@@ -6,8 +6,9 @@ import cvxpy as cp
 import numpy as np
 from workload import Workload, Operation
 import plot
+from typing import Tuple
 
-def schedule(workload: Workload):
+def schedule(workload: Workload) -> Tuple[int, int]:
     num_operations = workload.num_operations
     num_machines = workload.num_machines
 
@@ -17,7 +18,7 @@ def schedule(workload: Workload):
     C_max = cp.Variable()
 
     # Hyperparameters
-    H = 1000
+    H = 5000
 
     # Constraints
     constraints = []
@@ -71,7 +72,3 @@ def schedule(workload: Workload):
     print("Status: ", problem.status)
     print("Optimal value: ", problem.value)
     return t, alpha
-
-    # Plot the optimized schedule
-    durations = [op.get_durations() for op in workload.operations]
-    plot.plot_optimization_schedule(durations, t, alpha, num_machines)

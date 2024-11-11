@@ -1,7 +1,7 @@
 from workload import Workload, Operation
 import numpy as np
 
-def generate_syn_workload(n_jobs, n_machines, n_operations_per_job):
+def generate_syn_workload(n_jobs: int, n_operations_per_job: int, n_machines: int) -> Workload:
     """
     Generates a synthetic workload for the scheduling problem.
 
@@ -21,5 +21,3 @@ def generate_syn_workload(n_jobs, n_machines, n_operations_per_job):
 
     workload = Workload(operations)
     return workload
-
-generate_syn_workload(1000, 5, 10)

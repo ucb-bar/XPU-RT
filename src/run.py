@@ -1,16 +1,17 @@
 from workload import Workload, Operation
 import plot
 from scheduler import schedule
+from generate_syn_workload import generate_syn_workload
 
 # Create the workload
-mpc = Operation([200, 100])
-dnn = Operation([800, 200])
-ekf = Operation([10, 1000]) # TODO handle incompatible machines
-workload = Workload([mpc, dnn, ekf])
+print("Creating synthetic workload...")
+workload = generate_syn_workload(1, 15, 5)
 
 # Schedule the workload
+print("Scheduling the workload...")
 t, alpha = schedule(workload)
 
 # Plot the optimized schedule
+print("Plotting the optimized schedule...")
 durations = [op.get_durations() for op in workload.operations]
-plot.plot_optimization_schedule(durations, t, alpha, 2)
+plot.plot_optimization_schedule(durations, t, alpha, workload.num_machines)
