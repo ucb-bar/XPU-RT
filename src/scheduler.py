@@ -4,9 +4,85 @@
 
 import cvxpy as cp
 import numpy as np
-from workload import Workload, Operation
-import plot
+from workload import Workload, Window
 from typing import Tuple
+
+def schedule_window(window: Window) -> Tuple[int, int]:
+    num_operations = len(window.operations)
+    num_machines = len(window.machines)
+
+    alpha = cp.Variable((num_operations, num_machines), boolean=True)
+    beta = cp.Variable((num_operations, num_operations), boolean=True)
+    t = cp.Variable(num_operations)
+    C_max = cp.Variable()
+
+    # Hyperparameters
+    H = 5000
+
+    # Constraints
+    constraints = []
+    # (2)
+    for i in range(num_operations):
+        constraints.append(
+            cp.sum(alpha[i, :]) == 1
+        )
+    # (3)
+    for i in range(num_operations):
+        pred = window.operations[i].get_predecessor()
+        i_pred = None if pred is None else window.operations.index(pred)
+
+        # check if there is a required predecessor
+        if i_pred is not None:
+            constraints.append(
+                t[i] >= t[i_pred] + cp.sum(cp.multiply(window.operations[i_pred].get_durations()[:], alpha[i_pred, :]))
+            )
+    # (4)
+    for i in range(num_operations):
+        for j in range(i+1, num_operations):
+            for k in range(num_machines):
+                constraints.append(
+                    t[i] >= t[j] + window.operations[j].get_durations()[k] - (2 - alpha[i, k] - alpha[j, k] + beta[i, j]) * H
+                )
+    # (5)
+    for i in range(num_operations):
+        for j in range(i+1, num_operations):
+            for k in range(num_machines):
+                constraints.append(
+                    t[j] >= t[i] + window.operations[i].get_durations()[k] - (3 - alpha[i, k] - alpha[j, k] - beta[i, j]) * H
+                )
+    # (6)
+    for i in range(num_operations):
+        constraints.append(
+            C_max >= t[i] + cp.sum(cp.multiply(window.operations[i].get_durations()[:], alpha[i, :]))
+        )
+    # (7) and (8) are covered by boolean argument of alpha and beta variables
+    # all operations start at 0
+    for i in range(num_operations):
+        constraints.append(
+            t[i] >= 0
+        )
+
+    # term to maximize consecutive empty space on each machine
+    empty_space = cp.Variable(num_machines)
+    for k in range(num_machines):
+        for i in range(num_operations):
+            for j in range(i+1, num_operations):
+                constraints.append(
+                    empty_space[k] >= t[i] - (t[j] + window.operations[j].get_durations()[k] - (2 - alpha[i, k] - alpha[j, k] + beta[i, j]) * H)
+                )
+
+
+    objective_func = 150*C_max + cp.sum(empty_space)
+    # objective_func = C_max
+
+    # Optimization problem
+    objective = cp.Minimize(objective_func)
+    problem = cp.Problem(objective, constraints)
+    problem.solve(solver=cp.MOSEK, verbose=True)
+
+    print("Status: ", problem.status)
+    print("Optimal value: ", problem.value)
+    return t, alpha
 
 def schedule(workload: Workload) -> Tuple[int, int]:
     num_operations = workload.num_operations
@@ -28,16 +104,15 @@ def schedule(workload: Workload) -> Tuple[int, int]:
             cp.sum(alpha[i, :]) == 1
         )
     # (3)
-    # for i in range(num_operations):
-    #     i_pred = workload.operations[i].get_predecessor()
+    for i in range(num_operations):
+        pred = workload.operations[i].get_predecessor()
+        i_pred = None if pred is None else workload.operations.index(pred)
 
-    #     # check if there is no required predecessor
-    #     if i_pred is None:
-    #         continue
-
-    #     constraints.append(
-    #         t[i] >= t[i_pred] + cp.sum(cp.multiply(workload.operations[i_pred].get_durations()[:], alpha[i_pred, :]))
-    #     )
+        # check if there is a required predecessor
+        if i_pred is not None:
+            constraints.append(
+                t[i] >= t[i_pred] + cp.sum(cp.multiply(workload.operations[i_pred].get_durations()[:], alpha[i_pred, :]))
+            )
     # (4)
     for i in range(num_operations):
         for j in range(i+1, num_operations):
