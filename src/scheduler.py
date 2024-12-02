@@ -85,8 +85,8 @@ def schedule_window(window: Window) -> Tuple[int, int]:
     return t, alpha
 
 def schedule(workload: Workload) -> Tuple[int, int]:
-    num_operations = workload.num_operations
-    num_machines = workload.num_machines
+    num_operations = len(workload.get_operations())
+    num_machines = len(workload.machines)
 
     alpha = cp.Variable((num_operations, num_machines), boolean=True)
     beta = cp.Variable((num_operations, num_operations), boolean=True)

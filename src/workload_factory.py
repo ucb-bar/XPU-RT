@@ -29,7 +29,7 @@ def generate_syn_workload(n_operations: int, n_machines: int) -> Workload:
         processing_times = [np.random.randint(50, 1000) for _ in range(n_machines)]
         operations.append(Operation(processing_times))
 
-    workload = Workload(operations)
+    workload = Workload(operations, machines=[f'machine_{i}' for i in range(n_machines)])
     return workload
 
 def generate_syn_window():

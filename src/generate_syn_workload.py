@@ -1,7 +1,7 @@
 from workload import Workload, Operation
 import numpy as np
 
-def generate_syn_workload(n_jobs: int, n_operations_per_job: int, n_machines: int) -> Workload:
+def generate_syn_workload(n_operations: int, n_machines: int) -> Workload:
     """
     Generates a synthetic workload for the scheduling problem.
 
@@ -14,10 +14,9 @@ def generate_syn_workload(n_jobs: int, n_operations_per_job: int, n_machines: in
     - workload: a Workload object containing the synthetic operations
     """
     operations = []
-    for i in range(n_jobs):
-        for j in range(n_operations_per_job):
-            processing_times = [np.random.randint(50, 1000) for _ in range(n_machines)]
-            operations.append(Operation(processing_times))
+    for _ in range(n_operations):
+        processing_times = [np.random.randint(50, 1000) for _ in range(n_machines)]
+        operations.append(Operation(processing_times))
 
-    workload = Workload(operations)
+    workload = Workload(operations, np.zeros(n_machines))
     return workload

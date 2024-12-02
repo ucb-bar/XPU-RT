@@ -1,13 +1,15 @@
+import random
+
 class Workload:
     """
     A workload that contains jobs and machines to schedule
     """
 
-    jobs = []
+    operations = []
     machines = []
 
-    def __init__(self, jobs, machines):
-        self.jobs = jobs
+    def __init__(self, operations, machines):
+        self.operations = operations
         self.machines = machines
 
     def add_job(self, job):
@@ -25,6 +27,9 @@ class Workload:
     def get_num_machines(self):
         return len(self.machines)
     
+    def get_operations(self):
+        return self.operations
+    
 
 class Job:
     operations = []
@@ -37,6 +42,28 @@ class Job:
 
     def get_operations(self):
         return self.operations
+
+class VariableRuntimeJob (Job):
+    """
+    Model as a job that has two versions of operations with different runtimes
+    """
+
+    def __init__(self, operations, long_operations, prob=0.5):
+        """
+        Job that takes the long operations with probability prob
+        """
+        self.operations = operations
+        self.long_operations = long_operations
+        self.prob = prob
+
+    def get_operations(self):
+        """
+        Returns the operations with shorter runtime with probability prob
+        """
+        if random.random() < self.prob:
+            return self.long_operations
+        else:
+            return self.operations
 
 class Operation:
     processing_times = []
