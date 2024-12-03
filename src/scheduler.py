@@ -29,7 +29,12 @@ def schedule_window(window: Window) -> Tuple[int, int]:
     # (3)
     for i in range(num_operations):
         pred = window.operations[i].get_predecessor()
-        i_pred = None if pred is None else window.operations.index(pred)
+        i_pred = None
+        if pred is not None:
+            try:
+                i_pred = window.operations.index(pred)
+            except ValueError:
+                i_pred = None
 
         # check if there is a required predecessor
         if i_pred is not None:
@@ -72,19 +77,19 @@ def schedule_window(window: Window) -> Tuple[int, int]:
                 )
 
 
-    objective_func = 150*C_max + cp.sum(empty_space)
-    # objective_func = C_max
+    # objective_func = 150*C_max + cp.sum(empty_space)
+    objective_func = C_max
 
     # Optimization problem
     objective = cp.Minimize(objective_func)
     problem = cp.Problem(objective, constraints)
-    problem.solve(solver=cp.MOSEK, verbose=True)
+    problem.solve(solver=cp.MOSEK, verbose=False)
 
     print("Status: ", problem.status)
     print("Optimal value: ", problem.value)
-    return t, alpha
+    return t.value, alpha.value
 
-def schedule(workload: Workload) -> Tuple[int, int]:
+def schedule(workload: Workload, transfer_times) -> Tuple[int, int]:
     num_operations = len(workload.get_operations())
     num_machines = len(workload.machines)
 
@@ -110,8 +115,13 @@ def schedule(workload: Workload) -> Tuple[int, int]:
 
         # check if there is a required predecessor
         if i_pred is not None:
+            machine_pred = np.argmax(alpha[i_pred, :])
+            machine_curr = np.argmax(alpha[i, :])
+
+            transfer_time = transfer_times[machine_pred][machine_curr]
+
             constraints.append(
-                t[i] >= t[i_pred] + cp.sum(cp.multiply(workload.operations[i_pred].get_durations()[:], alpha[i_pred, :]))
+                t[i] >= t[i_pred] + cp.sum(cp.multiply(workload.operations[i_pred].get_durations()[:], alpha[i_pred, :])) + transfer_time
             )
     # (4)
     for i in range(num_operations):
@@ -142,7 +152,7 @@ def schedule(workload: Workload) -> Tuple[int, int]:
     # Optimization problem
     objective = cp.Minimize(C_max)
     problem = cp.Problem(objective, constraints)
-    problem.solve(solver=cp.MOSEK, verbose=True)
+    problem.solve(solver=cp.MOSEK, verbose=False)
 
     print("Status: ", problem.status)
     print("Optimal value: ", problem.value)

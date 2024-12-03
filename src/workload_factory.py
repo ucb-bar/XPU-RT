@@ -26,7 +26,7 @@ def generate_syn_workload(n_operations: int, n_machines: int) -> Workload:
     """
     operations = []
     for _ in range(n_operations):
-        processing_times = [np.random.randint(50, 1000) for _ in range(n_machines)]
+        processing_times = [np.random.randint(50, 150) for _ in range(n_machines)]
         operations.append(Operation(processing_times))
 
     workload = Workload(operations, machines=[f'machine_{i}' for i in range(n_machines)])
@@ -90,3 +90,21 @@ def generate_test_window() -> Window:
     window.add_jobs([ekf, slam, pid])
 
     return window
+
+def create_sequential_workload(n_jobs, n_operations_per_job) -> Workload:
+    # Create a workload
+    machines = ['cpu', 'gpu', 'fpga']
+    operations = [[] for _ in range(n_jobs)]
+
+    for i in range(n_jobs):
+        for _ in range(n_operations_per_job):
+            processing_times = [np.random.randint(50, 150) for _ in range(n_operations_per_job)]
+            operations[i].append(Operation(processing_times))
+
+    jobs = [create_sequential_job(ops) for ops in operations]
+
+    workload_operations = []
+    for job in jobs:
+        workload_operations.extend(job.get_operations())
+    workload = Workload(workload_operations, machines)
+    return workload

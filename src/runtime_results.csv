@@ -41,3 +41,6 @@ num_jobs,num_machines,runtime,plot
 11,2,52.017887592315674,runtime/schedule_jobs11_machines2.png
 11,3,28.73050570487976,runtime/schedule_jobs11_machines3.png
 11,4,6.3173301219940186,runtime/schedule_jobs11_machines4.png
+12,2,7840.633547544479,runtime/schedule_jobs12_machines2.png
+12,3,52.73487639427185,runtime/schedule_jobs12_machines3.png
+12,4,5.271666526794434,runtime/schedule_jobs12_machines4.png

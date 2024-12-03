@@ -30,6 +30,22 @@ class Workload:
     def get_operations(self):
         return self.operations
     
+    def get_durations(self):
+        durations = []
+        for i in range(len(self.operations)):
+            operation = self.operations[i]
+            if operation.predecessor is None:
+                durations.append([operation.get_durations()])
+            else:
+                durations[-1].append(operation.get_durations())
+        return durations
+    
+    def set_transfer_times(self, transfer_times):
+        self.transfer_times = transfer_times
+    
+    def get_transfer_times(self):
+        return self.transfer_times
+    
 
 class Job:
     operations = []
@@ -102,3 +118,16 @@ class Window:
     def add_jobs(self, jobs: list[Job]):
         for job in jobs:
             self.operations.extend(job.get_operations())
+    
+    def get_durations(self):
+        durations = []
+        for i in range(len(self.operations)):
+            operation = self.operations[i]
+            if operation.predecessor is None:
+                durations.append([operation.get_durations()])
+            else:
+                if len(durations) == 0:
+                    durations.append([operation.get_durations()])
+                else:
+                    durations[-1].append(operation.get_durations())
+        return durations

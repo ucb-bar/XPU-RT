@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-def plot_optimization_schedule(durations: list[list[list[float]]], t, alpha, num_machines, save_path="plots/schedule.png"):
+def plot_optimization_schedule(durations: list[list[list[float]]], t, alpha, num_machines, transfer_times, save_path="plots/schedule.png"):
     """
     Parses CVXPY optimization outputs to plot a schedule of jobs on machines over time,
     ensuring operations within the same job are plotted with gradients of the same color.
@@ -38,6 +38,7 @@ def plot_optimization_schedule(durations: list[list[list[float]]], t, alpha, num
     fig, ax = plt.subplots(figsize=(10, 6))
     base_colors = plt.cm.tab20.colors  # Use 'tab20' colormap for better color distinction
     color_gradients = np.linspace(0.6, 1.0, 5)  # Gradients to adjust color intensity
+    transfer_color = 'black'  # Color for transfer times
 
     # Plot each operation as a bar on its assigned machine row
     current_operation_index = 0
@@ -58,6 +59,16 @@ def plot_optimization_schedule(durations: list[list[list[float]]], t, alpha, num
                            edgecolor='black',
                            label=f'Job {job_index + 1}' if operation_index == 0 else None)
             
+            # Plot transfer time if this is not the first operation
+            if operation_index > 0:
+                prev_machine = machine_assignments[current_operation_index - 1]
+                transfer_time = transfer_times[prev_machine][machine]
+                ax.broken_barh([(start_time - transfer_time, transfer_time)], 
+                            (prev_machine - 0.4, 0.8),
+                            facecolors=transfer_color,
+                            edgecolor='black',
+                            label='Transfer\nTime' if current_operation_index == 1 else None)
+            
             current_operation_index += 1
 
     # Customize the y-axis to show each machine as a separate row
@@ -67,16 +78,21 @@ def plot_optimization_schedule(durations: list[list[list[float]]], t, alpha, num
     # Set labels and title
     ax.set_xlabel("Time")
     ax.set_ylabel("Machines")
-    ax.set_title("Optimized Job Schedule Over Time")
+    ax.set_title("Optimized Job Schedule With Convex Packing")
 
     # Optional: show a legend
     handles, labels = ax.get_legend_handles_labels()
     unique_labels = {label: handle for label, handle in zip(labels, handles)}
-    ax.legend(unique_labels.values(), unique_labels.keys(), loc='upper right', title="Jobs", bbox_to_anchor=(1.15, 1))
+
+    # Ensure 'Transfer Time' appears last in the legend
+    if 'Transfer\nTime' in unique_labels:
+        transfer_handle = unique_labels.pop('Transfer\nTime')
+        unique_labels['Transfer\nTime'] = transfer_handle
+        
+    ax.legend(unique_labels.values(), unique_labels.keys(), loc='upper right', title="Jobs", bbox_to_anchor=(1.18, 1))
 
     plt.tight_layout()
 
     # Save the plot
     # check if the save path has a folder
     plt.savefig(save_path, dpi=300, bbox_inches='tight')
-    plt.show()
