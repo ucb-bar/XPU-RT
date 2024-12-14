@@ -111,6 +111,8 @@ def convex_schedule(workload: Workload, transfer_times):
     t = [time_and_op[0] for time_and_op in times_and_ops]
     t = np.array(t)
 
+    # TODO validate the schedule with the collision solver
+
     print("Status: ", problem.status)
     print("Optimal value: ", problem.value)
     return t, alpha

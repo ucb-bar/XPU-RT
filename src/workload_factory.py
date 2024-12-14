@@ -108,3 +108,21 @@ def create_sequential_workload(n_jobs, n_operations_per_job) -> Workload:
         workload_operations.extend(job.get_operations())
     workload = Workload(workload_operations, machines)
     return workload
+
+def create_sequential_workload_with_n_machines(n_jobs, n_operations_per_job, n_machines) -> Workload:
+    # Create a workload
+    machines = [f'machine_{i}' for i in range(n_machines)]
+    operations = [[] for _ in range(n_jobs)]
+
+    for i in range(n_jobs):
+        for _ in range(n_operations_per_job):
+            processing_times = [np.random.randint(50, 150) for _ in range(n_machines)]
+            operations[i].append(Operation(processing_times))
+
+    jobs = [create_sequential_job(ops) for ops in operations]
+
+    workload_operations = []
+    for job in jobs:
+        workload_operations.extend(job.get_operations())
+    workload = Workload(workload_operations, machines)
+    return workload
