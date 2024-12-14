@@ -157,3 +157,123 @@ def schedule(workload: Workload, transfer_times) -> Tuple[int, int]:
     print("Status: ", problem.status)
     print("Optimal value: ", problem.value)
     return t, alpha
+
+def schedule_additional_objectives(workload: Workload, transfer_times, nominal_start_times: list[float]) -> Tuple[int, int]:
+    """
+    @param nominal_start_times: list of nominal start times for each operation. If there is no desired start time, set index to -1
+    """
+    num_operations = len(workload.get_operations())
+    num_machines = len(workload.machines)
+
+    alpha = cp.Variable((num_operations, num_machines), boolean=True)
+    beta = cp.Variable((num_operations, num_operations), boolean=True)
+    t = cp.Variable(num_operations)
+    C_max = cp.Variable()
+
+    # desired frequency
+    z = cp.Variable(num_operations)
+
+    # interrupt tolerance
+    G_max = cp.Variable()
+    g = cp.Variable(num_operations)
+
+    # Hyperparameters
+    H = 5000
+
+    # Constraints
+    constraints = []
+    # (2)
+    for i in range(num_operations):
+        constraints.append(
+            cp.sum(alpha[i, :]) == 1
+        )
+    # (3)
+    for i in range(num_operations):
+        pred = workload.operations[i].get_predecessor()
+        i_pred = None if pred is None else workload.operations.index(pred)
+
+        # check if there is a required predecessor
+        if i_pred is not None:
+            machine_pred = np.argmax(alpha[i_pred, :])
+            machine_curr = np.argmax(alpha[i, :])
+
+            transfer_time = transfer_times[machine_pred][machine_curr]
+
+            constraints.append(
+                t[i] >= t[i_pred] + cp.sum(cp.multiply(workload.operations[i_pred].get_durations()[:], alpha[i_pred, :])) + transfer_time
+            )
+    # (4)
+    for i in range(num_operations):
+        for j in range(i+1, num_operations):
+            for k in range(num_machines):
+                constraints.append(
+                    t[i] >= t[j] + workload.operations[j].get_durations()[k] - (2 - alpha[i, k] - alpha[j, k] + beta[i, j]) * H
+                )
+    # (5)
+    for i in range(num_operations):
+        for j in range(i+1, num_operations):
+            for k in range(num_machines):
+                constraints.append(
+                    t[j] >= t[i] + workload.operations[i].get_durations()[k] - (3 - alpha[i, k] - alpha[j, k] - beta[i, j]) * H
+                )
+    # (6)
+    for i in range(num_operations):
+        constraints.append(
+            C_max >= t[i] + cp.sum(cp.multiply(workload.operations[i].get_durations()[:], alpha[i, :]))
+        )
+    # (7) and (8) are covered by boolean argument of alpha and beta variables
+    # all operations start at 0
+    for i in range(num_operations):
+        constraints.append(
+            t[i] >= 0
+        )
+
+    # desired frequency
+    for i in range(num_operations):
+        if nominal_start_times[i] >= 0:
+            constraints.append(
+                z[i] >= t[i] - nominal_start_times[i]
+            )
+            constraints.append(
+                z[i] >= -(t[i] - nominal_start_times[i])
+            )
+        constraints.append(
+            z[i] >= 0
+        )
+
+    # interrupt tolerance
+    for i in range(num_operations):
+        for j in range(i+1, num_operations):
+            for k in range(num_machines):
+                constraints.append(
+                    g[i] >= (t[i] - t[j] - workload.operations[j].get_durations()[k]) - (2 - alpha[i, k] - alpha[j, k] + beta[i, j]) * H
+                )
+
+    for i in range(num_operations):
+        for j in range(i+1, num_operations):
+            for k in range(num_machines):
+                constraints.append(
+                    g[j] >= (t[j] - t[i] - workload.operations[i].get_durations()[k]) - (3 - alpha[i, k] - alpha[j, k] - beta[i, j]) * H
+                )
+
+    for i in range(num_operations):
+        constraints.append(
+            G_max <= g[i]
+        )
+        constraints.append(
+            g[i] >= 0
+        )
+        constraints.append(
+            g[i] <= H
+        )
+
+    # Optimization problem
+    objective_func = C_max + cp.sum(z) - 0.1*G_max
+    # objective_func = C_max + cp.sum(z)
+    objective = cp.Minimize(objective_func)
+    problem = cp.Problem(objective, constraints)
+    problem.solve(solver=cp.MOSEK, verbose=True)
+
+    print("Status: ", problem.status)
+    print("Optimal value: ", problem.value)
+    return t, alpha
