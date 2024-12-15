@@ -1,6 +1,17 @@
 from workload import Workload, Job, Operation, Window
 import numpy as np
+from typing import Tuple
 from constants import NOT_SUPPORTED
+
+def generate_syn_transfer_times(n_machines: int, max_transfer_time: int=500) -> np.ndarray:
+    """
+    Generates a symmetric matrix of transfer times between machines.
+    """
+    
+    transfer_times = np.random.randint(0, max_transfer_time, (n_machines, n_machines))
+    transfer_times = (transfer_times + transfer_times.T) / 2
+    np.fill_diagonal(transfer_times, 0)
+    return transfer_times
 
 def create_sequential_job(operations: list[Operation]) -> Job:
     """
@@ -13,89 +24,55 @@ def create_sequential_job(operations: list[Operation]) -> Job:
     
     return Job(operations)
 
-def generate_syn_workload(n_operations: int, n_machines: int) -> Workload:
+def generate_syn_workload(n_operations: int, n_machines: int, transfer_times: np.ndarray, processing_time_range: Tuple[float, float]=(50, 150)) -> Workload:
     """
     Generates a synthetic workload for the scheduling problem.
 
     Parameters:
     - n_operations: number of operations
     - n_machines: number of machines available
+    - transfer_times: a matrix of transfer times between machines
+    - processing_time_range: a tuple of the minimum and maximum processing times for each operation
 
     Returns:
     - workload: a Workload object containing the synthetic operations
     """
+    
     operations = []
     for _ in range(n_operations):
-        processing_times = [np.random.randint(50, 150) for _ in range(n_machines)]
+        processing_times = [np.random.randint(processing_time_range[0], processing_time_range[1]) for _ in range(n_machines)]
         operations.append(Operation(processing_times))
-
-    workload = Workload(operations, machines=[f'machine_{i}' for i in range(n_machines)])
+    machines = [f'machine_{i}' for i in range(n_machines)]
+    workload = Workload(operations, machines, transfer_times)
     return workload
 
-def generate_syn_window():
+def generate_syn_window(n_operations: int, n_machines: int, transfer_times: np.ndarray, processing_time_range: Tuple[float, float]=(50, 150)) -> Window:
     """
-    Creates a synthetic window.
-    Contains 2 jobs with 3 operations each.
+    Generates a synthetic window for the scheduling problem.
+
+    Parameters:
+    - n_operations: number of operations
+    - n_machines: number of machines available
+    - transfer_times: a matrix of transfer times between machines
+
+    Returns:
+    - workload: a Workload object containing the synthetic operations
     """
-
-    operations1 = []
-    operations2 = []
-
-    for _ in range(3):
-        processing_times = [np.random.randint(50, 1000) for _ in range(3)]
-        operations1.append(Operation(processing_times))
-
-    for _ in range(3):
-        processing_times = [np.random.randint(50, 1000) for _ in range(3)]
-        operations2.append(Operation(processing_times))
     
-    job1 = create_sequential_job(operations1)
-    job2 = create_sequential_job(operations2)
-
-    window = Window(1000)
-    window.add_jobs([job1, job2])
-    window.machines = ['cpu', 'gpu', 'fpga']
-
+    operations = []
+    for _ in range(n_operations):
+        processing_times = [np.random.randint(processing_time_range[0], processing_time_range[1]) for _ in range(n_machines)]
+        operations.append(Operation(processing_times))
+    machines = [f'machine_{i}' for i in range(n_machines)]
+    expected_time = sum([np.mean(operation.get_durations()) for operation in operations])
+    window = Window(expected_time, operations, machines, transfer_times)
     return window
 
-def generate_test_window() -> Window:
-    """
-    An example robotics workload of a periodic EKF, a SLAM, and a PID controller.
-    The system has 3 machines: CPU, GPU, and FPGA.
-    EKF is supported on CPU and FPGA.
-    SLAM is supported on CPU and GPU.
-    PID is supported on CPU and FPGA.
-
-    EKF has 3 operations, SLAM has 5 operations, and PID has 2 operations.
-    """
-
-    machines = ['cpu', 'gpu', 'fpga']
-    ekf1 = Operation([10, NOT_SUPPORTED, 5])
-    ekf2 = Operation([20, NOT_SUPPORTED, 5], predecessor=ekf1)
-    ekf3 = Operation([10, NOT_SUPPORTED, 10], predecessor=ekf2)
-    ekf = Job([ekf1, ekf2, ekf3])
-
-    slam1 = Operation([100, 10, NOT_SUPPORTED])
-    slam2 = Operation([200, 40, NOT_SUPPORTED], predecessor=slam1)
-    slam3 = Operation([100, 80, NOT_SUPPORTED], predecessor=slam2)
-    slam4 = Operation([150, 20, NOT_SUPPORTED], predecessor=slam3)
-    slam5 = Operation([300, 400, NOT_SUPPORTED], predecessor=slam4)
-    slam = Job([slam1, slam2, slam3, slam4, slam5])
-
-    pid1 = Operation([50, NOT_SUPPORTED, 25])
-    pid2 = Operation([50, NOT_SUPPORTED, 25], predecessor=pid1)
-    pid = Job([pid1, pid2])
-
-    window = Window(1000, machines=machines)
-    window.add_jobs([ekf, slam, pid])
-
-    return window
-
-def create_sequential_workload(n_jobs, n_operations_per_job) -> Workload:
+def create_syn_sequential_workload(n_jobs: int, n_operations_per_job: int, n_machines: int, transfer_times: np.ndarray, processing_time_range: Tuple[float, float]=(50, 150)) -> Workload:
     # Create a workload
-    machines = ['cpu', 'gpu', 'fpga']
-    operations = [[] for _ in range(n_jobs)]
+    machines = [f'machine_{i}' for i in range(n_machines)]
 
+    operations = [[] for _ in range(n_jobs)]
     for i in range(n_jobs):
         for _ in range(n_operations_per_job):
             processing_times = [np.random.randint(50, 150) for _ in range(n_operations_per_job)]
@@ -106,23 +83,5 @@ def create_sequential_workload(n_jobs, n_operations_per_job) -> Workload:
     workload_operations = []
     for job in jobs:
         workload_operations.extend(job.get_operations())
-    workload = Workload(workload_operations, machines)
-    return workload
-
-def create_sequential_workload_with_n_machines(n_jobs, n_operations_per_job, n_machines) -> Workload:
-    # Create a workload
-    machines = [f'machine_{i}' for i in range(n_machines)]
-    operations = [[] for _ in range(n_jobs)]
-
-    for i in range(n_jobs):
-        for _ in range(n_operations_per_job):
-            processing_times = [np.random.randint(50, 150) for _ in range(n_machines)]
-            operations[i].append(Operation(processing_times))
-
-    jobs = [create_sequential_job(ops) for ops in operations]
-
-    workload_operations = []
-    for job in jobs:
-        workload_operations.extend(job.get_operations())
-    workload = Workload(workload_operations, machines)
+    workload = Workload(workload_operations, machines, transfer_times)
     return workload

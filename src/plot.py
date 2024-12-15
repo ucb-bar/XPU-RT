@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-def plot_optimization_schedule(durations: list[list[list[float]]], t, alpha, num_machines, transfer_times, save_path="plots/schedule.png"):
+def plot_optimization_schedule(durations: list[list[list[float]]], t, alpha, num_machines, transfer_times, save_path="plots/schedule.png", plot_title="Schedule"):
     """
     Parses CVXPY optimization outputs to plot a schedule of jobs on machines over time,
     ensuring operations within the same job are plotted with gradients of the same color.
@@ -78,7 +78,7 @@ def plot_optimization_schedule(durations: list[list[list[float]]], t, alpha, num
     # Set labels and title
     ax.set_xlabel("Time")
     ax.set_ylabel("Machines")
-    ax.set_title("Optimized Job Schedule With Convex Packing")
+    ax.set_title(plot_title)
 
     # Optional: show a legend
     handles, labels = ax.get_legend_handles_labels()
@@ -95,4 +95,4 @@ def plot_optimization_schedule(durations: list[list[list[float]]], t, alpha, num
 
     # Save the plot
     # check if the save path has a folder
-    plt.savefig(save_path, dpi=300, bbox_inches='tight')
+    plt.savefig(save_path, dpi=500, bbox_inches='tight')
