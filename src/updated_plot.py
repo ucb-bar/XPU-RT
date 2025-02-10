@@ -2,7 +2,10 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 
-def plot_optimization_schedule(durations, t, alpha, num_jobs, num_machines, machines, transfer_times, save_path="plots/schedule.png", plot_title="Schedule"):
+def plot_combined_schedule(
+    durations: list[list[list[float]]], t, alpha, num_machines, transfer_times, num_jobs,
+    save_path=None, plot_title="Schedule",
+    start_times=None, machine_allocations=None):
     """
     Parses CVXPY optimization outputs to plot a schedule of jobs on machines over time.
 
@@ -18,6 +21,27 @@ def plot_optimization_schedule(durations, t, alpha, num_jobs, num_machines, mach
     - num_jobs: Number of jobs (used for naming the file).
     """
 
+
+    # If using greedy scheduling, use start_times and machine_allocations
+    if start_times is not None and machine_allocations is not None:
+        job_colors = {}
+        unique_jobs = sorted(set(job[0] for job in start_times.keys()))
+        color_map = plt.cm.get_cmap("tab10", len(unique_jobs))
+        for idx, job in enumerate(unique_jobs):
+            job_colors[job] = color_map(idx)
+
+        machine_mapping = {machine: i + 1 for i, machine in enumerate(sorted(set(machine_allocations.values())))}
+
+        for (job, op), start_time in start_times.items():
+            machine = machine_allocations[(job, op)]
+            machine_idx = machine_mapping[machine]
+            operation_duration = durations[(job, op)]
+            
+            ax.barh(machine_idx, width=operation_duration, left=start_time, color=job_colors[job], edgecolor='black', label=f"Job {job}, Op {op}")
+
+        ax.set_yticks(list(machine_mapping.values()))
+        ax.set_yticklabels(list(machine_mapping.keys()))
+    
     # Ensure job and machine numbers are provided
     if num_jobs is None or num_machines is None:
         raise ValueError("num_jobs and num_machines must be provided to generate dynamic filenames.")
@@ -77,7 +101,7 @@ def plot_optimization_schedule(durations, t, alpha, num_jobs, num_machines, mach
 
     # Labels and title
     ax.set_yticks(range(num_machines))
-    ax.set_yticklabels(machines)
+    ax.set_yticklabels([f'Machine {i+1}' for i in range(num_machines)])
     ax.set_xlabel("Time")
     ax.set_ylabel("Machines")
     ax.set_title(plot_title)
