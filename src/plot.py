@@ -1,84 +1,92 @@
+import os
 import matplotlib.pyplot as plt
 import numpy as np
 
-def plot_optimization_schedule(durations: list[list[list[float]]], t, alpha, num_machines, transfer_times, save_path="plots/schedule.png", plot_title="Schedule"):
+def plot_optimization_schedule(durations, t, alpha, num_jobs, num_machines, machines, transfer_times, save_path="plots/schedule.png", plot_title="Schedule"):
     """
-    Parses CVXPY optimization outputs to plot a schedule of jobs on machines over time,
-    ensuring operations within the same job are plotted with gradients of the same color.
+    Parses CVXPY optimization outputs to plot a schedule of jobs on machines over time.
 
     Parameters:
-    - durations: list of jobs, where each job is a list of operations, and each operation
-                 is a list of runtimes for different machines.
+    - durations: List of jobs, where each job is a list of operations, 
+                 and each operation is a list of runtimes for different machines.
     - t: CVXPY variable (vector) containing start times for each operation in each job.
     - alpha: CVXPY variable (matrix) containing machine assignments for each operation.
-    - num_machines: total number of machines.
+    - num_machines: Total number of machines.
+    - transfer_times: Transfer time matrix between machines.
+    - save_path: Optional file path to save the plot.
+    - plot_title: Title for the plot.
+    - num_jobs: Number of jobs (used for naming the file).
     """
-    # Get the optimized start times and machine assignments from CVXPY variables
-    if not isinstance(t, np.ndarray):
-        start_times = np.array(t.value).flatten()  # Convert CVXPY start times to a 1D numpy array
-    else:
-        start_times = t
-    
-    # check if alpha is a numpy array
-    if not isinstance(alpha, np.ndarray):
-        alpha_values = np.array(alpha.value)  # Convert CVXPY alpha matrix to a numpy array
-    else:
-        alpha_values = alpha
 
-    # Ensure the total number of operations matches the start times
+    # Ensure job and machine numbers are provided
+    if num_jobs is None or num_machines is None:
+        raise ValueError("num_jobs and num_machines must be provided to generate dynamic filenames.")
+
+    # Define save directory and create it if it doesn't exist
+    plot_dir = "/scratch/kris/scheduler/src/scripts/plots"
+    os.makedirs(plot_dir, exist_ok=True)
+
+    # Define the dynamic filename based on job and machine count
+    if save_path is None:
+        save_path = os.path.join(plot_dir, f"schedule_jobs{num_jobs}_machines{num_machines}.png")
+
+    # Convert optimization variables to NumPy arrays if needed
+    start_times = np.array(t.value).flatten() if not isinstance(t, np.ndarray) else t
+    alpha_values = np.array(alpha.value) if not isinstance(alpha, np.ndarray) else alpha
+
+    # Validate number of operations
     num_operations = sum(len(job) for job in durations)
     if num_operations != len(start_times):
         raise ValueError(f"Mismatch: durations specify {num_operations} operations, "
                          f"but start_times has {len(start_times)} entries.")
 
-    # Determine machine assignments based on alpha values
-    machine_assignments = np.argmax(alpha_values, axis=1)  # Finds the machine (index) assigned for each operation
+    # Determine machine assignments
+    machine_assignments = np.argmax(alpha_values, axis=1)
 
-    # Set up the plot
+    # Plot settings
     fig, ax = plt.subplots(figsize=(10, 6))
-    base_colors = plt.cm.tab20.colors  # Use 'tab20' colormap for better color distinction
-    color_gradients = np.linspace(0.6, 1.0, 5)  # Gradients to adjust color intensity
-    transfer_color = 'black'  # Color for transfer times
+    base_colors = plt.cm.tab20.colors
+    color_gradients = np.linspace(0.6, 1.0, 5)
+    transfer_color = 'black'
 
-    # Plot each operation as a bar on its assigned machine row
+    # Plot each operation
     current_operation_index = 0
     for job_index, job_durations in enumerate(durations):
-        base_color = np.array(base_colors[job_index % len(base_colors)])  # Base color for the job
+        base_color = np.array(base_colors[job_index % len(base_colors)])
         for operation_index, operation_runtimes in enumerate(job_durations):
-            # Fetch relevant data
             start_time = start_times[current_operation_index]
             machine = machine_assignments[current_operation_index]
-            operation_duration = operation_runtimes[machine]  # Get runtime for the assigned machine
-            gradient_factor = color_gradients[min(operation_index, len(color_gradients) - 1)]  # Gradation for this operation
-            operation_color = tuple(base_color * gradient_factor)  # Adjust base color intensity
+            operation_duration = operation_runtimes[machine]
+            gradient_factor = color_gradients[min(operation_index, len(color_gradients) - 1)]
+            operation_color = tuple(base_color * gradient_factor)
 
-            # Plot operation as a horizontal bar
             ax.broken_barh([(start_time, operation_duration)], 
                            (machine - 0.4, 0.8),
                            facecolors=operation_color,
-                           edgecolor='black',
-                           label=f'Job {job_index + 1}' if operation_index == 0 else None)
-            
-            # Plot transfer time if this is not the first operation
+                           edgecolor='black')
+
             if operation_index > 0:
                 prev_machine = machine_assignments[current_operation_index - 1]
                 transfer_time = transfer_times[prev_machine][machine]
                 ax.broken_barh([(start_time - transfer_time, transfer_time)], 
                             (prev_machine - 0.4, 0.8),
                             facecolors=transfer_color,
-                            edgecolor='black',
-                            label='Transfer\nTime' if current_operation_index == 1 else None)
-            
+                            edgecolor='black')
+
             current_operation_index += 1
 
-    # Customize the y-axis to show each machine as a separate row
+    # Labels and title
     ax.set_yticks(range(num_machines))
-    ax.set_yticklabels([f'Machine {i+1}' for i in range(num_machines)])
-    
-    # Set labels and title
+    ax.set_yticklabels(machines)
     ax.set_xlabel("Time")
     ax.set_ylabel("Machines")
     ax.set_title(plot_title)
+
+    plt.tight_layout()
+
+    # Save the plot with dynamic filename
+    print(f"Saving plot to {save_path}...")
+    plt.savefig(save_path, dpi=500, bbox_inches='tight')
 
     # Optional: show a legend
     handles, labels = ax.get_legend_handles_labels()

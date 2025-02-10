@@ -49,7 +49,7 @@ class Workload:
     def get_operations(self) -> list[Operation]:
         return self.operations
     
-    def get_durations(self) -> list[list[float]]:
+    def get_durations(self) -> list:
         """
         Get the durations of the operations in the workload. The durations are grouped by job.
         """
