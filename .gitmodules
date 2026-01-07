@@ -1,0 +1,3 @@
+[submodule "merlin"]
+	path = merlin
+	url = https://github.com/copparihollmann/merlin.git
