@@ -1,10 +1,9 @@
-# TODO this code is outdated
-
 import time
+import os
 from workload import Workload, Operation
 import plot
 from scheduler import schedule
-from workload_factory import generate_syn_workload
+from workload_factory import create_syn_sequential_workload, generate_syn_transfer_times
 import numpy as np
 import csv
 from workload_factory import create_sequential_job
@@ -30,8 +29,10 @@ def param_sweep():
         for num_machines in num_machines_list:
             print(f"Generating workload with {num_jobs} jobs and {num_machines} machines...")
             
-            # Generate synthetic workload
-            workload = generate_syn_workload(num_jobs, num_machines)
+            # Generate transfer times and synthetic workload
+            transfer_times = generate_syn_transfer_times(num_machines)
+            n_operations_per_job = 3  # Default number of operations per job
+            workload = create_syn_sequential_workload(num_jobs, n_operations_per_job, num_machines, transfer_times)
             
             # Schedule the workload and record runtime
             print(f"Scheduling workload for {num_jobs} jobs and {num_machines} machines...")
@@ -44,16 +45,17 @@ def param_sweep():
             durations = []
             for i in range(len(workload.operations)):
                 operation = workload.operations[i]
-                if operation.predecessor is None:
+                if not operation.predecessors:
                     durations.append([operation.get_durations()])
                 else:
                     durations[-1].append(operation.get_durations())
             
             # Save the plot
+            os.makedirs("runtime", exist_ok=True)
             plot_filename = f"runtime/schedule_jobs{num_jobs}_machines{num_machines}.png"
             print(f"Saving plot to {plot_filename}...")
             try:
-                plot.plot_optimization_schedule(durations, t, alpha, len(workload.machines), plot_filename)
+                plot.plot_optimization_schedule(durations, t, alpha, num_jobs, num_machines, workload.machines, workload.get_transfer_times(), save_path=plot_filename)
             
                 # Append the current result to the file
                 with open(results_file, mode="a", newline="") as file:
@@ -106,11 +108,16 @@ def transfer_time_test():
 
     operations = job1.get_operations() + job2.get_operations() + job3.get_operations() + job4.get_operations()
 
-    workload = Workload(operations, machines)
+    workload = Workload(operations, machines, transfer_times)
     
-    t, alpha = schedule(workload, transfer_times)
+    t, alpha = schedule(workload)
 
-    plot.plot_optimization_schedule(workload.get_durations(), t, alpha, 3, transfer_times, "transfer_time_test.png")
+    # Count number of jobs (operations with no predecessor start a new job)
+    num_jobs = sum(1 for op in operations if not op.predecessors)
+    
+    # Create plots directory if it doesn't exist
+    os.makedirs("plots", exist_ok=True)
+    plot.plot_optimization_schedule(workload.get_durations(), t, alpha, num_jobs, len(workload.machines), machines, transfer_times, save_path="plots/transfer_time_test.png")
 
 if __name__ == "__main__":
     transfer_time_test()

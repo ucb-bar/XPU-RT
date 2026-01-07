@@ -29,6 +29,11 @@ def plot_optimization_schedule(durations, t, alpha, num_jobs, num_machines, mach
     # Define the dynamic filename based on job and machine count
     if save_path is None:
         save_path = os.path.join(plot_dir, f"schedule_jobs{num_jobs}_machines{num_machines}.png")
+    else:
+        # Create directory for custom save path if it doesn't exist
+        save_dir = os.path.dirname(save_path)
+        if save_dir:  # Only create if there's a directory component
+            os.makedirs(save_dir, exist_ok=True)
 
     # Convert optimization variables to NumPy arrays if needed
     start_times = np.array(t.value).flatten() if not isinstance(t, np.ndarray) else t

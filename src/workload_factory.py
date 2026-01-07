@@ -1,6 +1,6 @@
 from workload import Workload, Job, Operation, Window
 import numpy as np
-from typing import Tuple
+from typing import Tuple, Dict, List
 from constants import NOT_SUPPORTED
 
 def generate_syn_transfer_times(n_machines: int, max_transfer_time: int=500) -> np.ndarray:
@@ -15,12 +15,14 @@ def generate_syn_transfer_times(n_machines: int, max_transfer_time: int=500) -> 
 
 def create_sequential_job(operations: list[Operation]) -> Job:
     """
-    From the list of operations, creates a job of sequentially dependent operations
+    From the list of operations, creates a job of sequentially dependent operations.
+    Each operation depends on the previous one (single predecessor chain for backward compatibility).
     """
     
     for i in range(len(operations) - 1):
         operations[i].successor = operations[i+1]
-        operations[i+1].predecessor = operations[i]
+        # Use add_predecessor to maintain list structure
+        operations[i+1].add_predecessor(operations[i])
     
     return Job(operations)
 
@@ -85,3 +87,53 @@ def create_syn_sequential_workload(n_jobs: int, n_operations_per_job: int, n_mac
         workload_operations.extend(job.get_operations())
     workload = Workload(workload_operations, machines, transfer_times)
     return workload
+
+def create_workload_from_dependencies(
+    dispatch_data: Dict,
+    processing_times: Dict[str, List[float]],
+    machines: List[str],
+    transfer_times: np.ndarray
+) -> Workload:
+    """
+    Creates a workload from a dependency graph structure (like dronet_dispatch_deps.json).
+    
+    Parameters:
+    - dispatch_data: Dictionary with 'dispatches' key containing dispatch information
+    - processing_times: Dictionary mapping dispatch IDs to list of processing times for each machine
+    - machines: List of machine names
+    - transfer_times: Matrix of transfer times between machines
+    
+    Returns:
+    - Workload object with operations linked according to dependencies
+    """
+    dispatches = dispatch_data.get('dispatches', {})
+    
+    # Create Operation objects for each dispatch
+    operations_map = {}
+    for dispatch_name, dispatch_info in dispatches.items():
+        # Get processing times for this dispatch (check by name first, then by ID for backward compatibility)
+        if dispatch_name in processing_times:
+            proc_times = processing_times[dispatch_name]
+        else:
+            dispatch_id = dispatch_info.get('id', dispatch_name)
+            if dispatch_id in processing_times:
+                proc_times = processing_times[dispatch_id]
+            else:
+                # Generate random processing times if not provided
+                proc_times = [np.random.randint(50, 150) for _ in machines]
+        
+        operations_map[dispatch_name] = Operation(proc_times)
+    
+    # Set up predecessor relationships
+    for dispatch_name, dispatch_info in dispatches.items():
+        dependencies = dispatch_info.get('dependencies', [])
+        operation = operations_map[dispatch_name]
+        
+        for dep_name in dependencies:
+            if dep_name in operations_map:
+                operation.add_predecessor(operations_map[dep_name])
+    
+    # Create list of operations in order (operations with no dependencies first)
+    operations = list(operations_map.values())
+    
+    return Workload(operations, machines, transfer_times)

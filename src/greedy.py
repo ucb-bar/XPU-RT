@@ -29,14 +29,31 @@ def greedy(jobs: List[Job], machines: List[str], job_durations: Dict[Tuple[int, 
     while available_jobs:
         # Find an operation that has no unfinished predecessors
         for job_idx, op_idx, operation in list(available_jobs):
-            predecessor = operation.get_predecessor()
-            if predecessor:
-                pred_op_idx = op_idx - 1  # Since jobs are sequential
-                if (job_idx, pred_op_idx) not in scheduled_jobs:
-                    continue  # Can't schedule yet
-                predecessor_end_time = scheduled_jobs[(job_idx, pred_op_idx)] + job_durations.get((job_idx, operation_allocations[(job_idx, pred_op_idx)]), 0)
+            predecessors = operation.get_predecessors()
+            if predecessors:
+                # Check if all predecessors are scheduled
+                all_predecessors_scheduled = True
+                max_predecessor_end_time = 0
+                for pred in predecessors:
+                    # Find predecessor's index (assuming sequential jobs)
+                    pred_op_idx = None
+                    for check_job_idx, check_job in enumerate(jobs):
+                        if pred in check_job.get_operations():
+                            pred_op_idx = check_job.get_operations().index(pred)
+                            if (check_job_idx, pred_op_idx) not in scheduled_jobs:
+                                all_predecessors_scheduled = False
+                                break
+                            else:
+                                pred_end_time = scheduled_jobs[(check_job_idx, pred_op_idx)] + job_durations.get((check_job_idx, operation_allocations.get((check_job_idx, pred_op_idx), machines[0])), 0)
+                                max_predecessor_end_time = max(max_predecessor_end_time, pred_end_time)
+                    if not all_predecessors_scheduled:
+                        break
+                
+                if not all_predecessors_scheduled:
+                    continue  # Can't schedule yet - waiting for predecessors
+                predecessor_end_time = max_predecessor_end_time
             else:
-                predecessor_end_time = 0  # No predecessor, can start at time 0
+                predecessor_end_time = 0  # No predecessors, can start at time 0
             
             # Find the machine with the minimum end time
             best_machine = None
