@@ -2,15 +2,36 @@ import numpy as np
 
 class Operation:
     """
-    Lowest level of a schedulable instance. An operation has a processing time and potentially a predecessor.
+    Lowest level of a schedulable instance. An operation has a processing time and potentially multiple predecessors.
     Each operation has a must havea   processing time for each machine in the workload.
     """
-    def __init__(self, processing_times: list[float], predecessor=None):
+    def __init__(self, processing_times: list[float], predecessors=None):
         self.processing_times = processing_times
-        self.predecessor = predecessor
+        # Support both single predecessor (backward compatibility) and list of predecessors
+        if predecessors is None:
+            self.predecessors = []
+        elif isinstance(predecessors, list):
+            self.predecessors = predecessors
+        else:
+            # Single predecessor provided for backward compatibility
+            self.predecessors = [predecessors]
+        # Keep backward compatibility: predecessor property returns first predecessor or None
+        self.predecessor = self.predecessors[0] if self.predecessors else None
+    
+    def get_predecessors(self):
+        """Returns list of all predecessors"""
+        return self.predecessors
     
     def get_predecessor(self):
-        return self.predecessor
+        """Returns first predecessor for backward compatibility, or None if no predecessors"""
+        return self.predecessors[0] if self.predecessors else None
+    
+    def add_predecessor(self, predecessor):
+        """Add a predecessor to the list"""
+        if predecessor not in self.predecessors:
+            self.predecessors.append(predecessor)
+            # Update backward compatibility property (first predecessor)
+            self.predecessor = self.predecessors[0] if self.predecessors else None
     
     def get_durations(self) -> list[float]:
         return self.processing_times
@@ -56,7 +77,7 @@ class Workload:
         durations = []
         for i in range(len(self.operations)):
             operation = self.operations[i]
-            if operation.predecessor is None:
+            if not operation.predecessors:  # No predecessors means start of a new job
                 durations.append([operation.get_durations()])
             else:
                 durations[-1].append(operation.get_durations())
@@ -95,7 +116,7 @@ class Window:
         durations = []
         for i in range(len(self.operations)):
             operation = self.operations[i]
-            if operation.predecessor is None:
+            if not operation.predecessors:  # No predecessors means start of a new job
                 durations.append([operation.get_durations()])
             else:
                 if len(durations) == 0:

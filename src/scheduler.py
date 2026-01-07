@@ -28,27 +28,27 @@ def schedule_window(window: Window) -> Tuple[np.ndarray, np.ndarray]:
         constraints.append(
             cp.sum(alpha[i, :]) == 1
         )
-    # (3)
+    # (3) Precedence constraints: operation i must start after ALL its predecessors complete
     for i in range(num_operations):
-        pred = window.operations[i].get_predecessor()
-        i_pred = None
-        if pred is not None:
+        predecessors = window.operations[i].get_predecessors()
+        for pred in predecessors:
+            i_pred = None
             try:
                 i_pred = window.operations.index(pred)
             except ValueError:
                 # happens when the predecessor is not in the window
                 i_pred = None
 
-        # check if there is a required predecessor
-        if i_pred is not None:
-            machine_pred = np.argmax(alpha[i_pred, :])
-            machine_curr = np.argmax(alpha[i, :])
+            # check if there is a required predecessor in this window
+            if i_pred is not None:
+                machine_pred = np.argmax(alpha[i_pred, :])
+                machine_curr = np.argmax(alpha[i, :])
 
-            transfer_time = transfer_times[machine_pred][machine_curr]
+                transfer_time = transfer_times[machine_pred][machine_curr]
 
-            constraints.append(
-                t[i] >= t[i_pred] + cp.sum(cp.multiply(window.operations[i_pred].get_durations()[:], alpha[i_pred, :])) + transfer_time
-            )
+                constraints.append(
+                    t[i] >= t[i_pred] + cp.sum(cp.multiply(window.operations[i_pred].get_durations()[:], alpha[i_pred, :])) + transfer_time
+                )
     # (4)
     for i in range(num_operations):
         for j in range(i+1, num_operations):
@@ -117,13 +117,12 @@ def schedule(workload: Workload) -> Tuple[np.ndarray, np.ndarray]:
         constraints.append(
             cp.sum(alpha[i, :]) == 1
         )
-    # (3)
+    # (3) Precedence constraints: operation i must start after ALL its predecessors complete
     for i in range(num_operations):
-        pred = workload.operations[i].get_predecessor()
-        i_pred = None if pred is None else workload.operations.index(pred)
+        predecessors = workload.operations[i].get_predecessors()
+        for pred in predecessors:
+            i_pred = workload.operations.index(pred)
 
-        # check if there is a required predecessor
-        if i_pred is not None:
             machine_pred = np.argmax(alpha[i_pred, :])
             machine_curr = np.argmax(alpha[i, :])
 
@@ -198,13 +197,12 @@ def schedule_additional_objectives(workload: Workload, nominal_start_times: list
         constraints.append(
             cp.sum(alpha[i, :]) == 1
         )
-    # (3)
+    # (3) Precedence constraints: operation i must start after ALL its predecessors complete
     for i in range(num_operations):
-        pred = workload.operations[i].get_predecessor()
-        i_pred = None if pred is None else workload.operations.index(pred)
+        predecessors = workload.operations[i].get_predecessors()
+        for pred in predecessors:
+            i_pred = workload.operations.index(pred)
 
-        # check if there is a required predecessor
-        if i_pred is not None:
             machine_pred = np.argmax(alpha[i_pred, :])
             machine_curr = np.argmax(alpha[i, :])
 

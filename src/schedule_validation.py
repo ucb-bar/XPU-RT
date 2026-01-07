@@ -11,11 +11,11 @@ def overlap_fixer(workload: Workload, t: np.ndarray, alpha: np.ndarray):
         for j in range(i+1, len(t)):
             # check if j is predecessor of i and vice versa
             transfer_time = 0
-            if workload.operations[i].predecessor == workload.operations[j]:
+            if workload.operations[j] in workload.operations[i].predecessors:
                 machine_pred = np.argmax(alpha[j])
                 machine_curr = np.argmax(alpha[i])
                 transfer_time = transfer_times[machine_pred][machine_curr]
-            elif workload.operations[j].predecessor == workload.operations[i]:
+            elif workload.operations[i] in workload.operations[j].predecessors:
                 machine_pred = np.argmax(alpha[i])
                 machine_curr = np.argmax(alpha[j])
                 transfer_time = transfer_times[machine_pred][machine_curr]
@@ -40,11 +40,11 @@ def count_overlaps(workload: Workload, t: np.ndarray, alpha: np.ndarray):
         for j in range(i+1, len(t)):
             # check if j is predecessor of i and vice versa
             transfer_time = 0
-            if workload.operations[i].predecessor == workload.operations[j]:
+            if workload.operations[j] in workload.operations[i].predecessors:
                 machine_pred = np.argmax(alpha[j])
                 machine_curr = np.argmax(alpha[i])
                 transfer_time = transfer_times[machine_pred][machine_curr]
-            elif workload.operations[j].predecessor == workload.operations[i]:
+            elif workload.operations[i] in workload.operations[j].predecessors:
                 machine_pred = np.argmax(alpha[i])
                 machine_curr = np.argmax(alpha[j])
                 transfer_time = transfer_times[machine_pred][machine_curr]

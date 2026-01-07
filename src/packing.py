@@ -28,13 +28,12 @@ def lp_schedule(workload: Workload) -> Tuple[np.ndarray, np.ndarray]:
         constraints.append(
             cp.sum(alpha[i, :]) == 1
         )
-    # (3)
+    # (3) Precedence constraints: operation i must start after ALL its predecessors complete
     for i in range(num_operations):
-        pred = workload.operations[i].get_predecessor()
-        i_pred = None if pred is None else workload.operations.index(pred)
+        predecessors = workload.operations[i].get_predecessors()
+        for pred in predecessors:
+            i_pred = workload.operations.index(pred)
 
-        # check if there is a required predecessor
-        if i_pred is not None:
             machine_pred = np.argmax(alpha[i_pred, :])
             machine_curr = np.argmax(alpha[i, :])
 
@@ -189,10 +188,9 @@ def combine_solved_windows(original_workload, windows, solutions):
         start_time = t[latest_operation_idx] + duration + np.mean(transfer_times)
 
     for i in range(len(original_operations)):
-        pred = original_operations[i].get_predecessor()
-        i_pred = None if pred is None else original_operations.index(pred)
-
-        if i_pred is not None:
+        predecessors = original_operations[i].get_predecessors()
+        for pred in predecessors:
+            i_pred = original_operations.index(pred)
             machine_pred = np.argmax(alpha[i_pred, :])
             machine_curr = np.argmax(alpha[i, :])
             transfer_time = transfer_times[machine_pred][machine_curr]
