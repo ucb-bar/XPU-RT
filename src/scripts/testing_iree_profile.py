@@ -2,7 +2,10 @@
 Test script for scheduling IREE dispatch graphs (Fast, Dronet, and MLP) on a dual-core device
 using profiled runtimes where available.
 
-Currently profiled data is available for Dronet and MLP:
+Currently profiled data is available for Fast, Dronet, and MLP:
+- Fast:
+  * `src/data/fastdepth/topo_0_1_2_3/results.csv` contains measurements for the performant core (CPU_P).
+  * `src/data/fastdepth/topo_0_1/results.csv` contains measurements for the efficient core (CPU_E).
 - Dronet:
   * `src/data/dronet/topo_0_1_2_3/results.csv` contains measurements for the performant core (CPU_P).
   * `src/data/dronet/topo_0_1/results.csv` contains measurements for the efficient core (CPU_E).
@@ -11,8 +14,6 @@ Currently profiled data is available for Dronet and MLP:
   * `src/data/mlp/topo_0_1/results.csv` contains measurements for the efficient core (CPU_E).
 - If a dispatch has only P-core or only E-core data, the missing value is derived using the
   scaling factor (CPU_P is 1.5x faster than CPU_E).
-
-Other networks (Fast) still use randomly generated runtimes.
 """
 
 import sys
@@ -330,6 +331,10 @@ def schedule_iree_networks_profiled():
     Schedule Fast, Dronet, and 5 MLP instances on a dual-core device using
     profiled runtimes where available.
 
+    - Fast uses profiled runtimes:
+      * CPU_P from `src/data/fastdepth/topo_0_1_2_3/results.csv`
+      * CPU_E from `src/data/fastdepth/topo_0_1/results.csv`
+      * If only one core's data is available, the other is derived via scaling (t_E = 1.5 * t_P).
     - Dronet uses profiled runtimes:
       * CPU_P from `src/data/dronet/topo_0_1_2_3/results.csv`
       * CPU_E from `src/data/dronet/topo_0_1/results.csv`
@@ -338,7 +343,6 @@ def schedule_iree_networks_profiled():
       * CPU_P from `src/data/mlp/topo_0_1_2_3/results.csv`
       * CPU_E from `src/data/mlp/topo_0_1/results.csv`
       * If only one core's data is available, the other is derived via scaling (t_E = 1.5 * t_P).
-    - Fast still uses synthetic runtimes.
     - Dependency chains:
         Chain 1: Fast → Dronet
         Chain 2: MLP0 → MLP1 → MLP2 → MLP3 → MLP4
@@ -396,6 +400,24 @@ def schedule_iree_networks_profiled():
         "topo_0_1",
         "results.csv",
     )
+    
+    # Paths to profiled Fast (fastdepth) runtimes
+    fast_profile_csv_p = os.path.join(
+        script_dir,
+        "..",
+        "data",
+        "fastdepth",
+        "topo_0_1_2_3",
+        "results.csv",
+    )
+    fast_profile_csv_e = os.path.join(
+        script_dir,
+        "..",
+        "data",
+        "fastdepth",
+        "topo_0_1",
+        "results.csv",
+    )
 
     print("=" * 60)
     print("Loading dispatch graphs (with profiled runtimes)...")
@@ -418,15 +440,27 @@ def schedule_iree_networks_profiled():
     print(f"\n3. Loading profiled MLP E-core runtimes from: {mlp_profile_csv_e}")
     mlp_profiled_times_e = load_profiled_times(mlp_profile_csv_e)
     print(f"   Loaded {len(mlp_profiled_times_e)} profiled E-core entries")
+    
+    # Load profiled runtimes for Fast (CPU_P and CPU_E)
+    print(f"\n4. Loading profiled Fast P-core runtimes from: {fast_profile_csv_p}")
+    fast_profiled_times_p = load_profiled_times(fast_profile_csv_p)
+    print(f"   Loaded {len(fast_profiled_times_p)} profiled P-core entries")
+    
+    print(f"\n5. Loading profiled Fast E-core runtimes from: {fast_profile_csv_e}")
+    fast_profiled_times_e = load_profiled_times(fast_profile_csv_e)
+    print(f"   Loaded {len(fast_profiled_times_e)} profiled E-core entries")
 
     # Create workloads from JSON files
-    print(f"\n4. Loading fast dispatch graph from: {fast_path}")
+    print(f"\n6. Loading fast dispatch graph from: {fast_path}")
     fast_workload, fast_job_name = create_workload_from_json_with_profile(
-        fast_path, name_prefix="fast_", profiled_times_p=None, profiled_times_e=None
+        fast_path,
+        name_prefix="fast_",
+        profiled_times_p=fast_profiled_times_p,
+        profiled_times_e=fast_profiled_times_e,
     )
     print(f"   Created {fast_job_name} workload with {len(fast_workload.operations)} operations")
 
-    print(f"\n5. Loading dronet dispatch graph from: {dronet_path}")
+    print(f"\n7. Loading dronet dispatch graph from: {dronet_path}")
     dronet_workload, dronet_job_name = create_workload_from_json_with_profile(
         dronet_path,
         name_prefix="dronet_",
@@ -436,7 +470,7 @@ def schedule_iree_networks_profiled():
     print(f"   Created {dronet_job_name} workload with {len(dronet_workload.operations)} operations")
 
     # Create 5 MLP workloads, each with a unique prefix (using profiled runtimes)
-    print(f"\n6. Loading MLP dispatch graph (5 instances, profiled runtimes)...")
+    print(f"\n8. Loading MLP dispatch graph (5 instances, profiled runtimes)...")
     mlp_workloads: list[Workload] = []
     mlp_job_names: list[str] = []
     for i in range(5):
@@ -453,11 +487,11 @@ def schedule_iree_networks_profiled():
         print(f"   Created {mlp_job_name} workload with {len(mlp_workload.operations)} operations")
 
     # Make Dronet depend on Fast
-    print(f"\n7. Adding dependency: {dronet_job_name} depends on {fast_job_name}...")
+    print(f"\n9. Adding dependency: {dronet_job_name} depends on {fast_job_name}...")
     add_dependency(fast_workload, dronet_workload)
 
     # Make each MLP instance depend on the previous one (MLP instances are independent of Fast/Dronet)
-    print("\n8. Adding dependencies between MLP instances (MLPs are independent of Fast/Dronet)...")
+    print("\n10. Adding dependencies between MLP instances (MLPs are independent of Fast/Dronet)...")
     for i in range(1, len(mlp_workloads)):
         print(f"   {mlp_job_names[i]} depends on {mlp_job_names[i-1]}...")
         add_dependency(mlp_workloads[i - 1], mlp_workloads[i])
@@ -466,7 +500,7 @@ def schedule_iree_networks_profiled():
     # Fast and Dronet form one dependency chain: Fast → Dronet
     # MLP instances form their own independent chain: MLP0 → MLP1 → MLP2 → MLP3 → MLP4
     # These two chains can run in parallel (after Fast completes, Dronet and MLP0 can both start)
-    print("\n9. Combining workloads...")
+    print("\n11. Combining workloads...")
     print("   Dependency chains:")
     print(f"     Chain 1: {fast_job_name} → {dronet_job_name}")
     print(f"     Chain 2: {' → '.join(mlp_job_names)}")
@@ -501,7 +535,7 @@ def schedule_iree_networks_profiled():
 
     # Schedule the combined workload
     print("\n" + "=" * 60)
-    print("Scheduling combined workload (with profiled Dronet and MLP runtimes)...")
+    print("Scheduling combined workload (with profiled Fast, Dronet, and MLP runtimes)...")
     print("=" * 60)
     t, alpha = schedule(combined_workload)
 
@@ -540,7 +574,7 @@ def schedule_iree_networks_profiled():
         combined_workload.get_transfer_times(),
         save_path="plots/iree_combined_schedule_profiled.png",
         plot_title=(
-            f"{fast_job_name.capitalize()} → {dronet_job_name.capitalize()} (profiled) + "
+            f"{fast_job_name.capitalize()} (profiled) → {dronet_job_name.capitalize()} (profiled) + "
             f"{mlp_chain} (profiled) Schedule on Dual-Core Device"
         ),
         workload=combined_workload,

@@ -132,7 +132,7 @@ def create_workload_from_dependencies(
         
         operations_map[dispatch_name] = Operation(
             proc_times, 
-            operation_id=operation_id,
+            operation_id=ope1ration_id,
             operation_name=operation_name,
             job_id=job_id  # All operations in a single workload belong to the same job
         )
