@@ -1,4 +1,4 @@
-"""src/plot.py
+"""
 Test script for scheduling IREE dispatch graphs (dronet and MLP) on a dual-core device.
 Parses dispatch dependency JSON files and schedules them in parallel on CPU_P (performant) 
 and CPU_E (efficient) cores. CPU_P is 1.5x faster than CPU_E.
@@ -59,12 +59,13 @@ def create_workload_from_json(json_path: str, name_prefix: str = "") -> tuple:
     
     # Generate processing times for dual-core device
     # Map dispatch names to processing times (the function expects names)
+    # Use synthetic P-core runtimes in a similar ballpark to profiled data (~5 ms)
     processing_times_by_name = {}
     for dispatch_name, dispatch_info in dispatches.items():
-        # Generate random processing time for this dispatch
-        base_time = np.random.randint(50, 200)
-        cpu_e_time = float(base_time)
-        cpu_p_time = float(base_time / 1.5)  # CPU_P is 1.5x faster
+        # Generate random P-core time in milliseconds (2–10 ms)
+        p_ms_synth = float(np.random.uniform(2.0, 10.0))
+        cpu_p_time = p_ms_synth
+        cpu_e_time = p_ms_synth * 1.5  # CPU_P is 1.5x faster than CPU_E
         processing_times_by_name[dispatch_name] = [cpu_p_time, cpu_e_time]
     
     # Define machines (dual-core device)
