@@ -5,7 +5,7 @@ class Operation:
     Lowest level of a schedulable instance. An operation has a processing time and potentially multiple predecessors.
     Each operation has a must havea   processing time for each machine in the workload.
     """
-    def __init__(self, processing_times: list[float], predecessors=None):
+    def __init__(self, processing_times: list[float], predecessors=None, operation_id=None, operation_name=None, job_id=None):
         self.processing_times = processing_times
         # Support both single predecessor (backward compatibility) and list of predecessors
         if predecessors is None:
@@ -17,6 +17,11 @@ class Operation:
             self.predecessors = [predecessors]
         # Keep backward compatibility: predecessor property returns first predecessor or None
         self.predecessor = self.predecessors[0] if self.predecessors else None
+        # Operation identifier and name
+        self.operation_id = operation_id
+        self.operation_name = operation_name
+        # Job identifier - explicitly tracks which job this operation belongs to
+        self.job_id = job_id
     
     def get_predecessors(self):
         """Returns list of all predecessors"""
@@ -59,10 +64,11 @@ class Workload:
     @param machines: list of machines that can process the operations.
     @param transfer_times: matrix of transfer times between machines. transfer_times[i][j] is the time to transfer from machine i to machine j.
     """
-    def __init__(self, operations: list[Operation], machines: list[str], transfer_times: np.ndarray):
+    def __init__(self, operations: list[Operation], machines: list[str], transfer_times: np.ndarray, job_names: list[str] = None):
         self.operations = operations
         self.machines = machines
         self.transfer_times = transfer_times
+        self.job_names = job_names if job_names is not None else []
 
     def get_machines(self) -> list[str]:
         return self.machines
@@ -73,14 +79,33 @@ class Workload:
     def get_durations(self) -> list:
         """
         Get the durations of the operations in the workload. The durations are grouped by job.
+        Uses explicit job_id if available, otherwise falls back to predecessor-based grouping.
         """
         durations = []
+        current_job_id = None
+        
         for i in range(len(self.operations)):
             operation = self.operations[i]
-            if not operation.predecessors:  # No predecessors means start of a new job
-                durations.append([operation.get_durations()])
+            
+            # Use explicit job_id if available
+            if operation.job_id is not None:
+                if operation.job_id != current_job_id:
+                    # Start of a new job
+                    durations.append([operation.get_durations()])
+                    current_job_id = operation.job_id
+                else:
+                    # Same job, append to current job's operations
+                    durations[-1].append(operation.get_durations())
             else:
-                durations[-1].append(operation.get_durations())
+                # Fallback to predecessor-based grouping for backward compatibility
+                if not operation.predecessors:  # No predecessors means start of a new job
+                    durations.append([operation.get_durations()])
+                    current_job_id = None  # Reset for fallback mode
+                else:
+                    if len(durations) == 0:
+                        durations.append([operation.get_durations()])
+                    else:
+                        durations[-1].append(operation.get_durations())
         return durations
     
     def set_transfer_times(self, transfer_times: np.ndarray):

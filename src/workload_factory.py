@@ -110,6 +110,10 @@ def create_workload_from_dependencies(
     
     # Create Operation objects for each dispatch
     operations_map = {}
+    # Determine job_id: operations with no dependencies within this workload start a new job
+    # For a single workload, all operations belong to job_id 0
+    job_id = 0
+    
     for dispatch_name, dispatch_info in dispatches.items():
         # Get processing times for this dispatch (check by name first, then by ID for backward compatibility)
         if dispatch_name in processing_times:
@@ -122,7 +126,16 @@ def create_workload_from_dependencies(
                 # Generate random processing times if not provided
                 proc_times = [np.random.randint(50, 150) for _ in machines]
         
-        operations_map[dispatch_name] = Operation(proc_times)
+        # Extract ID and name from dispatch info
+        operation_id = dispatch_info.get('id', None)
+        operation_name = dispatch_name
+        
+        operations_map[dispatch_name] = Operation(
+            proc_times, 
+            operation_id=operation_id,
+            operation_name=operation_name,
+            job_id=job_id  # All operations in a single workload belong to the same job
+        )
     
     # Set up predecessor relationships
     for dispatch_name, dispatch_info in dispatches.items():
@@ -136,4 +149,38 @@ def create_workload_from_dependencies(
     # Create list of operations in order (operations with no dependencies first)
     operations = list(operations_map.values())
     
-    return Workload(operations, machines, transfer_times)
+    # Determine job names: operations with no predecessors start a new job
+    job_names = []
+    seen_prefixes = set()
+    
+    for operation in operations:
+        if not operation.predecessors:
+            # Use operation name to extract job name
+            op_name = operation.operation_name or f"dispatch_{len(job_names)}"
+            # Extract prefix if it exists (e.g., "dronet_dispatch_0" -> "dronet")
+            if '_' in op_name:
+                parts = op_name.split('_')
+                if len(parts) >= 2:
+                    # Take the prefix part (e.g., "dronet" from "dronet_dispatch_0")
+                    prefix = parts[0]
+                    # Capitalize for better display
+                    job_name = prefix.capitalize()
+                    # Only add if we haven't seen this prefix yet (avoid duplicates)
+                    if job_name not in seen_prefixes:
+                        job_names.append(job_name)
+                        seen_prefixes.add(job_name)
+                else:
+                    if op_name not in seen_prefixes:
+                        job_names.append(op_name.capitalize())
+                        seen_prefixes.add(op_name)
+            else:
+                if op_name not in seen_prefixes:
+                    job_names.append(op_name.capitalize())
+                    seen_prefixes.add(op_name)
+    
+    # If no job names found, create default ones
+    if not job_names:
+        num_jobs = sum(1 for op in operations if not op.predecessors)
+        job_names = [f"Job {i}" for i in range(num_jobs)]
+    
+    return Workload(operations, machines, transfer_times, job_names=job_names)
