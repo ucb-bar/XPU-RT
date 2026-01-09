@@ -7,6 +7,7 @@ and CPU_E (efficient) cores. CPU_P is 1.5x faster than CPU_E.
 import sys
 import os
 import json
+import argparse
 import numpy as np
 
 # Add parent path to sys path to enable imports
@@ -205,10 +206,13 @@ def add_dependency(source_workload: Workload, target_workload: Workload):
         for source_op in source_last_ops:
             target_op.add_predecessor(source_op)
 
-def schedule_iree_networks():
+def schedule_iree_networks(use_glpdepth=False):
     """
-    Main function to schedule fast, dronet (depends on fast), and 5 MLP instances on dual-core device.
+    Main function to schedule fast/glpdepth, dronet (depends on fast/glpdepth), and 5 MLP instances on dual-core device.
     Each MLP instance depends on the previous one (MLP0 → MLP1 → MLP2 → MLP3 → MLP4).
+    
+    Parameters:
+    - use_glpdepth: If True, use glpdepth instead of fast as the first network
     """
     # Path to JSON files (relative to script location)
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -223,7 +227,17 @@ def schedule_iree_networks():
         'computation_graph'
     )
     
-    fast_path = os.path.join(base_path, 'fast_dispatch_deps.json')
+    # Select first network based on argument
+    if use_glpdepth:
+        first_network_name = "glpdepth"
+        first_network_file = "glpdepth_dispatch_deps.json"
+        first_network_prefix = "glpdepth_"
+    else:
+        first_network_name = "fast"
+        first_network_file = "fast_dispatch_deps.json"
+        first_network_prefix = "fast_"
+    
+    first_network_path = os.path.join(base_path, first_network_file)
     dronet_path = os.path.join(base_path, 'dronet_dispatch_deps.json')
     mlp_path = os.path.join(base_path, 'mlp_dispatch_deps.json')
     
@@ -232,9 +246,11 @@ def schedule_iree_networks():
     print("=" * 60)
     
     # Create workloads from JSON files
-    print(f"\n1. Loading fast dispatch graph from: {fast_path}")
-    fast_workload, fast_job_name = create_workload_from_json(fast_path, name_prefix="fast_")
-    print(f"   Created {fast_job_name} workload with {len(fast_workload.operations)} operations")
+    print(f"\n1. Loading {first_network_name} dispatch graph from: {first_network_path}")
+    first_network_workload, first_network_job_name = create_workload_from_json(
+        first_network_path, name_prefix=first_network_prefix
+    )
+    print(f"   Created {first_network_job_name} workload with {len(first_network_workload.operations)} operations")
     
     print(f"\n2. Loading dronet dispatch graph from: {dronet_path}")
     dronet_workload, dronet_job_name = create_workload_from_json(dronet_path, name_prefix="dronet_")
@@ -252,33 +268,34 @@ def schedule_iree_networks():
         mlp_job_names.append(mlp_job_name)
         print(f"   Created {mlp_job_name} workload with {len(mlp_workload.operations)} operations")
     
-    # Make dronet depend on fast
-    print(f"\n4. Adding dependency: {dronet_job_name} depends on {fast_job_name}...")
-    add_dependency(fast_workload, dronet_workload)
+    # Make dronet depend on first network
+    print(f"\n4. Adding dependency: {dronet_job_name} depends on {first_network_job_name}...")
+    add_dependency(first_network_workload, dronet_workload)
     
-    # Make each MLP instance depend on the previous one (MLP instances are independent of Fast/Dronet)
-    print(f"\n5. Adding dependencies between MLP instances (MLPs are independent of Fast/Dronet)...")
+    # Make each MLP instance depend on the previous one (MLP instances are independent of first network/Dronet)
+    first_network_label = first_network_name.capitalize()
+    print(f"\n5. Adding dependencies between MLP instances (MLPs are independent of {first_network_label}/Dronet)...")
     for i in range(1, 5):
         print(f"   {mlp_job_names[i]} depends on {mlp_job_names[i-1]}...")
         add_dependency(mlp_workloads[i-1], mlp_workloads[i])
     
     # Combine workloads
-    # Fast and Dronet form one dependency chain: Fast → Dronet
+    # First network and Dronet form one dependency chain: First → Dronet
     # MLP instances form their own independent chain: MLP0 → MLP1 → MLP2 → MLP3 → MLP4
-    # These two chains can run in parallel (after Fast completes, Dronet and MLP0 can both start)
+    # These two chains can run in parallel (after first network completes, Dronet and MLP0 can both start)
     print(f"\n6. Combining workloads...")
     print(f"   Dependency chains:")
-    print(f"     Chain 1: {fast_job_name} → {dronet_job_name}")
+    print(f"     Chain 1: {first_network_job_name} → {dronet_job_name}")
     print(f"     Chain 2: {' → '.join(mlp_job_names)}")
     print(f"   (Chains are independent and can run in parallel)")
-    all_workloads = [fast_workload, dronet_workload] + mlp_workloads
-    all_job_names = [fast_job_name, dronet_job_name] + mlp_job_names
+    all_workloads = [first_network_workload, dronet_workload] + mlp_workloads
+    all_job_names = [first_network_job_name, dronet_job_name] + mlp_job_names
     
-    # Create job_id mapping: Fast=0, Dronet=1, all MLPs=2 (same color for all MLPs)
+    # Create job_id mapping: First network=0, Dronet=1, all MLPs=2 (same color for all MLPs)
     job_id_mapping = [0, 1] + [2] * len(mlp_workloads)  # All MLPs get job_id=2
     
     # Use a single name "MLP" for all MLP instances in the legend
-    all_job_names_for_legend = [fast_job_name, dronet_job_name] + ["MLP"] * len(mlp_workloads)
+    all_job_names_for_legend = [first_network_job_name, dronet_job_name] + ["MLP"] * len(mlp_workloads)
     
     combined_workload = combine_workloads(all_workloads, job_names=all_job_names_for_legend, job_id_mapping=job_id_mapping)
     
@@ -317,10 +334,10 @@ def schedule_iree_networks():
     print(f"  CPU_P (performant): {cpu_p_count} operations")
     print(f"  CPU_E (efficient): {cpu_e_count} operations")
     
-    # Count operations per network (based on order: fast first, then dronet, then MLP instances)
+    # Count operations per network (based on order: first network, then dronet, then MLP instances)
     current_idx = 0
-    fast_indices = list(range(current_idx, current_idx + len(fast_workload.operations)))
-    current_idx += len(fast_workload.operations)
+    first_network_indices = list(range(current_idx, current_idx + len(first_network_workload.operations)))
+    current_idx += len(first_network_workload.operations)
     dronet_indices = list(range(current_idx, current_idx + len(dronet_workload.operations)))
     current_idx += len(dronet_workload.operations)
     
@@ -331,13 +348,13 @@ def schedule_iree_networks():
         mlp_indices_list.append(mlp_indices)
         current_idx += len(mlp_workload.operations)
     
-    fast_cpu_p = sum(1 for i in fast_indices if np.argmax(alpha[i]) == 0)
-    fast_cpu_e = sum(1 for i in fast_indices if np.argmax(alpha[i]) == 1)
+    first_network_cpu_p = sum(1 for i in first_network_indices if np.argmax(alpha[i]) == 0)
+    first_network_cpu_e = sum(1 for i in first_network_indices if np.argmax(alpha[i]) == 1)
     dronet_cpu_p = sum(1 for i in dronet_indices if np.argmax(alpha[i]) == 0)
     dronet_cpu_e = sum(1 for i in dronet_indices if np.argmax(alpha[i]) == 1)
     
     print(f"\nPer-network core assignments:")
-    print(f"  {fast_job_name.capitalize()}: CPU_P={fast_cpu_p}, CPU_E={fast_cpu_e}")
+    print(f"  {first_network_job_name.capitalize()}: CPU_P={first_network_cpu_p}, CPU_E={first_network_cpu_e}")
     print(f"  {dronet_job_name.capitalize()}: CPU_P={dronet_cpu_p}, CPU_E={dronet_cpu_e}")
     for i, mlp_indices in enumerate(mlp_indices_list):
         mlp_cpu_p = sum(1 for idx in mlp_indices if np.argmax(alpha[idx]) == 0)
@@ -361,7 +378,7 @@ def schedule_iree_networks():
         combined_workload.machines,
         combined_workload.get_transfer_times(),
         save_path="plots/iree_combined_schedule.png",
-        plot_title=f"{fast_job_name.capitalize()} → {dronet_job_name.capitalize()} + {mlp_chain} Schedule on Dual-Core Device",
+        plot_title=f"{first_network_job_name.capitalize()} → {dronet_job_name.capitalize()} + {mlp_chain} Schedule on Dual-Core Device",
         workload=combined_workload
     )
     
@@ -370,5 +387,15 @@ def schedule_iree_networks():
     return combined_workload, t, alpha
 
 if __name__ == "__main__":
-    schedule_iree_networks()
+    parser = argparse.ArgumentParser(
+        description="Schedule IREE dispatch graphs (fast/glpdepth, dronet, and MLP) on a dual-core device"
+    )
+    parser.add_argument(
+        "--use-glpdepth",
+        action="store_true",
+        help="Use glpdepth instead of fast as the first network (default: use fast)"
+    )
+    args = parser.parse_args()
+    
+    schedule_iree_networks(use_glpdepth=args.use_glpdepth)
 
