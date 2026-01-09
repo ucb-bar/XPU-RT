@@ -1,13 +1,15 @@
 """
-Test script for scheduling IREE dispatch graphs (dronet and MLP) on a dual-core device.
+Test script for scheduling IREE dispatch graphs (dronet and MLP) on a dual-core device using a greedy scheduler.
 Parses dispatch dependency JSON files and schedules them in parallel on CPU_P (performant) 
 and CPU_E (efficient) cores. CPU_P is 1.5x faster than CPU_E.
+Uses a greedy scheduling algorithm instead of MILP optimization.
 """
 
 import sys
 import os
 import json
 import argparse
+import csv
 import numpy as np
 
 # Add parent path to sys path to enable imports
@@ -15,15 +17,175 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from workload import Workload, Operation
 from workload_factory import create_workload_from_dependencies
-from scheduler import schedule
 import plot
+
+def greedy_schedule(workload: Workload) -> tuple:
+    """
+    Greedy scheduling algorithm that assigns each operation to the machine that gives the earliest completion time.
+    
+    Parameters:
+    - workload: Workload object containing operations, machines, and transfer times
+    
+    Returns:
+    - t: numpy array of start times for each operation
+    - alpha: numpy array of shape (num_operations, num_machines) where alpha[i, j] = 1 if operation i is assigned to machine j
+    """
+    num_operations = len(workload.operations)
+    machines = workload.machines
+    num_machines = len(machines)
+    transfer_times = workload.get_transfer_times()
+    
+    # Initialize arrays
+    t = np.zeros(num_operations)  # Start times
+    alpha = np.zeros((num_operations, num_machines))  # Machine assignments (one-hot)
+    
+    # Track when each machine becomes available
+    machine_available_time = np.zeros(num_machines)
+    
+    # Track which operations have been scheduled
+    scheduled = [False] * num_operations
+    
+    # Get operation durations for each machine
+    operation_durations = []
+    for op in workload.operations:
+        durations = op.get_durations()
+        operation_durations.append(durations)
+    
+    # Schedule operations iteratively
+    while not all(scheduled):
+        # Find an operation that can be scheduled (all predecessors are scheduled)
+        best_op_idx = None
+        best_completion_time = float('inf')
+        best_machine = None
+        best_start_time = 0
+        
+        for i in range(num_operations):
+            if scheduled[i]:
+                continue
+            
+            # Check if all predecessors are scheduled
+            op = workload.operations[i]
+            can_schedule = True
+            max_predecessor_end_time = 0.0
+            
+            for pred in op.predecessors:
+                pred_idx = workload.operations.index(pred)
+                if not scheduled[pred_idx]:
+                    can_schedule = False
+                    break
+            
+            if not can_schedule:
+                continue
+            
+            # For this operation, find the machine that gives the earliest completion time
+            for machine_idx in range(num_machines):
+                # Calculate the earliest start time considering:
+                # 1. Machine availability
+                # 2. All predecessors completing (with proper transfer times)
+                earliest_start = machine_available_time[machine_idx]
+                
+                # Consider all predecessors and their transfer times
+                for pred in op.predecessors:
+                    pred_idx = workload.operations.index(pred)
+                    pred_machine = np.argmax(alpha[pred_idx, :])
+                    pred_duration = operation_durations[pred_idx][pred_machine]
+                    pred_end_time = t[pred_idx] + pred_duration
+                    
+                    # Add transfer time from predecessor's machine to this candidate machine
+                    transfer_time = transfer_times[pred_machine, machine_idx]
+                    pred_ready_time = pred_end_time + transfer_time
+                    
+                    earliest_start = max(earliest_start, pred_ready_time)
+                
+                duration = operation_durations[i][machine_idx]
+                completion_time = earliest_start + duration
+                
+                if completion_time < best_completion_time:
+                    best_completion_time = completion_time
+                    best_op_idx = i
+                    best_machine = machine_idx
+                    best_start_time = earliest_start
+        
+        if best_op_idx is None:
+            # This shouldn't happen if the dependency graph is acyclic
+            # But if it does, schedule the first unscheduled operation on the first machine
+            for i in range(num_operations):
+                if not scheduled[i]:
+                    best_op_idx = i
+                    best_machine = 0
+                    best_start_time = machine_available_time[0]
+                    break
+        
+        # Schedule the operation
+        t[best_op_idx] = best_start_time
+        alpha[best_op_idx, best_machine] = 1.0
+        scheduled[best_op_idx] = True
+        
+        # Update machine availability
+        duration = operation_durations[best_op_idx][best_machine]
+        machine_available_time[best_machine] = best_start_time + duration
+    
+    return t, alpha
 
 def load_dispatch_graph(json_path: str) -> dict:
     """Load a dispatch dependencies JSON file."""
     with open(json_path, 'r') as f:
         return json.load(f)
 
-def create_workload_from_json(json_path: str, name_prefix: str = "") -> tuple:
+def load_profiled_times(csv_path: str) -> dict:
+    """
+    Load profiled runtimes from a CSV file.
+
+    The CSV is expected to have at least:
+      - dispatch_id
+      - module_name
+      - mean_time
+      - mean_unit (assumed 'ms')
+
+    Returns:
+      dict mapping dispatch_id (int) -> {"time_ms": float, "module_name": str}
+    """
+    profiled: dict[int, dict] = {}
+    with open(csv_path, "r") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            # Parse dispatch_id
+            dispatch_id_str = row.get("dispatch_id")
+            if dispatch_id_str is None or dispatch_id_str == "":
+                continue
+            try:
+                dispatch_id = int(dispatch_id_str)
+            except ValueError:
+                continue
+
+            module_name = row.get("module_name", "")
+            try:
+                mean_time = float(row.get("mean_time", 0.0))
+            except ValueError:
+                continue
+            unit = row.get("mean_unit", "ms")
+            # Convert to milliseconds if needed (currently ms already)
+            if unit == "us":
+                mean_time_ms = mean_time / 1000.0
+            elif unit == "s":
+                mean_time_ms = mean_time * 1000.0
+            else:
+                # Assume ms by default
+                mean_time_ms = mean_time
+
+            profiled[dispatch_id] = {
+                "time_ms": mean_time_ms,
+                "module_name": module_name,
+            }
+    return profiled
+
+def create_workload_from_json(
+    json_path: str,
+    name_prefix: str = "",
+    profiled_times_p: dict | None = None,
+    profiled_times_e: dict | None = None,
+    p_core_speedup: float = 1.5,
+) -> tuple:
     """
     Create a workload from a dispatch dependencies JSON file.
     
@@ -60,13 +222,60 @@ def create_workload_from_json(json_path: str, name_prefix: str = "") -> tuple:
     
     # Generate processing times for dual-core device
     # Map dispatch names to processing times (the function expects names)
-    # Use synthetic P-core runtimes in a similar ballpark to profiled data (~5 ms)
-    processing_times_by_name = {}
+    processing_times_by_name: dict[str, list[float]] = {}
+    
     for dispatch_name, dispatch_info in dispatches.items():
-        # Generate random P-core time in milliseconds (2–10 ms)
-        p_ms_synth = float(np.random.uniform(2.0, 10.0))
-        cpu_p_time = p_ms_synth
-        cpu_e_time = p_ms_synth * 1.5  # CPU_P is 1.5x faster than CPU_E
+        cpu_p_time: float
+        cpu_e_time: float
+
+        # Get dispatch ID from JSON
+        json_dispatch_id = dispatch_info.get("id", None)
+        
+        # Try to get profiled P-core time
+        p_ms = None
+        if profiled_times_p and isinstance(json_dispatch_id, int) and json_dispatch_id in profiled_times_p:
+            entry_p = profiled_times_p[json_dispatch_id]
+            p_ms = entry_p["time_ms"]
+            module_name = entry_p.get("module_name", "")
+            # Debug: exact ID match between JSON dispatch and CSV entry
+            print(
+                f"[PROFILE MATCH-ID] json_id={json_dispatch_id}, "
+                f"dispatch_name='{dispatch_name}', module_name='{module_name}', "
+                f"P-core runtime={p_ms} ms"
+            )
+        
+        # Try to get profiled E-core time
+        e_ms = None
+        if profiled_times_e and isinstance(json_dispatch_id, int) and json_dispatch_id in profiled_times_e:
+            entry_e = profiled_times_e[json_dispatch_id]
+            e_ms = entry_e["time_ms"]
+            if p_ms is not None:
+                # Both P and E times found
+                print(
+                    f"[PROFILE MATCH-ID] json_id={json_dispatch_id}, "
+                    f"E-core runtime={e_ms} ms"
+                )
+        
+        if p_ms is not None:
+            # Use profiled P-core time
+            cpu_p_time = float(p_ms)
+            if e_ms is not None:
+                # Use profiled E-core time
+                cpu_e_time = float(e_ms)
+            else:
+                # Derive E-core time from P-core time using speedup factor
+                cpu_e_time = float(p_ms * p_core_speedup)
+        elif e_ms is not None:
+            # Only E-core time available, derive P-core from it
+            cpu_e_time = float(e_ms)
+            cpu_p_time = float(e_ms / p_core_speedup)
+        else:
+            # No profile for this dispatch; fall back to synthetic numbers
+            # Choose synthetic P-core times in a similar ballpark to profiled data (~5 ms)
+            p_ms_synth = float(np.random.uniform(2.0, 10.0))  # 2–10 ms
+            cpu_p_time = p_ms_synth
+            cpu_e_time = p_ms_synth * p_core_speedup
+        
         processing_times_by_name[dispatch_name] = [cpu_p_time, cpu_e_time]
     
     # Define machines (dual-core device)
@@ -206,13 +415,15 @@ def add_dependency(source_workload: Workload, target_workload: Workload):
         for source_op in source_last_ops:
             target_op.add_predecessor(source_op)
 
-def schedule_iree_networks(use_glpdepth=False):
+def schedule_iree_networks(use_glpdepth=False, use_profiled=False):
     """
     Main function to schedule fast/glpdepth, dronet (depends on fast/glpdepth), and 5 MLP instances on dual-core device.
     Each MLP instance depends on the previous one (MLP0 → MLP1 → MLP2 → MLP3 → MLP4).
+    Uses a greedy scheduling algorithm instead of MILP optimization.
     
     Parameters:
     - use_glpdepth: If True, use glpdepth instead of fast as the first network
+    - use_profiled: If True, use profiled runtimes from CSV files (currently only supported for glpdepth when use_glpdepth is True)
     """
     # Path to JSON files (relative to script location)
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -241,6 +452,40 @@ def schedule_iree_networks(use_glpdepth=False):
     dronet_path = os.path.join(base_path, 'dronet_dispatch_deps.json')
     mlp_path = os.path.join(base_path, 'mlp_dispatch_deps.json')
     
+    # Load profiled data if requested
+    first_network_profiled_times_p = None
+    first_network_profiled_times_e = None
+    if use_profiled:
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        if use_glpdepth:
+            # Load glpdepth profiled data
+            glpdepth_profile_csv_p = os.path.join(
+                script_dir,
+                "..",
+                "data",
+                "glpdepth",
+                "topo_0_1_2_3",
+                "results.csv",
+            )
+            glpdepth_profile_csv_e = os.path.join(
+                script_dir,
+                "..",
+                "data",
+                "glpdepth",
+                "topo_0_1",
+                "results.csv",
+            )
+            print("=" * 60)
+            print("Loading profiled runtimes...")
+            print("=" * 60)
+            print(f"\nLoading profiled glpdepth P-core runtimes from: {glpdepth_profile_csv_p}")
+            first_network_profiled_times_p = load_profiled_times(glpdepth_profile_csv_p)
+            print(f"   Loaded {len(first_network_profiled_times_p)} profiled P-core entries")
+            
+            print(f"\nLoading profiled glpdepth E-core runtimes from: {glpdepth_profile_csv_e}")
+            first_network_profiled_times_e = load_profiled_times(glpdepth_profile_csv_e)
+            print(f"   Loaded {len(first_network_profiled_times_e)} profiled E-core entries")
+    
     print("=" * 60)
     print("Loading dispatch graphs...")
     print("=" * 60)
@@ -248,7 +493,10 @@ def schedule_iree_networks(use_glpdepth=False):
     # Create workloads from JSON files
     print(f"\n1. Loading {first_network_name} dispatch graph from: {first_network_path}")
     first_network_workload, first_network_job_name = create_workload_from_json(
-        first_network_path, name_prefix=first_network_prefix
+        first_network_path,
+        name_prefix=first_network_prefix,
+        profiled_times_p=first_network_profiled_times_p,
+        profiled_times_e=first_network_profiled_times_e,
     )
     print(f"   Created {first_network_job_name} workload with {len(first_network_workload.operations)} operations")
     
@@ -313,11 +561,11 @@ def schedule_iree_networks(use_glpdepth=False):
     independent_jobs = sum(1 for op in combined_workload.operations if not op.predecessors)
     print(f"  Independent jobs (can run in parallel): {independent_jobs}")
     
-    # Schedule the combined workload
+    # Schedule the combined workload using greedy algorithm
     print("\n" + "=" * 60)
-    print("Scheduling combined workload...")
+    print("Scheduling combined workload using greedy algorithm...")
     print("=" * 60)
-    t, alpha = schedule(combined_workload)
+    t, alpha = greedy_schedule(combined_workload)
     
     # Calculate makespan
     makespan = max(t[i] + combined_workload.operations[i].get_durations()[np.argmax(alpha[i])] 
@@ -369,6 +617,13 @@ def schedule_iree_networks(use_glpdepth=False):
     
     # Create title showing the dependency chain
     mlp_chain = " → ".join([name.capitalize() for name in mlp_job_names])
+    plot_suffix = "Greedy"
+    if use_profiled:
+        plot_suffix += " (Profiled)"
+    plot_filename = "iree_combined_schedule_greedy.png"
+    if use_profiled:
+        plot_filename = "iree_combined_schedule_greedy_profiled.png"
+    
     plot.plot_optimization_schedule(
         combined_workload.get_durations(),
         t,
@@ -377,25 +632,30 @@ def schedule_iree_networks(use_glpdepth=False):
         len(combined_workload.machines),
         combined_workload.machines,
         combined_workload.get_transfer_times(),
-        save_path="plots/iree_combined_schedule.png",
-        plot_title=f"{first_network_job_name.capitalize()} → {dronet_job_name.capitalize()} + {mlp_chain} Schedule on Dual-Core Device",
+        save_path=f"plots/{plot_filename}",
+        plot_title=f"{first_network_job_name.capitalize()} → {dronet_job_name.capitalize()} + {mlp_chain} Schedule on Dual-Core Device ({plot_suffix})",
         workload=combined_workload
     )
     
-    print(f"\nPlot saved to plots/iree_combined_schedule.png")
+    print(f"\nPlot saved to plots/{plot_filename}")
     
     return combined_workload, t, alpha
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Schedule IREE dispatch graphs (fast/glpdepth, dronet, and MLP) on a dual-core device"
+        description="Schedule IREE dispatch graphs (fast/glpdepth, dronet, and MLP) on a dual-core device using greedy scheduling"
     )
     parser.add_argument(
         "--use-glpdepth",
         action="store_true",
         help="Use glpdepth instead of fast as the first network (default: use fast)"
     )
+    parser.add_argument(
+        "--use-profiled",
+        action="store_true",
+        help="Use profiled runtimes from CSV files (currently only supported for glpdepth when --use-glpdepth is set)"
+    )
     args = parser.parse_args()
     
-    schedule_iree_networks(use_glpdepth=args.use_glpdepth)
+    schedule_iree_networks(use_glpdepth=args.use_glpdepth, use_profiled=args.use_profiled)
 

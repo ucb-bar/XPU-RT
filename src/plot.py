@@ -47,8 +47,45 @@ def plot_optimization_schedule(durations, t, alpha, num_jobs, num_machines, mach
         raise ValueError(f"Mismatch: durations specify {num_operations} operations, "
                          f"but start_times has {len(start_times)} entries.")
 
-    # Determine machine assignments
+    # Determine machine/combination assignments
     machine_assignments = np.argmax(alpha_values, axis=1)
+    
+    # Check if we're using machine combinations
+    # IMPORTANT: Use transfer_times shape to detect, not len(machines), because
+    # 'machines' parameter might be combination labels (3 elements) while transfer_times
+    # is always indexed by actual machines (2 elements)
+    num_actual_machines = transfer_times.shape[0]
+    using_combinations = False
+    machine_combinations = None
+    if workload is not None and hasattr(workload, 'get_machine_combinations'):
+        machine_combinations = workload.get_machine_combinations()
+        # If we have more combinations than actual machines, we're using combinations
+        if len(machine_combinations) > num_actual_machines:
+            using_combinations = True
+        # Also check if alpha has more columns than actual machines (most reliable indicator)
+        elif alpha_values.shape[1] > num_actual_machines:
+            using_combinations = True
+            # If we detected via alpha shape but don't have combinations, try to get them
+            if machine_combinations is None:
+                machine_combinations = workload.get_machine_combinations()
+    
+    # Additional check: if alpha has more columns than actual machines, we must be using combinations
+    if not using_combinations and alpha_values.shape[1] > num_actual_machines:
+        using_combinations = True
+        if workload is not None and hasattr(workload, 'get_machine_combinations'):
+            machine_combinations = workload.get_machine_combinations()
+    
+    # Final safety check: always use combinations if alpha columns > actual machines
+    # This is the most reliable indicator
+    if alpha_values.shape[1] > num_actual_machines:
+        using_combinations = True
+        if machine_combinations is None and workload is not None and hasattr(workload, 'get_machine_combinations'):
+            machine_combinations = workload.get_machine_combinations()
+    
+    # Get actual machine list from workload if available (for transfer time lookups)
+    actual_machines = machines  # Default to what was passed
+    if workload is not None and hasattr(workload, 'machines'):
+        actual_machines = workload.machines
 
     # Plot settings
     fig, ax = plt.subplots(figsize=(12, 6))
@@ -257,7 +294,42 @@ def plot_optimization_schedule(durations, t, alpha, num_jobs, num_machines, mach
             
             start_time = start_times[current_operation_index]
             machine = machine_assignments[current_operation_index]
-            operation_duration = operation_runtimes[machine]
+            
+            # Get operation duration - handle both machine and combination indices
+            # Check if we're using combinations: use transfer_times shape (actual machines) not len(machines)
+            # This is the most reliable check - if alpha has more columns than actual machines, we MUST be using combinations
+            is_using_combos = (alpha_values.shape[1] > num_actual_machines) or using_combinations
+            
+            # Try to get duration using combinations if applicable
+            if is_using_combos and workload is not None and current_operation_index < len(workload.operations):
+                # Get machine combinations if not already set
+                if machine_combinations is None and hasattr(workload, 'get_machine_combinations'):
+                    machine_combinations = workload.get_machine_combinations()
+                if machine_combinations is not None and hasattr(workload.operations[current_operation_index], 'get_duration_for_combination'):
+                    try:
+                        # machine is actually a combination index
+                        operation_duration = workload.operations[current_operation_index].get_duration_for_combination(
+                            machine, machine_combinations, actual_machines
+                        )
+                    except (ValueError, IndexError, AttributeError):
+                        # Fallback to traditional indexing if combination lookup fails
+                        if machine < len(operation_runtimes):
+                            operation_duration = operation_runtimes[machine]
+                        else:
+                            operation_duration = operation_runtimes[0] if len(operation_runtimes) > 0 else 1.0
+                else:
+                    # Fallback: use machine index (shouldn't happen, but safe)
+                    if machine < len(operation_runtimes):
+                        operation_duration = operation_runtimes[machine]
+                    else:
+                        operation_duration = operation_runtimes[0] if len(operation_runtimes) > 0 else 1.0
+            else:
+                # Traditional machine-based indexing
+                if machine < len(operation_runtimes):
+                    operation_duration = operation_runtimes[machine]
+                else:
+                    # Safety fallback
+                    operation_duration = operation_runtimes[0] if len(operation_runtimes) > 0 else 1.0
             # Use a subtle gradient for operations within the same job
             gradient_factor = color_gradients[min(operation_index, len(color_gradients) - 1)]
             operation_color = tuple(op_base_color * gradient_factor)
@@ -285,7 +357,57 @@ def plot_optimization_schedule(durations, t, alpha, num_jobs, num_machines, mach
 
             if operation_index > 0:
                 prev_machine = machine_assignments[current_operation_index - 1]
-                transfer_time = transfer_times[prev_machine][machine]
+                # For transfer times, we need to map combination indices to machine indices
+                # Use the same robust check as for duration lookup - use num_actual_machines (from transfer_times)
+                is_using_combos_for_transfer = alpha_values.shape[1] > num_actual_machines
+                
+                # Debug: print once to see what's happening
+                if current_operation_index == 1:
+                    print(f"DEBUG TRANSFER: alpha_shape={alpha_values.shape}, num_actual_machines={num_actual_machines}, "
+                          f"len(machines)={len(machines)}, alpha_cols={alpha_values.shape[1]}, "
+                          f"is_using_combos={is_using_combos_for_transfer}, prev_machine={prev_machine}, machine={machine}, "
+                          f"transfer_times_shape={transfer_times.shape}, "
+                          f"machine_combinations={machine_combinations is not None}")
+                
+                if is_using_combos_for_transfer:
+                    # Get machine combinations if not already set
+                    if machine_combinations is None and workload is not None and hasattr(workload, 'get_machine_combinations'):
+                        machine_combinations = workload.get_machine_combinations()
+                    if machine_combinations is not None:
+                        # Get first machine from each combination for transfer time lookup
+                        prev_combo = machine_combinations[prev_machine]
+                        curr_combo = machine_combinations[machine]
+                        prev_machine_idx = actual_machines.index(prev_combo[0])
+                        curr_machine_idx = actual_machines.index(curr_combo[0])
+                        transfer_time = transfer_times[prev_machine_idx][curr_machine_idx]
+                    else:
+                        # Fallback: use combination indices directly (shouldn't happen)
+                        if prev_machine < len(machines) and machine < len(machines):
+                            transfer_time = transfer_times[prev_machine][machine]
+                        else:
+                            transfer_time = 0
+                else:
+                    # Traditional indexing - but check bounds first using actual machines
+                    if prev_machine < num_actual_machines and machine < num_actual_machines:
+                        transfer_time = transfer_times[prev_machine][machine]
+                    else:
+                        # This shouldn't happen - we're using combinations but didn't detect it
+                        print(f"ERROR TRANSFER: prev_machine={prev_machine}, machine={machine} out of bounds for {num_actual_machines} actual machines")
+                        print(f"  alpha_shape={alpha_values.shape}, alpha_cols={alpha_values.shape[1]}, num_actual_machines={num_actual_machines}")
+                        print(f"  is_using_combos_for_transfer={is_using_combos_for_transfer}, using_combinations={using_combinations}")
+                        # Force use of combinations - this is a safety fallback
+                        if workload is not None and hasattr(workload, 'get_machine_combinations'):
+                            machine_combinations = workload.get_machine_combinations()
+                            if machine_combinations is not None and prev_machine < len(machine_combinations) and machine < len(machine_combinations):
+                                prev_combo = machine_combinations[prev_machine]
+                                curr_combo = machine_combinations[machine]
+                                prev_machine_idx = actual_machines.index(prev_combo[0])
+                                curr_machine_idx = actual_machines.index(curr_combo[0])
+                                transfer_time = transfer_times[prev_machine_idx][curr_machine_idx]
+                            else:
+                                transfer_time = 0
+                        else:
+                            transfer_time = 0
                 if transfer_time > 0:  # Only plot if there's actual transfer time
                     ax.broken_barh([(start_time - transfer_time, transfer_time)], 
                                 (prev_machine - 0.4, 0.8),
