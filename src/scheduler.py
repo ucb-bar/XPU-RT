@@ -4,9 +4,11 @@
 
 import cvxpy as cp
 import numpy as np
+import time
 from workload import Workload, Window
 from packing import greedy_packing, convex_packing, combine_solved_windows
-from typing import Tuple
+from typing import Tuple, Optional
+from fusion import fuse_operations, expand_schedule, print_fusion_report
 
 def schedule_window(window: Window) -> Tuple[np.ndarray, np.ndarray]:
     num_operations = len(window.operations)
@@ -116,7 +118,44 @@ def schedule_window(window: Window) -> Tuple[np.ndarray, np.ndarray]:
     print("Optimal value: ", problem.value)
     return t.value, alpha.value
 
-def schedule(workload: Workload) -> Tuple[np.ndarray, np.ndarray]:
+def schedule(workload: Workload, fusion_threshold: Optional[float] = None, verbose: bool = False, solver_verbosity: int = 0, time_limit: Optional[float] = None) -> Tuple[np.ndarray, np.ndarray, Optional[Workload], Optional[dict]]:
+    """
+    Schedule a workload, optionally with operation fusion.
+    
+    Args:
+        workload: The workload to schedule
+        fusion_threshold: If provided, fuse operations with duration <= threshold (in time units).
+                        If None, no fusion is performed.
+        verbose: If True, print problem statistics and timing information.
+        solver_verbosity: MOSEK solver verbosity level (0=silent, >0=enables verbose output).
+        time_limit: Maximum optimization time in seconds. If None, no time limit is set.
+                   MOSEK will return the best solution found within the time limit.
+    
+    Returns:
+        (t, alpha, fused_workload, fusion_map) where:
+        - t: Start times for operations (original operations if fusion was used)
+        - alpha: Machine assignments for operations (original operations if fusion was used)
+        - fused_workload: The fused workload (None if no fusion)
+        - fusion_map: Mapping from fused op index to original op indices (None if no fusion)
+    """
+    original_workload = workload
+    fusion_map = None
+    
+    # Apply fusion only if threshold is explicitly provided and positive
+    # If fusion_threshold is None (flag not passed) or <= 0, skip fusion
+    if fusion_threshold is not None and fusion_threshold > 0:
+        workload, fusion_map = fuse_operations(workload, fusion_threshold)
+        print(f"Fusion applied: {len(original_workload.operations)} operations -> {len(workload.operations)} fused operations")
+        # Print detailed fusion report for debugging (to file)
+        import os
+        os.makedirs("fusion_reports", exist_ok=True)
+        report_file = f"fusion_reports/fusion_report_{len(original_workload.operations)}to{len(workload.operations)}.txt"
+        print_fusion_report(original_workload, workload, fusion_map, output_file=report_file)
+    else:
+        # No fusion requested - use original workload as-is
+        if verbose:
+            print("Fusion skipped: fusion_threshold not provided or <= 0")
+    
     num_operations = len(workload.get_operations())
     machine_combinations = workload.get_machine_combinations()
     num_combinations = len(machine_combinations)
@@ -212,11 +251,97 @@ def schedule(workload: Workload) -> Tuple[np.ndarray, np.ndarray]:
     # Optimization problem
     objective = cp.Minimize(C_max)
     problem = cp.Problem(objective, constraints)
-    problem.solve(solver=cp.MOSEK, verbose=False)
+    
+    # Print problem statistics
+    if verbose:
+        print(f"\n{'='*60}")
+        print("OPTIMIZATION PROBLEM STATISTICS")
+        print(f"{'='*60}")
+        print(f"Number of operations: {num_operations}")
+        print(f"Number of machine combinations: {num_combinations}")
+        num_vars = num_operations * num_combinations + num_operations * num_operations + num_operations + 1
+        print(f"Number of variables: {num_vars}")
+        print(f"  - alpha (operation->combination): {num_operations * num_combinations}")
+        print(f"  - beta (operation ordering): {num_operations * num_operations}")
+        print(f"  - t (start times): {num_operations}")
+        print(f"  - C_max (makespan): 1")
+        print(f"Number of constraints: {len(constraints)}")
+        print(f"{'='*60}\n")
+        print("Starting optimization...")
+        start_time = time.time()
+    
+    # Configure MOSEK solver parameters
+    # CVXPY's verbose parameter controls MOSEK output
+    # For additional MOSEK-specific parameters, we can pass them through mosek_params
+    # Note: CVXPY's verbose=True already enables MOSEK logging
+    mosek_verbose = verbose or (solver_verbosity > 0)
+    mosek_params = {}
+    
+    # Set time limit if specified (in seconds)
+    if time_limit is not None and time_limit > 0:
+        mosek_params['MSK_DPAR_OPTIMIZER_MAX_TIME'] = time_limit
+        if verbose:
+            print(f"Time limit set to {time_limit:.1f} seconds ({time_limit/60:.1f} minutes)")
+    
+    if mosek_params:
+        problem.solve(solver=cp.MOSEK, verbose=mosek_verbose, mosek_params=mosek_params)
+    else:
+        problem.solve(solver=cp.MOSEK, verbose=mosek_verbose)
+    
+    if verbose:
+        elapsed_time = time.time() - start_time
+        print(f"\nOptimization completed in {elapsed_time:.2f} seconds")
+        print(f"{'='*60}")
 
     print("Status: ", problem.status)
     print("Optimal value: ", problem.value)
-    return t.value, alpha.value
+
+    t_result = t.value
+    alpha_result = alpha.value
+    
+    # Check if optimization was successful
+    if t_result is None or alpha_result is None:
+        print("Warning: Optimization failed (infeasible or error). Cannot expand schedule.")
+        return None, None, workload if fusion_threshold else None, fusion_map
+    
+    # Check problem status - warn if not optimal
+    if problem.status not in [cp.OPTIMAL, cp.OPTIMAL_INACCURATE]:
+        print(f"Warning: Problem status is '{problem.status}' (not optimal).")
+        if problem.status == cp.SOLVER_ERROR:
+            print("  Solver encountered an error. Solution may be invalid.")
+        elif problem.status in [cp.INFEASIBLE, cp.INFEASIBLE_INACCURATE]:
+            print("  Problem is infeasible. Solution is invalid.")
+            return None, None, workload if fusion_threshold else None, fusion_map
+        elif problem.status in [cp.UNBOUNDED, cp.UNBOUNDED_INACCURATE]:
+            print("  Problem is unbounded. Solution may be invalid.")
+        else:
+            print("  Solution may not be optimal but should be feasible.")
+    
+    # Validate solution dimensions
+    if len(t_result) != num_operations or alpha_result.shape[0] != num_operations:
+        print(f"Error: Solution dimensions don't match. Expected {num_operations} operations, got {len(t_result)} start times and {alpha_result.shape[0]} assignments.")
+        return None, None, workload if fusion_threshold else None, fusion_map
+    
+    # Expand schedule back to original operations if fusion was used
+    if fusion_threshold is not None and fusion_threshold > 0 and fusion_map is not None:
+        t_result, alpha_result = expand_schedule(workload, fusion_map, original_workload, t_result, alpha_result)
+        print(f"Schedule expanded: {len(workload.operations)} fused operations -> {len(original_workload.operations)} original operations")
+        
+        # Validate expansion
+        if len(t_result) != len(original_workload.operations):
+            print(f"ERROR: Expanded schedule has {len(t_result)} operations but original workload has {len(original_workload.operations)} operations!")
+        else:
+            print(f"Validation: All {len(original_workload.operations)} original operations have been scheduled.")
+        
+        return t_result, alpha_result, workload, fusion_map
+    
+    # Validate non-fused schedule
+    if len(t_result) != len(workload.operations):
+        print(f"ERROR: Schedule has {len(t_result)} operations but workload has {len(workload.operations)} operations!")
+    else:
+        print(f"Validation: All {len(workload.operations)} operations have been scheduled.")
+    
+    return t_result, alpha_result, None, None
 
 def schedule_additional_objectives(workload: Workload, nominal_start_times: list[float], gap_bound: float) -> Tuple[np.ndarray, np.ndarray]:
     """
