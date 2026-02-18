@@ -355,7 +355,8 @@ def schedule_iree_networks_grouped():
     print("\n" + "=" * 60)
     print("Scheduling workload (with machine combinations)...")
     print("=" * 60)
-    t, alpha = schedule(combined_workload)
+    result = schedule(combined_workload)
+    t, alpha, _, _ = result  # Always returns 4 values now
     
     # Calculate makespan
     machine_combinations = combined_workload.get_machine_combinations()

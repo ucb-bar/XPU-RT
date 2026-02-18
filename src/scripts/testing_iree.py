@@ -317,7 +317,8 @@ def schedule_iree_networks(use_glpdepth=False):
     print("\n" + "=" * 60)
     print("Scheduling combined workload...")
     print("=" * 60)
-    t, alpha = schedule(combined_workload)
+    result = schedule(combined_workload)
+    t, alpha, _, _ = result  # Always returns 4 values now
     
     # Calculate makespan
     makespan = max(t[i] + combined_workload.operations[i].get_durations()[np.argmax(alpha[i])] 

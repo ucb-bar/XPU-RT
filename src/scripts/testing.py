@@ -37,7 +37,8 @@ def param_sweep():
             # Schedule the workload and record runtime
             print(f"Scheduling workload for {num_jobs} jobs and {num_machines} machines...")
             start_time = time.time()
-            t, alpha = schedule(workload)
+            result = schedule(workload)
+            t, alpha, _, _ = result  # Always returns 4 values now
             runtime = time.time() - start_time
             print(f"Scheduling completed in {runtime:.2f} seconds.")
 
@@ -114,7 +115,7 @@ def transfer_time_test():
 
     # Count number of jobs (operations with no predecessor start a new job)
     num_jobs = sum(1 for op in operations if not op.predecessors)
-    
+
     # Create plots directory if it doesn't exist
     os.makedirs("plots", exist_ok=True)
     plot.plot_optimization_schedule(workload.get_durations(), t, alpha, num_jobs, len(workload.machines), machines, transfer_times, save_path="plots/transfer_time_test.png")
