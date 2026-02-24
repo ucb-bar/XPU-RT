@@ -255,13 +255,27 @@ def schedule(workload: Workload, fusion_threshold: Optional[float] = None, verbo
                         constraints.append(
                             t[j] >= t[i] + dur_i_k1 - (3 - alpha[i, k1] - alpha[j, k2] - beta[i, j]) * H
                         )
-    # (6)
+    # (6) Makespan constraints:
+    # C_max tracks only NON-periodic operations (operations without explicit time-window bounds).
+    # Periodic/background operations (with min_start_t or max_end_t set) do NOT constrain C_max.
+    non_periodic_ops_exist = False
     for i in range(num_operations):
+        op = workload.operations[i]
+        # Treat an operation as periodic/background if it has any time-window bound
+        is_periodic = getattr(op, "min_start_t", None) is not None or getattr(op, "max_end_t", None) is not None
+        if is_periodic:
+            continue
+        non_periodic_ops_exist = True
         # Build duration vector for all combinations
-        dur_vec = [workload.operations[i].get_duration_for_combination(k, machine_combinations, workload.machines) for k in range(num_combinations)]
+        dur_vec = [
+            workload.operations[i].get_duration_for_combination(k, machine_combinations, workload.machines)
+            for k in range(num_combinations)
+        ]
         constraints.append(
             C_max >= t[i] + cp.sum(cp.multiply(dur_vec, alpha[i, :]))
         )
+    # If there are no non-periodic operations, C_max is unconstrained from below
+    # (objective will be trivial), which is acceptable: only periodic tasks exist.
     
     # Debug: Print durations for first operation to verify they're correct
     if num_operations > 0:
