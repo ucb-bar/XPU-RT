@@ -5,10 +5,21 @@
 import cvxpy as cp
 import numpy as np
 import time
+import os
+import sys
+
+# Ensure local modules are imported correctly
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 from workload import Workload, Window
 from packing import greedy_packing, convex_packing, combine_solved_windows
 from typing import Tuple, Optional
-from fusion import fuse_operations, expand_schedule, print_fusion_report
+
+# Import from local fusion module (not the system package)
+try:
+    from .fusion import fuse_operations, expand_schedule, print_fusion_report
+except ImportError:
+    from fusion import fuse_operations, expand_schedule, print_fusion_report
 
 def schedule_window(window: Window) -> Tuple[np.ndarray, np.ndarray]:
     num_operations = len(window.operations)
