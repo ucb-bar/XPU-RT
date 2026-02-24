@@ -218,6 +218,26 @@ def schedule(workload: Workload, fusion_threshold: Optional[float] = None, verbo
             constraints.append(
                 t[i] >= t[i_pred] + cp.sum(cp.multiply(dur_vec_pred, alpha[i_pred, :])) + transfer_time_weighted
             )
+    # Time window constraints: operations must respect min_start_t and max_end_t if specified
+    for i in range(num_operations):
+        op = workload.operations[i]
+        # Constraint: operation must start after min_start_t (if specified)
+        if op.min_start_t is not None:
+            constraints.append(
+                t[i] >= op.min_start_t
+            )
+        # Constraint: operation must end before max_end_t (if specified)
+        if op.max_end_t is not None:
+            # Build duration vector for all combinations
+            dur_vec = [op.get_duration_for_combination(k, machine_combinations, workload.machines) for k in range(num_combinations)]
+            # Operation completion time = start_time + duration_for_chosen_combination
+            # Must be <= max_end_t
+            constraints.append(
+                t[i] + cp.sum(cp.multiply(dur_vec, alpha[i, :])) <= op.max_end_t
+            )
+            # constraints.append(
+            #     t[i] <= op.max_end_t
+            # )
     # (4) and (5) Non-overlap constraints: if two operations are assigned to overlapping combinations, enforce ordering
     for i in range(num_operations):
         for j in range(i+1, num_operations):
