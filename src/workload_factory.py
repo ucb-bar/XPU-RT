@@ -253,6 +253,10 @@ def create_workload_from_network_hierarchy(
         network_job_ids[network_identifier] = network_id
         network_job_names[network_identifier] = network_info.get('identifier', network_identifier)
         
+        # Extract time constraints from network info (if present)
+        network_min_start_t = network_info.get('min_start_t', None)
+        network_max_end_t = network_info.get('max_end_t', None)
+        
         # Create operations for dispatches in this network
         network_ops_map: Dict[str, Operation] = {}
         
@@ -274,12 +278,15 @@ def create_workload_from_network_hierarchy(
                 proc_times = [cpu_p_time, cpu_e_time] if len(machines) == 2 else [np.random.uniform(2.0, 10.0) for _ in machines]
             
             # Extract dispatch ID and create operation
+            # Inherit time constraints from network if present
             dispatch_id = dispatch_info.get('id', None)
             operation = Operation(
                 proc_times,
                 operation_id=dispatch_id,
                 operation_name=prefixed_dispatch_name,
-                job_id=network_id
+                job_id=network_id,
+                min_start_t=network_min_start_t,
+                max_end_t=network_max_end_t
             )
             
             network_ops_map[dispatch_name] = operation
