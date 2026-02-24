@@ -5,7 +5,7 @@ class Operation:
     Lowest level of a schedulable instance. An operation has a processing time and potentially multiple predecessors.
     Each operation has a must havea   processing time for each machine in the workload.
     """
-    def __init__(self, processing_times: list[float], predecessors=None, operation_id=None, operation_name=None, job_id=None):
+    def __init__(self, processing_times: list[float], predecessors=None, operation_id=None, operation_name=None, job_id=None, min_start_t=None, max_end_t=None):
         self.processing_times = processing_times
         # Support both single predecessor (backward compatibility) and list of predecessors
         if predecessors is None:
@@ -22,6 +22,9 @@ class Operation:
         self.operation_name = operation_name
         # Job identifier - explicitly tracks which job this operation belongs to
         self.job_id = job_id
+        # Time constraints - minimum start time and maximum end time
+        self.min_start_t = min_start_t
+        self.max_end_t = max_end_t
     
     def get_predecessors(self):
         """Returns list of all predecessors"""
