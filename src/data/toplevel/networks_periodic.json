@@ -1,0 +1,18 @@
+{
+  "networks": {
+    "dronet": {
+      "id": 0,
+      "identifier": "dronet",
+      "dispatch_deps_path": "merlin/samples/robotic-NN/pytorch_workload/computation_graph/dronet_dispatch_deps.json"
+    },
+    "mlp": {
+      "id": 1,
+      "identifier": "mlp",
+      "dispatch_deps_path": "merlin/samples/robotic-NN/pytorch_workload/computation_graph/mlp_dispatch_deps.json",
+      "period": 25,
+      "window_duration": 25,
+      "start_time": 0
+    }
+  },
+  "edges": []
+}

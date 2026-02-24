@@ -44,7 +44,7 @@ def schedule_iree_networks(networks_json_path: str = None, solver_verbosity: int
             '..',
             'data',
             'toplevel',
-            'networks_deps.json'
+            'networks_periodic.json'
         )
     
     # Resolve to absolute path
@@ -178,7 +178,7 @@ if __name__ == "__main__":
         "--networks-json",
         type=str,
         default=None,
-        help="Path to the top-level networks dependencies JSON file (default: src/data/toplevel/networks_deps.json)"
+        help="Path to the top-level networks dependencies JSON file (default: src/data/toplevel/networks_periodic.json)"
     )
     parser.add_argument(
         "--solver-verbosity",

@@ -202,10 +202,16 @@ def create_workload_from_network_hierarchy(
     1. Top level: Networks with dependencies between networks
     2. Sub level: Dispatches within each network with dependencies between dispatches
     
+    Supports periodic networks: If a network has 'period', 'window_duration', and 'start_time' fields,
+    it will be expanded into multiple instances (currently fixed at 5 instances) with calculated time windows.
+    Each instance gets: min_start_t = start_time + i * period, max_end_t = start_time + i * period + window_duration.
+    
     Parameters:
     - networks_data: Dictionary with 'networks' and 'edges' keys:
         * 'networks': Dict mapping network identifier to network info (id, identifier, dispatch_deps_path)
+                      Periodic networks should have: period, window_duration, start_time (and optionally num_instances)
         * 'edges': List of edges between networks [{"from": "network1", "to": "network2"}]
+                   Edges referencing periodic networks are expanded to all instances
     - repo_base_path: Base path of the repository (paths in networks_data are relative to this)
     - machines: List of machine names
     - transfer_times: Matrix of transfer times between machines
@@ -222,6 +228,121 @@ def create_workload_from_network_hierarchy(
     networks = networks_data.get('networks', {})
     network_edges = networks_data.get('edges', [])
     
+    # Expand periodic networks into multiple instances
+    # Fixed number of instances for now (will be calculated later)
+    NUM_PERIODIC_INSTANCES = 5
+    
+    expanded_networks: Dict[str, Dict] = {}
+    periodic_network_to_instances: Dict[str, List[str]] = {}  # Maps periodic network -> list of instance identifiers
+    periodic_base_to_instances: Dict[str, str] = {}  # Maps instance identifier -> base periodic network identifier
+    
+    # Pre-generate processing times for periodic networks to ensure consistency across instances
+    periodic_processing_times_cache: Dict[Tuple[str, str], List[float]] = {}  # (base_network_id, dispatch_name) -> proc_times
+    
+    for network_identifier, network_info in networks.items():
+        # Check if this network is periodic
+        period = network_info.get('period', None)
+        window_duration = network_info.get('window_duration', None)
+        start_time = network_info.get('start_time', 0)
+        
+        if period is not None and window_duration is not None:
+            # This is a periodic network - pre-generate processing times for consistency
+            dispatch_deps_path = network_info.get('dispatch_deps_path', '')
+            full_dispatch_path = os.path.join(repo_base_path, dispatch_deps_path)
+            
+            if os.path.exists(full_dispatch_path):
+                with open(full_dispatch_path, 'r') as f:
+                    dispatch_data = json.load(f)
+                dispatches = dispatch_data.get('dispatches', {})
+                
+                # Generate processing times once for this periodic network
+                for dispatch_name, dispatch_info in dispatches.items():
+                    cache_key = (network_identifier, dispatch_name)
+                    
+                    # Check if we should use provided processing times or generate synthetic
+                    base_prefix = f"{network_identifier}_"
+                    prefixed_dispatch_name = f"{base_prefix}{dispatch_name}"
+                    
+                    if processing_times and prefixed_dispatch_name in processing_times:
+                        periodic_processing_times_cache[cache_key] = processing_times[prefixed_dispatch_name]
+                    elif processing_time_generator:
+                        periodic_processing_times_cache[cache_key] = processing_time_generator(network_identifier, dispatch_name)
+                    else:
+                        # Generate synthetic processing times (same for all instances)
+                        p_ms_synth = float(np.random.uniform(2.0, 10.0))
+                        cpu_p_time = p_ms_synth
+                        cpu_e_time = p_ms_synth * p_core_speedup
+                        proc_times = [cpu_p_time, cpu_e_time] if len(machines) == 2 else [np.random.uniform(2.0, 10.0) for _ in machines]
+                        periodic_processing_times_cache[cache_key] = proc_times
+            
+            # Expand periodic network into multiple instances
+            base_id = network_info.get('id', 0)
+            base_identifier = network_info.get('identifier', network_identifier)
+            instance_identifiers = []
+            
+            for i in range(NUM_PERIODIC_INSTANCES):
+                instance_identifier = f"{network_identifier}{i}"
+                instance_min_start_t = start_time + i * period
+                instance_max_end_t = start_time + i * period + window_duration
+                
+                # Create instance network info
+                instance_info = network_info.copy()
+                instance_info['id'] = base_id + i  # Each instance gets a unique ID
+                instance_info['identifier'] = f"{base_identifier}{i}"
+                instance_info['min_start_t'] = instance_min_start_t
+                instance_info['max_end_t'] = instance_max_end_t
+                # Remove periodic fields as they're now expanded
+                instance_info.pop('period', None)
+                instance_info.pop('window_duration', None)
+                instance_info.pop('start_time', None)
+                
+                expanded_networks[instance_identifier] = instance_info
+                instance_identifiers.append(instance_identifier)
+                periodic_base_to_instances[instance_identifier] = network_identifier
+            
+            periodic_network_to_instances[network_identifier] = instance_identifiers
+        else:
+            # Regular network - add as-is
+            expanded_networks[network_identifier] = network_info
+    
+    # Expand edges: if an edge references a periodic network, expand it to all instances
+    expanded_edges = []
+    for edge in network_edges:
+        from_network = edge.get('from')
+        to_network = edge.get('to')
+        
+        # Check if networks are periodic and expand them
+        from_instances = periodic_network_to_instances.get(from_network, [from_network])
+        to_instances = periodic_network_to_instances.get(to_network, [to_network])
+        
+        # For now, if both are periodic, create edges between corresponding instances
+        # (instance 0 -> instance 0, instance 1 -> instance 1, etc.)
+        # This can be customized later
+        if len(from_instances) > 1 and len(to_instances) > 1:
+            # Both are periodic - create edges between corresponding instances
+            for i in range(min(len(from_instances), len(to_instances))):
+                expanded_edges.append({
+                    'from': from_instances[i],
+                    'to': to_instances[i]
+                })
+        elif len(from_instances) > 1:
+            # Only from_network is periodic - create edges from all instances to to_network
+            for from_inst in from_instances:
+                expanded_edges.append({
+                    'from': from_inst,
+                    'to': to_network
+                })
+        elif len(to_instances) > 1:
+            # Only to_network is periodic - create edges from from_network to all instances
+            for to_inst in to_instances:
+                expanded_edges.append({
+                    'from': from_network,
+                    'to': to_inst
+                })
+        else:
+            # Neither is periodic - keep original edge
+            expanded_edges.append(edge)
+    
     # Map to store operations for each network
     network_operations_map: Dict[str, List[Operation]] = {}
     # Map to store all operations by their prefixed names
@@ -232,7 +353,8 @@ def create_workload_from_network_hierarchy(
     network_job_names: Dict[str, str] = {}
     
     # First pass: Load each network's dispatch graph and create operations
-    for network_identifier, network_info in networks.items():
+    # Now iterate over expanded_networks instead of networks
+    for network_identifier, network_info in expanded_networks.items():
         network_id = network_info.get('id', 0)
         dispatch_deps_path = network_info.get('dispatch_deps_path', '')
         
@@ -265,7 +387,20 @@ def create_workload_from_network_hierarchy(
             prefixed_dispatch_name = f"{network_prefix}{dispatch_name}"
             
             # Get processing times
-            if processing_times and prefixed_dispatch_name in processing_times:
+            # Check if this is an instance of a periodic network - if so, use cached times
+            base_periodic_network = periodic_base_to_instances.get(network_identifier)
+            if base_periodic_network is not None:
+                # This is a periodic instance - use pre-generated processing times
+                cache_key = (base_periodic_network, dispatch_name)
+                if cache_key in periodic_processing_times_cache:
+                    proc_times = periodic_processing_times_cache[cache_key]
+                else:
+                    # Fallback: generate synthetic (shouldn't happen if pre-generation worked)
+                    p_ms_synth = float(np.random.uniform(2.0, 10.0))
+                    cpu_p_time = p_ms_synth
+                    cpu_e_time = p_ms_synth * p_core_speedup
+                    proc_times = [cpu_p_time, cpu_e_time] if len(machines) == 2 else [np.random.uniform(2.0, 10.0) for _ in machines]
+            elif processing_times and prefixed_dispatch_name in processing_times:
                 proc_times = processing_times[prefixed_dispatch_name]
             elif processing_time_generator:
                 proc_times = processing_time_generator(network_identifier, dispatch_name)
@@ -314,7 +449,8 @@ def create_workload_from_network_hierarchy(
     #   - Find first operations in to_network (operations with no predecessors within that network)
     #   - Make first operations of to_network depend on last operations of from_network
     
-    for edge in network_edges:
+    # Use expanded_edges instead of network_edges
+    for edge in expanded_edges:
         from_network = edge.get('from')
         to_network = edge.get('to')
         
