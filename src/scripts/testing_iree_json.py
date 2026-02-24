@@ -8,6 +8,7 @@ import sys
 import os
 import json
 import argparse
+import csv
 import numpy as np
 
 # Add parent path to sys path to enable imports
@@ -22,6 +23,46 @@ def load_networks_graph(json_path: str) -> dict:
     """Load a network dependencies JSON file."""
     with open(json_path, 'r') as f:
         return json.load(f)
+
+
+def load_profiled_times(csv_path: str) -> dict[int, dict]:
+    """
+    Load profiled runtimes from a CSV file.
+
+    Expected columns:
+      - dispatch_id
+      - mean_time
+      - mean_unit (assumed 'ms' if missing)
+
+    Returns:
+      dict mapping dispatch_id (int) -> {"time_ms": float}
+    """
+    profiled: dict[int, dict] = {}
+    if not os.path.exists(csv_path):
+        return profiled
+    with open(csv_path, "r") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            dispatch_id_str = row.get("dispatch_id")
+            if not dispatch_id_str:
+                continue
+            try:
+                dispatch_id = int(dispatch_id_str)
+            except ValueError:
+                continue
+            try:
+                mean_time = float(row.get("mean_time", 0.0))
+            except ValueError:
+                continue
+            unit = row.get("mean_unit", "ms")
+            if unit == "us":
+                mean_time_ms = mean_time / 1000.0
+            elif unit == "s":
+                mean_time_ms = mean_time * 1000.0
+            else:
+                mean_time_ms = mean_time
+            profiled[dispatch_id] = {"time_ms": mean_time_ms}
+    return profiled
 
 
 def _trim_periodic_after_nonperiodic_makespan(workload: Workload, t: np.ndarray, alpha: np.ndarray) -> tuple[Workload, np.ndarray, np.ndarray]:
@@ -90,7 +131,13 @@ def _trim_periodic_after_nonperiodic_makespan(workload: Workload, t: np.ndarray,
 
     return trimmed_workload, trimmed_t, trimmed_alpha
 
-def schedule_iree_networks(networks_json_path: str = None, solver_verbosity: int = 0, time_limit: float = None, random_seed: int | None = 0):
+def schedule_iree_networks(
+    networks_json_path: str = None,
+    solver_verbosity: int = 0,
+    time_limit: float = None,
+    random_seed: int | None = 0,
+    use_profiled: bool = False,
+) -> tuple[Workload, np.ndarray, np.ndarray]:
     """
     Main function to schedule networks from a hierarchical network dependencies JSON file.
     
@@ -142,7 +189,109 @@ def schedule_iree_networks(networks_json_path: str = None, solver_verbosity: int
     
     # Create transfer times matrix (zero transfer time between cores on same device)
     transfer_times = np.zeros((2, 2))
-    
+
+    # Optional: build profiled processing times if requested
+    processing_times: dict[str, list[float]] | None = None
+    if use_profiled:
+        print("\nUsing profiled runtimes where available...")
+        processing_times = {}
+
+        # Paths to profiled runtimes (P-core and E-core) for known networks
+        dronet_profile_csv_p = os.path.join(
+            script_dir,
+            "..",
+            "data",
+            "dronet_rvv",
+            "topo_0_1_2_3",
+            "results.csv",
+        )
+        dronet_profile_csv_e = os.path.join(
+            script_dir,
+            "..",
+            "data",
+            "dronet_scalar",
+            "topo_0_1_2_3",
+            "results.csv",
+        )
+        mlp_profile_csv_p = os.path.join(
+            script_dir,
+            "..",
+            "data",
+            "mlp_rvv",
+            "topo_0_1_2_3",
+            "results.csv",
+        )
+        mlp_profile_csv_e = os.path.join(
+            script_dir,
+            "..",
+            "data",
+            "mlp_scalar",
+            "topo_0_1_2_3",
+            "results.csv",
+        )
+
+        dronet_profiled_p = load_profiled_times(dronet_profile_csv_p)
+        dronet_profiled_e = load_profiled_times(dronet_profile_csv_e)
+        mlp_profiled_p = load_profiled_times(mlp_profile_csv_p)
+        mlp_profiled_e = load_profiled_times(mlp_profile_csv_e)
+
+        p_core_speedup = 1.5
+
+        # Helper to map dispatch_deps filename to profiled dicts
+        def get_profiles_for_dispatch_path(path: str) -> tuple[dict[int, dict] | None, dict[int, dict] | None]:
+            fname = os.path.basename(path)
+            if "dronet_dispatch_deps" in fname:
+                return dronet_profiled_p or None, dronet_profiled_e or None
+            if "mlp_dispatch_deps" in fname:
+                return mlp_profiled_p or None, mlp_profiled_e or None
+            return None, None
+
+        # Build processing_times keyed by prefixed dispatch name for each network
+        for net_id, net_info in networks.items():
+            dispatch_deps_path = net_info.get("dispatch_deps_path", "")
+            full_dispatch_path = os.path.join(repo_base_path, dispatch_deps_path)
+            if not os.path.exists(full_dispatch_path):
+                continue
+
+            prof_p, prof_e = get_profiles_for_dispatch_path(dispatch_deps_path)
+            if prof_p is None and prof_e is None:
+                continue  # no profiles for this network
+
+            with open(full_dispatch_path, "r") as f:
+                dispatch_data = json.load(f)
+            dispatches = dispatch_data.get("dispatches", {})
+
+            net_prefix = f"{net_id}_"
+            for dispatch_name, dispatch_info in dispatches.items():
+                dispatch_id = dispatch_info.get("id", None)
+                cpu_p_time: float
+                cpu_e_time: float
+
+                p_ms = None
+                e_ms = None
+                if isinstance(dispatch_id, int) and prof_p and dispatch_id in prof_p:
+                    p_ms = prof_p[dispatch_id]["time_ms"]
+                if isinstance(dispatch_id, int) and prof_e and dispatch_id in prof_e:
+                    e_ms = prof_e[dispatch_id]["time_ms"]
+
+                if p_ms is not None:
+                    cpu_p_time = float(p_ms)
+                    if e_ms is not None:
+                        cpu_e_time = float(e_ms)
+                    else:
+                        cpu_e_time = float(p_ms * p_core_speedup)
+                elif e_ms is not None:
+                    cpu_e_time = float(e_ms)
+                    cpu_p_time = float(e_ms / p_core_speedup)
+                else:
+                    # No profile for this dispatch; fall back to synthetic here
+                    p_ms_synth = float(np.random.uniform(2.0, 10.0))
+                    cpu_p_time = p_ms_synth
+                    cpu_e_time = p_ms_synth * p_core_speedup
+
+                prefixed_name = f"{net_prefix}{dispatch_name}"
+                processing_times[prefixed_name] = [cpu_p_time, cpu_e_time]
+
     # Create workload from network hierarchy
     print(f"\nCreating workload from network hierarchy...")
     combined_workload = create_workload_from_network_hierarchy(
@@ -152,6 +301,7 @@ def schedule_iree_networks(networks_json_path: str = None, solver_verbosity: int
         transfer_times=transfer_times,
         p_core_speedup=1.5,
         random_seed=random_seed,
+        processing_times=processing_times,
     )
     
     print(f"\nWorkload created successfully!")
@@ -271,6 +421,11 @@ if __name__ == "__main__":
         default=0,
         help="Seed for synthetic runtime generation (default: 0 for reproducible results). Use -1 for nondeterministic.",
     )
+    parser.add_argument(
+        "--profiled",
+        action="store_true",
+        help="Use profiled runtimes where available (currently supports Dronet and MLP).",
+    )
     args = parser.parse_args()
 
     seed = None if args.random_seed is not None and args.random_seed < 0 else args.random_seed
@@ -280,5 +435,6 @@ if __name__ == "__main__":
         solver_verbosity=args.solver_verbosity,
         time_limit=args.time_limit,
         random_seed=seed,
+        use_profiled=args.profiled,
     )
 

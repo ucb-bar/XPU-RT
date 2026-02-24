@@ -233,10 +233,96 @@ def create_workload_from_network_hierarchy(
 
     # Random number generator for synthetic processing times
     rng = np.random.default_rng(random_seed)
-    
-    # Expand periodic networks into multiple instances
-    # Fixed number of instances for now (will be calculated later)
-    NUM_PERIODIC_INSTANCES = 10
+
+    def _estimate_num_periodic_instances() -> Dict[str, int]:
+        """
+        Heuristic to estimate how many instances to create for each periodic network.
+
+        For now:
+          1) Compute a worst-case horizon as:
+               H = 2 * sum_over_nonperiodic_ops( worst_machine_duration(op) )
+             where worst_machine_duration(op) is the max duration across machines.
+          2) For each periodic network with period T, set:
+               num_instances = ceil(H / T), at least 1.
+        """
+        total_worst_nonperiodic = 0.0
+
+        for net_id, net_info in networks.items():
+            period = net_info.get("period", None)
+            window_duration = net_info.get("window_duration", None)
+            # Skip periodic networks when computing the non-periodic horizon
+            if period is not None and window_duration is not None:
+                continue
+
+            dispatch_deps_path = net_info.get("dispatch_deps_path", "")
+            full_dispatch_path = os.path.join(repo_base_path, dispatch_deps_path)
+            if not os.path.exists(full_dispatch_path):
+                continue
+
+            try:
+                with open(full_dispatch_path, "r") as f:
+                    dispatch_data = json.load(f)
+            except Exception:
+                continue
+
+            dispatches = dispatch_data.get("dispatches", {})
+            base_prefix = f"{net_id}_"
+
+            for dispatch_name, dispatch_info in dispatches.items():
+                prefixed_name = f"{base_prefix}{dispatch_name}"
+
+                # Determine processing times for this dispatch
+                if processing_times and prefixed_name in processing_times:
+                    proc_times = processing_times[prefixed_name]
+                elif processing_time_generator:
+                    proc_times = processing_time_generator(net_id, dispatch_name)
+                else:
+                    # Synthetic: same pattern as used elsewhere
+                    p_ms_synth = float(rng.uniform(2.0, 10.0))
+                    cpu_p_time = p_ms_synth
+                    cpu_e_time = p_ms_synth * p_core_speedup
+                    proc_times = (
+                        [cpu_p_time, cpu_e_time]
+                        if len(machines) == 2
+                        else [float(rng.uniform(2.0, 10.0)) for _ in machines]
+                    )
+
+                if not proc_times:
+                    continue
+
+                worst_dur = max(proc_times)
+                total_worst_nonperiodic += float(worst_dur)
+
+        # If there are no non-periodic operations, default to 1 instance per periodic network
+        if total_worst_nonperiodic <= 0.0:
+            periodic_counts: Dict[str, int] = {}
+            for net_id, net_info in networks.items():
+                period = net_info.get("period", None)
+                window_duration = net_info.get("window_duration", None)
+                if period is not None and window_duration is not None:
+                    periodic_counts[net_id] = 1
+            return periodic_counts
+
+        horizon = 2.0 * total_worst_nonperiodic
+        periodic_counts: Dict[str, int] = {}
+        for net_id, net_info in networks.items():
+            period = net_info.get("period", None)
+            window_duration = net_info.get("window_duration", None)
+            if period is None or window_duration is None:
+                continue
+            try:
+                T = float(period)
+            except (TypeError, ValueError):
+                continue
+            if T <= 0:
+                continue
+            num_instances = int(np.ceil(horizon / T))
+            periodic_counts[net_id] = max(1, num_instances)
+
+        return periodic_counts
+
+    # Estimate number of instances for each periodic network
+    periodic_num_instances = _estimate_num_periodic_instances()
     
     expanded_networks: Dict[str, Dict] = {}
     periodic_network_to_instances: Dict[str, List[str]] = {}  # Maps periodic network -> list of instance identifiers
@@ -285,8 +371,9 @@ def create_workload_from_network_hierarchy(
             base_id = network_info.get('id', 0)
             base_identifier = network_info.get('identifier', network_identifier)
             instance_identifiers = []
-            
-            for i in range(NUM_PERIODIC_INSTANCES):
+
+            num_instances = periodic_num_instances.get(network_identifier, 1)
+            for i in range(num_instances):
                 instance_identifier = f"{network_identifier}{i}"
                 instance_min_start_t = start_time + i * period
                 instance_max_end_t = start_time + i * period + window_duration
