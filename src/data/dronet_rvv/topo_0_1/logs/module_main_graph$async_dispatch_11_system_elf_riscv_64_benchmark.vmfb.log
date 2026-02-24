@@ -1,0 +1,27 @@
+2026-01-09T12:01:35.610047
+Running tools/iree-benchmark-module --module=/home/dima/sched_vmfb/dronet_rvv/module_main_graph$async_dispatch_11_system_elf_riscv_64_benchmark.vmfb --device=local-task --function=main_graph$async_dispatch_11_system_elf_riscv_64_main_graph$async_dispatch_11_conv_128x4x4x128x3x3_f32 --input=1xi32=1 --task_topology_cpu_ids=0,1 --benchmark_repetitions=10
+2026-01-09T12:01:35+08:00
+Running tools/iree-benchmark-module
+Run on (8 X 1600 MHz CPU s)
+CPU Caches:
+  L1 Instruction 32 KiB (x8)
+  L1 Data 32 KiB (x8)
+  L2 Unified 512 KiB (x2)
+Load Average: 3.17, 2.46, 2.17
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Benchmark                                                                                                                                        Time             CPU   Iterations UserCounters...
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+BM_main_graph$async_dispatch_11_system_elf_riscv_64_main_graph$async_dispatch_11_conv_128x4x4x128x3x3_f32/process_time/real_time              8.16 ms         16.1 ms           85 items_per_second=122.501/s
+BM_main_graph$async_dispatch_11_system_elf_riscv_64_main_graph$async_dispatch_11_conv_128x4x4x128x3x3_f32/process_time/real_time              8.15 ms         16.1 ms           85 items_per_second=122.753/s
+BM_main_graph$async_dispatch_11_system_elf_riscv_64_main_graph$async_dispatch_11_conv_128x4x4x128x3x3_f32/process_time/real_time              8.14 ms         16.1 ms           85 items_per_second=122.857/s
+BM_main_graph$async_dispatch_11_system_elf_riscv_64_main_graph$async_dispatch_11_conv_128x4x4x128x3x3_f32/process_time/real_time              8.18 ms         16.2 ms           85 items_per_second=122.22/s
+BM_main_graph$async_dispatch_11_system_elf_riscv_64_main_graph$async_dispatch_11_conv_128x4x4x128x3x3_f32/process_time/real_time              8.14 ms         16.1 ms           85 items_per_second=122.816/s
+BM_main_graph$async_dispatch_11_system_elf_riscv_64_main_graph$async_dispatch_11_conv_128x4x4x128x3x3_f32/process_time/real_time              8.19 ms         16.1 ms           85 items_per_second=122.166/s
+BM_main_graph$async_dispatch_11_system_elf_riscv_64_main_graph$async_dispatch_11_conv_128x4x4x128x3x3_f32/process_time/real_time              8.17 ms         16.1 ms           85 items_per_second=122.448/s
+BM_main_graph$async_dispatch_11_system_elf_riscv_64_main_graph$async_dispatch_11_conv_128x4x4x128x3x3_f32/process_time/real_time              8.15 ms         16.1 ms           85 items_per_second=122.771/s
+BM_main_graph$async_dispatch_11_system_elf_riscv_64_main_graph$async_dispatch_11_conv_128x4x4x128x3x3_f32/process_time/real_time              8.14 ms         16.1 ms           85 items_per_second=122.865/s
+BM_main_graph$async_dispatch_11_system_elf_riscv_64_main_graph$async_dispatch_11_conv_128x4x4x128x3x3_f32/process_time/real_time              8.16 ms         16.1 ms           85 items_per_second=122.509/s
+BM_main_graph$async_dispatch_11_system_elf_riscv_64_main_graph$async_dispatch_11_conv_128x4x4x128x3x3_f32/process_time/real_time_mean         8.16 ms         16.1 ms           10 items_per_second=122.591/s
+BM_main_graph$async_dispatch_11_system_elf_riscv_64_main_graph$async_dispatch_11_conv_128x4x4x128x3x3_f32/process_time/real_time_median       8.15 ms         16.1 ms           10 items_per_second=122.631/s
+BM_main_graph$async_dispatch_11_system_elf_riscv_64_main_graph$async_dispatch_11_conv_128x4x4x128x3x3_f32/process_time/real_time_stddev      0.017 ms        0.016 ms           10 items_per_second=0.260115/s
+BM_main_graph$async_dispatch_11_system_elf_riscv_64_main_graph$async_dispatch_11_conv_128x4x4x128x3x3_f32/process_time/real_time_cv           0.21 %          0.10 %            10 items_per_second=0.21%

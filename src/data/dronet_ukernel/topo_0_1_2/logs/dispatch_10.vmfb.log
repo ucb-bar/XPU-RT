@@ -1,0 +1,27 @@
+2026-01-09T09:36:13.197410
+Running tools/iree-benchmark-module --module=/home/dima/sched_vmfb/dronet_ukernel/dispatch_10.vmfb --device=local-task --function=main_graph$async_dispatch_10_system_elf_riscv_64_main_graph$async_dispatch_10_matmul_like_128x4x4x64_f32 --input=1xi32=1 --task_topology_cpu_ids=0,1,2 --benchmark_repetitions=10
+2026-01-09T09:36:13+08:00
+Running tools/iree-benchmark-module
+Run on (8 X 1600 MHz CPU s)
+CPU Caches:
+  L1 Instruction 32 KiB (x8)
+  L1 Data 32 KiB (x8)
+  L2 Unified 512 KiB (x2)
+Load Average: 3.68, 2.95, 2.64
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Benchmark                                                                                                                                          Time             CPU   Iterations UserCounters...
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+BM_main_graph$async_dispatch_10_system_elf_riscv_64_main_graph$async_dispatch_10_matmul_like_128x4x4x64_f32/process_time/real_time             0.571 ms         1.41 ms         1222 items_per_second=1.75256k/s
+BM_main_graph$async_dispatch_10_system_elf_riscv_64_main_graph$async_dispatch_10_matmul_like_128x4x4x64_f32/process_time/real_time             0.562 ms         1.40 ms         1222 items_per_second=1.78063k/s
+BM_main_graph$async_dispatch_10_system_elf_riscv_64_main_graph$async_dispatch_10_matmul_like_128x4x4x64_f32/process_time/real_time             0.560 ms         1.40 ms         1222 items_per_second=1.7863k/s
+BM_main_graph$async_dispatch_10_system_elf_riscv_64_main_graph$async_dispatch_10_matmul_like_128x4x4x64_f32/process_time/real_time             0.562 ms         1.40 ms         1222 items_per_second=1.77778k/s
+BM_main_graph$async_dispatch_10_system_elf_riscv_64_main_graph$async_dispatch_10_matmul_like_128x4x4x64_f32/process_time/real_time             0.562 ms         1.40 ms         1222 items_per_second=1.77936k/s
+BM_main_graph$async_dispatch_10_system_elf_riscv_64_main_graph$async_dispatch_10_matmul_like_128x4x4x64_f32/process_time/real_time             0.563 ms         1.40 ms         1222 items_per_second=1.77711k/s
+BM_main_graph$async_dispatch_10_system_elf_riscv_64_main_graph$async_dispatch_10_matmul_like_128x4x4x64_f32/process_time/real_time             0.564 ms         1.40 ms         1222 items_per_second=1.77179k/s
+BM_main_graph$async_dispatch_10_system_elf_riscv_64_main_graph$async_dispatch_10_matmul_like_128x4x4x64_f32/process_time/real_time             0.562 ms         1.40 ms         1222 items_per_second=1.77795k/s
+BM_main_graph$async_dispatch_10_system_elf_riscv_64_main_graph$async_dispatch_10_matmul_like_128x4x4x64_f32/process_time/real_time             0.565 ms         1.40 ms         1222 items_per_second=1.77115k/s
+BM_main_graph$async_dispatch_10_system_elf_riscv_64_main_graph$async_dispatch_10_matmul_like_128x4x4x64_f32/process_time/real_time             0.562 ms         1.40 ms         1222 items_per_second=1.7783k/s
+BM_main_graph$async_dispatch_10_system_elf_riscv_64_main_graph$async_dispatch_10_matmul_like_128x4x4x64_f32/process_time/real_time_mean        0.563 ms         1.40 ms           10 items_per_second=1.77529k/s
+BM_main_graph$async_dispatch_10_system_elf_riscv_64_main_graph$async_dispatch_10_matmul_like_128x4x4x64_f32/process_time/real_time_median      0.562 ms         1.40 ms           10 items_per_second=1.77786k/s
+BM_main_graph$async_dispatch_10_system_elf_riscv_64_main_graph$async_dispatch_10_matmul_like_128x4x4x64_f32/process_time/real_time_stddev      0.003 ms        0.002 ms           10 items_per_second=9.05541/s
+BM_main_graph$async_dispatch_10_system_elf_riscv_64_main_graph$async_dispatch_10_matmul_like_128x4x4x64_f32/process_time/real_time_cv           0.51 %          0.16 %            10 items_per_second=0.51%

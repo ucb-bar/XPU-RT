@@ -1,0 +1,27 @@
+2026-01-08T03:10:00.653329
+Running tools/iree-benchmark-module --module=/home/dima/sched_vmfb/fastdepth/module_main_graph$async_dispatch_44_system_elf_riscv_64_benchmark.vmfb --device=local-task --function=main_graph$async_dispatch_44_system_elf_riscv_64_main_graph$async_dispatch_44_matmul_like_32x12544x64_f32 --input=1xi32=1 --task_topology_cpu_ids=0,1,2,3 --benchmark_repetitions=10
+2026-01-08T03:10:00+08:00
+Running tools/iree-benchmark-module
+Run on (8 X 1600 MHz CPU s)
+CPU Caches:
+  L1 Instruction 32 KiB (x8)
+  L1 Data 32 KiB (x8)
+  L2 Unified 512 KiB (x2)
+Load Average: 5.77, 4.91, 3.99
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Benchmark                                                                                                                                           Time             CPU   Iterations UserCounters...
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+BM_main_graph$async_dispatch_44_system_elf_riscv_64_main_graph$async_dispatch_44_matmul_like_32x12544x64_f32/process_time/real_time               301 ms         1136 ms            2 items_per_second=3.32526/s
+BM_main_graph$async_dispatch_44_system_elf_riscv_64_main_graph$async_dispatch_44_matmul_like_32x12544x64_f32/process_time/real_time               301 ms         1137 ms            2 items_per_second=3.31778/s
+BM_main_graph$async_dispatch_44_system_elf_riscv_64_main_graph$async_dispatch_44_matmul_like_32x12544x64_f32/process_time/real_time               301 ms         1135 ms            2 items_per_second=3.32503/s
+BM_main_graph$async_dispatch_44_system_elf_riscv_64_main_graph$async_dispatch_44_matmul_like_32x12544x64_f32/process_time/real_time               301 ms         1134 ms            2 items_per_second=3.32701/s
+BM_main_graph$async_dispatch_44_system_elf_riscv_64_main_graph$async_dispatch_44_matmul_like_32x12544x64_f32/process_time/real_time               301 ms         1136 ms            2 items_per_second=3.32607/s
+BM_main_graph$async_dispatch_44_system_elf_riscv_64_main_graph$async_dispatch_44_matmul_like_32x12544x64_f32/process_time/real_time               301 ms         1135 ms            2 items_per_second=3.32718/s
+BM_main_graph$async_dispatch_44_system_elf_riscv_64_main_graph$async_dispatch_44_matmul_like_32x12544x64_f32/process_time/real_time               301 ms         1135 ms            2 items_per_second=3.32636/s
+BM_main_graph$async_dispatch_44_system_elf_riscv_64_main_graph$async_dispatch_44_matmul_like_32x12544x64_f32/process_time/real_time               301 ms         1136 ms            2 items_per_second=3.32687/s
+BM_main_graph$async_dispatch_44_system_elf_riscv_64_main_graph$async_dispatch_44_matmul_like_32x12544x64_f32/process_time/real_time               301 ms         1135 ms            2 items_per_second=3.32632/s
+BM_main_graph$async_dispatch_44_system_elf_riscv_64_main_graph$async_dispatch_44_matmul_like_32x12544x64_f32/process_time/real_time               301 ms         1135 ms            2 items_per_second=3.3272/s
+BM_main_graph$async_dispatch_44_system_elf_riscv_64_main_graph$async_dispatch_44_matmul_like_32x12544x64_f32/process_time/real_time_mean          301 ms         1135 ms           10 items_per_second=3.32551/s
+BM_main_graph$async_dispatch_44_system_elf_riscv_64_main_graph$async_dispatch_44_matmul_like_32x12544x64_f32/process_time/real_time_median        301 ms         1135 ms           10 items_per_second=3.32634/s
+BM_main_graph$async_dispatch_44_system_elf_riscv_64_main_graph$async_dispatch_44_matmul_like_32x12544x64_f32/process_time/real_time_stddev      0.255 ms        0.851 ms           10 items_per_second=2.81924m/s
+BM_main_graph$async_dispatch_44_system_elf_riscv_64_main_graph$async_dispatch_44_matmul_like_32x12544x64_f32/process_time/real_time_cv           0.08 %          0.07 %            10 items_per_second=0.08%

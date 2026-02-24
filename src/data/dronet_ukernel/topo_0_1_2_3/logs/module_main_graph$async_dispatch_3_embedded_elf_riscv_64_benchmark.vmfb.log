@@ -1,0 +1,27 @@
+2026-01-09T13:31:21.102382
+Running tools/iree-benchmark-module --module=/home/dima/sched_vmfb/dronet_ukernel/module_main_graph$async_dispatch_3_embedded_elf_riscv_64_benchmark.vmfb --device=local-task --function=main_graph$async_dispatch_3_embedded_elf_riscv_64_main_graph$async_dispatch_3_conv_32x14x14x32x3x3_f32 --input=1xi32=1 --task_topology_cpu_ids=0,1,2,3 --benchmark_repetitions=10
+2026-01-09T13:31:21+08:00
+Running tools/iree-benchmark-module
+Run on (8 X 1600 MHz CPU s)
+CPU Caches:
+  L1 Instruction 32 KiB (x8)
+  L1 Data 32 KiB (x8)
+  L2 Unified 512 KiB (x2)
+Load Average: 4.60, 3.58, 2.80
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Benchmark                                                                                                                                        Time             CPU   Iterations UserCounters...
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+BM_main_graph$async_dispatch_3_embedded_elf_riscv_64_main_graph$async_dispatch_3_conv_32x14x14x32x3x3_f32/process_time/real_time              3.40 ms         13.2 ms          206 items_per_second=293.945/s
+BM_main_graph$async_dispatch_3_embedded_elf_riscv_64_main_graph$async_dispatch_3_conv_32x14x14x32x3x3_f32/process_time/real_time              3.38 ms         13.2 ms          206 items_per_second=295.642/s
+BM_main_graph$async_dispatch_3_embedded_elf_riscv_64_main_graph$async_dispatch_3_conv_32x14x14x32x3x3_f32/process_time/real_time              3.38 ms         13.2 ms          206 items_per_second=295.906/s
+BM_main_graph$async_dispatch_3_embedded_elf_riscv_64_main_graph$async_dispatch_3_conv_32x14x14x32x3x3_f32/process_time/real_time              3.39 ms         13.2 ms          206 items_per_second=295.172/s
+BM_main_graph$async_dispatch_3_embedded_elf_riscv_64_main_graph$async_dispatch_3_conv_32x14x14x32x3x3_f32/process_time/real_time              3.39 ms         13.2 ms          206 items_per_second=294.9/s
+BM_main_graph$async_dispatch_3_embedded_elf_riscv_64_main_graph$async_dispatch_3_conv_32x14x14x32x3x3_f32/process_time/real_time              3.38 ms         13.2 ms          206 items_per_second=295.673/s
+BM_main_graph$async_dispatch_3_embedded_elf_riscv_64_main_graph$async_dispatch_3_conv_32x14x14x32x3x3_f32/process_time/real_time              3.39 ms         13.2 ms          206 items_per_second=294.875/s
+BM_main_graph$async_dispatch_3_embedded_elf_riscv_64_main_graph$async_dispatch_3_conv_32x14x14x32x3x3_f32/process_time/real_time              3.39 ms         13.2 ms          206 items_per_second=295.087/s
+BM_main_graph$async_dispatch_3_embedded_elf_riscv_64_main_graph$async_dispatch_3_conv_32x14x14x32x3x3_f32/process_time/real_time              3.38 ms         13.2 ms          206 items_per_second=295.744/s
+BM_main_graph$async_dispatch_3_embedded_elf_riscv_64_main_graph$async_dispatch_3_conv_32x14x14x32x3x3_f32/process_time/real_time              3.41 ms         13.2 ms          206 items_per_second=293.476/s
+BM_main_graph$async_dispatch_3_embedded_elf_riscv_64_main_graph$async_dispatch_3_conv_32x14x14x32x3x3_f32/process_time/real_time_mean         3.39 ms         13.2 ms           10 items_per_second=295.042/s
+BM_main_graph$async_dispatch_3_embedded_elf_riscv_64_main_graph$async_dispatch_3_conv_32x14x14x32x3x3_f32/process_time/real_time_median       3.39 ms         13.2 ms           10 items_per_second=295.129/s
+BM_main_graph$async_dispatch_3_embedded_elf_riscv_64_main_graph$async_dispatch_3_conv_32x14x14x32x3x3_f32/process_time/real_time_stddev      0.009 ms        0.007 ms           10 items_per_second=0.797115/s
+BM_main_graph$async_dispatch_3_embedded_elf_riscv_64_main_graph$async_dispatch_3_conv_32x14x14x32x3x3_f32/process_time/real_time_cv           0.27 %          0.05 %            10 items_per_second=0.27%

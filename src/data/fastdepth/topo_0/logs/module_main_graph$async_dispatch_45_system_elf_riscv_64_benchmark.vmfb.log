@@ -1,0 +1,27 @@
+2026-01-08T03:00:41.713853
+Running tools/iree-benchmark-module --module=/home/dima/sched_vmfb/fastdepth/module_main_graph$async_dispatch_45_system_elf_riscv_64_benchmark.vmfb --device=local-task --function=main_graph$async_dispatch_45_system_elf_riscv_64_main_graph$async_dispatch_45_matvec_like_50176x32_f32 --input=1xi32=1 --task_topology_cpu_ids=0 --benchmark_repetitions=10
+2026-01-08T03:00:41+08:00
+Running tools/iree-benchmark-module
+Run on (8 X 1600 MHz CPU s)
+CPU Caches:
+  L1 Instruction 32 KiB (x8)
+  L1 Data 32 KiB (x8)
+  L2 Unified 512 KiB (x2)
+Load Average: 3.04, 3.53, 3.26
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Benchmark                                                                                                                                        Time             CPU   Iterations UserCounters...
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+BM_main_graph$async_dispatch_45_system_elf_riscv_64_main_graph$async_dispatch_45_matvec_like_50176x32_f32/process_time/real_time              16.8 ms         16.8 ms           42 items_per_second=59.4992/s
+BM_main_graph$async_dispatch_45_system_elf_riscv_64_main_graph$async_dispatch_45_matvec_like_50176x32_f32/process_time/real_time              16.9 ms         16.9 ms           42 items_per_second=59.3127/s
+BM_main_graph$async_dispatch_45_system_elf_riscv_64_main_graph$async_dispatch_45_matvec_like_50176x32_f32/process_time/real_time              16.8 ms         16.8 ms           42 items_per_second=59.4457/s
+BM_main_graph$async_dispatch_45_system_elf_riscv_64_main_graph$async_dispatch_45_matvec_like_50176x32_f32/process_time/real_time              16.8 ms         16.8 ms           42 items_per_second=59.4898/s
+BM_main_graph$async_dispatch_45_system_elf_riscv_64_main_graph$async_dispatch_45_matvec_like_50176x32_f32/process_time/real_time              16.9 ms         16.9 ms           42 items_per_second=59.2973/s
+BM_main_graph$async_dispatch_45_system_elf_riscv_64_main_graph$async_dispatch_45_matvec_like_50176x32_f32/process_time/real_time              16.8 ms         16.8 ms           42 items_per_second=59.4847/s
+BM_main_graph$async_dispatch_45_system_elf_riscv_64_main_graph$async_dispatch_45_matvec_like_50176x32_f32/process_time/real_time              16.8 ms         16.8 ms           42 items_per_second=59.4692/s
+BM_main_graph$async_dispatch_45_system_elf_riscv_64_main_graph$async_dispatch_45_matvec_like_50176x32_f32/process_time/real_time              16.9 ms         16.9 ms           42 items_per_second=59.2897/s
+BM_main_graph$async_dispatch_45_system_elf_riscv_64_main_graph$async_dispatch_45_matvec_like_50176x32_f32/process_time/real_time              17.2 ms         17.2 ms           42 items_per_second=58.0692/s
+BM_main_graph$async_dispatch_45_system_elf_riscv_64_main_graph$async_dispatch_45_matvec_like_50176x32_f32/process_time/real_time              17.2 ms         17.2 ms           42 items_per_second=58.2828/s
+BM_main_graph$async_dispatch_45_system_elf_riscv_64_main_graph$async_dispatch_45_matvec_like_50176x32_f32/process_time/real_time_mean         16.9 ms         16.9 ms           10 items_per_second=59.164/s
+BM_main_graph$async_dispatch_45_system_elf_riscv_64_main_graph$async_dispatch_45_matvec_like_50176x32_f32/process_time/real_time_median       16.8 ms         16.8 ms           10 items_per_second=59.3792/s
+BM_main_graph$async_dispatch_45_system_elf_riscv_64_main_graph$async_dispatch_45_matvec_like_50176x32_f32/process_time/real_time_stddev      0.153 ms        0.154 ms           10 items_per_second=0.529627/s
+BM_main_graph$async_dispatch_45_system_elf_riscv_64_main_graph$async_dispatch_45_matvec_like_50176x32_f32/process_time/real_time_cv           0.91 %          0.91 %            10 items_per_second=0.90%

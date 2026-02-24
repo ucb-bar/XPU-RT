@@ -1,0 +1,27 @@
+2026-01-08T02:21:14.791584
+Running tools/iree-benchmark-module --module=/home/dima/sched_vmfb/dronet/module_main_graph$async_dispatch_11_system_elf_riscv_64_benchmark.vmfb --device=local-task --function=main_graph$async_dispatch_11_system_elf_riscv_64_main_graph$async_dispatch_11_conv_128x7x7x128x3x3_f32 --input=1xi32=1 --task_topology_cpu_ids=0,1,2,3 --benchmark_repetitions=10
+2026-01-08T02:21:14+08:00
+Running tools/iree-benchmark-module
+Run on (8 X 1600 MHz CPU s)
+CPU Caches:
+  L1 Instruction 32 KiB (x8)
+  L1 Data 32 KiB (x8)
+  L2 Unified 512 KiB (x2)
+Load Average: 4.00, 2.92, 2.37
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Benchmark                                                                                                                                        Time             CPU   Iterations UserCounters...
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+BM_main_graph$async_dispatch_11_system_elf_riscv_64_main_graph$async_dispatch_11_conv_128x7x7x128x3x3_f32/process_time/real_time              12.1 ms         41.6 ms           58 items_per_second=82.8706/s
+BM_main_graph$async_dispatch_11_system_elf_riscv_64_main_graph$async_dispatch_11_conv_128x7x7x128x3x3_f32/process_time/real_time              12.0 ms         41.6 ms           58 items_per_second=83.2976/s
+BM_main_graph$async_dispatch_11_system_elf_riscv_64_main_graph$async_dispatch_11_conv_128x7x7x128x3x3_f32/process_time/real_time              12.0 ms         41.6 ms           58 items_per_second=83.0317/s
+BM_main_graph$async_dispatch_11_system_elf_riscv_64_main_graph$async_dispatch_11_conv_128x7x7x128x3x3_f32/process_time/real_time              12.2 ms         41.6 ms           58 items_per_second=82.2558/s
+BM_main_graph$async_dispatch_11_system_elf_riscv_64_main_graph$async_dispatch_11_conv_128x7x7x128x3x3_f32/process_time/real_time              12.1 ms         41.6 ms           58 items_per_second=82.7289/s
+BM_main_graph$async_dispatch_11_system_elf_riscv_64_main_graph$async_dispatch_11_conv_128x7x7x128x3x3_f32/process_time/real_time              12.1 ms         41.6 ms           58 items_per_second=82.939/s
+BM_main_graph$async_dispatch_11_system_elf_riscv_64_main_graph$async_dispatch_11_conv_128x7x7x128x3x3_f32/process_time/real_time              12.1 ms         41.7 ms           58 items_per_second=82.75/s
+BM_main_graph$async_dispatch_11_system_elf_riscv_64_main_graph$async_dispatch_11_conv_128x7x7x128x3x3_f32/process_time/real_time              12.0 ms         41.6 ms           58 items_per_second=83.2107/s
+BM_main_graph$async_dispatch_11_system_elf_riscv_64_main_graph$async_dispatch_11_conv_128x7x7x128x3x3_f32/process_time/real_time              12.0 ms         41.6 ms           58 items_per_second=83.2806/s
+BM_main_graph$async_dispatch_11_system_elf_riscv_64_main_graph$async_dispatch_11_conv_128x7x7x128x3x3_f32/process_time/real_time              12.1 ms         41.6 ms           58 items_per_second=82.4255/s
+BM_main_graph$async_dispatch_11_system_elf_riscv_64_main_graph$async_dispatch_11_conv_128x7x7x128x3x3_f32/process_time/real_time_mean         12.1 ms         41.6 ms           10 items_per_second=82.8791/s
+BM_main_graph$async_dispatch_11_system_elf_riscv_64_main_graph$async_dispatch_11_conv_128x7x7x128x3x3_f32/process_time/real_time_median       12.1 ms         41.6 ms           10 items_per_second=82.9048/s
+BM_main_graph$async_dispatch_11_system_elf_riscv_64_main_graph$async_dispatch_11_conv_128x7x7x128x3x3_f32/process_time/real_time_stddev      0.051 ms        0.031 ms           10 items_per_second=0.35067/s
+BM_main_graph$async_dispatch_11_system_elf_riscv_64_main_graph$async_dispatch_11_conv_128x7x7x128x3x3_f32/process_time/real_time_cv           0.42 %          0.07 %            10 items_per_second=0.42%

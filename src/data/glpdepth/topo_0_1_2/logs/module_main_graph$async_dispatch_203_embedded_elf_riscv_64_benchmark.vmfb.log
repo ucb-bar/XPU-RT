@@ -1,0 +1,27 @@
+2026-01-08T12:45:00.345230
+Running tools/iree-benchmark-module --module=/home/dima/sched_vmfb/glpdepth/module_main_graph$async_dispatch_203_embedded_elf_riscv_64_benchmark.vmfb --device=local-task --function=main_graph$async_dispatch_203_embedded_elf_riscv_64_main_graph$async_dispatch_203_elementwise_broadcast_200704_f32 --input=1xi32=1 --task_topology_cpu_ids=0,1,2 --benchmark_repetitions=10
+2026-01-08T12:45:00+08:00
+Running tools/iree-benchmark-module
+Run on (8 X 1600 MHz CPU s)
+CPU Caches:
+  L1 Instruction 32 KiB (x8)
+  L1 Data 32 KiB (x8)
+  L2 Unified 512 KiB (x2)
+Load Average: 4.71, 4.34, 3.87
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Benchmark                                                                                                                                                    Time             CPU   Iterations UserCounters...
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+BM_main_graph$async_dispatch_203_embedded_elf_riscv_64_main_graph$async_dispatch_203_elementwise_broadcast_200704_f32/process_time/real_time              3.30 ms         9.18 ms          212 items_per_second=303.036/s
+BM_main_graph$async_dispatch_203_embedded_elf_riscv_64_main_graph$async_dispatch_203_elementwise_broadcast_200704_f32/process_time/real_time              3.30 ms         9.19 ms          212 items_per_second=302.806/s
+BM_main_graph$async_dispatch_203_embedded_elf_riscv_64_main_graph$async_dispatch_203_elementwise_broadcast_200704_f32/process_time/real_time              3.39 ms         9.22 ms          212 items_per_second=294.635/s
+BM_main_graph$async_dispatch_203_embedded_elf_riscv_64_main_graph$async_dispatch_203_elementwise_broadcast_200704_f32/process_time/real_time              3.38 ms         9.25 ms          212 items_per_second=296.131/s
+BM_main_graph$async_dispatch_203_embedded_elf_riscv_64_main_graph$async_dispatch_203_elementwise_broadcast_200704_f32/process_time/real_time              3.42 ms         9.25 ms          212 items_per_second=292.494/s
+BM_main_graph$async_dispatch_203_embedded_elf_riscv_64_main_graph$async_dispatch_203_elementwise_broadcast_200704_f32/process_time/real_time              3.37 ms         9.24 ms          212 items_per_second=296.673/s
+BM_main_graph$async_dispatch_203_embedded_elf_riscv_64_main_graph$async_dispatch_203_elementwise_broadcast_200704_f32/process_time/real_time              3.40 ms         9.24 ms          212 items_per_second=293.987/s
+BM_main_graph$async_dispatch_203_embedded_elf_riscv_64_main_graph$async_dispatch_203_elementwise_broadcast_200704_f32/process_time/real_time              3.36 ms         9.24 ms          212 items_per_second=297.406/s
+BM_main_graph$async_dispatch_203_embedded_elf_riscv_64_main_graph$async_dispatch_203_elementwise_broadcast_200704_f32/process_time/real_time              3.34 ms         9.24 ms          212 items_per_second=299.149/s
+BM_main_graph$async_dispatch_203_embedded_elf_riscv_64_main_graph$async_dispatch_203_elementwise_broadcast_200704_f32/process_time/real_time              3.35 ms         9.25 ms          212 items_per_second=298.399/s
+BM_main_graph$async_dispatch_203_embedded_elf_riscv_64_main_graph$async_dispatch_203_elementwise_broadcast_200704_f32/process_time/real_time_mean         3.36 ms         9.23 ms           10 items_per_second=297.472/s
+BM_main_graph$async_dispatch_203_embedded_elf_riscv_64_main_graph$async_dispatch_203_elementwise_broadcast_200704_f32/process_time/real_time_median       3.37 ms         9.24 ms           10 items_per_second=297.039/s
+BM_main_graph$async_dispatch_203_embedded_elf_riscv_64_main_graph$async_dispatch_203_elementwise_broadcast_200704_f32/process_time/real_time_stddev      0.039 ms        0.026 ms           10 items_per_second=3.5039/s
+BM_main_graph$async_dispatch_203_embedded_elf_riscv_64_main_graph$async_dispatch_203_elementwise_broadcast_200704_f32/process_time/real_time_cv           1.17 %          0.28 %            10 items_per_second=1.18%

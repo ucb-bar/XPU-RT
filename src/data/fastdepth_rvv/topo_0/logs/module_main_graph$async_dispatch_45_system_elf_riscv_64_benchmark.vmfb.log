@@ -1,0 +1,27 @@
+2026-01-09T12:21:56.348057
+Running tools/iree-benchmark-module --module=/home/dima/sched_vmfb/fastdepth_rvv/module_main_graph$async_dispatch_45_system_elf_riscv_64_benchmark.vmfb --device=local-task --function=main_graph$async_dispatch_45_system_elf_riscv_64_main_graph$async_dispatch_45_matvec_like_50176x32_f32 --input=1xi32=1 --task_topology_cpu_ids=0 --benchmark_repetitions=10
+2026-01-09T12:21:56+08:00
+Running tools/iree-benchmark-module
+Run on (8 X 1600 MHz CPU s)
+CPU Caches:
+  L1 Instruction 32 KiB (x8)
+  L1 Data 32 KiB (x8)
+  L2 Unified 512 KiB (x2)
+Load Average: 3.09, 2.71, 2.57
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Benchmark                                                                                                                                        Time             CPU   Iterations UserCounters...
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+BM_main_graph$async_dispatch_45_system_elf_riscv_64_main_graph$async_dispatch_45_matvec_like_50176x32_f32/process_time/real_time              23.8 ms         23.9 ms           29 items_per_second=41.9387/s
+BM_main_graph$async_dispatch_45_system_elf_riscv_64_main_graph$async_dispatch_45_matvec_like_50176x32_f32/process_time/real_time              23.8 ms         23.8 ms           29 items_per_second=42.057/s
+BM_main_graph$async_dispatch_45_system_elf_riscv_64_main_graph$async_dispatch_45_matvec_like_50176x32_f32/process_time/real_time              23.8 ms         23.8 ms           29 items_per_second=42.0964/s
+BM_main_graph$async_dispatch_45_system_elf_riscv_64_main_graph$async_dispatch_45_matvec_like_50176x32_f32/process_time/real_time              23.9 ms         23.9 ms           29 items_per_second=41.9223/s
+BM_main_graph$async_dispatch_45_system_elf_riscv_64_main_graph$async_dispatch_45_matvec_like_50176x32_f32/process_time/real_time              23.8 ms         23.8 ms           29 items_per_second=42.0459/s
+BM_main_graph$async_dispatch_45_system_elf_riscv_64_main_graph$async_dispatch_45_matvec_like_50176x32_f32/process_time/real_time              23.8 ms         23.8 ms           29 items_per_second=42.0905/s
+BM_main_graph$async_dispatch_45_system_elf_riscv_64_main_graph$async_dispatch_45_matvec_like_50176x32_f32/process_time/real_time              23.8 ms         23.9 ms           29 items_per_second=41.9288/s
+BM_main_graph$async_dispatch_45_system_elf_riscv_64_main_graph$async_dispatch_45_matvec_like_50176x32_f32/process_time/real_time              23.8 ms         23.8 ms           29 items_per_second=42.0539/s
+BM_main_graph$async_dispatch_45_system_elf_riscv_64_main_graph$async_dispatch_45_matvec_like_50176x32_f32/process_time/real_time              23.8 ms         23.9 ms           29 items_per_second=41.9353/s
+BM_main_graph$async_dispatch_45_system_elf_riscv_64_main_graph$async_dispatch_45_matvec_like_50176x32_f32/process_time/real_time              23.8 ms         23.8 ms           29 items_per_second=42.0677/s
+BM_main_graph$async_dispatch_45_system_elf_riscv_64_main_graph$async_dispatch_45_matvec_like_50176x32_f32/process_time/real_time_mean         23.8 ms         23.8 ms           10 items_per_second=42.0136/s
+BM_main_graph$async_dispatch_45_system_elf_riscv_64_main_graph$async_dispatch_45_matvec_like_50176x32_f32/process_time/real_time_median       23.8 ms         23.8 ms           10 items_per_second=42.0499/s
+BM_main_graph$async_dispatch_45_system_elf_riscv_64_main_graph$async_dispatch_45_matvec_like_50176x32_f32/process_time/real_time_stddev      0.041 ms        0.042 ms           10 items_per_second=0.0726691/s
+BM_main_graph$async_dispatch_45_system_elf_riscv_64_main_graph$async_dispatch_45_matvec_like_50176x32_f32/process_time/real_time_cv           0.17 %          0.17 %            10 items_per_second=0.17%

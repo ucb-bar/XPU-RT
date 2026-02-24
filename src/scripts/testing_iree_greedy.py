@@ -18,7 +18,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from workload import Workload, Operation
 from workload_factory import create_workload_from_dependencies
 import plot
-from validate_schedule import validate_schedule
+from schedule_validation import overlap_fixer, count_overlaps, validate_schedule
 
 class OperationWithCombinations(Operation):
     """
@@ -890,12 +890,8 @@ def schedule_iree_networks(use_glpdepth=False, use_profiled=False, use_grouped=F
     base_path = os.path.join(
         script_dir, 
         '..', 
-        '..', 
-        'merlin', 
-        'samples', 
-        'robotic-NN', 
         'pytorch_workload', 
-        'computation_graph'
+        'samples'
     )
     
     # Select first network based on argument

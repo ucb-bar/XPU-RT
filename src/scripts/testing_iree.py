@@ -219,12 +219,8 @@ def schedule_iree_networks(use_glpdepth=False):
     base_path = os.path.join(
         script_dir, 
         '..', 
-        '..', 
-        'merlin', 
-        'samples', 
-        'robotic-NN', 
         'pytorch_workload', 
-        'computation_graph'
+        'samples'
     )
     
     # Select first network based on argument

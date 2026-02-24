@@ -1,0 +1,27 @@
+2026-01-08T12:08:32.113111
+Running tools/iree-benchmark-module --module=/home/dima/sched_vmfb/glpdepth/module_main_graph$async_dispatch_12_embedded_elf_riscv_64_benchmark.vmfb --device=local-task --function=main_graph$async_dispatch_12_embedded_elf_riscv_64_main_graph$async_dispatch_12_softmax_3136x49xf32_dispatch_tensor_store --input=1xi32=1 --task_topology_cpu_ids=0 --benchmark_repetitions=10
+2026-01-08T12:08:32+08:00
+Running tools/iree-benchmark-module
+Run on (8 X 1600 MHz CPU s)
+CPU Caches:
+  L1 Instruction 32 KiB (x8)
+  L1 Data 32 KiB (x8)
+  L2 Unified 512 KiB (x2)
+Load Average: 3.03, 2.58, 2.27
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Benchmark                                                                                                                                                           Time             CPU   Iterations UserCounters...
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+BM_main_graph$async_dispatch_12_embedded_elf_riscv_64_main_graph$async_dispatch_12_softmax_3136x49xf32_dispatch_tensor_store/process_time/real_time              6.18 ms         6.19 ms          114 items_per_second=161.893/s
+BM_main_graph$async_dispatch_12_embedded_elf_riscv_64_main_graph$async_dispatch_12_softmax_3136x49xf32_dispatch_tensor_store/process_time/real_time              6.17 ms         6.18 ms          114 items_per_second=162.12/s
+BM_main_graph$async_dispatch_12_embedded_elf_riscv_64_main_graph$async_dispatch_12_softmax_3136x49xf32_dispatch_tensor_store/process_time/real_time              6.26 ms         6.18 ms          114 items_per_second=159.839/s
+BM_main_graph$async_dispatch_12_embedded_elf_riscv_64_main_graph$async_dispatch_12_softmax_3136x49xf32_dispatch_tensor_store/process_time/real_time              6.28 ms         6.22 ms          114 items_per_second=159.345/s
+BM_main_graph$async_dispatch_12_embedded_elf_riscv_64_main_graph$async_dispatch_12_softmax_3136x49xf32_dispatch_tensor_store/process_time/real_time              6.35 ms         6.33 ms          114 items_per_second=157.57/s
+BM_main_graph$async_dispatch_12_embedded_elf_riscv_64_main_graph$async_dispatch_12_softmax_3136x49xf32_dispatch_tensor_store/process_time/real_time              6.35 ms         6.35 ms          114 items_per_second=157.587/s
+BM_main_graph$async_dispatch_12_embedded_elf_riscv_64_main_graph$async_dispatch_12_softmax_3136x49xf32_dispatch_tensor_store/process_time/real_time              6.35 ms         6.35 ms          114 items_per_second=157.473/s
+BM_main_graph$async_dispatch_12_embedded_elf_riscv_64_main_graph$async_dispatch_12_softmax_3136x49xf32_dispatch_tensor_store/process_time/real_time              6.32 ms         6.28 ms          114 items_per_second=158.261/s
+BM_main_graph$async_dispatch_12_embedded_elf_riscv_64_main_graph$async_dispatch_12_softmax_3136x49xf32_dispatch_tensor_store/process_time/real_time              6.29 ms         6.31 ms          114 items_per_second=158.857/s
+BM_main_graph$async_dispatch_12_embedded_elf_riscv_64_main_graph$async_dispatch_12_softmax_3136x49xf32_dispatch_tensor_store/process_time/real_time              6.31 ms         6.25 ms          114 items_per_second=158.55/s
+BM_main_graph$async_dispatch_12_embedded_elf_riscv_64_main_graph$async_dispatch_12_softmax_3136x49xf32_dispatch_tensor_store/process_time/real_time_mean         6.28 ms         6.26 ms           10 items_per_second=159.15/s
+BM_main_graph$async_dispatch_12_embedded_elf_riscv_64_main_graph$async_dispatch_12_softmax_3136x49xf32_dispatch_tensor_store/process_time/real_time_median       6.30 ms         6.27 ms           10 items_per_second=158.704/s
+BM_main_graph$async_dispatch_12_embedded_elf_riscv_64_main_graph$async_dispatch_12_softmax_3136x49xf32_dispatch_tensor_store/process_time/real_time_stddev      0.066 ms        0.068 ms           10 items_per_second=1.69464/s
+BM_main_graph$async_dispatch_12_embedded_elf_riscv_64_main_graph$async_dispatch_12_softmax_3136x49xf32_dispatch_tensor_store/process_time/real_time_cv           1.06 %          1.08 %            10 items_per_second=1.06%
