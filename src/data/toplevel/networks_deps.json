@@ -1,0 +1,52 @@
+{
+  "networks": {
+    "dronet": {
+      "id": 0,
+      "identifier": "dronet",
+      "dispatch_deps_path": "merlin/samples/robotic-NN/pytorch_workload/computation_graph/dronet_dispatch_deps.json"
+    },
+    "mlp0": {
+      "id": 1,
+      "identifier": "mlp0",
+      "dispatch_deps_path": "merlin/samples/robotic-NN/pytorch_workload/computation_graph/mlp_dispatch_deps.json"
+    },
+    "mlp1": {
+      "id": 2,
+      "identifier": "mlp1",
+      "dispatch_deps_path": "merlin/samples/robotic-NN/pytorch_workload/computation_graph/mlp_dispatch_deps.json"
+    },
+    "mlp2": {
+      "id": 3,
+      "identifier": "mlp2",
+      "dispatch_deps_path": "merlin/samples/robotic-NN/pytorch_workload/computation_graph/mlp_dispatch_deps.json"
+    },
+    "mlp3": {
+      "id": 4,
+      "identifier": "mlp3",
+      "dispatch_deps_path": "merlin/samples/robotic-NN/pytorch_workload/computation_graph/mlp_dispatch_deps.json"
+    },
+    "mlp4": {
+      "id": 5,
+      "identifier": "mlp4",
+      "dispatch_deps_path": "merlin/samples/robotic-NN/pytorch_workload/computation_graph/mlp_dispatch_deps.json"
+    }
+  },
+  "edges": [
+    {
+      "from": "mlp0",
+      "to": "mlp1"
+    },
+    {
+      "from": "mlp1",
+      "to": "mlp2"
+    },
+    {
+      "from": "mlp2",
+      "to": "mlp3"
+    },
+    {
+      "from": "mlp3",
+      "to": "mlp4"
+    }
+  ]
+}

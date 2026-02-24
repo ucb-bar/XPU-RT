@@ -1,6 +1,8 @@
 from workload import Workload, Job, Operation, Window
 import numpy as np
-from typing import Tuple, Dict, List
+import json
+import os
+from typing import Tuple, Dict, List, Optional, Callable
 from constants import NOT_SUPPORTED
 
 def generate_syn_transfer_times(n_machines: int, max_transfer_time: int=500) -> np.ndarray:
@@ -184,3 +186,193 @@ def create_workload_from_dependencies(
         job_names = [f"Job {i}" for i in range(num_jobs)]
     
     return Workload(operations, machines, transfer_times, job_names=job_names)
+
+def create_workload_from_network_hierarchy(
+    networks_data: Dict,
+    repo_base_path: str,
+    machines: List[str],
+    transfer_times: np.ndarray,
+    processing_times: Optional[Dict[str, List[float]]] = None,
+    processing_time_generator: Optional[Callable[[str, str], List[float]]] = None,
+    p_core_speedup: float = 1.5
+) -> Workload:
+    """
+    Creates a workload from a hierarchical network dependencies structure.
+    This function handles two levels:
+    1. Top level: Networks with dependencies between networks
+    2. Sub level: Dispatches within each network with dependencies between dispatches
+    
+    Parameters:
+    - networks_data: Dictionary with 'networks' and 'edges' keys:
+        * 'networks': Dict mapping network identifier to network info (id, identifier, dispatch_deps_path)
+        * 'edges': List of edges between networks [{"from": "network1", "to": "network2"}]
+    - repo_base_path: Base path of the repository (paths in networks_data are relative to this)
+    - machines: List of machine names
+    - transfer_times: Matrix of transfer times between machines
+    - processing_times: Optional dict mapping dispatch names (with prefix) to processing times.
+                       If None, will use processing_time_generator or generate synthetic times.
+    - processing_time_generator: Optional function(network_identifier, dispatch_name) -> List[float]
+                                to generate processing times. If None, uses synthetic generation.
+    - p_core_speedup: Speedup factor for P-core vs E-core (used for synthetic generation)
+    
+    Returns:
+    - Combined Workload object with all operations from all networks, linked according to
+      both network-level and dispatch-level dependencies
+    """
+    networks = networks_data.get('networks', {})
+    network_edges = networks_data.get('edges', [])
+    
+    # Map to store operations for each network
+    network_operations_map: Dict[str, List[Operation]] = {}
+    # Map to store all operations by their prefixed names
+    all_operations_map: Dict[str, Operation] = {}
+    # Map network identifier to its job_id
+    network_job_ids: Dict[str, int] = {}
+    # Map network identifier to its job name
+    network_job_names: Dict[str, str] = {}
+    
+    # First pass: Load each network's dispatch graph and create operations
+    for network_identifier, network_info in networks.items():
+        network_id = network_info.get('id', 0)
+        dispatch_deps_path = network_info.get('dispatch_deps_path', '')
+        
+        # Resolve path relative to repo base
+        full_dispatch_path = os.path.join(repo_base_path, dispatch_deps_path)
+        
+        if not os.path.exists(full_dispatch_path):
+            raise FileNotFoundError(f"Dispatch dependencies file not found: {full_dispatch_path}")
+        
+        # Load dispatch dependencies JSON
+        with open(full_dispatch_path, 'r') as f:
+            dispatch_data = json.load(f)
+        
+        dispatches = dispatch_data.get('dispatches', {})
+        network_prefix = f"{network_identifier}_"
+        
+        # Store job_id and job_name for this network
+        network_job_ids[network_identifier] = network_id
+        network_job_names[network_identifier] = network_info.get('identifier', network_identifier)
+        
+        # Create operations for dispatches in this network
+        network_ops_map: Dict[str, Operation] = {}
+        
+        for dispatch_name, dispatch_info in dispatches.items():
+            # Create prefixed dispatch name to avoid conflicts
+            prefixed_dispatch_name = f"{network_prefix}{dispatch_name}"
+            
+            # Get processing times
+            if processing_times and prefixed_dispatch_name in processing_times:
+                proc_times = processing_times[prefixed_dispatch_name]
+            elif processing_time_generator:
+                proc_times = processing_time_generator(network_identifier, dispatch_name)
+            else:
+                # Generate synthetic processing times
+                # Use random P-core time in milliseconds (2-10 ms range)
+                p_ms_synth = float(np.random.uniform(2.0, 10.0))
+                cpu_p_time = p_ms_synth
+                cpu_e_time = p_ms_synth * p_core_speedup
+                proc_times = [cpu_p_time, cpu_e_time] if len(machines) == 2 else [np.random.uniform(2.0, 10.0) for _ in machines]
+            
+            # Extract dispatch ID and create operation
+            dispatch_id = dispatch_info.get('id', None)
+            operation = Operation(
+                proc_times,
+                operation_id=dispatch_id,
+                operation_name=prefixed_dispatch_name,
+                job_id=network_id
+            )
+            
+            network_ops_map[dispatch_name] = operation
+            all_operations_map[prefixed_dispatch_name] = operation
+        
+        # Set up dispatch-level dependencies within this network
+        for dispatch_name, dispatch_info in dispatches.items():
+            dependencies = dispatch_info.get('dependencies', [])
+            operation = network_ops_map[dispatch_name]
+            
+            for dep_name in dependencies:
+                if dep_name in network_ops_map:
+                    # Dependency is within the same network
+                    operation.add_predecessor(network_ops_map[dep_name])
+                elif f"{network_prefix}{dep_name}" in all_operations_map:
+                    # Dependency might be from a prefixed name (shouldn't happen in normal case)
+                    operation.add_predecessor(all_operations_map[f"{network_prefix}{dep_name}"])
+        
+        # Store operations for this network
+        network_operations_map[network_identifier] = list(network_ops_map.values())
+    
+    # Second pass: Set up network-level dependencies
+    # For each edge (from_network -> to_network):
+    #   - Find last operations in from_network (operations with no successors within that network)
+    #   - Find first operations in to_network (operations with no predecessors within that network)
+    #   - Make first operations of to_network depend on last operations of from_network
+    
+    for edge in network_edges:
+        from_network = edge.get('from')
+        to_network = edge.get('to')
+        
+        if from_network not in network_operations_map or to_network not in network_operations_map:
+            continue
+        
+        from_ops = network_operations_map[from_network]
+        to_ops = network_operations_map[to_network]
+        
+        # Find last operations in from_network (not predecessors of any other operation in that network)
+        from_last_ops = []
+        from_ops_set = set(from_ops)
+        for op in from_ops:
+            is_predecessor = False
+            for other_op in from_ops:
+                if op in other_op.predecessors:
+                    is_predecessor = True
+                    break
+            if not is_predecessor:
+                from_last_ops.append(op)
+        
+        # If no explicit last operations found, use all operations (fallback)
+        if not from_last_ops:
+            from_last_ops = from_ops
+        
+        # Find first operations in to_network (operations with no predecessors within that network)
+        # Check only within-network predecessors by comparing job_id
+        to_network_job_id = network_job_ids.get(to_network, 0)
+        to_first_ops = [
+            op for op in to_ops 
+            if not any(pred.job_id == to_network_job_id for pred in op.predecessors)
+        ]
+        
+        # If no first operations found, use the first operation (fallback)
+        if not to_first_ops:
+            to_first_ops = [to_ops[0]] if to_ops else []
+        
+        # Add dependencies: each first operation of to_network depends on all last operations of from_network
+        for to_op in to_first_ops:
+            for from_op in from_last_ops:
+                to_op.add_predecessor(from_op)
+    
+    # Collect all operations
+    all_operations = []
+    for network_ops in network_operations_map.values():
+        all_operations.extend(network_ops)
+    
+    # Create job names list (ordered by job_id)
+    # Group networks by job_id (in case multiple networks share the same job_id)
+    job_id_to_names: Dict[int, List[str]] = {}
+    for network_identifier, job_id in network_job_ids.items():
+        if job_id not in job_id_to_names:
+            job_id_to_names[job_id] = []
+        job_name = network_job_names[network_identifier]
+        if job_name not in job_id_to_names[job_id]:
+            job_id_to_names[job_id].append(job_name)
+    
+    # Create ordered job names list
+    max_job_id = max(network_job_ids.values()) if network_job_ids else 0
+    job_names = []
+    for job_id in range(max_job_id + 1):
+        if job_id in job_id_to_names:
+            # Use first name if multiple networks share same job_id
+            job_names.append(job_id_to_names[job_id][0])
+        else:
+            job_names.append(f"Job {job_id}")
+    
+    return Workload(all_operations, machines, transfer_times, job_names=job_names)
