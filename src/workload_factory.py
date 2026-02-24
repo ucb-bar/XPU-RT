@@ -194,7 +194,8 @@ def create_workload_from_network_hierarchy(
     transfer_times: np.ndarray,
     processing_times: Optional[Dict[str, List[float]]] = None,
     processing_time_generator: Optional[Callable[[str, str], List[float]]] = None,
-    p_core_speedup: float = 1.5
+    p_core_speedup: float = 1.5,
+    random_seed: Optional[int] = 0,
 ) -> Workload:
     """
     Creates a workload from a hierarchical network dependencies structure.
@@ -220,6 +221,8 @@ def create_workload_from_network_hierarchy(
     - processing_time_generator: Optional function(network_identifier, dispatch_name) -> List[float]
                                 to generate processing times. If None, uses synthetic generation.
     - p_core_speedup: Speedup factor for P-core vs E-core (used for synthetic generation)
+    - random_seed: Seed for synthetic runtime generation. If None, uses nondeterministic randomness.
+                   Defaults to 0 for reproducible schedules.
     
     Returns:
     - Combined Workload object with all operations from all networks, linked according to
@@ -227,10 +230,13 @@ def create_workload_from_network_hierarchy(
     """
     networks = networks_data.get('networks', {})
     network_edges = networks_data.get('edges', [])
+
+    # Random number generator for synthetic processing times
+    rng = np.random.default_rng(random_seed)
     
     # Expand periodic networks into multiple instances
     # Fixed number of instances for now (will be calculated later)
-    NUM_PERIODIC_INSTANCES = 5
+    NUM_PERIODIC_INSTANCES = 10
     
     expanded_networks: Dict[str, Dict] = {}
     periodic_network_to_instances: Dict[str, List[str]] = {}  # Maps periodic network -> list of instance identifiers
@@ -269,10 +275,10 @@ def create_workload_from_network_hierarchy(
                         periodic_processing_times_cache[cache_key] = processing_time_generator(network_identifier, dispatch_name)
                     else:
                         # Generate synthetic processing times (same for all instances)
-                        p_ms_synth = float(np.random.uniform(2.0, 10.0))
+                        p_ms_synth = float(rng.uniform(2.0, 10.0))
                         cpu_p_time = p_ms_synth
                         cpu_e_time = p_ms_synth * p_core_speedup
-                        proc_times = [cpu_p_time, cpu_e_time] if len(machines) == 2 else [np.random.uniform(2.0, 10.0) for _ in machines]
+                        proc_times = [cpu_p_time, cpu_e_time] if len(machines) == 2 else [float(rng.uniform(2.0, 10.0)) for _ in machines]
                         periodic_processing_times_cache[cache_key] = proc_times
             
             # Expand periodic network into multiple instances
@@ -396,10 +402,10 @@ def create_workload_from_network_hierarchy(
                     proc_times = periodic_processing_times_cache[cache_key]
                 else:
                     # Fallback: generate synthetic (shouldn't happen if pre-generation worked)
-                    p_ms_synth = float(np.random.uniform(2.0, 10.0))
+                    p_ms_synth = float(rng.uniform(2.0, 10.0))
                     cpu_p_time = p_ms_synth
                     cpu_e_time = p_ms_synth * p_core_speedup
-                    proc_times = [cpu_p_time, cpu_e_time] if len(machines) == 2 else [np.random.uniform(2.0, 10.0) for _ in machines]
+                    proc_times = [cpu_p_time, cpu_e_time] if len(machines) == 2 else [float(rng.uniform(2.0, 10.0)) for _ in machines]
             elif processing_times and prefixed_dispatch_name in processing_times:
                 proc_times = processing_times[prefixed_dispatch_name]
             elif processing_time_generator:
@@ -407,10 +413,10 @@ def create_workload_from_network_hierarchy(
             else:
                 # Generate synthetic processing times
                 # Use random P-core time in milliseconds (2-10 ms range)
-                p_ms_synth = float(np.random.uniform(2.0, 10.0))
+                p_ms_synth = float(rng.uniform(2.0, 10.0))
                 cpu_p_time = p_ms_synth
                 cpu_e_time = p_ms_synth * p_core_speedup
-                proc_times = [cpu_p_time, cpu_e_time] if len(machines) == 2 else [np.random.uniform(2.0, 10.0) for _ in machines]
+                proc_times = [cpu_p_time, cpu_e_time] if len(machines) == 2 else [float(rng.uniform(2.0, 10.0)) for _ in machines]
             
             # Extract dispatch ID and create operation
             # Inherit time constraints from network if present

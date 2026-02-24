@@ -23,7 +23,7 @@ def load_networks_graph(json_path: str) -> dict:
     with open(json_path, 'r') as f:
         return json.load(f)
 
-def schedule_iree_networks(networks_json_path: str = None, solver_verbosity: int = 0, time_limit: float = None):
+def schedule_iree_networks(networks_json_path: str = None, solver_verbosity: int = 0, time_limit: float = None, random_seed: int | None = 0):
     """
     Main function to schedule networks from a hierarchical network dependencies JSON file.
     
@@ -83,7 +83,8 @@ def schedule_iree_networks(networks_json_path: str = None, solver_verbosity: int
         repo_base_path=repo_base_path,
         machines=machines,
         transfer_times=transfer_times,
-        p_core_speedup=1.5
+        p_core_speedup=1.5,
+        random_seed=random_seed,
     )
     
     print(f"\nWorkload created successfully!")
@@ -193,11 +194,20 @@ if __name__ == "__main__":
         default=None,
         help="Maximum optimization time in seconds. MOSEK will return the best solution found within this time limit.",
     )
+    parser.add_argument(
+        "--random-seed",
+        type=int,
+        default=0,
+        help="Seed for synthetic runtime generation (default: 0 for reproducible results). Use -1 for nondeterministic.",
+    )
     args = parser.parse_args()
+
+    seed = None if args.random_seed is not None and args.random_seed < 0 else args.random_seed
     
     schedule_iree_networks(
         networks_json_path=args.networks_json,
         solver_verbosity=args.solver_verbosity,
-        time_limit=args.time_limit
+        time_limit=args.time_limit,
+        random_seed=seed,
     )
 
