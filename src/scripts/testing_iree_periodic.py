@@ -23,6 +23,82 @@ def load_networks_graph(json_path: str) -> dict:
     with open(json_path, 'r') as f:
         return json.load(f)
 
+
+def _trim_periodic_after_nonperiodic_makespan(workload: Workload, t: np.ndarray, alpha: np.ndarray) -> tuple[Workload, np.ndarray, np.ndarray]:
+    """
+    Post-process the schedule to discard periodic/background operations that occur
+    entirely after the last non-periodic operation completes.
+    
+    An operation is considered periodic/background if it has a time-window bound
+    (min_start_t or max_end_t set). Non-periodic operations have both as None.
+    
+    We:
+      1) Compute the makespan over non-periodic operations only.
+      2) Drop any periodic operation whose window starts at or after this makespan.
+         (i.e., its period does not overlap the non-periodic makespan interval).
+    """
+    if t is None or alpha is None or len(workload.operations) == 0:
+        return workload, t, alpha
+
+    # 1) Compute makespan over non-periodic operations
+    nonperiodic_completion_times: list[float] = []
+    for i, op in enumerate(workload.operations):
+        is_periodic = (getattr(op, "min_start_t", None) is not None) or (getattr(op, "max_end_t", None) is not None)
+        if is_periodic:
+            continue
+        # Completion time based on chosen machine
+        combo_idx = int(np.argmax(alpha[i]))
+        dur = op.get_duration_for_combination(combo_idx, workload.get_machine_combinations(), workload.machines)
+        nonperiodic_completion_times.append(float(t[i] + dur))
+
+    if not nonperiodic_completion_times:
+        # No non-periodic ops: nothing to trim
+        return workload, t, alpha
+
+    nonperiodic_makespan = max(nonperiodic_completion_times)
+
+    # 2) Build keep mask: always keep non-periodic ops; for periodic, keep only
+    #    those whose window overlaps [0, nonperiodic_makespan).
+    keep_indices: list[int] = []
+    for i, op in enumerate(workload.operations):
+        min_start_t = getattr(op, "min_start_t", None)
+        max_end_t = getattr(op, "max_end_t", None)
+        is_periodic = (min_start_t is not None) or (max_end_t is not None)
+
+        if not is_periodic:
+            keep_indices.append(i)
+            continue
+
+        # If no explicit window, treat as non-periodic (already handled above).
+        if min_start_t is None or max_end_t is None:
+            keep_indices.append(i)
+            continue
+
+        # Period window [min_start_t, max_end_t) overlaps [0, nonperiodic_makespan) iff:
+        #   min_start_t < nonperiodic_makespan and max_end_t > 0
+        if (min_start_t < nonperiodic_makespan) and (max_end_t > 0):
+            keep_indices.append(i)
+        # else: drop this periodic op (it is entirely after the relevant horizon)
+
+    if len(keep_indices) == len(workload.operations):
+        # Nothing trimmed
+        return workload, t, alpha
+
+    # Build trimmed workload and schedule arrays
+    trimmed_ops = [workload.operations[i] for i in keep_indices]
+    trimmed_t = np.array([t[i] for i in keep_indices])
+    trimmed_alpha = np.array([alpha[i] for i in keep_indices])
+
+    trimmed_workload = Workload(
+        trimmed_ops,
+        workload.machines,
+        workload.transfer_times,
+        job_names=workload.job_names,
+        machine_combinations=workload.machine_combinations,
+    )
+
+    return trimmed_workload, trimmed_t, trimmed_alpha
+
 def schedule_iree_networks(networks_json_path: str = None, solver_verbosity: int = 0, time_limit: float = None, random_seed: int | None = 0):
     """
     Main function to schedule networks from a hierarchical network dependencies JSON file.
@@ -108,6 +184,10 @@ def schedule_iree_networks(networks_json_path: str = None, solver_verbosity: int
     print("=" * 60)
     result = schedule(combined_workload, solver_verbosity=solver_verbosity, time_limit=time_limit)
     t, alpha, _, _ = result  # Always returns 4 values now
+
+    # Post-process schedule: trim periodic/background operations that occur
+    # entirely after the non-periodic makespan.
+    combined_workload, t, alpha = _trim_periodic_after_nonperiodic_makespan(combined_workload, t, alpha)
     
     # Calculate makespan
     makespan = max(t[i] + combined_workload.operations[i].get_durations()[np.argmax(alpha[i])] 
