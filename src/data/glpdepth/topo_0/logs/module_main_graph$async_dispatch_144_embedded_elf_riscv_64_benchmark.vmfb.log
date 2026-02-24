@@ -1,0 +1,27 @@
+2026-01-08T12:08:46.749802
+Running tools/iree-benchmark-module --module=/home/dima/sched_vmfb/glpdepth/module_main_graph$async_dispatch_144_embedded_elf_riscv_64_benchmark.vmfb --device=local-task --function=main_graph$async_dispatch_144_embedded_elf_riscv_64_main_graph$async_dispatch_144_reduction_196x160_f32 --input=1xi32=1 --task_topology_cpu_ids=0 --benchmark_repetitions=10
+2026-01-08T12:08:46+08:00
+Running tools/iree-benchmark-module
+Run on (8 X 1600 MHz CPU s)
+CPU Caches:
+  L1 Instruction 32 KiB (x8)
+  L1 Data 32 KiB (x8)
+  L2 Unified 512 KiB (x2)
+Load Average: 3.09, 2.62, 2.29
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Benchmark                                                                                                                                         Time             CPU   Iterations UserCounters...
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+BM_main_graph$async_dispatch_144_embedded_elf_riscv_64_main_graph$async_dispatch_144_reduction_196x160_f32/process_time/real_time              1.09 ms         1.10 ms          639 items_per_second=919.026/s
+BM_main_graph$async_dispatch_144_embedded_elf_riscv_64_main_graph$async_dispatch_144_reduction_196x160_f32/process_time/real_time              1.09 ms         1.10 ms          639 items_per_second=913.476/s
+BM_main_graph$async_dispatch_144_embedded_elf_riscv_64_main_graph$async_dispatch_144_reduction_196x160_f32/process_time/real_time              1.08 ms         1.09 ms          639 items_per_second=923.732/s
+BM_main_graph$async_dispatch_144_embedded_elf_riscv_64_main_graph$async_dispatch_144_reduction_196x160_f32/process_time/real_time              1.08 ms         1.09 ms          639 items_per_second=926.315/s
+BM_main_graph$async_dispatch_144_embedded_elf_riscv_64_main_graph$async_dispatch_144_reduction_196x160_f32/process_time/real_time              1.09 ms         1.09 ms          639 items_per_second=921.386/s
+BM_main_graph$async_dispatch_144_embedded_elf_riscv_64_main_graph$async_dispatch_144_reduction_196x160_f32/process_time/real_time              1.08 ms         1.09 ms          639 items_per_second=925.387/s
+BM_main_graph$async_dispatch_144_embedded_elf_riscv_64_main_graph$async_dispatch_144_reduction_196x160_f32/process_time/real_time              1.08 ms         1.08 ms          639 items_per_second=928.553/s
+BM_main_graph$async_dispatch_144_embedded_elf_riscv_64_main_graph$async_dispatch_144_reduction_196x160_f32/process_time/real_time              1.09 ms         1.09 ms          639 items_per_second=920.058/s
+BM_main_graph$async_dispatch_144_embedded_elf_riscv_64_main_graph$async_dispatch_144_reduction_196x160_f32/process_time/real_time              1.08 ms         1.09 ms          639 items_per_second=924.85/s
+BM_main_graph$async_dispatch_144_embedded_elf_riscv_64_main_graph$async_dispatch_144_reduction_196x160_f32/process_time/real_time              1.08 ms         1.09 ms          639 items_per_second=925.291/s
+BM_main_graph$async_dispatch_144_embedded_elf_riscv_64_main_graph$async_dispatch_144_reduction_196x160_f32/process_time/real_time_mean         1.08 ms         1.09 ms           10 items_per_second=922.807/s
+BM_main_graph$async_dispatch_144_embedded_elf_riscv_64_main_graph$async_dispatch_144_reduction_196x160_f32/process_time/real_time_median       1.08 ms         1.09 ms           10 items_per_second=924.291/s
+BM_main_graph$async_dispatch_144_embedded_elf_riscv_64_main_graph$async_dispatch_144_reduction_196x160_f32/process_time/real_time_stddev      0.005 ms        0.004 ms           10 items_per_second=4.39858/s
+BM_main_graph$async_dispatch_144_embedded_elf_riscv_64_main_graph$async_dispatch_144_reduction_196x160_f32/process_time/real_time_cv           0.48 %          0.40 %            10 items_per_second=0.48%

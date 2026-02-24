@@ -1,0 +1,27 @@
+2026-01-09T09:45:00.116887
+Running tools/iree-benchmark-module --module=/home/dima/sched_vmfb/dronet_ukernel/dispatch_10.vmfb --device=local-task --function=main_graph$async_dispatch_10_system_elf_riscv_64_main_graph$async_dispatch_10_matmul_like_128x4x4x64_f32 --input=1xi32=1 --task_topology_cpu_ids=4,5,6,7 --benchmark_repetitions=10
+2026-01-09T09:45:00+08:00
+Running tools/iree-benchmark-module
+Run on (8 X 1600 MHz CPU s)
+CPU Caches:
+  L1 Instruction 32 KiB (x8)
+  L1 Data 32 KiB (x8)
+  L2 Unified 512 KiB (x2)
+Load Average: 3.03, 2.94, 2.85
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Benchmark                                                                                                                                          Time             CPU   Iterations UserCounters...
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+BM_main_graph$async_dispatch_10_system_elf_riscv_64_main_graph$async_dispatch_10_matmul_like_128x4x4x64_f32/process_time/real_time             0.424 ms         1.44 ms         1670 items_per_second=2.3583k/s
+BM_main_graph$async_dispatch_10_system_elf_riscv_64_main_graph$async_dispatch_10_matmul_like_128x4x4x64_f32/process_time/real_time             0.426 ms         1.44 ms         1670 items_per_second=2.34837k/s
+BM_main_graph$async_dispatch_10_system_elf_riscv_64_main_graph$async_dispatch_10_matmul_like_128x4x4x64_f32/process_time/real_time             0.422 ms         1.44 ms         1670 items_per_second=2.37196k/s
+BM_main_graph$async_dispatch_10_system_elf_riscv_64_main_graph$async_dispatch_10_matmul_like_128x4x4x64_f32/process_time/real_time             0.419 ms         1.44 ms         1670 items_per_second=2.38456k/s
+BM_main_graph$async_dispatch_10_system_elf_riscv_64_main_graph$async_dispatch_10_matmul_like_128x4x4x64_f32/process_time/real_time             0.420 ms         1.44 ms         1670 items_per_second=2.38086k/s
+BM_main_graph$async_dispatch_10_system_elf_riscv_64_main_graph$async_dispatch_10_matmul_like_128x4x4x64_f32/process_time/real_time             0.419 ms         1.44 ms         1670 items_per_second=2.38914k/s
+BM_main_graph$async_dispatch_10_system_elf_riscv_64_main_graph$async_dispatch_10_matmul_like_128x4x4x64_f32/process_time/real_time             0.423 ms         1.44 ms         1670 items_per_second=2.3659k/s
+BM_main_graph$async_dispatch_10_system_elf_riscv_64_main_graph$async_dispatch_10_matmul_like_128x4x4x64_f32/process_time/real_time             0.419 ms         1.44 ms         1670 items_per_second=2.38544k/s
+BM_main_graph$async_dispatch_10_system_elf_riscv_64_main_graph$async_dispatch_10_matmul_like_128x4x4x64_f32/process_time/real_time             0.419 ms         1.44 ms         1670 items_per_second=2.38693k/s
+BM_main_graph$async_dispatch_10_system_elf_riscv_64_main_graph$async_dispatch_10_matmul_like_128x4x4x64_f32/process_time/real_time             0.419 ms         1.44 ms         1670 items_per_second=2.38792k/s
+BM_main_graph$async_dispatch_10_system_elf_riscv_64_main_graph$async_dispatch_10_matmul_like_128x4x4x64_f32/process_time/real_time_mean        0.421 ms         1.44 ms           10 items_per_second=2.37594k/s
+BM_main_graph$async_dispatch_10_system_elf_riscv_64_main_graph$async_dispatch_10_matmul_like_128x4x4x64_f32/process_time/real_time_median      0.420 ms         1.44 ms           10 items_per_second=2.38271k/s
+BM_main_graph$async_dispatch_10_system_elf_riscv_64_main_graph$async_dispatch_10_matmul_like_128x4x4x64_f32/process_time/real_time_stddev      0.003 ms        0.001 ms           10 items_per_second=14.2018/s
+BM_main_graph$async_dispatch_10_system_elf_riscv_64_main_graph$async_dispatch_10_matmul_like_128x4x4x64_f32/process_time/real_time_cv           0.60 %          0.07 %            10 items_per_second=0.60%

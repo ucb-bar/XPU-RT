@@ -565,12 +565,8 @@ def schedule_iree_networks_profiled(no_depth_network: bool = False, use_mobilene
     base_path = os.path.join(
         script_dir,
         "..",
-        "..",
-        "merlin",
-        "samples",
-        "robotic-NN",
         "pytorch_workload",
-        "computation_graph",
+        "samples",
     )
 
     fast_path = os.path.join(base_path, "fast_dispatch_deps.json")

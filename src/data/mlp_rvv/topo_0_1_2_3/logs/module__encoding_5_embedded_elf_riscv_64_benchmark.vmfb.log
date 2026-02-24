@@ -1,0 +1,27 @@
+2026-01-09T10:05:21.050928
+Running tools/iree-benchmark-module --module=/home/dima/sched_vmfb/mlp_scalar/module__encoding_5_embedded_elf_riscv_64_benchmark.vmfb --device=local-task --function=_encoding_5_embedded_elf_riscv_64__encoding_5_encode_10xf32_to_10xf32 --input=1xi32=1 --task_topology_cpu_ids=0,1,2,3 --benchmark_repetitions=10
+2026-01-09T10:05:21+08:00
+Running tools/iree-benchmark-module
+Run on (8 X 1600 MHz CPU s)
+CPU Caches:
+  L1 Instruction 32 KiB (x8)
+  L1 Data 32 KiB (x8)
+  L2 Unified 512 KiB (x2)
+Load Average: 3.19, 3.10, 3.12
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+Benchmark                                                                                                       Time             CPU   Iterations UserCounters...
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+BM__encoding_5_embedded_elf_riscv_64__encoding_5_encode_10xf32_to_10xf32/process_time/real_time             0.062 ms        0.067 ms        11327 items_per_second=16.1892k/s
+BM__encoding_5_embedded_elf_riscv_64__encoding_5_encode_10xf32_to_10xf32/process_time/real_time             0.063 ms        0.068 ms        11327 items_per_second=15.9123k/s
+BM__encoding_5_embedded_elf_riscv_64__encoding_5_encode_10xf32_to_10xf32/process_time/real_time             0.062 ms        0.067 ms        11327 items_per_second=16.0736k/s
+BM__encoding_5_embedded_elf_riscv_64__encoding_5_encode_10xf32_to_10xf32/process_time/real_time             0.062 ms        0.067 ms        11327 items_per_second=16.0917k/s
+BM__encoding_5_embedded_elf_riscv_64__encoding_5_encode_10xf32_to_10xf32/process_time/real_time             0.062 ms        0.067 ms        11327 items_per_second=16.1511k/s
+BM__encoding_5_embedded_elf_riscv_64__encoding_5_encode_10xf32_to_10xf32/process_time/real_time             0.063 ms        0.068 ms        11327 items_per_second=15.8806k/s
+BM__encoding_5_embedded_elf_riscv_64__encoding_5_encode_10xf32_to_10xf32/process_time/real_time             0.063 ms        0.068 ms        11327 items_per_second=15.8462k/s
+BM__encoding_5_embedded_elf_riscv_64__encoding_5_encode_10xf32_to_10xf32/process_time/real_time             0.063 ms        0.068 ms        11327 items_per_second=15.9697k/s
+BM__encoding_5_embedded_elf_riscv_64__encoding_5_encode_10xf32_to_10xf32/process_time/real_time             0.063 ms        0.068 ms        11327 items_per_second=15.9417k/s
+BM__encoding_5_embedded_elf_riscv_64__encoding_5_encode_10xf32_to_10xf32/process_time/real_time             0.063 ms        0.068 ms        11327 items_per_second=15.9411k/s
+BM__encoding_5_embedded_elf_riscv_64__encoding_5_encode_10xf32_to_10xf32/process_time/real_time_mean        0.063 ms        0.068 ms           10 items_per_second=15.9997k/s
+BM__encoding_5_embedded_elf_riscv_64__encoding_5_encode_10xf32_to_10xf32/process_time/real_time_median      0.063 ms        0.068 ms           10 items_per_second=15.9557k/s
+BM__encoding_5_embedded_elf_riscv_64__encoding_5_encode_10xf32_to_10xf32/process_time/real_time_stddev      0.000 ms        0.000 ms           10 items_per_second=118.258/s
+BM__encoding_5_embedded_elf_riscv_64__encoding_5_encode_10xf32_to_10xf32/process_time/real_time_cv           0.74 %          0.67 %            10 items_per_second=0.74%

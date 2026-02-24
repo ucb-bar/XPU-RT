@@ -1,0 +1,27 @@
+2026-01-09T13:29:29.951791
+Running tools/iree-benchmark-module --module=/home/dima/sched_vmfb/dronet_ukernel/module_main_graph$async_dispatch_3_embedded_elf_riscv_64_benchmark.vmfb --device=local-task --function=main_graph$async_dispatch_3_embedded_elf_riscv_64_main_graph$async_dispatch_3_conv_32x14x14x32x3x3_f32 --input=1xi32=1 --task_topology_cpu_ids=0,1,2 --benchmark_repetitions=10
+2026-01-09T13:29:29+08:00
+Running tools/iree-benchmark-module
+Run on (8 X 1600 MHz CPU s)
+CPU Caches:
+  L1 Instruction 32 KiB (x8)
+  L1 Data 32 KiB (x8)
+  L2 Unified 512 KiB (x2)
+Load Average: 3.95, 3.10, 2.56
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Benchmark                                                                                                                                        Time             CPU   Iterations UserCounters...
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+BM_main_graph$async_dispatch_3_embedded_elf_riscv_64_main_graph$async_dispatch_3_conv_32x14x14x32x3x3_f32/process_time/real_time              4.90 ms         13.1 ms          143 items_per_second=203.897/s
+BM_main_graph$async_dispatch_3_embedded_elf_riscv_64_main_graph$async_dispatch_3_conv_32x14x14x32x3x3_f32/process_time/real_time              4.90 ms         13.1 ms          143 items_per_second=203.876/s
+BM_main_graph$async_dispatch_3_embedded_elf_riscv_64_main_graph$async_dispatch_3_conv_32x14x14x32x3x3_f32/process_time/real_time              4.90 ms         13.1 ms          143 items_per_second=203.922/s
+BM_main_graph$async_dispatch_3_embedded_elf_riscv_64_main_graph$async_dispatch_3_conv_32x14x14x32x3x3_f32/process_time/real_time              4.89 ms         13.0 ms          143 items_per_second=204.445/s
+BM_main_graph$async_dispatch_3_embedded_elf_riscv_64_main_graph$async_dispatch_3_conv_32x14x14x32x3x3_f32/process_time/real_time              4.88 ms         13.0 ms          143 items_per_second=204.745/s
+BM_main_graph$async_dispatch_3_embedded_elf_riscv_64_main_graph$async_dispatch_3_conv_32x14x14x32x3x3_f32/process_time/real_time              4.98 ms         13.1 ms          143 items_per_second=200.968/s
+BM_main_graph$async_dispatch_3_embedded_elf_riscv_64_main_graph$async_dispatch_3_conv_32x14x14x32x3x3_f32/process_time/real_time              4.91 ms         13.0 ms          143 items_per_second=203.561/s
+BM_main_graph$async_dispatch_3_embedded_elf_riscv_64_main_graph$async_dispatch_3_conv_32x14x14x32x3x3_f32/process_time/real_time              4.86 ms         12.9 ms          143 items_per_second=205.554/s
+BM_main_graph$async_dispatch_3_embedded_elf_riscv_64_main_graph$async_dispatch_3_conv_32x14x14x32x3x3_f32/process_time/real_time              4.87 ms         13.0 ms          143 items_per_second=205.396/s
+BM_main_graph$async_dispatch_3_embedded_elf_riscv_64_main_graph$async_dispatch_3_conv_32x14x14x32x3x3_f32/process_time/real_time              4.87 ms         13.0 ms          143 items_per_second=205.319/s
+BM_main_graph$async_dispatch_3_embedded_elf_riscv_64_main_graph$async_dispatch_3_conv_32x14x14x32x3x3_f32/process_time/real_time_mean         4.90 ms         13.0 ms           10 items_per_second=204.168/s
+BM_main_graph$async_dispatch_3_embedded_elf_riscv_64_main_graph$async_dispatch_3_conv_32x14x14x32x3x3_f32/process_time/real_time_median       4.90 ms         13.0 ms           10 items_per_second=204.184/s
+BM_main_graph$async_dispatch_3_embedded_elf_riscv_64_main_graph$async_dispatch_3_conv_32x14x14x32x3x3_f32/process_time/real_time_stddev      0.032 ms        0.055 ms           10 items_per_second=1.33306/s
+BM_main_graph$async_dispatch_3_embedded_elf_riscv_64_main_graph$async_dispatch_3_conv_32x14x14x32x3x3_f32/process_time/real_time_cv           0.66 %          0.42 %            10 items_per_second=0.65%

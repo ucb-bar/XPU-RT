@@ -322,12 +322,8 @@ def schedule_iree_networks_grouped():
     base_path = os.path.join(
         script_dir,
         "..",
-        "..",
-        "merlin",
-        "samples",
-        "robotic-NN",
         "pytorch_workload",
-        "computation_graph",
+        "samples",
     )
     
     dronet_path = os.path.join(base_path, "dronet_dispatch_deps.json")

@@ -1,0 +1,27 @@
+2026-01-08T12:47:46.273532
+Running tools/iree-benchmark-module --module=/home/dima/sched_vmfb/glpdepth/module_main_graph$async_dispatch_4_embedded_elf_riscv_64_benchmark.vmfb --device=local-task --function=main_graph$async_dispatch_4_embedded_elf_riscv_64_main_graph$async_dispatch_4_mmt4d_5x98x32x7x32x1_f32 --input=1xi32=1 --task_topology_cpu_ids=0,1,2 --benchmark_repetitions=10
+2026-01-08T12:47:46+08:00
+Running tools/iree-benchmark-module
+Run on (8 X 1600 MHz CPU s)
+CPU Caches:
+  L1 Instruction 32 KiB (x8)
+  L1 Data 32 KiB (x8)
+  L2 Unified 512 KiB (x2)
+Load Average: 4.99, 4.63, 4.06
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Benchmark                                                                                                                                        Time             CPU   Iterations UserCounters...
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+BM_main_graph$async_dispatch_4_embedded_elf_riscv_64_main_graph$async_dispatch_4_mmt4d_5x98x32x7x32x1_f32/process_time/real_time             0.931 ms         1.97 ms          753 items_per_second=1.07465k/s
+BM_main_graph$async_dispatch_4_embedded_elf_riscv_64_main_graph$async_dispatch_4_mmt4d_5x98x32x7x32x1_f32/process_time/real_time             0.928 ms         1.97 ms          753 items_per_second=1.07701k/s
+BM_main_graph$async_dispatch_4_embedded_elf_riscv_64_main_graph$async_dispatch_4_mmt4d_5x98x32x7x32x1_f32/process_time/real_time             0.915 ms         1.96 ms          753 items_per_second=1.09252k/s
+BM_main_graph$async_dispatch_4_embedded_elf_riscv_64_main_graph$async_dispatch_4_mmt4d_5x98x32x7x32x1_f32/process_time/real_time             0.911 ms         1.96 ms          753 items_per_second=1.09788k/s
+BM_main_graph$async_dispatch_4_embedded_elf_riscv_64_main_graph$async_dispatch_4_mmt4d_5x98x32x7x32x1_f32/process_time/real_time             0.911 ms         1.96 ms          753 items_per_second=1.0975k/s
+BM_main_graph$async_dispatch_4_embedded_elf_riscv_64_main_graph$async_dispatch_4_mmt4d_5x98x32x7x32x1_f32/process_time/real_time             0.914 ms         1.96 ms          753 items_per_second=1.09432k/s
+BM_main_graph$async_dispatch_4_embedded_elf_riscv_64_main_graph$async_dispatch_4_mmt4d_5x98x32x7x32x1_f32/process_time/real_time             0.919 ms         1.96 ms          753 items_per_second=1.08759k/s
+BM_main_graph$async_dispatch_4_embedded_elf_riscv_64_main_graph$async_dispatch_4_mmt4d_5x98x32x7x32x1_f32/process_time/real_time             0.916 ms         1.96 ms          753 items_per_second=1.09209k/s
+BM_main_graph$async_dispatch_4_embedded_elf_riscv_64_main_graph$async_dispatch_4_mmt4d_5x98x32x7x32x1_f32/process_time/real_time             0.914 ms         1.96 ms          753 items_per_second=1.09412k/s
+BM_main_graph$async_dispatch_4_embedded_elf_riscv_64_main_graph$async_dispatch_4_mmt4d_5x98x32x7x32x1_f32/process_time/real_time             0.909 ms         1.96 ms          753 items_per_second=1.09968k/s
+BM_main_graph$async_dispatch_4_embedded_elf_riscv_64_main_graph$async_dispatch_4_mmt4d_5x98x32x7x32x1_f32/process_time/real_time_mean        0.917 ms         1.96 ms           10 items_per_second=1.09074k/s
+BM_main_graph$async_dispatch_4_embedded_elf_riscv_64_main_graph$async_dispatch_4_mmt4d_5x98x32x7x32x1_f32/process_time/real_time_median      0.915 ms         1.96 ms           10 items_per_second=1.09332k/s
+BM_main_graph$async_dispatch_4_embedded_elf_riscv_64_main_graph$async_dispatch_4_mmt4d_5x98x32x7x32x1_f32/process_time/real_time_stddev      0.007 ms        0.006 ms           10 items_per_second=8.58504/s
+BM_main_graph$async_dispatch_4_embedded_elf_riscv_64_main_graph$async_dispatch_4_mmt4d_5x98x32x7x32x1_f32/process_time/real_time_cv           0.79 %          0.31 %            10 items_per_second=0.79%

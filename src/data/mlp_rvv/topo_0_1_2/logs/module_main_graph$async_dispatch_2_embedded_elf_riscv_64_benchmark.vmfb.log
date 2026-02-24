@@ -1,0 +1,27 @@
+2026-01-09T10:04:34.466090
+Running tools/iree-benchmark-module --module=/home/dima/sched_vmfb/mlp_scalar/module_main_graph$async_dispatch_2_embedded_elf_riscv_64_benchmark.vmfb --device=local-task --function=main_graph$async_dispatch_2_embedded_elf_riscv_64_main_graph$async_dispatch_2_matvec_like_2x32_f32 --input=1xi32=1 --task_topology_cpu_ids=0,1,2 --benchmark_repetitions=10
+2026-01-09T10:04:34+08:00
+Running tools/iree-benchmark-module
+Run on (8 X 1600 MHz CPU s)
+CPU Caches:
+  L1 Instruction 32 KiB (x8)
+  L1 Data 32 KiB (x8)
+  L2 Unified 512 KiB (x2)
+Load Average: 3.04, 3.05, 3.10
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Benchmark                                                                                                                                    Time             CPU   Iterations UserCounters...
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+BM_main_graph$async_dispatch_2_embedded_elf_riscv_64_main_graph$async_dispatch_2_matvec_like_2x32_f32/process_time/real_time             0.064 ms        0.070 ms        10961 items_per_second=15.5285k/s
+BM_main_graph$async_dispatch_2_embedded_elf_riscv_64_main_graph$async_dispatch_2_matvec_like_2x32_f32/process_time/real_time             0.065 ms        0.071 ms        10961 items_per_second=15.2879k/s
+BM_main_graph$async_dispatch_2_embedded_elf_riscv_64_main_graph$async_dispatch_2_matvec_like_2x32_f32/process_time/real_time             0.066 ms        0.071 ms        10961 items_per_second=15.1378k/s
+BM_main_graph$async_dispatch_2_embedded_elf_riscv_64_main_graph$async_dispatch_2_matvec_like_2x32_f32/process_time/real_time             0.065 ms        0.071 ms        10961 items_per_second=15.4502k/s
+BM_main_graph$async_dispatch_2_embedded_elf_riscv_64_main_graph$async_dispatch_2_matvec_like_2x32_f32/process_time/real_time             0.065 ms        0.071 ms        10961 items_per_second=15.4653k/s
+BM_main_graph$async_dispatch_2_embedded_elf_riscv_64_main_graph$async_dispatch_2_matvec_like_2x32_f32/process_time/real_time             0.065 ms        0.071 ms        10961 items_per_second=15.4832k/s
+BM_main_graph$async_dispatch_2_embedded_elf_riscv_64_main_graph$async_dispatch_2_matvec_like_2x32_f32/process_time/real_time             0.064 ms        0.070 ms        10961 items_per_second=15.5659k/s
+BM_main_graph$async_dispatch_2_embedded_elf_riscv_64_main_graph$async_dispatch_2_matvec_like_2x32_f32/process_time/real_time             0.065 ms        0.071 ms        10961 items_per_second=15.4619k/s
+BM_main_graph$async_dispatch_2_embedded_elf_riscv_64_main_graph$async_dispatch_2_matvec_like_2x32_f32/process_time/real_time             0.067 ms        0.070 ms        10961 items_per_second=14.9406k/s
+BM_main_graph$async_dispatch_2_embedded_elf_riscv_64_main_graph$async_dispatch_2_matvec_like_2x32_f32/process_time/real_time             0.065 ms        0.070 ms        10961 items_per_second=15.4985k/s
+BM_main_graph$async_dispatch_2_embedded_elf_riscv_64_main_graph$async_dispatch_2_matvec_like_2x32_f32/process_time/real_time_mean        0.065 ms        0.071 ms           10 items_per_second=15.382k/s
+BM_main_graph$async_dispatch_2_embedded_elf_riscv_64_main_graph$async_dispatch_2_matvec_like_2x32_f32/process_time/real_time_median      0.065 ms        0.071 ms           10 items_per_second=15.4636k/s
+BM_main_graph$async_dispatch_2_embedded_elf_riscv_64_main_graph$async_dispatch_2_matvec_like_2x32_f32/process_time/real_time_stddev      0.001 ms        0.000 ms           10 items_per_second=200.107/s
+BM_main_graph$async_dispatch_2_embedded_elf_riscv_64_main_graph$async_dispatch_2_matvec_like_2x32_f32/process_time/real_time_cv           1.32 %          0.65 %            10 items_per_second=1.30%

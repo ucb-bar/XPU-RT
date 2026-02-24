@@ -1,0 +1,27 @@
+2026-01-09T10:05:11.525416
+Running tools/iree-benchmark-module --module=/home/dima/sched_vmfb/mlp_scalar/module__encoding_4_embedded_elf_riscv_64_benchmark.vmfb --device=local-task --function=_encoding_4_embedded_elf_riscv_64__encoding_4_encode_2xf32_to_2xf32 --input=1xi32=1 --task_topology_cpu_ids=0,1,2,3 --benchmark_repetitions=10
+2026-01-09T10:05:11+08:00
+Running tools/iree-benchmark-module
+Run on (8 X 1600 MHz CPU s)
+CPU Caches:
+  L1 Instruction 32 KiB (x8)
+  L1 Data 32 KiB (x8)
+  L2 Unified 512 KiB (x2)
+Load Average: 3.23, 3.11, 3.12
+---------------------------------------------------------------------------------------------------------------------------------------------------------------
+Benchmark                                                                                                     Time             CPU   Iterations UserCounters...
+---------------------------------------------------------------------------------------------------------------------------------------------------------------
+BM__encoding_4_embedded_elf_riscv_64__encoding_4_encode_2xf32_to_2xf32/process_time/real_time             0.054 ms        0.061 ms        15050 items_per_second=18.4998k/s
+BM__encoding_4_embedded_elf_riscv_64__encoding_4_encode_2xf32_to_2xf32/process_time/real_time             0.054 ms        0.061 ms        15050 items_per_second=18.463k/s
+BM__encoding_4_embedded_elf_riscv_64__encoding_4_encode_2xf32_to_2xf32/process_time/real_time             0.056 ms        0.062 ms        15050 items_per_second=17.8681k/s
+BM__encoding_4_embedded_elf_riscv_64__encoding_4_encode_2xf32_to_2xf32/process_time/real_time             0.055 ms        0.061 ms        15050 items_per_second=18.1117k/s
+BM__encoding_4_embedded_elf_riscv_64__encoding_4_encode_2xf32_to_2xf32/process_time/real_time             0.056 ms        0.062 ms        15050 items_per_second=17.8807k/s
+BM__encoding_4_embedded_elf_riscv_64__encoding_4_encode_2xf32_to_2xf32/process_time/real_time             0.055 ms        0.061 ms        15050 items_per_second=18.1579k/s
+BM__encoding_4_embedded_elf_riscv_64__encoding_4_encode_2xf32_to_2xf32/process_time/real_time             0.055 ms        0.061 ms        15050 items_per_second=18.1179k/s
+BM__encoding_4_embedded_elf_riscv_64__encoding_4_encode_2xf32_to_2xf32/process_time/real_time             0.055 ms        0.061 ms        15050 items_per_second=18.271k/s
+BM__encoding_4_embedded_elf_riscv_64__encoding_4_encode_2xf32_to_2xf32/process_time/real_time             0.058 ms        0.064 ms        15050 items_per_second=17.3401k/s
+BM__encoding_4_embedded_elf_riscv_64__encoding_4_encode_2xf32_to_2xf32/process_time/real_time             0.063 ms        0.070 ms        15050 items_per_second=15.8322k/s
+BM__encoding_4_embedded_elf_riscv_64__encoding_4_encode_2xf32_to_2xf32/process_time/real_time_mean        0.056 ms        0.062 ms           10 items_per_second=17.8542k/s
+BM__encoding_4_embedded_elf_riscv_64__encoding_4_encode_2xf32_to_2xf32/process_time/real_time_median      0.055 ms        0.061 ms           10 items_per_second=18.1148k/s
+BM__encoding_4_embedded_elf_riscv_64__encoding_4_encode_2xf32_to_2xf32/process_time/real_time_stddev      0.003 ms        0.003 ms           10 items_per_second=784.792/s
+BM__encoding_4_embedded_elf_riscv_64__encoding_4_encode_2xf32_to_2xf32/process_time/real_time_cv           4.78 %          4.44 %            10 items_per_second=4.40%
