@@ -136,6 +136,7 @@ def schedule(
     solver_verbosity: int = 0,
     time_limit: Optional[float] = None,
     restrict_makespan_to_nonperiodic: bool = True,
+    prune_cross_period_constraints: bool = True,
 ) -> Tuple[np.ndarray, np.ndarray, Optional[Workload], Optional[dict]]:
     """
     Schedule a workload, optionally with operation fusion.
@@ -151,6 +152,9 @@ def schedule(
         restrict_makespan_to_nonperiodic: If True, C_max only tracks non-periodic operations
                    (those without min_start_t / max_end_t). Periodic/background operations
                    still obey all constraints but do not affect the makespan objective.
+        prune_cross_period_constraints: If True, skip precedence and non-overlap constraints
+                   between operations whose time windows provably do not overlap in time.
+                   This reduces redundant constraints for periodic tasks in disjoint periods.
     
     Returns:
         (t, alpha, fused_workload, fusion_map) where:
@@ -197,14 +201,50 @@ def schedule(
         constraints.append(
             cp.sum(alpha[i, :]) == 1
         )
+    def _periods_overlap(op_a, op_b) -> bool:
+        """Return True if the time windows of two operations can overlap."""
+        a_start = getattr(op_a, "min_start_t", None)
+        a_end = getattr(op_a, "max_end_t", None)
+        b_start = getattr(op_b, "min_start_t", None)
+        b_end = getattr(op_b, "max_end_t", None)
+        # If any bound is missing, conservatively assume they may overlap
+        if a_start is None or a_end is None or b_start is None or b_end is None:
+            return True
+        # Intervals [a_start, a_end) and [b_start, b_end) overlap iff both:
+        # a_start < b_end and b_start < a_end
+        return (a_start < b_end) and (b_start < a_end)
+
     # (3) Precedence constraints: operation i must start after ALL its predecessors complete
     for i in range(num_operations):
-        predecessors = workload.operations[i].get_predecessors()
+        op_i = workload.operations[i]
+        predecessors = op_i.get_predecessors()
         for pred in predecessors:
             i_pred = workload.operations.index(pred)
 
+            # Optionally prune precedence constraints between non-overlapping periods
+            if prune_cross_period_constraints:
+                pred_start = getattr(pred, "min_start_t", None)
+                pred_end = getattr(pred, "max_end_t", None)
+                succ_start = getattr(op_i, "min_start_t", None)
+                succ_end = getattr(op_i, "max_end_t", None)
+                if pred_start is not None and pred_end is not None and succ_start is not None and succ_end is not None:
+                    # If predecessor's window ends before successor's window starts,
+                    # precedence is automatically satisfied by time-window constraints.
+                    if pred_end <= succ_start:
+                        continue
+                    # If successor's window ends before predecessor's window starts,
+                    # the precedence is impossible under the windows; raise early.
+                    if succ_end <= pred_start:
+                        raise ValueError(
+                            f"Infeasible precedence: successor window [{succ_start}, {succ_end}) "
+                            f"before predecessor window [{pred_start}, {pred_end})."
+                        )
+
             # Build duration vector for predecessor
-            dur_vec_pred = [workload.operations[i_pred].get_duration_for_combination(k, machine_combinations, workload.machines) for k in range(num_combinations)]
+            dur_vec_pred = [
+                workload.operations[i_pred].get_duration_for_combination(k, machine_combinations, workload.machines)
+                for k in range(num_combinations)
+            ]
             
             # For transfer time, we need to handle the product of two binary variables (alpha[i_pred, k_pred] * alpha[i, k_curr])
             # Since this is non-convex, we use an upper bound approach: use the maximum transfer time
@@ -218,11 +258,6 @@ def schedule(
                     transfer_time_val = transfer_times[machine_pred][machine_curr]
                     max_transfer_time = max(max_transfer_time, transfer_time_val)
             
-            # For transfer time, we use the maximum transfer time as an upper bound
-            # This is conservative but ensures correctness and is DCP-compliant
-            # The actual transfer time will be <= max_transfer_time, which is safe for scheduling
-            # For backward compatibility (singleton combinations), this still works correctly
-            # since the maximum is just the max over all machine pairs
             transfer_time_weighted = max_transfer_time
             
             constraints.append(
@@ -251,17 +286,28 @@ def schedule(
     # (4) and (5) Non-overlap constraints: if two operations are assigned to overlapping combinations, enforce ordering
     for i in range(num_operations):
         for j in range(i+1, num_operations):
+            op_i = workload.operations[i]
+            op_j = workload.operations[j]
+
+            # Optionally skip pairs whose time windows cannot overlap
+            if prune_cross_period_constraints and not _periods_overlap(op_i, op_j):
+                continue
+
             for k1 in range(num_combinations):
                 for k2 in range(num_combinations):
                     # Only add constraint if combinations overlap
                     if workload.combinations_overlap(k1, k2):
                         # (4) Operation i starts after j finishes (if i is on k1 and j is on k2)
-                        dur_j_k2 = workload.operations[j].get_duration_for_combination(k2, machine_combinations, workload.machines)
+                        dur_j_k2 = workload.operations[j].get_duration_for_combination(
+                            k2, machine_combinations, workload.machines
+                        )
                         constraints.append(
                             t[i] >= t[j] + dur_j_k2 - (2 - alpha[i, k1] - alpha[j, k2] + beta[i, j]) * H
                         )
                         # (5) Operation j starts after i finishes (if j is on k2 and i is on k1)
-                        dur_i_k1 = workload.operations[i].get_duration_for_combination(k1, machine_combinations, workload.machines)
+                        dur_i_k1 = workload.operations[i].get_duration_for_combination(
+                            k1, machine_combinations, workload.machines
+                        )
                         constraints.append(
                             t[j] >= t[i] + dur_i_k1 - (3 - alpha[i, k1] - alpha[j, k2] - beta[i, j]) * H
                         )
