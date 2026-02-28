@@ -360,7 +360,7 @@ def schedule_iree_networks(
             script_dir,
             '..',
             'data',
-            'toplevel',
+            'hardware',
             'hardware_spec.json'
         )
     if not os.path.isabs(hardware_json_path):
@@ -388,13 +388,16 @@ def schedule_iree_networks(
     
     #Print hardware information
     print(f"\nHardware specification:")
-    hardware_num_types = hardware_data.get('num_machine_types', 0)
-    hardware_machines = hardware_data.get('machines', {})
-
+    machines ={}
+    hardware_types = hardware_data.get('hardware', 0)
+    for machineid, machine_info in hardware_types.items():
+        machines[machineid] = machine_info.get('cores', 0)
+    
+    printf(f"  Machines: {machines}")
+    
     # Define machines (dual-core device)
     # Example with 2 CPU cores, 3 GPU cores, and 1 NPU core. Adjust as needed.
-    machines = {"CPU": 2, "GPU":3, "NPU": 1 }
-    machine_denotation = {"CPU_1"}
+    # machines = {"CPU": 2, "GPU":3, "NPU": 1 }
     
     # Create transfer times matrix (zero transfer time between cores on same device)
     transfer_times = np.zeros((2, 2))
