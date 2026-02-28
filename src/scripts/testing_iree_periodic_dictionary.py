@@ -388,19 +388,25 @@ def schedule_iree_networks(
     
     #Print hardware information
     print(f"\nHardware specification:")
-    machines ={}
+    machines_dict ={}
     hardware_types = hardware_data.get('hardware', 0)
     for machineid, machine_info in hardware_types.items():
-        machines[machineid] = machine_info.get('cores', 0)
+        machines_dict[machineid] = machine_info.get('cores', 0)
     
-    printf(f"  Machines: {machines}")
-    
+    print(f"  Machines: {machines_dict}")
+
+    machines =[]
+    for machineid, cores in machines_dict.items():
+        for i in range(cores):
+            machines.append(f"{machineid}_{i}")
+    print(f"List of machine cores: {machines}")
+
     # Define machines (dual-core device)
     # Example with 2 CPU cores, 3 GPU cores, and 1 NPU core. Adjust as needed.
     # machines = {"CPU": 2, "GPU":3, "NPU": 1 }
     
     # Create transfer times matrix (zero transfer time between cores on same device)
-    transfer_times = np.zeros((2, 2))
+    transfer_times = np.zeros((len(machines), len(machines)))
 
     # Optional: build profiled processing times if requested
     processing_times: dict[str, list[float]] | None = None
@@ -530,6 +536,7 @@ def schedule_iree_networks(
     print(f"\nWorkload created successfully!")
     print(f"  Total operations: {len(combined_workload.operations)}")
     print(f"  Machines: {combined_workload.machines}")
+    print(f"  Machine combinations: {combined_workload.machine_combinations}")
     print(f"  Job names: {combined_workload.job_names}")
     
     # Print some statistics
@@ -605,6 +612,9 @@ def schedule_iree_networks(
                      for i in sorted(set(op.job_id for op in combined_workload.operations))]
     title_networks = " + ".join([name.capitalize() for name in network_names])
     
+
+    this_file_name = os.path.basename(__file__)
+    print(f"\nGenerating plot for schedule...")
     plot.plot_optimization_schedule(
         combined_workload.get_durations(),
         t,
@@ -613,12 +623,12 @@ def schedule_iree_networks(
         len(combined_workload.machines),
         combined_workload.machines,
         combined_workload.get_transfer_times(),
-        save_path="plots/iree_combined_schedule_period.png",
+        save_path=f"plots/{this_file_name.replace('.py', '')}.png",
         plot_title=f"{title_networks} Schedule on Dual-Core Device (Periodic)",
         workload=combined_workload
     )
     
-    print(f"\nPlot saved to plots/iree_combined_schedule_period.png")
+    print(f"\nPlot saved to plots/{this_file_name.replace('.py', '')}.png")
     
     # Output combined JSON file with scheduling information
     os.makedirs("schedules", exist_ok=True)
