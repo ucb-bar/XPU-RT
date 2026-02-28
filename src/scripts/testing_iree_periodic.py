@@ -31,11 +31,12 @@ def load_profiled_times(csv_path: str) -> dict[int, dict]:
 
     Expected columns:
       - dispatch_id
+      - module_name (optional)
       - mean_time
       - mean_unit (assumed 'ms' if missing)
     
     Returns:
-      dict mapping dispatch_id (int) -> {"time_ms": float}
+      dict mapping dispatch_id (int) -> {"time_ms": float, "module_name": str}
     """
     profiled: dict[int, dict] = {}
     if not os.path.exists(csv_path):
@@ -50,6 +51,8 @@ def load_profiled_times(csv_path: str) -> dict[int, dict]:
                 dispatch_id = int(dispatch_id_str)
             except ValueError:
                 continue
+            
+            module_name = row.get("module_name", "")
             try:
                 mean_time = float(row.get("mean_time", 0.0))
             except ValueError:
@@ -61,8 +64,179 @@ def load_profiled_times(csv_path: str) -> dict[int, dict]:
                 mean_time_ms = mean_time * 1000.0
             else:
                 mean_time_ms = mean_time
-            profiled[dispatch_id] = {"time_ms": mean_time_ms}
+            profiled[dispatch_id] = {
+                "time_ms": mean_time_ms,
+                "module_name": module_name,
+            }
     return profiled
+
+def output_scheduled_json(
+    combined_workload: Workload,
+    t: np.ndarray,
+    alpha: np.ndarray,
+    output_path: str,
+    profiled_times_p: dict | None = None,
+    profiled_times_e: dict | None = None
+):
+    """
+    Output a combined JSON file with all dispatches, their hardware targets, and start times.
+    
+    Args:
+        combined_workload: Combined workload after scheduling
+        t: Start times array from scheduling
+        alpha: Assignment matrix from scheduling
+        output_path: Path to save the output JSON file
+        profiled_times_p: Optional dict mapping dispatch_id -> {"time_ms": float, "module_name": str} for P-core
+        profiled_times_e: Optional dict mapping dispatch_id -> {"time_ms": float, "module_name": str} for E-core
+    """
+    machine_combinations = combined_workload.get_machine_combinations()
+    
+    # First pass: collect all dispatch info with completion times
+    dispatch_info_list = []
+    
+    for op_idx in range(len(combined_workload.operations)):
+        op = combined_workload.operations[op_idx]
+        
+        # Get dispatch name from operation
+        dispatch_name = op.operation_name if hasattr(op, 'operation_name') and op.operation_name else f"op_{op_idx}"
+        
+        # Get hardware target (which combination was assigned)
+        combo_idx = np.argmax(alpha[op_idx])
+        hardware_target = "+".join(machine_combinations[combo_idx]) if len(machine_combinations[combo_idx]) > 1 else machine_combinations[combo_idx][0]
+        
+        # Get start time
+        start_time = float(t[op_idx])
+        
+        # Get duration for the assigned combination
+        duration = op.get_duration_for_combination(
+            combo_idx, machine_combinations, combined_workload.machines
+        )
+        
+        # Get dispatch ID
+        dispatch_id = op.operation_id if hasattr(op, 'operation_id') and op.operation_id is not None else op_idx
+        
+        # Get job name
+        job_id = op.job_id if hasattr(op, 'job_id') and op.job_id is not None else 0
+        job_name = combined_workload.job_names[job_id] if job_id < len(combined_workload.job_names) else f"Job {job_id}"
+        
+        # Get module name from profiled data if available
+        module_name = None
+        if profiled_times_p and isinstance(dispatch_id, int) and dispatch_id in profiled_times_p:
+            module_name = profiled_times_p[dispatch_id].get("module_name")
+        elif profiled_times_e and isinstance(dispatch_id, int) and dispatch_id in profiled_times_e:
+            module_name = profiled_times_e[dispatch_id].get("module_name")
+        
+        completion_time = start_time + float(duration)
+        
+        dispatch_info_list.append({
+            'op_idx': op_idx,
+            'dispatch_name': dispatch_name,
+            'dispatch_id': dispatch_id,
+            'hardware_target': hardware_target,
+            'start_time': start_time,
+            'duration': float(duration),
+            'completion_time': completion_time,
+            'job_name': job_name,
+            'module_name': module_name,
+            'op': op,
+        })
+    
+    # Build time dependency mapping: for each hardware target, track dispatches sorted by completion time
+    hardware_dispatch_map = {}  # hardware_target -> list of (completion_time, dispatch_name, start_time)
+    
+    for info in dispatch_info_list:
+        hw_target = info['hardware_target']
+        if hw_target not in hardware_dispatch_map:
+            hardware_dispatch_map[hw_target] = []
+        hardware_dispatch_map[hw_target].append((
+            info['completion_time'],
+            info['dispatch_name'],
+            info['start_time']
+        ))
+    
+    # Sort each hardware target's dispatches by completion time
+    for hw_target in hardware_dispatch_map:
+        hardware_dispatch_map[hw_target].sort(key=lambda x: x[0])  # Sort by completion_time
+    
+    # Build combined dispatches dictionary
+    combined_dispatches = {}
+    
+    for info in dispatch_info_list:
+        dispatch_name = info['dispatch_name']
+        hardware_target = info['hardware_target']
+        start_time = info['start_time']
+        op = info['op']
+        
+        # Get dependencies (from operation predecessors)
+        dependencies = []
+        for pred_op in op.predecessors:
+            # Find the index of this predecessor in the combined workload
+            pred_idx = None
+            for idx, combined_operation in enumerate(combined_workload.operations):
+                if combined_operation == pred_op:
+                    pred_idx = idx
+                    break
+            if pred_idx is not None:
+                pred_dispatch_name = combined_workload.operations[pred_idx].operation_name if hasattr(combined_workload.operations[pred_idx], 'operation_name') and combined_workload.operations[pred_idx].operation_name else f"op_{pred_idx}"
+                dependencies.append(pred_dispatch_name)
+        
+        # Find time dependency: previous dispatch on same hardware target
+        time_dependency = None
+        if hardware_target in hardware_dispatch_map:
+            hw_dispatches = hardware_dispatch_map[hardware_target]
+            # Find the dispatch that finished most recently before this one starts
+            for completion_time, prev_dispatch_name, prev_start_time in hw_dispatches:
+                if completion_time <= start_time and prev_dispatch_name != dispatch_name:
+                    time_dependency = prev_dispatch_name
+                elif completion_time > start_time:
+                    break  # No need to check further (sorted by completion time)
+        
+        # Create dispatch entry
+        dispatch_entry = {
+            "id": info['dispatch_id'],
+            "ordinal": 1,  # Keep original structure
+            "total": 1,
+            "dependencies": dependencies,
+            "hardware_target": hardware_target,
+            "start_time": start_time,
+            "duration": info['duration'],
+            "job_name": info['job_name']
+        }
+        
+        # Add module_name if available
+        if info['module_name']:
+            dispatch_entry["module_name"] = info['module_name']
+        
+        # Add time_dependency if found
+        if time_dependency:
+            dispatch_entry["time_dependency"] = time_dependency
+        
+        combined_dispatches[dispatch_name] = dispatch_entry
+    
+    # Create output JSON structure
+    output_data = {
+        "dot_file": "combined_schedule_periodic.json",
+        "dispatches": combined_dispatches,
+        "metadata": {
+            "makespan": float(max(
+                t[i] + combined_workload.operations[i].get_duration_for_combination(
+                    np.argmax(alpha[i]), machine_combinations, combined_workload.machines
+                )
+                for i in range(len(combined_workload.operations))
+            )),
+            "num_operations": len(combined_workload.operations),
+            "machines": combined_workload.machines,
+            "machine_combinations": [combo if isinstance(combo, list) else [combo] for combo in machine_combinations]
+        }
+    }
+    
+    # Save to file
+    os.makedirs(os.path.dirname(output_path) if os.path.dirname(output_path) else '.', exist_ok=True)
+    with open(output_path, 'w') as f:
+        json.dump(output_data, f, indent=2)
+    
+    print(f"\nScheduled JSON saved to: {output_path}")
+
 
 def _trim_periodic_after_nonperiodic_makespan(workload: Workload, t: np.ndarray, alpha: np.ndarray) -> tuple[Workload, np.ndarray, np.ndarray]:
     """
@@ -202,9 +376,13 @@ def schedule_iree_networks(
 
     # Optional: build profiled processing times if requested
     processing_times: dict[str, list[float]] | None = None
+    combined_profiled_p: dict[int, dict] | None = None
+    combined_profiled_e: dict[int, dict] | None = None
     if use_profiled:
         print("\nUsing profiled runtimes where available...")
         processing_times = {}
+        combined_profiled_p = {}
+        combined_profiled_e = {}
 
         # Paths to profiled runtimes (P-core and E-core) for known networks
         dronet_profile_csv_p = os.path.join(
@@ -244,6 +422,16 @@ def schedule_iree_networks(
         dronet_profiled_e = load_profiled_times(dronet_profile_csv_e)
         mlp_profiled_p = load_profiled_times(mlp_profile_csv_p)
         mlp_profiled_e = load_profiled_times(mlp_profile_csv_e)
+        
+        # Combine profiled data for JSON output
+        if dronet_profiled_p:
+            combined_profiled_p.update(dronet_profiled_p)
+        if dronet_profiled_e:
+            combined_profiled_e.update(dronet_profiled_e)
+        if mlp_profiled_p:
+            combined_profiled_p.update(mlp_profiled_p)
+        if mlp_profiled_e:
+            combined_profiled_e.update(mlp_profiled_e)
 
         p_core_speedup = 1.5
 
@@ -335,6 +523,7 @@ def schedule_iree_networks(
         solver_verbosity=solver_verbosity,
         time_limit=time_limit,
         restrict_makespan_to_nonperiodic=restrict_makespan_to_nonperiodic,
+        prune_cross_period_constraints=prune_periodic,
     )
     t, alpha, _, _ = result  # Always returns 4 values now
     
@@ -402,6 +591,25 @@ def schedule_iree_networks(
     )
     
     print(f"\nPlot saved to plots/iree_combined_schedule_period.png")
+    
+    # Output combined JSON file with scheduling information
+    os.makedirs("schedules", exist_ok=True)
+    # Extract base filename from input JSON path
+    input_json_basename = os.path.basename(networks_json_path)
+    input_json_name = os.path.splitext(input_json_basename)[0]  # Remove .json extension
+    json_output_path = f"schedules/scheduled_{input_json_name}.json"
+    if use_profiled:
+        json_output_path = json_output_path.replace(".json", "_profiled.json")
+    
+    print(f"\nOutputting scheduled JSON...")
+    output_scheduled_json(
+        combined_workload=combined_workload,
+        t=t,
+        alpha=alpha,
+        output_path=json_output_path,
+        profiled_times_p=combined_profiled_p,
+        profiled_times_e=combined_profiled_e
+    )
     
     return combined_workload, t, alpha
 
