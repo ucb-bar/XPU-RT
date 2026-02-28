@@ -13,6 +13,7 @@ def schedule_window(window: Window) -> Tuple[np.ndarray, np.ndarray]:
     machine_combinations = window.get_machine_combinations()
     num_combinations = len(machine_combinations)
     transfer_times = window.get_transfer_times()
+    machines = window.machines  # Get machine concurrency limits
 
     alpha = cp.Variable((num_operations, num_combinations), boolean=True)
     beta = cp.Variable((num_operations, num_operations), boolean=True)
@@ -49,9 +50,13 @@ def schedule_window(window: Window) -> Tuple[np.ndarray, np.ndarray]:
                 max_transfer_time = 0
                 for k_pred in range(num_combinations):
                     for k_curr in range(num_combinations):
-                        machine_pred = window.machines.index(machine_combinations[k_pred][0])
-                        machine_curr = window.machines.index(machine_combinations[k_curr][0])
-                        transfer_time_val = transfer_times[machine_pred][machine_curr]
+                        # Get machine names and find their indices
+                        machine_pred_name = machine_combinations[k_pred][0]
+                        machine_curr_name = machine_combinations[k_curr][0]
+                        machine_names = list(window.machines.keys())
+                        machine_pred_idx = machine_names.index(machine_pred_name) if machine_pred_name in machine_names else 0
+                        machine_curr_idx = machine_names.index(machine_curr_name) if machine_curr_name in machine_names else 0
+                        transfer_time_val = transfer_times[machine_pred_idx][machine_curr_idx]
                         max_transfer_time = max(max_transfer_time, transfer_time_val)
                 
                 transfer_time_weighted = max_transfer_time
@@ -59,25 +64,34 @@ def schedule_window(window: Window) -> Tuple[np.ndarray, np.ndarray]:
                 constraints.append(
                     t[i] >= t[i_pred] + cp.sum(cp.multiply(dur_vec_pred, alpha[i_pred, :])) + transfer_time_weighted
                 )
-    # (4) and (5) Non-overlap constraints: if two operations are assigned to overlapping combinations, enforce ordering
+    
+    # (4) and (5) Overlap constraints with machine concurrency limits
+    # Only enforce strict ordering when concurrency limit is 1
     for i in range(num_operations):
         for j in range(i+1, num_operations):
             for k1 in range(num_combinations):
                 for k2 in range(num_combinations):
                     # Only add constraint if combinations overlap
                     if window.combinations_overlap(k1, k2):
-                        # (4) Operation i starts after j finishes (if i is on k1 and j is on k2)
-                        # Get duration for combination k2
-                        dur_j_k2 = window.operations[j].get_duration_for_combination(k2, machine_combinations, window.machines)
-                        constraints.append(
-                            t[i] >= t[j] + dur_j_k2 - (2 - alpha[i, k1] - alpha[j, k2] + beta[i, j]) * H
-                        )
-                        # (5) Operation j starts after i finishes (if j is on k2 and i is on k1)
-                        # Get duration for combination k1
-                        dur_i_k1 = window.operations[i].get_duration_for_combination(k1, machine_combinations, window.machines)
-                        constraints.append(
-                            t[j] >= t[i] + dur_i_k1 - (3 - alpha[i, k1] - alpha[j, k2] - beta[i, j]) * H
-                        )
+                        # Get the machines in both combinations
+                        shared_machines = set(machine_combinations[k1]) & set(machine_combinations[k2])
+                        
+                        # Check if ANY shared machine has concurrency limit of 1
+                        must_not_overlap = any(machines.get(m, 1) == 1 for m in shared_machines)
+                        
+                        if must_not_overlap:
+                            # Machine can only run 1 operation: enforce strict ordering
+                            # (4) Operation i starts after j finishes (if i is on k1 and j is on k2)
+                            dur_j_k2 = window.operations[j].get_duration_for_combination(k2, machine_combinations, window.machines)
+                            constraints.append(
+                                t[i] >= t[j] + dur_j_k2 - (2 - alpha[i, k1] - alpha[j, k2] + beta[i, j]) * H
+                            )
+                            # (5) Operation j starts after i finishes (if j is on k2 and i is on k1)
+                            dur_i_k1 = window.operations[i].get_duration_for_combination(k1, machine_combinations, window.machines)
+                            constraints.append(
+                                t[j] >= t[i] + dur_i_k1 - (3 - alpha[i, k1] - alpha[j, k2] - beta[i, j]) * H
+                            )
+                        # If concurrency > 1, allow overlaps by not adding strict ordering constraints   
     # (6)
     for i in range(num_operations):
         # Build duration vector for all combinations
@@ -125,7 +139,7 @@ def schedule(workload: Workload) -> Tuple[np.ndarray, np.ndarray]:
     alpha = cp.Variable((num_operations, num_combinations), boolean=True)
     beta = cp.Variable((num_operations, num_operations), boolean=True)
     t = cp.Variable(num_operations)
-    C_max = cp.Variable()
+    C_max = cp.Variable() 
 
     # Hyperparameters
     H = 5000
@@ -153,8 +167,9 @@ def schedule(workload: Workload) -> Tuple[np.ndarray, np.ndarray]:
             max_transfer_time = 0
             for k_pred in range(num_combinations):
                 for k_curr in range(num_combinations):
-                    machine_pred = workload.machines.index(machine_combinations[k_pred][0])
-                    machine_curr = workload.machines.index(machine_combinations[k_curr][0])
+                    machine_name_to_idx = {name: idx for idx, name in enumerate(workload.machines)}
+                    machine_pred = machine_name_to_idx[machine_combinations[k_pred][0]]
+                    machine_curr = machine_name_to_idx[machine_combinations[k_curr  ][0]]
                     transfer_time_val = transfer_times[machine_pred][machine_curr]
                     max_transfer_time = max(max_transfer_time, transfer_time_val)
             
@@ -250,6 +265,14 @@ def schedule_additional_objectives(workload: Workload, nominal_start_times: list
         constraints.append(
             cp.sum(alpha[i, :]) == 1
         )
+
+    max_transfer_time = 0
+    for k_pred in range(num_combinations):
+        for k_curr in range(num_combinations):
+            machine_pred = workload.machines.index(machine_combinations[k_pred][0])
+            machine_curr = workload.machines.index(machine_combinations[k_curr][0])
+            transfer_time_val = transfer_times[machine_pred][machine_curr]
+            max_transfer_time = max(max_transfer_time, transfer_time_val)
     # (3) Precedence constraints: operation i must start after ALL its predecessors complete
     for i in range(num_operations):
         predecessors = workload.operations[i].get_predecessors()
@@ -263,13 +286,7 @@ def schedule_additional_objectives(workload: Workload, nominal_start_times: list
             # Since this is non-convex, we use an upper bound approach: use the maximum transfer time
             # This is conservative but ensures correctness (actual transfer time will be <= max)
             # For backward compatibility with singleton combinations, this works correctly
-            max_transfer_time = 0
-            for k_pred in range(num_combinations):
-                for k_curr in range(num_combinations):
-                    machine_pred = workload.machines.index(machine_combinations[k_pred][0])
-                    machine_curr = workload.machines.index(machine_combinations[k_curr][0])
-                    transfer_time_val = transfer_times[machine_pred][machine_curr]
-                    max_transfer_time = max(max_transfer_time, transfer_time_val)
+            #TODO: Ailsa: Why is this inside the loop lol? Shouldn't this be moved out. 
             
             # For transfer time, we use the maximum transfer time as an upper bound
             # This is conservative but ensures correctness and is DCP-compliant
@@ -376,7 +393,7 @@ def schedule_with_greedy_packing(workload: Workload, n_splits: int) -> Tuple[np.
     return t, alpha
 
 def schedule_with_convex_packing(workload: Workload, n_splits: int) -> Tuple[int, int]:
-    windows = convex_packing(workload, n_splits)
+    windows = convex_packing(workload,  n_splits)
 
     solutions = []
     for i, window in enumerate(windows):

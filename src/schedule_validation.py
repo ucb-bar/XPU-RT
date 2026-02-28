@@ -6,26 +6,52 @@ def overlap_fixer(workload: Workload, t: np.ndarray, alpha: np.ndarray):
     Resolves overlaps by pushing them forward in time
     @return: updated t that is free of overlaps and respects the precedence constraints
     """
-    transfer_times = workload.get_transfer_times()
-    for i in range(len(t)):
-        for j in range(i+1, len(t)):
-            # check if j is predecessor of i and vice versa
-            transfer_time = 0
-            if workload.operations[j] in workload.operations[i].predecessors:
-                machine_pred = np.argmax(alpha[j])
-                machine_curr = np.argmax(alpha[i])
-                transfer_time = transfer_times[machine_pred][machine_curr]
-            elif workload.operations[i] in workload.operations[j].predecessors:
-                machine_pred = np.argmax(alpha[i])
-                machine_curr = np.argmax(alpha[j])
-                transfer_time = transfer_times[machine_pred][machine_curr]
+    # Respect per-machine concurrency limits from workload.get_machines() (dict: name -> limit)
+    machine_limits = workload.get_machines()
+    machine_combinations = workload.get_machine_combinations()
+    # map machine name -> index in workload.machines list (for any transfer-time lookups elsewhere)
+    machine_name_to_idx = {name: idx for idx, name in enumerate(workload.machines)}
 
-            if t[i] < t[j] and np.argmax(alpha[i]) == np.argmax(alpha[j]):
-                if t[i] + workload.operations[i].get_durations()[np.argmax(alpha[i])] + transfer_time > t[j]:
-                    t[j] = t[i] + workload.operations[i].get_durations()[np.argmax(alpha[i])] + transfer_time
-            elif t[i] > t[j] and np.argmax(alpha[i]) == np.argmax(alpha[j]):
-                if t[j] + workload.operations[j].get_durations()[np.argmax(alpha[j])] + transfer_time > t[i]:
-                    t[i] = t[j] + workload.operations[j].get_durations()[np.argmax(alpha[j])] + transfer_time
+    num_ops = len(t)
+
+    # Repeat a few passes to resolve cascading adjustments
+    for _ in range(num_ops):
+        # iterate operations in increasing start-time order
+        order = sorted(range(num_ops), key=lambda x: t[x])
+        for i in order:
+            combo_i = int(np.argmax(alpha[i]))
+            dur_i = workload.operations[i].get_duration_for_combination(combo_i, machine_combinations, workload.machines)
+            start_i = t[i]
+            end_i = start_i + dur_i
+
+            new_start = start_i
+
+            # For each machine used by operation i, check current overlapping operations
+            for m in machine_combinations[combo_i]:
+                limit = int(machine_limits.get(m, 1))
+                # collect end times of ops that overlap with i on machine m
+                overlapping_ends = []
+                for j in range(num_ops):
+                    if j == i:
+                        continue
+                    combo_j = int(np.argmax(alpha[j]))
+                    if m not in machine_combinations[combo_j]:
+                        continue
+                    dur_j = workload.operations[j].get_duration_for_combination(combo_j, machine_combinations, workload.machines)
+                    start_j = t[j]
+                    end_j = start_j + dur_j
+                    # intervals overlap?
+                    if start_i < end_j and start_j < end_i:
+                        overlapping_ends.append(end_j)
+
+                # If number of overlapping operations (excluding i) is already >= limit, push i
+                if len(overlapping_ends) >= limit:
+                    # push i to after the earliest-finishing overlapping operation
+                    earliest_end = min(overlapping_ends)
+                    new_start = max(new_start, earliest_end)
+
+            if new_start > start_i:
+                t[i] = new_start
 
     return t
 
@@ -33,26 +59,32 @@ def count_overlaps(workload: Workload, t: np.ndarray, alpha: np.ndarray):
     """
     @return: number of overlaps in the schedule
     """
-    transfer_times = workload.get_transfer_times()
-    count = 0
+    machine_limits = workload.get_machines()
+    machine_combinations = workload.get_machine_combinations()
+    num_ops = len(t)
+    violations = 0
 
-    for i in range(len(t)):
-        for j in range(i+1, len(t)):
-            # check if j is predecessor of i and vice versa
-            transfer_time = 0
-            if workload.operations[j] in workload.operations[i].predecessors:
-                machine_pred = np.argmax(alpha[j])
-                machine_curr = np.argmax(alpha[i])
-                transfer_time = transfer_times[machine_pred][machine_curr]
-            elif workload.operations[i] in workload.operations[j].predecessors:
-                machine_pred = np.argmax(alpha[i])
-                machine_curr = np.argmax(alpha[j])
-                transfer_time = transfer_times[machine_pred][machine_curr]
+    # For each machine, count operations that exceed concurrency limit
+    for m, limit in machine_limits.items():
+        limit = int(limit)
+        # build intervals for ops that use machine m
+        intervals = []  # (start, end, idx)
+        for i in range(num_ops):
+            combo_i = int(np.argmax(alpha[i]))
+            if m not in machine_combinations[combo_i]:
+                continue
+            dur_i = workload.operations[i].get_duration_for_combination(combo_i, machine_combinations, workload.machines)
+            intervals.append((t[i], t[i] + dur_i, i))
 
-            if t[i] < t[j] and np.argmax(alpha[i]) == np.argmax(alpha[j]):
-                if t[i] + workload.operations[i].get_durations()[np.argmax(alpha[i])] + transfer_time > t[j]:
-                    count += 1
-            elif t[i] > t[j] and np.argmax(alpha[i]) == np.argmax(alpha[j]):
-                if t[j] + workload.operations[j].get_durations()[np.argmax(alpha[j])] + transfer_time > t[i]:
-                    count += 1
-    return count
+        # for each operation, count overlaps and increment violations when exceeding limit
+        for start_i, end_i, i in intervals:
+            overlap_count = 0
+            for start_j, end_j, j in intervals:
+                if i == j:
+                    continue
+                if start_i < end_j and start_j < end_i:
+                    overlap_count += 1
+            if overlap_count >= limit:
+                violations += 1
+
+    return violations

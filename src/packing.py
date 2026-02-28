@@ -11,6 +11,9 @@ def lp_schedule(workload: Workload) -> Tuple[np.ndarray, np.ndarray]:
     """
     num_operations = len(workload.get_operations())
     machine_combinations = workload.get_machine_combinations()
+    machines = workload.get_machines()
+    # map machine name -> index in the workload's machine list (for transfer time lookup)
+    machine_name_to_idx = {name: idx for idx, name in enumerate(workload.machines)}
     num_combinations = len(machine_combinations)
     transfer_times = workload.get_transfer_times()
 
@@ -39,8 +42,8 @@ def lp_schedule(workload: Workload) -> Tuple[np.ndarray, np.ndarray]:
             combo_pred_idx = np.argmax(alpha[i_pred, :])
             combo_curr_idx = np.argmax(alpha[i, :])
             
-            machine_pred = workload.machines.index(machine_combinations[combo_pred_idx][0])
-            machine_curr = workload.machines.index(machine_combinations[combo_curr_idx][0])
+            machine_pred = machine_name_to_idx[machine_combinations[combo_pred_idx][0]]
+            machine_curr = machine_name_to_idx[machine_combinations[combo_curr_idx][0]]
             
             transfer_time = transfer_times[machine_pred][machine_curr]
 
@@ -56,16 +59,31 @@ def lp_schedule(workload: Workload) -> Tuple[np.ndarray, np.ndarray]:
                 for k2 in range(num_combinations):
                     # Only add constraint if combinations overlap
                     if workload.combinations_overlap(k1, k2):
-                        dur_j_k2 = workload.operations[j].get_duration_for_combination(k2, machine_combinations, workload.machines)
-                        dur_i_k1 = workload.operations[i].get_duration_for_combination(k1, machine_combinations, workload.machines)
-                        # (4)
-                        constraints.append(
-                            t[i] >= t[j] + dur_j_k2 - (2 - alpha[i, k1] - alpha[j, k2] + beta[i, j]) * H
-                        )
-                        # (5)
-                        constraints.append(
-                            t[j] >= t[i] + dur_i_k1 - (3 - alpha[i, k1] - alpha[j, k2] - beta[i, j]) * H
-                        )
+                        # Determine whether to enforce pairwise ordering based on machine concurrency limits.
+                        # If any shared machine between the two combinations has limit == 1 (or no limits provided),
+                        # fall back to the original pairwise ordering constraints. If limits allow >1 concurrent
+                        # jobs on the shared machines, skip pairwise ordering and rely on the subset-based
+                        # concurrency constraints added later.
+                        shared_machines = set(machine_combinations[k1]).intersection(set(machine_combinations[k2]))
+                        no_overlap = []
+                        enforce_pairwise = False
+                        for m in shared_machines:
+                            limit = machines[m]
+                            if int(limit) <= 1:
+                                enforce_pairwise = True
+                                break
+
+                        if enforce_pairwise:
+                            dur_j_k2 = workload.operations[j].get_duration_for_combination(k2, machine_combinations, workload.machines)
+                            dur_i_k1 = workload.operations[i].get_duration_for_combination(k1, machine_combinations, workload.machines)
+                            # (4)
+                            constraints.append(
+                                t[i] >= t[j] + dur_j_k2 - (2 - alpha[i, k1] - alpha[j, k2] + beta[i, j]) * H
+                            )
+                            # (5)
+                            constraints.append(
+                                t[j] >= t[i] + dur_i_k1 - (3 - alpha[i, k1] - alpha[j, k2] - beta[i, j]) * H
+                            )
     # (6)
     for i in range(num_operations):
         # Build duration vector for all combinations
@@ -73,6 +91,50 @@ def lp_schedule(workload: Workload) -> Tuple[np.ndarray, np.ndarray]:
         constraints.append(
             C_max >= t[i] + cp.sum(cp.multiply(dur_vec, alpha[i, :]))
         )
+
+    # (9) Machine concurrency limits (conservative subset-based enforcement)
+    # machine_limits: dict mapping machine_name -> allowed concurrent operations (int)
+    # For each machine, for every subset of operations of size (limit+1) that could run on that machine,
+    # enforce at least one ordering among the pairs in the subset so that not all can overlap simultaneously.
+    if machines is not None:
+        from itertools import combinations
+
+        # Build a mapping from machine name to list of operations that can run on it
+        ops_per_machine = {m: [] for m in workload.get_machines().keys()}
+        for i_op, op in enumerate(workload.get_operations()):
+            for combo_idx, combo in enumerate(machine_combinations):
+                # if any machine in combo matches, mark that op as capable on that machine
+                for m in combo:
+                    if m in ops_per_machine:
+                        ops_per_machine[m].append(i_op)
+        # deduplicate lists
+        for m in ops_per_machine:
+            ops_per_machine[m] = sorted(set(ops_per_machine[m]))
+
+        for m, limit in machines.items():
+            if m not in ops_per_machine:
+                continue
+            ops = ops_per_machine[m]
+            k_req = int(limit)
+            # only need constraint if there are potentially more than k_req operations
+            if len(ops) > k_req:
+                # for every subset of size k_req+1, require at least one ordered pair
+                for subset in combinations(ops, k_req + 1):
+                    pair_indices = []
+                    for p in range(len(subset)):
+                        for q in range(p + 1, len(subset)):
+                            i = subset[p]
+                            j = subset[q]
+                            # beta was defined for ordered pairs (i,j) where i and j are indices
+                            # ensure we reference the correct beta variable (use min/max ordering used elsewhere)
+                            if i < j:
+                                pair_indices.append(beta[i, j])
+                            else:
+                                pair_indices.append(beta[j, i])
+                    if pair_indices:
+                        constraints.append(
+                            cp.sum(pair_indices) >= 1
+                        )
     # (7) and (8) are covered by boolean argument of alpha and beta variables
     # all operations start at 0
     for i in range(num_operations):
@@ -144,13 +206,33 @@ def greedy_packing(workload: Workload, n_splits: int) -> list[Window]:
 
 def convex_packing(workload: Workload, n_splits: int) -> List[Window]:
     """
-    approximate the optimal packing of jobs into windows using convex optimization.
+    Approximate the optimal packing of jobs into windows using convex optimization while respecting machine concurrency limits.
     
     1) solves optimization problem without integer constraints
     2) splits the operations into n_splits windows based on the start times
+    3) enforces machine concurrency constraints within the packing
 
-    Returns a list of windows each containing a subset of the operations
+    @param workload: The workload to schedule
+    @param machines: Dictionary where keys are machine names and values are concurrency limits
+                     (max number of operations that can run simultaneously on that machine)
+    @param n_splits: Number of splits to divide the workload into (creates n_splits+1 windows)
+    @return: List of windows containing subsets of operations
     """
+    operations = workload.get_operations().copy()
+    machines = workload.get_machines()
+    machine_combinations = workload.get_machine_combinations()
+    t, alpha = lp_schedule(workload)
+
+    # Track machine intervals to enforce concurrency constraints
+    machine_intervals = {machine: [] for machine in machines.keys()}
+
+    # sort operations by start time
+    times_and_ops = []
+    for i in range(len(t)):
+        times_and_ops.append([t[i], operations[i], i])
+    
+    times_and_ops.sort(key=lambda time_and_op: time_and_op[0])
+
     operations = workload.get_operations().copy()
     t, alpha = lp_schedule(workload)
 
@@ -209,8 +291,9 @@ def combine_solved_windows(original_workload, windows, solutions):
             combo_pred_idx = np.argmax(alpha[i_pred, :])
             combo_curr_idx = np.argmax(alpha[i, :])
             # Get first machine from each combination for transfer time lookup
-            machine_pred = original_workload.machines.index(machine_combinations[combo_pred_idx][0])
-            machine_curr = original_workload.machines.index(machine_combinations[combo_curr_idx][0])
+            machine_name_to_idx = {name: idx for idx, name in enumerate(original_workload.machines)}
+            machine_pred = machine_name_to_idx[machine_combinations[combo_pred_idx][0]]
+            machine_curr = machine_name_to_idx[machine_combinations[combo_curr_idx][0]]
             transfer_time = transfer_times[machine_pred][machine_curr]
             dur_pred = original_operations[i_pred].get_duration_for_combination(combo_pred_idx, machine_combinations, original_workload.machines)
             t[i] = max(t[i], t[i_pred] + dur_pred + transfer_time)

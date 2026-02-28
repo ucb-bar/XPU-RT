@@ -23,6 +23,12 @@ class Operation:
         # Job identifier - explicitly tracks which job this operation belongs to
         self.job_id = job_id
     
+
+     # check that the length of the processing time is same as the number of machines
+    def check_processing_times(self, machines: dict[str, int]):
+        if len(self.processing_times) != len(machines.keys()):
+            raise ValueError(f"Length of processing_times {len(self.processing_times)} does not match number of machines {len(machines.keys())}")
+
     def get_predecessors(self):
         """Returns list of all predecessors"""
         return self.predecessors
@@ -46,7 +52,7 @@ class Operation:
         """
         return self.processing_times
     
-    def get_duration_for_combination(self, combination_idx: int, machine_combinations: list[list[str]], machines: list[str]) -> float:
+    def get_duration_for_combination(self, combination_idx: int, machine_combinations: list[list[str]], machines: dict[str, int]) -> float:
         """
         Get the duration for a specific machine combination.
         
@@ -64,10 +70,11 @@ class Operation:
             raise ValueError(f"Invalid combination index: {combination_idx}")
         
         combo = machine_combinations[combination_idx]
-        
+        list_machines = list(machines.keys())   # 'apple'
+
         # If singleton combination, return duration for that machine
         if len(combo) == 1:
-            machine_idx = machines.index(combo[0])
+            machine_idx = list_machines.index(combo[0])
             if machine_idx < len(self.processing_times):
                 return self.processing_times[machine_idx]
             else:
@@ -77,7 +84,7 @@ class Operation:
         # This is a reasonable default: the operation takes as long as the slowest machine
         durations = []
         for machine_name in combo:
-            machine_idx = machines.index(machine_name)
+            machine_idx = list_machines.index(machine_name)
             if machine_idx < len(self.processing_times):
                 durations.append(self.processing_times[machine_idx])
         if durations:
@@ -98,41 +105,78 @@ class Job:
     def get_operations(self) -> list[Operation]:
         return self.operations
 
+
 class Workload:
+
     """
     High level representation of a schedulable workload that contains operations that are potentially
     dependent as part of a job, machines that can process the operations, and transfer times between
-    machines.
+    machines.    
 
     @param operations: list of operations that are part of the workload. Potentially dependent on each other.
-    @param machines: list of machines that can process the operations (for backward compatibility).
+    @param full_machines : list of all machines that can process the operations, including duplicates
+    @param machines: dictionary of machines that can process the operations (for backward compatibility), passed in as a map.
+    @param full_transfer_times : dictionary of transfer times between machines, where keys are tuples of machine names (from_machine, to_machine) and values are transfer times. 
     @param transfer_times: matrix of transfer times between machines. transfer_times[i][j] is the time to transfer from machine i to machine j.
     @param job_names: optional list of job names for plotting/display.
     @param machine_combinations: optional list of machine combinations (list of lists). 
                                  If None, each machine in 'machines' becomes a singleton combination for backward compatibility.
                                  Example: [['CPU_P'], ['CPU_E'], ['CPU_P', 'CPU_E']]
     """
-    def __init__(self, operations: list[Operation], machines: list[str], transfer_times: np.ndarray, job_names: list[str] = None, machine_combinations: list[list[str]] = None):
+
+    def set_full_transfer_time(self, machines: dict[str, int], transfer_times: np.ndarray) -> list[list[float]]:
+        """
+        Convert a compact transfer time matrix into a full dictionary format for backward compatibility.
+        The input transfer_times is a matrix where transfer_times[i][j] is the time to transfer from machine i to machine j.
+        The output is an array where each element is a list of transfer times for a specific machine copy.
+        """
+        full_transfer_times = []
+        machine_list = list(machines.keys())
+        for j in machine_list:
+            num_copies = machines[j]
+            for copy_idx in range(1, num_copies + 1):
+                full_transfer_times.append(list[float]())
+                for k in machine_list:
+                    num_copies_k = machines[k]
+                    for copy_idx_k in range(1, num_copies_k + 1):
+                        i = machine_list.index(j)
+                        l = machine_list.index(k)
+                        time = transfer_times[i][l]
+                        full_transfer_times[-1].append(time)
+        return full_transfer_times
+
+    def __init__(self, operations: list[Operation], machines: dict[str, int], transfer_times: np.ndarray, job_names: list[str] = None, machine_combinations: list[list[str]] = None, equivalence_classes: list[list[str]] = None):
         self.operations = operations
         self.machines = machines  # Keep for backward compatibility
-        
+        self.full_transfer_times = self.set_full_transfer_time(self.machines, transfer_times)  # Convert to full dictionary format for backward compatibility
+
         # Set up machine_combinations: if not provided, create singleton combinations from machines
         if machine_combinations is None:
             # Backward compatibility: each machine becomes its own combination
             self.machine_combinations = [[m] for m in machines]
         else:
             self.machine_combinations = machine_combinations
-        
+
         # Validate that all machines in combinations exist in the original machines list
         all_machines_in_combinations = set()
         for combo in self.machine_combinations:
             all_machines_in_combinations.update(combo)
-        if not all_machines_in_combinations.issubset(set(machines)):
+        if not all_machines_in_combinations.issubset(set(machines.keys())):
             raise ValueError(f"Machine combinations contain machines not in the machines list: {all_machines_in_combinations - set(machines)}")
         
         self.transfer_times = transfer_times
         self.job_names = job_names if job_names is not None else []
-    
+        result = []
+
+        # Expand machines dictionary into a full list of machine names with duplicates (e.g., CPU_P_1, CPU_P_2, etc.)
+        for machine, count in machines.items():
+            for i in range(1, count + 1): 
+                result.append(f"{machine}_{i}")
+        self.full_machines = result
+
+    def get_full_transfer_times(self) -> dict[tuple[str, str], float]:
+        return self.full_transfer_times
+
     def get_machine_combinations(self) -> list[list[str]]:
         """Returns the list of machine combinations."""
         return self.machine_combinations
@@ -152,10 +196,13 @@ class Workload:
         
         set1 = set(self.machine_combinations[combo_idx1])
         set2 = set(self.machine_combinations[combo_idx2])
-        return bool(set1 & set2)  # True if intersection is non-empty
+        return set1 & set2 if bool(set1 & set2) else False # True if intersection is non-empty
 
-    def get_machines(self) -> list[str]:
+    def get_machines(self) -> dict[str, int]:
         return self.machines
+
+    def get_full_machines(self) -> list[str]:
+        return self.full_machines
     
     def get_operations(self) -> list[Operation]:
         return self.operations
@@ -202,14 +249,14 @@ class Window:
     """
     A time slice in a workload
     """
-    def __init__(self, time_frame: float, operations: list[Operation], machines: list[str], transfer_times: np.ndarray, machine_combinations: list[list[str]] = None):
+    def __init__(self, time_frame: float, operations: list[Operation], machines: dict[str, int], transfer_times: np.ndarray, machine_combinations: list[list[str]] = None):
         self.operations = operations
         self.machines = machines  # Keep for backward compatibility
         
         # Set up machine_combinations: if not provided, create singleton combinations from machines
         if machine_combinations is None:
             # Backward compatibility: each machine becomes its own combination
-            self.machine_combinations = [[m] for m in machines]
+            self.machine_combinations = [[m] for m in machines.keys()]
         else:
             self.machine_combinations = machine_combinations
         
@@ -217,7 +264,7 @@ class Window:
         all_machines_in_combinations = set()
         for combo in self.machine_combinations:
             all_machines_in_combinations.update(combo)
-        if not all_machines_in_combinations.issubset(set(machines)):
+        if not all_machines_in_combinations.issubset(set(machines.keys())):
             raise ValueError(f"Machine combinations contain machines not in the machines list: {all_machines_in_combinations - set(machines)}")
         
         self.time_frame = time_frame
@@ -242,7 +289,8 @@ class Window:
         
         set1 = set(self.machine_combinations[combo_idx1])
         set2 = set(self.machine_combinations[combo_idx2])
-        return bool(set1 & set2)  # True if intersection is non-empty
+        intersection = set1 & set2
+        return set1 & set2 if bool(intersection) else None # True if intersection is non-empty
 
     def add_operations(self, operations: list[Operation]):
         self.operations.extend(operations)
