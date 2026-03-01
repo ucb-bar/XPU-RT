@@ -251,10 +251,11 @@ def schedule(
             # This is conservative but ensures correctness (actual transfer time will be <= max)
             # For backward compatibility with singleton combinations, this works correctly
             max_transfer_time = 0
+
             for k_pred in range(num_combinations):
                 for k_curr in range(num_combinations):
-                    machine_pred = workload.machines.index(machine_combinations[k_pred][0])
-                    machine_curr = workload.machines.index(machine_combinations[k_curr][0])
+                    machine_pred = list(workload.machines.keys()).index(machine_combinations[k_pred][0])
+                    machine_curr = list(workload.machines.keys()).index(machine_combinations[k_curr][0])
                     transfer_time_val = transfer_times[machine_pred][machine_curr]
                     max_transfer_time = max(max_transfer_time, transfer_time_val)
             
@@ -283,34 +284,44 @@ def schedule(
             # constraints.append(
             #     t[i] <= op.max_end_t
             # )
-    # (4) and (5) Non-overlap constraints: if two operations are assigned to overlapping combinations, enforce ordering
-    for i in range(num_operations):
-        for j in range(i+1, num_operations):
-            op_i = workload.operations[i]
-            op_j = workload.operations[j]
 
-            # Optionally skip pairs whose time windows cannot overlap
-            if prune_cross_period_constraints and not _periods_overlap(op_i, op_j):
-                continue
-
-            for k1 in range(num_combinations):
-                for k2 in range(num_combinations):
-                    # Only add constraint if combinations overlap
-                    if workload.combinations_overlap(k1, k2):
-                        # (4) Operation i starts after j finishes (if i is on k1 and j is on k2)
+    # (4) & (5) Checks if two combinations intersect at any machines, if so then place a limit on the number of overlapping 
+    # tasks that can be placed between these combinations - this limit is defined by the minimum number of cores 
+    # for each intersecting machine
+    overlap_track = {}
+    for k1 in range(num_combinations):
+        for k2 in range(num_combinations):
+            overlap_track[(k1,k2)] = {}
+            overlap = workload.combinations_overlap(k1, k2)
+            if overlap:
+                max_overlap = min(workload.machines[m] for m in overlap)
+                pairs = [ (i,j) for j in range(i+1, num_operations) for i in range (num_operations)]
+                for i in range(num_operations):
+                    for j in range(i+1, num_operations):
                         dur_j_k2 = workload.operations[j].get_duration_for_combination(
-                            k2, machine_combinations, workload.machines
+                                    k2, machine_combinations, workload.machines
                         )
-                        constraints.append(
-                            t[i] >= t[j] + dur_j_k2 - (2 - alpha[i, k1] - alpha[j, k2] + beta[i, j]) * H
+                        dur_i_k2 = workload.operations[i].get_duration_for_combination(
+                                    k2, machine_combinations, workload.machines
                         )
-                        # (5) Operation j starts after i finishes (if j is on k2 and i is on k1)
-                        dur_i_k1 = workload.operations[i].get_duration_for_combination(
-                            k1, machine_combinations, workload.machines
-                        )
-                        constraints.append(
-                            t[j] >= t[i] + dur_i_k1 - (3 - alpha[i, k1] - alpha[j, k2] - beta[i, j]) * H
-                        )
+                        i_before = cp.Variable(boolean=True)  # i finishes before j
+                        i_after  = cp.Variable(boolean=True)  # j finishes before i
+
+                        constraints.append( t[i] + dur_i_k2 <= t[j] + H*(1 - i_before))
+                        constraints.append( t[j] + dur_j_k2 <= t[i] + H*(1 - i_after))
+                        constraints.append( i_before + i_after <= 1)
+
+                        # Overlap indicator var per combination pair per operation
+                        overlap_track[(k1,k2)][(i,j)] = cp.Variable(boolean=True)
+
+                        # Overlap = 1 if intervals overlap AND both operations are assigned to the corresponding combinations
+                        constraints.append( overlap_track[(k1,k2)][(i,j)] >= 1 - i_before - i_after + alpha[i][k1] + alpha[j][k2] - 2 )
+                        constraints.append( overlap_track[(k1,k2)][(i,j)] <= alpha[i][k1] )
+                        constraints.append( overlap_track[(k1,k2)][(i,j)] <= alpha[j][k2] )
+                        constraints.append( overlap_track[(k1,k2)][(i,j)] <= 1 - i_before )
+                        constraints.append( overlap_track[(k1,k2)][(i,j)] <= 1 - i_after )
+                constraints.append(cp.sum([overlap_track[(k1,k2)][(i,j)] for i,j in pairs]) <= max_overlap )
+
     # (6) Makespan constraints:
     if restrict_makespan_to_nonperiodic:
         # C_max tracks only NON-periodic operations (operations without explicit time-window bounds).

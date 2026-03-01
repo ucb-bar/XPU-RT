@@ -3,12 +3,12 @@
     "dronet": {
       "id": 0,
       "identifier": "dronet",
-      "dispatch_deps_path": "merlin/samples/robotic-NN/pytorch_workload/computation_graph/dronet_dispatch_deps.json"
+      "dispatch_deps_path": "src/pytorch_workload/samples/dronet_dispatch_deps.json"
     },
     "mlp": {
       "id": 1,
       "identifier": "mlp",
-      "dispatch_deps_path": "merlin/samples/robotic-NN/pytorch_workload/computation_graph/mlp_dispatch_deps.json",
+      "dispatch_deps_path": "src/pytorch_workload/samples/mlp_dispatch_deps.json",
       "period": 2,
       "window_duration": 0.5,
       "start_time": 0

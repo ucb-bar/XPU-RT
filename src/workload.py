@@ -70,7 +70,7 @@ class Operation:
         
         # If singleton combination, return duration for that machine
         if len(combo) == 1:
-            machine_idx = machines.index(combo[0])
+            machine_idx = list(machines.keys()).index(combo[0])
             if machine_idx < len(self.processing_times):
                 return self.processing_times[machine_idx]
             else:
@@ -140,7 +140,7 @@ class Workload:
         """Returns the list of machine combinations."""
         return self.machine_combinations
     
-    def combinations_overlap(self, combo_idx1: int, combo_idx2: int) -> bool:
+    def combinations_overlap(self, combo_idx1: int, combo_idx2: int) -> list[str]:
         """
         Check if two machine combinations overlap (share any machines).
         
@@ -155,7 +155,7 @@ class Workload:
         
         set1 = set(self.machine_combinations[combo_idx1])
         set2 = set(self.machine_combinations[combo_idx2])
-        return bool(set1 & set2)  # True if intersection is non-empty
+        return set1 & set2# True if intersection is non-empty
 
     def get_machines(self) -> list[str]:
         return self.machines
@@ -230,7 +230,7 @@ class Window:
         """Returns the list of machine combinations."""
         return self.machine_combinations
     
-    def combinations_overlap(self, combo_idx1: int, combo_idx2: int) -> bool:
+    def combinations_overlap(self, combo_idx1: int, combo_idx2: int) -> list[str]:
         """
         Check if two machine combinations overlap (share any machines).
         
@@ -245,7 +245,7 @@ class Window:
         
         set1 = set(self.machine_combinations[combo_idx1])
         set2 = set(self.machine_combinations[combo_idx2])
-        return bool(set1 & set2)  # True if intersection is non-empty
+        return set1 & set2 # True if intersection is non-empty
 
     def add_operations(self, operations: list[Operation]):
         self.operations.extend(operations)
