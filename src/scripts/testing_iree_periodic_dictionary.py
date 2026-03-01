@@ -520,13 +520,12 @@ def schedule_iree_networks(
 
                 prefixed_name = f"{net_prefix}{dispatch_name}"
                 processing_times[prefixed_name] = [cpu_p_time, cpu_e_time]
-
     # Create workload from network hierarchy
     print(f"\nCreating workload from network hierarchy...")
     combined_workload = create_workload_from_network_hierarchy(
         networks_data=networks_data,
         repo_base_path=repo_base_path,
-        machines=machines,
+        machines=machines_dict,
         transfer_times=transfer_times,
         p_core_speedup=1.5,
         random_seed=random_seed,

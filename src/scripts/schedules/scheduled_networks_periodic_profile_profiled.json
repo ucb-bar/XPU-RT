@@ -1,0 +1,764 @@
+{
+  "dot_file": "combined_schedule_periodic.json",
+  "dispatches": {
+    "dronet_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_P",
+      "start_time": 0.06400000000030559,
+      "duration": 0.145,
+      "job_name": "dronet",
+      "module_name": "main_graph$async_dispatch_0_system_elf_riscv_64_main_graph$async_dispatch_0_matvec_like_32x10_f32",
+      "time_dependency": "mlp0_dispatch_0"
+    },
+    "dronet_dispatch_1": {
+      "id": 1,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dronet_dispatch_0"
+      ],
+      "hardware_target": "CPU_P",
+      "start_time": 0.20900000000030558,
+      "duration": 4.29,
+      "job_name": "dronet",
+      "module_name": "main_graph$async_dispatch_1_system_elf_riscv_64_main_graph$async_dispatch_1_matvec_like_32x32_f32",
+      "time_dependency": "dronet_dispatch_0"
+    },
+    "dronet_dispatch_10": {
+      "id": 10,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dronet_dispatch_8"
+      ],
+      "hardware_target": "CPU_E",
+      "start_time": 18.201000000000505,
+      "duration": 1.54,
+      "job_name": "dronet",
+      "module_name": "main_graph$async_dispatch_10_system_elf_riscv_64_main_graph$async_dispatch_10_matmul_like_128x4x4x64_f32",
+      "time_dependency": "mlp9_dispatch_2"
+    },
+    "dronet_dispatch_11": {
+      "id": 11,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dronet_dispatch_10",
+        "dronet_dispatch_9"
+      ],
+      "hardware_target": "CPU_P",
+      "start_time": 19.7410000000005,
+      "duration": 4.17,
+      "job_name": "dronet",
+      "module_name": "main_graph$async_dispatch_11_system_elf_riscv_64_main_graph$async_dispatch_11_conv_128x4x4x128x3x3_f32",
+      "time_dependency": "dronet_dispatch_9"
+    },
+    "dronet_dispatch_12": {
+      "id": 12,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dronet_dispatch_11"
+      ],
+      "hardware_target": "CPU_P",
+      "start_time": 23.9110000000005,
+      "duration": 0.07866666666666666,
+      "job_name": "dronet",
+      "module_name": "main_graph$async_dispatch_12_embedded_elf_riscv_64_main_graph$async_dispatch_12_matvec_like_6272_f32",
+      "time_dependency": "dronet_dispatch_11"
+    },
+    "dronet_dispatch_13_1": {
+      "id": 13,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dronet_dispatch_12"
+      ],
+      "hardware_target": "CPU_P",
+      "start_time": 23.989666666667166,
+      "duration": 0.064,
+      "job_name": "dronet",
+      "module_name": "main_graph$async_dispatch_13_system_elf_riscv_64_main_graph$async_dispatch_13_slow_memcpy",
+      "time_dependency": "dronet_dispatch_12"
+    },
+    "dronet_dispatch_13_2": {
+      "id": 13,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dronet_dispatch_14"
+      ],
+      "hardware_target": "CPU_E",
+      "start_time": 24.0240000000005,
+      "duration": 0.062,
+      "job_name": "dronet",
+      "module_name": "main_graph$async_dispatch_13_system_elf_riscv_64_main_graph$async_dispatch_13_slow_memcpy",
+      "time_dependency": "dronet_dispatch_14"
+    },
+    "dronet_dispatch_14": {
+      "id": 14,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dronet_dispatch_11"
+      ],
+      "hardware_target": "CPU_E",
+      "start_time": 23.9110000000005,
+      "duration": 0.113,
+      "job_name": "dronet",
+      "module_name": "main_graph$async_dispatch_14_system_elf_riscv_64_main_graph$async_dispatch_14_matvec_like_2048_f32",
+      "time_dependency": "mlp11_dispatch_2"
+    },
+    "dronet_dispatch_2": {
+      "id": 2,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dronet_dispatch_1"
+      ],
+      "hardware_target": "CPU_P",
+      "start_time": 4.499000000000307,
+      "duration": 0.725,
+      "job_name": "dronet",
+      "module_name": "main_graph$async_dispatch_2_system_elf_riscv_64_main_graph$async_dispatch_2_matvec_like_2x32_f32",
+      "time_dependency": "dronet_dispatch_1"
+    },
+    "dronet_dispatch_3": {
+      "id": 3,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dronet_dispatch_2"
+      ],
+      "hardware_target": "CPU_P",
+      "start_time": 5.224000000000306,
+      "duration": 3.5,
+      "job_name": "dronet",
+      "module_name": "main_graph$async_dispatch_3_system_elf_riscv_64_main_graph$async_dispatch_3_conv_32x14x14x32x3x3_f32",
+      "time_dependency": "dronet_dispatch_1"
+    },
+    "dronet_dispatch_4": {
+      "id": 4,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dronet_dispatch_2"
+      ],
+      "hardware_target": "CPU_P",
+      "start_time": 8.788000000001254,
+      "duration": 0.533,
+      "job_name": "dronet",
+      "module_name": "main_graph$async_dispatch_4_system_elf_riscv_64_main_graph$async_dispatch_4_matmul_like_32x14x14x32_f32",
+      "time_dependency": "dronet_dispatch_3"
+    },
+    "dronet_dispatch_5": {
+      "id": 5,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dronet_dispatch_3",
+        "dronet_dispatch_4"
+      ],
+      "hardware_target": "CPU_P",
+      "start_time": 9.320999999999847,
+      "duration": 3.21,
+      "job_name": "dronet",
+      "module_name": "main_graph$async_dispatch_5_system_elf_riscv_64_main_graph$async_dispatch_5_conv_32x14x14x32x3x3_f32",
+      "time_dependency": "dronet_dispatch_3"
+    },
+    "dronet_dispatch_6": {
+      "id": 6,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dronet_dispatch_5"
+      ],
+      "hardware_target": "CPU_P",
+      "start_time": 12.531000000000503,
+      "duration": 1.88,
+      "job_name": "dronet",
+      "module_name": "main_graph$async_dispatch_6_system_elf_riscv_64_main_graph$async_dispatch_6_conv_64x7x7x32x3x3_f32",
+      "time_dependency": "dronet_dispatch_5"
+    },
+    "dronet_dispatch_7": {
+      "id": 7,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dronet_dispatch_5"
+      ],
+      "hardware_target": "CPU_E",
+      "start_time": 12.53099999999898,
+      "duration": 1.17,
+      "job_name": "dronet",
+      "module_name": "main_graph$async_dispatch_7_system_elf_riscv_64_main_graph$async_dispatch_7_matmul_like_64x7x7x32_f32",
+      "time_dependency": "mlp6_dispatch_2"
+    },
+    "dronet_dispatch_8": {
+      "id": 8,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dronet_dispatch_6",
+        "dronet_dispatch_7"
+      ],
+      "hardware_target": "CPU_P",
+      "start_time": 14.4110000000005,
+      "duration": 3.2,
+      "job_name": "dronet",
+      "module_name": "main_graph$async_dispatch_8_system_elf_riscv_64_main_graph$async_dispatch_8_conv_64x7x7x64x3x3_f32",
+      "time_dependency": "dronet_dispatch_5"
+    },
+    "dronet_dispatch_9": {
+      "id": 9,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dronet_dispatch_8"
+      ],
+      "hardware_target": "CPU_P",
+      "start_time": 17.611000000000498,
+      "duration": 2.13,
+      "job_name": "dronet",
+      "module_name": "main_graph$async_dispatch_9_system_elf_riscv_64_main_graph$async_dispatch_9_conv_128x4x4x64x3x3_f32",
+      "time_dependency": "dronet_dispatch_6"
+    },
+    "mlp0_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_P",
+      "start_time": -0.0,
+      "duration": 0.064,
+      "job_name": "mlp0",
+      "module_name": "main_graph$async_dispatch_0_system_elf_riscv_64_main_graph$async_dispatch_0_matvec_like_32x10_f32"
+    },
+    "mlp0_dispatch_1": {
+      "id": 1,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "mlp0_dispatch_0"
+      ],
+      "hardware_target": "CPU_E",
+      "start_time": 0.064,
+      "duration": 0.07,
+      "job_name": "mlp0",
+      "module_name": "main_graph$async_dispatch_1_system_elf_riscv_64_main_graph$async_dispatch_1_matvec_like_32x32_f32"
+    },
+    "mlp0_dispatch_2": {
+      "id": 2,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "mlp0_dispatch_1"
+      ],
+      "hardware_target": "CPU_E",
+      "start_time": 0.43500000000000005,
+      "duration": 0.065,
+      "job_name": "mlp0",
+      "module_name": "main_graph$async_dispatch_2_system_elf_riscv_64_main_graph$async_dispatch_2_matvec_like_2x32_f32",
+      "time_dependency": "mlp0_dispatch_1"
+    },
+    "mlp1_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_E",
+      "start_time": 2.2990000000002913,
+      "duration": 0.066,
+      "job_name": "mlp1",
+      "module_name": "main_graph$async_dispatch_0_system_elf_riscv_64_main_graph$async_dispatch_0_matvec_like_32x10_f32",
+      "time_dependency": "mlp0_dispatch_2"
+    },
+    "mlp1_dispatch_1": {
+      "id": 1,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "mlp1_dispatch_0"
+      ],
+      "hardware_target": "CPU_E",
+      "start_time": 2.365000000000291,
+      "duration": 0.07,
+      "job_name": "mlp1",
+      "module_name": "main_graph$async_dispatch_1_system_elf_riscv_64_main_graph$async_dispatch_1_matvec_like_32x32_f32",
+      "time_dependency": "mlp1_dispatch_0"
+    },
+    "mlp1_dispatch_2": {
+      "id": 2,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "mlp1_dispatch_1"
+      ],
+      "hardware_target": "CPU_E",
+      "start_time": 2.435,
+      "duration": 0.065,
+      "job_name": "mlp1",
+      "module_name": "main_graph$async_dispatch_2_system_elf_riscv_64_main_graph$async_dispatch_2_matvec_like_2x32_f32",
+      "time_dependency": "mlp1_dispatch_0"
+    },
+    "mlp2_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_E",
+      "start_time": 4.0,
+      "duration": 0.066,
+      "job_name": "mlp2",
+      "module_name": "main_graph$async_dispatch_0_system_elf_riscv_64_main_graph$async_dispatch_0_matvec_like_32x10_f32",
+      "time_dependency": "mlp1_dispatch_2"
+    },
+    "mlp2_dispatch_1": {
+      "id": 1,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "mlp2_dispatch_0"
+      ],
+      "hardware_target": "CPU_E",
+      "start_time": 4.364999999999999,
+      "duration": 0.07,
+      "job_name": "mlp2",
+      "module_name": "main_graph$async_dispatch_1_system_elf_riscv_64_main_graph$async_dispatch_1_matvec_like_32x32_f32",
+      "time_dependency": "mlp2_dispatch_0"
+    },
+    "mlp2_dispatch_2": {
+      "id": 2,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "mlp2_dispatch_1"
+      ],
+      "hardware_target": "CPU_E",
+      "start_time": 4.435,
+      "duration": 0.065,
+      "job_name": "mlp2",
+      "module_name": "main_graph$async_dispatch_2_system_elf_riscv_64_main_graph$async_dispatch_2_matvec_like_2x32_f32",
+      "time_dependency": "mlp2_dispatch_1"
+    },
+    "mlp3_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_E",
+      "start_time": 6.0,
+      "duration": 0.066,
+      "job_name": "mlp3",
+      "module_name": "main_graph$async_dispatch_0_system_elf_riscv_64_main_graph$async_dispatch_0_matvec_like_32x10_f32",
+      "time_dependency": "mlp2_dispatch_2"
+    },
+    "mlp3_dispatch_1": {
+      "id": 1,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "mlp3_dispatch_0"
+      ],
+      "hardware_target": "CPU_E",
+      "start_time": 6.066,
+      "duration": 0.07,
+      "job_name": "mlp3",
+      "module_name": "main_graph$async_dispatch_1_system_elf_riscv_64_main_graph$async_dispatch_1_matvec_like_32x32_f32",
+      "time_dependency": "mlp3_dispatch_0"
+    },
+    "mlp3_dispatch_2": {
+      "id": 2,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "mlp3_dispatch_1"
+      ],
+      "hardware_target": "CPU_E",
+      "start_time": 6.136,
+      "duration": 0.065,
+      "job_name": "mlp3",
+      "module_name": "main_graph$async_dispatch_2_system_elf_riscv_64_main_graph$async_dispatch_2_matvec_like_2x32_f32",
+      "time_dependency": "mlp3_dispatch_1"
+    },
+    "mlp4_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_E",
+      "start_time": 8.299,
+      "duration": 0.066,
+      "job_name": "mlp4",
+      "module_name": "main_graph$async_dispatch_0_system_elf_riscv_64_main_graph$async_dispatch_0_matvec_like_32x10_f32",
+      "time_dependency": "mlp3_dispatch_2"
+    },
+    "mlp4_dispatch_1": {
+      "id": 1,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "mlp4_dispatch_0"
+      ],
+      "hardware_target": "CPU_E",
+      "start_time": 8.365,
+      "duration": 0.07,
+      "job_name": "mlp4",
+      "module_name": "main_graph$async_dispatch_1_system_elf_riscv_64_main_graph$async_dispatch_1_matvec_like_32x32_f32",
+      "time_dependency": "mlp4_dispatch_0"
+    },
+    "mlp4_dispatch_2": {
+      "id": 2,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "mlp4_dispatch_1"
+      ],
+      "hardware_target": "CPU_E",
+      "start_time": 8.435,
+      "duration": 0.065,
+      "job_name": "mlp4",
+      "module_name": "main_graph$async_dispatch_2_system_elf_riscv_64_main_graph$async_dispatch_2_matvec_like_2x32_f32",
+      "time_dependency": "mlp4_dispatch_1"
+    },
+    "mlp5_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_E",
+      "start_time": 10.0,
+      "duration": 0.066,
+      "job_name": "mlp5",
+      "module_name": "main_graph$async_dispatch_0_system_elf_riscv_64_main_graph$async_dispatch_0_matvec_like_32x10_f32",
+      "time_dependency": "mlp4_dispatch_2"
+    },
+    "mlp5_dispatch_1": {
+      "id": 1,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "mlp5_dispatch_0"
+      ],
+      "hardware_target": "CPU_E",
+      "start_time": 10.066,
+      "duration": 0.07,
+      "job_name": "mlp5",
+      "module_name": "main_graph$async_dispatch_1_system_elf_riscv_64_main_graph$async_dispatch_1_matvec_like_32x32_f32",
+      "time_dependency": "mlp5_dispatch_0"
+    },
+    "mlp5_dispatch_2": {
+      "id": 2,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "mlp5_dispatch_1"
+      ],
+      "hardware_target": "CPU_E",
+      "start_time": 10.435,
+      "duration": 0.065,
+      "job_name": "mlp5",
+      "module_name": "main_graph$async_dispatch_2_system_elf_riscv_64_main_graph$async_dispatch_2_matvec_like_2x32_f32",
+      "time_dependency": "mlp5_dispatch_1"
+    },
+    "mlp6_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_E",
+      "start_time": 12.0,
+      "duration": 0.066,
+      "job_name": "mlp6",
+      "module_name": "main_graph$async_dispatch_0_system_elf_riscv_64_main_graph$async_dispatch_0_matvec_like_32x10_f32",
+      "time_dependency": "mlp5_dispatch_2"
+    },
+    "mlp6_dispatch_1": {
+      "id": 1,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "mlp6_dispatch_0"
+      ],
+      "hardware_target": "CPU_E",
+      "start_time": 12.066,
+      "duration": 0.07,
+      "job_name": "mlp6",
+      "module_name": "main_graph$async_dispatch_1_system_elf_riscv_64_main_graph$async_dispatch_1_matvec_like_32x32_f32",
+      "time_dependency": "mlp6_dispatch_0"
+    },
+    "mlp6_dispatch_2": {
+      "id": 2,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "mlp6_dispatch_1"
+      ],
+      "hardware_target": "CPU_E",
+      "start_time": 12.136000000000001,
+      "duration": 0.065,
+      "job_name": "mlp6",
+      "module_name": "main_graph$async_dispatch_2_system_elf_riscv_64_main_graph$async_dispatch_2_matvec_like_2x32_f32",
+      "time_dependency": "mlp6_dispatch_1"
+    },
+    "mlp7_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_E",
+      "start_time": 14.0,
+      "duration": 0.066,
+      "job_name": "mlp7",
+      "module_name": "main_graph$async_dispatch_0_system_elf_riscv_64_main_graph$async_dispatch_0_matvec_like_32x10_f32",
+      "time_dependency": "dronet_dispatch_7"
+    },
+    "mlp7_dispatch_1": {
+      "id": 1,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "mlp7_dispatch_0"
+      ],
+      "hardware_target": "CPU_E",
+      "start_time": 14.365,
+      "duration": 0.07,
+      "job_name": "mlp7",
+      "module_name": "main_graph$async_dispatch_1_system_elf_riscv_64_main_graph$async_dispatch_1_matvec_like_32x32_f32",
+      "time_dependency": "mlp7_dispatch_0"
+    },
+    "mlp7_dispatch_2": {
+      "id": 2,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "mlp7_dispatch_1"
+      ],
+      "hardware_target": "CPU_E",
+      "start_time": 14.435,
+      "duration": 0.065,
+      "job_name": "mlp7",
+      "module_name": "main_graph$async_dispatch_2_system_elf_riscv_64_main_graph$async_dispatch_2_matvec_like_2x32_f32",
+      "time_dependency": "mlp7_dispatch_1"
+    },
+    "mlp8_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_E",
+      "start_time": 16.0,
+      "duration": 0.066,
+      "job_name": "mlp8",
+      "module_name": "main_graph$async_dispatch_0_system_elf_riscv_64_main_graph$async_dispatch_0_matvec_like_32x10_f32",
+      "time_dependency": "mlp7_dispatch_2"
+    },
+    "mlp8_dispatch_1": {
+      "id": 1,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "mlp8_dispatch_0"
+      ],
+      "hardware_target": "CPU_E",
+      "start_time": 16.365,
+      "duration": 0.07,
+      "job_name": "mlp8",
+      "module_name": "main_graph$async_dispatch_1_system_elf_riscv_64_main_graph$async_dispatch_1_matvec_like_32x32_f32",
+      "time_dependency": "mlp8_dispatch_0"
+    },
+    "mlp8_dispatch_2": {
+      "id": 2,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "mlp8_dispatch_1"
+      ],
+      "hardware_target": "CPU_E",
+      "start_time": 16.435,
+      "duration": 0.065,
+      "job_name": "mlp8",
+      "module_name": "main_graph$async_dispatch_2_system_elf_riscv_64_main_graph$async_dispatch_2_matvec_like_2x32_f32",
+      "time_dependency": "mlp8_dispatch_1"
+    },
+    "mlp9_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_E",
+      "start_time": 18.0,
+      "duration": 0.066,
+      "job_name": "mlp9",
+      "module_name": "main_graph$async_dispatch_0_system_elf_riscv_64_main_graph$async_dispatch_0_matvec_like_32x10_f32",
+      "time_dependency": "mlp8_dispatch_2"
+    },
+    "mlp9_dispatch_1": {
+      "id": 1,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "mlp9_dispatch_0"
+      ],
+      "hardware_target": "CPU_E",
+      "start_time": 18.066,
+      "duration": 0.07,
+      "job_name": "mlp9",
+      "module_name": "main_graph$async_dispatch_1_system_elf_riscv_64_main_graph$async_dispatch_1_matvec_like_32x32_f32",
+      "time_dependency": "mlp9_dispatch_0"
+    },
+    "mlp9_dispatch_2": {
+      "id": 2,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "mlp9_dispatch_1"
+      ],
+      "hardware_target": "CPU_E",
+      "start_time": 18.136,
+      "duration": 0.065,
+      "job_name": "mlp9",
+      "module_name": "main_graph$async_dispatch_2_system_elf_riscv_64_main_graph$async_dispatch_2_matvec_like_2x32_f32",
+      "time_dependency": "mlp9_dispatch_1"
+    },
+    "mlp10_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_E",
+      "start_time": 20.0,
+      "duration": 0.066,
+      "job_name": "mlp10",
+      "module_name": "main_graph$async_dispatch_0_system_elf_riscv_64_main_graph$async_dispatch_0_matvec_like_32x10_f32",
+      "time_dependency": "dronet_dispatch_10"
+    },
+    "mlp10_dispatch_1": {
+      "id": 1,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "mlp10_dispatch_0"
+      ],
+      "hardware_target": "CPU_E",
+      "start_time": 20.365,
+      "duration": 0.07,
+      "job_name": "mlp10",
+      "module_name": "main_graph$async_dispatch_1_system_elf_riscv_64_main_graph$async_dispatch_1_matvec_like_32x32_f32",
+      "time_dependency": "mlp10_dispatch_0"
+    },
+    "mlp10_dispatch_2": {
+      "id": 2,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "mlp10_dispatch_1"
+      ],
+      "hardware_target": "CPU_E",
+      "start_time": 20.435,
+      "duration": 0.065,
+      "job_name": "mlp10",
+      "module_name": "main_graph$async_dispatch_2_system_elf_riscv_64_main_graph$async_dispatch_2_matvec_like_2x32_f32",
+      "time_dependency": "mlp10_dispatch_1"
+    },
+    "mlp11_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_E",
+      "start_time": 22.0,
+      "duration": 0.066,
+      "job_name": "mlp11",
+      "module_name": "main_graph$async_dispatch_0_system_elf_riscv_64_main_graph$async_dispatch_0_matvec_like_32x10_f32",
+      "time_dependency": "mlp10_dispatch_2"
+    },
+    "mlp11_dispatch_1": {
+      "id": 1,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "mlp11_dispatch_0"
+      ],
+      "hardware_target": "CPU_E",
+      "start_time": 22.066,
+      "duration": 0.07,
+      "job_name": "mlp11",
+      "module_name": "main_graph$async_dispatch_1_system_elf_riscv_64_main_graph$async_dispatch_1_matvec_like_32x32_f32",
+      "time_dependency": "mlp11_dispatch_0"
+    },
+    "mlp11_dispatch_2": {
+      "id": 2,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "mlp11_dispatch_1"
+      ],
+      "hardware_target": "CPU_E",
+      "start_time": 22.435,
+      "duration": 0.065,
+      "job_name": "mlp11",
+      "module_name": "main_graph$async_dispatch_2_system_elf_riscv_64_main_graph$async_dispatch_2_matvec_like_2x32_f32",
+      "time_dependency": "mlp11_dispatch_1"
+    },
+    "mlp12_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_P",
+      "start_time": 24.053666666667915,
+      "duration": 0.064,
+      "job_name": "mlp12",
+      "module_name": "main_graph$async_dispatch_0_system_elf_riscv_64_main_graph$async_dispatch_0_matvec_like_32x10_f32",
+      "time_dependency": "dronet_dispatch_13_1"
+    },
+    "mlp12_dispatch_1": {
+      "id": 1,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "mlp12_dispatch_0"
+      ],
+      "hardware_target": "CPU_P",
+      "start_time": 24.117666666667915,
+      "duration": 0.067,
+      "job_name": "mlp12",
+      "module_name": "main_graph$async_dispatch_1_system_elf_riscv_64_main_graph$async_dispatch_1_matvec_like_32x32_f32",
+      "time_dependency": "mlp12_dispatch_0"
+    },
+    "mlp12_dispatch_2": {
+      "id": 2,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "mlp12_dispatch_1"
+      ],
+      "hardware_target": "CPU_P",
+      "start_time": 24.433999999999997,
+      "duration": 0.066,
+      "job_name": "mlp12",
+      "module_name": "main_graph$async_dispatch_2_system_elf_riscv_64_main_graph$async_dispatch_2_matvec_like_2x32_f32",
+      "time_dependency": "mlp12_dispatch_1"
+    }
+  },
+  "metadata": {
+    "makespan": 24.499999999999996,
+    "num_operations": 55,
+    "machines": [
+      "CPU_P",
+      "CPU_E"
+    ],
+    "machine_combinations": [
+      [
+        "CPU_P"
+      ],
+      [
+        "CPU_E"
+      ]
+    ]
+  }
+}
