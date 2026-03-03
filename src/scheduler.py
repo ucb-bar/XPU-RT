@@ -289,38 +289,54 @@ def schedule(
     # tasks that can be placed between these combinations - this limit is defined by the minimum number of cores 
     # for each intersecting machine
     overlap_track = {}
-    for k1 in range(num_combinations):
-        for k2 in range(num_combinations):
-            overlap_track[(k1,k2)] = {}
-            overlap = workload.combinations_overlap(k1, k2)
-            if overlap:
-                max_overlap = min(workload.machines[m] for m in overlap)
-                pairs = [ (i,j) for j in range(i+1, num_operations) for i in range (num_operations)]
-                for i in range(num_operations):
+    before = {}
+    after = {}
+    z = {}
+    list_overflow = [0 for i in range(num_operations * num_combinations * num_combinations)]
+
+    for k_1 in range (num_combinations):
+        for k_2 in range (num_combinations):
+            overlap_track[(k_1,k_2)] = {}
+            before[(k_1,k_2)] = {}
+            after[(k_1,k_2)] = {}
+            z[(k_1,k_2)] = {}
+
+    for i in range(num_operations):
+        for k_1 in range (num_combinations):
+            for k_2 in range (num_combinations):
+                overlaps_for_i = []
+                list_overflow[i * num_combinations^2 + k_1 * num_combinations + k_2] = cp.Variable()
+                overlapping_machines = workload.combinations_overlap(k_1,k_2)
+                if (overlapping_machines):
                     for j in range(i+1, num_operations):
-                        dur_j_k2 = workload.operations[j].get_duration_for_combination(
-                                    k2, machine_combinations, workload.machines
+                        z[(k_1,k_2)][(i,j)] = cp.Variable(boolean=True)
+                        overlap_track[(k_1,k_2)][(i,j)] = cp.Variable(boolean=True)
+                        before[(k_1,k_2)][(i,j)]  = cp.Variable(boolean=True)
+                        after[(k_1,k_2)][(i,j)] = cp.Variable(boolean=True)
+                        
+                        dur_j_k1 = workload.operations[i].get_duration_for_combination(k_1, machine_combinations, workload.machines) 
+                        dur_i_k2 = workload.operations[j].get_duration_for_combination(k_2, machine_combinations, workload.machines) 
+
+                        # If before = 1 → i finishes before j starts
+                        constraints.append(
+                            t[i] + dur_i_k2 <= t[j] + H*(1 - before[(k_1,k_2)][(i,j)])
                         )
-                        dur_i_k2 = workload.operations[i].get_duration_for_combination(
-                                    k2, machine_combinations, workload.machines
+                        # If after = 1 → j finishes before i starts
+                        constraints.append(
+                            t[j] + dur_j_k1 <= t[i] + H*(1 - after[(k_1,k_2)][(i,j)])
                         )
-                        i_before = cp.Variable(boolean=True)  # i finishes before j
-                        i_after  = cp.Variable(boolean=True)  # j finishes before i
-
-                        constraints.append( t[i] + dur_i_k2 <= t[j] + H*(1 - i_before))
-                        constraints.append( t[j] + dur_j_k2 <= t[i] + H*(1 - i_after))
-                        constraints.append( i_before + i_after <= 1)
-
-                        # Overlap indicator var per combination pair per operation
-                        overlap_track[(k1,k2)][(i,j)] = cp.Variable(boolean=True)
-
-                        # Overlap = 1 if intervals overlap AND both operations are assigned to the corresponding combinations
-                        constraints.append( overlap_track[(k1,k2)][(i,j)] >= 1 - i_before - i_after + alpha[i][k1] + alpha[j][k2] - 2 )
-                        constraints.append( overlap_track[(k1,k2)][(i,j)] <= alpha[i][k1] )
-                        constraints.append( overlap_track[(k1,k2)][(i,j)] <= alpha[j][k2] )
-                        constraints.append( overlap_track[(k1,k2)][(i,j)] <= 1 - i_before )
-                        constraints.append( overlap_track[(k1,k2)][(i,j)] <= 1 - i_after )
-                constraints.append(cp.sum([overlap_track[(k1,k2)][(i,j)] for i,j in pairs]) <= max_overlap )
+                        constraints.append(z[(k_1,k_2)][(i,j)] <= alpha[i][k_1])
+                        constraints.append(z[(k_1,k_2)][(i,j)] <= alpha[j][k_2])
+                        constraints.append(z[(k_1,k_2)][(i,j)] >= alpha[i][k_1] + alpha[j][k_2] - 1)
+                        
+                        # Exactly one relationship holds
+                        constraints.append(
+                            before[(k_1,k_2)][(i,j)] +  after[(k_1,k_2)][(i,j)] +  overlap_track[(k_1,k_2)][(i,j)] == z[(k_1,k_2)][(i,j)]
+                        )
+                        y = overlap_track[(k_1,k_2)][(i,j)]
+                        overlaps_for_i.append(y)
+                    capacity_expr = min([workload.machines[i] for i in overlapping_machines]) - 1
+                constraints.append(cp.sum(overlaps_for_i) <= capacity_expr + list_overflow[i * num_combinations^2 + k_1 * num_combinations + k_2])
 
     # (6) Makespan constraints:
     if restrict_makespan_to_nonperiodic:
@@ -352,7 +368,7 @@ def schedule(
                 for k in range(num_combinations)
             ]
             constraints.append(
-                C_max >= t[i] + cp.sum(cp.multiply(dur_vec, alpha[i, :]))
+                C_max >= t[i] + cp.sum(cp.multiply(dur_vec, alpha[i, :])) + cp.sum(list_overflow) * H
             )
     
     # Debug: Print durations for first operation to verify they're correct
@@ -418,6 +434,12 @@ def schedule(
 
     print("Status: ", problem.status)
     print("Optimal value: ", problem.value)
+
+    print(len(list_overflow))
+
+    #Print out the number of Overlaps over:
+    for elem in list_overflow:
+        print(f"OVERFLOW ON TASK: {elem.value}\n")
 
     t_result = t.value
     alpha_result = alpha.value
@@ -551,7 +573,7 @@ def schedule_additional_objectives(workload: Workload, nominal_start_times: list
         # Build duration vector for all combinations
         dur_vec = [workload.operations[i].get_duration_for_combination(k, machine_combinations, workload.machines) for k in range(num_combinations)]
         constraints.append(
-            C_max >= t[i] + cp.sum(cp.multiply(dur_vec, alpha[i, :]))
+            C_max >= t[i] + cp.sum(cp.multiply(dur_vec, alpha[i, :])) + cp.sum(list_overflow) * 5000
         )
     # (7) and (8) are covered by boolean argument of alpha and beta variables
     # all operations start at 0

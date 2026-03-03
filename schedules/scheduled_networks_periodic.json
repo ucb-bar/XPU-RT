@@ -19,9 +19,10 @@
         "dronet_dispatch_0"
       ],
       "hardware_target": "CPU",
-      "start_time": 5.680361114472769,
+      "start_time": 6.833388150394967,
       "duration": 5.979381563900952,
-      "job_name": "dronet"
+      "job_name": "dronet",
+      "time_dependency": "mlp0_dispatch_1"
     },
     "dronet_dispatch_10": {
       "id": 10,
@@ -31,7 +32,7 @@
         "dronet_dispatch_8"
       ],
       "hardware_target": "GPU",
-      "start_time": 30.471731200167458,
+      "start_time": 35.05354471037906,
       "duration": 7.689143023917999,
       "job_name": "dronet",
       "time_dependency": "dronet_dispatch_8"
@@ -45,10 +46,10 @@
         "dronet_dispatch_9"
       ],
       "hardware_target": "CPU",
-      "start_time": 38.160874224085454,
+      "start_time": 44.05185200538078,
       "duration": 7.832120936610475,
       "job_name": "dronet",
-      "time_dependency": "mlp1_dispatch_1"
+      "time_dependency": "dronet_dispatch_7"
     },
     "dronet_dispatch_12": {
       "id": 12,
@@ -58,7 +59,7 @@
         "dronet_dispatch_11"
       ],
       "hardware_target": "CPU",
-      "start_time": 45.992995160695926,
+      "start_time": 53.80098239787573,
       "duration": 8.909120721964605,
       "job_name": "dronet",
       "time_dependency": "dronet_dispatch_11"
@@ -71,10 +72,10 @@
         "dronet_dispatch_12"
       ],
       "hardware_target": "NPU",
-      "start_time": 54.90211588266053,
+      "start_time": 62.96081759010714,
       "duration": 8.578990620344563,
       "job_name": "dronet",
-      "time_dependency": "dronet_dispatch_9"
+      "time_dependency": "mlp1_dispatch_2"
     },
     "dronet_dispatch_13_2": {
       "id": 13,
@@ -84,10 +85,10 @@
         "dronet_dispatch_14"
       ],
       "hardware_target": "CPU",
-      "start_time": 55.44113368854517,
+      "start_time": 70.18157401181682,
       "duration": 3.8589833571144307,
       "job_name": "dronet",
-      "time_dependency": "dronet_dispatch_12"
+      "time_dependency": "mlp2_dispatch_1"
     },
     "dronet_dispatch_14": {
       "id": 14,
@@ -96,11 +97,11 @@
       "dependencies": [
         "dronet_dispatch_11"
       ],
-      "hardware_target": "NPU",
-      "start_time": 45.992995160695926,
-      "duration": 9.44813852784924,
+      "hardware_target": "GPU",
+      "start_time": 53.80095357829034,
+      "duration": 5.542022631796252,
       "job_name": "dronet",
-      "time_dependency": "dronet_dispatch_9"
+      "time_dependency": "dronet_dispatch_10"
     },
     "dronet_dispatch_2": {
       "id": 2,
@@ -110,10 +111,10 @@
         "dronet_dispatch_1"
       ],
       "hardware_target": "NPU",
-      "start_time": 11.65974267837372,
+      "start_time": 12.812769714295918,
       "duration": 2.2269229209081685,
       "job_name": "dronet",
-      "time_dependency": "dronet_dispatch_0"
+      "time_dependency": "mlp0_dispatch_2"
     },
     "dronet_dispatch_3": {
       "id": 3,
@@ -123,7 +124,7 @@
         "dronet_dispatch_2"
       ],
       "hardware_target": "CPU",
-      "start_time": 13.886665599281887,
+      "start_time": 17.81106861217625,
       "duration": 2.127933836188576,
       "job_name": "dronet",
       "time_dependency": "dronet_dispatch_1"
@@ -136,7 +137,7 @@
         "dronet_dispatch_2"
       ],
       "hardware_target": "CPU",
-      "start_time": 13.886665599281887,
+      "start_time": 17.410342474572225,
       "duration": 2.528659973792598,
       "job_name": "dronet",
       "time_dependency": "dronet_dispatch_1"
@@ -150,7 +151,7 @@
         "dronet_dispatch_4"
       ],
       "hardware_target": "CPU",
-      "start_time": 16.415325573074487,
+      "start_time": 19.939002448364825,
       "duration": 5.442389855582666,
       "job_name": "dronet",
       "time_dependency": "dronet_dispatch_4"
@@ -162,11 +163,11 @@
       "dependencies": [
         "dronet_dispatch_5"
       ],
-      "hardware_target": "CPU",
-      "start_time": 21.85771542865715,
-      "duration": 3.9334057127547597,
+      "hardware_target": "NPU",
+      "start_time": 25.381392303947493,
+      "duration": 3.806955427338595,
       "job_name": "dronet",
-      "time_dependency": "dronet_dispatch_5"
+      "time_dependency": "dronet_dispatch_2"
     },
     "dronet_dispatch_7": {
       "id": 7,
@@ -176,7 +177,7 @@
         "dronet_dispatch_5"
       ],
       "hardware_target": "CPU",
-      "start_time": 21.85771542865715,
+      "start_time": 26.017791530649315,
       "duration": 4.306646056060621,
       "job_name": "dronet",
       "time_dependency": "dronet_dispatch_5"
@@ -190,9 +191,10 @@
         "dronet_dispatch_7"
       ],
       "hardware_target": "GPU",
-      "start_time": 26.164361484717773,
+      "start_time": 30.746174994929376,
       "duration": 4.307369715449684,
-      "job_name": "dronet"
+      "job_name": "dronet",
+      "time_dependency": "mlp1_dispatch_0"
     },
     "dronet_dispatch_9": {
       "id": 9,
@@ -202,19 +204,19 @@
         "dronet_dispatch_8"
       ],
       "hardware_target": "NPU",
-      "start_time": 30.471731200167458,
+      "start_time": 35.05354471037906,
       "duration": 4.955235288733447,
       "job_name": "dronet",
-      "time_dependency": "mlp0_dispatch_2"
+      "time_dependency": "dronet_dispatch_6"
     },
     "mlp0_dispatch_0": {
       "id": 0,
       "ordinal": 1,
       "total": 1,
       "dependencies": [],
-      "hardware_target": "CPU",
+      "hardware_target": "GPU",
       "start_time": 0.0,
-      "duration": 7.375959023650875,
+      "duration": 3.5961235517457064,
       "job_name": "mlp0"
     },
     "mlp0_dispatch_1": {
@@ -224,11 +226,10 @@
       "dependencies": [
         "mlp0_dispatch_0"
       ],
-      "hardware_target": "NPU",
-      "start_time": 7.375959023650875,
-      "duration": 9.417236424542939,
-      "job_name": "mlp0",
-      "time_dependency": "dronet_dispatch_0"
+      "hardware_target": "CPU",
+      "start_time": 3.5961235517457064,
+      "duration": 2.843962236561836,
+      "job_name": "mlp0"
     },
     "mlp0_dispatch_2": {
       "id": 2,
@@ -238,21 +239,21 @@
         "mlp0_dispatch_1"
       ],
       "hardware_target": "NPU",
-      "start_time": 19.598171001207398,
+      "start_time": 7.146773846082601,
       "duration": 5.401828998792604,
       "job_name": "mlp0",
-      "time_dependency": "mlp0_dispatch_1"
+      "time_dependency": "dronet_dispatch_0"
     },
     "mlp1_dispatch_0": {
       "id": 0,
       "ordinal": 1,
       "total": 1,
       "dependencies": [],
-      "hardware_target": "CPU",
-      "start_time": 25.0,
-      "duration": 7.375959023650875,
+      "hardware_target": "GPU",
+      "start_time": 26.713048346667776,
+      "duration": 3.5961235517457064,
       "job_name": "mlp1",
-      "time_dependency": "dronet_dispatch_5"
+      "time_dependency": "mlp0_dispatch_0"
     },
     "mlp1_dispatch_1": {
       "id": 1,
@@ -262,7 +263,7 @@
         "mlp1_dispatch_0"
       ],
       "hardware_target": "CPU",
-      "start_time": 32.37595902365087,
+      "start_time": 41.484899334852955,
       "duration": 2.843962236561836,
       "job_name": "mlp1",
       "time_dependency": "dronet_dispatch_7"
@@ -274,22 +275,22 @@
       "dependencies": [
         "mlp1_dispatch_1"
       ],
-      "hardware_target": "CPU",
-      "start_time": 40.3632760504741,
-      "duration": 9.636723949525898,
+      "hardware_target": "NPU",
+      "start_time": 44.32886157141479,
+      "duration": 5.401828998792604,
       "job_name": "mlp1",
-      "time_dependency": "mlp1_dispatch_1"
+      "time_dependency": "dronet_dispatch_9"
     },
     "mlp2_dispatch_0": {
       "id": 0,
       "ordinal": 1,
       "total": 1,
       "dependencies": [],
-      "hardware_target": "CPU",
-      "start_time": 50.0,
-      "duration": 7.375959023650875,
+      "hardware_target": "GPU",
+      "start_time": 53.80095357829034,
+      "duration": 3.5961235517457064,
       "job_name": "mlp2",
-      "time_dependency": "mlp1_dispatch_2"
+      "time_dependency": "dronet_dispatch_10"
     },
     "mlp2_dispatch_1": {
       "id": 1,
@@ -299,7 +300,7 @@
         "mlp2_dispatch_0"
       ],
       "hardware_target": "CPU",
-      "start_time": 57.37595902365087,
+      "start_time": 66.75420876464555,
       "duration": 2.843962236561836,
       "job_name": "mlp2",
       "time_dependency": "dronet_dispatch_12"
@@ -311,15 +312,15 @@
       "dependencies": [
         "mlp2_dispatch_1"
       ],
-      "hardware_target": "GPU",
-      "start_time": 64.40882423596855,
-      "duration": 5.999166509501176,
+      "hardware_target": "NPU",
+      "start_time": 69.59817100120739,
+      "duration": 5.401828998792604,
       "job_name": "mlp2",
-      "time_dependency": "dronet_dispatch_10"
+      "time_dependency": "mlp1_dispatch_2"
     }
   },
   "metadata": {
-    "makespan": 70.40799074546973,
+    "makespan": 75.0,
     "num_operations": 25,
     "machines": {
       "CPU": 3,
