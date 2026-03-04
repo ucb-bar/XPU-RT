@@ -3,40 +3,40 @@
     "dronet": {
       "id": 0,
       "identifier": "dronet",
-      "dispatch_deps_path": "merlin/samples/robotic-NN/pytorch_workload/computation_graph/dronet_dispatch_deps.json"
+      "dispatch_deps_path": "src/pytorch_workload/samples/dronet_dispatch_deps.json"
     },
     "mlp0": {
       "id": 1,
       "identifier": "mlp0",
-      "dispatch_deps_path": "merlin/samples/robotic-NN/pytorch_workload/computation_graph/mlp_dispatch_deps.json",
+      "dispatch_deps_path": "src/pytorch_workload/samples/mlp_dispatch_deps.json",
       "min_start_t": 0,
       "max_end_t": 40
     },
     "mlp1": {
       "id": 2,
       "identifier": "mlp1",
-      "dispatch_deps_path": "merlin/samples/robotic-NN/pytorch_workload/computation_graph/mlp_dispatch_deps.json",
+      "dispatch_deps_path": "src/pytorch_workload/samples/mlp_dispatch_deps.json",
       "min_start_t": 40,
       "max_end_t": 80
     },
     "mlp2": {
       "id": 3,
       "identifier": "mlp2",
-      "dispatch_deps_path": "merlin/samples/robotic-NN/pytorch_workload/computation_graph/mlp_dispatch_deps.json",
+      "dispatch_deps_path": "src/pytorch_workload/samples/mlp_dispatch_deps.json",
       "min_start_t": 80,
       "max_end_t": 120
     },
     "mlp3": {
       "id": 4,
       "identifier": "mlp3",
-      "dispatch_deps_path": "merlin/samples/robotic-NN/pytorch_workload/computation_graph/mlp_dispatch_deps.json",
+      "dispatch_deps_path": "src/pytorch_workload/samples/mlp_dispatch_deps.json",
       "min_start_t": 120,
       "max_end_t": 160
     },
     "mlp4": {
       "id": 5,
       "identifier": "mlp4",
-      "dispatch_deps_path": "merlin/samples/robotic-NN/pytorch_workload/computation_graph/mlp_dispatch_deps.json",
+      "dispatch_deps_path": "src/pytorch_workload/samples/mlp_dispatch_deps.json",
       "min_start_t": 160,
       "max_end_t": 200
     }
