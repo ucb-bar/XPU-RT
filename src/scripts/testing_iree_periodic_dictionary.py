@@ -566,9 +566,16 @@ def schedule_iree_networks(
     if prune_periodic:
         combined_workload, t, alpha = _trim_periodic_after_nonperiodic_makespan(combined_workload, t, alpha)
     
+    print(alpha[i])
     # Calculate makespan
-    makespan = max(t[i] + combined_workload.operations[i].get_durations()[np.argmax(alpha[i])] 
-                   for i in range(len(combined_workload.operations)))
+    makespan = max(
+        t[i] + combined_workload.operations[i].get_duration_for_combination(
+            np.argmax(alpha[i]),
+            combined_workload.machine_combinations,
+            combined_workload.machines
+        )
+        for i in range(len(combined_workload.operations))
+    )
     
     print(f"\nScheduling completed!")
     print(f"Makespan: {makespan:.2f} time units")
@@ -613,21 +620,6 @@ def schedule_iree_networks(
     
 
     this_file_name = os.path.basename(__file__)
-    print(f"\nGenerating plot for schedule...")
-    plot.plot_optimization_schedule(
-        combined_workload.get_durations(),
-        t,
-        alpha,
-        num_jobs,
-        len(combined_workload.machines),
-        combined_workload.machines,
-        combined_workload.get_transfer_times(),
-        save_path=f"plots/{this_file_name.replace('.py', '')}.png",
-        plot_title=f"{title_networks} Schedule on Dual-Core Device (Periodic)",
-        workload=combined_workload
-    )
-    
-    print(f"\nPlot saved to plots/{this_file_name.replace('.py', '')}.png")
     
     # Output combined JSON file with scheduling information
     os.makedirs("schedules", exist_ok=True)
@@ -648,6 +640,11 @@ def schedule_iree_networks(
         profiled_times_e=combined_profiled_e
     )
     
+    print(f"\nGenerating plot for schedule...")
+    data = json.load(open(json_output_path))
+    plot.plot_schedule_from_json(data, f"plots/{this_file_name.replace('.py', '')}.png")
+    print(f"\nPlot saved to plots/{this_file_name.replace('.py', '')}.png")
+
     return combined_workload, t, alpha
 
 if __name__ == "__main__":

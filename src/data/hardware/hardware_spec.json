@@ -1,10 +1,10 @@
 {
     "hardware": {
         "CPU": {
-            "cores": 3
+            "cores": 2
         },
         "GPU": {
-            "cores": 3
+            "cores": 2
         },
         "NPU": {
             "cores": 0

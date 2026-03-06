@@ -1,4 +1,5 @@
 import numpy as np
+import itertools
 
 class Operation:
     """
@@ -29,6 +30,11 @@ class Operation:
     def get_predecessors(self):
         """Returns list of all predecessors"""
         return self.predecessors
+
+    def combination_to_machine(self, combination:str):
+        machine = ""
+        machine = combination[0][:combination[0].index("_")]
+        return machine
     
     def get_predecessor(self):
         """Returns first predecessor for backward compatibility, or None if no predecessors"""
@@ -49,7 +55,7 @@ class Operation:
         """
         return self.processing_times
     
-    def get_duration_for_combination(self, combination_idx: int, machine_combinations: list[list[str]], machines: list[str]) -> float:
+    def get_duration_for_combination(self, combination_idx: int, machine_combinations: list[list[str]], machines: dict[str, int]) -> float:
         """
         Get the duration for a specific machine combination.
         
@@ -67,26 +73,14 @@ class Operation:
             raise ValueError(f"Invalid combination index: {combination_idx}")
         
         combo = machine_combinations[combination_idx]
-        
-        # If singleton combination, return duration for that machine
-        if len(combo) == 1:
-            machine_idx = list(machines.keys()).index(combo[0])
-            if machine_idx < len(self.processing_times):
-                return self.processing_times[machine_idx]
-            else:
-                raise ValueError(f"Machine {combo[0]} not found in processing_times")
-        
-        # For multi-machine combinations, use max duration (can be customized later)
-        # This is a reasonable default: the operation takes as long as the slowest machine
-        durations = []
-        for machine_name in combo:
-            machine_idx = machines.index(machine_name)
-            if machine_idx < len(self.processing_times):
-                durations.append(self.processing_times[machine_idx])
-        if durations:
-            return max(durations)  # Use max as default for parallel execution
+        machine_in_combo = self.combination_to_machine(combo)
+        machine_idx = list(machines.keys()).index(machine_in_combo)
+
+        if machine_idx < len(self.processing_times):
+            time = self.processing_times[machine_idx] / len(combo) 
+            return time
         else:
-            raise ValueError(f"Could not find durations for combination {combo}")
+            raise ValueError(f"Machine {combo[0]} not found in processing_times")
     
 class Job:
     """
@@ -115,27 +109,45 @@ class Workload:
                                  If None, each machine in 'machines' becomes a singleton combination for backward compatibility.
                                  Example: [['CPU_P'], ['CPU_E'], ['CPU_P', 'CPU_E']]
     """
-    def __init__(self, operations: list[Operation], machines: list[str], transfer_times: np.ndarray, job_names: list[str] = None, machine_combinations: list[list[str]] = None):
+    def __init__(self, operations: list[Operation], machines: dict[str, int], transfer_times: np.ndarray, job_names: list[str] = None, machine_combinations: list[list[str]] = None):
         self.operations = operations
         self.machines = machines  # Keep for backward compatibility
         
+        self.all_cores = []
+        for machine in machines:
+            self.all_cores += [f"{machine}_{i}" for i in range (machines[machine])]
+
         # Set up machine_combinations: if not provided, create singleton combinations from machines
         if machine_combinations is None:
             # Backward compatibility: each machine becomes its own combination
-            self.machine_combinations = [[m] for m in machines]
+            self.machine_combinations = []
+            for m in machines.keys():
+                instances = [f"{m}_{i}" for i in range(machines[m])]
+                for size in range(1, machines[m] + 1):
+                    for combo in itertools.combinations(instances, size):
+                        self.machine_combinations.append(list(combo))
         else:
             self.machine_combinations = machine_combinations
         
         # Validate that all machines in combinations exist in the original machines list
         all_machines_in_combinations = set()
         for combo in self.machine_combinations:
-            all_machines_in_combinations.update(combo)
+            all_machines_in_combinations.add(self.combination_to_machine(combo))
         if not all_machines_in_combinations.issubset(set(machines)):
             raise ValueError(f"Machine combinations contain machines not in the machines list: {all_machines_in_combinations - set(machines)}")
         
         self.transfer_times = transfer_times
         self.job_names = job_names if job_names is not None else []
+
+    def combination_to_machine(self, combination:str):
+        machine = ""
+        machine = combination[0][:combination[0].index("_")]
+        return machine
     
+    def get_full_transfer_times(self):
+        num_cores = sum(self.machines.values())
+        return np.zeros((num_cores,num_cores))
+
     def get_machine_combinations(self) -> list[list[str]]:
         """Returns the list of machine combinations."""
         return self.machine_combinations
@@ -152,7 +164,7 @@ class Workload:
             return False
         if combo_idx2 < 0 or combo_idx2 >= len(self.machine_combinations):
             return False
-        
+    
         set1 = set(self.machine_combinations[combo_idx1])
         set2 = set(self.machine_combinations[combo_idx2])
         return set1 & set2# True if intersection is non-empty
@@ -162,7 +174,7 @@ class Workload:
     
     def get_operations(self) -> list[Operation]:
         return self.operations
-    
+
     def get_durations(self) -> list:
         """
         Get the durations of the operations in the workload. The durations are grouped by job.

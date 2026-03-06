@@ -73,13 +73,25 @@ def generate_syn_window(n_operations: int, n_machines: int, transfer_times: np.n
     return window
 
 def create_syn_sequential_workload(n_jobs: int, n_operations_per_job: int, n_machines: int, transfer_times: np.ndarray, processing_time_range: Tuple[float, float]=(50, 150)) -> Workload:
+    """
+    Create a synthetic workload consisting of `n_jobs` sequential jobs, each with
+    `n_operations_per_job` operations. Every operation has a random processing time
+    for each of the `n_machines` machines, drawn uniformly from
+    `processing_time_range`.
+    """
     # Create a workload
     machines = [f'machine_{i}' for i in range(n_machines)]
 
     operations = [[] for _ in range(n_jobs)]
     for i in range(n_jobs):
         for _ in range(n_operations_per_job):
-            processing_times = [np.random.randint(50, 150) for _ in range(n_operations_per_job)]
+            # previously mistakenly used n_operations_per_job for the length of
+            # the processing_times list; it should be based on machines and use
+            # the provided range
+            processing_times = [
+                np.random.randint(processing_time_range[0], processing_time_range[1])
+                for _ in range(n_machines)
+            ]
             operations[i].append(Operation(processing_times))
 
     jobs = [create_sequential_job(ops) for ops in operations]
