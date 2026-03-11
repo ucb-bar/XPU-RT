@@ -9,6 +9,7 @@ import os
 import json
 import argparse
 import csv
+import glob
 import numpy as np
 
 # Add parent path to sys path to enable imports
@@ -69,6 +70,39 @@ def load_profiled_times(csv_path: str) -> dict[int, dict]:
                 "module_name": module_name,
             }
     return profiled
+
+
+def _find_profile_csv_in_gen(
+    repo_base_path: str,
+    *,
+    model: str,
+    target: str,
+    hw: str,
+    basename: str,
+    topo_tag: str = "topo_0_1_2_3",
+) -> str | None:
+    """
+    Find a profiling results.csv produced by runtime/scripts/profile_remote.sh.
+
+    Expected layout:
+      gen/profile/<hw>/<target>/<model>/<basename>/<input_tag>/<topo_tag>/results.csv
+
+    We pick the most recently modified match.
+    """
+    profile_root = os.path.join(repo_base_path, "gen", "profile")
+
+    # New layout (with input_tag subdir).
+    pat1 = os.path.join(profile_root, hw, target, model, basename, "*", topo_tag, "results.csv")
+    matches = glob.glob(pat1)
+
+    # Back-compat layout (no input_tag subdir).
+    if not matches:
+        pat2 = os.path.join(profile_root, hw, target, model, basename, topo_tag, "results.csv")
+        matches = glob.glob(pat2)
+
+    if not matches:
+        return None
+    return max(matches, key=lambda p: os.path.getmtime(p))
 
 def output_scheduled_json(
     combined_workload: Workload,
@@ -384,64 +418,37 @@ def schedule_iree_networks(
         combined_profiled_p = {}
         combined_profiled_e = {}
 
-        # Paths to profiled runtimes (P-core and E-core) for known networks
-        dronet_profile_csv_p = os.path.join(
-            script_dir,
-            "..",
-            "data",
-            "dronet_rvv",
-            "topo_0_1_2_3",
-            "results.csv",
-        )
-        dronet_profile_csv_e = os.path.join(
-            script_dir,
-            "..",
-            "data",
-            "dronet_scalar",
-            "topo_0_1_2_3",
-            "results.csv",
-        )
-        mlp_profile_csv_p = os.path.join(
-            script_dir,
-            "..",
-            "data",
-            "mlp_rvv",
-            "topo_0_1_2_3",
-            "results.csv",
-        )
-        mlp_profile_csv_e = os.path.join(
-            script_dir,
-            "..",
-            "data",
-            "mlp_scalar",
-            "topo_0_1_2_3",
-            "results.csv",
-        )
+        # Prefer profiles generated under gen/profile/... (produced by runtime/scripts/profile_remote.sh).
+        # Convention:
+        #   CPU_P uses RVV profile, CPU_E uses scalar profile.
+        DEFAULT_TARGET = "spacemit_x60"
+        TOPO_TAG = "topo_0_1_2_3"
 
-        dronet_profiled_p = load_profiled_times(dronet_profile_csv_p)
-        dronet_profiled_e = load_profiled_times(dronet_profile_csv_e)
-        mlp_profiled_p = load_profiled_times(mlp_profile_csv_p)
-        mlp_profiled_e = load_profiled_times(mlp_profile_csv_e)
+        def _basename_from_dispatch_deps_path(path: str) -> str:
+            # Example:
+            #   gen/vmfb/dronet/spacemit_x60/scalar/dronet.q.int8/dronet.q.int8_dispatch_graph.json
+            # basename directory is ".../<basename>/file.json"
+            return os.path.basename(os.path.dirname(path)) if path else ""
+
+        def _profiles_for_network(net_id: str, dispatch_deps_path: str) -> tuple[dict[int, dict] | None, dict[int, dict] | None]:
+            model = net_id
+            target = DEFAULT_TARGET
+            basename = _basename_from_dispatch_deps_path(dispatch_deps_path) or f"{model}.q.int8"
+
+            csv_p = _find_profile_csv_in_gen(repo_base_path, model=model, target=target, hw="RVV", basename=basename, topo_tag=TOPO_TAG)
+            csv_e = _find_profile_csv_in_gen(repo_base_path, model=model, target=target, hw="scalar", basename=basename, topo_tag=TOPO_TAG)
+
+            prof_p = load_profiled_times(csv_p) if csv_p else {}
+            prof_e = load_profiled_times(csv_e) if csv_e else {}
+
+            if not prof_p and csv_p:
+                print(f"  (warning) profile CSV had no usable rows: {csv_p}")
+            if not prof_e and csv_e:
+                print(f"  (warning) profile CSV had no usable rows: {csv_e}")
+
+            return (prof_p or None), (prof_e or None)
         
-        # Combine profiled data for JSON output
-        if dronet_profiled_p:
-            combined_profiled_p.update(dronet_profiled_p)
-        if dronet_profiled_e:
-            combined_profiled_e.update(dronet_profiled_e)
-        if mlp_profiled_p:
-            combined_profiled_p.update(mlp_profiled_p)
-        if mlp_profiled_e:
-            combined_profiled_e.update(mlp_profiled_e)
-
         p_core_speedup = 1.5
-
-        def get_profiles_for_dispatch_path(path: str) -> tuple[dict[int, dict] | None, dict[int, dict] | None]:
-            fname = os.path.basename(path)
-            if "dronet_dispatch_deps" in fname:
-                return dronet_profiled_p or None, dronet_profiled_e or None
-            if "mlp_dispatch_deps" in fname:
-                return mlp_profiled_p or None, mlp_profiled_e or None
-            return None, None
 
         for net_id, net_info in networks.items():
             dispatch_deps_path = net_info.get("dispatch_deps_path", "")
@@ -449,9 +456,15 @@ def schedule_iree_networks(
             if not os.path.exists(full_dispatch_path):
                 continue
 
-            prof_p, prof_e = get_profiles_for_dispatch_path(dispatch_deps_path)
+            prof_p, prof_e = _profiles_for_network(net_id, dispatch_deps_path)
             if prof_p is None and prof_e is None:
                 continue
+
+            # Combine profiled data for JSON output
+            if prof_p:
+                combined_profiled_p.update(prof_p)
+            if prof_e:
+                combined_profiled_e.update(prof_e)
 
             with open(full_dispatch_path, "r") as f:
                 dispatch_data = json.load(f)
