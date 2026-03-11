@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.onnx
 
+
 class SimpleMLP(nn.Module):
     def __init__(self, input_dim=10, hidden_dim=32, output_dim=2):
         super(SimpleMLP, self).__init__()
@@ -19,6 +20,7 @@ class SimpleMLP(nn.Module):
         x = self.fc3(x)
         return x
 
+
 if __name__ == "__main__":
     # Example: input is a batch of 1, 10 features
     model = SimpleMLP(input_dim=10, hidden_dim=32, output_dim=2)
@@ -32,6 +34,6 @@ if __name__ == "__main__":
         output_names=["output"],
         opset_version=17,
         dynamo=False,
-        dynamic_axes={"input": {0: "batch_size"}, "output": {0: "batch_size"}}
+        dynamic_axes={"input": {0: "batch_size"}, "output": {0: "batch_size"}},
     )
     print("Exported simple_mlp.onnx")

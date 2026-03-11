@@ -13,9 +13,7 @@ num_machines = data["num_machines"]
 runtime = data["runtime"]
 
 # Create a grid for plotting
-grid_jobs, grid_machines = np.meshgrid(
-    np.unique(num_jobs), np.unique(num_machines)
-)
+grid_jobs, grid_machines = np.meshgrid(np.unique(num_jobs), np.unique(num_machines))
 grid_runtime = np.zeros_like(grid_jobs, dtype=float)
 
 # Fill the grid with runtime values
@@ -26,12 +24,16 @@ for i, (job, machine, run) in enumerate(zip(num_jobs, num_machines, runtime)):
 
 # Create the 3D surface plot
 fig = plt.figure(figsize=(12, 8))
-ax = fig.add_subplot(111, projection='3d')
+ax = fig.add_subplot(111, projection="3d")
 
 # Plot the surface with a log scale for runtime
 surf = ax.plot_surface(
-    grid_jobs, grid_machines, np.log10(grid_runtime),
-    cmap='viridis', edgecolor='k', alpha=0.8
+    grid_jobs,
+    grid_machines,
+    np.log10(grid_runtime),
+    cmap="viridis",
+    edgecolor="k",
+    alpha=0.8,
 )
 
 # Adjust the view
@@ -49,7 +51,7 @@ cbar.set_label("Log10 Runtime (s)")
 
 # Save the plot with the rotated view
 output_file = "plots/runtime_surface.pdf"
-plt.savefig(output_file, dpi=500, bbox_inches='tight')
+plt.savefig(output_file, dpi=500, bbox_inches="tight")
 plt.show()
 
 print(f"Plot saved to {output_file}")

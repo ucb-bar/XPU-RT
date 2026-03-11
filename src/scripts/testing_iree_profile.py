@@ -142,10 +142,14 @@ def create_workload_from_json_with_profile(
 
         # Get dispatch ID from JSON
         json_dispatch_id = dispatch_info.get("id", None)
-        
+
         # Try to get profiled P-core time
         p_ms = None
-        if profiled_times_p and isinstance(json_dispatch_id, int) and json_dispatch_id in profiled_times_p:
+        if (
+            profiled_times_p
+            and isinstance(json_dispatch_id, int)
+            and json_dispatch_id in profiled_times_p
+        ):
             entry_p = profiled_times_p[json_dispatch_id]
             p_ms = entry_p["time_ms"]
             module_name = entry_p.get("module_name", "")
@@ -155,10 +159,14 @@ def create_workload_from_json_with_profile(
                 f"dispatch_name='{dispatch_name}', module_name='{module_name}', "
                 f"P-core runtime={p_ms} ms"
             )
-        
+
         # Try to get profiled E-core time
         e_ms = None
-        if profiled_times_e and isinstance(json_dispatch_id, int) and json_dispatch_id in profiled_times_e:
+        if (
+            profiled_times_e
+            and isinstance(json_dispatch_id, int)
+            and json_dispatch_id in profiled_times_e
+        ):
             entry_e = profiled_times_e[json_dispatch_id]
             e_ms = entry_e["time_ms"]
             if p_ms is not None:
@@ -167,7 +175,7 @@ def create_workload_from_json_with_profile(
                     f"[PROFILE MATCH-ID] json_id={json_dispatch_id}, "
                     f"E-core runtime={e_ms} ms"
                 )
-        
+
         if p_ms is not None:
             # Use profiled P-core time
             cpu_p_time = float(p_ms)
@@ -288,7 +296,9 @@ def combine_workloads(
             final_job_names.append(f"Job {j}")
 
     # Create combined workload
-    combined_workload = Workload(all_operations, machines, transfer_times, job_names=final_job_names)
+    combined_workload = Workload(
+        all_operations, machines, transfer_times, job_names=final_job_names
+    )
 
     return combined_workload
 
@@ -301,11 +311,11 @@ def output_scheduled_json(
     alpha: np.ndarray,
     output_path: str,
     profiled_times_p: dict | None = None,
-    profiled_times_e: dict | None = None
+    profiled_times_e: dict | None = None,
 ):
     """
     Output a combined JSON file with all dispatches, their hardware targets, and start times.
-    
+
     Args:
         all_workloads: List of original Workload objects
         all_job_names: List of job names corresponding to workloads
@@ -317,104 +327,132 @@ def output_scheduled_json(
         profiled_times_e: Optional dict mapping dispatch_id -> {"time_ms": float, "module_name": str} for E-core
     """
     import json
-    
+
     machine_combinations = combined_workload.get_machine_combinations()
-    
+
     # Build mapping from operation index in combined workload to dispatch info
     operation_to_dispatch = {}
     current_idx = 0
-    
+
     for workload_idx, workload in enumerate(all_workloads):
-        job_name = all_job_names[workload_idx] if workload_idx < len(all_job_names) else f"job_{workload_idx}"
-        
+        job_name = (
+            all_job_names[workload_idx]
+            if workload_idx < len(all_job_names)
+            else f"job_{workload_idx}"
+        )
+
         for op in workload.operations:
             operation_to_dispatch[current_idx] = {
-                'operation': op,
-                'job_name': job_name,
-                'workload_idx': workload_idx
+                "operation": op,
+                "job_name": job_name,
+                "workload_idx": workload_idx,
             }
             current_idx += 1
-    
+
     # First pass: collect all dispatch info with completion times
     dispatch_info_list = []
-    
+
     for op_idx in range(len(combined_workload.operations)):
         op_info = operation_to_dispatch.get(op_idx)
         if not op_info:
             continue
-        
-        op = op_info['operation']
-        job_name = op_info['job_name']
-        
+
+        op = op_info["operation"]
+        job_name = op_info["job_name"]
+
         # Get dispatch name from operation
-        dispatch_name = op.operation_name if hasattr(op, 'operation_name') and op.operation_name else f"op_{op_idx}"
-        
+        dispatch_name = (
+            op.operation_name
+            if hasattr(op, "operation_name") and op.operation_name
+            else f"op_{op_idx}"
+        )
+
         # Get hardware target (which combination was assigned)
         combo_idx = np.argmax(alpha[op_idx])
-        hardware_target = "+".join(machine_combinations[combo_idx]) if len(machine_combinations[combo_idx]) > 1 else machine_combinations[combo_idx][0]
-        
+        hardware_target = (
+            "+".join(machine_combinations[combo_idx])
+            if len(machine_combinations[combo_idx]) > 1
+            else machine_combinations[combo_idx][0]
+        )
+
         # Get start time
         start_time = float(t[op_idx])
-        
+
         # Get duration for the assigned combination
         duration = combined_workload.operations[op_idx].get_duration_for_combination(
             combo_idx, machine_combinations, combined_workload.machines
         )
-        
+
         # Get dispatch ID
-        dispatch_id = op.operation_id if hasattr(op, 'operation_id') and op.operation_id is not None else op_idx
-        
+        dispatch_id = (
+            op.operation_id
+            if hasattr(op, "operation_id") and op.operation_id is not None
+            else op_idx
+        )
+
         # Get module name from profiled data if available
         module_name = None
-        if profiled_times_p and isinstance(dispatch_id, int) and dispatch_id in profiled_times_p:
+        if (
+            profiled_times_p
+            and isinstance(dispatch_id, int)
+            and dispatch_id in profiled_times_p
+        ):
             module_name = profiled_times_p[dispatch_id].get("module_name")
-        elif profiled_times_e and isinstance(dispatch_id, int) and dispatch_id in profiled_times_e:
+        elif (
+            profiled_times_e
+            and isinstance(dispatch_id, int)
+            and dispatch_id in profiled_times_e
+        ):
             module_name = profiled_times_e[dispatch_id].get("module_name")
-        
+
         completion_time = start_time + float(duration)
-        
-        dispatch_info_list.append({
-            'op_idx': op_idx,
-            'dispatch_name': dispatch_name,
-            'dispatch_id': dispatch_id,
-            'hardware_target': hardware_target,
-            'start_time': start_time,
-            'duration': float(duration),
-            'completion_time': completion_time,
-            'job_name': job_name,
-            'module_name': module_name,
-            'op': op,
-            'combined_op': combined_workload.operations[op_idx]
-        })
-    
+
+        dispatch_info_list.append(
+            {
+                "op_idx": op_idx,
+                "dispatch_name": dispatch_name,
+                "dispatch_id": dispatch_id,
+                "hardware_target": hardware_target,
+                "start_time": start_time,
+                "duration": float(duration),
+                "completion_time": completion_time,
+                "job_name": job_name,
+                "module_name": module_name,
+                "op": op,
+                "combined_op": combined_workload.operations[op_idx],
+            }
+        )
+
     # Build time dependency mapping: for each hardware target, track dispatches sorted by completion time
-    hardware_dispatch_map = {}  # hardware_target -> list of (completion_time, dispatch_name, start_time)
-    
+    hardware_dispatch_map = (
+        {}
+    )  # hardware_target -> list of (completion_time, dispatch_name, start_time)
+
     for info in dispatch_info_list:
-        hw_target = info['hardware_target']
+        hw_target = info["hardware_target"]
         if hw_target not in hardware_dispatch_map:
             hardware_dispatch_map[hw_target] = []
-        hardware_dispatch_map[hw_target].append((
-            info['completion_time'],
-            info['dispatch_name'],
-            info['start_time']
-        ))
-    
+        hardware_dispatch_map[hw_target].append(
+            (info["completion_time"], info["dispatch_name"], info["start_time"])
+        )
+
     # Sort each hardware target's dispatches by completion time
     for hw_target in hardware_dispatch_map:
-        hardware_dispatch_map[hw_target].sort(key=lambda x: x[0])  # Sort by completion_time
-    
+        hardware_dispatch_map[hw_target].sort(
+            key=lambda x: x[0]
+        )  # Sort by completion_time
+
     # Build combined dispatches dictionary
     combined_dispatches = {}
-    
+
     for info in dispatch_info_list:
-        dispatch_name = info['dispatch_name']
-        hardware_target = info['hardware_target']
-        start_time = info['start_time']
-        
+        dispatch_name = info["dispatch_name"]
+        hardware_target = info["hardware_target"]
+        start_time = info["start_time"]
+
         # Get dependencies (from combined workload operation predecessors)
         dependencies = []
-        combined_op = info['combined_op']
+        combined_op = info["combined_op"]
         for pred_op in combined_op.predecessors:
             # Find the index of this predecessor in the combined workload
             pred_idx = None
@@ -424,64 +462,83 @@ def output_scheduled_json(
                     break
             if pred_idx is not None and pred_idx in operation_to_dispatch:
                 pred_info = operation_to_dispatch[pred_idx]
-                pred_dispatch_name = pred_info['operation'].operation_name if hasattr(pred_info['operation'], 'operation_name') and pred_info['operation'].operation_name else f"op_{pred_idx}"
+                pred_dispatch_name = (
+                    pred_info["operation"].operation_name
+                    if hasattr(pred_info["operation"], "operation_name")
+                    and pred_info["operation"].operation_name
+                    else f"op_{pred_idx}"
+                )
                 dependencies.append(pred_dispatch_name)
-        
+
         # Find time dependency: previous dispatch on same hardware target
         time_dependency = None
         if hardware_target in hardware_dispatch_map:
             hw_dispatches = hardware_dispatch_map[hardware_target]
             # Find the dispatch that finished most recently before this one starts
             for completion_time, prev_dispatch_name, prev_start_time in hw_dispatches:
-                if completion_time <= start_time and prev_dispatch_name != dispatch_name:
+                if (
+                    completion_time <= start_time
+                    and prev_dispatch_name != dispatch_name
+                ):
                     time_dependency = prev_dispatch_name
                 elif completion_time > start_time:
                     break  # No need to check further (sorted by completion time)
-        
+
         # Create dispatch entry
         dispatch_entry = {
-            "id": info['dispatch_id'],
+            "id": info["dispatch_id"],
             "ordinal": 1,  # Keep original structure
             "total": 1,
             "dependencies": dependencies,
             "hardware_target": hardware_target,
             "start_time": start_time,
-            "duration": info['duration'],
-            "job_name": info['job_name']
+            "duration": info["duration"],
+            "job_name": info["job_name"],
         }
-        
+
         # Add module_name if available
-        if info['module_name']:
-            dispatch_entry["module_name"] = info['module_name']
-        
+        if info["module_name"]:
+            dispatch_entry["module_name"] = info["module_name"]
+
         # Add time_dependency if found
         if time_dependency:
             dispatch_entry["time_dependency"] = time_dependency
-        
+
         combined_dispatches[dispatch_name] = dispatch_entry
-    
+
     # Create output JSON structure
     output_data = {
         "dot_file": "combined_schedule.json",
         "dispatches": combined_dispatches,
         "metadata": {
-            "makespan": float(max(
-                t[i] + combined_workload.operations[i].get_duration_for_combination(
-                    np.argmax(alpha[i]), machine_combinations, combined_workload.machines
+            "makespan": float(
+                max(
+                    t[i]
+                    + combined_workload.operations[i].get_duration_for_combination(
+                        np.argmax(alpha[i]),
+                        machine_combinations,
+                        combined_workload.machines,
+                    )
+                    for i in range(len(combined_workload.operations))
                 )
-                for i in range(len(combined_workload.operations))
-            )),
+            ),
             "num_operations": len(combined_workload.operations),
             "machines": combined_workload.machines,
-            "machine_combinations": [combo if isinstance(combo, list) else [combo] for combo in machine_combinations]
-        }
+            "machine_combinations": [
+                combo if isinstance(combo, list) else [combo]
+                for combo in machine_combinations
+            ],
+        },
     }
-    
+
     # Save to file
-    os.makedirs(os.path.dirname(output_path) if os.path.dirname(output_path) else '.', exist_ok=True)
-    with open(output_path, 'w') as f:
+    os.makedirs(
+        os.path.dirname(output_path) if os.path.dirname(output_path) else ".",
+        exist_ok=True,
+    )
+    with open(output_path, "w") as f:
         json.dump(output_data, f, indent=2)
-    
+
     print(f"\nScheduled JSON saved to: {output_path}")
 
 
@@ -520,7 +577,15 @@ def add_dependency(source_workload: Workload, target_workload: Workload) -> None
             target_op.add_predecessor(source_op)
 
 
-def schedule_iree_networks_profiled(no_depth_network: bool = False, use_mobilenet: bool = False, use_diffusion: bool = False, fusion_threshold: float = None, verbose: bool = False, solver_verbosity: int = 0, time_limit: float = None):
+def schedule_iree_networks_profiled(
+    no_depth_network: bool = False,
+    use_mobilenet: bool = False,
+    use_diffusion: bool = False,
+    fusion_threshold: float = None,
+    verbose: bool = False,
+    solver_verbosity: int = 0,
+    time_limit: float = None,
+):
     """
     Schedule Fast, Dronet, and either 5 MLP instances, 1 MobilenetV2, or 1 Diffusion model on a dual-core device using
     profiled runtimes where available.
@@ -554,7 +619,7 @@ def schedule_iree_networks_profiled(no_depth_network: bool = False, use_mobilene
       The two chains are independent and can run in parallel.
       If no_depth_network is True, Fast is skipped.
       Special case: If both use_mobilenet and use_diffusion are True, both feed into Dronet.
-    
+
     Args:
         no_depth_network: If True, skip loading and scheduling Fast (depth network).
         use_mobilenet: If True, use a single MobilenetV2 instead of 5 MLP instances.
@@ -594,7 +659,7 @@ def schedule_iree_networks_profiled(no_depth_network: bool = False, use_mobilene
         "topo_0_1_2_3",
         "results.csv",
     )
-    
+
     # Paths to profiled MLP runtimes
     # P-core: vector/RVV data
     mlp_profile_csv_p = os.path.join(
@@ -614,7 +679,7 @@ def schedule_iree_networks_profiled(no_depth_network: bool = False, use_mobilene
         "topo_0_1_2_3",
         "results.csv",
     )
-    
+
     # Paths to profiled Fast (fastdepth) runtimes
     # P-core: vector/RVV data
     fast_profile_csv_p = os.path.join(
@@ -634,7 +699,7 @@ def schedule_iree_networks_profiled(no_depth_network: bool = False, use_mobilene
         "topo_0_1_2_3",
         "results.csv",
     )
-    
+
     # Paths to profiled MobilenetV2 runtimes
     # P-core: vector/RVV data
     mobilenet_profile_csv_p = os.path.join(
@@ -663,11 +728,11 @@ def schedule_iree_networks_profiled(no_depth_network: bool = False, use_mobilene
     print(f"\n0. Loading profiled Dronet P-core runtimes from: {dronet_profile_csv_p}")
     dronet_profiled_times_p = load_profiled_times(dronet_profile_csv_p)
     print(f"   Loaded {len(dronet_profiled_times_p)} profiled P-core entries")
-    
+
     print(f"\n1. Loading profiled Dronet E-core runtimes from: {dronet_profile_csv_e}")
     dronet_profiled_times_e = load_profiled_times(dronet_profile_csv_e)
     print(f"   Loaded {len(dronet_profiled_times_e)} profiled E-core entries")
-    
+
     # Initialize MLP, MobilenetV2, and Diffusion profiled times variables
     mlp_profiled_times_p = None
     mlp_profiled_times_e = None
@@ -675,25 +740,29 @@ def schedule_iree_networks_profiled(no_depth_network: bool = False, use_mobilene
     mobilenet_profiled_times_e = None
     diffusion_profiled_times_p = None
     diffusion_profiled_times_e = None
-    
+
     # Load profiled runtimes for MLP, MobilenetV2, and/or Diffusion (CPU_P and CPU_E)
     if not use_mobilenet and not use_diffusion:
         print(f"\n2. Loading profiled MLP P-core runtimes from: {mlp_profile_csv_p}")
         mlp_profiled_times_p = load_profiled_times(mlp_profile_csv_p)
         print(f"   Loaded {len(mlp_profiled_times_p)} profiled P-core entries")
-        
+
         print(f"\n3. Loading profiled MLP E-core runtimes from: {mlp_profile_csv_e}")
         mlp_profiled_times_e = load_profiled_times(mlp_profile_csv_e)
         print(f"   Loaded {len(mlp_profiled_times_e)} profiled E-core entries")
     else:
-        print(f"\n2. Loading profiled MobilenetV2 P-core runtimes from: {mobilenet_profile_csv_p}")
+        print(
+            f"\n2. Loading profiled MobilenetV2 P-core runtimes from: {mobilenet_profile_csv_p}"
+        )
         mobilenet_profiled_times_p = load_profiled_times(mobilenet_profile_csv_p)
         print(f"   Loaded {len(mobilenet_profiled_times_p)} profiled P-core entries")
-        
-        print(f"\n3. Loading profiled MobilenetV2 E-core runtimes from: {mobilenet_profile_csv_e}")
+
+        print(
+            f"\n3. Loading profiled MobilenetV2 E-core runtimes from: {mobilenet_profile_csv_e}"
+        )
         mobilenet_profiled_times_e = load_profiled_times(mobilenet_profile_csv_e)
         print(f"   Loaded {len(mobilenet_profiled_times_e)} profiled E-core entries")
-    
+
     # Load profiled runtimes for Diffusion (CPU_P and CPU_E) if enabled
     if use_diffusion:
         # Paths to profiled Diffusion runtimes
@@ -715,27 +784,31 @@ def schedule_iree_networks_profiled(no_depth_network: bool = False, use_mobilene
             "topo_0_1_2_3",
             "results.csv",
         )
-        
+
         step_num = 2 if use_mobilenet else 2
-        print(f"\n{step_num + 1}. Loading profiled Diffusion P-core runtimes from: {diffusion_profile_csv_p}")
+        print(
+            f"\n{step_num + 1}. Loading profiled Diffusion P-core runtimes from: {diffusion_profile_csv_p}"
+        )
         diffusion_profiled_times_p = load_profiled_times(diffusion_profile_csv_p)
         print(f"   Loaded {len(diffusion_profiled_times_p)} profiled P-core entries")
-        
-        print(f"\n{step_num + 2}. Loading profiled Diffusion E-core runtimes from: {diffusion_profile_csv_e}")
+
+        print(
+            f"\n{step_num + 2}. Loading profiled Diffusion E-core runtimes from: {diffusion_profile_csv_e}"
+        )
         diffusion_profiled_times_e = load_profiled_times(diffusion_profile_csv_e)
         print(f"   Loaded {len(diffusion_profiled_times_e)} profiled E-core entries")
-    
+
     # Load profiled runtimes for Fast (CPU_P and CPU_E) - only if not skipping depth network
     fast_profiled_times_p = None
     fast_profiled_times_e = None
     fast_workload = None
     fast_job_name = None
-    
+
     if not no_depth_network:
         print(f"\n4. Loading profiled Fast P-core runtimes from: {fast_profile_csv_p}")
         fast_profiled_times_p = load_profiled_times(fast_profile_csv_p)
         print(f"   Loaded {len(fast_profiled_times_p)} profiled P-core entries")
-        
+
         print(f"\n5. Loading profiled Fast E-core runtimes from: {fast_profile_csv_e}")
         fast_profiled_times_e = load_profiled_times(fast_profile_csv_e)
         print(f"   Loaded {len(fast_profiled_times_e)} profiled E-core entries")
@@ -748,7 +821,9 @@ def schedule_iree_networks_profiled(no_depth_network: bool = False, use_mobilene
             profiled_times_p=fast_profiled_times_p,
             profiled_times_e=fast_profiled_times_e,
         )
-        print(f"   Created {fast_job_name} workload with {len(fast_workload.operations)} operations")
+        print(
+            f"   Created {fast_job_name} workload with {len(fast_workload.operations)} operations"
+        )
     else:
         print("\n4-6. Skipping Fast (depth network) as requested")
 
@@ -762,7 +837,9 @@ def schedule_iree_networks_profiled(no_depth_network: bool = False, use_mobilene
         profiled_times_p=dronet_profiled_times_p,
         profiled_times_e=dronet_profiled_times_e,
     )
-    print(f"   Created {dronet_job_name} workload with {len(dronet_workload.operations)} operations")
+    print(
+        f"   Created {dronet_job_name} workload with {len(dronet_workload.operations)} operations"
+    )
 
     # Create MLP workloads, MobilenetV2 workload, and/or Diffusion workload
     mlp_workloads: list[Workload] = []
@@ -771,13 +848,17 @@ def schedule_iree_networks_profiled(no_depth_network: bool = False, use_mobilene
     mobilenet_job_name = None
     diffusion_workload = None
     diffusion_job_name = None
-    
+
     if not use_mobilenet and not use_diffusion:
         # Create 5 MLP workloads, each with a unique prefix (using profiled runtimes)
         if not no_depth_network:
-            print(f"\n8. Loading MLP dispatch graph (5 instances, profiled runtimes)...")
+            print(
+                f"\n8. Loading MLP dispatch graph (5 instances, profiled runtimes)..."
+            )
         else:
-            print(f"\n5. Loading MLP dispatch graph (5 instances, profiled runtimes)...")
+            print(
+                f"\n5. Loading MLP dispatch graph (5 instances, profiled runtimes)..."
+            )
         for i in range(5):
             mlp_prefix = f"mlp{i}_"
             mlp_workload, mlp_job_name = create_workload_from_json_with_profile(
@@ -789,7 +870,9 @@ def schedule_iree_networks_profiled(no_depth_network: bool = False, use_mobilene
             mlp_job_name = f"mlp{i}"  # Use numbered name
             mlp_workloads.append(mlp_workload)
             mlp_job_names.append(mlp_job_name)
-            print(f"   Created {mlp_job_name} workload with {len(mlp_workload.operations)} operations")
+            print(
+                f"   Created {mlp_job_name} workload with {len(mlp_workload.operations)} operations"
+            )
     else:
         # Create single MobilenetV2 workload
         if not no_depth_network:
@@ -803,8 +886,10 @@ def schedule_iree_networks_profiled(no_depth_network: bool = False, use_mobilene
             profiled_times_e=mobilenet_profiled_times_e,
         )
         mobilenet_job_name = "mobilenet_v2"
-        print(f"   Created {mobilenet_job_name} workload with {len(mobilenet_workload.operations)} operations")
-    
+        print(
+            f"   Created {mobilenet_job_name} workload with {len(mobilenet_workload.operations)} operations"
+        )
+
     # Create Diffusion workload if enabled
     if use_diffusion:
         if not no_depth_network:
@@ -819,34 +904,42 @@ def schedule_iree_networks_profiled(no_depth_network: bool = False, use_mobilene
             profiled_times_e=diffusion_profiled_times_e,
         )
         diffusion_job_name = "diffusion"
-        print(f"   Created {diffusion_job_name} workload with {len(diffusion_workload.operations)} operations")
+        print(
+            f"   Created {diffusion_job_name} workload with {len(diffusion_workload.operations)} operations"
+        )
 
     # Make Dronet depend on Fast, MobilenetV2, and/or Diffusion
     # Special case: if both mobilenet and diffusion are enabled, dronet depends on both
     step_num = 9 if not no_depth_network else 6
     dependencies_added = []
-    
+
     # Add dependency on Fast if included
     if not no_depth_network:
-        print(f"\n{step_num}. Adding dependency: {dronet_job_name} depends on {fast_job_name}...")
+        print(
+            f"\n{step_num}. Adding dependency: {dronet_job_name} depends on {fast_job_name}..."
+        )
         add_dependency(fast_workload, dronet_workload)
         dependencies_added.append(fast_job_name)
         step_num += 1
-    
+
     # Add dependency on MobilenetV2 if enabled
     if use_mobilenet:
-        print(f"\n{step_num}. Adding dependency: {dronet_job_name} depends on {mobilenet_job_name}...")
+        print(
+            f"\n{step_num}. Adding dependency: {dronet_job_name} depends on {mobilenet_job_name}..."
+        )
         add_dependency(mobilenet_workload, dronet_workload)
         dependencies_added.append(mobilenet_job_name)
         step_num += 1
-    
+
     # Add dependency on Diffusion if enabled
     if use_diffusion:
-        print(f"\n{step_num}. Adding dependency: {dronet_job_name} depends on {diffusion_job_name}...")
+        print(
+            f"\n{step_num}. Adding dependency: {dronet_job_name} depends on {diffusion_job_name}..."
+        )
         add_dependency(diffusion_workload, dronet_workload)
         dependencies_added.append(diffusion_job_name)
         step_num += 1
-    
+
     if not dependencies_added:
         print("\n6. Dronet is independent (no dependencies)")
 
@@ -854,7 +947,9 @@ def schedule_iree_networks_profiled(no_depth_network: bool = False, use_mobilene
     # Note: MobilenetV2 and Diffusion dependencies are handled above (they feed into dronet)
     if not use_mobilenet and not use_diffusion:
         step_num = 10 if not no_depth_network else 7
-        print(f"\n{step_num}. Adding dependencies between MLP instances (MLPs are independent of Fast/Dronet)...")
+        print(
+            f"\n{step_num}. Adding dependencies between MLP instances (MLPs are independent of Fast/Dronet)..."
+        )
         for i in range(1, len(mlp_workloads)):
             print(f"   {mlp_job_names[i]} depends on {mlp_job_names[i-1]}...")
             add_dependency(mlp_workloads[i - 1], mlp_workloads[i])
@@ -882,12 +977,12 @@ def schedule_iree_networks_profiled(no_depth_network: bool = False, use_mobilene
         dronet_deps.append(mobilenet_job_name)
     if use_diffusion:
         dronet_deps.append(diffusion_job_name)
-    
+
     if dronet_deps:
         print(f"     Chain 1: {' + '.join(dronet_deps)} → {dronet_job_name}")
     else:
         print(f"     Chain 1: {dronet_job_name} (independent)")
-    
+
     if not use_mobilenet and not use_diffusion:
         print(f"     Chain 2: {' → '.join(mlp_job_names)}")
     print("   (Chains are independent and can run in parallel)")
@@ -896,7 +991,9 @@ def schedule_iree_networks_profiled(no_depth_network: bool = False, use_mobilene
         if not no_depth_network:
             all_workloads = [fast_workload, dronet_workload] + mlp_workloads
             # Use a single name "MLP" for all MLP instances in the legend
-            all_job_names_for_legend = [fast_job_name, dronet_job_name] + ["MLP"] * len(mlp_workloads)
+            all_job_names_for_legend = [fast_job_name, dronet_job_name] + ["MLP"] * len(
+                mlp_workloads
+            )
             # Create job_id mapping: Fast=0, Dronet=1, all MLPs=2 (same color for all MLPs)
             job_id_mapping = [0, 1] + [2] * len(mlp_workloads)
         else:
@@ -911,25 +1008,25 @@ def schedule_iree_networks_profiled(no_depth_network: bool = False, use_mobilene
         all_job_names_for_legend = []
         job_id_mapping = []
         job_id = 0
-        
+
         if not no_depth_network:
             all_workloads.append(fast_workload)
             all_job_names_for_legend.append(fast_job_name)
             job_id_mapping.append(job_id)
             job_id += 1
-        
+
         if use_mobilenet:
             all_workloads.append(mobilenet_workload)
             all_job_names_for_legend.append(mobilenet_job_name)
             job_id_mapping.append(job_id)
             job_id += 1
-        
+
         if use_diffusion:
             all_workloads.append(diffusion_workload)
             all_job_names_for_legend.append(diffusion_job_name)
             job_id_mapping.append(job_id)
             job_id += 1
-        
+
         # Dronet comes last (depends on all above)
         all_workloads.append(dronet_workload)
         all_job_names_for_legend.append(dronet_job_name)
@@ -949,39 +1046,67 @@ def schedule_iree_networks_profiled(no_depth_network: bool = False, use_mobilene
     operations_with_multiple_predecessors = [
         op for op in combined_workload.operations if len(op.predecessors) > 1
     ]
-    print(f"  Operations with multiple predecessors: {len(operations_with_multiple_predecessors)}")
+    print(
+        f"  Operations with multiple predecessors: {len(operations_with_multiple_predecessors)}"
+    )
 
     # Count independent jobs (operations with no predecessors)
-    independent_jobs = sum(1 for op in combined_workload.operations if not op.predecessors)
+    independent_jobs = sum(
+        1 for op in combined_workload.operations if not op.predecessors
+    )
     print(f"  Independent jobs (can run in parallel): {independent_jobs}")
 
     # Schedule the combined workload
     print("\n" + "=" * 60)
     if not no_depth_network:
         if not use_mobilenet and not use_diffusion:
-            print("Scheduling combined workload (with profiled Fast, Dronet, and MLP runtimes)...")
+            print(
+                "Scheduling combined workload (with profiled Fast, Dronet, and MLP runtimes)..."
+            )
         elif use_mobilenet and use_diffusion:
-            print("Scheduling combined workload (with profiled Fast, Dronet, MobilenetV2, and Diffusion runtimes)...")
+            print(
+                "Scheduling combined workload (with profiled Fast, Dronet, MobilenetV2, and Diffusion runtimes)..."
+            )
         elif use_mobilenet:
-            print("Scheduling combined workload (with profiled Fast, Dronet, and MobilenetV2 runtimes)...")
+            print(
+                "Scheduling combined workload (with profiled Fast, Dronet, and MobilenetV2 runtimes)..."
+            )
         else:  # use_diffusion
-            print("Scheduling combined workload (with profiled Fast, Dronet, and Diffusion runtimes)...")
+            print(
+                "Scheduling combined workload (with profiled Fast, Dronet, and Diffusion runtimes)..."
+            )
     else:
         if not use_mobilenet and not use_diffusion:
-            print("Scheduling combined workload (with profiled Dronet and MLP runtimes, no depth network)...")
+            print(
+                "Scheduling combined workload (with profiled Dronet and MLP runtimes, no depth network)..."
+            )
         elif use_mobilenet and use_diffusion:
-            print("Scheduling combined workload (with profiled Dronet, MobilenetV2, and Diffusion runtimes, no depth network)...")
+            print(
+                "Scheduling combined workload (with profiled Dronet, MobilenetV2, and Diffusion runtimes, no depth network)..."
+            )
         elif use_mobilenet:
-            print("Scheduling combined workload (with profiled Dronet and MobilenetV2 runtimes, no depth network)...")
+            print(
+                "Scheduling combined workload (with profiled Dronet and MobilenetV2 runtimes, no depth network)..."
+            )
         else:  # use_diffusion
-            print("Scheduling combined workload (with profiled Dronet and Diffusion runtimes, no depth network)...")
+            print(
+                "Scheduling combined workload (with profiled Dronet and Diffusion runtimes, no depth network)..."
+            )
     print("=" * 60)
-    result = schedule(combined_workload, fusion_threshold=fusion_threshold, verbose=verbose, solver_verbosity=solver_verbosity, time_limit=time_limit)
+    result = schedule(
+        combined_workload,
+        fusion_threshold=fusion_threshold,
+        verbose=verbose,
+        solver_verbosity=solver_verbosity,
+        time_limit=time_limit,
+    )
     t, alpha, _, _ = result  # Always returns 4 values now
-    
+
     # Check if scheduling was successful
     if t is None or alpha is None:
-        print("\nScheduling failed (infeasible or error). Cannot proceed with analysis.")
+        print(
+            "\nScheduling failed (infeasible or error). Cannot proceed with analysis."
+        )
         return combined_workload, None, None
 
     # Calculate makespan
@@ -1031,24 +1156,20 @@ def schedule_iree_networks_profiled(no_depth_network: bool = False, use_mobilene
             chain_str = " + ".join(chains) + " → " + dronet_job_name.capitalize()
         else:
             chain_str = dronet_job_name.capitalize()
-        
+
         if not no_depth_network:
-            plot_title = (
-                f"{fast_job_name.capitalize()} (profiled) → {chain_str} (profiled) Schedule on Dual-Core Device"
-            )
+            plot_title = f"{fast_job_name.capitalize()} (profiled) → {chain_str} (profiled) Schedule on Dual-Core Device"
         else:
-            plot_title = (
-                f"{chain_str} (profiled) Schedule on Dual-Core Device"
-            )
-    
+            plot_title = f"{chain_str} (profiled) Schedule on Dual-Core Device"
+
     # Add makespan to plot title
     plot_title = f"{plot_title} (Makespan: {makespan:.2f} ms)"
-    
+
     # Determine plot filename
     plot_filename = "iree_combined_schedule_profiled.png"
     if fusion_threshold is not None and fusion_threshold > 0:
         plot_filename = "iree_combined_schedule_profiled_fusion.png"
-    
+
     plot.plot_optimization_schedule(
         combined_workload.get_durations(),
         t,
@@ -1063,7 +1184,7 @@ def schedule_iree_networks_profiled(no_depth_network: bool = False, use_mobilene
     )
 
     print(f"\nPlot saved to plots/{plot_filename}")
-    
+
     # Output combined JSON file with scheduling information
     os.makedirs("schedules", exist_ok=True)
     json_output_path = "schedules/combined_schedule_profiled.json"
@@ -1072,12 +1193,14 @@ def schedule_iree_networks_profiled(no_depth_network: bool = False, use_mobilene
     if no_depth_network:
         json_output_path = json_output_path.replace(".json", "_no_depth.json")
     if use_mobilenet and use_diffusion:
-        json_output_path = json_output_path.replace(".json", "_mobilenet_diffusion.json")
+        json_output_path = json_output_path.replace(
+            ".json", "_mobilenet_diffusion.json"
+        )
     elif use_mobilenet:
         json_output_path = json_output_path.replace(".json", "_mobilenet.json")
     elif use_diffusion:
         json_output_path = json_output_path.replace(".json", "_diffusion.json")
-    
+
     # Combine profiled times for JSON output
     combined_profiled_p = {}
     combined_profiled_e = {}
@@ -1100,7 +1223,7 @@ def schedule_iree_networks_profiled(no_depth_network: bool = False, use_mobilene
             combined_profiled_p.update(diffusion_profiled_times_p)
         if use_diffusion and diffusion_profiled_times_e:
             combined_profiled_e.update(diffusion_profiled_times_e)
-    
+
     print(f"\nOutputting scheduled JSON...")
     output_scheduled_json(
         all_workloads=all_workloads,
@@ -1110,17 +1233,17 @@ def schedule_iree_networks_profiled(no_depth_network: bool = False, use_mobilene
         alpha=alpha,
         output_path=json_output_path,
         profiled_times_p=combined_profiled_p if combined_profiled_p else None,
-        profiled_times_e=combined_profiled_e if combined_profiled_e else None
+        profiled_times_e=combined_profiled_e if combined_profiled_e else None,
     )
-    
+
     # Validate schedule against original JSON and profiled data
     print("\n" + "=" * 60)
     print("Validating schedule against original JSON and profiled data...")
     print("=" * 60)
-    
+
     # Combine all JSON dispatch data
     combined_json_data = {"dispatches": {}}
-    
+
     # Load and combine JSON files
     json_files = []
     if not no_depth_network:
@@ -1134,7 +1257,7 @@ def schedule_iree_networks_profiled(no_depth_network: bool = False, use_mobilene
             json_files.append(("mobilenet_", mobilenet_path))
         if use_diffusion:
             json_files.append(("diffusion_", diffusion_path))
-    
+
     for prefix, json_path in json_files:
         dispatch_data = load_dispatch_graph(json_path)
         original_dispatches = dispatch_data.get("dispatches", {})
@@ -1148,18 +1271,18 @@ def schedule_iree_networks_profiled(no_depth_network: bool = False, use_mobilene
                     for dep in prefixed_info["dependencies"]
                 ]
             combined_json_data["dispatches"][prefixed_name] = prefixed_info
-    
+
     # Combine all profiled times
     combined_profiled_p = {}
     combined_profiled_e = {}
-    
+
     if not no_depth_network:
         combined_profiled_p.update(fast_profiled_times_p)
         combined_profiled_e.update(fast_profiled_times_e)
-    
+
     combined_profiled_p.update(dronet_profiled_times_p)
     combined_profiled_e.update(dronet_profiled_times_e)
-    
+
     if not use_mobilenet and not use_diffusion:
         combined_profiled_p.update(mlp_profiled_times_p)
         combined_profiled_e.update(mlp_profiled_times_e)
@@ -1170,24 +1293,39 @@ def schedule_iree_networks_profiled(no_depth_network: bool = False, use_mobilene
         if use_diffusion:
             combined_profiled_p.update(diffusion_profiled_times_p)
             combined_profiled_e.update(diffusion_profiled_times_e)
-    
+
     # Run validation
     os.makedirs("validation_reports", exist_ok=True)
     validation_file = "validation_reports/validation_report.txt"
-    
+
     # Build network-specific profiled times to avoid dispatch_id collisions
     profiled_times_by_network = {}
     if not no_depth_network:
-        profiled_times_by_network["fast"] = {"p": fast_profiled_times_p, "e": fast_profiled_times_e}
-    profiled_times_by_network["dronet"] = {"p": dronet_profiled_times_p, "e": dronet_profiled_times_e}
+        profiled_times_by_network["fast"] = {
+            "p": fast_profiled_times_p,
+            "e": fast_profiled_times_e,
+        }
+    profiled_times_by_network["dronet"] = {
+        "p": dronet_profiled_times_p,
+        "e": dronet_profiled_times_e,
+    }
     if not use_mobilenet and not use_diffusion:
-        profiled_times_by_network["mlp"] = {"p": mlp_profiled_times_p, "e": mlp_profiled_times_e}
+        profiled_times_by_network["mlp"] = {
+            "p": mlp_profiled_times_p,
+            "e": mlp_profiled_times_e,
+        }
     else:
         if use_mobilenet:
-            profiled_times_by_network["mobilenet"] = {"p": mobilenet_profiled_times_p, "e": mobilenet_profiled_times_e}
+            profiled_times_by_network["mobilenet"] = {
+                "p": mobilenet_profiled_times_p,
+                "e": mobilenet_profiled_times_e,
+            }
         if use_diffusion:
-            profiled_times_by_network["diffusion"] = {"p": diffusion_profiled_times_p, "e": diffusion_profiled_times_e}
-    
+            profiled_times_by_network["diffusion"] = {
+                "p": diffusion_profiled_times_p,
+                "e": diffusion_profiled_times_e,
+            }
+
     is_valid, validation_results = validate_schedule(
         combined_workload,
         t,
@@ -1198,14 +1336,14 @@ def schedule_iree_networks_profiled(no_depth_network: bool = False, use_mobilene
         profiled_times_by_network=profiled_times_by_network,
         output_file=validation_file,
     )
-    
+
     if is_valid:
         print("✓ Validation PASSED: All checks passed")
     else:
         print("✗ Validation FAILED: See validation report for details")
         print(f"  Errors: {len(validation_results['errors'])}")
         print(f"  Warnings: {len(validation_results['warnings'])}")
-    
+
     print(f"\nValidation report saved to: {validation_file}")
 
     return combined_workload, t, alpha
@@ -1262,7 +1400,5 @@ if __name__ == "__main__":
         fusion_threshold=args.fusion_threshold,
         verbose=args.verbose,
         solver_verbosity=args.solver_verbosity,
-        time_limit=args.time_limit
+        time_limit=args.time_limit,
     )
-
-

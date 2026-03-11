@@ -2,15 +2,24 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 
+
 def plot_combined_schedule(
-    durations: list[list[list[float]]], t, alpha, num_machines, transfer_times, num_jobs,
-    save_path=None, plot_title="Schedule",
-    start_times=None, machine_allocations=None):
+    durations: list[list[list[float]]],
+    t,
+    alpha,
+    num_machines,
+    transfer_times,
+    num_jobs,
+    save_path=None,
+    plot_title="Schedule",
+    start_times=None,
+    machine_allocations=None,
+):
     """
     Parses CVXPY optimization outputs to plot a schedule of jobs on machines over time.
 
     Parameters:
-    - durations: List of jobs, where each job is a list of operations, 
+    - durations: List of jobs, where each job is a list of operations,
                  and each operation is a list of runtimes for different machines.
     - t: CVXPY variable (vector) containing start times for each operation in each job.
     - alpha: CVXPY variable (matrix) containing machine assignments for each operation.
@@ -21,7 +30,6 @@ def plot_combined_schedule(
     - num_jobs: Number of jobs (used for naming the file).
     """
 
-
     # If using greedy scheduling, use start_times and machine_allocations
     if start_times is not None and machine_allocations is not None:
         job_colors = {}
@@ -30,21 +38,33 @@ def plot_combined_schedule(
         for idx, job in enumerate(unique_jobs):
             job_colors[job] = color_map(idx)
 
-        machine_mapping = {machine: i + 1 for i, machine in enumerate(sorted(set(machine_allocations.values())))}
+        machine_mapping = {
+            machine: i + 1
+            for i, machine in enumerate(sorted(set(machine_allocations.values())))
+        }
 
         for (job, op), start_time in start_times.items():
             machine = machine_allocations[(job, op)]
             machine_idx = machine_mapping[machine]
             operation_duration = durations[(job, op)]
-            
-            ax.barh(machine_idx, width=operation_duration, left=start_time, color=job_colors[job], edgecolor='black', label=f"Job {job}, Op {op}")
+
+            ax.barh(
+                machine_idx,
+                width=operation_duration,
+                left=start_time,
+                color=job_colors[job],
+                edgecolor="black",
+                label=f"Job {job}, Op {op}",
+            )
 
         ax.set_yticks(list(machine_mapping.values()))
         ax.set_yticklabels(list(machine_mapping.keys()))
-    
+
     # Ensure job and machine numbers are provided
     if num_jobs is None or num_machines is None:
-        raise ValueError("num_jobs and num_machines must be provided to generate dynamic filenames.")
+        raise ValueError(
+            "num_jobs and num_machines must be provided to generate dynamic filenames."
+        )
 
     # Define save directory and create it if it doesn't exist
     plot_dir = "/scratch/kris/scheduler/src/scripts/plots"
@@ -52,7 +72,9 @@ def plot_combined_schedule(
 
     # Define the dynamic filename based on job and machine count
     if save_path is None:
-        save_path = os.path.join(plot_dir, f"schedule_jobs{num_jobs}_machines{num_machines}.png")
+        save_path = os.path.join(
+            plot_dir, f"schedule_jobs{num_jobs}_machines{num_machines}.png"
+        )
 
     # Convert optimization variables to NumPy arrays if needed
     start_times = np.array(t.value).flatten() if not isinstance(t, np.ndarray) else t
@@ -61,8 +83,10 @@ def plot_combined_schedule(
     # Validate number of operations
     num_operations = sum(len(job) for job in durations)
     if num_operations != len(start_times):
-        raise ValueError(f"Mismatch: durations specify {num_operations} operations, "
-                         f"but start_times has {len(start_times)} entries.")
+        raise ValueError(
+            f"Mismatch: durations specify {num_operations} operations, "
+            f"but start_times has {len(start_times)} entries."
+        )
 
     # Determine machine assignments
     machine_assignments = np.argmax(alpha_values, axis=1)
@@ -71,7 +95,7 @@ def plot_combined_schedule(
     fig, ax = plt.subplots(figsize=(10, 6))
     base_colors = plt.cm.tab20.colors
     color_gradients = np.linspace(0.6, 1.0, 5)
-    transfer_color = 'black'
+    transfer_color = "black"
 
     # Plot each operation
     current_operation_index = 0
@@ -81,27 +105,33 @@ def plot_combined_schedule(
             start_time = start_times[current_operation_index]
             machine = machine_assignments[current_operation_index]
             operation_duration = operation_runtimes[machine]
-            gradient_factor = color_gradients[min(operation_index, len(color_gradients) - 1)]
+            gradient_factor = color_gradients[
+                min(operation_index, len(color_gradients) - 1)
+            ]
             operation_color = tuple(base_color * gradient_factor)
 
-            ax.broken_barh([(start_time, operation_duration)], 
-                           (machine - 0.4, 0.8),
-                           facecolors=operation_color,
-                           edgecolor='black')
+            ax.broken_barh(
+                [(start_time, operation_duration)],
+                (machine - 0.4, 0.8),
+                facecolors=operation_color,
+                edgecolor="black",
+            )
 
             if operation_index > 0:
                 prev_machine = machine_assignments[current_operation_index - 1]
                 transfer_time = transfer_times[prev_machine][machine]
-                ax.broken_barh([(start_time - transfer_time, transfer_time)], 
-                            (prev_machine - 0.4, 0.8),
-                            facecolors=transfer_color,
-                            edgecolor='black')
+                ax.broken_barh(
+                    [(start_time - transfer_time, transfer_time)],
+                    (prev_machine - 0.4, 0.8),
+                    facecolors=transfer_color,
+                    edgecolor="black",
+                )
 
             current_operation_index += 1
 
     # Labels and title
     ax.set_yticks(range(num_machines))
-    ax.set_yticklabels([f'Machine {i+1}' for i in range(num_machines)])
+    ax.set_yticklabels([f"Machine {i+1}" for i in range(num_machines)])
     ax.set_xlabel("Time")
     ax.set_ylabel("Machines")
     ax.set_title(plot_title)
@@ -110,21 +140,27 @@ def plot_combined_schedule(
 
     # Save the plot with dynamic filename
     print(f"Saving plot to {save_path}...")
-    plt.savefig(save_path, dpi=500, bbox_inches='tight')
+    plt.savefig(save_path, dpi=500, bbox_inches="tight")
 
     # Optional: show a legend
     handles, labels = ax.get_legend_handles_labels()
     unique_labels = {label: handle for label, handle in zip(labels, handles)}
 
     # Ensure 'Transfer Time' appears last in the legend
-    if 'Transfer\nTime' in unique_labels:
-        transfer_handle = unique_labels.pop('Transfer\nTime')
-        unique_labels['Transfer\nTime'] = transfer_handle
-        
-    ax.legend(unique_labels.values(), unique_labels.keys(), loc='upper right', title="Jobs", bbox_to_anchor=(1.18, 1))
+    if "Transfer\nTime" in unique_labels:
+        transfer_handle = unique_labels.pop("Transfer\nTime")
+        unique_labels["Transfer\nTime"] = transfer_handle
+
+    ax.legend(
+        unique_labels.values(),
+        unique_labels.keys(),
+        loc="upper right",
+        title="Jobs",
+        bbox_to_anchor=(1.18, 1),
+    )
 
     plt.tight_layout()
 
     # Save the plot
     # check if the save path has a folder
-    plt.savefig(save_path, dpi=500, bbox_inches='tight')
+    plt.savefig(save_path, dpi=500, bbox_inches="tight")

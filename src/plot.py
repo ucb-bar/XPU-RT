@@ -6,7 +6,9 @@ import numpy as np
 from collections import OrderedDict
 
 
-def plot_schedule_from_json(schedule_data: dict, save_path: str = "schedule.png", plot_title: str = "Schedule"):
+def plot_schedule_from_json(
+    schedule_data: dict, save_path: str = "schedule.png", plot_title: str = "Schedule"
+):
     """
     Plot a schedule from a resolved JSON schedule (as produced by the periodic scheduler).
 
@@ -49,7 +51,9 @@ def plot_schedule_from_json(schedule_data: dict, save_path: str = "schedule.png"
             for core in d["hardware_target"].split("+"):
                 core_set.add(core)
         # Sort: group by type, then index
-        all_cores = sorted(core_set, key=lambda c: (c.rsplit("_", 1)[0], int(c.rsplit("_", 1)[1])))
+        all_cores = sorted(
+            core_set, key=lambda c: (c.rsplit("_", 1)[0], int(c.rsplit("_", 1)[1]))
+        )
 
     row_index = {core: i for i, core in enumerate(all_cores)}
     num_rows = len(all_cores)
@@ -59,16 +63,16 @@ def plot_schedule_from_json(schedule_data: dict, save_path: str = "schedule.png"
     # ------------------------------------------------------------------ #
     job_names = sorted({d["job_name"] for d in dispatches.values()})
     highly_distinct_colors = [
-        (0.2, 0.6, 1.0),   # Sky Blue
+        (0.2, 0.6, 1.0),  # Sky Blue
         (0.8, 0.35, 0.0),  # Orange-Brown
-        (0.0, 0.72, 0.35), # Green
-        (0.9, 0.1, 0.1),   # Red
+        (0.0, 0.72, 0.35),  # Green
+        (0.9, 0.1, 0.1),  # Red
         (0.6, 0.0, 0.85),  # Purple
-        (0.95, 0.75, 0.0), # Yellow
-        (0.0, 0.65, 0.85), # Cyan
-        (0.85, 0.45, 0.65),# Pink
-        (0.45, 0.28, 0.08),# Brown
-        (0.4, 0.4, 0.4),   # Gray
+        (0.95, 0.75, 0.0),  # Yellow
+        (0.0, 0.65, 0.85),  # Cyan
+        (0.85, 0.45, 0.65),  # Pink
+        (0.45, 0.28, 0.08),  # Brown
+        (0.4, 0.4, 0.4),  # Gray
     ]
     job_color = {}
     for i, jn in enumerate(job_names):
@@ -91,7 +95,9 @@ def plot_schedule_from_json(schedule_data: dict, save_path: str = "schedule.png"
         cores = hw.split("+")
         valid_cores = [c for c in cores if c in row_index]
         if not valid_cores:
-            print(f"Warning: no known cores in hardware_target '{hw}', skipping '{dispatch_name}'")
+            print(
+                f"Warning: no known cores in hardware_target '{hw}', skipping '{dispatch_name}'"
+            )
             continue
 
         is_multi = len(valid_cores) > 1
@@ -114,9 +120,13 @@ def plot_schedule_from_json(schedule_data: dict, save_path: str = "schedule.png"
             text_color = "white" if brightness < 0.55 else "black"
             label = str(op_id)
             ax.text(
-                text_x, mid_row, label,
-                ha="center", va="center",
-                fontsize=7, fontweight="bold",
+                text_x,
+                mid_row,
+                label,
+                ha="center",
+                va="center",
+                fontsize=7,
+                fontweight="bold",
                 color=text_color,
             )
 
@@ -154,7 +164,9 @@ def plot_schedule_from_json(schedule_data: dict, save_path: str = "schedule.png"
 # ------------------------------------------------------------------ #
 # Convenience: load from file and plot                               #
 # ------------------------------------------------------------------ #
-def plot_schedule_from_json_file(json_path: str, save_path: str = None, plot_title: str = None):
+def plot_schedule_from_json_file(
+    json_path: str, save_path: str = None, plot_title: str = None
+):
     with open(json_path) as f:
         data = json.load(f)
 
@@ -173,35 +185,171 @@ def plot_schedule_from_json_file(json_path: str, save_path: str = None, plot_tit
 if __name__ == "__main__":
     sample = {
         "dispatches": {
-            "dronet_dispatch_0":  {"id": 0,  "hardware_target": "GPU_0+GPU_1", "start_time": 0.0,              "duration": 4.796, "job_name": "dronet"},
-            "dronet_dispatch_1":  {"id": 1,  "hardware_target": "CPU_0+CPU_1", "start_time": 4.796,            "duration": 2.990, "job_name": "dronet"},
-            "dronet_dispatch_2":  {"id": 2,  "hardware_target": "GPU_0+GPU_1", "start_time": 7.785,            "duration": 3.457, "job_name": "dronet"},
-            "dronet_dispatch_3":  {"id": 3,  "hardware_target": "CPU_0+CPU_1", "start_time": 11.243,           "duration": 1.064, "job_name": "dronet"},
-            "dronet_dispatch_4":  {"id": 4,  "hardware_target": "CPU_0+CPU_1", "start_time": 11.243,           "duration": 1.264, "job_name": "dronet"},
-            "dronet_dispatch_5":  {"id": 5,  "hardware_target": "CPU_0+CPU_1", "start_time": 12.507,           "duration": 2.721, "job_name": "dronet"},
-            "dronet_dispatch_6":  {"id": 6,  "hardware_target": "CPU_0+CPU_1", "start_time": 15.228,           "duration": 1.967, "job_name": "dronet"},
-            "dronet_dispatch_7":  {"id": 7,  "hardware_target": "CPU_0+CPU_1", "start_time": 15.228,           "duration": 2.153, "job_name": "dronet"},
-            "dronet_dispatch_8":  {"id": 8,  "hardware_target": "GPU_0+GPU_1", "start_time": 17.382,           "duration": 2.154, "job_name": "dronet"},
-            "dronet_dispatch_9":  {"id": 9,  "hardware_target": "CPU_0+CPU_1", "start_time": 19.535,           "duration": 3.506, "job_name": "dronet"},
-            "dronet_dispatch_10": {"id": 10, "hardware_target": "GPU_0+GPU_1", "start_time": 19.535,           "duration": 3.845, "job_name": "dronet"},
-            "dronet_dispatch_11": {"id": 11, "hardware_target": "CPU_0+CPU_1", "start_time": 23.380,           "duration": 3.916, "job_name": "dronet"},
-            "dronet_dispatch_12": {"id": 12, "hardware_target": "CPU_0+CPU_1", "start_time": 27.296,           "duration": 4.455, "job_name": "dronet"},
-            "dronet_dispatch_13_1":{"id":13, "hardware_target": "GPU_0+GPU_1", "start_time": 31.751,           "duration": 4.560, "job_name": "dronet"},
-            "dronet_dispatch_13_2":{"id":13, "hardware_target": "CPU_0+CPU_1", "start_time": 30.067,           "duration": 1.929, "job_name": "dronet"},
-            "dronet_dispatch_14": {"id": 14, "hardware_target": "GPU_0+GPU_1", "start_time": 27.296,           "duration": 2.771, "job_name": "dronet"},
-            "mlp0_dispatch_0":    {"id": 0,  "hardware_target": "GPU_0+GPU_1", "start_time": 0.0,              "duration": 1.798, "job_name": "mlp0"},
-            "mlp0_dispatch_1":    {"id": 1,  "hardware_target": "CPU_0+CPU_1", "start_time": 1.798,            "duration": 1.422, "job_name": "mlp0"},
-            "mlp0_dispatch_2":    {"id": 2,  "hardware_target": "GPU_0+GPU_1", "start_time": 22.000,           "duration": 3.000, "job_name": "mlp0"},
-            "mlp1_dispatch_0":    {"id": 0,  "hardware_target": "GPU_0+GPU_1", "start_time": 25.0,             "duration": 1.798, "job_name": "mlp1"},
-            "mlp1_dispatch_1":    {"id": 1,  "hardware_target": "CPU_0+CPU_1", "start_time": 26.798,           "duration": 1.422, "job_name": "mlp1"},
-            "mlp1_dispatch_2":    {"id": 2,  "hardware_target": "GPU_0+GPU_1", "start_time": 47.000,           "duration": 3.000, "job_name": "mlp1"},
+            "dronet_dispatch_0": {
+                "id": 0,
+                "hardware_target": "GPU_0+GPU_1",
+                "start_time": 0.0,
+                "duration": 4.796,
+                "job_name": "dronet",
+            },
+            "dronet_dispatch_1": {
+                "id": 1,
+                "hardware_target": "CPU_0+CPU_1",
+                "start_time": 4.796,
+                "duration": 2.990,
+                "job_name": "dronet",
+            },
+            "dronet_dispatch_2": {
+                "id": 2,
+                "hardware_target": "GPU_0+GPU_1",
+                "start_time": 7.785,
+                "duration": 3.457,
+                "job_name": "dronet",
+            },
+            "dronet_dispatch_3": {
+                "id": 3,
+                "hardware_target": "CPU_0+CPU_1",
+                "start_time": 11.243,
+                "duration": 1.064,
+                "job_name": "dronet",
+            },
+            "dronet_dispatch_4": {
+                "id": 4,
+                "hardware_target": "CPU_0+CPU_1",
+                "start_time": 11.243,
+                "duration": 1.264,
+                "job_name": "dronet",
+            },
+            "dronet_dispatch_5": {
+                "id": 5,
+                "hardware_target": "CPU_0+CPU_1",
+                "start_time": 12.507,
+                "duration": 2.721,
+                "job_name": "dronet",
+            },
+            "dronet_dispatch_6": {
+                "id": 6,
+                "hardware_target": "CPU_0+CPU_1",
+                "start_time": 15.228,
+                "duration": 1.967,
+                "job_name": "dronet",
+            },
+            "dronet_dispatch_7": {
+                "id": 7,
+                "hardware_target": "CPU_0+CPU_1",
+                "start_time": 15.228,
+                "duration": 2.153,
+                "job_name": "dronet",
+            },
+            "dronet_dispatch_8": {
+                "id": 8,
+                "hardware_target": "GPU_0+GPU_1",
+                "start_time": 17.382,
+                "duration": 2.154,
+                "job_name": "dronet",
+            },
+            "dronet_dispatch_9": {
+                "id": 9,
+                "hardware_target": "CPU_0+CPU_1",
+                "start_time": 19.535,
+                "duration": 3.506,
+                "job_name": "dronet",
+            },
+            "dronet_dispatch_10": {
+                "id": 10,
+                "hardware_target": "GPU_0+GPU_1",
+                "start_time": 19.535,
+                "duration": 3.845,
+                "job_name": "dronet",
+            },
+            "dronet_dispatch_11": {
+                "id": 11,
+                "hardware_target": "CPU_0+CPU_1",
+                "start_time": 23.380,
+                "duration": 3.916,
+                "job_name": "dronet",
+            },
+            "dronet_dispatch_12": {
+                "id": 12,
+                "hardware_target": "CPU_0+CPU_1",
+                "start_time": 27.296,
+                "duration": 4.455,
+                "job_name": "dronet",
+            },
+            "dronet_dispatch_13_1": {
+                "id": 13,
+                "hardware_target": "GPU_0+GPU_1",
+                "start_time": 31.751,
+                "duration": 4.560,
+                "job_name": "dronet",
+            },
+            "dronet_dispatch_13_2": {
+                "id": 13,
+                "hardware_target": "CPU_0+CPU_1",
+                "start_time": 30.067,
+                "duration": 1.929,
+                "job_name": "dronet",
+            },
+            "dronet_dispatch_14": {
+                "id": 14,
+                "hardware_target": "GPU_0+GPU_1",
+                "start_time": 27.296,
+                "duration": 2.771,
+                "job_name": "dronet",
+            },
+            "mlp0_dispatch_0": {
+                "id": 0,
+                "hardware_target": "GPU_0+GPU_1",
+                "start_time": 0.0,
+                "duration": 1.798,
+                "job_name": "mlp0",
+            },
+            "mlp0_dispatch_1": {
+                "id": 1,
+                "hardware_target": "CPU_0+CPU_1",
+                "start_time": 1.798,
+                "duration": 1.422,
+                "job_name": "mlp0",
+            },
+            "mlp0_dispatch_2": {
+                "id": 2,
+                "hardware_target": "GPU_0+GPU_1",
+                "start_time": 22.000,
+                "duration": 3.000,
+                "job_name": "mlp0",
+            },
+            "mlp1_dispatch_0": {
+                "id": 0,
+                "hardware_target": "GPU_0+GPU_1",
+                "start_time": 25.0,
+                "duration": 1.798,
+                "job_name": "mlp1",
+            },
+            "mlp1_dispatch_1": {
+                "id": 1,
+                "hardware_target": "CPU_0+CPU_1",
+                "start_time": 26.798,
+                "duration": 1.422,
+                "job_name": "mlp1",
+            },
+            "mlp1_dispatch_2": {
+                "id": 2,
+                "hardware_target": "GPU_0+GPU_1",
+                "start_time": 47.000,
+                "duration": 3.000,
+                "job_name": "mlp1",
+            },
         },
         "metadata": {
             "machine_combinations": [
-                ["CPU_0"], ["CPU_1"], ["CPU_0", "CPU_1"],
-                ["GPU_0"], ["GPU_1"], ["GPU_0", "GPU_1"],
+                ["CPU_0"],
+                ["CPU_1"],
+                ["CPU_0", "CPU_1"],
+                ["GPU_0"],
+                ["GPU_1"],
+                ["GPU_0", "GPU_1"],
             ]
-        }
+        },
     }
     plot_schedule_from_json(
         sample,

@@ -5,12 +5,14 @@ This script demonstrates the use of additional objectives in the optimization pr
 # add parent path to sys path to enable imports
 import sys
 import os
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import numpy as np
 from workload_factory import generate_syn_workload, generate_syn_transfer_times
 from scheduler import schedule_additional_objectives
 from plot import plot_optimization_schedule
+
 
 def run_additional_objectives():
     # Generate synthetic workload
@@ -27,7 +29,15 @@ def run_additional_objectives():
     # Schedule the workload
     t, alpha = schedule_additional_objectives(workload, nominal_start_times)
 
-    plot_optimization_schedule(workload.get_durations(), t, alpha, len(workload.machines), transfer_times, save_path="plots/additional_objectives_schedule.png")
+    plot_optimization_schedule(
+        workload.get_durations(),
+        t,
+        alpha,
+        len(workload.machines),
+        transfer_times,
+        save_path="plots/additional_objectives_schedule.png",
+    )
+
 
 if __name__ == "__main__":
     run_additional_objectives()
