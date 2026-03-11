@@ -3,7 +3,72 @@ import numpy as np
 import json
 import os
 from typing import Tuple, Dict, List, Optional, Callable
-from constants import NOT_SUPPORTED
+
+
+def resolve_dispatch_deps_path(repo_base_path: str, dispatch_deps_path: str) -> str:
+    """
+    Resolve a dispatch dependency JSON path across current and legacy layouts.
+    """
+    if not dispatch_deps_path:
+        return ""
+
+    raw_path = dispatch_deps_path.strip()
+    if os.path.isabs(raw_path):
+        return raw_path if os.path.exists(raw_path) else ""
+
+    normalized = raw_path.lstrip("./")
+    candidates: List[str] = [
+        os.path.join(repo_base_path, normalized),
+    ]
+
+    legacy_prefix = "src/pytorch_workload/samples/"
+    if normalized.startswith(legacy_prefix):
+        candidates.append(
+            os.path.join(
+                repo_base_path,
+                "xpu-rt",
+                "pytorch_workload",
+                "samples",
+                normalized[len(legacy_prefix):],
+            )
+        )
+
+    old_merlin_prefix = "merlin/samples/robotic-NN/pytorch_workload/computation_graph/"
+    if normalized.startswith(old_merlin_prefix):
+        candidates.append(
+            os.path.join(
+                repo_base_path,
+                "xpu-rt",
+                "pytorch_workload",
+                "samples",
+                normalized[len(old_merlin_prefix):],
+            )
+        )
+
+    # Broad fallback for stale "src/" prefix.
+    if normalized.startswith("src/"):
+        candidates.append(os.path.join(repo_base_path, normalized[len("src/"):]))
+
+    # Final fallback: same filename under canonical samples directory.
+    candidates.append(
+        os.path.join(
+            repo_base_path,
+            "xpu-rt",
+            "pytorch_workload",
+            "samples",
+            os.path.basename(normalized),
+        )
+    )
+
+    seen: set[str] = set()
+    for candidate in candidates:
+        if candidate in seen:
+            continue
+        seen.add(candidate)
+        if os.path.exists(candidate):
+            return candidate
+
+    return ""
 
 def generate_syn_transfer_times(n_machines: int, max_transfer_time: int=500) -> np.ndarray:
     """
@@ -255,7 +320,7 @@ def create_workload_from_network_hierarchy(
                 continue
 
             dispatch_deps_path = net_info.get("dispatch_deps_path", "")
-            full_dispatch_path = os.path.join(repo_base_path, dispatch_deps_path)
+            full_dispatch_path = resolve_dispatch_deps_path(repo_base_path, dispatch_deps_path)
             if not os.path.exists(full_dispatch_path):
                 continue
 
@@ -340,7 +405,7 @@ def create_workload_from_network_hierarchy(
         if period is not None and window_duration is not None:
             # This is a periodic network - pre-generate processing times for consistency
             dispatch_deps_path = network_info.get('dispatch_deps_path', '')
-            full_dispatch_path = os.path.join(repo_base_path, dispatch_deps_path)
+            full_dispatch_path = resolve_dispatch_deps_path(repo_base_path, dispatch_deps_path)
             
             if os.path.exists(full_dispatch_path):
                 with open(full_dispatch_path, 'r') as f:
@@ -452,10 +517,13 @@ def create_workload_from_network_hierarchy(
         dispatch_deps_path = network_info.get('dispatch_deps_path', '')
         
         # Resolve path relative to repo base
-        full_dispatch_path = os.path.join(repo_base_path, dispatch_deps_path)
+        full_dispatch_path = resolve_dispatch_deps_path(repo_base_path, dispatch_deps_path)
         
         if not os.path.exists(full_dispatch_path):
-            raise FileNotFoundError(f"Dispatch dependencies file not found: {full_dispatch_path}")
+            raise FileNotFoundError(
+                "Dispatch dependencies file not found for "
+                f"'{dispatch_deps_path}' (repo base: {repo_base_path})"
+            )
         
         # Load dispatch dependencies JSON
         with open(full_dispatch_path, 'r') as f:

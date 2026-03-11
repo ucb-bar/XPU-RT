@@ -16,7 +16,7 @@ import numpy as np
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from workload import Workload, Operation
-from workload_factory import create_workload_from_network_hierarchy
+from workload_factory import create_workload_from_network_hierarchy, resolve_dispatch_deps_path
 from scheduler import schedule
 import plot
 
@@ -367,7 +367,7 @@ def schedule_iree_networks(
     """
     # Get script directory and repo base path
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    repo_base_path = os.path.join(script_dir, '..', '..')
+    repo_base_path = os.path.abspath(os.path.join(script_dir, '..'))
     
     # Use default networks JSON if not provided
     if networks_json_path is None:
@@ -452,7 +452,7 @@ def schedule_iree_networks(
 
         for net_id, net_info in networks.items():
             dispatch_deps_path = net_info.get("dispatch_deps_path", "")
-            full_dispatch_path = os.path.join(repo_base_path, dispatch_deps_path)
+            full_dispatch_path = resolve_dispatch_deps_path(repo_base_path, dispatch_deps_path)
             if not os.path.exists(full_dispatch_path):
                 continue
 
@@ -634,7 +634,7 @@ if __name__ == "__main__":
         "--networks-json",
         type=str,
         default=None,
-        help="Path to the top-level networks dependencies JSON file (default: src/data/toplevel/networks_periodic.json)"
+        help="Path to the top-level networks dependencies JSON file (default: data/toplevel/networks_periodic.json)"
     )
     parser.add_argument(
         "--solver-verbosity",
@@ -683,4 +683,3 @@ if __name__ == "__main__":
         prune_periodic=not args.no_prune_periods,
         restrict_makespan_to_nonperiodic=not args.include_periodic_in_makespan,
     )
-
