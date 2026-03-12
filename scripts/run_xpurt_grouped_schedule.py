@@ -345,8 +345,8 @@ def schedule_iree_networks_grouped():
         "samples",
     )
 
-    dronet_path = os.path.join(base_path, "dronet_dispatch_deps.json")
-
+    full_dispatch_path = resolve_dispatch_deps_path(repo_base_path, dispatch_deps_path)
+    
     print("=" * 60)
     print("Loading Dronet dispatch graph (with machine combinations support)...")
     print("=" * 60)
