@@ -1,56 +1,128 @@
-# RobotSchedule
-Generating Schedules for Robotic Workloads
+# XPU-RT Scheduling and Runtime Integration
 
-## Installation
+## Project Description
 
-Install the package in editable mode:
+**XPU-RT** is an adaptable full-stack end-to-end (E2E) compilation and scheduling flow for efficient mapping of robotic multi-model workloads onto heterogeneous shared-memory SoCs.
+
+Current project scope:
+
+1. Adaptable full stack: enables E2E compilation and mapping of robotic multi-model graphs to heterogeneous shared-memory SoCs, while exposing extension points for new compilation/runtime capabilities.
+2. Optimal AOT scheduler: integrates with IREE/MLIR-oriented flows to generate a pre-scheduled execution plan from computation graph structure and profiled signals (for example latency and energy), then statically maps operators to target compute resources.
+3. Robotic timing model: supports robot-specific scheduling semantics where periodic tasks are treated as hard real-time deadline-driven workloads and non-periodic tasks are handled as soft real-time workloads tied to QoE-style objectives.
+4. Hardware-in-the-loop and static profiling: supports hardware-informed mapping through closed-loop profiling and monitoring (for example perf, LLVM-MCA, and environment/hardware feedback).
+5. Runtime and hardware mechanisms: focuses on synchronization and data-movement-aware execution support for efficient operator dispatch, monitoring, and coordination.
+6. Performance validation goal: emphasizes RTL-level and hardware-evaluated improvements that outweigh scheduler/runtime overhead.
+
+This repository contains:
+
+1. A Python scheduling stack for multi-core dispatch scheduling experiments.
+2. Runtime tooling that integrates with the Merlin/IREE runtime artifacts.
+3. Data, scripts, and benchmark flows for end-to-end compile -> profile -> schedule.
+
+## Example Usage (Robotics System Context)
+
+In robotic deployments, different model pipelines run at different required frequencies and with different criticality. This repository is structured around that constraint:
+
+1. Build and profile dispatch-level execution behavior from real hardware/toolchain artifacts.
+2. Generate static schedules that respect periodic control/perception timing requirements.
+3. Co-schedule non-periodic workloads to maximize utilization while keeping quality metrics and responsiveness acceptable.
+4. Feed profiling and hardware observations back into future mapping/scheduling decisions.
+
+## Repository Initialization
+
+Clone with submodules:
+
 ```bash
-pip install -e .
+git clone --recurse-submodules <repo-url>
+cd XPU-RT
 ```
 
-## Examples
+If already cloned without submodules:
 
-The repository includes several example scripts in `src/scripts/`:
+```bash
+git submodule update --init --recursive
+```
 
-### Basic Scheduling Examples
+Create Python environment (recommended):
 
-**`testing.py`** - Parameter sweep for scheduling workloads with transfer times
-- Performs a parameter sweep over different numbers of jobs and machines
-- Generates synthetic sequential workloads with transfer times
-- Saves runtime results to CSV and schedule plots to `plots/` directory
-- Run: `python src/scripts/testing.py`
+```bash
+conda env create -f env.yml
+conda activate schedule
+```
 
-**`testing_simple.py`** - Simple scheduling without transfer times
-- Demonstrates scheduling with zero transfer times (simplified problem)
-- Creates a workload with 4 sequential jobs on 3 machines (CPU, GPU, FPGA)
-- Saves plot to `plots/simple_test.png`
-- Run: `python src/scripts/testing_simple.py`
+Install this repo in editable mode:
 
-### Advanced Scheduling Examples
+```bash
+python -m pip install -e .
+```
 
-**`testing_iree.py`** - Schedule IREE dispatch graphs on dual-core device
-- Schedules real neural network dispatch graphs (Fast, Dronet, and 5 MLP instances)
-- Models a dual-core device with CPU_P (performant, 1.5x faster) and CPU_E (efficient)
-- Creates dependency chains: Fast → Dronet, and MLP0 → MLP1 → MLP2 → MLP3 → MLP4
-- All MLP instances share the same color in the visualization
-- Saves plot to `plots/iree_combined_schedule.png`
-- Run: `python src/scripts/testing_iree.py`
+## Quick Start Commands
 
-**`packing_demo.py`** - Demonstrates greedy vs. convex packing algorithms
-- Compares greedy and convex packing approaches for workload scheduling
-- Shows trade-offs between solution quality and computation time
-- Saves plots to `plots/greedy_schedule.pdf` and `plots/convex_schedule.pdf`
-- Run: `python src/scripts/packing_demo.py`
+Run basic demos:
 
-**`additional_obj_demo.py`** - Scheduling with additional objectives
-- Demonstrates scheduling with nominal start times and periodic constraints
-- Useful for real-time scheduling scenarios
-- Saves plot to `plots/additional_objectives_schedule.png`
-- Run: `python src/scripts/additional_obj_demo.py`
+```bash
+python scripts/testing.py
+python scripts/packing_demo.py
+python scripts/additional_obj_demo.py
+```
 
-## Output
+Run hierarchical scheduler on top-level network graph:
 
-Most examples generate:
-- Schedule visualizations saved to `plots/` directory
-- Runtime statistics printed to console
-- Some examples also save CSV files with performance metrics
+```bash
+python scripts/run_xpurt_schedule.py --profiled
+```
+
+Run greedy scheduler variant:
+
+```bash
+python scripts/run_greedy_schedule.py --use-grouped
+```
+
+## Directory Hierarchy
+
+```text
+XPU-RT/
+├── xpu-rt/                    # Python scheduler core modules
+│   ├── scheduler.py
+│   ├── workload.py
+│   ├── workload_factory.py
+│   ├── packing.py
+│   ├── plot.py
+│   ├── schedule_validation.py
+│   └── pytorch_workload/      # Sample model artifacts + dispatch JSON inputs
+├── scripts/                   # Python entry points for experiments/scheduling
+├── runtime/                   # C runtime tool + scripts for compile/profile flow
+│   ├── tools/json_dispatch_runner.c
+│   └── scripts/*.sh
+├── data/                      # Collected benchmark/profile/scheduling outputs
+├── merlin/                    # Git submodule (compiler/runtime/tooling upstream)
+├── env.yml                    # Conda environment
+└── setup.py                   # Editable pip install config
+```
+
+## Connection to the `merlin` Submodule
+
+`merlin` is a required submodule defined in `.gitmodules`. This repo depends on it for model compilation and runtime static libraries.
+
+### File-Level Integration Points
+
+1. `runtime/scripts/compile_all_models.sh` -> calls `merlin/tools/compile.py`
+2. `runtime/scripts/compile_all_models.sh` -> compiles models under `merlin/models/...`
+3. `runtime/CMakeLists.txt` -> includes header from `merlin/xpu-rt/xpurt_scheduler_core.h`
+4. `runtime/build_runtime.sh` -> links against Merlin-produced archive:
+   `merlin/build/<build-name>/runtime/src/iree/runtime/libxpurt_iree_plugin_standalone.a`
+5. `runtime/build_runtime.sh` -> can trigger Merlin target build:
+   `xpurt_iree_plugin_standalone`
+
+### Data/Artifact Flow Between This Repo and `merlin`
+
+1. `runtime/scripts/compile_all_models.sh` generates VMFB + graph artifacts into `gen/vmfb/...` (using Merlin compiler).
+2. `runtime/scripts/profile_remote.sh` runs topology benchmarks remotely and writes CSV results to `gen/profile/...`.
+3. `scripts/run_xpurt_schedule.py` reads profiled CSVs from `gen/profile/...` and combines them with dispatch graph JSON inputs to produce schedules.
+4. Final scheduling outputs and logs are stored under `data/...` and script output directories.
+
+## Notes
+
+1. The Python scheduler modules are sourced from `xpu-rt/*.py` and installed via `setup.py`.
+2. Runtime C tooling in `runtime/` is separate from Python scheduling code and is focused on Merlin/IREE integration.
+3. If submodule contents are missing, runtime build/profile scripts will fail early.
