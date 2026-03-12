@@ -1,4 +1,3 @@
-
 import numpy as np
 import itertools
 
@@ -93,7 +92,6 @@ class Operation:
         machine_in_combo = self.combination_to_machine(combo)
         machine_idx = list(machines.keys()).index(machine_in_combo)
 
-        #THIS NEEDS TO BE CHANGED FOR PROFILED PROCESSING TIMES
         if machine_idx < len(self.processing_times):
             time = self.processing_times[machine_idx] / len(combo)
             return time
@@ -256,7 +254,7 @@ class Window:
         self,
         time_frame: float,
         operations: list[Operation],
-        machines: dict[str,int],
+        machines: list[str],
         transfer_times: np.ndarray,
         machine_combinations: list[list[str]] = None,
     ):
