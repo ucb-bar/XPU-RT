@@ -26,6 +26,8 @@ set -euo pipefail
 #   REMOTE_TMP_BASE=/tmp
 #   KEEP_REMOTE_TMP=1
 #   CONTINUE_ON_ERROR=1
+#   USE_STAGED_INSTALL=1      Stage local install to remote tmp and use it (default: 1)
+#   LOCAL_INSTALL_DIR=...     Local install dir to stage (default: merlin/build/spacemit-merlin-perf/install)
 #
 # Forwarded to run_all_topologies.sh (optional):
 #   DEVICE=local-task
@@ -44,6 +46,8 @@ PROFILE_ROOT="${PROFILE_ROOT:-${REPO_ROOT}/gen/profile}"
 
 KEEP_REMOTE_TMP="${KEEP_REMOTE_TMP:-0}"
 CONTINUE_ON_ERROR="${CONTINUE_ON_ERROR:-0}"
+USE_STAGED_INSTALL="${USE_STAGED_INSTALL:-1}"
+LOCAL_INSTALL_DIR="${LOCAL_INSTALL_DIR:-${REPO_ROOT}/merlin/build/spacemit-merlin-perf/install}"
 
 LOCAL_RUN_ALL="${REPO_ROOT}/runtime/scripts/run_all_topologies.sh"
 LOCAL_RUN_PY="${REPO_ROOT}/runtime/scripts/run_vmfb_benchmarks.py"
@@ -63,17 +67,11 @@ echo "Remote: ${REMOTE}"
 echo "Remote IREE root: ${REMOTE_IREE_ROOT}"
 echo "VMFB root: ${VMFB_ROOT}"
 echo "Profile root: ${PROFILE_ROOT}"
+echo "Use staged install: ${USE_STAGED_INSTALL}"
+echo "Local install dir: ${LOCAL_INSTALL_DIR}"
 
 bench_tool_remote=""
-if ssh "${ssh_opts[@]}" "${REMOTE}" "test -x '${REMOTE_IREE_ROOT}/tools/iree-benchmark-module'"; then
-  bench_tool_remote="${REMOTE_IREE_ROOT}/tools/iree-benchmark-module"
-elif ssh "${ssh_opts[@]}" "${REMOTE}" "test -x '${REMOTE_IREE_ROOT}/bin/iree-benchmark-module'"; then
-  bench_tool_remote="${REMOTE_IREE_ROOT}/bin/iree-benchmark-module"
-else
-  echo "Error: could not find iree-benchmark-module under ${REMOTE_IREE_ROOT}/{tools,bin}" >&2
-  exit 1
-fi
-echo "Remote bench tool: ${bench_tool_remote}"
+remote_ld_library_path=""
 
 remote_tmp="$(
   ssh "${ssh_opts[@]}" "${REMOTE}" "mktemp -d '${REMOTE_TMP_BASE%/}/freshsched_profile.XXXXXX'"
@@ -96,6 +94,51 @@ trap cleanup_remote EXIT
 echo "Uploading helper scripts..."
 scp -q "${LOCAL_RUN_ALL}" "${LOCAL_RUN_PY}" "${REMOTE}:${remote_tmp}/"
 ssh "${ssh_opts[@]}" "${REMOTE}" "chmod +x '${remote_tmp}/run_all_topologies.sh'"
+
+if [[ "${USE_STAGED_INSTALL}" == "1" ]]; then
+  if [[ ! -d "${LOCAL_INSTALL_DIR}" ]]; then
+    echo "Error: USE_STAGED_INSTALL=1 but LOCAL_INSTALL_DIR is missing: ${LOCAL_INSTALL_DIR}" >&2
+    exit 1
+  fi
+  echo "Staging local install to remote..."
+  remote_install="${remote_tmp}/iree_install"
+  ssh "${ssh_opts[@]}" "${REMOTE}" "mkdir -p '${remote_install}'"
+  # Stream a compressed tarball to avoid many small file transfers.
+  tar -C "${LOCAL_INSTALL_DIR}" -czf - . | ssh "${ssh_opts[@]}" "${REMOTE}" "tar -C '${remote_install}' -xzf -"
+
+  # Prefer the staged install's benchmark tool.
+  if ssh "${ssh_opts[@]}" "${REMOTE}" "test -x '${remote_install}/tools/iree-benchmark-module'"; then
+    bench_tool_remote="${remote_install}/tools/iree-benchmark-module"
+  elif ssh "${ssh_opts[@]}" "${REMOTE}" "test -x '${remote_install}/bin/iree-benchmark-module'"; then
+    bench_tool_remote="${remote_install}/bin/iree-benchmark-module"
+  else
+    echo "Warning: staged install missing iree-benchmark-module under ${remote_install}/{tools,bin}; falling back to REMOTE_IREE_ROOT" >&2
+  fi
+
+  # If staged install has shared libs, add them to LD_LIBRARY_PATH for the remote run.
+  # (Safe even if the binary is static.)
+  if ssh "${ssh_opts[@]}" "${REMOTE}" "test -d '${remote_install}/lib'"; then
+    remote_ld_library_path="${remote_install}/lib"
+  fi
+  if ssh "${ssh_opts[@]}" "${REMOTE}" "test -d '${remote_install}/lib64'"; then
+    remote_ld_library_path="${remote_install}/lib64${remote_ld_library_path:+:${remote_ld_library_path}}"
+  fi
+fi
+
+if [[ -z "${bench_tool_remote}" ]]; then
+  if ssh "${ssh_opts[@]}" "${REMOTE}" "test -x '${REMOTE_IREE_ROOT}/tools/iree-benchmark-module'"; then
+    bench_tool_remote="${REMOTE_IREE_ROOT}/tools/iree-benchmark-module"
+  elif ssh "${ssh_opts[@]}" "${REMOTE}" "test -x '${REMOTE_IREE_ROOT}/bin/iree-benchmark-module'"; then
+    bench_tool_remote="${REMOTE_IREE_ROOT}/bin/iree-benchmark-module"
+  else
+    echo "Error: could not find iree-benchmark-module under staged install or ${REMOTE_IREE_ROOT}/{tools,bin}" >&2
+    exit 1
+  fi
+fi
+echo "Remote bench tool: ${bench_tool_remote}"
+if [[ -n "${remote_ld_library_path}" ]]; then
+  echo "Remote LD_LIBRARY_PATH prefix: ${remote_ld_library_path}"
+fi
 
 zips=()
 if [[ $# -gt 0 ]]; then
@@ -161,6 +204,7 @@ for zip_path in "${zips[@]}"; do
   set +e
   ssh "${ssh_opts[@]}" "${REMOTE}" \
     "cd '${remote_tmp}' && \
+     ${remote_ld_library_path:+LD_LIBRARY_PATH='${remote_ld_library_path}':\"\$LD_LIBRARY_PATH\"} \
      PY_SCRIPT='${remote_tmp}/run_vmfb_benchmarks.py' \
      BENCH_TOOL='${bench_tool_remote}' \
      DEVICE='${DEVICE:-local-task}' \
