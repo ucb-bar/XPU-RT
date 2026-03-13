@@ -1,7 +1,7 @@
 """
 Test script for scheduling IREE dispatch graphs from hierarchical network dependencies.
-Parses top-level network dependency JSON files and schedules them on CPU_P (performant) 
-and CPU_E (efficient) cores. CPU_P is 1.5x faster than CPU_E.
+Parses top-level network dependency JSON files and schedules them on configured
+performant/efficient cores (defaults: CPU_P/CPU_E).
 """
 
 import sys
@@ -24,6 +24,353 @@ def load_networks_graph(json_path: str) -> dict:
     """Load a network dependencies JSON file."""
     with open(json_path, 'r') as f:
         return json.load(f)
+
+
+def _deep_merge_dict(base: dict, override: dict) -> dict:
+    """Recursively merge two dictionaries (override wins)."""
+    merged = dict(base)
+    for key, value in override.items():
+        if isinstance(value, dict) and isinstance(merged.get(key), dict):
+            merged[key] = _deep_merge_dict(merged[key], value)
+        else:
+            merged[key] = value
+    return merged
+
+
+def _first_nonempty_string(candidates: list[object], default: str) -> str:
+    for candidate in candidates:
+        if isinstance(candidate, str):
+            stripped = candidate.strip()
+            if stripped:
+                return stripped
+    return default
+
+
+def _coerce_positive_float(value: object, default: float, field_name: str) -> float:
+    if value is None:
+        return default
+    try:
+        converted = float(value)
+    except (TypeError, ValueError):
+        print(f"  (warning) invalid {field_name}={value!r}; using default {default}")
+        return default
+    if converted <= 0:
+        print(f"  (warning) invalid {field_name}={value!r}; must be > 0. Using default {default}")
+        return default
+    return converted
+
+
+def _coerce_nonnegative_float_or_none(value: object, default: float | None, field_name: str) -> float | None:
+    if value is None:
+        return default
+    try:
+        converted = float(value)
+    except (TypeError, ValueError):
+        print(f"  (warning) invalid {field_name}={value!r}; using default {default}")
+        return default
+    if converted < 0:
+        print(f"  (warning) invalid {field_name}={value!r}; must be >= 0. Using default {default}")
+        return default
+    return converted
+
+
+def _coerce_bool(value: object, default: bool, field_name: str) -> bool:
+    if value is None:
+        return default
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return bool(value)
+    if isinstance(value, str):
+        lowered = value.strip().lower()
+        if lowered in {"1", "true", "yes", "y", "on"}:
+            return True
+        if lowered in {"0", "false", "no", "n", "off"}:
+            return False
+    print(f"  (warning) invalid {field_name}={value!r}; using default {default}")
+    return default
+
+
+def _coerce_int_in_range(value: object, default: int, field_name: str, *, min_value: int, max_value: int) -> int:
+    if value is None:
+        return default
+    try:
+        converted = int(value)
+    except (TypeError, ValueError):
+        print(f"  (warning) invalid {field_name}={value!r}; using default {default}")
+        return default
+    if converted < min_value or converted > max_value:
+        print(
+            f"  (warning) invalid {field_name}={value!r}; must be in [{min_value}, {max_value}]. "
+            f"Using default {default}"
+        )
+        return default
+    return converted
+
+
+def _coerce_seed(value: object, default: int | None = 0) -> int | None:
+    """
+    Parse seed values:
+      - negative => nondeterministic (None)
+      - None => default
+    """
+    if value is None:
+        return default
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        print(f"  (warning) invalid random_seed={value!r}; using default {default}")
+        return default
+    return None if parsed < 0 else parsed
+
+
+def _resolve_aux_json_path(path: str, repo_base_path: str, networks_json_path: str) -> str:
+    """Resolve relative paths first from networks JSON dir, then from repo root."""
+    if os.path.isabs(path):
+        return path
+    from_networks_dir = os.path.join(os.path.dirname(networks_json_path), path)
+    if os.path.exists(from_networks_dir):
+        return from_networks_dir
+    return os.path.join(repo_base_path, path)
+
+
+def _load_hardware_runtime_config(
+    networks_data: dict,
+    repo_base_path: str,
+    networks_json_path: str,
+) -> dict:
+    """
+    Load hardware/runtime config from:
+      1) optional external JSON referenced by 'hardware_json_path'
+      2) inline top-level 'hardware' object in networks JSON
+      3) optional top-level 'scheduler' object for generic hyperparameters
+
+    Supported keys (inline or in hardware JSON):
+      hardware:
+        machines: {cpu_p, cpu_e} OR [cpu_p_name, cpu_e_name]
+        cpu_p: {name, profile_hw}
+        cpu_e: {name, profile_hw}
+        profile: {target, topo_tag}
+        p_core_speedup: float
+      scheduler:
+        random_seed: int (or -1 for nondeterministic)
+        solver_verbosity: int in [0, 4]
+        time_limit: float seconds (>= 0)
+        use_profiled: bool
+        prune_periodic: bool
+        restrict_makespan_to_nonperiodic: bool
+    """
+    defaults = {
+        "cpu_p_name": "CPU_P",
+        "cpu_e_name": "CPU_E",
+        "cpu_p_profile_hw": "RVV",
+        "cpu_e_profile_hw": "scalar",
+        "profile_target": "spacemit_x60",
+        "profile_topo_tag": "topo_0_1_2_3",
+        "p_core_speedup": 1.5,
+        "random_seed": 0,
+        "solver_verbosity": 0,
+        "time_limit": None,
+        "use_profiled": False,
+        "prune_periodic": True,
+        "restrict_makespan_to_nonperiodic": True,
+    }
+
+    external_data: dict = {}
+    hardware_json_path = networks_data.get("hardware_json_path")
+    if isinstance(hardware_json_path, str) and hardware_json_path.strip():
+        resolved_hardware_json_path = _resolve_aux_json_path(
+            hardware_json_path.strip(),
+            repo_base_path=repo_base_path,
+            networks_json_path=networks_json_path,
+        )
+        if os.path.exists(resolved_hardware_json_path):
+            try:
+                with open(resolved_hardware_json_path, "r") as f:
+                    loaded = json.load(f)
+                if isinstance(loaded, dict):
+                    external_data = loaded
+                else:
+                    print(
+                        "  (warning) hardware_json_path did not contain a JSON object: "
+                        f"{resolved_hardware_json_path}. Ignoring."
+                    )
+            except Exception as e:
+                print(
+                    f"  (warning) failed to read hardware_json_path={resolved_hardware_json_path}: {e}. "
+                    "Ignoring external hardware config."
+                )
+        else:
+            print(f"  (warning) hardware_json_path not found: {resolved_hardware_json_path}. Using defaults/inline config.")
+
+    external_hardware_cfg = external_data.get("hardware", external_data) if isinstance(external_data, dict) else {}
+    if not isinstance(external_hardware_cfg, dict):
+        external_hardware_cfg = {}
+
+    inline_hardware_cfg = networks_data.get("hardware", {})
+    if not isinstance(inline_hardware_cfg, dict):
+        inline_hardware_cfg = {}
+
+    scheduler_cfg = networks_data.get("scheduler", {})
+    if not isinstance(scheduler_cfg, dict):
+        scheduler_cfg = {}
+
+    hardware_cfg = _deep_merge_dict(external_hardware_cfg, inline_hardware_cfg)
+
+    machines_cfg = hardware_cfg.get("machines", {})
+    if not isinstance(machines_cfg, dict) and not isinstance(machines_cfg, list):
+        machines_cfg = {}
+    cpu_p_cfg = hardware_cfg.get("cpu_p", {})
+    if not isinstance(cpu_p_cfg, dict):
+        cpu_p_cfg = {}
+    cpu_e_cfg = hardware_cfg.get("cpu_e", {})
+    if not isinstance(cpu_e_cfg, dict):
+        cpu_e_cfg = {}
+    profile_cfg = hardware_cfg.get("profile", {})
+    if not isinstance(profile_cfg, dict):
+        profile_cfg = {}
+    profile_hw_cfg = hardware_cfg.get("profile_hw", {})
+    if not isinstance(profile_hw_cfg, dict):
+        profile_hw_cfg = {}
+
+    list_machine_p = machines_cfg[0] if isinstance(machines_cfg, list) and len(machines_cfg) > 0 else None
+    list_machine_e = machines_cfg[1] if isinstance(machines_cfg, list) and len(machines_cfg) > 1 else None
+
+    cpu_p_name = _first_nonempty_string(
+        [
+            cpu_p_cfg.get("name"),
+            machines_cfg.get("cpu_p") if isinstance(machines_cfg, dict) else None,
+            machines_cfg.get("CPU_p") if isinstance(machines_cfg, dict) else None,
+            hardware_cfg.get("cpu_p_name"),
+            hardware_cfg.get("cpu_p_machine"),
+            networks_data.get("cpu_p_name"),
+            networks_data.get("cpu_p_machine"),
+            list_machine_p,
+        ],
+        default=defaults["cpu_p_name"],
+    )
+    cpu_e_name = _first_nonempty_string(
+        [
+            cpu_e_cfg.get("name"),
+            machines_cfg.get("cpu_e") if isinstance(machines_cfg, dict) else None,
+            machines_cfg.get("CPU_e") if isinstance(machines_cfg, dict) else None,
+            hardware_cfg.get("cpu_e_name"),
+            hardware_cfg.get("cpu_e_machine"),
+            networks_data.get("cpu_e_name"),
+            networks_data.get("cpu_e_machine"),
+            list_machine_e,
+        ],
+        default=defaults["cpu_e_name"],
+    )
+    if cpu_p_name == cpu_e_name:
+        raise ValueError(f"Invalid hardware config: cpu_p_name and cpu_e_name are both '{cpu_p_name}'. They must be distinct.")
+
+    cpu_p_profile_hw = _first_nonempty_string(
+        [
+            cpu_p_cfg.get("profile_hw"),
+            profile_hw_cfg.get("cpu_p"),
+            hardware_cfg.get("cpu_p_profile_hw"),
+            networks_data.get("cpu_p_profile_hw"),
+        ],
+        default=defaults["cpu_p_profile_hw"],
+    )
+    cpu_e_profile_hw = _first_nonempty_string(
+        [
+            cpu_e_cfg.get("profile_hw"),
+            profile_hw_cfg.get("cpu_e"),
+            hardware_cfg.get("cpu_e_profile_hw"),
+            networks_data.get("cpu_e_profile_hw"),
+        ],
+        default=defaults["cpu_e_profile_hw"],
+    )
+
+    profile_target = _first_nonempty_string(
+        [
+            profile_cfg.get("target"),
+            hardware_cfg.get("profile_target"),
+            hardware_cfg.get("target"),
+            networks_data.get("profile_target"),
+            networks_data.get("target"),
+        ],
+        default=defaults["profile_target"],
+    )
+    profile_topo_tag = _first_nonempty_string(
+        [
+            profile_cfg.get("topo_tag"),
+            hardware_cfg.get("topo_tag"),
+            hardware_cfg.get("profile_topo_tag"),
+            networks_data.get("profile_topo_tag"),
+            networks_data.get("topo_tag"),
+        ],
+        default=defaults["profile_topo_tag"],
+    )
+
+    raw_speedup = (
+        hardware_cfg.get("p_core_speedup")
+        if hardware_cfg.get("p_core_speedup") is not None
+        else scheduler_cfg.get("p_core_speedup", networks_data.get("p_core_speedup"))
+    )
+    p_core_speedup = _coerce_positive_float(
+        raw_speedup,
+        default=defaults["p_core_speedup"],
+        field_name="p_core_speedup",
+    )
+
+    raw_seed = (
+        scheduler_cfg.get("random_seed")
+        if scheduler_cfg.get("random_seed") is not None
+        else scheduler_cfg.get("seed")
+    )
+    if raw_seed is None:
+        raw_seed = networks_data.get("random_seed", networks_data.get("seed"))
+    random_seed = _coerce_seed(raw_seed, default=defaults["random_seed"])
+
+    solver_verbosity = _coerce_int_in_range(
+        scheduler_cfg.get("solver_verbosity", networks_data.get("solver_verbosity")),
+        default=defaults["solver_verbosity"],
+        field_name="solver_verbosity",
+        min_value=0,
+        max_value=4,
+    )
+    time_limit = _coerce_nonnegative_float_or_none(
+        scheduler_cfg.get("time_limit", networks_data.get("time_limit")),
+        default=defaults["time_limit"],
+        field_name="time_limit",
+    )
+    use_profiled = _coerce_bool(
+        scheduler_cfg.get("use_profiled", networks_data.get("use_profiled")),
+        default=defaults["use_profiled"],
+        field_name="use_profiled",
+    )
+    prune_periodic = _coerce_bool(
+        scheduler_cfg.get("prune_periodic", networks_data.get("prune_periodic")),
+        default=defaults["prune_periodic"],
+        field_name="prune_periodic",
+    )
+    restrict_makespan_to_nonperiodic = _coerce_bool(
+        scheduler_cfg.get(
+            "restrict_makespan_to_nonperiodic",
+            networks_data.get("restrict_makespan_to_nonperiodic"),
+        ),
+        default=defaults["restrict_makespan_to_nonperiodic"],
+        field_name="restrict_makespan_to_nonperiodic",
+    )
+
+    return {
+        "cpu_p_name": cpu_p_name,
+        "cpu_e_name": cpu_e_name,
+        "cpu_p_profile_hw": cpu_p_profile_hw,
+        "cpu_e_profile_hw": cpu_e_profile_hw,
+        "profile_target": profile_target,
+        "profile_topo_tag": profile_topo_tag,
+        "p_core_speedup": p_core_speedup,
+        "random_seed": random_seed,
+        "solver_verbosity": solver_verbosity,
+        "time_limit": time_limit,
+        "use_profiled": use_profiled,
+        "prune_periodic": prune_periodic,
+        "restrict_makespan_to_nonperiodic": restrict_makespan_to_nonperiodic,
+    }
 
 
 def load_profiled_times(csv_path: str) -> dict[int, dict]:
@@ -349,21 +696,27 @@ def _trim_periodic_after_nonperiodic_makespan(workload: Workload, t: np.ndarray,
 
 def schedule_iree_networks(
     networks_json_path: str = None,
-    solver_verbosity: int = 0,
-    time_limit: float = None,
-    random_seed: int | None = 0,
-    use_profiled: bool = False,
-    prune_periodic: bool = True,
-    restrict_makespan_to_nonperiodic: bool = True,
+    solver_verbosity: int | None = None,
+    time_limit: float | None = None,
+    random_seed: int | None = None,
+    p_core_speedup: float | None = None,
+    use_profiled: bool | None = None,
+    prune_periodic: bool | None = None,
+    restrict_makespan_to_nonperiodic: bool | None = None,
 ) -> tuple[Workload, np.ndarray, np.ndarray]:
     """
     Main function to schedule networks from a hierarchical network dependencies JSON file.
     
     Parameters:
     - networks_json_path: Path to the top-level networks dependencies JSON file.
-                          If None, uses the default networks_deps.json file.
-    - solver_verbosity: MOSEK solver verbosity level (0=silent, 1=errors, 2=warnings, 3=info, 4=detailed progress).
-    - time_limit: Maximum optimization time in seconds. MOSEK will return the best solution found within this time limit.
+                          If None, uses data/toplevel/networks_periodic_profile.json.
+    - solver_verbosity: Optional MOSEK verbosity override. If None, use JSON/default.
+    - time_limit: Optional solver time-limit override. If None, use JSON/default.
+    - random_seed: Optional runtime seed override. None means use JSON config/default.
+    - p_core_speedup: Optional P-core speedup override. None means use JSON config/default.
+    - use_profiled: Optional profiled-runtimes override. None means use JSON/default.
+    - prune_periodic: Optional periodic-pruning override. None means use JSON/default.
+    - restrict_makespan_to_nonperiodic: Optional makespan-objective override. None means use JSON/default.
     """
     # Get script directory and repo base path
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -376,7 +729,7 @@ def schedule_iree_networks(
         '..', 
             'data',
             'toplevel',
-            'networks_periodic.json'
+            'networks_periodic_profile.json'
         )
     
     # Resolve to absolute path
@@ -390,6 +743,56 @@ def schedule_iree_networks(
     
     # Load network dependencies JSON
     networks_data = load_networks_graph(networks_json_path)
+
+    # Resolve hardware and runtime settings from JSON (+ optional hardware JSON file).
+    runtime_cfg = _load_hardware_runtime_config(
+        networks_data,
+        repo_base_path=repo_base_path,
+        networks_json_path=networks_json_path,
+    )
+    cpu_p_name = runtime_cfg["cpu_p_name"]
+    cpu_e_name = runtime_cfg["cpu_e_name"]
+    cpu_p_profile_hw = runtime_cfg["cpu_p_profile_hw"]
+    cpu_e_profile_hw = runtime_cfg["cpu_e_profile_hw"]
+    profile_target = runtime_cfg["profile_target"]
+    profile_topo_tag = runtime_cfg["profile_topo_tag"]
+    effective_p_core_speedup = _coerce_positive_float(
+        p_core_speedup,
+        default=runtime_cfg["p_core_speedup"],
+        field_name="p_core_speedup",
+    )
+    effective_random_seed = _coerce_seed(
+        random_seed,
+        default=runtime_cfg["random_seed"],
+    )
+    effective_solver_verbosity = _coerce_int_in_range(
+        solver_verbosity,
+        default=runtime_cfg["solver_verbosity"],
+        field_name="solver_verbosity",
+        min_value=0,
+        max_value=4,
+    )
+    effective_time_limit = _coerce_nonnegative_float_or_none(
+        time_limit,
+        default=runtime_cfg["time_limit"],
+        field_name="time_limit",
+    )
+    effective_use_profiled = _coerce_bool(
+        use_profiled,
+        default=runtime_cfg["use_profiled"],
+        field_name="use_profiled",
+    )
+    effective_prune_periodic = _coerce_bool(
+        prune_periodic,
+        default=runtime_cfg["prune_periodic"],
+        field_name="prune_periodic",
+    )
+    effective_restrict_makespan_to_nonperiodic = _coerce_bool(
+        restrict_makespan_to_nonperiodic,
+        default=runtime_cfg["restrict_makespan_to_nonperiodic"],
+        field_name="restrict_makespan_to_nonperiodic",
+    )
+    rng = np.random.default_rng(effective_random_seed)
     
     # Print network information
     networks = networks_data.get('networks', {})
@@ -402,27 +805,38 @@ def schedule_iree_networks(
     for edge in edges:
         print(f"  - {edge.get('from')} → {edge.get('to')}")
     
+    print("\nResolved runtime configuration:")
+    print(f"  Machines: [{cpu_p_name}, {cpu_e_name}]")
+    print(f"  Profile HW mapping: {cpu_p_name}->{cpu_p_profile_hw}, {cpu_e_name}->{cpu_e_profile_hw}")
+    print(f"  Profile target/topology: target={profile_target}, topo_tag={profile_topo_tag}")
+    print(f"  p_core_speedup: {effective_p_core_speedup}")
+    print(f"  random_seed: {'nondeterministic' if effective_random_seed is None else effective_random_seed}")
+    print(f"  solver_verbosity: {effective_solver_verbosity}")
+    print(f"  time_limit: {effective_time_limit}")
+    print(f"  use_profiled: {effective_use_profiled}")
+    print(f"  prune_periodic: {effective_prune_periodic}")
+    print(f"  restrict_makespan_to_nonperiodic: {effective_restrict_makespan_to_nonperiodic}")
+
     # Define machines (dual-core device)
-    machines = ['CPU_P', 'CPU_E']
+    machines = [cpu_p_name, cpu_e_name]
     
     # Create transfer times matrix (zero transfer time between cores on same device)
-    transfer_times = np.zeros((2, 2))
+    transfer_times = np.zeros((len(machines), len(machines)))
 
     # Optional: build profiled processing times if requested
     processing_times: dict[str, list[float]] | None = None
     combined_profiled_p: dict[int, dict] | None = None
     combined_profiled_e: dict[int, dict] | None = None
-    if use_profiled:
+    if effective_use_profiled:
         print("\nUsing profiled runtimes where available...")
         processing_times = {}
         combined_profiled_p = {}
         combined_profiled_e = {}
 
         # Prefer profiles generated under gen/profile/... (produced by runtime/scripts/profile_remote.sh).
-        # Convention:
-        #   CPU_P uses RVV profile, CPU_E uses scalar profile.
-        DEFAULT_TARGET = "spacemit_x60"
-        TOPO_TAG = "topo_0_1_2_3"
+        # Mapping of machine -> profile-hw is JSON configurable.
+        DEFAULT_TARGET = profile_target
+        TOPO_TAG = profile_topo_tag
 
         def _basename_from_dispatch_deps_path(path: str) -> str:
             # Example:
@@ -430,13 +844,57 @@ def schedule_iree_networks(
             # basename directory is ".../<basename>/file.json"
             return os.path.basename(os.path.dirname(path)) if path else ""
 
-        def _profiles_for_network(net_id: str, dispatch_deps_path: str) -> tuple[dict[int, dict] | None, dict[int, dict] | None]:
-            model = net_id
+        def _profiles_for_network(
+            net_id: str,
+            net_info: dict,
+            dispatch_deps_path: str,
+        ) -> tuple[dict[int, dict] | None, dict[int, dict] | None]:
             target = DEFAULT_TARGET
-            basename = _basename_from_dispatch_deps_path(dispatch_deps_path) or f"{model}.q.int8"
+            basename = _basename_from_dispatch_deps_path(dispatch_deps_path) or f"{net_id}.q.int8"
 
-            csv_p = _find_profile_csv_in_gen(repo_base_path, model=model, target=target, hw="RVV", basename=basename, topo_tag=TOPO_TAG)
-            csv_e = _find_profile_csv_in_gen(repo_base_path, model=model, target=target, hw="scalar", basename=basename, topo_tag=TOPO_TAG)
+            # Profiles are usually stored under gen/profile/<hw>/<target>/<model>/<basename>/...
+            # Some net IDs include instance suffixes (e.g. mlp0, mlp1), while profile model
+            # directories use the base model name (e.g. mlp). Try several model candidates.
+            basename_model = os.path.basename(basename).split(".")[0]
+            model_candidates: list[str] = []
+            for c in (
+                net_id,
+                net_info.get("identifier") if isinstance(net_info, dict) else None,
+                basename_model,
+            ):
+                if isinstance(c, str) and c and c not in model_candidates:
+                    model_candidates.append(c)
+            if not model_candidates:
+                model_candidates = [net_id]
+
+            csv_p = None
+            csv_e = None
+            selected_model = model_candidates[0]
+            for model_candidate in model_candidates:
+                candidate_csv_p = _find_profile_csv_in_gen(
+                    repo_base_path,
+                    model=model_candidate,
+                    target=target,
+                    hw=cpu_p_profile_hw,
+                    basename=basename,
+                    topo_tag=TOPO_TAG,
+                )
+                candidate_csv_e = _find_profile_csv_in_gen(
+                    repo_base_path,
+                    model=model_candidate,
+                    target=target,
+                    hw=cpu_e_profile_hw,
+                    basename=basename,
+                    topo_tag=TOPO_TAG,
+                )
+                if candidate_csv_p or candidate_csv_e:
+                    csv_p = candidate_csv_p
+                    csv_e = candidate_csv_e
+                    selected_model = model_candidate
+                    break
+
+            if selected_model != net_id:
+                print(f"  (info) profile model fallback: net_id={net_id} -> model={selected_model}")
 
             prof_p = load_profiled_times(csv_p) if csv_p else {}
             prof_e = load_profiled_times(csv_e) if csv_e else {}
@@ -448,15 +906,13 @@ def schedule_iree_networks(
 
             return (prof_p or None), (prof_e or None)
         
-        p_core_speedup = 1.5
-
         for net_id, net_info in networks.items():
             dispatch_deps_path = net_info.get("dispatch_deps_path", "")
             full_dispatch_path = resolve_dispatch_deps_path(repo_base_path, dispatch_deps_path)
             if not os.path.exists(full_dispatch_path):
                 continue
 
-            prof_p, prof_e = _profiles_for_network(net_id, dispatch_deps_path)
+            prof_p, prof_e = _profiles_for_network(net_id, net_info, dispatch_deps_path)
             if prof_p is None and prof_e is None:
                 continue
 
@@ -488,14 +944,14 @@ def schedule_iree_networks(
                     if e_ms is not None:
                         cpu_e_time = float(e_ms)
                     else:
-                        cpu_e_time = float(p_ms * p_core_speedup)
+                        cpu_e_time = float(p_ms * effective_p_core_speedup)
                 elif e_ms is not None:
                     cpu_e_time = float(e_ms)
-                    cpu_p_time = float(e_ms / p_core_speedup)
+                    cpu_p_time = float(e_ms / effective_p_core_speedup)
                 else:
-                    p_ms_synth = float(np.random.uniform(2.0, 10.0))
+                    p_ms_synth = float(rng.uniform(2.0, 10.0))
                     cpu_p_time = p_ms_synth
-                    cpu_e_time = p_ms_synth * p_core_speedup
+                    cpu_e_time = p_ms_synth * effective_p_core_speedup
 
                 prefixed_name = f"{net_prefix}{dispatch_name}"
                 processing_times[prefixed_name] = [cpu_p_time, cpu_e_time]
@@ -507,8 +963,8 @@ def schedule_iree_networks(
         repo_base_path=repo_base_path,
         machines=machines,
         transfer_times=transfer_times,
-        p_core_speedup=1.5,
-        random_seed=random_seed,
+        p_core_speedup=effective_p_core_speedup,
+        random_seed=effective_random_seed,
         processing_times=processing_times,
     )
     
@@ -533,16 +989,16 @@ def schedule_iree_networks(
     print("=" * 60)
     result = schedule(
         combined_workload,
-        solver_verbosity=solver_verbosity,
-        time_limit=time_limit,
-        restrict_makespan_to_nonperiodic=restrict_makespan_to_nonperiodic,
-        prune_cross_period_constraints=prune_periodic,
+        solver_verbosity=effective_solver_verbosity,
+        time_limit=effective_time_limit,
+        restrict_makespan_to_nonperiodic=effective_restrict_makespan_to_nonperiodic,
+        prune_cross_period_constraints=effective_prune_periodic,
     )
     t, alpha, _, _ = result  # Always returns 4 values now
     
     # Post-process schedule: optionally trim periodic/background operations that
     # occur entirely after the non-periodic makespan.
-    if prune_periodic:
+    if effective_prune_periodic:
         combined_workload, t, alpha = _trim_periodic_after_nonperiodic_makespan(combined_workload, t, alpha)
     
     # Calculate makespan
@@ -552,32 +1008,48 @@ def schedule_iree_networks(
     print(f"\nScheduling completed!")
     print(f"Makespan: {makespan:.2f} time units")
     
-    # Count operations assigned to each core
-    cpu_p_count = sum(1 for i in range(len(alpha)) if np.argmax(alpha[i]) == 0)
-    cpu_e_count = sum(1 for i in range(len(alpha)) if np.argmax(alpha[i]) == 1)
+    # Count operations assigned to each machine
+    machine_names = list(combined_workload.machines)
+    machine_counts = {name: 0 for name in machine_names}
+    for i in range(len(alpha)):
+        assigned_machine_idx = int(np.argmax(alpha[i]))
+        if 0 <= assigned_machine_idx < len(machine_names):
+            machine_counts[machine_names[assigned_machine_idx]] += 1
     
-    print(f"\nCore assignments:")
-    print(f"  CPU_P (performant): {cpu_p_count} operations")
-    print(f"  CPU_E (efficient): {cpu_e_count} operations")
+    print("\nCore assignments:")
+    for machine_name in machine_names:
+        if machine_name == cpu_p_name:
+            role = "performant"
+        elif machine_name == cpu_e_name:
+            role = "efficient"
+        else:
+            role = "machine"
+        print(f"  {machine_name} ({role}): {machine_counts[machine_name]} operations")
     
     # Count operations per network (group by job_id)
     network_stats = {}
     for op_idx, op in enumerate(combined_workload.operations):
         job_id = op.job_id
         if job_id not in network_stats:
-            network_stats[job_id] = {'cpu_p': 0, 'cpu_e': 0, 'name': combined_workload.job_names[job_id] if job_id < len(combined_workload.job_names) else f"Job {job_id}"}
+            network_stats[job_id] = {
+                "name": combined_workload.job_names[job_id] if job_id < len(combined_workload.job_names) else f"Job {job_id}",
+                "machine_counts": {name: 0 for name in machine_names},
+            }
         
         # Find which machine this operation is assigned to
-        assigned_machine = np.argmax(alpha[op_idx])
-        if assigned_machine == 0:
-            network_stats[job_id]['cpu_p'] += 1
-        else:
-            network_stats[job_id]['cpu_e'] += 1
+        assigned_machine_idx = int(np.argmax(alpha[op_idx]))
+        if 0 <= assigned_machine_idx < len(machine_names):
+            assigned_machine_name = machine_names[assigned_machine_idx]
+            network_stats[job_id]["machine_counts"][assigned_machine_name] += 1
     
     print(f"\nPer-network core assignments:")
     for job_id in sorted(network_stats.keys()):
         stats = network_stats[job_id]
-        print(f"  {stats['name'].capitalize()}: CPU_P={stats['cpu_p']}, CPU_E={stats['cpu_e']}")
+        machine_counts_text = ", ".join(
+            f"{machine_name}={stats['machine_counts'][machine_name]}"
+            for machine_name in machine_names
+        )
+        print(f"  {stats['name'].capitalize()}: {machine_counts_text}")
     
     # Create plot
     os.makedirs("plots", exist_ok=True)
@@ -611,7 +1083,7 @@ def schedule_iree_networks(
     input_json_basename = os.path.basename(networks_json_path)
     input_json_name = os.path.splitext(input_json_basename)[0]  # Remove .json extension
     json_output_path = f"schedules/scheduled_{input_json_name}.json"
-    if use_profiled:
+    if effective_use_profiled:
         json_output_path = json_output_path.replace(".json", "_profiled.json")
     
     print(f"\nOutputting scheduled JSON...")
@@ -633,42 +1105,72 @@ if __name__ == "__main__":
     parser.add_argument(
         "--networks-json",
         type=str,
-        default=None,
-        help="Path to the top-level networks dependencies JSON file (default: data/toplevel/networks_periodic.json)"
+        default="data/toplevel/networks_periodic_profile.json",
+        help="Path to the top-level networks dependencies JSON file (default: data/toplevel/networks_periodic_profile.json)"
     )
     parser.add_argument(
         "--solver-verbosity",
         type=int,
         default=0,
         choices=[0, 1, 2, 3, 4],
-        help="MOSEK solver verbosity level: 0=silent, 1=errors, 2=warnings, 3=info, 4=detailed progress.",
+        help="MOSEK solver verbosity level override: 0=silent, 1=errors, 2=warnings, 3=info, 4=detailed progress. If omitted, use JSON/default.",
     )
     parser.add_argument(
         "--time-limit",
         type=float,
-        default=None,
-        help="Maximum optimization time in seconds. MOSEK will return the best solution found within this time limit.",
+        default=20,
+        help="Maximum optimization time in seconds (override). If omitted, use JSON/default.",
     )
     parser.add_argument(
         "--profiled",
+        dest="profiled",
         action="store_true",
-        help="Use profiled runtimes where available (currently supports Dronet and MLP).",
+        default=True,
+        help="Enable profiled runtimes (default: enabled).",
+    )
+    parser.add_argument(
+        "--no-profiled",
+        dest="profiled",
+        action="store_false",
+        help="Disable profiled runtimes.",
+    )
+    parser.add_argument(
+        "--prune-periods",
+        dest="prune_periodic",
+        action="store_true",
+        default=None,
+        help="Enable pruning of periodic operations (override).",
     )
     parser.add_argument(
         "--no-prune-periods",
+        dest="prune_periodic",
+        action="store_false",
+        help="Disable pruning of periodic operations (override).",
+    )
+    parser.add_argument(
+        "--restrict-makespan-to-nonperiodic",
+        dest="restrict_makespan_to_nonperiodic",
         action="store_true",
-        help="Disable pruning of periodic operations scheduled entirely after the non-periodic makespan.",
+        default=None,
+        help="Restrict makespan objective to non-periodic operations (override).",
     )
     parser.add_argument(
         "--include-periodic-in-makespan",
-        action="store_true",
-        help="Include periodic operations in the makespan objective instead of only non-periodic tasks.",
+        dest="restrict_makespan_to_nonperiodic",
+        action="store_false",
+        help="Include periodic operations in makespan objective (override).",
     )
     parser.add_argument(
         "--random-seed",
         type=int,
-        default=0,
-        help="Seed for synthetic runtime generation (default: 0 for reproducible results). Use -1 for nondeterministic.",
+        default=None,
+        help="Seed for synthetic runtime generation. If omitted, uses JSON config (scheduler.random_seed/seed) or 0. Use -1 for nondeterministic.",
+    )
+    parser.add_argument(
+        "--p-core-speedup",
+        type=float,
+        default=None,
+        help="Override P-core speedup factor. If omitted, uses JSON config (hardware/scheduler p_core_speedup) or 1.5.",
     )
     args = parser.parse_args()
     
@@ -679,7 +1181,8 @@ if __name__ == "__main__":
         solver_verbosity=args.solver_verbosity,
         time_limit=args.time_limit,
         random_seed=seed,
+        p_core_speedup=args.p_core_speedup,
         use_profiled=args.profiled,
-        prune_periodic=not args.no_prune_periods,
-        restrict_makespan_to_nonperiodic=not args.include_periodic_in_makespan,
+        prune_periodic=args.prune_periodic,
+        restrict_makespan_to_nonperiodic=args.restrict_makespan_to_nonperiodic,
     )
