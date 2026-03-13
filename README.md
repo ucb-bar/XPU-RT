@@ -28,7 +28,7 @@ In robotic deployments, different model pipelines run at different required freq
 3. Co-schedule non-periodic workloads to maximize utilization while keeping quality metrics and responsiveness acceptable.
 4. Feed profiling and hardware observations back into future mapping/scheduling decisions.
 
-## Repository Initialization
+### 0) Repository Initialization
 
 Clone with submodules:
 
@@ -38,17 +38,29 @@ cd XPU-RT
 ```
 
 If already cloned without submodules:
-
 ```bash
 git submodule update --init --recursive
 ```
 
-Create Python environment (recommended):
+### Set up `merlin` Submodule
+Go to `https://github.com/ucb-bar/merlin/`. Follow the first 3 steps to set up `merlin` submodule.
+Note: `merlin` is a required submodule for model compilation and static libraries.
+
+#### 1) Intall Environment
+```bash
+conda env create -f env_linux.yml
+conda activate merlin-dev
+uv sync
+pre-commit install
+```
+
+
+#### 2) Build host compiler tools
 
 ```bash
-conda env create -f env.yml
-conda activate schedule
+conda activate merlin-dev
 ```
+
 
 Install this repo in editable mode:
 
@@ -56,8 +68,16 @@ Install this repo in editable mode:
 python -m pip install -e .
 ```
 
-## Quick Start Commands
 
+After installing merlin, run the following scripts in XPU-RT:
+```bash
+runtime/scripts/compile_all_models.sh # build all the vmfb files for dronet/mlp
+runtime/scripts/profile_remote.sh # run on banana pi
+```
+
+For runtime-specific setup and usage details, see [runtime/README.md](runtime/README.md).
+
+## Quick Start Commands
 Run basic demos:
 
 ```bash
@@ -78,7 +98,7 @@ Run greedy scheduler variant:
 python scripts/run_greedy_schedule.py --use-grouped
 ```
 
-## Directory Hierarchy
+## Repository Map
 
 ```text
 XPU-RT/
@@ -100,9 +120,6 @@ XPU-RT/
 └── setup.py                   # Editable pip install config
 ```
 
-## Connection to the `merlin` Submodule
-
-`merlin` is a required submodule defined in `.gitmodules`. This repo depends on it for model compilation and runtime static libraries.
 
 ### File-Level Integration Points
 
