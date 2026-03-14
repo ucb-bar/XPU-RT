@@ -4,73 +4,59 @@
 
 **XPU-RT** is an adaptable full-stack end-to-end (E2E) compilation and scheduling flow for efficient mapping of robotic multi-model workloads onto heterogeneous shared-memory SoCs.
 
-Current project scope:
-
-1. Adaptable full stack: enables E2E compilation and mapping of robotic multi-model graphs to heterogeneous shared-memory SoCs, while exposing extension points for new compilation/runtime capabilities.
-2. Optimal AOT scheduler: integrates with IREE/MLIR-oriented flows to generate a pre-scheduled execution plan from computation graph structure and profiled signals (for example latency and energy), then statically maps operators to target compute resources.
-3. Robotic timing model: supports robot-specific scheduling semantics where periodic tasks are treated as hard real-time deadline-driven workloads and non-periodic tasks are handled as soft real-time workloads tied to QoE-style objectives.
-4. Hardware-in-the-loop and static profiling: supports hardware-informed mapping through closed-loop profiling and monitoring (for example perf, LLVM-MCA, and environment/hardware feedback).
-5. Runtime and hardware mechanisms: focuses on synchronization and data-movement-aware execution support for efficient operator dispatch, monitoring, and coordination.
-6. Performance validation goal: emphasizes RTL-level and hardware-evaluated improvements that outweigh scheduler/runtime overhead.
-
-This repository contains:
-
-1. A Python scheduling stack for multi-core dispatch scheduling experiments.
-2. Runtime tooling that integrates with the Merlin/IREE runtime artifacts.
-3. Data, scripts, and benchmark flows for end-to-end compile -> profile -> schedule.
-
-## Example Usage (Robotics System Context)
-
-In robotic deployments, different model pipelines run at different required frequencies and with different criticality. This repository is structured around that constraint:
-
-1. Build and profile dispatch-level execution behavior from real hardware/toolchain artifacts.
-2. Generate static schedules that respect periodic control/perception timing requirements.
-3. Co-schedule non-periodic workloads to maximize utilization while keeping quality metrics and responsiveness acceptable.
-4. Feed profiling and hardware observations back into future mapping/scheduling decisions.
-
-## Repository Initialization
-
-Clone with submodules:
+### Repository Initialization
 
 ```bash
-git clone --recurse-submodules <repo-url>
+git clone https://github.com/ucb-bar/XPU-RT.git
 cd XPU-RT
 ```
-
-If already cloned without submodules:
-
 ```bash
 git submodule update --init --recursive
 ```
 
-Create Python environment (recommended):
-
+### Set up `merlin` Submodule
+#### 1) Intall Environment
 ```bash
-conda env create -f env.yml
-conda activate schedule
+conda env create -f merlin/env_linux.yml
+conda activate merlin-dev
+uv sync
 ```
 
-Install this repo in editable mode:
-
+#### 2) Build compiler tools, target runtime and toolchain for your device target 
 ```bash
-python -m pip install -e .
+bash setup.sh
+```
+After installing merlin, run the following scripts in XPU-RT:
+```bash
+runtime/scripts/compile_all_models.sh # build all the vmfb files for your models
+runtime/scripts/profile_remote.sh # run on your device target i.e. spacemit_x60 for banana pi
 ```
 
-## Quick Start Commands
+For runtime-specific setup and usage details, see [runtime/README.md](runtime/README.md).
 
-Run basic demos:
+#### Config your model parameters
+Create `data/toplevel/networks_periodic_profile.json` if there is none, and add entries like:
 
-```bash
-python scripts/testing.py
-python scripts/packing_demo.py
-python scripts/additional_obj_demo.py
+```text
+"mlp": {
+  "id": 1,
+  "identifier":            # model name
+  "dispatch_deps_path":    # path to model json 
+  "period":                # Duration in millisec between excution windows (inverse of frequency)
+  "window_duration":       # Duration in millisec for model to finish after window start 
+}
 ```
 
-Run hierarchical scheduler on top-level network graph:
+### Run XPU-RT Scheduler
+Run basic demos on top-level network graph:
 
 ```bash
 python scripts/run_xpurt_schedule.py --profiled
 ```
+The optimal schedule of your workloads on your target will be found in `schedules/scheduled_networks_periodic_profiled.json` with visualization in 'plots/iree_combined_schedule_period.png' after it finishes.
+
+
+### [Optional] Run Baseline greedy Scheduler
 
 Run greedy scheduler variant:
 
@@ -78,7 +64,7 @@ Run greedy scheduler variant:
 python scripts/run_greedy_schedule.py --use-grouped
 ```
 
-## Directory Hierarchy
+## Repository Map
 
 ```text
 XPU-RT/
@@ -100,9 +86,6 @@ XPU-RT/
 └── setup.py                   # Editable pip install config
 ```
 
-## Connection to the `merlin` Submodule
-
-`merlin` is a required submodule defined in `.gitmodules`. This repo depends on it for model compilation and runtime static libraries.
 
 ### File-Level Integration Points
 

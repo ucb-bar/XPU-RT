@@ -1,0 +1,31 @@
+{
+  "hardware": {
+    "machines": { "cpu_p": "CPU_P", "cpu_e": "CPU_E" },
+    "profile_hw": { "cpu_p": "RVV", "cpu_e": "scalar" },
+    "profile": { "target": "spacemit_x60", "topo_tag": "topo_0_1_2_3" }
+  },
+  "scheduler": {
+    "random_seed": 42,
+    "solver_verbosity": 2,
+    "time_limit": 60,
+    "use_profiled": true,
+    "prune_periodic": true,
+    "restrict_makespan_to_nonperiodic": true
+  },
+  "networks": {
+    "dronet": {
+      "id": 0,
+      "identifier": "dronet",
+      "dispatch_deps_path": "gen/vmfb/dronet/spacemit_x60/RVV/dronet.q.int8/dronet.q.int8_dispatch_graph.json"
+    },
+    "mlp": {
+      "id": 1,
+      "identifier": "mlp",
+      "dispatch_deps_path": "gen/vmfb/mlp/spacemit_x60/RVV/mlp.q.int8/mlp.q.int8_dispatch_graph.json",
+      "period": 2,
+      "window_duration": 0.5,
+      "start_time": 0
+    }
+  },
+  "edges": []
+}
