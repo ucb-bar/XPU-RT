@@ -44,7 +44,7 @@ class Operation:
 
     def combination_to_machine(self, combination: str):
         machine = ""
-        machine = combination[0][: combination[0].index("_")]
+        machine = combination[0][: combination[0].rindex("_")]
         return machine
 
     def get_predecessor(self):
@@ -170,7 +170,7 @@ class Workload:
 
     def combination_to_machine(self, combination: str):
         machine = ""
-        machine = combination[0][: combination[0].index("_")]
+        machine = combination[0][: combination[0].rindex("_")]
         return machine
 
     def get_full_transfer_times(self):

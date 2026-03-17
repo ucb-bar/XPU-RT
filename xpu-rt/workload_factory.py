@@ -4,7 +4,6 @@ import json
 import os
 from typing import Tuple, Dict, List, Optional, Callable
 
-
 def resolve_dispatch_deps_path(repo_base_path: str, dispatch_deps_path: str) -> str:
     """
     Resolve a dispatch dependency JSON path across current and legacy layouts.

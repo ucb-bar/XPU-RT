@@ -247,6 +247,8 @@ def schedule(
         # Intervals [a_start, a_end) and [b_start, b_end) overlap iff both:
         # a_start < b_end and b_start < a_end
         return (a_start < b_end) and (b_start < a_end)
+    
+    print("HELLo")
 
     # (3) Precedence constraints: operation i must start after ALL its predecessors complete
     for i in range(num_operations):
