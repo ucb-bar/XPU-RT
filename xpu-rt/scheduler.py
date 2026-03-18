@@ -248,8 +248,6 @@ def schedule(
         # a_start < b_end and b_start < a_end
         return (a_start < b_end) and (b_start < a_end)
     
-    print("HELLo")
-
     # (3) Precedence constraints: operation i must start after ALL its predecessors complete
     for i in range(num_operations):
         op_i = workload.operations[i]
@@ -339,42 +337,24 @@ def schedule(
             # constraints.append(
             #     t[i] <= op.max_end_t
             # )
+    #(4) & (5) Non-overlapping Constraints iff two operations are placed on the same cores
 
-    first_assignment = {}
-    for o1 in range(num_operations):
-        for o2 in range(o1 + 1, num_operations):
-            first_assignment[(o1, o2)] = {}
-            for k1 in range(num_combinations):
-                for k2 in range(num_combinations):
-                    if workload.combinations_overlap(k1, k2):
-                        first_assignment[(o1, o2)][(k1, k2)] = cp.Variable(boolean=True)
-
-                        dur_o1_k1 = workload.operations[
-                            o1
-                        ].get_duration_for_combination(
-                            k1, machine_combinations, workload.machines
-                        )
-                        dur_o2_k2 = workload.operations[
-                            o2
-                        ].get_duration_for_combination(
-                            k2, machine_combinations, workload.machines
-                        )
-
-                        constraints.append(
-                            t[o1]
-                            >= t[o2]
-                            + dur_o2_k2
-                            - (1 - first_assignment[(o1, o2)][(k1, k2)]) * H
-                            - (2 - alpha[o1, k1] - alpha[o2, k2]) * H
-                        )
-                        constraints.append(
-                            t[o2]
-                            >= t[o1]
-                            + dur_o1_k1
-                            - first_assignment[(o1, o2)][(k1, k2)] * H
-                            - (2 - alpha[o1, k1] - alpha[o2, k2]) * H
-                        )
-
+    #preprocess operations that already have non-overlapping contraints placed on them
+    overlapping_operations = [(i,j) for j in range(num_operations) for i in range(j+1, num_operations)
+                                 if (i not in workload.operations[j].get_predecessors())
+                                 or not _periods_overlap(workload.operations[i],workload.operations[j])
+                             ]
+    #preprocess combinations that do not share the same cores
+    overlapping_pairs = [(k1,k2) for k1 in range(num_combinations) for k2 in range(num_combinations) if workload.combinations_overlap(k1,k2)]
+    for i,j in overlapping_operations:
+        for k1,k2 in overlapping_pairs:
+            #conditions where the problem is already solved
+            dur_i_k1 = workload.operations[i].get_duration_for_combination(
+                k1, machine_combinations, workload.machines
+            )
+            constraints.append(
+                t[i] >= t[i] + dur_i_k1 - (3 - alpha[i, k1] - alpha[j, k2] - beta[i, j]) * H
+            )
     # (6) Makespan constraints:
     if restrict_makespan_to_nonperiodic:
         # C_max tracks only NON-periodic operations (operations without explicit time-window bounds).
@@ -686,19 +666,11 @@ def schedule_additional_objectives(
                 for k2 in range(num_combinations):
                     # Only add constraint if combinations overlap
                     if workload.combinations_overlap(k1, k2):
-                        dur_j_k2 = workload.operations[j].get_duration_for_combination(
-                            k2, machine_combinations, workload.machines
-                        )
                         dur_i_k1 = workload.operations[i].get_duration_for_combination(
                             k1, machine_combinations, workload.machines
                         )
                         constraints.append(
-                            g[i]
-                            >= (t[i] - t[j] - dur_j_k2)
-                            - (2 - alpha[i, k1] - alpha[j, k2] + beta[i, j]) * H
-                        )
-                        constraints.append(
-                            g[j]
+                            t[j]
                             >= (t[j] - t[i] - dur_i_k1)
                             - (3 - alpha[i, k1] - alpha[j, k2] - beta[i, j]) * H
                         )
