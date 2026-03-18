@@ -234,8 +234,10 @@ def create_workload_from_dependencies(
                 proc_times = processing_times[dispatch_id]
             else:
                 # Generate random processing times if not provided
-                proc_times = [np.random.randint(50, 150) for _ in machines]
-
+                proc_times = {
+                    cpu_p_name: [float(np.random.randint(50, 150)) for _ in range(machines[cpu_p_name])],
+                    cpu_e_name: [float(np.random.randint(50, 150)) for _ in range(machines[cpu_e_name])],
+                }
         # Extract ID and name from dispatch info
         operation_id = dispatch_info.get("id", None)
         operation_name = dispatch_name

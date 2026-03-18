@@ -71,6 +71,7 @@ class Operation:
         combination_idx: int,
         machine_combinations: list[list[str]],
         machines: dict[str, int],
+        num_cores: int = 0
     ) -> float:
         """
         Get the duration for a specific machine combination.
@@ -93,7 +94,7 @@ class Operation:
         machine_idx = list(machines.keys()).index(machine_in_combo)
 
         if machine_idx < len(self.processing_times):
-            time = self.processing_times[machine_idx] / len(combo)
+            time = self.processing_times[machine_in_combo][num_cores-1]
             return time
         else:
             raise ValueError(f"Machine {combo[0]} not found in processing_times")
