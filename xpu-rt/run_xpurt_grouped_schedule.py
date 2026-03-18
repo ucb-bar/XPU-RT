@@ -418,38 +418,39 @@ def load_profiled_times(csv_path: str) -> dict[int, dict]:
             }
     return profiled
 
-
-def _find_profile_csv_in_gen(
+def _find_profile_csvs_in_gen(
     repo_base_path: str,
     *,
     model: str,
     target: str,
     hw: str,
     basename: str,
-    topo_tag: str = "topo_0_1_2_3",
-) -> str | None:
+    num_cores: int,
+) -> dict[str, str]:
     """
-    Find a profiling results.csv produced by runtime/scripts/profile_remote.sh.
+    Find profiling results.csv files for each core topology.
 
-    Expected layout:
-      gen/profile/<hw>/<target>/<model>/<basename>/<input_tag>/<topo_tag>/results.csv
-
-    We pick the most recently modified match.
+    For num_cores=4, generates topo tags: topo_0, topo_0_1, topo_0_1_2, topo_0_1_2_3
+    Returns dict mapping topo_tag -> csv_path for all found CSVs.
     """
     profile_root = os.path.join(repo_base_path, "gen", "profile")
+    topo_tags = ["topo_" + "_".join(str(i) for i in range(n)) for n in range(1, num_cores + 1)]
 
-    # New layout (with input_tag subdir).
-    pat1 = os.path.join(profile_root, hw, target, model, basename, "*", topo_tag, "results.csv")
-    matches = glob.glob(pat1)
+    found: dict[str, str] = {}
+    for topo_tag in topo_tags:
+        # New layout (with input_tag subdir)
+        pat1 = os.path.join(profile_root, hw, target, model, basename, "*", topo_tag, "results.csv")
+        matches = glob.glob(pat1)
 
-    # Back-compat layout (no input_tag subdir).
-    if not matches:
-        pat2 = os.path.join(profile_root, hw, target, model, basename, topo_tag, "results.csv")
-        matches = glob.glob(pat2)
+        # Back-compat layout (no input_tag subdir)
+        if not matches:
+            pat2 = os.path.join(profile_root, hw, target, model, basename, topo_tag, "results.csv")
+            matches = glob.glob(pat2)
 
-    if not matches:
-        return None
-    return max(matches, key=lambda p: os.path.getmtime(p))
+        if matches:
+            found[topo_tag] = max(matches, key=lambda p: os.path.getmtime(p))
+
+    return found
 
 def output_scheduled_json(
     combined_workload: Workload,
@@ -818,7 +819,7 @@ def schedule_iree_networks(
     print(f"  restrict_makespan_to_nonperiodic: {effective_restrict_makespan_to_nonperiodic}")
 
     # Define machines (dual-core device)
-    machines = {cpu_p_name : 1, cpu_e_name : 1}
+    machines = {cpu_p_name : 4, cpu_e_name : 4}
     
     # Create transfer times matrix (zero transfer time between cores on same device)
     transfer_times = np.zeros((len(machines), len(machines)))
@@ -871,21 +872,21 @@ def schedule_iree_networks(
             csv_e = None
             selected_model = model_candidates[0]
             for model_candidate in model_candidates:
-                candidate_csv_p = _find_profile_csv_in_gen(
+                candidate_csv_p = _find_profile_csvs_in_gen(
                     repo_base_path,
                     model=model_candidate,
                     target=target,
                     hw=cpu_p_profile_hw,
                     basename=basename,
-                    topo_tag=TOPO_TAG,
+                    num_cores=machines[cpu_p_name],
                 )
-                candidate_csv_e = _find_profile_csv_in_gen(
+                candidate_csv_e = _find_profile_csvs_in_gen(
                     repo_base_path,
                     model=model_candidate,
                     target=target,
                     hw=cpu_e_profile_hw,
                     basename=basename,
-                    topo_tag=TOPO_TAG,
+                    num_cores=machines[cpu_e_name],
                 )
                 if candidate_csv_p or candidate_csv_e:
                     csv_p = candidate_csv_p
@@ -896,16 +897,25 @@ def schedule_iree_networks(
             if selected_model != net_id:
                 print(f"  (info) profile model fallback: net_id={net_id} -> model={selected_model}")
 
-            prof_p = load_profiled_times(csv_p) if csv_p else {}
-            prof_e = load_profiled_times(csv_e) if csv_e else {}
+            # Merge all topo CSVs into a single profile dict, keyed by topo_tag
+            prof_p: dict[str, dict[int, dict]] = {}
+            for topo_tag, csv_path in csvs_p.items():
+                loaded = load_profiled_times(csv_path)
+                if not loaded:
+                    print(f"  (warning) profile CSV had no usable rows: {csv_path}")
+                else:
+                    prof_p[topo_tag] = loaded
 
-            if not prof_p and csv_p:
-                print(f"  (warning) profile CSV had no usable rows: {csv_p}")
-            if not prof_e and csv_e:
-                print(f"  (warning) profile CSV had no usable rows: {csv_e}")
+            prof_e: dict[str, dict[int, dict]] = {}
+            for topo_tag, csv_path in csvs_e.items():
+                loaded = load_profiled_times(csv_path)
+                if not loaded:
+                    print(f"  (warning) profile CSV had no usable rows: {csv_path}")
+                else:
+                    prof_e[topo_tag] = loaded
 
-            return (prof_p or None), (prof_e or None)
-        
+            return (prof_p or None), (prof_e or None)   
+
         for net_id, net_info in networks.items():
             dispatch_deps_path = net_info.get("dispatch_deps_path", "")
             full_dispatch_path = resolve_dispatch_deps_path(repo_base_path, dispatch_deps_path)
@@ -917,46 +927,71 @@ def schedule_iree_networks(
                 continue
 
             # Combine profiled data for JSON output
-            if prof_p:
-                combined_profiled_p.update(prof_p)
+            for topo_tag, topo_data in prof_p.items():
+                if topo_tag not in combined_profiled_p:
+                    combined_profiled_p[topo_tag] = {}
+                combined_profiled_p[topo_tag].update(topo_data)
             if prof_e:
-                combined_profiled_e.update(prof_e)
+                for topo_tag, topo_data in prof_e.items():
+                    if topo_tag not in combined_profiled_e:
+                        combined_profiled_e[topo_tag] = {}
+                    combined_profiled_e[topo_tag].update(topo_data)
 
             with open(full_dispatch_path, "r") as f:
                 dispatch_data = json.load(f)
             dispatches = dispatch_data.get("dispatches", {})
 
             net_prefix = f"{net_id}_"
+
             for dispatch_name, dispatch_info in dispatches.items():
                 dispatch_id = dispatch_info.get("id", None)
+                prefixed_name = f"{net_prefix}{dispatch_name}"
+
                 cpu_p_time: float
                 cpu_e_time: float
 
                 p_ms = None
                 e_ms = None
-                if isinstance(dispatch_id, int) and prof_p and dispatch_id in prof_p:
-                    p_ms = prof_p[dispatch_id]["time_ms"]
-                if isinstance(dispatch_id, int) and prof_e and dispatch_id in prof_e:
-                    e_ms = prof_e[dispatch_id]["time_ms"]
+                p_ms_by_topo: dict[str, float] = {}
 
-                if p_ms is not None:
-                    cpu_p_time = float(p_ms)
-                    if e_ms is not None:
-                        cpu_e_time = float(e_ms)
-                    else:
-                        cpu_e_time = float(p_ms * effective_p_core_speedup)
-                elif e_ms is not None:
-                    cpu_e_time = float(e_ms)
-                    cpu_p_time = float(e_ms / effective_p_core_speedup)
+                if isinstance(dispatch_id, int) and prof_p:
+                    for topo_tag, topo_data in prof_p.items():
+                        if dispatch_id in topo_data:
+                            p_ms_by_topo[topo_tag] = topo_data[dispatch_id]["time_ms"]
+               
+                e_ms_by_topo: dict[str, float] = {}
+
+                if isinstance(dispatch_id, int) and prof_e:
+                    for topo_tag, topo_data in prof_e.items():
+                        if dispatch_id in topo_data:
+                            e_ms_by_topo[topo_tag] = topo_data[dispatch_id]["time_ms"]
+                
+                all_topo_tags = sorted(set(p_ms_by_topo.keys()) | set(e_ms_by_topo.keys()))
+                if all_topo_tags:
+                    times_by_topo: dict[str, list[float]] = {}
+                    for topo_tag in all_topo_tags:
+                        p_ms = p_ms_by_topo.get(topo_tag)
+                        e_ms = e_ms_by_topo.get(topo_tag)
+
+                        if p_ms is not None:
+                            cpu_p_time = float(p_ms)
+                            cpu_e_time = float(e_ms) if e_ms is not None else float(p_ms * effective_p_core_speedup)
+                        elif e_ms is not None:
+                            cpu_e_time = float(e_ms)
+                            cpu_p_time = float(e_ms / effective_p_core_speedup)
+                        else:
+                            p_ms_synth = float(rng.uniform(2.0, 10.0))
+                            cpu_p_time = p_ms_synth
+                            cpu_e_time = p_ms_synth * effective_p_core_speedup
+
+                        times_by_topo[topo_tag] = [cpu_p_time, cpu_e_time]
+                    processing_times[prefixed_name] = times_by_topo
                 else:
+                    # No profiled data at all - use synthetic
                     p_ms_synth = float(rng.uniform(2.0, 10.0))
-                    cpu_p_time = p_ms_synth
-                    cpu_e_time = p_ms_synth * effective_p_core_speedup
-
-                prefixed_name = f"{net_prefix}{dispatch_name}"
-                processing_times[prefixed_name] = [cpu_p_time, cpu_e_time]
-
-    # Create workload from network hierarchy
+                    processing_times[prefixed_name] = {
+                        "topo_0": [p_ms_synth, p_ms_synth * effective_p_core_speedup]
+                    }    # Create workload from network hierarchy
     print(f"\nCreating workload from network hierarchy...")
     combined_workload = create_workload_from_network_hierarchy(
         networks_data=networks_data,
