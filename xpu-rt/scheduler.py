@@ -342,7 +342,7 @@ def schedule(
     #preprocess operations that already have non-overlapping contraints placed on them
     overlapping_operations = [(i,j) for j in range(num_operations) for i in range(j+1, num_operations)
                                  if (i not in workload.operations[j].get_predecessors())
-                                 or not _periods_overlap(workload.operations[i],workload.operations[j])
+                                 and _periods_overlap(workload.operations[i],workload.operations[j])
                              ]
     #preprocess combinations that do not share the same cores
     overlapping_pairs = [(k1,k2) for k1 in range(num_combinations) for k2 in range(num_combinations) if workload.combinations_overlap(k1,k2)]
@@ -353,7 +353,7 @@ def schedule(
                 k1, machine_combinations, workload.machines
             )
             constraints.append(
-                t[i] >= t[i] + dur_i_k1 - (3 - alpha[i, k1] - alpha[j, k2] - beta[i, j]) * H
+                t[j] >= t[i] + dur_i_k1 - (3 - alpha[i, k1] - alpha[j, k2] - beta[i, j]) * H
             )
     # (6) Makespan constraints:
     if restrict_makespan_to_nonperiodic:
