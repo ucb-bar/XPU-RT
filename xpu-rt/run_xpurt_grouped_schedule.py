@@ -970,9 +970,7 @@ def schedule_iree_networks(
                         if dispatch_id in topo_data:
                             e_ms_by_topo[topo_tag] = topo_data[dispatch_id]["time_ms"]
                 
-                #TODO: ALL OF THIS NEEDS TO BE FIXED
                 all_topo_tags = sorted(set(p_ms_by_topo.keys()) | set(e_ms_by_topo.keys()))
-                # Sort topo tags by number of cores (topo_0 < topo_0_1 < topo_0_1_2 < topo_0_1_2_3)
                 sorted_topos = sorted(all_topo_tags, key=lambda t: len(t.split("_")) - 1)
 
                 for elem in machines[cpu_p_name]:
@@ -980,21 +978,23 @@ def schedule_iree_networks(
                         p_ms = p_ms_by_topo.get(sorted_topos.keys()[elem])
                     except:
                         print(f"No profiled data for {prefixed_name} on {topo_tag} on cpu_p")
+                    if p_ms is not None:
+                        cpu_p_times.append(float(p_ms))
+                    else:
+                        p_ms_synth = float(rng.uniform(2.0, 10.0))
+
+                for elem in machines[cpu_e_name]:
                     try:
                         e_ms = e_ms_by_topo.get(sorted_topos.keys()[elem])
                     except:
-                        print(f"No profiled data for {prefixed_name} on {topo_tag} on cpu_p")
-
-                    if p_ms is not None:
-                        cpu_p_times.append(float(p_ms))
-                        cpu_e_times.append(float(e_ms) if e_ms is not None else float(p_ms * effective_p_core_speedup))
-                    elif e_ms is not None:
+                        print(f"No profiled data for {prefixed_name} on {topo_tag} on cpu_e")
+                    if e_ms is not None:
                         cpu_e_times.append(float(e_ms))
-                        cpu_p_times.append(float(e_ms / effective_p_core_speedup))
                     else:
-                        p_ms_synth = float(rng.uniform(2.0, 10.0))
-                        cpu_p_times.append(p_ms_synth)
-                        cpu_e_times.append(p_ms_synth * effective_p_core_speedup)
+                        try:
+                            cpu_e_times.append(p_ms_by_topo.get(sorted_topos.keys()[elem]) * effective_p_core_speedup)
+                        except:
+                            cpu_e_times.append(float(rng.uniform(2.0, 10.0)))
 
                 processing_times[prefixed_name] = {
                     cpu_p_name: cpu_p_times,
