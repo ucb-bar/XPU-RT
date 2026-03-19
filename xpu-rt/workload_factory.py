@@ -4,6 +4,19 @@ import json
 import os
 from typing import Tuple, Dict, List, Optional, Callable
 
+
+def find_or_generate_processing_times(processing_times, prefixed_name, processing_time_generator, net_id, dispatch_name, machines, rng, p_core_speedup=1.5):
+    if processing_times and prefixed_name in processing_times:
+        proc_times = processing_times[prefixed_name]
+    elif processing_time_generator:
+        proc_times = processing_time_generator(net_id, dispatch_name)
+    else:
+        # Synthetic: same pattern as used elsewhere
+        proc_times = { machine : [float(rng.uniform(2.0, 10.0)) for _ in range(machines[machine])] for machine in machines }
+    if not proc_times:
+        return None
+    return proc_times
+
 def resolve_dispatch_deps_path(repo_base_path: str, dispatch_deps_path: str) -> str:
     """
     Resolve a dispatch dependency JSON path across current and legacy layouts.
@@ -115,15 +128,14 @@ def generate_syn_workload(
     Returns:
     - workload: a Workload object containing the synthetic operations
     """
-
+    machines = {f"machine_{i}" : k for k in range (np.randint(1,4)) for i in range(n_machines)}
     operations = []
     for _ in range(n_operations):
-        processing_times = [
-            np.random.randint(processing_time_range[0], processing_time_range[1])
-            for _ in range(n_machines)
-        ]
+        proc_times = { 
+            machine : [float(rng.uniform(2.0, 10.0)) for _ in range(machines[machine])]
+            for machine in machines 
+        }
         operations.append(Operation(processing_times))
-    machines = [f"machine_{i}" for i in range(n_machines)]
     workload = Workload(operations, machines, transfer_times)
     return workload
 
@@ -146,14 +158,14 @@ def generate_syn_window(
     - workload: a Workload object containing the synthetic operations
     """
 
+    machines = {f"machine_{i}" : k for k in range (np.randint(1,4)) for i in range(n_machines)}
     operations = []
     for _ in range(n_operations):
-        processing_times = [
-            np.random.randint(processing_time_range[0], processing_time_range[1])
-            for _ in range(n_machines)
-        ]
+        proc_times = { 
+            machine : [float(rng.uniform(2.0, 10.0)) for _ in range(machines[machine])]
+            for machine in machines 
+        }
         operations.append(Operation(processing_times))
-    machines = [f"machine_{i}" for i in range(n_machines)]
     expected_time = sum(
         [np.mean(operation.get_durations()) for operation in operations]
     )
@@ -175,7 +187,7 @@ def create_syn_sequential_workload(
     `processing_time_range`.
     """
     # Create a workload
-    machines = [f"machine_{i}" for i in range(n_machines)]
+    machines = {f"machine_{i}" : k for k in range (np.randint(1,4)) for i in range(n_machines)}
 
     operations = [[] for _ in range(n_jobs)]
     for i in range(n_jobs):
@@ -183,10 +195,10 @@ def create_syn_sequential_workload(
             # previously mistakenly used n_operations_per_job for the length of
             # the processing_times list; it should be based on machines and use
             # the provided range
-            processing_times = [
-                np.random.randint(processing_time_range[0], processing_time_range[1])
-                for _ in range(n_machines)
-            ]
+            proc_times = { 
+                machine : [float(rng.uniform(2.0, 10.0)) for _ in range(machines[machine])]
+                for machine in machines 
+            }
             operations[i].append(Operation(processing_times))
 
     jobs = [create_sequential_job(ops) for ops in operations]
@@ -234,10 +246,11 @@ def create_workload_from_dependencies(
                 proc_times = processing_times[dispatch_id]
             else:
                 # Generate random processing times if not provided
-                proc_times = {
-                    cpu_p_name: [float(np.random.randint(50, 150)) for _ in range(machines[cpu_p_name])],
-                    cpu_e_name: [float(np.random.randint(50, 150)) for _ in range(machines[cpu_e_name])],
+                proc_times = { 
+                    machine : [float(rng.uniform(2.0, 10.0)) for _ in range(machines[machine])]
+                    for machine in machines 
                 }
+
         # Extract ID and name from dispatch info
         operation_id = dispatch_info.get("id", None)
         operation_name = dispatch_name
@@ -382,26 +395,15 @@ def create_workload_from_network_hierarchy(
             for dispatch_name, dispatch_info in dispatches.items():
                 prefixed_name = f"{base_prefix}{dispatch_name}"
 
-                # Determine processing times for this dispatch
-                if processing_times and prefixed_name in processing_times:
-                    proc_times = processing_times[prefixed_name]
-                elif processing_time_generator:
-                    proc_times = processing_time_generator(net_id, dispatch_name)
-                else:
-                    # Synthetic: same pattern as used elsewhere
-                    p_ms_synth = float(rng.uniform(2.0, 10.0))
-                    cpu_p_time = p_ms_synth
-                    cpu_e_time = p_ms_synth * p_core_speedup
-                    proc_times = (
-                        [cpu_p_time, cpu_e_time]
-                        if len(machines) == 2
-                        else [float(rng.uniform(2.0, 10.0)) for _ in machines]
-                    )
-
-                if not proc_times:
+                proc_times = find_or_generate_processing_times(
+                    processing_times, prefixed_name, processing_time_generator,
+                    net_id, dispatch_name, machines, rng, p_core_speedup
+                )
+                if proc_times is None:
                     continue
 
-                worst_dur = max(proc_times)
+                created_array = [proc_times[machine][machines[machine]//2] for machine in machines]
+                worst_dur = max(created_array)
                 total_worst_nonperiodic += float(worst_dur)
 
         # If there are no non-periodic operations, default to 1 instance per periodic network
@@ -468,29 +470,17 @@ def create_workload_from_network_hierarchy(
                 for dispatch_name, dispatch_info in dispatches.items():
                     cache_key = (network_identifier, dispatch_name)
 
-                    # Check if we should use provided processing times or generate synthetic
                     base_prefix = f"{network_identifier}_"
                     prefixed_dispatch_name = f"{base_prefix}{dispatch_name}"
 
-                    if processing_times and prefixed_dispatch_name in processing_times:
-                        periodic_processing_times_cache[cache_key] = processing_times[
-                            prefixed_dispatch_name
-                        ]
-                    elif processing_time_generator:
-                        periodic_processing_times_cache[cache_key] = (
-                            processing_time_generator(network_identifier, dispatch_name)
-                        )
-                    else:
-                        # Generate synthetic processing times (same for all instances)
-                        p_ms_synth = float(rng.uniform(2.0, 10.0))
-                        cpu_p_time = p_ms_synth
-                        cpu_e_time = p_ms_synth * p_core_speedup
-                        proc_times = (
-                            [cpu_p_time, cpu_e_time]
-                            if len(machines) == 2
-                            else [float(rng.uniform(2.0, 10.0)) for _ in machines]
-                        )
-                        periodic_processing_times_cache[cache_key] = proc_times
+                    proc_times = find_or_generate_processing_times(
+                        processing_times, prefixed_dispatch_name, processing_time_generator,
+                        network_identifier, dispatch_name, machines, rng, p_core_speedup
+                    )
+                    if proc_times is None:
+                        continue
+
+                    periodic_processing_times_cache[cache_key] = proc_times
 
             # Expand periodic network into multiple instances
             base_id = network_info.get("id", 0)
@@ -611,31 +601,17 @@ def create_workload_from_network_hierarchy(
                     proc_times = periodic_processing_times_cache[cache_key]
                 else:
                     # Fallback: generate synthetic (shouldn't happen if pre-generation worked)
-                    p_ms_synth = float(rng.uniform(2.0, 10.0))
-                    cpu_p_time = p_ms_synth
-                    cpu_e_time = p_ms_synth * p_core_speedup
-                    proc_times = (
-                        [cpu_p_time, cpu_e_time]
-                        if len(machines) == 2
-                        else [float(rng.uniform(2.0, 10.0)) for _ in machines]
+                    proc_times = find_or_generate_processing_times(
+                        None, prefixed_dispatch_name, None,
+                        network_identifier, dispatch_name, machines, rng, p_core_speedup
                     )
-            elif processing_times and prefixed_dispatch_name in processing_times:
-                proc_times = processing_times[prefixed_dispatch_name]
-            elif processing_time_generator:
-                proc_times = processing_time_generator(
-                    network_identifier, dispatch_name
-                )
             else:
-                # Generate synthetic processing times
-                # Use random P-core time in milliseconds (2-10 ms range)
-                p_ms_synth = float(rng.uniform(2.0, 10.0))
-                cpu_p_time = p_ms_synth
-                cpu_e_time = p_ms_synth * p_core_speedup
-                proc_times = (
-                    [cpu_p_time, cpu_e_time]
-                    if len(machines) == 2
-                    else [float(rng.uniform(2.0, 10.0)) for _ in machines]
+                proc_times = find_or_generate_processing_times(
+                    processing_times, prefixed_dispatch_name, processing_time_generator,
+                    network_identifier, dispatch_name, machines, rng, p_core_speedup
                 )
+            if proc_times is None:
+                continue
 
             # Extract dispatch ID and create operation
             # Inherit time constraints from network if present

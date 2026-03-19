@@ -439,7 +439,6 @@ def _find_profile_csvs_in_gen(
     for topo_tag in topo_tags:
         # New layout (with input_tag subdir)
         pat1 = os.path.join(profile_root, hw, target, model, basename, "*", topo_tag, "results.csv")
-        print(pat1)
         matches = glob.glob(pat1)
         # Back-compat layout (no input_tag subdir)
         if not matches:
@@ -447,6 +446,10 @@ def _find_profile_csvs_in_gen(
             matches = glob.glob(pat2)
         if matches:
             found[topo_tag] = max(matches, key=lambda p: os.path.getmtime(p))
+        else:
+            continue
+            #print(f"WARNING: no profiled times were found at {pat1} or at {pat2}" )
+
     return found
 
 def output_scheduled_json(
@@ -816,7 +819,7 @@ def schedule_iree_networks(
     print(f"  restrict_makespan_to_nonperiodic: {effective_restrict_makespan_to_nonperiodic}")
 
     # Define machines (dual-core device)
-    machines = {cpu_p_name : 4, cpu_e_name : 4}
+    machines = {cpu_p_name : 1, cpu_e_name : 1}
     
     # Create transfer times matrix (zero transfer time between cores on same device)
     transfer_times = np.zeros((len(machines), len(machines)))
@@ -826,7 +829,6 @@ def schedule_iree_networks(
     combined_profiled_p: dict[int, dict] | None = None
     combined_profiled_e: dict[int, dict] | None = None
 
-    print(effective_use_profiled)
 
     if effective_use_profiled:
         print("\nUsing profiled runtimes where available...")
@@ -899,23 +901,25 @@ def schedule_iree_networks(
 
             # Merge all topo CSVs into a single profile dict, keyed by topo_tag
             prof_p: dict[str, dict[int, dict]] = {}
-            for topo_tag, csv_path in csv_p.items():
-                loaded = load_profiled_times(csv_path)
-                if not loaded:
-                    print(f"  (warning) profile CSV had no usable rows: {csv_path}")
-                else:
-                    prof_p[topo_tag] = loaded
+            if csv_p is not None:
+                for topo_tag, csv_path in csv_p.items():
+                    loaded = load_profiled_times(csv_path)
+                    if not loaded:
+                        print(f"  (warning) profile CSV had no usable rows: {csv_path}")
+                    else:
+                        prof_p[topo_tag] = loaded
 
             prof_e: dict[str, dict[int, dict]] = {}
-            for topo_tag, csv_path in csv_e.items():
-                loaded = load_profiled_times(csv_path)
-                if not loaded:
-                    print(f"  (warning) profile CSV had no usable rows: {csv_path}")
-                else:
-                    prof_e[topo_tag] = loaded
+            if csv_e is not None:
+                for topo_tag, csv_path in csv_e.items():
+                    loaded = load_profiled_times(csv_path)
+                    if not loaded:
+                        print(f"  (warning) profile CSV had no usable rows: {csv_path}")
+                    else:
+                        prof_e[topo_tag] = loaded
 
             return (prof_p or None), (prof_e or None)   
-
+        
         for net_id, net_info in networks.items():
             dispatch_deps_path = net_info.get("dispatch_deps_path", "")
             full_dispatch_path = resolve_dispatch_deps_path(repo_base_path, dispatch_deps_path)
@@ -946,9 +950,9 @@ def schedule_iree_networks(
             for dispatch_name, dispatch_info in dispatches.items():
                 dispatch_id = dispatch_info.get("id", None)
                 prefixed_name = f"{net_prefix}{dispatch_name}"
-
-                cpu_p_time: float
-                cpu_e_time: float
+                
+                cpu_p_times: list[float] = []
+                cpu_e_times: list[float] = []
 
                 p_ms = None
                 e_ms = None
@@ -966,33 +970,37 @@ def schedule_iree_networks(
                         if dispatch_id in topo_data:
                             e_ms_by_topo[topo_tag] = topo_data[dispatch_id]["time_ms"]
                 
+                #TODO: ALL OF THIS NEEDS TO BE FIXED
                 all_topo_tags = sorted(set(p_ms_by_topo.keys()) | set(e_ms_by_topo.keys()))
-                if all_topo_tags:
-                    # Sort topo tags by number of cores (topo_0 < topo_0_1 < topo_0_1_2 < topo_0_1_2_3)
-                    sorted_topos = sorted(all_topo_tags, key=lambda t: len(t.split("_")) - 1)
+                # Sort topo tags by number of cores (topo_0 < topo_0_1 < topo_0_1_2 < topo_0_1_2_3)
+                sorted_topos = sorted(all_topo_tags, key=lambda t: len(t.split("_")) - 1)
 
-                    cpu_p_times: list[float] = []
-                    cpu_e_times: list[float] = []
-                    for topo_tag in sorted_topos:
-                        p_ms = p_ms_by_topo.get(topo_tag)
-                        e_ms = e_ms_by_topo.get(topo_tag)
+                for elem in machines[cpu_p_name]:
+                    try:
+                        p_ms = p_ms_by_topo.get(sorted_topos.keys()[elem])
+                    except:
+                        print(f"No profiled data for {prefixed_name} on {topo_tag} on cpu_p")
+                    try:
+                        e_ms = e_ms_by_topo.get(sorted_topos.keys()[elem])
+                    except:
+                        print(f"No profiled data for {prefixed_name} on {topo_tag} on cpu_p")
 
-                        if p_ms is not None:
-                            cpu_p_times.append(float(p_ms))
-                            cpu_e_times.append(float(e_ms) if e_ms is not None else float(p_ms * effective_p_core_speedup))
-                        elif e_ms is not None:
-                            cpu_e_times.append(float(e_ms))
-                            cpu_p_times.append(float(e_ms / effective_p_core_speedup))
-                        else:
-                            p_ms_synth = float(rng.uniform(2.0, 10.0))
-                            cpu_p_times.append(p_ms_synth)
-                            cpu_e_times.append(p_ms_synth * effective_p_core_speedup)
+                    if p_ms is not None:
+                        cpu_p_times.append(float(p_ms))
+                        cpu_e_times.append(float(e_ms) if e_ms is not None else float(p_ms * effective_p_core_speedup))
+                    elif e_ms is not None:
+                        cpu_e_times.append(float(e_ms))
+                        cpu_p_times.append(float(e_ms / effective_p_core_speedup))
+                    else:
+                        p_ms_synth = float(rng.uniform(2.0, 10.0))
+                        cpu_p_times.append(p_ms_synth)
+                        cpu_e_times.append(p_ms_synth * effective_p_core_speedup)
 
-                    processing_times[prefixed_name] = {
-                        cpu_p_name: cpu_p_times,
-                        cpu_e_name: cpu_e_times,
-                    }
-    
+                processing_times[prefixed_name] = {
+                    cpu_p_name: cpu_p_times,
+                    cpu_e_name: cpu_e_times,
+                }
+
     print(f"\nCreating workload from network hierarchy...")
     combined_workload = create_workload_from_network_hierarchy(
         networks_data=networks_data,
@@ -1003,7 +1011,7 @@ def schedule_iree_networks(
         random_seed=effective_random_seed,
         processing_times=processing_times,
     )
-    
+
     print(f"\nWorkload created successfully!")
     print(f"  Total operations: {len(combined_workload.operations)}")
     print(f"  Machines: {combined_workload.machines}")

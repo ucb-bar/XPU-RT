@@ -448,6 +448,7 @@ def _find_profile_csv_in_gen(
         matches = glob.glob(pat2)
 
     if not matches:
+        print(f"WARNING: no profiled times were found at {pat1} or at {pat2}" )
         return None
     return max(matches, key=lambda p: os.path.getmtime(p))
 
@@ -892,12 +893,12 @@ def schedule_iree_networks(
                     csv_e = candidate_csv_e
                     selected_model = model_candidate
                     break
-
             if selected_model != net_id:
                 print(f"  (info) profile model fallback: net_id={net_id} -> model={selected_model}")
 
             prof_p = load_profiled_times(csv_p) if csv_p else {}
             prof_e = load_profiled_times(csv_e) if csv_e else {}
+    
 
             if not prof_p and csv_p:
                 print(f"  (warning) profile CSV had no usable rows: {csv_p}")
