@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Compile a set of Merlin models to VMFB and dump DOT graphs + artifacts.
 #
-# This is a thin wrapper over `merlin/tools/compile.py`.
+# This is a thin wrapper over `merlin/tools/merlin.py compile`.
 #
 # Outputs are written by default under:
 #   merlin/build/compiled_models/<model>/<target>_<basename>/
@@ -23,10 +23,10 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-MERLIN_DIR="${REPO_ROOT}/merlin"
+MERLIN_DIR="${MERLIN_DIR:-${REPO_ROOT}/merlin}"
 
-if [[ ! -f "${MERLIN_DIR}/tools/compile.py" ]]; then
-  echo "Error: expected Merlin at ${MERLIN_DIR} (missing tools/compile.py)" >&2
+if [[ ! -f "${MERLIN_DIR}/tools/merlin.py" ]]; then
+  echo "Error: expected Merlin at ${MERLIN_DIR} (missing tools/merlin.py)" >&2
   exit 1
 fi
 
@@ -96,7 +96,7 @@ for target in "${TARGETS[@]}"; do
       out_dir="${OUT_ROOT}/${model_name}/${target}/${hw}/${basename}"
 
       set +e
-      python3 tools/compile.py "${model}" \
+      uv run tools/merlin.py compile "${model}" \
         --target "${target}" \
         --hw "${hw}" \
         --output-dir "${out_dir}" \

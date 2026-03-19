@@ -1,36 +1,36 @@
 cmake_minimum_required(VERSION 3.16)
 project(XpuRtRuntime C)
 
-# This directory builds a small runtime tool (`json_dispatch_runner`) that
-# consumes the Merlin-built xpu-rt IREE wrapper library.
+# This directory can build custom runtime tools that link against the
+# Merlin-built xpu-rt standalone archive (libxpurt_standalone.a).
 #
-# Usage example (standalone archive is strongly recommended):
+# For most workflows, use the pre-built binaries from merlin directly:
+#   merlin-baseline-async        (baseline topo-order dispatch runner)
+#   merlin-dispatch-scheduler    (two-cluster scheduled dispatch runner)
+#
+# These are built automatically by `merlin build --profile spacemit` and
+# live in merlin/build/<profile>/runtime/plugins/merlin-samples/.
+#
+# For custom tools, link against the standalone archive:
 #   cmake -B build -S runtime \
 #     -DCMAKE_BUILD_TYPE=Release \
-#     -DXPURT_STANDALONE_LIB_PATH=../merlin/build/spacemit-merlin-perf/runtime/src/iree/runtime/libxpurt_iree_plugin_standalone.a
+#     -DXPURT_STANDALONE_LIB_PATH=../merlin/build/spacemit-merlin-perf/runtime/src/iree/runtime/libxpurt_standalone.a
 #   cmake --build build --target json_dispatch_runner
+#
+# For Zephyr: cross-compile merlin with a Zephyr-compatible profile, then
+# point XPURT_STANDALONE_LIB_PATH at the resulting libxpurt_standalone.a.
+# Use Zephyr's zephyr_library_import_from_static() or
+# target_link_libraries() to link it into your Zephyr application.
 
 set(XPURT_STANDALONE_LIB_PATH "" CACHE FILEPATH
-    "Path to libxpurt_iree_plugin_standalone.a (plugin + IREE runtime objects) built by Merlin/IREE")
-set(XPURT_LIB_PATH "" CACHE FILEPATH
-    "Path to libxpurt_iree_plugin.a (plugin only). This usually cannot link out-of-tree without IREE targets.")
+    "Path to libxpurt_standalone.a (xpu-rt + IREE runtime objects) built by Merlin/IREE")
 set(XPURT_FLATCC_PARSING_LIB_PATH "" CACHE FILEPATH
     "Optional path to FlatCC parsing/verifier archive (libflatcc_parsing.a) if not auto-detected")
 
-set(_XPURT_LINK_LIB "")
-set(_XPURT_WHOLE_ARCHIVE OFF)
-if(XPURT_STANDALONE_LIB_PATH)
-  set(_XPURT_LINK_LIB "${XPURT_STANDALONE_LIB_PATH}")
-  set(_XPURT_WHOLE_ARCHIVE ON)
-elseif(XPURT_LIB_PATH)
-  message(WARNING
-    "XPURT_LIB_PATH points at the plugin-only archive. Prefer XPURT_STANDALONE_LIB_PATH "
-    "(libxpurt_iree_plugin_standalone.a), otherwise you may see undefined references to IREE.")
-  set(_XPURT_LINK_LIB "${XPURT_LIB_PATH}")
-else()
+if(NOT XPURT_STANDALONE_LIB_PATH)
   message(FATAL_ERROR
-    "Set XPURT_STANDALONE_LIB_PATH to libxpurt_iree_plugin_standalone.a (recommended). "
-    "Alternatively set XPURT_LIB_PATH to libxpurt_iree_plugin.a (may not link out-of-tree).")
+    "Set XPURT_STANDALONE_LIB_PATH to libxpurt_standalone.a. "
+    "This is built by: merlin build --profile spacemit --config perf")
 endif()
 
 set(CMAKE_C_STANDARD 11)
@@ -44,7 +44,7 @@ add_executable(json_dispatch_runner
 
 # Header-only dependency on the xpu-rt public API inside the Merlin tree.
 target_include_directories(json_dispatch_runner PRIVATE
-  "${CMAKE_CURRENT_SOURCE_DIR}/../merlin/xpu-rt"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../merlin/samples/common"
 )
 
 # Build up extra archives that must come *after* the xpurt standalone archive.
@@ -56,23 +56,14 @@ if(XPURT_FLATCC_PARSING_LIB_PATH)
   list(APPEND _XPURT_EXTRA_ARCHIVES "${XPURT_FLATCC_PARSING_LIB_PATH}")
 endif()
 
-# Link the standalone archive (plugin + IREE objects). We whole-archive it to
+# Link the standalone archive (xpu-rt + IREE objects). We whole-archive it to
 # keep driver/registry objects that may otherwise be dropped by the linker.
-# IMPORTANT: static archive link order matters (GNU ld), so we also append any
-# extra archives *after* the standalone archive in the same call.
-if(_XPURT_WHOLE_ARCHIVE)
-  target_link_libraries(json_dispatch_runner PRIVATE
-    "-Wl,--whole-archive"
-    "${_XPURT_LINK_LIB}"
-    "-Wl,--no-whole-archive"
-    ${_XPURT_EXTRA_ARCHIVES}
-  )
-else()
-  target_link_libraries(json_dispatch_runner PRIVATE
-    "${_XPURT_LINK_LIB}"
-    ${_XPURT_EXTRA_ARCHIVES}
-  )
-endif()
+target_link_libraries(json_dispatch_runner PRIVATE
+  "-Wl,--whole-archive"
+  "${XPURT_STANDALONE_LIB_PATH}"
+  "-Wl,--no-whole-archive"
+  ${_XPURT_EXTRA_ARCHIVES}
+)
 
 # System libs commonly needed by IREE runtime and the plugin.
 target_link_libraries(json_dispatch_runner PRIVATE

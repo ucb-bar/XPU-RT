@@ -13,8 +13,9 @@ Usage: $(basename "$0") [options]
 
 Options:
   --xpurt-lib FILE    Path to either:
-                        - libxpurt_iree_plugin_standalone.a (preferred), or
-                        - libxpurt_iree_plugin.a (plugin-only; script will try to find/build standalone)
+                        - libxpurt_standalone.a (preferred), or
+                        - libxpurt_iree_plugin_standalone.a (legacy name), or
+                        - libxpurt_iree_plugin.a (plugin-only; script will try to find standalone)
                       Defaults to \$XPURT_LIB if set.
   --target NAME       Build target: host | spacemit (default: host).
   --build-type TYPE   CMake build type (default: Release).
@@ -22,11 +23,11 @@ Options:
 
 Examples:
   # Host build:
-  XPURT_LIB=/path/to/host/libxpurt_iree_plugin_standalone.a $(basename "$0")
+  XPURT_LIB=/path/to/host/libxpurt_standalone.a $(basename "$0")
 
   # SpacemiT X60 build (uses Merlin-installed toolchain if RISCV_TOOLCHAIN_ROOT unset):
   $(basename "$0") --target spacemit \\
-    --xpurt-lib /path/to/spacemit-merlin-perf/.../libxpurt_iree_plugin.a
+    --xpurt-lib ./merlin/build/spacemit-merlin-perf/runtime/src/iree/runtime/libxpurt_standalone.a
 EOF
 }
 
@@ -100,10 +101,11 @@ XPURT_FLATCC_PARSING_LIB="${XPURT_FLATCC_PARSING_LIB:-}"
 if [[ -z "${XPURT_FLATCC_PARSING_LIB}" ]]; then
   # If the xpurt lib is inside a Merlin build tree, use that as a base.
   BUILD_DIR_MERLIN=""
-  if [[ "$(basename "${XPURT_LIB_ABS}")" == "libxpurt_iree_plugin_standalone.a" ]]; then
-    # From .../build-name/runtime/src/iree/runtime/libxpurt_iree_plugin_standalone.a -> .../build-name
+  LIB_BASENAME="$(basename "${XPURT_LIB_ABS}")"
+  if [[ "${LIB_BASENAME}" == "libxpurt_standalone.a" || "${LIB_BASENAME}" == "libxpurt_iree_plugin_standalone.a" ]]; then
+    # From .../build-name/runtime/src/iree/runtime/lib*.a -> .../build-name
     BUILD_DIR_MERLIN="$(cd "$(dirname "$(dirname "$(dirname "$(dirname "$(dirname "${XPURT_LIB_ABS}")")")")")" && pwd)"
-  elif [[ "$(basename "${XPURT_LIB_ABS}")" == "libxpurt_iree_plugin.a" ]]; then
+  elif [[ "${LIB_BASENAME}" == "libxpurt_iree_plugin.a" ]]; then
     # From .../build-name/runtime/plugins/xpu-rt/libxpurt_iree_plugin.a -> .../build-name
     BUILD_DIR_MERLIN="$(cd "$(dirname "$(dirname "$(dirname "$(dirname "${XPURT_LIB_ABS}")")")")" && pwd)"
   fi
@@ -122,7 +124,7 @@ fi
 CMAKE_EXTRA_ARGS=()
 if [[ "${TARGET}" == "spacemit" ]]; then
   PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
-  MERLIN_ROOT="${PROJECT_ROOT}/merlin"
+  MERLIN_ROOT="${MERLIN_DIR:-${PROJECT_ROOT}/merlin}"
   IREE_SRC="${MERLIN_ROOT}/third_party/iree_bar"
   TOOLCHAIN_FILE="${IREE_SRC}/build_tools/cmake/riscv.toolchain.cmake"
 
