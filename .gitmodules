@@ -1,3 +1,6 @@
 [submodule "merlin"]
 	path = merlin
 	url = https://github.com/ucb-bar/merlin.git
+[submodule "zephyr-chipyard-sw"]
+	path = zephyr-chipyard-sw
+	url = https://github.com/ucb-bar/zephyr-chipyard-sw.git
