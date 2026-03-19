@@ -226,11 +226,24 @@ def schedule(
     t = cp.Variable(num_operations)
     C_max = cp.Variable()
 
-    # Hyperparameters
-    H = 5000
-
     # Constraints
     constraints = []
+
+    # Pre-compute all durations of operations on machines
+    durations = {
+        (i, k): workload.operations[i].get_duration_for_combination(
+            k, machine_combinations, workload.machines
+        )
+        for i in range(num_operations)
+        for k in range(num_combinations)
+    }
+
+    # Set Hyperparameters
+    H = sum(
+        max(durations[i, k] for k in range(num_combinations))
+        for i in range(num_operations)
+    )
+
     # (2) Each operation must be assigned to exactly one machine combination
     for i in range(num_operations):
         constraints.append(cp.sum(alpha[i, :]) == 1)
@@ -341,21 +354,28 @@ def schedule(
 
     #preprocess operations that already have non-overlapping contraints placed on them
     overlapping_operations = [(i,j) for j in range(num_operations) for i in range(j+1, num_operations)
-                                 if (i not in workload.operations[j].get_predecessors())
-                                 and _periods_overlap(workload.operations[i],workload.operations[j])
+                                if not any(workload.operations[i] is pred for pred in workload.operations[j].get_predecessors())
+                                and not any(workload.operations[j] is pred for pred in workload.operations[i].get_predecessors())
+                                and _periods_overlap(workload.operations[i],workload.operations[j])
                              ]
     #preprocess combinations that do not share the same cores
     overlapping_pairs = [(k1,k2) for k1 in range(num_combinations) for k2 in range(num_combinations) if workload.combinations_overlap(k1,k2)]
     
     for i,j in overlapping_operations:
+        constraints.append(beta[i, j] + beta[j, i] == 1) 
         for k1,k2 in overlapping_pairs:
-            #conditions where the problem is already solved
-            dur_i_k1 = workload.operations[i].get_duration_for_combination(
-                k1, machine_combinations, workload.machines
-            )
+            dur_i_k1 = durations[i,k_1] 
+            dur_i_k2 = durations[j,k_2]
+            
+            # i before j
             constraints.append(
                 t[j] >= t[i] + dur_i_k1 - (3 - alpha[i, k1] - alpha[j, k2] - beta[i, j]) * H
             )
+            # j before i
+            constraints.append(
+                t[i] >= t[j] + dur_j_k2 - (2 - alpha[i, k1] - alpha[j, k2] + beta[i, j]) * H
+            )
+
     # (6) Makespan constraints:
     if restrict_makespan_to_nonperiodic:
         # C_max tracks only NON-periodic operations (operations without explicit time-window bounds).
@@ -562,7 +582,6 @@ def schedule_additional_objectives(
 
     # Hyperparameters
     H = 5000
-
     # Constraints
     constraints = []
     # (2) Each operation must be assigned to exactly one machine combination
