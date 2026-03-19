@@ -346,6 +346,7 @@ def schedule(
                              ]
     #preprocess combinations that do not share the same cores
     overlapping_pairs = [(k1,k2) for k1 in range(num_combinations) for k2 in range(num_combinations) if workload.combinations_overlap(k1,k2)]
+    
     for i,j in overlapping_operations:
         for k1,k2 in overlapping_pairs:
             #conditions where the problem is already solved
