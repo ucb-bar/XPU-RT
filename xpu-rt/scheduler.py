@@ -21,7 +21,102 @@ try:
 except ImportError:
     from fusion import fuse_operations, expand_schedule, print_fusion_report
 
-def schedule_window(window: Window) -> Tuple[np.ndarray, np.ndarray]:
+
+def _constraints_section_logger(enabled: bool, constraints: list):
+    """
+    Lightweight logger for timing constraint-generation sections.
+
+    Usage:
+        end = log("name")   # starts section
+        ... add constraints ...
+        end()               # prints timing (+count, seconds) if enabled
+    """
+    def _start(name: str):
+        if not enabled:
+            return lambda: None
+        start_t = time.perf_counter()
+        start_n = len(constraints)
+        print(f"[constraints] start: {name} (n={start_n})")
+
+        def _end():
+            end_t = time.perf_counter()
+            end_n = len(constraints)
+            print(
+                f"[constraints] done : {name} (+{end_n - start_n}, n={end_n}, {end_t - start_t:.3f}s)"
+            )
+
+        return _end
+
+    return _start
+
+
+def _compute_dependency_descendants_bitset(operations: list) -> Optional[list[int]]:
+    """
+    Compute transitive reachability (descendants) for the precedence graph induced by
+    op.get_predecessors() edges, restricted to the given `operations` list.
+
+    Returns:
+        descendants: list[int] where bit j of descendants[i] is 1 iff i ->* j
+        or None if the graph appears cyclic (no valid topological order).
+    """
+    n = len(operations)
+    if n == 0:
+        return []
+
+    # Fast op->index lookup. Prefer hashing the object; fall back to id().
+    op_to_idx = None
+    try:
+        op_to_idx = {op: i for i, op in enumerate(operations)}
+    except TypeError:
+        op_to_idx = None
+    opid_to_idx = {id(op): i for i, op in enumerate(operations)}
+
+    def _idx(op):
+        if op_to_idx is not None:
+            try:
+                return op_to_idx[op]
+            except KeyError:
+                pass
+        return opid_to_idx.get(id(op), None)
+
+    succ: list[list[int]] = [[] for _ in range(n)]
+    indeg = [0] * n
+
+    for i, op in enumerate(operations):
+        for pred in op.get_predecessors():
+            p = _idx(pred)
+            if p is None:
+                continue
+            succ[p].append(i)
+            indeg[i] += 1
+
+    # Kahn topological sort
+    from collections import deque
+
+    q = deque([u for u in range(n) if indeg[u] == 0])
+    topo: list[int] = []
+    while q:
+        u = q.popleft()
+        topo.append(u)
+        for v in succ[u]:
+            indeg[v] -= 1
+            if indeg[v] == 0:
+                q.append(v)
+
+    if len(topo) != n:
+        # Cycle (or inconsistent predecessor lists); skip pruning in this case.
+        return None
+
+    descendants = [0] * n
+    for u in reversed(topo):
+        bits = 0
+        for v in succ[u]:
+            bits |= descendants[v] | (1 << v)
+        descendants[u] = bits
+    return descendants
+
+
+def schedule_window(window: Window, debug_constraints: bool = False) -> Tuple[np.ndarray, np.ndarray]:
     num_operations = len(window.operations)
     machine_combinations = window.get_machine_combinations()
     num_combinations = len(machine_combinations)
@@ -37,12 +132,19 @@ def schedule_window(window: Window) -> Tuple[np.ndarray, np.ndarray]:
 
     # Constraints
     constraints = []
+    log = _constraints_section_logger(enabled=debug_constraints, constraints=constraints)
+    build_all_start = time.perf_counter() if debug_constraints else None
+
     # (2) Each operation must be assigned to exactly one machine combination
+    end = log("(2) assignment (alpha row-sum == 1)")
     for i in range(num_operations):
         constraints.append(
             cp.sum(alpha[i, :]) == 1
         )
+    end()
+
     # (3) Precedence constraints: operation i must start after ALL its predecessors complete
+    end = log("(3) precedence")
     for i in range(num_operations):
         predecessors = window.operations[i].get_predecessors()
         for pred in predecessors:
@@ -72,9 +174,18 @@ def schedule_window(window: Window) -> Tuple[np.ndarray, np.ndarray]:
                 constraints.append(
                     t[i] >= t[i_pred] + cp.sum(cp.multiply(dur_vec_pred, alpha[i_pred, :])) + transfer_time_weighted
                 )
+    end()
+
     # (4) and (5) Non-overlap constraints: if two operations are assigned to overlapping combinations, enforce ordering
+    end = log("(4)(5) non-overlap (pairwise, overlapping combinations)")
+    dep_desc = _compute_dependency_descendants_bitset(window.operations)
     for i in range(num_operations):
         for j in range(i+1, num_operations):
+            # Optimization: If i and j are already ordered by a dependency chain (i ->* j or j ->* i),
+            # precedence constraints already enforce a non-overlap in time, so skip overlap constraints.
+            if dep_desc is not None:
+                if ((dep_desc[i] >> j) & 1) or ((dep_desc[j] >> i) & 1):
+                    continue
             for k1 in range(num_combinations):
                 for k2 in range(num_combinations):
                     # Only add constraint if combinations overlap
@@ -91,21 +202,29 @@ def schedule_window(window: Window) -> Tuple[np.ndarray, np.ndarray]:
                         constraints.append(
                             t[j] >= t[i] + dur_i_k1 - (3 - alpha[i, k1] - alpha[j, k2] - beta[i, j]) * H
                         )
+    end()
+
     # (6)
+    end = log("(6) makespan lower bound (C_max)")
     for i in range(num_operations):
         # Build duration vector for all combinations
         dur_vec = [window.operations[i].get_duration_for_combination(k, machine_combinations, window.machines) for k in range(num_combinations)]
         constraints.append(
             C_max >= t[i] + cp.sum(cp.multiply(dur_vec, alpha[i, :]))
         )
+    end()
+
     # (7) and (8) are covered by boolean argument of alpha and beta variables
     # all operations start at 0
+    end = log("t >= 0")
     for i in range(num_operations):
         constraints.append(
             t[i] >= 0
         )
+    end()
 
     # term to maximize consecutive empty space on each machine combination
+    end = log("empty_space (aux objective constraints)")
     empty_space = cp.Variable(num_combinations)
     for k in range(num_combinations):
         for i in range(num_operations):
@@ -115,6 +234,10 @@ def schedule_window(window: Window) -> Tuple[np.ndarray, np.ndarray]:
                 constraints.append(
                     empty_space[k] >= t[i] - (t[j] + dur_j_k - (2 - alpha[i, k] - alpha[j, k] + beta[i, j]) * H)
                 )
+    end()
+
+    if debug_constraints:
+        print(f"[constraints] total build time: {time.perf_counter() - build_all_start:.3f}s (n={len(constraints)})")
 
 
     # objective_func = 150*C_max + cp.sum(empty_space)
@@ -137,6 +260,8 @@ def schedule(
     time_limit: Optional[float] = None,
     restrict_makespan_to_nonperiodic: bool = True,
     prune_cross_period_constraints: bool = True,
+    debug_constraints: bool = False,
+    prune_overlap_constraints_for_dependency_chain: bool = True,
 ) -> Tuple[np.ndarray, np.ndarray, Optional[Workload], Optional[dict]]:
     """
     Schedule a workload, optionally with operation fusion.
@@ -155,6 +280,11 @@ def schedule(
         prune_cross_period_constraints: If True, skip precedence and non-overlap constraints
                    between operations whose time windows provably do not overlap in time.
                    This reduces redundant constraints for periodic tasks in disjoint periods.
+        debug_constraints: If True (or verbose=True), print timing and counts for each major
+                   constraint family during model construction.
+        prune_overlap_constraints_for_dependency_chain: If True, skip generating (4)(5) non-overlap
+                   constraints for operation pairs that are already ordered by the precedence graph
+                   via a transitive dependency chain (i ->* j or j ->* i).
     
     Returns:
         (t, alpha, fused_workload, fusion_map) where:
@@ -196,11 +326,18 @@ def schedule(
 
     # Constraints
     constraints = []
+    constraints_debug_enabled = debug_constraints or verbose
+    log = _constraints_section_logger(enabled=constraints_debug_enabled, constraints=constraints)
+    build_all_start = time.perf_counter()
+
     # (2) Each operation must be assigned to exactly one machine combination
+    end = log("(2) assignment (alpha row-sum == 1)")
     for i in range(num_operations):
         constraints.append(
             cp.sum(alpha[i, :]) == 1
         )
+    end()
+
     def _periods_overlap(op_a, op_b) -> bool:
         """Return True if the time windows of two operations can overlap."""
         a_start = getattr(op_a, "min_start_t", None)
@@ -215,6 +352,7 @@ def schedule(
         return (a_start < b_end) and (b_start < a_end)
 
     # (3) Precedence constraints: operation i must start after ALL its predecessors complete
+    end = log("(3) precedence")
     for i in range(num_operations):
         op_i = workload.operations[i]
         predecessors = op_i.get_predecessors()
@@ -263,7 +401,10 @@ def schedule(
             constraints.append(
                 t[i] >= t[i_pred] + cp.sum(cp.multiply(dur_vec_pred, alpha[i_pred, :])) + transfer_time_weighted
             )
+    end()
+
     # Time window constraints: operations must respect min_start_t and max_end_t if specified
+    end = log("time windows (min_start_t/max_end_t)")
     for i in range(num_operations):
         op = workload.operations[i]
         # Constraint: operation must start after min_start_t (if specified)
@@ -283,7 +424,13 @@ def schedule(
             # constraints.append(
             #     t[i] <= op.max_end_t
             # )
+    end()
+
     # (4) and (5) Non-overlap constraints: if two operations are assigned to overlapping combinations, enforce ordering
+    end = log("(4)(5) non-overlap (pairwise, overlapping combinations)")
+    dep_desc = None
+    if prune_overlap_constraints_for_dependency_chain:
+        dep_desc = _compute_dependency_descendants_bitset(workload.operations)
     for i in range(num_operations):
         for j in range(i+1, num_operations):
             op_i = workload.operations[i]
@@ -292,6 +439,12 @@ def schedule(
             # Optionally skip pairs whose time windows cannot overlap
             if prune_cross_period_constraints and not _periods_overlap(op_i, op_j):
                 continue
+
+            # Optimization: If i and j are already ordered by a dependency chain (i ->* j or j ->* i),
+            # precedence constraints already enforce a non-overlap in time, so skip overlap constraints.
+            if dep_desc is not None:
+                if ((dep_desc[i] >> j) & 1) or ((dep_desc[j] >> i) & 1):
+                    continue
 
             for k1 in range(num_combinations):
                 for k2 in range(num_combinations):
@@ -311,10 +464,13 @@ def schedule(
                         constraints.append(
                             t[j] >= t[i] + dur_i_k1 - (3 - alpha[i, k1] - alpha[j, k2] - beta[i, j]) * H
                         )
+    end()
+
     # (6) Makespan constraints:
     if restrict_makespan_to_nonperiodic:
         # C_max tracks only NON-periodic operations (operations without explicit time-window bounds).
         # Periodic/background operations (with min_start_t or max_end_t set) do NOT constrain C_max.
+        end = log("(6) makespan lower bound (C_max) - non-periodic only")
         non_periodic_ops_exist = False
         for i in range(num_operations):
             op = workload.operations[i]
@@ -333,8 +489,10 @@ def schedule(
             )
         # If there are no non-periodic operations, C_max is unconstrained from below
         # (objective will be trivial), which is acceptable: only periodic tasks exist.
+        end()
     else:
         # Original behavior: C_max covers all operations (including periodic ones)
+        end = log("(6) makespan lower bound (C_max) - all operations")
         for i in range(num_operations):
             dur_vec = [
                 workload.operations[i].get_duration_for_combination(k, machine_combinations, workload.machines)
@@ -343,9 +501,10 @@ def schedule(
             constraints.append(
                 C_max >= t[i] + cp.sum(cp.multiply(dur_vec, alpha[i, :]))
             )
+        end()
     
     # Debug: Print durations for first operation to verify they're correct
-    if num_operations > 0:
+    if (verbose or debug_constraints) and num_operations > 0:
         print(f"\nDEBUG DURATIONS for first operation:")
         for k in range(num_combinations):
             combo = machine_combinations[k]
@@ -355,9 +514,17 @@ def schedule(
     
     # (7) and (8) are covered by boolean argument of alpha and beta variables
     # all operations start at 0
+    end = log("t >= 0")
     for i in range(num_operations):
         constraints.append(
             t[i] >= 0
+        )
+    end()
+
+    if constraints_debug_enabled:
+        print(
+            f"[constraints] total build time: {time.perf_counter() - build_all_start:.3f}s "
+            f"(n={len(constraints)})"
         )
 
     # Optimization problem
@@ -455,7 +622,12 @@ def schedule(
     
     return t_result, alpha_result, None, None
 
-def schedule_additional_objectives(workload: Workload, nominal_start_times: list[float], gap_bound: float) -> Tuple[np.ndarray, np.ndarray]:
+def schedule_additional_objectives(
+    workload: Workload,
+    nominal_start_times: list[float],
+    gap_bound: float,
+    debug_constraints: bool = False,
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     @param nominal_start_times: list of nominal start times for each operation. If there is no desired start time, set index to -1
     @param gap_bound: the maximum maximum allowable gap between operations to bound the optimization problem
@@ -482,12 +654,19 @@ def schedule_additional_objectives(workload: Workload, nominal_start_times: list
 
     # Constraints
     constraints = []
+    log = _constraints_section_logger(enabled=debug_constraints, constraints=constraints)
+    build_all_start = time.perf_counter() if debug_constraints else None
+
     # (2) Each operation must be assigned to exactly one machine combination
+    end = log("(2) assignment (alpha row-sum == 1)")
     for i in range(num_operations):
         constraints.append(
             cp.sum(alpha[i, :]) == 1
         )
+    end()
+
     # (3) Precedence constraints: operation i must start after ALL its predecessors complete
+    end = log("(3) precedence")
     for i in range(num_operations):
         predecessors = workload.operations[i].get_predecessors()
         for pred in predecessors:
@@ -518,9 +697,16 @@ def schedule_additional_objectives(workload: Workload, nominal_start_times: list
             constraints.append(
                 t[i] >= t[i_pred] + cp.sum(cp.multiply(dur_vec_pred, alpha[i_pred, :])) + transfer_time_weighted
             )
+    end()
+
     # (4) and (5) Non-overlap constraints: if two operations are assigned to overlapping combinations, enforce ordering
+    end = log("(4)(5) non-overlap (pairwise, overlapping combinations)")
+    dep_desc = _compute_dependency_descendants_bitset(workload.operations)
     for i in range(num_operations):
         for j in range(i+1, num_operations):
+            if dep_desc is not None:
+                if ((dep_desc[i] >> j) & 1) or ((dep_desc[j] >> i) & 1):
+                    continue
             for k1 in range(num_combinations):
                 for k2 in range(num_combinations):
                     # Only add constraint if combinations overlap
@@ -535,21 +721,29 @@ def schedule_additional_objectives(workload: Workload, nominal_start_times: list
                         constraints.append(
                             t[j] >= t[i] + dur_i_k1 - (3 - alpha[i, k1] - alpha[j, k2] - beta[i, j]) * H
                         )
+    end()
+
     # (6)
+    end = log("(6) makespan lower bound (C_max)")
     for i in range(num_operations):
         # Build duration vector for all combinations
         dur_vec = [workload.operations[i].get_duration_for_combination(k, machine_combinations, workload.machines) for k in range(num_combinations)]
         constraints.append(
             C_max >= t[i] + cp.sum(cp.multiply(dur_vec, alpha[i, :]))
         )
+    end()
+
     # (7) and (8) are covered by boolean argument of alpha and beta variables
     # all operations start at 0
+    end = log("t >= 0")
     for i in range(num_operations):
         constraints.append(
             t[i] >= 0
         )
+    end()
 
     # desired frequency
+    end = log("desired frequency (z)")
     for i in range(num_operations):
         if nominal_start_times[i] >= 0:
             constraints.append(
@@ -561,8 +755,10 @@ def schedule_additional_objectives(workload: Workload, nominal_start_times: list
         constraints.append(
             z[i] >= 0
         )
+    end()
 
     # interrupt tolerance
+    end = log("interrupt tolerance (g/G_max)")
     for i in range(num_operations):
         for j in range(i+1, num_operations):
             for k1 in range(num_combinations):
@@ -588,6 +784,10 @@ def schedule_additional_objectives(workload: Workload, nominal_start_times: list
         constraints.append(
             g[i] <= gap_bound
         )
+    end()
+
+    if debug_constraints:
+        print(f"[constraints] total build time: {time.perf_counter() - build_all_start:.3f}s (n={len(constraints)})")
 
     # Optimization problem
     objective_func = C_max + cp.sum(z) - 0.1*G_max
