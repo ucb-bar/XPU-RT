@@ -1,0 +1,38 @@
+site_name: CompGen
+site_description: User-facing documentation for CompGen, an LLM-driven compiler generator.
+repo_url: https://github.com/compgen-project/compgen
+theme:
+  name: material
+  features:
+    - navigation.instant
+    - navigation.sections
+    - content.code.copy
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - fenced_code
+  - tables
+  - toc:
+      permalink: true
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: getting-started/installation.md
+      - Quickstart: getting-started/quickstart.md
+      - What Works Today: getting-started/what-works-today.md
+  - Guides:
+      - Use the Demo: guides/use-the-demo.md
+      - Bring Up a Target: guides/bring-up-a-target.md
+      - Inspect Artifacts: guides/inspect-artifacts.md
+  - Concepts:
+      - What CompGen Is: concepts/what-is-compgen.md
+      - Architecture Overview: concepts/architecture.md
+      - Verification Model: concepts/verification.md
+  - Reference:
+      - CLI Reference: reference/cli.md
+      - Python API: reference/python-api.md
+      - Target Profile Schema: reference/target-profile-schema.md
+      - Target Packages: reference/target-packages.md
+      - Tested Stack: reference/tested-stack.md
+      - Troubleshooting: reference/troubleshooting.md

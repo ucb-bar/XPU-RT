@@ -1,0 +1,106 @@
+# CompGen Target Profile: Heterogeneous RISC-V SoC
+#
+# A heterogeneous SoC with a host RISC-V CPU, an NPU accelerator,
+# and a DSP.  The NPU runs under Zephyr RTOS, the DSP is bare-metal,
+# and the host runs Linux.
+
+name: riscv-soc-acme
+schema_version: "1.0"
+
+devices:
+  - device_type: cpu
+    name: RV64-Host
+    vendor: acme
+    compute_units:
+      - name: rv64gc
+        count: 4
+        supported_dtypes: [float64, float32, float16]
+        peak_tflops: 0.1
+    memory_hierarchy:
+      - name: l1_cache
+        size_bytes: 65536
+        bandwidth_gbps: 100.0
+      - name: dram
+        size_bytes: 4294967296  # 4 GB
+        bandwidth_gbps: 25.0
+    supported_ops:
+      - matmul
+      - add
+      - mul
+      - relu
+    kernel_backends:
+      - native_lowering
+
+  - device_type: npu
+    name: ACME-NPU-v2
+    vendor: acme
+    compute_units:
+      - name: systolic_array
+        count: 1
+        supported_dtypes: [int8, float16]
+        peak_tflops: 8.0
+    memory_hierarchy:
+      - name: scratchpad
+        size_bytes: 2097152  # 2 MB
+        bandwidth_gbps: 256.0
+      - name: shared_dram
+        size_bytes: 536870912  # 512 MB
+        bandwidth_gbps: 25.0
+    supported_ops:
+      - matmul
+      - conv2d
+      - layernorm
+      - gelu
+      - attention
+    kernel_backends:
+      - ukernel
+
+  - device_type: dsp
+    name: ACME-DSP-v1
+    vendor: acme
+    compute_units:
+      - name: vector_unit
+        count: 2
+        supported_dtypes: [float32, float16, int16]
+        peak_tflops: 0.5
+    memory_hierarchy:
+      - name: sram
+        size_bytes: 262144  # 256 KB
+        bandwidth_gbps: 50.0
+    supported_ops:
+      - add
+      - mul
+      - softmax
+      - layernorm
+    kernel_backends:
+      - native_lowering
+
+interconnects:
+  - topology: dma
+    bandwidth_gbps: 10.0
+    latency_us: 0.5
+    devices: [0, 1]
+  - topology: shared_memory
+    bandwidth_gbps: 5.0
+    latency_us: 1.0
+    devices: [0, 2]
+
+constraints:
+  max_power_w: 15
+  max_memory_gb: 4
+
+cost_model:
+  op_latencies:
+    matmul_256x256: 50.0
+    conv2d_64x64: 30.0
+    layernorm_256: 2.0
+  memory_bandwidth:
+    dram: 25.0
+    scratchpad: 256.0
+
+metadata:
+  architecture: riscv
+  deployment_model: multi_domain_soc
+  host_runtime: linux_userspace
+  npu_runtime: zephyr_rtos
+  dsp_runtime: bare_metal

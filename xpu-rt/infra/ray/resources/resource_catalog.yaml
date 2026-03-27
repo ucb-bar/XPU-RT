@@ -1,0 +1,47 @@
+# CompGen Hardware Resource Catalog
+#
+# Defines scarce hardware resources managed by the HardwareBroker.
+# Each entry maps to a Ray custom resource for scheduling.
+
+resources:
+  # Example: FPGA board
+  - resource_id: "fpga-xilinx-u250-01"
+    resource_type: "fpga"
+    target_name: "xilinx-u250"
+    node_address: "worker-fpga-01"
+    custom_resources:
+      fpga_xilinx: 1.0
+    properties:
+      board_serial: "XFL1234"
+      bitstream_dir: "/opt/fpga/bitstreams"
+
+  # Example: RISC-V development board
+  - resource_id: "board-spacemit-x60-01"
+    resource_type: "board"
+    target_name: "spacemit-x60"
+    node_address: "worker-riscv-01"
+    custom_resources:
+      spacemit_x60: 1.0
+    properties:
+      serial_port: "/dev/ttyUSB0"
+      flash_tool: "openocd"
+
+  # Example: Cycle-accurate simulator
+  - resource_id: "sim-gemmini-01"
+    resource_type: "simulator"
+    target_name: "gemmini"
+    node_address: "worker-sim-01"
+    custom_resources:
+      gemmini_sim: 1.0
+    properties:
+      simulator_binary: "/opt/chipyard/sim/simulator-gemmini"
+
+  # Example: FireSim slot
+  - resource_id: "firesim-slot-01"
+    resource_type: "simulator"
+    target_name: "firesim"
+    node_address: "worker-firesim-01"
+    custom_resources:
+      firesim_f1: 1.0
+    properties:
+      instance_type: "f1.2xlarge"

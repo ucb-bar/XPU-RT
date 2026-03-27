@@ -1,0 +1,77 @@
+name: test-matrix-ext
+schema_version: "2.0"
+
+platform:
+  vendor: test_vendor
+  family: riscv_vendor_matrix_extension
+  chip_name: test_matrix_chip
+  host_arch: riscv64
+
+execution_model:
+  model: decoupled_matrix
+  thread_model: single_thread
+  dispatch_model: synchronous
+  parallelism: data_parallel
+
+isa:
+  base_isa: rv64gc
+  extensions:
+    - name: xmatrix
+      version: "1.0"
+      description: "Vendor matrix extension"
+  custom_instructions:
+    matrix_mul: "Matrix multiply accumulate"
+    matrix_load: "Load tile into matrix register"
+  compiler_intrinsics: true
+
+native_ops:
+  families:
+    - name: matrix_multiply
+      ops: [matmul]
+      constraints:
+        max_m: 16
+        max_n: 16
+        max_k: 16
+      fallback: decompose
+
+engine_geometry:
+  systolic_array_dim: [16, 16]
+  vector_length_bits: 128
+  tiles:
+    - name: matrix_tile
+      dimensions: [16, 16]
+      element_bits: 8
+      layout: row_major
+
+memory_model:
+  address_spaces:
+    - name: matrix_registers
+      size_bytes: 8192
+    - name: dram
+      size_bytes: 4294967296
+  coherence: coherent
+
+numeric_contract:
+  supported_dtypes:
+    - name: int8
+      native: true
+      accumulator_dtype: int32
+    - name: float32
+      native: true
+
+runtime_contract:
+  calling_convention: c_abi
+  kernel_launch: function_call
+  synchronization: fence
+
+verification_surface:
+  golden_model: pytorch_cpu
+  has_simulator: true
+  simulator_command: "spike --extension=xmatrix"
+
+patches:
+  new_dialects_needed: []
+  requirements:
+    - component: stages
+      description: "Add matrix lowering stage"
+      priority: required

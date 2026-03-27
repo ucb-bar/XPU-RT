@@ -1,0 +1,89 @@
+name: test-gpu-simt
+schema_version: "2.0"
+
+platform:
+  vendor: test_vendor
+  family: simt_gpu_hal
+  chip_name: test_gpu_chip
+  host_arch: x86_64
+  toolchain: llvm-18
+  sdk: cuda-toolkit
+  sdk_version: "12.0"
+
+execution_model:
+  model: simt_gpu
+  thread_model: simt
+  dispatch_model: command_queue
+  parallelism: data_parallel
+  has_scoreboard: true
+
+isa:
+  base_isa: ptx
+  extensions:
+    - name: sm_80
+      version: "8.0"
+      description: "Ampere compute capability"
+  compiler_intrinsics: true
+
+native_ops:
+  families:
+    - name: matrix_multiply
+      ops: [matmul, batch_matmul]
+      fallback: decompose
+    - name: elementwise
+      ops: [add, mul, sub, div, relu, gelu, sigmoid]
+      fallback: decompose
+    - name: reduction
+      ops: [softmax, layernorm, reduce_sum]
+      fallback: decompose
+
+engine_geometry:
+  max_warp_size: 32
+  register_file_entries: 65536
+  tiles:
+    - name: tensor_core_tile
+      dimensions: [16, 16, 16]
+      element_bits: 16
+      layout: row_major
+
+memory_model:
+  address_spaces:
+    - name: registers
+      size_bytes: 262144
+    - name: shared_memory
+      size_bytes: 167936
+    - name: l2_cache
+      size_bytes: 41943040
+    - name: global_memory
+      size_bytes: 85899345920
+  coherence: coherent
+  preferred_layouts: [row_major]
+
+numeric_contract:
+  supported_dtypes:
+    - name: float32
+      native: true
+    - name: float16
+      native: true
+      accumulator_dtype: float32
+    - name: bfloat16
+      native: true
+      accumulator_dtype: float32
+    - name: int8
+      native: true
+      accumulator_dtype: int32
+  mixed_precision_pairs:
+    - [float16, float32]
+    - [bfloat16, float32]
+
+runtime_contract:
+  calling_convention: c_abi
+  kernel_launch: command_queue
+  synchronization: event
+  memory_allocation: dynamic
+  requires_runtime_library: cuda_runtime
+
+verification_surface:
+  golden_model: pytorch_cpu
+  has_emulator: true
+  performance_counters: [sm_active, dram_read, dram_write]

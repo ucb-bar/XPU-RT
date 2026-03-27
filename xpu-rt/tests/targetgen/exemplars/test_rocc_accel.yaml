@@ -1,0 +1,89 @@
+name: test-rocc-accel
+schema_version: "2.0"
+
+platform:
+  vendor: test_vendor
+  family: rocc_accelerator
+  chip_name: test_rocc_chip
+  host_arch: riscv64
+  deployment_model: bare_metal
+
+execution_model:
+  model: rocc_coprocessor
+  thread_model: single_thread
+  dispatch_model: synchronous
+  control_flow: host_driven
+
+isa:
+  base_isa: rv64gc
+  extensions:
+    - name: rocc_custom0
+      description: "Custom accelerator command interface"
+  custom_instructions:
+    mvin: "Move data into scratchpad"
+    mvout: "Move data out of scratchpad"
+    compute: "Execute computation on array"
+  instruction_encoding: custom_prefix
+
+native_ops:
+  families:
+    - name: matrix_multiply
+      ops: [matmul, batch_matmul]
+      constraints:
+        max_dim: 16
+      fallback: decompose
+    - name: movement
+      ops: [dma_in, dma_out]
+
+engine_geometry:
+  systolic_array_dim: [16, 16]
+  tiles:
+    - name: scratchpad_tile
+      dimensions: [16, 16]
+      element_bits: 8
+      alignment_bytes: 16
+
+memory_model:
+  address_spaces:
+    - name: scratchpad
+      id: 0
+      size_bytes: 262144
+      dma_accessible: true
+    - name: accumulator
+      id: 1
+      size_bytes: 65536
+    - name: dram
+      id: 2
+      size_bytes: 4294967296
+  coherence: software_managed
+  dma_model: 2d
+  double_buffering: true
+  max_outstanding_dma: 4
+
+numeric_contract:
+  supported_dtypes:
+    - name: int8
+      native: true
+      accumulator_dtype: int32
+    - name: float32
+      native: true
+
+runtime_contract:
+  calling_convention: custom_abi
+  kernel_launch: function_call
+  synchronization: fence
+
+verification_surface:
+  has_simulator: true
+  simulator_command: "spike --extension=accel"
+  golden_model: pytorch_cpu
+  trace_support: instruction_trace
+
+patches:
+  new_dialects_needed: [test_accel]
+  new_stages_needed: [accel_lowering, memory_plan]
+  requirements:
+    - component: ir
+      description: "Add accelerator dialect ops"
+      priority: required
+      estimated_effort: medium

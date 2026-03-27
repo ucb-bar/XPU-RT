@@ -1,0 +1,83 @@
+# CompGen Target Profile: NVIDIA A100-SXM4-80GB
+#
+# Single-device GPU profile for NVIDIA A100.
+# Values from NVIDIA A100 datasheet and CUDA documentation.
+
+name: cuda-a100
+schema_version: "1.0"
+
+devices:
+  - device_type: gpu
+    name: A100-SXM4-80GB
+    vendor: nvidia
+    compute_units:
+      - name: tensor_core
+        count: 432
+        supported_dtypes: [float64, float32, tf32, float16, bfloat16, int8, int4]
+        peak_tflops: 312.0  # FP16 Tensor Core
+      - name: cuda_core
+        count: 6912
+        supported_dtypes: [float64, float32, float16]
+        peak_tflops: 19.5  # FP32
+    memory_hierarchy:
+      - name: registers
+        size_bytes: 262144  # 256 KB per SM, 108 SMs
+      - name: shared_memory
+        size_bytes: 167936  # 164 KB per SM (configurable)
+      - name: l1_cache
+        size_bytes: 196608  # 192 KB per SM (combined with shared)
+      - name: l2_cache
+        size_bytes: 41943040  # 40 MB
+        bandwidth_gbps: 6144.0
+      - name: hbm
+        size_bytes: 85899345920  # 80 GB
+        bandwidth_gbps: 2039.0
+    supported_ops:
+      - matmul
+      - conv2d
+      - layernorm
+      - softmax
+      - gelu
+      - attention
+      - batch_norm
+      - relu
+      - add
+      - mul
+    features:
+      - tf32
+      - fp16
+      - bf16
+      - int8
+      - sparsity_2_4
+      - nvlink
+      - cuda_graphs
+    kernel_backends:
+      - triton
+      - cutlass
+      - cublas
+      - cudnn
+
+constraints:
+  max_power_w: 400
+  max_memory_gb: 80
+
+cost_model:
+  op_latencies:
+    # Approximate latencies in microseconds for common shapes
+    matmul_4096x4096: 85.0
+    layernorm_4096: 5.0
+    softmax_4096: 4.0
+    gelu_4096: 3.0
+  memory_bandwidth:
+    hbm: 2039.0  # GB/s
+    l2: 6144.0   # GB/s
+  compute_throughput:
+    fp16: 312.0  # TFLOPS
+    tf32: 156.0  # TFLOPS
+    fp32: 19.5   # TFLOPS
+
+metadata:
+  architecture: ampere
+  compute_capability: "8.0"
+  sm_count: 108
+  max_threads_per_sm: 2048
