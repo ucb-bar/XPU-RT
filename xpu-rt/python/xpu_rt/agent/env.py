@@ -1,0 +1,1682 @@
+"""Agent-first compiler environment.
+
+This is the primary interface for LLM/agent-driven compilation. It is NOT
+a compiler with an LLM wrapper — it is a structured environment where:
+
+- The system computes legal actions from the current IR + target
+- Actions are validated BEFORE execution with specific error messages
+- Rewards are immediate, structured, and per-action (not just pass/fail)
+- The observation is compact and structured (not raw IR text)
+- The action space adapts to the current state
+
+Think of it as a gym-like environment for compiler optimization:
+    state = IR structure + target capabilities + cost estimates + history
+    action = one optimization decision (tile, fuse, place, etc.)
+    reward = cost reduction + verification pass
+    done = budget exhausted or no improving actions remain
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Any
+
+from xdsl.dialects.builtin import ModuleOp, TensorType
+from xdsl.dialects.func import CallOp
+from xdsl.dialects.linalg import MatmulOp
+from xdsl.ir import Operation
+
+from compgen.targets.schema import TargetProfile
+
+# ============================================================================
+# Observation: what the agent sees (compact, structured, NOT raw IR text)
+# ============================================================================
+
+
+@dataclass(frozen=True)
+class RegionInfo:
+    """What the agent knows about one IR region.
+
+    This is the agent-efficient representation of an op. No IR text parsing
+    needed — all relevant info is pre-extracted.
+    """
+
+    region_id: str
+    op_type: str                     # "matmul", "gelu", "add", "transpose", etc.
+    input_shapes: tuple[tuple[int, ...], ...]
+    output_shapes: tuple[tuple[int, ...], ...]
+    flops: int                       # estimated FLOPs (0 for non-compute ops)
+    bytes_in: int                    # input bytes
+    bytes_out: int                   # output bytes
+    arithmetic_intensity: float      # flops / total_bytes
+    estimated_latency_us: float      # from cost model
+    device_index: int                # current device assignment (-1 = unassigned)
+    is_compute_bound: bool           # True if compute-bound, False if memory-bound
+    dtype: str                       # "f32", "f16", etc.
+    consumers: tuple[str, ...]       # region_ids that consume this op's output
+    producers: tuple[str, ...]       # region_ids that produce this op's inputs
+
+
+@dataclass(frozen=True)
+class Observation:
+    """Complete observation for the agent. Compact, structured, no IR text.
+
+    This is what the agent receives at every step. It contains everything
+    needed to make the next decision without parsing MLIR.
+    """
+
+    regions: tuple[RegionInfo, ...]
+    total_flops: int
+    total_bytes: int
+    estimated_total_latency_us: float
+    num_devices: int
+    device_names: tuple[str, ...]
+    device_memory_bytes: tuple[int, ...]
+    objective: str                   # "latency", "throughput", "memory", "energy"
+    step_count: int
+    budget_remaining: int
+    best_latency_us: float           # best seen so far
+    history_summary: tuple[StepRecord, ...]  # last N steps
+
+
+@dataclass(frozen=True)
+class StepRecord:
+    """Record of one past step, for the agent's history window."""
+
+    step: int
+    action_type: str
+    action_target: str               # region_id or description
+    was_legal: bool
+    was_applied: bool
+    cost_before_us: float
+    cost_after_us: float
+    improvement_pct: float
+    verification_passed: bool
+    error: str
+
+
+# ============================================================================
+# Actions: what the agent can do (validated before execution)
+# ============================================================================
+
+
+@dataclass(frozen=True)
+class Action:
+    """Base for all agent actions."""
+
+    action_type: str
+    region_id: str = ""
+
+
+@dataclass(frozen=True)
+class TileAction(Action):
+    """Tile a matmul/linalg op."""
+
+    action_type: str = "tile"
+    tile_sizes: tuple[int, ...] = ()
+
+
+@dataclass(frozen=True)
+class FuseAction(Action):
+    """Fuse two adjacent regions."""
+
+    action_type: str = "fuse"
+    target_region_id: str = ""       # second region to fuse with
+
+
+@dataclass(frozen=True)
+class AssignDeviceAction(Action):
+    """Place a region on a device."""
+
+    action_type: str = "assign_device"
+    device_index: int = 0
+
+
+@dataclass(frozen=True)
+class SetDtypeAction(Action):
+    """Change dtype of a region's computation."""
+
+    action_type: str = "set_dtype"
+    dtype: str = "f16"
+
+
+@dataclass(frozen=True)
+class InsertCopyAction(Action):
+    """Insert a cross-device copy."""
+
+    action_type: str = "insert_copy"
+    target_region_id: str = ""
+    async_: bool = True
+
+
+@dataclass(frozen=True)
+class NoopAction(Action):
+    """Do nothing (pass this turn)."""
+
+    action_type: str = "noop"
+
+
+@dataclass(frozen=True)
+class GeneralizeAction(Action):
+    """Generalize a named linalg op (matmul→generic). Exposes computation body."""
+
+    action_type: str = "generalize"
+
+
+@dataclass(frozen=True)
+class ApplyPassAction(Action):
+    """Apply a registered xDSL compiler pass."""
+
+    action_type: str = "apply_pass"
+    pass_name: str = ""
+    pass_args: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class CheckpointAction(Action):
+    """Save current state for speculative exploration."""
+
+    action_type: str = "checkpoint"
+
+
+@dataclass(frozen=True)
+class RollbackAction(Action):
+    """Restore to last checkpoint."""
+
+    action_type: str = "rollback"
+
+
+@dataclass(frozen=True)
+class InspectAction(Action):
+    """Request detailed info about a region (selective attention)."""
+
+    action_type: str = "inspect"
+
+
+@dataclass(frozen=True)
+class AnalyzeAction(Action):
+    """Run network analysis — detect patterns, bottlenecks, kernel opportunities."""
+
+    action_type: str = "analyze"
+
+
+@dataclass(frozen=True)
+class SearchKernelAction(Action):
+    """Search for an optimized kernel for a pattern cluster via Autocomp."""
+
+    action_type: str = "search_kernel"
+    cluster_id: str = ""
+    budget: int = 10
+
+
+@dataclass(frozen=True)
+class GeneratePassAction(Action):
+    """Ask the LLM to generate a new xDSL compiler pass."""
+
+    action_type: str = "generate_pass"
+    description: str = ""
+    target_pattern: str = ""
+    expected_effect: str = ""
+
+
+@dataclass(frozen=True)
+class SolveAction(Action):
+    """Run solver for heterogeneous placement and/or scheduling."""
+
+    action_type: str = "solve"
+    solve_type: str = "placement"  # "placement", "schedule", "both"
+    timeout_ms: int = 10000
+
+
+@dataclass(frozen=True)
+class BenchmarkAction(Action):
+    """Run real hardware benchmark and get ground-truth measurements."""
+
+    action_type: str = "benchmark"
+    device: str = "cuda"             # "cpu" or "cuda"
+    mode: str = "eager"              # "eager", "compiled"
+    num_iterations: int = 100
+
+
+@dataclass(frozen=True)
+class CalibrateAction(Action):
+    """Calibrate cost model from benchmark results."""
+
+    action_type: str = "calibrate"
+
+
+@dataclass(frozen=True)
+class DiscoverOpsAction(Action):
+    """Scan FX graph for unknown ops and generate support."""
+
+    action_type: str = "discover_ops"
+    auto_generate: bool = False      # if True, use LLM to generate decompositions
+
+
+@dataclass(frozen=True)
+class CompileAndRunAction(Action):
+    """Compile with agent decisions via torch.compile and benchmark."""
+
+    action_type: str = "compile_and_run"
+    device: str = "cuda"
+    num_iterations: int = 50
+
+
+@dataclass(frozen=True)
+class EqSatAction(Action):
+    """Run equality saturation on current IR.
+
+    Explores equivalent computational forms and extracts the cheapest
+    via a global cost model. Rules are selected by category.
+    """
+
+    action_type: str = "eqsat"
+    rule_categories: tuple[str, ...] = ("algebraic",)
+    max_iterations: int = 10
+    segment_threshold: int = 200
+
+
+@dataclass(frozen=True)
+class ProposeRuleAction(Action):
+    """Propose a new rewrite rule for the e-graph.
+
+    The rule is a Python RewritePattern (generated by LLM or user).
+    It is validated before being added to the rule registry.
+    """
+
+    action_type: str = "propose_rule"
+    rule_code: str = ""
+    category: str = "llm_generated"
+
+
+@dataclass(frozen=True)
+class InspectEGraphAction(Action):
+    """Inspect the current e-graph state.
+
+    Returns a summary: e-class count, e-node count, ambiguous regions,
+    extraction forks, and rule statistics.
+    """
+
+    action_type: str = "inspect_egraph"
+
+
+@dataclass(frozen=True)
+class SetExtractionObjectiveAction(Action):
+    """Adjust extraction cost model weights.
+
+    Lets the agent tune what the extractor optimizes for.
+    """
+
+    action_type: str = "set_extraction_objective"
+    fusion_weight: float = 1.0
+    transfer_weight: float = 1.0
+    backend_match_weight: float = 1.0
+
+
+@dataclass(frozen=True)
+class ConfigureProfilingAction(Action):
+    """Configure profiling for the current target.
+
+    The LLM selects instrumentation level, counters, and custom hooks
+    based on detected bottlenecks and target capabilities.
+    """
+
+    action_type: str = "configure_profiling"
+    instrumentation_level: str = "op_level"  # "none", "op_level", "tile_level", "full"
+    counters: list[str] = field(default_factory=list)
+    custom_hooks: dict[str, str] = field(default_factory=dict)
+    analysis_focus: str = "latency"
+
+
+@dataclass(frozen=True)
+class ConfigureDispatchAction(Action):
+    """Configure dispatch strategy for heterogeneous execution.
+
+    The LLM selects the dispatch strategy and transport parameters
+    based on topology and workload characteristics.
+    """
+
+    action_type: str = "configure_dispatch"
+    strategy: str = "bulk_sync"  # "bulk_sync", "pipeline", "wavefront", "streaming"
+    transport_overrides: dict[str, str] = field(default_factory=dict)
+    thread_config: dict[str, int] = field(default_factory=dict)
+    double_buffer: bool = False
+
+
+@dataclass(frozen=True)
+class GenerateRuntimeHooksAction(Action):
+    """Generate target-specific C/Zephyr hook code.
+
+    The LLM generates instrumentation code tailored to the target
+    hardware, verified by compilation check.
+    """
+
+    action_type: str = "generate_runtime_hooks"
+    hook_type: str = "profiling"  # "profiling", "dispatch", "transport", "dma"
+    target_language: str = "c"  # "c", "zephyr_c"
+    hook_code: dict[str, str] = field(default_factory=dict)  # hook_point → C code
+
+
+@dataclass(frozen=True)
+class LegalAction:
+    """An action that the system has validated as legal, with estimated cost.
+
+    The agent picks from a list of these — it never submits raw actions
+    that haven't been pre-validated.
+    """
+
+    action: Action
+    estimated_cost_delta_us: float   # negative = improvement
+    estimated_cost_after_us: float
+    reason: str                      # why this action is legal/recommended
+    risk: str                        # "safe", "moderate", "risky"
+    rank: int                        # system's ranking (1 = best predicted)
+
+
+# ============================================================================
+# StepResult: what comes back after an action
+# ============================================================================
+
+
+@dataclass(frozen=True)
+class StepResult:
+    """Result of taking one action in the environment."""
+
+    observation: Observation
+    reward: float                    # positive = improvement
+    done: bool                       # episode over?
+    info: StepInfo
+
+
+@dataclass(frozen=True)
+class StepInfo:
+    """Detailed info about what happened."""
+
+    action_applied: bool
+    verification_passed: bool
+    cost_before_us: float
+    cost_after_us: float
+    improvement_pct: float
+    error: str                       # empty if no error
+    diagnostics: tuple[str, ...]     # warnings, notes
+
+
+# ============================================================================
+# The Environment
+# ============================================================================
+
+
+def _extract_regions(module: ModuleOp, target: TargetProfile) -> list[RegionInfo]:
+    """Extract structured region info from the IR module.
+
+    Picks up ops with compgen.region_id AND significant unlabeled ops
+    (like GenericOp after generalization). Auto-assigns region IDs to
+    unlabeled ops so the agent always has a complete view.
+    """
+    from xdsl.dialects.builtin import StringAttr
+    from xdsl.dialects.linalg import GenericOp, TransposeOp
+
+    regions: list[RegionInfo] = []
+
+    # Significant op types that should always be visible to the agent
+    significant_types = (MatmulOp, GenericOp, TransposeOp, CallOp)
+
+    # Collect ops with existing region_id AND significant unlabeled ops
+    ops_with_rid: list[tuple[str, Operation]] = []
+    counters: dict[str, int] = {}
+
+    for op in module.walk():
+        rid_attr = op.attributes.get("compgen.region_id")
+        if rid_attr is not None:
+            ops_with_rid.append((rid_attr.data, op))  # type: ignore[attr-defined]
+        elif isinstance(op, significant_types):
+            # Auto-assign a region_id
+            op_name = type(op).__name__.lower().replace("op", "")
+            count = counters.get(op_name, 0)
+            rid = f"{op_name}_{count}"
+            counters[op_name] = count + 1
+            op.attributes["compgen.region_id"] = StringAttr(rid)
+            ops_with_rid.append((rid, op))
+
+    for rid, op in ops_with_rid:
+        # Determine op type
+        if isinstance(op, MatmulOp):
+            op_type = "matmul"
+        elif isinstance(op, CallOp):
+            callee = op.callee.string_value() if hasattr(op, "callee") else ""
+            if "gelu" in callee:
+                op_type = "gelu"
+            elif "add" in callee:
+                op_type = "add"
+            elif "mul" in callee:
+                op_type = "mul"
+            else:
+                op_type = "call"
+        else:
+            op_type = type(op).__name__.lower().replace("op", "")
+
+        # Extract shapes
+        input_shapes = tuple(
+            tuple(o.type.get_shape()) for o in op.operands if isinstance(o.type, TensorType)
+        )
+        output_shapes = tuple(
+            tuple(r.type.get_shape()) for r in op.results if isinstance(r.type, TensorType)
+        )
+
+        # Estimate FLOPs and bytes
+        flops = 0
+        bytes_in = 0
+        bytes_out = 0
+        for shape in input_shapes:
+            elem_count = 1
+            for s in shape:
+                elem_count *= s
+            bytes_in += elem_count * 4  # assume f32
+        for shape in output_shapes:
+            elem_count = 1
+            for s in shape:
+                elem_count *= s
+            bytes_out += elem_count * 4
+
+        if op_type == "matmul" and len(input_shapes) >= 2:
+            dim_m = input_shapes[0][0]
+            dim_k = input_shapes[0][1]
+            dim_n = input_shapes[1][1] if len(input_shapes[1]) > 1 else input_shapes[1][0]
+            flops = 2 * dim_m * dim_k * dim_n
+
+        total_bytes = bytes_in + bytes_out
+        ai = flops / total_bytes if total_bytes > 0 else 0.0
+
+        # Estimate latency from target profile
+        latency_us = 0.0
+        if target.devices:
+            dev = target.devices[0]
+            peak_flops_per_sec = 0.0
+            peak_bw_bytes_per_sec = 0.0
+            for cu in dev.compute_units:
+                if cu.peak_tflops:
+                    peak_flops_per_sec = max(peak_flops_per_sec, cu.peak_tflops * 1e12)
+            for ml in dev.memory_hierarchy:
+                if ml.bandwidth_gbps:
+                    peak_bw_bytes_per_sec = max(peak_bw_bytes_per_sec, ml.bandwidth_gbps * 1e9)
+
+            compute_time = flops / peak_flops_per_sec if peak_flops_per_sec > 0 else 0
+            memory_time = total_bytes / peak_bw_bytes_per_sec if peak_bw_bytes_per_sec > 0 else 0
+            latency_us = max(compute_time, memory_time) * 1e6
+
+        is_compute_bound = flops > 0 and (ai > 10.0)  # rough threshold
+
+        regions.append(RegionInfo(
+            region_id=rid,
+            op_type=op_type,
+            input_shapes=input_shapes,
+            output_shapes=output_shapes,
+            flops=flops,
+            bytes_in=bytes_in,
+            bytes_out=bytes_out,
+            arithmetic_intensity=ai,
+            estimated_latency_us=latency_us,
+            device_index=-1,
+            is_compute_bound=is_compute_bound,
+            dtype="f32",
+            consumers=(),  # TODO: build data flow graph
+            producers=(),
+        ))
+
+    return regions
+
+
+def _make_pass_factory(pass_name: str) -> Any:
+    """Lazy-import pass factories to avoid import-time dependency on xDSL transforms."""
+    factories: dict[str, Any] = {}
+
+    def _generalize_factory(args: dict[str, Any]) -> Any:
+        from xdsl.transforms.linalg_generalize_named_ops import LinalgGeneralizeNamedOpsPass
+        return LinalgGeneralizeNamedOpsPass()
+
+    def _dce_factory(args: dict[str, Any]) -> Any:
+        from xdsl.transforms.dead_code_elimination import DeadCodeElimination
+        return DeadCodeElimination()
+
+    def _canonicalize_factory(args: dict[str, Any]) -> Any:
+        from xdsl.transforms.canonicalize import CanonicalizePass
+        return CanonicalizePass()
+
+    def _constant_fold_factory(args: dict[str, Any]) -> Any:
+        from xdsl.transforms.constant_fold_interp import ConstantFoldInterpPass
+        return ConstantFoldInterpPass()
+
+    def _cse_factory(args: dict[str, Any]) -> Any:
+        from xdsl.transforms.common_subexpression_elimination import CommonSubexpressionElimination
+        return CommonSubexpressionElimination()
+
+    factories = {
+        "generalize": _generalize_factory,
+        "dce": _dce_factory,
+        "canonicalize": _canonicalize_factory,
+        "constant_fold": _constant_fold_factory,
+        "cse": _cse_factory,
+    }
+    return factories.get(pass_name)
+
+
+_PASS_MENU: dict[str, dict[str, Any]] = {
+    "generalize": {
+        "factory": _make_pass_factory("generalize"),
+        "desc": "Named ops (matmul, transpose) → linalg.generic",
+        "risk": "safe",
+    },
+    "dce": {
+        "factory": _make_pass_factory("dce"),
+        "desc": "Remove dead code",
+        "risk": "safe",
+    },
+    "canonicalize": {
+        "factory": _make_pass_factory("canonicalize"),
+        "desc": "Canonicalize ops",
+        "risk": "safe",
+    },
+    "constant_fold": {
+        "factory": _make_pass_factory("constant_fold"),
+        "desc": "Fold constants",
+        "risk": "safe",
+    },
+    "cse": {
+        "factory": _make_pass_factory("cse"),
+        "desc": "Eliminate common subexpressions",
+        "risk": "safe",
+    },
+}
+
+
+def _compute_legal_actions(regions: list[RegionInfo], target: TargetProfile) -> list[LegalAction]:
+    """Compute the set of legal actions from the current state."""
+    actions: list[LegalAction] = []
+    rank = 0
+
+    for region in regions:
+        if region.op_type == "matmul":
+            # Legal tile sizes based on dimensions
+            dim_m = region.input_shapes[0][0] if region.input_shapes else 8
+            dim_k = region.input_shapes[0][1] if region.input_shapes and len(region.input_shapes[0]) > 1 else 1
+            dim_n = region.output_shapes[0][1] if region.output_shapes and len(region.output_shapes[0]) > 1 else 1
+
+            for tm in _legal_tiles(dim_m):
+                for tn in _legal_tiles(dim_n):
+                    for tk in _legal_tiles(dim_k):
+                        tile = (tm, tn, tk)
+                        goodness = min(tm, 256) * min(tn, 256) * min(tk, 64) / (256 * 256 * 64)
+                        delta = -region.estimated_latency_us * goodness * 0.3  # up to 30% improvement
+
+                        rank += 1
+                        actions.append(LegalAction(
+                            action=TileAction(region_id=region.region_id, tile_sizes=tile),
+                            estimated_cost_delta_us=delta,
+                            estimated_cost_after_us=region.estimated_latency_us + delta,
+                            reason=f"Tile {region.region_id} [{tm},{tn},{tk}]",
+                            risk="safe",
+                            rank=rank,
+                        ))
+
+        # Device assignment (for all regions, if multiple devices)
+        if len(target.devices) > 1:
+            for dev_idx, dev in enumerate(target.devices):
+                rank += 1
+                actions.append(LegalAction(
+                    action=AssignDeviceAction(region_id=region.region_id, device_index=dev_idx),
+                    estimated_cost_delta_us=0.0,  # TODO: model per-device cost
+                    estimated_cost_after_us=region.estimated_latency_us,
+                    reason=f"Place {region.region_id} on {dev.name}",
+                    risk="safe",
+                    rank=rank,
+                ))
+
+    # Generalize: offer for named ops (matmul, transpose)
+    named_ops = [r for r in regions if r.op_type in ("matmul", "transpose")]
+    if named_ops:
+        rank += 1
+        actions.append(LegalAction(
+            action=GeneralizeAction(region_id="all"),
+            estimated_cost_delta_us=0.0,
+            estimated_cost_after_us=0.0,
+            reason=f"Generalize {len(named_ops)} named ops → linalg.generic",
+            risk="safe",
+            rank=rank,
+        ))
+
+    # Pass menu: always offer safe passes
+    for pass_name, pass_info in _PASS_MENU.items():
+        if pass_name == "generalize":
+            continue  # already offered above
+        rank += 1
+        actions.append(LegalAction(
+            action=ApplyPassAction(pass_name=pass_name),
+            estimated_cost_delta_us=0.0,
+            estimated_cost_after_us=0.0,
+            reason=f"Apply {pass_name}: {pass_info['desc']}",
+            risk=pass_info["risk"],
+            rank=rank,
+        ))
+
+    # Checkpoint and rollback
+    rank += 1
+    actions.append(LegalAction(
+        action=CheckpointAction(),
+        estimated_cost_delta_us=0.0,
+        estimated_cost_after_us=0.0,
+        reason="Save state for speculative exploration",
+        risk="safe",
+        rank=rank,
+    ))
+
+    # Inspect: offer for each region
+    for region in regions:
+        rank += 1
+        actions.append(LegalAction(
+            action=InspectAction(region_id=region.region_id),
+            estimated_cost_delta_us=0.0,
+            estimated_cost_after_us=0.0,
+            reason=f"Inspect {region.region_id} ({region.op_type})",
+            risk="safe",
+            rank=rank,
+        ))
+
+    # Analyze: always available
+    rank += 1
+    actions.append(LegalAction(
+        action=AnalyzeAction(),
+        estimated_cost_delta_us=0.0,
+        estimated_cost_after_us=0.0,
+        reason="Analyze network: detect patterns, bottlenecks, kernel opportunities",
+        risk="safe",
+        rank=rank,
+    ))
+
+    # Always include noop
+    actions.append(LegalAction(
+        action=NoopAction(),
+        estimated_cost_delta_us=0.0,
+        estimated_cost_after_us=0.0,
+        reason="Do nothing",
+        risk="safe",
+        rank=rank + 1,
+    ))
+
+    # Sort by estimated improvement (best first)
+    actions.sort(key=lambda a: a.estimated_cost_delta_us)
+    for i, a in enumerate(actions):
+        actions[i] = LegalAction(
+            action=a.action, estimated_cost_delta_us=a.estimated_cost_delta_us,
+            estimated_cost_after_us=a.estimated_cost_after_us,
+            reason=a.reason, risk=a.risk, rank=i + 1,
+        )
+
+    return actions
+
+
+def _legal_tiles(dim: int) -> list[int]:
+    """Return legal tile sizes for a dimension."""
+    candidates = [t for t in [16, 32, 64, 128, 256] if t <= dim]
+    if not candidates:
+        candidates = [dim]
+    return candidates
+
+
+class CompilerEnv:
+    """Agent-first compiler environment.
+
+    Usage:
+        env = CompilerEnv()
+        obs = env.reset(module, target, objective="latency", budget=50)
+        while True:
+            actions = env.legal_actions()
+            # Agent picks one:
+            result = env.step(actions[0].action)
+            if result.done:
+                break
+        best_module = env.best_module()
+    """
+
+    def __init__(self) -> None:
+        self._module: ModuleOp | None = None
+        self._original_module: ModuleOp | None = None
+        self._target: TargetProfile | None = None
+        self._objective: str = "latency"
+        self._budget: int = 50
+        self._step_count: int = 0
+        self._history: list[StepRecord] = []
+        self._regions: list[RegionInfo] = []
+        self._best_cost: float = float("inf")
+        self._best_module: ModuleOp | None = None
+        self._current_cost: float = float("inf")
+        self._checkpoints: list[tuple[ModuleOp, list[RegionInfo], float]] = []
+        self._exported_program: Any = None
+        self._analysis: Any = None  # NetworkAnalysis, set by AnalyzeAction
+        self._pass_generator: Any = None  # PassGenerator, created on first GeneratePassAction
+        self._pytorch_model: Any = None  # Original nn.Module for benchmarking
+        self._sample_inputs: Any = None  # Sample inputs for benchmarking
+        self._benchmark_results: list[Any] = []  # BenchmarkResult history
+        self._memory: Any = None  # AgentMemory, lazy-loaded
+        self._runtime_artifacts: dict[str, Any] = {}  # runtime configs generated by LLM
+        self._profiling_config: Any = None  # InstrumentationConfig
+        self._dispatch_config: Any = None  # DispatchConfig
+        self._generated_hooks: dict[str, str] = {}  # hook_point → C code
+        self._recipe_module: ModuleOp | None = None  # Recipe IR accumulator
+
+    def reset(
+        self,
+        module: ModuleOp,
+        target: TargetProfile,
+        objective: str = "latency",
+        budget: int = 50,
+        exported_program: Any = None,
+        pytorch_model: Any = None,
+        sample_inputs: Any = None,
+    ) -> Observation:
+        """Start a new optimization episode.
+
+        Args:
+            module: xDSL ModuleOp (Payload IR).
+            target: Hardware target profile.
+            objective: Optimization objective.
+            budget: Max steps.
+            exported_program: Original torch.export ExportedProgram (for FX-level analysis).
+            pytorch_model: Original nn.Module (for benchmarking).
+            sample_inputs: Sample inputs tuple (for benchmarking).
+        """
+        self._original_module = module
+        self._module = module.clone()
+        self._target = target
+        self._objective = objective
+        self._budget = budget
+        self._step_count = 0
+        self._history = []
+        self._exported_program = exported_program
+        self._pytorch_model = pytorch_model
+        self._sample_inputs = sample_inputs
+        self._analysis = None
+        self._benchmark_results = []
+        self._eqsat_weights: dict[str, float] = {
+            "fusion": 1.0, "transfer": 1.0, "backend_match": 1.0,
+        }
+
+        self._regions = _extract_regions(self._module, target)
+        self._current_cost = sum(r.estimated_latency_us for r in self._regions)
+        self._best_cost = self._current_cost
+        self._best_module = self._module.clone()
+
+        return self._make_observation()
+
+    def enable_recipe_tracking(self) -> None:
+        """Enable Recipe IR accumulation.
+
+        After calling this, each ``step()`` will also record the action
+        as a Recipe IR op in an internal module. Call ``recipe`` to
+        retrieve the accumulated Recipe IR.
+        """
+        assert self._module is not None and self._target is not None
+        from compgen.ir.recipe.seed import generate_seed_recipe
+        self._recipe_module = generate_seed_recipe(
+            self._module, self._target, self._objective,
+        )
+
+    @property
+    def recipe(self) -> ModuleOp | None:
+        """Return the accumulated Recipe IR module, or None if tracking is off."""
+        return self._recipe_module
+
+    def observe(self) -> Observation:
+        """Get the current observation."""
+        return self._make_observation()
+
+    def legal_actions(self, max_actions: int = 200) -> list[LegalAction]:
+        """Get legal actions for the current state, ranked by estimated value.
+
+        Noop is always included regardless of max_actions.
+        """
+        assert self._target is not None
+        actions = _compute_legal_actions(self._regions, self._target)
+        # Ensure noop is always present
+        noops = [a for a in actions if isinstance(a.action, NoopAction)]
+        non_noops = [a for a in actions if not isinstance(a.action, NoopAction)]
+        result = non_noops[:max_actions]
+        if noops:
+            result.append(noops[0])
+        return result
+
+    def step(self, action: Action) -> StepResult:
+        """Apply an action and return the result.
+
+        Real transforms clone the module, apply the pass, verify the result,
+        re-extract regions, and update the cost model. Failed transforms are
+        rejected with diagnostics — the module stays unchanged.
+        """
+        assert self._module is not None and self._target is not None
+
+        cost_before = self._current_cost
+        self._step_count += 1
+        applied = False
+        error = ""
+        verification_passed = True
+        diagnostics: list[str] = []
+
+        if isinstance(action, NoopAction):
+            applied = True
+
+        elif isinstance(action, GeneralizeAction):
+            applied, error, diagnostics = self._apply_generalize(action)
+
+        elif isinstance(action, ApplyPassAction):
+            applied, error, diagnostics = self._apply_pass(action)
+
+        elif isinstance(action, CheckpointAction):
+            self._checkpoints.append((
+                self._module.clone(),
+                list(self._regions),
+                self._current_cost,
+            ))
+            applied = True
+            diagnostics.append(f"Checkpoint saved (depth {len(self._checkpoints)})")
+
+        elif isinstance(action, RollbackAction):
+            if self._checkpoints:
+                mod, regions, cost = self._checkpoints.pop()
+                self._module = mod
+                self._regions = regions
+                self._current_cost = cost
+                applied = True
+                diagnostics.append(f"Rolled back (depth {len(self._checkpoints)})")
+            else:
+                error = "No checkpoint to rollback to"
+
+        elif isinstance(action, InspectAction):
+            # Inspect doesn't change state, just enriches diagnostics
+            for r in self._regions:
+                if r.region_id == action.region_id:
+                    diagnostics.append(
+                        f"INSPECT {r.region_id}: type={r.op_type} "
+                        f"flops={r.flops:,} bytes={r.bytes_in + r.bytes_out:,} "
+                        f"AI={r.arithmetic_intensity:.1f} latency={r.estimated_latency_us:.2f}us "
+                        f"bound={'compute' if r.is_compute_bound else 'memory'} "
+                        f"device={r.device_index} dtype={r.dtype}"
+                    )
+                    applied = True
+                    break
+            if not applied:
+                error = f"Region {action.region_id} not found"
+
+        elif isinstance(action, AnalyzeAction):
+            applied, error, diagnostics = self._apply_analyze()
+
+        elif isinstance(action, SearchKernelAction):
+            applied, error, diagnostics = self._apply_search_kernel(action)
+
+        elif isinstance(action, GeneratePassAction):
+            applied, error, diagnostics = self._apply_generate_pass(action)
+
+        elif isinstance(action, SolveAction):
+            applied, error, diagnostics = self._apply_solve(action)
+
+        elif isinstance(action, BenchmarkAction):
+            applied, error, diagnostics = self._apply_benchmark(action)
+
+        elif isinstance(action, CalibrateAction):
+            applied, error, diagnostics = self._apply_calibrate()
+
+        elif isinstance(action, DiscoverOpsAction):
+            applied, error, diagnostics = self._apply_discover_ops(action)
+
+        elif isinstance(action, CompileAndRunAction):
+            applied, error, diagnostics = self._apply_compile_and_run(action)
+
+        elif isinstance(action, EqSatAction):
+            applied, error, diagnostics = self._apply_eqsat(action)
+
+        elif isinstance(action, InspectEGraphAction):
+            applied, error, diagnostics = self._apply_inspect_egraph()
+
+        elif isinstance(action, SetExtractionObjectiveAction):
+            self._eqsat_weights = {
+                "fusion": action.fusion_weight,
+                "transfer": action.transfer_weight,
+                "backend_match": action.backend_match_weight,
+            }
+            applied = True
+            diagnostics.append(
+                f"Extraction weights updated: fusion={action.fusion_weight}, "
+                f"transfer={action.transfer_weight}, "
+                f"backend_match={action.backend_match_weight}"
+            )
+
+        elif isinstance(action, TileAction):
+            applied = False
+            error = "Tiling pass not yet implemented"
+
+        elif isinstance(action, AssignDeviceAction):
+            for i, r in enumerate(self._regions):
+                if r.region_id == action.region_id:
+                    self._regions[i] = RegionInfo(
+                        region_id=r.region_id, op_type=r.op_type,
+                        input_shapes=r.input_shapes, output_shapes=r.output_shapes,
+                        flops=r.flops, bytes_in=r.bytes_in, bytes_out=r.bytes_out,
+                        arithmetic_intensity=r.arithmetic_intensity,
+                        estimated_latency_us=r.estimated_latency_us,
+                        device_index=action.device_index,
+                        is_compute_bound=r.is_compute_bound, dtype=r.dtype,
+                        consumers=r.consumers, producers=r.producers,
+                    )
+                    applied = True
+                    break
+
+        elif isinstance(action, ConfigureProfilingAction):
+            applied, error, diagnostics = self._apply_configure_profiling(action)
+
+        elif isinstance(action, ConfigureDispatchAction):
+            applied, error, diagnostics = self._apply_configure_dispatch(action)
+
+        elif isinstance(action, GenerateRuntimeHooksAction):
+            applied, error, diagnostics = self._apply_generate_hooks(action)
+
+        else:
+            error = f"Unknown action type: {action.action_type}"
+
+        cost_after = sum(r.estimated_latency_us for r in self._regions)
+        self._current_cost = cost_after
+        improvement = ((cost_before - cost_after) / cost_before * 100) if cost_before > 0 else 0
+
+        if applied and cost_after < self._best_cost:
+            self._best_cost = cost_after
+            self._best_module = self._module.clone()
+
+        record = StepRecord(
+            step=self._step_count,
+            action_type=action.action_type,
+            action_target=action.region_id,
+            was_legal=True,
+            was_applied=applied,
+            cost_before_us=cost_before,
+            cost_after_us=cost_after,
+            improvement_pct=improvement,
+            verification_passed=verification_passed,
+            error=error,
+        )
+        self._history.append(record)
+
+        # Record action in Recipe IR if tracking is enabled
+        if self._recipe_module is not None and applied:
+            from compgen.agent.recipe_bridge import action_to_recipe_op
+            recipe_op = action_to_recipe_op(action, self._step_count)
+            if recipe_op is not None:
+                self._recipe_module.body.block.add_op(recipe_op)
+
+        done = self._step_count >= self._budget
+        reward = (cost_before - cost_after) / max(cost_before, 1e-9)
+
+        return StepResult(
+            observation=self._make_observation(),
+            reward=reward,
+            done=done,
+            info=StepInfo(
+                action_applied=applied,
+                verification_passed=verification_passed,
+                cost_before_us=cost_before,
+                cost_after_us=cost_after,
+                improvement_pct=improvement,
+                error=error,
+                diagnostics=tuple(diagnostics),
+            ),
+        )
+
+    def _apply_generalize(self, action: GeneralizeAction) -> tuple[bool, str, list[str]]:
+        """Apply LinalgGeneralizeNamedOpsPass — turns matmul/transpose → generic."""
+        from xdsl.transforms.linalg_generalize_named_ops import LinalgGeneralizeNamedOpsPass
+
+        assert self._module is not None and self._target is not None
+        diagnostics: list[str] = []
+
+        try:
+            cloned = self._module.clone()
+            LinalgGeneralizeNamedOpsPass().apply(None, cloned)  # type: ignore[arg-type]
+            cloned.verify()
+
+            self._module = cloned
+            self._regions = _extract_regions(self._module, self._target)
+            diagnostics.append("Generalized named ops → linalg.generic")
+            return True, "", diagnostics
+        except Exception as e:
+            return False, f"Generalize failed: {e}", diagnostics
+
+    def _apply_pass(self, action: ApplyPassAction) -> tuple[bool, str, list[str]]:
+        """Apply a registered xDSL pass from the pass menu."""
+        assert self._module is not None and self._target is not None
+        diagnostics: list[str] = []
+
+        pass_entry = _PASS_MENU.get(action.pass_name)
+        if pass_entry is None:
+            return False, f"Unknown pass: {action.pass_name}. Available: {list(_PASS_MENU.keys())}", diagnostics
+
+        try:
+            cloned = self._module.clone()
+            pass_instance = pass_entry["factory"](action.pass_args)
+            pass_instance.apply(None, cloned)
+            cloned.verify()
+
+            self._module = cloned
+            self._regions = _extract_regions(self._module, self._target)
+            diagnostics.append(f"Applied pass '{action.pass_name}': {pass_entry['desc']}")
+            return True, "", diagnostics
+        except Exception as e:
+            return False, f"Pass '{action.pass_name}' failed: {e}", diagnostics
+
+    def _apply_analyze(self) -> tuple[bool, str, list[str]]:
+        """Run network analysis on the FX graph."""
+        from compgen.agent.analyzer import NetworkAnalyzer
+
+        diagnostics: list[str] = []
+
+        if self._exported_program is None:
+            return False, "No ExportedProgram available. Pass exported_program to reset().", diagnostics
+
+        assert self._target is not None
+        try:
+            analyzer = NetworkAnalyzer()
+            self._analysis = analyzer.analyze(self._exported_program, self._target)
+
+            diagnostics.append(f"ANALYSIS: {len(self._analysis.clusters)} pattern clusters detected")
+            for c in self._analysis.clusters:
+                best_lat = min(c.estimated_latency_per_device.values()) if c.estimated_latency_per_device else 0
+                bottleneck = " [BOTTLENECK]" if c.is_bottleneck else ""
+                diagnostics.append(
+                    f"  {c.cluster_id}|{c.pattern_type}|{c.total_flops:,}F|"
+                    f"{best_lat:.2f}us|kernel:{c.kernel_opportunity}{bottleneck}"
+                )
+            if self._analysis.unclustered_ops:
+                diagnostics.append(f"  {len(self._analysis.unclustered_ops)} unclustered ops")
+            for opp in self._analysis.optimization_opportunities:
+                diagnostics.append(f"  OPP: {opp}")
+
+            return True, "", diagnostics
+        except Exception as e:
+            return False, f"Analysis failed: {e}", diagnostics
+
+    def _apply_search_kernel(self, action: SearchKernelAction) -> tuple[bool, str, list[str]]:
+        """Run Autocomp kernel search for a pattern cluster."""
+        from compgen.kernels.autocomp_adapter import AutocompAdapter
+
+        diagnostics: list[str] = []
+
+        if self._analysis is None:
+            return False, "Run AnalyzeAction first to detect pattern clusters.", diagnostics
+
+        # Find the cluster
+        cluster = None
+        for c in self._analysis.clusters:
+            if c.cluster_id == action.cluster_id:
+                cluster = c
+                break
+
+        if cluster is None:
+            available = [c.cluster_id for c in self._analysis.clusters]
+            return False, f"Cluster '{action.cluster_id}' not found. Available: {available}", diagnostics
+
+        assert self._target is not None
+
+        # Check if search is viable
+        adapter = AutocompAdapter()
+        if not adapter.quick_check(cluster, self._target):
+            return False, "Autocomp search not viable (need GPU + GOOGLE_API_KEY)", diagnostics
+
+        try:
+            result = adapter.search_kernel(cluster, self._target, budget=action.budget)
+            diagnostics.append(
+                f"KERNEL: {result.cluster_id} -> {result.language} "
+                f"latency={result.latency_us:.2f}us correct={result.correct} "
+                f"speedup={result.speedup_vs_baseline:.2f}x"
+            )
+            return True, "", diagnostics
+        except Exception as e:
+            return False, f"Kernel search failed: {e}", diagnostics
+
+    def _apply_benchmark(self, action: BenchmarkAction) -> tuple[bool, str, list[str]]:
+        """Run real hardware benchmark on the PyTorch model."""
+        from compgen.runtime.local_executor import LocalExecutor
+
+        diagnostics: list[str] = []
+
+        if self._pytorch_model is None or self._sample_inputs is None:
+            return False, "No PyTorch model/inputs. Pass pytorch_model and sample_inputs to reset().", diagnostics
+
+        try:
+            executor = LocalExecutor()
+            result = executor.benchmark(
+                model=self._pytorch_model,
+                sample_inputs=self._sample_inputs,
+                device=action.device,
+                mode=action.mode,
+                num_iterations=action.num_iterations,
+            )
+
+            self._benchmark_results.append(result)
+
+            diagnostics.append(
+                f"BENCHMARK: {result.device}/{result.mode} "
+                f"latency={result.latency_median_us:.1f}us (p99={result.latency_p99_us:.1f}us) "
+                f"throughput={result.throughput_samples_per_sec:.0f} samples/s "
+                f"memory={result.peak_memory_bytes / 1e6:.1f}MB"
+            )
+
+            # Compare with cost model estimate
+            estimated = self._current_cost
+            actual = result.latency_median_us
+            if estimated > 0:
+                accuracy = 1.0 - abs(estimated - actual) / max(estimated, actual)
+                diagnostics.append(
+                    f"  Cost model: estimated={estimated:.1f}us actual={actual:.1f}us "
+                    f"accuracy={accuracy:.1%}"
+                )
+
+            return True, "", diagnostics
+        except Exception as e:
+            return False, f"Benchmark failed: {e}", diagnostics
+
+    def _apply_calibrate(self) -> tuple[bool, str, list[str]]:
+        """Calibrate cost model from benchmark measurements."""
+        from compgen.agent.memory import AgentMemory
+
+        diagnostics: list[str] = []
+
+        if not self._benchmark_results:
+            return False, "No benchmark results. Run BenchmarkAction first.", diagnostics
+
+        if self._memory is None:
+            self._memory = AgentMemory()
+
+        assert self._target is not None
+        latest = self._benchmark_results[-1]
+        device_name = self._target.devices[0].name if self._target.devices else "unknown"
+
+        # Update calibration for each region
+        for r in self._regions:
+            if r.estimated_latency_us > 0:
+                # Distribute measured latency proportionally across regions
+                total_estimated = sum(reg.estimated_latency_us for reg in self._regions)
+                if total_estimated > 0:
+                    fraction = r.estimated_latency_us / total_estimated
+                    estimated_for_region = r.estimated_latency_us
+                    measured_for_region = latest.latency_median_us * fraction
+                    self._memory.cost_calibration.update(
+                        device_name, r.op_type, estimated_for_region, measured_for_region
+                    )
+
+        # Report calibration state
+        factors = self._memory.cost_calibration.factors.get(device_name, {})
+        diagnostics.append(f"CALIBRATE: Updated {len(factors)} op correction factors for {device_name}")
+        for op_type, factor in factors.items():
+            diagnostics.append(f"  {op_type}: correction={factor:.2f}x")
+
+        # Save memory
+        self._memory.save(".compgen_cache/agent_memory.json")
+        diagnostics.append("  Memory saved to .compgen_cache/agent_memory.json")
+
+        return True, "", diagnostics
+
+    def _apply_discover_ops(self, action: DiscoverOpsAction) -> tuple[bool, str, list[str]]:
+        """Scan FX graph for unknown ops."""
+        from compgen.agent.op_discovery import OpDiscovery
+
+        diagnostics: list[str] = []
+
+        if self._exported_program is None:
+            return False, "No ExportedProgram. Pass exported_program to reset().", diagnostics
+
+        discovery = OpDiscovery()
+        unknowns = discovery.discover_unknown_ops(self._exported_program)
+
+        if not unknowns:
+            diagnostics.append("DISCOVER: All ops are known — no unknown ops found")
+            return True, "", diagnostics
+
+        diagnostics.append(f"DISCOVER: Found {len(unknowns)} unknown ops:")
+        for u in unknowns:
+            diagnostics.append(f"  {u.target}: {u.shape} (seen {u.count}x)")
+
+        if action.auto_generate and unknowns:
+            diagnostics.append("  Auto-generation of decompositions not yet implemented")
+
+        return True, "", diagnostics
+
+    def _apply_compile_and_run(self, action: CompileAndRunAction) -> tuple[bool, str, list[str]]:
+        """Compile with torch.compile using agent decisions and benchmark."""
+        from compgen.runtime.torch_backend import CompGenBackend
+
+        diagnostics: list[str] = []
+
+        if self._pytorch_model is None or self._sample_inputs is None:
+            return False, "No PyTorch model. Pass pytorch_model and sample_inputs to reset().", diagnostics
+
+        try:
+            # Collect agent decisions from current state
+            decisions = {
+                "device_assignments": {r.region_id: r.device_index for r in self._regions},
+                "objective": self._objective,
+            }
+
+            backend = CompGenBackend(decisions)
+            result = backend.compile_and_benchmark(
+                self._pytorch_model, self._sample_inputs,
+                device=action.device, num_iterations=action.num_iterations,
+            )
+
+            diagnostics.append(
+                f"COMPILE+RUN: {result.device}/{result.mode} "
+                f"latency={result.latency_median_us:.1f}us "
+                f"throughput={result.throughput_samples_per_sec:.0f} samples/s"
+            )
+
+            self._benchmark_results.append(result)
+            return True, "", diagnostics
+        except Exception as e:
+            return False, f"Compile+run failed: {e}", diagnostics
+
+    def _apply_eqsat(self, action: EqSatAction) -> tuple[bool, str, list[str]]:
+        """Run equality saturation on current IR."""
+        diagnostics: list[str] = []
+
+        try:
+            from compgen.eqsat.config import EqSatConfig
+            from compgen.eqsat.pipeline import run_eqsat_pass
+            from compgen.eqsat.rules.registry import create_default_registry
+
+            registry = create_default_registry()
+            rules = registry.get_rules(action.rule_categories)
+
+            if not rules:
+                return False, f"No rules found for categories: {action.rule_categories}", diagnostics
+
+            config = EqSatConfig(
+                max_iterations=action.max_iterations,
+                segment_threshold=action.segment_threshold,
+            )
+
+            result = run_eqsat_pass(self._module, config=config, rules=rules)
+
+            diagnostics.append(
+                f"EQSAT: {result.ops_before}→{result.ops_after} ops, "
+                f"{result.eclasses_initial}→{result.eclasses_after_rewrite} eclasses, "
+                f"{result.enodes_after_rewrite} enodes, changed={result.changed}"
+            )
+            for rule_name, count in result.rule_stats.items():
+                diagnostics.append(f"  rule {rule_name}: {count} matches")
+
+            # Re-extract regions from updated IR
+            self._regions = _extract_regions(self._module, self._target)
+
+            return True, "", diagnostics
+        except Exception as e:
+            return False, f"EqSat failed: {e}", diagnostics
+
+    def _apply_inspect_egraph(self) -> tuple[bool, str, list[str]]:
+        """Inspect e-graph state of current IR (creates temporary e-graph)."""
+        diagnostics: list[str] = []
+
+        try:
+            from xdsl.dialects import equivalence
+
+            from compgen.eqsat.pipeline import _count_eclasses, _count_enodes, create_egraph
+
+            # Create a temporary copy to inspect
+            temp_module = self._module.clone()
+            create_egraph(temp_module)
+
+            n_eclasses = _count_eclasses(temp_module)
+            n_enodes = _count_enodes(temp_module)
+
+            diagnostics.append(
+                f"EGRAPH: {n_eclasses} e-classes, {n_enodes} e-nodes"
+            )
+
+            # Count ops by type
+            op_counts: dict[str, int] = {}
+            for op in temp_module.walk():
+                if not isinstance(op, (equivalence.AnyClassOp, equivalence.GraphOp,
+                                       equivalence.YieldOp)):
+                    name = op.name
+                    op_counts[name] = op_counts.get(name, 0) + 1
+            for name, count in sorted(op_counts.items(), key=lambda x: -x[1])[:10]:
+                diagnostics.append(f"  {name}: {count}")
+
+            return True, "", diagnostics
+        except Exception as e:
+            return False, f"EGraph inspection failed: {e}", diagnostics
+
+    def _apply_solve(self, action: SolveAction) -> tuple[bool, str, list[str]]:
+        """Run CP-SAT solver for placement and/or scheduling."""
+        from compgen.solve.partition import Partition
+        from compgen.solve.placement import PlacementConstraint, solve_placement
+        from compgen.solve.schedule import solve_schedule
+
+        assert self._target is not None
+        diagnostics: list[str] = []
+
+        num_devices = len(self._target.devices)
+        if num_devices < 2:
+            return False, "Solver requires multi-device target (>= 2 devices)", diagnostics
+
+        # Build partitions from regions
+        partitions = []
+        deps: dict[str, list[str]] = {}
+        for r in self._regions:
+            partitions.append(Partition(
+                partition_id=r.region_id,
+                op_names=[r.region_id],
+                dependencies=list(r.producers),
+                estimated_cost_us=r.estimated_latency_us,
+                memory_bytes=r.bytes_in + r.bytes_out,
+            ))
+            deps[r.region_id] = list(r.producers)
+
+        # Device compute rates from target profile
+        compute_rates = []
+        for dev in self._target.devices:
+            peak = 0.0
+            for cu in dev.compute_units:
+                if cu.peak_tflops:
+                    peak = max(peak, cu.peak_tflops)
+            compute_rates.append(max(peak, 0.01))
+
+        # Device memory caps
+        memory_caps = []
+        for dev in self._target.devices:
+            cap = max((ml.size_bytes for ml in dev.memory_hierarchy), default=0)
+            memory_caps.append(cap)
+
+        # Transfer cost from interconnects
+        transfer_costs: dict[tuple[int, int], float] = {}
+        for ic in self._target.interconnects:
+            d1, d2 = ic.devices
+            if ic.bandwidth_gbps > 0:
+                cost_per_byte = 1.0 / (ic.bandwidth_gbps * 1e9) * 1e6  # us per byte
+                transfer_costs[(d1, d2)] = cost_per_byte
+                transfer_costs[(d2, d1)] = cost_per_byte
+
+        # Collect agent constraints from current device assignments
+        constraints = []
+        for r in self._regions:
+            if r.device_index >= 0:
+                constraints.append(PlacementConstraint(
+                    partition_id=r.region_id,
+                    required_device=r.device_index,
+                    reason="Agent-assigned",
+                ))
+
+        if action.solve_type in ("placement", "both"):
+            placement = solve_placement(
+                partitions=partitions,
+                num_devices=num_devices,
+                device_compute_rates=compute_rates,
+                device_memory_caps=memory_caps,
+                transfer_cost_matrix=transfer_costs,
+                constraints=constraints,
+                timeout_ms=action.timeout_ms,
+            )
+
+            if placement.feasible:
+                diagnostics.append(
+                    f"PLACEMENT: feasible, cost={placement.objective_value:.2f}us, "
+                    f"time={placement.solve_time_ms:.0f}ms"
+                )
+                for pid, dev_idx in placement.assignments.items():
+                    diagnostics.append(f"  {pid} → device {dev_idx} ({self._target.devices[dev_idx].name})")
+
+                # Update regions with solver assignments
+                for i, r in enumerate(self._regions):
+                    dev_idx = placement.assignments.get(r.region_id, r.device_index)
+                    if dev_idx != r.device_index:
+                        self._regions[i] = RegionInfo(
+                            region_id=r.region_id, op_type=r.op_type,
+                            input_shapes=r.input_shapes, output_shapes=r.output_shapes,
+                            flops=r.flops, bytes_in=r.bytes_in, bytes_out=r.bytes_out,
+                            arithmetic_intensity=r.arithmetic_intensity,
+                            estimated_latency_us=r.estimated_latency_us,
+                            device_index=dev_idx,
+                            is_compute_bound=r.is_compute_bound, dtype=r.dtype,
+                            consumers=r.consumers, producers=r.producers,
+                        )
+            else:
+                diagnostics.append(f"PLACEMENT: infeasible (time={placement.solve_time_ms:.0f}ms)")
+                return False, "Placement solver found no feasible solution", diagnostics
+
+        if action.solve_type in ("schedule", "both"):
+            assignments = {r.region_id: r.device_index for r in self._regions}
+            durations = {r.region_id: max(r.estimated_latency_us, 0.001) for r in self._regions}
+
+            sched = solve_schedule(
+                partition_ids=[r.region_id for r in self._regions],
+                durations_us=durations,
+                device_assignments=assignments,
+                dependencies=deps,
+                num_devices=num_devices,
+                timeout_ms=action.timeout_ms,
+            )
+
+            if sched.feasible:
+                diagnostics.append(
+                    f"SCHEDULE: feasible, makespan={sched.makespan_us:.2f}us, "
+                    f"time={sched.solve_time_ms:.0f}ms"
+                )
+                for pid in sorted(sched.start_times, key=lambda p: sched.start_times[p]):
+                    diagnostics.append(
+                        f"  {pid}: {sched.start_times[pid]:.2f}us → {sched.end_times[pid]:.2f}us"
+                    )
+            else:
+                diagnostics.append(f"SCHEDULE: infeasible (time={sched.solve_time_ms:.0f}ms)")
+
+        return True, "", diagnostics
+
+    def _apply_generate_pass(self, action: GeneratePassAction) -> tuple[bool, str, list[str]]:
+        """Ask the LLM to generate a new compiler pass, then validate it."""
+        from compgen.agent.pass_gen import PassGenerator
+        from compgen.llm.gemini_client import GeminiClient
+
+        assert self._module is not None
+        diagnostics: list[str] = []
+
+        if not action.description:
+            return False, "GeneratePassAction requires a description", diagnostics
+
+        # Create pass generator on first use
+        if self._pass_generator is None:
+            client = GeminiClient(model="gemini-2.5-flash")
+            self._pass_generator = PassGenerator(llm_client=client)
+
+        try:
+            result = self._pass_generator.generate(
+                description=action.description,
+                target_pattern=action.target_pattern,
+                expected_effect=action.expected_effect,
+                module=self._module,
+            )
+
+            if result.verified:
+                diagnostics.append(f"PASS_GEN: '{result.name}' generated and VERIFIED")
+                diagnostics.append(f"  Code: {len(result.source_code)} chars")
+
+                # Apply the pass
+                assert self._target is not None
+                success, err = self._pass_generator.apply_generated_pass(result.name, self._module)
+                if success:
+                    self._regions = _extract_regions(self._module, self._target)
+                    diagnostics.append("  Applied successfully")
+                    return True, "", diagnostics
+                else:
+                    diagnostics.append(f"  Application failed: {err}")
+                    return False, err, diagnostics
+            else:
+                diagnostics.append(f"PASS_GEN: '{result.name}' FAILED verification")
+                diagnostics.append(f"  Error: {result.verification_error}")
+                return False, result.verification_error, diagnostics
+
+        except Exception as e:
+            return False, f"Pass generation failed: {e}", diagnostics
+
+    def _apply_configure_profiling(
+        self, action: ConfigureProfilingAction,
+    ) -> tuple[bool, str, list[str]]:
+        """Configure profiling based on LLM decision."""
+        from compgen.runtime.instrumentation import InstrumentationConfig, InstrumentationLevel
+
+        diagnostics: list[str] = []
+
+        level_map = {
+            "none": InstrumentationLevel.NONE,
+            "op_level": InstrumentationLevel.OP_LEVEL,
+            "tile_level": InstrumentationLevel.TILE_LEVEL,
+            "full": InstrumentationLevel.FULL,
+        }
+        level = level_map.get(action.instrumentation_level, InstrumentationLevel.OP_LEVEL)
+
+        self._profiling_config = InstrumentationConfig(level=level)
+        self._generated_hooks.update(action.custom_hooks)
+        self._runtime_artifacts["profiling"] = {
+            "level": action.instrumentation_level,
+            "counters": action.counters,
+            "custom_hooks": action.custom_hooks,
+            "analysis_focus": action.analysis_focus,
+        }
+
+        diagnostics.append(f"Profiling configured: level={action.instrumentation_level}")
+        if action.counters:
+            diagnostics.append(f"  Counters: {', '.join(action.counters)}")
+        if action.custom_hooks:
+            diagnostics.append(f"  Custom hooks: {len(action.custom_hooks)} hook points")
+
+        return True, "", diagnostics
+
+    def _apply_configure_dispatch(
+        self, action: ConfigureDispatchAction,
+    ) -> tuple[bool, str, list[str]]:
+        """Configure dispatch strategy based on LLM decision."""
+        from compgen.runtime.dispatch_strategy import create_strategy
+
+        diagnostics: list[str] = []
+
+        try:
+            create_strategy(action.strategy)  # validate strategy name
+        except ValueError as e:
+            return False, str(e), diagnostics
+
+        self._dispatch_config = {
+            "strategy": action.strategy,
+            "transport_overrides": action.transport_overrides,
+            "thread_config": action.thread_config,
+            "double_buffer": action.double_buffer,
+        }
+        self._runtime_artifacts["dispatch"] = self._dispatch_config
+
+        diagnostics.append(f"Dispatch strategy: {action.strategy}")
+        if action.transport_overrides:
+            diagnostics.append(f"  Transport overrides: {action.transport_overrides}")
+        if action.thread_config:
+            diagnostics.append(f"  Thread config: {action.thread_config}")
+        if action.double_buffer:
+            diagnostics.append("  Double buffering: enabled")
+
+        return True, "", diagnostics
+
+    def _apply_generate_hooks(
+        self, action: GenerateRuntimeHooksAction,
+    ) -> tuple[bool, str, list[str]]:
+        """Generate target-specific runtime hooks from LLM output."""
+        diagnostics: list[str] = []
+
+        if not action.hook_code:
+            return False, "No hook code provided", diagnostics
+
+        # Validate: each hook point should have non-empty code
+        for hook_point, code in action.hook_code.items():
+            if not code.strip():
+                return False, f"Empty hook code for {hook_point}", diagnostics
+
+        self._generated_hooks.update(action.hook_code)
+        self._runtime_artifacts.setdefault("hooks", {})
+        self._runtime_artifacts["hooks"].update(action.hook_code)
+
+        diagnostics.append(f"Generated {len(action.hook_code)} runtime hooks ({action.hook_type})")
+        for hp in action.hook_code:
+            diagnostics.append(f"  {hp}: {len(action.hook_code[hp])} chars")
+
+        return True, "", diagnostics
+
+    @property
+    def runtime_artifacts(self) -> dict[str, Any]:
+        """Get all generated runtime artifacts."""
+        return dict(self._runtime_artifacts)
+
+    @property
+    def generated_hooks(self) -> dict[str, str]:
+        """Get all generated hook code."""
+        return dict(self._generated_hooks)
+
+    @property
+    def analysis(self) -> Any:
+        """Get the current network analysis (None if not yet run)."""
+        return self._analysis
+
+    def best_module(self) -> ModuleOp | None:
+        """Get the best module seen during this episode."""
+        return self._best_module
+
+    def _make_observation(self) -> Observation:
+        """Build the current observation."""
+        assert self._target is not None
+
+        device_names = tuple(d.name for d in self._target.devices)
+        device_memory = tuple(
+            max((ml.size_bytes for ml in d.memory_hierarchy), default=0)
+            for d in self._target.devices
+        )
+
+        return Observation(
+            regions=tuple(self._regions),
+            total_flops=sum(r.flops for r in self._regions),
+            total_bytes=sum(r.bytes_in + r.bytes_out for r in self._regions),
+            estimated_total_latency_us=self._current_cost,
+            num_devices=len(self._target.devices),
+            device_names=device_names,
+            device_memory_bytes=device_memory,
+            objective=self._objective,
+            step_count=self._step_count,
+            budget_remaining=self._budget - self._step_count,
+            best_latency_us=self._best_cost,
+            history_summary=tuple(self._history[-10:]),
+        )
+
+
+__all__ = [
+    "Action",
+    "AnalyzeAction",
+    "ApplyPassAction",
+    "BenchmarkAction",
+    "CalibrateAction",
+    "AssignDeviceAction",
+    "CheckpointAction",
+    "CompileAndRunAction",
+    "CompilerEnv",
+    "DiscoverOpsAction",
+    "FuseAction",
+    "GeneralizeAction",
+    "GeneratePassAction",
+    "InspectAction",
+    "InsertCopyAction",
+    "LegalAction",
+    "NoopAction",
+    "Observation",
+    "RegionInfo",
+    "RollbackAction",
+    "SearchKernelAction",
+    "SetDtypeAction",
+    "SolveAction",
+    "StepInfo",
+    "StepResult",
+    "TileAction",
+]
