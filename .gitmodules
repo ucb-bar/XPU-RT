@@ -1,0 +1,9 @@
+[submodule "third_party/autocomp"]
+	path = third_party/autocomp
+	url = https://github.com/ucb-bar/autocomp.git
+[submodule "third_party/llvm-project"]
+	path = third_party/llvm-project
+	url = https://github.com/llvm/llvm-project.git
+[submodule "third_party/zephyr"]
+	path = third_party/zephyr
+	url = https://github.com/zephyrproject-rtos/zephyr.git
