@@ -1,0 +1,41 @@
+op_family: layer_norm
+tiling_guidance:
+- target_class: gpu
+  tile_sizes:
+  - 256
+  rationale: Reduce over the normalisation axis (typically the last dimension).  One thread block per token/sample with 256
+    threads for the reduction.
+  source: Triton/cuDNN
+  confidence: high
+fusion_opportunities:
+- pattern: layer_norm+linear
+  description: Fuse LayerNorm into the subsequent linear layer's prologue to avoid writing the normalised intermediate to
+    global memory.
+  conditions:
+  - Linear immediately follows LayerNorm.
+  source: Triton/Megatron-LM
+  confidence: medium
+layout_preferences:
+- target_class: gpu
+  preferred_layout: (..., D) with D contiguous
+  rationale: Reduction over the last (contiguous) dimension is fastest.
+  source: Triton
+backend_guidance:
+- target_class: gpu
+  recommended_backend: Triton
+  conditions: Standard layer normalisation
+  rationale: Triton LayerNorm kernel with online Welford reduction.  Often fused with adjacent ops.
+  source: Triton
+- target_class: cpu
+  recommended_backend: oneDNN
+  conditions: Standard layer normalisation
+  rationale: oneDNN layer_normalization primitive with SIMD.
+  source: oneDNN
+pitfalls:
+- LayerNorm with large hidden dimensions (e.g., 12288 in GPT-3) benefits from warp-level reduction; ensure enough threads
+  per block.
+- 'RMSNorm (used in LLaMA) is cheaper: skip mean subtraction, only compute root-mean-square.  Do not use full LayerNorm when
+  RMSNorm suffices.'
+performance_bounds:
+- 'Memory-bound: single pass over the normalisation dimension.'
+- Throughput limited by reduction bandwidth, not compute.

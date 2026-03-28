@@ -88,6 +88,7 @@ def dataclass_to_xdsl(op: RecipeOp) -> Operation | None:
 
     if isinstance(op, SetTileParams):
         props: dict[str, object] = {
+            "sym_name": StringAttr(f"cand_tile_{op.region_id}"),
             "region_ref": _sym_ref(op.region_id),
             "tile_sizes": ArrayAttr([_int_attr(s) for s in op.tile_sizes]),
         }
@@ -97,6 +98,7 @@ def dataclass_to_xdsl(op: RecipeOp) -> Operation | None:
 
     if isinstance(op, AssignDevice):
         return PlaceOnDeviceOp.build(properties={
+            "sym_name": StringAttr(f"cand_place_{op.region_id}_{op.device_index}"),
             "region_ref": _sym_ref(op.region_id),
             "device": DeviceRefAttr(op.device_index, ""),
             **({"reason": StringAttr(op.reason)} if op.reason else {}),
@@ -104,6 +106,7 @@ def dataclass_to_xdsl(op: RecipeOp) -> Operation | None:
 
     if isinstance(op, InsertCopyBoundary):
         return InsertCopyBoundaryOp.build(properties={
+            "sym_name": StringAttr(f"cand_copy_{op.src_region}_{op.dst_region}"),
             "src_region": _sym_ref(op.src_region),
             "dst_region": _sym_ref(op.dst_region),
             "tensor_name": StringAttr(op.tensor_name),
@@ -112,6 +115,7 @@ def dataclass_to_xdsl(op: RecipeOp) -> Operation | None:
 
     if isinstance(op, RequestKernelSearch):
         return RequestTritonKernelOp.build(properties={
+            "sym_name": StringAttr(f"cand_kernel_{op.region_id}"),
             "region_ref": _sym_ref(op.region_id),
             "search_budget": _int_attr(op.search_budget),
             **({"backend": StringAttr(op.backend)} if op.backend else {}),
@@ -139,15 +143,18 @@ def dataclass_to_xdsl(op: RecipeOp) -> Operation | None:
         if family == "tile":
             # Emit a TileOp with empty tile sizes as a placeholder
             return TileOp.build(properties={
+                "sym_name": StringAttr(f"cand_tile_{op.region_id}"),
                 "region_ref": _sym_ref(op.region_id),
                 "tile_sizes": ArrayAttr([]),
             })
         if family == "fuse":
             return FuseOp.build(properties={
+                "sym_name": StringAttr(f"cand_fuse_{op.region_id}"),
                 "fuse_regions": ArrayAttr([_sym_ref(op.region_id)]),
             })
         if family == "vectorize":
             return VectorizeOp.build(properties={
+                "sym_name": StringAttr(f"cand_vectorize_{op.region_id}"),
                 "region_ref": _sym_ref(op.region_id),
                 "vector_width": _int_attr(1),
             })
@@ -158,6 +165,7 @@ def dataclass_to_xdsl(op: RecipeOp) -> Operation | None:
             region_id=op.region_id,
         )
         return TileOp.build(properties={
+            "sym_name": StringAttr(f"cand_tile_{op.region_id}"),
             "region_ref": _sym_ref(op.region_id),
             "tile_sizes": ArrayAttr([]),
         })

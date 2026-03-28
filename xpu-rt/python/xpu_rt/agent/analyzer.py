@@ -9,7 +9,8 @@ computation structure with explicit data flow via node.users.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from collections import Counter, defaultdict, deque
+from dataclasses import dataclass, field
 from typing import Any
 
 from compgen.agent.patterns import FXNodeInfo, extract_fx_nodes, match_patterns
@@ -63,6 +64,45 @@ class NetworkAnalysis:
     data_flow: list[DataFlowEdge]
     bottleneck_clusters: list[str]   # cluster_ids sorted by latency (worst first)
     optimization_opportunities: list[str]  # natural-language descriptions
+    dossier: "GraphAnalysisDossier | None" = None
+
+
+@dataclass(frozen=True)
+class RegionDossier:
+    """Deterministic per-region analysis for the agent and compiler."""
+
+    region_id: str
+    kind: str
+    node_names: tuple[str, ...]
+    repeated_count: int
+    flops: int
+    bytes: int
+    arithmetic_intensity: float
+    dynamic_shapes: bool
+    producers: tuple[str, ...]
+    consumers: tuple[str, ...]
+    parallelizable_with: tuple[str, ...]
+    layout_candidates: tuple[str, ...]
+    backend_viability: tuple[str, ...]
+    best_device: str
+    local_memory_fit: dict[str, bool] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class GraphAnalysisDossier:
+    """Richer deterministic graph-analysis view for planning and synthesis."""
+
+    model_name: str
+    op_histogram: dict[str, int]
+    repeated_patterns: dict[str, int]
+    total_regions: int
+    total_flops: int
+    total_bytes: int
+    critical_path: tuple[str, ...]
+    independent_region_sets: tuple[tuple[str, ...], ...]
+    dynamic_shape_regions: tuple[str, ...]
+    unsupported_targets: tuple[str, ...]
+    regions: tuple[RegionDossier, ...]
 
 
 class NetworkAnalyzer:
@@ -196,9 +236,13 @@ class NetworkAnalyzer:
         # Total stats
         total_flops = sum(n.flops for n in fx_nodes)
         total_bytes = sum(n.bytes_total for n in fx_nodes)
-        total_params = sum(
-            1 for node in exported_program.graph.nodes
-            if node.op == "placeholder" and node.name.startswith("p_")
+        total_params = self._count_parameter_placeholders(exported_program)
+        dossier = self._build_dossier(
+            fx_nodes=fx_nodes,
+            clusters=clusters,
+            data_flow=data_flow,
+            target=target,
+            model_name=model_name,
         )
 
         return NetworkAnalysis(
@@ -211,7 +255,226 @@ class NetworkAnalyzer:
             data_flow=data_flow,
             bottleneck_clusters=bottleneck_ids,
             optimization_opportunities=opportunities,
+            dossier=dossier,
         )
+
+    def _count_parameter_placeholders(self, exported_program: Any) -> int:
+        graphs = getattr(exported_program, "graphs", ()) or ()
+        if graphs:
+            return sum(
+                1
+                for graph_module in graphs
+                for node in graph_module.graph.nodes
+                if node.op == "placeholder" and node.name.startswith("p_")
+            )
+        graph = getattr(exported_program, "graph", None)
+        if graph is None:
+            return 0
+        return sum(
+            1 for node in graph.nodes
+            if node.op == "placeholder" and node.name.startswith("p_")
+        )
+
+    def _build_dossier(
+        self,
+        *,
+        fx_nodes: list[FXNodeInfo],
+        clusters: list[PatternCluster],
+        data_flow: list[DataFlowEdge],
+        target: TargetProfile,
+        model_name: str,
+    ) -> GraphAnalysisDossier:
+        """Build the richer deterministic graph-analysis dossier."""
+
+        node_by_name = {node.name: node for node in fx_nodes}
+        op_histogram = Counter(node.target for node in fx_nodes)
+        cluster_counter = Counter(cluster.pattern_type for cluster in clusters)
+        node_to_region: dict[str, str] = {}
+        region_bytes: dict[str, int] = {}
+        region_flops: dict[str, int] = {}
+        region_kind: dict[str, str] = {}
+        region_best_device: dict[str, str] = {}
+        region_node_names: dict[str, tuple[str, ...]] = {}
+
+        for cluster in clusters:
+            region_bytes[cluster.cluster_id] = cluster.total_bytes
+            region_flops[cluster.cluster_id] = cluster.total_flops
+            region_kind[cluster.cluster_id] = cluster.pattern_type
+            region_best_device[cluster.cluster_id] = cluster.best_device
+            region_node_names[cluster.cluster_id] = cluster.node_names
+            for node_name in cluster.node_names:
+                node_to_region[node_name] = cluster.cluster_id
+
+        for node in fx_nodes:
+            if node.name in node_to_region:
+                continue
+            node_to_region[node.name] = node.name
+            region_bytes[node.name] = node.bytes_total
+            region_flops[node.name] = node.flops
+            region_kind[node.name] = node.target
+            region_best_device[node.name] = target.devices[0].name if target.devices else ""
+            region_node_names[node.name] = (node.name,)
+            cluster_counter[node.target] += 1
+
+        adjacency: dict[str, list[str]] = defaultdict(list)
+        predecessors: dict[str, list[str]] = defaultdict(list)
+        edge_set: set[tuple[str, str]] = set()
+        for node in fx_nodes:
+            src_region = node_to_region.get(node.name)
+            if not src_region:
+                continue
+            for user_name in node.user_names:
+                dst_region = node_to_region.get(user_name)
+                if not dst_region or src_region == dst_region:
+                    continue
+                key = (src_region, dst_region)
+                if key in edge_set:
+                    continue
+                edge_set.add(key)
+                adjacency[src_region].append(dst_region)
+                predecessors[dst_region].append(src_region)
+
+        indegree: dict[str, int] = {
+            region_id: len(set(predecessors.get(region_id, ())))
+            for region_id in region_kind
+        }
+
+        topo_queue = deque(sorted(region_id for region_id, value in indegree.items() if value == 0))
+        topo_order: list[str] = []
+        depth: dict[str, int] = {}
+        while topo_queue:
+            region_id = topo_queue.popleft()
+            topo_order.append(region_id)
+            parent_depth = max((depth.get(parent, -1) for parent in predecessors.get(region_id, ())), default=-1)
+            depth[region_id] = parent_depth + 1
+            for child in adjacency.get(region_id, ()):
+                indegree[child] -= 1
+                if indegree[child] == 0:
+                    topo_queue.append(child)
+
+        if not topo_order:
+            topo_order = [node.name for node in fx_nodes]
+            depth = {node.name: 0 for node in fx_nodes}
+
+        cluster_by_id = {cluster.cluster_id: cluster for cluster in clusters}
+        best_latency = {}
+        for region_id in region_kind:
+            cluster = cluster_by_id.get(region_id)
+            if cluster is not None and cluster.estimated_latency_per_device:
+                best_latency[region_id] = min(cluster.estimated_latency_per_device.values())
+            else:
+                best_latency[region_id] = max(region_bytes.get(region_id, 0), 1) / 1e3
+        longest_cost: dict[str, float] = {}
+        longest_path: dict[str, tuple[str, ...]] = {}
+        for region_id in topo_order:
+            parent_ids = tuple(sorted(set(predecessors.get(region_id, ()))))
+            if not parent_ids:
+                longest_cost[region_id] = best_latency.get(region_id, 0.0)
+                longest_path[region_id] = (region_id,)
+                continue
+            parent = max(parent_ids, key=lambda rid: longest_cost.get(rid, 0.0))
+            longest_cost[region_id] = longest_cost.get(parent, 0.0) + best_latency.get(region_id, 0.0)
+            longest_path[region_id] = longest_path.get(parent, ()) + (region_id,)
+        critical_path = max(longest_path.values(), key=len, default=())
+
+        same_depth: dict[int, list[str]] = defaultdict(list)
+        for region_id, value in depth.items():
+            same_depth[value].append(region_id)
+        independent_region_sets = tuple(
+            tuple(sorted(region_ids))
+            for region_ids in same_depth.values()
+            if len(region_ids) > 1
+        )
+
+        unsupported_targets: set[str] = set()
+        from compgen.ir.payload.decompositions import DECOMPOSITION_TABLE
+
+        for node in fx_nodes:
+            if node.target not in DECOMPOSITION_TABLE:
+                unsupported_targets.add(node.target)
+
+        regions: list[RegionDossier] = []
+        for region_id in topo_order:
+            related_depth = depth.get(region_id, 0)
+            parallelizable = tuple(
+                rid for rid in same_depth.get(related_depth, [])
+                if rid != region_id
+            )
+            node_names = region_node_names.get(region_id, ())
+            dynamic_shapes = any(
+                not all(isinstance(dim, int) and dim >= 0 for dim in (node_by_name[name].shape or ()))
+                for name in node_names
+                if name in node_by_name
+            )
+            regions.append(RegionDossier(
+                region_id=region_id,
+                kind=region_kind.get(region_id, region_id),
+                node_names=node_names,
+                repeated_count=cluster_counter[region_kind.get(region_id, region_id)],
+                flops=region_flops.get(region_id, 0),
+                bytes=region_bytes.get(region_id, 0),
+                arithmetic_intensity=(
+                    region_flops.get(region_id, 0) / region_bytes.get(region_id, 1)
+                    if region_bytes.get(region_id, 0) > 0 else 0.0
+                ),
+                dynamic_shapes=dynamic_shapes,
+                producers=tuple(sorted(set(predecessors.get(region_id, ())))),
+                consumers=tuple(sorted(set(adjacency.get(region_id, ())))),
+                parallelizable_with=parallelizable,
+                layout_candidates=self._layout_candidates(region_kind.get(region_id, region_id)),
+                backend_viability=self._backend_viability_for_kind(region_kind.get(region_id, region_id), target),
+                best_device=region_best_device.get(region_id, ""),
+                local_memory_fit={
+                    device.name: self._local_memory_fit_for_bytes(region_bytes.get(region_id, 0), device)
+                    for device in target.devices
+                },
+            ))
+
+        dynamic_shape_regions = tuple(
+            region.region_id for region in regions if region.dynamic_shapes
+        )
+
+        return GraphAnalysisDossier(
+            model_name=model_name,
+            op_histogram=dict(op_histogram),
+            repeated_patterns=dict(cluster_counter),
+            total_regions=len(regions),
+            total_flops=sum(node.flops for node in fx_nodes),
+            total_bytes=sum(node.bytes_total for node in fx_nodes),
+            critical_path=tuple(critical_path),
+            independent_region_sets=independent_region_sets,
+            dynamic_shape_regions=dynamic_shape_regions,
+            unsupported_targets=tuple(sorted(unsupported_targets)),
+            regions=tuple(regions),
+        )
+
+    def _layout_candidates(self, pattern_type: str) -> tuple[str, ...]:
+        if "attention" in pattern_type:
+            return ("qkv_packed", "blocked_head_major")
+        if "linear" in pattern_type or "mlp" in pattern_type:
+            return ("rowmajor_epilogue", "blocked_64x64x32")
+        return ("contiguous",)
+
+    def _backend_viability_for_kind(self, pattern_type: str, target: TargetProfile) -> tuple[str, ...]:
+        viable: list[str] = ["library", "fallback"]
+        device_names = " ".join(device.name.lower() for device in target.devices)
+        if any(token in device_names for token in ("cuda", "gpu")):
+            viable.insert(0, "triton")
+        if any(token in device_names for token in ("npu", "accel", "soc")):
+            viable.insert(0, "accel_native")
+        if pattern_type.startswith("linear") or "mlp" in pattern_type or "aten.addmm" in pattern_type:
+            viable.append("exo")
+        return tuple(dict.fromkeys(viable))
+
+    def _backend_viability(self, cluster: PatternCluster, target: TargetProfile) -> tuple[str, ...]:
+        return self._backend_viability_for_kind(cluster.pattern_type, target)
+
+    def _local_memory_fit_for_bytes(self, required_bytes: int, device: Any) -> bool:
+        available = max((getattr(level, "size_bytes", 0) for level in device.memory_hierarchy), default=0)
+        return required_bytes <= available
+
+    def _local_memory_fit(self, cluster: PatternCluster, device: Any) -> bool:
+        return self._local_memory_fit_for_bytes(cluster.total_bytes, device)
 
     def _build_data_flow(
         self,
@@ -280,7 +543,9 @@ class NetworkAnalyzer:
 
 __all__ = [
     "DataFlowEdge",
+    "GraphAnalysisDossier",
     "NetworkAnalysis",
     "NetworkAnalyzer",
     "PatternCluster",
+    "RegionDossier",
 ]

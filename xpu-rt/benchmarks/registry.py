@@ -14,7 +14,7 @@ from benchmarks.spec import (
     WorkloadBundle,
     WorkloadSpec,
 )
-from benchmarks.workloads import get_loader
+from benchmarks.workloads import get_loader, get_model_spec
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -78,6 +78,23 @@ class BenchmarkRegistry:
 
 
 def _register_workloads(registry: BenchmarkRegistry) -> None:
+    def add_workload(workload_id: str, tier: str, description: str, tags: list[str]) -> None:
+        model_spec = get_model_spec(workload_id)
+        registry.register_workload(
+            WorkloadSpec(
+                workload_id=workload_id,
+                tier=tier,
+                description=description,
+                loader=get_loader(workload_id),
+                tags=tags,
+                source_model_id=model_spec.source_model_id if model_spec is not None else workload_id,
+                capture_mode=str(model_spec.capture_mode) if model_spec is not None else "torch_export",
+                readiness=str(model_spec.readiness) if model_spec is not None else "full_pipeline",
+                expected_status=model_spec.expected_status if model_spec is not None else "pass",
+                model_spec=model_spec,
+            )
+        )
+
     for workload_id, tier, description, tags in [
         ("simple_mlp", "tier_b", "SimpleMLP block from examples", ["mlp", "paper_subset"]),
         ("transformer_block", "tier_b", "TransformerBlock from examples", ["transformer", "paper_subset"]),
@@ -95,16 +112,19 @@ def _register_workloads(registry: BenchmarkRegistry) -> None:
         ("copy_boundary_heavy", "tier_a", "Copy-boundary heavy synthetic graph", ["microbenchmark", "hybrid"]),
         ("scan_small_kernels", "tier_a", "Small-kernel scan-like graph", ["microbenchmark", "loop"]),
         ("reduction_block", "tier_a", "Reduction-heavy block", ["microbenchmark", "reduction"]),
+        ("llama31_decoder_block", "tier_frontier", "Llama-style decoder block workload", ["frontier", "transformer"]),
+        ("llama31_8b_slice", "tier_frontier", "Llama 3.1 8B-style slice workload", ["frontier", "transformer"]),
+        ("llama4_moe_router_expert_block", "tier_frontier", "MoE router/expert block workload", ["frontier", "moe"]),
+        ("dlrmv3_ranking_block", "tier_frontier", "DLRMv3-style ranking workload", ["frontier", "recommendation"]),
+        ("mamba_block", "tier_frontier", "State-space sequence block workload", ["frontier", "state_space"]),
+        ("convnext_stage", "tier_frontier", "ConvNeXt stage workload", ["frontier", "vision"]),
+        ("smolvla_one_step", "tier_frontier", "SmolVLA one-step robotics workload", ["frontier", "robotics"]),
+        ("groot_policy_step", "tier_frontier", "GR00T robotics workload probe", ["frontier", "robotics"]),
+        ("cosmos_reason2", "tier_frontier", "Cosmos Reason 2 probe workload", ["frontier", "robotics"]),
+        ("cosmos_predict2_5", "tier_frontier", "Cosmos Predict 2.5 probe workload", ["frontier", "robotics"]),
+        ("cosmos_transfer2_5", "tier_frontier", "Cosmos Transfer 2.5 probe workload", ["frontier", "robotics"]),
     ]:
-        registry.register_workload(
-            WorkloadSpec(
-                workload_id=workload_id,
-                tier=tier,
-                description=description,
-                loader=get_loader(workload_id),
-                tags=tags,
-            )
-        )
+        add_workload(workload_id, tier, description, tags)
 
     registry.register_bundle(
         WorkloadBundle(
@@ -269,15 +289,15 @@ def _register_cases_and_studies(registry: BenchmarkRegistry) -> None:
         ("copy_boundary_heavy", "riscv_soc"),
     ]:
         add_case(
-            ExperimentCase(
-                case_id=f"single_{workload_id}_{target_id}",
-                study_id="single_specialization",
-                workload_id=workload_id,
-                target_id=target_id,
-                baseline_ids=DEFAULT_BASELINES,
-                ablations=["seed_only", "fixed_pass_only", "no_eqsat", "no_solver"],
-                tags=["specialization", "paper_subset"],
-            )
+                ExperimentCase(
+                    case_id=f"single_{workload_id}_{target_id}",
+                    study_id="single_specialization",
+                    workload_id=workload_id,
+                    target_id=target_id,
+                    baseline_ids=DEFAULT_BASELINES,
+                    ablations=["seed_only", "fixed_pass_only", "no_eqsat", "no_solver", "no_guard_synthesis"],
+                    tags=["specialization", "paper_subset"],
+                )
         )
 
     for workload_id, bundle_id in [
@@ -285,28 +305,46 @@ def _register_cases_and_studies(registry: BenchmarkRegistry) -> None:
         ("simple_mlp", "BundleM"),
     ]:
         add_case(
-            ExperimentCase(
-                case_id=f"bundle_{workload_id}",
-                study_id="bundle_specialization",
-                workload_id=workload_id,
-                target_id="cuda_a100",
-                baseline_ids=DEFAULT_BASELINES,
-                ablations=["single_workload_specialization", "bundle_specialization"],
-                tags=["bundle", "paper_subset"],
-                metadata={"bundle_id": bundle_id},
-            )
+                ExperimentCase(
+                    case_id=f"bundle_{workload_id}",
+                    study_id="bundle_specialization",
+                    workload_id=workload_id,
+                    target_id="cuda_a100",
+                    baseline_ids=DEFAULT_BASELINES,
+                    ablations=["single_workload_specialization", "bundle_specialization", "no_guard_synthesis"],
+                    tags=["bundle", "paper_subset"],
+                    metadata={"bundle_id": bundle_id},
+                )
         )
 
     for workload_id in ["transformer_block", "simple_mlp", "copy_boundary_heavy"]:
         add_case(
+                ExperimentCase(
+                    case_id=f"hybrid_{workload_id}",
+                    study_id="hybrid_planning",
+                    workload_id=workload_id,
+                    target_id="multi_device",
+                    baseline_ids=DEFAULT_BASELINES,
+                    ablations=["no_solver", "no_guard_synthesis"],
+                    tags=["hybrid", "paper_subset"],
+                )
+        )
+
+    for workload_id, target_id in [
+        ("matmul_bias_gelu", "cuda_a100"),
+        ("matmul_add_relu", "cuda_a100"),
+        ("copy_boundary_heavy", "riscv_soc"),
+        ("reduction_block", "riscv_soc"),
+    ]:
+        add_case(
             ExperimentCase(
-                case_id=f"hybrid_{workload_id}",
-                study_id="hybrid_planning",
+                case_id=f"guard_{workload_id}_{target_id}",
+                study_id="guard_synthesis",
                 workload_id=workload_id,
-                target_id="multi_device",
+                target_id=target_id,
                 baseline_ids=DEFAULT_BASELINES,
-                ablations=["no_solver"],
-                tags=["hybrid", "paper_subset"],
+                ablations=["handwritten_only", "synth_only", "meet_handwritten_synth", "no_guard_synthesis"],
+                tags=["guard_synthesis", "paper_subset"],
             )
         )
 
@@ -322,6 +360,45 @@ def _register_cases_and_studies(registry: BenchmarkRegistry) -> None:
             )
         )
 
+    frontier_block_workloads = [
+        "llama31_decoder_block",
+        "llama31_8b_slice",
+        "llama4_moe_router_expert_block",
+        "dlrmv3_ranking_block",
+        "mamba_block",
+        "convnext_stage",
+    ]
+    for workload_id in frontier_block_workloads:
+        add_case(
+            ExperimentCase(
+                case_id=f"frontier_block_{workload_id}",
+                study_id="frontier_blocks",
+                workload_id=workload_id,
+                target_id="cuda_a100",
+                baseline_ids=["compgen"],
+                tags=["frontier", "block"],
+            )
+        )
+
+    frontier_robotics_workloads = [
+        "smolvla_one_step",
+        "groot_policy_step",
+        "cosmos_reason2",
+        "cosmos_predict2_5",
+        "cosmos_transfer2_5",
+    ]
+    for workload_id in frontier_robotics_workloads:
+        add_case(
+            ExperimentCase(
+                case_id=f"frontier_robotics_{workload_id}",
+                study_id="frontier_robotics",
+                workload_id=workload_id,
+                target_id="multi_device",
+                baseline_ids=["compgen"],
+                tags=["frontier", "robotics"],
+            )
+        )
+
     for study_id, description, tier, tags in [
         ("pipeline_sanity", "Pipeline sanity study across frozen workloads and targets", "study", ["sanity"]),
         ("pass_discovery", "Pass-discovery microbenchmark study", "study", ["microbenchmark"]),
@@ -329,6 +406,9 @@ def _register_cases_and_studies(registry: BenchmarkRegistry) -> None:
         ("bundle_specialization", "Workload-bundle transfer study", "study", ["bundle"]),
         ("hybrid_planning", "Hybrid placement/scheduling study", "study", ["hybrid"]),
         ("verification_red_team", "Verification red-team study", "study", ["verification"]),
+        ("guard_synthesis", "Synthesized analysis and guard study", "study", ["guard_synthesis"]),
+        ("frontier_blocks", "Frontier block workload study", "study", ["frontier"]),
+        ("frontier_robotics", "Frontier robotics and world-model study", "study", ["frontier", "robotics"]),
     ]:
         registry.register_study(
             StudySpec(
@@ -346,6 +426,7 @@ def _register_cases_and_studies(registry: BenchmarkRegistry) -> None:
         + case_ids["bundle_specialization"]
         + case_ids["hybrid_planning"]
         + case_ids["verification_red_team"]
+        + case_ids["guard_synthesis"]
     )
     registry.register_study(
         StudySpec(
@@ -354,6 +435,37 @@ def _register_cases_and_studies(registry: BenchmarkRegistry) -> None:
             case_ids=paper_subset_ids,
             tier="study",
             tags=["paper_subset"],
+        )
+    )
+
+    frontier_all_ids = case_ids.get("frontier_blocks", []) + case_ids.get("frontier_robotics", [])
+    registry.register_study(
+        StudySpec(
+            study_id="frontier_all",
+            description="Union study covering all frontier workloads, including probe-only entries",
+            case_ids=frontier_all_ids,
+            tier="study",
+            tags=["frontier"],
+        )
+    )
+
+    ready_workloads = {
+        workload_id
+        for workload_id, spec in registry.workloads.items()
+        if spec.expected_status == "pass"
+    }
+    paper_frontier_ready_ids = [
+        case_id
+        for case_id in frontier_all_ids
+        if registry.get_case(case_id).workload_id in ready_workloads
+    ]
+    registry.register_study(
+        StudySpec(
+            study_id="paper_frontier_ready",
+            description="Frontier workloads that are capture-stable in the current environment",
+            case_ids=paper_frontier_ready_ids,
+            tier="study",
+            tags=["frontier", "paper_ready"],
         )
     )
 

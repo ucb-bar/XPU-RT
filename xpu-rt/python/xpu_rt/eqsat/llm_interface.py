@@ -197,6 +197,53 @@ def validate_rule_code(code: str) -> RuleValidationResult:
     return RuleValidationResult(valid=True, rule=rule, error="")
 
 
+def validate_and_verify_rule(code: str, max_bitwidth: int = 8) -> RuleValidationResult:
+    """Validate AND formally verify an LLM-generated rule.
+
+    Three-stage validation (same as ``validate_rule_code``), plus
+    optional PDL formal verification if the rule is exportable.
+
+    Args:
+        code: Python source code containing a rule class.
+        max_bitwidth: Maximum bitwidth for PDL verification.
+
+    Returns:
+        RuleValidationResult. If PDL verification is available and the
+        rule is exportable, the result includes verification status in
+        the error field (e.g., "PDL verification: sound").
+    """
+    result = validate_rule_code(code)
+    if not result.valid or result.rule is None:
+        return result
+
+    # Try to export and verify via PDL
+    try:
+        from compgen.rewrite.export_pdl import eqsat_rule_to_pdl
+        from compgen.rewrite.verify_pdl import verify_rewrite_family
+
+        exported = eqsat_rule_to_pdl(result.rule)
+        if exported is not None:
+            pattern_fn, replacement_fn = exported
+            pdl_result = verify_rewrite_family(
+                pattern=pattern_fn,
+                replacement=replacement_fn,
+                num_operands=2,
+                max_bitwidth=max_bitwidth,
+            )
+            if pdl_result.sound:
+                log.info("eqsat.rule.verified", rule=result.rule.name, status="sound")
+            else:
+                log.warning(
+                    "eqsat.rule.unsound",
+                    rule=result.rule.name,
+                    unsound_bitwidths=pdl_result.unsound_bitwidths,
+                )
+    except Exception as e:
+        log.debug("eqsat.rule.verify_skipped", error=str(e))
+
+    return result
+
+
 # ============================================================================
 # LLM interaction functions
 # ============================================================================

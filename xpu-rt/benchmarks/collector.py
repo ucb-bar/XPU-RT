@@ -12,6 +12,7 @@ from benchmarks.record import (
     IRMetrics,
     PerformanceMetrics,
     RecipeMetrics,
+    SynthesisMetrics,
     SolverMetrics,
 )
 
@@ -21,11 +22,15 @@ log = logging.getLogger(__name__)
 def collect_capture_metrics(
     export_success: bool,
     graph_break_count: int = 0,
+    graph_count: int = 0,
+    auto_translations_added: int = 0,
     export_time_ms: float = 0.0,
     decomposition_coverage: float = 0.0,
     total_fx_nodes: int = 0,
     decomposed_ops: int = 0,
     opaque_ops: int = 0,
+    analysis_success: bool = False,
+    capture_mode: str = "torch_export",
     unsupported_ops: list[str] | None = None,
 ) -> CaptureMetrics:
     """Collect capture stage metrics."""
@@ -33,6 +38,8 @@ def collect_capture_metrics(
     return CaptureMetrics(
         export_success=export_success,
         graph_break_count=graph_break_count,
+        graph_count=graph_count,
+        auto_translations_added=auto_translations_added,
         op_coverage=op_coverage,
         unsupported_ops=unsupported_ops or [],
         export_time_ms=export_time_ms,
@@ -40,6 +47,8 @@ def collect_capture_metrics(
         total_fx_nodes=total_fx_nodes,
         decomposed_ops=decomposed_ops,
         opaque_ops=opaque_ops,
+        analysis_success=analysis_success,
+        capture_mode=capture_mode,
     )
 
 
@@ -155,6 +164,7 @@ def collect_recipe_metrics(module: Any) -> RecipeMetrics:
     from compgen.ir.recipe.ops_scope import (
         AnchorOp,
         BindPayloadOp,
+        RecipeGuardOp,
         RecipeRegionOp,
         SegmentOp,
     )
@@ -167,7 +177,7 @@ def collect_recipe_metrics(module: Any) -> RecipeMetrics:
         RequireTranslationValidationOp,
     )
 
-    scope_types = (RecipeRegionOp, SegmentOp, AnchorOp, BindPayloadOp)
+    scope_types = (RecipeRegionOp, SegmentOp, AnchorOp, RecipeGuardOp, BindPayloadOp)
     fact_types = (BackendAvailableOp, KernelContractOp, TransferCostOp,
                   LocalMemFitOp, FusibleWithOp, CalibrationOp, ExportIssueOp, GraphBreakOp)
     candidate_types = (TileOp, FuseOp, VectorizeOp, ReassociateOp, LayoutNormalizeOp,
@@ -222,12 +232,18 @@ def collect_agentic_metrics(result: Any) -> AgenticMetrics:
 
 def collect_performance_metrics(result: Any) -> PerformanceMetrics:
     """Collect from BenchmarkResult."""
+    p90 = 0.0
+    per_run_us = list(result.per_run_us)
+    if per_run_us:
+        index = min(max(int(len(per_run_us) * 0.9), 0), len(per_run_us) - 1)
+        p90 = sorted(per_run_us)[index]
     return PerformanceMetrics(
         latency_median_us=result.latency_median_us,
+        latency_p90_us=p90,
         latency_p99_us=result.latency_p99_us,
-        latency_mean_us=sum(result.per_run_us) / max(len(result.per_run_us), 1) if result.per_run_us else 0.0,
-        latency_std_us=_std(result.per_run_us),
-        per_run_us=list(result.per_run_us),
+        latency_mean_us=sum(per_run_us) / max(len(per_run_us), 1) if per_run_us else 0.0,
+        latency_std_us=_std(per_run_us),
+        per_run_us=per_run_us,
         throughput_samples_per_sec=result.throughput_samples_per_sec,
         peak_memory_bytes=result.peak_memory_bytes,
         device=result.device,
@@ -235,6 +251,33 @@ def collect_performance_metrics(result: Any) -> PerformanceMetrics:
         num_iterations=result.num_iterations,
         warmup_iterations=result.warmup_iterations,
     )
+
+
+def collect_synthesis_metrics(summary: dict[str, Any] | None = None) -> SynthesisMetrics:
+    """Collect synthesized-guard metrics from a summary dictionary."""
+
+    summary = summary or {}
+    metrics = SynthesisMetrics(
+        fragments_proposed=int(summary.get("fragments_proposed", 0)),
+        sound_on_first_attempt=int(summary.get("sound_on_first_attempt", 0)),
+        precise_unsound=int(summary.get("precise_unsound", 0)),
+        repaired_by_guard=int(summary.get("repaired_by_guard", 0)),
+        promoted=int(summary.get("promoted", 0)),
+        average_guard_terms=float(summary.get("average_guard_terms", 0.0)),
+        average_proof_time_ms=float(summary.get("average_proof_time_ms", 0.0)),
+        legality_recall=float(summary.get("legality_recall", 0.0)),
+        unsafe_accept_rate=float(summary.get("unsafe_accept_rate", 0.0)),
+        profitable_opportunity_recall=float(summary.get("profitable_opportunity_recall", 0.0)),
+        missed_opportunity_rate=float(summary.get("missed_opportunity_rate", 0.0)),
+        additional_legal_fusions=int(summary.get("additional_legal_fusions", 0)),
+        additional_profitable_fusions=int(summary.get("additional_profitable_fusions", 0)),
+        additional_local_mem_placements=int(summary.get("additional_local_mem_placements", 0)),
+        speedup_passes_only=float(summary.get("speedup_passes_only", 0.0)),
+        speedup_guards_only=float(summary.get("speedup_guards_only", 0.0)),
+        speedup_combined=float(summary.get("speedup_combined", 0.0)),
+        families=dict(summary.get("families", {})),
+    )
+    return metrics
 
 
 def _std(values: list[float]) -> float:
@@ -253,5 +296,6 @@ __all__ = [
     "collect_ir_metrics",
     "collect_performance_metrics",
     "collect_recipe_metrics",
+    "collect_synthesis_metrics",
     "collect_solver_metrics",
 ]

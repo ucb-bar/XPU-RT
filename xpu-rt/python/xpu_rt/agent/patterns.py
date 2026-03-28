@@ -126,52 +126,65 @@ class MatchedPattern:
 def extract_fx_nodes(exported_program: Any) -> list[FXNodeInfo]:
     """Extract structured info from FX graph nodes."""
     nodes: list[FXNodeInfo] = []
-    for node in exported_program.graph.nodes:
-        if node.op != "call_function":
-            continue
+    for prefix, graph in _iter_fx_graphs(exported_program):
+        for node in graph.nodes:
+            if node.op != "call_function":
+                continue
 
-        target = str(node.target)
-        input_names = tuple(a.name for a in node.args if hasattr(a, "name"))
-        user_names = tuple(u.name for u in node.users)
+            target = str(node.target)
+            input_names = tuple(f"{prefix}{a.name}" for a in node.args if hasattr(a, "name"))
+            user_names = tuple(f"{prefix}{u.name}" for u in node.users)
 
-        val = node.meta.get("val")
-        shape = tuple(val.shape) if hasattr(val, "shape") else None
-        dtype = str(val.dtype).replace("torch.", "") if hasattr(val, "dtype") else "f32"
+            val = node.meta.get("val")
+            shape = tuple(val.shape) if hasattr(val, "shape") else None
+            dtype = str(val.dtype).replace("torch.", "") if hasattr(val, "dtype") else "f32"
 
-        # Estimate FLOPs
-        flops = 0
-        if "linear" in target and shape and len(input_names) >= 2:
-            # linear(x, w, b): FLOPs ≈ 2 * M * K * N
-            in_shape = None
-            for a in node.args:
-                if hasattr(a, "meta"):
-                    v = a.meta.get("val")
-                    if hasattr(v, "shape") and len(v.shape) == 2:
-                        in_shape = tuple(v.shape)
-                        break
-            if in_shape and shape:
-                flops = 2 * in_shape[0] * in_shape[1] * shape[-1]
+            # Estimate FLOPs
+            flops = 0
+            if "linear" in target and shape and len(input_names) >= 2:
+                # linear(x, w, b): FLOPs ≈ 2 * M * K * N
+                in_shape = None
+                for arg in node.args:
+                    if hasattr(arg, "meta"):
+                        value = arg.meta.get("val")
+                        if hasattr(value, "shape") and len(value.shape) == 2:
+                            in_shape = tuple(value.shape)
+                            break
+                if in_shape and shape:
+                    flops = 2 * in_shape[0] * in_shape[1] * shape[-1]
 
-        # Estimate bytes
-        bytes_total = 0
-        if shape:
-            elem = 1
-            for s in shape:
-                elem *= s
-            bytes_total = elem * 4  # assume f32
+            # Estimate bytes
+            bytes_total = 0
+            if shape:
+                elem = 1
+                for dim in shape:
+                    elem *= dim
+                bytes_total = elem * 4  # assume f32
 
-        nodes.append(FXNodeInfo(
-            name=node.name,
-            target=target,
-            input_names=input_names,
-            user_names=user_names,
-            shape=shape,
-            dtype=dtype,
-            flops=flops,
-            bytes_total=bytes_total,
-        ))
+            nodes.append(FXNodeInfo(
+                name=f"{prefix}{node.name}",
+                target=target,
+                input_names=input_names,
+                user_names=user_names,
+                shape=shape,
+                dtype=dtype,
+                flops=flops,
+                bytes_total=bytes_total,
+            ))
 
     return nodes
+
+
+def _iter_fx_graphs(exported_program: Any) -> list[tuple[str, Any]]:
+    """Return all FX graphs exposed by an exported program or capture artifact."""
+
+    graphs = getattr(exported_program, "graphs", ()) or ()
+    if graphs:
+        return [(f"partition{idx}::", graph_module.graph) for idx, graph_module in enumerate(graphs)]
+    graph = getattr(exported_program, "graph", None)
+    if graph is None:
+        raise TypeError("Unsupported FX graph container: expected .graph or .graphs")
+    return [("", graph)]
 
 
 def match_patterns(fx_nodes: list[FXNodeInfo]) -> list[MatchedPattern]:

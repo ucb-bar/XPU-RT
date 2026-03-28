@@ -30,8 +30,14 @@ from compgen.ir.recipe.attrs import (
     ProvenanceAttr,
     ShapeSummaryAttr,
 )
-from compgen.ir.recipe.ops_candidate import PlaceOnDeviceOp, TileOp
-from compgen.ir.recipe.ops_fact import BackendAvailableOp, KernelContractOp
+from compgen.ir.recipe.ops_candidate import FuseOp, PlaceOnDeviceOp, TileOp
+from compgen.ir.recipe.ops_fact import (
+    BackendAvailableOp,
+    CalibrationOp,
+    FusibleWithOp,
+    KernelContractOp,
+    LocalMemFitOp,
+)
 from compgen.ir.recipe.ops_provenance import FromTemplateOp
 from compgen.ir.recipe.ops_scope import RecipeRegionOp
 from compgen.ir.recipe.ops_verify import RequireDiffTestOp
@@ -73,6 +79,7 @@ def generate_seed_recipe(
 
     # Step 1: Extract regions from payload
     significant_ops = _extract_significant_ops(payload_module)
+    compute_regions: list[str] = []
 
     for op_name, op_info in significant_ops.items():
         region_id = f"r_{region_counter}"
@@ -103,6 +110,12 @@ def generate_seed_recipe(
                 "region_ref": SymbolRefAttr(region_id),
                 "backend": StringAttr(backend),
             }))
+        for device_index, device_name, fits in _infer_local_mem_fits(op_info, target_profile):
+            block.add_op(LocalMemFitOp.build(properties={
+                "region_ref": SymbolRefAttr(region_id),
+                "device": DeviceRefAttr(device_index, device_name),
+                "fits": IntegerAttr(1 if fits else 0, IntegerType(64)),
+            }))
 
         # Step 3: Kernel contracts
         if op_info.get("is_compute"):
@@ -115,11 +128,21 @@ def generate_seed_recipe(
                     op_info["estimated_flops"], IntegerType(64)
                 )
             block.add_op(KernelContractOp.build(properties=contract_props))
+            block.add_op(CalibrationOp.build(properties={
+                "region_ref": SymbolRefAttr(region_id),
+                "measured_latency_us": IntegerAttr(
+                    max(int(op_info.get("estimated_flops", 0) // 128), 1),
+                    IntegerType(64),
+                ),
+                "device": DeviceRefAttr(0, _default_device_name(target_profile)),
+            }))
+            compute_regions.append(region_id)
 
         # Step 4: Default candidates
         if op_info.get("tileable"):
             default_sizes = _default_tile_sizes(op_info)
             block.add_op(TileOp.build(properties={
+                "sym_name": StringAttr(f"cand_tile_{region_id}"),
                 "region_ref": SymbolRefAttr(region_id),
                 "tile_sizes": ArrayAttr(
                     [IntegerAttr(s, IntegerType(64)) for s in default_sizes]
@@ -129,14 +152,28 @@ def generate_seed_recipe(
 
         # Default device placement (device 0)
         block.add_op(PlaceOnDeviceOp.build(properties={
+            "sym_name": StringAttr(f"cand_place_{region_id}_d0"),
             "region_ref": SymbolRefAttr(region_id),
-            "device": DeviceRefAttr(0, "default"),
+            "device": DeviceRefAttr(0, _default_device_name(target_profile)),
             "provenance": ProvenanceAttr("seed", 0),
         }))
 
         # Step 5: Verification obligations
         block.add_op(RequireDiffTestOp.build(properties={
             "region_ref": SymbolRefAttr(region_id),
+        }))
+
+    for lhs, rhs in zip(compute_regions, compute_regions[1:]):
+        block.add_op(FusibleWithOp.build(properties={
+            "region_a": SymbolRefAttr(lhs),
+            "region_b": SymbolRefAttr(rhs),
+            "fusion_kind": StringAttr("producer_consumer"),
+        }))
+        block.add_op(FuseOp.build(properties={
+            "sym_name": StringAttr(f"cand_fuse_{lhs}_{rhs}"),
+            "fuse_regions": ArrayAttr([SymbolRefAttr(lhs), SymbolRefAttr(rhs)]),
+            "fusion_kind": StringAttr("producer_consumer"),
+            "provenance": ProvenanceAttr("seed", 0),
         }))
 
     log.info("seed.generated", regions=region_counter)
@@ -185,11 +222,51 @@ def _infer_backends(
     target_profile: Any,
 ) -> list[str]:
     """Infer available backends for an op."""
-    backends = ["fallback"]
+    backends = {"fallback"}
     if op_info.get("is_compute"):
-        backends.append("triton")
-        backends.append("autocomp")
-    return backends
+        if target_profile is not None and getattr(target_profile, "devices", None):
+            for device in target_profile.devices:
+                for backend in getattr(device, "kernel_backends", []):
+                    backends.add(str(backend))
+                if device.device_type in {"accelerator", "npu"}:
+                    backends.add("accel_native")
+                if device.device_type == "gpu":
+                    backends.add("triton")
+                    backends.add("autocomp")
+                if device.device_type == "cpu":
+                    backends.add("ukernel")
+        else:
+            backends.update({"triton", "autocomp"})
+    return sorted(backends)
+
+
+def _default_device_name(target_profile: Any) -> str:
+    if target_profile is not None and getattr(target_profile, "devices", None):
+        if target_profile.devices:
+            return target_profile.devices[0].name
+    return "default"
+
+
+def _infer_local_mem_fits(
+    op_info: dict[str, Any],
+    target_profile: Any,
+) -> list[tuple[int, str, bool]]:
+    """Infer whether the region likely fits local memory for each device."""
+
+    if target_profile is None or not getattr(target_profile, "devices", None):
+        return [(0, "default", bool(op_info.get("is_compute")))]
+
+    required_bytes = 64 * 1024 if op_info.get("tileable") else 16 * 1024
+    results: list[tuple[int, str, bool]] = []
+    for index, device in enumerate(target_profile.devices):
+        local_levels = [
+            level.size_bytes
+            for level in getattr(device, "memory_hierarchy", [])
+            if level.name in {"registers", "shared_memory", "scratchpad", "sram", "l1_cache"}
+        ]
+        fits = bool(local_levels) and max(local_levels) >= required_bytes
+        results.append((index, device.name, fits))
+    return results
 
 
 def _default_tile_sizes(op_info: dict[str, Any]) -> list[int]:

@@ -1,24 +1,18 @@
-"""SmolVLA model wrapper for CompGen analysis.
+"""Compatibility wrapper around the canonical SmolVLA model adapter.
 
-Loads SmolVLA from Understanding-PI0, captures the FX graph via torch.compile,
-and provides the captured graph for CompGen's NetworkAnalyzer.
-
-Usage:
-    python examples/models/smolvla_wrapper.py
+This module intentionally re-exports the old example-level helpers so existing
+tests and scripts continue to work while the real implementation lives under
+``compgen.models``.
 """
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path
 from typing import Any
 
 import torch
 
-# Add Understanding-PI0 to path
-PI0_ROOT = Path("/scratch2/agustin/merlin/third_party/Understanding-PI0")
-if str(PI0_ROOT) not in sys.path:
-    sys.path.insert(0, str(PI0_ROOT))
+from compgen.capture import capture_dynamo_partitions
+from compgen.models import get_graph_op_summary, load_smolvla_bundle
 
 
 def load_smolvla(device: str = "cpu") -> tuple[Any, tuple[torch.Tensor, ...], int]:
@@ -27,52 +21,25 @@ def load_smolvla(device: str = "cpu") -> tuple[Any, tuple[torch.Tensor, ...], in
     Returns:
         (wrapper, flat_inputs, num_cams)
     """
-    from understanding_pi0.smolvla_mx.loader import build_dummy_processed_inputs, load_smolvla_policy
-    from understanding_pi0.smolvla_mx.wrappers import SmolVLAOneStepNoCacheWrapper, flatten_processed_inputs
-
-    policy = load_smolvla_policy(model_id="lerobot/smolvla_base", device=device)
-    processed = build_dummy_processed_inputs(policy, batch_size=1, prompt_len=8, device=device)
-    flat_inputs = flatten_processed_inputs(processed)
-    num_cams = (len(flat_inputs) - 5) // 2
-    wrapper = SmolVLAOneStepNoCacheWrapper(policy, num_cams=num_cams)
-
-    return wrapper, flat_inputs, num_cams
+    return load_smolvla_bundle(device=device)
 
 
 def capture_fx_graphs(
     wrapper: Any,
     flat_inputs: tuple[torch.Tensor, ...],
 ) -> list[torch.fx.GraphModule]:
-    """Capture FX graphs via torch.compile custom backend.
+    """Capture FX graphs via TorchDynamo partition capture.
 
     Returns all captured graph partitions (torch.compile may split
     the model into multiple subgraphs due to graph breaks).
     """
-    import torch._dynamo as dynamo
-    dynamo.reset()
-
-    captured: list[torch.fx.GraphModule] = []
-
-    def capture_backend(gm: torch.fx.GraphModule, example_inputs: list[torch.Tensor]) -> Any:
-        captured.append(gm)
-        return gm.forward
-
-    compiled = torch.compile(wrapper, backend=capture_backend)
-    with torch.no_grad():
-        compiled(*flat_inputs)
-
-    return captured
+    artifact = capture_dynamo_partitions(wrapper, flat_inputs)
+    return list(artifact.graphs)
 
 
 def get_smolvla_op_summary(graphs: list[torch.fx.GraphModule]) -> dict[str, int]:
     """Get op target counts across all captured graphs."""
-    targets: dict[str, int] = {}
-    for gm in graphs:
-        for node in gm.graph.nodes:
-            if node.op == "call_function":
-                t = str(node.target)
-                targets[t] = targets.get(t, 0) + 1
-    return dict(sorted(targets.items(), key=lambda x: -x[1]))
+    return get_graph_op_summary(graphs)
 
 
 if __name__ == "__main__":

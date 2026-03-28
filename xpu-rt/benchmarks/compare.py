@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from benchmarks.record import RunRecord
+from compgen.benchmarks.common.results import write_normalized_suite_results
 
 
 def load_all_results(results_dir: str | Path) -> list[RunRecord]:
@@ -95,14 +96,16 @@ def coverage_table(records: list[RunRecord]) -> str:
         return "No records found."
 
     lines = [
-        "| System | Model | Target | Export | Graph Breaks | Decomposition | Opaque Ops |",
-        "|--------|-------|--------|--------|--------------|---------------|------------|",
+        "| System | Model | Target | Mode | Export | Analysis | Graphs | Graph Breaks | Decomposition | Opaque Ops |",
+        "|--------|-------|--------|------|--------|----------|--------|--------------|---------------|------------|",
     ]
     for r in records:
         export = "yes" if r.capture.export_success else "no"
+        analysis = "yes" if r.capture.analysis_success else "no"
         lines.append(
-            f"| {r.system_name} | {r.model_name} | {r.target_name} | {export} | "
-            f"{r.capture.graph_break_count} | {r.capture.decomposition_coverage:.2f} | {r.capture.opaque_ops} |"
+            f"| {r.system_name} | {r.model_name} | {r.target_name} | {r.capture.capture_mode or '—'} | {export} | "
+            f"{analysis} | {r.capture.graph_count} | {r.capture.graph_break_count} | "
+            f"{r.capture.decomposition_coverage:.2f} | {r.capture.opaque_ops} |"
         )
     return "\n".join(lines)
 
@@ -121,8 +124,13 @@ def export_csv(records: list[RunRecord], output_path: str | Path) -> Path:
         "model_name",
         "target_name",
         "status",
+        "readiness",
+        "expected_status",
         "ablation",
         "total_compile_time_ms",
+        "capture_mode",
+        "analysis_success",
+        "graph_count",
         "export_success",
         "decomposition_coverage",
         "eqsat_ops_before",
@@ -151,8 +159,13 @@ def export_csv(records: list[RunRecord], output_path: str | Path) -> Path:
                     "model_name": r.model_name,
                     "target_name": r.target_name,
                     "status": r.status,
+                    "readiness": r.readiness,
+                    "expected_status": r.expected_status,
                     "ablation": r.config.get("ablation", ""),
                     "total_compile_time_ms": r.total_compile_time_ms,
+                    "capture_mode": r.capture.capture_mode,
+                    "analysis_success": r.capture.analysis_success,
+                    "graph_count": r.capture.graph_count,
                     "export_success": r.capture.export_success,
                     "decomposition_coverage": r.capture.decomposition_coverage,
                     "eqsat_ops_before": r.eqsat.ops_before,
@@ -171,11 +184,19 @@ def export_csv(records: list[RunRecord], output_path: str | Path) -> Path:
     return path
 
 
+def export_normalized_suite_json(records: list[RunRecord], output_dir: str | Path) -> list[Path]:
+    """Export the normalized cross-suite JSON projection for records with suite metadata."""
+
+    suite_records = [record for record in records if record.suite.suite_id]
+    return write_normalized_suite_results(suite_records, output_dir)
+
+
 __all__ = [
     "ablation_table",
     "artifact_completeness_table",
     "coverage_table",
     "export_csv",
+    "export_normalized_suite_json",
     "load_all_results",
     "summary_table",
 ]

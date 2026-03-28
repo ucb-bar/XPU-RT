@@ -1,0 +1,132 @@
+- target_class: npu
+  category: memory_hierarchy
+  pattern_name: explicit_scratchpad
+  description: NPU/accelerator local memory is a software-managed scratchpad, not a hardware cache.  All data movement must
+    be explicitly programmed via DMA or load/store instructions.
+  implementation_notes:
+  - Scratchpad sizes are typically 64 KB - 512 KB per PE or cluster.
+  - Partition scratchpad into input buffer, output buffer, and weight buffer.
+  - Size each buffer to hold exactly one tile of the computation.
+  - 'No cache coherence: software must manage consistency.'
+  source: Gemmini/Exo
+  confidence: high
+- target_class: npu
+  category: memory_hierarchy
+  pattern_name: dma_data_movement
+  description: Use DMA engines for bulk data transfer between main memory and scratchpad.  DMA runs independently of the compute
+    units, enabling overlap of data movement and computation.
+  implementation_notes:
+  - 'Configure DMA: src_addr, dst_addr, transfer_size, stride, padding.'
+  - 2D DMA for strided access (e.g., extracting a tile from a larger matrix).
+  - DMA completion is signalled via interrupt or polling a status register.
+  - Tile sizes must account for DMA setup overhead (~100-1000 cycles).
+  source: Gemmini/Exo
+  confidence: high
+- target_class: npu
+  category: memory_hierarchy
+  pattern_name: software_managed_cache
+  description: Some accelerators provide a software-managed cache (SMC) that behaves like a scratchpad with cache-like lookup.  Requires
+    explicit allocate/invalidate but supports flexible reuse patterns.
+  implementation_notes:
+  - Allocate cache lines explicitly for tiles that will be reused.
+  - Invalidate after use to free space for new tiles.
+  - Useful for irregular access patterns where pure scratchpad is wasteful.
+  source: Exo
+  confidence: low
+- target_class: npu
+  category: parallelism
+  pattern_name: systolic_array_mapping
+  description: 'Map matrix multiply onto a systolic array: data flows through a 2D grid of processing elements (PEs), with
+    each PE performing a multiply-accumulate and forwarding data to its neighbour.'
+  implementation_notes:
+  - 'Output-stationary: each PE accumulates one output element.'
+  - 'Weight-stationary: each PE holds one weight, inputs flow through.'
+  - 'Row-stationary: each PE processes one row of the output.'
+  - Tile sizes must match the PE array dimensions (e.g., 16x16 or 32x32).
+  - Underutilisation when problem dimensions do not divide array dimensions.
+  source: Gemmini
+  confidence: high
+- target_class: npu
+  category: parallelism
+  pattern_name: pe_utilisation
+  description: 'Maximise PE array utilisation by choosing tile sizes that fill the array.  Partial tiles waste compute: a
+    10x10 problem on a 16x16 array uses only 39% of PEs.'
+  implementation_notes:
+  - Pad matrices to multiples of the array dimension when possible.
+  - For non-square problems, consider remapping to better fill the array.
+  - 'Monitor utilisation: effective_ops / peak_ops ratio.'
+  - Pipeline multiple tiles through the array for throughput.
+  source: Gemmini
+  confidence: high
+- target_class: npu
+  category: parallelism
+  pattern_name: pipeline_stages
+  description: 'Pipeline the computation into stages: load, compute, store.  Each stage operates on a different tile, achieving
+    steady-state throughput where all units are busy.'
+  implementation_notes:
+  - 'Three-stage pipeline: DMA_in[i+1] | Compute[i] | DMA_out[i-1].'
+  - Requires at least 3 tile buffers in scratchpad (triple buffering).
+  - Steady-state throughput = max(DMA_time, compute_time) per tile.
+  - Pipeline fill and drain add latency for small workloads.
+  source: Gemmini/Exo
+  confidence: high
+- target_class: npu
+  category: data_movement
+  pattern_name: dma_double_buffering
+  description: Overlap DMA transfers with computation using double buffering.  While the accelerator computes on buffer A,
+    DMA loads the next tile into buffer B, and vice versa.
+  implementation_notes:
+  - 'Allocate 2x scratchpad space: buffer[0] and buffer[1].'
+  - 'Iteration i: compute(buffer[i%2]), DMA_load(buffer[(i+1)%2]).'
+  - 'Synchronise: wait for DMA completion before computing on new buffer.'
+  - Effective when compute_time >= DMA_time (compute-bound regime).
+  source: Exo/Gemmini
+  confidence: high
+- target_class: npu
+  category: data_movement
+  pattern_name: explicit_address_computation
+  description: Compute scratchpad addresses explicitly in software.  There is no hardware address translation (no TLB, no
+    virtual memory).
+  implementation_notes:
+  - Base address + row * stride + col * element_size.
+  - Account for padding/alignment requirements of the DMA engine.
+  - Tile layout in scratchpad may differ from layout in main memory.
+  - Exo's memory-aware scheduling handles this automatically.
+  source: Exo
+  confidence: high
+- target_class: npu
+  category: data_movement
+  pattern_name: blocking_for_local_memory
+  description: Choose tile sizes so each tile fits in the accelerator's local memory.  The tile must include input, output,
+    and any intermediate buffers.
+  implementation_notes:
+  - Available = scratchpad_size - firmware_reserved.
+  - Tile memory = input_tile + output_tile + weight_tile (for matmul).
+  - 'If double buffering: 2 * tile_memory <= available.'
+  - Iterate over tiles in an order that maximises data reuse.
+  source: Exo/Gemmini
+  confidence: high
+- target_class: npu
+  category: instruction_selection
+  pattern_name: matrix_engine_instructions
+  description: Use the accelerator's custom matrix engine instructions (e.g., Gemmini's mvin/mvout/compute, Google TPU's MXU
+    ops) for matrix multiply.
+  implementation_notes:
+  - 'Instructions are typically: load_to_accumulator, matmul_accumulate, store_from_accumulator.'
+  - Operand sizes must match the hardware array dimensions.
+  - Accumulator precision is usually higher than input precision (e.g., int8 -> int32).
+  - Some engines require explicit accumulator initialisation.
+  source: Gemmini/Exo
+  confidence: high
+- target_class: npu
+  category: instruction_selection
+  pattern_name: config_state_management
+  description: Many accelerators require explicit configuration of compute mode, precision, and layout before issuing compute
+    instructions.
+  implementation_notes:
+  - 'Config instruction sets: dataflow mode, activation function, precision.'
+  - Configuration changes have latency; batch operations with the same config.
+  - Save/restore config state when switching between op types.
+  - Exo platform definitions encode legal configurations.
+  source: Exo/Gemmini
+  confidence: medium

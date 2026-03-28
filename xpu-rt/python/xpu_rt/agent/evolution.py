@@ -189,7 +189,10 @@ class EvolutionaryOptimizer:
                     available_transforms=[], kernel_contracts=[],
                     objective=Objective.LATENCY,
                 ),
-                config=LLMConfig(model="gemini-2.5-flash", temperature=0.7),
+                config=LLMConfig(
+                    model=str(getattr(self.llm_client, "model", "default")),
+                    temperature=0.7,
+                ),
             )
             response = self.llm_client.generate(request)
             return self._parse_strategies(response.raw_text, generation=0)
@@ -255,7 +258,10 @@ class EvolutionaryOptimizer:
                     available_transforms=[], kernel_contracts=[],
                     objective=Objective.LATENCY,
                 ),
-                config=LLMConfig(model="gemini-2.5-flash", temperature=0.7),
+                config=LLMConfig(
+                    model=str(getattr(self.llm_client, "model", "default")),
+                    temperature=0.7,
+                ),
             )
             response = self.llm_client.generate(request)
             return self._parse_strategies(response.raw_text, generation=gen + 1)

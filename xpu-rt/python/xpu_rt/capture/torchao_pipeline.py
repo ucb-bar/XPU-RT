@@ -19,6 +19,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+import torch
+
 
 @dataclass(frozen=True)
 class QuantizationConfig:
@@ -66,11 +68,29 @@ def apply_quantization(model: Any, config: QuantizationConfig) -> Any:
     Returns:
         Quantized model (modified in-place or new module).
 
-    TODO: Call torchao.quantization.quantize_(model, ...) based on config.scheme.
-    TODO: Handle calibration if needed by the scheme.
-    TODO: Return the quantized model with metadata.
     """
-    raise NotImplementedError("apply_quantization is not yet implemented")
+    try:
+        from torchao.quantization import (
+            float8_weight_only,
+            int4_weight_only,
+            int8_weight_only,
+            quantize_,
+        )
+    except ImportError as exc:
+        raise RuntimeError("torchao is not installed") from exc
+
+    scheme_map = {
+        "int8_weight_only": int8_weight_only,
+        "int4_weight_only": int4_weight_only,
+        "fp8": float8_weight_only,
+    }
+    factory = scheme_map.get(config.scheme)
+    if factory is None:
+        raise ValueError(f"Unsupported TorchAO scheme: {config.scheme}")
+
+    quantizer = factory()
+    quantize_(model, quantizer)
+    return model
 
 
 def verify_quant_accuracy(
@@ -81,11 +101,28 @@ def verify_quant_accuracy(
 ) -> AccuracyReport:
     """Verify quantization accuracy against the original model.
 
-    TODO: Run both models on test_inputs.
-    TODO: Compute L2, max absolute error, and cosine similarity.
-    TODO: Report whether within tolerance.
     """
-    raise NotImplementedError("verify_quant_accuracy is not yet implemented")
+    with torch.no_grad():
+        reference = original_model(*test_inputs)
+        candidate = quantized_model(*test_inputs)
+
+    diff = (reference - candidate).float()
+    ref_norm = torch.linalg.vector_norm(reference.float()).item()
+    cand_norm = torch.linalg.vector_norm(candidate.float()).item()
+    l2_error = torch.linalg.vector_norm(diff).item()
+    max_abs_error = diff.abs().max().item()
+
+    denom = max(ref_norm * cand_norm, 1e-12)
+    cosine_similarity = torch.sum(reference.float() * candidate.float()).item() / denom
+    within_tolerance = max_abs_error <= tolerance
+
+    return AccuracyReport(
+        l2_error=l2_error,
+        max_abs_error=max_abs_error,
+        cosine_similarity=float(cosine_similarity),
+        within_tolerance=within_tolerance,
+        tolerance=tolerance,
+    )
 
 
 __all__ = ["AccuracyReport", "QuantizationConfig", "apply_quantization", "verify_quant_accuracy"]

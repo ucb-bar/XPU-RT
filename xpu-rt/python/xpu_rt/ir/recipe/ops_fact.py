@@ -132,13 +132,107 @@ class GraphBreakOp(IRDLOperation):
     traits = traits_def(Pure())
 
 
+@irdl_op_definition
+class UnsupportedOperatorOp(IRDLOperation):
+    """Records an operator that required unsupported-op recovery."""
+
+    name = "recipe.fact.unsupported_operator"
+
+    target = prop_def(StringAttr)
+    stage = prop_def(StringAttr)
+    strategy = opt_prop_def(StringAttr)
+
+    traits = traits_def(Pure())
+
+
+@irdl_op_definition
+class GuardFailureOp(IRDLOperation):
+    """Records a guard failure or guard-sensitive export hazard."""
+
+    name = "recipe.fact.guard_failure"
+
+    name_hint = prop_def(StringAttr)
+    source = prop_def(StringAttr)
+    code = opt_prop_def(ArrayAttr)
+
+    traits = traits_def(Pure())
+
+
+@irdl_op_definition
+class QuantizationIntentOp(IRDLOperation):
+    """Records quantization intent observed at the capture boundary."""
+
+    name = "recipe.fact.quantization_intent"
+
+    region_ref = prop_def(SymbolRefAttr)
+    scheme = prop_def(StringAttr)
+    detail = opt_prop_def(StringAttr)
+
+    traits = traits_def(Pure())
+
+
+@irdl_op_definition
+class TileDivisibleOp(IRDLOperation):
+    """Formally verified: region dimensions are divisible by given tile sizes.
+
+    When ``verified`` is 1, this fact was proved sound by the Z3-backed
+    transfer analysis pipeline, not just estimated.
+    """
+
+    name = "recipe.fact.tile_divisible"
+
+    region_ref = prop_def(SymbolRefAttr)
+    tile_sizes = prop_def(ArrayAttr)
+    verified = prop_def(IntegerAttr)  # 1 = formally verified, 0 = estimated
+
+    traits = traits_def(Pure())
+
+
+@irdl_op_definition
+class ContiguousLayoutOp(IRDLOperation):
+    """Formally verified: region has contiguous memory layout.
+
+    When ``verified`` is 1, the layout contiguity was proved via SMT.
+    """
+
+    name = "recipe.fact.contiguous_layout"
+
+    region_ref = prop_def(SymbolRefAttr)
+    verified = prop_def(IntegerAttr)  # 1 = formally verified, 0 = estimated
+
+    traits = traits_def(Pure())
+
+
+@irdl_op_definition
+class BackendEligibleOp(IRDLOperation):
+    """Formally verified: region is eligible for a specific backend.
+
+    Verified via transfer analysis that the region's ops and types are
+    legal for the specified backend lane.
+    """
+
+    name = "recipe.fact.backend_eligible"
+
+    region_ref = prop_def(SymbolRefAttr)
+    backend = prop_def(StringAttr)  # "triton", "exo", "accel", "ukernel"
+    verified = prop_def(IntegerAttr)
+
+    traits = traits_def(Pure())
+
+
 __all__ = [
     "BackendAvailableOp",
+    "BackendEligibleOp",
     "CalibrationOp",
+    "ContiguousLayoutOp",
     "ExportIssueOp",
     "FusibleWithOp",
+    "GuardFailureOp",
     "GraphBreakOp",
     "KernelContractOp",
     "LocalMemFitOp",
+    "QuantizationIntentOp",
+    "TileDivisibleOp",
     "TransferCostOp",
+    "UnsupportedOperatorOp",
 ]

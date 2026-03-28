@@ -25,6 +25,7 @@ from compgen.llm.base import (
     GenerationRequest,
     GenerationResponse,
 )
+from compgen.llm._prompt import render_request_prompt
 
 
 @dataclass
@@ -70,7 +71,7 @@ class LLMRecorder:
         self.log_dir.mkdir(parents=True, exist_ok=True)
 
         # Build prompt text for hashing
-        prompt_text = request.prompt_template or ""
+        prompt_text = render_request_prompt(request)
         prompt_hash = hashlib.sha256(prompt_text.encode()).hexdigest()[:12]
 
         record = {
@@ -83,8 +84,21 @@ class LLMRecorder:
                 "top_p": request.config.top_p,
             },
             "prompt_hash": prompt_hash,
-            "prompt_template": request.prompt_template[:500] if request.prompt_template else "",
+            "prompt": prompt_text,
+            "prompt_preview": prompt_text[:500],
             "artifact_type": request.artifact_type,
+            "context": {
+                "target_profile_summary": request.context.target_profile_summary,
+                "available_transforms": list(request.context.available_transforms),
+                "kernel_contracts": list(request.context.kernel_contracts),
+                "frontend_diagnostics_summary": request.context.frontend_diagnostics_summary,
+                "analysis_dossier_summary": request.context.analysis_dossier_summary,
+                "unsupported_operator_summary": request.context.unsupported_operator_summary,
+                "pack_summary": request.context.pack_summary,
+                "integration_branch_summary": request.context.integration_branch_summary,
+                "frontier_summary": request.context.frontier_summary,
+                "legal_action_summary": request.context.legal_action_summary,
+            },
             "response": {
                 "raw_text_length": len(response.raw_text),
                 "raw_text_preview": response.raw_text[:200],

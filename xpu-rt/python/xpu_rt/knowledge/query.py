@@ -9,13 +9,13 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from compgen.knowledge.base import (
+    AntiPattern,
+    CompilerHeuristic,
+    KernelLibraryWisdom,
     KnowledgeBase,
     OpWisdom,
     TargetPattern,
     TransformRecipe,
-    KernelLibraryWisdom,
-    CompilerHeuristic,
-    AntiPattern,
 )
 
 

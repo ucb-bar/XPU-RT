@@ -73,6 +73,21 @@ class AnchorOp(IRDLOperation):
 
 
 @irdl_op_definition
+class RecipeGuardOp(IRDLOperation):
+    """Stable handle for a promoted synthesized guard artifact."""
+
+    name = "recipe.guard"
+
+    sym_name = prop_def(StringAttr)
+    guard_key = prop_def(StringAttr)
+    transform_family = prop_def(StringAttr)
+    guard_kind = opt_prop_def(StringAttr)
+    target_class = opt_prop_def(StringAttr)
+
+    traits = traits_def(SymbolOpInterface(), Pure())
+
+
+@irdl_op_definition
 class BindPayloadOp(IRDLOperation):
     """Bind a recipe scope to a specific payload module.
 
@@ -91,6 +106,7 @@ class BindPayloadOp(IRDLOperation):
 __all__ = [
     "AnchorOp",
     "BindPayloadOp",
+    "RecipeGuardOp",
     "RecipeRegionOp",
     "SegmentOp",
 ]

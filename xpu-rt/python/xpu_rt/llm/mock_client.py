@@ -25,6 +25,7 @@ from compgen.llm.base import (
     GenerationRequest,
     GenerationResponse,
 )
+from compgen.llm._prompt import render_request_prompt
 
 
 def _normalize_prompt(prompt: str) -> str:
@@ -68,7 +69,7 @@ class MockLLMClient:
 
     def generate(self, request: GenerationRequest) -> GenerationResponse:
         """Return a pre-recorded response for the given request."""
-        prompt = request.prompt_template
+        prompt = render_request_prompt(request)
 
         # Check exact matches first
         key = _hash_prompt(prompt)

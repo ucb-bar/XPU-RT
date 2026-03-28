@@ -27,9 +27,11 @@ class TileOp(IRDLOperation):
 
     name = "recipe.tile"
 
+    sym_name = opt_prop_def(StringAttr)
     region_ref = prop_def(SymbolRefAttr)
     tile_sizes = prop_def(ArrayAttr)  # ArrayAttr of IntegerAttr
     interchange = opt_prop_def(ArrayAttr)
+    guard_refs = opt_prop_def(ArrayAttr)  # ArrayAttr of SymbolRefAttr
     provenance = opt_prop_def(ProvenanceAttr)
 
     traits = traits_def(Pure())
@@ -48,8 +50,10 @@ class FuseOp(IRDLOperation):
 
     name = "recipe.fuse"
 
+    sym_name = opt_prop_def(StringAttr)
     fuse_regions = prop_def(ArrayAttr)  # ArrayAttr of SymbolRefAttr
     fusion_kind = opt_prop_def(StringAttr)  # "producer_consumer", "horizontal"
+    guard_refs = opt_prop_def(ArrayAttr)  # ArrayAttr of SymbolRefAttr
     provenance = opt_prop_def(ProvenanceAttr)
 
     traits = traits_def(Pure())
@@ -65,8 +69,10 @@ class VectorizeOp(IRDLOperation):
 
     name = "recipe.vectorize"
 
+    sym_name = opt_prop_def(StringAttr)
     region_ref = prop_def(SymbolRefAttr)
     vector_width = prop_def(IntegerAttr)
+    guard_refs = opt_prop_def(ArrayAttr)  # ArrayAttr of SymbolRefAttr
     provenance = opt_prop_def(ProvenanceAttr)
 
     traits = traits_def(Pure())
@@ -87,8 +93,10 @@ class ReassociateOp(IRDLOperation):
 
     name = "recipe.reassociate"
 
+    sym_name = opt_prop_def(StringAttr)
     region_ref = prop_def(SymbolRefAttr)
     strategy = prop_def(StringAttr)
+    guard_refs = opt_prop_def(ArrayAttr)  # ArrayAttr of SymbolRefAttr
     provenance = opt_prop_def(ProvenanceAttr)
 
     traits = traits_def(Pure())
@@ -108,8 +116,10 @@ class LayoutNormalizeOp(IRDLOperation):
 
     name = "recipe.layout_normalize"
 
+    sym_name = opt_prop_def(StringAttr)
     region_ref = prop_def(SymbolRefAttr)
     target_layout = prop_def(StringAttr)
+    guard_refs = opt_prop_def(ArrayAttr)  # ArrayAttr of SymbolRefAttr
     provenance = opt_prop_def(ProvenanceAttr)
 
     traits = traits_def(Pure())
@@ -121,8 +131,10 @@ class LowerToAccelOp(IRDLOperation):
 
     name = "recipe.lower_to_accel"
 
+    sym_name = opt_prop_def(StringAttr)
     region_ref = prop_def(SymbolRefAttr)
     accel_cluster = opt_prop_def(StringAttr)
+    guard_refs = opt_prop_def(ArrayAttr)  # ArrayAttr of SymbolRefAttr
     provenance = opt_prop_def(ProvenanceAttr)
 
     traits = traits_def(Pure())
@@ -134,10 +146,12 @@ class RequestTritonKernelOp(IRDLOperation):
 
     name = "recipe.request_triton_kernel"
 
+    sym_name = opt_prop_def(StringAttr)
     region_ref = prop_def(SymbolRefAttr)
     search_budget = prop_def(IntegerAttr)
     kernel_family = opt_prop_def(StringAttr)  # "matmul_epilogue", "reduction", etc.
     backend = opt_prop_def(StringAttr)  # "triton", "autocomp"
+    guard_refs = opt_prop_def(ArrayAttr)  # ArrayAttr of SymbolRefAttr
     provenance = opt_prop_def(ProvenanceAttr)
 
     traits = traits_def(Pure())
@@ -155,9 +169,11 @@ class MaterializeUkernelOp(IRDLOperation):
 
     name = "recipe.materialize_ukernel"
 
+    sym_name = opt_prop_def(StringAttr)
     region_ref = prop_def(SymbolRefAttr)
     kernel_name = prop_def(StringAttr)
     calling_convention = opt_prop_def(StringAttr)  # "c", "triton", "nki", "cuda"
+    guard_refs = opt_prop_def(ArrayAttr)  # ArrayAttr of SymbolRefAttr
     provenance = opt_prop_def(ProvenanceAttr)
 
     traits = traits_def(Pure())
@@ -169,9 +185,11 @@ class PlaceOnDeviceOp(IRDLOperation):
 
     name = "recipe.place_on_device"
 
+    sym_name = opt_prop_def(StringAttr)
     region_ref = prop_def(SymbolRefAttr)
     device = prop_def(DeviceRefAttr)
     reason = opt_prop_def(StringAttr)
+    guard_refs = opt_prop_def(ArrayAttr)  # ArrayAttr of SymbolRefAttr
     provenance = opt_prop_def(ProvenanceAttr)
 
     traits = traits_def(Pure())
@@ -189,10 +207,12 @@ class InsertCopyBoundaryOp(IRDLOperation):
 
     name = "recipe.insert_copy_boundary"
 
+    sym_name = opt_prop_def(StringAttr)
     src_region = prop_def(SymbolRefAttr)
     dst_region = prop_def(SymbolRefAttr)
     tensor_name = prop_def(StringAttr)
     is_async = opt_prop_def(IntegerAttr)  # 1 = async, 0 = sync
+    guard_refs = opt_prop_def(ArrayAttr)  # ArrayAttr of SymbolRefAttr
     provenance = opt_prop_def(ProvenanceAttr)
 
     traits = traits_def(Pure())
@@ -204,8 +224,10 @@ class SegmentBoundaryOp(IRDLOperation):
 
     name = "recipe.segment_boundary"
 
+    sym_name = opt_prop_def(StringAttr)
     after_region = prop_def(SymbolRefAttr)
     reason = opt_prop_def(StringAttr)
+    guard_refs = opt_prop_def(ArrayAttr)  # ArrayAttr of SymbolRefAttr
     provenance = opt_prop_def(ProvenanceAttr)
 
     traits = traits_def(Pure())
@@ -217,8 +239,10 @@ class BlackboxOp(IRDLOperation):
 
     name = "recipe.blackbox"
 
+    sym_name = opt_prop_def(StringAttr)
     region_ref = prop_def(SymbolRefAttr)
     blackbox_class = prop_def(StringAttr)  # "side_effect", "unsupported", "opaque"
+    guard_refs = opt_prop_def(ArrayAttr)  # ArrayAttr of SymbolRefAttr
     provenance = opt_prop_def(ProvenanceAttr)
 
     traits = traits_def(Pure())
@@ -234,11 +258,13 @@ class RequestExoKernelOp(IRDLOperation):
 
     name = "recipe.request_exo_kernel"
 
+    sym_name = opt_prop_def(StringAttr)
     region_ref = prop_def(SymbolRefAttr)
     search_budget = prop_def(IntegerAttr)
     schedule_lib = opt_prop_def(StringAttr)
     target_kit = opt_prop_def(StringAttr)
     kernel_family = opt_prop_def(StringAttr)  # "matmul", "conv2d", "reduction"
+    guard_refs = opt_prop_def(ArrayAttr)  # ArrayAttr of SymbolRefAttr
     provenance = opt_prop_def(ProvenanceAttr)
 
     traits = traits_def(Pure())
@@ -260,9 +286,11 @@ class SelectExoScheduleLibOp(IRDLOperation):
 
     name = "recipe.select_exo_schedule_lib"
 
+    sym_name = opt_prop_def(StringAttr)
     region_ref = prop_def(SymbolRefAttr)
     lib_name = prop_def(StringAttr)
     version = opt_prop_def(StringAttr)
+    guard_refs = opt_prop_def(ArrayAttr)  # ArrayAttr of SymbolRefAttr
     provenance = opt_prop_def(ProvenanceAttr)
 
     traits = traits_def(Pure())

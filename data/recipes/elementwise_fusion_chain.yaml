@@ -1,0 +1,28 @@
+name: elementwise_fusion_chain
+op_family: elementwise
+target_class: gpu
+steps:
+- action: identify_chain
+  parameters:
+    ops:
+    - relu
+    - add
+    - mul
+    - sigmoid
+  rationale: Identify chain of elementwise ops
+- action: fuse
+  parameters:
+    strategy: single_kernel
+  rationale: Avoid intermediate materializations
+- action: vectorize
+  parameters:
+    dtype: float4
+    target: loads_stores
+  rationale: Maximize memory bandwidth with vectorized access
+- action: loop_strategy
+  parameters:
+    method: grid_stride
+  rationale: Handle arbitrary tensor sizes
+expected_speedup: 2-5x over separate kernels (memory-bound)
+source: Triton/CUDA fusion patterns
+confidence: high

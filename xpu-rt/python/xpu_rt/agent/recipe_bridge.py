@@ -40,6 +40,10 @@ def _prov(iteration: int) -> ProvenanceAttr:
     return ProvenanceAttr("agent", iteration)
 
 
+def _candidate_sym(prefix: str, region_id: str, iteration: int) -> StringAttr:
+    return StringAttr(f"{prefix}_{region_id}_{iteration}")
+
+
 def action_to_recipe_op(action: Action, iteration: int = 0) -> Operation | None:
     """Convert an agent Action to a Recipe IR operation.
 
@@ -63,6 +67,7 @@ def action_to_recipe_op(action: Action, iteration: int = 0) -> Operation | None:
 
     if isinstance(action, TileAction) and action.region_id:
         return TileOp.build(properties={
+            "sym_name": _candidate_sym("cand_tile", action.region_id, iteration),
             "region_ref": SymbolRefAttr(action.region_id),
             "tile_sizes": ArrayAttr([_int(s) for s in action.tile_sizes]),
             "provenance": _prov(iteration),
@@ -73,12 +78,14 @@ def action_to_recipe_op(action: Action, iteration: int = 0) -> Operation | None:
         if action.target_region_id:
             refs.append(SymbolRefAttr(action.target_region_id))
         return FuseOp.build(properties={
+            "sym_name": _candidate_sym("cand_fuse", action.region_id, iteration),
             "fuse_regions": ArrayAttr(refs),
             "provenance": _prov(iteration),
         })
 
     if isinstance(action, AssignDeviceAction) and action.region_id:
         return PlaceOnDeviceOp.build(properties={
+            "sym_name": _candidate_sym("cand_place", action.region_id, iteration),
             "region_ref": SymbolRefAttr(action.region_id),
             "device": DeviceRefAttr(action.device_index, "device"),
             "provenance": _prov(iteration),
@@ -86,6 +93,7 @@ def action_to_recipe_op(action: Action, iteration: int = 0) -> Operation | None:
 
     if isinstance(action, InsertCopyAction) and action.region_id:
         return InsertCopyBoundaryOp.build(properties={
+            "sym_name": _candidate_sym("cand_copy", action.region_id, iteration),
             "src_region": SymbolRefAttr(action.region_id),
             "dst_region": SymbolRefAttr(action.target_region_id or action.region_id),
             "tensor_name": StringAttr("data"),
@@ -102,6 +110,23 @@ def action_to_recipe_op(action: Action, iteration: int = 0) -> Operation | None:
                 [StringAttr(c) for c in action.rule_categories],
             )
         return RequireEqsatOp.build(properties=props)
+
+    # Verification actions → Recipe IR verification ops
+    from compgen.agent.env import RequestVerificationAction
+    from compgen.ir.recipe.ops_verify import (
+        RequireDiffTestOp,
+        RequireTranslationValidationOp,
+    )
+
+    if isinstance(action, RequestVerificationAction) and action.region_id:
+        if action.level in ("translation_validation", "both"):
+            return RequireTranslationValidationOp.build(properties={
+                "region_ref": SymbolRefAttr(action.region_id),
+            })
+        if action.level == "differential":
+            return RequireDiffTestOp.build(properties={
+                "region_ref": SymbolRefAttr(action.region_id),
+            })
 
     return None
 

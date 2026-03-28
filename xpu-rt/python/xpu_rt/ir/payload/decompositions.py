@@ -256,16 +256,82 @@ def decompose_transpose(
     return DecompResult(ops=[t_empty, transpose], result=transpose.results[0], region_ids=[rid])
 
 
+def decompose_permute(
+    operands: list[SSAValue],
+    meta: dict[str, Any],
+    node_name: str,
+) -> DecompResult:
+    """Decompose aten.permute.default(input, dims) for the common 2D transpose case."""
+
+    operand_type = operands[0].type
+    val: Any = meta["val"]
+    result_shape = list(val.shape)
+    if not isinstance(operand_type, TensorType):
+        dims = None
+    else:
+        input_shape = list(operand_type.get_shape())
+        dims = (1, 0) if len(input_shape) == 2 and input_shape == list(reversed(result_shape)) else None
+
+    if dims != (1, 0):
+        from xdsl.dialects.func import CallOp
+
+        result_type = TensorType(Float32Type(), list(val.shape))
+        rid = _next_region_id("permute")
+        call = CallOp("aten_permute", [operands[0]], [result_type])
+        _attach_region_id(call, rid)
+        return DecompResult(ops=[call], result=call.res[0], region_ids=[rid])
+
+    return decompose_transpose(operands, meta, node_name)
+
+
+def decompose_addmm(
+    operands: list[SSAValue],
+    meta: dict[str, Any],
+    node_name: str,
+) -> DecompResult:
+    """Decompose aten.addmm.default(bias, mat1, mat2, ...) -> matmul + bias add."""
+
+    from xdsl.dialects.func import CallOp
+
+    val: Any = meta["val"]
+    result_type = TensorType(Float32Type(), list(val.shape))
+    ops: list[Operation] = []
+    region_ids: list[str] = []
+
+    mm_empty = _make_empty(result_type)
+    ops.append(mm_empty)
+
+    matmul = MatmulOp(
+        inputs=[operands[1], operands[2]],
+        outputs=[mm_empty.results[0]],
+        res=[result_type],
+    )
+    matmul_rid = _next_region_id("matmul")
+    _attach_region_id(matmul, matmul_rid)
+    region_ids.append(matmul_rid)
+    ops.append(matmul)
+
+    bias_add = CallOp("aten_bias_add", [operands[0], matmul.results[0]], [result_type])
+    add_rid = _next_region_id("add")
+    _attach_region_id(bias_add, add_rid)
+    region_ids.append(add_rid)
+    ops.append(bias_add)
+
+    return DecompResult(ops=ops, result=bias_add.res[0], region_ids=region_ids)
+
+
 # ============================================================================
 # Decomposition table
 # ============================================================================
 
 DECOMPOSITION_TABLE: dict[str, DecompFn] = {
+    "aten.addmm.default": decompose_addmm,
     "aten.linear.default": decompose_linear,
     "aten.gelu.default": decompose_gelu,
     "aten.add.Tensor": decompose_add_tensor,
     "aten.mul.Tensor": decompose_mul_tensor,
     "aten.mm.default": decompose_mm,
+    "aten.permute.default": decompose_permute,
     "aten.t.default": decompose_transpose,
 }
 

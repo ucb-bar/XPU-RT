@@ -21,6 +21,8 @@ class CaptureMetrics:
 
     export_success: bool = False
     graph_break_count: int = 0
+    graph_count: int = 0
+    auto_translations_added: int = 0
     op_coverage: float = 0.0
     unsupported_ops: list[str] = field(default_factory=list)
     export_time_ms: float = 0.0
@@ -28,6 +30,8 @@ class CaptureMetrics:
     total_fx_nodes: int = 0
     decomposed_ops: int = 0
     opaque_ops: int = 0
+    analysis_success: bool = False
+    capture_mode: str = "torch_export"
     exported_program_path: str = ""
 
 
@@ -148,6 +152,7 @@ class PerformanceMetrics:
     """Runtime performance measurements."""
 
     latency_median_us: float = 0.0
+    latency_p90_us: float = 0.0
     latency_p99_us: float = 0.0
     latency_mean_us: float = 0.0
     latency_std_us: float = 0.0
@@ -259,6 +264,30 @@ class GenerationMetrics:
 
 
 @dataclass
+class SynthesisMetrics:
+    """Synthesized-guard and synthesized-analysis metrics."""
+
+    fragments_proposed: int = 0
+    sound_on_first_attempt: int = 0
+    precise_unsound: int = 0
+    repaired_by_guard: int = 0
+    promoted: int = 0
+    average_guard_terms: float = 0.0
+    average_proof_time_ms: float = 0.0
+    legality_recall: float = 0.0
+    unsafe_accept_rate: float = 0.0
+    profitable_opportunity_recall: float = 0.0
+    missed_opportunity_rate: float = 0.0
+    additional_legal_fusions: int = 0
+    additional_profitable_fusions: int = 0
+    additional_local_mem_placements: int = 0
+    speedup_passes_only: float = 0.0
+    speedup_guards_only: float = 0.0
+    speedup_combined: float = 0.0
+    families: dict[str, dict[str, Any]] = field(default_factory=dict)
+
+
+@dataclass
 class DefectMetrics:
     """Verification red-team outcomes."""
 
@@ -284,6 +313,27 @@ class StudyMetadata:
 
 
 @dataclass
+class SuiteMetadata:
+    """Normalized benchmark-suite metadata for a run."""
+
+    suite_id: str = ""
+    manifest_id: str = ""
+    upstream_workload_id: str = ""
+    mode: str = ""
+    device: str = ""
+    dtype: str = ""
+    batch_size: int = 0
+    scenario: str = ""
+    category: str = ""
+    dataset: str = ""
+    official_runner: str = ""
+    source_root: str = ""
+    blessed: bool = False
+    official_metrics: list[dict[str, Any]] = field(default_factory=list)
+    extra: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
 class RunRecord:
     """Complete benchmark run record."""
 
@@ -295,9 +345,13 @@ class RunRecord:
     system_name: str = "compgen"
     workload_id: str = ""
     target_id: str = ""
+    source_model_id: str = ""
+    readiness: str = "full_pipeline"
+    expected_status: str = "pass"
     status: str = "pending"
     config: dict[str, Any] = field(default_factory=dict)
     study: StudyMetadata = field(default_factory=StudyMetadata)
+    suite: SuiteMetadata = field(default_factory=SuiteMetadata)
     capture: CaptureMetrics = field(default_factory=CaptureMetrics)
     ir: IRMetrics = field(default_factory=IRMetrics)
     recipe: RecipeMetrics = field(default_factory=RecipeMetrics)
@@ -313,6 +367,7 @@ class RunRecord:
     artifacts: ArtifactMetrics = field(default_factory=ArtifactMetrics)
     productivity: ProductivityMetrics = field(default_factory=ProductivityMetrics)
     generation: GenerationMetrics = field(default_factory=GenerationMetrics)
+    synthesis: SynthesisMetrics = field(default_factory=SynthesisMetrics)
     defects: DefectMetrics = field(default_factory=DefectMetrics)
     total_compile_time_ms: float = 0.0
     promotion_status: str = "pending"
@@ -341,6 +396,7 @@ class RunRecord:
         record = cls()
         nested_types: dict[str, type[Any]] = {
             "study": StudyMetadata,
+            "suite": SuiteMetadata,
             "capture": CaptureMetrics,
             "ir": IRMetrics,
             "recipe": RecipeMetrics,
@@ -356,6 +412,7 @@ class RunRecord:
             "artifacts": ArtifactMetrics,
             "productivity": ProductivityMetrics,
             "generation": GenerationMetrics,
+            "synthesis": SynthesisMetrics,
             "defects": DefectMetrics,
         }
         for key, val in data.items():
@@ -383,6 +440,8 @@ __all__ = [
     "RecipeMetrics",
     "RunRecord",
     "SolverMetrics",
+    "SynthesisMetrics",
     "StudyMetadata",
+    "SuiteMetadata",
     "VerificationMetrics",
 ]

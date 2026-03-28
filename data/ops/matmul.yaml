@@ -1,0 +1,109 @@
+op_family: matmul
+tiling_guidance:
+- target_class: gpu
+  tile_sizes:
+  - 128
+  - 128
+  - 32
+  rationale: Maximises tensor core utilisation on NVIDIA Ampere/Hopper; 128x128 output tile saturates the warp scheduler and
+    32-deep K tile fits comfortably in shared memory (~128 KB budget at fp16).
+  source: CUTLASS
+  confidence: high
+- target_class: gpu
+  tile_sizes:
+  - 64
+  - 64
+  - 32
+  rationale: Better choice for medium-sized matrices (M,N < 2048) where 128x128 tiles cause wave quantisation waste.  Still
+    fills tensor cores.
+  source: Triton
+  confidence: high
+- target_class: cpu
+  tile_sizes:
+  - 256
+  - 256
+  - 512
+  rationale: Outer blocking targets L2 cache (256 KB - 1 MB per core).  The 256x256 output tile and 512-deep K panel stream
+    through L1 in a GEBP micro-kernel pattern, matching MKL/BLIS designs.
+  source: Exo/MKL
+  confidence: high
+- target_class: cpu
+  tile_sizes:
+  - 6
+  - 16
+  rationale: 'Inner register block for AVX-512: 6 rows x 16 columns keeps 6 accumulators in ZMM registers (6 x 16 fp32 = 6
+    ZMMs) with headroom for A and B panels.'
+  source: Exo/MKL
+  confidence: high
+- target_class: npu
+  tile_sizes:
+  - 16
+  - 16
+  - 16
+  rationale: Matches common systolic array dimensions (16x16 PE grid).  Hardware accumulates a 16x16 output tile per cycle.
+  source: Gemmini/Exo
+  confidence: medium
+- target_class: npu
+  tile_sizes:
+  - 32
+  - 32
+  - 32
+  rationale: Larger systolic arrays (32x32 PE grid) use this tile size; common on custom TPU-style accelerators.
+  source: Gemmini/Exo
+  confidence: medium
+fusion_opportunities:
+- pattern: matmul+bias+relu
+  description: 'Epilogue fusion: bias addition and ReLU activation are folded into the matmul kernel, avoiding a separate
+    memory-bound kernel launch and an extra round-trip to global memory for the intermediate result.'
+  conditions:
+  - Bias is broadcastable along the N dimension.
+  - ReLU (or other pointwise) immediately follows bias addition.
+  source: CUTLASS
+  confidence: high
+- pattern: matmul+softmax
+  description: 'Attention pattern: when matmul feeds directly into softmax (as in Q@K^T -> softmax), fusing avoids materialising
+    the full N x N attention matrix in global memory.'
+  conditions:
+  - Second operand is attention scores (Q @ K^T result).
+  - Softmax operates along the last dimension.
+  source: cuDNN
+  confidence: high
+layout_preferences:
+- target_class: gpu
+  preferred_layout: NT (row-major A, col-major B)
+  rationale: CUTLASS NT layout enables coalesced loads for both A (row-major, consecutive elements in K) and B (col-major,
+    consecutive elements in K), maximising global memory bandwidth utilisation.
+  source: CUTLASS
+- target_class: cpu
+  preferred_layout: row-major A, row-major B (packed)
+  rationale: 'Row-major storage with BLIS-style packing: B is packed into column-panels for sequential access in the micro-kernel.  Avoids
+    TLB misses on large matrices.'
+  source: BLIS/MKL
+backend_guidance:
+- target_class: gpu
+  recommended_backend: Triton/CUTLASS
+  conditions: fp16/bf16/tf32 operands, M*N*K > 2^18
+  rationale: Tensor core utilisation via mma.sync; CUTLASS for peak throughput, Triton for faster iteration and fused epilogues.
+  source: CUTLASS/Triton
+- target_class: cpu
+  recommended_backend: Exo/MKL
+  conditions: fp32/int8 operands, server-class CPU with AVX-512 or AMX
+  rationale: Exo generates cache-tuned micro-kernels; MKL provides hand-optimised fallback with AMX int8/bf16 support.
+  source: Exo/MKL
+- target_class: npu
+  recommended_backend: accel dialect / Exo
+  conditions: Systolic array target with custom ISA
+  rationale: Accel dialect maps matmul to hardware matrix engine instructions; Exo generates explicit DMA + compute schedules.
+  source: Gemmini/Exo
+pitfalls:
+- 'Bank conflicts in shared memory when tile sizes are not multiples of 32 (GPU): use padding or swizzled layouts to avoid
+  32-bank conflicts.'
+- Register pressure with large tile sizes (e.g., 256x256 on GPU) causes spills to local memory, negating the benefit of tiling.
+- 'Wave quantisation waste: if grid_dim * block_size does not evenly divide the number of SMs, some waves run with partially-filled
+  SMs.  Choose tile sizes so ceil(M/tile_M) * ceil(N/tile_N) is a multiple of the SM count.'
+- 'Incorrect K-tile alignment for tensor cores: K tile must be a multiple of 8 (fp16) or 4 (tf32) to use mma.sync instructions.'
+performance_bounds:
+- Compute-bound when arithmetic intensity (2*M*N*K / (M*K + K*N + M*N) * elem_size) exceeds the device's ops:byte ratio (e.g.,
+  ~200 ops/byte on A100 fp16).
+- Memory-bound for tall-skinny or short-fat matrices where one dimension is < 128.
+- 'Theoretical peak: 312 TFLOPS fp16 on A100, 989 TFLOPS fp8 on H100.'

@@ -1,0 +1,31 @@
+name: layernorm_gpu_fused
+op_family: layernorm
+target_class: gpu
+steps:
+- action: parallel_reduce
+  parameters:
+    ops:
+    - mean
+    - variance
+    scope: row
+  rationale: Compute mean and variance in a single pass per row
+- action: warp_reduce
+  parameters:
+    method: shfl_down
+  rationale: Use warp shuffle for fast intra-warp reduction
+- action: normalize_and_scale
+  parameters:
+    fused: true
+    ops:
+    - subtract_mean
+    - divide_std
+    - scale
+    - bias
+  rationale: Fuse normalization and affine transform to avoid extra reads
+- action: vectorize
+  parameters:
+    width_bits: 128
+  rationale: Coalesced 128-bit loads and stores
+expected_speedup: 2-3x over separate mean/var/normalize kernels
+source: Apex/Triton fused LayerNorm
+confidence: high

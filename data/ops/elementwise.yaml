@@ -1,0 +1,60 @@
+op_family: elementwise
+tiling_guidance:
+- target_class: gpu
+  tile_sizes:
+  - 1024
+  rationale: Block size of 1024 threads with vectorised loads (float4 / 128-bit).  Grid-stride loop over the full tensor.  Maximises
+    memory bandwidth utilisation by keeping all SMs busy.
+  source: Triton/CUDA
+  confidence: high
+- target_class: cpu
+  tile_sizes:
+  - 64
+  rationale: Process 64 elements per inner loop iteration (4 AVX-512 vectors of 16 fp32 elements) to hide instruction latency.
+  source: oneDNN
+  confidence: medium
+fusion_opportunities:
+- pattern: elementwise chain
+  description: Always fuse consecutive elementwise operations (e.g., add -> relu, mul -> sigmoid, gelu = x * 0.5 * (1 + erf(x/sqrt(2))))
+    into a single kernel to avoid redundant global memory round-trips.
+  conditions:
+  - All ops have compatible shapes (broadcasting allowed).
+  source: TVM/XLA/Triton
+  confidence: high
+- pattern: matmul epilogue
+  description: Fuse elementwise ops (bias, activation, residual add) into the matmul epilogue rather than launching separate
+    kernels.
+  conditions:
+  - Elementwise op immediately consumes matmul output.
+  - No other consumer of the intermediate matmul result.
+  source: CUTLASS/Triton
+  confidence: high
+layout_preferences:
+- target_class: gpu
+  preferred_layout: contiguous (any order, as long as innermost dim is contiguous)
+  rationale: Elementwise ops only need coalesced access; layout order is irrelevant.
+  source: Triton
+backend_guidance:
+- target_class: gpu
+  recommended_backend: Triton or fused into matmul epilogue
+  conditions: Any pointwise operation
+  rationale: Standalone elementwise kernels in Triton are trivial to write; but prefer fusing into a producer kernel's epilogue
+    when possible.
+  source: Triton/CUTLASS
+- target_class: cpu
+  recommended_backend: native vectorisation
+  conditions: Any pointwise operation
+  rationale: LLVM vectorises elementwise loops automatically with proper pragmas.
+  source: LLVM
+pitfalls:
+- Do NOT launch a separate GPU kernel for a single elementwise op if it can be fused with its producer or consumer.  Kernel
+  launch overhead (~5 us) dominates for small tensors.
+- Broadcasting can cause non-coalesced access if the broadcast dimension is the innermost one.  Materialise the broadcast
+  explicitly for large tensors.
+- GELU and SiLU have expensive transcendental functions (erf, sigmoid); use polynomial approximations when fp16 precision
+  is acceptable.
+performance_bounds:
+- 'Always memory-bound: arithmetic intensity is O(1) -- one op per element loaded.'
+- Peak throughput = memory_bandwidth / element_size.
+- Fusion is the ONLY lever for improving elementwise performance (turn memory-bound elementwise into part of a compute-bound
+  fused kernel).

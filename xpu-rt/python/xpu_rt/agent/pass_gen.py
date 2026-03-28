@@ -12,6 +12,7 @@ Only verified passes are added to the session's pass menu.
 from __future__ import annotations
 
 import ast
+import inspect
 import traceback
 from dataclasses import dataclass, field
 from typing import Any
@@ -79,6 +80,7 @@ class GeneratedPass:
     description: str
     source_code: str
     pattern_class: type | None = None
+    guard_refs: tuple[str, ...] = ()
     verified: bool = False
     verification_error: str = ""
 
@@ -88,6 +90,8 @@ class PassGenerator:
     """Generates and validates xDSL RewritePattern passes via LLM."""
 
     llm_client: CompGenLLMProtocol
+    guard_runtime: Any | None = None
+    default_guard_refs: tuple[str, ...] = ()
     _generated_passes: dict[str, GeneratedPass] = field(default_factory=dict)
 
     def generate(
@@ -96,6 +100,8 @@ class PassGenerator:
         target_pattern: str,
         expected_effect: str,
         module: ModuleOp,
+        *,
+        guard_refs: tuple[str, ...] = (),
     ) -> GeneratedPass:
         """Ask the LLM to generate a pass, then validate it.
 
@@ -118,7 +124,11 @@ class PassGenerator:
                 kernel_contracts=[],
                 objective=Objective.LATENCY,
             ),
-            config=LLMConfig(model="gemini-2.5-flash", temperature=0.2, max_tokens=2000),
+            config=LLMConfig(
+                model=str(getattr(self.llm_client, "model", "default")),
+                temperature=0.2,
+                max_tokens=2000,
+            ),
             artifact_type="rewrite_pattern",
         )
 
@@ -136,7 +146,7 @@ class PassGenerator:
             )
 
         # Validate the generated code
-        return self._validate(description, source_code, module)
+        return self._validate(description, source_code, module, guard_refs=guard_refs or self.default_guard_refs)
 
     def _extract_code(self, response: GenerationResponse) -> str:
         """Extract Python code from LLM response."""
@@ -160,6 +170,8 @@ class PassGenerator:
         description: str,
         source_code: str,
         module: ModuleOp,
+        *,
+        guard_refs: tuple[str, ...] = (),
     ) -> GeneratedPass:
         """Validate generated pass: parse, compile, apply to cloned module, verify."""
         name = description[:50].replace(" ", "_").lower()
@@ -171,6 +183,7 @@ class PassGenerator:
             return GeneratedPass(
                 name=name, description=description, source_code=source_code,
                 verified=False, verification_error=f"Syntax error: {e}",
+                guard_refs=guard_refs,
             )
 
         # Step 2: Compile — does it define a RewritePattern subclass?
@@ -181,6 +194,7 @@ class PassGenerator:
             return GeneratedPass(
                 name=name, description=description, source_code=source_code,
                 verified=False, verification_error=f"Execution error: {e}",
+                guard_refs=guard_refs,
             )
 
         # Find the pattern class
@@ -194,12 +208,13 @@ class PassGenerator:
             return GeneratedPass(
                 name=name, description=description, source_code=source_code,
                 verified=False, verification_error="No RewritePattern subclass found in generated code",
+                guard_refs=guard_refs,
             )
 
         # Step 3: IR validity — apply to cloned module, check it still verifies
         try:
             cloned = module.clone()
-            pattern = pattern_class()
+            pattern = self._instantiate_pattern(pattern_class, guard_refs=guard_refs)
             walker = PatternRewriteWalker(pattern, apply_recursively=False)
             walker.rewrite_module(cloned)
             cloned.verify()
@@ -207,16 +222,33 @@ class PassGenerator:
             return GeneratedPass(
                 name=name, description=description, source_code=source_code,
                 pattern_class=pattern_class,
+                guard_refs=guard_refs,
                 verified=False, verification_error=f"IR verification failed: {e}\n{traceback.format_exc()[-200:]}",
             )
 
         # All checks passed
         generated = GeneratedPass(
             name=name, description=description, source_code=source_code,
-            pattern_class=pattern_class, verified=True,
+            pattern_class=pattern_class, guard_refs=guard_refs, verified=True,
         )
         self._generated_passes[name] = generated
         return generated
+
+    def _instantiate_pattern(
+        self,
+        pattern_class: type,
+        *,
+        guard_refs: tuple[str, ...],
+    ) -> RewritePattern:
+        signature = inspect.signature(pattern_class.__init__)
+        kwargs: dict[str, Any] = {}
+        if "guard_runtime" in signature.parameters:
+            kwargs["guard_runtime"] = self.guard_runtime
+        if "guard_refs" in signature.parameters:
+            kwargs["guard_refs"] = guard_refs
+        elif "guard_ref" in signature.parameters:
+            kwargs["guard_ref"] = guard_refs[0] if guard_refs else None
+        return pattern_class(**kwargs)
 
     def apply_generated_pass(self, name: str, module: ModuleOp) -> tuple[bool, str]:
         """Apply a previously generated and verified pass to a module.
@@ -230,7 +262,7 @@ class PassGenerator:
             return False, f"Pass '{name}' is not verified"
 
         try:
-            pattern = gen.pattern_class()
+            pattern = self._instantiate_pattern(gen.pattern_class, guard_refs=gen.guard_refs)
             walker = PatternRewriteWalker(pattern, apply_recursively=False)
             walker.rewrite_module(module)
             module.verify()

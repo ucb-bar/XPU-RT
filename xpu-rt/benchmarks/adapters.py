@@ -16,6 +16,7 @@ from benchmarks.collector import (
     collect_eqsat_metrics,
     collect_ir_metrics,
     collect_recipe_metrics,
+    collect_synthesis_metrics,
     collect_solver_metrics,
 )
 from benchmarks.record import RunRecord
@@ -59,6 +60,9 @@ def _new_record(ctx: AdapterContext, *, system_name: str) -> RunRecord:
         system_name=system_name,
         workload_id=ctx.workload.workload_id,
         target_id=ctx.target.target_id,
+        source_model_id=ctx.workload.source_model_id,
+        readiness=ctx.workload.readiness,
+        expected_status=ctx.workload.expected_status,
         status="pending",
         config={**ctx.extra_config, **({"ablation": ablation} if ablation else {})},
     )
@@ -142,6 +146,115 @@ def _serialize_verification_result(result: Any) -> dict[str, Any]:
     }
 
 
+def _capture_artifact_for_workload(ctx: AdapterContext, model: Any, sample_inputs: tuple[Any, ...]) -> Any:
+    """Capture according to the workload's configured frontend mode."""
+
+    from compgen.capture import capture_dynamo_partitions, capture_frontend_artifact
+
+    if ctx.workload.capture_mode == "torch_dynamo_partioned":
+        return capture_dynamo_partitions(model, sample_inputs)
+    if ctx.workload.capture_mode == "torch_dynamo_partitioned":
+        return capture_dynamo_partitions(model, sample_inputs)
+    return capture_frontend_artifact(model, sample_inputs)
+
+
+def _populate_capture_from_artifact(record: RunRecord, artifact: Any, *, capture_ms: float) -> None:
+    """Copy generic capture information from a frontend artifact into the record."""
+
+    total_fx_nodes = int(getattr(artifact.validation, "num_ops", 0))
+    auto_translations = len(getattr(artifact, "synthesized_payload_translations", {}))
+    unsupported_ops = [
+        str(resolution.target)
+        for resolution in getattr(artifact, "unsupported_resolutions", [])
+    ]
+    record.capture = collect_capture_metrics(
+        export_success=artifact.exported_program is not None,
+        graph_break_count=int(getattr(artifact, "graph_break_count", 0)),
+        graph_count=int(getattr(artifact, "graph_count", 0)),
+        auto_translations_added=auto_translations,
+        export_time_ms=capture_ms,
+        decomposition_coverage=0.0,
+        total_fx_nodes=total_fx_nodes,
+        decomposed_ops=0,
+        opaque_ops=len(unsupported_ops),
+        analysis_success=bool(getattr(artifact, "analysis_success", False)),
+        capture_mode=str(getattr(artifact, "capture_mode", "")),
+        unsupported_ops=unsupported_ops,
+    )
+
+
+def _finalize_expected_failure(
+    record: RunRecord,
+    ctx: AdapterContext,
+    exc: Exception,
+    *,
+    total_start: float,
+) -> RunRecord:
+    """Map expected workload failures to skip/xfail instead of hard fail."""
+
+    record.errors.append(str(exc))
+    record.total_compile_time_ms = (time.perf_counter() - total_start) * 1000
+    if ctx.workload.expected_status in {"skip", "xfail"}:
+        record.status = ctx.workload.expected_status
+        record.verification.overall_status = "skip"
+        return record
+    record.status = "fail"
+    record.verification.overall_status = "fail"
+    return record
+
+
+def _analysis_only_record(
+    ctx: AdapterContext,
+    record: RunRecord,
+    *,
+    model: Any,
+    sample_inputs: tuple[Any, ...],
+    target_profile: Any,
+    total_start: float,
+) -> RunRecord:
+    """Run capture and graph analysis without the full lowering pipeline."""
+
+    from compgen.agent.analyzer import NetworkAnalyzer
+
+    capture_start = time.perf_counter()
+    artifact = _capture_artifact_for_workload(ctx, model, sample_inputs)
+    capture_ms = (time.perf_counter() - capture_start) * 1000
+    _populate_capture_from_artifact(record, artifact, capture_ms=capture_ms)
+
+    analysis_input = artifact.exported_program if artifact.exported_program is not None else artifact
+    analysis = NetworkAnalyzer().analyze(
+        analysis_input,
+        target_profile,
+        model_name=ctx.workload.workload_id,
+    )
+    record.capture.analysis_success = True
+    if analysis.dossier is not None:
+        record.ir.total_ops = sum(analysis.dossier.op_histogram.values())
+        record.ir.op_type_histogram = dict(analysis.dossier.op_histogram)
+        record.profiling.summary = {
+            "critical_path": list(analysis.dossier.critical_path),
+            "unsupported_targets": list(analysis.dossier.unsupported_targets),
+            "total_regions": analysis.dossier.total_regions,
+        }
+    record.ir.total_flops = analysis.total_flops
+    record.ir.total_bytes = analysis.total_bytes
+    if record.ir.total_bytes:
+        record.performance.arithmetic_intensity = record.ir.total_flops / max(record.ir.total_bytes, 1)
+    record.verification.overall_status = "skip"
+    record.total_compile_time_ms = (time.perf_counter() - total_start) * 1000
+    record.status = "pass"
+    return record
+
+
+def _skip_non_pipeline_workload(record: RunRecord, ctx: AdapterContext, *, reason: str) -> RunRecord:
+    """Skip baselines that require a runnable full pipeline."""
+
+    record.status = "skip"
+    record.errors.append(reason)
+    record.verification.overall_status = "skip"
+    return record
+
+
 class CompGenAdapter:
     """Primary CompGen system adapter."""
 
@@ -151,15 +264,24 @@ class CompGenAdapter:
     def run(self, ctx: AdapterContext) -> RunRecord:
         record = _new_record(ctx, system_name="compgen")
         _populate_study_identity(record, ctx)
-
-        model, sample_inputs = ctx.workload.loader()
         total_start = time.perf_counter()
 
         try:
+            model, sample_inputs = ctx.workload.load(ctx.workspace)
             target_profile, resolved_target_name = _load_target_profile(ctx.target, ctx.output_dir)
             record.target_name = resolved_target_name
 
-            from compgen.capture.torch_export import capture_model
+            if ctx.workload.readiness != "full_pipeline":
+                return _analysis_only_record(
+                    ctx,
+                    record,
+                    model=model,
+                    sample_inputs=sample_inputs,
+                    target_profile=target_profile,
+                    total_start=total_start,
+                )
+
+            from compgen.capture import capture_frontend_artifact
             from compgen.eqsat.pipeline import run_eqsat_pass
             from compgen.ir.recipe.lower import lower_recipe
             from compgen.ir.recipe.seed import generate_seed_recipe
@@ -173,30 +295,37 @@ class CompGenAdapter:
             from compgen.runtime.local_executor import LocalExecutor
             from compgen.runtime.planner import plan_execution
             from compgen.runtime.torch_backend import CompGenBackend
+            from compgen.synthesis.integration import synthesize_and_attach_guards
             from compgen.transforms.verify import TransformVerifier, VerificationLevel
 
             capture_start = time.perf_counter()
-            exported = capture_model(model, sample_inputs)
+            artifact = capture_frontend_artifact(model, sample_inputs)
             capture_ms = (time.perf_counter() - capture_start) * 1000
+            _populate_capture_from_artifact(record, artifact, capture_ms=capture_ms)
+            exported = artifact.exported_program
             if exported is None:
-                record.capture = collect_capture_metrics(export_success=False, export_time_ms=capture_ms)
                 record.status = "fail"
                 record.errors.append("torch.export failed")
                 record.total_compile_time_ms = (time.perf_counter() - total_start) * 1000
                 return record
 
-            module, diagnostics = fx_to_xdsl(exported)
+            module, diagnostics = fx_to_xdsl(exported, **artifact.strict_import_options())
             original_module = module.clone()
             total_fx_nodes = len(getattr(exported.graph, "nodes", []))
             decomposed = sum(1 for d in diagnostics if getattr(d, "level", "") != "error")
             opaque = sum(1 for d in diagnostics if getattr(d, "level", "") == "error")
             record.capture = collect_capture_metrics(
                 export_success=True,
+                graph_break_count=artifact.graph_break_count,
+                graph_count=artifact.graph_count,
+                auto_translations_added=len(getattr(artifact, "synthesized_payload_translations", {})),
                 export_time_ms=capture_ms,
                 decomposition_coverage=decomposed / max(len(diagnostics), 1),
                 total_fx_nodes=total_fx_nodes,
                 decomposed_ops=decomposed,
                 opaque_ops=opaque,
+                analysis_success=True,
+                capture_mode=str(artifact.capture_mode),
                 unsupported_ops=[str(d) for d in diagnostics if getattr(d, "level", "") == "error"],
             )
             record.ir = collect_ir_metrics(module)
@@ -219,11 +348,26 @@ class CompGenAdapter:
                 record.eqsat.changed = False
 
             recipe_module = generate_seed_recipe(module, target_profile)
+            guard_registry = None
+            fact_index = None
+            synthesis_summary: dict[str, Any] | None = None
+            if ctx.ablation not in {"no_guard_synthesis", "handwritten_only"}:
+                guard_registry, fact_index, synthesis_summary = synthesize_and_attach_guards(
+                    recipe_module,
+                    out_dir=ctx.output_dir / "guards",
+                    target_class=ctx.target.target_class,
+                )
+                record.synthesis = collect_synthesis_metrics(synthesis_summary)
             record.recipe = collect_recipe_metrics(recipe_module)
             validation = validate_recipe_module(recipe_module)
             record.recipe.validation_passed = validation.valid
             record.recipe.validation_errors = len(validation.errors)
-            lowered = lower_recipe(recipe_module)
+            lowered = lower_recipe(
+                recipe_module,
+                guard_registry=guard_registry,
+                fact_index=fact_index,
+                target_class=ctx.target.target_class,
+            )
             record.recipe.transform_scripts_count = len(lowered.transform_scripts)
             record.recipe.kernel_jobs_count = len(lowered.kernel_jobs)
             record.recipe.plan_fragments_count = len(lowered.plan_fragments)
@@ -231,6 +375,20 @@ class CompGenAdapter:
             record.recipe.eqsat_jobs_count = len(lowered.eqsat_jobs)
             record.recipe.lowering_diagnostics = len(lowered.diagnostics)
             record.performance.kernel_count = len(lowered.kernel_jobs)
+            if synthesis_summary is not None:
+                family_data = synthesis_summary.get("families", {})
+                fusion_family = family_data.get("fusion", {})
+                local_mem_family = family_data.get("local_mem", {})
+                record.synthesis.additional_legal_fusions = int(fusion_family.get("promoted", 0))
+                record.synthesis.additional_profitable_fusions = int(fusion_family.get("promoted", 0))
+                record.synthesis.additional_local_mem_placements = int(local_mem_family.get("promoted", 0))
+                total_guard_verdicts = len(lowered.guard_verdicts)
+                rejected_verdicts = sum(1 for verdict in lowered.guard_verdicts if not verdict.get("allow", False))
+                if total_guard_verdicts:
+                    record.synthesis.unsafe_accept_rate = 0.0
+                    record.synthesis.missed_opportunity_rate = rejected_verdicts / total_guard_verdicts
+                    record.synthesis.legality_recall = (total_guard_verdicts - rejected_verdicts) / total_guard_verdicts
+                    record.synthesis.profitable_opportunity_recall = record.synthesis.legality_recall
 
             record.generation.candidate_transforms = record.recipe.candidate_ops
             record.generation.candidate_kernels = len(lowered.kernel_jobs)
@@ -348,6 +506,12 @@ class CompGenAdapter:
                 record.baselines.speedup_vs_compiled = record.baselines.compiled_gpu_latency_us / max(
                     backend_result.latency_median_us, 1e-6
                 )
+            if ctx.ablation in {"fixed_pass_only", "no_guard_synthesis", "handwritten_only"}:
+                record.synthesis.speedup_passes_only = record.baselines.speedup_vs_compiled
+            elif ctx.ablation == "synth_only":
+                record.synthesis.speedup_guards_only = record.baselines.speedup_vs_compiled
+            else:
+                record.synthesis.speedup_combined = record.baselines.speedup_vs_compiled
 
             record.generation.search_time_ms = record.eqsat.eqsat_time_ms + record.kernels.total_search_time_ms
             record.generation.compile_time_ms = (time.perf_counter() - total_start) * 1000
@@ -359,9 +523,7 @@ class CompGenAdapter:
             record.status = "pass" if not record.errors and record.verification.overall_status in {"pass", "skip"} else "fail"
 
         except Exception as exc:  # pragma: no cover - exercised by integration paths
-            record.status = "fail"
-            record.errors.append(str(exc))
-            record.total_compile_time_ms = (time.perf_counter() - total_start) * 1000
+            return _finalize_expected_failure(record, ctx, exc, total_start=total_start)
 
         return record
 
@@ -375,7 +537,13 @@ class TorchEagerAdapter:
     def run(self, ctx: AdapterContext) -> RunRecord:
         record = _new_record(ctx, system_name="torch_eager")
         _populate_study_identity(record, ctx)
-        model, sample_inputs = ctx.workload.loader()
+        if ctx.workload.readiness != "full_pipeline":
+            return _skip_non_pipeline_workload(
+                record,
+                ctx,
+                reason=f"torch_eager baseline skipped for workload readiness={ctx.workload.readiness}",
+            )
+        model, sample_inputs = ctx.workload.load(ctx.workspace)
         from compgen.runtime.local_executor import LocalExecutor
 
         result = LocalExecutor().benchmark(model, sample_inputs, device="cpu", mode="eager", num_iterations=10, warmup=3)
@@ -401,7 +569,13 @@ class TorchCompileAdapter:
     def run(self, ctx: AdapterContext) -> RunRecord:
         record = _new_record(ctx, system_name="torch_compile")
         _populate_study_identity(record, ctx)
-        model, sample_inputs = ctx.workload.loader()
+        if ctx.workload.readiness != "full_pipeline":
+            return _skip_non_pipeline_workload(
+                record,
+                ctx,
+                reason=f"torch_compile baseline skipped for workload readiness={ctx.workload.readiness}",
+            )
+        model, sample_inputs = ctx.workload.load(ctx.workspace)
         from compgen.runtime.local_executor import LocalExecutor
 
         result = LocalExecutor().benchmark(

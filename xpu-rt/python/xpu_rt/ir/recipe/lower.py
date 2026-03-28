@@ -49,8 +49,29 @@ from compgen.ir.recipe.ops_verify import (
     RequireProfileBudgetOp,
     RequireTranslationValidationOp,
 )
+from compgen.ir.recipe.ops_scope import RecipeGuardOp
+from compgen.synthesis.facts import RecipeFactIndex, build_candidate_env, build_fact_index
+from compgen.synthesis.registry import GuardRegistry
+from compgen.synthesis.runtime import GuardRuntime, GuardVerdict
 
 log = structlog.get_logger()
+
+
+CANDIDATE_OP_TYPES = (
+    TileOp,
+    FuseOp,
+    VectorizeOp,
+    ReassociateOp,
+    LayoutNormalizeOp,
+    LowerToAccelOp,
+    RequestTritonKernelOp,
+    RequestExoKernelOp,
+    SelectExoScheduleLibOp,
+    MaterializeUkernelOp,
+    PlaceOnDeviceOp,
+    InsertCopyBoundaryOp,
+    SegmentBoundaryOp,
+)
 
 
 @dataclass(frozen=True)
@@ -62,10 +83,18 @@ class LoweringOutput:
     plan_fragments: list[dict[str, Any]] = field(default_factory=list)
     verification_obligations: list[dict[str, Any]] = field(default_factory=list)
     eqsat_jobs: list[dict[str, Any]] = field(default_factory=list)
+    guard_verdicts: list[dict[str, Any]] = field(default_factory=list)
+    feedback_events: list[dict[str, Any]] = field(default_factory=list)
     diagnostics: list[str] = field(default_factory=list)
 
 
-def lower_recipe(module: ModuleOp) -> LoweringOutput:
+def lower_recipe(
+    module: ModuleOp,
+    *,
+    guard_registry: GuardRegistry | None = None,
+    fact_index: RecipeFactIndex | None = None,
+    target_class: str = "",
+) -> LoweringOutput:
     """Lower a Recipe IR module to concrete outputs.
 
     Dispatches each op to its lowering handler based on op type.
@@ -75,7 +104,18 @@ def lower_recipe(module: ModuleOp) -> LoweringOutput:
     plan_fragments: list[dict[str, Any]] = []
     verification_obligations: list[dict[str, Any]] = []
     eqsat_jobs: list[dict[str, Any]] = []
+    guard_verdicts: list[dict[str, Any]] = []
+    feedback_events: list[dict[str, Any]] = []
     diagnostics: list[str] = []
+    runtime = GuardRuntime(guard_registry) if guard_registry is not None else None
+    guard_ops = {
+        op.sym_name.data: op
+        for op in module.walk()
+        if isinstance(op, RecipeGuardOp)
+    }
+    resolved_fact_index = fact_index
+    if resolved_fact_index is None and (runtime is not None or guard_ops):
+        resolved_fact_index = build_fact_index(module, target_class=target_class)
 
     for op in module.body.block.ops:
         try:
@@ -86,6 +126,12 @@ def lower_recipe(module: ModuleOp) -> LoweringOutput:
                 plan_fragments,
                 verification_obligations,
                 eqsat_jobs,
+                guard_ops,
+                runtime,
+                resolved_fact_index,
+                guard_verdicts,
+                feedback_events,
+                diagnostics,
             )
         except Exception as e:
             diagnostics.append(f"Error lowering {op.name}: {e}")
@@ -97,6 +143,7 @@ def lower_recipe(module: ModuleOp) -> LoweringOutput:
         plans=len(plan_fragments),
         verifications=len(verification_obligations),
         eqsat=len(eqsat_jobs),
+        guards=len(guard_verdicts),
         diagnostics=len(diagnostics),
     )
 
@@ -106,6 +153,8 @@ def lower_recipe(module: ModuleOp) -> LoweringOutput:
         plan_fragments=plan_fragments,
         verification_obligations=verification_obligations,
         eqsat_jobs=eqsat_jobs,
+        guard_verdicts=guard_verdicts,
+        feedback_events=feedback_events,
         diagnostics=diagnostics,
     )
 
@@ -117,8 +166,25 @@ def _lower_op(
     plan_fragments: list[dict[str, Any]],
     verification_obligations: list[dict[str, Any]],
     eqsat_jobs: list[dict[str, Any]],
+    guard_ops: dict[str, RecipeGuardOp],
+    guard_runtime: GuardRuntime | None,
+    fact_index: RecipeFactIndex | None,
+    guard_verdicts: list[dict[str, Any]],
+    feedback_events: list[dict[str, Any]],
+    diagnostics: list[str],
 ) -> None:
     """Dispatch a single op to its lowering handler."""
+
+    if isinstance(op, CANDIDATE_OP_TYPES) and not _candidate_guards_allow(
+        op,
+        guard_ops,
+        guard_runtime,
+        fact_index,
+        guard_verdicts,
+        feedback_events,
+        diagnostics,
+    ):
+        return
 
     # --- Candidate ops → Transform scripts ---
     if isinstance(op, TileOp):
@@ -188,6 +254,102 @@ def _int_attr_val(attr: IntegerAttr) -> int:
 
 def _str_attr_val(attr: StringAttr) -> str:
     return attr.data
+
+
+def _candidate_symbol(op: Operation) -> str:
+    if hasattr(op, "sym_name") and getattr(op, "sym_name") is not None:
+        return getattr(op, "sym_name").data
+    return ""
+
+
+def _guard_ref_names(op: Operation) -> list[str]:
+    if not hasattr(op, "guard_refs") or getattr(op, "guard_refs") is None:
+        return []
+    guard_refs = getattr(op, "guard_refs")
+    return [
+        ref.root_reference.data
+        for ref in guard_refs.data
+        if isinstance(ref, SymbolRefAttr)
+    ]
+
+
+def _verdict_to_dict(verdict: GuardVerdict, *, guard_ref: str, candidate_ref: str) -> dict[str, Any]:
+    return {
+        "candidate_ref": candidate_ref,
+        "guard_ref": guard_ref,
+        "guard_key": verdict.guard_key,
+        "allow": verdict.allow,
+        "reason": verdict.reason,
+        "fragments_evaluated": verdict.fragments_evaluated,
+        "failed_fragment_index": verdict.failed_fragment_index,
+        "details": verdict.details,
+    }
+
+
+def _candidate_guards_allow(
+    op: Operation,
+    guard_ops: dict[str, RecipeGuardOp],
+    guard_runtime: GuardRuntime | None,
+    fact_index: RecipeFactIndex | None,
+    guard_verdicts: list[dict[str, Any]],
+    feedback_events: list[dict[str, Any]],
+    diagnostics: list[str],
+) -> bool:
+    guard_refs = _guard_ref_names(op)
+    if not guard_refs:
+        return True
+
+    candidate_ref = _candidate_symbol(op)
+    if guard_runtime is None:
+        diagnostics.append(f"Guarded candidate skipped ({op.name}): no guard registry/runtime available")
+        for guard_ref in guard_refs:
+            payload = {
+                "candidate_ref": candidate_ref,
+                "guard_ref": guard_ref,
+                "allow": False,
+                "reason": "missing_guard_runtime",
+            }
+            guard_verdicts.append(payload)
+            feedback_events.append(payload)
+        return False
+
+    if fact_index is None:
+        diagnostics.append(f"Guarded candidate skipped ({op.name}): no fact index available")
+        for guard_ref in guard_refs:
+            payload = {
+                "candidate_ref": candidate_ref,
+                "guard_ref": guard_ref,
+                "allow": False,
+                "reason": "missing_fact_index",
+            }
+            guard_verdicts.append(payload)
+            feedback_events.append(payload)
+        return False
+
+    env = build_candidate_env(op, fact_index)
+    for guard_ref in guard_refs:
+        guard_op = guard_ops.get(guard_ref)
+        if guard_op is None:
+            payload = {
+                "candidate_ref": candidate_ref,
+                "guard_ref": guard_ref,
+                "allow": False,
+                "reason": "unknown_guard_ref",
+            }
+            diagnostics.append(f"Guarded candidate skipped ({op.name}): unresolved guard @{guard_ref}")
+            guard_verdicts.append(payload)
+            feedback_events.append(payload)
+            return False
+        verdict = guard_runtime.evaluate(guard_op.guard_key.data, env)
+        payload = _verdict_to_dict(verdict, guard_ref=guard_ref, candidate_ref=candidate_ref)
+        guard_verdicts.append(payload)
+        feedback_events.append(payload)
+        if not verdict.allow:
+            diagnostics.append(
+                f"Guarded candidate rejected ({op.name}): guard @{guard_ref} ({guard_op.guard_key.data}) -> {verdict.reason}"
+            )
+            return False
+    return True
 
 
 def _lower_tile(op: TileOp, out: list[str]) -> None:

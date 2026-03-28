@@ -17,4 +17,49 @@ reproducibility and audit.
 
 from __future__ import annotations
 
-__all__: list[str] = []
+from compgen.llm.anthropic_client import AnthropicClient
+from compgen.llm.base import (
+    CompGenLLMProtocol,
+    GenerationRequest,
+    GenerationResponse,
+    LLMConfig,
+    Objective,
+    PromptContext,
+)
+from compgen.llm.cli_client import ClaudeCLIClient, CodexCLIClient
+from compgen.llm.config import (
+    LLMSelection,
+    SUPPORTED_PROVIDERS,
+    apply_selection_to_env,
+    build_llm_runtime,
+    resolve_llm_selection,
+    selection_status,
+)
+from compgen.llm.factory import create_llm_client
+from compgen.llm.gemini_client import GeminiClient
+from compgen.llm.mock_client import MockLLMClient
+from compgen.llm.openai_client import OpenAIClient
+from compgen.llm.recorder import LLMRecorder
+
+__all__ = [
+    "AnthropicClient",
+    "ClaudeCLIClient",
+    "CodexCLIClient",
+    "CompGenLLMProtocol",
+    "GenerationRequest",
+    "GenerationResponse",
+    "GeminiClient",
+    "LLMSelection",
+    "LLMConfig",
+    "LLMRecorder",
+    "MockLLMClient",
+    "Objective",
+    "OpenAIClient",
+    "PromptContext",
+    "SUPPORTED_PROVIDERS",
+    "apply_selection_to_env",
+    "build_llm_runtime",
+    "create_llm_client",
+    "resolve_llm_selection",
+    "selection_status",
+]

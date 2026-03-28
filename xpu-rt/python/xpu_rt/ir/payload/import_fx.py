@@ -30,7 +30,7 @@ from xdsl.dialects.func import CallOp, FuncOp, ReturnOp
 from xdsl.ir import Attribute, Block, Region, SSAValue
 from xdsl.printer import Printer
 
-from compgen.ir.payload.decompositions import DECOMPOSITION_TABLE, reset_region_counters
+from compgen.ir.payload.decompositions import DECOMPOSITION_TABLE, DecompFn, reset_region_counters
 
 
 def _torch_dtype_to_xdsl(dtype: torch.dtype) -> Attribute:
@@ -82,6 +82,9 @@ class FXImporter:
     diagnostics: list[ImportDiagnostic] = field(default_factory=list)
     decomposed_count: int = 0
     opaque_count: int = 0
+    allow_opaque_fallback: bool = True
+    explicit_blackboxes: set[str] = field(default_factory=set)
+    dynamic_decompositions: dict[str, DecompFn] = field(default_factory=dict)
 
     @property
     def decomposition_coverage(self) -> float:
@@ -144,8 +147,19 @@ class FXImporter:
         declared_sigs: dict[str, str] = {}
         name_counters: dict[str, int] = {}
 
-        # Track gelu external declaration
-        gelu_declared = False
+        def ensure_external_decl(call: CallOp) -> None:
+            callee = call.callee.string_value()
+            operand_types = tuple(str(value.type) for value in call.operands)
+            result_types = tuple(str(value.type) for value in call.results)
+            sig_key = f"{callee}:{operand_types}:{result_types}"
+            if sig_key in declared_sigs:
+                return
+            declared_sigs[sig_key] = callee
+            extern_funcs.append(FuncOp.external(
+                callee,
+                [value.type for value in call.operands],
+                [value.type for value in call.results],
+            ))
 
         # Process call_function nodes
         for node in call_nodes:
@@ -165,19 +179,14 @@ class FXImporter:
                     operands.append(value_map[arg.name])
 
             # Try decomposition table first
-            decomp_fn = DECOMPOSITION_TABLE.get(target_str)
+            decomp_fn = self.dynamic_decompositions.get(target_str, DECOMPOSITION_TABLE.get(target_str))
             if decomp_fn is not None:
                 meta = dict(node.meta)
                 result = decomp_fn(operands, meta, node.name)
 
-                # Handle extern declarations needed by decompositions (e.g., gelu)
                 for op in result.ops:
-                    if isinstance(op, CallOp) and not gelu_declared:
-                        callee = op.callee.string_value()
-                        if callee == "aten_gelu":
-                            ext = FuncOp.external("aten_gelu", [operands[0].type], [result_type])
-                            extern_funcs.append(ext)
-                            gelu_declared = True
+                    if isinstance(op, CallOp):
+                        ensure_external_decl(op)
                     block.add_op(op)
 
                 if result.result is not None:
@@ -187,6 +196,14 @@ class FXImporter:
                 self.diagnostics.append(ImportDiagnostic(
                     fx_node=node.name, level="info",
                     message=f"Decomposed {target_str} -> {len(result.ops)} ops (regions: {result.region_ids})",
+                ))
+                continue
+
+            if not self.allow_opaque_fallback and target_str not in self.explicit_blackboxes:
+                self.diagnostics.append(ImportDiagnostic(
+                    fx_node=node.name,
+                    level="error",
+                    message=f"Unsupported without explicit blackbox approval: {target_str}",
                 ))
                 continue
 
@@ -210,8 +227,9 @@ class FXImporter:
             value_map[node.name] = call_op.res[0]
 
             self.opaque_count += 1
+            level = "warning" if target_str in self.explicit_blackboxes else "info"
             self.diagnostics.append(ImportDiagnostic(
-                fx_node=node.name, level="info",
+                fx_node=node.name, level=level,
                 message=f"Opaque: {target_str} -> func.call @{func_name}",
             ))
 
@@ -251,13 +269,23 @@ class FXImporter:
         return stream.getvalue()
 
 
-def fx_to_xdsl(exported_program: Any) -> tuple[ModuleOp, list[ImportDiagnostic]]:
+def fx_to_xdsl(
+    exported_program: Any,
+    *,
+    allow_opaque_fallback: bool = True,
+    explicit_blackboxes: set[str] | None = None,
+    dynamic_decompositions: dict[str, DecompFn] | None = None,
+) -> tuple[ModuleOp, list[ImportDiagnostic]]:
     """Convenience function: export -> xDSL in one call.
 
     Returns:
         Tuple of (xDSL ModuleOp, list of diagnostics).
     """
-    importer = FXImporter()
+    importer = FXImporter(
+        allow_opaque_fallback=allow_opaque_fallback,
+        explicit_blackboxes=set(explicit_blackboxes or ()),
+        dynamic_decompositions=dict(dynamic_decompositions or {}),
+    )
     module = importer.import_graph(exported_program)
     return module, importer.diagnostics
 

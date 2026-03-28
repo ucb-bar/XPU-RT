@@ -246,6 +246,40 @@ def run_eqsat_pass(
 
     log.info("eqsat.start", ops=ops_before, rules=len(rules))
 
+    # Step 0a: Classify ops (blackbox vs profitable)
+    try:
+        from compgen.eqsat.blackbox import classify_module, count_blackbox, count_profitable
+
+        classifications = classify_module(module)
+        n_profitable = count_profitable(classifications)
+        n_blackbox = count_blackbox(classifications)
+        log.info(
+            "eqsat.classify",
+            profitable=n_profitable,
+            blackbox=n_blackbox,
+            total=len(classifications),
+        )
+    except Exception:
+        log.warning("eqsat.classify_failed", exc_info=True)
+        classifications = None
+        n_profitable = ops_before
+
+    # Step 0b: Segment if the module is large
+    segments = None
+    if n_profitable > config.segment_threshold:
+        try:
+            from compgen.eqsat.segment import segment_module
+
+            segments = segment_module(module, threshold=config.segment_threshold)
+            log.info(
+                "eqsat.segmented",
+                num_segments=len(segments),
+                threshold=config.segment_threshold,
+            )
+        except Exception:
+            log.warning("eqsat.segment_failed", exc_info=True)
+            segments = None
+
     # Step 1: Create e-graph structure
     create_egraph(module)
     eclasses_initial = _count_eclasses(module)
@@ -261,6 +295,21 @@ def run_eqsat_pass(
         enodes=enodes_after_rewrite,
         rule_stats=rule_stats,
     )
+
+    # Step 2b: Summarize e-graph (before extraction removes eclasses)
+    egraph_summary = None
+    try:
+        from compgen.eqsat.explain import summarize_egraph
+
+        egraph_summary = summarize_egraph(module)
+        log.info(
+            "eqsat.summary",
+            eclasses=egraph_summary.num_eclasses,
+            enodes=egraph_summary.num_enodes,
+            ambiguous=egraph_summary.ambiguous_eclasses,
+        )
+    except Exception:
+        log.warning("eqsat.summarize_failed", exc_info=True)
 
     # Step 3: Assign costs and extract
     if cost_dict is not None:
@@ -295,6 +344,7 @@ def run_eqsat_pass(
         enodes_after_rewrite=enodes_after_rewrite,
         rule_stats=rule_stats,
         changed=changed,
+        summary=egraph_summary,
     )
 
 
@@ -309,3 +359,4 @@ class EqSatResult:
     enodes_after_rewrite: int
     rule_stats: dict[str, int]
     changed: bool
+    summary: object | None = None  # EGraphSummary when available

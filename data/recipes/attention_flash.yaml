@@ -1,0 +1,29 @@
+name: attention_flash
+op_family: attention
+target_class: gpu
+steps:
+- action: tile
+  parameters:
+    dim: sequence_length
+    block_size:
+    - 64
+    - 128
+  rationale: Process attention in blocks
+- action: fuse
+  parameters:
+    ops:
+    - qk_matmul
+    - softmax
+  rationale: Avoid materializing N x N attention matrix
+- action: online_softmax
+  parameters:
+    method: incremental
+  rationale: Compute softmax incrementally
+- action: accumulate
+  parameters:
+    op: attn_v_matmul
+    strategy: output_stationary
+  rationale: Output-stationary accumulation within tile
+expected_speedup: 2-4x over naive, O(N) memory vs O(N^2)
+source: FlashAttention paper
+confidence: high

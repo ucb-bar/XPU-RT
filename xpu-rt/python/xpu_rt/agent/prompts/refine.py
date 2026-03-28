@@ -19,6 +19,12 @@ class RefinementContext:
     actions_tried: list[dict[str, str]]
     last_action_result: str
     remaining_bottlenecks: list[str]
+    graph_break_count: int = 0
+    guard_count: int = 0
+    unsupported_ops: list[str] | None = None
+    analysis_summary: str = ""
+    legal_actions_summary: str = ""
+    verification_summary: str = ""
 
 
 REFINE_PROMPT = textwrap.dedent("""\
@@ -30,6 +36,11 @@ REFINE_PROMPT = textwrap.dedent("""\
     - Current latency: {current_latency_us:.1f} us
     - Improvement so far: {improvement_pct:+.1f}%
 
+    ## Frontend diagnostics
+    - Graph breaks: {graph_break_count}
+    - Guards: {guard_count}
+    - Unsupported ops: {unsupported_ops}
+
     ## Actions tried:
     {actions_tried}
 
@@ -38,6 +49,15 @@ REFINE_PROMPT = textwrap.dedent("""\
     ## Remaining bottlenecks:
     {bottlenecks}
 
+    ## Analysis summary:
+    {analysis_summary}
+
+    ## Verification summary:
+    {verification_summary}
+
+    ## Legal actions:
+    {legal_actions}
+
     ## Task
     What should we try next? Choose one action:
     1. "eqsat" — propose a new rewrite rule
@@ -45,7 +65,9 @@ REFINE_PROMPT = textwrap.dedent("""\
     3. "fuse" — fuse two adjacent regions
     4. "assign_device" — move an op to a different device
     5. "generate_pass" — ask LLM to generate a new compiler pass
-    6. "noop" — stop optimizing (no more improvements possible)
+    6. "discover_ops" — inspect unsupported or unresolved operators
+    7. "request_verification" — spend budget on formal or differential checks
+    8. "noop" — stop optimizing (no more improvements possible)
 
     Respond as JSON:
     {{"action_type": "...", "target_region": "...", "parameters": {{}}, "reasoning": "..."}}
@@ -59,6 +81,7 @@ def format_prompt(ctx: RefinementContext) -> str:
         for i, a in enumerate(ctx.actions_tried[-5:])
     ) or "  (none yet)"
     bottlenecks = "\n".join(f"  - {b}" for b in ctx.remaining_bottlenecks[:5]) or "  (none)"
+    unsupported = ", ".join((ctx.unsupported_ops or [])[:10]) or "(none)"
 
     return REFINE_PROMPT.format(
         iteration=ctx.iteration,
@@ -66,9 +89,15 @@ def format_prompt(ctx: RefinementContext) -> str:
         best_latency_us=ctx.best_latency_us,
         current_latency_us=ctx.current_latency_us,
         improvement_pct=ctx.improvement_so_far_pct,
+        graph_break_count=ctx.graph_break_count,
+        guard_count=ctx.guard_count,
+        unsupported_ops=unsupported,
         actions_tried=actions,
         last_result=ctx.last_action_result,
         bottlenecks=bottlenecks,
+        analysis_summary=ctx.analysis_summary or "  (none)",
+        verification_summary=ctx.verification_summary or "  (none)",
+        legal_actions=ctx.legal_actions_summary or "  (none)",
     )
 
 
@@ -80,6 +109,19 @@ class RefinementAction:
     target_region: str
     parameters: dict[str, str]
     reasoning: str
+
+
+REFINEMENT_SCHEMA: dict[str, object] = {
+    "type": "object",
+    "properties": {
+        "action_type": {"type": "string"},
+        "target_region": {"type": "string"},
+        "parameters": {"type": "object"},
+        "reasoning": {"type": "string"},
+    },
+    "required": ["action_type", "target_region", "parameters", "reasoning"],
+    "additionalProperties": False,
+}
 
 
 def parse_response(response_text: str) -> RefinementAction | None:

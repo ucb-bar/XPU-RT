@@ -1,0 +1,41 @@
+name: matmul_gpu_tensor_core
+op_family: matmul
+target_class: gpu
+steps:
+- action: tile
+  parameters:
+    tile_sizes:
+    - 128
+    - 128
+    - 32
+  rationale: Match tensor core tile shape and shared memory capacity
+- action: interchange
+  parameters:
+    permutation:
+    - 2
+    - 0
+    - 1
+  rationale: Move K to outermost for output-stationary dataflow
+- action: stage_mem
+  parameters:
+    operands:
+    - A
+    - B
+    target: shared
+  rationale: Exploit data reuse across thread block
+- action: tile
+  parameters:
+    tile_sizes:
+    - 16
+    - 16
+    - 16
+    level: inner
+  rationale: Match warp-level MMA shape
+- action: vectorize
+  parameters:
+    target: loads
+    width_bits: 128
+  rationale: Use 128-bit loads for coalesced access
+expected_speedup: 10-50x over naive, within 80% of CUTLASS
+source: CUTLASS/Triton patterns
+confidence: high

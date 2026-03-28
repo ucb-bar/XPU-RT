@@ -73,6 +73,30 @@ class PromptContext:
     hardware_feedback: str = ""
     """Profiling or diagnostic feedback from prior runs."""
 
+    frontend_diagnostics_summary: str = ""
+    """Graph breaks, guards, and export-boundary diagnostics."""
+
+    analysis_dossier_summary: str = ""
+    """Deterministic graph-analysis dossier summary."""
+
+    unsupported_operator_summary: str = ""
+    """Unsupported-op dossiers or recovery frontier summary."""
+
+    pack_summary: str = ""
+    """Active extension packs, sealed surfaces, and generation apertures."""
+
+    integration_branch_summary: str = ""
+    """Integration worktree or branch state for active packs."""
+
+    frontier_summary: str = ""
+    """Current search frontier, verification state, and next-step context."""
+
+    legal_action_summary: str = ""
+    """Compact summary of currently legal actions."""
+
+    evidence_json: str = ""
+    """Machine-readable evidence snapshot serialized as JSON text."""
+
 
 @dataclass(frozen=True)
 class GenerationRequest:

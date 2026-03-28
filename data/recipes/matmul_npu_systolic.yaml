@@ -1,0 +1,34 @@
+name: matmul_npu_systolic
+op_family: matmul
+target_class: npu
+steps:
+- action: tile
+  parameters:
+    tile_sizes:
+    - DIM
+    - DIM
+    - DIM
+  rationale: Match PE array geometry
+- action: configure
+  parameters:
+    mode: matmul_accumulate
+  rationale: Set config for matmul+accumulate
+- action: dma_load
+  parameters:
+    operands:
+    - A
+    - B
+    target: scratchpad
+  rationale: Pre-stage data for systolic execution
+- action: invoke_engine
+  parameters:
+    engine: systolic_matmul
+  rationale: Single instruction for tile matmul
+- action: dma_store
+  parameters:
+    operand: result
+    source: accumulator
+  rationale: Move result from accumulator to main memory
+expected_speedup: Near-peak hardware utilization
+source: Gemmini/Exo Gemmini schedule library
+confidence: high

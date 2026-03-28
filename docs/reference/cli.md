@@ -13,7 +13,19 @@ Use this page to understand the intended CLI shape, not as a promise that every 
 ```bash
 uv run python -m compgen.cli --help
 uv run python -m compgen.cli --version
+uv run python -m compgen.cli --llm-backend claude-cli llm show
 ```
+
+## Global LLM Options
+
+The top-level CLI now exposes project-level LLM selection:
+
+- `--llm-backend {gemini,openai,anthropic,claude-cli,codex-cli}`
+- `--llm-model MODEL`
+- `--llm-record-dir DIR`
+- `--llm-no-record`
+
+These options apply to the whole command invocation and are mirrored into the process environment for downstream code.
 
 ## Commands
 
@@ -22,6 +34,8 @@ uv run python -m compgen.cli --version
 | `init-target PROFILE` | Validate a target profile | Contract only |
 | `analyze MODEL --inputs SPEC --target PROFILE` | Capture model and build analysis artifacts | Contract only |
 | `generate --target PROFILE --analysis-dir DIR` | Run generation pipeline | Contract only |
+| `llm show` | Inspect the resolved LLM backend selection | Implemented |
+| `llm smoke` | Run a direct smoke test against the selected backend | Implemented |
 | `verify BUNDLE_PATH` | Run verification ladder | Contract only |
 | `run BUNDLE_PATH` | Execute a bundle locally | Contract only |
 | `promote BUNDLE_PATH` | Promote a verified bundle | Contract only |

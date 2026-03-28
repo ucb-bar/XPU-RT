@@ -1,0 +1,2015 @@
+schema_version: '1.0'
+summary:
+  op_wisdom: 9
+  target_patterns: 50
+  transform_recipes: 11
+  kernel_wisdom: 27
+  compiler_heuristics: 21
+  anti_patterns: 16
+op_wisdom:
+  matmul:
+    op_family: matmul
+    tiling_guidance:
+    - target_class: gpu
+      tile_sizes:
+      - 128
+      - 128
+      - 32
+      rationale: Maximises tensor core utilisation on NVIDIA Ampere/Hopper; 128x128 output tile saturates the warp scheduler
+        and 32-deep K tile fits comfortably in shared memory (~128 KB budget at fp16).
+      source: CUTLASS
+      confidence: high
+    - target_class: gpu
+      tile_sizes:
+      - 64
+      - 64
+      - 32
+      rationale: Better choice for medium-sized matrices (M,N < 2048) where 128x128 tiles cause wave quantisation waste.  Still
+        fills tensor cores.
+      source: Triton
+      confidence: high
+    - target_class: cpu
+      tile_sizes:
+      - 256
+      - 256
+      - 512
+      rationale: Outer blocking targets L2 cache (256 KB - 1 MB per core).  The 256x256 output tile and 512-deep K panel stream
+        through L1 in a GEBP micro-kernel pattern, matching MKL/BLIS designs.
+      source: Exo/MKL
+      confidence: high
+    - target_class: cpu
+      tile_sizes:
+      - 6
+      - 16
+      rationale: 'Inner register block for AVX-512: 6 rows x 16 columns keeps 6 accumulators in ZMM registers (6 x 16 fp32
+        = 6 ZMMs) with headroom for A and B panels.'
+      source: Exo/MKL
+      confidence: high
+    - target_class: npu
+      tile_sizes:
+      - 16
+      - 16
+      - 16
+      rationale: Matches common systolic array dimensions (16x16 PE grid).  Hardware accumulates a 16x16 output tile per cycle.
+      source: Gemmini/Exo
+      confidence: medium
+    - target_class: npu
+      tile_sizes:
+      - 32
+      - 32
+      - 32
+      rationale: Larger systolic arrays (32x32 PE grid) use this tile size; common on custom TPU-style accelerators.
+      source: Gemmini/Exo
+      confidence: medium
+    fusion_opportunities:
+    - pattern: matmul+bias+relu
+      description: 'Epilogue fusion: bias addition and ReLU activation are folded into the matmul kernel, avoiding a separate
+        memory-bound kernel launch and an extra round-trip to global memory for the intermediate result.'
+      conditions:
+      - Bias is broadcastable along the N dimension.
+      - ReLU (or other pointwise) immediately follows bias addition.
+      source: CUTLASS
+      confidence: high
+    - pattern: matmul+softmax
+      description: 'Attention pattern: when matmul feeds directly into softmax (as in Q@K^T -> softmax), fusing avoids materialising
+        the full N x N attention matrix in global memory.'
+      conditions:
+      - Second operand is attention scores (Q @ K^T result).
+      - Softmax operates along the last dimension.
+      source: cuDNN
+      confidence: high
+    layout_preferences:
+    - target_class: gpu
+      preferred_layout: NT (row-major A, col-major B)
+      rationale: CUTLASS NT layout enables coalesced loads for both A (row-major, consecutive elements in K) and B (col-major,
+        consecutive elements in K), maximising global memory bandwidth utilisation.
+      source: CUTLASS
+    - target_class: cpu
+      preferred_layout: row-major A, row-major B (packed)
+      rationale: 'Row-major storage with BLIS-style packing: B is packed into column-panels for sequential access in the micro-kernel.  Avoids
+        TLB misses on large matrices.'
+      source: BLIS/MKL
+    backend_guidance:
+    - target_class: gpu
+      recommended_backend: Triton/CUTLASS
+      conditions: fp16/bf16/tf32 operands, M*N*K > 2^18
+      rationale: Tensor core utilisation via mma.sync; CUTLASS for peak throughput, Triton for faster iteration and fused
+        epilogues.
+      source: CUTLASS/Triton
+    - target_class: cpu
+      recommended_backend: Exo/MKL
+      conditions: fp32/int8 operands, server-class CPU with AVX-512 or AMX
+      rationale: Exo generates cache-tuned micro-kernels; MKL provides hand-optimised fallback with AMX int8/bf16 support.
+      source: Exo/MKL
+    - target_class: npu
+      recommended_backend: accel dialect / Exo
+      conditions: Systolic array target with custom ISA
+      rationale: Accel dialect maps matmul to hardware matrix engine instructions; Exo generates explicit DMA + compute schedules.
+      source: Gemmini/Exo
+    pitfalls:
+    - 'Bank conflicts in shared memory when tile sizes are not multiples of 32 (GPU): use padding or swizzled layouts to avoid
+      32-bank conflicts.'
+    - Register pressure with large tile sizes (e.g., 256x256 on GPU) causes spills to local memory, negating the benefit of
+      tiling.
+    - 'Wave quantisation waste: if grid_dim * block_size does not evenly divide the number of SMs, some waves run with partially-filled
+      SMs.  Choose tile sizes so ceil(M/tile_M) * ceil(N/tile_N) is a multiple of the SM count.'
+    - 'Incorrect K-tile alignment for tensor cores: K tile must be a multiple of 8 (fp16) or 4 (tf32) to use mma.sync instructions.'
+    performance_bounds:
+    - Compute-bound when arithmetic intensity (2*M*N*K / (M*K + K*N + M*N) * elem_size) exceeds the device's ops:byte ratio
+      (e.g., ~200 ops/byte on A100 fp16).
+    - Memory-bound for tall-skinny or short-fat matrices where one dimension is < 128.
+    - 'Theoretical peak: 312 TFLOPS fp16 on A100, 989 TFLOPS fp8 on H100.'
+  conv2d:
+    op_family: conv2d
+    tiling_guidance:
+    - target_class: gpu
+      tile_sizes:
+      - 1
+      - 64
+      - 16
+      - 16
+      rationale: Tile over batch (1), output channels (64), and spatial dims (16x16).  Balances occupancy and shared memory
+        usage for implicit GEMM on GPU.
+      source: cuDNN
+      confidence: high
+    - target_class: cpu
+      tile_sizes:
+      - 1
+      - 16
+      - 14
+      - 14
+      rationale: Smaller spatial tiles fit L1 cache; 16 output channels match AVX-512 vector width for fp32.
+      source: oneDNN
+      confidence: high
+    fusion_opportunities:
+    - pattern: conv2d+batchnorm+relu
+      description: 'Canonical CNN fusion: batch normalisation (scale + shift) and ReLU are folded into the convolution epilogue,
+        eliminating two intermediate tensors.'
+      conditions:
+      - BatchNorm is in inference mode (running mean/var, no gradient).
+      - ReLU (or ReLU6 / clamp) immediately follows BatchNorm.
+      source: cuDNN/TensorRT
+      confidence: high
+    - pattern: conv2d+add (residual)
+      description: ResNet-style residual addition fused into convolution output, avoiding an extra elementwise kernel.
+      conditions:
+      - Residual tensor has same shape as conv output.
+      source: cuDNN
+      confidence: high
+    layout_preferences:
+    - target_class: gpu
+      preferred_layout: NHWC
+      rationale: cuDNN's fastest convolution algorithms (implicit GEMM, Winograd) require NHWC.  Tensor cores expect channel-last
+        layout.
+      source: cuDNN
+    - target_class: cpu
+      preferred_layout: 'NCHW (blocked: nChw16c)'
+      rationale: oneDNN uses blocked layout (nChw16c for AVX-512) for SIMD-friendly channel access while keeping spatial locality.
+      source: oneDNN
+    backend_guidance:
+    - target_class: gpu
+      recommended_backend: cuDNN / Triton
+      conditions: Standard kernel sizes (1x1, 3x3, 5x5, 7x7), NHWC layout
+      rationale: cuDNN auto-tunes algorithm selection (implicit GEMM, Winograd, FFT).  Triton for custom fused convolutions.
+      source: cuDNN/Triton
+    - target_class: cpu
+      recommended_backend: oneDNN
+      conditions: x86 CPU with AVX-512 or AMX
+      rationale: oneDNN provides optimised JIT convolution kernels for Intel CPUs.
+      source: oneDNN
+    - target_class: npu
+      recommended_backend: accel dialect
+      conditions: Accelerator with conv/matmul engine
+      rationale: Map to hardware convolution instructions via accel dialect.
+      source: CompGen
+    pitfalls:
+    - Winograd convolution is only worthwhile for 3x3 and 5x5 kernels with stride 1; for other sizes the transform overhead
+      exceeds the FLOPs saving.
+    - 'im2col (explicit GEMM) has significant memory overhead: the im2col buffer is C_in * K_h * K_w times larger than the
+      input spatial dims.'
+    - 'Algorithm selection matters enormously: cuDNN''s auto-tuner can find 2-5x differences between algorithms for the same
+      problem size.'
+    - Depthwise convolution needs a completely different kernel strategy (per-channel); do not use the same tiling as standard
+      convolution.
+    performance_bounds:
+    - Compute-bound for large batch sizes and high channel counts.
+    - Memory-bound for depthwise and 1x1 pointwise convolutions.
+    - Winograd reduces FLOPs by up to 2.25x for 3x3 (F(4x4, 3x3) transform) but adds transform overhead.
+  attention:
+    op_family: attention
+    tiling_guidance:
+    - target_class: gpu
+      tile_sizes:
+      - 64
+      - 64
+      rationale: FlashAttention tiles over sequence length in blocks of 64.  Each thread block computes a 64-token slice of
+        Q against 64-token blocks of K/V, accumulating the softmax statistics in registers (online softmax).
+      source: FlashAttention
+      confidence: high
+    - target_class: gpu
+      tile_sizes:
+      - 128
+      - 128
+      rationale: FlashAttention-2 uses larger tiles (128) for better tensor core utilisation on Hopper GPUs with larger shared
+        memory.
+      source: FlashAttention-2
+      confidence: high
+    fusion_opportunities:
+    - pattern: Q@K^T -> scale -> softmax -> @V
+      description: 'FlashAttention pattern: the entire multi-head attention computation is fused into a single kernel that
+        never materialises the N x N attention matrix in global memory.  Uses online softmax (log-sum-exp tracking) to compute
+        exact softmax in a single pass.'
+      conditions:
+      - Standard multi-head attention (Q, K, V with compatible shapes).
+      - Causal or non-causal masking (both supported).
+      - Head dimension is a power of 2 and <= 256.
+      source: FlashAttention/Triton
+      confidence: high
+    - pattern: attention+dropout
+      description: Dropout mask is generated and applied inside the fused attention kernel, avoiding materialisation of the
+        dropout mask tensor.
+      conditions:
+      - Training mode with dropout probability > 0.
+      source: FlashAttention
+      confidence: high
+    layout_preferences:
+    - target_class: gpu
+      preferred_layout: (batch, heads, seq_len, head_dim) contiguous
+      rationale: FlashAttention expects Q, K, V in (B, H, S, D) layout with the last dimension contiguous for coalesced loads.
+      source: FlashAttention
+    backend_guidance:
+    - target_class: gpu
+      recommended_backend: Triton (FlashAttention)
+      conditions: Sequence length > 128, head_dim in {64, 128}
+      rationale: Triton FlashAttention kernel achieves near-peak memory bandwidth and avoids O(N^2) memory for the attention
+        matrix.
+      source: FlashAttention/Triton
+    - target_class: cpu
+      recommended_backend: fused attention kernel
+      conditions: Inference with moderate sequence lengths
+      rationale: CPU fused attention avoids materialising the attention matrix; block-wise computation fits in L2 cache.
+      source: oneDNN/PyTorch
+    pitfalls:
+    - Naive attention materialises an O(N^2) intermediate matrix (seq_len x seq_len), causing OOM for long sequences (e.g.,
+      8192+ tokens on 40 GB GPU).
+    - 'Memory-bound for long sequences even with FlashAttention: total I/O scales as O(N^2 * d / M) where M is SRAM size.'
+    - Causal masking requires careful handling in the tiled kernel to avoid wasted computation on masked-out tiles (skip fully-masked
+      blocks).
+    - 'Numerical precision: online softmax must track running max and log-sum-exp carefully to match the numerics of the unfused
+      version.'
+    performance_bounds:
+    - Memory-bound for seq_len > 512 on most GPUs when not using FlashAttention.
+    - 'FlashAttention is IO-aware: complexity is O(N^2 * d^2 / M) HBM accesses vs O(N^2 * d + N^2) for standard attention.'
+    - Compute-bound with FlashAttention when head_dim is large (128+) and seq_len is moderate (< 2048).
+  reduction:
+    op_family: reduction
+    tiling_guidance:
+    - target_class: gpu
+      tile_sizes:
+      - 256
+      rationale: 256-thread block for intra-block tree reduction using shared memory.  Warp-level reductions via __shfl_down_sync
+        for the final 32 elements, then shared memory for cross-warp combination.
+      source: Triton/CUDA handbook
+      confidence: high
+    - target_class: cpu
+      tile_sizes:
+      - 16
+      rationale: 'SIMD horizontal reduction: reduce 16 fp32 elements (AVX-512) per instruction, then scalar reduction across
+        lanes.'
+      source: oneDNN
+      confidence: high
+    fusion_opportunities:
+    - pattern: reduction+broadcast+elementwise
+      description: 'Softmax pattern: reduce(max) -> subtract -> exp -> reduce(sum) -> divide.  Fusing the entire chain avoids
+        multiple kernel launches and intermediate tensor allocations.'
+      conditions:
+      - Reduction and broadcast are along the same dimension.
+      - Elementwise ops are between reductions.
+      source: Triton/TVM
+      confidence: high
+    layout_preferences:
+    - target_class: gpu
+      preferred_layout: Reduce along contiguous (innermost) dimension
+      rationale: Coalesced reads when reducing along the last dimension.  Reducing along non-contiguous dimensions requires
+        a transpose or strided access.
+      source: CUDA handbook
+    backend_guidance:
+    - target_class: gpu
+      recommended_backend: Triton
+      conditions: Any reduction axis, any dtype
+      rationale: Triton's tl.reduce primitives generate efficient warp-shuffle and shared-memory reduction code.
+      source: Triton
+    - target_class: cpu
+      recommended_backend: native vectorisation
+      conditions: Reduction over contiguous axis
+      rationale: LLVM auto-vectorises simple reductions effectively with -O3.
+      source: LLVM/oneDNN
+    pitfalls:
+    - Cross-warp reduction on GPU requires __shfl instructions (warp shuffle); naive shared memory atomic approach causes
+      serialisation.
+    - Global atomics have severe contention for large grids; prefer a two-pass approach (per-block partial reduction, then
+      final reduction kernel).
+    - 'Softmax numerical stability: always subtract the row maximum before exp() to avoid overflow in fp16/bf16.'
+    - Reduction along non-contiguous dimensions is much slower; consider transposing first if the reduction is the bottleneck.
+    performance_bounds:
+    - 'Reduction is almost always memory-bound: one pass over input data with minimal compute per element.'
+    - Theoretical throughput limited by memory bandwidth / element_size.
+  elementwise:
+    op_family: elementwise
+    tiling_guidance:
+    - target_class: gpu
+      tile_sizes:
+      - 1024
+      rationale: Block size of 1024 threads with vectorised loads (float4 / 128-bit).  Grid-stride loop over the full tensor.  Maximises
+        memory bandwidth utilisation by keeping all SMs busy.
+      source: Triton/CUDA
+      confidence: high
+    - target_class: cpu
+      tile_sizes:
+      - 64
+      rationale: Process 64 elements per inner loop iteration (4 AVX-512 vectors of 16 fp32 elements) to hide instruction
+        latency.
+      source: oneDNN
+      confidence: medium
+    fusion_opportunities:
+    - pattern: elementwise chain
+      description: Always fuse consecutive elementwise operations (e.g., add -> relu, mul -> sigmoid, gelu = x * 0.5 * (1
+        + erf(x/sqrt(2)))) into a single kernel to avoid redundant global memory round-trips.
+      conditions:
+      - All ops have compatible shapes (broadcasting allowed).
+      source: TVM/XLA/Triton
+      confidence: high
+    - pattern: matmul epilogue
+      description: Fuse elementwise ops (bias, activation, residual add) into the matmul epilogue rather than launching separate
+        kernels.
+      conditions:
+      - Elementwise op immediately consumes matmul output.
+      - No other consumer of the intermediate matmul result.
+      source: CUTLASS/Triton
+      confidence: high
+    layout_preferences:
+    - target_class: gpu
+      preferred_layout: contiguous (any order, as long as innermost dim is contiguous)
+      rationale: Elementwise ops only need coalesced access; layout order is irrelevant.
+      source: Triton
+    backend_guidance:
+    - target_class: gpu
+      recommended_backend: Triton or fused into matmul epilogue
+      conditions: Any pointwise operation
+      rationale: Standalone elementwise kernels in Triton are trivial to write; but prefer fusing into a producer kernel's
+        epilogue when possible.
+      source: Triton/CUTLASS
+    - target_class: cpu
+      recommended_backend: native vectorisation
+      conditions: Any pointwise operation
+      rationale: LLVM vectorises elementwise loops automatically with proper pragmas.
+      source: LLVM
+    pitfalls:
+    - Do NOT launch a separate GPU kernel for a single elementwise op if it can be fused with its producer or consumer.  Kernel
+      launch overhead (~5 us) dominates for small tensors.
+    - Broadcasting can cause non-coalesced access if the broadcast dimension is the innermost one.  Materialise the broadcast
+      explicitly for large tensors.
+    - GELU and SiLU have expensive transcendental functions (erf, sigmoid); use polynomial approximations when fp16 precision
+      is acceptable.
+    performance_bounds:
+    - 'Always memory-bound: arithmetic intensity is O(1) -- one op per element loaded.'
+    - Peak throughput = memory_bandwidth / element_size.
+    - Fusion is the ONLY lever for improving elementwise performance (turn memory-bound elementwise into part of a compute-bound
+      fused kernel).
+  transpose:
+    op_family: transpose
+    tiling_guidance:
+    - target_class: gpu
+      tile_sizes:
+      - 32
+      - 32
+      rationale: '32x32 tile in shared memory: read a 32x32 tile with coalesced loads, transpose in shared memory, write back
+        with coalesced stores.  Padding shared memory to 33 columns avoids bank conflicts.'
+      source: CUDA handbook
+      confidence: high
+    fusion_opportunities:
+    - pattern: transpose+matmul
+      description: Avoid explicit transpose by using transposed GEMM variant (e.g., CUTLASS TN/NT layout).  The matmul kernel
+        reads the matrix in transposed order directly.
+      conditions:
+      - Transpose feeds directly into a matmul operand.
+      source: CUTLASS
+      confidence: high
+    layout_preferences: []
+    backend_guidance:
+    - target_class: gpu
+      recommended_backend: Triton or vendor kernel
+      conditions: Standalone transpose required
+      rationale: Triton generates shared-memory-based transpose kernels.  Prefer fusing into consumer when possible.
+      source: Triton
+    - target_class: cpu
+      recommended_backend: native (loop interchange)
+      conditions: Any transpose
+      rationale: Cache-oblivious recursive transpose or tiled copy.
+      source: BLIS
+    pitfalls:
+    - Naive GPU transpose causes completely uncoalesced writes (or reads), reducing effective bandwidth by up to 10x.  Always
+      use shared memory staging.
+    - Permutations of more than 2 dimensions may require multiple passes or generalised copy kernels; check if a view/stride
+      change suffices.
+    performance_bounds:
+    - 'Memory-bound: 2 * tensor_size bytes transferred (read + write).'
+    - 'Achievable bandwidth: 80-90% of peak HBM bandwidth with shared memory staging.'
+  gather:
+    op_family: gather
+    tiling_guidance: []
+    fusion_opportunities: []
+    layout_preferences: []
+    backend_guidance:
+    - target_class: gpu
+      recommended_backend: custom Triton kernel
+      conditions: Irregular index patterns
+      rationale: Triton's tl.load with mask handles irregular gather patterns.  No vendor library covers the general case
+        well.
+      source: Triton
+    - target_class: cpu
+      recommended_backend: native loops
+      conditions: Any gather/scatter
+      rationale: AVX-512 has vpgatherdd/vpscatterdd but throughput is limited; scalar loops may be faster for irregular patterns.
+      source: Intel intrinsics guide
+    pitfalls:
+    - Irregular access patterns defeat caching and vectorisation.  Pre-sort indices when possible to improve spatial locality.
+    - Scatter with duplicate indices has undefined order; use atomic operations or segment-based reduction for correctness.
+    - GPU gather/scatter is limited by L2 cache hit rate on the index pattern.  Random indices achieve only 10-20% of peak
+      bandwidth.
+    performance_bounds:
+    - Throughput depends entirely on index pattern locality.
+    - 'Best case (sequential indices): approaches memcpy bandwidth.'
+    - 'Worst case (random indices): limited by cache line fetch rate.'
+  batch_norm:
+    op_family: batch_norm
+    tiling_guidance:
+    - target_class: gpu
+      tile_sizes:
+      - 256
+      rationale: Reduce over spatial dimensions (H, W) and batch (N) per channel.  One thread block per channel with 256 threads
+        for the reduction.
+      source: cuDNN
+      confidence: high
+    fusion_opportunities:
+    - pattern: conv2d+batch_norm
+      description: 'Fold BatchNorm into preceding convolution weights at inference time: W_fused = W * gamma / sqrt(var +
+        eps), b_fused = (b - mean) * gamma / sqrt(var + eps) + beta.  Zero runtime cost.'
+      conditions:
+      - Inference mode (running statistics, no gradient).
+      - Preceding op is conv2d or linear.
+      source: cuDNN/TensorRT/oneDNN
+      confidence: high
+    - pattern: batch_norm+relu
+      description: Fuse activation into the BatchNorm output pass.
+      conditions:
+      - ReLU or clamp immediately follows BatchNorm.
+      source: cuDNN
+      confidence: high
+    layout_preferences:
+    - target_class: gpu
+      preferred_layout: NHWC
+      rationale: Channel-last layout enables coalesced reduction over spatial dims.
+      source: cuDNN
+    backend_guidance:
+    - target_class: gpu
+      recommended_backend: cuDNN
+      conditions: Standard batch normalisation
+      rationale: cuDNN's fused BN kernels handle forward, backward, and inference.
+      source: cuDNN
+    - target_class: cpu
+      recommended_backend: oneDNN
+      conditions: Standard batch normalisation
+      rationale: oneDNN provides optimised BN with SIMD reduction.
+      source: oneDNN
+    pitfalls:
+    - Training BN requires two passes (mean, then variance) unless using Welford's online algorithm in a single pass.
+    - Small batch sizes make BN statistics noisy; consider GroupNorm or LayerNorm.
+    - 'BN is often the fusion boundary: always try to fold into preceding conv/linear.'
+    performance_bounds:
+    - 'Memory-bound: two passes over the activation tensor (compute stats, then normalise).'
+    - 'Inference: can be completely eliminated by folding into preceding linear op.'
+  layer_norm:
+    op_family: layer_norm
+    tiling_guidance:
+    - target_class: gpu
+      tile_sizes:
+      - 256
+      rationale: Reduce over the normalisation axis (typically the last dimension).  One thread block per token/sample with
+        256 threads for the reduction.
+      source: Triton/cuDNN
+      confidence: high
+    fusion_opportunities:
+    - pattern: layer_norm+linear
+      description: Fuse LayerNorm into the subsequent linear layer's prologue to avoid writing the normalised intermediate
+        to global memory.
+      conditions:
+      - Linear immediately follows LayerNorm.
+      source: Triton/Megatron-LM
+      confidence: medium
+    layout_preferences:
+    - target_class: gpu
+      preferred_layout: (..., D) with D contiguous
+      rationale: Reduction over the last (contiguous) dimension is fastest.
+      source: Triton
+    backend_guidance:
+    - target_class: gpu
+      recommended_backend: Triton
+      conditions: Standard layer normalisation
+      rationale: Triton LayerNorm kernel with online Welford reduction.  Often fused with adjacent ops.
+      source: Triton
+    - target_class: cpu
+      recommended_backend: oneDNN
+      conditions: Standard layer normalisation
+      rationale: oneDNN layer_normalization primitive with SIMD.
+      source: oneDNN
+    pitfalls:
+    - LayerNorm with large hidden dimensions (e.g., 12288 in GPT-3) benefits from warp-level reduction; ensure enough threads
+      per block.
+    - 'RMSNorm (used in LLaMA) is cheaper: skip mean subtraction, only compute root-mean-square.  Do not use full LayerNorm
+      when RMSNorm suffices.'
+    performance_bounds:
+    - 'Memory-bound: single pass over the normalisation dimension.'
+    - Throughput limited by reduction bandwidth, not compute.
+target_patterns:
+  gpu:
+  - target_class: gpu
+    category: memory_hierarchy
+    pattern_name: shared_memory_staging
+    description: Stage data from global memory into shared memory (scratchpad) for reuse across threads within a thread block.  Amortises
+      the cost of high-latency HBM reads over many compute operations.
+    implementation_notes:
+    - 'Allocate shared memory tile: __shared__ float tile[TILE_M][TILE_K].'
+    - 'Cooperative load: each thread loads one or more elements from global memory.'
+    - __syncthreads() before consuming the tile.
+    - Pad shared memory to TILE_K+1 columns to avoid 32-bank conflicts.
+    - 'Double-buffer: overlap next tile''s load with current tile''s compute.'
+    source: CUTLASS/Triton
+    confidence: high
+  - target_class: gpu
+    category: memory_hierarchy
+    pattern_name: l2_persistent_kernels
+    description: 'Persistent kernel design: launch exactly as many thread blocks as the GPU has SMs, and loop over work items
+      within each block.  Improves L2 cache residency by keeping the working set in L2 across iterations.'
+    implementation_notes:
+    - Set grid_dim = num_SMs (or 2 * num_SMs for latency hiding).
+    - 'Each block loops: while (tile_idx = atomicAdd(&counter, 1)) < total_tiles.'
+    - Tile ordering (Hilbert curve or row-major) affects L2 hit rate.
+    - Use cudaFuncSetAttribute to set max shared memory if needed.
+    source: CUTLASS
+    confidence: medium
+  - target_class: gpu
+    category: memory_hierarchy
+    pattern_name: register_tiling
+    description: Tile the innermost compute loop into registers.  Each thread computes a small output sub-tile (e.g., 8x8
+      fp16 elements) entirely in registers, maximising arithmetic intensity before writing back.
+    implementation_notes:
+    - 'Declare register arrays: float acc[TM][TN] for the output sub-tile.'
+    - Load A and B fragments into registers from shared memory.
+    - 'Compute outer product: acc[i][j] += a[i] * b[j] in the inner loop.'
+    - 'Monitor register usage: NVIDIA GPUs have 256 32-bit registers per thread; exceeding this causes spills to local memory.'
+    source: CUTLASS/Triton
+    confidence: high
+  - target_class: gpu
+    category: parallelism
+    pattern_name: output_tile_mapping
+    description: Map each thread block to one output tile.  The 2D grid covers the output matrix (or tensor), and each block
+      computes its tile by iterating over the reduction (K) dimension.
+    implementation_notes:
+    - grid_dim = (ceil(M/TILE_M), ceil(N/TILE_N)).
+    - block_dim = (WARP_M * 32, WARP_N) where warps tile the output tile.
+    - K-loop is sequential within each block.
+    - For batched ops, add a third grid dimension for the batch.
+    source: CUDA programming guide
+    confidence: high
+  - target_class: gpu
+    category: parallelism
+    pattern_name: warp_cooperative_ops
+    description: Use warp-level matrix operations (mma.sync / WMMA) to exploit tensor cores.  Multiple threads in a warp cooperatively
+      compute a small matrix multiply (e.g., 16x16x16).
+    implementation_notes:
+    - Use nvcuda::wmma or inline PTX mma.sync.aligned.m16n8k16.
+    - 'Fragment types: matrix_a (row_major), matrix_b (col_major), accumulator.'
+    - Each warp computes one fragment-sized output; warps tile the thread block's output.
+    - 'Supported types: fp16, bf16, tf32, int8, fp8 (Hopper).'
+    source: NVIDIA PTX guide
+    confidence: high
+  - target_class: gpu
+    category: parallelism
+    pattern_name: wave_quantisation
+    description: Choose grid dimensions so that the total number of thread blocks is a multiple of the number of SMs.  Partial
+      waves (the last wave with fewer blocks than SMs) waste GPU resources.
+    implementation_notes:
+    - Compute num_blocks = ceil(M/TILE_M) * ceil(N/TILE_N).
+    - Adjust TILE_M, TILE_N so num_blocks % num_SMs == 0 (or close to 0).
+    - For small problems, consider reducing tile sizes to fill more SMs.
+    - A100 has 108 SMs; H100 has 132 SMs.  Target multiples of these.
+    source: CUDA programming guide
+    confidence: high
+  - target_class: gpu
+    category: data_movement
+    pattern_name: async_copy
+    description: Use cp.async (Ampere+) to overlap global-to-shared-memory copies with computation.  The copy bypasses L1
+      cache and runs in the background while the SM executes math instructions.
+    implementation_notes:
+    - Use cp.async.cg.shared.global for 16-byte copies.
+    - Group copies with cp.async.commit_group and cp.async.wait_group.
+    - 'Combine with double buffering: compute on buffer 0 while loading buffer 1.'
+    - Hopper TMA (Tensor Memory Accelerator) further automates this.
+    source: CUTLASS/CUDA toolkit
+    confidence: high
+  - target_class: gpu
+    category: data_movement
+    pattern_name: double_buffering
+    description: Allocate two shared memory buffers.  While the kernel computes on one buffer, the next tile is being loaded
+      into the other.  Hides memory latency behind compute.
+    implementation_notes:
+    - Declare smem[2][TILE_M][TILE_K] for double buffering.
+    - 'Iteration i: compute on smem[i % 2], load into smem[(i+1) % 2].'
+    - 'Requires careful sync: __syncthreads() between compute and next load.'
+    - Increases shared memory usage by 2x; ensure it fits in the SM budget.
+    source: CUTLASS
+    confidence: high
+  - target_class: gpu
+    category: data_movement
+    pattern_name: l1_prefetch
+    description: Prefetch data into L1 cache for subsequent access.  Useful when access patterns are predictable but shared
+      memory staging is not needed.
+    implementation_notes:
+    - Use __ldg() for read-only data (uses texture cache path on some arches).
+    - LDG.128 (128-bit loads) maximise bandwidth utilisation.
+    - 'Cache hints: prefetch.global.L1 for data needed soon.'
+    source: CUDA toolkit
+    confidence: medium
+  - target_class: gpu
+    category: instruction_selection
+    pattern_name: tensor_core_mma
+    description: Select tensor core instructions (mma.sync) for matrix multiply-accumulate operations in fp16, bf16, tf32,
+      int8, or fp8.  Delivers 2-16x higher throughput than CUDA cores for supported types.
+    implementation_notes:
+    - 'fp16 mma.sync.aligned.m16n8k16: 256 FLOPs per instruction per warp.'
+    - 'tf32 mma: use float inputs truncated to tf32 for 8x throughput with ~fp16 accuracy.'
+    - 'int8 mma: for quantised inference, 2x throughput over fp16.'
+    - 'Hopper fp8 (e4m3/e5m2): 2x throughput over fp16 mma.'
+    source: NVIDIA PTX guide
+    confidence: high
+  - target_class: gpu
+    category: instruction_selection
+    pattern_name: vector_loads
+    description: Use 128-bit vector loads (LDG.128) to maximise memory bandwidth.  Each load fetches 4 fp32 or 8 fp16 elements
+      in one transaction.
+    implementation_notes:
+    - Align data to 16 bytes for LDG.128.
+    - Use float4 or half8 types for 128-bit loads.
+    - Ensure consecutive threads access consecutive 128-bit words for coalescing.
+    source: NVIDIA PTX guide
+    confidence: high
+  - target_class: gpu
+    category: instruction_selection
+    pattern_name: fma_instructions
+    description: Use fused multiply-add (FMA) instructions for better accuracy and throughput.  One FMA = 2 FLOPs with a single
+      rounding.
+    implementation_notes:
+    - 'CUDA FMA: fmaf(a, b, c) or __fmaf_rn(a, b, c).'
+    - Most compilers emit FMA automatically; verify with SASS disassembly.
+    - FMA count is the basis for roofline peak FLOPS calculations.
+    source: NVIDIA PTX guide
+    confidence: high
+  cpu:
+  - target_class: cpu
+    category: memory_hierarchy
+    pattern_name: l1_tiling
+    description: Tile innermost loops so the working set fits in L1 cache (32-64 KB per core).  For matmul, this means the
+      micro-kernel's A panel and B panel must fit in L1.
+    implementation_notes:
+    - 'Typical L1 tile: 6 rows of A (6 * K * 4B) + one column-panel of B (K * 16 * 4B).'
+    - 'Total: ~(6 + 16) * K * 4B; for K=512, this is ~44 KB -- fits in 48 KB L1d.'
+    - Access pattern must be sequential to benefit from hardware prefetcher.
+    - Align tiles to cache line boundaries (64 bytes).
+    source: oneDNN/BLIS
+    confidence: high
+  - target_class: cpu
+    category: memory_hierarchy
+    pattern_name: l2_tiling
+    description: Tile outer loops so the working set fits in L2 cache (256 KB - 1 MB per core).  The GEBP (General Block Panel)
+      pattern keeps a block of A in L2 while streaming panels of B through.
+    implementation_notes:
+    - 'GEBP: A block is MC x KC, B panel is KC x NC.'
+    - MC * KC * elem_size should fit in L2 (e.g., 256 * 512 * 4B = 512 KB).
+    - Iterate over NC-wide panels of B, reusing A block from L2.
+    - Pack A and B into contiguous buffers for sequential access.
+    source: BLIS/Exo
+    confidence: high
+  - target_class: cpu
+    category: memory_hierarchy
+    pattern_name: register_blocking
+    description: Block the micro-kernel to use all available SIMD registers as accumulators.  For AVX-512, this means filling
+      32 ZMM registers with output tiles.
+    implementation_notes:
+    - 'AVX-512: 32 ZMM registers, each holding 16 fp32 or 32 bf16 elements.'
+    - 'Typical micro-kernel: 6x16 (6 rows x 16 cols = 6 ZMM accumulators), leaving registers for A and B fragments.'
+    - 'AMX: 8 tile registers of 16x16 bytes each; use for int8/bf16 matmul.'
+    - Register blocking is the innermost tiling level.
+    source: Exo/oneDNN
+    confidence: high
+  - target_class: cpu
+    category: parallelism
+    pattern_name: openmp_outer_parallel
+    description: Parallelise outer loops with OpenMP.  Each thread gets a chunk of the output to compute independently, minimising
+      synchronisation.
+    implementation_notes:
+    - '#pragma omp parallel for schedule(static) on the outermost loop.'
+    - Chunk size should give each thread at least one L2 tile.
+    - 'Avoid false sharing: ensure thread-local output tiles are on separate cache lines.'
+    - Thread count = number of physical cores (not hyperthreads) for compute-bound work.
+    source: oneDNN/MKL
+    confidence: high
+  - target_class: cpu
+    category: parallelism
+    pattern_name: simd_vectorisation
+    description: Vectorise inner loops with SIMD instructions (AVX-512, AVX2, NEON).  Process multiple data elements per instruction
+      cycle.
+    implementation_notes:
+    - 'AVX-512: 16 fp32 elements per instruction (512 bits).'
+    - 'AVX2: 8 fp32 elements per instruction (256 bits).'
+    - 'ARM NEON/SVE: 4-16 fp32 elements depending on vector length.'
+    - Use intrinsics or let the compiler auto-vectorise with -O3 -march=native.
+    - Ensure loop trip count is a multiple of vector width (or add remainder loop).
+    source: oneDNN/MKL
+    confidence: high
+  - target_class: cpu
+    category: parallelism
+    pattern_name: numa_aware_allocation
+    description: Allocate data on the NUMA node where it will be consumed.  Cross-node memory access has 2-3x higher latency
+      and lower bandwidth.
+    implementation_notes:
+    - Use numactl --membind or libnuma's numa_alloc_onnode().
+    - 'First-touch policy: initialise data on the thread that will use it.'
+    - For multi-socket systems, partition work so each socket operates on local memory.
+    - Check topology with numactl -H or hwloc.
+    source: oneDNN
+    confidence: high
+  - target_class: cpu
+    category: data_movement
+    pattern_name: software_prefetch
+    description: Issue software prefetch instructions to bring data into cache before it is needed, hiding memory latency
+      for predictable access patterns.
+    implementation_notes:
+    - _mm_prefetch(ptr, _MM_HINT_T0) for L1 prefetch.
+    - _mm_prefetch(ptr, _MM_HINT_T1) for L2 prefetch.
+    - Prefetch 2-4 cache lines ahead of the current access.
+    - Effective for sequential and strided access; useless for random access.
+    source: BLIS/MKL
+    confidence: medium
+  - target_class: cpu
+    category: data_movement
+    pattern_name: cache_line_alignment
+    description: Align data structures and allocation boundaries to cache line size (typically 64 bytes) to avoid false sharing
+      and partial cache line loads.
+    implementation_notes:
+    - Use aligned_alloc(64, size) or posix_memalign(&ptr, 64, size).
+    - Pad structure members to 64-byte boundaries for thread-local data.
+    - Matrix leading dimensions should be multiples of 16 (64B / 4B per float).
+    source: BLIS/oneDNN
+    confidence: high
+  - target_class: cpu
+    category: data_movement
+    pattern_name: matrix_packing
+    description: Pack matrices into contiguous buffers with the micro-kernel's access pattern.  Converts arbitrary stride
+      layouts into sequential access, eliminating TLB misses on large matrices.
+    implementation_notes:
+    - Pack B into column-panels of width NR (e.g., 16 for AVX-512).
+    - Pack A into row-panels of height MR (e.g., 6 for the 6x16 micro-kernel).
+    - Packing is O(N^2) for an NxN matrix; amortised over the O(N^3) compute.
+    - Pack into pre-allocated buffers to avoid allocation overhead.
+    source: BLIS/MKL
+    confidence: high
+  - target_class: cpu
+    category: instruction_selection
+    pattern_name: avx512_fp32
+    description: Use AVX-512 instructions for fp32 computation.  Process 16 fp32 elements per instruction with ZMM registers.
+    implementation_notes:
+    - 'vfmadd231ps: fused multiply-add, 16 FLOPs per instruction.'
+    - vmovups/vmovaps for 512-bit loads/stores.
+    - vbroadcastss for scalar broadcast into ZMM register.
+    - 'Throughput: 2 FMA per cycle on Skylake-X and later (64 FLOPs/cycle/core).'
+    source: Exo/oneDNN
+    confidence: high
+  - target_class: cpu
+    category: instruction_selection
+    pattern_name: amx_matmul
+    description: Use Intel AMX (Advanced Matrix Extensions) for int8 and bf16 matrix multiply.  Each TDPB* instruction computes
+      a 16x16 tile in one cycle.
+    implementation_notes:
+    - 8 tile registers (tmm0-tmm7), each 16 rows x 64 bytes (16x16 int32 accumulator).
+    - 'TDPBSSD: int8 matmul with int32 accumulation.'
+    - 'TDPBF16PS: bf16 matmul with fp32 accumulation.'
+    - Requires explicit tile configuration via LDTILECFG.
+    - Available on Sapphire Rapids and later.
+    source: Exo/oneDNN
+    confidence: high
+  npu:
+  - target_class: npu
+    category: memory_hierarchy
+    pattern_name: explicit_scratchpad
+    description: NPU/accelerator local memory is a software-managed scratchpad, not a hardware cache.  All data movement must
+      be explicitly programmed via DMA or load/store instructions.
+    implementation_notes:
+    - Scratchpad sizes are typically 64 KB - 512 KB per PE or cluster.
+    - Partition scratchpad into input buffer, output buffer, and weight buffer.
+    - Size each buffer to hold exactly one tile of the computation.
+    - 'No cache coherence: software must manage consistency.'
+    source: Gemmini/Exo
+    confidence: high
+  - target_class: npu
+    category: memory_hierarchy
+    pattern_name: dma_data_movement
+    description: Use DMA engines for bulk data transfer between main memory and scratchpad.  DMA runs independently of the
+      compute units, enabling overlap of data movement and computation.
+    implementation_notes:
+    - 'Configure DMA: src_addr, dst_addr, transfer_size, stride, padding.'
+    - 2D DMA for strided access (e.g., extracting a tile from a larger matrix).
+    - DMA completion is signalled via interrupt or polling a status register.
+    - Tile sizes must account for DMA setup overhead (~100-1000 cycles).
+    source: Gemmini/Exo
+    confidence: high
+  - target_class: npu
+    category: memory_hierarchy
+    pattern_name: software_managed_cache
+    description: Some accelerators provide a software-managed cache (SMC) that behaves like a scratchpad with cache-like lookup.  Requires
+      explicit allocate/invalidate but supports flexible reuse patterns.
+    implementation_notes:
+    - Allocate cache lines explicitly for tiles that will be reused.
+    - Invalidate after use to free space for new tiles.
+    - Useful for irregular access patterns where pure scratchpad is wasteful.
+    source: Exo
+    confidence: low
+  - target_class: npu
+    category: parallelism
+    pattern_name: systolic_array_mapping
+    description: 'Map matrix multiply onto a systolic array: data flows through a 2D grid of processing elements (PEs), with
+      each PE performing a multiply-accumulate and forwarding data to its neighbour.'
+    implementation_notes:
+    - 'Output-stationary: each PE accumulates one output element.'
+    - 'Weight-stationary: each PE holds one weight, inputs flow through.'
+    - 'Row-stationary: each PE processes one row of the output.'
+    - Tile sizes must match the PE array dimensions (e.g., 16x16 or 32x32).
+    - Underutilisation when problem dimensions do not divide array dimensions.
+    source: Gemmini
+    confidence: high
+  - target_class: npu
+    category: parallelism
+    pattern_name: pe_utilisation
+    description: 'Maximise PE array utilisation by choosing tile sizes that fill the array.  Partial tiles waste compute:
+      a 10x10 problem on a 16x16 array uses only 39% of PEs.'
+    implementation_notes:
+    - Pad matrices to multiples of the array dimension when possible.
+    - For non-square problems, consider remapping to better fill the array.
+    - 'Monitor utilisation: effective_ops / peak_ops ratio.'
+    - Pipeline multiple tiles through the array for throughput.
+    source: Gemmini
+    confidence: high
+  - target_class: npu
+    category: parallelism
+    pattern_name: pipeline_stages
+    description: 'Pipeline the computation into stages: load, compute, store.  Each stage operates on a different tile, achieving
+      steady-state throughput where all units are busy.'
+    implementation_notes:
+    - 'Three-stage pipeline: DMA_in[i+1] | Compute[i] | DMA_out[i-1].'
+    - Requires at least 3 tile buffers in scratchpad (triple buffering).
+    - Steady-state throughput = max(DMA_time, compute_time) per tile.
+    - Pipeline fill and drain add latency for small workloads.
+    source: Gemmini/Exo
+    confidence: high
+  - target_class: npu
+    category: data_movement
+    pattern_name: dma_double_buffering
+    description: Overlap DMA transfers with computation using double buffering.  While the accelerator computes on buffer
+      A, DMA loads the next tile into buffer B, and vice versa.
+    implementation_notes:
+    - 'Allocate 2x scratchpad space: buffer[0] and buffer[1].'
+    - 'Iteration i: compute(buffer[i%2]), DMA_load(buffer[(i+1)%2]).'
+    - 'Synchronise: wait for DMA completion before computing on new buffer.'
+    - Effective when compute_time >= DMA_time (compute-bound regime).
+    source: Exo/Gemmini
+    confidence: high
+  - target_class: npu
+    category: data_movement
+    pattern_name: explicit_address_computation
+    description: Compute scratchpad addresses explicitly in software.  There is no hardware address translation (no TLB, no
+      virtual memory).
+    implementation_notes:
+    - Base address + row * stride + col * element_size.
+    - Account for padding/alignment requirements of the DMA engine.
+    - Tile layout in scratchpad may differ from layout in main memory.
+    - Exo's memory-aware scheduling handles this automatically.
+    source: Exo
+    confidence: high
+  - target_class: npu
+    category: data_movement
+    pattern_name: blocking_for_local_memory
+    description: Choose tile sizes so each tile fits in the accelerator's local memory.  The tile must include input, output,
+      and any intermediate buffers.
+    implementation_notes:
+    - Available = scratchpad_size - firmware_reserved.
+    - Tile memory = input_tile + output_tile + weight_tile (for matmul).
+    - 'If double buffering: 2 * tile_memory <= available.'
+    - Iterate over tiles in an order that maximises data reuse.
+    source: Exo/Gemmini
+    confidence: high
+  - target_class: npu
+    category: instruction_selection
+    pattern_name: matrix_engine_instructions
+    description: Use the accelerator's custom matrix engine instructions (e.g., Gemmini's mvin/mvout/compute, Google TPU's
+      MXU ops) for matrix multiply.
+    implementation_notes:
+    - 'Instructions are typically: load_to_accumulator, matmul_accumulate, store_from_accumulator.'
+    - Operand sizes must match the hardware array dimensions.
+    - Accumulator precision is usually higher than input precision (e.g., int8 -> int32).
+    - Some engines require explicit accumulator initialisation.
+    source: Gemmini/Exo
+    confidence: high
+  - target_class: npu
+    category: instruction_selection
+    pattern_name: config_state_management
+    description: Many accelerators require explicit configuration of compute mode, precision, and layout before issuing compute
+      instructions.
+    implementation_notes:
+    - 'Config instruction sets: dataflow mode, activation function, precision.'
+    - Configuration changes have latency; batch operations with the same config.
+    - Save/restore config state when switching between op types.
+    - Exo platform definitions encode legal configurations.
+    source: Exo/Gemmini
+    confidence: medium
+  accelerator:
+  - target_class: npu
+    category: memory_hierarchy
+    pattern_name: explicit_scratchpad
+    description: NPU/accelerator local memory is a software-managed scratchpad, not a hardware cache.  All data movement must
+      be explicitly programmed via DMA or load/store instructions.
+    implementation_notes:
+    - Scratchpad sizes are typically 64 KB - 512 KB per PE or cluster.
+    - Partition scratchpad into input buffer, output buffer, and weight buffer.
+    - Size each buffer to hold exactly one tile of the computation.
+    - 'No cache coherence: software must manage consistency.'
+    source: Gemmini/Exo
+    confidence: high
+  - target_class: npu
+    category: memory_hierarchy
+    pattern_name: dma_data_movement
+    description: Use DMA engines for bulk data transfer between main memory and scratchpad.  DMA runs independently of the
+      compute units, enabling overlap of data movement and computation.
+    implementation_notes:
+    - 'Configure DMA: src_addr, dst_addr, transfer_size, stride, padding.'
+    - 2D DMA for strided access (e.g., extracting a tile from a larger matrix).
+    - DMA completion is signalled via interrupt or polling a status register.
+    - Tile sizes must account for DMA setup overhead (~100-1000 cycles).
+    source: Gemmini/Exo
+    confidence: high
+  - target_class: npu
+    category: memory_hierarchy
+    pattern_name: software_managed_cache
+    description: Some accelerators provide a software-managed cache (SMC) that behaves like a scratchpad with cache-like lookup.  Requires
+      explicit allocate/invalidate but supports flexible reuse patterns.
+    implementation_notes:
+    - Allocate cache lines explicitly for tiles that will be reused.
+    - Invalidate after use to free space for new tiles.
+    - Useful for irregular access patterns where pure scratchpad is wasteful.
+    source: Exo
+    confidence: low
+  - target_class: npu
+    category: parallelism
+    pattern_name: systolic_array_mapping
+    description: 'Map matrix multiply onto a systolic array: data flows through a 2D grid of processing elements (PEs), with
+      each PE performing a multiply-accumulate and forwarding data to its neighbour.'
+    implementation_notes:
+    - 'Output-stationary: each PE accumulates one output element.'
+    - 'Weight-stationary: each PE holds one weight, inputs flow through.'
+    - 'Row-stationary: each PE processes one row of the output.'
+    - Tile sizes must match the PE array dimensions (e.g., 16x16 or 32x32).
+    - Underutilisation when problem dimensions do not divide array dimensions.
+    source: Gemmini
+    confidence: high
+  - target_class: npu
+    category: parallelism
+    pattern_name: pe_utilisation
+    description: 'Maximise PE array utilisation by choosing tile sizes that fill the array.  Partial tiles waste compute:
+      a 10x10 problem on a 16x16 array uses only 39% of PEs.'
+    implementation_notes:
+    - Pad matrices to multiples of the array dimension when possible.
+    - For non-square problems, consider remapping to better fill the array.
+    - 'Monitor utilisation: effective_ops / peak_ops ratio.'
+    - Pipeline multiple tiles through the array for throughput.
+    source: Gemmini
+    confidence: high
+  - target_class: npu
+    category: parallelism
+    pattern_name: pipeline_stages
+    description: 'Pipeline the computation into stages: load, compute, store.  Each stage operates on a different tile, achieving
+      steady-state throughput where all units are busy.'
+    implementation_notes:
+    - 'Three-stage pipeline: DMA_in[i+1] | Compute[i] | DMA_out[i-1].'
+    - Requires at least 3 tile buffers in scratchpad (triple buffering).
+    - Steady-state throughput = max(DMA_time, compute_time) per tile.
+    - Pipeline fill and drain add latency for small workloads.
+    source: Gemmini/Exo
+    confidence: high
+  - target_class: npu
+    category: data_movement
+    pattern_name: dma_double_buffering
+    description: Overlap DMA transfers with computation using double buffering.  While the accelerator computes on buffer
+      A, DMA loads the next tile into buffer B, and vice versa.
+    implementation_notes:
+    - 'Allocate 2x scratchpad space: buffer[0] and buffer[1].'
+    - 'Iteration i: compute(buffer[i%2]), DMA_load(buffer[(i+1)%2]).'
+    - 'Synchronise: wait for DMA completion before computing on new buffer.'
+    - Effective when compute_time >= DMA_time (compute-bound regime).
+    source: Exo/Gemmini
+    confidence: high
+  - target_class: npu
+    category: data_movement
+    pattern_name: explicit_address_computation
+    description: Compute scratchpad addresses explicitly in software.  There is no hardware address translation (no TLB, no
+      virtual memory).
+    implementation_notes:
+    - Base address + row * stride + col * element_size.
+    - Account for padding/alignment requirements of the DMA engine.
+    - Tile layout in scratchpad may differ from layout in main memory.
+    - Exo's memory-aware scheduling handles this automatically.
+    source: Exo
+    confidence: high
+  - target_class: npu
+    category: data_movement
+    pattern_name: blocking_for_local_memory
+    description: Choose tile sizes so each tile fits in the accelerator's local memory.  The tile must include input, output,
+      and any intermediate buffers.
+    implementation_notes:
+    - Available = scratchpad_size - firmware_reserved.
+    - Tile memory = input_tile + output_tile + weight_tile (for matmul).
+    - 'If double buffering: 2 * tile_memory <= available.'
+    - Iterate over tiles in an order that maximises data reuse.
+    source: Exo/Gemmini
+    confidence: high
+  - target_class: npu
+    category: instruction_selection
+    pattern_name: matrix_engine_instructions
+    description: Use the accelerator's custom matrix engine instructions (e.g., Gemmini's mvin/mvout/compute, Google TPU's
+      MXU ops) for matrix multiply.
+    implementation_notes:
+    - 'Instructions are typically: load_to_accumulator, matmul_accumulate, store_from_accumulator.'
+    - Operand sizes must match the hardware array dimensions.
+    - Accumulator precision is usually higher than input precision (e.g., int8 -> int32).
+    - Some engines require explicit accumulator initialisation.
+    source: Gemmini/Exo
+    confidence: high
+  - target_class: npu
+    category: instruction_selection
+    pattern_name: config_state_management
+    description: Many accelerators require explicit configuration of compute mode, precision, and layout before issuing compute
+      instructions.
+    implementation_notes:
+    - 'Config instruction sets: dataflow mode, activation function, precision.'
+    - Configuration changes have latency; batch operations with the same config.
+    - Save/restore config state when switching between op types.
+    - Exo platform definitions encode legal configurations.
+    source: Exo/Gemmini
+    confidence: medium
+  soc:
+  - target_class: soc
+    category: data_movement
+    pattern_name: minimise_cross_domain_transfers
+    description: 'Minimise data transfers between heterogeneous domains (e.g., host CPU to accelerator, CPU to GPU, FPGA to
+      CPU).  Cross-domain transfers incur high latency (PCIe: ~5-15 us, on-chip bus: ~100-500 ns) and limited bandwidth.'
+    implementation_notes:
+    - Batch multiple ops on the accelerator before transferring results back.
+    - 'Use device-resident tensors: keep data on the accelerator across op boundaries.'
+    - Profile transfer costs with the runtime profiler; compare to compute savings.
+    - Consider computation duplication on both domains if transfer cost exceeds recompute.
+    source: Zephyr RTOS patterns
+    confidence: high
+  - target_class: soc
+    category: data_movement
+    pattern_name: dma_bulk_transfer
+    description: Use DMA engines for bulk data transfers between domains.  DMA avoids tying up the CPU for data movement and
+      can achieve higher bandwidth than programmed I/O.
+    implementation_notes:
+    - 'Configure DMA channel: source, destination, size, callback.'
+    - Use scatter-gather DMA for non-contiguous buffers.
+    - 'Double-buffer: CPU fills buffer A while DMA transfers buffer B.'
+    - Align buffers to DMA burst size (typically 32-128 bytes).
+    source: Zephyr RTOS patterns
+    confidence: high
+  - target_class: soc
+    category: data_movement
+    pattern_name: latency_sensitive_on_coordinator
+    description: Keep latency-sensitive operations (control flow, branching, small scalar computations) on the host CPU (coordinator).  Only
+      offload compute-intensive parallel work to accelerators.
+    implementation_notes:
+    - Control flow (if/else, loop bounds) on CPU; data-parallel compute on accelerator.
+    - 'Scalar reductions: reduce on accelerator, transfer single scalar to CPU.'
+    - 'Dynamic shapes: compute on CPU, compile/dispatch static tiles to accelerator.'
+    - Runtime decision logic (scheduling, memory allocation) always on CPU.
+    source: CompGen runtime
+    confidence: high
+  - target_class: soc
+    category: parallelism
+    pattern_name: heterogeneous_assignment
+    description: 'Assign operations to the most appropriate domain: compute-heavy parallel work to the accelerator (GPU/NPU),
+      sequential control to the host CPU, and I/O-bound work to DMA engines.'
+    implementation_notes:
+    - 'Profile each op: FLOPs, memory access, control flow complexity.'
+    - Ops with high arithmetic intensity -> accelerator.
+    - Ops with high branch divergence -> CPU.
+    - Ops with bulk sequential I/O -> DMA.
+    - Use the solver (CP-SAT) to optimise the assignment globally.
+    source: CompGen runtime
+    confidence: high
+  - target_class: soc
+    category: parallelism
+    pattern_name: cross_domain_pipeline
+    description: 'Pipeline work across domains: CPU prepares inputs while accelerator computes previous batch, and DMA transfers
+      results from the batch before that.'
+    implementation_notes:
+    - 'Three-stage pipeline: CPU_prepare[i+1] | Accel_compute[i] | DMA_writeback[i-1].'
+    - Use event/semaphore signalling between domains for synchronisation.
+    - Pipeline depth trades latency for throughput.
+    - 'Monitor pipeline bubbles: if one stage is much slower, it bottlenecks the pipeline.'
+    source: CompGen runtime
+    confidence: medium
+transform_recipes:
+- name: matmul_gpu_tensor_core
+  op_family: matmul
+  target_class: gpu
+  steps:
+  - action: tile
+    parameters:
+      tile_sizes:
+      - 128
+      - 128
+      - 32
+    rationale: Match tensor core tile shape and shared memory capacity
+  - action: interchange
+    parameters:
+      permutation:
+      - 2
+      - 0
+      - 1
+    rationale: Move K to outermost for output-stationary dataflow
+  - action: stage_mem
+    parameters:
+      operands:
+      - A
+      - B
+      target: shared
+    rationale: Exploit data reuse across thread block
+  - action: tile
+    parameters:
+      tile_sizes:
+      - 16
+      - 16
+      - 16
+      level: inner
+    rationale: Match warp-level MMA shape
+  - action: vectorize
+    parameters:
+      target: loads
+      width_bits: 128
+    rationale: Use 128-bit loads for coalesced access
+  expected_speedup: 10-50x over naive, within 80% of CUTLASS
+  source: CUTLASS/Triton patterns
+  confidence: high
+- name: matmul_cpu_avx2
+  op_family: matmul
+  target_class: cpu
+  steps:
+  - action: tile
+    parameters:
+      tile_sizes:
+      - 256
+      - 256
+      - 512
+      labels:
+      - MC
+      - NC
+      - KC
+    rationale: L2 cache blocking
+  - action: tile
+    parameters:
+      tile_sizes:
+      - 6
+      - 16
+      labels:
+      - MR
+      - NR
+      level: inner
+    rationale: Register blocking for AVX2 (6 rows x 2 YMM regs)
+  - action: interchange
+    parameters:
+      move_to_outermost: K
+    rationale: Output-stationary accumulation in registers
+  - action: stage_mem
+    parameters:
+      operand: C_reg
+      target: registers
+    rationale: Keep accumulator in YMM registers
+  - action: divide_dim
+    parameters:
+      operand: C_reg
+      factor: 8
+    rationale: Map to individual YMM registers (8 floats each)
+  - action: set_memory
+    parameters:
+      operand: C_reg
+      memory: AVX2
+    rationale: Pin to vector registers
+  - action: replace_intrinsics
+    parameters:
+      instructions:
+      - mm256_loadu_ps
+      - mm256_fmadd_ps
+      - mm256_broadcast_ss
+    rationale: Replace loads/stores/FMA with AVX2 intrinsics
+  expected_speedup: 80-95% of MKL
+  source: Exo AVX2 matmul tutorial
+  confidence: high
+- name: matmul_npu_systolic
+  op_family: matmul
+  target_class: npu
+  steps:
+  - action: tile
+    parameters:
+      tile_sizes:
+      - DIM
+      - DIM
+      - DIM
+    rationale: Match PE array geometry
+  - action: configure
+    parameters:
+      mode: matmul_accumulate
+    rationale: Set config for matmul+accumulate
+  - action: dma_load
+    parameters:
+      operands:
+      - A
+      - B
+      target: scratchpad
+    rationale: Pre-stage data for systolic execution
+  - action: invoke_engine
+    parameters:
+      engine: systolic_matmul
+    rationale: Single instruction for tile matmul
+  - action: dma_store
+    parameters:
+      operand: result
+      source: accumulator
+    rationale: Move result from accumulator to main memory
+  expected_speedup: Near-peak hardware utilization
+  source: Gemmini/Exo Gemmini schedule library
+  confidence: high
+- name: conv2d_gpu_implicit_gemm
+  op_family: conv2d
+  target_class: gpu
+  steps:
+  - action: reshape
+    parameters:
+      strategy: implicit_gemm
+    rationale: Reshape as matmul without materializing im2col
+  - action: tile
+    parameters:
+      tile_sizes:
+      - N_tile
+      - K_tile
+      - PQ_tile
+    rationale: Map to matmul tile
+  - action: use_tensor_cores
+    parameters:
+      dtype: fp16
+      accumulator: fp32
+    rationale: fp16 accumulation via tensor cores
+  - action: fuse
+    parameters:
+      ops:
+      - batch_norm
+      - relu
+    rationale: Epilogue fusion
+  expected_speedup: Within 90% of cuDNN for common shapes
+  source: cuDNN implicit GEMM / CUTLASS conv
+  confidence: high
+- name: attention_flash
+  op_family: attention
+  target_class: gpu
+  steps:
+  - action: tile
+    parameters:
+      dim: sequence_length
+      block_size:
+      - 64
+      - 128
+    rationale: Process attention in blocks
+  - action: fuse
+    parameters:
+      ops:
+      - qk_matmul
+      - softmax
+    rationale: Avoid materializing N x N attention matrix
+  - action: online_softmax
+    parameters:
+      method: incremental
+    rationale: Compute softmax incrementally
+  - action: accumulate
+    parameters:
+      op: attn_v_matmul
+      strategy: output_stationary
+    rationale: Output-stationary accumulation within tile
+  expected_speedup: 2-4x over naive, O(N) memory vs O(N^2)
+  source: FlashAttention paper
+  confidence: high
+- name: reduction_gpu_tree
+  op_family: reduction
+  target_class: gpu
+  steps:
+  - action: parallel_reduce
+    parameters:
+      scope: thread_block
+    rationale: Each block reduces a tile
+  - action: tree_reduce
+    parameters:
+      method: shfl_down
+      steps: log2
+    rationale: Log2 steps with __shfl_down within warp
+  - action: cross_block_reduce
+    parameters:
+      method: atomic_or_multipass
+    rationale: Final reduction across blocks
+  expected_speedup: Near bandwidth-bound peak
+  source: CUDA reduction best practices
+  confidence: high
+- name: elementwise_fusion_chain
+  op_family: elementwise
+  target_class: gpu
+  steps:
+  - action: identify_chain
+    parameters:
+      ops:
+      - relu
+      - add
+      - mul
+      - sigmoid
+    rationale: Identify chain of elementwise ops
+  - action: fuse
+    parameters:
+      strategy: single_kernel
+    rationale: Avoid intermediate materializations
+  - action: vectorize
+    parameters:
+      dtype: float4
+      target: loads_stores
+    rationale: Maximize memory bandwidth with vectorized access
+  - action: loop_strategy
+    parameters:
+      method: grid_stride
+    rationale: Handle arbitrary tensor sizes
+  expected_speedup: 2-5x over separate kernels (memory-bound)
+  source: Triton/CUDA fusion patterns
+  confidence: high
+- name: depthwise_conv2d_gpu
+  op_family: conv2d
+  target_class: gpu
+  steps:
+  - action: map_channels
+    parameters:
+      strategy: one_channel_per_block
+    rationale: Each thread block handles one output channel
+  - action: tile
+    parameters:
+      tile_sizes:
+      - H_tile
+      - W_tile
+      dims:
+      - height
+      - width
+    rationale: Tile spatial dimensions for shared memory reuse
+  - action: stage_mem
+    parameters:
+      operand: input_tile
+      target: shared
+      halo: true
+    rationale: Load input patch with halo into shared memory
+  - action: fuse
+    parameters:
+      ops:
+      - bias
+      - relu
+    rationale: Epilogue fusion avoids extra kernel launch
+  expected_speedup: 3-10x over naive, within 85% of cuDNN
+  source: EfficientNet / MobileNet optimization guides
+  confidence: medium
+- name: layernorm_gpu_fused
+  op_family: layernorm
+  target_class: gpu
+  steps:
+  - action: parallel_reduce
+    parameters:
+      ops:
+      - mean
+      - variance
+      scope: row
+    rationale: Compute mean and variance in a single pass per row
+  - action: warp_reduce
+    parameters:
+      method: shfl_down
+    rationale: Use warp shuffle for fast intra-warp reduction
+  - action: normalize_and_scale
+    parameters:
+      fused: true
+      ops:
+      - subtract_mean
+      - divide_std
+      - scale
+      - bias
+    rationale: Fuse normalization and affine transform to avoid extra reads
+  - action: vectorize
+    parameters:
+      width_bits: 128
+    rationale: Coalesced 128-bit loads and stores
+  expected_speedup: 2-3x over separate mean/var/normalize kernels
+  source: Apex/Triton fused LayerNorm
+  confidence: high
+- name: softmax_gpu_online
+  op_family: softmax
+  target_class: gpu
+  steps:
+  - action: online_max
+    parameters:
+      method: running_max
+    rationale: Track running max to avoid separate max-reduction pass
+  - action: online_sum
+    parameters:
+      method: rescaled_accumulation
+    rationale: Accumulate exp(x - running_max) with correction factors
+  - action: normalize
+    parameters:
+      fused: true
+    rationale: Divide by final sum in same kernel
+  - action: vectorize
+    parameters:
+      width_bits: 128
+    rationale: Coalesced access for memory-bound workload
+  expected_speedup: 1.5-2x over two-pass (max then softmax)
+  source: Online softmax / FlashAttention
+  confidence: high
+- name: batched_matmul_gpu
+  op_family: matmul
+  target_class: gpu
+  steps:
+  - action: batch_map
+    parameters:
+      strategy: batch_per_block_cluster
+    rationale: Map batch dimension to block grid z-axis
+  - action: tile
+    parameters:
+      tile_sizes:
+      - 128
+      - 128
+      - 32
+    rationale: Standard tensor core tile for M, N, K
+  - action: stage_mem
+    parameters:
+      operands:
+      - A
+      - B
+      target: shared
+      stages: 3
+    rationale: Multi-stage async pipeline to hide global memory latency
+  - action: use_tensor_cores
+    parameters:
+      dtype: fp16
+      accumulator: fp32
+    rationale: Leverage tensor cores for throughput
+  - action: swizzle
+    parameters:
+      target: shared_memory
+      pattern: 128B
+    rationale: Avoid shared memory bank conflicts
+  expected_speedup: Within 85% of cuBLAS batched GEMM
+  source: CUTLASS batched GEMM / Triton batched matmul
+  confidence: high
+kernel_wisdom:
+- library: cutlass
+  topic: threadblock_tile_sizes
+  insight: Use 128x128, 128x256, or 256x128 threadblock tiles for large GEMMs. Fall back to 64x64 for small or skinny GEMMs.
+    Warp tiles of 32x32 or 64x32 map well to tensor core shapes.
+  conditions:
+  - GEMM problem size >= 512 in each dimension for large tiles
+  confidence: high
+- library: cutlass
+  topic: epilogue_fusion
+  insight: Fuse bias addition, activation functions (relu, gelu, silu), and residual add into the GEMM epilogue to avoid separate
+    kernel launches and redundant global memory traffic.
+  conditions:
+  - Epilogue ops are element-wise or row-broadcast
+  confidence: high
+- library: cutlass
+  topic: persistent_kernels
+  insight: Persistent kernels keep thread blocks alive across multiple output tiles, improving SM utilization by amortizing
+    launch overhead and enabling software-managed scheduling. Crucial for small problem sizes that would otherwise under-occupy
+    the GPU.
+  conditions:
+  - CUTLASS 3.x or later
+  - Problem size small enough to under-occupy SMs
+  confidence: high
+- library: cutlass
+  topic: swizzle_patterns
+  insight: Swizzle patterns remap thread IDs to data elements to avoid shared memory bank conflicts. A 128B swizzle aligns
+    128-byte access patterns across threads in a warp.
+  conditions:
+  - Shared memory used for tile staging
+  confidence: high
+- library: cutlass
+  topic: pipeline_stages
+  insight: Use 2-4 asynchronous copy pipeline stages (cp.async / TMA) to overlap global-to-shared memory transfers with MMA
+    computation. More stages hide more latency but consume more shared memory.
+  conditions:
+  - Ampere or later GPU architecture
+  confidence: high
+- library: cutlass
+  topic: mixed_precision
+  insight: Use fp16 or bf16 for compute operands with fp32 accumulator to prevent error accumulation in large reductions.
+    The tensor core natively supports this mixed-precision mode.
+  conditions:
+  - Tensor core capable GPU
+  - Acceptable accuracy trade-off
+  confidence: high
+- library: cutlass
+  topic: warp_specialization
+  insight: 'In CUTLASS 3.x, warps within a CTA can be specialized for different roles: producer warps issue TMA loads while
+    consumer warps execute MMA, enabling a pipelined producer-consumer overlap.'
+  conditions:
+  - Hopper architecture (sm_90+)
+  - CUTLASS 3.x
+  confidence: high
+- library: cutlass
+  topic: split_k
+  insight: For skinny GEMMs (small M or N, large K), split the K dimension across multiple thread blocks and accumulate partial
+    results, trading extra memory for higher parallelism.
+  conditions:
+  - M or N < ~256 and K >> M*N
+  confidence: medium
+- library: cudnn
+  topic: algorithm_selection
+  insight: cuDNN provides multiple algorithms for each operation (IMPLICIT_GEMM, IMPLICIT_PRECOMP_GEMM, GEMM, FFT, WINOGRAD,
+    WINOGRAD_NONFUSED). Profile all and pick the fastest for each specific input shape -- there is no single best algorithm.
+  conditions:
+  - Shape known at compile time or amortized across iterations
+  confidence: high
+- library: cudnn
+  topic: workspace_management
+  insight: Allocate the workspace buffer once and reuse across layers. Some algorithms require O(N^2) workspace; pre-query
+    max workspace to avoid repeated allocations.
+  conditions:
+  - Static graph with known shapes
+  confidence: high
+- library: cudnn
+  topic: tensor_core_enforcement
+  insight: Set CUDNN_TENSOR_OP_MATH explicitly to enable tensor core paths. Default math mode may not use tensor cores even
+    when available.
+  conditions:
+  - Volta or later GPU
+  - fp16 or bf16 data
+  confidence: high
+- library: cudnn
+  topic: graph_api
+  insight: cuDNN 8.x graph API builds an execution plan for an entire subgraph, enabling inter-kernel fusion and global optimization
+    across multiple operations (e.g., conv + bias + relu + residual).
+  conditions:
+  - cuDNN 8.x or later
+  - Subgraph of supported operations
+  confidence: high
+- library: cudnn
+  topic: nhwc_preference
+  insight: cuDNN tensor core kernels strongly prefer NHWC layout. Using NCHW forces a layout transpose or falls back to non-tensor-core
+    paths.
+  conditions:
+  - Tensor core capable GPU
+  confidence: high
+- library: onednn
+  topic: jit_code_generation
+  insight: oneDNN JIT-compiles optimized kernels at runtime for specific tensor shapes and CPU features. This eliminates the
+    need to ship pre-compiled variants for every shape.
+  conditions:
+  - x86 CPU with AVX2 or later
+  confidence: high
+- library: onednn
+  topic: brgemm_primitive
+  insight: The batch-reduce GEMM (BRGEMM) is oneDNN's universal building block. Convolutions, attention, and other ops are
+    lowered to BRGEMM calls, amortizing optimization effort.
+  conditions:
+  - x86 CPU
+  - AMX or AVX-512 available
+  confidence: high
+- library: onednn
+  topic: memory_format_propagation
+  insight: Let oneDNN choose optimal blocked formats (nChw16c, nChw8c, etc.) and propagate them through the graph. Inserting
+    manual reorders at every op boundary destroys performance.
+  conditions:
+  - Graph of oneDNN-supported ops
+  confidence: high
+- library: onednn
+  topic: post_ops_fusion
+  insight: oneDNN supports appending post-ops (eltwise, sum, binary) to primitives. Fusing relu or residual add into convolution
+    avoids separate passes over memory.
+  conditions:
+  - Post-op is element-wise or broadcast-compatible
+  confidence: high
+- library: triton
+  topic: block_pointers
+  insight: Block pointers (tl.make_block_ptr) enable the compiler to reason about structured memory access patterns and emit
+    TMA instructions on Hopper. Prefer them over manual pointer arithmetic.
+  conditions:
+  - Hopper GPU for TMA
+  - Regular access patterns
+  confidence: high
+- library: triton
+  topic: dot_operand_placement
+  insight: tl.dot requires both operands to reside in shared memory (or registers) on pre-Hopper architectures. Failing to
+    stage operands to shared memory before tl.dot causes correctness issues or poor performance.
+  conditions:
+  - Pre-Hopper GPU (sm_80, sm_86)
+  confidence: high
+- library: triton
+  topic: accumulator_dtype
+  insight: Always use fp32 accumulators with fp16/bf16 inputs in tl.dot. fp16 accumulation over large K dimensions leads to
+    catastrophic numerical errors.
+  conditions:
+  - K dimension > 256
+  - fp16 or bf16 operands
+  confidence: high
+- library: triton
+  topic: autotuning_knobs
+  insight: Key autotuning parameters are BLOCK_M, BLOCK_N, BLOCK_K, num_warps, and num_stages. Sweep a grid of these; optimal
+    values vary dramatically across shapes and GPUs.
+  conditions:
+  - Performance-critical kernel
+  confidence: high
+- library: triton
+  topic: mask_handling
+  insight: Use boolean masks for boundary conditions and pass other=0.0 to tl.load for safe out-of-bounds padding. Incorrect
+    masking is the most common source of Triton kernel bugs.
+  conditions:
+  - Tensor dimensions not divisible by block size
+  confidence: high
+- library: triton
+  topic: persistent_reduction
+  insight: For reductions, keep partial results in registers across loop iterations instead of writing to shared memory. This
+    turns a multi-pass algorithm into a single efficient pass.
+  conditions:
+  - Reduction dimension fits in register budget
+  confidence: high
+- library: exo
+  topic: cursor_navigation
+  insight: Use cursor-based navigation (proc.find(...) and cursor forwarding) for stable references to program points across
+    transforms. Name-based references break when surrounding code changes.
+  conditions:
+  - Exo 2 or later
+  confidence: high
+- library: exo
+  topic: schedule_libraries
+  insight: Compose fine-grained scheduling primitives (split, reorder, stage_mem, set_memory, replace) into reusable scheduling
+    functions that encapsulate target-specific patterns.
+  conditions:
+  - Reusable schedule across similar ops
+  confidence: high
+- library: exo
+  topic: config_hoisting
+  insight: Hoist stateful accelerator configuration instructions (e.g., Gemmini config_ld, config_matmul) out of hot loops
+    to avoid redundant reconfiguration on every iteration.
+  conditions:
+  - Accelerator with stateful configuration registers
+  confidence: high
+- library: exo
+  topic: replace_instruction
+  insight: Define hardware instructions with semantic bodies (EXO instruction definitions), then use replace_all to match
+    equivalent loop nest patterns in the scheduled code. This ensures the mapping from loops to instructions is semantics-preserving.
+  conditions:
+  - Target has custom instructions with known semantics
+  confidence: high
+compiler_heuristics:
+- compiler: tvm
+  topic: auto_scheduling
+  heuristic: 'Start from a naive loop nest and apply a fixed sequence of sketch rules: multi-level tiling, fusion, cache read/write
+    insertion, vectorization, and parallelization. Each rule generates candidate programs; a cost model prunes the search
+    space.'
+  conditions:
+  - Using Ansor auto-scheduler
+  confidence: high
+- compiler: tvm
+  topic: cost_model
+  heuristic: Train an XGBoost model on profiled program features (loop structure, memory access patterns, arithmetic intensity)
+    to predict kernel runtime. Transfer-learning from similar workloads reduces measurement budget on new targets.
+  conditions:
+  - AutoTVM or Ansor with profiling data
+  confidence: high
+- compiler: tvm
+  topic: operator_fusion
+  heuristic: Classify ops as injective, reduction, or complex. Fuse injective ops greedily into their consumers. Fuse elementwise
+    ops into the epilogue of reductions. Never fuse two reductions unless they share the same reduction axis.
+  conditions:
+  - Relay or Relax graph-level optimization
+  confidence: high
+- compiler: tvm
+  topic: layout_transformation
+  heuristic: Insert explicit layout_transform ops at boundaries between subgraphs with different preferred layouts (e.g.,
+    NCHW for compute, NCHWc for vectorized inner kernel). Run a global pass to minimize total transformation cost.
+  conditions:
+  - Heterogeneous layout preferences across ops
+  confidence: medium
+- compiler: tvm
+  topic: dynamic_shapes
+  heuristic: Use symbolic shape variables with declared upper bounds. Pad tensors to the upper bound at kernel boundaries
+    and mask out padding. This keeps the kernel code static while handling dynamic input sizes.
+  conditions:
+  - Dynamic batch size or sequence length
+  confidence: medium
+- compiler: tvm
+  topic: schedule_templates
+  heuristic: Define a schedule template that encodes the high-level structure (number of tile levels, parallelism strategy)
+    and leave tile sizes, unroll factors, and vectorization widths as tunable parameters. Search fills in the concrete values.
+  conditions:
+  - AutoTVM template-based tuning
+  confidence: high
+- compiler: halide
+  topic: compute_at_vs_store_at
+  heuristic: compute_at places a producer's computation inside a consumer's loop for fusion. store_at controls where the intermediate
+    buffer is allocated. Use compute_at for fusion, and store_at at a coarser loop level when the producer's values are reused
+    across consumer iterations.
+  conditions:
+  - Producer-consumer pair in a Halide pipeline
+  confidence: high
+- compiler: halide
+  topic: bound_inference
+  heuristic: Halide automatically infers the required input bounds for each stage by backward-propagating output bounds through
+    the dependency graph. The compiler inserts boundary checks or clamping. Trust the inference rather than manually computing
+    bounds.
+  conditions:
+  - Standard Halide pipeline
+  confidence: high
+- compiler: halide
+  topic: sliding_window
+  heuristic: For stencil computations, compute only the newly required rows of the producer as the consumer slides over the
+    output. This reduces redundant computation from O(filter_size * output) to O(output).
+  conditions:
+  - Stencil/convolution with spatial reuse
+  - Consumer iterates in order
+  confidence: high
+- compiler: halide
+  topic: unroll_and_vectorize
+  heuristic: Unroll small inner loops to expose instruction-level parallelism, then vectorize over the fastest-varying dimension
+    (innermost contiguous). Unrolling the vectorized dimension itself wastes registers.
+  conditions:
+  - Inner loop trip count small and known at compile time
+  confidence: high
+- compiler: halide
+  topic: split_reorder_parallelize
+  heuristic: Split the outermost loop to create parallel tiles, reorder loops to place the parallel dimension outermost and
+    the vectorizable dimension innermost. This is the canonical parallelization pattern.
+  conditions:
+  - Sufficient output size for parallelism
+  confidence: high
+- compiler: iree
+  topic: flow_stream_hal
+  heuristic: 'IREE decomposes execution into three levels: Flow (coarse-grained device placement and partitioning), Stream
+    (fine-grained asynchronous ordering within a device), and HAL (hardware dispatch and resource management). Map high-level
+    decisions to the appropriate level.'
+  conditions:
+  - IREE-based compilation pipeline
+  confidence: high
+- compiler: iree
+  topic: tiling_heuristics
+  heuristic: Tile to workgroup level first (mapping to GPU thread blocks or CPU threads), then tile again within each workgroup
+    to distribute work across invocations. Workgroup tile sizes should match shared memory capacity; invocation tiles should
+    match register file size.
+  conditions:
+  - GPU or multi-core CPU target
+  confidence: high
+- compiler: iree
+  topic: buffer_planning
+  heuristic: Perform lifetime analysis on stream-ordered commands and reuse buffers whose lifetimes do not overlap. This reduces
+    peak memory without inserting unnecessary synchronization.
+  conditions:
+  - Static execution plan or bounded dynamic shapes
+  confidence: high
+- compiler: iree
+  topic: dispatch_region_formation
+  heuristic: Group ops into dispatch regions that execute together on one device. The grouping respects data dependencies
+    and device affinity. Minimize the number of dispatches to reduce launch overhead.
+  conditions:
+  - IREE Flow dialect
+  confidence: high
+- compiler: iree
+  topic: executable_caching
+  heuristic: Compile each dispatch executable once and cache the resulting VMFB. On re-execution, load from cache to skip
+    compilation. Keyed by source hash, target triple, and compilation flags.
+  conditions:
+  - Repeated execution of the same model
+  confidence: high
+- compiler: xla
+  topic: operator_fusion
+  heuristic: Fuse element-wise ops greedily into their consumers. Stop at reduction boundaries (reduce, reduce-window) because
+    reductions change the parallelism structure. After fusion, each fused computation becomes a single HLO fusion instruction.
+  conditions:
+  - XLA HLO optimization pipeline
+  confidence: high
+- compiler: xla
+  topic: spmd_partitioning
+  heuristic: Annotate tensors with sharding specs over a device mesh. The GSPMD partitioner propagates sharding through the
+    graph and inserts all-gather, all-reduce, and reduce-scatter collectives at boundaries. Minimize cross-device communication
+    by aligning sharding with computation locality.
+  conditions:
+  - Multi-device execution
+  - TPU or multi-GPU
+  confidence: high
+- compiler: xla
+  topic: memory_optimization
+  heuristic: 'Schedule HLO instructions to minimize peak memory by using liveness analysis: free buffers as soon as their
+    last consumer executes. Recomputation (rematerialization) trades compute for memory when peak is too high.'
+  conditions:
+  - Memory-constrained device (GPU, TPU)
+  confidence: high
+- compiler: xla
+  topic: buffer_assignment
+  heuristic: Share physical buffers between non-interfering logical buffers using an interference graph. Color the graph to
+    minimize total memory. Respect alignment constraints and aliasing rules.
+  conditions:
+  - Static shape graph
+  confidence: high
+- compiler: xla
+  topic: algebraic_simplification
+  heuristic: 'Run algebraic simplifications early: constant folding, strength reduction (x * 2 -> x + x), dead computation
+    elimination, and identity removal (add 0, multiply 1). These reduce graph size before expensive optimization passes.'
+  conditions:
+  - Any HLO graph
+  confidence: high
+anti_patterns:
+- name: tile_too_small
+  description: Choosing tile sizes that are too small causes launch overhead and loop control overhead to dominate useful
+    computation. Each tile carries fixed costs (kernel launch, barrier setup, index math) that must be amortized over enough
+    work.
+  symptoms:
+  - Kernel launch overhead dominates runtime profile
+  - Low arithmetic intensity per tile
+  - GPU occupancy is high but throughput is low
+  fix: Increase tile sizes until compute-to-overhead ratio is favorable. For GPU, aim for at least 64x64 output tiles. Profile
+    to confirm launch overhead is negligible.
+  source: CUTLASS tuning guide / CUDA best practices
+- name: tile_too_large
+  description: Choosing tile sizes that are too large causes register spilling to local memory and shared memory overflow,
+    both of which destroy performance. On CPUs, overly large tiles cause L1/L2 cache thrashing.
+  symptoms:
+  - High local memory (lmem) traffic in profiler
+  - Shared memory allocation exceeds hardware limit (compilation failure)
+  - Register spill count is non-zero in PTX/SASS analysis
+  - L1 cache miss rate spikes on CPU
+  fix: Reduce tile sizes to fit within shared memory budget and register file. Use occupancy calculator to verify. For CPU,
+    tile to L1/L2 cache size.
+  source: CUTLASS tuning guide / Triton autotuning
+- name: fuse_across_reduction_without_sync
+  description: Fusing operations across a reduction boundary without proper synchronization produces incorrect results. A
+    reduction changes the parallelism structure; downstream ops depend on the fully reduced value.
+  symptoms:
+  - Numerical mismatches vs reference implementation
+  - Results change with different thread counts or block sizes
+  - Race conditions detected by compute-sanitizer
+  fix: Insert a barrier or kernel boundary at reduction boundaries. Only fuse across a reduction if the fused kernel correctly
+    implements the two-phase reduction pattern (partial + final).
+  source: TVM fusion rules / XLA fusion pass
+- name: naive_transpose
+  description: Transposing a matrix by directly swapping indices causes uncoalesced global memory access on GPUs. One of the
+    two accesses (read or write) will stride across memory, reducing effective bandwidth by 8-32x.
+  symptoms:
+  - Global memory throughput far below peak bandwidth
+  - High L2 sector-miss rate
+  - Transpose kernel slower than expected for a memory-bound op
+  fix: 'Use shared memory as a staging buffer: read a tile coalesced into shared memory, apply the transpose in shared memory
+    (with padding to avoid bank conflicts), then write the tile coalesced to global.'
+  source: CUDA transpose optimization guide
+- name: materialize_attention_matrix
+  description: Computing the full N x N attention matrix before applying softmax and V multiplication consumes O(N^2) memory,
+    making it infeasible for long sequences and wasting memory bandwidth.
+  symptoms:
+  - Out-of-memory errors on long sequences (N > 2048)
+  - Memory usage grows quadratically with sequence length
+  - Attention computation dominates both time and memory
+  fix: Use tiled attention (FlashAttention) to compute attention in blocks with O(N) memory. Fuse Q@K, softmax, and @V within
+    each tile using online softmax.
+  source: FlashAttention paper
+- name: separate_elementwise_kernels
+  description: Launching a separate GPU kernel for each elementwise operation (relu, add, mul, etc.) wastes kernel launch
+    overhead and forces each intermediate result to round-trip through global memory.
+  symptoms:
+  - Many small kernels in profiler trace
+  - Kernel launch overhead visible in timeline
+  - Low compute utilization despite high SM activity
+  - Memory bandwidth is the bottleneck for trivially compute-bound ops
+  fix: Fuse chains of elementwise ops into a single kernel. Most compiler frameworks (TVM, XLA, Triton) do this automatically.
+    For manual kernels, write a single kernel with a grid-stride loop.
+  source: XLA fusion / TVM operator fusion
+- name: unaligned_memory_access
+  description: Issuing loads and stores at addresses that are not aligned to the access width (e.g., 128-bit loads at non-16-byte-aligned
+    addresses) forces multiple memory transactions and can be 2-8x slower.
+  symptoms:
+  - Low global memory throughput despite high access volume
+  - Excessive memory transactions per request in profiler
+  - Performance cliff when tensor dimensions change slightly
+  fix: Pad tensor dimensions to alignment boundaries (typically 128 bits / 16 bytes). Ensure base pointers are aligned. Use
+    aligned load/store intrinsics when available.
+  source: CUDA C++ Programming Guide / Triton best practices
+- name: wrong_memory_space
+  description: Keeping data in global memory when it could reside in shared memory or registers wastes bandwidth. Conversely,
+    staging data to shared memory with no reuse just adds overhead.
+  symptoms:
+  - High global memory traffic for data that is reused within a block
+  - Shared memory allocation for data accessed only once
+  - Performance does not improve with shared memory staging
+  fix: Stage to shared memory only when reuse factor > 1 across threads in a block. Keep scalars and per-thread accumulators
+    in registers. Use the roofline model to determine whether you are bandwidth-bound.
+  source: CUDA best practices / CUTLASS design
+- name: missing_barrier
+  description: Omitting __syncthreads() (or equivalent barrier) between shared memory writes and reads causes race conditions.
+    Some threads read stale or partially written data.
+  symptoms:
+  - Non-deterministic numerical results across runs
+  - Results differ between debug and release builds
+  - compute-sanitizer reports hazards
+  fix: Insert __syncthreads() after all threads have written to shared memory and before any thread reads from it. Minimize
+    barriers by restructuring the algorithm to reduce shared memory communication points.
+  source: CUDA C++ Programming Guide
+- name: wave_quantization_waste
+  description: If the grid (total thread blocks) is not a multiple of the number of SMs, the last wave has idle SMs. For small
+    grids, this causes significant utilization loss.
+  symptoms:
+  - Achieved occupancy much lower than theoretical occupancy
+  - GPU utilization drops for certain problem sizes
+  - Performance cliff at specific batch sizes or tile configurations
+  fix: Choose tile sizes so that the total number of blocks is a multiple of the SM count, or use persistent kernels that
+    keep all SMs busy. Pad the grid if needed.
+  source: CUDA occupancy analysis / CUTLASS persistent kernels
+- name: over_parallelization
+  description: Launching more threads than there is useful work creates idle warps that still consume scheduling resources.
+    On CPUs, over-subscribing cores with threads adds context-switch overhead.
+  symptoms:
+  - Many threads with zero or trivial work in profiler
+  - High warp stall rate due to insufficient work per warp
+  - CPU performance degrades beyond optimal thread count
+  fix: 'Size the grid to match the work: one thread block per output tile, one thread per element within the tile. On CPU,
+    use thread count equal to physical core count, not logical.'
+  source: CUDA best practices / oneDNN threading guide
+- name: fp16_accumulation_instability
+  description: Accumulating many fp16 values (e.g., a dot product over K > 256) in fp16 precision causes catastrophic loss
+    of significance. The limited dynamic range and mantissa bits of fp16 make large sums inaccurate.
+  symptoms:
+  - Large numerical errors vs fp32 reference
+  - Errors grow with K dimension or sequence length
+  - Training diverges or evaluation metrics degrade
+  fix: Use fp32 accumulators with fp16/bf16 operands. Tensor cores natively support this mixed-precision mode. For Triton,
+    set acc_dtype=tl.float32 in tl.dot.
+  source: NVIDIA mixed-precision guide / Triton best practices
+- name: cache_thrashing_poor_tiling
+  description: Tile sizes that do not align with cache line sizes or cache capacity cause repeated eviction and re-fetch of
+    the same data (thrashing). This is especially severe for matrix operations with strided access.
+  symptoms:
+  - Cache miss rate far above expected for working set size
+  - Performance varies non-monotonically with tile size
+  - Hardware performance counters show high LLC misses
+  fix: 'Tile to fit within the target cache level (L1: 32-64KB, L2: 256KB-1MB). Align tile boundaries to cache line size (64
+    bytes). For matrices, tile both dimensions to keep the working set within cache.'
+  source: Halide scheduling guide / oneDNN tuning
+- name: dma_without_double_buffering
+  description: Issuing DMA transfers synchronously (load, wait, compute, store) stalls the compute pipeline while waiting
+    for data. Without double buffering or pipelining, compute and memory transfer cannot overlap.
+  symptoms:
+  - Compute unit idle time visible in profiler
+  - Achieved throughput well below roofline for both compute and memory
+  - Performance does not improve with faster compute
+  fix: 'Use double or multi-buffering: while computing on buffer A, prefetch the next tile into buffer B. On GPUs, use cp.async
+    with multiple pipeline stages. On NPUs, overlap DMA with systolic execution.'
+  source: CUTLASS async pipeline / Gemmini double buffering
+- name: single_device_placement
+  description: Placing all operations on a single device in a multi-device system leaves other devices idle and may cause
+    memory pressure on the overloaded device.
+  symptoms:
+  - Only one device shows utilization in system monitor
+  - Out-of-memory on one device while others have free memory
+  - Training/inference time scales linearly despite multiple devices
+  fix: Partition the computation across devices using pipeline parallelism, tensor parallelism, or data parallelism. Use the
+    solver-backed placement planner to minimize cross-device communication.
+  source: XLA GSPMD / IREE multi-device
+- name: excessive_synchronization
+  description: Inserting unnecessary barriers or device synchronizations (e.g., cudaDeviceSynchronize after every kernel)
+    serializes execution and prevents the hardware from overlapping independent work.
+  symptoms:
+  - Profiler shows large gaps between kernel launches
+  - GPU utilization is low despite many kernels
+  - Removing sync points speeds up execution significantly
+  fix: 'Use fine-grained synchronization: CUDA events or stream ordering instead of device-wide sync. Only synchronize when
+    there is a true data dependency between operations.'
+  source: CUDA best practices / IREE stream dialect

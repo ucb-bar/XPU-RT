@@ -19,13 +19,13 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 import structlog
-from xdsl.dialects.builtin import ModuleOp, SymbolRefAttr
-from xdsl.ir import Operation
+from xdsl.dialects.builtin import ArrayAttr, ModuleOp, StringAttr, SymbolRefAttr
+from xdsl.ir import Attribute, Operation
 from xdsl.utils.exceptions import VerifyException
 
 from compgen.ir.recipe.ops import RecipeOp
 from compgen.ir.recipe.ops_candidate import PlaceOnDeviceOp
-from compgen.ir.recipe.ops_scope import AnchorOp, RecipeRegionOp, SegmentOp
+from compgen.ir.recipe.ops_scope import AnchorOp, RecipeGuardOp, RecipeRegionOp, SegmentOp
 
 log = structlog.get_logger()
 
@@ -59,9 +59,28 @@ def _collect_defined_symbols(module: ModuleOp) -> set[str]:
     """
     symbols: set[str] = set()
     for op in module.walk():
-        if isinstance(op, (RecipeRegionOp, SegmentOp, AnchorOp)):
+        if isinstance(op, (RecipeRegionOp, SegmentOp, AnchorOp, RecipeGuardOp)):
             symbols.add(op.sym_name.data)
+            continue
+        if hasattr(op, "sym_name"):
+            sym_name = getattr(op, "sym_name")
+            if isinstance(sym_name, StringAttr):
+                symbols.add(sym_name.data)
     return symbols
+
+
+def _collect_symbol_refs_from_attr(attr: Attribute) -> list[str]:
+    refs: list[str] = []
+    if isinstance(attr, SymbolRefAttr):
+        refs.append(attr.root_reference.data)
+    elif isinstance(attr, ArrayAttr):
+        for item in attr.data:
+            refs.extend(_collect_symbol_refs_from_attr(item))
+    elif hasattr(attr, "parameters"):
+        for param in getattr(attr, "parameters", ()):
+            if isinstance(param, Attribute):
+                refs.extend(_collect_symbol_refs_from_attr(param))
+    return refs
 
 
 def _collect_symbol_refs(op: Operation) -> list[str]:
@@ -77,8 +96,7 @@ def _collect_symbol_refs(op: Operation) -> list[str]:
     if not hasattr(op, "properties"):
         return refs
     for attr in op.properties.values():
-        if isinstance(attr, SymbolRefAttr):
-            refs.append(attr.root_reference.data)
+        refs.extend(_collect_symbol_refs_from_attr(attr))
     return refs
 
 

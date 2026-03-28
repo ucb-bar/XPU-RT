@@ -1,0 +1,36 @@
+name: batched_matmul_gpu
+op_family: matmul
+target_class: gpu
+steps:
+- action: batch_map
+  parameters:
+    strategy: batch_per_block_cluster
+  rationale: Map batch dimension to block grid z-axis
+- action: tile
+  parameters:
+    tile_sizes:
+    - 128
+    - 128
+    - 32
+  rationale: Standard tensor core tile for M, N, K
+- action: stage_mem
+  parameters:
+    operands:
+    - A
+    - B
+    target: shared
+    stages: 3
+  rationale: Multi-stage async pipeline to hide global memory latency
+- action: use_tensor_cores
+  parameters:
+    dtype: fp16
+    accumulator: fp32
+  rationale: Leverage tensor cores for throughput
+- action: swizzle
+  parameters:
+    target: shared_memory
+    pattern: 128B
+  rationale: Avoid shared memory bank conflicts
+expected_speedup: Within 85% of cuBLAS batched GEMM
+source: CUTLASS batched GEMM / Triton batched matmul
+confidence: high

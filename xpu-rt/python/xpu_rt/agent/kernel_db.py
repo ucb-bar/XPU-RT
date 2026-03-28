@@ -122,5 +122,98 @@ class KernelDB:
         """Number of stored kernels."""
         return len(self._entries)
 
+    @classmethod
+    def from_memory(cls, memory: Any) -> KernelDB:
+        """Create a KernelDB backed by CompilerMemory.
+
+        Reads promoted kernel candidates from the unified memory and
+        exposes them through the same KernelDB interface. New stores
+        are written to both the JSON file and CompilerMemory.
+
+        Args:
+            memory: A ``CompilerMemory`` instance.
+
+        Returns:
+            A KernelDB that bridges to the unified memory.
+        """
+        db = cls.__new__(cls)
+        db._path = Path(".compgen_cache/kernel_db.json")
+        db._entries = []
+        db._memory = memory
+        db._load()
+
+        # Also load promoted kernels from CompilerMemory
+        try:
+            from compgen.memory.schema import CandidateStatus, KnowledgeKind, ObjectKind
+
+            for item in memory.retrieve_knowledge(kind=KnowledgeKind.SCHEDULE_TEMPLATE, top_k=100):
+                code = memory.blobs.load(item.artifact_hash) if item.artifact_hash else ""
+                if code and item.scope_key:
+                    parts = item.scope_key.split("|", 1)
+                    pattern_type = parts[0] if parts else ""
+                    target_name = parts[1] if len(parts) > 1 else ""
+                    entry = KernelEntry(
+                        pattern_type=pattern_type,
+                        target_name=target_name,
+                        shapes_key="unknown",
+                        kernel_code=code,
+                        language="triton",
+                        latency_us=0.0,
+                        correct=True,
+                        speedup=0.0,
+                        plan=item.summary,
+                    )
+                    if not any(e.pattern_type == entry.pattern_type and e.target_name == entry.target_name
+                              for e in db._entries):
+                        db._entries.append(entry)
+        except Exception:
+            pass  # CompilerMemory may not have kernel knowledge yet
+
+        return db
+
+    def store_to_memory(self, entry: KernelEntry, memory: Any) -> None:
+        """Store a kernel entry in both the JSON DB and CompilerMemory.
+
+        Args:
+            entry: The kernel entry to store.
+            memory: A ``CompilerMemory`` instance.
+        """
+        self.store(entry)
+
+        try:
+            from compgen.memory.schema import GeneratorKind, KnowledgeKind, ObjectKind, ScopeKind
+
+            # Record as a task + candidate in the unified memory
+            task = memory.create_task(
+                kind=ObjectKind.KERNEL,
+                workload_key=entry.pattern_type,
+                target_key=entry.target_name,
+            )
+            candidate = memory.record_candidate(
+                task_id=task.task_id,
+                artifact=entry.kernel_code,
+                generator_kind=GeneratorKind.PROVIDER,
+                metadata={"language": entry.language, "plan": entry.plan},
+            )
+            memory.record_evaluation(
+                candidate_id=candidate.candidate_id,
+                compile_ok=True,
+                correctness_ok=entry.correct,
+                latency_us=entry.latency_us,
+                score=entry.speedup,
+            )
+
+            # Also store as a knowledge item for retrieval
+            memory.store_knowledge(
+                kind=KnowledgeKind.SCHEDULE_TEMPLATE,
+                summary=f"{entry.pattern_type} kernel for {entry.target_name} ({entry.language})",
+                artifact=entry.kernel_code,
+                scope_kind=ScopeKind.OPERATOR_FAMILY,
+                scope_key=f"{entry.pattern_type}|{entry.target_name}",
+                source="kernel_db",
+            )
+        except Exception:
+            pass  # Best-effort; JSON store is the primary
+
 
 __all__ = ["KernelDB", "KernelEntry"]

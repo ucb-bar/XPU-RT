@@ -38,6 +38,7 @@ class SemanticPredicateOp(IRDLOperation):
     operand_names = prop_def(ArrayAttr)  # ArrayAttr of StringAttr
     semantic_type = prop_def(StringAttr)  # "bitvector", "integer", "boolean", "real"
     bit_width = opt_prop_def(IntegerAttr)
+    guard_key = opt_prop_def(StringAttr)
 
     traits = traits_def(Pure())
 
@@ -68,6 +69,7 @@ class SemanticInvariantOp(IRDLOperation):
     region_ref = prop_def(SymbolRefAttr)
     predicate_name = prop_def(StringAttr)
     operand_names = opt_prop_def(ArrayAttr)
+    guard_key = opt_prop_def(StringAttr)
 
     traits = traits_def(Pure())
 

@@ -43,13 +43,19 @@ from compgen.ir.recipe.ops_choice import (
 )
 from compgen.ir.recipe.ops_fact import (
     BackendAvailableOp,
+    BackendEligibleOp,
     CalibrationOp,
+    ContiguousLayoutOp,
     ExportIssueOp,
     FusibleWithOp,
+    GuardFailureOp,
     GraphBreakOp,
     KernelContractOp,
     LocalMemFitOp,
+    QuantizationIntentOp,
+    TileDivisibleOp,
     TransferCostOp,
+    UnsupportedOperatorOp,
 )
 from compgen.ir.recipe.ops_provenance import (
     FeedbackOp,
@@ -63,6 +69,7 @@ from compgen.ir.recipe.ops_provenance import (
 from compgen.ir.recipe.ops_scope import (
     AnchorOp,
     BindPayloadOp,
+    RecipeGuardOp,
     RecipeRegionOp,
     SegmentOp,
 )
@@ -76,7 +83,7 @@ from compgen.ir.recipe.ops_verify import (
 )
 
 # All operations in the Recipe dialect, grouped by family
-_SCOPE_OPS = [RecipeRegionOp, SegmentOp, AnchorOp, BindPayloadOp]
+_SCOPE_OPS = [RecipeRegionOp, SegmentOp, AnchorOp, RecipeGuardOp, BindPayloadOp]
 
 _FACT_OPS = [
     BackendAvailableOp,
@@ -87,6 +94,12 @@ _FACT_OPS = [
     CalibrationOp,
     ExportIssueOp,
     GraphBreakOp,
+    UnsupportedOperatorOp,
+    GuardFailureOp,
+    QuantizationIntentOp,
+    TileDivisibleOp,
+    ContiguousLayoutOp,
+    BackendEligibleOp,
 ]
 
 _CANDIDATE_OPS = [

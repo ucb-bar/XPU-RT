@@ -1,0 +1,29 @@
+name: conv2d_gpu_implicit_gemm
+op_family: conv2d
+target_class: gpu
+steps:
+- action: reshape
+  parameters:
+    strategy: implicit_gemm
+  rationale: Reshape as matmul without materializing im2col
+- action: tile
+  parameters:
+    tile_sizes:
+    - N_tile
+    - K_tile
+    - PQ_tile
+  rationale: Map to matmul tile
+- action: use_tensor_cores
+  parameters:
+    dtype: fp16
+    accumulator: fp32
+  rationale: fp16 accumulation via tensor cores
+- action: fuse
+  parameters:
+    ops:
+    - batch_norm
+    - relu
+  rationale: Epilogue fusion
+expected_speedup: Within 90% of cuDNN for common shapes
+source: cuDNN implicit GEMM / CUTLASS conv
+confidence: high

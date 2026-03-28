@@ -10,8 +10,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from compgen.models import ModelSpec, build_default_model_catalog
 
 LoaderFn = Callable[[], tuple[nn.Module, tuple[Any, ...]]]
+
+
+MODEL_CATALOG = build_default_model_catalog()
 
 
 def _example_loader(
@@ -144,6 +148,15 @@ def _micro_loader(module_cls: type[nn.Module], *inputs: torch.Tensor, **kwargs: 
     return _load
 
 
+def _catalog_loader(model_id: str) -> LoaderFn:
+    """Adapt a model-catalog spec to the legacy workload loader signature."""
+
+    def _load() -> tuple[nn.Module, tuple[Any, ...]]:
+        return MODEL_CATALOG.get(model_id).load()
+
+    return _load
+
+
 DEFAULT_LOADERS: dict[str, LoaderFn] = {
     "simple_mlp": _example_loader("examples.models.simple_mlp"),
     "transformer_block": _example_loader("examples.models.transformer_block"),
@@ -181,6 +194,17 @@ DEFAULT_LOADERS: dict[str, LoaderFn] = {
     "copy_boundary_heavy": _micro_loader(CopyBoundaryHeavy, torch.randn(4, 64, 128), hidden_dim=128),
     "scan_small_kernels": _micro_loader(ScanSmallKernels, torch.randn(4, 64, 128), hidden_dim=128),
     "reduction_block": _micro_loader(ReductionBlock, torch.randn(4, 64, 128), hidden_dim=128),
+    "llama31_decoder_block": _catalog_loader("llama31_decoder_block"),
+    "llama31_8b_slice": _catalog_loader("llama31_8b_slice"),
+    "llama4_moe_router_expert_block": _catalog_loader("llama4_moe_router_expert_block"),
+    "dlrmv3_ranking_block": _catalog_loader("dlrmv3_ranking_block"),
+    "mamba_block": _catalog_loader("mamba_block"),
+    "convnext_stage": _catalog_loader("convnext_stage"),
+    "smolvla_one_step": _catalog_loader("smolvla_one_step"),
+    "groot_policy_step": _catalog_loader("groot_policy_step"),
+    "cosmos_reason2": _catalog_loader("cosmos_reason2"),
+    "cosmos_predict2_5": _catalog_loader("cosmos_predict2_5"),
+    "cosmos_transfer2_5": _catalog_loader("cosmos_transfer2_5"),
 }
 
 
@@ -200,4 +224,13 @@ def get_loader(workload_id: str) -> LoaderFn:
     return DEFAULT_LOADERS[workload_id]
 
 
-__all__ = ["DEFAULT_LOADERS", "LoaderEntry", "LoaderFn", "get_loader"]
+def get_model_spec(workload_id: str) -> ModelSpec | None:
+    """Return the model-catalog entry for a workload when one exists."""
+
+    try:
+        return MODEL_CATALOG.get(workload_id)
+    except KeyError:
+        return None
+
+
+__all__ = ["DEFAULT_LOADERS", "LoaderEntry", "LoaderFn", "MODEL_CATALOG", "get_loader", "get_model_spec"]

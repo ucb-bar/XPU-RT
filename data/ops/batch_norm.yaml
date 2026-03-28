@@ -1,0 +1,47 @@
+op_family: batch_norm
+tiling_guidance:
+- target_class: gpu
+  tile_sizes:
+  - 256
+  rationale: Reduce over spatial dimensions (H, W) and batch (N) per channel.  One thread block per channel with 256 threads
+    for the reduction.
+  source: cuDNN
+  confidence: high
+fusion_opportunities:
+- pattern: conv2d+batch_norm
+  description: 'Fold BatchNorm into preceding convolution weights at inference time: W_fused = W * gamma / sqrt(var + eps),
+    b_fused = (b - mean) * gamma / sqrt(var + eps) + beta.  Zero runtime cost.'
+  conditions:
+  - Inference mode (running statistics, no gradient).
+  - Preceding op is conv2d or linear.
+  source: cuDNN/TensorRT/oneDNN
+  confidence: high
+- pattern: batch_norm+relu
+  description: Fuse activation into the BatchNorm output pass.
+  conditions:
+  - ReLU or clamp immediately follows BatchNorm.
+  source: cuDNN
+  confidence: high
+layout_preferences:
+- target_class: gpu
+  preferred_layout: NHWC
+  rationale: Channel-last layout enables coalesced reduction over spatial dims.
+  source: cuDNN
+backend_guidance:
+- target_class: gpu
+  recommended_backend: cuDNN
+  conditions: Standard batch normalisation
+  rationale: cuDNN's fused BN kernels handle forward, backward, and inference.
+  source: cuDNN
+- target_class: cpu
+  recommended_backend: oneDNN
+  conditions: Standard batch normalisation
+  rationale: oneDNN provides optimised BN with SIMD reduction.
+  source: oneDNN
+pitfalls:
+- Training BN requires two passes (mean, then variance) unless using Welford's online algorithm in a single pass.
+- Small batch sizes make BN statistics noisy; consider GroupNorm or LayerNorm.
+- 'BN is often the fusion boundary: always try to fold into preceding conv/linear.'
+performance_bounds:
+- 'Memory-bound: two passes over the activation tensor (compute stats, then normalise).'
+- 'Inference: can be completely eliminated by folding into preceding linear op.'
