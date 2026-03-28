@@ -182,22 +182,30 @@ class FXImporter:
             decomp_fn = self.dynamic_decompositions.get(target_str, DECOMPOSITION_TABLE.get(target_str))
             if decomp_fn is not None:
                 meta = dict(node.meta)
-                result = decomp_fn(operands, meta, node.name)
+                try:
+                    result = decomp_fn(operands, meta, node.name)
+                except (IndexError, KeyError, TypeError) as decomp_err:
+                    # Decomposition failed (e.g. missing operands from scalar constants).
+                    # Fall through to opaque fallback instead of crashing.
+                    self.diagnostics.append(ImportDiagnostic(
+                        fx_node=node.name, level="warning",
+                        message=f"Decomposition failed for {target_str}: {decomp_err}; falling back to opaque call",
+                    ))
+                else:
+                    for op in result.ops:
+                        if isinstance(op, CallOp):
+                            ensure_external_decl(op)
+                        block.add_op(op)
 
-                for op in result.ops:
-                    if isinstance(op, CallOp):
-                        ensure_external_decl(op)
-                    block.add_op(op)
+                    if result.result is not None:
+                        value_map[node.name] = result.result
 
-                if result.result is not None:
-                    value_map[node.name] = result.result
-
-                self.decomposed_count += 1
-                self.diagnostics.append(ImportDiagnostic(
-                    fx_node=node.name, level="info",
-                    message=f"Decomposed {target_str} -> {len(result.ops)} ops (regions: {result.region_ids})",
-                ))
-                continue
+                    self.decomposed_count += 1
+                    self.diagnostics.append(ImportDiagnostic(
+                        fx_node=node.name, level="info",
+                        message=f"Decomposed {target_str} -> {len(result.ops)} ops (regions: {result.region_ids})",
+                    ))
+                    continue
 
             if not self.allow_opaque_fallback and target_str not in self.explicit_blackboxes:
                 self.diagnostics.append(ImportDiagnostic(

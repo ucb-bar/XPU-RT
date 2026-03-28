@@ -320,4 +320,74 @@ class AutocompAdapter:
         return has_gpu
 
 
-__all__ = ["AutocompAdapter", "KernelResult"]
+def search_kernel(region_id: str, job: dict[str, Any], target: Any) -> dict[str, Any]:
+    """Bridge between recipe executor and kernel providers.
+
+    Extracts ``op_family`` and shape information from *job*, builds a
+    :class:`~compgen.kernels.provider.KernelContract`, and tries the
+    :class:`~compgen.kernels.providers.triton_templates.TritonTemplateProvider`
+    first.  Falls back to an empty result if nothing matches.
+
+    Args:
+        region_id: Identifier for the IR region being lowered.
+        job: Dict with at least ``op_family`` and optionally ``input_shapes``,
+            ``output_shapes``, ``dtypes``, ``target_name``.
+        target: Target profile (used for metadata only).
+
+    Returns:
+        Dict with keys ``region_id``, ``found``, ``kernel_code``,
+        ``latency_us``, and ``error``.
+    """
+    from compgen.kernels.provider import KernelContract, SearchBudget
+    from compgen.kernels.providers.triton_templates import TritonTemplateProvider
+
+    op_family: str = job.get("op_family", "")
+    raw_input_shapes = job.get("input_shapes", ())
+    raw_output_shapes = job.get("output_shapes", ())
+    dtypes = tuple(job.get("dtypes", ("float32",)))
+    target_name: str = job.get("target_name", "")
+
+    input_shapes = tuple(tuple(s) for s in raw_input_shapes)
+    output_shapes = tuple(tuple(s) for s in raw_output_shapes)
+
+    contract = KernelContract(
+        region_id=region_id,
+        op_family=op_family,
+        input_shapes=input_shapes,
+        output_shapes=output_shapes,
+        dtypes=dtypes,
+        target_name=target_name,
+    )
+
+    provider = TritonTemplateProvider()
+    budget = SearchBudget()
+
+    try:
+        if provider.accepts_contract(contract):
+            result = provider.search(contract, budget)
+            return {
+                "region_id": region_id,
+                "found": result.found,
+                "kernel_code": result.kernel_code,
+                "latency_us": result.latency_us,
+                "error": None,
+            }
+    except Exception as exc:
+        return {
+            "region_id": region_id,
+            "found": False,
+            "kernel_code": "",
+            "latency_us": 0.0,
+            "error": str(exc),
+        }
+
+    return {
+        "region_id": region_id,
+        "found": False,
+        "kernel_code": "",
+        "latency_us": 0.0,
+        "error": f"No provider accepts op_family={op_family!r}",
+    }
+
+
+__all__ = ["AutocompAdapter", "KernelResult", "search_kernel"]

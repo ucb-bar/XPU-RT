@@ -139,6 +139,8 @@ class VerificationMetrics:
     check_assertions_run: int = 0
     differential_pass: bool = False
     differential_max_error: float = 0.0
+    numeric_equiv_pass: bool = False
+    numeric_equiv_max_error: float = 0.0
     translation_validation_pass: bool | None = None
     translation_validation_time_ms: float = 0.0
     overall_status: str = "pending"

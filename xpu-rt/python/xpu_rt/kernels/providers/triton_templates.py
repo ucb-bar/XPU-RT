@@ -1,0 +1,503 @@
+"""Triton kernel template provider.
+
+Generates real Triton kernels from parameterised templates for common
+fused operation patterns (matmul+bias+epilogue, elementwise). Templates
+are valid ``@triton.jit`` functions with tiling parameters exposed as
+``tl.constexpr``.
+
+The provider compiles and validates kernels when Triton is available;
+when it is not, it still emits source-code strings but skips execution.
+"""
+
+from __future__ import annotations
+
+import textwrap
+from dataclasses import dataclass, field
+from typing import Any
+
+import structlog
+
+from compgen.kernels.provider import (
+    KernelContract,
+    KnowledgeExport,
+    ProviderResult,
+    SearchBudget,
+)
+
+log = structlog.get_logger()
+
+# ---------------------------------------------------------------------------
+# Triton availability probe
+# ---------------------------------------------------------------------------
+
+_TRITON_AVAILABLE: bool
+try:
+    import triton  # noqa: F401
+    import triton.language as tl  # noqa: F401
+
+    _TRITON_AVAILABLE = True
+except ImportError:
+    _TRITON_AVAILABLE = False
+
+
+def triton_available() -> bool:
+    """Return True when the ``triton`` package can be imported."""
+    return _TRITON_AVAILABLE
+
+
+# ---------------------------------------------------------------------------
+# Templates (source-code strings)
+# ---------------------------------------------------------------------------
+
+_MATMUL_BIAS_GELU_TEMPLATE = textwrap.dedent("""\
+    import triton
+    import triton.language as tl
+    from triton.language.extra.cuda import libdevice
+    import torch
+
+    @triton.jit
+    def matmul_bias_gelu_kernel(
+        A_ptr, B_ptr, bias_ptr, C_ptr,
+        M, N, K,
+        stride_am, stride_ak,
+        stride_bk, stride_bn,
+        stride_cm, stride_cn,
+        BLOCK_M: tl.constexpr, BLOCK_N: tl.constexpr, BLOCK_K: tl.constexpr,
+    ):
+        pid_m = tl.program_id(0)
+        pid_n = tl.program_id(1)
+        offs_m = pid_m * BLOCK_M + tl.arange(0, BLOCK_M)
+        offs_n = pid_n * BLOCK_N + tl.arange(0, BLOCK_N)
+        offs_k = tl.arange(0, BLOCK_K)
+
+        a_ptrs = A_ptr + offs_m[:, None] * stride_am + offs_k[None, :] * stride_ak
+        b_ptrs = B_ptr + offs_k[:, None] * stride_bk + offs_n[None, :] * stride_bn
+
+        acc = tl.zeros((BLOCK_M, BLOCK_N), dtype=tl.float32)
+        for k_start in range(0, K, BLOCK_K):
+            mask_a = (offs_m[:, None] < M) & ((offs_k[None, :] + k_start) < K)
+            mask_b = ((offs_k[:, None] + k_start) < K) & (offs_n[None, :] < N)
+            a = tl.load(a_ptrs, mask=mask_a, other=0.0)
+            b = tl.load(b_ptrs, mask=mask_b, other=0.0)
+            acc += tl.dot(a, b)
+            a_ptrs += BLOCK_K * stride_ak
+            b_ptrs += BLOCK_K * stride_bk
+
+        # bias + GELU
+        bias = tl.load(bias_ptr + offs_n, mask=offs_n < N, other=0.0)
+        acc = acc + bias[None, :]
+        # Approximate GELU: x * 0.5 * (1 + tanh(sqrt(2/pi) * (x + 0.044715 * x^3)))
+        x = acc
+        cdf = 0.5 * (1.0 + libdevice.tanh(0.7978845608 * (x + 0.044715 * x * x * x)))
+        acc = x * cdf
+
+        mask_c = (offs_m[:, None] < M) & (offs_n[None, :] < N)
+        c_ptrs = C_ptr + offs_m[:, None] * stride_cm + offs_n[None, :] * stride_cn
+        tl.store(c_ptrs, acc, mask=mask_c)
+
+    def kernel(A: torch.Tensor, B: torch.Tensor, bias: torch.Tensor) -> torch.Tensor:
+        M, K = A.shape
+        K2, N = B.shape
+        assert K == K2
+        C = torch.empty((M, N), device=A.device, dtype=A.dtype)
+        BLOCK_M, BLOCK_N, BLOCK_K = {block_m}, {block_n}, {block_k}
+        grid = ((M + BLOCK_M - 1) // BLOCK_M, (N + BLOCK_N - 1) // BLOCK_N)
+        matmul_bias_gelu_kernel[grid](
+            A, B, bias, C,
+            M, N, K,
+            A.stride(0), A.stride(1),
+            B.stride(0), B.stride(1),
+            C.stride(0), C.stride(1),
+            BLOCK_M=BLOCK_M, BLOCK_N=BLOCK_N, BLOCK_K=BLOCK_K,
+        )
+        return C
+""")
+
+_MATMUL_BIAS_RELU_TEMPLATE = textwrap.dedent("""\
+    import triton
+    import triton.language as tl
+    import torch
+
+    @triton.jit
+    def matmul_bias_relu_kernel(
+        A_ptr, B_ptr, bias_ptr, C_ptr,
+        M, N, K,
+        stride_am, stride_ak,
+        stride_bk, stride_bn,
+        stride_cm, stride_cn,
+        BLOCK_M: tl.constexpr, BLOCK_N: tl.constexpr, BLOCK_K: tl.constexpr,
+    ):
+        pid_m = tl.program_id(0)
+        pid_n = tl.program_id(1)
+        offs_m = pid_m * BLOCK_M + tl.arange(0, BLOCK_M)
+        offs_n = pid_n * BLOCK_N + tl.arange(0, BLOCK_N)
+        offs_k = tl.arange(0, BLOCK_K)
+
+        a_ptrs = A_ptr + offs_m[:, None] * stride_am + offs_k[None, :] * stride_ak
+        b_ptrs = B_ptr + offs_k[:, None] * stride_bk + offs_n[None, :] * stride_bn
+
+        acc = tl.zeros((BLOCK_M, BLOCK_N), dtype=tl.float32)
+        for k_start in range(0, K, BLOCK_K):
+            mask_a = (offs_m[:, None] < M) & ((offs_k[None, :] + k_start) < K)
+            mask_b = ((offs_k[:, None] + k_start) < K) & (offs_n[None, :] < N)
+            a = tl.load(a_ptrs, mask=mask_a, other=0.0)
+            b = tl.load(b_ptrs, mask=mask_b, other=0.0)
+            acc += tl.dot(a, b)
+            a_ptrs += BLOCK_K * stride_ak
+            b_ptrs += BLOCK_K * stride_bk
+
+        # bias + ReLU
+        bias = tl.load(bias_ptr + offs_n, mask=offs_n < N, other=0.0)
+        acc = acc + bias[None, :]
+        acc = tl.maximum(acc, 0.0)
+
+        mask_c = (offs_m[:, None] < M) & (offs_n[None, :] < N)
+        c_ptrs = C_ptr + offs_m[:, None] * stride_cm + offs_n[None, :] * stride_cn
+        tl.store(c_ptrs, acc, mask=mask_c)
+
+    def kernel(A: torch.Tensor, B: torch.Tensor, bias: torch.Tensor) -> torch.Tensor:
+        M, K = A.shape
+        K2, N = B.shape
+        assert K == K2
+        C = torch.empty((M, N), device=A.device, dtype=A.dtype)
+        BLOCK_M, BLOCK_N, BLOCK_K = {block_m}, {block_n}, {block_k}
+        grid = ((M + BLOCK_M - 1) // BLOCK_M, (N + BLOCK_N - 1) // BLOCK_N)
+        matmul_bias_relu_kernel[grid](
+            A, B, bias, C,
+            M, N, K,
+            A.stride(0), A.stride(1),
+            B.stride(0), B.stride(1),
+            C.stride(0), C.stride(1),
+            BLOCK_M=BLOCK_M, BLOCK_N=BLOCK_N, BLOCK_K=BLOCK_K,
+        )
+        return C
+""")
+
+_ELEMENTWISE_GELU_TEMPLATE = textwrap.dedent("""\
+    import triton
+    import triton.language as tl
+    from triton.language.extra.cuda import libdevice
+    import torch
+
+    @triton.jit
+    def elementwise_gelu_kernel(
+        X_ptr, Y_ptr, N,
+        BLOCK_SIZE: tl.constexpr,
+    ):
+        pid = tl.program_id(0)
+        offs = pid * BLOCK_SIZE + tl.arange(0, BLOCK_SIZE)
+        mask = offs < N
+        x = tl.load(X_ptr + offs, mask=mask, other=0.0)
+        # Approximate GELU
+        cdf = 0.5 * (1.0 + libdevice.tanh(0.7978845608 * (x + 0.044715 * x * x * x)))
+        y = x * cdf
+        tl.store(Y_ptr + offs, y, mask=mask)
+
+    def kernel(X: torch.Tensor) -> torch.Tensor:
+        Y = torch.empty_like(X)
+        N = X.numel()
+        BLOCK_SIZE = {block_size}
+        grid = ((N + BLOCK_SIZE - 1) // BLOCK_SIZE,)
+        elementwise_gelu_kernel[grid](X, Y, N, BLOCK_SIZE=BLOCK_SIZE)
+        return Y
+""")
+
+# Map from op_family tag to template string and description.
+_TEMPLATES: dict[str, tuple[str, str]] = {
+    "matmul_bias_gelu": (_MATMUL_BIAS_GELU_TEMPLATE, "Fused matmul + bias + GELU"),
+    "matmul_bias_relu": (_MATMUL_BIAS_RELU_TEMPLATE, "Fused matmul + bias + ReLU"),
+    "elementwise_gelu": (_ELEMENTWISE_GELU_TEMPLATE, "Element-wise GELU"),
+}
+
+
+# ---------------------------------------------------------------------------
+# Block-size heuristic
+# ---------------------------------------------------------------------------
+
+def _pick_tile_sizes(
+    dim_m: int, dim_n: int, dim_k: int,
+) -> tuple[int, int, int]:
+    """Choose BLOCK_M, BLOCK_N, BLOCK_K for a matmul tile.
+
+    Uses power-of-two clamping sized to fit in shared memory.  For the
+    matmul inner loop the dominant shared-memory cost is roughly
+    ``(BLOCK_M * BLOCK_K + BLOCK_K * BLOCK_N) * 4 * num_stages`` bytes.
+    We target <= 48 KiB to stay within most GPU limits.
+    """
+    def _clamp_po2(dim: int, lo: int = 16, hi: int = 64) -> int:
+        v = max(lo, min(hi, dim))
+        # round down to nearest power of two
+        v = 1 << (v.bit_length() - 1)
+        return max(lo, v)
+
+    bm = _clamp_po2(dim_m, lo=16, hi=64)
+    bn = _clamp_po2(dim_n, lo=16, hi=64)
+    bk = _clamp_po2(dim_k, lo=16, hi=32)
+    return bm, bn, bk
+
+
+# ---------------------------------------------------------------------------
+# Provider implementation
+# ---------------------------------------------------------------------------
+
+@dataclass
+class TritonTemplateProvider:
+    """Generates Triton kernels from parameterised templates.
+
+    Implements :class:`~compgen.kernels.provider.KernelProvider`.
+
+    Attributes:
+        default_block_size: Default element-wise block size.
+    """
+
+    default_block_size: int = 1024
+    _accumulated_knowledge: list[KnowledgeExport] = field(default_factory=list)
+
+    # -- KernelProvider protocol ---------------------------------------------
+
+    @property
+    def name(self) -> str:  # noqa: D401
+        """Provider identifier."""
+        return "triton_templates"
+
+    def accepts_contract(self, contract: KernelContract) -> bool:
+        """Return True if *contract.op_family* matches a known template."""
+        return contract.op_family in _TEMPLATES
+
+    def search(self, contract: KernelContract, budget: SearchBudget) -> ProviderResult:
+        """Generate a Triton kernel from the matching template.
+
+        Steps:
+            1. Select template by ``contract.op_family``.
+            2. Derive tile sizes from contract shapes.
+            3. Instantiate the source string.
+            4. Optionally validate with :class:`KernelValidator`.
+            5. Return :class:`ProviderResult`.
+
+        Args:
+            contract: Kernel contract describing the required operation.
+            budget: Resource budget (largely unused for templates).
+
+        Returns:
+            A populated :class:`ProviderResult`.
+        """
+        op = contract.op_family
+        if op not in _TEMPLATES:
+            return ProviderResult(found=False, metadata={"reason": f"no template for {op}"})
+
+        template_src, description = _TEMPLATES[op]
+
+        # Derive shapes from contract
+        dim_m, dim_n, dim_k = _shapes_from_contract(contract)
+
+        # Instantiate template
+        kernel_code = _instantiate(template_src, op, dim_m, dim_n, dim_k, self.default_block_size)
+
+        log.info(
+            "triton_templates.instantiated",
+            op_family=op,
+            dim_m=dim_m, dim_n=dim_n, dim_k=dim_k,
+            triton_available=_TRITON_AVAILABLE,
+        )
+
+        # Validation (best-effort when Triton + CUDA are present)
+        validation_diags: list[str] = []
+        correct = False
+        latency_us = 0.0
+
+        if _TRITON_AVAILABLE:
+            try:
+                import torch
+
+                if torch.cuda.is_available():
+                    correct, latency_us, validation_diags = _validate_on_gpu(
+                        kernel_code, op, dim_m, dim_n, dim_k,
+                    )
+                else:
+                    validation_diags.append("CUDA not available; skipping GPU validation")
+            except Exception as exc:
+                validation_diags.append(f"Validation error: {exc}")
+        else:
+            validation_diags.append("Triton not importable; returning source only")
+
+        # Knowledge export
+        knowledge = [
+            KnowledgeExport(
+                kind="template_match",
+                scope="operator_family",
+                scope_key=op,
+                content=f"Template '{op}' instantiated ({description}), M={dim_m} N={dim_n} K={dim_k}",
+                metadata={"correct": correct, "latency_us": latency_us},
+                confidence=0.9 if correct else 0.4,
+            ),
+        ]
+        self._accumulated_knowledge.extend(knowledge)
+
+        return ProviderResult(
+            found=True,
+            kernel_code=kernel_code,
+            language="triton",
+            latency_us=latency_us,
+            correct=correct,
+            plan=f"template:{op}",
+            iterations_used=1,
+            total_candidates=1,
+            knowledge_exports=knowledge,
+            metadata={
+                "description": description,
+                "triton_available": _TRITON_AVAILABLE,
+                "validation": validation_diags,
+            },
+        )
+
+    def export_knowledge(self) -> list[KnowledgeExport]:
+        """Export accumulated knowledge and clear the buffer."""
+        exports = list(self._accumulated_knowledge)
+        self._accumulated_knowledge.clear()
+        return exports
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _shapes_from_contract(contract: KernelContract) -> tuple[int, int, int]:
+    """Extract ``(dim_m, dim_n, dim_k)`` from the contract shapes.
+
+    Falls back to sensible defaults when shape information is absent.
+    """
+    dim_m, dim_n, dim_k = 128, 128, 256
+
+    if contract.input_shapes:
+        first = contract.input_shapes[0]
+        if len(first) >= 2:
+            dim_m, dim_k = first[0], first[1]
+        if len(contract.input_shapes) > 1:
+            second = contract.input_shapes[1]
+            if len(second) >= 2:
+                dim_n = second[1]
+
+    if contract.output_shapes:
+        out = contract.output_shapes[0]
+        if len(out) >= 2:
+            dim_m, dim_n = out[0], out[1]
+
+    return dim_m, dim_n, dim_k
+
+
+def _instantiate(
+    template: str,
+    op: str,
+    dim_m: int,
+    dim_n: int,
+    dim_k: int,
+    default_block: int,
+) -> str:
+    """Format a template string with tile-size parameters."""
+    if op.startswith("elementwise"):
+        return template.format(block_size=default_block)
+
+    block_m, block_n, block_k = _pick_tile_sizes(dim_m, dim_n, dim_k)
+    return template.format(block_m=block_m, block_n=block_n, block_k=block_k)
+
+
+def _import_kernel_from_source(kernel_code: str) -> Any:
+    """Write *kernel_code* to a temp file and import the ``kernel`` callable.
+
+    Triton's ``@triton.jit`` decorator inspects source via
+    ``inspect.getsource()``, which only works for functions defined in
+    real files on disk -- ``exec()`` into a dict will fail.
+    """
+    import importlib.util
+    import tempfile
+
+    with tempfile.NamedTemporaryFile(
+        suffix=".py", prefix="triton_tmpl_", mode="w", delete=False,
+    ) as f:
+        f.write(kernel_code)
+        f.flush()
+        spec = importlib.util.spec_from_file_location("_triton_tmpl", f.name)
+        assert spec is not None and spec.loader is not None
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)  # type: ignore[union-attr]
+        return getattr(mod, "kernel")
+
+
+def _validate_on_gpu(
+    kernel_code: str,
+    op: str,
+    dim_m: int,
+    dim_n: int,
+    dim_k: int,
+) -> tuple[bool, float, list[str]]:
+    """Compile, run, and validate a kernel on GPU.
+
+    Returns ``(correct, latency_us, diagnostics)``.
+    """
+    import torch
+
+    diags: list[str] = []
+    device = "cuda"
+
+    # 1. Import kernel from temp file (Triton JIT needs real source)
+    try:
+        kernel_fn = _import_kernel_from_source(kernel_code)
+        diags.append("Compilation: PASS")
+    except Exception as exc:
+        return False, 0.0, [f"Compilation failed: {exc}"]
+
+    # 2. Build reference inputs and outputs
+    if op == "elementwise_gelu":
+        x = torch.randn(dim_m, dim_n, device=device, dtype=torch.float32)
+        ref_out = torch.nn.functional.gelu(x)
+        test_inputs = (x,)
+    else:
+        a_mat = torch.randn(dim_m, dim_k, device=device, dtype=torch.float32)
+        b_mat = torch.randn(dim_k, dim_n, device=device, dtype=torch.float32)
+        bias = torch.randn(dim_n, device=device, dtype=torch.float32)
+        if op == "matmul_bias_gelu":
+            ref_out = torch.nn.functional.gelu(a_mat @ b_mat + bias)
+        else:  # matmul_bias_relu
+            ref_out = torch.nn.functional.relu(a_mat @ b_mat + bias)
+        test_inputs = (a_mat, b_mat, bias)
+
+    # 3. Correctness check
+    try:
+        actual = kernel_fn(*test_inputs)
+        diff = actual.float() - ref_out.float()
+        l2 = float(torch.norm(diff).item())
+        max_abs = float(torch.max(torch.abs(diff)).item())
+        tol = 1e-2  # GELU approximation needs wider tolerance
+        correct = max_abs <= tol
+        diags.append(
+            f"Correctness: {'PASS' if correct else 'FAIL'} "
+            f"(l2={l2:.6f}, max_abs={max_abs:.6f}, tol={tol})"
+        )
+    except Exception as exc:
+        return False, 0.0, diags + [f"Execution failed: {exc}"]
+
+    # 4. Latency measurement
+    latency_us = 0.0
+    if correct:
+        try:
+            for _ in range(3):
+                kernel_fn(*test_inputs)
+            torch.cuda.synchronize()
+
+            start = torch.cuda.Event(enable_timing=True)
+            end = torch.cuda.Event(enable_timing=True)
+            n_iters = 20
+            start.record()
+            for _ in range(n_iters):
+                kernel_fn(*test_inputs)
+            end.record()
+            torch.cuda.synchronize()
+            latency_us = start.elapsed_time(end) * 1000.0 / n_iters
+            diags.append(f"Performance: {latency_us:.1f} us/iter ({n_iters} iters)")
+        except Exception:
+            pass  # best-effort
+
+    return correct, latency_us, diags
+
+
+__all__ = ["TritonTemplateProvider", "triton_available"]

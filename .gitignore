@@ -268,6 +268,9 @@ third_party/**/.pytest_cache/
 benchmarks/results/
 benchmarks/tmp/
 
+# Paper metrics artifacts
+artifacts/paper/
+
 # LLM / Agent generated artifacts (NEVER commit these)
 # Agent memory and session databases
 *.db

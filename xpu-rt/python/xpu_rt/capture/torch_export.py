@@ -218,11 +218,27 @@ def capture_model(
 
     model.eval()
 
+    # Ensure model and inputs are on CPU to avoid FakeTensor device propagation
+    # errors during torch.export tracing.
+    model = model.to("cpu")
+    if isinstance(sample_inputs, (tuple, list)):
+        sample_inputs = tuple(
+            t.to("cpu") if isinstance(t, torch.Tensor) else t
+            for t in sample_inputs
+        )
+
     kwargs: dict[str, Any] = {}
     if dynamic_shapes is not None:
         kwargs["dynamic_shapes"] = dynamic_shapes
 
-    exported = torch.export.export(model, sample_inputs, **kwargs)
+    try:
+        exported = torch.export.export(model, sample_inputs, **kwargs)
+    except Exception as first_err:
+        if "FakeTensor" in str(first_err) or "device" in str(first_err).lower():
+            kwargs["strict"] = False
+            exported = torch.export.export(model, sample_inputs, **kwargs)
+        else:
+            raise
     return exported
 
 
