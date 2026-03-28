@@ -4,32 +4,26 @@
 
 **XPU-RT** is an adaptable full-stack end-to-end (E2E) compilation and scheduling flow for efficient mapping of robotic multi-model workloads onto heterogeneous shared-memory SoCs.
 
+This project is under active development. If you would love to contribute or if you find any issues, please do so by opening a [pull request](https://github.com/ucb-bar/XPURT/pulls) or [filing an issue](https://github.com/ucb-bar/XPURT/issues) on GitHub.
+
 ### Repository Initialization
 
 ```bash
 git clone https://github.com/ucb-bar/XPU-RT.git
 cd XPU-RT
-```
-```bash
 git submodule update --init --recursive
 ```
 
-### Set up `merlin` Submodule
-#### 1) Intall Environment
 ```bash
 conda env create -f merlin/env_linux.yml
 conda activate merlin-dev
 uv sync
 ```
 
-#### 2) Build compiler tools, target runtime and toolchain for your device target 
 ```bash
 bash setup.sh
 ```
-After installing merlin, run the following scripts in XPU-RT:
 ```bash
-runtime/scripts/compile_all_models.sh # build all the vmfb files for your models
-runtime/scripts/profile_remote.sh # run on your device target i.e. spacemit_x60 for banana pi
 ```
 
 For runtime-specific setup and usage details, see [runtime/README.md](runtime/README.md).
@@ -77,9 +71,6 @@ XPU-RT/
 │   ├── schedule_validation.py
 │   └── pytorch_workload/      # Sample model artifacts + dispatch JSON inputs
 ├── scripts/                   # Python entry points for experiments/scheduling
-├── runtime/                   # C runtime tool + scripts for compile/profile flow
-│   ├── tools/json_dispatch_runner.c
-│   └── scripts/*.sh
 ├── data/                      # Collected benchmark/profile/scheduling outputs
 ├── merlin/                    # Git submodule (compiler/runtime/tooling upstream)
 ├── env.yml                    # Conda environment
@@ -89,13 +80,7 @@ XPU-RT/
 
 ### File-Level Integration Points
 
-1. `runtime/scripts/compile_all_models.sh` -> calls `merlin/tools/compile.py`
 2. `runtime/scripts/compile_all_models.sh` -> compiles models under `merlin/models/...`
-3. `runtime/CMakeLists.txt` -> includes header from `merlin/xpu-rt/xpurt_scheduler_core.h`
-4. `runtime/build_runtime.sh` -> links against Merlin-produced archive:
-   `merlin/build/<build-name>/runtime/src/iree/runtime/libxpurt_iree_plugin_standalone.a`
-5. `runtime/build_runtime.sh` -> can trigger Merlin target build:
-   `xpurt_iree_plugin_standalone`
 
 ### Data/Artifact Flow Between This Repo and `merlin`
 
