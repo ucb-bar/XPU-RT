@@ -45,7 +45,9 @@ def test_tile_build_minimal() -> None:
         "tile_sizes": ArrayAttr([_i64(64), _i64(32)]),
     })
     assert len(op.tile_sizes.data) == 2
+    assert op.sym_name is None
     assert op.interchange is None
+    assert op.guard_refs is None
     assert op.provenance is None
 
 
@@ -57,6 +59,17 @@ def test_tile_build_with_provenance() -> None:
         "provenance": prov,
     })
     assert op.provenance.source.data == "agent"
+
+
+def test_tile_build_with_symbol_and_guard_refs() -> None:
+    op = TileOp.build(properties={
+        "sym_name": StringAttr("cand_tile_r0"),
+        "region_ref": SymbolRefAttr("seg0"),
+        "tile_sizes": ArrayAttr([_i64(128)]),
+        "guard_refs": ArrayAttr([SymbolRefAttr("guard_fusion")]),
+    })
+    assert op.sym_name.data == "cand_tile_r0"
+    assert len(op.guard_refs.data) == 1
 
 
 def test_tile_verify_positive_sizes() -> None:
@@ -97,6 +110,8 @@ def test_fuse_build() -> None:
         "fuse_regions": ArrayAttr([SymbolRefAttr("r0"), SymbolRefAttr("r1")]),
     })
     assert len(op.fuse_regions.data) == 2
+    assert op.sym_name is None
+    assert op.guard_refs is None
 
 
 def test_fuse_build_with_fusion_kind() -> None:

@@ -13,4 +13,18 @@ Recipes are keyed by: hash(target_profile) + hash(model_ir) + hash(objective)
 
 from __future__ import annotations
 
-__all__: list[str] = []
+from compgen.promotion.lineage import (
+    LineageGraph,
+    LineageNode,
+    build_lineage_graph,
+    find_lineage_siblings,
+    get_promotion_history,
+)
+
+__all__: list[str] = [
+    "LineageGraph",
+    "LineageNode",
+    "build_lineage_graph",
+    "find_lineage_siblings",
+    "get_promotion_history",
+]

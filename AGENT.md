@@ -163,6 +163,8 @@ internal tracking disagree about what was changed.
 
 ### Public Documentation Rules
 
+- Always generate up-to date documentation inside of `docs`
+
 `docs/` is user-facing only.
 
 Allowed in `docs/`:

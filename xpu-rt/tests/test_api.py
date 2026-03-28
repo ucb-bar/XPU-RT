@@ -166,6 +166,20 @@ class TestCompileModel:
         compiled = compile_model(_TinyMLP(), dev)
         assert isinstance(compiled.import_diagnostics, list)
 
+    def test_compile_has_capture_artifact(self, tmp_path: Path) -> None:
+        """The strict frontend capture artifact must be attached to the result."""
+        dev = device(EXEMPLAR_DIR / "test_gpu_simt.yaml", output_dir=tmp_path / "out")
+        compiled = compile_model(_TinyMLP(), dev)
+        assert compiled.capture_artifact.validation.valid
+        assert "torch" in compiled.capture_artifact.runtime_versions
+
+    def test_compile_has_analysis_dossier(self, tmp_path: Path) -> None:
+        """Compilation should produce a graph-analysis dossier before eqsat."""
+        dev = device(EXEMPLAR_DIR / "test_gpu_simt.yaml", output_dir=tmp_path / "out")
+        compiled = compile_model(_TinyMLP(), dev)
+        assert compiled.analysis_dossier is not None
+        assert compiled.analysis_dossier.total_regions >= 1
+
     def test_compile_with_explicit_sample_inputs(self, tmp_path: Path) -> None:
         """Explicit sample_inputs must be used instead of the default."""
         dev = device(EXEMPLAR_DIR / "test_gpu_simt.yaml", output_dir=tmp_path / "out")

@@ -12,9 +12,12 @@ from compgen.ir.recipe.ops_candidate import PlaceOnDeviceOp, TileOp
 from compgen.ir.recipe.ops_choice import RequireEqsatOp, RequireSolverOp
 from compgen.ir.recipe.ops_fact import BackendAvailableOp
 from compgen.ir.recipe.ops_provenance import FromTemplateOp
-from compgen.ir.recipe.ops_scope import RecipeRegionOp
+from compgen.ir.recipe.ops_scope import RecipeGuardOp, RecipeRegionOp
 from compgen.ir.recipe.ops_verify import RequireDiffTestOp, RequireMemoryBoundOp
 from compgen.ir.recipe.validate import validate_recipe_module
+from compgen.synthesis.guard_lang import Cmp, CmpOp, Const, Var
+from compgen.synthesis.promote import GuardArtifact
+from compgen.synthesis.registry import GuardRegistry
 from xdsl.dialects.builtin import (
     ArrayAttr,
     IntegerAttr,
@@ -186,6 +189,105 @@ def test_lower_memory_bound() -> None:
     output = lower_recipe(module)
     assert len(output.verification_obligations) == 1
     assert output.verification_obligations[0]["max_bytes"] == 1048576
+
+
+def test_guard_ref_validation_passes_with_known_guard() -> None:
+    block = Block()
+    block.add_op(RecipeRegionOp.build(properties={
+        "sym_name": StringAttr("r0"),
+        "payload_region_id": StringAttr("op_0"),
+    }))
+    block.add_op(RecipeGuardOp.build(properties={
+        "sym_name": StringAttr("guard_tile"),
+        "guard_key": StringAttr("guard.local_mem"),
+        "transform_family": StringAttr("local_mem"),
+    }))
+    block.add_op(TileOp.build(properties={
+        "sym_name": StringAttr("cand_tile_r0"),
+        "region_ref": SymbolRefAttr("r0"),
+        "tile_sizes": ArrayAttr([IntegerAttr(64, IntegerType(64))]),
+        "guard_refs": ArrayAttr([SymbolRefAttr("guard_tile")]),
+    }))
+    module = ModuleOp(Region(block))
+    result = validate_recipe_module(module)
+    assert result.valid
+
+
+def test_guard_ref_validation_fails_for_missing_guard() -> None:
+    block = Block()
+    block.add_op(RecipeRegionOp.build(properties={
+        "sym_name": StringAttr("r0"),
+        "payload_region_id": StringAttr("op_0"),
+    }))
+    block.add_op(TileOp.build(properties={
+        "sym_name": StringAttr("cand_tile_r0"),
+        "region_ref": SymbolRefAttr("r0"),
+        "tile_sizes": ArrayAttr([IntegerAttr(64, IntegerType(64))]),
+        "guard_refs": ArrayAttr([SymbolRefAttr("guard_missing")]),
+    }))
+    module = ModuleOp(Region(block))
+    result = validate_recipe_module(module)
+    assert not result.valid
+    assert any("guard_missing" in error.message for error in result.errors)
+
+
+def test_lower_guarded_candidate_rejects_without_registry() -> None:
+    block = Block()
+    block.add_op(RecipeRegionOp.build(properties={
+        "sym_name": StringAttr("r0"),
+        "payload_region_id": StringAttr("op_0"),
+    }))
+    block.add_op(RecipeGuardOp.build(properties={
+        "sym_name": StringAttr("guard_tile"),
+        "guard_key": StringAttr("guard.local_mem"),
+        "transform_family": StringAttr("local_mem"),
+    }))
+    block.add_op(TileOp.build(properties={
+        "sym_name": StringAttr("cand_tile_r0"),
+        "region_ref": SymbolRefAttr("r0"),
+        "tile_sizes": ArrayAttr([IntegerAttr(64, IntegerType(64))]),
+        "guard_refs": ArrayAttr([SymbolRefAttr("guard_tile")]),
+    }))
+    module = ModuleOp(Region(block))
+    output = lower_recipe(module)
+    assert output.transform_scripts == []
+    assert output.guard_verdicts[0]["reason"] == "missing_guard_runtime"
+
+
+def test_lower_guarded_candidate_with_registry() -> None:
+    block = Block()
+    block.add_op(RecipeRegionOp.build(properties={
+        "sym_name": StringAttr("r0"),
+        "payload_region_id": StringAttr("matmul_0"),
+    }))
+    block.add_op(BackendAvailableOp.build(properties={
+        "region_ref": SymbolRefAttr("r0"),
+        "backend": StringAttr("triton"),
+    }))
+    block.add_op(RecipeGuardOp.build(properties={
+        "sym_name": StringAttr("guard_tile"),
+        "guard_key": StringAttr("guard.local_mem"),
+        "transform_family": StringAttr("local_mem"),
+    }))
+    block.add_op(TileOp.build(properties={
+        "sym_name": StringAttr("cand_tile_r0"),
+        "region_ref": SymbolRefAttr("r0"),
+        "tile_sizes": ArrayAttr([IntegerAttr(64, IntegerType(64))]),
+        "guard_refs": ArrayAttr([SymbolRefAttr("guard_tile")]),
+    }))
+    module = ModuleOp(Region(block))
+
+    registry = GuardRegistry()
+    registry.register(GuardArtifact(
+        guard_key="guard.local_mem",
+        transform_family="local_mem",
+        guard_kind="placement",
+        fragments=(Cmp(CmpOp.EQ, Var("backend_triton"), Const(True)),),
+    ))
+
+    output = lower_recipe(module, guard_registry=registry)
+    assert len(output.transform_scripts) == 1
+    assert output.guard_verdicts[0]["allow"] is True
 
 
 # ---- Agent bridge tests ----

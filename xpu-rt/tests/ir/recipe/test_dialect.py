@@ -15,8 +15,8 @@ def test_dialect_name() -> None:
 
 
 def test_dialect_op_count() -> None:
-    """Dialect contains exactly 46 operations (44 original + 2 Exo ops)."""
-    assert len(ALL_OPS) == 46
+    """Dialect contains exactly 53 operations."""
+    assert len(ALL_OPS) == 53
 
 
 def test_dialect_attr_count() -> None:
@@ -31,6 +31,7 @@ def test_all_scope_op_names_present() -> None:
         "recipe.region",
         "recipe.segment",
         "recipe.anchor",
+        "recipe.guard",
         "recipe.bind_payload",
     ):
         assert expected in names, f"{expected} missing from ALL_OPS"
@@ -48,6 +49,9 @@ def test_all_fact_op_names_present() -> None:
         "recipe.fact.calibration",
         "recipe.fact.export_issue",
         "recipe.fact.graph_break",
+        "recipe.fact.tile_divisible",
+        "recipe.fact.contiguous_layout",
+        "recipe.fact.backend_eligible",
     ):
         assert expected in names, f"{expected} missing from ALL_OPS"
 

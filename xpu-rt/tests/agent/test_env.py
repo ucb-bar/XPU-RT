@@ -5,6 +5,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+from compgen.packs import PackContextSummary
 from compgen.agent.env import (
     AnalyzeAction,
     ApplyPassAction,
@@ -26,7 +27,7 @@ from compgen.agent.serialize import (
     parse_action,
     result_to_prompt,
 )
-from compgen.capture.torch_export import capture_model
+from compgen.capture.torch_export import capture_frontend_artifact, capture_model
 from compgen.ir.payload.import_fx import fx_to_xdsl
 from compgen.targets.schema import load_profile
 
@@ -251,6 +252,45 @@ def test_result_to_prompt() -> None:
     text = result_to_prompt(result)
     assert "RESULT:" in text
     assert "VERIFY:" in text
+
+
+def test_observation_exposes_frontend_artifact_summary() -> None:
+    """Observation should surface graph-break, guard, and unsupported summaries."""
+    artifact = capture_frontend_artifact(*_get_mlp_full()[2:])
+    module, _, model, inputs = _get_mlp_full()
+    env = CompilerEnv()
+    obs = env.reset(
+        module,
+        _get_target(),
+        exported_program=artifact.exported_program,
+        capture_artifact=artifact,
+        pytorch_model=model,
+        sample_inputs=inputs,
+    )
+
+    assert obs.graph_break_count >= 0
+    assert obs.guard_count >= 0
+    assert isinstance(obs.unsupported_ops, tuple)
+
+
+def test_observation_exposes_pack_context() -> None:
+    env = CompilerEnv()
+    obs = env.reset(
+        _get_mlp_module(),
+        _get_target(),
+        pack_context=PackContextSummary(
+            active_packs=("cuda_tile", "iree_tracy"),
+            sealed_surfaces=("tile_dialect_semantics",),
+            generation_apertures=("tile_schedule_generation",),
+            available_profilers=("iree_tracy",),
+            benchmark_targets=("cuda_tile_smoke",),
+            integration_branch="compgen/integration/cuda_tile/test",
+        ),
+    )
+
+    assert obs.active_packs == ("cuda_tile", "iree_tracy")
+    assert "PACKS:" in observation_to_prompt(obs)
+    assert observation_to_dict(obs)["packs"]["integration_branch"] == "compgen/integration/cuda_tile/test"
 
 
 # ---- Real transforms ----

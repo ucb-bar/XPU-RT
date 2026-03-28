@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from compgen.packs import default_pack_root
 from compgen.targets.capability import TargetClass
 from compgen.targets.maturity import TargetMaturity
 from compgen.targets.package import (
@@ -73,3 +74,21 @@ def test_load_target_package(tmp_path: Path) -> None:
     assert loaded.manifest.target_name == "cuda-a100"
     assert loaded.profile is not None
     assert loaded.capabilities is not None
+
+
+def test_generate_target_package_with_extension_packs(tmp_path: Path) -> None:
+    profile = load_profile(PROFILES_DIR / "cuda_a100.yaml")
+    pkg = generate_target_package(
+        profile,
+        tmp_path / "cuda_pkg",
+        extension_packs=[
+            default_pack_root() / "cuda_tile",
+            default_pack_root() / "iree_tracy",
+        ],
+    )
+
+    assert pkg.manifest.composed_from_packs == ("cuda_tile", "iree_tracy")
+    assert "tile_dialect_semantics" in pkg.sealed_surfaces
+    assert "tile_schedule_generation" in pkg.generation_apertures
+    assert (pkg.root / "packs" / "cuda_tile" / "manifest.yaml").exists()
+    assert pkg.pack_context().active_packs == ("cuda_tile", "iree_tracy")

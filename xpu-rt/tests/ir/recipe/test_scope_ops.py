@@ -11,6 +11,7 @@ from compgen.ir.recipe.attrs import EffectClassAttr, ShapeSummaryAttr
 from compgen.ir.recipe.ops_scope import (
     AnchorOp,
     BindPayloadOp,
+    RecipeGuardOp,
     RecipeRegionOp,
     SegmentOp,
 )
@@ -134,6 +135,24 @@ def test_anchor_op_verify_ok() -> None:
         "payload_op_name": StringAttr("arith.addf"),
     })
     op.verify()
+
+
+# -- RecipeGuardOp ------------------------------------------------------------
+
+
+def test_recipe_guard_build() -> None:
+    op = RecipeGuardOp.build(properties={
+        "sym_name": StringAttr("guard_fusion"),
+        "guard_key": StringAttr("guard.fusion.legality.TRITON_FRIENDLY.1"),
+        "transform_family": StringAttr("fusion"),
+        "guard_kind": StringAttr("legality"),
+    })
+    assert op.sym_name.data == "guard_fusion"
+    assert op.transform_family.data == "fusion"
+
+
+def test_recipe_guard_name() -> None:
+    assert RecipeGuardOp.name == "recipe.guard"
 
 
 # -- BindPayloadOp ------------------------------------------------------------

@@ -23,6 +23,7 @@ def test_run_record_defaults() -> None:
     assert record.run_id  # non-empty UUID
     assert record.timestamp  # non-empty ISO timestamp
     assert record.model_name == ""
+    assert record.readiness == "full_pipeline"
     assert record.promotion_status == "pending"
 
 
@@ -32,6 +33,7 @@ def test_run_record_to_dict() -> None:
     assert d["model_name"] == "mlp"
     assert d["target_name"] == "cuda_a100"
     assert "capture" in d
+    assert "suite" in d
     assert "eqsat" in d
     assert "recipe" in d
     assert "solver" in d
@@ -76,6 +78,8 @@ def test_run_record_save_load_round_trip() -> None:
 def test_capture_metrics_defaults() -> None:
     m = CaptureMetrics()
     assert m.export_success is False
+    assert m.capture_mode == "torch_export"
+    assert m.auto_translations_added == 0
     assert m.op_coverage == 0.0
     assert m.unsupported_ops == []
 

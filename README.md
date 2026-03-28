@@ -18,10 +18,30 @@ git clone --recurse-submodules https://github.com/compgen-project/compgen.git
 cd compgen
 ./scripts/bootstrap.sh
 uv run python -m compgen.cli --help
+uv run python -m compgen.cli --llm-backend claude-cli llm show
 uv run python scripts/e2e_demo.py
 ```
 
 The demo is the current best end-to-end path. Most CLI subcommands are still documented contract surfaces rather than fully implemented workflows.
+
+## LLM Backend Selection
+
+CompGen now has a canonical project-level LLM selection path through the top-level CLI. You can select Gemini, OpenAI, Anthropic, Claude CLI, or Codex CLI without manual Python instantiation:
+
+```bash
+uv run python -m compgen.cli --llm-backend gemini llm show
+uv run python -m compgen.cli --llm-backend claude-cli --llm-model sonnet llm smoke
+uv run python -m compgen.cli --llm-backend codex-cli --llm-model gpt-5.4-mini llm smoke
+```
+
+Global options:
+
+- `--llm-backend`: `gemini`, `openai`, `anthropic`, `claude-cli`, or `codex-cli`
+- `--llm-model`: override the backend default model or alias
+- `--llm-record-dir`: choose where request/response logs are written
+- `--llm-no-record`: disable request/response recording
+
+The same selection is mirrored into `COMPGEN_LLM_BACKEND` / `COMPGEN_LLM_MODEL` for downstream code paths inside the same process.
 
 ## Documentation
 

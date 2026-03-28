@@ -148,3 +148,15 @@ def test_analyze_data_flow() -> None:
 
     # There should be at least one data flow edge (cluster→output)
     assert len(analysis.data_flow) >= 1
+
+
+def test_analyze_builds_graph_dossier() -> None:
+    """Analysis should expose a richer graph-analysis dossier."""
+    ep = _export_simple_mlp()
+    analysis = NetworkAnalyzer().analyze(ep, _get_target(), model_name="SimpleMLP")
+
+    assert analysis.dossier is not None
+    assert analysis.dossier.model_name == "SimpleMLP"
+    assert analysis.dossier.total_regions >= 1
+    assert len(analysis.dossier.regions) >= 1
+    assert "aten.linear.default" in analysis.dossier.op_histogram

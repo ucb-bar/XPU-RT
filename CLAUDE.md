@@ -121,6 +121,7 @@ Scopes: `capture`, `ir`, `payload`, `recipe`, `semantic`, `accel`, `ukernel`, `t
 - Verification ladder must pass before any artifact is used
 - Promotion requires ALL verification levels to pass
 - Never trust LLM output without verification -- not even for "simple" transforms
+- Always generate up-to date documentation inside of `docs`
 
 ## Key Terminology
 

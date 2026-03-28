@@ -36,6 +36,7 @@ from compgen.ir.recipe.ops_provenance import (
 from compgen.ir.recipe.ops_scope import (
     AnchorOp,
     BindPayloadOp,
+    RecipeGuardOp,
     RecipeRegionOp,
     SegmentOp,
 )
@@ -122,6 +123,16 @@ def test_round_trip_bind_payload() -> None:
     _round_trip([op])
 
 
+def test_round_trip_recipe_guard() -> None:
+    op = RecipeGuardOp.build(properties={
+        "sym_name": StringAttr("guard_fusion"),
+        "guard_key": StringAttr("guard.fusion.legality.TRITON_FRIENDLY.abcd1234"),
+        "transform_family": StringAttr("fusion"),
+        "guard_kind": StringAttr("legality"),
+    })
+    _round_trip([op])
+
+
 # -- Family B: Fact ops round-trip --------------------------------------------
 
 
@@ -168,6 +179,16 @@ def test_round_trip_tile_with_provenance() -> None:
         "region_ref": SymbolRefAttr("seg0"),
         "tile_sizes": ArrayAttr([_i64(128)]),
         "provenance": prov,
+    })
+    _round_trip([op])
+
+
+def test_round_trip_tile_with_symbol_and_guard_refs() -> None:
+    op = TileOp.build(properties={
+        "sym_name": StringAttr("cand_tile_r0"),
+        "region_ref": SymbolRefAttr("seg0"),
+        "tile_sizes": ArrayAttr([_i64(128)]),
+        "guard_refs": ArrayAttr([SymbolRefAttr("guard_fusion")]),
     })
     _round_trip([op])
 

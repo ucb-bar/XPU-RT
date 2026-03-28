@@ -5,7 +5,9 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from compgen.capture.torch_export import capture_model
+import torch
+
+from compgen.capture.torch_export import capture_frontend_artifact, capture_model
 from compgen.ir.payload.import_fx import FXImporter, ImportDiagnostic, fx_to_xdsl
 
 EXAMPLES_DIR = Path(__file__).parent.parent.parent.parent / "examples" / "models"
@@ -78,3 +80,23 @@ def test_ir_text_has_tensor_types() -> None:
     ir_text = FXImporter().get_ir_text(module)
     assert "tensor<8x768xf32>" in ir_text
     assert "tensor<8x3072xf32>" in ir_text
+
+
+class _SinModel(torch.nn.Module):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return torch.sin(x)
+
+
+def test_strict_import_uses_synthesized_translation_from_capture_artifact() -> None:
+    """Strict import should consume synthesized payload translations from the artifact."""
+    artifact = capture_frontend_artifact(_SinModel(), (torch.randn(4, 8),))
+    module, diags = fx_to_xdsl(
+        artifact.exported_program,
+        **artifact.strict_import_options(),
+    )
+
+    assert module is not None
+    errors = [diag for diag in diags if diag.level == "error"]
+    assert errors == []
+    ir_text = FXImporter().get_ir_text(module)
+    assert "func.call @aten_sin_default" in ir_text

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from compgen.transforms.verify import (
+    verify_guarded_transform,
     TransformVerifier,
     VerificationLevel,
     verify_transform,
@@ -76,3 +77,11 @@ def test_identity_transform_passes() -> None:
     module = _make_module()
     result = verify_transform(module, module.clone())
     assert result.passed
+
+
+def test_guard_rejected_transform_skips_verification() -> None:
+    module = _make_module()
+    result = verify_guarded_transform(module, module.clone(), guard_matched=False)
+    assert result.guard_matched is False
+    assert result.verification.passed
+    assert result.note == "guard_rejected"

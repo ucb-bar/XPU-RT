@@ -5,7 +5,16 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from compgen.capture.torch_export import ExportValidation, capture_model, validate_export
+import torch
+
+from compgen.capture.torch_export import (
+    CaptureArtifact,
+    ExportValidation,
+    capture_dynamo_partitions,
+    capture_frontend_artifact,
+    capture_model,
+    validate_export,
+)
 
 # Add examples to path for model imports
 EXAMPLES_DIR = Path(__file__).parent.parent.parent / "examples" / "models"
@@ -56,3 +65,56 @@ def test_export_validation_fields() -> None:
     assert v.num_ops == 5
     assert v.graph_breaks == []
     assert v.warnings == []
+
+
+def test_capture_frontend_artifact_collects_boundary_metadata() -> None:
+    """capture_frontend_artifact should record the prepared export boundary."""
+    model, inputs = _get_simple_mlp()
+    artifact = capture_frontend_artifact(model, inputs)
+
+    assert isinstance(artifact, CaptureArtifact)
+    assert artifact.validation.valid
+    assert artifact.capture_mode == "torch_export"
+    assert artifact.analysis_success is True
+    assert artifact.graph_count == 1
+    assert "torch" in artifact.runtime_versions
+    assert len(artifact.decomposition_targets) > 0
+    assert artifact.diagnostics.graph_count >= 0
+
+    prepared_targets = [
+        str(node.target)
+        for node in artifact.exported_program.graph.nodes
+        if node.op == "call_function"
+    ]
+    assert "aten.addmm.default" in prepared_targets
+    assert "aten.permute.default" in prepared_targets
+
+
+class _SinModel(torch.nn.Module):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return torch.sin(x)
+
+
+def test_capture_frontend_artifact_recovers_simple_unsupported_ops() -> None:
+    """Simple unsupported ATen ops should get a synthesized recovery plan."""
+    artifact = capture_frontend_artifact(_SinModel(), (torch.randn(4, 8),))
+
+    assert len(artifact.unsupported_resolutions) >= 1
+    resolution = next(r for r in artifact.unsupported_resolutions if r.target == "aten.sin.default")
+    assert resolution.classification.strategy == "synthesized_external_call"
+    assert resolution.translation is not None
+    assert resolution.verification.schema_ok
+    assert resolution.verification.eager_reference_ok
+
+
+def test_capture_dynamo_partitions_collects_fx_graphs() -> None:
+    """TorchDynamo partition capture should return FX graph modules."""
+    model, inputs = _get_simple_mlp()
+    artifact = capture_dynamo_partitions(model, inputs)
+
+    assert artifact.capture_mode == "torch_dynamo_partitioned"
+    assert artifact.exported_program is None
+    assert artifact.analysis_success is True
+    assert artifact.graph_count >= 1
+    assert len(artifact.graphs) >= 1
+    assert artifact.validation.num_ops >= 2

@@ -5,7 +5,13 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from benchmarks.adapters import AdapterContext, ExpertFixtureAdapter, ExternalRepoAdapter, check_baseline_availability
+from benchmarks.adapters import (
+    AdapterContext,
+    ExpertFixtureAdapter,
+    ExternalRepoAdapter,
+    TorchEagerAdapter,
+    check_baseline_availability,
+)
 from benchmarks.registry import build_default_registry
 from benchmarks.spec import BaselineSpec, ExperimentCase, TargetSpec, WorkloadSpec, WorkspaceConfig
 
@@ -80,3 +86,23 @@ def test_check_baseline_availability_reports_states(tmp_path: Path) -> None:
     (tmp_path / "iree").mkdir(parents=True)
     result = check_baseline_availability(registry, workspace, ["iree"])
     assert result["iree"] == "available"
+
+
+def test_torch_eager_skips_analysis_only_workloads(tmp_path: Path) -> None:
+    registry = build_default_registry()
+    workload = WorkloadSpec("smolvla_one_step", "tier_frontier", "dummy", _dummy_loader, readiness="analysis_only")
+    target = TargetSpec("cuda_a100", tmp_path / "target.yaml", "target_profile", "dummy", "GPU")
+    baseline = BaselineSpec("torch_eager", "torch_eager", "dummy")
+    case = ExperimentCase("case", "study", "smolvla_one_step", "cuda_a100", ["torch_eager"])
+    ctx = AdapterContext(
+        workspace=WorkspaceConfig.default(tmp_path),
+        registry=registry,
+        case=case,
+        workload=workload,
+        target=target,
+        baseline=baseline,
+        output_dir=tmp_path,
+    )
+
+    record = TorchEagerAdapter().run(ctx)
+    assert record.status == "skip"

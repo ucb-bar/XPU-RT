@@ -4,12 +4,17 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+import os
+
+import pytest
 
 from compgen.agent.env import CompilerEnv, GeneratePassAction
 from compgen.agent.pass_gen import PassGenerator
 from compgen.capture.torch_export import capture_model
 from compgen.ir.payload.import_fx import fx_to_xdsl
+from compgen.llm import create_llm_client
 from compgen.llm.gemini_client import GeminiClient
+from compgen.llm.mock_client import MockLLMClient
 from compgen.targets.schema import load_profile
 
 EXAMPLES = Path(__file__).parent.parent.parent / "examples"
@@ -74,13 +79,37 @@ def test_pass_generator_no_pattern_class() -> None:
     assert "No RewritePattern" in result.verification_error
 
 
+def test_pass_generator_injects_guard_ref() -> None:
+    module, _ = _get_module_and_ep()
+    gen = PassGenerator(llm_client=GeminiClient())
+
+    code = """
+from xdsl.pattern_rewriter import RewritePattern, PatternRewriter
+from xdsl.ir import Operation
+
+class GuardedNoopPattern(RewritePattern):
+    def __init__(self, guard_ref=None):
+        self.guard_ref = guard_ref
+
+    def match_and_rewrite(self, op: Operation, rewriter: PatternRewriter):
+        return
+"""
+    result = gen._validate("guarded_noop", code, module, guard_refs=("guard.local_mem",))
+    assert result.verified
+    assert result.guard_refs == ("guard.local_mem",)
+
+
 # ---- Real LLM generation test ----
 
 
 def test_generate_pass_via_llm() -> None:
-    """Real LLM call to generate a pass. Requires Gemini API."""
+    """Opt-in real LLM call to generate a pass."""
+    if os.environ.get("COMPGEN_RUN_REAL_LLM_TESTS") != "1":
+        pytest.skip("Set COMPGEN_RUN_REAL_LLM_TESTS=1 to enable real LLM smoke tests.")
     module, _ = _get_module_and_ep()
-    client = GeminiClient(model="gemini-2.5-flash")
+    backend = os.environ.get("COMPGEN_REAL_LLM_BACKEND", "gemini")
+    model = os.environ.get("COMPGEN_REAL_LLM_MODEL")
+    client = create_llm_client(backend, model=model, working_dir=Path.cwd())
     gen = PassGenerator(llm_client=client)
 
     result = gen.generate(
@@ -107,6 +136,19 @@ def test_generate_pass_action_in_env() -> None:
     module, ep = _get_module_and_ep()
     env = CompilerEnv()
     env.reset(module, _get_target(), exported_program=ep, budget=5)
+    client = MockLLMClient(strict=False)
+    client.add_response(
+        "You are generating an xDSL compiler pass",
+        """```python
+from xdsl.pattern_rewriter import RewritePattern, PatternRewriter
+from xdsl.ir import Operation
+
+class NoopPattern(RewritePattern):
+    def match_and_rewrite(self, op: Operation, rewriter: PatternRewriter):
+        return
+```""",
+    )
+    env.attach_llm_client(client)
 
     result = env.step(GeneratePassAction(
         description="Tag all MatmulOp with a 'compgen.llm_generated' StringAttr annotation",
