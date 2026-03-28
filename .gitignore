@@ -247,3 +247,46 @@ compgen_output/targetgen/
 
 # LLVM build artifacts (third_party/llvm-project)
 third_party/llvm-project/build/
+
+# CompGen generated artifacts (ephemeral)
+.compgen/
+artifacts/runs/
+artifacts/cache/
+artifacts/traces/
+artifacts/tmp/
+generated/staging/
+generated/scratch/
+
+# Local pack/build outputs
+third_party/**/build/
+third_party/**/.pixi/
+third_party/**/.snakemake/
+third_party/**/__pycache__/
+third_party/**/.pytest_cache/
+
+# Benchmark outputs
+benchmarks/results/
+benchmarks/tmp/
+
+# LLM / Agent generated artifacts (NEVER commit these)
+# Agent memory and session databases
+*.db
+*.db-journal
+*.db-wal
+# Pack integration worktrees and external checkouts
+userpacks/**/.compgen_external/
+# Promoted artifacts staging (review before committing)
+python/compgen/generated/promoted/
+python/compgen/transforms/promoted/
+python/compgen/kernels/promoted/
+python/compgen/extensions/promoted/
+# Agent worktrees
+.claude/worktrees/
+# API keys
+.env
+.env.local
+# LLM response/prompt caches
+*.jsonl
+!benchmarks/**/*.jsonl
+# Generated target packages
+target_packages/

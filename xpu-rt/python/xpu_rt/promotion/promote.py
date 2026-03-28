@@ -105,7 +105,24 @@ class RecipePromoter:
         dest = self.library_path / key.key
         dest.mkdir(parents=True, exist_ok=True)
 
-        # Write manifest
+        # Copy full bundle artifacts into promoted directory
+        bundle_root = bundle.metadata.get("bundle_root") if bundle.metadata else None
+        if bundle_root:
+            import shutil
+
+            src = Path(bundle_root)
+            if src.is_dir():
+                for artifact_name, rel_path in bundle.artifacts.items():
+                    artifact_src = src / rel_path
+                    if artifact_src.exists():
+                        artifact_dest = dest / rel_path
+                        artifact_dest.parent.mkdir(parents=True, exist_ok=True)
+                        if artifact_src.is_dir():
+                            shutil.copytree(artifact_src, artifact_dest, dirs_exist_ok=True)
+                        else:
+                            shutil.copy2(artifact_src, artifact_dest)
+
+        # Write manifest (always, even if bundle_root was unavailable)
         manifest_path = dest / "manifest.json"
         manifest_path.write_text(json.dumps(bundle.to_dict(), indent=2))
 
