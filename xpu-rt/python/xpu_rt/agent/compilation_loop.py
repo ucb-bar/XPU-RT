@@ -123,6 +123,38 @@ class AgenticCompilationLoop:
         best_obs = obs
         no_improvement_count = 0
 
+        # Create search task + retrieve priors from memory
+        self._current_task_id = "default"
+        self._retrieval_priors: list[Any] = []
+        if self.compiler_memory is not None:
+            try:
+                from compgen.memory.schema import ObjectKind
+                from compgen.search.retrieve import SearchRetriever
+                from compgen.search.task import SearchTask
+
+                task = self.compiler_memory.create_task(
+                    kind=ObjectKind.BACKEND_PLAN,
+                    target_key=target.name,
+                    objective="latency",
+                )
+                self._current_task_id = task.task_id
+
+                # Retrieve prior knowledge to seed analysis
+                retriever = SearchRetriever(self.compiler_memory)
+                search_task = SearchTask.for_kernel(
+                    task_id=task.task_id,
+                    op_family="",  # broad retrieval
+                    hardware=target.name,
+                )
+                retrieval = retriever.retrieve_for_task(search_task)
+                self._retrieval_priors = (
+                    retrieval.schedule_templates + retrieval.tactics
+                )
+                if self._retrieval_priors:
+                    log.info("agentic.retrieval", priors=len(self._retrieval_priors))
+            except Exception:
+                pass
+
         log.info("agentic.start", initial_cost=initial_cost, budget=self.budget)
 
         # Step 1: Initial analysis
@@ -151,7 +183,7 @@ class AgenticCompilationLoop:
             verification_passed = result.info.verification_passed
             if self._should_verify(action) and result.info.action_applied:
                 vr = self._run_per_step_verification(action, obs, target)
-                if vr is not None and not vr.get("passed", True):
+                if vr is not None and not vr.get("passed", True) and vr.get("counterexample"):
                     # TV failed — attempt counterexample repair
                     repair = self._ask_llm_for_counterexample_repair(
                         vr, action, obs, target,
@@ -240,6 +272,27 @@ class AgenticCompilationLoop:
                     success=total_improvement > 0,
                 )
                 self._memory.save(Path(".compgen_cache/agent_memory.json"))
+            except Exception:
+                pass
+
+        # Extract reusable knowledge from this search trajectory
+        if self.compiler_memory is not None and total_improvement > 0:
+            try:
+                from compgen.search.promote import SearchPromoter
+
+                promoter = SearchPromoter(self.compiler_memory)
+                promoter.extract_knowledge(
+                    task_id=self._current_task_id,
+                    task_kind="backend_plan",
+                    op_family="",
+                )
+                # Update retrieval stats for priors that were used
+                if self._retrieval_priors:
+                    used_ids = [
+                        p.knowledge_id for p in self._retrieval_priors
+                        if hasattr(p, "knowledge_id")
+                    ]
+                    promoter.update_retrieval_stats(used_ids, task_succeeded=total_improvement > 0)
             except Exception:
                 pass
 
@@ -1009,7 +1062,7 @@ class AgenticCompilationLoop:
         ctx = CounterexampleRepairContext(
             region_id=vr.get("region_id", ""),
             transform_applied=action.action_type,
-            counterexample=vr.get("counterexample", {}),
+            counterexample=vr.get("counterexample") or {},
             verification_error=vr.get("status", "unknown"),
             available_alternatives=["tile", "fuse", "eqsat", "noop"],
         )

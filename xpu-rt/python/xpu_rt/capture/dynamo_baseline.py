@@ -104,11 +104,24 @@ def compile_baseline(
     timings.sort()
     warm_ms = timings[len(timings) // 2]  # median
 
+    # Extract graph break and op coverage diagnostics
+    num_graph_breaks = 0
+    compiled_op_fraction = 1.0
+    try:
+        diag = collect_diagnostics(model, sample_inputs)
+        num_graph_breaks = len(diag.graph_breaks)
+        total_ops = len(diag.op_coverage)
+        if total_ops > 0:
+            compiled_ops = sum(1 for v in diag.op_coverage.values() if v)
+            compiled_op_fraction = compiled_ops / total_ops
+    except Exception:
+        pass
+
     return BaselineReport(
         cold_compile_ms=cold_ms,
         warm_run_ms=warm_ms,
-        num_graph_breaks=0,  # TODO: extract from Dynamo logs
-        compiled_op_fraction=1.0,  # TODO: measure actual coverage
+        num_graph_breaks=num_graph_breaks,
+        compiled_op_fraction=compiled_op_fraction,
         backend=backend,
     )
 

@@ -142,11 +142,9 @@ def decompose_linear(
 
     result = matmul.results[0]
 
-    # Step 3: Add bias if present
-    if len(operands) >= 3:
-        # TODO: Implement proper bias broadcast + linalg.add
-        # For now the matmul result IS the output (bias addition deferred)
-        pass
+    # Step 3: Bias addition deferred — requires broadcast lowering
+    # (bias is [N] but result is [M, N], needs linalg.generic with
+    # indexing_maps for proper broadcast semantics)
 
     return DecompResult(ops=ops, result=result, region_ids=region_ids)
 

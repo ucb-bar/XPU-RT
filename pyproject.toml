@@ -48,6 +48,7 @@ dev = [
 solve = [
     "ortools>=9.8",
     "z3-solver>=4.12",
+    "scipy>=1.11",
 ]
 iree = [
     "iree-compiler>=3.0",

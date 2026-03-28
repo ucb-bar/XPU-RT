@@ -96,6 +96,14 @@ class KernelContract:
     cost: CostEstimate = field(default_factory=CostEstimate)
     fusable: bool = True
     metadata: dict[str, Any] = field(default_factory=dict)
+    # Layout bridge fields (additive, backward-compatible)
+    accepted_input_layouts: list[list[LayoutRequirement]] = field(default_factory=list)
+    preferred_input_layouts: list[LayoutRequirement] = field(default_factory=list)
+    can_absorb_transpose: bool = False
+    supports_prepacked_lhs: bool = False
+    supports_prepacked_rhs: bool = False
+    tile_layout_family: str | None = None
+    materialization_cost_hint: float = 0.0
 
 
 def _estimate_matmul_flops(op: MatmulOp) -> int:
@@ -166,10 +174,18 @@ def _extract_op_contract(op: Operation) -> KernelContract | None:
                     num_elements *= dim
             bytes_written += num_elements * elem_bytes
 
-    # Estimate FLOPs
+    # Estimate FLOPs and layout semantics
+    can_absorb_transpose = False
+    supports_prepacked_lhs = False
+    supports_prepacked_rhs = False
+    tile_layout_family: str | None = None
+
     if isinstance(op, MatmulOp):
         flops = _estimate_matmul_flops(op)
         fusable = False  # Matmul is typically a kernel boundary
+        can_absorb_transpose = True
+        supports_prepacked_rhs = True
+        tile_layout_family = "mma"
     elif isinstance(op, GenericOp):
         # Generic ops: estimate from output size
         for result in op.results:
@@ -183,6 +199,7 @@ def _extract_op_contract(op: Operation) -> KernelContract | None:
     elif isinstance(op, TransposeOp):
         flops = 0  # Transpose is just a layout change
         fusable = True
+        can_absorb_transpose = True
 
     if not dtypes:
         dtypes = {"float32"}
@@ -198,6 +215,10 @@ def _extract_op_contract(op: Operation) -> KernelContract | None:
             bytes_written=bytes_written,
         ),
         fusable=fusable,
+        can_absorb_transpose=can_absorb_transpose,
+        supports_prepacked_lhs=supports_prepacked_lhs,
+        supports_prepacked_rhs=supports_prepacked_rhs,
+        tile_layout_family=tile_layout_family,
     )
 
 

@@ -8,14 +8,31 @@ Invariants:
     - Ops have explicit shape and dtype contracts.
     - Async ops (DMA, matrix engine) have explicit start/wait semantics.
 
-TODO: Implement as xDSL Operation subclasses.
-TODO: Add verifier rules per op.
+Two representations are provided:
+    1. Frozen dataclass ops -- lightweight Python-side descriptors.
+    2. xDSL IRDL operations -- for dialect registration and IR manipulation.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, ClassVar
+
+from xdsl.dialects.builtin import ArrayAttr, IntegerAttr, StringAttr
+from xdsl.irdl import (
+    IRDLOperation,
+    irdl_op_definition,
+    opt_prop_def,
+    prop_def,
+    traits_def,
+)
+from xdsl.traits import Pure
+from xdsl.utils.exceptions import VerifyException
+
+
+# ---------------------------------------------------------------------------
+# Frozen dataclass ops (lightweight descriptors)
+# ---------------------------------------------------------------------------
 
 
 @dataclass(frozen=True)
@@ -110,4 +127,123 @@ class BarrierOp:
     scope: str = "workgroup"
 
 
-__all__ = ["BarrierOp", "DMAStartOp", "DMAWaitOp", "MatrixEngineOp", "TileLoadOp", "TileStoreOp"]
+# ---------------------------------------------------------------------------
+# xDSL IRDL operations
+# ---------------------------------------------------------------------------
+
+
+@irdl_op_definition
+class AccelTileLoadIROp(IRDLOperation):
+    """Load a tile from global memory to local/scratchpad memory (xDSL op)."""
+
+    name = "compgen.accel.tile_load"
+
+    src_memref = prop_def(StringAttr)
+    dst_memref = prop_def(StringAttr)
+    shape = opt_prop_def(ArrayAttr)
+    dtype = opt_prop_def(StringAttr)
+
+    traits = traits_def(Pure())
+
+
+@irdl_op_definition
+class AccelTileStoreIROp(IRDLOperation):
+    """Store a tile from local memory to global memory (xDSL op)."""
+
+    name = "compgen.accel.tile_store"
+
+    src_memref = prop_def(StringAttr)
+    dst_memref = prop_def(StringAttr)
+    shape = opt_prop_def(ArrayAttr)
+    dtype = opt_prop_def(StringAttr)
+
+    traits = traits_def(Pure())
+
+
+@irdl_op_definition
+class AccelDMAStartIROp(IRDLOperation):
+    """Start an asynchronous DMA transfer (xDSL op)."""
+
+    name = "compgen.accel.dma_start"
+
+    src = prop_def(StringAttr)
+    dst = prop_def(StringAttr)
+    size_bytes = prop_def(IntegerAttr)
+    event = prop_def(StringAttr)
+
+
+@irdl_op_definition
+class AccelDMAWaitIROp(IRDLOperation):
+    """Wait for a DMA transfer to complete (xDSL op)."""
+
+    name = "compgen.accel.dma_wait"
+
+    event = prop_def(StringAttr)
+
+
+@irdl_op_definition
+class AccelMatrixEngineIROp(IRDLOperation):
+    """Launch a matrix/tensor engine computation (xDSL op)."""
+
+    name = "compgen.accel.matrix_engine"
+
+    op_kind = prop_def(StringAttr)
+    a_ref = prop_def(StringAttr)
+    b_ref = prop_def(StringAttr)
+    c_ref = prop_def(StringAttr)
+
+    _VALID_KINDS: ClassVar[frozenset[str]] = frozenset({
+        "matmul", "conv", "mma", "outer_product",
+    })
+
+    def verify_(self) -> None:
+        if self.op_kind.data not in self._VALID_KINDS:
+            raise VerifyException(
+                f"Invalid matrix engine op_kind '{self.op_kind.data}', "
+                f"expected one of {sorted(self._VALID_KINDS)}"
+            )
+
+
+@irdl_op_definition
+class AccelBarrierIROp(IRDLOperation):
+    """Synchronization barrier (xDSL op)."""
+
+    name = "compgen.accel.barrier"
+
+    scope = opt_prop_def(StringAttr)
+
+    _VALID_SCOPES: ClassVar[frozenset[str]] = frozenset({"workgroup", "device", "system"})
+
+    def verify_(self) -> None:
+        if self.scope is not None and self.scope.data not in self._VALID_SCOPES:
+            raise VerifyException(
+                f"Invalid barrier scope '{self.scope.data}', "
+                f"expected one of {sorted(self._VALID_SCOPES)}"
+            )
+
+
+ACCEL_IR_OPS: list[type[IRDLOperation]] = [
+    AccelTileLoadIROp,
+    AccelTileStoreIROp,
+    AccelDMAStartIROp,
+    AccelDMAWaitIROp,
+    AccelMatrixEngineIROp,
+    AccelBarrierIROp,
+]
+"""All xDSL IRDL operations in the accelerator dialect."""
+
+__all__ = [
+    "AccelBarrierIROp",
+    "AccelDMAStartIROp",
+    "AccelDMAWaitIROp",
+    "AccelMatrixEngineIROp",
+    "AccelTileLoadIROp",
+    "AccelTileStoreIROp",
+    "ACCEL_IR_OPS",
+    "BarrierOp",
+    "DMAStartOp",
+    "DMAWaitOp",
+    "MatrixEngineOp",
+    "TileLoadOp",
+    "TileStoreOp",
+]

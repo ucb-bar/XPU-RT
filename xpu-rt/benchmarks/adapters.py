@@ -119,6 +119,32 @@ def _load_target_profile(target: TargetSpec, output_dir: Path) -> tuple[Any, str
     return profile, profile.name
 
 
+def _compgen_runtime_config(ctx: AdapterContext) -> dict[str, Any]:
+    """Resolve optional pack/LLM config for the CompGen adapter."""
+
+    workspace_cfg = ctx.workspace.get_suite_config("compgen") if ctx.workspace is not None else {}
+    merged = dict(workspace_cfg)
+    merged.update(ctx.extra_config)
+    return merged
+
+
+def _resolve_compgen_packs(ctx: AdapterContext) -> tuple[str | Path, ...]:
+    """Resolve pack specs for the current CompGen benchmark run."""
+
+    config = _compgen_runtime_config(ctx)
+    target_packs = config.get("target_packs", {})
+    if isinstance(target_packs, dict):
+        scoped = target_packs.get(ctx.target.target_id)
+        if scoped:
+            return tuple(scoped)
+    packs = config.get("packs", ())
+    if isinstance(packs, (list, tuple)):
+        return tuple(packs)
+    if packs:
+        return (packs,)
+    return ()
+
+
 def _serialize_kernel_contracts(contracts: list[Any]) -> list[dict[str, Any]]:
     """Convert kernel contracts to JSON-friendly objects."""
 
@@ -265,11 +291,27 @@ class CompGenAdapter:
         record = _new_record(ctx, system_name="compgen")
         _populate_study_identity(record, ctx)
         total_start = time.perf_counter()
+        runtime_config = _compgen_runtime_config(ctx)
+        pack_specs = _resolve_compgen_packs(ctx)
 
         try:
             model, sample_inputs = ctx.workload.load(ctx.workspace)
             target_profile, resolved_target_name = _load_target_profile(ctx.target, ctx.output_dir)
             record.target_name = resolved_target_name
+            target_package = None
+            if pack_specs:
+                from compgen.targets.package import generate_target_package
+
+                target_package = generate_target_package(
+                    target_profile,
+                    ctx.output_dir / "target_packages" / ctx.target.target_id,
+                    extension_packs=pack_specs,
+                )
+                pack_context = target_package.pack_context()
+                record.config["active_packs"] = list(pack_context.active_packs)
+                record.config["sealed_surfaces"] = list(pack_context.sealed_surfaces)
+                record.config["generation_apertures"] = list(pack_context.generation_apertures)
+                record.artifacts.artifact_paths["target_package"] = str(target_package.root)
 
             if ctx.workload.readiness != "full_pipeline":
                 return _analysis_only_record(
@@ -331,6 +373,68 @@ class CompGenAdapter:
             record.ir = collect_ir_metrics(module)
             if record.ir.total_bytes:
                 record.performance.arithmetic_intensity = record.ir.total_flops / max(record.ir.total_bytes, 1)
+
+            llm_backend = str(runtime_config.get("llm_backend", "")).strip()
+            if not llm_backend:
+                llm_backend = str(runtime_config.get("backend", "")).strip() if runtime_config.get("agentic") else ""
+            if not llm_backend:
+                llm_backend = str(runtime_config.get("llm", "")).strip()
+            if not llm_backend:
+                llm_backend = str((__import__("os")).environ.get("COMPGEN_LLM_BACKEND", "")).strip()
+
+            if llm_backend:
+                from compgen.agent.compilation_loop import AgenticCompilationLoop
+                from compgen.agent.env import CompilerEnv
+                from compgen.llm.config import build_llm_runtime, resolve_llm_selection
+
+                llm_model = runtime_config.get("llm_model")
+                llm_record = runtime_config.get("llm_record")
+                llm_record_dir = runtime_config.get("llm_record_dir") or (ctx.output_dir / "llm_logs")
+                agent_budget = int(runtime_config.get("agent_budget", 2))
+                use_recipe = bool(runtime_config.get("agent_with_recipe", True))
+                selection = resolve_llm_selection(
+                    llm_backend,
+                    model=str(llm_model) if llm_model else None,
+                    record=bool(llm_record) if llm_record is not None else None,
+                    record_dir=llm_record_dir,
+                )
+                llm_client = build_llm_runtime(selection, working_dir=ctx.workspace.repo_root)
+                env = CompilerEnv()
+                env.reset(
+                    module.clone(),
+                    target_profile,
+                    objective=ctx.case.objective,
+                    budget=agent_budget,
+                    exported_program=exported,
+                    capture_artifact=artifact,
+                    pack_context=target_package.pack_context() if target_package is not None else None,
+                    loaded_packs=target_package.extension_packs if target_package is not None else (),
+                    pytorch_model=model,
+                    sample_inputs=sample_inputs,
+                )
+                loop = AgenticCompilationLoop(llm_client=llm_client, env=env, budget=agent_budget)
+                agentic_result = (
+                    loop.run_with_recipe(target_profile) if use_recipe else loop.run(target_profile)
+                )
+                best_module = env.best_module()
+                if best_module is not None:
+                    module = best_module.clone()
+                record.agentic.iterations_run = agentic_result.iterations_run
+                record.agentic.iterations_improved = agentic_result.iterations_improved
+                record.agentic.initial_cost_us = agentic_result.initial_cost_us
+                record.agentic.final_cost_us = agentic_result.final_cost_us
+                record.agentic.total_improvement_pct = agentic_result.total_improvement_pct
+                record.agentic.iteration_costs = [item.cost_after_us for item in agentic_result.history]
+                record.agentic.iteration_improvements = [item.improvement_pct for item in agentic_result.history]
+                record.agentic.iteration_actions = [item.action_type for item in agentic_result.history]
+                record.llm.total_calls = int(getattr(llm_client, "total_calls", 0))
+                record.llm.total_tokens = int(getattr(llm_client, "total_tokens", 0))
+                record.llm.model_id = selection.model
+                runtime_artifact_path = ctx.output_dir / "agentic_runtime_artifacts.json"
+                runtime_artifact_path.write_text(json.dumps(agentic_result.runtime_artifacts, indent=2, default=str))
+                record.artifacts.artifact_paths["agentic_runtime_artifacts"] = str(runtime_artifact_path)
+                record.config["llm_backend"] = selection.provider
+                record.config["llm_model"] = selection.model
 
             contracts = build_kernel_contracts(module, target_profile)
             decisions = select_strategies(contracts, target_profile)

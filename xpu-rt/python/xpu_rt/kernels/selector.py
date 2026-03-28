@@ -21,12 +21,25 @@ from enum import Enum
 from compgen.kernels.contracts import KernelSpec
 from compgen.targets.schema import TargetProfile
 
+# Lazy import to avoid circular dependencies
+_ukernel_registry = None
+
+
+def _get_ukernel_registry():
+    """Get or build the default ukernel registry (lazy singleton)."""
+    global _ukernel_registry
+    if _ukernel_registry is None:
+        from compgen.ir.ukernel.builtins import build_default_registry
+        _ukernel_registry = build_default_registry()
+    return _ukernel_registry
+
 
 class KernelStrategy(Enum):
     """Strategy for handling a kernel."""
 
     NATIVE = "native"
     LIBRARY = "library"
+    UKERNEL = "ukernel"
     AUTOCOMP = "autocomp"
     EXO = "exo"
     FALLBACK = "fallback"
@@ -106,6 +119,51 @@ class KernelSelector:
             if hasattr(device, "supported_ops") and device.supported_ops:
                 self.native_ops.update(device.supported_ops)
 
+    def _check_ukernel(self, spec: KernelSpec) -> bool:
+        """Check if a registered ukernel can handle this spec."""
+        from compgen.ir.ukernel.constraints import ConstraintContext
+
+        registry = _get_ukernel_registry()
+
+        # Map op_name to op_family for ukernel matching
+        op_name = spec.contract.op_name
+        op_family = op_name.split(".")[-1] if "." in op_name else op_name
+
+        # Build constraint context from spec and target
+        shapes: dict[str, int] = {}
+        if spec.input_shapes:
+            first = spec.input_shapes[0]
+            if len(first) >= 2:
+                shapes["M"] = first[0]
+                shapes["K"] = first[1]
+            if len(spec.input_shapes) > 1 and len(spec.input_shapes[1]) >= 2:
+                shapes["N"] = spec.input_shapes[1][1]
+
+        # Fallback: estimate shapes from cost if no explicit shapes
+        if not shapes and spec.contract.cost.flops > 0:
+            # For matmul, flops ≈ 2*M*N*K, use flops as a proxy for "has dimensions"
+            shapes["M"] = 1  # Minimal valid shape
+            shapes["N"] = 1
+            shapes["K"] = 1
+
+        features: set[str] = set()
+        for device in self.target.devices:
+            for cu in device.compute_units:
+                features.add(f"has_{cu.name}")
+            for feat in getattr(device, "features", []):
+                features.add(f"has_{feat}")
+
+        dtypes = tuple(spec.contract.supported_dtypes) if spec.contract.supported_dtypes else ("float32",)
+
+        context = ConstraintContext(
+            shapes=shapes,
+            dtypes=dtypes,
+            target_features=frozenset(features),
+            device_type=self.target.devices[0].device_type if self.target.devices else "",
+        )
+
+        return registry.select_ukernel(op_family, context) is not None
+
     def select(self, specs: list[KernelSpec]) -> list[StrategyDecision]:
         """Select strategies for a list of kernel specifications.
 
@@ -136,6 +194,15 @@ class KernelSelector:
                     strategy=KernelStrategy.LIBRARY,
                     reason=f"{op_name} available in {self.library_ops[op_name]}",
                     library_name=self.library_ops[op_name],
+                ))
+                continue
+
+            # 2.5. Check ukernel registry
+            if self._check_ukernel(spec):
+                decisions.append(StrategyDecision(
+                    spec=spec,
+                    strategy=KernelStrategy.UKERNEL,
+                    reason=f"{op_name} matched a registered ukernel",
                 ))
                 continue
 

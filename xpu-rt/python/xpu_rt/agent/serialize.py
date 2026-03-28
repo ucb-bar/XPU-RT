@@ -17,9 +17,12 @@ from compgen.agent.env import (
     Action,
     AssignDeviceAction,
     FuseAction,
+    GenerateLLVMPatchAction,
+    GenerateXDSLDialectAction,
     LegalAction,
     NoopAction,
     Observation,
+    RequestSemanticsAction,
     SetDtypeAction,
     StepResult,
     TileAction,
@@ -226,6 +229,18 @@ def parse_action(action_dict: dict[str, Any]) -> Action:
         return FuseAction(region_id=rid, target_region_id=action_dict.get("target_region_id", ""))
     elif atype == "set_dtype":
         return SetDtypeAction(region_id=rid, dtype=action_dict.get("dtype", "f16"))
+    elif atype == "request_semantics":
+        return RequestSemanticsAction(op_type=str(action_dict.get("op_type", "")))
+    elif atype == "generate_xdsl_dialect":
+        return GenerateXDSLDialectAction(
+            pack_name=str(action_dict.get("pack_name", "")),
+            spec=dict(action_dict.get("spec", {})),
+        )
+    elif atype == "generate_llvm_patch":
+        return GenerateLLVMPatchAction(
+            pack_name=str(action_dict.get("pack_name", "")),
+            spec=dict(action_dict.get("spec", {})),
+        )
     elif atype == "noop":
         return NoopAction()
     else:

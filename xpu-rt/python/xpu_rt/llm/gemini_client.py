@@ -89,7 +89,10 @@ class GeminiClient:
         self, request: GenerationRequest, schema: dict[str, Any]
     ) -> GenerationResponse:
         """Generate structured (JSON) output from Gemini using response_mime_type."""
-        from google.genai import types
+        try:
+            from google.genai import types
+        except ImportError:
+            types = None  # type: ignore[assignment]
 
         client = self._get_client()
         prompt = render_request_prompt(request)
@@ -97,15 +100,23 @@ class GeminiClient:
         model = request.config.model or self.model
 
         t0 = time.perf_counter()
-        response = client.models.generate_content(
-            model=model,
-            contents=prompt,
-            config=types.GenerateContentConfig(
+        if types is not None:
+            config = types.GenerateContentConfig(
                 temperature=request.config.temperature,
                 max_output_tokens=request.config.max_tokens,
                 response_mime_type="application/json",
                 thinking_config=types.ThinkingConfig(thinking_budget=0),
-            ),
+            )
+        else:
+            config = {  # type: ignore[assignment]
+                "temperature": request.config.temperature,
+                "max_output_tokens": request.config.max_tokens,
+                "response_mime_type": "application/json",
+            }
+        response = client.models.generate_content(
+            model=model,
+            contents=prompt,
+            config=config,
         )
         latency_ms = (time.perf_counter() - t0) * 1000
 

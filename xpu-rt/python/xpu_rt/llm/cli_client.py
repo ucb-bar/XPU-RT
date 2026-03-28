@@ -25,6 +25,12 @@ from compgen.llm.base import (
 )
 
 
+def _requires_prompt_schema_fallback(schema: dict[str, Any]) -> bool:
+    """Some CLI structured-output surfaces only accept object-root schemas."""
+
+    return str(schema.get("type", "object")) != "object"
+
+
 def _merged_env() -> dict[str, str]:
     env = os.environ.copy()
     for key, value in load_dotenv_map().items():
@@ -105,6 +111,24 @@ class ClaudeCLIClient:
     def generate_structured(
         self, request: GenerationRequest, schema: dict[str, Any],
     ) -> GenerationResponse:
+        if _requires_prompt_schema_fallback(schema):
+            structured_request = GenerationRequest(
+                prompt_template=(
+                    f"{request.prompt_template}\n\nRespond with valid JSON matching this schema:\n"
+                    f"{json.dumps(schema, indent=2)}"
+                ),
+                context=request.context,
+                config=request.config,
+                artifact_type=request.artifact_type,
+            )
+            response = self.generate(structured_request)
+            try:
+                parsed = parse_json_payload(response.raw_text)
+                response.parsed_artifacts = [stringify_json_payload(parsed)]
+            except json.JSONDecodeError:
+                response.parsed_artifacts = response.parsed_artifacts or [response.raw_text]
+            return response
+
         prompt = render_request_prompt(request)
         model = request.config.model or self.model
         args = [
@@ -165,6 +189,23 @@ class CodexCLIClient:
     def generate_structured(
         self, request: GenerationRequest, schema: dict[str, Any],
     ) -> GenerationResponse:
+        if _requires_prompt_schema_fallback(schema):
+            structured_request = GenerationRequest(
+                prompt_template=(
+                    f"{request.prompt_template}\n\nRespond with valid JSON matching this schema:\n"
+                    f"{json.dumps(schema, indent=2)}"
+                ),
+                context=request.context,
+                config=request.config,
+                artifact_type=request.artifact_type,
+            )
+            response = self.generate(structured_request)
+            try:
+                parsed = parse_json_payload(response.raw_text)
+                response.parsed_artifacts = [stringify_json_payload(parsed)]
+            except json.JSONDecodeError:
+                response.parsed_artifacts = response.parsed_artifacts or [response.raw_text]
+            return response
         return self._run(request, schema=schema)
 
     def _run(

@@ -41,7 +41,6 @@ class LLMConfig:
     max_tokens: int = 8192
     top_p: float = 1.0
     seed: int | None = None
-    # TODO: Add structured output schema support (JSON mode, tool use, etc.)
 
 
 @dataclass(frozen=True)
@@ -147,9 +146,6 @@ class CompGenLLMProtocol(Protocol):
 
     This is intentionally minimal. Adapters (Gemini, OpenAI, mock) implement
     this protocol. The ``LLMRecorder`` wraps any implementor.
-
-    TODO: Add generate_structured() for JSON-schema-constrained output.
-    TODO: Add batch generation for parallel candidate search.
     """
 
     def generate(self, request: GenerationRequest) -> GenerationResponse:

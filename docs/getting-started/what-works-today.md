@@ -11,6 +11,8 @@ This page is intentionally strict about current state.
 | `uv run python scripts/e2e_demo.py` | Runnable demo | Best public path through the current system |
 | `compgen.device()` | Implemented | Consumes a targetgen-style hardware spec YAML |
 | `compgen.compile_model()` | Implemented | Returns a `CompiledModel` that benchmarks with the local executor |
+| `python -m benchmarks.cli list-suites` | Implemented | Probes the recognized benchmark suites and pack integrations |
+| `python -m benchmarks.cli run-suite-workload ...` | Runnable with configured inputs | Runs one benchmark-suite workload and emits normalized result JSONs |
 | Example target profiles in `examples/target_profiles/` | Available | Used by lower-level profile-centric flows and the demo |
 
 ## Implemented but More Advanced
@@ -37,4 +39,5 @@ This page is intentionally strict about current state.
 
 - If you need a real first run, use the demo.
 - If you need a scriptable entrypoint, use the Python API.
+- If you need benchmark coverage or cross-suite result exports, use the benchmark harness guide and `python -m benchmarks.cli`.
 - If you need the eventual CLI shape, use the CLI reference, but treat command execution semantics as planned unless noted otherwise.

@@ -3,41 +3,44 @@
 Registers the ``compgen.accel`` dialect with xDSL. The dialect provides
 ops for custom accelerator primitives.
 
-Invariants:
-    - The dialect is registered lazily (only when needed).
-    - All ops have explicit memory/effect semantics.
-    - The dialect is extensible per-vendor.
-
-TODO: Implement xDSL Dialect subclass for compgen.accel.
-TODO: Register with xDSL's dialect registry.
+Two exports:
+    - ``AccelDialect`` -- xDSL ``Dialect`` object for registration.
+    - ``AccelDialectConfig`` -- legacy dataclass kept for backward compat.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 
+from xdsl.ir import Dialect
+
+from compgen.ir.accel.ops import ACCEL_IR_OPS
+
+AccelDialect = Dialect("compgen.accel", ACCEL_IR_OPS, [])
+"""The Accel IR dialect -- register with ``ctx.register_dialect("compgen.accel", lambda: AccelDialect)``."""
+
 
 @dataclass
-class AccelDialect:
-    """Custom accelerator dialect registration.
+class AccelDialectConfig:
+    """Legacy accelerator dialect configuration.
+
+    Kept for backward compatibility. Prefer using :data:`AccelDialect` directly.
 
     Attributes:
         name: Dialect name (default: "compgen.accel").
         vendor: Optional vendor prefix for vendor-specific extensions.
-
-    TODO: Implement as xDSL Dialect subclass.
-    TODO: Register ops from ops.py.
     """
 
     name: str = "compgen.accel"
     vendor: str = ""
 
-    def register(self) -> None:
-        """Register this dialect with the xDSL context.
+    def register(self) -> Dialect:
+        """Return the xDSL Dialect object for ``compgen.accel``.
 
-        TODO: Create xDSL Dialect, register all ops.
+        Returns:
+            The :data:`AccelDialect` xDSL ``Dialect`` instance.
         """
-        raise NotImplementedError("AccelDialect.register is not yet implemented")
+        return AccelDialect
 
 
-__all__ = ["AccelDialect"]
+__all__ = ["AccelDialect", "AccelDialectConfig"]

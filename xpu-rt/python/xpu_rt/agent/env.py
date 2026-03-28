@@ -28,7 +28,7 @@ from xdsl.dialects.func import CallOp
 from xdsl.dialects.linalg import MatmulOp
 from xdsl.ir import Operation
 
-from compgen.packs import PackContextSummary
+from compgen.packs import LoadedPack, PackContextSummary, check_surface_allowed
 from compgen.targets.schema import TargetProfile
 
 # ============================================================================
@@ -456,6 +456,24 @@ class RequestTransferAnalysisAction(Action):
 
 
 @dataclass(frozen=True)
+class GenerateXDSLDialectAction(Action):
+    """Generate xDSL dialect scaffolding for an extension pack."""
+
+    action_type: str = "generate_xdsl_dialect"
+    pack_name: str = ""
+    spec: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class GenerateLLVMPatchAction(Action):
+    """Generate LLVM fork patch scaffolding for an extension pack."""
+
+    action_type: str = "generate_llvm_patch"
+    pack_name: str = ""
+    spec: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
 class LegalAction:
     """An action that the system has validated as legal, with estimated cost.
 
@@ -687,6 +705,47 @@ _PASS_MENU: dict[str, dict[str, Any]] = {
 }
 
 
+_PACK_ACTION_APERTURES: dict[type[Action], tuple[str, ...]] = {
+    SearchKernelAction: (
+        "kernel_selection",
+        "schedule_generation",
+        "tile_schedule_generation",
+        "tile_fusion_generation",
+        "tile_layout_generation",
+        "tiling_schedules",
+        "software_pipelining",
+        "attention_schedule_generation",
+        "packing_layout_generation",
+        "kernel_submission_plans",
+        "backend_plan_generation",
+    ),
+    ConfigureDispatchAction: (
+        "runtime_policies",
+        "topology_plans",
+        "dispatch_batching",
+        "queueing_policies",
+        "packet_schedule_generation",
+        "overlap_plans",
+        "double_buffering",
+    ),
+    GenerateRuntimeHooksAction: ("runtime_policies", "host_runtime_glue"),
+    ConfigureProfilingAction: ("metric_mapping", "trace_correlation"),
+    RequestSemanticsAction: (
+        "unsupported_op_translation",
+        "xdsl_dialect_generation",
+        "llvm_patch_generation",
+    ),
+    GenerateXDSLDialectAction: ("xdsl_dialect_generation",),
+    GenerateLLVMPatchAction: ("llvm_patch_generation",),
+}
+
+_PACK_DIRECT_SURFACES: dict[type[Action], tuple[str, ...]] = {
+    RequestSemanticsAction: ("dialect_semantics", "llvm_intrinsics"),
+    GenerateXDSLDialectAction: ("dialect_semantics",),
+    GenerateLLVMPatchAction: ("llvm_intrinsics",),
+}
+
+
 def _compute_legal_actions(regions: list[RegionInfo], target: TargetProfile) -> list[LegalAction]:
     """Compute the set of legal actions from the current state."""
     actions: list[LegalAction] = []
@@ -851,6 +910,7 @@ class CompilerEnv:
         self._exported_program: Any = None
         self._capture_artifact: Any = None
         self._pack_context: PackContextSummary | None = None
+        self._loaded_packs: tuple[LoadedPack, ...] = ()
         self._analysis: Any = None  # NetworkAnalysis, set by AnalyzeAction
         self._llm_client: Any = None  # Shared LLM backend for pass generation / agent helpers
         self._pass_generator: Any = None  # PassGenerator, created on first GeneratePassAction
@@ -878,6 +938,7 @@ class CompilerEnv:
         exported_program: Any = None,
         capture_artifact: Any = None,
         pack_context: PackContextSummary | None = None,
+        loaded_packs: tuple[LoadedPack, ...] = (),
         pytorch_model: Any = None,
         sample_inputs: Any = None,
     ) -> Observation:
@@ -903,6 +964,7 @@ class CompilerEnv:
         self._exported_program = exported_program
         self._capture_artifact = capture_artifact
         self._pack_context = pack_context
+        self._loaded_packs = tuple(loaded_packs)
         self._pytorch_model = pytorch_model
         self._sample_inputs = sample_inputs
         self._analysis = None
@@ -960,6 +1022,96 @@ class CompilerEnv:
         """Get the current observation."""
         return self._make_observation()
 
+    def _pack_apertures(self) -> tuple[str, ...]:
+        if self._pack_context is None:
+            return ()
+        return self._pack_context.generation_apertures
+
+    def _sealed_surfaces(self) -> tuple[str, ...]:
+        if self._pack_context is None:
+            return ()
+        return self._pack_context.sealed_surfaces
+
+    def _pack_violation_for_action(self, action: Action) -> str | None:
+        if self._pack_context is None or not self._pack_context.active_packs:
+            return None
+
+        sealed = set(self._sealed_surfaces())
+        for surface in _PACK_DIRECT_SURFACES.get(type(action), ()):
+            def _matches(candidate: str) -> bool:
+                return candidate == surface or candidate.endswith(surface)
+
+            if self._loaded_packs:
+                violation = check_surface_allowed(self._loaded_packs, requested_surface=surface)
+                if violation is not None:
+                    return (
+                        f"Action '{action.action_type}' cannot mutate sealed surface "
+                        f"'{violation.surface}' owned by pack '{violation.pack_name}'."
+                    )
+                for pack in self._loaded_packs:
+                    for candidate in pack.manifest.sealed_surfaces:
+                        if _matches(candidate):
+                            return (
+                                f"Action '{action.action_type}' cannot mutate sealed surface "
+                                f"'{candidate}' owned by pack '{pack.manifest.name}'."
+                            )
+            if any(_matches(candidate) for candidate in sealed):
+                return (
+                    f"Action '{action.action_type}' cannot mutate sealed surface "
+                    f"'{surface}' declared by the active extension packs."
+                )
+
+        required_apertures = _PACK_ACTION_APERTURES.get(type(action), ())
+        if not required_apertures:
+            return None
+
+        declared = set(self._pack_apertures())
+        if any(aperture in declared for aperture in required_apertures):
+            return None
+        if not declared:
+            return (
+                f"Action '{action.action_type}' requires one of {sorted(required_apertures)} "
+                "but the active packs expose no generation apertures."
+            )
+        return (
+            f"Action '{action.action_type}' requires one of {sorted(required_apertures)} "
+            f"but the active packs only allow {sorted(declared)}."
+        )
+
+    def _pack_generated_actions(self) -> list[LegalAction]:
+        actions: list[LegalAction] = []
+        if not self._loaded_packs:
+            return actions
+
+        declared = set(self._pack_apertures())
+        rank = 10000
+        for pack in self._loaded_packs:
+            if "xdsl_dialect_generation" in declared and "dialect_semantics" not in pack.manifest.sealed_surfaces:
+                rank += 1
+                actions.append(
+                    LegalAction(
+                        action=GenerateXDSLDialectAction(pack_name=pack.manifest.name),
+                        estimated_cost_delta_us=0.0,
+                        estimated_cost_after_us=self._current_cost,
+                        reason=f"Generate xDSL dialect scaffolding for pack {pack.manifest.name}",
+                        risk="moderate",
+                        rank=rank,
+                    )
+                )
+            if "llvm_patch_generation" in declared and "llvm_intrinsics" not in pack.manifest.sealed_surfaces:
+                rank += 1
+                actions.append(
+                    LegalAction(
+                        action=GenerateLLVMPatchAction(pack_name=pack.manifest.name),
+                        estimated_cost_delta_us=0.0,
+                        estimated_cost_after_us=self._current_cost,
+                        reason=f"Generate LLVM fork patch scaffolding for pack {pack.manifest.name}",
+                        risk="moderate",
+                        rank=rank,
+                    )
+                )
+        return actions
+
     def legal_actions(self, max_actions: int = 200) -> list[LegalAction]:
         """Get legal actions for the current state, ranked by estimated value.
 
@@ -967,6 +1119,16 @@ class CompilerEnv:
         """
         assert self._target is not None
         actions = _compute_legal_actions(self._regions, self._target)
+        actions.extend(self._pack_generated_actions())
+        filtered: list[LegalAction] = []
+        for candidate in actions:
+            if isinstance(candidate.action, NoopAction):
+                filtered.append(candidate)
+                continue
+            violation = self._pack_violation_for_action(candidate.action)
+            if violation is None:
+                filtered.append(candidate)
+        actions = filtered
         # Ensure noop is always present
         noops = [a for a in actions if isinstance(a.action, NoopAction)]
         non_noops = [a for a in actions if not isinstance(a.action, NoopAction)]
@@ -990,6 +1152,37 @@ class CompilerEnv:
         error = ""
         verification_passed = True
         diagnostics: list[str] = []
+
+        violation = self._pack_violation_for_action(action)
+        if violation is not None:
+            error = violation
+            record = StepRecord(
+                step=self._step_count,
+                action_type=action.action_type,
+                action_target=action.region_id,
+                was_legal=False,
+                was_applied=False,
+                cost_before_us=cost_before,
+                cost_after_us=cost_before,
+                improvement_pct=0.0,
+                verification_passed=False,
+                error=error,
+            )
+            self._history.append(record)
+            return StepResult(
+                observation=self._make_observation(),
+                reward=0.0,
+                done=self._step_count >= self._budget,
+                info=StepInfo(
+                    action_applied=False,
+                    verification_passed=False,
+                    cost_before_us=cost_before,
+                    cost_after_us=cost_before,
+                    improvement_pct=0.0,
+                    error=error,
+                    diagnostics=tuple(),
+                ),
+            )
 
         if isinstance(action, NoopAction):
             applied = True
@@ -1127,6 +1320,12 @@ class CompilerEnv:
 
         elif isinstance(action, RequestTransferAnalysisAction):
             applied, error, diagnostics = self._apply_request_transfer_analysis(action)
+
+        elif isinstance(action, GenerateXDSLDialectAction):
+            applied, error, diagnostics = self._apply_generate_xdsl_dialect(action)
+
+        elif isinstance(action, GenerateLLVMPatchAction):
+            applied, error, diagnostics = self._apply_generate_llvm_patch(action)
 
         else:
             error = f"Unknown action type: {action.action_type}"
@@ -1304,9 +1503,14 @@ class CompilerEnv:
 
         assert self._target is not None
 
-        # Lazy-init KernelDB on first use
+        # Lazy-init KernelDB on first use (bridge to CompilerMemory if available)
         if self._kernel_db is None:
-            self._kernel_db = KernelDB(db_path=".compgen_cache/kernel_db/kernel_db.json")
+            try:
+                from compgen.memory.store import CompilerMemory
+                mem = CompilerMemory()
+                self._kernel_db = KernelDB.from_memory(mem)
+            except Exception:
+                self._kernel_db = KernelDB(db_path=".compgen_cache/kernel_db/kernel_db.json")
 
         # Check cache before running expensive search
         cached = self._kernel_db.lookup(
@@ -1322,7 +1526,68 @@ class CompilerEnv:
             )
             return True, "", diagnostics
 
-        # Check if search is viable
+        # Try provider registry first (supports multiple backends)
+        try:
+            from compgen.kernels.provider import KernelContract, SearchBudget
+            from compgen.kernels.registry import ProviderRegistry
+
+            if not hasattr(self, "_provider_registry") or self._provider_registry is None:
+                from compgen.kernels.providers.autocomp import AutocompProvider, ExoProvider
+
+                self._provider_registry = ProviderRegistry()
+                self._provider_registry.register(AutocompProvider())
+                self._provider_registry.register(ExoProvider())
+
+            contract = KernelContract(
+                region_id=cluster.cluster_id,
+                op_family=cluster.pattern_type,
+                target_name=self._target.name,
+                hardware_key=self._target.name,
+            )
+            budget = SearchBudget(max_iterations=action.budget or 10)
+            provider_result = self._provider_registry.search(contract, budget)
+
+            # Ingest knowledge from providers into CompilerMemory
+            if hasattr(self, "_verification_results"):
+                try:
+                    from compgen.memory.store import CompilerMemory
+
+                    mem = CompilerMemory()
+                    self._provider_registry.ingest_knowledge(mem)
+                    # Apply contract feedback for future searches
+                    feedback = self._provider_registry.collect_feedback()
+                    if feedback:
+                        diagnostics.append(
+                            f"  Provider feedback: {len(feedback)} contract suggestions"
+                        )
+                except Exception:
+                    pass
+
+            if provider_result.found:
+                diagnostics.append(
+                    f"KERNEL (provider): {cluster.cluster_id} -> {provider_result.language} "
+                    f"latency={provider_result.latency_us:.2f}us"
+                )
+                if provider_result.correct:
+                    from compgen.agent.kernel_db import _shapes_key
+
+                    entry = KernelEntry(
+                        pattern_type=cluster.pattern_type,
+                        target_name=self._target.name,
+                        shapes_key=_shapes_key(cluster.input_shapes),
+                        kernel_code=provider_result.kernel_code,
+                        language=provider_result.language,
+                        latency_us=provider_result.latency_us,
+                        correct=provider_result.correct,
+                        speedup=provider_result.speedup,
+                        plan=provider_result.plan,
+                    )
+                    self._kernel_db.store(entry)
+                return True, "", diagnostics
+        except ImportError:
+            pass  # fall through to direct autocomp path
+
+        # Direct autocomp path (fallback if provider registry not available)
         adapter = AutocompAdapter()
         if not adapter.quick_check(cluster, self._target):
             return False, "Autocomp search not viable (need GPU + GOOGLE_API_KEY)", diagnostics
@@ -1351,6 +1616,13 @@ class CompilerEnv:
                     plan=result.plan,
                 )
                 self._kernel_db.store(entry)
+                # Also write to CompilerMemory for cross-session retrieval
+                try:
+                    from compgen.memory.store import CompilerMemory
+                    mem = CompilerMemory()
+                    self._kernel_db.store_to_memory(entry, mem)
+                except Exception:
+                    pass
                 diagnostics.append("  Kernel cached to KernelDB for future reuse.")
 
             return True, "", diagnostics
@@ -1848,6 +2120,125 @@ class CompilerEnv:
 
         return True, "", diagnostics
 
+    def _find_loaded_pack(self, pack_name: str) -> LoadedPack | None:
+        if not self._loaded_packs:
+            return None
+        if pack_name:
+            for pack in self._loaded_packs:
+                if pack.manifest.name == pack_name:
+                    return pack
+            return None
+        return self._loaded_packs[0]
+
+    def _default_dialect_spec(self, pack: LoadedPack) -> dict[str, Any]:
+        op_name = f"{pack.manifest.name}_dispatch".replace("-", "_")
+        return {
+            "name": pack.manifest.name.replace("-", "_"),
+            "python_module": pack.manifest.name.replace("-", "_"),
+            "doc": f"Generated scaffold for pack {pack.manifest.name}.",
+            "ops": [
+                {
+                    "name": op_name,
+                    "operands": [{"name": "input", "type_expr": "AnyAttr()"}],
+                    "results": [{"name": "output", "type_expr": "AnyAttr()"}],
+                    "traits": ["Pure"],
+                    "summary": f"Generated entry op for {pack.manifest.name}",
+                }
+            ],
+        }
+
+    def _default_llvm_patch_spec(self, pack: LoadedPack) -> dict[str, Any]:
+        dialect_name = pack.manifest.name.replace("-", "_")
+        return {
+            "dialect_name": dialect_name,
+            "intrinsics": [
+                {
+                    "name": f"llvm.{dialect_name}.dispatch",
+                    "ret_type": "llvm_void_ty",
+                    "arg_types": ["llvm_ptr_ty"],
+                    "summary": f"Generated dispatch intrinsic for {pack.manifest.name}",
+                }
+            ],
+        }
+
+    def _write_generated_bundle(
+        self,
+        *,
+        branch: Any,
+        subdir: str,
+        files: dict[str, str],
+    ) -> dict[str, str]:
+        output_dir = branch.worktree_path / subdir
+        output_dir.mkdir(parents=True, exist_ok=True)
+        emitted: dict[str, str] = {}
+        for rel_name, content in files.items():
+            path = output_dir / rel_name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(content)
+            emitted[rel_name] = str(path)
+        return emitted
+
+    def _apply_generate_xdsl_dialect(
+        self, action: GenerateXDSLDialectAction,
+    ) -> tuple[bool, str, list[str]]:
+        from compgen.extensions.xdsl_generate import generate_xdsl_dialect
+
+        diagnostics: list[str] = []
+        pack = self._find_loaded_pack(action.pack_name)
+        if pack is None:
+            return False, f"Unknown pack '{action.pack_name}'", diagnostics
+
+        branch = pack.pack.branch_plan(run_id=f"step-{self._step_count}")
+        spec = action.spec or self._default_dialect_spec(pack)
+        files = generate_xdsl_dialect(spec)
+        emitted = self._write_generated_bundle(
+            branch=branch,
+            subdir=f"generated/xdsl/{pack.manifest.name}",
+            files=files,
+        )
+        self._runtime_artifacts.setdefault("xdsl_dialects", {})
+        self._runtime_artifacts["xdsl_dialects"][pack.manifest.name] = {
+            "branch_name": branch.branch_name,
+            "worktree_path": str(branch.worktree_path),
+            "files": emitted,
+        }
+        diagnostics.append(
+            f"Generated xDSL dialect scaffold for {pack.manifest.name} at {branch.worktree_path}"
+        )
+        diagnostics.extend(f"  {name} -> {path}" for name, path in emitted.items())
+        return True, "", diagnostics
+
+    def _apply_generate_llvm_patch(
+        self, action: GenerateLLVMPatchAction,
+    ) -> tuple[bool, str, list[str]]:
+        from compgen.extensions.llvm_patchgen import generate_llvm_patch_bundle
+
+        diagnostics: list[str] = []
+        pack = self._find_loaded_pack(action.pack_name)
+        if pack is None:
+            return False, f"Unknown pack '{action.pack_name}'", diagnostics
+
+        branch = pack.pack.branch_plan(run_id=f"step-{self._step_count}")
+        spec = action.spec or self._default_llvm_patch_spec(pack)
+        files = generate_llvm_patch_bundle(spec)
+        emitted = self._write_generated_bundle(
+            branch=branch,
+            subdir=f"generated/llvm/{pack.manifest.name}",
+            files=files,
+        )
+        self._runtime_artifacts.setdefault("llvm_patches", {})
+        self._runtime_artifacts["llvm_patches"][pack.manifest.name] = {
+            "branch_name": branch.branch_name,
+            "worktree_path": str(branch.worktree_path),
+            "llvm_fork_path": str(branch.llvm_fork_path) if branch.llvm_fork_path else "",
+            "files": emitted,
+        }
+        diagnostics.append(
+            f"Generated LLVM patch scaffold for {pack.manifest.name} at {branch.worktree_path}"
+        )
+        diagnostics.extend(f"  {name} -> {path}" for name, path in emitted.items())
+        return True, "", diagnostics
+
     # ------------------------------------------------------------------
     # Core transform actions
     # ------------------------------------------------------------------
@@ -2124,21 +2515,30 @@ __all__ = [
     "Action",
     "AnalyzeAction",
     "ApplyPassAction",
+    "AssignDeviceAction",
     "BenchmarkAction",
     "CalibrateAction",
-    "AssignDeviceAction",
     "CheckpointAction",
     "CompileAndRunAction",
+    "ConfigureDispatchAction",
+    "ConfigureProfilingAction",
     "CompilerEnv",
     "DiscoverOpsAction",
+    "EqSatAction",
     "FuseAction",
+    "GenerateLLVMPatchAction",
     "GeneralizeAction",
     "GeneratePassAction",
+    "GenerateRuntimeHooksAction",
+    "GenerateXDSLDialectAction",
     "InspectAction",
     "InsertCopyAction",
     "LegalAction",
     "NoopAction",
     "Observation",
+    "RequestSemanticsAction",
+    "RequestTransferAnalysisAction",
+    "RequestVerificationAction",
     "RegionInfo",
     "RollbackAction",
     "SearchKernelAction",
