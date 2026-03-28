@@ -13,6 +13,7 @@ Invariants:
 from __future__ import annotations
 
 import ast
+import inspect
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -116,7 +117,7 @@ class TransformApplicator:
 
             # Find RewritePattern subclass
             patterns = [
-                v()
+                self._instantiate_pattern(v, script.guard_refs)
                 for v in namespace.values()
                 if isinstance(v, type)
                 and issubclass(v, RewritePattern)
@@ -159,6 +160,17 @@ class TransformApplicator:
             scripts_applied=applied,
             diagnostics=diagnostics,
         )
+
+    def _instantiate_pattern(self, pattern_class: type, guard_refs: tuple[str, ...]) -> Any:
+        signature = inspect.signature(pattern_class.__init__)
+        kwargs: dict[str, Any] = {}
+        if "guard_runtime" in signature.parameters:
+            kwargs["guard_runtime"] = None
+        if "guard_refs" in signature.parameters:
+            kwargs["guard_refs"] = guard_refs
+        elif "guard_ref" in signature.parameters:
+            kwargs["guard_ref"] = guard_refs[0] if guard_refs else None
+        return pattern_class(**kwargs)
 
 
 def apply_transforms(module: ModuleOp, scripts: list[TransformScript]) -> TransformedIR:

@@ -1,0 +1,25 @@
+name: cuda_tile
+version: "0.1.0"
+kinds: ["DialectPack", "KernelPack"]
+owned_surfaces:
+  - tile_dialect_semantics
+  - tile_kernel_substrate
+sealed_surfaces:
+  - tile_dialect_semantics
+  - tile_kernel_substrate
+generation_apertures:
+  - payload_to_cuda_tile_lowering
+  - tile_schedule_generation
+  - tile_fusion_generation
+  - tile_layout_generation
+integration_mode: overlay_branch
+benchmark_suite: pack_integrations
+benchmark_targets: ["cuda_tile_smoke"]
+reference_runner: cuda_tile
+workspace_keys: ["cuda_tile"]
+third_party_names: ["cuda-tile"]
+expected_files: ["README.md"]
+available_profilers: ["nsight_systems", "iree_vulkan_gpu", "iree_tracy"]
+metadata:
+  vendor: nvidia
+

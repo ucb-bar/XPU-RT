@@ -15,6 +15,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from xdsl.dialects.builtin import ModuleOp
+
 from compgen.llm.base import CompGenLLMProtocol, Objective
 from compgen.targets.schema import TargetProfile
 
@@ -33,6 +35,7 @@ class TransformScript:
 
     name: str
     content: str
+    guard_refs: tuple[str, ...] = ()
     parameters: dict[str, Any] = field(default_factory=dict)
     template_name: str | None = None
     generation_metadata: dict[str, Any] = field(default_factory=dict)
@@ -56,9 +59,11 @@ class TransformSynthesizer:
         self,
         ir_summary: str,
         target: TargetProfile,
+        module: ModuleOp,
         objective: Objective,
         kernel_contracts: list[str] | None = None,
         prior_feedback: str = "",
+        guard_refs: tuple[str, ...] = (),
     ) -> list[TransformScript]:
         """Generate transform script candidates.
 
@@ -89,12 +94,15 @@ class TransformSynthesizer:
                 description=description,
                 target_pattern="",
                 expected_effect="optimization",
+                module=module,
+                guard_refs=guard_refs,
             )
-            if result.valid and result.code:
+            if result.verified and result.source_code:
                 scripts.append(TransformScript(
                     name=f"transform_{i}",
-                    content=result.code,
-                    generation_metadata={"valid": result.valid},
+                    content=result.source_code,
+                    guard_refs=result.guard_refs,
+                    generation_metadata={"verified": result.verified},
                 ))
 
         return scripts
@@ -103,12 +111,15 @@ class TransformSynthesizer:
 def synthesize_transforms(
     ir_summary: str,
     target: TargetProfile,
+    module: ModuleOp,
     objective: Objective,
     llm_client: CompGenLLMProtocol,
+    *,
+    guard_refs: tuple[str, ...] = (),
 ) -> list[TransformScript]:
     """Convenience function: synthesize transforms with defaults."""
     synthesizer = TransformSynthesizer(llm_client=llm_client)
-    return synthesizer.synthesize(ir_summary, target, objective)
+    return synthesizer.synthesize(ir_summary, target, module, objective, guard_refs=guard_refs)
 
 
 __all__ = ["TransformScript", "TransformSynthesizer", "synthesize_transforms"]

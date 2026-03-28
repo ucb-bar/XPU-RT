@@ -1,0 +1,27 @@
+name: gluon
+version: "0.1.0"
+kinds: ["TargetPack", "RuntimePack"]
+owned_surfaces:
+  - command_processor_abi
+  - driver_abi
+  - simulator_truth
+sealed_surfaces:
+  - command_processor_abi
+  - driver_abi
+  - simulator_truth
+generation_apertures:
+  - dispatch_batching
+  - packet_schedule_generation
+  - queueing_policies
+  - kernel_submission_plans
+integration_mode: overlay_branch
+benchmark_suite: pack_integrations
+benchmark_targets: ["gluon_smoke"]
+reference_runner: gluon
+workspace_keys: ["gluon"]
+third_party_names: ["gluon"]
+expected_files: ["README.md"]
+available_profilers: ["iree_tracy"]
+metadata:
+  vendor: local_path_pack
+

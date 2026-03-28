@@ -1,0 +1,26 @@
+name: flexasr
+version: "0.1.0"
+kinds: ["TargetPack", "RuntimePack", "PerfModelPack"]
+owned_surfaces:
+  - axi_programming_model
+  - systemc_model
+  - hls_flow
+sealed_surfaces:
+  - axi_programming_model
+  - systemc_model
+  - hls_flow
+generation_apertures:
+  - attention_schedule_generation
+  - packing_layout_generation
+  - host_runtime_glue
+integration_mode: overlay_branch
+benchmark_suite: pack_integrations
+benchmark_targets: ["flexasr_smoke"]
+reference_runner: flexasr
+workspace_keys: ["flexasr"]
+third_party_names: ["flexasr", "FlexASR"]
+expected_files: ["README.md"]
+available_profilers: ["iree_cpu_events", "iree_tracy"]
+metadata:
+  vendor: harvard-acc
+

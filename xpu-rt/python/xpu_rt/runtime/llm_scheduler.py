@@ -89,7 +89,10 @@ class LLMScheduler:
                     kernel_contracts=[],
                     objective=Objective.LATENCY,
                 ),
-                config=LLMConfig(model="gemini-2.5-flash", temperature=0.2),
+                config=LLMConfig(
+                    model=str(getattr(self.llm_client, "model", "default")),
+                    temperature=0.2,
+                ),
             )
             response = self.llm_client.generate(request)
             parsed = parse_response(response.raw_text)

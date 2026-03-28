@@ -1,0 +1,29 @@
+name: snax_mlir
+version: "0.1.0"
+kinds: ["DialectPack", "RuntimePack", "KernelPack", "ProfilerPack"]
+owned_surfaces:
+  - snaxc_driver
+  - runtime_abi
+  - launch_semantics
+  - trace_parser
+sealed_surfaces:
+  - snaxc_driver
+  - runtime_abi
+  - launch_semantics
+generation_apertures:
+  - payload_to_snax_lowering
+  - setup_dedup
+  - overlap_plans
+  - scratchpad_banking
+  - double_buffering
+integration_mode: overlay_branch
+benchmark_suite: pack_integrations
+benchmark_targets: ["snax_mlir_smoke"]
+reference_runner: snaxc
+workspace_keys: ["snax_mlir", "snax"]
+third_party_names: ["snax-mlir"]
+expected_files: ["README.md"]
+available_profilers: ["snax_trace", "iree_tracy"]
+metadata:
+  vendor: kuleuven-micas
+

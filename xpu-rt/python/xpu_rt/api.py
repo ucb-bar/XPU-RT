@@ -30,7 +30,8 @@ import structlog
 import torch
 import torch.nn as nn
 
-from compgen.capture.torch_export import capture_model
+from compgen.agent.analyzer import GraphAnalysisDossier, NetworkAnalyzer
+from compgen.capture.torch_export import CaptureArtifact, capture_frontend_artifact
 from compgen.eqsat.pipeline import EqSatResult, run_eqsat_pass
 from compgen.ir.payload.import_fx import ImportDiagnostic, fx_to_xdsl
 from compgen.runtime.local_executor import BenchmarkResult, LocalExecutor
@@ -38,6 +39,7 @@ from compgen.stages.registry import PipelineResult, StageRegistry, TargetDialect
 from compgen.targetgen.generate import GeneratedTarget, generate_target
 from compgen.targetgen.hardware_spec import HardwareSpec
 from compgen.targets.capability import CapabilitySpec
+from compgen.targets.package import TargetPackage, generate_target_package
 from compgen.targets.schema import TargetProfile
 
 log = structlog.get_logger()
@@ -59,6 +61,7 @@ class CompGenDevice:
         capabilities: Inferred CapabilitySpec (what the target can do).
         dialect_stack: Generated TargetDialectStack for the stage pipeline.
         generated_target: Full GeneratedTarget result from targetgen.
+        target_package: Optional composed target package with extension packs.
     """
 
     spec: HardwareSpec
@@ -66,6 +69,7 @@ class CompGenDevice:
     capabilities: CapabilitySpec
     dialect_stack: TargetDialectStack
     generated_target: GeneratedTarget
+    target_package: TargetPackage | None = None
 
 
 @dataclass(frozen=True)
@@ -80,6 +84,8 @@ class CompiledModel:
         model: The original PyTorch model.
         device: The CompGenDevice used for compilation.
         objective: Optimisation objective (e.g. ``"latency"``).
+        capture_artifact: Canonical frontend boundary data.
+        analysis_dossier: Deterministic graph analysis from the prepared export.
         pipeline_result: Result from the stage pipeline.
         eqsat_result: Result from the equality-saturation pass.
         import_diagnostics: Diagnostics from FX-to-xDSL import.
@@ -88,6 +94,8 @@ class CompiledModel:
     model: nn.Module
     device: CompGenDevice
     objective: str
+    capture_artifact: CaptureArtifact
+    analysis_dossier: GraphAnalysisDossier | None
     pipeline_result: PipelineResult
     eqsat_result: EqSatResult
     import_diagnostics: list[ImportDiagnostic] = field(default_factory=list)
@@ -122,6 +130,7 @@ class CompiledModel:
 def device(
     spec_path: str | Path,
     output_dir: str | Path | None = None,
+    packs: tuple[str | Path, ...] | None = None,
 ) -> CompGenDevice:
     """Load a HardwareSpec YAML and generate a target device.
 
@@ -155,12 +164,22 @@ def device(
         stages=len(generated.dialect_stack.stages),
     )
 
+    target_package = None
+    if packs:
+        package_dir = Path(output_dir) / "package"
+        target_package = generate_target_package(
+            generated.profile,
+            package_dir,
+            extension_packs=packs,
+        )
+
     return CompGenDevice(
         spec=generated.spec,
         profile=generated.profile,
         capabilities=generated.capabilities,
         dialect_stack=generated.dialect_stack,
         generated_target=generated,
+        target_package=target_package,
     )
 
 
@@ -200,11 +219,22 @@ def compile_model(
 
     # Stage 0: Capture
     log.info("api.compile.capture")
-    exported = capture_model(model, sample_inputs)
+    capture_artifact = capture_frontend_artifact(model, sample_inputs)
 
     # Stage 1: FX -> xDSL Payload IR
     log.info("api.compile.import_fx")
-    module, diagnostics = fx_to_xdsl(exported)
+    module, diagnostics = fx_to_xdsl(
+        capture_artifact.exported_program,
+        **capture_artifact.strict_import_options(),
+    )
+
+    # Stage 1.5: Graph dossier
+    log.info("api.compile.analyze")
+    analysis = NetworkAnalyzer().analyze(
+        capture_artifact.exported_program,
+        target_device.profile,
+        model_name=type(model).__name__,
+    )
 
     # Stage 2: Equality saturation
     log.info("api.compile.eqsat")
@@ -234,6 +264,8 @@ def compile_model(
         model=model,
         device=target_device,
         objective=objective,
+        capture_artifact=capture_artifact,
+        analysis_dossier=analysis.dossier,
         pipeline_result=pipeline_result,
         eqsat_result=eqsat_result,
         import_diagnostics=diagnostics,

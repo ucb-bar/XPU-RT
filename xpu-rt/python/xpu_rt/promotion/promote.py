@@ -127,10 +127,56 @@ class RecipePromoter:
         )
 
 
-def promote_recipe(bundle: Bundle, library_path: str | Path, force: bool = False) -> PromotionResult:
-    """Convenience function: promote with defaults."""
+def promote_recipe(
+    bundle: Bundle,
+    library_path: str | Path,
+    force: bool = False,
+    memory: Any = None,
+) -> PromotionResult:
+    """Convenience function: promote with defaults.
+
+    If ``memory`` is provided (a ``CompilerMemory`` instance), the promotion
+    is also recorded in the unified memory system.
+    """
     promoter = RecipePromoter(library_path=Path(library_path))
-    return promoter.promote(bundle, force=force)
+    result = promoter.promote(bundle, force=force)
+
+    # Bridge to CompilerMemory
+    if memory is not None and result.promoted and result.key is not None:
+        try:
+            from compgen.memory.schema import GeneratorKind, KnowledgeKind, ObjectKind, ScopeKind
+
+            task = memory.create_task(
+                kind=ObjectKind.BACKEND_PLAN,
+                workload_key=bundle.model_hash or "",
+                target_key=bundle.target_profile or "",
+                objective=bundle.objective or "latency",
+            )
+            artifact_content = json.dumps(bundle.to_dict(), indent=2)
+            candidate = memory.record_candidate(
+                task_id=task.task_id,
+                artifact=artifact_content,
+                generator_kind=GeneratorKind.TEMPLATE,
+            )
+            memory.promote_candidate(
+                candidate_id=candidate.candidate_id,
+                promotion_key=result.key.key,
+                reason="recipe promotion",
+            )
+
+            # Store the promotion as reusable knowledge
+            memory.store_knowledge(
+                kind=KnowledgeKind.SCHEDULE_TEMPLATE,
+                summary=f"Promoted recipe for {bundle.target_profile} ({bundle.objective})",
+                artifact=artifact_content,
+                scope_kind=ScopeKind.TARGET,
+                scope_key=bundle.target_profile or "",
+                source="promotion",
+            )
+        except Exception:
+            pass  # Best-effort bridge
+
+    return result
 
 
 __all__ = ["PromotionResult", "RecipeKey", "RecipePromoter", "promote_recipe"]

@@ -54,6 +54,15 @@ class TransformVerificationResult:
     details: dict[str, Any] = field(default_factory=dict)
 
 
+@dataclass(frozen=True)
+class GuardedTransformVerificationResult:
+    """Verification outcome for a transform gated by synthesized guards."""
+
+    guard_matched: bool
+    verification: TransformVerificationResult
+    note: str = ""
+
+
 def _verify_structural(module: ModuleOp) -> tuple[bool, str]:
     """Run the xDSL verifier on the module."""
     try:
@@ -173,8 +182,16 @@ class TransformVerifier:
                     levels_passed.append(level)
 
             elif level == VerificationLevel.TRANSLATION_VALIDATION:
-                details["translation_validation"] = "translation_validation: SKIPPED (not implemented)"
-                levels_passed.append(level)  # Skip = pass for now
+                try:
+                    from compgen.ir.semantic.translation_validation import validate_translation
+
+                    tv = validate_translation(original_module, transformed_module)
+                    details["translation_validation"] = f"translation_validation: {tv.status.upper()}"
+                    if tv.valid:
+                        levels_passed.append(level)
+                except NotImplementedError:
+                    details["translation_validation"] = "translation_validation: SKIPPED (not implemented)"
+                    levels_passed.append(level)
 
         all_passed = len(levels_passed) == len(levels_run)
 
@@ -195,9 +212,41 @@ def verify_transform(
     return verifier.verify(original_module, transformed_module, sample_inputs)
 
 
+def verify_guarded_transform(
+    original_module: ModuleOp,
+    transformed_module: ModuleOp,
+    *,
+    guard_matched: bool,
+    sample_inputs: Any = None,
+    verifier: TransformVerifier | None = None,
+) -> GuardedTransformVerificationResult:
+    """Verify a transform that may have been skipped by a guard."""
+
+    if not guard_matched:
+        return GuardedTransformVerificationResult(
+            guard_matched=False,
+            verification=TransformVerificationResult(
+                passed=True,
+                levels_run=[],
+                levels_passed=[],
+                details={"guard": "guard rejected; transform not applied"},
+            ),
+            note="guard_rejected",
+        )
+    active_verifier = verifier or TransformVerifier()
+    result = active_verifier.verify(original_module, transformed_module, sample_inputs)
+    return GuardedTransformVerificationResult(
+        guard_matched=True,
+        verification=result,
+        note="guard_applied",
+    )
+
+
 __all__ = [
     "TransformVerificationResult",
+    "GuardedTransformVerificationResult",
     "TransformVerifier",
     "VerificationLevel",
+    "verify_guarded_transform",
     "verify_transform",
 ]

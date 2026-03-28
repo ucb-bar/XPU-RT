@@ -34,10 +34,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any, Iterable
 
 from compgen.targets.capability import CapabilitySpec, TargetClass
 from compgen.targets.maturity import TargetMaturity
 from compgen.targets.schema import TargetProfile
+from compgen.packs import LoadedPack, PackContextSummary, default_pack_root, load_pack
 
 
 @dataclass(frozen=True)
@@ -59,6 +61,10 @@ class TargetPackageManifest:
     maturity: TargetMaturity = TargetMaturity.L0_RECOGNIZED
     components: dict[str, str] = field(default_factory=dict)
     existing_backend: str | None = None
+    composed_from_packs: tuple[str, ...] = ()
+    sealed_surfaces: tuple[str, ...] = ()
+    generation_apertures: tuple[str, ...] = ()
+    integration_artifacts: dict[str, dict[str, str]] = field(default_factory=dict)
 
 
 @dataclass
@@ -78,6 +84,48 @@ class TargetPackage:
     profile: TargetProfile | None = None
     capabilities: CapabilitySpec | None = None
     maturity: TargetMaturity = TargetMaturity.L0_RECOGNIZED
+    extension_packs: tuple[LoadedPack, ...] = ()
+    owned_surfaces: tuple[str, ...] = ()
+    sealed_surfaces: tuple[str, ...] = ()
+    generation_apertures: tuple[str, ...] = ()
+    integration_artifacts: dict[str, dict[str, str]] = field(default_factory=dict)
+
+    def pack_context(self) -> PackContextSummary:
+        """Summarize the active pack ownership context."""
+
+        available_profilers = sorted({
+            profiler
+            for pack in self.extension_packs
+            for profiler in pack.manifest.available_profilers
+        })
+        benchmark_targets = sorted({
+            target
+            for pack in self.extension_packs
+            for target in pack.manifest.benchmark_targets
+        })
+        return PackContextSummary(
+            active_packs=tuple(pack.manifest.name for pack in self.extension_packs),
+            sealed_surfaces=self.sealed_surfaces,
+            generation_apertures=self.generation_apertures,
+            available_profilers=tuple(available_profilers),
+            benchmark_targets=tuple(benchmark_targets),
+        )
+
+
+def _coerce_loaded_pack(spec: str | Path | LoadedPack) -> LoadedPack:
+    if isinstance(spec, LoadedPack):
+        return spec
+    candidate = Path(spec)
+    if candidate.exists():
+        return load_pack(candidate)
+    builtin_root = default_pack_root() / str(spec)
+    return load_pack(builtin_root)
+
+
+def _coerce_loaded_packs(extension_packs: Iterable[str | Path | LoadedPack] | None) -> tuple[LoadedPack, ...]:
+    if not extension_packs:
+        return ()
+    return tuple(_coerce_loaded_pack(spec) for spec in extension_packs)
 
 
 def generate_target_package(
@@ -85,6 +133,7 @@ def generate_target_package(
     output_dir: str | Path,
     docs_dir: str | Path | None = None,
     existing_backend: str | None = None,
+    extension_packs: Iterable[str | Path | LoadedPack] | None = None,
 ) -> TargetPackage:
     """Generate a target enablement package.
 
@@ -122,6 +171,7 @@ def generate_target_package(
 
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
+    loaded_packs = _coerce_loaded_packs(extension_packs)
 
     # Classify and infer capabilities
     target_class = classify_target(profile)
@@ -133,6 +183,8 @@ def generate_target_package(
         subdirs.append("ir")
     for subdir in subdirs:
         (output / subdir).mkdir(exist_ok=True)
+    if loaded_packs:
+        (output / "packs").mkdir(exist_ok=True)
 
     # Write target_profile.yaml
     profile_data = {
@@ -179,12 +231,47 @@ def generate_target_package(
     if "ir" in subdirs:
         components["ir"] = "ir/"
 
+    pack_artifacts: dict[str, dict[str, str]] = {}
+    owned_surfaces = sorted({
+        surface
+        for pack in loaded_packs
+        for surface in pack.manifest.owned_surfaces
+    })
+    sealed_surfaces = sorted({
+        surface
+        for pack in loaded_packs
+        for surface in pack.manifest.sealed_surfaces
+    })
+    generation_apertures = sorted({
+        aperture
+        for pack in loaded_packs
+        for aperture in pack.manifest.generation_apertures
+    })
+
+    for pack in loaded_packs:
+        pack_dir = output / "packs" / pack.manifest.name
+        pack_dir.mkdir(parents=True, exist_ok=True)
+        manifest_copy = pack_dir / "manifest.yaml"
+        manifest_copy.write_text((pack.root / "manifest.yaml").read_text())
+        components[f"pack:{pack.manifest.name}"] = str(Path("packs") / pack.manifest.name / "manifest.yaml")
+        pack_artifacts[pack.manifest.name] = {
+            "manifest": str(Path("packs") / pack.manifest.name / "manifest.yaml"),
+            "integration_mode": pack.manifest.integration_mode,
+            "reference_runner": pack.manifest.reference_runner,
+        }
+        if pack.manifest.llvm_fork_key:
+            pack_artifacts[pack.manifest.name]["llvm_fork_key"] = pack.manifest.llvm_fork_key
+
     manifest = TargetPackageManifest(
         target_name=profile.name,
         target_class=target_class,
         maturity=TargetMaturity.L0_RECOGNIZED,
         components=components,
         existing_backend=existing_backend,
+        composed_from_packs=tuple(pack.manifest.name for pack in loaded_packs),
+        sealed_surfaces=tuple(sealed_surfaces),
+        generation_apertures=tuple(generation_apertures),
+        integration_artifacts=pack_artifacts,
     )
 
     # Write manifest.json
@@ -195,6 +282,10 @@ def generate_target_package(
         "maturity": manifest.maturity.name,
         "components": manifest.components,
         "existing_backend": manifest.existing_backend,
+        "composed_from_packs": list(manifest.composed_from_packs),
+        "sealed_surfaces": list(manifest.sealed_surfaces),
+        "generation_apertures": list(manifest.generation_apertures),
+        "integration_artifacts": manifest.integration_artifacts,
     }
     with open(output / "manifest.json", "w") as f:
         json.dump(manifest_data, f, indent=2)
@@ -205,6 +296,11 @@ def generate_target_package(
         profile=profile,
         capabilities=capabilities,
         maturity=TargetMaturity.L0_RECOGNIZED,
+        extension_packs=loaded_packs,
+        owned_surfaces=tuple(owned_surfaces),
+        sealed_surfaces=tuple(sealed_surfaces),
+        generation_apertures=tuple(generation_apertures),
+        integration_artifacts=pack_artifacts,
     )
 
     return package
@@ -225,6 +321,13 @@ def load_target_package(package_dir: str | Path) -> TargetPackage:
     with open(manifest_path) as f:
         manifest_data = json.load(f)
 
+    pack_names = tuple(manifest_data.get("composed_from_packs", ()))
+    loaded_packs = tuple(
+        load_pack(root / "packs" / pack_name)
+        for pack_name in pack_names
+        if (root / "packs" / pack_name / "manifest.yaml").exists()
+    )
+
     # Load profile
     profile_path = root / manifest_data.get("components", {}).get("target_profile", "target_profile.yaml")
     profile = _load_profile(profile_path) if profile_path.exists() else None
@@ -239,6 +342,10 @@ def load_target_package(package_dir: str | Path) -> TargetPackage:
         maturity=TargetMaturity[manifest_data.get("maturity", "L0_RECOGNIZED")],
         components=manifest_data.get("components", {}),
         existing_backend=manifest_data.get("existing_backend"),
+        composed_from_packs=pack_names,
+        sealed_surfaces=tuple(manifest_data.get("sealed_surfaces", ())),
+        generation_apertures=tuple(manifest_data.get("generation_apertures", ())),
+        integration_artifacts=dict(manifest_data.get("integration_artifacts", {})),
     )
 
     return TargetPackage(
@@ -247,6 +354,17 @@ def load_target_package(package_dir: str | Path) -> TargetPackage:
         profile=profile,
         capabilities=capabilities,
         maturity=manifest.maturity,
+        extension_packs=loaded_packs,
+        owned_surfaces=tuple(
+            sorted({
+                surface
+                for pack in loaded_packs
+                for surface in pack.manifest.owned_surfaces
+            })
+        ),
+        sealed_surfaces=manifest.sealed_surfaces,
+        generation_apertures=manifest.generation_apertures,
+        integration_artifacts=manifest.integration_artifacts,
     )
 
 
@@ -264,6 +382,9 @@ def validate_target_package(package: TargetPackage) -> list[str]:
         full_path = package.root / rel_path
         if not full_path.exists():
             errors.append(f"Component '{name}' not found at {rel_path}")
+
+    if package.manifest.composed_from_packs and not package.extension_packs:
+        errors.append("Manifest declares composed packs but none were loaded")
 
     return errors
 

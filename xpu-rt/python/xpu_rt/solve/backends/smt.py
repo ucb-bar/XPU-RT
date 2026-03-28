@@ -4,15 +4,12 @@ Used for legality checking and semantic verification:
     - Translation validation queries
     - Peephole rewrite verification
     - Dataflow analysis soundness
-    - Constraint satisfaction for legality
+    - Synthesized-guard soundness checks
 
 Invariants:
     - z3 is imported at call time (optional dep).
     - Timeout is always set.
     - "unknown" results are distinguished from "unsat" and "sat".
-
-TODO: Implement SMTSolver with query interface.
-TODO: Implement bitvector and integer theory support.
 """
 
 from __future__ import annotations
@@ -39,28 +36,73 @@ class SMTSolver:
         """Check satisfiability of a formula.
 
         Returns: "sat", "unsat", or "unknown".
-
-        TODO: Import z3, build solver, add formula, check.
         """
-        raise NotImplementedError("SMTSolver.check_sat is not yet implemented")
+        try:
+            import z3
+        except ImportError as exc:  # pragma: no cover - optional dependency
+            raise RuntimeError("z3 is required for SMT solving") from exc
+
+        solver = z3.Solver()
+        solver.set(timeout=self.timeout_ms)
+        solver.add(formula)
+        result = solver.check()
+        if result == z3.sat:
+            return "sat"
+        if result == z3.unsat:
+            return "unsat"
+        return "unknown"
 
     def prove(self, formula: Any) -> str:
         """Prove validity of a formula (check unsat of negation).
 
         Returns: "valid", "invalid", or "unknown".
-
-        TODO: Negate formula, check_sat, invert result.
         """
-        raise NotImplementedError("SMTSolver.prove is not yet implemented")
+        try:
+            import z3
+        except ImportError as exc:  # pragma: no cover - optional dependency
+            raise RuntimeError("z3 is required for SMT solving") from exc
+
+        status = self.check_sat(z3.Not(formula))
+        if status == "unsat":
+            return "valid"
+        if status == "sat":
+            return "invalid"
+        return "unknown"
 
     def get_model(self, formula: Any) -> dict[str, Any] | None:
         """Get a satisfying model (counterexample).
 
         Returns: Model dict if sat, None otherwise.
-
-        TODO: Check sat, extract model if sat.
         """
-        raise NotImplementedError("SMTSolver.get_model is not yet implemented")
+        try:
+            import z3
+        except ImportError as exc:  # pragma: no cover - optional dependency
+            raise RuntimeError("z3 is required for SMT solving") from exc
+
+        solver = z3.Solver()
+        solver.set(timeout=self.timeout_ms)
+        solver.add(formula)
+        result = solver.check()
+        if result != z3.sat:
+            return None
+
+        model = solver.model()
+        extracted: dict[str, Any] = {}
+        for decl in model.decls():
+            value = model[decl]
+            if value is None:
+                continue
+            if z3.is_true(value):
+                extracted[decl.name()] = True
+            elif z3.is_false(value):
+                extracted[decl.name()] = False
+            elif z3.is_int_value(value):
+                extracted[decl.name()] = value.as_long()
+            elif z3.is_rational_value(value):
+                extracted[decl.name()] = float(value.as_fraction())
+            else:
+                extracted[decl.name()] = str(value)
+        return extracted
 
 
 __all__ = ["SMTSolver"]

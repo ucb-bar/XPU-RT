@@ -1,0 +1,19 @@
+name: iree_tracy
+version: "0.1.0"
+kinds: ["ProfilerPack"]
+owned_surfaces:
+  - profiler_parser
+sealed_surfaces:
+  - profiler_parser
+generation_apertures:
+  - metric_mapping
+  - trace_correlation
+integration_mode: readonly
+benchmark_suite: pack_integrations
+benchmark_targets: ["tracy_profiling"]
+reference_runner: iree_tracy
+workspace_keys: ["iree_tracy", "iree"]
+expected_files: []
+available_profilers: ["iree_tracy"]
+metadata:
+  profiler_kind: tracy
