@@ -8,6 +8,8 @@ import pytest
 import torch
 import torch.nn as nn
 from compgen.api import CompGenDevice, CompiledModel, compile_model, device
+from compgen.agent.env import CompilerEnv
+from compgen.llm.mock_client import MockLLMClient
 from compgen.runtime.local_executor import BenchmarkResult
 from compgen.stages.registry import PipelineResult, TargetDialectStack
 from compgen.targetgen.generate import GeneratedTarget
@@ -106,6 +108,12 @@ class TestDevice:
         assert isinstance(dev, CompGenDevice)
         assert len(dev.dialect_stack.stages) > 0
 
+    def test_device_can_compose_extension_packs(self, tmp_path: Path) -> None:
+        spec_path = EXEMPLAR_DIR / "test_gpu_simt.yaml"
+        dev = device(spec_path, output_dir=tmp_path / "out", packs=("cuda_tile", "iree_tracy"))
+        assert dev.target_package is not None
+        assert dev.target_package.pack_context().active_packs == ("cuda_tile", "iree_tracy")
+
 
 # ---------------------------------------------------------------------------
 # compile_model()
@@ -186,6 +194,40 @@ class TestCompileModel:
         inputs = (torch.randn(2, 64),)
         compiled = compile_model(_TinyMLP(), dev, sample_inputs=inputs)
         assert isinstance(compiled, CompiledModel)
+
+    def test_compile_exposes_payload_module_and_inputs(self, tmp_path: Path) -> None:
+        dev = device(EXEMPLAR_DIR / "test_gpu_simt.yaml", output_dir=tmp_path / "out")
+        inputs = (torch.randn(2, 64),)
+        compiled = compile_model(_TinyMLP(), dev, sample_inputs=inputs)
+        assert compiled.payload_module is not None
+        assert compiled.sample_inputs == inputs
+
+    def test_compile_can_create_pack_aware_agent_env(self, tmp_path: Path) -> None:
+        dev = device(
+            EXEMPLAR_DIR / "test_gpu_simt.yaml",
+            output_dir=tmp_path / "out",
+            packs=("cuda_tile", "iree_tracy"),
+        )
+        compiled = compile_model(_TinyMLP(), dev)
+        env = compiled.create_agent_env(budget=7)
+        assert isinstance(env, CompilerEnv)
+        obs = env.observe()
+        assert obs.active_packs == ("cuda_tile", "iree_tracy")
+        assert "tile_dialect_semantics" in obs.sealed_surfaces
+
+    def test_compile_can_run_agentic_loop(self, tmp_path: Path) -> None:
+        dev = device(EXEMPLAR_DIR / "test_gpu_simt.yaml", output_dir=tmp_path / "out")
+        compiled = compile_model(_TinyMLP(), dev)
+        client = MockLLMClient(strict=False)
+        client.add_response("optimization", "[]")
+        client.add_response(
+            "iteratively",
+            '{"action_type":"noop","target_region":"","parameters":{},"reasoning":"stop"}',
+        )
+
+        result = compiled.run_agentic(client, budget=1, with_recipe=False)
+        assert result.best_observation is not None
+        assert result.iterations_run <= 1
 
 
 # ---------------------------------------------------------------------------

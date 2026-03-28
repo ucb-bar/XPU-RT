@@ -86,7 +86,7 @@ class TestFullPipeline:
         pipeline_result = registry.run_pipeline(module, target, capabilities)
 
         assert pipeline_result.passed, f"Pipeline failed at {pipeline_result.first_failure}"
-        assert pipeline_result.stages_run == 5
+        assert pipeline_result.stages_run == 6
 
         # 6. Verify bundle
         assert (tmp_path / "bundle" / "manifest.json").exists()

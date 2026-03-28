@@ -203,3 +203,27 @@ def test_compilation_loop_passes_frontend_and_dossier_context_to_llm() -> None:
     assert "repeated_patterns=elementwise_chain:2" in request.context.analysis_dossier_summary
     assert "aten.sin.default" in request.context.unsupported_operator_summary
     assert '"graph_break_count": 1' in request.context.evidence_json
+
+
+def test_compilation_loop_skips_repair_when_verification_has_no_counterexample() -> None:
+    env = CompilerEnv()
+    target = load_profile("examples/target_profiles/cuda_a100.yaml")
+    module = _make_module()
+    env.reset(module, target, budget=20)
+
+    client = MockLLMClient(strict=False)
+    client.add_response(
+        "optimization",
+        '[{"action_type": "eqsat", "target": "all", "reason": "algebraic", "expected_improvement": 1.0}]',
+    )
+
+    loop = AgenticCompilationLoop(llm_client=client, env=env, budget=1)
+    loop._run_per_step_verification = lambda action, obs, target: {  # type: ignore[method-assign]
+        "passed": False,
+        "status": "unknown",
+        "region_id": action.region_id,
+        "counterexample": None,
+    }
+
+    result = loop.run(target)
+    assert result.best_observation is not None

@@ -2,13 +2,53 @@
 
 from __future__ import annotations
 
-import pytest
+from xdsl.builder import Builder, ImplicitBuilder
+from xdsl.dialects.arith import ConstantOp
+from xdsl.dialects.builtin import FloatAttr, Float32Type, ModuleOp, TensorType, f32
+from xdsl.dialects.func import FuncOp, ReturnOp
+from xdsl.ir import Block, Region
+
 from compgen.runtime.planner import (
     CopyOp,
     ExecutionPlan,
+    ExecutionPlanner,
     MemoryPlan,
     PlacementDecision,
+    plan_execution,
 )
+from compgen.targets.schema import DeviceSpec, TargetProfile
+
+
+def _make_trivial_module() -> ModuleOp:
+    """Build a minimal xDSL ModuleOp with one constant op."""
+    tensor_type = TensorType(f32, [2, 2])
+
+    @Builder.implicit_region
+    def body() -> None:
+        @Builder.implicit_region((tensor_type,))
+        def func_body(args: tuple) -> None:  # type: ignore[type-arg]
+            ReturnOp(args[0])
+
+        FuncOp("main", ([tensor_type], [tensor_type]), func_body)
+
+    return ModuleOp(body)
+
+
+def _make_single_device_profile() -> TargetProfile:
+    return TargetProfile(
+        name="test-single",
+        devices=[DeviceSpec(device_type="gpu", name="test-gpu-0")],
+    )
+
+
+def _make_multi_device_profile() -> TargetProfile:
+    return TargetProfile(
+        name="test-multi",
+        devices=[
+            DeviceSpec(device_type="gpu", name="test-gpu-0"),
+            DeviceSpec(device_type="gpu", name="test-gpu-1"),
+        ],
+    )
 
 
 def test_placement_decision_construction() -> None:
@@ -45,11 +85,27 @@ def test_execution_plan_defaults() -> None:
     assert plan.metadata == {}
 
 
-@pytest.mark.skip(reason="scaffold only -- implementation pending")
 def test_execution_planner_plan() -> None:
-    """ExecutionPlanner.plan should produce a valid ExecutionPlan."""
+    """ExecutionPlanner.plan should produce a valid ExecutionPlan for a single device."""
+    module = _make_trivial_module()
+    profile = _make_single_device_profile()
+    planner = ExecutionPlanner(target=profile)
+    plan = planner.plan(module)
+
+    assert isinstance(plan, ExecutionPlan)
+    # Single device: everything on device 0, no copies
+    for p in plan.placements:
+        assert p.device_index == 0
+    assert plan.copies == []
+    assert plan.estimated_latency_us is not None
 
 
-@pytest.mark.skip(reason="scaffold only -- implementation pending")
 def test_plan_execution_convenience() -> None:
     """plan_execution should work with default settings."""
+    module = _make_trivial_module()
+    profile = _make_single_device_profile()
+    plan = plan_execution(module, profile)
+
+    assert isinstance(plan, ExecutionPlan)
+    assert len(plan.execution_order) >= 0
+    assert isinstance(plan.memory_plans, list)

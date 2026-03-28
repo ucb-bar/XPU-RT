@@ -103,12 +103,17 @@ class TargetPackage:
             for pack in self.extension_packs
             for target in pack.manifest.benchmark_targets
         })
+        integration_branches = [
+            pack.pack.branch_plan(run_id="package").branch_name
+            for pack in self.extension_packs
+        ]
         return PackContextSummary(
             active_packs=tuple(pack.manifest.name for pack in self.extension_packs),
             sealed_surfaces=self.sealed_surfaces,
             generation_apertures=self.generation_apertures,
             available_profilers=tuple(available_profilers),
             benchmark_targets=tuple(benchmark_targets),
+            integration_branch=",".join(integration_branches),
         )
 
 

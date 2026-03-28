@@ -8,19 +8,34 @@ Invariants:
     - Calibration results are deterministic (or averaged over runs).
     - Results are saved to YAML for reuse across pipeline runs.
     - Calibration never modifies the base profile -- it returns a new one.
-
-TODO: Implement Calibrator with microbenchmark suite.
-TODO: Implement memory bandwidth measurement.
-TODO: Implement op-level latency measurement (matmul, conv, etc.).
-TODO: Support remote calibration (SSH to device, run benchmarks, pull results).
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Protocol, runtime_checkable
+
+import structlog
 
 from compgen.targets.schema import TargetProfile
+
+log = structlog.get_logger()
+
+_BENCHMARK_UNITS: dict[str, str] = {
+    "hbm_bandwidth": "GB/s",
+    "matmul_fp16": "TFLOPS",
+    "matmul_fp32": "TFLOPS",
+    "l2_bandwidth": "GB/s",
+}
+
+
+@runtime_checkable
+class DeviceHandle(Protocol):
+    """Protocol for device benchmark execution."""
+
+    def run_benchmark(self, name: str, params: dict[str, Any] | None = None) -> float:
+        """Run a named benchmark and return the measured value."""
+        ...
 
 
 @dataclass(frozen=True)
@@ -62,9 +77,6 @@ class Calibrator:
     Attributes:
         benchmarks: List of benchmark names to run.
         num_samples: Number of samples per benchmark.
-
-    TODO: Implement run() that executes benchmarks on the target device.
-    TODO: Implement each benchmark type (bandwidth, latency, throughput).
     """
 
     benchmarks: list[str] = field(default_factory=lambda: ["hbm_bandwidth", "matmul_fp16"])
@@ -73,21 +85,55 @@ class Calibrator:
     def calibrate(self, profile: TargetProfile, device_handle: Any = None) -> CalibratedProfile:
         """Run calibration benchmarks and return an updated profile.
 
+        If *device_handle* implements :class:`DeviceHandle`, each benchmark is
+        executed on real hardware.  Otherwise synthetic defaults are pulled from
+        the profile's ``cost_model``.
+
         Args:
             profile: Base target profile.
             device_handle: Optional handle to the target device.
 
         Returns:
             CalibratedProfile with measured data.
-
-        TODO: Run each benchmark, collect results, update profile.
         """
-        raise NotImplementedError("Calibrator.calibrate is not yet implemented")
+        results: list[CalibrationResult] = []
+        for bench_name in self.benchmarks:
+            if device_handle is not None:
+                log.info("calibrator.run_benchmark", benchmark=bench_name, samples=self.num_samples)
+                value = device_handle.run_benchmark(bench_name, {"num_samples": self.num_samples})
+                unit = _BENCHMARK_UNITS.get(bench_name, "units")
+                results.append(CalibrationResult(
+                    benchmark=bench_name, value=value, unit=unit, samples=self.num_samples,
+                ))
+            else:
+                # Synthetic defaults from profile cost_model
+                default_value = profile.cost_model.get(bench_name, 0.0)
+                unit = _BENCHMARK_UNITS.get(bench_name, "units")
+                results.append(CalibrationResult(
+                    benchmark=bench_name, value=default_value, unit=unit, samples=0,
+                ))
+
+        # Update profile calibration_data
+        cal_data = dict(profile.calibration_data)
+        for r in results:
+            cal_data[r.benchmark] = r.value
+
+        updated = TargetProfile(
+            name=profile.name,
+            schema_version=profile.schema_version,
+            devices=profile.devices,
+            interconnects=profile.interconnects,
+            constraints=profile.constraints,
+            cost_model=profile.cost_model,
+            calibration_data=cal_data,
+            metadata=profile.metadata,
+        )
+        return CalibratedProfile(profile=updated, results=results)
 
 
 def calibrate(profile: TargetProfile, device_handle: Any = None) -> CalibratedProfile:
     """Convenience function: calibrate a profile with defaults."""
-    raise NotImplementedError("calibrate is not yet implemented")
+    return Calibrator().calibrate(profile, device_handle)
 
 
-__all__ = ["CalibratedProfile", "CalibrationResult", "Calibrator", "calibrate"]
+__all__ = ["CalibratedProfile", "CalibrationResult", "Calibrator", "DeviceHandle", "calibrate"]

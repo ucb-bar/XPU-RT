@@ -82,7 +82,7 @@ class TransformSynthesizer:
         generator = PassGenerator(llm_client=self.llm_client)
         description = (
             f"Generate a RewritePattern for {target.name} "
-            f"optimizing {objective.metric}. "
+            f"optimizing {objective.value}. "
             f"IR summary: {ir_summary[:500]}"
         )
         if prior_feedback:

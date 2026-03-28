@@ -94,23 +94,47 @@ def assess_maturity(target_package: Any) -> MaturityAssessment:
 
     l0_ok = has_profile and has_caps
 
-    # L1-L3: not checkable yet (require pipeline stages)
+    # L1: at least one verification result with correctness_ok
+    l1_ok = False
+    if hasattr(target_package, "verification_results") and target_package.verification_results:
+        l1_ok = any(
+            getattr(vr, "correctness_ok", False) for vr in target_package.verification_results
+        )
     requirements.append(MaturityRequirement(
         level=TargetMaturity.L1_CORRECTNESS, name="fallback_correct",
-        description="At least one workload correct via fallback", satisfied=False,
+        description="At least one workload correct via fallback", satisfied=l1_ok,
     ))
+
+    # L2: at least one recipe with performance data
+    l2_ok = False
+    if hasattr(target_package, "recipes") and target_package.recipes:
+        l2_ok = any(
+            getattr(recipe, "performance_data", None) is not None for recipe in target_package.recipes
+        )
     requirements.append(MaturityRequirement(
         level=TargetMaturity.L2_OPTIMIZED, name="recipe_beats_fallback",
-        description="At least one optimized recipe beats fallback", satisfied=False,
+        description="At least one optimized recipe beats fallback", satisfied=l2_ok,
     ))
+
+    # L3: all promoted recipes are verified
+    l3_ok = False
+    if hasattr(target_package, "promoted_recipes") and target_package.promoted_recipes:
+        l3_ok = all(
+            getattr(recipe, "verified", False) for recipe in target_package.promoted_recipes
+        )
     requirements.append(MaturityRequirement(
         level=TargetMaturity.L3_PROMOTED, name="promoted_verified",
-        description="Promoted recipes pass full verification ladder", satisfied=False,
+        description="Promoted recipes pass full verification ladder", satisfied=l3_ok,
     ))
 
     if l0_ok:
         current_level = TargetMaturity.L0_RECOGNIZED
-    # Future: check L1, L2, L3
+    if l0_ok and l1_ok:
+        current_level = TargetMaturity.L1_CORRECTNESS
+    if l0_ok and l1_ok and l2_ok:
+        current_level = TargetMaturity.L2_OPTIMIZED
+    if l0_ok and l1_ok and l2_ok and l3_ok:
+        current_level = TargetMaturity.L3_PROMOTED
 
     blockers = [r for r in requirements if not r.satisfied and r.level.value == current_level.value + 1]
 

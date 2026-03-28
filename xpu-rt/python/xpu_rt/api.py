@@ -29,11 +29,15 @@ from typing import Any
 import structlog
 import torch
 import torch.nn as nn
+from xdsl.dialects.builtin import ModuleOp
 
 from compgen.agent.analyzer import GraphAnalysisDossier, NetworkAnalyzer
+from compgen.agent.compilation_loop import AgenticCompilationLoop, CompilationResult
+from compgen.agent.env import CompilerEnv
 from compgen.capture.torch_export import CaptureArtifact, capture_frontend_artifact
 from compgen.eqsat.pipeline import EqSatResult, run_eqsat_pass
 from compgen.ir.payload.import_fx import ImportDiagnostic, fx_to_xdsl
+from compgen.llm.base import CompGenLLMProtocol
 from compgen.runtime.local_executor import BenchmarkResult, LocalExecutor
 from compgen.stages.registry import PipelineResult, StageRegistry, TargetDialectStack
 from compgen.targetgen.generate import GeneratedTarget, generate_target
@@ -96,8 +100,10 @@ class CompiledModel:
     objective: str
     capture_artifact: CaptureArtifact
     analysis_dossier: GraphAnalysisDossier | None
+    payload_module: ModuleOp
     pipeline_result: PipelineResult
     eqsat_result: EqSatResult
+    sample_inputs: tuple[Any, ...]
     import_diagnostics: list[ImportDiagnostic] = field(default_factory=list)
 
     def __call__(
@@ -125,6 +131,42 @@ class CompiledModel:
             num_iterations=num_iterations,
             warmup=warmup,
         )
+
+    def create_agent_env(self, *, budget: int = 50) -> CompilerEnv:
+        """Create a pack-aware agent environment from this compiled model."""
+
+        env = CompilerEnv()
+        target_package = self.device.target_package
+        pack_context = target_package.pack_context() if target_package is not None else None
+        loaded_packs = target_package.extension_packs if target_package is not None else ()
+        env.reset(
+            self.payload_module.clone(),
+            self.device.profile,
+            objective=self.objective,
+            budget=budget,
+            exported_program=self.capture_artifact.exported_program,
+            capture_artifact=self.capture_artifact,
+            pack_context=pack_context,
+            loaded_packs=loaded_packs,
+            pytorch_model=self.model,
+            sample_inputs=self.sample_inputs,
+        )
+        return env
+
+    def run_agentic(
+        self,
+        llm_client: CompGenLLMProtocol,
+        *,
+        budget: int = 10,
+        with_recipe: bool = True,
+    ) -> CompilationResult:
+        """Run the agentic loop starting from this compiled model's payload IR."""
+
+        env = self.create_agent_env(budget=budget)
+        loop = AgenticCompilationLoop(llm_client=llm_client, env=env, budget=budget)
+        if with_recipe:
+            return loop.run_with_recipe(self.device.profile)
+        return loop.run(self.device.profile)
 
 
 def device(
@@ -236,6 +278,29 @@ def compile_model(
         model_name=type(model).__name__,
     )
 
+    # Stage 1.75: Annotate ops with ukernel matches
+    log.info("api.compile.ukernel_annotate")
+    from compgen.ir.ukernel.builtins import build_default_registry
+    from compgen.ir.ukernel.annotate import annotate_ukernel_ops
+
+    ukernel_registry = build_default_registry()
+    # Extract target features for ukernel matching
+    _target_features: set[str] = set()
+    for _dev in target_device.profile.devices:
+        for _cu in _dev.compute_units:
+            _target_features.add(f"has_{_cu.name}")
+        for _feat in getattr(_dev, "features", []):
+            _target_features.add(f"has_{_feat}")
+    _device_type = target_device.profile.devices[0].device_type if target_device.profile.devices else ""
+
+    ukernel_annotations = annotate_ukernel_ops(
+        module,
+        ukernel_registry,
+        target_features=frozenset(_target_features),
+        device_type=_device_type,
+    )
+    log.info("api.compile.ukernel_annotate.done", annotated=ukernel_annotations)
+
     # Stage 2: Equality saturation
     log.info("api.compile.eqsat")
     eqsat_result = run_eqsat_pass(module)
@@ -266,8 +331,10 @@ def compile_model(
         objective=objective,
         capture_artifact=capture_artifact,
         analysis_dossier=analysis.dossier,
+        payload_module=module.clone(),
         pipeline_result=pipeline_result,
         eqsat_result=eqsat_result,
+        sample_inputs=sample_inputs,
         import_diagnostics=diagnostics,
     )
 

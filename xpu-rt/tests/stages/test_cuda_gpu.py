@@ -1,7 +1,7 @@
 """Tests for the CUDA GPU target dialect stack.
 
 Proves the full stage architecture works end-to-end:
-  encoding → dispatch → tiling → codegen → bundle
+  encoding → layout → dispatch → tiling → codegen → bundle
 with CUDA-specific plugins at each stage.
 """
 
@@ -106,13 +106,13 @@ class TestCudaStack:
     def test_create_stack(self) -> None:
         stack = create_cuda_gpu_stack()
         assert stack.target_name == "cuda_a100"
-        assert len(stack.stages) == 5
-        assert len(stack.plugins) == 4
+        assert len(stack.stages) == 6
+        assert len(stack.plugins) == 5
 
     def test_stack_stage_names(self) -> None:
         stack = create_cuda_gpu_stack()
         names = [s.name for s in stack.stages]
-        assert names == ["encoding", "dispatch", "tiling", "codegen", "bundle"]
+        assert names == ["encoding", "layout", "dispatch", "tiling", "codegen", "bundle"]
 
 
 # ============================================================================
@@ -133,7 +133,7 @@ class TestCudaPipeline:
         result = registry.run_pipeline(module, target, capabilities)
 
         assert result.passed, f"Pipeline failed: {result.first_failure}"
-        assert result.stages_run == 5
+        assert result.stages_run == 6
 
         # Check artifacts
         assert (tmp_path / "out" / "manifest.json").exists()
@@ -159,7 +159,7 @@ class TestCudaPipeline:
 
         violations = [r.contract_violations for r in result.stage_results]
         assert result.passed, f"Pipeline failed at {result.first_failure}: {violations}"
-        assert result.stages_run == 5
+        assert result.stages_run == 6
 
     def test_pipeline_produces_per_stage_results(self, target, capabilities) -> None:
         """Each stage should produce a StageResult."""
@@ -171,10 +171,10 @@ class TestCudaPipeline:
         module = _make_module()
         result = registry.run_pipeline(module, target, capabilities)
 
-        assert len(result.stage_results) == 5
+        assert len(result.stage_results) == 6
         for sr in result.stage_results:
             assert sr.passed
-            assert sr.stage_name in {"encoding", "dispatch", "tiling", "codegen", "bundle"}
+            assert sr.stage_name in {"encoding", "layout", "dispatch", "tiling", "codegen", "bundle"}
             assert len(sr.diagnostics) > 0  # Each stage should log something
 
     def test_pipeline_collects_artifacts(self, target, capabilities) -> None:
@@ -189,14 +189,15 @@ class TestCudaPipeline:
 
         # CUDA plugins produce strategy artifacts
         assert "encoding_strategy" in result.all_artifacts
+        assert "layout_strategy" in result.all_artifacts
         assert "fusion_strategy" in result.all_artifacts
         assert "tiling_strategy" in result.all_artifacts
         assert "codegen_strategy" in result.all_artifacts
 
     def test_variable_depth_vs_fixed(self, target, capabilities) -> None:
-        """CUDA stack has 5 stages; a simpler target could have 3."""
+        """CUDA stack has 6 stages; a simpler target could have 3."""
         cuda_stack = create_cuda_gpu_stack()
-        assert len(cuda_stack.stages) == 5
+        assert len(cuda_stack.stages) == 6
 
         # A minimal stack with just encoding + dispatch + bundle
         from compgen.stages.bundle import BundleStage

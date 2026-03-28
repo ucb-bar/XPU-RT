@@ -23,6 +23,7 @@ nav:
       - What Works Today: getting-started/what-works-today.md
   - Guides:
       - Use the Demo: guides/use-the-demo.md
+      - Benchmark Suites: guides/use-benchmark-suites.md
       - Bring Up a Target: guides/bring-up-a-target.md
       - Inspect Artifacts: guides/inspect-artifacts.md
   - Concepts:

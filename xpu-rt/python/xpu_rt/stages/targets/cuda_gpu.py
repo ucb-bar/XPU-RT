@@ -24,6 +24,7 @@ from compgen.stages.dispatch import DispatchStage
 from compgen.stages.dispatch.stage import DISPATCH_ID_ATTR
 from compgen.stages.encoding import EncodingStage
 from compgen.stages.encoding.stage import ENCODING_ATTR
+from compgen.stages.layout.stage import LayoutStage
 from compgen.stages.registry import TargetDialectStack
 from compgen.stages.templates.codegen import CODEGEN_BACKEND_ATTR, CodegenStage
 from compgen.stages.templates.tiling import TILE_SIZES_ATTR, TilingStage
@@ -135,6 +136,35 @@ class CudaTilingPlugin:
         return {"tiling_strategy": "cuda_threadblock"}
 
 
+class CudaLayoutPlugin:
+    """CUDA GPU layout: specialize layouts for tensor-core MMA tile shapes."""
+
+    @property
+    def target_name(self) -> str:
+        return "cuda_gpu"
+
+    @property
+    def stage_name(self) -> str:
+        return "layout"
+
+    def configure(self, target: TargetProfile, capabilities: CapabilitySpec) -> None:
+        self._target = target
+        self._caps = capabilities
+
+    def transform(self, module: ModuleOp) -> ModuleOp:
+        from compgen.transforms.layout.cuda_resolver import CudaLayoutResolver
+        from compgen.transforms.layout.fuse_layout_into_producers import fuse_layout_into_producers
+        from compgen.transforms.layout.specialize_layouts import specialize_layouts
+
+        module = fuse_layout_into_producers(module)
+        resolver = CudaLayoutResolver()
+        module = specialize_layouts(module, resolver=resolver, capabilities=self._caps)
+        return module
+
+    def get_artifacts(self) -> dict[str, Any]:
+        return {"layout_strategy": "cuda_mma_tiled"}
+
+
 class CudaCodegenPlugin:
     """CUDA GPU codegen: assign Triton or cuBLAS backends."""
 
@@ -188,6 +218,7 @@ def create_cuda_gpu_stack(output_dir: str | None = None) -> TargetDialectStack:
         target_name="cuda_a100",  # matches target profile name
         stages=[
             EncodingStage(),
+            LayoutStage(),
             DispatchStage(),
             TilingStage(),
             CodegenStage(),
@@ -195,6 +226,7 @@ def create_cuda_gpu_stack(output_dir: str | None = None) -> TargetDialectStack:
         ],
         plugins={
             "encoding": CudaEncodingPlugin(),
+            "layout": CudaLayoutPlugin(),
             "dispatch": CudaDispatchPlugin(),
             "tiling": CudaTilingPlugin(),
             "codegen": CudaCodegenPlugin(),

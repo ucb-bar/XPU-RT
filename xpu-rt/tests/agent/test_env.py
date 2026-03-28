@@ -5,7 +5,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from compgen.packs import PackContextSummary
+from compgen.packs import PackContextSummary, default_pack_root, load_pack
 from compgen.agent.env import (
     AnalyzeAction,
     ApplyPassAction,
@@ -13,9 +13,12 @@ from compgen.agent.env import (
     BenchmarkAction,
     CheckpointAction,
     CompilerEnv,
+    GenerateLLVMPatchAction,
+    GenerateXDSLDialectAction,
     GeneralizeAction,
     InspectAction,
     NoopAction,
+    RequestSemanticsAction,
     RollbackAction,
     SearchKernelAction,
     SolveAction,
@@ -291,6 +294,72 @@ def test_observation_exposes_pack_context() -> None:
     assert obs.active_packs == ("cuda_tile", "iree_tracy")
     assert "PACKS:" in observation_to_prompt(obs)
     assert observation_to_dict(obs)["packs"]["integration_branch"] == "compgen/integration/cuda_tile/test"
+
+
+def test_pack_governance_blocks_sealed_semantics_generation() -> None:
+    env = CompilerEnv()
+    cuda_tile = load_pack(default_pack_root() / "cuda_tile")
+    obs = env.reset(
+        _get_mlp_module(),
+        _get_target(),
+        pack_context=PackContextSummary(
+            active_packs=("cuda_tile",),
+            sealed_surfaces=cuda_tile.manifest.sealed_surfaces,
+            generation_apertures=cuda_tile.manifest.generation_apertures,
+        ),
+        loaded_packs=(cuda_tile,),
+    )
+    assert obs.active_packs == ("cuda_tile",)
+
+    result = env.step(RequestSemanticsAction(op_type="cuda_tile.matmul"))
+    assert not result.info.action_applied
+    assert "request_semantics" in result.info.error
+
+
+def test_pack_governance_generates_xdsl_and_llvm_artifacts() -> None:
+    env = CompilerEnv()
+    gemmini = load_pack(default_pack_root() / "gemmini_mx")
+    env.reset(
+        _get_mlp_module(),
+        _get_target(),
+        pack_context=PackContextSummary(
+            active_packs=(gemmini.manifest.name,),
+            sealed_surfaces=gemmini.manifest.sealed_surfaces,
+            generation_apertures=gemmini.manifest.generation_apertures,
+        ),
+        loaded_packs=(gemmini,),
+    )
+
+    xdsl_result = env.step(GenerateXDSLDialectAction(pack_name="gemmini_mx"))
+    assert xdsl_result.info.action_applied, xdsl_result.info.error
+    llvm_result = env.step(GenerateLLVMPatchAction(pack_name="gemmini_mx"))
+    assert llvm_result.info.action_applied, llvm_result.info.error
+
+    artifacts = env.runtime_artifacts
+    assert "gemmini_mx" in artifacts["xdsl_dialects"]
+    assert "dialect.py" in artifacts["xdsl_dialects"]["gemmini_mx"]["files"]
+    assert "gemmini_mx" in artifacts["llvm_patches"]
+    assert any(name.endswith(".td") for name in artifacts["llvm_patches"]["gemmini_mx"]["files"])
+
+
+def test_legal_actions_surface_pack_generation_actions() -> None:
+    env = CompilerEnv()
+    gemmini = load_pack(default_pack_root() / "gemmini_mx")
+    env.reset(
+        _get_mlp_module(),
+        _get_target(),
+        pack_context=PackContextSummary(
+            active_packs=(gemmini.manifest.name,),
+            sealed_surfaces=gemmini.manifest.sealed_surfaces,
+            generation_apertures=gemmini.manifest.generation_apertures,
+        ),
+        loaded_packs=(gemmini,),
+    )
+
+    legal = env.legal_actions()
+    action_types = {type(item.action).__name__ for item in legal}
+    assert "GenerateXDSLDialectAction" in action_types
+    assert "GenerateLLVMPatchAction" in action_types
 
 
 # ---- Real transforms ----
