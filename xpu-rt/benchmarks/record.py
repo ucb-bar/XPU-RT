@@ -87,6 +87,10 @@ class EqSatMetrics:
     total_rule_applications: int = 0
     changed: bool = False
     eqsat_time_ms: float = 0.0
+    # Codegen-enriched fields
+    pct_regions_touched: float = 0.0
+    top_rewrite_families: list[str] = field(default_factory=list)
+    speedup_delta_from_eqsat: float = 0.0
 
 
 @dataclass
@@ -111,6 +115,12 @@ class SolverMetrics:
     copy_time_us: float = 0.0
     node_assignments: dict[str, str] = field(default_factory=dict)
     transport_config: dict[str, str] = field(default_factory=dict)
+    # Codegen-enriched fields
+    distinct_devices_used: int = 0
+    total_bytes_transferred: int = 0
+    pct_time_solver: float = 0.0
+    pct_time_codegen: float = 0.0
+    pct_time_verification: float = 0.0
 
 
 @dataclass
@@ -127,6 +137,17 @@ class KernelMetrics:
     total_search_tokens: int = 0
     total_search_time_ms: float = 0.0
     contracts_path: str = ""
+    # Codegen-specific rollups
+    region_details: list[dict[str, Any]] = field(default_factory=list)
+    pct_native: float = 0.0
+    pct_library: float = 0.0
+    pct_fallback: float = 0.0
+    pct_generated: float = 0.0
+    pct_opaque: float = 0.0
+    pct_verified_numerically: float = 0.0
+    compile_ms_per_region: float = 0.0
+    roofline_gap: float = 0.0
+    realized_backends: dict[str, int] = field(default_factory=dict)
 
 
 @dataclass
@@ -143,6 +164,7 @@ class VerificationMetrics:
     numeric_equiv_max_error: float = 0.0
     translation_validation_pass: bool | None = None
     translation_validation_time_ms: float = 0.0
+    structural_expected_mismatch: bool = False
     overall_status: str = "pending"
     caught_by_level: dict[str, int] = field(default_factory=dict)
     rejection_reasons: list[str] = field(default_factory=list)
@@ -301,6 +323,70 @@ class DefectMetrics:
 
 
 @dataclass
+class CodegenRegionDetail:
+    """Per-region codegen detail — serialized to dict for KernelMetrics.region_details."""
+
+    region_id: str = ""
+    op_family: str = ""
+    selected_strategy: str = ""
+    candidate_backends: list[str] = field(default_factory=list)
+    selected_backend: str = ""
+    search_budget: int = 0
+    search_iterations_used: int = 0
+    generated_kernel_count: int = 0
+    compile_success: bool = False
+    numeric_pass: bool = False
+    perf_target_us: float = 0.0
+    measured_latency_us: float = 0.0
+    speedup_vs_reference: float = 0.0
+    fallback_reason: str = ""
+    layout_contract: str = ""
+    prepack_applied: bool = False
+    transpose_materializations: int = 0
+    opaque_boundary: bool = False
+    provider_backend: str = ""
+    baseline_latency_us: float = 0.0
+
+
+@dataclass
+class FallbackPressure:
+    """Fallback pressure metrics."""
+
+    fallback_region_count: int = 0
+    fallback_flop_share: float = 0.0
+    fallback_latency_share: float = 0.0
+    fallback_reasons_histogram: dict[str, int] = field(default_factory=dict)
+
+
+@dataclass
+class LayoutFriction:
+    """Layout friction metrics."""
+
+    materialized_transposes: int = 0
+    bytes_on_relayout: int = 0
+    prepacked_operands: int = 0
+    regions_in_propagated_layout: int = 0
+    opaque_boundaries_forcing_materialization: int = 0
+
+
+@dataclass
+class CodegenFunnel:
+    """Codegen success funnel metrics."""
+
+    eligible: int = 0
+    attempted: int = 0
+    compiled: int = 0
+    verified: int = 0
+    benchmarked: int = 0
+    faster: int = 0
+    promoted: int = 0
+    geo_mean_speedup: float = 0.0
+    median_time_to_first_valid_ms: float = 0.0
+    median_time_to_first_faster_ms: float = 0.0
+    budget_utilization: float = 0.0
+
+
+@dataclass
 class StudyMetadata:
     """Study and case identity for the paper harness."""
 
@@ -371,6 +457,9 @@ class RunRecord:
     generation: GenerationMetrics = field(default_factory=GenerationMetrics)
     synthesis: SynthesisMetrics = field(default_factory=SynthesisMetrics)
     defects: DefectMetrics = field(default_factory=DefectMetrics)
+    fallback_pressure: FallbackPressure = field(default_factory=FallbackPressure)
+    layout_friction: LayoutFriction = field(default_factory=LayoutFriction)
+    codegen_funnel: CodegenFunnel = field(default_factory=CodegenFunnel)
     total_compile_time_ms: float = 0.0
     promotion_status: str = "pending"
     errors: list[str] = field(default_factory=list)
@@ -416,6 +505,9 @@ class RunRecord:
             "generation": GenerationMetrics,
             "synthesis": SynthesisMetrics,
             "defects": DefectMetrics,
+            "fallback_pressure": FallbackPressure,
+            "layout_friction": LayoutFriction,
+            "codegen_funnel": CodegenFunnel,
         }
         for key, val in data.items():
             if key in nested_types and isinstance(val, dict):
@@ -430,11 +522,15 @@ __all__ = [
     "ArtifactMetrics",
     "BaselineMetrics",
     "CaptureMetrics",
+    "CodegenFunnel",
+    "CodegenRegionDetail",
     "DefectMetrics",
     "EqSatMetrics",
+    "FallbackPressure",
     "GenerationMetrics",
     "IRMetrics",
     "KernelMetrics",
+    "LayoutFriction",
     "LLMMetrics",
     "PerformanceMetrics",
     "ProductivityMetrics",

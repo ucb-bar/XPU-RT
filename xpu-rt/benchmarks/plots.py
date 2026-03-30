@@ -301,30 +301,37 @@ def plot_verification_ladder(records: list[RunRecord], output_dir: str | Path) -
 
     fig, ax = plt.subplots(figsize=(10, max(3, len(records) * 0.6 + 1)))
 
-    levels = ["Structural", "CHECK", "Differential", "Translation\nValidation"]
+    levels = ["Structural", "CHECK", "Differential", "Translation\nValidation", "Overall"]
     data = []
     labels = []
     for r in records:
         v = r.verification
+        mismatch = getattr(v, "structural_expected_mismatch", False)
+        overall_val = (
+            0.75 if mismatch else
+            (1.0 if v.overall_status == "pass" else
+             (0.5 if v.overall_status in ("skip", "skipped") else 0.0))
+        )
         row = [
-            1 if v.structural_pass else 0,
+            1 if v.structural_pass else (0.75 if mismatch else 0),
             1 if v.check_assertions_pass else 0,
             1 if v.differential_pass else 0,
             1 if v.translation_validation_pass else (0.5 if v.translation_validation_pass is None else 0),
+            overall_val,
         ]
         data.append(row)
         labels.append(f"{r.model_name}/{r.target_name}")
 
     if not data:
-        data = [[0, 0, 0, 0]]
+        data = [[0, 0, 0, 0, 0]]
         labels = ["(no data)"]
 
     import numpy as np
     data_arr = np.array(data)
 
-    # Color: green=pass, red=fail, yellow=skip/None
+    # 4 colors: red=FAIL, yellow=SKIP, yellow-green=EXPECTED_MISMATCH, green=PASS
     from matplotlib.colors import ListedColormap
-    cmap = ListedColormap(["#e74c3c", "#f39c12", "#2ecc71"])
+    cmap = ListedColormap(["#e74c3c", "#f39c12", "#a8d08d", "#2ecc71"])
     ax.imshow(data_arr, cmap=cmap, vmin=0, vmax=1, aspect="auto")
 
     ax.set_xticks(range(len(levels)))
@@ -337,9 +344,16 @@ def plot_verification_ladder(records: list[RunRecord], output_dir: str | Path) -
     for i in range(len(labels)):
         for j in range(len(levels)):
             val = data_arr[i, j]
-            text = "PASS" if val == 1 else ("SKIP" if val == 0.5 else "FAIL")
-            ax.text(j, i, text, ha="center", va="center", fontsize=8, fontweight="bold",
-                    color="white" if val != 0.5 else "black")
+            if val >= 1.0:
+                text = "PASS"
+            elif val >= 0.7:
+                text = "MISMATCH"
+            elif val >= 0.4:
+                text = "SKIP"
+            else:
+                text = "FAIL"
+            ax.text(j, i, text, ha="center", va="center", fontsize=7, fontweight="bold",
+                    color="white" if val < 0.4 or val >= 1.0 else "black")
 
     path = _ensure_dir(Path(output_dir)) / "verification_ladder.png"
     fig.savefig(path, dpi=150, bbox_inches="tight")

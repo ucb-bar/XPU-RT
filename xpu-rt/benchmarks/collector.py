@@ -5,11 +5,17 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from dataclasses import asdict
+
 from benchmarks.record import (
     AgenticMetrics,
     CaptureMetrics,
+    CodegenFunnel,
+    CodegenRegionDetail,
     EqSatMetrics,
+    FallbackPressure,
     IRMetrics,
+    LayoutFriction,
     PerformanceMetrics,
     RecipeMetrics,
     SynthesisMetrics,
@@ -289,11 +295,250 @@ def _std(values: list[float]) -> float:
     return variance ** 0.5
 
 
+# ---------------------------------------------------------------------------
+# Codegen-specific collectors
+# ---------------------------------------------------------------------------
+
+
+def collect_codegen_region_detail(
+    decision: Any,
+    spec: Any | None = None,
+    layout_plan: Any | None = None,
+    region_id: str = "",
+) -> dict[str, Any]:
+    """Build a per-region codegen detail dict from a StrategyDecision.
+
+    Returns ``asdict(CodegenRegionDetail(...))``.
+    """
+    strategy = decision.strategy.value if hasattr(decision.strategy, "value") else str(decision.strategy)
+    op_name = decision.spec.contract.op_name if hasattr(decision.spec, "contract") else ""
+    op_family = op_name.split(".")[-1] if "." in op_name else op_name
+
+    perf_target = 0.0
+    if spec is not None and hasattr(spec, "perf_target_us") and spec.perf_target_us is not None:
+        perf_target = spec.perf_target_us
+
+    search_budget = 0
+    backends: list[str] = []
+    if spec is not None and hasattr(spec, "search_budget"):
+        search_budget = spec.search_budget
+    if spec is not None and hasattr(spec, "backends"):
+        backends = list(spec.backends)
+
+    prepack = False
+    layout_contract = ""
+    if layout_plan is not None:
+        prepack = bool(getattr(layout_plan, "prepack_candidates", []))
+        layout_contract = getattr(layout_plan, "preferred_output_layout", "")
+
+    fallback_reason = ""
+    if strategy in ("fallback", "unsupported"):
+        fallback_reason = decision.reason
+
+    detail = CodegenRegionDetail(
+        region_id=region_id or op_name,
+        op_family=op_family,
+        selected_strategy=strategy,
+        candidate_backends=backends,
+        selected_backend=decision.library_name or "",
+        search_budget=search_budget,
+        perf_target_us=perf_target,
+        fallback_reason=fallback_reason,
+        layout_contract=layout_contract,
+        prepack_applied=prepack,
+    )
+    return asdict(detail)
+
+
+def collect_fallback_pressure(
+    decisions: list[Any],
+    specs: list[Any] | None = None,
+) -> FallbackPressure:
+    """Compute fallback pressure from strategy decisions."""
+    total_flops = 0
+    fallback_flops = 0
+    fallback_count = 0
+    reasons: dict[str, int] = {}
+
+    for i, d in enumerate(decisions):
+        strategy = d.strategy.value if hasattr(d.strategy, "value") else str(d.strategy)
+        flops = 0
+        if specs and i < len(specs):
+            flops = getattr(specs[i].contract.cost, "flops", 0) if hasattr(specs[i], "contract") else 0
+        elif hasattr(d.spec, "contract"):
+            flops = getattr(d.spec.contract.cost, "flops", 0)
+        total_flops += flops
+
+        if strategy == "fallback":
+            fallback_count += 1
+            fallback_flops += flops
+            reason = d.reason if hasattr(d, "reason") else "unknown"
+            reasons[reason] = reasons.get(reason, 0) + 1
+
+    return FallbackPressure(
+        fallback_region_count=fallback_count,
+        fallback_flop_share=fallback_flops / max(total_flops, 1),
+        fallback_latency_share=0.0,  # needs runtime measurement
+        fallback_reasons_histogram=reasons,
+    )
+
+
+def collect_layout_friction(
+    layout_plans: dict[str, Any] | None = None,
+    region_details: list[dict[str, Any]] | None = None,
+) -> LayoutFriction:
+    """Compute layout friction from layout plans and region details."""
+    plans = layout_plans or {}
+    details = region_details or []
+
+    prepacked = 0
+    propagated = 0
+    for plan in plans.values():
+        candidates = getattr(plan, "prepack_candidates", [])
+        prepacked += len(candidates)
+        if getattr(plan, "tile_encoding", None):
+            propagated += 1
+
+    transpose_mats = 0
+    opaque_bounds = 0
+    for d in details:
+        transpose_mats += d.get("transpose_materializations", 0)
+        if d.get("opaque_boundary", False):
+            opaque_bounds += 1
+
+    return LayoutFriction(
+        materialized_transposes=transpose_mats,
+        bytes_on_relayout=0,  # needs runtime measurement
+        prepacked_operands=prepacked,
+        regions_in_propagated_layout=propagated,
+        opaque_boundaries_forcing_materialization=opaque_bounds,
+    )
+
+
+def collect_codegen_funnel(
+    region_details: list[dict[str, Any]] | None = None,
+) -> CodegenFunnel:
+    """Compute codegen success funnel from region details."""
+    details = region_details or []
+
+    eligible = 0
+    attempted = 0
+    compiled = 0
+    verified = 0
+    benchmarked = 0
+    faster = 0
+    promoted = 0
+    speedups: list[float] = []
+
+    for d in details:
+        strategy = d.get("selected_strategy", "")
+        if strategy in ("native",):
+            continue
+        eligible += 1
+        if d.get("search_iterations_used", 0) > 0:
+            attempted += 1
+        if d.get("compile_success", False):
+            compiled += 1
+        if d.get("numeric_pass", False):
+            verified += 1
+        if d.get("measured_latency_us", 0.0) > 0:
+            benchmarked += 1
+        su = d.get("speedup_vs_reference", 0.0)
+        if su > 1.0:
+            faster += 1
+            speedups.append(su)
+        if d.get("generated_kernel_count", 0) > 0 and d.get("numeric_pass", False):
+            promoted += 1
+
+    geo_mean = 0.0
+    if speedups:
+        import math
+        geo_mean = math.exp(sum(math.log(s) for s in speedups) / len(speedups))
+
+    budget_total = sum(d.get("search_budget", 0) for d in details if d.get("selected_strategy", "") not in ("native",))
+    iters_total = sum(d.get("search_iterations_used", 0) for d in details)
+    utilization = iters_total / max(budget_total, 1)
+
+    return CodegenFunnel(
+        eligible=eligible,
+        attempted=attempted,
+        compiled=compiled,
+        verified=verified,
+        benchmarked=benchmarked,
+        faster=faster,
+        promoted=promoted,
+        geo_mean_speedup=geo_mean,
+        budget_utilization=utilization,
+    )
+
+
+def collect_realized_backends(
+    region_details: list[dict[str, Any]] | None = None,
+) -> dict[str, int]:
+    """Count regions by realized codegen backend (provider that produced the kernel)."""
+    details = region_details or []
+    backends: dict[str, int] = {}
+    for d in details:
+        backend = d.get("provider_backend", "none")
+        backends[backend] = backends.get(backend, 0) + 1
+    return backends
+
+
+def collect_kernel_rollups(
+    strategy_histogram: dict[str, int],
+    region_details: list[dict[str, Any]] | None = None,
+    total_compile_time_ms: float = 0.0,
+) -> dict[str, float]:
+    """Compute model-level kernel rollups from strategy histogram and region details.
+
+    Returns a dict of field names -> values to set on KernelMetrics.
+    """
+    details = region_details or []
+    total = sum(strategy_histogram.values()) or 1
+
+    native = strategy_histogram.get("native", 0)
+    library = strategy_histogram.get("library", 0)
+    fallback = strategy_histogram.get("fallback", 0)
+    unsupported = strategy_histogram.get("unsupported", 0)
+    generated = strategy_histogram.get("autocomp", 0) + strategy_histogram.get("exo", 0) + strategy_histogram.get("ukernel", 0)
+    opaque = library + unsupported
+
+    verified_count = sum(1 for d in details if d.get("numeric_pass", False))
+    region_count = len(details) or total
+
+    # Roofline gap: median of measured / target for regions with both
+    gaps = []
+    for d in details:
+        target = d.get("perf_target_us", 0.0)
+        measured = d.get("measured_latency_us", 0.0)
+        if target > 0 and measured > 0:
+            gaps.append(measured / target)
+    gaps.sort()
+    roofline_gap = gaps[len(gaps) // 2] if gaps else 0.0
+
+    return {
+        "pct_native": native / total * 100,
+        "pct_library": library / total * 100,
+        "pct_fallback": fallback / total * 100,
+        "pct_generated": generated / total * 100,
+        "pct_opaque": opaque / total * 100,
+        "pct_verified_numerically": verified_count / max(region_count, 1) * 100,
+        "compile_ms_per_region": total_compile_time_ms / max(region_count, 1),
+        "roofline_gap": roofline_gap,
+    }
+
+
 __all__ = [
     "collect_agentic_metrics",
     "collect_capture_metrics",
+    "collect_codegen_funnel",
+    "collect_codegen_region_detail",
     "collect_eqsat_metrics",
+    "collect_fallback_pressure",
     "collect_ir_metrics",
+    "collect_kernel_rollups",
+    "collect_layout_friction",
+    "collect_realized_backends",
     "collect_performance_metrics",
     "collect_recipe_metrics",
     "collect_synthesis_metrics",

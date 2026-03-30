@@ -125,4 +125,57 @@ def build_kernel_contracts(
     return specs
 
 
-__all__ = ["KernelSearchPlan", "KernelSpec", "build_kernel_contracts"]
+def spec_to_provider_contract(
+    spec: KernelSpec,
+    region_id: str,
+    target: TargetProfile,
+) -> Any:
+    """Bridge IR-level KernelSpec to provider-level KernelContract.
+
+    Converts the IR kernel spec into the provider protocol's contract type
+    so that ``ProviderRegistry.search()`` can be called.
+    """
+    from compgen.kernels.provider import KernelContract as ProviderContract
+
+    ir_contract = spec.contract
+    op_name = ir_contract.op_name
+    op_family = op_name.split(".")[-1] if "." in op_name else op_name
+
+    # Map IR op_family names to template-compatible names
+    _aliases = {
+        "softmax": "softmax",
+        "layer_norm": "layer_norm",
+        "batch_norm": "layer_norm",
+    }
+    op_family = _aliases.get(op_family, op_family)
+
+    input_shapes = tuple(tuple(s) for s in spec.input_shapes) if spec.input_shapes else ()
+    output_shapes = tuple(tuple(s) for s in spec.output_shapes) if spec.output_shapes else ()
+
+    # Synthesize minimal shapes when IR contracts don't carry concrete shapes
+    # so that constraint evaluators (e.g. M>=1) can fire.
+    if not input_shapes and ir_contract.cost.flops > 0:
+        if op_family in ("matmul", "batch_matmul"):
+            input_shapes = ((1, 64), (64, 64))
+        elif op_family in ("conv_2d_nhwc_hwcf",):
+            input_shapes = ((1, 8, 8, 3), (3, 3, 3, 16))
+        else:
+            input_shapes = ((1, 64),)
+    dtypes = tuple(ir_contract.supported_dtypes) if ir_contract.supported_dtypes else ("float32",)
+
+    target_name = target.name
+    hardware_key = target.devices[0].name if target.devices else ""
+
+    return ProviderContract(
+        region_id=region_id,
+        op_family=op_family,
+        input_shapes=input_shapes,
+        output_shapes=output_shapes,
+        dtypes=dtypes,
+        target_name=target_name,
+        hardware_key=hardware_key,
+        objective="latency",
+    )
+
+
+__all__ = ["KernelSearchPlan", "KernelSpec", "build_kernel_contracts", "spec_to_provider_contract"]

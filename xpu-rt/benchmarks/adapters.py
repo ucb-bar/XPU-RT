@@ -537,6 +537,13 @@ class CompGenAdapter:
                 record.verification.differential_max_error = float(verification_result.max_abs_error or 0.0)
                 tv_detail = verification_result.details.get("translation_validation", "")
                 record.verification.translation_validation_pass = None if "SKIPPED" in tv_detail else True
+                # Detect structural-expected-mismatch (structural fails but numeric passes)
+                if hasattr(verification_result, "levels_run"):
+                    from compgen.transforms.verify import VerificationLevel
+                    structural_ran = VerificationLevel.STRUCTURAL in verification_result.levels_run
+                    structural_passed = VerificationLevel.STRUCTURAL in verification_result.levels_passed
+                    if verification_result.passed and structural_ran and not structural_passed:
+                        record.verification.structural_expected_mismatch = True
                 record.verification.overall_status = "pass" if verification_result.passed else "fail"
             else:
                 record.verification.overall_status = "skip"

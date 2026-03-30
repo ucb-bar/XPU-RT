@@ -202,11 +202,167 @@ _ELEMENTWISE_GELU_TEMPLATE = textwrap.dedent("""\
         return Y
 """)
 
+_MATMUL_TEMPLATE = textwrap.dedent("""\
+    import triton
+    import triton.language as tl
+    import torch
+
+    @triton.jit
+    def matmul_kernel(
+        A_ptr, B_ptr, C_ptr,
+        M, N, K,
+        stride_am, stride_ak,
+        stride_bk, stride_bn,
+        stride_cm, stride_cn,
+        BLOCK_M: tl.constexpr, BLOCK_N: tl.constexpr, BLOCK_K: tl.constexpr,
+    ):
+        pid_m = tl.program_id(0)
+        pid_n = tl.program_id(1)
+        offs_m = pid_m * BLOCK_M + tl.arange(0, BLOCK_M)
+        offs_n = pid_n * BLOCK_N + tl.arange(0, BLOCK_N)
+        offs_k = tl.arange(0, BLOCK_K)
+
+        a_ptrs = A_ptr + offs_m[:, None] * stride_am + offs_k[None, :] * stride_ak
+        b_ptrs = B_ptr + offs_k[:, None] * stride_bk + offs_n[None, :] * stride_bn
+
+        acc = tl.zeros((BLOCK_M, BLOCK_N), dtype=tl.float32)
+        for k_start in range(0, K, BLOCK_K):
+            mask_a = (offs_m[:, None] < M) & ((offs_k[None, :] + k_start) < K)
+            mask_b = ((offs_k[:, None] + k_start) < K) & (offs_n[None, :] < N)
+            a = tl.load(a_ptrs, mask=mask_a, other=0.0)
+            b = tl.load(b_ptrs, mask=mask_b, other=0.0)
+            acc += tl.dot(a, b)
+            a_ptrs += BLOCK_K * stride_ak
+            b_ptrs += BLOCK_K * stride_bk
+
+        mask_c = (offs_m[:, None] < M) & (offs_n[None, :] < N)
+        c_ptrs = C_ptr + offs_m[:, None] * stride_cm + offs_n[None, :] * stride_cn
+        tl.store(c_ptrs, acc, mask=mask_c)
+
+    def kernel(A: torch.Tensor, B: torch.Tensor) -> torch.Tensor:
+        M, K = A.shape
+        K2, N = B.shape
+        assert K == K2
+        C = torch.empty((M, N), device=A.device, dtype=A.dtype)
+        BLOCK_M, BLOCK_N, BLOCK_K = {block_m}, {block_n}, {block_k}
+        grid = ((M + BLOCK_M - 1) // BLOCK_M, (N + BLOCK_N - 1) // BLOCK_N)
+        matmul_kernel[grid](
+            A, B, C,
+            M, N, K,
+            A.stride(0), A.stride(1),
+            B.stride(0), B.stride(1),
+            C.stride(0), C.stride(1),
+            BLOCK_M=BLOCK_M, BLOCK_N=BLOCK_N, BLOCK_K=BLOCK_K,
+        )
+        return C
+""")
+
+_SOFTMAX_TEMPLATE = textwrap.dedent("""\
+    import triton
+    import triton.language as tl
+    import torch
+
+    @triton.jit
+    def softmax_kernel(
+        input_ptr, output_ptr,
+        n_cols,
+        stride_row,
+        BLOCK_SIZE: tl.constexpr,
+    ):
+        row_idx = tl.program_id(0)
+        row_start = row_idx * stride_row
+        col_offsets = tl.arange(0, BLOCK_SIZE)
+        mask = col_offsets < n_cols
+
+        row = tl.load(input_ptr + row_start + col_offsets, mask=mask, other=float('-inf'))
+        row_max = tl.max(row, axis=0)
+        numerator = tl.exp(row - row_max)
+        denominator = tl.sum(numerator, axis=0)
+        result = numerator / denominator
+        tl.store(output_ptr + row_start + col_offsets, result, mask=mask)
+
+    def kernel(X: torch.Tensor) -> torch.Tensor:
+        n_rows, n_cols = X.shape
+        Y = torch.empty_like(X)
+        BLOCK_SIZE = {block_size}
+        grid = (n_rows,)
+        softmax_kernel[grid](X, Y, n_cols, X.stride(0), BLOCK_SIZE=BLOCK_SIZE)
+        return Y
+""")
+
+_LAYERNORM_TEMPLATE = textwrap.dedent("""\
+    import triton
+    import triton.language as tl
+    import torch
+
+    @triton.jit
+    def layernorm_kernel(
+        input_ptr, output_ptr,
+        n_cols,
+        stride_row,
+        eps: tl.constexpr,
+        BLOCK_SIZE: tl.constexpr,
+    ):
+        row_idx = tl.program_id(0)
+        row_start = row_idx * stride_row
+        col_offsets = tl.arange(0, BLOCK_SIZE)
+        mask = col_offsets < n_cols
+
+        row = tl.load(input_ptr + row_start + col_offsets, mask=mask, other=0.0)
+        mean = tl.sum(row, axis=0) / n_cols
+        centered = row - mean
+        var = tl.sum(centered * centered, axis=0) / n_cols
+        rstd = 1.0 / tl.sqrt(var + eps)
+        result = centered * rstd
+        tl.store(output_ptr + row_start + col_offsets, result, mask=mask)
+
+    def kernel(X: torch.Tensor) -> torch.Tensor:
+        n_rows, n_cols = X.shape
+        Y = torch.empty_like(X)
+        BLOCK_SIZE = {block_size}
+        grid = (n_rows,)
+        layernorm_kernel[grid](X, Y, n_cols, X.stride(0), eps=1e-5, BLOCK_SIZE=BLOCK_SIZE)
+        return Y
+""")
+
+_ADD_RELU_TEMPLATE = textwrap.dedent("""\
+    import triton
+    import triton.language as tl
+    import torch
+
+    @triton.jit
+    def add_relu_kernel(
+        a_ptr, b_ptr, output_ptr,
+        n_elements,
+        BLOCK_SIZE: tl.constexpr,
+    ):
+        pid = tl.program_id(0)
+        offsets = pid * BLOCK_SIZE + tl.arange(0, BLOCK_SIZE)
+        mask = offsets < n_elements
+
+        a = tl.load(a_ptr + offsets, mask=mask, other=0.0)
+        b = tl.load(b_ptr + offsets, mask=mask, other=0.0)
+        result = tl.maximum(a + b, 0.0)
+        tl.store(output_ptr + offsets, result, mask=mask)
+
+    def kernel(A: torch.Tensor, B: torch.Tensor) -> torch.Tensor:
+        output = torch.empty_like(A)
+        n_elements = A.numel()
+        BLOCK_SIZE = {block_size}
+        grid = ((n_elements + BLOCK_SIZE - 1) // BLOCK_SIZE,)
+        add_relu_kernel[grid](A, B, output, n_elements, BLOCK_SIZE=BLOCK_SIZE)
+        return output
+""")
+
 # Map from op_family tag to template string and description.
 _TEMPLATES: dict[str, tuple[str, str]] = {
+    "matmul": (_MATMUL_TEMPLATE, "Matrix multiply (C = A @ B)"),
     "matmul_bias_gelu": (_MATMUL_BIAS_GELU_TEMPLATE, "Fused matmul + bias + GELU"),
     "matmul_bias_relu": (_MATMUL_BIAS_RELU_TEMPLATE, "Fused matmul + bias + ReLU"),
     "elementwise_gelu": (_ELEMENTWISE_GELU_TEMPLATE, "Element-wise GELU"),
+    "softmax": (_SOFTMAX_TEMPLATE, "Row-wise softmax"),
+    "layer_norm": (_LAYERNORM_TEMPLATE, "Fused layer normalization"),
+    "add_relu": (_ADD_RELU_TEMPLATE, "Elementwise add + ReLU"),
 }
 
 
@@ -394,8 +550,13 @@ def _instantiate(
     default_block: int,
 ) -> str:
     """Format a template string with tile-size parameters."""
-    if op.startswith("elementwise"):
-        return template.format(block_size=default_block)
+    if op.startswith("elementwise") or op in ("softmax", "layer_norm", "add_relu"):
+        block_size = default_block
+        if op in ("softmax", "layer_norm"):
+            # For row-wise ops, block_size must be >= n_cols (power of 2)
+            block_size = max(default_block, 1 << max(dim_n.bit_length(), 4))
+            block_size = min(block_size, 8192)  # cap to avoid excessive shared memory
+        return template.format(block_size=block_size)
 
     block_m, block_n, block_k = _pick_tile_sizes(dim_m, dim_n, dim_k)
     return template.format(block_m=block_m, block_n=block_n, block_k=block_k)
@@ -451,6 +612,24 @@ def _validate_on_gpu(
         x = torch.randn(dim_m, dim_n, device=device, dtype=torch.float32)
         ref_out = torch.nn.functional.gelu(x)
         test_inputs = (x,)
+    elif op == "matmul":
+        a_mat = torch.randn(dim_m, dim_k, device=device, dtype=torch.float32)
+        b_mat = torch.randn(dim_k, dim_n, device=device, dtype=torch.float32)
+        ref_out = a_mat @ b_mat
+        test_inputs = (a_mat, b_mat)
+    elif op == "softmax":
+        x = torch.randn(dim_m, dim_n, device=device, dtype=torch.float32)
+        ref_out = torch.softmax(x, dim=-1)
+        test_inputs = (x,)
+    elif op == "layer_norm":
+        x = torch.randn(dim_m, dim_n, device=device, dtype=torch.float32)
+        ref_out = torch.nn.functional.layer_norm(x, (dim_n,))
+        test_inputs = (x,)
+    elif op == "add_relu":
+        a = torch.randn(dim_m, dim_n, device=device, dtype=torch.float32)
+        b = torch.randn(dim_m, dim_n, device=device, dtype=torch.float32)
+        ref_out = torch.relu(a + b)
+        test_inputs = (a, b)
     else:
         a_mat = torch.randn(dim_m, dim_k, device=device, dtype=torch.float32)
         b_mat = torch.randn(dim_k, dim_n, device=device, dtype=torch.float32)

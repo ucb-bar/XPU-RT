@@ -144,6 +144,17 @@ def export_csv(records: list[RunRecord], output_path: str | Path) -> Path:
         "throughput_samples_per_sec",
         "artifact_completeness_score",
         "promotion_status",
+        # Codegen-specific columns
+        "pct_native",
+        "pct_library",
+        "pct_fallback",
+        "pct_generated",
+        "roofline_gap",
+        "fallback_flop_share",
+        "materialized_transposes",
+        "codegen_eligible",
+        "codegen_faster",
+        "geo_mean_speedup",
     ]
 
     with open(path, "w", newline="", encoding="utf-8") as handle:
@@ -179,6 +190,17 @@ def export_csv(records: list[RunRecord], output_path: str | Path) -> Path:
                     "throughput_samples_per_sec": r.performance.throughput_samples_per_sec,
                     "artifact_completeness_score": r.artifacts.completeness_score,
                     "promotion_status": r.promotion_status,
+                    # Codegen-specific
+                    "pct_native": r.kernels.pct_native,
+                    "pct_library": r.kernels.pct_library,
+                    "pct_fallback": r.kernels.pct_fallback,
+                    "pct_generated": r.kernels.pct_generated,
+                    "roofline_gap": r.kernels.roofline_gap,
+                    "fallback_flop_share": r.fallback_pressure.fallback_flop_share,
+                    "materialized_transposes": r.layout_friction.materialized_transposes,
+                    "codegen_eligible": r.codegen_funnel.eligible,
+                    "codegen_faster": r.codegen_funnel.faster,
+                    "geo_mean_speedup": r.codegen_funnel.geo_mean_speedup,
                 }
             )
     return path
