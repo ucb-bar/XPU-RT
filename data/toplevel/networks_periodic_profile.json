@@ -2,7 +2,11 @@
   "hardware": {
     "machines": { "cpu_p": "CPU_P", "cpu_e": "CPU_E" },
     "profile_hw": { "cpu_p": "RVV", "cpu_e": "scalar" },
-    "profile": { "target": "spacemit_x60", "topo_tag": "topo_0_1_2_3" }
+    "profile": {
+      "target": "spacemit_x60",
+      "topo_tag": "topo_0_1_2_3",
+      "gen_root": "profiled/gen"
+    }
   },
   "scheduler": {
     "random_seed": 42,
@@ -13,19 +17,51 @@
     "restrict_makespan_to_nonperiodic": true
   },
   "networks": {
-    "dronet": {
+    "dronet0": {
       "id": 0,
       "identifier": "dronet",
-      "dispatch_deps_path": "gen/vmfb/dronet/spacemit_x60/RVV/dronet.q.int8/dronet.q.int8_dispatch_graph.json"
+      "dispatch_deps_path": "profiled/gen/vmfb/dronet/spacemit_x60/RVV/dronet.q.int8/dronet.q.int8_dispatch_graph.json",
+      "min_start_t": 0,
+      "max_end_t": 55
     },
-    "mlp": {
+    "dronet1": {
       "id": 1,
-      "identifier": "mlp",
-      "dispatch_deps_path": "gen/vmfb/mlp/spacemit_x60/RVV/mlp.q.int8/mlp.q.int8_dispatch_graph.json",
-      "period": 2,
-      "window_duration": 0.5,
-      "start_time": 0
+      "identifier": "dronet",
+      "dispatch_deps_path": "profiled/gen/vmfb/dronet/spacemit_x60/RVV/dronet.q.int8/dronet.q.int8_dispatch_graph.json",
+      "min_start_t": 55,
+      "max_end_t": 110
+    },
+    "dronet2": {
+      "id": 2,
+      "identifier": "dronet",
+      "dispatch_deps_path": "profiled/gen/vmfb/dronet/spacemit_x60/RVV/dronet.q.int8/dronet.q.int8_dispatch_graph.json",
+      "min_start_t": 110,
+      "max_end_t": 165
+    },
+    "dronet3": {
+      "id": 3,
+      "identifier": "dronet",
+      "dispatch_deps_path": "profiled/gen/vmfb/dronet/spacemit_x60/RVV/dronet.q.int8/dronet.q.int8_dispatch_graph.json",
+      "min_start_t": 165,
+      "max_end_t": 220
+    },
+    "dronet4": {
+      "id": 4,
+      "identifier": "dronet",
+      "dispatch_deps_path": "profiled/gen/vmfb/dronet/spacemit_x60/RVV/dronet.q.int8/dronet.q.int8_dispatch_graph.json",
+      "min_start_t": 220,
+      "max_end_t": 275
+    },
+    "mobilenet": {
+      "id": 5,
+      "identifier": "mobilenet_v2",
+      "dispatch_deps_path": "profiled/gen/vmfb/mobilenet_v2/spacemit_x60/RVV/mobilenet_v2/mobilenet_v2_dispatch_graph.json"
     }
   },
-  "edges": []
+  "edges": [
+    { "from": "dronet0", "to": "dronet1" },
+    { "from": "dronet1", "to": "dronet2" },
+    { "from": "dronet2", "to": "dronet3" },
+    { "from": "dronet3", "to": "dronet4" }
+  ]
 }

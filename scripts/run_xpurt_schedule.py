@@ -12,8 +12,12 @@ import csv
 import glob
 import numpy as np
 
-# Add parent path to sys path to enable imports
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Repo root + xpu-rt package (workload, scheduler, plot, workload_factory live under xpu-rt/)
+_repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_xpu_rt = os.path.join(_repo_root, "xpu-rt")
+for _p in (_xpu_rt, _repo_root):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
 
 from workload import Workload, Operation
 from workload_factory import create_workload_from_network_hierarchy, resolve_dispatch_deps_path
@@ -150,7 +154,9 @@ def _load_hardware_runtime_config(
         machines: {cpu_p, cpu_e} OR [cpu_p_name, cpu_e_name]
         cpu_p: {name, profile_hw}
         cpu_e: {name, profile_hw}
-        profile: {target, topo_tag}
+        profile: {target, topo_tag, gen_root}
+        gen_root: str (optional, default "gen") — directory under repo containing profile/ and
+          typically paired vmfb/ trees; e.g. "profiled/gen" for artifacts extracted under profiled/.
         p_core_speedup: float
       scheduler:
         random_seed: int (or -1 for nondeterministic)
@@ -167,6 +173,7 @@ def _load_hardware_runtime_config(
         "cpu_e_profile_hw": "scalar",
         "profile_target": "spacemit_x60",
         "profile_topo_tag": "topo_0_1_2_3",
+        "gen_root": "gen",
         "p_core_speedup": 1.5,
         "random_seed": 0,
         "solver_verbosity": 0,
@@ -305,6 +312,16 @@ def _load_hardware_runtime_config(
         default=defaults["profile_topo_tag"],
     )
 
+    gen_root = _first_nonempty_string(
+        [
+            profile_cfg.get("gen_root"),
+            hardware_cfg.get("gen_root"),
+            networks_data.get("gen_root"),
+        ],
+        default=defaults["gen_root"],
+    )
+    gen_root = gen_root.strip().strip("/\\")
+
     raw_speedup = (
         hardware_cfg.get("p_core_speedup")
         if hardware_cfg.get("p_core_speedup") is not None
@@ -363,6 +380,7 @@ def _load_hardware_runtime_config(
         "cpu_e_profile_hw": cpu_e_profile_hw,
         "profile_target": profile_target,
         "profile_topo_tag": profile_topo_tag,
+        "gen_root": gen_root,
         "p_core_speedup": p_core_speedup,
         "random_seed": random_seed,
         "solver_verbosity": solver_verbosity,
@@ -422,6 +440,7 @@ def load_profiled_times(csv_path: str) -> dict[int, dict]:
 def _find_profile_csv_in_gen(
     repo_base_path: str,
     *,
+    gen_root: str = "gen",
     model: str,
     target: str,
     hw: str,
@@ -432,11 +451,14 @@ def _find_profile_csv_in_gen(
     Find a profiling results.csv produced by runtime/scripts/profile_remote.sh.
 
     Expected layout:
-      gen/profile/<hw>/<target>/<model>/<basename>/<input_tag>/<topo_tag>/results.csv
+      <gen_root>/profile/<hw>/<target>/<model>/<basename>/<input_tag>/<topo_tag>/results.csv
+
+    Default gen_root is \"gen\"; use e.g. \"profiled/gen\" when artifacts live under profiled/.
 
     We pick the most recently modified match.
     """
-    profile_root = os.path.join(repo_base_path, "gen", "profile")
+    gr = (gen_root or "gen").strip().strip("/\\")
+    profile_root = os.path.join(repo_base_path, gr, "profile")
 
     # New layout (with input_tag subdir).
     pat1 = os.path.join(profile_root, hw, target, model, basename, "*", topo_tag, "results.csv")
@@ -756,6 +778,7 @@ def schedule_iree_networks(
     cpu_e_profile_hw = runtime_cfg["cpu_e_profile_hw"]
     profile_target = runtime_cfg["profile_target"]
     profile_topo_tag = runtime_cfg["profile_topo_tag"]
+    gen_root = runtime_cfg["gen_root"]
     effective_p_core_speedup = _coerce_positive_float(
         p_core_speedup,
         default=runtime_cfg["p_core_speedup"],
@@ -808,7 +831,10 @@ def schedule_iree_networks(
     print("\nResolved runtime configuration:")
     print(f"  Machines: [{cpu_p_name}, {cpu_e_name}]")
     print(f"  Profile HW mapping: {cpu_p_name}->{cpu_p_profile_hw}, {cpu_e_name}->{cpu_e_profile_hw}")
-    print(f"  Profile target/topology: target={profile_target}, topo_tag={profile_topo_tag}")
+    print(
+        f"  Profile target/topology: target={profile_target}, topo_tag={profile_topo_tag}, "
+        f"gen_root={gen_root}"
+    )
     print(f"  p_core_speedup: {effective_p_core_speedup}")
     print(f"  random_seed: {'nondeterministic' if effective_random_seed is None else effective_random_seed}")
     print(f"  solver_verbosity: {effective_solver_verbosity}")
@@ -873,6 +899,7 @@ def schedule_iree_networks(
             for model_candidate in model_candidates:
                 candidate_csv_p = _find_profile_csv_in_gen(
                     repo_base_path,
+                    gen_root=gen_root,
                     model=model_candidate,
                     target=target,
                     hw=cpu_p_profile_hw,
@@ -881,6 +908,7 @@ def schedule_iree_networks(
                 )
                 candidate_csv_e = _find_profile_csv_in_gen(
                     repo_base_path,
+                    gen_root=gen_root,
                     model=model_candidate,
                     target=target,
                     hw=cpu_e_profile_hw,

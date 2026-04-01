@@ -4,6 +4,8 @@ import json
 import os
 from typing import Tuple, Dict, List, Optional, Callable
 
+from profile_metrics import profile_based_horizon_ms
+
 
 def resolve_dispatch_deps_path(repo_base_path: str, dispatch_deps_path: str) -> str:
     """
@@ -304,8 +306,16 @@ def create_workload_from_network_hierarchy(
         Heuristic to estimate how many instances to create for each periodic network.
 
         For now:
-          1) Compute a worst-case horizon as:
-               H = 2 * sum_over_nonperiodic_ops( worst_machine_duration(op) )
+          1) Compute a worst-case horizon H (ms):
+               - If hardware.profile + profiled results.csv can be resolved, prefer
+                 H = S_np / F_p  where
+                   S_np = sum of worst-case layer times (max over CPU_P/CPU_E per
+                          dispatch node) for all non-periodic, non-window-slice networks
+                   F_p  = max over periodic workloads of (S_p / W), i.e. the same
+                          "window fraction" as scripts/worst_case_periodic_window_fraction.py
+                 (equivalently: nonperiodic script total / periodic window fraction.)
+               - Else fall back to:
+                   H = 2.0 * sum_over_nonperiodic_ops( worst_machine_duration(op) )
              where worst_machine_duration(op) is the max duration across machines.
           2) For each periodic network with period T, set:
                num_instances = ceil(H / T), at least 1.
@@ -368,7 +378,11 @@ def create_workload_from_network_hierarchy(
                     periodic_counts[net_id] = 1
             return periodic_counts
 
-        horizon = 2.0 * total_worst_nonperiodic
+        profile_horizon = profile_based_horizon_ms(networks_data, repo_base_path)
+        if profile_horizon is not None and profile_horizon > 0.0:
+            horizon = float(profile_horizon)
+        else:
+            horizon = 2.0 * total_worst_nonperiodic
         periodic_counts: Dict[str, int] = {}
         for net_id, net_info in networks.items():
             period = net_info.get("period", None)
