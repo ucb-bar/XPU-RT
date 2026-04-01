@@ -206,8 +206,8 @@ def transfer_time_test():
         job_durations_list = [op.get_durations() for op in job.get_operations()]
         durations.append(job_durations_list)
 
-    # Define plot directory
-    plot_dir = "/scratch/kris/scheduler/src/scripts/plots"
+    # Define plot directory (repo-root plots/, same as plot.REPO_PLOTS_DIR)
+    plot_dir = str(plot.REPO_PLOTS_DIR)
     os.makedirs(plot_dir, exist_ok=True)
     machines = ['asic', 'cpu', 'gpu', 'fpga', 'tpu']
 
@@ -232,8 +232,6 @@ def transfer_time_test():
     except Exception as e:
         print(f"Error scheduling workload with greedy algorithm: {e}")
         return
-    plot_dir = "/scratch/kris/scheduler/src/scripts/plots"
-    os.makedirs(plot_dir, exist_ok=True)
     # schedule_plot_filename = os.path.join(plot_dir, "schedule_transfer_time_test1.png")
     # print(f"Saving schedule plot to {schedule_plot_filename}...")
     # plot_greedy_schedule(t, alpha, save_path=schedule_plot_filename)
