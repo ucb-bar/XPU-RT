@@ -333,6 +333,8 @@ class EqSatAction(Action):
     rule_categories: tuple[str, ...] = ("algebraic",)
     max_iterations: int = 10
     segment_threshold: int = 200
+    blackbox_overrides: dict[str, str] = field(default_factory=dict)
+    segment_threshold_override: int | None = None
 
 
 @dataclass(frozen=True)
@@ -1794,15 +1796,30 @@ class CompilerEnv:
             registry = create_default_registry()
             rules = registry.get_rules(action.rule_categories)
 
+            # Include session-generated rules from ProposeRuleAction (Unit 3)
+            if hasattr(self, "_session_rules"):
+                rules = list(rules) + list(self._session_rules)
+
             if not rules:
                 return False, f"No rules found for categories: {action.rule_categories}", diagnostics
 
+            # Use segment threshold override from LLM if provided (Unit 5)
+            seg_threshold = action.segment_threshold
+            if action.segment_threshold_override is not None:
+                seg_threshold = action.segment_threshold_override
+
             config = EqSatConfig(
                 max_iterations=action.max_iterations,
-                segment_threshold=action.segment_threshold,
+                segment_threshold=seg_threshold,
             )
 
-            result = run_eqsat_pass(self._module, config=config, rules=rules)
+            result = run_eqsat_pass(
+                self._module,
+                config=config,
+                rules=rules,
+                blackbox_overrides=action.blackbox_overrides or None,
+                segment_config={"threshold": seg_threshold} if action.segment_threshold_override else None,
+            )
 
             diagnostics.append(
                 f"EQSAT: {result.ops_before}→{result.ops_after} ops, "
@@ -2346,7 +2363,11 @@ class CompilerEnv:
 
         result = validate_and_verify_rule(action.rule_code)
         if result.valid:
-            diagnostics.append(f"Rule '{result.rule.name}' validated and registered")
+            # Store rule for subsequent EqSatAction use (Unit 3)
+            if not hasattr(self, "_session_rules"):
+                self._session_rules = []
+            self._session_rules.append(result.rule)
+            diagnostics.append(f"Rule '{result.rule.name}' validated and registered for session")
             return True, "", diagnostics
         else:
             return False, f"Rule validation failed: {result.error}", diagnostics

@@ -99,11 +99,16 @@ def classify_op(op: Operation) -> OpClass:
     return OpClass.BLACKBOX
 
 
-def classify_module(module: ModuleOp) -> dict[Operation, OpClass]:
+def classify_module(
+    module: ModuleOp,
+    overrides: dict[str, str] | None = None,
+) -> dict[Operation, OpClass]:
     """Classify all ops in a module.
 
     Args:
         module: The module to classify.
+        overrides: Optional LLM-provided overrides mapping op_type_name
+            to "open" or "close". Overrides the heuristic classification.
 
     Returns:
         Dict mapping each non-structural op to its classification.
@@ -116,6 +121,18 @@ def classify_module(module: ModuleOp) -> dict[Operation, OpClass]:
             continue
         if not op.results:
             continue
+
+        # Apply LLM overrides if provided
+        if overrides:
+            op_type_name = type(op).__name__
+            full_name = op.name if hasattr(op, "name") else op_type_name
+            override_val = overrides.get(full_name) or overrides.get(op_type_name)
+            if override_val == "open":
+                classifications[op] = OpClass.PROFITABLE
+                continue
+            elif override_val == "close":
+                classifications[op] = OpClass.BLACKBOX
+                continue
 
         classifications[op] = classify_op(op)
 

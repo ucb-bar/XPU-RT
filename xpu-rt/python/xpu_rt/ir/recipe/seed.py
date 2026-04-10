@@ -49,6 +49,7 @@ def generate_seed_recipe(
     payload_module: ModuleOp,
     target_profile: Any = None,  # TargetProfile when available
     objective: str = "latency",
+    llm_client: Any = None,  # Optional CompGenLLMProtocol for personalization (Unit 9)
 ) -> ModuleOp:
     """Generate a seed Recipe IR from Payload IR analysis.
 
@@ -80,6 +81,40 @@ def generate_seed_recipe(
     # Step 1: Extract regions from payload
     significant_ops = _extract_significant_ops(payload_module)
     compute_regions: list[str] = []
+
+    # LLM personalization (Unit 9)
+    llm_personalization: dict[str, Any] = {}
+    if llm_client is not None:
+        try:
+            from compgen.agent.prompts.recipe_seed import RECIPE_SEED_SCHEMA, RecipeSeedContext
+            from compgen.agent.prompts.recipe_seed import format_prompt as fmt_seed
+            from compgen.agent.prompts.recipe_seed import parse_response as parse_seed
+            from compgen.llm.base import GenerationRequest, LLMConfig
+
+            # Build op histogram
+            op_hist: dict[str, int] = {}
+            for name, info in significant_ops.items():
+                op_type = info.get("op_type", name.split("_")[0])
+                op_hist[op_type] = op_hist.get(op_type, 0) + 1
+
+            ctx = RecipeSeedContext(
+                op_histogram=op_hist,
+                target_name=target_profile.name if target_profile else "unknown",
+                objective=objective,
+                total_flops=sum(info.get("flops", 0) for info in significant_ops.values()),
+                total_bytes=sum(info.get("bytes", 0) for info in significant_ops.values()),
+                num_devices=len(target_profile.devices) if target_profile else 1,
+            )
+            prompt = fmt_seed(ctx)
+            request = GenerationRequest(
+                prompt_template=prompt,
+                config=LLMConfig(temperature=0.2, max_tokens=1000),
+            )
+            response = llm_client.generate_structured(request, RECIPE_SEED_SCHEMA)
+            llm_personalization = parse_seed(response.raw_text) or {}
+            log.info("seed.llm_personalization", keys=list(llm_personalization.keys()))
+        except Exception:
+            pass
 
     for op_name, op_info in significant_ops.items():
         region_id = f"r_{region_counter}"
@@ -138,9 +173,16 @@ def generate_seed_recipe(
             }))
             compute_regions.append(region_id)
 
-        # Step 4: Default candidates
+        # Step 4: Default candidates (personalized by LLM when available)
+        skip_ops = llm_personalization.get("skip_ops", [])
+        if op_name in skip_ops:
+            continue
+
         if op_info.get("tileable"):
-            default_sizes = _default_tile_sizes(op_info)
+            # Use LLM-suggested tile sizes if available
+            op_type = op_info.get("op_type", op_name.split("_")[0])
+            llm_tiles = llm_personalization.get("default_tile_sizes", {}).get(op_type)
+            default_sizes = llm_tiles if llm_tiles else _default_tile_sizes(op_info)
             block.add_op(TileOp.build(properties={
                 "sym_name": StringAttr(f"cand_tile_{region_id}"),
                 "region_ref": SymbolRefAttr(region_id),

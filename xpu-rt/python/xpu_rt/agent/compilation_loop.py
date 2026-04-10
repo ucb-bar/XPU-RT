@@ -31,7 +31,9 @@ from compgen.agent.env import (
     GenerateRuntimeHooksAction,
     NoopAction,
     Observation,
+    ProposeRuleAction,
     RequestVerificationAction,
+    SetExtractionObjectiveAction,
 )
 from compgen.agent.prompts.analyze import ANALYSIS_SCHEMA, AnalysisContext, ProposedOptimization
 from compgen.agent.prompts.analyze import format_prompt as fmt_analyze
@@ -90,6 +92,8 @@ class AgenticCompilationLoop:
     budget: int = 10
     min_improvement_pct: float = 0.1
     compiler_memory: Any = None  # Optional CompilerMemory instance
+    no_improvement_threshold: int = 5
+    explore_temperature: float = 0.5
 
     def run(self, target: TargetProfile) -> CompilationResult:
         """Run the full agentic compilation loop.
@@ -122,6 +126,8 @@ class AgenticCompilationLoop:
         best_cost = initial_cost
         best_obs = obs
         no_improvement_count = 0
+        self._active_plan: list[Action] = []
+        self._plan_attempted = False
 
         # Create search task + retrieve priors from memory
         self._current_task_id = "default"
@@ -155,6 +161,16 @@ class AgenticCompilationLoop:
             except Exception:
                 pass
 
+            # Retrieve learned cost weights for this target (Unit 12)
+            try:
+                from compgen.solve.learned_weights import retrieve_best_weights
+                learned_weights = retrieve_best_weights(self.compiler_memory, target_key=target.name)
+                if learned_weights:
+                    self.env._eqsat_weights = learned_weights
+                    log.info("agentic.learned_weights", weights=learned_weights)
+            except Exception:
+                pass
+
         log.info("agentic.start", initial_cost=initial_cost, budget=self.budget)
 
         # Step 1: Initial analysis
@@ -164,12 +180,37 @@ class AgenticCompilationLoop:
             # Step 2: Get next action
             if iteration < len(proposals):
                 action = self._proposal_to_action(proposals[iteration])
+            elif self._active_plan:
+                # Multi-step plan: consume next planned action
+                action = self._active_plan.pop(0)
             else:
-                action = self._ask_llm_for_refinement(obs, history, target)
+                # Try multi-step planning when stalled
+                if no_improvement_count > 0 and not self._plan_attempted:
+                    plan_actions = self._ask_llm_for_plan(obs, history, target)
+                    self._plan_attempted = True
+                    if plan_actions:
+                        self._active_plan = plan_actions
+                        action = self._active_plan.pop(0)
+                    else:
+                        action = self._ask_llm_for_refinement(
+                            obs, history, target, no_improvement_count=no_improvement_count,
+                        )
+                else:
+                    action = self._ask_llm_for_refinement(
+                        obs, history, target, no_improvement_count=no_improvement_count,
+                    )
 
             if action is None or isinstance(action, NoopAction):
                 log.info("agentic.stop", reason="LLM suggested noop", iteration=iteration)
                 break
+
+            # Step 2b: Consult eqsat search state before applying eqsat actions
+            if isinstance(action, EqSatAction):
+                extra = self._consult_eqsat_search_state(obs, target)
+                if extra is not None and not isinstance(extra, NoopAction):
+                    # Apply the supplementary action (e.g., weight tuning, rule proposal)
+                    self.env.step(extra)
+                    obs = self.env.observe()
 
             # Step 3: Apply action
             cost_before = obs.estimated_total_latency_us
@@ -226,6 +267,35 @@ class AgenticCompilationLoop:
                 except Exception:
                     pass
 
+                # Record error patterns for failed actions (Unit 14)
+                if not result.info.action_applied or not verification_passed:
+                    try:
+                        from compgen.memory.error_patterns import record_error_pattern
+                        reason = "verification_failed" if not verification_passed else "not_applied"
+                        record_error_pattern(
+                            self.compiler_memory,
+                            action_type=action.action_type,
+                            region_context=action.region_id,
+                            failure_reason=reason,
+                            target_key=target.name,
+                        )
+                    except Exception:
+                        pass
+
+                # Record calibration data (Unit 15)
+                if result.info.action_applied and improvement != 0:
+                    try:
+                        from compgen.memory.calibration import record_calibration
+                        record_calibration(
+                            self.compiler_memory,
+                            target_key=target.name,
+                            op_family=action.action_type,
+                            estimated_us=cost_before,
+                            measured_us=cost_after,
+                        )
+                    except Exception:
+                        pass
+
             if cost_after < best_cost:
                 best_cost = cost_after
                 best_obs = obs
@@ -241,9 +311,9 @@ class AgenticCompilationLoop:
                 cost=cost_after,
             )
 
-            # Early stop if no improvement for 3 consecutive iterations
-            if no_improvement_count >= 3:
-                log.info("agentic.stop", reason="no improvement for 3 iterations")
+            # Early stop if no improvement for threshold consecutive iterations
+            if no_improvement_count >= self.no_improvement_threshold:
+                log.info("agentic.stop", reason=f"no improvement for {self.no_improvement_threshold} iterations")
                 break
 
         total_improvement = ((initial_cost - best_cost) / max(initial_cost, 1e-9)) * 100
@@ -272,6 +342,21 @@ class AgenticCompilationLoop:
                     success=total_improvement > 0,
                 )
                 self._memory.save(Path(".compgen_cache/agent_memory.json"))
+            except Exception:
+                pass
+
+        # Store learned cost weights (Unit 12)
+        if self.compiler_memory is not None and total_improvement > 0:
+            try:
+                from compgen.solve.learned_weights import store_cost_weights
+                eqsat_weights = getattr(self.env, "_eqsat_weights", {})
+                if eqsat_weights:
+                    store_cost_weights(
+                        self.compiler_memory,
+                        target_key=target.name,
+                        weights=eqsat_weights,
+                        measured_gain=total_improvement,
+                    )
             except Exception:
                 pass
 
@@ -394,7 +479,7 @@ class AgenticCompilationLoop:
                         ),
                     }
 
-            # Attempt promotion if all verifications passed
+            # Attempt promotion if all verifications passed (with LLM guidance - Unit 16)
             try:
                 from compgen.promotion.promote import promote_recipe
                 from compgen.runtime.bundle import Bundle
@@ -402,7 +487,37 @@ class AgenticCompilationLoop:
                 ver_summary = result.runtime_artifacts.get("verification_summary", {})
                 all_passed = ver_summary.get("failed", 0) == 0
 
-                if all_passed and lowered.transform_scripts:
+                # Ask LLM for promotion decision
+                llm_promotes = True
+                try:
+                    from compgen.agent.prompts.promotion_decision import PROMOTION_SCHEMA, PromotionContext
+                    from compgen.agent.prompts.promotion_decision import format_prompt as fmt_promo
+                    from compgen.agent.prompts.promotion_decision import parse_response as parse_promo
+
+                    promo_ctx = PromotionContext(
+                        improvement_pct=result.total_improvement_pct,
+                        verification_summary=str(ver_summary),
+                        target_name=target.name,
+                        similar_promoted_count=0,
+                        iterations_run=result.iterations_run,
+                        best_latency_us=result.final_cost_us,
+                        initial_latency_us=result.initial_cost_us,
+                    )
+                    promo_prompt = fmt_promo(promo_ctx)
+                    promo_request = GenerationRequest(
+                        prompt_template=promo_prompt,
+                        context=PromptContext(model_ir_summary="", target_profile_summary=self._target_summary(target)),
+                        config=self._llm_config(temperature=0.1, max_tokens=800),
+                    )
+                    promo_response = self._generate_with_schema(promo_request, PROMOTION_SCHEMA)
+                    promo_decision = parse_promo(promo_response.raw_text)
+                    if promo_decision is not None:
+                        llm_promotes = promo_decision.get("promote", True)
+                        log.info("agentic.promotion_decision", promote=llm_promotes, reason=promo_decision.get("reason", ""))
+                except Exception:
+                    pass  # Fall back to rule-based
+
+                if all_passed and lowered.transform_scripts and llm_promotes:
                     bundle = Bundle(
                         target_profile=target.name,
                         model_hash=str(id(module))[:12],
@@ -488,9 +603,21 @@ class AgenticCompilationLoop:
 
     def _ask_llm_for_refinement(
         self, obs: Observation, history: list[IterationRecord], target: TargetProfile,
+        *, no_improvement_count: int = 0,
     ) -> Action | None:
         """Ask LLM what to try next based on history."""
         legal_actions = self.env.legal_actions(max_actions=20)
+
+        # Retrieve error patterns to include as context
+        error_pattern_dicts: list[dict] = []
+        if self.compiler_memory is not None:
+            try:
+                from compgen.memory.error_patterns import error_patterns_to_prompt, retrieve_error_patterns
+                patterns = retrieve_error_patterns(self.compiler_memory, target_key=target.name, top_k=3)
+                error_pattern_dicts = error_patterns_to_prompt(patterns)
+            except Exception:
+                pass
+
         ctx = RefinementContext(
             iteration=len(history),
             total_budget=self.budget,
@@ -509,14 +636,19 @@ class AgenticCompilationLoop:
             analysis_summary=self._analysis_summary(obs),
             legal_actions_summary=self._legal_actions_summary(legal_actions),
             verification_summary=self._verification_summary(obs),
+            error_patterns=error_pattern_dicts,
         )
         prompt = fmt_refine(ctx)
+
+        # Use higher temperature when stalled (explore mode)
+        explore = no_improvement_count >= self.no_improvement_threshold // 2
+        temperature = self.explore_temperature if explore else 0.2
 
         try:
             request = GenerationRequest(
                 prompt_template=prompt,
                 context=self._build_prompt_context(obs, target, legal_actions, history=history),
-                config=self._llm_config(temperature=0.2, max_tokens=1200),
+                config=self._llm_config(temperature=temperature, max_tokens=1200),
             )
             response = self._generate_with_schema(request, REFINEMENT_SCHEMA)
             action = parse_refine(response.raw_text)
@@ -525,6 +657,297 @@ class AgenticCompilationLoop:
             return self._refinement_to_action(action)
         except Exception:
             return NoopAction()
+
+    # ------------------------------------------------------------------
+    # Multi-step planning (Unit 2)
+    # ------------------------------------------------------------------
+
+    def _ask_llm_for_plan(
+        self, obs: Observation, history: list[IterationRecord], target: TargetProfile,
+    ) -> list[Action]:
+        """Ask LLM for a multi-step optimization plan (3-5 steps)."""
+        try:
+            from compgen.agent.prompts.plan_multi_step import PLAN_SCHEMA, PlanContext
+            from compgen.agent.prompts.plan_multi_step import format_prompt as fmt_plan
+            from compgen.agent.prompts.plan_multi_step import parse_response as parse_plan
+        except ImportError:
+            return []
+
+        legal_actions = self.env.legal_actions(max_actions=20)
+        ctx = PlanContext(
+            observation_summary=observation_to_prompt(obs, legal_actions),
+            history_summary="\n".join(self._prior_attempts(history)),
+            legal_actions_summary=self._legal_actions_summary(legal_actions),
+            budget_remaining=self.budget - len(history),
+        )
+        prompt = fmt_plan(ctx)
+
+        try:
+            request = GenerationRequest(
+                prompt_template=prompt,
+                context=self._build_prompt_context(obs, target, legal_actions, history=history),
+                config=self._llm_config(temperature=0.3, max_tokens=2000),
+            )
+            response = self._generate_with_schema(request, PLAN_SCHEMA)
+            steps = parse_plan(response.raw_text)
+            if not steps:
+                return []
+
+            actions: list[Action] = []
+            for step in steps:
+                from compgen.agent.prompts.analyze import ProposedOptimization
+                proposal = ProposedOptimization(
+                    action_type=step.get("action_type", "noop"),
+                    target=step.get("target", ""),
+                    reason=step.get("reason", ""),
+                    expected_improvement=0.0,
+                )
+                action = self._proposal_to_action(proposal)
+                if not isinstance(action, NoopAction):
+                    actions.append(action)
+
+            log.info("agentic.multi_step_plan", steps=len(actions))
+            return actions
+        except Exception as e:
+            log.debug("agentic.plan_failed", error=str(e))
+            return []
+
+    # ------------------------------------------------------------------
+    # EqSat rule generation (Unit 3)
+    # ------------------------------------------------------------------
+
+    def _ask_llm_for_eqsat_rule(
+        self, obs: Observation, target: TargetProfile,
+    ) -> ProposeRuleAction | None:
+        """Ask LLM to generate a new EqSat rewrite rule."""
+        try:
+            from compgen.eqsat.explain import summarize_module
+            from compgen.eqsat.llm_interface import format_rule_proposal_prompt
+        except ImportError:
+            return None
+
+        try:
+            module = self.env._module if hasattr(self.env, "_module") else None
+            if module is None:
+                return None
+
+            summary = summarize_module(module)
+            prompt = format_rule_proposal_prompt(
+                egraph_summary=summary.to_prompt() if hasattr(summary, "to_prompt") else str(summary),
+                target_description=self._target_summary(target),
+                objective="latency",
+            )
+
+            request = GenerationRequest(
+                prompt_template=prompt,
+                context=PromptContext(model_ir_summary="", target_profile_summary=self._target_summary(target)),
+                config=self._llm_config(temperature=0.3, max_tokens=2000),
+            )
+            response = self.llm_client.generate(request)
+            rule_code = response.raw_text.strip()
+
+            # Extract code from markdown fences if present
+            if "```" in rule_code:
+                import re
+                m = re.search(r"```(?:python)?\n(.*?)```", rule_code, re.DOTALL)
+                if m:
+                    rule_code = m.group(1).strip()
+
+            if rule_code:
+                log.info("agentic.eqsat_rule_generated", code_len=len(rule_code))
+                return ProposeRuleAction(region_id="", rule_code=rule_code, category="llm_generated")
+        except Exception as e:
+            log.debug("agentic.eqsat_rule_failed", error=str(e))
+
+        return None
+
+    # ------------------------------------------------------------------
+    # EqSat search state consultation (Unit 4)
+    # ------------------------------------------------------------------
+
+    def _consult_eqsat_search_state(
+        self, obs: Observation, target: TargetProfile,
+    ) -> Action | None:
+        """Consult LLM about eqsat search direction and weight tuning."""
+        try:
+            from compgen.agent.prompts.eqsat_extraction_weights import EXTRACTION_WEIGHTS_SCHEMA, WeightsContext
+            from compgen.agent.prompts.eqsat_extraction_weights import format_prompt as fmt_weights
+            from compgen.agent.prompts.eqsat_extraction_weights import parse_response as parse_weights
+            from compgen.agent.prompts.eqsat_search_state import SEARCH_STATE_SCHEMA, SearchStateContext
+            from compgen.agent.prompts.eqsat_search_state import format_prompt as fmt_ss
+            from compgen.agent.prompts.eqsat_search_state import parse_response as parse_ss
+        except ImportError:
+            return None
+
+        try:
+            ctx = SearchStateContext(
+                egraph_summary=self._analysis_summary(obs),
+                rule_stats={},
+                best_cost=obs.best_latency_us,
+                iteration=obs.step_count,
+                total_eclasses=0,
+                total_enodes=0,
+            )
+            prompt = fmt_ss(ctx)
+
+            request = GenerationRequest(
+                prompt_template=prompt,
+                context=PromptContext(model_ir_summary="", target_profile_summary=self._target_summary(target)),
+                config=self._llm_config(temperature=0.2, max_tokens=1200),
+            )
+            response = self._generate_with_schema(request, SEARCH_STATE_SCHEMA)
+            result = parse_ss(response.raw_text)
+
+            if result and result.get("action") == "CHANGE_WEIGHTS":
+                # Ask for specific weights
+                w_ctx = WeightsContext(
+                    egraph_summary=self._analysis_summary(obs),
+                    target_description=self._target_summary(target),
+                    current_fusion_weight=1.0,
+                    current_transfer_weight=1.0,
+                    current_backend_match_weight=1.0,
+                )
+                w_prompt = fmt_weights(w_ctx)
+                w_request = GenerationRequest(
+                    prompt_template=w_prompt,
+                    context=PromptContext(model_ir_summary="", target_profile_summary=self._target_summary(target)),
+                    config=self._llm_config(temperature=0.2, max_tokens=800),
+                )
+                w_response = self._generate_with_schema(w_request, EXTRACTION_WEIGHTS_SCHEMA)
+                weights = parse_weights(w_response.raw_text)
+                if weights:
+                    return SetExtractionObjectiveAction(
+                        fusion_weight=weights.get("fusion_weight", 1.0),
+                        transfer_weight=weights.get("transfer_weight", 1.0),
+                        backend_match_weight=weights.get("backend_match_weight", 1.0),
+                    )
+
+            if result and result.get("action") == "PROPOSE_RULE":
+                return self._ask_llm_for_eqsat_rule(obs, target)
+
+        except Exception as e:
+            log.debug("agentic.eqsat_search_state_failed", error=str(e))
+
+        return None
+
+    # ------------------------------------------------------------------
+    # Evolutionary optimizer integration (Unit 11)
+    # ------------------------------------------------------------------
+
+    def run_with_evolution(self, target: TargetProfile) -> CompilationResult:
+        """Run optimization using the evolutionary strategy optimizer."""
+        from compgen.agent.evolution import EvolutionaryOptimizer
+
+        optimizer = EvolutionaryOptimizer(
+            llm_client=self.llm_client,
+            env=self.env,
+            population_size=5,
+            top_k=2,
+            generations=3,
+        )
+        evo_result = optimizer.evolve(target)
+
+        # Record in compiler memory if available
+        if self.compiler_memory is not None:
+            try:
+                from compgen.memory.schema import ObjectKind
+                task = self.compiler_memory.create_task(
+                    kind=ObjectKind.BACKEND_PLAN,
+                    target_key=target.name,
+                    objective="latency",
+                )
+                for gen_idx, gen_strats in enumerate(evo_result.history):
+                    for strat in gen_strats:
+                        self.compiler_memory.record_episode_step(
+                            task_id=task.task_id,
+                            action=strat.strategy.name,
+                            reward=strat.improvement_pct / 100.0,
+                            step_number=gen_idx,
+                            metadata={"actions": ",".join(strat.strategy.action_types)},
+                        )
+            except Exception:
+                pass
+
+        return CompilationResult(
+            initial_cost_us=evo_result.best_cost_us / max(1 - evo_result.total_improvement_pct / 100, 1e-9),
+            final_cost_us=evo_result.best_cost_us,
+            total_improvement_pct=evo_result.total_improvement_pct,
+            iterations_run=evo_result.candidates_evaluated,
+            iterations_improved=sum(
+                1 for gen in evo_result.history for s in gen if s.improvement_pct > 0
+            ),
+            history=[],
+            best_observation=self.env.observe(),
+        )
+
+    # ------------------------------------------------------------------
+    # Multi-module global strategy (Unit 16)
+    # ------------------------------------------------------------------
+
+    def run_multi_module(
+        self, modules: list[Any], target: TargetProfile,
+    ) -> list[CompilationResult]:
+        """Coordinate optimization across multiple modules."""
+        try:
+            from compgen.agent.prompts.global_strategy import GLOBAL_STRATEGY_SCHEMA, GlobalStrategyContext
+            from compgen.agent.prompts.global_strategy import format_prompt as fmt_gs
+            from compgen.agent.prompts.global_strategy import parse_response as parse_gs
+        except ImportError:
+            # Fall back to sequential optimization
+            results = []
+            for module in modules:
+                self.env.reset_module(module) if hasattr(self.env, "reset_module") else None
+                results.append(self.run(target))
+            return results
+
+        # Build per-module summaries
+        summaries = []
+        for i, module in enumerate(modules):
+            summaries.append({
+                "name": f"module_{i}",
+                "op_count": sum(1 for _ in module.walk()) if hasattr(module, "walk") else 0,
+                "flops": 0,
+                "bottleneck": "unknown",
+            })
+
+        ctx = GlobalStrategyContext(
+            module_count=len(modules),
+            per_module_summaries=summaries,
+            target_name=target.name,
+        )
+        prompt = fmt_gs(ctx)
+
+        # Get global strategy from LLM
+        priority_order = list(range(len(modules)))
+        try:
+            request = GenerationRequest(
+                prompt_template=prompt,
+                context=PromptContext(model_ir_summary="", target_profile_summary=self._target_summary(target)),
+                config=self._llm_config(temperature=0.2, max_tokens=1200),
+            )
+            response = self._generate_with_schema(request, GLOBAL_STRATEGY_SCHEMA)
+            result = parse_gs(response.raw_text)
+            if result and result.get("priority_order"):
+                # Map module names to indices
+                name_to_idx = {f"module_{i}": i for i in range(len(modules))}
+                order = [name_to_idx.get(n, -1) for n in result["priority_order"]]
+                priority_order = [i for i in order if 0 <= i < len(modules)]
+                # Add any missing indices
+                for i in range(len(modules)):
+                    if i not in priority_order:
+                        priority_order.append(i)
+            log.info("agentic.global_strategy", order=priority_order)
+        except Exception:
+            pass
+
+        # Execute in LLM-suggested order
+        results: list[CompilationResult] = []
+        for idx in priority_order:
+            if hasattr(self.env, "reset_module"):
+                self.env.reset_module(modules[idx])
+            results.append(self.run(target))
+
+        return results
 
     def _proposal_to_action(self, proposal: ProposedOptimization) -> Action:
         """Convert an LLM proposal into a concrete env action."""
@@ -539,7 +962,9 @@ class AgenticCompilationLoop:
 
         target = getattr(proposal, "target", "") or ""
         if proposal.action_type == "eqsat":
-            return EqSatAction(region_id=target, rule_categories=("algebraic", "fusion"))
+            # Try to generate a new rule via LLM first (Unit 3)
+            # The rule will be applied via ProposeRuleAction before EqSatAction
+            return EqSatAction(region_id=target, rule_categories=("algebraic", "fusion", "llm_generated"))
         if proposal.action_type == "tile":
             return TileAction(region_id=target, tile_sizes=(32, 32))
         if proposal.action_type == "fuse":

@@ -29,6 +29,8 @@ def specialize_layouts(
     *,
     resolver: Any | None = None,
     capabilities: CapabilitySpec | None = None,
+    llm_client: Any | None = None,
+    target_name: str = "",
 ) -> ModuleOp:
     """Specialize generic layout encodings for the target.
 
@@ -70,6 +72,37 @@ def specialize_layouts(
                 result = resolver.specialize(encoding_str, capabilities)
                 if result is not None:
                     pack_spec_str = str(result)
+            except Exception:
+                pass
+
+        # Fall back to LLM-guided layout planning (Unit 7)
+        if pack_spec_str is None and llm_client is not None:
+            try:
+                from compgen.agent.prompts.layout_plan import LAYOUT_PLAN_SCHEMA, LayoutPlanContext
+                from compgen.agent.prompts.layout_plan import format_prompt as fmt_lp
+                from compgen.agent.prompts.layout_plan import parse_response as parse_lp
+                from compgen.llm.base import GenerationRequest, LLMConfig
+
+                tile_hint_str = ""
+                if tile_hint and hasattr(tile_hint, "data"):
+                    tile_hint_str = tile_hint.data
+
+                ctx = LayoutPlanContext(
+                    op_name=type(op).__name__,
+                    encoding_str=encoding_str,
+                    target_name=target_name,
+                    capabilities_summary=str(capabilities) if capabilities else "unknown",
+                    tile_family_hint=tile_hint_str,
+                )
+                prompt = fmt_lp(ctx)
+                request = GenerationRequest(
+                    prompt_template=prompt,
+                    config=LLMConfig(temperature=0.1, max_tokens=600),
+                )
+                response = llm_client.generate_structured(request, LAYOUT_PLAN_SCHEMA)
+                result = parse_lp(response.raw_text)
+                if result and "inner_tiles" in result:
+                    pack_spec_str = str(result["inner_tiles"])
             except Exception:
                 pass
 

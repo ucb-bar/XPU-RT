@@ -86,7 +86,8 @@ CREATE TABLE IF NOT EXISTS knowledge_items (
     wins INTEGER DEFAULT 0,
     failures INTEGER DEFAULT 0,
     last_used_at TEXT DEFAULT '',
-    source TEXT DEFAULT ''
+    source TEXT DEFAULT '',
+    embedding_hash TEXT DEFAULT ''
 );
 
 CREATE TABLE IF NOT EXISTS promotions (

@@ -18,6 +18,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 
+from typing import Any
+
 from compgen.kernels.contracts import KernelSpec
 from compgen.targets.schema import TargetProfile
 
@@ -102,6 +104,7 @@ class KernelSelector:
     target: TargetProfile
     native_ops: set[str] = field(default_factory=set)
     library_ops: dict[str, str] = field(default_factory=dict)
+    llm_client: Any = None  # Optional CompGenLLMProtocol for LLM-guided decisions
 
     def __post_init__(self) -> None:
         """Populate native_ops and library_ops from target profile."""
@@ -206,7 +209,14 @@ class KernelSelector:
                 ))
                 continue
 
-            # 3. Check if worth autocomp search
+            # 3. LLM-guided strategy selection (Unit 6)
+            if self.llm_client is not None:
+                llm_decision = self._ask_llm_for_strategy(spec, op_name)
+                if llm_decision is not None:
+                    decisions.append(llm_decision)
+                    continue
+
+            # 3b. Check if worth autocomp search (heuristic fallback)
             if spec.contract.cost.flops >= _MIN_AUTOCOMP_FLOPS:
                 decisions.append(StrategyDecision(
                     spec=spec,
@@ -223,6 +233,63 @@ class KernelSelector:
             ))
 
         return decisions
+
+
+    def _ask_llm_for_strategy(self, spec: KernelSpec, op_name: str) -> StrategyDecision | None:
+        """Ask LLM to select strategy for a borderline op."""
+        try:
+            from compgen.agent.prompts.kernel_strategy import KERNEL_STRATEGY_SCHEMA, KernelStrategyContext
+            from compgen.agent.prompts.kernel_strategy import format_prompt as fmt_ks
+            from compgen.agent.prompts.kernel_strategy import parse_response as parse_ks
+            from compgen.llm.base import GenerationRequest, LLMConfig
+
+            op_family = op_name.split(".")[-1] if "." in op_name else op_name
+            has_gpu = any(d.device_type == "gpu" for d in self.target.devices)
+            ctx = KernelStrategyContext(
+                op_name=op_name,
+                op_family=op_family,
+                flops=spec.contract.cost.flops,
+                input_shapes=str(spec.input_shapes),
+                output_shapes=str(spec.output_shapes),
+                dtype=spec.contract.supported_dtypes[0] if spec.contract.supported_dtypes else "float32",
+                target_name=self.target.name,
+                has_gpu=has_gpu,
+                available_strategies=["native", "library", "ukernel", "autocomp", "fallback"],
+            )
+            prompt = fmt_ks(ctx)
+
+            from compgen.llm.base import Objective, PromptContext
+            model_id = "default"
+            try:
+                m = getattr(self.llm_client, "model", None)
+                if m is not None and isinstance(m, str):
+                    model_id = m
+            except Exception:
+                pass
+            request = GenerationRequest(
+                prompt_template=prompt,
+                context=PromptContext(
+                    model_ir_summary="",
+                    target_profile_summary=str(self.target.name),
+                    available_transforms=[],
+                    kernel_contracts=[],
+                    objective=Objective.LATENCY,
+                ),
+                config=LLMConfig(model=model_id, temperature=0.1, max_tokens=600),
+            )
+            response = self.llm_client.generate_structured(request, KERNEL_STRATEGY_SCHEMA)
+            result = parse_ks(response.raw_text)
+            if result and result.get("strategy"):
+                strategy_name = result["strategy"].upper()
+                strategy = KernelStrategy[strategy_name]
+                return StrategyDecision(
+                    spec=spec,
+                    strategy=strategy,
+                    reason=f"LLM: {result.get('reason', 'no reason')}",
+                )
+        except Exception:
+            pass
+        return None
 
 
 def select_strategies(

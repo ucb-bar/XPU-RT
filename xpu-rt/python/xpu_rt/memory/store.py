@@ -62,9 +62,11 @@ class CompilerMemory:
         self,
         db_path: Path = Path(".compgen_cache/memory.db"),
         blob_root: Path = Path(".compgen_cache/blobs"),
+        embedding_provider: Any = None,
     ) -> None:
         self.db = SQLiteBackend(db_path)
         self.blobs = BlobStore(blob_root)
+        self.embedding_provider = embedding_provider  # Optional EmbeddingProvider for semantic retrieval
 
     def close(self) -> None:
         """Close the database connection."""
@@ -296,11 +298,11 @@ class CompilerMemory:
             source=source,
         )
         self.db.execute(
-            "INSERT INTO knowledge_items VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO knowledge_items VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (item.knowledge_id, item.knowledge_kind.value, item.scope_kind.value,
              item.scope_key, item.summary, item.artifact_hash,
              item.quality_score, item.uses, item.wins, item.failures,
-             item.last_used_at, item.source),
+             item.last_used_at, item.source, item.embedding_hash),
         )
         self.db.commit()
         return item
@@ -342,10 +344,22 @@ class CompilerMemory:
     ) -> list[KnowledgeItem]:
         """Retrieve knowledge items similar to a state signature.
 
-        Uses scope_key matching on op_family and hardware as a proxy
-        for full embedding-based retrieval.
+        Tries embedding-based similarity first when an embedding_provider
+        is available, falling back to scope_key matching.
         """
-        # Query by op_family scope first, then hardware family
+        # Try embedding-based retrieval first (Unit 13)
+        if self.embedding_provider is not None:
+            try:
+                from compgen.memory.embeddings import retrieve_by_similarity
+                query = f"{op_family} {hardware_signature} {bottleneck_signature}".strip()
+                if query:
+                    results = retrieve_by_similarity(self, query, self.embedding_provider, top_k=top_k)
+                    if results:
+                        return results
+            except Exception:
+                pass  # Fall back to scope_key matching
+
+        # Scope_key matching fallback
         results: list[KnowledgeItem] = []
 
         if op_family:
@@ -597,6 +611,7 @@ class CompilerMemory:
             failures=row["failures"],
             last_used_at=row["last_used_at"],
             source=row["source"],
+            embedding_hash=row["embedding_hash"] if "embedding_hash" in row.keys() else "",
         )
 
 

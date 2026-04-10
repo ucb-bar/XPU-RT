@@ -127,7 +127,7 @@ def _estimate_matmul_flops(op: MatmulOp) -> int:
 
 def _dtype_bytes(dtype_name: str) -> int:
     """Bytes per element for common dtypes."""
-    return {"f32": 4, "f64": 8, "f16": 2, "bf16": 2, "i32": 4, "i8": 1}.get(dtype_name, 4)
+    return {"f32": 4, "f64": 8, "f16": 2, "bf16": 2, "f8e4m3": 1, "i32": 4, "i8": 1}.get(dtype_name, 4)
 
 
 def _extract_op_contract(op: Operation) -> KernelContract | None:

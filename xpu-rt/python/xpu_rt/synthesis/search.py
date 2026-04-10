@@ -59,6 +59,77 @@ def _numeric_vars(examples: Iterable[SynthesisExample]) -> list[str]:
     return sorted(names)
 
 
+def _llm_seed_fragments(
+    llm_client: Any,
+    positives: list[SynthesisExample],
+    negatives: list[SynthesisExample],
+) -> list[Expr]:
+    """Ask LLM to propose guard expression fragments (Unit 10)."""
+    try:
+        from compgen.agent.prompts.guard_propose import GUARD_PROPOSE_SCHEMA, GuardProposeContext
+        from compgen.agent.prompts.guard_propose import format_prompt as fmt_gp
+        from compgen.agent.prompts.guard_propose import parse_response as parse_gp
+        from compgen.llm.base import GenerationRequest, LLMConfig
+
+        # Collect variable names/types from examples
+        var_names: list[str] = []
+        var_types: dict[str, str] = {}
+        if positives:
+            for key, val in positives[0].env.items():
+                var_names.append(key)
+                var_types[key] = "bool" if isinstance(val, bool) else "int"
+
+        # Summarize examples
+        pos_summary = "\n".join(
+            f"  {{{', '.join(f'{k}={v}' for k, v in ex.env.items())}}}"
+            for ex in positives[:5]
+        )
+        neg_summary = "\n".join(
+            f"  {{{', '.join(f'{k}={v}' for k, v in ex.env.items())}}}"
+            for ex in negatives[:5]
+        )
+
+        ctx = GuardProposeContext(
+            variable_names=var_names,
+            variable_types=var_types,
+            positive_examples_summary=pos_summary,
+            negative_examples_summary=neg_summary,
+            num_positives=len(positives),
+            num_negatives=len(negatives),
+        )
+        prompt = fmt_gp(ctx)
+        request = GenerationRequest(
+            prompt_template=prompt,
+            config=LLMConfig(temperature=0.2, max_tokens=800),
+        )
+        response = llm_client.generate_structured(request, GUARD_PROPOSE_SCHEMA)
+        fragments = parse_gp(response.raw_text)
+        if not fragments:
+            return []
+
+        # Convert fragment dicts to Expr AST
+        exprs: list[Expr] = []
+        for frag in fragments:
+            var = frag.get("var", "")
+            op = frag.get("op", "")
+            value = frag.get("value")
+            if op == "%" and "divisor" in frag:
+                exprs.append(ModEq(Var(var), frag["divisor"], frag.get("remainder", 0)))
+            elif op == ">=" and value is not None:
+                exprs.append(Cmp(CmpOp.GE, Var(var), Const(value)))
+            elif op == "<=" and value is not None:
+                exprs.append(Cmp(CmpOp.LE, Var(var), Const(value)))
+            elif op == "==" and value is not None:
+                exprs.append(Cmp(CmpOp.EQ, Var(var), Const(value)))
+            elif op == ">" and value is not None:
+                exprs.append(Cmp(CmpOp.GT, Var(var), Const(value)))
+            elif op == "<" and value is not None:
+                exprs.append(Cmp(CmpOp.LT, Var(var), Const(value)))
+        return exprs
+    except Exception:
+        return []
+
+
 def _seed_fragments(examples: list[SynthesisExample], cfg: GuardSearchConfig) -> list[Expr]:
     atoms: list[Expr] = []
     positives = [example for example in examples if example.safe]
@@ -140,6 +211,7 @@ def search_guard_fragments(
     cfg: GuardSearchConfig | None = None,
     *,
     require_profitable: bool = False,
+    llm_client: Any = None,
 ) -> GuardSearchResult:
     """Search for a conjunction of guard fragments.
 
@@ -163,6 +235,17 @@ def search_guard_fragments(
         return GuardSearchResult(promoted_fragments=(Const(False),))
 
     atoms = _seed_fragments(positives, cfg)
+
+    # Merge LLM-proposed guard fragments (Unit 10)
+    if llm_client is not None:
+        llm_atoms = _llm_seed_fragments(llm_client, positives, negatives)
+        # Deduplicate by string representation
+        existing_strs = {str(a) for a in atoms}
+        for la in llm_atoms:
+            if str(la) not in existing_strs:
+                atoms.append(la)
+                existing_strs.add(str(la))
+
     sound_atoms = [atom for atom in atoms if _is_observed_sound(atom, negatives) and _covers(atom, positives) > 0]
     precise_unsound = [
         atom for atom in atoms

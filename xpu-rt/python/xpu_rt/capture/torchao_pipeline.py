@@ -69,21 +69,72 @@ def apply_quantization(model: Any, config: QuantizationConfig) -> Any:
         Quantized model (modified in-place or new module).
 
     """
+    # NPU FP8 E4M3 po2 quantization (custom scheme for NPU hardware)
+    if config.scheme == "fp8_e4m3_po2_npu":
+        from compgen.quantization.smolvla_recipe import apply_smolvla_quantization, default_npu_recipe
+
+        recipe = default_npu_recipe()
+        return apply_smolvla_quantization(model, recipe)
+
+    if config.scheme == "fp8_e4m3_po2":
+        from compgen.quantization.fp8_config import FP8E4M3Po2Config
+        from torchao.quantization import quantize_
+
+        quantize_(model, FP8E4M3Po2Config())
+        return model
+
+    # Legacy TorchAO schemes -- handle both pre-0.17 (function-based) and
+    # 0.17+ (Config-class-based) APIs.
     try:
-        from torchao.quantization import (
-            float8_weight_only,
-            int4_weight_only,
-            int8_weight_only,
-            quantize_,
-        )
+        from torchao.quantization import quantize_
     except ImportError as exc:
         raise RuntimeError("torchao is not installed") from exc
 
-    scheme_map = {
-        "int8_weight_only": int8_weight_only,
-        "int4_weight_only": int4_weight_only,
-        "fp8": float8_weight_only,
-    }
+    scheme_map: dict[str, Any] = {}
+
+    # torchao 0.17+: Config classes (preferred)
+    try:
+        from torchao.quantization import Int8WeightOnlyConfig
+
+        scheme_map["int8_weight_only"] = Int8WeightOnlyConfig
+    except ImportError:
+        pass
+    try:
+        from torchao.quantization import Int4WeightOnlyConfig
+
+        scheme_map["int4_weight_only"] = Int4WeightOnlyConfig
+    except ImportError:
+        pass
+    try:
+        from torchao.quantization import Float8WeightOnlyConfig
+
+        scheme_map["fp8"] = Float8WeightOnlyConfig
+    except ImportError:
+        pass
+
+    # torchao <0.17: function-based API (fallback)
+    if "int8_weight_only" not in scheme_map:
+        try:
+            from torchao.quantization import int8_weight_only
+
+            scheme_map["int8_weight_only"] = int8_weight_only
+        except ImportError:
+            pass
+    if "int4_weight_only" not in scheme_map:
+        try:
+            from torchao.quantization import int4_weight_only
+
+            scheme_map["int4_weight_only"] = int4_weight_only
+        except ImportError:
+            pass
+    if "fp8" not in scheme_map:
+        try:
+            from torchao.quantization import float8_weight_only
+
+            scheme_map["fp8"] = float8_weight_only
+        except ImportError:
+            pass
+
     factory = scheme_map.get(config.scheme)
     if factory is None:
         raise ValueError(f"Unsupported TorchAO scheme: {config.scheme}")

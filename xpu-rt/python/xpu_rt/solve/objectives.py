@@ -107,5 +107,26 @@ class CompositeCost:
         """Evaluate composite cost as weighted sum of all terms."""
         return sum(term.evaluate(partitions, cost_data) for term in self.terms)
 
+    @classmethod
+    def from_learned(cls, weights: dict[str, float]) -> CompositeCost:
+        """Create a CompositeCost from learned weight dict.
+
+        Args:
+            weights: Dict with keys like 'latency_weight', 'throughput_weight',
+                    'memory_weight', 'energy_weight', 'fusion_weight', etc.
+
+        Returns:
+            CompositeCost with terms weighted by learned values.
+        """
+        terms: list[CostTerm] = []
+        terms.append(LatencyCost(weight=weights.get("latency_weight", weights.get("fusion_weight", 1.0))))
+        if "throughput_weight" in weights:
+            terms.append(ThroughputCost(weight=weights["throughput_weight"]))
+        if "memory_weight" in weights or "transfer_weight" in weights:
+            terms.append(MemoryCost(weight=weights.get("memory_weight", weights.get("transfer_weight", 0.0))))
+        if "energy_weight" in weights:
+            terms.append(EnergyCost(weight=weights["energy_weight"]))
+        return cls(terms=terms)
+
 
 __all__ = ["CompositeCost", "CostTerm", "EnergyCost", "LatencyCost", "MemoryCost", "ThroughputCost"]

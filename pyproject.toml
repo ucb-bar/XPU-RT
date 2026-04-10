@@ -50,6 +50,9 @@ solve = [
     "z3-solver>=4.12",
     "scipy>=1.11",
 ]
+quantization = [
+    "torchao>=0.16",
+]
 iree = [
     "iree-compiler>=3.0",
     "iree-runtime>=3.0",

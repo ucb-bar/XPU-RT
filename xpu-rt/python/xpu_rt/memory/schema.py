@@ -184,6 +184,7 @@ class KnowledgeItem:
     failures: int = 0
     last_used_at: str = ""
     source: str = ""
+    embedding_hash: str = ""
 
 
 @dataclass(frozen=True)

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import textwrap
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass(frozen=True)
@@ -25,6 +25,7 @@ class RefinementContext:
     analysis_summary: str = ""
     legal_actions_summary: str = ""
     verification_summary: str = ""
+    error_patterns: list[dict] = field(default_factory=list)
 
 
 REFINE_PROMPT = textwrap.dedent("""\
@@ -58,6 +59,9 @@ REFINE_PROMPT = textwrap.dedent("""\
     ## Legal actions:
     {legal_actions}
 
+    ## Known failure modes (avoid repeating these):
+    {error_patterns}
+
     ## Task
     What should we try next? Choose one action:
     1. "eqsat" — propose a new rewrite rule
@@ -83,6 +87,11 @@ def format_prompt(ctx: RefinementContext) -> str:
     bottlenecks = "\n".join(f"  - {b}" for b in ctx.remaining_bottlenecks[:5]) or "  (none)"
     unsupported = ", ".join((ctx.unsupported_ops or [])[:10]) or "(none)"
 
+    error_text = "  (none)" if not ctx.error_patterns else "\n".join(
+        f"  - {p.get('action_type', '?')}: {p.get('failure_reason', '?')} (x{p.get('occurrences', 1)})"
+        for p in ctx.error_patterns[:5]
+    )
+
     return REFINE_PROMPT.format(
         iteration=ctx.iteration,
         total_budget=ctx.total_budget,
@@ -98,6 +107,7 @@ def format_prompt(ctx: RefinementContext) -> str:
         analysis_summary=ctx.analysis_summary or "  (none)",
         verification_summary=ctx.verification_summary or "  (none)",
         legal_actions=ctx.legal_actions_summary or "  (none)",
+        error_patterns=error_text,
     )
 
 

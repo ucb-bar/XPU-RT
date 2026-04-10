@@ -63,6 +63,30 @@ def load_smolvla_bundle(
     )
     _ensure_sys_path(root)
 
+    # Bypass lerobot.policies.__init__ which imports the broken GR00T dataclass.
+    # We directly import the smolvla submodule without triggering the full
+    # policy registry.
+    import importlib
+    import sys
+
+    # Pre-register stub modules to prevent lerobot.policies.__init__ from
+    # importing the broken GR00T package at all.
+    _stubs_needed = [
+        "lerobot.policies.groot",
+        "lerobot.policies.groot.configuration_groot",
+        "lerobot.policies.groot.modeling_groot",
+        "lerobot.policies.groot.groot_n1",
+    ]
+    import types as _types
+    for _mod_name in _stubs_needed:
+        if _mod_name not in sys.modules:
+            _stub = _types.ModuleType(_mod_name)
+            _stub.__path__ = []  # type: ignore[attr-defined]
+            # Add dummy attributes that __init__.py expects
+            if _mod_name.endswith(".configuration_groot"):
+                _stub.GrootConfig = type("GrootConfig", (), {})  # type: ignore[attr-defined]
+            sys.modules[_mod_name] = _stub
+
     from understanding_pi0.smolvla_mx.loader import build_dummy_processed_inputs, load_smolvla_policy
     from understanding_pi0.smolvla_mx.wrappers import SmolVLAOneStepNoCacheWrapper, flatten_processed_inputs
 
@@ -82,6 +106,42 @@ def load_smolvla(
     """Load the SmolVLA one-step wrapper and example inputs."""
 
     wrapper, flat_inputs, _ = load_smolvla_bundle(workspace, device=device)
+    return wrapper, flat_inputs
+
+
+def load_smolvla_quantized_bundle(
+    workspace: WorkspaceConfig | None = None,
+    *,
+    device: str = "cpu",
+) -> tuple[nn.Module, tuple[torch.Tensor, ...], int]:
+    """Load SmolVLA with FP8 E4M3 po2 quantization for NPU deployment.
+
+    Applies the NPU quantization recipe (all matmuls FP8, vector ops BF16,
+    softmax BF16) and rewrites modules for export compatibility.
+
+    Returns:
+        (quantized_wrapper, flat_inputs, num_cams)
+    """
+    wrapper, flat_inputs, num_cams = load_smolvla_bundle(workspace, device=device)
+
+    from compgen.quantization.export_wrappers import rewrite_for_export
+    from compgen.quantization.smolvla_recipe import apply_smolvla_quantization, default_npu_recipe
+
+    recipe = default_npu_recipe()
+    apply_smolvla_quantization(wrapper, recipe)
+    rewrite_for_export(wrapper)
+
+    return wrapper, flat_inputs, num_cams
+
+
+def load_smolvla_quantized(
+    workspace: WorkspaceConfig | None = None,
+    *,
+    device: str = "cpu",
+) -> tuple[nn.Module, tuple[Any, ...]]:
+    """Load the quantized SmolVLA wrapper and example inputs."""
+
+    wrapper, flat_inputs, _ = load_smolvla_quantized_bundle(workspace, device=device)
     return wrapper, flat_inputs
 
 
@@ -137,6 +197,24 @@ def build_robotics_model_specs() -> list[ModelSpec]:
             expected_status="pass",
             tags=("frontier", "robotics", "smolvla"),
             requirements=("understanding_pi0", "lerobot[smolvla]"),
+        ),
+        ModelSpec(
+            model_id="smolvla_fp8_npu",
+            family="robotics_vla",
+            description="SmolVLA quantized to FP8 E4M3 (po2 scaling) for NPU deployment",
+            loader=load_smolvla_quantized,
+            source=ModelSource(
+                kind="external_repo",
+                identifier="Understanding-PI0",
+                repo_name="understanding_pi0",
+                notes="Uses Understanding-PI0 + LeRobot smolvla wrapper, FP8 E4M3 po2 quantization",
+            ),
+            source_model_id="lerobot/smolvla_base",
+            capture_mode=CaptureMode.TORCH_DYNAMO_PARTITIONED,
+            readiness=ReadinessLevel.ANALYSIS_ONLY,
+            expected_status="pass",
+            tags=("frontier", "robotics", "smolvla", "fp8", "npu"),
+            requirements=("understanding_pi0", "lerobot[smolvla]", "torchao>=0.16"),
         ),
         ModelSpec(
             model_id="groot_policy_step",

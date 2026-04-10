@@ -4,7 +4,14 @@ from __future__ import annotations
 
 from compgen.models.core import CaptureMode, ModelCatalog, ModelSource, ModelSpec, ReadinessLevel
 from compgen.models.frontier import build_frontier_model_specs
-from compgen.models.robotics import build_robotics_model_specs, get_graph_op_summary, load_smolvla, load_smolvla_bundle
+from compgen.models.robotics import (
+    build_robotics_model_specs,
+    get_graph_op_summary,
+    load_smolvla,
+    load_smolvla_bundle,
+    load_smolvla_quantized,
+    load_smolvla_quantized_bundle,
+)
 
 
 def build_default_model_catalog() -> ModelCatalog:
@@ -26,4 +33,6 @@ __all__ = [
     "get_graph_op_summary",
     "load_smolvla",
     "load_smolvla_bundle",
+    "load_smolvla_quantized",
+    "load_smolvla_quantized_bundle",
 ]

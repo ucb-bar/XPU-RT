@@ -217,6 +217,9 @@ def run_eqsat_pass(
     config: EqSatConfig | None = None,
     rules: list[EqSatRewriteRule] | None = None,
     cost_dict: dict[str, int] | None = None,
+    llm_callback: Any = None,
+    blackbox_overrides: dict[str, str] | None = None,
+    segment_config: dict[str, Any] | None = None,
 ) -> EqSatResult:
     """Run the full equality saturation pass.
 
@@ -247,10 +250,11 @@ def run_eqsat_pass(
     log.info("eqsat.start", ops=ops_before, rules=len(rules))
 
     # Step 0a: Classify ops (blackbox vs profitable)
+    # Apply LLM-guided blackbox overrides if provided (Unit 5)
     try:
         from compgen.eqsat.blackbox import classify_module, count_blackbox, count_profitable
 
-        classifications = classify_module(module)
+        classifications = classify_module(module, overrides=blackbox_overrides)
         n_profitable = count_profitable(classifications)
         n_blackbox = count_blackbox(classifications)
         log.info(
@@ -296,7 +300,27 @@ def run_eqsat_pass(
         rule_stats=rule_stats,
     )
 
-    # Step 2b: Summarize e-graph (before extraction removes eclasses)
+    # Step 2b: Consult LLM callback for mid-search guidance (Unit 4)
+    if llm_callback is not None:
+        try:
+            from compgen.eqsat.explain import EGraphSummary
+            callback_result = llm_callback(
+                EGraphSummary(
+                    num_eclasses=eclasses_after_rewrite,
+                    num_enodes=enodes_after_rewrite,
+                    ambiguous_eclasses=0,
+                ),
+                rule_stats,
+            )
+            if isinstance(callback_result, dict):
+                # LLM suggested new cost weights — will be used in extraction
+                cost_dict = cost_dict or {}
+                cost_dict.update(callback_result)
+                log.info("eqsat.llm_callback", result_keys=list(callback_result.keys()))
+        except Exception:
+            log.debug("eqsat.llm_callback_failed", exc_info=True)
+
+    # Step 2c: Summarize e-graph (before extraction removes eclasses)
     egraph_summary = None
     try:
         from compgen.eqsat.explain import summarize_egraph

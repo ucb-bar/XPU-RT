@@ -7,3 +7,9 @@
 [submodule "third_party/zephyr"]
 	path = third_party/zephyr
 	url = https://github.com/zephyrproject-rtos/zephyr.git
+[submodule "third_party/pi0-quant"]
+	path = third_party/pi0-quant
+	url = https://github.com/chloe-wong/pi0-quant.git
+[submodule "third_party/npu_model"]
+	path = third_party/npu_model
+	url = https://github.com/ucb-ee194-tapeout/npu_model.git

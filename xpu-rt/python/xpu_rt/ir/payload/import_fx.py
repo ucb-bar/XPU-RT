@@ -19,6 +19,7 @@ from typing import Any
 
 import torch
 from xdsl.dialects.builtin import (
+    BFloat16Type,
     Float16Type,
     Float32Type,
     Float64Type,
@@ -35,11 +36,20 @@ from compgen.ir.payload.decompositions import DECOMPOSITION_TABLE, DecompFn, res
 
 def _torch_dtype_to_xdsl(dtype: torch.dtype) -> Attribute:
     """Convert a torch dtype to an xDSL element type."""
-    mapping = {
+    mapping: dict[torch.dtype, type] = {
         torch.float32: Float32Type,
         torch.float64: Float64Type,
         torch.float16: Float16Type,
+        torch.bfloat16: BFloat16Type,
     }
+    # FP8 types (float8_e4m3fn, float8_e5m2) don't have native xDSL types.
+    # After rewrite_for_export(), the graph uses explicit cast ops so FP8
+    # should not appear as tensor element types.  Fall back to Float16Type
+    # if they somehow leak through.
+    if hasattr(torch, "float8_e4m3fn") and dtype == torch.float8_e4m3fn:
+        return Float16Type()
+    if hasattr(torch, "float8_e5m2") and dtype == torch.float8_e5m2:
+        return Float16Type()
     factory = mapping.get(dtype, Float32Type)
     return factory()  # type: ignore[abstract]
 
