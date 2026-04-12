@@ -3,19 +3,29 @@ set -euo pipefail
 
 # profile_remote.sh
 #
-# Stages generated *_benchmarks.zip bundles to a remote machine, unzips them,
+# Stages generated *_benchmarks.zip bundles to a remote machine (BananaPi), unzips them,
 # runs topology sweeps via run_all_topologies.sh, and copies CSV/log results back
 # into gen/profile/<hw>/<target>/<model>/<basename>/...
 #
 # Default discovery scans:
 #   gen/vmfb/**/**/**/**/*_benchmarks.zip
 #
+# SmolVLA ONNX Submodels (9 total):
+#   action_in_projector, action_out_projector, smolvlm_expert_decode, smolvlm_expert_prefill,
+#   smolvlm_text, smolvlm_vision, state_projector, time_in_projector, time_out_projector
+#
 # Remote defaults:
-#   REMOTE=10.44.86.251
+#   REMOTE=10.44.86.251 (BananaPi)
 #   REMOTE_IREE_ROOT=/home/spacemit-merlin-perf
 #
 # Usage:
+#   # Profile all ONNX submodels (default - profiles everything found)
 #   ./runtime/scripts/profile_remote.sh
+#
+#   # Profile only specific ONNX submodels
+#   SUBMODEL_FILTER="smolvlm_expert_decode smolvlm_expert_prefill" ./runtime/scripts/profile_remote.sh
+#
+#   # Profile specific benchmark zip files
 #   ./runtime/scripts/profile_remote.sh path/to/specific_benchmarks.zip [...]
 #
 # Env overrides:
@@ -23,6 +33,7 @@ set -euo pipefail
 #   REMOTE_IREE_ROOT=/home/spacemit-merlin-perf
 #   VMFB_ROOT=<repo>/gen/vmfb
 #   PROFILE_ROOT=<repo>/gen/profile
+#   SUBMODEL_FILTER="model1 model2"  Filter to specific submodels (space-separated)
 #   REMOTE_TMP_BASE=/tmp
 #   KEEP_REMOTE_TMP=1
 #   CONTINUE_ON_ERROR=1
@@ -44,8 +55,24 @@ REMOTE_TMP_BASE="${REMOTE_TMP_BASE:-/tmp}"
 VMFB_ROOT="${VMFB_ROOT:-${REPO_ROOT}/gen/vmfb}"
 PROFILE_ROOT="${PROFILE_ROOT:-${REPO_ROOT}/gen/profile}"
 
+# SmolVLA ONNX submodels (canonical list)
+SMOLVLA_ONNX_SUBMODELS=(
+  action_in_projector
+  action_out_projector
+  smolvlm_expert_decode
+  smolvlm_expert_prefill
+  smolvlm_text
+  smolvlm_vision
+  state_projector
+  time_in_projector
+  time_out_projector
+)
+
+# Optional filter: profile only specific submodels (space-separated)
+SUBMODEL_FILTER="${SUBMODEL_FILTER:-}"
+
 KEEP_REMOTE_TMP="${KEEP_REMOTE_TMP:-0}"
-CONTINUE_ON_ERROR="${CONTINUE_ON_ERROR:-0}"
+CONTINUE_ON_ERROR="${CONTINUE_ON_ERROR:-1}"
 USE_STAGED_INSTALL="${USE_STAGED_INSTALL:-1}"
 LOCAL_INSTALL_DIR="${LOCAL_INSTALL_DIR:-${REPO_ROOT}/merlin/build/spacemit-merlin-perf/install}"
 
@@ -63,12 +90,21 @@ fi
 
 ssh_opts=(-o BatchMode=yes)
 
+echo "========================================================================"
+echo "SmolVLA ONNX Submodels - Remote Profiling on BananaPi"
+echo "========================================================================"
 echo "Remote: ${REMOTE}"
 echo "Remote IREE root: ${REMOTE_IREE_ROOT}"
 echo "VMFB root: ${VMFB_ROOT}"
 echo "Profile root: ${PROFILE_ROOT}"
 echo "Use staged install: ${USE_STAGED_INSTALL}"
 echo "Local install dir: ${LOCAL_INSTALL_DIR}"
+if [[ -n "${SUBMODEL_FILTER}" ]]; then
+  echo "Submodel filter: ${SUBMODEL_FILTER}"
+else
+  echo "Submodel filter: ALL (${#SMOLVLA_ONNX_SUBMODELS[@]} models)"
+fi
+echo "========================================================================"
 
 bench_tool_remote=""
 remote_ld_library_path=""
@@ -140,25 +176,73 @@ if [[ -n "${remote_ld_library_path}" ]]; then
   echo "Remote LD_LIBRARY_PATH prefix: ${remote_ld_library_path}"
 fi
 
+# Build filter map if SUBMODEL_FILTER is set
+declare -A submodel_allow=()
+if [[ -n "${SUBMODEL_FILTER}" ]]; then
+  # shellcheck disable=SC2206
+  _filter_list=(${SUBMODEL_FILTER})
+  for sm in "${_filter_list[@]}"; do
+    submodel_allow["${sm}"]=1
+  done
+  echo "Filtering to ${#submodel_allow[@]} submodels: ${SUBMODEL_FILTER}"
+fi
+
 zips=()
 if [[ $# -gt 0 ]]; then
+  # Explicit paths provided
   zips=("$@")
+  echo "Using ${#zips[@]} explicitly provided benchmark zip(s)"
 else
+  # Auto-discovery mode
   if [[ ! -d "${VMFB_ROOT}" ]]; then
     echo "Error: VMFB_ROOT does not exist: ${VMFB_ROOT}" >&2
     exit 1
   fi
+
+  # Find all *_benchmarks.zip files
+  all_zips=()
   while IFS= read -r -d '' z; do
-    zips+=("$z")
+    all_zips+=("$z")
   done < <(find "${VMFB_ROOT}" -type f -name '*_benchmarks.zip' -print0 | sort -z)
+
+  echo "Found ${#all_zips[@]} benchmark zip file(s) in ${VMFB_ROOT}"
+
+  # Apply submodel filter if set
+  if [[ ${#submodel_allow[@]} -gt 0 ]]; then
+    for z in "${all_zips[@]}"; do
+      # Extract model name from path: <VMFB_ROOT>/<model>/...
+      rel="${z#${VMFB_ROOT%/}/}"
+      model="${rel%%/*}"
+      if [[ -n "${submodel_allow[$model]:-}" ]]; then
+        zips+=("$z")
+      fi
+    done
+    echo "After filtering: ${#zips[@]} benchmark zip(s) match submodel filter"
+  else
+    # No filter - use all
+    zips=("${all_zips[@]}")
+  fi
 fi
 
 if [[ ${#zips[@]} -eq 0 ]]; then
   echo "Error: no *_benchmarks.zip found (VMFB_ROOT=${VMFB_ROOT})" >&2
+  if [[ -n "${SUBMODEL_FILTER}" ]]; then
+    echo "       (with SUBMODEL_FILTER=${SUBMODEL_FILTER})" >&2
+  fi
   exit 1
 fi
 
+echo ""
+echo "Will profile ${#zips[@]} benchmark bundle(s):"
+for z in "${zips[@]}"; do
+  rel="${z#${VMFB_ROOT%/}/}"
+  echo "  - ${rel}"
+done
+echo ""
+
 failures=0
+success=0
+skipped=0
 
 for zip_path in "${zips[@]}"; do
   zip_abs="$(cd "$(dirname "${zip_path}")" && pwd)/$(basename "${zip_path}")"
@@ -215,23 +299,37 @@ for zip_path in "${zips[@]}"; do
   set -e
 
   if [[ $rc -ne 0 ]]; then
-    echo "FAILED profiling (rc=${rc}): ${zip_abs}" >&2
+    echo "❌ FAILED profiling (rc=${rc}): ${model}" >&2
     failures=$((failures + 1))
     if [[ "${CONTINUE_ON_ERROR}" != "1" ]]; then
       exit "${rc}"
     fi
+  else
+    echo "✅ SUCCESS: ${model}"
+    success=$((success + 1))
   fi
 
   # Copy results back.
   # remote_out contains: <base_out_dir>/<INPUT_NAME>/topo_.../results.csv,...
   # INPUT_NAME is basename(remote_in) which is input_tag.
   scp -q -r "${REMOTE}:${remote_out}/${input_tag}/" "${local_out}/"
+  echo "Results copied to: ${local_out}"
 done
+
+echo ""
+echo "========================================================================"
+echo "Profiling Complete"
+echo "========================================================================"
+echo "Total models processed: $((success + failures))"
+echo "✅ Success: ${success}"
+echo "❌ Failed: ${failures}"
+echo "Profile results: ${PROFILE_ROOT}"
+echo "========================================================================"
 
 if [[ "${failures}" -ne 0 ]]; then
   echo "Done with failures: ${failures}" >&2
   exit 2
 fi
 
-echo "Done."
+echo "All profiles completed successfully!"
 
