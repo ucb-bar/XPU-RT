@@ -4,3 +4,6 @@
 [submodule "zephyr-chipyard-sw"]
 	path = zephyr-chipyard-sw
 	url = https://github.com/ucb-bar/zephyr-chipyard-sw.git
+[submodule "sims/IsaacLab"]
+	path = sims/IsaacLab
+	url = https://github.com/isaac-sim/IsaacLab.git
