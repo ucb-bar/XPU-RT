@@ -2,9 +2,59 @@ from workload import Workload, Job, Operation, Window
 import numpy as np
 import json
 import os
-from typing import Tuple, Dict, List, Optional, Callable
+from typing import Tuple, Dict, List, Optional
 
 from profile_metrics import profile_based_horizon_ms
+
+# Hardware constants — SpacemiT x60
+CPU_P = "CPU_P"
+CPU_E = "CPU_E"
+
+
+def machine_type_prefix(machine_name: str) -> str:
+    """Return the type prefix of a per-core machine name, e.g. 'CPU_P#2' -> 'CPU_P'."""
+    return machine_name.split("#")[0] if "#" in machine_name else machine_name
+
+
+def expand_machine_core_counts_to_list(machine_core_counts: dict[str, int]) -> list[str]:
+    """Expand {'CPU_P': 4, 'CPU_E': 5} into ['CPU_P#0', ..., 'CPU_P#3', 'CPU_E#0', ..., 'CPU_E#4']."""
+    machines = []
+    for machine_type, count in machine_core_counts.items():
+        for i in range(count):
+            machines.append(f"{machine_type}#{i}")
+    return machines
+
+
+def build_machine_combinations(machine_core_counts: dict[str, int]) -> tuple[list[str], list[list[str]]]:
+    """
+    Build the full machines list and cumulative core-group combinations.
+
+    For {'CPU_P': 4, 'CPU_E': 4} returns:
+      machines = ['CPU_P#0', ..., 'CPU_P#3', 'CPU_E#0', ..., 'CPU_E#3']
+      combinations = [
+          ['CPU_P#0'],                                  # 1 P-core  → topo_0
+          ['CPU_P#0', 'CPU_P#1'],                       # 2 P-cores → topo_0_1
+          ['CPU_P#0', 'CPU_P#1', 'CPU_P#2'],            # 3 P-cores → topo_0_1_2
+          ['CPU_P#0', 'CPU_P#1', 'CPU_P#2', 'CPU_P#3'], # 4 P-cores → topo_0_1_2_3
+          ['CPU_E#0'],                                  # 1 E-core  → topo_0
+          ...
+      ]
+
+    Each combination only contains cores from the same processor type.
+    """
+    machines = expand_machine_core_counts_to_list(machine_core_counts)
+    combinations = []
+    for machine_type, count in machine_core_counts.items():
+        cores = [f"{machine_type}#{i}" for i in range(count)]
+        for n in range(1, count + 1):
+            combinations.append(cores[:n])
+    return machines, combinations
+
+
+def topo_tag_for_combination(combo: list[str]) -> str:
+    """Return the topo tag that corresponds to a combination size, e.g. 3 cores → 'topo_0_1_2'."""
+    n = len(combo)
+    return "topo_" + "_".join(str(i) for i in range(n))
 
 
 def resolve_dispatch_deps_path(repo_base_path: str, dispatch_deps_path: str) -> str:
@@ -89,8 +139,6 @@ def create_sequential_job(operations: list[Operation]) -> Job:
     """
     
     for i in range(len(operations) - 1):
-        operations[i].successor = operations[i+1]
-        # Use add_predecessor to maintain list structure
         operations[i+1].add_predecessor(operations[i])
     
     return Job(operations)
@@ -260,46 +308,51 @@ def create_workload_from_network_hierarchy(
     machines: List[str],
     transfer_times: np.ndarray,
     processing_times: Optional[Dict[str, List[float]]] = None,
-    processing_time_generator: Optional[Callable[[str, str], List[float]]] = None,
     p_core_speedup: float = 1.5,
     random_seed: Optional[int] = 0,
+    machine_combinations: Optional[List[List[str]]] = None,
 ) -> Workload:
     """
     Creates a workload from a hierarchical network dependencies structure.
-    This function handles two levels:
+
+    Handles two levels:
     1. Top level: Networks with dependencies between networks
     2. Sub level: Dispatches within each network with dependencies between dispatches
-    
-    Supports periodic networks: If a network has 'period', 'window_duration', and 'start_time' fields,
-    it will be expanded into multiple instances (currently fixed at 5 instances) with calculated time windows.
-    Each instance gets: min_start_t = start_time + i * period, max_end_t = start_time + i * period + window_duration.
-    
+
+    Periodic networks (those with 'period' and 'window_duration') are expanded into
+    multiple instances with calculated time windows.
+
     Parameters:
-    - networks_data: Dictionary with 'networks' and 'edges' keys:
-        * 'networks': Dict mapping network identifier to network info (id, identifier, dispatch_deps_path)
-                      Periodic networks should have: period, window_duration, start_time (and optionally num_instances)
-        * 'edges': List of edges between networks [{"from": "network1", "to": "network2"}]
-                   Edges referencing periodic networks are expanded to all instances
-    - repo_base_path: Base path of the repository (paths in networks_data are relative to this)
-    - machines: List of machine names
+    - networks_data: Dictionary with 'networks' and 'edges' keys
+    - repo_base_path: Base path of the repository
+    - machines: List of all physical core names
     - transfer_times: Matrix of transfer times between machines
-    - processing_times: Optional dict mapping dispatch names (with prefix) to processing times.
-                       If None, will use processing_time_generator or generate synthetic times.
-    - processing_time_generator: Optional function(network_identifier, dispatch_name) -> List[float]
-                                to generate processing times. If None, uses synthetic generation.
-    - p_core_speedup: Speedup factor for P-core vs E-core (used for synthetic generation)
-    - random_seed: Seed for synthetic runtime generation. If None, uses nondeterministic randomness.
-                   Defaults to 0 for reproducible schedules.
-    
-    Returns:
-    - Combined Workload object with all operations from all networks, linked according to
-      both network-level and dispatch-level dependencies
+    - processing_times: Optional dict mapping prefixed dispatch names to processing times.
+                       Values are per-combination (one entry per machine_combination).
+                       If None, generates synthetic times using p_core_speedup.
+    - p_core_speedup: Speedup factor for P-core vs E-core (synthetic generation)
+    - random_seed: Seed for synthetic runtime generation. None = nondeterministic.
+    - machine_combinations: List of core groupings (e.g. [[CPU_P#0], [CPU_P#0,CPU_P#1], ...]).
+                           If None, each machine becomes a singleton combination.
     """
     networks = networks_data.get('networks', {})
     network_edges = networks_data.get('edges', [])
 
     # Random number generator for synthetic processing times
     rng = np.random.default_rng(random_seed)
+
+    effective_combos = machine_combinations if machine_combinations is not None else [[m] for m in machines]
+
+    def _synthetic_proc_times() -> List[float]:
+        """Generate synthetic per-combination processing times."""
+        p_ms = float(rng.uniform(2.0, 10.0))
+        times = []
+        for combo in effective_combos:
+            core_type = machine_type_prefix(combo[0])
+            base = p_ms if core_type == CPU_P else p_ms * p_core_speedup
+            # Rough scaling: more cores = faster (but not perfectly linear)
+            times.append(base / len(combo))
+        return times
 
     def _estimate_num_periodic_instances() -> Dict[str, int]:
         """
@@ -349,18 +402,8 @@ def create_workload_from_network_hierarchy(
                 # Determine processing times for this dispatch
                 if processing_times and prefixed_name in processing_times:
                     proc_times = processing_times[prefixed_name]
-                elif processing_time_generator:
-                    proc_times = processing_time_generator(net_id, dispatch_name)
                 else:
-                    # Synthetic: same pattern as used elsewhere
-                    p_ms_synth = float(rng.uniform(2.0, 10.0))
-                    cpu_p_time = p_ms_synth
-                    cpu_e_time = p_ms_synth * p_core_speedup
-                    proc_times = (
-                        [cpu_p_time, cpu_e_time]
-                        if len(machines) == 2
-                        else [float(rng.uniform(2.0, 10.0)) for _ in machines]
-                    )
+                    proc_times = _synthetic_proc_times()
 
                 if not proc_times:
                     continue
@@ -436,15 +479,8 @@ def create_workload_from_network_hierarchy(
                     
                     if processing_times and prefixed_dispatch_name in processing_times:
                         periodic_processing_times_cache[cache_key] = processing_times[prefixed_dispatch_name]
-                    elif processing_time_generator:
-                        periodic_processing_times_cache[cache_key] = processing_time_generator(network_identifier, dispatch_name)
                     else:
-                        # Generate synthetic processing times (same for all instances)
-                        p_ms_synth = float(rng.uniform(2.0, 10.0))
-                        cpu_p_time = p_ms_synth
-                        cpu_e_time = p_ms_synth * p_core_speedup
-                        proc_times = [cpu_p_time, cpu_e_time] if len(machines) == 2 else [float(rng.uniform(2.0, 10.0)) for _ in machines]
-                        periodic_processing_times_cache[cache_key] = proc_times
+                        periodic_processing_times_cache[cache_key] = _synthetic_proc_times()
             
             # Expand periodic network into multiple instances
             base_id = network_info.get('id', 0)
@@ -570,22 +606,11 @@ def create_workload_from_network_hierarchy(
                 if cache_key in periodic_processing_times_cache:
                     proc_times = periodic_processing_times_cache[cache_key]
                 else:
-                    # Fallback: generate synthetic (shouldn't happen if pre-generation worked)
-                    p_ms_synth = float(rng.uniform(2.0, 10.0))
-                    cpu_p_time = p_ms_synth
-                    cpu_e_time = p_ms_synth * p_core_speedup
-                    proc_times = [cpu_p_time, cpu_e_time] if len(machines) == 2 else [float(rng.uniform(2.0, 10.0)) for _ in machines]
+                    proc_times = _synthetic_proc_times()
             elif processing_times and prefixed_dispatch_name in processing_times:
                 proc_times = processing_times[prefixed_dispatch_name]
-            elif processing_time_generator:
-                proc_times = processing_time_generator(network_identifier, dispatch_name)
             else:
-                # Generate synthetic processing times
-                # Use random P-core time in milliseconds (2-10 ms range)
-                p_ms_synth = float(rng.uniform(2.0, 10.0))
-                cpu_p_time = p_ms_synth
-                cpu_e_time = p_ms_synth * p_core_speedup
-                proc_times = [cpu_p_time, cpu_e_time] if len(machines) == 2 else [float(rng.uniform(2.0, 10.0)) for _ in machines]
+                proc_times = _synthetic_proc_times()
             
             # Extract dispatch ID and create operation
             # Inherit time constraints from network if present
@@ -693,4 +718,4 @@ def create_workload_from_network_hierarchy(
         else:
             job_names.append(f"Job {job_id}")
     
-    return Workload(all_operations, machines, transfer_times, job_names=job_names)
+    return Workload(all_operations, machines, transfer_times, job_names=job_names, machine_combinations=machine_combinations)
