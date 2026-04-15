@@ -1,7 +1,13 @@
 import os
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import numpy as np
+
+# XPU-RT repo root /plots (this file lives in xpu-rt/)
+REPO_PLOTS_DIR = Path(__file__).resolve().parent.parent / "plots"
+
 
 def plot_optimization_schedule(durations, t, alpha, num_jobs, num_machines, machines, transfer_times, save_path="plots/schedule.png", plot_title="Schedule", workload=None):
     """
@@ -25,7 +31,7 @@ def plot_optimization_schedule(durations, t, alpha, num_jobs, num_machines, mach
         raise ValueError("num_jobs and num_machines must be provided to generate dynamic filenames.")
 
     # Define save directory and create it if it doesn't exist
-    plot_dir = "/scratch/kris/scheduler/src/scripts/plots"
+    plot_dir = str(REPO_PLOTS_DIR)
     os.makedirs(plot_dir, exist_ok=True)
 
     # Define the dynamic filename based on job and machine count
