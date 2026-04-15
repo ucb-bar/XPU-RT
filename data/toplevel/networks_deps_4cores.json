@@ -1,0 +1,76 @@
+{
+  "hardware": {
+    "machines": { "CPU_P": 4, "CPU_E": 4 },
+    "profile_hw": { "cpu_p": "RVV", "cpu_e": "scalar" },
+    "profile": { "target": "spacemit_x60", "topo_tag": "topo_0_1_2_3" },
+    "p_core_speedup": 1.5
+  },
+  "scheduler": {
+    "random_seed": 42,
+    "solver_verbosity": 2,
+    "time_limit": 60,
+    "use_profiled": true,
+    "prune_periodic": true,
+    "restrict_makespan_to_nonperiodic": true
+  },
+  "networks": {
+    "dronet": {
+      "id": 0,
+      "identifier": "dronet",
+      "dispatch_deps_path": "gen/vmfb/dronet/spacemit_x60/RVV/dronet.q.int8/dronet.q.int8_dispatch_graph.json"
+    },
+    "mlp0": {
+      "id": 1,
+      "identifier": "mlp0",
+      "dispatch_deps_path": "gen/vmfb/mlp/spacemit_x60/RVV/mlp.q.int8/mlp.q.int8_dispatch_graph.json",
+      "min_start_t": 0,
+      "max_end_t": 7
+    },
+    "mlp1": {
+      "id": 2,
+      "identifier": "mlp1",
+      "dispatch_deps_path": "gen/vmfb/mlp/spacemit_x60/RVV/mlp.q.int8/mlp.q.int8_dispatch_graph.json",
+      "min_start_t": 7,
+      "max_end_t": 14
+    },
+    "mlp2": {
+      "id": 3,
+      "identifier": "mlp2",
+      "dispatch_deps_path": "gen/vmfb/mlp/spacemit_x60/RVV/mlp.q.int8/mlp.q.int8_dispatch_graph.json",
+      "min_start_t": 14,
+      "max_end_t": 21
+    },
+    "mlp3": {
+      "id": 4,
+      "identifier": "mlp3",
+      "dispatch_deps_path": "gen/vmfb/mlp/spacemit_x60/RVV/mlp.q.int8/mlp.q.int8_dispatch_graph.json",
+      "min_start_t": 21,
+      "max_end_t": 28
+    },
+    "mlp4": {
+      "id": 5,
+      "identifier": "mlp4",
+      "dispatch_deps_path": "gen/vmfb/mlp/spacemit_x60/RVV/mlp.q.int8/mlp.q.int8_dispatch_graph.json",
+      "min_start_t": 28,
+      "max_end_t": 35
+    }
+  },
+  "edges": [
+    {
+      "from": "mlp0",
+      "to": "mlp1"
+    },
+    {
+      "from": "mlp1",
+      "to": "mlp2"
+    },
+    {
+      "from": "mlp2",
+      "to": "mlp3"
+    },
+    {
+      "from": "mlp3",
+      "to": "mlp4"
+    }
+  ]
+}

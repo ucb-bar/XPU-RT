@@ -52,41 +52,18 @@ class Operation:
     def get_duration_for_combination(self, combination_idx: int, machine_combinations: list[list[str]], machines: list[str]) -> float:
         """
         Get the duration for a specific machine combination.
-        
-        For backward compatibility:
-        - If combination is singleton [machine], returns processing_times[machine_index]
-        - If combination has multiple machines, returns max of individual machine durations
-          (can be overridden later for explicit combination durations)
-        
+
+        Processing times are indexed per-combination (one entry per machine combination),
+        so this is a direct index lookup.
+
         @param combination_idx: index of the machine combination
-        @param machine_combinations: list of machine combinations
-        @param machines: list of all machines (for index lookup)
+        @param machine_combinations: list of machine combinations (kept for call-site compatibility)
+        @param machines: list of all machines (kept for call-site compatibility)
         @return: duration for this combination
         """
-        if combination_idx < 0 or combination_idx >= len(machine_combinations):
+        if combination_idx < 0 or combination_idx >= len(self.processing_times):
             raise ValueError(f"Invalid combination index: {combination_idx}")
-        
-        combo = machine_combinations[combination_idx]
-        
-        # If singleton combination, return duration for that machine
-        if len(combo) == 1:
-            machine_idx = machines.index(combo[0])
-            if machine_idx < len(self.processing_times):
-                return self.processing_times[machine_idx]
-            else:
-                raise ValueError(f"Machine {combo[0]} not found in processing_times")
-        
-        # For multi-machine combinations, use max duration (can be customized later)
-        # This is a reasonable default: the operation takes as long as the slowest machine
-        durations = []
-        for machine_name in combo:
-            machine_idx = machines.index(machine_name)
-            if machine_idx < len(self.processing_times):
-                durations.append(self.processing_times[machine_idx])
-        if durations:
-            return max(durations)  # Use max as default for parallel execution
-        else:
-            raise ValueError(f"Could not find durations for combination {combo}")
+        return self.processing_times[combination_idx]
     
 class Job:
     """
