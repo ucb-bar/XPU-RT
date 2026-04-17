@@ -171,7 +171,7 @@ def main() -> None:
         "ConvBlock": (SimpleConvBlock().eval(), (torch.randn(2, 3, 32, 32),)),
     }
 
-    from compgen.verify.harness import verify_callable_against_reference
+    from compgen.semantic.verify.harness import verify_callable_against_reference
 
     all_verify_passed = True
     for name, (m, inp) in models_to_verify.items():
@@ -821,7 +821,7 @@ def main() -> None:
         )
 
         # Run the agentic compilation loop with MockLLMClient
-        from compgen.agent.compilation_loop import AgenticCompilationLoop
+        from compgen.agent.loop import AgenticCompilationLoop
         from compgen.agent.env import CompilerEnv
         from compgen.llm.mock_client import MockLLMClient
 

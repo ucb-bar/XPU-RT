@@ -15,9 +15,9 @@ from compgen.ir.recipe.ops_provenance import FromTemplateOp
 from compgen.ir.recipe.ops_scope import RecipeGuardOp, RecipeRegionOp
 from compgen.ir.recipe.ops_verify import RequireDiffTestOp, RequireMemoryBoundOp
 from compgen.ir.recipe.validate import validate_recipe_module
-from compgen.synthesis.guard_lang import Cmp, CmpOp, Const, Var
-from compgen.synthesis.promote import GuardArtifact
-from compgen.synthesis.registry import GuardRegistry
+from compgen.semantic.synthesis.guard_lang import Cmp, CmpOp, Const, Var
+from compgen.semantic.synthesis.promote import GuardArtifact
+from compgen.semantic.synthesis.registry import GuardRegistry
 from xdsl.dialects.builtin import (
     ArrayAttr,
     IntegerAttr,

@@ -26,7 +26,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from compgen.quantization.kernel_contracts import NpuKernelContract
+from compgen.kernels.providers.npu_contracts import NpuKernelContract
 
 
 @dataclass(frozen=True)

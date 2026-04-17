@@ -174,7 +174,7 @@ class TestSmolVLAPipeline:
 class TestSmolVLAAgenticLoop:
     def test_agentic_loop_on_mlp(self) -> None:
         """Agentic compilation loop runs on MLP (SmolVLA proxy)."""
-        from compgen.agent.compilation_loop import AgenticCompilationLoop
+        from compgen.agent.loop import AgenticCompilationLoop
         from compgen.agent.env import CompilerEnv
         from compgen.capture.torch_export import capture_model
         from compgen.ir.payload.import_fx import fx_to_xdsl

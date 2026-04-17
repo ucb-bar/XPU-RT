@@ -218,8 +218,8 @@ def validate_and_verify_rule(code: str, max_bitwidth: int = 8) -> RuleValidation
 
     # Try to export and verify via PDL
     try:
-        from compgen.rewrite.export_pdl import eqsat_rule_to_pdl
-        from compgen.rewrite.verify_pdl import verify_rewrite_family
+        from compgen.semantic.rewrite.export_pdl import eqsat_rule_to_pdl
+        from compgen.semantic.rewrite.verify_pdl import verify_rewrite_family
 
         exported = eqsat_rule_to_pdl(result.rule)
         if exported is not None:

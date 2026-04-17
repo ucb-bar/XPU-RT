@@ -232,7 +232,7 @@ class QuantizedModelPipeline:
             from compgen.kernels.patterns.catalog import build_pattern_catalog, export_pattern_catalog
             from compgen.kernels.golden.generator import generate_golden_for_pattern
             from compgen.kernels.golden.export import export_golden_data, export_test_harness
-            from compgen.passes.graph_decompose import run_decomposition_on_graphs
+            from compgen.transforms.graph_passes import run_decomposition_on_graphs
 
             graphs = list(artifact.graphs)
 

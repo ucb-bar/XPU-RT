@@ -105,7 +105,7 @@ test(kernels): add autocomp adapter integration tests
 refactor(runtime): simplify execution plan serialization
 ```
 
-Scopes: `capture`, `ir`, `payload`, `recipe`, `semantic`, `accel`, `ukernel`, `transforms`, `kernels`, `runtime`, `promotion`, `llm`, `targets`, `solve`, `cli`, `docs`, `tests`
+Scopes: `agent`, `analysis`, `api`, `benchmarks`, `capture`, `cli`, `docs`, `eqsat`, `extensions`, `ir` (covers `payload`, `recipe`, `semantic` sub-layers), `kernels`, `llm` (covers `llm.knowledge`), `memory` (covers `memory.search`), `models`, `packs`, `promotion`, `quantization`, `runtime`, `semantic` (covers `semantic.rewrite`, `semantic.synthesis`, `semantic.verify`), `solve`, `stages`, `targetgen`, `targets`, `tests`, `transforms`
 
 ## Test Conventions
 

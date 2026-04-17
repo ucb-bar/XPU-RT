@@ -10,7 +10,7 @@ Verification methods (layered):
        compare outputs within tolerance.
     4. Numeric -- run the original PyTorch model eagerly and via
        ``torch.compile(backend="eager")``, compare outputs with
-       :func:`compgen.verify.compare.compare_tensors`.  When structural
+       :func:`compgen.semantic.verify.compare.compare_tensors`.  When structural
        verification fails but numeric equivalence holds, the overall
        result is still PASS (semantic truth overrides structural mismatch).
 
@@ -33,7 +33,7 @@ import torch.nn as nn
 from xdsl.dialects.builtin import ModuleOp
 from xdsl.printer import Printer
 
-from compgen.verify.compare import compare_tensors
+from compgen.semantic.verify.compare import compare_tensors
 
 log = structlog.get_logger(__name__)
 
@@ -148,7 +148,7 @@ def _verify_numeric(
 
     Runs the model in plain eager mode and through ``torch.compile`` with
     the ``eager`` backend, then compares outputs element-wise using
-    :func:`compgen.verify.compare.compare_tensors`.
+    :func:`compgen.semantic.verify.compare.compare_tensors`.
 
     Args:
         model: The PyTorch module to verify.

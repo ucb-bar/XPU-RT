@@ -5,7 +5,7 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 from compgen.agent.analyzer import GraphAnalysisDossier, NetworkAnalysis, RegionDossier
-from compgen.agent.compilation_loop import AgenticCompilationLoop, CompilationResult
+from compgen.agent.loop import AgenticCompilationLoop, CompilationResult
 from compgen.agent.env import CompilerEnv
 from compgen.llm.base import GenerationRequest, GenerationResponse
 from compgen.llm.mock_client import MockLLMClient

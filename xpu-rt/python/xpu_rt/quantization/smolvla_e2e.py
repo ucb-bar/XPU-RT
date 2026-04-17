@@ -80,7 +80,7 @@ def run_smolvla_npu_pipeline(
     # 2b. Generate deduplicated kernel contracts
     kernel_contracts_list: list[object] = []
     if report.capture_artifact and report.capture_artifact.graphs:
-        from compgen.quantization.kernel_contracts import (
+        from compgen.kernels.providers.npu_contracts import (
             export_contracts_autocomp,
             export_contracts_yaml,
             format_contracts_report,
@@ -129,7 +129,7 @@ def run_smolvla_npu_pipeline(
         print(f"\n{format_analysis_report(report.graph_analysis)}")
 
     if kernel_contracts_list:
-        from compgen.quantization.kernel_contracts import format_contracts_report as fmt_kc
+        from compgen.kernels.providers.npu_contracts import format_contracts_report as fmt_kc
         print(f"\n{fmt_kc(kernel_contracts_list)}")
 
     if report.metadata.get("pattern_count"):

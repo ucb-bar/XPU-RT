@@ -32,7 +32,7 @@ import torch.nn as nn
 from xdsl.dialects.builtin import ModuleOp
 
 from compgen.agent.analyzer import GraphAnalysisDossier, NetworkAnalyzer
-from compgen.agent.compilation_loop import AgenticCompilationLoop, CompilationResult
+from compgen.agent.loop import AgenticCompilationLoop, CompilationResult
 from compgen.agent.env import CompilerEnv
 from compgen.capture.torch_export import CaptureArtifact, capture_frontend_artifact
 from compgen.eqsat.pipeline import EqSatResult, run_eqsat_pass

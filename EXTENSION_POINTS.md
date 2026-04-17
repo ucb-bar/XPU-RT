@@ -12,7 +12,8 @@ This document maps every extensible surface in the CompGen codebase. Scaffold co
 | **Runtime adapter** | `runtime/adapters/` | Executor interface | `local.py`, `iree.py` |
 | **MLIR dialect** | `extensions/dialects/` | `DialectSpec` | HexKL-style |
 | **Transform template** | `transforms/templates/` | Transform Dialect | Triton fused template |
-| **Graph pass** | `passes/` | `FX graph → FX graph` | `graph_decompose.py` |
+| **Graph pass** | `transforms/` | `FX graph → FX graph` | `graph_passes.py` |
+| **C++ compiler codegen** | `extensions/mlir_cppgen/` | xDSL dialect introspection | `mlir_cppgen/` |
 
 Each extension directory has a `_template.py` file showing exactly how to add your implementation.
 
@@ -23,10 +24,10 @@ python/compgen/
 │
 │  ─── SCAFFOLD (core infrastructure) ───
 │
-├── ir/                    [S] Three-layer IR stack
+├── ir/                    [S] Three-layer IR stack + leaf dialects
 │   ├── payload/           [S]   Canonical computational IR (xDSL/linalg)
 │   ├── recipe/            [S]   LLM-facing control IR
-│   ├── semantic/          [S]   Verification/trust layer
+│   ├── semantic/          [S]   Semantic IR (formal verification layer)
 │   ├── accel/             [S]   Accelerator dialect
 │   ├── ukernel/           [S]   Microkernel call boundary
 │   ├── tile/              [S]   Tile dialect
@@ -44,20 +45,21 @@ python/compgen/
 ├── capture/               [S] Model capture (torch.export, TorchDynamo)
 ├── agent/                 [S] LLM agent framework (CompilerEnv, loops)
 ├── llm/                   [S] LLM client adapters (Gemini, OpenAI, Anthropic)
+│   └── knowledge/         [S]   Optimization knowledge base (prompt-side)
 ├── eqsat/                 [S] Equality saturation engine
 ├── solve/                 [S] Mathematical solvers (CP-SAT, MILP, SMT)
-├── verify/                [S] Verification ladder (structural→functional→performance→formal)
-├── semantic/              [S] Formal verification (SMT backends)
-├── rewrite/               [S] Rewrite rule infrastructure
+├── semantic/              [S] Semantic verification layer
+│   ├── backends/          [S]   SMT / TV / PDL / transfer backends
+│   ├── verify/            [S]   Functional verification (eager vs candidate)
+│   ├── rewrite/           [S]   PDL rewrite verification
+│   └── synthesis/         [S]   Guard synthesis (SMT-backed)
 ├── promotion/             [S] LLM→verified→deterministic pipeline
 ├── memory/                [S] Artifact storage (content-addressed)
-├── knowledge/             [S] Optimization knowledge base
-├── search/                [S] Search infrastructure (frontiers, replay)
+│   └── search/            [S]   Search infrastructure (frontiers, replay, retrieve)
 ├── packs/                 [S] Extension pack system
 ├── models/                [S] Model catalog
 ├── benchmarks/            [S] Benchmark framework
-├── analysis/              [S] Analysis infrastructure
-├── synthesis/             [S] Guard synthesis
+├── analysis/              [S] Analysis infrastructure (layout planning)
 ├── targetgen/             [S] Hardware spec → compiler generator
 ├── api.py                 [S] Top-level API
 ├── cli.py                 [S] CLI
@@ -110,21 +112,20 @@ python/compgen/
 │   ├── iree_adapter.py    [E]   IREE runtime adapter
 │   └── pjrt_adapter.py    [E]   PJRT runtime adapter
 │
-├── extensions/            [E] Custom dialects & patches
+├── extensions/            [E] Custom dialects, patches, and C++ codegen
 │   ├── xdsl_generate.py   [S]   Dialect generation framework
 │   ├── llvm_patchgen.py   [S]   LLVM patch generation
+│   ├── mlir_cppgen/       [S]   xDSL → standalone C++ MLIR compiler (introspect + emit)
 │   ├── dialects/          [E] ← ADD YOUR MLIR DIALECT HERE
 │   │   └── _template.py   [E]   Template for new dialects
 │   └── (generated files)  [E]   Auto-generated dialect code
 │
-├── transforms/            [E] Transform scripts
-│   ├── apply.py           [S]   Transform application
-│   ├── synthesize.py      [S]   Transform synthesis
-│   ├── verify.py          [S]   Transform verification
-│   └── templates/         [E] ← ADD YOUR TRANSFORM TEMPLATES HERE
-│
-└── passes/                [E] Graph decomposition passes
-    └── graph_decompose.py [E] ← ADD YOUR PASSES HERE
+└── transforms/            [E] Transform scripts + graph passes
+    ├── apply.py           [S]   Transform application
+    ├── synthesize.py      [S]   Transform synthesis
+    ├── verify.py          [S]   Transform verification
+    ├── graph_passes.py    [E]   FX graph decomposition (fusion, transpose fold, ...)
+    └── templates/         [E] ← ADD YOUR TRANSFORM TEMPLATES HERE
 
 contrib/                   [E] Community-contributed extensions
 ├── README.md                  How to contribute
@@ -169,5 +170,13 @@ contrib/                   [E] Community-contributed extensions
 1. Copy `python/compgen/runtime/adapters/_template.py`
 2. Implement the executor interface
 3. Register in the runtime configuration
+
+### Generating a Standalone C++ MLIR Compiler
+
+1. Define your xDSL dialect under `python/compgen/ir/` (or `extensions/dialects/`)
+2. Register the dialect in `extensions/mlir_cppgen/introspect.py`
+3. Run `python -m compgen.extensions.mlir_cppgen --out artifacts/compiler`
+4. The generator introspects your dialect and emits TableGen, C++ ops/attrs/passes, CMake, Docker, and an `opt` driver
+5. See `docs/architecture/compiler-generation.md` for the full pipeline
 
 See `docs/architecture/extension-points.md` for the full guide with code examples.

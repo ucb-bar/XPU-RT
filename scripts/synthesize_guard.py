@@ -8,7 +8,7 @@ from pathlib import Path
 import click
 
 from compgen.ir.recipe.serialize import mlir_to_recipe, recipe_to_mlir
-from compgen.synthesis.integration import synthesize_and_attach_guards
+from compgen.semantic.synthesis.integration import synthesize_and_attach_guards
 
 
 @click.command()

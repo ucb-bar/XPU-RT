@@ -239,7 +239,7 @@ from compgen.quantization.autocomp_bridge import (
     load_autocomp_result,
     validate_kernel_against_contract,
 )
-from compgen.quantization.kernel_contracts import NpuKernelContract
+from compgen.kernels.providers.npu_contracts import NpuKernelContract
 import yaml
 
 # Load the contract
@@ -329,7 +329,7 @@ All pipeline steps are available programmatically:
 ```python
 from compgen.quantization.pipeline import QuantizedModelPipeline
 from compgen.capture.torchao_pipeline import QuantizationConfig
-from compgen.quantization.kernel_contracts import (
+from compgen.kernels.providers.npu_contracts import (
     generate_npu_kernel_contracts,
     export_contracts_yaml,
     export_contracts_autocomp,

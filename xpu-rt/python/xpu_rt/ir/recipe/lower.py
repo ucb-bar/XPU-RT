@@ -50,9 +50,9 @@ from compgen.ir.recipe.ops_verify import (
     RequireTranslationValidationOp,
 )
 from compgen.ir.recipe.ops_scope import RecipeGuardOp
-from compgen.synthesis.facts import RecipeFactIndex, build_candidate_env, build_fact_index
-from compgen.synthesis.registry import GuardRegistry
-from compgen.synthesis.runtime import GuardRuntime, GuardVerdict
+from compgen.semantic.synthesis.facts import RecipeFactIndex, build_candidate_env, build_fact_index
+from compgen.semantic.synthesis.registry import GuardRegistry
+from compgen.semantic.synthesis.runtime import GuardRuntime, GuardVerdict
 
 log = structlog.get_logger()
 

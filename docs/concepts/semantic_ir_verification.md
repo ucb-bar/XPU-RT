@@ -43,7 +43,7 @@ Verifies that DAG-to-DAG rewrite rules are sound across all bitwidths.
    - If UNSAT → sound at this width
 3. If sound at all widths → rewrite family is promotable
 
-**Entry point:** `compgen.rewrite.verify_pdl.verify_rewrite_family()`
+**Entry point:** `compgen.semantic.rewrite.verify_pdl.verify_rewrite_family()`
 
 ### Transfer Function Verification
 

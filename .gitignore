@@ -143,6 +143,8 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+# ...but not the compgen.agent.env package (virtualenv pattern collision)
+!python/compgen/agent/env/
 
 # Spyder project settings
 .spyderproject
