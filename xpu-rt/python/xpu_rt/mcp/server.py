@@ -23,6 +23,7 @@ Claude Code configuration (``.mcp.json``)::
 from __future__ import annotations
 
 import json
+import logging
 import sys
 import time
 from typing import Any
@@ -32,6 +33,34 @@ import structlog
 from compgen.mcp.session import SessionManager
 from compgen.mcp.tools import ALL_TOOLS
 from compgen.mcp.transcript import McpTranscriptRecorder
+
+
+def _route_logs_to_stderr() -> None:
+    """Force every logger to stderr so nothing pollutes the stdio JSON-RPC stream.
+
+    The MCP transport expects newline-delimited JSON on stdout; a single
+    log line on stdout breaks every downstream parser. Called at server
+    startup before any tool dispatch.
+    """
+
+    # Route the stdlib root logger to stderr.
+    root = logging.getLogger()
+    for handler in list(root.handlers):
+        root.removeHandler(handler)
+    stderr_handler = logging.StreamHandler(sys.stderr)
+    stderr_handler.setFormatter(logging.Formatter("%(message)s"))
+    root.addHandler(stderr_handler)
+
+    # Pin structlog to the same stderr stream.
+    structlog.configure(
+        processors=[
+            structlog.processors.TimeStamper(fmt="iso"),
+            structlog.processors.add_log_level,
+            structlog.processors.KeyValueRenderer(key_order=["event"]),
+        ],
+        logger_factory=structlog.PrintLoggerFactory(file=sys.stderr),
+    )
+
 
 log = structlog.get_logger()
 
@@ -123,6 +152,7 @@ def _run_async_server() -> None:
     """Run the MCP stdio server event loop."""
     import asyncio
 
+    _route_logs_to_stderr()
     mcp_mod = _require_mcp()
     from mcp.server import Server   # type: ignore[import-not-found]
     from mcp.server.stdio import stdio_server   # type: ignore[import-not-found]

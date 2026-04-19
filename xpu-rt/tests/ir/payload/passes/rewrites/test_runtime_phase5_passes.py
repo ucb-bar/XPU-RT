@@ -1,4 +1,4 @@
-"""Tests for the Wave 6 Phase-5 runtime passes.
+"""Tests for the Phase-5 runtime passes.
 
 All nine passes operate on :class:`compgen.runtime.execution_plan.ExecutionPlan`
 rather than xDSL IR, so the tests live in one module and share a

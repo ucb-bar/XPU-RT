@@ -1,4 +1,4 @@
-"""Tests for Wave 12: stacked fixtures + autotuner + bench + disk cache."""
+"""Tests for stacked-fixture compile + autotuner + bench + on-disk pipeline cache."""
 
 from __future__ import annotations
 

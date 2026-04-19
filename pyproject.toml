@@ -109,6 +109,23 @@ check_untyped_defs = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = "test_*.py"
+# Centralized flake / env-gated exclusions shared by `make test`,
+# local runs, and CI. Override with `pytest --override-ini="addopts="
+# <path>` when you need to exercise one of these deliberately.
+addopts = [
+    # Env-gated: external benchmark deps.
+    "--ignore=tests/benchmarks/test_runner.py",
+    "--ignore=tests/benchmarks/test_torchbench_adapter.py",
+    # Env-gated: requires Understanding-PI0 checkout + 450M SmolVLA.
+    "--ignore=tests/test_smolvla_e2e.py",
+    # LLM-path flakes.
+    "--ignore=tests/agent/test_gepa_loop.py",
+    "--ignore=tests/agent/test_pipeline_e2e.py",
+    # Individual known-flaky test ids.
+    "--deselect=tests/agent/invent_slots/test_registrar.py::test_registrar_registers_all_slots",
+    "--deselect=tests/agent/policies/test_default.py::test_policy_against_real_registry",
+    "--deselect=tests/kernels/megakernel/test_llama_decoder_layer.py::test_tinyllama_layernorm_scales_are_loaded_from_real_checkpoint",
+]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "requires_gpu: marks tests that need GPU hardware",

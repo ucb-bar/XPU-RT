@@ -1,0 +1,45 @@
+name: gpu
+
+# GPU-gated tests. Requires a self-hosted runner with CUDA + Triton.
+# Not scheduled — manual trigger only, because the repo does not yet
+# ship a GitHub-hosted GPU runner. Maintainers with local GPU hardware
+# can attach a self-hosted runner labelled `gpu` and kick this off.
+# See docs/contributing/gpu_ci.md for setup.
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_filter:
+        description: "Pytest -k expression (optional)"
+        required: false
+        default: ""
+
+jobs:
+  gpu:
+    name: CUDA-gated tests
+    runs-on: [self-hosted, gpu]
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      - name: Install dependencies
+        run: uv sync --frozen
+      - name: nvidia-smi
+        run: nvidia-smi || (echo "No CUDA on this runner" && exit 1)
+      - name: Run GPU-gated tests
+        run: |
+          args=""
+          if [ -n "${{ inputs.test_filter }}" ]; then
+            args="-k ${{ inputs.test_filter }}"
+          fi
+          uv run pytest \
+            tests/runtime/test_gpu_executor.py \
+            tests/kernels/megakernel \
+            tests/stages/test_cuda_gpu.py \
+            -q --durations=20 $args

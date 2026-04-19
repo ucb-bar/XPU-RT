@@ -1,0 +1,48 @@
+name: nightly-e2e
+
+on:
+  schedule:
+    # Daily at 07:00 UTC
+    - cron: "0 7 * * *"
+  workflow_dispatch: {}
+  push:
+    branches: [main]
+
+concurrency:
+  group: nightly-e2e-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  e2e:
+    name: Full regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies (core + mcp)
+        run: uv sync --frozen --extra mcp
+
+      # Ignore + deselect list lives in pyproject.toml [tool.pytest.ini_options]
+      # so local + CI stay in sync. Overrides belong in dedicated jobs, not here.
+      - name: Run full regression
+        run: uv run pytest tests/ -q --durations=50
+
+      - name: Upload session transcripts (if any)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: compgen-session-transcripts
+          path: |
+            sessions/**/transcript.jsonl
+          if-no-files-found: ignore

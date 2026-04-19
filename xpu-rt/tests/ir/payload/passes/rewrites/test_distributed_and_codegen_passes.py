@@ -1,5 +1,4 @@
-"""Tests for the Wave 10 passes (distributed + control-flow + codegen
-quality + niche expanders).
+"""Tests for the distributed + control-flow + codegen-quality + niche-expander passes.
 
 All 15 passes are covered here in one file with ≥3 tests each, plus
 integration tests spanning the full distributed chain.

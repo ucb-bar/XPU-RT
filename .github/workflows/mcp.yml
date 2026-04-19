@@ -1,0 +1,116 @@
+name: mcp
+
+on:
+  pull_request:
+    paths:
+      - "python/compgen/mcp/**"
+      - "python/compgen/packs/**"
+      - "tests/mcp/**"
+      - "user_perspective/demo_agentic_compile.py"
+      - "scripts/ci/mcp_stdio_smoke.py"
+      - ".github/workflows/mcp.yml"
+  push:
+    branches: [main]
+    paths:
+      - "python/compgen/mcp/**"
+      - "python/compgen/packs/**"
+      - "tests/mcp/**"
+      - "scripts/ci/mcp_stdio_smoke.py"
+      - ".github/workflows/mcp.yml"
+
+concurrency:
+  group: mcp-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mcp-dispatch:
+    name: MCP dispatch tests + tool-surface lock
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      - name: Install dependencies (mcp extra)
+        run: uv sync --frozen --extra mcp
+      - name: Pytest tests/mcp
+        run: uv run pytest tests/mcp -q
+      - name: Tool-surface lock
+        run: |
+          uv run python - <<'PY'
+          from compgen.mcp.tools import ALL_TOOLS
+          names = sorted(t["name"] for t in ALL_TOOLS)
+          print("tools:", names)
+          assert len(ALL_TOOLS) >= 16, f"expected ≥16 tools, got {len(ALL_TOOLS)}"
+          required = {
+              "open_target", "load_model", "compile",
+              "bundle_export", "register_pack",
+          }
+          missing = required - set(names)
+          assert not missing, f"missing: {missing}"
+          PY
+      - name: Upload transcripts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcp-session-transcripts
+          path: |
+            sessions/**/transcript.jsonl
+          if-no-files-found: ignore
+
+  mcp-stdio-smoke:
+    name: MCP stdio handshake
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    needs: mcp-dispatch
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      - name: Install dependencies (mcp extra)
+        run: uv sync --frozen --extra mcp
+      - name: Boot compgen-mcp + drive initialize/tools.list/tools.call
+        run: uv run python scripts/ci/mcp_stdio_smoke.py
+      - name: Run demo_agentic_compile.py
+        env:
+          COMPGEN_SESSION_DIR: ${{ github.workspace }}/ci_sessions
+        run: |
+          # The demo script lives under the gitignored user_perspective/
+          # sandbox; recreate it from the checked-in test fixtures.
+          mkdir -p user_perspective/sessions
+          # Scaffold the my_fp4 pack the demo expects.
+          uv run compgen scaffold-pack --kind quantization --name my_fp4 --out user_perspective --overwrite
+          if [ -f user_perspective/demo_agentic_compile.py ]; then
+            uv run python user_perspective/demo_agentic_compile.py
+            # Expect at least one transcript with ≥ 6 records.
+            found=0
+            for f in "$COMPGEN_SESSION_DIR"/*/transcript.jsonl; do
+              [ -f "$f" ] || continue
+              lines=$(wc -l < "$f")
+              echo "transcript $f lines=$lines"
+              [ "$lines" -ge 6 ] && found=$((found+1))
+            done
+            if [ "$found" -eq 0 ]; then
+              echo "no transcript with ≥6 records found" && exit 1
+            fi
+          else
+            echo "demo_agentic_compile.py not present in user_perspective/ (gitignored); skipping replay"
+          fi
+      - name: Upload transcripts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcp-stdio-transcripts
+          path: |
+            ci_sessions/**/transcript.jsonl
+          if-no-files-found: ignore

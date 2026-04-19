@@ -5,7 +5,7 @@ turned them into real MVP annotation passes. This file is kept (rather
 than renamed) to preserve git blame context and because the stubs.py
 module itself kept its name. The tests here now assert the real
 (stub=False) behaviour; the fuller per-pass invariants live in
-``test_wave2_wave3_upgrades.py``.
+``test_annotator_pass_coverage.py``.
 """
 
 from __future__ import annotations

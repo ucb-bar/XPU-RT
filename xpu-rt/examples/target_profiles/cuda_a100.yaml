@@ -51,6 +51,11 @@ devices:
       - sparsity_2_4
       - nvlink
       - cuda_graphs
+      # ETC megakernel capability flags (Event Tensor Compiler integration).
+      # Used by compgen.agent.gates.megakernel as a B200 stand-in until a
+      # dedicated cuda_b200.yaml lands.
+      - persistent_kernels
+      - semaphore_atomics
     kernel_backends:
       - triton
       - cutlass
@@ -81,3 +86,7 @@ metadata:
   compute_capability: "8.0"
   sm_count: 108
   max_threads_per_sm: 2048
+  # ETC integration metadata (Phase A): used by the StaticMegakernelSchedule
+  # pass when no explicit sm_count is set on an event.graph op.
+  megakernel_default_sm_count: 108
+  megakernel_scheduler_default: static

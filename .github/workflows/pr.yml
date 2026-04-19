@@ -1,0 +1,124 @@
+name: pr
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: pr-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint (ruff, advisory)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      - name: Install dependencies
+        run: uv sync --frozen
+      - name: Ruff check
+        run: uv run ruff check python/ benchmarks/ tests/
+      - name: Ruff format check
+        run: uv run ruff format --check python/ benchmarks/ tests/
+
+  typecheck:
+    name: Typecheck (mypy, advisory)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      - name: Install dependencies
+        run: uv sync --frozen
+      - name: Mypy
+        run: uv run mypy python/compgen/
+
+  test:
+    name: Pytest (CPU)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      - name: Install dependencies
+        run: uv sync --frozen
+      - name: Run tests
+        run: uv run pytest tests/ -q --durations=20
+      - name: Upload pytest output on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-output
+          path: |
+            .pytest_cache/**
+            pytest-report.txt
+
+  lockfile:
+    name: uv.lock drift
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      - name: Check lockfile is current
+        run: uv lock --check
+
+  smoke-cli:
+    name: CLI + scaffold-pack smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      - name: Install dependencies (with mcp extra)
+        run: uv sync --frozen --extra mcp
+      - name: compgen --version
+        run: uv run compgen --version
+      - name: Scaffold + load a pack end-to-end
+        run: |
+          uv run compgen scaffold-pack \
+            --kind quantization --name ci_demo --out /tmp/scaffold_smoke
+          uv run python - <<'PY'
+          import sys
+          sys.path.insert(0, "/tmp/scaffold_smoke/ci_demo/src")
+          from compgen.packs import load_pack
+          loaded = load_pack("ci_demo")
+          assert loaded.manifest.name == "ci_demo"
+          assert "KernelPack" in loaded.manifest.kinds
+          print(f"loaded {loaded.manifest.name} kinds={loaded.manifest.kinds}")
+          PY

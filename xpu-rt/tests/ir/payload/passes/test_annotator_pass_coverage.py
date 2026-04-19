@@ -1,4 +1,4 @@
-"""Tests for the fifth-wave upgrades: 11 Wave-2/3 passes now real (stub=False).
+"""Tests for the walk-and-annotate path of 11 upgraded stub passes (stub=False).
 
 Each test builds an empty ModuleOp, runs the pass, and asserts the
 count attribute lands on the module with value 0 (no matches on empty

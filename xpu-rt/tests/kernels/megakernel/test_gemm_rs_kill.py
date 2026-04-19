@@ -175,7 +175,7 @@ def _reference(a: torch.Tensor) -> torch.Tensor:
 # ---------------------------------------------------------------------------
 
 
-def test_phase_a_megakernel_pipeline_end_to_end_on_gpu(tmp_path: Path) -> None:
+def test_megakernel_pipeline_end_to_end_on_gpu(tmp_path: Path) -> None:
     sm_count = 4
     n_tiles = 4
     tile_size = 32

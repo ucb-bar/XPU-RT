@@ -60,6 +60,66 @@ The same selection is mirrored into `COMPGEN_LLM_BACKEND` / `COMPGEN_LLM_MODEL` 
 - Hardware-spec example for `compgen.device(...)`: [`examples/hardware_specs/gpu_simt_demo.yaml`](examples/hardware_specs/gpu_simt_demo.yaml)
 - Demo model and script: [`examples/models/`](examples/models/) and [`scripts/e2e_demo.py`](scripts/e2e_demo.py)
 
+## Compile a model end-to-end
+
+Stage B's pipeline driver takes any `nn.Module` + example inputs + a
+`CompGenOptions` preset and runs 37 optimization passes across 5
+dialects:
+
+```python
+import torch
+import torch.nn as nn
+from compgen.options import cuda_a100_defaults
+from compgen.pipeline import compile_and_diff
+
+class Block(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.fc = nn.Linear(64, 64)
+    def forward(self, x):
+        return torch.relu(self.fc(x))
+
+model = Block().eval()
+x = torch.randn(1, 4, 64)
+
+report = compile_and_diff(
+    model, (x,),
+    options=cuda_a100_defaults(),
+    fixture_name="my_block",
+    eager_reference=model(x).detach(),
+    run_compiled_executor=True,
+)
+print("passed:", report.passed)
+print("opaque rate:", report.opaque_rate)
+print("compiled diff:", report.compiled_diff_max_abs)
+```
+
+## What Stage B ships
+
+- **37 passes** across 12 waves: structural, quantization, layout,
+  distributed (SPMD + AllReduce / AllGather / ReduceScatter +
+  pipeline parallel + collective_quantizer), control-flow,
+  codegen-quality, Event Tensor (arXiv:2604.13327v1),
+  runtime / Phase-5, rematerialization, scatter / gather
+  expansion.
+- **5 custom dialects**: `compgen.quant` (TorchAO AffineQuantizedTensor
+  mirror), `compgen.tensor_ext` (Concat / Pack / Unpack),
+  `compgen.linalg_ext` (Softmax / RMSNorm / LayerNorm / RoPE /
+  SwiGLU / GELU / SiLU), `compgen.event` (Event Tensor), and
+  `compgen.collective` (AllReduce / AllGather / ReduceScatter /
+  Broadcast).
+- **FP8 + HMX** types: `Float8E4M3FNType`, `Float8E5M2Type`, four
+  HMX tile primitives on `compgen.accel`.
+- **Pipeline infrastructure**: options preset system
+  (cuda_a100 / cuda_h100 / npu_fp8), LRU pipeline cache,
+  differential test harness, CPU reference executor, Triton kernel
+  emitter skeleton, autotuner, benchmark harness.
+- **9 real-workload fixtures**: attention_mlp_tiny,
+  qwen_moe_tiny, smolvla_tiny, gemma_decode_tiny,
+  tinyllama_block_tiny, vla_decoder_tiny,
+  tinyllama_stack_3, gemma_stack_3, smolvla_stack_2 — all
+  compile + execute end-to-end through the pipeline.
+
 ## License
 
 Apache License 2.0. See [LICENSE](LICENSE).
