@@ -150,10 +150,22 @@ class CompilationStage(abc.ABC):
       3. A slot for target-specific passes (filled by a TargetStagePlugin)
       4. Verification (contract enforcement)
       5. A REQUIREMENTS.md path for LLM generation
+      6. An optional ``llm_phase`` tag (1..7) declaring which pipeline
+         phase from ``proposed_compgen_architecture.md`` the stage
+         belongs to. Enforces L-XLA-6: Phase 2 stages never read
+         runtime state, Phase 5 stages never rewrite Recipe-IR graph
+         structure, etc. Opt-in — stages that haven't been classified
+         yet leave ``llm_phase = None``.
 
     Subclasses implement the concrete stage logic.  Target-specific behavior
     is injected via ``TargetStagePlugin``, NOT by subclassing.
     """
+
+    #: Optional phase tag. 1 = normalization, 2 = semantic global opt,
+    #: 3 = placement/layout, 4 = kernel contract emission,
+    #: 5 = runtime contract, 6 = verify/promote, 7 = package.
+    #: Override in subclasses that belong to a specific phase.
+    llm_phase: int | None = None
 
     def __init__(self) -> None:
         self._plugin: TargetStagePlugin | None = None

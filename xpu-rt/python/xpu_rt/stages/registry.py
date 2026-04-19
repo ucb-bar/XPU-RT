@@ -86,6 +86,37 @@ class StageRegistry:
         """Look up a target dialect stack."""
         return self._target_stacks.get(target_name)
 
+    def check_phase_monotonicity(
+        self, target_name: str
+    ) -> list[str]:
+        """Return violations of L-XLA-6: stages' llm_phase must not regress.
+
+        Stages with ``llm_phase = None`` are skipped. An empty list means
+        the stack is phase-monotonic (or has no phase-tagged stages).
+        Callers can treat this as a *lint* (warn) or a *gate* (fail)
+        depending on how strict they want to be — the method never
+        raises.
+        """
+        stack = self._target_stacks.get(target_name)
+        if stack is None:
+            return [f"no stack for target '{target_name}'"]
+
+        violations: list[str] = []
+        last_phase: int | None = None
+        last_stage: str = ""
+        for stage in stack.stages:
+            phase = getattr(stage, "llm_phase", None)
+            if phase is None:
+                continue
+            if last_phase is not None and phase < last_phase:
+                violations.append(
+                    f"stage {stage.name!r} (phase={phase}) runs AFTER "
+                    f"{last_stage!r} (phase={last_phase})"
+                )
+            last_phase = phase
+            last_stage = stage.name
+        return violations
+
     def list_targets(self) -> list[str]:
         """List all registered target names."""
         return list(self._target_stacks.keys())

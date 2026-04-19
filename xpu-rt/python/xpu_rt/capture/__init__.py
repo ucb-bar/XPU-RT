@@ -29,6 +29,10 @@ from compgen.capture.torch_export import (
     capture_model,
     validate_export,
 )
+from compgen.capture.inductor_harvest import (
+    InductorHarvestReport,
+    harvest_inductor_graph,
+)
 from compgen.capture.torchao_pipeline import AccuracyReport, QuantizationConfig, apply_quantization, verify_quant_accuracy
 
 __all__ = [
@@ -38,6 +42,7 @@ __all__ = [
     "DynamoReport",
     "ExportValidation",
     "GuardObservation",
+    "InductorHarvestReport",
     "QuantizationConfig",
     "RangeConstraint",
     "apply_quantization",
@@ -47,6 +52,7 @@ __all__ = [
     "capture_model",
     "collect_diagnostics",
     "compile_baseline",
+    "harvest_inductor_graph",
     "validate_export",
     "verify_quant_accuracy",
 ]

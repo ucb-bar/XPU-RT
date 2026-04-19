@@ -220,6 +220,31 @@ class CompilerEnv:
         """Return the accumulated Agent IR module, or None if tracking is off."""
         return self._agent_module
 
+    @property
+    def payload_module(self) -> ModuleOp | None:
+        """Return the live Payload IR module (the working copy ``step()`` mutates).
+
+        Set with :meth:`set_payload_module` when an external pass
+        (e.g. :func:`compgen.mcp.tools.recipe_apply.apply_recipe`)
+        rewrites the IR and needs to rebind the env's view of it.
+        """
+        return self._module
+
+    def set_payload_module(self, module: ModuleOp) -> None:
+        """Replace the live Payload IR module + re-extract region facts.
+
+        Used after :class:`~compgen.ir.recipe.execute.RecipeExecutor`
+        applies transform scripts to the payload module — the env
+        needs to see the rewritten module so subsequent ``observe()``
+        / ``step()`` calls operate on the new state.
+        """
+        assert self._target is not None, (
+            "set_payload_module called before reset(); env has no target"
+        )
+        self._module = module
+        self._regions = _extract_regions(self._module, self._target)
+        self._current_cost = sum(r.estimated_latency_us for r in self._regions)
+
     def observe(self) -> Observation:
         """Get the current observation."""
         return self._make_observation()

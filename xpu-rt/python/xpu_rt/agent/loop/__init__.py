@@ -18,10 +18,20 @@ Internal modules:
 from __future__ import annotations
 
 from compgen.agent.loop.core import AgenticCompilationLoop
+from compgen.agent.loop.phased import (
+    DriveLoopResult,
+    PhasePolicy,
+    PhaseRunSummary,
+    PhasedDriveLoop,
+)
 from compgen.agent.loop.records import CompilationResult, IterationRecord
 
 __all__ = [
     "AgenticCompilationLoop",
     "CompilationResult",
+    "DriveLoopResult",
     "IterationRecord",
+    "PhasePolicy",
+    "PhaseRunSummary",
+    "PhasedDriveLoop",
 ]
