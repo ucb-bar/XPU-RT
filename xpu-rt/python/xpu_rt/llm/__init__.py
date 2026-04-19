@@ -39,7 +39,15 @@ from compgen.llm.factory import create_llm_client
 from compgen.llm.gemini_client import GeminiClient
 from compgen.llm.mock_client import MockLLMClient
 from compgen.llm.openai_client import OpenAIClient
-from compgen.llm.recorder import LLMRecorder
+from compgen.llm.recorder import LLMRecorder, ToolCallRecord, ToolCallRecorder
+from compgen.llm.registry import (
+    InventSlot,
+    Registry,
+    Tool,
+    ToolArg,
+    ToolResult,
+    get_registry,
+)
 
 __all__ = [
     "AnthropicClient",
@@ -49,6 +57,7 @@ __all__ = [
     "GenerationRequest",
     "GenerationResponse",
     "GeminiClient",
+    "InventSlot",
     "LLMSelection",
     "LLMConfig",
     "LLMRecorder",
@@ -56,10 +65,17 @@ __all__ = [
     "Objective",
     "OpenAIClient",
     "PromptContext",
+    "Registry",
     "SUPPORTED_PROVIDERS",
+    "Tool",
+    "ToolArg",
+    "ToolCallRecord",
+    "ToolCallRecorder",
+    "ToolResult",
     "apply_selection_to_env",
     "build_llm_runtime",
     "create_llm_client",
+    "get_registry",
     "resolve_llm_selection",
     "selection_status",
 ]

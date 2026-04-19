@@ -20,11 +20,25 @@ from compgen.promotion.lineage import (
     find_lineage_siblings,
     get_promotion_history,
 )
+from compgen.promotion.pattern_graduation import (
+    PatternAppearance,
+    PatternIdentity,
+    PatternPromotionRequest,
+    build_promotion_requests,
+    graduate_from_transcripts,
+    scan_transcripts,
+)
 
 __all__: list[str] = [
     "LineageGraph",
     "LineageNode",
+    "PatternAppearance",
+    "PatternIdentity",
+    "PatternPromotionRequest",
     "build_lineage_graph",
+    "build_promotion_requests",
     "find_lineage_siblings",
     "get_promotion_history",
+    "graduate_from_transcripts",
+    "scan_transcripts",
 ]
