@@ -15,8 +15,13 @@ def test_dialect_name() -> None:
 
 
 def test_dialect_op_count() -> None:
-    """Dialect contains exactly 53 operations."""
-    assert len(ALL_OPS) == 53
+    """Dialect contains exactly 65 operations.
+
+    53 original ops (scope=5, fact=14, candidate=14, choice=7, verify=6,
+    provenance=7) + 12 propose ops (10 original + 2 megakernel/scheduling
+    added for the Event Tensor Compiler integration).
+    """
+    assert len(ALL_OPS) == 65
 
 
 def test_dialect_attr_count() -> None:

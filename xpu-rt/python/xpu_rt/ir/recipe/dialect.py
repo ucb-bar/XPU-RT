@@ -57,6 +57,21 @@ from compgen.ir.recipe.ops_fact import (
     TransferCostOp,
     UnsupportedOperatorOp,
 )
+from compgen.ir.recipe.ops_propose import (
+    _PROPOSE_OPS,
+    ProposeBufferLifetimePlanOp,
+    ProposeCollectivePipelineOp,
+    ProposeDequantFusionOp,
+    ProposeFusionOp,
+    ProposeLayoutPlanOp,
+    ProposeMegakernelSynthesisOp,
+    ProposeMultiOutputFusionOp,
+    ProposeNumericsPlanOp,
+    ProposePeepholePatternOp,
+    ProposeRematerializationPlanOp,
+    ProposeSchedulingPolicyOp,
+    ProposeShardingPlanOp,
+)
 from compgen.ir.recipe.ops_provenance import (
     FeedbackOp,
     FromAgentOp,
@@ -155,6 +170,7 @@ ALL_OPS = (
     + _CHOICE_OPS
     + _VERIFY_OPS
     + _PROVENANCE_OPS
+    + _PROPOSE_OPS
 )
 
 ALL_ATTRS = [

@@ -222,6 +222,120 @@ class AccelBarrierIROp(IRDLOperation):
             )
 
 
+# ---------------------------------------------------------------------------
+# Wave 9: HMX tile primitives (hexagon-mlir-inspired)
+# ---------------------------------------------------------------------------
+
+
+@irdl_op_definition
+class HMXTileLoadIROp(IRDLOperation):
+    """Load a 32x32 (or configurable) tile from DRAM to VTCM with format xform.
+
+    Mirrors hexagon's ``micro_hmx_copy_submatrix_to_f16`` pattern: load
+    a submatrix + apply a row-major-to-activation-horizontal format
+    transform in a single op.
+    """
+
+    name = "compgen.accel.hmx_tile_load"
+
+    src_memref = prop_def(StringAttr)
+    dst_memref = prop_def(StringAttr)
+    tile_shape = prop_def(ArrayAttr)
+    format_xform = prop_def(StringAttr)
+    dtype = prop_def(StringAttr)
+
+    _VALID_XFORMS: ClassVar[frozenset[str]] = frozenset({
+        "rm_to_ah", "rm_to_av", "identity",
+    })
+
+    def verify_(self) -> None:
+        if self.format_xform.data not in self._VALID_XFORMS:
+            raise VerifyException(
+                f"Invalid format_xform '{self.format_xform.data}', "
+                f"expected one of {sorted(self._VALID_XFORMS)}"
+            )
+        for d in self.tile_shape.data:
+            if isinstance(d, IntegerAttr) and d.value.data <= 0:
+                raise VerifyException(
+                    f"hmx_tile_load tile_shape entries must be positive, "
+                    f"got {d.value.data}"
+                )
+
+
+@irdl_op_definition
+class HMXMatrixEngineIROp(IRDLOperation):
+    """Invoke the HMX matrix engine: ``C = op_kind(A, B, C_init)`` on tiles."""
+
+    name = "compgen.accel.hmx_matrix_engine"
+
+    a_tile = prop_def(StringAttr)
+    b_tile = prop_def(StringAttr)
+    c_tile = prop_def(StringAttr)
+    op_kind = prop_def(StringAttr)
+    shape = prop_def(ArrayAttr)
+    dtype = prop_def(StringAttr)
+    accumulate = opt_prop_def(StringAttr)
+
+    _VALID_KINDS: ClassVar[frozenset[str]] = frozenset({
+        "matmul", "matmul_accumulate", "outer_product",
+    })
+
+    def verify_(self) -> None:
+        if self.op_kind.data not in self._VALID_KINDS:
+            raise VerifyException(
+                f"Invalid hmx_matrix_engine op_kind '{self.op_kind.data}', "
+                f"expected one of {sorted(self._VALID_KINDS)}"
+            )
+        dims = [
+            int(d.value.data) for d in self.shape.data
+            if isinstance(d, IntegerAttr)
+        ]
+        if len(dims) != 3:
+            raise VerifyException(
+                f"hmx_matrix_engine shape must have 3 entries [M, N, K], "
+                f"got {len(dims)}"
+            )
+        if any(d <= 0 for d in dims):
+            raise VerifyException(
+                f"hmx_matrix_engine shape entries must be positive, got {dims}"
+            )
+
+
+@irdl_op_definition
+class HMXAccumulatorClearIROp(IRDLOperation):
+    """Clear an HMX accumulator tile to zero."""
+
+    name = "compgen.accel.hmx_accumulator_clear"
+
+    c_tile = prop_def(StringAttr)
+    dtype = prop_def(StringAttr)
+    shape = prop_def(ArrayAttr)
+
+
+@irdl_op_definition
+class HMXDMAOverlapIROp(IRDLOperation):
+    """Pipeline marker for the hexagon-mlir double-buffer (S1/S2) lowering."""
+
+    name = "compgen.accel.hmx_dma_overlap"
+
+    producer_tile = prop_def(StringAttr)
+    consumer_tile = prop_def(StringAttr)
+    line_bytes = prop_def(IntegerAttr)
+    depth = prop_def(IntegerAttr)
+
+    def verify_(self) -> None:
+        if self.line_bytes.value.data <= 0:
+            raise VerifyException(
+                f"hmx_dma_overlap line_bytes must be positive, got "
+                f"{self.line_bytes.value.data}"
+            )
+        if self.depth.value.data < 2:
+            raise VerifyException(
+                f"hmx_dma_overlap depth must be >= 2, got "
+                f"{self.depth.value.data}"
+            )
+
+
 ACCEL_IR_OPS: list[type[IRDLOperation]] = [
     AccelTileLoadIROp,
     AccelTileStoreIROp,
@@ -229,6 +343,10 @@ ACCEL_IR_OPS: list[type[IRDLOperation]] = [
     AccelDMAWaitIROp,
     AccelMatrixEngineIROp,
     AccelBarrierIROp,
+    HMXTileLoadIROp,
+    HMXMatrixEngineIROp,
+    HMXAccumulatorClearIROp,
+    HMXDMAOverlapIROp,
 ]
 """All xDSL IRDL operations in the accelerator dialect."""
 
@@ -239,6 +357,10 @@ __all__ = [
     "AccelMatrixEngineIROp",
     "AccelTileLoadIROp",
     "AccelTileStoreIROp",
+    "HMXTileLoadIROp",
+    "HMXMatrixEngineIROp",
+    "HMXAccumulatorClearIROp",
+    "HMXDMAOverlapIROp",
     "ACCEL_IR_OPS",
     "BarrierOp",
     "DMAStartOp",

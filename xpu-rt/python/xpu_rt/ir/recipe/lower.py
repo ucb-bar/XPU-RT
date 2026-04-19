@@ -41,6 +41,13 @@ from compgen.ir.recipe.ops_choice import (
     RequireEqsatOp,
     RequireSolverOp,
 )
+from compgen.ir.recipe.ops_propose import (
+    ProposeDequantFusionOp,
+    ProposeFusionOp,
+    ProposeLayoutPlanOp,
+    ProposeMegakernelSynthesisOp,
+    ProposePayload,
+)
 from compgen.ir.recipe.ops_verify import (
     RequireCheckFileOp,
     RequireDiffTestOp,
@@ -224,6 +231,16 @@ def _lower_op(
     elif isinstance(op, RequireEqsatOp):
         _lower_require_eqsat(op, eqsat_jobs)
 
+    # --- Propose ops (LLM invent-slots) → transform scripts + sometimes kernel jobs ---
+    elif isinstance(op, ProposeFusionOp):
+        _lower_propose_fusion(op, transform_scripts, verification_obligations)
+    elif isinstance(op, ProposeMegakernelSynthesisOp):
+        _lower_propose_megakernel(op, kernel_jobs, verification_obligations)
+    elif isinstance(op, ProposeLayoutPlanOp):
+        _lower_propose_layout(op, transform_scripts, verification_obligations)
+    elif isinstance(op, ProposeDequantFusionOp):
+        _lower_propose_dequant(op, transform_scripts, verification_obligations)
+
     # --- Verification obligation ops ---
     elif isinstance(op, RequireDiffTestOp):
         _lower_require_diff_test(op, verification_obligations)
@@ -377,6 +394,145 @@ def _lower_fuse(op: FuseOp, out: list[str]) -> None:
         f'  fusion_kind = "{kind}"'
     )
     out.append(script)
+
+
+# ---- Propose-op lowerings (LLM invent-slot outputs) ------------------------
+#
+# Propose-ops are the LLM's accepted proposals, appended to the recipe
+# module by :func:`compgen.agent.recipe_bridge_invent.proposal_to_recipe_op`.
+# Here we turn them into the same downstream artifacts candidate ops produce
+# (transform scripts / kernel jobs / verification obligations), plus a
+# verification obligation specific to each proposal family so the semantic
+# executor can gate the lowered transform.
+
+
+def _lower_propose_fusion(
+    op: ProposeFusionOp,
+    transform_scripts: list[str],
+    verification_obligations: list[dict[str, Any]],
+) -> None:
+    regions = [
+        _sym_ref_str(r) for r in op.grouped_regions.data
+        if isinstance(r, SymbolRefAttr)
+    ]
+    if not regions:
+        return
+    try:
+        payload = ProposePayload.from_json(op.payload.data)
+    except Exception:   # noqa: BLE001
+        payload = ProposePayload()
+    fusion_kind = str(payload.chosen.get("fusion_kind", "producer_consumer"))
+    sym = _candidate_symbol(op) or "propose_fusion"
+    script = (
+        f"// propose_fusion[{sym}]: {', '.join(regions)} (kind={fusion_kind})\n"
+        f"// target_feature_justification: {payload.target_feature_justification}\n"
+        f"transform.structured.fuse_into_containing_op\n"
+        f"  targets [{', '.join(f'%{r}' for r in regions)}]\n"
+        f'  fusion_kind = "{fusion_kind}"'
+    )
+    transform_scripts.append(script)
+    # Every LLM-invented fusion MUST be differential-tested before the
+    # bundle is promoted. The obligation anchors to the first grouped
+    # region; the executor walks the fused set from there.
+    verification_obligations.append({
+        "type": "differential",
+        "region_id": regions[0],
+        "kind": "propose_fusion",
+        "grouped_regions": regions,
+        "source_op": op.name,
+    })
+
+
+def _lower_propose_megakernel(
+    op: ProposeMegakernelSynthesisOp,
+    kernel_jobs: list[dict[str, Any]],
+    verification_obligations: list[dict[str, Any]],
+) -> None:
+    regions = [
+        _sym_ref_str(r) for r in op.fused_region_refs.data
+        if isinstance(r, SymbolRefAttr)
+    ]
+    if not regions:
+        return
+    try:
+        payload = ProposePayload.from_json(op.payload.data)
+    except Exception:   # noqa: BLE001
+        payload = ProposePayload()
+    sym = _candidate_symbol(op) or "propose_megakernel"
+    megakernel_name = str(payload.chosen.get("megakernel_name", sym))
+    kernel_jobs.append({
+        "type": "megakernel_synthesis",
+        "kernel_name": megakernel_name,
+        "fused_regions": regions,
+        "event_tensor_decls": payload.chosen.get("event_tensor_decls", []),
+        "task_partition": payload.chosen.get("task_partition", {}),
+        "prefetch_annotations": payload.chosen.get("prefetch_annotations", []),
+        "source_op": op.name,
+        "target_feature_justification": payload.target_feature_justification,
+    })
+    verification_obligations.append({
+        "type": "translation_validation",
+        "region_id": regions[0],
+        "kind": "propose_megakernel_synthesis",
+        "fused_regions": regions,
+        "source_op": op.name,
+    })
+
+
+def _lower_propose_layout(
+    op: ProposeLayoutPlanOp,
+    transform_scripts: list[str],
+    verification_obligations: list[dict[str, Any]],
+) -> None:
+    region = _sym_ref_str(op.region_ref)
+    try:
+        payload = ProposePayload.from_json(op.payload.data)
+    except Exception:   # noqa: BLE001
+        payload = ProposePayload()
+    layout = str(payload.chosen.get("layout", "row_major"))
+    sym = _candidate_symbol(op) or "propose_layout"
+    script = (
+        f"// propose_layout[{sym}]: {region} -> {layout}\n"
+        f"// target_feature_justification: {payload.target_feature_justification}\n"
+        f"transform.structured.pack %{region}\n"
+        f'  layout = "{layout}"'
+    )
+    transform_scripts.append(script)
+    verification_obligations.append({
+        "type": "layout_invariant",
+        "region_id": region,
+        "kind": "propose_layout_plan",
+        "layout": layout,
+        "source_op": op.name,
+    })
+
+
+def _lower_propose_dequant(
+    op: ProposeDequantFusionOp,
+    transform_scripts: list[str],
+    verification_obligations: list[dict[str, Any]],
+) -> None:
+    region = _sym_ref_str(op.region_ref)
+    try:
+        payload = ProposePayload.from_json(op.payload.data)
+    except Exception:   # noqa: BLE001
+        payload = ProposePayload()
+    pattern = str(payload.chosen.get("pattern", "generic_dequant"))
+    sym = _candidate_symbol(op) or "propose_dequant"
+    script = (
+        f"// propose_dequant_fusion[{sym}]: {region} (pattern={pattern})\n"
+        f"// Lowered as a placeholder; payload carries full scheme.\n"
+        f"transform.structured.match ops{{[\"linalg.generic\"]}} in %{region}"
+    )
+    transform_scripts.append(script)
+    verification_obligations.append({
+        "type": "differential",
+        "region_id": region,
+        "kind": "propose_dequant_fusion",
+        "pattern": pattern,
+        "tolerance_hint": payload.chosen.get("tolerance_hint"),
+        "source_op": op.name,
+    })
 
 
 def _lower_vectorize(op: VectorizeOp, out: list[str]) -> None:

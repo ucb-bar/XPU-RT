@@ -47,5 +47,11 @@ def test_accel_dialect_ops_registered() -> None:
 
 
 def test_accel_dialect_ops_count() -> None:
-    """The dialect should have exactly 6 ops."""
-    assert len(ACCEL_IR_OPS) == 6
+    """The dialect should have exactly 10 ops (6 base + 4 HMX).
+
+    Base: tile_load, tile_store, dma_start, dma_wait,
+          matrix_engine, barrier.
+    Wave 9 HMX additions: hmx_tile_load, hmx_matrix_engine,
+          hmx_accumulator_clear, hmx_dma_overlap.
+    """
+    assert len(ACCEL_IR_OPS) == 10

@@ -44,6 +44,8 @@ class KernelStrategy(Enum):
     UKERNEL = "ukernel"
     AUTOCOMP = "autocomp"
     EXO = "exo"
+    MEGAKERNEL_STATIC = "megakernel_static"
+    MEGAKERNEL_DYNAMIC = "megakernel_dynamic"
     FALLBACK = "fallback"
     UNSUPPORTED = "unsupported"
 
