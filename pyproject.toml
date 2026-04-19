@@ -70,9 +70,17 @@ ray = [
     "ray[tune]>=2.9",
     "fastapi>=0.110",
 ]
+mcp = [
+    "mcp>=1.0",
+]
+demo = [
+    "transformers>=4.44",
+    "accelerate>=0.33",
+]
 
 [project.scripts]
 compgen = "compgen.cli:main"
+compgen-mcp = "compgen.mcp.server:main"
 
 [project.urls]
 Repository = "https://github.com/compgen-project/compgen"

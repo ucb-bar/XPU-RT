@@ -278,6 +278,11 @@ artifacts/compiler/
 # Raw paper benchmark timings (regeneratable via benchmark suite)
 artifacts/paper_bench/
 
+# user_perspective/ is a disposable external-user sandbox, never committed.
+# See user_perspective/README.md. Configs + models + extensions here belong
+# to the simulated user, not the repo.
+user_perspective/
+
 # LLM / Agent generated artifacts (NEVER commit these)
 # Agent memory and session databases
 *.db

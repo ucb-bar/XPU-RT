@@ -25,13 +25,62 @@ from xdsl.dialects.builtin import (
     Float64Type,
     FunctionType,
     ModuleOp,
+    StringAttr,
     TensorType,
 )
+from xdsl.dialects.builtin import FlatSymbolRefAttr
 from xdsl.dialects.func import CallOp, FuncOp, ReturnOp
-from xdsl.ir import Attribute, Block, Region, SSAValue
+
+def FlatSymbolRefAttr_ref(name: str) -> FlatSymbolRefAttr:
+    """Helper: build a FlatSymbolRefAttr from a plain string name."""
+    return FlatSymbolRefAttr(name)
+from xdsl.ir import Attribute, Block, Operation, Region, SSAValue
 from xdsl.printer import Printer
 
-from compgen.ir.payload.decompositions import DECOMPOSITION_TABLE, DecompFn, reset_region_counters
+from compgen.ir.payload.decompositions import (
+    DECOMPOSITION_TABLE,
+    DecompFn,
+    DecompResult,
+    reset_region_counters,
+)
+from compgen.ir.payload.types import Float8E4M3FNType, Float8E5M2Type
+
+
+# Tags the FX-side graph passes (in ``compgen.transforms.graph_passes``) set
+# on ``node.meta``. ``FXImporter`` forwards each onto the emitted xDSL ops
+# so downstream Recipe-IR passes don't have to re-detect patterns the FX
+# stage already recognized.
+_FX_META_FORWARD_KEYS = (
+    "_compgen_pattern",
+    "_compgen_transpose_absorbed",
+    "_compgen_fuse_dequant",
+)
+
+
+def _forward_fx_meta(
+    op: Operation,
+    fx_meta: dict[str, Any],
+    decomp_hint: str | None = None,
+) -> None:
+    """Copy FX node meta + DecompResult.pattern_hint onto ``op.attributes``.
+
+    - ``_compgen_pattern`` (FX-level tag) -> ``compgen._pattern_hint``
+    - ``_compgen_transpose_absorbed`` -> ``compgen.transpose_absorbed`` (bool string)
+    - ``_compgen_fuse_dequant`` -> ``compgen.fuse_dequant`` (bool string)
+    - ``decomp_hint`` (decomp-side explicit tag) wins when FX didn't set one.
+
+    Idempotent: won't overwrite an existing attribute.
+    """
+    fx_hint = fx_meta.get("_compgen_pattern") if isinstance(fx_meta, dict) else None
+    effective_hint = fx_hint or decomp_hint
+    if effective_hint and "compgen._pattern_hint" not in op.attributes:
+        op.attributes["compgen._pattern_hint"] = StringAttr(str(effective_hint))
+
+    if isinstance(fx_meta, dict):
+        if fx_meta.get("_compgen_transpose_absorbed") and "compgen.transpose_absorbed" not in op.attributes:
+            op.attributes["compgen.transpose_absorbed"] = StringAttr("true")
+        if fx_meta.get("_compgen_fuse_dequant") and "compgen.fuse_dequant" not in op.attributes:
+            op.attributes["compgen.fuse_dequant"] = StringAttr("true")
 
 
 def _torch_dtype_to_xdsl(dtype: torch.dtype) -> Attribute:
@@ -42,14 +91,14 @@ def _torch_dtype_to_xdsl(dtype: torch.dtype) -> Attribute:
         torch.float16: Float16Type,
         torch.bfloat16: BFloat16Type,
     }
-    # FP8 types (float8_e4m3fn, float8_e5m2) don't have native xDSL types.
-    # After rewrite_for_export(), the graph uses explicit cast ops so FP8
-    # should not appear as tensor element types.  Fall back to Float16Type
-    # if they somehow leak through.
+    # FP8 is a first-class CompGen type (`compgen.float8_e4m3fn`,
+    # `compgen.float8_e5m2`) that mirrors MLIR's semantics.  Earlier
+    # revisions silently demoted to Float16Type; we now preserve the
+    # FP8 semantics so Phase-2 numerics passes see the real type.
     if hasattr(torch, "float8_e4m3fn") and dtype == torch.float8_e4m3fn:
-        return Float16Type()
+        return Float8E4M3FNType()
     if hasattr(torch, "float8_e5m2") and dtype == torch.float8_e5m2:
-        return Float16Type()
+        return Float8E5M2Type()
     factory = mapping.get(dtype, Float32Type)
     return factory()  # type: ignore[abstract]
 
@@ -157,16 +206,36 @@ class FXImporter:
         declared_sigs: dict[str, str] = {}
         name_counters: dict[str, int] = {}
 
+        declared_callee_sig: dict[str, str] = {}
+
         def ensure_external_decl(call: CallOp) -> None:
             callee = call.callee.string_value()
             operand_types = tuple(str(value.type) for value in call.operands)
             result_types = tuple(str(value.type) for value in call.results)
             sig_key = f"{callee}:{operand_types}:{result_types}"
             if sig_key in declared_sigs:
+                # Rewrite the call to use the canonical (possibly
+                # disambiguated) name for this signature.
+                call.properties["callee"] = FlatSymbolRefAttr_ref(
+                    declared_sigs[sig_key]
+                )
                 return
-            declared_sigs[sig_key] = callee
+            # If the callee name already exists with a different
+            # signature, generate a unique suffixed name.
+            chosen_name = callee
+            if callee in declared_callee_sig:
+                count = name_counters.get(callee, 1)
+                while f"{callee}_{count}" in declared_callee_sig:
+                    count += 1
+                chosen_name = f"{callee}_{count}"
+                name_counters[callee] = count + 1
+            declared_callee_sig[chosen_name] = sig_key
+            declared_sigs[sig_key] = chosen_name
+            if chosen_name != callee:
+                # Rewrite the existing CallOp to point at the new name.
+                call.properties["callee"] = FlatSymbolRefAttr_ref(chosen_name)
             extern_funcs.append(FuncOp.external(
-                callee,
+                chosen_name,
                 [value.type for value in call.operands],
                 [value.type for value in call.results],
             ))
@@ -192,6 +261,11 @@ class FXImporter:
             decomp_fn = self.dynamic_decompositions.get(target_str, DECOMPOSITION_TABLE.get(target_str))
             if decomp_fn is not None:
                 meta = dict(node.meta)
+                # Forward FX-level args / kwargs to the decomposition so it
+                # can extract scalar properties (group_size, axis, quant_min,
+                # quant_max, etc.) that don't show up as SSA operands.
+                meta["_fx_args"] = tuple(node.args)
+                meta["_fx_kwargs"] = dict(node.kwargs)
                 try:
                     result = decomp_fn(operands, meta, node.name)
                 except (IndexError, KeyError, TypeError) as decomp_err:
@@ -205,15 +279,24 @@ class FXImporter:
                     for op in result.ops:
                         if isinstance(op, CallOp):
                             ensure_external_decl(op)
+                        _forward_fx_meta(op, meta, result.pattern_hint)
                         block.add_op(op)
 
                     if result.result is not None:
                         value_map[node.name] = result.result
 
                     self.decomposed_count += 1
+                    hint_suffix = (
+                        f", hint: {result.pattern_hint}"
+                        if result.pattern_hint
+                        else ""
+                    )
                     self.diagnostics.append(ImportDiagnostic(
                         fx_node=node.name, level="info",
-                        message=f"Decomposed {target_str} -> {len(result.ops)} ops (regions: {result.region_ids})",
+                        message=(
+                            f"Decomposed {target_str} -> {len(result.ops)} ops "
+                            f"(regions: {result.region_ids}{hint_suffix})"
+                        ),
                     ))
                     continue
 

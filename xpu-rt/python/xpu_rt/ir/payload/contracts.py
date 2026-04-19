@@ -74,6 +74,33 @@ class CostEstimate:
 
 
 @dataclass(frozen=True)
+class AutocompCostBudget:
+    """Bounds the autocomp kernel search per this contract.
+
+    Introduced as P6 in ``user_perspective/analysis/repo_patch_plan.md``.
+    Optional: a ``None`` budget means legacy behaviour (unbounded
+    search, same as v1 contracts). When present, the autocomp adapter
+    enforces ``max_wall_seconds`` and ``max_candidates``, and may
+    short-circuit when ``early_stop_if_matches_library`` is true and a
+    library call has been bound.
+
+    Attributes:
+        max_wall_seconds: Hard upper bound on autocomp wall-time.
+        max_candidates: Hard upper bound on candidate kernels searched.
+        early_stop_if_matches_library: When True, skip autocomp entirely
+            if ``match_library_call`` has already bound this region.
+        budget_source: Provenance tag — "explicit" (LLM/user set it),
+            "derived_from_target_model" (computed from target autocomp
+            coefficients), or "default".
+    """
+
+    max_wall_seconds: float
+    max_candidates: int
+    early_stop_if_matches_library: bool = True
+    budget_source: str = "derived_from_target_model"
+
+
+@dataclass(frozen=True)
 class KernelContract:
     """Contract for an op or subgraph in the payload IR.
 
@@ -86,6 +113,7 @@ class KernelContract:
         cost: Estimated cost.
         fusable: Whether this op can be fused with neighbors.
         metadata: Additional op-specific metadata.
+        autocomp_cost_budget: Optional P6 budget bounding kernel search.
     """
 
     op_name: str
@@ -104,6 +132,8 @@ class KernelContract:
     supports_prepacked_rhs: bool = False
     tile_layout_family: str | None = None
     materialization_cost_hint: float = 0.0
+    # P6: autocomp search budget (optional, backward-compatible).
+    autocomp_cost_budget: AutocompCostBudget | None = None
 
 
 def _estimate_matmul_flops(op: MatmulOp) -> int:
@@ -239,4 +269,11 @@ def extract_contracts(module: ModuleOp) -> list[KernelContract]:
     return contracts
 
 
-__all__ = ["CostEstimate", "KernelContract", "LayoutKind", "LayoutRequirement", "extract_contracts"]
+__all__ = [
+    "AutocompCostBudget",
+    "CostEstimate",
+    "KernelContract",
+    "LayoutKind",
+    "LayoutRequirement",
+    "extract_contracts",
+]
