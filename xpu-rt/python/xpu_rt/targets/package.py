@@ -123,8 +123,12 @@ def _coerce_loaded_pack(spec: str | Path | LoadedPack) -> LoadedPack:
     candidate = Path(spec)
     if candidate.exists():
         return load_pack(candidate)
+    # Try the repo-local builtin pack directory first, then fall back to
+    # entry-point / import resolution (``load_pack`` handles both).
     builtin_root = default_pack_root() / str(spec)
-    return load_pack(builtin_root)
+    if (builtin_root / "manifest.yaml").exists():
+        return load_pack(builtin_root)
+    return load_pack(str(spec))
 
 
 def _coerce_loaded_packs(extension_packs: Iterable[str | Path | LoadedPack] | None) -> tuple[LoadedPack, ...]:

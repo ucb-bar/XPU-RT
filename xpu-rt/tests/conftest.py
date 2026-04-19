@@ -2,13 +2,53 @@
 
 All fixtures return lightweight objects suitable for unit testing.
 No GPU or network access required unless marked with appropriate pytest markers.
+
+**Home-directory isolation.** The LLM driver and MCP server default
+their transcript/extensions directories to ``~/.compgen/...``. Test
+runs must never write there. The ``_compgen_home_isolation``
+autouse fixture redirects both defaults to a per-session tmp path and
+disables cross-session graduation + local extension loading so the
+process-wide registry stays pristine.
 """
 
 from __future__ import annotations
 
+import os
+import tempfile
 from pathlib import Path
 
 import pytest
+
+
+@pytest.fixture(autouse=True, scope="session")
+def _compgen_home_isolation():
+    """Stop tests from polluting ``~/.compgen``.
+
+    Sets env vars the LLM driver + MCP transcript recorder consult,
+    and disables local extension loading + cross-session graduation.
+    """
+    tmp_home = Path(tempfile.mkdtemp(prefix="compgen-test-home-"))
+    (tmp_home / "transcripts").mkdir(parents=True, exist_ok=True)
+    (tmp_home / "extensions").mkdir(parents=True, exist_ok=True)
+
+    saved = {}
+    for key, value in (
+        ("COMPGEN_SESSION_DIR", str(tmp_home / "transcripts")),
+        ("COMPGEN_EXTENSIONS_DIR", str(tmp_home / "extensions")),
+        ("COMPGEN_DISABLE_LOCAL_EXTENSIONS", "1"),
+        ("COMPGEN_DISABLE_CROSS_SESSION_GRADUATION", "1"),
+        ("COMPGEN_DISABLE_AUTHORED_GRADUATION", "1"),
+    ):
+        saved[key] = os.environ.get(key)
+        os.environ[key] = value
+    try:
+        yield tmp_home
+    finally:
+        for key, prev in saved.items():
+            if prev is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = prev
 
 
 @pytest.fixture

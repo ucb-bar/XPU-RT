@@ -68,14 +68,61 @@ def _load_declared_pack(root: Path, manifest: ExtensionPackManifest) -> Extensio
     raise ValueError(f"Pack module {manifest.entry_module} does not expose build_pack/PACK/Pack")
 
 
-def load_pack(root: str | Path) -> LoadedPack:
-    """Load an extension pack rooted at a manifest directory."""
+def resolve_entry_point_target(value: str) -> Path:
+    """Resolve a ``pkg.mod[:attr]`` entry-point value to a pack-root Path.
 
-    root = Path(root)
-    manifest_path = root / "manifest.yaml"
+    Rules:
+      - No ``:attr`` → use ``Path(module.__file__).parent`` as the pack root.
+      - ``:attr`` is a ``Path``/``str`` → treat as the pack root path.
+      - ``:attr`` is callable → call with no args; result must be a Path or str.
+    """
+
+    module_name, _, attr_name = value.partition(":")
+    module = importlib.import_module(module_name)
+    if not attr_name:
+        module_file = getattr(module, "__file__", None)
+        if module_file is None:
+            raise ValueError(f"entry-point module {module_name!r} has no __file__")
+        return Path(module_file).parent
+
+    target = getattr(module, attr_name)
+    if isinstance(target, Path):
+        return target
+    if isinstance(target, str):
+        return Path(target)
+    if callable(target):
+        result = target()
+        if isinstance(result, Path):
+            return result
+        if isinstance(result, str):
+            return Path(result)
+        raise TypeError(
+            f"entry-point {value!r} callable returned {type(result).__name__}; expected Path|str"
+        )
+    raise TypeError(
+        f"entry-point {value!r} resolved to {type(target).__name__}; expected Path|str|callable"
+    )
+
+
+def _resolve_pack_source(source: str | Path) -> Path:
+    """Accept a Path, a path-like string, or an entry-point value; return a Path."""
+
+    if isinstance(source, Path):
+        return source
+    candidate = Path(source)
+    if candidate.exists():
+        return candidate
+    return resolve_entry_point_target(source)
+
+
+def load_pack(root: str | Path) -> LoadedPack:
+    """Load an extension pack rooted at a manifest directory or entry point."""
+
+    resolved_root = _resolve_pack_source(root)
+    manifest_path = resolved_root / "manifest.yaml"
     if not manifest_path.exists():
-        raise FileNotFoundError(f"No manifest.yaml in {root}")
+        raise FileNotFoundError(f"No manifest.yaml in {resolved_root}")
     manifest = load_manifest(manifest_path)
-    pack = _load_declared_pack(root, manifest)
-    return LoadedPack(root=root, manifest=manifest, pack=pack)
+    pack = _load_declared_pack(resolved_root, manifest)
+    return LoadedPack(root=resolved_root, manifest=manifest, pack=pack)
 

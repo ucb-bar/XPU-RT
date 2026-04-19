@@ -821,5 +821,164 @@ def scaffold_target(
         click.echo(f"  Apertures:         {', '.join(package.manifest.generation_apertures)}")
 
 
+@main.command("scaffold-pack")
+@click.option(
+    "--kind",
+    type=click.Choice(["quantization", "target", "provider", "dialect", "runtime"]),
+    required=True,
+    help="Extension point this pack extends.",
+)
+@click.option(
+    "--name",
+    type=str,
+    required=True,
+    help="Pack name (valid Python identifier; becomes the pip + import name).",
+)
+@click.option(
+    "--out",
+    "out_dir",
+    type=click.Path(file_okay=False),
+    default=".",
+    show_default=True,
+    help="Directory under which the pack folder (<name>/) will be created.",
+)
+@click.option(
+    "--overwrite",
+    is_flag=True,
+    default=False,
+    help="Replace any existing directory at the target path.",
+)
+@click.pass_obj
+def scaffold_pack_cmd(
+    cli: CLIContext,
+    kind: str,
+    name: str,
+    out_dir: str,
+    overwrite: bool,
+) -> None:
+    """Scaffold a pip-installable CompGen extension pack.
+
+    The generated package declares a ``compgen.packs`` entry point and ships a
+    ``manifest.yaml`` plus a starter extension module seeded from the CompGen
+    in-tree template. After scaffolding:
+
+        pip install -e <out>/<name>
+
+    CompGen's pack discovery picks the pack up automatically.
+    """
+    from compgen.packs.scaffolding import scaffold_pack
+
+    result = scaffold_pack(kind=kind, name=name, out_dir=out_dir, overwrite=overwrite)
+    click.echo(f"[scaffold-pack] Kind:           {kind}")
+    click.echo(f"[scaffold-pack] Name:           {name}")
+    click.echo(f"[scaffold-pack] Pack root:      {result.pack_root}")
+    click.echo(f"[scaffold-pack] Package root:   {result.package_root}")
+    click.echo(f"[scaffold-pack] Manifest:       {result.manifest_path}")
+    click.echo(f"[scaffold-pack] pyproject.toml: {result.pyproject_path}")
+    click.echo(f"[scaffold-pack] Starter module: {result.scheme_path}")
+    click.echo("")
+    click.echo("Next steps:")
+    click.echo(f"  cd {result.pack_root}")
+    click.echo("  pip install -e .")
+    click.echo(
+        '  python -c "from compgen.packs import load_pack; print(load_pack(\\"'
+        + name
+        + '\\").manifest.name)"'
+    )
+
+
+@main.group()
+def contrib() -> None:
+    """Draft upstream contributions from local extensions."""
+
+
+@contrib.command("list")
+def contrib_list() -> None:
+    """List every local user extension + its invocation count."""
+    from compgen.contrib import list_extensions
+
+    exts = list_extensions()
+    if not exts:
+        click.echo("No local extensions under ~/.compgen/extensions.")
+        return
+    for e in exts:
+        tag = "eligible" if e.eligible else e.eligibility_reason
+        click.echo(f"  {e.kind:4} {e.name:<32} invocations={e.accepted_invocations:3} [{tag}]")
+
+
+@contrib.command("status")
+def contrib_status() -> None:
+    """Show which local extensions are eligible for upstream drafting."""
+    from compgen.contrib import status
+
+    info = status()
+    click.echo(f"Root:     {info['root']}")
+    click.echo(f"Total:    {info['total']}")
+    click.echo(f"Eligible: {info['eligible']}")
+    for e in info["extensions"]:
+        click.echo(
+            f"  - {e['name']:<32} kind={e['kind']:<5} "
+            f"invocations={e['accepted_invocations']:3} "
+            f"eligible={e['eligible']}  {e['reason']}"
+        )
+
+
+@contrib.command("draft")
+@click.option("--slot", "slot_name", required=True,
+              help="Local extension (tool or invent-slot) name to draft.")
+@click.option("--no-tests", is_flag=True,
+              help="Skip running pytest on the synthesised test.")
+@click.option("--no-commit", is_flag=True,
+              help="Copy files but do not create a git commit.")
+@click.option("--no-branch", is_flag=True,
+              help="Do not create a new git branch.")
+def contrib_draft(
+    slot_name: str, no_tests: bool, no_commit: bool, no_branch: bool,
+) -> None:
+    """Draft an upstream contribution from a local extension."""
+    from compgen.contrib import draft_pr
+
+    result = draft_pr(
+        slot_name,
+        run_tests=not no_tests,
+        commit=not no_commit,
+        create_branch=not no_branch,
+    )
+    click.echo(f"Slot:             {result.slot_name}")
+    click.echo(f"Branch:           {result.branch}")
+    click.echo(f"Upstream module:  {result.upstream_module}")
+    click.echo(f"Upstream test:    {result.upstream_test}")
+    click.echo(f"Pytest passed:    {result.pytest_passed}")
+    click.echo(f"Committed:        {result.committed}")
+    click.echo(f"gh command:       {result.gh_command}")
+    if result.errors:
+        click.echo("\nErrors:")
+        for err in result.errors:
+            click.echo(f"  {err}")
+        raise SystemExit(1)
+
+
+@main.group()
+def mcp() -> None:
+    """Run or inspect the CompGen MCP stdio server."""
+
+
+@mcp.command("serve")
+def mcp_serve() -> None:
+    """Run the ``compgen-mcp`` stdio server (requires the [mcp] extra)."""
+    from compgen.mcp.server import main as mcp_main
+
+    mcp_main()
+
+
+@mcp.command("tools")
+def mcp_tools() -> None:
+    """List the MCP tools this server exposes."""
+    from compgen.mcp.tools import ALL_TOOLS
+
+    for t in ALL_TOOLS:
+        click.echo(f"  [{t['phase']:<9}] {t['name']:<32} {t['description']}")
+
+
 if __name__ == "__main__":
     main()

@@ -105,6 +105,13 @@ class CompiledModel:
     eqsat_result: EqSatResult
     sample_inputs: tuple[Any, ...]
     import_diagnostics: list[ImportDiagnostic] = field(default_factory=list)
+    #: P2 completion — when ``compile_model`` is invoked with a
+    #: ``drive_loop=PhasedDriveLoop(...)`` argument, the result of that
+    #: drive-loop run is captured here. ``None`` otherwise.
+    drive_loop_result: Any = None
+    #: Populated when ``compile_model`` is called with
+    #: ``recover_unsupported=True``. Gives per-op recovery decisions.
+    recovery_plan: Any = None
 
     def __call__(
         self,
@@ -230,12 +237,19 @@ def compile_model(
     target_device: CompGenDevice,
     objective: str = "latency",
     sample_inputs: tuple[Any, ...] | None = None,
+    drive_loop: Any = None,
+    drive_loop_phases: tuple[int, ...] = (2, 3),
+    recover_unsupported: bool = False,
+    recovery_llm_client: Any = None,
 ) -> CompiledModel:
     """Capture, optimise, and compile a PyTorch model for a target device.
 
     Pipeline:
         1. Capture via ``torch.export``
         2. Convert FX graph to xDSL Payload IR
+        2.5. (Optional) Run the LLM-driven :class:`PhasedDriveLoop` —
+             tools + invent-slots registered into
+             :func:`compgen.llm.registry.get_registry`.
         3. Run equality-saturation optimisation
         4. Run the target's stage pipeline
 
@@ -245,6 +259,15 @@ def compile_model(
         objective: Optimisation objective (``"latency"`` or ``"throughput"``).
         sample_inputs: Sample inputs for export.  If ``None``, a default
             ``(torch.randn(1, 64),)`` tensor is used.
+        drive_loop: **P2 completion** (see
+            ``user_perspective/reports/stage_b_fourth_wave_status.md``).
+            When not ``None`` (typically a
+            :class:`compgen.agent.loop.PhasedDriveLoop`), the drive loop
+            runs between the FX→xDSL import and equality saturation.
+            Backward-compatible: ``None`` preserves legacy behaviour.
+        drive_loop_phases: Which phases the drive loop iterates over
+            (default: ``(2, 3)`` — semantic opt + placement/layout).
+            Ignored when ``drive_loop`` is ``None``.
 
     Returns:
         A :class:`CompiledModel` callable for benchmarking.
@@ -262,6 +285,26 @@ def compile_model(
     # Stage 0: Capture
     log.info("api.compile.capture")
     capture_artifact = capture_frontend_artifact(model, sample_inputs)
+
+    # Stage 0.5: Optional LLM-driven unsupported-op recovery.
+    recovery_plan_obj: Any = None
+    if recover_unsupported and capture_artifact.unsupported_resolutions:
+        from compgen.agent.llm_driver_recovery import plan_recovery
+
+        log.info(
+            "api.compile.recover_unsupported",
+            num_issues=len(capture_artifact.unsupported_resolutions),
+            have_llm=recovery_llm_client is not None,
+        )
+        recovery_plan_obj = plan_recovery(
+            capture_artifact, llm_client=recovery_llm_client,
+        )
+        log.info(
+            "api.compile.recover_unsupported.done",
+            ok=recovery_plan_obj.ok(),
+            llm_consulted=recovery_plan_obj.llm_consulted,
+            by_strategy={k: len(v) for k, v in recovery_plan_obj.by_strategy().items()},
+        )
 
     # Stage 1: FX -> xDSL Payload IR
     log.info("api.compile.import_fx")
@@ -301,6 +344,26 @@ def compile_model(
     )
     log.info("api.compile.ukernel_annotate.done", annotated=ukernel_annotations)
 
+    # Stage 1.9: Optional LLM drive loop (P2 completion).
+    drive_loop_result: Any = None
+    if drive_loop is not None:
+        log.info("api.compile.drive_loop", phases=list(drive_loop_phases))
+        # The caller owns the policy. We accept either an object with a
+        # ``.run(phases=, policy=)`` method (PhasedDriveLoop) or a plain
+        # callable ``drive_loop(module, phases) -> result``.
+        if hasattr(drive_loop, "run"):
+            # Default policy: no-op (empty steps per phase). Real callers
+            # set ``drive_loop.context["policy"]`` or subclass.
+            def _default_policy(_phase: int, _registry: Any, _ctx: dict[str, Any]) -> list:
+                return []
+            policy = (drive_loop.context or {}).get("policy", _default_policy)
+            drive_loop_result = drive_loop.run(
+                phases=list(drive_loop_phases), policy=policy
+            )
+        else:
+            drive_loop_result = drive_loop(module, drive_loop_phases)
+        log.info("api.compile.drive_loop.done", result_summary=type(drive_loop_result).__name__)
+
     # Stage 2: Equality saturation
     log.info("api.compile.eqsat")
     eqsat_result = run_eqsat_pass(module)
@@ -336,6 +399,8 @@ def compile_model(
         eqsat_result=eqsat_result,
         sample_inputs=sample_inputs,
         import_diagnostics=diagnostics,
+        drive_loop_result=drive_loop_result,
+        recovery_plan=recovery_plan_obj,
     )
 
 

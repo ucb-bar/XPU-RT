@@ -24,8 +24,11 @@ __all__ = [
     "__version__",
     "CompGenDevice",
     "CompiledModel",
+    "LLMCompileResult",
     "compile_model",
+    "compile_with_llm",
     "device",
+    "open_llm_session",
 ]
 
 
@@ -40,6 +43,15 @@ def __getattr__(name: str):
             "CompiledModel": CompiledModel,
             "compile_model": compile_model,
             "device": device,
+        }
+        return exports[name]
+    if name in {"compile_with_llm", "open_llm_session", "LLMCompileResult"}:
+        from compgen.api_llm import LLMCompileResult, compile_with_llm, open_llm_session
+
+        exports = {
+            "compile_with_llm": compile_with_llm,
+            "open_llm_session": open_llm_session,
+            "LLMCompileResult": LLMCompileResult,
         }
         return exports[name]
     raise AttributeError(name)
