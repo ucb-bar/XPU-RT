@@ -1,0 +1,152 @@
+{
+  "hardware": {
+    "machines": { "CPU_P": 1, "CPU_E": 1 },
+    "profile_hw": { "cpu_p": "RVV", "cpu_e": "scalar" },
+    "profile": { "target": "spacemit_x60", "topo_tag": "topo_0_1_2_3" },
+    "p_core_speedup": 1.5
+  },
+  "scheduler": {
+    "random_seed": 42,
+    "solver_verbosity": 2,
+    "time_limit": 600,
+    "use_profiled": true,
+    "prune_periodic": true,
+    "restrict_makespan_to_nonperiodic": true
+  },
+  "networks": {
+    "dronet0": {
+      "id": 0,
+      "identifier": "dronet",
+      "dispatch_deps_path": "profiled/gen/vmfb/dronet/spacemit_x60/RVV/dronet.q.int8/dronet.q.int8_dispatch_graph.json",
+      "min_start_t": 0,
+      "max_end_t": 100
+    },
+    "dronet1": {
+      "id": 1,
+      "identifier": "dronet",
+      "dispatch_deps_path": "profiled/gen/vmfb/dronet/spacemit_x60/RVV/dronet.q.int8/dronet.q.int8_dispatch_graph.json",
+      "min_start_t": 100,
+      "max_end_t": 200
+    },
+    "dronet2": {
+      "id": 2,
+      "identifier": "dronet",
+      "dispatch_deps_path": "profiled/gen/vmfb/dronet/spacemit_x60/RVV/dronet.q.int8/dronet.q.int8_dispatch_graph.json",
+      "min_start_t": 200,
+      "max_end_t": 300
+    },
+    "dronet3": {
+      "id": 3,
+      "identifier": "dronet",
+      "dispatch_deps_path": "profiled/gen/vmfb/dronet/spacemit_x60/RVV/dronet.q.int8/dronet.q.int8_dispatch_graph.json",
+      "min_start_t": 300,
+      "max_end_t": 400
+    },
+    "dronet4": {
+      "id": 4,
+      "identifier": "dronet",
+      "dispatch_deps_path": "profiled/gen/vmfb/dronet/spacemit_x60/RVV/dronet.q.int8/dronet.q.int8_dispatch_graph.json",
+      "min_start_t": 400,
+      "max_end_t": 500
+    },
+    "mlp0": {
+      "id": 5,
+      "identifier": "mlp0",
+      "dispatch_deps_path": "gen/vmfb/mlp/spacemit_x60/RVV/mlp.q.int8/mlp.q.int8_dispatch_graph.json",
+      "min_start_t": 500,
+      "max_end_t": 507
+    },
+    "mlp1": {
+      "id": 6,
+      "identifier": "mlp1",
+      "dispatch_deps_path": "gen/vmfb/mlp/spacemit_x60/RVV/mlp.q.int8/mlp.q.int8_dispatch_graph.json",
+      "min_start_t": 507,
+      "max_end_t": 514
+    },
+    "mlp2": {
+      "id": 7,
+      "identifier": "mlp2",
+      "dispatch_deps_path": "gen/vmfb/mlp/spacemit_x60/RVV/mlp.q.int8/mlp.q.int8_dispatch_graph.json",
+      "min_start_t": 514,
+      "max_end_t": 521
+    },
+    "mlp3": {
+      "id": 8,
+      "identifier": "mlp3",
+      "dispatch_deps_path": "gen/vmfb/mlp/spacemit_x60/RVV/mlp.q.int8/mlp.q.int8_dispatch_graph.json",
+      "min_start_t": 521,
+      "max_end_t": 528
+    },
+    "mlp4": {
+      "id": 9,
+      "identifier": "mlp4",
+      "dispatch_deps_path": "gen/vmfb/mlp/spacemit_x60/RVV/mlp.q.int8/mlp.q.int8_dispatch_graph.json",
+      "min_start_t": 528,
+      "max_end_t": 535
+    },   
+    "mlp5": {
+      "id": 5,
+      "identifier": "mlp5",
+      "dispatch_deps_path": "gen/vmfb/mlp/spacemit_x60/RVV/mlp.q.int8/mlp.q.int8_dispatch_graph.json",
+      "min_start_t": 500,
+      "max_end_t": 507
+    },
+    "mlp6": {
+      "id": 6,
+      "identifier": "mlp6",
+      "dispatch_deps_path": "gen/vmfb/mlp/spacemit_x60/RVV/mlp.q.int8/mlp.q.int8_dispatch_graph.json",
+      "min_start_t": 507,
+      "max_end_t": 514
+    },
+    "mlp7": {
+      "id": 7,
+      "identifier": "mlp7",
+      "dispatch_deps_path": "gen/vmfb/mlp/spacemit_x60/RVV/mlp.q.int8/mlp.q.int8_dispatch_graph.json",
+      "min_start_t": 514,
+      "max_end_t": 521
+    },
+    "mlp8": {
+      "id": 8,
+      "identifier": "mlp8",
+      "dispatch_deps_path": "gen/vmfb/mlp/spacemit_x60/RVV/mlp.q.int8/mlp.q.int8_dispatch_graph.json",
+      "min_start_t": 521,
+      "max_end_t": 528
+    },
+    "mlp9": {
+      "id": 9,
+      "identifier": "mlp9",
+      "dispatch_deps_path": "gen/vmfb/mlp/spacemit_x60/RVV/mlp.q.int8/mlp.q.int8_dispatch_graph.json",
+      "min_start_t": 528,
+      "max_end_t": 535
+    },
+
+    "mobilenet": {
+      "id": 10,
+      "identifier": "mobilenet_v2",
+      "dispatch_deps_path": "profiled/gen/vmfb/mobilenet_v2/spacemit_x60/RVV/mobilenet_v2/mobilenet_v2_dispatch_graph.json"
+    }
+  },
+  "edges": [
+    {
+      "from": "mlp0",
+      "to": "mlp1"
+    },
+    {
+      "from": "mlp1",
+      "to": "mlp2"
+    },
+    {
+      "from": "mlp2",
+      "to": "mlp3"
+    },
+    {
+      "from": "mlp3",
+      "to": "mlp4"
+    },
+    { "from": "dronet0", "to": "dronet1" },
+    { "from": "dronet1", "to": "dronet2" },
+    { "from": "dronet2", "to": "dronet3" },
+    { "from": "dronet3", "to": "dronet4" },
+    { "from": "dronet4", "to": "mlp0" }
+  ]
+}

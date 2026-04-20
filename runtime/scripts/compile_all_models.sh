@@ -2,52 +2,67 @@
 set -euo pipefail
 
 # Compile a set of Merlin models to VMFB and dump DOT graphs + artifacts.
-#
-# This is a thin wrapper over `merlin/tools/merlin.py compile`.
-#
+##
 # Outputs are written by default under:
 #   merlin/build/compiled_models/<model>/<target>_<basename>/
 # This wrapper overrides it to:
 #   gen/vmfb/<model>/<target>/<hw>/<basename>/
-#
-# Usage:
-#   ./runtime/scripts/compile_all_models.sh
-#
-# Optional env vars:
-#   DRY_RUN=1                 Pass --dry-run to compile.py (prints commands only)
-#   CONTINUE_ON_ERROR=1       Continue compiling other configs after a failure
-#   COMPILER_BUILD_DIR=...    Value for compile.py --build-dir (default: host-vanilla-release)
-#   OUT_ROOT=...              Output root (default: <repo>/gen/vmfb)
-#   PARSE_DOT=1               Run dot_dispatch_parser.py to produce *_dispatch_graph.json (default: 1)
-#   DOT_PNG=1                 Also render *_dispatch_graph.png (default: 0)
+# Merlin copies the source .mlir there, then iree-compile runs on that copy; compiler errors under
+# .../sources/ are artifact paths, not the path under merlin/models/.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-MERLIN_DIR="${MERLIN_DIR:-${REPO_ROOT}/merlin}"
+# Default Merlin root: sibling of XPU-RT (e.g. .../kris/merlin next to .../kris/XPU-RT).
+# Override with MERLIN_DIR if Merlin lives elsewhere (e.g. nested XPU-RT/merlin).
+if [[ -n "${MERLIN_DIR:-}" ]]; then
+  MERLIN_DIR="$(cd "${MERLIN_DIR}" && pwd)"
+elif [[ -f "${REPO_ROOT}/../merlin/tools/merlin.py" ]]; then
+  MERLIN_DIR="$(cd "${REPO_ROOT}/../merlin" && pwd)"
+else
+  MERLIN_DIR="${REPO_ROOT}/merlin"
+fi
 
 if [[ ! -f "${MERLIN_DIR}/tools/merlin.py" ]]; then
   echo "Error: expected Merlin at ${MERLIN_DIR} (missing tools/merlin.py)" >&2
   exit 1
 fi
 
-# ---- Config lists (edit as needed) ----
-MODELS=(
-  "models/mlp/mlp.q.int8.mlir"
-  "models/dronet/dronet.q.int8.mlir"
-)
 
+
+MODELS=(
+  "models/smolVLA/smolVLA.mlir"
+  # "models/smolVLA/smolVLA.q.int8.mlir"
+  # "models/smolVLA/smolVLA.q.fp8.mlir"
+  # "models/mlp/mlp.q.int8.mlir"
+  # "models/mlp/mlp.q.fp8.mlir"
+  # "models/dronet/dronet.q.int8.mlir"
+)
 TARGETS=(
   "spacemit_x60"
 )
 
 HWS=(
-  "RVV"
+  #"RVV"
   "scalar"
 )
 
 DRY_RUN="${DRY_RUN:-0}"
 CONTINUE_ON_ERROR="${CONTINUE_ON_ERROR:-0}"
-COMPILER_BUILD_DIR="${COMPILER_BUILD_DIR:-host-vanilla-release}"
+MERLIN_TOOL_BUILD_DIR="${MERLIN_TOOL_BUILD_DIR:-host-vanilla-debug}"
+
+# Prefer a real iree-compile path. Drop bogus MERLIN_IREE_COMPILE (e.g. host-merlin-release from old env).
+if [[ -n "${MERLIN_IREE_COMPILE:-}" ]] && [[ ! -f "${MERLIN_IREE_COMPILE}" ]]; then
+  case "${MERLIN_IREE_COMPILE}" in
+    */* | ./*) ;;
+    *) unset MERLIN_IREE_COMPILE ;;
+  esac
+fi
+IREE_COMPILE_BIN="${IREE_COMPILE_BIN:-${MERLIN_DIR}/build/host-vanilla-debug/install/bin/iree-compile}"
+if [[ -f "${IREE_COMPILE_BIN}" ]]; then
+  export MERLIN_IREE_COMPILE="${IREE_COMPILE_BIN}"
+fi
+
+# Keep outputs under this repo (see header); override OUT_ROOT only if you want another root.
 OUT_ROOT="${OUT_ROOT:-${REPO_ROOT}/gen/vmfb}"
 PARSE_DOT="${PARSE_DOT:-1}"
 DOT_PNG="${DOT_PNG:-0}"
@@ -59,11 +74,11 @@ if [[ "${PARSE_DOT}" == "1" && ! -f "${DOT_PARSER}" ]]; then
 fi
 
 extra_args=(
-  "--quantized"
-  "--dump-artifacts"
-  "--build-benchmarks"
-  "--dump-graph"
-  "--build-dir" "${COMPILER_BUILD_DIR}"
+  # "--quantized"
+  #"--dump-artifacts"
+  #"--build-benchmarks"
+  #"--dump-graph"
+  "--build-dir" "${MERLIN_TOOL_BUILD_DIR}"
 )
 if [[ "${DRY_RUN}" == "1" ]]; then
   extra_args+=("--dry-run")
@@ -85,10 +100,7 @@ for target in "${TARGETS[@]}"; do
         fi
       fi
 
-      echo "================================================================================"
-      echo "Compiling: model=${model} target=${target} hw=${hw}"
-      echo "================================================================================"
-
+      _src_mlir="${MERLIN_DIR}/${model}"
       model_name="$(basename "$(dirname "${model}")")"
       basename="$(basename "${model}")"
       basename="${basename%.mlir}"
@@ -105,7 +117,7 @@ for target in "${TARGETS[@]}"; do
       set -e
 
       if [[ $rc -ne 0 ]]; then
-        echo "FAILED (rc=${rc}): model=${model} target=${target} hw=${hw}" >&2
+        echo "FAILED (rc=${rc}): target=${target} hw=${hw} source=${_src_mlir}" >&2
         failures=$((failures + 1))
         if [[ "${CONTINUE_ON_ERROR}" != "1" ]]; then
           popd >/dev/null
