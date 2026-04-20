@@ -536,6 +536,57 @@ class LLMDrivenCompiler:
             tool_result={"appended_op": appended_op_name} if appended_op_name else None,
         )
 
+    def step_invent_many(
+        self,
+        proposals: list[dict[str, Any]],
+        *,
+        atomic: bool = False,
+        gate_ctx: dict[str, Any] | None = None,
+        llm_turn_id: str = "",
+    ) -> tuple[list[DriverStepResult], bool]:
+        """Run a batch of invent-slot proposals; return (results, rolled_back).
+
+        Each entry in ``proposals`` is ``{slot_name, proposal, [phase], [gate_ctx]}``.
+        On ``atomic=True``, the recipe + payload are deep-cloned BEFORE the
+        first proposal; if any proposal in the batch is rejected (or the
+        slot is unknown), the snapshots are rebound and the batch is
+        considered rolled back. Returns the per-step results regardless,
+        so the agent can read them all + decide.
+        """
+        snapshot_recipe = None
+        snapshot_payload = None
+        if atomic and self.env.recipe is not None:
+            snapshot_recipe = self.env.recipe.clone()
+        if atomic and self.env.payload_module is not None:
+            snapshot_payload = self.env.payload_module.clone()
+
+        results: list[DriverStepResult] = []
+        rolled_back = False
+        for entry in proposals:
+            slot_name = entry.get("slot_name") or ""
+            proposal = entry.get("proposal") or {}
+            phase = entry.get("phase")
+            entry_ctx = dict(gate_ctx or {})
+            entry_ctx.update(entry.get("gate_ctx") or {})
+            r = self.step_invent(
+                slot_name, proposal,
+                phase=phase,
+                gate_ctx=entry_ctx,
+                llm_turn_id=llm_turn_id,
+            )
+            results.append(r)
+            if atomic and r.status not in {"accepted"}:
+                # Rollback: rebind both recipe + payload to the
+                # snapshots we took before the batch started.
+                if snapshot_recipe is not None:
+                    self.env._recipe_module = snapshot_recipe
+                if snapshot_payload is not None:
+                    self.env.set_payload_module(snapshot_payload)
+                self._last_view = self._compute_view()
+                rolled_back = True
+                break
+        return results, rolled_back
+
     def step_proposal(
         self,
         action_type: str,

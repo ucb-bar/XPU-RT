@@ -15,8 +15,7 @@ Pipeline:
 
 from __future__ import annotations
 
-import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 import structlog
@@ -35,18 +34,17 @@ from compgen.agent.env import (
     RequestVerificationAction,
     SetExtractionObjectiveAction,
 )
+from compgen.agent.loop import prompts
+from compgen.agent.loop.records import CompilationResult, IterationRecord
 from compgen.agent.prompts.analyze import ANALYSIS_SCHEMA, AnalysisContext, ProposedOptimization
 from compgen.agent.prompts.analyze import format_prompt as fmt_analyze
 from compgen.agent.prompts.analyze import parse_response as parse_analyze
 from compgen.agent.prompts.refine import REFINEMENT_SCHEMA, RefinementAction, RefinementContext
 from compgen.agent.prompts.refine import format_prompt as fmt_refine
 from compgen.agent.prompts.refine import parse_response as parse_refine
-from compgen.agent.serialize import legal_actions_to_dict, observation_to_dict, observation_to_prompt
-from compgen.llm.base import CompGenLLMProtocol, GenerationRequest, LLMConfig, Objective, PromptContext
+from compgen.agent.serialize import observation_to_prompt
+from compgen.llm.base import CompGenLLMProtocol, GenerationRequest, LLMConfig, PromptContext
 from compgen.targets.schema import TargetProfile
-
-from compgen.agent.loop import prompts
-from compgen.agent.loop.records import CompilationResult, IterationRecord
 
 log = structlog.get_logger()
 
@@ -77,8 +75,9 @@ class AgenticCompilationLoop:
         """
         # Load persistent agent memory for cost calibration + strategy history
         try:
-            from compgen.agent.memory import AgentMemory
             from pathlib import Path
+
+            from compgen.agent.memory import AgentMemory
 
             memory_path = Path(".compgen_cache/agent_memory.json")
             self._memory = AgentMemory.load(memory_path) if memory_path.exists() else AgentMemory()
@@ -89,6 +88,7 @@ class AgenticCompilationLoop:
         if self.compiler_memory is None:
             try:
                 from compgen.memory.store import CompilerMemory
+
                 self.compiler_memory = CompilerMemory()
             except Exception:
                 pass
@@ -128,9 +128,7 @@ class AgenticCompilationLoop:
                     hardware=target.name,
                 )
                 retrieval = retriever.retrieve_for_task(search_task)
-                self._retrieval_priors = (
-                    retrieval.schedule_templates + retrieval.tactics
-                )
+                self._retrieval_priors = retrieval.schedule_templates + retrieval.tactics
                 if self._retrieval_priors:
                     log.info("agentic.retrieval", priors=len(self._retrieval_priors))
             except Exception:
@@ -139,6 +137,7 @@ class AgenticCompilationLoop:
             # Retrieve learned cost weights for this target (Unit 12)
             try:
                 from compgen.solve.learned_weights import retrieve_best_weights
+
                 learned_weights = retrieve_best_weights(self.compiler_memory, target_key=target.name)
                 if learned_weights:
                     self.env._eqsat_weights = learned_weights
@@ -168,11 +167,17 @@ class AgenticCompilationLoop:
                         action = self._active_plan.pop(0)
                     else:
                         action = self._ask_llm_for_refinement(
-                            obs, history, target, no_improvement_count=no_improvement_count,
+                            obs,
+                            history,
+                            target,
+                            no_improvement_count=no_improvement_count,
                         )
                 else:
                     action = self._ask_llm_for_refinement(
-                        obs, history, target, no_improvement_count=no_improvement_count,
+                        obs,
+                        history,
+                        target,
+                        no_improvement_count=no_improvement_count,
                     )
 
             if action is None or isinstance(action, NoopAction):
@@ -202,7 +207,10 @@ class AgenticCompilationLoop:
                 if vr is not None and not vr.get("passed", True) and vr.get("counterexample"):
                     # TV failed — attempt counterexample repair
                     repair = self._ask_llm_for_counterexample_repair(
-                        vr, action, obs, target,
+                        vr,
+                        action,
+                        obs,
+                        target,
                     )
                     if repair is not None and not isinstance(repair, NoopAction):
                         log.info(
@@ -246,6 +254,7 @@ class AgenticCompilationLoop:
                 if not result.info.action_applied or not verification_passed:
                     try:
                         from compgen.memory.error_patterns import record_error_pattern
+
                         reason = "verification_failed" if not verification_passed else "not_applied"
                         record_error_pattern(
                             self.compiler_memory,
@@ -261,6 +270,7 @@ class AgenticCompilationLoop:
                 if result.info.action_applied and improvement != 0:
                     try:
                         from compgen.memory.calibration import record_calibration
+
                         record_calibration(
                             self.compiler_memory,
                             target_key=target.name,
@@ -324,6 +334,7 @@ class AgenticCompilationLoop:
         if self.compiler_memory is not None and total_improvement > 0:
             try:
                 from compgen.solve.learned_weights import store_cost_weights
+
                 eqsat_weights = getattr(self.env, "_eqsat_weights", {})
                 if eqsat_weights:
                     store_cost_weights(
@@ -348,10 +359,7 @@ class AgenticCompilationLoop:
                 )
                 # Update retrieval stats for priors that were used
                 if self._retrieval_priors:
-                    used_ids = [
-                        p.knowledge_id for p in self._retrieval_priors
-                        if hasattr(p, "knowledge_id")
-                    ]
+                    used_ids = [p.knowledge_id for p in self._retrieval_priors if hasattr(p, "knowledge_id")]
                     promoter.update_retrieval_stats(used_ids, task_succeeded=total_improvement > 0)
             except Exception:
                 pass
@@ -436,9 +444,7 @@ class AgenticCompilationLoop:
                             "passed": vr.passed,
                             "status": vr.status,
                             "solver_time_ms": vr.solver_time_ms,
-                            "counterexample_summary": (
-                                vr.counterexample.summary if vr.counterexample else None
-                            ),
+                            "counterexample_summary": (vr.counterexample.summary if vr.counterexample else None),
                         }
                         for vr in exec_result.verification_results
                     ]
@@ -446,12 +452,9 @@ class AgenticCompilationLoop:
                         "total": len(exec_result.verification_results),
                         "passed": sum(1 for vr in exec_result.verification_results if vr.passed),
                         "failed": sum(
-                            1 for vr in exec_result.verification_results
-                            if not vr.passed and vr.status != "skipped"
+                            1 for vr in exec_result.verification_results if not vr.passed and vr.status != "skipped"
                         ),
-                        "skipped": sum(
-                            1 for vr in exec_result.verification_results if vr.status == "skipped"
-                        ),
+                        "skipped": sum(1 for vr in exec_result.verification_results if vr.status == "skipped"),
                     }
 
             # Attempt promotion if all verifications passed (with LLM guidance - Unit 16)
@@ -481,28 +484,33 @@ class AgenticCompilationLoop:
                     promo_prompt = fmt_promo(promo_ctx)
                     promo_request = GenerationRequest(
                         prompt_template=promo_prompt,
-                        context=PromptContext(model_ir_summary="", target_profile_summary=prompts.target_summary(target)),
+                        context=PromptContext(
+                            model_ir_summary="", target_profile_summary=prompts.target_summary(target)
+                        ),
                         config=self._llm_config(temperature=0.1, max_tokens=800),
                     )
                     promo_response = self._generate_with_schema(promo_request, PROMOTION_SCHEMA)
                     promo_decision = parse_promo(promo_response.raw_text)
                     if promo_decision is not None:
                         llm_promotes = promo_decision.get("promote", True)
-                        log.info("agentic.promotion_decision", promote=llm_promotes, reason=promo_decision.get("reason", ""))
+                        log.info(
+                            "agentic.promotion_decision", promote=llm_promotes, reason=promo_decision.get("reason", "")
+                        )
                 except Exception:
                     pass  # Fall back to rule-based
 
                 if all_passed and lowered.transform_scripts and llm_promotes:
                     bundle = Bundle(
                         target_profile=target.name,
-                        model_hash=str(id(module))[:12],
+                        model_hash=str(id(payload_after))[:12],
                         objective="latency",
                         transform_scripts=lowered.transform_scripts,
                         kernel_jobs=lowered.kernel_jobs,
                         plan_fragments=lowered.plan_fragments,
                     )
                     promo = promote_recipe(
-                        bundle, ".compgen_cache/recipes",
+                        bundle,
+                        ".compgen_cache/recipes",
                         memory=self.compiler_memory,
                     )
                     result.runtime_artifacts["promotion"] = {
@@ -577,8 +585,12 @@ class AgenticCompilationLoop:
             return []
 
     def _ask_llm_for_refinement(
-        self, obs: Observation, history: list[IterationRecord], target: TargetProfile,
-        *, no_improvement_count: int = 0,
+        self,
+        obs: Observation,
+        history: list[IterationRecord],
+        target: TargetProfile,
+        *,
+        no_improvement_count: int = 0,
     ) -> Action | None:
         """Ask LLM what to try next based on history."""
         legal_actions = self.env.legal_actions(max_actions=20)
@@ -588,6 +600,7 @@ class AgenticCompilationLoop:
         if self.compiler_memory is not None:
             try:
                 from compgen.memory.error_patterns import error_patterns_to_prompt, retrieve_error_patterns
+
                 patterns = retrieve_error_patterns(self.compiler_memory, target_key=target.name, top_k=3)
                 error_pattern_dicts = error_patterns_to_prompt(patterns)
             except Exception:
@@ -638,7 +651,10 @@ class AgenticCompilationLoop:
     # ------------------------------------------------------------------
 
     def _ask_llm_for_plan(
-        self, obs: Observation, history: list[IterationRecord], target: TargetProfile,
+        self,
+        obs: Observation,
+        history: list[IterationRecord],
+        target: TargetProfile,
     ) -> list[Action]:
         """Ask LLM for a multi-step optimization plan (3-5 steps)."""
         try:
@@ -671,6 +687,7 @@ class AgenticCompilationLoop:
             actions: list[Action] = []
             for step in steps:
                 from compgen.agent.prompts.analyze import ProposedOptimization
+
                 proposal = ProposedOptimization(
                     action_type=step.get("action_type", "noop"),
                     target=step.get("target", ""),
@@ -692,7 +709,9 @@ class AgenticCompilationLoop:
     # ------------------------------------------------------------------
 
     def _ask_llm_for_eqsat_rule(
-        self, obs: Observation, target: TargetProfile,
+        self,
+        obs: Observation,
+        target: TargetProfile,
     ) -> ProposeRuleAction | None:
         """Ask LLM to generate a new EqSat rewrite rule."""
         try:
@@ -724,6 +743,7 @@ class AgenticCompilationLoop:
             # Extract code from markdown fences if present
             if "```" in rule_code:
                 import re
+
                 m = re.search(r"```(?:python)?\n(.*?)```", rule_code, re.DOTALL)
                 if m:
                     rule_code = m.group(1).strip()
@@ -741,7 +761,9 @@ class AgenticCompilationLoop:
     # ------------------------------------------------------------------
 
     def _consult_eqsat_search_state(
-        self, obs: Observation, target: TargetProfile,
+        self,
+        obs: Observation,
+        target: TargetProfile,
     ) -> Action | None:
         """Consult LLM about eqsat search direction and weight tuning."""
         try:
@@ -826,6 +848,7 @@ class AgenticCompilationLoop:
         if self.compiler_memory is not None:
             try:
                 from compgen.memory.schema import ObjectKind
+
                 task = self.compiler_memory.create_task(
                     kind=ObjectKind.BACKEND_PLAN,
                     target_key=target.name,
@@ -848,9 +871,7 @@ class AgenticCompilationLoop:
             final_cost_us=evo_result.best_cost_us,
             total_improvement_pct=evo_result.total_improvement_pct,
             iterations_run=evo_result.candidates_evaluated,
-            iterations_improved=sum(
-                1 for gen in evo_result.history for s in gen if s.improvement_pct > 0
-            ),
+            iterations_improved=sum(1 for gen in evo_result.history for s in gen if s.improvement_pct > 0),
             history=[],
             best_observation=self.env.observe(),
         )
@@ -860,7 +881,9 @@ class AgenticCompilationLoop:
     # ------------------------------------------------------------------
 
     def run_multi_module(
-        self, modules: list[Any], target: TargetProfile,
+        self,
+        modules: list[Any],
+        target: TargetProfile,
     ) -> list[CompilationResult]:
         """Coordinate optimization across multiple modules."""
         try:
@@ -878,12 +901,14 @@ class AgenticCompilationLoop:
         # Build per-module summaries
         summaries = []
         for i, module in enumerate(modules):
-            summaries.append({
-                "name": f"module_{i}",
-                "op_count": sum(1 for _ in module.walk()) if hasattr(module, "walk") else 0,
-                "flops": 0,
-                "bottleneck": "unknown",
-            })
+            summaries.append(
+                {
+                    "name": f"module_{i}",
+                    "op_count": sum(1 for _ in module.walk()) if hasattr(module, "walk") else 0,
+                    "flops": 0,
+                    "bottleneck": "unknown",
+                }
+            )
 
         ctx = GlobalStrategyContext(
             module_count=len(modules),
@@ -931,7 +956,6 @@ class AgenticCompilationLoop:
             DiscoverOpsAction,
             FuseAction,
             GeneratePassAction,
-            RequestVerificationAction,
             TileAction,
         )
 
@@ -964,7 +988,6 @@ class AgenticCompilationLoop:
             DiscoverOpsAction,
             FuseAction,
             GeneratePassAction,
-            RequestVerificationAction,
             TileAction,
         )
 
@@ -1046,7 +1069,9 @@ class AgenticCompilationLoop:
     # ------------------------------------------------------------------
 
     def _orchestrate_runtime(
-        self, obs: Observation | None, target: TargetProfile,
+        self,
+        obs: Observation | None,
+        target: TargetProfile,
     ) -> dict[str, Any]:
         """Generate runtime artifacts after optimization converges.
 
@@ -1102,7 +1127,9 @@ class AgenticCompilationLoop:
         return artifacts
 
     def _ask_llm_for_profiling(
-        self, obs: Observation, target: TargetProfile,
+        self,
+        obs: Observation,
+        target: TargetProfile,
     ) -> ConfigureProfilingAction | None:
         """Ask LLM to configure profiling."""
         from compgen.agent.prompts.runtime_profile import ProfileHookContext
@@ -1110,9 +1137,12 @@ class AgenticCompilationLoop:
         from compgen.agent.prompts.runtime_profile import parse_response as parse_profile
 
         bottlenecks = [
-            {"region": r.region_id, "kind": "compute_bound" if r.is_compute_bound else "memory_bound",
-             "severity": r.estimated_latency_us / max(obs.estimated_total_latency_us, 1e-9),
-             "suggestion": "tile" if r.is_compute_bound else "fuse"}
+            {
+                "region": r.region_id,
+                "kind": "compute_bound" if r.is_compute_bound else "memory_bound",
+                "severity": r.estimated_latency_us / max(obs.estimated_total_latency_us, 1e-9),
+                "suggestion": "tile" if r.is_compute_bound else "fuse",
+            }
             for r in obs.regions
             if r.estimated_latency_us > obs.estimated_total_latency_us * 0.1
         ]
@@ -1145,7 +1175,9 @@ class AgenticCompilationLoop:
             return None
 
     def _ask_llm_for_dispatch(
-        self, obs: Observation, target: TargetProfile,
+        self,
+        obs: Observation,
+        target: TargetProfile,
     ) -> ConfigureDispatchAction | None:
         """Ask LLM to select dispatch strategy."""
         from compgen.agent.prompts.runtime_dispatch import DispatchContext
@@ -1154,9 +1186,7 @@ class AgenticCompilationLoop:
 
         ctx = DispatchContext(
             target_name=target.name,
-            device_utilization={
-                name: 0.0 for name in obs.device_names
-            },
+            device_utilization={name: 0.0 for name in obs.device_names},
             current_strategy="bulk_sync",
         )
         prompt = fmt_dispatch(ctx)
@@ -1182,7 +1212,9 @@ class AgenticCompilationLoop:
             return None
 
     def _ask_llm_for_hooks(
-        self, obs: Observation, target: TargetProfile,
+        self,
+        obs: Observation,
+        target: TargetProfile,
     ) -> GenerateRuntimeHooksAction | None:
         """Ask LLM to generate runtime hooks.
 
@@ -1220,7 +1252,10 @@ class AgenticCompilationLoop:
         return action.action_type in self._VERIFIABLE_ACTION_TYPES
 
     def _run_per_step_verification(
-        self, action: Action, obs: Observation, target: TargetProfile,
+        self,
+        action: Action,
+        obs: Observation,
+        target: TargetProfile,
     ) -> dict[str, Any] | None:
         """Run verification for the action that was just applied.
 
@@ -1233,11 +1268,13 @@ class AgenticCompilationLoop:
 
         # Ask LLM for verification strategy
         ctx = VerifyStrategyContext(
-            regions=[{
-                "region_id": action.region_id,
-                "op_type": action.action_type,
-                "transform_applied": action.action_type,
-            }],
+            regions=[
+                {
+                    "region_id": action.region_id,
+                    "op_type": action.action_type,
+                    "transform_applied": action.action_type,
+                }
+            ],
             verification_budget_ms=30_000,
             verifiable_ops=list(getattr(obs.verification, "verifiable_op_types", ())),
             past_failures=[],

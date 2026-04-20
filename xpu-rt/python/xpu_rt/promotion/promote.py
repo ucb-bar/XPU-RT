@@ -19,6 +19,7 @@ import hashlib
 import json
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 from compgen.runtime.bundle import Bundle
 
@@ -129,11 +130,14 @@ class RecipePromoter:
         # Record audit event
         try:
             from compgen.promotion.audit import AuditLog, create_event
+
             audit = AuditLog(self.library_path / "audit.jsonl")
-            audit.record(create_event(
-                "promotion",
-                data={"key": key.key, "target": bundle.target_profile, "version": version},
-            ))
+            audit.record(
+                create_event(
+                    "promotion",
+                    data={"key": key.key, "target": bundle.target_profile, "version": version},
+                )
+            )
         except Exception:
             pass  # Audit is best-effort
 

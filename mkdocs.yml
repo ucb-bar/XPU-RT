@@ -21,15 +21,26 @@ nav:
       - Installation: getting-started/installation.md
       - Quickstart: getting-started/quickstart.md
       - What Works Today: getting-started/what-works-today.md
-  - Guides:
-      - Use the Demo: guides/use-the-demo.md
-      - Benchmark Suites: guides/use-benchmark-suites.md
-      - Bring Up a Target: guides/bring-up-a-target.md
-      - Inspect Artifacts: guides/inspect-artifacts.md
   - Concepts:
       - What CompGen Is: concepts/what-is-compgen.md
       - Architecture Overview: concepts/architecture.md
       - Verification Model: concepts/verification.md
+      - Semantic IR Verification: concepts/semantic_ir_verification.md
+      - Agent Verification Loop: concepts/agent_verification_loop.md
+  - User Guides:
+      - Use the Demo: guides/use-the-demo.md
+      - Bring Up a Target: guides/bring-up-a-target.md
+      - Inspect Artifacts: guides/inspect-artifacts.md
+      - Benchmark Suites: guides/use-benchmark-suites.md
+      - Custom Quantization: guides/custom-quantization.md
+      - NPU Kernel Generation: guides/npu-kernel-generation.md
+  - Architecture:
+      - Compiler Generation: architecture/compiler-generation.md
+      - Event Tensor Integration: architecture/event_tensor.md
+      - Runtime Model: architecture/runtime-model.md
+      - Target Backend Model: architecture/target-backend-model.md
+      - Triton Integration: architecture/triton-integration-spec.md
+      - Extension Points: architecture/extension-points.md
   - Reference:
       - CLI Reference: reference/cli.md
       - Python API: reference/python-api.md
@@ -37,3 +48,6 @@ nav:
       - Target Packages: reference/target-packages.md
       - Tested Stack: reference/tested-stack.md
       - Troubleshooting: reference/troubleshooting.md
+  - Contributing:
+      - GPU CI: contributing/gpu_ci.md
+      - Releasing: contributing/releasing.md

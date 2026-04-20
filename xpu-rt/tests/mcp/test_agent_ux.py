@@ -169,7 +169,7 @@ def test_view_recipe_middle_carries_sym_name_so_agent_sees_region_ids(
 def test_get_dossier_exposes_recipe_to_payload_translation(tmp_path: Path) -> None:
     """Agents see payload region names in the dossier (mm_1, rmsnorm_0)
     but propose_invent_slot expects recipe sym names (r_0/r_1). The
-    region_map must bridge them."""
+    region_map must bridge them and carry the role tag."""
     sm, sid = _open_session(tmp_path)
     r = get_dossier(sm, session_id=sid)
     assert "region_map" in r, (
@@ -177,11 +177,21 @@ def test_get_dossier_exposes_recipe_to_payload_translation(tmp_path: Path) -> No
     )
     rmap = r["region_map"]
     assert rmap, "region_map is empty"
-    # Every recipe sym must look like r_<N> (synthetic) and map to
-    # something nontrivial.
-    for sym, payload_id in list(rmap.items())[:3]:
+    # New shape: {sym: {payload_id, role?}}.
+    for sym, info in list(rmap.items())[:3]:
         assert sym.startswith("r_"), f"unexpected sym format: {sym}"
-        assert payload_id, f"empty payload_id for {sym}"
+        assert isinstance(info, dict)
+        assert info.get("payload_id"), f"empty payload_id for {sym}"
+    # P7.1: at least one region must carry a non-empty role.
+    roles_present = [info.get("role") for info in rmap.values() if info.get("role")]
+    assert roles_present, (
+        "no role tags propagated from compgen._pattern_hint — P7.1 regression"
+    )
+    # Reverse-index must agree with forward.
+    assert "regions_by_role" in r
+    for role, syms in r["regions_by_role"].items():
+        for s in syms:
+            assert rmap[s]["role"] == role
 
 
 # ---------------------------------------------------------------------------

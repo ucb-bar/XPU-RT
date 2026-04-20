@@ -13,7 +13,7 @@ import io
 import json
 import tempfile
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import structlog
 from xdsl.context import Context
@@ -38,9 +38,7 @@ def _register_dialects(ctx: Context) -> None:
 
 def _count_eclasses(module: builtin.ModuleOp) -> int:
     """Count equivalence.class ops in the module."""
-    return sum(
-        1 for op in module.walk() if isinstance(op, equivalence.AnyClassOp)
-    )
+    return sum(1 for op in module.walk() if isinstance(op, equivalence.AnyClassOp))
 
 
 def _count_enodes(module: builtin.ModuleOp) -> int:
@@ -57,9 +55,17 @@ def _count_ops(module: builtin.ModuleOp) -> int:
     return sum(
         1
         for op in module.walk()
-        if not isinstance(op, (equivalence.AnyClassOp, equivalence.GraphOp,
-                               equivalence.YieldOp, builtin.ModuleOp,
-                               func.FuncOp, func.ReturnOp))
+        if not isinstance(
+            op,
+            (
+                equivalence.AnyClassOp,
+                equivalence.GraphOp,
+                equivalence.YieldOp,
+                builtin.ModuleOp,
+                func.FuncOp,
+                func.ReturnOp,
+            ),
+        )
     )
 
 
@@ -203,9 +209,7 @@ def assign_costs_and_extract(
     _register_dialects(ctx)
 
     if config.cost_file:
-        EqsatAddCostsPass(
-            cost_file=config.cost_file, default=config.default_cost
-        ).apply(ctx, module)
+        EqsatAddCostsPass(cost_file=config.cost_file, default=config.default_cost).apply(ctx, module)
     else:
         EqsatAddCostsPass(default=config.default_cost).apply(ctx, module)
 
@@ -242,6 +246,7 @@ def run_eqsat_pass(
 
     if rules is None:
         from compgen.eqsat.rules.algebraic import get_default_algebraic_rules
+
         rules = get_default_algebraic_rules()
 
     ops_before = _count_ops(module)
@@ -304,6 +309,7 @@ def run_eqsat_pass(
     if llm_callback is not None:
         try:
             from compgen.eqsat.explain import EGraphSummary
+
             callback_result = llm_callback(
                 EGraphSummary(
                     num_eclasses=eclasses_after_rewrite,
@@ -337,17 +343,12 @@ def run_eqsat_pass(
 
     # Step 3: Assign costs and extract
     if cost_dict is not None:
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".json", delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(cost_dict, f)
             cost_file = f.name
         config = EqSatConfig(
             **{
-                **{
-                    field: getattr(config, field)
-                    for field in config.__dataclass_fields__
-                },
+                **{field: getattr(config, field) for field in config.__dataclass_fields__},
                 "cost_file": cost_file,
             }
         )

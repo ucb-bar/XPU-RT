@@ -85,12 +85,8 @@ class MILPSolver:
         try:
             import numpy as np
             from scipy.optimize import LinearConstraint, milp
-            from scipy.sparse import eye as speye
         except ImportError as exc:
-            raise ImportError(
-                "scipy is required for MILPSolver. "
-                "Install it with: pip install scipy"
-            ) from exc
+            raise ImportError("scipy is required for MILPSolver. Install it with: pip install scipy") from exc
 
         t0 = time.perf_counter()
 

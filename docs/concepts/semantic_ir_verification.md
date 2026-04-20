@@ -68,7 +68,7 @@ The agent interacts with verification at four points:
 3. **Semantics discovery** — LLM generates semantics for unknown ops
 4. **Transfer analysis** — LLM designs verified dataflow analyses
 
-See [Agent Verification Loop](../agent/verification_loop.md) for details.
+See [Agent Verification Loop](agent_verification_loop.md) for details.
 
 ## Recipe IR Verification Ops
 

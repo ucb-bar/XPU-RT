@@ -109,24 +109,36 @@ def get_dossier(
         "repeated_patterns": dict(getattr(dossier, "repeated_patterns", {})),
         "pattern_count": sum(dict(getattr(dossier, "repeated_patterns", {})).values()),
     }
-    # Region name translation table: recipe sym ('r_0') → payload region_id
-    # ('mm_1' / 'rmsnorm_0' / 'CallOp_0'). Agents calling propose_*
-    # invent slots can pass either form; both resolve to the same payload
-    # ops. Without this mapping the dossier's critical_path names look
-    # disconnected from the recipe's view_recipe banner names.
+    # Region name translation table: recipe sym ('r_0') → {payload_id, role}.
+    # Agents calling propose_* invent slots can pass either name form;
+    # both resolve to the same ops. The role tag (e.g. "matmul",
+    # "softmax", "rmsnorm") lets agents pick "the q_proj matmul"
+    # without paging through view_recipe.
     driver = session.driver
     if driver is not None and driver.env.recipe is not None:
-        recipe_to_payload: dict[str, str] = {}
+        from xdsl.dialects.builtin import StringAttr
+        region_map: dict[str, dict[str, str]] = {}
         for rop in driver.env.recipe.body.block.ops:
             if rop.name != "recipe.region":
                 continue
             sym = rop.properties.get("sym_name")
             pid = rop.properties.get("payload_region_id")
-            from xdsl.dialects.builtin import StringAttr
+            role = rop.properties.get("role")
             if isinstance(sym, StringAttr) and isinstance(pid, StringAttr):
-                recipe_to_payload[sym.data] = pid.data
-        payload["region_map"] = recipe_to_payload
-        payload["region_count"] = len(recipe_to_payload)
+                entry: dict[str, str] = {"payload_id": pid.data}
+                if isinstance(role, StringAttr) and role.data:
+                    entry["role"] = role.data
+                region_map[sym.data] = entry
+        payload["region_map"] = region_map
+        payload["region_count"] = len(region_map)
+        # Reverse-index: role → list of recipe syms with that role.
+        # Lets agents fetch "all matmul regions" without scanning.
+        regions_by_role: dict[str, list[str]] = {}
+        for sym, info in region_map.items():
+            r = info.get("role")
+            if r:
+                regions_by_role.setdefault(r, []).append(sym)
+        payload["regions_by_role"] = regions_by_role
     if op_id is not None:
         # Look up the op in the Recipe-IR view's focus so the LLM sees
         # the exact serialised form it referenced by id.

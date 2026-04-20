@@ -36,6 +36,12 @@ class RecipeRegionOp(IRDLOperation):
     shape_summary = opt_prop_def(ShapeSummaryAttr)
     effect_class = opt_prop_def(EffectClassAttr)
     op_count = opt_prop_def(IntegerAttr)
+    #: Op-family tag derived from ``compgen._pattern_hint`` on the
+    #: corresponding payload op (matmul / softmax / rmsnorm / silu /
+    #: view / cat / ...). Lets agents reason at the model level
+    #: ("the q-projection matmul") instead of the IR level ("r_3").
+    #: Optional — present whenever import_fx had a hint to stamp.
+    role = opt_prop_def(StringAttr)
 
     traits = traits_def(SymbolOpInterface())
 

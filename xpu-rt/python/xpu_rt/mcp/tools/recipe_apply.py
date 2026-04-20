@@ -149,6 +149,53 @@ def apply_recipe(
     )
     ver_failed = len(ver_results) - ver_passed - ver_skipped
 
+    # Per-obligation surface (P7.2): every VerificationResult expanded
+    # so the agent can read region_id + status + counterexample summary
+    # + solver wall-clock without paging through the underlying
+    # dataclass. Source data is already in memory; we just stop
+    # discarding it.
+    per_obligation: list[dict[str, Any]] = []
+    for v in ver_results:
+        cex = getattr(v, "counterexample", None)
+        per_obligation.append({
+            "region_id": getattr(v, "region_id", ""),
+            "type": getattr(v, "obligation_type", ""),
+            "status": getattr(v, "status", ""),
+            "passed": bool(getattr(v, "passed", False)),
+            "solver_time_ms": float(getattr(v, "solver_time_ms", 0.0)),
+            "counterexample_summary": getattr(cex, "summary", None) if cex else None,
+            "details": dict(getattr(v, "details", {}) or {}),
+        })
+
+    # Per-script transform error surface (P7.6): _apply_transforms emits
+    # diagnostics shaped ``transform(recipe_transform_<i>): <level> — <msg>``.
+    # Parse them back out so the agent gets one entry per script with
+    # status + error text instead of an opaque ``transforms_failed: 56``.
+    per_script: list[dict[str, Any]] = []
+    seen_indices: set[int] = set()
+    import re as _re
+    diag_pat = _re.compile(
+        r"transform\(recipe_transform_(\d+)\):\s*(\w+)\s*[—-]\s*(.+)"
+    )
+    for diag in result.diagnostics:
+        m = diag_pat.match(diag)
+        if not m:
+            continue
+        idx = int(m.group(1))
+        level = m.group(2)
+        msg = m.group(3).strip()
+        per_script.append({
+            "script_index": idx,
+            "level": level,           # info / warning / error
+            "error": msg if level.lower() != "info" else None,
+            "message": msg,
+        })
+        seen_indices.add(idx)
+    # Stash the per-obligation list on the driver so explain_verification
+    # can recover it without re-running the executor.
+    driver._last_verification = list(per_obligation)   # type: ignore[attr-defined]
+    driver._last_transform_diagnostics = list(per_script)   # type: ignore[attr-defined]
+
     return {
         "ok": True,
         "session_id": session_id,
@@ -156,6 +203,12 @@ def apply_recipe(
         "payload_hash_after": payload_after,
         "payload_changed": payload_before != payload_after,
         "recipe_hash": recipe_hash,
+        "transforms": {
+            "applied": result.transforms_applied,
+            "failed": result.transforms_failed,
+            "per_script": per_script,
+        },
+        # Back-compat: keep the flat counters so earlier callers still work.
         "transforms_applied": result.transforms_applied,
         "transforms_failed": result.transforms_failed,
         "eqsat_runs": result.eqsat_runs,
@@ -166,6 +219,7 @@ def apply_recipe(
             "passed": ver_passed,
             "failed": ver_failed,
             "skipped": ver_skipped,
+            "per_obligation": per_obligation,
         },
         "diagnostics": list(result.diagnostics),
         "mutation_report": mutation_report.to_dict(),

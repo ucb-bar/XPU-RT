@@ -228,6 +228,7 @@ def promote_authored_tools(
     min_passes: int = 5,
     min_workloads: int = 2,
     min_targets: int = 2,
+    min_passes_session: int | None = None,
 ) -> AuthoredGraduationReport:
     """Scan the trial log, materialise authored tools that cleared thresholds.
 
@@ -240,7 +241,16 @@ def promote_authored_tools(
             don't have a cryptographic record of.
         log_path: JSONL trial log. Defaults to
             :func:`default_trial_log_path`.
-        min_passes / min_workloads / min_targets: Graduation thresholds.
+        min_passes / min_workloads / min_targets: Cross-session
+            graduation thresholds (default 5 / 2 / 2). These bind for
+            tools that need to prove themselves across many sessions
+            before earning a permanent registry slot.
+        min_passes_session: When set, switches to a *session-scoped*
+            threshold path that uses ``(min_passes_session, 1, 1)``
+            instead of the cross-session triple. Lets an in-session
+            agent iterate on a freshly-authored tool and graduate it
+            after a couple of trials, without polluting the cross-
+            session graduation state file.
 
     Returns:
         :class:`AuthoredGraduationReport`.
@@ -253,15 +263,29 @@ def promote_authored_tools(
     if not aggregates:
         return report
 
-    state = _load_state(path)
-    applied: dict[str, Any] = state.setdefault("applied", {})
+    # Session-scoped path uses lower thresholds + does NOT touch the
+    # persistent ``_state`` file, so the same trial set CAN later
+    # graduate cross-session under the higher bar.
+    if min_passes_session is not None:
+        eff_passes = int(min_passes_session)
+        eff_workloads = 1
+        eff_targets = 1
+        applied: dict[str, Any] = {}
+        save_state_after = False
+    else:
+        eff_passes = min_passes
+        eff_workloads = min_workloads
+        eff_targets = min_targets
+        state = _load_state(path)
+        applied = state.setdefault("applied", {})
+        save_state_after = True
 
     for key, a in aggregates.items():
-        if a.passed_trials < min_passes:
+        if a.passed_trials < eff_passes:
             continue
-        if len(a.workloads) < min_workloads:
+        if len(a.workloads) < eff_workloads:
             continue
-        if len(a.targets) < min_targets:
+        if len(a.targets) < eff_targets:
             continue
         report.candidates_found += 1
 
@@ -301,7 +325,7 @@ def promote_authored_tools(
         except Exception as exc:   # noqa: BLE001
             report.errors.append(f"register_tool({key}): {type(exc).__name__}: {exc}")
 
-    if report.new_tools_registered:
+    if report.new_tools_registered and save_state_after:
         _save_state(path, state)
 
     return report

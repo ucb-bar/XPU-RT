@@ -135,6 +135,8 @@ def generate_seed_recipe(
             region_props["op_count"] = IntegerAttr(
                 op_info["op_count"], IntegerType(64)
             )
+        if op_info.get("role"):
+            region_props["role"] = StringAttr(str(op_info["role"]))
 
         block.add_op(RecipeRegionOp.build(properties=region_props))
 
@@ -244,6 +246,32 @@ def _extract_significant_ops(
             "tileable": False,
             "op_count": 1,
         }
+
+        # Pull through the pattern hint already stamped by import_fx
+        # (e.g. "matmul", "softmax", "rmsnorm", "silu", "view", "cat").
+        # This becomes ``recipe.region.role`` so agents can reason at
+        # the model layer ("the q-projection matmul") instead of the
+        # IR layer ("r_3"). When the hint is absent, fall back to a
+        # coarse op-family derived from the xDSL op name.
+        hint_attr = op.attributes.get("compgen._pattern_hint") \
+            if hasattr(op, "attributes") else None
+        if hint_attr is not None and hasattr(hint_attr, "data"):
+            info["role"] = hint_attr.data
+        else:
+            xdsl_name = str(getattr(op, "name", ""))
+            if xdsl_name.startswith("linalg."):
+                info["role"] = xdsl_name.removeprefix("linalg.")
+            elif xdsl_name.startswith("tensor."):
+                info["role"] = xdsl_name.removeprefix("tensor.")
+            elif xdsl_name == "func.call":
+                # The callee's name is the most useful coarse role for
+                # the aten-passthrough family.
+                callee = op.callee.root_reference.data \
+                    if hasattr(op, "callee") else ""
+                if callee.startswith("aten_"):
+                    info["role"] = callee.removeprefix("aten_")
+                else:
+                    info["role"] = callee or "call"
 
         # Check for compute ops
         if isinstance(op, (linalg.MatmulOp,)):

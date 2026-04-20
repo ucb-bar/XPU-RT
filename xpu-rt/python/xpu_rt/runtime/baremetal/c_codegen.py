@@ -487,6 +487,7 @@ def _attr_str(attr: Any) -> str:
 # bytes in kernels/*.c).
 _AGENT_DECISION_ATTRS: tuple[str, ...] = (
     "compgen.region_id",
+    "compgen._pattern_hint",   # op-family role (matmul/softmax/rmsnorm/...) from import_fx
     "compgen.fused_into",
     "compgen.fusion_kind",
     "compgen.tile_sizes_str",

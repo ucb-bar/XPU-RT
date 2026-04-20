@@ -1,32 +1,23 @@
 # CompGen
 
-CompGen is a compiler generator for heterogeneous hardware targets. It uses LLMs as proposal engines inside a verification-first workflow that captures models, builds IR, generates target-specific artifacts, and packages the result for execution.
+CompGen is an LLM-driven compiler generator for heterogeneous hardware
+targets. It captures PyTorch programs, runs a staged xDSL/MLIR pipeline,
+proposes transforms via LLM-backed invent-slots, verifies every proposal,
+and packages the result into a deterministic deployment recipe.
 
-This docs site is user-facing first. It tells you what you can run today, what is still scaffolded, and where to start without sending you through internal roadmap or thesis material.
+## Start here →
 
-## Start Here
+- **New to CompGen?** [Getting Started → Quickstart](getting-started/quickstart.md)
+- **How does it work?** [Concepts → What CompGen Is](concepts/what-is-compgen.md)
+- **Running a workflow?** [User Guides → Use the Demo](guides/use-the-demo.md)
+- **Understanding the design?** [Architecture → Compiler Generation](architecture/compiler-generation.md)
+- **Looking up an API?** [Reference → CLI Reference](reference/cli.md)
+- **Sending a PR?** [Contributing → Releasing](contributing/releasing.md)
 
-1. Read [Installation](getting-started/installation.md).
-2. Run the [Quickstart](getting-started/quickstart.md).
-3. Check [What Works Today](getting-started/what-works-today.md) before relying on a surface.
-4. Use the guides and reference pages once you have the demo running.
+## What works today
 
-## Current Reality
-
-| Area | Current state |
-|------|---------------|
-| Bootstrap and package install | Available |
-| `--help` / `--version` CLI surface | Available |
-| End-to-end demo path | Runnable |
-| Top-level Python API | Implemented and tested |
-| Benchmark harness and suite adapters | Runnable with configured suite roots / commands |
-| Pipeline subcommands (`analyze`, `generate`, `verify`, `run`, `promote`) | Declared, but still contract/stub surfaces |
-| Agent planning, roadmap, thesis, and deep design docs | Moved to `tmp/agentic_documentation/` |
-
-## Recommended Learning Path
-
-- Use the [Quickstart](getting-started/quickstart.md) if you want to run something immediately.
-- Use [Use the Demo](guides/use-the-demo.md) if you want to understand the current runnable pipeline.
-- Use [Benchmark Suites](guides/use-benchmark-suites.md) if you want to run TorchBench, HuggingFace, TIMM, MLPerf, SOL-ExecBench, HeteroBench, or pack-backed integrations through the benchmark harness.
-- Use [Bring Up a Target](guides/bring-up-a-target.md) if you want to work with hardware specs or target profiles.
-- Use [CLI Reference](reference/cli.md) and [Python API](reference/python-api.md) when you need exact entrypoints.
+See [What Works Today](getting-started/what-works-today.md) for the honest
+current state — runnable vs scaffolded vs stub per surface. Everything
+listed in the nav above is code that exists; the "what works today" page
+tracks which surfaces are end-to-end, which are contract-only, and where
+the LLM currently delegates.

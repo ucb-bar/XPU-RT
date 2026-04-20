@@ -30,8 +30,8 @@ from compgen.agent.self_extension._index import (
 )
 from compgen.agent.self_extension.authored_tool import (
     AuthoredTool,
-    AuthoredToolTrial,
     AuthoredToolSource,
+    AuthoredToolTrial,
 )
 from compgen.agent.self_extension.graduate import (
     AuthoredGraduationReport,
@@ -62,4 +62,5 @@ __all__ = [
     "register_authored_tool",
     "run_trial",
     "sandbox_invoke",
+    "snapshot_authored_index",
 ]

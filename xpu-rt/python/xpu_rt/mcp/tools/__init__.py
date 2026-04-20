@@ -18,11 +18,15 @@ Exported tool dicts take the shape::
 
 from __future__ import annotations
 
+from compgen.mcp.tools.batch import BATCH_TOOLS
 from compgen.mcp.tools.diagnose import DIAGNOSE_TOOLS
+from compgen.mcp.tools.explain import EXPLAIN_TOOLS
+from compgen.mcp.tools.graduate import GRADUATE_TOOLS
 from compgen.mcp.tools.inspect import INSPECT_TOOLS
 from compgen.mcp.tools.lifecycle import LIFECYCLE_TOOLS
 from compgen.mcp.tools.recipe_apply import APPLY_RECIPE_TOOLS
 from compgen.mcp.tools.recovery import RECOVERY_TOOLS
+from compgen.mcp.tools.suggest import SUGGEST_TOOLS
 from compgen.mcp.tools.transform import TRANSFORM_TOOLS
 
 ALL_TOOLS: list[dict] = [
@@ -32,14 +36,22 @@ ALL_TOOLS: list[dict] = [
     *TRANSFORM_TOOLS,
     *RECOVERY_TOOLS,
     *APPLY_RECIPE_TOOLS,
+    *EXPLAIN_TOOLS,
+    *GRADUATE_TOOLS,
+    *BATCH_TOOLS,
+    *SUGGEST_TOOLS,
 ]
 
 __all__ = [
     "ALL_TOOLS",
     "APPLY_RECIPE_TOOLS",
+    "BATCH_TOOLS",
     "DIAGNOSE_TOOLS",
+    "EXPLAIN_TOOLS",
+    "GRADUATE_TOOLS",
     "INSPECT_TOOLS",
     "LIFECYCLE_TOOLS",
     "RECOVERY_TOOLS",
+    "SUGGEST_TOOLS",
     "TRANSFORM_TOOLS",
 ]

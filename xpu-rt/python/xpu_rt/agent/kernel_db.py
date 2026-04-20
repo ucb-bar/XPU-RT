@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 from dataclasses import asdict, dataclass
 from pathlib import Path
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -81,10 +82,12 @@ class KernelDB:
         """Find a cached kernel matching the pattern, target, and shapes."""
         key = _shapes_key(shapes)
         for entry in self._entries:
-            if (entry.pattern_type == pattern_type
-                    and entry.target_name == target_name
-                    and entry.shapes_key == key
-                    and entry.correct):
+            if (
+                entry.pattern_type == pattern_type
+                and entry.target_name == target_name
+                and entry.shapes_key == key
+                and entry.correct
+            ):
                 return entry
         return None
 
@@ -92,10 +95,13 @@ class KernelDB:
         """Store a kernel entry. Replaces existing entry with same key if better."""
         # Remove existing entry with same key if this one is better
         self._entries = [
-            e for e in self._entries
-            if not (e.pattern_type == entry.pattern_type
-                    and e.target_name == entry.target_name
-                    and e.shapes_key == entry.shapes_key)
+            e
+            for e in self._entries
+            if not (
+                e.pattern_type == entry.pattern_type
+                and e.target_name == entry.target_name
+                and e.shapes_key == entry.shapes_key
+            )
         ]
         self._entries.append(entry)
         self._save()
@@ -107,8 +113,7 @@ class KernelDB:
     ) -> KernelEntry | None:
         """Get the best kernel for a pattern type on a target (any shape)."""
         matches = [
-            e for e in self._entries
-            if e.pattern_type == pattern_type and e.target_name == target_name and e.correct
+            e for e in self._entries if e.pattern_type == pattern_type and e.target_name == target_name and e.correct
         ]
         if not matches:
             return None
@@ -144,7 +149,7 @@ class KernelDB:
 
         # Also load promoted kernels from CompilerMemory
         try:
-            from compgen.memory.schema import CandidateStatus, KnowledgeKind, ObjectKind
+            from compgen.memory.schema import KnowledgeKind
 
             for item in memory.retrieve_knowledge(kind=KnowledgeKind.SCHEDULE_TEMPLATE, top_k=100):
                 code = memory.blobs.load(item.artifact_hash) if item.artifact_hash else ""
@@ -163,8 +168,9 @@ class KernelDB:
                         speedup=0.0,
                         plan=item.summary,
                     )
-                    if not any(e.pattern_type == entry.pattern_type and e.target_name == entry.target_name
-                              for e in db._entries):
+                    if not any(
+                        e.pattern_type == entry.pattern_type and e.target_name == entry.target_name for e in db._entries
+                    ):
                         db._entries.append(entry)
         except Exception:
             pass  # CompilerMemory may not have kernel knowledge yet
