@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import pytest
 import torch
 import torch.nn as nn
-
 from compgen.quantization.fp8_tensor import FP8E4M3Po2Tensor
 from compgen.quantization.smolvla_recipe import (
     ComponentQuantConfig,
@@ -16,10 +14,10 @@ from compgen.quantization.smolvla_recipe import (
     infer_component,
 )
 
-
 # ---------------------------------------------------------------------------
 # Component inference
 # ---------------------------------------------------------------------------
+
 
 class TestInferComponent:
     def test_vision_tower(self) -> None:
@@ -72,6 +70,7 @@ class TestInferComponent:
 # Default recipe
 # ---------------------------------------------------------------------------
 
+
 class TestDefaultRecipe:
     def test_all_components_enabled(self) -> None:
         recipe = default_npu_recipe()
@@ -103,6 +102,7 @@ class TestDefaultRecipe:
 # ---------------------------------------------------------------------------
 # Apply recipe to mock model
 # ---------------------------------------------------------------------------
+
 
 class _MockSmolVLA(nn.Module):
     """Minimal mock of SmolVLA architecture for testing."""

@@ -5,7 +5,6 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from compgen.packs import PackContextSummary, default_pack_root, load_pack
 from compgen.agent.env import (
     AnalyzeAction,
     ApplyPassAction,
@@ -13,9 +12,9 @@ from compgen.agent.env import (
     BenchmarkAction,
     CheckpointAction,
     CompilerEnv,
+    GeneralizeAction,
     GenerateLLVMPatchAction,
     GenerateXDSLDialectAction,
-    GeneralizeAction,
     InspectAction,
     NoopAction,
     RequestSemanticsAction,
@@ -32,6 +31,7 @@ from compgen.agent.serialize import (
 )
 from compgen.capture.torch_export import capture_frontend_artifact, capture_model
 from compgen.ir.payload.import_fx import fx_to_xdsl
+from compgen.packs import PackContextSummary, default_pack_root, load_pack
 from compgen.targets.schema import load_profile
 
 EXAMPLES = Path(__file__).parent.parent.parent / "examples"
@@ -41,6 +41,7 @@ def _get_mlp_full():
     """Get everything needed for full env: module, ep, pytorch model, inputs."""
     sys.path.insert(0, str(EXAMPLES / "models"))
     from simple_mlp import SimpleMLP, get_sample_inputs
+
     model = SimpleMLP()
     inputs = get_sample_inputs()
     ep = capture_model(model, inputs)
@@ -656,6 +657,7 @@ def test_benchmark_cpu() -> None:
 def test_benchmark_gpu() -> None:
     """BenchmarkAction on GPU should return real measurements."""
     import torch
+
     if not torch.cuda.is_available():
         return  # skip if no GPU
 
@@ -671,6 +673,7 @@ def test_benchmark_gpu() -> None:
 def test_benchmark_compiled_gpu() -> None:
     """BenchmarkAction with torch.compile should work."""
     import torch
+
     if not torch.cuda.is_available():
         return
 

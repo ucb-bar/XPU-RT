@@ -20,7 +20,6 @@ uniqueness of ``inner_dims_pos``.
 from __future__ import annotations
 
 from xdsl.dialects.builtin import (
-    ArrayAttr,
     DenseArrayBase,
     IntegerAttr,
     IntegerType,
@@ -41,7 +40,6 @@ from xdsl.irdl import (
 )
 from xdsl.traits import Pure
 from xdsl.utils.exceptions import VerifyException
-
 
 # --- helpers -----------------------------------------------------------------
 
@@ -99,9 +97,7 @@ class ConcatOp(IRDLOperation):
 
     def verify_(self) -> None:
         if len(self.inputs) == 0:
-            raise VerifyException(
-                f"{self.name}: requires at least one input tensor"
-            )
+            raise VerifyException(f"{self.name}: requires at least one input tensor")
 
         d = self.dim.value.data
         # Fetch input + result types. Only enforce structural checks
@@ -116,37 +112,24 @@ class ConcatOp(IRDLOperation):
         first_shape = list(input_types[0].get_shape())
         rank = len(first_shape)
         if d < 0 or d >= rank:
-            raise VerifyException(
-                f"{self.name}: dim {d} is out of range for rank-{rank} inputs"
-            )
+            raise VerifyException(f"{self.name}: dim {d} is out of range for rank-{rank} inputs")
 
         elem = input_types[0].get_element_type()
         for t in input_types[1:]:
             shape = list(t.get_shape())
             if len(shape) != rank:
-                raise VerifyException(
-                    f"{self.name}: all inputs must have the same rank "
-                    f"(got {rank} and {len(shape)})"
-                )
+                raise VerifyException(f"{self.name}: all inputs must have the same rank (got {rank} and {len(shape)})")
             for i, (lhs, rhs) in enumerate(zip(first_shape, shape, strict=True)):
                 if i == d:
                     continue
                 if lhs != rhs:
-                    raise VerifyException(
-                        f"{self.name}: mismatched extent on non-concat dim {i} "
-                        f"({lhs} vs {rhs})"
-                    )
+                    raise VerifyException(f"{self.name}: mismatched extent on non-concat dim {i} ({lhs} vs {rhs})")
             if t.get_element_type() != elem:
-                raise VerifyException(
-                    f"{self.name}: all inputs must share an element type"
-                )
+                raise VerifyException(f"{self.name}: all inputs must share an element type")
 
         res_shape = list(result_type.get_shape())
         if len(res_shape) != rank:
-            raise VerifyException(
-                f"{self.name}: result rank {len(res_shape)} must equal "
-                f"input rank {rank}"
-            )
+            raise VerifyException(f"{self.name}: result rank {len(res_shape)} must equal input rank {rank}")
         # The only dim permitted to be ``-1`` (dynamic) is ``d``; every
         # other dim must match the common input shape.
         for i in range(rank):
@@ -154,8 +137,7 @@ class ConcatOp(IRDLOperation):
                 continue
             if res_shape[i] != first_shape[i]:
                 raise VerifyException(
-                    f"{self.name}: result dim {i} ({res_shape[i]}) "
-                    f"must equal input dim ({first_shape[i]})"
+                    f"{self.name}: result dim {i} ({res_shape[i]}) must equal input dim ({first_shape[i]})"
                 )
 
 
@@ -248,51 +230,34 @@ class PackOp(IRDLOperation):
                 f"inner_tiles ({len(tiles)}) must have the same length"
             )
         if len(set(dims_pos)) != len(dims_pos):
-            raise VerifyException(
-                f"{self.name}: inner_dims_pos entries must be unique: {dims_pos}"
-            )
+            raise VerifyException(f"{self.name}: inner_dims_pos entries must be unique: {dims_pos}")
         for p in dims_pos:
             if p < 0:
-                raise VerifyException(
-                    f"{self.name}: inner_dims_pos entries must be non-negative, "
-                    f"got {p}"
-                )
+                raise VerifyException(f"{self.name}: inner_dims_pos entries must be non-negative, got {p}")
         for t in tiles:
             if t <= 0:
-                raise VerifyException(
-                    f"{self.name}: inner_tiles must be strictly positive, got {t}"
-                )
+                raise VerifyException(f"{self.name}: inner_tiles must be strictly positive, got {t}")
 
         src_type = self.source.type
         res_type = self.result.type
-        if not isinstance(src_type, TensorType) or not isinstance(
-            res_type, TensorType
-        ):
+        if not isinstance(src_type, TensorType) or not isinstance(res_type, TensorType):
             return
         src_rank = len(src_type.get_shape())
         res_rank = len(res_type.get_shape())
         if res_rank != src_rank + len(dims_pos):
             raise VerifyException(
-                f"{self.name}: result rank {res_rank} must equal "
-                f"source rank {src_rank} + {len(dims_pos)} inner tiles"
+                f"{self.name}: result rank {res_rank} must equal source rank {src_rank} + {len(dims_pos)} inner tiles"
             )
         for p in dims_pos:
             if p >= src_rank:
-                raise VerifyException(
-                    f"{self.name}: inner_dims_pos entry {p} out of range "
-                    f"for rank-{src_rank} source"
-                )
+                raise VerifyException(f"{self.name}: inner_dims_pos entry {p} out of range for rank-{src_rank} source")
         if self.outer_dims_perm is not None:
             perm = _dense_i64_values(self.outer_dims_perm)
             if len(perm) != src_rank:
-                raise VerifyException(
-                    f"{self.name}: outer_dims_perm must have length "
-                    f"{src_rank}, got {len(perm)}"
-                )
+                raise VerifyException(f"{self.name}: outer_dims_perm must have length {src_rank}, got {len(perm)}")
             if sorted(perm) != list(range(src_rank)):
                 raise VerifyException(
-                    f"{self.name}: outer_dims_perm must be a permutation of "
-                    f"[0, {src_rank}), got {perm}"
+                    f"{self.name}: outer_dims_perm must be a permutation of [0, {src_rank}), got {perm}"
                 )
 
 
@@ -356,45 +321,31 @@ class UnpackOp(IRDLOperation):
                 f"inner_tiles ({len(tiles)}) must have the same length"
             )
         if len(set(dims_pos)) != len(dims_pos):
-            raise VerifyException(
-                f"{self.name}: inner_dims_pos entries must be unique: {dims_pos}"
-            )
+            raise VerifyException(f"{self.name}: inner_dims_pos entries must be unique: {dims_pos}")
         for t in tiles:
             if t <= 0:
-                raise VerifyException(
-                    f"{self.name}: inner_tiles must be strictly positive, got {t}"
-                )
+                raise VerifyException(f"{self.name}: inner_tiles must be strictly positive, got {t}")
 
         src_type = self.source.type
         res_type = self.result.type
-        if not isinstance(src_type, TensorType) or not isinstance(
-            res_type, TensorType
-        ):
+        if not isinstance(src_type, TensorType) or not isinstance(res_type, TensorType):
             return
         src_rank = len(src_type.get_shape())
         res_rank = len(res_type.get_shape())
         if src_rank != res_rank + len(dims_pos):
             raise VerifyException(
-                f"{self.name}: source rank {src_rank} must equal "
-                f"result rank {res_rank} + {len(dims_pos)} inner tiles"
+                f"{self.name}: source rank {src_rank} must equal result rank {res_rank} + {len(dims_pos)} inner tiles"
             )
         for p in dims_pos:
             if p < 0 or p >= res_rank:
-                raise VerifyException(
-                    f"{self.name}: inner_dims_pos entry {p} out of range "
-                    f"for rank-{res_rank} result"
-                )
+                raise VerifyException(f"{self.name}: inner_dims_pos entry {p} out of range for rank-{res_rank} result")
         if self.outer_dims_perm is not None:
             perm = _dense_i64_values(self.outer_dims_perm)
             if len(perm) != res_rank:
-                raise VerifyException(
-                    f"{self.name}: outer_dims_perm must have length "
-                    f"{res_rank}, got {len(perm)}"
-                )
+                raise VerifyException(f"{self.name}: outer_dims_perm must have length {res_rank}, got {len(perm)}")
             if sorted(perm) != list(range(res_rank)):
                 raise VerifyException(
-                    f"{self.name}: outer_dims_perm must be a permutation of "
-                    f"[0, {res_rank}), got {perm}"
+                    f"{self.name}: outer_dims_perm must be a permutation of [0, {res_rank}), got {perm}"
                 )
 
 

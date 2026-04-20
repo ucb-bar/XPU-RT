@@ -23,7 +23,7 @@ PREPACK_HINT_ATTR = "compgen.prepack_hint"
 
 def attach_layout_hints(
     module: ModuleOp,
-    plans: dict[str, "LayoutPlan"],
+    plans: dict[str, LayoutPlan],
 ) -> ModuleOp:
     """Annotate ops with layout hints from analysis plans.
 
@@ -73,9 +73,7 @@ def attach_layout_hints(
             hints_attached += 1
 
             if plan.prepack_candidates:
-                op.attributes[PREPACK_HINT_ATTR] = StringAttr(
-                    ",".join(plan.prepack_candidates)
-                )
+                op.attributes[PREPACK_HINT_ATTR] = StringAttr(",".join(plan.prepack_candidates))
                 prepack_hints += 1
 
     log.debug(

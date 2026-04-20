@@ -187,11 +187,13 @@ class BulkSyncStrategy(DispatchStrategy):
                 )
                 for op in level_groups[level_idx]
             ]
-            waves.append(DispatchWave(
-                wave_id=level_idx,
-                ops=ops,
-                sync_after=True,
-            ))
+            waves.append(
+                DispatchWave(
+                    wave_id=level_idx,
+                    ops=ops,
+                    sync_after=True,
+                )
+            )
 
         log.debug("dispatch.bulk_sync.planned", num_waves=len(waves))
         return waves
@@ -262,12 +264,14 @@ class PipelineStrategy(DispatchStrategy):
                     )
                     for op in copy_ops
                 ]
-                waves.append(DispatchWave(
-                    wave_id=wave_id,
-                    ops=ops,
-                    sync_after=False,  # overlap with next compute wave
-                    metadata={"pipeline_stage": level_idx, "phase": "transfer"},
-                ))
+                waves.append(
+                    DispatchWave(
+                        wave_id=wave_id,
+                        ops=ops,
+                        sync_after=False,  # overlap with next compute wave
+                        metadata={"pipeline_stage": level_idx, "phase": "transfer"},
+                    )
+                )
                 wave_id += 1
 
             # Then compute
@@ -282,12 +286,14 @@ class PipelineStrategy(DispatchStrategy):
                     )
                     for op in compute_ops
                 ]
-                waves.append(DispatchWave(
-                    wave_id=wave_id,
-                    ops=ops,
-                    sync_after=True,  # sync before next stage
-                    metadata={"pipeline_stage": level_idx, "phase": "compute"},
-                ))
+                waves.append(
+                    DispatchWave(
+                        wave_id=wave_id,
+                        ops=ops,
+                        sync_after=True,  # sync before next stage
+                        metadata={"pipeline_stage": level_idx, "phase": "compute"},
+                    )
+                )
                 wave_id += 1
 
         log.debug("dispatch.pipeline.planned", num_waves=len(waves))
@@ -337,15 +343,11 @@ class WavefrontStrategy(DispatchStrategy):
 
         while remaining:
             # Find all ops with zero in-degree
-            ready = [
-                op for op in execution_order
-                if op in remaining and in_degree.get(op, 0) == 0
-            ]
+            ready = [op for op in execution_order if op in remaining and in_degree.get(op, 0) == 0]
 
             if not ready:
                 # Break cycle — force-dispatch remaining
-                log.warning("dispatch.wavefront.cycle_detected",
-                            remaining=len(remaining))
+                log.warning("dispatch.wavefront.cycle_detected", remaining=len(remaining))
                 ready = list(remaining)
 
             ops = [
@@ -361,12 +363,14 @@ class WavefrontStrategy(DispatchStrategy):
 
             # Wavefront: only sync when crossing device boundaries
             devices_in_wave = {placements.get(op, 0) for op in ready}
-            waves.append(DispatchWave(
-                wave_id=wave_id,
-                ops=ops,
-                sync_after=len(devices_in_wave) > 1,
-                metadata={"wavefront_width": len(ready)},
-            ))
+            waves.append(
+                DispatchWave(
+                    wave_id=wave_id,
+                    ops=ops,
+                    sync_after=len(devices_in_wave) > 1,
+                    metadata={"wavefront_width": len(ready)},
+                )
+            )
 
             # Update in-degrees
             for op in ready:
@@ -434,24 +438,28 @@ class StreamingStrategy(DispatchStrategy):
             for dev, ops in device_ops.items():
                 if slot < len(ops):
                     op = ops[slot]
-                    slot_ops.append(DispatchOp(
-                        op_name=op,
-                        device_index=dev,
-                        node_name=node_map.get(dev, ""),
-                        estimated_latency_us=latencies.get(op, 0.0),
-                        is_copy=op.startswith("copy_"),
-                    ))
+                    slot_ops.append(
+                        DispatchOp(
+                            op_name=op,
+                            device_index=dev,
+                            node_name=node_map.get(dev, ""),
+                            estimated_latency_us=latencies.get(op, 0.0),
+                            is_copy=op.startswith("copy_"),
+                        )
+                    )
 
             if slot_ops:
-                waves.append(DispatchWave(
-                    wave_id=wave_id,
-                    ops=slot_ops,
-                    sync_after=False,  # streaming: no sync between slots
-                    metadata={
-                        "slot": slot,
-                        "double_buffer": self._double_buffer,
-                    },
-                ))
+                waves.append(
+                    DispatchWave(
+                        wave_id=wave_id,
+                        ops=slot_ops,
+                        sync_after=False,  # streaming: no sync between slots
+                        metadata={
+                            "slot": slot,
+                            "double_buffer": self._double_buffer,
+                        },
+                    )
+                )
                 wave_id += 1
 
         # Final sync wave
@@ -532,10 +540,7 @@ def create_strategy(name: str, **kwargs: Any) -> DispatchStrategy:
     """
     cls = _STRATEGY_REGISTRY.get(name)
     if cls is None:
-        msg = (
-            f"Unknown dispatch strategy {name!r}. "
-            f"Available: {sorted(_STRATEGY_REGISTRY)}"
-        )
+        msg = f"Unknown dispatch strategy {name!r}. Available: {sorted(_STRATEGY_REGISTRY)}"
         raise ValueError(msg)
     return cls(**kwargs)
 

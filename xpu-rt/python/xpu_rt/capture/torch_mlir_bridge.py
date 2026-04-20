@@ -111,6 +111,7 @@ def _parse_mlir_text_to_xdsl(mlir_text: str) -> ModuleOp | None:
         from compgen.ir.linalg_ext import LinalgExt
         from compgen.ir.quant import Quant
         from compgen.ir.tensor_ext import TensorExt
+
         ctx.load_dialect(LinalgExt)
         ctx.load_dialect(Quant)
         ctx.load_dialect(TensorExt)
@@ -175,8 +176,7 @@ def bridge_fx_graph(
                 result.module = module
                 result.path_taken = "torch_mlir"
                 result.diagnostics.append(
-                    f"torch-mlir path produced {len(mlir_text)} chars of "
-                    f"{output_type} MLIR; parsed into xDSL"
+                    f"torch-mlir path produced {len(mlir_text)} chars of {output_type} MLIR; parsed into xDSL"
                 )
                 log.info(
                     "torch_mlir_bridge.ok",
@@ -184,16 +184,12 @@ def bridge_fx_graph(
                     mlir_bytes=len(mlir_text),
                 )
                 return result
-            result.diagnostics.append(
-                "torch-mlir produced MLIR text but xDSL could not parse it"
-            )
+            result.diagnostics.append("torch-mlir produced MLIR text but xDSL could not parse it")
         except Exception as exc:  # noqa: BLE001
             result.diagnostics.append(f"torch-mlir path raised: {exc}")
             log.warning("torch_mlir_bridge.torch_mlir_failed", error=str(exc))
     else:
-        result.diagnostics.append(
-            "torch-mlir not installed; falling back to CompGen FXImporter"
-        )
+        result.diagnostics.append("torch-mlir not installed; falling back to CompGen FXImporter")
 
     if not allow_fallback:
         result.diagnostics.append("allow_fallback=False; returning no module")
@@ -210,8 +206,7 @@ def bridge_fx_graph(
         errors = [d for d in importer.diagnostics if d.level == "error"]
         if errors:
             result.diagnostics.append(
-                f"FXImporter fallback produced {len(errors)} errors: "
-                f"{[d.message for d in errors[:3]]}"
+                f"FXImporter fallback produced {len(errors)} errors: {[d.message for d in errors[:3]]}"
             )
             return result
         result.module = module
@@ -242,10 +237,7 @@ def bridge_fx_graph_or_raise(
     """Raise-on-failure wrapper around :func:`bridge_fx_graph`."""
     result = bridge_fx_graph(model, example_inputs, **kwargs)
     if result.module is None:
-        raise RuntimeError(
-            "FX -> xDSL bridge failed for both paths:\n  "
-            + "\n  ".join(result.diagnostics)
-        )
+        raise RuntimeError("FX -> xDSL bridge failed for both paths:\n  " + "\n  ".join(result.diagnostics))
     return result.module
 
 

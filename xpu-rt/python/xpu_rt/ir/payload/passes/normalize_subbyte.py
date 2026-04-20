@@ -26,7 +26,7 @@ from xdsl.dialects.builtin import (
 from xdsl.ir import Operation
 
 from compgen.ir.payload.passes.base import PayloadPass
-from compgen.llm.registry import AutocompCostImpact, ToolArg, ToolResult
+from compgen.llm.registry import AutocompCostImpact, ToolArg
 
 _SUBBYTE_BITS = frozenset({1, 2, 4})
 
@@ -72,13 +72,18 @@ class NormalizeSubByte(PayloadPass):
     def tool_args(self) -> tuple[ToolArg, ...]:
         return (
             ToolArg(
-                name="region", dtype="region_ref", description="region",
-                required=False, default="",
+                name="region",
+                dtype="region_ref",
+                description="region",
+                required=False,
+                default="",
             ),
             ToolArg(
-                name="packing", dtype="enum",
+                name="packing",
+                dtype="enum",
                 description="target packing strategy",
-                required=False, default="target_native",
+                required=False,
+                default="target_native",
                 enum=("bit_pack", "byte_pack", "target_native"),
             ),
         )
@@ -92,9 +97,7 @@ class NormalizeSubByte(PayloadPass):
             op.attributes["compgen.subbyte_packing"] = StringAttr(packing)
             annotated += 1
 
-        module.attributes["compgen.normalize_subbyte.count"] = IntegerAttr(
-            annotated, i64
-        )
+        module.attributes["compgen.normalize_subbyte.count"] = IntegerAttr(annotated, i64)
         return module
 
 

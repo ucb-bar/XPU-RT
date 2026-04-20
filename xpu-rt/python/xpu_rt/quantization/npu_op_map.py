@@ -85,129 +85,287 @@ _OP_TABLE: dict[str, NpuQuantDecision] = {
     # Matrix operations -> MXU (FP8 inputs, BF16 accumulation)
     # ======================================================================
     "aten.linear.default": NpuQuantDecision(
-        NpuOpCategory.MXU_FP8, "fp8_e4m3", "bf16", "bf16", "e8m0", "vmatmul.mxu0",
+        NpuOpCategory.MXU_FP8,
+        "fp8_e4m3",
+        "bf16",
+        "bf16",
+        "e8m0",
+        "vmatmul.mxu0",
     ),
     "aten.mm.default": NpuQuantDecision(
-        NpuOpCategory.MXU_FP8, "fp8_e4m3", "bf16", "bf16", "e8m0", "vmatmul.mxu0",
+        NpuOpCategory.MXU_FP8,
+        "fp8_e4m3",
+        "bf16",
+        "bf16",
+        "e8m0",
+        "vmatmul.mxu0",
     ),
     "aten.addmm.default": NpuQuantDecision(
-        NpuOpCategory.MXU_FP8, "fp8_e4m3", "bf16", "bf16", "e8m0", "vmatmul.mxu0",
+        NpuOpCategory.MXU_FP8,
+        "fp8_e4m3",
+        "bf16",
+        "bf16",
+        "e8m0",
+        "vmatmul.mxu0",
     ),
     "aten.bmm.default": NpuQuantDecision(
-        NpuOpCategory.MXU_FP8, "fp8_e4m3", "bf16", "bf16", "e8m0", "vmatmul.mxu0",
+        NpuOpCategory.MXU_FP8,
+        "fp8_e4m3",
+        "bf16",
+        "bf16",
+        "e8m0",
+        "vmatmul.mxu0",
     ),
     "aten.conv2d": NpuQuantDecision(
-        NpuOpCategory.MXU_FP8, "fp8_e4m3", "bf16", "bf16", "e8m0", "vmatmul.mxu0",
+        NpuOpCategory.MXU_FP8,
+        "fp8_e4m3",
+        "bf16",
+        "bf16",
+        "e8m0",
+        "vmatmul.mxu0",
     ),
     "aten.convolution.default": NpuQuantDecision(
-        NpuOpCategory.MXU_FP8, "fp8_e4m3", "bf16", "bf16", "e8m0", "vmatmul.mxu0",
+        NpuOpCategory.MXU_FP8,
+        "fp8_e4m3",
+        "bf16",
+        "bf16",
+        "e8m0",
+        "vmatmul.mxu0",
     ),
-
     # ======================================================================
     # Elementwise binary -> VPU (BF16)
     # ======================================================================
     "aten.add.Tensor": NpuQuantDecision(
-        NpuOpCategory.VPU_BF16, "bf16", "bf16", "bf16", None, "vadd.bf16",
+        NpuOpCategory.VPU_BF16,
+        "bf16",
+        "bf16",
+        "bf16",
+        None,
+        "vadd.bf16",
     ),
     "aten.sub.Tensor": NpuQuantDecision(
-        NpuOpCategory.VPU_BF16, "bf16", "bf16", "bf16", None, "vsub.bf16",
+        NpuOpCategory.VPU_BF16,
+        "bf16",
+        "bf16",
+        "bf16",
+        None,
+        "vsub.bf16",
     ),
     "aten.mul.Tensor": NpuQuantDecision(
-        NpuOpCategory.VPU_BF16, "bf16", "bf16", "bf16", None, "vmul.bf16",
+        NpuOpCategory.VPU_BF16,
+        "bf16",
+        "bf16",
+        "bf16",
+        None,
+        "vmul.bf16",
     ),
     "aten.mul.Scalar": NpuQuantDecision(
-        NpuOpCategory.VPU_BF16, "bf16", "bf16", "bf16", None, "vmul.bf16",
+        NpuOpCategory.VPU_BF16,
+        "bf16",
+        "bf16",
+        "bf16",
+        None,
+        "vmul.bf16",
     ),
     "aten.div.Tensor": NpuQuantDecision(
-        NpuOpCategory.VPU_BF16, "bf16", "bf16", "bf16", None, "vrecip.bf16",
+        NpuOpCategory.VPU_BF16,
+        "bf16",
+        "bf16",
+        "bf16",
+        None,
+        "vrecip.bf16",
     ),
     "aten.pow.Tensor_Scalar": NpuQuantDecision(
-        NpuOpCategory.VPU_BF16, "bf16", "bf16", "bf16", None, "vmul.bf16",
+        NpuOpCategory.VPU_BF16,
+        "bf16",
+        "bf16",
+        "bf16",
+        None,
+        "vmul.bf16",
     ),
-
     # ======================================================================
     # Elementwise unary -> VPU (BF16)
     # ======================================================================
     "aten.reciprocal.default": NpuQuantDecision(
-        NpuOpCategory.VPU_BF16, "bf16", "bf16", "bf16", None, "vrecip.bf16",
+        NpuOpCategory.VPU_BF16,
+        "bf16",
+        "bf16",
+        "bf16",
+        None,
+        "vrecip.bf16",
     ),
     "aten.sqrt.default": NpuQuantDecision(
-        NpuOpCategory.VPU_BF16, "bf16", "bf16", "bf16", None, "vsqrt.bf16",
+        NpuOpCategory.VPU_BF16,
+        "bf16",
+        "bf16",
+        "bf16",
+        None,
+        "vsqrt.bf16",
     ),
     "aten.sin.default": NpuQuantDecision(
-        NpuOpCategory.VPU_BF16, "bf16", "bf16", "bf16", None, "vsin.bf16",
+        NpuOpCategory.VPU_BF16,
+        "bf16",
+        "bf16",
+        "bf16",
+        None,
+        "vsin.bf16",
     ),
     "aten.cos.default": NpuQuantDecision(
-        NpuOpCategory.VPU_BF16, "bf16", "bf16", "bf16", None, "vcos.bf16",
+        NpuOpCategory.VPU_BF16,
+        "bf16",
+        "bf16",
+        "bf16",
+        None,
+        "vcos.bf16",
     ),
     "aten.tanh.default": NpuQuantDecision(
-        NpuOpCategory.VPU_BF16, "bf16", "bf16", "bf16", None, "vtanh.bf16",
+        NpuOpCategory.VPU_BF16,
+        "bf16",
+        "bf16",
+        "bf16",
+        None,
+        "vtanh.bf16",
     ),
     "aten.log2.default": NpuQuantDecision(
-        NpuOpCategory.VPU_BF16, "bf16", "bf16", "bf16", None, "vlog2.bf16",
+        NpuOpCategory.VPU_BF16,
+        "bf16",
+        "bf16",
+        "bf16",
+        None,
+        "vlog2.bf16",
     ),
     "aten.exp.default": NpuQuantDecision(
-        NpuOpCategory.VPU_BF16, "bf16", "bf16", "bf16", None, "vexp.bf16",
+        NpuOpCategory.VPU_BF16,
+        "bf16",
+        "bf16",
+        "bf16",
+        None,
+        "vexp.bf16",
     ),
     "aten.exp2.default": NpuQuantDecision(
-        NpuOpCategory.VPU_BF16, "bf16", "bf16", "bf16", None, "vexp2.bf16",
+        NpuOpCategory.VPU_BF16,
+        "bf16",
+        "bf16",
+        "bf16",
+        None,
+        "vexp2.bf16",
     ),
     "aten.relu.default": NpuQuantDecision(
-        NpuOpCategory.VPU_BF16, "bf16", "bf16", "bf16", None, "vrelu.bf16",
+        NpuOpCategory.VPU_BF16,
+        "bf16",
+        "bf16",
+        "bf16",
+        None,
+        "vrelu.bf16",
     ),
     "aten.gelu.default": NpuQuantDecision(
-        NpuOpCategory.VPU_BF16, "bf16", "bf16", "bf16", None, None,
+        NpuOpCategory.VPU_BF16,
+        "bf16",
+        "bf16",
+        "bf16",
+        None,
+        None,
     ),
     "aten.silu.default": NpuQuantDecision(
-        NpuOpCategory.VPU_BF16, "bf16", "bf16", "bf16", None, None,
+        NpuOpCategory.VPU_BF16,
+        "bf16",
+        "bf16",
+        "bf16",
+        None,
+        None,
     ),
-
     # ======================================================================
     # Softmax -> VPU (ALWAYS BF16, never FP8)
     # ======================================================================
     "aten._softmax.default": NpuQuantDecision(
-        NpuOpCategory.VPU_BF16, "bf16", "bf16", "bf16", None, None,
+        NpuOpCategory.VPU_BF16,
+        "bf16",
+        "bf16",
+        "bf16",
+        None,
+        None,
     ),
     "aten.softmax.int": NpuQuantDecision(
-        NpuOpCategory.VPU_BF16, "bf16", "bf16", "bf16", None, None,
+        NpuOpCategory.VPU_BF16,
+        "bf16",
+        "bf16",
+        "bf16",
+        None,
+        None,
     ),
-
     # ======================================================================
     # Reductions -> XLU (BF16)
     # ======================================================================
     "aten.amax.default": NpuQuantDecision(
-        NpuOpCategory.XLU_BF16, "bf16", "bf16", "bf16", None, "vredmax.bf16",
+        NpuOpCategory.XLU_BF16,
+        "bf16",
+        "bf16",
+        "bf16",
+        None,
+        "vredmax.bf16",
     ),
     "aten.sum.default": NpuQuantDecision(
-        NpuOpCategory.XLU_BF16, "bf16", "bf16", "bf16", None, "vredsum.bf16",
+        NpuOpCategory.XLU_BF16,
+        "bf16",
+        "bf16",
+        "bf16",
+        None,
+        "vredsum.bf16",
     ),
     "aten.sum.dim_IntList": NpuQuantDecision(
-        NpuOpCategory.XLU_BF16, "bf16", "bf16", "bf16", None, "vredsum.bf16",
+        NpuOpCategory.XLU_BF16,
+        "bf16",
+        "bf16",
+        "bf16",
+        None,
+        "vredsum.bf16",
     ),
     "aten.mean.dim": NpuQuantDecision(
-        NpuOpCategory.XLU_BF16, "bf16", "bf16", "bf16", None, "vredsum.bf16",
+        NpuOpCategory.XLU_BF16,
+        "bf16",
+        "bf16",
+        "bf16",
+        None,
+        "vredsum.bf16",
     ),
     "aten.var.correction": NpuQuantDecision(
-        NpuOpCategory.XLU_BF16, "bf16", "bf16", "bf16", None, None,
+        NpuOpCategory.XLU_BF16,
+        "bf16",
+        "bf16",
+        "bf16",
+        None,
+        None,
     ),
-
     # ======================================================================
     # Transpose -> XLU
     # ======================================================================
     "aten.t.default": NpuQuantDecision(
-        NpuOpCategory.XLU_BF16, "bf16", "bf16", "bf16", None, "vtrpose.xlu",
+        NpuOpCategory.XLU_BF16,
+        "bf16",
+        "bf16",
+        "bf16",
+        None,
+        "vtrpose.xlu",
     ),
-
     # ======================================================================
     # Quantize / dequantize -> VPU (hardware pack/unpack)
     # ======================================================================
     "npu.pack_bf16_to_fp8": NpuQuantDecision(
-        NpuOpCategory.VPU_BF16, "bf16", "bf16", "fp8_e4m3", "e8m0", "vpack.bf16.fp8",
+        NpuOpCategory.VPU_BF16,
+        "bf16",
+        "bf16",
+        "fp8_e4m3",
+        "e8m0",
+        "vpack.bf16.fp8",
     ),
     "npu.unpack_fp8_to_bf16": NpuQuantDecision(
-        NpuOpCategory.VPU_BF16, "fp8_e4m3", "bf16", "bf16", "e8m0", "vunpack.fp8.bf16",
+        NpuOpCategory.VPU_BF16,
+        "fp8_e4m3",
+        "bf16",
+        "bf16",
+        "e8m0",
+        "vunpack.fp8.bf16",
     ),
-
     # ======================================================================
     # Passthrough / metadata-only ops
     # ======================================================================
@@ -296,9 +454,7 @@ def classify_op(op_target: str) -> NpuOpCategory:
     """
     decision = _OP_TABLE.get(op_target)
     if decision is None:
-        raise KeyError(
-            f"Unmapped operator: {op_target!r}. Add it to npu_op_map._OP_TABLE."
-        )
+        raise KeyError(f"Unmapped operator: {op_target!r}. Add it to npu_op_map._OP_TABLE.")
     return decision.category
 
 
@@ -316,9 +472,7 @@ def get_quant_decision(op_target: str) -> NpuQuantDecision:
     """
     decision = _OP_TABLE.get(op_target)
     if decision is None:
-        raise KeyError(
-            f"Unmapped operator: {op_target!r}. Add it to npu_op_map._OP_TABLE."
-        )
+        raise KeyError(f"Unmapped operator: {op_target!r}. Add it to npu_op_map._OP_TABLE.")
     return decision
 
 

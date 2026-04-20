@@ -17,13 +17,10 @@ dataclasses -- no xDSL IR mutation, no disk I/O.
 from __future__ import annotations
 
 from collections import defaultdict
-from collections.abc import Iterable
 from dataclasses import dataclass, field
 
 from compgen.runtime.execution_plan import (
-    BufferDescriptor,
     ExecutionPlan,
-    Lifetime,
 )
 
 
@@ -63,10 +60,7 @@ class LivenessReport:
         lb = self.per_buffer[b]
         if la.persistent or lb.persistent:
             return True
-        return not (
-            la.last_use_tick < lb.first_use_tick
-            or lb.last_use_tick < la.first_use_tick
-        )
+        return not (la.last_use_tick < lb.first_use_tick or lb.last_use_tick < la.first_use_tick)
 
 
 @dataclass
@@ -139,17 +133,13 @@ def compute_liveness(plan: ExecutionPlan) -> LivenessReport:
             live_at[t].add(b.buffer_id)
     report.live_at = dict(live_at)
 
-    by_bytes: dict[str, int] = {
-        b.buffer_id: b.size_bytes for b in plan.buffers
-    }
+    by_bytes: dict[str, int] = {b.buffer_id: b.size_bytes for b in plan.buffers}
     peak_tick = 0
     peak_bytes = 0
     peak_count = 0
     for tick, ids in live_at.items():
         total_bytes = sum(by_bytes[x] for x in ids)
-        if total_bytes > peak_bytes or (
-            total_bytes == peak_bytes and len(ids) > peak_count
-        ):
+        if total_bytes > peak_bytes or (total_bytes == peak_bytes and len(ids) > peak_count):
             peak_bytes = total_bytes
             peak_tick = tick
             peak_count = len(ids)

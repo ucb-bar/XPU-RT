@@ -23,16 +23,15 @@ and keeps vector ops in BF16, matching the NPU hardware model.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Callable
 
 import structlog
 import torch
 import torch.nn as nn
 
 from compgen.quantization.attention import (
-    ExportableFP8Attention,
     FP8AttentionConfig,
     replace_sdpa_with_fp8_attention,
 )
@@ -45,6 +44,7 @@ logger = structlog.get_logger()
 # ---------------------------------------------------------------------------
 # Component classification
 # ---------------------------------------------------------------------------
+
 
 class SmolVLAComponent(str, Enum):
     """Architectural component of the SmolVLA model."""
@@ -99,6 +99,7 @@ def infer_component(module_path: str) -> SmolVLAComponent:
 # ---------------------------------------------------------------------------
 # Per-component quantization config
 # ---------------------------------------------------------------------------
+
 
 @dataclass(frozen=True)
 class ComponentQuantConfig:
@@ -166,6 +167,7 @@ def default_npu_recipe() -> SmolVLAQuantRecipe:
 # ---------------------------------------------------------------------------
 # Apply quantization recipe
 # ---------------------------------------------------------------------------
+
 
 def _make_component_filter(
     recipe: SmolVLAQuantRecipe,
@@ -260,8 +262,7 @@ def apply_smolvla_quantization(
         from torchao.quantization import quantize_
     except ImportError as exc:
         raise RuntimeError(
-            "torchao is required for SmolVLA quantization. "
-            "Install with: pip install torchao>=0.16"
+            "torchao is required for SmolVLA quantization. Install with: pip install torchao>=0.16"
         ) from exc
 
     config = FP8E4M3Po2Config(scaling_mode=recipe.scaling_mode)
@@ -269,10 +270,7 @@ def apply_smolvla_quantization(
     quantize_(model, config, filter_fn=filter_fn)
 
     # Count quantized linears
-    n_linear = sum(
-        1 for _, p in model.named_parameters()
-        if isinstance(p, FP8E4M3Po2Tensor)
-    )
+    n_linear = sum(1 for _, p in model.named_parameters() if isinstance(p, FP8E4M3Po2Tensor))
     logger.info("quantized_linears", count=n_linear, scaling_mode=recipe.scaling_mode)
 
     # Step 2: Quantize Conv2d weights

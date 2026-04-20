@@ -14,7 +14,6 @@ from dataclasses import dataclass
 
 from xdsl.dialects.builtin import ModuleOp, StringAttr
 from xdsl.dialects.linalg import MatmulOp
-from xdsl.ir import Operation
 from xdsl.pattern_rewriter import (
     PatternRewriter,
     PatternRewriteWalker,
@@ -36,9 +35,7 @@ class _FuseGEMMRS(RewritePattern):
         self.stats = stats
 
     @op_type_rewrite_pattern
-    def match_and_rewrite(
-        self, op: MatmulOp, rewriter: PatternRewriter
-    ) -> None:
+    def match_and_rewrite(self, op: MatmulOp, rewriter: PatternRewriter) -> None:
         self.stats.matmuls_seen += 1
         if "compgen.gemm_rs_fused" in op.attributes:
             return
@@ -50,12 +47,8 @@ class _FuseGEMMRS(RewritePattern):
             consumer = use.operation
             if isinstance(consumer, ReduceScatterOp):
                 op.attributes["compgen.gemm_rs_fused"] = StringAttr("true")
-                op.attributes["compgen.gemm_rs_scatter_dim"] = (
-                    consumer.scatter_dim
-                )
-                op.attributes["compgen.gemm_rs_reduce_kind"] = (
-                    consumer.reduce_kind.kind
-                )
+                op.attributes["compgen.gemm_rs_scatter_dim"] = consumer.scatter_dim
+                op.attributes["compgen.gemm_rs_reduce_kind"] = consumer.reduce_kind.kind
                 self.stats.fusions_applied += 1
                 return
 
@@ -65,7 +58,8 @@ def run_fuse_gemm_and_reduce_scatter(
 ) -> FuseGemmReduceScatterStats:
     stats = FuseGemmReduceScatterStats()
     walker = PatternRewriteWalker(
-        _FuseGEMMRS(stats), apply_recursively=False,
+        _FuseGEMMRS(stats),
+        apply_recursively=False,
     )
     walker.rewrite_module(module)
     return stats

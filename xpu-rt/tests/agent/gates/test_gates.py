@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import pytest
 import torch
-
 from compgen.agent.gates import (
     composite_gate,
     differential_gate,
@@ -62,7 +60,7 @@ def test_differential_deferred_without_context() -> None:
 
 def test_composite_short_circuits_on_first_rejection() -> None:
     r = composite_gate(
-        {},   # missing chosen/select_vs_invent → structural rejects
+        {},  # missing chosen/select_vs_invent → structural rejects
         gates=[structural_gate, differential_gate],
     )
     assert r["status"] == "rejected"
@@ -74,7 +72,7 @@ def test_composite_short_circuits_on_first_rejection() -> None:
 
 def test_composite_fail_fast_false_runs_all() -> None:
     r = composite_gate(
-        {},   # structural rejects
+        {},  # structural rejects
         gates=[structural_gate, differential_gate],
         fail_fast=False,
     )

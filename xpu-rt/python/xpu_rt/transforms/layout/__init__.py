@@ -29,10 +29,10 @@ if TYPE_CHECKING:
 
 def run_layout_pipeline(
     module: ModuleOp,
-    plans: dict[str, "LayoutPlan"] | None = None,
+    plans: dict[str, LayoutPlan] | None = None,
     resolver: Any | None = None,
-    target: "TargetProfile | None" = None,
-    capabilities: "CapabilitySpec | None" = None,
+    target: TargetProfile | None = None,
+    capabilities: CapabilitySpec | None = None,
     prepack_candidates: list[Any] | None = None,
 ) -> ModuleOp:
     """Run all 10 layout passes in order."""

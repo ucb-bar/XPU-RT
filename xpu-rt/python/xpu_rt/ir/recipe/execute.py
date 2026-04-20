@@ -109,18 +109,14 @@ class RecipeExecutor:
 
         # 1. Apply transform scripts
         if self.enable_transforms and lowered.transform_scripts:
-            current_module, applied, failed, diags = self._apply_transforms(
-                current_module, lowered.transform_scripts
-            )
+            current_module, applied, failed, diags = self._apply_transforms(current_module, lowered.transform_scripts)
             transforms_applied = applied
             transforms_failed = failed
             diagnostics.extend(diags)
 
         # 2. Run eqsat jobs
         if self.enable_eqsat and lowered.eqsat_jobs:
-            current_module, runs, diags = self._run_eqsat_jobs(
-                current_module, lowered.eqsat_jobs
-            )
+            current_module, runs, diags = self._run_eqsat_jobs(current_module, lowered.eqsat_jobs)
             eqsat_runs = runs
             diagnostics.extend(diags)
 
@@ -162,7 +158,9 @@ class RecipeExecutor:
         )
 
     def _apply_transforms(
-        self, module: ModuleOp, scripts: list[str],
+        self,
+        module: ModuleOp,
+        scripts: list[str],
     ) -> tuple[ModuleOp, int, int, list[str]]:
         """Apply transform scripts to the module."""
         from compgen.transforms.apply import TransformApplicator
@@ -197,7 +195,9 @@ class RecipeExecutor:
         return module, 0, failed, diagnostics
 
     def _run_eqsat_jobs(
-        self, module: ModuleOp, jobs: list[dict[str, Any]],
+        self,
+        module: ModuleOp,
+        jobs: list[dict[str, Any]],
     ) -> tuple[ModuleOp, int, list[str]]:
         """Run eqsat jobs against the module."""
         from compgen.eqsat.pipeline import run_eqsat_pass
@@ -211,6 +211,7 @@ class RecipeExecutor:
                 max_iter = job.get("max_iterations", 10)
 
                 from compgen.eqsat.config import EqSatConfig
+
                 config = EqSatConfig(
                     max_iterations=max_iter,
                     rule_categories=tuple(categories),
@@ -220,8 +221,7 @@ class RecipeExecutor:
                 module = result.module if hasattr(result, "module") else module
                 runs += 1
                 diagnostics.append(
-                    f"eqsat({job.get('region_id', '?')}): "
-                    f"categories={categories}, iterations={max_iter}"
+                    f"eqsat({job.get('region_id', '?')}): categories={categories}, iterations={max_iter}"
                 )
             except Exception as e:
                 diagnostics.append(f"eqsat({job.get('region_id', '?')}): failed — {e}")
@@ -229,7 +229,9 @@ class RecipeExecutor:
         return module, runs, diagnostics
 
     def _execute_kernel_jobs(
-        self, jobs: list[dict[str, Any]], target: Any,
+        self,
+        jobs: list[dict[str, Any]],
+        target: Any,
     ) -> tuple[list[KernelResult], list[str]]:
         """Dispatch kernel search jobs to backends."""
         diagnostics: list[str] = []
@@ -246,36 +248,56 @@ class RecipeExecutor:
                     from compgen.kernels.autocomp_adapter import search_kernel
 
                     kr = search_kernel(region_id, job, target)
-                    results.append(KernelResult(
-                        region_id=region_id,
-                        backend=backend,
-                        found=kr is not None,
-                        kernel_code=getattr(kr, "kernel_code", "") if kr else "",
-                        latency_us=getattr(kr, "latency_us", 0.0) if kr else 0.0,
-                    ))
+                    results.append(
+                        KernelResult(
+                            region_id=region_id,
+                            backend=backend,
+                            found=kr is not None,
+                            kernel_code=getattr(kr, "kernel_code", "") if kr else "",
+                            latency_us=getattr(kr, "latency_us", 0.0) if kr else 0.0,
+                        )
+                    )
                     diagnostics.append(f"kernel({region_id}): {backend} — {'found' if kr else 'not found'}")
                 except (ImportError, Exception) as e:
-                    results.append(KernelResult(
-                        region_id=region_id, backend=backend, found=False, error=str(e),
-                    ))
+                    results.append(
+                        KernelResult(
+                            region_id=region_id,
+                            backend=backend,
+                            found=False,
+                            error=str(e),
+                        )
+                    )
                     diagnostics.append(f"kernel({region_id}): {backend} — error: {e}")
 
             elif job_type == "exo_kernel_search":
                 diagnostics.append(f"kernel({region_id}): exo — deferred (requires GPU)")
-                results.append(KernelResult(
-                    region_id=region_id, backend="exo", found=False, error="deferred",
-                ))
+                results.append(
+                    KernelResult(
+                        region_id=region_id,
+                        backend="exo",
+                        found=False,
+                        error="deferred",
+                    )
+                )
 
             else:
                 diagnostics.append(f"kernel({region_id}): {job_type} — not yet supported")
-                results.append(KernelResult(
-                    region_id=region_id, backend=backend, found=False, error="unsupported job type",
-                ))
+                results.append(
+                    KernelResult(
+                        region_id=region_id,
+                        backend=backend,
+                        found=False,
+                        error="unsupported job type",
+                    )
+                )
 
         return results, diagnostics
 
     def _apply_plan_fragments(
-        self, module: ModuleOp, fragments: list[dict[str, Any]], target: Any,
+        self,
+        module: ModuleOp,
+        fragments: list[dict[str, Any]],
+        target: Any,
     ) -> list[str]:
         """Apply plan fragments (placement, copy boundaries, solver config)."""
         diagnostics: list[str] = []
@@ -292,9 +314,7 @@ class RecipeExecutor:
                 src = frag.get("src_region", "")
                 dst = frag.get("dst_region", "")
                 is_async = frag.get("is_async", False)
-                diagnostics.append(
-                    f"plan: copy {src} → {dst}" + (" (async)" if is_async else "")
-                )
+                diagnostics.append(f"plan: copy {src} → {dst}" + (" (async)" if is_async else ""))
 
             elif frag_type == "segment_boundary":
                 diagnostics.append(f"plan: segment boundary after {region_id}")

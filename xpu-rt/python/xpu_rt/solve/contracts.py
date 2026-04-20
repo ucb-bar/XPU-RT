@@ -124,13 +124,15 @@ def _apply_calibration(
         factor = calibration.get_factor(default_device_name, op_type)
 
         if factor != 1.0:
-            calibrated.append(Partition(
-                partition_id=p.partition_id,
-                op_names=p.op_names,
-                dependencies=p.dependencies,
-                estimated_cost_us=p.estimated_cost_us * factor,
-                memory_bytes=p.memory_bytes,
-            ))
+            calibrated.append(
+                Partition(
+                    partition_id=p.partition_id,
+                    op_names=p.op_names,
+                    dependencies=p.dependencies,
+                    estimated_cost_us=p.estimated_cost_us * factor,
+                    memory_bytes=p.memory_bytes,
+                )
+            )
         else:
             calibrated.append(p)
 

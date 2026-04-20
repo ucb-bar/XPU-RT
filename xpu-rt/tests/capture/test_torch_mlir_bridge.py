@@ -5,8 +5,6 @@ from __future__ import annotations
 import pytest
 import torch
 import torch.nn as nn
-from xdsl.dialects.builtin import ModuleOp
-
 from compgen.capture.torch_mlir_bridge import (
     BridgeResult,
     bridge_fx_graph,
@@ -14,6 +12,7 @@ from compgen.capture.torch_mlir_bridge import (
     module_to_text,
     torch_mlir_available,
 )
+from xdsl.dialects.builtin import ModuleOp
 
 
 class _TinyMLP(nn.Module):
@@ -74,7 +73,9 @@ def test_bridge_or_raise_raises_when_both_paths_fail():
 
     with pytest.raises(RuntimeError, match="bridge failed"):
         bridge_fx_graph_or_raise(
-            _TinyMLP(), _tiny_inputs(), allow_fallback=False,
+            _TinyMLP(),
+            _tiny_inputs(),
+            allow_fallback=False,
         )
 
 

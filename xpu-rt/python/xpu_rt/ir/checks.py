@@ -108,18 +108,24 @@ class IRChecker:
                         found = True
                         break
                 if not found:
-                    failures.append(CheckFailure(
-                        check=check, line_number=pos,
-                        message=f"CHECK pattern '{check.pattern}' not found after line {pos}",
-                    ))
+                    failures.append(
+                        CheckFailure(
+                            check=check,
+                            line_number=pos,
+                            message=f"CHECK pattern '{check.pattern}' not found after line {pos}",
+                        )
+                    )
 
             elif check.kind == CheckKind.CHECK_NOT:
                 for i in range(pos, len(lines)):
                     if check.pattern in lines[i]:
-                        failures.append(CheckFailure(
-                            check=check, line_number=i + 1,
-                            message=f"CHECK-NOT pattern '{check.pattern}' found at line {i + 1}",
-                        ))
+                        failures.append(
+                            CheckFailure(
+                                check=check,
+                                line_number=i + 1,
+                                message=f"CHECK-NOT pattern '{check.pattern}' found at line {i + 1}",
+                            )
+                        )
                         break
 
             elif check.kind == CheckKind.CHECK_LABEL:
@@ -131,28 +137,37 @@ class IRChecker:
                         found = True
                         break
                 if not found:
-                    failures.append(CheckFailure(
-                        check=check, line_number=-1,
-                        message=f"CHECK-LABEL pattern '{check.pattern}' not found anywhere",
-                    ))
+                    failures.append(
+                        CheckFailure(
+                            check=check,
+                            line_number=-1,
+                            message=f"CHECK-LABEL pattern '{check.pattern}' not found anywhere",
+                        )
+                    )
 
             elif check.kind == CheckKind.CHECK_SAME:
                 if last_match_line >= 0 and check.pattern in lines[last_match_line]:
                     pass  # OK, same line
                 else:
-                    failures.append(CheckFailure(
-                        check=check, line_number=last_match_line,
-                        message=f"CHECK-SAME pattern '{check.pattern}' not on same line as last match",
-                    ))
+                    failures.append(
+                        CheckFailure(
+                            check=check,
+                            line_number=last_match_line,
+                            message=f"CHECK-SAME pattern '{check.pattern}' not on same line as last match",
+                        )
+                    )
 
             elif check.kind == CheckKind.CHECK_COUNT:
                 count = sum(1 for line in lines if check.pattern in line)
                 expected = check.count or 0
                 if count != expected:
-                    failures.append(CheckFailure(
-                        check=check, line_number=-1,
-                        message=f"CHECK-COUNT expected {expected} occurrences of '{check.pattern}', found {count}",
-                    ))
+                    failures.append(
+                        CheckFailure(
+                            check=check,
+                            line_number=-1,
+                            message=f"CHECK-COUNT expected {expected} occurrences of '{check.pattern}', found {count}",
+                        )
+                    )
 
         return CheckResult(
             passed=len(failures) == 0,
@@ -167,12 +182,12 @@ def _parse_check_line(line: str) -> CheckLine | None:
     # Strip leading comment markers
     for prefix in ("//", "#", "--"):
         if line.startswith(prefix):
-            line = line[len(prefix):].strip()
+            line = line[len(prefix) :].strip()
 
     for kind in CheckKind:
         tag = kind.value + ":"
         if line.startswith(tag):
-            pattern = line[len(tag):].strip()
+            pattern = line[len(tag) :].strip()
             if kind == CheckKind.CHECK_COUNT:
                 # Format: CHECK-COUNT:N: pattern
                 parts = pattern.split(":", 1)

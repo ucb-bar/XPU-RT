@@ -12,8 +12,8 @@ from dataclasses import dataclass, field
 import structlog
 
 from compgen.memory.schema import KnowledgeItem
-from compgen.memory.store import CompilerMemory
 from compgen.memory.search.task import SearchTask
+from compgen.memory.store import CompilerMemory
 
 log = structlog.get_logger()
 
@@ -36,12 +36,7 @@ class RetrievalResult:
 
     @property
     def total(self) -> int:
-        return (
-            len(self.schedule_templates)
-            + len(self.tactics)
-            + len(self.error_repairs)
-            + len(self.similar_candidates)
-        )
+        return len(self.schedule_templates) + len(self.tactics) + len(self.error_repairs) + len(self.similar_candidates)
 
     @property
     def is_empty(self) -> bool:
@@ -108,9 +103,9 @@ class SearchRetriever:
                 unique_templates.append(item)
 
         result = RetrievalResult(
-            schedule_templates=unique_templates[:self.top_k],
-            tactics=actual_tactics[:self.top_k],
-            error_repairs=repairs[:self.top_k],
+            schedule_templates=unique_templates[: self.top_k],
+            tactics=actual_tactics[: self.top_k],
+            error_repairs=repairs[: self.top_k],
         )
 
         log.info(

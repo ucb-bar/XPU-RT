@@ -66,8 +66,7 @@ class EventTensorOp(IRDLOperation):
     def verify_(self) -> None:
         if self.wait_count.value.data < 0:
             raise VerifyException(
-                f"event.event_tensor wait_count must be non-negative, "
-                f"got {self.wait_count.value.data}"
+                f"event.event_tensor wait_count must be non-negative, got {self.wait_count.value.data}"
             )
         scope = self.event_type.scope.data
         if scope not in EventTensorTypeAttr._VALID_SCOPES:
@@ -99,10 +98,7 @@ class NotifyOp(IRDLOperation):
 
     def verify_(self) -> None:
         if self.coord.decrement.value.data <= 0:
-            raise VerifyException(
-                f"event.notify decrement must be positive, "
-                f"got {self.coord.decrement.value.data}"
-            )
+            raise VerifyException(f"event.notify decrement must be positive, got {self.coord.decrement.value.data}")
 
 
 @irdl_op_definition
@@ -143,8 +139,7 @@ class CallDeviceOp(IRDLOperation):
         for dim in self.task_shape.data:
             if isinstance(dim, IntegerAttr) and dim.value.data < 1 and dim.value.data != -1:
                 raise VerifyException(
-                    f"event.call_device task_shape entries must be >=1 or -1 "
-                    f"(symbolic), got {dim.value.data}"
+                    f"event.call_device task_shape entries must be >=1 or -1 (symbolic), got {dim.value.data}"
                 )
 
 
@@ -188,6 +183,7 @@ class GraphOp(IRDLOperation):
         }
         if sm_count is not None:
             from xdsl.dialects.builtin import IntegerType  # local to avoid cycle
+
             if isinstance(sm_count, int):
                 sm_count = IntegerAttr(sm_count, IntegerType(64))
             properties["sm_count"] = sm_count
@@ -205,10 +201,7 @@ class GraphOp(IRDLOperation):
                 f"expected one of {sorted(SchedulingPolicyAttr._VALID)}"
             )
         if self.sm_count is not None and self.sm_count.value.data <= 0:
-            raise VerifyException(
-                f"event.graph sm_count must be positive, "
-                f"got {self.sm_count.value.data}"
-            )
+            raise VerifyException(f"event.graph sm_count must be positive, got {self.sm_count.value.data}")
 
 
 @irdl_op_definition
@@ -270,8 +263,7 @@ class MaterializeViewOp(IRDLOperation):
         for dim in self.concrete_shape.data:
             if isinstance(dim, IntegerAttr) and dim.value.data < 0:
                 raise VerifyException(
-                    f"event.materialize_view concrete_shape entries must be "
-                    f"non-negative, got {dim.value.data}"
+                    f"event.materialize_view concrete_shape entries must be non-negative, got {dim.value.data}"
                 )
 
 

@@ -9,9 +9,7 @@ def _mk_proposal(**chosen_overrides: object) -> dict[str, object]:
     chosen = {
         "megakernel_name": "mk",
         "fused_region_refs": ["r0", "r1"],
-        "event_tensor_decls": [
-            {"name": "E", "shape": [4], "wait_count": 1, "scope": "device"}
-        ],
+        "event_tensor_decls": [{"name": "E", "shape": [4], "wait_count": 1, "scope": "device"}],
         "task_partition": {"r0": [4], "r1": [4]},
     }
     chosen.update(chosen_overrides)
@@ -134,11 +132,10 @@ def test_target_lacking_one_capability_is_rejected() -> None:
 
 
 def test_event_graph_with_no_ukernel_call_is_accepted() -> None:
-    from xdsl.dialects.builtin import IntegerAttr, IntegerType, StringAttr
-    from xdsl.ir import Block, Region
-
     from compgen.ir.event.attrs import EventTensorTypeAttr
     from compgen.ir.event.ops import EventTensorOp, GraphOp
+    from xdsl.dialects.builtin import IntegerAttr, IntegerType, StringAttr
+    from xdsl.ir import Block, Region
 
     block = Block()
     block.add_op(

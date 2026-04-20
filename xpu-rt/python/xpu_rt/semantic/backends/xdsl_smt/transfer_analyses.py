@@ -78,9 +78,7 @@ class TransferAnalysisBridge:
             log.warning("transfer_analysis.unknown_type", type=analysis_type)
             return []
 
-    def _analyze_tile_divisibility(
-        self, region_id: str, props: dict[str, Any]
-    ) -> list[VerifiedFact]:
+    def _analyze_tile_divisibility(self, region_id: str, props: dict[str, Any]) -> list[VerifiedFact]:
         """Check if region dimensions are divisible by common tile sizes."""
         shapes = props.get("shapes", [])
         if not shapes:
@@ -92,10 +90,7 @@ class TransferAnalysisBridge:
 
         for tile in candidate_tiles:
             all_divisible = all(
-                dim % tile == 0
-                for shape in shapes
-                for dim in shape
-                if isinstance(dim, int) and dim > 0
+                dim % tile == 0 for shape in shapes for dim in shape if isinstance(dim, int) and dim > 0
             )
             if all_divisible and shapes:
                 divisible_tiles.append(tile)
@@ -110,9 +105,7 @@ class TransferAnalysisBridge:
             ]
         return []
 
-    def _analyze_local_mem_fit(
-        self, region_id: str, props: dict[str, Any]
-    ) -> list[VerifiedFact]:
+    def _analyze_local_mem_fit(self, region_id: str, props: dict[str, Any]) -> list[VerifiedFact]:
         """Check if region data fits in local memory."""
         bytes_total = props.get("bytes_in", 0) + props.get("bytes_out", 0)
         local_mem_bytes = props.get("local_mem_bytes", 49152)  # 48KB default
@@ -131,16 +124,11 @@ class TransferAnalysisBridge:
             ]
         return []
 
-    def _analyze_contiguous_layout(
-        self, region_id: str, props: dict[str, Any]
-    ) -> list[VerifiedFact]:
+    def _analyze_contiguous_layout(self, region_id: str, props: dict[str, Any]) -> list[VerifiedFact]:
         """Check if region has contiguous memory layout."""
         # Simplified: check if all tensor dimensions are statically known
         shapes = props.get("shapes", [])
-        all_static = all(
-            all(isinstance(d, int) and d > 0 for d in shape)
-            for shape in shapes
-        )
+        all_static = all(all(isinstance(d, int) and d > 0 for d in shape) for shape in shapes)
         if all_static and shapes:
             return [
                 VerifiedFact(

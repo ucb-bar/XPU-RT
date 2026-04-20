@@ -3,10 +3,6 @@
 from __future__ import annotations
 
 import pytest
-from xdsl.dialects.builtin import IntegerAttr, IntegerType, StringAttr
-from xdsl.ir import Block, Region
-from xdsl.utils.exceptions import VerifyException
-
 from compgen.ir.event.attrs import (
     EventCoordAttr,
     EventTensorTypeAttr,
@@ -24,7 +20,9 @@ from compgen.ir.event.ops import (
     UpdateOp,
     WaitOp,
 )
-
+from xdsl.dialects.builtin import IntegerAttr, IntegerType, StringAttr
+from xdsl.ir import Block, Region
+from xdsl.utils.exceptions import VerifyException
 
 # ---------------------------------------------------------------------------
 # Dialect registration

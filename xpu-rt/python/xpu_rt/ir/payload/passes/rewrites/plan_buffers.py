@@ -100,9 +100,7 @@ def run_plan_buffers(
         # We use the global graph (which already respects memory-space
         # separation via ``only_same_memory_space=True``) and read the
         # subgraph.
-        global_graph = compute_interference_graph(
-            liveness, only_same_memory_space=True
-        )
+        global_graph = compute_interference_graph(liveness, only_same_memory_space=True)
         local_ids = {b.buffer_id for b in buffers}
 
         # Build per-color sizes. Alignment-pad each buffer.

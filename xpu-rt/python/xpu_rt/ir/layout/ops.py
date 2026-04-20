@@ -20,9 +20,10 @@ from xdsl.irdl import (
 from xdsl.traits import Pure
 from xdsl.utils.exceptions import VerifyException
 
+from compgen.ir.layout.attrs import LayoutEncodingAttr, PackSpecAttr
+
 # Reuse ProvenanceAttr from Recipe IR for lineage tracking
 from compgen.ir.recipe.attrs import ProvenanceAttr
-from compgen.ir.layout.attrs import LayoutEncodingAttr, PackSpecAttr
 
 
 @irdl_op_definition
@@ -80,9 +81,7 @@ class PackOp(IRDLOperation):
         val = self.is_prepack.value.data
         # i1 stores 1 as -1 (signed 1-bit); accept both representations
         if val not in (0, 1, -1):
-            raise VerifyException(
-                f"layout.pack is_prepack must be 0 or 1, got {val}"
-            )
+            raise VerifyException(f"layout.pack is_prepack must be 0 or 1, got {val}")
 
 
 @irdl_op_definition

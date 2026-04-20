@@ -101,6 +101,7 @@ class TestCostModel:
 
     def test_to_json_path(self) -> None:
         import json
+
         model = CostModel(base_costs={"arith.addi": 3})
         path = model.to_json_path()
         with open(path) as f:

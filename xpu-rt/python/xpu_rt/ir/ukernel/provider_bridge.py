@@ -8,21 +8,18 @@ search interface.
 
 from __future__ import annotations
 
-from typing import Any
-
 import structlog
 
 from compgen.ir.ukernel.constraints import ConstraintContext
 from compgen.ir.ukernel.registry import UkernelRegistry
+
+# Use the provider-level KernelContract (not IR-level)
 from compgen.kernels.provider import (
-    KernelProvider,
+    KernelContract,
     KnowledgeExport,
     ProviderResult,
     SearchBudget,
 )
-
-# Use the provider-level KernelContract (not IR-level)
-from compgen.kernels.provider import KernelContract
 
 log = structlog.get_logger()
 
@@ -124,13 +121,15 @@ class UkernelProvider:
         """Export ukernel registry knowledge."""
         exports = []
         for decl in self._registry.all_decls():
-            exports.append(KnowledgeExport(
-                kind="ukernel_decl",
-                scope="global",
-                scope_key=decl.kernel_name,
-                content=f"{decl.kernel_name}: {decl.transparency} {decl.body_kind}",
-                confidence=1.0,
-            ))
+            exports.append(
+                KnowledgeExport(
+                    kind="ukernel_decl",
+                    scope="global",
+                    scope_key=decl.kernel_name,
+                    content=f"{decl.kernel_name}: {decl.transparency} {decl.body_kind}",
+                    confidence=1.0,
+                )
+            )
         return exports
 
 

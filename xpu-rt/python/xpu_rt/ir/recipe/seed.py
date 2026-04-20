@@ -73,10 +73,14 @@ def generate_seed_recipe(
     region_counter = 0
 
     # Step 0: Provenance
-    block.add_op(FromTemplateOp.build(properties={
-        "template_name": StringAttr("seed_generator"),
-        "template_version": IntegerAttr(1, IntegerType(64)),
-    }))
+    block.add_op(
+        FromTemplateOp.build(
+            properties={
+                "template_name": StringAttr("seed_generator"),
+                "template_version": IntegerAttr(1, IntegerType(64)),
+            }
+        )
+    )
 
     # Step 1: Extract regions from payload
     significant_ops = _extract_significant_ops(payload_module)
@@ -126,15 +130,11 @@ def generate_seed_recipe(
             "payload_region_id": StringAttr(op_name),
         }
         if op_info.get("shape"):
-            region_props["shape_summary"] = ShapeSummaryAttr(
-                op_info["shape"], op_info.get("dtype", "f32")
-            )
+            region_props["shape_summary"] = ShapeSummaryAttr(op_info["shape"], op_info.get("dtype", "f32"))
         if op_info.get("effect"):
             region_props["effect_class"] = EffectClassAttr(op_info["effect"])
         if op_info.get("op_count"):
-            region_props["op_count"] = IntegerAttr(
-                op_info["op_count"], IntegerType(64)
-            )
+            region_props["op_count"] = IntegerAttr(op_info["op_count"], IntegerType(64))
         if op_info.get("role"):
             region_props["role"] = StringAttr(str(op_info["role"]))
 
@@ -143,16 +143,24 @@ def generate_seed_recipe(
         # Step 2: Backend availability
         backends = _infer_backends(op_info, target_profile)
         for backend in backends:
-            block.add_op(BackendAvailableOp.build(properties={
-                "region_ref": SymbolRefAttr(region_id),
-                "backend": StringAttr(backend),
-            }))
+            block.add_op(
+                BackendAvailableOp.build(
+                    properties={
+                        "region_ref": SymbolRefAttr(region_id),
+                        "backend": StringAttr(backend),
+                    }
+                )
+            )
         for device_index, device_name, fits in _infer_local_mem_fits(op_info, target_profile):
-            block.add_op(LocalMemFitOp.build(properties={
-                "region_ref": SymbolRefAttr(region_id),
-                "device": DeviceRefAttr(device_index, device_name),
-                "fits": IntegerAttr(1 if fits else 0, IntegerType(64)),
-            }))
+            block.add_op(
+                LocalMemFitOp.build(
+                    properties={
+                        "region_ref": SymbolRefAttr(region_id),
+                        "device": DeviceRefAttr(device_index, device_name),
+                        "fits": IntegerAttr(1 if fits else 0, IntegerType(64)),
+                    }
+                )
+            )
 
         # Step 3: Kernel contracts
         if op_info.get("is_compute"):
@@ -161,18 +169,20 @@ def generate_seed_recipe(
                 "op_name": StringAttr(op_info.get("op_type", "unknown")),
             }
             if op_info.get("estimated_flops"):
-                contract_props["estimated_flops"] = IntegerAttr(
-                    op_info["estimated_flops"], IntegerType(64)
-                )
+                contract_props["estimated_flops"] = IntegerAttr(op_info["estimated_flops"], IntegerType(64))
             block.add_op(KernelContractOp.build(properties=contract_props))
-            block.add_op(CalibrationOp.build(properties={
-                "region_ref": SymbolRefAttr(region_id),
-                "measured_latency_us": IntegerAttr(
-                    max(int(op_info.get("estimated_flops", 0) // 128), 1),
-                    IntegerType(64),
-                ),
-                "device": DeviceRefAttr(0, _default_device_name(target_profile)),
-            }))
+            block.add_op(
+                CalibrationOp.build(
+                    properties={
+                        "region_ref": SymbolRefAttr(region_id),
+                        "measured_latency_us": IntegerAttr(
+                            max(int(op_info.get("estimated_flops", 0) // 128), 1),
+                            IntegerType(64),
+                        ),
+                        "device": DeviceRefAttr(0, _default_device_name(target_profile)),
+                    }
+                )
+            )
             compute_regions.append(region_id)
 
         # Step 4: Default candidates (personalized by LLM when available)
@@ -185,40 +195,58 @@ def generate_seed_recipe(
             op_type = op_info.get("op_type", op_name.split("_")[0])
             llm_tiles = llm_personalization.get("default_tile_sizes", {}).get(op_type)
             default_sizes = llm_tiles if llm_tiles else _default_tile_sizes(op_info)
-            block.add_op(TileOp.build(properties={
-                "sym_name": StringAttr(f"cand_tile_{region_id}"),
-                "region_ref": SymbolRefAttr(region_id),
-                "tile_sizes": ArrayAttr(
-                    [IntegerAttr(s, IntegerType(64)) for s in default_sizes]
-                ),
-                "provenance": ProvenanceAttr("seed", 0),
-            }))
+            block.add_op(
+                TileOp.build(
+                    properties={
+                        "sym_name": StringAttr(f"cand_tile_{region_id}"),
+                        "region_ref": SymbolRefAttr(region_id),
+                        "tile_sizes": ArrayAttr([IntegerAttr(s, IntegerType(64)) for s in default_sizes]),
+                        "provenance": ProvenanceAttr("seed", 0),
+                    }
+                )
+            )
 
         # Default device placement (device 0)
-        block.add_op(PlaceOnDeviceOp.build(properties={
-            "sym_name": StringAttr(f"cand_place_{region_id}_d0"),
-            "region_ref": SymbolRefAttr(region_id),
-            "device": DeviceRefAttr(0, _default_device_name(target_profile)),
-            "provenance": ProvenanceAttr("seed", 0),
-        }))
+        block.add_op(
+            PlaceOnDeviceOp.build(
+                properties={
+                    "sym_name": StringAttr(f"cand_place_{region_id}_d0"),
+                    "region_ref": SymbolRefAttr(region_id),
+                    "device": DeviceRefAttr(0, _default_device_name(target_profile)),
+                    "provenance": ProvenanceAttr("seed", 0),
+                }
+            )
+        )
 
         # Step 5: Verification obligations
-        block.add_op(RequireDiffTestOp.build(properties={
-            "region_ref": SymbolRefAttr(region_id),
-        }))
+        block.add_op(
+            RequireDiffTestOp.build(
+                properties={
+                    "region_ref": SymbolRefAttr(region_id),
+                }
+            )
+        )
 
     for lhs, rhs in zip(compute_regions, compute_regions[1:]):
-        block.add_op(FusibleWithOp.build(properties={
-            "region_a": SymbolRefAttr(lhs),
-            "region_b": SymbolRefAttr(rhs),
-            "fusion_kind": StringAttr("producer_consumer"),
-        }))
-        block.add_op(FuseOp.build(properties={
-            "sym_name": StringAttr(f"cand_fuse_{lhs}_{rhs}"),
-            "fuse_regions": ArrayAttr([SymbolRefAttr(lhs), SymbolRefAttr(rhs)]),
-            "fusion_kind": StringAttr("producer_consumer"),
-            "provenance": ProvenanceAttr("seed", 0),
-        }))
+        block.add_op(
+            FusibleWithOp.build(
+                properties={
+                    "region_a": SymbolRefAttr(lhs),
+                    "region_b": SymbolRefAttr(rhs),
+                    "fusion_kind": StringAttr("producer_consumer"),
+                }
+            )
+        )
+        block.add_op(
+            FuseOp.build(
+                properties={
+                    "sym_name": StringAttr(f"cand_fuse_{lhs}_{rhs}"),
+                    "fuse_regions": ArrayAttr([SymbolRefAttr(lhs), SymbolRefAttr(rhs)]),
+                    "fusion_kind": StringAttr("producer_consumer"),
+                    "provenance": ProvenanceAttr("seed", 0),
+                }
+            )
+        )
 
     log.info("seed.generated", regions=region_counter)
     return ModuleOp(Region(block))
@@ -253,8 +281,7 @@ def _extract_significant_ops(
         # the model layer ("the q-projection matmul") instead of the
         # IR layer ("r_3"). When the hint is absent, fall back to a
         # coarse op-family derived from the xDSL op name.
-        hint_attr = op.attributes.get("compgen._pattern_hint") \
-            if hasattr(op, "attributes") else None
+        hint_attr = op.attributes.get("compgen._pattern_hint") if hasattr(op, "attributes") else None
         if hint_attr is not None and hasattr(hint_attr, "data"):
             info["role"] = hint_attr.data
         else:
@@ -266,8 +293,7 @@ def _extract_significant_ops(
             elif xdsl_name == "func.call":
                 # The callee's name is the most useful coarse role for
                 # the aten-passthrough family.
-                callee = op.callee.root_reference.data \
-                    if hasattr(op, "callee") else ""
+                callee = op.callee.root_reference.data if hasattr(op, "callee") else ""
                 if callee.startswith("aten_"):
                     info["role"] = callee.removeprefix("aten_")
                 else:

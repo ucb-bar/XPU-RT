@@ -3,11 +3,9 @@ trigger session-start graduation, observe the live registry."""
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 import pytest
-
 from compgen.agent.self_extension import (
     AuthoredTool,
     AuthoredToolSource,
@@ -18,9 +16,7 @@ from compgen.agent.self_extension import (
     run_trial,
 )
 from compgen.agent.self_extension._index import snapshot_authored_index
-from compgen.agent.self_extension.trials import default_trial_log_path
 from compgen.llm.registry import Registry
-
 
 _TOOL = AuthoredTool(
     name="reg_int_tool",
@@ -55,8 +51,7 @@ def test_registered_index_is_visible_to_promotion(monkeypatch, tmp_path: Path) -
             for _ in range(2):
                 run_trial(
                     _TOOL,
-                    TrialScenario(workload=w, target=t, scorer=_scorer,
-                                  kwargs={"n": 7}),
+                    TrialScenario(workload=w, target=t, scorer=_scorer, kwargs={"n": 7}),
                     log_path=log,
                 )
 

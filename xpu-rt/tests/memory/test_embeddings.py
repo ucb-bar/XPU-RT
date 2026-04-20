@@ -1,14 +1,15 @@
 """Tests for embedding-based semantic similarity (Unit 13)."""
+
 from __future__ import annotations
-import json
+
 import pytest
-from pathlib import Path
 from compgen.memory.embeddings import MockEmbeddingProvider, cosine_similarity, embed_and_store, retrieve_by_similarity
 
 
 @pytest.fixture
 def memory(tmp_path):
     from compgen.memory.store import CompilerMemory
+
     return CompilerMemory(
         db_path=tmp_path / "test.db",
         blob_root=tmp_path / "blobs",
@@ -40,6 +41,7 @@ class TestMockEmbeddingProvider:
 
     def test_embed_normalized(self, provider):
         import math
+
         vec = provider.embed("test")
         norm = math.sqrt(sum(x * x for x in vec))
         assert abs(norm - 1.0) < 0.01
@@ -62,6 +64,7 @@ class TestCosineSimilarity:
 class TestEmbedAndRetrieve:
     def test_store_and_retrieve(self, memory, provider):
         from compgen.memory.schema import KnowledgeKind, ScopeKind
+
         # Store 3 items with embeddings
         items = []
         for text in ["matmul tiling optimization", "convolution layout", "softmax kernel"]:

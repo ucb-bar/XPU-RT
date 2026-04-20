@@ -32,8 +32,8 @@ import torch.nn as nn
 from xdsl.dialects.builtin import ModuleOp
 
 from compgen.agent.analyzer import GraphAnalysisDossier, NetworkAnalyzer
-from compgen.agent.loop import AgenticCompilationLoop, CompilationResult
 from compgen.agent.env import CompilerEnv
+from compgen.agent.loop import AgenticCompilationLoop, CompilationResult
 from compgen.capture.torch_export import CaptureArtifact, capture_frontend_artifact
 from compgen.eqsat.pipeline import EqSatResult, run_eqsat_pass
 from compgen.ir.payload.import_fx import ImportDiagnostic, fx_to_xdsl
@@ -297,7 +297,8 @@ def compile_model(
             have_llm=recovery_llm_client is not None,
         )
         recovery_plan_obj = plan_recovery(
-            capture_artifact, llm_client=recovery_llm_client,
+            capture_artifact,
+            llm_client=recovery_llm_client,
         )
         log.info(
             "api.compile.recover_unsupported.done",
@@ -323,8 +324,8 @@ def compile_model(
 
     # Stage 1.75: Annotate ops with ukernel matches
     log.info("api.compile.ukernel_annotate")
-    from compgen.ir.ukernel.builtins import build_default_registry
     from compgen.ir.ukernel.annotate import annotate_ukernel_ops
+    from compgen.ir.ukernel.builtins import build_default_registry
 
     ukernel_registry = build_default_registry()
     # Extract target features for ukernel matching
@@ -356,10 +357,9 @@ def compile_model(
             # set ``drive_loop.context["policy"]`` or subclass.
             def _default_policy(_phase: int, _registry: Any, _ctx: dict[str, Any]) -> list:
                 return []
+
             policy = (drive_loop.context or {}).get("policy", _default_policy)
-            drive_loop_result = drive_loop.run(
-                phases=list(drive_loop_phases), policy=policy
-            )
+            drive_loop_result = drive_loop.run(phases=list(drive_loop_phases), policy=policy)
         else:
             drive_loop_result = drive_loop(module, drive_loop_phases)
         log.info("api.compile.drive_loop.done", result_summary=type(drive_loop_result).__name__)

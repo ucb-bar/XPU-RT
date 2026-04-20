@@ -5,8 +5,6 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import pytest
-
 from compgen.agent.self_extension.authored_tool import (
     AuthoredTool,
     AuthoredToolSource,
@@ -46,7 +44,10 @@ def _tool() -> AuthoredTool:
 def test_run_trial_records_pass(tmp_path: Path) -> None:
     log = tmp_path / "trials.jsonl"
     scenario = TrialScenario(
-        workload="w1", target="t1", scorer=_pass_scorer, kwargs={"x": 2},
+        workload="w1",
+        target="t1",
+        scorer=_pass_scorer,
+        kwargs={"x": 2},
         name="plus_one",
     )
     trial = run_trial(_tool(), scenario, session_id="s1", log_path=log)
@@ -61,7 +62,10 @@ def test_run_trial_records_pass(tmp_path: Path) -> None:
 def test_run_trial_records_fail(tmp_path: Path) -> None:
     log = tmp_path / "trials.jsonl"
     scenario = TrialScenario(
-        workload="w1", target="t1", scorer=_fail_scorer, kwargs={"x": 2},
+        workload="w1",
+        target="t1",
+        scorer=_fail_scorer,
+        kwargs={"x": 2},
     )
     trial = run_trial(_tool(), scenario, log_path=log)
     assert not trial.passed
@@ -70,7 +74,10 @@ def test_run_trial_records_fail(tmp_path: Path) -> None:
 def test_run_trial_bad_scorer_counts_as_fail(tmp_path: Path) -> None:
     log = tmp_path / "trials.jsonl"
     scenario = TrialScenario(
-        workload="w1", target="t1", scorer=_bad_scorer, kwargs={"x": 2},
+        workload="w1",
+        target="t1",
+        scorer=_bad_scorer,
+        kwargs={"x": 2},
     )
     trial = run_trial(_tool(), scenario, log_path=log)
     assert not trial.passed
@@ -87,7 +94,9 @@ def test_run_trial_authored_tool_raises_counts_as_fail(tmp_path: Path) -> None:
     )
     log = tmp_path / "trials.jsonl"
     scenario = TrialScenario(
-        workload="w1", target="t1", scorer=_pass_scorer,
+        workload="w1",
+        target="t1",
+        scorer=_pass_scorer,
     )
     trial = run_trial(tool, scenario, log_path=log)
     assert not trial.passed
@@ -97,7 +106,10 @@ def test_run_trial_authored_tool_raises_counts_as_fail(tmp_path: Path) -> None:
 def test_trial_log_writes_one_line_per_call(tmp_path: Path) -> None:
     log = tmp_path / "trials.jsonl"
     scenario = TrialScenario(
-        workload="w", target="t", scorer=_pass_scorer, kwargs={"x": 1},
+        workload="w",
+        target="t",
+        scorer=_pass_scorer,
+        kwargs={"x": 1},
     )
     run_trial(_tool(), scenario, log_path=log)
     run_trial(_tool(), scenario, log_path=log)

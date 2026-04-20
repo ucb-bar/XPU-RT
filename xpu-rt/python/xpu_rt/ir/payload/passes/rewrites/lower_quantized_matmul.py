@@ -44,7 +44,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from xdsl.dialects.arith import AddfOp, MulfOp, SIToFPOp, SubiOp
+from xdsl.dialects.arith import MulfOp, SIToFPOp
 from xdsl.dialects.builtin import (
     AffineMapAttr,
     Float32Type,
@@ -60,7 +60,7 @@ from xdsl.dialects.linalg import (
     YieldOp,
 )
 from xdsl.dialects.tensor import EmptyOp
-from xdsl.ir import Attribute, Block, Operation, Region, SSAValue
+from xdsl.ir import Block, Operation, Region, SSAValue
 from xdsl.ir.affine import AffineExpr, AffineMap
 from xdsl.pattern_rewriter import (
     GreedyRewritePatternApplier,
@@ -76,7 +76,6 @@ from compgen.ir.quant import (
     WeightInt8PackMMOp,
 )
 
-
 _VALID_POLICIES = frozenset({"always", "zp_zero_only", "skip"})
 
 
@@ -86,9 +85,7 @@ class LowerQuantizedMatmulConfig:
 
     def __post_init__(self) -> None:
         if self.policy not in _VALID_POLICIES:
-            raise ValueError(
-                f"policy must be one of {sorted(_VALID_POLICIES)}; got {self.policy!r}"
-            )
+            raise ValueError(f"policy must be one of {sorted(_VALID_POLICIES)}; got {self.policy!r}")
 
 
 @dataclass
@@ -201,11 +198,12 @@ def _lower_int8_pack_mm(
         ],
         result_types=[dequant_out_type],
     )
-    dq_generic.attributes["compgen._dequant_from"] = op.attributes.get(
-        "compgen.region_id"
-    ) or op.properties.get("compgen.region_id") or op.attributes.get(
-        "compgen._pattern_hint"
-    ) or _region_id_fallback()
+    dq_generic.attributes["compgen._dequant_from"] = (
+        op.attributes.get("compgen.region_id")
+        or op.properties.get("compgen.region_id")
+        or op.attributes.get("compgen._pattern_hint")
+        or _region_id_fallback()
+    )
 
     # Now the matmul. Weight is [O, K]; matmul expects [K, N]. Since
     # TorchAO's weight_int8pack_mm interprets w_i8 as the weight with
@@ -228,6 +226,7 @@ def _lower_int8_pack_mm(
         AffineExpr.dimension(2),
     )
     from xdsl.dialects.builtin import ArrayAttr
+
     mm_init = EmptyOp([], res_type)
     mm = MatmulOp(
         inputs=[op.input, dq_generic.results[0]],
@@ -253,6 +252,7 @@ def _lower_int8_pack_mm(
 
 def _region_id_fallback():
     from xdsl.dialects.builtin import StringAttr
+
     return StringAttr("")
 
 
@@ -269,9 +269,7 @@ class _Int8PackMMPattern(RewritePattern):
         self.stats = stats
 
     @op_type_rewrite_pattern
-    def match_and_rewrite(
-        self, op: WeightInt8PackMMOp, rewriter: PatternRewriter
-    ) -> None:
+    def match_and_rewrite(self, op: WeightInt8PackMMOp, rewriter: PatternRewriter) -> None:
         if self.cfg.policy == "skip":
             self.stats.skipped_policy += 1
             return
@@ -298,9 +296,7 @@ class _Int4PackMMPattern(RewritePattern):
         self.stats = stats
 
     @op_type_rewrite_pattern
-    def match_and_rewrite(
-        self, op: WeightInt4PackMMOp, rewriter: PatternRewriter
-    ) -> None:
+    def match_and_rewrite(self, op: WeightInt4PackMMOp, rewriter: PatternRewriter) -> None:
         if self.cfg.policy == "skip":
             self.stats.skipped_policy += 1
             return
@@ -309,6 +305,7 @@ class _Int4PackMMPattern(RewritePattern):
             return
         # Leave the op structurally but tag it so Wave 6 can find it.
         from xdsl.dialects.builtin import StringAttr
+
         op.attributes["compgen.int4_lowering_scheduled"] = StringAttr("true")
         self.stats.int4_rewritten += 1
 
@@ -323,13 +320,12 @@ class _Int4PackQMPattern(RewritePattern):
         self.stats = stats
 
     @op_type_rewrite_pattern
-    def match_and_rewrite(
-        self, op: WeightInt4PackQMOp, rewriter: PatternRewriter
-    ) -> None:
+    def match_and_rewrite(self, op: WeightInt4PackQMOp, rewriter: PatternRewriter) -> None:
         if self.cfg.policy == "skip":
             self.stats.skipped_policy += 1
             return
         from xdsl.dialects.builtin import StringAttr
+
         op.attributes["compgen.int4_qm_lowering_scheduled"] = StringAttr("true")
         self.stats.int4_qm_rewritten += 1
 

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from xdsl.dialects.builtin import ModuleOp
-
 from compgen.agent.env import (
     CompilerEnv,
     ConfigureDispatchAction,
@@ -11,6 +9,7 @@ from compgen.agent.env import (
     GenerateRuntimeHooksAction,
 )
 from compgen.targets.schema import DeviceSpec, TargetProfile
+from xdsl.dialects.builtin import ModuleOp
 
 
 def _make_env() -> CompilerEnv:
@@ -123,12 +122,16 @@ class TestGenerateRuntimeHooksAction:
 
     def test_hooks_accumulate(self) -> None:
         env = _make_env()
-        env.step(GenerateRuntimeHooksAction(
-            hook_code={"pre_dispatch": "hook1();"},
-        ))
-        env.step(GenerateRuntimeHooksAction(
-            hook_code={"post_dispatch": "hook2();"},
-        ))
+        env.step(
+            GenerateRuntimeHooksAction(
+                hook_code={"pre_dispatch": "hook1();"},
+            )
+        )
+        env.step(
+            GenerateRuntimeHooksAction(
+                hook_code={"post_dispatch": "hook2();"},
+            )
+        )
         assert len(env.generated_hooks) == 2
         assert "pre_dispatch" in env.generated_hooks
         assert "post_dispatch" in env.generated_hooks

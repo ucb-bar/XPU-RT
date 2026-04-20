@@ -4,12 +4,12 @@ Provides an embedding provider protocol and cosine similarity search
 to enhance CompilerMemory's retrieve_similar() with semantic matching
 instead of exact scope_key matching.
 """
+
 from __future__ import annotations
 
 import hashlib
 import json
 import math
-from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 import structlog
@@ -55,12 +55,12 @@ class MockEmbeddingProvider:
         # Use pairs of hex chars as seed values
         raw = []
         for i in range(0, min(len(h), self._dim * 2), 2):
-            val = int(h[i:i+2], 16) / 255.0 - 0.5
+            val = int(h[i : i + 2], 16) / 255.0 - 0.5
             raw.append(val)
         # Pad if needed
         while len(raw) < self._dim:
             raw.append(0.0)
-        raw = raw[:self._dim]
+        raw = raw[: self._dim]
         # Normalize
         norm = math.sqrt(sum(x * x for x in raw)) or 1.0
         return [x / norm for x in raw]
@@ -131,7 +131,6 @@ def retrieve_by_similarity(
     Returns:
         List of KnowledgeItem sorted by similarity (highest first).
     """
-    from compgen.memory.schema import KnowledgeItem as KI
 
     query_vec = provider.embed(query_text)
 

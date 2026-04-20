@@ -4,11 +4,9 @@ from __future__ import annotations
 
 from typing import Any, ClassVar
 
-import pytest
-from xdsl.dialects.builtin import ModuleOp
-
 from compgen.ir.payload.passes.base import PayloadPass
 from compgen.llm.registry import Registry
+from xdsl.dialects.builtin import ModuleOp
 
 
 class _ToyPass(PayloadPass):
@@ -42,7 +40,7 @@ def test_register_is_idempotent() -> None:
     r = Registry()
     p = _ToyPass()
     p.register(r)
-    p.register(r)   # should not raise
+    p.register(r)  # should not raise
     assert r.counts()[2]["tools"] == 1
 
 

@@ -24,14 +24,10 @@ if str(REPO_ROOT) not in sys.path:
 sys.modules.setdefault("torchvision", None)
 
 
-pytestmark = pytest.mark.skipif(
-    not torch.cuda.is_available(), reason="real-example tests require CUDA"
-)
+pytestmark = pytest.mark.skipif(not torch.cuda.is_available(), reason="real-example tests require CUDA")
 
 
-_TINYLLAMA_CACHE = Path(os.path.expanduser(
-    "~/.cache/huggingface/hub/models--TinyLlama--TinyLlama-1.1B-Chat-v1.0"
-))
+_TINYLLAMA_CACHE = Path(os.path.expanduser("~/.cache/huggingface/hub/models--TinyLlama--TinyLlama-1.1B-Chat-v1.0"))
 
 
 @pytest.mark.slow
@@ -48,9 +44,6 @@ def test_tiled_megakernel_on_real_tinyllama_full_intermediate() -> None:
     )
 
     emit_s, run_s, err = run_tinyllama_full_intermediate()
-    assert err < 5e-2, (
-        f"tiled megakernel on real TinyLlama (full-intermediate) "
-        f"diverges by {err}"
-    )
+    assert err < 5e-2, f"tiled megakernel on real TinyLlama (full-intermediate) diverges by {err}"
     # Emit itself should stay under a second even at this dim.
     assert emit_s < 5.0, f"emit took {emit_s:.2f} s -- unexpectedly slow"

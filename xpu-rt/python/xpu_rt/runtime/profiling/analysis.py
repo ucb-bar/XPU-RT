@@ -161,9 +161,7 @@ class ProfileAnalyzer:
         for snap in snapshots:
             for tm in snap.tile_metrics:
                 per_tile.setdefault(tm.region_id, []).append(tm)
-                per_region_lat[tm.region_id] = (
-                    per_region_lat.get(tm.region_id, 0.0) + tm.latency_us
-                )
+                per_region_lat[tm.region_id] = per_region_lat.get(tm.region_id, 0.0) + tm.latency_us
 
         # Roofline points
         roofline: list[RooflinePoint] = []
@@ -173,22 +171,24 @@ class ProfileAnalyzer:
             latency = per_region_lat.get(rid, 1.0)
             achieved = (flops / 1e9) / (latency / 1e6) if latency > 0 else 0.0
 
-            ridge_point = (
-                self._peak_gflops / self._peak_bw if self._peak_bw > 0 else float("inf")
-            )
+            ridge_point = self._peak_gflops / self._peak_bw if self._peak_bw > 0 else float("inf")
 
-            roofline.append(RooflinePoint(
-                region_id=rid,
-                arithmetic_intensity=ai,
-                achieved_gflops=achieved,
-                peak_gflops=self._peak_gflops,
-                peak_bandwidth_gbps=self._peak_bw,
-                is_compute_bound=ai > ridge_point,
-            ))
+            roofline.append(
+                RooflinePoint(
+                    region_id=rid,
+                    arithmetic_intensity=ai,
+                    achieved_gflops=achieved,
+                    peak_gflops=self._peak_gflops,
+                    peak_bandwidth_gbps=self._peak_bw,
+                    is_compute_bound=ai > ridge_point,
+                )
+            )
 
         # Bottleneck detection
         bottlenecks = self._detect_bottlenecks(
-            per_region_lat, roofline, per_tile,
+            per_region_lat,
+            roofline,
+            per_tile,
         )
 
         total_lat = sum(per_region_lat.values())
@@ -230,13 +230,15 @@ class ProfileAnalyzer:
                     kind = "memory_bound"
                     suggestion = "Consider fusion or layout optimization"
 
-                bottlenecks.append(BottleneckInfo(
-                    region_id=rid,
-                    kind=kind,
-                    severity=min(frac * 2, 1.0),
-                    description=f"Region {rid} takes {frac*100:.1f}% of total latency",
-                    suggested_action=suggestion,
-                ))
+                bottlenecks.append(
+                    BottleneckInfo(
+                        region_id=rid,
+                        kind=kind,
+                        severity=min(frac * 2, 1.0),
+                        description=f"Region {rid} takes {frac * 100:.1f}% of total latency",
+                        suggested_action=suggestion,
+                    )
+                )
 
         bottlenecks.sort(key=lambda b: b.severity, reverse=True)
         return bottlenecks

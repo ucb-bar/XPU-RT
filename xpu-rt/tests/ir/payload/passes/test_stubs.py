@@ -11,8 +11,6 @@ module itself kept its name. The tests here now assert the real
 from __future__ import annotations
 
 import pytest
-from xdsl.dialects.builtin import ModuleOp
-
 from compgen.ir.payload.passes.stubs import (
     FoldTransposesIntoDots,
     FuseDequantMatmul,
@@ -26,7 +24,7 @@ from compgen.ir.payload.passes.stubs import (
     RaiseSpecialOps,
     SetNumericsPolicy,
 )
-
+from xdsl.dialects.builtin import ModuleOp
 
 _ALL_PASSES = [
     FoldTransposesIntoDots,
@@ -62,8 +60,8 @@ def test_metadata_populated(cls) -> None:
 
 
 def test_all_passes_register_non_stub() -> None:
-    from compgen.llm import get_registry
     import compgen.ir.payload.passes  # noqa: F401
+    from compgen.llm import get_registry
 
     r = get_registry()
     for cls in _ALL_PASSES:

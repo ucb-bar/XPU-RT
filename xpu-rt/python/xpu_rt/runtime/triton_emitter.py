@@ -35,8 +35,7 @@ from pathlib import Path
 from typing import Any
 
 import structlog
-from xdsl.dialects.builtin import IntegerAttr, StringAttr
-from xdsl.dialects.func import CallOp
+from xdsl.dialects.builtin import StringAttr
 from xdsl.dialects.linalg import MatmulOp
 
 log = structlog.get_logger()
@@ -212,9 +211,7 @@ def emit_triton_kernels(
         report.skipped_unsupported_op += 1
 
     # Write the manifest.
-    (out_path / "emission_manifest.json").write_text(
-        json.dumps(manifest, indent=2)
-    )
+    (out_path / "emission_manifest.json").write_text(json.dumps(manifest, indent=2))
     report.manifest = manifest
     log.info(
         "triton_emitter.done",
@@ -227,6 +224,7 @@ def emit_triton_kernels(
 def triton_available() -> bool:
     try:
         import triton  # noqa: F401
+
         return True
     except ImportError:
         return False

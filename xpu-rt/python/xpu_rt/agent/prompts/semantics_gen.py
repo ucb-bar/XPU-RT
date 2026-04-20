@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import textwrap
 from dataclasses import dataclass
 
@@ -67,9 +66,7 @@ SEMANTICS_GEN_PROMPT = textwrap.dedent("""\
 
 def format_prompt(ctx: SemanticsGenContext) -> str:
     """Render the semantics generation prompt."""
-    examples = "\n\n".join(
-        f"```python\n{ex}\n```" for ex in ctx.existing_semantics_examples[:3]
-    ) or "(none available)"
+    examples = "\n\n".join(f"```python\n{ex}\n```" for ex in ctx.existing_semantics_examples[:3]) or "(none available)"
 
     return SEMANTICS_GEN_PROMPT.format(
         op_type=ctx.op_type,

@@ -103,11 +103,13 @@ def _plugin_tests(plan: SupportPlan) -> list[VerificationTest]:
     tests: list[VerificationTest] = []
     for stage_req in plan.required_stages:
         if stage_req.needs_plugin:
-            tests.append(VerificationTest(
-                VerificationLevel.L6_PLUGIN_PASSES,
-                f"plugin_{stage_req.stage_name}_runs",
-                f"Plugin for {stage_req.stage_name} runs without error",
-            ))
+            tests.append(
+                VerificationTest(
+                    VerificationLevel.L6_PLUGIN_PASSES,
+                    f"plugin_{stage_req.stage_name}_runs",
+                    f"Plugin for {stage_req.stage_name} runs without error",
+                )
+            )
     return tests
 
 
@@ -121,12 +123,14 @@ def _differential_tests(spec: HardwareSpec) -> list[VerificationTest]:
         ),
     ]
     if spec.verification_surface.has_simulator:
-        tests.append(VerificationTest(
-            VerificationLevel.L7_DIFFERENTIAL_CORRECT,
-            "simulator_match",
-            "Output matches simulator execution",
-            requires_hardware=True,
-        ))
+        tests.append(
+            VerificationTest(
+                VerificationLevel.L7_DIFFERENTIAL_CORRECT,
+                "simulator_match",
+                "Output matches simulator execution",
+                requires_hardware=True,
+            )
+        )
     return tests
 
 
@@ -141,12 +145,14 @@ def _perf_tests(spec: HardwareSpec) -> list[VerificationTest]:
         ),
     ]
     if spec.verification_surface.performance_counters:
-        tests.append(VerificationTest(
-            VerificationLevel.L9_PERF_CHARACTERIZED,
-            "perf_counters_read",
-            f"Read performance counters: {spec.verification_surface.performance_counters[:3]}",
-            requires_hardware=True,
-        ))
+        tests.append(
+            VerificationTest(
+                VerificationLevel.L9_PERF_CHARACTERIZED,
+                "perf_counters_read",
+                f"Read performance counters: {spec.verification_surface.performance_counters[:3]}",
+                requires_hardware=True,
+            )
+        )
     return tests
 
 

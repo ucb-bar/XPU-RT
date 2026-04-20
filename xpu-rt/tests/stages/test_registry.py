@@ -83,8 +83,7 @@ class _FailingStage(CompilationStage):
         return StageContract(
             stage_name="failing",
             postconditions=[
-                IRInvariant("impossible", "requires matmul",
-                            required_ops=frozenset({"linalg.matmul"})),
+                IRInvariant("impossible", "requires matmul", required_ops=frozenset({"linalg.matmul"})),
             ],
         )
 
@@ -115,12 +114,19 @@ class TestTargetDialectStack:
             @property
             def target_name(self) -> str:
                 return "test"
+
             @property
             def stage_name(self) -> str:
                 return "stage_a"
-            def configure(self, t, c): pass
-            def transform(self, m): return m
-            def get_artifacts(self): return {}
+
+            def configure(self, t, c):
+                pass
+
+            def transform(self, m):
+                return m
+
+            def get_artifacts(self):
+                return {}
 
         stack = TargetDialectStack(
             target_name="test",
@@ -230,6 +236,7 @@ class TestStageRegistry:
 
         # Create a fake target for the long stack
         from compgen.targets.schema import DeviceSpec, TargetProfile
+
         long_target = TargetProfile(
             name=long_target_name,
             devices=[DeviceSpec(device_type="cpu", name="d0")],

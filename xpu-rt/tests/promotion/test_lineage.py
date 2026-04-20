@@ -5,12 +5,9 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from compgen.memory.schema import CandidateStatus, GeneratorKind, ObjectKind
 from compgen.memory.store import CompilerMemory
 from compgen.promotion.lineage import (
-    LineageGraph,
-    LineageNode,
     build_lineage_graph,
     find_lineage_siblings,
     get_promotion_history,

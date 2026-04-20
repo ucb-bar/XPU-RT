@@ -36,7 +36,6 @@ from compgen.ir.payload.passes.base import PayloadPass
 from compgen.llm.registry import AutocompCostImpact, ToolArg, ToolResult
 from compgen.solve.per_sm_queue import EventEdge, TileTask, solve_per_sm_queue
 
-
 _DEFAULT_DURATION_US = 1.0
 _SCHEDULE_ATTR = "compgen.static_schedule"
 
@@ -233,11 +232,7 @@ class StaticMegakernelSchedule(PayloadPass):
                     json.dumps({"status": "rejected", "errors": report.errors})
                 )
                 continue
-            sm_count = (
-                graph.sm_count.value.data
-                if graph.sm_count is not None
-                else sm_count_default
-            )
+            sm_count = graph.sm_count.value.data if graph.sm_count is not None else sm_count_default
             tasks, edges = extract_event_edges(graph)
             sched = solve_per_sm_queue(
                 tasks=tasks,
@@ -248,11 +243,7 @@ class StaticMegakernelSchedule(PayloadPass):
             event_decls = [
                 {
                     "name": et.sym_name.data,
-                    "shape": [
-                        d.value.data
-                        for d in et.event_type.shape.data
-                        if isinstance(d, IntegerAttr)
-                    ],
+                    "shape": [d.value.data for d in et.event_type.shape.data if isinstance(d, IntegerAttr)],
                     "wait_count": et.wait_count.value.data,
                     "scope": et.event_type.scope.data,
                     "counter_dtype": et.event_type.counter_dtype.data,
@@ -265,9 +256,7 @@ class StaticMegakernelSchedule(PayloadPass):
                 "sm_count": sm_count,
                 "makespan_us": sched.makespan_us,
                 "solve_time_ms": sched.solve_time_ms,
-                "per_sm_order": {
-                    str(sm): order for sm, order in sched.per_sm_order.items()
-                },
+                "per_sm_order": {str(sm): order for sm, order in sched.per_sm_order.items()},
                 "assignment": sched.assignment,
                 "event_tensor_decls": event_decls,
                 "task_count": len(tasks),

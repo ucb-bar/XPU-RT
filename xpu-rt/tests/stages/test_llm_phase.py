@@ -4,10 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from xdsl.dialects.builtin import ModuleOp
-
 from compgen.stages.base import CompilationStage, StageContract
 from compgen.stages.registry import StageRegistry, TargetDialectStack
+from xdsl.dialects.builtin import ModuleOp
 
 
 class _PhaseTagged(CompilationStage):

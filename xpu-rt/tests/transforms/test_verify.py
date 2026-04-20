@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from compgen.transforms.verify import (
-    verify_guarded_transform,
     TransformVerifier,
     VerificationLevel,
+    verify_guarded_transform,
     verify_transform,
 )
 from xdsl.dialects import arith, func

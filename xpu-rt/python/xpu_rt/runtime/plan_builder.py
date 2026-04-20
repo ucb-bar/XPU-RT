@@ -49,9 +49,7 @@ class ExecutionPlanBuilder:
         device: str = "",
         capacity: float = 0.0,
     ) -> ExecutionPlanBuilder:
-        self.plan.resources.append(
-            Resource(id=id, kind=kind, device=device, capacity=capacity)
-        )
+        self.plan.resources.append(Resource(id=id, kind=kind, device=device, capacity=capacity))
         return self
 
     # --- region placement + queues -------------------------------------

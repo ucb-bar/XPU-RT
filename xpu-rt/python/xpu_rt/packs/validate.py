@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import Iterable
 
 from compgen.packs.base import LoadedPack
 from compgen.packs.envcheck import EnvCheckResult, check_pack_environment

@@ -28,7 +28,7 @@ def _make_module() -> ModuleOp:
 
 def test_valid_rule_generation() -> None:
     """A well-formed Python rule passes validation."""
-    rule_code = '''
+    rule_code = """
 class TestRule(EqSatRewriteRule):
     @property
     def name(self):
@@ -46,7 +46,7 @@ class TestRule(EqSatRewriteRule):
                 add_alternative_to_eclass(eclass, commuted.result)
                 count += 1
         return count
-'''
+"""
     result = validate_rule_code(rule_code)
     assert result.valid, f"Rule validation failed: {result.error}"
     assert result.rule is not None
@@ -61,7 +61,7 @@ def test_invalid_rule_rejected() -> None:
 
 def test_validated_rule_applied_to_eqsat() -> None:
     """A validated rule runs successfully in the eqsat pipeline."""
-    rule_code = '''
+    rule_code = """
 class NopRule(EqSatRewriteRule):
     @property
     def name(self):
@@ -69,7 +69,7 @@ class NopRule(EqSatRewriteRule):
 
     def match_and_add(self, module):
         return 0
-'''
+"""
     validation = validate_rule_code(rule_code)
     assert validation.valid
 
@@ -90,7 +90,7 @@ def test_transform_verification_passes() -> None:
 def test_transform_go_no_go() -> None:
     """Aggregate: rule validation + eqsat + verification all work."""
     # 1. Validate a rule
-    rule_code = '''
+    rule_code = """
 class AddCommute(EqSatRewriteRule):
     @property
     def name(self):
@@ -98,7 +98,7 @@ class AddCommute(EqSatRewriteRule):
 
     def match_and_add(self, module):
         return 0
-'''
+"""
     validation = validate_rule_code(rule_code)
     assert validation.valid
 

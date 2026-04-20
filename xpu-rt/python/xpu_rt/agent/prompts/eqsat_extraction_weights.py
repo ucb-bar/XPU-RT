@@ -1,5 +1,7 @@
 """Prompt for EqSat extraction cost weight tuning."""
+
 from __future__ import annotations
+
 import json
 import re
 import textwrap
@@ -9,6 +11,7 @@ from dataclasses import dataclass
 @dataclass(frozen=True)
 class WeightsContext:
     """Context for extraction weight tuning prompt."""
+
     egraph_summary: str
     target_description: str
     current_fusion_weight: float
@@ -78,7 +81,7 @@ def parse_response(text: str) -> dict | None:
     try:
         data = json.loads(text)
     except json.JSONDecodeError:
-        m = re.search(r'\{.*\}', text, re.DOTALL)
+        m = re.search(r"\{.*\}", text, re.DOTALL)
         if m:
             try:
                 data = json.loads(m.group())

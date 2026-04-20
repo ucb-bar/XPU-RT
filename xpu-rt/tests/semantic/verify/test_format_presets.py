@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 import pytest
-
 from compgen.semantic.verify.compare import (
-    ComparisonConfig,
     DTYPE_PRESETS,
     FORMAT_PRESETS,
+    ComparisonConfig,
     tolerance_for_format,
 )
 
@@ -30,8 +29,9 @@ def test_format_presets_covers_all_quantization_families():
         "nvfp4",
     )
     for prefix in required_prefixes:
-        assert any(k == prefix or k.startswith(f"{prefix}_") for k in FORMAT_PRESETS), \
+        assert any(k == prefix or k.startswith(f"{prefix}_") for k in FORMAT_PRESETS), (
             f"no FORMAT_PRESETS entry for {prefix}"
+        )
 
 
 def test_tolerance_for_format_exact_key():
@@ -42,7 +42,7 @@ def test_tolerance_for_format_exact_key():
 
 def test_tolerance_for_format_suffix_strip_fallback():
     # "int4_per_tensor" explicitly exists; test an untouched suffix form.
-    cfg = tolerance_for_format("int4_per_block")   # not explicitly in table
+    cfg = tolerance_for_format("int4_per_block")  # not explicitly in table
     # Suffix-stripping falls back to the bare ``int4`` entry.
     assert cfg.atol == 0.5
     assert cfg.rtol == 0.0

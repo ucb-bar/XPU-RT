@@ -92,11 +92,14 @@ def _run_pipeline(model_name: str, model: torch.nn.Module, inputs: tuple) -> Mod
 
     # Step 5: CHECK assertions on IR text
     ir_text = FXImporter().get_ir_text(canon_module)
-    check_result = check_ir(ir_text, [
-        "// CHECK: func.func @forward",
-        "// CHECK: func.return",
-        "// CHECK-NOT: COMPGEN_UNSUPPORTED",
-    ])
+    check_result = check_ir(
+        ir_text,
+        [
+            "// CHECK: func.func @forward",
+            "// CHECK: func.return",
+            "// CHECK-NOT: COMPGEN_UNSUPPORTED",
+        ],
+    )
     result.ir_checks_passed = check_result.passed
 
     return result
@@ -107,12 +110,15 @@ def _load_model(name: str):
     sys.path.insert(0, str(EXAMPLES_DIR))
     if name == "simple_mlp":
         from simple_mlp import SimpleMLP, get_sample_inputs
+
         return SimpleMLP(), get_sample_inputs()
     elif name == "transformer_block":
         from transformer_block import TransformerBlock, get_sample_inputs
+
         return TransformerBlock(), get_sample_inputs()
     elif name == "quantized_mlp":
         from quantized_mlp import get_model_and_inputs
+
         return get_model_and_inputs()
     else:
         raise ValueError(f"Unknown model: {name}")

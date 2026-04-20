@@ -70,13 +70,11 @@ FORMAT_PRESETS: dict[str, ComparisonConfig] = {
     "float8_e4m3fn_per_tensor": ComparisonConfig(atol=1e-2, rtol=1e-2),
     "float8_e4m3fn_per_channel": ComparisonConfig(atol=1e-2, rtol=1e-2),
     "float8_e5m2_per_tensor": ComparisonConfig(atol=1.5e-2, rtol=1.5e-2),
-
     # Int8 (kept consistent with DTYPE_PRESETS for exactness on
     # well-aligned quantization).
     "int8": ComparisonConfig(atol=0.0, rtol=0.0),
     "int8_per_tensor": ComparisonConfig(atol=0.0, rtol=0.0),
     "int8_per_channel": ComparisonConfig(atol=0.0, rtol=0.0),
-
     # Int4 — ±0.5 LSB (half-quantum) plus small relative slack for the
     # per-channel and per-group paths because groupwise scale changes
     # carry additional rounding.
@@ -84,22 +82,18 @@ FORMAT_PRESETS: dict[str, ComparisonConfig] = {
     "int4_per_tensor": ComparisonConfig(atol=0.5, rtol=0.0),
     "int4_per_channel": ComparisonConfig(atol=0.5, rtol=2e-2),
     "int4_per_group": ComparisonConfig(atol=0.5, rtol=3e-2),
-
     "uint4": ComparisonConfig(atol=0.5, rtol=0.0),
     "uint4_per_tensor": ComparisonConfig(atol=0.5, rtol=0.0),
     "uint4_per_channel": ComparisonConfig(atol=0.5, rtol=2e-2),
     "uint4_per_group": ComparisonConfig(atol=0.5, rtol=3e-2),
-
     # Intx (1-3 bit) — much wider tolerance; these are lossy by design.
     "intx": ComparisonConfig(atol=1.0, rtol=0.1),
     "intx_per_group": ComparisonConfig(atol=1.0, rtol=0.1),
     "intx_per_channel": ComparisonConfig(atol=1.0, rtol=0.1),
-
     # MX family (block-wise with shared exponent).
     "mx4": ComparisonConfig(atol=2e-2, rtol=2e-2),
     "mx6": ComparisonConfig(atol=1.5e-2, rtol=1.5e-2),
     "mx9": ComparisonConfig(atol=1e-2, rtol=1e-2),
-
     # NVFP4 block format (NV custom 4-bit float).
     "nvfp4": ComparisonConfig(atol=1.5e-2, rtol=1.5e-2),
     "nvfp4_block": ComparisonConfig(atol=1.5e-2, rtol=1.5e-2),

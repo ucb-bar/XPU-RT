@@ -222,10 +222,7 @@ def capture_model(
     # errors during torch.export tracing.
     model = model.to("cpu")
     if isinstance(sample_inputs, (tuple, list)):
-        sample_inputs = tuple(
-            t.to("cpu") if isinstance(t, torch.Tensor) else t
-            for t in sample_inputs
-        )
+        sample_inputs = tuple(t.to("cpu") if isinstance(t, torch.Tensor) else t for t in sample_inputs)
 
     kwargs: dict[str, Any] = {}
     if dynamic_shapes is not None:
@@ -284,9 +281,9 @@ def capture_frontend_artifact(
         supported_targets=set(DECOMPOSITION_TABLE.keys()),
         runtime_versions=versions,
     )
-    explicit_blackboxes = tuple(sorted(
-        resolution.target for resolution in unsupported_resolutions if resolution.approved_blackbox
-    ))
+    explicit_blackboxes = tuple(
+        sorted(resolution.target for resolution in unsupported_resolutions if resolution.approved_blackbox)
+    )
     synthesized_payload_translations = {
         resolution.target: resolution.translation.translator
         for resolution in unsupported_resolutions

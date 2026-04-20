@@ -50,7 +50,7 @@ LLM-tool signature:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from xdsl.dialects.builtin import (
     AffineMapAttr,
@@ -60,7 +60,7 @@ from xdsl.dialects.builtin import (
     i64,
 )
 from xdsl.dialects.linalg import GenericOp, IteratorType, IteratorTypeAttr, TransposeOp
-from xdsl.ir import Operation, SSAValue
+from xdsl.ir import SSAValue
 from xdsl.ir.affine import AffineExpr, AffineMap
 from xdsl.pattern_rewriter import (
     GreedyRewritePatternApplier,
@@ -84,9 +84,7 @@ class PropagateTransposesConfig:
     aggressiveness: str = "through_elementwise"
 
 
-_VALID_AGGRESSIVENESS = frozenset(
-    {"conservative", "through_elementwise", "through_conv", "through_pad"}
-)
+_VALID_AGGRESSIVENESS = frozenset({"conservative", "through_elementwise", "through_conv", "through_pad"})
 
 
 # --- helpers ------------------------------------------------------------------
@@ -142,9 +140,7 @@ class ComposeAdjacentTransposesPattern(RewritePattern):
         self.stats = stats
 
     @op_type_rewrite_pattern
-    def match_and_rewrite(
-        self, op: TransposeOp, rewriter: PatternRewriter
-    ) -> None:
+    def match_and_rewrite(self, op: TransposeOp, rewriter: PatternRewriter) -> None:
         inner = _defining_transpose(op.input)
         if inner is None:
             return
@@ -248,9 +244,7 @@ class PushTransposeIntoElementwisePattern(RewritePattern):
         self.stats = stats
 
     @op_type_rewrite_pattern
-    def match_and_rewrite(
-        self, op: GenericOp, rewriter: PatternRewriter
-    ) -> None:
+    def match_and_rewrite(self, op: GenericOp, rewriter: PatternRewriter) -> None:
         if self.cfg.aggressiveness == "conservative":
             return
         if not _iterator_is_all_parallel(op):
@@ -344,10 +338,7 @@ def run_propagate_transposes(
     """Bubble transposes to a fixed point."""
     cfg = config if config is not None else PropagateTransposesConfig()
     if cfg.aggressiveness not in _VALID_AGGRESSIVENESS:
-        raise ValueError(
-            f"aggressiveness must be one of {sorted(_VALID_AGGRESSIVENESS)}; "
-            f"got {cfg.aggressiveness!r}"
-        )
+        raise ValueError(f"aggressiveness must be one of {sorted(_VALID_AGGRESSIVENESS)}; got {cfg.aggressiveness!r}")
     stats = PropagateTransposesStats()
     patterns = [
         ComposeAdjacentTransposesPattern(stats=stats),

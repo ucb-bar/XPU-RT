@@ -5,11 +5,10 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from compgen.bench import BenchmarkReport, measure_pipeline, measure_pipeline_suite
-from compgen.options import CompGenOptions, cuda_a100_defaults
+from compgen.options import cuda_a100_defaults
 from compgen.pipeline import PipelineCache, compile_and_diff
-from compgen.search import Autotuner, AutotuneResult, OptionsAxis
+from compgen.search import Autotuner, OptionsAxis
 
 from tests._fixtures.real_workloads import (
     attention_mlp_tiny,
@@ -17,7 +16,6 @@ from tests._fixtures.real_workloads import (
     smolvla_stack_2,
     tinyllama_stack_3,
 )
-
 
 # =========================================================================
 # Stacked full-model fixtures (W12.1)
@@ -34,6 +32,7 @@ class TestStackedFixtures:
         a = fn()
         b = fn()
         import torch
+
         assert torch.allclose(a.eager_output, b.eager_output)
 
     def test_tinyllama_stack_has_embed_and_lm_head(self):
@@ -61,7 +60,8 @@ class TestStackedFixturesE2E:
     def test_stacked_fixture_compiles_end_to_end(self, fn):
         fx = fn()
         report = compile_and_diff(
-            fx.model, fx.example_inputs,
+            fx.model,
+            fx.example_inputs,
             options=cuda_a100_defaults(),
             fixture_name=fx.name,
             eager_reference=fx.eager_output,
@@ -147,7 +147,9 @@ class TestAutotuner:
     def test_summary_is_printable(self):
         fx = attention_mlp_tiny()
         tuner = Autotuner(
-            base=cuda_a100_defaults(), axes=[], strategy="baseline",
+            base=cuda_a100_defaults(),
+            axes=[],
+            strategy="baseline",
         )
         result = tuner.search(fx.model, fx.example_inputs, workload_name=fx.name)
         text = result.summary()
@@ -163,7 +165,8 @@ class TestBenchmarkHarness:
     def test_measure_pipeline_returns_report(self):
         fx = attention_mlp_tiny()
         report = measure_pipeline(
-            fx.model, fx.example_inputs,
+            fx.model,
+            fx.example_inputs,
             options=cuda_a100_defaults(),
             fixture_name=fx.name,
             n_iter=2,
@@ -177,9 +180,11 @@ class TestBenchmarkHarness:
     def test_cache_speedup_is_recorded(self):
         fx = attention_mlp_tiny()
         report = measure_pipeline(
-            fx.model, fx.example_inputs,
+            fx.model,
+            fx.example_inputs,
             options=cuda_a100_defaults(),
-            n_iter=2, exported_program=fx.exported,
+            n_iter=2,
+            exported_program=fx.exported,
         )
         assert report.compile_speedup > 1.0
 
@@ -217,6 +222,7 @@ class TestDiskCache:
 
     def test_manifest_records_every_cached_entry(self, tmp_path: Path):
         import json
+
         cache = PipelineCache(max_entries=8)
         fx = attention_mlp_tiny()
         cache.compile(fx.model, fx.example_inputs, options=cuda_a100_defaults())
@@ -238,10 +244,8 @@ class TestExecutorFidelity:
         linalg.generic bodies, so `mul by 2.0` produces the right
         output instead of identity."""
         from compgen.runtime.cpu_executor import _find_constant_in_body
-
-        import torch
         from xdsl.dialects.arith import ConstantOp, MulfOp
-        from xdsl.dialects.builtin import FloatAttr, Float32Type
+        from xdsl.dialects.builtin import Float32Type, FloatAttr
         from xdsl.dialects.linalg import YieldOp
         from xdsl.ir import Block
 

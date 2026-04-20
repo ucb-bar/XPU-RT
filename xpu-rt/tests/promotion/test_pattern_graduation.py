@@ -5,8 +5,6 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import pytest
-
 from compgen.promotion import (
     PatternAppearance,
     PatternIdentity,
@@ -55,8 +53,7 @@ def _write_entry(
 def test_scan_extracts_accepted_invents(tmp_path: Path) -> None:
     p = tmp_path / "t.jsonl"
     _write_entry(p, workload="w1", target="t1", chosen={"rewrite": "A"})
-    _write_entry(p, workload="w1", target="t1", chosen={"rewrite": "A"},
-                 gate_status="rejected")  # should be ignored
+    _write_entry(p, workload="w1", target="t1", chosen={"rewrite": "A"}, gate_status="rejected")  # should be ignored
 
     apps = scan_transcripts([p])
     assert len(apps) == 1

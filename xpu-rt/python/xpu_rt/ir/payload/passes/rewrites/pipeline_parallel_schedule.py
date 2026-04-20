@@ -62,20 +62,12 @@ def run_pipeline_parallel_schedule(
 ) -> PipelineParallelStats:
     cfg = config if config is not None else PipelineParallelConfig()
     if cfg.num_stages < 1 or cfg.num_microbatches < cfg.num_stages:
-        raise ValueError(
-            "num_microbatches must be >= num_stages >= 1"
-        )
+        raise ValueError("num_microbatches must be >= num_stages >= 1")
     schedule = _generate_1f1b(cfg.num_stages, cfg.num_microbatches)
-    module.attributes["compgen.pp_schedule"] = StringAttr(
-        ";".join(f"{s}:{m}:{p}" for s, m, p in schedule)
-    )
+    module.attributes["compgen.pp_schedule"] = StringAttr(";".join(f"{s}:{m}:{p}" for s, m, p in schedule))
     module.attributes["compgen.pp_schedule_kind"] = StringAttr(cfg.schedule_kind)
-    module.attributes["compgen.pp_num_stages"] = StringAttr(
-        str(cfg.num_stages)
-    )
-    module.attributes["compgen.pp_num_microbatches"] = StringAttr(
-        str(cfg.num_microbatches)
-    )
+    module.attributes["compgen.pp_num_stages"] = StringAttr(str(cfg.num_stages))
+    module.attributes["compgen.pp_num_microbatches"] = StringAttr(str(cfg.num_microbatches))
     return PipelineParallelStats(
         schedule_entries=len(schedule),
         schedule_kind=cfg.schedule_kind,

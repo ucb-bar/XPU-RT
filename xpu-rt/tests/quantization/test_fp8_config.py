@@ -5,17 +5,16 @@ from __future__ import annotations
 import pytest
 import torch
 import torch.nn as nn
-
 from compgen.quantization.fp8_ops import FP8_E4M3_DTYPE, is_power_of_two
 from compgen.quantization.fp8_tensor import FP8E4M3Po2Tensor
 
 torchao = pytest.importorskip("torchao")
 from torchao.quantization import quantize_  # noqa: E402
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _simple_mlp(in_f: int = 32, hidden: int = 64, out_f: int = 16) -> nn.Module:
     """Create a simple two-layer MLP in bfloat16."""
@@ -29,6 +28,7 @@ def _simple_mlp(in_f: int = 32, hidden: int = 64, out_f: int = 16) -> nn.Module:
 # ---------------------------------------------------------------------------
 # FP8E4M3Po2Tensor basics
 # ---------------------------------------------------------------------------
+
 
 class TestFP8E4M3Po2Tensor:
     def test_from_float(self) -> None:
@@ -93,13 +93,12 @@ class TestFP8E4M3Po2Tensor:
 # Matmul dispatch
 # ---------------------------------------------------------------------------
 
+
 class TestFP8Matmul:
     def test_mm_dispatch(self) -> None:
         """torch.mm with FP8 weight should produce correct-shaped result."""
         activation = torch.randn(4, 32, dtype=torch.bfloat16)
-        weight = FP8E4M3Po2Tensor.from_float(
-            torch.randn(16, 32, dtype=torch.bfloat16)
-        )
+        weight = FP8E4M3Po2Tensor.from_float(torch.randn(16, 32, dtype=torch.bfloat16))
         result = torch.mm(activation, weight.t())
         assert result.shape == (4, 16)
         assert result.dtype == torch.bfloat16
@@ -107,9 +106,7 @@ class TestFP8Matmul:
     def test_linear_dispatch(self) -> None:
         """F.linear with FP8 weight should work."""
         activation = torch.randn(4, 32, dtype=torch.bfloat16)
-        weight = FP8E4M3Po2Tensor.from_float(
-            torch.randn(16, 32, dtype=torch.bfloat16)
-        )
+        weight = FP8E4M3Po2Tensor.from_float(torch.randn(16, 32, dtype=torch.bfloat16))
         bias = torch.randn(16, dtype=torch.bfloat16)
         result = torch.nn.functional.linear(activation, weight, bias)
         assert result.shape == (4, 16)
@@ -117,9 +114,7 @@ class TestFP8Matmul:
     def test_linear_module_forward(self) -> None:
         """nn.Linear with FP8 weight should produce correct output."""
         layer = nn.Linear(32, 16, bias=True, dtype=torch.bfloat16)
-        layer.weight = nn.Parameter(
-            FP8E4M3Po2Tensor.from_float(layer.weight), requires_grad=False
-        )
+        layer.weight = nn.Parameter(FP8E4M3Po2Tensor.from_float(layer.weight), requires_grad=False)
         x = torch.randn(4, 32, dtype=torch.bfloat16)
         out = layer(x)
         assert out.shape == (4, 16)
@@ -145,6 +140,7 @@ class TestFP8Matmul:
 # ---------------------------------------------------------------------------
 # quantize_() integration
 # ---------------------------------------------------------------------------
+
 
 class TestQuantizeIntegration:
     def test_quantize_replaces_weights(self) -> None:
@@ -180,9 +176,7 @@ class TestQuantizeIntegration:
 
         for name, param in model.named_parameters():
             if isinstance(param, FP8E4M3Po2Tensor):
-                assert is_power_of_two(param._scale), (
-                    f"Scale for {name} is {param._scale}, not a power of two"
-                )
+                assert is_power_of_two(param._scale), f"Scale for {name} is {param._scale}, not a power of two"
 
     def test_quantize_with_filter_fn(self) -> None:
         """quantize_() with filter should only quantize matching layers."""

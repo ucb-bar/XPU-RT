@@ -3,9 +3,6 @@
 from __future__ import annotations
 
 import pytest
-from xdsl.dialects.builtin import ArrayAttr, IntegerAttr, StringAttr, SymbolRefAttr, i64
-from xdsl.utils.exceptions import VerifyException
-
 from compgen.ir.recipe.dialect import ALL_OPS, Recipe
 from compgen.ir.recipe.ops_propose import (
     _PROPOSE_OPS,
@@ -23,6 +20,8 @@ from compgen.ir.recipe.ops_propose import (
     ProposeSchedulingPolicyOp,
     ProposeShardingPlanOp,
 )
+from xdsl.dialects.builtin import ArrayAttr, IntegerAttr, StringAttr, SymbolRefAttr, i64
+from xdsl.utils.exceptions import VerifyException
 
 
 def _valid_payload() -> str:
@@ -247,22 +246,17 @@ def _mk_megakernel_payload() -> str:
             {
                 "megakernel_name": "mm_rs_static",
                 "fused_region_refs": ["region_mm", "region_rs"],
-                "event_tensor_decls": [
-                    {"name": "E", "shape": [4], "wait_count": 2, "scope": "device"}
-                ],
+                "event_tensor_decls": [{"name": "E", "shape": [4], "wait_count": 2, "scope": "device"}],
             }
         ],
         chosen={
             "megakernel_name": "mm_rs_static",
             "fused_region_refs": ["region_mm", "region_rs"],
-            "event_tensor_decls": [
-                {"name": "E", "shape": [4], "wait_count": 2, "scope": "device"}
-            ],
+            "event_tensor_decls": [{"name": "E", "shape": [4], "wait_count": 2, "scope": "device"}],
             "task_partition": {"region_mm": [4], "region_rs": [4]},
         },
         target_feature_justification=(
-            "B200 capabilities.persistent_kernels=true and "
-            "capabilities.semaphore_atomics=true; ETC abstraction"
+            "B200 capabilities.persistent_kernels=true and capabilities.semaphore_atomics=true; ETC abstraction"
         ),
         gate_result={"status": "accepted", "details": {}},
         select_vs_invent="invent",
@@ -272,9 +266,7 @@ def _mk_megakernel_payload() -> str:
 def test_propose_megakernel_synthesis_verifies() -> None:
     op = ProposeMegakernelSynthesisOp.create(
         properties={
-            "fused_region_refs": ArrayAttr(
-                [SymbolRefAttr("region_mm"), SymbolRefAttr("region_rs")]
-            ),
+            "fused_region_refs": ArrayAttr([SymbolRefAttr("region_mm"), SymbolRefAttr("region_rs")]),
             "payload": StringAttr(_mk_megakernel_payload()),
         },
     )

@@ -84,15 +84,11 @@ def check_event_graph(graph: GraphOp) -> EventGraphReport:
         elif isinstance(op, (UpdateOp, TriggerOp)):
             ref = op.target.event_ref.data
             if ref not in report.event_decls:
-                report.errors.append(
-                    f"{op.name} targets undeclared event {ref!r}"
-                )
+                report.errors.append(f"{op.name} targets undeclared event {ref!r}")
             else:
                 report.data_dep_events.add(ref)
             if is_static:
-                report.errors.append(
-                    f"{op.name} forbidden under static scheduling policy"
-                )
+                report.errors.append(f"{op.name} forbidden under static scheduling policy")
         elif isinstance(op, CallDeviceOp):
             # Multiplicity per dispatched task: every entry in task_shape
             # contributes a multiplier so that a CallDeviceOp on a 4-tile
@@ -112,15 +108,10 @@ def check_event_graph(graph: GraphOp) -> EventGraphReport:
                         continue
                     ref = coord.event_ref.data
                     if ref not in report.event_decls:
-                        report.errors.append(
-                            f"call_device {edge_attr_name} references "
-                            f"undeclared event {ref!r}"
-                        )
+                        report.errors.append(f"call_device {edge_attr_name} references undeclared event {ref!r}")
                         continue
                     if edge_attr_name == "out_edges":
-                        report.notify_counts[ref] += (
-                            coord.decrement.value.data * task_grid
-                        )
+                        report.notify_counts[ref] += coord.decrement.value.data * task_grid
                     else:
                         report.wait_counts[ref] += task_grid
 
@@ -140,9 +131,7 @@ def check_event_graph(graph: GraphOp) -> EventGraphReport:
                 f"deadlock"
             )
         if waits == 0:
-            report.warnings.append(
-                f"event {name!r} produced ({notifies}) but never waited on"
-            )
+            report.warnings.append(f"event {name!r} produced ({notifies}) but never waited on")
 
     if graph.sm_count is not None and isinstance(graph.sm_count, IntegerAttr):
         if graph.sm_count.value.data <= 0:

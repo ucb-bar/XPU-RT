@@ -108,9 +108,7 @@ def dispatch_tool(
     duration_ms = (time.perf_counter() - started) * 1000.0
 
     session_id = (
-        arguments.get("session_id")
-        or (result.get("session_id") if isinstance(result, dict) else None)
-        or "unknown"
+        arguments.get("session_id") or (result.get("session_id") if isinstance(result, dict) else None) or "unknown"
     )
     if recorder is not None:
         recorder.record(
@@ -126,10 +124,10 @@ def dispatch_tool(
 
 def _require_mcp() -> Any:
     try:
-        import mcp   # type: ignore[import-not-found]
-        import mcp.server   # type: ignore[import-not-found]
-        import mcp.server.stdio   # type: ignore[import-not-found]
-        import mcp.types   # type: ignore[import-not-found]
+        import mcp  # type: ignore[import-not-found]
+        import mcp.server  # type: ignore[import-not-found]
+        import mcp.server.stdio  # type: ignore[import-not-found]
+        import mcp.types  # type: ignore[import-not-found]
 
         return mcp
     except ImportError as exc:
@@ -154,9 +152,9 @@ def _run_async_server() -> None:
 
     _route_logs_to_stderr()
     mcp_mod = _require_mcp()
-    from mcp.server import Server   # type: ignore[import-not-found]
-    from mcp.server.stdio import stdio_server   # type: ignore[import-not-found]
-    from mcp.types import TextContent, Tool   # type: ignore[import-not-found]
+    from mcp.server import Server  # type: ignore[import-not-found]
+    from mcp.server.stdio import stdio_server  # type: ignore[import-not-found]
+    from mcp.types import TextContent, Tool  # type: ignore[import-not-found]
 
     sm = SessionManager()
     recorder = McpTranscriptRecorder.from_env()
@@ -165,7 +163,7 @@ def _run_async_server() -> None:
     tool_by_name = {t["name"]: t for t in ALL_TOOLS}
 
     @server.list_tools()
-    async def _list_tools() -> list[Any]:   # type: ignore[misc]
+    async def _list_tools() -> list[Any]:  # type: ignore[misc]
         return [
             Tool(
                 name=t["name"],
@@ -176,16 +174,21 @@ def _run_async_server() -> None:
         ]
 
     @server.call_tool()
-    async def _call_tool(name: str, arguments: dict[str, Any]) -> list[Any]:   # type: ignore[misc]
+    async def _call_tool(name: str, arguments: dict[str, Any]) -> list[Any]:  # type: ignore[misc]
         result = dispatch_tool(
-            name, arguments, sm=sm, tool_by_name=tool_by_name, recorder=recorder,
+            name,
+            arguments,
+            sm=sm,
+            tool_by_name=tool_by_name,
+            recorder=recorder,
         )
         return [TextContent(type="text", text=_serialise(result))]
 
     async def _main() -> None:
         async with stdio_server() as (read_stream, write_stream):
             await server.run(
-                read_stream, write_stream,
+                read_stream,
+                write_stream,
                 server.create_initialization_options(),
             )
 

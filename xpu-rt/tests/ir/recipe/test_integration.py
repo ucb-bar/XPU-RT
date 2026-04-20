@@ -34,41 +34,67 @@ def _build_simple_recipe() -> ModuleOp:
     block = Block()
 
     # Provenance
-    block.add_op(FromTemplateOp.build(properties={
-        "template_name": StringAttr("test"),
-        "template_version": IntegerAttr(1, IntegerType(64)),
-    }))
+    block.add_op(
+        FromTemplateOp.build(
+            properties={
+                "template_name": StringAttr("test"),
+                "template_version": IntegerAttr(1, IntegerType(64)),
+            }
+        )
+    )
 
     # Region
-    block.add_op(RecipeRegionOp.build(properties={
-        "sym_name": StringAttr("r0"),
-        "payload_region_id": StringAttr("matmul_0"),
-    }))
+    block.add_op(
+        RecipeRegionOp.build(
+            properties={
+                "sym_name": StringAttr("r0"),
+                "payload_region_id": StringAttr("matmul_0"),
+            }
+        )
+    )
 
     # Facts
-    block.add_op(BackendAvailableOp.build(properties={
-        "region_ref": SymbolRefAttr("r0"),
-        "backend": StringAttr("triton"),
-    }))
+    block.add_op(
+        BackendAvailableOp.build(
+            properties={
+                "region_ref": SymbolRefAttr("r0"),
+                "backend": StringAttr("triton"),
+            }
+        )
+    )
 
     # Candidate actions
-    block.add_op(TileOp.build(properties={
-        "region_ref": SymbolRefAttr("r0"),
-        "tile_sizes": ArrayAttr([
-            IntegerAttr(64, IntegerType(64)),
-            IntegerAttr(32, IntegerType(64)),
-        ]),
-        "provenance": ProvenanceAttr("seed", 0),
-    }))
-    block.add_op(PlaceOnDeviceOp.build(properties={
-        "region_ref": SymbolRefAttr("r0"),
-        "device": DeviceRefAttr(0, "gpu0"),
-    }))
+    block.add_op(
+        TileOp.build(
+            properties={
+                "region_ref": SymbolRefAttr("r0"),
+                "tile_sizes": ArrayAttr(
+                    [
+                        IntegerAttr(64, IntegerType(64)),
+                        IntegerAttr(32, IntegerType(64)),
+                    ]
+                ),
+                "provenance": ProvenanceAttr("seed", 0),
+            }
+        )
+    )
+    block.add_op(
+        PlaceOnDeviceOp.build(
+            properties={
+                "region_ref": SymbolRefAttr("r0"),
+                "device": DeviceRefAttr(0, "gpu0"),
+            }
+        )
+    )
 
     # Verification
-    block.add_op(RequireDiffTestOp.build(properties={
-        "region_ref": SymbolRefAttr("r0"),
-    }))
+    block.add_op(
+        RequireDiffTestOp.build(
+            properties={
+                "region_ref": SymbolRefAttr("r0"),
+            }
+        )
+    )
 
     return ModuleOp(Region(block))
 
@@ -86,10 +112,14 @@ def test_unresolved_symbol_fails_validation() -> None:
     """Reference to undefined region should fail."""
     block = Block()
     # No RegionOp defined, but TileOp references "r_missing"
-    block.add_op(TileOp.build(properties={
-        "region_ref": SymbolRefAttr("r_missing"),
-        "tile_sizes": ArrayAttr([IntegerAttr(64, IntegerType(64))]),
-    }))
+    block.add_op(
+        TileOp.build(
+            properties={
+                "region_ref": SymbolRefAttr("r_missing"),
+                "tile_sizes": ArrayAttr([IntegerAttr(64, IntegerType(64))]),
+            }
+        )
+    )
     module = ModuleOp(Region(block))
     result = validate_recipe_module(module)
     assert not result.valid
@@ -99,18 +129,30 @@ def test_unresolved_symbol_fails_validation() -> None:
 def test_conflicting_placement_fails_validation() -> None:
     """Two PlaceOnDeviceOp for same region with different devices."""
     block = Block()
-    block.add_op(RecipeRegionOp.build(properties={
-        "sym_name": StringAttr("r0"),
-        "payload_region_id": StringAttr("op_0"),
-    }))
-    block.add_op(PlaceOnDeviceOp.build(properties={
-        "region_ref": SymbolRefAttr("r0"),
-        "device": DeviceRefAttr(0, "gpu0"),
-    }))
-    block.add_op(PlaceOnDeviceOp.build(properties={
-        "region_ref": SymbolRefAttr("r0"),
-        "device": DeviceRefAttr(1, "gpu1"),
-    }))
+    block.add_op(
+        RecipeRegionOp.build(
+            properties={
+                "sym_name": StringAttr("r0"),
+                "payload_region_id": StringAttr("op_0"),
+            }
+        )
+    )
+    block.add_op(
+        PlaceOnDeviceOp.build(
+            properties={
+                "region_ref": SymbolRefAttr("r0"),
+                "device": DeviceRefAttr(0, "gpu0"),
+            }
+        )
+    )
+    block.add_op(
+        PlaceOnDeviceOp.build(
+            properties={
+                "region_ref": SymbolRefAttr("r0"),
+                "device": DeviceRefAttr(1, "gpu1"),
+            }
+        )
+    )
     module = ModuleOp(Region(block))
     result = validate_recipe_module(module)
     assert not result.valid
@@ -146,10 +188,14 @@ def test_lower_produces_verification_obligations() -> None:
 
 def test_lower_solver_job() -> None:
     block = Block()
-    block.add_op(RequireSolverOp.build(properties={
-        "solve_type": StringAttr("placement"),
-        "timeout_ms": IntegerAttr(5000, IntegerType(64)),
-    }))
+    block.add_op(
+        RequireSolverOp.build(
+            properties={
+                "solve_type": StringAttr("placement"),
+                "timeout_ms": IntegerAttr(5000, IntegerType(64)),
+            }
+        )
+    )
     module = ModuleOp(Region(block))
     output = lower_recipe(module)
     assert len(output.plan_fragments) == 1
@@ -159,14 +205,22 @@ def test_lower_solver_job() -> None:
 
 def test_lower_eqsat_job() -> None:
     block = Block()
-    block.add_op(RecipeRegionOp.build(properties={
-        "sym_name": StringAttr("r0"),
-        "payload_region_id": StringAttr("matmul_0"),
-    }))
-    block.add_op(RequireEqsatOp.build(properties={
-        "region_ref": SymbolRefAttr("r0"),
-        "rule_categories": ArrayAttr([StringAttr("algebraic"), StringAttr("fusion")]),
-    }))
+    block.add_op(
+        RecipeRegionOp.build(
+            properties={
+                "sym_name": StringAttr("r0"),
+                "payload_region_id": StringAttr("matmul_0"),
+            }
+        )
+    )
+    block.add_op(
+        RequireEqsatOp.build(
+            properties={
+                "region_ref": SymbolRefAttr("r0"),
+                "rule_categories": ArrayAttr([StringAttr("algebraic"), StringAttr("fusion")]),
+            }
+        )
+    )
     module = ModuleOp(Region(block))
     output = lower_recipe(module)
     assert len(output.eqsat_jobs) == 1
@@ -176,15 +230,23 @@ def test_lower_eqsat_job() -> None:
 
 def test_lower_memory_bound() -> None:
     block = Block()
-    block.add_op(RecipeRegionOp.build(properties={
-        "sym_name": StringAttr("r0"),
-        "payload_region_id": StringAttr("op_0"),
-    }))
-    block.add_op(RequireMemoryBoundOp.build(properties={
-        "region_ref": SymbolRefAttr("r0"),
-        "max_bytes": IntegerAttr(1048576, IntegerType(64)),
-        "device": DeviceRefAttr(0, "gpu0"),
-    }))
+    block.add_op(
+        RecipeRegionOp.build(
+            properties={
+                "sym_name": StringAttr("r0"),
+                "payload_region_id": StringAttr("op_0"),
+            }
+        )
+    )
+    block.add_op(
+        RequireMemoryBoundOp.build(
+            properties={
+                "region_ref": SymbolRefAttr("r0"),
+                "max_bytes": IntegerAttr(1048576, IntegerType(64)),
+                "device": DeviceRefAttr(0, "gpu0"),
+            }
+        )
+    )
     module = ModuleOp(Region(block))
     output = lower_recipe(module)
     assert len(output.verification_obligations) == 1
@@ -193,21 +255,33 @@ def test_lower_memory_bound() -> None:
 
 def test_guard_ref_validation_passes_with_known_guard() -> None:
     block = Block()
-    block.add_op(RecipeRegionOp.build(properties={
-        "sym_name": StringAttr("r0"),
-        "payload_region_id": StringAttr("op_0"),
-    }))
-    block.add_op(RecipeGuardOp.build(properties={
-        "sym_name": StringAttr("guard_tile"),
-        "guard_key": StringAttr("guard.local_mem"),
-        "transform_family": StringAttr("local_mem"),
-    }))
-    block.add_op(TileOp.build(properties={
-        "sym_name": StringAttr("cand_tile_r0"),
-        "region_ref": SymbolRefAttr("r0"),
-        "tile_sizes": ArrayAttr([IntegerAttr(64, IntegerType(64))]),
-        "guard_refs": ArrayAttr([SymbolRefAttr("guard_tile")]),
-    }))
+    block.add_op(
+        RecipeRegionOp.build(
+            properties={
+                "sym_name": StringAttr("r0"),
+                "payload_region_id": StringAttr("op_0"),
+            }
+        )
+    )
+    block.add_op(
+        RecipeGuardOp.build(
+            properties={
+                "sym_name": StringAttr("guard_tile"),
+                "guard_key": StringAttr("guard.local_mem"),
+                "transform_family": StringAttr("local_mem"),
+            }
+        )
+    )
+    block.add_op(
+        TileOp.build(
+            properties={
+                "sym_name": StringAttr("cand_tile_r0"),
+                "region_ref": SymbolRefAttr("r0"),
+                "tile_sizes": ArrayAttr([IntegerAttr(64, IntegerType(64))]),
+                "guard_refs": ArrayAttr([SymbolRefAttr("guard_tile")]),
+            }
+        )
+    )
     module = ModuleOp(Region(block))
     result = validate_recipe_module(module)
     assert result.valid
@@ -215,16 +289,24 @@ def test_guard_ref_validation_passes_with_known_guard() -> None:
 
 def test_guard_ref_validation_fails_for_missing_guard() -> None:
     block = Block()
-    block.add_op(RecipeRegionOp.build(properties={
-        "sym_name": StringAttr("r0"),
-        "payload_region_id": StringAttr("op_0"),
-    }))
-    block.add_op(TileOp.build(properties={
-        "sym_name": StringAttr("cand_tile_r0"),
-        "region_ref": SymbolRefAttr("r0"),
-        "tile_sizes": ArrayAttr([IntegerAttr(64, IntegerType(64))]),
-        "guard_refs": ArrayAttr([SymbolRefAttr("guard_missing")]),
-    }))
+    block.add_op(
+        RecipeRegionOp.build(
+            properties={
+                "sym_name": StringAttr("r0"),
+                "payload_region_id": StringAttr("op_0"),
+            }
+        )
+    )
+    block.add_op(
+        TileOp.build(
+            properties={
+                "sym_name": StringAttr("cand_tile_r0"),
+                "region_ref": SymbolRefAttr("r0"),
+                "tile_sizes": ArrayAttr([IntegerAttr(64, IntegerType(64))]),
+                "guard_refs": ArrayAttr([SymbolRefAttr("guard_missing")]),
+            }
+        )
+    )
     module = ModuleOp(Region(block))
     result = validate_recipe_module(module)
     assert not result.valid
@@ -233,21 +315,33 @@ def test_guard_ref_validation_fails_for_missing_guard() -> None:
 
 def test_lower_guarded_candidate_rejects_without_registry() -> None:
     block = Block()
-    block.add_op(RecipeRegionOp.build(properties={
-        "sym_name": StringAttr("r0"),
-        "payload_region_id": StringAttr("op_0"),
-    }))
-    block.add_op(RecipeGuardOp.build(properties={
-        "sym_name": StringAttr("guard_tile"),
-        "guard_key": StringAttr("guard.local_mem"),
-        "transform_family": StringAttr("local_mem"),
-    }))
-    block.add_op(TileOp.build(properties={
-        "sym_name": StringAttr("cand_tile_r0"),
-        "region_ref": SymbolRefAttr("r0"),
-        "tile_sizes": ArrayAttr([IntegerAttr(64, IntegerType(64))]),
-        "guard_refs": ArrayAttr([SymbolRefAttr("guard_tile")]),
-    }))
+    block.add_op(
+        RecipeRegionOp.build(
+            properties={
+                "sym_name": StringAttr("r0"),
+                "payload_region_id": StringAttr("op_0"),
+            }
+        )
+    )
+    block.add_op(
+        RecipeGuardOp.build(
+            properties={
+                "sym_name": StringAttr("guard_tile"),
+                "guard_key": StringAttr("guard.local_mem"),
+                "transform_family": StringAttr("local_mem"),
+            }
+        )
+    )
+    block.add_op(
+        TileOp.build(
+            properties={
+                "sym_name": StringAttr("cand_tile_r0"),
+                "region_ref": SymbolRefAttr("r0"),
+                "tile_sizes": ArrayAttr([IntegerAttr(64, IntegerType(64))]),
+                "guard_refs": ArrayAttr([SymbolRefAttr("guard_tile")]),
+            }
+        )
+    )
     module = ModuleOp(Region(block))
     output = lower_recipe(module)
     assert output.transform_scripts == []
@@ -256,34 +350,52 @@ def test_lower_guarded_candidate_rejects_without_registry() -> None:
 
 def test_lower_guarded_candidate_with_registry() -> None:
     block = Block()
-    block.add_op(RecipeRegionOp.build(properties={
-        "sym_name": StringAttr("r0"),
-        "payload_region_id": StringAttr("matmul_0"),
-    }))
-    block.add_op(BackendAvailableOp.build(properties={
-        "region_ref": SymbolRefAttr("r0"),
-        "backend": StringAttr("triton"),
-    }))
-    block.add_op(RecipeGuardOp.build(properties={
-        "sym_name": StringAttr("guard_tile"),
-        "guard_key": StringAttr("guard.local_mem"),
-        "transform_family": StringAttr("local_mem"),
-    }))
-    block.add_op(TileOp.build(properties={
-        "sym_name": StringAttr("cand_tile_r0"),
-        "region_ref": SymbolRefAttr("r0"),
-        "tile_sizes": ArrayAttr([IntegerAttr(64, IntegerType(64))]),
-        "guard_refs": ArrayAttr([SymbolRefAttr("guard_tile")]),
-    }))
+    block.add_op(
+        RecipeRegionOp.build(
+            properties={
+                "sym_name": StringAttr("r0"),
+                "payload_region_id": StringAttr("matmul_0"),
+            }
+        )
+    )
+    block.add_op(
+        BackendAvailableOp.build(
+            properties={
+                "region_ref": SymbolRefAttr("r0"),
+                "backend": StringAttr("triton"),
+            }
+        )
+    )
+    block.add_op(
+        RecipeGuardOp.build(
+            properties={
+                "sym_name": StringAttr("guard_tile"),
+                "guard_key": StringAttr("guard.local_mem"),
+                "transform_family": StringAttr("local_mem"),
+            }
+        )
+    )
+    block.add_op(
+        TileOp.build(
+            properties={
+                "sym_name": StringAttr("cand_tile_r0"),
+                "region_ref": SymbolRefAttr("r0"),
+                "tile_sizes": ArrayAttr([IntegerAttr(64, IntegerType(64))]),
+                "guard_refs": ArrayAttr([SymbolRefAttr("guard_tile")]),
+            }
+        )
+    )
     module = ModuleOp(Region(block))
 
     registry = GuardRegistry()
-    registry.register(GuardArtifact(
-        guard_key="guard.local_mem",
-        transform_family="local_mem",
-        guard_kind="placement",
-        fragments=(Cmp(CmpOp.EQ, Var("backend_triton"), Const(True)),),
-    ))
+    registry.register(
+        GuardArtifact(
+            guard_key="guard.local_mem",
+            transform_family="local_mem",
+            guard_kind="placement",
+            fragments=(Cmp(CmpOp.EQ, Var("backend_triton"), Const(True)),),
+        )
+    )
 
     output = lower_recipe(module, guard_registry=registry)
     assert len(output.transform_scripts) == 1
@@ -328,10 +440,12 @@ def test_recipe_op_to_action_tile() -> None:
     from compgen.agent.env import TileAction
     from compgen.agent.recipe_bridge import recipe_op_to_action
 
-    op = TileOp.build(properties={
-        "region_ref": SymbolRefAttr("r0"),
-        "tile_sizes": ArrayAttr([IntegerAttr(64, IntegerType(64))]),
-    })
+    op = TileOp.build(
+        properties={
+            "region_ref": SymbolRefAttr("r0"),
+            "tile_sizes": ArrayAttr([IntegerAttr(64, IntegerType(64))]),
+        }
+    )
     action = recipe_op_to_action(op)
     assert isinstance(action, TileAction)
     assert action.tile_sizes == (64,)

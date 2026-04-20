@@ -26,8 +26,6 @@ Usage::
 
 from __future__ import annotations
 
-import json
-import math
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -36,12 +34,10 @@ from typing import Any
 import torch
 import yaml
 
+from compgen.quantization.graph_analyzer import _normalize_fn_target
 from compgen.quantization.npu_op_map import (
-    NpuOpCategory,
-    NpuQuantDecision,
     _OP_TABLE,
 )
-from compgen.quantization.graph_analyzer import _FN_TO_ATEN, _normalize_fn_target
 
 
 @dataclass
@@ -120,11 +116,20 @@ _CONV_OPS = {"aten.conv2d", "aten.convolution.default"}
 _SOFTMAX_OPS = {"aten._softmax.default", "aten.softmax.int"}
 _ELEMENTWISE_BINARY = {"aten.add.Tensor", "aten.sub.Tensor", "aten.mul.Tensor", "aten.div.Tensor"}
 _ELEMENTWISE_UNARY = {
-    "aten.exp.default", "aten.exp2.default", "aten.log2.default",
-    "aten.sin.default", "aten.cos.default", "aten.tanh.default",
-    "aten.sqrt.default", "aten.reciprocal.default",
-    "aten.relu.default", "aten.gelu.default", "aten.silu.default",
-    "aten.pow.Tensor_Scalar", "aten.clamp.default", "aten.abs.default",
+    "aten.exp.default",
+    "aten.exp2.default",
+    "aten.log2.default",
+    "aten.sin.default",
+    "aten.cos.default",
+    "aten.tanh.default",
+    "aten.sqrt.default",
+    "aten.reciprocal.default",
+    "aten.relu.default",
+    "aten.gelu.default",
+    "aten.silu.default",
+    "aten.pow.Tensor_Scalar",
+    "aten.clamp.default",
+    "aten.abs.default",
     "aten.neg.default",
 }
 _REDUCTION_OPS = {"aten.sum.default", "aten.sum.dim_IntList", "aten.amax.default", "aten.mean.dim"}
@@ -161,6 +166,7 @@ def _npu_unit_for_family(family: str) -> str:
 # ---------------------------------------------------------------------------
 # Shape extraction from FX nodes
 # ---------------------------------------------------------------------------
+
 
 def _extract_shape(val: Any) -> tuple[int, ...] | None:
     """Extract shape from an FX node's meta value."""
@@ -283,15 +289,17 @@ def generate_npu_kernel_contracts(
                 tuple(input_dtypes),
             )
 
-            signature_groups[sig_key].append({
-                "aten_target": aten_target,
-                "node_name": node.name,
-                "graph_idx": gi,
-                "input_shapes": input_shapes,
-                "input_dtypes": input_dtypes,
-                "output_shape": output_shape,
-                "output_dtype": output_dtype,
-            })
+            signature_groups[sig_key].append(
+                {
+                    "aten_target": aten_target,
+                    "node_name": node.name,
+                    "graph_idx": gi,
+                    "input_shapes": input_shapes,
+                    "input_dtypes": input_dtypes,
+                    "output_shape": output_shape,
+                    "output_dtype": output_dtype,
+                }
+            )
 
     # Build contracts from grouped signatures
     contracts: list[NpuKernelContract] = []
@@ -330,9 +338,7 @@ def generate_npu_kernel_contracts(
                     flops *= d
 
         # Build shape string for contract ID
-        shape_str = "x".join(
-            "x".join(str(d) for d in s) for s in input_shapes_tuple
-        )
+        shape_str = "x".join("x".join(str(d) for d in s) for s in input_shapes_tuple)
         contract_id = f"{family}_{npu_input_dtypes[0]}_{shape_str}"
 
         # ISA mnemonic
@@ -351,25 +357,27 @@ def generate_npu_kernel_contracts(
                 output_shapes.append(op["output_shape"])
                 break
 
-        contracts.append(NpuKernelContract(
-            contract_id=contract_id,
-            op_family=family,
-            npu_unit=npu_unit,
-            input_shapes=list(input_shapes_tuple),
-            output_shapes=output_shapes,
-            input_dtypes=npu_input_dtypes,
-            output_dtype=npu_output_dtype,
-            accumulation_dtype=accum_dtype,
-            scale_format=scale_fmt,
-            tile_shape=(32, 32),
-            reference_pytorch=ref_code,
-            instance_count=len(ops),
-            source_ops=[op["node_name"] for op in ops[:20]],
-            estimated_flops=flops,
-            total_flops=flops * len(ops),
-            priority=flops * len(ops),
-            isa_mnemonic=isa,
-        ))
+        contracts.append(
+            NpuKernelContract(
+                contract_id=contract_id,
+                op_family=family,
+                npu_unit=npu_unit,
+                input_shapes=list(input_shapes_tuple),
+                output_shapes=output_shapes,
+                input_dtypes=npu_input_dtypes,
+                output_dtype=npu_output_dtype,
+                accumulation_dtype=accum_dtype,
+                scale_format=scale_fmt,
+                tile_shape=(32, 32),
+                reference_pytorch=ref_code,
+                instance_count=len(ops),
+                source_ops=[op["node_name"] for op in ops[:20]],
+                estimated_flops=flops,
+                total_flops=flops * len(ops),
+                priority=flops * len(ops),
+                isa_mnemonic=isa,
+            )
+        )
 
     # Sort by priority (highest first)
     contracts.sort(key=lambda c: c.priority, reverse=True)
@@ -379,6 +387,7 @@ def generate_npu_kernel_contracts(
 # ---------------------------------------------------------------------------
 # Reference PyTorch code generation
 # ---------------------------------------------------------------------------
+
 
 def _generate_reference_pytorch(
     family: str,
@@ -467,6 +476,7 @@ def _generate_reference_pytorch(
 # Export functions
 # ---------------------------------------------------------------------------
 
+
 def export_contracts_yaml(
     contracts: list[NpuKernelContract],
     output_dir: str | Path,
@@ -502,14 +512,16 @@ def export_contracts_yaml(
     for c in contracts:
         summary["contracts_by_unit"][c.npu_unit] = summary["contracts_by_unit"].get(c.npu_unit, 0) + 1
         summary["contracts_by_family"][c.op_family] = summary["contracts_by_family"].get(c.op_family, 0) + 1
-        summary["contracts"].append({
-            "contract_id": c.contract_id,
-            "op_family": c.op_family,
-            "npu_unit": c.npu_unit,
-            "instance_count": c.instance_count,
-            "total_flops": c.total_flops,
-            "priority": c.priority,
-        })
+        summary["contracts"].append(
+            {
+                "contract_id": c.contract_id,
+                "op_family": c.op_family,
+                "npu_unit": c.npu_unit,
+                "instance_count": c.instance_count,
+                "total_flops": c.total_flops,
+                "priority": c.priority,
+            }
+        )
 
     (out / "summary.yaml").write_text(yaml.dump(summary, default_flow_style=False, sort_keys=False))
     return out
@@ -548,9 +560,7 @@ def export_contracts_autocomp(
         (pkg_dir / "test.py").write_text(test_code)
 
         # Contract metadata
-        (pkg_dir / "contract.yaml").write_text(
-            yaml.dump(contract.to_dict(), default_flow_style=False, sort_keys=False)
-        )
+        (pkg_dir / "contract.yaml").write_text(yaml.dump(contract.to_dict(), default_flow_style=False, sort_keys=False))
 
     # Index file
     index = {

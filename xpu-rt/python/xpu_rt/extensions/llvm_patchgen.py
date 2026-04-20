@@ -42,16 +42,16 @@ def generate_llvm_patch_bundle(spec: LLVMPatchSpec | dict[str, Any]) -> dict[str
     td_name = "".join(piece.capitalize() for piece in spec.dialect_name.split("_"))
     intrinsics_lines = [
         f"// Generated LLVM intrinsic declarations for {spec.dialect_name}",
-        f"let TargetPrefix = \"{spec.dialect_name}\" in {{",
+        f'let TargetPrefix = "{spec.dialect_name}" in {{',
     ]
     lowering_lines = [
         f"// Generated lowering skeleton for {spec.dialect_name}",
-        "#include \"llvm/IR/IRBuilder.h\"",
+        '#include "llvm/IR/IRBuilder.h"',
         "",
         f"namespace {spec.dialect_name} {{",
     ]
     test_lines = [
-        f"; RUN: opt -passes=instcombine %s -S | FileCheck %s",
+        "; RUN: opt -passes=instcombine %s -S | FileCheck %s",
         f"; Generated smoke test for {spec.dialect_name}",
         "",
     ]

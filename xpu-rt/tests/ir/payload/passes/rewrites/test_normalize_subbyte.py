@@ -2,20 +2,10 @@
 
 from __future__ import annotations
 
-import pytest
-from xdsl.dialects.builtin import (
-    Float32Type,
-    FunctionType,
-    IntegerAttr,
-    IntegerType,
-    ModuleOp,
-    StringAttr,
-    TensorType,
+from compgen.ir.payload.passes.rewrites.normalize_subbyte import (
+    NormalizeSubbyteStats,
+    run_normalize_subbyte,
 )
-from xdsl.dialects.func import FuncOp, ReturnOp
-from xdsl.dialects.tensor import EmptyOp
-from xdsl.ir import Block, Region
-
 from compgen.ir.quant import (
     AffineQuantizedTensorType,
     PackedIntTensorType,
@@ -23,10 +13,18 @@ from compgen.ir.quant import (
     WeightInt4PackQMOp,
     WeightInt8PackMMOp,
 )
-from compgen.ir.payload.passes.rewrites.normalize_subbyte import (
-    NormalizeSubbyteStats,
-    run_normalize_subbyte,
+from xdsl.dialects.builtin import (
+    Float32Type,
+    FunctionType,
+    IntegerAttr,
+    IntegerType,
+    ModuleOp,
+    TensorType,
 )
+from xdsl.dialects.func import FuncOp, ReturnOp
+from xdsl.dialects.tensor import EmptyOp
+from xdsl.ir import Block, Region
+
 from tests.ir.payload.passes._pattern_test_helpers import (
     assert_module_verifies,
 )

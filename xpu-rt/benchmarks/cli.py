@@ -5,6 +5,8 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+from compgen.benchmarks import SuiteRunConfig
+
 from benchmarks.adapters import check_baseline_availability
 from benchmarks.compare import (
     ablation_table,
@@ -26,7 +28,6 @@ from benchmarks.suite_runner import (
     run_suite,
     run_suite_workload,
 )
-from compgen.benchmarks import SuiteRunConfig
 
 
 def _workspace_from_args(args: argparse.Namespace) -> WorkspaceConfig:
@@ -89,7 +90,9 @@ def build_parser() -> argparse.ArgumentParser:
     run_suite_parser.add_argument("--all-workloads", action="store_true")
     run_suite_parser.add_argument("--output-tag", default="")
 
-    run_suite_workload_parser = subparsers.add_parser("run-suite-workload", help="Run one workload from a benchmark suite")
+    run_suite_workload_parser = subparsers.add_parser(
+        "run-suite-workload", help="Run one workload from a benchmark suite"
+    )
     run_suite_workload_parser.add_argument("suite_id")
     run_suite_workload_parser.add_argument("workload_id")
     run_suite_workload_parser.add_argument("--output-dir", default="benchmarks/results/suites")
@@ -190,7 +193,9 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "probe-suite":
-        status = probe_suite(args.suite_id, workspace=workspace, config=SuiteRunConfig(device=args.device, dtype=args.dtype))
+        status = probe_suite(
+            args.suite_id, workspace=workspace, config=SuiteRunConfig(device=args.device, dtype=args.dtype)
+        )
         availability = "available" if status.available else f"unavailable ({status.reason})"
         source = f" root={status.source_root}" if status.source_root else ""
         print(f"{args.suite_id}: {availability}{source}")

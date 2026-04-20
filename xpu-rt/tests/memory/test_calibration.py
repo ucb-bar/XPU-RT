@@ -1,13 +1,15 @@
 """Tests for performance feedback calibration (Unit 15)."""
+
 from __future__ import annotations
+
 import pytest
-from pathlib import Path
-from compgen.memory.calibration import record_calibration, get_calibration_factor, calibrate_cost
+from compgen.memory.calibration import calibrate_cost, get_calibration_factor, record_calibration
 
 
 @pytest.fixture
 def memory(tmp_path):
     from compgen.memory.store import CompilerMemory
+
     return CompilerMemory(
         db_path=tmp_path / "test.db",
         blob_root=tmp_path / "blobs",

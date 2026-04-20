@@ -3,11 +3,9 @@
 from __future__ import annotations
 
 import pytest
-
 from compgen.agent.invent_slots import seeds as seed_mod
 from compgen.agent.invent_slots.registrar import register_invent_slots
 from compgen.llm.registry import Registry
-
 
 SLOT_NAMES = (
     "propose_layout_plan",
@@ -44,7 +42,7 @@ def test_registrar_is_idempotent() -> None:
     r = Registry()
     register_invent_slots(r)
     registered_2 = register_invent_slots(r)
-    assert registered_2 == []   # second call: nothing new
+    assert registered_2 == []  # second call: nothing new
 
 
 def test_slots_are_not_stubs() -> None:
@@ -56,17 +54,20 @@ def test_slots_are_not_stubs() -> None:
         assert slot.is_stub is False
 
 
-@pytest.mark.parametrize("seed_fn_name", [
-    "propose_layout_plan_seed",
-    "propose_fusion_seed",
-    "propose_peephole_pattern_seed",
-    "propose_numerics_plan_seed",
-    "propose_dequant_fusion_seed",
-    "propose_buffer_lifetime_plan_seed",
-    "propose_rematerialization_plan_seed",
-    "propose_megakernel_synthesis_seed",
-    "propose_scheduling_policy_seed",
-])
+@pytest.mark.parametrize(
+    "seed_fn_name",
+    [
+        "propose_layout_plan_seed",
+        "propose_fusion_seed",
+        "propose_peephole_pattern_seed",
+        "propose_numerics_plan_seed",
+        "propose_dequant_fusion_seed",
+        "propose_buffer_lifetime_plan_seed",
+        "propose_rematerialization_plan_seed",
+        "propose_megakernel_synthesis_seed",
+        "propose_scheduling_policy_seed",
+    ],
+)
 def test_every_seed_produces_structural_ok_payload(seed_fn_name: str) -> None:
     seed_fn = getattr(seed_mod, seed_fn_name)
     payload = seed_fn()
@@ -94,6 +95,7 @@ def test_slot_verify_accepts_its_own_seed() -> None:
 def test_global_registry_picks_up_slots_on_import() -> None:
     import compgen.agent.invent_slots  # noqa: F401
     from compgen.llm import get_registry
+
     r = get_registry()
     for name in SLOT_NAMES:
         slot = r.lookup_invent_slot(name)

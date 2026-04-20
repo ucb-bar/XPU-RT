@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable
 
 from compgen.packs.base import LoadedPack
 
@@ -32,4 +32,3 @@ def check_surface_allowed(
                 reason="sealed_surface",
             )
     return None
-

@@ -55,7 +55,7 @@ from xdsl.dialects.builtin import (
 )
 from xdsl.dialects.linalg import MatmulOp, YieldOp
 from xdsl.dialects.tensor import EmptyOp
-from xdsl.ir import Attribute, Block, Operation, SSAValue
+from xdsl.ir import Attribute, Operation, SSAValue
 from xdsl.ir.affine import AffineExpr, AffineMap
 from xdsl.pattern_rewriter import (
     GreedyRewritePatternApplier,

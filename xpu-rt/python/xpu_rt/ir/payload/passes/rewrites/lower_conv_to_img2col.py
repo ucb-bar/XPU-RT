@@ -57,7 +57,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from xdsl.dialects.builtin import (
-    Float32Type,
     IntegerAttr,
     IntegerType,
     ModuleOp,
@@ -65,7 +64,6 @@ from xdsl.dialects.builtin import (
     TensorType,
 )
 from xdsl.dialects.func import CallOp
-from xdsl.dialects.tensor import EmptyOp
 from xdsl.ir import Operation
 from xdsl.pattern_rewriter import (
     PatternRewriter,
@@ -131,9 +129,7 @@ class _Img2ColSchedulePattern(RewritePattern):
         self.stats = stats
 
     @op_type_rewrite_pattern
-    def match_and_rewrite(
-        self, op: CallOp, rewriter: PatternRewriter
-    ) -> None:
+    def match_and_rewrite(self, op: CallOp, rewriter: PatternRewriter) -> None:
         if not _is_convolution_call(op):
             return
         self.stats.convs_seen += 1
@@ -152,9 +148,7 @@ class _Img2ColSchedulePattern(RewritePattern):
             self.stats.convs_skipped_wrong_rank += 1
             return
 
-        if self.cfg.require_static_shapes and (
-            any(d < 0 for d in input_shape) or any(d < 0 for d in filter_shape)
-        ):
+        if self.cfg.require_static_shapes and (any(d < 0 for d in input_shape) or any(d < 0 for d in filter_shape)):
             self.stats.convs_skipped_dynamic += 1
             return
 
@@ -180,15 +174,9 @@ class _Img2ColSchedulePattern(RewritePattern):
 
         # Tag with shape metadata so Wave 6 can structurally lower.
         op.attributes["compgen.img2col_scheduled"] = StringAttr("true")
-        op.attributes["compgen.img2col_input_shape"] = StringAttr(
-            ",".join(str(d) for d in input_shape)
-        )
-        op.attributes["compgen.img2col_filter_shape"] = StringAttr(
-            ",".join(str(d) for d in filter_shape)
-        )
-        op.attributes["compgen.img2col_output_shape"] = StringAttr(
-            ",".join(str(d) for d in out_shape)
-        )
+        op.attributes["compgen.img2col_input_shape"] = StringAttr(",".join(str(d) for d in input_shape))
+        op.attributes["compgen.img2col_filter_shape"] = StringAttr(",".join(str(d) for d in filter_shape))
+        op.attributes["compgen.img2col_output_shape"] = StringAttr(",".join(str(d) for d in out_shape))
         self.stats.convs_scheduled += 1
 
         # Emit a real ``compgen.tensor_ext.pack`` op on the conv's
@@ -208,10 +196,7 @@ class _Img2ColSchedulePattern(RewritePattern):
         input_val = op.operands[0]
         input_elem = input_val.type.get_element_type()
         # Result shape after tiling dims [H, W] into (H/KH, W/KW, KH, KW).
-        packed_shape = (
-            list(input_shape[:-2])
-            + [input_shape[-2] // KH, input_shape[-1] // KW, KH, KW]
-        )
+        packed_shape = list(input_shape[:-2]) + [input_shape[-2] // KH, input_shape[-1] // KW, KH, KW]
         packed_type = TensorType(input_elem, packed_shape)
         pack = PackOp(
             source=input_val,

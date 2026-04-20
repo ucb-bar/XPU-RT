@@ -46,8 +46,7 @@ class ZephyrTraceAdapter:
         self._trace_backend = config.get("trace_backend", "ram")
         self._trace_format = config.get("trace_format", "ctf")
         self._config = config
-        log.debug("zephyr_trace.configured",
-                  backend=self._trace_backend, format=self._trace_format)
+        log.debug("zephyr_trace.configured", backend=self._trace_backend, format=self._trace_format)
 
     def start(self) -> None:
         self._active = True
@@ -94,8 +93,7 @@ class ZephyrTraceAdapter:
             "usb": "CONFIG_TRACING_BACKEND_USB",
             "posix": "CONFIG_TRACING_BACKEND_POSIX",
         }
-        backend_key = backend_map.get(self._trace_backend,
-                                       "CONFIG_TRACING_BACKEND_RAM")
+        backend_key = backend_map.get(self._trace_backend, "CONFIG_TRACING_BACKEND_RAM")
         kconfig[backend_key] = "y"
 
         if self._trace_format == "ctf":

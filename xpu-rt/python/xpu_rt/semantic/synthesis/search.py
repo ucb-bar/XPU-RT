@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import Any, Iterable
+from typing import Any
 
 from compgen.semantic.synthesis.dataset import SynthesisExample
 from compgen.semantic.synthesis.guard_lang import (
@@ -80,14 +81,8 @@ def _llm_seed_fragments(
                 var_types[key] = "bool" if isinstance(val, bool) else "int"
 
         # Summarize examples
-        pos_summary = "\n".join(
-            f"  {{{', '.join(f'{k}={v}' for k, v in ex.env.items())}}}"
-            for ex in positives[:5]
-        )
-        neg_summary = "\n".join(
-            f"  {{{', '.join(f'{k}={v}' for k, v in ex.env.items())}}}"
-            for ex in negatives[:5]
-        )
+        pos_summary = "\n".join(f"  {{{', '.join(f'{k}={v}' for k, v in ex.env.items())}}}" for ex in positives[:5])
+        neg_summary = "\n".join(f"  {{{', '.join(f'{k}={v}' for k, v in ex.env.items())}}}" for ex in negatives[:5])
 
         ctx = GuardProposeContext(
             variable_names=var_names,
@@ -224,11 +219,11 @@ def search_guard_fragments(
         return GuardSearchResult(promoted_fragments=(Const(False),))
 
     positives = [
-        example for example in examples
-        if example.safe and (example.profitable if require_profitable else True)
+        example for example in examples if example.safe and (example.profitable if require_profitable else True)
     ]
     negatives = [
-        example for example in examples
+        example
+        for example in examples
         if not example.safe or (require_profitable and example.safe and not example.profitable)
     ]
     if not positives:
@@ -248,8 +243,7 @@ def search_guard_fragments(
 
     sound_atoms = [atom for atom in atoms if _is_observed_sound(atom, negatives) and _covers(atom, positives) > 0]
     precise_unsound = [
-        atom for atom in atoms
-        if _covers(atom, positives) > 0 and not _is_observed_sound(atom, negatives)
+        atom for atom in atoms if _covers(atom, positives) > 0 and not _is_observed_sound(atom, negatives)
     ]
 
     repaired_exprs: list[Expr] = []

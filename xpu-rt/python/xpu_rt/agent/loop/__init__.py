@@ -20,9 +20,9 @@ from __future__ import annotations
 from compgen.agent.loop.core import AgenticCompilationLoop
 from compgen.agent.loop.phased import (
     DriveLoopResult,
+    PhasedDriveLoop,
     PhasePolicy,
     PhaseRunSummary,
-    PhasedDriveLoop,
 )
 from compgen.agent.loop.records import CompilationResult, IterationRecord
 

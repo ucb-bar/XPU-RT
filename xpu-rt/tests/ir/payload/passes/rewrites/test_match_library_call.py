@@ -3,6 +3,12 @@
 from __future__ import annotations
 
 import pytest
+from compgen.ir.payload.passes.rewrites.match_library_call import (
+    MatchLibraryCallConfig,
+    MatchLibraryCallStats,
+    run_match_library_call,
+)
+from compgen.ir.quant import WeightInt4PackMMOp, WeightInt8PackMMOp
 from xdsl.dialects.builtin import (
     Float32Type,
     FunctionType,
@@ -16,12 +22,6 @@ from xdsl.dialects.linalg import MatmulOp
 from xdsl.dialects.tensor import EmptyOp
 from xdsl.ir import Block, Region
 
-from compgen.ir.quant import WeightInt4PackMMOp, WeightInt8PackMMOp
-from compgen.ir.payload.passes.rewrites.match_library_call import (
-    MatchLibraryCallConfig,
-    MatchLibraryCallStats,
-    run_match_library_call,
-)
 from tests.ir.payload.passes._pattern_test_helpers import assert_module_verifies
 
 
@@ -51,18 +51,23 @@ def _int8_pack_mm_module():
     wt = _ft([32, 128], IntegerType(8))
     st = _ft([32])
     rt = _ft([4, 32])
-    x = EmptyOp([], xt); wi = EmptyOp([], wt); s = EmptyOp([], st)
+    x = EmptyOp([], xt)
+    wi = EmptyOp([], wt)
+    s = EmptyOp([], st)
     q = WeightInt8PackMMOp(operands=[x.results[0], wi.results[0], s.results[0]], result_types=[rt])
     return _wrap([x, wi, s, q], q.result, rt), q
 
 
 def _int4_pack_mm_module():
     from xdsl.dialects.builtin import IntegerAttr
+
     xt = _ft([4, 128])
     wt = _ft([32, 64], IntegerType(8))
     sz = _ft([32, 2])
     rt = _ft([4, 32])
-    x = EmptyOp([], xt); wi = EmptyOp([], wt); szo = EmptyOp([], sz)
+    x = EmptyOp([], xt)
+    wi = EmptyOp([], wt)
+    szo = EmptyOp([], sz)
     q = WeightInt4PackMMOp(
         operands=[x.results[0], wi.results[0], szo.results[0]],
         result_types=[rt],
@@ -75,7 +80,8 @@ def _conv_module():
     it = _ft([1, 3, 8, 8])
     ft = _ft([16, 3, 3, 3])
     ot = _ft([1, 16, 8, 8])
-    x = EmptyOp([], it); w = EmptyOp([], ft)
+    x = EmptyOp([], it)
+    w = EmptyOp([], ft)
     ext = FuncOp.external("aten_convolution", [it, ft], [ot])
     call = CallOp("aten_convolution", [x.results[0], w.results[0]], [ot])
     call.attributes["compgen._pattern_hint"] = StringAttr("convolution")
@@ -191,6 +197,7 @@ def test_match_library_call_on_attention_mlp_tiny():
     """
     from compgen.capture.torch_mlir_bridge import bridge_fx_graph
     from compgen.options import cuda_a100_defaults
+
     from tests._fixtures.real_workloads import attention_mlp_tiny
 
     fx = attention_mlp_tiny()
@@ -208,6 +215,7 @@ def test_match_library_call_on_attention_mlp_tiny():
 def test_match_library_call_on_qwen_moe_tiny():
     from compgen.capture.torch_mlir_bridge import bridge_fx_graph
     from compgen.options import cuda_a100_defaults
+
     from tests._fixtures.real_workloads import qwen_moe_tiny
 
     fx = qwen_moe_tiny()

@@ -137,12 +137,14 @@ def write_cmake_files(
         dialect_lib_dir = lib_dir / d.prefix
         dialect_lib_dir.mkdir(parents=True, exist_ok=True)
         path = dialect_lib_dir / "CMakeLists.txt"
-        path.write_text(emit_lib_cmake(
-            d,
-            has_passes=has_passes,
-            dep_targets=dep_targets_full,
-            dep_libs=dep_libs,
-        ))
+        path.write_text(
+            emit_lib_cmake(
+                d,
+                has_passes=has_passes,
+                dep_targets=dep_targets_full,
+                dep_libs=dep_libs,
+            )
+        )
         written.append(path)
 
     # compgen-opt/CMakeLists.txt

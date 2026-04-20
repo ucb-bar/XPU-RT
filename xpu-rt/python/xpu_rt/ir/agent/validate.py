@@ -123,20 +123,10 @@ def validate_agent_module(
             continue
         for ref in _collect_symbol_refs(op):
             if ref and ref not in all_symbols:
-                errors.append(
-                    AgentValidationError(i, type(op).__name__, f"Unresolved symbol reference: @{ref}")
-                )
+                errors.append(AgentValidationError(i, type(op).__name__, f"Unresolved symbol reference: @{ref}"))
 
-    expected_proofs = {
-        op.claim_ref.root_reference.data
-        for op in module.walk()
-        if isinstance(op, ExpectedProofOp)
-    }
-    evidence_sets = {
-        name: op
-        for name, op in symbols.items()
-        if isinstance(op, EvidenceSetOp)
-    }
+    expected_proofs = {op.claim_ref.root_reference.data for op in module.walk() if isinstance(op, ExpectedProofOp)}
+    evidence_sets = {name: op for name, op in symbols.items() if isinstance(op, EvidenceSetOp)}
 
     for i, op in enumerate(module.walk()):
         if isinstance(op, ClaimOp) and op.kind.data in _PROOF_REQUIRED_KINDS:

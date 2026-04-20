@@ -5,7 +5,6 @@ from __future__ import annotations
 import pytest
 import torch
 import torch.nn as nn
-
 from compgen.quantization.export_wrappers import (
     ExportableFP8Conv2d,
     ExportableFP8Linear,
@@ -20,6 +19,7 @@ torchao = pytest.importorskip("torchao")
 # ---------------------------------------------------------------------------
 # ExportableFP8Linear
 # ---------------------------------------------------------------------------
+
 
 class TestExportableFP8Linear:
     def test_forward_correctness(self) -> None:
@@ -46,9 +46,7 @@ class TestExportableFP8Linear:
     def test_from_quantized_linear(self) -> None:
         """Create from an nn.Linear with FP8E4M3Po2Tensor weight."""
         linear = nn.Linear(32, 16, dtype=torch.bfloat16)
-        linear.weight = nn.Parameter(
-            FP8E4M3Po2Tensor.from_float(linear.weight), requires_grad=False
-        )
+        linear.weight = nn.Parameter(FP8E4M3Po2Tensor.from_float(linear.weight), requires_grad=False)
         exp_linear = ExportableFP8Linear.from_quantized_linear(linear)
         assert exp_linear.in_features == 32
         assert exp_linear.out_features == 16
@@ -66,6 +64,7 @@ class TestExportableFP8Linear:
 # ExportableFP8Conv2d
 # ---------------------------------------------------------------------------
 
+
 class TestExportableFP8Conv2d:
     def test_forward_correctness(self) -> None:
         w = torch.randn(16, 3, 3, 3, dtype=torch.bfloat16)
@@ -79,9 +78,7 @@ class TestExportableFP8Conv2d:
 
     def test_from_quantized_conv2d(self) -> None:
         conv = nn.Conv2d(3, 16, 3, padding=1, dtype=torch.bfloat16)
-        conv.weight = nn.Parameter(
-            FP8E4M3Po2Tensor.from_float(conv.weight), requires_grad=False
-        )
+        conv.weight = nn.Parameter(FP8E4M3Po2Tensor.from_float(conv.weight), requires_grad=False)
         exp_conv = ExportableFP8Conv2d.from_quantized_conv2d(conv)
         assert exp_conv.weight_fp8.dtype == torch.float8_e4m3fn
 
@@ -89,6 +86,7 @@ class TestExportableFP8Conv2d:
 # ---------------------------------------------------------------------------
 # rewrite_for_export
 # ---------------------------------------------------------------------------
+
 
 class TestRewriteForExport:
     def test_linear_replacement(self) -> None:
@@ -99,8 +97,9 @@ class TestRewriteForExport:
             nn.Linear(16, 8, dtype=torch.bfloat16),
         )
         # Quantize
-        from torchao.quantization import quantize_
         from compgen.quantization.fp8_config import FP8E4M3Po2Config
+        from torchao.quantization import quantize_
+
         quantize_(model, FP8E4M3Po2Config())
 
         # Rewrite for export
@@ -113,9 +112,7 @@ class TestRewriteForExport:
     def test_conv2d_replacement(self) -> None:
         """nn.Conv2d with FP8 weight should become ExportableFP8Conv2d."""
         model = nn.Sequential(nn.Conv2d(3, 16, 3, padding=1, dtype=torch.bfloat16))
-        model[0].weight = nn.Parameter(
-            FP8E4M3Po2Tensor.from_float(model[0].weight), requires_grad=False
-        )
+        model[0].weight = nn.Parameter(FP8E4M3Po2Tensor.from_float(model[0].weight), requires_grad=False)
         rewrite_for_export(model)
         assert isinstance(model[0], ExportableFP8Conv2d)
 
@@ -126,8 +123,9 @@ class TestRewriteForExport:
             nn.ReLU(),
             nn.Linear(16, 8, dtype=torch.bfloat16),
         )
-        from torchao.quantization import quantize_
         from compgen.quantization.fp8_config import FP8E4M3Po2Config
+        from torchao.quantization import quantize_
+
         quantize_(model, FP8E4M3Po2Config())
         rewrite_for_export(model)
 
@@ -157,8 +155,9 @@ class TestRewriteForExport:
                 return self.decoder(self.encoder(x))
 
         model = Outer()
-        from torchao.quantization import quantize_
         from compgen.quantization.fp8_config import FP8E4M3Po2Config
+        from torchao.quantization import quantize_
+
         quantize_(model, FP8E4M3Po2Config())
         rewrite_for_export(model)
 
@@ -176,8 +175,9 @@ class TestRewriteForExport:
             nn.ReLU(),
             nn.Linear(8, 4, dtype=torch.bfloat16),
         )
-        from torchao.quantization import quantize_
         from compgen.quantization.fp8_config import FP8E4M3Po2Config
+        from torchao.quantization import quantize_
+
         quantize_(model, FP8E4M3Po2Config())
         rewrite_for_export(model)
 

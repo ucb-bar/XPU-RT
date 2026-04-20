@@ -25,12 +25,9 @@ from compgen.capture.unsupported.synthesize_decomp import (
     synthesize_export_decomposition,
 )
 from compgen.capture.unsupported.synthesize_translation import (
-    SynthesizedPayloadTranslation,
     synthesize_payload_translation,
 )
-from compgen.capture.unsupported.verify import verify_unsupported_resolution
 from compgen.mcp.session import McpSession, SessionManager
-
 
 # ---------------------------------------------------------------------------
 # Per-session recovery state (lives on the session's metadata dict)
@@ -46,10 +43,10 @@ class RecoveryBookkeeping:
     LLM sees updated state on each iteration.
     """
 
-    decomps: dict[str, str] = field(default_factory=dict)          # target -> description
-    translations: dict[str, str] = field(default_factory=dict)     # target -> callee_name
-    blackboxes: set[str] = field(default_factory=set)              # target set
-    failed: dict[str, str] = field(default_factory=dict)           # target -> error
+    decomps: dict[str, str] = field(default_factory=dict)  # target -> description
+    translations: dict[str, str] = field(default_factory=dict)  # target -> callee_name
+    blackboxes: set[str] = field(default_factory=set)  # target set
+    failed: dict[str, str] = field(default_factory=dict)  # target -> error
 
 
 def _recovery_state(session: McpSession) -> RecoveryBookkeeping:
@@ -61,7 +58,8 @@ def _recovery_state(session: McpSession) -> RecoveryBookkeeping:
 
 
 def _find_resolution(
-    session: McpSession, op_target: str,
+    session: McpSession,
+    op_target: str,
 ) -> UnsupportedOpResolution | None:
     compiled = session.require_compiled()
     for res in compiled.capture_artifact.unsupported_resolutions:
@@ -93,18 +91,21 @@ def synthesize_decomp(
     resolution = _find_resolution(session, op_target)
     if resolution is None:
         return {
-            "ok": False, "session_id": session_id,
+            "ok": False,
+            "session_id": session_id,
             "error": f"Op {op_target!r} not in session's unsupported set.",
         }
 
     decomp: SynthesizedDecomposition | None = synthesize_export_decomposition(
-        op_target, resolution.dossier,
+        op_target,
+        resolution.dossier,
     )
     if decomp is None:
         state = _recovery_state(session)
         state.failed[op_target] = "not_on_allow_list"
         return {
-            "ok": False, "session_id": session_id,
+            "ok": False,
+            "session_id": session_id,
             "op_target": op_target,
             "reason": "not_on_allow_list",
             "remediation_hint": (
@@ -118,7 +119,8 @@ def synthesize_decomp(
     state.decomps[op_target] = decomp.description
     state.failed.pop(op_target, None)
     return {
-        "ok": True, "session_id": session_id,
+        "ok": True,
+        "session_id": session_id,
         "op_target": op_target,
         "description": decomp.description,
         "strategy": "export_decomposition",
@@ -141,7 +143,8 @@ def synthesize_translation(
     resolution = _find_resolution(session, op_target)
     if resolution is None:
         return {
-            "ok": False, "session_id": session_id,
+            "ok": False,
+            "session_id": session_id,
             "error": f"Op {op_target!r} not in session's unsupported set.",
         }
 
@@ -157,23 +160,27 @@ def synthesize_translation(
             reason="LLM override; structural eligibility unchecked",
         )
         translation = synthesize_payload_translation(
-            resolution.issue, resolution.dossier, forced_cls,
+            resolution.issue,
+            resolution.dossier,
+            forced_cls,
         )
     else:
         translation = resolution.translation or synthesize_payload_translation(
-            resolution.issue, resolution.dossier, cls,
+            resolution.issue,
+            resolution.dossier,
+            cls,
         )
 
     if translation is None:
         state = _recovery_state(session)
         state.failed[op_target] = "translation_not_eligible"
         return {
-            "ok": False, "session_id": session_id,
+            "ok": False,
+            "session_id": session_id,
             "op_target": op_target,
             "reason": "translation_not_eligible",
             "remediation_hint": (
-                "The op's schema is too complex for an external-call "
-                "translation. Try register_blackbox."
+                "The op's schema is too complex for an external-call translation. Try register_blackbox."
             ),
         }
 
@@ -181,7 +188,8 @@ def synthesize_translation(
     state.translations[op_target] = translation.callee_name
     state.failed.pop(op_target, None)
     return {
-        "ok": True, "session_id": session_id,
+        "ok": True,
+        "session_id": session_id,
         "op_target": op_target,
         "callee_name": translation.callee_name,
         "kind": translation.kind,
@@ -206,7 +214,8 @@ def register_blackbox(
     resolution = _find_resolution(session, op_target)
     if resolution is None:
         return {
-            "ok": False, "session_id": session_id,
+            "ok": False,
+            "session_id": session_id,
             "error": f"Op {op_target!r} not in session's unsupported set.",
         }
     state = _recovery_state(session)
@@ -214,7 +223,8 @@ def register_blackbox(
     state.failed.pop(op_target, None)
 
     return {
-        "ok": True, "session_id": session_id,
+        "ok": True,
+        "session_id": session_id,
         "op_target": op_target,
         "strategy": "explicit_blackbox",
         "promotion_record": {
@@ -242,7 +252,8 @@ def resolve_unsupported_op(
     resolution = _find_resolution(session, op_target)
     if resolution is None:
         return {
-            "ok": False, "session_id": session_id,
+            "ok": False,
+            "session_id": session_id,
             "error": f"Op {op_target!r} not in session's unsupported set.",
         }
 
@@ -262,7 +273,8 @@ def resolve_unsupported_op(
     fn = dispatch.get(strategy)
     if fn is None:
         return {
-            "ok": False, "session_id": session_id,
+            "ok": False,
+            "session_id": session_id,
             "error": f"Unknown strategy {strategy!r}; expected auto|decomp|translation|blackbox",
         }
     result = fn(sm, session_id=session_id, op_target=op_target)
@@ -271,13 +283,16 @@ def resolve_unsupported_op(
 
 
 def recovery_status(
-    sm: SessionManager, *, session_id: str,
+    sm: SessionManager,
+    *,
+    session_id: str,
 ) -> dict[str, Any]:
     """Report the session's accumulated recovery state."""
     session = sm.get(session_id)
     state = _recovery_state(session)
     return {
-        "ok": True, "session_id": session_id,
+        "ok": True,
+        "session_id": session_id,
         "decomps": dict(state.decomps),
         "translations": dict(state.translations),
         "blackboxes": sorted(state.blackboxes),
@@ -332,8 +347,7 @@ RECOVERY_TOOLS: list[dict[str, Any]] = [
     {
         "name": "resolve_unsupported_op",
         "description": (
-            "Aggregator: pick (auto|decomp|translation|blackbox) and apply "
-            "recovery for one unsupported op."
+            "Aggregator: pick (auto|decomp|translation|blackbox) and apply recovery for one unsupported op."
         ),
         "phase": "transform",
         "handler": resolve_unsupported_op,

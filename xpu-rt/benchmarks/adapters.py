@@ -16,8 +16,8 @@ from benchmarks.collector import (
     collect_eqsat_metrics,
     collect_ir_metrics,
     collect_recipe_metrics,
-    collect_synthesis_metrics,
     collect_solver_metrics,
+    collect_synthesis_metrics,
 )
 from benchmarks.record import RunRecord
 from benchmarks.registry import BenchmarkRegistry
@@ -27,11 +27,9 @@ from benchmarks.spec import BaselineSpec, ExperimentCase, TargetSpec, WorkloadSp
 class Adapter(Protocol):
     """Common adapter interface."""
 
-    def is_available(self, ctx: AdapterContext) -> tuple[bool, str]:
-        ...
+    def is_available(self, ctx: AdapterContext) -> tuple[bool, str]: ...
 
-    def run(self, ctx: AdapterContext) -> RunRecord:
-        ...
+    def run(self, ctx: AdapterContext) -> RunRecord: ...
 
 
 @dataclass(frozen=True)
@@ -189,10 +187,7 @@ def _populate_capture_from_artifact(record: RunRecord, artifact: Any, *, capture
 
     total_fx_nodes = int(getattr(artifact.validation, "num_ops", 0))
     auto_translations = len(getattr(artifact, "synthesized_payload_translations", {}))
-    unsupported_ops = [
-        str(resolution.target)
-        for resolution in getattr(artifact, "unsupported_resolutions", [])
-    ]
+    unsupported_ops = [str(resolution.target) for resolution in getattr(artifact, "unsupported_resolutions", [])]
     record.capture = collect_capture_metrics(
         export_success=artifact.exported_program is not None,
         graph_break_count=int(getattr(artifact, "graph_break_count", 0)),
@@ -325,11 +320,11 @@ class CompGenAdapter:
 
             from compgen.capture import capture_frontend_artifact
             from compgen.eqsat.pipeline import run_eqsat_pass
+            from compgen.ir.payload.import_fx import fx_to_xdsl
             from compgen.ir.recipe.lower import lower_recipe
             from compgen.ir.recipe.seed import generate_seed_recipe
             from compgen.ir.recipe.serialize import recipe_module_to_yaml, recipe_to_mlir
             from compgen.ir.recipe.validate import validate_recipe_module
-            from compgen.ir.payload.import_fx import fx_to_xdsl
             from compgen.kernels.contracts import build_kernel_contracts
             from compgen.kernels.selector import select_strategies
             from compgen.promotion.promote import RecipePromoter
@@ -383,8 +378,8 @@ class CompGenAdapter:
                 llm_backend = str((__import__("os")).environ.get("COMPGEN_LLM_BACKEND", "")).strip()
 
             if llm_backend:
-                from compgen.agent.loop import AgenticCompilationLoop
                 from compgen.agent.env import CompilerEnv
+                from compgen.agent.loop import AgenticCompilationLoop
                 from compgen.llm.config import build_llm_runtime, resolve_llm_selection
 
                 llm_model = runtime_config.get("llm_model")
@@ -413,9 +408,7 @@ class CompGenAdapter:
                     sample_inputs=sample_inputs,
                 )
                 loop = AgenticCompilationLoop(llm_client=llm_client, env=env, budget=agent_budget)
-                agentic_result = (
-                    loop.run_with_recipe(target_profile) if use_recipe else loop.run(target_profile)
-                )
+                agentic_result = loop.run_with_recipe(target_profile) if use_recipe else loop.run(target_profile)
                 best_module = env.best_module()
                 if best_module is not None:
                     module = best_module.clone()
@@ -530,16 +523,22 @@ class CompGenAdapter:
                 )
                 verification_result = verifier.verify(original_module, module)
                 verification_payload = _serialize_verification_result(verification_result)
-                record.verification.structural_pass = "structural" in verification_result.details and "PASS" in verification_result.details["structural"]
+                record.verification.structural_pass = (
+                    "structural" in verification_result.details and "PASS" in verification_result.details["structural"]
+                )
                 record.verification.check_assertions_pass = True
                 record.verification.check_assertions_run = 0
-                record.verification.differential_pass = "differential" in verification_result.details and "PASS" in verification_result.details["differential"]
+                record.verification.differential_pass = (
+                    "differential" in verification_result.details
+                    and "PASS" in verification_result.details["differential"]
+                )
                 record.verification.differential_max_error = float(verification_result.max_abs_error or 0.0)
                 tv_detail = verification_result.details.get("translation_validation", "")
                 record.verification.translation_validation_pass = None if "SKIPPED" in tv_detail else True
                 # Detect structural-expected-mismatch (structural fails but numeric passes)
                 if hasattr(verification_result, "levels_run"):
                     from compgen.transforms.verify import VerificationLevel
+
                     structural_ran = VerificationLevel.STRUCTURAL in verification_result.levels_run
                     structural_passed = VerificationLevel.STRUCTURAL in verification_result.levels_passed
                     if verification_result.passed and structural_ran and not structural_passed:
@@ -585,9 +584,15 @@ class CompGenAdapter:
 
             executor = LocalExecutor()
             comparison = executor.compare(model, sample_inputs, num_iterations=10)
-            record.baselines.eager_cpu_latency_us = comparison.eager_cpu.latency_median_us if comparison.eager_cpu else 0.0
-            record.baselines.eager_gpu_latency_us = comparison.eager_gpu.latency_median_us if comparison.eager_gpu else 0.0
-            record.baselines.compiled_gpu_latency_us = comparison.compiled_gpu.latency_median_us if comparison.compiled_gpu else 0.0
+            record.baselines.eager_cpu_latency_us = (
+                comparison.eager_cpu.latency_median_us if comparison.eager_cpu else 0.0
+            )
+            record.baselines.eager_gpu_latency_us = (
+                comparison.eager_gpu.latency_median_us if comparison.eager_gpu else 0.0
+            )
+            record.baselines.compiled_gpu_latency_us = (
+                comparison.compiled_gpu.latency_median_us if comparison.compiled_gpu else 0.0
+            )
 
             compgen_backend = CompGenBackend(decisions={"ablation": ctx.ablation})
             backend_result = compgen_backend.compile_and_benchmark(
@@ -630,8 +635,12 @@ class CompGenAdapter:
                 record.solver.placement_time_ms + record.solver.schedule_time_ms + record.solver.memory_time_ms
             )
             record.total_compile_time_ms = record.generation.compile_time_ms
-            record.generation.rejected_by_verification = 0 if record.verification.overall_status in {"pass", "skip"} else 1
-            record.status = "pass" if not record.errors and record.verification.overall_status in {"pass", "skip"} else "fail"
+            record.generation.rejected_by_verification = (
+                0 if record.verification.overall_status in {"pass", "skip"} else 1
+            )
+            record.status = (
+                "pass" if not record.errors and record.verification.overall_status in {"pass", "skip"} else "fail"
+            )
 
         except Exception as exc:  # pragma: no cover - exercised by integration paths
             return _finalize_expected_failure(record, ctx, exc, total_start=total_start)
@@ -657,7 +666,9 @@ class TorchEagerAdapter:
         model, sample_inputs = ctx.workload.load(ctx.workspace)
         from compgen.runtime.local_executor import LocalExecutor
 
-        result = LocalExecutor().benchmark(model, sample_inputs, device="cpu", mode="eager", num_iterations=10, warmup=3)
+        result = LocalExecutor().benchmark(
+            model, sample_inputs, device="cpu", mode="eager", num_iterations=10, warmup=3
+        )
         record.performance.latency_median_us = result.latency_median_us
         record.performance.latency_p99_us = result.latency_p99_us
         record.performance.throughput_samples_per_sec = result.throughput_samples_per_sec

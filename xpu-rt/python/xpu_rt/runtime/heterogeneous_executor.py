@@ -119,9 +119,7 @@ class HeterogeneousExecutor:
                     self._transports[rev_key] = transport
 
         self._initialized = True
-        log.info("executor.initialized",
-                 num_transports=len(self._transports),
-                 num_nodes=len(self.topology.nodes))
+        log.info("executor.initialized", num_transports=len(self._transports), num_nodes=len(self.topology.nodes))
 
     def shutdown(self) -> None:
         """Close all transport channels."""

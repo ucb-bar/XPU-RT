@@ -9,7 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from xdsl.dialects.builtin import ArrayAttr, IntegerAttr, IntegerType, ModuleOp
-from xdsl.ir import Operation, SSAValue
+from xdsl.ir import Operation
 from xdsl.pattern_rewriter import (
     PatternRewriter,
     PatternRewriteWalker,
@@ -30,18 +30,14 @@ def _replica_groups(devices: list[int]) -> ArrayAttr:
     n = 1
     for d in devices:
         n *= d
-    return ArrayAttr(
-        [ArrayAttr([IntegerAttr(i, IntegerType(64)) for i in range(n)])]
-    )
+    return ArrayAttr([ArrayAttr([IntegerAttr(i, IntegerType(64)) for i in range(n)])])
 
 
 class _InsertAllReducePattern(RewritePattern):
     def __init__(self, stats: InsertAllReduceStats) -> None:
         self.stats = stats
 
-    def match_and_rewrite(
-        self, op: Operation, rewriter: PatternRewriter
-    ) -> None:
+    def match_and_rewrite(self, op: Operation, rewriter: PatternRewriter) -> None:
         sharding = op.attributes.get("compgen.sharding")
         if not isinstance(sharding, ShardingSpecAttr):
             return

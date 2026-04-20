@@ -110,12 +110,14 @@ class LayoutPlanner:
         if analysis.dossier is not None and analysis.dossier.regions:
             for region in analysis.dossier.regions:
                 plans[region.region_id] = self._plan_from_dossier(
-                    region, tensor_cores,
+                    region,
+                    tensor_cores,
                 )
         else:
             for cluster in analysis.clusters:
                 plans[cluster.cluster_id] = self._plan_from_cluster(
-                    cluster, tensor_cores,
+                    cluster,
+                    tensor_cores,
                 )
 
         logger.debug("LayoutPlanner produced %d plans", len(plans))
@@ -142,7 +144,9 @@ class LayoutPlanner:
 
         if _matches_any(kind, _MATMUL_KEYWORDS):
             output_layout, tile = self._matmul_layouts(
-                layout_candidates, tensor_cores, notes,
+                layout_candidates,
+                tensor_cores,
+                notes,
             )
             # Mark RHS (second operand) as a prepack candidate
             if len(region.node_names) >= 2:
@@ -154,7 +158,9 @@ class LayoutPlanner:
 
         elif _matches_any(kind, _ATTENTION_KEYWORDS):
             output_layout, tile = self._attention_layouts(
-                layout_candidates, tensor_cores, notes,
+                layout_candidates,
+                tensor_cores,
+                notes,
             )
             # QK matmul benefits from tiled; softmax is row-major
             for idx, name in enumerate(region.node_names):

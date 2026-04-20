@@ -7,7 +7,6 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-
 from compgen.llm.anthropic_client import AnthropicClient
 from compgen.llm.base import GenerationRequest, LLMConfig, Objective, PromptContext
 from compgen.llm.cli_client import ClaudeCLIClient, CodexCLIClient

@@ -78,13 +78,12 @@ def verify_proposal(
     ``"structural" | "differential"``. Unknown names are silently
     dropped (the driver never raises on bad input from the LLM).
     """
-    _ = sm.get(session_id)   # exists-check
+    _ = sm.get(session_id)  # exists-check
     gate_catalogue = {
         "structural": structural_gate,
         "differential": differential_gate,
     }
-    chosen = [gate_catalogue[g] for g in (gates or ["structural"])
-              if g in gate_catalogue] or [structural_gate]
+    chosen = [gate_catalogue[g] for g in (gates or ["structural"]) if g in gate_catalogue] or [structural_gate]
     ctx: dict[str, Any] = {}
     if atol is not None:
         ctx["atol"] = atol
@@ -111,7 +110,9 @@ def step_proposal(
     session = sm.get(session_id)
     driver = session.require_driver()
     result = driver.step_proposal(
-        action_type, target=target, reason=reason,
+        action_type,
+        target=target,
+        reason=reason,
     )
     return {"ok": True, "session_id": session_id, **asdict(result)}
 

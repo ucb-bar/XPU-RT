@@ -8,7 +8,7 @@ from typing import Any
 import torch
 from xdsl.dialects.builtin import Float16Type, Float32Type, Float64Type, StringAttr, TensorType
 from xdsl.dialects.func import CallOp
-from xdsl.ir import Operation, SSAValue
+from xdsl.ir import SSAValue
 
 from compgen.capture.unsupported.classify import UnsupportedClassification
 from compgen.capture.unsupported.detect import UnsupportedOperatorIssue

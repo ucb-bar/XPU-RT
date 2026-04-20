@@ -5,10 +5,7 @@ from __future__ import annotations
 import pytest
 import torch
 import torch.nn as nn
-
-from compgen.quantization.fp8_tensor import FP8E4M3Po2Tensor
 from compgen.quantization.verify import (
-    NpuAlignmentResult,
     compare_quantized_accuracy,
     npu_alignment_check,
 )

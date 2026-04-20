@@ -62,22 +62,30 @@ class TestHardwareBrokerActor:
         assert resources == []
 
     def test_register_and_list(self, broker) -> None:
-        rid = ray.get(broker.register_resource.remote({
-            "resource_id": "test-board-01",
-            "resource_type": "board",
-            "target_name": "test-target",
-        }))
+        rid = ray.get(
+            broker.register_resource.remote(
+                {
+                    "resource_id": "test-board-01",
+                    "resource_type": "board",
+                    "target_name": "test-target",
+                }
+            )
+        )
         assert rid == "test-board-01"
         resources = ray.get(broker.list_resources.remote())
         assert len(resources) == 1
         assert resources[0]["available"] is True
 
     def test_reserve_and_release(self, broker) -> None:
-        ray.get(broker.register_resource.remote({
-            "resource_id": "test-fpga-01",
-            "resource_type": "fpga",
-            "target_name": "xilinx",
-        }))
+        ray.get(
+            broker.register_resource.remote(
+                {
+                    "resource_id": "test-fpga-01",
+                    "resource_type": "fpga",
+                    "target_name": "xilinx",
+                }
+            )
+        )
 
         lease = ray.get(broker.reserve.remote("fpga", "tester", 60.0))
         assert lease is not None
@@ -96,10 +104,14 @@ class TestHardwareBrokerActor:
         assert lease3 is not None
 
     def test_reserve_wrong_type(self, broker) -> None:
-        ray.get(broker.register_resource.remote({
-            "resource_id": "test-board-02",
-            "resource_type": "board",
-        }))
+        ray.get(
+            broker.register_resource.remote(
+                {
+                    "resource_id": "test-board-02",
+                    "resource_type": "board",
+                }
+            )
+        )
         result = ray.get(broker.reserve.remote("fpga", "tester", 60.0))
         assert result is None
 
@@ -110,13 +122,15 @@ class TestArtifactIndexActor:
         assert count == 0
 
     def test_register_and_get(self, artifact_index) -> None:
-        aid = ray.get(artifact_index.register_artifact.remote(
-            artifact_type="bundle",
-            target_name="cuda-a100",
-            storage_path="/artifacts/bundle_001",
-            model_hash="abc123",
-            objective="latency",
-        ))
+        aid = ray.get(
+            artifact_index.register_artifact.remote(
+                artifact_type="bundle",
+                target_name="cuda-a100",
+                storage_path="/artifacts/bundle_001",
+                model_hash="abc123",
+                objective="latency",
+            )
+        )
         assert isinstance(aid, str)
 
         entry = ray.get(artifact_index.get_artifact.remote(aid))
@@ -125,29 +139,37 @@ class TestArtifactIndexActor:
         assert entry["artifact_type"] == "bundle"
 
     def test_find_by_target(self, artifact_index) -> None:
-        ray.get(artifact_index.register_artifact.remote(
-            artifact_type="bundle",
-            target_name="target-a",
-            storage_path="/a",
-        ))
-        ray.get(artifact_index.register_artifact.remote(
-            artifact_type="bundle",
-            target_name="target-b",
-            storage_path="/b",
-        ))
+        ray.get(
+            artifact_index.register_artifact.remote(
+                artifact_type="bundle",
+                target_name="target-a",
+                storage_path="/a",
+            )
+        )
+        ray.get(
+            artifact_index.register_artifact.remote(
+                artifact_type="bundle",
+                target_name="target-b",
+                storage_path="/b",
+            )
+        )
 
-        results = ray.get(artifact_index.find_artifacts.remote(
-            target_name="target-a",
-        ))
+        results = ray.get(
+            artifact_index.find_artifacts.remote(
+                target_name="target-a",
+            )
+        )
         assert len(results) >= 1
         assert all(r["target_name"] == "target-a" for r in results)
 
     def test_delete(self, artifact_index) -> None:
-        aid = ray.get(artifact_index.register_artifact.remote(
-            artifact_type="kernel",
-            target_name="test",
-            storage_path="/k",
-        ))
+        aid = ray.get(
+            artifact_index.register_artifact.remote(
+                artifact_type="kernel",
+                target_name="test",
+                storage_path="/k",
+            )
+        )
         deleted = ray.get(artifact_index.delete_artifact.remote(aid))
         assert deleted is True
         assert ray.get(artifact_index.get_artifact.remote(aid)) is None
@@ -155,10 +177,12 @@ class TestArtifactIndexActor:
 
 class TestPlanSearchActor:
     def test_start_evolutionary(self, plan_search) -> None:
-        exp_id = ray.get(plan_search.start_evolutionary_search.remote(
-            target_name="test",
-            target_profile_path="specs/test.yaml",
-        ))
+        exp_id = ray.get(
+            plan_search.start_evolutionary_search.remote(
+                target_name="test",
+                target_profile_path="specs/test.yaml",
+            )
+        )
         assert isinstance(exp_id, str)
 
         status = ray.get(plan_search.get_experiment_status.remote(exp_id))
@@ -166,17 +190,21 @@ class TestPlanSearchActor:
         assert status["status"] == "completed"
 
     def test_start_tile_search(self, plan_search) -> None:
-        exp_id = ray.get(plan_search.start_tile_search.remote(
-            target_name="test",
-            op_type="matmul",
-        ))
+        exp_id = ray.get(
+            plan_search.start_tile_search.remote(
+                target_name="test",
+                op_type="matmul",
+            )
+        )
         status = ray.get(plan_search.get_experiment_status.remote(exp_id))
         assert status["experiment_type"] == "tile"
 
     def test_list_experiments(self, plan_search) -> None:
-        ray.get(plan_search.start_eqsat_ablation.remote(
-            target_name="test",
-        ))
+        ray.get(
+            plan_search.start_eqsat_ablation.remote(
+                target_name="test",
+            )
+        )
         exps = ray.get(plan_search.list_experiments.remote())
         assert len(exps) >= 1
 

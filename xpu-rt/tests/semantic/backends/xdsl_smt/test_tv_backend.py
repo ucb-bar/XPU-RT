@@ -3,17 +3,15 @@
 from __future__ import annotations
 
 import pytest
-from xdsl.builder import ImplicitBuilder
-from xdsl.context import Context as MLContext
-from xdsl.dialects.arith import AddiOp, ConstantOp
-from xdsl.dialects.builtin import Builtin, IntegerAttr, IntegerType, ModuleOp
-from xdsl.dialects.func import Func, FuncOp, ReturnOp
-from xdsl.ir import Block, Region
-
 from compgen.semantic.backends.xdsl_smt.tv_backend import (
     ArithZ3Lowerer,
     TranslationValidationBackend,
 )
+from xdsl.builder import ImplicitBuilder
+from xdsl.dialects.arith import AddiOp, ConstantOp
+from xdsl.dialects.builtin import IntegerAttr, IntegerType, ModuleOp
+from xdsl.dialects.func import FuncOp, ReturnOp
+from xdsl.ir import Block, Region
 
 z3 = pytest.importorskip("z3")
 

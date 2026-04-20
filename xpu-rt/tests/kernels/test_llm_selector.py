@@ -1,7 +1,8 @@
 """Tests for LLM-guided kernel strategy selection (Unit 6)."""
+
 from __future__ import annotations
+
 import json
-import pytest
 from unittest.mock import MagicMock
 
 from compgen.kernels.selector import KernelSelector, KernelStrategy
@@ -19,8 +20,10 @@ def _make_mock_llm(strategy: str = "autocomp", reason: str = "test"):
 
 def _make_spec(op_name: str = "linalg.matmul", flops: int = 500):
     """Create a minimal KernelSpec for testing."""
-    from compgen.kernels.contracts import KernelSpec
     from unittest.mock import MagicMock
+
+    from compgen.kernels.contracts import KernelSpec
+
     contract = MagicMock()
     contract.op_name = op_name
     contract.cost.flops = flops
@@ -32,6 +35,7 @@ def _make_spec(op_name: str = "linalg.matmul", flops: int = 500):
 
 def _make_target():
     from unittest.mock import MagicMock
+
     target = MagicMock()
     target.name = "test_gpu"
     device = MagicMock()

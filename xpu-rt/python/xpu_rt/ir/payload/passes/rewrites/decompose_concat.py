@@ -39,7 +39,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from xdsl.dialects.builtin import DenseArrayBase, ModuleOp, i64
+from xdsl.dialects.builtin import ModuleOp
 from xdsl.dialects.tensor import EmptyOp, InsertSliceOp
 from xdsl.ir import Operation, SSAValue
 from xdsl.pattern_rewriter import (
@@ -76,9 +76,7 @@ class DecomposeConcatPattern(RewritePattern):
         self.stats = stats if stats is not None else DecomposeConcatStats()
 
     @op_type_rewrite_pattern
-    def match_and_rewrite(
-        self, op: ConcatOp, rewriter: PatternRewriter
-    ) -> None:
+    def match_and_rewrite(self, op: ConcatOp, rewriter: PatternRewriter) -> None:
         self.stats.concat_ops_seen += 1
 
         # Static-shape gate.
@@ -133,8 +131,7 @@ class DecomposeConcatPattern(RewritePattern):
         # ConcatOp.verify_ but asserting here catches regressions from
         # future dynamic-shape changes.
         assert offset_on_dim == result_shape[dim], (
-            f"decompose_concat: accumulated offset {offset_on_dim} != "
-            f"result extent {result_shape[dim]} on dim {dim}"
+            f"decompose_concat: accumulated offset {offset_on_dim} != result extent {result_shape[dim]} on dim {dim}"
         )
 
         rewriter.replace_matched_op(inserts, new_results=[current_dst])

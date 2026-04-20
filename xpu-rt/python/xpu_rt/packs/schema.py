@@ -88,4 +88,3 @@ class PackContextSummary:
     available_profilers: tuple[str, ...] = ()
     benchmark_targets: tuple[str, ...] = ()
     integration_branch: str = ""
-

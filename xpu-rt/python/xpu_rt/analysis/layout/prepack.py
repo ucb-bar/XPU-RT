@@ -119,14 +119,16 @@ class PrepackPlanner:
 
                 benefit = reuse * approx_bytes * _MATERIALIZATION_COST_FACTOR_US
 
-                candidates.append(PrepackCandidate(
-                    region_id=cluster.cluster_id,
-                    operand_name=name,
-                    operand_index=idx,
-                    is_constant=is_const,
-                    reuse_count=reuse,
-                    estimated_benefit_us=benefit,
-                ))
+                candidates.append(
+                    PrepackCandidate(
+                        region_id=cluster.cluster_id,
+                        operand_name=name,
+                        operand_index=idx,
+                        is_constant=is_const,
+                        reuse_count=reuse,
+                        estimated_benefit_us=benefit,
+                    )
+                )
 
         # Sort best-first.
         candidates.sort(key=lambda c: c.estimated_benefit_us, reverse=True)

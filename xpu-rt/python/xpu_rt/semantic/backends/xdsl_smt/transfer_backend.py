@@ -14,8 +14,9 @@ concrete OR result is consistent with the predicted known bits.
 from __future__ import annotations
 
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any
 
 import structlog
 from xdsl.dialects.builtin import ModuleOp
@@ -106,10 +107,7 @@ class TransferVerificationBackend:
             concretes = [z3.BitVec(f"c{i}", width) for i in range(num_operands)]
 
             # Create abstract operands (e.g., known-bits: zeros, ones)
-            abstracts = [
-                (z3.BitVec(f"a{i}_zeros", width), z3.BitVec(f"a{i}_ones", width))
-                for i in range(num_operands)
-            ]
+            abstracts = [(z3.BitVec(f"a{i}_zeros", width), z3.BitVec(f"a{i}_ones", width)) for i in range(num_operands)]
 
             # Assert abstract values are valid
             for ab in abstracts:

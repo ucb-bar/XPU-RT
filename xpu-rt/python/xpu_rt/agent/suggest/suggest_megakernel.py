@@ -23,14 +23,27 @@ from compgen.agent.suggest._candidate import ProposalCandidate
 from compgen.agent.suggest._dispatch import register_suggester
 from compgen.agent.suggest._recipe_index import build_recipe_index
 
-
-_MATMUL_ROLES = frozenset({
-    "matmul", "mm", "addmm", "linear", "bmm", "batch_matmul",
-    "_weight_int4pack_mm", "_weight_int8pack_mm",
-})
-_ACTIVATION_ROLES = frozenset({
-    "silu", "gelu", "sigmoid", "tanh", "relu",
-})
+_MATMUL_ROLES = frozenset(
+    {
+        "matmul",
+        "mm",
+        "addmm",
+        "linear",
+        "bmm",
+        "batch_matmul",
+        "_weight_int4pack_mm",
+        "_weight_int8pack_mm",
+    }
+)
+_ACTIVATION_ROLES = frozenset(
+    {
+        "silu",
+        "gelu",
+        "sigmoid",
+        "tanh",
+        "relu",
+    }
+)
 
 # Roles considered "semantic" for megakernel membership. Structural
 # noise (yield / empty / view / transpose / permute / cat / clone /
@@ -41,11 +54,21 @@ _ACTIVATION_ROLES = frozenset({
 _SEMANTIC_ROLES: frozenset[str] = (
     _MATMUL_ROLES
     | _ACTIVATION_ROLES
-    | frozenset({
-        "softmax", "_softmax", "rmsnorm", "layer_norm",
-        "native_layer_norm", "rsqrt",
-        "mul", "add", "sub", "div", "neg",
-    })
+    | frozenset(
+        {
+            "softmax",
+            "_softmax",
+            "rmsnorm",
+            "layer_norm",
+            "native_layer_norm",
+            "rsqrt",
+            "mul",
+            "add",
+            "sub",
+            "div",
+            "neg",
+        }
+    )
 )
 
 
@@ -88,10 +111,12 @@ def _mlp_window(idx) -> list[str] | None:
     for i in range(n - 3):
         slice_ = idx.regions[i : i + 4]
         roles = [idx.role_by_region.get(s, "") for s in slice_]
-        if (roles[0] in _MATMUL_ROLES
-                and roles[1] in _ACTIVATION_ROLES
-                and roles[2] == "mul"
-                and roles[3] in _MATMUL_ROLES):
+        if (
+            roles[0] in _MATMUL_ROLES
+            and roles[1] in _ACTIVATION_ROLES
+            and roles[2] == "mul"
+            and roles[3] in _MATMUL_ROLES
+        ):
             # The tight 4-op slice is already semantic — but defensively
             # filter so future slack windows still emit clean lists.
             return _filter_semantic(idx, list(slice_))
@@ -113,68 +138,65 @@ def suggest_megakernel(
 
     attn = _attention_window(idx)
     if attn:
-        out.append(ProposalCandidate(
-            chosen={
-                "megakernel_name": f"{target_name}_attention_block",
-                "fused_region_refs": attn,
-                "event_tensor_decls": [
-                    {"name": "scores_done", "wait_count": len(attn) - 1,
-                     "scope": "block"},
-                ],
-            },
-            rationale=(
-                f"Attention-block megakernel: matmul→softmax→matmul "
-                f"({len(attn)} regions: {attn})"
-            ),
-            expected_impact=0.85,
-            target_feature_justification=(
-                "persistent_kernels + semaphore_atomics on the attention "
-                "block keep Q·K·V intermediates resident in scratchpad."
-            ),
-            metadata={"window": "attention"},
-        ))
+        out.append(
+            ProposalCandidate(
+                chosen={
+                    "megakernel_name": f"{target_name}_attention_block",
+                    "fused_region_refs": attn,
+                    "event_tensor_decls": [
+                        {"name": "scores_done", "wait_count": len(attn) - 1, "scope": "block"},
+                    ],
+                },
+                rationale=(f"Attention-block megakernel: matmul→softmax→matmul ({len(attn)} regions: {attn})"),
+                expected_impact=0.85,
+                target_feature_justification=(
+                    "persistent_kernels + semaphore_atomics on the attention "
+                    "block keep Q·K·V intermediates resident in scratchpad."
+                ),
+                metadata={"window": "attention"},
+            )
+        )
 
     mlp = _mlp_window(idx)
     if mlp:
-        out.append(ProposalCandidate(
-            chosen={
-                "megakernel_name": f"{target_name}_mlp_block",
-                "fused_region_refs": mlp,
-                "event_tensor_decls": [
-                    {"name": "gate_done", "wait_count": 1, "scope": "block"},
-                    {"name": "up_done", "wait_count": 1, "scope": "block"},
-                ],
-            },
-            rationale=(
-                f"MLP-block megakernel: matmul→{idx.role_by_region.get(mlp[1])}→mul→matmul "
-                f"({len(mlp)} regions: {mlp})"
-            ),
-            expected_impact=0.8,
-            target_feature_justification=(
-                "SwiGLU-style MLP collapses into one persistent kernel; "
-                "intermediates never leave VTCM/SMEM."
-            ),
-            metadata={"window": "mlp"},
-        ))
+        out.append(
+            ProposalCandidate(
+                chosen={
+                    "megakernel_name": f"{target_name}_mlp_block",
+                    "fused_region_refs": mlp,
+                    "event_tensor_decls": [
+                        {"name": "gate_done", "wait_count": 1, "scope": "block"},
+                        {"name": "up_done", "wait_count": 1, "scope": "block"},
+                    ],
+                },
+                rationale=(
+                    f"MLP-block megakernel: matmul→{idx.role_by_region.get(mlp[1])}→mul→matmul "
+                    f"({len(mlp)} regions: {mlp})"
+                ),
+                expected_impact=0.8,
+                target_feature_justification=(
+                    "SwiGLU-style MLP collapses into one persistent kernel; intermediates never leave VTCM/SMEM."
+                ),
+                metadata={"window": "mlp"},
+            )
+        )
 
     # Fallback: cluster all matmuls (when neither attention nor MLP
     # window matched but matmuls exist).
-    matmuls = [s for s in idx.regions
-               if idx.role_by_region.get(s, "") in _MATMUL_ROLES]
+    matmuls = [s for s in idx.regions if idx.role_by_region.get(s, "") in _MATMUL_ROLES]
     if not out and len(matmuls) >= 2:
-        out.append(ProposalCandidate(
-            chosen={
-                "megakernel_name": f"{target_name}_all_matmuls",
-                "fused_region_refs": matmuls[:8],   # cap so the recipe stays sane
-            },
-            rationale=(
-                f"All-matmul cluster (no attention/MLP pattern found); "
-                f"{len(matmuls)} regions"
-            ),
-            expected_impact=0.5,
-            target_feature_justification="matmul-heavy region grouping",
-            metadata={"window": "all_matmuls"},
-        ))
+        out.append(
+            ProposalCandidate(
+                chosen={
+                    "megakernel_name": f"{target_name}_all_matmuls",
+                    "fused_region_refs": matmuls[:8],  # cap so the recipe stays sane
+                },
+                rationale=(f"All-matmul cluster (no attention/MLP pattern found); {len(matmuls)} regions"),
+                expected_impact=0.5,
+                target_feature_justification="matmul-heavy region grouping",
+                metadata={"window": "all_matmuls"},
+            )
+        )
 
     return out[:k]
 

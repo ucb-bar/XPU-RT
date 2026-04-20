@@ -370,8 +370,11 @@ _TEMPLATES: dict[str, tuple[str, str]] = {
 # Block-size heuristic
 # ---------------------------------------------------------------------------
 
+
 def _pick_tile_sizes(
-    dim_m: int, dim_n: int, dim_k: int,
+    dim_m: int,
+    dim_n: int,
+    dim_k: int,
 ) -> tuple[int, int, int]:
     """Choose BLOCK_M, BLOCK_N, BLOCK_K for a matmul tile.
 
@@ -380,6 +383,7 @@ def _pick_tile_sizes(
     ``(BLOCK_M * BLOCK_K + BLOCK_K * BLOCK_N) * 4 * num_stages`` bytes.
     We target <= 48 KiB to stay within most GPU limits.
     """
+
     def _clamp_po2(dim: int, lo: int = 16, hi: int = 64) -> int:
         v = max(lo, min(hi, dim))
         # round down to nearest power of two
@@ -395,6 +399,7 @@ def _pick_tile_sizes(
 # ---------------------------------------------------------------------------
 # Provider implementation
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class TritonTemplateProvider:
@@ -452,7 +457,9 @@ class TritonTemplateProvider:
         log.info(
             "triton_templates.instantiated",
             op_family=op,
-            dim_m=dim_m, dim_n=dim_n, dim_k=dim_k,
+            dim_m=dim_m,
+            dim_n=dim_n,
+            dim_k=dim_k,
             triton_available=_TRITON_AVAILABLE,
         )
 
@@ -467,7 +474,11 @@ class TritonTemplateProvider:
 
                 if torch.cuda.is_available():
                     correct, latency_us, validation_diags = _validate_on_gpu(
-                        kernel_code, op, dim_m, dim_n, dim_k,
+                        kernel_code,
+                        op,
+                        dim_m,
+                        dim_n,
+                        dim_k,
                     )
                 else:
                     validation_diags.append("CUDA not available; skipping GPU validation")
@@ -516,6 +527,7 @@ class TritonTemplateProvider:
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _shapes_from_contract(contract: KernelContract) -> tuple[int, int, int]:
     """Extract ``(dim_m, dim_n, dim_k)`` from the contract shapes.
@@ -573,7 +585,10 @@ def _import_kernel_from_source(kernel_code: str) -> Any:
     import tempfile
 
     with tempfile.NamedTemporaryFile(
-        suffix=".py", prefix="triton_tmpl_", mode="w", delete=False,
+        suffix=".py",
+        prefix="triton_tmpl_",
+        mode="w",
+        delete=False,
     ) as f:
         f.write(kernel_code)
         f.flush()
@@ -648,10 +663,7 @@ def _validate_on_gpu(
         max_abs = float(torch.max(torch.abs(diff)).item())
         tol = 1e-2  # GELU approximation needs wider tolerance
         correct = max_abs <= tol
-        diags.append(
-            f"Correctness: {'PASS' if correct else 'FAIL'} "
-            f"(l2={l2:.6f}, max_abs={max_abs:.6f}, tol={tol})"
-        )
+        diags.append(f"Correctness: {'PASS' if correct else 'FAIL'} (l2={l2:.6f}, max_abs={max_abs:.6f}, tol={tol})")
     except Exception as exc:
         return False, 0.0, diags + [f"Execution failed: {exc}"]
 

@@ -46,6 +46,7 @@ class TestExplain:
 
         # Add a commuted alternative
         from compgen.eqsat.rules.algebraic import CommutativityAddiRule
+
         CommutativityAddiRule().apply(module)
 
         summary = summarize_egraph(module)
@@ -87,7 +88,7 @@ class TestExplain:
 
 class TestRuleValidation:
     def test_valid_rule_code(self) -> None:
-        code = '''
+        code = """
 class TestCommute(EqSatRewriteRule):
     @property
     def name(self):
@@ -105,7 +106,7 @@ class TestCommute(EqSatRewriteRule):
                 add_alternative_to_eclass(eclass, commuted.result)
                 count += 1
         return count
-'''
+"""
         result = validate_rule_code(code)
         assert result.valid
         assert result.rule is not None
@@ -124,18 +125,18 @@ class TestCommute(EqSatRewriteRule):
         assert "No EqSatRewriteRule subclass found" in result.error
 
     def test_missing_name_property(self) -> None:
-        code = '''
+        code = """
 class BadRule(EqSatRewriteRule):
     def match_and_add(self, module):
         return 0
-'''
+"""
         result = validate_rule_code(code)
         # This should fail because `name` is an abstract property
         assert not result.valid
 
     def test_validated_rule_actually_works(self) -> None:
         """A validated rule should actually work on a real module."""
-        code = '''
+        code = """
 class NopRule(EqSatRewriteRule):
     @property
     def name(self):
@@ -143,7 +144,7 @@ class NopRule(EqSatRewriteRule):
 
     def match_and_add(self, module):
         return 0
-'''
+"""
         result = validate_rule_code(code)
         assert result.valid
 
@@ -208,7 +209,7 @@ class TestRuleIntegration:
     def test_llm_generated_rule_applied_to_egraph(self) -> None:
         """Simulate the full LLM rule proposal pipeline."""
         # Step 1: LLM generates rule code
-        llm_rule_code = '''
+        llm_rule_code = """
 class MulCommute(EqSatRewriteRule):
     @property
     def name(self):
@@ -233,7 +234,7 @@ class MulCommute(EqSatRewriteRule):
             add_alternative_to_eclass(eclass, commuted.result)
             count += 1
         return count
-'''
+"""
         # Step 2: Validate
         validation = validate_rule_code(llm_rule_code)
         assert validation.valid

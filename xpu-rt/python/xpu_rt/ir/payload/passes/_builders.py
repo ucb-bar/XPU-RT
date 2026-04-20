@@ -29,20 +29,18 @@ Public entry points:
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable
+from collections.abc import Callable
 
 from xdsl.dialects.arith import ExtFOp, TruncFOp
 from xdsl.dialects.builtin import (
     AffineMapAttr,
     ArrayAttr,
-    FixedBitwidthType,
     TensorType,
 )
 from xdsl.dialects.linalg import GenericOp, IteratorTypeAttr, YieldOp
 from xdsl.ir import Attribute, Block, Operation, Region, SSAValue
 from xdsl.ir.affine import AffineExpr, AffineMap
 from xdsl.pattern_rewriter import PatternRewriter
-
 
 # --- AffineMap builders ------------------------------------------------------
 
@@ -62,10 +60,7 @@ def affine_map_transpose(rank: int, perm: list[int]) -> AffineMap:
     ``perm`` must be a permutation of ``range(rank)``.
     """
     if sorted(perm) != list(range(rank)):
-        raise ValueError(
-            f"affine_map_transpose: perm {perm} must be a permutation of "
-            f"range({rank})"
-        )
+        raise ValueError(f"affine_map_transpose: perm {perm} must be a permutation of range({rank})")
     exprs = tuple(AffineExpr.dimension(perm[i]) for i in range(rank))
     return AffineMap(rank, 0, exprs)
 
@@ -80,19 +75,11 @@ def affine_map_broadcast(rank: int, bcast_dims: list[int]) -> AffineMap:
     ``bcast_dims`` entries must be unique and in ``[0, rank)``.
     """
     if any(d < 0 or d >= rank for d in bcast_dims):
-        raise ValueError(
-            f"affine_map_broadcast: bcast_dims {bcast_dims} out of range for "
-            f"rank {rank}"
-        )
+        raise ValueError(f"affine_map_broadcast: bcast_dims {bcast_dims} out of range for rank {rank}")
     if len(set(bcast_dims)) != len(bcast_dims):
-        raise ValueError(
-            f"affine_map_broadcast: bcast_dims {bcast_dims} must be unique"
-        )
+        raise ValueError(f"affine_map_broadcast: bcast_dims {bcast_dims} must be unique")
     bset = set(bcast_dims)
-    exprs = tuple(
-        AffineExpr.constant(0) if i in bset else AffineExpr.dimension(i)
-        for i in range(rank)
-    )
+    exprs = tuple(AffineExpr.constant(0) if i in bset else AffineExpr.dimension(i) for i in range(rank))
     return AffineMap(rank, 0, exprs)
 
 
@@ -101,6 +88,7 @@ def affine_map_broadcast(rank: int, bcast_dims: list[int]) -> AffineMap:
 
 def _iterator_array(kinds: list[str]) -> ArrayAttr:
     from xdsl.dialects.linalg import IteratorType
+
     valid = {
         "parallel": IteratorType.PARALLEL,
         "reduction": IteratorType.REDUCTION,
@@ -109,9 +97,7 @@ def _iterator_array(kinds: list[str]) -> ArrayAttr:
     attrs = []
     for k in kinds:
         if k not in valid:
-            raise ValueError(
-                f"iterator kind {k!r} must be one of {sorted(valid)}"
-            )
+            raise ValueError(f"iterator kind {k!r} must be one of {sorted(valid)}")
         attrs.append(IteratorTypeAttr(valid[k]))
     return ArrayAttr(attrs)
 
@@ -136,10 +122,7 @@ def linalg_generic_elementwise(
     """
     init_type = init.type
     if not isinstance(init_type, TensorType):
-        raise TypeError(
-            f"linalg_generic_elementwise: init must have TensorType, "
-            f"got {init_type}"
-        )
+        raise TypeError(f"linalg_generic_elementwise: init must have TensorType, got {init_type}")
     rank = len(init_type.get_shape())
 
     maps = [AffineMapAttr(affine_map_identity(rank))] * (len(inputs) + 1)
@@ -158,9 +141,7 @@ def linalg_generic_elementwise(
     body(list(block.args), block)
     # Defensive check: user body must terminate with linalg.yield.
     if not block.ops or not isinstance(block.last_op, YieldOp):
-        raise ValueError(
-            "linalg_generic_elementwise: body must end with linalg.yield"
-        )
+        raise ValueError("linalg_generic_elementwise: body must end with linalg.yield")
 
     region = Region([block])
     return GenericOp(
@@ -199,9 +180,7 @@ def linalg_generic_reduction(
 
     for d in reduction_dims:
         if d < 0 or d >= in_rank:
-            raise ValueError(
-                f"reduction_dim {d} out of range for input rank {in_rank}"
-            )
+            raise ValueError(f"reduction_dim {d} out of range for input rank {in_rank}")
     if len(set(reduction_dims)) != len(reduction_dims):
         raise ValueError(f"reduction_dims {reduction_dims} must be unique")
 
@@ -212,14 +191,10 @@ def linalg_generic_reduction(
     output_exprs = tuple(AffineExpr.dimension(i) for i in kept)
     output_map = AffineMap(in_rank, 0, output_exprs)
 
-    iterator_kinds = [
-        "reduction" if i in reduction_dims else "parallel" for i in range(in_rank)
-    ]
+    iterator_kinds = ["reduction" if i in reduction_dims else "parallel" for i in range(in_rank)]
     iterators = _iterator_array(iterator_kinds)
 
-    block = Block(
-        arg_types=[in_type.get_element_type(), init_type.get_element_type()]
-    )
+    block = Block(arg_types=[in_type.get_element_type(), init_type.get_element_type()])
     body(list(block.args), block)
     if not block.ops or not isinstance(block.last_op, YieldOp):
         raise ValueError("linalg_generic_reduction: body must end with linalg.yield")
@@ -260,9 +235,7 @@ def linalg_generic_matmul_like(
     init_type = init.type
     for label, t in (("lhs", lhs_type), ("rhs", rhs_type), ("init", init_type)):
         if not isinstance(t, TensorType):
-            raise TypeError(
-                f"linalg_generic_matmul_like: {label} must have TensorType"
-            )
+            raise TypeError(f"linalg_generic_matmul_like: {label} must have TensorType")
 
     dim_count = max(m.num_dims for m in (lhs_map, rhs_map, output_map))
     # Two parallel output dims followed by ``dim_count - 2`` reduction
@@ -322,9 +295,7 @@ def insert_arith_cast(
     """
     value_type = value.type
     if not isinstance(value_type, TensorType):
-        raise TypeError(
-            f"insert_arith_cast expects a tensor-typed value, got {value_type}"
-        )
+        raise TypeError(f"insert_arith_cast expects a tensor-typed value, got {value_type}")
     src_elem = value_type.get_element_type()
     if src_elem == target_elem_type:
         return value

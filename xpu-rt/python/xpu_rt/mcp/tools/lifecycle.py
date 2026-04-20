@@ -6,14 +6,12 @@ import json
 from pathlib import Path
 from typing import Any
 
-import torch
-
 from compgen.agent.llm_driver import LLMDrivenCompiler
-from compgen.api import compile_model, device as _device
+from compgen.api import compile_model
+from compgen.api import device as _device
 from compgen.api_llm import _resolve_llm, _resolve_model
 from compgen.mcp.async_jobs import JobQueue
 from compgen.mcp.session import McpSession, SessionManager
-
 
 # The JobQueue is module-level so every handler shares the same pool.
 _JOBS = JobQueue(max_workers=2, inline_threshold_s=5.0)
@@ -159,21 +157,27 @@ def load_model(
     source = model_path or hf_id
     try:
         module, sample_inputs = _resolve_model(
-            source if hf_id else Path(source), sample_inputs=None,
+            source if hf_id else Path(source),
+            sample_inputs=None,
         )
-    except Exception as e:   # noqa: BLE001
+    except Exception as e:  # noqa: BLE001
         return {"ok": False, "error": f"load_model: {type(e).__name__}: {e}"}
 
     session.model_hint = source
 
     def _compile() -> dict[str, Any]:
         compiled = compile_model(
-            module, dev, objective=objective, sample_inputs=sample_inputs,
+            module,
+            dev,
+            objective=objective,
+            sample_inputs=sample_inputs,
         )
         client, provider = _resolve_llm(llm)
         env = compiled.create_agent_env(budget=budget)
         driver = LLMDrivenCompiler(
-            env=env, target=dev.profile, llm_client=client,
+            env=env,
+            target=dev.profile,
+            llm_client=client,
             transcript_dir=session.scratch_dir / "transcripts",
             budget=budget,
         )
@@ -225,7 +229,9 @@ def compile_session(
     def _run() -> dict[str, Any]:
         assert session.llm_client is not None
         result = compiled.run_agentic(
-            session.llm_client, budget=driver.budget, with_recipe=True,
+            session.llm_client,
+            budget=driver.budget,
+            with_recipe=True,
         )
         return {
             "ok": True,
@@ -257,9 +263,7 @@ def bundle_export(
     """
     session = sm.get(session_id)
     compiled = session.require_compiled()
-    out = Path(output_dir).expanduser() if output_dir else (
-        session.scratch_dir / "bundle"
-    )
+    out = Path(output_dir).expanduser() if output_dir else (session.scratch_dir / "bundle")
     out.mkdir(parents=True, exist_ok=True)
 
     from compgen.ir.recipe.serialize import recipe_to_mlir
@@ -290,6 +294,7 @@ def bundle_export(
             from compgen.stages.bundle.baremetal_plugin import (
                 write_baremetal_bundle,
             )
+
             baremetal_dir = out / "baremetal"
             result = write_baremetal_bundle(
                 payload_module,
@@ -304,7 +309,7 @@ def bundle_export(
                 "extension_source": result.extension_source.name,
                 "makefile": result.makefile.name if result.makefile else None,
             }
-        except Exception as exc:   # noqa: BLE001
+        except Exception as exc:  # noqa: BLE001
             baremetal_info = {
                 "ok": False,
                 "error": f"{type(exc).__name__}: {exc}",
@@ -312,6 +317,7 @@ def bundle_export(
     if target_class == "triton_friendly":
         try:
             from compgen.stages.bundle.triton_plugin import write_triton_bundle
+
             triton_dir = out / "triton"
             tres = write_triton_bundle(payload_module, triton_dir)
             triton_info = {
@@ -322,7 +328,7 @@ def bundle_export(
                 "manifest": tres.manifest_path.name,
                 "skipped": tres.skipped,
             }
-        except Exception as exc:   # noqa: BLE001
+        except Exception as exc:  # noqa: BLE001
             triton_info = {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
 
     manifest = {
@@ -354,7 +360,10 @@ def bundle_export(
 
 
 def poll_job(
-    sm: SessionManager, *, job_id: str, session_id: str | None = None,
+    sm: SessionManager,
+    *,
+    job_id: str,
+    session_id: str | None = None,
 ) -> dict[str, Any]:
     """Poll an asynchronous job submitted by a lifecycle tool."""
     _ = session_id  # not used — jobs are process-wide
@@ -404,10 +413,7 @@ LIFECYCLE_TOOLS: list[dict[str, Any]] = [
                 "session_id": {"type": "string"},
                 "pack": {
                     "type": "string",
-                    "description": (
-                        "Filesystem path to a pack root, or a "
-                        "'package[:attr]' entry-point identifier."
-                    ),
+                    "description": ("Filesystem path to a pack root, or a 'package[:attr]' entry-point identifier."),
                 },
             },
             "required": ["session_id", "pack"],

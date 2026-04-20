@@ -18,18 +18,16 @@ from __future__ import annotations
 
 from typing import Any, ClassVar
 
-from xdsl.dialects.builtin import IntegerAttr, ModuleOp, StringAttr, i64
+from xdsl.dialects.builtin import ModuleOp
 from xdsl.ir import Operation
 
 from compgen.ir.payload.passes._annot_helpers import (
     annotate_matching_ops,
     op_matches_any_prefix,
     operand_defining_op,
-    walk_ops_by_name,
 )
 from compgen.ir.payload.passes.base import PayloadPass
 from compgen.llm.registry import AutocompCostImpact, ToolArg
-
 
 # ---------------------------------------------------------------------------
 # Pattern catalogs — shared by multiple passes
@@ -40,25 +38,29 @@ from compgen.llm.registry import AutocompCostImpact, ToolArg
 # modern TorchAO ATen op names (_weight_int8pack_mm, _weight_int4pack_mm,
 # _weight_int4pack_qm) plus the opaque-call wrappers that the expanded
 # decomposition table emits for those ops (prefix ``aten_weight_intNpack_*``).
-_QUANTIZED_MATMUL_OPS = frozenset({
-    # legacy IREE name
-    "linalg.quantized_matmul",
-    # modern TorchAO ATen names (direct, when decomposition doesn't fire)
-    "aten._weight_int8pack_mm.default",
-    "aten._weight_int4pack_mm.default",
-    "aten._weight_int4pack_qm.default",
-    # opaque-call shapes emitted by the wave-6 decompositions
-    "func.call",   # matched in conjunction with compgen._pattern_hint below
-})
+_QUANTIZED_MATMUL_OPS = frozenset(
+    {
+        # legacy IREE name
+        "linalg.quantized_matmul",
+        # modern TorchAO ATen names (direct, when decomposition doesn't fire)
+        "aten._weight_int8pack_mm.default",
+        "aten._weight_int4pack_mm.default",
+        "aten._weight_int4pack_qm.default",
+        # opaque-call shapes emitted by the wave-6 decompositions
+        "func.call",  # matched in conjunction with compgen._pattern_hint below
+    }
+)
 
 # Pattern-hint strings a matched op must carry for it to count as a
 # quantized matmul. Used alongside the name match so ``func.call`` ops
 # carrying the right pattern_hint are recognised without false positives.
-_QUANTIZED_MATMUL_PATTERN_HINTS = frozenset({
-    "weight_int8pack_mm",
-    "weight_int4pack_mm",
-    "weight_int4pack_qm",
-})
+_QUANTIZED_MATMUL_PATTERN_HINTS = frozenset(
+    {
+        "weight_int8pack_mm",
+        "weight_int4pack_mm",
+        "weight_int4pack_qm",
+    }
+)
 
 _QUANTIZED_CONV_OPS = frozenset(
     {
@@ -69,24 +71,26 @@ _QUANTIZED_CONV_OPS = frozenset(
 
 # Dequantize-shaped ops — used by FuseDequantMatmul to detect a
 # producer-side dequant before a matmul consumer.
-_DEQUANT_OPS = frozenset({
-    "torch.ops.quantized_decomposed.dequantize_per_tensor.default",
-    "torch.ops.quantized_decomposed.dequantize_per_channel.default",
-    "torch.ops.quantized_decomposed.dequantize_per_group_along_last_dim.default",
-    "quantized_decomposed.dequantize_per_tensor.default",
-    "quantized_decomposed.dequantize_per_channel.default",
-    "quantized_decomposed.dequantize_per_group_along_last_dim.default",
-})
-
-_DEQUANT_PATTERN_HINTS = frozenset({
-    "dequantize_per_tensor",
-    "dequantize_per_channel",
-    "dequantize_per_group",
-})
-
-_MATMUL_OPS = frozenset(
-    {"linalg.matmul", "linalg.batch_matmul", "linalg.quantized_matmul"}
+_DEQUANT_OPS = frozenset(
+    {
+        "torch.ops.quantized_decomposed.dequantize_per_tensor.default",
+        "torch.ops.quantized_decomposed.dequantize_per_channel.default",
+        "torch.ops.quantized_decomposed.dequantize_per_group_along_last_dim.default",
+        "quantized_decomposed.dequantize_per_tensor.default",
+        "quantized_decomposed.dequantize_per_channel.default",
+        "quantized_decomposed.dequantize_per_group_along_last_dim.default",
+    }
 )
+
+_DEQUANT_PATTERN_HINTS = frozenset(
+    {
+        "dequantize_per_tensor",
+        "dequantize_per_channel",
+        "dequantize_per_group",
+    }
+)
+
+_MATMUL_OPS = frozenset({"linalg.matmul", "linalg.batch_matmul", "linalg.quantized_matmul"})
 
 _CONV_OPS_NHWC = frozenset(
     {
@@ -148,9 +152,14 @@ class LowerQuantizedMatmul(PayloadPass):
     def tool_args(self) -> tuple[ToolArg, ...]:
         return (
             ToolArg("region", "region_ref", "region", required=False, default=""),
-            ToolArg("policy", "enum", "lowering policy",
-                    enum=("always", "zp_zero_only", "skip"),
-                    required=False, default="always"),
+            ToolArg(
+                "policy",
+                "enum",
+                "lowering policy",
+                enum=("always", "zp_zero_only", "skip"),
+                required=False,
+                default="always",
+            ),
         )
 
     def run(self, module: ModuleOp, **kwargs: Any) -> ModuleOp:
@@ -182,18 +191,21 @@ class LowerQuantizedConv(PayloadPass):
     phase: ClassVar[int] = 2
     wraps_pass: ClassVar[str] = "IREE:QuantizedConvToConv"
     autocomp_cost_impact: ClassVar[AutocompCostImpact] = "high"
-    description: ClassVar[str] = (
-        "Identify quantized conv2d ops and annotate a lowering mode."
-    )
+    description: ClassVar[str] = "Identify quantized conv2d ops and annotate a lowering mode."
     covers_families: ClassVar[frozenset[str]] = frozenset()
     stub: ClassVar[bool] = False
 
     def tool_args(self) -> tuple[ToolArg, ...]:
         return (
             ToolArg("region", "region_ref", "region", required=False, default=""),
-            ToolArg("policy", "enum", "lowering policy",
-                    enum=("always", "zp_zero_only", "skip"),
-                    required=False, default="always"),
+            ToolArg(
+                "policy",
+                "enum",
+                "lowering policy",
+                enum=("always", "zp_zero_only", "skip"),
+                required=False,
+                default="always",
+            ),
         )
 
     def run(self, module: ModuleOp, **kwargs: Any) -> ModuleOp:
@@ -235,9 +247,14 @@ class PropagateTransposes(PayloadPass):
     def tool_args(self) -> tuple[ToolArg, ...]:
         return (
             ToolArg("region", "region_ref", "region", required=False, default=""),
-            ToolArg("aggressiveness", "enum", "how far to push",
-                    enum=("conservative", "through_elementwise", "through_conv", "through_pad"),
-                    required=False, default="through_elementwise"),
+            ToolArg(
+                "aggressiveness",
+                "enum",
+                "how far to push",
+                enum=("conservative", "through_elementwise", "through_conv", "through_pad"),
+                required=False,
+                default="through_elementwise",
+            ),
         )
 
     def _user_target(self, op: Operation) -> str:
@@ -282,12 +299,9 @@ class LowerConvToImg2Col(PayloadPass):
     wraps_pass: ClassVar[str] = "IREE:ConvertConv2DToImg2Col"
     autocomp_cost_impact: ClassVar[AutocompCostImpact] = "high"
     description: ClassVar[str] = (
-        "Identify linalg.conv_2d_* ops and mark whether their shapes are "
-        "static (img2col-eligible) or dynamic (skip)."
+        "Identify linalg.conv_2d_* ops and mark whether their shapes are static (img2col-eligible) or dynamic (skip)."
     )
-    covers_families: ClassVar[frozenset[str]] = frozenset(
-        {"rvv_cpu", "qualcomm_npu", "qualcomm_dsp", "generic_npu"}
-    )
+    covers_families: ClassVar[frozenset[str]] = frozenset({"rvv_cpu", "qualcomm_npu", "qualcomm_dsp", "generic_npu"})
     stub: ClassVar[bool] = False
 
     def _has_static_shape(self, op: Operation) -> bool:
@@ -338,11 +352,13 @@ class RaiseSpecialOps(PayloadPass):
     def tool_args(self) -> tuple[ToolArg, ...]:
         return (
             ToolArg("region", "region_ref", "region", required=False, default=""),
-            ToolArg("library", "enum_set",
-                    "named special-op library to raise",
-                    enum=("softmax", "logsoftmax", "layernorm", "rmsnorm",
-                          "gelu", "silu", "rope", "swiglu"),
-                    required=False),
+            ToolArg(
+                "library",
+                "enum_set",
+                "named special-op library to raise",
+                enum=("softmax", "logsoftmax", "layernorm", "rmsnorm", "gelu", "silu", "rope", "swiglu"),
+                required=False,
+            ),
         )
 
     def _detect_pattern(self, op: Operation) -> str | None:
@@ -385,10 +401,13 @@ class MatchLibraryCall(PayloadPass):
     def tool_args(self) -> tuple[ToolArg, ...]:
         return (
             ToolArg("region", "region_ref", "region", required=False, default=""),
-            ToolArg("target_capabilities", "target_ref",
-                    "target resource model (optional; list of family names, "
-                    "target_resource dict, or profile object)",
-                    required=False, default=None),
+            ToolArg(
+                "target_capabilities",
+                "target_ref",
+                "target resource model (optional; list of family names, target_resource dict, or profile object)",
+                required=False,
+                default=None,
+            ),
         )
 
     def _match_family(self, op: Operation, target_families: list[str]) -> str:
@@ -410,9 +429,7 @@ class MatchLibraryCall(PayloadPass):
                 target_families = list(target)
             elif isinstance(target, dict):
                 fams = target.get("supported_kernel_families") or []
-                target_families = [
-                    f.get("family", "") if isinstance(f, dict) else str(f) for f in fams
-                ]
+                target_families = [f.get("family", "") if isinstance(f, dict) else str(f) for f in fams]
             else:
                 fams = getattr(target, "supported_kernel_families", []) or []
                 target_families = [getattr(f, "family", str(f)) for f in fams]
@@ -442,8 +459,7 @@ class SetNumericsPolicy(PayloadPass):
     wraps_pass: ClassVar[str] = "XLA:FloatNormalization"
     autocomp_cost_impact: ClassVar[AutocompCostImpact] = "high"
     description: ClassVar[str] = (
-        "Walk contraction ops; annotate compgen.numerics_policy with the "
-        "declared dtype + accumulator combination."
+        "Walk contraction ops; annotate compgen.numerics_policy with the declared dtype + accumulator combination."
     )
     covers_families: ClassVar[frozenset[str]] = frozenset()
     stub: ClassVar[bool] = False
@@ -451,12 +467,22 @@ class SetNumericsPolicy(PayloadPass):
     def tool_args(self) -> tuple[ToolArg, ...]:
         return (
             ToolArg("region", "region_ref", "region", required=False, default=""),
-            ToolArg("input_dtype", "enum", "input dtype",
-                    enum=("f32", "bf16", "f16", "fp8_e4m3", "fp8_e5m2", "int8"),
-                    required=False, default="bf16"),
-            ToolArg("accumulator_dtype", "enum", "accumulator dtype",
-                    enum=("f32", "f16", "i32"),
-                    required=False, default="f32"),
+            ToolArg(
+                "input_dtype",
+                "enum",
+                "input dtype",
+                enum=("f32", "bf16", "f16", "fp8_e4m3", "fp8_e5m2", "int8"),
+                required=False,
+                default="bf16",
+            ),
+            ToolArg(
+                "accumulator_dtype",
+                "enum",
+                "accumulator dtype",
+                enum=("f32", "f16", "i32"),
+                required=False,
+                default="f32",
+            ),
         )
 
     def run(self, module: ModuleOp, **kwargs: Any) -> ModuleOp:
@@ -492,9 +518,7 @@ class FoldTransposesIntoDots(PayloadPass):
         "For each linalg.matmul, identify whether lhs/rhs has a transpose "
         "producer; annotate compgen.fold_candidate with lhs/rhs/both/none."
     )
-    covers_families: ClassVar[frozenset[str]] = frozenset(
-        {"rvv_cpu", "qualcomm_npu", "qualcomm_dsp", "generic_npu"}
-    )
+    covers_families: ClassVar[frozenset[str]] = frozenset({"rvv_cpu", "qualcomm_npu", "qualcomm_dsp", "generic_npu"})
     stub: ClassVar[bool] = False
 
     def run(self, module: ModuleOp, **kwargs: Any) -> ModuleOp:
@@ -532,19 +556,21 @@ class PlanReduction(PayloadPass):
     phase: ClassVar[int] = 2
     wraps_pass: ClassVar[str] = "XLA:ReductionDimensionGrouper+Splitter+TreeReductionRewriter"
     autocomp_cost_impact: ClassVar[AutocompCostImpact] = "medium"
-    description: ClassVar[str] = (
-        "For each reduction op, annotate compgen.reduction_strategy per the "
-        "declared strategy."
-    )
+    description: ClassVar[str] = "For each reduction op, annotate compgen.reduction_strategy per the declared strategy."
     covers_families: ClassVar[frozenset[str]] = frozenset()
     stub: ClassVar[bool] = False
 
     def tool_args(self) -> tuple[ToolArg, ...]:
         return (
             ToolArg("region", "region_ref", "region", required=False, default=""),
-            ToolArg("strategy", "enum", "reduction strategy",
-                    enum=("group", "split", "tree_reduce"),
-                    required=False, default="split"),
+            ToolArg(
+                "strategy",
+                "enum",
+                "reduction strategy",
+                enum=("group", "split", "tree_reduce"),
+                required=False,
+                default="split",
+            ),
         )
 
     def _is_reduction(self, op: Operation) -> bool:
@@ -560,7 +586,7 @@ class PlanReduction(PayloadPass):
                     text = str(getattr(it, "data", it))
                     if "reduction" in text.lower():
                         return True
-            except Exception:   # noqa: BLE001
+            except Exception:  # noqa: BLE001
                 pass
         return False
 
@@ -637,9 +663,14 @@ class FuseDequantMatmul(PayloadPass):
     def tool_args(self) -> tuple[ToolArg, ...]:
         return (
             ToolArg("region", "region_ref", "region", required=False, default=""),
-            ToolArg("safety", "enum", "reassociation safety level",
-                    enum=("reassoc_safe_only", "allow_numerics_relaxation"),
-                    required=False, default="reassoc_safe_only"),
+            ToolArg(
+                "safety",
+                "enum",
+                "reassociation safety level",
+                enum=("reassoc_safe_only", "allow_numerics_relaxation"),
+                required=False,
+                default="reassoc_safe_only",
+            ),
         )
 
     def _is_dequant_shaped(self, op: Operation | None) -> bool:

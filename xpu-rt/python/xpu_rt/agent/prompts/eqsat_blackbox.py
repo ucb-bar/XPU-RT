@@ -1,14 +1,17 @@
 """Prompt for EqSat blackbox frontier decisions."""
+
 from __future__ import annotations
+
 import json
 import re
 import textwrap
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
 class BlackboxContext:
     """Context for blackbox frontier prompt."""
+
     op_types_counts: dict[str, int]  # op_type -> count
     current_open: list[str]
     current_closed: list[str]
@@ -81,7 +84,7 @@ def parse_response(text: str) -> dict | None:
         if isinstance(data, dict) and "open" in data:
             return data
     except json.JSONDecodeError:
-        m = re.search(r'\{.*\}', text, re.DOTALL)
+        m = re.search(r"\{.*\}", text, re.DOTALL)
         if m:
             try:
                 data = json.loads(m.group())

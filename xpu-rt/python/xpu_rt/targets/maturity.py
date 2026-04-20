@@ -83,49 +83,63 @@ def assess_maturity(target_package: Any) -> MaturityAssessment:
     has_profile = hasattr(target_package, "profile") and target_package.profile is not None
     has_caps = hasattr(target_package, "capabilities") and target_package.capabilities is not None
 
-    requirements.append(MaturityRequirement(
-        level=TargetMaturity.L0_RECOGNIZED, name="profile_valid",
-        description="Target profile is loaded and valid", satisfied=has_profile,
-    ))
-    requirements.append(MaturityRequirement(
-        level=TargetMaturity.L0_RECOGNIZED, name="capabilities_inferred",
-        description="Capability spec is inferred", satisfied=has_caps,
-    ))
+    requirements.append(
+        MaturityRequirement(
+            level=TargetMaturity.L0_RECOGNIZED,
+            name="profile_valid",
+            description="Target profile is loaded and valid",
+            satisfied=has_profile,
+        )
+    )
+    requirements.append(
+        MaturityRequirement(
+            level=TargetMaturity.L0_RECOGNIZED,
+            name="capabilities_inferred",
+            description="Capability spec is inferred",
+            satisfied=has_caps,
+        )
+    )
 
     l0_ok = has_profile and has_caps
 
     # L1: at least one verification result with correctness_ok
     l1_ok = False
     if hasattr(target_package, "verification_results") and target_package.verification_results:
-        l1_ok = any(
-            getattr(vr, "correctness_ok", False) for vr in target_package.verification_results
+        l1_ok = any(getattr(vr, "correctness_ok", False) for vr in target_package.verification_results)
+    requirements.append(
+        MaturityRequirement(
+            level=TargetMaturity.L1_CORRECTNESS,
+            name="fallback_correct",
+            description="At least one workload correct via fallback",
+            satisfied=l1_ok,
         )
-    requirements.append(MaturityRequirement(
-        level=TargetMaturity.L1_CORRECTNESS, name="fallback_correct",
-        description="At least one workload correct via fallback", satisfied=l1_ok,
-    ))
+    )
 
     # L2: at least one recipe with performance data
     l2_ok = False
     if hasattr(target_package, "recipes") and target_package.recipes:
-        l2_ok = any(
-            getattr(recipe, "performance_data", None) is not None for recipe in target_package.recipes
+        l2_ok = any(getattr(recipe, "performance_data", None) is not None for recipe in target_package.recipes)
+    requirements.append(
+        MaturityRequirement(
+            level=TargetMaturity.L2_OPTIMIZED,
+            name="recipe_beats_fallback",
+            description="At least one optimized recipe beats fallback",
+            satisfied=l2_ok,
         )
-    requirements.append(MaturityRequirement(
-        level=TargetMaturity.L2_OPTIMIZED, name="recipe_beats_fallback",
-        description="At least one optimized recipe beats fallback", satisfied=l2_ok,
-    ))
+    )
 
     # L3: all promoted recipes are verified
     l3_ok = False
     if hasattr(target_package, "promoted_recipes") and target_package.promoted_recipes:
-        l3_ok = all(
-            getattr(recipe, "verified", False) for recipe in target_package.promoted_recipes
+        l3_ok = all(getattr(recipe, "verified", False) for recipe in target_package.promoted_recipes)
+    requirements.append(
+        MaturityRequirement(
+            level=TargetMaturity.L3_PROMOTED,
+            name="promoted_verified",
+            description="Promoted recipes pass full verification ladder",
+            satisfied=l3_ok,
         )
-    requirements.append(MaturityRequirement(
-        level=TargetMaturity.L3_PROMOTED, name="promoted_verified",
-        description="Promoted recipes pass full verification ladder", satisfied=l3_ok,
-    ))
+    )
 
     if l0_ok:
         current_level = TargetMaturity.L0_RECOGNIZED

@@ -24,7 +24,6 @@ every W6 runtime pass rewrites.
 
 from __future__ import annotations
 
-from collections.abc import Iterable
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
@@ -114,10 +113,7 @@ class Lifetime:
         interval (they stay live across the whole program)."""
         if self.persistent or other.persistent:
             return True
-        return not (
-            self.last_use_tick < other.first_use_tick
-            or other.last_use_tick < self.first_use_tick
-        )
+        return not (self.last_use_tick < other.first_use_tick or other.last_use_tick < self.first_use_tick)
 
 
 @dataclass
@@ -241,55 +237,34 @@ class ExecutionPlan:
                 )
             if b.ownership == "alias":
                 if not b.alias_of:
-                    raise ValueError(
-                        f"buffer {b.buffer_id!r}: ownership=alias requires "
-                        f"alias_of to be set"
-                    )
+                    raise ValueError(f"buffer {b.buffer_id!r}: ownership=alias requires alias_of to be set")
                 if b.alias_of == b.buffer_id:
-                    raise ValueError(
-                        f"buffer {b.buffer_id!r}: alias_of must reference "
-                        f"a different buffer"
-                    )
+                    raise ValueError(f"buffer {b.buffer_id!r}: alias_of must reference a different buffer")
 
         # Second-pass: resolve alias_of references against seen_buffers.
         for b in self.buffers:
             if b.alias_of and b.alias_of not in seen_buffers:
-                raise ValueError(
-                    f"buffer {b.buffer_id!r}: alias_of references unknown "
-                    f"buffer {b.alias_of!r}"
-                )
+                raise ValueError(f"buffer {b.buffer_id!r}: alias_of references unknown buffer {b.alias_of!r}")
 
         for e in self.copy_edges:
             if e.from_buffer not in seen_buffers:
-                raise ValueError(
-                    f"copy_edge from_buffer {e.from_buffer!r} is unknown"
-                )
+                raise ValueError(f"copy_edge from_buffer {e.from_buffer!r} is unknown")
             if e.to_buffer not in seen_buffers:
-                raise ValueError(
-                    f"copy_edge to_buffer {e.to_buffer!r} is unknown"
-                )
+                raise ValueError(f"copy_edge to_buffer {e.to_buffer!r} is unknown")
             if e.size_bytes < 0:
                 raise ValueError(
-                    f"copy_edge {e.from_buffer}->{e.to_buffer}: "
-                    f"size_bytes ({e.size_bytes}) must be non-negative"
+                    f"copy_edge {e.from_buffer}->{e.to_buffer}: size_bytes ({e.size_bytes}) must be non-negative"
                 )
 
         for d in self.dependency_edges:
             if d.from_region not in seen_regions:
-                raise ValueError(
-                    f"dependency_edge from_region {d.from_region!r} is unknown"
-                )
+                raise ValueError(f"dependency_edge from_region {d.from_region!r} is unknown")
             if d.to_region not in seen_regions:
-                raise ValueError(
-                    f"dependency_edge to_region {d.to_region!r} is unknown"
-                )
+                raise ValueError(f"dependency_edge to_region {d.to_region!r} is unknown")
 
         for q in self.queue_timeline:
             if q.region_id not in seen_regions:
-                raise ValueError(
-                    f"queue_timeline entry refers to unknown region "
-                    f"{q.region_id!r}"
-                )
+                raise ValueError(f"queue_timeline entry refers to unknown region {q.region_id!r}")
 
     # --- serialization --------------------------------------------------
 

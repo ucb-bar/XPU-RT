@@ -9,21 +9,24 @@ promotion can still happen with the higher bar).
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 import pytest
 import torch
 import torch.nn as nn
-
 from compgen.agent.invent_slots.registrar import register_invent_slots
 from compgen.agent.llm_driver import LLMDrivenCompiler
 from compgen.agent.self_extension import (
-    AuthoredTool, AuthoredToolSource, TrialScenario,
-    clear_authored_index, register_authored_tool, run_trial,
+    AuthoredTool,
+    AuthoredToolSource,
+    TrialScenario,
+    clear_authored_index,
+    register_authored_tool,
+    run_trial,
 )
 from compgen.agent.self_extension.graduate import promote_authored_tools
-from compgen.api import compile_model, device as _device
+from compgen.api import compile_model
+from compgen.api import device as _device
 from compgen.llm.mock_client import MockLLMClient
 from compgen.llm.registry import Registry
 from compgen.mcp.session import SessionManager
@@ -32,10 +35,7 @@ from compgen.mcp.tools.graduate import (
     promote_in_session_authored_tools,
 )
 
-EXEMPLAR = (
-    Path(__file__).resolve().parents[1]
-    / "targetgen" / "exemplars" / "test_gpu_simt.yaml"
-)
+EXEMPLAR = Path(__file__).resolve().parents[1] / "targetgen" / "exemplars" / "test_gpu_simt.yaml"
 
 _TOOL = AuthoredTool(
     name="ses_demo_tool",
@@ -59,14 +59,19 @@ def _open(tmp_path: Path) -> tuple[SessionManager, str, Path]:
     session = sm.open()
     dev = _device(EXEMPLAR)
     compiled = compile_model(
-        nn.Linear(8, 4).eval(), dev, sample_inputs=(torch.randn(1, 8),),
+        nn.Linear(8, 4).eval(),
+        dev,
+        sample_inputs=(torch.randn(1, 8),),
     )
-    reg = Registry(); register_invent_slots(reg)
+    reg = Registry()
+    register_invent_slots(reg)
     env = compiled.create_agent_env(budget=4)
     driver = LLMDrivenCompiler(
-        env=env, target=dev.profile,
+        env=env,
+        target=dev.profile,
         llm_client=MockLLMClient(strict=False),
-        budget=4, registry=reg,
+        budget=4,
+        registry=reg,
     )
     session.compiled = compiled
     session.device = dev
@@ -94,13 +99,14 @@ def test_two_trials_in_session_promote(tmp_path: Path) -> None:
     for _ in range(2):
         run_trial(
             _TOOL,
-            TrialScenario(workload="w1", target="t1",
-                          scorer=_scorer, kwargs={"x": 3}),
+            TrialScenario(workload="w1", target="t1", scorer=_scorer, kwargs={"x": 3}),
             log_path=log,
         )
 
     r = promote_in_session_authored_tools(
-        sm, session_id=sid, min_passes=2,
+        sm,
+        session_id=sid,
+        min_passes=2,
     )
     assert r["ok"]
     assert r["candidates_found"] == 1
@@ -117,8 +123,7 @@ def test_same_trials_dont_clear_cross_session_threshold(tmp_path: Path) -> None:
     for _ in range(2):
         run_trial(
             _TOOL,
-            TrialScenario(workload="w1", target="t1",
-                          scorer=_scorer, kwargs={"x": 3}),
+            TrialScenario(workload="w1", target="t1", scorer=_scorer, kwargs={"x": 3}),
             log_path=log,
         )
     fresh_reg = Registry()
@@ -139,21 +144,20 @@ def test_in_session_promotion_does_not_touch_cross_session_state(tmp_path: Path)
     for _ in range(2):
         run_trial(
             _TOOL,
-            TrialScenario(workload="w1", target="t1",
-                          scorer=_scorer, kwargs={"x": 3}),
+            TrialScenario(workload="w1", target="t1", scorer=_scorer, kwargs={"x": 3}),
             log_path=log,
         )
     state_path = log.parent / "authored_graduations.json"
     state_before = state_path.read_text() if state_path.exists() else ""
 
     promote_in_session_authored_tools(
-        sm, session_id=sid, min_passes=2,
+        sm,
+        session_id=sid,
+        min_passes=2,
     )
 
     state_after = state_path.read_text() if state_path.exists() else ""
-    assert state_before == state_after, (
-        "session-scoped promotion mutated the persistent state file"
-    )
+    assert state_before == state_after, "session-scoped promotion mutated the persistent state file"
 
 
 def test_in_session_promotion_idempotent_within_session(tmp_path: Path) -> None:
@@ -163,8 +167,7 @@ def test_in_session_promotion_idempotent_within_session(tmp_path: Path) -> None:
     for _ in range(2):
         run_trial(
             _TOOL,
-            TrialScenario(workload="w1", target="t1",
-                          scorer=_scorer, kwargs={"x": 3}),
+            TrialScenario(workload="w1", target="t1", scorer=_scorer, kwargs={"x": 3}),
             log_path=log,
         )
     r1 = promote_in_session_authored_tools(sm, session_id=sid, min_passes=2)

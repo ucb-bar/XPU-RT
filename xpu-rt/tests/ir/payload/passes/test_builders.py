@@ -3,18 +3,6 @@
 from __future__ import annotations
 
 import pytest
-from xdsl.dialects.arith import AddfOp, MulfOp
-from xdsl.dialects.builtin import (
-    AffineMapAttr,
-    Float16Type,
-    Float32Type,
-    Float64Type,
-    TensorType,
-)
-from xdsl.dialects.linalg import GenericOp, YieldOp
-from xdsl.dialects.tensor import EmptyOp
-from xdsl.ir.affine import AffineExpr, AffineMap
-
 from compgen.ir.payload.passes._builders import (
     affine_map_broadcast,
     affine_map_identity,
@@ -24,6 +12,16 @@ from compgen.ir.payload.passes._builders import (
     linalg_generic_matmul_like,
     linalg_generic_reduction,
 )
+from xdsl.dialects.arith import AddfOp, MulfOp
+from xdsl.dialects.builtin import (
+    Float16Type,
+    Float32Type,
+    Float64Type,
+    TensorType,
+)
+from xdsl.dialects.linalg import GenericOp, YieldOp
+from xdsl.dialects.tensor import EmptyOp
+from xdsl.ir.affine import AffineExpr, AffineMap
 
 
 def _ft(shape):
@@ -105,8 +103,10 @@ def test_linalg_generic_elementwise_verifies():
 def test_linalg_generic_elementwise_rejects_non_tensor_init():
     # init must be TensorType.
     with pytest.raises(TypeError):
+
         class Fake:
             type = Float32Type()
+
         linalg_generic_elementwise([_value([4])], Fake(), _ft([4]), _ew_add_body)
 
 
@@ -183,7 +183,14 @@ def test_matmul_like_basic_matmul_shape():
     out_map = AffineMap(3, 0, (d0, d1))
 
     op = linalg_generic_matmul_like(
-        lhs, rhs, out, _ft([M, N]), lhs_map, rhs_map, out_map, _mm_body,
+        lhs,
+        rhs,
+        out,
+        _ft([M, N]),
+        lhs_map,
+        rhs_map,
+        out_map,
+        _mm_body,
     )
     op.verify()
 
@@ -205,7 +212,14 @@ def test_matmul_like_transpose_a_shape():
     out_map = AffineMap(3, 0, (d0, d1))
 
     op = linalg_generic_matmul_like(
-        lhs, rhs, out, _ft([M, N]), lhs_map, rhs_map, out_map, _mm_body,
+        lhs,
+        rhs,
+        out,
+        _ft([M, N]),
+        lhs_map,
+        rhs_map,
+        out_map,
+        _mm_body,
     )
     op.verify()
 

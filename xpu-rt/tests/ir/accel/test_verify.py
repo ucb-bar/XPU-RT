@@ -12,7 +12,6 @@ from compgen.ir.accel.ops import (
 )
 from compgen.ir.accel.verify import AccelVerificationResult, verify_accel_ops
 
-
 # -- Valid ops pass ----------------------------------------------------------
 
 

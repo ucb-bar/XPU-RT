@@ -37,14 +37,15 @@ def observation_to_prompt(obs: Observation, legal_actions: list[LegalAction] | N
     lines: list[str] = []
 
     # Header
-    lines.append(f"OBJ:{obs.objective} STEP:{obs.step_count}/{obs.step_count + obs.budget_remaining}"
-                 f" COST:{obs.estimated_total_latency_us:.1f}us BEST:{obs.best_latency_us:.1f}us")
+    lines.append(
+        f"OBJ:{obs.objective} STEP:{obs.step_count}/{obs.step_count + obs.budget_remaining}"
+        f" COST:{obs.estimated_total_latency_us:.1f}us BEST:{obs.best_latency_us:.1f}us"
+    )
     lines.append(f"DEVICES:{obs.num_devices} [{','.join(obs.device_names)}]")
     lines.append(f"FLOPS:{obs.total_flops:,} BYTES:{obs.total_bytes:,}")
     if obs.graph_break_count or obs.guard_count or obs.unsupported_ops:
         lines.append(
-            f"FRONTEND: breaks={obs.graph_break_count} guards={obs.guard_count} "
-            f"unsupported={len(obs.unsupported_ops)}"
+            f"FRONTEND: breaks={obs.graph_break_count} guards={obs.guard_count} unsupported={len(obs.unsupported_ops)}"
         )
     if obs.active_packs:
         lines.append(
@@ -63,8 +64,7 @@ def observation_to_prompt(obs: Observation, legal_actions: list[LegalAction] | N
         bound = "C" if r.is_compute_bound else "M"  # Compute or Memory bound
         dev = f"D{r.device_index}" if r.device_index >= 0 else "D?"
         lines.append(
-            f"  {r.region_id}|{r.op_type}|{shapes}|{r.dtype}|"
-            f"{r.flops:,}F|{r.estimated_latency_us:.1f}us|{bound}|{dev}"
+            f"  {r.region_id}|{r.op_type}|{shapes}|{r.dtype}|{r.flops:,}F|{r.estimated_latency_us:.1f}us|{bound}|{dev}"
         )
     lines.append("")
 
@@ -92,15 +92,11 @@ def observation_to_prompt(obs: Observation, legal_actions: list[LegalAction] | N
     # Verification summary (if available)
     if obs.verification is not None:
         v = obs.verification
-        lines.append(
-            f"VERIFY: {v.tv_passed}ok {v.tv_failed}fail {v.tv_pending}pending"
-        )
+        lines.append(f"VERIFY: {v.tv_passed}ok {v.tv_failed}fail {v.tv_pending}pending")
         if v.last_failure_region:
-            lines.append(f"  FAIL {v.last_failure_region}: \"{v.last_counterexample_summary}\"")
+            lines.append(f'  FAIL {v.last_failure_region}: "{v.last_counterexample_summary}"')
         if v.verified_facts:
-            fact_strs = [
-                f"{f.region_id}:{f.kind}({f.detail})" for f in v.verified_facts[:5]
-            ]
+            fact_strs = [f"{f.region_id}:{f.kind}({f.detail})" for f in v.verified_facts[:5]]
             lines.append(f"  FACTS: {' '.join(fact_strs)}")
         if v.verifiable_op_types:
             lines.append(f"  VERIFIABLE: {','.join(v.verifiable_op_types[:10])}")
@@ -108,10 +104,7 @@ def observation_to_prompt(obs: Observation, legal_actions: list[LegalAction] | N
 
     if obs.analysis_dossier is not None:
         dossier = obs.analysis_dossier
-        lines.append(
-            f"DOSSIER: regions={dossier.total_regions} "
-            f"critical_path={','.join(dossier.critical_path[:5])}"
-        )
+        lines.append(f"DOSSIER: regions={dossier.total_regions} critical_path={','.join(dossier.critical_path[:5])}")
         if dossier.unsupported_targets:
             lines.append(f"  UNSUPPORTED: {','.join(dossier.unsupported_targets[:10])}")
         repeated = sorted(dossier.repeated_patterns.items(), key=lambda item: (-item[1], item[0]))
@@ -171,7 +164,9 @@ def observation_to_dict(obs: Observation) -> dict[str, Any]:
             "critical_path": list(obs.analysis_dossier.critical_path),
             "repeated_patterns": dict(obs.analysis_dossier.repeated_patterns),
             "unsupported_targets": list(obs.analysis_dossier.unsupported_targets),
-        } if obs.analysis_dossier is not None else None,
+        }
+        if obs.analysis_dossier is not None
+        else None,
     }
 
     if obs.verification is not None:

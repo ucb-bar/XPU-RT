@@ -1,5 +1,7 @@
 """Prompt for LLM-guided Recipe IR seed personalization."""
+
 from __future__ import annotations
+
 import json
 import re
 import textwrap
@@ -9,6 +11,7 @@ from dataclasses import dataclass, field
 @dataclass(frozen=True)
 class RecipeSeedContext:
     """Context for recipe seed personalization prompt."""
+
     op_histogram: dict[str, int]
     target_name: str
     objective: str
@@ -87,7 +90,7 @@ def parse_response(text: str) -> dict | None:
         if isinstance(data, dict) and "prioritize_ops" in data:
             return data
     except json.JSONDecodeError:
-        m = re.search(r'\{.*\}', text, re.DOTALL)
+        m = re.search(r"\{.*\}", text, re.DOTALL)
         if m:
             try:
                 data = json.loads(m.group())

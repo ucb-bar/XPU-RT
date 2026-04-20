@@ -6,13 +6,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
 import torch
 import torch.nn as nn
-
 from compgen.agent.invent_slots.registrar import register_invent_slots
 from compgen.agent.llm_driver import LLMDrivenCompiler
-from compgen.api import compile_model, device as _device
+from compgen.api import compile_model
+from compgen.api import device as _device
 from compgen.llm.mock_client import MockLLMClient
 from compgen.llm.registry import Registry
 from compgen.mcp.session import SessionManager
@@ -20,10 +19,7 @@ from compgen.mcp.tools.explain import EXPLAIN_TOOLS, explain_verification
 from compgen.mcp.tools.recipe_apply import apply_recipe
 from compgen.mcp.tools.transform import propose_invent_slot
 
-EXEMPLAR = (
-    Path(__file__).resolve().parents[1]
-    / "targetgen" / "exemplars" / "test_gpu_simt.yaml"
-)
+EXEMPLAR = Path(__file__).resolve().parents[1] / "targetgen" / "exemplars" / "test_gpu_simt.yaml"
 
 
 class _MLP(nn.Module):
@@ -31,6 +27,7 @@ class _MLP(nn.Module):
         super().__init__()
         self.fc1 = nn.Linear(32, 32)
         self.fc2 = nn.Linear(32, 16)
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.fc2(torch.relu(self.fc1(x)))
 
@@ -40,14 +37,19 @@ def _open(tmp_path: Path) -> tuple[SessionManager, str]:
     session = sm.open()
     dev = _device(EXEMPLAR)
     compiled = compile_model(
-        _MLP().eval(), dev, sample_inputs=(torch.randn(1, 32),),
+        _MLP().eval(),
+        dev,
+        sample_inputs=(torch.randn(1, 32),),
     )
-    reg = Registry(); register_invent_slots(reg)
+    reg = Registry()
+    register_invent_slots(reg)
     env = compiled.create_agent_env(budget=4)
     driver = LLMDrivenCompiler(
-        env=env, target=dev.profile,
+        env=env,
+        target=dev.profile,
         llm_client=MockLLMClient(strict=False),
-        budget=4, registry=reg,
+        budget=4,
+        registry=reg,
     )
     session.compiled = compiled
     session.device = dev
@@ -63,7 +65,9 @@ def test_explain_tool_is_registered() -> None:
 def test_apply_recipe_returns_per_obligation_and_per_script(tmp_path: Path) -> None:
     sm, sid = _open(tmp_path)
     propose_invent_slot(
-        sm, session_id=sid, slot_name="propose_fusion",
+        sm,
+        session_id=sid,
+        slot_name="propose_fusion",
         proposal={
             "chosen": {"grouped_regions": ["r_0", "r_1"]},
             "select_vs_invent": "invent",
@@ -91,10 +95,11 @@ def test_explain_verification_after_apply_returns_failures_with_hints(tmp_path: 
     # for. Transform Dialect interpreter isn't wired, so we expect
     # transform-script failures to surface.
     propose_invent_slot(
-        sm, session_id=sid, slot_name="propose_fusion",
+        sm,
+        session_id=sid,
+        slot_name="propose_fusion",
         proposal={
-            "chosen": {"grouped_regions": ["r_0", "r_1"],
-                       "fusion_kind": "producer_consumer"},
+            "chosen": {"grouped_regions": ["r_0", "r_1"], "fusion_kind": "producer_consumer"},
             "select_vs_invent": "invent",
         },
     )
@@ -127,9 +132,10 @@ def test_explain_verification_before_apply_is_empty(tmp_path: Path) -> None:
 def test_explain_verification_includes_passed_when_asked(tmp_path: Path) -> None:
     sm, sid = _open(tmp_path)
     propose_invent_slot(
-        sm, session_id=sid, slot_name="propose_fusion",
-        proposal={"chosen": {"grouped_regions": ["r_0", "r_1"]},
-                  "select_vs_invent": "invent"},
+        sm,
+        session_id=sid,
+        slot_name="propose_fusion",
+        proposal={"chosen": {"grouped_regions": ["r_0", "r_1"]}, "select_vs_invent": "invent"},
     )
     apply_recipe(sm, session_id=sid)
     r_failed = explain_verification(sm, session_id=sid, include_passed=False)

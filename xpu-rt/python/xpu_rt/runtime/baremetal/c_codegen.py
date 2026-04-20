@@ -43,7 +43,6 @@ produce different C bytes.
 
 from __future__ import annotations
 
-import io
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -58,7 +57,7 @@ from xdsl.dialects.builtin import (
     TensorType,
 )
 from xdsl.dialects.func import CallOp, FuncOp, ReturnOp
-from xdsl.ir import Block, Operation, SSAValue
+from xdsl.ir import Operation, SSAValue
 
 log = structlog.get_logger()
 
@@ -71,7 +70,7 @@ log = structlog.get_logger()
 def _c_scalar_for(elem_type: Any) -> str:
     """ANSI C scalar type for a payload element type."""
     if isinstance(elem_type, Float16Type):
-        return "uint16_t"   # half stored as raw bits; npu helpers convert
+        return "uint16_t"  # half stored as raw bits; npu helpers convert
     if isinstance(elem_type, Float32Type):
         return "float"
     if isinstance(elem_type, Float64Type):
@@ -87,7 +86,7 @@ def _c_scalar_for(elem_type: Any) -> str:
         if bits <= 32:
             return "int32_t"
         return "int64_t"
-    return "float"   # safe default
+    return "float"  # safe default
 
 
 def _shape_dims(t: TensorType) -> tuple[int, ...]:
@@ -206,8 +205,11 @@ def _emit_func_declaration(func: FuncOp) -> str:
 
 
 def _emit_op(
-    op: Operation, names: _NameTable, lines: list[str],
-    *, indent: str = "    ",
+    op: Operation,
+    names: _NameTable,
+    lines: list[str],
+    *,
+    indent: str = "    ",
 ) -> None:
     """Emit C source for one op into ``lines``."""
 
@@ -230,15 +232,11 @@ def _emit_op(
         if op.results:
             res = op.results[0]
             res_name = names.name_for(res, prefix="t")
-            scalar = _c_scalar_for(res.type.element_type) \
-                if isinstance(res.type, TensorType) else "int64_t"
+            scalar = _c_scalar_for(res.type.element_type) if isinstance(res.type, TensorType) else "int64_t"
             shape = _shape_str(res.type) if isinstance(res.type, TensorType) else ""
             bits = [b for b in (shape, trail) if b]
             comment = f"  /* {' | '.join(bits)} */" if bits else ""
-            lines.append(
-                f"{indent}{scalar} *{res_name} = "
-                f"npu_call_{callee}({args});{comment}"
-            )
+            lines.append(f"{indent}{scalar} *{res_name} = npu_call_{callee}({args});{comment}")
         else:
             comment = f"  /* {trail} */" if trail else ""
             lines.append(f"{indent}npu_call_{callee}({args});{comment}")
@@ -321,9 +319,7 @@ def _emit_op(
             perm = op.attributes.get("permutation")
             perm_str = _array_attr_to_c(perm)
             n = len(dims)
-            lines.append(
-                f"{indent}static const int64_t {res_name}_perm[{n}] = {perm_str};"
-            )
+            lines.append(f"{indent}static const int64_t {res_name}_perm[{n}] = {perm_str};")
             lines.append(
                 f"{indent}{scalar} *{res_name} = npu_transpose("
                 f"{names.name_for(a)}, {names.name_for(c_init)}, "
@@ -378,14 +374,8 @@ def _emit_op(
             res_name = names.name_for(outs[0], prefix="t")
             in_args = ", ".join(names.name_for(o) for o in op.operands)
             n = _elem_count(t) if isinstance(t, TensorType) else 0
-            lines.append(
-                f"{indent}/* linalg.generic — body opaque; deferred to npu_call_generic */"
-            )
-            lines.append(
-                f"{indent}{scalar} *{res_name} = npu_call_generic("
-                f"{in_args}, /*n_elems=*/{n}"
-                f");"
-            )
+            lines.append(f"{indent}/* linalg.generic — body opaque; deferred to npu_call_generic */")
+            lines.append(f"{indent}{scalar} *{res_name} = npu_call_generic({in_args}, /*n_elems=*/{n});")
         return
 
     # ---- arith / math scalar ops ----------------------------------------
@@ -422,18 +412,13 @@ def _emit_op(
             in_args = ", ".join(names.name_for(o) for o in op.operands)
             shape = _shape_str(t) if isinstance(t, TensorType) else ""
             n = _elem_count(t) if isinstance(t, TensorType) else 0
-            lines.append(
-                f"{indent}{scalar} *{res_name} = {view_call}("
-                f"{in_args}, /*n_elems=*/{n});  /* {shape} */"
-            )
+            lines.append(f"{indent}{scalar} *{res_name} = {view_call}({in_args}, /*n_elems=*/{n});  /* {shape} */")
         return
 
     # ---- catchall --------------------------------------------------------
     # We refuse to silently skip — emit a compile-time hint (still valid C
     # via /* ... */) so the codegen is honest about what it didn't render.
-    lines.append(
-        f"{indent}/* unhandled op: {op_name} (results={len(op.results)}) */"
-    )
+    lines.append(f"{indent}/* unhandled op: {op_name} (results={len(op.results)}) */")
 
 
 # ---------------------------------------------------------------------------
@@ -442,34 +427,34 @@ def _emit_op(
 
 
 _SCALAR_OPS: dict[str, Any] = {
-    "arith.addf":     lambda a: f"{a[0]} + {a[1]}",
-    "arith.subf":     lambda a: f"{a[0]} - {a[1]}",
-    "arith.mulf":     lambda a: f"{a[0]} * {a[1]}",
-    "arith.divf":     lambda a: f"{a[0]} / {a[1]}",
-    "arith.negf":     lambda a: f"-({a[0]})",
+    "arith.addf": lambda a: f"{a[0]} + {a[1]}",
+    "arith.subf": lambda a: f"{a[0]} - {a[1]}",
+    "arith.mulf": lambda a: f"{a[0]} * {a[1]}",
+    "arith.divf": lambda a: f"{a[0]} / {a[1]}",
+    "arith.negf": lambda a: f"-({a[0]})",
     "arith.maximumf": lambda a: f"((({a[0]}) > ({a[1]})) ? ({a[0]}) : ({a[1]}))",
     "arith.minimumf": lambda a: f"((({a[0]}) < ({a[1]})) ? ({a[0]}) : ({a[1]}))",
-    "arith.cmpf":     lambda a: f"(({a[0]}) == ({a[1]}))",
-    "arith.addi":     lambda a: f"{a[0]} + {a[1]}",
-    "arith.subi":     lambda a: f"{a[0]} - {a[1]}",
-    "arith.muli":     lambda a: f"{a[0]} * {a[1]}",
-    "math.exp":       lambda a: f"npu_expf({a[0]})",
-    "math.log":       lambda a: f"npu_logf({a[0]})",
-    "math.sqrt":      lambda a: f"npu_sqrtf({a[0]})",
-    "math.rsqrt":     lambda a: f"npu_rsqrtf({a[0]})",
-    "math.tanh":      lambda a: f"npu_tanhf({a[0]})",
-    "math.sin":       lambda a: f"npu_sinf({a[0]})",
-    "math.cos":       lambda a: f"npu_cosf({a[0]})",
+    "arith.cmpf": lambda a: f"(({a[0]}) == ({a[1]}))",
+    "arith.addi": lambda a: f"{a[0]} + {a[1]}",
+    "arith.subi": lambda a: f"{a[0]} - {a[1]}",
+    "arith.muli": lambda a: f"{a[0]} * {a[1]}",
+    "math.exp": lambda a: f"npu_expf({a[0]})",
+    "math.log": lambda a: f"npu_logf({a[0]})",
+    "math.sqrt": lambda a: f"npu_sqrtf({a[0]})",
+    "math.rsqrt": lambda a: f"npu_rsqrtf({a[0]})",
+    "math.tanh": lambda a: f"npu_tanhf({a[0]})",
+    "math.sin": lambda a: f"npu_sinf({a[0]})",
+    "math.cos": lambda a: f"npu_cosf({a[0]})",
 }
 
 
 _TENSOR_VIEW_OPS: dict[str, str] = {
-    "tensor.extract_slice":  "npu_view_extract_slice",
-    "tensor.insert_slice":   "npu_view_insert_slice",
-    "tensor.expand_shape":   "npu_view_expand_shape",
+    "tensor.extract_slice": "npu_view_extract_slice",
+    "tensor.insert_slice": "npu_view_insert_slice",
+    "tensor.expand_shape": "npu_view_expand_shape",
     "tensor.collapse_shape": "npu_view_collapse_shape",
-    "tensor.cast":           "npu_view_cast",
-    "tensor.reshape":        "npu_view_reshape",
+    "tensor.cast": "npu_view_cast",
+    "tensor.reshape": "npu_view_reshape",
 }
 
 
@@ -487,7 +472,7 @@ def _attr_str(attr: Any) -> str:
 # bytes in kernels/*.c).
 _AGENT_DECISION_ATTRS: tuple[str, ...] = (
     "compgen.region_id",
-    "compgen._pattern_hint",   # op-family role (matmul/softmax/rmsnorm/...) from import_fx
+    "compgen._pattern_hint",  # op-family role (matmul/softmax/rmsnorm/...) from import_fx
     "compgen.fused_into",
     "compgen.fusion_kind",
     "compgen.tile_sizes_str",
@@ -518,13 +503,13 @@ def _array_attr_to_c(attr: Any) -> str:
         return "{ 0 }"
     try:
         # DenseArrayBase exposes .get_values()
-        vals = attr.get_values()   # type: ignore[attr-defined]
+        vals = attr.get_values()  # type: ignore[attr-defined]
         return "{ " + ", ".join(str(int(v)) for v in vals) + " }"
     except AttributeError:
         try:
             data = attr.data
             return "{ " + ", ".join(str(int(getattr(v, "value", v).data)) for v in data) + " }"
-        except Exception:   # noqa: BLE001
+        except Exception:  # noqa: BLE001
             return "{ 0 }"
 
 
@@ -542,7 +527,7 @@ def _const_to_c(attr: Any, scalar: str) -> str:
         if hasattr(attr, "value"):
             v = attr.value
             return f"{float(v)}f" if scalar == "float" else str(float(v))
-    except Exception:   # noqa: BLE001
+    except Exception:  # noqa: BLE001
         pass
     return "0"
 
@@ -581,11 +566,7 @@ def emit_function_definition(func: FuncOp, *, header: str = "") -> str:
     ]
     body = "\n".join(body_lines) if body_lines else "    /* empty body */"
     leader = f"{header}\n" if header else ""
-    return (
-        f"{leader}{ret_str}npu_call_{sym}({params}) {{\n"
-        f"{body}\n"
-        f"}}\n"
-    )
+    return f"{leader}{ret_str}npu_call_{sym}({params}) {{\n{body}\n}}\n"
 
 
 def emit_function_declaration(func: FuncOp) -> str:
@@ -600,15 +581,17 @@ def emit_function_declaration(func: FuncOp) -> str:
 
 @dataclass(frozen=True)
 class GeneratedCFunction:
-    sym_name: str          # original MLIR symbol
-    c_name: str            # sanitized C identifier
-    is_definition: bool    # True for funcs with bodies
-    source: str            # the C source string
-    pattern_id: str        # used for execution-order metadata
+    sym_name: str  # original MLIR symbol
+    c_name: str  # sanitized C identifier
+    is_definition: bool  # True for funcs with bodies
+    source: str  # the C source string
+    pattern_id: str  # used for execution-order metadata
 
 
 def emit_module(
-    module: ModuleOp, *, file_header: str = "",
+    module: ModuleOp,
+    *,
+    file_header: str = "",
 ) -> list[GeneratedCFunction]:
     """Walk a payload ModuleOp; return one GeneratedCFunction per func.func.
 
@@ -625,21 +608,33 @@ def emit_module(
         if has_body:
             source = emit_function_definition(op, header=file_header)
             pattern = "forward" if sym == "forward" else c_name
-            out.append(GeneratedCFunction(
-                sym_name=sym, c_name=c_name,
-                is_definition=True, source=source, pattern_id=pattern,
-            ))
+            out.append(
+                GeneratedCFunction(
+                    sym_name=sym,
+                    c_name=c_name,
+                    is_definition=True,
+                    source=source,
+                    pattern_id=pattern,
+                )
+            )
         else:
             source = emit_function_declaration(op)
-            out.append(GeneratedCFunction(
-                sym_name=sym, c_name=c_name,
-                is_definition=False, source=source, pattern_id="aten_passthrough",
-            ))
+            out.append(
+                GeneratedCFunction(
+                    sym_name=sym,
+                    c_name=c_name,
+                    is_definition=False,
+                    source=source,
+                    pattern_id="aten_passthrough",
+                )
+            )
     return out
 
 
 def emit_npu_driver_extension_h(
-    funcs: list[GeneratedCFunction], *, model_name: str = "model",
+    funcs: list[GeneratedCFunction],
+    *,
+    model_name: str = "model",
 ) -> str:
     """Header containing prototypes for every npu_* symbol the kernels call.
 

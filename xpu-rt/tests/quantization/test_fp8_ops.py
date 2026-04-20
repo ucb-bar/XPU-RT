@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-import math
 import sys
 
 import pytest
 import torch
-
 from compgen.quantization.fp8_ops import (
     FP8_E4M3_DTYPE,
     FP8_E4M3_MAX,
@@ -26,7 +24,9 @@ from compgen.quantization.fp8_ops import (
 _HAS_PI0_QUANT = False
 try:
     sys.path.insert(0, "/scratch2/agustin/CompGen/third_party/pi0-quant")
-    from pi0_inout.quant_types import QuantFormat, quant as pi0_quant, set_fp8_mode
+    from pi0_inout.quant_types import QuantFormat, set_fp8_mode
+    from pi0_inout.quant_types import quant as pi0_quant
+
     _HAS_PI0_QUANT = True
 except ImportError:
     pass
@@ -35,6 +35,7 @@ except ImportError:
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
+
 
 class TestConstants:
     def test_fp8_e4m3_max(self) -> None:
@@ -50,6 +51,7 @@ class TestConstants:
 # ---------------------------------------------------------------------------
 # Po2 scale computation
 # ---------------------------------------------------------------------------
+
 
 class TestFp8Po2Scale:
     def test_zero_tensor(self) -> None:
@@ -73,7 +75,7 @@ class TestFp8Po2Scale:
 
         # amax = 1.0 -> raw = 1/256 ~ 0.0039 -> floor(log2(0.0039)) = -8 -> scale = 2^-8
         x = torch.tensor([1.0])
-        assert fp8_po2_scale(x) == 2.0 ** -8
+        assert fp8_po2_scale(x) == 2.0**-8
 
     def test_bf16_input(self) -> None:
         x = torch.randn(32, dtype=torch.bfloat16) * 50
@@ -90,6 +92,7 @@ class TestFp8Po2Scale:
 # Absmax scale computation
 # ---------------------------------------------------------------------------
 
+
 class TestFp8AbsmaxScale:
     def test_zero_tensor(self) -> None:
         assert fp8_absmax_scale(torch.zeros(10)) == 1.0
@@ -102,6 +105,7 @@ class TestFp8AbsmaxScale:
 # ---------------------------------------------------------------------------
 # Quantize (po2)
 # ---------------------------------------------------------------------------
+
 
 class TestQuantizeFp8Po2:
     def test_output_dtype(self) -> None:
@@ -136,6 +140,7 @@ class TestQuantizeFp8Po2:
 # Quantize (absmax)
 # ---------------------------------------------------------------------------
 
+
 class TestQuantizeFp8Scaled:
     def test_output_dtype(self) -> None:
         x = torch.randn(16)
@@ -151,6 +156,7 @@ class TestQuantizeFp8Scaled:
 # ---------------------------------------------------------------------------
 # Dequantize
 # ---------------------------------------------------------------------------
+
 
 class TestDequantize:
     def test_default_bf16(self) -> None:
@@ -178,6 +184,7 @@ class TestDequantize:
 # ---------------------------------------------------------------------------
 # Quantize-dequantize roundtrip (simulate noise)
 # ---------------------------------------------------------------------------
+
 
 class TestQuantizeDequantize:
     def test_po2_preserves_dtype(self) -> None:
@@ -214,6 +221,7 @@ class TestQuantizeDequantize:
 # is_power_of_two
 # ---------------------------------------------------------------------------
 
+
 class TestIsPowerOfTwo:
     @pytest.mark.parametrize("val", [1.0, 2.0, 4.0, 0.5, 0.25, 256.0, 2**-8, 2**15])
     def test_true_cases(self, val: float) -> None:
@@ -227,6 +235,7 @@ class TestIsPowerOfTwo:
 # ---------------------------------------------------------------------------
 # Cross-validation with pi0-quant
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.skipif(not _HAS_PI0_QUANT, reason="pi0-quant not available")
 class TestPi0QuantEquivalence:
@@ -266,6 +275,5 @@ class TestPi0QuantEquivalence:
             pi0_out = pi0_quant(x, QuantFormat.FLOAT8_E4M3)
             our_out = quantize_dequantize_fp8_po2(x)
             assert torch.allclose(pi0_out.float(), our_out.float(), atol=1e-6), (
-                f"Mismatch at mag={mag}, max diff: "
-                f"{(pi0_out.float() - our_out.float()).abs().max()}"
+                f"Mismatch at mag={mag}, max diff: {(pi0_out.float() - our_out.float()).abs().max()}"
             )

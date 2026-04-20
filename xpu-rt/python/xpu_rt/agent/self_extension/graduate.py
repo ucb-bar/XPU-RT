@@ -32,12 +32,11 @@ import structlog
 
 from compgen.agent.self_extension.authored_tool import (
     AuthoredTool,
-    AuthoredToolSource,
 )
 from compgen.agent.self_extension.sandbox import sandbox_invoke
 from compgen.agent.self_extension.trials import default_trial_log_path
 
-if TYPE_CHECKING:   # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover
     from compgen.llm.registry import Registry
 
 log = structlog.get_logger()
@@ -133,7 +132,7 @@ def _load_state(log_path: Path) -> dict[str, Any]:
         return {}
     try:
         return json.loads(p.read_text())
-    except Exception:   # noqa: BLE001
+    except Exception:  # noqa: BLE001
         return {}
 
 
@@ -152,7 +151,8 @@ def _save_state(log_path: Path, state: dict[str, Any]) -> None:
 
 
 def _materialise_tool(
-    agg: _Aggregate, author: AuthoredTool,
+    agg: _Aggregate,
+    author: AuthoredTool,
 ):
     """Build a :class:`Tool` whose impl sandboxes the authored source."""
     from compgen.llm.registry import Tool, ToolArg, ToolResult
@@ -165,7 +165,9 @@ def _materialise_tool(
         # authored tools stay bounded by the same policy that green-lit
         # their trials.
         r = sandbox_invoke(
-            source_snapshot, entry_name, kwargs=kwargs,
+            source_snapshot,
+            entry_name,
+            kwargs=kwargs,
         )
         return {
             "status": "ok" if r.ok else "sandbox_failed",
@@ -174,10 +176,7 @@ def _materialise_tool(
             "source_digest": author.source.digest,
             "elapsed_s": r.elapsed_s,
             "value": r.value,
-            "violations": [
-                {"kind": v.kind, "detail": v.detail, "location": v.location}
-                for v in r.violations
-            ],
+            "violations": [{"kind": v.kind, "detail": v.detail, "location": v.location} for v in r.violations],
             "error": r.error,
         }
 
@@ -195,7 +194,7 @@ def _materialise_tool(
         phase=author.phase,
         kind="tool",
         wraps_pass=f"authored_tool:{author.source.digest}",
-        autocomp_cost_impact=author.autocomp_cost_impact,   # type: ignore[arg-type]
+        autocomp_cost_impact=author.autocomp_cost_impact,  # type: ignore[arg-type]
         args=args,
         result=ToolResult(
             dtype=author.result_schema.get("dtype", "dict"),
@@ -204,7 +203,8 @@ def _materialise_tool(
                 "Return value wrapped by the self-extension sandbox.",
             ),
         ),
-        description=author.description or (
+        description=author.description
+        or (
             f"LLM-authored tool graduated after {agg.passed_trials} "
             f"passes across {len(agg.workloads)} workloads and "
             f"{len(agg.targets)} targets."
@@ -221,7 +221,7 @@ def _materialise_tool(
 
 
 def promote_authored_tools(
-    registry: "Registry",
+    registry: Registry,
     *,
     authored_index: dict[str, AuthoredTool] | None = None,
     log_path: Path | None = None,
@@ -296,8 +296,7 @@ def promote_authored_tools(
         authored = (authored_index or {}).get(key)
         if authored is None:
             report.errors.append(
-                f"{key}: aggregate cleared thresholds but no AuthoredTool "
-                f"supplied in authored_index; skipping."
+                f"{key}: aggregate cleared thresholds but no AuthoredTool supplied in authored_index; skipping."
             )
             continue
 
@@ -311,18 +310,21 @@ def promote_authored_tools(
                 "workloads": sorted(a.workloads),
                 "targets": sorted(a.targets),
             }
-            report.new_tools_registered.append({
-                "tool_name": tool.name,
-                "source_digest": a.source_digest,
-                "passed_trials": a.passed_trials,
-                "workloads": sorted(a.workloads),
-                "targets": sorted(a.targets),
-            })
+            report.new_tools_registered.append(
+                {
+                    "tool_name": tool.name,
+                    "source_digest": a.source_digest,
+                    "passed_trials": a.passed_trials,
+                    "workloads": sorted(a.workloads),
+                    "targets": sorted(a.targets),
+                }
+            )
             log.info(
                 "self_extension.graduated",
-                tool=tool.name, passed_trials=a.passed_trials,
+                tool=tool.name,
+                passed_trials=a.passed_trials,
             )
-        except Exception as exc:   # noqa: BLE001
+        except Exception as exc:  # noqa: BLE001
             report.errors.append(f"register_tool({key}): {type(exc).__name__}: {exc}")
 
     if report.new_tools_registered and save_state_after:

@@ -7,7 +7,8 @@ control flow, or side effects) cannot be exported and return None.
 
 from __future__ import annotations
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 import structlog
 from xdsl.dialects.builtin import ModuleOp

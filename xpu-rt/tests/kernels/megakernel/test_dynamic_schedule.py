@@ -22,9 +22,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 
-pytestmark = pytest.mark.skipif(
-    not torch.cuda.is_available(), reason="real-example tests require CUDA"
-)
+pytestmark = pytest.mark.skipif(not torch.cuda.is_available(), reason="real-example tests require CUDA")
 
 
 # ---------------------------------------------------------------------------
@@ -43,7 +41,8 @@ def test_dynamic_row_sum_matches_torch_sum() -> None:
     torch.manual_seed(0)
     a = torch.randn(
         (compiled.n_row_blocks * compiled.block_m, compiled.j_chunks * compiled.block_k),
-        dtype=torch.float32, device="cuda",
+        dtype=torch.float32,
+        device="cuda",
     )
     got = run_dynamic_megakernel(compiled, a)
     ref = reference(a)
@@ -94,12 +93,18 @@ def test_dynamic_initial_queue_seeds_only_root_tasks() -> None:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("n_experts,n_tokens,top_k,head_dim", [
-    (4, 8, 2, 32),
-    (8, 16, 2, 32),
-])
+@pytest.mark.parametrize(
+    "n_experts,n_tokens,top_k,head_dim",
+    [
+        (4, 8, 2, 32),
+        (8, 16, 2, 32),
+    ],
+)
 def test_moe_megakernel_matches_pytorch_reference(
-    n_experts: int, n_tokens: int, top_k: int, head_dim: int,
+    n_experts: int,
+    n_tokens: int,
+    top_k: int,
+    head_dim: int,
 ) -> None:
     from examples.event_tensor.moe_megakernel import (
         compile_moe_megakernel,
@@ -109,15 +114,23 @@ def test_moe_megakernel_matches_pytorch_reference(
     )
 
     torch.manual_seed(99)
-    x      = torch.randn((n_tokens, head_dim), dtype=torch.float32, device="cuda")
-    w      = torch.randn(
-        (n_experts, head_dim, head_dim), dtype=torch.float32, device="cuda",
-    ) * 0.05
+    x = torch.randn((n_tokens, head_dim), dtype=torch.float32, device="cuda")
+    w = (
+        torch.randn(
+            (n_experts, head_dim, head_dim),
+            dtype=torch.float32,
+            device="cuda",
+        )
+        * 0.05
+    )
     router = torch.randn((n_tokens, n_experts), dtype=torch.float32, device="cuda")
     routing = route_tokens(router, n_experts, top_k, max_slots_per_expert=16)
 
     compiled = compile_moe_megakernel(
-        n_experts=n_experts, n_tokens=n_tokens, top_k=top_k, head_dim=head_dim,
+        n_experts=n_experts,
+        n_tokens=n_tokens,
+        top_k=top_k,
+        head_dim=head_dim,
         max_slots_per_expert=16,
     )
     got = run_moe_megakernel(compiled, x, w, routing)
@@ -149,9 +162,10 @@ def test_moe_emitted_kernel_handles_two_device_functions() -> None:
 
     compiled = compile_moe_megakernel(n_experts=4, n_tokens=8, top_k=2, head_dim=32)
     src = compiled.kernel_source
-    assert "_run_gather_tile"    in src
+    assert "_run_gather_tile" in src
     assert "_run_expert_compute" in src
     # Both functions appear in the dispatch table.
     assert sorted(compiled.lowering.device_function_table.values()) == [
-        "expert_compute", "gather_tile",
+        "expert_compute",
+        "gather_tile",
     ]

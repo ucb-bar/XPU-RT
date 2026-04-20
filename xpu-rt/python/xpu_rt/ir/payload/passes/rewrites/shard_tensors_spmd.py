@@ -22,11 +22,10 @@ collectives need to fire.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
-from xdsl.dialects.builtin import ArrayAttr, ModuleOp, StringAttr, TensorType
+from xdsl.dialects.builtin import ModuleOp, TensorType
 from xdsl.dialects.linalg import MatmulOp
-from xdsl.ir import Operation
 from xdsl.pattern_rewriter import (
     PatternRewriter,
     PatternRewriteWalker,
@@ -70,9 +69,7 @@ class _ShardMatmulPattern(RewritePattern):
         self.stats = stats
 
     @op_type_rewrite_pattern
-    def match_and_rewrite(
-        self, op: MatmulOp, rewriter: PatternRewriter
-    ) -> None:
+    def match_and_rewrite(self, op: MatmulOp, rewriter: PatternRewriter) -> None:
         self.stats.ops_seen += 1
         if "compgen.sharding" in op.attributes:
             return
@@ -99,10 +96,16 @@ class _ShardMatmulPattern(RewritePattern):
                 partial="sum",
             )
             op.attributes["compgen.sharding_lhs"] = _mk_sharding(
-                lhs_rank, devices, None, axis,
+                lhs_rank,
+                devices,
+                None,
+                axis,
             )
             op.attributes["compgen.sharding_rhs"] = _mk_sharding(
-                rhs_rank, devices, rhs_rank - 1, axis,
+                rhs_rank,
+                devices,
+                rhs_rank - 1,
+                axis,
             )
             self.stats.matmuls_sharded += 1
             self.stats.shardings_attached += 1
@@ -126,9 +129,9 @@ def run_shard_tensors_spmd(
             if any(isinstance(v.type, TensorType) for v in op.results):
                 op.attributes["compgen.sharding"] = ShardingSpecAttr(
                     devices=list(cfg.mesh_shape),
-                    dim_map=["replicated"] *
-                    max(1, len(list(op.results[0].type.get_shape())))
-                    if isinstance(op.results[0].type, TensorType) else 1,
+                    dim_map=["replicated"] * max(1, len(list(op.results[0].type.get_shape())))
+                    if isinstance(op.results[0].type, TensorType)
+                    else 1,
                 )
                 stats.replicated_ops += 1
     return stats

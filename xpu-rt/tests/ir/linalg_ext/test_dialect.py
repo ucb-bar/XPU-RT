@@ -3,11 +3,6 @@
 from __future__ import annotations
 
 import pytest
-from xdsl.dialects.builtin import Float32Type, TensorType
-from xdsl.dialects.tensor import EmptyOp
-from xdsl.ir import Dialect
-from xdsl.utils.exceptions import VerifyException
-
 from compgen.ir.linalg_ext import (
     ALL_OPS,
     GeluOp,
@@ -19,6 +14,10 @@ from compgen.ir.linalg_ext import (
     SoftmaxOp,
     SwiGLUOp,
 )
+from xdsl.dialects.builtin import Float32Type, TensorType
+from xdsl.dialects.tensor import EmptyOp
+from xdsl.ir import Dialect
+from xdsl.utils.exceptions import VerifyException
 
 
 def _ft(shape):
@@ -196,4 +195,5 @@ def test_silu_builds():
 )
 def test_ops_are_pure(op_cls):
     from xdsl.traits import Pure
+
     assert any(isinstance(t, Pure) for t in op_cls.traits.traits)

@@ -3,13 +3,17 @@
 from __future__ import annotations
 
 import pytest
+from compgen.ir.linalg_ext import LayerNormOp, RMSNormOp, SoftmaxOp
+from compgen.ir.payload.passes.rewrites.plan_reduction import (
+    PlanReductionConfig,
+    PlanReductionStats,
+    run_plan_reduction,
+)
 from xdsl.dialects.builtin import (
     AffineMapAttr,
-    ArrayAttr,
     Float32Type,
     FunctionType,
     ModuleOp,
-    StringAttr,
     TensorType,
 )
 from xdsl.dialects.func import FuncOp, ReturnOp
@@ -23,12 +27,6 @@ from xdsl.dialects.tensor import EmptyOp
 from xdsl.ir import Block, Region
 from xdsl.ir.affine import AffineExpr, AffineMap
 
-from compgen.ir.linalg_ext import LayerNormOp, RMSNormOp, SoftmaxOp
-from compgen.ir.payload.passes.rewrites.plan_reduction import (
-    PlanReductionConfig,
-    PlanReductionStats,
-    run_plan_reduction,
-)
 from tests.ir.payload.passes._pattern_test_helpers import assert_module_verifies
 
 
@@ -108,9 +106,7 @@ def test_invalid_thresholds_raise():
     with pytest.raises(ValueError):
         PlanReductionConfig(large_reduction_threshold=0)
     with pytest.raises(ValueError, match="tree_reduce_threshold"):
-        PlanReductionConfig(
-            large_reduction_threshold=1000, tree_reduce_threshold=500
-        )
+        PlanReductionConfig(large_reduction_threshold=1000, tree_reduce_threshold=500)
 
 
 # --- linalg.generic reduction coverage ---------------------------------------
@@ -124,6 +120,7 @@ def _generic_reduction_module(shape=(4, 1024)) -> ModuleOp:
     e_out = EmptyOp([], t_out)
     body = Block(arg_types=[Float32Type(), Float32Type()])
     from xdsl.dialects.arith import AddfOp
+
     add = AddfOp(body.args[0], body.args[1])
     body.add_op(add)
     body.add_op(YieldOp(add.result))
@@ -246,6 +243,7 @@ def test_plan_reduction_on_qwen_moe_tiny():
     from compgen.ir.payload.passes.rewrites.raise_special_ops import (
         run_raise_special_ops,
     )
+
     from tests._fixtures.real_workloads import qwen_moe_tiny
 
     fx = qwen_moe_tiny()
@@ -258,15 +256,10 @@ def test_plan_reduction_on_qwen_moe_tiny():
     # qwen_moe_tiny has a softmax over last dim = 2 (n_experts).
     # That's small -> group strategy.
     assert stats.ops_annotated >= 1
-    annotated = [
-        op for op in result.module.walk()
-        if "compgen.reduction_strategy" in op.attributes
-    ]
+    annotated = [op for op in result.module.walk() if "compgen.reduction_strategy" in op.attributes]
     assert len(annotated) >= 1
     for op in annotated:
-        assert op.attributes["compgen.reduction_strategy"].data in {
-            "group", "split", "tree_reduce"
-        }
+        assert op.attributes["compgen.reduction_strategy"].data in {"group", "split", "tree_reduce"}
     assert_module_verifies(result.module)
 
 
@@ -276,6 +269,7 @@ def test_plan_reduction_on_qwen_moe_tiny():
 def test_group_permutes_iteration_dims_so_reductions_trail():
     """Real structural rewrite: iterator_types=[p, r, p, r] → [p, p, r, r]."""
     from xdsl.dialects.arith import AddfOp
+
     t_in = _ft([2, 4, 8, 16])
     t_out = _ft([2, 8])
     e_in = EmptyOp([], t_in)
@@ -288,7 +282,9 @@ def test_group_permutes_iteration_dims_so_reductions_trail():
     input_map = AffineMap(4, 0, (d0, d1, d2, d3))
     output_map = AffineMap(4, 0, (d0, d2))
     g = GenericOp(
-        inputs=[e_in.results[0]], outputs=[e_out.results[0]], body=Region([body]),
+        inputs=[e_in.results[0]],
+        outputs=[e_out.results[0]],
+        body=Region([body]),
         indexing_maps=[AffineMapAttr(input_map), AffineMapAttr(output_map)],
         iterator_types=[
             IteratorTypeAttr(IteratorType.PARALLEL),
@@ -311,8 +307,10 @@ def test_group_permutes_iteration_dims_so_reductions_trail():
     # After the rewrite: reduction dims trail.
     kinds_after = [k.data for k in g.iterator_types.data]
     assert kinds_after == [
-        IteratorType.PARALLEL, IteratorType.PARALLEL,
-        IteratorType.REDUCTION, IteratorType.REDUCTION,
+        IteratorType.PARALLEL,
+        IteratorType.PARALLEL,
+        IteratorType.REDUCTION,
+        IteratorType.REDUCTION,
     ]
     assert_module_verifies(m)
 
@@ -320,6 +318,7 @@ def test_group_permutes_iteration_dims_so_reductions_trail():
 def test_group_no_op_when_reductions_already_trailing():
     """When iterator_types are already [p, ..., r, ...], no permutation fires."""
     from xdsl.dialects.arith import AddfOp
+
     t_in = _ft([2, 4])
     t_out = _ft([2])
     e_in = EmptyOp([], t_in)
@@ -330,7 +329,9 @@ def test_group_no_op_when_reductions_already_trailing():
     body.add_op(YieldOp(add.result))
     d0, d1 = (AffineExpr.dimension(i) for i in range(2))
     g = GenericOp(
-        inputs=[e_in.results[0]], outputs=[e_out.results[0]], body=Region([body]),
+        inputs=[e_in.results[0]],
+        outputs=[e_out.results[0]],
+        body=Region([body]),
         indexing_maps=[
             AffineMapAttr(AffineMap(2, 0, (d0, d1))),
             AffineMapAttr(AffineMap(2, 0, (d0,))),
@@ -359,6 +360,7 @@ def test_plan_reduction_on_attention_mlp_tiny():
     from compgen.ir.payload.passes.rewrites.raise_special_ops import (
         run_raise_special_ops,
     )
+
     from tests._fixtures.real_workloads import attention_mlp_tiny
 
     fx = attention_mlp_tiny()

@@ -2,7 +2,14 @@
 
 from __future__ import annotations
 
-import pytest
+from compgen.ir.payload.passes.rewrites.lower_quantized_conv import (
+    LowerQuantizedConvStats,
+    run_lower_quantized_conv,
+)
+from compgen.ir.quant import (
+    DequantizePerChannelOp,
+    DequantizePerTensorOp,
+)
 from xdsl.dialects.builtin import (
     Float32Type,
     FunctionType,
@@ -16,14 +23,6 @@ from xdsl.dialects.func import CallOp, FuncOp, ReturnOp
 from xdsl.dialects.tensor import EmptyOp
 from xdsl.ir import Block, Region
 
-from compgen.ir.quant import (
-    DequantizePerChannelOp,
-    DequantizePerTensorOp,
-)
-from compgen.ir.payload.passes.rewrites.lower_quantized_conv import (
-    LowerQuantizedConvStats,
-    run_lower_quantized_conv,
-)
 from tests.ir.payload.passes._pattern_test_helpers import (
     assert_module_verifies,
 )
@@ -34,7 +33,8 @@ def _ft(shape, elem=None):
 
 
 def _quantized_conv_module(
-    *, per_channel: bool = True,
+    *,
+    per_channel: bool = True,
 ) -> tuple[ModuleOp, CallOp]:
     N, C, H, W = 1, 3, 8, 8
     F, KH, KW = 16, 3, 3

@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import pytest
 import torch
-
 from compgen.agent.gates import (
     composite_gate,
     differential_gate,
@@ -93,7 +92,7 @@ def test_numerical_drift_synthesised_from_comparisons() -> None:
 def test_composite_gate_populates_remediation_on_rejection() -> None:
     """End-to-end: composite_gate → structural rejects → hint surfaces."""
     result = composite_gate(
-        {},   # missing chosen/select_vs_invent → structural rejects
+        {},  # missing chosen/select_vs_invent → structural rejects
         gates=[structural_gate],
         slot_name="my_slot",
     )

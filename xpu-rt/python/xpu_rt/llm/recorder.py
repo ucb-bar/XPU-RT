@@ -20,12 +20,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from compgen.llm._prompt import render_request_prompt
 from compgen.llm.base import (
     CompGenLLMProtocol,
     GenerationRequest,
     GenerationResponse,
 )
-from compgen.llm._prompt import render_request_prompt
 
 
 @dataclass
@@ -47,9 +47,7 @@ class LLMRecorder:
         self._record(request, response, t0)
         return response
 
-    def generate_structured(
-        self, request: GenerationRequest, schema: dict[str, Any]
-    ) -> GenerationResponse:
+    def generate_structured(self, request: GenerationRequest, schema: dict[str, Any]) -> GenerationResponse:
         """Forward structured generation and record."""
         t0 = time.time()
         response = self.wrapped.generate_structured(request, schema)
@@ -156,12 +154,12 @@ class ToolCallRecord:
 
     phase: int
     llm_turn_id: str
-    kind: str                           # tool_call | invent_proposal | observation | verification
-    name: str                           # tool or invent-slot name
+    kind: str  # tool_call | invent_proposal | observation | verification
+    name: str  # tool or invent-slot name
     args: dict[str, Any]
     result: dict[str, Any]
-    select_vs_invent: str               # select | invent | na
-    recipe_ir_diff: dict[str, Any]      # {before_hash, after_hash, op_delta}
+    select_vs_invent: str  # select | invent | na
+    recipe_ir_diff: dict[str, Any]  # {before_hash, after_hash, op_delta}
     gate_result: dict[str, Any] | None
     timestamp_iso: str
     elapsed_ms: int

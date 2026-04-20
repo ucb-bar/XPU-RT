@@ -131,9 +131,7 @@ class _RMSNorm(nn.Module):
         return x / rms * self.weight
 
 
-def _apply_rope(
-    x: torch.Tensor, cos: torch.Tensor, sin: torch.Tensor
-) -> torch.Tensor:
+def _apply_rope(x: torch.Tensor, cos: torch.Tensor, sin: torch.Tensor) -> torch.Tensor:
     # Split last dim in halves, apply pair-wise rotation.
     half = x.shape[-1] // 2
     x1, x2 = x[..., :half], x[..., half:]
@@ -240,15 +238,15 @@ class _QwenMoELayer(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # x: [B, T, D]
         B, T, D = x.shape
-        logits = self.router(x)                 # [B, T, E]
-        probs = F.softmax(logits, dim=-1)       # [B, T, E]
+        logits = self.router(x)  # [B, T, E]
+        probs = F.softmax(logits, dim=-1)  # [B, T, E]
         # Static top-1 via argmax; each expert processes all tokens with
         # a scale factor = probability of being chosen (so the graph is
         # static-shape, no dynamic routing).
         out = torch.zeros_like(x)
         for i, expert in enumerate(self.experts):
-            expert_out = expert(x)              # [B, T, D]
-            out = out + expert_out * probs[..., i:i+1]
+            expert_out = expert(x)  # [B, T, D]
+            out = out + expert_out * probs[..., i : i + 1]
         return out
 
 
@@ -446,7 +444,9 @@ class _VLADecoderBlock(nn.Module):
         self,
         q_in: torch.Tensor,
         kv_in: torch.Tensor,
-        qW: nn.Linear, kW: nn.Linear, vW: nn.Linear,
+        qW: nn.Linear,
+        kW: nn.Linear,
+        vW: nn.Linear,
     ) -> torch.Tensor:
         B, T, C = q_in.shape
         _, Tkv, _ = kv_in.shape
@@ -519,10 +519,9 @@ class _TinyLlamaStack(nn.Module):
         super().__init__()
         self.vocab_size = vocab_size
         self.embed = nn.Embedding(vocab_size, d_model)
-        self.blocks = nn.ModuleList([
-            _TinyLlamaBlock(d_model=d_model, n_heads=n_heads, intermediate=intermediate)
-            for _ in range(n_layers)
-        ])
+        self.blocks = nn.ModuleList(
+            [_TinyLlamaBlock(d_model=d_model, n_heads=n_heads, intermediate=intermediate) for _ in range(n_layers)]
+        )
         self.final_norm = _RMSNorm(d_model)
         self.lm_head = nn.Linear(d_model, vocab_size, bias=False)
         self.lm_head.weight = self.embed.weight  # weight tying
@@ -544,8 +543,11 @@ def tinyllama_stack_3() -> RealWorkloadFixture:
     _deterministic_seed()
     d_model, n_heads, head_dim = 128, 4, 32
     model = _TinyLlamaStack(
-        vocab_size=256, d_model=d_model, n_heads=n_heads,
-        n_layers=3, intermediate=256,
+        vocab_size=256,
+        d_model=d_model,
+        n_heads=n_heads,
+        n_layers=3,
+        intermediate=256,
     ).eval()
     input_ids = torch.randint(0, 256, (1, 8), dtype=torch.long)
     half = head_dim // 2
@@ -578,10 +580,7 @@ class _GemmaStack(nn.Module):
     ) -> None:
         super().__init__()
         self.embed = nn.Embedding(vocab_size, d_model)
-        self.blocks = nn.ModuleList([
-            _GemmaDecodeBlock(d_model=d_model, n_heads=n_heads)
-            for _ in range(n_layers)
-        ])
+        self.blocks = nn.ModuleList([_GemmaDecodeBlock(d_model=d_model, n_heads=n_heads) for _ in range(n_layers)])
         self.final_norm = _RMSNorm(d_model)
         self.lm_head = nn.Linear(d_model, vocab_size, bias=False)
 
@@ -601,7 +600,10 @@ def gemma_stack_3() -> RealWorkloadFixture:
     _deterministic_seed()
     d_model, n_heads, head_dim = 128, 4, 32
     model = _GemmaStack(
-        vocab_size=256, d_model=d_model, n_heads=n_heads, n_layers=3,
+        vocab_size=256,
+        d_model=d_model,
+        n_heads=n_heads,
+        n_layers=3,
     ).eval()
     input_ids = torch.randint(0, 256, (1, 8), dtype=torch.long)
     half = head_dim // 2
@@ -633,10 +635,7 @@ class _SmolVLAStack(nn.Module):
     ) -> None:
         super().__init__()
         self.input_proj = nn.Linear(d_model, d_model, bias=False)
-        self.blocks = nn.ModuleList([
-            _SmolVLABlock(d_model=d_model, n_heads=n_heads)
-            for _ in range(n_layers)
-        ])
+        self.blocks = nn.ModuleList([_SmolVLABlock(d_model=d_model, n_heads=n_heads) for _ in range(n_layers)])
         self.head = nn.Linear(d_model, 7)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:

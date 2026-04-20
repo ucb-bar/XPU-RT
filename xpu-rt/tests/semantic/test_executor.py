@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import pytest
+from compgen.semantic.executor import VerificationExecutor
 from xdsl.dialects.builtin import ModuleOp
-
-from compgen.semantic.executor import VerificationExecutor, VerificationResult
 
 
 class TestVerificationExecutor:

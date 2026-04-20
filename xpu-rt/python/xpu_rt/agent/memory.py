@@ -86,9 +86,7 @@ class AgentMemory:
         data = json.loads(path.read_text())
         mem = cls()
         mem.cost_calibration.factors = data.get("cost_calibration", {})
-        mem.strategy_history = [
-            StrategyRecord(**s) for s in data.get("strategy_history", [])
-        ]
+        mem.strategy_history = [StrategyRecord(**s) for s in data.get("strategy_history", [])]
         mem.pass_orderings = data.get("pass_orderings", {})
         mem.session_count = data.get("session_count", 0)
         return mem
@@ -104,15 +102,17 @@ class AgentMemory:
         success: bool,
     ) -> None:
         """Record a strategy attempt."""
-        self.strategy_history.append(StrategyRecord(
-            model_name=model_name,
-            target_name=target_name,
-            pattern_type=pattern_type,
-            actions_taken=actions,
-            estimated_improvement=estimated,
-            actual_improvement=actual,
-            success=success,
-        ))
+        self.strategy_history.append(
+            StrategyRecord(
+                model_name=model_name,
+                target_name=target_name,
+                pattern_type=pattern_type,
+                actions_taken=actions,
+                estimated_improvement=estimated,
+                actual_improvement=actual,
+                success=success,
+            )
+        )
 
     def best_pass_ordering(self, pattern_type: str) -> list[str] | None:
         """Get the best known pass ordering for a pattern type."""

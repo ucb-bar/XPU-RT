@@ -39,10 +39,7 @@ _HINTS: dict[str, dict[str, Any]] = {
             "('select' when reusing a known kernel, 'invent' when proposing "
             "a new one)."
         ),
-        "example_fix": (
-            '{"chosen": "candidate_id", "select_vs_invent": "select", '
-            '"candidates": [...]}'
-        ),
+        "example_fix": ('{"chosen": "candidate_id", "select_vs_invent": "select", "candidates": [...]}'),
         "applies_to": ("structural",),
     },
     "select_vs_invent must be 'select' or 'invent'": {
@@ -140,8 +137,7 @@ _DEFERRED_HINTS: dict[str, str] = {
         "run verify_proposal with gates=[structural_gate] only."
     ),
     "missing dependency": (
-        "Gate was skipped due to a missing runtime dependency. Install "
-        "the requested package and retry."
+        "Gate was skipped due to a missing runtime dependency. Install the requested package and retry."
     ),
 }
 

@@ -25,20 +25,17 @@ from pathlib import Path
 import pytest
 import torch
 import torch.nn as nn
-
 from compgen.agent.invent_slots.registrar import register_invent_slots
 from compgen.agent.llm_driver import LLMDrivenCompiler
-from compgen.api import compile_model, device as _device
+from compgen.api import compile_model
+from compgen.api import device as _device
 from compgen.llm.mock_client import MockLLMClient
 from compgen.llm.registry import Registry
 from compgen.mcp.session import SessionManager
 from compgen.mcp.tools.recipe_apply import APPLY_RECIPE_TOOLS, apply_recipe
 from compgen.mcp.tools.transform import propose_invent_slot
 
-EXEMPLAR = (
-    Path(__file__).resolve().parents[1]
-    / "targetgen" / "exemplars" / "test_gpu_simt.yaml"
-)
+EXEMPLAR = Path(__file__).resolve().parents[1] / "targetgen" / "exemplars" / "test_gpu_simt.yaml"
 
 
 class _TwoLinear(nn.Module):
@@ -58,16 +55,21 @@ def _prepared(tmp_path: Path) -> tuple[SessionManager, str]:
     session = sm.open()
     dev = _device(EXEMPLAR)
     compiled = compile_model(
-        _TwoLinear().eval(), dev, sample_inputs=(torch.randn(1, 32),),
+        _TwoLinear().eval(),
+        dev,
+        sample_inputs=(torch.randn(1, 32),),
     )
 
     reg = Registry()
     register_invent_slots(reg)
     env = compiled.create_agent_env(budget=4)
     driver = LLMDrivenCompiler(
-        env=env, target=dev.profile, llm_client=MockLLMClient(strict=False),
+        env=env,
+        target=dev.profile,
+        llm_client=MockLLMClient(strict=False),
         transcript_dir=session.scratch_dir / "transcripts",
-        budget=4, registry=reg,
+        budget=4,
+        registry=reg,
     )
     session.compiled = compiled
     session.device = dev
@@ -100,17 +102,13 @@ def test_apply_recipe_after_propose_fusion_changes_payload(tmp_path: Path) -> No
 
     # Region names from the seed recipe — the canonical r_0/r_1/...
     # come from generate_seed_recipe walking the payload's func.func ops.
-    region_names = [
-        op.sym_name.data for op in driver.env.recipe.body.block.ops
-        if op.name == "recipe.region"
-    ][:2]
-    assert len(region_names) >= 2, (
-        f"expected ≥2 seed regions, got {region_names}"
-    )
+    region_names = [op.sym_name.data for op in driver.env.recipe.body.block.ops if op.name == "recipe.region"][:2]
+    assert len(region_names) >= 2, f"expected ≥2 seed regions, got {region_names}"
 
     # 1. Agent proposes fusion of the first two regions.
     prop_result = propose_invent_slot(
-        sm, session_id=sid,
+        sm,
+        session_id=sid,
         slot_name="propose_fusion",
         proposal={
             "chosen": {
@@ -139,12 +137,12 @@ def test_apply_recipe_records_verification_obligation(tmp_path: Path) -> None:
     """Every accepted propose_fusion lowers to a differential obligation."""
     sm, sid = _prepared(tmp_path)
     session = sm.get(sid)
-    region_names = [
-        op.sym_name.data for op in session.driver.env.recipe.body.block.ops
-        if op.name == "recipe.region"
-    ][:2]
+    region_names = [op.sym_name.data for op in session.driver.env.recipe.body.block.ops if op.name == "recipe.region"][
+        :2
+    ]
     propose_invent_slot(
-        sm, session_id=sid,
+        sm,
+        session_id=sid,
         slot_name="propose_fusion",
         proposal={
             "chosen": {"grouped_regions": region_names},
@@ -164,15 +162,17 @@ def test_apply_recipe_session_unknown_returns_error(tmp_path: Path) -> None:
 
 def test_apply_recipe_no_recipe_returns_error(tmp_path: Path) -> None:
     """Session with the env not reset (no recipe tracking) → error response."""
-    from compgen.mcp.session import McpSession
     sm = SessionManager(scratch_root=tmp_path / "scratch")
     session = sm.open()
+
     # Patch a driver that has env but no recipe — directly via attribute.
     class _FakeEnv:
         recipe = None
         payload_module = None
+
     class _FakeDriver:
         env = _FakeEnv()
+
     session.driver = _FakeDriver()  # type: ignore[assignment]
     result = apply_recipe(sm, session_id=session.session_id)
     assert not result["ok"]

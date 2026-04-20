@@ -41,14 +41,13 @@ LLM-tool signature:
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import Iterable
 
 from xdsl.dialects.builtin import (
     BFloat16Type,
     Float16Type,
     Float32Type,
-    IntegerType,
     ModuleOp,
     StringAttr,
     TensorType,
@@ -69,14 +68,19 @@ from compgen.ir.quant import (
     WeightInt8PackMMOp,
 )
 
-
-_KNOWN_LIBRARIES = frozenset({
-    "cublas", "cublaslt", "cudnn",
-    "triton",
-    "onednn", "xnnpack",
-    "qnn",
-    "rocblas", "miopen",
-})
+_KNOWN_LIBRARIES = frozenset(
+    {
+        "cublas",
+        "cublaslt",
+        "cudnn",
+        "triton",
+        "onednn",
+        "xnnpack",
+        "qnn",
+        "rocblas",
+        "miopen",
+    }
+)
 
 _MATMUL_LIBRARIES = {"cublas", "cublaslt", "triton", "onednn", "rocblas", "qnn"}
 _QUANT_MATMUL_LIBRARIES = {"cublaslt", "triton", "qnn"}
@@ -90,9 +94,7 @@ class MatchLibraryCallConfig:
     def __post_init__(self) -> None:
         for lib in self.library_allowlist:
             if lib not in _KNOWN_LIBRARIES:
-                raise ValueError(
-                    f"unknown library {lib!r}; known: {sorted(_KNOWN_LIBRARIES)}"
-                )
+                raise ValueError(f"unknown library {lib!r}; known: {sorted(_KNOWN_LIBRARIES)}")
 
 
 @dataclass
@@ -223,9 +225,7 @@ def _is_conv_call(op: Operation) -> bool:
     hint = op.attributes.get("compgen._pattern_hint")
     if hint is None:
         return False
-    return isinstance(hint, StringAttr) and hint.data in {
-        "convolution", "quantized_convolution"
-    }
+    return isinstance(hint, StringAttr) and hint.data in {"convolution", "quantized_convolution"}
 
 
 # --- patterns ----------------------------------------------------------------
@@ -241,9 +241,7 @@ class _MatmulDispatchPattern(RewritePattern):
         self.stats = stats
 
     @op_type_rewrite_pattern
-    def match_and_rewrite(
-        self, op: MatmulOp, rewriter: PatternRewriter
-    ) -> None:
+    def match_and_rewrite(self, op: MatmulOp, rewriter: PatternRewriter) -> None:
         self.stats.ops_seen += 1
         if "compgen.library_dispatch" in op.attributes:
             self.stats.skipped_already_dispatched += 1
@@ -266,9 +264,7 @@ class _QuantMatmulDispatchPattern(RewritePattern):
         self.cfg = cfg
         self.stats = stats
 
-    def match_and_rewrite(
-        self, op: Operation, rewriter: PatternRewriter
-    ) -> None:
+    def match_and_rewrite(self, op: Operation, rewriter: PatternRewriter) -> None:
         if not isinstance(op, _QUANT_MATMUL_ALL):
             return
         self.stats.ops_seen += 1
@@ -294,9 +290,7 @@ class _ConvDispatchPattern(RewritePattern):
         self.stats = stats
 
     @op_type_rewrite_pattern
-    def match_and_rewrite(
-        self, op: CallOp, rewriter: PatternRewriter
-    ) -> None:
+    def match_and_rewrite(self, op: CallOp, rewriter: PatternRewriter) -> None:
         if not _is_conv_call(op):
             return
         self.stats.ops_seen += 1

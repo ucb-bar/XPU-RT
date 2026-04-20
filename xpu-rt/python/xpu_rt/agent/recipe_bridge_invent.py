@@ -38,7 +38,6 @@ from compgen.ir.recipe.ops_propose import (
     ProposePayload,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -89,9 +88,7 @@ def _payload_attr(
     payload = ProposePayload(
         candidates=list(proposal.get("candidates", [])),
         chosen=dict(proposal.get("chosen", {})),
-        target_feature_justification=str(
-            proposal.get("target_feature_justification", "")
-        ),
+        target_feature_justification=str(proposal.get("target_feature_justification", "")),
         gate_result=dict(proposal.get("gate_result", {})),
         select_vs_invent=proposal.get("select_vs_invent", "invent"),
         llm_turn_id=llm_turn_id,
@@ -106,31 +103,29 @@ def _payload_attr(
 
 
 def _build_propose_fusion(
-    proposal: dict[str, Any], iteration: int, llm_turn_id: str,
+    proposal: dict[str, Any],
+    iteration: int,
+    llm_turn_id: str,
 ) -> Operation:
     chosen = proposal.get("chosen") or {}
-    regions = (
-        chosen.get("grouped_regions")
-        or chosen.get("regions")
-        or chosen.get("members")
+    regions = chosen.get("grouped_regions") or chosen.get("regions") or chosen.get("members")
+    return ProposeFusionOp.build(
+        properties={
+            "sym_name": _sym_name("propose_fusion", iteration),
+            "grouped_regions": _region_refs(regions),
+            "payload": _payload_attr(proposal, llm_turn_id=llm_turn_id),
+            "provenance": _prov(iteration),
+        }
     )
-    return ProposeFusionOp.build(properties={
-        "sym_name": _sym_name("propose_fusion", iteration),
-        "grouped_regions": _region_refs(regions),
-        "payload": _payload_attr(proposal, llm_turn_id=llm_turn_id),
-        "provenance": _prov(iteration),
-    })
 
 
 def _build_propose_megakernel_synthesis(
-    proposal: dict[str, Any], iteration: int, llm_turn_id: str,
+    proposal: dict[str, Any],
+    iteration: int,
+    llm_turn_id: str,
 ) -> Operation:
     chosen = proposal.get("chosen") or {}
-    regions = (
-        chosen.get("fused_region_refs")
-        or chosen.get("grouped_regions")
-        or chosen.get("regions")
-    )
+    regions = chosen.get("fused_region_refs") or chosen.get("grouped_regions") or chosen.get("regions")
     props: dict[str, Any] = {
         "sym_name": _sym_name("propose_megakernel_synthesis", iteration),
         "fused_region_refs": _region_refs(regions),
@@ -144,37 +139,41 @@ def _build_propose_megakernel_synthesis(
 
 
 def _build_propose_layout_plan(
-    proposal: dict[str, Any], iteration: int, llm_turn_id: str,
+    proposal: dict[str, Any],
+    iteration: int,
+    llm_turn_id: str,
 ) -> Operation:
     chosen = proposal.get("chosen") or {}
     region = chosen.get("region_ref") or chosen.get("region")
     if not isinstance(region, str) or not region:
-        raise ValueError(
-            "propose_layout_plan requires chosen.region_ref as a string"
-        )
-    return ProposeLayoutPlanOp.build(properties={
-        "sym_name": _sym_name("propose_layout_plan", iteration),
-        "region_ref": SymbolRefAttr(region),
-        "payload": _payload_attr(proposal, llm_turn_id=llm_turn_id),
-        "provenance": _prov(iteration),
-    })
+        raise ValueError("propose_layout_plan requires chosen.region_ref as a string")
+    return ProposeLayoutPlanOp.build(
+        properties={
+            "sym_name": _sym_name("propose_layout_plan", iteration),
+            "region_ref": SymbolRefAttr(region),
+            "payload": _payload_attr(proposal, llm_turn_id=llm_turn_id),
+            "provenance": _prov(iteration),
+        }
+    )
 
 
 def _build_propose_dequant_fusion(
-    proposal: dict[str, Any], iteration: int, llm_turn_id: str,
+    proposal: dict[str, Any],
+    iteration: int,
+    llm_turn_id: str,
 ) -> Operation:
     chosen = proposal.get("chosen") or {}
     region = chosen.get("region_ref") or chosen.get("region")
     if not isinstance(region, str) or not region:
-        raise ValueError(
-            "propose_dequant_fusion requires chosen.region_ref as a string"
-        )
-    return ProposeDequantFusionOp.build(properties={
-        "sym_name": _sym_name("propose_dequant_fusion", iteration),
-        "region_ref": SymbolRefAttr(region),
-        "payload": _payload_attr(proposal, llm_turn_id=llm_turn_id),
-        "provenance": _prov(iteration),
-    })
+        raise ValueError("propose_dequant_fusion requires chosen.region_ref as a string")
+    return ProposeDequantFusionOp.build(
+        properties={
+            "sym_name": _sym_name("propose_dequant_fusion", iteration),
+            "region_ref": SymbolRefAttr(region),
+            "payload": _payload_attr(proposal, llm_turn_id=llm_turn_id),
+            "provenance": _prov(iteration),
+        }
+    )
 
 
 # ---------------------------------------------------------------------------

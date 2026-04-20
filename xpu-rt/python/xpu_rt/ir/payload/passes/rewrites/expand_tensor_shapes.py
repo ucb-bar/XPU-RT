@@ -19,7 +19,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from xdsl.dialects.builtin import ModuleOp, StringAttr, TensorType
-from xdsl.ir import Operation
 
 
 @dataclass
@@ -47,9 +46,7 @@ def run_expand_tensor_shapes(
                 mask = "".join("1" if d < 0 else "0" for d in shape)
                 op.attributes["compgen.dynamic_dim_mask"] = StringAttr(mask)
             # Always emit the template for downstream tiling.
-            op.attributes["compgen.symbolic_shape_template"] = StringAttr(
-                ",".join(str(d) for d in shape)
-            )
+            op.attributes["compgen.symbolic_shape_template"] = StringAttr(",".join(str(d) for d in shape))
             stats.shape_templates_emitted += 1
             break  # only tag the first result
     return stats

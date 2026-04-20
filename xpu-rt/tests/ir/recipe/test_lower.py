@@ -67,10 +67,9 @@ def test_lower_recipe_dispatches_ops() -> None:
 
 def test_lower_recipe_collects_diagnostics() -> None:
     """lower_recipe should surface per-op diagnostics in the output."""
+    from compgen.ir.recipe.lower import lower_recipe
     from xdsl.dialects.builtin import ModuleOp
     from xdsl.ir import Block, Region
-
-    from compgen.ir.recipe.lower import lower_recipe
 
     # An empty module should lower without errors and produce empty outputs
     module = ModuleOp(Region(Block()))
@@ -88,6 +87,7 @@ def test_lower_recipe_collects_diagnostics() -> None:
 def _module_with(op):
     from xdsl.dialects.builtin import ModuleOp
     from xdsl.ir import Block, Region
+
     m = ModuleOp(Region([Block()]))
     m.body.block.add_op(op)
     return m
@@ -117,8 +117,7 @@ def test_propose_fusion_lowers_to_fuse_transform_script() -> None:
     assert any("r_3" in s for s in result.transform_scripts)
     # Every proposed fusion gets a diff-test obligation.
     assert any(
-        v.get("kind") == "propose_fusion" and v["type"] == "differential"
-        for v in result.verification_obligations
+        v.get("kind") == "propose_fusion" and v["type"] == "differential" for v in result.verification_obligations
     )
 
 
@@ -146,10 +145,7 @@ def test_propose_megakernel_lowers_to_kernel_job() -> None:
     assert len(jobs) == 1
     assert jobs[0]["kernel_name"] == "gemma_block"
     assert jobs[0]["fused_regions"] == ["r_2", "r_3"]
-    assert any(
-        v.get("kind") == "propose_megakernel_synthesis"
-        for v in result.verification_obligations
-    )
+    assert any(v.get("kind") == "propose_megakernel_synthesis" for v in result.verification_obligations)
 
 
 def test_propose_layout_plan_lowers_to_pack_script() -> None:
@@ -168,10 +164,7 @@ def test_propose_layout_plan_lowers_to_pack_script() -> None:
 
     assert any("transform.structured.pack" in s for s in result.transform_scripts)
     assert any("blocked_32x32" in s for s in result.transform_scripts)
-    assert any(
-        v.get("kind") == "propose_layout_plan"
-        for v in result.verification_obligations
-    )
+    assert any(v.get("kind") == "propose_layout_plan" for v in result.verification_obligations)
 
 
 def test_propose_dequant_lowers_to_match_script() -> None:
@@ -189,18 +182,13 @@ def test_propose_dequant_lowers_to_match_script() -> None:
     result = lower_recipe(module)
 
     assert any("transform.structured.match" in s for s in result.transform_scripts)
-    assert any(
-        v.get("kind") == "propose_dequant_fusion"
-        for v in result.verification_obligations
-    )
+    assert any(v.get("kind") == "propose_dequant_fusion" for v in result.verification_obligations)
 
 
 def test_propose_fusion_empty_regions_no_op_lowers_nothing() -> None:
     """Defensively: a mal-constructed op (no regions) lowers cleanly (no crash)."""
-    from xdsl.dialects.builtin import ArrayAttr, StringAttr
-
-    from compgen.ir.recipe.ops_propose import ProposeFusionOp, ProposePayload
-    from compgen.ir.recipe.lower import lower_recipe
+    from compgen.ir.recipe.ops_propose import ProposePayload
+    from xdsl.dialects.builtin import StringAttr
 
     # Build an op with valid JSON but zero regions; bypass the bridge's
     # ValueError path so we cover the lowering-side defensive branch.
@@ -215,7 +203,7 @@ def test_propose_fusion_empty_regions_no_op_lowers_nothing() -> None:
     # is caught as a ValueError (separately tested) and the lowering never
     # sees it. This test asserts the path is safe.
     from compgen.agent.recipe_bridge_invent import proposal_to_recipe_op
-    import pytest
+
     with pytest.raises(ValueError):
         proposal_to_recipe_op(
             "propose_fusion",

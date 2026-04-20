@@ -21,7 +21,6 @@ from compgen.agent.suggest._recipe_index import (
     critical_path_recipe_syms,
 )
 
-
 # Coarse role-compatibility table for producer-consumer fusion.
 _FUSION_ROLE_PAIRS: set[tuple[str, str]] = set()
 
@@ -31,24 +30,43 @@ def _canonical_pairs() -> set[tuple[str, str]]:
         return _FUSION_ROLE_PAIRS
     pairs = [
         # Norm → projection
-        ("rsqrt", "mul"), ("rsqrt", "matmul"),
-        ("rmsnorm", "matmul"), ("layer_norm", "matmul"),
+        ("rsqrt", "mul"),
+        ("rsqrt", "matmul"),
+        ("rmsnorm", "matmul"),
+        ("layer_norm", "matmul"),
         ("native_layer_norm", "matmul"),
         # Linear → activation (any of)
-        ("matmul", "silu"), ("matmul", "gelu"), ("matmul", "sigmoid"),
-        ("matmul", "tanh"), ("matmul", "relu"), ("matmul", "neg"),
-        ("matmul", "mul"), ("matmul", "add"),
-        ("mm", "silu"), ("mm", "gelu"), ("mm", "sigmoid"),
-        ("addmm", "silu"), ("addmm", "gelu"), ("addmm", "sigmoid"),
+        ("matmul", "silu"),
+        ("matmul", "gelu"),
+        ("matmul", "sigmoid"),
+        ("matmul", "tanh"),
+        ("matmul", "relu"),
+        ("matmul", "neg"),
+        ("matmul", "mul"),
+        ("matmul", "add"),
+        ("mm", "silu"),
+        ("mm", "gelu"),
+        ("mm", "sigmoid"),
+        ("addmm", "silu"),
+        ("addmm", "gelu"),
+        ("addmm", "sigmoid"),
         # Activation pairings (SwiGLU: silu(gate) * up)
-        ("silu", "mul"), ("sigmoid", "mul"), ("gelu", "mul"),
+        ("silu", "mul"),
+        ("sigmoid", "mul"),
+        ("gelu", "mul"),
         # Elementwise chains
-        ("mul", "add"), ("mul", "mul"), ("add", "mul"),
+        ("mul", "add"),
+        ("mul", "mul"),
+        ("add", "mul"),
         ("sub", "mul"),
         # Layout-prep next to compute
-        ("view", "matmul"), ("permute", "matmul"), ("transpose", "matmul"),
+        ("view", "matmul"),
+        ("permute", "matmul"),
+        ("transpose", "matmul"),
         # Softmax + value-projection
-        ("softmax", "matmul"), ("softmax", "bmm"), ("softmax", "batch_matmul"),
+        ("softmax", "matmul"),
+        ("softmax", "bmm"),
+        ("softmax", "batch_matmul"),
     ]
     _FUSION_ROLE_PAIRS.update(pairs)
     return _FUSION_ROLE_PAIRS
@@ -86,9 +104,7 @@ def suggest_fusion(
     already = _existing_grouped_pairs(recipe)
 
     role_regions = [
-        (i, sym, idx.role_by_region.get(sym, ""))
-        for i, sym in enumerate(idx.regions)
-        if idx.role_by_region.get(sym)
+        (i, sym, idx.role_by_region.get(sym, "")) for i, sym in enumerate(idx.regions) if idx.role_by_region.get(sym)
     ]
 
     # Group instances by (prod_role, cons_role). Multiple occurrences
@@ -118,18 +134,20 @@ def suggest_fusion(
             if role_key not in canonical and score < 0.5:
                 continue
             seen_pairs.add(sym_pair)
-            grouped.setdefault(role_key, []).append({
-                "chosen": {
-                    "grouped_regions": [prod, cons],
-                    "fusion_kind": "producer_consumer",
-                    "producer_role": prod_role,
-                    "consumer_role": cons_role,
-                },
-                "score": score,
-                "in_critical_path": in_critical,
-                "distance": distance,
-                "regions": [prod, cons],
-            })
+            grouped.setdefault(role_key, []).append(
+                {
+                    "chosen": {
+                        "grouped_regions": [prod, cons],
+                        "fusion_kind": "producer_consumer",
+                        "producer_role": prod_role,
+                        "consumer_role": cons_role,
+                    },
+                    "score": score,
+                    "in_critical_path": in_critical,
+                    "distance": distance,
+                    "regions": [prod, cons],
+                }
+            )
 
     target_just = (
         f"{target.name} compute lane"
@@ -145,10 +163,7 @@ def suggest_fusion(
         boost = min(0.1, 0.02 * (len(instances) - 1))
         score = min(1.0, head["score"] + boost)
         if len(instances) > 1:
-            extra_pairs = ", ".join(
-                f"({m['regions'][0]}, {m['regions'][1]})"
-                for m in instances[1:4]
-            )
+            extra_pairs = ", ".join(f"({m['regions'][0]}, {m['regions'][1]})" for m in instances[1:4])
             tail = "" if len(instances) <= 4 else f" (+{len(instances) - 4} more)"
             rationale = (
                 f"{prod_role} → {cons_role} producer-consumer fusion "
@@ -160,27 +175,25 @@ def suggest_fusion(
             rationale = (
                 f"{prod_role} → {cons_role} producer-consumer fusion "
                 f"(regions {head['regions'][0]}, {head['regions'][1]}, "
-                f"distance={head['distance']})"
-                + (" [on critical path]" if head["in_critical_path"] else "")
+                f"distance={head['distance']})" + (" [on critical path]" if head["in_critical_path"] else "")
             )
-        candidates.append(ProposalCandidate(
-            chosen=dict(head["chosen"]),
-            rationale=rationale,
-            expected_impact=score,
-            target_feature_justification=target_just,
-            members=[
-                {"chosen": dict(m["chosen"]),
-                 "regions": list(m["regions"]),
-                 "score": m["score"]}
-                for m in instances
-            ],
-            metadata={
-                "pair": [prod_role, cons_role],
-                "instance_count": len(instances),
-                "in_critical_path": head["in_critical_path"],
-                "distance": head["distance"],
-            },
-        ))
+        candidates.append(
+            ProposalCandidate(
+                chosen=dict(head["chosen"]),
+                rationale=rationale,
+                expected_impact=score,
+                target_feature_justification=target_just,
+                members=[
+                    {"chosen": dict(m["chosen"]), "regions": list(m["regions"]), "score": m["score"]} for m in instances
+                ],
+                metadata={
+                    "pair": [prod_role, cons_role],
+                    "instance_count": len(instances),
+                    "in_critical_path": head["in_critical_path"],
+                    "distance": head["distance"],
+                },
+            )
+        )
 
     candidates.sort(key=lambda c: c.expected_impact, reverse=True)
     return candidates[:k]
@@ -205,7 +218,7 @@ def _existing_grouped_pairs(recipe: ModuleOp) -> set[frozenset]:
                     syms.append(root.data)
             if syms:
                 out.add(frozenset(syms))
-        except Exception:   # noqa: BLE001
+        except Exception:  # noqa: BLE001
             continue
     return out
 

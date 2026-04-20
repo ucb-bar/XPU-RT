@@ -23,6 +23,7 @@ if Path(_PI0_PATH).exists() and _PI0_PATH not in sys.path:
 _SMOLVLA_AVAILABLE = False
 try:
     from examples.models.smolvla_wrapper import capture_fx_graphs, load_smolvla
+
     _SMOLVLA_AVAILABLE = True
 except ImportError:
     pass
@@ -60,15 +61,13 @@ class TestSmolVLACapture:
         graphs = smolvla_fx_graphs
         assert len(graphs) >= 1
         # SmolVLA typically produces 9 partitions
-        total_ops = sum(
-            sum(1 for n in g.graph.nodes if n.op == "call_function")
-            for g in graphs
-        )
+        total_ops = sum(sum(1 for n in g.graph.nodes if n.op == "call_function") for g in graphs)
         assert total_ops > 100  # Should have hundreds of ops
 
     def test_smolvla_op_summary(self, smolvla_fx_graphs) -> None:
         """SmolVLA has expected op types (matmul, softmax, gelu, etc.)."""
         from examples.models.smolvla_wrapper import get_smolvla_op_summary
+
         summary = get_smolvla_op_summary(smolvla_fx_graphs)
         # SmolVLA should have linear, matmul, softmax-related ops
         op_names = set(summary.keys())
@@ -86,6 +85,7 @@ class TestSmolVLAConversion:
             def __init__(self):
                 super().__init__()
                 self.fc = torch.nn.Linear(64, 32)
+
             def forward(self, x):
                 return self.fc(x)
 
@@ -109,6 +109,7 @@ class TestSmolVLAPipeline:
                 super().__init__()
                 self.fc1 = torch.nn.Linear(64, 128)
                 self.fc2 = torch.nn.Linear(128, 32)
+
             def forward(self, x):
                 return self.fc2(torch.relu(self.fc1(x)))
 
@@ -131,6 +132,7 @@ class TestSmolVLAPipeline:
             def __init__(self):
                 super().__init__()
                 self.fc = torch.nn.Linear(64, 32)
+
             def forward(self, x):
                 return self.fc(x)
 
@@ -153,6 +155,7 @@ class TestSmolVLAPipeline:
                 super().__init__()
                 self.fc1 = torch.nn.Linear(64, 128)
                 self.fc2 = torch.nn.Linear(128, 32)
+
             def forward(self, x):
                 return self.fc2(torch.relu(self.fc1(x)))
 
@@ -174,8 +177,8 @@ class TestSmolVLAPipeline:
 class TestSmolVLAAgenticLoop:
     def test_agentic_loop_on_mlp(self) -> None:
         """Agentic compilation loop runs on MLP (SmolVLA proxy)."""
-        from compgen.agent.loop import AgenticCompilationLoop
         from compgen.agent.env import CompilerEnv
+        from compgen.agent.loop import AgenticCompilationLoop
         from compgen.capture.torch_export import capture_model
         from compgen.ir.payload.import_fx import fx_to_xdsl
         from compgen.llm.mock_client import MockLLMClient
@@ -185,6 +188,7 @@ class TestSmolVLAAgenticLoop:
             def __init__(self):
                 super().__init__()
                 self.fc = torch.nn.Linear(32, 16)
+
             def forward(self, x):
                 return self.fc(x)
 

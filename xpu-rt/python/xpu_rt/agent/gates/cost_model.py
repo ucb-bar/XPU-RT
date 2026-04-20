@@ -26,7 +26,7 @@ def cost_model_gate(proposal: dict[str, Any], **ctx: Any) -> dict[str, Any]:
     try:
         from compgen.solve.backends.cp_sat import CPSatSolver
         from compgen.solve.contracts import extract_solver_problem
-    except ImportError as e:   # pragma: no cover
+    except ImportError as e:  # pragma: no cover
         return {
             "status": "deferred",
             "details": {"reason": f"solve backend unavailable: {e}"},
@@ -39,16 +39,11 @@ def cost_model_gate(proposal: dict[str, Any], **ctx: Any) -> dict[str, Any]:
         if module is None or target is None:
             return {
                 "status": "deferred",
-                "details": {
-                    "reason": (
-                        "cost_model_gate requires either ctx.problem OR "
-                        "ctx.module + ctx.target"
-                    )
-                },
+                "details": {"reason": ("cost_model_gate requires either ctx.problem OR ctx.module + ctx.target")},
             }
         try:
             problem = extract_solver_problem(module, target)
-        except Exception as e:   # noqa: BLE001
+        except Exception as e:  # noqa: BLE001
             return {
                 "status": "rejected",
                 "details": {
@@ -60,7 +55,7 @@ def cost_model_gate(proposal: dict[str, Any], **ctx: Any) -> dict[str, Any]:
     solver = CPSatSolver(timeout_ms=timeout_ms)
     try:
         result = solver.solve(problem)
-    except Exception as e:   # noqa: BLE001
+    except Exception as e:  # noqa: BLE001
         return {
             "status": "rejected",
             "details": {

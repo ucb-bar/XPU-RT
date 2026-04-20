@@ -15,7 +15,6 @@ from compgen.llm._prompt import (
     stringify_json_payload,
 )
 from compgen.llm.base import (
-    CompGenLLMProtocol,
     GenerationRequest,
     GenerationResponse,
 )
@@ -60,8 +59,7 @@ class AnthropicClient:
         latency_ms = (time.perf_counter() - t0) * 1000
 
         raw_text = "".join(
-            block.text for block in getattr(response, "content", [])
-            if getattr(block, "type", "") == "text"
+            block.text for block in getattr(response, "content", []) if getattr(block, "type", "") == "text"
         )
         usage = getattr(response, "usage", None)
         return GenerationResponse(
@@ -75,7 +73,9 @@ class AnthropicClient:
         )
 
     def generate_structured(
-        self, request: GenerationRequest, schema: dict[str, Any],
+        self,
+        request: GenerationRequest,
+        schema: dict[str, Any],
     ) -> GenerationResponse:
         structured_request = GenerationRequest(
             prompt_template=(

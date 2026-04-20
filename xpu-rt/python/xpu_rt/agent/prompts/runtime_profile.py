@@ -100,16 +100,19 @@ PROFILE_HOOK_PROMPT = textwrap.dedent("""\
 
 def format_prompt(ctx: ProfileHookContext) -> str:
     """Render profiling configuration prompt."""
-    bottleneck_lines = "\n".join(
-        f"  - {b.get('region', '?')}: {b.get('kind', '?')} "
-        f"(severity {b.get('severity', 0):.2f}) — {b.get('suggestion', '')}"
-        for b in ctx.current_bottlenecks
-    ) or "  (none detected)"
+    bottleneck_lines = (
+        "\n".join(
+            f"  - {b.get('region', '?')}: {b.get('kind', '?')} "
+            f"(severity {b.get('severity', 0):.2f}) — {b.get('suggestion', '')}"
+            for b in ctx.current_bottlenecks
+        )
+        or "  (none detected)"
+    )
 
-    drift_lines = "\n".join(
-        f"  {op}: measured={v:.1f}us vs estimated"
-        for op, v in ctx.measured_vs_estimated.items()
-    ) or "  (no drift data)"
+    drift_lines = (
+        "\n".join(f"  {op}: measured={v:.1f}us vs estimated" for op, v in ctx.measured_vs_estimated.items())
+        or "  (no drift data)"
+    )
 
     return PROFILE_HOOK_PROMPT.format(
         target_name=ctx.target_name,

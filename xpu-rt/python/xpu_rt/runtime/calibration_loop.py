@@ -108,14 +108,16 @@ class CalibrationLoop:
                 drift = abs(estimated_us - measured_us) / measured_us
                 exceeded = drift > self.drift_threshold
 
-                results.append(DriftResult(
-                    op_type=op_type,
-                    device_name=device_name,
-                    estimated_us=estimated_us,
-                    measured_us=measured_us,
-                    drift=drift,
-                    exceeded=exceeded,
-                ))
+                results.append(
+                    DriftResult(
+                        op_type=op_type,
+                        device_name=device_name,
+                        estimated_us=estimated_us,
+                        measured_us=measured_us,
+                        drift=drift,
+                        exceeded=exceeded,
+                    )
+                )
 
                 log.debug(
                     "calibration.drift",

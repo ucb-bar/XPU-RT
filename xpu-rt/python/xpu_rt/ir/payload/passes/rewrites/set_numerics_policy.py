@@ -49,7 +49,6 @@ LLM-tool signature:
 
 from __future__ import annotations
 
-from collections.abc import Iterable
 from dataclasses import dataclass, field
 
 from xdsl.dialects.arith import (
@@ -80,7 +79,6 @@ from xdsl.pattern_rewriter import (
     op_type_rewrite_pattern,
 )
 
-
 # --- configuration ------------------------------------------------------------
 
 
@@ -99,13 +97,9 @@ class NumericsPolicy:
     """
 
     storage_types: frozenset[type[Attribute]] = field(
-        default_factory=lambda: frozenset(
-            {Float16Type, BFloat16Type, Float32Type, Float64Type}
-        )
+        default_factory=lambda: frozenset({Float16Type, BFloat16Type, Float32Type, Float64Type})
     )
-    supported_per_kind: dict[str, frozenset[type[Attribute]]] = field(
-        default_factory=dict
-    )
+    supported_per_kind: dict[str, frozenset[type[Attribute]]] = field(default_factory=dict)
     promotion_type_cls: type[Attribute] = Float32Type
 
     def is_supported(self, kind: str, elem_type: Attribute) -> bool:

@@ -31,12 +31,21 @@ from xdsl.pattern_rewriter import (
     op_type_rewrite_pattern,
 )
 
-
 _RESHAPE_HINTS = frozenset({"view", "expand", "reshape", "unsqueeze", "squeeze"})
-_ELEMENTWISE_HINTS = frozenset({
-    "add", "sub", "mul", "div", "gelu", "silu", "neg", "sigmoid",
-    "relu", "tanh",
-})
+_ELEMENTWISE_HINTS = frozenset(
+    {
+        "add",
+        "sub",
+        "mul",
+        "div",
+        "gelu",
+        "silu",
+        "neg",
+        "sigmoid",
+        "relu",
+        "tanh",
+    }
+)
 
 
 def _hint(op: Operation) -> str | None:
@@ -55,9 +64,7 @@ class _BubbleExpandPattern(RewritePattern):
         self.stats = stats
 
     @op_type_rewrite_pattern
-    def match_and_rewrite(
-        self, op: CallOp, rewriter: PatternRewriter
-    ) -> None:
+    def match_and_rewrite(self, op: CallOp, rewriter: PatternRewriter) -> None:
         hint = _hint(op)
         if hint not in _ELEMENTWISE_HINTS:
             return
@@ -72,9 +79,7 @@ class _BubbleExpandPattern(RewritePattern):
             return
         if "compgen.bubble_reshape_through" in op.attributes:
             return
-        op.attributes["compgen.bubble_reshape_through"] = StringAttr(
-            prod_hint
-        )
+        op.attributes["compgen.bubble_reshape_through"] = StringAttr(prod_hint)
         self.stats.reshape_pairs_tagged += 1
 
 
@@ -83,7 +88,8 @@ def run_bubble_expand_shapes(
 ) -> BubbleExpandShapesStats:
     stats = BubbleExpandShapesStats()
     walker = PatternRewriteWalker(
-        _BubbleExpandPattern(stats), apply_recursively=False,
+        _BubbleExpandPattern(stats),
+        apply_recursively=False,
     )
     walker.rewrite_module(module)
     return stats

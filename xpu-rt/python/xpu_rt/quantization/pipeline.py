@@ -53,7 +53,6 @@ from compgen.quantization.graph_analyzer import (
     QuantizedGraphAnalysis,
     analyze_for_npu,
     analyze_fx_graphs,
-    format_analysis_report,
 )
 from compgen.quantization.verify import NpuAlignmentResult, npu_alignment_check
 
@@ -228,10 +227,10 @@ class QuantizedModelPipeline:
             return
 
         try:
-            from compgen.kernels.patterns.detection import detect_patterns_in_graphs
-            from compgen.kernels.patterns.catalog import build_pattern_catalog, export_pattern_catalog
-            from compgen.kernels.golden.generator import generate_golden_for_pattern
             from compgen.kernels.golden.export import export_golden_data, export_test_harness
+            from compgen.kernels.golden.generator import generate_golden_for_pattern
+            from compgen.kernels.patterns.catalog import build_pattern_catalog, export_pattern_catalog
+            from compgen.kernels.patterns.detection import detect_patterns_in_graphs
             from compgen.transforms.graph_passes import run_decomposition_on_graphs
 
             graphs = list(artifact.graphs)
@@ -358,16 +357,21 @@ class QuantizedModelPipeline:
         # Alignment report
         if self._report.alignment_result is not None:
             ar = self._report.alignment_result
-            (out / "alignment_report.json").write_text(json.dumps({
-                "passed": ar.passed,
-                "fp8_linear_count": ar.fp8_linear_count,
-                "fp8_conv2d_count": ar.fp8_conv2d_count,
-                "fp8_attention_count": ar.fp8_attention_count,
-                "non_po2_scales": ar.non_po2_scales,
-                "unquantized_linears": ar.unquantized_linears,
-                "warnings": ar.warnings,
-                "errors": ar.errors,
-            }, indent=2))
+            (out / "alignment_report.json").write_text(
+                json.dumps(
+                    {
+                        "passed": ar.passed,
+                        "fp8_linear_count": ar.fp8_linear_count,
+                        "fp8_conv2d_count": ar.fp8_conv2d_count,
+                        "fp8_attention_count": ar.fp8_attention_count,
+                        "non_po2_scales": ar.non_po2_scales,
+                        "unquantized_linears": ar.unquantized_linears,
+                        "warnings": ar.warnings,
+                        "errors": ar.errors,
+                    },
+                    indent=2,
+                )
+            )
 
         # Payload IR
         if self._report.payload_ir_text:
@@ -377,16 +381,22 @@ class QuantizedModelPipeline:
         for i, contract in enumerate(self._report.kernel_contracts):
             contract_path = out / "kernel_contracts" / f"contract_{i:04d}_{contract.op_name.replace('.', '_')}.yaml"
             import yaml
-            contract_path.write_text(yaml.dump({
-                "op_name": contract.op_name,
-                "supported_dtypes": list(contract.supported_dtypes),
-                "fusable": contract.fusable,
-                "cost": {
-                    "flops": contract.cost.flops,
-                    "bytes_read": contract.cost.bytes_read,
-                    "bytes_written": contract.cost.bytes_written,
-                },
-            }, default_flow_style=False))
+
+            contract_path.write_text(
+                yaml.dump(
+                    {
+                        "op_name": contract.op_name,
+                        "supported_dtypes": list(contract.supported_dtypes),
+                        "fusable": contract.fusable,
+                        "cost": {
+                            "flops": contract.cost.flops,
+                            "bytes_read": contract.cost.bytes_read,
+                            "bytes_written": contract.cost.bytes_written,
+                        },
+                    },
+                    default_flow_style=False,
+                )
+            )
 
         # Verification report (combines alignment + graph analysis)
         verification = {
@@ -406,9 +416,7 @@ class QuantizedModelPipeline:
             "param_count": self._report.param_count,
             "quantization_scheme": self._quant_config.scheme if self._quant_config else None,
             "target": "npu" if self._target_op_map is None else "custom",
-            "artifacts": [
-                str(p.relative_to(out)) for p in sorted(out.rglob("*")) if p.is_file()
-            ],
+            "artifacts": [str(p.relative_to(out)) for p in sorted(out.rglob("*")) if p.is_file()],
         }
         (out / "manifest.json").write_text(json.dumps(manifest, indent=2))
 

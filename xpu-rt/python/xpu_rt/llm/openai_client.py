@@ -15,7 +15,6 @@ from compgen.llm._prompt import (
     stringify_json_payload,
 )
 from compgen.llm.base import (
-    CompGenLLMProtocol,
     GenerationRequest,
     GenerationResponse,
 )
@@ -72,7 +71,9 @@ class OpenAIClient:
         )
 
     def generate_structured(
-        self, request: GenerationRequest, schema: dict[str, Any],
+        self,
+        request: GenerationRequest,
+        schema: dict[str, Any],
     ) -> GenerationResponse:
         structured_request = GenerationRequest(
             prompt_template=(

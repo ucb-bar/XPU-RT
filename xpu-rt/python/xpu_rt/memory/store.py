@@ -11,13 +11,13 @@ from __future__ import annotations
 
 import json
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import structlog
 
-from compgen.memory.blobs import BlobStore, content_hash
+from compgen.memory.blobs import BlobStore
 from compgen.memory.schema import (
     Candidate,
     CandidateStatus,
@@ -29,7 +29,6 @@ from compgen.memory.schema import (
     ObjectKind,
     Promotion,
     ScopeKind,
-    Source,
     StateSignature,
     Task,
 )
@@ -43,7 +42,7 @@ def _uid() -> str:
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 class CompilerMemory:
@@ -102,9 +101,17 @@ class CompilerMemory:
         )
         self.db.execute(
             "INSERT INTO tasks VALUES (?,?,?,?,?,?,?,?,?)",
-            (task.task_id, task.task_kind.value, task.workload_key, task.region_key,
-             task.target_key, task.hardware_key, task.objective,
-             task.input_artifact_hash, task.created_at),
+            (
+                task.task_id,
+                task.task_kind.value,
+                task.workload_key,
+                task.region_key,
+                task.target_key,
+                task.hardware_key,
+                task.objective,
+                task.input_artifact_hash,
+                task.created_at,
+            ),
         )
         self.db.commit()
         return task
@@ -153,10 +160,19 @@ class CompilerMemory:
         )
         self.db.execute(
             "INSERT INTO state_signatures VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-            (state.state_id, state.task_id, state.op_family,
-             state.shape_signature, state.dtype_signature, state.layout_signature,
-             state.hardware_signature, state.memory_signature, state.config_signature,
-             state.bottleneck_signature, state.profile_signature),
+            (
+                state.state_id,
+                state.task_id,
+                state.op_family,
+                state.shape_signature,
+                state.dtype_signature,
+                state.layout_signature,
+                state.hardware_signature,
+                state.memory_signature,
+                state.config_signature,
+                state.bottleneck_signature,
+                state.profile_signature,
+            ),
         )
         self.db.commit()
         return state
@@ -193,11 +209,19 @@ class CompilerMemory:
         )
         self.db.execute(
             "INSERT INTO candidates VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-            (candidate.candidate_id, candidate.task_id, candidate.artifact_hash,
-             candidate.parent_candidate_id, candidate.generator_kind.value,
-             candidate.generator_model, candidate.generation_round,
-             candidate.state_signature_id, candidate.status.value,
-             candidate.created_at, json.dumps(candidate.metadata)),
+            (
+                candidate.candidate_id,
+                candidate.task_id,
+                candidate.artifact_hash,
+                candidate.parent_candidate_id,
+                candidate.generator_kind.value,
+                candidate.generator_model,
+                candidate.generation_round,
+                candidate.state_signature_id,
+                candidate.status.value,
+                candidate.created_at,
+                json.dumps(candidate.metadata),
+            ),
         )
         self.db.commit()
         return candidate
@@ -256,12 +280,22 @@ class CompilerMemory:
         )
         self.db.execute(
             "INSERT INTO evaluations VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-            (evaluation.eval_id, evaluation.candidate_id, evaluation.backend,
-             int(evaluation.compile_ok), int(evaluation.correctness_ok),
-             int(evaluation.perf_ok), evaluation.score, evaluation.latency_us,
-             evaluation.throughput, evaluation.energy,
-             evaluation.verifier_summary, evaluation.profile_summary,
-             evaluation.profile_artifact_hash, evaluation.created_at),
+            (
+                evaluation.eval_id,
+                evaluation.candidate_id,
+                evaluation.backend,
+                int(evaluation.compile_ok),
+                int(evaluation.correctness_ok),
+                int(evaluation.perf_ok),
+                evaluation.score,
+                evaluation.latency_us,
+                evaluation.throughput,
+                evaluation.energy,
+                evaluation.verifier_summary,
+                evaluation.profile_summary,
+                evaluation.profile_artifact_hash,
+                evaluation.created_at,
+            ),
         )
         self.db.commit()
         return evaluation
@@ -269,7 +303,8 @@ class CompilerMemory:
     def get_evaluations(self, candidate_id: str) -> list[Evaluation]:
         """Get all evaluations for a candidate."""
         rows = self.db.fetchall(
-            "SELECT * FROM evaluations WHERE candidate_id = ?", (candidate_id,),
+            "SELECT * FROM evaluations WHERE candidate_id = ?",
+            (candidate_id,),
         )
         return [self._row_to_evaluation(r) for r in rows]
 
@@ -299,10 +334,21 @@ class CompilerMemory:
         )
         self.db.execute(
             "INSERT INTO knowledge_items VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
-            (item.knowledge_id, item.knowledge_kind.value, item.scope_kind.value,
-             item.scope_key, item.summary, item.artifact_hash,
-             item.quality_score, item.uses, item.wins, item.failures,
-             item.last_used_at, item.source, item.embedding_hash),
+            (
+                item.knowledge_id,
+                item.knowledge_kind.value,
+                item.scope_kind.value,
+                item.scope_key,
+                item.summary,
+                item.artifact_hash,
+                item.quality_score,
+                item.uses,
+                item.wins,
+                item.failures,
+                item.last_used_at,
+                item.source,
+                item.embedding_hash,
+            ),
         )
         self.db.commit()
         return item
@@ -351,6 +397,7 @@ class CompilerMemory:
         if self.embedding_provider is not None:
             try:
                 from compgen.memory.embeddings import retrieve_by_similarity
+
                 query = f"{op_family} {hardware_signature} {bottleneck_signature}".strip()
                 if query:
                     results = retrieve_by_similarity(self, query, self.embedding_provider, top_k=top_k)
@@ -363,24 +410,30 @@ class CompilerMemory:
         results: list[KnowledgeItem] = []
 
         if op_family:
-            results.extend(self.retrieve_knowledge(
-                scope_kind=ScopeKind.OPERATOR_FAMILY,
-                scope_key=op_family,
-                top_k=top_k,
-            ))
+            results.extend(
+                self.retrieve_knowledge(
+                    scope_kind=ScopeKind.OPERATOR_FAMILY,
+                    scope_key=op_family,
+                    top_k=top_k,
+                )
+            )
 
         if hardware_signature:
-            results.extend(self.retrieve_knowledge(
-                scope_kind=ScopeKind.HARDWARE_FAMILY,
-                scope_key=hardware_signature,
-                top_k=top_k,
-            ))
+            results.extend(
+                self.retrieve_knowledge(
+                    scope_kind=ScopeKind.HARDWARE_FAMILY,
+                    scope_key=hardware_signature,
+                    top_k=top_k,
+                )
+            )
 
         # Also fetch global knowledge
-        results.extend(self.retrieve_knowledge(
-            scope_kind=ScopeKind.GLOBAL,
-            top_k=top_k,
-        ))
+        results.extend(
+            self.retrieve_knowledge(
+                scope_kind=ScopeKind.GLOBAL,
+                top_k=top_k,
+            )
+        )
 
         # Deduplicate and return top-k by quality
         seen: set[str] = set()
@@ -439,10 +492,16 @@ class CompilerMemory:
         )
         self.db.execute(
             "INSERT INTO promotions VALUES (?,?,?,?,?,?,?,?)",
-            (promotion.promotion_id, promotion.candidate_id,
-             promotion.promotion_key, promotion.version,
-             promotion.reason, promotion.measured_gain,
-             promotion.verified_by, promotion.created_at),
+            (
+                promotion.promotion_id,
+                promotion.candidate_id,
+                promotion.promotion_key,
+                promotion.version,
+                promotion.reason,
+                promotion.measured_gain,
+                promotion.verified_by,
+                promotion.created_at,
+            ),
         )
         self.update_candidate_status(candidate_id, CandidateStatus.PROMOTED)
         self.db.commit()
@@ -474,9 +533,16 @@ class CompilerMemory:
         )
         self.db.execute(
             "INSERT INTO episode_steps VALUES (?,?,?,?,?,?,?,?)",
-            (step.step_id, step.task_id, step.candidate_id,
-             step.action, step.reward, step.step_number,
-             json.dumps(step.metadata), step.created_at),
+            (
+                step.step_id,
+                step.task_id,
+                step.candidate_id,
+                step.action,
+                step.reward,
+                step.step_number,
+                json.dumps(step.metadata),
+                step.created_at,
+            ),
         )
         self.db.commit()
         return step
@@ -489,9 +555,12 @@ class CompilerMemory:
         )
         return [
             EpisodeStep(
-                step_id=r["step_id"], task_id=r["task_id"],
-                candidate_id=r["candidate_id"], action=r["action"],
-                reward=r["reward"], step_number=r["step_number"],
+                step_id=r["step_id"],
+                task_id=r["task_id"],
+                candidate_id=r["candidate_id"],
+                action=r["action"],
+                reward=r["reward"],
+                step_number=r["step_number"],
                 metadata=json.loads(r["metadata_json"]),
                 created_at=r["created_at"],
             )

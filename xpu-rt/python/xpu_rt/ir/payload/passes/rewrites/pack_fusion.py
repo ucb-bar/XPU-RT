@@ -22,7 +22,6 @@ from dataclasses import dataclass
 
 from xdsl.dialects.builtin import DenseArrayBase, ModuleOp, StringAttr
 from xdsl.dialects.linalg import GenericOp
-from xdsl.ir import Operation, SSAValue
 from xdsl.pattern_rewriter import (
     PatternRewriter,
     PatternRewriteWalker,
@@ -30,7 +29,7 @@ from xdsl.pattern_rewriter import (
     op_type_rewrite_pattern,
 )
 
-from compgen.ir.tensor_ext import PackOp, UnpackOp
+from compgen.ir.tensor_ext import PackOp
 
 
 @dataclass
@@ -53,9 +52,7 @@ class _PackFusionPattern(RewritePattern):
         self.stats = stats
 
     @op_type_rewrite_pattern
-    def match_and_rewrite(
-        self, op: PackOp, rewriter: PatternRewriter
-    ) -> None:
+    def match_and_rewrite(self, op: PackOp, rewriter: PatternRewriter) -> None:
         self.stats.packs_seen += 1
 
         # Identity elision: replace the pack's result with its input.
@@ -74,9 +71,7 @@ class _PackFusionPattern(RewritePattern):
         for use in op.result.uses:
             consumer = use.operation
             if isinstance(consumer, GenericOp):
-                consumer.attributes["compgen.pack_fused_on_input"] = StringAttr(
-                    str(use.index)
-                )
+                consumer.attributes["compgen.pack_fused_on_input"] = StringAttr(str(use.index))
                 self.stats.generics_tagged += 1
                 break
 
@@ -84,7 +79,8 @@ class _PackFusionPattern(RewritePattern):
 def run_pack_fusion(module: ModuleOp) -> PackFusionStats:
     stats = PackFusionStats()
     walker = PatternRewriteWalker(
-        _PackFusionPattern(stats), apply_recursively=False,
+        _PackFusionPattern(stats),
+        apply_recursively=False,
     )
     walker.rewrite_module(module)
     return stats

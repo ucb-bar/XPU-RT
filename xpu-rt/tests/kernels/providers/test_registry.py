@@ -5,7 +5,6 @@ from __future__ import annotations
 from compgen.kernels.provider import (
     ContractFeedback,
     KernelContract,
-    KernelProvider,
     KnowledgeExport,
     ProviderResult,
     SearchBudget,

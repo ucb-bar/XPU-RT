@@ -2,15 +2,12 @@
 
 from __future__ import annotations
 
-import tempfile
 from pathlib import Path
 
 import pytest
-
-from compgen.memory.blobs import BlobStore, content_hash
+from compgen.memory.blobs import BlobStore
 from compgen.memory.schema import (
     CandidateStatus,
-    GeneratorKind,
     KnowledgeKind,
     ObjectKind,
     ScopeKind,
@@ -193,10 +190,20 @@ class TestCompilerMemoryProviderIngestion:
         count = memory.ingest_provider_knowledge(
             provider_name="autocomp",
             exports=[
-                {"kind": "schedule_template", "scope": "operator_family", "scope_key": "matmul",
-                 "content": "def schedule(): ...", "summary": "Tiled matmul for H100"},
-                {"kind": "hardware_rule", "scope": "hardware_family", "scope_key": "hopper",
-                 "content": "", "summary": "WGMMA requires specific tile alignment"},
+                {
+                    "kind": "schedule_template",
+                    "scope": "operator_family",
+                    "scope_key": "matmul",
+                    "content": "def schedule(): ...",
+                    "summary": "Tiled matmul for H100",
+                },
+                {
+                    "kind": "hardware_rule",
+                    "scope": "hardware_family",
+                    "scope_key": "hopper",
+                    "content": "",
+                    "summary": "WGMMA requires specific tile alignment",
+                },
             ],
         )
         assert count == 2

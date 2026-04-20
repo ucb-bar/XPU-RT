@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from benchmarks.spec import WorkspaceConfig
 from compgen.packs import default_pack_root, discover_pack_paths, load_builtin_packs, load_pack
+
+from benchmarks.spec import WorkspaceConfig
 
 
 def test_discover_builtin_pack_paths() -> None:

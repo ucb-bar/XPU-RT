@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import pytest
 import torch
-
 from compgen.llm import get_registry
 from compgen.llm.tools import verification
 
@@ -40,9 +38,7 @@ def test_differential_test_rejects_when_ref_raises() -> None:
     def _boom() -> torch.Tensor:
         raise RuntimeError("boom")
 
-    result = verification._run_differential_test_impl(
-        ref_fn=_boom, got_fn=lambda: torch.zeros(4)
-    )
+    result = verification._run_differential_test_impl(ref_fn=_boom, got_fn=lambda: torch.zeros(4))
     assert result["status"] == "rejected"
     assert "ref_fn raised" in result["details"]["reason"]
 
@@ -57,9 +53,7 @@ def test_differential_test_count_mismatch() -> None:
 
 
 def test_structural_check_accepts_dict_with_schema_version() -> None:
-    out = verification._run_structural_check_impl(
-        artifact={"schema_version": "2.0", "anything": True}
-    )
+    out = verification._run_structural_check_impl(artifact={"schema_version": "2.0", "anything": True})
     assert out["status"] == "accepted"
 
 

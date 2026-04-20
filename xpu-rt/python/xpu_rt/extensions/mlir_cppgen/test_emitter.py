@@ -19,7 +19,7 @@ from compgen.extensions.mlir_cppgen.pass_emitter import PassInfo
 def _op_test_body(info: DialectInfo, op: OpInfo) -> str:
     """Generate a test snippet for one op."""
     lines = []
-    lines.append(f'// CHECK: {info.name}.{op.mnemonic}')
+    lines.append(f"// CHECK: {info.name}.{op.mnemonic}")
 
     # Build a minimal op with required properties
     props = []
@@ -29,11 +29,11 @@ def _op_test_body(info: DialectInfo, op: OpInfo) -> str:
         if p.tablegen_type == "StrAttr":
             props.append(f'{p.name} = "test"')
         elif p.tablegen_type == "I64Attr":
-            props.append(f'{p.name} = 0 : i64')
+            props.append(f"{p.name} = 0 : i64")
         elif p.tablegen_type == "FlatSymbolRefAttr":
-            props.append(f'{p.name} = @test_ref')
+            props.append(f"{p.name} = @test_ref")
         elif p.tablegen_type == "ArrayAttr":
-            props.append(f'{p.name} = []')
+            props.append(f"{p.name} = []")
         elif "Attr" in p.tablegen_type:
             # Custom attr — use generic syntax
             props.append(f'{p.name} = "default"')
@@ -53,7 +53,7 @@ def emit_roundtrip_test(info: DialectInfo) -> str:
     survive the roundtrip.
     """
     lines = [
-        f"// RUN: compgen-opt %s | compgen-opt | FileCheck %s",
+        "// RUN: compgen-opt %s | compgen-opt | FileCheck %s",
         f"// Roundtrip test for {info.name} dialect ({len(info.ops)} ops)",
         "",
     ]
@@ -76,18 +76,18 @@ def emit_pass_test(p: PassInfo) -> str:
         f"// Test for pass: {p.pass_flag}",
         f"// Type: {p.pattern}",
         "",
-        'module {',
-        '  func.func @test() {',
-        '    return',
-        '  }',
-        '}',
+        "module {",
+        "  func.func @test() {",
+        "    return",
+        "  }",
+        "}",
         "",
     ]
 
     if p.pattern == "attr_annotation":
-        lines.append(f"// CHECK: func.func @test")
+        lines.append("// CHECK: func.func @test")
     elif p.pattern == "structural":
-        lines.append(f"// CHECK: module")
+        lines.append("// CHECK: module")
 
     return "\n".join(lines)
 

@@ -24,27 +24,32 @@ def suggest_scheduling_policy(
 ) -> list[ProposalCandidate]:
     has_dynamic = bool(getattr(dossier, "graph_break_count", 0))
     if has_dynamic:
-        return [ProposalCandidate(
+        return [
+            ProposalCandidate(
+                chosen={
+                    "megakernel_ref": "agent_megakernel",
+                    "policy": "dynamic",
+                    "early_push": True,
+                },
+                rationale="data-dependent edges detected — dynamic on-chip scheduler",
+                expected_impact=0.7,
+                target_feature_justification="dossier reports graph breaks",
+                metadata={"reason": "graph_breaks"},
+            )
+        ]
+    return [
+        ProposalCandidate(
             chosen={
                 "megakernel_ref": "agent_megakernel",
-                "policy": "dynamic", "early_push": True,
+                "policy": "static",
+                "sm_count": 32,
             },
-            rationale="data-dependent edges detected — dynamic on-chip scheduler",
-            expected_impact=0.7,
-            target_feature_justification="dossier reports graph breaks",
-            metadata={"reason": "graph_breaks"},
-        )]
-    return [ProposalCandidate(
-        chosen={
-            "megakernel_ref": "agent_megakernel",
-            "policy": "static",
-            "sm_count": 32,
-        },
-        rationale="no data-dependent edges — static per-SM queue",
-        expected_impact=0.6,
-        target_feature_justification="dossier shows static control flow",
-        metadata={"reason": "static"},
-    )]
+            rationale="no data-dependent edges — static per-SM queue",
+            expected_impact=0.6,
+            target_feature_justification="dossier shows static control flow",
+            metadata={"reason": "static"},
+        )
+    ]
 
 
 __all__ = ["suggest_scheduling_policy"]

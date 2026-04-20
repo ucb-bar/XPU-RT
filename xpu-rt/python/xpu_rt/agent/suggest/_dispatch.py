@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from xdsl.dialects.builtin import ModuleOp
 
@@ -16,9 +17,11 @@ SUGGESTERS: dict[str, SuggesterFn] = {}
 
 def register_suggester(slot_name: str) -> Callable[[SuggesterFn], SuggesterFn]:
     """Decorator that registers a suggester against ``slot_name``."""
+
     def _decorate(fn: SuggesterFn) -> SuggesterFn:
         SUGGESTERS[slot_name] = fn
         return fn
+
     return _decorate
 
 
@@ -47,7 +50,7 @@ def suggest(
         return []
     try:
         out = fn(recipe=recipe, dossier=dossier, target=target, k=k)
-    except Exception:   # noqa: BLE001
+    except Exception:  # noqa: BLE001
         # A suggester crashing must NEVER break the agent's flow.
         return []
     for c in out:

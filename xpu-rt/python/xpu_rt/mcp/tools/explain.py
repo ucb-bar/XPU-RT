@@ -20,7 +20,6 @@ from typing import Any
 
 from compgen.mcp.session import SessionManager
 
-
 # Per-obligation hint dispatch. Keys match the ``obligation_type``
 # strings produced by ``lower_recipe._lower_require_*`` handlers.
 _VERIFICATION_HINTS: dict[str, dict[str, str]] = {
@@ -128,42 +127,37 @@ def explain_verification(
     transforms = list(getattr(driver, "_last_transform_diagnostics", []) or [])
 
     failed_obs = [
-        o for o in obligations
-        if include_passed or (
-            not o.get("passed", False) and o.get("status") != "skipped"
-        )
+        o for o in obligations if include_passed or (not o.get("passed", False) and o.get("status") != "skipped")
     ]
     failed_obs = failed_obs[:n]
 
-    failed_transforms = [
-        t for t in transforms
-        if t.get("level", "").lower() == "error"
-    ]
+    failed_transforms = [t for t in transforms if t.get("level", "").lower() == "error"]
     failed_transforms = failed_transforms[:n]
 
     # Enrich each failure with hint + next_step.
     enriched_obligations: list[dict[str, Any]] = []
     for o in failed_obs:
         hint, next_step = _hint_for_obligation(o)
-        enriched_obligations.append({
-            **o,
-            "remediation_hint": hint,
-            "next_step": next_step,
-        })
+        enriched_obligations.append(
+            {
+                **o,
+                "remediation_hint": hint,
+                "next_step": next_step,
+            }
+        )
 
     enriched_transforms: list[dict[str, Any]] = []
     for t in failed_transforms:
         level = t.get("level", "").lower()
-        enriched_transforms.append({
-            **t,
-            "remediation_hint": _TRANSFORM_LEVEL_HINTS.get(
-                level, "Inspect the message for context."
-            ),
-            "next_step": (
-                "Re-fetch view_recipe; the targeted region may have been "
-                "rewritten by an earlier transform."
-            ),
-        })
+        enriched_transforms.append(
+            {
+                **t,
+                "remediation_hint": _TRANSFORM_LEVEL_HINTS.get(level, "Inspect the message for context."),
+                "next_step": (
+                    "Re-fetch view_recipe; the targeted region may have been rewritten by an earlier transform."
+                ),
+            }
+        )
 
     return {
         "ok": True,
@@ -173,13 +167,10 @@ def explain_verification(
         "summary": {
             "obligations_total": len(obligations),
             "obligations_failed": sum(
-                1 for o in obligations
-                if not o.get("passed", False) and o.get("status") != "skipped"
+                1 for o in obligations if not o.get("passed", False) and o.get("status") != "skipped"
             ),
             "transform_scripts_total": len(transforms),
-            "transform_scripts_failed": sum(
-                1 for t in transforms if t.get("level", "").lower() == "error"
-            ),
+            "transform_scripts_failed": sum(1 for t in transforms if t.get("level", "").lower() == "error"),
         },
     }
 

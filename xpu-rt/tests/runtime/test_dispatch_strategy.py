@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from compgen.runtime.dispatch_strategy import (
     BulkSyncStrategy,
     DispatchOp,
@@ -15,7 +14,6 @@ from compgen.runtime.dispatch_strategy import (
     create_strategy,
     register_strategy,
 )
-
 
 # ---- Shared test data ----
 
@@ -99,7 +97,11 @@ class TestBulkSyncStrategy:
         ops, placements, deps, latencies = _diamond_dag()
         node_map = {0: "host", 1: "npu"}
         waves = BulkSyncStrategy().plan_waves(
-            ops, placements, deps, latencies, node_for_device=node_map,
+            ops,
+            placements,
+            deps,
+            latencies,
+            node_for_device=node_map,
         )
         # C is on device 1 → node "npu"
         c_op = [op for w in waves for op in w.ops if op.op_name == "C"][0]

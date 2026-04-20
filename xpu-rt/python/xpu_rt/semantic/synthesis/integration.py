@@ -39,7 +39,9 @@ def synthesize_and_attach_guards(
 
         result = search_guard_fragments(examples, cfg)
         promoted = bool(result.promoted_fragments) and not (
-            len(result.promoted_fragments) == 1 and isinstance(result.promoted_fragments[0], Const) and result.promoted_fragments[0].value is False
+            len(result.promoted_fragments) == 1
+            and isinstance(result.promoted_fragments[0], Const)
+            and result.promoted_fragments[0].value is False
         )
         proof = None
         proof_spec = get_soundness_spec(family_name)
@@ -80,20 +82,21 @@ def synthesize_and_attach_guards(
 
         guard_symbol = f"guard_{family_name}"
         existing_guard = next(
-            (
-                op for op in module.body.block.ops
-                if isinstance(op, RecipeGuardOp) and op.sym_name.data == guard_symbol
-            ),
+            (op for op in module.body.block.ops if isinstance(op, RecipeGuardOp) and op.sym_name.data == guard_symbol),
             None,
         )
         if existing_guard is None:
-            module.body.block.add_op(RecipeGuardOp.build(properties={
-                "sym_name": StringAttr(guard_symbol),
-                "guard_key": StringAttr(artifact.guard_key),
-                "transform_family": StringAttr(family_name),
-                "guard_kind": StringAttr(family_spec.guard_kind),
-                **({"target_class": StringAttr(target_class)} if target_class else {}),
-            }))
+            module.body.block.add_op(
+                RecipeGuardOp.build(
+                    properties={
+                        "sym_name": StringAttr(guard_symbol),
+                        "guard_key": StringAttr(artifact.guard_key),
+                        "transform_family": StringAttr(family_name),
+                        "guard_kind": StringAttr(family_spec.guard_kind),
+                        **({"target_class": StringAttr(target_class)} if target_class else {}),
+                    }
+                )
+            )
 
         for op in module.walk():
             if family_spec.matches_candidate(op):
@@ -108,11 +111,13 @@ def synthesize_and_attach_guards(
     summary["promoted"] = total_promoted
     summary["average_guard_terms"] = (
         sum(family["average_guard_terms"] for family in summary["families"].values()) / max(total_promoted, 1)
-        if summary["families"] else 0.0
+        if summary["families"]
+        else 0.0
     )
     summary["average_proof_time_ms"] = (
         sum(family["average_proof_time_ms"] for family in summary["families"].values()) / max(total_promoted, 1)
-        if summary["families"] else 0.0
+        if summary["families"]
+        else 0.0
     )
     return registry, fact_index, summary
 

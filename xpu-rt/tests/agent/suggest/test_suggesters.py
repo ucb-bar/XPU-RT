@@ -12,9 +12,7 @@ from pathlib import Path
 import pytest
 import torch
 import torch.nn as nn
-
 from compgen.agent.suggest import (
-    SUGGESTERS,
     suggest,
     supported_slot_names,
 )
@@ -23,13 +21,11 @@ from compgen.agent.suggest._recipe_index import (
     build_recipe_index,
     critical_path_recipe_syms,
 )
-from compgen.api import compile_model, device as _device
+from compgen.api import compile_model
+from compgen.api import device as _device
 from compgen.ir.recipe.seed import generate_seed_recipe
 
-EXEMPLAR = (
-    Path(__file__).resolve().parents[2]
-    / "targetgen" / "exemplars" / "test_gpu_simt.yaml"
-)
+EXEMPLAR = Path(__file__).resolve().parents[2] / "targetgen" / "exemplars" / "test_gpu_simt.yaml"
 
 
 class _Mlp(nn.Module):
@@ -37,6 +33,7 @@ class _Mlp(nn.Module):
         super().__init__()
         self.fc1 = nn.Linear(32, 32)
         self.fc2 = nn.Linear(32, 16)
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.fc2(torch.relu(self.fc1(x)))
 
@@ -44,10 +41,14 @@ class _Mlp(nn.Module):
 def _seed():
     dev = _device(EXEMPLAR)
     compiled = compile_model(
-        _Mlp().eval(), dev, sample_inputs=(torch.randn(1, 32),),
+        _Mlp().eval(),
+        dev,
+        sample_inputs=(torch.randn(1, 32),),
     )
     recipe = generate_seed_recipe(
-        compiled.payload_module, dev.profile, "latency",
+        compiled.payload_module,
+        dev.profile,
+        "latency",
     )
     return recipe, compiled.analysis_dossier, dev.profile
 
@@ -59,9 +60,12 @@ def _seed():
 
 def test_every_canonical_slot_has_a_suggester() -> None:
     canonical = {
-        "propose_fusion", "propose_megakernel_synthesis",
-        "propose_layout_plan", "propose_dequant_fusion",
-        "propose_numerics_plan", "propose_peephole_pattern",
+        "propose_fusion",
+        "propose_megakernel_synthesis",
+        "propose_layout_plan",
+        "propose_dequant_fusion",
+        "propose_numerics_plan",
+        "propose_peephole_pattern",
         "propose_buffer_lifetime_plan",
         "propose_rematerialization_plan",
         "propose_scheduling_policy",
@@ -74,7 +78,10 @@ def test_every_canonical_slot_has_a_suggester() -> None:
 def test_unknown_slot_returns_empty_list() -> None:
     recipe, dossier, target = _seed()
     out = suggest(
-        "not_a_slot", recipe=recipe, dossier=dossier, target=target,
+        "not_a_slot",
+        recipe=recipe,
+        dossier=dossier,
+        target=target,
     )
     assert out == []
 
@@ -138,14 +145,19 @@ def test_suggest_fusion_to_proposal_is_accepted_by_propose_invent_slot(tmp_path:
     session = sm.open()
     dev = _device(EXEMPLAR)
     compiled = compile_model(
-        _Mlp().eval(), dev, sample_inputs=(torch.randn(1, 32),),
+        _Mlp().eval(),
+        dev,
+        sample_inputs=(torch.randn(1, 32),),
     )
-    reg = Registry(); register_invent_slots(reg)
+    reg = Registry()
+    register_invent_slots(reg)
     env = compiled.create_agent_env(budget=4)
     driver = LLMDrivenCompiler(
-        env=env, target=dev.profile,
+        env=env,
+        target=dev.profile,
         llm_client=MockLLMClient(strict=False),
-        budget=4, registry=reg,
+        budget=4,
+        registry=reg,
     )
     session.compiled = compiled
     session.device = dev
@@ -162,7 +174,8 @@ def test_suggest_fusion_to_proposal_is_accepted_by_propose_invent_slot(tmp_path:
         pytest.skip("no candidates generated")
     # Submit candidate 0 verbatim.
     r = propose_invent_slot(
-        sm, session_id=session.session_id,
+        sm,
+        session_id=session.session_id,
         slot_name="propose_fusion",
         proposal=candidates[0].to_proposal(),
     )
@@ -178,7 +191,9 @@ def test_suggest_megakernel_returns_at_least_fallback() -> None:
     recipe, dossier, target = _seed()
     out = suggest(
         "propose_megakernel_synthesis",
-        recipe=recipe, dossier=dossier, target=target,
+        recipe=recipe,
+        dossier=dossier,
+        target=target,
     )
     # MLP has matmuls but no softmax → no attention window. The MLP
     # window may or may not match (depends on op decomposition). At
@@ -197,7 +212,10 @@ def test_suggest_megakernel_returns_at_least_fallback() -> None:
 def test_suggest_layout_plan_uses_target_tile_mn() -> None:
     recipe, dossier, target = _seed()
     out = suggest(
-        "propose_layout_plan", recipe=recipe, dossier=dossier, target=target,
+        "propose_layout_plan",
+        recipe=recipe,
+        dossier=dossier,
+        target=target,
     )
     # Target has tile_mn declared, so layout strings should embed it.
     for c in out:
@@ -213,7 +231,10 @@ def test_suggest_layout_plan_uses_target_tile_mn() -> None:
 def test_suggest_dequant_fusion_on_plain_mlp_is_empty_or_valid() -> None:
     recipe, dossier, target = _seed()
     out = suggest(
-        "propose_dequant_fusion", recipe=recipe, dossier=dossier, target=target,
+        "propose_dequant_fusion",
+        recipe=recipe,
+        dossier=dossier,
+        target=target,
     )
     # Plain MLP has no quantized ops → expect empty list.
     assert isinstance(out, list)
@@ -226,13 +247,16 @@ def test_suggest_dequant_fusion_on_plain_mlp_is_empty_or_valid() -> None:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("slot", [
-    "propose_numerics_plan",
-    "propose_peephole_pattern",
-    "propose_buffer_lifetime_plan",
-    "propose_rematerialization_plan",
-    "propose_scheduling_policy",
-])
+@pytest.mark.parametrize(
+    "slot",
+    [
+        "propose_numerics_plan",
+        "propose_peephole_pattern",
+        "propose_buffer_lifetime_plan",
+        "propose_rematerialization_plan",
+        "propose_scheduling_policy",
+    ],
+)
 def test_other_suggesters_smoke(slot: str) -> None:
     recipe, dossier, target = _seed()
     out = suggest(slot, recipe=recipe, dossier=dossier, target=target)

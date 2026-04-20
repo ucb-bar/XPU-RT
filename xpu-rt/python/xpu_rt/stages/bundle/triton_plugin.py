@@ -17,19 +17,20 @@ from pathlib import Path
 
 import structlog
 from xdsl.dialects.builtin import ModuleOp, StringAttr
-from xdsl.ir import Operation
 
 from compgen.runtime.triton_emitter import emit_triton_kernels
 
 log = structlog.get_logger()
 
 
-_TRITON_ELIGIBLE_OP_NAMES: frozenset[str] = frozenset({
-    "linalg.matmul",
-    "linalg.batch_matmul",
-    "linalg.softmax",
-    "compgen.linalg_ext.softmax",
-})
+_TRITON_ELIGIBLE_OP_NAMES: frozenset[str] = frozenset(
+    {
+        "linalg.matmul",
+        "linalg.batch_matmul",
+        "linalg.softmax",
+        "compgen.linalg_ext.softmax",
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -73,9 +74,7 @@ def write_triton_bundle(
     report = emit_triton_kernels(module, out_dir=output_dir)
 
     kernels_dir = output_dir / "kernels"
-    kernel_files = (
-        sorted(kernels_dir.glob("*.py")) if kernels_dir.exists() else []
-    )
+    kernel_files = sorted(kernels_dir.glob("*.py")) if kernels_dir.exists() else []
     return TritonBundleResult(
         output_dir=output_dir,
         kernel_files=kernel_files,

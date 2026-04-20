@@ -7,8 +7,8 @@ from pathlib import Path
 import pytest
 import torch
 import torch.nn as nn
-from compgen.api import CompGenDevice, CompiledModel, compile_model, device
 from compgen.agent.env import CompilerEnv
+from compgen.api import CompGenDevice, CompiledModel, compile_model, device
 from compgen.llm.mock_client import MockLLMClient
 from compgen.runtime.local_executor import BenchmarkResult
 from compgen.stages.registry import PipelineResult, TargetDialectStack
@@ -265,13 +265,16 @@ class TestPackageExports:
 
     def test_import_device_from_package(self) -> None:
         from compgen import device as dev_fn
+
         assert callable(dev_fn)
 
     def test_import_compile_model_from_package(self) -> None:
         from compgen import compile_model as cm_fn
+
         assert callable(cm_fn)
 
     def test_import_classes_from_package(self) -> None:
         from compgen import CompGenDevice, CompiledModel
+
         assert CompGenDevice is not None
         assert CompiledModel is not None

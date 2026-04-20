@@ -14,17 +14,16 @@ from __future__ import annotations
 import threading
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:   # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover
     from compgen.agent.self_extension.authored_tool import AuthoredTool
 
 from compgen.agent.self_extension.authored_tool import authored_tool_key
 
-
 _lock = threading.Lock()
-_index: dict[str, "AuthoredTool"] = {}
+_index: dict[str, AuthoredTool] = {}
 
 
-def register_authored_tool(tool: "AuthoredTool") -> str:
+def register_authored_tool(tool: AuthoredTool) -> str:
     """Add ``tool`` to the process-wide index keyed by name@digest."""
     key = authored_tool_key(tool)
     with _lock:
@@ -32,7 +31,7 @@ def register_authored_tool(tool: "AuthoredTool") -> str:
     return key
 
 
-def snapshot_authored_index() -> dict[str, "AuthoredTool"]:
+def snapshot_authored_index() -> dict[str, AuthoredTool]:
     """Return a shallow copy so callers don't see mid-write state."""
     with _lock:
         return dict(_index)

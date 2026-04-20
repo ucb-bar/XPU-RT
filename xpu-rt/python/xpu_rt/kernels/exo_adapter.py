@@ -21,9 +21,7 @@ def _require_exo() -> Any:
 
         return exo
     except ImportError as e:
-        raise ImportError(
-            "Exo is required for ExoAdapter. Install with: pip install 'compgen[exo]'"
-        ) from e
+        raise ImportError("Exo is required for ExoAdapter. Install with: pip install 'compgen[exo]'") from e
 
 
 @dataclass(frozen=True)

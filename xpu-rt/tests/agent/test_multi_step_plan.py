@@ -1,7 +1,9 @@
 """Tests for multi-step planning prompt (Unit 2)."""
+
 from __future__ import annotations
+
 import json
-import pytest
+
 from compgen.agent.prompts.plan_multi_step import PlanContext, format_prompt, parse_response
 
 
@@ -32,11 +34,13 @@ class TestPlanContext:
 
 class TestParsePlan:
     def test_parse_valid_plan(self):
-        text = json.dumps([
-            {"action_type": "tile", "target": "matmul_0", "reason": "compute bound"},
-            {"action_type": "fuse", "target": "gelu_0", "reason": "adjacent"},
-            {"action_type": "eqsat", "target": "all", "reason": "cleanup"},
-        ])
+        text = json.dumps(
+            [
+                {"action_type": "tile", "target": "matmul_0", "reason": "compute bound"},
+                {"action_type": "fuse", "target": "gelu_0", "reason": "adjacent"},
+                {"action_type": "eqsat", "target": "all", "reason": "cleanup"},
+            ]
+        )
         result = parse_response(text)
         assert result is not None
         assert len(result) == 3

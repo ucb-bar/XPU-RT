@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import tempfile
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -27,10 +26,10 @@ from benchmarks.record import (
     SolverMetrics,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _mock_decision(
     strategy_value: str = "native",
@@ -49,6 +48,7 @@ def _mock_decision(
 # ---------------------------------------------------------------------------
 # TestCodegenDataclassDefaults
 # ---------------------------------------------------------------------------
+
 
 class TestCodegenDataclassDefaults:
     """Verify new codegen dataclasses instantiate with correct defaults."""
@@ -107,6 +107,7 @@ class TestCodegenDataclassDefaults:
 # TestExtendedDataclassBackcompat
 # ---------------------------------------------------------------------------
 
+
 class TestExtendedDataclassBackcompat:
     """Ensure extended dataclasses remain backward-compatible."""
 
@@ -154,6 +155,7 @@ class TestExtendedDataclassBackcompat:
 # TestRunRecordSerialization
 # ---------------------------------------------------------------------------
 
+
 class TestRunRecordSerialization:
     """Round-trip and backward-compat serialization tests."""
 
@@ -173,8 +175,13 @@ class TestRunRecordSerialization:
             opaque_boundaries_forcing_materialization=1,
         )
         rr.codegen_funnel = CodegenFunnel(
-            eligible=10, attempted=8, compiled=7, verified=6,
-            faster=5, promoted=4, geo_mean_speedup=1.35,
+            eligible=10,
+            attempted=8,
+            compiled=7,
+            verified=6,
+            faster=5,
+            promoted=4,
+            geo_mean_speedup=1.35,
         )
         rr.kernels.pct_native = 50.0
         rr.kernels.roofline_gap = 1.2
@@ -216,6 +223,7 @@ class TestRunRecordSerialization:
 # ---------------------------------------------------------------------------
 # TestCollectors
 # ---------------------------------------------------------------------------
+
 
 class TestCollectors:
     """Tests for the codegen-specific collector functions."""

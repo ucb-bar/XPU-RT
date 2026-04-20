@@ -23,7 +23,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from xdsl.dialects.builtin import ModuleOp, StringAttr, TensorType
+from xdsl.dialects.builtin import ModuleOp, TensorType
 
 from compgen.stages.base import CompilationStage, IRInvariant, StageContract
 from compgen.stages.encoding.stage import ENCODING_ATTR
@@ -105,14 +105,14 @@ class LayoutStage(CompilationStage):
 
     def shared_passes(self, module: ModuleOp, target: TargetProfile) -> ModuleOp:
         """Run target-agnostic layout passes."""
-        from compgen.transforms.layout.canonicalize_transposes import canonicalize_transposes
         from compgen.transforms.layout.attach_layout_hints import attach_layout_hints
-        from compgen.transforms.layout.set_virtual_encodings import set_virtual_encodings
-        from compgen.transforms.layout.propagate_layouts import propagate_layouts
+        from compgen.transforms.layout.canonicalize_transposes import canonicalize_transposes
+        from compgen.transforms.layout.cleanup_layout_artifacts import cleanup_layout_artifacts
         from compgen.transforms.layout.hoist_layout_ops import hoist_layout_ops
         from compgen.transforms.layout.introduce_prepacking import introduce_prepacking
         from compgen.transforms.layout.materialize_layout_boundaries import materialize_layout_boundaries
-        from compgen.transforms.layout.cleanup_layout_artifacts import cleanup_layout_artifacts
+        from compgen.transforms.layout.propagate_layouts import propagate_layouts
+        from compgen.transforms.layout.set_virtual_encodings import set_virtual_encodings
 
         # Passes 1-5 (target-agnostic)
         module = canonicalize_transposes(module)

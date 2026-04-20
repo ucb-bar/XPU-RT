@@ -81,6 +81,7 @@ class TestBlackbox:
 
     def test_constant_is_profitable(self) -> None:
         from xdsl.dialects.builtin import IntegerAttr
+
         block = Block()
         op = arith.ConstantOp(IntegerAttr.from_index_int_value(42))
         block.add_op(op)

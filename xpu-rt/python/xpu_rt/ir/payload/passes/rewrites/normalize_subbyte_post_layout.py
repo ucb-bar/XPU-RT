@@ -69,11 +69,7 @@ def run_normalize_subbyte_post_layout(
     *,
     config: NormalizeSubbytePostLayoutConfig | None = None,
 ) -> NormalizeSubbytePostLayoutStats:
-    cfg = (
-        config
-        if config is not None
-        else NormalizeSubbytePostLayoutConfig()
-    )
+    cfg = config if config is not None else NormalizeSubbytePostLayoutConfig()
     stats = NormalizeSubbytePostLayoutStats()
 
     # subbyte_ops summary format: a list of dicts
@@ -85,9 +81,7 @@ def run_normalize_subbyte_post_layout(
     if not subbyte_ops:
         return stats
 
-    strides: dict[str, int] = dict(
-        plan.summary.get("subbyte_buffer_strides", {})
-    )
+    strides: dict[str, int] = dict(plan.summary.get("subbyte_buffer_strides", {}))
 
     for entry in subbyte_ops:
         bid = entry.get("buffer_id")

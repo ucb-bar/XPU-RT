@@ -34,7 +34,6 @@ LLM-tool signature:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
 
 from xdsl.dialects.builtin import (
     AffineMapAttr,
@@ -177,9 +176,7 @@ class FoldMatmulTransposePattern(RewritePattern):
         self.stats = stats if stats is not None else FoldTransposesStats()
 
     @op_type_rewrite_pattern
-    def match_and_rewrite(
-        self, op: MatmulOp, rewriter: PatternRewriter
-    ) -> None:
+    def match_and_rewrite(self, op: MatmulOp, rewriter: PatternRewriter) -> None:
         self.stats.matmuls_seen += 1
 
         lhs = op.inputs[0]
@@ -188,14 +185,8 @@ class FoldMatmulTransposePattern(RewritePattern):
         lhs_transpose = _defining_transpose(lhs)
         rhs_transpose = _defining_transpose(rhs)
 
-        lhs_foldable = (
-            lhs_transpose is not None
-            and _is_2d_reverse_perm(_permutation_list(lhs_transpose))
-        )
-        rhs_foldable = (
-            rhs_transpose is not None
-            and _is_2d_reverse_perm(_permutation_list(rhs_transpose))
-        )
+        lhs_foldable = lhs_transpose is not None and _is_2d_reverse_perm(_permutation_list(lhs_transpose))
+        rhs_foldable = rhs_transpose is not None and _is_2d_reverse_perm(_permutation_list(rhs_transpose))
 
         if not lhs_foldable and not rhs_foldable:
             return
@@ -240,9 +231,7 @@ class EliminateDoubleTransposePattern(RewritePattern):
         self.stats = stats if stats is not None else FoldTransposesStats()
 
     @op_type_rewrite_pattern
-    def match_and_rewrite(
-        self, op: TransposeOp, rewriter: PatternRewriter
-    ) -> None:
+    def match_and_rewrite(self, op: TransposeOp, rewriter: PatternRewriter) -> None:
         # Look at the producer of ``op.input``.
         source = op.input
         producer = source.owner if hasattr(source, "owner") else None

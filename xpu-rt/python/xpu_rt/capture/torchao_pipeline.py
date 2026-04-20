@@ -77,8 +77,9 @@ def apply_quantization(model: Any, config: QuantizationConfig) -> Any:
         return apply_smolvla_quantization(model, recipe)
 
     if config.scheme == "fp8_e4m3_po2":
-        from compgen.quantization.fp8_config import FP8E4M3Po2Config
         from torchao.quantization import quantize_
+
+        from compgen.quantization.fp8_config import FP8E4M3Po2Config
 
         quantize_(model, FP8E4M3Po2Config())
         return model
@@ -150,9 +151,7 @@ def verify_quant_accuracy(
     test_inputs: Any,
     tolerance: float = 0.01,
 ) -> AccuracyReport:
-    """Verify quantization accuracy against the original model.
-
-    """
+    """Verify quantization accuracy against the original model."""
     with torch.no_grad():
         reference = original_model(*test_inputs)
         candidate = quantized_model(*test_inputs)

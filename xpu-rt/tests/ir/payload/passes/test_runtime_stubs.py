@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 import pytest
-from xdsl.dialects.builtin import ModuleOp
-
 from compgen.ir.payload.passes.runtime_stubs import (
     AliasIoBuffers,
     AssignMemorySpace,
@@ -16,7 +14,7 @@ from compgen.ir.payload.passes.runtime_stubs import (
     PlanBuffers,
     register_runtime_passes,
 )
-
+from xdsl.dialects.builtin import ModuleOp
 
 _ALL = [
     AliasIoBuffers,

@@ -8,6 +8,8 @@ available, falls back to hand-built modules otherwise.
 from __future__ import annotations
 
 import pytest
+from compgen.ir.layout.ops import SetLayoutOp, UnsetLayoutOp
+from compgen.stages.encoding.stage import ENCODING_ATTR
 from xdsl.dialects import arith, func
 from xdsl.dialects.builtin import (
     Float32Type,
@@ -18,10 +20,6 @@ from xdsl.dialects.builtin import (
     TensorType,
 )
 from xdsl.ir import Block, Region
-
-from compgen.ir.layout.ops import SetLayoutOp, UnsetLayoutOp
-from compgen.stages.encoding.stage import ENCODING_ATTR
-
 
 # ---------------------------------------------------------------------------
 # Module builders
@@ -71,12 +69,14 @@ def _add_encoding_attrs(module: ModuleOp) -> ModuleOp:
 class TestCanonicalizeTransposes:
     def test_no_crash_on_empty_module(self) -> None:
         from compgen.transforms.layout.canonicalize_transposes import canonicalize_transposes
+
         module = _make_arith_module()
         result = canonicalize_transposes(module)
         assert isinstance(result, ModuleOp)
 
     def test_no_crash_on_tensor_module(self) -> None:
         from compgen.transforms.layout.canonicalize_transposes import canonicalize_transposes
+
         module = _make_tensor_module()
         result = canonicalize_transposes(module)
         assert isinstance(result, ModuleOp)
@@ -85,6 +85,7 @@ class TestCanonicalizeTransposes:
 class TestAttachLayoutHints:
     def test_no_crash_on_empty_plans(self) -> None:
         from compgen.transforms.layout.attach_layout_hints import attach_layout_hints
+
         module = _make_arith_module()
         result = attach_layout_hints(module, {})
         assert isinstance(result, ModuleOp)
@@ -93,6 +94,7 @@ class TestAttachLayoutHints:
 class TestSetVirtualEncodings:
     def test_no_crash_on_arith_module(self) -> None:
         from compgen.transforms.layout.set_virtual_encodings import set_virtual_encodings
+
         module = _add_encoding_attrs(_make_arith_module())
         result = set_virtual_encodings(module)
         assert isinstance(result, ModuleOp)
@@ -101,6 +103,7 @@ class TestSetVirtualEncodings:
 class TestPropagateLayouts:
     def test_no_crash(self) -> None:
         from compgen.transforms.layout.propagate_layouts import propagate_layouts
+
         module = _make_arith_module()
         result = propagate_layouts(module)
         assert isinstance(result, ModuleOp)
@@ -109,6 +112,7 @@ class TestPropagateLayouts:
 class TestHoistLayoutOps:
     def test_no_crash(self) -> None:
         from compgen.transforms.layout.hoist_layout_ops import hoist_layout_ops
+
         module = _make_arith_module()
         result = hoist_layout_ops(module)
         assert isinstance(result, ModuleOp)
@@ -117,6 +121,7 @@ class TestHoistLayoutOps:
 class TestFuseLayoutIntoProducers:
     def test_no_crash(self) -> None:
         from compgen.transforms.layout.fuse_layout_into_producers import fuse_layout_into_producers
+
         module = _make_arith_module()
         result = fuse_layout_into_producers(module)
         assert isinstance(result, ModuleOp)
@@ -125,6 +130,7 @@ class TestFuseLayoutIntoProducers:
 class TestIntroducePrepacking:
     def test_no_crash(self) -> None:
         from compgen.transforms.layout.introduce_prepacking import introduce_prepacking
+
         module = _make_arith_module()
         result = introduce_prepacking(module)
         assert isinstance(result, ModuleOp)
@@ -133,6 +139,7 @@ class TestIntroducePrepacking:
 class TestSpecializeLayouts:
     def test_no_crash(self) -> None:
         from compgen.transforms.layout.specialize_layouts import specialize_layouts
+
         module = _make_arith_module()
         result = specialize_layouts(module)
         assert isinstance(result, ModuleOp)
@@ -141,6 +148,7 @@ class TestSpecializeLayouts:
 class TestMaterializeLayoutBoundaries:
     def test_no_crash(self) -> None:
         from compgen.transforms.layout.materialize_layout_boundaries import materialize_layout_boundaries
+
         module = _make_arith_module()
         result = materialize_layout_boundaries(module)
         assert isinstance(result, ModuleOp)
@@ -149,12 +157,14 @@ class TestMaterializeLayoutBoundaries:
 class TestCleanupLayoutArtifacts:
     def test_marks_module_clean(self) -> None:
         from compgen.transforms.layout.cleanup_layout_artifacts import cleanup_layout_artifacts
+
         module = _make_arith_module()
         result = cleanup_layout_artifacts(module)
         assert "compgen.layout_clean" in result.attributes
 
     def test_no_virtual_ops_remain(self) -> None:
         from compgen.transforms.layout.cleanup_layout_artifacts import cleanup_layout_artifacts
+
         module = _make_arith_module()
         result = cleanup_layout_artifacts(module)
         for op in result.walk():
@@ -169,6 +179,7 @@ class TestCleanupLayoutArtifacts:
 class TestRunLayoutPipeline:
     def test_full_pipeline_arith_module(self) -> None:
         from compgen.transforms.layout import run_layout_pipeline
+
         module = _add_encoding_attrs(_make_arith_module())
         result = run_layout_pipeline(module)
         assert isinstance(result, ModuleOp)
@@ -177,6 +188,7 @@ class TestRunLayoutPipeline:
 
     def test_no_virtual_layout_ops_remain(self) -> None:
         from compgen.transforms.layout import run_layout_pipeline
+
         module = _add_encoding_attrs(_make_arith_module())
         result = run_layout_pipeline(module)
         for op in result.walk():
@@ -184,6 +196,7 @@ class TestRunLayoutPipeline:
 
     def test_pipeline_with_tensor_module(self) -> None:
         from compgen.transforms.layout import run_layout_pipeline
+
         module = _add_encoding_attrs(_make_tensor_module())
         result = run_layout_pipeline(module)
         assert isinstance(result, ModuleOp)
@@ -248,16 +261,20 @@ class TestLayoutPipelineWithCapture:
 
     def test_encoding_then_pipeline(self, captured_module) -> None:
         from compgen.stages.encoding.stage import EncodingStage
-        from compgen.targets.schema import TargetProfile, DeviceSpec, ComputeUnit, MemoryLevel
+        from compgen.targets.schema import ComputeUnit, DeviceSpec, MemoryLevel, TargetProfile
         from compgen.transforms.layout import run_layout_pipeline
 
         target = TargetProfile(
             name="test_gpu",
-            devices=[DeviceSpec(
-                device_type="gpu", name="TestGPU", vendor="test",
-                compute_units=[ComputeUnit(name="tensor_core", count=1, peak_tflops=100.0)],
-                memory_hierarchy=[MemoryLevel(name="hbm", size_bytes=1024**3)],
-            )],
+            devices=[
+                DeviceSpec(
+                    device_type="gpu",
+                    name="TestGPU",
+                    vendor="test",
+                    compute_units=[ComputeUnit(name="tensor_core", count=1, peak_tflops=100.0)],
+                    memory_hierarchy=[MemoryLevel(name="hbm", size_bytes=1024**3)],
+                )
+            ],
         )
         stage = EncodingStage()
         encoded = stage.shared_passes(captured_module, target)

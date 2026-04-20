@@ -180,6 +180,7 @@ class TestMultiDevicePipeline:
         if plan.metadata.get("schedule_feasible"):
             # Makespan should be less than or equal to serial sum
             from compgen.solve.partition import partition_graph
+
             partitions = partition_graph(module)
             serial_sum = sum(p.estimated_cost_us for p in partitions)
             assert plan.estimated_latency_us <= serial_sum + 1.0  # +1 for copy overhead

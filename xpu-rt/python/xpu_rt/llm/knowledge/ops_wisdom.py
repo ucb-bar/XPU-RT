@@ -220,8 +220,7 @@ def build_default_op_wisdom() -> dict[str, OpWisdom]:
                 target_class="cpu",
                 tile_sizes=[1, 16, 14, 14],
                 rationale=(
-                    "Smaller spatial tiles fit L1 cache; 16 output channels match AVX-512 "
-                    "vector width for fp32."
+                    "Smaller spatial tiles fit L1 cache; 16 output channels match AVX-512 vector width for fp32."
                 ),
                 source="oneDNN",
                 confidence=Confidence.HIGH,
@@ -311,8 +310,7 @@ def build_default_op_wisdom() -> dict[str, OpWisdom]:
         performance_bounds=[
             "Compute-bound for large batch sizes and high channel counts.",
             "Memory-bound for depthwise and 1x1 pointwise convolutions.",
-            "Winograd reduces FLOPs by up to 2.25x for 3x3 (F(4x4, 3x3) transform) "
-            "but adds transform overhead.",
+            "Winograd reduces FLOPs by up to 2.25x for 3x3 (F(4x4, 3x3) transform) but adds transform overhead.",
         ],
     )
 
@@ -419,8 +417,7 @@ def build_default_op_wisdom() -> dict[str, OpWisdom]:
             "Memory-bound for seq_len > 512 on most GPUs when not using FlashAttention.",
             "FlashAttention is IO-aware: complexity is O(N^2 * d^2 / M) HBM accesses vs "
             "O(N^2 * d + N^2) for standard attention.",
-            "Compute-bound with FlashAttention when head_dim is large (128+) and seq_len "
-            "is moderate (< 2048).",
+            "Compute-bound with FlashAttention when head_dim is large (128+) and seq_len is moderate (< 2048).",
         ],
     )
 
@@ -485,8 +482,7 @@ def build_default_op_wisdom() -> dict[str, OpWisdom]:
                 recommended_backend="Triton",
                 conditions="Any reduction axis, any dtype",
                 rationale=(
-                    "Triton's tl.reduce primitives generate efficient warp-shuffle and "
-                    "shared-memory reduction code."
+                    "Triton's tl.reduce primitives generate efficient warp-shuffle and shared-memory reduction code."
                 ),
                 source="Triton",
             ),
@@ -503,14 +499,12 @@ def build_default_op_wisdom() -> dict[str, OpWisdom]:
             "naive shared memory atomic approach causes serialisation.",
             "Global atomics have severe contention for large grids; prefer a two-pass "
             "approach (per-block partial reduction, then final reduction kernel).",
-            "Softmax numerical stability: always subtract the row maximum before exp() "
-            "to avoid overflow in fp16/bf16.",
+            "Softmax numerical stability: always subtract the row maximum before exp() to avoid overflow in fp16/bf16.",
             "Reduction along non-contiguous dimensions is much slower; consider transposing "
             "first if the reduction is the bottleneck.",
         ],
         performance_bounds=[
-            "Reduction is almost always memory-bound: one pass over input data with minimal "
-            "compute per element.",
+            "Reduction is almost always memory-bound: one pass over input data with minimal compute per element.",
             "Theoretical throughput limited by memory bandwidth / element_size.",
         ],
     )
@@ -836,10 +830,7 @@ def build_default_op_wisdom() -> dict[str, OpWisdom]:
                 target_class="gpu",
                 recommended_backend="Triton",
                 conditions="Standard layer normalisation",
-                rationale=(
-                    "Triton LayerNorm kernel with online Welford reduction.  "
-                    "Often fused with adjacent ops."
-                ),
+                rationale=("Triton LayerNorm kernel with online Welford reduction.  Often fused with adjacent ops."),
                 source="Triton",
             ),
             BackendGuidance(

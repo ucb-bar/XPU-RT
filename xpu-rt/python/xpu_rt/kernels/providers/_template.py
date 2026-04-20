@@ -16,10 +16,9 @@ Steps:
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Any
 
-from compgen.kernels.provider import KernelContract, KernelProvider, ProviderResult
+from compgen.kernels.provider import KernelContract, ProviderResult
 
 
 class TemplateKernelProvider:

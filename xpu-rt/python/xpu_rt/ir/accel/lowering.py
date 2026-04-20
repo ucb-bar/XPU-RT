@@ -54,54 +54,66 @@ def lower_accel_to_llvm(module: Any, target_triple: str = "") -> LoweringOutput:
 
     for op in ops:
         if isinstance(op, TileLoadOp):
-            result.lowered_ops.append({
-                "type": "memcpy",
-                "src": op.src_memref,
-                "dst": op.dst_memref,
-                "shape": list(op.shape),
-                "dtype": op.dtype,
-                "target_triple": target_triple,
-            })
+            result.lowered_ops.append(
+                {
+                    "type": "memcpy",
+                    "src": op.src_memref,
+                    "dst": op.dst_memref,
+                    "shape": list(op.shape),
+                    "dtype": op.dtype,
+                    "target_triple": target_triple,
+                }
+            )
         elif isinstance(op, TileStoreOp):
-            result.lowered_ops.append({
-                "type": "memcpy",
-                "src": op.src_memref,
-                "dst": op.dst_memref,
-                "shape": list(op.shape),
-                "dtype": op.dtype,
-                "target_triple": target_triple,
-            })
+            result.lowered_ops.append(
+                {
+                    "type": "memcpy",
+                    "src": op.src_memref,
+                    "dst": op.dst_memref,
+                    "shape": list(op.shape),
+                    "dtype": op.dtype,
+                    "target_triple": target_triple,
+                }
+            )
         elif isinstance(op, DMAStartOp):
-            result.lowered_ops.append({
-                "type": "dma_start",
-                "src": op.src,
-                "dst": op.dst,
-                "size_bytes": op.size_bytes,
-                "event": op.event,
-                "target_triple": target_triple,
-            })
+            result.lowered_ops.append(
+                {
+                    "type": "dma_start",
+                    "src": op.src,
+                    "dst": op.dst,
+                    "size_bytes": op.size_bytes,
+                    "event": op.event,
+                    "target_triple": target_triple,
+                }
+            )
         elif isinstance(op, DMAWaitOp):
-            result.lowered_ops.append({
-                "type": "dma_wait",
-                "event": op.event,
-                "target_triple": target_triple,
-            })
+            result.lowered_ops.append(
+                {
+                    "type": "dma_wait",
+                    "event": op.event,
+                    "target_triple": target_triple,
+                }
+            )
         elif isinstance(op, MatrixEngineOp):
-            result.lowered_ops.append({
-                "type": "matrix_engine",
-                "op_kind": op.op_kind,
-                "a_ref": op.a_ref,
-                "b_ref": op.b_ref,
-                "c_ref": op.c_ref,
-                "config": dict(op.config),
-                "target_triple": target_triple,
-            })
+            result.lowered_ops.append(
+                {
+                    "type": "matrix_engine",
+                    "op_kind": op.op_kind,
+                    "a_ref": op.a_ref,
+                    "b_ref": op.b_ref,
+                    "c_ref": op.c_ref,
+                    "config": dict(op.config),
+                    "target_triple": target_triple,
+                }
+            )
         elif isinstance(op, BarrierOp):
-            result.lowered_ops.append({
-                "type": "barrier",
-                "scope": op.scope,
-                "target_triple": target_triple,
-            })
+            result.lowered_ops.append(
+                {
+                    "type": "barrier",
+                    "scope": op.scope,
+                    "target_triple": target_triple,
+                }
+            )
         else:
             result.diagnostics.append(f"Unsupported op type: {type(op).__name__}")
 

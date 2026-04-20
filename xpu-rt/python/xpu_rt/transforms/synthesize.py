@@ -81,9 +81,7 @@ class TransformSynthesizer:
 
         generator = PassGenerator(llm_client=self.llm_client)
         description = (
-            f"Generate a RewritePattern for {target.name} "
-            f"optimizing {objective.value}. "
-            f"IR summary: {ir_summary[:500]}"
+            f"Generate a RewritePattern for {target.name} optimizing {objective.value}. IR summary: {ir_summary[:500]}"
         )
         if prior_feedback:
             description += f"\nPrior feedback: {prior_feedback}"
@@ -98,12 +96,14 @@ class TransformSynthesizer:
                 guard_refs=guard_refs,
             )
             if result.verified and result.source_code:
-                scripts.append(TransformScript(
-                    name=f"transform_{i}",
-                    content=result.source_code,
-                    guard_refs=result.guard_refs,
-                    generation_metadata={"verified": result.verified},
-                ))
+                scripts.append(
+                    TransformScript(
+                        name=f"transform_{i}",
+                        content=result.source_code,
+                        guard_refs=result.guard_refs,
+                        generation_metadata={"verified": result.verified},
+                    )
+                )
 
         return scripts
 

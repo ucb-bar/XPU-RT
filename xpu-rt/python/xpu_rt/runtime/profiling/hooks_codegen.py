@@ -162,10 +162,7 @@ class HookCodeGenerator:
 
         hooks["pre_tile"] = GeneratedHook(
             hook_point="pre_tile",
-            code=(
-                "cg_perf_start(perf_ctx);\n"
-                'CG_TRACE_BEGIN("tile", tile_name);'
-            ),
+            code=('cg_perf_start(perf_ctx);\nCG_TRACE_BEGIN("tile", tile_name);'),
             includes=["compgen/trace.h", "compgen/perf_counters.h"],
         )
         hooks["post_tile"] = GeneratedHook(
@@ -174,7 +171,7 @@ class HookCodeGenerator:
                 "CG_TRACE_END();\n"
                 "cg_perf_stop(perf_ctx);\n"
                 "cg_perf_read(perf_ctx, tile_counters, num_counters);\n"
-                "CG_TRACE_TILE(region_id, tile_idx, \"cycles\", tile_counters[0]);"
+                'CG_TRACE_TILE(region_id, tile_idx, "cycles", tile_counters[0]);'
             ),
             includes=["compgen/trace.h", "compgen/perf_counters.h"],
         )

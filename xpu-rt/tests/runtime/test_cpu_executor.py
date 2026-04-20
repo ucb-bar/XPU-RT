@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 import pytest
-import torch
-
 from compgen.capture.torch_mlir_bridge import bridge_fx_graph
 from compgen.runtime.cpu_executor import ExecutorStats, execute
 
@@ -13,7 +11,6 @@ from tests._fixtures.real_workloads import (
     attention_mlp_tiny,
     qwen_moe_tiny,
 )
-
 
 # --- bridged-module execution (no passes applied) ------------------------
 
@@ -79,10 +76,22 @@ def test_executor_fills_zero_on_failed_op():
 
 def test_dispatch_includes_core_aten_ops():
     from compgen.runtime.cpu_executor import _ATEN_DISPATCH
+
     for op in (
-        "aten_matmul", "aten_add", "aten_sub", "aten_mul", "aten_div",
-        "aten_gelu", "aten_silu", "aten_softmax", "aten_layer_norm",
-        "aten_transpose", "aten_view", "aten_contiguous",
-        "aten_sqrt", "aten_rsqrt", "aten_pow",
+        "aten_matmul",
+        "aten_add",
+        "aten_sub",
+        "aten_mul",
+        "aten_div",
+        "aten_gelu",
+        "aten_silu",
+        "aten_softmax",
+        "aten_layer_norm",
+        "aten_transpose",
+        "aten_view",
+        "aten_contiguous",
+        "aten_sqrt",
+        "aten_rsqrt",
+        "aten_pow",
     ):
         assert op in _ATEN_DISPATCH, f"{op} missing from dispatch"

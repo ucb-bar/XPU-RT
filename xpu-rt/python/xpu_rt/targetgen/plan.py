@@ -170,14 +170,9 @@ def generate_support_plan(
     required_dialects = list(spec.patches.new_dialects_needed)
 
     # Check if LLVM patches are needed
-    llvm_patches = any(
-        r.component == "llvm" or "llvm" in r.description.lower()
-        for r in spec.patches.requirements
-    )
+    llvm_patches = any(r.component == "llvm" or "llvm" in r.description.lower() for r in spec.patches.requirements)
     # Also check ISA exposure
-    if spec.isa.compiler_intrinsics and family in (
-        TargetFamily.RVV_CPU_EXTENSION, TargetFamily.RISCV_VENDOR_MATRIX
-    ):
+    if spec.isa.compiler_intrinsics and family in (TargetFamily.RVV_CPU_EXTENSION, TargetFamily.RISCV_VENDOR_MATRIX):
         if spec.isa.custom_instructions:
             llvm_patches = True
 

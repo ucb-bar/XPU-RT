@@ -15,12 +15,10 @@ All generated files use string templates (no Jinja2 dependency).
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
 import structlog
 
-from compgen.runtime.memory_layout import MemoryLayout
-from compgen.runtime.program_builder import DeviceKernel, ModelProgram
+from compgen.runtime.program_builder import ModelProgram
 
 logger = structlog.get_logger()
 
@@ -101,9 +99,7 @@ class BaremetalEmitter:
     def _emit_npu_driver_h(self, program: ModelProgram, out: Path) -> None:
         # Enumerate kernel IDs from unique patterns
         patterns = sorted(set(k.pattern_id for k in program.device_kernels))
-        enum_entries = ",\n    ".join(
-            f"KERNEL_{p.upper()} = {i}" for i, p in enumerate(patterns)
-        )
+        enum_entries = ",\n    ".join(f"KERNEL_{p.upper()} = {i}" for i, p in enumerate(patterns))
 
         content = f"""\
 #ifndef NPU_DRIVER_H
@@ -216,8 +212,7 @@ void npu_shutdown(void) {{
         for init in program.initialization:
             c_name = init.buffer.name.upper().replace(".", "_")
             declarations.append(
-                f"extern const uint8_t {c_name}_DATA[];\n"
-                f"#define {c_name}_DATA_SIZE {init.buffer.size_bytes}"
+                f"extern const uint8_t {c_name}_DATA[];\n#define {c_name}_DATA_SIZE {init.buffer.size_bytes}"
             )
 
         content = f"""\
@@ -274,9 +269,7 @@ void npu_shutdown(void) {{
         weight_loads = []
         for init in program.initialization:
             c_name = init.buffer.name.upper().replace(".", "_")
-            weight_loads.append(
-                f"    npu_dma_write({c_name}_ADDR, {c_name}_DATA, {c_name}_DATA_SIZE);"
-            )
+            weight_loads.append(f"    npu_dma_write({c_name}_ADDR, {c_name}_DATA, {c_name}_DATA_SIZE);")
         weight_body = "\n".join(weight_loads) if weight_loads else "    /* No weights to load */"
 
         content = f"""\
@@ -334,12 +327,13 @@ int main(void) {{
             for name, region in program.memory_layout.regions.items():
                 c_name = name.upper()
                 memory_entries.append(
-                    f"    {c_name} (rwx) : ORIGIN = 0x{region.base_addr:08X}, "
-                    f"LENGTH = 0x{region.size_bytes:X}"
+                    f"    {c_name} (rwx) : ORIGIN = 0x{region.base_addr:08X}, LENGTH = 0x{region.size_bytes:X}"
                 )
 
-        memory_block = "\n".join(memory_entries) if memory_entries else (
-            "    DRAM (rwx) : ORIGIN = 0x80000000, LENGTH = 0x1000000"
+        memory_block = (
+            "\n".join(memory_entries)
+            if memory_entries
+            else ("    DRAM (rwx) : ORIGIN = 0x80000000, LENGTH = 0x1000000")
         )
 
         content = f"""\

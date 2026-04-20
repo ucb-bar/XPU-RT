@@ -81,9 +81,7 @@ def run_insert_copies(
     cfg = config if config is not None else InsertCopiesConfig()
     stats = InsertCopiesStats()
 
-    existing_pairs = {
-        (e.from_buffer, e.to_buffer) for e in plan.copy_edges
-    }
+    existing_pairs = {(e.from_buffer, e.to_buffer) for e in plan.copy_edges}
 
     for edge in plan.dependency_edges:
         stats.edges_seen += 1
@@ -115,9 +113,7 @@ def run_insert_copies(
         # can't tell). Wave 7's pipeline driver will set the
         # consumer space from target.
         producer_space = producer_buf.memory_space
-        consumer_space = plan.summary.get(
-            "device_default_space", {}
-        ).get(consumer_placement.device, producer_space)
+        consumer_space = plan.summary.get("device_default_space", {}).get(consumer_placement.device, producer_space)
 
         if producer_space == consumer_space:
             stats.skipped_same_space += 1
@@ -144,11 +140,7 @@ def run_insert_copies(
         if copy_pair in existing_pairs:
             continue
 
-        est = (
-            _latency_ns(producer_buf.size_bytes, cfg.estimated_bandwidth_gbps)
-            if cfg.emit_latency
-            else 0
-        )
+        est = _latency_ns(producer_buf.size_bytes, cfg.estimated_bandwidth_gbps) if cfg.emit_latency else 0
         plan.copy_edges.append(
             CopyEdge(
                 from_buffer=producer_buf.buffer_id,

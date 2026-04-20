@@ -8,7 +8,6 @@ memory-bound cases" or "things that reduced config cycles."
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
 
 from compgen.memory.schema import Evaluation
 

@@ -8,10 +8,7 @@ from xdsl.dialects.builtin import ArrayAttr, IntegerAttr, IntegerType, StringAtt
 from xdsl.ir import ParametrizedAttribute
 from xdsl.irdl import irdl_attr_definition, param_def
 
-
-_VALID_REDUCE_OPS: frozenset[str] = frozenset(
-    {"sum", "mean", "max", "min", "prod"}
-)
+_VALID_REDUCE_OPS: frozenset[str] = frozenset({"sum", "mean", "max", "min", "prod"})
 
 
 @irdl_attr_definition
@@ -35,9 +32,7 @@ class ShardingSpecAttr(ParametrizedAttribute):
     dim_map: ArrayAttr = param_def(ArrayAttr)
     partial: StringAttr = param_def(StringAttr)
 
-    _VALID_PARTIAL: ClassVar[frozenset[str]] = frozenset(
-        {"none", "sum", "mean", "max", "min"}
-    )
+    _VALID_PARTIAL: ClassVar[frozenset[str]] = frozenset({"none", "sum", "mean", "max", "min"})
 
     def __init__(
         self,
@@ -51,10 +46,7 @@ class ShardingSpecAttr(ParametrizedAttribute):
             dim_map = ArrayAttr([StringAttr(s) for s in dim_map])
         if isinstance(partial, str):
             if partial not in self._VALID_PARTIAL:
-                raise ValueError(
-                    f"partial must be one of {sorted(self._VALID_PARTIAL)}, "
-                    f"got {partial!r}"
-                )
+                raise ValueError(f"partial must be one of {sorted(self._VALID_PARTIAL)}, got {partial!r}")
             partial = StringAttr(partial)
         super().__init__(devices, dim_map, partial)
 
@@ -70,10 +62,7 @@ class ReduceKindAttr(ParametrizedAttribute):
     def __init__(self, kind: str | StringAttr) -> None:
         if isinstance(kind, str):
             if kind not in _VALID_REDUCE_OPS:
-                raise ValueError(
-                    f"kind must be one of {sorted(_VALID_REDUCE_OPS)}, "
-                    f"got {kind!r}"
-                )
+                raise ValueError(f"kind must be one of {sorted(_VALID_REDUCE_OPS)}, got {kind!r}")
             kind = StringAttr(kind)
         super().__init__(kind)
 

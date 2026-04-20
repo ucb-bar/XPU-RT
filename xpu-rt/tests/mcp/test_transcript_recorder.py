@@ -6,13 +6,12 @@ import json
 from pathlib import Path
 
 import pytest
-
 from compgen.mcp.server import dispatch_tool
 from compgen.mcp.session import SessionManager
 from compgen.mcp.transcript import (
     ENV_VAR,
-    McpTranscriptRecorder,
     TRANSCRIPT_FILENAME,
+    McpTranscriptRecorder,
     default_session_root,
 )
 
@@ -84,19 +83,13 @@ def test_recorder_error_field_propagates(recorder: McpTranscriptRecorder) -> Non
 
 def test_recorder_disabled_writes_nothing(tmp_path: Path) -> None:
     rec = McpTranscriptRecorder(root=tmp_path / "sessions", enabled=False)
-    rec.record(
-        tool="open_target", args={}, result={"ok": True}, session_id="s", duration_ms=1.0
-    )
+    rec.record(tool="open_target", args={}, result={"ok": True}, session_id="s", duration_ms=1.0)
     assert not rec.transcript_path("s").exists()
 
 
 def test_recorder_session_isolation(recorder: McpTranscriptRecorder) -> None:
-    recorder.record(
-        tool="open_target", args={}, result={"ok": True}, session_id="a", duration_ms=1.0
-    )
-    recorder.record(
-        tool="open_target", args={}, result={"ok": True}, session_id="b", duration_ms=1.0
-    )
+    recorder.record(tool="open_target", args={}, result={"ok": True}, session_id="a", duration_ms=1.0)
+    recorder.record(tool="open_target", args={}, result={"ok": True}, session_id="b", duration_ms=1.0)
     assert recorder.count("a") == 1
     assert recorder.count("b") == 1
     assert (recorder.root / "a" / TRANSCRIPT_FILENAME).exists()
@@ -108,9 +101,7 @@ def test_default_session_root_env_var(monkeypatch: pytest.MonkeyPatch, tmp_path:
     assert default_session_root() == tmp_path / "my_sessions"
 
 
-def test_default_session_root_cwd_fallback(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_default_session_root_cwd_fallback(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.delenv(ENV_VAR, raising=False)
     assert default_session_root(cwd=tmp_path) == tmp_path / "sessions"
 

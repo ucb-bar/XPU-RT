@@ -22,11 +22,10 @@ from compgen.llm.registry import (
     get_registry,
 )
 from compgen.semantic.verify.compare import (
-    ComparisonConfig,
     DTYPE_PRESETS,
+    ComparisonConfig,
     compare_tensors,
 )
-
 
 # ---------------------------------------------------------------------------
 # run_differential_test
@@ -50,7 +49,7 @@ def _run_differential_test_impl(
     t0 = time.perf_counter()
     try:
         ref_out = ref_fn()
-    except Exception as e:   # noqa: BLE001
+    except Exception as e:  # noqa: BLE001
         return {
             "status": "rejected",
             "details": {"reason": "ref_fn raised", "error": f"{type(e).__name__}: {e}"},
@@ -60,7 +59,7 @@ def _run_differential_test_impl(
     t0 = time.perf_counter()
     try:
         got_out = got_fn()
-    except Exception as e:   # noqa: BLE001
+    except Exception as e:  # noqa: BLE001
         return {
             "status": "rejected",
             "details": {"reason": "got_fn raised", "error": f"{type(e).__name__}: {e}"},
@@ -123,8 +122,7 @@ run_differential_test = Tool(
         ToolArg("atol", "number", "absolute tolerance", required=False, default=1e-5),
         ToolArg("rtol", "number", "relative tolerance", required=False, default=1e-5),
     ),
-    result=ToolResult("GateResult",
-                      "accepted/rejected + per-output NumericComparison"),
+    result=ToolResult("GateResult", "accepted/rejected + per-output NumericComparison"),
     description="Runs two callables, compares outputs, returns a gate result.",
     impl=_run_differential_test_impl,
     stub=False,
@@ -147,14 +145,14 @@ def _run_structural_check_impl(*, artifact: Any) -> dict[str, Any]:
     try:
         from xdsl.dialects.builtin import ModuleOp
         from xdsl.ir import Operation
-    except ImportError:   # pragma: no cover
-        ModuleOp = object   # type: ignore
-        Operation = object   # type: ignore
+    except ImportError:  # pragma: no cover
+        ModuleOp = object  # type: ignore
+        Operation = object  # type: ignore
 
     if isinstance(artifact, ModuleOp) or isinstance(artifact, Operation):
         try:
             artifact.verify()
-        except Exception as e:   # noqa: BLE001
+        except Exception as e:  # noqa: BLE001
             return {
                 "status": "rejected",
                 "details": {"reason": "xdsl verify failed", "error": str(e)},
@@ -192,10 +190,7 @@ run_structural_check = Tool(
     kind="verification",
     wraps_pass="xdsl verify + schema check",
     autocomp_cost_impact="zero",
-    args=(
-        ToolArg("artifact", "artifact_ref",
-                "xDSL Operation/ModuleOp or dict-shaped artifact"),
-    ),
+    args=(ToolArg("artifact", "artifact_ref", "xDSL Operation/ModuleOp or dict-shaped artifact"),),
     result=ToolResult("GateResult", "accepted/rejected + error list"),
     description="Runs IR verifier or dict-schema structural check.",
     impl=_run_structural_check_impl,

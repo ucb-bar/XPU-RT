@@ -39,9 +39,8 @@ def _serialize(obj: Any) -> Any:
 # read_target_features
 # ---------------------------------------------------------------------------
 
-def _read_target_features_impl(
-    *, device: Any, slice_keys: tuple[str, ...] = ()
-) -> dict[str, Any]:
+
+def _read_target_features_impl(*, device: Any, slice_keys: tuple[str, ...] = ()) -> dict[str, Any]:
     """Return a JSON-safe subset of a CompGenDevice's target profile.
 
     The LLM passes a concrete ``compgen.device(...)`` handle (or its
@@ -66,9 +65,11 @@ read_target_features = Tool(
     args=(
         ToolArg("device", "compgen_device", "CompGenDevice or TargetProfile"),
         ToolArg(
-            "slice_keys", "tuple[str]",
+            "slice_keys",
+            "tuple[str]",
             "subset of top-level fields to return ([] = full profile)",
-            required=False, default=(),
+            required=False,
+            default=(),
         ),
     ),
     result=ToolResult("TargetSlice", "typed subset of target profile"),
@@ -81,6 +82,7 @@ read_target_features = Tool(
 # ---------------------------------------------------------------------------
 # read_analyzer_dossier
 # ---------------------------------------------------------------------------
+
 
 def _read_analyzer_dossier_impl(*, analysis: Any) -> dict[str, Any]:
     """Return a JSON-safe summary of a NetworkAnalysis dossier.
@@ -102,10 +104,8 @@ def _read_analyzer_dossier_impl(*, analysis: Any) -> dict[str, Any]:
         "cluster_count": len(getattr(analysis, "clusters", [])),
         "region_count": len(getattr(dossier, "regions", [])),
         "bottleneck_clusters": list(getattr(analysis, "bottleneck_clusters", [])),
-        "dynamic_shape_regions":
-            list(getattr(dossier, "dynamic_shape_regions", [])),
-        "optimization_opportunities":
-            list(getattr(analysis, "optimization_opportunities", [])),
+        "dynamic_shape_regions": list(getattr(dossier, "dynamic_shape_regions", [])),
+        "optimization_opportunities": list(getattr(analysis, "optimization_opportunities", [])),
     }
 
 
@@ -115,10 +115,7 @@ read_analyzer_dossier = Tool(
     kind="observability",
     wraps_pass="compgen.agent.analyzer.NetworkAnalyzer",
     autocomp_cost_impact="zero",
-    args=(
-        ToolArg("analysis", "NetworkAnalysis",
-                "Result of NetworkAnalyzer().analyze(...)"),
-    ),
+    args=(ToolArg("analysis", "NetworkAnalysis", "Result of NetworkAnalyzer().analyze(...)"),),
     result=ToolResult(
         "AnalyzerDossierSummary",
         "model totals, region count, bottleneck ids, optimization opportunities",
@@ -133,6 +130,7 @@ read_analyzer_dossier = Tool(
 # read_region_shapes
 # ---------------------------------------------------------------------------
 
+
 def _read_region_shapes_impl(*, analysis: Any, region_id: str) -> dict[str, Any]:
     """Return shape+flops info for a single region from the dossier."""
     dossier = getattr(analysis, "dossier", None)
@@ -146,8 +144,7 @@ def _read_region_shapes_impl(*, analysis: Any, region_id: str) -> dict[str, Any]
                 "kind": getattr(r, "kind", ""),
                 "flops": int(getattr(r, "flops", 0)),
                 "bytes": int(getattr(r, "bytes", 0)),
-                "arithmetic_intensity":
-                    float(getattr(r, "arithmetic_intensity", 0.0)),
+                "arithmetic_intensity": float(getattr(r, "arithmetic_intensity", 0.0)),
                 "dynamic_shapes": bool(getattr(r, "dynamic_shapes", False)),
                 "repeated_count": int(getattr(r, "repeated_count", 0)),
                 "producers": list(getattr(r, "producers", [])),
@@ -163,12 +160,10 @@ read_region_shapes = Tool(
     wraps_pass="compgen.agent.analyzer (region lookup)",
     autocomp_cost_impact="zero",
     args=(
-        ToolArg("analysis", "NetworkAnalysis",
-                "Result of NetworkAnalyzer().analyze(...)"),
+        ToolArg("analysis", "NetworkAnalysis", "Result of NetworkAnalyzer().analyze(...)"),
         ToolArg("region_id", "string", "region SymbolRef"),
     ),
-    result=ToolResult("ShapeReport",
-                      "kind, flops, bytes, arithmetic intensity, producers, consumers"),
+    result=ToolResult("ShapeReport", "kind, flops, bytes, arithmetic intensity, producers, consumers"),
     description="Returns structural info for a region by id.",
     impl=_read_region_shapes_impl,
     stub=False,

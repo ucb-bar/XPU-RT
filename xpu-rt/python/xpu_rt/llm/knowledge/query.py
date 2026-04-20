@@ -123,9 +123,7 @@ def query(kb: KnowledgeBase, ctx: QueryContext) -> QueryResult:
     # Get compiler heuristics relevant to current stage
     compiler_heuristics = kb.query_heuristics()
     if ctx.current_stage == "eqsat":
-        compiler_heuristics = [
-            h for h in compiler_heuristics if h.topic in ("fusion", "simplification", "rewrite")
-        ]
+        compiler_heuristics = [h for h in compiler_heuristics if h.topic in ("fusion", "simplification", "rewrite")]
     elif ctx.current_stage == "kernel_search":
         compiler_heuristics = [
             h for h in compiler_heuristics if h.topic in ("autotuning", "code_generation", "scheduling")

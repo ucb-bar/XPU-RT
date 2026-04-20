@@ -126,10 +126,7 @@ def solve_per_sm_queue(
 
         if t.affinity_sm is not None:
             if not 0 <= t.affinity_sm < sm_count:
-                raise ValueError(
-                    f"task {t.task_id} affinity_sm={t.affinity_sm} out of range "
-                    f"[0, {sm_count})"
-                )
+                raise ValueError(f"task {t.task_id} affinity_sm={t.affinity_sm} out of range [0, {sm_count})")
             sm = model.new_int_var(t.affinity_sm, t.affinity_sm, f"sm_{t.task_id}")
         else:
             sm = model.new_int_var(0, sm_count - 1, f"sm_{t.task_id}")

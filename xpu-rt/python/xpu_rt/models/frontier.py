@@ -8,7 +8,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from compgen.models.core import CaptureMode, ModelSource, ModelSpec, ReadinessLevel
+from compgen.models.core import ModelSource, ModelSpec
 
 
 class RMSNorm(nn.Module):
@@ -74,8 +74,7 @@ class LlamaSliceModel(nn.Module):
     def __init__(self, hidden_dim: int = 768, num_heads: int = 12, ff_dim: int = 3072, depth: int = 2) -> None:
         super().__init__()
         self.blocks = nn.ModuleList(
-            LlamaDecoderBlock(hidden_dim=hidden_dim, num_heads=num_heads, ff_dim=ff_dim)
-            for _ in range(depth)
+            LlamaDecoderBlock(hidden_dim=hidden_dim, num_heads=num_heads, ff_dim=ff_dim) for _ in range(depth)
         )
         self.final_norm = RMSNorm(hidden_dim)
 

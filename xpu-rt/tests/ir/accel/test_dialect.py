@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from xdsl.ir import Dialect
-
 from compgen.ir.accel.dialect import AccelDialect, AccelDialectConfig
 from compgen.ir.accel.ops import ACCEL_IR_OPS
+from xdsl.ir import Dialect
 
 
 def test_accel_dialect_is_xdsl_dialect() -> None:

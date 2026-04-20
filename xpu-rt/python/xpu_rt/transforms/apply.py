@@ -90,11 +90,13 @@ class TransformApplicator:
                 # Parse and validate
                 ast.parse(script.content)
             except SyntaxError as e:
-                diagnostics.append(TransformDiagnostic(
-                    transform_name=script.name,
-                    level="error",
-                    message=f"Syntax error: {e}",
-                ))
+                diagnostics.append(
+                    TransformDiagnostic(
+                        transform_name=script.name,
+                        level="error",
+                        message=f"Syntax error: {e}",
+                    )
+                )
                 continue
 
             # Execute to find RewritePattern
@@ -108,28 +110,30 @@ class TransformApplicator:
                 )
                 exec(script.content, namespace)
             except Exception as e:
-                diagnostics.append(TransformDiagnostic(
-                    transform_name=script.name,
-                    level="error",
-                    message=f"Execution error: {e}",
-                ))
+                diagnostics.append(
+                    TransformDiagnostic(
+                        transform_name=script.name,
+                        level="error",
+                        message=f"Execution error: {e}",
+                    )
+                )
                 continue
 
             # Find RewritePattern subclass
             patterns = [
                 self._instantiate_pattern(v, script.guard_refs)
                 for v in namespace.values()
-                if isinstance(v, type)
-                and issubclass(v, RewritePattern)
-                and v is not RewritePattern
+                if isinstance(v, type) and issubclass(v, RewritePattern) and v is not RewritePattern
             ]
 
             if not patterns:
-                diagnostics.append(TransformDiagnostic(
-                    transform_name=script.name,
-                    level="warning",
-                    message="No RewritePattern subclass found in script",
-                ))
+                diagnostics.append(
+                    TransformDiagnostic(
+                        transform_name=script.name,
+                        level="warning",
+                        message="No RewritePattern subclass found in script",
+                    )
+                )
                 continue
 
             # Apply patterns
@@ -143,17 +147,21 @@ class TransformApplicator:
                 result_module.verify()
 
                 applied.append(script)
-                diagnostics.append(TransformDiagnostic(
-                    transform_name=script.name,
-                    level="info",
-                    message="Applied successfully",
-                ))
+                diagnostics.append(
+                    TransformDiagnostic(
+                        transform_name=script.name,
+                        level="info",
+                        message="Applied successfully",
+                    )
+                )
             except Exception as e:
-                diagnostics.append(TransformDiagnostic(
-                    transform_name=script.name,
-                    level="error",
-                    message=f"Application failed: {e}",
-                ))
+                diagnostics.append(
+                    TransformDiagnostic(
+                        transform_name=script.name,
+                        level="error",
+                        message=f"Application failed: {e}",
+                    )
+                )
 
         return TransformedIR(
             module=result_module,

@@ -1,14 +1,16 @@
 """Tests for learned cost model weights (Unit 12)."""
+
 from __future__ import annotations
+
 import pytest
-from pathlib import Path
-from compgen.solve.learned_weights import store_cost_weights, retrieve_best_weights
+from compgen.solve.learned_weights import retrieve_best_weights, store_cost_weights
 from compgen.solve.objectives import CompositeCost
 
 
 @pytest.fixture
 def memory(tmp_path):
     from compgen.memory.store import CompilerMemory
+
     return CompilerMemory(
         db_path=tmp_path / "test.db",
         blob_root=tmp_path / "blobs",
@@ -50,15 +52,19 @@ class TestCompositeCostFromLearned:
         assert cost.terms[0].weight == 2.0
 
     def test_with_memory_weight(self):
-        cost = CompositeCost.from_learned({
-            "fusion_weight": 1.0,
-            "memory_weight": 0.5,
-        })
+        cost = CompositeCost.from_learned(
+            {
+                "fusion_weight": 1.0,
+                "memory_weight": 0.5,
+            }
+        )
         assert len(cost.terms) >= 2
 
     def test_from_learned_with_energy(self):
-        cost = CompositeCost.from_learned({
-            "fusion_weight": 1.0,
-            "energy_weight": 0.1,
-        })
+        cost = CompositeCost.from_learned(
+            {
+                "fusion_weight": 1.0,
+                "energy_weight": 0.1,
+            }
+        )
         assert any(hasattr(t, "energy_per_us") for t in cost.terms)

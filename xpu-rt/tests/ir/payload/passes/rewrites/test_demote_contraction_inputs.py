@@ -3,6 +3,11 @@
 from __future__ import annotations
 
 import pytest
+from compgen.ir.payload.passes.rewrites.demote_contraction_inputs import (
+    DemoteContractionInputsConfig,
+    DemoteContractionStats,
+    run_demote_contraction_inputs,
+)
 from xdsl.dialects.builtin import (
     BFloat16Type,
     Float16Type,
@@ -17,11 +22,6 @@ from xdsl.dialects.linalg import MatmulOp
 from xdsl.dialects.tensor import EmptyOp
 from xdsl.ir import Block, Region
 
-from compgen.ir.payload.passes.rewrites.demote_contraction_inputs import (
-    DemoteContractionInputsConfig,
-    DemoteContractionStats,
-    run_demote_contraction_inputs,
-)
 from tests.ir.payload.passes._pattern_test_helpers import (
     assert_module_verifies,
     count_ops,

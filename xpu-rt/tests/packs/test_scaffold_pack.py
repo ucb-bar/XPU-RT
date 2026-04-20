@@ -8,10 +8,9 @@ from pathlib import Path
 import pytest
 import yaml
 from click.testing import CliRunner
-
 from compgen.cli import main
-from compgen.packs.scaffolding import SUPPORTED_KINDS, scaffold_pack
 from compgen.packs import load_pack
+from compgen.packs.scaffolding import SUPPORTED_KINDS, scaffold_pack
 
 
 @pytest.mark.parametrize("kind", SUPPORTED_KINDS)
@@ -54,9 +53,7 @@ def test_scaffolded_package_exposes_pack_root(tmp_path: Path, monkeypatch: pytes
         sys.modules.pop("my_dial", None)
 
 
-def test_scaffold_then_load_pack_by_entry_point_value(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_scaffold_then_load_pack_by_entry_point_value(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     scaffold_pack(kind="quantization", name="my_fp8", out_dir=tmp_path)
     monkeypatch.syspath_prepend(str(tmp_path / "my_fp8" / "src"))
 
@@ -94,9 +91,7 @@ def test_scaffold_overwrite_replaces_existing(tmp_path: Path) -> None:
     # Drop a sentinel file that should be erased by overwrite
     sentinel = first.pack_root / "LEGACY.txt"
     sentinel.write_text("old")
-    second = scaffold_pack(
-        kind="quantization", name="my_fp8", out_dir=tmp_path, overwrite=True
-    )
+    second = scaffold_pack(kind="quantization", name="my_fp8", out_dir=tmp_path, overwrite=True)
     assert not sentinel.exists()
     assert second.pack_root == first.pack_root
 

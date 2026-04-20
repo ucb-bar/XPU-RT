@@ -17,9 +17,9 @@ Steps:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
-from compgen.targets.backend import BaseTargetBackend, CompiledArtifact, CompilationStageResult
+from compgen.targets.backend import BaseTargetBackend, CompilationStageResult
 from compgen.targets.options import TargetOptions
 
 

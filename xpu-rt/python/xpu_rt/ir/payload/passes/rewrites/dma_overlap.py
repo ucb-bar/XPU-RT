@@ -96,14 +96,10 @@ def run_dma_overlap(
     cfg = config if config is not None else DMAOverlapConfig()
     stats = DMAOverlapStats()
     if cfg.sync_kind not in ("semaphore", "barrier", "fence"):
-        raise ValueError(
-            f"sync_kind must be one of semaphore/barrier/fence, got {cfg.sync_kind!r}"
-        )
+        raise ValueError(f"sync_kind must be one of semaphore/barrier/fence, got {cfg.sync_kind!r}")
 
     applied: list[str] = list(plan.summary.get("dma_overlap_applied", []))
-    plan_map: dict[str, dict[str, str]] = dict(
-        plan.summary.get("dma_overlap_plan", {})
-    )
+    plan_map: dict[str, dict[str, str]] = dict(plan.summary.get("dma_overlap_plan", {}))
 
     new_copies: list[CopyEdge] = []
     new_buffers: list[BufferDescriptor] = []
@@ -185,9 +181,7 @@ def run_dma_overlap(
             key = f"{edge.from_buffer}->{edge.to_buffer}"
             if key in applied and edge.to_buffer in plan_map:
                 to_remove.add(id(edge))
-        plan.copy_edges = [
-            e for e in plan.copy_edges if id(e) not in to_remove
-        ]
+        plan.copy_edges = [e for e in plan.copy_edges if id(e) not in to_remove]
 
     plan.buffers.extend(new_buffers)
     plan.copy_edges.extend(new_copies)

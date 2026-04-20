@@ -2,6 +2,14 @@
 
 from __future__ import annotations
 
+from compgen.ir.event.attrs import EventCoordAttr, EventTensorTypeAttr
+from compgen.ir.event.ops import CallDeviceOp, EventTensorOp, GraphOp
+from compgen.ir.payload.passes.megakernel_static_schedule import (
+    StaticMegakernelSchedule,
+)
+from compgen.kernels.provider import KernelContract, KernelProvider, SearchBudget
+from compgen.kernels.providers.megakernel import MegakernelProvider
+from compgen.kernels.selector import KernelStrategy
 from xdsl.dialects.builtin import (
     ArrayAttr,
     IntegerAttr,
@@ -11,15 +19,6 @@ from xdsl.dialects.builtin import (
     SymbolRefAttr,
 )
 from xdsl.ir import Block, Region
-
-from compgen.ir.event.attrs import EventCoordAttr, EventTensorTypeAttr
-from compgen.ir.event.ops import CallDeviceOp, EventTensorOp, GraphOp
-from compgen.ir.payload.passes.megakernel_static_schedule import (
-    StaticMegakernelSchedule,
-)
-from compgen.kernels.provider import KernelContract, KernelProvider, SearchBudget
-from compgen.kernels.providers.megakernel import MegakernelProvider
-from compgen.kernels.selector import KernelStrategy
 
 
 def _scheduled_graph(sm_count: int = 4) -> GraphOp:

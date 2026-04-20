@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 from compgen.semantic.synthesis.guard_lang import eval_guard
 from compgen.semantic.synthesis.registry import GuardRegistry

@@ -33,7 +33,6 @@ from compgen.ir.quant import (
     DequantizePerTensorOp,
 )
 
-
 _DEQUANT_OPS = (DequantizePerTensorOp, DequantizePerChannelOp, DequantizePerGroupOp)
 
 
@@ -56,9 +55,7 @@ class _HoistPattern(RewritePattern):
     def __init__(self, stats: HoistEncodingOpsStats) -> None:
         self.stats = stats
 
-    def match_and_rewrite(
-        self, op: Operation, rewriter: PatternRewriter
-    ) -> None:
+    def match_and_rewrite(self, op: Operation, rewriter: PatternRewriter) -> None:
         if not isinstance(op, _DEQUANT_OPS):
             return
         self.stats.dequants_seen += 1
@@ -71,9 +68,7 @@ class _HoistPattern(RewritePattern):
         if not _single_use(q_input):
             return
         op.attributes["compgen.hoist_candidate"] = StringAttr("true")
-        op.attributes["compgen.hoist_dequant_kind"] = StringAttr(
-            type(op).__name__
-        )
+        op.attributes["compgen.hoist_dequant_kind"] = StringAttr(type(op).__name__)
         self.stats.candidates_tagged += 1
 
 
@@ -82,7 +77,8 @@ def run_hoist_encoding_ops(
 ) -> HoistEncodingOpsStats:
     stats = HoistEncodingOpsStats()
     walker = PatternRewriteWalker(
-        _HoistPattern(stats), apply_recursively=False,
+        _HoistPattern(stats),
+        apply_recursively=False,
     )
     walker.rewrite_module(module)
     return stats

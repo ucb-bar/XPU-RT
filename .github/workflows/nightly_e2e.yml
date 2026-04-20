@@ -30,8 +30,8 @@ jobs:
           curl -LsSf https://astral.sh/uv/install.sh | sh
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
-      - name: Install dependencies (core + mcp)
-        run: uv sync --frozen --extra mcp
+      - name: Install dependencies (all test-relevant extras)
+        run: uv sync --frozen --extra dev --extra mcp --extra quantization --extra solve --extra demo
 
       # Ignore + deselect list lives in pyproject.toml [tool.pytest.ini_options]
       # so local + CI stay in sync. Overrides belong in dedicated jobs, not here.

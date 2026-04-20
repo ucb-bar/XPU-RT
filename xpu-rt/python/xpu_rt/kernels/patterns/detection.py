@@ -10,7 +10,6 @@ Framework-agnostic: works with any model captured via TorchDynamo.
 
 from __future__ import annotations
 
-from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -49,6 +48,7 @@ class DetectedPattern:
 # ---------------------------------------------------------------------------
 # Target normalization (handles both dynamo built-in fns and ATen overloads)
 # ---------------------------------------------------------------------------
+
 
 def _target_name(node: Any) -> str:
     """Normalize an FX node target to a short name for pattern matching."""
@@ -110,16 +110,56 @@ _GELU_NAMES = {"gelu", "aten.gelu.default"}
 _RELU_NAMES = {"relu", "aten.relu.default"}
 _CONV_NAMES = {"conv2d", "aten.conv2d", "aten.convolution.default"}
 
-_BINARY_NAMES = {"add", "sub", "mul", "truediv", "iadd", "imul", "isub", "itruediv",
-                 "aten.add.Tensor", "aten.sub.Tensor", "aten.mul.Tensor", "aten.div.Tensor"}
-_UNARY_NAMES = {"exp", "exp2", "log2", "sin", "cos", "tanh", "sqrt", "reciprocal", "rsqrt",
-                "abs", "neg", "clamp", "pow",
-                "aten.exp.default", "aten.sin.default", "aten.cos.default", "aten.tanh.default",
-                "aten.sqrt.default", "aten.reciprocal.default", "aten.pow.Tensor_Scalar",
-                "aten.clamp.default", "aten.abs.default", "aten.neg.default",
-                "aten.log2.default", "aten.exp2.default"}
-_REDUCTION_NAMES = {"sum", "mean", "amax", "aten.sum.default", "aten.sum.dim_IntList",
-                    "aten.mean.dim", "aten.amax.default"}
+_BINARY_NAMES = {
+    "add",
+    "sub",
+    "mul",
+    "truediv",
+    "iadd",
+    "imul",
+    "isub",
+    "itruediv",
+    "aten.add.Tensor",
+    "aten.sub.Tensor",
+    "aten.mul.Tensor",
+    "aten.div.Tensor",
+}
+_UNARY_NAMES = {
+    "exp",
+    "exp2",
+    "log2",
+    "sin",
+    "cos",
+    "tanh",
+    "sqrt",
+    "reciprocal",
+    "rsqrt",
+    "abs",
+    "neg",
+    "clamp",
+    "pow",
+    "aten.exp.default",
+    "aten.sin.default",
+    "aten.cos.default",
+    "aten.tanh.default",
+    "aten.sqrt.default",
+    "aten.reciprocal.default",
+    "aten.pow.Tensor_Scalar",
+    "aten.clamp.default",
+    "aten.abs.default",
+    "aten.neg.default",
+    "aten.log2.default",
+    "aten.exp2.default",
+}
+_REDUCTION_NAMES = {
+    "sum",
+    "mean",
+    "amax",
+    "aten.sum.default",
+    "aten.sum.dim_IntList",
+    "aten.mean.dim",
+    "aten.amax.default",
+}
 
 
 def _estimate_matmul_flops(shapes: list[tuple[int, ...]]) -> int:
@@ -157,6 +197,7 @@ def _matmul_params(shapes: list[tuple[int, ...]]) -> dict[str, int]:
 # Multi-op pattern detectors (look-ahead from a node)
 # ---------------------------------------------------------------------------
 
+
 def _get_users(node: Any) -> list[Any]:
     """Get consumer nodes of an FX node."""
     return list(node.users.keys()) if hasattr(node, "users") else []
@@ -183,6 +224,7 @@ def _check_activation_fusion(node: Any) -> str | None:
 # ---------------------------------------------------------------------------
 # Main detection
 # ---------------------------------------------------------------------------
+
 
 def detect_patterns_in_graphs(
     graphs: list[torch.fx.GraphModule],
@@ -233,21 +275,43 @@ def detect_patterns_in_graphs(
                 if activation:
                     user = _get_users(node)[0]
                     seen_nodes.add(user.name)
-                    patterns.append(DetectedPattern(
-                        pattern_type=f"fused_linear_{activation}",
-                        nodes=[node.name, user.name],
-                        primary_node=node.name,
-                        input_shapes=in_shapes,
-                        output_shape=_shape(user) or out_shape,
-                        input_dtypes=in_dtypes,
-                        output_dtype=out_dtype,
-                        params=_matmul_params(in_shapes),
-                        flops=_estimate_matmul_flops(in_shapes),
-                        graph_idx=gi,
-                    ))
+                    patterns.append(
+                        DetectedPattern(
+                            pattern_type=f"fused_linear_{activation}",
+                            nodes=[node.name, user.name],
+                            primary_node=node.name,
+                            input_shapes=in_shapes,
+                            output_shape=_shape(user) or out_shape,
+                            input_dtypes=in_dtypes,
+                            output_dtype=out_dtype,
+                            params=_matmul_params(in_shapes),
+                            flops=_estimate_matmul_flops(in_shapes),
+                            graph_idx=gi,
+                        )
+                    )
                 else:
-                    patterns.append(DetectedPattern(
-                        pattern_type="matmul",
+                    patterns.append(
+                        DetectedPattern(
+                            pattern_type="matmul",
+                            nodes=[node.name],
+                            primary_node=node.name,
+                            input_shapes=in_shapes,
+                            output_shape=out_shape,
+                            input_dtypes=in_dtypes,
+                            output_dtype=out_dtype,
+                            params=_matmul_params(in_shapes),
+                            flops=_estimate_matmul_flops(in_shapes),
+                            graph_idx=gi,
+                        )
+                    )
+                continue
+
+            # --- Batch matmul ---
+            if tname in _BMM_NAMES:
+                seen_nodes.add(node.name)
+                patterns.append(
+                    DetectedPattern(
+                        pattern_type="batch_matmul",
                         nodes=[node.name],
                         primary_node=node.name,
                         input_shapes=in_shapes,
@@ -257,132 +321,130 @@ def detect_patterns_in_graphs(
                         params=_matmul_params(in_shapes),
                         flops=_estimate_matmul_flops(in_shapes),
                         graph_idx=gi,
-                    ))
-                continue
-
-            # --- Batch matmul ---
-            if tname in _BMM_NAMES:
-                seen_nodes.add(node.name)
-                patterns.append(DetectedPattern(
-                    pattern_type="batch_matmul",
-                    nodes=[node.name],
-                    primary_node=node.name,
-                    input_shapes=in_shapes,
-                    output_shape=out_shape,
-                    input_dtypes=in_dtypes,
-                    output_dtype=out_dtype,
-                    params=_matmul_params(in_shapes),
-                    flops=_estimate_matmul_flops(in_shapes),
-                    graph_idx=gi,
-                ))
+                    )
+                )
                 continue
 
             # --- Conv2d ---
             if tname in _CONV_NAMES:
                 seen_nodes.add(node.name)
-                patterns.append(DetectedPattern(
-                    pattern_type="conv2d",
-                    nodes=[node.name],
-                    primary_node=node.name,
-                    input_shapes=in_shapes,
-                    output_shape=out_shape,
-                    input_dtypes=in_dtypes,
-                    output_dtype=out_dtype,
-                    params={},
-                    flops=0,
-                    graph_idx=gi,
-                ))
+                patterns.append(
+                    DetectedPattern(
+                        pattern_type="conv2d",
+                        nodes=[node.name],
+                        primary_node=node.name,
+                        input_shapes=in_shapes,
+                        output_shape=out_shape,
+                        input_dtypes=in_dtypes,
+                        output_dtype=out_dtype,
+                        params={},
+                        flops=0,
+                        graph_idx=gi,
+                    )
+                )
                 continue
 
             # --- Softmax ---
             if tname in _SOFTMAX_NAMES:
                 seen_nodes.add(node.name)
-                patterns.append(DetectedPattern(
-                    pattern_type="softmax",
-                    nodes=[node.name],
-                    primary_node=node.name,
-                    input_shapes=in_shapes,
-                    output_shape=out_shape,
-                    input_dtypes=in_dtypes,
-                    output_dtype=out_dtype,
-                    params={},
-                    flops=in_shapes[0][-1] * 5 if in_shapes else 0,  # exp+sum+div per element
-                    graph_idx=gi,
-                ))
+                patterns.append(
+                    DetectedPattern(
+                        pattern_type="softmax",
+                        nodes=[node.name],
+                        primary_node=node.name,
+                        input_shapes=in_shapes,
+                        output_shape=out_shape,
+                        input_dtypes=in_dtypes,
+                        output_dtype=out_dtype,
+                        params={},
+                        flops=in_shapes[0][-1] * 5 if in_shapes else 0,  # exp+sum+div per element
+                        graph_idx=gi,
+                    )
+                )
                 continue
 
             # --- Standalone activations ---
             if tname in _SILU_NAMES:
                 seen_nodes.add(node.name)
-                patterns.append(DetectedPattern(
-                    pattern_type="silu",
-                    nodes=[node.name],
-                    primary_node=node.name,
-                    input_shapes=in_shapes,
-                    output_shape=out_shape,
-                    input_dtypes=in_dtypes,
-                    output_dtype=out_dtype,
-                    graph_idx=gi,
-                ))
+                patterns.append(
+                    DetectedPattern(
+                        pattern_type="silu",
+                        nodes=[node.name],
+                        primary_node=node.name,
+                        input_shapes=in_shapes,
+                        output_shape=out_shape,
+                        input_dtypes=in_dtypes,
+                        output_dtype=out_dtype,
+                        graph_idx=gi,
+                    )
+                )
                 continue
 
             if tname in _GELU_NAMES:
                 seen_nodes.add(node.name)
-                patterns.append(DetectedPattern(
-                    pattern_type="gelu",
-                    nodes=[node.name],
-                    primary_node=node.name,
-                    input_shapes=in_shapes,
-                    output_shape=out_shape,
-                    input_dtypes=in_dtypes,
-                    output_dtype=out_dtype,
-                    graph_idx=gi,
-                ))
+                patterns.append(
+                    DetectedPattern(
+                        pattern_type="gelu",
+                        nodes=[node.name],
+                        primary_node=node.name,
+                        input_shapes=in_shapes,
+                        output_shape=out_shape,
+                        input_dtypes=in_dtypes,
+                        output_dtype=out_dtype,
+                        graph_idx=gi,
+                    )
+                )
                 continue
 
             # --- Elementwise binary ---
             if tname in _BINARY_NAMES:
                 seen_nodes.add(node.name)
-                patterns.append(DetectedPattern(
-                    pattern_type="elementwise_binary",
-                    nodes=[node.name],
-                    primary_node=node.name,
-                    input_shapes=in_shapes,
-                    output_shape=out_shape,
-                    input_dtypes=in_dtypes,
-                    output_dtype=out_dtype,
-                    graph_idx=gi,
-                ))
+                patterns.append(
+                    DetectedPattern(
+                        pattern_type="elementwise_binary",
+                        nodes=[node.name],
+                        primary_node=node.name,
+                        input_shapes=in_shapes,
+                        output_shape=out_shape,
+                        input_dtypes=in_dtypes,
+                        output_dtype=out_dtype,
+                        graph_idx=gi,
+                    )
+                )
                 continue
 
             # --- Elementwise unary ---
             if tname in _UNARY_NAMES:
                 seen_nodes.add(node.name)
-                patterns.append(DetectedPattern(
-                    pattern_type="elementwise_unary",
-                    nodes=[node.name],
-                    primary_node=node.name,
-                    input_shapes=in_shapes,
-                    output_shape=out_shape,
-                    input_dtypes=in_dtypes,
-                    output_dtype=out_dtype,
-                    graph_idx=gi,
-                ))
+                patterns.append(
+                    DetectedPattern(
+                        pattern_type="elementwise_unary",
+                        nodes=[node.name],
+                        primary_node=node.name,
+                        input_shapes=in_shapes,
+                        output_shape=out_shape,
+                        input_dtypes=in_dtypes,
+                        output_dtype=out_dtype,
+                        graph_idx=gi,
+                    )
+                )
                 continue
 
             # --- Reductions ---
             if tname in _REDUCTION_NAMES:
                 seen_nodes.add(node.name)
-                patterns.append(DetectedPattern(
-                    pattern_type="reduction",
-                    nodes=[node.name],
-                    primary_node=node.name,
-                    input_shapes=in_shapes,
-                    output_shape=out_shape,
-                    input_dtypes=in_dtypes,
-                    output_dtype=out_dtype,
-                    graph_idx=gi,
-                ))
+                patterns.append(
+                    DetectedPattern(
+                        pattern_type="reduction",
+                        nodes=[node.name],
+                        primary_node=node.name,
+                        input_shapes=in_shapes,
+                        output_shape=out_shape,
+                        input_dtypes=in_dtypes,
+                        output_dtype=out_dtype,
+                        graph_idx=gi,
+                    )
+                )
                 continue
 
     return patterns

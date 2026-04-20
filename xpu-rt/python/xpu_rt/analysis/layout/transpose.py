@@ -161,15 +161,14 @@ class TransposeProfitabilityAnalyzer:
             for node_name in consumer.node_names:
                 node_contract = contract_by_name.get(node_name)
                 if node_contract is not None and node_contract.metadata.get(
-                    "can_absorb_transpose", False,
+                    "can_absorb_transpose",
+                    False,
                 ):
                     return TransposeClassification.ABSORBABLE
 
         # 3) Propagatable: all consumers are elementwise.
         if consumer_ids and all(
-            _is_elementwise_like(cluster_by_id[cid].pattern_type)
-            for cid in consumer_ids
-            if cid in cluster_by_id
+            _is_elementwise_like(cluster_by_id[cid].pattern_type) for cid in consumer_ids if cid in cluster_by_id
         ):
             return TransposeClassification.PROPAGATABLE
 

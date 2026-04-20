@@ -66,8 +66,8 @@ from dataclasses import dataclass
 from xdsl.dialects.builtin import (
     AffineMapAttr,
     ArrayAttr,
-    IntegerType,
     IntegerAttr,
+    IntegerType,
     ModuleOp,
     StringAttr,
     TensorType,
@@ -77,7 +77,7 @@ from xdsl.dialects.linalg import (
     IteratorType,
     IteratorTypeAttr,
 )
-from xdsl.ir import Attribute, Operation
+from xdsl.ir import Operation
 from xdsl.ir.affine import AffineExpr, AffineMap
 from xdsl.pattern_rewriter import (
     PatternRewriter,
@@ -86,7 +86,6 @@ from xdsl.pattern_rewriter import (
 )
 
 from compgen.ir.linalg_ext import LayerNormOp, RMSNormOp, SoftmaxOp
-
 
 _VALID_POLICIES = frozenset({"auto", "group", "split", "tree_reduce"})
 _VALID_STRATEGIES = frozenset({"group", "split", "tree_reduce"})
@@ -100,15 +99,11 @@ class PlanReductionConfig:
 
     def __post_init__(self) -> None:
         if self.policy not in _VALID_POLICIES:
-            raise ValueError(
-                f"policy must be one of {sorted(_VALID_POLICIES)}; got {self.policy!r}"
-            )
+            raise ValueError(f"policy must be one of {sorted(_VALID_POLICIES)}; got {self.policy!r}")
         if self.large_reduction_threshold <= 0:
             raise ValueError("large_reduction_threshold must be positive")
         if self.tree_reduce_threshold <= self.large_reduction_threshold:
-            raise ValueError(
-                "tree_reduce_threshold must exceed large_reduction_threshold"
-            )
+            raise ValueError("tree_reduce_threshold must exceed large_reduction_threshold")
 
 
 @dataclass
@@ -248,9 +243,7 @@ def _try_group_structural_rewrite(op: GenericOp) -> bool:
         new_maps.append(AffineMapAttr(_permute_affine_map(m, perm_inv)))
 
     new_iter_kinds = [kind_list[old] for old in perm]
-    op.properties["iterator_types"] = ArrayAttr(
-        [IteratorTypeAttr(k) for k in new_iter_kinds]
-    )
+    op.properties["iterator_types"] = ArrayAttr([IteratorTypeAttr(k) for k in new_iter_kinds])
     op.properties["indexing_maps"] = ArrayAttr(new_maps)
     return True
 
@@ -267,9 +260,7 @@ class _GenericReductionAnnotator(RewritePattern):
         self.cfg = cfg
         self.stats = stats
 
-    def match_and_rewrite(
-        self, op: Operation, rewriter: PatternRewriter
-    ) -> None:
+    def match_and_rewrite(self, op: Operation, rewriter: PatternRewriter) -> None:
         if not isinstance(op, GenericOp):
             return
         red_idx = _reduction_iter_indices(op)
@@ -295,11 +286,7 @@ class _GenericReductionAnnotator(RewritePattern):
                     break
                 extent *= ext
 
-        strategy = (
-            self.cfg.policy
-            if self.cfg.policy != "auto"
-            else _choose_auto(extent, self.cfg)
-        )
+        strategy = self.cfg.policy if self.cfg.policy != "auto" else _choose_auto(extent, self.cfg)
         _annotate(op, strategy, extent)
         self.stats.ops_annotated += 1
         if strategy == "group":
@@ -329,9 +316,7 @@ class _LinalgExtReductionAnnotator(RewritePattern):
         self.cfg = cfg
         self.stats = stats
 
-    def match_and_rewrite(
-        self, op: Operation, rewriter: PatternRewriter
-    ) -> None:
+    def match_and_rewrite(self, op: Operation, rewriter: PatternRewriter) -> None:
         if not isinstance(op, (SoftmaxOp, RMSNormOp, LayerNormOp)):
             return
         self.stats.ops_seen += 1
@@ -344,11 +329,7 @@ class _LinalgExtReductionAnnotator(RewritePattern):
         shape = list(src_type.get_shape())
         extent = shape[-1] if shape else -1
 
-        strategy = (
-            self.cfg.policy
-            if self.cfg.policy != "auto"
-            else _choose_auto(extent, self.cfg)
-        )
+        strategy = self.cfg.policy if self.cfg.policy != "auto" else _choose_auto(extent, self.cfg)
         _annotate(op, strategy, extent)
         self.stats.ops_annotated += 1
         if strategy == "group":

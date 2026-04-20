@@ -5,8 +5,8 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 from compgen.agent.analyzer import GraphAnalysisDossier, NetworkAnalysis, RegionDossier
-from compgen.agent.loop import AgenticCompilationLoop, CompilationResult
 from compgen.agent.env import CompilerEnv
+from compgen.agent.loop import AgenticCompilationLoop, CompilationResult
 from compgen.llm.base import GenerationRequest, GenerationResponse
 from compgen.llm.mock_client import MockLLMClient
 from compgen.targets.schema import load_profile
@@ -120,12 +120,13 @@ def test_compilation_loop_passes_frontend_and_dossier_context_to_llm() -> None:
 
         def generate(self, request: GenerationRequest) -> GenerationResponse:
             self.raw_requests.append(request)
-            return GenerationResponse(raw_text='{"action_type":"noop","target_region":"","parameters":{},"reasoning":"stop"}',
-                                      parsed_artifacts=[], model_id=self.model)
+            return GenerationResponse(
+                raw_text='{"action_type":"noop","target_region":"","parameters":{},"reasoning":"stop"}',
+                parsed_artifacts=[],
+                model_id=self.model,
+            )
 
-        def generate_structured(
-            self, request: GenerationRequest, schema: dict[str, object]
-        ) -> GenerationResponse:
+        def generate_structured(self, request: GenerationRequest, schema: dict[str, object]) -> GenerationResponse:
             self.structured_requests.append((request, schema))
             if request.prompt_template.startswith("You are an expert ML compiler optimizer"):
                 return GenerationResponse(

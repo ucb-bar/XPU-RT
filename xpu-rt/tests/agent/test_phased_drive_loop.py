@@ -6,8 +6,7 @@ import json
 from pathlib import Path
 
 import pytest
-
-from compgen.agent.loop import DriveLoopResult, PhaseRunSummary, PhasedDriveLoop
+from compgen.agent.loop import PhasedDriveLoop
 from compgen.llm import (
     InventSlot,
     Registry,
@@ -25,18 +24,20 @@ def registry() -> Registry:
     def _echo_impl(**kwargs):
         return {"status": "ok", "echoed": kwargs}
 
-    r.register_tool(Tool(
-        name="echo_tool",
-        phase=2,
-        kind="tool",
-        wraps_pass="stub",
-        autocomp_cost_impact="low",
-        args=(ToolArg("region", "region_ref", "region"),),
-        result=ToolResult("ok", "ok"),
-        description="echo",
-        impl=_echo_impl,
-        stub=False,
-    ))
+    r.register_tool(
+        Tool(
+            name="echo_tool",
+            phase=2,
+            kind="tool",
+            wraps_pass="stub",
+            autocomp_cost_impact="low",
+            args=(ToolArg("region", "region_ref", "region"),),
+            result=ToolResult("ok", "ok"),
+            description="echo",
+            impl=_echo_impl,
+            stub=False,
+        )
+    )
 
     def _gate(proposal, **ctx):
         return {
@@ -51,18 +52,20 @@ def registry() -> Registry:
             "seed_source": "default",
         }
 
-    r.register_invent_slot(InventSlot(
-        name="propose_thing",
-        phase=3,
-        input_schema="inp",
-        output_op="recipe.x",
-        gate="stub",
-        autocomp_cost_impact="high",
-        description="test slot",
-        baseline_seed=_seed,
-        gate_impl=_gate,
-        stub=False,
-    ))
+    r.register_invent_slot(
+        InventSlot(
+            name="propose_thing",
+            phase=3,
+            input_schema="inp",
+            output_op="recipe.x",
+            gate="stub",
+            autocomp_cost_impact="high",
+            description="test slot",
+            baseline_seed=_seed,
+            gate_impl=_gate,
+            stub=False,
+        )
+    )
 
     return r
 
@@ -88,9 +91,7 @@ def test_tool_call_recorded(registry: Registry, tmp_path: Path) -> None:
     assert parsed["select_vs_invent"] == "select"
 
 
-def test_invent_slot_runs_baseline_seed_when_requested(
-    registry: Registry, tmp_path: Path
-) -> None:
+def test_invent_slot_runs_baseline_seed_when_requested(registry: Registry, tmp_path: Path) -> None:
     rec = ToolCallRecorder(log_path=tmp_path / "t.jsonl")
     loop = PhasedDriveLoop(registry=registry, recorder=rec)
 
@@ -125,9 +126,7 @@ def test_invent_slot_rejection_counted(registry: Registry, tmp_path: Path) -> No
     assert result.phase_summaries[0].rejected_invents == 1
 
 
-def test_unknown_name_recorded_as_not_found(
-    registry: Registry, tmp_path: Path
-) -> None:
+def test_unknown_name_recorded_as_not_found(registry: Registry, tmp_path: Path) -> None:
     rec = ToolCallRecorder(log_path=tmp_path / "t.jsonl")
     loop = PhasedDriveLoop(registry=registry, recorder=rec)
 
@@ -144,12 +143,20 @@ def test_tool_exception_recorded(registry: Registry, tmp_path: Path) -> None:
     def _boom(**kw):
         raise RuntimeError("boom")
 
-    registry.register_tool(Tool(
-        name="boom_tool", phase=2, kind="tool", wraps_pass="stub",
-        autocomp_cost_impact="low",
-        args=(), result=ToolResult("ok", "ok"),
-        description="boom", impl=_boom, stub=False,
-    ))
+    registry.register_tool(
+        Tool(
+            name="boom_tool",
+            phase=2,
+            kind="tool",
+            wraps_pass="stub",
+            autocomp_cost_impact="low",
+            args=(),
+            result=ToolResult("ok", "ok"),
+            description="boom",
+            impl=_boom,
+            stub=False,
+        )
+    )
 
     rec = ToolCallRecorder(log_path=tmp_path / "t.jsonl")
     loop = PhasedDriveLoop(registry=registry, recorder=rec)

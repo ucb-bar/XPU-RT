@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import yaml
-
 
 ModelLoader = Callable[[], tuple[Any, tuple[Any, ...]]]
 
@@ -47,7 +47,9 @@ class WorkspaceConfig:
                 return value
             if value.startswith(("{", "$")):
                 return value
-            if any(token in value for token in ("/", "\\")) or value.endswith(("_root", "_dir", ".json", ".yaml", ".csv", ".txt")):
+            if any(token in value for token in ("/", "\\")) or value.endswith(
+                ("_root", "_dir", ".json", ".yaml", ".csv", ".txt")
+            ):
                 candidate = Path(value).expanduser()
                 if candidate.is_absolute():
                     return str(candidate.resolve())
@@ -58,21 +60,15 @@ class WorkspaceConfig:
         data = yaml.safe_load(path.read_text()) or {}
         repo_root = Path(data.get("repo_root", path.parent)).resolve()
         external_roots = {
-            name: Path(value).expanduser().resolve()
-            if Path(value).is_absolute()
-            else (path.parent / value).resolve()
+            name: Path(value).expanduser().resolve() if Path(value).is_absolute() else (path.parent / value).resolve()
             for name, value in (data.get("external_roots") or {}).items()
         }
         pack_roots = {
-            name: Path(value).expanduser().resolve()
-            if Path(value).is_absolute()
-            else (path.parent / value).resolve()
+            name: Path(value).expanduser().resolve() if Path(value).is_absolute() else (path.parent / value).resolve()
             for name, value in (data.get("pack_roots") or {}).items()
         }
         llvm_forks = {
-            name: Path(value).expanduser().resolve()
-            if Path(value).is_absolute()
-            else (path.parent / value).resolve()
+            name: Path(value).expanduser().resolve() if Path(value).is_absolute() else (path.parent / value).resolve()
             for name, value in (data.get("llvm_forks") or {}).items()
         }
         integration_worktrees_root = data.get("integration_worktrees_root")
@@ -134,7 +130,9 @@ class WorkspaceConfig:
             "external_roots": {name: str(path) for name, path in self.external_roots.items()},
             "pack_roots": {name: str(path) for name, path in self.pack_roots.items()},
             "llvm_forks": {name: str(path) for name, path in self.llvm_forks.items()},
-            "integration_worktrees_root": str(self.integration_worktrees_root) if self.integration_worktrees_root else "",
+            "integration_worktrees_root": str(self.integration_worktrees_root)
+            if self.integration_worktrees_root
+            else "",
             "suite_configs": self.suite_configs,
             "pack_configs": self.pack_configs,
         }

@@ -77,8 +77,8 @@ class DriverStepResult:
     ``current_view()``.
     """
 
-    status: str                                    # accepted | rejected | deferred | applied | failed
-    kind: str                                      # tool | invent | proposal
+    status: str  # accepted | rejected | deferred | applied | failed
+    kind: str  # tool | invent | proposal
     name: str
     ir_hash_before: str
     ir_hash_after: str
@@ -88,7 +88,7 @@ class DriverStepResult:
     tool_result: dict[str, Any] | None = None
     diagnostics: tuple[str, ...] = ()
     remediation_hint: str | None = None
-    ir_view_after: dict[str, Any] | None = None    # filled only on mutation
+    ir_view_after: dict[str, Any] | None = None  # filled only on mutation
 
 
 @dataclass
@@ -142,8 +142,9 @@ class LLMDrivenCompiler:
         # Idempotent — second + later calls return early on each slot.
         try:
             from compgen.agent.invent_slots.registrar import register_invent_slots
+
             register_invent_slots(self.registry)
-        except Exception:   # noqa: BLE001
+        except Exception:  # noqa: BLE001
             # Never block driver init on slot registration; the agent
             # will see status=unknown if it tries an unregistered slot
             # and can read the remediation hint we surface below.
@@ -153,6 +154,7 @@ class LLMDrivenCompiler:
         # tests can redirect writes away from ~/.compgen.
         if self.transcript_dir is None:
             import os
+
             env = os.environ.get("COMPGEN_SESSION_DIR")
             if env:
                 self.transcript_dir = Path(env).expanduser()
@@ -170,7 +172,7 @@ class LLMDrivenCompiler:
                 enabled=True,
             )
             # Route env + loop through the recorder.
-            self.llm_client = self._llm_recorder   # type: ignore[assignment]
+            self.llm_client = self._llm_recorder  # type: ignore[assignment]
 
         self._tool_recorder = ToolCallRecorder(
             log_path=self.transcript_dir / self._session_id / "tools.jsonl",
@@ -181,7 +183,7 @@ class LLMDrivenCompiler:
         if self.env.recipe is None:
             try:
                 self.env.enable_recipe_tracking()
-            except Exception as e:   # noqa: BLE001
+            except Exception as e:  # noqa: BLE001
                 log.debug("llm_driver.recipe_tracking_unavailable", error=str(e))
 
         # Create the backing loop (we only call its translation + per-step
@@ -208,7 +210,10 @@ class LLMDrivenCompiler:
     # ------------------------------------------------------------------
 
     def current_view(
-        self, *, focus: str | None = None, max_ops: int | None = None,
+        self,
+        *,
+        focus: str | None = None,
+        max_ops: int | None = None,
     ) -> dict[str, Any]:
         """Return the token-efficient Recipe-IR view of the current session.
 
@@ -241,9 +246,7 @@ class LLMDrivenCompiler:
         # Re-compute the checkpoint's view at full breadth too, since
         # it may have been stored with a smaller max_ops.
         ckpt_full = ckpt.view
-        if ckpt_full.get("total_ops", 0) > len(
-            ckpt_full.get("banner", []) + ckpt_full.get("middle", [])
-        ):
+        if ckpt_full.get("total_ops", 0) > len(ckpt_full.get("banner", []) + ckpt_full.get("middle", [])):
             # Original ckpt was truncated; we still diff against it but
             # surface the limitation in the result.
             pass
@@ -266,7 +269,9 @@ class LLMDrivenCompiler:
             ckpt_id = f"{ckpt_id}_{self._step_index}"
         full_view = self._compute_view(max_ops=100_000)
         self._checkpoints[ckpt_id] = DriverCheckpoint(
-            ckpt_id=ckpt_id, view=full_view, step_index=self._step_index,
+            ckpt_id=ckpt_id,
+            view=full_view,
+            step_index=self._step_index,
         )
         # Track the (possibly default-bounded) view for cheap re-reads.
         self._last_view = self._compute_view()
@@ -284,19 +289,17 @@ class LLMDrivenCompiler:
             "checkpoints": sorted(self._checkpoints.keys()),
             "recipe_hash": (self._last_view or {}).get("hash"),
             "cost_before_best_us": self.env._best_cost,
-            "llm_calls": (self._llm_recorder.total_calls
-                          if self._llm_recorder is not None else 0),
-            "tool_calls": (self._tool_recorder.total_calls
-                           if self._tool_recorder is not None else 0),
+            "llm_calls": (self._llm_recorder.total_calls if self._llm_recorder is not None else 0),
+            "tool_calls": (self._tool_recorder.total_calls if self._tool_recorder is not None else 0),
         }
 
     # ------------------------------------------------------------------
     # Tool / slot / proposal dispatch
     # ------------------------------------------------------------------
 
-    def step_tool(self, tool_name: str, args: dict[str, Any] | None = None,
-                  *, phase: int | None = None,
-                  llm_turn_id: str = "") -> DriverStepResult:
+    def step_tool(
+        self, tool_name: str, args: dict[str, Any] | None = None, *, phase: int | None = None, llm_turn_id: str = ""
+    ) -> DriverStepResult:
         """Invoke a registered :class:`Tool` by name.
 
         Returns a :class:`DriverStepResult` whose ``status`` is one of:
@@ -325,16 +328,23 @@ class LLMDrivenCompiler:
                 + (f"Did you mean: {nearest}?" if nearest else "")
             )
             self._record_tool(
-                name=tool_name, phase=phase or -1, kind="tool_call",
-                args=args, result={"status": "unknown",
-                                   "available_tools": available},
-                before=view_before, after=view_before,
-                gate_result=None, elapsed_ms=int((time.perf_counter() - t0) * 1000),
+                name=tool_name,
+                phase=phase or -1,
+                kind="tool_call",
+                args=args,
+                result={"status": "unknown", "available_tools": available},
+                before=view_before,
+                after=view_before,
+                gate_result=None,
+                elapsed_ms=int((time.perf_counter() - t0) * 1000),
                 llm_turn_id=llm_turn_id,
             )
             return DriverStepResult(
-                status="unknown", kind="tool", name=tool_name,
-                ir_hash_before=before_hash, ir_hash_after=before_hash,
+                status="unknown",
+                kind="tool",
+                name=tool_name,
+                ir_hash_before=before_hash,
+                ir_hash_after=before_hash,
                 elapsed_ms=int((time.perf_counter() - t0) * 1000),
                 summary=f"No tool named {tool_name!r} in registry.",
                 remediation_hint=hint,
@@ -347,7 +357,7 @@ class LLMDrivenCompiler:
             status = "applied" if raw_status not in {"no_impl", "error", "failed"} else raw_status
             if tool.is_stub:
                 status = "no_impl"
-        except Exception as e:   # noqa: BLE001
+        except Exception as e:  # noqa: BLE001
             tool_result = {"status": "error", "error": f"{type(e).__name__}: {e}"}
             status = "failed"
 
@@ -360,22 +370,29 @@ class LLMDrivenCompiler:
         self._step_index += 1
 
         self._record_tool(
-            name=tool.name, phase=tool.phase, kind="tool_call",
-            args=args, result=tool_result,
-            before=view_before, after=view_after,
-            gate_result=None, elapsed_ms=elapsed_ms,
+            name=tool.name,
+            phase=tool.phase,
+            kind="tool_call",
+            args=args,
+            result=tool_result,
+            before=view_before,
+            after=view_after,
+            gate_result=None,
+            elapsed_ms=elapsed_ms,
             llm_turn_id=llm_turn_id,
         )
 
         self._last_view = view_after
         return DriverStepResult(
-            status=status, kind="tool", name=tool.name,
-            ir_hash_before=before_hash, ir_hash_after=after_hash,
+            status=status,
+            kind="tool",
+            name=tool.name,
+            ir_hash_before=before_hash,
+            ir_hash_after=after_hash,
             elapsed_ms=elapsed_ms,
             summary=f"tool {tool.name} status={status}",
             tool_result=tool_result,
-            ir_view_after=(view_after if status == "applied"
-                           and after_hash != before_hash else None),
+            ir_view_after=(view_after if status == "applied" and after_hash != before_hash else None),
         )
 
     def step_invent(
@@ -398,7 +415,8 @@ class LLMDrivenCompiler:
         assert self.registry is not None
         assert self._tool_recorder is not None
         slot: InventSlot | None = self.registry.lookup_invent_slot(
-            slot_name, phase=phase,
+            slot_name,
+            phase=phase,
         )
 
         t0 = time.perf_counter()
@@ -408,7 +426,11 @@ class LLMDrivenCompiler:
 
         if slot is None:
             return self._unknown_slot_result(
-                slot_name, before_hash, t0, phase, llm_turn_id,
+                slot_name,
+                before_hash,
+                t0,
+                phase,
+                llm_turn_id,
                 view=view_before,
             )
 
@@ -425,9 +447,12 @@ class LLMDrivenCompiler:
                 gate_result = slot.verify(proposal, **ctx)
             else:
                 gate_result = composite_gate(
-                    proposal, gates=gates, slot_name=slot.name, **ctx,
+                    proposal,
+                    gates=gates,
+                    slot_name=slot.name,
+                    **ctx,
                 )
-        except Exception as e:   # noqa: BLE001
+        except Exception as e:  # noqa: BLE001
             gate_result = {
                 "status": "rejected",
                 "details": {
@@ -452,8 +477,10 @@ class LLMDrivenCompiler:
                     from compgen.agent.recipe_bridge_invent import (
                         proposal_to_recipe_op,
                     )
+
                     op = proposal_to_recipe_op(
-                        slot.name, proposal,
+                        slot.name,
+                        proposal,
                         iteration=self._step_index,
                         llm_turn_id=llm_turn_id or self._session_id,
                     )
@@ -477,7 +504,7 @@ class LLMDrivenCompiler:
                         },
                     }
                     self._accepted_steps -= 1
-                except Exception:   # noqa: BLE001
+                except Exception:  # noqa: BLE001
                     # Surfacing op-construction failures as rejections
                     # keeps the loop advancing; log silently.
                     pass
@@ -486,15 +513,17 @@ class LLMDrivenCompiler:
             # contribution drafting.
             try:
                 from compgen.agent.extensions.local_loader import record_accepted_invocation
+
                 record_accepted_invocation(
-                    None, slot.name,
+                    None,
+                    slot.name,
                     {
                         "proposal_digest": str(sorted(proposal.items()))[:400],
                         "session_id": self._session_id,
                         "step_index": self._step_index,
                     },
                 )
-            except Exception:   # noqa: BLE001
+            except Exception:  # noqa: BLE001
                 pass
 
         # Recompute the view AFTER we've had a chance to mutate the
@@ -506,12 +535,16 @@ class LLMDrivenCompiler:
         self._step_index += 1
 
         self._record_tool(
-            name=slot.name, phase=slot.phase, kind="invent_proposal",
+            name=slot.name,
+            phase=slot.phase,
+            kind="invent_proposal",
             args={"proposal_keys": sorted(proposal.keys())},
             result={"status": status, "appended_op": appended_op_name},
-            before=view_before, after=view_after,
+            before=view_before,
+            after=view_after,
             gate_result=gate_result,
-            elapsed_ms=elapsed_ms, llm_turn_id=llm_turn_id,
+            elapsed_ms=elapsed_ms,
+            llm_turn_id=llm_turn_id,
             select_vs_invent=proposal.get("select_vs_invent", "invent"),
         )
 
@@ -525,14 +558,16 @@ class LLMDrivenCompiler:
         if appended_op_name:
             summary += f" appended={appended_op_name}"
         return DriverStepResult(
-            status=status, kind="invent", name=slot.name,
-            ir_hash_before=before_hash, ir_hash_after=after_hash,
+            status=status,
+            kind="invent",
+            name=slot.name,
+            ir_hash_before=before_hash,
+            ir_hash_after=after_hash,
             elapsed_ms=elapsed_ms,
             summary=summary,
             gate_result=gate_result,
             remediation_hint=remediation,
-            ir_view_after=(view_after if status == "accepted"
-                           and after_hash != before_hash else None),
+            ir_view_after=(view_after if status == "accepted" and after_hash != before_hash else None),
             tool_result={"appended_op": appended_op_name} if appended_op_name else None,
         )
 
@@ -569,7 +604,8 @@ class LLMDrivenCompiler:
             entry_ctx = dict(gate_ctx or {})
             entry_ctx.update(entry.get("gate_ctx") or {})
             r = self.step_invent(
-                slot_name, proposal,
+                slot_name,
+                proposal,
                 phase=phase,
                 gate_ctx=entry_ctx,
                 llm_turn_id=llm_turn_id,
@@ -620,16 +656,23 @@ class LLMDrivenCompiler:
         if isinstance(action, NoopAction):
             elapsed_ms = int((time.perf_counter() - t0) * 1000)
             self._record_tool(
-                name=f"proposal:{action_type}", phase=-1, kind="tool_call",
+                name=f"proposal:{action_type}",
+                phase=-1,
+                kind="tool_call",
                 args={"target": target, "reason": reason},
                 result={"status": "noop"},
-                before=view_before, after=view_before,
-                gate_result=None, elapsed_ms=elapsed_ms,
+                before=view_before,
+                after=view_before,
+                gate_result=None,
+                elapsed_ms=elapsed_ms,
                 llm_turn_id=llm_turn_id,
             )
             return DriverStepResult(
-                status="noop", kind="proposal", name=action_type,
-                ir_hash_before=before_hash, ir_hash_after=before_hash,
+                status="noop",
+                kind="proposal",
+                name=action_type,
+                ir_hash_before=before_hash,
+                ir_hash_after=before_hash,
                 elapsed_ms=elapsed_ms,
                 summary=f"proposal {action_type!r} mapped to noop",
             )
@@ -637,11 +680,14 @@ class LLMDrivenCompiler:
         # Apply the action.
         try:
             step_result = self.env.step(action)
-        except Exception as e:   # noqa: BLE001
+        except Exception as e:  # noqa: BLE001
             elapsed_ms = int((time.perf_counter() - t0) * 1000)
             return DriverStepResult(
-                status="failed", kind="proposal", name=action_type,
-                ir_hash_before=before_hash, ir_hash_after=before_hash,
+                status="failed",
+                kind="proposal",
+                name=action_type,
+                ir_hash_before=before_hash,
+                ir_hash_after=before_hash,
                 elapsed_ms=elapsed_ms,
                 summary=f"env.step raised: {type(e).__name__}: {e}",
             )
@@ -655,14 +701,17 @@ class LLMDrivenCompiler:
         after_hash = view_after.get("hash", before_hash)
 
         self._record_tool(
-            name=f"proposal:{action_type}", phase=-1, kind="tool_call",
+            name=f"proposal:{action_type}",
+            phase=-1,
+            kind="tool_call",
             args={"target": target, "reason": reason},
             result={
                 "action_applied": applied,
                 "cost_after_us": step_result.info.cost_after_us,
                 "error": step_result.info.error,
             },
-            before=view_before, after=view_after,
+            before=view_before,
+            after=view_after,
             gate_result=None,
             elapsed_ms=int((time.perf_counter() - t0) * 1000),
             llm_turn_id=llm_turn_id,
@@ -671,11 +720,12 @@ class LLMDrivenCompiler:
         self._last_view = view_after
         return DriverStepResult(
             status="applied" if applied else "failed",
-            kind="proposal", name=action_type,
-            ir_hash_before=before_hash, ir_hash_after=after_hash,
+            kind="proposal",
+            name=action_type,
+            ir_hash_before=before_hash,
+            ir_hash_after=after_hash,
             elapsed_ms=int((time.perf_counter() - t0) * 1000),
-            summary=(f"proposal {action_type!r} applied="
-                     f"{applied} cost={step_result.info.cost_after_us:.1f}"),
+            summary=(f"proposal {action_type!r} applied={applied} cost={step_result.info.cost_after_us:.1f}"),
             diagnostics=step_result.info.diagnostics,
             tool_result={
                 "cost_before_us": step_result.info.cost_before_us,
@@ -691,7 +741,10 @@ class LLMDrivenCompiler:
     # ------------------------------------------------------------------
 
     def _compute_view(
-        self, *, focus: str | None = None, max_ops: int | None = None,
+        self,
+        *,
+        focus: str | None = None,
+        max_ops: int | None = None,
     ) -> dict[str, Any]:
         """Compute the current Recipe-IR view, or a minimal stub view if tracking is off."""
         module = self.env.recipe
@@ -745,8 +798,12 @@ class LLMDrivenCompiler:
         )
 
     def _unknown_slot_result(
-        self, slot_name: str, before_hash: str, t0: float,
-        phase: int | None, llm_turn_id: str,
+        self,
+        slot_name: str,
+        before_hash: str,
+        t0: float,
+        phase: int | None,
+        llm_turn_id: str,
         view: dict[str, Any],
     ) -> DriverStepResult:
         elapsed_ms = int((time.perf_counter() - t0) * 1000)
@@ -761,14 +818,23 @@ class LLMDrivenCompiler:
             + (f"Did you mean: {nearest}?" if nearest else "")
         )
         self._record_tool(
-            name=slot_name, phase=phase or -1, kind="invent_proposal",
-            args={}, result={"status": "unknown", "available_slots": available},
-            before=view, after=view, gate_result=None,
-            elapsed_ms=elapsed_ms, llm_turn_id=llm_turn_id,
+            name=slot_name,
+            phase=phase or -1,
+            kind="invent_proposal",
+            args={},
+            result={"status": "unknown", "available_slots": available},
+            before=view,
+            after=view,
+            gate_result=None,
+            elapsed_ms=elapsed_ms,
+            llm_turn_id=llm_turn_id,
         )
         return DriverStepResult(
-            status="unknown", kind="invent", name=slot_name,
-            ir_hash_before=before_hash, ir_hash_after=before_hash,
+            status="unknown",
+            kind="invent",
+            name=slot_name,
+            ir_hash_before=before_hash,
+            ir_hash_after=before_hash,
             elapsed_ms=elapsed_ms,
             summary=f"No invent-slot named {slot_name!r} in registry.",
             remediation_hint=hint,
@@ -779,6 +845,7 @@ class LLMDrivenCompiler:
     def _nearest_slot_names(query: str, available: list[str], k: int = 3) -> list[str]:
         """Cheap edit-distance ranking so the agent can recover from typos."""
         import difflib
+
         return difflib.get_close_matches(query, available, n=k, cutoff=0.4)
 
 

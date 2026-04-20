@@ -53,8 +53,7 @@ class BareMetalPMUAdapter:
         self._arch = config.get("arch", "riscv")
         self._counters = config.get("counters", ["cycles", "instructions"])
         self._config = config
-        log.debug("bare_metal_pmu.configured", arch=self._arch,
-                  counters=self._counters)
+        log.debug("bare_metal_pmu.configured", arch=self._arch, counters=self._counters)
 
     def start(self) -> None:
         self._active = True
@@ -93,16 +92,10 @@ class BareMetalPMUAdapter:
 
         if csr in ("mcycle", "minstret"):
             rd_insn = "rdcycle" if csr == "mcycle" else "rdinstret"
-            return (
-                f"uint64_t {counter_name}_val;\n"
-                f'__asm__ volatile("{rd_insn} %0" : "=r"({counter_name}_val));'
-            )
+            return f'uint64_t {counter_name}_val;\n__asm__ volatile("{rd_insn} %0" : "=r"({counter_name}_val));'
 
         # Generic CSR read for mhpmcounterN
-        return (
-            f"uint64_t {counter_name}_val;\n"
-            f'__asm__ volatile("csrr %0, {csr}" : "=r"({counter_name}_val));'
-        )
+        return f'uint64_t {counter_name}_val;\n__asm__ volatile("csrr %0, {csr}" : "=r"({counter_name}_val));'
 
     def instrumentation_code(self) -> dict[str, str]:
         """Generate complete C instrumentation code block.
@@ -123,19 +116,11 @@ class BareMetalPMUAdapter:
 
             if csr in ("mcycle", "minstret"):
                 rd_insn = "rdcycle" if csr == "mcycle" else "rdinstret"
-                starts.append(
-                    f'__asm__ volatile("{rd_insn} %0" : "=r"(_start_{counter}));'
-                )
-                stops.append(
-                    f'__asm__ volatile("{rd_insn} %0" : "=r"(_end_{counter}));'
-                )
+                starts.append(f'__asm__ volatile("{rd_insn} %0" : "=r"(_start_{counter}));')
+                stops.append(f'__asm__ volatile("{rd_insn} %0" : "=r"(_end_{counter}));')
             else:
-                starts.append(
-                    f'__asm__ volatile("csrr %0, {csr}" : "=r"(_start_{counter}));'
-                )
-                stops.append(
-                    f'__asm__ volatile("csrr %0, {csr}" : "=r"(_end_{counter}));'
-                )
+                starts.append(f'__asm__ volatile("csrr %0, {csr}" : "=r"(_start_{counter}));')
+                stops.append(f'__asm__ volatile("csrr %0, {csr}" : "=r"(_end_{counter}));')
 
             reads.append(f"uint64_t {counter}_delta = _end_{counter} - _start_{counter};")
 

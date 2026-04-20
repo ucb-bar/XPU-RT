@@ -25,9 +25,7 @@ class AgentSessionOp(IRDLOperation):
     def verify_(self) -> None:
         valid = {"iterative", "frontier", "evolutionary", "runtime"}
         if self.search_mode.data not in valid:
-            raise VerifyException(
-                f"Invalid search_mode '{self.search_mode.data}', expected one of {valid}"
-            )
+            raise VerifyException(f"Invalid search_mode '{self.search_mode.data}', expected one of {valid}")
 
 
 @irdl_op_definition

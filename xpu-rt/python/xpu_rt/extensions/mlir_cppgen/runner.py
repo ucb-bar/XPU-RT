@@ -97,8 +97,7 @@ def run_compgen_opt(
         opt_binary = find_compgen_opt()
     if opt_binary is None:
         raise FileNotFoundError(
-            "compgen-opt binary not found. Build with: "
-            "cmake -G Ninja -S artifacts/compiler -B build && ninja -C build"
+            "compgen-opt binary not found. Build with: cmake -G Ninja -S artifacts/compiler -B build && ninja -C build"
         )
 
     opt_binary = Path(opt_binary)

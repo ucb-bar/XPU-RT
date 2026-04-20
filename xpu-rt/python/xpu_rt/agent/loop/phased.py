@@ -27,9 +27,10 @@ Expected compose flow once P7/P8 real pass ports land:
 from __future__ import annotations
 
 import time
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Iterable
+from typing import Any
 
 from compgen.llm.recorder import ToolCallRecorder
 from compgen.llm.registry import (
@@ -38,7 +39,6 @@ from compgen.llm.registry import (
     Tool,
     get_registry,
 )
-
 
 # ---------------------------------------------------------------------------
 # Types the driver consumes
@@ -177,7 +177,7 @@ class PhasedDriveLoop:
         t0 = time.perf_counter()
         try:
             result = tool.invoke(**args)
-        except Exception as e:   # noqa: BLE001
+        except Exception as e:  # noqa: BLE001
             result = {"status": "error", "error": f"{type(e).__name__}: {e}"}
         elapsed_ms = int((time.perf_counter() - t0) * 1000.0)
 
@@ -241,8 +241,7 @@ class PhasedDriveLoop:
                 name=slot.name,
                 kind="invent_proposal",
                 args=args,
-                result={"chosen": proposal.get("chosen", {}),
-                        "candidates_count": len(proposal.get("candidates", []))},
+                result={"chosen": proposal.get("chosen", {}), "candidates_count": len(proposal.get("candidates", []))},
                 select_vs_invent="invent",
                 gate_result=gate_result,
                 elapsed_ms=elapsed_ms,

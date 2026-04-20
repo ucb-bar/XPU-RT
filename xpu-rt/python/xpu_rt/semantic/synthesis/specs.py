@@ -46,11 +46,7 @@ class FusionGuardSpec(GuardFamilySpec):
         )
         profitable = bool(
             safe
-            and (
-                env.get("backend_triton")
-                or env.get("target_is_accel_native")
-                or env.get("target_is_ukernel_runtime")
-            )
+            and (env.get("backend_triton") or env.get("target_is_accel_native") or env.get("target_is_ukernel_runtime"))
             and env.get("estimated_flops", 0) > 0
         )
         return safe, profitable
@@ -67,17 +63,11 @@ class LocalMemGuardSpec(GuardFamilySpec):
 
     def label(self, env: dict[str, Any]) -> tuple[bool, bool]:
         safe = bool(
-            env.get("graph_break_free", True)
-            and env.get("export_issue_free", True)
-            and env.get("local_mem_fit", False)
+            env.get("graph_break_free", True) and env.get("export_issue_free", True) and env.get("local_mem_fit", False)
         )
         profitable = bool(
             safe
-            and (
-                env.get("target_is_accel_native")
-                or env.get("target_is_ukernel_runtime")
-                or env.get("backend_triton")
-            )
+            and (env.get("target_is_accel_native") or env.get("target_is_ukernel_runtime") or env.get("backend_triton"))
             and env.get("estimated_flops", 0) > 0
         )
         return safe, profitable

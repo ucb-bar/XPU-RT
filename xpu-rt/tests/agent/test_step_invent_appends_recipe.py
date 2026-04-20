@@ -15,19 +15,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
 import torch
 import torch.nn as nn
-
 from compgen.agent.llm_driver import LLMDrivenCompiler
-from compgen.api import compile_model, device as _device
-from compgen.ir.recipe.ops_propose import ProposeFusionOp
+from compgen.api import compile_model
+from compgen.api import device as _device
 from compgen.llm.mock_client import MockLLMClient
 
-EXEMPLAR = (
-    Path(__file__).resolve().parents[1]
-    / "targetgen" / "exemplars" / "test_gpu_simt.yaml"
-)
+EXEMPLAR = Path(__file__).resolve().parents[1] / "targetgen" / "exemplars" / "test_gpu_simt.yaml"
 
 
 class _TinyMLP(nn.Module):
@@ -45,7 +40,8 @@ def _driver(tmp_path: Path) -> LLMDrivenCompiler:
 
     dev = _device(EXEMPLAR)
     compiled = compile_model(
-        _TinyMLP().eval(), dev,
+        _TinyMLP().eval(),
+        dev,
         sample_inputs=(torch.randn(1, 32),),
     )
     env = compiled.create_agent_env(budget=4)
@@ -54,8 +50,11 @@ def _driver(tmp_path: Path) -> LLMDrivenCompiler:
     reg = Registry()
     register_invent_slots(reg)
     return LLMDrivenCompiler(
-        env=env, target=dev.profile, llm_client=MockLLMClient(strict=False),
-        transcript_dir=tmp_path / "transcripts", budget=4,
+        env=env,
+        target=dev.profile,
+        llm_client=MockLLMClient(strict=False),
+        transcript_dir=tmp_path / "transcripts",
+        budget=4,
         registry=reg,
     )
 
@@ -104,9 +103,7 @@ def test_current_view_surfaces_appended_op(tmp_path: Path) -> None:
 
     view_after = driver.current_view(max_ops=150)
     assert view_after["hash"] != hash_before
-    all_rows = view_after["banner"] + [
-        r for r in view_after["middle"] if "_op" in r
-    ]
+    all_rows = view_after["banner"] + [r for r in view_after["middle"] if "_op" in r]
     assert any(r["_op"] == "recipe.propose_fusion" for r in all_rows)
 
 

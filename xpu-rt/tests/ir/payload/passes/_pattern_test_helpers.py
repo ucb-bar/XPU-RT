@@ -21,6 +21,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
+from compgen.ir.payload.decompositions import _attach_region_id
 from xdsl.dialects.builtin import (
     Float32Type,
     FunctionType,
@@ -37,9 +38,6 @@ from xdsl.pattern_rewriter import (
     PatternRewriteWalker,
     RewritePattern,
 )
-
-from compgen.ir.payload.decompositions import _attach_region_id
-
 
 # --- Module builders ---------------------------------------------------------
 
@@ -78,9 +76,7 @@ def _wrap_in_forward_func(
     return ModuleOp([func])
 
 
-def build_linalg_matmul_module(
-    M: int = 4, K: int = 8, N: int = 16, *, region_id: str = "matmul_0"
-) -> ModuleOp:
+def build_linalg_matmul_module(M: int = 4, K: int = 8, N: int = 16, *, region_id: str = "matmul_0") -> ModuleOp:
     """Build a module containing one ``linalg.matmul`` tagged with ``region_id``."""
     lhs_empty = EmptyOp([], _ft([M, K]))
     rhs_empty = EmptyOp([], _ft([K, N]))
@@ -136,7 +132,7 @@ def build_quantized_matmul_module(
 
     ``bits`` ∈ {4, 8}.
     """
-    from xdsl.dialects.builtin import IntegerAttr, IntegerType
+    from xdsl.dialects.builtin import IntegerAttr
 
     if bits not in (4, 8):
         raise ValueError(f"bits must be 4 or 8, got {bits}")
@@ -147,6 +143,7 @@ def build_quantized_matmul_module(
     ops: list = [x, w]
     if bits == 8:
         from compgen.ir.quant import WeightInt8PackMMOp
+
         scales = EmptyOp([], _ft([N]))
         ops.append(scales)
         op = WeightInt8PackMMOp(
@@ -155,6 +152,7 @@ def build_quantized_matmul_module(
         )
     else:
         from compgen.ir.quant import WeightInt4PackMMOp
+
         sz = EmptyOp([], _ft([N, 2]))
         ops.append(sz)
         op = WeightInt4PackMMOp(
@@ -214,9 +212,7 @@ def assert_op_count(
 ) -> None:
     """Count ops named ``op_name`` across the module and assert the count."""
     actual = count_ops(module, op_name)
-    assert (
-        actual == expected
-    ), f"expected {expected} {op_name!r}, found {actual}"
+    assert actual == expected, f"expected {expected} {op_name!r}, found {actual}"
 
 
 def count_ops(module: ModuleOp, op_name: str) -> int:
@@ -276,8 +272,7 @@ def assert_smt_equivalent(
     if result.status == "unknown" and allow_unknown:
         return
     raise AssertionError(
-        f"translation validation failed: status={result.status} "
-        f"counterexample={result.counterexample}"
+        f"translation validation failed: status={result.status} counterexample={result.counterexample}"
     )
 
 

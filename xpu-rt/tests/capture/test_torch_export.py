@@ -6,7 +6,6 @@ import sys
 from pathlib import Path
 
 import torch
-
 from compgen.capture.torch_export import (
     CaptureArtifact,
     ExportValidation,
@@ -82,9 +81,7 @@ def test_capture_frontend_artifact_collects_boundary_metadata() -> None:
     assert artifact.diagnostics.graph_count >= 0
 
     prepared_targets = [
-        str(node.target)
-        for node in artifact.exported_program.graph.nodes
-        if node.op == "call_function"
+        str(node.target) for node in artifact.exported_program.graph.nodes if node.op == "call_function"
     ]
     assert "aten.addmm.default" in prepared_targets
     assert "aten.permute.default" in prepared_targets

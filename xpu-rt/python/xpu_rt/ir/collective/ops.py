@@ -15,9 +15,7 @@ participating devices.
 
 from __future__ import annotations
 
-from typing import ClassVar
-
-from xdsl.dialects.builtin import ArrayAttr, IntegerAttr, IntegerType, StringAttr
+from xdsl.dialects.builtin import ArrayAttr, IntegerAttr
 from xdsl.ir import Attribute
 from xdsl.irdl import (
     IRDLOperation,
@@ -53,9 +51,7 @@ class AllReduceOp(IRDLOperation):
 
     def verify_(self) -> None:
         if not self.replica_groups.data:
-            raise VerifyException(
-                f"{self.name}: replica_groups must list at least one group"
-            )
+            raise VerifyException(f"{self.name}: replica_groups must list at least one group")
 
 
 @irdl_op_definition
@@ -77,9 +73,7 @@ class AllGatherOp(IRDLOperation):
 
     def verify_(self) -> None:
         if self.all_gather_dim.value.data < 0:
-            raise VerifyException(
-                f"{self.name}: all_gather_dim must be non-negative"
-            )
+            raise VerifyException(f"{self.name}: all_gather_dim must be non-negative")
 
 
 @irdl_op_definition
@@ -102,9 +96,7 @@ class ReduceScatterOp(IRDLOperation):
 
     def verify_(self) -> None:
         if self.scatter_dim.value.data < 0:
-            raise VerifyException(
-                f"{self.name}: scatter_dim must be non-negative"
-            )
+            raise VerifyException(f"{self.name}: scatter_dim must be non-negative")
 
 
 @irdl_op_definition

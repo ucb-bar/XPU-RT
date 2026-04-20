@@ -30,17 +30,16 @@ phase of the compile pipeline can enumerate what's available.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable, Literal
+from typing import Any, Literal
 
 # ---------------------------------------------------------------------------
 # Typed descriptors
 # ---------------------------------------------------------------------------
 
 ToolKind = Literal["tool", "observability", "verification"]
-AutocompCostImpact = Literal[
-    "very_high", "high", "medium", "low", "indirect", "zero"
-]
+AutocompCostImpact = Literal["very_high", "high", "medium", "low", "indirect", "zero"]
 
 
 @dataclass(frozen=True)
@@ -111,8 +110,8 @@ class InventSlot:
     name: str
     phase: int
     input_schema: str
-    output_op: str                                  # e.g. "recipe.propose_fusion"
-    gate: str                                       # human-readable gate spec
+    output_op: str  # e.g. "recipe.propose_fusion"
+    gate: str  # human-readable gate spec
     autocomp_cost_impact: AutocompCostImpact
     description: str
     baseline_seed: Callable[..., dict[str, Any]] | None = None
@@ -150,26 +149,18 @@ class PhaseRegistry:
 
     def register_tool(self, tool: Tool) -> None:
         if tool.phase != self.phase:
-            raise ValueError(
-                f"Tool {tool.name!r} declares phase={tool.phase} but "
-                f"registering into phase={self.phase}"
-            )
+            raise ValueError(f"Tool {tool.name!r} declares phase={tool.phase} but registering into phase={self.phase}")
         if tool.name in self.tools:
-            raise ValueError(
-                f"Tool {tool.name!r} already registered in phase {self.phase}"
-            )
+            raise ValueError(f"Tool {tool.name!r} already registered in phase {self.phase}")
         self.tools[tool.name] = tool
 
     def register_invent_slot(self, slot: InventSlot) -> None:
         if slot.phase != self.phase:
             raise ValueError(
-                f"InventSlot {slot.name!r} declares phase={slot.phase} but "
-                f"registering into phase={self.phase}"
+                f"InventSlot {slot.name!r} declares phase={slot.phase} but registering into phase={self.phase}"
             )
         if slot.name in self.invent_slots:
-            raise ValueError(
-                f"InventSlot {slot.name!r} already registered in phase {self.phase}"
-            )
+            raise ValueError(f"InventSlot {slot.name!r} already registered in phase {self.phase}")
         self.invent_slots[slot.name] = slot
 
 
@@ -183,24 +174,16 @@ class Registry:
     """Global LLM registry, partitioned by phase."""
 
     def __init__(self) -> None:
-        self._phases: dict[int, PhaseRegistry] = {
-            p: PhaseRegistry(phase=p) for p in _LLM_PHASES
-        }
+        self._phases: dict[int, PhaseRegistry] = {p: PhaseRegistry(phase=p) for p in _LLM_PHASES}
 
     def register_tool(self, tool: Tool) -> None:
         if tool.phase not in self._phases:
-            raise ValueError(
-                f"Tool {tool.name!r} phase={tool.phase} is not one of "
-                f"{_LLM_PHASES}"
-            )
+            raise ValueError(f"Tool {tool.name!r} phase={tool.phase} is not one of {_LLM_PHASES}")
         self._phases[tool.phase].register_tool(tool)
 
     def register_invent_slot(self, slot: InventSlot) -> None:
         if slot.phase not in self._phases:
-            raise ValueError(
-                f"InventSlot {slot.name!r} phase={slot.phase} is not one of "
-                f"{_LLM_PHASES}"
-            )
+            raise ValueError(f"InventSlot {slot.name!r} phase={slot.phase} is not one of {_LLM_PHASES}")
         self._phases[slot.phase].register_invent_slot(slot)
 
     def list_tools(self, phase: int | None = None) -> list[Tool]:
@@ -211,11 +194,7 @@ class Registry:
     def list_invent_slots(self, phase: int | None = None) -> list[InventSlot]:
         if phase is not None:
             return list(self._phases[phase].invent_slots.values())
-        return [
-            s
-            for p in _LLM_PHASES
-            for s in self._phases[p].invent_slots.values()
-        ]
+        return [s for p in _LLM_PHASES for s in self._phases[p].invent_slots.values()]
 
     def lookup_tool(self, name: str, phase: int | None = None) -> Tool | None:
         if phase is not None:
@@ -225,9 +204,7 @@ class Registry:
                 return self._phases[p].tools[name]
         return None
 
-    def lookup_invent_slot(
-        self, name: str, phase: int | None = None
-    ) -> InventSlot | None:
+    def lookup_invent_slot(self, name: str, phase: int | None = None) -> InventSlot | None:
         if phase is not None:
             return self._phases[phase].invent_slots.get(name)
         for p in _LLM_PHASES:
@@ -269,12 +246,13 @@ def get_registry() -> Registry:
     if not _LOCAL_EXTENSIONS_LOADED:
         _LOCAL_EXTENSIONS_LOADED = True  # set first so failure can't loop
         import os
+
         if not os.environ.get("COMPGEN_DISABLE_LOCAL_EXTENSIONS"):
             try:
                 from compgen.agent.extensions.local_loader import load_local_extensions
 
                 load_local_extensions(_GLOBAL_REGISTRY)
-            except Exception:   # noqa: BLE001
+            except Exception:  # noqa: BLE001
                 # Loader is designed to never raise, but belt-and-braces
                 # here so a truly broken install never breaks registry
                 # initialisation.

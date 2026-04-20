@@ -2,14 +2,11 @@
 
 from __future__ import annotations
 
-import importlib
-import os
 import sys
 import textwrap
 from pathlib import Path
 
 import pytest
-
 from compgen.packs import (
     discover_packs,
     load_discovered_packs,
@@ -61,9 +58,7 @@ def _patch_entry_points(monkeypatch: pytest.MonkeyPatch, entries: list[_FakeEntr
             return entries
         return []
 
-    monkeypatch.setattr(
-        "compgen.packs.registry.importlib.metadata.entry_points", fake_entry_points
-    )
+    monkeypatch.setattr("compgen.packs.registry.importlib.metadata.entry_points", fake_entry_points)
 
 
 # --- resolve_entry_point_target ------------------------------------------------
@@ -86,9 +81,7 @@ def test_resolve_entry_point_with_path_attr(tmp_path: Path, monkeypatch: pytest.
 
     helper = tmp_path / "fakepack_b_helper"
     helper.mkdir()
-    (helper / "__init__.py").write_text(
-        f"from pathlib import Path\nPACK_ROOT = Path({str(pack_root)!r})\n"
-    )
+    (helper / "__init__.py").write_text(f"from pathlib import Path\nPACK_ROOT = Path({str(pack_root)!r})\n")
 
     monkeypatch.syspath_prepend(str(tmp_path))
 
@@ -102,9 +95,7 @@ def test_resolve_entry_point_with_callable_attr(tmp_path: Path, monkeypatch: pyt
 
     helper = tmp_path / "fakepack_c_helper"
     helper.mkdir()
-    (helper / "__init__.py").write_text(
-        f"def get_pack_root():\n    return {str(pack_root)!r}\n"
-    )
+    (helper / "__init__.py").write_text(f"def get_pack_root():\n    return {str(pack_root)!r}\n")
 
     monkeypatch.syspath_prepend(str(tmp_path))
     resolved = resolve_entry_point_target("fakepack_c_helper:get_pack_root")
@@ -128,9 +119,7 @@ def test_discover_packs_repo_only(tmp_path: Path) -> None:
     _write_manifest(repo_root / "userpacks" / "alpha", "alpha")
     _write_manifest(repo_root / "userpacks" / "beta", "beta")
 
-    found = discover_packs(
-        repo_root=repo_root, include_entry_points=False, include_env=False
-    )
+    found = discover_packs(repo_root=repo_root, include_entry_points=False, include_env=False)
     names = [p.name for p in found]
     assert names == ["alpha", "beta"]
 
@@ -140,9 +129,7 @@ def test_discover_packs_env_var_direct(tmp_path: Path, monkeypatch: pytest.Monke
     _write_manifest(pack, "my_pack")
 
     monkeypatch.setenv(ENV_VAR, str(pack))
-    found = discover_packs(
-        repo_root=tmp_path / "no_repo", include_entry_points=False
-    )
+    found = discover_packs(repo_root=tmp_path / "no_repo", include_entry_points=False)
     assert [p.resolve() for p in found] == [pack.resolve()]
 
 
@@ -152,9 +139,7 @@ def test_discover_packs_env_var_parent_dir(tmp_path: Path, monkeypatch: pytest.M
     _write_manifest(parent / "two", "two")
 
     monkeypatch.setenv(ENV_VAR, str(parent))
-    found = discover_packs(
-        repo_root=tmp_path / "no_repo", include_entry_points=False
-    )
+    found = discover_packs(repo_root=tmp_path / "no_repo", include_entry_points=False)
     assert sorted(p.name for p in found) == ["one", "two"]
 
 
@@ -183,13 +168,9 @@ def test_discover_packs_deduplicates(tmp_path: Path, monkeypatch: pytest.MonkeyP
     monkeypatch.setenv(ENV_VAR, str(pack))
     pkg_dir = tmp_path / "dup_pack_module"
     pkg_dir.mkdir()
-    (pkg_dir / "__init__.py").write_text(
-        f"from pathlib import Path\nPACK_ROOT = Path({str(pack)!r})\n"
-    )
+    (pkg_dir / "__init__.py").write_text(f"from pathlib import Path\nPACK_ROOT = Path({str(pack)!r})\n")
     monkeypatch.syspath_prepend(str(tmp_path))
-    _patch_entry_points(
-        monkeypatch, [_FakeEntryPoint("dup_pack", "dup_pack_module:PACK_ROOT")]
-    )
+    _patch_entry_points(monkeypatch, [_FakeEntryPoint("dup_pack", "dup_pack_module:PACK_ROOT")])
 
     found = discover_packs(repo_root=repo_root)
     # Three sources reference the same pack — must dedupe to one
@@ -202,9 +183,7 @@ def test_load_discovered_packs_end_to_end(tmp_path: Path, monkeypatch: pytest.Mo
     _write_manifest(pack, "loaded_pack")
     monkeypatch.setenv(ENV_VAR, str(pack))
 
-    loaded = load_discovered_packs(
-        repo_root=tmp_path / "no_repo", include_entry_points=False
-    )
+    loaded = load_discovered_packs(repo_root=tmp_path / "no_repo", include_entry_points=False)
     assert len(loaded) == 1
     assert loaded[0].manifest.name == "loaded_pack"
 

@@ -62,9 +62,10 @@ The same selection is mirrored into `COMPGEN_LLM_BACKEND` / `COMPGEN_LLM_MODEL` 
 
 ## Compile a model end-to-end
 
-Stage B's pipeline driver takes any `nn.Module` + example inputs + a
-`CompGenOptions` preset and runs 37 optimization passes across 5
-dialects:
+`compgen.pipeline.compile_and_diff` takes an `nn.Module`, example inputs,
+and a `CompGenOptions` preset; it captures the graph, runs the staged
+xDSL pipeline, and returns a differential report against the eager
+reference.
 
 ```python
 import torch
@@ -94,31 +95,19 @@ print("opaque rate:", report.opaque_rate)
 print("compiled diff:", report.compiled_diff_max_abs)
 ```
 
-## What Stage B ships
+## What's in the box
 
-- **37 passes** across 12 waves: structural, quantization, layout,
-  distributed (SPMD + AllReduce / AllGather / ReduceScatter +
-  pipeline parallel + collective_quantizer), control-flow,
-  codegen-quality, Event Tensor (arXiv:2604.13327v1),
-  runtime / Phase-5, rematerialization, scatter / gather
-  expansion.
-- **5 custom dialects**: `compgen.quant` (TorchAO AffineQuantizedTensor
-  mirror), `compgen.tensor_ext` (Concat / Pack / Unpack),
-  `compgen.linalg_ext` (Softmax / RMSNorm / LayerNorm / RoPE /
-  SwiGLU / GELU / SiLU), `compgen.event` (Event Tensor), and
-  `compgen.collective` (AllReduce / AllGather / ReduceScatter /
-  Broadcast).
-- **FP8 + HMX** types: `Float8E4M3FNType`, `Float8E5M2Type`, four
-  HMX tile primitives on `compgen.accel`.
-- **Pipeline infrastructure**: options preset system
-  (cuda_a100 / cuda_h100 / npu_fp8), LRU pipeline cache,
-  differential test harness, CPU reference executor, Triton kernel
-  emitter skeleton, autotuner, benchmark harness.
-- **9 real-workload fixtures**: attention_mlp_tiny,
-  qwen_moe_tiny, smolvla_tiny, gemma_decode_tiny,
-  tinyllama_block_tiny, vla_decoder_tiny,
-  tinyllama_stack_3, gemma_stack_3, smolvla_stack_2 — all
-  compile + execute end-to-end through the pipeline.
+- Staged xDSL pipeline covering structural, quantization, layout,
+  distributed, control-flow, and runtime-side passes.
+- Custom dialects `compgen.quant`, `compgen.tensor_ext`,
+  `compgen.linalg_ext`, `compgen.event`, `compgen.collective`, plus
+  FP8 + HMX tile primitives on `compgen.accel`.
+- `CompGenOptions` presets (`cuda_a100`, `cuda_h100`, `npu_fp8`), an
+  LRU pipeline cache, a differential test harness, a CPU reference
+  executor, a Triton kernel emitter, an autotuner, and a benchmark
+  harness.
+- Real-workload fixtures under `tests/_fixtures/` (SmolVLA, Gemma,
+  TinyLlama, Qwen-MoE, VLA-decoder) used by the pipeline probes.
 
 ## License
 

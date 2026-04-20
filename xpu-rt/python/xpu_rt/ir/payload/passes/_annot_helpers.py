@@ -10,7 +10,7 @@ stay small.
 
 from __future__ import annotations
 
-from typing import Any, Callable, Iterable
+from collections.abc import Callable, Iterable
 
 from xdsl.dialects.builtin import IntegerAttr, ModuleOp, StringAttr, i64
 from xdsl.ir import Operation

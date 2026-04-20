@@ -13,13 +13,12 @@ from xdsl.dialects.builtin import (
     IntegerAttr,
     IntegerType,
     ModuleOp,
-    StringAttr,
     SymbolRefAttr,
 )
 from xdsl.ir import Block
 
 from compgen.ir.layout.attrs import PackSpecAttr
-from compgen.ir.layout.ops import PackOp, SetLayoutOp, UnpackOp, UnsetLayoutOp
+from compgen.ir.layout.ops import PackOp, SetLayoutOp, UnsetLayoutOp
 
 log = structlog.get_logger()
 
@@ -35,7 +34,6 @@ def materialize_layout_boundaries(module: ModuleOp) -> ModuleOp:
       UnsetLayout position.
     - Remove the virtual SetLayoutOp/UnsetLayoutOp.
     """
-    from xdsl.dialects.func import FuncOp, ReturnOp
 
     materialized = 0
     removed_virtual = 0

@@ -15,7 +15,6 @@ from typing import Any
 
 from compgen.ir.layout.attrs import PackSpecAttr
 
-
 # MMA tile shapes for common GPU generations
 _MMA_TILE_SHAPES: dict[str, dict[str, list[int]]] = {
     # A100 / H100 tensor core tiles
@@ -95,14 +94,8 @@ class CudaLayoutResolver:
 
     def materialize(self, specialized: PackSpecAttr) -> dict[str, Any]:
         """Return CUDA-specific materialization metadata."""
-        inner = [
-            a.value.data if hasattr(a, "value") else 0
-            for a in specialized.inner_tiles.data
-        ]
-        perm = [
-            a.value.data if hasattr(a, "value") else 0
-            for a in specialized.outer_perm.data
-        ]
+        inner = [a.value.data if hasattr(a, "value") else 0 for a in specialized.inner_tiles.data]
+        perm = [a.value.data if hasattr(a, "value") else 0 for a in specialized.outer_perm.data]
         return {
             "inner_tiles": inner,
             "outer_perm": perm,

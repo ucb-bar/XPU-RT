@@ -54,9 +54,10 @@ EQSAT_PROMPT = textwrap.dedent("""\
 
 def format_prompt(ctx: EqSatContext) -> str:
     """Render the eqsat rule proposal prompt."""
-    prior = "\n".join(
-        f"  - {name}: {imp:+.1f}%" for name, imp in zip(ctx.prior_rules, ctx.prior_improvements)
-    ) or "  (none yet)"
+    prior = (
+        "\n".join(f"  - {name}: {imp:+.1f}%" for name, imp in zip(ctx.prior_rules, ctx.prior_improvements))
+        or "  (none yet)"
+    )
     return EQSAT_PROMPT.format(
         egraph_summary=ctx.egraph_summary,
         target_name=ctx.target_name,

@@ -1,14 +1,17 @@
 """Prompt for LLM-guided guard expression synthesis."""
+
 from __future__ import annotations
+
 import json
 import re
 import textwrap
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
 class GuardProposeContext:
     """Context for guard synthesis prompt."""
+
     variable_names: list[str]
     variable_types: dict[str, str]  # e.g. {"M": "int", "batch": "int"}
     positive_examples_summary: str
@@ -76,10 +79,7 @@ GUARD_PROPOSE_SCHEMA = {
 
 def format_prompt(ctx: GuardProposeContext) -> str:
     """Format the guard proposal prompt."""
-    variables = "\n".join(
-        f"  - {name}: {ctx.variable_types.get(name, 'int')}"
-        for name in ctx.variable_names
-    )
+    variables = "\n".join(f"  - {name}: {ctx.variable_types.get(name, 'int')}" for name in ctx.variable_names)
     return GUARD_PROPOSE_PROMPT.format(
         variables=variables,
         num_positives=ctx.num_positives,
@@ -94,7 +94,7 @@ def parse_response(text: str) -> list[dict] | None:
     try:
         data = json.loads(text)
     except json.JSONDecodeError:
-        m = re.search(r'\{.*\}', text, re.DOTALL)
+        m = re.search(r"\{.*\}", text, re.DOTALL)
         if m:
             try:
                 data = json.loads(m.group())

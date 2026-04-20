@@ -24,9 +24,7 @@ def _make_tool(name: str, phase: int, stub: bool, kind: str = "tool") -> Tool:
         kind=kind,
         wraps_pass="stub",
         autocomp_cost_impact="low",
-        args=(
-            ToolArg("region", "region_ref", "region", required=False, default=""),
-        ),
+        args=(ToolArg("region", "region_ref", "region", required=False, default=""),),
         result=ToolResult("ok", "ok"),
         description=name,
         impl=_noop_impl,
@@ -110,8 +108,8 @@ def test_default_args_merge_with_tool_defaults() -> None:
 
 def test_policy_against_real_registry() -> None:
     """Sanity-check against the live registry populated on import."""
-    import compgen.llm.tools  # noqa: F401
     import compgen.agent.invent_slots  # noqa: F401
+    import compgen.llm.tools  # noqa: F401
     from compgen.llm import get_registry
 
     r = get_registry()

@@ -129,9 +129,7 @@ _SLOT_SPECS: tuple[dict[str, Any], ...] = (
     {
         "name": "propose_scheduling_policy",
         "phase": 4,
-        "input_schema": (
-            "megakernel_ref + per_sm_resource_model + has_data_dependent_edges"
-        ),
+        "input_schema": ("megakernel_ref + per_sm_resource_model + has_data_dependent_edges"),
         "output_op": "recipe.propose_scheduling_policy",
         "autocomp_cost_impact": "high",
         "description": (
@@ -183,10 +181,12 @@ def register_invent_slots(registry: Registry | None = None) -> list[str]:
     # has accepted across multiple workloads/targets into named tools.
     try:
         import os
+
         if not os.environ.get("COMPGEN_DISABLE_CROSS_SESSION_GRADUATION"):
             from compgen.promotion.cross_session import promote_pending_graduations
+
             promote_pending_graduations(reg)
-    except Exception:   # noqa: BLE001
+    except Exception:  # noqa: BLE001
         pass
 
     # Self-extension graduation — promotes LLM-authored tools whose
@@ -196,15 +196,17 @@ def register_invent_slots(registry: Registry | None = None) -> list[str]:
     # registered yet this call is a no-op.
     try:
         import os
+
         if not os.environ.get("COMPGEN_DISABLE_AUTHORED_GRADUATION"):
-            from compgen.agent.self_extension.graduate import (
-                promote_authored_tools,
-            )
             from compgen.agent.self_extension._index import (
                 snapshot_authored_index,
             )
+            from compgen.agent.self_extension.graduate import (
+                promote_authored_tools,
+            )
+
             promote_authored_tools(reg, authored_index=snapshot_authored_index())
-    except Exception:   # noqa: BLE001
+    except Exception:  # noqa: BLE001
         pass
 
     return newly_registered

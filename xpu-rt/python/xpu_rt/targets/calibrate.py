@@ -102,16 +102,26 @@ class Calibrator:
                 log.info("calibrator.run_benchmark", benchmark=bench_name, samples=self.num_samples)
                 value = device_handle.run_benchmark(bench_name, {"num_samples": self.num_samples})
                 unit = _BENCHMARK_UNITS.get(bench_name, "units")
-                results.append(CalibrationResult(
-                    benchmark=bench_name, value=value, unit=unit, samples=self.num_samples,
-                ))
+                results.append(
+                    CalibrationResult(
+                        benchmark=bench_name,
+                        value=value,
+                        unit=unit,
+                        samples=self.num_samples,
+                    )
+                )
             else:
                 # Synthetic defaults from profile cost_model
                 default_value = profile.cost_model.get(bench_name, 0.0)
                 unit = _BENCHMARK_UNITS.get(bench_name, "units")
-                results.append(CalibrationResult(
-                    benchmark=bench_name, value=default_value, unit=unit, samples=0,
-                ))
+                results.append(
+                    CalibrationResult(
+                        benchmark=bench_name,
+                        value=default_value,
+                        unit=unit,
+                        samples=0,
+                    )
+                )
 
         # Update profile calibration_data
         cal_data = dict(profile.calibration_data)

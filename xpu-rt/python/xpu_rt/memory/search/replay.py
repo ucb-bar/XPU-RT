@@ -8,11 +8,10 @@ replay component.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
 
 import structlog
 
-from compgen.memory.schema import EpisodeStep, StateSignature
+from compgen.memory.schema import EpisodeStep
 from compgen.memory.store import CompilerMemory
 
 log = structlog.get_logger()
@@ -97,9 +96,7 @@ class ReplayBuffer:
             Trajectories sorted by total reward (best first).
         """
         # Get all tasks of this kind
-        rows = self.memory.db.fetchall(
-            "SELECT task_id FROM tasks WHERE task_kind = ?", (task_kind,)
-        )
+        rows = self.memory.db.fetchall("SELECT task_id FROM tasks WHERE task_kind = ?", (task_kind,))
 
         trajectories: list[Trajectory] = []
         for row in rows:

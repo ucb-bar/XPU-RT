@@ -20,13 +20,22 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from xdsl.dialects.builtin import ModuleOp, StringAttr, TensorType
-from xdsl.ir import Operation
 
-
-_RECOMPUTABLE_HINTS: frozenset[str] = frozenset({
-    "layer_norm", "rms_norm", "softmax", "silu", "gelu",
-    "sub", "mul", "div", "add", "sigmoid", "pow_tensor_scalar",
-})
+_RECOMPUTABLE_HINTS: frozenset[str] = frozenset(
+    {
+        "layer_norm",
+        "rms_norm",
+        "softmax",
+        "silu",
+        "gelu",
+        "sub",
+        "mul",
+        "div",
+        "add",
+        "sigmoid",
+        "pow_tensor_scalar",
+    }
+)
 
 
 @dataclass(frozen=True)

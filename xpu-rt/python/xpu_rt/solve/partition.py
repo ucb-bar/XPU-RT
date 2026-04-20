@@ -93,13 +93,15 @@ def partition_graph(module: ModuleOp, max_partitions: int = 64) -> list[Partitio
                     if dep_pid != pid and dep_pid not in deps:
                         deps.append(dep_pid)
 
-        partitions.append(Partition(
-            partition_id=pid,
-            op_names=[op.name],
-            dependencies=deps,
-            estimated_cost_us=1.0 if not isinstance(op, MatmulOp) else 10.0,
-            memory_bytes=_estimate_op_bytes(op),
-        ))
+        partitions.append(
+            Partition(
+                partition_id=pid,
+                op_names=[op.name],
+                dependencies=deps,
+                estimated_cost_us=1.0 if not isinstance(op, MatmulOp) else 10.0,
+                memory_bytes=_estimate_op_bytes(op),
+            )
+        )
 
         if partition_count >= max_partitions:
             break

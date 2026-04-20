@@ -21,7 +21,7 @@ Per `analysis/proposed_compgen_architecture.md` and
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, ClassVar
 
 from xdsl.dialects.builtin import ModuleOp
@@ -67,9 +67,7 @@ class PayloadPass:
         )
 
     def tool_result(self) -> ToolResult:
-        return ToolResult(
-            dtype="ModuleOp", description="rewritten module (cloned)"
-        )
+        return ToolResult(dtype="ModuleOp", description="rewritten module (cloned)")
 
     # --- implementation (override in subclass) ---
     def run(self, module: ModuleOp, **kwargs: Any) -> ModuleOp:  # noqa: D401
@@ -94,7 +92,7 @@ class PayloadPass:
             return {"status": "error", "reason": "missing required kwarg 'module'"}
         try:
             new_module = self.run(module, **kwargs)
-        except Exception as e:   # noqa: BLE001
+        except Exception as e:  # noqa: BLE001
             return {
                 "status": "error",
                 "reason": f"{type(e).__name__}: {e}",

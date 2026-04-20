@@ -119,12 +119,7 @@ def solve_placement(
     # Memory capacity constraints
     if device_memory_caps:
         for d in range(num_devices):
-            model.add(
-                sum(
-                    p.memory_bytes * x[(p.partition_id, d)]
-                    for p in partitions
-                ) <= device_memory_caps[d]
-            )
+            model.add(sum(p.memory_bytes * x[(p.partition_id, d)] for p in partitions) <= device_memory_caps[d])
 
     # Objective: minimize compute cost + transfer cost
     # Scale to integers for CP-SAT (multiply by 1000 for microseconds precision)

@@ -8,7 +8,6 @@ both local (beam search) and global (frontier) search loops.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
 
 from compgen.memory.schema import KnowledgeItem, ObjectKind, StateSignature
 

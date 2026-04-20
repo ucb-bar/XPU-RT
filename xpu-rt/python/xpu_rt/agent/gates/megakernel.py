@@ -26,7 +26,6 @@ from __future__ import annotations
 
 from typing import Any
 
-
 _REQUIRED_TARGET_FEATURES = ("persistent_kernels", "semaphore_atomics")
 _VALID_POLICIES = ("static", "dynamic")
 
@@ -125,9 +124,7 @@ def megakernel_persistent_kernel_gate(
     target_features = ctx.get("target_features")
     if target_features is not None:
         feature_set = {str(f) for f in target_features}
-        missing = [
-            feat for feat in _REQUIRED_TARGET_FEATURES if feat not in feature_set
-        ]
+        missing = [feat for feat in _REQUIRED_TARGET_FEATURES if feat not in feature_set]
         if missing:
             return {
                 "status": "rejected",

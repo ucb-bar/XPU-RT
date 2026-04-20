@@ -7,7 +7,6 @@ import os
 from types import SimpleNamespace
 
 import pytest
-
 from compgen.llm.base import GenerationRequest, LLMConfig, Objective, PromptContext
 from compgen.llm.gemini_client import GeminiClient
 

@@ -61,11 +61,7 @@ class ManifestExtensionPack:
                 details={"reason": "source_root_missing"},
             )
 
-        missing = tuple(
-            rel_path
-            for rel_path in self.manifest.expected_files
-            if not (source_root / rel_path).exists()
-        )
+        missing = tuple(rel_path for rel_path in self.manifest.expected_files if not (source_root / rel_path).exists())
         details = {
             "kinds": list(self.manifest.kinds),
             "reference_runner": self.manifest.reference_runner,
@@ -123,4 +119,3 @@ class ManifestExtensionPack:
             worktree_path=worktree_path,
             llvm_fork_path=llvm_fork_path,
         )
-

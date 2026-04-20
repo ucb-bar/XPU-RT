@@ -10,6 +10,7 @@ from benchmarks.record import RunRecord
 
 try:
     import matplotlib  # noqa: F401
+
     HAS_MATPLOTLIB = True
 except ImportError:
     HAS_MATPLOTLIB = False
@@ -58,6 +59,7 @@ def _make_sample_records() -> list[RunRecord]:
 @pytest.mark.skipif(not HAS_MATPLOTLIB, reason="matplotlib not installed")
 def test_all_plots_generate() -> None:
     from benchmarks.plots import generate_all_plots
+
     records = _make_sample_records()
     with tempfile.TemporaryDirectory() as tmpdir:
         paths = generate_all_plots(records, tmpdir)
@@ -71,6 +73,7 @@ def test_all_plots_generate() -> None:
 @pytest.mark.skipif(not HAS_MATPLOTLIB, reason="matplotlib not installed")
 def test_convergence_plot() -> None:
     from benchmarks.plots import plot_convergence
+
     records = _make_sample_records()
     with tempfile.TemporaryDirectory() as tmpdir:
         path = plot_convergence(records, tmpdir)
@@ -81,6 +84,7 @@ def test_convergence_plot() -> None:
 @pytest.mark.skipif(not HAS_MATPLOTLIB, reason="matplotlib not installed")
 def test_baseline_comparison_plot() -> None:
     from benchmarks.plots import plot_baseline_comparison
+
     records = _make_sample_records()
     with tempfile.TemporaryDirectory() as tmpdir:
         path = plot_baseline_comparison(records, tmpdir)

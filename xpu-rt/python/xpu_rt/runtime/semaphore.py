@@ -49,10 +49,7 @@ class TimelineSemaphore:
         """
         async with self._condition:
             if target < self._value:
-                raise ValueError(
-                    f"TimelineSemaphore({self.name}): cannot go backwards "
-                    f"({self._value} -> {target})"
-                )
+                raise ValueError(f"TimelineSemaphore({self.name}): cannot go backwards ({self._value} -> {target})")
             self._value = target
             log.debug("timeline.signal", name=self.name, value=target)
             self._condition.notify_all()

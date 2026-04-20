@@ -37,7 +37,6 @@ from xdsl.utils.exceptions import VerifyException
 
 from compgen.ir.recipe.attrs import ProvenanceAttr
 
-
 # ---------------------------------------------------------------------------
 # Shared payload dataclass (Python-side)
 # ---------------------------------------------------------------------------
@@ -110,8 +109,7 @@ def _verify_payload_shape(payload_str: str, op_name: str) -> None:
         raise VerifyException(f"{op_name}.payload missing 'select_vs_invent'")
     if parsed["select_vs_invent"] not in ("select", "invent"):
         raise VerifyException(
-            f"{op_name}.payload.select_vs_invent must be 'select' or 'invent', "
-            f"got {parsed['select_vs_invent']!r}"
+            f"{op_name}.payload.select_vs_invent must be 'select' or 'invent', got {parsed['select_vs_invent']!r}"
         )
 
 
@@ -133,7 +131,7 @@ class ProposeLayoutPlanOp(IRDLOperation):
 
     sym_name = opt_prop_def(StringAttr)
     region_ref = prop_def(SymbolRefAttr)
-    payload = prop_def(StringAttr)              # JSON ProposePayload
+    payload = prop_def(StringAttr)  # JSON ProposePayload
     guard_refs = opt_prop_def(ArrayAttr)
     provenance = opt_prop_def(ProvenanceAttr)
 
@@ -157,7 +155,7 @@ class ProposeFusionOp(IRDLOperation):
     name = "recipe.propose_fusion"
 
     sym_name = opt_prop_def(StringAttr)
-    grouped_regions = prop_def(ArrayAttr)        # ArrayAttr of SymbolRefAttr
+    grouped_regions = prop_def(ArrayAttr)  # ArrayAttr of SymbolRefAttr
     payload = prop_def(StringAttr)
     guard_refs = opt_prop_def(ArrayAttr)
     provenance = opt_prop_def(ProvenanceAttr)
@@ -167,9 +165,7 @@ class ProposeFusionOp(IRDLOperation):
     def verify_(self) -> None:
         _verify_payload_shape(self.payload.data, self.name)
         if len(self.grouped_regions.data) < 1:
-            raise VerifyException(
-                f"{self.name} requires at least 1 region in grouped_regions"
-            )
+            raise VerifyException(f"{self.name} requires at least 1 region in grouped_regions")
 
     def get_payload(self) -> ProposePayload:
         return ProposePayload.from_json(self.payload.data)
@@ -193,9 +189,7 @@ class ProposeMultiOutputFusionOp(IRDLOperation):
     def verify_(self) -> None:
         _verify_payload_shape(self.payload.data, self.name)
         if self.producer_output_count.value.data < 2:
-            raise VerifyException(
-                f"{self.name} requires producer_output_count >= 2"
-            )
+            raise VerifyException(f"{self.name} requires producer_output_count >= 2")
 
     def get_payload(self) -> ProposePayload:
         return ProposePayload.from_json(self.payload.data)
@@ -214,7 +208,7 @@ class ProposePeepholePatternOp(IRDLOperation):
 
     sym_name = opt_prop_def(StringAttr)
     region_ref = prop_def(SymbolRefAttr)
-    pattern_class = prop_def(StringAttr)        # "attention_variant" / "activation_idiom" / ...
+    pattern_class = prop_def(StringAttr)  # "attention_variant" / "activation_idiom" / ...
     payload = prop_def(StringAttr)
     guard_refs = opt_prop_def(ArrayAttr)
     provenance = opt_prop_def(ProvenanceAttr)
@@ -280,7 +274,7 @@ class ProposeShardingPlanOp(IRDLOperation):
     name = "recipe.propose_sharding_plan"
 
     sym_name = opt_prop_def(StringAttr)
-    module_ref = prop_def(SymbolRefAttr)        # whole-module reference
+    module_ref = prop_def(SymbolRefAttr)  # whole-module reference
     payload = prop_def(StringAttr)
     guard_refs = opt_prop_def(ArrayAttr)
     provenance = opt_prop_def(ProvenanceAttr)
@@ -301,7 +295,7 @@ class ProposeBufferLifetimePlanOp(IRDLOperation):
     name = "recipe.propose_buffer_lifetime_plan"
 
     sym_name = opt_prop_def(StringAttr)
-    plan_ref = prop_def(SymbolRefAttr)          # references an execution plan
+    plan_ref = prop_def(SymbolRefAttr)  # references an execution plan
     payload = prop_def(StringAttr)
     guard_refs = opt_prop_def(ArrayAttr)
     provenance = opt_prop_def(ProvenanceAttr)
@@ -334,8 +328,7 @@ class ProposeRematerializationPlanOp(IRDLOperation):
         _verify_payload_shape(self.payload.data, self.name)
         if self.memory_budget_bytes.value.data <= 0:
             raise VerifyException(
-                f"{self.name} memory_budget_bytes must be positive, "
-                f"got {self.memory_budget_bytes.value.data}"
+                f"{self.name} memory_budget_bytes must be positive, got {self.memory_budget_bytes.value.data}"
             )
 
     def get_payload(self) -> ProposePayload:
@@ -350,7 +343,7 @@ class ProposeCollectivePipelineOp(IRDLOperation):
 
     sym_name = opt_prop_def(StringAttr)
     region_ref = prop_def(SymbolRefAttr)
-    direction = prop_def(StringAttr)            # "forward" / "backward" / "host_offload"
+    direction = prop_def(StringAttr)  # "forward" / "backward" / "host_offload"
     payload = prop_def(StringAttr)
     guard_refs = opt_prop_def(ArrayAttr)
     provenance = opt_prop_def(ProvenanceAttr)
@@ -361,8 +354,7 @@ class ProposeCollectivePipelineOp(IRDLOperation):
         _verify_payload_shape(self.payload.data, self.name)
         if self.direction.data not in ("forward", "backward", "host_offload"):
             raise VerifyException(
-                f"{self.name} direction must be forward|backward|host_offload, "
-                f"got {self.direction.data!r}"
+                f"{self.name} direction must be forward|backward|host_offload, got {self.direction.data!r}"
             )
 
     def get_payload(self) -> ProposePayload:
@@ -392,9 +384,9 @@ class ProposeMegakernelSynthesisOp(IRDLOperation):
     name = "recipe.propose_megakernel_synthesis"
 
     sym_name = opt_prop_def(StringAttr)
-    fused_region_refs = prop_def(ArrayAttr)         # ArrayAttr of SymbolRefAttr
+    fused_region_refs = prop_def(ArrayAttr)  # ArrayAttr of SymbolRefAttr
     target_device_ref = opt_prop_def(SymbolRefAttr)
-    payload = prop_def(StringAttr)                  # JSON ProposePayload
+    payload = prop_def(StringAttr)  # JSON ProposePayload
     guard_refs = opt_prop_def(ArrayAttr)
     provenance = opt_prop_def(ProvenanceAttr)
 
@@ -403,9 +395,7 @@ class ProposeMegakernelSynthesisOp(IRDLOperation):
     def verify_(self) -> None:
         _verify_payload_shape(self.payload.data, self.name)
         if len(self.fused_region_refs.data) < 1:
-            raise VerifyException(
-                f"{self.name} requires at least 1 region in fused_region_refs"
-            )
+            raise VerifyException(f"{self.name} requires at least 1 region in fused_region_refs")
 
     def get_payload(self) -> ProposePayload:
         return ProposePayload.from_json(self.payload.data)
@@ -434,7 +424,7 @@ class ProposeSchedulingPolicyOp(IRDLOperation):
 
     sym_name = opt_prop_def(StringAttr)
     megakernel_ref = prop_def(SymbolRefAttr)
-    payload = prop_def(StringAttr)                  # JSON ProposePayload
+    payload = prop_def(StringAttr)  # JSON ProposePayload
     guard_refs = opt_prop_def(ArrayAttr)
     provenance = opt_prop_def(ProvenanceAttr)
 
@@ -447,10 +437,7 @@ class ProposeSchedulingPolicyOp(IRDLOperation):
         chosen = json.loads(self.payload.data).get("chosen", {})
         policy = chosen.get("policy")
         if policy is not None and policy not in self._VALID_POLICIES:
-            raise VerifyException(
-                f"{self.name} chosen.policy must be one of "
-                f"{self._VALID_POLICIES}, got {policy!r}"
-            )
+            raise VerifyException(f"{self.name} chosen.policy must be one of {self._VALID_POLICIES}, got {policy!r}")
 
     def get_payload(self) -> ProposePayload:
         return ProposePayload.from_json(self.payload.data)

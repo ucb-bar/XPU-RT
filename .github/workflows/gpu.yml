@@ -29,7 +29,7 @@ jobs:
           curl -LsSf https://astral.sh/uv/install.sh | sh
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
       - name: Install dependencies
-        run: uv sync --frozen
+        run: uv sync --frozen --extra dev --extra mcp --extra quantization --extra solve --extra demo
       - name: nvidia-smi
         run: nvidia-smi || (echo "No CUDA on this runner" && exit 1)
       - name: Run GPU-gated tests

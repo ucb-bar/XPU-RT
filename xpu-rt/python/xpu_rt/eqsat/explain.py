@@ -62,12 +62,14 @@ def summarize_egraph(module: ModuleOp) -> EGraphSummary:
                     op_type_counts[op_name] = op_type_counts.get(op_name, 0) + 1
                     total_enodes += 1
 
-            eclass_summaries.append(EClassSummary(
-                eclass_id=eclass_id,
-                num_alternatives=len(op.operands),
-                op_types=tuple(op_types),
-                has_constant=has_constant,
-            ))
+            eclass_summaries.append(
+                EClassSummary(
+                    eclass_id=eclass_id,
+                    num_alternatives=len(op.operands),
+                    op_types=tuple(op_types),
+                    has_constant=has_constant,
+                )
+            )
             eclass_id += 1
 
     ambiguous = sum(1 for s in eclass_summaries if s.num_alternatives > 1)
@@ -103,9 +105,6 @@ def summary_to_prompt(summary: EGraphSummary) -> str:
     if summary.ambiguous_eclasses > 0:
         ambiguous = [s for s in summary.eclass_summaries if s.num_alternatives > 1]
         for s in ambiguous[:5]:
-            lines.append(
-                f"  eclass_{s.eclass_id}: {s.num_alternatives} alternatives "
-                f"[{', '.join(s.op_types)}]"
-            )
+            lines.append(f"  eclass_{s.eclass_id}: {s.num_alternatives} alternatives [{', '.join(s.op_types)}]")
 
     return "\n".join(lines)

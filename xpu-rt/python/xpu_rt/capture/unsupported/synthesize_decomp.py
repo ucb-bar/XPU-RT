@@ -56,7 +56,10 @@ def _decomp_baddbmm(
 
 
 def _decomp_linear(
-    input: torch.Tensor, weight: torch.Tensor, bias: torch.Tensor | None = None, **_: Any,
+    input: torch.Tensor,
+    weight: torch.Tensor,
+    bias: torch.Tensor | None = None,
+    **_: Any,
 ) -> torch.Tensor:
     """linear(input, weight, bias) -> mm(input, weight^T) + bias."""
     result = torch.mm(input, weight.t()) if input.dim() == 2 else torch.matmul(input, weight.t())

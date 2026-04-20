@@ -143,7 +143,7 @@ class KernelValidator:
                     diagnostics=["Output is not a tensor"],
                 )
 
-            diff = (actual_outputs.float() - ref.float())
+            diff = actual_outputs.float() - ref.float()
             l2_error = float(torch.norm(diff).item())
             max_abs_error = float(torch.max(torch.abs(diff)).item())
 

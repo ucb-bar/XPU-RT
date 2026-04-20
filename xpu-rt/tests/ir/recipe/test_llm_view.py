@@ -10,14 +10,13 @@ Invariants:
 from __future__ import annotations
 
 import pytest
-from xdsl.dialects.builtin import ModuleOp
-from xdsl.ir import Block, Region
-
 from compgen.ir.recipe.llm_view import (
     diff_views,
     estimate_tokens,
     recipe_to_llm_view,
 )
+from xdsl.dialects.builtin import ModuleOp
+from xdsl.ir import Block, Region
 
 
 def _empty_module() -> ModuleOp:
@@ -42,9 +41,10 @@ def test_view_is_deterministic() -> None:
 
 def test_view_respects_max_ops() -> None:
     """Even with a populated recipe, max_ops caps rows."""
-    from compgen.ir.recipe.seed import generate_seed_recipe
-    from compgen.api import device
     from pathlib import Path
+
+    from compgen.api import device
+    from compgen.ir.recipe.seed import generate_seed_recipe
 
     exemplar = Path(__file__).resolve().parents[2] / "targetgen" / "exemplars" / "test_gpu_simt.yaml"
     dev = device(exemplar)
@@ -55,18 +55,17 @@ def test_view_respects_max_ops() -> None:
     recipe = generate_seed_recipe(payload, dev.profile, "latency")
 
     view = recipe_to_llm_view(recipe, max_ops=12)
-    total_rows = len(view["banner"]) + sum(
-        1 for r in view["middle"] if "_truncated" not in r
-    )
+    total_rows = len(view["banner"]) + sum(1 for r in view["middle"] if "_truncated" not in r)
     assert total_rows <= 12
 
 
 def test_view_truncation_marker() -> None:
     """When the recipe has more ops than max_ops, a _truncated row appears."""
-    from compgen.ir.recipe.seed import generate_seed_recipe
-    from compgen.api import device
-
     from pathlib import Path
+
+    from compgen.api import device
+    from compgen.ir.recipe.seed import generate_seed_recipe
+
     exemplar = Path(__file__).resolve().parents[2] / "targetgen" / "exemplars" / "test_gpu_simt.yaml"
     dev = device(exemplar)
     recipe = generate_seed_recipe(_empty_module(), dev.profile, "latency")
@@ -80,10 +79,11 @@ def test_view_truncation_marker() -> None:
 
 def test_token_budget_under_2k_for_small_recipe() -> None:
     """A small recipe's default view should fit well under 2k tokens."""
-    from compgen.ir.recipe.seed import generate_seed_recipe
-    from compgen.api import device
-
     from pathlib import Path
+
+    from compgen.api import device
+    from compgen.ir.recipe.seed import generate_seed_recipe
+
     exemplar = Path(__file__).resolve().parents[2] / "targetgen" / "exemplars" / "test_gpu_simt.yaml"
     dev = device(exemplar)
     recipe = generate_seed_recipe(_empty_module(), dev.profile, "latency")
@@ -141,10 +141,11 @@ def test_diff_views_on_unchanged() -> None:
 
 def test_focus_inlines_named_op() -> None:
     """When `focus=op_id` is supplied, the named op appears in `focused`."""
-    from compgen.ir.recipe.seed import generate_seed_recipe
-    from compgen.api import device
-
     from pathlib import Path
+
+    from compgen.api import device
+    from compgen.ir.recipe.seed import generate_seed_recipe
+
     exemplar = Path(__file__).resolve().parents[2] / "targetgen" / "exemplars" / "test_gpu_simt.yaml"
     dev = device(exemplar)
     recipe = generate_seed_recipe(_empty_module(), dev.profile, "latency")

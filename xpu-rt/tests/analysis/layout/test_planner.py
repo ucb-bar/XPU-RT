@@ -2,22 +2,26 @@
 
 from __future__ import annotations
 
-import pytest
-from compgen.analysis.layout.planner import LayoutPlanner, LayoutPlan
-from compgen.agent.analyzer import NetworkAnalysis, PatternCluster, DataFlowEdge
-from compgen.targets.schema import TargetProfile, DeviceSpec, MemoryLevel, ComputeUnit
+from compgen.agent.analyzer import NetworkAnalysis, PatternCluster
+from compgen.analysis.layout.planner import LayoutPlan, LayoutPlanner
+from compgen.targets.schema import ComputeUnit, DeviceSpec, MemoryLevel, TargetProfile
 
 
 def _mock_target() -> TargetProfile:
     return TargetProfile(
         name="test_gpu",
-        devices=[DeviceSpec(
-            device_type="gpu", name="TestGPU", vendor="test",
-            compute_units=[ComputeUnit(name="tensor_core", count=1, peak_tflops=100.0)],
-            memory_hierarchy=[MemoryLevel(name="hbm", size_bytes=1024**3)],
-            supported_ops=["matmul"], features=["tensor_core"],
-            kernel_backends=["triton"],
-        )],
+        devices=[
+            DeviceSpec(
+                device_type="gpu",
+                name="TestGPU",
+                vendor="test",
+                compute_units=[ComputeUnit(name="tensor_core", count=1, peak_tflops=100.0)],
+                memory_hierarchy=[MemoryLevel(name="hbm", size_bytes=1024**3)],
+                supported_ops=["matmul"],
+                features=["tensor_core"],
+                kernel_backends=["triton"],
+            )
+        ],
     )
 
 
@@ -25,13 +29,18 @@ def _mock_target_no_tc() -> TargetProfile:
     """Target without tensor cores."""
     return TargetProfile(
         name="test_gpu_no_tc",
-        devices=[DeviceSpec(
-            device_type="gpu", name="BasicGPU", vendor="test",
-            compute_units=[ComputeUnit(name="cuda_core", count=1, peak_tflops=10.0)],
-            memory_hierarchy=[MemoryLevel(name="hbm", size_bytes=1024**3)],
-            supported_ops=["matmul"], features=[],
-            kernel_backends=["triton"],
-        )],
+        devices=[
+            DeviceSpec(
+                device_type="gpu",
+                name="BasicGPU",
+                vendor="test",
+                compute_units=[ComputeUnit(name="cuda_core", count=1, peak_tflops=10.0)],
+                memory_hierarchy=[MemoryLevel(name="hbm", size_bytes=1024**3)],
+                supported_ops=["matmul"],
+                features=[],
+                kernel_backends=["triton"],
+            )
+        ],
     )
 
 
@@ -109,7 +118,11 @@ class TestLayoutPlanner:
         for plan in plans.values():
             assert isinstance(plan, LayoutPlan)
             assert plan.preferred_output_layout in (
-                "row_major", "tiled", "blocked", "col_major", "rowmajor",
+                "row_major",
+                "tiled",
+                "blocked",
+                "col_major",
+                "rowmajor",
             )
 
     def test_plan_keys_match_cluster_ids(self) -> None:

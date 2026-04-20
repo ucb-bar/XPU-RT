@@ -52,7 +52,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from xdsl.dialects.builtin import (
-    FunctionType,
     IntegerAttr,
     IntegerType,
     ModuleOp,
@@ -60,10 +59,9 @@ from xdsl.dialects.builtin import (
     TensorType,
 )
 from xdsl.dialects.func import CallOp, FuncOp
-from xdsl.ir import Attribute, Block, Operation, Region
+from xdsl.ir import Attribute
 
 from compgen.ir.event.ops import (
-    CallDeviceOp,
     EventTensorOp,
     GraphOp,
     NotifyOp,
@@ -137,11 +135,7 @@ def run_lower_event_tensor_to_atomic(
     config: LowerEventTensorToAtomicConfig | None = None,
 ) -> LowerEventTensorToAtomicStats:
     """Replace Event Tensor IR with atomic int-tensor primitives."""
-    cfg = (
-        config
-        if config is not None
-        else LowerEventTensorToAtomicConfig()
-    )
+    cfg = config if config is not None else LowerEventTensorToAtomicConfig()
     stats = LowerEventTensorToAtomicStats()
     elem = _counter_type(cfg.counter_dtype)
 

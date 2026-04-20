@@ -23,9 +23,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 
-pytestmark = pytest.mark.skipif(
-    not torch.cuda.is_available(), reason="real-example tests require CUDA"
-)
+pytestmark = pytest.mark.skipif(not torch.cuda.is_available(), reason="real-example tests require CUDA")
 
 
 # ---------------------------------------------------------------------------
@@ -43,26 +41,49 @@ def test_llama_decoder_layer_matches_pytorch_reference() -> None:
     H, S, D_HEAD, I = 4, 16, 16, 64
     D_HIDDEN = H * D_HEAD
     compiled = compile_llama_decoder_layer(
-        n_heads=H, seq_len=S, head_dim=D_HEAD, intermediate_dim=I,
+        n_heads=H,
+        seq_len=S,
+        head_dim=D_HEAD,
+        intermediate_dim=I,
     )
     torch.manual_seed(7)
-    x       = torch.randn((S, D_HIDDEN),       dtype=torch.float32, device="cuda") * 0.1
-    w_norm1 = torch.randn((D_HIDDEN,),         dtype=torch.float32, device="cuda") * 0.1 + 1.0
-    w_q     = torch.randn((D_HIDDEN, D_HIDDEN), dtype=torch.float32, device="cuda") * 0.05
-    w_k     = torch.randn((D_HIDDEN, D_HIDDEN), dtype=torch.float32, device="cuda") * 0.05
-    w_v     = torch.randn((D_HIDDEN, D_HIDDEN), dtype=torch.float32, device="cuda") * 0.05
-    w_o     = torch.randn((D_HIDDEN, D_HIDDEN), dtype=torch.float32, device="cuda") * 0.05
-    w_norm2 = torch.randn((D_HIDDEN,),         dtype=torch.float32, device="cuda") * 0.1 + 1.0
-    w_gate  = torch.randn((I, D_HIDDEN),       dtype=torch.float32, device="cuda") * 0.05
-    w_up    = torch.randn((I, D_HIDDEN),       dtype=torch.float32, device="cuda") * 0.05
-    w_down  = torch.randn((D_HIDDEN, I),       dtype=torch.float32, device="cuda") * 0.05
+    x = torch.randn((S, D_HIDDEN), dtype=torch.float32, device="cuda") * 0.1
+    w_norm1 = torch.randn((D_HIDDEN,), dtype=torch.float32, device="cuda") * 0.1 + 1.0
+    w_q = torch.randn((D_HIDDEN, D_HIDDEN), dtype=torch.float32, device="cuda") * 0.05
+    w_k = torch.randn((D_HIDDEN, D_HIDDEN), dtype=torch.float32, device="cuda") * 0.05
+    w_v = torch.randn((D_HIDDEN, D_HIDDEN), dtype=torch.float32, device="cuda") * 0.05
+    w_o = torch.randn((D_HIDDEN, D_HIDDEN), dtype=torch.float32, device="cuda") * 0.05
+    w_norm2 = torch.randn((D_HIDDEN,), dtype=torch.float32, device="cuda") * 0.1 + 1.0
+    w_gate = torch.randn((I, D_HIDDEN), dtype=torch.float32, device="cuda") * 0.05
+    w_up = torch.randn((I, D_HIDDEN), dtype=torch.float32, device="cuda") * 0.05
+    w_down = torch.randn((D_HIDDEN, I), dtype=torch.float32, device="cuda") * 0.05
 
     got = run_llama_decoder_layer(
-        compiled, x, w_norm1, w_q, w_k, w_v, w_o, w_norm2, w_gate, w_up, w_down,
+        compiled,
+        x,
+        w_norm1,
+        w_q,
+        w_k,
+        w_v,
+        w_o,
+        w_norm2,
+        w_gate,
+        w_up,
+        w_down,
     )
     ref = reference_decoder_layer(
-        x, w_norm1, w_q, w_k, w_v, w_o, w_norm2, w_gate, w_up, w_down,
-        n_heads=H, head_dim=D_HEAD,
+        x,
+        w_norm1,
+        w_q,
+        w_k,
+        w_v,
+        w_o,
+        w_norm2,
+        w_gate,
+        w_up,
+        w_down,
+        n_heads=H,
+        head_dim=D_HEAD,
     )
     err = (got - ref).abs().max().item()
     assert err < 5e-3, f"decoder layer diverges by {err}"
@@ -76,7 +97,10 @@ def test_llama_decoder_layer_emits_nine_device_functions() -> None:
     )
 
     compiled = compile_llama_decoder_layer(
-        n_heads=2, seq_len=16, head_dim=16, intermediate_dim=32,
+        n_heads=2,
+        seq_len=16,
+        head_dim=16,
+        intermediate_dim=32,
     )
     src = compiled.kernel_source
     for fn in (
@@ -94,8 +118,14 @@ def test_llama_decoder_layer_emits_nine_device_functions() -> None:
 
     # Eight event tensors threaded through the persistent kernel signature.
     for ev in (
-        "ENORM1_ptr", "EQKV_ptr", "ESCORES_ptr", "EATTN_ptr",
-        "EOPROJ_ptr", "ENORM2_ptr", "EGATE_ptr", "EUP_ptr",
+        "ENORM1_ptr",
+        "EQKV_ptr",
+        "ESCORES_ptr",
+        "EATTN_ptr",
+        "EOPROJ_ptr",
+        "ENORM2_ptr",
+        "EGATE_ptr",
+        "EUP_ptr",
     ):
         assert ev in src, f"{ev} not threaded through the megakernel"
 
@@ -105,9 +135,7 @@ def test_llama_decoder_layer_emits_nine_device_functions() -> None:
 # ---------------------------------------------------------------------------
 
 
-_TINYLLAMA_CACHE = Path(os.path.expanduser(
-    "~/.cache/huggingface/hub/models--TinyLlama--TinyLlama-1.1B-Chat-v1.0"
-))
+_TINYLLAMA_CACHE = Path(os.path.expanduser("~/.cache/huggingface/hub/models--TinyLlama--TinyLlama-1.1B-Chat-v1.0"))
 
 
 @pytest.mark.skipif(
@@ -128,10 +156,14 @@ def test_tinyllama_full_decoder_layer_matches_pytorch_reference() -> None:
     compiled = compile_for_tinyllama_full(seq_len=DEFAULT_SEQ_LEN)
 
     torch.manual_seed(2026)
-    x = torch.randn(
-        (DEFAULT_SEQ_LEN, sliced_cfg["hidden_dim"]),
-        dtype=torch.float32, device="cuda",
-    ) * 0.1
+    x = (
+        torch.randn(
+            (DEFAULT_SEQ_LEN, sliced_cfg["hidden_dim"]),
+            dtype=torch.float32,
+            device="cuda",
+        )
+        * 0.1
+    )
 
     got, ref = run_tinyllama_full_layer(compiled, x, sliced, sliced_cfg)
     err = (got - ref).abs().max().item()
@@ -162,9 +194,7 @@ def test_tinyllama_layernorm_scales_are_loaded_from_real_checkpoint() -> None:
         ("w_norm1", sliced.w_norm1),
         ("w_norm2", sliced.w_norm2),
     ):
-        std  = float(w.std().item())
+        std = float(w.std().item())
         nonzero_frac = float((w != 0).float().mean().item())
         assert std > 1e-5, f"{name} std={std} -- looks zero-initialised"
-        assert nonzero_frac > 0.95, (
-            f"{name} {nonzero_frac:.2%} non-zero -- looks like a sparse buffer"
-        )
+        assert nonzero_frac > 0.95, f"{name} {nonzero_frac:.2%} non-zero -- looks like a sparse buffer"

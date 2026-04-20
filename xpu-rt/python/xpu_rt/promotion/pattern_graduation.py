@@ -24,10 +24,10 @@ from __future__ import annotations
 
 import json
 from collections import defaultdict
-from dataclasses import dataclass, field
+from collections.abc import Iterable
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable
-
+from typing import Any
 
 # ---------------------------------------------------------------------------
 # Data classes
@@ -45,7 +45,7 @@ class PatternIdentity:
 
     slot_name: str
     target_feature_justification: str
-    chosen_signature: str    # sorted-keys hash of chosen dict
+    chosen_signature: str  # sorted-keys hash of chosen dict
 
 
 @dataclass(frozen=True)
@@ -57,7 +57,7 @@ class PatternAppearance:
     target: str
     llm_turn_id: str
     transcript_path: str
-    gate_status: str        # always 'accepted' for graduation-eligible appearances
+    gate_status: str  # always 'accepted' for graduation-eligible appearances
 
 
 @dataclass(frozen=True)
@@ -91,8 +91,7 @@ class PatternPromotionRequest:
     def to_dict(self) -> dict[str, Any]:
         return {
             "slot_name": self.identity.slot_name,
-            "target_feature_justification":
-                self.identity.target_feature_justification,
+            "target_feature_justification": self.identity.target_feature_justification,
             "chosen_signature": self.identity.chosen_signature,
             "workloads_proven": sorted(self.workloads_proven),
             "targets_proven": sorted(self.targets_proven),
@@ -167,9 +166,7 @@ def scan_transcripts(
             if not isinstance(chosen_raw, dict):
                 chosen_raw = {}
             target_justification = (
-                args.get("target_feature_justification")
-                or result.get("target_feature_justification")
-                or ""
+                args.get("target_feature_justification") or result.get("target_feature_justification") or ""
             )
 
             identity = PatternIdentity(

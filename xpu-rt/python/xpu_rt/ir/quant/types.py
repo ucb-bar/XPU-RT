@@ -44,25 +44,28 @@ from xdsl.dialects.builtin import (
 from xdsl.ir import Attribute, ParametrizedAttribute
 from xdsl.irdl import irdl_attr_definition, param_def
 
-
-_VALID_GRANULARITY: frozenset[str] = frozenset({
-    "per_tensor",
-    "per_channel",
-    "per_group",
-    "per_token",
-    "per_row",
-})
+_VALID_GRANULARITY: frozenset[str] = frozenset(
+    {
+        "per_tensor",
+        "per_channel",
+        "per_group",
+        "per_token",
+        "per_row",
+    }
+)
 """Allowed values for the ``AffineQuantizedTensorType.granularity`` tag."""
 
 
-_VALID_AFFINE_LAYOUTS: frozenset[str] = frozenset({
-    "plain",
-    "tensor_core_tiled",
-    "marlin",
-    "marlin_sparse",
-    "block_sparse",
-    "int4_cpu",
-})
+_VALID_AFFINE_LAYOUTS: frozenset[str] = frozenset(
+    {
+        "plain",
+        "tensor_core_tiled",
+        "marlin",
+        "marlin_sparse",
+        "block_sparse",
+        "int4_cpu",
+    }
+)
 """Allowed values for the ``AffineQuantizedTensorType.layout`` tag.
 
 Mirrors the TorchAO layout variants documented in
@@ -118,10 +121,7 @@ class AffineQuantizedTensorType(ParametrizedAttribute):
             zero_point_dtype = IntegerType(0)
         if isinstance(granularity, str):
             if granularity not in _VALID_GRANULARITY:
-                raise ValueError(
-                    f"Invalid granularity {granularity!r}; "
-                    f"expected one of {sorted(_VALID_GRANULARITY)}"
-                )
+                raise ValueError(f"Invalid granularity {granularity!r}; expected one of {sorted(_VALID_GRANULARITY)}")
             granularity = StringAttr(granularity)
         if block_size is None:
             block_size = ArrayAttr([])
@@ -131,10 +131,7 @@ class AffineQuantizedTensorType(ParametrizedAttribute):
             )
         if isinstance(layout, str):
             if layout not in _VALID_AFFINE_LAYOUTS:
-                raise ValueError(
-                    f"Invalid layout {layout!r}; "
-                    f"expected one of {sorted(_VALID_AFFINE_LAYOUTS)}"
-                )
+                raise ValueError(f"Invalid layout {layout!r}; expected one of {sorted(_VALID_AFFINE_LAYOUTS)}")
             layout = StringAttr(layout)
         super().__init__(
             storage_type,
@@ -174,8 +171,7 @@ class PackedIntTensorType(ParametrizedAttribute):
         if isinstance(bit_width, int):
             if bit_width not in self._VALID_BITS:
                 raise ValueError(
-                    f"PackedIntTensorType bit_width must be one of "
-                    f"{sorted(self._VALID_BITS)}, got {bit_width}"
+                    f"PackedIntTensorType bit_width must be one of {sorted(self._VALID_BITS)}, got {bit_width}"
                 )
             bit_width = IntegerAttr(bit_width, IntegerType(64))
         if isinstance(pack_dim, int):
@@ -264,6 +260,7 @@ class NVFP4TensorType(ParametrizedAttribute):
             block_size = IntegerAttr(block_size, IntegerType(64))
         if scale_dtype is None:
             from xdsl.dialects.builtin import Float32Type
+
             scale_dtype = Float32Type()
         super().__init__(block_size, scale_dtype)
 

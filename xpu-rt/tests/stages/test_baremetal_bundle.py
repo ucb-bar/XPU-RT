@@ -21,14 +21,11 @@ from pathlib import Path
 import pytest
 import torch
 import torch.nn as nn
-
-from compgen.api import compile_model, device as _device
+from compgen.api import compile_model
+from compgen.api import device as _device
 from compgen.stages.bundle.baremetal_plugin import write_baremetal_bundle
 
-EXEMPLAR = (
-    Path(__file__).resolve().parents[1]
-    / "targetgen" / "exemplars" / "test_gpu_simt.yaml"
-)
+EXEMPLAR = Path(__file__).resolve().parents[1] / "targetgen" / "exemplars" / "test_gpu_simt.yaml"
 GCC = shutil.which("gcc")
 
 
@@ -45,7 +42,9 @@ class _TwoLinear(nn.Module):
 def _compile_small() -> tuple:
     dev = _device(EXEMPLAR)
     compiled = compile_model(
-        _TwoLinear().eval(), dev, sample_inputs=(torch.randn(1, 32),),
+        _TwoLinear().eval(),
+        dev,
+        sample_inputs=(torch.randn(1, 32),),
     )
     return compiled.payload_module, dev.profile
 
@@ -56,9 +55,15 @@ def test_write_baremetal_bundle_creates_scaffold_files(tmp_path: Path) -> None:
     result = write_baremetal_bundle(module, profile, out)
 
     expected = {
-        "memory_map.h", "npu_driver.h", "npu_driver.c",
-        "npu_driver_ext.h", "npu_driver_ext.c",
-        "weights.h", "main.c", "linker.ld", "Makefile",
+        "memory_map.h",
+        "npu_driver.h",
+        "npu_driver.c",
+        "npu_driver_ext.h",
+        "npu_driver_ext.c",
+        "weights.h",
+        "main.c",
+        "linker.ld",
+        "Makefile",
     }
     got = {p.name for p in out.iterdir()}
     missing = expected - got
@@ -79,10 +84,9 @@ def test_emitted_c_parses_with_gcc_fsyntax_only(tmp_path: Path) -> None:
     errors: list[str] = []
     for src in sources:
         p = subprocess.run(
-            [GCC, "-std=c99", "-fsyntax-only",
-             "-I", str(out), "-I", str(out / "kernels"),
-             str(src)],
-            capture_output=True, text=True,
+            [GCC, "-std=c99", "-fsyntax-only", "-I", str(out), "-I", str(out / "kernels"), str(src)],
+            capture_output=True,
+            text=True,
         )
         if p.returncode != 0:
             errors.append(f"{src.name}:\n{p.stderr}")
@@ -139,14 +143,12 @@ def test_different_payload_produces_different_c_sources(tmp_path: Path) -> None:
     new_files = set(snap_b) - set(snap_a)
     shared_changed = {n for n in set(snap_a) & set(snap_b) if snap_a[n] != snap_b[n]}
     assert new_files or shared_changed, (
-        "expected emitted C/H to reflect the appended func.func; "
-        f"new={new_files} shared_changed={shared_changed}"
+        f"expected emitted C/H to reflect the appended func.func; new={new_files} shared_changed={shared_changed}"
     )
     # The injected function name must surface in at least one C/H file.
-    assert any(
-        "agent_injected_fn" in text
-        for text in (snap_b[n] for n in new_files | shared_changed)
-    ), "injected function name did not appear in any emitted C/H file"
+    assert any("agent_injected_fn" in text for text in (snap_b[n] for n in new_files | shared_changed)), (
+        "injected function name did not appear in any emitted C/H file"
+    )
 
 
 def test_ext_header_has_helper_protos(tmp_path: Path) -> None:
@@ -155,8 +157,12 @@ def test_ext_header_has_helper_protos(tmp_path: Path) -> None:
     write_baremetal_bundle(module, profile, out)
     ext_h = (out / "npu_driver_ext.h").read_text()
     for sym in [
-        "npu_matmul(", "npu_batch_matmul(", "npu_transpose(",
-        "npu_softmax_lastdim(", "npu_view_extract_slice(",
-        "npu_expf(", "npu_rsqrtf(",
+        "npu_matmul(",
+        "npu_batch_matmul(",
+        "npu_transpose(",
+        "npu_softmax_lastdim(",
+        "npu_view_extract_slice(",
+        "npu_expf(",
+        "npu_rsqrtf(",
     ]:
         assert sym in ext_h, f"missing helper proto: {sym}"

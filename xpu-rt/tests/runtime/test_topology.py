@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from compgen.runtime.topology import (
     DeviceRole,
     RuntimeDevice,
@@ -20,7 +18,6 @@ from compgen.targetgen.hardware_spec import (
     TopologySpec,
 )
 from compgen.targets.schema import DeviceSpec, Interconnect, TargetProfile
-
 
 # ---- RuntimeDevice ----
 
@@ -105,10 +102,12 @@ def _make_soc_topology() -> RuntimeTopology:
             ),
         ],
         links=[
-            RuntimeLink(src_node="host_cpu", dst_node="npu_domain",
-                        transport="zephyr_ipc", bandwidth_gbps=5.0, latency_us=0.5),
-            RuntimeLink(src_node="host_cpu", dst_node="dsp_domain",
-                        transport="dma", bandwidth_gbps=2.0, latency_us=1.0),
+            RuntimeLink(
+                src_node="host_cpu", dst_node="npu_domain", transport="zephyr_ipc", bandwidth_gbps=5.0, latency_us=0.5
+            ),
+            RuntimeLink(
+                src_node="host_cpu", dst_node="dsp_domain", transport="dma", bandwidth_gbps=2.0, latency_us=1.0
+            ),
         ],
     )
 
@@ -290,8 +289,7 @@ class TestInferTopology:
                 DeviceSpec(device_type="gpu", name="A100"),
             ],
             interconnects=[
-                Interconnect(topology="pcie", bandwidth_gbps=32.0,
-                             devices=(0, 1)),
+                Interconnect(topology="pcie", bandwidth_gbps=32.0, devices=(0, 1)),
             ],
         )
         topo = infer_topology(profile)

@@ -2,17 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-from xdsl.dialects.builtin import (
-    FunctionType,
-    IntegerAttr,
-    IntegerType,
-    ModuleOp,
-    StringAttr,
-)
-from xdsl.dialects.func import CallOp, FuncOp, ReturnOp
-from xdsl.ir import Block, Region
-
 from compgen.ir.event import (
     EventCoordAttr,
     EventTensorOp,
@@ -26,8 +15,17 @@ from compgen.ir.payload.passes.rewrites.lower_event_tensor_to_atomic import (
     LowerEventTensorToAtomicStats,
     run_lower_event_tensor_to_atomic,
 )
-from tests.ir.payload.passes._pattern_test_helpers import assert_module_verifies
+from xdsl.dialects.builtin import (
+    FunctionType,
+    IntegerAttr,
+    IntegerType,
+    ModuleOp,
+    StringAttr,
+)
+from xdsl.dialects.func import CallOp, FuncOp, ReturnOp
+from xdsl.ir import Block, Region
 
+from tests.ir.payload.passes._pattern_test_helpers import assert_module_verifies
 
 # --- fixtures ---------------------------------------------------------------
 
@@ -66,7 +64,9 @@ def test_notify_becomes_func_call():
     m, et, notify, wait = _graph_with_et_notify_wait()
     stats = run_lower_event_tensor_to_atomic(m)
     assert stats.notifies_lowered == 1
-    calls = [op for op in m.walk() if isinstance(op, CallOp) and op.callee.string_value() == "compgen_event_atomic_decrement"]
+    calls = [
+        op for op in m.walk() if isinstance(op, CallOp) and op.callee.string_value() == "compgen_event_atomic_decrement"
+    ]
     assert len(calls) == 1
     assert_module_verifies(m)
 
@@ -102,7 +102,9 @@ def test_external_decls_are_emitted():
 def test_notify_call_carries_event_ref_and_indices():
     m, et, notify, _ = _graph_with_et_notify_wait()
     run_lower_event_tensor_to_atomic(m)
-    call = next(op for op in m.walk() if isinstance(op, CallOp) and op.callee.string_value() == "compgen_event_atomic_decrement")
+    call = next(
+        op for op in m.walk() if isinstance(op, CallOp) and op.callee.string_value() == "compgen_event_atomic_decrement"
+    )
     assert call.attributes["compgen.event_ref"].data == "E"
     indices = call.attributes["compgen.event_indices"]
     # indices is an ArrayAttr of StringAttr.
@@ -113,7 +115,9 @@ def test_notify_call_carries_event_ref_and_indices():
 def test_wait_call_carries_event_ref_and_indices():
     m, *_ = _graph_with_et_notify_wait()
     run_lower_event_tensor_to_atomic(m)
-    call = next(op for op in m.walk() if isinstance(op, CallOp) and op.callee.string_value() == "compgen_event_spin_wait")
+    call = next(
+        op for op in m.walk() if isinstance(op, CallOp) and op.callee.string_value() == "compgen_event_spin_wait"
+    )
     assert call.attributes["compgen.event_ref"].data == "E"
 
 
@@ -188,12 +192,18 @@ def test_multiple_event_tensors_and_notifies():
     et_type_a = EventTensorTypeAttr(shape=[2], counter_dtype="i32", scope="device")
     et_type_b = EventTensorTypeAttr(shape=[4], counter_dtype="i32", scope="device")
     et_a = EventTensorOp.build(
-        properties={"sym_name": StringAttr("A"), "event_type": et_type_a,
-                    "wait_count": IntegerAttr(1, IntegerType(64))},
+        properties={
+            "sym_name": StringAttr("A"),
+            "event_type": et_type_a,
+            "wait_count": IntegerAttr(1, IntegerType(64)),
+        },
     )
     et_b = EventTensorOp.build(
-        properties={"sym_name": StringAttr("B"), "event_type": et_type_b,
-                    "wait_count": IntegerAttr(2, IntegerType(64))},
+        properties={
+            "sym_name": StringAttr("B"),
+            "event_type": et_type_b,
+            "wait_count": IntegerAttr(2, IntegerType(64)),
+        },
     )
     na = NotifyOp.build(properties={"coord": EventCoordAttr("A", ["0"])})
     nb = NotifyOp.build(properties={"coord": EventCoordAttr("B", ["3"])})

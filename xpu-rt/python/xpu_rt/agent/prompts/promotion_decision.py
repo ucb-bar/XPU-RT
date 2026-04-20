@@ -1,5 +1,7 @@
 """Prompt for LLM-guided promotion decisions."""
+
 from __future__ import annotations
+
 import json
 import re
 import textwrap
@@ -9,6 +11,7 @@ from dataclasses import dataclass
 @dataclass(frozen=True)
 class PromotionContext:
     """Context for promotion decision prompt."""
+
     improvement_pct: float
     verification_summary: str
     target_name: str
@@ -79,7 +82,7 @@ def parse_response(text: str) -> dict | None:
         if isinstance(data, dict) and "promote" in data:
             return data
     except json.JSONDecodeError:
-        m = re.search(r'\{.*\}', text, re.DOTALL)
+        m = re.search(r"\{.*\}", text, re.DOTALL)
         if m:
             try:
                 data = json.loads(m.group())

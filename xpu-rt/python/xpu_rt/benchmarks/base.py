@@ -43,23 +43,20 @@ class SuiteAdapter(Protocol):
         workspace: WorkspaceConfig | None = None,
         *,
         blessed_only: bool = False,
-    ) -> list[SuiteManifestEntry]:
-        ...
+    ) -> list[SuiteManifestEntry]: ...
 
     def prepare_environment(
         self,
         workspace: WorkspaceConfig | None = None,
         config: SuiteRunConfig | None = None,
-    ) -> SuiteEnvironmentStatus:
-        ...
+    ) -> SuiteEnvironmentStatus: ...
 
     def prepare_inputs(
         self,
         entry: SuiteManifestEntry,
         workspace: WorkspaceConfig | None = None,
         config: SuiteRunConfig | None = None,
-    ) -> Any:
-        ...
+    ) -> Any: ...
 
     def run_reference(
         self,
@@ -68,8 +65,7 @@ class SuiteAdapter(Protocol):
         workspace: WorkspaceConfig | None = None,
         output_dir: str | Path | None = None,
         config: SuiteRunConfig | None = None,
-    ) -> list[RunRecord]:
-        ...
+    ) -> list[RunRecord]: ...
 
     def run_compgen(
         self,
@@ -78,19 +74,16 @@ class SuiteAdapter(Protocol):
         workspace: WorkspaceConfig | None = None,
         output_dir: str | Path | None = None,
         config: SuiteRunConfig | None = None,
-    ) -> list[RunRecord]:
-        ...
+    ) -> list[RunRecord]: ...
 
-    def collect_metrics(self, records: list[RunRecord]) -> list[NormalizedSuiteResult]:
-        ...
+    def collect_metrics(self, records: list[RunRecord]) -> list[NormalizedSuiteResult]: ...
 
     def emit_artifacts(
         self,
         records: list[RunRecord],
         *,
         output_dir: str | Path,
-    ) -> list[Path]:
-        ...
+    ) -> list[Path]: ...
 
 
 __all__ = ["SuiteAdapter", "SuiteRunConfig"]

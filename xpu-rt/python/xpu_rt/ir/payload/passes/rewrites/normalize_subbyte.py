@@ -37,7 +37,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from xdsl.dialects.builtin import ModuleOp, StringAttr
-from xdsl.ir import Attribute, Operation
+from xdsl.ir import Operation
 from xdsl.pattern_rewriter import (
     PatternRewriter,
     PatternRewriteWalker,
@@ -50,7 +50,6 @@ from compgen.ir.quant import (
     WeightInt4PackQMOp,
     WeightInt8PackMMOp,
 )
-
 
 _PACKED_MM_OPS = (WeightInt8PackMMOp, WeightInt4PackMMOp, WeightInt4PackQMOp)
 
@@ -68,9 +67,7 @@ class NormalizeSubbyteStats:
 
     def record_canonical(self, bit_width: int) -> None:
         assert self.canonical_bit_widths is not None
-        self.canonical_bit_widths[bit_width] = (
-            self.canonical_bit_widths.get(bit_width, 0) + 1
-        )
+        self.canonical_bit_widths[bit_width] = self.canonical_bit_widths.get(bit_width, 0) + 1
 
 
 # --- helpers ------------------------------------------------------------------
@@ -121,9 +118,7 @@ class _AnnotateSubbyteBoundariesPattern(RewritePattern):
     def __init__(self, stats: NormalizeSubbyteStats) -> None:
         self.stats = stats
 
-    def match_and_rewrite(
-        self, op: Operation, rewriter: PatternRewriter
-    ) -> None:
+    def match_and_rewrite(self, op: Operation, rewriter: PatternRewriter) -> None:
         self.stats.ops_seen += 1
         packed = _packed_type(op)
         if packed is None and isinstance(op, (WeightInt4PackMMOp, WeightInt4PackQMOp)):
@@ -137,9 +132,7 @@ class _AnnotateSubbyteBoundariesPattern(RewritePattern):
         self.stats.ops_with_qtype += 1
         bw = packed.bit_width.value.data
         pd = packed.pack_dim.value.data
-        op.attributes["compgen.subbyte_canonical"] = StringAttr(
-            f"bit_width={bw},pack_dim={pd}"
-        )
+        op.attributes["compgen.subbyte_canonical"] = StringAttr(f"bit_width={bw},pack_dim={pd}")
         self.stats.record_canonical(bw)
 
         # Also annotate the "boundary" role so Wave 6 passes know

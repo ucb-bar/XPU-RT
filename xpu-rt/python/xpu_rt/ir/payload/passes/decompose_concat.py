@@ -24,7 +24,7 @@ from xdsl.dialects.builtin import ModuleOp, StringAttr
 from xdsl.ir import Operation
 
 from compgen.ir.payload.passes.base import PayloadPass
-from compgen.llm.registry import AutocompCostImpact, ToolArg, ToolResult
+from compgen.llm.registry import AutocompCostImpact, ToolArg
 
 # Candidate op-name patterns. xDSL doesn't register a universal
 # "tensor.concat" today in CompGen's import path; FX-level `aten.cat`
@@ -121,9 +121,7 @@ class DecomposeConcat(PayloadPass):
             prev = 0
         from xdsl.dialects.builtin import IntegerAttr, i64
 
-        module.attributes["compgen.decompose_concat.count"] = IntegerAttr(
-            prev + annotated_count, i64
-        )
+        module.attributes["compgen.decompose_concat.count"] = IntegerAttr(prev + annotated_count, i64)
         return module
 
 

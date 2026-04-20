@@ -9,7 +9,6 @@ from compgen.agent.invent_slots.seeds import (
 )
 from compgen.llm.registry import Registry
 
-
 # ---------------------------------------------------------------------------
 # Spec presence / shape
 # ---------------------------------------------------------------------------

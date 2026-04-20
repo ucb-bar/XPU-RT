@@ -37,10 +37,12 @@ def _print_op(op) -> str:
 
 def test_recipe_region_minimal() -> None:
     """Build with only required properties."""
-    op = RecipeRegionOp.build(properties={
-        "sym_name": StringAttr("matmul0"),
-        "payload_region_id": StringAttr("payload_r0"),
-    })
+    op = RecipeRegionOp.build(
+        properties={
+            "sym_name": StringAttr("matmul0"),
+            "payload_region_id": StringAttr("payload_r0"),
+        }
+    )
     assert op.sym_name.data == "matmul0"
     assert op.payload_region_id.data == "payload_r0"
     assert op.shape_summary is None
@@ -52,13 +54,15 @@ def test_recipe_region_with_optionals() -> None:
     """Build with all optional properties populated."""
     shape = ShapeSummaryAttr([128, 64], "f32")
     effect = EffectClassAttr("pure")
-    op = RecipeRegionOp.build(properties={
-        "sym_name": StringAttr("conv1"),
-        "payload_region_id": StringAttr("payload_r1"),
-        "shape_summary": shape,
-        "effect_class": effect,
-        "op_count": IntegerAttr(12, IntegerType(64)),
-    })
+    op = RecipeRegionOp.build(
+        properties={
+            "sym_name": StringAttr("conv1"),
+            "payload_region_id": StringAttr("payload_r1"),
+            "shape_summary": shape,
+            "effect_class": effect,
+            "op_count": IntegerAttr(12, IntegerType(64)),
+        }
+    )
     assert op.shape_summary is not None
     assert op.shape_summary.dtype.data == "f32"
     assert op.effect_class is not None
@@ -72,18 +76,22 @@ def test_recipe_region_name() -> None:
 
 def test_recipe_region_verify_ok() -> None:
     """Verify succeeds for a well-formed op."""
-    op = RecipeRegionOp.build(properties={
-        "sym_name": StringAttr("r0"),
-        "payload_region_id": StringAttr("p0"),
-    })
+    op = RecipeRegionOp.build(
+        properties={
+            "sym_name": StringAttr("r0"),
+            "payload_region_id": StringAttr("p0"),
+        }
+    )
     op.verify()
 
 
 def test_recipe_region_printable() -> None:
-    op = RecipeRegionOp.build(properties={
-        "sym_name": StringAttr("r0"),
-        "payload_region_id": StringAttr("p0"),
-    })
+    op = RecipeRegionOp.build(
+        properties={
+            "sym_name": StringAttr("r0"),
+            "payload_region_id": StringAttr("p0"),
+        }
+    )
     text = _print_op(op)
     assert "recipe.region" in text
 
@@ -93,10 +101,12 @@ def test_recipe_region_printable() -> None:
 
 def test_segment_op_build() -> None:
     """Build a SegmentOp grouping two regions."""
-    op = SegmentOp.build(properties={
-        "sym_name": StringAttr("seg0"),
-        "region_refs": ArrayAttr([SymbolRefAttr("r0"), SymbolRefAttr("r1")]),
-    })
+    op = SegmentOp.build(
+        properties={
+            "sym_name": StringAttr("seg0"),
+            "region_refs": ArrayAttr([SymbolRefAttr("r0"), SymbolRefAttr("r1")]),
+        }
+    )
     assert op.sym_name.data == "seg0"
     assert len(op.region_refs.data) == 2
 
@@ -106,10 +116,12 @@ def test_segment_op_name() -> None:
 
 
 def test_segment_op_verify_ok() -> None:
-    op = SegmentOp.build(properties={
-        "sym_name": StringAttr("seg0"),
-        "region_refs": ArrayAttr([SymbolRefAttr("r0")]),
-    })
+    op = SegmentOp.build(
+        properties={
+            "sym_name": StringAttr("seg0"),
+            "region_refs": ArrayAttr([SymbolRefAttr("r0")]),
+        }
+    )
     op.verify()
 
 
@@ -117,10 +129,12 @@ def test_segment_op_verify_ok() -> None:
 
 
 def test_anchor_op_build() -> None:
-    op = AnchorOp.build(properties={
-        "sym_name": StringAttr("anchor0"),
-        "payload_op_name": StringAttr("linalg.matmul"),
-    })
+    op = AnchorOp.build(
+        properties={
+            "sym_name": StringAttr("anchor0"),
+            "payload_op_name": StringAttr("linalg.matmul"),
+        }
+    )
     assert op.sym_name.data == "anchor0"
     assert op.payload_op_name.data == "linalg.matmul"
 
@@ -130,10 +144,12 @@ def test_anchor_op_name() -> None:
 
 
 def test_anchor_op_verify_ok() -> None:
-    op = AnchorOp.build(properties={
-        "sym_name": StringAttr("a0"),
-        "payload_op_name": StringAttr("arith.addf"),
-    })
+    op = AnchorOp.build(
+        properties={
+            "sym_name": StringAttr("a0"),
+            "payload_op_name": StringAttr("arith.addf"),
+        }
+    )
     op.verify()
 
 
@@ -141,12 +157,14 @@ def test_anchor_op_verify_ok() -> None:
 
 
 def test_recipe_guard_build() -> None:
-    op = RecipeGuardOp.build(properties={
-        "sym_name": StringAttr("guard_fusion"),
-        "guard_key": StringAttr("guard.fusion.legality.TRITON_FRIENDLY.1"),
-        "transform_family": StringAttr("fusion"),
-        "guard_kind": StringAttr("legality"),
-    })
+    op = RecipeGuardOp.build(
+        properties={
+            "sym_name": StringAttr("guard_fusion"),
+            "guard_key": StringAttr("guard.fusion.legality.TRITON_FRIENDLY.1"),
+            "transform_family": StringAttr("fusion"),
+            "guard_kind": StringAttr("legality"),
+        }
+    )
     assert op.sym_name.data == "guard_fusion"
     assert op.transform_family.data == "fusion"
 
@@ -159,10 +177,12 @@ def test_recipe_guard_name() -> None:
 
 
 def test_bind_payload_build() -> None:
-    op = BindPayloadOp.build(properties={
-        "region_ref": SymbolRefAttr("r0"),
-        "payload_module_id": StringAttr("module_main"),
-    })
+    op = BindPayloadOp.build(
+        properties={
+            "region_ref": SymbolRefAttr("r0"),
+            "payload_module_id": StringAttr("module_main"),
+        }
+    )
     assert op.payload_module_id.data == "module_main"
 
 
@@ -171,9 +191,11 @@ def test_bind_payload_name() -> None:
 
 
 def test_bind_payload_printable() -> None:
-    op = BindPayloadOp.build(properties={
-        "region_ref": SymbolRefAttr("r0"),
-        "payload_module_id": StringAttr("mod0"),
-    })
+    op = BindPayloadOp.build(
+        properties={
+            "region_ref": SymbolRefAttr("r0"),
+            "payload_module_id": StringAttr("mod0"),
+        }
+    )
     text = _print_op(op)
     assert "recipe.bind_payload" in text

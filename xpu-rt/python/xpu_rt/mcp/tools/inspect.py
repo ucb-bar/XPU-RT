@@ -38,7 +38,10 @@ def diff_recipe(
 
 
 def checkpoint(
-    sm: SessionManager, *, session_id: str, label: str | None = None,
+    sm: SessionManager,
+    *,
+    session_id: str,
+    label: str | None = None,
 ) -> dict[str, Any]:
     """Freeze the current view as a named checkpoint."""
     session = sm.get(session_id)
@@ -57,31 +60,35 @@ def list_phase_tools(
 
     Shape: ``{tools: [{name, phase, is_stub, args, result}], slots: [...]}``.
     """
-    _ = session_id   # unused — registry is process-wide
+    _ = session_id  # unused — registry is process-wide
     reg = get_registry()
     tools_out: list[dict[str, Any]] = []
     for t in reg.list_tools(phase=phase):
-        tools_out.append({
-            "name": t.name,
-            "phase": t.phase,
-            "kind": t.kind,
-            "is_stub": t.is_stub,
-            "wraps_pass": t.wraps_pass,
-            "description": t.description,
-            "args": [asdict(a) for a in t.args],
-            "result": asdict(t.result),
-        })
+        tools_out.append(
+            {
+                "name": t.name,
+                "phase": t.phase,
+                "kind": t.kind,
+                "is_stub": t.is_stub,
+                "wraps_pass": t.wraps_pass,
+                "description": t.description,
+                "args": [asdict(a) for a in t.args],
+                "result": asdict(t.result),
+            }
+        )
     slots_out: list[dict[str, Any]] = []
     for s in reg.list_invent_slots(phase=phase):
-        slots_out.append({
-            "name": s.name,
-            "phase": s.phase,
-            "is_stub": s.is_stub,
-            "output_op": s.output_op,
-            "gate": s.gate,
-            "description": s.description,
-            "input_schema": s.input_schema,
-        })
+        slots_out.append(
+            {
+                "name": s.name,
+                "phase": s.phase,
+                "is_stub": s.is_stub,
+                "output_op": s.output_op,
+                "gate": s.gate,
+                "description": s.description,
+                "input_schema": s.input_schema,
+            }
+        )
     return {
         "ok": True,
         "tools": tools_out,
@@ -117,6 +124,7 @@ def get_dossier(
     driver = session.driver
     if driver is not None and driver.env.recipe is not None:
         from xdsl.dialects.builtin import StringAttr
+
         region_map: dict[str, dict[str, str]] = {}
         for rop in driver.env.recipe.body.block.ops:
             if rop.name != "recipe.region":
@@ -148,7 +156,9 @@ def get_dossier(
 
 
 def session_summary(
-    sm: SessionManager, *, session_id: str,
+    sm: SessionManager,
+    *,
+    session_id: str,
 ) -> dict[str, Any]:
     """Return the driver's session summary."""
     session = sm.get(session_id)

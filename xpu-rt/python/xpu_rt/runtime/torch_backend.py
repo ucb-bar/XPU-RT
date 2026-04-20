@@ -51,10 +51,7 @@ class CompGenBackend:
 
         if device == "cuda" and torch.cuda.is_available():
             model = model.to("cuda")
-            inputs = tuple(
-                x.to("cuda") if isinstance(x, torch.Tensor) else x
-                for x in sample_inputs
-            )
+            inputs = tuple(x.to("cuda") if isinstance(x, torch.Tensor) else x for x in sample_inputs)
         else:
             device = "cpu"
             inputs = sample_inputs

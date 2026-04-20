@@ -88,7 +88,14 @@ def _install_fake_transformers(monkeypatch) -> None:
     module = types.ModuleType("transformers")
 
     class BertConfig:
-        def __init__(self, hidden_size: int = 128, intermediate_size: int = 512, num_attention_heads: int = 4, num_hidden_layers: int = 2, vocab_size: int = 30522) -> None:
+        def __init__(
+            self,
+            hidden_size: int = 128,
+            intermediate_size: int = 512,
+            num_attention_heads: int = 4,
+            num_hidden_layers: int = 2,
+            vocab_size: int = 30522,
+        ) -> None:
             self.hidden_size = hidden_size
             self.intermediate_size = intermediate_size
             self.num_attention_heads = num_attention_heads
@@ -96,7 +103,9 @@ def _install_fake_transformers(monkeypatch) -> None:
             self.vocab_size = vocab_size
 
     class GPT2Config:
-        def __init__(self, n_embd: int = 128, n_layer: int = 2, n_head: int = 4, vocab_size: int = 50257, n_positions: int = 32) -> None:
+        def __init__(
+            self, n_embd: int = 128, n_layer: int = 2, n_head: int = 4, vocab_size: int = 50257, n_positions: int = 32
+        ) -> None:
             self.n_embd = n_embd
             self.n_layer = n_layer
             self.n_head = n_head
@@ -104,7 +113,15 @@ def _install_fake_transformers(monkeypatch) -> None:
             self.n_positions = n_positions
 
     class T5Config:
-        def __init__(self, d_model: int = 128, d_ff: int = 256, num_layers: int = 2, num_decoder_layers: int = 2, num_heads: int = 4, vocab_size: int = 32128) -> None:
+        def __init__(
+            self,
+            d_model: int = 128,
+            d_ff: int = 256,
+            num_layers: int = 2,
+            num_decoder_layers: int = 2,
+            num_heads: int = 4,
+            vocab_size: int = 32128,
+        ) -> None:
             self.d_model = d_model
             self.d_ff = d_ff
             self.num_layers = num_layers

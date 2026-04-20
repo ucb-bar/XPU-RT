@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import hashlib
+from dataclasses import dataclass
 
 from compgen.capture.unsupported.classify import UnsupportedClassification
 from compgen.capture.unsupported.introspect import UnsupportedOpDossier

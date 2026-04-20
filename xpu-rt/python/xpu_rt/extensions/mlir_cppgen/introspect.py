@@ -9,9 +9,9 @@ from __future__ import annotations
 
 import inspect
 from dataclasses import dataclass, field
-from typing import Any, ClassVar
+from typing import Any
 
-from xdsl.ir import Dialect, ParametrizedAttribute
+from xdsl.ir import Dialect
 from xdsl.irdl import IRDLOperation
 
 # ---------------------------------------------------------------------------
@@ -153,11 +153,13 @@ def introspect_attr(attr_cls: type, dialect_prefix: str) -> AttrInfo:
         # Extract the constraint type (BaseAttr wrapping the actual type)
         xdsl_type = _extract_constraint_type_name(param_def.constr)
         tg_type = _resolve_tablegen_type(xdsl_type)
-        fields.append(AttrFieldInfo(
-            name=param_name,
-            xdsl_type=xdsl_type,
-            tablegen_type=tg_type,
-        ))
+        fields.append(
+            AttrFieldInfo(
+                name=param_name,
+                xdsl_type=xdsl_type,
+                tablegen_type=tg_type,
+            )
+        )
 
     cpp_class = f"{dialect_prefix}_{attr_cls.__name__}"
     register_custom_attr(attr_cls.__name__, dialect_prefix)
@@ -219,12 +221,14 @@ def _extract_properties(op_cls: type) -> list[PropInfo]:
         xdsl_type = _extract_constraint_type_name(prop_def.constr)
         tablegen_type = _resolve_tablegen_type(xdsl_type)
 
-        props.append(PropInfo(
-            name=prop_name,
-            xdsl_type=xdsl_type,
-            tablegen_type=tablegen_type,
-            is_optional=is_optional,
-        ))
+        props.append(
+            PropInfo(
+                name=prop_name,
+                xdsl_type=xdsl_type,
+                tablegen_type=tablegen_type,
+                is_optional=is_optional,
+            )
+        )
 
     return props
 
@@ -321,6 +325,7 @@ def _extract_verifier(op_cls: type) -> VerifierInfo | None:
 def _get_verify_source(cls_source: str) -> str:
     """Extract just the verify_ method body from class source."""
     import re
+
     match = re.search(r"(    def verify_\(self\).*?)(?=\n    \w|\n\n__|\Z)", cls_source, re.DOTALL)
     return match.group(1) if match else ""
 
@@ -328,6 +333,7 @@ def _get_verify_source(cls_source: str) -> str:
 def _find_validated_property(source: str) -> str | None:
     """Heuristic: find property name from ``self.X.data`` in verify_ source."""
     import re
+
     matches = re.findall(r"self\.(\w+)\.data", source)
     for m in matches:
         if not m.startswith("_"):
@@ -372,7 +378,7 @@ def introspect_dialect(
     )
 
     # Introspect attributes first (so ops can reference them)
-    for attr_cls in (attr_classes or []):
+    for attr_cls in attr_classes or []:
         info.attrs.append(introspect_attr(attr_cls, prefix))
 
     # Introspect operations
@@ -434,8 +440,13 @@ def introspect_tile_dialect() -> DialectInfo:
         Tile,
         attr_classes=[MemoryClassAttr, FragmentLayoutAttr, TileShapeAttr],
         op_classes=[
-            TileLoadOp, TileStoreOp, TileMMAOp, TileElementwiseOp,
-            TileReduceOp, TileBarrierOp, TileAsyncCopyOp,
+            TileLoadOp,
+            TileStoreOp,
+            TileMMAOp,
+            TileElementwiseOp,
+            TileReduceOp,
+            TileBarrierOp,
+            TileAsyncCopyOp,
         ],
     )
 
@@ -456,9 +467,12 @@ def introspect_accel_dialect() -> DialectInfo:
         AccelDialect,
         attr_classes=[],
         op_classes=[
-            AccelTileLoadIROp, AccelTileStoreIROp,
-            AccelDMAStartIROp, AccelDMAWaitIROp,
-            AccelMatrixEngineIROp, AccelBarrierIROp,
+            AccelTileLoadIROp,
+            AccelTileStoreIROp,
+            AccelDMAStartIROp,
+            AccelDMAWaitIROp,
+            AccelMatrixEngineIROp,
+            AccelBarrierIROp,
         ],
     )
 

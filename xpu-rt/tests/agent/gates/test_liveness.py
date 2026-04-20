@@ -13,11 +13,9 @@ def test_deferred_when_missing_ctx() -> None:
 def test_accepts_fitting_allocation() -> None:
     lifetimes = [
         BufferLifetime("b0", 1024, 0, 0.0, 1.0),
-        BufferLifetime("b1", 2048, 0, 2.0, 3.0),    # non-overlap with b0
+        BufferLifetime("b1", 2048, 0, 2.0, 3.0),  # non-overlap with b0
     ]
-    r = liveness_gate(
-        {}, lifetimes=lifetimes, device_capacities={0: 4096}
-    )
+    r = liveness_gate({}, lifetimes=lifetimes, device_capacities={0: 4096})
     assert r["status"] == "accepted"
     assert r["details"]["peak_per_device"][0] <= 4096
 

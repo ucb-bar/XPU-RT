@@ -5,7 +5,11 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import pytest
+from compgen.runtime.triton_emitter import (
+    TritonEmitterReport,
+    emit_triton_kernels,
+    triton_available,
+)
 from xdsl.dialects.builtin import (
     Float32Type,
     FunctionType,
@@ -17,12 +21,6 @@ from xdsl.dialects.func import FuncOp, ReturnOp
 from xdsl.dialects.linalg import MatmulOp
 from xdsl.dialects.tensor import EmptyOp
 from xdsl.ir import Block, Region
-
-from compgen.runtime.triton_emitter import (
-    TritonEmitterReport,
-    emit_triton_kernels,
-    triton_available,
-)
 
 
 def _ft(shape):

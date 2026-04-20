@@ -17,7 +17,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-
 from typing import Any
 
 from compgen.kernels.contracts import KernelSpec
@@ -32,6 +31,7 @@ def _get_ukernel_registry():
     global _ukernel_registry
     if _ukernel_registry is None:
         from compgen.ir.ukernel.builtins import build_default_registry
+
         _ukernel_registry = build_default_registry()
     return _ukernel_registry
 
@@ -78,16 +78,32 @@ _GPU_LIBRARY_OPS: dict[str, str] = {
 }
 
 # Ops that are cheaply lowered natively (elementwise, reshape, etc.)
-_NATIVE_OPS: frozenset[str] = frozenset({
-    "arith.addi", "arith.subi", "arith.muli",
-    "arith.addf", "arith.subf", "arith.mulf", "arith.divf",
-    "arith.negf", "arith.maximumf", "arith.minimumf",
-    "arith.constant", "arith.select",
-    "arith.extf", "arith.truncf", "arith.sitofp", "arith.fptosi",
-    "arith.cmpf", "arith.cmpi", "arith.index_cast",
-    "linalg.fill", "linalg.transpose",
-    "func.call",
-})
+_NATIVE_OPS: frozenset[str] = frozenset(
+    {
+        "arith.addi",
+        "arith.subi",
+        "arith.muli",
+        "arith.addf",
+        "arith.subf",
+        "arith.mulf",
+        "arith.divf",
+        "arith.negf",
+        "arith.maximumf",
+        "arith.minimumf",
+        "arith.constant",
+        "arith.select",
+        "arith.extf",
+        "arith.truncf",
+        "arith.sitofp",
+        "arith.fptosi",
+        "arith.cmpf",
+        "arith.cmpi",
+        "arith.index_cast",
+        "linalg.fill",
+        "linalg.transpose",
+        "func.call",
+    }
+)
 
 # Minimum FLOPs to justify autocomp search (below this, use fallback)
 _MIN_AUTOCOMP_FLOPS = 1000
@@ -113,9 +129,7 @@ class KernelSelector:
         self.native_ops = set(_NATIVE_OPS)
 
         # Check if target has GPU devices
-        has_gpu = any(
-            d.device_type == "gpu" for d in self.target.devices
-        )
+        has_gpu = any(d.device_type == "gpu" for d in self.target.devices)
         if has_gpu:
             self.library_ops = dict(_GPU_LIBRARY_OPS)
 
@@ -185,30 +199,36 @@ class KernelSelector:
 
             # 1. Check native lowering
             if op_name in self.native_ops:
-                decisions.append(StrategyDecision(
-                    spec=spec,
-                    strategy=KernelStrategy.NATIVE,
-                    reason=f"{op_name} has native lowering support",
-                ))
+                decisions.append(
+                    StrategyDecision(
+                        spec=spec,
+                        strategy=KernelStrategy.NATIVE,
+                        reason=f"{op_name} has native lowering support",
+                    )
+                )
                 continue
 
             # 2. Check library coverage
             if op_name in self.library_ops:
-                decisions.append(StrategyDecision(
-                    spec=spec,
-                    strategy=KernelStrategy.LIBRARY,
-                    reason=f"{op_name} available in {self.library_ops[op_name]}",
-                    library_name=self.library_ops[op_name],
-                ))
+                decisions.append(
+                    StrategyDecision(
+                        spec=spec,
+                        strategy=KernelStrategy.LIBRARY,
+                        reason=f"{op_name} available in {self.library_ops[op_name]}",
+                        library_name=self.library_ops[op_name],
+                    )
+                )
                 continue
 
             # 2.5. Check ukernel registry
             if self._check_ukernel(spec):
-                decisions.append(StrategyDecision(
-                    spec=spec,
-                    strategy=KernelStrategy.UKERNEL,
-                    reason=f"{op_name} matched a registered ukernel",
-                ))
+                decisions.append(
+                    StrategyDecision(
+                        spec=spec,
+                        strategy=KernelStrategy.UKERNEL,
+                        reason=f"{op_name} matched a registered ukernel",
+                    )
+                )
                 continue
 
             # 3. LLM-guided strategy selection (Unit 6)
@@ -220,22 +240,25 @@ class KernelSelector:
 
             # 3b. Check if worth autocomp search (heuristic fallback)
             if spec.contract.cost.flops >= _MIN_AUTOCOMP_FLOPS:
-                decisions.append(StrategyDecision(
-                    spec=spec,
-                    strategy=KernelStrategy.AUTOCOMP,
-                    reason=f"{op_name} has {spec.contract.cost.flops} FLOPs, worth searching",
-                ))
+                decisions.append(
+                    StrategyDecision(
+                        spec=spec,
+                        strategy=KernelStrategy.AUTOCOMP,
+                        reason=f"{op_name} has {spec.contract.cost.flops} FLOPs, worth searching",
+                    )
+                )
                 continue
 
             # 4. Fallback for small ops
-            decisions.append(StrategyDecision(
-                spec=spec,
-                strategy=KernelStrategy.FALLBACK,
-                reason=f"{op_name} too small for custom kernel ({spec.contract.cost.flops} FLOPs)",
-            ))
+            decisions.append(
+                StrategyDecision(
+                    spec=spec,
+                    strategy=KernelStrategy.FALLBACK,
+                    reason=f"{op_name} too small for custom kernel ({spec.contract.cost.flops} FLOPs)",
+                )
+            )
 
         return decisions
-
 
     def _ask_llm_for_strategy(self, spec: KernelSpec, op_name: str) -> StrategyDecision | None:
         """Ask LLM to select strategy for a borderline op."""
@@ -261,6 +284,7 @@ class KernelSelector:
             prompt = fmt_ks(ctx)
 
             from compgen.llm.base import Objective, PromptContext
+
             model_id = "default"
             try:
                 m = getattr(self.llm_client, "model", None)
@@ -294,9 +318,7 @@ class KernelSelector:
         return None
 
 
-def select_strategies(
-    specs: list[KernelSpec], target: TargetProfile
-) -> list[StrategyDecision]:
+def select_strategies(specs: list[KernelSpec], target: TargetProfile) -> list[StrategyDecision]:
     """Convenience function: select strategies with defaults."""
     selector = KernelSelector(target=target)
     return selector.select(specs)

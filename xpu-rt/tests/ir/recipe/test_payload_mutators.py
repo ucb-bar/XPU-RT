@@ -7,7 +7,13 @@ attributes when the recipe contains FuseOp / ProposeFusionOp / TileOp
 
 from __future__ import annotations
 
-import pytest
+from compgen.agent.recipe_bridge_invent import proposal_to_recipe_op
+from compgen.ir.recipe.attrs import DeviceRefAttr, ProvenanceAttr
+from compgen.ir.recipe.ops_candidate import FuseOp, PlaceOnDeviceOp, TileOp
+from compgen.ir.recipe.payload_mutators import (
+    PayloadMutationReport,
+    apply_recipe_to_payload,
+)
 from xdsl.dialects.builtin import (
     ArrayAttr,
     Float32Type,
@@ -20,14 +26,6 @@ from xdsl.dialects.builtin import (
 )
 from xdsl.dialects.func import FuncOp
 from xdsl.ir import Block, Region
-
-from compgen.agent.recipe_bridge_invent import proposal_to_recipe_op
-from compgen.ir.recipe.attrs import DeviceRefAttr, ProvenanceAttr
-from compgen.ir.recipe.ops_candidate import FuseOp, PlaceOnDeviceOp, TileOp
-from compgen.ir.recipe.payload_mutators import (
-    PayloadMutationReport,
-    apply_recipe_to_payload,
-)
 
 
 def _payload_with_regions(regions: list[str]) -> ModuleOp:
@@ -43,9 +41,13 @@ def _payload_with_regions(regions: list[str]) -> ModuleOp:
     rets = []
     for i, region in enumerate(regions):
         # Body-less private callee declaration.
-        module.body.block.add_op(FuncOp.external(
-            f"helper_{i}", [inputs[i]], [outputs[i]],
-        ))
+        module.body.block.add_op(
+            FuncOp.external(
+                f"helper_{i}",
+                [inputs[i]],
+                [outputs[i]],
+            )
+        )
         call = CallOp(
             callee=f"helper_{i}",
             arguments=[block.args[i]],
@@ -98,16 +100,8 @@ def test_propose_fusion_stamps_fused_into_on_matching_ops() -> None:
 
     # Walk payload, check the two matching ops got new region_id +
     # fused_into; the third (r_c) stays unchanged.
-    region_ids = [
-        o.attributes["compgen.region_id"].data
-        for o in payload.walk()
-        if "compgen.region_id" in o.attributes
-    ]
-    fused_ids = [
-        o.attributes.get("compgen.fused_into")
-        for o in payload.walk()
-        if "compgen.fused_into" in o.attributes
-    ]
+    region_ids = [o.attributes["compgen.region_id"].data for o in payload.walk() if "compgen.region_id" in o.attributes]
+    fused_ids = [o.attributes.get("compgen.fused_into") for o in payload.walk() if "compgen.fused_into" in o.attributes]
     # Two of the three ops were rewritten to a shared fused_<digest>.
     fused_set = {r for r in region_ids if r.startswith("fused_")}
     assert len(fused_set) == 1
@@ -119,13 +113,18 @@ def test_propose_fusion_stamps_fused_into_on_matching_ops() -> None:
 def test_fuseop_directly_also_stamps() -> None:
     payload = _payload_with_regions(["r_x", "r_y"])
     recipe = _empty_recipe()
-    op = FuseOp.build(properties={
-        "sym_name": StringAttr("fuse_xy"),
-        "fuse_regions": ArrayAttr([
-            SymbolRefAttr("r_x"), SymbolRefAttr("r_y"),
-        ]),
-        "provenance": ProvenanceAttr("agent", 0),
-    })
+    op = FuseOp.build(
+        properties={
+            "sym_name": StringAttr("fuse_xy"),
+            "fuse_regions": ArrayAttr(
+                [
+                    SymbolRefAttr("r_x"),
+                    SymbolRefAttr("r_y"),
+                ]
+            ),
+            "provenance": ProvenanceAttr("agent", 0),
+        }
+    )
     recipe.body.block.add_op(op)
     report = apply_recipe_to_payload(recipe, payload)
     assert report.fusions_applied == 1
@@ -160,22 +159,23 @@ def test_fusion_idempotent_on_repeat() -> None:
 def test_tileop_stamps_tile_sizes() -> None:
     payload = _payload_with_regions(["r_t"])
     recipe = _empty_recipe()
-    tile = TileOp.build(properties={
-        "sym_name": StringAttr("tile_t"),
-        "region_ref": SymbolRefAttr("r_t"),
-        "tile_sizes": ArrayAttr([
-            IntegerAttr(32, IntegerType(64)),
-            IntegerAttr(64, IntegerType(64)),
-        ]),
-        "provenance": ProvenanceAttr("agent", 0),
-    })
+    tile = TileOp.build(
+        properties={
+            "sym_name": StringAttr("tile_t"),
+            "region_ref": SymbolRefAttr("r_t"),
+            "tile_sizes": ArrayAttr(
+                [
+                    IntegerAttr(32, IntegerType(64)),
+                    IntegerAttr(64, IntegerType(64)),
+                ]
+            ),
+            "provenance": ProvenanceAttr("agent", 0),
+        }
+    )
     recipe.body.block.add_op(tile)
     report = apply_recipe_to_payload(recipe, payload)
     assert report.tiles_applied == 1
-    touched = [
-        o for o in payload.walk()
-        if "compgen.tile_sizes_str" in o.attributes
-    ]
+    touched = [o for o in payload.walk() if "compgen.tile_sizes_str" in o.attributes]
     assert len(touched) == 1
     assert touched[0].attributes["compgen.tile_sizes_str"].data == "32,64"
 
@@ -188,19 +188,21 @@ def test_tileop_stamps_tile_sizes() -> None:
 def test_placeop_stamps_device_attribute() -> None:
     payload = _payload_with_regions(["r_d"])
     recipe = _empty_recipe()
-    place = PlaceOnDeviceOp.build(properties={
-        "sym_name": StringAttr("place_d"),
-        "region_ref": SymbolRefAttr("r_d"),
-        "device": DeviceRefAttr(2, "device"),
-        "provenance": ProvenanceAttr("agent", 0),
-    })
+    place = PlaceOnDeviceOp.build(
+        properties={
+            "sym_name": StringAttr("place_d"),
+            "region_ref": SymbolRefAttr("r_d"),
+            "device": DeviceRefAttr(2, "device"),
+            "provenance": ProvenanceAttr("agent", 0),
+        }
+    )
     recipe.body.block.add_op(place)
     report = apply_recipe_to_payload(recipe, payload)
     assert report.placements_applied == 1
     touched = [
-        o for o in payload.walk()
-        if o.attributes.get("compgen.device") is not None
-        and "device_2" in o.attributes["compgen.device"].data
+        o
+        for o in payload.walk()
+        if o.attributes.get("compgen.device") is not None and "device_2" in o.attributes["compgen.device"].data
     ]
     assert len(touched) == 1
 
@@ -227,15 +229,9 @@ def test_propose_megakernel_stamps_megakernel_name() -> None:
     recipe.body.block.add_op(op)
     report = apply_recipe_to_payload(recipe, payload)
     assert report.megakernels_applied == 1
-    touched = [
-        o for o in payload.walk()
-        if o.attributes.get("compgen.megakernel") is not None
-    ]
+    touched = [o for o in payload.walk() if o.attributes.get("compgen.megakernel") is not None]
     assert len(touched) == 2
-    assert all(
-        o.attributes["compgen.megakernel"].data == "gemma_block_mk"
-        for o in touched
-    )
+    assert all(o.attributes["compgen.megakernel"].data == "gemma_block_mk" for o in touched)
 
 
 def test_report_to_dict_is_serialisable() -> None:
@@ -243,13 +239,13 @@ def test_report_to_dict_is_serialisable() -> None:
     recipe = _empty_recipe()
     op = proposal_to_recipe_op(
         "propose_fusion",
-        {"chosen": {"grouped_regions": ["r_0", "r_1"]},
-         "select_vs_invent": "invent"},
+        {"chosen": {"grouped_regions": ["r_0", "r_1"]}, "select_vs_invent": "invent"},
     )
     recipe.body.block.add_op(op)
     report = apply_recipe_to_payload(recipe, payload)
     d = report.to_dict()
     import json
+
     json.dumps(d)
     assert d["fusions_applied"] == 1
     assert d["payload_ops_touched"] == 2
@@ -283,9 +279,13 @@ def _payload_with_chain(regions: list[str]) -> ModuleOp:
     # body-less private declaration that passes xDSL's verifier (the
     # plain ctor would leave an empty single-block region).
     for i in range(n):
-        module.body.block.add_op(FuncOp.external(
-            f"helper_{i}", [in_t], [out_t],
-        ))
+        module.body.block.add_op(
+            FuncOp.external(
+                f"helper_{i}",
+                [in_t],
+                [out_t],
+            )
+        )
     for i in range(n):
         call = CallOp(
             callee=f"helper_{i}",
@@ -302,7 +302,8 @@ def _payload_with_chain(regions: list[str]) -> ModuleOp:
 
 
 def _count_calls_in_forward(module: ModuleOp) -> int:
-    from xdsl.dialects.func import CallOp as _CallOp, FuncOp as _FuncOp
+    from xdsl.dialects.func import CallOp as _CallOp
+
     count = 0
     for op in module.walk():
         if isinstance(op, _CallOp):
@@ -312,10 +313,8 @@ def _count_calls_in_forward(module: ModuleOp) -> int:
 
 def _has_func_named(module: ModuleOp, name: str) -> bool:
     from xdsl.dialects.func import FuncOp as _FuncOp
-    return any(
-        isinstance(o, _FuncOp) and o.sym_name.data == name
-        for o in module.body.block.ops
-    )
+
+    return any(isinstance(o, _FuncOp) and o.sym_name.data == name for o in module.body.block.ops)
 
 
 def test_structural_fusion_collapses_two_call_chain() -> None:
@@ -327,8 +326,7 @@ def test_structural_fusion_collapses_two_call_chain() -> None:
     recipe = _empty_recipe()
     op = proposal_to_recipe_op(
         "propose_fusion",
-        {"chosen": {"grouped_regions": ["r_a", "r_b"]},
-         "select_vs_invent": "invent"},
+        {"chosen": {"grouped_regions": ["r_a", "r_b"]}, "select_vs_invent": "invent"},
     )
     recipe.body.block.add_op(op)
     report = apply_recipe_to_payload(recipe, module)
@@ -336,9 +334,7 @@ def test_structural_fusion_collapses_two_call_chain() -> None:
     assert report.structural_fusions == 1
     assert report.structural_callees_added == 1
     calls_after = _count_calls_in_forward(module)
-    assert calls_after == 1, (
-        "expected the two CallOps to collapse into one fused call"
-    )
+    assert calls_after == 1, "expected the two CallOps to collapse into one fused call"
     # The fused callee declaration must exist as a private FuncOp.
     assert _has_func_named(module, "fused_helper_0__helper_1")
 
@@ -348,11 +344,12 @@ def test_structural_fusion_three_op_chain() -> None:
     assert _count_calls_in_forward(module) == 3
 
     recipe = _empty_recipe()
-    recipe.body.block.add_op(proposal_to_recipe_op(
-        "propose_fusion",
-        {"chosen": {"grouped_regions": ["r_a", "r_b", "r_c"]},
-         "select_vs_invent": "invent"},
-    ))
+    recipe.body.block.add_op(
+        proposal_to_recipe_op(
+            "propose_fusion",
+            {"chosen": {"grouped_regions": ["r_a", "r_b", "r_c"]}, "select_vs_invent": "invent"},
+        )
+    )
     report = apply_recipe_to_payload(recipe, module)
 
     assert report.structural_fusions == 1
@@ -366,15 +363,16 @@ def test_non_chain_falls_back_to_attribute_stamping() -> None:
     calls_before = _count_calls_in_forward(payload)
 
     recipe = _empty_recipe()
-    recipe.body.block.add_op(proposal_to_recipe_op(
-        "propose_fusion",
-        {"chosen": {"grouped_regions": ["r_par_0", "r_par_1"]},
-         "select_vs_invent": "invent"},
-    ))
+    recipe.body.block.add_op(
+        proposal_to_recipe_op(
+            "propose_fusion",
+            {"chosen": {"grouped_regions": ["r_par_0", "r_par_1"]}, "select_vs_invent": "invent"},
+        )
+    )
     report = apply_recipe_to_payload(recipe, payload)
 
     assert report.structural_fusions == 0
-    assert report.fusions_applied == 1   # attribute-only stamp succeeded
+    assert report.fusions_applied == 1  # attribute-only stamp succeeded
     # Op count unchanged.
     assert _count_calls_in_forward(payload) == calls_before
 
@@ -383,13 +381,14 @@ def test_structural_fusion_module_remains_verifiable() -> None:
     """Running verify() on the post-fusion module must not raise."""
     module = _payload_with_chain(["r_a", "r_b"])
     recipe = _empty_recipe()
-    recipe.body.block.add_op(proposal_to_recipe_op(
-        "propose_fusion",
-        {"chosen": {"grouped_regions": ["r_a", "r_b"]},
-         "select_vs_invent": "invent"},
-    ))
+    recipe.body.block.add_op(
+        proposal_to_recipe_op(
+            "propose_fusion",
+            {"chosen": {"grouped_regions": ["r_a", "r_b"]}, "select_vs_invent": "invent"},
+        )
+    )
     apply_recipe_to_payload(recipe, module)
-    module.verify()   # must not raise
+    module.verify()  # must not raise
 
 
 def test_structural_fusion_does_not_break_other_consumers() -> None:
@@ -399,9 +398,13 @@ def test_structural_fusion_does_not_break_other_consumers() -> None:
     module = ModuleOp(Region([Block()]))
     in_t = TensorType(Float32Type(), [4, 4])
     for i in range(3):
-        module.body.block.add_op(FuncOp.external(
-            f"helper_{i}", [in_t], [in_t],
-        ))
+        module.body.block.add_op(
+            FuncOp.external(
+                f"helper_{i}",
+                [in_t],
+                [in_t],
+            )
+        )
     func = FuncOp(name="forward", function_type=([in_t], [in_t]))
     block = func.body.blocks[0]
     c0 = CallOp(callee="helper_0", arguments=[block.args[0]], return_types=[in_t])
@@ -418,14 +421,15 @@ def test_structural_fusion_does_not_break_other_consumers() -> None:
     module.body.block.add_op(func)
 
     recipe = _empty_recipe()
-    recipe.body.block.add_op(proposal_to_recipe_op(
-        "propose_fusion",
-        {"chosen": {"grouped_regions": ["rA", "rB"]},
-         "select_vs_invent": "invent"},
-    ))
+    recipe.body.block.add_op(
+        proposal_to_recipe_op(
+            "propose_fusion",
+            {"chosen": {"grouped_regions": ["rA", "rB"]}, "select_vs_invent": "invent"},
+        )
+    )
     report = apply_recipe_to_payload(recipe, module)
     # Structural fusion must be refused — c0's output also feeds c2.
     assert report.structural_fusions == 0
     # But attribute-stamping should still have stamped both ops.
     assert report.fusions_applied == 1
-    assert _count_calls_in_forward(module) == 3   # nothing erased
+    assert _count_calls_in_forward(module) == 3  # nothing erased

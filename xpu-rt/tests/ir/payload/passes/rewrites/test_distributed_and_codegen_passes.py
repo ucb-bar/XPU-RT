@@ -7,22 +7,8 @@ integration tests spanning the full distributed chain.
 from __future__ import annotations
 
 import pytest
-from xdsl.dialects.builtin import (
-    Float32Type,
-    FunctionType,
-    IntegerAttr,
-    IntegerType,
-    ModuleOp,
-    StringAttr,
-    TensorType,
-)
-from xdsl.dialects.func import CallOp, FuncOp, ReturnOp
-from xdsl.dialects.linalg import MatmulOp
-from xdsl.dialects.tensor import EmptyOp
-from xdsl.ir import Block, Region
-
 from compgen.capture.torch_mlir_bridge import bridge_fx_graph
-from compgen.ir.collective import AllReduceOp, ReduceKindAttr, ShardingSpecAttr
+from compgen.ir.collective import AllReduceOp
 from compgen.ir.payload.passes.rewrites.bubble_expand_shapes import (
     BubbleExpandShapesStats,
     run_bubble_expand_shapes,
@@ -32,19 +18,15 @@ from compgen.ir.payload.passes.rewrites.collective_quantizer import (
     run_collective_quantizer,
 )
 from compgen.ir.payload.passes.rewrites.expand_tensor_shapes import (
-    ExpandTensorShapesStats,
     run_expand_tensor_shapes,
 )
 from compgen.ir.payload.passes.rewrites.fuse_gemm_and_reduce_scatter import (
-    FuseGemmReduceScatterStats,
     run_fuse_gemm_and_reduce_scatter,
 )
 from compgen.ir.payload.passes.rewrites.gather_expander import (
-    GatherExpanderStats,
     run_gather_expander,
 )
 from compgen.ir.payload.passes.rewrites.hoist_encoding_ops import (
-    HoistEncodingOpsStats,
     run_hoist_encoding_ops,
 )
 from compgen.ir.payload.passes.rewrites.insert_all_gather import (
@@ -65,11 +47,9 @@ from compgen.ir.payload.passes.rewrites.pipeline_parallel_schedule import (
     run_pipeline_parallel_schedule,
 )
 from compgen.ir.payload.passes.rewrites.remat_activations import (
-    RematActivationsStats,
     run_remat_activations,
 )
 from compgen.ir.payload.passes.rewrites.scatter_expander import (
-    ScatterExpanderStats,
     run_scatter_expander,
 )
 from compgen.ir.payload.passes.rewrites.shard_tensors_spmd import (
@@ -78,9 +58,21 @@ from compgen.ir.payload.passes.rewrites.shard_tensors_spmd import (
     run_shard_tensors_spmd,
 )
 from compgen.ir.payload.passes.rewrites.simplify_while_loop import (
-    SimplifyWhileLoopStats,
     run_simplify_while_loop,
 )
+from xdsl.dialects.builtin import (
+    Float32Type,
+    FunctionType,
+    IntegerAttr,
+    IntegerType,
+    ModuleOp,
+    StringAttr,
+    TensorType,
+)
+from xdsl.dialects.func import FuncOp, ReturnOp
+from xdsl.dialects.linalg import MatmulOp
+from xdsl.dialects.tensor import EmptyOp
+from xdsl.ir import Block, Region
 
 from tests._fixtures.real_workloads import (
     attention_mlp_tiny,

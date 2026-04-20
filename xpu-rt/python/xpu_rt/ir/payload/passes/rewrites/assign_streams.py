@@ -31,7 +31,6 @@ LLM-tool signature:
 
 from __future__ import annotations
 
-from collections import defaultdict
 from dataclasses import dataclass, field
 
 from compgen.runtime.execution_plan import (
@@ -56,9 +55,7 @@ class AssignStreamsStats:
     queues_bound: set[str] = field(default_factory=set)
 
 
-def _producers_of(
-    region_id: str, edges: list[tuple[str, str]]
-) -> list[str]:
+def _producers_of(region_id: str, edges: list[tuple[str, str]]) -> list[str]:
     return [frm for frm, to in edges if to == region_id]
 
 
@@ -72,13 +69,9 @@ def run_assign_streams(
 
     # Queue -> stream_id (stable ordering).
     unique_queues = sorted({rp.queue for rp in plan.region_placement})
-    queue_to_stream: dict[str, int] = {
-        q: i for i, q in enumerate(unique_queues)
-    }
+    queue_to_stream: dict[str, int] = {q: i for i, q in enumerate(unique_queues)}
 
-    queue_by_region: dict[str, str] = {
-        rp.region_id: rp.queue for rp in plan.region_placement
-    }
+    queue_by_region: dict[str, str] = {rp.region_id: rp.queue for rp in plan.region_placement}
     edges = [(e.from_region, e.to_region) for e in plan.dependency_edges]
 
     annotations: list[StreamAnnotation] = []
@@ -96,9 +89,7 @@ def run_assign_streams(
                 kind = cfg.default_async_kind
 
         sid = queue_to_stream.get(rp.queue, 0)
-        annotations.append(
-            StreamAnnotation(region_id=rp.region_id, stream_id=sid, kind=kind)
-        )
+        annotations.append(StreamAnnotation(region_id=rp.region_id, stream_id=sid, kind=kind))
         stats.queues_bound.add(rp.queue)
         if kind == "sync":
             stats.sync_regions += 1

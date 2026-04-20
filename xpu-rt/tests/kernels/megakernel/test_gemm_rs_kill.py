@@ -24,7 +24,6 @@ which is the load-bearing claim of the ETC paper.
 from __future__ import annotations
 
 import json
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -32,6 +31,13 @@ import pytest
 torch = pytest.importorskip("torch")
 triton = pytest.importorskip("triton")
 import triton.language as tl
+from compgen.ir.event.attrs import EventCoordAttr, EventTensorTypeAttr
+from compgen.ir.event.ops import CallDeviceOp, EventTensorOp, GraphOp
+from compgen.ir.payload.passes.megakernel_static_schedule import (
+    StaticMegakernelSchedule,
+)
+from compgen.ir.tile.lower_megakernel import lower_megakernel
+from compgen.semantic.verify.harness import verify_callable_against_reference
 from xdsl.dialects.builtin import (
     ArrayAttr,
     IntegerAttr,
@@ -42,18 +48,7 @@ from xdsl.dialects.builtin import (
 )
 from xdsl.ir import Block, Region
 
-from compgen.ir.event.attrs import EventCoordAttr, EventTensorTypeAttr
-from compgen.ir.event.ops import CallDeviceOp, EventTensorOp, GraphOp
-from compgen.ir.payload.passes.megakernel_static_schedule import (
-    StaticMegakernelSchedule,
-)
-from compgen.ir.tile.lower_megakernel import lower_megakernel
-from compgen.semantic.verify.harness import verify_callable_against_reference
-
-
-pytestmark = pytest.mark.skipif(
-    not torch.cuda.is_available(), reason="kill test requires a CUDA device"
-)
+pytestmark = pytest.mark.skipif(not torch.cuda.is_available(), reason="kill test requires a CUDA device")
 
 
 # ---------------------------------------------------------------------------
@@ -66,8 +61,8 @@ def _megakernel_partial_then_reduce(
     A_ptr,
     out_ptr,
     E_ptr,
-    QUEUE_PTR,         # int32, shape (SM_COUNT, MAX_QLEN, 2)
-    QUEUE_LEN_PTR,     # int32, shape (SM_COUNT,)
+    QUEUE_PTR,  # int32, shape (SM_COUNT, MAX_QLEN, 2)
+    QUEUE_LEN_PTR,  # int32, shape (SM_COUNT,)
     N_TILES: tl.constexpr,
     TILE_SIZE: tl.constexpr,
     MAX_QLEN: tl.constexpr,
@@ -105,7 +100,9 @@ def _megakernel_partial_then_reduce(
         task_idx += 1
 
 
-def _flatten_queue(per_sm_order: dict[int, list[str]], task_kinds: dict[str, int], max_qlen: int) -> tuple[torch.Tensor, torch.Tensor]:
+def _flatten_queue(
+    per_sm_order: dict[int, list[str]], task_kinds: dict[str, int], max_qlen: int
+) -> tuple[torch.Tensor, torch.Tensor]:
     """Flatten the per-SM queue into a (SM_COUNT, MAX_QLEN, 2) int32 tensor + lens."""
     sm_count = max(per_sm_order) + 1 if per_sm_order else 0
     queue = torch.zeros((sm_count, max_qlen, 2), dtype=torch.int32, device="cuda")
@@ -213,8 +210,14 @@ def test_megakernel_pipeline_end_to_end_on_gpu(tmp_path: Path) -> None:
         E.fill_(1)
         out.zero_()
         _megakernel_partial_then_reduce[(sm_count,)](
-            a, out, E, queue, lens,
-            N_TILES=n_tiles, TILE_SIZE=tile_size, MAX_QLEN=max_qlen,
+            a,
+            out,
+            E,
+            queue,
+            lens,
+            N_TILES=n_tiles,
+            TILE_SIZE=tile_size,
+            MAX_QLEN=max_qlen,
         )
         torch.cuda.synchronize()
         return out

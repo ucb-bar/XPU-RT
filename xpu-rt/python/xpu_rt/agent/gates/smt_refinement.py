@@ -44,7 +44,7 @@ def smt_refinement_gate(proposal: dict[str, Any], **ctx: Any) -> dict[str, Any]:
 
     try:
         from compgen.ir.semantic.translation_validation import validate_translation
-    except ImportError as e:   # pragma: no cover
+    except ImportError as e:  # pragma: no cover
         return {
             "status": "deferred",
             "details": {"reason": f"translation_validation unavailable: {e}"},
@@ -52,7 +52,7 @@ def smt_refinement_gate(proposal: dict[str, Any], **ctx: Any) -> dict[str, Any]:
 
     try:
         result = validate_translation(source_module, target_module, timeout_ms=timeout_ms)
-    except Exception as e:   # noqa: BLE001
+    except Exception as e:  # noqa: BLE001
         return {
             "status": "rejected",
             "details": {

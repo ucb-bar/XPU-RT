@@ -28,8 +28,8 @@ from compgen.llm.base import (
 )
 from compgen.llm.cli_client import ClaudeCLIClient, CodexCLIClient
 from compgen.llm.config import (
-    LLMSelection,
     SUPPORTED_PROVIDERS,
+    LLMSelection,
     apply_selection_to_env,
     build_llm_runtime,
     resolve_llm_selection,

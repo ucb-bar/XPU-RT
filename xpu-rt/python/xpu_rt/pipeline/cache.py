@@ -15,7 +15,7 @@ overflow.
 from __future__ import annotations
 
 from collections import OrderedDict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 from compgen.options import CompGenOptions
@@ -43,6 +43,7 @@ def _model_identity(model: Any) -> str:
     """
     try:
         import torch
+
         if isinstance(model, torch.nn.Module):
             sd = model.state_dict()
             parts = []
@@ -158,11 +159,13 @@ class PipelineCache:
         payload: list[dict[str, Any]] = []
         for key in self._entries:
             model_id, options_key, input_sig = key
-            payload.append({
-                "model_id": model_id,
-                "options_key": list(options_key),
-                "input_signature": list(input_sig),
-            })
+            payload.append(
+                {
+                    "model_id": model_id,
+                    "options_key": list(options_key),
+                    "input_signature": list(input_sig),
+                }
+            )
         p.write_text(
             json.dumps(
                 {
@@ -181,7 +184,7 @@ class PipelineCache:
         )
 
     @classmethod
-    def load_manifest(cls, path: Any) -> "PipelineCache":
+    def load_manifest(cls, path: Any) -> PipelineCache:
         """Load cache metadata from a manifest written by :meth:`save_manifest`."""
         import json
         from pathlib import Path

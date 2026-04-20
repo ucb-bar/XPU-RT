@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+from compgen.runtime.instrumentation import (
+    InstrumentationConfig,
+    InstrumentationLevel,
+)
 from compgen.runtime.profiling.adapter import (
-    ProfileSnapshot,
     ProfilerAdapter,
+    ProfileSnapshot,
     TileMetrics,
 )
 from compgen.runtime.profiling.adapters.bare_metal_pmu import BareMetalPMUAdapter
@@ -15,10 +19,8 @@ from compgen.runtime.profiling.analysis import (
     BottleneckInfo,
     ProfileAnalysis,
     ProfileAnalyzer,
-    RooflinePoint,
 )
 from compgen.runtime.profiling.hooks_codegen import (
-    GeneratedHook,
     HookCodeGenerator,
 )
 from compgen.runtime.profiling.registry import (
@@ -27,12 +29,7 @@ from compgen.runtime.profiling.registry import (
     list_adapters,
     register_adapter,
 )
-from compgen.runtime.instrumentation import (
-    InstrumentationConfig,
-    InstrumentationLevel,
-)
 from compgen.targetgen.hardware_spec import ProfilerBackend, ProfilingSpec
-
 
 # ---- Adapter Protocol ----
 

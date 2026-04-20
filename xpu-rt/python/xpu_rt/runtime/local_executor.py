@@ -31,7 +31,7 @@ class BenchmarkResult:
     throughput_samples_per_sec: float
     peak_memory_bytes: int
     device: str
-    mode: str                        # "eager", "compiled", "compgen"
+    mode: str  # "eager", "compiled", "compgen"
     num_iterations: int
     warmup_iterations: int
     per_run_us: list[float] = field(default_factory=list)
@@ -78,10 +78,7 @@ class LocalExecutor:
         # Move to device
         if device == "cuda" and torch.cuda.is_available():
             model = model.to("cuda")
-            inputs = tuple(
-                x.to("cuda") if isinstance(x, torch.Tensor) else x
-                for x in sample_inputs
-            )
+            inputs = tuple(x.to("cuda") if isinstance(x, torch.Tensor) else x for x in sample_inputs)
         else:
             device = "cpu"
             inputs = sample_inputs
@@ -145,8 +142,7 @@ class LocalExecutor:
         num_iterations: int = 100,
     ) -> ComparisonResult:
         """Run full comparison: eager CPU, eager GPU, compiled GPU."""
-        eager_cpu = self.benchmark(model, sample_inputs, device="cpu", mode="eager",
-                                   num_iterations=num_iterations)
+        eager_cpu = self.benchmark(model, sample_inputs, device="cpu", mode="eager", num_iterations=num_iterations)
 
         eager_gpu = None
         compiled_gpu = None
@@ -154,10 +150,10 @@ class LocalExecutor:
         speedup_gpu = 0.0
 
         if torch.cuda.is_available():
-            eager_gpu = self.benchmark(model, sample_inputs, device="cuda", mode="eager",
-                                       num_iterations=num_iterations)
-            compiled_gpu = self.benchmark(model, sample_inputs, device="cuda", mode="compiled",
-                                          num_iterations=num_iterations)
+            eager_gpu = self.benchmark(model, sample_inputs, device="cuda", mode="eager", num_iterations=num_iterations)
+            compiled_gpu = self.benchmark(
+                model, sample_inputs, device="cuda", mode="compiled", num_iterations=num_iterations
+            )
 
             if eager_gpu.latency_median_us > 0:
                 speedup_compile = eager_gpu.latency_median_us / compiled_gpu.latency_median_us

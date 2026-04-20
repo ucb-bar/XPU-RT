@@ -22,7 +22,6 @@ from xdsl.dialects.builtin import (
     TensorType,
 )
 from xdsl.dialects.func import CallOp
-from xdsl.ir import Operation
 from xdsl.pattern_rewriter import (
     PatternRewriter,
     PatternRewriteWalker,
@@ -54,9 +53,7 @@ class _ScatterExpanderPattern(RewritePattern):
         self.stats = stats
 
     @op_type_rewrite_pattern
-    def match_and_rewrite(
-        self, op: CallOp, rewriter: PatternRewriter
-    ) -> None:
+    def match_and_rewrite(self, op: CallOp, rewriter: PatternRewriter) -> None:
         hint = op.attributes.get("compgen._pattern_hint")
         if not isinstance(hint, StringAttr) or hint.data not in self.cfg.hint_set:
             return
@@ -66,15 +63,11 @@ class _ScatterExpanderPattern(RewritePattern):
         rt = op.results[0].type if op.results else None
         if not isinstance(rt, TensorType):
             return
-        if self.cfg.require_static_shapes and any(
-            d < 0 for d in rt.get_shape()
-        ):
+        if self.cfg.require_static_shapes and any(d < 0 for d in rt.get_shape()):
             self.stats.scatters_skipped_dynamic += 1
             return
         op.attributes["compgen.scatter_expanded"] = StringAttr("true")
-        op.attributes["compgen.scatter_rank"] = IntegerAttr(
-            len(list(rt.get_shape())), IntegerType(64)
-        )
+        op.attributes["compgen.scatter_rank"] = IntegerAttr(len(list(rt.get_shape())), IntegerType(64))
         self.stats.scatters_tagged += 1
 
 
@@ -86,7 +79,8 @@ def run_scatter_expander(
     cfg = config if config is not None else ScatterExpanderConfig()
     stats = ScatterExpanderStats()
     walker = PatternRewriteWalker(
-        _ScatterExpanderPattern(cfg, stats), apply_recursively=False,
+        _ScatterExpanderPattern(cfg, stats),
+        apply_recursively=False,
     )
     walker.rewrite_module(module)
     return stats

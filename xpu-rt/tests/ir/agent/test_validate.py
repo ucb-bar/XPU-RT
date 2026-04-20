@@ -42,7 +42,9 @@ def _recipe_module() -> ModuleOp:
     return ModuleOp(Region(block))
 
 
-def _base_agent_module(*, with_proof: bool = False, with_commit: bool = False, with_verification: bool = False) -> ModuleOp:
+def _base_agent_module(
+    *, with_proof: bool = False, with_commit: bool = False, with_verification: bool = False
+) -> ModuleOp:
     block = Block()
     block.add_op(
         AgentSessionOp.build(

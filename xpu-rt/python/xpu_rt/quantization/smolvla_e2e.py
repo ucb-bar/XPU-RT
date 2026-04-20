@@ -83,7 +83,6 @@ def run_smolvla_npu_pipeline(
         from compgen.kernels.providers.npu_contracts import (
             export_contracts_autocomp,
             export_contracts_yaml,
-            format_contracts_report,
             generate_npu_kernel_contracts,
         )
 
@@ -130,6 +129,7 @@ def run_smolvla_npu_pipeline(
 
     if kernel_contracts_list:
         from compgen.kernels.providers.npu_contracts import format_contracts_report as fmt_kc
+
         print(f"\n{fmt_kc(kernel_contracts_list)}")
 
     if report.metadata.get("pattern_count"):
@@ -148,7 +148,7 @@ def run_smolvla_npu_pipeline(
         for err in report.errors:
             print(f"    - {err}")
 
-    print(f"\n  Timings:")
+    print("\n  Timings:")
     for step, t in sorted(report.timings.items()):
         print(f"    {step}: {t:.2f}s")
 

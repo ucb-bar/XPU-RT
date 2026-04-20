@@ -14,10 +14,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
 import torch
 import torch.nn as nn
-
 from compgen.llm.mock_client import MockLLMClient
 from compgen.mcp.session import SessionManager
 from compgen.mcp.tools import ALL_TOOLS
@@ -30,7 +28,6 @@ from compgen.mcp.tools.inspect import (
 )
 from compgen.mcp.tools.lifecycle import (
     bundle_export,
-    load_model,
     open_target,
 )
 from compgen.mcp.tools.transform import (
@@ -40,10 +37,7 @@ from compgen.mcp.tools.transform import (
     verify_proposal,
 )
 
-EXEMPLAR = (
-    Path(__file__).resolve().parents[1]
-    / "targetgen" / "exemplars" / "test_gpu_simt.yaml"
-)
+EXEMPLAR = Path(__file__).resolve().parents[1] / "targetgen" / "exemplars" / "test_gpu_simt.yaml"
 
 
 class _TinyMLP(nn.Module):
@@ -134,8 +128,9 @@ def test_load_model_from_python_file(tmp_path: Path) -> None:
 
     # Run load_model with llm='gemini' would hit the API; to avoid
     # that we monkey-patch _resolve_llm via a direct driver path.
-    from compgen.api import compile_model, device as _device
     from compgen.agent.llm_driver import LLMDrivenCompiler
+    from compgen.api import compile_model
+    from compgen.api import device as _device
 
     mf = _model_file(tmp_path)
     # Use the handler's _resolve_model helper through load_model but
@@ -144,15 +139,22 @@ def test_load_model_from_python_file(tmp_path: Path) -> None:
     dev = _device(EXEMPLAR)
     session.device = dev
     from compgen.api_llm import _resolve_model
+
     module, inputs = _resolve_model(mf, None)
     compiled = compile_model(
-        module, dev, objective="latency", sample_inputs=inputs,
+        module,
+        dev,
+        objective="latency",
+        sample_inputs=inputs,
     )
     mock = MockLLMClient(strict=False)
     env = compiled.create_agent_env(budget=4)
     driver = LLMDrivenCompiler(
-        env=env, target=dev.profile, llm_client=mock,
-        transcript_dir=session.scratch_dir / "transcripts", budget=4,
+        env=env,
+        target=dev.profile,
+        llm_client=mock,
+        transcript_dir=session.scratch_dir / "transcripts",
+        budget=4,
     )
     session.compiled = compiled
     session.driver = driver
@@ -175,8 +177,9 @@ def _prepared_session(tmp_path: Path) -> tuple[SessionManager, str]:
     sid = opened["session_id"]
     session = sm.get(sid)
 
-    from compgen.api import compile_model, device as _device
     from compgen.agent.llm_driver import LLMDrivenCompiler
+    from compgen.api import compile_model
+    from compgen.api import device as _device
     from compgen.api_llm import _resolve_model
 
     dev = _device(EXEMPLAR)
@@ -186,8 +189,11 @@ def _prepared_session(tmp_path: Path) -> tuple[SessionManager, str]:
     mock = MockLLMClient(strict=False)
     env = compiled.create_agent_env(budget=4)
     driver = LLMDrivenCompiler(
-        env=env, target=dev.profile, llm_client=mock,
-        transcript_dir=session.scratch_dir / "transcripts", budget=4,
+        env=env,
+        target=dev.profile,
+        llm_client=mock,
+        transcript_dir=session.scratch_dir / "transcripts",
+        budget=4,
     )
     session.compiled = compiled
     session.driver = driver
@@ -236,9 +242,7 @@ def test_list_phase_tools_returns_catalogue(tmp_path: Path) -> None:
     assert res["ok"]
     assert "tools" in res and "invent_slots" in res
     # Counts shape: {phase: {"tools": n, "invent_slots": m}}
-    assert all(
-        "tools" in v and "invent_slots" in v for v in res["counts"].values()
-    )
+    assert all("tools" in v and "invent_slots" in v for v in res["counts"].values())
 
 
 def test_session_summary_reports_session_id(tmp_path: Path) -> None:
@@ -257,7 +261,8 @@ def test_session_summary_reports_session_id(tmp_path: Path) -> None:
 def test_verify_proposal_structural_only_accepts(tmp_path: Path) -> None:
     sm, sid = _prepared_session(tmp_path)
     res = verify_proposal(
-        sm, session_id=sid,
+        sm,
+        session_id=sid,
         proposal={"chosen": {}, "select_vs_invent": "invent"},
         gates=["structural"],
     )
@@ -268,8 +273,9 @@ def test_verify_proposal_structural_only_accepts(tmp_path: Path) -> None:
 def test_verify_proposal_rejects_carries_remediation(tmp_path: Path) -> None:
     sm, sid = _prepared_session(tmp_path)
     res = verify_proposal(
-        sm, session_id=sid,
-        proposal={},   # missing required keys
+        sm,
+        session_id=sid,
+        proposal={},  # missing required keys
         gates=["structural"],
     )
     assert res["ok"]
@@ -288,7 +294,9 @@ def test_invoke_tool_unknown_returns_unknown(tmp_path: Path) -> None:
 def test_propose_invent_slot_unknown_returns_unknown(tmp_path: Path) -> None:
     sm, sid = _prepared_session(tmp_path)
     res = propose_invent_slot(
-        sm, session_id=sid, slot_name="no_such_slot",
+        sm,
+        session_id=sid,
+        slot_name="no_such_slot",
         proposal={"chosen": {}, "select_vs_invent": "invent"},
     )
     assert res["ok"]

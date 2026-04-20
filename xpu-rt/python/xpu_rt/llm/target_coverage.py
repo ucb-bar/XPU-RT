@@ -17,7 +17,7 @@ calibrated numbers.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Literal
 
 Coverage = Literal["full", "partial", "none", "overlap"]
@@ -79,88 +79,141 @@ class InductorCoverage:
 # (no inductor coverage) via cost_weight_for().
 _SEED: tuple[InductorCoverage, ...] = (
     # raise_special_ops
-    InductorCoverage("cuda", "raise_special_ops", "partial", "prefer",
-                     notes="inductor fuses softmax but does not raise to named kernel; autocomp benefits from named contracts"),
-    InductorCoverage("amd", "raise_special_ops", "partial", "prefer",
-                     notes="same reasoning as cuda"),
+    InductorCoverage(
+        "cuda",
+        "raise_special_ops",
+        "partial",
+        "prefer",
+        notes="inductor fuses softmax but does not raise to named kernel; autocomp benefits from named contracts",
+    ),
+    InductorCoverage("amd", "raise_special_ops", "partial", "prefer", notes="same reasoning as cuda"),
     InductorCoverage("arm_cpu", "raise_special_ops", "none", "prefer"),
-
     # fuse_dequant_matmul
-    InductorCoverage("cuda", "fuse_dequant_matmul", "none", "prefer",
-                     notes="inductor rarely fuses non-PyTorch-quant formats into a single Triton kernel"),
+    InductorCoverage(
+        "cuda",
+        "fuse_dequant_matmul",
+        "none",
+        "prefer",
+        notes="inductor rarely fuses non-PyTorch-quant formats into a single Triton kernel",
+    ),
     InductorCoverage("amd", "fuse_dequant_matmul", "none", "prefer"),
-
     # propagate_transposes
-    InductorCoverage("cuda", "propagate_transposes", "partial", "neutral",
-                     notes="inductor folds many adjacent transposes; tool catches those that cross scheduler boundaries"),
+    InductorCoverage(
+        "cuda",
+        "propagate_transposes",
+        "partial",
+        "neutral",
+        notes="inductor folds many adjacent transposes; tool catches those that cross scheduler boundaries",
+    ),
     InductorCoverage("amd", "propagate_transposes", "partial", "neutral"),
-
     # lower_quantized_matmul / lower_quantized_conv
     InductorCoverage("cuda", "lower_quantized_matmul", "none", "prefer"),
     InductorCoverage("amd", "lower_quantized_matmul", "none", "prefer"),
     InductorCoverage("cuda", "lower_quantized_conv", "none", "prefer"),
     InductorCoverage("amd", "lower_quantized_conv", "none", "prefer"),
-
     # lower_conv_to_img2col
-    InductorCoverage("cuda", "lower_conv_to_img2col", "overlap", "penalize",
-                     notes="cuDNN direct conv is usually faster; pass wins on atypical shapes only"),
-    InductorCoverage("amd", "lower_conv_to_img2col", "overlap", "penalize",
-                     notes="MIOpen direct conv similar story"),
-
+    InductorCoverage(
+        "cuda",
+        "lower_conv_to_img2col",
+        "overlap",
+        "penalize",
+        notes="cuDNN direct conv is usually faster; pass wins on atypical shapes only",
+    ),
+    InductorCoverage("amd", "lower_conv_to_img2col", "overlap", "penalize", notes="MIOpen direct conv similar story"),
     # decompose_concat
-    InductorCoverage("cuda", "decompose_concat", "full", "penalize",
-                     autocomp_still_useful=False,
-                     notes="inductor decomposes concats; CompGen pass is redundant on CUDA"),
-    InductorCoverage("amd", "decompose_concat", "full", "penalize",
-                     autocomp_still_useful=False),
-
+    InductorCoverage(
+        "cuda",
+        "decompose_concat",
+        "full",
+        "penalize",
+        autocomp_still_useful=False,
+        notes="inductor decomposes concats; CompGen pass is redundant on CUDA",
+    ),
+    InductorCoverage("amd", "decompose_concat", "full", "penalize", autocomp_still_useful=False),
     # demote_contraction_inputs
-    InductorCoverage("cuda", "demote_contraction_inputs", "partial", "neutral",
-                     notes="inductor respects dtype but target-specific accum widths still matter"),
+    InductorCoverage(
+        "cuda",
+        "demote_contraction_inputs",
+        "partial",
+        "neutral",
+        notes="inductor respects dtype but target-specific accum widths still matter",
+    ),
     InductorCoverage("amd", "demote_contraction_inputs", "partial", "neutral"),
-
     # match_library_call
-    InductorCoverage("cuda", "match_library_call", "partial", "prefer",
-                     notes="inductor matches cuBLAS/cuDNN; our unified matcher also covers FlashAttention-3, custom epilogues, ONNX-RT"),
-    InductorCoverage("amd", "match_library_call", "partial", "prefer",
-                     notes="inductor matches rocBLAS/MIOpen; we add more"),
-
+    InductorCoverage(
+        "cuda",
+        "match_library_call",
+        "partial",
+        "prefer",
+        notes="inductor matches cuBLAS/cuDNN; our unified matcher also covers FlashAttention-3, custom epilogues, ONNX-RT",
+    ),
+    InductorCoverage(
+        "amd", "match_library_call", "partial", "prefer", notes="inductor matches rocBLAS/MIOpen; we add more"
+    ),
     # set_numerics_policy
-    InductorCoverage("cuda", "set_numerics_policy", "full", "neutral",
-                     notes="inductor preserves declared dtypes; we still handle fp8/int8 variants it doesn't know"),
+    InductorCoverage(
+        "cuda",
+        "set_numerics_policy",
+        "full",
+        "neutral",
+        notes="inductor preserves declared dtypes; we still handle fp8/int8 variants it doesn't know",
+    ),
     InductorCoverage("amd", "set_numerics_policy", "partial", "neutral"),
-
     # normalize_subbyte
-    InductorCoverage("cuda", "normalize_subbyte", "none", "prefer",
-                     notes="no inductor path for int4/int2 packing"),
+    InductorCoverage("cuda", "normalize_subbyte", "none", "prefer", notes="no inductor path for int4/int2 packing"),
     InductorCoverage("amd", "normalize_subbyte", "none", "prefer"),
-
     # fold_transposes_into_dots
-    InductorCoverage("cuda", "fold_transposes_into_dots", "full", "penalize",
-                     autocomp_still_useful=False,
-                     notes="inductor folds; CompGen redundant"),
-    InductorCoverage("amd", "fold_transposes_into_dots", "full", "penalize",
-                     autocomp_still_useful=False),
-
+    InductorCoverage(
+        "cuda",
+        "fold_transposes_into_dots",
+        "full",
+        "penalize",
+        autocomp_still_useful=False,
+        notes="inductor folds; CompGen redundant",
+    ),
+    InductorCoverage("amd", "fold_transposes_into_dots", "full", "penalize", autocomp_still_useful=False),
     # plan_reduction
-    InductorCoverage("cuda", "plan_reduction", "partial", "neutral",
-                     notes="inductor picks one reduction strategy per op; target may prefer another"),
+    InductorCoverage(
+        "cuda",
+        "plan_reduction",
+        "partial",
+        "neutral",
+        notes="inductor picks one reduction strategy per op; target may prefer another",
+    ),
     InductorCoverage("amd", "plan_reduction", "partial", "neutral"),
-
     # fuse_softmax_to_triton
-    InductorCoverage("cuda", "fuse_softmax_to_triton", "full", "penalize",
-                     autocomp_still_useful=False,
-                     notes="inductor fuses SDPA+softmax natively since 2.x"),
-    InductorCoverage("amd", "fuse_softmax_to_triton", "partial", "prefer",
-                     notes="ROCm Triton less mature; CompGen's fused version often wins"),
-
+    InductorCoverage(
+        "cuda",
+        "fuse_softmax_to_triton",
+        "full",
+        "penalize",
+        autocomp_still_useful=False,
+        notes="inductor fuses SDPA+softmax natively since 2.x",
+    ),
+    InductorCoverage(
+        "amd",
+        "fuse_softmax_to_triton",
+        "partial",
+        "prefer",
+        notes="ROCm Triton less mature; CompGen's fused version often wins",
+    ),
     # megakernel_static_schedule (Algorithm 1, Event Tensor Compiler).
     # Inductor never produces a single persistent megakernel that fuses
     # across kernel boundaries -- it preserves them.  Always prefer.
-    InductorCoverage("cuda", "megakernel_static_schedule", "none", "prefer",
-                     notes="inductor preserves kernel boundaries; megakernel synthesis is gap-fill"),
-    InductorCoverage("amd", "megakernel_static_schedule", "none", "prefer",
-                     notes="HIP-Triton has no equivalent persistent megakernel codegen"),
+    InductorCoverage(
+        "cuda",
+        "megakernel_static_schedule",
+        "none",
+        "prefer",
+        notes="inductor preserves kernel boundaries; megakernel synthesis is gap-fill",
+    ),
+    InductorCoverage(
+        "amd",
+        "megakernel_static_schedule",
+        "none",
+        "prefer",
+        notes="HIP-Triton has no equivalent persistent megakernel codegen",
+    ),
 )
 
 

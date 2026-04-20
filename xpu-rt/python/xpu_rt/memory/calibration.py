@@ -3,6 +3,7 @@
 Records pairs of (estimated_latency, measured_latency) per target and
 op_family. Computes calibration factors to correct future cost estimates.
 """
+
 from __future__ import annotations
 
 import json
@@ -39,16 +40,17 @@ def record_calibration(
 
     ratio = measured_us / max(estimated_us, 1e-9)
     summary = (
-        f"calibration {op_family}@{target_key}: "
-        f"est={estimated_us:.1f}us meas={measured_us:.1f}us ratio={ratio:.2f}"
+        f"calibration {op_family}@{target_key}: est={estimated_us:.1f}us meas={measured_us:.1f}us ratio={ratio:.2f}"
     )
-    artifact = json.dumps({
-        "target_key": target_key,
-        "op_family": op_family,
-        "estimated_us": estimated_us,
-        "measured_us": measured_us,
-        "ratio": ratio,
-    })
+    artifact = json.dumps(
+        {
+            "target_key": target_key,
+            "op_family": op_family,
+            "estimated_us": estimated_us,
+            "measured_us": measured_us,
+            "ratio": ratio,
+        }
+    )
 
     item = memory.store_knowledge(
         kind=KnowledgeKind.HARDWARE_RULE,

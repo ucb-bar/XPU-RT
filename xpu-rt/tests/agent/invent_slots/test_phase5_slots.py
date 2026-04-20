@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import compgen.agent.invent_slots  # noqa: F401
+from compgen.agent.invent_slots.registrar import register_invent_slots
 from compgen.agent.invent_slots.seeds import (
     propose_buffer_lifetime_plan_seed,
     propose_rematerialization_plan_seed,
 )
-from compgen.agent.invent_slots.registrar import register_invent_slots
 from compgen.llm.registry import Registry
 
 

@@ -104,7 +104,6 @@ _LAYOUT_PASSES: list[PassInfo] = [
         });""",
         extra_includes=["mlir/Dialect/Func/IR/FuncOps.h"],
     ),
-
     # --- Pass 2: Attach Layout Hints ---
     PassInfo(
         name="attach_layout_hints",
@@ -124,7 +123,6 @@ _LAYOUT_PASSES: list[PassInfo] = [
         (void)ctx;""",
         extra_includes=[],
     ),
-
     # --- Pass 3: Set Virtual Encodings ---
     PassInfo(
         name="set_virtual_encodings",
@@ -177,7 +175,6 @@ _LAYOUT_PASSES: list[PassInfo] = [
             "Layout/LayoutAttrs.h",
         ],
     ),
-
     # --- Pass 4: Propagate Layouts ---
     PassInfo(
         name="propagate_layouts",
@@ -255,7 +252,6 @@ _LAYOUT_PASSES: list[PassInfo] = [
             "llvm/ADT/StringSet.h",
         ],
     ),
-
     # --- Pass 5: Hoist Layout Ops ---
     PassInfo(
         name="hoist_layout_ops",
@@ -318,7 +314,6 @@ _LAYOUT_PASSES: list[PassInfo] = [
             "llvm/ADT/StringMap.h",
         ],
     ),
-
     # --- Pass 6: Fuse Layout Into Producers ---
     PassInfo(
         name="fuse_layout_into_producers",
@@ -385,7 +380,6 @@ _LAYOUT_PASSES: list[PassInfo] = [
             "llvm/ADT/DenseMap.h",
         ],
     ),
-
     # --- Pass 7: Introduce Prepacking ---
     PassInfo(
         name="introduce_prepacking",
@@ -419,7 +413,6 @@ _LAYOUT_PASSES: list[PassInfo] = [
             "Layout/LayoutAttrs.h",
         ],
     ),
-
     # --- Pass 8: Specialize Layouts ---
     PassInfo(
         name="specialize_layouts",
@@ -468,7 +461,6 @@ _LAYOUT_PASSES: list[PassInfo] = [
         });""",
         extra_includes=["mlir/Dialect/Func/IR/FuncOps.h"],
     ),
-
     # --- Pass 9: Materialize Layout Boundaries ---
     PassInfo(
         name="materialize_layout_boundaries",
@@ -515,7 +507,6 @@ _LAYOUT_PASSES: list[PassInfo] = [
             "llvm/ADT/SmallVector.h",
         ],
     ),
-
     # --- Pass 10: Cleanup Layout Artifacts ---
     PassInfo(
         name="cleanup_layout_artifacts",
@@ -655,9 +646,13 @@ def write_pass_files(
 
     # Passes.h
     h_path = include_dir / f"{info.prefix}Passes.h"
-    h_path.write_text(emit_passes_h(
-        info.prefix, info.cpp_namespace, has_attrs=bool(info.attrs),
-    ))
+    h_path.write_text(
+        emit_passes_h(
+            info.prefix,
+            info.cpp_namespace,
+            has_attrs=bool(info.attrs),
+        )
+    )
     written.append(h_path)
 
     # Per-pass .cpp files
@@ -668,9 +663,13 @@ def write_pass_files(
 
     # Passes/CMakeLists.txt
     cmake_path = passes_dir / "CMakeLists.txt"
-    cmake_path.write_text(emit_passes_lib_cmake(
-        info.prefix, passes, has_attrs=bool(info.attrs),
-    ))
+    cmake_path.write_text(
+        emit_passes_lib_cmake(
+            info.prefix,
+            passes,
+            has_attrs=bool(info.attrs),
+        )
+    )
     written.append(cmake_path)
 
     return written

@@ -68,17 +68,13 @@ class PriorityScheduler:
     """
 
     num_devices: int = 1
-    _queues: dict[int, list[deque[Workload]]] = field(
-        default_factory=dict, init=False
-    )
+    _queues: dict[int, list[deque[Workload]]] = field(default_factory=dict, init=False)
     _lock: threading.Lock = field(default_factory=threading.Lock, init=False)
 
     def __post_init__(self) -> None:
         # Per device: one deque per priority level (indexed by Priority value)
         for device in range(self.num_devices):
-            self._queues[device] = [
-                deque() for _ in range(len(Priority))
-            ]
+            self._queues[device] = [deque() for _ in range(len(Priority))]
 
     def submit(self, workload: Workload, device: int = 0) -> None:
         """Submit a workload to a device's ready queue.
@@ -91,9 +87,7 @@ class PriorityScheduler:
             ValueError: If *device* is out of range.
         """
         if device < 0 or device >= self.num_devices:
-            raise ValueError(
-                f"Device {device} out of range [0, {self.num_devices})"
-            )
+            raise ValueError(f"Device {device} out of range [0, {self.num_devices})")
 
         with self._lock:
             self._queues[device][workload.priority].append(workload)
@@ -117,9 +111,7 @@ class PriorityScheduler:
             The next :class:`Workload`, or ``None``.
         """
         if device < 0 or device >= self.num_devices:
-            raise ValueError(
-                f"Device {device} out of range [0, {self.num_devices})"
-            )
+            raise ValueError(f"Device {device} out of range [0, {self.num_devices})")
 
         with self._lock:
             # Iterate from highest to lowest priority

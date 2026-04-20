@@ -146,7 +146,7 @@ class EvolutionaryOptimizer:
 
             if gen < self.generations - 1:
                 # Select winners and mutate
-                winners = sorted(scored, key=lambda s: s.cost_us)[:self.top_k]
+                winners = sorted(scored, key=lambda s: s.cost_us)[: self.top_k]
                 strategies = self._mutate(winners, gen, target)
 
         if best_scored is None:
@@ -185,8 +185,10 @@ class EvolutionaryOptimizer:
             request = GenerationRequest(
                 prompt_template=prompt,
                 context=PromptContext(
-                    model_ir_summary="", target_profile_summary=target.name,
-                    available_transforms=[], kernel_contracts=[],
+                    model_ir_summary="",
+                    target_profile_summary=target.name,
+                    available_transforms=[],
+                    kernel_contracts=[],
                     objective=Objective.LATENCY,
                 ),
                 config=LLMConfig(
@@ -227,13 +229,15 @@ class EvolutionaryOptimizer:
             cost = obs_after.estimated_total_latency_us
             improvement = ((baseline_cost - cost) / max(baseline_cost, 1e-9)) * 100
 
-            results.append(ScoredStrategy(
-                strategy=strategy,
-                cost_us=cost,
-                improvement_pct=improvement,
-                actions_applied=applied,
-                actions_failed=failed,
-            ))
+            results.append(
+                ScoredStrategy(
+                    strategy=strategy,
+                    cost_us=cost,
+                    improvement_pct=improvement,
+                    actions_applied=applied,
+                    actions_failed=failed,
+                )
+            )
 
             # Rollback to try next strategy
             self.env.step(RollbackAction())
@@ -243,19 +247,22 @@ class EvolutionaryOptimizer:
     def _mutate(self, winners: list[ScoredStrategy], gen: int, target: TargetProfile) -> list[Strategy]:
         """Ask LLM to refine winning strategies."""
         winner_desc = "\n".join(
-            f"  {w.strategy.name}: {w.strategy.action_types} → {w.improvement_pct:+.1f}%"
-            for w in winners
+            f"  {w.strategy.name}: {w.strategy.action_types} → {w.improvement_pct:+.1f}%" for w in winners
         )
         prompt = MUTATE_PROMPT.format(
-            gen=gen, winners=winner_desc, n=self.population_size,
+            gen=gen,
+            winners=winner_desc,
+            n=self.population_size,
         )
 
         try:
             request = GenerationRequest(
                 prompt_template=prompt,
                 context=PromptContext(
-                    model_ir_summary="", target_profile_summary=target.name,
-                    available_transforms=[], kernel_contracts=[],
+                    model_ir_summary="",
+                    target_profile_summary=target.name,
+                    available_transforms=[],
+                    kernel_contracts=[],
                     objective=Objective.LATENCY,
                 ),
                 config=LLMConfig(

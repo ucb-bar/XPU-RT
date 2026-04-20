@@ -9,7 +9,6 @@ from pathlib import Path
 import pytest
 import torch
 import torch.nn as nn
-
 from compgen.quantization.pipeline import PipelineReport, QuantizedModelPipeline
 
 torchao = pytest.importorskip("torchao")
@@ -81,7 +80,9 @@ class TestPipelineWithQuant:
         x = (torch.randn(4, 32, dtype=torch.bfloat16),)
         config = QuantizationConfig(scheme="fp8_e4m3_po2")
         pipeline = QuantizedModelPipeline(
-            model=model, sample_inputs=x, quant_config=config,
+            model=model,
+            sample_inputs=x,
+            quant_config=config,
         )
         report = pipeline.run()
         assert report.quantization_applied is True
@@ -93,7 +94,9 @@ class TestPipelineWithQuant:
         x = (torch.randn(4, 32, dtype=torch.bfloat16),)
         config = QuantizationConfig(scheme="fp8_e4m3_po2")
         pipeline = QuantizedModelPipeline(
-            model=model, sample_inputs=x, quant_config=config,
+            model=model,
+            sample_inputs=x,
+            quant_config=config,
         )
         report = pipeline.run()
         assert report.alignment_result is not None
@@ -108,7 +111,8 @@ class TestPipelineArtifacts:
             model = _simple_mlp()
             x = (torch.randn(4, 32),)
             pipeline = QuantizedModelPipeline(
-                model=model, sample_inputs=x,
+                model=model,
+                sample_inputs=x,
                 model_name="test_artifacts",
                 output_dir=tmpdir,
             )
@@ -125,7 +129,9 @@ class TestPipelineArtifacts:
             model = _simple_mlp()
             x = (torch.randn(4, 32),)
             pipeline = QuantizedModelPipeline(
-                model=model, sample_inputs=x, output_dir=tmpdir,
+                model=model,
+                sample_inputs=x,
+                output_dir=tmpdir,
             )
             pipeline.run()
             data = json.loads((Path(tmpdir) / "graph_analysis.json").read_text())
@@ -137,7 +143,9 @@ class TestPipelineArtifacts:
             model = _simple_mlp()
             x = (torch.randn(4, 32),)
             pipeline = QuantizedModelPipeline(
-                model=model, sample_inputs=x, output_dir=tmpdir,
+                model=model,
+                sample_inputs=x,
+                output_dir=tmpdir,
             )
             pipeline.run()
             manifest = json.loads((Path(tmpdir) / "manifest.json").read_text())
@@ -152,8 +160,10 @@ class TestPipelineArtifacts:
             x = (torch.randn(4, 32, dtype=torch.bfloat16),)
             config = QuantizationConfig(scheme="fp8_e4m3_po2")
             pipeline = QuantizedModelPipeline(
-                model=model, sample_inputs=x,
-                quant_config=config, output_dir=tmpdir,
+                model=model,
+                sample_inputs=x,
+                quant_config=config,
+                output_dir=tmpdir,
             )
             report = pipeline.run()
             out = Path(tmpdir)

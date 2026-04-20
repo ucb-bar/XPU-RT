@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 import pytest
+from compgen.ir.payload.passes.rewrites.propagate_transposes import (
+    PropagateTransposesConfig,
+    PropagateTransposesStats,
+    run_propagate_transposes,
+)
 from xdsl.dialects.arith import ConstantOp, MulfOp
 from xdsl.dialects.builtin import (
     AffineMapAttr,
-    ArrayAttr,
     DenseArrayBase,
     Float32Type,
     FloatAttr,
@@ -28,11 +32,6 @@ from xdsl.dialects.tensor import EmptyOp
 from xdsl.ir import Block, Region
 from xdsl.ir.affine import AffineMap
 
-from compgen.ir.payload.passes.rewrites.propagate_transposes import (
-    PropagateTransposesConfig,
-    PropagateTransposesStats,
-    run_propagate_transposes,
-)
 from tests.ir.payload.passes._pattern_test_helpers import (
     assert_module_verifies,
     count_ops,
@@ -65,13 +64,17 @@ def test_double_reverse_perm_collapses():
     x = EmptyOp([], t1)
     i1 = EmptyOp([], t2)
     tr1 = TransposeOp(
-        input=x.results[0], init=i1.results[0],
-        permutation=_perm([1, 0]), result=t2,
+        input=x.results[0],
+        init=i1.results[0],
+        permutation=_perm([1, 0]),
+        result=t2,
     )
     i2 = EmptyOp([], t1)
     tr2 = TransposeOp(
-        input=tr1.results[0], init=i2.results[0],
-        permutation=_perm([1, 0]), result=t1,
+        input=tr1.results[0],
+        init=i2.results[0],
+        permutation=_perm([1, 0]),
+        result=t1,
     )
     m = _wrap([x, i1, tr1, i2, tr2], tr2.results[0], t1)
 
@@ -90,11 +93,9 @@ def test_composed_non_identity_folds_into_single():
     t2 = _ft([3, 4, 2])
     x = EmptyOp([], t0)
     i1 = EmptyOp([], t1)
-    tr1 = TransposeOp(input=x.results[0], init=i1.results[0],
-                      permutation=_perm([2, 0, 1]), result=t1)
+    tr1 = TransposeOp(input=x.results[0], init=i1.results[0], permutation=_perm([2, 0, 1]), result=t1)
     i2 = EmptyOp([], t2)
-    tr2 = TransposeOp(input=tr1.results[0], init=i2.results[0],
-                      permutation=_perm([2, 0, 1]), result=t2)
+    tr2 = TransposeOp(input=tr1.results[0], init=i2.results[0], permutation=_perm([2, 0, 1]), result=t2)
     m = _wrap([x, i1, tr1, i2, tr2], tr2.results[0], t2)
 
     stats = run_propagate_transposes(m)
@@ -108,14 +109,11 @@ def test_three_chained_transposes_reduce_to_one_or_zero():
     t0 = _ft([4, 8])
     x = EmptyOp([], t0)
     i1 = EmptyOp([], _ft([8, 4]))
-    tr1 = TransposeOp(input=x.results[0], init=i1.results[0],
-                      permutation=_perm([1, 0]), result=_ft([8, 4]))
+    tr1 = TransposeOp(input=x.results[0], init=i1.results[0], permutation=_perm([1, 0]), result=_ft([8, 4]))
     i2 = EmptyOp([], _ft([4, 8]))
-    tr2 = TransposeOp(input=tr1.results[0], init=i2.results[0],
-                      permutation=_perm([1, 0]), result=_ft([4, 8]))
+    tr2 = TransposeOp(input=tr1.results[0], init=i2.results[0], permutation=_perm([1, 0]), result=_ft([4, 8]))
     i3 = EmptyOp([], _ft([8, 4]))
-    tr3 = TransposeOp(input=tr2.results[0], init=i3.results[0],
-                      permutation=_perm([1, 0]), result=_ft([8, 4]))
+    tr3 = TransposeOp(input=tr2.results[0], init=i3.results[0], permutation=_perm([1, 0]), result=_ft([8, 4]))
     m = _wrap([x, i1, tr1, i2, tr2, i3, tr3], tr3.results[0], _ft([8, 4]))
 
     stats = run_propagate_transposes(m)
@@ -130,8 +128,7 @@ def test_single_transpose_is_not_touched():
     t1 = _ft([8, 4])
     x = EmptyOp([], t0)
     i = EmptyOp([], t1)
-    tr = TransposeOp(input=x.results[0], init=i.results[0],
-                     permutation=_perm([1, 0]), result=t1)
+    tr = TransposeOp(input=x.results[0], init=i.results[0], permutation=_perm([1, 0]), result=t1)
     m = _wrap([x, i, tr], tr.results[0], t1)
 
     stats = run_propagate_transposes(m)
@@ -171,8 +168,7 @@ def test_push_through_elementwise_generic():
     t2 = _ft([8, 4])
     x = EmptyOp([], t1)
     it = EmptyOp([], t2)
-    tr = TransposeOp(input=x.results[0], init=it.results[0],
-                     permutation=_perm([1, 0]), result=t2)
+    tr = TransposeOp(input=x.results[0], init=it.results[0], permutation=_perm([1, 0]), result=t2)
     init, g = _identity_generic(tr.results[0], (8, 4))
     m = _wrap([x, it, tr, init, g], g.results[0], t2)
 
@@ -186,14 +182,11 @@ def test_conservative_aggressiveness_does_not_push():
     t2 = _ft([8, 4])
     x = EmptyOp([], t1)
     it = EmptyOp([], t2)
-    tr = TransposeOp(input=x.results[0], init=it.results[0],
-                     permutation=_perm([1, 0]), result=t2)
+    tr = TransposeOp(input=x.results[0], init=it.results[0], permutation=_perm([1, 0]), result=t2)
     init, g = _identity_generic(tr.results[0], (8, 4))
     m = _wrap([x, it, tr, init, g], g.results[0], t2)
 
-    stats = run_propagate_transposes(
-        m, config=PropagateTransposesConfig(aggressiveness="conservative")
-    )
+    stats = run_propagate_transposes(m, config=PropagateTransposesConfig(aggressiveness="conservative"))
     assert stats.elementwise_pushes == 0
 
 
@@ -219,11 +212,14 @@ def test_no_transpose_is_noop():
     body = Block(arg_types=[Float32Type(), Float32Type()])
     c = ConstantOp(FloatAttr(2.0, Float32Type()))
     mul = MulfOp(body.args[0], c.result)
-    body.add_op(c); body.add_op(mul); body.add_op(YieldOp(mul.result))
+    body.add_op(c)
+    body.add_op(mul)
+    body.add_op(YieldOp(mul.result))
     init2 = EmptyOp([], t)
     idmap = AffineMap.identity(2)
     g = GenericOp(
-        inputs=[input_e.results[0]], outputs=[init2.results[0]],
+        inputs=[input_e.results[0]],
+        outputs=[init2.results[0]],
         body=Region([body]),
         indexing_maps=[AffineMapAttr(idmap), AffineMapAttr(idmap)],
         iterator_types=[IteratorTypeAttr(IteratorType.PARALLEL), IteratorTypeAttr(IteratorType.PARALLEL)],
@@ -249,11 +245,9 @@ def test_idempotent_second_run_is_noop_or_smaller():
     t2 = _ft([8, 4])
     x = EmptyOp([], t1)
     i1 = EmptyOp([], t2)
-    tr1 = TransposeOp(input=x.results[0], init=i1.results[0],
-                      permutation=_perm([1, 0]), result=t2)
+    tr1 = TransposeOp(input=x.results[0], init=i1.results[0], permutation=_perm([1, 0]), result=t2)
     i2 = EmptyOp([], t1)
-    tr2 = TransposeOp(input=tr1.results[0], init=i2.results[0],
-                      permutation=_perm([1, 0]), result=t1)
+    tr2 = TransposeOp(input=tr1.results[0], init=i2.results[0], permutation=_perm([1, 0]), result=t1)
     m = _wrap([x, i1, tr1, i2, tr2], tr2.results[0], t1)
     first = run_propagate_transposes(m)
     assert first.chained_collapses >= 1
@@ -269,11 +263,9 @@ def test_region_id_preserved_through_chained_collapse():
     t2 = _ft([8, 4])
     x = EmptyOp([], t1)
     i1 = EmptyOp([], t2)
-    tr1 = TransposeOp(input=x.results[0], init=i1.results[0],
-                      permutation=_perm([1, 0]), result=t2)
+    tr1 = TransposeOp(input=x.results[0], init=i1.results[0], permutation=_perm([1, 0]), result=t2)
     i2 = EmptyOp([], t1)
-    tr2 = TransposeOp(input=tr1.results[0], init=i2.results[0],
-                      permutation=_perm([1, 0]), result=t1)
+    tr2 = TransposeOp(input=tr1.results[0], init=i2.results[0], permutation=_perm([1, 0]), result=t1)
     tr2.attributes["compgen.region_id"] = StringAttr("outer_t")
     m = _wrap([x, i1, tr1, i2, tr2], tr2.results[0], t1)
 
@@ -291,6 +283,7 @@ def test_propagate_transposes_on_attention_mlp_tiny_is_safe():
     """Real-workload test: the pass should not introduce verifier
     errors on a bridged attention block."""
     from compgen.capture.torch_mlir_bridge import bridge_fx_graph
+
     from tests._fixtures.real_workloads import attention_mlp_tiny
 
     fx = attention_mlp_tiny()
@@ -307,6 +300,7 @@ def test_propagate_transposes_on_attention_mlp_tiny_is_safe():
 
 def test_propagate_transposes_on_qwen_moe_tiny_is_safe():
     from compgen.capture.torch_mlir_bridge import bridge_fx_graph
+
     from tests._fixtures.real_workloads import qwen_moe_tiny
 
     fx = qwen_moe_tiny()

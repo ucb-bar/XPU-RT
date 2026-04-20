@@ -19,9 +19,10 @@ from __future__ import annotations
 import threading
 import time
 import uuid
-from concurrent.futures import ThreadPoolExecutor, Future
+from collections.abc import Callable
+from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
 
 
 @dataclass
@@ -30,7 +31,7 @@ class Job:
 
     job_id: str
     name: str
-    status: str = "running"          # running | done | failed
+    status: str = "running"  # running | done | failed
     started_at: float = field(default_factory=time.time)
     finished_at: float | None = None
     result: dict[str, Any] | None = None
@@ -52,7 +53,10 @@ class JobQueue:
     """
 
     def __init__(
-        self, *, max_workers: int = 2, inline_threshold_s: float = 5.0,
+        self,
+        *,
+        max_workers: int = 2,
+        inline_threshold_s: float = 5.0,
     ) -> None:
         self._pool = ThreadPoolExecutor(max_workers=max_workers)
         self._inline_threshold_s = inline_threshold_s
@@ -60,7 +64,9 @@ class JobQueue:
         self._lock = threading.Lock()
 
     def submit(
-        self, name: str, fn: Callable[[], dict[str, Any]],
+        self,
+        name: str,
+        fn: Callable[[], dict[str, Any]],
     ) -> Job:
         """Submit ``fn`` for async execution. Returns the job record.
 
@@ -75,8 +81,11 @@ class JobQueue:
         return job
 
     def run_inline_or_async(
-        self, name: str, fn: Callable[[], dict[str, Any]],
-        *, inline_threshold_s: float | None = None,
+        self,
+        name: str,
+        fn: Callable[[], dict[str, Any]],
+        *,
+        inline_threshold_s: float | None = None,
     ) -> dict[str, Any]:
         """Project to sync when fast; hand back a job-id when slow.
 
@@ -84,17 +93,14 @@ class JobQueue:
         always returned; ``{"async": true, "job_id": "..."}`` means the
         LLM should poll, anything else is the final result.
         """
-        threshold = (
-            inline_threshold_s if inline_threshold_s is not None
-            else self._inline_threshold_s
-        )
+        threshold = inline_threshold_s if inline_threshold_s is not None else self._inline_threshold_s
         job = self.submit(name, fn)
         try:
             assert job._future is not None
             result = job._future.result(timeout=threshold)
             # finished in time — inline.
             return result
-        except Exception as exc:   # includes TimeoutError from .result()
+        except Exception as exc:  # includes TimeoutError from .result()
             # Timeout: hand back job-id. Real exceptions within fn are
             # already captured in job.status via _runner.
             if "timeout" in type(exc).__name__.lower():
@@ -133,7 +139,7 @@ class JobQueue:
             out = fn()
             job.result = out
             job.status = "done"
-        except Exception as e:   # noqa: BLE001
+        except Exception as e:  # noqa: BLE001
             job.status = "failed"
             job.error = f"{type(e).__name__}: {e}"
         finally:

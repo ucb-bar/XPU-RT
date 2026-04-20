@@ -16,7 +16,6 @@ from benchmarks.spec import (
 )
 from benchmarks.workloads import get_loader, get_model_spec
 
-
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_BASELINES = [
     "compgen",
@@ -102,8 +101,18 @@ def _register_workloads(registry: BenchmarkRegistry) -> None:
         ("simple_mlp_batch16", "tier_c", "SimpleMLP shape variant for bundle specialization", ["mlp", "bundle"]),
         ("simple_mlp_batch32", "tier_c", "Held-out SimpleMLP bundle variant", ["mlp", "bundle", "heldout"]),
         ("transformer_block_seq8", "tier_c", "Transformer block discovery variant", ["transformer", "bundle"]),
-        ("transformer_block_seq32", "tier_c", "Transformer block held-out variant", ["transformer", "bundle", "heldout"]),
-        ("quantized_mlp_batch16", "tier_c", "Quantized MLP held-out bundle variant", ["quantized", "bundle", "heldout"]),
+        (
+            "transformer_block_seq32",
+            "tier_c",
+            "Transformer block held-out variant",
+            ["transformer", "bundle", "heldout"],
+        ),
+        (
+            "quantized_mlp_batch16",
+            "tier_c",
+            "Quantized MLP held-out bundle variant",
+            ["quantized", "bundle", "heldout"],
+        ),
         ("matmul_bias_gelu", "tier_a", "Matmul + bias + GELU microbenchmark", ["microbenchmark", "matmul"]),
         ("matmul_add_relu", "tier_a", "Matmul + residual add + ReLU microbenchmark", ["microbenchmark", "matmul"]),
         ("layernorm_chain", "tier_a", "LayerNorm chain microbenchmark", ["microbenchmark", "reduction"]),
@@ -289,15 +298,15 @@ def _register_cases_and_studies(registry: BenchmarkRegistry) -> None:
         ("copy_boundary_heavy", "riscv_soc"),
     ]:
         add_case(
-                ExperimentCase(
-                    case_id=f"single_{workload_id}_{target_id}",
-                    study_id="single_specialization",
-                    workload_id=workload_id,
-                    target_id=target_id,
-                    baseline_ids=DEFAULT_BASELINES,
-                    ablations=["seed_only", "fixed_pass_only", "no_eqsat", "no_solver", "no_guard_synthesis"],
-                    tags=["specialization", "paper_subset"],
-                )
+            ExperimentCase(
+                case_id=f"single_{workload_id}_{target_id}",
+                study_id="single_specialization",
+                workload_id=workload_id,
+                target_id=target_id,
+                baseline_ids=DEFAULT_BASELINES,
+                ablations=["seed_only", "fixed_pass_only", "no_eqsat", "no_solver", "no_guard_synthesis"],
+                tags=["specialization", "paper_subset"],
+            )
         )
 
     for workload_id, bundle_id in [
@@ -305,29 +314,29 @@ def _register_cases_and_studies(registry: BenchmarkRegistry) -> None:
         ("simple_mlp", "BundleM"),
     ]:
         add_case(
-                ExperimentCase(
-                    case_id=f"bundle_{workload_id}",
-                    study_id="bundle_specialization",
-                    workload_id=workload_id,
-                    target_id="cuda_a100",
-                    baseline_ids=DEFAULT_BASELINES,
-                    ablations=["single_workload_specialization", "bundle_specialization", "no_guard_synthesis"],
-                    tags=["bundle", "paper_subset"],
-                    metadata={"bundle_id": bundle_id},
-                )
+            ExperimentCase(
+                case_id=f"bundle_{workload_id}",
+                study_id="bundle_specialization",
+                workload_id=workload_id,
+                target_id="cuda_a100",
+                baseline_ids=DEFAULT_BASELINES,
+                ablations=["single_workload_specialization", "bundle_specialization", "no_guard_synthesis"],
+                tags=["bundle", "paper_subset"],
+                metadata={"bundle_id": bundle_id},
+            )
         )
 
     for workload_id in ["transformer_block", "simple_mlp", "copy_boundary_heavy"]:
         add_case(
-                ExperimentCase(
-                    case_id=f"hybrid_{workload_id}",
-                    study_id="hybrid_planning",
-                    workload_id=workload_id,
-                    target_id="multi_device",
-                    baseline_ids=DEFAULT_BASELINES,
-                    ablations=["no_solver", "no_guard_synthesis"],
-                    tags=["hybrid", "paper_subset"],
-                )
+            ExperimentCase(
+                case_id=f"hybrid_{workload_id}",
+                study_id="hybrid_planning",
+                workload_id=workload_id,
+                target_id="multi_device",
+                baseline_ids=DEFAULT_BASELINES,
+                ablations=["no_solver", "no_guard_synthesis"],
+                tags=["hybrid", "paper_subset"],
+            )
         )
 
     for workload_id, target_id in [
@@ -450,14 +459,10 @@ def _register_cases_and_studies(registry: BenchmarkRegistry) -> None:
     )
 
     ready_workloads = {
-        workload_id
-        for workload_id, spec in registry.workloads.items()
-        if spec.expected_status == "pass"
+        workload_id for workload_id, spec in registry.workloads.items() if spec.expected_status == "pass"
     }
     paper_frontier_ready_ids = [
-        case_id
-        for case_id in frontier_all_ids
-        if registry.get_case(case_id).workload_id in ready_workloads
+        case_id for case_id in frontier_all_ids if registry.get_case(case_id).workload_id in ready_workloads
     ]
     registry.register_study(
         StudySpec(
@@ -477,10 +482,14 @@ def _register_defects(registry: BenchmarkRegistry) -> None:
         DefectSpec("wrong_layout_assumption", "layout_invariant", "Layout invariant mismatch", "verification"),
         DefectSpec("wrong_device_placement", "solver", "Placement violates device assumptions", "solver"),
         DefectSpec("missing_copy_boundary", "planning", "Cross-device dependency without copy op", "planning"),
-        DefectSpec("numerically_wrong_kernel", "differential", "Kernel produces numerically wrong results", "differential"),
+        DefectSpec(
+            "numerically_wrong_kernel", "differential", "Kernel produces numerically wrong results", "differential"
+        ),
         DefectSpec("malformed_transform", "structural", "Transform text cannot be verified structurally", "structural"),
         DefectSpec("infeasible_memory_budget", "memory_bound", "Memory budget is impossible on the target", "memory"),
-        DefectSpec("overoptimistic_profile_budget", "profile_budget", "Profile budget below measured latency", "profile"),
+        DefectSpec(
+            "overoptimistic_profile_budget", "profile_budget", "Profile budget below measured latency", "profile"
+        ),
     ]:
         registry.register_defect(defect)
 

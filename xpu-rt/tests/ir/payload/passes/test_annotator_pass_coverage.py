@@ -9,8 +9,6 @@ full walk+annotate path without requiring a synthesized input IR.
 from __future__ import annotations
 
 import pytest
-from xdsl.dialects.builtin import ModuleOp
-
 from compgen.ir.payload.passes.stubs import (
     FoldTransposesIntoDots,
     FuseDequantMatmul,
@@ -24,7 +22,7 @@ from compgen.ir.payload.passes.stubs import (
     RaiseSpecialOps,
     SetNumericsPolicy,
 )
-
+from xdsl.dialects.builtin import ModuleOp
 
 _PASS_COUNT_ATTR: list[tuple[type, str]] = [
     (LowerQuantizedMatmul, "compgen.lower_quantized_matmul.count"),
@@ -41,15 +39,13 @@ _PASS_COUNT_ATTR: list[tuple[type, str]] = [
 ]
 
 
-@pytest.mark.parametrize("cls,count_attr", _PASS_COUNT_ATTR,
-                         ids=[c.name for c, _ in _PASS_COUNT_ATTR])
+@pytest.mark.parametrize("cls,count_attr", _PASS_COUNT_ATTR, ids=[c.name for c, _ in _PASS_COUNT_ATTR])
 def test_pass_not_stub(cls, count_attr) -> None:
     p = cls()
     assert p.stub is False
 
 
-@pytest.mark.parametrize("cls,count_attr", _PASS_COUNT_ATTR,
-                         ids=[c.name for c, _ in _PASS_COUNT_ATTR])
+@pytest.mark.parametrize("cls,count_attr", _PASS_COUNT_ATTR, ids=[c.name for c, _ in _PASS_COUNT_ATTR])
 def test_pass_runs_on_empty_module(cls, count_attr) -> None:
     mod = ModuleOp([])
     p = cls()
@@ -62,8 +58,7 @@ def test_pass_runs_on_empty_module(cls, count_attr) -> None:
     assert int(val.value.data) == 0
 
 
-@pytest.mark.parametrize("cls,_count_attr", _PASS_COUNT_ATTR,
-                         ids=[c.name for c, _ in _PASS_COUNT_ATTR])
+@pytest.mark.parametrize("cls,_count_attr", _PASS_COUNT_ATTR, ids=[c.name for c, _ in _PASS_COUNT_ATTR])
 def test_pass_registers_non_stub_tool(cls, _count_attr) -> None:
     import compgen.ir.payload.passes  # noqa: F401  auto-registration
     from compgen.llm import get_registry

@@ -89,10 +89,7 @@ class PayloadMutationReport:
     diagnostics: list[str] = field(default_factory=list)
 
     def total(self) -> int:
-        return (
-            self.fusions_applied + self.tiles_applied
-            + self.placements_applied + self.megakernels_applied
-        )
+        return self.fusions_applied + self.tiles_applied + self.placements_applied + self.megakernels_applied
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -188,10 +185,7 @@ def _build_recipe_to_payload_map(recipe: ModuleOp) -> dict[str, str]:
         if op.name != "recipe.region":
             continue
         sym = op.properties.get("sym_name") or op.attributes.get("sym_name")
-        payload_id = (
-            op.properties.get("payload_region_id")
-            or op.attributes.get("payload_region_id")
-        )
+        payload_id = op.properties.get("payload_region_id") or op.attributes.get("payload_region_id")
         if isinstance(sym, StringAttr) and isinstance(payload_id, StringAttr):
             out[sym.data] = payload_id.data
     return out
@@ -252,7 +246,9 @@ def _resolve_targets(
 
 
 def _apply_fusion(
-    targets: list[Operation], region_refs: list[str], *,
+    targets: list[Operation],
+    region_refs: list[str],
+    *,
     fusion_kind: str = "producer_consumer",
     label: str = "fusion",
 ) -> tuple[int, str]:
@@ -275,13 +271,12 @@ def _apply_fusion(
 
 
 def _apply_tile(
-    targets: list[Operation], sizes: tuple[int, ...],
+    targets: list[Operation],
+    sizes: tuple[int, ...],
 ) -> int:
     if not targets or not sizes:
         return 0
-    sizes_attr = ArrayAttr([
-        IntegerAttr(int(s), IntegerType(64)) for s in sizes
-    ])
+    sizes_attr = ArrayAttr([IntegerAttr(int(s), IntegerType(64)) for s in sizes])
     sizes_str = ",".join(str(s) for s in sizes)
     str_attr = StringAttr(sizes_str)
     for op in targets:
@@ -291,7 +286,8 @@ def _apply_tile(
 
 
 def _apply_place(
-    targets: list[Operation], device_index: int,
+    targets: list[Operation],
+    device_index: int,
 ) -> int:
     if not targets:
         return 0
@@ -320,7 +316,10 @@ def _sanitize_callee(name: str) -> str:
 
 
 def _ensure_callee_decl(
-    module: ModuleOp, name: str, in_types: list[Any], out_types: list[Any],
+    module: ModuleOp,
+    name: str,
+    in_types: list[Any],
+    out_types: list[Any],
 ) -> None:
     """Add a private ``func.func`` declaration for ``name`` to the module
     body if one isn't already present. Mirrors how torch.export's import
@@ -432,7 +431,10 @@ def _try_structural_fuse(
 
     # Declare the fused callee on the module (idempotent).
     _ensure_callee_decl(
-        module, fused_callee, new_operand_types, [new_result_type],
+        module,
+        fused_callee,
+        new_operand_types,
+        [new_result_type],
     )
 
     # Build the new fused CallOp + stamp the agent-decision attributes
@@ -469,7 +471,8 @@ def _try_structural_fuse(
 
 
 def _apply_megakernel(
-    targets: list[Operation], megakernel_name: str,
+    targets: list[Operation],
+    megakernel_name: str,
 ) -> int:
     if not targets or not megakernel_name:
         return 0
@@ -487,7 +490,8 @@ def _apply_megakernel(
 
 
 def apply_recipe_to_payload(
-    recipe: ModuleOp, payload: ModuleOp,
+    recipe: ModuleOp,
+    payload: ModuleOp,
 ) -> PayloadMutationReport:
     """Walk ``recipe`` and apply every supported op to ``payload`` in place.
 
@@ -532,7 +536,10 @@ def apply_recipe_to_payload(
         )
 
     def _do_fusion(
-        refs: list[str], *, fusion_kind: str, label: str,
+        refs: list[str],
+        *,
+        fusion_kind: str,
+        label: str,
     ) -> None:
         """Resolve targets, try a real SSA-collapsing fusion, fall back
         to attribute-stamping when the chain doesn't qualify."""
@@ -541,66 +548,70 @@ def apply_recipe_to_payload(
             return
         fused_id = f"fused_{label}_{_digest(refs)}"
         ok, callee = _try_structural_fuse(
-            payload, targets,
-            fused_id=fused_id, fusion_kind=fusion_kind,
+            payload,
+            targets,
+            fused_id=fused_id,
+            fusion_kind=fusion_kind,
         )
         if ok:
             report.fusions_applied += 1
             report.structural_fusions += 1
             report.structural_callees_added += 1
             report.payload_ops_touched += len(targets)
-            report.diagnostics.append(
-                f"structural_fuse {label}: {len(targets)} CallOps -> {callee}"
-            )
+            report.diagnostics.append(f"structural_fuse {label}: {len(targets)} CallOps -> {callee}")
             # Refresh indices (we erased the old ops + added a new one).
             by_compgen_id.setdefault(fused_id, []).append(
                 # The newly-inserted CallOp is at the same position the
                 # first target used to occupy; re-walk to be safe.
-                next((o for o in payload.walk()
-                      if o.attributes.get("compgen.region_id") is not None
-                      and o.attributes["compgen.region_id"].data == fused_id),
-                     None)  # type: ignore[arg-type]
+                next(
+                    (
+                        o
+                        for o in payload.walk()
+                        if o.attributes.get("compgen.region_id") is not None
+                        and o.attributes["compgen.region_id"].data == fused_id
+                    ),
+                    None,
+                )  # type: ignore[arg-type]
             )
             # Re-build the seed-index lazily on the next op (cheap walk).
             return
         # Fallback: attribute-only stamping on the resolved targets.
         n, _ = _apply_fusion(
-            targets, refs, fusion_kind=fusion_kind, label=label,
+            targets,
+            refs,
+            fusion_kind=fusion_kind,
+            label=label,
         )
         if n:
             report.fusions_applied += 1
             report.payload_ops_touched += n
-            report.diagnostics.append(
-                f"attribute_fuse {label}: {n} ops stamped"
-            )
+            report.diagnostics.append(f"attribute_fuse {label}: {n} ops stamped")
 
     for op in recipe.body.block.ops:
         if isinstance(op, ProposeFusionOp):
             refs = _region_set_from(op, "grouped_regions")
             try:
                 payload_data = ProposePayload.from_json(op.payload.data)
-                fk = str(payload_data.chosen.get(
-                    "fusion_kind", "producer_consumer",
-                ))
-            except Exception:   # noqa: BLE001
+                fk = str(
+                    payload_data.chosen.get(
+                        "fusion_kind",
+                        "producer_consumer",
+                    )
+                )
+            except Exception:  # noqa: BLE001
                 fk = "producer_consumer"
-            label = (op.sym_name.data
-                     if op.sym_name is not None else "propose_fusion")
+            label = op.sym_name.data if op.sym_name is not None else "propose_fusion"
             _do_fusion(refs, fusion_kind=fk, label=label)
 
         elif isinstance(op, FuseOp):
             refs = _region_set_from(op, "fuse_regions")
-            label = (op.sym_name.data
-                     if op.sym_name is not None else "fuse")
+            label = op.sym_name.data if op.sym_name is not None else "fuse"
             _do_fusion(refs, fusion_kind="producer_consumer", label=label)
 
         elif isinstance(op, TileOp):
             ref = _single_region(op, "region_ref")
             targets = _resolve([ref] if ref else [])
-            sizes = tuple(
-                int(s.value.data) for s in op.tile_sizes.data
-                if isinstance(s, IntegerAttr)
-            )
+            sizes = tuple(int(s.value.data) for s in op.tile_sizes.data if isinstance(s, IntegerAttr))
             n = _apply_tile(targets, sizes)
             if n:
                 report.tiles_applied += 1
@@ -612,7 +623,7 @@ def apply_recipe_to_payload(
             device_index = 0
             try:
                 device_index = int(op.device.index.value.data)
-            except Exception:   # noqa: BLE001
+            except Exception:  # noqa: BLE001
                 pass
             n = _apply_place(targets, device_index)
             if n:
@@ -624,10 +635,13 @@ def apply_recipe_to_payload(
             targets = _resolve(refs)
             try:
                 payload_data = ProposePayload.from_json(op.payload.data)
-                megakernel_name = str(payload_data.chosen.get(
-                    "megakernel_name", "agent_megakernel",
-                ))
-            except Exception:   # noqa: BLE001
+                megakernel_name = str(
+                    payload_data.chosen.get(
+                        "megakernel_name",
+                        "agent_megakernel",
+                    )
+                )
+            except Exception:  # noqa: BLE001
                 megakernel_name = "agent_megakernel"
             n = _apply_megakernel(targets, megakernel_name)
             if n:

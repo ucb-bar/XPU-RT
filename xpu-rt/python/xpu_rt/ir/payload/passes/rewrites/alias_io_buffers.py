@@ -41,7 +41,7 @@ LLM-tool signature:
 from __future__ import annotations
 
 from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from compgen.runtime.execution_plan import (
     BufferDescriptor,
@@ -90,8 +90,7 @@ def _lifetimes_overlap(a: BufferDescriptor, b: BufferDescriptor) -> bool:
     if a.lifetime.persistent or b.lifetime.persistent:
         return True
     return not (
-        a.lifetime.last_use_tick < b.lifetime.first_use_tick
-        or b.lifetime.last_use_tick < a.lifetime.first_use_tick
+        a.lifetime.last_use_tick < b.lifetime.first_use_tick or b.lifetime.last_use_tick < a.lifetime.first_use_tick
     )
 
 
@@ -112,9 +111,7 @@ def run_alias_io_buffers(
             by_space[buf.memory_space].append(buf)
             stats.candidate_leafs += 1
 
-    decisions: list[tuple[str, str]] = list(
-        plan.summary.get("alias_decisions", [])
-    )
+    decisions: list[tuple[str, str]] = list(plan.summary.get("alias_decisions", []))
 
     for space, leafs in by_space.items():
         # Sort by first_use_tick for deterministic pairing.
@@ -123,7 +120,7 @@ def run_alias_io_buffers(
         for i, a in enumerate(leafs):
             if a.buffer_id in already_aliased:
                 continue
-            for b in leafs[i + 1:]:
+            for b in leafs[i + 1 :]:
                 if b.buffer_id in already_aliased:
                     continue
                 if a.memory_space != b.memory_space:

@@ -44,7 +44,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from xdsl.dialects.builtin import ModuleOp, StringAttr
-from xdsl.ir import Operation, SSAValue
+from xdsl.ir import Operation
 from xdsl.pattern_rewriter import (
     PatternRewriter,
     PatternRewriteWalker,
@@ -110,9 +110,7 @@ def _preserve_attrs(dst: Operation, src: Operation) -> None:
             dst.attributes[key] = src.attributes[key]
 
 
-def _raise_softmax(
-    op: Operation, rewriter: PatternRewriter
-) -> bool:
+def _raise_softmax(op: Operation, rewriter: PatternRewriter) -> bool:
     if len(op.operands) < 1 or len(op.results) != 1:
         return False
     # Softmax dim defaults to the last axis. We can't recover the
@@ -197,8 +195,12 @@ def _raise_rope(op: Operation, rewriter: PatternRewriter) -> bool:
     # directly); we handle it for symmetry with the other named
     # ops. Results must be (q_rot, k_rot).
     new = RoPEOp(
-        op.operands[0], op.operands[1], op.operands[2], op.operands[3],
-        op.results[0].type, op.results[1].type,
+        op.operands[0],
+        op.operands[1],
+        op.operands[2],
+        op.operands[3],
+        op.results[0].type,
+        op.results[1].type,
     )
     _preserve_attrs(new, op)
     rewriter.replace_matched_op(new)
@@ -226,9 +228,7 @@ class RaiseSpecialOpsPattern(RewritePattern):
     def __init__(self, stats: RaiseSpecialOpsStats | None = None) -> None:
         self.stats = stats if stats is not None else RaiseSpecialOpsStats()
 
-    def match_and_rewrite(
-        self, op: Operation, rewriter: PatternRewriter
-    ) -> None:
+    def match_and_rewrite(self, op: Operation, rewriter: PatternRewriter) -> None:
         hint = _hint(op)
         if hint is None:
             return

@@ -18,7 +18,7 @@ from xdsl.dialects.builtin import ModuleOp, StringAttr
 
 @dataclass
 class RecipeIndex:
-    regions: list[str] = field(default_factory=list)              # in declaration order
+    regions: list[str] = field(default_factory=list)  # in declaration order
     role_by_region: dict[str, str] = field(default_factory=dict)  # sym -> role
     payload_by_region: dict[str, str] = field(default_factory=dict)  # sym -> payload_id
     regions_by_role: dict[str, list[str]] = field(default_factory=dict)

@@ -11,7 +11,7 @@ Invariants:
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 import structlog
@@ -75,10 +75,7 @@ class CPSatSolver:
         try:
             from ortools.sat.python import cp_model as _cp_model  # noqa: F401
         except ImportError as exc:
-            raise ImportError(
-                "ortools is required for CPSatSolver. "
-                "Install it with: pip install ortools"
-            ) from exc
+            raise ImportError("ortools is required for CPSatSolver. Install it with: pip install ortools") from exc
 
         from compgen.solve.memory import BufferLifetime, solve_memory
         from compgen.solve.placement import solve_placement
@@ -95,9 +92,7 @@ class CPSatSolver:
 
         # --- Phase 1: Placement ---
         device_memory_caps = (
-            [problem.device_capacities[d] for d in range(num_devices)]
-            if problem.device_capacities
-            else None
+            [problem.device_capacities[d] for d in range(num_devices)] if problem.device_capacities else None
         )
 
         placement = solve_placement(
@@ -152,13 +147,15 @@ class CPSatSolver:
             end = schedule.end_times.get(pid, start + p.estimated_cost_us)
 
             if p.memory_bytes > 0:
-                lifetimes.append(BufferLifetime(
-                    buffer_name=pid,
-                    size_bytes=p.memory_bytes,
-                    device_index=device_idx,
-                    start_us=start,
-                    end_us=end,
-                ))
+                lifetimes.append(
+                    BufferLifetime(
+                        buffer_name=pid,
+                        size_bytes=p.memory_bytes,
+                        device_index=device_idx,
+                        start_us=start,
+                        end_us=end,
+                    )
+                )
 
         device_caps = dict(problem.device_capacities) if problem.device_capacities else {}
         memory = solve_memory(

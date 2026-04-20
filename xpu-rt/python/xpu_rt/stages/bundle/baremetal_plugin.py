@@ -24,7 +24,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 
 import structlog
 from xdsl.dialects.builtin import ModuleOp, TensorType
@@ -63,19 +62,25 @@ def _func_byte_size(func: FuncOp, *, default_inputs: int = 1024) -> int:
             for d in in_t.get_shape():
                 d_int = int(d) if d > 0 else 1
                 n *= d_int
-            total += n * 4   # f32 default
+            total += n * 4  # f32 default
     return max(total, default_inputs)
 
 
 def _device_kernel_for(g: GeneratedCFunction, *, byte_size: int) -> DeviceKernel:
     """Wrap one emitted C function as a DeviceKernel for the BaremetalEmitter."""
     in_buf = BufferRef(
-        name=f"{g.c_name}_in", shape=(byte_size // 4,), dtype="f32",
-        size_bytes=byte_size, persistent=False,
+        name=f"{g.c_name}_in",
+        shape=(byte_size // 4,),
+        dtype="f32",
+        size_bytes=byte_size,
+        persistent=False,
     )
     out_buf = BufferRef(
-        name=f"{g.c_name}_out", shape=(byte_size // 4,), dtype="f32",
-        size_bytes=byte_size, persistent=False,
+        name=f"{g.c_name}_out",
+        shape=(byte_size // 4,),
+        dtype="f32",
+        size_bytes=byte_size,
+        persistent=False,
     )
     return DeviceKernel(
         kernel_id=g.c_name,
@@ -111,10 +116,10 @@ def write_baremetal_bundle(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # 1. Walk the module → emit one C function per func.func.
-    funcs = emit_module(module, file_header=(
-        f"/* CompGen-emitted kernel for target {target.name}. */\n"
-        f'#include "../npu_driver_ext.h"\n'
-    ))
+    funcs = emit_module(
+        module,
+        file_header=(f'/* CompGen-emitted kernel for target {target.name}. */\n#include "../npu_driver_ext.h"\n'),
+    )
 
     # 2. Build a ModelProgram so BaremetalEmitter has something to chew on.
     builder_kernels: list[DeviceKernel] = []
@@ -135,7 +140,7 @@ def write_baremetal_bundle(
         host_kernels=[],
         device_kernels=builder_kernels,
         execution_order=[k.kernel_id for k in builder_kernels],
-        memory_layout=None,   # left None — emitter falls back to a stub map
+        memory_layout=None,  # left None — emitter falls back to a stub map
         initialization=[],
         weight_data={},
     )
@@ -160,7 +165,9 @@ def write_baremetal_bundle(
         text = mk.read_text()
         if "npu_driver_ext.c" not in text:
             patched = text.replace(
-                "npu_driver.c", "npu_driver.c npu_driver_ext.c", 1,
+                "npu_driver.c",
+                "npu_driver.c npu_driver_ext.c",
+                1,
             )
             # Also link libm for sqrtf/expf/tanhf.
             if "-lm" not in patched:

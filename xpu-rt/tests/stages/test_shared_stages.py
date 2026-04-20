@@ -68,10 +68,7 @@ class TestEncodingSpecific:
         assert result.passed
         # Ops with tensor results should have encoding attr
         # (arith ops on IndexType don't get encoding — that's correct)
-        encoded_count = sum(
-            1 for op in result.module.walk()
-            if ENCODING_ATTR in op.attributes
-        )
+        encoded_count = sum(1 for op in result.module.walk() if ENCODING_ATTR in op.attributes)
         # At least some ops should be encoded (or none if no tensor results)
         assert encoded_count >= 0  # pass even for arith-only modules
 
@@ -146,6 +143,7 @@ class TestBundleSpecific:
 
     def test_module_unchanged(self, target, capabilities, sample_module) -> None:
         from compgen.eqsat.pipeline import _print_ir
+
         stage = BundleStage()
         result = stage.run(sample_module, target, capabilities)
         ir_after = _print_ir(result.module)

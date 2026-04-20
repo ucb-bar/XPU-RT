@@ -83,7 +83,7 @@ class NormalizedSuiteResult:
         return payload
 
     @classmethod
-    def from_run_record(cls, record: Any) -> "NormalizedSuiteResult":
+    def from_run_record(cls, record: Any) -> NormalizedSuiteResult:
         """Project a verbose RunRecord into the flat suite schema."""
 
         p90_us = float(getattr(record.performance, "latency_p90_us", 0.0))
@@ -125,7 +125,9 @@ class NormalizedSuiteResult:
             promoted_artifacts=record.generation.promoted_candidates,
             device_assignment=dict(record.solver.node_assignments),
             transfer_time_ms=record.solver.copy_time_us / 1000.0,
-            config_time_ms=record.solver.placement_time_ms + record.solver.schedule_time_ms + record.solver.memory_time_ms,
+            config_time_ms=record.solver.placement_time_ms
+            + record.solver.schedule_time_ms
+            + record.solver.memory_time_ms,
             overlap_ratio=record.profiling.dma_compute_overlap,
             utilization=max(record.profiling.compute_utilization, record.profiling.memory_utilization),
             official_metrics=official_metrics,

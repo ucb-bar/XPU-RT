@@ -9,9 +9,6 @@ as unused kwargs.
 from __future__ import annotations
 
 import pytest
-from xdsl.dialects.builtin import Float32Type, TensorType
-from xdsl.dialects.tensor import EmptyOp
-
 from compgen.ir.payload.decompositions import (
     decompose_choose_qparams_per_channel,
     decompose_choose_qparams_per_tensor,
@@ -39,6 +36,8 @@ from compgen.ir.quant import (
     WeightInt4PackQMOp,
     WeightInt8PackMMOp,
 )
+from xdsl.dialects.builtin import Float32Type, TensorType
+from xdsl.dialects.tensor import EmptyOp
 
 
 @pytest.fixture(autouse=True)

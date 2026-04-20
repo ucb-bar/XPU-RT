@@ -1,27 +1,19 @@
-"""Production-readiness differential test harness.
+"""Differential test harness for ``compile_through_pipeline``.
 
-Drives a PyTorch model through ``compile_through_pipeline`` and
-records:
+Drives a PyTorch model through the pipeline and records:
 
-- whether the bridge succeeded
-- which passes ran vs were skipped
+- whether the FX → xDSL bridge succeeded
+- which passes ran vs. were skipped
 - module verifier status
 - ExecutionPlan validator status
 - opaque-call rate on the final module
-- eager reference output vs the golden baseline (when re-run is
-  deterministic; matches the ``feedback_no_stubs_real_examples`` memory
-  constraint)
+- eager reference output vs. the golden baseline (for re-run
+  determinism)
 
-The harness does NOT execute the compiled artifact today (Wave 7
-stops at IR + ExecutionPlan; a concrete runtime emitter lands in
-separate scope). The diff-test therefore compares ``eager_output``
-from a re-run against the originally-recorded ``eager_output`` in
-the fixture, proving that the compilation pipeline does not perturb
-the eager reference execution path.
-
-When a true compiled-vs-eager comparison becomes available (Wave
-10+ with the Triton / ukernel emitter wired up), this module is the
-place to add it -- the harness's contract stays the same.
+When ``run_compiled_executor=True`` and a runtime is wired up, the
+harness also compares the compiled output against the eager
+reference. Without an executor it verifies that the compilation path
+does not perturb eager behaviour on the same fixture.
 
 Usage::
 
@@ -134,7 +126,7 @@ def compile_and_diff(
             re-run against. When ``None`` we re-run eager twice and
             compare to itself as a determinism check.
         opaque_rate_threshold: fraction above which the diff is
-            considered failed. Default 0.15 (matches Wave 7 budget).
+            considered failed. Default 0.15.
         atol / rtol: tolerance for eager vs reference comparison.
     """
     report = DiffReport(passed=True, fixture_name=fixture_name)
@@ -179,10 +171,7 @@ def compile_and_diff(
     report.opaque_count = opaque
     report.total_ops = total
     if report.opaque_rate > opaque_rate_threshold:
-        report.warnings.append(
-            f"opaque rate {report.opaque_rate:.3f} exceeds threshold "
-            f"{opaque_rate_threshold}"
-        )
+        report.warnings.append(f"opaque rate {report.opaque_rate:.3f} exceeds threshold {opaque_rate_threshold}")
 
     # --- 5. Eager diff ------------------------------------------------
     if example_inputs is not None:
@@ -204,8 +193,7 @@ def compile_and_diff(
                 report.eager_diff_max_abs = diff
                 if diff > atol + rtol * ref.abs().max().item():
                     report.failures.append(
-                        f"eager vs reference diff {diff:.6f} exceeds tolerance "
-                        f"({atol} + {rtol} * max_abs)"
+                        f"eager vs reference diff {diff:.6f} exceeds tolerance ({atol} + {rtol} * max_abs)"
                     )
                     report.eager_diff_pass = False
                     report.passed = False
@@ -216,6 +204,7 @@ def compile_and_diff(
     if run_compiled_executor and example_inputs is not None and eager_reference is not None:
         try:
             import torch
+
             from compgen.runtime.cpu_executor import ExecutorStats, execute
 
             ep = exported_program
@@ -244,13 +233,10 @@ def compile_and_diff(
                         tol = atol + rtol * eager_reference.abs().max().item()
                         report.compiled_diff_pass = diff == diff and diff <= tol  # nan-safe
                         if not report.compiled_diff_pass:
-                            report.warnings.append(
-                                f"compiled vs eager diff {diff:.6f} > tol {tol:.6f}"
-                            )
+                            report.warnings.append(f"compiled vs eager diff {diff:.6f} > tol {tol:.6f}")
                     else:
                         report.warnings.append(
-                            f"compiled output shape {tuple(out.shape)} != "
-                            f"eager {tuple(eager_reference.shape)}"
+                            f"compiled output shape {tuple(out.shape)} != eager {tuple(eager_reference.shape)}"
                         )
         except Exception as exc:  # noqa: BLE001
             report.warnings.append(f"compiled executor failed: {exc}")

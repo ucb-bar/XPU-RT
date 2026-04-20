@@ -54,9 +54,11 @@ class TestISASpec:
 
 class TestNativeOps:
     def test_with_families(self) -> None:
-        ops = NativeOpsSpec(families=[
-            NativeOpFamily(name="matmul", ops=["matmul", "batch_matmul"]),
-        ])
+        ops = NativeOpsSpec(
+            families=[
+                NativeOpFamily(name="matmul", ops=["matmul", "batch_matmul"]),
+            ]
+        )
         assert len(ops.families) == 1
         assert ops.families[0].fallback == "decompose"
 
@@ -77,20 +79,24 @@ class TestEngineGeometry:
 
 class TestMemoryModel:
     def test_address_spaces(self) -> None:
-        m = MemoryModelSpec(address_spaces=[
-            AddressSpace(name="scratchpad", size_bytes=256 * 1024),
-            AddressSpace(name="dram", size_bytes=4 * 1024**3),
-        ])
+        m = MemoryModelSpec(
+            address_spaces=[
+                AddressSpace(name="scratchpad", size_bytes=256 * 1024),
+                AddressSpace(name="dram", size_bytes=4 * 1024**3),
+            ]
+        )
         assert len(m.address_spaces) == 2
         assert m.coherence == "coherent"
 
 
 class TestNumericContract:
     def test_dtypes(self) -> None:
-        n = NumericContractSpec(supported_dtypes=[
-            DtypeSupport(name="int8", accumulator_dtype="int32"),
-            DtypeSupport(name="float32"),
-        ])
+        n = NumericContractSpec(
+            supported_dtypes=[
+                DtypeSupport(name="int8", accumulator_dtype="int32"),
+                DtypeSupport(name="float32"),
+            ]
+        )
         assert len(n.supported_dtypes) == 2
 
 

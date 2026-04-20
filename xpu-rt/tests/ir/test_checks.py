@@ -60,21 +60,27 @@ def test_check_not_fails_on_match() -> None:
 
 def test_check_label_scoping() -> None:
     """CHECK-LABEL should reset search position."""
-    result = check_ir(SAMPLE_IR, [
-        "// CHECK-LABEL: func.func @forward",
-        "// CHECK: linalg.matmul",
-        "// CHECK: arith.addf",
-    ])
+    result = check_ir(
+        SAMPLE_IR,
+        [
+            "// CHECK-LABEL: func.func @forward",
+            "// CHECK: linalg.matmul",
+            "// CHECK: arith.addf",
+        ],
+    )
     assert result.passed
     assert result.checks_run == 3
 
 
 def test_check_ordering() -> None:
     """CHECKs must match in order."""
-    result = check_ir(SAMPLE_IR, [
-        "// CHECK: arith.addf",
-        "// CHECK: linalg.matmul",  # second matmul should match
-    ])
+    result = check_ir(
+        SAMPLE_IR,
+        [
+            "// CHECK: arith.addf",
+            "// CHECK: linalg.matmul",  # second matmul should match
+        ],
+    )
     assert result.passed
 
 
@@ -89,13 +95,16 @@ def test_check_count() -> None:
 
 def test_multiple_checks_mixed() -> None:
     """Multiple check types together."""
-    result = check_ir(SAMPLE_IR, [
-        "// CHECK-LABEL: func.func @forward",
-        "// CHECK: linalg.matmul",
-        "// CHECK: linalg.generic",
-        "// CHECK-NOT: tensor.empty",
-        "// CHECK-COUNT:2: arith.addf",
-    ])
+    result = check_ir(
+        SAMPLE_IR,
+        [
+            "// CHECK-LABEL: func.func @forward",
+            "// CHECK: linalg.matmul",
+            "// CHECK: linalg.generic",
+            "// CHECK-NOT: tensor.empty",
+            "// CHECK-COUNT:2: arith.addf",
+        ],
+    )
     assert result.passed
     assert result.checks_run == 5
 

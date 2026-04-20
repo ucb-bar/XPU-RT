@@ -27,11 +27,11 @@ def test_solve_empty_partitions() -> None:
 def test_solve_single_partition_two_devices() -> None:
     """Single partition should be placed on the fastest device."""
     partitions = [
-        Partition(partition_id="matmul_0", op_names=["matmul_0"],
-                  estimated_cost_us=100.0, memory_bytes=4096),
+        Partition(partition_id="matmul_0", op_names=["matmul_0"], estimated_cost_us=100.0, memory_bytes=4096),
     ]
     sol = solve_placement(
-        partitions, num_devices=2,
+        partitions,
+        num_devices=2,
         device_compute_rates=[1.0, 10.0],  # device 1 is 10x faster
     )
     assert sol.feasible
@@ -41,12 +41,12 @@ def test_solve_single_partition_two_devices() -> None:
 def test_solve_respects_forced_constraint() -> None:
     """Force constraint should be respected."""
     partitions = [
-        Partition(partition_id="matmul_0", op_names=["matmul_0"],
-                  estimated_cost_us=100.0, memory_bytes=4096),
+        Partition(partition_id="matmul_0", op_names=["matmul_0"], estimated_cost_us=100.0, memory_bytes=4096),
     ]
     constraints = [PlacementConstraint(partition_id="matmul_0", required_device=0)]
     sol = solve_placement(
-        partitions, num_devices=2,
+        partitions,
+        num_devices=2,
         device_compute_rates=[1.0, 10.0],
         constraints=constraints,
     )
@@ -57,13 +57,12 @@ def test_solve_respects_forced_constraint() -> None:
 def test_solve_memory_constraint() -> None:
     """Partitions should not exceed device memory."""
     partitions = [
-        Partition(partition_id="p0", op_names=["p0"],
-                  estimated_cost_us=10.0, memory_bytes=8000),
-        Partition(partition_id="p1", op_names=["p1"],
-                  estimated_cost_us=10.0, memory_bytes=8000),
+        Partition(partition_id="p0", op_names=["p0"], estimated_cost_us=10.0, memory_bytes=8000),
+        Partition(partition_id="p1", op_names=["p1"], estimated_cost_us=10.0, memory_bytes=8000),
     ]
     sol = solve_placement(
-        partitions, num_devices=2,
+        partitions,
+        num_devices=2,
         device_memory_caps=[10000, 10000],  # each can hold only 1 partition
     )
     assert sol.feasible
@@ -74,8 +73,7 @@ def test_solve_memory_constraint() -> None:
 def test_solve_reports_time() -> None:
     """Solver should report solve time."""
     partitions = [
-        Partition(partition_id="p0", op_names=["p0"],
-                  estimated_cost_us=10.0, memory_bytes=100),
+        Partition(partition_id="p0", op_names=["p0"], estimated_cost_us=10.0, memory_bytes=100),
     ]
     sol = solve_placement(partitions, num_devices=2)
     assert sol.feasible

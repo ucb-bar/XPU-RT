@@ -32,9 +32,7 @@ class TransposeTransposeRule(EqSatRewriteRule):
 
     def match_and_add(self, module: ModuleOp) -> int:
         count = 0
-        transpose_ops = [
-            op for op in module.walk() if isinstance(op, linalg.TransposeOp)
-        ]
+        transpose_ops = [op for op in module.walk() if isinstance(op, linalg.TransposeOp)]
 
         for outer_t in transpose_ops:
             outer_input = outer_t.operands[0]

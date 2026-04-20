@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from compgen.runtime.transport import (
     LocalTransport,
     SharedMemTransport,
@@ -15,7 +14,6 @@ from compgen.runtime.transport import (
     create_transport,
     register_transport,
 )
-
 
 # ---- TransportMessage ----
 

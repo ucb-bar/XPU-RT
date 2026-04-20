@@ -75,8 +75,12 @@ def test_scheduling_feasibility() -> None:
     dependencies = {"t0": [], "t1": ["t0"], "t2": ["t0"]}
 
     solution = solve_schedule(
-        partition_ids, durations, device_assignments, dependencies,
-        num_devices=2, timeout_ms=5000,
+        partition_ids,
+        durations,
+        device_assignments,
+        dependencies,
+        num_devices=2,
+        timeout_ms=5000,
     )
     assert solution.feasible
     # t1 must start after t0 finishes

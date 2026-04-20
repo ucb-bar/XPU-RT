@@ -15,6 +15,7 @@ EXAMPLES_DIR = Path(__file__).parent.parent.parent.parent / "examples" / "models
 def _get_simple_mlp():
     sys.path.insert(0, str(EXAMPLES_DIR))
     from simple_mlp import SimpleMLP, get_sample_inputs
+
     return SimpleMLP(), get_sample_inputs()
 
 

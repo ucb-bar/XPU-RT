@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 import inspect
+from dataclasses import dataclass, field
 from typing import Any
 
 import torch
@@ -144,9 +144,7 @@ def build_operator_dossier(
     tags = tuple(str(tag) for tag in (getattr(reference, "tags", None) or ()))
     schema = str(getattr(reference, "_schema", "")) if reference is not None else ""
     is_view = bool(getattr(reference, "is_view", False)) if reference is not None else False
-    example_inputs = tuple(
-        info for arg in sample_args if (info := _tensor_example(arg)) is not None
-    )
+    example_inputs = tuple(info for arg in sample_args if (info := _tensor_example(arg)) is not None)
     example_output_info = _tensor_example(sample_output)
 
     return UnsupportedOpDossier(

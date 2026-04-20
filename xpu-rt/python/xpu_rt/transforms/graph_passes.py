@@ -148,6 +148,7 @@ def _trace_rms_norm(pow_node: Any) -> list[Any] | None:
 # Pass: Fold transpose into matmul
 # ---------------------------------------------------------------------------
 
+
 def fold_transpose_into_matmul(graph: torch.fx.GraphModule) -> int:
     """Fold explicit transpose ops into matmul consumers.
 
@@ -178,6 +179,7 @@ def fold_transpose_into_matmul(graph: torch.fx.GraphModule) -> int:
 # Pass: Raise composite ops
 # ---------------------------------------------------------------------------
 
+
 def raise_composite_ops(graph: torch.fx.GraphModule) -> int:
     """Detect composite op sequences and annotate them.
 
@@ -205,6 +207,7 @@ def raise_composite_ops(graph: torch.fx.GraphModule) -> int:
 # ---------------------------------------------------------------------------
 # Combined pass
 # ---------------------------------------------------------------------------
+
 
 def run_all_decomposition_passes(graph: torch.fx.GraphModule) -> dict[str, int]:
     """Run all decomposition passes on an FX graph.

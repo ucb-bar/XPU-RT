@@ -66,9 +66,7 @@ def propose_peephole_pattern_seed(**ctx: Any) -> dict[str, Any]:
         "output_schema": {},
         "rationale": "mvp seed - awaiting LLM proposal",
     }
-    return _basic_payload(
-        chosen, justification="no matching entry in ported pattern library"
-    )
+    return _basic_payload(chosen, justification="no matching entry in ported pattern library")
 
 
 def propose_numerics_plan_seed(**ctx: Any) -> dict[str, Any]:
@@ -141,10 +139,7 @@ def propose_megakernel_synthesis_seed(**ctx: Any) -> dict[str, Any]:
     """
     region_refs: list[str] = list(ctx.get("candidate_regions", []))
     edges: list[dict[str, Any]] = list(ctx.get("inter_region_edges", []))
-    mk_name = (
-        ctx.get("megakernel_name")
-        or (f"mk_{'_'.join(region_refs)}" if region_refs else "mk_unspecified")
-    )
+    mk_name = ctx.get("megakernel_name") or (f"mk_{'_'.join(region_refs)}" if region_refs else "mk_unspecified")
     event_decls = [
         {
             "name": f"E_{i}",

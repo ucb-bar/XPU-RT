@@ -7,9 +7,8 @@ from pathlib import Path
 
 import pytest
 import torch
-
-from compgen.agent.loop import AgenticCompilationLoop
 from compgen.agent.env import CompilerEnv
+from compgen.agent.loop import AgenticCompilationLoop
 from compgen.capture.torch_export import capture_frontend_artifact
 from compgen.ir.payload.import_fx import fx_to_xdsl
 from compgen.llm import LLMRecorder, create_llm_client

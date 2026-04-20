@@ -39,7 +39,7 @@ from compgen.promotion.pattern_graduation import (
     scan_transcripts,
 )
 
-if TYPE_CHECKING:   # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover
     from compgen.llm.registry import Registry
 
 log = structlog.get_logger()
@@ -92,7 +92,7 @@ def _load_state(root: Path) -> dict[str, Any]:
         return {}
     try:
         return json.loads(path.read_text())
-    except Exception:   # noqa: BLE001
+    except Exception:  # noqa: BLE001
         return {}
 
 
@@ -146,10 +146,8 @@ def _make_graduated_tool(req: PatternPromotionRequest):
         kind="tool",
         wraps_pass=f"graduated_from:{req.identity.slot_name}",
         autocomp_cost_impact="medium",
-        args=(ToolArg(name="ctx", dtype="dict", description="Optional context",
-                      required=False),),
-        result=ToolResult(dtype="dict",
-                          description="The cached chosen exemplar plus graduation provenance"),
+        args=(ToolArg(name="ctx", dtype="dict", description="Optional context", required=False),),
+        result=ToolResult(dtype="dict", description="The cached chosen exemplar plus graduation provenance"),
         description=(
             f"Auto-graduated from invent slot {req.identity.slot_name!r} "
             f"after {req.acceptance_count} acceptances across "
@@ -174,7 +172,7 @@ def _all_tools_jsonl(root: Path) -> list[Path]:
 
 
 def promote_pending_graduations(
-    registry: "Registry",
+    registry: Registry,
     *,
     transcripts_root: Path | str | None = None,
     min_workloads: int = 2,
@@ -198,11 +196,7 @@ def promote_pending_graduations(
         :class:`CrossSessionGraduationReport`.
     """
     report = CrossSessionGraduationReport()
-    root = (
-        Path(transcripts_root).expanduser()
-        if transcripts_root is not None
-        else DEFAULT_TRANSCRIPTS_ROOT
-    )
+    root = Path(transcripts_root).expanduser() if transcripts_root is not None else DEFAULT_TRANSCRIPTS_ROOT
 
     transcripts = _all_tools_jsonl(root)
     report.transcripts_scanned = len(transcripts)
@@ -236,9 +230,7 @@ def promote_pending_graduations(
                 identity = PatternIdentity(
                     slot_name=entry.get("name", "<unknown>"),
                     target_feature_justification=(
-                        args.get("target_feature_justification")
-                        or result.get("target_feature_justification")
-                        or ""
+                        args.get("target_feature_justification") or result.get("target_feature_justification") or ""
                     ),
                     chosen_signature=_chosen_signature(chosen),
                 )
@@ -249,7 +241,7 @@ def promote_pending_graduations(
             min_targets=min_targets,
             transcripts_by_identity=by_identity,
         )
-    except Exception as exc:   # noqa: BLE001
+    except Exception as exc:  # noqa: BLE001
         report.errors.append(f"graduation scan/build failed: {exc}")
         return report
 
@@ -274,27 +266,27 @@ def promote_pending_graduations(
                 "workloads_proven": sorted(req.workloads_proven),
                 "targets_proven": sorted(req.targets_proven),
             }
-            report.new_tools_registered.append(GraduationResult(
-                slot_name=req.identity.slot_name,
-                chosen_signature=req.identity.chosen_signature,
-                tool_name=tool.name,
-                workloads_proven=tuple(sorted(req.workloads_proven)),
-                targets_proven=tuple(sorted(req.targets_proven)),
-                acceptance_count=req.acceptance_count,
-            ))
+            report.new_tools_registered.append(
+                GraduationResult(
+                    slot_name=req.identity.slot_name,
+                    chosen_signature=req.identity.chosen_signature,
+                    tool_name=tool.name,
+                    workloads_proven=tuple(sorted(req.workloads_proven)),
+                    targets_proven=tuple(sorted(req.targets_proven)),
+                    acceptance_count=req.acceptance_count,
+                )
+            )
             log.info(
                 "cross_session.graduated",
                 slot=req.identity.slot_name,
                 tool=tool.name,
                 acceptance_count=req.acceptance_count,
             )
-        except Exception as exc:   # noqa: BLE001
+        except Exception as exc:  # noqa: BLE001
             # Swallow — never break registry init. Most likely a
             # ValueError from registry double-registration when state
             # file got out of sync.
-            report.errors.append(
-                f"register_tool({_graduated_tool_name(req)}): {type(exc).__name__}: {exc}"
-            )
+            report.errors.append(f"register_tool({_graduated_tool_name(req)}): {type(exc).__name__}: {exc}")
 
     if report.new_tools_registered:
         _save_state(root, state)

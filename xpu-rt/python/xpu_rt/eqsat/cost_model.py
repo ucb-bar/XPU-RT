@@ -52,20 +52,32 @@ class CostModel:
 
     # Class-level constants (not dataclass fields)
     _ZERO_COST_OPS: frozenset[str] = field(
-        init=False, repr=False,
+        init=False,
+        repr=False,
         default=frozenset({"arith.constant"}),
     )
     _FUSIBLE_PRODUCERS: frozenset[str] = field(
-        init=False, repr=False,
-        default=frozenset({
-            "arith.addi", "arith.addf", "arith.muli", "arith.mulf",
-            "arith.subf", "arith.subi", "arith.divf",
-            "arith.negf", "arith.maximumf", "arith.minimumf",
-            "arith.select",
-        }),
+        init=False,
+        repr=False,
+        default=frozenset(
+            {
+                "arith.addi",
+                "arith.addf",
+                "arith.muli",
+                "arith.mulf",
+                "arith.subf",
+                "arith.subi",
+                "arith.divf",
+                "arith.negf",
+                "arith.maximumf",
+                "arith.minimumf",
+                "arith.select",
+            }
+        ),
     )
     _COMPUTE_HEAVY: dict[str, int] = field(
-        init=False, repr=False,
+        init=False,
+        repr=False,
         default_factory=lambda: {
             "linalg.matmul": 100,
             "linalg.generic": 50,
@@ -144,9 +156,17 @@ class CostModel:
         non-additive cost modeling.
         """
         for op in module.walk():
-            if isinstance(op, (equivalence.AnyClassOp, equivalence.GraphOp,
-                               equivalence.YieldOp, ModuleOp, func.FuncOp,
-                               func.ReturnOp)):
+            if isinstance(
+                op,
+                (
+                    equivalence.AnyClassOp,
+                    equivalence.GraphOp,
+                    equivalence.YieldOp,
+                    ModuleOp,
+                    func.FuncOp,
+                    func.ReturnOp,
+                ),
+            ):
                 continue
             if not op.results:
                 continue
@@ -169,9 +189,7 @@ class CostModel:
     def to_json_path(self) -> str:
         """Write costs to a temp JSON file, return path."""
         d = self.to_json_dict()
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".json", delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(d, f)
             return f.name
 

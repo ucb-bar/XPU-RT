@@ -44,6 +44,7 @@ class GoldenTestCase:
 # Per-pattern golden data generators
 # ---------------------------------------------------------------------------
 
+
 def _gen_matmul(params: dict[str, Any]) -> tuple[dict[str, torch.Tensor], torch.Tensor]:
     M = params.get("M", 64)
     K = params.get("K", 768)

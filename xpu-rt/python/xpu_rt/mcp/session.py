@@ -51,23 +51,17 @@ class McpSession:
 
     def require_device(self) -> CompGenDevice:
         if self.device is None:
-            raise RuntimeError(
-                "No target open in this session. Call open_target first."
-            )
+            raise RuntimeError("No target open in this session. Call open_target first.")
         return self.device
 
     def require_driver(self) -> LLMDrivenCompiler:
         if self.driver is None:
-            raise RuntimeError(
-                "No model loaded in this session. Call load_model first."
-            )
+            raise RuntimeError("No model loaded in this session. Call load_model first.")
         return self.driver
 
     def require_compiled(self) -> CompiledModel:
         if self.compiled is None:
-            raise RuntimeError(
-                "No compiled model in this session. Call load_model first."
-            )
+            raise RuntimeError("No compiled model in this session. Call load_model first.")
         return self.compiled
 
 
@@ -81,9 +75,7 @@ class SessionManager:
 
     def __init__(self, scratch_root: Path | None = None) -> None:
         self._sessions: dict[str, McpSession] = {}
-        self._scratch_root = scratch_root or Path(
-            tempfile.gettempdir()
-        ) / "compgen-mcp"
+        self._scratch_root = scratch_root or Path(tempfile.gettempdir()) / "compgen-mcp"
         self._scratch_root.mkdir(parents=True, exist_ok=True)
 
     def open(self, session_id: str | None = None) -> McpSession:

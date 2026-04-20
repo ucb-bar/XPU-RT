@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from compgen.llm import (
     InventSlot,
     Registry,
@@ -29,9 +28,7 @@ def _make_tool(name: str, phase: int = 2, impl=None, stub: bool = True) -> Tool:
     )
 
 
-def _make_invent_slot(
-    name: str, phase: int = 3, gate_impl=None, stub: bool = True
-) -> InventSlot:
+def _make_invent_slot(name: str, phase: int = 3, gate_impl=None, stub: bool = True) -> InventSlot:
     return InventSlot(
         name=name,
         phase=phase,

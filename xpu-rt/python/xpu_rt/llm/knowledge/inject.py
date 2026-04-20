@@ -81,8 +81,7 @@ def _format_op_wisdom(wisdom_list: list[OpWisdom], target_class: str, max_items:
             if tg.target_class in (target_class, "any"):
                 sizes = ", ".join(str(s) for s in tg.tile_sizes)
                 lines.append(
-                    f"- **Tiling [{sizes}]**: {tg.rationale}"
-                    f" (source: {tg.source}, confidence: {tg.confidence.value})"
+                    f"- **Tiling [{sizes}]**: {tg.rationale} (source: {tg.source}, confidence: {tg.confidence.value})"
                 )
         # Fusion opportunities
         for fo in w.fusion_opportunities[:3]:
@@ -90,9 +89,7 @@ def _format_op_wisdom(wisdom_list: list[OpWisdom], target_class: str, max_items:
         # Backend guidance for this target
         for bg in w.backend_guidance:
             if bg.target_class in (target_class, "any"):
-                lines.append(
-                    f"- **Backend**: Use {bg.recommended_backend}. {bg.rationale} (source: {bg.source})"
-                )
+                lines.append(f"- **Backend**: Use {bg.recommended_backend}. {bg.rationale} (source: {bg.source})")
         # Pitfalls
         if w.pitfalls:
             lines.append(f"- **Pitfalls**: {'; '.join(w.pitfalls[:3])}")

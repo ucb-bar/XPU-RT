@@ -47,11 +47,14 @@ def batch_propose(
     driver = session.require_driver()
     if not isinstance(proposals, list):
         return {
-            "ok": False, "session_id": session_id,
+            "ok": False,
+            "session_id": session_id,
             "error": "proposals must be a list",
         }
     results, rolled_back = driver.step_invent_many(
-        proposals, atomic=atomic, gate_ctx=gate_ctx,
+        proposals,
+        atomic=atomic,
+        gate_ctx=gate_ctx,
     )
     rejected = sum(1 for r in results if r.status not in {"accepted"})
     if rolled_back:

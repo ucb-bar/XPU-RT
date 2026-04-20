@@ -10,12 +10,14 @@ from compgen.semantic.synthesis.runtime import GuardRuntime
 
 def test_guard_runtime_accepts_matching_env() -> None:
     registry = GuardRegistry()
-    registry.register(GuardArtifact(
-        guard_key="guard.fusion.legality.generic.1",
-        transform_family="fusion",
-        guard_kind="legality",
-        fragments=(Cmp(CmpOp.EQ, Var("fusible"), Const(True)),),
-    ))
+    registry.register(
+        GuardArtifact(
+            guard_key="guard.fusion.legality.generic.1",
+            transform_family="fusion",
+            guard_kind="legality",
+            fragments=(Cmp(CmpOp.EQ, Var("fusible"), Const(True)),),
+        )
+    )
     runtime = GuardRuntime(registry)
     verdict = runtime.evaluate("guard.fusion.legality.generic.1", {"fusible": True})
     assert verdict.allow is True
@@ -24,12 +26,14 @@ def test_guard_runtime_accepts_matching_env() -> None:
 
 def test_guard_runtime_rejects_non_matching_env() -> None:
     registry = GuardRegistry()
-    registry.register(GuardArtifact(
-        guard_key="guard.local_mem.placement.generic.1",
-        transform_family="local_mem",
-        guard_kind="placement",
-        fragments=(Cmp(CmpOp.EQ, Var("local_mem_fit"), Const(True)),),
-    ))
+    registry.register(
+        GuardArtifact(
+            guard_key="guard.local_mem.placement.generic.1",
+            transform_family="local_mem",
+            guard_kind="placement",
+            fragments=(Cmp(CmpOp.EQ, Var("local_mem_fit"), Const(True)),),
+        )
+    )
     runtime = GuardRuntime(registry)
     verdict = runtime.evaluate("guard.local_mem.placement.generic.1", {"local_mem_fit": False})
     assert verdict.allow is False

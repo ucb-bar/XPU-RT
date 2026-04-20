@@ -26,12 +26,14 @@ _TRANSPARENT_PREFIXES = (
     "math.",
 )
 
-_TRANSPARENT_OPS = frozenset({
-    "linalg.fill",
-    "tensor.empty",
-    "tensor.extract_slice",
-    "tensor.insert_slice",
-})
+_TRANSPARENT_OPS = frozenset(
+    {
+        "linalg.fill",
+        "tensor.empty",
+        "tensor.extract_slice",
+        "tensor.insert_slice",
+    }
+)
 
 
 def _is_ukernel_transparent(op) -> bool:  # type: ignore[no-untyped-def]

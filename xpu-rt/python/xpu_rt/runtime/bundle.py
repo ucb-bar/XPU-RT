@@ -21,8 +21,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from compgen.runtime.planner import ExecutionPlan
     from xdsl.dialects.builtin import ModuleOp
+
+    from compgen.runtime.planner import ExecutionPlan
 
 
 @dataclass(frozen=True)
@@ -117,6 +118,7 @@ class BundleBuilder:
         # 2. Write execution_plan.yaml
         if execution_plan is not None:
             import yaml
+
             plan_path = root / "execution_plan.yaml"
             plan_path.write_text(yaml.dump(execution_plan.to_dict(), default_flow_style=False))
             artifacts["execution_plan"] = "execution_plan.yaml"
@@ -141,12 +143,14 @@ class BundleBuilder:
         # 3. Write golden I/O
         if golden_inputs is not None:
             import torch
+
             inputs_path = root / "golden_inputs.pt"
             torch.save(golden_inputs, inputs_path)
             artifacts["golden_inputs"] = "golden_inputs.pt"
 
         if golden_outputs is not None:
             import torch
+
             outputs_path = root / "golden_outputs.pt"
             torch.save(golden_outputs, outputs_path)
             artifacts["golden_outputs"] = "golden_outputs.pt"

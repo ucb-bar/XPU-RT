@@ -7,14 +7,13 @@ layout propagation while opaque ones do not.
 
 from __future__ import annotations
 
+from compgen.transforms.layout import run_layout_pipeline
+from compgen.transforms.layout.propagate_layouts import _is_ukernel_transparent
 from xdsl.builder import Builder
 from xdsl.dialects.arith import ConstantOp
 from xdsl.dialects.builtin import ModuleOp, StringAttr, i32
 from xdsl.dialects.func import FuncOp, ReturnOp
 from xdsl.ir import Block, Region
-
-from compgen.transforms.layout import run_layout_pipeline
-from compgen.transforms.layout.propagate_layouts import _is_ukernel_transparent
 
 
 class _FakeOp:

@@ -102,7 +102,8 @@ def test_recipe_metrics() -> None:
 
 def test_performance_metrics() -> None:
     m = PerformanceMetrics(
-        latency_median_us=150.0, latency_p99_us=200.0,
+        latency_median_us=150.0,
+        latency_p99_us=200.0,
         per_run_us=[140.0, 150.0, 160.0],
     )
     assert len(m.per_run_us) == 3
@@ -145,5 +146,6 @@ def test_multiple_records_in_dir() -> None:
         r2.save(tmpdir)
 
         from benchmarks.compare import load_all_results
+
         loaded = load_all_results(tmpdir)
         assert len(loaded) == 2

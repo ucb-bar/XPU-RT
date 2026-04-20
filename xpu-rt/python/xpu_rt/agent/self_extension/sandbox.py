@@ -27,53 +27,57 @@ import ast
 import signal
 import types
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
 
 # Exact set of top-level modules authored tools may import. Adjust
 # conservatively — every addition expands the attack surface.
-DEFAULT_IMPORT_ALLOWLIST: frozenset[str] = frozenset({
-    "math",
-    "statistics",
-    "itertools",
-    "functools",
-    "operator",
-    "collections",
-    "dataclasses",
-    "typing",
-    # CompGen's own surface — authored tools compose our primitives.
-    "compgen",
-    "compgen.ir",
-    "compgen.ir.recipe",
-    "compgen.ir.recipe.llm_view",
-    "compgen.ir.payload",
-    "compgen.llm.registry",
-    # Numerical libs the LLM is likely to reach for.
-    "torch",
-    "numpy",
-})
+DEFAULT_IMPORT_ALLOWLIST: frozenset[str] = frozenset(
+    {
+        "math",
+        "statistics",
+        "itertools",
+        "functools",
+        "operator",
+        "collections",
+        "dataclasses",
+        "typing",
+        # CompGen's own surface — authored tools compose our primitives.
+        "compgen",
+        "compgen.ir",
+        "compgen.ir.recipe",
+        "compgen.ir.recipe.llm_view",
+        "compgen.ir.payload",
+        "compgen.llm.registry",
+        # Numerical libs the LLM is likely to reach for.
+        "torch",
+        "numpy",
+    }
+)
 
 
 # Names removed from the authored tool's __builtins__. Everything else
 # from builtins remains available.
-_FORBIDDEN_BUILTINS: frozenset[str] = frozenset({
-    "open",
-    "exec",
-    "eval",
-    "compile",
-    "__import__",
-    "input",
-    "breakpoint",
-    "help",
-    "exit",
-    "quit",
-})
+_FORBIDDEN_BUILTINS: frozenset[str] = frozenset(
+    {
+        "open",
+        "exec",
+        "eval",
+        "compile",
+        "__import__",
+        "input",
+        "breakpoint",
+        "help",
+        "exit",
+        "quit",
+    }
+)
 
 
 @dataclass(frozen=True)
 class SandboxViolation:
     """One policy violation detected statically or at runtime."""
 
-    kind: str     # forbidden_import | forbidden_call | exec_error | timeout
+    kind: str  # forbidden_import | forbidden_call | exec_error | timeout
     detail: str
     location: str = ""
 
@@ -103,11 +107,13 @@ def _scan_imports(source: str, allow: frozenset[str]) -> list[SandboxViolation]:
     try:
         tree = ast.parse(source)
     except SyntaxError as exc:
-        return [SandboxViolation(
-            kind="exec_error",
-            detail=f"SyntaxError: {exc.msg}",
-            location=f"line {exc.lineno}",
-        )]
+        return [
+            SandboxViolation(
+                kind="exec_error",
+                detail=f"SyntaxError: {exc.msg}",
+                location=f"line {exc.lineno}",
+            )
+        ]
 
     violations: list[SandboxViolation] = []
     for node in ast.walk(tree):
@@ -115,26 +121,32 @@ def _scan_imports(source: str, allow: frozenset[str]) -> list[SandboxViolation]:
             for alias in node.names:
                 top = alias.name.split(".")[0]
                 if alias.name not in allow and top not in allow:
-                    violations.append(SandboxViolation(
-                        kind="forbidden_import",
-                        detail=alias.name,
-                        location=f"line {node.lineno}",
-                    ))
+                    violations.append(
+                        SandboxViolation(
+                            kind="forbidden_import",
+                            detail=alias.name,
+                            location=f"line {node.lineno}",
+                        )
+                    )
         elif isinstance(node, ast.ImportFrom):
             if node.module is None:
-                violations.append(SandboxViolation(
-                    kind="forbidden_import",
-                    detail="relative import",
-                    location=f"line {node.lineno}",
-                ))
+                violations.append(
+                    SandboxViolation(
+                        kind="forbidden_import",
+                        detail="relative import",
+                        location=f"line {node.lineno}",
+                    )
+                )
                 continue
             top = node.module.split(".")[0]
             if node.module not in allow and top not in allow:
-                violations.append(SandboxViolation(
-                    kind="forbidden_import",
-                    detail=node.module,
-                    location=f"line {node.lineno}",
-                ))
+                violations.append(
+                    SandboxViolation(
+                        kind="forbidden_import",
+                        detail=node.module,
+                        location=f"line {node.lineno}",
+                    )
+                )
     return violations
 
 
@@ -164,9 +176,10 @@ class _Timeout:
         self._prev = None
         self._enabled = False
 
-    def __enter__(self) -> "_Timeout":
+    def __enter__(self) -> _Timeout:
         try:
             import threading
+
             if threading.current_thread() is threading.main_thread():
                 self._prev = signal.signal(signal.SIGALRM, self._raise)
                 signal.setitimer(signal.ITIMER_REAL, self.seconds)
@@ -249,8 +262,7 @@ def sandbox_invoke(
     try:
         with redirect_stdout(stdout):
             try:
-                exec(compile(source, f"<authored:{entry_name}>", "exec"),
-                     namespace)
+                exec(compile(source, f"<authored:{entry_name}>", "exec"), namespace)
             except SyntaxError as exc:
                 result.error = f"SyntaxError: {exc.msg} (line {exc.lineno})"
                 result.violations = [
@@ -261,19 +273,25 @@ def sandbox_invoke(
                     )
                 ]
                 return result
-    except Exception as exc:   # noqa: BLE001
+    except Exception as exc:  # noqa: BLE001
         result.error = f"{type(exc).__name__}: {exc}"
-        result.violations.append(SandboxViolation(
-            kind="exec_error", detail=result.error,
-        ))
+        result.violations.append(
+            SandboxViolation(
+                kind="exec_error",
+                detail=result.error,
+            )
+        )
         return result
 
     entry = namespace.get(entry_name)
     if not callable(entry):
         result.error = f"source does not define a callable named {entry_name!r}"
-        result.violations.append(SandboxViolation(
-            kind="exec_error", detail=result.error,
-        ))
+        result.violations.append(
+            SandboxViolation(
+                kind="exec_error",
+                detail=result.error,
+            )
+        )
         return result
 
     # Invoke under a wall-clock timeout.
@@ -283,17 +301,23 @@ def sandbox_invoke(
                 value = entry(**(kwargs or {}))
     except TimeoutError as exc:
         result.error = str(exc)
-        result.violations.append(SandboxViolation(
-            kind="timeout", detail=str(exc),
-        ))
+        result.violations.append(
+            SandboxViolation(
+                kind="timeout",
+                detail=str(exc),
+            )
+        )
         result.elapsed_s = time.perf_counter() - t0
         result.stdout = stdout.getvalue()
         return result
-    except Exception as exc:   # noqa: BLE001
+    except Exception as exc:  # noqa: BLE001
         result.error = f"{type(exc).__name__}: {exc}"
-        result.violations.append(SandboxViolation(
-            kind="exec_error", detail=result.error,
-        ))
+        result.violations.append(
+            SandboxViolation(
+                kind="exec_error",
+                detail=result.error,
+            )
+        )
         result.elapsed_s = time.perf_counter() - t0
         result.stdout = stdout.getvalue()
         return result

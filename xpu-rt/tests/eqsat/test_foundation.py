@@ -117,9 +117,7 @@ class TestCommutativityRule:
         for op in module.walk():
             if isinstance(op, equivalence.ClassOp):
                 for operand in op.operands:
-                    if hasattr(operand, "owner") and isinstance(
-                        operand.owner, arith.AddiOp
-                    ):
+                    if hasattr(operand, "owner") and isinstance(operand.owner, arith.AddiOp):
                         # This eclass should have the commuted alternative
                         if len(op.operands) == 2:
                             return
@@ -259,9 +257,7 @@ class TestCostExtraction:
         add_op = arith.AddiOp(a, b)
         block.add_op(add_op)
         block.add_op(func.ReturnOp(add_op.result))
-        module = ModuleOp(
-            [func.FuncOp("test", ([idx, idx], [idx]), Region([block]))]
-        )
+        module = ModuleOp([func.FuncOp("test", ([idx, idx], [idx]), Region([block]))])
 
         # Create e-graph manually
         create_egraph(module)
@@ -292,6 +288,7 @@ class TestCostExtraction:
 
         # Assign costs directly and extract (skip run_eqsat_pass which re-creates eclasses)
         from xdsl.context import Context
+
         ctx = Context()
         ctx.allow_unregistered = True
         # addi=10, muli=1 → muli should win
@@ -300,6 +297,7 @@ class TestCostExtraction:
 
         from xdsl.transforms.eqsat_add_costs import EqsatAddCostsPass
         from xdsl.transforms.eqsat_extract import EqsatExtractPass
+
         cost_dict = {"arith.addi": 10, "arith.muli": 1}
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(cost_dict, f)

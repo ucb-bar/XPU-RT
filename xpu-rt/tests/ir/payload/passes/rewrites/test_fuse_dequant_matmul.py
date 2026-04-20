@@ -2,7 +2,16 @@
 
 from __future__ import annotations
 
-import pytest
+from compgen.ir.payload.passes.rewrites.fuse_dequant_matmul import (
+    FuseDequantMatmulConfig,
+    FuseDequantMatmulStats,
+    run_fuse_dequant_matmul,
+)
+from compgen.ir.quant import (
+    DequantizePerChannelOp,
+    DequantizePerGroupOp,
+    DequantizePerTensorOp,
+)
 from xdsl.dialects.builtin import (
     Float32Type,
     FunctionType,
@@ -17,16 +26,6 @@ from xdsl.dialects.linalg import MatmulOp
 from xdsl.dialects.tensor import EmptyOp
 from xdsl.ir import Block, Region
 
-from compgen.ir.quant import (
-    DequantizePerChannelOp,
-    DequantizePerGroupOp,
-    DequantizePerTensorOp,
-)
-from compgen.ir.payload.passes.rewrites.fuse_dequant_matmul import (
-    FuseDequantMatmulConfig,
-    FuseDequantMatmulStats,
-    run_fuse_dequant_matmul,
-)
 from tests.ir.payload.passes._pattern_test_helpers import (
     assert_module_verifies,
     count_ops,

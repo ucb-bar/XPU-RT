@@ -3,14 +3,12 @@
 from __future__ import annotations
 
 import pytest
-
 from compgen.solve.per_sm_queue import (
     EventEdge,
     PerSMSchedule,
     TileTask,
     solve_per_sm_queue,
 )
-
 
 # ---------------------------------------------------------------------------
 # Trivial / boundary cases
@@ -154,8 +152,6 @@ def test_out_of_range_affinity_is_rejected() -> None:
 
 
 def test_returns_per_sm_schedule_instance() -> None:
-    sched = solve_per_sm_queue(
-        tasks=[TileTask("t", "f")], edges=[], sm_count=1
-    )
+    sched = solve_per_sm_queue(tasks=[TileTask("t", "f")], edges=[], sm_count=1)
     assert isinstance(sched, PerSMSchedule)
     assert sched.solve_time_ms >= 0.0

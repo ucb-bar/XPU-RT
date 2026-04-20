@@ -13,27 +13,27 @@ Inspired by Hexagon-MLIR's approach where Triton ops flow through
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 
 
 class ComputeUnit(str, Enum):
     """Abstract compute unit classification (target-independent)."""
 
-    MATRIX = "matrix"        # Tiled matrix multiply (MXU, tensor core, HMX)
-    VECTOR = "vector"        # Vector/SIMD elementwise (VPU, HVX, NEON)
-    SCALAR = "scalar"        # Scalar ALU
+    MATRIX = "matrix"  # Tiled matrix multiply (MXU, tensor core, HMX)
+    VECTOR = "vector"  # Vector/SIMD elementwise (VPU, HVX, NEON)
+    SCALAR = "scalar"  # Scalar ALU
     REDUCTION = "reduction"  # Reduction hardware (tree, shuffle)
-    MEMORY = "memory"        # Load/store/DMA
-    CONTROL = "control"      # Control flow, synchronization
+    MEMORY = "memory"  # Load/store/DMA
+    CONTROL = "control"  # Control flow, synchronization
 
 
 class MemoryLevel(str, Enum):
     """Abstract memory hierarchy level (target-independent)."""
 
-    REGISTER = "register"        # Register file / accumulator
-    SCRATCHPAD = "scratchpad"    # On-chip fast memory (VTCM, VMEM, shared memory)
-    GLOBAL = "global"            # Main memory (DDR, HBM)
+    REGISTER = "register"  # Register file / accumulator
+    SCRATCHPAD = "scratchpad"  # On-chip fast memory (VTCM, VMEM, shared memory)
+    GLOBAL = "global"  # Main memory (DDR, HBM)
 
 
 @dataclass(frozen=True)
@@ -82,7 +82,6 @@ TRITON_OP_SEMANTICS: list[TritonOpSemantic] = [
         description="Store a tile of data from registers to global memory",
         linalg_equivalent="memref.store / tensor.insert_slice",
     ),
-
     # --- Matrix operations ---
     TritonOpSemantic(
         triton_op="tl.dot",
@@ -91,7 +90,6 @@ TRITON_OP_SEMANTICS: list[TritonOpSemantic] = [
         description="Tile-level matrix multiply-accumulate",
         linalg_equivalent="linalg.matmul / linalg.batch_matmul",
     ),
-
     # --- Elementwise operations ---
     TritonOpSemantic(
         triton_op="tl.exp",
@@ -142,7 +140,6 @@ TRITON_OP_SEMANTICS: list[TritonOpSemantic] = [
         description="Element-wise absolute value",
         linalg_equivalent="math.absf (in linalg.generic)",
     ),
-
     # --- Reduction operations ---
     TritonOpSemantic(
         triton_op="tl.sum",
@@ -165,7 +162,6 @@ TRITON_OP_SEMANTICS: list[TritonOpSemantic] = [
         description="Min reduction along an axis",
         linalg_equivalent="linalg.generic with min accumulation",
     ),
-
     # --- Initialization ---
     TritonOpSemantic(
         triton_op="tl.zeros",
@@ -183,7 +179,6 @@ TRITON_OP_SEMANTICS: list[TritonOpSemantic] = [
         description="Initialize a tile with a constant",
         linalg_equivalent="linalg.fill",
     ),
-
     # --- Control flow ---
     TritonOpSemantic(
         triton_op="tl.program_id",
@@ -206,7 +201,6 @@ TRITON_OP_SEMANTICS: list[TritonOpSemantic] = [
         description="Get the total number of programs/blocks",
         linalg_equivalent="N/A (maps to loop bound)",
     ),
-
     # --- Type conversion ---
     TritonOpSemantic(
         triton_op="tl.cast",
@@ -215,7 +209,6 @@ TRITON_OP_SEMANTICS: list[TritonOpSemantic] = [
         description="Convert between data types",
         linalg_equivalent="arith.truncf / arith.extf / arith.fptosi",
     ),
-
     # --- Atomic operations ---
     TritonOpSemantic(
         triton_op="tl.atomic_add",
@@ -228,9 +221,7 @@ TRITON_OP_SEMANTICS: list[TritonOpSemantic] = [
 ]
 
 # Build lookup dict
-_SEMANTIC_BY_OP: dict[str, TritonOpSemantic] = {
-    s.triton_op: s for s in TRITON_OP_SEMANTICS
-}
+_SEMANTIC_BY_OP: dict[str, TritonOpSemantic] = {s.triton_op: s for s in TRITON_OP_SEMANTICS}
 
 
 def get_triton_semantic(triton_op: str) -> TritonOpSemantic | None:

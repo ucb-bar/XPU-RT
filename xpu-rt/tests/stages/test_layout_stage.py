@@ -7,17 +7,6 @@ and integration with CudaLayoutPlugin.
 from __future__ import annotations
 
 import pytest
-from xdsl.dialects import arith, func
-from xdsl.dialects.builtin import (
-    Float32Type,
-    FunctionType,
-    IndexType,
-    ModuleOp,
-    StringAttr,
-    TensorType,
-)
-from xdsl.ir import Block, Region
-
 from compgen.ir.layout.ops import SetLayoutOp, UnsetLayoutOp
 from compgen.stages.base import CompilationStage, StageContract
 from compgen.stages.encoding.stage import ENCODING_ATTR
@@ -29,7 +18,16 @@ from compgen.targets.schema import (
     MemoryLevel,
     TargetProfile,
 )
-
+from xdsl.dialects import arith, func
+from xdsl.dialects.builtin import (
+    Float32Type,
+    FunctionType,
+    IndexType,
+    ModuleOp,
+    StringAttr,
+    TensorType,
+)
+from xdsl.ir import Block, Region
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -75,13 +73,18 @@ def _add_encoding_attrs(module: ModuleOp) -> ModuleOp:
 def target() -> TargetProfile:
     return TargetProfile(
         name="test_gpu",
-        devices=[DeviceSpec(
-            device_type="gpu", name="TestGPU", vendor="test",
-            compute_units=[ComputeUnit(name="tensor_core", count=1, peak_tflops=100.0)],
-            memory_hierarchy=[MemoryLevel(name="hbm", size_bytes=1024**3)],
-            supported_ops=["matmul"], features=["tensor_core"],
-            kernel_backends=["triton"],
-        )],
+        devices=[
+            DeviceSpec(
+                device_type="gpu",
+                name="TestGPU",
+                vendor="test",
+                compute_units=[ComputeUnit(name="tensor_core", count=1, peak_tflops=100.0)],
+                memory_hierarchy=[MemoryLevel(name="hbm", size_bytes=1024**3)],
+                supported_ops=["matmul"],
+                features=["tensor_core"],
+                kernel_backends=["triton"],
+            )
+        ],
     )
 
 
@@ -195,6 +198,7 @@ class TestLayoutStageSharedPasses:
 class TestLayoutStageWithCudaPlugin:
     def test_plugin_registration(self) -> None:
         from compgen.stages.targets.cuda_gpu import CudaLayoutPlugin
+
         stage = LayoutStage()
         plugin = CudaLayoutPlugin()
         stage.register_plugin(plugin)
@@ -202,16 +206,19 @@ class TestLayoutStageWithCudaPlugin:
 
     def test_plugin_stage_name_matches(self) -> None:
         from compgen.stages.targets.cuda_gpu import CudaLayoutPlugin
+
         plugin = CudaLayoutPlugin()
         assert plugin.stage_name == "layout"
 
     def test_plugin_target_name(self) -> None:
         from compgen.stages.targets.cuda_gpu import CudaLayoutPlugin
+
         plugin = CudaLayoutPlugin()
         assert plugin.target_name == "cuda_gpu"
 
     def test_full_run_with_plugin(self, target, capabilities) -> None:
         from compgen.stages.targets.cuda_gpu import CudaLayoutPlugin
+
         stage = LayoutStage()
         plugin = CudaLayoutPlugin()
         stage.register_plugin(plugin)
@@ -228,6 +235,7 @@ class TestLayoutStageWithCudaPlugin:
 
     def test_run_produces_artifacts_with_plugin(self, target, capabilities) -> None:
         from compgen.stages.targets.cuda_gpu import CudaLayoutPlugin
+
         stage = LayoutStage()
         plugin = CudaLayoutPlugin()
         stage.register_plugin(plugin)

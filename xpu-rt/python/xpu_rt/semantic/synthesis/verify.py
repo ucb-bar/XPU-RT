@@ -28,11 +28,9 @@ from compgen.solve.backends.smt import SMTSolver
 class SoundnessFormulaSpec(Protocol):
     """Family-specific sufficient-condition proof spec."""
 
-    def build_vars(self) -> dict[str, Any]:
-        ...
+    def build_vars(self) -> dict[str, Any]: ...
 
-    def sound_formula(self, vars: dict[str, Any]) -> Any:
-        ...
+    def sound_formula(self, vars: dict[str, Any]) -> Any: ...
 
 
 @dataclass(frozen=True)
@@ -118,7 +116,9 @@ def prove_guard_soundness(
     status = solver.prove(implication)
     counterexample = None
     if status == "invalid":
-        counterexample = solver.get_model(z3.And(lower_expr_to_solver(guard_expr, vars), z3.Not(spec.sound_formula(vars))))
+        counterexample = solver.get_model(
+            z3.And(lower_expr_to_solver(guard_expr, vars), z3.Not(spec.sound_formula(vars)))
+        )
     return GuardProofResult(
         proved_sound=status == "valid",
         status=status,

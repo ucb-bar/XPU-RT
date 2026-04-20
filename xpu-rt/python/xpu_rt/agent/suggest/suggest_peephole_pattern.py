@@ -14,7 +14,6 @@ from compgen.agent.suggest._candidate import ProposalCandidate
 from compgen.agent.suggest._dispatch import register_suggester
 from compgen.agent.suggest._recipe_index import build_recipe_index
 
-
 _PEEPHOLE_PATTERNS: dict[tuple[str, str], tuple[str, str, float]] = {
     ("transpose", "transpose"): (
         "double_transpose_elim",
@@ -22,7 +21,9 @@ _PEEPHOLE_PATTERNS: dict[tuple[str, str], tuple[str, str, float]] = {
         0.9,
     ),
     ("permute", "permute"): (
-        "double_permute_elim", "two permutes cancel out", 0.85,
+        "double_permute_elim",
+        "two permutes cancel out",
+        0.85,
     ),
     ("view", "view"): ("view_collapse", "consecutive views collapse", 0.7),
     ("expand", "view"): ("expand_view_canon", "expand+view canonicalisation", 0.5),
@@ -47,17 +48,19 @@ def suggest_peephole_pattern(
         if match is None:
             continue
         pattern_class, rationale, score = match
-        out.append(ProposalCandidate(
-            chosen={
-                "region_ref": prod,
-                "pattern_class": pattern_class,
-                "consumed_region_ref": cons,
-            },
-            rationale=f"{rationale} ({prod} → {cons})",
-            expected_impact=score,
-            target_feature_justification="structural rewrite, target-agnostic",
-            metadata={"pair": [prod_role, cons_role]},
-        ))
+        out.append(
+            ProposalCandidate(
+                chosen={
+                    "region_ref": prod,
+                    "pattern_class": pattern_class,
+                    "consumed_region_ref": cons,
+                },
+                rationale=f"{rationale} ({prod} → {cons})",
+                expected_impact=score,
+                target_feature_justification="structural rewrite, target-agnostic",
+                metadata={"pair": [prod_role, cons_role]},
+            )
+        )
     out.sort(key=lambda c: c.expected_impact, reverse=True)
     return out[:k]
 

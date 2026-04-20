@@ -3,17 +3,6 @@
 from __future__ import annotations
 
 import pytest
-from xdsl.dialects.builtin import (
-    ArrayAttr,
-    Float32Type,
-    IntegerAttr,
-    IntegerType,
-    TensorType,
-)
-from xdsl.dialects.tensor import EmptyOp
-from xdsl.ir import Dialect
-from xdsl.utils.exceptions import VerifyException
-
 from compgen.ir.collective import (
     ALL_ATTRS,
     ALL_OPS,
@@ -25,6 +14,16 @@ from compgen.ir.collective import (
     ReduceScatterOp,
     ShardingSpecAttr,
 )
+from xdsl.dialects.builtin import (
+    ArrayAttr,
+    Float32Type,
+    IntegerAttr,
+    IntegerType,
+    TensorType,
+)
+from xdsl.dialects.tensor import EmptyOp
+from xdsl.ir import Dialect
+from xdsl.utils.exceptions import VerifyException
 
 
 def _t(shape):
@@ -32,9 +31,7 @@ def _t(shape):
 
 
 def _groups(n=4):
-    return ArrayAttr(
-        [ArrayAttr([IntegerAttr(i, IntegerType(64)) for i in range(n)])]
-    )
+    return ArrayAttr([ArrayAttr([IntegerAttr(i, IntegerType(64)) for i in range(n)])])
 
 
 # --- dialect registration ------------------------------------------------
@@ -78,7 +75,8 @@ def test_reduce_kind_rejects_unknown():
 def test_all_reduce_builds_and_verifies():
     e = EmptyOp([], _t([8, 16]))
     op = AllReduceOp.build(
-        operands=[e.results[0]], result_types=[_t([8, 16])],
+        operands=[e.results[0]],
+        result_types=[_t([8, 16])],
         properties={
             "reduce_kind": ReduceKindAttr("sum"),
             "replica_groups": _groups(4),
@@ -90,7 +88,8 @@ def test_all_reduce_builds_and_verifies():
 def test_all_reduce_rejects_empty_replica_groups():
     e = EmptyOp([], _t([8, 16]))
     op = AllReduceOp.build(
-        operands=[e.results[0]], result_types=[_t([8, 16])],
+        operands=[e.results[0]],
+        result_types=[_t([8, 16])],
         properties={
             "reduce_kind": ReduceKindAttr("sum"),
             "replica_groups": ArrayAttr([]),
@@ -106,7 +105,8 @@ def test_all_reduce_rejects_empty_replica_groups():
 def test_all_gather_builds():
     e = EmptyOp([], _t([8, 16]))
     op = AllGatherOp.build(
-        operands=[e.results[0]], result_types=[_t([32, 16])],
+        operands=[e.results[0]],
+        result_types=[_t([32, 16])],
         properties={
             "all_gather_dim": IntegerAttr(0, IntegerType(64)),
             "replica_groups": _groups(4),
@@ -118,7 +118,8 @@ def test_all_gather_builds():
 def test_all_gather_rejects_negative_dim():
     e = EmptyOp([], _t([8, 16]))
     op = AllGatherOp.build(
-        operands=[e.results[0]], result_types=[_t([32, 16])],
+        operands=[e.results[0]],
+        result_types=[_t([32, 16])],
         properties={
             "all_gather_dim": IntegerAttr(-1, IntegerType(64)),
             "replica_groups": _groups(4),
@@ -134,7 +135,8 @@ def test_all_gather_rejects_negative_dim():
 def test_reduce_scatter_builds():
     e = EmptyOp([], _t([32, 16]))
     op = ReduceScatterOp.build(
-        operands=[e.results[0]], result_types=[_t([8, 16])],
+        operands=[e.results[0]],
+        result_types=[_t([8, 16])],
         properties={
             "scatter_dim": IntegerAttr(0, IntegerType(64)),
             "reduce_kind": ReduceKindAttr("sum"),
@@ -150,7 +152,8 @@ def test_reduce_scatter_builds():
 def test_broadcast_builds():
     e = EmptyOp([], _t([8, 16]))
     op = BroadcastOp.build(
-        operands=[e.results[0]], result_types=[_t([8, 16])],
+        operands=[e.results[0]],
+        result_types=[_t([8, 16])],
         properties={
             "source_replica": IntegerAttr(0, IntegerType(64)),
             "replica_groups": _groups(4),
@@ -165,4 +168,5 @@ def test_broadcast_builds():
 @pytest.mark.parametrize("cls", [AllReduceOp, AllGatherOp, ReduceScatterOp, BroadcastOp])
 def test_collective_ops_are_pure(cls):
     from xdsl.traits import Pure
+
     assert any(isinstance(t, Pure) for t in cls.traits.traits)

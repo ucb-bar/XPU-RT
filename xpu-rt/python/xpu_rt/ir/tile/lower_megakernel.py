@@ -35,14 +35,14 @@ from __future__ import annotations
 
 import json
 import textwrap
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Any, Sequence
+from typing import Any
 
 from xdsl.dialects.builtin import IntegerAttr, StringAttr
 
 from compgen.ir.event.attrs import EventTensorTypeAttr
 from compgen.ir.event.ops import EventTensorOp, GraphOp
-
 
 _SCHEDULE_ATTR = "compgen.static_schedule"
 
@@ -253,9 +253,7 @@ def lower_megakernel(
         )
     payload_attr = graph.attributes[_SCHEDULE_ATTR]
     if not isinstance(payload_attr, StringAttr):
-        raise ValueError(
-            f"{_SCHEDULE_ATTR} must be a StringAttr, got {type(payload_attr).__name__}"
-        )
+        raise ValueError(f"{_SCHEDULE_ATTR} must be a StringAttr, got {type(payload_attr).__name__}")
     schedule = json.loads(payload_attr.data)
     if schedule.get("status") != "ok":
         return MegakernelLoweringResult(
@@ -278,9 +276,7 @@ def lower_megakernel(
     task_kind_map: dict[str, int] = {tid: func_to_kind[tid.split(":")[0]] for tid in assignment}
 
     task_table_src, structured_queue = _emit_task_table(per_sm_order, task_kind_map)
-    dispatch_decl, dispatch_call = _signature_args(
-        spec.data_pointers, event_names, spec.constexpr_args
-    )
+    dispatch_decl, dispatch_call = _signature_args(spec.data_pointers, event_names, spec.constexpr_args)
     body_table = _device_function_table(funcs, spec)
     dispatch_branches = _emit_dispatch_branches(funcs, func_to_kind, dispatch_call)
     kernel_name = _kernel_name(graph)

@@ -21,10 +21,8 @@ import hashlib
 from typing import Any
 
 from xdsl.dialects.builtin import ModuleOp
-from xdsl.ir import Operation
 
 from compgen.ir.recipe.serialize import _op_to_dict
-
 
 # Rough mapping from op-name prefix to a coarse "family" used for the
 # per-phase counts. Intentionally small; anything uncategorised lands
@@ -211,9 +209,10 @@ def recipe_to_llm_view(
                 break
 
     # Module-level hash: stable over op order + content.
-    mod_hash = "sha256:" + hashlib.sha256(
-        ("|".join(f"{d['_op']}:{sorted(d.items())}" for d in op_dicts)).encode()
-    ).hexdigest()[:16]
+    mod_hash = (
+        "sha256:"
+        + hashlib.sha256(("|".join(f"{d['_op']}:{sorted(d.items())}" for d in op_dicts)).encode()).hexdigest()[:16]
+    )
 
     view: dict[str, Any] = {
         "hash": mod_hash,
@@ -227,9 +226,7 @@ def recipe_to_llm_view(
     return view
 
 
-def diff_views(
-    view_a: dict[str, Any], view_b: dict[str, Any]
-) -> dict[str, Any]:
+def diff_views(view_a: dict[str, Any], view_b: dict[str, Any]) -> dict[str, Any]:
     """Return what changed between two views.
 
     Args:

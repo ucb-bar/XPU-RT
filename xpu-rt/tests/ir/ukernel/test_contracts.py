@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
 from compgen.ir.ukernel.contracts import UkernelContract
 
 
@@ -47,7 +46,9 @@ def test_contract_matching() -> None:
 
     # Unsupported dtype
     bad_dtype = UkernelCallOp(
-        kernel_name="my_matmul", operands=["a", "b"], results=["c"],
+        kernel_name="my_matmul",
+        operands=["a", "b"],
+        results=["c"],
         metadata={"dtype": "int8"},
     )
     assert check_contract(bad_dtype, contract) is False

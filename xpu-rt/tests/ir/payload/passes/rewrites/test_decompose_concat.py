@@ -3,26 +3,22 @@
 from __future__ import annotations
 
 import pytest
+from compgen.ir.payload.passes.rewrites.decompose_concat import (
+    DecomposeConcatStats,
+    run_decompose_concat,
+)
+from compgen.ir.tensor_ext import ConcatOp
 from xdsl.dialects.builtin import Float32Type, ModuleOp, TensorType
 from xdsl.dialects.func import FuncOp, ReturnOp
 from xdsl.dialects.tensor import EmptyOp
 from xdsl.ir import Block, Region
 
-from compgen.ir.payload.passes.rewrites.decompose_concat import (
-    DecomposeConcatPattern,
-    DecomposeConcatStats,
-    run_decompose_concat,
-)
-from compgen.ir.tensor_ext import ConcatOp
 from tests.ir.payload.passes._pattern_test_helpers import (
-    apply_pattern,
     assert_module_verifies,
-    assert_op_count,
     assert_smt_equivalent,
     build_concat_module,
     count_ops,
 )
-
 
 # --- basic outer-dim -----------------------------------------------------------
 
@@ -88,6 +84,7 @@ def _build_dynamic_concat_module() -> ModuleOp:
         block.add_op(op)
     block.add_op(ReturnOp(concat.result))
     from xdsl.dialects.builtin import FunctionType
+
     func_type = FunctionType.from_lists([], [TensorType(f32, [-1, 4])])
     func = FuncOp("forward", func_type, Region([block]))
     return ModuleOp([func])
@@ -138,6 +135,7 @@ def test_module_with_no_concat_is_untouched():
         block.add_op(op)
     block.add_op(ReturnOp(mm.results[0]))
     from xdsl.dialects.builtin import FunctionType
+
     func = FuncOp(
         "forward",
         FunctionType.from_lists([], [ft]),
@@ -175,17 +173,14 @@ def test_multiple_concats_rewrite_in_one_pass():
     f32 = Float32Type()
     a1 = EmptyOp([], TensorType(f32, [2, 4]))
     a2 = EmptyOp([], TensorType(f32, [3, 4]))
-    c1 = ConcatOp([a1.results[0], a2.results[0]], dim=0,
-                  result_type=TensorType(f32, [5, 4]))
+    c1 = ConcatOp([a1.results[0], a2.results[0]], dim=0, result_type=TensorType(f32, [5, 4]))
 
     b1 = EmptyOp([], TensorType(f32, [1, 4]))
     b2 = EmptyOp([], TensorType(f32, [4, 4]))
-    c2 = ConcatOp([b1.results[0], b2.results[0]], dim=0,
-                  result_type=TensorType(f32, [5, 4]))
+    c2 = ConcatOp([b1.results[0], b2.results[0]], dim=0, result_type=TensorType(f32, [5, 4]))
 
     # Both concat outputs are consumed by a final concat on dim=1.
-    c_final = ConcatOp([c1.result, c2.result], dim=1,
-                       result_type=TensorType(f32, [5, 8]))
+    c_final = ConcatOp([c1.result, c2.result], dim=1, result_type=TensorType(f32, [5, 8]))
 
     block = Block()
     for op in (a1, a2, c1, b1, b2, c2, c_final):
@@ -193,6 +188,7 @@ def test_multiple_concats_rewrite_in_one_pass():
     block.add_op(ReturnOp(c_final.result))
 
     from xdsl.dialects.builtin import FunctionType
+
     func = FuncOp(
         "forward",
         FunctionType.from_lists([], [TensorType(f32, [5, 8])]),

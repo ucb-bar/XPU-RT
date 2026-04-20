@@ -27,17 +27,13 @@ from collections.abc import Mapping
 from dataclasses import asdict, dataclass, field, fields
 from typing import Any
 
-
 _DEFAULT_NUMERICS_POLICY = "preserve_f32"
 _VALID_NUMERICS_POLICIES: frozenset[str] = frozenset(
-    {"preserve_f32", "demote_activations_to_bf16", "demote_activations_to_f16",
-     "normalize_to_target"}
+    {"preserve_f32", "demote_activations_to_bf16", "demote_activations_to_f16", "normalize_to_target"}
 )
 
 _DEFAULT_SCHEDULING_POLICY = "static"
-_VALID_SCHEDULING_POLICIES: frozenset[str] = frozenset(
-    {"static", "dynamic", "hybrid"}
-)
+_VALID_SCHEDULING_POLICIES: frozenset[str] = frozenset({"static", "dynamic", "hybrid"})
 
 
 @dataclass(frozen=True)
@@ -161,13 +157,11 @@ class CompGenOptions:
     def __post_init__(self) -> None:
         if self.numerics_policy not in _VALID_NUMERICS_POLICIES:
             raise ValueError(
-                f"numerics_policy must be one of "
-                f"{sorted(_VALID_NUMERICS_POLICIES)}; got {self.numerics_policy!r}"
+                f"numerics_policy must be one of {sorted(_VALID_NUMERICS_POLICIES)}; got {self.numerics_policy!r}"
             )
         if self.scheduling_policy not in _VALID_SCHEDULING_POLICIES:
             raise ValueError(
-                f"scheduling_policy must be one of "
-                f"{sorted(_VALID_SCHEDULING_POLICIES)}; got {self.scheduling_policy!r}"
+                f"scheduling_policy must be one of {sorted(_VALID_SCHEDULING_POLICIES)}; got {self.scheduling_policy!r}"
             )
         if self.transpose_aggressiveness not in {
             "conservative",
@@ -175,19 +169,13 @@ class CompGenOptions:
             "through_conv",
             "through_pad",
         }:
-            raise ValueError(
-                f"transpose_aggressiveness invalid: {self.transpose_aggressiveness!r}"
-            )
+            raise ValueError(f"transpose_aggressiveness invalid: {self.transpose_aggressiveness!r}")
         if self.reduction_policy not in {"group", "split", "tree_reduce"}:
             raise ValueError(f"reduction_policy invalid: {self.reduction_policy!r}")
         if self.quantized_matmul_policy not in {"always", "zp_zero_only", "skip"}:
-            raise ValueError(
-                f"quantized_matmul_policy invalid: {self.quantized_matmul_policy!r}"
-            )
+            raise ValueError(f"quantized_matmul_policy invalid: {self.quantized_matmul_policy!r}")
         if self.demote_target_type not in {"bf16", "f16"}:
-            raise ValueError(
-                f"demote_target_type must be bf16 or f16, got {self.demote_target_type!r}"
-            )
+            raise ValueError(f"demote_target_type must be bf16 or f16, got {self.demote_target_type!r}")
         if self.regression_tolerance_atol < 0:
             raise ValueError("regression_tolerance_atol must be non-negative")
 
@@ -226,6 +214,7 @@ class CompGenOptions:
         Converts list-valued (former frozenset) entries back to tuples
         so the resulting key is fully hashable.
         """
+
         def _hashable(v: Any) -> Any:
             if isinstance(v, (list, set, frozenset)):
                 return tuple(sorted(v))

@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 import pytest
-from xdsl.dialects.builtin import ModuleOp
 from xdsl.dialects.linalg import MatmulOp
 from xdsl.pattern_rewriter import PatternRewriter, RewritePattern, op_type_rewrite_pattern
-from xdsl.dialects.tensor import EmptyOp
 
 from tests.ir.payload.passes._pattern_test_helpers import (
     all_ops,
@@ -20,7 +18,6 @@ from tests.ir.payload.passes._pattern_test_helpers import (
     count_ops,
     find_op_by_region_id,
 )
-
 
 # --- Module builders ---------------------------------------------------------
 

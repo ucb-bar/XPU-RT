@@ -80,16 +80,23 @@ REFINE_PROMPT = textwrap.dedent("""\
 
 def format_prompt(ctx: RefinementContext) -> str:
     """Render refinement prompt."""
-    actions = "\n".join(
-        f"  Step {i+1}: {a.get('action_type', '?')} on {a.get('target', '?')} → {a.get('result', '?')}"
-        for i, a in enumerate(ctx.actions_tried[-5:])
-    ) or "  (none yet)"
+    actions = (
+        "\n".join(
+            f"  Step {i + 1}: {a.get('action_type', '?')} on {a.get('target', '?')} → {a.get('result', '?')}"
+            for i, a in enumerate(ctx.actions_tried[-5:])
+        )
+        or "  (none yet)"
+    )
     bottlenecks = "\n".join(f"  - {b}" for b in ctx.remaining_bottlenecks[:5]) or "  (none)"
     unsupported = ", ".join((ctx.unsupported_ops or [])[:10]) or "(none)"
 
-    error_text = "  (none)" if not ctx.error_patterns else "\n".join(
-        f"  - {p.get('action_type', '?')}: {p.get('failure_reason', '?')} (x{p.get('occurrences', 1)})"
-        for p in ctx.error_patterns[:5]
+    error_text = (
+        "  (none)"
+        if not ctx.error_patterns
+        else "\n".join(
+            f"  - {p.get('action_type', '?')}: {p.get('failure_reason', '?')} (x{p.get('occurrences', 1)})"
+            for p in ctx.error_patterns[:5]
+        )
     )
 
     return REFINE_PROMPT.format(

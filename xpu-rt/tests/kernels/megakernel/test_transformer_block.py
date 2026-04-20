@@ -20,9 +20,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 
-pytestmark = pytest.mark.skipif(
-    not torch.cuda.is_available(), reason="real-example tests require CUDA"
-)
+pytestmark = pytest.mark.skipif(not torch.cuda.is_available(), reason="real-example tests require CUDA")
 
 
 # ---------------------------------------------------------------------------
@@ -40,13 +38,16 @@ def test_transformer_block_megakernel_matches_pytorch_reference() -> None:
     H, S, D_HEAD, I = 4, 32, 32, 128
     D_HIDDEN = H * D_HEAD
     compiled = compile_transformer_block_megakernel(
-        n_heads=H, seq_len=S, head_dim=D_HEAD, intermediate_dim=I,
+        n_heads=H,
+        seq_len=S,
+        head_dim=D_HEAD,
+        intermediate_dim=I,
     )
     torch.manual_seed(31)
     q = torch.randn((H, S, D_HEAD), dtype=torch.float32, device="cuda")
     k = torch.randn((H, S, D_HEAD), dtype=torch.float32, device="cuda")
     v = torch.randn((H, S, D_HEAD), dtype=torch.float32, device="cuda")
-    x = torch.randn((S, D_HIDDEN),  dtype=torch.float32, device="cuda")
+    x = torch.randn((S, D_HIDDEN), dtype=torch.float32, device="cuda")
     wg = torch.randn((I, D_HIDDEN), dtype=torch.float32, device="cuda") * 0.05
     wu = torch.randn((I, D_HIDDEN), dtype=torch.float32, device="cuda") * 0.05
     wd = torch.randn((D_HIDDEN, I), dtype=torch.float32, device="cuda") * 0.05
@@ -63,7 +64,10 @@ def test_transformer_block_emits_five_device_functions_and_four_event_tensors() 
     )
 
     compiled = compile_transformer_block_megakernel(
-        n_heads=2, seq_len=16, head_dim=32, intermediate_dim=64,
+        n_heads=2,
+        seq_len=16,
+        head_dim=32,
+        intermediate_dim=64,
     )
     src = compiled.kernel_source
     # All five paper-faithful device-function bodies are present in the
@@ -86,9 +90,7 @@ def test_transformer_block_emits_five_device_functions_and_four_event_tensors() 
 # ---------------------------------------------------------------------------
 
 
-_TINYLLAMA_CACHE = Path(os.path.expanduser(
-    "~/.cache/huggingface/hub/models--TinyLlama--TinyLlama-1.1B-Chat-v1.0"
-))
+_TINYLLAMA_CACHE = Path(os.path.expanduser("~/.cache/huggingface/hub/models--TinyLlama--TinyLlama-1.1B-Chat-v1.0"))
 
 
 @pytest.mark.skipif(
@@ -109,16 +111,19 @@ def test_tinyllama_layer0_weights_match_pytorch_reference() -> None:
     compiled = compile_for_tinyllama(seq_len=DEFAULT_SEQ_LEN)
 
     torch.manual_seed(42)
-    x = torch.randn(
-        (DEFAULT_SEQ_LEN, sliced_cfg["hidden_dim"]),
-        dtype=torch.float32, device="cuda",
-    ) * 0.1
+    x = (
+        torch.randn(
+            (DEFAULT_SEQ_LEN, sliced_cfg["hidden_dim"]),
+            dtype=torch.float32,
+            device="cuda",
+        )
+        * 0.1
+    )
 
     got, ref = run_tinyllama_block(compiled, x, sliced, sliced_cfg)
     err = (got - ref).abs().max().item()
     assert err < 1e-2, (
-        f"TinyLlama-block megakernel diverges by {err} from PyTorch eager "
-        "on real Llama weights -- expected < 1e-2."
+        f"TinyLlama-block megakernel diverges by {err} from PyTorch eager on real Llama weights -- expected < 1e-2."
     )
 
 
@@ -176,18 +181,21 @@ def test_aot_warmup_benchmark_runs_to_completion() -> None:
     full = load_tinyllama_layer0()
     sliced, sliced_cfg = slice_weights_for_megakernel(full)
     torch.manual_seed(123)
-    x = torch.randn(
-        (DEFAULT_SEQ_LEN, sliced_cfg["hidden_dim"]),
-        dtype=torch.float32, device="cuda",
-    ) * 0.1
+    x = (
+        torch.randn(
+            (DEFAULT_SEQ_LEN, sliced_cfg["hidden_dim"]),
+            dtype=torch.float32,
+            device="cuda",
+        )
+        * 0.1
+    )
 
     aot = measure_megakernel_aot(sliced, sliced_cfg, x)
     assert aot.cold_seconds > 0
     assert aot.warm_seconds > 0
     # Warm path must be substantially faster than cold (Triton cache hit).
     assert aot.warm_seconds < aot.cold_seconds, (
-        f"AOT warm ({aot.warm_seconds:.3f} s) should be < cold "
-        f"({aot.cold_seconds:.3f} s)"
+        f"AOT warm ({aot.warm_seconds:.3f} s) should be < cold ({aot.cold_seconds:.3f} s)"
     )
 
     jit = measure_torch_compile_jit(sliced, sliced_cfg, x)

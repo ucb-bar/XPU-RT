@@ -3,11 +3,6 @@
 from __future__ import annotations
 
 import pytest
-from xdsl.dialects.builtin import Float32Type, TensorType
-from xdsl.dialects.tensor import EmptyOp
-from xdsl.ir import Dialect
-from xdsl.utils.exceptions import VerifyException
-
 from compgen.ir.tensor_ext import (
     ALL_OPS,
     ConcatOp,
@@ -15,6 +10,10 @@ from compgen.ir.tensor_ext import (
     TensorExt,
     UnpackOp,
 )
+from xdsl.dialects.builtin import Float32Type, TensorType
+from xdsl.dialects.tensor import EmptyOp
+from xdsl.ir import Dialect
+from xdsl.utils.exceptions import VerifyException
 
 
 def _ft(shape):
@@ -266,4 +265,5 @@ def test_unpack_outer_dims_perm_permutation_check():
 @pytest.mark.parametrize("op_cls", [ConcatOp, PackOp, UnpackOp])
 def test_ops_are_pure(op_cls):
     from xdsl.traits import Pure
+
     assert any(isinstance(t, Pure) for t in op_cls.traits.traits)

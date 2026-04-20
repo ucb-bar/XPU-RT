@@ -10,9 +10,6 @@ the decomposition function directly, and asserts the result carries:
 from __future__ import annotations
 
 import pytest
-from xdsl.dialects.builtin import Float32Type, TensorType
-from xdsl.dialects.tensor import EmptyOp
-
 from compgen.ir.payload.decompositions import (
     DECOMPOSITION_TABLE,
     decompose_bmm,
@@ -43,6 +40,8 @@ from compgen.ir.payload.decompositions import (
     decompose_weight_int8pack_mm,
     reset_region_counters,
 )
+from xdsl.dialects.builtin import Float32Type, TensorType
+from xdsl.dialects.tensor import EmptyOp
 
 
 def _fake_meta(shape=(4, 8)):
@@ -172,14 +171,14 @@ def test_decomposition_table_has_expected_entries():
     assert len(DECOMPOSITION_TABLE) >= 28
     # Key entries survived
     for key in (
-        "aten.addmm.default",                         # pre-existing
-        "aten.bmm.default",                            # wave 6 B.1
+        "aten.addmm.default",  # pre-existing
+        "aten.bmm.default",  # wave 6 B.1
         "aten.native_layer_norm.default",
         "aten._softmax.default",
         "aten.rsqrt.default",
         "aten.convolution.default",
         "aten.embedding.default",
-        "aten._weight_int8pack_mm.default",            # wave 6 C.2
+        "aten._weight_int8pack_mm.default",  # wave 6 C.2
         "aten._weight_int4pack_mm.default",
         "torch.ops.quantized_decomposed.dequantize_per_channel.default",
     ):

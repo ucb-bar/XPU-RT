@@ -32,14 +32,14 @@ TODO: Implement validate_target_package() for completeness checks.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Iterable
 
+from compgen.packs import LoadedPack, PackContextSummary, default_pack_root, load_pack
 from compgen.targets.capability import CapabilitySpec, TargetClass
 from compgen.targets.maturity import TargetMaturity
 from compgen.targets.schema import TargetProfile
-from compgen.packs import LoadedPack, PackContextSummary, default_pack_root, load_pack
 
 
 @dataclass(frozen=True)
@@ -93,20 +93,13 @@ class TargetPackage:
     def pack_context(self) -> PackContextSummary:
         """Summarize the active pack ownership context."""
 
-        available_profilers = sorted({
-            profiler
-            for pack in self.extension_packs
-            for profiler in pack.manifest.available_profilers
-        })
-        benchmark_targets = sorted({
-            target
-            for pack in self.extension_packs
-            for target in pack.manifest.benchmark_targets
-        })
-        integration_branches = [
-            pack.pack.branch_plan(run_id="package").branch_name
-            for pack in self.extension_packs
-        ]
+        available_profilers = sorted(
+            {profiler for pack in self.extension_packs for profiler in pack.manifest.available_profilers}
+        )
+        benchmark_targets = sorted(
+            {target for pack in self.extension_packs for target in pack.manifest.benchmark_targets}
+        )
+        integration_branches = [pack.pack.branch_plan(run_id="package").branch_name for pack in self.extension_packs]
         return PackContextSummary(
             active_packs=tuple(pack.manifest.name for pack in self.extension_packs),
             sealed_surfaces=self.sealed_surfaces,
@@ -241,21 +234,11 @@ def generate_target_package(
         components["ir"] = "ir/"
 
     pack_artifacts: dict[str, dict[str, str]] = {}
-    owned_surfaces = sorted({
-        surface
-        for pack in loaded_packs
-        for surface in pack.manifest.owned_surfaces
-    })
-    sealed_surfaces = sorted({
-        surface
-        for pack in loaded_packs
-        for surface in pack.manifest.sealed_surfaces
-    })
-    generation_apertures = sorted({
-        aperture
-        for pack in loaded_packs
-        for aperture in pack.manifest.generation_apertures
-    })
+    owned_surfaces = sorted({surface for pack in loaded_packs for surface in pack.manifest.owned_surfaces})
+    sealed_surfaces = sorted({surface for pack in loaded_packs for surface in pack.manifest.sealed_surfaces})
+    generation_apertures = sorted(
+        {aperture for pack in loaded_packs for aperture in pack.manifest.generation_apertures}
+    )
 
     for pack in loaded_packs:
         pack_dir = output / "packs" / pack.manifest.name
@@ -364,13 +347,7 @@ def load_target_package(package_dir: str | Path) -> TargetPackage:
         capabilities=capabilities,
         maturity=manifest.maturity,
         extension_packs=loaded_packs,
-        owned_surfaces=tuple(
-            sorted({
-                surface
-                for pack in loaded_packs
-                for surface in pack.manifest.owned_surfaces
-            })
-        ),
+        owned_surfaces=tuple(sorted({surface for pack in loaded_packs for surface in pack.manifest.owned_surfaces})),
         sealed_surfaces=manifest.sealed_surfaces,
         generation_apertures=manifest.generation_apertures,
         integration_artifacts=manifest.integration_artifacts,

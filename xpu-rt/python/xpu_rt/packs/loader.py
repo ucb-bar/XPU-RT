@@ -96,12 +96,8 @@ def resolve_entry_point_target(value: str) -> Path:
             return result
         if isinstance(result, str):
             return Path(result)
-        raise TypeError(
-            f"entry-point {value!r} callable returned {type(result).__name__}; expected Path|str"
-        )
-    raise TypeError(
-        f"entry-point {value!r} resolved to {type(target).__name__}; expected Path|str|callable"
-    )
+        raise TypeError(f"entry-point {value!r} callable returned {type(result).__name__}; expected Path|str")
+    raise TypeError(f"entry-point {value!r} resolved to {type(target).__name__}; expected Path|str|callable")
 
 
 def _resolve_pack_source(source: str | Path) -> Path:
@@ -125,4 +121,3 @@ def load_pack(root: str | Path) -> LoadedPack:
     manifest = load_manifest(manifest_path)
     pack = _load_declared_pack(resolved_root, manifest)
     return LoadedPack(root=resolved_root, manifest=manifest, pack=pack)
-

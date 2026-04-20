@@ -4,16 +4,6 @@ from __future__ import annotations
 
 import json
 
-from xdsl.dialects.builtin import (
-    ArrayAttr,
-    IntegerAttr,
-    IntegerType,
-    ModuleOp,
-    StringAttr,
-    SymbolRefAttr,
-)
-from xdsl.ir import Block, Region
-
 from compgen.ir.event.attrs import EventCoordAttr, EventTensorTypeAttr
 from compgen.ir.event.ops import (
     CallDeviceOp,
@@ -24,7 +14,15 @@ from compgen.ir.payload.passes.megakernel_static_schedule import (
     StaticMegakernelSchedule,
     extract_event_edges,
 )
-
+from xdsl.dialects.builtin import (
+    ArrayAttr,
+    IntegerAttr,
+    IntegerType,
+    ModuleOp,
+    StringAttr,
+    SymbolRefAttr,
+)
+from xdsl.ir import Block, Region
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -54,10 +52,7 @@ def _gemm_rs_module(sm_count: int = 4) -> tuple[ModuleOp, GraphOp]:
                 "device_func": SymbolRefAttr("partial_sum"),
                 "task_shape": ArrayAttr([IntegerAttr(4, IntegerType(64))]),
                 "out_edges": ArrayAttr(
-                    [
-                        EventCoordAttr("E", [str(i)], 1)
-                        for i in range(4)
-                    ],
+                    [EventCoordAttr("E", [str(i)], 1) for i in range(4)],
                 ),
             },
         ),
@@ -68,10 +63,7 @@ def _gemm_rs_module(sm_count: int = 4) -> tuple[ModuleOp, GraphOp]:
                 "device_func": SymbolRefAttr("final_sum"),
                 "task_shape": ArrayAttr([IntegerAttr(4, IntegerType(64))]),
                 "in_edges": ArrayAttr(
-                    [
-                        EventCoordAttr("E", [str(i)], 1)
-                        for i in range(4)
-                    ],
+                    [EventCoordAttr("E", [str(i)], 1) for i in range(4)],
                 ),
             },
         ),
@@ -240,6 +232,4 @@ def test_pass_is_idempotent_in_makespan_and_task_set() -> None:
     assert a["makespan_us"] == b["makespan_us"]
     assert a["task_count"] == b["task_count"]
     assert set(a["assignment"].keys()) == set(b["assignment"].keys())
-    assert {len(q) for q in a["per_sm_order"].values()} == {
-        len(q) for q in b["per_sm_order"].values()
-    }
+    assert {len(q) for q in a["per_sm_order"].values()} == {len(q) for q in b["per_sm_order"].values()}

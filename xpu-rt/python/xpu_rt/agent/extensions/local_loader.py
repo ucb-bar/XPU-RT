@@ -31,14 +31,15 @@ import json
 import os
 import sys
 import traceback
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any
 
 import structlog
 
-if TYPE_CHECKING:   # pragma: no cover
-    from compgen.llm.registry import InventSlot, Registry, Tool
+if TYPE_CHECKING:  # pragma: no cover
+    from compgen.llm.registry import Registry
 
 log = structlog.get_logger()
 
@@ -98,7 +99,7 @@ def _load_state(root: Path) -> dict[str, Any]:
         return {}
     try:
         return json.loads(path.read_text())
-    except Exception:   # noqa: BLE001
+    except Exception:  # noqa: BLE001
         return {}
 
 
@@ -127,10 +128,7 @@ def _ext_root(override: Path | None) -> Path:
 def _discover(root: Path) -> list[Path]:
     if not root.exists() or not root.is_dir():
         return []
-    return sorted(
-        p for p in root.glob("*.py")
-        if p.is_file() and not p.name.startswith("_")
-    )
+    return sorted(p for p in root.glob("*.py") if p.is_file() and not p.name.startswith("_"))
 
 
 def _import_file(path: Path) -> Any:
@@ -146,7 +144,9 @@ def _import_file(path: Path) -> Any:
 
 
 def _iter_collected(
-    module: Any, single_attr: str, plural_attr: str,
+    module: Any,
+    single_attr: str,
+    plural_attr: str,
 ) -> list[Any]:
     items: list[Any] = []
     single = getattr(module, single_attr, None)
@@ -162,7 +162,8 @@ def _iter_collected(
 
 
 def _register_from_module(
-    module: Any, registry: "Registry",
+    module: Any,
+    registry: Registry,
 ) -> tuple[list[str], list[str]]:
     """Return (tool_names, slot_names) registered from ``module``."""
     from compgen.llm.registry import InventSlot, Tool
@@ -172,12 +173,8 @@ def _register_from_module(
 
     reg_fn: Callable[[Any], Any] | None = getattr(module, "register", None)
     if callable(reg_fn):
-        before_tools = {
-            t.name for t in registry.list_tools()
-        }
-        before_slots = {
-            s.name for s in registry.list_invent_slots()
-        }
+        before_tools = {t.name for t in registry.list_tools()}
+        before_slots = {s.name for s in registry.list_invent_slots()}
         reg_fn(registry)
         after_tools = {t.name for t in registry.list_tools()}
         after_slots = {s.name for s in registry.list_invent_slots()}
@@ -199,7 +196,7 @@ def _register_from_module(
 
 
 def load_local_extensions(
-    registry: "Registry",
+    registry: Registry,
     root: Path | str | None = None,
     *,
     force: bool = False,
@@ -251,7 +248,7 @@ def load_local_extensions(
                 tools=len(tools),
                 slots=len(slots),
             )
-        except Exception as exc:   # noqa: BLE001
+        except Exception as exc:  # noqa: BLE001
             err = f"{type(exc).__name__}: {exc}\n{traceback.format_exc(limit=3)}"
             result.extensions.append(
                 LocalExtension(

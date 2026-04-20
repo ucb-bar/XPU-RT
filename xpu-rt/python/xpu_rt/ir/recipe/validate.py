@@ -124,18 +124,22 @@ def validate_recipe_module(module: ModuleOp) -> RecipeValidationResult:
     try:
         module.verify()
     except VerifyException as exc:
-        errors.append(RecipeValidationError(
-            op_index=-1,
-            op_type="ModuleOp",
-            message=f"xDSL verification failed: {exc}",
-        ))
+        errors.append(
+            RecipeValidationError(
+                op_index=-1,
+                op_type="ModuleOp",
+                message=f"xDSL verification failed: {exc}",
+            )
+        )
         log.warning("validate.xdsl_verify_failed", error=str(exc))
     except Exception as exc:  # noqa: BLE001
-        errors.append(RecipeValidationError(
-            op_index=-1,
-            op_type="ModuleOp",
-            message=f"Unexpected verification error: {exc}",
-        ))
+        errors.append(
+            RecipeValidationError(
+                op_index=-1,
+                op_type="ModuleOp",
+                message=f"Unexpected verification error: {exc}",
+            )
+        )
         log.error("validate.unexpected_verify_error", error=str(exc))
 
     # --- Step 2: Collect defined symbols --------------------------------------
@@ -149,11 +153,13 @@ def validate_recipe_module(module: ModuleOp) -> RecipeValidationResult:
         refs = _collect_symbol_refs(op)
         for ref in refs:
             if ref and ref not in defined_symbols:
-                errors.append(RecipeValidationError(
-                    op_index=i,
-                    op_type=op_type_name,
-                    message=f"Unresolved symbol reference: @{ref}",
-                ))
+                errors.append(
+                    RecipeValidationError(
+                        op_index=i,
+                        op_type=op_type_name,
+                        message=f"Unresolved symbol reference: @{ref}",
+                    )
+                )
 
     # --- Step 4: Detect conflicting device assignments ------------------------
     device_assignments: dict[str, tuple[int, int]] = {}  # region_ref -> (device_index, first_op_index)
@@ -164,14 +170,16 @@ def validate_recipe_module(module: ModuleOp) -> RecipeValidationResult:
             if region_id in device_assignments:
                 prev_device, prev_idx = device_assignments[region_id]
                 if prev_device != device_index:
-                    errors.append(RecipeValidationError(
-                        op_index=i,
-                        op_type="PlaceOnDeviceOp",
-                        message=(
-                            f"Conflicting device assignment for region @{region_id}: "
-                            f"was device {prev_device} (op {prev_idx}), now device {device_index}"
-                        ),
-                    ))
+                    errors.append(
+                        RecipeValidationError(
+                            op_index=i,
+                            op_type="PlaceOnDeviceOp",
+                            message=(
+                                f"Conflicting device assignment for region @{region_id}: "
+                                f"was device {prev_device} (op {prev_idx}), now device {device_index}"
+                            ),
+                        )
+                    )
             else:
                 device_assignments[region_id] = (device_index, i)
 

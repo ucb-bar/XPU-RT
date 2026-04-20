@@ -81,10 +81,12 @@ def dataclass_to_xdsl(op: RecipeOp) -> Operation | None:
         TypeError: If *op* is not a recognised RecipeOp variant.
     """
     if isinstance(op, MatchRegion):
-        return RecipeRegionOp.build(properties={
-            "sym_name": StringAttr(op.region_id),
-            "payload_region_id": StringAttr(op.region_id),
-        })
+        return RecipeRegionOp.build(
+            properties={
+                "sym_name": StringAttr(op.region_id),
+                "payload_region_id": StringAttr(op.region_id),
+            }
+        )
 
     if isinstance(op, SetTileParams):
         props: dict[str, object] = {
@@ -97,78 +99,98 @@ def dataclass_to_xdsl(op: RecipeOp) -> Operation | None:
         return TileOp.build(properties=props)
 
     if isinstance(op, AssignDevice):
-        return PlaceOnDeviceOp.build(properties={
-            "sym_name": StringAttr(f"cand_place_{op.region_id}_{op.device_index}"),
-            "region_ref": _sym_ref(op.region_id),
-            "device": DeviceRefAttr(op.device_index, ""),
-            **({"reason": StringAttr(op.reason)} if op.reason else {}),
-        })
+        return PlaceOnDeviceOp.build(
+            properties={
+                "sym_name": StringAttr(f"cand_place_{op.region_id}_{op.device_index}"),
+                "region_ref": _sym_ref(op.region_id),
+                "device": DeviceRefAttr(op.device_index, ""),
+                **({"reason": StringAttr(op.reason)} if op.reason else {}),
+            }
+        )
 
     if isinstance(op, InsertCopyBoundary):
-        return InsertCopyBoundaryOp.build(properties={
-            "sym_name": StringAttr(f"cand_copy_{op.src_region}_{op.dst_region}"),
-            "src_region": _sym_ref(op.src_region),
-            "dst_region": _sym_ref(op.dst_region),
-            "tensor_name": StringAttr(op.tensor_name),
-            "is_async": _int_attr(1 if op.async_ else 0),
-        })
+        return InsertCopyBoundaryOp.build(
+            properties={
+                "sym_name": StringAttr(f"cand_copy_{op.src_region}_{op.dst_region}"),
+                "src_region": _sym_ref(op.src_region),
+                "dst_region": _sym_ref(op.dst_region),
+                "tensor_name": StringAttr(op.tensor_name),
+                "is_async": _int_attr(1 if op.async_ else 0),
+            }
+        )
 
     if isinstance(op, RequestKernelSearch):
-        return RequestTritonKernelOp.build(properties={
-            "sym_name": StringAttr(f"cand_kernel_{op.region_id}"),
-            "region_ref": _sym_ref(op.region_id),
-            "search_budget": _int_attr(op.search_budget),
-            **({"backend": StringAttr(op.backend)} if op.backend else {}),
-        })
+        return RequestTritonKernelOp.build(
+            properties={
+                "sym_name": StringAttr(f"cand_kernel_{op.region_id}"),
+                "region_ref": _sym_ref(op.region_id),
+                "search_budget": _int_attr(op.search_budget),
+                **({"backend": StringAttr(op.backend)} if op.backend else {}),
+            }
+        )
 
     if isinstance(op, RequireCheck):
         if op.check_type == "translation_validation":
-            return RequireTranslationValidationOp.build(properties={
-                "region_ref": _sym_ref(op.region_id),
-            })
+            return RequireTranslationValidationOp.build(
+                properties={
+                    "region_ref": _sym_ref(op.region_id),
+                }
+            )
         # Default to differential test for all other check types
-        return RequireDiffTestOp.build(properties={
-            "region_ref": _sym_ref(op.region_id),
-        })
+        return RequireDiffTestOp.build(
+            properties={
+                "region_ref": _sym_ref(op.region_id),
+            }
+        )
 
     if isinstance(op, PromoteIfVerified):
-        return PromoteOp.build(properties={
-            "candidate_ref": _sym_ref(op.recipe_name),
-            "recipe_key": StringAttr(op.recipe_name),
-            "version": _int_attr(0),
-        })
+        return PromoteOp.build(
+            properties={
+                "candidate_ref": _sym_ref(op.recipe_name),
+                "recipe_key": StringAttr(op.recipe_name),
+                "version": _int_attr(0),
+            }
+        )
 
     if isinstance(op, ChooseTransformFamily):
         family = op.family.lower()
         if family == "tile":
             # Emit a TileOp with empty tile sizes as a placeholder
-            return TileOp.build(properties={
-                "sym_name": StringAttr(f"cand_tile_{op.region_id}"),
-                "region_ref": _sym_ref(op.region_id),
-                "tile_sizes": ArrayAttr([]),
-            })
+            return TileOp.build(
+                properties={
+                    "sym_name": StringAttr(f"cand_tile_{op.region_id}"),
+                    "region_ref": _sym_ref(op.region_id),
+                    "tile_sizes": ArrayAttr([]),
+                }
+            )
         if family == "fuse":
-            return FuseOp.build(properties={
-                "sym_name": StringAttr(f"cand_fuse_{op.region_id}"),
-                "fuse_regions": ArrayAttr([_sym_ref(op.region_id)]),
-            })
+            return FuseOp.build(
+                properties={
+                    "sym_name": StringAttr(f"cand_fuse_{op.region_id}"),
+                    "fuse_regions": ArrayAttr([_sym_ref(op.region_id)]),
+                }
+            )
         if family == "vectorize":
-            return VectorizeOp.build(properties={
-                "sym_name": StringAttr(f"cand_vectorize_{op.region_id}"),
-                "region_ref": _sym_ref(op.region_id),
-                "vector_width": _int_attr(1),
-            })
+            return VectorizeOp.build(
+                properties={
+                    "sym_name": StringAttr(f"cand_vectorize_{op.region_id}"),
+                    "region_ref": _sym_ref(op.region_id),
+                    "vector_width": _int_attr(1),
+                }
+            )
         # Unknown family -- fall back to TileOp placeholder
         log.warning(
             "compat.unknown_transform_family",
             family=op.family,
             region_id=op.region_id,
         )
-        return TileOp.build(properties={
-            "sym_name": StringAttr(f"cand_tile_{op.region_id}"),
-            "region_ref": _sym_ref(op.region_id),
-            "tile_sizes": ArrayAttr([]),
-        })
+        return TileOp.build(
+            properties={
+                "sym_name": StringAttr(f"cand_tile_{op.region_id}"),
+                "region_ref": _sym_ref(op.region_id),
+                "tile_sizes": ArrayAttr([]),
+            }
+        )
 
     if isinstance(op, SetObjective):
         log.info("compat.set_objective_skipped", objective=op.objective.value)
@@ -195,18 +217,10 @@ def xdsl_to_dataclass(op: Operation) -> RecipeOp | None:
         )
 
     if isinstance(op, TileOp):
-        sizes = tuple(
-            attr.value.data
-            for attr in op.tile_sizes.data
-            if isinstance(attr, IntegerAttr)
-        )
+        sizes = tuple(attr.value.data for attr in op.tile_sizes.data if isinstance(attr, IntegerAttr))
         interchange: tuple[int, ...] | None = None
         if op.interchange is not None:
-            interchange = tuple(
-                attr.value.data
-                for attr in op.interchange.data
-                if isinstance(attr, IntegerAttr)
-            )
+            interchange = tuple(attr.value.data for attr in op.interchange.data if isinstance(attr, IntegerAttr))
         return SetTileParams(
             region_id=op.region_ref.root_reference.data,
             tile_sizes=sizes,

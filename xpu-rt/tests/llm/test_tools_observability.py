@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-import pytest
-
 from compgen.llm import get_registry
+
 # Importing triggers auto-registration into the global registry.
 from compgen.llm.tools import observability  # noqa: F401
 
@@ -44,9 +43,7 @@ def test_read_target_features_slice_keys_filters() -> None:
     class FakeDevice:
         profile: FakeProfile = field(default_factory=FakeProfile)
 
-    out = observability._read_target_features_impl(
-        device=FakeDevice(), slice_keys=("name",)
-    )
+    out = observability._read_target_features_impl(device=FakeDevice(), slice_keys=("name",))
     assert out["status"] == "ok"
     assert set(out["target"].keys()) == {"name"}
 

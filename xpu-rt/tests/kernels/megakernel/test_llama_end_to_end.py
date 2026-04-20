@@ -23,9 +23,7 @@ if str(REPO_ROOT) not in sys.path:
 sys.modules.setdefault("torchvision", None)
 
 
-pytestmark = pytest.mark.skipif(
-    not torch.cuda.is_available(), reason="real-example tests require CUDA"
-)
+pytestmark = pytest.mark.skipif(not torch.cuda.is_available(), reason="real-example tests require CUDA")
 
 
 # ---------------------------------------------------------------------------
@@ -46,7 +44,7 @@ def test_megakernel_substitutes_one_layer_in_real_llama_forward() -> None:
     torch.manual_seed(54321)
     input_ids = torch.randint(0, bundle.config.vocab_size, (1, 16), device="cuda")
 
-    hf_logits  = hf_only_forward(bundle.model, input_ids)
+    hf_logits = hf_only_forward(bundle.model, input_ids)
     sub_logits = substituted_forward(bundle, input_ids)
     err = (hf_logits - sub_logits).abs().max().item()
     assert err < 5e-4, f"single-layer substitution diverges by {err}"
@@ -65,7 +63,7 @@ def test_megakernel_substitutes_all_layers_in_real_llama_forward() -> None:
     torch.manual_seed(54321)
     input_ids = torch.randint(0, bundle.config.vocab_size, (1, 16), device="cuda")
 
-    hf_logits   = hf_only_forward(bundle.model, input_ids)
+    hf_logits = hf_only_forward(bundle.model, input_ids)
     full_logits = fully_substituted_forward(bundle, input_ids)
     err = (hf_logits - full_logits).abs().max().item()
     assert err < 5e-3, f"all-layers substitution diverges by {err}"
@@ -97,8 +95,11 @@ def test_megakernel_greedy_generation_matches_hf_generate() -> None:
     cfg = model.config
     compiled = compile_megakernel_for(model, seq_len=final_max_S)
     cos_full, sin_full = hf_rope_tables(
-        seq_len=final_max_S, head_dim=cfg.head_dim,
-        base=10000.0, device="cuda", dtype=torch.float32,
+        seq_len=final_max_S,
+        head_dim=cfg.head_dim,
+        base=10000.0,
+        device="cuda",
+        dtype=torch.float32,
     )
 
     torch.manual_seed(20260418)
@@ -120,8 +121,12 @@ def test_megakernel_greedy_generation_matches_hf_generate() -> None:
             hidden = model.model.embed_tokens(padded).squeeze(0)
             for i in range(cfg.num_hidden_layers):
                 bundle = HFDropInBundle(
-                    model=model, config=cfg, compiled=compiled,
-                    layer_idx=i, cos=cos_full, sin=sin_full,
+                    model=model,
+                    config=cfg,
+                    compiled=compiled,
+                    layer_idx=i,
+                    cos=cos_full,
+                    sin=sin_full,
                 )
                 hidden = _layer_megakernel_output(bundle, hidden)
             hidden = model.model.norm(hidden)
@@ -133,6 +138,4 @@ def test_megakernel_greedy_generation_matches_hf_generate() -> None:
         )
     mk_new = cur[0, SEQ_LEN:].tolist()
 
-    assert hf_new == mk_new, (
-        f"Greedy generation diverges:\n  HF: {hf_new}\n  MK: {mk_new}"
-    )
+    assert hf_new == mk_new, f"Greedy generation diverges:\n  HF: {hf_new}\n  MK: {mk_new}"

@@ -6,7 +6,6 @@ import os
 from pathlib import Path
 
 import pytest
-
 from compgen.llm import LLMRecorder, create_llm_client
 from compgen.llm.base import GenerationRequest, LLMConfig, Objective, PromptContext
 

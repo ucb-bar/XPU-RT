@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import importlib
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
 from compgen.models import ModelSpec, build_default_model_catalog
 
 LoaderFn = Callable[[], tuple[nn.Module, tuple[Any, ...]]]

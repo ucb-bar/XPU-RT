@@ -69,10 +69,7 @@ class AssignMemorySpaceStats:
 
 
 def _is_weight_like(buf: BufferDescriptor) -> bool:
-    return (
-        buf.lifetime.persistent
-        or buf.ownership == "shared_readonly"
-    )
+    return buf.lifetime.persistent or buf.ownership == "shared_readonly"
 
 
 def _choose_space(

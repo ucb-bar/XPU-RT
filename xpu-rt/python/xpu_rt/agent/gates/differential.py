@@ -26,9 +26,7 @@ def differential_gate(proposal: dict[str, Any], **ctx: Any) -> dict[str, Any]:
     if ref_fn is None or got_fn is None:
         return {
             "status": "deferred",
-            "details": {
-                "reason": "differential gate requires ctx.ref_fn + ctx.got_fn"
-            },
+            "details": {"reason": "differential gate requires ctx.ref_fn + ctx.got_fn"},
         }
 
     atol = float(ctx.get("atol", 1e-5))
@@ -36,8 +34,9 @@ def differential_gate(proposal: dict[str, Any], **ctx: Any) -> dict[str, Any]:
 
     try:
         import torch
+
         from compgen.semantic.verify.compare import compare_tensors
-    except ImportError as e:   # pragma: no cover
+    except ImportError as e:  # pragma: no cover
         return {
             "status": "deferred",
             "details": {"reason": f"missing dependency: {e}"},
@@ -53,7 +52,7 @@ def differential_gate(proposal: dict[str, Any], **ctx: Any) -> dict[str, Any]:
     t0 = time.perf_counter()
     try:
         ref_out = ref_fn()
-    except Exception as e:   # noqa: BLE001
+    except Exception as e:  # noqa: BLE001
         return {
             "status": "rejected",
             "details": {
@@ -66,7 +65,7 @@ def differential_gate(proposal: dict[str, Any], **ctx: Any) -> dict[str, Any]:
     t0 = time.perf_counter()
     try:
         got_out = got_fn()
-    except Exception as e:   # noqa: BLE001
+    except Exception as e:  # noqa: BLE001
         return {
             "status": "rejected",
             "details": {

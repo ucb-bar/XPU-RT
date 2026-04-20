@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from compgen.semantic.rewrite.verify_pdl import verify_rewrite_family
 
 z3 = pytest.importorskip("z3")

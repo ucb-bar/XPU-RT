@@ -39,9 +39,7 @@ class TileOp(IRDLOperation):
     def verify_(self) -> None:
         for size_attr in self.tile_sizes.data:
             if isinstance(size_attr, IntegerAttr) and size_attr.value.data <= 0:
-                raise VerifyException(
-                    f"Tile sizes must be positive, got {size_attr.value.data}"
-                )
+                raise VerifyException(f"Tile sizes must be positive, got {size_attr.value.data}")
 
 
 @irdl_op_definition
@@ -79,9 +77,7 @@ class VectorizeOp(IRDLOperation):
 
     def verify_(self) -> None:
         if self.vector_width.value.data <= 0:
-            raise VerifyException(
-                f"Vector width must be positive, got {self.vector_width.value.data}"
-            )
+            raise VerifyException(f"Vector width must be positive, got {self.vector_width.value.data}")
 
 
 @irdl_op_definition
@@ -104,10 +100,7 @@ class ReassociateOp(IRDLOperation):
     def verify_(self) -> None:
         valid = {"left", "right", "balanced"}
         if self.strategy.data not in valid:
-            raise VerifyException(
-                f"Invalid reassociation strategy '{self.strategy.data}', "
-                f"expected one of {valid}"
-            )
+            raise VerifyException(f"Invalid reassociation strategy '{self.strategy.data}', expected one of {valid}")
 
 
 @irdl_op_definition
@@ -158,9 +151,7 @@ class RequestTritonKernelOp(IRDLOperation):
 
     def verify_(self) -> None:
         if self.search_budget.value.data <= 0:
-            raise VerifyException(
-                f"Search budget must be positive, got {self.search_budget.value.data}"
-            )
+            raise VerifyException(f"Search budget must be positive, got {self.search_budget.value.data}")
 
 
 @irdl_op_definition
@@ -196,9 +187,7 @@ class PlaceOnDeviceOp(IRDLOperation):
 
     def verify_(self) -> None:
         if self.device.index.value.data < 0:
-            raise VerifyException(
-                f"Device index must be non-negative, got {self.device.index.value.data}"
-            )
+            raise VerifyException(f"Device index must be non-negative, got {self.device.index.value.data}")
 
 
 @irdl_op_definition
@@ -271,9 +260,7 @@ class RequestExoKernelOp(IRDLOperation):
 
     def verify_(self) -> None:
         if self.search_budget.value.data <= 0:
-            raise VerifyException(
-                f"Search budget must be positive, got {self.search_budget.value.data}"
-            )
+            raise VerifyException(f"Search budget must be positive, got {self.search_budget.value.data}")
 
 
 @irdl_op_definition

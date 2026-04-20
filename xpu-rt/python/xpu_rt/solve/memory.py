@@ -95,9 +95,7 @@ def solve_memory(
             placed = False
 
             # Try offset 0, then above each existing allocation
-            candidate_offsets = [0] + [
-                a[0] + a[1] for a in allocated
-            ]
+            candidate_offsets = [0] + [a[0] + a[1] for a in allocated]
             candidate_offsets = sorted(set(candidate_offsets))
 
             for offset in candidate_offsets:
@@ -105,14 +103,9 @@ def solve_memory(
                 conflicts = False
                 for alloc_offset, alloc_size, alloc_start, alloc_end in allocated:
                     # Check spatial overlap
-                    spatial_overlap = (
-                        offset < alloc_offset + alloc_size
-                        and offset + buf.size_bytes > alloc_offset
-                    )
+                    spatial_overlap = offset < alloc_offset + alloc_size and offset + buf.size_bytes > alloc_offset
                     # Check temporal overlap
-                    temporal_overlap = (
-                        buf.start_us < alloc_end and buf.end_us > alloc_start
-                    )
+                    temporal_overlap = buf.start_us < alloc_end and buf.end_us > alloc_start
                     if spatial_overlap and temporal_overlap:
                         conflicts = True
                         break
@@ -140,10 +133,7 @@ def solve_memory(
         peak_per_device[device_idx] = peak
 
     # Check feasibility
-    feasible = all(
-        peak_per_device.get(d, 0) <= device_capacities.get(d, 2**63)
-        for d in peak_per_device
-    )
+    feasible = all(peak_per_device.get(d, 0) <= device_capacities.get(d, 2**63) for d in peak_per_device)
 
     elapsed_ms = (time.monotonic() - start) * 1000
 

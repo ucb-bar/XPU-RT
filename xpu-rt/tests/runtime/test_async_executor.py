@@ -25,9 +25,11 @@ EXAMPLES = Path(__file__).parent.parent.parent / "examples" / "models"
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _get_model_and_inputs() -> tuple[torch.nn.Module, tuple[torch.Tensor, ...]]:
     sys.path.insert(0, str(EXAMPLES))
     from simple_mlp import SimpleMLP, get_sample_inputs
+
     return SimpleMLP(), get_sample_inputs()
 
 
@@ -112,6 +114,7 @@ def _run(coro: Any) -> Any:
 # TimelineSemaphore tests
 # ---------------------------------------------------------------------------
 
+
 class TestTimelineSemaphore:
     """Tests for the timeline semaphore primitive."""
 
@@ -140,6 +143,7 @@ class TestTimelineSemaphore:
 
     def test_wait_already_reached(self) -> None:
         """wait() returns immediately if the value is already >= target."""
+
         async def _go() -> None:
             sem = TimelineSemaphore(name="test")
             await sem.signal(5)
@@ -149,6 +153,7 @@ class TestTimelineSemaphore:
 
     def test_wait_blocks_until_signal(self) -> None:
         """wait() blocks until signal advances past target."""
+
         async def _go() -> None:
             sem = TimelineSemaphore(name="test")
 
@@ -177,6 +182,7 @@ class TestTimelineSemaphore:
 
     def test_multiple_waiters(self) -> None:
         """Multiple waiters at different targets all get woken."""
+
         async def _go() -> None:
             sem = TimelineSemaphore(name="test")
             results: list[int] = []
@@ -210,6 +216,7 @@ class TestTimelineSemaphore:
 # TaskResult / AsyncExecutionResult tests
 # ---------------------------------------------------------------------------
 
+
 class TestTaskResult:
     def test_construction(self) -> None:
         r = TaskResult(partition_id="p_0", device="cpu", elapsed_us=42.0)
@@ -235,6 +242,7 @@ class TestAsyncExecutionResult:
 # ---------------------------------------------------------------------------
 # AsyncExecutor tests
 # ---------------------------------------------------------------------------
+
 
 class TestAsyncExecutor:
     def test_simple_plan_produces_output(self) -> None:
@@ -266,6 +274,7 @@ class TestAsyncExecutor:
 
     def test_semaphore_advances_with_copies(self) -> None:
         """The timeline semaphore advances once per copy."""
+
         async def _go() -> None:
             model, inputs = _get_model_and_inputs()
             plan = _multi_device_plan()
@@ -291,6 +300,7 @@ class TestAsyncExecutor:
 
     def test_diamond_dag_all_copies_run(self) -> None:
         """Both copies in a diamond DAG execute."""
+
         async def _go() -> None:
             model, inputs = _get_model_and_inputs()
             plan = _diamond_plan()
@@ -354,6 +364,7 @@ class TestAsyncExecutor:
 # ---------------------------------------------------------------------------
 # run_async convenience function tests
 # ---------------------------------------------------------------------------
+
 
 class TestRunAsync:
     def test_returns_execution_result(self) -> None:

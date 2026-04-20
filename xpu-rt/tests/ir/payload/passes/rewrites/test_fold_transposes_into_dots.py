@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-import pytest
+from compgen.ir.payload.passes.rewrites.fold_transposes_into_dots import (
+    FoldTransposesStats,
+    run_fold_transposes_into_dots,
+)
 from xdsl.dialects.builtin import (
     DenseArrayBase,
     Float32Type,
@@ -16,13 +19,8 @@ from xdsl.dialects.linalg import MatmulOp, TransposeOp
 from xdsl.dialects.tensor import EmptyOp
 from xdsl.ir import Block, Region
 
-from compgen.ir.payload.passes.rewrites.fold_transposes_into_dots import (
-    FoldTransposesStats,
-    run_fold_transposes_into_dots,
-)
 from tests.ir.payload.passes._pattern_test_helpers import (
     assert_module_verifies,
-    assert_op_count,
     count_ops,
 )
 

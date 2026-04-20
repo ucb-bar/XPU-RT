@@ -1,12 +1,9 @@
 """CompGen end-to-end pipeline driver.
 
 Entry point: :func:`compgen.pipeline.driver.compile_through_pipeline`.
-Runs all 22 Wave 1-6 passes in the right order, returning an xDSL
-``ModuleOp`` + an ``ExecutionPlan`` + a summary of every pass that
-fired.
-
-Modelled on hexagon-mlir's ``LinalgToLLVMPass.cpp`` pass-pipeline
-orchestration.
+Runs the full xDSL rewrite + runtime-planning pipeline in order,
+returning an xDSL ``ModuleOp``, an ``ExecutionPlan``, and a per-pass
+summary.
 """
 
 from __future__ import annotations

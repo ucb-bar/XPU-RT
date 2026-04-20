@@ -18,7 +18,6 @@ from typing import Any
 
 from compgen.agent.gates._remediation import add_remediation
 
-
 GateFn = Callable[..., dict[str, Any]]
 
 
@@ -55,11 +54,13 @@ def composite_gate(
         gate_name = getattr(gate, "__name__", str(gate))
         result = gate(proposal, **ctx)
         status = result.get("status", "deferred")
-        trace.append({
-            "gate": gate_name,
-            "status": status,
-            "details": result.get("details", {}),
-        })
+        trace.append(
+            {
+                "gate": gate_name,
+                "status": status,
+                "details": result.get("details", {}),
+            }
+        )
         if status == "rejected":
             final_status = "rejected"
             if fail_fast:

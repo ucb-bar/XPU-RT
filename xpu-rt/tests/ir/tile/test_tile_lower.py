@@ -24,52 +24,64 @@ def _i64(val: int) -> IntegerAttr:
 
 
 def _make_load() -> TileLoadOp:
-    return TileLoadOp.build(properties={
-        "src_memref": SymbolRefAttr("A"),
-        "memory_class": MemoryClassAttr("global"),
-        "shape": TileShapeAttr([16, 16]),
-    })
+    return TileLoadOp.build(
+        properties={
+            "src_memref": SymbolRefAttr("A"),
+            "memory_class": MemoryClassAttr("global"),
+            "shape": TileShapeAttr([16, 16]),
+        }
+    )
 
 
 def _make_store() -> TileStoreOp:
-    return TileStoreOp.build(properties={
-        "dst_memref": SymbolRefAttr("C"),
-        "fragment_ref": SymbolRefAttr("frag_C"),
-        "memory_class": MemoryClassAttr("global"),
-        "shape": TileShapeAttr([16, 16]),
-    })
+    return TileStoreOp.build(
+        properties={
+            "dst_memref": SymbolRefAttr("C"),
+            "fragment_ref": SymbolRefAttr("frag_C"),
+            "memory_class": MemoryClassAttr("global"),
+            "shape": TileShapeAttr([16, 16]),
+        }
+    )
 
 
 def _make_mma() -> TileMMAOp:
-    return TileMMAOp.build(properties={
-        "a_ref": SymbolRefAttr("A"),
-        "b_ref": SymbolRefAttr("B"),
-        "c_ref": SymbolRefAttr("C"),
-        "shape": TileShapeAttr([16, 16, 8]),
-    })
+    return TileMMAOp.build(
+        properties={
+            "a_ref": SymbolRefAttr("A"),
+            "b_ref": SymbolRefAttr("B"),
+            "c_ref": SymbolRefAttr("C"),
+            "shape": TileShapeAttr([16, 16, 8]),
+        }
+    )
 
 
 def _make_elementwise() -> TileElementwiseOp:
-    return TileElementwiseOp.build(properties={
-        "fragment_ref": SymbolRefAttr("frag"),
-        "op_kind": StringAttr("relu"),
-        "shape": TileShapeAttr([128]),
-    })
+    return TileElementwiseOp.build(
+        properties={
+            "fragment_ref": SymbolRefAttr("frag"),
+            "op_kind": StringAttr("relu"),
+            "shape": TileShapeAttr([128]),
+        }
+    )
 
 
 def _make_reduce() -> TileReduceOp:
-    return TileReduceOp.build(properties={
-        "fragment_ref": SymbolRefAttr("x"),
-        "reduce_kind": StringAttr("sum"),
-        "axis": _i64(0),
-        "shape": TileShapeAttr([128, 64]),
-    })
+    return TileReduceOp.build(
+        properties={
+            "fragment_ref": SymbolRefAttr("x"),
+            "reduce_kind": StringAttr("sum"),
+            "axis": _i64(0),
+            "shape": TileShapeAttr([128, 64]),
+        }
+    )
 
 
 def _make_barrier() -> TileBarrierOp:
-    return TileBarrierOp.build(properties={
-        "scope": StringAttr("workgroup"),
-    })
+    return TileBarrierOp.build(
+        properties={
+            "scope": StringAttr("workgroup"),
+        }
+    )
 
 
 # -- Triton lowering -----------------------------------------------------------

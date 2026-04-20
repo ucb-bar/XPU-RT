@@ -21,6 +21,7 @@ from xdsl.ir import Block, Region
 
 # -- Fixtures --
 
+
 def _make_arith_module() -> ModuleOp:
     idx = IndexType()
     block = Block(arg_types=[idx, idx])
@@ -78,6 +79,7 @@ class _DummyPlugin:
 
 # -- IRInvariant tests --
 
+
 class TestIRInvariant:
     def test_invariant_with_required_ops(self) -> None:
         inv = IRInvariant(
@@ -107,6 +109,7 @@ class TestIRInvariant:
 
 # -- StageContract tests --
 
+
 class TestStageContract:
     def test_empty_contract(self) -> None:
         c = StageContract(stage_name="test")
@@ -120,6 +123,7 @@ class TestStageContract:
 
 
 # -- StageResult tests --
+
 
 class TestStageResult:
     def test_passing_result(self) -> None:
@@ -138,6 +142,7 @@ class TestStageResult:
 
 # -- CompilationStage tests --
 
+
 class TestCompilationStage:
     def test_stage_properties(self) -> None:
         stage = _DummyStage()
@@ -148,8 +153,10 @@ class TestCompilationStage:
         stage = _DummyStage()
         module = _make_arith_module()
         from compgen.targets.schema import load_profile
+
         target = load_profile("examples/target_profiles/cuda_a100.yaml")
         from compgen.targets.capability import infer_capabilities
+
         caps = infer_capabilities(target)
 
         result = stage.run(module, target, caps)
@@ -164,8 +171,10 @@ class TestCompilationStage:
 
         module = _make_arith_module()
         from compgen.targets.schema import load_profile
+
         target = load_profile("examples/target_profiles/cuda_a100.yaml")
         from compgen.targets.capability import infer_capabilities
+
         caps = infer_capabilities(target)
 
         result = stage.run(module, target, caps)
@@ -179,12 +188,19 @@ class TestCompilationStage:
             @property
             def target_name(self) -> str:
                 return "x"
+
             @property
             def stage_name(self) -> str:
                 return "wrong_name"
-            def configure(self, t, c): pass
-            def transform(self, m): return m
-            def get_artifacts(self): return {}
+
+            def configure(self, t, c):
+                pass
+
+            def transform(self, m):
+                return m
+
+            def get_artifacts(self):
+                return {}
 
         with pytest.raises(ValueError, match="does not match"):
             stage.register_plugin(BadPlugin())
@@ -254,16 +270,17 @@ class TestCompilationStage:
                 return StageContract(
                     stage_name="strict",
                     preconditions=[
-                        IRInvariant("needs_matmul", "needs matmul",
-                                    required_ops=frozenset({"linalg.matmul"})),
+                        IRInvariant("needs_matmul", "needs matmul", required_ops=frozenset({"linalg.matmul"})),
                     ],
                 )
 
         stage = StrictStage()
         module = _make_arith_module()
         from compgen.targets.schema import load_profile
+
         target = load_profile("examples/target_profiles/cuda_a100.yaml")
         from compgen.targets.capability import infer_capabilities
+
         caps = infer_capabilities(target)
 
         result = stage.run(module, target, caps)
@@ -272,6 +289,7 @@ class TestCompilationStage:
 
 
 # -- TargetStagePlugin protocol --
+
 
 class TestTargetStagePlugin:
     def test_plugin_satisfies_protocol(self) -> None:

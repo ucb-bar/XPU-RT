@@ -8,18 +8,13 @@ import json
 import os
 import subprocess
 import sys
+from collections.abc import Iterable
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 import torch
 import torch.nn as nn
-
-from benchmarks.adapters import AdapterContext, CompGenAdapter
-from benchmarks.collector import collect_performance_metrics
-from benchmarks.record import RunRecord
-from benchmarks.registry import build_default_registry
-from benchmarks.spec import BaselineSpec, ExperimentCase, WorkloadSpec, WorkspaceConfig
 from compgen.benchmarks import (
     NormalizedSuiteResult,
     SuiteEnvironmentStatus,
@@ -30,6 +25,12 @@ from compgen.benchmarks import (
     write_normalized_suite_results,
 )
 from compgen.packs import default_pack_root, load_builtin_packs, load_pack
+
+from benchmarks.adapters import AdapterContext, CompGenAdapter
+from benchmarks.collector import collect_performance_metrics
+from benchmarks.record import RunRecord
+from benchmarks.registry import build_default_registry
+from benchmarks.spec import BaselineSpec, ExperimentCase, WorkloadSpec, WorkspaceConfig
 
 
 def _import_available(module_name: str) -> bool:
@@ -123,7 +124,9 @@ def _apply_metrics_payload(record: RunRecord, payload: dict[str, Any]) -> None:
         return
     record.capture.export_success = bool(payload.get("export_success", record.capture.export_success))
     record.capture.analysis_success = bool(payload.get("capture_success", record.capture.analysis_success))
-    record.capture.graph_break_count = int(payload.get("graph_break_count", payload.get("graph_breaks", record.capture.graph_break_count)))
+    record.capture.graph_break_count = int(
+        payload.get("graph_break_count", payload.get("graph_breaks", record.capture.graph_break_count))
+    )
     record.capture.graph_count = int(payload.get("graph_count", record.capture.graph_count))
     unsupported = payload.get("unsupported_ops", [])
     if isinstance(unsupported, list):
@@ -132,7 +135,9 @@ def _apply_metrics_payload(record: RunRecord, payload: dict[str, Any]) -> None:
         record.capture.unsupported_ops = [str(unsupported)]
     elif "unsupported_ops_count" in payload:
         record.capture.unsupported_ops = ["unsupported"] * int(payload.get("unsupported_ops_count", 0))
-    record.capture.auto_translations_added = int(payload.get("auto_translations_added", record.capture.auto_translations_added))
+    record.capture.auto_translations_added = int(
+        payload.get("auto_translations_added", record.capture.auto_translations_added)
+    )
 
     if "compile_time_ms" in payload:
         record.total_compile_time_ms = float(payload["compile_time_ms"])
@@ -172,7 +177,9 @@ def _apply_metrics_payload(record: RunRecord, payload: dict[str, Any]) -> None:
     record.kernels.total_kernel_specs = int(payload.get("generated_kernels", record.kernels.total_kernel_specs))
     record.recipe.transform_scripts_count = int(payload.get("generated_passes", record.recipe.transform_scripts_count))
     record.synthesis.promoted = int(payload.get("generated_guards", record.synthesis.promoted))
-    record.generation.promoted_candidates = int(payload.get("promoted_artifacts", record.generation.promoted_candidates))
+    record.generation.promoted_candidates = int(
+        payload.get("promoted_artifacts", record.generation.promoted_candidates)
+    )
     record.agentic.iterations_run = int(payload.get("repair_iterations", record.agentic.iterations_run))
 
     if "device_assignment" in payload and isinstance(payload["device_assignment"], dict):
@@ -346,7 +353,9 @@ class BaseSuiteAdapter:
         blessed_only: bool = False,
     ) -> list[SuiteManifestEntry]:
         root = self._resolve_root(workspace)
-        entries = self._merge_entries(self.builtin_manifest, self._config_manifest_entries(workspace), self._discover_manifest(root))
+        entries = self._merge_entries(
+            self.builtin_manifest, self._config_manifest_entries(workspace), self._discover_manifest(root)
+        )
         return filter_manifest_entries(entries, blessed_only=blessed_only)
 
     def prepare_environment(
@@ -417,7 +426,14 @@ class BaseSuiteAdapter:
         record = _suite_record(entry, system_name=system_name, config=config, suite_root=suite_root)
         output_dir.mkdir(parents=True, exist_ok=True)
         metrics_path = output_dir / f"{entry.workload_id}_{system_name}_metrics.json"
-        mapping = _command_mapping(entry, workspace=workspace, suite_root=suite_root, output_dir=output_dir, metrics_path=metrics_path, config=config)
+        mapping = _command_mapping(
+            entry,
+            workspace=workspace,
+            suite_root=suite_root,
+            output_dir=output_dir,
+            metrics_path=metrics_path,
+            config=config,
+        )
         template = self._command_template(workspace, entry, key=command_key)
         if template is None:
             record.status = "skip"
@@ -576,7 +592,9 @@ class PyTorchSuiteAdapter(BaseSuiteAdapter):
         output_dir: str | Path | None = None,
         config: SuiteRunConfig | None = None,
     ) -> list[RunRecord]:
-        config = config or SuiteRunConfig(mode=entry.mode, device=entry.device, dtype=entry.dtype, batch_size=entry.batch_size)
+        config = config or SuiteRunConfig(
+            mode=entry.mode, device=entry.device, dtype=entry.dtype, batch_size=entry.batch_size
+        )
         output_dir = Path(output_dir or Path.cwd())
         records = [self._official_record(entry, workspace=workspace, output_dir=output_dir, config=config)]
         records.append(
@@ -607,7 +625,9 @@ class PyTorchSuiteAdapter(BaseSuiteAdapter):
         output_dir: str | Path | None = None,
         config: SuiteRunConfig | None = None,
     ) -> list[RunRecord]:
-        config = config or SuiteRunConfig(mode=entry.mode, device=entry.device, dtype=entry.dtype, batch_size=entry.batch_size)
+        config = config or SuiteRunConfig(
+            mode=entry.mode, device=entry.device, dtype=entry.dtype, batch_size=entry.batch_size
+        )
         output_dir = Path(output_dir or Path.cwd())
         suite_root = self._resolve_root(workspace)
 
@@ -681,9 +701,19 @@ class TorchBenchSuiteAdapter(PyTorchSuiteAdapter):
     external_keys = ("torchbench",)
     third_party_names = ("benchmark",)
     builtin_manifest = (
-        SuiteManifestEntry("torchbench", "hf_Bert", "TorchBench hf_Bert model", upstream_workload_id="hf_Bert", blessed=True),
-        SuiteManifestEntry("torchbench", "resnet50", "TorchBench ResNet50 model", upstream_workload_id="resnet50", blessed=True),
-        SuiteManifestEntry("torchbench", "timm_vision_transformer", "TorchBench timm ViT model", upstream_workload_id="timm_vision_transformer", blessed=True),
+        SuiteManifestEntry(
+            "torchbench", "hf_Bert", "TorchBench hf_Bert model", upstream_workload_id="hf_Bert", blessed=True
+        ),
+        SuiteManifestEntry(
+            "torchbench", "resnet50", "TorchBench ResNet50 model", upstream_workload_id="resnet50", blessed=True
+        ),
+        SuiteManifestEntry(
+            "torchbench",
+            "timm_vision_transformer",
+            "TorchBench timm ViT model",
+            upstream_workload_id="timm_vision_transformer",
+            blessed=True,
+        ),
     )
 
     def prepare_environment(
@@ -903,7 +933,9 @@ class ExternalCommandSuiteAdapter(BaseSuiteAdapter):
         output_dir: str | Path | None = None,
         config: SuiteRunConfig | None = None,
     ) -> list[RunRecord]:
-        config = config or SuiteRunConfig(mode=entry.mode, device=entry.device, dtype=entry.dtype, batch_size=entry.batch_size)
+        config = config or SuiteRunConfig(
+            mode=entry.mode, device=entry.device, dtype=entry.dtype, batch_size=entry.batch_size
+        )
         return [
             self._run_command_record(
                 entry,
@@ -923,7 +955,9 @@ class ExternalCommandSuiteAdapter(BaseSuiteAdapter):
         output_dir: str | Path | None = None,
         config: SuiteRunConfig | None = None,
     ) -> list[RunRecord]:
-        config = config or SuiteRunConfig(mode=entry.mode, device=entry.device, dtype=entry.dtype, batch_size=entry.batch_size)
+        config = config or SuiteRunConfig(
+            mode=entry.mode, device=entry.device, dtype=entry.dtype, batch_size=entry.batch_size
+        )
         return [
             self._run_command_record(
                 entry,
@@ -1095,7 +1129,9 @@ class PackIntegrationSuiteAdapter(BaseSuiteAdapter):
         output_dir: str | Path | None = None,
         config: SuiteRunConfig | None = None,
     ) -> list[RunRecord]:
-        config = config or SuiteRunConfig(mode=entry.mode, device=entry.device, dtype=entry.dtype, batch_size=entry.batch_size)
+        config = config or SuiteRunConfig(
+            mode=entry.mode, device=entry.device, dtype=entry.dtype, batch_size=entry.batch_size
+        )
         return [
             self._pack_command(
                 entry,
@@ -1115,7 +1151,9 @@ class PackIntegrationSuiteAdapter(BaseSuiteAdapter):
         output_dir: str | Path | None = None,
         config: SuiteRunConfig | None = None,
     ) -> list[RunRecord]:
-        config = config or SuiteRunConfig(mode=entry.mode, device=entry.device, dtype=entry.dtype, batch_size=entry.batch_size)
+        config = config or SuiteRunConfig(
+            mode=entry.mode, device=entry.device, dtype=entry.dtype, batch_size=entry.batch_size
+        )
         return [
             self._pack_command(
                 entry,
@@ -1134,11 +1172,41 @@ class MLPerfSuiteAdapter(ExternalCommandSuiteAdapter):
     external_keys = ("mlperf_inference", "mlperf")
     third_party_names = ("mlperf_inference", "inference")
     builtin_manifest = (
-        SuiteManifestEntry("mlperf", "llama3.1-8b", "MLPerf Llama 3.1 8B benchmark", blessed=True, metadata={"scenario": "Offline", "category": "datacenter"}),
-        SuiteManifestEntry("mlperf", "whisper", "MLPerf Whisper benchmark", blessed=True, metadata={"scenario": "Offline", "category": "edge"}),
-        SuiteManifestEntry("mlperf", "dlrm-v3", "MLPerf DLRM-v3 benchmark", blessed=True, metadata={"scenario": "Offline", "category": "datacenter"}),
-        SuiteManifestEntry("mlperf", "resnet50-v1.5", "MLPerf ResNet50 benchmark", blessed=True, metadata={"scenario": "Offline", "category": "edge"}),
-        SuiteManifestEntry("mlperf", "rgat", "MLPerf RGAT benchmark", blessed=False, metadata={"scenario": "Offline", "category": "datacenter"}),
+        SuiteManifestEntry(
+            "mlperf",
+            "llama3.1-8b",
+            "MLPerf Llama 3.1 8B benchmark",
+            blessed=True,
+            metadata={"scenario": "Offline", "category": "datacenter"},
+        ),
+        SuiteManifestEntry(
+            "mlperf",
+            "whisper",
+            "MLPerf Whisper benchmark",
+            blessed=True,
+            metadata={"scenario": "Offline", "category": "edge"},
+        ),
+        SuiteManifestEntry(
+            "mlperf",
+            "dlrm-v3",
+            "MLPerf DLRM-v3 benchmark",
+            blessed=True,
+            metadata={"scenario": "Offline", "category": "datacenter"},
+        ),
+        SuiteManifestEntry(
+            "mlperf",
+            "resnet50-v1.5",
+            "MLPerf ResNet50 benchmark",
+            blessed=True,
+            metadata={"scenario": "Offline", "category": "edge"},
+        ),
+        SuiteManifestEntry(
+            "mlperf",
+            "rgat",
+            "MLPerf RGAT benchmark",
+            blessed=False,
+            metadata={"scenario": "Offline", "category": "datacenter"},
+        ),
     )
 
 

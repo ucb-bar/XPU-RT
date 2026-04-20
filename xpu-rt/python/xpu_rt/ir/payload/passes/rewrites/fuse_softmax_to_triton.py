@@ -48,10 +48,9 @@ from __future__ import annotations
 
 import os
 import shutil
-import subprocess
 import tempfile
 import textwrap
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from xdsl.dialects.builtin import ModuleOp, StringAttr, TensorType
 from xdsl.ir import Operation
@@ -63,7 +62,6 @@ from xdsl.pattern_rewriter import (
 )
 
 from compgen.ir.linalg_ext import SoftmaxOp
-
 
 # --- configuration -----------------------------------------------------------
 
@@ -188,8 +186,7 @@ def _invoke_triton_shared(
         return TritonSharedResult(
             ok=False,
             diagnostics=(
-                f"triton-shared-opt found at {tool_path} but "
-                "end-to-end lowering is not wired up in this wave"
+                f"triton-shared-opt found at {tool_path} but end-to-end lowering is not wired up in this wave"
             ),
         )
 
@@ -216,9 +213,7 @@ class FuseSoftmaxToTritonPattern(RewritePattern):
         self.stats = stats
 
     @op_type_rewrite_pattern
-    def match_and_rewrite(
-        self, op: SoftmaxOp, rewriter: PatternRewriter
-    ) -> None:
+    def match_and_rewrite(self, op: SoftmaxOp, rewriter: PatternRewriter) -> None:
         self.stats.softmaxes_seen += 1
 
         # Policy gate: Triton must be on the allowlist.
@@ -268,25 +263,17 @@ class FuseSoftmaxToTritonPattern(RewritePattern):
         _copy_preserved(annotated, op)
         annotated.attributes["compgen.triton_kernel_call"] = StringAttr(kernel_name)
         annotated.attributes["compgen.triton_source"] = StringAttr(source)
-        annotated.attributes["compgen.triton_block_size"] = StringAttr(
-            str(self.cfg.block_size)
-        )
+        annotated.attributes["compgen.triton_block_size"] = StringAttr(str(self.cfg.block_size))
 
         # Optionally invoke triton-shared-opt.
         if self.cfg.invoke_triton_shared:
-            result = _invoke_triton_shared(
-                source, tool_path=self.cfg.triton_shared_opt_path
-            )
+            result = _invoke_triton_shared(source, tool_path=self.cfg.triton_shared_opt_path)
             if result.ok:
                 self.stats.triton_shared_lowered += 1
-                annotated.attributes["compgen.triton_linalg_mlir"] = StringAttr(
-                    result.linalg_mlir
-                )
+                annotated.attributes["compgen.triton_linalg_mlir"] = StringAttr(result.linalg_mlir)
             else:
                 self.stats.triton_shared_unavailable += 1
-                annotated.attributes["compgen.triton_status"] = StringAttr(
-                    "source_only"
-                )
+                annotated.attributes["compgen.triton_status"] = StringAttr("source_only")
         else:
             annotated.attributes["compgen.triton_status"] = StringAttr("source_only")
 

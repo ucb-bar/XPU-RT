@@ -3,13 +3,6 @@
 from __future__ import annotations
 
 import pytest
-from xdsl.dialects.builtin import (
-    BFloat16Type,
-    Float32Type,
-    IntegerType,
-)
-from xdsl.ir import Dialect
-
 from compgen.ir.payload.types import Float8E4M3FNType
 from compgen.ir.quant import (
     ALL_ATTRS,
@@ -20,7 +13,12 @@ from compgen.ir.quant import (
     PackedIntTensorType,
     Quant,
 )
-
+from xdsl.dialects.builtin import (
+    BFloat16Type,
+    Float32Type,
+    IntegerType,
+)
+from xdsl.ir import Dialect
 
 # --- registration -------------------------------------------------------------
 
@@ -78,25 +76,19 @@ def test_affine_tensor_per_group_carries_block_size():
 
 
 def test_affine_tensor_fp8_storage():
-    a = AffineQuantizedTensorType(
-        Float8E4M3FNType(), BFloat16Type(), granularity="per_token"
-    )
+    a = AffineQuantizedTensorType(Float8E4M3FNType(), BFloat16Type(), granularity="per_token")
     assert a.storage_type == Float8E4M3FNType()
     assert a.granularity.data == "per_token"
 
 
 def test_affine_tensor_rejects_bad_granularity():
     with pytest.raises(ValueError, match="Invalid granularity"):
-        AffineQuantizedTensorType(
-            IntegerType(8), Float32Type(), granularity="per_everything"
-        )
+        AffineQuantizedTensorType(IntegerType(8), Float32Type(), granularity="per_everything")
 
 
 def test_affine_tensor_rejects_bad_layout():
     with pytest.raises(ValueError, match="Invalid layout"):
-        AffineQuantizedTensorType(
-            IntegerType(8), Float32Type(), layout="made_up"
-        )
+        AffineQuantizedTensorType(IntegerType(8), Float32Type(), layout="made_up")
 
 
 # --- PackedIntTensorType ------------------------------------------------------

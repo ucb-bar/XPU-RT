@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
-import pytest
+from compgen.ir.payload.passes.rewrites.lower_conv_to_img2col import (
+    LowerConvToImg2ColConfig,
+    LowerConvToImg2ColStats,
+    run_lower_conv_to_img2col,
+)
 from xdsl.dialects.builtin import (
     Float32Type,
     FunctionType,
@@ -14,11 +18,6 @@ from xdsl.dialects.func import CallOp, FuncOp, ReturnOp
 from xdsl.dialects.tensor import EmptyOp
 from xdsl.ir import Block, Region
 
-from compgen.ir.payload.passes.rewrites.lower_conv_to_img2col import (
-    LowerConvToImg2ColConfig,
-    LowerConvToImg2ColStats,
-    run_lower_conv_to_img2col,
-)
 from tests.ir.payload.passes._pattern_test_helpers import assert_module_verifies
 
 
@@ -60,7 +59,8 @@ def test_static_conv_gets_scheduled():
 
 def test_shape_metadata_is_recorded():
     m, call = _conv_module(
-        input_shape=(2, 3, 16, 16), filter_shape=(32, 3, 5, 5),
+        input_shape=(2, 3, 16, 16),
+        filter_shape=(32, 3, 5, 5),
         output_shape=(2, 32, 12, 12),
     )
     run_lower_conv_to_img2col(m)
@@ -91,7 +91,8 @@ def test_wrong_rank_is_skipped():
     t_in = _ft([3, 8, 8])
     t_w = _ft([16, 3, 3])
     t_out = _ft([16, 8, 8])
-    x = EmptyOp([], t_in); w = EmptyOp([], t_w)
+    x = EmptyOp([], t_in)
+    w = EmptyOp([], t_w)
     ext = FuncOp.external("aten_convolution", [t_in, t_w], [t_out])
     call = CallOp("aten_convolution", [x.results[0], w.results[0]], [t_out])
     call.attributes["compgen._pattern_hint"] = StringAttr("convolution")
@@ -108,7 +109,8 @@ def test_wrong_rank_is_skipped():
 
 def test_too_small_output_is_skipped():
     m, _ = _conv_module(
-        input_shape=(1, 1, 2, 2), filter_shape=(1, 1, 1, 1),
+        input_shape=(1, 1, 2, 2),
+        filter_shape=(1, 1, 1, 1),
         output_shape=(1, 1, 2, 2),
     )
     cfg = LowerConvToImg2ColConfig(min_output_elements=64)
@@ -202,6 +204,7 @@ def test_pack_tile_sizes_recorded_on_conv():
 def test_noop_on_attention_mlp_tiny():
     """attention_mlp_tiny has no conv ops -> pass is a no-op."""
     from compgen.capture.torch_mlir_bridge import bridge_fx_graph
+
     from tests._fixtures.real_workloads import attention_mlp_tiny
 
     fx = attention_mlp_tiny()

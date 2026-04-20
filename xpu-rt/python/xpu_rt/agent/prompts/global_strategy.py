@@ -1,5 +1,7 @@
 """Prompt for cross-module global optimization strategy."""
+
 from __future__ import annotations
+
 import json
 import re
 import textwrap
@@ -9,6 +11,7 @@ from dataclasses import dataclass, field
 @dataclass(frozen=True)
 class GlobalStrategyContext:
     """Context for global strategy prompt."""
+
     module_count: int
     per_module_summaries: list[dict]  # [{name, op_count, flops, bottleneck}]
     target_name: str
@@ -78,7 +81,7 @@ def parse_response(text: str) -> dict | None:
         if isinstance(data, dict) and "strategy" in data:
             return data
     except json.JSONDecodeError:
-        m = re.search(r'\{.*\}', text, re.DOTALL)
+        m = re.search(r"\{.*\}", text, re.DOTALL)
         if m:
             try:
                 data = json.loads(m.group())

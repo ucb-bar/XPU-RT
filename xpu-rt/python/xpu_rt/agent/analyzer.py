@@ -26,16 +26,16 @@ class PatternCluster:
     """
 
     cluster_id: str
-    pattern_type: str                # "linear_chain", "gqa_attention", etc.
-    node_names: tuple[str, ...]      # FX node names in this cluster
+    pattern_type: str  # "linear_chain", "gqa_attention", etc.
+    node_names: tuple[str, ...]  # FX node names in this cluster
     total_flops: int
     total_bytes: int
-    arithmetic_intensity: float      # flops / bytes
+    arithmetic_intensity: float  # flops / bytes
     estimated_latency_per_device: dict[str, float]  # device_name → us
     best_device: str
     is_bottleneck: bool
-    kernel_opportunity: str          # what kernel could replace this
-    input_shapes: dict[str, tuple[int, ...]]   # node_name → shape for cluster inputs
+    kernel_opportunity: str  # what kernel could replace this
+    input_shapes: dict[str, tuple[int, ...]]  # node_name → shape for cluster inputs
     output_shapes: dict[str, tuple[int, ...]]  # node_name → shape for cluster outputs
 
 
@@ -43,8 +43,8 @@ class PatternCluster:
 class DataFlowEdge:
     """Data flow between clusters (or between a cluster and input/output)."""
 
-    src: str                         # cluster_id or "input"
-    dst: str                         # cluster_id or "output"
+    src: str  # cluster_id or "input"
+    dst: str  # cluster_id or "output"
     tensor_bytes: int
 
 
@@ -60,11 +60,11 @@ class NetworkAnalysis:
     total_flops: int
     total_bytes: int
     clusters: list[PatternCluster]
-    unclustered_ops: list[str]       # FX nodes not in any cluster
+    unclustered_ops: list[str]  # FX nodes not in any cluster
     data_flow: list[DataFlowEdge]
-    bottleneck_clusters: list[str]   # cluster_ids sorted by latency (worst first)
+    bottleneck_clusters: list[str]  # cluster_ids sorted by latency (worst first)
     optimization_opportunities: list[str]  # natural-language descriptions
-    dossier: "GraphAnalysisDossier | None" = None
+    dossier: GraphAnalysisDossier | None = None
 
 
 @dataclass(frozen=True)
@@ -178,20 +178,22 @@ class NetworkAnalyzer:
             if last_node.shape:
                 output_shapes[last_node.name] = last_node.shape
 
-            clusters.append(PatternCluster(
-                cluster_id=match.cluster_id,
-                pattern_type=match.pattern_name,
-                node_names=match.node_names,
-                total_flops=total_flops,
-                total_bytes=total_bytes,
-                arithmetic_intensity=ai,
-                estimated_latency_per_device=latency_per_device,
-                best_device=best_device,
-                is_bottleneck=False,  # set below
-                kernel_opportunity=match.kernel_opportunity,
-                input_shapes=input_shapes,
-                output_shapes=output_shapes,
-            ))
+            clusters.append(
+                PatternCluster(
+                    cluster_id=match.cluster_id,
+                    pattern_type=match.pattern_name,
+                    node_names=match.node_names,
+                    total_flops=total_flops,
+                    total_bytes=total_bytes,
+                    arithmetic_intensity=ai,
+                    estimated_latency_per_device=latency_per_device,
+                    best_device=best_device,
+                    is_bottleneck=False,  # set below
+                    kernel_opportunity=match.kernel_opportunity,
+                    input_shapes=input_shapes,
+                    output_shapes=output_shapes,
+                )
+            )
 
             clustered_nodes.update(match.node_names)
 
@@ -216,14 +218,18 @@ class NetworkAnalyzer:
 
             clusters = [
                 PatternCluster(
-                    cluster_id=c.cluster_id, pattern_type=c.pattern_type,
-                    node_names=c.node_names, total_flops=c.total_flops,
-                    total_bytes=c.total_bytes, arithmetic_intensity=c.arithmetic_intensity,
+                    cluster_id=c.cluster_id,
+                    pattern_type=c.pattern_type,
+                    node_names=c.node_names,
+                    total_flops=c.total_flops,
+                    total_bytes=c.total_bytes,
+                    arithmetic_intensity=c.arithmetic_intensity,
                     estimated_latency_per_device=c.estimated_latency_per_device,
                     best_device=c.best_device,
                     is_bottleneck=c.cluster_id in bottleneck_set,
                     kernel_opportunity=c.kernel_opportunity,
-                    input_shapes=c.input_shapes, output_shapes=c.output_shapes,
+                    input_shapes=c.input_shapes,
+                    output_shapes=c.output_shapes,
                 )
                 for c in clusters
             ]
@@ -270,10 +276,7 @@ class NetworkAnalyzer:
         graph = getattr(exported_program, "graph", None)
         if graph is None:
             return 0
-        return sum(
-            1 for node in graph.nodes
-            if node.op == "placeholder" and node.name.startswith("p_")
-        )
+        return sum(1 for node in graph.nodes if node.op == "placeholder" and node.name.startswith("p_"))
 
     def _build_dossier(
         self,
@@ -334,10 +337,7 @@ class NetworkAnalyzer:
                 adjacency[src_region].append(dst_region)
                 predecessors[dst_region].append(src_region)
 
-        indegree: dict[str, int] = {
-            region_id: len(set(predecessors.get(region_id, ())))
-            for region_id in region_kind
-        }
+        indegree: dict[str, int] = {region_id: len(set(predecessors.get(region_id, ()))) for region_id in region_kind}
 
         topo_queue = deque(sorted(region_id for region_id, value in indegree.items() if value == 0))
         topo_order: list[str] = []
@@ -381,9 +381,7 @@ class NetworkAnalyzer:
         for region_id, value in depth.items():
             same_depth[value].append(region_id)
         independent_region_sets = tuple(
-            tuple(sorted(region_ids))
-            for region_ids in same_depth.values()
-            if len(region_ids) > 1
+            tuple(sorted(region_ids)) for region_ids in same_depth.values() if len(region_ids) > 1
         )
 
         unsupported_targets: set[str] = set()
@@ -396,43 +394,41 @@ class NetworkAnalyzer:
         regions: list[RegionDossier] = []
         for region_id in topo_order:
             related_depth = depth.get(region_id, 0)
-            parallelizable = tuple(
-                rid for rid in same_depth.get(related_depth, [])
-                if rid != region_id
-            )
+            parallelizable = tuple(rid for rid in same_depth.get(related_depth, []) if rid != region_id)
             node_names = region_node_names.get(region_id, ())
             dynamic_shapes = any(
                 not all(isinstance(dim, int) and dim >= 0 for dim in (node_by_name[name].shape or ()))
                 for name in node_names
                 if name in node_by_name
             )
-            regions.append(RegionDossier(
-                region_id=region_id,
-                kind=region_kind.get(region_id, region_id),
-                node_names=node_names,
-                repeated_count=cluster_counter[region_kind.get(region_id, region_id)],
-                flops=region_flops.get(region_id, 0),
-                bytes=region_bytes.get(region_id, 0),
-                arithmetic_intensity=(
-                    region_flops.get(region_id, 0) / region_bytes.get(region_id, 1)
-                    if region_bytes.get(region_id, 0) > 0 else 0.0
-                ),
-                dynamic_shapes=dynamic_shapes,
-                producers=tuple(sorted(set(predecessors.get(region_id, ())))),
-                consumers=tuple(sorted(set(adjacency.get(region_id, ())))),
-                parallelizable_with=parallelizable,
-                layout_candidates=self._layout_candidates(region_kind.get(region_id, region_id)),
-                backend_viability=self._backend_viability_for_kind(region_kind.get(region_id, region_id), target),
-                best_device=region_best_device.get(region_id, ""),
-                local_memory_fit={
-                    device.name: self._local_memory_fit_for_bytes(region_bytes.get(region_id, 0), device)
-                    for device in target.devices
-                },
-            ))
+            regions.append(
+                RegionDossier(
+                    region_id=region_id,
+                    kind=region_kind.get(region_id, region_id),
+                    node_names=node_names,
+                    repeated_count=cluster_counter[region_kind.get(region_id, region_id)],
+                    flops=region_flops.get(region_id, 0),
+                    bytes=region_bytes.get(region_id, 0),
+                    arithmetic_intensity=(
+                        region_flops.get(region_id, 0) / region_bytes.get(region_id, 1)
+                        if region_bytes.get(region_id, 0) > 0
+                        else 0.0
+                    ),
+                    dynamic_shapes=dynamic_shapes,
+                    producers=tuple(sorted(set(predecessors.get(region_id, ())))),
+                    consumers=tuple(sorted(set(adjacency.get(region_id, ())))),
+                    parallelizable_with=parallelizable,
+                    layout_candidates=self._layout_candidates(region_kind.get(region_id, region_id)),
+                    backend_viability=self._backend_viability_for_kind(region_kind.get(region_id, region_id), target),
+                    best_device=region_best_device.get(region_id, ""),
+                    local_memory_fit={
+                        device.name: self._local_memory_fit_for_bytes(region_bytes.get(region_id, 0), device)
+                        for device in target.devices
+                    },
+                )
+            )
 
-        dynamic_shape_regions = tuple(
-            region.region_id for region in regions if region.dynamic_shapes
-        )
+        dynamic_shape_regions = tuple(region.region_id for region in regions if region.dynamic_shapes)
 
         return GraphAnalysisDossier(
             model_name=model_name,
@@ -500,10 +496,13 @@ class NetworkAnalyzer:
                     edge_key = (src_cluster, dst_cluster)
                     if edge_key not in seen_edges:
                         bytes_transferred = node.bytes_total
-                        edges.append(DataFlowEdge(
-                            src=src_cluster, dst=dst_cluster,
-                            tensor_bytes=bytes_transferred,
-                        ))
+                        edges.append(
+                            DataFlowEdge(
+                                src=src_cluster,
+                                dst=dst_cluster,
+                                tensor_bytes=bytes_transferred,
+                            )
+                        )
                         seen_edges.add(edge_key)
 
         return edges
@@ -533,10 +532,7 @@ class NetworkAnalyzer:
             opps.append(f"{len(unclustered)} ops not in any recognized pattern — may need custom handling")
 
         if len(target.devices) > 1:
-            opps.append(
-                f"Multi-device target ({len(target.devices)} devices) — "
-                f"heterogeneous placement opportunity"
-            )
+            opps.append(f"Multi-device target ({len(target.devices)} devices) — heterogeneous placement opportunity")
 
         return opps
 

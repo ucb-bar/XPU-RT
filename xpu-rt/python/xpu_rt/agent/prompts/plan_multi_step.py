@@ -63,9 +63,10 @@ PLAN_SCHEMA: dict[str, object] = {
 
 def format_prompt(ctx: PlanContext) -> str:
     """Format the multi-step planning prompt."""
-    error_text = "None" if not ctx.error_patterns else "\n".join(
-        f"  - {p.get('action_type', '?')}: {p.get('failure_reason', '?')}"
-        for p in ctx.error_patterns
+    error_text = (
+        "None"
+        if not ctx.error_patterns
+        else "\n".join(f"  - {p.get('action_type', '?')}: {p.get('failure_reason', '?')}" for p in ctx.error_patterns)
     )
     return PLAN_PROMPT.format(
         observation_summary=ctx.observation_summary,
@@ -83,7 +84,7 @@ def parse_response(text: str) -> list[dict] | None:
         if isinstance(data, list):
             return data
     except json.JSONDecodeError:
-        m = re.search(r'\[.*\]', text, re.DOTALL)
+        m = re.search(r"\[.*\]", text, re.DOTALL)
         if m:
             try:
                 data = json.loads(m.group())

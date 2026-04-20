@@ -15,20 +15,20 @@ Supported constraint syntax:
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import Iterable
 
 import structlog
 
 log = structlog.get_logger()
 
 # Regex patterns for constraint parsing
-_SHAPE_MOD_RE = re.compile(r"^([A-Z_]\w*)%(\d+)==(\d+)$")        # M%16==0
+_SHAPE_MOD_RE = re.compile(r"^([A-Z_]\w*)%(\d+)==(\d+)$")  # M%16==0
 _SHAPE_CMP_RE = re.compile(r"^([A-Z_]\w*)(>=|<=|==|!=|>|<)(\d+)$")  # K>=32
-_DEVICE_RE = re.compile(r"^device_type==(\w+)$")                  # device_type==gpu
-_DTYPE_EQ_RE = re.compile(r"^dtype==(\w+)$")                      # dtype==float32
-_DTYPE_IN_RE = re.compile(r"^dtype_in\(([^)]+)\)$")               # dtype_in(float16,bfloat16)
-_LAYOUT_RE = re.compile(r"^(lhs|rhs|out)_(\w+)$")                 # lhs_rowmajor, rhs_prepacked
+_DEVICE_RE = re.compile(r"^device_type==(\w+)$")  # device_type==gpu
+_DTYPE_EQ_RE = re.compile(r"^dtype==(\w+)$")  # dtype==float32
+_DTYPE_IN_RE = re.compile(r"^dtype_in\(([^)]+)\)$")  # dtype_in(float16,bfloat16)
+_LAYOUT_RE = re.compile(r"^(lhs|rhs|out)_(\w+)$")  # lhs_rowmajor, rhs_prepacked
 
 
 @dataclass(frozen=True)
@@ -81,8 +81,14 @@ def evaluate_constraint(constraint: str, context: ConstraintContext) -> bool:
         val = context.shapes.get(dim_name)
         if val is None:
             return False
-        ops = {">=": val >= threshold, "<=": val <= threshold, "==": val == threshold,
-               "!=": val != threshold, ">": val > threshold, "<": val < threshold}
+        ops = {
+            ">=": val >= threshold,
+            "<=": val <= threshold,
+            "==": val == threshold,
+            "!=": val != threshold,
+            ">": val > threshold,
+            "<": val < threshold,
+        }
         return ops.get(op, False)
 
     # Device type: device_type==gpu

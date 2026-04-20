@@ -29,7 +29,9 @@ from compgen.quantization.fp8_ops import (
     quantize_fp8_e4m3_po2,
 )
 from compgen.quantization.fp8_tensor import FP8E4M3Po2Tensor
+from compgen.quantization.graph_analyzer import QuantizedGraphAnalysis, analyze_for_npu, format_analysis_report
 from compgen.quantization.npu_op_map import NpuOpCategory, NpuQuantDecision, classify_op
+from compgen.quantization.pipeline import PipelineReport, QuantizedModelPipeline
 from compgen.quantization.smolvla_recipe import (
     SmolVLAComponent,
     SmolVLAQuantRecipe,
@@ -37,8 +39,6 @@ from compgen.quantization.smolvla_recipe import (
     default_npu_recipe,
     infer_component,
 )
-from compgen.quantization.graph_analyzer import QuantizedGraphAnalysis, analyze_for_npu, format_analysis_report
-from compgen.quantization.pipeline import PipelineReport, QuantizedModelPipeline
 from compgen.quantization.verify import NpuAlignmentResult, npu_alignment_check
 
 __all__ = [

@@ -48,6 +48,7 @@ from compgen.ir.recipe.ops_propose import (
     ProposeMegakernelSynthesisOp,
     ProposePayload,
 )
+from compgen.ir.recipe.ops_scope import RecipeGuardOp
 from compgen.ir.recipe.ops_verify import (
     RequireCheckFileOp,
     RequireDiffTestOp,
@@ -56,7 +57,6 @@ from compgen.ir.recipe.ops_verify import (
     RequireProfileBudgetOp,
     RequireTranslationValidationOp,
 )
-from compgen.ir.recipe.ops_scope import RecipeGuardOp
 from compgen.semantic.synthesis.facts import RecipeFactIndex, build_candidate_env, build_fact_index
 from compgen.semantic.synthesis.registry import GuardRegistry
 from compgen.semantic.synthesis.runtime import GuardRuntime, GuardVerdict
@@ -115,11 +115,7 @@ def lower_recipe(
     feedback_events: list[dict[str, Any]] = []
     diagnostics: list[str] = []
     runtime = GuardRuntime(guard_registry) if guard_registry is not None else None
-    guard_ops = {
-        op.sym_name.data: op
-        for op in module.walk()
-        if isinstance(op, RecipeGuardOp)
-    }
+    guard_ops = {op.sym_name.data: op for op in module.walk() if isinstance(op, RecipeGuardOp)}
     resolved_fact_index = fact_index
     if resolved_fact_index is None and (runtime is not None or guard_ops):
         resolved_fact_index = build_fact_index(module, target_class=target_class)
@@ -283,11 +279,7 @@ def _guard_ref_names(op: Operation) -> list[str]:
     if not hasattr(op, "guard_refs") or getattr(op, "guard_refs") is None:
         return []
     guard_refs = getattr(op, "guard_refs")
-    return [
-        ref.root_reference.data
-        for ref in guard_refs.data
-        if isinstance(ref, SymbolRefAttr)
-    ]
+    return [ref.root_reference.data for ref in guard_refs.data if isinstance(ref, SymbolRefAttr)]
 
 
 def _verdict_to_dict(verdict: GuardVerdict, *, guard_ref: str, candidate_ref: str) -> dict[str, Any]:
@@ -374,13 +366,13 @@ def _lower_tile(op: TileOp, out: list[str]) -> None:
     sizes = [_int_attr_val(s) for s in op.tile_sizes.data if isinstance(s, IntegerAttr)]
     sizes_str = ", ".join(str(s) for s in sizes)
     script = (
-        f'// Tile {region} with sizes [{sizes_str}]\n'
-        f'transform.structured.tile_using_forall %{region}\n'
-        f'  tile_sizes [{sizes_str}]'
+        f"// Tile {region} with sizes [{sizes_str}]\n"
+        f"transform.structured.tile_using_forall %{region}\n"
+        f"  tile_sizes [{sizes_str}]"
     )
     if op.interchange is not None:
         ic = [_int_attr_val(i) for i in op.interchange.data if isinstance(i, IntegerAttr)]
-        script += f'\n  interchange [{", ".join(str(i) for i in ic)}]'
+        script += f"\n  interchange [{', '.join(str(i) for i in ic)}]"
     out.append(script)
 
 
@@ -388,9 +380,9 @@ def _lower_fuse(op: FuseOp, out: list[str]) -> None:
     regions = [_sym_ref_str(r) for r in op.fuse_regions.data if isinstance(r, SymbolRefAttr)]
     kind = _str_attr_val(op.fusion_kind) if op.fusion_kind else "producer_consumer"
     script = (
-        f'// Fuse regions: {", ".join(regions)}\n'
-        f'transform.structured.fuse_into_containing_op\n'
-        f'  targets [{", ".join(f"%{r}" for r in regions)}]\n'
+        f"// Fuse regions: {', '.join(regions)}\n"
+        f"transform.structured.fuse_into_containing_op\n"
+        f"  targets [{', '.join(f'%{r}' for r in regions)}]\n"
         f'  fusion_kind = "{kind}"'
     )
     out.append(script)
@@ -411,15 +403,12 @@ def _lower_propose_fusion(
     transform_scripts: list[str],
     verification_obligations: list[dict[str, Any]],
 ) -> None:
-    regions = [
-        _sym_ref_str(r) for r in op.grouped_regions.data
-        if isinstance(r, SymbolRefAttr)
-    ]
+    regions = [_sym_ref_str(r) for r in op.grouped_regions.data if isinstance(r, SymbolRefAttr)]
     if not regions:
         return
     try:
         payload = ProposePayload.from_json(op.payload.data)
-    except Exception:   # noqa: BLE001
+    except Exception:  # noqa: BLE001
         payload = ProposePayload()
     fusion_kind = str(payload.chosen.get("fusion_kind", "producer_consumer"))
     sym = _candidate_symbol(op) or "propose_fusion"
@@ -434,13 +423,15 @@ def _lower_propose_fusion(
     # Every LLM-invented fusion MUST be differential-tested before the
     # bundle is promoted. The obligation anchors to the first grouped
     # region; the executor walks the fused set from there.
-    verification_obligations.append({
-        "type": "differential",
-        "region_id": regions[0],
-        "kind": "propose_fusion",
-        "grouped_regions": regions,
-        "source_op": op.name,
-    })
+    verification_obligations.append(
+        {
+            "type": "differential",
+            "region_id": regions[0],
+            "kind": "propose_fusion",
+            "grouped_regions": regions,
+            "source_op": op.name,
+        }
+    )
 
 
 def _lower_propose_megakernel(
@@ -448,35 +439,36 @@ def _lower_propose_megakernel(
     kernel_jobs: list[dict[str, Any]],
     verification_obligations: list[dict[str, Any]],
 ) -> None:
-    regions = [
-        _sym_ref_str(r) for r in op.fused_region_refs.data
-        if isinstance(r, SymbolRefAttr)
-    ]
+    regions = [_sym_ref_str(r) for r in op.fused_region_refs.data if isinstance(r, SymbolRefAttr)]
     if not regions:
         return
     try:
         payload = ProposePayload.from_json(op.payload.data)
-    except Exception:   # noqa: BLE001
+    except Exception:  # noqa: BLE001
         payload = ProposePayload()
     sym = _candidate_symbol(op) or "propose_megakernel"
     megakernel_name = str(payload.chosen.get("megakernel_name", sym))
-    kernel_jobs.append({
-        "type": "megakernel_synthesis",
-        "kernel_name": megakernel_name,
-        "fused_regions": regions,
-        "event_tensor_decls": payload.chosen.get("event_tensor_decls", []),
-        "task_partition": payload.chosen.get("task_partition", {}),
-        "prefetch_annotations": payload.chosen.get("prefetch_annotations", []),
-        "source_op": op.name,
-        "target_feature_justification": payload.target_feature_justification,
-    })
-    verification_obligations.append({
-        "type": "translation_validation",
-        "region_id": regions[0],
-        "kind": "propose_megakernel_synthesis",
-        "fused_regions": regions,
-        "source_op": op.name,
-    })
+    kernel_jobs.append(
+        {
+            "type": "megakernel_synthesis",
+            "kernel_name": megakernel_name,
+            "fused_regions": regions,
+            "event_tensor_decls": payload.chosen.get("event_tensor_decls", []),
+            "task_partition": payload.chosen.get("task_partition", {}),
+            "prefetch_annotations": payload.chosen.get("prefetch_annotations", []),
+            "source_op": op.name,
+            "target_feature_justification": payload.target_feature_justification,
+        }
+    )
+    verification_obligations.append(
+        {
+            "type": "translation_validation",
+            "region_id": regions[0],
+            "kind": "propose_megakernel_synthesis",
+            "fused_regions": regions,
+            "source_op": op.name,
+        }
+    )
 
 
 def _lower_propose_layout(
@@ -487,7 +479,7 @@ def _lower_propose_layout(
     region = _sym_ref_str(op.region_ref)
     try:
         payload = ProposePayload.from_json(op.payload.data)
-    except Exception:   # noqa: BLE001
+    except Exception:  # noqa: BLE001
         payload = ProposePayload()
     layout = str(payload.chosen.get("layout", "row_major"))
     sym = _candidate_symbol(op) or "propose_layout"
@@ -498,13 +490,15 @@ def _lower_propose_layout(
         f'  layout = "{layout}"'
     )
     transform_scripts.append(script)
-    verification_obligations.append({
-        "type": "layout_invariant",
-        "region_id": region,
-        "kind": "propose_layout_plan",
-        "layout": layout,
-        "source_op": op.name,
-    })
+    verification_obligations.append(
+        {
+            "type": "layout_invariant",
+            "region_id": region,
+            "kind": "propose_layout_plan",
+            "layout": layout,
+            "source_op": op.name,
+        }
+    )
 
 
 def _lower_propose_dequant(
@@ -515,33 +509,33 @@ def _lower_propose_dequant(
     region = _sym_ref_str(op.region_ref)
     try:
         payload = ProposePayload.from_json(op.payload.data)
-    except Exception:   # noqa: BLE001
+    except Exception:  # noqa: BLE001
         payload = ProposePayload()
     pattern = str(payload.chosen.get("pattern", "generic_dequant"))
     sym = _candidate_symbol(op) or "propose_dequant"
     script = (
         f"// propose_dequant_fusion[{sym}]: {region} (pattern={pattern})\n"
         f"// Lowered as a placeholder; payload carries full scheme.\n"
-        f"transform.structured.match ops{{[\"linalg.generic\"]}} in %{region}"
+        f'transform.structured.match ops{{["linalg.generic"]}} in %{region}'
     )
     transform_scripts.append(script)
-    verification_obligations.append({
-        "type": "differential",
-        "region_id": region,
-        "kind": "propose_dequant_fusion",
-        "pattern": pattern,
-        "tolerance_hint": payload.chosen.get("tolerance_hint"),
-        "source_op": op.name,
-    })
+    verification_obligations.append(
+        {
+            "type": "differential",
+            "region_id": region,
+            "kind": "propose_dequant_fusion",
+            "pattern": pattern,
+            "tolerance_hint": payload.chosen.get("tolerance_hint"),
+            "source_op": op.name,
+        }
+    )
 
 
 def _lower_vectorize(op: VectorizeOp, out: list[str]) -> None:
     region = _sym_ref_str(op.region_ref)
     width = _int_attr_val(op.vector_width)
     script = (
-        f'// Vectorize {region} with width {width}\n'
-        f'transform.structured.vectorize %{region}\n'
-        f'  vector_sizes [{width}]'
+        f"// Vectorize {region} with width {width}\ntransform.structured.vectorize %{region}\n  vector_sizes [{width}]"
     )
     out.append(script)
 
@@ -550,8 +544,8 @@ def _lower_reassociate(op: ReassociateOp, out: list[str]) -> None:
     region = _sym_ref_str(op.region_ref)
     strategy = _str_attr_val(op.strategy)
     out.append(
-        f'// Reassociate {region} ({strategy})\n'
-        f'transform.apply_patterns.reassociate %{region}\n'
+        f"// Reassociate {region} ({strategy})\n"
+        f"transform.apply_patterns.reassociate %{region}\n"
         f'  strategy = "{strategy}"'
     )
 
@@ -560,8 +554,8 @@ def _lower_layout_normalize(op: LayoutNormalizeOp, out: list[str]) -> None:
     region = _sym_ref_str(op.region_ref)
     layout = _str_attr_val(op.target_layout)
     out.append(
-        f'// Normalize layout of {region} to {layout}\n'
-        f'transform.apply_patterns.layout_normalize %{region}\n'
+        f"// Normalize layout of {region} to {layout}\n"
+        f"transform.apply_patterns.layout_normalize %{region}\n"
         f'  target_layout = "{layout}"'
     )
 
@@ -606,39 +600,47 @@ def _lower_to_accel(op: LowerToAccelOp, out: list[dict[str, Any]]) -> None:
 
 
 def _lower_place_on_device(op: PlaceOnDeviceOp, out: list[dict[str, Any]]) -> None:
-    out.append({
-        "type": "placement",
-        "region_id": _sym_ref_str(op.region_ref),
-        "device_index": op.device.index.value.data,
-        "device_name": op.device.device_name.data,
-        "reason": _str_attr_val(op.reason) if op.reason else "",
-    })
+    out.append(
+        {
+            "type": "placement",
+            "region_id": _sym_ref_str(op.region_ref),
+            "device_index": op.device.index.value.data,
+            "device_name": op.device.device_name.data,
+            "reason": _str_attr_val(op.reason) if op.reason else "",
+        }
+    )
 
 
 def _lower_copy_boundary(op: InsertCopyBoundaryOp, out: list[dict[str, Any]]) -> None:
-    out.append({
-        "type": "copy_boundary",
-        "src_region": _sym_ref_str(op.src_region),
-        "dst_region": _sym_ref_str(op.dst_region),
-        "tensor_name": _str_attr_val(op.tensor_name),
-        "is_async": bool(op.is_async and _int_attr_val(op.is_async)),
-    })
+    out.append(
+        {
+            "type": "copy_boundary",
+            "src_region": _sym_ref_str(op.src_region),
+            "dst_region": _sym_ref_str(op.dst_region),
+            "tensor_name": _str_attr_val(op.tensor_name),
+            "is_async": bool(op.is_async and _int_attr_val(op.is_async)),
+        }
+    )
 
 
 def _lower_segment_boundary(op: SegmentBoundaryOp, out: list[dict[str, Any]]) -> None:
-    out.append({
-        "type": "segment_boundary",
-        "after_region": _sym_ref_str(op.after_region),
-        "reason": _str_attr_val(op.reason) if op.reason else "",
-    })
+    out.append(
+        {
+            "type": "segment_boundary",
+            "after_region": _sym_ref_str(op.after_region),
+            "reason": _str_attr_val(op.reason) if op.reason else "",
+        }
+    )
 
 
 def _lower_require_solver(op: RequireSolverOp, out: list[dict[str, Any]]) -> None:
-    out.append({
-        "type": "solver",
-        "solve_type": _str_attr_val(op.solve_type),
-        "timeout_ms": _int_attr_val(op.timeout_ms) if op.timeout_ms else None,
-    })
+    out.append(
+        {
+            "type": "solver",
+            "solve_type": _str_attr_val(op.solve_type),
+            "timeout_ms": _int_attr_val(op.timeout_ms) if op.timeout_ms else None,
+        }
+    )
 
 
 # ---- EqSat job lowering ----
@@ -650,10 +652,7 @@ def _lower_require_eqsat(op: RequireEqsatOp, out: list[dict[str, Any]]) -> None:
         "region_id": _sym_ref_str(op.region_ref),
     }
     if op.rule_categories:
-        job["rule_categories"] = [
-            _str_attr_val(c) for c in op.rule_categories.data
-            if isinstance(c, StringAttr)
-        ]
+        job["rule_categories"] = [_str_attr_val(c) for c in op.rule_categories.data if isinstance(c, StringAttr)]
     if op.max_iterations:
         job["max_iterations"] = _int_attr_val(op.max_iterations)
     out.append(job)
@@ -685,11 +684,13 @@ def _lower_require_tv(op: RequireTranslationValidationOp, out: list[dict[str, An
 
 
 def _lower_require_layout(op: RequireLayoutInvariantOp, out: list[dict[str, Any]]) -> None:
-    out.append({
-        "type": "layout_invariant",
-        "region_id": _sym_ref_str(op.region_ref),
-        "expected_layout": _str_attr_val(op.expected_layout),
-    })
+    out.append(
+        {
+            "type": "layout_invariant",
+            "region_id": _sym_ref_str(op.region_ref),
+            "expected_layout": _str_attr_val(op.expected_layout),
+        }
+    )
 
 
 def _lower_require_memory(op: RequireMemoryBoundOp, out: list[dict[str, Any]]) -> None:
@@ -704,10 +705,12 @@ def _lower_require_memory(op: RequireMemoryBoundOp, out: list[dict[str, Any]]) -
 
 
 def _lower_require_check_file(op: RequireCheckFileOp, out: list[dict[str, Any]]) -> None:
-    out.append({
-        "type": "check_file",
-        "path": _str_attr_val(op.check_file_path),
-    })
+    out.append(
+        {
+            "type": "check_file",
+            "path": _str_attr_val(op.check_file_path),
+        }
+    )
 
 
 def _lower_require_profile(op: RequireProfileBudgetOp, out: list[dict[str, Any]]) -> None:
@@ -741,12 +744,14 @@ def _lower_request_exo_kernel(op: RequestExoKernelOp, out: list[dict[str, Any]])
 
 
 def _lower_select_exo_schedule(op: SelectExoScheduleLibOp, out: list[dict[str, Any]]) -> None:
-    out.append({
-        "type": "exo_schedule_lib",
-        "region_id": _sym_ref_str(op.region_ref),
-        "lib_name": _str_attr_val(op.lib_name),
-        "version": _str_attr_val(op.version) if op.version else None,
-    })
+    out.append(
+        {
+            "type": "exo_schedule_lib",
+            "region_id": _sym_ref_str(op.region_ref),
+            "lib_name": _str_attr_val(op.lib_name),
+            "version": _str_attr_val(op.version) if op.version else None,
+        }
+    )
 
 
 # --- Backward compatibility ---
@@ -760,6 +765,7 @@ def lower_recipe_ops(ops: list[RecipeOp]) -> LoweringOutput:
     Converts to xDSL module first via compat.py, then lowers.
     """
     from compgen.ir.recipe.compat import recipe_list_to_module
+
     module = recipe_list_to_module(ops)
     return lower_recipe(module)
 

@@ -150,7 +150,9 @@ class TestGenerateZephyrProject:
         spec = HardwareSpec(
             name="no-dma-target",
             platform=PlatformSpec(
-                vendor="test", family="test", chip_name="test",
+                vendor="test",
+                family="test",
+                chip_name="test",
                 deployment_model="zephyr",
             ),
             execution_model=ExecutionModelSpec(model=ExecutionModel.SIMD_VECTOR),
@@ -359,7 +361,9 @@ class TestSocRuntimeDispatcher:
         spec = HardwareSpec(
             name="bad-deploy",
             platform=PlatformSpec(
-                vendor="x", family="x", chip_name="x",
+                vendor="x",
+                family="x",
+                chip_name="x",
                 deployment_model="linux_userspace",
             ),
         )

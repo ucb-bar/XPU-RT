@@ -12,12 +12,9 @@ Inherits from ``TorchAOBaseTensor`` for automatic ``__tensor_flatten__``,
 from __future__ import annotations
 
 import torch
-from torch.utils._python_dispatch import return_and_correct_aliasing
-
 from torchao.utils import TorchAOBaseTensor
 
 from compgen.quantization.fp8_ops import (
-    FP8_E4M3_DTYPE,
     dequantize_fp8_e4m3,
     quantize_fp8_e4m3_po2,
 )

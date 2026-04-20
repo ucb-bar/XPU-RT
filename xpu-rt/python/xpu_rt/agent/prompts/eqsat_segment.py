@@ -1,5 +1,7 @@
 """Prompt for EqSat segmentation hints."""
+
 from __future__ import annotations
+
 import json
 import re
 import textwrap
@@ -9,6 +11,7 @@ from dataclasses import dataclass, field
 @dataclass(frozen=True)
 class SegmentContext:
     """Context for segmentation hints prompt."""
+
     op_count: int
     op_types_summary: str
     dataflow_depth: int
@@ -81,7 +84,7 @@ def parse_response(text: str) -> dict | None:
         if isinstance(data, dict) and "threshold" in data:
             return data
     except json.JSONDecodeError:
-        m = re.search(r'\{.*\}', text, re.DOTALL)
+        m = re.search(r"\{.*\}", text, re.DOTALL)
         if m:
             try:
                 data = json.loads(m.group())

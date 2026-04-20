@@ -121,9 +121,7 @@ class TestGenerateHalDriver:
         for c_file in out.glob("*.c"):
             text = c_file.read_text()
             unresolved = re.findall(r"\{[a-z_]+\}", text)
-            assert not unresolved, (
-                f"Unresolved placeholders in {c_file.name}: {unresolved}"
-            )
+            assert not unresolved, f"Unresolved placeholders in {c_file.name}: {unresolved}"
 
 
 class TestFamilySpecificOutput:

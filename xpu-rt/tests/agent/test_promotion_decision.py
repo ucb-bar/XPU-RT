@@ -1,7 +1,9 @@
 """Tests for LLM-guided promotion decisions (Unit 16)."""
+
 from __future__ import annotations
+
 import json
-import pytest
+
 from compgen.agent.prompts.promotion_decision import PromotionContext, format_prompt, parse_response
 
 

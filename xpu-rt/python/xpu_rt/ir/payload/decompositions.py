@@ -53,9 +53,9 @@ class DecompResult:
 # Type for decomposition functions
 DecompFn = Callable[
     [
-        list[SSAValue],       # positional operands (resolved FX args)
-        dict[str, Any],       # FX node metadata (shapes, dtypes)
-        str,                  # node name (for region_id generation)
+        list[SSAValue],  # positional operands (resolved FX args)
+        dict[str, Any],  # FX node metadata (shapes, dtypes)
+        str,  # node name (for region_id generation)
     ],
     DecompResult,
 ]
@@ -376,7 +376,10 @@ def decompose_bmm(operands, meta, node_name):
     # emit as opaque call but with a canonical hint so the propagation
     # tags reach Recipe IR.
     return _opaque_decomp(
-        "aten_bmm", operands, meta, "batch_matmul",
+        "aten_bmm",
+        operands,
+        meta,
+        "batch_matmul",
         pattern_hint="batch_matmul",
     )
 
@@ -388,7 +391,10 @@ def decompose_native_layer_norm(operands, meta, node_name):
     ``raise_special_ops`` picks it up.
     """
     return _opaque_decomp(
-        "aten_native_layer_norm", operands, meta, "layer_norm",
+        "aten_native_layer_norm",
+        operands,
+        meta,
+        "layer_norm",
         pattern_hint="layer_norm",
     )
 
@@ -396,7 +402,10 @@ def decompose_native_layer_norm(operands, meta, node_name):
 def decompose_softmax(operands, meta, node_name):
     """aten._softmax.default(input, dim, half_to_float)."""
     return _opaque_decomp(
-        "aten_softmax", operands, meta, "softmax",
+        "aten_softmax",
+        operands,
+        meta,
+        "softmax",
         pattern_hint="softmax",
     )
 
@@ -404,7 +413,10 @@ def decompose_softmax(operands, meta, node_name):
 def decompose_rsqrt(operands, meta, node_name):
     """aten.rsqrt.default(input) -> math.rsqrt (opaque call MVP)."""
     return _opaque_decomp(
-        "aten_rsqrt", operands, meta, "rsqrt",
+        "aten_rsqrt",
+        operands,
+        meta,
+        "rsqrt",
         pattern_hint="rsqrt",
     )
 
@@ -412,7 +424,10 @@ def decompose_rsqrt(operands, meta, node_name):
 def decompose_pow_tensor_scalar(operands, meta, node_name):
     """aten.pow.Tensor_Scalar(input, exponent) - common in RMS norm (pow 2)."""
     return _opaque_decomp(
-        "aten_pow", operands, meta, "pow",
+        "aten_pow",
+        operands,
+        meta,
+        "pow",
         pattern_hint="pow_tensor_scalar",
     )
 
@@ -420,7 +435,10 @@ def decompose_pow_tensor_scalar(operands, meta, node_name):
 def decompose_mean_dim(operands, meta, node_name):
     """aten.mean.dim(input, dims, keepdim?, dtype?) -> linalg.reduce (MVP: opaque)."""
     return _opaque_decomp(
-        "aten_mean_dim", operands, meta, "reduce",
+        "aten_mean_dim",
+        operands,
+        meta,
+        "reduce",
         pattern_hint="reduce_mean",
     )
 
@@ -437,7 +455,10 @@ def decompose_convolution(operands, meta, node_name):
     # pass only the tensor operands to the opaque call (scalars become func-level).
     tensor_operands = [op for op in operands[:3]]
     return _opaque_decomp(
-        "aten_convolution", tensor_operands, meta, "convolution",
+        "aten_convolution",
+        tensor_operands,
+        meta,
+        "convolution",
         pattern_hint="convolution",
     )
 
@@ -447,7 +468,10 @@ def decompose_embedding(operands, meta, node_name):
     # weight + indices are the first two operands; scalar-flag kwargs beyond that.
     tensor_operands = operands[:2] if len(operands) >= 2 else operands
     return _opaque_decomp(
-        "aten_embedding", tensor_operands, meta, "embedding",
+        "aten_embedding",
+        tensor_operands,
+        meta,
+        "embedding",
         pattern_hint="embedding_lookup",
     )
 
@@ -455,7 +479,10 @@ def decompose_embedding(operands, meta, node_name):
 def decompose_sigmoid(operands, meta, node_name):
     """aten.sigmoid.default(input) -> elementwise sigmoid (MVP: opaque)."""
     return _opaque_decomp(
-        "aten_sigmoid", operands, meta, "elementwise",
+        "aten_sigmoid",
+        operands,
+        meta,
+        "elementwise",
         pattern_hint="sigmoid",
     )
 
@@ -463,7 +490,10 @@ def decompose_sigmoid(operands, meta, node_name):
 def decompose_neg(operands, meta, node_name):
     """aten.neg.default(input) -> elementwise negation."""
     return _opaque_decomp(
-        "aten_neg", operands, meta, "elementwise",
+        "aten_neg",
+        operands,
+        meta,
+        "elementwise",
         pattern_hint="neg",
     )
 
@@ -471,7 +501,10 @@ def decompose_neg(operands, meta, node_name):
 def decompose_silu(operands, meta, node_name):
     """aten.silu.default(input) -> elementwise silu (used in many MLPs)."""
     return _opaque_decomp(
-        "aten_silu", operands, meta, "elementwise",
+        "aten_silu",
+        operands,
+        meta,
+        "elementwise",
         pattern_hint="silu",
     )
 
@@ -479,7 +512,10 @@ def decompose_silu(operands, meta, node_name):
 def decompose_sub_tensor(operands, meta, node_name):
     """aten.sub.Tensor(a, b, alpha?) -> elementwise sub."""
     return _opaque_decomp(
-        "aten_sub", operands[:2], meta, "elementwise",
+        "aten_sub",
+        operands[:2],
+        meta,
+        "elementwise",
         pattern_hint="sub",
     )
 
@@ -487,7 +523,10 @@ def decompose_sub_tensor(operands, meta, node_name):
 def decompose_div_tensor(operands, meta, node_name):
     """aten.div.Tensor(a, b) -> elementwise div."""
     return _opaque_decomp(
-        "aten_div", operands[:2], meta, "elementwise",
+        "aten_div",
+        operands[:2],
+        meta,
+        "elementwise",
         pattern_hint="div",
     )
 
@@ -499,7 +538,10 @@ def decompose_view(operands, meta, node_name):
     """aten.view.default(input, shape) -> tensor reshape (opaque MVP)."""
     # view's shape is a scalar-list operand; keep only the tensor operand.
     return _opaque_decomp(
-        "aten_view", operands[:1], meta, "layout",
+        "aten_view",
+        operands[:1],
+        meta,
+        "layout",
         pattern_hint="view",
     )
 
@@ -507,7 +549,10 @@ def decompose_view(operands, meta, node_name):
 def decompose_unsqueeze(operands, meta, node_name):
     """aten.unsqueeze.default(input, dim) -> insert a size-1 dim."""
     return _opaque_decomp(
-        "aten_unsqueeze", operands[:1], meta, "layout",
+        "aten_unsqueeze",
+        operands[:1],
+        meta,
+        "layout",
         pattern_hint="unsqueeze",
     )
 
@@ -515,7 +560,10 @@ def decompose_unsqueeze(operands, meta, node_name):
 def decompose_expand(operands, meta, node_name):
     """aten.expand.default(input, sizes, implicit?) -> broadcast."""
     return _opaque_decomp(
-        "aten_expand", operands[:1], meta, "layout",
+        "aten_expand",
+        operands[:1],
+        meta,
+        "layout",
         pattern_hint="expand",
     )
 
@@ -529,7 +577,10 @@ def decompose_cat(operands, meta, node_name):
     # The first positional arg is a list of tensors; FX expands that
     # list onto operands, so everything that's already an SSAValue stays.
     return _opaque_decomp(
-        "aten_cat", operands, meta, "layout",
+        "aten_cat",
+        operands,
+        meta,
+        "layout",
         pattern_hint="cat",
     )
 
@@ -542,7 +593,10 @@ def decompose_split_with_sizes(operands, meta, node_name):
     which chunk each downstream consumer needs.
     """
     return _opaque_decomp(
-        "aten_split_with_sizes", operands[:1], meta, "layout",
+        "aten_split_with_sizes",
+        operands[:1],
+        meta,
+        "layout",
         pattern_hint="split",
     )
 
@@ -550,7 +604,10 @@ def decompose_split_with_sizes(operands, meta, node_name):
 def decompose_clone(operands, meta, node_name):
     """aten.clone.default(input) -> identity (metadata-only MVP)."""
     return _opaque_decomp(
-        "aten_clone", operands[:1], meta, "identity",
+        "aten_clone",
+        operands[:1],
+        meta,
+        "identity",
         pattern_hint="clone",
     )
 
@@ -561,7 +618,10 @@ def decompose_clone(operands, meta, node_name):
 def decompose_contiguous(operands, meta, node_name):
     """aten.contiguous.default(input) -> layout no-op; same shape same dtype."""
     return _opaque_decomp(
-        "aten_contiguous", operands[:1], meta, "layout",
+        "aten_contiguous",
+        operands[:1],
+        meta,
+        "layout",
         pattern_hint="contiguous",
     )
 
@@ -574,7 +634,10 @@ def decompose_transpose_int(operands, meta, node_name):
     which already reflects the transposition.
     """
     return _opaque_decomp(
-        "aten_transpose", operands[:1], meta, "layout",
+        "aten_transpose",
+        operands[:1],
+        meta,
+        "layout",
         pattern_hint="transpose",
     )
 
@@ -618,7 +681,10 @@ def decompose_matmul(operands, meta, node_name):
 
     hint = "batch_matmul" if out_rank > 2 else "matmul"
     return _opaque_decomp(
-        "aten_matmul", operands[:2], meta, "matmul",
+        "aten_matmul",
+        operands[:2],
+        meta,
+        "matmul",
         pattern_hint=hint,
     )
 
@@ -630,7 +696,10 @@ def decompose_slice_tensor(operands, meta, node_name):
     comes from meta.
     """
     return _opaque_decomp(
-        "aten_slice", operands[:1], meta, "layout",
+        "aten_slice",
+        operands[:1],
+        meta,
+        "layout",
         pattern_hint="slice",
     )
 
@@ -681,9 +750,11 @@ def _element_type_from_meta(meta: dict[str, Any]) -> Any:
         return IntegerType(64)
     if hasattr(torch, "float8_e4m3fn") and d == torch.float8_e4m3fn:
         from compgen.ir.payload.types import Float8E4M3FNType
+
         return Float8E4M3FNType()
     if hasattr(torch, "float8_e5m2") and d == torch.float8_e5m2:
         from compgen.ir.payload.types import Float8E5M2Type
+
         return Float8E5M2Type()
     return Float32Type()
 
@@ -707,11 +778,13 @@ def _fx_arg(meta: dict[str, Any], index: int, default: Any = None) -> Any:
 def _int_attr(value: int, width: int = 64) -> Any:
     """Shorthand for ``IntegerAttr(value, IntegerType(width))``."""
     from xdsl.dialects.builtin import IntegerAttr, IntegerType
+
     return IntegerAttr(int(value), IntegerType(width))
 
 
 def _string_attr(value: str) -> Any:
     from xdsl.dialects.builtin import StringAttr
+
     return StringAttr(str(value))
 
 
@@ -744,8 +817,7 @@ def decompose_quantize_per_tensor(operands, meta, node_name):
     # three tensor placeholders which we accept as-is.
     if len(operands) < 3:
         raise IndexError(
-            "decompose_quantize_per_tensor expects input + scale + zero_point "
-            f"(3 operands), got {len(operands)}"
+            f"decompose_quantize_per_tensor expects input + scale + zero_point (3 operands), got {len(operands)}"
         )
 
     properties: dict[str, Any] = {}
@@ -767,7 +839,9 @@ def decompose_quantize_per_tensor(operands, meta, node_name):
     )
     _attach_region_id(op, rid)
     return DecompResult(
-        ops=[op], result=op.results[0], region_ids=[rid],
+        ops=[op],
+        result=op.results[0],
+        region_ids=[rid],
         pattern_hint="quantize_per_tensor",
     )
 
@@ -781,10 +855,7 @@ def decompose_dequantize_per_tensor(operands, meta, node_name):
     result_type = TensorType(elem, list(val.shape))
 
     if len(operands) < 3:
-        raise IndexError(
-            "decompose_dequantize_per_tensor expects input + scale + zero_point, "
-            f"got {len(operands)}"
-        )
+        raise IndexError(f"decompose_dequantize_per_tensor expects input + scale + zero_point, got {len(operands)}")
 
     properties: dict[str, Any] = {}
     qmin = _fx_arg(meta, 3)
@@ -802,7 +873,9 @@ def decompose_dequantize_per_tensor(operands, meta, node_name):
     )
     _attach_region_id(op, rid)
     return DecompResult(
-        ops=[op], result=op.results[0], region_ids=[rid],
+        ops=[op],
+        result=op.results[0],
+        region_ids=[rid],
         pattern_hint="dequantize_per_tensor",
     )
 
@@ -821,10 +894,7 @@ def decompose_quantize_per_channel(operands, meta, node_name):
     result_type = TensorType(elem, list(val.shape))
 
     if len(operands) < 3:
-        raise IndexError(
-            "decompose_quantize_per_channel expects input + scales + zero_points, "
-            f"got {len(operands)}"
-        )
+        raise IndexError(f"decompose_quantize_per_channel expects input + scales + zero_points, got {len(operands)}")
 
     axis = _fx_arg(meta, 3)
     properties: dict[str, Any] = {
@@ -848,7 +918,9 @@ def decompose_quantize_per_channel(operands, meta, node_name):
     )
     _attach_region_id(op, rid)
     return DecompResult(
-        ops=[op], result=op.results[0], region_ids=[rid],
+        ops=[op],
+        result=op.results[0],
+        region_ids=[rid],
         pattern_hint="quantize_per_channel",
     )
 
@@ -862,10 +934,7 @@ def decompose_dequantize_per_channel(operands, meta, node_name):
     result_type = TensorType(elem, list(val.shape))
 
     if len(operands) < 3:
-        raise IndexError(
-            "decompose_dequantize_per_channel expects input + scales + zero_points, "
-            f"got {len(operands)}"
-        )
+        raise IndexError(f"decompose_dequantize_per_channel expects input + scales + zero_points, got {len(operands)}")
 
     axis = _fx_arg(meta, 3)
     properties: dict[str, Any] = {
@@ -886,7 +955,9 @@ def decompose_dequantize_per_channel(operands, meta, node_name):
     )
     _attach_region_id(op, rid)
     return DecompResult(
-        ops=[op], result=op.results[0], region_ids=[rid],
+        ops=[op],
+        result=op.results[0],
+        region_ids=[rid],
         pattern_hint="dequantize_per_channel",
     )
 
@@ -904,10 +975,7 @@ def decompose_quantize_per_group(operands, meta, node_name):
     result_type = TensorType(elem, list(val.shape))
 
     if len(operands) < 3:
-        raise IndexError(
-            "decompose_quantize_per_group expects input + scales + zero_points, "
-            f"got {len(operands)}"
-        )
+        raise IndexError(f"decompose_quantize_per_group expects input + scales + zero_points, got {len(operands)}")
 
     gs = _fx_arg(meta, 3)
     properties: dict[str, Any] = {
@@ -930,7 +998,9 @@ def decompose_quantize_per_group(operands, meta, node_name):
     )
     _attach_region_id(op, rid)
     return DecompResult(
-        ops=[op], result=op.results[0], region_ids=[rid],
+        ops=[op],
+        result=op.results[0],
+        region_ids=[rid],
         pattern_hint="quantize_per_group",
     )
 
@@ -944,10 +1014,7 @@ def decompose_dequantize_per_group(operands, meta, node_name):
     result_type = TensorType(elem, list(val.shape))
 
     if len(operands) < 3:
-        raise IndexError(
-            "decompose_dequantize_per_group expects input + scales + zero_points, "
-            f"got {len(operands)}"
-        )
+        raise IndexError(f"decompose_dequantize_per_group expects input + scales + zero_points, got {len(operands)}")
 
     gs = _fx_arg(meta, 3)
     properties: dict[str, Any] = {
@@ -968,7 +1035,9 @@ def decompose_dequantize_per_group(operands, meta, node_name):
     )
     _attach_region_id(op, rid)
     return DecompResult(
-        ops=[op], result=op.results[0], region_ids=[rid],
+        ops=[op],
+        result=op.results[0],
+        region_ids=[rid],
         pattern_hint="dequantize_per_group",
     )
 
@@ -982,10 +1051,7 @@ def decompose_weight_int8pack_mm(operands, meta, node_name):
     result_type = TensorType(elem, list(val.shape))
 
     if len(operands) < 3:
-        raise IndexError(
-            "decompose_weight_int8pack_mm expects input + weight + scales, "
-            f"got {len(operands)}"
-        )
+        raise IndexError(f"decompose_weight_int8pack_mm expects input + weight + scales, got {len(operands)}")
 
     rid = _next_region_id("quantized_matmul")
     op = WeightInt8PackMMOp(
@@ -994,7 +1060,9 @@ def decompose_weight_int8pack_mm(operands, meta, node_name):
     )
     _attach_region_id(op, rid)
     return DecompResult(
-        ops=[op], result=op.results[0], region_ids=[rid],
+        ops=[op],
+        result=op.results[0],
+        region_ids=[rid],
         pattern_hint="weight_int8pack_mm",
     )
 
@@ -1019,10 +1087,7 @@ def decompose_weight_int4pack_mm(operands, meta, node_name):
     elif len(operands) >= 4:
         tensor_operands = [operands[0], operands[1], operands[3]]
     else:
-        raise IndexError(
-            "decompose_weight_int4pack_mm expects >= 3 operands, "
-            f"got {len(operands)}"
-        )
+        raise IndexError(f"decompose_weight_int4pack_mm expects >= 3 operands, got {len(operands)}")
 
     gs = _fx_arg(meta, 2)
     if not isinstance(gs, int) or gs <= 0:
@@ -1041,7 +1106,9 @@ def decompose_weight_int4pack_mm(operands, meta, node_name):
     )
     _attach_region_id(op, rid)
     return DecompResult(
-        ops=[op], result=op.results[0], region_ids=[rid],
+        ops=[op],
+        result=op.results[0],
+        region_ids=[rid],
         pattern_hint="weight_int4pack_mm",
     )
 
@@ -1054,14 +1121,9 @@ def decompose_weight_int4pack_qm(operands, meta, node_name):
     elem = _element_type_from_meta(meta)
     result_type = TensorType(elem, list(val.shape))
 
-    tensor_operands = [
-        o for o in operands if hasattr(o, "type") and isinstance(o.type, TensorType)
-    ]
+    tensor_operands = [o for o in operands if hasattr(o, "type") and isinstance(o.type, TensorType)]
     if len(tensor_operands) < 3:
-        raise IndexError(
-            "decompose_weight_int4pack_qm expects >= 3 tensor operands, "
-            f"got {len(tensor_operands)}"
-        )
+        raise IndexError(f"decompose_weight_int4pack_qm expects >= 3 tensor operands, got {len(tensor_operands)}")
 
     gs = _fx_arg(meta, 2)
     if not isinstance(gs, int) or gs <= 0:
@@ -1075,7 +1137,9 @@ def decompose_weight_int4pack_qm(operands, meta, node_name):
     )
     _attach_region_id(op, rid)
     return DecompResult(
-        ops=[op], result=op.results[0], region_ids=[rid],
+        ops=[op],
+        result=op.results[0],
+        region_ids=[rid],
         pattern_hint="weight_int4pack_qm",
     )
 
@@ -1087,6 +1151,7 @@ def decompose_choose_qparams_per_tensor(operands, meta, node_name):
     # Produces (scale: f32, zero_point: i64) scalar tensors.
     scale_type = TensorType(Float32Type(), [])
     from xdsl.dialects.builtin import IntegerType
+
     zp_type = TensorType(IntegerType(64), [])
 
     if len(operands) < 1:
@@ -1113,15 +1178,18 @@ def decompose_choose_qparams_per_tensor(operands, meta, node_name):
     # ``scale`` as the canonical ``result`` since that's what the FX
     # node's downstream ops most commonly consume first.
     return DecompResult(
-        ops=[op], result=op.results[0], region_ids=[rid],
+        ops=[op],
+        result=op.results[0],
+        region_ids=[rid],
         pattern_hint="choose_qparams_per_tensor",
     )
 
 
 def decompose_choose_qparams_per_channel(operands, meta, node_name):
     """aten._choose_qparams_per_channel.default."""
-    from compgen.ir.quant.ops import ChooseQParamsPerChannelOp
     from xdsl.dialects.builtin import IntegerType
+
+    from compgen.ir.quant.ops import ChooseQParamsPerChannelOp
 
     val: Any = meta.get("val")
     # For channel qparams we produce two 1-D vectors of size C along
@@ -1153,7 +1221,9 @@ def decompose_choose_qparams_per_channel(operands, meta, node_name):
     )
     _attach_region_id(op, rid)
     return DecompResult(
-        ops=[op], result=op.results[0], region_ids=[rid],
+        ops=[op],
+        result=op.results[0],
+        region_ids=[rid],
         pattern_hint="choose_qparams_per_channel",
     )
 

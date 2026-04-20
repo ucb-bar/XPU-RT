@@ -39,7 +39,7 @@ log = structlog.get_logger()
 
 _REDUCE_OP_MAP = {
     "sum": "SUM",
-    "mean": "AVG",     # on NCCL >= 2.10, else fallback to SUM/world_size
+    "mean": "AVG",  # on NCCL >= 2.10, else fallback to SUM/world_size
     "max": "MAX",
     "min": "MIN",
     "prod": "PRODUCT",
@@ -58,6 +58,7 @@ def distributed_available() -> bool:
     """Whether ``torch.distributed`` + a backend are importable."""
     try:
         import torch
+
         return hasattr(torch, "distributed") and torch.distributed.is_available()
     except ImportError:
         return False
@@ -69,6 +70,7 @@ def current_env() -> DistributedEnv:
     if not distributed_available():
         return env
     import torch.distributed as dist
+
     if dist.is_initialized():
         env.initialized = True
         env.world_size = dist.get_world_size()
@@ -107,9 +109,7 @@ def init_if_needed(
     if rank is None:
         rank = int(os.environ.get("RANK", "0"))
     if init_method is None:
-        init_method = os.environ.get(
-            "COMPGEN_INIT_METHOD", "env://"
-        )
+        init_method = os.environ.get("COMPGEN_INIT_METHOD", "env://")
 
     # For world_size=1 we can skip init entirely -- the adapter's
     # ops will fall through to identity.
@@ -148,6 +148,7 @@ class DistributedAdapter:
         if self._is_single():
             return tensor
         import torch.distributed as dist
+
         op_attr = getattr(dist.ReduceOp, _REDUCE_OP_MAP.get(op, "SUM"), dist.ReduceOp.SUM)
         dist.all_reduce(tensor, op=op_attr)
         return tensor
@@ -162,6 +163,7 @@ class DistributedAdapter:
             return tensor
         import torch
         import torch.distributed as dist
+
         gathered = [torch.zeros_like(tensor) for _ in range(self.env.world_size)]
         dist.all_gather(gathered, tensor)
         return torch.cat(gathered, dim=dim)
@@ -177,11 +179,14 @@ class DistributedAdapter:
             return tensor
         import torch
         import torch.distributed as dist
+
         # Split along dim into world_size shards.
         shards = list(torch.chunk(tensor, self.env.world_size, dim=dim))
         out = torch.zeros_like(shards[0])
         op_attr = getattr(
-            dist.ReduceOp, _REDUCE_OP_MAP.get(op, "SUM"), dist.ReduceOp.SUM,
+            dist.ReduceOp,
+            _REDUCE_OP_MAP.get(op, "SUM"),
+            dist.ReduceOp.SUM,
         )
         dist.reduce_scatter(out, shards, op=op_attr)
         return out
@@ -190,6 +195,7 @@ class DistributedAdapter:
         if self._is_single():
             return tensor
         import torch.distributed as dist
+
         dist.broadcast(tensor, src=source_replica)
         return tensor
 

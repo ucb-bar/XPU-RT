@@ -43,8 +43,8 @@ class OpRecoveryDecision:
     """One resolved target — picked strategy + evidence."""
 
     target: str
-    strategy: str                     # decomp | translation | blackbox | none
-    source: str                       # classifier | llm | override | fallback
+    strategy: str  # decomp | translation | blackbox | none
+    source: str  # classifier | llm | override | fallback
     ok: bool
     detail: str = ""
     error: str = ""
@@ -140,13 +140,14 @@ def _llm_pick_strategy(
         ),
         config=LLMConfig(
             model=str(getattr(llm_client, "model", "default")),
-            temperature=0.1, max_tokens=128,
+            temperature=0.1,
+            max_tokens=128,
         ),
     )
 
     try:
         response = llm_client.generate(request)
-    except Exception as exc:   # noqa: BLE001
+    except Exception as exc:  # noqa: BLE001
         return "fallback", f"llm_call_failed: {exc}"
 
     text = (response.raw_text or "").strip().lower()
@@ -176,7 +177,8 @@ def _deterministic_default(
 
 
 def _apply_strategy(
-    strategy: str, resolution: UnsupportedOpResolution,
+    strategy: str,
+    resolution: UnsupportedOpResolution,
 ) -> tuple[bool, str, str]:
     """Try to apply ``strategy``; return (ok, detail, error)."""
     if strategy == "none":
@@ -184,7 +186,8 @@ def _apply_strategy(
 
     if strategy == "decomp":
         decomp = synthesize_export_decomposition(
-            resolution.target, resolution.dossier,
+            resolution.target,
+            resolution.dossier,
         )
         if decomp is None:
             return False, "", "not_on_allow_list"
@@ -192,6 +195,7 @@ def _apply_strategy(
 
     if strategy == "translation":
         from compgen.capture.unsupported.classify import UnsupportedClassification
+
         # Try both the existing classification and a forced eligibility.
         forced = UnsupportedClassification(
             bucket="payload_decomposition",
@@ -200,10 +204,9 @@ def _apply_strategy(
             reason="forced by LLM-driven recovery orchestrator",
         )
         translation = synthesize_payload_translation(
-            resolution.issue, resolution.dossier,
-            resolution.classification
-            if resolution.classification.strategy == "synthesized_external_call"
-            else forced,
+            resolution.issue,
+            resolution.dossier,
+            resolution.classification if resolution.classification.strategy == "synthesized_external_call" else forced,
         )
         if translation is None:
             return False, "", "translation_not_eligible"
@@ -243,16 +246,14 @@ def plan_recovery(
         source = "classifier"
 
         cls_conf = resolution.classification.confidence
-        if (
-            llm_client is not None
-            and cls_conf in consult_llm_on
-            and strategy != "none"
-        ):
+        if llm_client is not None and cls_conf in consult_llm_on and strategy != "none":
             picked, reasoning = _llm_pick_strategy(resolution, llm_client)
             plan.llm_consulted += 1
             log.debug(
                 "recovery.llm_consulted",
-                target=resolution.target, picked=picked, reasoning=reasoning[:80],
+                target=resolution.target,
+                picked=picked,
+                reasoning=reasoning[:80],
             )
             if picked == "fallback":
                 source = "fallback"
@@ -275,14 +276,16 @@ def plan_recovery(
                 else:
                     error = f"{error}; fallback={error2}"
 
-        plan.decisions.append(OpRecoveryDecision(
-            target=resolution.target,
-            strategy=strategy,
-            source=source,
-            ok=ok,
-            detail=detail,
-            error=error,
-        ))
+        plan.decisions.append(
+            OpRecoveryDecision(
+                target=resolution.target,
+                strategy=strategy,
+                source=source,
+                ok=ok,
+                detail=detail,
+                error=error,
+            )
+        )
         if not ok:
             plan.skipped += 1
 

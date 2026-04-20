@@ -348,8 +348,15 @@ class ZephyrIPCTransport:
 
     def open(self, **kwargs: Any) -> None:
         # Override config from kwargs if provided
-        for key in ("mechanism", "msg_size", "queue_depth", "pipe_size",
-                     "endpoint_name", "thread_priority", "stack_size"):
+        for key in (
+            "mechanism",
+            "msg_size",
+            "queue_depth",
+            "pipe_size",
+            "endpoint_name",
+            "thread_priority",
+            "stack_size",
+        ):
             if key in kwargs:
                 object.__setattr__(self._config, key, kwargs[key])
         self._open_flag = True
@@ -521,10 +528,7 @@ def create_transport(transport_name: str, **kwargs: Any) -> Transport:
     """
     cls = _TRANSPORT_REGISTRY.get(transport_name)
     if cls is None:
-        msg = (
-            f"Unknown transport {transport_name!r}. "
-            f"Available: {sorted(_TRANSPORT_REGISTRY)}"
-        )
+        msg = f"Unknown transport {transport_name!r}. Available: {sorted(_TRANSPORT_REGISTRY)}"
         raise ValueError(msg)
     return cls(**kwargs)  # type: ignore[call-arg]
 

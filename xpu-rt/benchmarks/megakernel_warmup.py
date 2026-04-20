@@ -34,11 +34,8 @@ Run as::
 from __future__ import annotations
 
 import gc
-import importlib.util
-import linecache
 import os
 import shutil
-import tempfile
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -46,8 +43,6 @@ from pathlib import Path
 import torch
 
 from examples.event_tensor.tinyllama_layer_megakernel import (
-    DEFAULT_HEAD_SLICE,
-    DEFAULT_INTERMEDIATE_SLICE,
     DEFAULT_SEQ_LEN,
     compile_for_tinyllama,
     load_tinyllama_layer0,
@@ -81,31 +76,49 @@ def _now() -> float:
 
 
 def measure_megakernel_aot(
-    weights, sliced_cfg, x, *, label: str = "megakernel_aot",
+    weights,
+    sliced_cfg,
+    x,
+    *,
+    label: str = "megakernel_aot",
 ) -> WarmupResult:
     """Cold = (emit source + Triton compile + first launch)
-       Warm = (re-import previously emitted source + Triton cache hit + launch)"""
+    Warm = (re-import previously emitted source + Triton cache hit + launch)"""
     _purge_triton_cache()
-    gc.collect(); torch.cuda.empty_cache()
+    gc.collect()
+    torch.cuda.empty_cache()
 
     t0 = _now()
     compiled_cold = compile_for_tinyllama(seq_len=DEFAULT_SEQ_LEN)
     q, k, v = project_qkv(x, weights, sliced_cfg)
     _ = run_transformer_block_megakernel(
-        compiled_cold, q, k, v, x,
-        weights.w_gate, weights.w_up, weights.w_down,
+        compiled_cold,
+        q,
+        k,
+        v,
+        x,
+        weights.w_gate,
+        weights.w_up,
+        weights.w_down,
     )
     cold = _now() - t0
 
     # Warm path: don't purge Triton cache; recompile the emitter (cheap)
     # and run again -- Triton sees a cache hit on the kernel hash.
-    gc.collect(); torch.cuda.empty_cache()
+    gc.collect()
+    torch.cuda.empty_cache()
     t0 = _now()
     compiled_warm = compile_for_tinyllama(seq_len=DEFAULT_SEQ_LEN)
     q, k, v = project_qkv(x, weights, sliced_cfg)
     _ = run_transformer_block_megakernel(
-        compiled_warm, q, k, v, x,
-        weights.w_gate, weights.w_up, weights.w_down,
+        compiled_warm,
+        q,
+        k,
+        v,
+        x,
+        weights.w_gate,
+        weights.w_up,
+        weights.w_down,
     )
     warm = _now() - t0
 
@@ -114,22 +127,26 @@ def measure_megakernel_aot(
         cold_seconds=cold,
         warm_seconds=warm,
         description=(
-            "Cold = emit Triton source + compile + first launch (no cache). "
-            "Warm = re-emit + Triton cache hit + launch."
+            "Cold = emit Triton source + compile + first launch (no cache). Warm = re-emit + Triton cache hit + launch."
         ),
     )
 
 
 def measure_torch_compile_jit(
-    weights, sliced_cfg, x, *, label: str = "torch.compile_jit",
+    weights,
+    sliced_cfg,
+    x,
+    *,
+    label: str = "torch.compile_jit",
 ) -> WarmupResult:
     """Cold = first call into torch.compile'd block (compiles on first call).
-       Warm = subsequent call (cached)."""
+    Warm = subsequent call (cached)."""
 
     def block(x_in, q, k, v, wg, wu, wd):
         return reference_block(q, k, v, x_in, wg, wu, wd)
 
-    gc.collect(); torch.cuda.empty_cache()
+    gc.collect()
+    torch.cuda.empty_cache()
     q, k, v = project_qkv(x, weights, sliced_cfg)
 
     # Reset torch's compile cache for an apples-to-apples cold start.
@@ -173,10 +190,14 @@ def main() -> None:
     )
 
     torch.manual_seed(123)
-    x = torch.randn(
-        (DEFAULT_SEQ_LEN, sliced_cfg["hidden_dim"]),
-        dtype=torch.float32, device="cuda",
-    ) * 0.1
+    x = (
+        torch.randn(
+            (DEFAULT_SEQ_LEN, sliced_cfg["hidden_dim"]),
+            dtype=torch.float32,
+            device="cuda",
+        )
+        * 0.1
+    )
 
     print("\n[1/2] Measuring CompGen megakernel AOT path ...")
     aot = measure_megakernel_aot(sliced, sliced_cfg, x)

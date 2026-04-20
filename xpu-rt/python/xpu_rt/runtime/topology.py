@@ -177,10 +177,7 @@ class RuntimeTopology:
         """Get all outbound links from a node."""
         result = [lk for lk in self.links if lk.src_node == node_name]
         # Include reverse direction for bidirectional links
-        result.extend(
-            lk for lk in self.links
-            if lk.dst_node == node_name and lk.bidirectional
-        )
+        result.extend(lk for lk in self.links if lk.dst_node == node_name and lk.bidirectional)
         return result
 
     def get_link_between(self, src: str, dst: str) -> RuntimeLink | None:
@@ -243,10 +240,7 @@ class RuntimeTopology:
         for node in self.nodes:
             for dev in node.devices:
                 if dev.device_index in all_devs:
-                    errors.append(
-                        f"device_index {dev.device_index} claimed by "
-                        f"multiple nodes"
-                    )
+                    errors.append(f"device_index {dev.device_index} claimed by multiple nodes")
                 all_devs.append(dev.device_index)
 
         return errors
@@ -355,13 +349,17 @@ def infer_topology(profile: TargetProfile) -> RuntimeTopology:
         A ``RuntimeTopology`` inferred from device layout.
     """
     if len(profile.devices) <= 1:
-        devices = [
-            RuntimeDevice(
-                device_index=0,
-                device_type=profile.devices[0].device_type if profile.devices else "cpu",
-                name=profile.devices[0].name if profile.devices else "cpu0",
-            )
-        ] if profile.devices else []
+        devices = (
+            [
+                RuntimeDevice(
+                    device_index=0,
+                    device_type=profile.devices[0].device_type if profile.devices else "cpu",
+                    name=profile.devices[0].name if profile.devices else "cpu0",
+                )
+            ]
+            if profile.devices
+            else []
+        )
 
         return RuntimeTopology(
             deployment=DeploymentTopology.SINGLE_DEVICE,
@@ -415,13 +413,15 @@ def infer_topology(profile: TargetProfile) -> RuntimeTopology:
         src_node = node_for_dev.get(ic.devices[0])
         dst_node = node_for_dev.get(ic.devices[1])
         if src_node and dst_node and src_node != dst_node:
-            links.append(RuntimeLink(
-                src_node=src_node,
-                dst_node=dst_node,
-                transport=_map_interconnect_to_transport(ic.topology),
-                bandwidth_gbps=ic.bandwidth_gbps,
-                latency_us=ic.latency_us or 0.0,
-            ))
+            links.append(
+                RuntimeLink(
+                    src_node=src_node,
+                    dst_node=dst_node,
+                    transport=_map_interconnect_to_transport(ic.topology),
+                    bandwidth_gbps=ic.bandwidth_gbps,
+                    latency_us=ic.latency_us or 0.0,
+                )
+            )
 
     return RuntimeTopology(
         deployment=DeploymentTopology.MULTI_DEVICE,

@@ -11,19 +11,11 @@ with MMIO register writes and DMA channel management.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from pathlib import Path
-from typing import Any
-
 import structlog
 
-from compgen.runtime.program_builder import DeviceKernel, ModelProgram
+from compgen.runtime.program_builder import ModelProgram
 from compgen.targets.backends.npu.memory_map import (
     NPU_DMA_CHANNELS,
-    NPU_DRAM_BASE,
-    NPU_MXU_TILE_M,
-    NPU_MXU_TILE_N,
-    NPU_VMEM_BASE,
 )
 
 logger = structlog.get_logger()

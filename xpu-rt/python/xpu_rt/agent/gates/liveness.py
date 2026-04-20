@@ -33,7 +33,7 @@ def liveness_gate(proposal: dict[str, Any], **ctx: Any) -> dict[str, Any]:
 
     try:
         from compgen.solve.memory import solve_memory
-    except ImportError as e:   # pragma: no cover
+    except ImportError as e:  # pragma: no cover
         return {
             "status": "deferred",
             "details": {"reason": f"compgen.solve.memory unavailable: {e}"},
@@ -41,7 +41,7 @@ def liveness_gate(proposal: dict[str, Any], **ctx: Any) -> dict[str, Any]:
 
     try:
         allocation = solve_memory(lifetimes, device_capacities, timeout_ms=timeout_ms)
-    except Exception as e:   # noqa: BLE001
+    except Exception as e:  # noqa: BLE001
         return {
             "status": "rejected",
             "details": {

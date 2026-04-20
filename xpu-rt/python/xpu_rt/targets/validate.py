@@ -63,35 +63,43 @@ def validate_profile(profile: TargetProfile) -> ValidationResult:
         # Compute unit counts must be positive
         for j, cu in enumerate(device.compute_units):
             if cu.count <= 0:
-                errors.append(ValidationError(
-                    path=f"{prefix}.compute_units[{j}].count",
-                    message=f"Compute unit count must be positive, got {cu.count}",
-                ))
+                errors.append(
+                    ValidationError(
+                        path=f"{prefix}.compute_units[{j}].count",
+                        message=f"Compute unit count must be positive, got {cu.count}",
+                    )
+                )
 
         # Memory hierarchy should have at least one level for non-trivial devices
         if not device.memory_hierarchy:
-            warnings.append(ValidationError(
-                path=f"{prefix}.memory_hierarchy",
-                message="Device has no memory hierarchy levels",
-                level="warning",
-            ))
+            warnings.append(
+                ValidationError(
+                    path=f"{prefix}.memory_hierarchy",
+                    message="Device has no memory hierarchy levels",
+                    level="warning",
+                )
+            )
 
         # Bandwidth must be non-negative
         for j, ml in enumerate(device.memory_hierarchy):
             if ml.bandwidth_gbps is not None and ml.bandwidth_gbps < 0:
-                errors.append(ValidationError(
-                    path=f"{prefix}.memory_hierarchy[{j}].bandwidth_gbps",
-                    message=f"Bandwidth must be non-negative, got {ml.bandwidth_gbps}",
-                ))
+                errors.append(
+                    ValidationError(
+                        path=f"{prefix}.memory_hierarchy[{j}].bandwidth_gbps",
+                        message=f"Bandwidth must be non-negative, got {ml.bandwidth_gbps}",
+                    )
+                )
 
     # Interconnect device indices must be valid
     for i, ic in enumerate(profile.interconnects):
         for idx in ic.devices:
             if idx < 0 or idx >= num_devices:
-                errors.append(ValidationError(
-                    path=f"interconnects[{i}].devices",
-                    message=f"Device index {idx} out of range [0, {num_devices})",
-                ))
+                errors.append(
+                    ValidationError(
+                        path=f"interconnects[{i}].devices",
+                        message=f"Device index {idx} out of range [0, {num_devices})",
+                    )
+                )
 
     return ValidationResult(
         valid=len(errors) == 0,
@@ -109,18 +117,24 @@ def validate_profile_file(path: str | Path) -> ValidationResult:
 
     # Check file exists
     if not path.exists():
-        return ValidationResult(valid=False, errors=[
-            ValidationError(path=str(path), message="File not found"),
-        ])
+        return ValidationResult(
+            valid=False,
+            errors=[
+                ValidationError(path=str(path), message="File not found"),
+            ],
+        )
 
     # Load raw YAML and check required keys
     with open(path) as f:
         data = yaml.safe_load(f)
 
     if not isinstance(data, dict):
-        return ValidationResult(valid=False, errors=[
-            ValidationError(path=str(path), message="YAML must be a mapping"),
-        ])
+        return ValidationResult(
+            valid=False,
+            errors=[
+                ValidationError(path=str(path), message="YAML must be a mapping"),
+            ],
+        )
 
     for key in ("name", "devices"):
         if key not in data:

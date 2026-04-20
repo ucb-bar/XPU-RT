@@ -1,5 +1,7 @@
 """Prompt for EqSat search state consultation."""
+
 from __future__ import annotations
+
 import json
 import re
 import textwrap
@@ -9,6 +11,7 @@ from dataclasses import dataclass
 @dataclass(frozen=True)
 class SearchStateContext:
     """Context for eqsat search state prompt."""
+
     egraph_summary: str
     rule_stats: dict[str, int]  # rule_name -> match_count
     best_cost: float
@@ -52,7 +55,10 @@ SEARCH_STATE_PROMPT = textwrap.dedent("""\
 SEARCH_STATE_SCHEMA = {
     "type": "object",
     "properties": {
-        "action": {"type": "string", "enum": ["PROPOSE_RULE", "CHANGE_BLACKBOX", "ADJUST_SEGMENTS", "CHANGE_WEIGHTS", "CONTINUE", "STOP"]},
+        "action": {
+            "type": "string",
+            "enum": ["PROPOSE_RULE", "CHANGE_BLACKBOX", "ADJUST_SEGMENTS", "CHANGE_WEIGHTS", "CONTINUE", "STOP"],
+        },
         "parameters": {"type": "object"},
         "reasoning": {"type": "string"},
     },
@@ -62,9 +68,11 @@ SEARCH_STATE_SCHEMA = {
 
 def format_prompt(ctx: SearchStateContext) -> str:
     """Format the search state prompt."""
-    stats = "\n".join(
-        f"  {name}: {count} matches" for name, count in sorted(ctx.rule_stats.items(), key=lambda x: -x[1])
-    ) if ctx.rule_stats else "  No rules applied yet"
+    stats = (
+        "\n".join(f"  {name}: {count} matches" for name, count in sorted(ctx.rule_stats.items(), key=lambda x: -x[1]))
+        if ctx.rule_stats
+        else "  No rules applied yet"
+    )
     return SEARCH_STATE_PROMPT.format(
         egraph_summary=ctx.egraph_summary,
         total_eclasses=ctx.total_eclasses,
@@ -82,7 +90,7 @@ def parse_response(text: str) -> dict | None:
         if isinstance(data, dict) and "action" in data:
             return data
     except json.JSONDecodeError:
-        m = re.search(r'\{.*\}', text, re.DOTALL)
+        m = re.search(r"\{.*\}", text, re.DOTALL)
         if m:
             try:
                 data = json.loads(m.group())

@@ -20,6 +20,7 @@ from typing import Any
 import torch
 from xdsl.dialects.builtin import (
     BFloat16Type,
+    FlatSymbolRefAttr,
     Float16Type,
     Float32Type,
     Float64Type,
@@ -28,23 +29,23 @@ from xdsl.dialects.builtin import (
     StringAttr,
     TensorType,
 )
-from xdsl.dialects.builtin import FlatSymbolRefAttr
 from xdsl.dialects.func import CallOp, FuncOp, ReturnOp
+
 
 def FlatSymbolRefAttr_ref(name: str) -> FlatSymbolRefAttr:
     """Helper: build a FlatSymbolRefAttr from a plain string name."""
     return FlatSymbolRefAttr(name)
+
+
 from xdsl.ir import Attribute, Block, Operation, Region, SSAValue
 from xdsl.printer import Printer
 
 from compgen.ir.payload.decompositions import (
     DECOMPOSITION_TABLE,
     DecompFn,
-    DecompResult,
     reset_region_counters,
 )
 from compgen.ir.payload.types import Float8E4M3FNType, Float8E5M2Type
-
 
 # Tags the FX-side graph passes (in ``compgen.transforms.graph_passes``) set
 # on ``node.meta``. ``FXImporter`` forwards each onto the emitted xDSL ops
@@ -174,10 +175,13 @@ class FXImporter:
         for p in placeholders:
             tt = node_types.get(p.name)
             if tt is None:
-                self.diagnostics.append(ImportDiagnostic(
-                    fx_node=p.name, level="warning",
-                    message=f"No type info for placeholder {p.name}, using f32[1]",
-                ))
+                self.diagnostics.append(
+                    ImportDiagnostic(
+                        fx_node=p.name,
+                        level="warning",
+                        message=f"No type info for placeholder {p.name}, using f32[1]",
+                    )
+                )
                 tt = TensorType(Float32Type(), [1])
             arg_types.append(tt)
 
@@ -216,9 +220,7 @@ class FXImporter:
             if sig_key in declared_sigs:
                 # Rewrite the call to use the canonical (possibly
                 # disambiguated) name for this signature.
-                call.properties["callee"] = FlatSymbolRefAttr_ref(
-                    declared_sigs[sig_key]
-                )
+                call.properties["callee"] = FlatSymbolRefAttr_ref(declared_sigs[sig_key])
                 return
             # If the callee name already exists with a different
             # signature, generate a unique suffixed name.
@@ -234,21 +236,26 @@ class FXImporter:
             if chosen_name != callee:
                 # Rewrite the existing CallOp to point at the new name.
                 call.properties["callee"] = FlatSymbolRefAttr_ref(chosen_name)
-            extern_funcs.append(FuncOp.external(
-                chosen_name,
-                [value.type for value in call.operands],
-                [value.type for value in call.results],
-            ))
+            extern_funcs.append(
+                FuncOp.external(
+                    chosen_name,
+                    [value.type for value in call.operands],
+                    [value.type for value in call.results],
+                )
+            )
 
         # Process call_function nodes
         for node in call_nodes:
             target_str = str(node.target)
             result_type = node_types.get(node.name)
             if result_type is None:
-                self.diagnostics.append(ImportDiagnostic(
-                    fx_node=node.name, level="warning",
-                    message=f"No type info for {node.name}, skipping",
-                ))
+                self.diagnostics.append(
+                    ImportDiagnostic(
+                        fx_node=node.name,
+                        level="warning",
+                        message=f"No type info for {node.name}, skipping",
+                    )
+                )
                 continue
 
             # Resolve operands
@@ -271,10 +278,13 @@ class FXImporter:
                 except (IndexError, KeyError, TypeError) as decomp_err:
                     # Decomposition failed (e.g. missing operands from scalar constants).
                     # Fall through to opaque fallback instead of crashing.
-                    self.diagnostics.append(ImportDiagnostic(
-                        fx_node=node.name, level="warning",
-                        message=f"Decomposition failed for {target_str}: {decomp_err}; falling back to opaque call",
-                    ))
+                    self.diagnostics.append(
+                        ImportDiagnostic(
+                            fx_node=node.name,
+                            level="warning",
+                            message=f"Decomposition failed for {target_str}: {decomp_err}; falling back to opaque call",
+                        )
+                    )
                 else:
                     for op in result.ops:
                         if isinstance(op, CallOp):
@@ -286,26 +296,27 @@ class FXImporter:
                         value_map[node.name] = result.result
 
                     self.decomposed_count += 1
-                    hint_suffix = (
-                        f", hint: {result.pattern_hint}"
-                        if result.pattern_hint
-                        else ""
+                    hint_suffix = f", hint: {result.pattern_hint}" if result.pattern_hint else ""
+                    self.diagnostics.append(
+                        ImportDiagnostic(
+                            fx_node=node.name,
+                            level="info",
+                            message=(
+                                f"Decomposed {target_str} -> {len(result.ops)} ops "
+                                f"(regions: {result.region_ids}{hint_suffix})"
+                            ),
+                        )
                     )
-                    self.diagnostics.append(ImportDiagnostic(
-                        fx_node=node.name, level="info",
-                        message=(
-                            f"Decomposed {target_str} -> {len(result.ops)} ops "
-                            f"(regions: {result.region_ids}{hint_suffix})"
-                        ),
-                    ))
                     continue
 
             if not self.allow_opaque_fallback and target_str not in self.explicit_blackboxes:
-                self.diagnostics.append(ImportDiagnostic(
-                    fx_node=node.name,
-                    level="error",
-                    message=f"Unsupported without explicit blackbox approval: {target_str}",
-                ))
+                self.diagnostics.append(
+                    ImportDiagnostic(
+                        fx_node=node.name,
+                        level="error",
+                        message=f"Unsupported without explicit blackbox approval: {target_str}",
+                    )
+                )
                 continue
 
             # Fallback: opaque func.call
@@ -329,10 +340,13 @@ class FXImporter:
 
             self.opaque_count += 1
             level = "warning" if target_str in self.explicit_blackboxes else "info"
-            self.diagnostics.append(ImportDiagnostic(
-                fx_node=node.name, level=level,
-                message=f"Opaque: {target_str} -> func.call @{func_name}",
-            ))
+            self.diagnostics.append(
+                ImportDiagnostic(
+                    fx_node=node.name,
+                    level=level,
+                    message=f"Opaque: {target_str} -> func.call @{func_name}",
+                )
+            )
 
         # Add return
         ret_values: list[SSAValue] = []
@@ -356,10 +370,13 @@ class FXImporter:
         try:
             module.verify()
         except Exception as e:
-            self.diagnostics.append(ImportDiagnostic(
-                fx_node="<module>", level="error",
-                message=f"Module verification failed: {e}",
-            ))
+            self.diagnostics.append(
+                ImportDiagnostic(
+                    fx_node="<module>",
+                    level="error",
+                    message=f"Module verification failed: {e}",
+                )
+            )
 
         return module
 

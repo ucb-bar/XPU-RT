@@ -54,7 +54,7 @@ class DynamoReport:
     graph_breaks: list[tuple[str, str]] = field(default_factory=list)
     guard_failures: int = 0
     op_coverage: dict[str, bool] = field(default_factory=dict)
-    guard_observations: list["GuardObservation"] = field(default_factory=list)
+    guard_observations: list[GuardObservation] = field(default_factory=list)
     graph_count: int = 0
     op_count: int = 0
     warnings: list[str] = field(default_factory=list)
@@ -144,9 +144,7 @@ def _extract_break_reason(reason: Any) -> tuple[str, str]:
 def _extract_guard_observation(guard: Any) -> GuardObservation:
     """Normalize a TorchDynamo guard object into a serializable dataclass."""
 
-    guard_types = tuple(
-        str(item) for item in (getattr(guard, "guard_types", None) or ())
-    )
+    guard_types = tuple(str(item) for item in (getattr(guard, "guard_types", None) or ()))
     code = tuple(str(item) for item in (getattr(guard, "code_list", None) or ()))
     user_stack = tuple(str(frame) for frame in (getattr(guard, "user_stack", None) or ()))
     create_fn = getattr(guard, "create_fn_name", "") or ""

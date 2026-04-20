@@ -118,25 +118,38 @@ class ExecutionPlan:
     def to_dict(self) -> dict[str, Any]:
         """Serialize to dict for YAML output."""
         return {
-            "placements": [
-                {"op": p.op_name, "device": p.device_index, "reason": p.reason}
-                for p in self.placements
-            ],
+            "placements": [{"op": p.op_name, "device": p.device_index, "reason": p.reason} for p in self.placements],
             "copies": [
-                {"tensor": c.tensor_name, "src": c.src_device, "dst": c.dst_device,
-                 "bytes": c.size_bytes, "async": c.async_}
+                {
+                    "tensor": c.tensor_name,
+                    "src": c.src_device,
+                    "dst": c.dst_device,
+                    "bytes": c.size_bytes,
+                    "async": c.async_,
+                }
                 for c in self.copies
             ],
             "execution_order": self.execution_order,
             "memory_plans": [
-                {"device": m.device_index, "peak_bytes": m.peak_bytes,
-                 "address_space": m.address_space, "physical_offset": m.physical_offset}
+                {
+                    "device": m.device_index,
+                    "peak_bytes": m.peak_bytes,
+                    "address_space": m.address_space,
+                    "physical_offset": m.physical_offset,
+                }
                 for m in self.memory_plans
             ],
             "dma_ops": [
-                {"tensor": d.tensor_name, "src_space": d.src_space, "dst_space": d.dst_space,
-                 "src_offset": d.src_offset, "dst_offset": d.dst_offset,
-                 "bytes": d.size_bytes, "stride_pattern": d.stride_pattern, "async": d.async_}
+                {
+                    "tensor": d.tensor_name,
+                    "src_space": d.src_space,
+                    "dst_space": d.dst_space,
+                    "src_offset": d.src_offset,
+                    "dst_offset": d.dst_offset,
+                    "bytes": d.size_bytes,
+                    "stride_pattern": d.stride_pattern,
+                    "async": d.async_,
+                }
                 for d in self.dma_ops
             ],
             "estimated_latency_us": self.estimated_latency_us,
@@ -192,10 +205,12 @@ class ExecutionPlanner:
             placements=placements,
             copies=[],
             execution_order=execution_order,
-            memory_plans=[MemoryPlan(
-                device_index=0,
-                peak_bytes=sum(p.memory_bytes for p in partitions),
-            )],
+            memory_plans=[
+                MemoryPlan(
+                    device_index=0,
+                    peak_bytes=sum(p.memory_bytes for p in partitions),
+                )
+            ],
             estimated_latency_us=total_latency,
         )
 
@@ -222,8 +237,12 @@ class ExecutionPlanner:
             device_memory_caps=device_memory,
             transfer_cost_matrix=transfer_cost_matrix,
         )
-        log.info("solver.placement.done", feasible=placement_solution.feasible,
-                 gap=placement_solution.gap, time_ms=placement_solution.solve_time_ms)
+        log.info(
+            "solver.placement.done",
+            feasible=placement_solution.feasible,
+            gap=placement_solution.gap,
+            time_ms=placement_solution.solve_time_ms,
+        )
 
         if not placement_solution.feasible:
             log.warning("solver.placement.infeasible")
@@ -244,7 +263,11 @@ class ExecutionPlanner:
 
         # Solve schedule (partitions + copy transfer tasks)
         schedule_solution = self._solve_schedule_with_copies(
-            partitions, assignments, copy_tasks, num_devices, solve_schedule,
+            partitions,
+            assignments,
+            copy_tasks,
+            num_devices,
+            solve_schedule,
         )
 
         if schedule_solution.feasible:
@@ -262,13 +285,21 @@ class ExecutionPlanner:
         part_by_id = {p.partition_id: p for p in partitions}
         device_capacities = dict(enumerate(device_memory))
         lifetimes = self._build_buffer_lifetimes(
-            partitions, assignments, copy_tasks, schedule_solution, part_by_id,
+            partitions,
+            assignments,
+            copy_tasks,
+            schedule_solution,
+            part_by_id,
         )
 
         log.info("solver.memory.start", num_buffers=len(lifetimes))
         memory_solution = solve_memory(lifetimes, device_capacities)
-        log.info("solver.memory.done", feasible=memory_solution.feasible,
-                 reuse_count=memory_solution.reuse_count, time_ms=memory_solution.solve_time_ms)
+        log.info(
+            "solver.memory.done",
+            feasible=memory_solution.feasible,
+            reuse_count=memory_solution.reuse_count,
+            time_ms=memory_solution.solve_time_ms,
+        )
 
         memory_plans = [
             MemoryPlan(device_index=dev_idx, peak_bytes=peak)
@@ -333,20 +364,24 @@ class ExecutionPlanner:
                     cost_per_byte = transfer_cost_matrix.get((dep_device, p_device), 0.001)
                     cost_us = transfer_bytes * cost_per_byte
 
-                    copies.append(CopyOp(
-                        tensor_name=f"{dep_id}_to_{p.partition_id}",
-                        src_device=dep_device,
-                        dst_device=p_device,
-                        size_bytes=transfer_bytes,
-                        estimated_cost_us=cost_us,
-                    ))
-                    copy_tasks.append(_CopyTask(
-                        copy_id=f"copy_{dep_id}_to_{p.partition_id}",
-                        src_partition=dep_id,
-                        dst_partition=p.partition_id,
-                        device=p_device,
-                        duration_us=max(cost_us, 0.001),
-                    ))
+                    copies.append(
+                        CopyOp(
+                            tensor_name=f"{dep_id}_to_{p.partition_id}",
+                            src_device=dep_device,
+                            dst_device=p_device,
+                            size_bytes=transfer_bytes,
+                            estimated_cost_us=cost_us,
+                        )
+                    )
+                    copy_tasks.append(
+                        _CopyTask(
+                            copy_id=f"copy_{dep_id}_to_{p.partition_id}",
+                            src_partition=dep_id,
+                            dst_partition=p.partition_id,
+                            device=p_device,
+                            duration_us=max(cost_us, 0.001),
+                        )
+                    )
 
         return copies, copy_tasks
 
@@ -362,9 +397,7 @@ class ExecutionPlanner:
         all_task_ids = [p.partition_id for p in partitions]
         durations_us: dict[str, float] = {p.partition_id: p.estimated_cost_us for p in partitions}
         device_assignments: dict[str, int] = dict(assignments)
-        dependencies: dict[str, list[str]] = {
-            p.partition_id: list(p.dependencies) for p in partitions
-        }
+        dependencies: dict[str, list[str]] = {p.partition_id: list(p.dependencies) for p in partitions}
 
         for ct in copy_tasks:
             all_task_ids.append(ct.copy_id)
@@ -382,8 +415,12 @@ class ExecutionPlanner:
             dependencies=dependencies,
             num_devices=num_devices,
         )
-        log.info("solver.schedule.done", feasible=solution.feasible,
-                 makespan_us=solution.makespan_us, time_ms=solution.solve_time_ms)
+        log.info(
+            "solver.schedule.done",
+            feasible=solution.feasible,
+            makespan_us=solution.makespan_us,
+            time_ms=solution.solve_time_ms,
+        )
         return solution
 
     def _build_buffer_lifetimes(
@@ -404,36 +441,42 @@ class ExecutionPlanner:
                 pid = p.partition_id
                 start = schedule_solution.start_times.get(pid, 0.0)
                 end = schedule_solution.end_times.get(pid, start + p.estimated_cost_us)
-                lifetimes.append(BufferLifetime(
-                    buffer_name=pid,
-                    size_bytes=p.memory_bytes,
-                    device_index=assignments.get(pid, 0),
-                    start_us=start,
-                    end_us=end,
-                ))
+                lifetimes.append(
+                    BufferLifetime(
+                        buffer_name=pid,
+                        size_bytes=p.memory_bytes,
+                        device_index=assignments.get(pid, 0),
+                        start_us=start,
+                        end_us=end,
+                    )
+                )
             # Copy buffers live from copy start until the destination partition finishes
             for ct in copy_tasks:
                 copy_start = schedule_solution.start_times.get(ct.copy_id, 0.0)
                 dst_end = schedule_solution.end_times.get(ct.dst_partition, copy_start + ct.duration_us)
                 src_part = part_by_id.get(ct.src_partition)
                 size = src_part.memory_bytes // 2 if src_part else 0
-                lifetimes.append(BufferLifetime(
-                    buffer_name=ct.copy_id,
-                    size_bytes=size,
-                    device_index=ct.device,
-                    start_us=copy_start,
-                    end_us=dst_end,
-                ))
+                lifetimes.append(
+                    BufferLifetime(
+                        buffer_name=ct.copy_id,
+                        size_bytes=size,
+                        device_index=ct.device,
+                        start_us=copy_start,
+                        end_us=dst_end,
+                    )
+                )
         else:
             total_duration = sum(p.estimated_cost_us for p in partitions)
             for p in partitions:
-                lifetimes.append(BufferLifetime(
-                    buffer_name=p.partition_id,
-                    size_bytes=p.memory_bytes,
-                    device_index=assignments.get(p.partition_id, 0),
-                    start_us=0.0,
-                    end_us=total_duration,
-                ))
+                lifetimes.append(
+                    BufferLifetime(
+                        buffer_name=p.partition_id,
+                        size_bytes=p.memory_bytes,
+                        device_index=assignments.get(p.partition_id, 0),
+                        start_us=0.0,
+                        end_us=total_duration,
+                    )
+                )
 
         return lifetimes
 

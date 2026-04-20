@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
-from io import StringIO
 from typing import Any
 
 import structlog
@@ -38,8 +37,6 @@ from xdsl.ir import Operation, SSAValue
 from compgen.semantic.backends.xdsl_smt.results import (
     StructuredCounterexample,
     TVResult,
-    interpret_z3_result,
-    parse_z3_counterexample,
 )
 
 log = structlog.get_logger()
@@ -100,8 +97,6 @@ class TranslationValidationBackend:
                 solver_time_ms=0.0,
             )
 
-        import z3
-
         effective_timeout = timeout_ms or self.timeout_ms
 
         # Extract func.func from both modules
@@ -117,9 +112,7 @@ class TranslationValidationBackend:
 
         try:
             start = time.monotonic()
-            result = self._build_and_check(
-                before_func, after_func, effective_timeout, optimize
-            )
+            result = self._build_and_check(before_func, after_func, effective_timeout, optimize)
             elapsed = (time.monotonic() - start) * 1000
             return TVResult(
                 ok=result["ok"],
@@ -159,18 +152,14 @@ class TranslationValidationBackend:
 
         # Both functions must use the same input variables
         # Equate corresponding inputs
-        for (src_name, src_var), (_, tgt_var) in zip(
-            before_inputs.items(), after_inputs.items()
-        ):
+        for (src_name, src_var), (_, tgt_var) in zip(before_inputs.items(), after_inputs.items()):
             solver.add(src_var == tgt_var)
 
         # Build refinement: for each output, target must equal source
         # Refinement: ¬(∧ᵢ (src_outᵢ == tgt_outᵢ))
         # If this is UNSAT, the refinement holds for all inputs
         refinement_parts = []
-        for (src_name, src_val), (_, tgt_val) in zip(
-            before_outputs.items(), after_outputs.items()
-        ):
+        for (src_name, src_val), (_, tgt_val) in zip(before_outputs.items(), after_outputs.items()):
             refinement_parts.append(src_val != tgt_val)
 
         if not refinement_parts:
@@ -221,9 +210,7 @@ class ArithZ3Lowerer:
     def __init__(self) -> None:
         self._values: dict[SSAValue, Any] = {}
 
-    def lower_func(
-        self, func: FuncOp, prefix: str = ""
-    ) -> tuple[dict[str, Any], dict[str, Any]]:
+    def lower_func(self, func: FuncOp, prefix: str = "") -> tuple[dict[str, Any], dict[str, Any]]:
         """Lower a func.func to Z3 expressions.
 
         Args:
@@ -369,7 +356,7 @@ def _arith_cmpi_to_z3(predicate: int, lhs: Any, rhs: Any) -> Any:
     mapping = {
         0: lambda a, b: a == b,
         1: lambda a, b: a != b,
-        2: lambda a, b: a < b,      # Z3 signed by default for BitVec
+        2: lambda a, b: a < b,  # Z3 signed by default for BitVec
         3: lambda a, b: a <= b,
         4: lambda a, b: a > b,
         5: lambda a, b: a >= b,

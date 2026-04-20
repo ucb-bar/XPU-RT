@@ -3,6 +3,15 @@
 from __future__ import annotations
 
 import pytest
+from compgen.ir.payload.passes.rewrites.lower_quantized_matmul import (
+    LowerQuantizedMatmulConfig,
+    LowerQuantizedMatmulStats,
+    run_lower_quantized_matmul,
+)
+from compgen.ir.quant import (
+    WeightInt4PackMMOp,
+    WeightInt8PackMMOp,
+)
 from xdsl.dialects.builtin import (
     Float32Type,
     FunctionType,
@@ -16,15 +25,6 @@ from xdsl.dialects.func import FuncOp, ReturnOp
 from xdsl.dialects.tensor import EmptyOp
 from xdsl.ir import Block, Region
 
-from compgen.ir.quant import (
-    WeightInt4PackMMOp,
-    WeightInt8PackMMOp,
-)
-from compgen.ir.payload.passes.rewrites.lower_quantized_matmul import (
-    LowerQuantizedMatmulConfig,
-    LowerQuantizedMatmulStats,
-    run_lower_quantized_matmul,
-)
 from tests.ir.payload.passes._pattern_test_helpers import (
     assert_module_verifies,
     count_ops,
@@ -134,7 +134,8 @@ def test_int4_pack_mm_is_tagged_not_expanded():
 def test_skip_policy_does_nothing():
     m, _ = _int8_module()
     stats = run_lower_quantized_matmul(
-        m, config=LowerQuantizedMatmulConfig(policy="skip"),
+        m,
+        config=LowerQuantizedMatmulConfig(policy="skip"),
     )
     assert stats.int8_rewritten == 0
     assert stats.skipped_policy >= 1
@@ -145,7 +146,8 @@ def test_zp_zero_only_policy_allows_default_symmetric():
     # No qtype attached -> default symmetric (zp=0).
     m, _ = _int8_module()
     stats = run_lower_quantized_matmul(
-        m, config=LowerQuantizedMatmulConfig(policy="zp_zero_only"),
+        m,
+        config=LowerQuantizedMatmulConfig(policy="zp_zero_only"),
     )
     assert stats.int8_rewritten == 1
 
@@ -181,9 +183,6 @@ def test_lower_quantized_matmul_on_tiny_int8_linear_captured():
     that the pass detects the compgen.quant.* op emitted by the
     decomposition table and lowers it.
     """
-    import torch
-    import torch.nn as nn
-    from compgen.capture.torch_mlir_bridge import bridge_fx_graph
 
     # We synthesize the op directly rather than via TorchAO here to
     # keep the real-workload test fast; the important fidelity is

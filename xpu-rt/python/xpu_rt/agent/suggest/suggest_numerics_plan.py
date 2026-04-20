@@ -14,10 +14,17 @@ from compgen.agent.suggest._candidate import ProposalCandidate
 from compgen.agent.suggest._dispatch import register_suggester
 from compgen.agent.suggest._recipe_index import build_recipe_index
 
-
-_COMPUTE_ROLES = frozenset({
-    "matmul", "mm", "addmm", "linear", "bmm", "batch_matmul", "softmax",
-})
+_COMPUTE_ROLES = frozenset(
+    {
+        "matmul",
+        "mm",
+        "addmm",
+        "linear",
+        "bmm",
+        "batch_matmul",
+        "softmax",
+    }
+)
 
 
 def _preferred_dtype(target: Any) -> str:
@@ -50,16 +57,19 @@ def suggest_numerics_plan(
         role = idx.role_by_region.get(sym, "")
         if role not in _COMPUTE_ROLES:
             continue
-        out.append(ProposalCandidate(
-            chosen={
-                "region_ref": sym, "compute_dtype": dtype,
-                "accumulator_dtype": "f32",
-            },
-            rationale=f"{role} on {sym} → {dtype} compute, f32 accumulator",
-            expected_impact=0.6,
-            target_feature_justification=f"target preferred dtype: {dtype}",
-            metadata={"role": role, "compute_dtype": dtype},
-        ))
+        out.append(
+            ProposalCandidate(
+                chosen={
+                    "region_ref": sym,
+                    "compute_dtype": dtype,
+                    "accumulator_dtype": "f32",
+                },
+                rationale=f"{role} on {sym} → {dtype} compute, f32 accumulator",
+                expected_impact=0.6,
+                target_feature_justification=f"target preferred dtype: {dtype}",
+                metadata={"role": role, "compute_dtype": dtype},
+            )
+        )
         if len(out) >= k:
             break
     return out

@@ -20,10 +20,7 @@ from compgen.runtime.transport import TransportMessage
 
 log = structlog.get_logger()
 
-_INSTALL_MSG = (
-    "Ray is required for RayTransport. "
-    "Install with: pip install 'compgen[ray]'"
-)
+_INSTALL_MSG = "Ray is required for RayTransport. Install with: pip install 'compgen[ray]'"
 
 
 def _require_ray() -> Any:

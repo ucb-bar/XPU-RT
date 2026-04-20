@@ -5,18 +5,23 @@ from __future__ import annotations
 import json
 
 from compgen.agent.prompts.runtime_dispatch import (
-    DispatchConfig,
     DispatchContext,
+)
+from compgen.agent.prompts.runtime_dispatch import (
     format_prompt as dispatch_prompt,
+)
+from compgen.agent.prompts.runtime_dispatch import (
     parse_response as parse_dispatch,
 )
 from compgen.agent.prompts.runtime_profile import (
-    ProfileHookConfig,
     ProfileHookContext,
+)
+from compgen.agent.prompts.runtime_profile import (
     format_prompt as profile_prompt,
+)
+from compgen.agent.prompts.runtime_profile import (
     parse_response as parse_profile,
 )
-
 
 # ---- runtime_profile.py ----
 
@@ -28,8 +33,7 @@ class TestProfilePrompt:
             available_backends=["nsight_systems", "perf"],
             available_counters=["cycles", "sm_active"],
             current_bottlenecks=[
-                {"region": "matmul_0", "kind": "compute_bound",
-                 "severity": 0.8, "suggestion": "tile"},
+                {"region": "matmul_0", "kind": "compute_bound", "severity": 0.8, "suggestion": "tile"},
             ],
             tile_profiling_available=True,
             runtime_env="linux_userspace",
@@ -41,13 +45,15 @@ class TestProfilePrompt:
         assert "tile" in prompt
 
     def test_parse_valid(self) -> None:
-        response = json.dumps({
-            "instrumentation_level": "TILE_LEVEL",
-            "counters_to_enable": ["cycles", "instructions"],
-            "custom_hooks": {"pre_dispatch": "my_hook();"},
-            "analysis_focus": "memory",
-            "reasoning": "memory-bound workload",
-        })
+        response = json.dumps(
+            {
+                "instrumentation_level": "TILE_LEVEL",
+                "counters_to_enable": ["cycles", "instructions"],
+                "custom_hooks": {"pre_dispatch": "my_hook();"},
+                "analysis_focus": "memory",
+                "reasoning": "memory-bound workload",
+            }
+        )
         config = parse_profile(response)
         assert config.instrumentation_level == "TILE_LEVEL"
         assert len(config.counters_to_enable) == 2
@@ -94,14 +100,16 @@ class TestDispatchPrompt:
         assert "bulk_sync" in prompt
 
     def test_parse_valid(self) -> None:
-        response = json.dumps({
-            "strategy": "pipeline",
-            "transport_overrides": {"host->npu": "zephyr_ipc"},
-            "thread_config": {"dispatch": 3, "dma_handler": 2},
-            "double_buffer": True,
-            "dma_tile_size": 65536,
-            "reasoning": "pipeline overlaps compute and DMA",
-        })
+        response = json.dumps(
+            {
+                "strategy": "pipeline",
+                "transport_overrides": {"host->npu": "zephyr_ipc"},
+                "thread_config": {"dispatch": 3, "dma_handler": 2},
+                "double_buffer": True,
+                "dma_tile_size": 65536,
+                "reasoning": "pipeline overlaps compute and DMA",
+            }
+        )
         config = parse_dispatch(response)
         assert config.strategy == "pipeline"
         assert config.transport_overrides["host->npu"] == "zephyr_ipc"

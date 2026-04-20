@@ -76,6 +76,7 @@ def capabilities(target):
 class TestCudaPlugins:
     def test_encoding_plugin_protocol(self) -> None:
         from compgen.stages.base import TargetStagePlugin
+
         plugin = CudaEncodingPlugin()
         assert isinstance(plugin, TargetStagePlugin)
         assert plugin.target_name == "cuda_gpu"
@@ -83,16 +84,19 @@ class TestCudaPlugins:
 
     def test_dispatch_plugin_protocol(self) -> None:
         from compgen.stages.base import TargetStagePlugin
+
         plugin = CudaDispatchPlugin()
         assert isinstance(plugin, TargetStagePlugin)
 
     def test_tiling_plugin_protocol(self) -> None:
         from compgen.stages.base import TargetStagePlugin
+
         plugin = CudaTilingPlugin()
         assert isinstance(plugin, TargetStagePlugin)
 
     def test_codegen_plugin_protocol(self) -> None:
         from compgen.stages.base import TargetStagePlugin
+
         plugin = CudaCodegenPlugin()
         assert isinstance(plugin, TargetStagePlugin)
 

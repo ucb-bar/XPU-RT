@@ -27,7 +27,6 @@ from dataclasses import dataclass
 
 from xdsl.dialects.builtin import IntegerAttr, ModuleOp, StringAttr
 from xdsl.dialects.func import FuncOp
-from xdsl.ir import Operation
 
 
 @dataclass(frozen=True)
@@ -64,9 +63,7 @@ def run_simplify_while_loop(
         if isinstance(tc_attr, IntegerAttr):
             tc = int(tc_attr.value.data)
             if 0 < tc <= cfg.unroll_threshold:
-                op.attributes["compgen.while_fully_unrollable"] = StringAttr(
-                    "true"
-                )
+                op.attributes["compgen.while_fully_unrollable"] = StringAttr("true")
                 stats.loops_fully_unrollable += 1
         op.attributes["compgen.while_simplified"] = StringAttr("true")
         stats.loops_tagged += 1
@@ -81,9 +78,7 @@ def run_simplify_while_loop(
                 flags = arg_attrs.data.split(",")
                 for i, f in enumerate(flags):
                     if f.strip() == "false":
-                        op.attributes[f"compgen.arg_{i}_invariant"] = StringAttr(
-                            "true"
-                        )
+                        op.attributes[f"compgen.arg_{i}_invariant"] = StringAttr("true")
                         stats.loop_invariants_tagged += 1
 
     return stats

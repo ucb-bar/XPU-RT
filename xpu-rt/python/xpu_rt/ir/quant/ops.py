@@ -31,7 +31,7 @@ from __future__ import annotations
 from typing import ClassVar
 
 from xdsl.dialects.builtin import IntegerAttr, StringAttr
-from xdsl.ir import Attribute, Operation, SSAValue
+from xdsl.ir import Attribute, Operation
 from xdsl.irdl import (
     IRDLOperation,
     irdl_op_definition,
@@ -46,7 +46,6 @@ from xdsl.utils.exceptions import VerifyException
 
 from compgen.ir.quant.types import AffineQuantizedTensorType
 
-
 # -- small shared validators ----------------------------------------------------
 
 
@@ -57,10 +56,7 @@ def _verify_quant_range(op: Operation, quant_min_attr, quant_max_attr) -> None:
     lo = quant_min_attr.value.data
     hi = quant_max_attr.value.data
     if lo >= hi:
-        raise VerifyException(
-            f"{op.name}: quant_min ({lo}) must be strictly less than "
-            f"quant_max ({hi})"
-        )
+        raise VerifyException(f"{op.name}: quant_min ({lo}) must be strictly less than quant_max ({hi})")
 
 
 # -- Per-tensor affine quantize / dequantize -----------------------------------
@@ -220,10 +216,7 @@ class QuantizePerGroupOp(IRDLOperation):
     def verify_(self) -> None:
         _verify_quant_range(self, self.quant_min, self.quant_max)
         if self.group_size.value.data <= 0:
-            raise VerifyException(
-                f"{self.name}: group_size must be positive, "
-                f"got {self.group_size.value.data}"
-            )
+            raise VerifyException(f"{self.name}: group_size must be positive, got {self.group_size.value.data}")
 
 
 @irdl_op_definition
@@ -249,10 +242,7 @@ class DequantizePerGroupOp(IRDLOperation):
     def verify_(self) -> None:
         _verify_quant_range(self, self.quant_min, self.quant_max)
         if self.group_size.value.data <= 0:
-            raise VerifyException(
-                f"{self.name}: group_size must be positive, "
-                f"got {self.group_size.value.data}"
-            )
+            raise VerifyException(f"{self.name}: group_size must be positive, got {self.group_size.value.data}")
 
 
 # -- Packed-weight GEMMs (TorchAO + aten) --------------------------------------
@@ -315,10 +305,7 @@ class WeightInt4PackMMOp(IRDLOperation):
     def verify_(self) -> None:
         gs = self.group_size.value.data
         if gs not in self._VALID_GROUP_SIZES:
-            raise VerifyException(
-                f"{self.name}: group_size must be one of "
-                f"{sorted(self._VALID_GROUP_SIZES)}, got {gs}"
-            )
+            raise VerifyException(f"{self.name}: group_size must be one of {sorted(self._VALID_GROUP_SIZES)}, got {gs}")
 
 
 @irdl_op_definition

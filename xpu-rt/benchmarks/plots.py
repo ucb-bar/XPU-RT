@@ -10,7 +10,6 @@ from pathlib import Path
 
 from benchmarks.record import RunRecord
 
-
 log = logging.getLogger(__name__)
 
 
@@ -18,13 +17,13 @@ def _require_matplotlib():
     """Lazy import matplotlib."""
     try:
         import matplotlib
+
         matplotlib.use("Agg")  # non-interactive backend
         import matplotlib.pyplot as plt
+
         return plt
     except ImportError as e:
-        raise ImportError(
-            "matplotlib required for plots. Install with: pip install matplotlib"
-        ) from e
+        raise ImportError("matplotlib required for plots. Install with: pip install matplotlib") from e
 
 
 def _ensure_dir(path: Path) -> Path:
@@ -33,6 +32,7 @@ def _ensure_dir(path: Path) -> Path:
 
 
 # ---- Plot 1: Agentic convergence curve ----
+
 
 def plot_convergence(records: list[RunRecord], output_dir: str | Path) -> Path:
     """Plot cost vs iteration for each run (agentic convergence curve).
@@ -64,6 +64,7 @@ def plot_convergence(records: list[RunRecord], output_dir: str | Path) -> Path:
 
 
 # ---- Plot 2: Baseline comparison bar chart ----
+
 
 def plot_baseline_comparison(records: list[RunRecord], output_dir: str | Path) -> Path:
     """Bar chart comparing CompGen vs baselines (eager CPU, eager GPU, compiled GPU)."""
@@ -100,6 +101,7 @@ def plot_baseline_comparison(records: list[RunRecord], output_dir: str | Path) -
 
 
 # ---- Plot 3: EqSat impact ----
+
 
 def plot_eqsat_impact(records: list[RunRecord], output_dir: str | Path) -> Path:
     """Bar chart showing ops before/after eqsat and reduction percentage."""
@@ -138,6 +140,7 @@ def plot_eqsat_impact(records: list[RunRecord], output_dir: str | Path) -> Path:
 
 
 # ---- Plot 4: Solver performance ----
+
 
 def plot_solver_metrics(records: list[RunRecord], output_dir: str | Path) -> Path:
     """Solver time and optimality gap per run."""
@@ -180,6 +183,7 @@ def plot_solver_metrics(records: list[RunRecord], output_dir: str | Path) -> Pat
 
 # ---- Plot 5: Recipe IR composition ----
 
+
 def plot_recipe_composition(records: list[RunRecord], output_dir: str | Path) -> Path:
     """Stacked bar showing Recipe IR op family distribution."""
     plt = _require_matplotlib()
@@ -214,6 +218,7 @@ def plot_recipe_composition(records: list[RunRecord], output_dir: str | Path) ->
 
 
 # ---- Plot 6: LLM cost breakdown ----
+
 
 def plot_llm_cost(records: list[RunRecord], output_dir: str | Path) -> Path:
     """Token usage and cost per run."""
@@ -252,6 +257,7 @@ def plot_llm_cost(records: list[RunRecord], output_dir: str | Path) -> Path:
 
 # ---- Plot 7: Compile time breakdown ----
 
+
 def plot_compile_time(records: list[RunRecord], output_dir: str | Path) -> Path:
     """Stacked bar showing time spent in each pipeline stage."""
     plt = _require_matplotlib()
@@ -265,8 +271,10 @@ def plot_compile_time(records: list[RunRecord], output_dir: str | Path) -> Path:
     eqsat = [r.eqsat.eqsat_time_ms for r in records]
     recipe = [r.recipe.seed_generation_time_ms for r in records]
     solver = [r.solver.placement_time_ms + r.solver.schedule_time_ms + r.solver.memory_time_ms for r in records]
-    other = [max(r.total_compile_time_ms - c - e - re - s, 0)
-             for r, c, e, re, s in zip(records, capture, eqsat, recipe, solver)]
+    other = [
+        max(r.total_compile_time_ms - c - e - re - s, 0)
+        for r, c, e, re, s in zip(records, capture, eqsat, recipe, solver)
+    ]
 
     bottom = np.zeros(len(records))
     for values, label, color in [
@@ -295,6 +303,7 @@ def plot_compile_time(records: list[RunRecord], output_dir: str | Path) -> Path:
 
 # ---- Plot 8: Verification ladder ----
 
+
 def plot_verification_ladder(records: list[RunRecord], output_dir: str | Path) -> Path:
     """Heatmap-style grid showing pass/fail at each verification level per run."""
     plt = _require_matplotlib()
@@ -308,9 +317,9 @@ def plot_verification_ladder(records: list[RunRecord], output_dir: str | Path) -
         v = r.verification
         mismatch = getattr(v, "structural_expected_mismatch", False)
         overall_val = (
-            0.75 if mismatch else
-            (1.0 if v.overall_status == "pass" else
-             (0.5 if v.overall_status in ("skip", "skipped") else 0.0))
+            0.75
+            if mismatch
+            else (1.0 if v.overall_status == "pass" else (0.5 if v.overall_status in ("skip", "skipped") else 0.0))
         )
         row = [
             1 if v.structural_pass else (0.75 if mismatch else 0),
@@ -327,10 +336,12 @@ def plot_verification_ladder(records: list[RunRecord], output_dir: str | Path) -
         labels = ["(no data)"]
 
     import numpy as np
+
     data_arr = np.array(data)
 
     # 4 colors: red=FAIL, yellow=SKIP, yellow-green=EXPECTED_MISMATCH, green=PASS
     from matplotlib.colors import ListedColormap
+
     cmap = ListedColormap(["#e74c3c", "#f39c12", "#a8d08d", "#2ecc71"])
     ax.imshow(data_arr, cmap=cmap, vmin=0, vmax=1, aspect="auto")
 
@@ -352,8 +363,16 @@ def plot_verification_ladder(records: list[RunRecord], output_dir: str | Path) -
                 text = "SKIP"
             else:
                 text = "FAIL"
-            ax.text(j, i, text, ha="center", va="center", fontsize=7, fontweight="bold",
-                    color="white" if val < 0.4 or val >= 1.0 else "black")
+            ax.text(
+                j,
+                i,
+                text,
+                ha="center",
+                va="center",
+                fontsize=7,
+                fontweight="bold",
+                color="white" if val < 0.4 or val >= 1.0 else "black",
+            )
 
     path = _ensure_dir(Path(output_dir)) / "verification_ladder.png"
     fig.savefig(path, dpi=150, bbox_inches="tight")
@@ -362,6 +381,7 @@ def plot_verification_ladder(records: list[RunRecord], output_dir: str | Path) -
 
 
 # ---- Plot 9: Kernel strategy distribution ----
+
 
 def plot_kernel_strategies(records: list[RunRecord], output_dir: str | Path) -> Path:
     """Pie/bar chart showing kernel strategy distribution across all runs."""
@@ -377,11 +397,16 @@ def plot_kernel_strategies(records: list[RunRecord], output_dir: str | Path) -> 
         total_hist = {"no_data": 1}
 
     fig, ax = plt.subplots(figsize=(8, 8))
-    colors = {"native": "#2ecc71", "library": "#3498db", "autocomp": "#9b59b6",
-              "exo": "#e67e22", "fallback": "#95a5a6", "unsupported": "#e74c3c"}
+    colors = {
+        "native": "#2ecc71",
+        "library": "#3498db",
+        "autocomp": "#9b59b6",
+        "exo": "#e67e22",
+        "fallback": "#95a5a6",
+        "unsupported": "#e74c3c",
+    }
     pie_colors = [colors.get(k, "#bdc3c7") for k in total_hist]
-    ax.pie(total_hist.values(), labels=total_hist.keys(), colors=pie_colors,
-           autopct="%1.1f%%", startangle=90)
+    ax.pie(total_hist.values(), labels=total_hist.keys(), colors=pie_colors, autopct="%1.1f%%", startangle=90)
     ax.set_title("Kernel Strategy Distribution (All Runs)")
 
     path = _ensure_dir(Path(output_dir)) / "kernel_strategies.png"
@@ -391,6 +416,7 @@ def plot_kernel_strategies(records: list[RunRecord], output_dir: str | Path) -> 
 
 
 # ---- Plot 10: Latency distribution (box plot) ----
+
 
 def plot_latency_distribution(records: list[RunRecord], output_dir: str | Path) -> Path:
     """Box plot of per-run latency distributions."""
@@ -424,15 +450,12 @@ def plot_latency_distribution(records: list[RunRecord], output_dir: str | Path) 
 
 # ---- Plot 11: Speedup CDF ----
 
+
 def plot_speedup_cdf(records: list[RunRecord], output_dir: str | Path) -> Path:
     """CDF of speedup vs compiled baseline for comparable records."""
     plt = _require_matplotlib()
 
-    speedups = sorted(
-        r.baselines.speedup_vs_compiled
-        for r in records
-        if r.baselines.speedup_vs_compiled > 0
-    )
+    speedups = sorted(r.baselines.speedup_vs_compiled for r in records if r.baselines.speedup_vs_compiled > 0)
 
     fig, ax = plt.subplots(figsize=(10, 6))
     if speedups:
@@ -453,6 +476,7 @@ def plot_speedup_cdf(records: list[RunRecord], output_dir: str | Path) -> Path:
 
 
 # ---- Plot 12: Bring-up effort ----
+
 
 def plot_bringup_effort(records: list[RunRecord], output_dir: str | Path) -> Path:
     """Bring-up effort comparison across systems."""
@@ -482,6 +506,7 @@ def plot_bringup_effort(records: list[RunRecord], output_dir: str | Path) -> Pat
 
 # ---- Plot 13: Artifact completeness ----
 
+
 def plot_artifact_completeness(records: list[RunRecord], output_dir: str | Path) -> Path:
     """Bar chart of bundle artifact completeness."""
     plt = _require_matplotlib()
@@ -504,6 +529,7 @@ def plot_artifact_completeness(records: list[RunRecord], output_dir: str | Path)
 
 
 # ---- Plot 14: Verification catch matrix ----
+
 
 def plot_verification_catch_matrix(records: list[RunRecord], output_dir: str | Path) -> Path:
     """Heatmap of caught defects by verification layer."""
@@ -533,6 +559,7 @@ def plot_verification_catch_matrix(records: list[RunRecord], output_dir: str | P
 
 # ---- Plot 15: Proposal funnel ----
 
+
 def plot_proposal_funnel(records: list[RunRecord], output_dir: str | Path) -> Path:
     """Proposal-to-promotion funnel for the CompGen runs."""
     plt = _require_matplotlib()
@@ -561,6 +588,7 @@ def plot_proposal_funnel(records: list[RunRecord], output_dir: str | Path) -> Pa
 
 
 # ---- Master plot function ----
+
 
 def generate_all_plots(records: list[RunRecord], output_dir: str | Path) -> list[Path]:
     """Generate all benchmark plots from a list of RunRecords.

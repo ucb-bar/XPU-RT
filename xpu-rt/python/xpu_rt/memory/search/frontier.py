@@ -8,12 +8,12 @@ exploration.
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import structlog
 
-from compgen.memory.store import CompilerMemory
 from compgen.memory.search.task import SearchTask
+from compgen.memory.store import CompilerMemory
 
 log = structlog.get_logger()
 
@@ -77,9 +77,7 @@ class SearchFrontier:
         best_entry: FrontierEntry | None = None
 
         for entry in self._entries:
-            ucb = entry.mean_reward + self.exploration_weight * math.sqrt(
-                math.log(self._total_pulls) / entry.pulls
-            )
+            ucb = entry.mean_reward + self.exploration_weight * math.sqrt(math.log(self._total_pulls) / entry.pulls)
             if ucb > best_score:
                 best_score = ucb
                 best_entry = entry

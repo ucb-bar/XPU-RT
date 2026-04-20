@@ -114,11 +114,13 @@ def build_kernel_contracts(
         # Priority: higher FLOPs = higher priority
         priority = contract.cost.flops
 
-        specs.append(KernelSpec(
-            contract=contract,
-            perf_target_us=perf_target,
-            priority=priority,
-        ))
+        specs.append(
+            KernelSpec(
+                contract=contract,
+                perf_target_us=perf_target,
+                priority=priority,
+            )
+        )
 
     # Sort by priority (highest first)
     specs.sort(key=lambda s: s.priority, reverse=True)

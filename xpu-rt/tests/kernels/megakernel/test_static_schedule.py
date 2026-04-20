@@ -28,9 +28,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 
-pytestmark = pytest.mark.skipif(
-    not torch.cuda.is_available(), reason="real-example tests require a CUDA device"
-)
+pytestmark = pytest.mark.skipif(not torch.cuda.is_available(), reason="real-example tests require a CUDA device")
 
 
 # ---------------------------------------------------------------------------
@@ -49,7 +47,8 @@ def test_row_sum_megakernel_matches_torch_sum() -> None:
     torch.manual_seed(0)
     a = torch.randn(
         (compiled.n_row_blocks * compiled.block_m, compiled.j_chunks * compiled.block_k),
-        dtype=torch.float32, device="cuda",
+        dtype=torch.float32,
+        device="cuda",
     )
     got = run_megakernel(compiled, a)
     ref = reference(a)
@@ -72,12 +71,17 @@ def test_row_sum_megakernel_kernel_source_is_emitted_not_handwritten() -> None:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("n_heads,seq_len,head_dim", [
-    (2, 32, 32),
-    (4, 64, 32),
-])
+@pytest.mark.parametrize(
+    "n_heads,seq_len,head_dim",
+    [
+        (2, 32, 32),
+        (4, 64, 32),
+    ],
+)
 def test_attention_megakernel_matches_torch_sdpa(
-    n_heads: int, seq_len: int, head_dim: int,
+    n_heads: int,
+    seq_len: int,
+    head_dim: int,
 ) -> None:
     from examples.event_tensor.attention_megakernel import (
         compile_attention_megakernel,
@@ -86,7 +90,10 @@ def test_attention_megakernel_matches_torch_sdpa(
     )
 
     compiled = compile_attention_megakernel(
-        n_heads=n_heads, seq_len=seq_len, head_dim=head_dim, q_tile_size=16,
+        n_heads=n_heads,
+        seq_len=seq_len,
+        head_dim=head_dim,
+        q_tile_size=16,
     )
     torch.manual_seed(123)
     q = torch.randn((n_heads, seq_len, head_dim), dtype=torch.float32, device="cuda")
@@ -118,12 +125,18 @@ def test_attention_megakernel_emits_real_softmax_dot_chain() -> None:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("M,K,I,N", [
-    (16, 32, 64, 32),
-    (32, 64, 128, 64),
-])
+@pytest.mark.parametrize(
+    "M,K,I,N",
+    [
+        (16, 32, 64, 32),
+        (32, 64, 128, 64),
+    ],
+)
 def test_llama_mlp_megakernel_matches_pytorch_reference(
-    M: int, K: int, I: int, N: int,
+    M: int,
+    K: int,
+    I: int,
+    N: int,
 ) -> None:
     from examples.event_tensor.llama_mlp_megakernel import (
         compile_mlp_megakernel,
@@ -133,9 +146,9 @@ def test_llama_mlp_megakernel_matches_pytorch_reference(
 
     compiled = compile_mlp_megakernel(M=M, K=K, I=I, N=N)
     torch.manual_seed(7)
-    x      = torch.randn((M, K), dtype=torch.float32, device="cuda")
+    x = torch.randn((M, K), dtype=torch.float32, device="cuda")
     w_gate = torch.randn((I, K), dtype=torch.float32, device="cuda") * 0.05
-    w_up   = torch.randn((I, K), dtype=torch.float32, device="cuda") * 0.05
+    w_up = torch.randn((I, K), dtype=torch.float32, device="cuda") * 0.05
     w_down = torch.randn((N, I), dtype=torch.float32, device="cuda") * 0.05
 
     got = run_mlp_megakernel(compiled, x, w_gate, w_up, w_down)

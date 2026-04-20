@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from xdsl.dialects.builtin import ModuleOp
-
 from compgen.ir.payload.passes import NormalizeSubByte
+from xdsl.dialects.builtin import ModuleOp
 
 
 def test_empty_module_zero_count() -> None:
@@ -21,8 +20,9 @@ def test_packing_enum_accepted() -> None:
 
 
 def test_registered_as_real_tool() -> None:
-    from compgen.llm import get_registry
     import compgen.ir.payload.passes  # noqa: F401
+    from compgen.llm import get_registry
+
     r = get_registry()
     tool = r.lookup_tool("normalize_subbyte", phase=2)
     assert tool is not None and tool.is_stub is False

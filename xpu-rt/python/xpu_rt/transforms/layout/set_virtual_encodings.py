@@ -22,13 +22,15 @@ log = structlog.get_logger()
 SET_LAYOUT_MARKER = "compgen.has_virtual_encoding"
 
 # Ops that are kernel boundaries (layout decisions matter here)
-_KERNEL_BOUNDARY_OPS = frozenset({
-    "linalg.matmul",
-    "linalg.generic",
-    "linalg.conv_2d_nchw_fchw",
-    "linalg.batch_matmul",
-    "func.call",
-})
+_KERNEL_BOUNDARY_OPS = frozenset(
+    {
+        "linalg.matmul",
+        "linalg.generic",
+        "linalg.conv_2d_nchw_fchw",
+        "linalg.batch_matmul",
+        "func.call",
+    }
+)
 
 
 def _is_ukernel_boundary(op) -> bool:  # type: ignore[no-untyped-def]

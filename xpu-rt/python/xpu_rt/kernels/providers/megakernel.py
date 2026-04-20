@@ -64,11 +64,7 @@ class MegakernelProvider:
         contract: KernelContract,
         budget: SearchBudget,
     ) -> ProviderResult:
-        graph: GraphOp | None = (
-            self.graph_lookup(contract.region_id)
-            if self.graph_lookup is not None
-            else None
-        )
+        graph: GraphOp | None = self.graph_lookup(contract.region_id) if self.graph_lookup is not None else None
         if graph is None:
             return ProviderResult(
                 found=False,
@@ -130,9 +126,7 @@ class MegakernelProvider:
                 scope_key=self._last_result.kernel_name,
                 content=str(self._last_result.event_layout),
                 metadata={
-                    "task_count": sum(
-                        len(q) for q in self._last_result.task_queue.values()
-                    ),
+                    "task_count": sum(len(q) for q in self._last_result.task_queue.values()),
                     "grid": self._last_result.launch_config.get("grid"),
                 },
                 confidence=0.8,

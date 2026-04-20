@@ -181,8 +181,11 @@ class PassGenerator:
             ast.parse(source_code)
         except SyntaxError as e:
             return GeneratedPass(
-                name=name, description=description, source_code=source_code,
-                verified=False, verification_error=f"Syntax error: {e}",
+                name=name,
+                description=description,
+                source_code=source_code,
+                verified=False,
+                verification_error=f"Syntax error: {e}",
                 guard_refs=guard_refs,
             )
 
@@ -192,8 +195,11 @@ class PassGenerator:
             exec(source_code, namespace)  # noqa: S102
         except Exception as e:
             return GeneratedPass(
-                name=name, description=description, source_code=source_code,
-                verified=False, verification_error=f"Execution error: {e}",
+                name=name,
+                description=description,
+                source_code=source_code,
+                verified=False,
+                verification_error=f"Execution error: {e}",
                 guard_refs=guard_refs,
             )
 
@@ -206,8 +212,11 @@ class PassGenerator:
 
         if pattern_class is None:
             return GeneratedPass(
-                name=name, description=description, source_code=source_code,
-                verified=False, verification_error="No RewritePattern subclass found in generated code",
+                name=name,
+                description=description,
+                source_code=source_code,
+                verified=False,
+                verification_error="No RewritePattern subclass found in generated code",
                 guard_refs=guard_refs,
             )
 
@@ -220,16 +229,23 @@ class PassGenerator:
             cloned.verify()
         except Exception as e:
             return GeneratedPass(
-                name=name, description=description, source_code=source_code,
+                name=name,
+                description=description,
+                source_code=source_code,
                 pattern_class=pattern_class,
                 guard_refs=guard_refs,
-                verified=False, verification_error=f"IR verification failed: {e}\n{traceback.format_exc()[-200:]}",
+                verified=False,
+                verification_error=f"IR verification failed: {e}\n{traceback.format_exc()[-200:]}",
             )
 
         # All checks passed
         generated = GeneratedPass(
-            name=name, description=description, source_code=source_code,
-            pattern_class=pattern_class, guard_refs=guard_refs, verified=True,
+            name=name,
+            description=description,
+            source_code=source_code,
+            pattern_class=pattern_class,
+            guard_refs=guard_refs,
+            verified=True,
         )
         self._generated_passes[name] = generated
         return generated

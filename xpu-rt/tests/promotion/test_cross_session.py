@@ -14,8 +14,6 @@ import time
 from pathlib import Path
 from typing import Any
 
-import pytest
-
 from compgen.llm.registry import Registry
 from compgen.promotion.cross_session import (
     CrossSessionGraduationReport,
@@ -25,8 +23,12 @@ from compgen.promotion.cross_session import (
 
 
 def _jsonl_entry(
-    *, slot_name: str, workload: str, target: str,
-    chosen: dict[str, Any] | None = None, session_idx: int = 0,
+    *,
+    slot_name: str,
+    workload: str,
+    target: str,
+    chosen: dict[str, Any] | None = None,
+    session_idx: int = 0,
     llm_turn_id: str | None = None,
 ) -> str:
     """Build one ToolCallRecorder-style JSONL line."""
@@ -55,18 +57,28 @@ def _setup_transcripts(root: Path, slot_name: str = "my_fusion") -> None:
     # Session 1: workload=distilbert, target=cuda_a100
     s1 = root / "sess_a"
     s1.mkdir(parents=True, exist_ok=True)
-    (s1 / "tools.jsonl").write_text("\n".join([
-        _jsonl_entry(slot_name=slot_name, workload="distilbert", target="cuda_a100",
-                     chosen=chosen, session_idx=1),
-    ]) + "\n")
+    (s1 / "tools.jsonl").write_text(
+        "\n".join(
+            [
+                _jsonl_entry(
+                    slot_name=slot_name, workload="distilbert", target="cuda_a100", chosen=chosen, session_idx=1
+                ),
+            ]
+        )
+        + "\n"
+    )
 
     # Session 2: workload=phi2, target=npu_xyz — same chosen payload.
     s2 = root / "sess_b"
     s2.mkdir(parents=True, exist_ok=True)
-    (s2 / "tools.jsonl").write_text("\n".join([
-        _jsonl_entry(slot_name=slot_name, workload="phi2", target="npu_xyz",
-                     chosen=chosen, session_idx=2),
-    ]) + "\n")
+    (s2 / "tools.jsonl").write_text(
+        "\n".join(
+            [
+                _jsonl_entry(slot_name=slot_name, workload="phi2", target="npu_xyz", chosen=chosen, session_idx=2),
+            ]
+        )
+        + "\n"
+    )
 
 
 def test_no_transcripts_yields_empty_report(tmp_path: Path) -> None:
@@ -127,15 +139,14 @@ def test_report_to_dict_is_json_safe(tmp_path: Path) -> None:
     reg = Registry()
     report = promote_pending_graduations(reg, transcripts_root=tmp_path)
     d = report_to_dict(report)
-    json.dumps(d)                         # must not raise
+    json.dumps(d)  # must not raise
     assert d["requests_found"] == 1
 
 
 def test_malformed_jsonl_does_not_crash(tmp_path: Path) -> None:
     (tmp_path / "sess").mkdir()
     (tmp_path / "sess" / "tools.jsonl").write_text(
-        "this is not json\n"
-        + _jsonl_entry(slot_name="ok", workload="w1", target="t1") + "\n"
+        "this is not json\n" + _jsonl_entry(slot_name="ok", workload="w1", target="t1") + "\n"
     )
     reg = Registry()
     # Must not raise, and must still return a coherent report.

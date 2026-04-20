@@ -34,7 +34,6 @@ import structlog
 from compgen.ir.recipe.execute import RecipeExecutor
 from compgen.ir.recipe.lower import lower_recipe
 from compgen.ir.recipe.payload_mutators import apply_recipe_to_payload
-from compgen.ir.recipe.serialize import recipe_to_mlir
 from compgen.mcp.session import SessionManager
 
 log = structlog.get_logger()
@@ -46,7 +45,7 @@ def _module_hash(module) -> str:
         return "sha256:none"
     try:
         text = str(module)
-    except Exception:   # noqa: BLE001
+    except Exception:  # noqa: BLE001
         text = repr(module)
     return "sha256:" + hashlib.sha256(text.encode()).hexdigest()[:16]
 
@@ -104,7 +103,7 @@ def apply_recipe(
 
     try:
         lowered = lower_recipe(env.recipe)
-    except Exception as exc:   # noqa: BLE001
+    except Exception as exc:  # noqa: BLE001
         log.exception("apply_recipe.lower_failed")
         return {
             "ok": False,
@@ -123,7 +122,7 @@ def apply_recipe(
     )
     try:
         result = executor.execute(payload, lowered, env._target)
-    except Exception as exc:   # noqa: BLE001
+    except Exception as exc:  # noqa: BLE001
         log.exception("apply_recipe.execute_failed")
         return {
             "ok": False,
@@ -144,9 +143,7 @@ def apply_recipe(
 
     ver_results = result.verification_results or []
     ver_passed = sum(1 for v in ver_results if getattr(v, "passed", False))
-    ver_skipped = sum(
-        1 for v in ver_results if getattr(v, "status", "") == "skipped"
-    )
+    ver_skipped = sum(1 for v in ver_results if getattr(v, "status", "") == "skipped")
     ver_failed = len(ver_results) - ver_passed - ver_skipped
 
     # Per-obligation surface (P7.2): every VerificationResult expanded
@@ -157,15 +154,17 @@ def apply_recipe(
     per_obligation: list[dict[str, Any]] = []
     for v in ver_results:
         cex = getattr(v, "counterexample", None)
-        per_obligation.append({
-            "region_id": getattr(v, "region_id", ""),
-            "type": getattr(v, "obligation_type", ""),
-            "status": getattr(v, "status", ""),
-            "passed": bool(getattr(v, "passed", False)),
-            "solver_time_ms": float(getattr(v, "solver_time_ms", 0.0)),
-            "counterexample_summary": getattr(cex, "summary", None) if cex else None,
-            "details": dict(getattr(v, "details", {}) or {}),
-        })
+        per_obligation.append(
+            {
+                "region_id": getattr(v, "region_id", ""),
+                "type": getattr(v, "obligation_type", ""),
+                "status": getattr(v, "status", ""),
+                "passed": bool(getattr(v, "passed", False)),
+                "solver_time_ms": float(getattr(v, "solver_time_ms", 0.0)),
+                "counterexample_summary": getattr(cex, "summary", None) if cex else None,
+                "details": dict(getattr(v, "details", {}) or {}),
+            }
+        )
 
     # Per-script transform error surface (P7.6): _apply_transforms emits
     # diagnostics shaped ``transform(recipe_transform_<i>): <level> — <msg>``.
@@ -174,9 +173,8 @@ def apply_recipe(
     per_script: list[dict[str, Any]] = []
     seen_indices: set[int] = set()
     import re as _re
-    diag_pat = _re.compile(
-        r"transform\(recipe_transform_(\d+)\):\s*(\w+)\s*[—-]\s*(.+)"
-    )
+
+    diag_pat = _re.compile(r"transform\(recipe_transform_(\d+)\):\s*(\w+)\s*[—-]\s*(.+)")
     for diag in result.diagnostics:
         m = diag_pat.match(diag)
         if not m:
@@ -184,17 +182,19 @@ def apply_recipe(
         idx = int(m.group(1))
         level = m.group(2)
         msg = m.group(3).strip()
-        per_script.append({
-            "script_index": idx,
-            "level": level,           # info / warning / error
-            "error": msg if level.lower() != "info" else None,
-            "message": msg,
-        })
+        per_script.append(
+            {
+                "script_index": idx,
+                "level": level,  # info / warning / error
+                "error": msg if level.lower() != "info" else None,
+                "message": msg,
+            }
+        )
         seen_indices.add(idx)
     # Stash the per-obligation list on the driver so explain_verification
     # can recover it without re-running the executor.
-    driver._last_verification = list(per_obligation)   # type: ignore[attr-defined]
-    driver._last_transform_diagnostics = list(per_script)   # type: ignore[attr-defined]
+    driver._last_verification = list(per_obligation)  # type: ignore[attr-defined]
+    driver._last_transform_diagnostics = list(per_script)  # type: ignore[attr-defined]
 
     return {
         "ok": True,

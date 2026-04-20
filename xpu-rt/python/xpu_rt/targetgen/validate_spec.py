@@ -33,74 +33,92 @@ def validate_hardware_spec(spec: HardwareSpec) -> ValidationResult:
 
     if model in (ExecutionModel.ROCC_COPROCESSOR, ExecutionModel.DECOUPLED_MATRIX):
         if not spec.engine_geometry.systolic_array_dim and not spec.engine_geometry.tiles:
-            warnings.append(ValidationError(
-                "engine_geometry",
-                f"{model.value} targets should specify systolic_array_dim or tiles",
-                level="warning",
-            ))
+            warnings.append(
+                ValidationError(
+                    "engine_geometry",
+                    f"{model.value} targets should specify systolic_array_dim or tiles",
+                    level="warning",
+                )
+            )
 
     if model == ExecutionModel.SIMD_VECTOR:
         if spec.engine_geometry.vector_length_bits == 0:
-            warnings.append(ValidationError(
-                "engine_geometry.vector_length_bits",
-                "SIMD_VECTOR targets should specify vector_length_bits",
-                level="warning",
-            ))
+            warnings.append(
+                ValidationError(
+                    "engine_geometry.vector_length_bits",
+                    "SIMD_VECTOR targets should specify vector_length_bits",
+                    level="warning",
+                )
+            )
 
     if model == ExecutionModel.SIMT_GPU:
         if spec.engine_geometry.max_warp_size == 0:
-            warnings.append(ValidationError(
-                "engine_geometry.max_warp_size",
-                "SIMT_GPU targets should specify max_warp_size",
-                level="warning",
-            ))
+            warnings.append(
+                ValidationError(
+                    "engine_geometry.max_warp_size",
+                    "SIMT_GPU targets should specify max_warp_size",
+                    level="warning",
+                )
+            )
 
     # Native ops check
     if not spec.native_ops.families:
-        warnings.append(ValidationError(
-            "native_ops.families",
-            "No native operation families specified",
-            level="warning",
-        ))
+        warnings.append(
+            ValidationError(
+                "native_ops.families",
+                "No native operation families specified",
+                level="warning",
+            )
+        )
 
     # Memory model check
     if not spec.memory_model.address_spaces:
-        warnings.append(ValidationError(
-            "memory_model.address_spaces",
-            "No address spaces specified",
-            level="warning",
-        ))
+        warnings.append(
+            ValidationError(
+                "memory_model.address_spaces",
+                "No address spaces specified",
+                level="warning",
+            )
+        )
 
     # Numeric contract check
     if not spec.numeric_contract.supported_dtypes:
-        warnings.append(ValidationError(
-            "numeric_contract.supported_dtypes",
-            "No supported dtypes specified",
-            level="warning",
-        ))
+        warnings.append(
+            ValidationError(
+                "numeric_contract.supported_dtypes",
+                "No supported dtypes specified",
+                level="warning",
+            )
+        )
 
     # Positive geometry dimensions
     for tile in spec.engine_geometry.tiles:
         if any(d <= 0 for d in tile.dimensions):
-            errors.append(ValidationError(
-                f"engine_geometry.tiles.{tile.name}",
-                f"Tile dimensions must be positive, got {tile.dimensions}",
-            ))
+            errors.append(
+                ValidationError(
+                    f"engine_geometry.tiles.{tile.name}",
+                    f"Tile dimensions must be positive, got {tile.dimensions}",
+                )
+            )
 
     for dim in spec.engine_geometry.systolic_array_dim:
         if dim <= 0:
-            errors.append(ValidationError(
-                "engine_geometry.systolic_array_dim",
-                f"Systolic array dimensions must be positive, got {dim}",
-            ))
+            errors.append(
+                ValidationError(
+                    "engine_geometry.systolic_array_dim",
+                    f"Systolic array dimensions must be positive, got {dim}",
+                )
+            )
 
     # Address space sizes
     for space in spec.memory_model.address_spaces:
         if space.size_bytes < 0:
-            errors.append(ValidationError(
-                f"memory_model.address_spaces.{space.name}",
-                f"Address space size must be non-negative, got {space.size_bytes}",
-            ))
+            errors.append(
+                ValidationError(
+                    f"memory_model.address_spaces.{space.name}",
+                    f"Address space size must be non-negative, got {space.size_bytes}",
+                )
+            )
 
     return ValidationResult(
         valid=len(errors) == 0,

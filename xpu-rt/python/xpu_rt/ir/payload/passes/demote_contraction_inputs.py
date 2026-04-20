@@ -17,7 +17,6 @@ from typing import Any, ClassVar
 
 from xdsl.dialects.builtin import (
     Float32Type,
-    FloatAttr,
     IntegerAttr,
     ModuleOp,
     StringAttr,
@@ -27,8 +26,7 @@ from xdsl.dialects.builtin import (
 from xdsl.ir import Operation
 
 from compgen.ir.payload.passes.base import PayloadPass
-from compgen.llm.registry import AutocompCostImpact, ToolArg, ToolResult
-
+from compgen.llm.registry import AutocompCostImpact, ToolArg
 
 _CONTRACTION_OPS = frozenset(
     {
@@ -56,9 +54,7 @@ def _operand_is_f32_tensor(op: Operation) -> bool:
     return False
 
 
-_ALLOWED_DEMOTE_TARGETS = frozenset(
-    {"bf16", "fp16", "fp8_e4m3", "fp8_e5m2"}
-)
+_ALLOWED_DEMOTE_TARGETS = frozenset({"bf16", "fp16", "fp8_e4m3", "fp8_e5m2"})
 
 
 class DemoteContractionInputs(PayloadPass):
@@ -79,19 +75,26 @@ class DemoteContractionInputs(PayloadPass):
     def tool_args(self) -> tuple[ToolArg, ...]:
         return (
             ToolArg(
-                name="region", dtype="region_ref", description="region",
-                required=False, default="",
+                name="region",
+                dtype="region_ref",
+                description="region",
+                required=False,
+                default="",
             ),
             ToolArg(
-                name="dtype", dtype="enum",
+                name="dtype",
+                dtype="enum",
                 description="target demoted input dtype",
-                required=False, default="bf16",
+                required=False,
+                default="bf16",
                 enum=("bf16", "fp16", "fp8_e4m3", "fp8_e5m2"),
             ),
             ToolArg(
-                name="targets", dtype="enum",
+                name="targets",
+                dtype="enum",
                 description="which ops to affect",
-                required=False, default="all_contractions",
+                required=False,
+                default="all_contractions",
                 enum=("all_contractions", "matmul_only", "conv_only"),
             ),
         )
@@ -99,9 +102,7 @@ class DemoteContractionInputs(PayloadPass):
     def run(self, module: ModuleOp, **kwargs: Any) -> ModuleOp:
         dtype = kwargs.get("dtype", "bf16")
         if dtype not in _ALLOWED_DEMOTE_TARGETS:
-            raise ValueError(
-                f"dtype must be one of {sorted(_ALLOWED_DEMOTE_TARGETS)}, got {dtype!r}"
-            )
+            raise ValueError(f"dtype must be one of {sorted(_ALLOWED_DEMOTE_TARGETS)}, got {dtype!r}")
         filt = kwargs.get("targets", "all_contractions")
 
         def _matches(op_name: str) -> bool:
@@ -122,9 +123,7 @@ class DemoteContractionInputs(PayloadPass):
             op.attributes["compgen.demote_to"] = StringAttr(dtype)
             annotated += 1
 
-        module.attributes["compgen.demote_contraction_inputs.count"] = IntegerAttr(
-            annotated, i64
-        )
+        module.attributes["compgen.demote_contraction_inputs.count"] = IntegerAttr(annotated, i64)
         return module
 
 

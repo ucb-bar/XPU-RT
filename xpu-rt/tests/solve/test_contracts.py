@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
 from compgen.solve.contracts import SolverProblem
 
 
@@ -25,7 +24,6 @@ def test_extract_solver_problem() -> None:
     """extract_solver_problem should build a SolverProblem from Recipe IR + target."""
     from compgen.solve.contracts import extract_solver_problem
     from compgen.targets.schema import DeviceSpec, MemoryLevel, TargetProfile
-
     from xdsl.dialects.builtin import Float32Type, ModuleOp, TensorType
     from xdsl.dialects.func import FuncOp, ReturnOp
     from xdsl.dialects.linalg import MatmulOp
@@ -69,7 +67,6 @@ def test_extract_solver_problem_with_cost_data() -> None:
     """extract_solver_problem should incorporate profiled cost data."""
     from compgen.solve.contracts import extract_solver_problem
     from compgen.targets.schema import DeviceSpec, MemoryLevel, TargetProfile
-
     from xdsl.dialects.builtin import Float32Type, ModuleOp, TensorType
     from xdsl.dialects.func import FuncOp, ReturnOp
     from xdsl.dialects.linalg import MatmulOp

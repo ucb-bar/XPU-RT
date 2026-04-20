@@ -18,10 +18,10 @@ from compgen.ir.payload.decompositions import DECOMPOSITION_TABLE
 class UnknownOp:
     """An op found in the FX graph that we don't know how to handle."""
 
-    target: str                      # e.g., "aten.special_op.default"
-    shape: tuple[int, ...] | None    # output shape
+    target: str  # e.g., "aten.special_op.default"
+    shape: tuple[int, ...] | None  # output shape
     dtype: str
-    count: int                       # how many times it appears
+    count: int  # how many times it appears
     input_shapes: list[tuple[int, ...]] = field(default_factory=list)
     example_args: list[str] = field(default_factory=list)  # arg names
 
@@ -67,14 +67,21 @@ class OpDiscovery:
             if target in unknown_counts:
                 existing = unknown_counts[target]
                 unknown_counts[target] = UnknownOp(
-                    target=target, shape=existing.shape, dtype=existing.dtype,
-                    count=existing.count + 1, input_shapes=existing.input_shapes,
+                    target=target,
+                    shape=existing.shape,
+                    dtype=existing.dtype,
+                    count=existing.count + 1,
+                    input_shapes=existing.input_shapes,
                     example_args=existing.example_args,
                 )
             else:
                 unknown_counts[target] = UnknownOp(
-                    target=target, shape=shape, dtype=dtype, count=1,
-                    input_shapes=input_shapes, example_args=arg_names,
+                    target=target,
+                    shape=shape,
+                    dtype=dtype,
+                    count=1,
+                    input_shapes=input_shapes,
+                    example_args=arg_names,
                 )
 
         return sorted(unknown_counts.values(), key=lambda u: -u.count)

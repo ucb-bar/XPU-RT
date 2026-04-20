@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
 from compgen.ir.payload.contracts import CostEstimate, KernelContract, LayoutKind, LayoutRequirement
 
 
@@ -48,7 +47,6 @@ def test_kernel_contract_construction() -> None:
 def test_extract_contracts() -> None:
     """extract_contracts should walk an xDSL module and emit KernelContracts."""
     from compgen.ir.payload.contracts import extract_contracts
-
     from xdsl.dialects.builtin import Float32Type, ModuleOp, TensorType
     from xdsl.dialects.func import FuncOp, ReturnOp
     from xdsl.dialects.linalg import MatmulOp
@@ -113,14 +111,8 @@ def test_kernel_contract_yaml_serialization() -> None:
             "bytes_written": contract.cost.bytes_written,
             "latency_us": contract.cost.latency_us,
         },
-        "input_layouts": [
-            {"kind": l.kind.value, "alignment": l.alignment}
-            for l in contract.input_layouts
-        ],
-        "output_layouts": [
-            {"kind": l.kind.value, "alignment": l.alignment}
-            for l in contract.output_layouts
-        ],
+        "input_layouts": [{"kind": l.kind.value, "alignment": l.alignment} for l in contract.input_layouts],
+        "output_layouts": [{"kind": l.kind.value, "alignment": l.alignment} for l in contract.output_layouts],
         "supported_dtypes": sorted(contract.supported_dtypes),
     }
     yaml_text = yaml.dump(data, default_flow_style=False, sort_keys=True)

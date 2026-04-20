@@ -61,16 +61,9 @@ class SearchBudgetOp(IRDLOperation):
 
     def verify_(self) -> None:
         if self.max_iterations.value.data <= 0:
-            raise VerifyException(
-                f"max_iterations must be positive, got {self.max_iterations.value.data}"
-            )
-        if (
-            self.timeout_ms is not None
-            and self.timeout_ms.value.data <= 0
-        ):
-            raise VerifyException(
-                f"timeout_ms must be positive, got {self.timeout_ms.value.data}"
-            )
+            raise VerifyException(f"max_iterations must be positive, got {self.max_iterations.value.data}")
+        if self.timeout_ms is not None and self.timeout_ms.value.data <= 0:
+            raise VerifyException(f"timeout_ms must be positive, got {self.timeout_ms.value.data}")
 
 
 @irdl_op_definition
@@ -108,10 +101,7 @@ class RequireSolverOp(IRDLOperation):
     def verify_(self) -> None:
         valid = {"placement", "schedule", "memory"}
         if self.solve_type.data not in valid:
-            raise VerifyException(
-                f"Invalid solve_type '{self.solve_type.data}', "
-                f"expected one of {valid}"
-            )
+            raise VerifyException(f"Invalid solve_type '{self.solve_type.data}', expected one of {valid}")
 
 
 @irdl_op_definition

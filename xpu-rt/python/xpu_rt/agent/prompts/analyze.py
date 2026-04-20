@@ -83,15 +83,17 @@ ANALYSIS_PROMPT = textwrap.dedent("""\
 
 def format_prompt(ctx: AnalysisContext) -> str:
     """Render the analysis prompt with model context."""
-    op_lines = "\n".join(f"  {name}: {count}" for name, count in sorted(
-        ctx.op_summary.items(), key=lambda x: -x[1]
-    )[:15])
+    op_lines = "\n".join(
+        f"  {name}: {count}" for name, count in sorted(ctx.op_summary.items(), key=lambda x: -x[1])[:15]
+    )
     bottleneck_lines = "\n".join(f"  - {op}" for op in ctx.bottleneck_ops[:5]) or "  (none identified)"
-    repeated_lines = "\n".join(
-        f"  - {name}: {count}" for name, count in sorted(
-            (ctx.repeated_patterns or {}).items(), key=lambda x: (-x[1], x[0])
-        )[:8]
-    ) or "  (none)"
+    repeated_lines = (
+        "\n".join(
+            f"  - {name}: {count}"
+            for name, count in sorted((ctx.repeated_patterns or {}).items(), key=lambda x: (-x[1], x[0]))[:8]
+        )
+        or "  (none)"
+    )
     critical_path_lines = "\n".join(f"  - {item}" for item in (ctx.critical_path or [])[:8]) or "  (none)"
     backend_lines = "\n".join(f"  - {item}" for item in (ctx.backend_viability or [])[:8]) or "  (none)"
     unsupported = ", ".join((ctx.unsupported_ops or [])[:10]) or "(none)"

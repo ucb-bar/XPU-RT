@@ -183,9 +183,7 @@ class VerificationExecutor:
         from compgen.semantic.backends.xdsl_smt.tv_backend import TranslationValidationBackend
 
         backend = TranslationValidationBackend(timeout_ms=self.tv_timeout_ms)
-        tv_result = backend.check_refinement(
-            payload_before, payload_after, optimize=True
-        )
+        tv_result = backend.check_refinement(payload_before, payload_after, optimize=True)
 
         return VerificationResult(
             obligation_type="translation_validation",
@@ -220,9 +218,7 @@ class VerificationExecutor:
 
         from compgen.transforms.verify import _verify_differential
 
-        passed, max_error, msg = _verify_differential(
-            payload_before, payload_after, float(tolerance)
-        )
+        passed, max_error, msg = _verify_differential(payload_before, payload_after, float(tolerance))
         return VerificationResult(
             obligation_type="differential",
             region_id=region_id,

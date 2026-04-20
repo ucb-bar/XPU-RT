@@ -5,10 +5,11 @@ backend_match_weight) work best for each target family. Persists in
 CompilerMemory so future compilations for the same target start with
 better defaults.
 """
+
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import structlog
 
@@ -44,11 +45,13 @@ def store_cost_weights(
         f"backend={weights.get('backend_match_weight', 1.0):.3f} "
         f"gain={measured_gain:+.1f}%"
     )
-    artifact = json.dumps({
-        "weights": weights,
-        "measured_gain": measured_gain,
-        "target_key": target_key,
-    })
+    artifact = json.dumps(
+        {
+            "weights": weights,
+            "measured_gain": measured_gain,
+            "target_key": target_key,
+        }
+    )
 
     item = memory.store_knowledge(
         kind=KnowledgeKind.HARDWARE_RULE,

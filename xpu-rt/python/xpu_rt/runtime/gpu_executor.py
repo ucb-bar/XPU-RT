@@ -72,17 +72,17 @@ def _require_gpu() -> None:
     if not gpu_available():
         try:
             import torch
+
             have_cuda = torch.cuda.is_available()
         except ImportError:
             have_cuda = False
         try:
             import triton  # noqa: F401
+
             have_triton = True
         except ImportError:
             have_triton = False
-        raise GPUNotAvailable(
-            f"GPU path unavailable: cuda={have_cuda}, triton={have_triton}"
-        )
+        raise GPUNotAvailable(f"GPU path unavailable: cuda={have_cuda}, triton={have_triton}")
 
 
 @dataclass
@@ -101,9 +101,7 @@ def _load_kernel_module(path: Path, kernel_name: str) -> Any:
     spec.loader.exec_module(module)
     fn = getattr(module, kernel_name, None)
     if fn is None:
-        raise AttributeError(
-            f"kernel file {path} does not export {kernel_name!r}"
-        )
+        raise AttributeError(f"kernel file {path} does not export {kernel_name!r}")
     return fn
 
 
@@ -112,8 +110,7 @@ def load_emission_manifest(artifact_dir: str | Path) -> dict[str, Any]:
     path = Path(artifact_dir) / "emission_manifest.json"
     if not path.exists():
         raise FileNotFoundError(
-            f"emission_manifest.json missing from {artifact_dir}; "
-            "run ``emit_triton_kernels`` first"
+            f"emission_manifest.json missing from {artifact_dir}; run ``emit_triton_kernels`` first"
         )
     return json.loads(path.read_text())
 
@@ -144,10 +141,7 @@ def launch_triton_kernel(
     manifest = load_emission_manifest(artifact)
     entry = manifest.get(kernel_name)
     if entry is None:
-        raise KeyError(
-            f"{kernel_name!r} not in emission manifest; "
-            f"known kernels: {sorted(manifest)}"
-        )
+        raise KeyError(f"{kernel_name!r} not in emission manifest; known kernels: {sorted(manifest)}")
     kernel_path = Path(entry["source_path"])
     if not kernel_path.exists():
         raise FileNotFoundError(f"kernel source missing: {kernel_path}")
@@ -156,17 +150,21 @@ def launch_triton_kernel(
 
     # Launch.
     import time
+
     t0 = time.perf_counter()
     fn[grid](*args)
     try:
         import torch
+
         torch.cuda.synchronize()
     except Exception:  # noqa: BLE001
         pass
     launch_ms = (time.perf_counter() - t0) * 1000.0
     log.info(
         "gpu_executor.launched",
-        kernel=kernel_name, grid=grid, launch_ms=launch_ms,
+        kernel=kernel_name,
+        grid=grid,
+        launch_ms=launch_ms,
     )
     return LaunchResult(kernel_name=kernel_name, grid=grid, launch_ms=launch_ms)
 
@@ -184,7 +182,8 @@ def launch_all_from_manifest(
     for name in manifest:
         if name not in args_by_kernel or name not in grids_by_kernel:
             log.warning(
-                "gpu_executor.skip_missing_args", kernel=name,
+                "gpu_executor.skip_missing_args",
+                kernel=name,
             )
             continue
         out.append(

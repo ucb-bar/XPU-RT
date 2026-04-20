@@ -162,9 +162,7 @@ class CompGenLLMProtocol(Protocol):
         """
         ...
 
-    def generate_structured(
-        self, request: GenerationRequest, schema: dict[str, Any]
-    ) -> GenerationResponse:
+    def generate_structured(self, request: GenerationRequest, schema: dict[str, Any]) -> GenerationResponse:
         """Generate a structured (JSON-schema-constrained) artifact.
 
         Args:

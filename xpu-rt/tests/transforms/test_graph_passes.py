@@ -13,8 +13,6 @@ captured as `call_function` (the pass only inspects call_function nodes).
 from __future__ import annotations
 
 import torch
-from torch import nn
-
 from compgen.transforms.graph_passes import (
     detect_and_annotate_patterns,
     fold_transpose_into_matmul,
@@ -22,6 +20,7 @@ from compgen.transforms.graph_passes import (
     run_all_decomposition_passes,
     run_decomposition_on_graphs,
 )
+from torch import nn
 
 
 class LinearSilu(nn.Module):
@@ -31,9 +30,7 @@ class LinearSilu(nn.Module):
         self.bias = nn.Parameter(torch.zeros(8))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return torch.nn.functional.silu(
-            torch.nn.functional.linear(x, self.weight, self.bias)
-        )
+        return torch.nn.functional.silu(torch.nn.functional.linear(x, self.weight, self.bias))
 
 
 class AddOnly(nn.Module):

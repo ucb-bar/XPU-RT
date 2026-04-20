@@ -4,20 +4,18 @@ from __future__ import annotations
 
 import math
 
-import pytest
 import torch
 import torch.nn as nn
-
 from compgen.quantization.attention import (
     ExportableFP8Attention,
     FP8AttentionConfig,
     replace_sdpa_with_fp8_attention,
 )
 
-
 # ---------------------------------------------------------------------------
 # Output shape and dtype
 # ---------------------------------------------------------------------------
+
 
 class TestExportableFP8Attention:
     def test_output_shape_4d(self) -> None:
@@ -73,6 +71,7 @@ class TestExportableFP8Attention:
 # Softmax stays BF16
 # ---------------------------------------------------------------------------
 
+
 class TestSoftmaxBF16:
     def test_softmax_always_bf16(self) -> None:
         """Verify softmax intermediate is BF16, never FP8."""
@@ -111,6 +110,7 @@ class TestSoftmaxBF16:
 # Attention weights are FP8 after softmax
 # ---------------------------------------------------------------------------
 
+
 class TestAttnWeightsFP8:
     def test_attn_weights_quantized_by_default(self) -> None:
         config = FP8AttentionConfig()
@@ -127,16 +127,16 @@ class TestAttnWeightsFP8:
         ref = torch.nn.functional.scaled_dot_product_attention(q, k, v)
 
         # FP8 attention
-        fp8_attn = ExportableFP8Attention(FP8AttentionConfig(
-            quantize_qkv=True,
-            quantize_attn_weights=True,
-        ))
+        fp8_attn = ExportableFP8Attention(
+            FP8AttentionConfig(
+                quantize_qkv=True,
+                quantize_attn_weights=True,
+            )
+        )
         fp8_out = fp8_attn(q, k, v)
 
         # Should be in the same ballpark (FP8 introduces quantization noise)
-        cosine_sim = torch.nn.functional.cosine_similarity(
-            ref.flatten().float(), fp8_out.flatten().float(), dim=0
-        )
+        cosine_sim = torch.nn.functional.cosine_similarity(ref.flatten().float(), fp8_out.flatten().float(), dim=0)
         assert cosine_sim > 0.9, f"Cosine similarity {cosine_sim:.4f} too low"
 
     def test_no_qkv_quantization(self) -> None:
@@ -151,6 +151,7 @@ class TestAttnWeightsFP8:
 # ---------------------------------------------------------------------------
 # Module replacement
 # ---------------------------------------------------------------------------
+
 
 class TestReplaceSdpa:
     def test_replace_by_name(self) -> None:

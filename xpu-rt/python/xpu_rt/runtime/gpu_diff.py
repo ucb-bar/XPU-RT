@@ -78,13 +78,15 @@ def compile_and_diff_gpu(
 
     # --- Run the standard pipeline + CPU diff first ------------------
     cpu_report = compile_and_diff(
-        model, example_inputs,
+        model,
+        example_inputs,
         options=options,
         fixture_name=fixture_name,
         eager_reference=eager_reference,
         exported_program=exported_program,
         run_compiled_executor=True,
-        atol=atol, rtol=rtol,
+        atol=atol,
+        rtol=rtol,
     )
     report.cpu_diff_max_abs = cpu_report.compiled_diff_max_abs
 
@@ -112,6 +114,7 @@ def compile_and_diff_gpu(
         # --- GPU launch path (real-hardware code) --------------------
         try:
             import time
+
             import torch
 
             manifest = load_emission_manifest(out_dir)
@@ -129,10 +132,7 @@ def compile_and_diff_gpu(
             # Triton-emitted kernels will be the fast path when we
             # hook them into the executor in the next iteration).
             device = torch.device("cuda:0")
-            inputs_cuda = tuple(
-                t.to(device) if isinstance(t, torch.Tensor) else t
-                for t in example_inputs
-            )
+            inputs_cuda = tuple(t.to(device) if isinstance(t, torch.Tensor) else t for t in example_inputs)
             model_cuda = model.to(device)
             t0 = time.perf_counter()
             with torch.no_grad():

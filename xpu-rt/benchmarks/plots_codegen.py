@@ -14,7 +14,6 @@ from pathlib import Path
 
 from benchmarks.record import RunRecord
 
-
 log = logging.getLogger(__name__)
 
 
@@ -22,13 +21,13 @@ def _require_matplotlib():
     """Lazy import matplotlib."""
     try:
         import matplotlib
+
         matplotlib.use("Agg")  # non-interactive backend
         import matplotlib.pyplot as plt
+
         return plt
     except ImportError as e:
-        raise ImportError(
-            "matplotlib required for plots. Install with: pip install matplotlib"
-        ) from e
+        raise ImportError("matplotlib required for plots. Install with: pip install matplotlib") from e
 
 
 def _ensure_dir(path: Path) -> Path:
@@ -37,6 +36,7 @@ def _ensure_dir(path: Path) -> Path:
 
 
 # ---- Plot 1: Coverage waterfall ----
+
 
 def plot_coverage_waterfall(records: list[RunRecord], output_dir: str | Path) -> Path:
     """Stacked horizontal bar chart showing pipeline coverage per model.
@@ -99,6 +99,7 @@ def plot_coverage_waterfall(records: list[RunRecord], output_dir: str | Path) ->
 
 # ---- Plot 2: Strategy mix ----
 
+
 def plot_strategy_mix(records: list[RunRecord], output_dir: str | Path) -> Path:
     """Stacked percentage bar chart showing kernel strategy distribution per model.
 
@@ -142,8 +143,16 @@ def plot_strategy_mix(records: list[RunRecord], output_dir: str | Path) -> Path:
     bottom = np.zeros(len(labels))
     for strategy in strategy_order:
         vals = np.array(fractions[strategy])
-        ax.bar(x, vals, bottom=bottom, width=0.6, label=strategy,
-               color=strategy_colors[strategy], edgecolor="white", linewidth=0.5)
+        ax.bar(
+            x,
+            vals,
+            bottom=bottom,
+            width=0.6,
+            label=strategy,
+            color=strategy_colors[strategy],
+            edgecolor="white",
+            linewidth=0.5,
+        )
         bottom += vals
 
     ax.set_xticks(x)
@@ -160,6 +169,7 @@ def plot_strategy_mix(records: list[RunRecord], output_dir: str | Path) -> Path:
 
 
 # ---- Plot 3: Roofline gap ----
+
 
 def plot_roofline_gap(records: list[RunRecord], output_dir: str | Path) -> Path:
     """Bar chart showing how close generated code is to roofline targets.
@@ -209,6 +219,7 @@ def plot_roofline_gap(records: list[RunRecord], output_dir: str | Path) -> Path:
 
 # ---- Plot 4: Speedup vs search cost ----
 
+
 def plot_speedup_vs_search_cost(records: list[RunRecord], output_dir: str | Path) -> Path:
     """Scatter plot showing cost-benefit of code generation search.
 
@@ -255,12 +266,14 @@ def plot_speedup_vs_search_cost(records: list[RunRecord], output_dir: str | Path
 
         # Legend from strategy colors
         from matplotlib.lines import Line2D
-        handles = [Line2D([0], [0], marker="o", color="w", markerfacecolor=c, markersize=8, label=s)
-                   for s, c in strategy_colors.items()]
+
+        handles = [
+            Line2D([0], [0], marker="o", color="w", markerfacecolor=c, markersize=8, label=s)
+            for s, c in strategy_colors.items()
+        ]
         ax.legend(handles=handles, fontsize=7, loc="upper left")
     else:
-        ax.text(0.5, 0.5, "No region details with speedup data",
-                transform=ax.transAxes, ha="center")
+        ax.text(0.5, 0.5, "No region details with speedup data", transform=ax.transAxes, ha="center")
 
     ax.set_xlabel("Search Iterations / Time (ms)")
     ax.set_ylabel("Speedup vs Reference")
@@ -273,6 +286,7 @@ def plot_speedup_vs_search_cost(records: list[RunRecord], output_dir: str | Path
 
 
 # ---- Plot 5: Multi-device planning ----
+
 
 def plot_multidevice_planning(records: list[RunRecord], output_dir: str | Path) -> Path:
     """Grouped bar chart comparing schedule makespan and solver overhead.
@@ -296,8 +310,7 @@ def plot_multidevice_planning(records: list[RunRecord], output_dir: str | Path) 
     labels = [r.model_name for r in filtered]
     makespans = [r.solver.schedule_makespan_us for r in filtered]
     solver_overheads = [
-        r.solver.placement_time_ms + r.solver.schedule_time_ms + r.solver.memory_time_ms
-        for r in filtered
+        r.solver.placement_time_ms + r.solver.schedule_time_ms + r.solver.memory_time_ms for r in filtered
     ]
 
     x = np.arange(len(labels))
@@ -305,14 +318,14 @@ def plot_multidevice_planning(records: list[RunRecord], output_dir: str | Path) 
 
     fig, ax1 = plt.subplots(figsize=(10, 5))
 
-    bars_makespan = ax1.bar(x - width / 2, makespans, width, label="Schedule Makespan",
-                            color="#3498db", alpha=0.85)
+    bars_makespan = ax1.bar(x - width / 2, makespans, width, label="Schedule Makespan", color="#3498db", alpha=0.85)
     ax1.set_ylabel("Schedule Makespan (us)", color="#3498db")
     ax1.tick_params(axis="y", labelcolor="#3498db")
 
     ax2 = ax1.twinx()
-    bars_solver = ax2.bar(x + width / 2, solver_overheads, width, label="Solver Overhead",
-                          color="#e67e22", alpha=0.7, hatch="//")
+    bars_solver = ax2.bar(
+        x + width / 2, solver_overheads, width, label="Solver Overhead", color="#e67e22", alpha=0.7, hatch="//"
+    )
     ax2.set_ylabel("Solver Overhead (ms)", color="#e67e22")
     ax2.tick_params(axis="y", labelcolor="#e67e22")
 
@@ -332,6 +345,7 @@ def plot_multidevice_planning(records: list[RunRecord], output_dir: str | Path) 
 
 # ---- Plot 6: Recipe scale payoff ----
 
+
 def plot_recipe_scale_payoff(records: list[RunRecord], output_dir: str | Path) -> Path:
     """Scatter plot showing recipe complexity vs speedup payoff.
 
@@ -339,7 +353,6 @@ def plot_recipe_scale_payoff(records: list[RunRecord], output_dir: str | Path) -
     proportional to model complexity (total payload IR ops).
     """
     plt = _require_matplotlib()
-    import numpy as np
 
     path = _ensure_dir(Path(output_dir)) / "recipe_scale_payoff.png"
 
@@ -361,13 +374,18 @@ def plot_recipe_scale_payoff(records: list[RunRecord], output_dir: str | Path) -
     sizes = [30 + 270 * (o / max_ir) for o in ir_ops]
 
     fig, ax = plt.subplots(figsize=(8, 6))
-    scatter = ax.scatter(recipe_ops, speedups, s=sizes, c="#3498db", alpha=0.7,
-                         edgecolors="white", linewidth=0.5)
+    scatter = ax.scatter(recipe_ops, speedups, s=sizes, c="#3498db", alpha=0.7, edgecolors="white", linewidth=0.5)
 
     for i, name in enumerate(names):
-        ax.annotate(name, (recipe_ops[i], speedups[i]),
-                    fontsize=6, ha="left", va="bottom",
-                    xytext=(4, 4), textcoords="offset points")
+        ax.annotate(
+            name,
+            (recipe_ops[i], speedups[i]),
+            fontsize=6,
+            ha="left",
+            va="bottom",
+            xytext=(4, 4),
+            textcoords="offset points",
+        )
 
     ax.axhline(y=1.0, color="black", linestyle="--", linewidth=0.8, alpha=0.5, label="Breakeven")
     ax.set_xlabel("Recipe IR Ops")
@@ -382,6 +400,7 @@ def plot_recipe_scale_payoff(records: list[RunRecord], output_dir: str | Path) -
 
 
 # ---- Plot 7: Agentic outcome trajectories ----
+
 
 def plot_agentic_outcome(records: list[RunRecord], output_dir: str | Path) -> Path:
     """Line plot showing agentic loop improvement trajectories.
@@ -408,7 +427,7 @@ def plot_agentic_outcome(records: list[RunRecord], output_dir: str | Path) -> Pa
         cumulative = list(np.cumsum(improvements))
         iters = list(range(1, len(cumulative) + 1))
         label = r.model_name
-        line, = ax.plot(iters, cumulative, marker="o", markersize=4, linewidth=1.5, label=label)
+        (line,) = ax.plot(iters, cumulative, marker="o", markersize=4, linewidth=1.5, label=label)
 
         # Annotate final improvement
         final_pct = r.agentic.total_improvement_pct
@@ -416,8 +435,10 @@ def plot_agentic_outcome(records: list[RunRecord], output_dir: str | Path) -> Pa
             ax.annotate(
                 f"{final_pct:.1f}%",
                 (iters[-1], cumulative[-1]),
-                fontsize=7, fontweight="bold",
-                xytext=(6, 4), textcoords="offset points",
+                fontsize=7,
+                fontweight="bold",
+                xytext=(6, 4),
+                textcoords="offset points",
                 color=line.get_color(),
             )
 
@@ -434,6 +455,7 @@ def plot_agentic_outcome(records: list[RunRecord], output_dir: str | Path) -> Pa
 
 
 # ---- Plot 8: Ablation heatmap ----
+
 
 def plot_ablation_heatmap(records: list[RunRecord], output_dir: str | Path) -> Path:
     """Heatmap showing ablation study results.
@@ -485,8 +507,7 @@ def plot_ablation_heatmap(records: list[RunRecord], output_dir: str | Path) -> P
             val = r.total_compile_time_ms
         matrix[row, col] = val
 
-    fig, ax = plt.subplots(figsize=(max(6, len(config_order) * 1.2 + 2),
-                                    max(4, len(model_order) * 0.6 + 1.5)))
+    fig, ax = plt.subplots(figsize=(max(6, len(config_order) * 1.2 + 2), max(4, len(model_order) * 0.6 + 1.5)))
 
     # Determine vmin/vmax centered on 1.0
     valid = matrix[~np.isnan(matrix)]
@@ -513,8 +534,7 @@ def plot_ablation_heatmap(records: list[RunRecord], output_dir: str | Path) -> P
                 ax.text(j, i, "--", ha="center", va="center", fontsize=7, color="grey")
             else:
                 text_color = "white" if abs(val - 1.0) > max_dev * 0.6 else "black"
-                ax.text(j, i, f"{val:.2f}", ha="center", va="center",
-                        fontsize=7, fontweight="bold", color=text_color)
+                ax.text(j, i, f"{val:.2f}", ha="center", va="center", fontsize=7, fontweight="bold", color=text_color)
 
     fig.savefig(path, dpi=150, bbox_inches="tight")
     plt.close(fig)
@@ -522,6 +542,7 @@ def plot_ablation_heatmap(records: list[RunRecord], output_dir: str | Path) -> P
 
 
 # ---- Master function ----
+
 
 def generate_all_codegen_plots(records: list[RunRecord], output_dir: str | Path) -> list[Path]:
     """Generate all eight codegen paper plots.

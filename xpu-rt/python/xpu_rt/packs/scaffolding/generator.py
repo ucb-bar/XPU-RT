@@ -199,9 +199,7 @@ def scaffold_pack(
     """
 
     if kind not in _KIND_SPEC:
-        raise ValueError(
-            f"unknown pack kind {kind!r}; pick from {sorted(_KIND_SPEC)!r}"
-        )
+        raise ValueError(f"unknown pack kind {kind!r}; pick from {sorted(_KIND_SPEC)!r}")
     pkg_name = _validate_name(name)
     spec = _KIND_SPEC[kind]
 
@@ -217,22 +215,14 @@ def scaffold_pack(
 
     # pyproject.toml
     pyproject_path = pack_root / "pyproject.toml"
-    pyproject_path.write_text(
-        _PYPROJECT_TEMPLATE.format(name=pkg_name, kind=kind)
-    )
+    pyproject_path.write_text(_PYPROJECT_TEMPLATE.format(name=pkg_name, kind=kind))
 
     # README
     readme_path = pack_root / "README.md"
-    readme_path.write_text(
-        _README_TEMPLATE.format(
-            name=pkg_name, kind=kind, scheme_basename=spec["scheme_basename"]
-        )
-    )
+    readme_path.write_text(_README_TEMPLATE.format(name=pkg_name, kind=kind, scheme_basename=spec["scheme_basename"]))
 
     # Python package __init__.py
-    (package_root / "__init__.py").write_text(
-        _PKG_INIT_TEMPLATE.format(name=pkg_name, kind=kind)
-    )
+    (package_root / "__init__.py").write_text(_PKG_INIT_TEMPLATE.format(name=pkg_name, kind=kind))
 
     # manifest.yaml (lives inside the package so pip install includes it)
     manifest_path = package_root / "manifest.yaml"
@@ -264,9 +254,7 @@ def scaffold_pack(
     )
 
 
-def _resolve_template_source(
-    rel_path: str, *, repo_root: str | Path | None
-) -> Path | None:
+def _resolve_template_source(rel_path: str, *, repo_root: str | Path | None) -> Path | None:
     """Locate a repo template file, searching explicit repo root then install."""
 
     if repo_root is not None:
@@ -281,7 +269,4 @@ def _resolve_template_source(
 
 
 def _fallback_scheme(*, kind: str) -> str:
-    return (
-        f'"""Fallback scaffold for {kind} extension. '
-        f"Replace with your implementation.\"\"\"\n"
-    )
+    return f'"""Fallback scaffold for {kind} extension. Replace with your implementation."""\n'

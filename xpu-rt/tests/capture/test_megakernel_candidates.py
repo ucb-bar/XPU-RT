@@ -77,8 +77,5 @@ def test_multiple_patterns_can_coexist() -> None:
         "aten.gather.default": 1,
     }
     long = ("aten.relu.default",) * 5
-    patterns = {
-        c.pattern
-        for c in estimate_megakernel_candidates(hist, [long])
-    }
+    patterns = {c.pattern for c in estimate_megakernel_candidates(hist, [long])}
     assert {"matmul_collective", "moe_routing", "unfused_chain"} <= patterns

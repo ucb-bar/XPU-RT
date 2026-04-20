@@ -5,6 +5,7 @@ mistakes in future optimization runs. Stores failure patterns in
 CompilerMemory with action context, enabling retrieval of relevant
 warnings when similar actions are proposed.
 """
+
 from __future__ import annotations
 
 import json
@@ -52,12 +53,14 @@ def record_error_pattern(
     from compgen.memory.schema import KnowledgeKind, ScopeKind
 
     summary = f"FAIL {action_type} on {target_key}: {failure_reason}"
-    artifact = json.dumps({
-        "action_type": action_type,
-        "region_context": region_context,
-        "failure_reason": failure_reason,
-        "target_key": target_key,
-    })
+    artifact = json.dumps(
+        {
+            "action_type": action_type,
+            "region_context": region_context,
+            "failure_reason": failure_reason,
+            "target_key": target_key,
+        }
+    )
 
     item = memory.store_knowledge(
         kind=KnowledgeKind.FAILURE_MODE,
@@ -110,13 +113,15 @@ def retrieve_error_patterns(
             data = json.loads(blob)
             if target_key and data.get("target_key", "") != target_key:
                 continue
-            patterns.append(ErrorPattern(
-                action_type=data.get("action_type", ""),
-                context_summary=data.get("region_context", ""),
-                failure_reason=data.get("failure_reason", ""),
-                target_key=data.get("target_key", ""),
-                occurrence_count=item.uses + 1,
-            ))
+            patterns.append(
+                ErrorPattern(
+                    action_type=data.get("action_type", ""),
+                    context_summary=data.get("region_context", ""),
+                    failure_reason=data.get("failure_reason", ""),
+                    target_key=data.get("target_key", ""),
+                    occurrence_count=item.uses + 1,
+                )
+            )
         except Exception:
             continue
 

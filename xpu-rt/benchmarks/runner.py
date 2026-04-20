@@ -200,11 +200,7 @@ def run_benchmark(
         raise KeyError(f"Unknown workload: {model_name}")
 
     target_id = next(
-        (
-            target.target_id
-            for target in registry.targets.values()
-            if str(target.path) == str(Path(target_spec_path))
-        ),
+        (target.target_id for target in registry.targets.values() if str(target.path) == str(Path(target_spec_path))),
         "",
     )
     if not target_id:

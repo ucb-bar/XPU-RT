@@ -61,10 +61,7 @@ def _infer_launch_mechanism(spec: HardwareSpec) -> str:
         return "mailbox"
     if spec.execution_model.model == ExecutionModel.ROCC_COPROCESSOR:
         return "rocc_instruction"
-    if (
-        spec.execution_model.model == ExecutionModel.DECOUPLED_MATRIX
-        and spec.isa.compiler_intrinsics
-    ):
+    if spec.execution_model.model == ExecutionModel.DECOUPLED_MATRIX and spec.isa.compiler_intrinsics:
         return "inline_intrinsic"
     return "function_call"
 
@@ -102,8 +99,7 @@ _ALLOC_MALLOC = {
 _ALLOC_SCRATCHPAD = {
     "alloc_includes": "",
     "alloc_globals": (
-        "static uint8_t scratchpad[262144];  /* sized from spec */\n"
-        "static size_t  scratchpad_offset = 0;"
+        "static uint8_t scratchpad[262144];  /* sized from spec */\nstatic size_t  scratchpad_offset = 0;"
     ),
     "alloc_body": (
         "    void *p = &scratchpad[scratchpad_offset];\n"
@@ -126,10 +122,7 @@ _ALLOC_FIRMWARE = {
 
 _ALLOC_DEVICE = {
     "alloc_includes": "",
-    "alloc_globals": (
-        "extern void *device_malloc(size_t size);\n"
-        "extern void  device_free(void *ptr);"
-    ),
+    "alloc_globals": ("extern void *device_malloc(size_t size);\nextern void  device_free(void *ptr);"),
     "alloc_body": "    return device_malloc(size_bytes);",
     "free_body": "    device_free(ptr);",
 }
@@ -146,13 +139,10 @@ _ALLOC_MAP: dict[str, dict[str, str]] = {
 _LAUNCH_FUNCTION_CALL = {
     "dispatch_includes": "",
     "dispatch_globals": (
-        "typedef int (*kernel_fn_t)(const void *, size_t);\n"
-        "extern kernel_fn_t kernel_lookup(const char *name);"
+        "typedef int (*kernel_fn_t)(const void *, size_t);\nextern kernel_fn_t kernel_lookup(const char *name);"
     ),
     "dispatch_body": (
-        "    kernel_fn_t fn = kernel_lookup(kernel_name);\n"
-        "    if (!fn) return -1;\n"
-        "    return fn(args, args_size);"
+        "    kernel_fn_t fn = kernel_lookup(kernel_name);\n    if (!fn) return -1;\n    return fn(args, args_size);"
     ),
 }
 
@@ -167,7 +157,7 @@ _LAUNCH_INLINE_INTRINSIC = {
     "dispatch_body": (
         "    kernel_fn_t fn = kernel_lookup(kernel_name);\n"
         "    if (!fn) return -1;\n"
-        "    __asm__ volatile(\"fence\" ::: \"memory\");\n"
+        '    __asm__ volatile("fence" ::: "memory");\n'
         "    return fn(args, args_size);"
     ),
 }
@@ -176,16 +166,14 @@ _LAUNCH_ROCC = {
     "dispatch_includes": "",
     "dispatch_globals": (
         "#define ROCC_INSTRUCTION(x, rs1, rs2, funct) \\\n"
-        "    __asm__ volatile(\".insn r CUSTOM_0, 0x7, \" #funct \", x0, %0, %1\" \\\n"
-        "                     :: \"r\"(rs1), \"r\"(rs2))\n"
+        '    __asm__ volatile(".insn r CUSTOM_0, 0x7, " #funct ", x0, %0, %1" \\\n'
+        '                     :: "r"(rs1), "r"(rs2))\n'
         "\n"
         "typedef int (*kernel_fn_t)(const void *, size_t);\n"
         "extern kernel_fn_t kernel_lookup(const char *name);"
     ),
     "dispatch_body": (
-        "    kernel_fn_t fn = kernel_lookup(kernel_name);\n"
-        "    if (!fn) return -1;\n"
-        "    return fn(args, args_size);"
+        "    kernel_fn_t fn = kernel_lookup(kernel_name);\n    if (!fn) return -1;\n    return fn(args, args_size);"
     ),
 }
 
@@ -244,15 +232,10 @@ _SYNC_FENCE_DMA = (
     "    return dma_wait_all();"
 )
 
-_SYNC_EVENT = (
-    "    extern int event_synchronize(void);\n"
-    "    return event_synchronize();"
-)
+_SYNC_EVENT = "    extern int event_synchronize(void);\n    return event_synchronize();"
 
 _SYNC_POLLING = (
-    "    extern volatile uint32_t *status_reg;\n"
-    "    while (*status_reg & 0x1u) { /* spin */ }\n"
-    "    return 0;"
+    "    extern volatile uint32_t *status_reg;\n    while (*status_reg & 0x1u) { /* spin */ }\n    return 0;"
 )
 
 _SYNC_MAP: dict[str, str] = {
@@ -269,27 +252,15 @@ _SYNC_MAP: dict[str, str] = {
 _INIT_BODIES: dict[str, str] = {
     "malloc": "    /* No special init for malloc-based targets. */\n    return 0;",
     "scratchpad": "    scratchpad_offset = 0;\n    return 0;",
-    "firmware_managed": (
-        "    extern int npu_firmware_init(void);\n"
-        "    return npu_firmware_init();"
-    ),
-    "device_alloc": (
-        "    extern int device_runtime_init(void);\n"
-        "    return device_runtime_init();"
-    ),
+    "firmware_managed": ("    extern int npu_firmware_init(void);\n    return npu_firmware_init();"),
+    "device_alloc": ("    extern int device_runtime_init(void);\n    return device_runtime_init();"),
 }
 
 _SHUTDOWN_BODIES: dict[str, str] = {
     "malloc": "    /* Nothing to tear down. */\n    return 0;",
     "scratchpad": "    scratchpad_offset = 0;\n    return 0;",
-    "firmware_managed": (
-        "    extern int npu_firmware_shutdown(void);\n"
-        "    return npu_firmware_shutdown();"
-    ),
-    "device_alloc": (
-        "    extern int device_runtime_shutdown(void);\n"
-        "    return device_runtime_shutdown();"
-    ),
+    "firmware_managed": ("    extern int npu_firmware_shutdown(void);\n    return npu_firmware_shutdown();"),
+    "device_alloc": ("    extern int device_runtime_shutdown(void);\n    return device_runtime_shutdown();"),
 }
 
 _EXTRA_INCLUDES: dict[str, str] = {

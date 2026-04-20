@@ -104,16 +104,31 @@ class TileElementwiseOp(IRDLOperation):
 
     traits = traits_def(Pure())
 
-    _VALID_OPS: ClassVar[frozenset[str]] = frozenset({
-        "relu", "gelu", "sigmoid", "tanh", "add", "mul", "sub", "div",
-        "exp", "log", "sqrt", "rsqrt", "abs", "neg", "max", "min",
-    })
+    _VALID_OPS: ClassVar[frozenset[str]] = frozenset(
+        {
+            "relu",
+            "gelu",
+            "sigmoid",
+            "tanh",
+            "add",
+            "mul",
+            "sub",
+            "div",
+            "exp",
+            "log",
+            "sqrt",
+            "rsqrt",
+            "abs",
+            "neg",
+            "max",
+            "min",
+        }
+    )
 
     def verify_(self) -> None:
         if self.op_kind.data not in self._VALID_OPS:
             raise VerifyException(
-                f"Invalid elementwise op '{self.op_kind.data}', "
-                f"expected one of {sorted(self._VALID_OPS)}"
+                f"Invalid elementwise op '{self.op_kind.data}', expected one of {sorted(self._VALID_OPS)}"
             )
 
 
@@ -139,8 +154,7 @@ class TileReduceOp(IRDLOperation):
     def verify_(self) -> None:
         if self.reduce_kind.data not in self._VALID_KINDS:
             raise VerifyException(
-                f"Invalid reduce kind '{self.reduce_kind.data}', "
-                f"expected one of {sorted(self._VALID_KINDS)}"
+                f"Invalid reduce kind '{self.reduce_kind.data}', expected one of {sorted(self._VALID_KINDS)}"
             )
 
 
@@ -163,8 +177,7 @@ class TileBarrierOp(IRDLOperation):
     def verify_(self) -> None:
         if self.scope.data not in self._VALID_SCOPES:
             raise VerifyException(
-                f"Invalid barrier scope '{self.scope.data}', "
-                f"expected one of {sorted(self._VALID_SCOPES)}"
+                f"Invalid barrier scope '{self.scope.data}', expected one of {sorted(self._VALID_SCOPES)}"
             )
 
 

@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
-
 from dataclasses import asdict
+from typing import Any
 
 from benchmarks.record import (
     AgenticMetrics,
@@ -18,8 +17,8 @@ from benchmarks.record import (
     LayoutFriction,
     PerformanceMetrics,
     RecipeMetrics,
-    SynthesisMetrics,
     SolverMetrics,
+    SynthesisMetrics,
 )
 
 log = logging.getLogger(__name__)
@@ -184,19 +183,50 @@ def collect_recipe_metrics(module: Any) -> RecipeMetrics:
     )
 
     scope_types = (RecipeRegionOp, SegmentOp, AnchorOp, RecipeGuardOp, BindPayloadOp)
-    fact_types = (BackendAvailableOp, KernelContractOp, TransferCostOp,
-                  LocalMemFitOp, FusibleWithOp, CalibrationOp, ExportIssueOp, GraphBreakOp)
-    candidate_types = (TileOp, FuseOp, VectorizeOp, ReassociateOp, LayoutNormalizeOp,
-                       LowerToAccelOp, RequestTritonKernelOp, RequestExoKernelOp,
-                       MaterializeUkernelOp, PlaceOnDeviceOp, InsertCopyBoundaryOp,
-                       SegmentBoundaryOp, SelectExoScheduleLibOp, BlackboxOp)
-    choice_types = (AlternativesOp, RankOp, SearchBudgetOp, RequireEqsatOp,
-                    RequireSolverOp, DeferChoiceOp, PromoteCandidateOp)
-    verify_types = (RequireDiffTestOp, RequireTranslationValidationOp,
-                    RequireLayoutInvariantOp, RequireMemoryBoundOp,
-                    RequireCheckFileOp, RequireProfileBudgetOp)
-    provenance_types = (FromAgentOp, FromEqsatOp, FromTemplateOp,
-                        FeedbackOp, RejectOp, PromoteOp, LineageOp)
+    fact_types = (
+        BackendAvailableOp,
+        KernelContractOp,
+        TransferCostOp,
+        LocalMemFitOp,
+        FusibleWithOp,
+        CalibrationOp,
+        ExportIssueOp,
+        GraphBreakOp,
+    )
+    candidate_types = (
+        TileOp,
+        FuseOp,
+        VectorizeOp,
+        ReassociateOp,
+        LayoutNormalizeOp,
+        LowerToAccelOp,
+        RequestTritonKernelOp,
+        RequestExoKernelOp,
+        MaterializeUkernelOp,
+        PlaceOnDeviceOp,
+        InsertCopyBoundaryOp,
+        SegmentBoundaryOp,
+        SelectExoScheduleLibOp,
+        BlackboxOp,
+    )
+    choice_types = (
+        AlternativesOp,
+        RankOp,
+        SearchBudgetOp,
+        RequireEqsatOp,
+        RequireSolverOp,
+        DeferChoiceOp,
+        PromoteCandidateOp,
+    )
+    verify_types = (
+        RequireDiffTestOp,
+        RequireTranslationValidationOp,
+        RequireLayoutInvariantOp,
+        RequireMemoryBoundOp,
+        RequireCheckFileOp,
+        RequireProfileBudgetOp,
+    )
+    provenance_types = (FromAgentOp, FromEqsatOp, FromTemplateOp, FeedbackOp, RejectOp, PromoteOp, LineageOp)
 
     metrics = RecipeMetrics()
     for op in module.body.block.ops:
@@ -292,7 +322,7 @@ def _std(values: list[float]) -> float:
         return 0.0
     mean = sum(values) / len(values)
     variance = sum((x - mean) ** 2 for x in values) / (len(values) - 1)
-    return variance ** 0.5
+    return variance**0.5
 
 
 # ---------------------------------------------------------------------------
@@ -453,6 +483,7 @@ def collect_codegen_funnel(
     geo_mean = 0.0
     if speedups:
         import math
+
         geo_mean = math.exp(sum(math.log(s) for s in speedups) / len(speedups))
 
     budget_total = sum(d.get("search_budget", 0) for d in details if d.get("selected_strategy", "") not in ("native",))
@@ -500,7 +531,9 @@ def collect_kernel_rollups(
     library = strategy_histogram.get("library", 0)
     fallback = strategy_histogram.get("fallback", 0)
     unsupported = strategy_histogram.get("unsupported", 0)
-    generated = strategy_histogram.get("autocomp", 0) + strategy_histogram.get("exo", 0) + strategy_histogram.get("ukernel", 0)
+    generated = (
+        strategy_histogram.get("autocomp", 0) + strategy_histogram.get("exo", 0) + strategy_histogram.get("ukernel", 0)
+    )
     opaque = library + unsupported
 
     verified_count = sum(1 for d in details if d.get("numeric_pass", False))

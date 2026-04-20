@@ -101,9 +101,16 @@ def _build_predicate_map() -> dict[str, Any]:
         return z3.UGE(a, b)
 
     return {
-        "eq": _eq, "ne": _ne,
-        "slt": _slt, "sle": _sle, "sgt": _sgt, "sge": _sge,
-        "ult": _ult, "ule": _ule, "ugt": _ugt, "uge": _uge,
+        "eq": _eq,
+        "ne": _ne,
+        "slt": _slt,
+        "sle": _sle,
+        "sgt": _sgt,
+        "sge": _sge,
+        "ult": _ult,
+        "ule": _ule,
+        "ugt": _ugt,
+        "uge": _uge,
     }
 
 

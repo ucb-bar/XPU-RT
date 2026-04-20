@@ -48,13 +48,15 @@ def emit_opt_driver(
 
     entries = []
     for d in dialects:
-        entries.append(DriverDialectEntry(
-            prefix=d.prefix,
-            cpp_namespace=d.cpp_namespace,
-            dialect_class=f"{d.prefix}Dialect",
-            has_attrs=bool(d.attrs),
-            has_ops=bool(d.ops),
-        ))
+        entries.append(
+            DriverDialectEntry(
+                prefix=d.prefix,
+                cpp_namespace=d.cpp_namespace,
+                dialect_class=f"{d.prefix}Dialect",
+                has_attrs=bool(d.attrs),
+                has_ops=bool(d.ops),
+            )
+        )
 
     pass_prefixes = sorted(dialects_with_passes)
     return tmpl.render(dialects=entries, pass_prefixes=pass_prefixes)

@@ -110,15 +110,14 @@ class FactorAddiIntoMuliRule(EqSatRewriteRule):
 
             # Check not already factored
             already_exists = any(
-                isinstance(operand, OpResult)
-                and isinstance(operand.owner, arith.MuliOp)
-                for operand in eclass.operands
+                isinstance(operand, OpResult) and isinstance(operand.owner, arith.MuliOp) for operand in eclass.operands
             )
             if already_exists:
                 continue
 
             # Create: constant 2
             from xdsl.dialects.builtin import IntegerAttr
+
             const_2 = arith.ConstantOp(IntegerAttr.from_index_int_value(2))
             Rewriter.insert_op(const_2, InsertPoint.before(eclass))
             const_2_eclass = equivalence.ClassOp(const_2.result)

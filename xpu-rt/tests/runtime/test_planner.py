@@ -2,12 +2,6 @@
 
 from __future__ import annotations
 
-from xdsl.builder import Builder, ImplicitBuilder
-from xdsl.dialects.arith import ConstantOp
-from xdsl.dialects.builtin import FloatAttr, Float32Type, ModuleOp, TensorType, f32
-from xdsl.dialects.func import FuncOp, ReturnOp
-from xdsl.ir import Block, Region
-
 from compgen.runtime.planner import (
     CopyOp,
     ExecutionPlan,
@@ -17,6 +11,9 @@ from compgen.runtime.planner import (
     plan_execution,
 )
 from compgen.targets.schema import DeviceSpec, TargetProfile
+from xdsl.builder import Builder
+from xdsl.dialects.builtin import ModuleOp, TensorType, f32
+from xdsl.dialects.func import FuncOp, ReturnOp
 
 
 def _make_trivial_module() -> ModuleOp:

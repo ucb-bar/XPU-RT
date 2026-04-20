@@ -85,9 +85,7 @@ def _verify_structural(module: ModuleOp) -> tuple[bool, str]:
         return False, f"structural: FAIL — {e}"
 
 
-def _verify_check_assertions(
-    module: ModuleOp, check_lines: list[str]
-) -> tuple[bool, str]:
+def _verify_check_assertions(module: ModuleOp, check_lines: list[str]) -> tuple[bool, str]:
     """Run CHECK-style assertions on the module's IR text."""
     from compgen.ir.checks import run_checks
 
@@ -259,9 +257,7 @@ class TransformVerifier:
                 levels_passed.append(level)
 
             elif level == VerificationLevel.DIFFERENTIAL:
-                passed, error, msg = _verify_differential(
-                    original_module, transformed_module, self.tolerance
-                )
+                passed, error, msg = _verify_differential(original_module, transformed_module, self.tolerance)
                 details["differential"] = msg
                 max_error = error
                 if passed:
@@ -281,9 +277,7 @@ class TransformVerifier:
 
             elif level == VerificationLevel.NUMERIC:
                 if model is not None and sample_inputs is not None:
-                    passed, num_error, msg = _verify_numeric(
-                        model, sample_inputs, tolerance=self.tolerance
-                    )
+                    passed, num_error, msg = _verify_numeric(model, sample_inputs, tolerance=self.tolerance)
                     details["numeric"] = msg
                     if num_error != float("inf"):
                         max_error = num_error if max_error is None else max(max_error, num_error)
@@ -296,19 +290,11 @@ class TransformVerifier:
         # Semantic truth: if structural fails but numeric passes, the overall
         # result is still PASS because the outputs are numerically equivalent.
         structural_failed = (
-            VerificationLevel.STRUCTURAL in levels_run
-            and VerificationLevel.STRUCTURAL not in levels_passed
+            VerificationLevel.STRUCTURAL in levels_run and VerificationLevel.STRUCTURAL not in levels_passed
         )
-        numeric_passed = (
-            VerificationLevel.NUMERIC in levels_run
-            and VerificationLevel.NUMERIC in levels_passed
-        )
+        numeric_passed = VerificationLevel.NUMERIC in levels_run and VerificationLevel.NUMERIC in levels_passed
         if structural_failed and numeric_passed:
-            all_passed = all(
-                lvl in levels_passed
-                for lvl in levels_run
-                if lvl != VerificationLevel.STRUCTURAL
-            )
+            all_passed = all(lvl in levels_passed for lvl in levels_run if lvl != VerificationLevel.STRUCTURAL)
         else:
             all_passed = len(levels_passed) == len(levels_run)
 

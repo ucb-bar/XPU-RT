@@ -50,18 +50,23 @@ def _get_family_constructor(family: TargetFamily):  # noqa: ANN202
     """Import and return the stack constructor for a family."""
     if family == TargetFamily.SIMT_GPU_HAL:
         from compgen.targetgen.families.simt_gpu_hal import create_gpu_stack
+
         return create_gpu_stack
     if family == TargetFamily.RVV_CPU_EXTENSION:
         from compgen.targetgen.families.rvv_cpu_extension import create_rvv_cpu_stack
+
         return create_rvv_cpu_stack
     if family == TargetFamily.ROCC_ACCELERATOR:
         from compgen.targetgen.families.rocc_accelerator import create_rocc_stack
+
         return create_rocc_stack
     if family == TargetFamily.RISCV_VENDOR_MATRIX:
         from compgen.targetgen.families.riscv_vendor_matrix import create_vendor_matrix_stack
+
         return create_vendor_matrix_stack
     if family == TargetFamily.STRUCTURED_NPU_TEXT_ISA:
         from compgen.targetgen.families.structured_npu import create_npu_stack
+
         return create_npu_stack
     msg = f"No stack constructor for family {family}"
     raise ValueError(msg)
@@ -153,43 +158,62 @@ def _write_artifacts(
 ) -> None:
     """Write all generated artifacts to the output directory."""
     # Classification
-    (output / "classification.json").write_text(json.dumps({
-        "family": classification.family.value,
-        "target_class": classification.target_class.value,
-        "integration_style": classification.integration_style.value,
-        "lowering_surface": classification.lowering_surface.value,
-        "confidence": classification.confidence,
-        "reasoning": classification.reasoning,
-    }, indent=2))
+    (output / "classification.json").write_text(
+        json.dumps(
+            {
+                "family": classification.family.value,
+                "target_class": classification.target_class.value,
+                "integration_style": classification.integration_style.value,
+                "lowering_surface": classification.lowering_surface.value,
+                "confidence": classification.confidence,
+                "reasoning": classification.reasoning,
+            },
+            indent=2,
+        )
+    )
 
     # Support plan
-    (output / "support_plan.json").write_text(json.dumps({
-        "target_name": plan.target_name,
-        "family": plan.family.value,
-        "kernel_backend": plan.kernel_backend,
-        "needs_accel_dialect": plan.needs_accel_dialect,
-        "needs_ukernel_dialect": plan.needs_ukernel_dialect,
-        "llvm_patches_needed": plan.llvm_patches_needed,
-        "estimated_effort": plan.estimated_effort,
-        "required_stages": [
-            {"name": s.stage_name, "class": s.stage_class, "needs_plugin": s.needs_plugin}
-            for s in plan.required_stages
-        ],
-        "required_dialects": plan.required_dialects,
-        "runtime_template": plan.runtime_template,
-        "threading_model": plan.threading_model,
-        "memory_strategy": plan.memory_strategy,
-    }, indent=2))
+    (output / "support_plan.json").write_text(
+        json.dumps(
+            {
+                "target_name": plan.target_name,
+                "family": plan.family.value,
+                "kernel_backend": plan.kernel_backend,
+                "needs_accel_dialect": plan.needs_accel_dialect,
+                "needs_ukernel_dialect": plan.needs_ukernel_dialect,
+                "llvm_patches_needed": plan.llvm_patches_needed,
+                "estimated_effort": plan.estimated_effort,
+                "required_stages": [
+                    {"name": s.stage_name, "class": s.stage_class, "needs_plugin": s.needs_plugin}
+                    for s in plan.required_stages
+                ],
+                "required_dialects": plan.required_dialects,
+                "runtime_template": plan.runtime_template,
+                "threading_model": plan.threading_model,
+                "memory_strategy": plan.memory_strategy,
+            },
+            indent=2,
+        )
+    )
 
     # Verification manifest
-    (output / "verification_manifest.json").write_text(json.dumps({
-        "target_name": manifest.target_name,
-        "highest_achievable": manifest.highest_achievable.name,
-        "maturity": manifest.maturity.name,
-        "test_count": len(manifest.tests),
-        "tests": [
-            {"level": t.level.name, "name": t.name, "description": t.description,
-             "requires_hardware": t.requires_hardware}
-            for t in manifest.tests
-        ],
-    }, indent=2))
+    (output / "verification_manifest.json").write_text(
+        json.dumps(
+            {
+                "target_name": manifest.target_name,
+                "highest_achievable": manifest.highest_achievable.name,
+                "maturity": manifest.maturity.name,
+                "test_count": len(manifest.tests),
+                "tests": [
+                    {
+                        "level": t.level.name,
+                        "name": t.name,
+                        "description": t.description,
+                        "requires_hardware": t.requires_hardware,
+                    }
+                    for t in manifest.tests
+                ],
+            },
+            indent=2,
+        )
+    )

@@ -65,9 +65,7 @@ def test_generate_structured() -> None:
     client = MockLLMClient()
     client.add_response("test", '{"key": "value"}')
 
-    response = client.generate_structured(
-        _make_request("test structured"), schema={"type": "object"}
-    )
+    response = client.generate_structured(_make_request("test structured"), schema={"type": "object"})
     assert response.raw_text == '{"key": "value"}'
 
 

@@ -13,7 +13,6 @@ import structlog
 from compgen.kernels.provider import (
     ContractFeedback,
     KernelContract,
-    KernelProvider,
     KnowledgeExport,
     ProviderResult,
     SearchBudget,
@@ -42,8 +41,7 @@ class AutocompProvider:
         hardware = contract.hardware_key.lower()
         # Accept GPU targets or unspecified targets
         return any(
-            kw in target or kw in hardware
-            for kw in ["gpu", "cuda", "triton", "h100", "a100", "hopper", "ampere", ""]
+            kw in target or kw in hardware for kw in ["gpu", "cuda", "triton", "h100", "a100", "hopper", "ampere", ""]
         )
 
     def search(self, contract: KernelContract, budget: SearchBudget) -> ProviderResult:
@@ -72,7 +70,10 @@ class AutocompProvider:
             return ProviderResult(found=False)
 
     def _search_with_adapter(
-        self, adapter: Any, contract: KernelContract, budget: SearchBudget,
+        self,
+        adapter: Any,
+        contract: KernelContract,
+        budget: SearchBudget,
     ) -> ProviderResult:
         """Internal: run autocomp search and translate result."""
         # For now, return not-found since autocomp requires GPU + API key
@@ -84,14 +85,16 @@ class AutocompProvider:
 
         # Export knowledge about this op family
         if contract.op_family:
-            knowledge.append(KnowledgeExport(
-                kind="optimization_tactic",
-                scope="operator_family",
-                scope_key=contract.op_family,
-                content=f"Autocomp search attempted for {contract.op_family}",
-                metadata={"target": contract.target_name},
-                confidence=0.3,
-            ))
+            knowledge.append(
+                KnowledgeExport(
+                    kind="optimization_tactic",
+                    scope="operator_family",
+                    scope_key=contract.op_family,
+                    content=f"Autocomp search attempted for {contract.op_family}",
+                    metadata={"target": contract.target_name},
+                    confidence=0.3,
+                )
+            )
             self._accumulated_knowledge.extend(knowledge)
 
         return ProviderResult(
@@ -122,10 +125,7 @@ class ExoProvider:
         """Exo handles accelerator kernels (Gemmini, custom targets)."""
         target = contract.target_name.lower()
         hardware = contract.hardware_key.lower()
-        return any(
-            kw in target or kw in hardware
-            for kw in ["gemmini", "exo", "snax", "accel"]
-        )
+        return any(kw in target or kw in hardware for kw in ["gemmini", "exo", "snax", "accel"])
 
     def search(self, contract: KernelContract, budget: SearchBudget) -> ProviderResult:
         """Search using Exo schedule evolution."""

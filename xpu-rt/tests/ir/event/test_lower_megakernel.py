@@ -3,16 +3,6 @@
 from __future__ import annotations
 
 import pytest
-from xdsl.dialects.builtin import (
-    ArrayAttr,
-    IntegerAttr,
-    IntegerType,
-    ModuleOp,
-    StringAttr,
-    SymbolRefAttr,
-)
-from xdsl.ir import Block, Region
-
 from compgen.ir.event.attrs import EventCoordAttr, EventTensorTypeAttr
 from compgen.ir.event.ops import CallDeviceOp, EventTensorOp, GraphOp
 from compgen.ir.payload.passes.megakernel_static_schedule import (
@@ -22,6 +12,15 @@ from compgen.ir.tile.lower_megakernel import (
     MegakernelLoweringResult,
     lower_megakernel,
 )
+from xdsl.dialects.builtin import (
+    ArrayAttr,
+    IntegerAttr,
+    IntegerType,
+    ModuleOp,
+    StringAttr,
+    SymbolRefAttr,
+)
+from xdsl.ir import Block, Region
 
 
 def _build_gemm_rs(sm_count: int = 4) -> tuple[ModuleOp, GraphOp]:
@@ -72,9 +71,7 @@ def test_lowering_requires_static_schedule_annotation() -> None:
 
 def test_lowering_returns_diagnostic_when_schedule_was_rejected() -> None:
     _, graph = _build_gemm_rs()
-    graph.attributes["compgen.static_schedule"] = StringAttr(
-        '{"status": "rejected", "errors": ["bogus"]}'
-    )
+    graph.attributes["compgen.static_schedule"] = StringAttr('{"status": "rejected", "errors": ["bogus"]}')
     result = lower_megakernel(graph)
     assert result.kernel_source == ""
     assert any("rejected" in d for d in result.diagnostics)

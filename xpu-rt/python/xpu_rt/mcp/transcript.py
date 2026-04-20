@@ -110,7 +110,7 @@ class McpTranscriptRecorder:
         return self._counts.get(session_id, 0)
 
     @classmethod
-    def from_env(cls, *, enabled: bool = True) -> "McpTranscriptRecorder":
+    def from_env(cls, *, enabled: bool = True) -> McpTranscriptRecorder:
         return cls(root=default_session_root(), enabled=enabled)
 
 

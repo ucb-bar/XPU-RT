@@ -25,9 +25,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from compgen.quantization.fp8_ops import (
-    FP8_E4M3_DTYPE,
-    FP8_E4M3_MAX,
-    dequantize_fp8_e4m3,
     quantize_fp8_e4m3_po2,
 )
 from compgen.quantization.fp8_tensor import FP8E4M3Po2Tensor
@@ -237,14 +234,10 @@ def rewrite_for_export(model: nn.Module) -> nn.Module:
     replacements: list[tuple[str, nn.Module, nn.Module]] = []
 
     for name, module in model.named_modules():
-        if isinstance(module, nn.Linear) and isinstance(
-            getattr(module, "weight", None), FP8E4M3Po2Tensor
-        ):
+        if isinstance(module, nn.Linear) and isinstance(getattr(module, "weight", None), FP8E4M3Po2Tensor):
             replacement = ExportableFP8Linear.from_quantized_linear(module)
             replacements.append((name, module, replacement))
-        elif isinstance(module, nn.Conv2d) and isinstance(
-            getattr(module, "weight", None), FP8E4M3Po2Tensor
-        ):
+        elif isinstance(module, nn.Conv2d) and isinstance(getattr(module, "weight", None), FP8E4M3Po2Tensor):
             replacement = ExportableFP8Conv2d.from_quantized_conv2d(module)
             replacements.append((name, module, replacement))
 

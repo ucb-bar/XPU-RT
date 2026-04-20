@@ -21,14 +21,11 @@ class ExtensionPack(Protocol):
     manifest: ExtensionPackManifest
     root: Path
 
-    def probe(self, workspace: WorkspaceConfig | None = None) -> PackProbeResult:
-        ...
+    def probe(self, workspace: WorkspaceConfig | None = None) -> PackProbeResult: ...
 
-    def compose(self, workspace: WorkspaceConfig | None = None) -> PackContribution:
-        ...
+    def compose(self, workspace: WorkspaceConfig | None = None) -> PackContribution: ...
 
-    def branch_plan(self, workspace: WorkspaceConfig | None = None, *, run_id: str = "default") -> BranchPlan:
-        ...
+    def branch_plan(self, workspace: WorkspaceConfig | None = None, *, run_id: str = "default") -> BranchPlan: ...
 
 
 @dataclass(frozen=True)
@@ -38,4 +35,3 @@ class LoadedPack:
     root: Path
     manifest: ExtensionPackManifest
     pack: ExtensionPack
-

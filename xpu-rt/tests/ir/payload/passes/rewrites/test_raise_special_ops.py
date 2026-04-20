@@ -8,6 +8,10 @@ real-workload tests that bridge ``attention_mlp_tiny`` /
 from __future__ import annotations
 
 import pytest
+from compgen.ir.payload.passes.rewrites.raise_special_ops import (
+    RaiseSpecialOpsStats,
+    run_raise_special_ops,
+)
 from xdsl.dialects.builtin import (
     Float32Type,
     FunctionType,
@@ -19,15 +23,10 @@ from xdsl.dialects.func import CallOp, FuncOp, ReturnOp
 from xdsl.dialects.tensor import EmptyOp
 from xdsl.ir import Block, Region
 
-from compgen.ir.payload.passes.rewrites.raise_special_ops import (
-    RaiseSpecialOpsStats,
-    run_raise_special_ops,
-)
 from tests.ir.payload.passes._pattern_test_helpers import (
     assert_module_verifies,
     count_ops,
 )
-
 
 # --- synthetic fixture helpers -----------------------------------------------
 
@@ -194,6 +193,7 @@ def test_raise_special_ops_on_attention_mlp_tiny():
     module still verifies.
     """
     from compgen.capture.torch_mlir_bridge import bridge_fx_graph
+
     from tests._fixtures.real_workloads import attention_mlp_tiny
 
     fx = attention_mlp_tiny()
@@ -211,6 +211,7 @@ def test_raise_special_ops_on_attention_mlp_tiny():
 def test_raise_special_ops_on_qwen_moe_tiny():
     """Real-workload test: qwen_moe_tiny has a softmax in the router."""
     from compgen.capture.torch_mlir_bridge import bridge_fx_graph
+
     from tests._fixtures.real_workloads import qwen_moe_tiny
 
     fx = qwen_moe_tiny()
@@ -226,6 +227,7 @@ def test_raise_special_ops_on_qwen_moe_tiny():
 
 def test_raise_special_ops_is_attribute_preserving_on_real_workload():
     from compgen.capture.torch_mlir_bridge import bridge_fx_graph
+
     from tests._fixtures.real_workloads import attention_mlp_tiny
 
     fx = attention_mlp_tiny()

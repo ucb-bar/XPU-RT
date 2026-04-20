@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import importlib.metadata
 import os
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Iterable
 
 from compgen.packs.base import LoadedPack
 from compgen.packs.loader import load_pack, resolve_entry_point_target
@@ -150,4 +150,3 @@ class PackRegistry:
             available_profilers=tuple(profilers),
             benchmark_targets=tuple(benchmarks),
         )
-

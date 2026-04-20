@@ -86,9 +86,7 @@ class StageRegistry:
         """Look up a target dialect stack."""
         return self._target_stacks.get(target_name)
 
-    def check_phase_monotonicity(
-        self, target_name: str
-    ) -> list[str]:
+    def check_phase_monotonicity(self, target_name: str) -> list[str]:
         """Return violations of L-XLA-6: stages' llm_phase must not regress.
 
         Stages with ``llm_phase = None`` are skipped. An empty list means
@@ -110,8 +108,7 @@ class StageRegistry:
                 continue
             if last_phase is not None and phase < last_phase:
                 violations.append(
-                    f"stage {stage.name!r} (phase={phase}) runs AFTER "
-                    f"{last_stage!r} (phase={last_phase})"
+                    f"stage {stage.name!r} (phase={phase}) runs AFTER {last_stage!r} (phase={last_phase})"
                 )
             last_phase = phase
             last_stage = stage.name

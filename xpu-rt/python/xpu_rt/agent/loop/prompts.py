@@ -13,11 +13,10 @@ import json
 from typing import Any
 
 from compgen.agent.env import Observation
+from compgen.agent.loop.records import IterationRecord
 from compgen.agent.serialize import legal_actions_to_dict, observation_to_dict, observation_to_prompt
 from compgen.llm.base import Objective, PromptContext
 from compgen.targets.schema import TargetProfile
-
-from compgen.agent.loop.records import IterationRecord
 
 
 def target_summary(target: TargetProfile) -> str:
@@ -43,11 +42,13 @@ def analysis_summary(obs: Observation) -> str:
     dossier = obs.analysis_dossier
     if dossier is None:
         return "analysis unavailable"
-    repeated = ", ".join(
-        f"{name}:{count}" for name, count in sorted(
-            dossier.repeated_patterns.items(), key=lambda item: (-item[1], item[0])
-        )[:8]
-    ) or "(none)"
+    repeated = (
+        ", ".join(
+            f"{name}:{count}"
+            for name, count in sorted(dossier.repeated_patterns.items(), key=lambda item: (-item[1], item[0]))[:8]
+        )
+        or "(none)"
+    )
     lines = [
         f"regions={dossier.total_regions}",
         f"critical_path={list(dossier.critical_path[:8])}",
@@ -107,8 +108,7 @@ def verification_summary(obs: Observation) -> str:
     )
     if obs.verification.last_failure_region:
         summary += (
-            f"\nlast_failure={obs.verification.last_failure_region}: "
-            f"{obs.verification.last_counterexample_summary}"
+            f"\nlast_failure={obs.verification.last_failure_region}: {obs.verification.last_counterexample_summary}"
         )
     return summary
 

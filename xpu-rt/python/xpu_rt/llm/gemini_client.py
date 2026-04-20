@@ -12,17 +12,17 @@ import time
 from dataclasses import dataclass
 from typing import Any
 
-from compgen.llm.base import (
-    CompGenLLMProtocol,
-    GenerationRequest,
-    GenerationResponse,
-)
 from compgen.llm._env import resolve_api_key
 from compgen.llm._prompt import (
     extract_markdown_artifacts,
     parse_json_payload,
     render_request_prompt,
     stringify_json_payload,
+)
+from compgen.llm.base import (
+    CompGenLLMProtocol,
+    GenerationRequest,
+    GenerationResponse,
 )
 
 
@@ -85,9 +85,7 @@ class GeminiClient:
             metadata={"finish_reason": "stop"},
         )
 
-    def generate_structured(
-        self, request: GenerationRequest, schema: dict[str, Any]
-    ) -> GenerationResponse:
+    def generate_structured(self, request: GenerationRequest, schema: dict[str, Any]) -> GenerationResponse:
         """Generate structured (JSON) output from Gemini using response_mime_type."""
         try:
             from google.genai import types

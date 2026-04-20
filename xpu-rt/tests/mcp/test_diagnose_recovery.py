@@ -12,13 +12,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
 import torch
 import torch.nn as nn
-
 from compgen.agent.llm_driver import LLMDrivenCompiler
-from compgen.api import compile_model, device as _device
-from compgen.api_llm import _resolve_model
+from compgen.api import compile_model
+from compgen.api import device as _device
 from compgen.llm.mock_client import MockLLMClient
 from compgen.mcp.session import SessionManager
 from compgen.mcp.tools.diagnose import (
@@ -35,10 +33,7 @@ from compgen.mcp.tools.recovery import (
     synthesize_translation,
 )
 
-EXEMPLAR = (
-    Path(__file__).resolve().parents[1]
-    / "targetgen" / "exemplars" / "test_gpu_simt.yaml"
-)
+EXEMPLAR = Path(__file__).resolve().parents[1] / "targetgen" / "exemplars" / "test_gpu_simt.yaml"
 
 
 class _WithUnsupported(nn.Module):
@@ -60,15 +55,19 @@ def _prepared_session(tmp_path: Path) -> tuple[SessionManager, str]:
     session.device = dev
 
     compiled = compile_model(
-        _WithUnsupported().eval(), dev,
+        _WithUnsupported().eval(),
+        dev,
         sample_inputs=(torch.randn(1, 32),),
-        recover_unsupported=False,   # let the LLM/MCP path drive recovery
+        recover_unsupported=False,  # let the LLM/MCP path drive recovery
     )
     mock = MockLLMClient(strict=False)
     env = compiled.create_agent_env(budget=4)
     driver = LLMDrivenCompiler(
-        env=env, target=dev.profile, llm_client=mock,
-        transcript_dir=session.scratch_dir / "transcripts", budget=4,
+        env=env,
+        target=dev.profile,
+        llm_client=mock,
+        transcript_dir=session.scratch_dir / "transcripts",
+        budget=4,
     )
     session.compiled = compiled
     session.driver = driver
@@ -89,8 +88,11 @@ def test_diagnose_and_recovery_tools_are_registered() -> None:
         assert t["input_schema"]["type"] == "object"
     assert "diagnose_model_compatibility" in names_d
     for expected in (
-        "synthesize_decomp", "synthesize_translation",
-        "register_blackbox", "resolve_unsupported_op", "recovery_status",
+        "synthesize_decomp",
+        "synthesize_translation",
+        "register_blackbox",
+        "resolve_unsupported_op",
+        "recovery_status",
     ):
         assert expected in names_r
 
@@ -110,10 +112,13 @@ def test_diagnose_model_compatibility_reports_tanh_issue(tmp_path: Path) -> None
     tanh_row = next(i for i in result["issues"] if i["target"] == "aten.tanh.default")
     # The dossier + classifier must surface the strategy the LLM can act on.
     assert tanh_row["classification"]["strategy"] in {
-        "synthesized_external_call", "explicit_blackbox",
+        "synthesized_external_call",
+        "explicit_blackbox",
     }
     assert tanh_row["recommended_tool"] in {
-        "synthesize_translation", "synthesize_decomp", "register_blackbox",
+        "synthesize_translation",
+        "synthesize_decomp",
+        "register_blackbox",
     }
 
 
@@ -122,6 +127,7 @@ def test_diagnose_exported_program_standalone_helper(tmp_path: Path) -> None:
     mod = _WithUnsupported().eval()
     ep = torch.export.export(mod, (torch.randn(1, 32),))
     from compgen.capture.unsupported.introspect import runtime_versions
+
     _ = runtime_versions()
     result = diagnose_exported_program(ep)
     assert result["ok"]
@@ -167,7 +173,10 @@ def test_register_blackbox_records_promotion(tmp_path: Path) -> None:
 def test_resolve_unsupported_op_auto_strategy(tmp_path: Path) -> None:
     sm, sid = _prepared_session(tmp_path)
     result = resolve_unsupported_op(
-        sm, session_id=sid, op_target="aten.tanh.default", strategy="auto",
+        sm,
+        session_id=sid,
+        op_target="aten.tanh.default",
+        strategy="auto",
     )
     assert result["ok"]
     # For tanh the auto path should pick translation (the classifier said so).
@@ -177,7 +186,10 @@ def test_resolve_unsupported_op_auto_strategy(tmp_path: Path) -> None:
 def test_resolve_unsupported_op_blackbox_override(tmp_path: Path) -> None:
     sm, sid = _prepared_session(tmp_path)
     result = resolve_unsupported_op(
-        sm, session_id=sid, op_target="aten.tanh.default", strategy="blackbox",
+        sm,
+        session_id=sid,
+        op_target="aten.tanh.default",
+        strategy="blackbox",
     )
     assert result["ok"]
     assert result["attempted_strategy"] == "blackbox"
@@ -186,7 +198,10 @@ def test_resolve_unsupported_op_blackbox_override(tmp_path: Path) -> None:
 def test_resolve_unsupported_op_unknown_strategy(tmp_path: Path) -> None:
     sm, sid = _prepared_session(tmp_path)
     result = resolve_unsupported_op(
-        sm, session_id=sid, op_target="aten.tanh.default", strategy="nonsense",
+        sm,
+        session_id=sid,
+        op_target="aten.tanh.default",
+        strategy="nonsense",
     )
     assert result["ok"] is False
     assert "Unknown strategy" in result["error"]

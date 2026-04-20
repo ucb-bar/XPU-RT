@@ -1,13 +1,20 @@
 """Tests for error pattern learning (Unit 14)."""
+
 from __future__ import annotations
+
 import pytest
-from pathlib import Path
-from compgen.memory.error_patterns import ErrorPattern, record_error_pattern, retrieve_error_patterns, error_patterns_to_prompt
+from compgen.memory.error_patterns import (
+    ErrorPattern,
+    error_patterns_to_prompt,
+    record_error_pattern,
+    retrieve_error_patterns,
+)
 
 
 @pytest.fixture
 def memory(tmp_path):
     from compgen.memory.store import CompilerMemory
+
     return CompilerMemory(
         db_path=tmp_path / "test.db",
         blob_root=tmp_path / "blobs",

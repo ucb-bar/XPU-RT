@@ -168,7 +168,8 @@ def generate_compiler(
 
     # CMake files
     cmake_written = write_cmake_files(
-        all_infos, output_dir,
+        all_infos,
+        output_dir,
         dep_graph=_DEP_GRAPH,
         dialects_with_passes=dialects_with_passes,
     )

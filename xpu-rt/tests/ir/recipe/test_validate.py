@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-import pytest
-
 from compgen.ir.recipe.compat import recipe_list_to_module
 from compgen.ir.recipe.ops import AssignDevice, MatchRegion, SetTileParams
-from compgen.ir.recipe.validate import validate_recipe, validate_recipe_module
+from compgen.ir.recipe.validate import validate_recipe_module
 
 
 def test_valid_recipe_passes() -> None:

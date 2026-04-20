@@ -305,9 +305,7 @@ _COMPGEN_CUSTOM: tuple[TorchAOScheme, ...] = (
 # Public catalog
 # ---------------------------------------------------------------------------
 
-TORCHAO_SCHEMES: dict[str, TorchAOScheme] = {
-    s.name: s for s in (*_STABLE, *_PROTOTYPE, *_QAT, *_COMPGEN_CUSTOM)
-}
+TORCHAO_SCHEMES: dict[str, TorchAOScheme] = {s.name: s for s in (*_STABLE, *_PROTOTYPE, *_QAT, *_COMPGEN_CUSTOM)}
 
 
 def list_schemes(

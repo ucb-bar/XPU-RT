@@ -62,7 +62,6 @@ from dataclasses import dataclass
 from xdsl.dialects.arith import AddfOp, ExtSIOp, MulfOp, SIToFPOp, SubiOp
 from xdsl.dialects.builtin import (
     AffineMapAttr,
-    ArrayAttr,
     Float32Type,
     ModuleOp,
     StringAttr,
@@ -75,7 +74,6 @@ from xdsl.dialects.linalg import (
     MatmulOp,
     YieldOp,
 )
-from xdsl.dialects.tensor import EmptyOp
 from xdsl.ir import Attribute, Block, Operation, Region, SSAValue
 from xdsl.ir.affine import AffineExpr, AffineMap
 from xdsl.pattern_rewriter import (
@@ -90,7 +88,6 @@ from compgen.ir.quant import (
     DequantizePerGroupOp,
     DequantizePerTensorOp,
 )
-
 
 _DequantOp = (DequantizePerTensorOp, DequantizePerChannelOp, DequantizePerGroupOp)
 
@@ -204,11 +201,7 @@ def _maybe_build_fused_generic(
     q_type = q_weight.type
     out_type = out.type
     lhs_type = lhs.type
-    if not (
-        isinstance(q_type, TensorType)
-        and isinstance(out_type, TensorType)
-        and isinstance(lhs_type, TensorType)
-    ):
+    if not (isinstance(q_type, TensorType) and isinstance(out_type, TensorType) and isinstance(lhs_type, TensorType)):
         return None
     if any(d < 0 for d in list(q_type.get_shape())):
         return None
@@ -325,11 +318,7 @@ def _maybe_build_fused_generic(
             new_gen.attributes[k_attr] = matmul.attributes[k_attr]
     new_gen.attributes["compgen.fused_dequant_kind"] = matmul.attributes.get(
         "compgen.fused_dequant_kind",
-        StringAttr(
-            "per_tensor"
-            if isinstance(dequant, DequantizePerTensorOp)
-            else "per_channel"
-        ),
+        StringAttr("per_tensor" if isinstance(dequant, DequantizePerTensorOp) else "per_channel"),
     )
     return new_gen
 
@@ -347,9 +336,7 @@ class _FuseDequantMatmulPattern(RewritePattern):
         self.stats = stats
 
     @op_type_rewrite_pattern
-    def match_and_rewrite(
-        self, op: MatmulOp, rewriter: PatternRewriter
-    ) -> None:
+    def match_and_rewrite(self, op: MatmulOp, rewriter: PatternRewriter) -> None:
         self.stats.matmuls_seen += 1
 
         # Already fused -> idempotent.
@@ -377,9 +364,7 @@ class _FuseDequantMatmulPattern(RewritePattern):
 
         # Safety gate.
         if self.cfg.reassoc_safe_only and not _is_reassoc_safe(dq):
-            if not (
-                isinstance(dq, DequantizePerGroupOp) and self.cfg.allow_per_group
-            ):
+            if not (isinstance(dq, DequantizePerGroupOp) and self.cfg.allow_per_group):
                 self.stats.skipped_reassoc_unsafe += 1
                 return
 

@@ -2,10 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-from xdsl.dialects.builtin import Float32Type, Float16Type, IntegerType, TensorType
-from xdsl.dialects.tensor import EmptyOp
-
 from compgen.ir.payload.passes._shape_utils import (
     common_element_type,
     infer_result_shape,
@@ -13,6 +9,8 @@ from compgen.ir.payload.passes._shape_utils import (
     rank_of,
     static_shape_or_none,
 )
+from xdsl.dialects.builtin import Float16Type, Float32Type, TensorType
+from xdsl.dialects.tensor import EmptyOp
 
 
 def _ft(shape):
@@ -79,10 +77,7 @@ def test_infer_concat_basic():
 
 
 def test_infer_concat_three_way():
-    assert (
-        infer_result_shape("concat", [(2, 4), (3, 4), (5, 4)], axis=0)
-        == (10, 4)
-    )
+    assert infer_result_shape("concat", [(2, 4), (3, 4), (5, 4)], axis=0) == (10, 4)
 
 
 def test_infer_concat_axis_mismatch_returns_none():
@@ -94,24 +89,15 @@ def test_infer_concat_dynamic_dim_propagates():
 
 
 def test_infer_reduction():
-    assert (
-        infer_result_shape("reduction", [(4, 8, 16)], reduction_dims=[1])
-        == (4, 16)
-    )
+    assert infer_result_shape("reduction", [(4, 8, 16)], reduction_dims=[1]) == (4, 16)
 
 
 def test_infer_reduction_rejects_bad_dim():
-    assert (
-        infer_result_shape("reduction", [(4, 8)], reduction_dims=[5])
-        is None
-    )
+    assert infer_result_shape("reduction", [(4, 8)], reduction_dims=[5]) is None
 
 
 def test_infer_transpose():
-    assert (
-        infer_result_shape("transpose", [(4, 8, 16)], perm=[2, 0, 1])
-        == (16, 4, 8)
-    )
+    assert infer_result_shape("transpose", [(4, 8, 16)], perm=[2, 0, 1]) == (16, 4, 8)
 
 
 def test_infer_transpose_rejects_bad_perm():

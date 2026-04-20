@@ -6,7 +6,6 @@ target-family body selection, and introspection APIs.
 
 from __future__ import annotations
 
-import pytest
 from compgen.ir.ukernel.constraints import ConstraintContext
 from compgen.ir.ukernel.ops import UkernelBodyOp, UkernelDeclOp, UkernelMatchOp
 from compgen.ir.ukernel.registry import UkernelRegistry

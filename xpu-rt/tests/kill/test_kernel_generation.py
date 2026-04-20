@@ -47,9 +47,7 @@ def kernel(x):
 """
     spec = _make_spec("layernorm")
     x = torch.randn(4, 64)
-    ref = (x - x.mean(dim=-1, keepdim=True)) / torch.sqrt(
-        x.var(dim=-1, keepdim=True, unbiased=False) + 1e-5
-    )
+    ref = (x - x.mean(dim=-1, keepdim=True)) / torch.sqrt(x.var(dim=-1, keepdim=True, unbiased=False) + 1e-5)
 
     result = validate_kernel(kernel_code, spec, (x,), ref)
     assert result.passed, f"Kernel validation failed: {result.diagnostics}"

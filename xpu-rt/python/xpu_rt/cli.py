@@ -22,9 +22,9 @@ import click
 
 from compgen import __version__
 from compgen.llm import (
+    SUPPORTED_PROVIDERS,
     LLMSelection,
     PromptContext,
-    SUPPORTED_PROVIDERS,
     apply_selection_to_env,
     build_llm_runtime,
     resolve_llm_selection,
@@ -223,6 +223,7 @@ def analyze(cli: CLIContext, model: str, inputs: str, target: str, output_dir: s
     click.echo("  Artifacts:     golden_*.pt, payload.mlir, kernel_contracts/, gap_analysis.json")
 
     import json
+
     import yaml
 
     out = Path(output_dir)
@@ -249,7 +250,6 @@ def analyze(cli: CLIContext, model: str, inputs: str, target: str, output_dir: s
     artifact = None
     try:
         from compgen.capture.torch_export import capture_frontend_artifact
-        from compgen.capture.dynamo_baseline import compile_baseline
 
         artifact = capture_frontend_artifact(model, (input_spec,) if not isinstance(input_spec, tuple) else input_spec)
         click.echo(f"  Export valid:  {artifact.validation.valid}")
@@ -269,6 +269,7 @@ def analyze(cli: CLIContext, model: str, inputs: str, target: str, output_dir: s
 
             # Write payload.mlir
             import io
+
             from xdsl.printer import Printer
 
             buf = io.StringIO()
@@ -411,7 +412,9 @@ def generate(
             "target": target_profile.name,
             "objective": objective,
             "budget": budget,
-            "devices": [{"index": i, "name": d.name, "type": d.device_type} for i, d in enumerate(target_profile.devices)],
+            "devices": [
+                {"index": i, "name": d.name, "type": d.device_type} for i, d in enumerate(target_profile.devices)
+            ],
         }
         (out / "execution_plan.yaml").write_text(yaml.dump(plan_data, default_flow_style=False))
         click.echo("  execution_plan.yaml written")
@@ -500,7 +503,9 @@ def verify(cli: CLIContext, bundle_path: str, level: str, report: str | None) ->
             if lvl == "structural":
                 # Check that manifest references valid artifacts
                 artifacts = manifest.get("artifacts", {})
-                missing = [name for name, path in artifacts.items() if not (bundle_dir / path).exists() and name != "manifest"]
+                missing = [
+                    name for name, path in artifacts.items() if not (bundle_dir / path).exists() and name != "manifest"
+                ]
                 if missing:
                     results[lvl] = {"status": "fail", "missing_artifacts": str(missing)}
                     click.echo(f"  {lvl}: FAIL (missing artifacts: {missing})")
@@ -599,10 +604,9 @@ def run(cli: CLIContext, bundle_path: str, inputs: str | None, device: str) -> N
     golden_outputs: torch.Tensor | None = None
     if golden_outputs_path.exists():
         golden_outputs = torch.load(golden_outputs_path, weights_only=True)
-        click.echo(f"[run] Golden outputs loaded for verification")
+        click.echo("[run] Golden outputs loaded for verification")
 
     # Execute: run golden inputs through verification
-    from compgen.runtime.local_executor import LocalExecutor
 
     click.echo(f"[run] Running on {device}...")
 
@@ -663,9 +667,7 @@ def promote(cli: CLIContext, bundle_path: str, library: str, force: bool) -> Non
     report_path = bundle_dir / "verification_report.json"
 
     if not report_path.exists() and not force:
-        raise click.ClickException(
-            f"No verification_report.json in {bundle_dir}. Run 'verify' first or use --force."
-        )
+        raise click.ClickException(f"No verification_report.json in {bundle_dir}. Run 'verify' first or use --force.")
 
     # Check verification status
     if report_path.exists():
@@ -674,9 +676,7 @@ def promote(cli: CLIContext, bundle_path: str, library: str, force: bool) -> Non
             overall = report_data.get("overall", "unknown")
             click.echo(f"[promote] Verification: {overall}")
             if overall != "pass" and not force:
-                raise click.ClickException(
-                    f"Verification status is '{overall}', not 'pass'. Use --force to override."
-                )
+                raise click.ClickException(f"Verification status is '{overall}', not 'pass'. Use --force to override.")
         except json.JSONDecodeError as exc:
             raise click.ClickException(f"Invalid verification report JSON: {exc}") from exc
 
@@ -778,9 +778,10 @@ def scaffold_target(
       L2: Optimized   (recipes beat fallback)
       L3: Promoted    (verified, stable, reusable)
     """
+    import yaml
+
     from compgen.targets.package import generate_target_package
     from compgen.targets.schema import load_profile
-    import yaml
 
     spec_path = Path(hardware_spec)
     output_root = Path(output_dir)
@@ -880,11 +881,7 @@ def scaffold_pack_cmd(
     click.echo("Next steps:")
     click.echo(f"  cd {result.pack_root}")
     click.echo("  pip install -e .")
-    click.echo(
-        '  python -c "from compgen.packs import load_pack; print(load_pack(\\"'
-        + name
-        + '\\").manifest.name)"'
-    )
+    click.echo('  python -c "from compgen.packs import load_pack; print(load_pack(\\"' + name + '\\").manifest.name)"')
 
 
 @main.group()
@@ -924,16 +921,15 @@ def contrib_status() -> None:
 
 
 @contrib.command("draft")
-@click.option("--slot", "slot_name", required=True,
-              help="Local extension (tool or invent-slot) name to draft.")
-@click.option("--no-tests", is_flag=True,
-              help="Skip running pytest on the synthesised test.")
-@click.option("--no-commit", is_flag=True,
-              help="Copy files but do not create a git commit.")
-@click.option("--no-branch", is_flag=True,
-              help="Do not create a new git branch.")
+@click.option("--slot", "slot_name", required=True, help="Local extension (tool or invent-slot) name to draft.")
+@click.option("--no-tests", is_flag=True, help="Skip running pytest on the synthesised test.")
+@click.option("--no-commit", is_flag=True, help="Copy files but do not create a git commit.")
+@click.option("--no-branch", is_flag=True, help="Do not create a new git branch.")
 def contrib_draft(
-    slot_name: str, no_tests: bool, no_commit: bool, no_branch: bool,
+    slot_name: str,
+    no_tests: bool,
+    no_commit: bool,
+    no_branch: bool,
 ) -> None:
     """Draft an upstream contribution from a local extension."""
     from compgen.contrib import draft_pr

@@ -108,9 +108,7 @@ def format_prompt(ctx: DispatchContext) -> str:
 
     workload_str = json.dumps(ctx.workload_shape, indent=2) if ctx.workload_shape else "  (unknown)"
 
-    util_lines = "\n".join(
-        f"  {dev}: {util:.0f}%" for dev, util in ctx.device_utilization.items()
-    ) or "  (no data)"
+    util_lines = "\n".join(f"  {dev}: {util:.0f}%" for dev, util in ctx.device_utilization.items()) or "  (no data)"
 
     return DISPATCH_PROMPT.format(
         target_name=ctx.target_name,

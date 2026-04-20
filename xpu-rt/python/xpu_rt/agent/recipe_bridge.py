@@ -66,40 +66,48 @@ def action_to_recipe_op(action: Action, iteration: int = 0) -> Operation | None:
     )
 
     if isinstance(action, TileAction) and action.region_id:
-        return TileOp.build(properties={
-            "sym_name": _candidate_sym("cand_tile", action.region_id, iteration),
-            "region_ref": SymbolRefAttr(action.region_id),
-            "tile_sizes": ArrayAttr([_int(s) for s in action.tile_sizes]),
-            "provenance": _prov(iteration),
-        })
+        return TileOp.build(
+            properties={
+                "sym_name": _candidate_sym("cand_tile", action.region_id, iteration),
+                "region_ref": SymbolRefAttr(action.region_id),
+                "tile_sizes": ArrayAttr([_int(s) for s in action.tile_sizes]),
+                "provenance": _prov(iteration),
+            }
+        )
 
     if isinstance(action, FuseAction) and action.region_id:
         refs = [SymbolRefAttr(action.region_id)]
         if action.target_region_id:
             refs.append(SymbolRefAttr(action.target_region_id))
-        return FuseOp.build(properties={
-            "sym_name": _candidate_sym("cand_fuse", action.region_id, iteration),
-            "fuse_regions": ArrayAttr(refs),
-            "provenance": _prov(iteration),
-        })
+        return FuseOp.build(
+            properties={
+                "sym_name": _candidate_sym("cand_fuse", action.region_id, iteration),
+                "fuse_regions": ArrayAttr(refs),
+                "provenance": _prov(iteration),
+            }
+        )
 
     if isinstance(action, AssignDeviceAction) and action.region_id:
-        return PlaceOnDeviceOp.build(properties={
-            "sym_name": _candidate_sym("cand_place", action.region_id, iteration),
-            "region_ref": SymbolRefAttr(action.region_id),
-            "device": DeviceRefAttr(action.device_index, "device"),
-            "provenance": _prov(iteration),
-        })
+        return PlaceOnDeviceOp.build(
+            properties={
+                "sym_name": _candidate_sym("cand_place", action.region_id, iteration),
+                "region_ref": SymbolRefAttr(action.region_id),
+                "device": DeviceRefAttr(action.device_index, "device"),
+                "provenance": _prov(iteration),
+            }
+        )
 
     if isinstance(action, InsertCopyAction) and action.region_id:
-        return InsertCopyBoundaryOp.build(properties={
-            "sym_name": _candidate_sym("cand_copy", action.region_id, iteration),
-            "src_region": SymbolRefAttr(action.region_id),
-            "dst_region": SymbolRefAttr(action.target_region_id or action.region_id),
-            "tensor_name": StringAttr("data"),
-            "is_async": _int(1 if action.async_ else 0),
-            "provenance": _prov(iteration),
-        })
+        return InsertCopyBoundaryOp.build(
+            properties={
+                "sym_name": _candidate_sym("cand_copy", action.region_id, iteration),
+                "src_region": SymbolRefAttr(action.region_id),
+                "dst_region": SymbolRefAttr(action.target_region_id or action.region_id),
+                "tensor_name": StringAttr("data"),
+                "is_async": _int(1 if action.async_ else 0),
+                "provenance": _prov(iteration),
+            }
+        )
 
     if isinstance(action, EqSatAction) and action.region_id:
         props: dict = {
@@ -120,13 +128,17 @@ def action_to_recipe_op(action: Action, iteration: int = 0) -> Operation | None:
 
     if isinstance(action, RequestVerificationAction) and action.region_id:
         if action.level in ("translation_validation", "both"):
-            return RequireTranslationValidationOp.build(properties={
-                "region_ref": SymbolRefAttr(action.region_id),
-            })
+            return RequireTranslationValidationOp.build(
+                properties={
+                    "region_ref": SymbolRefAttr(action.region_id),
+                }
+            )
         if action.level == "differential":
-            return RequireDiffTestOp.build(properties={
-                "region_ref": SymbolRefAttr(action.region_id),
-            })
+            return RequireDiffTestOp.build(
+                properties={
+                    "region_ref": SymbolRefAttr(action.region_id),
+                }
+            )
 
     return None
 
@@ -145,10 +157,7 @@ def recipe_op_to_action(op: Operation) -> Action | None:
     )
 
     if isinstance(op, TileOp):
-        sizes = tuple(
-            a.value.data for a in op.tile_sizes.data
-            if isinstance(a, IntegerAttr)
-        )
+        sizes = tuple(a.value.data for a in op.tile_sizes.data if isinstance(a, IntegerAttr))
         return TileAction(
             region_id=op.region_ref.root_reference.data,
             tile_sizes=sizes,
@@ -161,11 +170,7 @@ def recipe_op_to_action(op: Operation) -> Action | None:
         )
 
     if isinstance(op, FuseOp):
-        refs = [
-            r.root_reference.data
-            for r in op.fuse_regions.data
-            if isinstance(r, SymbolRefAttr)
-        ]
+        refs = [r.root_reference.data for r in op.fuse_regions.data if isinstance(r, SymbolRefAttr)]
         return FuseAction(
             region_id=refs[0] if refs else "",
             target_region_id=refs[1] if len(refs) > 1 else "",

@@ -44,9 +44,7 @@ class ProposalCandidate:
         """Wrap this candidate in the propose_invent_slot payload shape."""
         return {
             "chosen": dict(self.chosen),
-            "candidates": [{"chosen": dict(self.chosen),
-                            "rationale": self.rationale,
-                            "score": self.expected_impact}],
+            "candidates": [{"chosen": dict(self.chosen), "rationale": self.rationale, "score": self.expected_impact}],
             "target_feature_justification": self.target_feature_justification,
             "select_vs_invent": "invent",
         }
@@ -71,16 +69,17 @@ class ProposalCandidate:
         proposals = []
         for m in self.members:
             chosen = dict(m.get("chosen") or self.chosen)
-            proposals.append({
-                "slot_name": self.slot_name,
-                "proposal": {
-                    "chosen": chosen,
-                    "candidates": [],
-                    "target_feature_justification":
-                        self.target_feature_justification,
-                    "select_vs_invent": "invent",
-                },
-            })
+            proposals.append(
+                {
+                    "slot_name": self.slot_name,
+                    "proposal": {
+                        "chosen": chosen,
+                        "candidates": [],
+                        "target_feature_justification": self.target_feature_justification,
+                        "select_vs_invent": "invent",
+                    },
+                }
+            )
         return {
             "tool": "batch_propose",
             "args": {"proposals": proposals, "atomic": False},

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from compgen.ir.payload.contracts import (
     AutocompCostBudget,
     CostEstimate,
@@ -40,7 +39,7 @@ def test_contract_with_budget() -> None:
 def test_budget_is_frozen() -> None:
     b = AutocompCostBudget(max_wall_seconds=60.0, max_candidates=20)
     with pytest.raises(Exception):  # dataclass(frozen=True) → FrozenInstanceError
-        b.max_wall_seconds = 9999.0   # type: ignore[misc]
+        b.max_wall_seconds = 9999.0  # type: ignore[misc]
 
 
 def test_contract_without_budget_backward_compatible() -> None:

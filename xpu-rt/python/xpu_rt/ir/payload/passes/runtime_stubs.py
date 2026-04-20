@@ -35,9 +35,7 @@ class AssignQueue(_RuntimeStub):
     name: ClassVar[str] = "assign_queue"
     wraps_pass: ClassVar[str] = "XLA:queue_id annotation (Stream)"
     autocomp_cost_impact: ClassVar[AutocompCostImpact] = "indirect"
-    description: ClassVar[str] = (
-        "[STUB] assign a region to a queue/stream id for async execution."
-    )
+    description: ClassVar[str] = "[STUB] assign a region to a queue/stream id for async execution."
     covers_families: ClassVar[frozenset[str]] = frozenset()
 
     def tool_args(self) -> tuple[ToolArg, ...]:
@@ -52,9 +50,7 @@ class AssignMemorySpace(_RuntimeStub):
     name: ClassVar[str] = "assign_memory_space"
     wraps_pass: ClassVar[str] = "IREE:HAL memory-space assignment"
     autocomp_cost_impact: ClassVar[AutocompCostImpact] = "indirect"
-    description: ClassVar[str] = (
-        "[STUB] assign a region's buffers to a named memory domain."
-    )
+    description: ClassVar[str] = "[STUB] assign a region's buffers to a named memory domain."
     covers_families: ClassVar[frozenset[str]] = frozenset()
 
     def tool_args(self) -> tuple[ToolArg, ...]:
@@ -69,17 +65,20 @@ class PlanBuffers(_RuntimeStub):
     name: ClassVar[str] = "plan_buffers"
     wraps_pass: ClassVar[str] = "XLA:BufferAssigner"
     autocomp_cost_impact: ClassVar[AutocompCostImpact] = "indirect"
-    description: ClassVar[str] = (
-        "[STUB] allocate buffers with liveness + aliasing (feeds solve_memory)."
-    )
+    description: ClassVar[str] = "[STUB] allocate buffers with liveness + aliasing (feeds solve_memory)."
     covers_families: ClassVar[frozenset[str]] = frozenset()
 
     def tool_args(self) -> tuple[ToolArg, ...]:
         return (
             ToolArg("execution_plan", "plan_ref", "execution plan ref"),
-            ToolArg("coloring_policy", "enum", "buffer coloring policy",
-                    enum=("greedy", "first_fit", "min_peak"),
-                    required=False, default="first_fit"),
+            ToolArg(
+                "coloring_policy",
+                "enum",
+                "buffer coloring policy",
+                enum=("greedy", "first_fit", "min_peak"),
+                required=False,
+                default="first_fit",
+            ),
         )
 
 
@@ -87,17 +86,20 @@ class InsertCopies(_RuntimeStub):
     name: ClassVar[str] = "insert_copies"
     wraps_pass: ClassVar[str] = "XLA:CopyInsertion"
     autocomp_cost_impact: ClassVar[AutocompCostImpact] = "indirect"
-    description: ClassVar[str] = (
-        "[STUB] insert explicit copies where liveness demands."
-    )
+    description: ClassVar[str] = "[STUB] insert explicit copies where liveness demands."
     covers_families: ClassVar[frozenset[str]] = frozenset()
 
     def tool_args(self) -> tuple[ToolArg, ...]:
         return (
             ToolArg("execution_plan", "plan_ref", "execution plan ref"),
-            ToolArg("schedule_phase", "enum", "pre or post scheduling",
-                    enum=("pre_scheduling", "post_scheduling"),
-                    required=False, default="post_scheduling"),
+            ToolArg(
+                "schedule_phase",
+                "enum",
+                "pre or post scheduling",
+                enum=("pre_scheduling", "post_scheduling"),
+                required=False,
+                default="post_scheduling",
+            ),
         )
 
 
@@ -105,9 +107,7 @@ class AliasIoBuffers(_RuntimeStub):
     name: ClassVar[str] = "alias_io_buffers"
     wraps_pass: ClassVar[str] = "XLA:OptimizeInputOutputBufferAlias"
     autocomp_cost_impact: ClassVar[AutocompCostImpact] = "indirect"
-    description: ClassVar[str] = (
-        "[STUB] alias compatible I/O buffers to cut memory usage."
-    )
+    description: ClassVar[str] = "[STUB] alias compatible I/O buffers to cut memory usage."
     covers_families: ClassVar[frozenset[str]] = frozenset()
 
 
@@ -115,17 +115,20 @@ class InsertHostOffload(_RuntimeStub):
     name: ClassVar[str] = "insert_host_offload"
     wraps_pass: ClassVar[str] = "XLA:HostOffloader"
     autocomp_cost_impact: ClassVar[AutocompCostImpact] = "indirect"
-    description: ClassVar[str] = (
-        "[STUB] insert host-offload nodes per policy."
-    )
+    description: ClassVar[str] = "[STUB] insert host-offload nodes per policy."
     covers_families: ClassVar[frozenset[str]] = frozenset()
 
     def tool_args(self) -> tuple[ToolArg, ...]:
         return (
             ToolArg("region", "region_ref", "region"),
-            ToolArg("policy", "enum", "offload policy",
-                    enum=("always", "memory_pressure_driven", "never"),
-                    required=False, default="memory_pressure_driven"),
+            ToolArg(
+                "policy",
+                "enum",
+                "offload policy",
+                enum=("always", "memory_pressure_driven", "never"),
+                required=False,
+                default="memory_pressure_driven",
+            ),
         )
 
 
@@ -133,16 +136,13 @@ class AssignStreams(_RuntimeStub):
     name: ClassVar[str] = "assign_streams"
     wraps_pass: ClassVar[str] = "XLA:StreamAttributeAnnotator+AsyncWrapper"
     autocomp_cost_impact: ClassVar[AutocompCostImpact] = "indirect"
-    description: ClassVar[str] = (
-        "[STUB] annotate regions with stream ids for concurrency."
-    )
+    description: ClassVar[str] = "[STUB] annotate regions with stream ids for concurrency."
     covers_families: ClassVar[frozenset[str]] = frozenset()
 
     def tool_args(self) -> tuple[ToolArg, ...]:
         return (
             ToolArg("execution_plan", "plan_ref", "execution plan ref"),
-            ToolArg("stream_count", "integer", "max concurrent streams",
-                    required=False, default=1),
+            ToolArg("stream_count", "integer", "max concurrent streams", required=False, default=1),
         )
 
 
@@ -150,9 +150,7 @@ class NormalizeSubBytePostLayout(_RuntimeStub):
     name: ClassVar[str] = "normalize_subbyte_post_layout"
     wraps_pass: ClassVar[str] = "XLA:SubByteNormalization (post-layout mode)"
     autocomp_cost_impact: ClassVar[AutocompCostImpact] = "low"
-    description: ClassVar[str] = (
-        "[STUB] second-pass sub-byte normalization after layout commit."
-    )
+    description: ClassVar[str] = "[STUB] second-pass sub-byte normalization after layout commit."
     covers_families: ClassVar[frozenset[str]] = frozenset()
 
 

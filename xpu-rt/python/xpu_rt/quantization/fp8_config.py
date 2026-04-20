@@ -20,9 +20,7 @@ from dataclasses import dataclass
 from functools import partial
 from typing import Literal
 
-import torch
 import torch.nn as nn
-
 from torchao.core.config import AOBaseConfig
 from torchao.quantization.quant_api import register_quantize_module_handler
 
@@ -53,11 +51,7 @@ def _module_extra_repr(
     """Enhanced repr showing FP8 quantization info."""
     param = getattr(self, parameter_name, None)
     if isinstance(param, FP8E4M3Po2Tensor):
-        return (
-            f"{original_extra_repr}, "
-            f"weight_dtype=float8_e4m3fn, "
-            f"scale={param._scale}"
-        )
+        return f"{original_extra_repr}, weight_dtype=float8_e4m3fn, scale={param._scale}"
     return original_extra_repr
 
 

@@ -5,21 +5,19 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from compgen.memory.schema import (
-    CandidateStatus,
     GeneratorKind,
     KnowledgeKind,
     ObjectKind,
     ScopeKind,
 )
-from compgen.memory.store import CompilerMemory
 from compgen.memory.search.frontier import SearchFrontier
 from compgen.memory.search.promote import SearchPromoter
-from compgen.memory.search.replay import ReplayBuffer, Trajectory
-from compgen.memory.search.retrieve import RetrievalResult, SearchRetriever
+from compgen.memory.search.replay import ReplayBuffer
+from compgen.memory.search.retrieve import SearchRetriever
 from compgen.memory.search.scorer import score_kernel, score_pass
 from compgen.memory.search.task import SearchTask
+from compgen.memory.store import CompilerMemory
 
 
 @pytest.fixture
@@ -43,10 +41,15 @@ class TestSearchTask:
 class TestScorer:
     def test_score_correct_kernel(self) -> None:
         from compgen.memory.schema import Evaluation
+
         eval_ = Evaluation(
-            eval_id="e1", candidate_id="c1",
-            compile_ok=True, correctness_ok=True, perf_ok=True,
-            score=0.8, latency_us=100.0,
+            eval_id="e1",
+            candidate_id="c1",
+            compile_ok=True,
+            correctness_ok=True,
+            perf_ok=True,
+            score=0.8,
+            latency_us=100.0,
         )
         breakdown = score_kernel(eval_)
         assert breakdown.total > 0
@@ -54,20 +57,28 @@ class TestScorer:
 
     def test_score_incorrect_kernel(self) -> None:
         from compgen.memory.schema import Evaluation
+
         eval_ = Evaluation(
-            eval_id="e1", candidate_id="c1",
-            compile_ok=True, correctness_ok=False,
-            score=0.8, latency_us=100.0,
+            eval_id="e1",
+            candidate_id="c1",
+            compile_ok=True,
+            correctness_ok=False,
+            score=0.8,
+            latency_us=100.0,
         )
         breakdown = score_kernel(eval_)
         assert breakdown.total == 0.0  # gated by correctness
 
     def test_score_pass(self) -> None:
         from compgen.memory.schema import Evaluation
+
         eval_ = Evaluation(
-            eval_id="e1", candidate_id="c1",
-            compile_ok=True, correctness_ok=True,
-            score=0.5, verifier_summary="valid",
+            eval_id="e1",
+            candidate_id="c1",
+            compile_ok=True,
+            correctness_ok=True,
+            score=0.5,
+            verifier_summary="valid",
         )
         breakdown = score_pass(eval_)
         assert breakdown.total > 0

@@ -1,7 +1,9 @@
 """Tests for cross-module global strategy (Unit 16)."""
+
 from __future__ import annotations
+
 import json
-import pytest
+
 from compgen.agent.prompts.global_strategy import GlobalStrategyContext, format_prompt, parse_response
 
 
@@ -22,12 +24,14 @@ class TestGlobalStrategy:
         assert "decoder" in prompt
 
     def test_parse_sequential(self):
-        text = json.dumps({
-            "strategy": "sequential",
-            "priority_order": ["decoder", "encoder", "head"],
-            "shared_optimizations": ["fuse attention blocks"],
-            "reasoning": "decoder is largest"
-        })
+        text = json.dumps(
+            {
+                "strategy": "sequential",
+                "priority_order": ["decoder", "encoder", "head"],
+                "shared_optimizations": ["fuse attention blocks"],
+                "reasoning": "decoder is largest",
+            }
+        )
         result = parse_response(text)
         assert result is not None
         assert result["strategy"] == "sequential"

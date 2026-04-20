@@ -12,17 +12,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
 import torch
 import torch.nn as nn
-
-from compgen.api import compile_model, device as _device
+from compgen.api import compile_model
+from compgen.api import device as _device
 from compgen.ir.recipe.seed import generate_seed_recipe
 
-EXEMPLAR = (
-    Path(__file__).resolve().parents[2]
-    / "targetgen" / "exemplars" / "test_gpu_simt.yaml"
-)
+EXEMPLAR = Path(__file__).resolve().parents[2] / "targetgen" / "exemplars" / "test_gpu_simt.yaml"
 
 
 class _MLP(nn.Module):
@@ -30,6 +26,7 @@ class _MLP(nn.Module):
         super().__init__()
         self.fc1 = nn.Linear(32, 32)
         self.fc2 = nn.Linear(32, 16)
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.fc2(torch.relu(self.fc1(x)))
 
@@ -37,22 +34,29 @@ class _MLP(nn.Module):
 def _seed_recipe():
     dev = _device(EXEMPLAR)
     compiled = compile_model(
-        _MLP().eval(), dev, sample_inputs=(torch.randn(1, 32),),
+        _MLP().eval(),
+        dev,
+        sample_inputs=(torch.randn(1, 32),),
     )
     return generate_seed_recipe(
-        compiled.payload_module, dev.profile, "latency",
+        compiled.payload_module,
+        dev.profile,
+        "latency",
     )
 
 
 def test_recipe_region_op_has_role_property_defined() -> None:
     """Constructing a RecipeRegionOp with role= must succeed + verify."""
-    from xdsl.dialects.builtin import StringAttr
     from compgen.ir.recipe.ops_scope import RecipeRegionOp
-    op = RecipeRegionOp.build(properties={
-        "sym_name": StringAttr("r_test"),
-        "payload_region_id": StringAttr("MmOp_0"),
-        "role": StringAttr("matmul"),
-    })
+    from xdsl.dialects.builtin import StringAttr
+
+    op = RecipeRegionOp.build(
+        properties={
+            "sym_name": StringAttr("r_test"),
+            "payload_region_id": StringAttr("MmOp_0"),
+            "role": StringAttr("matmul"),
+        }
+    )
     op.verify()
     role = op.properties.get("role")
     assert isinstance(role, StringAttr)
@@ -62,17 +66,11 @@ def test_recipe_region_op_has_role_property_defined() -> None:
 def test_seed_recipe_stamps_role_on_regions() -> None:
     """At least one recipe.region in a seed-built recipe must carry role."""
     recipe = _seed_recipe()
-    region_ops = [op for op in recipe.body.block.ops
-                  if op.name == "recipe.region"]
+    region_ops = [op for op in recipe.body.block.ops if op.name == "recipe.region"]
     assert region_ops, "seed produced zero recipe.region ops"
 
-    with_role = [
-        op for op in region_ops
-        if op.properties.get("role") is not None
-    ]
-    assert with_role, (
-        "no recipe.region carries a role — pattern hints didn't propagate"
-    )
+    with_role = [op for op in region_ops if op.properties.get("role") is not None]
+    assert with_role, "no recipe.region carries a role — pattern hints didn't propagate"
 
     # Every captured op in our toy MLP should land with a useful role.
     # The exact set depends on how torch.export decomposes Linear+ReLU,
@@ -80,10 +78,19 @@ def test_seed_recipe_stamps_role_on_regions() -> None:
     # op-family name (matmul / mm / addmm / view / relu / max / ...).
     role_strings = {op.properties["role"].data for op in with_role}
     assert any(
-        any(family in r for family in (
-            "matmul", "mm", "addmm", "linear", "relu", "view",
-            "permute", "transpose",
-        ))
+        any(
+            family in r
+            for family in (
+                "matmul",
+                "mm",
+                "addmm",
+                "linear",
+                "relu",
+                "view",
+                "permute",
+                "transpose",
+            )
+        )
         for r in role_strings
     ), f"role strings look unrecognisable: {role_strings}"
 
@@ -116,15 +123,19 @@ def test_dossier_region_map_carries_role_when_present() -> None:
     session = sm.open()
     dev = _device(EXEMPLAR)
     compiled = compile_model(
-        _MLP().eval(), dev, sample_inputs=(torch.randn(1, 32),),
+        _MLP().eval(),
+        dev,
+        sample_inputs=(torch.randn(1, 32),),
     )
     reg = Registry()
     register_invent_slots(reg)
     env = compiled.create_agent_env(budget=2)
     driver = LLMDrivenCompiler(
-        env=env, target=dev.profile,
+        env=env,
+        target=dev.profile,
         llm_client=MockLLMClient(strict=False),
-        budget=2, registry=reg,
+        budget=2,
+        registry=reg,
     )
     session.compiled = compiled
     session.device = dev

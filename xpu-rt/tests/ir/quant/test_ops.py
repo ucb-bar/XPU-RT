@@ -3,16 +3,6 @@
 from __future__ import annotations
 
 import pytest
-from xdsl.dialects.builtin import (
-    Float32Type,
-    IntegerAttr,
-    IntegerType,
-    StringAttr,
-    TensorType,
-)
-from xdsl.dialects.tensor import EmptyOp
-from xdsl.utils.exceptions import VerifyException
-
 from compgen.ir.quant import (
     AffineQuantizedTensorType,
     ChooseQParamsPerChannelOp,
@@ -28,7 +18,15 @@ from compgen.ir.quant import (
     WeightInt4PackQMOp,
     WeightInt8PackMMOp,
 )
-
+from xdsl.dialects.builtin import (
+    Float32Type,
+    IntegerAttr,
+    IntegerType,
+    StringAttr,
+    TensorType,
+)
+from xdsl.dialects.tensor import EmptyOp
+from xdsl.utils.exceptions import VerifyException
 
 # --- shared fixtures ----------------------------------------------------------
 
@@ -293,5 +291,6 @@ def test_fake_quantize_rejects_inverted_range(x_f32, scalar_f32, scalar_i32):
 )
 def test_ops_are_pure(op_cls):
     from xdsl.traits import Pure
+
     trait_classes = {type(t) for t in op_cls.traits.traits}
     assert Pure in trait_classes, f"{op_cls.__name__} missing Pure trait"

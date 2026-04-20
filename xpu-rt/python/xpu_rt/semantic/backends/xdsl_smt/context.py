@@ -43,6 +43,7 @@ class SMTContextFactory:
         ctx = SMTContextFactory.create()
         try:
             from compgen.ir.tile.dialect import TileDialect
+
             ctx.load_dialect(TileDialect)
         except (ImportError, NotImplementedError):
             pass

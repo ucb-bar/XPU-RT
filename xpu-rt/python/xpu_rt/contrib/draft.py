@@ -23,9 +23,9 @@ import structlog
 
 from compgen.agent.extensions.local_loader import (
     DEFAULT_ROOT as EXT_ROOT,
-    STATE_FILENAME,
+)
+from compgen.agent.extensions.local_loader import (
     _load_state,
-    _state_path,
     load_local_extensions,
 )
 from compgen.llm.registry import Registry
@@ -42,8 +42,8 @@ log = structlog.get_logger()
 class ContribExtension:
     """One local extension and its upstream-readiness summary."""
 
-    name: str                            # slot or tool name
-    kind: str                            # "tool" | "slot"
+    name: str  # slot or tool name
+    kind: str  # "tool" | "slot"
     source_path: Path
     accepted_invocations: int
     eligible: bool
@@ -102,20 +102,30 @@ def list_extensions(root: Path | None = None) -> list[ContribExtension]:
         src = py_files.get(tool.name, Path(""))
         count = len(accepted.get(tool.name, []))
         eligible, reason = _eligibility(tool_name=tool.name, count=count)
-        out.append(ContribExtension(
-            name=tool.name, kind="tool",
-            source_path=src, accepted_invocations=count,
-            eligible=eligible, eligibility_reason=reason,
-        ))
+        out.append(
+            ContribExtension(
+                name=tool.name,
+                kind="tool",
+                source_path=src,
+                accepted_invocations=count,
+                eligible=eligible,
+                eligibility_reason=reason,
+            )
+        )
     for slot in reg.list_invent_slots():
         src = py_files.get(slot.name, Path(""))
         count = len(accepted.get(slot.name, []))
         eligible, reason = _eligibility(tool_name=slot.name, count=count)
-        out.append(ContribExtension(
-            name=slot.name, kind="slot",
-            source_path=src, accepted_invocations=count,
-            eligible=eligible, eligibility_reason=reason,
-        ))
+        out.append(
+            ContribExtension(
+                name=slot.name,
+                kind="slot",
+                source_path=src,
+                accepted_invocations=count,
+                eligible=eligible,
+                eligibility_reason=reason,
+            )
+        )
     out.sort(key=lambda e: e.name)
     return out
 
@@ -125,10 +135,7 @@ _MIN_ACCEPTED_INVOCATIONS = 3
 
 def _eligibility(*, tool_name: str, count: int) -> tuple[bool, str]:
     if count < _MIN_ACCEPTED_INVOCATIONS:
-        return False, (
-            f"need >={_MIN_ACCEPTED_INVOCATIONS} accepted invocations "
-            f"(got {count})"
-        )
+        return False, (f"need >={_MIN_ACCEPTED_INVOCATIONS} accepted invocations (got {count})")
     return True, "ready"
 
 
@@ -142,7 +149,8 @@ def status(root: Path | None = None) -> dict[str, Any]:
         "eligible": len(eligible),
         "extensions": [
             {
-                "name": e.name, "kind": e.kind,
+                "name": e.name,
+                "kind": e.kind,
                 "accepted_invocations": e.accepted_invocations,
                 "eligible": e.eligible,
                 "reason": e.eligibility_reason,
@@ -185,7 +193,8 @@ def _repo_root() -> Path:
 
 
 def _synthesize_test(
-    slot_name: str, invocations: list[dict[str, Any]],
+    slot_name: str,
+    invocations: list[dict[str, Any]],
 ) -> str:
     """Generate a smoke test that imports the contrib module."""
     header = f'''"""Auto-generated contrib regression test for ``{slot_name}``.
@@ -220,18 +229,25 @@ def test_{slot_name}_registration_roundtrips() -> None:
     assert tools or slots, "module declared neither TOOL nor SLOT"
 '''
     if invocations:
-        header += "\n\n# Accepted-invocation log (truncated): " + \
-            json.dumps(invocations[:5], indent=2, default=str) + "\n"
+        header += (
+            "\n\n# Accepted-invocation log (truncated): " + json.dumps(invocations[:5], indent=2, default=str) + "\n"
+        )
     return header
 
 
 def _git(
-    args: list[str], *, cwd: Path,
+    args: list[str],
+    *,
+    cwd: Path,
 ) -> tuple[int, str, str]:
     """Run a git command and return (rc, stdout, stderr) — never raises."""
     try:
         p = subprocess.run(
-            ["git", *args], cwd=cwd, capture_output=True, text=True, check=False,
+            ["git", *args],
+            cwd=cwd,
+            capture_output=True,
+            text=True,
+            check=False,
         )
         return p.returncode, p.stdout, p.stderr
     except FileNotFoundError:
@@ -242,9 +258,13 @@ def _pytest(test_file: Path, *, cwd: Path) -> tuple[bool, str]:
     try:
         p = subprocess.run(
             ["uv", "run", "pytest", str(test_file), "-q", "--no-header"],
-            cwd=cwd, capture_output=True, text=True, check=False, timeout=120,
+            cwd=cwd,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=120,
         )
-    except Exception as exc:   # noqa: BLE001
+    except Exception as exc:  # noqa: BLE001
         return False, f"pytest invocation failed: {exc}"
     return p.returncode == 0, p.stdout + p.stderr
 
@@ -274,9 +294,7 @@ def draft_pr(
 
     source_file = _find_source_file(src_root, slot_name)
     if source_file is None:
-        result.errors.append(
-            f"no extension file found for {slot_name!r} under {src_root}"
-        )
+        result.errors.append(f"no extension file found for {slot_name!r} under {src_root}")
         return result
 
     # Target paths inside the repo.
@@ -284,9 +302,7 @@ def draft_pr(
     upstream_dir.mkdir(parents=True, exist_ok=True)
     pkg_init = upstream_dir / "__init__.py"
     if not pkg_init.exists():
-        pkg_init.write_text(
-            '"""User-contributed invent slots (auto-generated from local extensions)."""\n'
-        )
+        pkg_init.write_text('"""User-contributed invent slots (auto-generated from local extensions)."""\n')
     upstream_module = upstream_dir / f"{slot_name}.py"
     result.upstream_module = upstream_module
 
@@ -300,9 +316,7 @@ def draft_pr(
 
     # Copy + test synthesis.
     shutil.copyfile(source_file, upstream_module)
-    accepted = (_load_state(src_root).get("accepted_invocations", {}) or {}).get(
-        slot_name, []
-    )
+    accepted = (_load_state(src_root).get("accepted_invocations", {}) or {}).get(slot_name, [])
     upstream_test.write_text(_synthesize_test(slot_name, accepted))
 
     # Optional pytest.
@@ -323,7 +337,8 @@ def draft_pr(
             current = out.strip()
             if current != result.branch:
                 rc2, _, err2 = _git(
-                    ["checkout", "-B", result.branch], cwd=repo,
+                    ["checkout", "-B", result.branch],
+                    cwd=repo,
                 )
                 if rc2 != 0:
                     result.errors.append(f"git checkout -B failed: {err2}")

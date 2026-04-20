@@ -2,13 +2,10 @@
 
 from __future__ import annotations
 
-import pytest
-
 from compgen.llm.target_coverage import (
     INDUCTOR_COVERAGE,
-    InductorCoverage,
-    coverage_notes_for_llm,
     cost_weight_for,
+    coverage_notes_for_llm,
     get_coverage,
     update_measurement,
 )
@@ -47,8 +44,10 @@ def test_notes_include_rationale_on_seeded_rows() -> None:
 
 def test_update_measurement_overwrites_seed() -> None:
     update_measurement(
-        "decompose_concat", "cuda",
-        coverage="partial", cost_weight_bias="neutral",
+        "decompose_concat",
+        "cuda",
+        coverage="partial",
+        cost_weight_bias="neutral",
         measured_shapes_where_compgen_wins=("B=1,N=7",),
         notes="measurement override in test",
     )
@@ -62,8 +61,10 @@ def test_update_measurement_overwrites_seed() -> None:
 
 def test_update_measurement_creates_new_row() -> None:
     update_measurement(
-        "brand_new_pass", "arm_cpu",
-        coverage="none", cost_weight_bias="prefer",
+        "brand_new_pass",
+        "arm_cpu",
+        coverage="none",
+        cost_weight_bias="prefer",
         notes="new row",
     )
     row = get_coverage("brand_new_pass", "arm_cpu")

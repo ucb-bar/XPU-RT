@@ -51,9 +51,7 @@ from dataclasses import dataclass
 from xdsl.dialects.arith import ExtSIOp, MulfOp, SIToFPOp, SubiOp
 from xdsl.dialects.builtin import (
     AffineMapAttr,
-    ArrayAttr,
     Float32Type,
-    IntegerType,
     ModuleOp,
     StringAttr,
     TensorType,
@@ -80,7 +78,6 @@ from compgen.ir.quant import (
     DequantizePerGroupOp,
     DequantizePerTensorOp,
 )
-
 
 _QUANTIZED_CONV_WEIGHT_TYPES = (
     DequantizePerChannelOp,
@@ -244,9 +241,7 @@ class _TagQuantizedConvPattern(RewritePattern):
         self.stats = stats
 
     @op_type_rewrite_pattern
-    def match_and_rewrite(
-        self, op: CallOp, rewriter: PatternRewriter
-    ) -> None:
+    def match_and_rewrite(self, op: CallOp, rewriter: PatternRewriter) -> None:
         if not _is_convolution_call(op):
             return
         self.stats.opaque_convs_seen += 1

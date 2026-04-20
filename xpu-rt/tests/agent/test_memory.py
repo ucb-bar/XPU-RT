@@ -17,6 +17,7 @@ EXAMPLES = Path(__file__).parent.parent.parent / "examples"
 def _get_full():
     sys.path.insert(0, str(EXAMPLES / "models"))
     from simple_mlp import SimpleMLP, get_sample_inputs
+
     model = SimpleMLP()
     inputs = get_sample_inputs()
     ep = capture_model(model, inputs)
@@ -82,8 +83,7 @@ def test_calibrate_after_benchmark() -> None:
     """CalibrateAction should update cost model from benchmark results."""
     module, ep, model, inputs = _get_full()
     env = CompilerEnv()
-    env.reset(module, _get_target(), pytorch_model=model, sample_inputs=inputs,
-              exported_program=ep, budget=10)
+    env.reset(module, _get_target(), pytorch_model=model, sample_inputs=inputs, exported_program=ep, budget=10)
 
     # First benchmark
     r1 = env.step(BenchmarkAction(device="cpu", mode="eager", num_iterations=5))

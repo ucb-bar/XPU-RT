@@ -20,6 +20,18 @@ from compgen.ir.payload.passes.demote_contraction_inputs import DemoteContractio
 # XLA ports (real)
 from compgen.ir.payload.passes.normalize_subbyte import NormalizeSubByte
 
+# Phase 5 runtime stubs (P15)
+from compgen.ir.payload.passes.runtime_stubs import (
+    AliasIoBuffers,
+    AssignMemorySpace,
+    AssignQueue,
+    AssignStreams,
+    InsertCopies,
+    InsertHostOffload,
+    NormalizeSubBytePostLayout,
+    PlanBuffers,
+)
+
 # Scaffolded stubs (real impl pending)
 from compgen.ir.payload.passes.stubs import (
     FoldTransposesIntoDots,
@@ -33,18 +45,6 @@ from compgen.ir.payload.passes.stubs import (
     PropagateTransposes,
     RaiseSpecialOps,
     SetNumericsPolicy,
-)
-
-# Phase 5 runtime stubs (P15)
-from compgen.ir.payload.passes.runtime_stubs import (
-    AliasIoBuffers,
-    AssignMemorySpace,
-    AssignQueue,
-    AssignStreams,
-    InsertCopies,
-    InsertHostOffload,
-    NormalizeSubBytePostLayout,
-    PlanBuffers,
 )
 
 # Registration (idempotent)

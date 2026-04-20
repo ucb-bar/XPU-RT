@@ -7,10 +7,9 @@ Each invent-slot gets:
 2. A composite gate (default: structural + differential; SMT-on-demand
    per the slot's metadata) bound as :attr:`InventSlot.gate_impl`.
 
-Importing this package auto-registers the 5 core invent-slots into
-:func:`compgen.llm.registry.get_registry`. Mirrors the Stage A
-prototypes in ``user_perspective/prototypes/invent_slots/`` but lives
-in-repo so the LLM drive loop can consume them directly.
+Importing this package auto-registers the core invent-slots into
+:func:`compgen.llm.registry.get_registry` so the LLM drive loop can
+consume them directly.
 """
 
 from __future__ import annotations

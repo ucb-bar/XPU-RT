@@ -8,7 +8,7 @@ specifications.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Protocol, runtime_checkable
 
 from compgen.ir.layout.attrs import PackSpecAttr
@@ -70,14 +70,8 @@ class DefaultLayoutResolver:
     def materialize(self, specialized: PackSpecAttr) -> dict[str, Any]:
         """Return basic metadata from the pack spec."""
         return {
-            "inner_tiles": [
-                a.value.data if hasattr(a, "value") else 0
-                for a in specialized.inner_tiles.data
-            ],
-            "outer_perm": [
-                a.value.data if hasattr(a, "value") else 0
-                for a in specialized.outer_perm.data
-            ],
+            "inner_tiles": [a.value.data if hasattr(a, "value") else 0 for a in specialized.inner_tiles.data],
+            "outer_perm": [a.value.data if hasattr(a, "value") else 0 for a in specialized.outer_perm.data],
             "padding": specialized.padding_value.data,
         }
 

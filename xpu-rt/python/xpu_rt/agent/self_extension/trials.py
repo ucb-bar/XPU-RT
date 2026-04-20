@@ -11,19 +11,18 @@ record its boolean verdict (plus optional score).
 
 from __future__ import annotations
 
-import json
 import os
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import structlog
 
 from compgen.agent.self_extension.authored_tool import (
     AuthoredTool,
     AuthoredToolTrial,
-    authored_tool_key,
 )
 from compgen.agent.self_extension.sandbox import SandboxResult, sandbox_invoke
 
@@ -120,7 +119,7 @@ def run_trial(
     )
     try:
         passed, score = scenario.scorer(sandbox)
-    except Exception as exc:   # noqa: BLE001
+    except Exception as exc:  # noqa: BLE001
         # Scorer bug → fail closed. Record the reason.
         passed, score = False, None
         sandbox.error = (sandbox.error or "") + f" | scorer_raised: {exc}"

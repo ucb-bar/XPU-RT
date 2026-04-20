@@ -13,9 +13,6 @@ from __future__ import annotations
 import json
 
 import pytest
-from xdsl.dialects.builtin import ArrayAttr, ModuleOp, StringAttr, SymbolRefAttr
-from xdsl.ir import Block, Region
-
 from compgen.agent.recipe_bridge_invent import (
     proposal_to_recipe_op,
     supported_slot_names,
@@ -28,6 +25,8 @@ from compgen.ir.recipe.ops_propose import (
     ProposePayload,
 )
 from compgen.ir.recipe.serialize import mlir_to_recipe, recipe_to_mlir
+from xdsl.dialects.builtin import ModuleOp
+from xdsl.ir import Block, Region
 
 
 def test_supported_slots_exposes_minimum_set() -> None:
@@ -61,7 +60,8 @@ def test_propose_fusion_from_grouped_regions() -> None:
             "gate_result": {"status": "accepted"},
             "select_vs_invent": "invent",
         },
-        iteration=7, llm_turn_id="turn_x",
+        iteration=7,
+        llm_turn_id="turn_x",
     )
     assert isinstance(op, ProposeFusionOp)
     # verify() was called inside the bridge; check the shape landed.
@@ -102,9 +102,7 @@ def test_propose_megakernel_synthesis_happy_path() -> None:
             "chosen": {
                 "megakernel_name": "gemma_block_mega",
                 "fused_region_refs": ["r_2", "r_3", "r_4"],
-                "event_tensor_decls": [
-                    {"name": "done", "shape": [1], "wait_count": 3, "scope": "block"}
-                ],
+                "event_tensor_decls": [{"name": "done", "shape": [1], "wait_count": 3, "scope": "block"}],
                 "task_partition": {"sm_0": ["r_2"], "sm_1": ["r_3", "r_4"]},
             },
             "target_feature_justification": "persistent_kernels + semaphore_atomics",
@@ -225,6 +223,12 @@ def test_payload_json_survives_construction() -> None:
         },
     )
     decoded = json.loads(op.payload.data)
-    for key in ("candidates", "chosen", "target_feature_justification",
-                "gate_result", "select_vs_invent", "llm_turn_id"):
+    for key in (
+        "candidates",
+        "chosen",
+        "target_feature_justification",
+        "gate_result",
+        "select_vs_invent",
+        "llm_turn_id",
+    ):
         assert key in decoded

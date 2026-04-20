@@ -17,15 +17,11 @@ from pathlib import Path
 import pytest
 import torch
 import torch.nn as nn
-
 from compgen import compile_with_llm, open_llm_session
 from compgen.api_llm import LLMCompileResult
 from compgen.llm.mock_client import MockLLMClient
 
-EXEMPLAR = (
-    Path(__file__).resolve().parents[1]
-    / "targetgen" / "exemplars" / "test_gpu_simt.yaml"
-)
+EXEMPLAR = Path(__file__).resolve().parents[1] / "targetgen" / "exemplars" / "test_gpu_simt.yaml"
 
 
 class _TinyMLP(nn.Module):
@@ -43,9 +39,12 @@ def test_compile_with_llm_returns_result_envelope() -> None:
     mock = MockLLMClient(strict=False)
 
     res = compile_with_llm(
-        model=model, target=EXEMPLAR,
-        llm=mock, sample_inputs=sample,
-        budget=2, transcript_dir=None,
+        model=model,
+        target=EXEMPLAR,
+        llm=mock,
+        sample_inputs=sample,
+        budget=2,
+        transcript_dir=None,
     )
     assert isinstance(res, LLMCompileResult)
     assert res.compiled.pipeline_result.passed
@@ -60,8 +59,11 @@ def test_compile_with_llm_forward_matches_eager() -> None:
     mock = MockLLMClient(strict=False)
 
     res = compile_with_llm(
-        model=model, target=EXEMPLAR, llm=mock,
-        sample_inputs=sample, budget=2,
+        model=model,
+        target=EXEMPLAR,
+        llm=mock,
+        sample_inputs=sample,
+        budget=2,
     )
     # LocalExecutor.benchmark returns a BenchmarkResult — we compare
     # the actual run's output to eager by re-running model(sample).
@@ -80,8 +82,12 @@ def test_compile_with_llm_return_driver_keeps_session_open() -> None:
     mock = MockLLMClient(strict=False)
 
     res = compile_with_llm(
-        model=model, target=EXEMPLAR, llm=mock,
-        sample_inputs=sample, budget=2, return_driver=True,
+        model=model,
+        target=EXEMPLAR,
+        llm=mock,
+        sample_inputs=sample,
+        budget=2,
+        return_driver=True,
     )
     assert res.driver is not None
     summary = res.driver.summary()
@@ -111,8 +117,11 @@ def build_model():
 """)
     mock = MockLLMClient(strict=False)
     res = compile_with_llm(
-        model=model_py, target=EXEMPLAR, llm=mock,
-        budget=2, transcript_dir=tmp_path / "tr",
+        model=model_py,
+        target=EXEMPLAR,
+        llm=mock,
+        budget=2,
+        transcript_dir=tmp_path / "tr",
     )
     assert res.compiled.pipeline_result.passed
 
@@ -122,8 +131,11 @@ def test_compile_with_llm_requires_sample_inputs_for_raw_module() -> None:
     mock = MockLLMClient(strict=False)
     with pytest.raises(ValueError, match="sample_inputs"):
         compile_with_llm(
-            model=model, target=EXEMPLAR, llm=mock,
-            sample_inputs=None, budget=1,
+            model=model,
+            target=EXEMPLAR,
+            llm=mock,
+            sample_inputs=None,
+            budget=1,
         )
 
 
@@ -133,7 +145,11 @@ def test_open_llm_session_returns_driver() -> None:
     mock = MockLLMClient(strict=False)
 
     driver = open_llm_session(
-        model, target=EXEMPLAR, llm=mock, sample_inputs=sample, budget=2,
+        model,
+        target=EXEMPLAR,
+        llm=mock,
+        sample_inputs=sample,
+        budget=2,
     )
     assert driver.summary()["step_index"] == 0
     # Invoking an unknown tool must surface as status="unknown", not raise.
@@ -148,8 +164,12 @@ def test_compile_with_llm_records_transcript_files(tmp_path: Path) -> None:
 
     tr = tmp_path / "transcripts"
     res = compile_with_llm(
-        model=model, target=EXEMPLAR, llm=mock,
-        sample_inputs=sample, budget=2, transcript_dir=tr,
+        model=model,
+        target=EXEMPLAR,
+        llm=mock,
+        sample_inputs=sample,
+        budget=2,
+        transcript_dir=tr,
     )
     assert res.transcript_dir == tr
     assert tr.exists()

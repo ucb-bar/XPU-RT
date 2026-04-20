@@ -22,8 +22,9 @@ from __future__ import annotations
 import gc
 import statistics
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
 
 import structlog
 
@@ -75,6 +76,7 @@ def _now_ms() -> float:
 def _peak_memory_bytes() -> int:
     try:
         import resource
+
         r = resource.getrusage(resource.RUSAGE_SELF)
         return int(r.ru_maxrss) * 1024  # kB on linux
     except Exception:  # noqa: BLE001
@@ -112,7 +114,9 @@ def measure_pipeline(
     mem_before = _peak_memory_bytes()
     cold_start = _now_ms()
     pr: PipelineResult = compile_through_pipeline(
-        model, example_inputs=example_inputs, options=options,
+        model,
+        example_inputs=example_inputs,
+        options=options,
         workload_name=fixture_name,
     )
     report.compile_time_ms = _now_ms() - cold_start
@@ -133,13 +137,16 @@ def measure_pipeline(
 
     # --- Executor timing --------------------------------------------
     import torch
+
     try:
         from compgen.runtime.cpu_executor import ExecutorStats, execute
+
         ep = exported_program
         if ep is None:
             ep = torch.export.export(model, example_inputs)
 
         stats = ExecutorStats()
+
         def _run_executor():
             execute(pr.module, ep, example_inputs, stats=stats)
 
@@ -155,12 +162,15 @@ def measure_pipeline(
     # --- Eager timing -----------------------------------------------
     try:
         import torch
+
         was_training = getattr(model, "training", None)
         if was_training is True:
             model.eval()
+
         def _run_eager():
             with torch.no_grad():
                 model(*example_inputs)
+
         samples = _time_runs(_run_eager, n_iter)
         report.eager_time_ms_min = min(samples)
         report.eager_time_ms_median = statistics.median(samples)
@@ -193,7 +203,8 @@ def measure_pipeline_suite(
         fx = fixture_fn()
         reports.append(
             measure_pipeline(
-                fx.model, fx.example_inputs,
+                fx.model,
+                fx.example_inputs,
                 options=options,
                 fixture_name=fx.name,
                 n_iter=n_iter,

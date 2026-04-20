@@ -13,14 +13,20 @@ EXAMPLES = Path(__file__).parent.parent.parent / "examples" / "models"
 def _get_model_and_inputs():
     sys.path.insert(0, str(EXAMPLES))
     from simple_mlp import SimpleMLP, get_sample_inputs
+
     return SimpleMLP(), get_sample_inputs()
 
 
 def test_benchmark_result_fields() -> None:
     r = BenchmarkResult(
-        latency_median_us=100.0, latency_p99_us=120.0,
-        throughput_samples_per_sec=10000.0, peak_memory_bytes=1024,
-        device="cpu", mode="eager", num_iterations=100, warmup_iterations=10,
+        latency_median_us=100.0,
+        latency_p99_us=120.0,
+        throughput_samples_per_sec=10000.0,
+        peak_memory_bytes=1024,
+        device="cpu",
+        mode="eager",
+        num_iterations=100,
+        warmup_iterations=10,
     )
     assert r.latency_median_us == 100.0
     assert r.device == "cpu"

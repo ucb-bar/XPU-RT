@@ -108,9 +108,7 @@ class AdaptiveBatchScheduler:
             RuntimeError: If :meth:`precompute` has not been called.
         """
         if not self.plans:
-            raise RuntimeError(
-                "No plans have been precomputed. Call precompute() first."
-            )
+            raise RuntimeError("No plans have been precomputed. Call precompute() first.")
 
         idx = bisect.bisect_left(self.tiers, batch_size)
 

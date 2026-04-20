@@ -92,7 +92,7 @@ def parse_response(text: str) -> dict | None:
         if isinstance(data, dict) and "strategy" in data:
             return data
     except json.JSONDecodeError:
-        m = re.search(r'\{.*\}', text, re.DOTALL)
+        m = re.search(r"\{.*\}", text, re.DOTALL)
         if m:
             try:
                 data = json.loads(m.group())

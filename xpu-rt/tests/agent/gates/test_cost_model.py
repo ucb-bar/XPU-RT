@@ -6,7 +6,6 @@ from dataclasses import dataclass, field
 from typing import Any
 
 import pytest
-
 from compgen.agent.gates import cost_model_gate
 
 

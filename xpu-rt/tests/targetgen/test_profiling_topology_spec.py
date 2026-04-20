@@ -13,7 +13,6 @@ from compgen.targetgen.hardware_spec import (
     TopologySpec,
 )
 
-
 # ---- ProfilerBackend ----
 
 
@@ -88,7 +87,7 @@ class TestProfilingSpec:
     def test_custom_hooks(self) -> None:
         ps = ProfilingSpec(
             custom_hooks={
-                "pre_dispatch": "CG_TRACE_BEGIN(\"dispatch\", kernel_name);",
+                "pre_dispatch": 'CG_TRACE_BEGIN("dispatch", kernel_name);',
                 "post_dispatch": "CG_TRACE_END();",
             },
         )
@@ -173,14 +172,11 @@ class TestTopologySpec:
         ts = TopologySpec(
             deployment=DeploymentTopology.MULTI_DOMAIN_SOC,
             nodes=[
-                TopologyNode(name="host", device_indices=[0], role="host",
-                             runtime_env="linux_userspace"),
-                TopologyNode(name="npu", device_indices=[1], role="accelerator",
-                             runtime_env="zephyr_rtos"),
+                TopologyNode(name="host", device_indices=[0], role="host", runtime_env="linux_userspace"),
+                TopologyNode(name="npu", device_indices=[1], role="accelerator", runtime_env="zephyr_rtos"),
             ],
             links=[
-                TopologyLink(src_node="host", dst_node="npu",
-                             transport="zephyr_ipc", bandwidth_gbps=5.0),
+                TopologyLink(src_node="host", dst_node="npu", transport="zephyr_ipc", bandwidth_gbps=5.0),
             ],
         )
         assert ts.deployment == DeploymentTopology.MULTI_DOMAIN_SOC
@@ -206,7 +202,9 @@ class TestHardwareSpecNewFields:
         hs = HardwareSpec(
             name="test-soc",
             platform=PlatformSpec(
-                vendor="acme", family="soc", chip_name="acme-soc-1",
+                vendor="acme",
+                family="soc",
+                chip_name="acme-soc-1",
                 deployment_model="zephyr_rtos",
             ),
             profiling=ProfilingSpec(
@@ -225,12 +223,10 @@ class TestHardwareSpecNewFields:
                 deployment=DeploymentTopology.MULTI_DOMAIN_SOC,
                 nodes=[
                     TopologyNode(name="host_cpu", device_indices=[0]),
-                    TopologyNode(name="npu", device_indices=[1],
-                                 runtime_env="zephyr_rtos"),
+                    TopologyNode(name="npu", device_indices=[1], runtime_env="zephyr_rtos"),
                 ],
                 links=[
-                    TopologyLink(src_node="host_cpu", dst_node="npu",
-                                 transport="dma"),
+                    TopologyLink(src_node="host_cpu", dst_node="npu", transport="dma"),
                 ],
             ),
         )

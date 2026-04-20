@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from compgen.schemas import available_schemas, load_schema, schema_path
 
 
@@ -18,13 +17,16 @@ def test_available_schemas_lists_all_five():
     }
 
 
-@pytest.mark.parametrize("name", [
-    "kernel_contract",
-    "recipe_ir",
-    "execution_plan",
-    "target_resource",
-    "region_analysis",
-])
+@pytest.mark.parametrize(
+    "name",
+    [
+        "kernel_contract",
+        "recipe_ir",
+        "execution_plan",
+        "target_resource",
+        "region_analysis",
+    ],
+)
 def test_load_schema_returns_dict(name: str):
     doc = load_schema(name)
     assert isinstance(doc, dict)

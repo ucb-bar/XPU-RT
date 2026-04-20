@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
-
-import pytest
 
 from compgen.agent.self_extension.authored_tool import (
     AuthoredTool,
@@ -18,7 +15,6 @@ from compgen.agent.self_extension.graduate import (
 )
 from compgen.agent.self_extension.trials import TrialScenario, run_trial
 from compgen.llm.registry import Registry
-
 
 _TOOL_SRC = """
 def run(x):
@@ -38,7 +34,9 @@ def _authored() -> AuthoredTool:
 
 
 def _populate_trials(
-    tool: AuthoredTool, log: Path, *,
+    tool: AuthoredTool,
+    log: Path,
+    *,
     passes_per_pair: int = 3,
     pairs: list[tuple[str, str]] | None = None,
 ) -> None:
@@ -52,7 +50,10 @@ def _populate_trials(
             run_trial(
                 tool,
                 TrialScenario(
-                    workload=w, target=t, scorer=_scorer, kwargs={"x": 3},
+                    workload=w,
+                    target=t,
+                    scorer=_scorer,
+                    kwargs={"x": 3},
                 ),
                 log_path=log,
             )
@@ -73,8 +74,12 @@ def test_graduation_promotes_tool(tmp_path: Path) -> None:
     index = {authored_tool_key(tool): tool}
     reg = Registry()
     report = promote_authored_tools(
-        reg, authored_index=index, log_path=log,
-        min_passes=5, min_workloads=2, min_targets=2,
+        reg,
+        authored_index=index,
+        log_path=log,
+        min_passes=5,
+        min_workloads=2,
+        min_targets=2,
     )
     assert report.candidates_found == 1
     assert len(report.new_tools_registered) == 1
@@ -167,7 +172,9 @@ def test_malformed_jsonl_does_not_crash(tmp_path: Path) -> None:
     log.write_text("not json\n" + log.read_text())
     reg = Registry()
     report = promote_authored_tools(
-        reg, authored_index={authored_tool_key(tool): tool}, log_path=log,
+        reg,
+        authored_index={authored_tool_key(tool): tool},
+        log_path=log,
     )
     assert isinstance(report, AuthoredGraduationReport)
     assert len(report.new_tools_registered) == 1

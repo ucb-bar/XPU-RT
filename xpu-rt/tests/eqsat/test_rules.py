@@ -158,6 +158,7 @@ class TestFusionRules:
         # Make muli cheaper
         import json
         import tempfile
+
         cost_dict = {"arith.addi": 10, "arith.muli": 2, "arith.constant": 1}
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(cost_dict, f)
@@ -191,10 +192,6 @@ class TestCombinedRules:
             assert rule.name
 
     def test_all_default_rules_are_unique(self) -> None:
-        all_rules = (
-            get_default_algebraic_rules()
-            + get_default_layout_rules()
-            + get_default_fusion_rules()
-        )
+        all_rules = get_default_algebraic_rules() + get_default_layout_rules() + get_default_fusion_rules()
         names = [r.name for r in all_rules]
         assert len(names) == len(set(names))

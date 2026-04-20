@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-from xdsl.dialects.builtin import Float32Type, FunctionType, ModuleOp, TensorType
-from xdsl.dialects.func import FuncOp, ReturnOp
-from xdsl.ir import Block, Region
-
 from compgen.llm.base import Objective
 from compgen.llm.mock_client import MockLLMClient
 from compgen.targets.schema import TargetProfile
 from compgen.transforms.synthesize import TransformScript, TransformSynthesizer
+from xdsl.dialects.builtin import Float32Type, FunctionType, ModuleOp, TensorType
+from xdsl.dialects.func import FuncOp, ReturnOp
+from xdsl.ir import Block, Region
 
 
 def _make_test_module() -> ModuleOp:

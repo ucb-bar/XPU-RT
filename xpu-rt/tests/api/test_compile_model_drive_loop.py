@@ -62,10 +62,12 @@ def test_drive_loop_object_with_run_is_called(monkeypatch) -> None:
         def run(self, *, phases, policy):
             self.run_called = True
             self.phases_seen = list(phases)
+
             # Mirror DriveLoopResult.__init__ shape
             class _Result:
                 total_elapsed_ms = 1.0
                 phase_summaries: list = []
+
             return _Result()
 
     mock_loop = _MockDriveLoop()
@@ -73,6 +75,7 @@ def test_drive_loop_object_with_run_is_called(monkeypatch) -> None:
     # --- Stub the pipeline to avoid real heavy work ---
     class _StubArtifact:
         exported_program = None
+
         def strict_import_options(self):
             return {}
 
@@ -89,7 +92,8 @@ def test_drive_loop_object_with_run_is_called(monkeypatch) -> None:
     monkeypatch.setattr(api_mod, "capture_frontend_artifact", lambda *a, **k: _StubArtifact())
     monkeypatch.setattr(api_mod, "fx_to_xdsl", lambda *a, **k: (ModuleOp([]), []))
     monkeypatch.setattr(
-        api_mod.NetworkAnalyzer, "analyze",
+        api_mod.NetworkAnalyzer,
+        "analyze",
         lambda self, *a, **k: _StubAnalysis(),
     )
     monkeypatch.setattr(
@@ -99,6 +103,7 @@ def test_drive_loop_object_with_run_is_called(monkeypatch) -> None:
 
     class _StubEqSat:
         changed = False
+
     monkeypatch.setattr(api_mod, "run_eqsat_pass", lambda *a, **k: _StubEqSat())
 
     class _StubPipelineResult:
@@ -106,13 +111,17 @@ def test_drive_loop_object_with_run_is_called(monkeypatch) -> None:
         stages_run = 0
         stage_results = ()
         all_artifacts = {}
+
     monkeypatch.setattr(
-        api_mod.StageRegistry, "run_pipeline",
+        api_mod.StageRegistry,
+        "run_pipeline",
         lambda self, *a, **k: _StubPipelineResult(),
     )
 
     # Build a minimal CompGenDevice-shaped stub
-    from dataclasses import dataclass, field as _dc_field
+    from dataclasses import dataclass
+    from dataclasses import field as _dc_field
+
     from compgen.stages.registry import TargetDialectStack
 
     @dataclass
@@ -145,6 +154,7 @@ def test_drive_loop_none_skips_loop(monkeypatch) -> None:
 
     class _StubArtifact:
         exported_program = None
+
         def strict_import_options(self):
             return {}
 
@@ -161,7 +171,8 @@ def test_drive_loop_none_skips_loop(monkeypatch) -> None:
     monkeypatch.setattr(api_mod, "capture_frontend_artifact", lambda *a, **k: _StubArtifact())
     monkeypatch.setattr(api_mod, "fx_to_xdsl", lambda *a, **k: (ModuleOp([]), []))
     monkeypatch.setattr(
-        api_mod.NetworkAnalyzer, "analyze",
+        api_mod.NetworkAnalyzer,
+        "analyze",
         lambda self, *a, **k: _StubAnalysis(),
     )
     monkeypatch.setattr(
@@ -171,6 +182,7 @@ def test_drive_loop_none_skips_loop(monkeypatch) -> None:
 
     class _StubEqSat:
         changed = False
+
     monkeypatch.setattr(api_mod, "run_eqsat_pass", lambda *a, **k: _StubEqSat())
 
     class _StubPipelineResult:
@@ -178,12 +190,16 @@ def test_drive_loop_none_skips_loop(monkeypatch) -> None:
         stages_run = 0
         stage_results = ()
         all_artifacts = {}
+
     monkeypatch.setattr(
-        api_mod.StageRegistry, "run_pipeline",
+        api_mod.StageRegistry,
+        "run_pipeline",
         lambda self, *a, **k: _StubPipelineResult(),
     )
 
-    from dataclasses import dataclass, field as _dc_field
+    from dataclasses import dataclass
+    from dataclasses import field as _dc_field
+
     from compgen.stages.registry import TargetDialectStack
 
     @dataclass
@@ -198,6 +214,8 @@ def test_drive_loop_none_skips_loop(monkeypatch) -> None:
         generated_target = None
 
     result = compile_model(
-        model=None, target_device=_StubDevice(), drive_loop=None,
+        model=None,
+        target_device=_StubDevice(),
+        drive_loop=None,
     )
     assert result.drive_loop_result is None

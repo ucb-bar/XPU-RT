@@ -26,12 +26,10 @@ from compgen.targets.schema import DeviceSpec, TargetProfile
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _simple_target(num_devices: int = 1) -> TargetProfile:
     """Create a minimal target profile for testing."""
-    devices = [
-        DeviceSpec(device_type="gpu", name=f"test_gpu_{i}")
-        for i in range(num_devices)
-    ]
+    devices = [DeviceSpec(device_type="gpu", name=f"test_gpu_{i}") for i in range(num_devices)]
     return TargetProfile(name="test-target", devices=devices)
 
 
@@ -48,6 +46,7 @@ def _dummy_plan(batch_size: int = 1) -> ExecutionPlan:
 # ---------------------------------------------------------------------------
 # AdaptiveBatchScheduler tests
 # ---------------------------------------------------------------------------
+
 
 class TestAdaptiveBatchScheduler:
     """Tests for batch-tier selection logic."""
@@ -126,6 +125,7 @@ class TestAdaptiveBatchScheduler:
 # ---------------------------------------------------------------------------
 # PriorityScheduler tests
 # ---------------------------------------------------------------------------
+
 
 class TestPriorityScheduler:
     """Tests for priority ordering and cooperative preemption."""
@@ -271,6 +271,7 @@ class TestPriorityScheduler:
 # CalibrationLoop tests
 # ---------------------------------------------------------------------------
 
+
 class TestCalibrationLoop:
     """Tests for drift detection and re-solve triggering."""
 
@@ -385,7 +386,7 @@ class TestCalibrationLoop:
         }
         estimates = {
             "gpu_0": {"matmul": 105.0, "relu": 15.0},  # 5%, 50%
-            "gpu_1": {"matmul": 180.0},                 # 10%
+            "gpu_1": {"matmul": 180.0},  # 10%
         }
 
         results = loop.check_drift(measurements, estimates)

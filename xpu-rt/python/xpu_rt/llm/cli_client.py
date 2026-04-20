@@ -19,7 +19,6 @@ from compgen.llm._prompt import (
     stringify_json_payload,
 )
 from compgen.llm.base import (
-    CompGenLLMProtocol,
     GenerationRequest,
     GenerationResponse,
 )
@@ -53,11 +52,7 @@ def _extract_text_payload(stdout: str) -> str:
             if isinstance(value, str):
                 return value
         if "messages" in payload and isinstance(payload["messages"], list):
-            texts = [
-                message.get("text", "")
-                for message in payload["messages"]
-                if isinstance(message, dict)
-            ]
+            texts = [message.get("text", "") for message in payload["messages"] if isinstance(message, dict)]
             joined = "\n".join(text for text in texts if text)
             if joined:
                 return joined
@@ -109,7 +104,9 @@ class ClaudeCLIClient:
         )
 
     def generate_structured(
-        self, request: GenerationRequest, schema: dict[str, Any],
+        self,
+        request: GenerationRequest,
+        schema: dict[str, Any],
     ) -> GenerationResponse:
         if _requires_prompt_schema_fallback(schema):
             structured_request = GenerationRequest(
@@ -187,7 +184,9 @@ class CodexCLIClient:
         return self._run(request, schema=None)
 
     def generate_structured(
-        self, request: GenerationRequest, schema: dict[str, Any],
+        self,
+        request: GenerationRequest,
+        schema: dict[str, Any],
     ) -> GenerationResponse:
         if _requires_prompt_schema_fallback(schema):
             structured_request = GenerationRequest(

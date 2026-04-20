@@ -38,7 +38,8 @@ import torch.nn as nn
 
 from compgen.agent.llm_driver import LLMDrivenCompiler
 from compgen.agent.loop import CompilationResult
-from compgen.api import CompGenDevice, CompiledModel, compile_model, device as _device
+from compgen.api import CompGenDevice, CompiledModel, compile_model
+from compgen.api import device as _device
 from compgen.llm.base import CompGenLLMProtocol
 from compgen.llm.recorder import LLMRecorder
 
@@ -101,8 +102,10 @@ def _resolve_llm(
     if isinstance(llm, str):
         if llm.strip().lower() == "mock":
             from compgen.llm.mock_client import MockLLMClient
+
             return MockLLMClient(strict=False), "mock"
         from compgen.llm.factory import create_llm_client, resolve_provider_name
+
         provider = resolve_provider_name(llm)
         return create_llm_client(provider), provider
     # Duck-typed client already — accept if it looks like a CompGenLLMProtocol.
@@ -126,9 +129,7 @@ def _resolve_model(
     """
     if isinstance(model, nn.Module):
         if sample_inputs is None:
-            raise ValueError(
-                "sample_inputs must be provided when passing a raw nn.Module."
-            )
+            raise ValueError("sample_inputs must be provided when passing a raw nn.Module.")
         return model, sample_inputs
 
     if isinstance(model, (str, Path)):
@@ -148,23 +149,21 @@ def _resolve_model(
 
 
 def _load_model_from_python_file(
-    path: Path, sample_inputs: tuple[Any, ...] | None,
+    path: Path,
+    sample_inputs: tuple[Any, ...] | None,
 ) -> tuple[nn.Module, tuple[Any, ...]]:
     import importlib.util
+
     spec = importlib.util.spec_from_file_location("compgen_user_model", path)
     if spec is None or spec.loader is None:
         raise ImportError(f"Cannot build spec for {path}")
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     if not hasattr(mod, "build_model"):
-        raise AttributeError(
-            f"{path} must define build_model() -> (nn.Module, sample_inputs)"
-        )
+        raise AttributeError(f"{path} must define build_model() -> (nn.Module, sample_inputs)")
     result = mod.build_model()
     if not (isinstance(result, tuple) and len(result) == 2):
-        raise ValueError(
-            f"{path}.build_model() must return a (module, sample_inputs) tuple"
-        )
+        raise ValueError(f"{path}.build_model() must return a (module, sample_inputs) tuple")
     module, inferred_inputs = result
     if sample_inputs is not None:
         inferred_inputs = sample_inputs
@@ -174,7 +173,8 @@ def _load_model_from_python_file(
 
 
 def _load_hf_model(
-    hf_id: str, sample_inputs: tuple[Any, ...] | None,
+    hf_id: str,
+    sample_inputs: tuple[Any, ...] | None,
 ) -> tuple[nn.Module, tuple[Any, ...]]:
     try:
         from transformers import AutoModel, AutoTokenizer
@@ -210,7 +210,7 @@ def compile_with_llm(
     sample_inputs: tuple[Any, ...] | None = None,
     objective: str = "latency",
     budget: int = 10,
-    recover_unsupported: bool = False,   # P2 feature; accepted but no-op in P1
+    recover_unsupported: bool = False,  # P2 feature; accepted but no-op in P1
     with_recipe: bool = True,
     transcript_dir: str | Path | None = None,
     return_driver: bool = False,
@@ -248,9 +248,12 @@ def compile_with_llm(
     Returns:
         :class:`LLMCompileResult` — callable like :class:`CompiledModel`.
     """
-    log.info("api_llm.start",
-             model=type(model).__name__ if isinstance(model, nn.Module) else str(model),
-             target=str(target), llm=llm if isinstance(llm, str) else type(llm).__name__)
+    log.info(
+        "api_llm.start",
+        model=type(model).__name__ if isinstance(model, nn.Module) else str(model),
+        target=str(target),
+        llm=llm if isinstance(llm, str) else type(llm).__name__,
+    )
 
     mod, inputs = _resolve_model(model, sample_inputs)
     dev = _resolve_target(target)
@@ -260,19 +263,24 @@ def compile_with_llm(
     # When recover_unsupported=True, compile_model consults the LLM on
     # ambiguous unsupported-op classifications before the FX→xDSL import.
     compiled = compile_model(
-        mod, dev, objective=objective, sample_inputs=inputs,
+        mod,
+        dev,
+        objective=objective,
+        sample_inputs=inputs,
         recover_unsupported=recover_unsupported,
         recovery_llm_client=client if recover_unsupported else None,
     )
-    log.info("api_llm.compile_model.done",
-             pipeline_passed=compiled.pipeline_result.passed,
-             recovery_ok=(compiled.recovery_plan.ok()
-                          if compiled.recovery_plan is not None else None))
+    log.info(
+        "api_llm.compile_model.done",
+        pipeline_passed=compiled.pipeline_result.passed,
+        recovery_ok=(compiled.recovery_plan.ok() if compiled.recovery_plan is not None else None),
+    )
 
     # Stage 2: wrap the LLM client with a recorder scoped to this run.
     # Honour COMPGEN_SESSION_DIR so tests + containerised users can
     # redirect transcripts away from ~/.compgen.
     import os
+
     if transcript_dir is not None:
         transcript_root = Path(transcript_dir).expanduser()
     elif os.environ.get("COMPGEN_SESSION_DIR"):
@@ -281,7 +289,8 @@ def compile_with_llm(
         transcript_root = Path("~/.compgen/transcripts").expanduser()
     transcript_root.mkdir(parents=True, exist_ok=True)
     recorder = LLMRecorder(
-        wrapped=client, log_dir=transcript_root / "llm",
+        wrapped=client,
+        log_dir=transcript_root / "llm",
         enabled=True,
     )
 
@@ -291,25 +300,33 @@ def compile_with_llm(
     driver: LLMDrivenCompiler | None = None
     try:
         llm_result = compiled.run_agentic(
-            recorder, budget=budget, with_recipe=with_recipe,
+            recorder,
+            budget=budget,
+            with_recipe=with_recipe,
         )
-        log.info("api_llm.loop.done",
-                 iterations=llm_result.iterations_run,
-                 improvement_pct=llm_result.total_improvement_pct)
-    except Exception as e:   # noqa: BLE001
+        log.info(
+            "api_llm.loop.done", iterations=llm_result.iterations_run, improvement_pct=llm_result.total_improvement_pct
+        )
+    except Exception as e:  # noqa: BLE001
         log.warning("api_llm.loop.failed", error=str(e))
 
     # Stage 4: optionally leave a driver session open for advanced callers.
     if return_driver:
         env = compiled.create_agent_env(budget=budget)
         driver = LLMDrivenCompiler(
-            env=env, target=dev.profile, llm_client=recorder,
-            transcript_dir=transcript_root, budget=budget,
+            env=env,
+            target=dev.profile,
+            llm_client=recorder,
+            transcript_dir=transcript_root,
+            budget=budget,
         )
 
     return LLMCompileResult(
-        compiled=compiled, llm_result=llm_result, driver=driver,
-        provider=provider, transcript_dir=transcript_root,
+        compiled=compiled,
+        llm_result=llm_result,
+        driver=driver,
+        provider=provider,
+        transcript_dir=transcript_root,
     )
 
 
@@ -337,9 +354,10 @@ def open_llm_session(
     compiled = compile_model(mod, dev, objective=objective, sample_inputs=inputs)
     env = compiled.create_agent_env(budget=budget)
     return LLMDrivenCompiler(
-        env=env, target=dev.profile, llm_client=client,
-        transcript_dir=(Path(transcript_dir).expanduser()
-                        if transcript_dir is not None else None),
+        env=env,
+        target=dev.profile,
+        llm_client=client,
+        transcript_dir=(Path(transcript_dir).expanduser() if transcript_dir is not None else None),
         budget=budget,
     )
 

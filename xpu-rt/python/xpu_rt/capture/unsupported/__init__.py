@@ -59,15 +59,17 @@ def recover_unsupported_operators(
         verification = verify_unsupported_resolution(issue, dossier, translation)
         promotion = build_promotion_record(dossier, classification, runtime_versions)
         approved_blackbox = classification.strategy == "explicit_blackbox"
-        resolutions.append(UnsupportedOpResolution(
-            issue=issue,
-            dossier=dossier,
-            classification=classification,
-            verification=verification,
-            promotion=promotion,
-            translation=translation,
-            approved_blackbox=approved_blackbox,
-        ))
+        resolutions.append(
+            UnsupportedOpResolution(
+                issue=issue,
+                dossier=dossier,
+                classification=classification,
+                verification=verification,
+                promotion=promotion,
+                translation=translation,
+                approved_blackbox=approved_blackbox,
+            )
+        )
     return resolutions
 
 

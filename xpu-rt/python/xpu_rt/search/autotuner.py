@@ -20,8 +20,9 @@ from __future__ import annotations
 
 import itertools
 import random
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass, field
-from typing import Any, Callable, Iterable, Sequence
+from typing import Any
 
 import structlog
 
@@ -47,12 +48,10 @@ class OptionsAxis:
             raise ValueError(f"OptionsAxis {self.field_name!r} needs ≥1 value")
         # Validate the field exists on CompGenOptions.
         import dataclasses
+
         fields = {f.name for f in dataclasses.fields(CompGenOptions)}
         if self.field_name not in fields:
-            raise ValueError(
-                f"{self.field_name!r} is not a CompGenOptions field; "
-                f"known: {sorted(fields)[:10]}..."
-            )
+            raise ValueError(f"{self.field_name!r} is not a CompGenOptions field; known: {sorted(fields)[:10]}...")
 
 
 @dataclass
@@ -89,10 +88,7 @@ class AutotuneResult:
         lines = [f"{len(self.trials)} trials, best metric: {self.best_metric:.4f}"]
         for t in self.trials:
             mark = "*" if t.index == self.best_index else " "
-            lines.append(
-                f"  {mark} trial {t.index}: metric={t.metric:.4f} "
-                f"stages_run={t.result.stages_run}"
-            )
+            lines.append(f"  {mark} trial {t.index}: metric={t.metric:.4f} stages_run={t.result.stages_run}")
         return "\n".join(lines)
 
 
@@ -134,9 +130,7 @@ class Autotuner:
         metric_fn: Callable[[PipelineResult], float] | None = None,
     ) -> None:
         if strategy not in ("grid", "random", "baseline"):
-            raise ValueError(
-                f"strategy must be grid/random/baseline, got {strategy!r}"
-            )
+            raise ValueError(f"strategy must be grid/random/baseline, got {strategy!r}")
         self.base = base
         self.axes = tuple(axes)
         self.strategy = strategy
@@ -153,20 +147,14 @@ class Autotuner:
         axes_values = [axis.values for axis in self.axes]
         if self.strategy == "grid":
             for combo in itertools.product(*axes_values):
-                changes = {
-                    axis.field_name: value
-                    for axis, value in zip(self.axes, combo, strict=True)
-                }
+                changes = {axis.field_name: value for axis, value in zip(self.axes, combo, strict=True)}
                 yield self.base.replace(**changes)
             return
 
         # random
         rng = random.Random(self.seed)
         for _ in range(self.n_trials):
-            changes = {
-                axis.field_name: rng.choice(axis.values)
-                for axis in self.axes
-            }
+            changes = {axis.field_name: rng.choice(axis.values) for axis in self.axes}
             yield self.base.replace(**changes)
 
     def search(
@@ -181,7 +169,9 @@ class Autotuner:
         best_metric = float("inf")
         for idx, opts in enumerate(self._enumerate()):
             pr = self.cache.compile(
-                model, example_inputs, options=opts,
+                model,
+                example_inputs,
+                options=opts,
                 workload_name=workload_name,
             )
             metric = self.metric_fn(pr)
@@ -191,7 +181,9 @@ class Autotuner:
                 best_metric = metric
                 best_idx = idx
             log.info(
-                "autotune.trial", index=idx, metric=metric,
+                "autotune.trial",
+                index=idx,
+                metric=metric,
                 stages_run=pr.stages_run,
             )
         result.best_index = best_idx

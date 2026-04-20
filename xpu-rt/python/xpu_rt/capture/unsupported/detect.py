@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 from compgen.capture.unsupported.introspect import ExampleTensorInfo
@@ -64,12 +64,15 @@ def detect_unsupported_operators(
         if target in supported_targets or target in explicit:
             continue
 
-        entry = grouped.setdefault(target, {
-            "node_names": [],
-            "source_locations": [],
-            "example_inputs": (),
-            "example_output": None,
-        })
+        entry = grouped.setdefault(
+            target,
+            {
+                "node_names": [],
+                "source_locations": [],
+                "example_inputs": (),
+                "example_output": None,
+            },
+        )
         entry["node_names"].append(node.name)
         location = _source_location(node)
         if location:
@@ -87,16 +90,18 @@ def detect_unsupported_operators(
 
     issues: list[UnsupportedOperatorIssue] = []
     for target, entry in sorted(grouped.items()):
-        issues.append(UnsupportedOperatorIssue(
-            target=target,
-            stage=stage,
-            reason="No registered Payload lowering or explicit blackbox approval",
-            count=len(entry["node_names"]),
-            node_names=tuple(entry["node_names"]),
-            source_locations=tuple(entry["source_locations"]),
-            example_inputs=entry["example_inputs"],
-            example_output=entry["example_output"],
-        ))
+        issues.append(
+            UnsupportedOperatorIssue(
+                target=target,
+                stage=stage,
+                reason="No registered Payload lowering or explicit blackbox approval",
+                count=len(entry["node_names"]),
+                node_names=tuple(entry["node_names"]),
+                source_locations=tuple(entry["source_locations"]),
+                example_inputs=entry["example_inputs"],
+                example_output=entry["example_output"],
+            )
+        )
     return issues
 
 

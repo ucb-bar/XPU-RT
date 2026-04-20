@@ -2,19 +2,19 @@
 
 from __future__ import annotations
 
-from compgen.agent.prompts.verify_strategy import (
-    VerificationAssignment,
-    VerifyStrategyContext,
-    format_prompt,
-    parse_response,
-)
 from compgen.agent.prompts.counterexample_repair import (
     CounterexampleRepairContext,
-    RepairProposal,
 )
 from compgen.agent.prompts.counterexample_repair import (
     format_prompt as fmt_repair,
+)
+from compgen.agent.prompts.counterexample_repair import (
     parse_response as parse_repair,
+)
+from compgen.agent.prompts.verify_strategy import (
+    VerifyStrategyContext,
+    format_prompt,
+    parse_response,
 )
 
 

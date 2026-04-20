@@ -39,13 +39,15 @@ def suggest_buffer_lifetime(
         policy = "ilp_window_8"
         impact = 0.8
         why = "large recipe — windowed ILP keeps allocator runtime bounded"
-    return [ProposalCandidate(
-        chosen={"policy": policy, "window_size": 8, "region_count": n},
-        rationale=why,
-        expected_impact=impact,
-        target_feature_justification="recipe-size heuristic",
-        metadata={"region_count": n},
-    )]
+    return [
+        ProposalCandidate(
+            chosen={"policy": policy, "window_size": 8, "region_count": n},
+            rationale=why,
+            expected_impact=impact,
+            target_feature_justification="recipe-size heuristic",
+            metadata={"region_count": n},
+        )
+    ]
 
 
 __all__ = ["suggest_buffer_lifetime"]

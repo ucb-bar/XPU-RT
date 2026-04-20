@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from compgen.options import CompGenOptions, cuda_a100_defaults, npu_fp8_defaults
 from compgen.pipeline import (
     DiffReport,
@@ -14,13 +13,9 @@ from compgen.pipeline import (
 from tests._fixtures.real_workloads import (
     ALL_FIXTURE_FNS,
     attention_mlp_tiny,
-    gemma_decode_tiny,
     qwen_moe_tiny,
     smolvla_tiny,
-    tinyllama_block_tiny,
-    vla_decoder_tiny,
 )
-
 
 # --- diff harness basics --------------------------------------------------
 
@@ -28,7 +23,8 @@ from tests._fixtures.real_workloads import (
 def test_diff_report_passes_for_attention_mlp_tiny():
     fx = attention_mlp_tiny()
     report = compile_and_diff(
-        fx.model, fx.example_inputs,
+        fx.model,
+        fx.example_inputs,
         options=cuda_a100_defaults(),
         fixture_name=fx.name,
         eager_reference=fx.eager_output,
@@ -42,7 +38,9 @@ def test_diff_report_passes_for_attention_mlp_tiny():
 def test_diff_report_records_stage_counts():
     fx = attention_mlp_tiny()
     report = compile_and_diff(
-        fx.model, fx.example_inputs, options=cuda_a100_defaults(),
+        fx.model,
+        fx.example_inputs,
+        options=cuda_a100_defaults(),
         fixture_name=fx.name,
     )
     assert report.stages_run >= 10
@@ -52,7 +50,9 @@ def test_diff_report_records_stage_counts():
 def test_diff_report_records_opaque_rate():
     fx = attention_mlp_tiny()
     report = compile_and_diff(
-        fx.model, fx.example_inputs, options=cuda_a100_defaults(),
+        fx.model,
+        fx.example_inputs,
+        options=cuda_a100_defaults(),
         fixture_name=fx.name,
     )
     assert report.total_ops > 0
@@ -67,7 +67,8 @@ def test_e2e_every_fixture_compiles_and_verifies(fn):
     """Real-workload E2E: every fixture bridges + pipeline + validates."""
     fx = fn()
     report = compile_and_diff(
-        fx.model, fx.example_inputs,
+        fx.model,
+        fx.example_inputs,
         options=cuda_a100_defaults(),
         fixture_name=fx.name,
         eager_reference=fx.eager_output,
@@ -75,17 +76,15 @@ def test_e2e_every_fixture_compiles_and_verifies(fn):
         # 6 workloads; production work will drop this further.
         opaque_rate_threshold=0.50,
     )
-    assert report.passed, (
-        f"{fx.name} failed: failures={report.failures}, "
-        f"warnings={report.warnings}"
-    )
+    assert report.passed, f"{fx.name} failed: failures={report.failures}, warnings={report.warnings}"
 
 
 @pytest.mark.parametrize("fn", ALL_FIXTURE_FNS, ids=lambda f: f.__name__)
 def test_e2e_every_fixture_executes_deterministic_eager(fn):
     fx = fn()
     report = compile_and_diff(
-        fx.model, fx.example_inputs,
+        fx.model,
+        fx.example_inputs,
         options=cuda_a100_defaults(),
         fixture_name=fx.name,
         eager_reference=fx.eager_output,
@@ -101,12 +100,14 @@ def test_e2e_every_fixture_executes_deterministic_eager(fn):
 def test_cuda_a100_and_npu_presets_produce_different_plans():
     fx = attention_mlp_tiny()
     cuda_report = compile_and_diff(
-        fx.model, fx.example_inputs,
+        fx.model,
+        fx.example_inputs,
         options=cuda_a100_defaults(),
         fixture_name=fx.name,
     )
     npu_report = compile_and_diff(
-        fx.model, fx.example_inputs,
+        fx.model,
+        fx.example_inputs,
         options=npu_fp8_defaults(),
         fixture_name=fx.name,
     )
@@ -130,7 +131,8 @@ def test_diff_report_captures_bridge_failure():
             return x
 
     report = compile_and_diff(
-        _Broken(), example_inputs=(),
+        _Broken(),
+        example_inputs=(),
         options=CompGenOptions(),
         fixture_name="broken",
     )

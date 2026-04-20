@@ -84,14 +84,10 @@ def npu_alignment_check(
             result.fp8_linear_count += 1
             if not is_power_of_two(module.weight_scale):
                 result.non_po2_scales.append((name, module.weight_scale))
-                result.errors.append(
-                    f"{name}: weight scale {module.weight_scale} is not power-of-two"
-                )
+                result.errors.append(f"{name}: weight scale {module.weight_scale} is not power-of-two")
                 result.passed = False
             if module.weight_fp8.dtype != torch.float8_e4m3fn:
-                result.errors.append(
-                    f"{name}: weight dtype is {module.weight_fp8.dtype}, expected float8_e4m3fn"
-                )
+                result.errors.append(f"{name}: weight dtype is {module.weight_fp8.dtype}, expected float8_e4m3fn")
                 result.passed = False
             continue
 
@@ -100,9 +96,7 @@ def npu_alignment_check(
             result.fp8_conv2d_count += 1
             if not is_power_of_two(module.weight_scale):
                 result.non_po2_scales.append((name, module.weight_scale))
-                result.errors.append(
-                    f"{name}: weight scale {module.weight_scale} is not power-of-two"
-                )
+                result.errors.append(f"{name}: weight scale {module.weight_scale} is not power-of-two")
                 result.passed = False
             continue
 
@@ -110,14 +104,10 @@ def npu_alignment_check(
         if isinstance(module, ExportableFP8Attention):
             result.fp8_attention_count += 1
             if module.config.softmax_dtype != torch.bfloat16:
-                result.errors.append(
-                    f"{name}: softmax dtype is {module.config.softmax_dtype}, must be bfloat16"
-                )
+                result.errors.append(f"{name}: softmax dtype is {module.config.softmax_dtype}, must be bfloat16")
                 result.passed = False
             if not module.config.quantize_attn_weights:
-                result.warnings.append(
-                    f"{name}: attention weights not quantized to FP8 (non-standard)"
-                )
+                result.warnings.append(f"{name}: attention weights not quantized to FP8 (non-standard)")
             continue
 
         # Check nn.Linear with FP8E4M3Po2Tensor weight
@@ -127,9 +117,7 @@ def npu_alignment_check(
                 result.fp8_linear_count += 1
                 if not is_power_of_two(weight._scale):
                     result.non_po2_scales.append((name, weight._scale))
-                    result.errors.append(
-                        f"{name}: weight scale {weight._scale} is not power-of-two"
-                    )
+                    result.errors.append(f"{name}: weight scale {weight._scale} is not power-of-two")
                     result.passed = False
             else:
                 # Check if this linear is in the allow list
@@ -187,7 +175,7 @@ def compare_quantized_accuracy(
     if isinstance(quant, tuple):
         quant = quant[0]
 
-    diff = (ref.float() - quant.float())
+    diff = ref.float() - quant.float()
     ref_norm = torch.linalg.vector_norm(ref.float()).item()
     quant_norm = torch.linalg.vector_norm(quant.float()).item()
 

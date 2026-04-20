@@ -5,13 +5,14 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from compgen.benchmarks import SuiteEnvironmentStatus, SuiteManifestEntry, SuiteRunConfig
+from compgen.benchmarks.common.results import write_normalized_suite_results
+
 from benchmarks.compare import load_all_results
 from benchmarks.record import RunRecord
 from benchmarks.registry import REPO_ROOT
 from benchmarks.spec import WorkspaceConfig
 from benchmarks.suite_adapters import SUITE_ADAPTERS
-from compgen.benchmarks import SuiteEnvironmentStatus, SuiteManifestEntry, SuiteRunConfig
-from compgen.benchmarks.common.results import write_normalized_suite_results
 
 DEFAULT_SUITE_RESULTS_DIR = Path(__file__).parent / "results" / "suites"
 
@@ -103,10 +104,7 @@ def run_suite_workload(
     config = config or SuiteRunConfig()
     entries = adapter.enumerate_workloads(workspace=workspace, blessed_only=False)
     entry = next(
-        (
-            item for item in entries
-            if item.workload_id == workload_id or item.upstream_workload_id == workload_id
-        ),
+        (item for item in entries if item.workload_id == workload_id or item.upstream_workload_id == workload_id),
         None,
     )
     if entry is None:

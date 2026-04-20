@@ -75,9 +75,7 @@ class PDLVerificationBackend:
             )
 
         for width in range(1, max_bitwidth + 1):
-            is_sound = self._check_bitwidth(
-                pattern_ops, replacement_ops, width
-            )
+            is_sound = self._check_bitwidth(pattern_ops, replacement_ops, width)
             checked.append(width)
             if not is_sound:
                 unsound.append(width)
@@ -155,7 +153,6 @@ class PDLVerificationBackend:
         width: int,
     ) -> bool:
         """Check a single bitwidth. Returns True if sound."""
-        import z3
 
         # This is a simplified path; real PDL verification would
         # lower the PDL pattern to SMT. For now we use the callable path.

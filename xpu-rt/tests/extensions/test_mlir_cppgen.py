@@ -14,7 +14,6 @@ from pathlib import Path
 
 import pytest
 
-
 # ---------------------------------------------------------------------------
 # Introspection tests
 # ---------------------------------------------------------------------------
@@ -171,10 +170,10 @@ class TestTableGenEmission:
         info = introspect_layout_dialect()
         content = emit_dialect_td(info)
 
-        assert 'def Layout_Dialect : Dialect' in content
+        assert "def Layout_Dialect : Dialect" in content
         assert 'let name = "layout"' in content
         assert 'let cppNamespace = "::compgen::layout"' in content
-        assert 'let useDefaultAttributePrinterParser = 1' in content
+        assert "let useDefaultAttributePrinterParser = 1" in content
 
     def test_layout_attrs_td(self) -> None:
         from compgen.extensions.mlir_cppgen.introspect import introspect_layout_dialect
@@ -420,7 +419,7 @@ class TestPassEmitter:
         assert "PropagateLayoutsPass" in content
         assert "valueEncoding" in content
         assert "isTransparent" in content
-        assert 'compgen.propagated_encoding' in content
+        assert "compgen.propagated_encoding" in content
         assert "arith." in content
         assert "math." in content
 

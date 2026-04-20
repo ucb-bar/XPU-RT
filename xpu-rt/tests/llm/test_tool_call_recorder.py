@@ -6,7 +6,6 @@ import json
 from pathlib import Path
 
 import pytest
-
 from compgen.llm import ToolCallRecorder
 
 
@@ -72,8 +71,12 @@ def test_recorder_disabled_does_not_write(tmp_path: Path) -> None:
 def test_recorder_appends_multiple(recorder: ToolCallRecorder) -> None:
     for i in range(3):
         recorder.record(
-            phase=2, name=f"tool_{i}", kind="tool_call",
-            args={"i": i}, result={"ok": True}, elapsed_ms=i,
+            phase=2,
+            name=f"tool_{i}",
+            kind="tool_call",
+            args={"i": i},
+            result={"ok": True},
+            elapsed_ms=i,
         )
     lines = recorder.log_path.read_text().strip().split("\n")
     assert len(lines) == 3

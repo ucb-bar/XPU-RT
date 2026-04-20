@@ -7,21 +7,9 @@ small set of builder helpers.
 
 from __future__ import annotations
 
-from typing import Callable
-
 import pytest
-
-from compgen.runtime.execution_plan import (
-    BufferDescriptor,
-    CopyEdge,
-    ExecutionPlan,
-    Lifetime,
-)
-from compgen.runtime.plan_builder import ExecutionPlanBuilder
-
 from compgen.ir.payload.passes.rewrites.alias_io_buffers import (
     AliasIOBuffersConfig,
-    AliasIOBuffersStats,
     run_alias_io_buffers,
 )
 from compgen.ir.payload.passes.rewrites.assign_memory_space import (
@@ -31,27 +19,21 @@ from compgen.ir.payload.passes.rewrites.assign_memory_space import (
 )
 from compgen.ir.payload.passes.rewrites.assign_queue import (
     AssignQueueConfig,
-    AssignQueueStats,
     run_assign_queue,
 )
 from compgen.ir.payload.passes.rewrites.assign_streams import (
     AssignStreamsConfig,
-    AssignStreamsStats,
     run_assign_streams,
 )
 from compgen.ir.payload.passes.rewrites.dma_overlap import (
     DMAOverlapConfig,
-    DMAOverlapStats,
     run_dma_overlap,
 )
 from compgen.ir.payload.passes.rewrites.insert_copies import (
-    InsertCopiesConfig,
-    InsertCopiesStats,
     run_insert_copies,
 )
 from compgen.ir.payload.passes.rewrites.insert_host_offload import (
     InsertHostOffloadConfig,
-    InsertHostOffloadStats,
     run_insert_host_offload,
 )
 from compgen.ir.payload.passes.rewrites.normalize_subbyte_post_layout import (
@@ -61,10 +43,12 @@ from compgen.ir.payload.passes.rewrites.normalize_subbyte_post_layout import (
 )
 from compgen.ir.payload.passes.rewrites.plan_buffers import (
     PlanBuffersConfig,
-    PlanBuffersStats,
     run_plan_buffers,
 )
-
+from compgen.runtime.execution_plan import (
+    ExecutionPlan,
+)
+from compgen.runtime.plan_builder import ExecutionPlanBuilder
 
 # --- shared builders ---------------------------------------------------------
 
@@ -459,9 +443,7 @@ class TestDMAOverlap:
 
     def test_dma_edges_use_configured_transfer_path(self):
         plan = self._plan_with_copy(size=16384)
-        run_dma_overlap(
-            plan, config=DMAOverlapConfig(dma_transfer_path="custom_dma")
-        )
+        run_dma_overlap(plan, config=DMAOverlapConfig(dma_transfer_path="custom_dma"))
         new_edges = [e for e in plan.copy_edges if "custom_dma" == e.transfer_path]
         assert len(new_edges) == 2
 
@@ -534,9 +516,7 @@ class TestNormalizeSubbytePostLayout:
         b.add_region("r", "cuda", "q")
         b.add_buffer("packed", 100, "hbm", 0, 5)
         plan = b.build()
-        plan.summary["subbyte_ops"] = [
-            {"buffer_id": "packed", "bit_width": 4, "pack_dim": 1}
-        ]
+        plan.summary["subbyte_ops"] = [{"buffer_id": "packed", "bit_width": 4, "pack_dim": 1}]
         cfg = NormalizeSubbytePostLayoutConfig(dma_line_bytes=64)
         stats = run_normalize_subbyte_post_layout(plan, config=cfg)
         assert stats.buffers_realigned == 1
@@ -560,9 +540,7 @@ class TestNormalizeSubbytePostLayout:
 
     def test_unknown_buffer_is_skipped(self):
         plan = _basic_plan()
-        plan.summary["subbyte_ops"] = [
-            {"buffer_id": "ghost", "bit_width": 4, "pack_dim": 1}
-        ]
+        plan.summary["subbyte_ops"] = [{"buffer_id": "ghost", "bit_width": 4, "pack_dim": 1}]
         stats = run_normalize_subbyte_post_layout(plan)
         assert stats.buffers_skipped >= 1
 
@@ -594,9 +572,7 @@ def test_full_phase5_chain_on_mixed_plan():
     plan.summary["device_default_space"] = {"cuda:0": "vtcm", "cpu": "host"}
 
     # Wave 6 chain in correct order:
-    run_assign_memory_space(
-        plan, config=AssignMemorySpaceConfig(vtcm_bytes=20_000, scratch_memory_space="vtcm")
-    )
+    run_assign_memory_space(plan, config=AssignMemorySpaceConfig(vtcm_bytes=20_000, scratch_memory_space="vtcm"))
     run_assign_queue(plan)
     run_assign_streams(plan)
     run_plan_buffers(plan)
@@ -604,9 +580,7 @@ def test_full_phase5_chain_on_mixed_plan():
     run_alias_io_buffers(plan)
     run_dma_overlap(plan, config=DMAOverlapConfig(min_copy_size_bytes=1024))
     run_insert_host_offload(plan)
-    plan.summary["subbyte_ops"] = [
-        {"buffer_id": "w", "bit_width": 4, "pack_dim": 1}
-    ]
+    plan.summary["subbyte_ops"] = [{"buffer_id": "w", "bit_width": 4, "pack_dim": 1}]
     run_normalize_subbyte_post_layout(plan)
 
     plan.validate()

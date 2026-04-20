@@ -25,7 +25,6 @@ from compgen.ir.quant import (
     QuantizePerTensorOp,
 )
 
-
 _COLLECTIVES = (AllReduceOp, AllGatherOp, ReduceScatterOp)
 _QUANTIZES = (QuantizePerTensorOp, QuantizePerChannelOp)
 _DEQUANTIZES = (DequantizePerTensorOp, DequantizePerChannelOp)
@@ -42,9 +41,7 @@ class _FuseCollectiveQuant(RewritePattern):
     def __init__(self, stats: CollectiveQuantizerStats) -> None:
         self.stats = stats
 
-    def match_and_rewrite(
-        self, op: Operation, rewriter: PatternRewriter
-    ) -> None:
+    def match_and_rewrite(self, op: Operation, rewriter: PatternRewriter) -> None:
         if not isinstance(op, _COLLECTIVES):
             return
         self.stats.collectives_seen += 1
@@ -54,21 +51,13 @@ class _FuseCollectiveQuant(RewritePattern):
         for use in op.results[0].uses:
             consumer = use.operation
             if isinstance(consumer, _QUANTIZES):
-                op.attributes["compgen.quant_fused"] = StringAttr(
-                    "quantize_after"
-                )
-                op.attributes["compgen.quant_fused_kind"] = StringAttr(
-                    type(consumer).__name__
-                )
+                op.attributes["compgen.quant_fused"] = StringAttr("quantize_after")
+                op.attributes["compgen.quant_fused_kind"] = StringAttr(type(consumer).__name__)
                 self.stats.fused_with_quantize += 1
                 return
             if isinstance(consumer, _DEQUANTIZES):
-                op.attributes["compgen.quant_fused"] = StringAttr(
-                    "dequantize_after"
-                )
-                op.attributes["compgen.quant_fused_kind"] = StringAttr(
-                    type(consumer).__name__
-                )
+                op.attributes["compgen.quant_fused"] = StringAttr("dequantize_after")
+                op.attributes["compgen.quant_fused_kind"] = StringAttr(type(consumer).__name__)
                 self.stats.fused_with_dequantize += 1
                 return
 
@@ -78,7 +67,8 @@ def run_collective_quantizer(
 ) -> CollectiveQuantizerStats:
     stats = CollectiveQuantizerStats()
     walker = PatternRewriteWalker(
-        _FuseCollectiveQuant(stats), apply_recursively=False,
+        _FuseCollectiveQuant(stats),
+        apply_recursively=False,
     )
     walker.rewrite_module(module)
     return stats

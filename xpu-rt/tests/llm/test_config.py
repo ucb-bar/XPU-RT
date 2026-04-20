@@ -6,7 +6,6 @@ import os
 from pathlib import Path
 
 import pytest
-
 from compgen.llm.base import CompGenLLMProtocol
 from compgen.llm.config import (
     LLMSelection,

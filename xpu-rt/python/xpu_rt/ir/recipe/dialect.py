@@ -48,8 +48,8 @@ from compgen.ir.recipe.ops_fact import (
     ContiguousLayoutOp,
     ExportIssueOp,
     FusibleWithOp,
-    GuardFailureOp,
     GraphBreakOp,
+    GuardFailureOp,
     KernelContractOp,
     LocalMemFitOp,
     QuantizationIntentOp,
@@ -59,18 +59,6 @@ from compgen.ir.recipe.ops_fact import (
 )
 from compgen.ir.recipe.ops_propose import (
     _PROPOSE_OPS,
-    ProposeBufferLifetimePlanOp,
-    ProposeCollectivePipelineOp,
-    ProposeDequantFusionOp,
-    ProposeFusionOp,
-    ProposeLayoutPlanOp,
-    ProposeMegakernelSynthesisOp,
-    ProposeMultiOutputFusionOp,
-    ProposeNumericsPlanOp,
-    ProposePeepholePatternOp,
-    ProposeRematerializationPlanOp,
-    ProposeSchedulingPolicyOp,
-    ProposeShardingPlanOp,
 )
 from compgen.ir.recipe.ops_provenance import (
     FeedbackOp,
@@ -163,15 +151,7 @@ _PROVENANCE_OPS = [
     LineageOp,
 ]
 
-ALL_OPS = (
-    _SCOPE_OPS
-    + _FACT_OPS
-    + _CANDIDATE_OPS
-    + _CHOICE_OPS
-    + _VERIFY_OPS
-    + _PROVENANCE_OPS
-    + _PROPOSE_OPS
-)
+ALL_OPS = _SCOPE_OPS + _FACT_OPS + _CANDIDATE_OPS + _CHOICE_OPS + _VERIFY_OPS + _PROVENANCE_OPS + _PROPOSE_OPS
 
 ALL_ATTRS = [
     ShapeSummaryAttr,

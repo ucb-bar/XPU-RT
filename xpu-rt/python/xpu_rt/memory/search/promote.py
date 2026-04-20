@@ -8,8 +8,6 @@ After a search completes, this module:
 
 from __future__ import annotations
 
-from typing import Any
-
 import structlog
 
 from compgen.memory.schema import (
@@ -121,8 +119,7 @@ class SearchPromoter:
             best_eval = max(evals, key=lambda e: e.score) if evals else None
 
             summary = (
-                f"{task_kind} tactic for {op_family}: "
-                f"score={best_eval.score:.2f}, latency={best_eval.latency_us:.1f}us"
+                f"{task_kind} tactic for {op_family}: score={best_eval.score:.2f}, latency={best_eval.latency_us:.1f}us"
                 if best_eval
                 else f"{task_kind} tactic for {op_family}"
             )

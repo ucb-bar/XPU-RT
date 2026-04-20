@@ -36,12 +36,11 @@ transformation rewrites the body" claim.
 
 from __future__ import annotations
 
-import json
 import textwrap
 from dataclasses import dataclass, field
 from typing import Any
 
-from xdsl.dialects.builtin import IntegerAttr, StringAttr
+from xdsl.dialects.builtin import IntegerAttr
 
 from compgen.ir.event.attrs import EventTensorTypeAttr
 from compgen.ir.event.ops import (
@@ -49,7 +48,6 @@ from compgen.ir.event.ops import (
     EventTensorOp,
     GraphOp,
 )
-
 
 _SCHEDULE_ATTR = "compgen.static_schedule"
 
@@ -157,7 +155,7 @@ class _TaskInfo:
     task_id: int
     kind: int
     device_func: str
-    in_edges: list[tuple[str, int]]   # (event_name, linear_index)
+    in_edges: list[tuple[str, int]]  # (event_name, linear_index)
     out_edges: list[tuple[str, int, int]]  # (event_name, linear_index, decrement)
 
 
@@ -195,11 +193,7 @@ def _gather_tasks(
         kind = func_to_kind[func]
 
         # task_shape -> task_id range.  Phase B MVP: 1D shapes.
-        dims = [
-            d.value.data
-            for d in call.task_shape.data
-            if isinstance(d, IntegerAttr)
-        ]
+        dims = [d.value.data for d in call.task_shape.data if isinstance(d, IntegerAttr)]
         n_tasks = 1
         for d in dims:
             n_tasks *= max(d, 1)
@@ -208,7 +202,8 @@ def _gather_tasks(
         # per task position, distribute them.  Else, every task shares
         # the same edge list.
         def _per_task_edges(
-            attr: Any, expected: int,
+            attr: Any,
+            expected: int,
         ) -> list[list[tuple[str, int]]]:
             if attr is None:
                 return [[] for _ in range(n_tasks)]
@@ -221,8 +216,7 @@ def _gather_tasks(
                         idx = _coord_index(c)
                         if idx is None:
                             raise ValueError(
-                                "Phase B dynamic scheduler MVP only supports "
-                                "literal integer event coords."
+                                "Phase B dynamic scheduler MVP only supports literal integer event coords."
                             )
                         out.append([(c.event_ref.data, idx)])
                     else:
@@ -235,8 +229,7 @@ def _gather_tasks(
                         idx = _coord_index(c)
                         if idx is None:
                             raise ValueError(
-                                "Phase B dynamic scheduler MVP only supports "
-                                "literal integer event coords."
+                                "Phase B dynamic scheduler MVP only supports literal integer event coords."
                             )
                         shared.append((c.event_ref.data, idx))
                 return [list(shared) for _ in range(n_tasks)]
@@ -246,7 +239,7 @@ def _gather_tasks(
 
         for tid in range(n_tasks):
             outs: list[tuple[str, int, int]] = []
-            for c in (call.out_edges.data if call.out_edges is not None else []):
+            for c in call.out_edges.data if call.out_edges is not None else []:
                 pass  # handled below
             # Pull decrements from the original coord attrs in order.
             for slot, edge in enumerate(out_edges_per_task[tid]):
@@ -343,9 +336,7 @@ def _emit_post_dispatch(
         first = False
         lines.append(f"        {keyword} (task_kind == {kind}) and (task_id == {tid}):")
         for ev_name, linear_idx, decrement in t.out_edges:
-            lines.append(
-                f"            old = tl.atomic_add({ev_name}_ptr + {linear_idx}, -{decrement})"
-            )
+            lines.append(f"            old = tl.atomic_add({ev_name}_ptr + {linear_idx}, -{decrement})")
             # Push only the consumers waiting on THIS event coordinate.
             consumers = consumer_table.get((ev_name, linear_idx), [])
             if consumers:
@@ -357,18 +348,10 @@ def _emit_post_dispatch(
                     # 3) publish via atomic store on QUEUE_VALID_PTR[slot] -- this
                     #    provides release semantics so consumers that load the
                     #    valid flag with acquire semantics see the payload.
-                    lines.append(
-                        f"                slot = tl.atomic_add(QUEUE_TAIL_PTR + 0, 1)"
-                    )
-                    lines.append(
-                        f"                tl.store(QUEUE_POOL_PTR + slot * 2 + 0, {c_tid})"
-                    )
-                    lines.append(
-                        f"                tl.store(QUEUE_POOL_PTR + slot * 2 + 1, {c_kind})"
-                    )
-                    lines.append(
-                        f"                tl.atomic_xchg(QUEUE_VALID_PTR + slot, 1)"
-                    )
+                    lines.append("                slot = tl.atomic_add(QUEUE_TAIL_PTR + 0, 1)")
+                    lines.append(f"                tl.store(QUEUE_POOL_PTR + slot * 2 + 0, {c_tid})")
+                    lines.append(f"                tl.store(QUEUE_POOL_PTR + slot * 2 + 1, {c_kind})")
+                    lines.append("                tl.atomic_xchg(QUEUE_VALID_PTR + slot, 1)")
     if first:
         lines.append("        pass  # no out_edges on any task")
     return "\n".join(lines)
@@ -401,18 +384,11 @@ def lower_megakernel_dynamic(
     only the graph structure + the user-supplied :class:`spec`.
     """
     if graph.policy.policy.data != "dynamic":
-        raise ValueError(
-            f"lower_megakernel_dynamic requires policy='dynamic', "
-            f"got policy={graph.policy.policy.data!r}"
-        )
+        raise ValueError(f"lower_megakernel_dynamic requires policy='dynamic', got policy={graph.policy.policy.data!r}")
 
     events = _event_layout(graph)
     event_names = [e["name"] for e in events]
-    funcs = sorted({
-        op.device_func.root_reference.data
-        for op in graph.body.walk()
-        if isinstance(op, CallDeviceOp)
-    })
+    funcs = sorted({op.device_func.root_reference.data for op in graph.body.walk() if isinstance(op, CallDeviceOp)})
     func_to_kind = {fn: i for i, fn in enumerate(funcs)}
 
     tasks = _gather_tasks(graph, func_to_kind)
@@ -424,11 +400,14 @@ def lower_megakernel_dynamic(
     body_table: dict[str, DynamicDeviceFunctionSpec] = {}
     for fn in funcs:
         body_table[fn] = by_name.get(
-            fn, DynamicDeviceFunctionSpec(name=fn, body_source="pass"),
+            fn,
+            DynamicDeviceFunctionSpec(name=fn, body_source="pass"),
         )
 
     dispatch_decl, dispatch_call = _signature_args(
-        spec.data_pointers, event_names, spec.constexpr_args,
+        spec.data_pointers,
+        event_names,
+        spec.constexpr_args,
     )
     dispatch_branches = _emit_dispatch_branches(funcs, func_to_kind, dispatch_call)
     post_dispatch = _emit_post_dispatch(tasks, consumer_table, events)
@@ -504,11 +483,7 @@ def lower_megakernel_dynamic(
 
     kernel_source = "\n".join(lines)
 
-    sm_count = (
-        graph.sm_count.value.data
-        if graph.sm_count is not None
-        else min(8, max(1, total_tasks))
-    )
+    sm_count = graph.sm_count.value.data if graph.sm_count is not None else min(8, max(1, total_tasks))
 
     return DynamicMegakernelLoweringResult(
         kernel_name=kernel_name,

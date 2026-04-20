@@ -152,10 +152,7 @@ def _gen_conv2d(
         f"                                out[n,oh,ow,co] += inp[n,oh+kh,ow+kw,ci] * weights[kh,kw,ci,co]\n"
     )
 
-    c_skeleton = (
-        f"// Exo-generated conv2d ({exo_t})\n"
-        f"void {proc_name}(...) {{ /* conv2d loop nest */ }}\n"
-    )
+    c_skeleton = f"// Exo-generated conv2d ({exo_t})\nvoid {proc_name}(...) {{ /* conv2d loop nest */ }}\n"
 
     return ExoSeedProc(
         name=proc_name,
@@ -183,8 +180,7 @@ def _gen_reduction(
     )
 
     c_skeleton = (
-        f"// Exo-generated reduction ({exo_t})\n"
-        f"void reduce_sum(int N, const float* x, float* result) {{ ... }}\n"
+        f"// Exo-generated reduction ({exo_t})\nvoid reduce_sum(int N, const float* x, float* result) {{ ... }}\n"
     )
 
     return ExoSeedProc(
@@ -212,10 +208,7 @@ def _gen_elementwise(
         f"        c[i] = a[i] + b[i]\n"
     )
 
-    c_skeleton = (
-        f"// Exo-generated elementwise ({exo_t})\n"
-        f"void elementwise_add(int N, ...) {{ ... }}\n"
-    )
+    c_skeleton = f"// Exo-generated elementwise ({exo_t})\nvoid elementwise_add(int N, ...) {{ ... }}\n"
 
     return ExoSeedProc(
         name="elementwise_add",

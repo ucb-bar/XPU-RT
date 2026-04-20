@@ -12,11 +12,8 @@ import json
 import subprocess
 from pathlib import Path
 
-import pytest
-
 from compgen.contrib import draft_pr, list_extensions, status
 from compgen.contrib.draft import _synthesize_test
-
 
 _TOOL_EXT = """
 from compgen.llm.registry import Tool, ToolArg, ToolResult
@@ -44,14 +41,16 @@ def _bootstrap_ext_root(tmp_path: Path, invocation_counts: int = 5) -> Path:
     state_path = root / "_state.json"
     # NB: no ``loaded_modules`` — every test's scratch Registry needs to
     # actually load the tool so list_extensions sees it.
-    state_path.write_text(json.dumps({
-        "accepted_invocations": {
-            "my_user_tool": [
-                {"session_id": f"s_{i}", "step_index": i}
-                for i in range(invocation_counts)
-            ],
-        },
-    }, indent=2))
+    state_path.write_text(
+        json.dumps(
+            {
+                "accepted_invocations": {
+                    "my_user_tool": [{"session_id": f"s_{i}", "step_index": i} for i in range(invocation_counts)],
+                },
+            },
+            indent=2,
+        )
+    )
     return root
 
 
@@ -63,9 +62,10 @@ def _bootstrap_repo(tmp_path: Path) -> Path:
     # Initialise a fresh git repo so the draft commit workflow can run.
     subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
     subprocess.run(
-        ["git", "-c", "user.email=t@x", "-c", "user.name=t",
-         "commit", "--allow-empty", "-m", "init"],
-        cwd=repo, check=True, capture_output=True,
+        ["git", "-c", "user.email=t@x", "-c", "user.name=t", "commit", "--allow-empty", "-m", "init"],
+        cwd=repo,
+        check=True,
+        capture_output=True,
     )
     return repo
 
@@ -111,8 +111,11 @@ def test_draft_pr_without_tests_or_commit_copies_files(tmp_path: Path) -> None:
 
     result = draft_pr(
         "my_user_tool",
-        source_root=root, repo_root=repo,
-        run_tests=False, commit=False, create_branch=False,
+        source_root=root,
+        repo_root=repo,
+        run_tests=False,
+        commit=False,
+        create_branch=False,
     )
     assert not result.errors, result.errors
     assert result.upstream_module is not None
@@ -136,8 +139,11 @@ def test_draft_pr_unknown_slot_reports_error(tmp_path: Path) -> None:
     repo = _bootstrap_repo(tmp_path)
     result = draft_pr(
         "no_such_slot_anywhere",
-        source_root=root, repo_root=repo,
-        run_tests=False, commit=False, create_branch=False,
+        source_root=root,
+        repo_root=repo,
+        run_tests=False,
+        commit=False,
+        create_branch=False,
     )
     assert result.errors
     assert any("no extension file found" in e for e in result.errors)
@@ -147,27 +153,33 @@ def test_draft_pr_with_branch_and_commit(tmp_path: Path) -> None:
     root = _bootstrap_ext_root(tmp_path, invocation_counts=3)
     repo = _bootstrap_repo(tmp_path)
     subprocess.run(
-        ["git", "-c", "user.email=t@x", "-c", "user.name=t",
-         "config", "user.email", "t@x"],
-        cwd=repo, check=True,
+        ["git", "-c", "user.email=t@x", "-c", "user.name=t", "config", "user.email", "t@x"],
+        cwd=repo,
+        check=True,
     )
     subprocess.run(
-        ["git", "-c", "user.email=t@x", "-c", "user.name=t",
-         "config", "user.name", "tester"],
-        cwd=repo, check=True,
+        ["git", "-c", "user.email=t@x", "-c", "user.name=t", "config", "user.name", "tester"],
+        cwd=repo,
+        check=True,
     )
 
     result = draft_pr(
         "my_user_tool",
-        source_root=root, repo_root=repo,
-        run_tests=False, commit=True, create_branch=True,
+        source_root=root,
+        repo_root=repo,
+        run_tests=False,
+        commit=True,
+        create_branch=True,
     )
     assert result.branch == "contrib/my-user-tool"
     assert result.committed
     # Branch should exist.
     branches = subprocess.run(
         ["git", "branch", "--format=%(refname:short)"],
-        cwd=repo, check=True, capture_output=True, text=True,
+        cwd=repo,
+        check=True,
+        capture_output=True,
+        text=True,
     ).stdout.splitlines()
     assert "contrib/my-user-tool" in branches
 

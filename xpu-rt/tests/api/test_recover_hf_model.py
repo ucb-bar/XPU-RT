@@ -21,17 +21,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
 import torch
 import torch.nn as nn
-
 from compgen import compile_with_llm
 from compgen.llm.mock_client import MockLLMClient
 
-EXEMPLAR = (
-    Path(__file__).resolve().parents[1]
-    / "targetgen" / "exemplars" / "test_gpu_simt.yaml"
-)
+EXEMPLAR = Path(__file__).resolve().parents[1] / "targetgen" / "exemplars" / "test_gpu_simt.yaml"
 
 
 class _TanhModel(nn.Module):
@@ -49,8 +44,12 @@ def test_compile_with_llm_recovers_tanh_deterministic() -> None:
     mock = MockLLMClient(strict=False)
 
     res = compile_with_llm(
-        model=model, target=EXEMPLAR, llm=mock, sample_inputs=sample,
-        budget=2, recover_unsupported=True,
+        model=model,
+        target=EXEMPLAR,
+        llm=mock,
+        sample_inputs=sample,
+        budget=2,
+        recover_unsupported=True,
     )
     assert res.compiled.recovery_plan is not None
     plan = res.compiled.recovery_plan
@@ -79,8 +78,12 @@ def test_compile_with_llm_recover_preserves_output_parity() -> None:
     eager_out = model(*sample).detach().clone()
 
     res = compile_with_llm(
-        model=model, target=EXEMPLAR, llm=mock, sample_inputs=sample,
-        budget=2, recover_unsupported=True,
+        model=model,
+        target=EXEMPLAR,
+        llm=mock,
+        sample_inputs=sample,
+        budget=2,
+        recover_unsupported=True,
     )
     got = res.compiled.model(*sample)
     torch.testing.assert_close(got, eager_out, atol=0.0, rtol=0.0)
@@ -93,8 +96,12 @@ def test_compile_with_llm_recover_false_leaves_plan_none() -> None:
     mock = MockLLMClient(strict=False)
 
     res = compile_with_llm(
-        model=model, target=EXEMPLAR, llm=mock, sample_inputs=sample,
-        budget=2, recover_unsupported=False,
+        model=model,
+        target=EXEMPLAR,
+        llm=mock,
+        sample_inputs=sample,
+        budget=2,
+        recover_unsupported=False,
     )
     assert res.compiled.recovery_plan is None
 
@@ -117,11 +124,14 @@ def test_compile_with_llm_recover_consults_llm_on_low_confidence() -> None:
 
     class _CountingLLM(MockLLMClient):
         calls: int = 0
+
         def generate(self, request):
             type(self).calls += 1
             from compgen.llm.base import GenerationResponse
+
             return GenerationResponse(
-                raw_text="translation", parsed_artifacts=["translation"],
+                raw_text="translation",
+                parsed_artifacts=["translation"],
                 model_id="mock",
             )
 
@@ -129,6 +139,7 @@ def test_compile_with_llm_recover_consults_llm_on_low_confidence() -> None:
 
     # Patch plan_recovery to downgrade confidence on every resolution.
     orig_plan = recovery.plan_recovery
+
     def patched_plan(artifact, *, llm_client=None, consult_llm_on=("low",)):
         for i, r in enumerate(artifact.unsupported_resolutions):
             forced = UnsupportedClassification(
@@ -138,15 +149,23 @@ def test_compile_with_llm_recover_consults_llm_on_low_confidence() -> None:
                 reason="patched to low for test",
             )
             from dataclasses import replace
+
             artifact.unsupported_resolutions[i] = replace(r, classification=forced)
         return orig_plan(
-            artifact, llm_client=llm_client, consult_llm_on=consult_llm_on,
+            artifact,
+            llm_client=llm_client,
+            consult_llm_on=consult_llm_on,
         )
+
     recovery.plan_recovery = patched_plan  # type: ignore[assignment]
     try:
         res = compile_with_llm(
-            model=model, target=EXEMPLAR, llm=llm, sample_inputs=sample,
-            budget=2, recover_unsupported=True,
+            model=model,
+            target=EXEMPLAR,
+            llm=llm,
+            sample_inputs=sample,
+            budget=2,
+            recover_unsupported=True,
         )
     finally:
         recovery.plan_recovery = orig_plan

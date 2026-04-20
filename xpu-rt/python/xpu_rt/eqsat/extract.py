@@ -39,10 +39,9 @@ def extract_with_cost_model(
     # We use xDSL's add_eqsat_costs on each block that has eclasses,
     # but with an empty cost_dict since we already assigned costs.
     from xdsl.dialects import equivalence
+
     eclass_parent_blocks = set(
-        o.parent
-        for o in module.walk()
-        if o.parent is not None and isinstance(o, equivalence.AnyClassOp)
+        o.parent for o in module.walk() if o.parent is not None and isinstance(o, equivalence.AnyClassOp)
     )
     for block in eclass_parent_blocks:
         add_eqsat_costs(block, default=None, cost_dict={})

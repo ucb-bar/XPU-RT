@@ -3,11 +3,8 @@
 from __future__ import annotations
 
 import pytest
-
-from xdsl.dialects.builtin import Float16Type, TensorType
-
 from compgen.ir.payload.types import Float8E4M3FNType, Float8E5M2Type
-
+from xdsl.dialects.builtin import Float16Type, TensorType
 
 # --- bitwidth + size ----------------------------------------------------------
 

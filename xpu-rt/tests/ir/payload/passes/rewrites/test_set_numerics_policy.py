@@ -3,6 +3,11 @@
 from __future__ import annotations
 
 import pytest
+from compgen.ir.payload.passes.rewrites.set_numerics_policy import (
+    NumericsPolicy,
+    SetNumericsPolicyStats,
+    run_set_numerics_policy,
+)
 from xdsl.dialects.arith import (
     AddfOp,
     ConstantOp,
@@ -24,11 +29,6 @@ from xdsl.dialects.builtin import (
 from xdsl.dialects.func import FuncOp, ReturnOp
 from xdsl.ir import Block, Region
 
-from compgen.ir.payload.passes.rewrites.set_numerics_policy import (
-    NumericsPolicy,
-    SetNumericsPolicyStats,
-    run_set_numerics_policy,
-)
 from tests.ir.payload.passes._pattern_test_helpers import (
     assert_module_verifies,
     count_ops,

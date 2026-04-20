@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
 from compgen.ir.ukernel.lower import lower_ukernel_to_call
 
 

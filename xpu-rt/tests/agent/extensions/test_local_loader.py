@@ -10,7 +10,6 @@ from compgen.agent.extensions.local_loader import (
 )
 from compgen.llm.registry import Registry
 
-
 _TOOL_EXT = """
 from compgen.llm.registry import Tool, ToolArg, ToolResult
 
@@ -79,7 +78,7 @@ def test_loader_swallows_import_errors(tmp_path: Path) -> None:
     result = load_local_extensions(reg, root=tmp_path)
     assert not result.ok()
     assert result.errors()
-    assert "my_user_tool" in result.tool_names()   # good.py still loaded
+    assert "my_user_tool" in result.tool_names()  # good.py still loaded
 
 
 def test_loader_is_idempotent(tmp_path: Path) -> None:

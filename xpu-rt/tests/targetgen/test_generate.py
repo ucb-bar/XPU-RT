@@ -49,9 +49,7 @@ class TestGenerateTarget:
         registry.register_target_stack(result.dialect_stack)
 
         pipeline_result = registry.run_pipeline(module, result.profile, result.capabilities)
-        assert pipeline_result.passed, (
-            f"{yaml_file.name}: Pipeline failed at {pipeline_result.first_failure}"
-        )
+        assert pipeline_result.passed, f"{yaml_file.name}: Pipeline failed at {pipeline_result.first_failure}"
 
 
 class TestFamilyStacks:
@@ -93,9 +91,7 @@ class TestVerificationManifest:
 
     def test_manifest_has_plugin_tests(self, tmp_path: Path) -> None:
         result = generate_target(EXEMPLAR_DIR / "test_rocc_accel.yaml", tmp_path / "rocc")
-        plugin_tests = result.verification_manifest.tests_at_level(
-            VerificationLevel.L6_PLUGIN_PASSES
-        )
+        plugin_tests = result.verification_manifest.tests_at_level(VerificationLevel.L6_PLUGIN_PASSES)
         # RoCC has a plugin for accel_lowering
         assert len(plugin_tests) >= 1
 
@@ -108,6 +104,7 @@ class TestVerificationManifest:
     def test_maturity_mapping(self, tmp_path: Path) -> None:
         result = generate_target(EXEMPLAR_DIR / "test_rocc_accel.yaml", tmp_path / "rocc")
         from compgen.targets.maturity import TargetMaturity
+
         # RoCC has simulator → can reach L9
         assert result.verification_manifest.maturity == TargetMaturity.L3_PROMOTED
 
@@ -115,6 +112,7 @@ class TestVerificationManifest:
 class TestArtifactOutput:
     def test_classification_json(self, tmp_path: Path) -> None:
         import json
+
         result = generate_target(EXEMPLAR_DIR / "test_gpu_simt.yaml", tmp_path / "gpu")
         data = json.loads((result.output_dir / "classification.json").read_text())
         assert data["family"] == "simt_gpu_hal"
@@ -122,6 +120,7 @@ class TestArtifactOutput:
 
     def test_support_plan_json(self, tmp_path: Path) -> None:
         import json
+
         result = generate_target(EXEMPLAR_DIR / "test_rocc_accel.yaml", tmp_path / "rocc")
         data = json.loads((result.output_dir / "support_plan.json").read_text())
         assert data["needs_accel_dialect"] is True

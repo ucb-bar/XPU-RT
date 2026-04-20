@@ -6,7 +6,6 @@ import sys
 from pathlib import Path
 
 import torch
-
 from compgen.capture.torch_export import capture_frontend_artifact, capture_model
 from compgen.ir.payload.import_fx import FXImporter, ImportDiagnostic, fx_to_xdsl
 
@@ -16,6 +15,7 @@ EXAMPLES_DIR = Path(__file__).parent.parent.parent.parent / "examples" / "models
 def _get_simple_mlp():
     sys.path.insert(0, str(EXAMPLES_DIR))
     from simple_mlp import SimpleMLP, get_sample_inputs
+
     return SimpleMLP(), get_sample_inputs()
 
 

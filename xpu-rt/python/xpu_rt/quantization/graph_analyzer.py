@@ -23,11 +23,9 @@ from typing import Any
 import torch
 
 from compgen.quantization.npu_op_map import (
+    _OP_TABLE,
     NpuOpCategory,
     NpuQuantDecision,
-    _OP_TABLE,
-    classify_op,
-    get_quant_decision,
 )
 
 
@@ -289,8 +287,7 @@ def format_analysis_report(analysis: QuantizedGraphAnalysis) -> str:
         "",
         f"  Graph partitions analyzed: {analysis.partition_count}",
         f"  Total call_function ops:   {analysis.total_ops}",
-        f"  Covered ops:               {sum(analysis.covered_ops.values())} "
-        f"({analysis.coverage_pct:.1f}%)",
+        f"  Covered ops:               {sum(analysis.covered_ops.values())} ({analysis.coverage_pct:.1f}%)",
         f"  Uncovered ops:             {sum(analysis.uncovered_ops.values())}",
         "",
         "  Execution Unit Breakdown:",

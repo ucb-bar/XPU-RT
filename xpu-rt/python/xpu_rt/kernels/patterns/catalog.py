@@ -11,7 +11,6 @@ Framework-agnostic: works with any model, any target.
 
 from __future__ import annotations
 
-import json
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -190,20 +189,21 @@ def generate_inputs(batch=1, heads=15, seq_q=291, seq_k=64, dtype=torch.bfloat16
     B = torch.randn(batch, heads, seq_k, seq_q, dtype=dtype)
     return {"A": A, "B": B}
 ''',
-    "softmax": '''\
+    "softmax": """\
 import torch
 
 def generate_inputs(batch=1, heads=15, seq=291, dtype=torch.bfloat16):
     torch.manual_seed(42)
     x = torch.randn(batch, heads, seq, seq, dtype=dtype)
     return {"x": x}
-''',
+""",
 }
 
 
 # ---------------------------------------------------------------------------
 # Catalog builder
 # ---------------------------------------------------------------------------
+
 
 def build_pattern_catalog(
     detected: list[DetectedPattern],
@@ -263,8 +263,11 @@ def build_pattern_catalog(
 
         # Parameter schema
         if shape_variants and shape_variants[0]:
-            schema = {k: type(v).__name__ for k, v in shape_variants[0].items()
-                      if k not in ("input_shapes", "output_shape", "flops")}
+            schema = {
+                k: type(v).__name__
+                for k, v in shape_variants[0].items()
+                if k not in ("input_shapes", "output_shape", "flops")
+            }
         else:
             schema = {}
 
@@ -288,20 +291,22 @@ def build_pattern_catalog(
             "conv2d": "2D convolution (vision patch embedding)",
         }
 
-        patterns.append(KernelPattern(
-            pattern_id=ptype,
-            op_family=op_family,
-            description=desc_map.get(ptype, f"Compute pattern: {ptype}"),
-            fused_ops=fused_ops,
-            parameter_schema=schema,
-            shape_variants=shape_variants,
-            instance_count=len(instances),
-            total_flops=total_flops,
-            compute_fraction=compute_frac,
-            reference_fn=_REFERENCE_CODE.get(ptype, f"# Reference for {ptype}\nimport torch\n"),
-            input_generator_fn=_INPUT_GENERATORS.get(ptype, ""),
-            priority_shapes=shape_variants[:5],
-        ))
+        patterns.append(
+            KernelPattern(
+                pattern_id=ptype,
+                op_family=op_family,
+                description=desc_map.get(ptype, f"Compute pattern: {ptype}"),
+                fused_ops=fused_ops,
+                parameter_schema=schema,
+                shape_variants=shape_variants,
+                instance_count=len(instances),
+                total_flops=total_flops,
+                compute_fraction=compute_frac,
+                reference_fn=_REFERENCE_CODE.get(ptype, f"# Reference for {ptype}\nimport torch\n"),
+                input_generator_fn=_INPUT_GENERATORS.get(ptype, ""),
+                priority_shapes=shape_variants[:5],
+            )
+        )
 
     patterns.sort(key=lambda p: p.total_flops, reverse=True)
     return patterns
@@ -310,6 +315,7 @@ def build_pattern_catalog(
 # ---------------------------------------------------------------------------
 # Export and reporting
 # ---------------------------------------------------------------------------
+
 
 def export_pattern_catalog(
     patterns: list[KernelPattern],
@@ -354,9 +360,12 @@ def export_pattern_catalog(
             (pdir / "input_generator.py").write_text(pattern.input_generator_fn)
 
         # All shape variants
-        (pdir / "all_variants.yaml").write_text(yaml.dump(
-            {"variants": pattern.shape_variants}, default_flow_style=False,
-        ))
+        (pdir / "all_variants.yaml").write_text(
+            yaml.dump(
+                {"variants": pattern.shape_variants},
+                default_flow_style=False,
+            )
+        )
 
     return out
 

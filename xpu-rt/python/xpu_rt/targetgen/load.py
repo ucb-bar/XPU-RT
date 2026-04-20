@@ -135,30 +135,35 @@ def extract_target_profile(spec: HardwareSpec) -> TargetProfile:
     # Build compute units from geometry
     compute_units: list[ComputeUnit] = []
     if spec.engine_geometry.systolic_array_dim:
-        compute_units.append(ComputeUnit(
-            name="systolic_array",
-            count=1,
-            supported_dtypes={d.name for d in spec.numeric_contract.supported_dtypes if d.native},
-        ))
+        compute_units.append(
+            ComputeUnit(
+                name="systolic_array",
+                count=1,
+                supported_dtypes={d.name for d in spec.numeric_contract.supported_dtypes if d.native},
+            )
+        )
     if spec.engine_geometry.vector_length_bits > 0:
-        compute_units.append(ComputeUnit(
-            name="vector_unit",
-            count=1,
-            supported_dtypes={d.name for d in spec.numeric_contract.supported_dtypes if d.native},
-        ))
+        compute_units.append(
+            ComputeUnit(
+                name="vector_unit",
+                count=1,
+                supported_dtypes={d.name for d in spec.numeric_contract.supported_dtypes if d.native},
+            )
+        )
     if spec.engine_geometry.max_warp_size > 0:
-        compute_units.append(ComputeUnit(
-            name="simt_core",
-            count=1,
-            supported_dtypes={d.name for d in spec.numeric_contract.supported_dtypes if d.native},
-        ))
+        compute_units.append(
+            ComputeUnit(
+                name="simt_core",
+                count=1,
+                supported_dtypes={d.name for d in spec.numeric_contract.supported_dtypes if d.native},
+            )
+        )
     if not compute_units:
         compute_units.append(ComputeUnit(name="default", count=1))
 
     # Build memory hierarchy from address spaces
     memory_hierarchy = [
-        MemoryLevel(name=space.name, size_bytes=space.size_bytes)
-        for space in spec.memory_model.address_spaces
+        MemoryLevel(name=space.name, size_bytes=space.size_bytes) for space in spec.memory_model.address_spaces
     ]
 
     # Collect supported ops from native op families

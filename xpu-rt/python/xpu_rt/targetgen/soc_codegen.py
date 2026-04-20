@@ -152,99 +152,101 @@ def _infer_threads(
     ipc = ipc_context or {}
 
     # Build real dispatch body
-    trace_begin = 'SYS_TRACE_IDLE();\n        ' if instrumented else ''
-    trace_end = '\n        /* trace: dispatch done */' if instrumented else ''
+    trace_begin = "SYS_TRACE_IDLE();\n        " if instrumented else ""
+    trace_end = "\n        /* trace: dispatch done */" if instrumented else ""
 
     if ipc.get("use_ipc_service"):
         dispatch_body = (
-            f'{trace_begin}'
-            f'/* Wait for work via IPC service endpoint */\n'
-            f'        struct {ipc.get("endpoint_name", "compgen_ep")}_msg msg;\n'
-            f'        int rc = ipc_service_recv(&ep, &msg, sizeof(msg), K_FOREVER);\n'
-            f'        if (rc == 0) {{\n'
-            f'            kernel_fn_t fn = kernel_lookup(msg.kernel_name);\n'
-            f'            if (fn) fn(msg.args, msg.args_size);\n'
-            f'        }}{trace_end}'
+            f"{trace_begin}"
+            f"/* Wait for work via IPC service endpoint */\n"
+            f"        struct {ipc.get('endpoint_name', 'compgen_ep')}_msg msg;\n"
+            f"        int rc = ipc_service_recv(&ep, &msg, sizeof(msg), K_FOREVER);\n"
+            f"        if (rc == 0) {{\n"
+            f"            kernel_fn_t fn = kernel_lookup(msg.kernel_name);\n"
+            f"            if (fn) fn(msg.args, msg.args_size);\n"
+            f"        }}{trace_end}"
         )
     elif ipc.get("mechanism") == "k_pipe":
         dispatch_body = (
-            f'{trace_begin}'
-            f'/* Read command from k_pipe */\n'
-            f'        uint8_t cmd_buf[{ipc.get("pipe_size", 4096)}];\n'
-            f'        size_t bytes_read = 0;\n'
-            f'        k_pipe_get(&cmd_pipe, cmd_buf, sizeof(cmd_buf),\n'
-            f'                   &bytes_read, 1, K_FOREVER);\n'
-            f'        if (bytes_read > 0) {{\n'
-            f'            dispatch_command(cmd_buf, bytes_read);\n'
-            f'        }}{trace_end}'
+            f"{trace_begin}"
+            f"/* Read command from k_pipe */\n"
+            f"        uint8_t cmd_buf[{ipc.get('pipe_size', 4096)}];\n"
+            f"        size_t bytes_read = 0;\n"
+            f"        k_pipe_get(&cmd_pipe, cmd_buf, sizeof(cmd_buf),\n"
+            f"                   &bytes_read, 1, K_FOREVER);\n"
+            f"        if (bytes_read > 0) {{\n"
+            f"            dispatch_command(cmd_buf, bytes_read);\n"
+            f"        }}{trace_end}"
         )
     else:
         # Default: k_msgq based dispatch
         dispatch_body = (
-            f'{trace_begin}'
-            f'/* Wait for dispatch command via k_msgq */\n'
-            f'        struct dispatch_msg msg;\n'
-            f'        if (k_msgq_get(&dispatch_msgq, &msg, K_FOREVER) == 0) {{\n'
-            f'            kernel_fn_t fn = kernel_lookup(msg.kernel_id);\n'
-            f'            if (fn) {{\n'
-            f'                fn(msg.args, msg.args_size);\n'
-            f'            }}\n'
-            f'        }}{trace_end}'
+            f"{trace_begin}"
+            f"/* Wait for dispatch command via k_msgq */\n"
+            f"        struct dispatch_msg msg;\n"
+            f"        if (k_msgq_get(&dispatch_msgq, &msg, K_FOREVER) == 0) {{\n"
+            f"            kernel_fn_t fn = kernel_lookup(msg.kernel_id);\n"
+            f"            if (fn) {{\n"
+            f"                fn(msg.args, msg.args_size);\n"
+            f"            }}\n"
+            f"        }}{trace_end}"
         )
 
-    threads.append(ThreadSpec(
-        name="dispatch",
-        stack_size=ipc.get("stack_size", 8192),
-        priority=ipc.get("thread_priority", 5),
-        description="Main dispatch thread — receives and executes kernel commands",
-        body=dispatch_body,
-        wait_sem="dispatch_ready",
-        post_sem="dispatch_done",
-    ))
+    threads.append(
+        ThreadSpec(
+            name="dispatch",
+            stack_size=ipc.get("stack_size", 8192),
+            priority=ipc.get("thread_priority", 5),
+            description="Main dispatch thread — receives and executes kernel commands",
+            body=dispatch_body,
+            wait_sem="dispatch_ready",
+            post_sem="dispatch_done",
+        )
+    )
 
     if _has_dma(spec):
         dma_body = (
-            f'{trace_begin}'
-            f'/* Wait for DMA request */\n'
-            f'        struct dma_request req;\n'
-            f'        if (k_msgq_get(&dma_msgq, &req, K_FOREVER) == 0) {{\n'
-            f'            struct dma_config cfg = {{0}};\n'
-            f'            struct dma_block_config blk = {{0}};\n'
-            f'            blk.source_address = req.src_addr;\n'
-            f'            blk.dest_address = req.dst_addr;\n'
-            f'            blk.block_size = req.size;\n'
-            f'            cfg.head_block = &blk;\n'
-            f'            cfg.block_count = 1;\n'
-            f'            cfg.channel_direction = MEMORY_TO_MEMORY;\n'
-            f'            dma_config(dma_dev, req.channel, &cfg);\n'
-            f'            dma_start(dma_dev, req.channel);\n'
-            f'        }}{trace_end}'
+            f"{trace_begin}"
+            f"/* Wait for DMA request */\n"
+            f"        struct dma_request req;\n"
+            f"        if (k_msgq_get(&dma_msgq, &req, K_FOREVER) == 0) {{\n"
+            f"            struct dma_config cfg = {{0}};\n"
+            f"            struct dma_block_config blk = {{0}};\n"
+            f"            blk.source_address = req.src_addr;\n"
+            f"            blk.dest_address = req.dst_addr;\n"
+            f"            blk.block_size = req.size;\n"
+            f"            cfg.head_block = &blk;\n"
+            f"            cfg.block_count = 1;\n"
+            f"            cfg.channel_direction = MEMORY_TO_MEMORY;\n"
+            f"            dma_config(dma_dev, req.channel, &cfg);\n"
+            f"            dma_start(dma_dev, req.channel);\n"
+            f"        }}{trace_end}"
         )
-        threads.append(ThreadSpec(
-            name="dma_handler",
-            stack_size=4096,
-            priority=3,
-            description="DMA transfer management — configures and starts DMA channels",
-            body=dma_body,
-            wait_sem="dma_request",
-            post_sem="dma_complete",
-        ))
+        threads.append(
+            ThreadSpec(
+                name="dma_handler",
+                stack_size=4096,
+                priority=3,
+                description="DMA transfer management — configures and starts DMA channels",
+                body=dma_body,
+                wait_sem="dma_request",
+                post_sem="dma_complete",
+            )
+        )
 
     # Profiling collector thread (when instrumented)
     if instrumented:
-        threads.append(ThreadSpec(
-            name="trace_collector",
-            stack_size=4096,
-            priority=10,  # low priority
-            description="Collects and flushes trace data",
-            body=(
-                '/* Periodically flush trace buffer */\n'
-                '        k_msleep(100);\n'
-                '        cg_trace_flush(NULL);'
-            ),
-            wait_sem="",
-            post_sem="",
-        ))
+        threads.append(
+            ThreadSpec(
+                name="trace_collector",
+                stack_size=4096,
+                priority=10,  # low priority
+                description="Collects and flushes trace data",
+                body=("/* Periodically flush trace buffer */\n        k_msleep(100);\n        cg_trace_flush(NULL);"),
+                wait_sem="",
+                post_sem="",
+            )
+        )
 
     return threads
 
@@ -257,10 +259,12 @@ def _infer_semaphores(spec: HardwareSpec) -> list[SemaphoreSpec]:
     ]
 
     if _has_dma(spec):
-        sems.extend([
-            SemaphoreSpec(name="dma_request", initial_count=0, limit=1),
-            SemaphoreSpec(name="dma_complete", initial_count=0, limit=1),
-        ])
+        sems.extend(
+            [
+                SemaphoreSpec(name="dma_request", initial_count=0, limit=1),
+                SemaphoreSpec(name="dma_complete", initial_count=0, limit=1),
+            ]
+        )
 
     return sems
 
@@ -286,12 +290,14 @@ def _arenas_from_memory_model(memory_model: MemoryModelSpec) -> list[ArenaSpec]:
         # Use larger alignment for DMA-accessible regions
         if space.dma_accessible:
             alignment = 64
-        arenas.append(ArenaSpec(
-            name=space.name,
-            size_bytes=space.size_bytes,
-            alignment=alignment,
-            section=f".{space.name}",
-        ))
+        arenas.append(
+            ArenaSpec(
+                name=space.name,
+                size_bytes=space.size_bytes,
+                alignment=alignment,
+                section=f".{space.name}",
+            )
+        )
     return arenas
 
 
@@ -303,14 +309,16 @@ def _memory_regions_from_spec(spec: HardwareSpec) -> list[MemoryRegion]:
     regions: list[MemoryRegion] = []
     for space, base in _assign_base_addresses(spec.memory_model.address_spaces):
         name_lower = space.name.lower()
-        regions.append(MemoryRegion(
-            name=space.name,
-            origin=base,
-            length=space.size_bytes,
-            flags="rwx" if name_lower in _EXECUTABLE_REGIONS else "rw",
-            alignment=64 if space.dma_accessible else 16,
-            is_arena=name_lower not in _EXECUTABLE_REGIONS,
-        ))
+        regions.append(
+            MemoryRegion(
+                name=space.name,
+                origin=base,
+                length=space.size_bytes,
+                flags="rwx" if name_lower in _EXECUTABLE_REGIONS else "rw",
+                alignment=64 if space.dma_accessible else 16,
+                is_arena=name_lower not in _EXECUTABLE_REGIONS,
+            )
+        )
     return regions
 
 
@@ -546,8 +554,10 @@ def generate_bare_metal_runtime(
 
     # 1. Arena allocator
     result = generate_arena_allocator(
-        spec.memory_model, out,
-        target_name=spec.name, family=family,
+        spec.memory_model,
+        out,
+        target_name=spec.name,
+        family=family,
     )
     generated.extend(result.generated_files)
 
@@ -590,8 +600,10 @@ def generate_bare_metal_runtime(
     # 4. DMA ops (if applicable)
     if _has_dma(spec):
         dma_result = generate_dma_ops(
-            spec.memory_model, out,
-            target_name=spec.name, family=family,
+            spec.memory_model,
+            out,
+            target_name=spec.name,
+            family=family,
         )
         generated.extend(dma_result.generated_files)
 
@@ -631,8 +643,5 @@ def generate_soc_runtime(
     if deployment == "bare_metal":
         return generate_bare_metal_runtime(spec, output_dir)
 
-    msg = (
-        f"Unsupported deployment_model={deployment!r} for SoC codegen. "
-        f"Expected 'zephyr' or 'bare_metal'."
-    )
+    msg = f"Unsupported deployment_model={deployment!r} for SoC codegen. Expected 'zephyr' or 'bare_metal'."
     raise ValueError(msg)

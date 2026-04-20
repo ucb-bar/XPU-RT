@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from compgen.capture.torchao_schemes import (
     TORCHAO_SCHEMES,
     TorchAOScheme,

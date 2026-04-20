@@ -1,12 +1,21 @@
 """Tests for EqSat LLM modes (Units 4, 5)."""
-from __future__ import annotations
-import json
-import pytest
 
-from compgen.agent.prompts.eqsat_search_state import SearchStateContext, format_prompt as fmt_ss, parse_response as parse_ss
-from compgen.agent.prompts.eqsat_extraction_weights import WeightsContext, format_prompt as fmt_ew, parse_response as parse_ew
-from compgen.agent.prompts.eqsat_blackbox import BlackboxContext, format_prompt as fmt_bb, parse_response as parse_bb
-from compgen.agent.prompts.eqsat_segment import SegmentContext, format_prompt as fmt_seg, parse_response as parse_seg
+from __future__ import annotations
+
+import json
+
+from compgen.agent.prompts.eqsat_blackbox import BlackboxContext
+from compgen.agent.prompts.eqsat_blackbox import format_prompt as fmt_bb
+from compgen.agent.prompts.eqsat_blackbox import parse_response as parse_bb
+from compgen.agent.prompts.eqsat_extraction_weights import WeightsContext
+from compgen.agent.prompts.eqsat_extraction_weights import format_prompt as fmt_ew
+from compgen.agent.prompts.eqsat_extraction_weights import parse_response as parse_ew
+from compgen.agent.prompts.eqsat_search_state import SearchStateContext
+from compgen.agent.prompts.eqsat_search_state import format_prompt as fmt_ss
+from compgen.agent.prompts.eqsat_search_state import parse_response as parse_ss
+from compgen.agent.prompts.eqsat_segment import SegmentContext
+from compgen.agent.prompts.eqsat_segment import format_prompt as fmt_seg
+from compgen.agent.prompts.eqsat_segment import parse_response as parse_seg
 
 
 class TestSearchState:
@@ -47,7 +56,9 @@ class TestExtractionWeights:
         assert "0.500" in prompt
 
     def test_parse_weights(self):
-        text = json.dumps({"fusion_weight": 1.5, "transfer_weight": 0.8, "backend_match_weight": 2.0, "reasoning": "ok"})
+        text = json.dumps(
+            {"fusion_weight": 1.5, "transfer_weight": 0.8, "backend_match_weight": 2.0, "reasoning": "ok"}
+        )
         result = parse_ew(text)
         assert result is not None
         assert result["fusion_weight"] == 1.5

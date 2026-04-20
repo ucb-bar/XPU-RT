@@ -117,14 +117,13 @@ def solve_schedule(
     # Per-device no-overlap: tasks on the same device cannot overlap
     for d in range(num_devices):
         device_intervals = [
-            intervals[pid] for pid in partition_ids
-            if device_assignments.get(pid) == d and pid in intervals
+            intervals[pid] for pid in partition_ids if device_assignments.get(pid) == d and pid in intervals
         ]
         if len(device_intervals) > 1:
             model.add_no_overlap(device_intervals)
 
     # Agent constraints
-    for c in (constraints or []):
+    for c in constraints or []:
         if c.partition_id in starts:
             if c.earliest_start_us > 0:
                 model.add(starts[c.partition_id] >= int(c.earliest_start_us * scale))

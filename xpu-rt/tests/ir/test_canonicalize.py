@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
+from compgen.ir.payload.canonicalize import CanonicalizationReport, CanonicalizePass, canonicalize
 from xdsl.dialects.builtin import Float32Type, FunctionType, ModuleOp, TensorType
 from xdsl.dialects.func import FuncOp, ReturnOp
-from xdsl.dialects.tensor import EmptyOp
 from xdsl.ir import Block, Region
-
-from compgen.ir.payload.canonicalize import CanonicalizationReport, CanonicalizePass, canonicalize
 
 
 def _make_trivial_module() -> ModuleOp:

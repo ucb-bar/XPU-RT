@@ -30,18 +30,14 @@ def _groups(devices: list[int]) -> ArrayAttr:
     n = 1
     for d in devices:
         n *= d
-    return ArrayAttr(
-        [ArrayAttr([IntegerAttr(i, IntegerType(64)) for i in range(n)])]
-    )
+    return ArrayAttr([ArrayAttr([IntegerAttr(i, IntegerType(64)) for i in range(n)])])
 
 
 class _InsertReduceScatterPattern(RewritePattern):
     def __init__(self, stats: InsertReduceScatterStats) -> None:
         self.stats = stats
 
-    def match_and_rewrite(
-        self, op: Operation, rewriter: PatternRewriter
-    ) -> None:
+    def match_and_rewrite(self, op: Operation, rewriter: PatternRewriter) -> None:
         sharding = op.attributes.get("compgen.sharding")
         scatter_axis_attr = op.attributes.get("compgen.scatter_axis")
         if not isinstance(sharding, ShardingSpecAttr):

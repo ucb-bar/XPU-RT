@@ -1,17 +1,13 @@
-"""Tests for the Wave 7 pipeline driver."""
+"""Tests for the pipeline driver."""
 
 from __future__ import annotations
 
-import pytest
-
 from compgen.options import (
-    CompGenOptions,
     cuda_a100_defaults,
     npu_fp8_defaults,
 )
 from compgen.pipeline.driver import (
     PipelineResult,
-    PipelineStageReport,
     compile_through_pipeline,
 )
 
@@ -19,7 +15,6 @@ from tests._fixtures.real_workloads import (
     attention_mlp_tiny,
     qwen_moe_tiny,
 )
-
 
 # --- default-options path (bridge + no-op stages) --------------------------
 
@@ -46,7 +41,9 @@ def test_default_plan_validates():
 def test_cuda_a100_preset_runs_expected_stages_on_attention_mlp_tiny():
     fx = attention_mlp_tiny()
     result = compile_through_pipeline(
-        fx.model, fx.example_inputs, options=cuda_a100_defaults(),
+        fx.model,
+        fx.example_inputs,
+        options=cuda_a100_defaults(),
     )
     # cuda_a100 enables 10+ stages.
     assert result.stages_run >= 10
@@ -62,7 +59,9 @@ def test_cuda_a100_preset_runs_expected_stages_on_attention_mlp_tiny():
 def test_cuda_a100_bridges_qwen_moe_tiny():
     fx = qwen_moe_tiny()
     result = compile_through_pipeline(
-        fx.model, fx.example_inputs, options=cuda_a100_defaults(),
+        fx.model,
+        fx.example_inputs,
+        options=cuda_a100_defaults(),
     )
     assert result.module is not None
     result.execution_plan.validate()
@@ -74,7 +73,9 @@ def test_cuda_a100_bridges_qwen_moe_tiny():
 def test_npu_preset_enables_quantization_stages():
     fx = attention_mlp_tiny()
     result = compile_through_pipeline(
-        fx.model, fx.example_inputs, options=npu_fp8_defaults(),
+        fx.model,
+        fx.example_inputs,
+        options=npu_fp8_defaults(),
     )
     enabled = {r.name for r in result.stage_reports if not r.skipped}
     # NPU preset enables host-offload + insert_copies + dma_overlap.
@@ -89,7 +90,9 @@ def test_npu_preset_enables_quantization_stages():
 def test_opaque_rate_below_threshold_on_attention_mlp():
     fx = attention_mlp_tiny()
     result = compile_through_pipeline(
-        fx.model, fx.example_inputs, options=cuda_a100_defaults(),
+        fx.model,
+        fx.example_inputs,
+        options=cuda_a100_defaults(),
     )
     total = 0
     opaque = 0
@@ -109,10 +112,12 @@ def test_opaque_rate_below_threshold_on_attention_mlp():
 def test_every_stage_is_reported_once():
     fx = attention_mlp_tiny()
     result = compile_through_pipeline(
-        fx.model, fx.example_inputs, options=cuda_a100_defaults(),
+        fx.model,
+        fx.example_inputs,
+        options=cuda_a100_defaults(),
     )
     names = [r.name for r in result.stage_reports]
-    # Expect ≥ 24 entries (bridge + 22 passes + 1 plan_validate is optional).
+    # Expect ≥ 23 entries (bridge + the pass suite + an optional plan-validate).
     assert len(names) >= 23
     # Every pass name is unique.
     dup = [n for n in set(names) if names.count(n) > 1]
@@ -153,27 +158,33 @@ def test_bridge_failure_returns_result_with_none_module():
 def test_result_stages_run_and_stages_skipped_sum_matches():
     fx = attention_mlp_tiny()
     result = compile_through_pipeline(
-        fx.model, fx.example_inputs, options=cuda_a100_defaults(),
+        fx.model,
+        fx.example_inputs,
+        options=cuda_a100_defaults(),
     )
     assert result.stages_run + result.stages_skipped == len(result.stage_reports)
 
 
-def test_stage_report_has_wave_annotation():
+def test_stage_report_has_group_annotation():
     fx = attention_mlp_tiny()
     result = compile_through_pipeline(
-        fx.model, fx.example_inputs, options=cuda_a100_defaults(),
+        fx.model,
+        fx.example_inputs,
+        options=cuda_a100_defaults(),
     )
-    waves = {r.wave for r in result.stage_reports}
-    assert waves.issubset({0, 1, 2, 3, 4, 5, 6})
+    groups = {r.group for r in result.stage_reports}
+    assert groups.issubset({0, 1, 2, 3, 4, 5, 6})
 
 
-# --- execution plan quality after Wave 6 ----------------------------------
+# --- execution plan quality after runtime passes --------------------------
 
 
 def test_cuda_a100_assigns_memory_space_to_all_buffers():
     fx = attention_mlp_tiny()
     result = compile_through_pipeline(
-        fx.model, fx.example_inputs, options=cuda_a100_defaults(),
+        fx.model,
+        fx.example_inputs,
+        options=cuda_a100_defaults(),
     )
     plan = result.execution_plan
     assert all(buf.memory_space for buf in plan.buffers)
@@ -182,7 +193,9 @@ def test_cuda_a100_assigns_memory_space_to_all_buffers():
 def test_cuda_a100_assigns_queues_to_all_regions():
     fx = attention_mlp_tiny()
     result = compile_through_pipeline(
-        fx.model, fx.example_inputs, options=cuda_a100_defaults(),
+        fx.model,
+        fx.example_inputs,
+        options=cuda_a100_defaults(),
     )
     plan = result.execution_plan
     assert all(rp.queue for rp in plan.region_placement)
@@ -191,7 +204,9 @@ def test_cuda_a100_assigns_queues_to_all_regions():
 def test_cuda_a100_produces_buffer_offsets():
     fx = attention_mlp_tiny()
     result = compile_through_pipeline(
-        fx.model, fx.example_inputs, options=cuda_a100_defaults(),
+        fx.model,
+        fx.example_inputs,
+        options=cuda_a100_defaults(),
     )
     plan = result.execution_plan
     assert "buffer_offsets" in plan.summary

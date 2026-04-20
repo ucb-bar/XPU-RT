@@ -30,7 +30,6 @@ the export signature).
 
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -38,9 +37,7 @@ import structlog
 import torch
 import torch.nn.functional as F
 from xdsl.dialects.builtin import (
-    AffineMapAttr,
     DenseArrayBase,
-    IntegerAttr,
     ModuleOp,
     StringAttr,
     TensorType,
@@ -48,7 +45,7 @@ from xdsl.dialects.builtin import (
 from xdsl.dialects.func import CallOp, FuncOp, ReturnOp
 from xdsl.dialects.linalg import GenericOp, MatmulOp, TransposeOp
 from xdsl.dialects.tensor import EmptyOp, InsertSliceOp
-from xdsl.ir import Attribute, Operation, SSAValue
+from xdsl.ir import Operation, SSAValue
 
 log = structlog.get_logger()
 
@@ -62,9 +59,7 @@ def _aten_layer_norm(args: list[torch.Tensor], **kw) -> torch.Tensor:
     # weight/bias from args[1]/args[2] if present.
     weight = args[1] if len(args) > 1 else None
     bias = args[2] if len(args) > 2 else None
-    return F.layer_norm(
-        inp, (inp.shape[-1],), weight=weight, bias=bias, eps=1e-5
-    )
+    return F.layer_norm(inp, (inp.shape[-1],), weight=weight, bias=bias, eps=1e-5)
 
 
 def _aten_softmax(args: list[torch.Tensor], **kw) -> torch.Tensor:
@@ -309,9 +304,7 @@ def _find_constant_in_body(body) -> float | None:
     return None
 
 
-def _exec_linalg_generic(
-    op: GenericOp, env: dict[SSAValue, torch.Tensor]
-) -> torch.Tensor:
+def _exec_linalg_generic(op: GenericOp, env: dict[SSAValue, torch.Tensor]) -> torch.Tensor:
     """Interpret a linalg.generic by reading the body + iterator_types.
 
     Handles:
@@ -323,6 +316,7 @@ def _exec_linalg_generic(
     - Dequant-style body (``sitofp → mulf``) → identity * scale.
     """
     from xdsl.dialects.linalg import IteratorType, IteratorTypeAttr
+
     kinds = op.iterator_types
     iterator_kinds = [k.data for k in kinds.data if isinstance(k, IteratorTypeAttr)]
     is_elementwise = all(k == IteratorType.PARALLEL for k in iterator_kinds)
@@ -394,16 +388,12 @@ def _exec_empty(op: EmptyOp, env: dict[SSAValue, torch.Tensor]) -> torch.Tensor:
     return torch.zeros(())
 
 
-def _exec_insert_slice(
-    op: InsertSliceOp, env: dict[SSAValue, torch.Tensor]
-) -> torch.Tensor:
+def _exec_insert_slice(op: InsertSliceOp, env: dict[SSAValue, torch.Tensor]) -> torch.Tensor:
     src = env[op.source]
     dst = env[op.dest].clone()
     static_offsets = [int(v) for v in op.static_offsets.get_values()]
     static_sizes = [int(v) for v in op.static_sizes.get_values()]
-    slices = tuple(
-        slice(o, o + s) for o, s in zip(static_offsets, static_sizes)
-    )
+    slices = tuple(slice(o, o + s) for o, s in zip(static_offsets, static_sizes))
     dst[slices] = src.reshape(dst[slices].shape)
     return dst
 
@@ -526,7 +516,8 @@ def execute(
         except Exception as exc:  # noqa: BLE001
             log.warning(
                 "cpu_executor.op_failed",
-                op=op.name, error=str(exc),
+                op=op.name,
+                error=str(exc),
             )
             stats.ops_skipped += 1
             # Fill op results with zeros so downstream ops still run.
@@ -576,11 +567,11 @@ def _dispatch(
         if op.results:
             rt = op.results[0].type
             if isinstance(rt, TensorType):
-                target_shape = tuple(
-                    d if d >= 0 else 1 for d in rt.get_shape()
-                )
+                target_shape = tuple(d if d >= 0 else 1 for d in rt.get_shape())
         return fn(
-            args, attrs=dict(op.attributes), target_shape=target_shape,
+            args,
+            attrs=dict(op.attributes),
+            target_shape=target_shape,
         )
     # Constant / yield / other internal ops -- no dispatch needed.
     raise KeyError(f"no dispatcher for {op.name}")

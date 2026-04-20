@@ -48,9 +48,7 @@ RUNTIME_PROMPT = textwrap.dedent("""\
 
 def format_prompt(ctx: RuntimeContext) -> str:
     """Render runtime adaptation prompt."""
-    util_lines = "\n".join(
-        f"  {dev}: {util:.0f}%" for dev, util in ctx.device_utilization.items()
-    ) or "  (no data)"
+    util_lines = "\n".join(f"  {dev}: {util:.0f}%" for dev, util in ctx.device_utilization.items()) or "  (no data)"
 
     return RUNTIME_PROMPT.format(
         measured_us=ctx.measured_latency_us,

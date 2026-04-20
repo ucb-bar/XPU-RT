@@ -4,14 +4,12 @@ from __future__ import annotations
 
 import torch
 import torch.nn as nn
-
 from compgen.quantization.graph_analyzer import (
     QuantizedGraphAnalysis,
     analyze_for_npu,
     analyze_fx_graphs,
     format_analysis_report,
 )
-from compgen.quantization.npu_op_map import NpuOpCategory, NpuQuantDecision, _OP_TABLE
 
 
 def _capture_simple_graph() -> list[torch.fx.GraphModule]:
@@ -24,6 +22,7 @@ def _capture_simple_graph() -> list[torch.fx.GraphModule]:
     x = torch.randn(4, 32)
 
     import torch._dynamo as dynamo
+
     dynamo.reset()
     captured: list[torch.fx.GraphModule] = []
 
@@ -85,6 +84,7 @@ class TestAnalyzeFxGraphs:
         analysis = analyze_for_npu(graphs)
         j = analysis.to_json()
         import json
+
         parsed = json.loads(j)
         assert isinstance(parsed, dict)
 

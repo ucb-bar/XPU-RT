@@ -216,7 +216,13 @@ def _target_name(target_profile: Any) -> str:
 
 def _recipe_candidate_symbol(op: Operation) -> str | None:
     if hasattr(op, "sym_name") and isinstance(getattr(op, "sym_name"), StringAttr):
-        if op.name.startswith("recipe.") and not op.name.startswith("recipe.region") and not op.name.startswith("recipe.segment") and not op.name.startswith("recipe.anchor") and not op.name.startswith("recipe.guard"):
+        if (
+            op.name.startswith("recipe.")
+            and not op.name.startswith("recipe.region")
+            and not op.name.startswith("recipe.segment")
+            and not op.name.startswith("recipe.anchor")
+            and not op.name.startswith("recipe.guard")
+        ):
             return getattr(op, "sym_name").data
     return None
 

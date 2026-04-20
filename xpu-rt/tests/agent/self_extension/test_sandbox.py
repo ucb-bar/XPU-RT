@@ -2,12 +2,7 @@
 
 from __future__ import annotations
 
-import pytest
-
 from compgen.agent.self_extension.sandbox import (
-    DEFAULT_IMPORT_ALLOWLIST,
-    SandboxResult,
-    SandboxViolation,
     sandbox_invoke,
 )
 

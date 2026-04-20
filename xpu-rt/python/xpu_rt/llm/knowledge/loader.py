@@ -70,12 +70,9 @@ def _kb_to_dict(kb: KnowledgeBase) -> dict[str, Any]:
     return {
         "schema_version": "1.0",
         "summary": kb.summary(),
-        "op_wisdom": {
-            name: _op_wisdom_to_dict(w) for name, w in kb.op_wisdom.items()
-        },
+        "op_wisdom": {name: _op_wisdom_to_dict(w) for name, w in kb.op_wisdom.items()},
         "target_patterns": {
-            tc: [_target_pattern_to_dict(p) for p in patterns]
-            for tc, patterns in kb.target_patterns.items()
+            tc: [_target_pattern_to_dict(p) for p in patterns] for tc, patterns in kb.target_patterns.items()
         },
         "transform_recipes": [_recipe_to_dict(r) for r in kb.transform_recipes],
         "kernel_wisdom": [_enum_to_str(asdict(w)) for w in kb.kernel_wisdom],

@@ -62,17 +62,22 @@ VERIFY_STRATEGY_PROMPT = textwrap.dedent("""\
 
 def format_prompt(ctx: VerifyStrategyContext) -> str:
     """Render the verification strategy prompt."""
-    region_lines = "\n".join(
-        f"  - {r['region_id']}: {r.get('op_type', '?')} → {r.get('transform_applied', '?')}"
-        for r in ctx.regions[:10]
-    ) or "  (none)"
+    region_lines = (
+        "\n".join(
+            f"  - {r['region_id']}: {r.get('op_type', '?')} → {r.get('transform_applied', '?')}"
+            for r in ctx.regions[:10]
+        )
+        or "  (none)"
+    )
 
     ops_line = ", ".join(ctx.verifiable_ops[:15]) or "(none)"
 
-    failure_lines = "\n".join(
-        f"  - {f['region_id']}: {f.get('counterexample_summary', 'no details')}"
-        for f in ctx.past_failures[:5]
-    ) or "  (none)"
+    failure_lines = (
+        "\n".join(
+            f"  - {f['region_id']}: {f.get('counterexample_summary', 'no details')}" for f in ctx.past_failures[:5]
+        )
+        or "  (none)"
+    )
 
     return VERIFY_STRATEGY_PROMPT.format(
         budget_ms=ctx.verification_budget_ms,

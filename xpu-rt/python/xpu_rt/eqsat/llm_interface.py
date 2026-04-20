@@ -184,9 +184,7 @@ def validate_rule_code(code: str) -> RuleValidationResult:
     ]
 
     if not rule_classes:
-        return RuleValidationResult(
-            valid=False, rule=None, error="No EqSatRewriteRule subclass found"
-        )
+        return RuleValidationResult(valid=False, rule=None, error="No EqSatRewriteRule subclass found")
 
     try:
         rule = rule_classes[0]()

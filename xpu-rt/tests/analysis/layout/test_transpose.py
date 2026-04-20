@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-import pytest
+from compgen.agent.analyzer import DataFlowEdge, NetworkAnalysis, PatternCluster
 from compgen.analysis.layout.transpose import (
     TransposeClassification,
     TransposeProfitabilityAnalyzer,
 )
-from compgen.agent.analyzer import NetworkAnalysis, PatternCluster, DataFlowEdge
 from compgen.ir.payload.contracts import KernelContract
 
 

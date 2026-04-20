@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
-import os
 
 import pytest
-
 from compgen.agent.env import CompilerEnv, GeneratePassAction
 from compgen.agent.pass_gen import PassGenerator
 from compgen.capture.torch_export import capture_model
@@ -23,6 +22,7 @@ EXAMPLES = Path(__file__).parent.parent.parent / "examples"
 def _get_module_and_ep():
     sys.path.insert(0, str(EXAMPLES / "models"))
     from simple_mlp import SimpleMLP, get_sample_inputs
+
     ep = capture_model(SimpleMLP(), get_sample_inputs())
     module, _ = fx_to_xdsl(ep)
     return module, ep
@@ -150,11 +150,13 @@ class NoopPattern(RewritePattern):
     )
     env.attach_llm_client(client)
 
-    result = env.step(GeneratePassAction(
-        description="Tag all MatmulOp with a 'compgen.llm_generated' StringAttr annotation",
-        target_pattern="MatmulOp",
-        expected_effect="MatmulOps get compgen.llm_generated attribute",
-    ))
+    result = env.step(
+        GeneratePassAction(
+            description="Tag all MatmulOp with a 'compgen.llm_generated' StringAttr annotation",
+            target_pattern="MatmulOp",
+            expected_effect="MatmulOps get compgen.llm_generated attribute",
+        )
+    )
 
     # Should have diagnostics regardless of success/failure
     assert len(result.info.diagnostics) > 0

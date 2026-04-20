@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any
 
 import numpy as np
 import torch
@@ -67,9 +66,13 @@ def export_golden_data(
                 np.save(tc_dir / "expected_output.npy", tc.expected_output.float().numpy())
 
         # Save metadata
-        (tc_dir / "shape_info.json").write_text(json.dumps(
-            tc.metadata, indent=2, default=str,
-        ))
+        (tc_dir / "shape_info.json").write_text(
+            json.dumps(
+                tc.metadata,
+                indent=2,
+                default=str,
+            )
+        )
 
     return out
 
@@ -97,8 +100,7 @@ def export_test_harness(
 
     input_names = list(test_case.inputs.keys())
     input_loads = "\n    ".join(
-        f'{name} = torch.load(golden_dir / "inputs" / "{name}.pt", weights_only=True)'
-        for name in input_names
+        f'{name} = torch.load(golden_dir / "inputs" / "{name}.pt", weights_only=True)' for name in input_names
     )
     input_args = ", ".join(input_names)
 

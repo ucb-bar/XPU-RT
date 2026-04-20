@@ -22,17 +22,12 @@ from compgen.capture.unsupported.introspect import runtime_versions
 from compgen.ir.payload.decompositions import DECOMPOSITION_TABLE
 from compgen.mcp.session import SessionManager
 
-
 # Strategy -> one-line LLM hint. These mirror the bucket/strategy
 # pairs produced by classify.py so the LLM can pick a concrete tool.
 _STRATEGY_HINTS: dict[str, str] = {
-    "known_payload_decomposition": (
-        "Already lowers through the registered Payload decomposition. "
-        "No action required."
-    ),
+    "known_payload_decomposition": ("Already lowers through the registered Payload decomposition. No action required."),
     "synthesized_external_call": (
-        "Eligible for an external-call translation. Call "
-        "synthesize_translation to wire it up."
+        "Eligible for an external-call translation. Call synthesize_translation to wire it up."
     ),
     "explicit_blackbox": (
         "Requires an opaque-boundary fallback. Call register_blackbox "
@@ -54,9 +49,7 @@ def _resolution_to_dict(
     dossier = resolution.dossier
     cls = resolution.classification
     example_inputs = [asdict(e) for e in issue.example_inputs]
-    example_output = (
-        asdict(issue.example_output) if issue.example_output else None
-    )
+    example_output = asdict(issue.example_output) if issue.example_output else None
     return {
         "target": issue.target,
         "count": issue.count,
@@ -77,9 +70,7 @@ def _resolution_to_dict(
             "is_view": dossier.is_view,
             "has_meta_kernel": dossier.has_meta_kernel,
             "has_any_kernel": dossier.has_any_kernel,
-            "payload_decomposition_registered": (
-                dossier.payload_decomposition_registered
-            ),
+            "payload_decomposition_registered": (dossier.payload_decomposition_registered),
         },
         "classification": {
             "bucket": cls.bucket,
@@ -154,10 +145,7 @@ def diagnose_model_compatibility(
 
     # Drop already-recovered rows unless asked (the LLM rarely needs them).
     if not include_recovered:
-        resolutions = [
-            r for r in resolutions
-            if r.classification.strategy != "known_payload_decomposition"
-        ]
+        resolutions = [r for r in resolutions if r.classification.strategy != "known_payload_decomposition"]
 
     issues_out = [_resolution_to_dict(r) for r in resolutions]
     # Recoverable = every remaining issue maps to a strategy we know

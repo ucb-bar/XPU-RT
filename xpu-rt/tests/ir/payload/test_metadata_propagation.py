@@ -8,13 +8,11 @@ from __future__ import annotations
 
 import torch
 import torch.nn as nn
-
-from xdsl.dialects.builtin import Float32Type, StringAttr, TensorType
-from xdsl.dialects.tensor import EmptyOp
-
 from compgen.capture.torch_export import capture_model
 from compgen.ir.payload.decompositions import DecompResult
 from compgen.ir.payload.import_fx import FXImporter, _forward_fx_meta
+from xdsl.dialects.builtin import Float32Type, StringAttr, TensorType
+from xdsl.dialects.tensor import EmptyOp
 
 
 def _make_op():
@@ -50,11 +48,14 @@ def test_forward_fx_meta_is_idempotent():
 
 def test_forward_fx_meta_transpose_absorbed_and_fuse_dequant():
     op = _make_op()
-    _forward_fx_meta(op, {
-        "_compgen_pattern": "matmul",
-        "_compgen_transpose_absorbed": True,
-        "_compgen_fuse_dequant": True,
-    })
+    _forward_fx_meta(
+        op,
+        {
+            "_compgen_pattern": "matmul",
+            "_compgen_transpose_absorbed": True,
+            "_compgen_fuse_dequant": True,
+        },
+    )
     assert op.attributes["compgen.transpose_absorbed"].data == "true"
     assert op.attributes["compgen.fuse_dequant"].data == "true"
 

@@ -21,16 +21,8 @@ candidate carries the raw ``chosen`` payload + a human-readable
 
 from __future__ import annotations
 
-from compgen.agent.suggest._candidate import ProposalCandidate
-from compgen.agent.suggest._dispatch import (
-    SUGGESTERS,
-    register_suggester,
-    suggest,
-    supported_slot_names,
-)
-
 # Auto-import per-slot modules so they register on package import.
-from compgen.agent.suggest import (   # noqa: F401, E402
+from compgen.agent.suggest import (  # noqa: F401, E402
     suggest_buffer_lifetime,
     suggest_dequant_fusion,
     suggest_fusion,
@@ -40,6 +32,13 @@ from compgen.agent.suggest import (   # noqa: F401, E402
     suggest_peephole_pattern,
     suggest_rematerialization,
     suggest_scheduling_policy,
+)
+from compgen.agent.suggest._candidate import ProposalCandidate
+from compgen.agent.suggest._dispatch import (
+    SUGGESTERS,
+    register_suggester,
+    suggest,
+    supported_slot_names,
 )
 
 __all__ = [

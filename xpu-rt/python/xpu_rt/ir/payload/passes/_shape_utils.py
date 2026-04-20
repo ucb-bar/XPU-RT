@@ -17,7 +17,6 @@ from collections.abc import Iterable
 from xdsl.dialects.builtin import TensorType
 from xdsl.ir import Attribute, SSAValue
 
-
 _DYNAMIC_DIM = -1
 
 
@@ -131,9 +130,7 @@ def infer_result_shape(
                 total = _DYNAMIC_DIM
             else:
                 total += s[axis]
-        return tuple(
-            total if i == axis else first[i] for i in range(rank)
-        )
+        return tuple(total if i == axis else first[i] for i in range(rank))
 
     if op_kind == "reduction":
         if reduction_dims is None:

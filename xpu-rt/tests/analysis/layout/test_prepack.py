@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-import pytest
-from compgen.analysis.layout.prepack import PrepackPlanner, PrepackCandidate
-from compgen.agent.analyzer import NetworkAnalysis, PatternCluster, DataFlowEdge
+from compgen.agent.analyzer import DataFlowEdge, NetworkAnalysis, PatternCluster
+from compgen.analysis.layout.prepack import PrepackCandidate, PrepackPlanner
 
 
 def _mock_analysis_with_weights() -> NetworkAnalysis:

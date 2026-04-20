@@ -7,12 +7,12 @@ from tempfile import TemporaryDirectory
 
 import pytest
 
-
 # --- hardware gates ---------------------------------------------------------
 
 
 def _have_gpu() -> bool:
     from compgen.runtime.gpu_executor import gpu_available
+
     return gpu_available()
 
 
@@ -25,6 +25,7 @@ gpu_only = pytest.mark.skipif(not _have_gpu(), reason="GPU not available")
 class TestGPUExecutorCPUSide:
     def test_gpu_available_returns_bool(self):
         from compgen.runtime.gpu_executor import gpu_available
+
         assert isinstance(gpu_available(), bool)
 
     def test_require_gpu_raises_on_missing(self):
@@ -35,18 +36,24 @@ class TestGPUExecutorCPUSide:
         with pytest.raises(GPUNotAvailable):
             # Any kernel launch triggers _require_gpu.
             from compgen.runtime.gpu_executor import launch_triton_kernel
+
             with TemporaryDirectory() as td:
                 launch_triton_kernel(
-                    Path(td), "nope", args=[], grid=(1,),
+                    Path(td),
+                    "nope",
+                    args=[],
+                    grid=(1,),
                 )
 
     def test_load_emission_manifest_missing_file_raises(self, tmp_path: Path):
         from compgen.runtime.gpu_executor import load_emission_manifest
+
         with pytest.raises(FileNotFoundError):
             load_emission_manifest(tmp_path)
 
     def test_load_emission_manifest_round_trip(self, tmp_path: Path):
         from compgen.runtime.gpu_executor import load_emission_manifest
+
         manifest_path = tmp_path / "emission_manifest.json"
         manifest_path.write_text('{"foo": {"kernel": "foo", "source_path": "x"}}')
         data = load_emission_manifest(tmp_path)
@@ -67,6 +74,7 @@ class TestGPUExecutorOnGPU:
         from compgen.pipeline import compile_through_pipeline
         from compgen.runtime.gpu_executor import launch_triton_kernel
         from compgen.runtime.triton_emitter import emit_triton_kernels
+
         from tests._fixtures.real_workloads import attention_mlp_tiny
 
         opts = CompGenOptions(
@@ -90,12 +98,21 @@ class TestGPUExecutorOnGPU:
         c = torch.zeros(M, N, device="cuda:0")
         grid = (1, 1)
         result = launch_triton_kernel(
-            tmp_path, name,
+            tmp_path,
+            name,
             args=[
-                a, b, c, M, N, K,
-                a.stride(0), a.stride(1),
-                b.stride(0), b.stride(1),
-                c.stride(0), c.stride(1),
+                a,
+                b,
+                c,
+                M,
+                N,
+                K,
+                a.stride(0),
+                a.stride(1),
+                b.stride(0),
+                b.stride(1),
+                c.stride(0),
+                c.stride(1),
             ],
             grid=grid,
         )
@@ -114,11 +131,13 @@ class TestGPUDiffHarness:
             pytest.skip("skip-path unreachable on gpu host")
         from compgen.options import cuda_h100_defaults
         from compgen.runtime.gpu_diff import compile_and_diff_gpu
+
         from tests._fixtures.real_workloads import attention_mlp_tiny
 
         fx = attention_mlp_tiny()
         report = compile_and_diff_gpu(
-            fx.model, fx.example_inputs,
+            fx.model,
+            fx.example_inputs,
             options=cuda_h100_defaults(),
             fixture_name=fx.name,
             eager_reference=fx.eager_output,
@@ -130,11 +149,13 @@ class TestGPUDiffHarness:
     def test_gpu_host_runs_diff(self):
         from compgen.options import cuda_h100_defaults
         from compgen.runtime.gpu_diff import compile_and_diff_gpu
+
         from tests._fixtures.real_workloads import attention_mlp_tiny
 
         fx = attention_mlp_tiny()
         report = compile_and_diff_gpu(
-            fx.model, fx.example_inputs,
+            fx.model,
+            fx.example_inputs,
             options=cuda_h100_defaults(),
             fixture_name=fx.name,
             eager_reference=fx.eager_output,
@@ -150,22 +171,26 @@ class TestGPUDiffHarness:
 class TestDistributedAdapter:
     def test_distributed_available_returns_bool(self):
         from compgen.runtime.distributed import distributed_available
+
         assert isinstance(distributed_available(), bool)
 
     def test_current_env_reports_state(self):
         from compgen.runtime.distributed import current_env
+
         env = current_env()
         # On CPU-only hosts: world_size=1 rank=0 uninitialized.
         assert env.world_size >= 1
 
     def test_init_if_needed_world_size_1_skips(self):
         from compgen.runtime.distributed import init_if_needed
+
         env = init_if_needed()
         assert env.world_size == 1
 
     def test_all_reduce_single_process_is_identity(self):
         import torch
         from compgen.runtime.distributed import DistributedAdapter
+
         adapter = DistributedAdapter()
         x = torch.arange(12, dtype=torch.float32).view(3, 4)
         y = adapter.all_reduce(x, op="sum")
@@ -174,6 +199,7 @@ class TestDistributedAdapter:
     def test_all_gather_single_process_is_identity(self):
         import torch
         from compgen.runtime.distributed import DistributedAdapter
+
         adapter = DistributedAdapter()
         x = torch.arange(6, dtype=torch.float32).view(2, 3)
         y = adapter.all_gather(x, dim=0)
@@ -182,6 +208,7 @@ class TestDistributedAdapter:
     def test_reduce_scatter_single_process_is_identity(self):
         import torch
         from compgen.runtime.distributed import DistributedAdapter
+
         adapter = DistributedAdapter()
         x = torch.arange(8, dtype=torch.float32).view(2, 4)
         y = adapter.reduce_scatter(x, op="sum", dim=0)
@@ -190,6 +217,7 @@ class TestDistributedAdapter:
     def test_broadcast_single_process_is_identity(self):
         import torch
         from compgen.runtime.distributed import DistributedAdapter
+
         adapter = DistributedAdapter()
         x = torch.ones(4)
         y = adapter.broadcast(x, source_replica=0)
@@ -197,5 +225,6 @@ class TestDistributedAdapter:
 
     def test_adapter_constructor_without_env_reads_current(self):
         from compgen.runtime.distributed import DistributedAdapter
+
         adapter = DistributedAdapter()
         assert adapter.env is not None

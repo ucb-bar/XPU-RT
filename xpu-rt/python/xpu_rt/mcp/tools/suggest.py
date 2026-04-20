@@ -8,13 +8,14 @@ is the thin MCP-layer adapter.
 
 from __future__ import annotations
 
-from dataclasses import asdict
 from typing import Any
 
 from compgen.agent.suggest import (
     SUGGESTERS,
-    suggest as _suggest,
     supported_slot_names,
+)
+from compgen.agent.suggest import (
+    suggest as _suggest,
 )
 from compgen.mcp.session import SessionManager
 
@@ -96,10 +97,7 @@ def suggest_proposals(
         batch_next = {
             "tool": "batch_propose",
             "args": {
-                "proposals": [
-                    {"slot_name": slot_name, "proposal": r["proposal"]}
-                    for r in rendered
-                ],
+                "proposals": [{"slot_name": slot_name, "proposal": r["proposal"]} for r in rendered],
                 "atomic": False,
             },
         }

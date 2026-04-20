@@ -183,8 +183,8 @@ def validate_kernel_against_contract(
     Returns:
         Dict with ``correct``, ``max_error``, ``latency_us`` keys.
     """
+
     import torch
-    import time
 
     # Execute reference
     ref_ns: dict[str, Any] = {}

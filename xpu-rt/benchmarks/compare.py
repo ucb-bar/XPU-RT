@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from benchmarks.record import RunRecord
 from compgen.benchmarks.common.results import write_normalized_suite_results
+
+from benchmarks.record import RunRecord
 
 
 def load_all_results(results_dir: str | Path) -> list[RunRecord]:

@@ -6,15 +6,11 @@ import sys
 from pathlib import Path
 
 import pytest
-
 from compgen.mcp.session import SessionManager
 from compgen.mcp.tools.lifecycle import open_target, register_pack
 from compgen.packs.scaffolding import scaffold_pack
 
-EXEMPLAR = (
-    Path(__file__).resolve().parents[1]
-    / "targetgen" / "exemplars" / "test_gpu_simt.yaml"
-)
+EXEMPLAR = Path(__file__).resolve().parents[1] / "targetgen" / "exemplars" / "test_gpu_simt.yaml"
 
 
 @pytest.fixture()
@@ -56,9 +52,7 @@ def test_register_pack_unknown_pack_returns_error(sm: SessionManager) -> None:
     assert session.packs == ()
 
 
-def test_open_target_packs_replaces_session_packs(
-    sm: SessionManager, scaffolded_pack: str
-) -> None:
+def test_open_target_packs_replaces_session_packs(sm: SessionManager, scaffolded_pack: str) -> None:
     session = sm.open()
     # Register something first
     register_pack(sm, session_id=session.session_id, pack=scaffolded_pack)
@@ -76,9 +70,7 @@ def test_open_target_packs_replaces_session_packs(
     assert session.spec_path == EXEMPLAR
 
 
-def test_open_target_without_packs_preserves_registered(
-    sm: SessionManager, scaffolded_pack: str
-) -> None:
+def test_open_target_without_packs_preserves_registered(sm: SessionManager, scaffolded_pack: str) -> None:
     session = sm.open()
     register_pack(sm, session_id=session.session_id, pack=scaffolded_pack)
     result = open_target(sm, spec_path=str(EXEMPLAR), session_id=session.session_id)
@@ -86,9 +78,7 @@ def test_open_target_without_packs_preserves_registered(
     assert result["active_packs"] == [scaffolded_pack]
 
 
-def test_register_pack_after_open_target_rebuilds_device(
-    sm: SessionManager, scaffolded_pack: str
-) -> None:
+def test_register_pack_after_open_target_rebuilds_device(sm: SessionManager, scaffolded_pack: str) -> None:
     session = sm.open()
     open_target(sm, spec_path=str(EXEMPLAR), session_id=session.session_id)
     first_device = session.device

@@ -202,7 +202,7 @@ class AutocompAdapter:
             sol_file=sol_file,
             test_file=test_file,
             context=f"Pattern: {cluster.pattern_type}, FLOPs: {cluster.total_flops:,}, "
-                    f"Kernel opportunity: {cluster.kernel_opportunity}",
+            f"Kernel opportunity: {cluster.kernel_opportunity}",
         )
 
         # Create hardware config
@@ -213,6 +213,7 @@ class AutocompAdapter:
                 break
 
         import torch
+
         hw_config = CudaHardwareConfig(
             gpu_name=gpu_name,
             pytorch_version=torch.__version__,
@@ -308,6 +309,7 @@ class AutocompAdapter:
         eval backend) to run a search.
         """
         import torch
+
         if not torch.cuda.is_available():
             return False
 

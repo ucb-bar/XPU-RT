@@ -14,11 +14,10 @@ for status.
 
 from __future__ import annotations
 
-from compgen.llm.tools import megakernel, observability, verification
-
 # Trigger registration of Phase 2/3 ported passes. The module's import
 # side-effect populates the registry with 14 passes (3 real + 11 stubs
 # as of the third wave).
 import compgen.ir.payload.passes as _ported_passes  # noqa: F401
+from compgen.llm.tools import megakernel, observability, verification
 
 __all__ = ["megakernel", "observability", "verification"]

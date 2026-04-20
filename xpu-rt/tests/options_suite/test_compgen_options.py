@@ -3,14 +3,12 @@
 from __future__ import annotations
 
 import pytest
-
 from compgen.options import (
     CompGenOptions,
     cuda_a100_defaults,
     cuda_h100_defaults,
     npu_fp8_defaults,
 )
-
 
 # --- defaults ---------------------------------------------------------------
 
@@ -20,8 +18,7 @@ def test_all_passes_off_by_default():
     true_flags = [
         name
         for name, value in opts.to_dict().items()
-        if value is True and name != "enable_differential_test"
-        and name != "fuse_dequant_reassoc_safe"
+        if value is True and name != "enable_differential_test" and name != "fuse_dequant_reassoc_safe"
     ]
     assert true_flags == [], f"unexpected True flags by default: {true_flags}"
 

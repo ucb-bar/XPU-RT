@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from compgen.runtime.execution_plan import (
     BufferDescriptor,
     ExecutionPlan,
@@ -85,7 +83,7 @@ def test_interference_graph_edges():
     plan = ExecutionPlan(workload="t", target="c")
     plan.buffers = [
         _mk("a", 0, 10),
-        _mk("b", 5, 15),   # overlaps a
+        _mk("b", 5, 15),  # overlaps a
         _mk("c", 20, 30),  # independent
     ]
     rep = compute_liveness(plan)

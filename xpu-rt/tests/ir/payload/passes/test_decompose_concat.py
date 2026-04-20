@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-from xdsl.builder import Builder
-from xdsl.dialects.builtin import IntegerAttr, ModuleOp, StringAttr, i64
-
 from compgen.ir.payload.passes import DecomposeConcat
+from xdsl.dialects.builtin import ModuleOp
 
 
 def _make_empty_module() -> ModuleOp:
@@ -28,8 +26,9 @@ def test_strategy_arg_accepted() -> None:
 
 
 def test_registered_as_real_tool() -> None:
-    from compgen.llm import get_registry
     import compgen.ir.payload.passes  # noqa: F401
+    from compgen.llm import get_registry
+
     r = get_registry()
     tool = r.lookup_tool("decompose_concat", phase=2)
     assert tool is not None

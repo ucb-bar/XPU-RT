@@ -15,7 +15,6 @@ backend (``TargetBackendProtocol``).
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
 
 from compgen.runtime.memory_layout import BufferRef, MemoryLayout, MemoryPlanner, MemoryRegion
 
@@ -230,12 +229,14 @@ class ProgramBuilder:
                 for buf_name in shared:
                     src_buf = next(b for b in curr.outputs if b.name == buf_name)
                     dst_buf = next(b for b in next_k.inputs if b.name == buf_name)
-                    transfers.append(DataTransfer(
-                        src=src_buf,
-                        dst=dst_buf,
-                        transfer_type="dma",
-                        size_bytes=src_buf.size_bytes,
-                    ))
+                    transfers.append(
+                        DataTransfer(
+                            src=src_buf,
+                            dst=dst_buf,
+                            transfer_type="dma",
+                            size_bytes=src_buf.size_bytes,
+                        )
+                    )
 
         return transfers
 

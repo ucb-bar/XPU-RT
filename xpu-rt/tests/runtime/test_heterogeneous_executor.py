@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from compgen.runtime.dispatch_strategy import (
-    BulkSyncStrategy,
     PipelineStrategy,
     WavefrontStrategy,
 )

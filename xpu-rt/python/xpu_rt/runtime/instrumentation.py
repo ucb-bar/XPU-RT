@@ -262,8 +262,7 @@ class InstrumentationConfig:
             "perf_backend": self.perf_backend.value,
             "trace_backend": self.trace_backend.value,
             "counter_groups": [
-                {"name": cg.name, "counters": cg.counters,
-                 "sample_every_n": cg.sample_every_n}
+                {"name": cg.name, "counters": cg.counters, "sample_every_n": cg.sample_every_n}
                 for cg in self.counter_groups
             ],
             "trace_filter": {
@@ -387,34 +386,40 @@ def _build_counter_groups(
         return groups
 
     # Classify counters into groups
-    compute_counters = [c for c in all_counters if any(
-        k in c.lower() for k in ("cycle", "instruction", "flop", "compute", "warp")
-    )]
-    memory_counters = [c for c in all_counters if any(
-        k in c.lower() for k in ("cache", "memory", "bandwidth", "dram", "hbm", "l2")
-    )]
+    compute_counters = [
+        c for c in all_counters if any(k in c.lower() for k in ("cycle", "instruction", "flop", "compute", "warp"))
+    ]
+    memory_counters = [
+        c for c in all_counters if any(k in c.lower() for k in ("cache", "memory", "bandwidth", "dram", "hbm", "l2"))
+    ]
     other_counters = [c for c in all_counters if c not in compute_counters and c not in memory_counters]
 
     sample_rate = 1 if level >= InstrumentationLevel.TILE_LEVEL else 10
 
     if compute_counters:
-        groups.append(CounterGroup(
-            name="compute",
-            counters=compute_counters,
-            sample_every_n=sample_rate,
-        ))
+        groups.append(
+            CounterGroup(
+                name="compute",
+                counters=compute_counters,
+                sample_every_n=sample_rate,
+            )
+        )
     if memory_counters:
-        groups.append(CounterGroup(
-            name="memory",
-            counters=memory_counters,
-            sample_every_n=sample_rate,
-        ))
+        groups.append(
+            CounterGroup(
+                name="memory",
+                counters=memory_counters,
+                sample_every_n=sample_rate,
+            )
+        )
     if other_counters:
-        groups.append(CounterGroup(
-            name="other",
-            counters=other_counters,
-            sample_every_n=sample_rate * 10,
-        ))
+        groups.append(
+            CounterGroup(
+                name="other",
+                counters=other_counters,
+                sample_every_n=sample_rate * 10,
+            )
+        )
 
     return groups
 

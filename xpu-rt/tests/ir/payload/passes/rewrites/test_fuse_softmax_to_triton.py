@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
-import pytest
+from compgen.ir.linalg_ext import SoftmaxOp
+from compgen.ir.payload.passes.rewrites.fuse_softmax_to_triton import (
+    FuseSoftmaxToTritonConfig,
+    FuseSoftmaxToTritonStats,
+    run_fuse_softmax_to_triton,
+)
 from xdsl.dialects.builtin import (
     Float32Type,
     FunctionType,
@@ -14,12 +19,6 @@ from xdsl.dialects.func import FuncOp, ReturnOp
 from xdsl.dialects.tensor import EmptyOp
 from xdsl.ir import Block, Region
 
-from compgen.ir.linalg_ext import SoftmaxOp
-from compgen.ir.payload.passes.rewrites.fuse_softmax_to_triton import (
-    FuseSoftmaxToTritonConfig,
-    FuseSoftmaxToTritonStats,
-    run_fuse_softmax_to_triton,
-)
 from tests.ir.payload.passes._pattern_test_helpers import (
     assert_module_verifies,
     count_ops,
@@ -170,6 +169,7 @@ def test_real_workload_qwen_moe_softmax_gets_triton_annotation():
     from compgen.ir.payload.passes.rewrites.raise_special_ops import (
         run_raise_special_ops,
     )
+
     from tests._fixtures.real_workloads import qwen_moe_tiny
 
     fx = qwen_moe_tiny()
@@ -183,8 +183,7 @@ def test_real_workload_qwen_moe_softmax_gets_triton_annotation():
     annotated = [
         op
         for op in bridge.module.walk()
-        if op.name == "compgen.linalg_ext.softmax"
-        and "compgen.triton_kernel_call" in op.attributes
+        if op.name == "compgen.linalg_ext.softmax" and "compgen.triton_kernel_call" in op.attributes
     ]
     assert len(annotated) >= 1
     assert_module_verifies(bridge.module)
@@ -195,6 +194,7 @@ def test_real_workload_attention_mlp_softmax_gets_annotation():
     from compgen.ir.payload.passes.rewrites.raise_special_ops import (
         run_raise_special_ops,
     )
+
     from tests._fixtures.real_workloads import attention_mlp_tiny
 
     fx = attention_mlp_tiny()

@@ -16,6 +16,7 @@ EXAMPLES = Path(__file__).parent.parent.parent / "examples"
 def _export_simple_mlp():
     sys.path.insert(0, str(EXAMPLES / "models"))
     from simple_mlp import SimpleMLP, get_sample_inputs
+
     return torch.export.export(SimpleMLP(), get_sample_inputs())
 
 
@@ -106,9 +107,7 @@ def test_analyze_produces_bottlenecks() -> None:
 
     assert len(analysis.bottleneck_clusters) >= 1
     # The linear_chain should be a bottleneck (it's the only compute)
-    bottleneck_cluster = next(
-        c for c in analysis.clusters if c.cluster_id == analysis.bottleneck_clusters[0]
-    )
+    bottleneck_cluster = next(c for c in analysis.clusters if c.cluster_id == analysis.bottleneck_clusters[0])
     assert bottleneck_cluster.is_bottleneck
 
 
@@ -137,8 +136,7 @@ def test_analyze_multi_device_opportunities() -> None:
     ep = _export_simple_mlp()
     analysis = NetworkAnalyzer().analyze(ep, _get_multi_target())
 
-    assert any("multi-device" in o.lower() or "heterogeneous" in o.lower()
-               for o in analysis.optimization_opportunities)
+    assert any("multi-device" in o.lower() or "heterogeneous" in o.lower() for o in analysis.optimization_opportunities)
 
 
 def test_analyze_data_flow() -> None:

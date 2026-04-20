@@ -29,7 +29,6 @@ from xdsl.irdl import (
 from xdsl.traits import Pure
 from xdsl.utils.exceptions import VerifyException
 
-
 # ---------------------------------------------------------------------------
 # Frozen dataclass ops (lightweight descriptors)
 # ---------------------------------------------------------------------------
@@ -192,15 +191,19 @@ class AccelMatrixEngineIROp(IRDLOperation):
     b_ref = prop_def(StringAttr)
     c_ref = prop_def(StringAttr)
 
-    _VALID_KINDS: ClassVar[frozenset[str]] = frozenset({
-        "matmul", "conv", "mma", "outer_product",
-    })
+    _VALID_KINDS: ClassVar[frozenset[str]] = frozenset(
+        {
+            "matmul",
+            "conv",
+            "mma",
+            "outer_product",
+        }
+    )
 
     def verify_(self) -> None:
         if self.op_kind.data not in self._VALID_KINDS:
             raise VerifyException(
-                f"Invalid matrix engine op_kind '{self.op_kind.data}', "
-                f"expected one of {sorted(self._VALID_KINDS)}"
+                f"Invalid matrix engine op_kind '{self.op_kind.data}', expected one of {sorted(self._VALID_KINDS)}"
             )
 
 
@@ -217,8 +220,7 @@ class AccelBarrierIROp(IRDLOperation):
     def verify_(self) -> None:
         if self.scope is not None and self.scope.data not in self._VALID_SCOPES:
             raise VerifyException(
-                f"Invalid barrier scope '{self.scope.data}', "
-                f"expected one of {sorted(self._VALID_SCOPES)}"
+                f"Invalid barrier scope '{self.scope.data}', expected one of {sorted(self._VALID_SCOPES)}"
             )
 
 
@@ -244,22 +246,22 @@ class HMXTileLoadIROp(IRDLOperation):
     format_xform = prop_def(StringAttr)
     dtype = prop_def(StringAttr)
 
-    _VALID_XFORMS: ClassVar[frozenset[str]] = frozenset({
-        "rm_to_ah", "rm_to_av", "identity",
-    })
+    _VALID_XFORMS: ClassVar[frozenset[str]] = frozenset(
+        {
+            "rm_to_ah",
+            "rm_to_av",
+            "identity",
+        }
+    )
 
     def verify_(self) -> None:
         if self.format_xform.data not in self._VALID_XFORMS:
             raise VerifyException(
-                f"Invalid format_xform '{self.format_xform.data}', "
-                f"expected one of {sorted(self._VALID_XFORMS)}"
+                f"Invalid format_xform '{self.format_xform.data}', expected one of {sorted(self._VALID_XFORMS)}"
             )
         for d in self.tile_shape.data:
             if isinstance(d, IntegerAttr) and d.value.data <= 0:
-                raise VerifyException(
-                    f"hmx_tile_load tile_shape entries must be positive, "
-                    f"got {d.value.data}"
-                )
+                raise VerifyException(f"hmx_tile_load tile_shape entries must be positive, got {d.value.data}")
 
 
 @irdl_op_definition
@@ -276,29 +278,24 @@ class HMXMatrixEngineIROp(IRDLOperation):
     dtype = prop_def(StringAttr)
     accumulate = opt_prop_def(StringAttr)
 
-    _VALID_KINDS: ClassVar[frozenset[str]] = frozenset({
-        "matmul", "matmul_accumulate", "outer_product",
-    })
+    _VALID_KINDS: ClassVar[frozenset[str]] = frozenset(
+        {
+            "matmul",
+            "matmul_accumulate",
+            "outer_product",
+        }
+    )
 
     def verify_(self) -> None:
         if self.op_kind.data not in self._VALID_KINDS:
             raise VerifyException(
-                f"Invalid hmx_matrix_engine op_kind '{self.op_kind.data}', "
-                f"expected one of {sorted(self._VALID_KINDS)}"
+                f"Invalid hmx_matrix_engine op_kind '{self.op_kind.data}', expected one of {sorted(self._VALID_KINDS)}"
             )
-        dims = [
-            int(d.value.data) for d in self.shape.data
-            if isinstance(d, IntegerAttr)
-        ]
+        dims = [int(d.value.data) for d in self.shape.data if isinstance(d, IntegerAttr)]
         if len(dims) != 3:
-            raise VerifyException(
-                f"hmx_matrix_engine shape must have 3 entries [M, N, K], "
-                f"got {len(dims)}"
-            )
+            raise VerifyException(f"hmx_matrix_engine shape must have 3 entries [M, N, K], got {len(dims)}")
         if any(d <= 0 for d in dims):
-            raise VerifyException(
-                f"hmx_matrix_engine shape entries must be positive, got {dims}"
-            )
+            raise VerifyException(f"hmx_matrix_engine shape entries must be positive, got {dims}")
 
 
 @irdl_op_definition
@@ -325,15 +322,9 @@ class HMXDMAOverlapIROp(IRDLOperation):
 
     def verify_(self) -> None:
         if self.line_bytes.value.data <= 0:
-            raise VerifyException(
-                f"hmx_dma_overlap line_bytes must be positive, got "
-                f"{self.line_bytes.value.data}"
-            )
+            raise VerifyException(f"hmx_dma_overlap line_bytes must be positive, got {self.line_bytes.value.data}")
         if self.depth.value.data < 2:
-            raise VerifyException(
-                f"hmx_dma_overlap depth must be >= 2, got "
-                f"{self.depth.value.data}"
-            )
+            raise VerifyException(f"hmx_dma_overlap depth must be >= 2, got {self.depth.value.data}")
 
 
 ACCEL_IR_OPS: list[type[IRDLOperation]] = [

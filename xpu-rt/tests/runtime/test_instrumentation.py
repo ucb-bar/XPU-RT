@@ -13,7 +13,6 @@ from compgen.runtime.instrumentation import (
 )
 from compgen.targetgen.hardware_spec import ProfilerBackend, ProfilingSpec
 
-
 # ---- InstrumentationLevel ----
 
 
@@ -239,8 +238,10 @@ class TestInferInstrumentation:
                 ProfilerBackend(
                     name="full",
                     counters=[
-                        "cycles", "instructions",  # compute
-                        "cache_misses", "dram_reads",  # memory
+                        "cycles",
+                        "instructions",  # compute
+                        "cache_misses",
+                        "dram_reads",  # memory
                         "power_watts",  # other
                     ],
                 ),
@@ -258,10 +259,12 @@ class TestInferInstrumentation:
     def test_tile_level_larger_buffer(self) -> None:
         spec = ProfilingSpec()
         cfg_op = infer_instrumentation(
-            spec, level=InstrumentationLevel.OP_LEVEL,
+            spec,
+            level=InstrumentationLevel.OP_LEVEL,
         )
         cfg_tile = infer_instrumentation(
-            spec, level=InstrumentationLevel.TILE_LEVEL,
+            spec,
+            level=InstrumentationLevel.TILE_LEVEL,
         )
         assert cfg_tile.trace_buffer_size > cfg_op.trace_buffer_size
 

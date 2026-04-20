@@ -133,30 +133,37 @@ class TestPackageImports:
 
     def test_import_config(self) -> None:
         from compgen.quantization import FP8E4M3Po2Config
+
         assert FP8E4M3Po2Config is not None
 
     def test_import_tensor(self) -> None:
         from compgen.quantization import FP8E4M3Po2Tensor
+
         assert FP8E4M3Po2Tensor is not None
 
     def test_import_attention(self) -> None:
         from compgen.quantization import ExportableFP8Attention
+
         assert ExportableFP8Attention is not None
 
     def test_import_recipe(self) -> None:
         from compgen.quantization import SmolVLAQuantRecipe, apply_smolvla_quantization
+
         assert SmolVLAQuantRecipe is not None
         assert apply_smolvla_quantization is not None
 
     def test_import_npu_map(self) -> None:
         from compgen.quantization import NpuOpCategory, classify_op
+
         assert NpuOpCategory is not None
         assert classify_op is not None
 
     def test_import_export(self) -> None:
         from compgen.quantization import rewrite_for_export
+
         assert rewrite_for_export is not None
 
     def test_import_verify(self) -> None:
         from compgen.quantization import npu_alignment_check
+
         assert npu_alignment_check is not None

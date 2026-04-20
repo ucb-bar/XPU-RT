@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
 from compgen.ir.recipe.serialize import recipe_to_yaml, yaml_to_recipe
 
 

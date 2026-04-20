@@ -21,8 +21,8 @@ from __future__ import annotations
 from typing import ClassVar
 
 from xdsl.dialects.builtin import (
-    FloatAttr,
     Float64Type,
+    FloatAttr,
     IntegerAttr,
     IntegerType,
     StringAttr,
@@ -155,10 +155,7 @@ class LayerNormOp(IRDLOperation):
 
     def verify_(self) -> None:
         if self.eps.value.data <= 0:
-            raise VerifyException(
-                f"{self.name}: eps must be strictly positive, "
-                f"got {self.eps.value.data}"
-            )
+            raise VerifyException(f"{self.name}: eps must be strictly positive, got {self.eps.value.data}")
 
 
 # --- RMSNorm ------------------------------------------------------------------
@@ -200,10 +197,7 @@ class RMSNormOp(IRDLOperation):
 
     def verify_(self) -> None:
         if self.eps.value.data <= 0:
-            raise VerifyException(
-                f"{self.name}: eps must be strictly positive, "
-                f"got {self.eps.value.data}"
-            )
+            raise VerifyException(f"{self.name}: eps must be strictly positive, got {self.eps.value.data}")
 
 
 # --- RoPE ---------------------------------------------------------------------
@@ -232,9 +226,14 @@ class RoPEOp(IRDLOperation):
 
     traits = traits_def(Pure())
 
-    _VALID_VARIANTS: ClassVar[frozenset[str]] = frozenset({
-        "neox", "gpt_j", "half_half", "llama",
-    })
+    _VALID_VARIANTS: ClassVar[frozenset[str]] = frozenset(
+        {
+            "neox",
+            "gpt_j",
+            "half_half",
+            "llama",
+        }
+    )
 
     def __init__(
         self,
@@ -266,8 +265,7 @@ class RoPEOp(IRDLOperation):
     def verify_(self) -> None:
         if self.variant is not None and self.variant.data not in self._VALID_VARIANTS:
             raise VerifyException(
-                f"{self.name}: variant must be one of "
-                f"{sorted(self._VALID_VARIANTS)}, got {self.variant.data!r}"
+                f"{self.name}: variant must be one of {sorted(self._VALID_VARIANTS)}, got {self.variant.data!r}"
             )
 
 
@@ -338,8 +336,7 @@ class GeluOp(IRDLOperation):
     def verify_(self) -> None:
         if self.approximate is not None and self.approximate.data not in self._VALID:
             raise VerifyException(
-                f"{self.name}: approximate must be one of "
-                f"{sorted(self._VALID)}, got {self.approximate.data!r}"
+                f"{self.name}: approximate must be one of {sorted(self._VALID)}, got {self.approximate.data!r}"
             )
 
 

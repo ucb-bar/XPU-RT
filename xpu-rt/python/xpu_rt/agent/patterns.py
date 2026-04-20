@@ -70,7 +70,7 @@ PATTERN_LIBRARY: dict[str, PatternSignature] = {
         op_targets=(
             "aten.linear.default",  # gate
             "aten.linear.default",  # up
-            "aten.mul.Tensor",      # gate * up
+            "aten.mul.Tensor",  # gate * up
             "aten.linear.default",  # down
         ),
         kernel_opportunity="fused_gate_mlp",
@@ -78,8 +78,13 @@ PATTERN_LIBRARY: dict[str, PatternSignature] = {
     ),
     "rmsnorm": PatternSignature(
         name="rmsnorm",
-        op_targets=("aten.pow.Tensor_Scalar", "aten.mean.dim", "aten.add.Tensor",
-                     "aten.rsqrt.default", "aten.mul.Tensor"),
+        op_targets=(
+            "aten.pow.Tensor_Scalar",
+            "aten.mean.dim",
+            "aten.add.Tensor",
+            "aten.rsqrt.default",
+            "aten.mul.Tensor",
+        ),
         kernel_opportunity="fused_rmsnorm",
         description="RMSNorm: pow → mean → add(eps) → rsqrt → mul",
     ),
@@ -97,10 +102,10 @@ class FXNodeInfo:
     """Extracted info from one FX graph node."""
 
     name: str
-    target: str                      # e.g., "aten.linear.default"
-    input_names: tuple[str, ...]     # names of input nodes
-    user_names: tuple[str, ...]      # names of consumer nodes
-    shape: tuple[int, ...] | None    # output shape
+    target: str  # e.g., "aten.linear.default"
+    input_names: tuple[str, ...]  # names of input nodes
+    user_names: tuple[str, ...]  # names of consumer nodes
+    shape: tuple[int, ...] | None  # output shape
     dtype: str
     flops: int
     bytes_total: int
@@ -161,16 +166,18 @@ def extract_fx_nodes(exported_program: Any) -> list[FXNodeInfo]:
                     elem *= dim
                 bytes_total = elem * 4  # assume f32
 
-            nodes.append(FXNodeInfo(
-                name=f"{prefix}{node.name}",
-                target=target,
-                input_names=input_names,
-                user_names=user_names,
-                shape=shape,
-                dtype=dtype,
-                flops=flops,
-                bytes_total=bytes_total,
-            ))
+            nodes.append(
+                FXNodeInfo(
+                    name=f"{prefix}{node.name}",
+                    target=target,
+                    input_names=input_names,
+                    user_names=user_names,
+                    shape=shape,
+                    dtype=dtype,
+                    flops=flops,
+                    bytes_total=bytes_total,
+                )
+            )
 
     return nodes
 
@@ -219,12 +226,14 @@ def match_patterns(fx_nodes: list[FXNodeInfo]) -> list[MatchedPattern]:
                 cluster_id = f"{pattern.name}_{count}"
                 cluster_counters[pattern.name] = count + 1
 
-                matches.append(MatchedPattern(
-                    pattern_name=pattern.name,
-                    cluster_id=cluster_id,
-                    node_names=tuple(matched_names),
-                    kernel_opportunity=pattern.kernel_opportunity,
-                ))
+                matches.append(
+                    MatchedPattern(
+                        pattern_name=pattern.name,
+                        cluster_id=cluster_id,
+                        node_names=tuple(matched_names),
+                        kernel_opportunity=pattern.kernel_opportunity,
+                    )
+                )
                 consumed.update(matched_names)
 
     return matches

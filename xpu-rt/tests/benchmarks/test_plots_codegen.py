@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-import pytest
 from pathlib import Path
+
+import pytest
 
 from benchmarks.record import RunRecord
 
@@ -116,6 +117,7 @@ class TestCodegenPlots:
 
     def test_plot_coverage_waterfall(self, tmp_path: Path) -> None:
         from benchmarks.plots_codegen import plot_coverage_waterfall
+
         path = plot_coverage_waterfall(_make_sample_records(), tmp_path)
         assert path.exists()
         assert path.suffix == ".png"
@@ -123,6 +125,7 @@ class TestCodegenPlots:
 
     def test_plot_strategy_mix(self, tmp_path: Path) -> None:
         from benchmarks.plots_codegen import plot_strategy_mix
+
         path = plot_strategy_mix(_make_sample_records(), tmp_path)
         assert path.exists()
         assert path.suffix == ".png"
@@ -130,6 +133,7 @@ class TestCodegenPlots:
 
     def test_plot_roofline_gap(self, tmp_path: Path) -> None:
         from benchmarks.plots_codegen import plot_roofline_gap
+
         path = plot_roofline_gap(_make_sample_records(), tmp_path)
         assert path.exists()
         assert path.suffix == ".png"
@@ -137,6 +141,7 @@ class TestCodegenPlots:
 
     def test_plot_speedup_vs_search_cost(self, tmp_path: Path) -> None:
         from benchmarks.plots_codegen import plot_speedup_vs_search_cost
+
         path = plot_speedup_vs_search_cost(_make_sample_records(), tmp_path)
         assert path.exists()
         assert path.suffix == ".png"
@@ -144,6 +149,7 @@ class TestCodegenPlots:
 
     def test_plot_multidevice_planning(self, tmp_path: Path) -> None:
         from benchmarks.plots_codegen import plot_multidevice_planning
+
         path = plot_multidevice_planning(_make_sample_records(), tmp_path)
         assert path.exists()
         assert path.suffix == ".png"
@@ -151,6 +157,7 @@ class TestCodegenPlots:
 
     def test_plot_recipe_scale_payoff(self, tmp_path: Path) -> None:
         from benchmarks.plots_codegen import plot_recipe_scale_payoff
+
         path = plot_recipe_scale_payoff(_make_sample_records(), tmp_path)
         assert path.exists()
         assert path.suffix == ".png"
@@ -158,6 +165,7 @@ class TestCodegenPlots:
 
     def test_plot_agentic_outcome(self, tmp_path: Path) -> None:
         from benchmarks.plots_codegen import plot_agentic_outcome
+
         path = plot_agentic_outcome(_make_sample_records(), tmp_path)
         assert path.exists()
         assert path.suffix == ".png"
@@ -165,6 +173,7 @@ class TestCodegenPlots:
 
     def test_plot_ablation_heatmap(self, tmp_path: Path) -> None:
         from benchmarks.plots_codegen import plot_ablation_heatmap
+
         path = plot_ablation_heatmap(_make_sample_records(), tmp_path)
         assert path.exists()
         assert path.suffix == ".png"
@@ -172,6 +181,7 @@ class TestCodegenPlots:
 
     def test_generate_all_codegen_plots(self, tmp_path: Path) -> None:
         from benchmarks.plots_codegen import generate_all_codegen_plots
+
         paths = generate_all_codegen_plots(_make_sample_records(), tmp_path)
         assert len(paths) >= 5
         for p in paths:
@@ -185,15 +195,16 @@ class TestEdgeCases:
 
     def test_empty_records_dont_crash(self, tmp_path: Path) -> None:
         from benchmarks.plots_codegen import (
+            plot_ablation_heatmap,
+            plot_agentic_outcome,
             plot_coverage_waterfall,
-            plot_strategy_mix,
-            plot_roofline_gap,
-            plot_speedup_vs_search_cost,
             plot_multidevice_planning,
             plot_recipe_scale_payoff,
-            plot_agentic_outcome,
-            plot_ablation_heatmap,
+            plot_roofline_gap,
+            plot_speedup_vs_search_cost,
+            plot_strategy_mix,
         )
+
         for fn in [
             plot_coverage_waterfall,
             plot_strategy_mix,
@@ -210,6 +221,7 @@ class TestEdgeCases:
 
     def test_single_record(self, tmp_path: Path) -> None:
         from benchmarks.plots_codegen import generate_all_codegen_plots
+
         paths = generate_all_codegen_plots(_make_sample_records()[:1], tmp_path)
         assert len(paths) >= 5
         for p in paths:

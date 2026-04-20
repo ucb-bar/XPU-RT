@@ -28,17 +28,9 @@ def extract_device_memory(target: TargetProfile) -> list[int]:
     device_memory: list[int] = []
     for device in target.devices:
         if hasattr(device, "memory_hierarchy") and device.memory_hierarchy:
-            total = sum(
-                level.capacity_bytes
-                for level in device.memory_hierarchy
-                if hasattr(level, "capacity_bytes")
-            )
+            total = sum(level.capacity_bytes for level in device.memory_hierarchy if hasattr(level, "capacity_bytes"))
             if total <= 0:
-                total = sum(
-                    level.size_bytes
-                    for level in device.memory_hierarchy
-                    if hasattr(level, "size_bytes")
-                )
+                total = sum(level.size_bytes for level in device.memory_hierarchy if hasattr(level, "size_bytes"))
             device_memory.append(total if total > 0 else _DEFAULT_MEMORY_BYTES)
         else:
             device_memory.append(_DEFAULT_MEMORY_BYTES)

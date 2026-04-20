@@ -20,12 +20,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from compgen.llm._prompt import render_request_prompt
 from compgen.llm.base import (
     CompGenLLMProtocol,
     GenerationRequest,
     GenerationResponse,
 )
-from compgen.llm._prompt import render_request_prompt
 
 
 def _normalize_prompt(prompt: str) -> str:
@@ -97,8 +97,7 @@ class MockLLMClient:
 
         if self.strict:
             raise KeyError(
-                f"No mock response for prompt (hash={key}). "
-                f"Add one with add_response() or add_exact_response()."
+                f"No mock response for prompt (hash={key}). Add one with add_response() or add_exact_response()."
             )
 
         return GenerationResponse(
@@ -109,9 +108,7 @@ class MockLLMClient:
             completion_tokens=0,
         )
 
-    def generate_structured(
-        self, request: GenerationRequest, schema: dict[str, Any]
-    ) -> GenerationResponse:
+    def generate_structured(self, request: GenerationRequest, schema: dict[str, Any]) -> GenerationResponse:
         """Return a pre-recorded structured response."""
         return self.generate(request)
 

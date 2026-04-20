@@ -25,7 +25,9 @@ def _iter_workspace_roots(workspace: WorkspaceConfig | None, keys: tuple[str, ..
     return roots
 
 
-def _resolve_existing_root(workspace: WorkspaceConfig | None, *, keys: tuple[str, ...], defaults: tuple[str, ...]) -> Path:
+def _resolve_existing_root(
+    workspace: WorkspaceConfig | None, *, keys: tuple[str, ...], defaults: tuple[str, ...]
+) -> Path:
     candidates = _iter_workspace_roots(workspace, keys)
     candidates.extend(Path(path) for path in defaults)
     for candidate in candidates:
@@ -66,7 +68,6 @@ def load_smolvla_bundle(
     # Bypass lerobot.policies.__init__ which imports the broken GR00T dataclass.
     # We directly import the smolvla submodule without triggering the full
     # policy registry.
-    import importlib
     import sys
 
     # Pre-register stub modules to prevent lerobot.policies.__init__ from
@@ -78,6 +79,7 @@ def load_smolvla_bundle(
         "lerobot.policies.groot.groot_n1",
     ]
     import types as _types
+
     for _mod_name in _stubs_needed:
         if _mod_name not in sys.modules:
             _stub = _types.ModuleType(_mod_name)
@@ -271,4 +273,3 @@ def build_robotics_model_specs() -> list[ModelSpec]:
             tags=("frontier", "robotics", "cosmos"),
         ),
     ]
-

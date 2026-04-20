@@ -100,9 +100,7 @@ def lower_agent(module: ModuleOp) -> AgentLoweringOutput:
                     "sym_name": op.sym_name.data,
                     "scope_ref": _sym(op.scope_ref),
                     "text": op.text.data,
-                    "confidence_milli": (
-                        op.confidence.value_milli.value.data if op.confidence is not None else None
-                    ),
+                    "confidence_milli": (op.confidence.value_milli.value.data if op.confidence is not None else None),
                 }
             )
             continue

@@ -122,11 +122,21 @@ def _adjacent_op_groups(gm: torch.fx.GraphModule) -> list[tuple[str, ...]]:
     current: list[str] = []
 
     elementwise = {
-        "aten.add.Tensor", "aten.sub.Tensor", "aten.mul.Tensor",
-        "aten.div.Tensor", "aten.relu.default", "aten.gelu.default",
-        "aten.sigmoid.default", "aten.tanh.default", "aten.silu.default",
-        "aten.neg.default", "aten.abs.default", "aten.exp.default",
-        "aten.log.default", "aten.sqrt.default", "aten.rsqrt.default",
+        "aten.add.Tensor",
+        "aten.sub.Tensor",
+        "aten.mul.Tensor",
+        "aten.div.Tensor",
+        "aten.relu.default",
+        "aten.gelu.default",
+        "aten.sigmoid.default",
+        "aten.tanh.default",
+        "aten.silu.default",
+        "aten.neg.default",
+        "aten.abs.default",
+        "aten.exp.default",
+        "aten.log.default",
+        "aten.sqrt.default",
+        "aten.rsqrt.default",
         "aten.reciprocal.default",
     }
 
@@ -201,7 +211,8 @@ def harvest_inductor_graph(
     """
     if not enabled:
         return InductorHarvestReport(
-            status="skipped", backend=backend,
+            status="skipped",
+            backend=backend,
             warnings=["harvest explicitly disabled"],
         )
 
@@ -212,14 +223,14 @@ def harvest_inductor_graph(
         compiled = torch.compile(model, backend=_snapshot_backend(captured))
         with torch.no_grad():
             compiled(*sample_inputs)
-    except Exception as e:   # noqa: BLE001
+    except Exception as e:  # noqa: BLE001
         elapsed_ms = (time.perf_counter() - t0) * 1000.0
         return InductorHarvestReport(
             status="fallback",
             backend=backend,
             fallback_reason=f"{type(e).__name__}: {e}",
             elapsed_ms=round(elapsed_ms, 3),
-            warnings=[f"torch.compile snapshot failed; falling back to raw FX"],
+            warnings=["torch.compile snapshot failed; falling back to raw FX"],
         )
 
     elapsed_ms = (time.perf_counter() - t0) * 1000.0

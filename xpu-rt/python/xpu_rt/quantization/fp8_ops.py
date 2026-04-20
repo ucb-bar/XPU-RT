@@ -39,6 +39,7 @@ FP8_E4M3_DTYPE: torch.dtype = torch.float8_e4m3fn
 # Po2 scaling helpers
 # ---------------------------------------------------------------------------
 
+
 def fp8_po2_scale(x: torch.Tensor) -> float:
     """Compute a per-tensor power-of-two scale for FP8 E4M3 quantization.
 
@@ -77,6 +78,7 @@ def fp8_absmax_scale(x: torch.Tensor) -> float:
 # ---------------------------------------------------------------------------
 # Quantize / dequantize
 # ---------------------------------------------------------------------------
+
 
 def quantize_fp8_e4m3_po2(x: torch.Tensor) -> tuple[torch.Tensor, float]:
     """Quantize a tensor to FP8 E4M3 using per-tensor po2 scaling.

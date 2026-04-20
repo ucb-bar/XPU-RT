@@ -36,6 +36,7 @@ log = structlog.get_logger()
 # IR Invariants — the atoms of contract checking
 # ---------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class IRInvariant:
     """A single verifiable invariant on the IR.
@@ -59,6 +60,7 @@ class IRInvariant:
 # Stage Contract — what a stage promises
 # ---------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class StageContract:
     """Input/output contract for a compilation stage.
@@ -81,6 +83,7 @@ class StageContract:
 # ---------------------------------------------------------------------------
 # Stage Result — what a stage produces
 # ---------------------------------------------------------------------------
+
 
 @dataclass(frozen=True)
 class StageResult:
@@ -108,6 +111,7 @@ class StageResult:
 # ---------------------------------------------------------------------------
 # Target Stage Plugin — what the LLM generates
 # ---------------------------------------------------------------------------
+
 
 @runtime_checkable
 class TargetStagePlugin(Protocol):
@@ -140,6 +144,7 @@ class TargetStagePlugin(Protocol):
 # ---------------------------------------------------------------------------
 # Compilation Stage — the ABC
 # ---------------------------------------------------------------------------
+
 
 class CompilationStage(abc.ABC):
     """Abstract base class for all compilation stages.
@@ -287,9 +292,7 @@ class CompilationStage(abc.ABC):
     def verify_contract(self, module: ModuleOp, contract: StageContract) -> list[str]:
         """Check all invariants in a contract. Returns violation messages."""
         violations: list[str] = []
-        all_invariants = (
-            contract.preconditions + contract.postconditions + contract.preserved_invariants
-        )
+        all_invariants = contract.preconditions + contract.postconditions + contract.preserved_invariants
 
         for inv in all_invariants:
             # Check required ops
@@ -321,9 +324,7 @@ class CompilationStage(abc.ABC):
     def register_plugin(self, plugin: TargetStagePlugin) -> None:
         """Register a target-specific plugin for this stage."""
         if plugin.stage_name != self.name:
-            raise ValueError(
-                f"Plugin stage_name '{plugin.stage_name}' does not match stage '{self.name}'"
-            )
+            raise ValueError(f"Plugin stage_name '{plugin.stage_name}' does not match stage '{self.name}'")
         self._plugin = plugin
         log.debug("stage.plugin_registered", stage=self.name, target=plugin.target_name)
 

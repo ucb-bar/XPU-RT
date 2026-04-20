@@ -15,11 +15,18 @@ from compgen.agent.suggest._candidate import ProposalCandidate
 from compgen.agent.suggest._dispatch import register_suggester
 from compgen.agent.suggest._recipe_index import build_recipe_index
 
-
-_MATMUL_ROLES = frozenset({
-    "matmul", "mm", "addmm", "linear", "bmm", "batch_matmul",
-    "_weight_int4pack_mm", "_weight_int8pack_mm",
-})
+_MATMUL_ROLES = frozenset(
+    {
+        "matmul",
+        "mm",
+        "addmm",
+        "linear",
+        "bmm",
+        "batch_matmul",
+        "_weight_int4pack_mm",
+        "_weight_int8pack_mm",
+    }
+)
 
 
 def _target_layout(target: Any) -> tuple[str, str]:
@@ -50,17 +57,18 @@ def suggest_layout_plan(
     layout, just = _target_layout(target)
 
     out: list[ProposalCandidate] = []
-    matmul_regions = [s for s in idx.regions
-                      if idx.role_by_region.get(s, "") in _MATMUL_ROLES]
+    matmul_regions = [s for s in idx.regions if idx.role_by_region.get(s, "") in _MATMUL_ROLES]
     for sym in matmul_regions[:k]:
         role = idx.role_by_region.get(sym, "matmul")
-        out.append(ProposalCandidate(
-            chosen={"region_ref": sym, "layout": layout},
-            rationale=f"Tile-aligned layout {layout} on {role} region {sym}",
-            expected_impact=0.7 if "blocked" in layout else 0.4,
-            target_feature_justification=just,
-            metadata={"role": role, "layout": layout},
-        ))
+        out.append(
+            ProposalCandidate(
+                chosen={"region_ref": sym, "layout": layout},
+                rationale=f"Tile-aligned layout {layout} on {role} region {sym}",
+                expected_impact=0.7 if "blocked" in layout else 0.4,
+                target_feature_justification=just,
+                metadata={"role": role, "layout": layout},
+            )
+        )
     return out
 
 

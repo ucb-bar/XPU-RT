@@ -165,10 +165,11 @@ def build_candidate_env(op: Operation, fact_index: RecipeFactIndex) -> dict[str,
     if isinstance(op, FuseOp):
         regions = [ref.root_reference.data for ref in op.fuse_regions.data]
         env["fusion_region_count"] = len(regions)
-        env["fusible"] = all(
-            tuple(sorted((lhs, rhs))) in fact_index.fusible_pairs
-            for lhs, rhs in zip(regions, regions[1:])
-        ) if len(regions) >= 2 else False
+        env["fusible"] = (
+            all(tuple(sorted((lhs, rhs))) in fact_index.fusible_pairs for lhs, rhs in zip(regions, regions[1:]))
+            if len(regions) >= 2
+            else False
+        )
         region_facts = [fact_index.get_or_create_region(region) for region in regions]
         env["estimated_flops"] = sum(facts.estimated_flops for facts in region_facts)
         env["backend_triton"] = all("triton" in facts.backends for facts in region_facts)
@@ -188,7 +189,9 @@ def build_candidate_env(op: Operation, fact_index: RecipeFactIndex) -> dict[str,
         dst = op.dst_region.root_reference.data
         env["src_region"] = src
         env["dst_region"] = dst
-        env["transfer_cost_us"] = fact_index.transfer_cost_us.get((src, dst), fact_index.transfer_cost_us.get((dst, src), 0))
+        env["transfer_cost_us"] = fact_index.transfer_cost_us.get(
+            (src, dst), fact_index.transfer_cost_us.get((dst, src), 0)
+        )
         return env
 
     return env

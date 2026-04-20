@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from compgen.runtime.execution_plan import (
     BufferDescriptor,
     CopyEdge,
@@ -14,13 +13,10 @@ from compgen.runtime.execution_plan import (
     QueueAssignment,
     QueueEntry,
     RegionPlacement,
-    Resource,
     StreamAnnotation,
-    SyncEdge,
     ticks_spanned,
 )
 from compgen.runtime.plan_builder import ExecutionPlanBuilder
-
 
 # --- Lifetime -----------------------------------------------------------------
 
@@ -92,56 +88,36 @@ def test_builder_validation_fires_on_duplicate_buffer():
 
 def test_validate_rejects_inverted_lifetime():
     plan = ExecutionPlan(workload="t", target="c")
-    plan.buffers.append(
-        BufferDescriptor(
-            "buf", 1024, "hbm", Lifetime(10, 5), "exclusive", ""
-        )
-    )
+    plan.buffers.append(BufferDescriptor("buf", 1024, "hbm", Lifetime(10, 5), "exclusive", ""))
     with pytest.raises(ValueError, match="first_use_tick"):
         plan.validate()
 
 
 def test_validate_rejects_alias_without_target():
     plan = ExecutionPlan(workload="t", target="c")
-    plan.buffers.append(
-        BufferDescriptor(
-            "buf", 1024, "hbm", Lifetime(0, 10), "alias", ""
-        )
-    )
+    plan.buffers.append(BufferDescriptor("buf", 1024, "hbm", Lifetime(0, 10), "alias", ""))
     with pytest.raises(ValueError, match="alias_of to be set"):
         plan.validate()
 
 
 def test_validate_rejects_self_alias():
     plan = ExecutionPlan(workload="t", target="c")
-    plan.buffers.append(
-        BufferDescriptor(
-            "buf", 1024, "hbm", Lifetime(0, 10), "alias", "buf"
-        )
-    )
+    plan.buffers.append(BufferDescriptor("buf", 1024, "hbm", Lifetime(0, 10), "alias", "buf"))
     with pytest.raises(ValueError, match="different buffer"):
         plan.validate()
 
 
 def test_validate_rejects_dangling_alias_target():
     plan = ExecutionPlan(workload="t", target="c")
-    plan.buffers.append(
-        BufferDescriptor(
-            "buf", 1024, "hbm", Lifetime(0, 10), "alias", "ghost"
-        )
-    )
+    plan.buffers.append(BufferDescriptor("buf", 1024, "hbm", Lifetime(0, 10), "alias", "ghost"))
     with pytest.raises(ValueError, match="alias_of references unknown"):
         plan.validate()
 
 
 def test_validate_rejects_dangling_copy_edge():
     plan = ExecutionPlan(workload="t", target="c")
-    plan.buffers.append(
-        BufferDescriptor("a", 1024, "hbm", Lifetime(0, 10), "exclusive", "")
-    )
-    plan.copy_edges.append(
-        CopyEdge(from_buffer="a", to_buffer="ghost", size_bytes=1024, transfer_path="x")
-    )
+    plan.buffers.append(BufferDescriptor("a", 1024, "hbm", Lifetime(0, 10), "exclusive", ""))
+    plan.copy_edges.append(CopyEdge(from_buffer="a", to_buffer="ghost", size_bytes=1024, transfer_path="x"))
     with pytest.raises(ValueError, match="to_buffer"):
         plan.validate()
 
@@ -177,10 +153,12 @@ def test_apply_queue_assignment_overwrites_queue_and_priority():
     b = ExecutionPlanBuilder("t", "c")
     b.add_region("r0", "d", "q_old", priority=0)
     b.add_region("r1", "d", "q_old", priority=0)
-    b.apply_queue_assignment([
-        QueueAssignment("r0", "q_new", 5),
-        QueueAssignment("r1", "q_new", 3),
-    ])
+    b.apply_queue_assignment(
+        [
+            QueueAssignment("r0", "q_new", 5),
+            QueueAssignment("r1", "q_new", 3),
+        ]
+    )
     assert b.plan.region_placement[0].queue == "q_new"
     assert b.plan.region_placement[0].priority == 5
     assert b.plan.region_placement[1].priority == 3
@@ -189,9 +167,11 @@ def test_apply_queue_assignment_overwrites_queue_and_priority():
 def test_apply_stream_annotation_sets_stream_id_and_kind():
     b = ExecutionPlanBuilder("t", "c")
     b.add_region("r0", "d", "q")
-    b.apply_stream_annotation([
-        StreamAnnotation("r0", stream_id=2, kind="async_wrap"),
-    ])
+    b.apply_stream_annotation(
+        [
+            StreamAnnotation("r0", stream_id=2, kind="async_wrap"),
+        ]
+    )
     assert b.plan.region_placement[0].stream_id == 2
     assert b.plan.summary["stream_kinds"]["r0"] == "async_wrap"
 
@@ -215,9 +195,7 @@ def test_ticks_spanned_considers_queue_entries():
 
 def test_fallback_round_trip():
     plan = ExecutionPlan(workload="t", target="c")
-    plan.fallback_transitions.append(
-        FallbackTransition("device.queue0.depth > 4", "plan_b")
-    )
+    plan.fallback_transitions.append(FallbackTransition("device.queue0.depth > 4", "plan_b"))
     d = plan.to_dict()
     restored = ExecutionPlan.from_dict(d)
     assert len(restored.fallback_transitions) == 1
