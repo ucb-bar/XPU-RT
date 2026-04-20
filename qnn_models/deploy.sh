@@ -20,11 +20,10 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONDA_ENV="xpurt"
-BOARD_USER="root"
-BOARD_IP="10.44.120.201"
-QNN_SDK="/scratch2/dima/misc_sw/qualcomm/qairt/2.45.0.260326"
-DOCKER_IMAGE="qnn-convert"
+CONDA_ENV="${CONDA_ENV:-xpurt}"
+BOARD_USER="${BOARD_USER:-root}"
+BOARD_IP="${BOARD_IP:-10.44.120.201}"
+DOCKER_IMAGE="${DOCKER_IMAGE:-qnn-convert}"
 RESULTS_FILE="$SCRIPT_DIR/benchmark_results.json"
 
 # --- Parse args ---
@@ -91,7 +90,6 @@ fi
 
 docker_run() {
     sudo docker run --rm \
-        -v "$QNN_SDK":/qnn:ro \
         -v "$SCRIPT_DIR":/workspace \
         "$DOCKER_IMAGE" "$@"
 }
@@ -132,7 +130,6 @@ for MODEL in "${ALL_MODELS[@]}"; do
         if [ "$CONVERTER" = "onnx" ]; then
             # Standard path: onnxsim → snpe-onnx-to-dlc
             docker_run bash -c "\
-                pip install -q onnxruntime onnx-simplifier 'numpy<2' && \
                 python3.10 -c \"
 import onnx
 from onnxsim import simplify
@@ -162,9 +159,6 @@ print('Simplified ONNX saved')
 
             echo "  Converting TFLite → DLC..."
             docker_run bash -c "\
-                apt-get update -qq && \
-                apt-get install -y -qq libllvm14 >/dev/null 2>&1 && \
-                pip install -q 'numpy<2' decorator attrs scipy psutil pytest tflite >/dev/null 2>&1 && \
                 python3.10 /qnn/bin/x86_64-linux-clang/snpe-tflite-to-dlc \
                     --input_network /workspace/${MODEL}_saved_model/${MODEL}_float32.tflite \
                     --output_path /workspace/${MODEL}.dlc"

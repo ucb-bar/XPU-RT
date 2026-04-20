@@ -16,9 +16,9 @@ MODEL_DIR="${1:?Usage: benchmark_qnn.sh <model_dir> <model_name> [iters]}"
 MODEL_NAME="${2:?Usage: benchmark_qnn.sh <model_dir> <model_name> [iters]}"
 ITERS="${3:-50}"
 
-QNN_SDK_ROOT=/root/qairt
+QNN_SDK_ROOT="${QNN_SDK_ROOT:-/root/qairt}"
 export LD_LIBRARY_PATH=$QNN_SDK_ROOT/lib/target:${LD_LIBRARY_PATH:-}
-export ADSP_LIBRARY_PATH="/root/qairt/lib/hexagon-v66;/dsp/cdsp;/dsp"
+export ADSP_LIBRARY_PATH="${QNN_SDK_ROOT}/lib/hexagon-v66;/dsp/cdsp;/dsp"
 QNN_NET_RUN=$QNN_SDK_ROOT/bin/target/qnn-net-run
 MODEL_FP="$MODEL_DIR/${MODEL_NAME}.dlc"
 MODEL_Q8="$MODEL_DIR/${MODEL_NAME}_quantized.dlc"
