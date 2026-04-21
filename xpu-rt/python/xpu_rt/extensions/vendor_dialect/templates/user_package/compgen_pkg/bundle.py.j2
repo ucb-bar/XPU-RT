@@ -1,0 +1,52 @@
+"""Drive the {{ vendor_name }} vendor toolchain to produce a runnable artifact.
+
+Bundle pipeline steps (from descriptor):
+{% for step in bundle_steps %}
+  * {{ step }}
+{% endfor %}
+
+The scaffold ships a safe no-op that emits the vendor MLIR text as the
+"artifact". Phase-D integration replaces this with real CLI / Python-API
+invocations against {{ vendor_name }}'s toolchain.
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Any
+
+from compgen.extensions.vendor_dialect.adapter import LoweringResult
+from compgen.extensions.vendor_dialect.descriptor import VendorDialectDescriptor
+from compgen.targets.backend import CompiledArtifact
+
+
+def emit_{{ vendor_name }}_artifact(
+    lowering: LoweringResult,
+    *,
+    descriptor: VendorDialectDescriptor,
+    output_dir: Path,
+    options: dict[str, Any],
+) -> CompiledArtifact:
+    """Run ``{{ cli_tools | join(' → ') if cli_tools else 'vendor toolchain' }}``
+    and return the resulting :class:`CompiledArtifact`.
+    """
+    # TODO(Phase-D): invoke the vendor CLI / Python API here.
+    vendor_path = output_dir / "{{ vendor_name }}.mlir"
+    vendor_path.parent.mkdir(parents=True, exist_ok=True)
+    vendor_path.write_text(lowering.vendor_mlir)
+
+    return CompiledArtifact(
+        code=lowering.vendor_mlir,
+        format="{{ output_format }}",
+        target_name=descriptor.target,
+        metadata={
+            "vendor": "{{ vendor_name }}",
+            "vendor_mlir_path": str(vendor_path),
+            "bundle_steps": {{ bundle_steps | list }},
+            "passthrough": True,
+            **lowering.metadata,
+        },
+    )
+
+
+__all__ = ["emit_{{ vendor_name }}_artifact"]

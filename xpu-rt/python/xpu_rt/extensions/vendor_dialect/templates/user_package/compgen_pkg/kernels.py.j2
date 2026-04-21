@@ -1,0 +1,38 @@
+"""LLM-backed kernel provider for {{ vendor_name }}.
+
+When the integration descriptor declares ``kernel_authoring_required``,
+the adapter attaches a :class:`ClaudeKernelProvider` configured with a
+{{ vendor_name }}-specific prompt pack. This module is the seam where
+that wiring lives.
+"""
+
+from __future__ import annotations
+
+from compgen.extensions.vendor_dialect.descriptor import VendorDialectDescriptor
+from compgen.kernels.provider import KernelProvider
+from compgen.kernels.providers.claude_kernel import ClaudeKernelProvider, PromptPack
+
+
+_PROMPT_PACK = PromptPack(
+    name="{{ vendor_name }}",
+    system=(
+        "You generate MLIR in the {{ vendor_name }} dialect. "
+        "Only emit the module body — no prose, no explanations."
+    ),
+    op_templates={
+        # TODO(Phase-D): add op-family-specific prompt templates.
+        # e.g. "matmul": "Write a tiled matmul kernel using {{ vendor_name }} ops...",
+    },
+)
+
+
+def build_{{ vendor_name }}_kernel_provider(descriptor: VendorDialectDescriptor) -> KernelProvider:
+    """Return the configured Claude-backed kernel provider."""
+    return ClaudeKernelProvider(
+        name="{{ vendor_name }}_kernels",
+        prompt_pack=_PROMPT_PACK,
+        target_name=descriptor.target,
+    )
+
+
+__all__ = ["build_{{ vendor_name }}_kernel_provider"]

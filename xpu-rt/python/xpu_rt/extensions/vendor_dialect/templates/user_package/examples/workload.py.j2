@@ -1,0 +1,34 @@
+"""Compile a workload with the {{ vendor_name }} adapter.
+
+Usage::
+
+    python examples/workload.py --workload tinyllama
+
+This example wires the scaffolded adapter into CompGen's
+``compile_with_vendor`` entry point. Fill in the real workload loader
+during Phase-D integration.
+"""
+
+from __future__ import annotations
+
+import argparse
+from pathlib import Path
+
+from {{ package_name }} import load_adapter
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Compile a workload with {{ vendor_name }}.")
+    parser.add_argument("--workload", default="tinyllama", choices=["tinyllama", "smolvla"])
+    parser.add_argument("--output", type=Path, default=Path("/tmp/{{ vendor_name }}_out"))
+    args = parser.parse_args()
+
+    adapter = load_adapter()
+    args.output.mkdir(parents=True, exist_ok=True)
+    print(f"Loaded adapter: {adapter.name} (target={adapter.target})")
+    print(f"Output: {args.output}")
+    print("TODO(Phase-D): call compgen.api.compile_with_vendor(model, adapter, ...)")
+
+
+if __name__ == "__main__":
+    main()

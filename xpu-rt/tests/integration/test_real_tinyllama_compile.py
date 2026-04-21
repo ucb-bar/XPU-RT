@@ -49,18 +49,22 @@ def test_real_tinyllama_compiles_end_to_end() -> None:
     assert result.compiled.pipeline_result.passed, "pipeline gate did not pass on real TinyLlama-1.1B"
 
 
-def test_real_tinyllama_bundle_has_forward_c() -> None:
+def test_real_tinyllama_bundle_has_payload_and_manifest() -> None:
+    """The bundle stage writes ``payload.mlir`` + ``manifest.json`` for every
+    target. (Per-target additions like ``baremetal/kernels/*.c`` only land
+    when the target is a ukernel-runtime; not asserted here.)"""
     from pathlib import Path
 
     result = run_tinyllama_compile(seq_len=4, budget=2)
-    bundle_dir = getattr(result.compiled, "bundle_dir", None) or getattr(
-        result.compiled.pipeline_result, "bundle_dir", None
-    )
+    bundle_dir = result.compiled.pipeline_result.all_artifacts.get("bundle_dir")
     if bundle_dir is None:
         pytest.skip("bundle_dir not surfaced on this build; bundle stage may be off")
-    forward_c = Path(bundle_dir) / "forward.c"
-    assert forward_c.exists(), f"forward.c missing under {bundle_dir}"
-    assert forward_c.stat().st_size > 0
+    payload_mlir = Path(bundle_dir) / "payload.mlir"
+    manifest_json = Path(bundle_dir) / "manifest.json"
+    assert payload_mlir.exists(), f"payload.mlir missing under {bundle_dir}"
+    assert manifest_json.exists(), f"manifest.json missing under {bundle_dir}"
+    assert payload_mlir.stat().st_size > 0
+    assert manifest_json.stat().st_size > 0
 
 
 def test_real_tinyllama_preserves_model_identity_for_diff_gate() -> None:
@@ -72,6 +76,6 @@ def test_real_tinyllama_preserves_model_identity_for_diff_gate() -> None:
     sample = (torch.randint(0, 100, (1, 4), dtype=torch.long),)
     with torch.no_grad():
         out = result.compiled.model(*sample)
-    # AutoModel returns BaseModelOutputWithPast; assert tensor-shape sanity.
-    last = getattr(out, "last_hidden_state", None)
-    assert last is not None and last.shape[:2] == (1, 4)
+    # _NoCacheLlamaWrapper returns last_hidden_state directly as a Tensor.
+    assert isinstance(out, torch.Tensor)
+    assert out.shape[0] == 1 and out.shape[1] == 4

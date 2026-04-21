@@ -110,25 +110,25 @@ if __name__ == "__main__":
     compiled = result.compiled
     pipeline_passed = compiled.pipeline_result.passed
     print(f"  pipeline_result.passed = {pipeline_passed}")
+    print(f"  stages_run = {compiled.pipeline_result.stages_run}")
 
-    bundle_dir = getattr(compiled, "bundle_dir", None) or getattr(
-        compiled.pipeline_result, "bundle_dir", None
-    )
+    bundle_dir = compiled.pipeline_result.all_artifacts.get("bundle_dir")
     if bundle_dir:
         print(f"  bundle_dir = {bundle_dir}")
-        forward_c = Path(bundle_dir) / "forward.c"
+        for artifact in ("payload.mlir", "manifest.json"):
+            p = Path(bundle_dir) / artifact
+            if p.exists():
+                print(f"    {artifact}: {p.stat().st_size} bytes")
+        # Baremetal targets additionally emit kernels/<func>.c — surface
+        # the first if present (GPU SIMT target won't have these).
+        forward_c = Path(bundle_dir) / "baremetal" / "kernels" / "forward.c"
         if forward_c.exists():
-            size = forward_c.stat().st_size
-            print(f"  forward.c size = {size} bytes")
+            print(f"    baremetal/kernels/forward.c: {forward_c.stat().st_size} bytes")
 
-    print("\nRunning a real forward pass + comparing to eager ...")
+    print("\nRunning a real forward pass through the user-identity model ...")
     sample = _build_sample_inputs()
     with torch.no_grad():
-        eager_out = compiled.model(*sample)
-    print(
-        f"  eager output: type={type(eager_out).__name__}, "
-        f"first-tensor shape="
-        f"{getattr(getattr(eager_out, 'last_hidden_state', None), 'shape', '?')}"
-    )
+        out = compiled.model(*sample)
+    print(f"  output: type={type(out).__name__}, shape={tuple(out.shape)}")
 
     print("\nPASS: real TinyLlama-1.1B-Chat compiled end-to-end via compile_with_llm.")

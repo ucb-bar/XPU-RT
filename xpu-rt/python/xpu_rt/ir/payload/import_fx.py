@@ -104,13 +104,28 @@ def _torch_dtype_to_xdsl(dtype: torch.dtype) -> Attribute:
     return factory()  # type: ignore[abstract]
 
 
+def _coerce_static_dim(dim: Any) -> int:
+    """Concrete dim → ``int(dim)``; symbolic / data-dependent dim → ``-1``.
+
+    xDSL's ``TensorType`` rejects ``SymInt`` (``"u6 should be of base
+    attribute builtin.int"``). For models with dynamic shapes (SmolVLA's
+    image-tile counts, etc.) we emit ``-1`` (xDSL's dynamic-dim convention)
+    so capture continues; downstream passes that need static shapes will
+    short-circuit through their own dynamic-shape paths.
+    """
+    try:
+        return int(dim)
+    except Exception:
+        return -1
+
+
 def _tensor_type_from_meta(val: Any) -> TensorType | None:
     """Extract a TensorType from an FX node's meta['val']."""
     if val is None:
         return None
     if hasattr(val, "shape") and hasattr(val, "dtype"):
         elem = _torch_dtype_to_xdsl(val.dtype)
-        shape = list(val.shape)
+        shape = [_coerce_static_dim(d) for d in val.shape]
         return TensorType(elem, shape)
     return None
 

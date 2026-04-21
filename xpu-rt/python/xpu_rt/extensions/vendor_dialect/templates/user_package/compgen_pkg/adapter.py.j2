@@ -1,0 +1,65 @@
+"""`{{ adapter_class_name }}` — vendor adapter for {{ vendor_name }}."""
+
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Any
+
+from compgen.extensions.vendor_dialect.adapter import LoweringResult, VendorDialectAdapter
+from compgen.extensions.vendor_dialect.descriptor import VendorDialectDescriptor
+from compgen.targets.backend import CompiledArtifact
+
+from .bundle import emit_{{ vendor_name }}_artifact
+from .lowering import lower_to_{{ vendor_name }}
+{% if kernel_authoring_required %}
+from .kernels import build_{{ vendor_name }}_kernel_provider
+{% endif %}
+
+
+class {{ adapter_class_name }}(VendorDialectAdapter):
+    """Drives CompGen compilation onto {{ vendor_name }}.
+
+    Target: ``{{ target }}``.
+    Lowering mode: ``{{ lowering_mode }}``.
+    Output format: ``{{ output_format }}``.
+    """
+
+    def __init__(self, descriptor: VendorDialectDescriptor) -> None:
+        {% if kernel_authoring_required %}
+        kernel_provider = build_{{ vendor_name }}_kernel_provider(descriptor)
+        super().__init__(descriptor, kernel_provider=kernel_provider)
+        {% else %}
+        super().__init__(descriptor)
+        {% endif %}
+
+    def lower_payload(
+        self,
+        payload_mlir: str,
+        *,
+        output_dir: str | Path,
+        options: dict[str, Any] | None = None,
+    ) -> LoweringResult:
+        return lower_to_{{ vendor_name }}(
+            payload_mlir,
+            descriptor=self.descriptor,
+            kernel_provider=self.kernel_provider(),
+            output_dir=Path(output_dir),
+            options=options or {},
+        )
+
+    def emit_artifact(
+        self,
+        lowering: LoweringResult,
+        *,
+        output_dir: str | Path,
+        options: dict[str, Any] | None = None,
+    ) -> CompiledArtifact:
+        return emit_{{ vendor_name }}_artifact(
+            lowering,
+            descriptor=self.descriptor,
+            output_dir=Path(output_dir),
+            options=options or {},
+        )
+
+
+__all__ = ["{{ adapter_class_name }}"]

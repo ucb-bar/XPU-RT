@@ -423,6 +423,25 @@ class AgenticCompilationLoop:
 
             # Execute ALL lowered outputs (transforms, eqsat, kernels, plan, verification)
             if payload_after is not None:
+                # Direct payload-mutator pass — applies the recipe's
+                # FuseOp / ProposeFusionOp / TileOp / PlaceOnDeviceOp /
+                # ProposeMegakernelSynthesisOp directly. The MCP-driven
+                # apply_recipe path uses this and the autonomous loop
+                # must mirror it: without this, every lowered Transform
+                # Dialect script falls through to the legacy
+                # TransformApplicator (which expects Python-source
+                # rewrite patterns) and fails uniformly with
+                # "Syntax error: invalid syntax", showing up as
+                # transforms_failed=N for every recipe op.
+                from compgen.ir.recipe.payload_mutators import (
+                    apply_recipe_to_payload,
+                )
+
+                mutation_report = apply_recipe_to_payload(recipe_module, payload_after)
+                result.runtime_artifacts["recipe_payload_mutations"] = (
+                    mutation_report.to_dict()
+                )
+
                 executor = RecipeExecutor()
                 exec_result = executor.execute(payload_after, lowered, target)
 
@@ -500,13 +519,22 @@ class AgenticCompilationLoop:
                     pass  # Fall back to rule-based
 
                 if all_passed and lowered.transform_scripts and llm_promotes:
+                    # ``Bundle`` (=``BundleManifest``) carries free-form
+                    # metadata in the ``metadata`` dict — recipe-lowering
+                    # outputs (transform_scripts, kernel_jobs, plan_fragments)
+                    # are JSON-safe and belong there. Passing them as named
+                    # kwargs raised TypeError at runtime which the
+                    # surrounding try/except silently swallowed, so the
+                    # promotion path was effectively dead.
                     bundle = Bundle(
                         target_profile=target.name,
                         model_hash=str(id(payload_after))[:12],
                         objective="latency",
-                        transform_scripts=lowered.transform_scripts,
-                        kernel_jobs=lowered.kernel_jobs,
-                        plan_fragments=lowered.plan_fragments,
+                        metadata={
+                            "transform_scripts": lowered.transform_scripts,
+                            "kernel_jobs": lowered.kernel_jobs,
+                            "plan_fragments": lowered.plan_fragments,
+                        },
                     )
                     promo = promote_recipe(
                         bundle,

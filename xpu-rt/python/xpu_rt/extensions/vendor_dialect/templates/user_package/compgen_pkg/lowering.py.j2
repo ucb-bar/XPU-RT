@@ -1,0 +1,55 @@
+"""Payload IR → {{ vendor_name }} dialect lowering.
+
+Lowering mode: ``{{ lowering_mode }}``.
+
+{% if lowering_mode == "kernel_authoring" %}
+Because {{ vendor_name }} has no direct linalg ingress, this lowering
+delegates to the adapter's :class:`KernelProvider` for per-op kernel
+authoring (see ``kernels.py``). Hand-crafted templates from
+``templates/`` take priority when the op family and shape class match;
+otherwise the provider is asked to generate fresh vendor-dialect MLIR.
+{% elif lowering_mode == "direct_linalg" %}
+{{ vendor_name }} ingests MLIR/linalg directly, so this module performs
+a textual passthrough plus any shape / tiling hints recorded in the
+frozen descriptor.
+{% else %}
+See the frozen descriptor for mode-specific lowering notes.
+{% endif %}
+
+This file is auto-scaffolded; replace the ``TODO`` markers with real
+vendor-specific lowering logic as part of the Phase-D integration.
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Any
+
+from compgen.extensions.vendor_dialect.adapter import LoweringResult
+from compgen.extensions.vendor_dialect.descriptor import VendorDialectDescriptor
+from compgen.kernels.provider import KernelProvider
+
+
+def lower_to_{{ vendor_name }}(
+    payload_mlir: str,
+    *,
+    descriptor: VendorDialectDescriptor,
+    kernel_provider: KernelProvider | None,
+    output_dir: Path,
+    options: dict[str, Any],
+) -> LoweringResult:
+    """Translate CompGen Payload IR text to {{ vendor_name }} MLIR text."""
+    # TODO(Phase-D): replace the passthrough below with the real lowering.
+    # For ``direct_linalg``: strip Payload-IR-only attributes and emit linalg.
+    # For ``kernel_authoring``: call ``kernel_provider.search(contract)`` per
+    # region and splice the returned ``kernel_code`` into the module.
+    vendor_mlir = payload_mlir
+    kernels: dict[str, str] = {}
+    metadata: dict[str, Any] = {
+        "lowering_mode": "{{ lowering_mode }}",
+        "passthrough": True,
+    }
+    return LoweringResult(vendor_mlir=vendor_mlir, kernels=kernels, metadata=metadata)
+
+
+__all__ = ["lower_to_{{ vendor_name }}"]

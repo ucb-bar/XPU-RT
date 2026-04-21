@@ -63,28 +63,32 @@ def segment_function(
     segments: list[Segment] = []
     current = Segment(segment_id=0)
 
-    for op in func_op.body.block.ops:
-        # Skip structural ops
-        if isinstance(op, func.ReturnOp):
-            continue
+    # Walk every op in every block. Real captures (e.g. HF Llama with
+    # attention masking) emit func bodies whose Region has multiple
+    # blocks — using ``.block`` would raise on those.
+    for block in func_op.body.blocks:
+        for op in block.ops:
+            # Skip structural ops
+            if isinstance(op, func.ReturnOp):
+                continue
 
-        if not op.results:
-            continue
+            if not op.results:
+                continue
 
-        classification = classify_op(op)
+            classification = classify_op(op)
 
-        if classification == OpClass.PROFITABLE:
-            # Check if adding this op exceeds threshold
-            if current.profitable_count >= threshold and current.profitable_count > 0:
-                segments.append(current)
-                current = Segment(segment_id=len(segments))
+            if classification == OpClass.PROFITABLE:
+                # Check if adding this op exceeds threshold
+                if current.profitable_count >= threshold and current.profitable_count > 0:
+                    segments.append(current)
+                    current = Segment(segment_id=len(segments))
 
-            current.ops.append(op)
-            current.profitable_count += 1
-        else:
-            # Blackboxed ops join the current segment
-            current.ops.append(op)
-            current.blackbox_count += 1
+                current.ops.append(op)
+                current.profitable_count += 1
+            else:
+                # Blackboxed ops join the current segment
+                current.ops.append(op)
+                current.blackbox_count += 1
 
     # Don't forget the last segment
     if current.ops:

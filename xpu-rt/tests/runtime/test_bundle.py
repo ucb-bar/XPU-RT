@@ -63,3 +63,33 @@ def test_bundle_integrity(tmp_path: Path) -> None:
             assert artifact_path.is_dir()
         else:
             assert artifact_path.exists(), relative
+
+
+def test_bundle_carries_lowered_recipe_metadata_for_promotion() -> None:
+    """The agent loop's promotion path stuffs recipe-lowering outputs
+    (transform_scripts / kernel_jobs / plan_fragments) into the bundle's
+    ``metadata`` dict — those are JSON-safe and not fields of
+    ``BundleManifest`` itself. Pre-fix this raised
+    ``TypeError: BundleManifest.__init__() got an unexpected keyword
+    argument 'transform_scripts'`` which the surrounding try/except in
+    ``compgen.agent.loop.core`` silently swallowed, so the promotion
+    path was effectively dead.
+    """
+    import json
+
+    bundle = BundleManifest(
+        target_profile="test-target",
+        model_hash="abc123",
+        objective="latency",
+        metadata={
+            "transform_scripts": ["%0 = transform.match ..."],
+            "kernel_jobs": [{"name": "matmul_kernel"}],
+            "plan_fragments": [{"placement": "device:0"}],
+        },
+    )
+    serialized = json.dumps(bundle.to_dict())
+    parsed = json.loads(serialized)
+    assert parsed["metadata"]["transform_scripts"] == [
+        "%0 = transform.match ..."
+    ]
+    assert parsed["metadata"]["kernel_jobs"][0]["name"] == "matmul_kernel"

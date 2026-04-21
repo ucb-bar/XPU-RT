@@ -58,7 +58,9 @@ class LLMCompileResult:
     ``compiled`` is the standard :class:`CompiledModel`; ``llm_result``
     is populated when an agentic loop actually ran, and ``driver`` is
     the :class:`LLMDrivenCompiler` instance when the caller asked us
-    to keep the session open.
+    to keep the session open. ``mcp_optimized`` is populated when the
+    caller passed an ``mcp_session`` and a list of contracts so the
+    W7 ``optimize_via_mcp`` loop runs after the standard pipeline.
     """
 
     compiled: CompiledModel
@@ -66,6 +68,7 @@ class LLMCompileResult:
     driver: LLMDrivenCompiler | None = None
     provider: str = ""
     transcript_dir: Path | None = None
+    mcp_optimized: Any = None      # OptimizedModel | None — populated by W8.1
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         """Forward to ``CompiledModel.__call__`` so the result is benchmark-ready."""
@@ -214,6 +217,9 @@ def compile_with_llm(
     with_recipe: bool = True,
     transcript_dir: str | Path | None = None,
     return_driver: bool = False,
+    mcp_session: tuple[Any, str] | None = None,
+    mcp_contracts: Any = None,
+    mcp_perf_budget_us: float | None = None,
 ) -> LLMCompileResult:
     """Compile ``model`` for ``target`` driven by ``llm``.
 
@@ -321,12 +327,32 @@ def compile_with_llm(
             budget=budget,
         )
 
+    # Stage 5 (W8.1): when an MCP session + contracts were supplied, run
+    # the agentic ``optimize_via_mcp`` loop on top. Every dispatch /
+    # codegen / bench decision routes through Claude Code via the MCP
+    # tool family.
+    mcp_optimized: Any = None
+    if mcp_session is not None and mcp_contracts:
+        from compgen.agent.mcp_optimizer import optimize_via_mcp
+        sm, sid = mcp_session
+        log.info("api_llm.mcp_optimize.start", target=dev.profile.name,
+                 contracts=len(mcp_contracts))
+        mcp_optimized = optimize_via_mcp(
+            model_fn=None, target=dev.profile.name,
+            contracts=mcp_contracts, sm=sm, session_id=sid,
+            perf_budget_us=mcp_perf_budget_us,
+        )
+        log.info("api_llm.mcp_optimize.done",
+                 decisions=len(mcp_optimized.decisions),
+                 cache_hits=sum(1 for d in mcp_optimized.decisions if d.cached))
+
     return LLMCompileResult(
         compiled=compiled,
         llm_result=llm_result,
         driver=driver,
         provider=provider,
         transcript_dir=transcript_root,
+        mcp_optimized=mcp_optimized,
     )
 
 

@@ -48,6 +48,24 @@ class McpSession:
     spec_path: Path | None = None
     packs: tuple[str, ...] = ()
     metadata: dict[str, Any] = field(default_factory=dict)
+    # In-session kernel-codegen state. Populated by the
+    # ``request_kernel_codegen`` / ``register_kernel_result`` MCP tools so
+    # ``ClaudeCodeKernelProvider`` can fulfill kernel requests by reading
+    # this cache instead of calling an external Anthropic API.
+    kernel_cache: Any = None  # set lazily; see compgen.mcp.tools.kernel._kernel_cache
+    # In-session HW-aware-dispatch state (W6.4). Populated by the
+    # ``request_dispatch_decision`` / ``register_dispatch_decision`` tools
+    # so the ``McpDispatchLLM`` adapter can route W6's ``decide_dispatch``
+    # through Claude Code instead of an external API.
+    dispatch_cache: Any = None
+    # In-session bench cache (W7.1) — see compgen.mcp.tools.bench._bench_cache
+    bench_cache: Any = None
+    # Per-session optimisation progress tracker (W7.3)
+    optim_progress: Any = None
+    # In-session refinement cache (W8.2) — see compgen.mcp.tools.refinement
+    refinement_cache: Any = None
+    # In-session autotune cache (W8.3) — see compgen.mcp.tools.autotune
+    autotune_cache: Any = None
 
     def require_device(self) -> CompGenDevice:
         if self.device is None:

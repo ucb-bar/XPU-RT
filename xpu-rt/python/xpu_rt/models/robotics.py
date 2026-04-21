@@ -65,6 +65,26 @@ def load_smolvla_bundle(
     )
     _ensure_sys_path(root)
 
+    # ``understanding_pi0`` imports ``lerobot``; if it isn't installed
+    # in the active venv, resolve the sibling source checkout and add
+    # its ``src/`` to sys.path so the import works.
+    try:
+        import lerobot  # noqa: F401
+    except ImportError:
+        try:
+            lerobot_root = _resolve_existing_root(
+                workspace,
+                keys=("lerobot",),
+                defaults=(
+                    "/scratch2/agustin/merlin/third_party/lerobot",
+                    "/scratch2/agustin/experimental/Understanding-PI0/lerobot",
+                ),
+            )
+            lerobot_src = lerobot_root / "src"
+            _ensure_sys_path(lerobot_src if lerobot_src.exists() else lerobot_root)
+        except FileNotFoundError:
+            pass  # falls through; the next import will raise the original error
+
     # Bypass lerobot.policies.__init__ which imports the broken GR00T dataclass.
     # We directly import the smolvla submodule without triggering the full
     # policy registry.

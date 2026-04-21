@@ -17,6 +17,22 @@ from compgen.agent.patterns import FXNodeInfo, extract_fx_nodes, match_patterns
 from compgen.targets.schema import TargetProfile
 
 
+def _to_concrete_int(value: Any) -> int:
+    """Coerce ``value`` to ``int`` if possible, falling back to ``0``.
+
+    ``cluster.total_bytes`` / ``node.bytes_total`` carry ``SymInt`` for
+    models with dynamic shapes (SmolVLA's image-tile counts, etc.).
+    Downstream dossier code does numeric comparisons (``max(...)``,
+    division, ordering), which trigger ``GuardOnDataDependentSymNode``
+    on un-specialized SymInts. We coerce at the ingest boundary so the
+    rest of the analyzer stays pure-int.
+    """
+    try:
+        return int(value)
+    except Exception:
+        return 0
+
+
 @dataclass(frozen=True)
 class PatternCluster:
     """A group of ops forming a recognized computation pattern.
@@ -300,8 +316,8 @@ class NetworkAnalyzer:
         region_node_names: dict[str, tuple[str, ...]] = {}
 
         for cluster in clusters:
-            region_bytes[cluster.cluster_id] = cluster.total_bytes
-            region_flops[cluster.cluster_id] = cluster.total_flops
+            region_bytes[cluster.cluster_id] = _to_concrete_int(cluster.total_bytes)
+            region_flops[cluster.cluster_id] = _to_concrete_int(cluster.total_flops)
             region_kind[cluster.cluster_id] = cluster.pattern_type
             region_best_device[cluster.cluster_id] = cluster.best_device
             region_node_names[cluster.cluster_id] = cluster.node_names
@@ -312,8 +328,8 @@ class NetworkAnalyzer:
             if node.name in node_to_region:
                 continue
             node_to_region[node.name] = node.name
-            region_bytes[node.name] = node.bytes_total
-            region_flops[node.name] = node.flops
+            region_bytes[node.name] = _to_concrete_int(node.bytes_total)
+            region_flops[node.name] = _to_concrete_int(node.flops)
             region_kind[node.name] = node.target
             region_best_device[node.name] = target.devices[0].name if target.devices else ""
             region_node_names[node.name] = (node.name,)

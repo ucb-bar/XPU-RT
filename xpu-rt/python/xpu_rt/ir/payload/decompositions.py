@@ -28,6 +28,31 @@ from xdsl.dialects.tensor import EmptyOp
 from xdsl.ir import Operation, SSAValue
 
 
+def _static_shape(shape_like: Any) -> list[int]:
+    """Coerce a sequence of possibly-symbolic dims to xDSL-friendly ints.
+
+    ``torch.export`` may emit ``SymInt`` dims (rendered as ``u6`` etc.)
+    when the graph is traced under data-dependent or unbacked shape
+    constraints (e.g. SmolVLA's image-tile counts). xDSL's
+    :class:`TensorType` only accepts :class:`builtin.int`; a symbolic dim
+    would otherwise surface as ``VerifyException: u6 should be of base
+    attribute builtin.int``.
+
+    This helper mirrors the more-narrow
+    :func:`compgen.ir.payload.import_fx._coerce_static_dim`. Symbolic
+    dims become xDSL's dynamic-dim sentinel (``-1``) so import
+    completes; downstream passes that need static shapes handle the
+    dynamic case through their own paths.
+    """
+    out: list[int] = []
+    for dim in shape_like:
+        try:
+            out.append(int(dim))
+        except Exception:
+            out.append(-1)
+    return out
+
+
 @dataclass
 class DecompResult:
     """Result of decomposing one FX node into xDSL ops.
@@ -114,7 +139,7 @@ def decompose_linear(
 
     # Get result type from metadata
     val: Any = meta["val"]
-    result_type = TensorType(Float32Type(), list(val.shape))
+    result_type = TensorType(Float32Type(), _static_shape(val.shape))
 
     # Step 1: Transpose weight [N, K] -> [K, N]
     w_type = w.type
@@ -170,7 +195,7 @@ def decompose_gelu(
     from xdsl.dialects.func import CallOp
 
     val: Any = meta["val"]
-    result_type = TensorType(Float32Type(), list(val.shape))
+    result_type = TensorType(Float32Type(), _static_shape(val.shape))
 
     # Create external function declaration for gelu
     # (In later phase, this becomes a linalg.generic with the GELU body)
@@ -181,22 +206,100 @@ def decompose_gelu(
     return DecompResult(ops=[call], result=call.res[0], region_ids=[rid])
 
 
+def _coerce_static_dim(d: Any) -> int:
+    try:
+        return int(d)
+    except Exception:
+        return -1
+
+
+def _scalar_to_tensor(scalar: Any, like_type: TensorType) -> tuple[list[Operation], SSAValue]:
+    """Materialize a Python scalar as a constant tensor matching ``like_type``.
+
+    Returns ``(ops_to_emit, ssa_value_to_use_as_operand)``.
+
+    xDSL's ``DenseIntOrFPElementsAttr.from_list`` packs data through the
+    element type's ``pack`` method. Some element types (notably
+    ``BFloat16Type`` as of xDSL 0.24) raise ``NotImplementedError`` in
+    ``pack`` — SmolVLA's vision tower carries bf16 weights, so we hit
+    this on import. The fallback below materialises the constant as f32
+    and emits an ``arith.truncf`` / ``arith.extf`` cast when the target
+    element type differs, keeping the IR well-typed.
+    """
+    from xdsl.dialects.arith import ConstantOp
+    from xdsl.dialects.builtin import DenseIntOrFPElementsAttr, IntegerType
+
+    elem = like_type.element_type
+    is_int = isinstance(elem, IntegerType)
+    data = [int(scalar)] if is_int else [float(scalar)]
+    try:
+        attr = DenseIntOrFPElementsAttr.from_list(like_type, data)
+        const = ConstantOp(attr, like_type)
+        return [const], const.result
+    except NotImplementedError:
+        pass
+
+    # Pack fallback: build the constant in f32 and cast to the target.
+    # Emits an opaque ``func.call @_compgen_cast`` rather than an xDSL
+    # arith cast, because the linalg-on-tensor cast path would require
+    # shape-aware loop nests that we don't have here. The cast call
+    # carries a ``compgen.cast_to`` attribute so downstream passes can
+    # lower it alongside the rest of the opaque fallbacks.
+    from xdsl.dialects.func import CallOp
+
+    f32_like = TensorType(Float32Type(), like_type.get_shape())
+    f32_attr = DenseIntOrFPElementsAttr.from_list(f32_like, [float(scalar)])
+    f32_const = ConstantOp(f32_attr, f32_like)
+    cast = CallOp("_compgen_cast_scalar", [f32_const.result], [like_type])
+    cast.attributes["compgen.cast_to"] = StringAttr(str(elem))
+    return [f32_const, cast], cast.res[0]
+
+
+def _binary_operands(operands: list[SSAValue], meta: dict[str, Any]) -> tuple[list[Operation], SSAValue, SSAValue]:
+    """Resolve a binary aten op's two operands, materializing a scalar second
+    operand from FX args when only one SSA value was supplied.
+
+    Pre-fix this raised ``IndexError: list index out of range`` for
+    ``aten.add.Tensor(tensor, scalar_int)`` because the scalar arrives as
+    a Python int via ``meta['_fx_args']`` rather than as an SSA operand.
+    """
+    if len(operands) >= 2:
+        return [], operands[0], operands[1]
+    if len(operands) == 1:
+        # Scalar second operand — broadcastable constant of result dtype.
+        val: Any = meta["val"]
+        elem = _element_type_from_meta(meta)
+        # 1-element tensor; the elementwise add will broadcast against it.
+        like = TensorType(elem, [1])
+        scalar = _fx_arg(meta, 1, 0)
+        ops, ssa = _scalar_to_tensor(scalar, like)
+        return ops, operands[0], ssa
+    raise IndexError("binary op with zero SSA operands")
+
+
 def decompose_add_tensor(
     operands: list[SSAValue],
     meta: dict[str, Any],
     node_name: str,
 ) -> DecompResult:
-    """Decompose aten.add.Tensor(a, b) -> element-wise add."""
+    """Decompose aten.add.Tensor(a, b) -> element-wise add.
+
+    Handles the (tensor, scalar) form by materialising the scalar as a
+    1-element constant tensor of the result dtype.
+    """
     from xdsl.dialects.func import CallOp
 
     val: Any = meta["val"]
-    result_type = TensorType(Float32Type(), list(val.shape))
+    elem = _element_type_from_meta(meta)
+    result_type = TensorType(elem, [_coerce_static_dim(d) for d in val.shape])
+
+    pre, lhs, rhs = _binary_operands(operands, meta)
 
     rid = _next_region_id("add")
-    call = CallOp("aten_add", [operands[0], operands[1]], [result_type])
+    call = CallOp("aten_add", [lhs, rhs], [result_type])
     _attach_region_id(call, rid)
 
-    return DecompResult(ops=[call], result=call.res[0], region_ids=[rid])
+    return DecompResult(ops=[*pre, call], result=call.res[0], region_ids=[rid])
 
 
 def decompose_mul_tensor(
@@ -204,17 +307,23 @@ def decompose_mul_tensor(
     meta: dict[str, Any],
     node_name: str,
 ) -> DecompResult:
-    """Decompose aten.mul.Tensor(a, b) -> element-wise mul."""
+    """Decompose aten.mul.Tensor(a, b) -> element-wise mul.
+
+    Handles the (tensor, scalar) form like ``decompose_add_tensor``.
+    """
     from xdsl.dialects.func import CallOp
 
     val: Any = meta["val"]
-    result_type = TensorType(Float32Type(), list(val.shape))
+    elem = _element_type_from_meta(meta)
+    result_type = TensorType(elem, [_coerce_static_dim(d) for d in val.shape])
+
+    pre, lhs, rhs = _binary_operands(operands, meta)
 
     rid = _next_region_id("mul")
-    call = CallOp("aten_mul", [operands[0], operands[1]], [result_type])
+    call = CallOp("aten_mul", [lhs, rhs], [result_type])
     _attach_region_id(call, rid)
 
-    return DecompResult(ops=[call], result=call.res[0], region_ids=[rid])
+    return DecompResult(ops=[*pre, call], result=call.res[0], region_ids=[rid])
 
 
 def decompose_mm(
@@ -224,7 +333,7 @@ def decompose_mm(
 ) -> DecompResult:
     """Decompose aten.mm.default(a, b) -> linalg.matmul."""
     val: Any = meta["val"]
-    result_type = TensorType(Float32Type(), list(val.shape))
+    result_type = TensorType(Float32Type(), _static_shape(val.shape))
 
     mm_empty = _make_empty(result_type)
     matmul = MatmulOp(
@@ -245,7 +354,7 @@ def decompose_transpose(
 ) -> DecompResult:
     """Decompose aten.t.default(input) -> linalg.transpose."""
     val: Any = meta["val"]
-    result_type = TensorType(Float32Type(), list(val.shape))
+    result_type = TensorType(Float32Type(), _static_shape(val.shape))
 
     t_empty = _make_empty(result_type)
     perm = DenseArrayBase.from_list(i64, [1, 0])
@@ -270,7 +379,7 @@ def decompose_permute(
 
     operand_type = operands[0].type
     val: Any = meta["val"]
-    result_shape = list(val.shape)
+    result_shape = _static_shape(val.shape)
     if not isinstance(operand_type, TensorType):
         dims = None
     else:
@@ -280,7 +389,7 @@ def decompose_permute(
     if dims != (1, 0):
         from xdsl.dialects.func import CallOp
 
-        result_type = TensorType(Float32Type(), list(val.shape))
+        result_type = TensorType(Float32Type(), _static_shape(val.shape))
         rid = _next_region_id("permute")
         call = CallOp("aten_permute", [operands[0]], [result_type])
         _attach_region_id(call, rid)
@@ -299,7 +408,7 @@ def decompose_addmm(
     from xdsl.dialects.func import CallOp
 
     val: Any = meta["val"]
-    result_type = TensorType(Float32Type(), list(val.shape))
+    result_type = TensorType(Float32Type(), _static_shape(val.shape))
     ops: list[Operation] = []
     region_ids: list[str] = []
 
@@ -355,7 +464,7 @@ def _opaque_decomp(
     from xdsl.dialects.func import CallOp
 
     val: Any = meta["val"]
-    result_type = TensorType(Float32Type(), list(val.shape))
+    result_type = TensorType(Float32Type(), _static_shape(val.shape))
     rid = _next_region_id(region_prefix)
     call = CallOp(op_name, operands, [result_type])
     _attach_region_id(call, rid)
@@ -370,7 +479,7 @@ def _opaque_decomp(
 def decompose_bmm(operands, meta, node_name):
     """aten.bmm.default(a, b) -> linalg.batch_matmul."""
     val: Any = meta["val"]
-    result_type = TensorType(Float32Type(), list(val.shape))
+    result_type = TensorType(Float32Type(), _static_shape(val.shape))
 
     # We don't have a dedicated BatchMatmulOp in the xdsl dialect here;
     # emit as opaque call but with a canonical hint so the propagation
@@ -663,7 +772,7 @@ def decompose_matmul(operands, meta, node_name):
             and len(list(lhs_type.get_shape())) == 2
             and len(list(rhs_type.get_shape())) == 2
         ):
-            result_type = TensorType(Float32Type(), list(shape))
+            result_type = TensorType(Float32Type(), _static_shape(shape))
             init = _make_empty(result_type)
             mm = MatmulOp(
                 inputs=[lhs, rhs],
@@ -686,6 +795,115 @@ def decompose_matmul(operands, meta, node_name):
         meta,
         "matmul",
         pattern_hint=hint,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Wave 7 — TinyLlama opaque-tail closure: 10 new families that previously
+# fell through to the unhinted opaque fallback. Each emits a typed
+# func.call with a pattern_hint so the kernel selector recognises them
+# as members of a known family (not unknown-tail).
+# ---------------------------------------------------------------------------
+
+
+def decompose_to_copy(operands, meta, node_name):
+    """aten._to_copy.default — dtype/device cast. Emits a DTYPE_CAST kernel."""
+    return _opaque_decomp(
+        "aten_to_dtype", operands[:1], meta, "cast", pattern_hint="dtype_cast"
+    )
+
+
+def decompose_where_self(operands, meta, node_name):
+    """aten.where.self(condition, x, y) — elementwise selection."""
+    return _opaque_decomp(
+        "aten_where", operands[:3], meta, "select", pattern_hint="where"
+    )
+
+
+def decompose_scalar_tensor(operands, meta, node_name):
+    """aten.scalar_tensor.default(value, ...) — 0-rank constant fill."""
+    return _opaque_decomp(
+        "aten_scalar_tensor", [], meta, "fill", pattern_hint="fill"
+    )
+
+
+def decompose_full_like(operands, meta, node_name):
+    """aten.full_like.default(input, fill_value, ...) — same-shape fill."""
+    return _opaque_decomp(
+        "aten_full_like", operands[:1], meta, "fill", pattern_hint="fill"
+    )
+
+
+def decompose_full(operands, meta, node_name):
+    """aten.full.default(size, fill_value, ...) — explicit-shape fill."""
+    return _opaque_decomp(
+        "aten_full", [], meta, "fill", pattern_hint="fill"
+    )
+
+
+def decompose_arange(operands, meta, node_name):
+    """aten.arange.start_step(start, end, step, ...) — index generator."""
+    return _opaque_decomp(
+        "aten_arange", [], meta, "arange", pattern_hint="arange"
+    )
+
+
+def decompose_logical_not(operands, meta, node_name):
+    """aten.logical_not.default — pointwise boolean NOT."""
+    return _opaque_decomp(
+        "aten_logical_not", operands[:1], meta, "logical", pattern_hint="logical_not"
+    )
+
+
+def decompose_bitwise_and(operands, meta, node_name):
+    """aten.bitwise_and.Tensor — pointwise bitwise AND."""
+    return _opaque_decomp(
+        "aten_bitwise_and", operands[:2], meta, "bitwise", pattern_hint="bitwise_and"
+    )
+
+
+def decompose_any_dim(operands, meta, node_name):
+    """aten.any.dim(input, dim, keepdim) — boolean OR reduction along dim."""
+    return _opaque_decomp(
+        "aten_any_dim", operands[:1], meta, "bool_reduce", pattern_hint="bool_reduce"
+    )
+
+
+def decompose_index_tensor(operands, meta, node_name):
+    """aten.index.Tensor — multi-dim gather. Operand 0 is source; index
+    tensors arrive via meta['_fx_args'][1] as a list."""
+    # Forward only the source SSA value; the index list is a Python list of
+    # tensors that the kernel will receive via the contract metadata.
+    return _opaque_decomp(
+        "aten_index", operands[:1], meta, "gather", pattern_hint="gather"
+    )
+
+
+def decompose_compare(operands, meta, node_name):
+    """aten.{eq,ne,le,lt,gt,ge}.{Tensor,Scalar} — pointwise comparison."""
+    return _opaque_decomp(
+        "aten_compare", operands[:2], meta, "compare", pattern_hint="compare"
+    )
+
+
+def decompose_cos(operands, meta, node_name):
+    """aten.cos.default — pointwise cosine (RoPE)."""
+    return _opaque_decomp(
+        "aten_cos", operands[:1], meta, "trig", pattern_hint="cos"
+    )
+
+
+def decompose_sin(operands, meta, node_name):
+    """aten.sin.default — pointwise sine (RoPE)."""
+    return _opaque_decomp(
+        "aten_sin", operands[:1], meta, "trig", pattern_hint="sin"
+    )
+
+
+def decompose_cumsum(operands, meta, node_name):
+    """aten.cumsum.default — prefix sum along dim."""
+    return _opaque_decomp(
+        "aten_cumsum", operands[:1], meta, "scan", pattern_hint="cumsum"
     )
 
 
@@ -810,7 +1028,7 @@ def decompose_quantize_per_tensor(operands, meta, node_name):
 
     val: Any = meta["val"]
     elem = _element_type_from_meta(meta)
-    result_type = TensorType(elem, list(val.shape))
+    result_type = TensorType(elem, _static_shape(val.shape))
 
     # Require at least input + scale + zero_point as SSA operands. In
     # the real FX path these all exist; in unit tests the caller passes
@@ -852,7 +1070,7 @@ def decompose_dequantize_per_tensor(operands, meta, node_name):
 
     val: Any = meta["val"]
     elem = _element_type_from_meta(meta)
-    result_type = TensorType(elem, list(val.shape))
+    result_type = TensorType(elem, _static_shape(val.shape))
 
     if len(operands) < 3:
         raise IndexError(f"decompose_dequantize_per_tensor expects input + scale + zero_point, got {len(operands)}")
@@ -891,7 +1109,7 @@ def decompose_quantize_per_channel(operands, meta, node_name):
 
     val: Any = meta["val"]
     elem = _element_type_from_meta(meta)
-    result_type = TensorType(elem, list(val.shape))
+    result_type = TensorType(elem, _static_shape(val.shape))
 
     if len(operands) < 3:
         raise IndexError(f"decompose_quantize_per_channel expects input + scales + zero_points, got {len(operands)}")
@@ -931,7 +1149,7 @@ def decompose_dequantize_per_channel(operands, meta, node_name):
 
     val: Any = meta["val"]
     elem = _element_type_from_meta(meta)
-    result_type = TensorType(elem, list(val.shape))
+    result_type = TensorType(elem, _static_shape(val.shape))
 
     if len(operands) < 3:
         raise IndexError(f"decompose_dequantize_per_channel expects input + scales + zero_points, got {len(operands)}")
@@ -972,7 +1190,7 @@ def decompose_quantize_per_group(operands, meta, node_name):
 
     val: Any = meta["val"]
     elem = _element_type_from_meta(meta)
-    result_type = TensorType(elem, list(val.shape))
+    result_type = TensorType(elem, _static_shape(val.shape))
 
     if len(operands) < 3:
         raise IndexError(f"decompose_quantize_per_group expects input + scales + zero_points, got {len(operands)}")
@@ -1011,7 +1229,7 @@ def decompose_dequantize_per_group(operands, meta, node_name):
 
     val: Any = meta["val"]
     elem = _element_type_from_meta(meta)
-    result_type = TensorType(elem, list(val.shape))
+    result_type = TensorType(elem, _static_shape(val.shape))
 
     if len(operands) < 3:
         raise IndexError(f"decompose_dequantize_per_group expects input + scales + zero_points, got {len(operands)}")
@@ -1048,7 +1266,7 @@ def decompose_weight_int8pack_mm(operands, meta, node_name):
 
     val: Any = meta["val"]
     elem = _element_type_from_meta(meta)
-    result_type = TensorType(elem, list(val.shape))
+    result_type = TensorType(elem, _static_shape(val.shape))
 
     if len(operands) < 3:
         raise IndexError(f"decompose_weight_int8pack_mm expects input + weight + scales, got {len(operands)}")
@@ -1080,7 +1298,7 @@ def decompose_weight_int4pack_mm(operands, meta, node_name):
 
     val: Any = meta["val"]
     elem = _element_type_from_meta(meta)
-    result_type = TensorType(elem, list(val.shape))
+    result_type = TensorType(elem, _static_shape(val.shape))
 
     if len(operands) == 3:
         tensor_operands = [operands[0], operands[1], operands[2]]
@@ -1119,7 +1337,7 @@ def decompose_weight_int4pack_qm(operands, meta, node_name):
 
     val: Any = meta["val"]
     elem = _element_type_from_meta(meta)
-    result_type = TensorType(elem, list(val.shape))
+    result_type = TensorType(elem, _static_shape(val.shape))
 
     tensor_operands = [o for o in operands if hasattr(o, "type") and isinstance(o.type, TensorType)]
     if len(tensor_operands) < 3:
@@ -1195,7 +1413,7 @@ def decompose_choose_qparams_per_channel(operands, meta, node_name):
     # For channel qparams we produce two 1-D vectors of size C along
     # the channel axis. When the test fixture lacks a concrete shape
     # we fall back to rank-0 scalars so the op still verifies.
-    shape = list(val.shape) if val is not None and hasattr(val, "shape") else []
+    shape = _static_shape(val.shape) if val is not None and hasattr(val, "shape") else []
     scale_type = TensorType(Float32Type(), shape)
     zp_type = TensorType(IntegerType(64), shape)
 
@@ -1291,6 +1509,34 @@ DECOMPOSITION_TABLE: dict[str, DecompFn] = {
     "quantized_decomposed.dequantize_per_channel.default": decompose_dequantize_per_channel,
     "quantized_decomposed.quantize_per_group_along_last_dim.default": decompose_quantize_per_group,
     "quantized_decomposed.dequantize_per_group_along_last_dim.default": decompose_dequantize_per_group,
+    # --- wave 7: TinyLlama opaque-tail closure (10 new families) ---
+    "aten._to_copy.default": decompose_to_copy,
+    "aten.where.self": decompose_where_self,
+    "aten.scalar_tensor.default": decompose_scalar_tensor,
+    "aten.full_like.default": decompose_full_like,
+    "aten.full.default": decompose_full,
+    "aten.arange.start_step": decompose_arange,
+    "aten.arange.default": decompose_arange,
+    "aten.logical_not.default": decompose_logical_not,
+    "aten.bitwise_and.Tensor": decompose_bitwise_and,
+    "aten.any.dim": decompose_any_dim,
+    "aten.index.Tensor": decompose_index_tensor,
+    # Comparisons + trig + scan (RoPE / mask construction)
+    "aten.eq.Scalar": decompose_compare,
+    "aten.eq.Tensor": decompose_compare,
+    "aten.ne.Scalar": decompose_compare,
+    "aten.ne.Tensor": decompose_compare,
+    "aten.le.Scalar": decompose_compare,
+    "aten.le.Tensor": decompose_compare,
+    "aten.lt.Scalar": decompose_compare,
+    "aten.lt.Tensor": decompose_compare,
+    "aten.gt.Scalar": decompose_compare,
+    "aten.gt.Tensor": decompose_compare,
+    "aten.ge.Scalar": decompose_compare,
+    "aten.ge.Tensor": decompose_compare,
+    "aten.cos.default": decompose_cos,
+    "aten.sin.default": decompose_sin,
+    "aten.cumsum.default": decompose_cumsum,
 }
 
 

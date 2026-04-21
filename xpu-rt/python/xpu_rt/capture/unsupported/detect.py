@@ -22,12 +22,30 @@ class UnsupportedOperatorIssue:
     example_output: ExampleTensorInfo | None = None
 
 
+def _coerce_dim(dim: Any) -> int:
+    """Return ``int(dim)`` when concrete, ``-1`` for symbolic / data-dependent
+    dims that can't be specialized (e.g. SmolVLA's dynamic image-tile counts).
+
+    Without the guard, calling ``int(SymInt(u6))`` during shape introspection
+    raises ``GuardOnDataDependentSymNode`` and aborts the entire export.
+    Capture-side metadata only needs concrete shapes for diagnostics, so a
+    sentinel is the right trade-off.
+    """
+    try:
+        return int(dim)
+    except Exception:
+        return -1
+
+
 def _tensor_info(value: Any) -> ExampleTensorInfo | None:
     if not hasattr(value, "shape") or not hasattr(value, "dtype"):
         return None
-    stride = tuple(value.stride()) if hasattr(value, "stride") else ()
+    try:
+        stride = tuple(value.stride()) if hasattr(value, "stride") else ()
+    except Exception:
+        stride = ()
     return ExampleTensorInfo(
-        shape=tuple(int(dim) for dim in value.shape),
+        shape=tuple(_coerce_dim(dim) for dim in value.shape),
         dtype=str(value.dtype).replace("torch.", ""),
         stride=stride,
     )

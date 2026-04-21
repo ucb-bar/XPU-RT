@@ -99,7 +99,10 @@ def test_strict_import_uses_synthesized_translation_from_capture_artifact() -> N
     errors = [diag for diag in diags if diag.level == "error"]
     assert errors == []
     ir_text = FXImporter().get_ir_text(module)
-    assert "func.call @aten_sin_default" in ir_text
+    # Either the wave-7 typed decomp (``@aten_sin`` + ``compgen._pattern_hint``)
+    # or the legacy opaque-fallback shape (``@aten_sin_default``) satisfies
+    # the contract: a synthesized translation lands for sin.
+    assert "func.call @aten_sin" in ir_text
 
 
 # ---------------------------------------------------------------------------
@@ -131,3 +134,22 @@ def test_import_reconciles_func_signature_with_body_return_type() -> None:
     # Must verify — if reconciliation regressed, this raises
     # VerifyException("Expected arguments to have the same types as ...").
     module.verify()
+
+
+def test_coerce_static_dim_keeps_concrete_dims() -> None:
+    from compgen.ir.payload.import_fx import _coerce_static_dim
+    assert _coerce_static_dim(7) == 7
+    assert _coerce_static_dim(0) == 0
+
+
+def test_coerce_static_dim_falls_back_to_negative_one_for_symbolic_dim() -> None:
+    """Models with dynamic shapes (e.g. SmolVLA's image tile counts) carry
+    SymInt dims that ``int(...)`` cannot specialize. We emit -1 so xDSL's
+    TensorType verifier accepts them as dynamic, and capture continues."""
+    from compgen.ir.payload.import_fx import _coerce_static_dim
+
+    class _Symish:
+        def __int__(self) -> int:
+            raise RuntimeError("data-dependent SymInt — can't specialize")
+
+    assert _coerce_static_dim(_Symish()) == -1

@@ -36,8 +36,25 @@ def run_smolvla_compile(
     *,
     target_profile: Path = TARGET_PROFILE,
     budget: int = 4,
+    max_verification_obligations: int = 200,
 ):
+    """Drive ``compile_with_llm`` on real SmolVLA.
+
+    SmolVLA emits ~7741 verification obligations whose full SMT ladder
+    takes hours; for smoke runs we cap them via the
+    ``COMPGEN_MAX_VERIFICATION_OBLIGATIONS`` env var honoured by
+    ``RecipeExecutor._execute_verifications``. Pass
+    ``max_verification_obligations=0`` (or any non-positive value) to run
+    the full ladder.
+    """
+    import os
+
     from compgen.models import load_smolvla_bundle
+
+    if max_verification_obligations and max_verification_obligations > 0:
+        os.environ["COMPGEN_MAX_VERIFICATION_OBLIGATIONS"] = str(
+            max_verification_obligations
+        )
 
     wrapper, flat_inputs, _num_cams = load_smolvla_bundle(device="cpu")
     return compile_with_llm(

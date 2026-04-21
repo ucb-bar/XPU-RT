@@ -231,7 +231,20 @@ def capture_model(
     try:
         exported = torch.export.export(model, sample_inputs, **kwargs)
     except Exception as first_err:
-        if "FakeTensor" in str(first_err) or "device" in str(first_err).lower():
+        msg = str(first_err)
+        # Retry under non-strict for known recoverable failure modes:
+        #  * FakeTensor / device-propagation issues
+        #  * GuardOnDataDependentSymNode — strict mode rejects size-like
+        #    symbolic shapes that show up in models doing dynamic image
+        #    tile counts (e.g. SmolVLA / SmolVLM); non-strict mode
+        #    accepts them as runtime guards.
+        recoverable = (
+            "FakeTensor" in msg
+            or "device" in msg.lower()
+            or "GuardOnDataDependentSymNode" in msg
+            or "data-dependent" in msg
+        )
+        if recoverable:
             kwargs["strict"] = False
             exported = torch.export.export(model, sample_inputs, **kwargs)
         else:

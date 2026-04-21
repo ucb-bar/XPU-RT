@@ -161,3 +161,24 @@ class TestSegmentation:
         segments = segment_module(module, threshold=3)
         ids = [s.segment_id for s in segments]
         assert len(ids) == len(set(ids))
+
+
+def test_segment_function_handles_multi_block_func_body() -> None:
+    """A real HF Llama capture emits func bodies with multiple blocks
+    (e.g. attention-mask conditionals). The segmenter must walk every
+    block, not assume single-block via ``Region.block``."""
+    from xdsl.dialects.builtin import IntegerType
+    from xdsl.dialects.builtin import IntegerAttr
+
+    i32 = IntegerType(32)
+    b0 = Block()
+    b1 = Block()
+    b0.add_op(arith.ConstantOp(IntegerAttr(0, i32)))
+    b1.add_op(func.ReturnOp())
+    region = Region([b0, b1])
+    func_op = func.FuncOp("multi_block", ((), ()), region)
+    # Pre-fix this raised:
+    #   ValueError: 'block' property of Region class is only available
+    #               for single-block regions.
+    segments = segment_function(func_op)
+    assert isinstance(segments, list)

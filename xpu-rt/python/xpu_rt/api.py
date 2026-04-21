@@ -404,9 +404,96 @@ def compile_model(
     )
 
 
+def compile_with_vendor(
+    model: nn.Module,
+    vendor_adapter: Any,
+    *,
+    sample_inputs: tuple[Any, ...] | None = None,
+    output_dir: str | Path | None = None,
+    options: dict[str, Any] | None = None,
+) -> Any:
+    """Drive end-to-end compilation of a PyTorch model onto a vendor dialect.
+
+    ``vendor_adapter`` is an instance of
+    :class:`compgen.extensions.vendor_dialect.VendorDialectAdapter` —
+    typically obtained via
+    :func:`compgen.extensions.vendor_dialect.get_adapter` after the
+    user-space package has been ``pip install``-ed. The helper performs:
+
+    1. Stage 0 capture (``torch.export``) and Stage 1 import (FX → Payload IR)
+       using the same code paths as :func:`compile_model`.
+    2. Serializes the Payload IR to text.
+    3. Hands the text to ``vendor_adapter.compile(...)`` which drives
+       the vendor-specific lowering + bundling.
+
+    Args:
+        model: PyTorch module.
+        vendor_adapter: The registered vendor adapter.
+        sample_inputs: Inputs for ``torch.export`` (default: random 1x64).
+        output_dir: Where vendor artifacts are written. Defaults to a
+            ``/tmp/compgen_<vendor>_<n>`` directory.
+        options: Adapter-specific options forwarded to ``compile()``.
+
+    Returns:
+        A :class:`compgen.targets.backend.CompiledArtifact` with the
+        vendor output and metadata.
+    """
+    from compgen.extensions.vendor_dialect.adapter import VendorDialectAdapter
+
+    if not isinstance(vendor_adapter, VendorDialectAdapter):
+        raise TypeError(
+            f"vendor_adapter must be a VendorDialectAdapter, got {type(vendor_adapter).__name__}"
+        )
+    if sample_inputs is None:
+        sample_inputs = (torch.randn(1, 64),)
+
+    log.info(
+        "api.compile_with_vendor.start",
+        model=type(model).__name__,
+        vendor=vendor_adapter.name,
+        target=vendor_adapter.target,
+    )
+
+    capture_artifact = capture_frontend_artifact(model, sample_inputs)
+    module, _ = fx_to_xdsl(
+        capture_artifact.exported_program,
+        **capture_artifact.strict_import_options(),
+    )
+    payload_mlir = _module_to_text(module)
+
+    out_dir = (
+        Path(output_dir).expanduser().resolve()
+        if output_dir is not None
+        else Path(f"/tmp/compgen_{vendor_adapter.name}_{id(model)}")
+    )
+    out_dir.mkdir(parents=True, exist_ok=True)
+    (out_dir / "payload.mlir").write_text(payload_mlir)
+
+    artifact = vendor_adapter.compile(payload_mlir, output_dir=out_dir, options=options or {})
+    log.info(
+        "api.compile_with_vendor.done",
+        vendor=vendor_adapter.name,
+        format=artifact.format,
+        output_dir=str(out_dir),
+    )
+    return artifact
+
+
+def _module_to_text(module: ModuleOp) -> str:
+    """Best-effort xDSL ModuleOp → MLIR text."""
+    from io import StringIO
+
+    from xdsl.printer import Printer
+
+    buf = StringIO()
+    Printer(stream=buf).print_op(module)
+    return buf.getvalue()
+
+
 __all__ = [
     "CompGenDevice",
     "CompiledModel",
     "compile_model",
+    "compile_with_vendor",
     "device",
 ]
