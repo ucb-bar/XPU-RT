@@ -145,9 +145,8 @@ sudo docker build -f Dockerfile.qnn-convert -t qnn-convert .
 ```
 
 **Qualcomm AI Engine Direct SDK** (QNN / QAIRT) v2.45.0:
-
 ```
-/scratch2/dima/misc_sw/qualcomm/qairt/2.45.0.260326/
+/scratch2/usr/misc_sw/qualcomm/qairt/2.45.0.260326/
 ├── bin/x86_64-linux-clang/
 │   ├── snpe-onnx-to-dlc        # ONNX -> DLC converter
 │   ├── snpe-tflite-to-dlc      # TFLite -> DLC converter
@@ -156,8 +155,16 @@ sudo docker build -f Dockerfile.qnn-convert -t qnn-convert .
     ├── python/                  # Python bindings (used inside Docker)
     └── x86_64-linux-clang/      # Host-side native libraries
 ```
+The SDK is automatically downloaded and installed inside the Docker image
+during the first build (from the Qualcomm Software Center).  No host-side
+SDK installation is required for model conversion.
 
-To use a different SDK version or path, edit `QNN_SDK=` in `deploy.sh`.
+To use a different SDK version, edit the `QNN_SDK_URL` build arg in
+`Dockerfile.qnn-convert` and rebuild the image:
+
+```bash
+sudo docker build -f Dockerfile.qnn-convert -t qnn-convert .
+```
 
 ### 2. QRB5165 Board
 
@@ -194,7 +201,14 @@ scp $QNN_SDK/lib/hexagon-v66/unsigned/libQnnDspV66Skel.so \
     root@10.44.120.201:/root/qairt/lib/hexagon-v66/
 ```
 
-To change the board IP or user, edit `BOARD_IP=` / `BOARD_USER=` in `deploy.sh`.
+To change the board IP or user, either edit `deploy.sh` or override via environment:
+
+```bash
+BOARD_IP=192.168.1.50 BOARD_USER=root ./deploy.sh
+```
+
+The board-side SDK path defaults to `/root/qairt` and can be overridden with
+`QNN_SDK_ROOT` on the board (or edit `benchmark_qnn.sh`).
 
 
 ## Tutorial: Converting ONNX to QNN DLC
@@ -438,8 +452,7 @@ accelerator).
 |------|---------|
 | `deploy.sh` | Main entry point -- orchestrates full pipeline (export, convert, deploy, benchmark) |
 | `benchmark_qnn.sh` | On-board benchmark script (scp'd to board, runs `qnn-net-run`) |
-| `plot_benchmarks.py` | Generate benchmark comparison plot from results JSON |
-| `Dockerfile.qnn-convert` | Docker image providing Ubuntu 22.04 + Python 3.10 + QNN SDK deps |
+| `Dockerfile.qnn-convert` | Self-contained Docker image: Ubuntu 22.04 + Python 3.10 + QNN SDK v2.45 (downloaded at build time) |
 | `dronet.py` | DroNet model definition (PyTorch) |
 | `export_onnx.py` | Export DroNet to ONNX |
 | `export_mobilenet.py` | Export MobileNetV2 to ONNX |
