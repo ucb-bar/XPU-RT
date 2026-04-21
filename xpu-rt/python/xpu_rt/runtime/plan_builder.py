@@ -1,7 +1,7 @@
 """Helpers for constructing ExecutionPlans from Recipe IR modules.
 
 The real ``Recipe IR → ExecutionPlan`` lowering lives in the W6 passes
-(which we ship in Wave 6). What's here now is the small-but-real set
+(which we ship in ). What's here now is the small-but-real set
 of builders that every W6 pass + every test that exercises Phase 5
 needs: a declarative way to assemble a plan, walk its regions, merge
 in buffer liveness + queue/stream assignments, and round-trip through

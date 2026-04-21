@@ -361,6 +361,20 @@ class FXImporter:
         if ret_values:
             block.add_op(ReturnOp(ret_values[0]))
 
+        # Reconcile the func signature with the actual return-value types.
+        # The original ret_types snapshot (line ~189) was taken from the
+        # FX output-node metadata, which can disagree with what the body
+        # actually produces — e.g. HF Llama checkpoints declare a bf16
+        # output but the attention math upcasts to f32, leaving the
+        # declared func.return type at bf16 and the live SSA value at f32.
+        # Without this, xDSL's verifier rejects the module on real-scale
+        # transformer captures with: "Expected arguments to have the same
+        # types as the function output types".
+        if ret_values:
+            actual_ret_types: list[Attribute] = [v.type for v in ret_values]
+            if actual_ret_types != ret_types:
+                func_type = FunctionType.from_lists(arg_types, actual_ret_types)
+
         region = Region([block])
         main_func = FuncOp("forward", func_type, region)
 

@@ -1,49 +1,99 @@
 # CLI Reference
 
-The `compgen` CLI defines the public command surface for the project.
+The `compgen` console script is installed with `pip install compgen`. It
+exposes the public command surface — discovery, MCP wire-up, extension
+scaffolding, and the pipeline subcommands.
 
-## Current Status
+## Status
 
-`--help` and `--version` are implemented. Most command bodies currently print their expected contract and then raise `NotImplementedError`.
+`compgen --help`, `--version`, the `mcp` subgroup, the `ext` subgroup, the
+`llm` subgroup, `contrib`, and `scaffold-pack` are implemented. The
+pipeline subcommands (`init-target`, `analyze`, `generate`, `verify`, `run`,
+`promote`, `scaffold-target`) define the intended contract — their bodies
+print their expected shape and fall back to partial implementations.
 
-Use this page to understand the intended CLI shape, not as a promise that every command is runnable today.
+Use this page as the intended CLI shape, not as a promise that every
+pipeline command is runnable end-to-end.
 
-## Global Usage
+## Global usage
 
 ```bash
-uv run python -m compgen.cli --help
-uv run python -m compgen.cli --version
-uv run python -m compgen.cli --llm-backend claude-cli llm show
+compgen --help
+compgen --version
+compgen --llm-backend claude-cli llm show
 ```
 
-## Global LLM Options
+Without an active venv the console script resolves via the entry point
+installed by `pip`. If you work out of a source checkout, `uv run compgen
+--help` works too.
 
-The top-level CLI now exposes project-level LLM selection:
+## Global LLM options
+
+The top-level command exposes project-level LLM selection:
 
 - `--llm-backend {gemini,openai,anthropic,claude-cli,codex-cli}`
 - `--llm-model MODEL`
 - `--llm-record-dir DIR`
 - `--llm-no-record`
 
-These options apply to the whole command invocation and are mirrored into the process environment for downstream code.
+These apply to the entire invocation and are mirrored into
+`COMPGEN_LLM_BACKEND` / `COMPGEN_LLM_MODEL` for downstream code.
 
-## Commands
+## MCP subcommands — `compgen mcp ...`
+
+| Command | Purpose |
+|--------|--------|
+| `compgen mcp serve` | Run the `compgen-mcp` stdio server in the current process |
+| `compgen mcp tools` | List every MCP tool this server exposes |
+| `compgen mcp print-config` | Emit the canonical `.mcp.json` snippet to stdout |
+| `compgen mcp install [--project] [--target PATH] [--force] [--dry-run]` | Merge the server entry into `~/.claude.json` (or `./.mcp.json` with `--project`), with a timestamped backup |
+| `compgen mcp doctor` | Import tool tree, list discovered extensions, check the MCP SDK, verify `compgen-mcp` is on `PATH` |
+
+See [MCP Setup](../getting-started/mcp-setup.md) and
+[MCP Tools Reference](mcp-tools.md).
+
+## Extension subcommands — `compgen ext ...`
+
+| Command | Purpose |
+|--------|--------|
+| `compgen ext list` | Show every discovered extension across entry-point plugins, vendor dialects, and `~/.compgen/extensions/` |
+| `compgen ext new <kind> <name> [--out DIR]` | Scaffold a pip-installable extension pack (`quantization`, `target`, `provider`, `dialect`, or `runtime`) |
+| `compgen ext doctor` | Re-run every discovery validator and report failures |
+
+See [Extension Authoring](../getting-started/extension-authoring.md) and
+[Extension Points](extension-points.md).
+
+## LLM subcommands — `compgen llm ...`
+
+| Command | Purpose | State |
+|--------|--------|-------|
+| `compgen llm show` | Show resolved backend + environment | Implemented |
+| `compgen llm smoke [--prompt ...] [--structured]` | One-shot smoke call against the selected backend | Implemented |
+
+## Pipeline subcommands
 
 | Command | Purpose | Current state |
-|--------|---------|---------------|
-| `init-target PROFILE` | Validate a target profile | Contract only |
-| `analyze MODEL --inputs SPEC --target PROFILE` | Capture model and build analysis artifacts | Contract only |
-| `generate --target PROFILE --analysis-dir DIR` | Run generation pipeline | Contract only |
-| `llm show` | Inspect the resolved LLM backend selection | Implemented |
-| `llm smoke` | Run a direct smoke test against the selected backend | Implemented |
-| `verify BUNDLE_PATH` | Run verification ladder | Contract only |
-| `run BUNDLE_PATH` | Execute a bundle locally | Contract only |
-| `promote BUNDLE_PATH` | Promote a verified bundle | Contract only |
-| `scaffold-target HARDWARE_SPEC` | Generate a target package | Contract only |
+|--------|--------|---------------|
+| `compgen init-target PROFILE` | Validate a target profile | Partial — loads + prints profile |
+| `compgen analyze MODEL --inputs SPEC --target PROFILE` | Capture model + build analysis artifacts | Partial — runs Stage 0/1/2 best-effort |
+| `compgen generate --target PROFILE --analysis-dir DIR` | Run LLM generation pipeline | Partial — writes transform + plan stubs |
+| `compgen verify BUNDLE_PATH` | Run verification ladder | Partial — structural/functional/performance/formal levels |
+| `compgen run BUNDLE_PATH` | Execute a bundle locally | Partial — loads golden inputs, reports verification status |
+| `compgen promote BUNDLE_PATH` | Promote a verified bundle to the recipe library | Implemented via `RecipePromoter` |
+| `compgen scaffold-target HARDWARE_SPEC` | Generate a target package | Implemented — emits a target enablement package |
+| `compgen scaffold-pack --kind ... --name ...` | Scaffold a pip-installable extension pack | Implemented — identical to `compgen ext new` |
 
-## Benchmark Harness
+## Contrib — drafting upstream contributions
 
-The benchmark harness is a separate implemented CLI:
+| Command | Purpose |
+|--------|--------|
+| `compgen contrib list` | List local extensions + invocation counts |
+| `compgen contrib status` | Show which extensions are eligible for upstream drafting |
+| `compgen contrib draft --slot NAME` | Draft a patch + regression test from a local extension |
+
+## Benchmark harness (separate)
+
+The benchmark harness is a distinct implemented CLI:
 
 ```bash
 env PYTHONPATH=python python -m benchmarks.cli --help
@@ -51,34 +101,19 @@ env PYTHONPATH=python python -m benchmarks.cli --help
 
 Implemented benchmark commands:
 
-- `check-baselines`
-- `list-suites`
-- `list-suite-workloads SUITE_ID`
+- `check-baselines`, `list-suites`, `list-suite-workloads SUITE_ID`
 - `probe-suite SUITE_ID`
-- `run-case CASE_ID`
-- `run-study STUDY_ID`
-- `run-suite SUITE_ID`
-- `run-suite-workload SUITE_ID WORKLOAD_ID`
-- `aggregate RESULTS_DIR`
-- `export-suite-results RESULTS_DIR`
-- `plot RESULTS_DIR`
+- `run-case CASE_ID`, `run-study STUDY_ID`
+- `run-suite SUITE_ID`, `run-suite-workload SUITE_ID WORKLOAD_ID`
+- `aggregate RESULTS_DIR`, `export-suite-results RESULTS_DIR`, `plot RESULTS_DIR`
 
-The suite runner supports:
+See the [Benchmark Suites guide](../guides/use-benchmark-suites.md) for
+workspace YAML examples and runnable command lines.
 
-- recognized benchmark suites: `torchbench`, `huggingface`, `timm`, `mlperf`, `sol_execbench`, `heterobench`
-- pack-backed integrations through `pack_integrations`
-- normalized cross-suite JSON exports derived from canonical `RunRecord` files
-- explicit workspace-driven suite commands through `suite_configs` and `pack_configs`
+## Recommended use today
 
-Use the [Benchmark Suites guide](../guides/use-benchmark-suites.md) for workspace YAML examples and runnable command lines.
-
-## Recommended Use Today
-
-- Use `--help` to discover the shape of the eventual public CLI.
-- Use the [Quickstart](../getting-started/quickstart.md) and [Python API](python-api.md) for runnable workflows.
-- Use the [Benchmark Suites guide](../guides/use-benchmark-suites.md) for the separate benchmark harness and suite adapters.
-
-## Notes
-
-- The CLI is still useful as a contract and design boundary.
-- The docs intentionally call out stub status instead of documenting the commands as if they already worked end to end.
+- `compgen mcp install` + Claude Code for the full interactive surface.
+- `compgen ext new ...` + `pip install -e` for extending CompGen in user space.
+- The Python API (`compgen.api`, `compgen.pipeline.compile_and_diff`) for
+  scripted runs.
+- The demo script and benchmark harness for end-to-end validation.

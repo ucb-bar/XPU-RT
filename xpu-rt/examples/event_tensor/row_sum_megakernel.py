@@ -1,11 +1,11 @@
-"""Real Phase A example: row-sum via Event Tensor megakernel.
+"""Real  example: row-sum via Event Tensor megakernel.
 
 Mirrors **Figure 3 of the Event Tensor Compiler paper** (Jin et al.,
 MLSys '26) exactly: two-stage row reduction over a matrix ``A`` of
 shape ``(n*32, K)``, split-K with ``J = K // 32`` chunks, coordinated
 by a per-(row-block, k-chunk) Event Tensor.
 
-This module is the *real* end-to-end Phase A validation:
+This module is the *real* end-to-end  validation:
 
     1. Construct an ``event.graph`` with the partial_sum and final_sum
        device functions and the inter-task Event Tensor.

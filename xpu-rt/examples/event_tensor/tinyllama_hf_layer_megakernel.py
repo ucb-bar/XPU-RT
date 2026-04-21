@@ -1,4 +1,4 @@
-"""Real Phase E example: TinyLlama layer-0 through HF-faithful megakernel.
+"""Real  example: TinyLlama layer-0 through HF-faithful megakernel.
 
 Loads ``model.layers.0`` from the cached TinyLlama-1.1B-Chat checkpoint
 and runs the **HF-faithful** decoder-layer megakernel from
@@ -7,7 +7,7 @@ causal mask + RMSNorm + SwiGLU + residuals) on a slice of those
 weights -- with the same RoPE base TinyLlama trained with
 (``rope_theta`` from the checkpoint config).
 
-This is the closest match Phase E achieves to running an actual HF
+This is the closest match  achieves to running an actual HF
 ``LlamaDecoderLayer.forward()``: identical math, identical RoPE
 tables, identical norms, identical projection / MLP weights -- the
 only differences are

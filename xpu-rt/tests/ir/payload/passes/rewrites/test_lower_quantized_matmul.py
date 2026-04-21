@@ -122,7 +122,7 @@ def test_int4_pack_mm_is_tagged_not_expanded():
     m, q = _int4_module()
     stats = run_lower_quantized_matmul(m)
     assert stats.int4_rewritten == 1
-    # The op remains but carries a scheduling tag for Wave 6.
+    # The op remains but carries a scheduling tag for .
     assert count_ops(m, "compgen.quant.weight_int4pack_mm") == 1
     op = next(o for o in m.walk() if o.name == "compgen.quant.weight_int4pack_mm")
     assert op.attributes["compgen.int4_lowering_scheduled"].data == "true"

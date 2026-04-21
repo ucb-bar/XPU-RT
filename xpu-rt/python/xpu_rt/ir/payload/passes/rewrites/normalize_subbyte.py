@@ -4,7 +4,7 @@
 Reconstruction of XLA's ``SubByteNormalizationPass``. Zero external
 references; CompGen owns the rewrite.
 
-Scope in Wave 4 (annotational):
+Scope in  (annotational):
 
 1. Walk every op in the module and collect its sub-byte operands +
    results -- defined as SSA values whose defining op carries a
@@ -12,8 +12,7 @@ Scope in Wave 4 (annotational):
 2. For each producer-consumer edge, compare ``(bit_width, pack_dim)``
    on the two ends. When they disagree, tag the consuming op with
    ``compgen.subbyte_boundary = "pack" | "unpack" | "repack"`` so
-   a later structural pass (Wave 6
-   ``normalize_subbyte_post_layout``) can materialize the right
+   a later structural pass can materialize the right
    ``compgen.tensor_ext.{pack,unpack}`` op.
 3. When the consuming op is the packed-int-mm itself
    (``weight_int4pack_mm`` / ``weight_int8pack_mm``), record the
@@ -21,7 +20,7 @@ Scope in Wave 4 (annotational):
    downstream passes don't have to re-derive.
 
 This pass does NOT emit tensor_ext.pack/unpack itself because the
-insertion point depends on memory-space decisions made in Wave 6.
+insertion point depends on memory-space decisions made in .
 The annotation contract is the stable seam.
 
 LLM-tool signature:
@@ -135,7 +134,7 @@ class _AnnotateSubbyteBoundariesPattern(RewritePattern):
         op.attributes["compgen.subbyte_canonical"] = StringAttr(f"bit_width={bw},pack_dim={pd}")
         self.stats.record_canonical(bw)
 
-        # Also annotate the "boundary" role so Wave 6 passes know
+        # Also annotate the "boundary" role so  passes know
         # where to insert pack/unpack ops. For packed-mm ops the
         # role is always 'unpack' (we feed the compute unit with
         # a packed tensor and it internally unpacks).

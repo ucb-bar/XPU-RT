@@ -1,10 +1,10 @@
 """``compgen.tensor_ext`` -- supplement to xDSL's tensor dialect.
 
-xDSL's ``tensor`` dialect is missing three ops we need for Wave 1+
+xDSL's ``tensor`` dialect is missing three ops we need for +
 reconstruction: ``concat``, ``pack``, ``unpack``. MLIR upstream ships
 them (``tensor.concat``, ``tensor.pack``, ``tensor.unpack``); this
-dialect mirrors their semantics so the Wave 1 ``decompose_concat``
-and Wave 4 ``normalize_subbyte`` passes have a real destination.
+dialect mirrors their semantics so the  ``decompose_concat``
+and  ``normalize_subbyte`` passes have a real destination.
 
 Register on a ``Context`` with::
 

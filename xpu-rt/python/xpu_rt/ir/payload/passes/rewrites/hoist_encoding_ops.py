@@ -11,7 +11,7 @@ The pass is conservative: it only tags the dequantize with
 - the dequantize has a single use, AND
 - its input (the quantized tensor) has a single use (the dequantize).
 
-Structural op movement lands alongside the Wave 6 memory-planning
+Structural op movement lands alongside the  memory-planning
 pass — at this layer we surface the candidate set.
 """
 

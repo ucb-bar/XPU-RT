@@ -13,3 +13,6 @@
 [submodule "third_party/npu_model"]
 	path = third_party/npu_model
 	url = https://github.com/ucb-ee194-tapeout/npu_model.git
+[submodule "third_party/kernelblaster"]
+	path = third_party/kernelblaster
+	url = https://github.com/NVlabs/KernelBlaster.git

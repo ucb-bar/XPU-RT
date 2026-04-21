@@ -1,4 +1,4 @@
-"""Wave 0.1 — quantization decompositions emit real ``compgen.quant`` ops.
+""".1 — quantization decompositions emit real ``compgen.quant`` ops.
 
 These tests replace the prior opaque-``func.call`` expectations: after
 W0.1, every entry in the TorchAO / quantized_decomposed family lowers

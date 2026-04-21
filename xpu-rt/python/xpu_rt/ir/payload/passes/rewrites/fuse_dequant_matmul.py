@@ -39,7 +39,7 @@ Safety modes:
   reduction reassociation may give slightly different rounding.
   Enabled by ``CompGenOptions.fuse_dequant_reassoc_safe = False``.
 
-For Wave 4 we ship the **tag + detach** path: the matmul is rewritten
+For  we ship the **tag + detach** path: the matmul is rewritten
 to drop the dequant input and instead read from the int weight
 directly via a property ``compgen.fused_dequant_kind`` on the
 matmul. The actual mixed-precision body lives in a follow-up wave
@@ -226,7 +226,7 @@ def _maybe_build_fused_generic(
         scales_map = AffineMap(3, 0, (j,))
     else:
         # per_group (rank-2) -- safer to bail and let the matmul
-        # stay tag-only; a dedicated per-group body lives in Wave 6.
+        # stay tag-only; a dedicated per-group body lives in .
         return None
     if zeros is not None:
         zeros_rank = _tensor_rank(zeros)
@@ -241,7 +241,7 @@ def _maybe_build_fused_generic(
     # Build body: args are [lhs_scalar, q_scalar, scale_scalar, (zp_scalar?), out_scalar].
     out_elem = out_type.get_element_type()
     if not isinstance(out_elem, Float32Type):
-        return None  # Wave 3 body assumes f32 accumulate.
+        return None  #  body assumes f32 accumulate.
 
     arg_types: list[Attribute] = [
         lhs_type.get_element_type(),
@@ -375,7 +375,7 @@ class _FuseDequantMatmulPattern(RewritePattern):
 
         # Real body fusion when the shape is canonical. When the
         # fused generic can't be emitted (per-group, non-f32 acc,
-        # weird ranks), we keep the op tagged so Wave 6 can pick it
+        # weird ranks), we keep the op tagged so  can pick it
         # up.
         if not isinstance(dq, DequantizePerGroupOp):
             fused = _maybe_build_fused_generic(op, dq, side)

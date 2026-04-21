@@ -1,4 +1,4 @@
-"""Real Phase B example: row-sum via *dynamic*-scheduled megakernel.
+"""Real  example: row-sum via *dynamic*-scheduled megakernel.
 
 Same workload as ``row_sum_megakernel.py`` (paper Fig. 3) but compiled
 with the **dynamic** scheduling transformation (Algorithm 2).

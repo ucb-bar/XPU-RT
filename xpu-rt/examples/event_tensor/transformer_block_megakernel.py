@@ -1,8 +1,8 @@
-"""Real Phase C example: fused attention + MLP transformer block megakernel.
+"""Real  example: fused attention + MLP transformer block megakernel.
 
 Composes two heavy LLM stages -- multi-head attention and a SwiGLU MLP --
 into a single persistent megakernel coordinated by event tensors.  This
-is the Phase C demonstration that the abstraction *composes*: more than
+is the  demonstration that the abstraction *composes*: more than
 one operator stage, more than one event tensor, multiple device function
 families, all fused into one kernel.
 
@@ -37,7 +37,7 @@ persistent kernel:
 For the dynamic emitter's auto-emitted notify-and-push logic to work
 with this many distinct events, every body still does its own
 ``tl.atomic_add`` / spin-wait calls -- this matches the path the MoE
-example took, and lets us focus the Phase C demonstration on stage
+example took, and lets us focus the  demonstration on stage
 *composition* rather than on extending the dynamic emitter further.
 
 Validated against a PyTorch eager reference that runs the same
@@ -435,7 +435,7 @@ def run_transformer_block_megakernel(
     D_HIDDEN, I = compiled.hidden_dim, compiled.intermediate_dim
     device = q.device
     if any(t.dtype != torch.float32 for t in (q, k, v, x_resid, w_gate, w_up, w_down)):
-        raise TypeError("Phase C transformer block megakernel only supports float32")
+        raise TypeError(" transformer block megakernel only supports float32")
     if tuple(q.shape) != (H, S, D_HEAD): raise ValueError("Q shape mismatch")
     if tuple(k.shape) != (H, S, D_HEAD): raise ValueError("K shape mismatch")
     if tuple(v.shape) != (H, S, D_HEAD): raise ValueError("V shape mismatch")

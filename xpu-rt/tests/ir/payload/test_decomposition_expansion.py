@@ -165,7 +165,7 @@ def test_weight_int4pack_mm_skips_group_size_scalar():
 
 
 def test_decomposition_table_has_expected_entries():
-    """Wave 6 adds at least 28 new entries."""
+    """adds at least 28 new entries."""
     # Before wave 6: 8 entries. After: 28 compute/layout + 17 quantized
     # (some with aliases) = 45+.
     assert len(DECOMPOSITION_TABLE) >= 28

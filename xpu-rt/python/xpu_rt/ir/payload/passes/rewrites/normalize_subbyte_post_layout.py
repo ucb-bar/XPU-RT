@@ -2,11 +2,11 @@
 ``dma_line_bytes``.
 
 Reconstruction of XLA's ``SubByteNormalization`` (the post-layout
-pass, complementary to Wave 4's ``normalize_subbyte``). Zero
+pass, complementary to 's ``normalize_subbyte``). Zero
 external references; CompGen owns the rewrite.
 
 Operates on :class:`ExecutionPlan`. Reads the sub-byte canonical
-decisions made in Wave 4 via ``compgen.subbyte_canonical`` /
+decisions made in  via ``compgen.subbyte_canonical`` /
 ``compgen.subbyte_boundary`` attributes on ops (stored in
 ``plan.summary["subbyte_ops"]`` after the agent layer copies them
 over), and:
@@ -28,7 +28,7 @@ Config:
   matching typical DRAM burst granularity).
 - ``subbyte_op_summary_key`` -- where to read tagged ops from on
   the plan summary (default ``"subbyte_ops"``). Populated by the
-  pipeline driver that runs Wave 4's normalize_subbyte first.
+  pipeline driver that runs 's normalize_subbyte first.
 
 LLM-tool signature:
 
@@ -75,7 +75,7 @@ def run_normalize_subbyte_post_layout(
     # subbyte_ops summary format: a list of dicts
     #   { "buffer_id": ..., "bit_width": 4, "pack_dim": 1 }
     # Populated by the pipeline driver after running
-    # ``normalize_subbyte`` (Wave 4.4). When the key is absent this
+    # ``normalize_subbyte``. When the key is absent this
     # pass is a no-op.
     subbyte_ops = plan.summary.get(cfg.subbyte_op_summary_key, [])
     if not subbyte_ops:

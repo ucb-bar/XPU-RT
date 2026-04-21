@@ -20,9 +20,9 @@ Fully structural lowering requires:
 - The convolution's shape (N, H, W, C, F, KH, KW, stride, dilation)
   from the FX node args -- not yet threaded through the opaque
   decomp table.
-- Static shapes -- dynamic-shape convs defer to a Wave 6 pass.
+- Static shapes -- dynamic-shape convs defer to a  pass.
 
-So in Wave 5 we ship a **scheduled lowering**: every
+So in  we ship a **scheduled lowering**: every
 ``func.call @aten_convolution`` with static-shape input + weight
 tensors gets:
 
@@ -30,7 +30,7 @@ tensors gets:
 - A placeholder ``compgen.tensor_ext.pack`` emitted alongside the
   call, with ``inner_tiles`` carrying the (KH*KW*C) inner dim as
   a single packed axis -- the stable seam the tile-lowering path
-  in Wave 6 consumes.
+  in  consumes.
 - The call's second operand (filter) is tagged so the dispatcher
   knows to materialize it as the GEMM rhs.
 
@@ -172,7 +172,7 @@ class _Img2ColSchedulePattern(RewritePattern):
             self.stats.convs_skipped_too_small += 1
             return
 
-        # Tag with shape metadata so Wave 6 can structurally lower.
+        # Tag with shape metadata so  can structurally lower.
         op.attributes["compgen.img2col_scheduled"] = StringAttr("true")
         op.attributes["compgen.img2col_input_shape"] = StringAttr(",".join(str(d) for d in input_shape))
         op.attributes["compgen.img2col_filter_shape"] = StringAttr(",".join(str(d) for d in filter_shape))

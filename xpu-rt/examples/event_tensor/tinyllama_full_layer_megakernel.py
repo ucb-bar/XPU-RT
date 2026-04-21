@@ -1,4 +1,4 @@
-"""Real Phase D example: full TinyLlama decoder-layer through one megakernel.
+"""Real  example: full TinyLlama decoder-layer through one megakernel.
 
 Loads ``model.layers.0`` from the cached TinyLlama-1.1B-Chat
 checkpoint *including* the layer's input_layernorm and

@@ -17,7 +17,7 @@ Why a single top-level dataclass instead of per-pass configs:
 - Serialization: dumping the options dict alongside the bundle
   means anyone can reproduce a run.
 
-The defaults are **conservative**: every Wave 1+ pass is off by
+The defaults are **conservative**: every + pass is off by
 default. Callers opt in per objective.
 """
 
@@ -45,32 +45,32 @@ class CompGenOptions:
 
     Groups:
 
-    - **Wave 1 -- structural / numerics**:
+    - **structural / numerics**:
         ``enable_decompose_concat``, ``enable_fold_transposes_into_dots``,
         ``enable_demote_contraction_inputs``, ``enable_set_numerics_policy``,
         ``numerics_policy``, ``demote_target_type``.
 
-    - **Wave 2 -- semantic detection / Triton fusion**:
+    - **semantic detection / Triton fusion**:
         ``enable_raise_special_ops``,
         ``enable_fuse_softmax_to_triton``,
         ``kernel_family_allowlist`` (e.g. ``frozenset({"triton", "cublas"})``).
 
-    - **Wave 3 -- layout / algebraic**:
+    - **layout / algebraic**:
         ``enable_propagate_transposes``, ``transpose_aggressiveness``
         (``conservative`` / ``through_elementwise`` / ``through_conv`` /
         ``through_pad``), ``enable_plan_reduction``, ``reduction_policy``
         (``group`` / ``split`` / ``tree_reduce``).
 
-    - **Wave 4 -- quantization**:
+    - **quantization**:
         ``enable_lower_quantized_matmul``, ``enable_lower_quantized_conv``,
         ``enable_fuse_dequant_matmul``, ``enable_normalize_subbyte``,
         ``quantized_matmul_policy`` (``always`` / ``zp_zero_only`` / ``skip``).
 
-    - **Wave 5 -- large structural**:
+    - **large structural**:
         ``enable_lower_conv_to_img2col``, ``enable_match_library_call``,
         ``library_allowlist``.
 
-    - **Wave 6 -- runtime / memory / streams**:
+    - **runtime / memory / streams**:
         ``enable_plan_buffers``, ``enable_insert_copies``,
         ``enable_dma_overlap``, ``enable_alias_io_buffers``,
         ``enable_assign_memory_space``, ``enable_assign_queue``,
@@ -84,7 +84,7 @@ class CompGenOptions:
         ``regression_tolerance_atol``, ``regression_tolerance_rtol``.
     """
 
-    # --- Wave 1 --------------------------------------------------------
+    # ---  --------------------------------------------------------
 
     enable_decompose_concat: bool = False
     enable_fold_transposes_into_dots: bool = False
@@ -93,20 +93,20 @@ class CompGenOptions:
     numerics_policy: str = _DEFAULT_NUMERICS_POLICY
     demote_target_type: str = "bf16"  # or "f16"
 
-    # --- Wave 2 --------------------------------------------------------
+    # ---  --------------------------------------------------------
 
     enable_raise_special_ops: bool = False
     enable_fuse_softmax_to_triton: bool = False
     kernel_family_allowlist: frozenset[str] = field(default_factory=frozenset)
 
-    # --- Wave 3 --------------------------------------------------------
+    # ---  --------------------------------------------------------
 
     enable_propagate_transposes: bool = False
     transpose_aggressiveness: str = "conservative"  # {conservative, through_elementwise, through_conv, through_pad}
     enable_plan_reduction: bool = False
     reduction_policy: str = "group"  # {group, split, tree_reduce}
 
-    # --- Wave 4 --------------------------------------------------------
+    # ---  --------------------------------------------------------
 
     enable_lower_quantized_matmul: bool = False
     enable_lower_quantized_conv: bool = False
@@ -115,13 +115,13 @@ class CompGenOptions:
     quantized_matmul_policy: str = "always"  # {always, zp_zero_only, skip}
     fuse_dequant_reassoc_safe: bool = True
 
-    # --- Wave 5 --------------------------------------------------------
+    # ---  --------------------------------------------------------
 
     enable_lower_conv_to_img2col: bool = False
     enable_match_library_call: bool = False
     library_allowlist: frozenset[str] = field(default_factory=frozenset)
 
-    # --- Wave 6 --------------------------------------------------------
+    # ---  --------------------------------------------------------
 
     enable_plan_buffers: bool = False
     enable_insert_copies: bool = False

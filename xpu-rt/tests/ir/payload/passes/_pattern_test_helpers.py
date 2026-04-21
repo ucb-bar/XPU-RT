@@ -1,4 +1,4 @@
-"""Test helpers for the Wave 1+ ``PatternRewriter`` pass tests.
+"""Test helpers for the + ``PatternRewriter`` pass tests.
 
 Every pass test needs:
 

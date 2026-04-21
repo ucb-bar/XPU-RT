@@ -1,4 +1,4 @@
-"""Real Phase B example: Mixture-of-Experts via dynamic megakernel.
+"""Real  example: Mixture-of-Experts via dynamic megakernel.
 
 Faithful Phase-B workload from the Event Tensor Compiler paper
 (Section 2.4, Figure 5b):
@@ -178,7 +178,7 @@ def build_moe_event_graph(
     )
     # gather tasks: out_edge target depends on data; for the IR, we use a
     # placeholder coord ("0") and rely on the emitter's per-task atomic_add
-    # to be replaced at codegen time by a runtime lookup.  For Phase B MVP
+    # to be replaced at codegen time by a runtime lookup.  For  MVP
     # we use a SHARED out_edge attribute pointing to E[0] (every gather
     # decrements *some* event; the body's expert_id determines which) --
     # the dynamic scheduler's correctness relies on the body itself doing
@@ -194,9 +194,9 @@ def build_moe_event_graph(
     # The cleanest MVP shape: gather tasks have NO out_edges (the body
     # writes its slot independently); the host pre-pushes the expert
     # tasks into the queue with their event counters seeded such that
-    # the kernel never spins on E.  This keeps Phase B MVP focused on
+    # the kernel never spins on E.  This keeps  MVP focused on
     # validating the runtime-data-dep aspect; full per-task data-dep
-    # routing is a Phase B+ extension.
+    # routing is a + extension.
     block.add_op(
         CallDeviceOp.create(
             properties={
@@ -392,7 +392,7 @@ def run_moe_megakernel(
 ) -> torch.Tensor:
     """Launch the emitted MoE megakernel and return Y of shape (T, D)."""
     if x.dtype != torch.float32 or w_experts.dtype != torch.float32:
-        raise TypeError("Phase B MoE megakernel only supports float32")
+        raise TypeError(" MoE megakernel only supports float32")
     if tuple(x.shape) != (compiled.n_tokens, compiled.head_dim):
         raise ValueError(
             f"X shape {tuple(x.shape)} != ({compiled.n_tokens}, {compiled.head_dim})"
@@ -410,7 +410,7 @@ def run_moe_megakernel(
     )
     y = torch.zeros((compiled.n_tokens, compiled.head_dim), dtype=torch.float32, device=device)
 
-    # Phase B simplification:
+    #  simplification:
     # * Gather tasks have no out_edges; they just shuffle data into the
     #   grouped buffer.  The emitter does NOT auto-emit notifies for them.
     # * Expert tasks have no in_edges; they're pushed by the host into
@@ -426,7 +426,7 @@ def run_moe_megakernel(
     #
     # NOTE: for full data-dep correctness across SMs, gather->expert
     # ordering is enforced by host-seeded event counters in the next
-    # Phase B+ iteration (event.update inside the kernel).  For MVP, we
+    # + iteration (event.update inside the kernel).  For MVP, we
     # synchronise via the head/tail/valid protocol -- expert tasks are
     # pushed last in the initial queue and are popped only after gather
     # tasks ahead of them in the head sequence.

@@ -129,7 +129,7 @@ def propose_rematerialization_plan_seed(**ctx: Any) -> dict[str, Any]:
 
 
 def propose_megakernel_synthesis_seed(**ctx: Any) -> dict[str, Any]:
-    """Default seed for ETC megakernel synthesis (Phase 4).
+    """Default seed for ETC megakernel synthesis.
 
     Bundles the candidate region cluster into a single megakernel name
     derived from the regions; declares one device-scope event tensor per
@@ -172,8 +172,8 @@ def propose_scheduling_policy_seed(**ctx: Any) -> dict[str, Any]:
     """Default seed: ``static`` scheduling unless the megakernel has
     data-dependent edges (then prefer ``dynamic``).
 
-    Phase A of the ETC integration only uses the ``static`` branch; the
-    ``dynamic`` branch is kept for Phase B's data-dependent workloads
+    Only the ``static`` branch; the
+    ``dynamic`` branch is kept for 's data-dependent workloads
     (MoE, attention with data-dep masks).
     """
     has_data_dep = bool(ctx.get("has_data_dependent_edges", False))

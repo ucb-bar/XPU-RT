@@ -146,12 +146,12 @@ class TestWavefrontStrategy:
     def test_diamond(self) -> None:
         ops, placements, deps, latencies = _diamond_dag()
         waves = WavefrontStrategy().plan_waves(ops, placements, deps, latencies)
-        # Wave 0: A, Wave 1: B+C, Wave 2: D
+        # A, : B+C, : D
         assert len(waves) == 3
         assert waves[0].ops[0].op_name == "A"
         wave1_names = {op.op_name for op in waves[1].ops}
         assert wave1_names == {"B", "C"}
-        # Wave 1 crosses devices → sync_after
+        #  crosses devices → sync_after
         assert waves[1].sync_after is True
 
     def test_single_device_no_sync(self) -> None:

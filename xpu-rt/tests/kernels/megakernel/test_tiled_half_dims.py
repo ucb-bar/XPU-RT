@@ -1,7 +1,7 @@
 """Tiled megakernel regression tests at half-TinyLlama dims.
 
 Validates the tiled-matmul layer megakernel at dims that overflow the
-Phase F shared-memory budget, including running on REAL TinyLlama-1.1B
+ shared-memory budget, including running on REAL TinyLlama-1.1B
 weights at HALF-TinyLlama dims with the checkpoint's actual head_dim
 and rope_theta.
 """
@@ -31,7 +31,7 @@ _TINYLLAMA_CACHE = Path(os.path.expanduser("~/.cache/huggingface/hub/models--Tin
 
 
 # ---------------------------------------------------------------------------
-# I.1 -- tiled megakernel at H=8 (the dim that overflowed Phase F)
+# I.1 -- tiled megakernel at H=8 (the dim that overflowed )
 # ---------------------------------------------------------------------------
 
 
@@ -124,7 +124,7 @@ def test_tiled_megakernel_emits_inner_k_loop() -> None:
 
 
 # ---------------------------------------------------------------------------
-# I.2 -- real TinyLlama at HALF-TinyLlama dims (Phase F couldn't reach this)
+# I.2 -- real TinyLlama at HALF-TinyLlama dims
 # ---------------------------------------------------------------------------
 
 

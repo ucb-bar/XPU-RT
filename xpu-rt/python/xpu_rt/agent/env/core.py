@@ -760,10 +760,12 @@ class CompilerEnv:
 
             if not hasattr(self, "_provider_registry") or self._provider_registry is None:
                 from compgen.kernels.providers.autocomp import AutocompProvider, ExoProvider
+                from compgen.kernels.providers.kernelblaster import KernelBlasterProvider
 
                 self._provider_registry = ProviderRegistry()
                 self._provider_registry.register(AutocompProvider())
                 self._provider_registry.register(ExoProvider())
+                self._provider_registry.register(KernelBlasterProvider())
 
             contract = KernelContract(
                 region_id=cluster.cluster_id,

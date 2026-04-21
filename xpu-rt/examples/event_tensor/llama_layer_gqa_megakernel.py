@@ -1,12 +1,12 @@
-"""Real Phase F example: Llama decoder layer megakernel with GQA + RoPE + causal.
+"""Real  example: Llama decoder layer megakernel with GQA + RoPE + causal.
 
-Extends Phase E's RoPE+causal megakernel with **Grouped-Query Attention**
+Extends 's RoPE+causal megakernel with **Grouped-Query Attention**
 (GQA): K and V are computed and rotated only for ``N_KV_HEADS`` heads
 (< ``N_HEADS``), and attention indexes them at ``h // KV_REPEAT``.  This
 matches the actual structure of TinyLlama, Llama-2/3, Gemma, Qwen, and
 every modern decoder-only LLM.
 
-Per-task structure (only the bits that change from Phase E):
+Per-task structure (only the bits that change from ):
 
     qkv_proj    : per (m_tile, h_q).  Always computes Q.  K/V only if
                   ``h_q == (h_q // KV_REPEAT) * KV_REPEAT`` -- i.e. h_q
@@ -231,7 +231,7 @@ tl.atomic_add(EATTN_ptr + q_tile, -1)
 """
 
 
-# Stages 5-10 (o_proj, norm2, MLP) reuse Phase E bodies unchanged.
+# Stages 5-10 (o_proj, norm2, MLP) reuse  bodies unchanged.
 _O_PROJ_BODY = r"""
 m_tile = task_id
 

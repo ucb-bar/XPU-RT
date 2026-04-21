@@ -571,7 +571,7 @@ def test_full_phase5_chain_on_mixed_plan():
     plan = b.build()
     plan.summary["device_default_space"] = {"cuda:0": "vtcm", "cpu": "host"}
 
-    # Wave 6 chain in correct order:
+    #  chain in correct order:
     run_assign_memory_space(plan, config=AssignMemorySpaceConfig(vtcm_bytes=20_000, scratch_memory_space="vtcm"))
     run_assign_queue(plan)
     run_assign_streams(plan)

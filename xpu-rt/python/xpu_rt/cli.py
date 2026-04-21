@@ -976,5 +976,193 @@ def mcp_tools() -> None:
         click.echo(f"  [{t['phase']:<9}] {t['name']:<32} {t['description']}")
 
 
+@mcp.command("print-config")
+@click.option("--indent", type=int, default=2, show_default=True, help="JSON indentation width.")
+def mcp_print_config(indent: int) -> None:
+    """Print the JSON snippet to add CompGen to a Claude Code / .mcp.json config."""
+    from compgen.mcp.config import mcp_server_json
+
+    click.echo(mcp_server_json(indent=indent))
+
+
+@mcp.command("install")
+@click.option(
+    "--project",
+    is_flag=True,
+    help="Write to ./.mcp.json (project-scoped) instead of ~/.claude.json (user-scoped).",
+)
+@click.option(
+    "--target",
+    type=click.Path(path_type=Path),
+    default=None,
+    help="Explicit target path. Overrides --project.",
+)
+@click.option("--force", is_flag=True, help="Overwrite an existing mcpServers.compgen entry.")
+@click.option("--dry-run", is_flag=True, help="Show what would happen without writing.")
+def mcp_install(project: bool, target: Path | None, force: bool, dry_run: bool) -> None:
+    """Merge the CompGen MCP server entry into a client config, with backup."""
+    from compgen.mcp.install import install_mcp_server
+
+    try:
+        result = install_mcp_server(target=target, project=project, force=force, dry_run=dry_run)
+    except RuntimeError as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    click.echo(f"[mcp install] Target:  {result.target}")
+    click.echo(f"[mcp install] Action:  {result.action}{' (dry-run)' if dry_run else ''}")
+    if result.backup is not None:
+        click.echo(f"[mcp install] Backup:  {result.backup}")
+    click.echo(f"[mcp install] Entry:   {result.entry}")
+    if result.action == "already-present":
+        click.echo("[mcp install] No change — the config already points at compgen-mcp.")
+    elif not dry_run:
+        click.echo("[mcp install] Restart Claude Code to pick up the new server.")
+
+
+@mcp.command("doctor")
+def mcp_doctor() -> None:
+    """Smoke-check the MCP server: import tools, list them, report discovery."""
+    import shutil
+
+    click.echo("[mcp doctor] Imports")
+    try:
+        from compgen.mcp.tools import ALL_TOOLS
+
+        click.echo(f"  tools:         {len(ALL_TOOLS)} registered")
+    except Exception as exc:  # noqa: BLE001
+        raise click.ClickException(f"failed to import compgen.mcp.tools: {exc}") from exc
+
+    try:
+        import mcp as _mcp  # noqa: F401
+
+        click.echo("  mcp SDK:       ok")
+    except ImportError as exc:
+        click.echo(f"  mcp SDK:       missing ({exc})")
+
+    try:
+        from compgen.plugins import discover_everything
+
+        report = discover_everything()
+        click.echo("[mcp doctor] Discovery")
+        click.echo(f"  user_space_root:  {report.user_space_root}")
+        click.echo(f"  user_space_tools: {len(report.user_space_tools)}")
+        click.echo(f"  user_space_slots: {len(report.user_space_slots)}")
+        click.echo(f"  vendor_dialects:  {len(report.vendor_dialects)}")
+        for group, names in report.entry_point_plugins.items():
+            click.echo(f"  {group:<40} {len(names)}")
+        if report.failures:
+            click.echo(f"  failures:         {len(report.failures)}")
+            for g, n, reason in report.failures:
+                click.echo(f"    - [{g}] {n}: {reason}")
+    except Exception as exc:  # noqa: BLE001
+        click.echo(f"[mcp doctor] Discovery failed: {exc}")
+
+    exe = shutil.which("compgen-mcp")
+    click.echo("[mcp doctor] Binary")
+    click.echo(f"  compgen-mcp:   {exe or '<not on PATH>'}")
+
+
+@main.group()
+def ext() -> None:
+    """Inspect and scaffold CompGen user extensions."""
+
+
+@ext.command("list")
+def ext_list() -> None:
+    """List every user extension discovered across all paths."""
+    from compgen.plugins import discover_everything
+
+    report = discover_everything()
+    click.echo(f"User-space root: {report.user_space_root}")
+
+    total_ep = sum(len(v) for v in report.entry_point_plugins.values())
+    click.echo(f"Entry-point plugins ({total_ep}):")
+    for group, names in report.entry_point_plugins.items():
+        click.echo(f"  {group}")
+        for n in names:
+            click.echo(f"    - {n}")
+        if not names:
+            click.echo("    (none)")
+
+    click.echo(f"Vendor dialects ({len(report.vendor_dialects)}):")
+    for n in report.vendor_dialects:
+        click.echo(f"  - {n}")
+    if not report.vendor_dialects:
+        click.echo("  (none)")
+
+    click.echo(f"User-space tools ({len(report.user_space_tools)}):")
+    for n in report.user_space_tools:
+        click.echo(f"  - {n}")
+    click.echo(f"User-space slots ({len(report.user_space_slots)}):")
+    for n in report.user_space_slots:
+        click.echo(f"  - {n}")
+    if report.user_space_errors:
+        click.echo(f"User-space errors ({len(report.user_space_errors)}):")
+        for path, err in report.user_space_errors:
+            click.echo(f"  - {path}: {err.splitlines()[0]}")
+    if report.failures:
+        click.echo(f"Entry-point failures ({len(report.failures)}):")
+        for g, n, reason in report.failures:
+            click.echo(f"  - [{g}] {n}: {reason}")
+
+
+@ext.command("new")
+@click.argument("kind", type=click.Choice(["quantization", "target", "provider", "dialect", "runtime"]))
+@click.argument("name", type=str)
+@click.option(
+    "--out",
+    "out_dir",
+    type=click.Path(file_okay=False),
+    default=None,
+    help="Directory to scaffold into. Defaults to the current working directory.",
+)
+@click.option("--overwrite", is_flag=True, help="Replace an existing directory at the target path.")
+def ext_new(kind: str, name: str, out_dir: str | None, overwrite: bool) -> None:
+    """Scaffold a pip-installable CompGen extension pack of KIND with NAME.
+
+    Thin alias for ``compgen scaffold-pack``: scaffolds into ``--out`` (or
+    the current directory). To make the scaffold visible to the running
+    MCP server, either ``pip install -e`` the scaffold, or copy its
+    starter module into ``~/.compgen/extensions/``.
+    """
+    from compgen.packs.scaffolding import scaffold_pack
+
+    dest = out_dir or str(Path.cwd())
+    result = scaffold_pack(kind=kind, name=name, out_dir=dest, overwrite=overwrite)
+    click.echo(f"[ext new] Kind:         {kind}")
+    click.echo(f"[ext new] Name:         {name}")
+    click.echo(f"[ext new] Pack root:    {result.pack_root}")
+    click.echo(f"[ext new] Starter:      {result.scheme_path}")
+    click.echo("")
+    click.echo("Next steps:")
+    click.echo(f"  cd {result.pack_root}")
+    click.echo("  pip install -e .        # so entry points register")
+    click.echo("  compgen ext list        # verify discovery")
+
+
+@ext.command("doctor")
+def ext_doctor() -> None:
+    """Re-run every discovery validator and report failures."""
+    from compgen.plugins import discover_everything
+
+    report = discover_everything()
+    ok = True
+    if report.failures:
+        click.echo(f"Entry-point validation failures ({len(report.failures)}):")
+        for g, n, reason in report.failures:
+            click.echo(f"  - [{g}] {n}: {reason}")
+        ok = False
+    if report.user_space_errors:
+        click.echo(f"User-space load errors ({len(report.user_space_errors)}):")
+        for path, err in report.user_space_errors:
+            click.echo(f"  - {path}: {err.splitlines()[0]}")
+        ok = False
+    click.echo(f"[ext doctor] total discovered: {report.total()}")
+    if ok:
+        click.echo("[ext doctor] all clean")
+    else:
+        raise click.ClickException("one or more extensions failed validation")
+
+
 if __name__ == "__main__":
     main()

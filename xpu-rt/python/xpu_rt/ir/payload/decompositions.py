@@ -326,7 +326,7 @@ def decompose_addmm(
 
 
 # ============================================================================
-# Wave 6 expansion — real-model coverage (smolVLA + Gemma-decode)
+#  expansion — real-model coverage (smolVLA + Gemma-decode)
 # ============================================================================
 #
 # Each entry below follows the established MVP pattern:
@@ -647,7 +647,7 @@ def decompose_matmul(operands, meta, node_name):
 
     Structural emission for the 2D × 2D case drops the opaque rate
     on real LLM fixtures. Higher-rank matmul stays opaque with
-    ``pattern_hint="batch_matmul"`` so Wave 5 dispatch handles it.
+    ``pattern_hint="batch_matmul"`` so  dispatch handles it.
     """
     val = meta.get("val")
     shape = getattr(val, "shape", ()) if val is not None else ()
@@ -705,7 +705,7 @@ def decompose_slice_tensor(operands, meta, node_name):
 
 
 # ============================================================================
-# Wave 6 C.2 — TorchAO quantized_decomposed + _weight_int*pack_mm
+#  C.2 — TorchAO quantized_decomposed + _weight_int*pack_mm
 # W0.1: lowered to real compgen.quant ops (no more opaque func.call).
 # ============================================================================
 
@@ -1266,7 +1266,7 @@ DECOMPOSITION_TABLE: dict[str, DecompFn] = {
     "aten.cat.default": decompose_cat,
     "aten.split_with_sizes.default": decompose_split_with_sizes,
     "aten.clone.default": decompose_clone,
-    # production-readiness fill-ins (Wave 9):
+    # production-readiness fill-ins:
     "aten.contiguous.default": decompose_contiguous,
     "aten.transpose.int": decompose_transpose_int,
     "aten.transpose.default": decompose_transpose_int,

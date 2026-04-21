@@ -141,7 +141,7 @@ def test_export_transformer_block() -> None:
     The transformer block has ~36 ops including multi-head attention,
     many of which are not yet in the decomposition table. We test export
     success and report coverage as informational. Full decomposition
-    coverage is a Phase C goal.
+    coverage is a  goal.
     """
     model, inputs = _load_model("transformer_block")
     result = _run_pipeline("transformer_block", model, inputs)

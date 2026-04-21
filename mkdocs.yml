@@ -19,7 +19,9 @@ nav:
   - Home: index.md
   - Getting Started:
       - Installation: getting-started/installation.md
+      - MCP Setup: getting-started/mcp-setup.md
       - Quickstart: getting-started/quickstart.md
+      - Extension Authoring: getting-started/extension-authoring.md
       - What Works Today: getting-started/what-works-today.md
   - Concepts:
       - What CompGen Is: concepts/what-is-compgen.md
@@ -34,6 +36,7 @@ nav:
       - Benchmark Suites: guides/use-benchmark-suites.md
       - Custom Quantization: guides/custom-quantization.md
       - NPU Kernel Generation: guides/npu-kernel-generation.md
+      - KernelBlaster Provider: guides/kernelblaster.md
   - Architecture:
       - Compiler Generation: architecture/compiler-generation.md
       - Event Tensor Integration: architecture/event_tensor.md
@@ -44,10 +47,13 @@ nav:
   - Reference:
       - CLI Reference: reference/cli.md
       - Python API: reference/python-api.md
+      - Extension Points: reference/extension-points.md
+      - MCP Tools: reference/mcp-tools.md
       - Target Profile Schema: reference/target-profile-schema.md
       - Target Packages: reference/target-packages.md
       - Tested Stack: reference/tested-stack.md
       - Troubleshooting: reference/troubleshooting.md
+      - Vendor Dialects: vendor_dialects.md
   - Contributing:
       - GPU CI: contributing/gpu_ci.md
       - Releasing: contributing/releasing.md

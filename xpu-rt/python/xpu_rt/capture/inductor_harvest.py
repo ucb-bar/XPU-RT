@@ -262,7 +262,7 @@ def harvest_inductor_graph(
 
 
 # ---------------------------------------------------------------------------
-# Megakernel candidate detection (ETC integration -- Phase A.9)
+# Megakernel candidate detection (ETC integration -- )
 # ---------------------------------------------------------------------------
 
 

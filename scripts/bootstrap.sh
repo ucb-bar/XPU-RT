@@ -63,6 +63,9 @@ if [[ ! -f "third_party/autocomp/pyproject.toml" ]]; then
     error "autocomp submodule not initialized. Check .gitmodules."
     exit 1
 fi
+if [[ -d "third_party/kernelblaster" ]]; then
+    info "kernelblaster submodule present — set COMPGEN_KERNELBLASTER_ROOT=\$PWD/third_party/kernelblaster to enable the provider"
+fi
 info "Submodules initialized"
 
 # --- Create virtual environment and install dependencies ---
@@ -94,6 +97,20 @@ if uv run python -c "from autocomp.hw_config import HardwareConfig; print('autoc
     info "autocomp import OK"
 else
     warn "autocomp import failed -- kernel search features may not work"
+fi
+
+# KernelBlaster availability (optional, CUDA + OPENAI_API_KEY required at runtime)
+if [[ -d "third_party/kernelblaster" ]]; then
+    if uv run python -c "
+from compgen.kernels.kernelblaster_adapter import KernelBlasterAdapter, KernelBlasterConfig
+from pathlib import Path
+cfg = KernelBlasterConfig(mode='local', repo_root=Path('third_party/kernelblaster').resolve(), openai_api_key='SMOKE')
+ok, reason = KernelBlasterAdapter(config=cfg).is_available()
+print('kernelblaster OK' if ok else f'kernelblaster NOT_READY: {reason}')
+"; then
+        info "kernelblaster submodule detected"
+        info "  export COMPGEN_KERNELBLASTER_ROOT=\"\$PWD/third_party/kernelblaster\" + OPENAI_API_KEY to enable"
+    fi
 fi
 
 # Test CLI

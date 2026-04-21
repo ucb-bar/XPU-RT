@@ -7,7 +7,7 @@ Reconstruction of IREE's ``PropagateLinalgTransposePass`` as a
 CompGen PatternRewriter. Zero external references; CompGen owns
 the rewrite.
 
-Two fold rules land in Wave 3 (the MVP subset that matters for LLM
+Two fold rules land in  (the MVP subset that matters for LLM
 workloads):
 
 1. **Chained-transpose collapse** -- ``transpose(transpose(x, p1),
@@ -27,7 +27,7 @@ Transpose → matmul absorption already lives in
 (W1.2); this pass defers to that one for contraction absorption.
 
 Transpose → convolution (HWCF ↔ HWFC) and transpose → pad are
-deferred to a follow-up (Wave 5 convolution rewrites).
+deferred to a follow-up.
 
 ``aggressiveness``:
 

@@ -102,9 +102,21 @@ class EncodingStage(CompilationStage):
 
 
 def _try_verify(module: ModuleOp) -> bool:
-    """Try to verify a module, return True if it passes."""
+    """Try to verify a module, return True if it passes.
+
+    Logs the exception when verification fails — silent failure here makes
+    pipeline-stage diagnostics ("valid_module: custom check failed") useless
+    on real-scale modules.
+    """
     try:
         module.verify()
         return True
-    except Exception:
+    except Exception as exc:
+        import structlog
+
+        structlog.get_logger().error(
+            "encoding.verify_failed",
+            exception=type(exc).__name__,
+            message=str(exc)[:500],
+        )
         return False

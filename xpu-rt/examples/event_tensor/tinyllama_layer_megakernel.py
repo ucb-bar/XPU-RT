@@ -1,4 +1,4 @@
-"""Real Phase C example: TinyLlama layer-0 weights through our megakernel.
+"""Real  example: TinyLlama layer-0 weights through our megakernel.
 
 Loads the actual ``model.layers.0`` weights from a cached TinyLlama-1.1B
 checkpoint (real Llama architecture: 32 attention heads, 4 KV heads
@@ -23,7 +23,7 @@ a toy.
 
 This intentionally does **not** include RMSNorm, RoPE, or the output
 projection -- those are layer-level wrappers that the megakernel will
-absorb in a Phase C+ extension.  The block we lower is the
+absorb in a + extension.  The block we lower is the
 attention-then-MLP residual sandwich that sits at the heart of every
 modern decoder layer.
 """

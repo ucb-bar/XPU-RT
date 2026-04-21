@@ -1,26 +1,43 @@
-# Verification Model
+# Verification model
 
-CompGen is designed around the rule "trust nothing from the generator until it is verified."
+CompGen is designed around one rule: trust nothing from the generator
+until it is verified.
 
-## Verification Layers
+## Four-level verification ladder
 
-The project documents four verification layers:
+1. **Structural** — schema validation, IR verifier, parser round-trip,
+   CHECK assertions.
+2. **Functional** — eager vs compiled outputs, randomised tensor tests,
+   dynamic shapes.
+3. **Performance** — compile time, warm run time, graph coverage, bytes
+   moved.
+4. **Formal** — translation validation, rewrite verification
+   (solver-backed, optional).
 
-1. Structural
-2. Functional
-3. Performance
-4. Formal
+Only bundles that pass every applicable level can be promoted into the
+deterministic recipe library.
 
-## What Is Available Today
+## What is available today
 
-- Structural-style validation exists in several subsystems and tests.
+- Structural-style validation is wired into several subsystems and tests.
 - The demo runs a transform verification step and emits bundle artifacts.
-- Target generation emits a `verification_manifest.json` describing the expected verification surface for a target.
+- Target generation emits a `verification_manifest.json` describing the
+  expected verification surface for a target.
+- `compgen verify` runs best-effort structural / functional / performance
+  / formal checks against a bundle; see
+  [CLI Reference](../reference/cli.md).
 
-## What Is Still Ahead
+## Further reading
 
-The full CLI-driven verification ladder is documented but not yet implemented end to end. Public docs treat it as design direction, not current user workflow.
+- [Concepts → Agent Verification Loop](agent_verification_loop.md) — how
+  the LLM loop is bounded by verification gates.
+- [Concepts → Semantic IR Verification](semantic_ir_verification.md) —
+  the Semantic IR trust layer.
+- [Architecture → Compiler Generation](../architecture/compiler-generation.md)
+  — where the ladder sits in the overall pipeline.
 
-## Why Users Should Care
+## Why users should care
 
-The point of CompGen is not just to generate compiler artifacts. It is to generate them in a way that can be checked, reproduced, and promoted only after passing validation.
+The point of CompGen is not just to generate compiler artifacts; it is to
+generate them in a way that can be checked, reproduced, and promoted only
+after passing validation.

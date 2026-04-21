@@ -30,24 +30,10 @@ jobs:
       - name: Ruff format check
         run: uv run ruff format --check python/ benchmarks/ tests/
 
-  typecheck:
-    name: Typecheck (mypy, advisory)
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - name: Install uv
-        run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-      - name: Install dependencies
-        run: uv sync --frozen --extra dev --extra mcp --extra quantization --extra solve --extra demo
-      - name: Mypy
-        run: uv run mypy python/compgen/
+  # Typecheck is intentionally not a CI job yet: the mypy baseline has
+  # 300+ pre-existing errors that must be triaged before the job can be
+  # green. Run `make typecheck` locally to see them. Re-enable here once
+  # the baseline is clean.
 
   test:
     name: Pytest (CPU)

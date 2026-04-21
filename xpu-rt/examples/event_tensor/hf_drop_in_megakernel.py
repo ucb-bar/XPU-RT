@@ -1,4 +1,4 @@
-"""Real Phase G example: megakernel as a drop-in HF Llama decoder layer.
+"""Real  example: megakernel as a drop-in HF Llama decoder layer.
 
 The proof:
 
@@ -18,9 +18,9 @@ This proves the megakernel is a true **drop-in replacement** for HF's
 production decoder-layer code path inside an actual
 ``LlamaForCausalLM``.
 
-Phase F.1 already proved
+ already proved
     our_PyTorch_reference == HF.LlamaDecoderLayer.forward()
-on real TinyLlama weights at the layer level.  Phase G scales that to
+on real TinyLlama weights at the layer level.   scales that to
 the model level: the substitution survives all the wiring HF does
 around a layer (residual norms, position-embedding plumbing, output
 unpacking, lm_head).

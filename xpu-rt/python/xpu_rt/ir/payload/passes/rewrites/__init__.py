@@ -1,4 +1,4 @@
-"""Wave 1+ reconstructed xDSL PatternRewriter passes.
+"""+ reconstructed xDSL PatternRewriter passes.
 
 Every pass here is CompGen-owned: zero external references to IREE
 or XLA as runtime implementations. Each file ports the corresponding

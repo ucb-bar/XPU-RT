@@ -34,9 +34,9 @@ The rewrite:
 This is applied idempotently: after the first pass, operands already
 match ``promotion_type`` and the gate skips.
 
-Applies only to **elementwise** math/arith ops in Wave 1. Contraction
-ops (matmul/conv) go through ``demote_contraction_inputs`` (Wave 1.3)
-or the Wave 3 ``propagate_transposes`` pass instead, which has the
+Applies only to **elementwise** math/arith ops in . Contraction
+ops (matmul/conv) go through ``demote_contraction_inputs``
+or the  ``propagate_transposes`` pass instead, which has the
 structural awareness to handle mixed-precision GEMM bodies correctly.
 
 LLM-tool signature:
@@ -218,7 +218,7 @@ class _NumericsElementwisePattern(RewritePattern):
             # Skip tensor-shaped elementwise; those live in
             # linalg.generic bodies where this pass's extf/truncf
             # would be illegal. A dedicated linalg-body pass handles
-            # them in Wave 2.
+            # them in .
             return
 
         # Build ext casts, rebuild op at promotion type, truncf back.

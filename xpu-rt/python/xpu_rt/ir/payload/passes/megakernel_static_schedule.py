@@ -82,12 +82,12 @@ def _coord_to_tasks(
 ) -> list[str]:
     """Map an event coord index expression to concrete task ids.
 
-    For Phase A we keep this conservative: ``coord_index_str`` may be a
+    For  we keep this conservative: ``coord_index_str`` may be a
     literal-only expression like ``"0"`` or ``"3,1"``.  Anything more
     complex (einsum syntax) widens to *all* tasks of ``func_name`` -- the
     solver then enforces the union of edges.  This is sound (over-
     approximates dependencies) but may serialise more than necessary.
-    Phase B's dynamic scheduler removes this restriction entirely.
+    's dynamic scheduler removes this restriction entirely.
     """
     candidates = call_lookup.get(func_name, [])
     if not candidates:

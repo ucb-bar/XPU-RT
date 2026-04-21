@@ -1,6 +1,6 @@
-"""Real Phase D example: full Llama decoder-layer megakernel.
+"""Real  example: full Llama decoder-layer megakernel.
 
-Extends the Phase C transformer block with the operators that turn it
+Extends the  transformer block with the operators that turn it
 into an actual Llama / Gemma / Qwen3 decoder layer:
 
     1. input_layernorm     -- RMSNorm before attention
@@ -556,7 +556,7 @@ def run_llama_decoder_layer(
     if any(t.dtype != torch.float32 for t in (
         x, w_norm1, w_q, w_k, w_v, w_o, w_norm2, w_gate, w_up, w_down,
     )):
-        raise TypeError("Phase D decoder layer megakernel only supports float32")
+        raise TypeError(" decoder layer megakernel only supports float32")
     if tuple(x.shape) != (S, D_HIDDEN): raise ValueError("X shape mismatch")
     if tuple(w_norm1.shape) != (D_HIDDEN,): raise ValueError("w_norm1 shape mismatch")
     if tuple(w_q.shape) != (D_HIDDEN, D_HIDDEN): raise ValueError("W_q shape mismatch")

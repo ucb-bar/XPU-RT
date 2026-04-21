@@ -1,12 +1,10 @@
-"""Real Phase F example: HF-faithful PyTorch reference vs the actual HF
+"""Real  example: HF-faithful PyTorch reference vs the actual HF
 ``LlamaDecoderLayer.forward()`` on real TinyLlama-1.1B layer-0 weights.
 
 Validates the chain that turns "our megakernel matches our reference"
 into "our megakernel matches HuggingFace":
 
-    megakernel  ==  our_HF_faithful_reference   (Phase E, max abs 1.8e-07
-                                                  on real TinyLlama weights
-                                                  at sliced dims)
+    megakernel  ==  our_HF_faithful_reference
     our_HF_faithful_reference  ==  HF.LlamaDecoderLayer.forward()
                                                  (proved here, on real
                                                   TinyLlama weights at the

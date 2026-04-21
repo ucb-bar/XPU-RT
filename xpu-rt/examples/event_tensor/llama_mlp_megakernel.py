@@ -1,4 +1,4 @@
-"""Real Phase A example: Llama / Gemma SwiGLU MLP via Event Tensor megakernel.
+"""Real  example: Llama / Gemma SwiGLU MLP via Event Tensor megakernel.
 
 Llama, Gemma, smolVLA, and Qwen3 all use the same gated-MLP block:
 
@@ -351,7 +351,7 @@ def run_mlp_megakernel(
 ) -> torch.Tensor:
     """Launch the emitted MLP megakernel and return Y of shape (M, N)."""
     if any(t.dtype != torch.float32 for t in (x, w_gate, w_up, w_down)):
-        raise TypeError("Phase A MLP megakernel only supports float32")
+        raise TypeError(" MLP megakernel only supports float32")
     if tuple(x.shape) != (compiled.M, compiled.K):
         raise ValueError(f"X shape {tuple(x.shape)} != ({compiled.M}, {compiled.K})")
     if tuple(w_gate.shape) != (compiled.I, compiled.K):

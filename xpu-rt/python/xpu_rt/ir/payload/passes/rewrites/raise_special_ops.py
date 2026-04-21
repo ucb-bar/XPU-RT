@@ -15,10 +15,10 @@ Strategy (fast path first, body walk second):
 2. **Body walk — linalg.generic pattern match (deferred)**: When a
    hint is absent we'd walk ``linalg.generic`` bodies and look for
    the canonical arithmetic sequence (``exp - max`` for softmax,
-   ``rsqrt(mean(x**2))`` for rmsnorm, etc.). That's Wave 2+ follow-up
+   ``rsqrt(mean(x**2))`` for rmsnorm, etc.). That's + follow-up
    work; the current decomposition pipeline ships hints on every
    traced op, so the fast path already covers every path through
-   Wave 1+ `raise_special_ops` in real workloads. When the follow-up
+   + `raise_special_ops` in real workloads. When the follow-up
    ships it plugs into the same ``_dispatch`` table below.
 
 Covered patterns (hint string → target op):

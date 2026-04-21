@@ -21,7 +21,7 @@ Usage::
     adapter = DistributedAdapter()
     y = adapter.all_reduce(x, op="sum")
 
-This module is the concrete integration point for the Wave 10
+This module is the concrete integration point for the
 distributed passes. The xDSL IR side is complete (shard_tensors_spmd,
 insert_all_reduce, etc.); this is how you execute it.
 """

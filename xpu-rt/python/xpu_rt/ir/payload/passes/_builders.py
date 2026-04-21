@@ -1,4 +1,4 @@
-"""Construction helpers for the Wave 1+ pattern rewrites.
+"""Construction helpers for the + pattern rewrites.
 
 Each rewrite in :mod:`compgen.ir.payload.passes.rewrites` needs a
 small, repetitive set of IR constructions: build a ``linalg.generic``

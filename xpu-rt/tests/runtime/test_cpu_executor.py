@@ -1,4 +1,4 @@
-"""Tests for the Wave 11 CPU reference executor."""
+"""Tests for the CPU reference executor."""
 
 from __future__ import annotations
 

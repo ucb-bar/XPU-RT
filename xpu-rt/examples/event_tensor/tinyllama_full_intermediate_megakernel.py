@@ -1,4 +1,4 @@
-"""Real Phase J example: full-TinyLlama-intermediate on real weights.
+"""Real  example: full-TinyLlama-intermediate on real weights.
 
 Pushes the tiled megakernel to the largest TinyLlama-derived config
 that compiles + runs in a reasonable window on a TITAN RTX:
@@ -8,7 +8,7 @@ that compiles + runs in a reasonable window on a TITAN RTX:
     hidden=1024 (half TinyLlama),
     intermediate=4096  (73% of TinyLlama's actual 5632).
 
-On our hardware the Phase I tiled emitter's Triton JIT for this
+On our hardware the  tiled emitter's Triton JIT for this
 configuration takes about 100 s (cold path) -- exactly the
 "warmup" cost the Event Tensor Compiler paper measures in its
 Table 1 headline claim (SGLang 583 s, vLLM 123 s, ETC-AOT 35 s

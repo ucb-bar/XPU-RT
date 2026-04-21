@@ -1,4 +1,4 @@
-"""Shape + rank utilities for Wave 1+ pattern rewrites.
+"""Shape + rank utilities for + pattern rewrites.
 
 xDSL's ``TensorType`` distinguishes static dims (positive ints) from
 dynamic dims (``-1``). Many rewrites need a bounded "is this shape
@@ -72,7 +72,7 @@ def infer_result_shape(
 ) -> tuple[int, ...] | None:
     """Infer the result shape of a handful of canonical ops.
 
-    This is the small subset needed by Wave 1-4 rewrites:
+    This is the small subset needed by -4 rewrites:
 
     - ``elementwise`` -- all operand shapes must match; result is
       the first.

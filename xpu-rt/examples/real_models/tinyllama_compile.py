@@ -1,4 +1,4 @@
-"""Phase A.1 — full TinyLlama-1.1B-Chat through ``compile_with_llm``.
+""" — full TinyLlama-1.1B-Chat through ``compile_with_llm``.
 
 End-to-end smoke for the agentic stack on a real published checkpoint:
 
@@ -6,7 +6,7 @@ End-to-end smoke for the agentic stack on a real published checkpoint:
   weights) via the standard ``compile_with_llm`` HF path.
 * Drives the agentic loop with :class:`MockLLMClient` so the smoke can
   run offline; the real-LLM smoke lives under
-  ``tests/llm/test_real_provider_smoke.py`` (Phase C1).
+  ``tests/llm/test_real_provider_smoke.py``.
 * Asserts the bundle landed on disk and the differential gate matched
   eager torch on a real forward pass.
 
@@ -85,8 +85,9 @@ def run_tinyllama_compile(
 ):
     """Compile real TinyLlama-1.1B end-to-end. Returns ``LLMCompileResult``."""
     sample = _build_sample_inputs(seq_len)
+    model = _load_real_tinyllama()
     return compile_with_llm(
-        model=HF_REPO_ID,
+        model=model,
         target=str(target_profile),
         llm=MockLLMClient(strict=False),
         sample_inputs=sample,

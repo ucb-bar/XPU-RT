@@ -1,4 +1,4 @@
-"""Tests for megakernel-candidate detection (Phase A.9)."""
+"""Tests for megakernel-candidate detection."""
 
 from __future__ import annotations
 

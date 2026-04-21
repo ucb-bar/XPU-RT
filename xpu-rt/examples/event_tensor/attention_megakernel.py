@@ -1,4 +1,4 @@
-"""Real Phase A example: Llama/Gemma-style attention via Event Tensor megakernel.
+"""Real  example: Llama/Gemma-style attention via Event Tensor megakernel.
 
 A two-stage tiled attention block coordinated by an Event Tensor:
 
@@ -13,7 +13,7 @@ A two-stage tiled attention block coordinated by an Event Tensor:
 
 This is the actual structure of the per-decode-step attention path in
 Llama, Gemma, smolVLA, Qwen3, and every other transformer the ETC paper
-targets at the model level.  Phase A scope keeps it as a single attention
+targets at the model level.   scope keeps it as a single attention
 block (static schedule, no dynamic dispatch); the same megakernel
 synthesis lifts unchanged into a Phase-C full-model template.
 
@@ -289,7 +289,7 @@ def run_attention_megakernel(
 ) -> torch.Tensor:
     """Launch the emitted attention megakernel.  ``q/k/v`` shape: (H, S, D)."""
     if q.dtype != torch.float32 or k.dtype != torch.float32 or v.dtype != torch.float32:
-        raise TypeError("emitted attention megakernel only supports float32 in Phase A")
+        raise TypeError("emitted attention megakernel only supports float32 in ")
     expected = (compiled.n_heads, compiled.seq_len, compiled.head_dim)
     for name, t in (("Q", q), ("K", k), ("V", v)):
         if tuple(t.shape) != expected:

@@ -1,11 +1,11 @@
-"""Real Phase H example: KV-cache-driven generation with our megakernels.
+"""Real  example: KV-cache-driven generation with our megakernels.
 
 Combines two megakernels:
 
-    * Prefill (Phase G): the GQA layer megakernel encodes the entire
+    * Prefill: the GQA layer megakernel encodes the entire
       prompt of S tokens at once.  We extract K/V cache *from* the prefill
       pass and seed the per-layer KV-cache buffers.
-    * Decode (Phase H.1): per generated token, the decode-step megakernel
+    * Decode: per generated token, the decode-step megakernel
       processes only the new token, reads the cached K/V, appends new
       K/V to the cache.
 

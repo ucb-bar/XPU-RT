@@ -30,6 +30,8 @@ def _seed_gemma_like():
     import sys
 
     UP = Path(__file__).resolve().parents[3] / "user_perspective"
+    if not (UP / "models" / "gemma_decode_slice.py").exists():
+        pytest.skip("user_perspective/models/gemma_decode_slice.py not present (sandbox is gitignored)")
     if str(UP) not in sys.path:
         sys.path.insert(0, str(UP))
     from models.gemma_decode_slice import load
@@ -182,6 +184,8 @@ def test_already_proposed_pair_drops_out_of_next_suggest_call(tmp_path: Path) ->
     import sys
 
     UP = Path(__file__).resolve().parents[3] / "user_perspective"
+    if not (UP / "models" / "gemma_decode_slice.py").exists():
+        pytest.skip("user_perspective/models/gemma_decode_slice.py not present (sandbox is gitignored)")
     if str(UP) not in sys.path:
         sys.path.insert(0, str(UP))
     from models.gemma_decode_slice import load

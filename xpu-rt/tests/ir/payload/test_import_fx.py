@@ -100,3 +100,34 @@ def test_strict_import_uses_synthesized_translation_from_capture_artifact() -> N
     assert errors == []
     ir_text = FXImporter().get_ir_text(module)
     assert "func.call @aten_sin_default" in ir_text
+
+
+# ---------------------------------------------------------------------------
+# Func-signature reconciliation: the FX output-node's recorded dtype can
+# diverge from what the body actually produces (e.g. HF Llama declares
+# bf16 outputs but the attention math upcasts to f32 at the return).
+# Without reconciliation, xDSL's verifier rejects the module with
+# "Expected arguments to have the same types as the function output types".
+# ---------------------------------------------------------------------------
+
+
+class _UpcastReturnModel(torch.nn.Module):
+    """Body upcasts the bf16 input to f32 before returning.
+
+    Isolates the func-signature reconciliation path: no matmul mixed-dtype
+    interactions, just a single op that changes the return dtype between
+    the FX output-node metadata and the produced SSA value.
+    """
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return x.to(torch.float32)
+
+
+def test_import_reconciles_func_signature_with_body_return_type() -> None:
+    model = _UpcastReturnModel().eval()
+    sample = (torch.randn(2, 8, dtype=torch.bfloat16),)
+    ep = capture_model(model, sample)
+    module, _ = fx_to_xdsl(ep)
+    # Must verify — if reconciliation regressed, this raises
+    # VerifyException("Expected arguments to have the same types as ...").
+    module.verify()

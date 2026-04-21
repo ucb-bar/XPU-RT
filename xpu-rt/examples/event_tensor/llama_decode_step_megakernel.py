@@ -1,4 +1,4 @@
-"""Real Phase H example: decode-step megakernel with KV cache.
+"""Real  example: decode-step megakernel with KV cache.
 
 This is the second of the two megakernels a real LLM serving stack
 needs:
@@ -33,7 +33,7 @@ Differences from the prefill megakernel:
     * MLP is one row of activations, so each MLP body is a tiny matmul.
     * o_proj, RMSNorm, SwiGLU all operate on a single row.
 
-Validated by composing this kernel with the Phase G prefill kernel:
+Validated by composing this kernel with the  prefill kernel:
 the prefill processes the prompt and populates the cache; the decode
 kernel produces each subsequent token.  Token-by-token match against
 ``HF.model.generate(do_sample=False)`` is the acceptance criterion.

@@ -17,7 +17,7 @@ Three sub-strategies:
   accumulating ``inner_size`` elements). Reduces register pressure
   and improves cache locality for long reductions. Threshold: a
   reduce dim whose extent is ``> large_reduction_threshold``
-  becomes ``split``. Annotational in Wave 3; the structural body
+  becomes ``split``. Annotational in ; the structural body
   change lands in a follow-up tiling pass.
 - ``tree_reduce`` -- cascade the reduction into a balanced tree of
   halving adds. Annotational today.
@@ -32,7 +32,7 @@ Split + tree_reduce remain annotational because the structural
 loop-nest transforms they need haven't landed yet. The annotation
 contract is however *mandatory*
 -- without it, the kernel generator has no signal to pick the
-strategy, which makes Wave 7 end-to-end tests fail on large-reduce
+strategy, which makes  end-to-end tests fail on large-reduce
 workloads like Qwen-MoE's expert combine.
 
 The rewrite also walks ``compgen.linalg_ext.softmax`` /

@@ -1,4 +1,4 @@
-"""Tests for the Wave-2/3 ported passes (upgraded to MVP real in Wave 5).
+"""Tests for the Wave-2/3 ported passes (upgraded to MVP real in ).
 
 These passes historically shipped as scaffolded stubs; the fifth wave
 turned them into real MVP annotation passes. This file is kept (rather

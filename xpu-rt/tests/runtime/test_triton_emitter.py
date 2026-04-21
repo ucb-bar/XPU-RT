@@ -1,4 +1,4 @@
-"""Tests for the Wave 11 Triton emitter skeleton."""
+"""Tests for the Triton emitter skeleton."""
 
 from __future__ import annotations
 

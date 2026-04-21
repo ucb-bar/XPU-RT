@@ -2,7 +2,7 @@
 
 Walks a compiled xDSL module and, for each op tagged with
 ``compgen.library_dispatch = "triton"`` (set by
-``match_library_call`` in Wave 5), emits a Triton kernel source
+``match_library_call`` in ), emits a Triton kernel source
 file + a launch-grid record.
 
 The emitter is **source-only** today: no Triton compile + no CUDA

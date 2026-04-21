@@ -1,11 +1,11 @@
-"""Real Phase I example: tiled-matmul Llama decoder layer megakernel.
+"""Real  example: tiled-matmul Llama decoder layer megakernel.
 
 Replaces every "load the entire weight matrix into shared memory"
-pattern from Phase F with an inner-K tile loop, so the megakernel runs
-at D_HIDDEN and I sizes that the Phase F design couldn't fit in the
+pattern from  with an inner-K tile loop, so the megakernel runs
+at D_HIDDEN and I sizes that the  design couldn't fit in the
 TITAN-RTX 64KB shared-memory budget.
 
-Bodies that change vs Phase F (`llama_layer_gqa_megakernel.py`):
+Bodies that change vs  (`llama_layer_gqa_megakernel.py`):
 
     * qkv_proj   :  inner-tile along D_HIDDEN with BLOCK_K
     * o_proj     :  split into (m_tile, n_tile) tasks; inner-tile along D_HIDDEN
@@ -18,7 +18,7 @@ O(BLOCK_K * BLOCK_*), so doubling D_HIDDEN no longer doubles the
 shared-mem cost of any one body.
 
 Validated against the same HF-faithful GQA reference at dims that the
-Phase F megakernel couldn't reach (e.g. H=8, hidden=128, I=256 and
+ megakernel couldn't reach (e.g. H=8, hidden=128, I=256 and
 larger).
 """
 
@@ -672,8 +672,8 @@ if __name__ == "__main__":
     if not torch.cuda.is_available():
         raise SystemExit("This example requires a CUDA device.")
 
-    # Reach a dim that the Phase F megakernel could not (H=8 was the
-    # smallest GQA case where Phase F overflowed shared memory).
+    # Reach a dim that the  megakernel could not (H=8 was the
+    # smallest GQA case where  overflowed shared memory).
     H, N_KV = 8, 2
     S, D_HEAD, I = 16, 16, 256
     D_HIDDEN = H * D_HEAD  # = 128
@@ -713,4 +713,4 @@ if __name__ == "__main__":
     assert err < 5e-3, f"tiled layer diverges by {err}"
     print("PASS: tiled-matmul Llama layer megakernel matches HF-faithful GQA reference")
     print(f"      at H={H}, hidden={D_HIDDEN}, intermediate={I} -- a config")
-    print("      that overflowed Phase F's shared memory budget.")
+    print("      that overflowed 's shared memory budget.")

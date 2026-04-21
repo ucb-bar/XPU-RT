@@ -2,7 +2,7 @@
 
 Adds KV-cache support: a new decode-step megakernel that processes one
 new token at a time using cached K/V from previous steps.  Composed
-with the Phase G prefill megakernel and validated against
+with the  prefill megakernel and validated against
 ``HF.model.generate(do_sample=False)`` -- the production LLM-serving
 pattern of "encode prompt once, decode incrementally with cache".
 """

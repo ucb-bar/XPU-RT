@@ -4,7 +4,7 @@ weights + dequantize + conv) to a float ``linalg.conv_2d_nhwc_hwcf``.
 Reconstruction of IREE's ``QuantizedConvToConv``. Zero external
 references; CompGen owns the rewrite.
 
-Scope: the Wave 1 decomposition table emits
+Scope: the  decomposition table emits
 ``aten.convolution.default`` as an opaque ``func.call @aten_convolution``
 carrying ``compgen._pattern_hint = "convolution"``. When the
 convolution's weight operand is the result of
@@ -19,14 +19,14 @@ This pass:
 2. Replaces the opaque call with a dequant ``linalg.generic`` (if
    not already materialized) + a real ``linalg.conv_2d_nhwc_hwcf``
    when the input layout is NHWC. For other layouts we tag the op
-   with ``compgen.quantized_conv_scheduled`` so Wave 5
+   with ``compgen.quantized_conv_scheduled`` so
    ``lower_conv_to_img2col`` can pick it up.
 
 Since most real FX captures of ``aten.convolution`` have layout
 metadata attached via FX node args, and that's not yet threaded
 through the decomp table, the most common path in this wave is the
 **tag-for-later** path. This is still useful: the tag is the
-contract Wave 5 / Wave 6 passes rely on to find quantized
+contract  /  passes rely on to find quantized
 convolutions.
 
 Future work: emit a true mixed-precision conv body (int8 input,

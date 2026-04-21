@@ -5,7 +5,7 @@ Reconstruction of IREE's ``QuantizedMatmulToMatmul`` with structural
 inspiration from hexagon-mlir's ``DecomposeHexKLMatmulPass``:
 triple-nested tile loop in spirit, but we emit two ops here (a
 dequant ``linalg.generic`` + a ``linalg.matmul``) and defer the
-tile-loop lowering to Wave 5 / Wave 6. Zero external references;
+tile-loop lowering to  / . Zero external references;
 CompGen owns the rewrite.
 
 For an int8 packed-weight GEMM
@@ -25,8 +25,8 @@ Policies:
 Int4 packed-weight GEMMs (``weight_int4pack_mm`` /
 ``weight_int4pack_qm``) carry the ``scales_and_zeros`` operand which
 bundles per-group scale + zp. Fully structural lowering requires
-sub-byte unpacking + per-group broadcast that we defer to Wave 4.4
-``normalize_subbyte`` + a tile-level unpack path in Wave 6. Here we
+sub-byte unpacking + per-group broadcast that we defer to .4
+``normalize_subbyte`` + a tile-level unpack path in . Here we
 do a **partial** rewrite: the op is replaced with
 ``compgen.tensor_ext.unpack`` + a dequant generic (scalar unpack)
 + ``linalg.matmul``. The tensor_ext.unpack is our stable seam for
@@ -283,7 +283,7 @@ class _Int4PackMMPattern(RewritePattern):
     """Partial lowering: replace int4pack_mm with an
     ``compgen.tensor_ext.unpack`` + dequant + matmul chain.
 
-    The unpack op is our stable seam for sub-byte handling; Wave 6's
+    The unpack op is our stable seam for sub-byte handling; 's
     ``normalize_subbyte_post_layout`` will pick it up.
     """
 
@@ -303,7 +303,7 @@ class _Int4PackMMPattern(RewritePattern):
         if self.cfg.policy == "zp_zero_only" and not _zp_is_zero(op):
             self.stats.skipped_policy += 1
             return
-        # Leave the op structurally but tag it so Wave 6 can find it.
+        # Leave the op structurally but tag it so  can find it.
         from xdsl.dialects.builtin import StringAttr
 
         op.attributes["compgen.int4_lowering_scheduled"] = StringAttr("true")

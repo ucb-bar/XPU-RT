@@ -6,9 +6,12 @@ This page is intentionally strict about current state.
 
 | Surface | Status | Notes |
 |--------|--------|-------|
-| `./scripts/bootstrap.sh` | Implemented | Installs the repo and runs smoke checks |
-| `uv run python -m compgen.cli --help` | Implemented | Good for discovering the command surface |
-| `uv run python scripts/e2e_demo.py` | Runnable demo | Best public path through the current system |
+| `pip install compgen` | Implemented | PyPI install; ships the CLI + the `compgen-mcp` server |
+| `compgen --help` / `compgen --version` | Implemented | Discovers the command surface without activating a venv |
+| `compgen mcp install` / `doctor` / `print-config` | Implemented | Wires the MCP server into Claude Code configs |
+| `compgen ext list` / `new` / `doctor` | Implemented | Scaffolds and inspects user extensions |
+| `./scripts/bootstrap.sh` (contributors) | Implemented | Source install: submodules, `.venv/`, editable autocomp |
+| `uv run python scripts/e2e_demo.py` | Runnable demo | Best public vertical slice through the current system |
 | `compgen.device()` | Implemented | Consumes a targetgen-style hardware spec YAML |
 | `compgen.compile_model()` | Implemented | Returns a `CompiledModel` that benchmarks with the local executor |
 | `python -m benchmarks.cli list-suites` | Implemented | Probes the recognized benchmark suites and pack integrations |

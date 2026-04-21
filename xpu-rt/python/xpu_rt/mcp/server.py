@@ -6,8 +6,8 @@ the shell; importing :mod:`compgen.mcp` does not require the MCP SDK.
 
 Usage::
 
-    pip install compgen[mcp]
-    compgen-mcp
+    pip install compgen
+    compgen-mcp                 # or: compgen mcp serve
 
 Claude Code configuration (``.mcp.json``)::
 
@@ -18,6 +18,10 @@ Claude Code configuration (``.mcp.json``)::
         }
       }
     }
+
+The canonical config snippet lives in :mod:`compgen.mcp.config`;
+``compgen mcp print-config`` and ``compgen mcp install`` both read it
+from there so docstring + CLI can't drift.
 """
 
 from __future__ import annotations
@@ -132,8 +136,8 @@ def _require_mcp() -> Any:
         return mcp
     except ImportError as exc:
         sys.stderr.write(
-            "compgen-mcp requires the optional 'mcp' package.\n"
-            "Install with: pip install compgen[mcp]\n"
+            "compgen-mcp requires the 'mcp' package.\n"
+            "Reinstall with: pip install --upgrade compgen\n"
             f"Import error: {exc}\n"
         )
         sys.exit(2)
@@ -155,6 +159,24 @@ def _run_async_server() -> None:
     from mcp.server import Server  # type: ignore[import-not-found]
     from mcp.server.stdio import stdio_server  # type: ignore[import-not-found]
     from mcp.types import TextContent, Tool  # type: ignore[import-not-found]
+
+    # Surface every discoverable extension (entry-point plugins, vendor
+    # dialects, user-space ~/.compgen/extensions/*.py) to the registries
+    # before tools are enumerated, so an installed kernel-provider or
+    # dropped-in extension is visible on the first list_tools call.
+    try:
+        from compgen.plugins import discover_everything
+
+        discovery = discover_everything()
+        log.info(
+            "mcp.discovery.complete",
+            total=discovery.total(),
+            user_space_root=discovery.user_space_root,
+            vendor_dialects=len(discovery.vendor_dialects),
+            user_space_tools=len(discovery.user_space_tools),
+        )
+    except Exception as exc:  # noqa: BLE001
+        log.warning("mcp.discovery.failed", error=str(exc))
 
     sm = SessionManager()
     recorder = McpTranscriptRecorder.from_env()

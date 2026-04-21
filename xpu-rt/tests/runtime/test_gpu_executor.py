@@ -1,4 +1,4 @@
-"""Tests for the Wave 13 GPU runtime + distributed adapter."""
+"""Tests for the GPU runtime + distributed adapter."""
 
 from __future__ import annotations
 

@@ -26,11 +26,11 @@ Configuration:
   ``compgen.region_id`` values. Lets the LLM policy layer opt in
   per region.
 
-Covered contraction ops: ``linalg.matmul`` only in Wave 1. The
+Covered contraction ops: ``linalg.matmul`` only in . The
 quantized-weight variants
 (``compgen.quant.weight_int{4,8}pack_{mm,qm}``) already carry integer
 weights; the activation input is demoted through the generic
-``linalg.generic`` elementwise path in Wave 4 (``lower_quantized_matmul``
+``linalg.generic`` elementwise path in  (``lower_quantized_matmul``
 covers the joint rewrite).
 
 LLM-tool signature:
@@ -237,7 +237,7 @@ class _LinalgMatmulDemote(RewritePattern):
             self.stats.contractions_skipped_wrong_dtype += 1
             return
         if not isinstance(acc_elem, Float32Type):
-            # Support only f32-accumulator matmuls in Wave 1.
+            # Support only f32-accumulator matmuls in .
             self.stats.contractions_skipped_wrong_dtype += 1
             return
         if lhs_elem != acc_elem or rhs_elem != acc_elem:

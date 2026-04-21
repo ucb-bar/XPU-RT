@@ -1,4 +1,4 @@
-"""Real Phase G example: greedy generation with our megakernel.
+"""Real  example: greedy generation with our megakernel.
 
 End-to-end demonstration that the emitted persistent megakernel can
 **generate tokens** the same way HuggingFace's actual ``LlamaForCausalLM``
@@ -22,10 +22,10 @@ This is the strongest "real LLM" demonstration the test surface can
 make: we generate the same sequence of tokens that HF generates, with
 every transformer-layer call being our compiler's emitted code.
 
-Note on KV cache: this Phase G example re-encodes the entire growing
+Note on KV cache: this  example re-encodes the entire growing
 sequence on each step (no KV cache reuse).  That is wasteful but keeps
 the demo focused on layer-level correctness; KV-cache append is the
-next emitter optimisation (Phase H).
+next emitter optimisation.
 """
 
 from __future__ import annotations

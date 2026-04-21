@@ -225,7 +225,7 @@ class AccelBarrierIROp(IRDLOperation):
 
 
 # ---------------------------------------------------------------------------
-# Wave 9: HMX tile primitives (hexagon-mlir-inspired)
+# HMX tile primitives (hexagon-mlir-inspired)
 # ---------------------------------------------------------------------------
 
 

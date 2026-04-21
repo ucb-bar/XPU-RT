@@ -2,7 +2,7 @@
 
 xDSL's ``linalg`` dialect lacks named ops for common LLM / vision
 patterns (softmax, layernorm, rmsnorm, rope, swiglu, gelu, silu). The
-Wave 2 ``raise_special_ops`` pass detects these patterns inside
+ ``raise_special_ops`` pass detects these patterns inside
 ``linalg.generic`` bodies and rewrites them into these named ops, so
 downstream passes (kernel dispatch, library-call matching, Triton
 lowering) can reason about them structurally instead of re-parsing

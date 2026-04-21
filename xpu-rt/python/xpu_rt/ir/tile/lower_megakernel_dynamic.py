@@ -170,7 +170,7 @@ def _coord_index(coord: Any) -> int | None:
             return None
     if not parts:
         return 0
-    # Linearise multi-d coords later; for Phase B MVP we use 1D events.
+    # Linearise multi-d coords later; for  MVP we use 1D events.
     if len(parts) > 1:
         return None
     return parts[0]
@@ -182,8 +182,8 @@ def _gather_tasks(
 ) -> list[_TaskInfo]:
     """Build per-task in/out-edge metadata.
 
-    Phase B MVP: literal integer coords only.  Symbolic / einsum coords
-    are deferred to Phase B.3 (event.update / event.trigger lowering).
+     MVP: literal integer coords only.  Symbolic / einsum coords
+    are deferred to .3 (event.update / event.trigger lowering).
     """
     tasks: list[_TaskInfo] = []
     for call in graph.body.walk():
@@ -192,7 +192,7 @@ def _gather_tasks(
         func = call.device_func.root_reference.data
         kind = func_to_kind[func]
 
-        # task_shape -> task_id range.  Phase B MVP: 1D shapes.
+        # task_shape -> task_id range.   MVP: 1D shapes.
         dims = [d.value.data for d in call.task_shape.data if isinstance(d, IntegerAttr)]
         n_tasks = 1
         for d in dims:
@@ -215,9 +215,7 @@ def _gather_tasks(
                     if hasattr(c, "event_ref"):
                         idx = _coord_index(c)
                         if idx is None:
-                            raise ValueError(
-                                "Phase B dynamic scheduler MVP only supports literal integer event coords."
-                            )
+                            raise ValueError(" dynamic scheduler MVP only supports literal integer event coords.")
                         out.append([(c.event_ref.data, idx)])
                     else:
                         out.append([])
@@ -228,9 +226,7 @@ def _gather_tasks(
                     if hasattr(c, "event_ref"):
                         idx = _coord_index(c)
                         if idx is None:
-                            raise ValueError(
-                                "Phase B dynamic scheduler MVP only supports literal integer event coords."
-                            )
+                            raise ValueError(" dynamic scheduler MVP only supports literal integer event coords.")
                         shared.append((c.event_ref.data, idx))
                 return [list(shared) for _ in range(n_tasks)]
 
@@ -245,7 +241,7 @@ def _gather_tasks(
             for slot, edge in enumerate(out_edges_per_task[tid]):
                 ev_name, linear_idx = edge
                 # Default decrement = 1 unless the original coord said otherwise.
-                # (Phase B MVP: every coord uses decrement 1.)
+                #
                 outs.append((ev_name, linear_idx, 1))
 
             tasks.append(
@@ -316,7 +312,7 @@ def _emit_post_dispatch(
 
     Each task instance gets its own conditional block, dispatched via
     ``if task_kind == K and task_id == T:`` chains.  This is fine for
-    Phase B MVP scale (hundreds of tasks); a future optimisation can
+     MVP scale (hundreds of tasks); a future optimisation can
     table-drive it via tl.load on a precomputed dispatch table.
     """
     if not tasks:

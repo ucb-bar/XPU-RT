@@ -1,6 +1,6 @@
 """Phase 5 runtime-contract tool stubs (P15).
 
-Scaffolded per the approved plan's Wave 4 / Phase 5 coverage. Every
+Scaffolded per the approved plan's  / Phase 5 coverage. Every
 tool is a ``_StubPass`` subclass with full metadata + tool-args +
 ``stub=True``. Real destructive implementations land in follow-up
 waves alongside the execution-plan emission and buffer solver.

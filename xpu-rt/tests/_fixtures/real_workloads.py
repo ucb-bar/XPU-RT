@@ -1,7 +1,7 @@
-"""Real-workload fixtures for Wave 2+ pass validation.
+"""Real-workload fixtures for + pass validation.
 
 Per the ``feedback_no_stubs_real_examples`` memory constraint, every
-pass from Wave 2 onwards must be validated on a real PyTorch model,
+pass from  onwards must be validated on a real PyTorch model,
 not a synthetic one-op fixture. This module ships three minimal
 fixtures that exercise the same patterns found in production LLM /
 VLA workloads:
@@ -674,7 +674,7 @@ ALL_FIXTURE_FNS = (
 )
 
 # Subset of fixtures known to bridge cleanly through CompGen's FXImporter
-# fallback today. Used by Wave 2+ pass tests when ``torch_mlir`` is not
+# fallback today. Used by + pass tests when ``torch_mlir`` is not
 # installed. When the torch-mlir bridge path is available, all fixtures
 # should bridge -- so tests should prefer ``ALL_FIXTURE_FNS`` with a
 # fallback to this subset.

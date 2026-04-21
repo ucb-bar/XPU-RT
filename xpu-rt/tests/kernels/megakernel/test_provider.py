@@ -1,4 +1,4 @@
-"""Tests for the MegakernelProvider (Phase A)."""
+"""Tests for the MegakernelProvider."""
 
 from __future__ import annotations
 

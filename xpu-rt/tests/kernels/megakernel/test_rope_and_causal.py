@@ -1,6 +1,6 @@
 """HF-faithful Llama decoder layer (RoPE + causal) megakernel regression tests.
 
-Adds the operators that turn the Phase D Llama decoder layer into an
+Adds the operators that turn the  Llama decoder layer into an
 HF-faithful one: RoPE (half-rotation, matching HF's
 ``apply_rotary_pos_emb``) and causal attention mask.  Every test
 executes the actually-emitted persistent megakernel on a real GPU.

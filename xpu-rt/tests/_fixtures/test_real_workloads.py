@@ -1,6 +1,6 @@
 """Tests for the real-workload fixtures themselves.
 
-These are smoke tests — the fixtures are the *test data* for Wave 2+
+These are smoke tests — the fixtures are the *test data* for +
 passes, so we only need to confirm they build, run on CPU, and
 expose the contract each pass relies on (model, inputs,
 eager_output, exported).

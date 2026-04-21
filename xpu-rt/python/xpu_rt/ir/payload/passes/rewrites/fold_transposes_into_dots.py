@@ -21,7 +21,7 @@ Only 2D transposes with permutation ``[1, 0]`` participate in the
 matmul fold. Higher-rank transposes or non-``[1, 0]`` perms produce
 shapes ``linalg.matmul`` can't consume without a generic lowering.
 When such cases appear in practice they will be handled by the
-Wave 3 ``propagate_transposes`` pass.
+ ``propagate_transposes`` pass.
 
 LLM-tool signature:
 

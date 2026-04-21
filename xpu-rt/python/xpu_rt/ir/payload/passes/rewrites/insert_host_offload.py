@@ -12,7 +12,7 @@ regions whose ``device`` starts with ``"cpu"`` / ``"host"`` and:
    (``CopyEdge`` with ``transfer_path="host_offload"``) plus a
    fallback sync edge.
 
-When combined with ``insert_copies`` (Wave 6.5) the pass creates
+When combined with ``insert_copies`` the pass creates
 host↔device transfer chains; on its own it's primarily
 annotational.
 

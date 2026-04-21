@@ -7,7 +7,7 @@ already been annotated by
 the Event Tensor Compiler paper) and produces a single ``@triton.jit``
 function whose grid equals the target's SM count.
 
-Code-generation strategy (Phase A, static scheduler):
+Code-generation strategy:
 
     * Allocate one ``i32``/``i64`` tensor per Event Tensor in the graph,
       zero-initialised at host launch time and seeded with ``wait_count``.
@@ -28,7 +28,7 @@ When :paramref:`device_functions` is omitted the emitter falls back to
 empty-body placeholders (used by structural tests); a real workload must
 supply bodies for every device function referenced by the graph.
 
-Phase B will add the dynamic push/pop scheduler in a sibling emitter.
+ will add the dynamic push/pop scheduler in a sibling emitter.
 """
 
 from __future__ import annotations

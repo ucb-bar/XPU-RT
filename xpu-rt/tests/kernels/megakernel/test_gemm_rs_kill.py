@@ -1,4 +1,4 @@
-"""End-to-end kill test for the ETC megakernel pipeline (Phase A).
+"""End-to-end kill test for the ETC megakernel pipeline.
 
 Walks every layer of the integration on a synthetic GEMM+ReduceScatter-
 style 4-task workload:
@@ -15,7 +15,7 @@ style 4-task workload:
 
 The Triton kernel is hand-written rather than auto-generated from the
 emitter's source string -- the emitter's per-device-function bodies are
-intentionally left as ``pass`` stubs in Phase A (real bodies come from
+intentionally left as ``pass`` stubs in  (real bodies come from
 ``lower_tile_to_triton``).  This kill test exercises the *protocol*
 (persistent grid, per-SM queue, atomic event counters) on real hardware,
 which is the load-bearing claim of the ETC paper.

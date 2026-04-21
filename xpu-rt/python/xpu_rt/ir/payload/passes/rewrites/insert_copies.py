@@ -17,7 +17,7 @@ Config:
 
 - ``default_transfer_path`` -- filled into each CopyEdge when the
   real ``transfer_path`` isn't known at this layer. Replaced by
-  Wave 7 pipeline driver when a concrete ``target_resource.v2``
+   pipeline driver when a concrete ``target_resource.v2``
   is available.
 - ``estimate_latency_ns`` -- simple model:
   ``size_bytes / bandwidth_gbps``. Default bandwidth 100 GB/s
@@ -110,7 +110,7 @@ def run_insert_copies(
         #
         # For this pass we synthesize a new "staging" buffer in the
         # consumer's memory space (heuristically ``"dram"`` when we
-        # can't tell). Wave 7's pipeline driver will set the
+        # can't tell). 's pipeline driver will set the
         # consumer space from target.
         producer_space = producer_buf.memory_space
         consumer_space = plan.summary.get("device_default_space", {}).get(consumer_placement.device, producer_space)

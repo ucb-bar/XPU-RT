@@ -1,7 +1,7 @@
 """Llama decoder-layer megakernel regression tests (full decoder layer in one megakernel).
 
 Every test executes the **actually-emitted** persistent megakernel on a
-real GPU.  Phase D adds the operators that turn the Phase C
+real GPU.   adds the operators that turn the
 transformer-block megakernel into a full Llama decoder layer
 (RMSNorm + QKV proj + O proj + RMSNorm), validated on real
 TinyLlama-1.1B layer-0 weights.

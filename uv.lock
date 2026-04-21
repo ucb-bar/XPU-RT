@@ -479,6 +479,7 @@ dependencies = [
     { name = "click" },
     { name = "jinja2" },
     { name = "jsonschema" },
+    { name = "mcp" },
     { name = "pyyaml" },
     { name = "rich" },
     { name = "structlog" },
@@ -489,6 +490,10 @@ dependencies = [
 [package.optional-dependencies]
 benchmarks = [
     { name = "matplotlib" },
+]
+compile = [
+    { name = "torch" },
+    { name = "xdsl" },
 ]
 demo = [
     { name = "accelerate" },
@@ -513,9 +518,6 @@ llm = [
     { name = "anthropic" },
     { name = "google-genai" },
     { name = "openai" },
-]
-mcp = [
-    { name = "mcp" },
 ]
 quantization = [
     { name = "torchao" },
@@ -542,7 +544,7 @@ requires-dist = [
     { name = "jinja2", specifier = ">=3.1" },
     { name = "jsonschema", specifier = ">=4.20" },
     { name = "matplotlib", marker = "extra == 'benchmarks'", specifier = ">=3.8" },
-    { name = "mcp", marker = "extra == 'mcp'", specifier = ">=1.0" },
+    { name = "mcp", specifier = ">=1.0" },
     { name = "mkdocs", marker = "extra == 'docs'", specifier = ">=1.6" },
     { name = "mkdocs-material", marker = "extra == 'docs'", specifier = ">=9.5" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10" },
@@ -560,12 +562,14 @@ requires-dist = [
     { name = "scipy", marker = "extra == 'solve'", specifier = ">=1.11" },
     { name = "structlog", specifier = ">=24.1" },
     { name = "torch", specifier = ">=2.4" },
+    { name = "torch", marker = "extra == 'compile'", specifier = ">=2.4" },
     { name = "torchao", marker = "extra == 'quantization'", specifier = ">=0.16" },
     { name = "transformers", marker = "extra == 'demo'", specifier = ">=4.44" },
     { name = "xdsl", specifier = ">=0.24" },
+    { name = "xdsl", marker = "extra == 'compile'", specifier = ">=0.24" },
     { name = "z3-solver", marker = "extra == 'solve'", specifier = ">=4.12" },
 ]
-provides-extras = ["llm", "dev", "solve", "quantization", "iree", "benchmarks", "docs", "ray", "mcp", "demo"]
+provides-extras = ["llm", "dev", "solve", "quantization", "iree", "benchmarks", "docs", "ray", "compile", "kernels", "demo"]
 
 [[package]]
 name = "contourpy"

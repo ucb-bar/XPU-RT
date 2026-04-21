@@ -97,7 +97,7 @@ def test_event_edges_link_producers_to_consumers() -> None:
     _, graph = _gemm_rs_module()
     _, edges = extract_event_edges(graph)
     # Every (producer_task, consumer_task) on event E should appear at least
-    # once.  We allow the over-approximation Phase A documents.
+    # once.  We allow the over-approximation  documents.
     pairs = {(e.producer, e.consumer) for e in edges}
     assert ("partial_sum:0", "final_sum:0") in pairs
     assert ("partial_sum:3", "final_sum:3") in pairs

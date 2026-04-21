@@ -1,40 +1,50 @@
-# Architecture Overview
+# Architecture overview
 
-CompGen is organized around a staged pipeline plus a target-generation subsystem.
+CompGen is organised around a staged pipeline plus a target-generation
+subsystem. This page is a map — for the full treatment see
+[Architecture → Compiler Generation](../architecture/compiler-generation.md).
 
-## Current Runnable Path
+## Current runnable path
 
-The demo and top-level Python API exercise this shape today:
+The demo and the top-level Python API exercise this shape today:
 
-1. Capture a PyTorch model
-2. Convert the graph into Payload IR
-3. Analyze kernels and choose strategies
-4. Run equality-saturation optimization
-5. Plan execution
-6. Bundle artifacts and benchmark locally
+1. Capture a PyTorch model (`torch.export` + `torch.compile` diagnostics).
+2. Convert the graph into Payload IR.
+3. Analyse kernels and choose strategies (gap analysis, kernel contracts).
+4. Run equality-saturation optimisation.
+5. Plan execution (placement + scheduling).
+6. Bundle artifacts and benchmark locally.
 
-## Target Generation Path
+## Target-generation path
 
-When you create a `CompGenDevice`, CompGen:
+Creating a `CompGenDevice`:
 
-1. Loads a hardware spec YAML
-2. Validates it
-3. Extracts a target profile
-4. Classifies the hardware family
-5. Generates a support plan
-6. Builds a target-specific dialect stack
-7. Emits target-generation artifacts
+1. Load a hardware spec YAML.
+2. Validate it against the schema.
+3. Extract a target profile.
+4. Classify the hardware family (Triton-friendly, accel-native, ukernel-runtime, hybrid).
+5. Generate a support plan.
+6. Build a target-specific dialect stack.
+7. Emit target-generation artifacts.
 
-## Public Surfaces
+## Public surfaces
 
 | Surface | Purpose |
-|--------|---------|
-| CLI | Discover the intended command surface |
-| Python API | Script the current working flows |
+|---------|---------|
+| MCP server (`compgen-mcp`) | Drive every pipeline stage from Claude Code |
+| CLI (`compgen ...`) | Scriptable command surface; see [CLI Reference](../reference/cli.md) |
+| Python API | Script the current working flows; see [Python API](../reference/python-api.md) |
+| Extension packs | User-authored providers / dialects / targets; see [Extension Authoring](../getting-started/extension-authoring.md) |
 | Demo script | Run the most complete vertical slice |
-| Target profiles | Describe deployment targets for profile-centric flows |
-| Hardware specs | Drive target generation and `compgen.device()` |
+| Target profiles + hardware specs | Describe deployment targets |
 
-## Internal Detail
+## Deeper reads
 
-The deeper architecture records, ADRs, scheduling design notes, and roadmap material were intentionally moved out of `docs/` into `tmp/agentic_documentation/` so the public docs can stay focused on user workflows.
+- [Architecture → Runtime Model](../architecture/runtime-model.md)
+- [Architecture → Target Backend Model](../architecture/target-backend-model.md)
+- [Architecture → Triton Integration](../architecture/triton-integration-spec.md)
+- [Architecture → Extension Points](../architecture/extension-points.md)
+
+Deeper design records, ADRs, and roadmap material live in
+`tmp/agentic_documentation/`; the public docs stay focused on user
+workflows.

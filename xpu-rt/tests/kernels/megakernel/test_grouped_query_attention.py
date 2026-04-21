@@ -3,7 +3,7 @@
 Closes the validation chain to actual HuggingFace ``LlamaDecoderLayer.forward()``:
 
   * F.1: our HF-faithful PyTorch reference matches HF's actual layer
-    code on real TinyLlama-1.1B layer-0 weights.  Combined with Phase E
+    code on real TinyLlama-1.1B layer-0 weights.  Combined with
     (megakernel matches the reference) this proves the emitted megakernel
     runs the same math as HuggingFace's production decoder layer.
 
@@ -51,7 +51,7 @@ _TINYLLAMA_CACHE = Path(os.path.expanduser("~/.cache/huggingface/hub/models--Tin
 def test_pytorch_reference_matches_hf_llama_decoder_layer_forward() -> None:
     """End-to-end chain proof:
 
-    megakernel (Phase E)  ==  our HF-faithful reference     (1.8e-07)
+    megakernel  ==  our HF-faithful reference     (1.8e-07)
     our HF-faithful reference  ==  HF.LlamaDecoderLayer.forward (this test)
     ⇒ megakernel runs the same math as HF's actual decoder layer.
     """
@@ -80,7 +80,7 @@ def test_pytorch_reference_matches_hf_llama_decoder_layer_forward() -> None:
         (4, 1),  # KV_REPEAT = 4 (TinyLlama-like ratio)
         # H >= 8 with our default block sizes overflows the TITAN-RTX 64 KB
         # shared-memory budget at the o_proj body's full-W_o load -- the
-        # tiled-W_o emitter optimisation is the next step (Phase G).
+        # tiled-W_o emitter optimisation is the next step.
     ],
 )
 def test_gqa_layer_megakernel_matches_gqa_reference(n_heads: int, n_kv_heads: int) -> None:

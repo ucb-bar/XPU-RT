@@ -1,7 +1,7 @@
-"""Real Phase E example: full Llama decoder-layer megakernel WITH RoPE + causal mask.
+"""Real  example: full Llama decoder-layer megakernel WITH RoPE + causal mask.
 
 Closes the remaining gap to true HuggingFace ``LlamaDecoderLayer.forward``
-parity by adding two operators that Phase D explicitly omitted:
+parity by adding two operators that  explicitly omitted:
 
     * **RoPE** (rotary position embedding) -- a per-(m_tile, head) device
       function that rotates Q[h, m_rows, :] and K[h, m_rows, :] using
@@ -15,7 +15,7 @@ parity by adding two operators that Phase D explicitly omitted:
       with ``-inf`` whenever ``j > i`` (key index after query position),
       then softmax.  Matches HF's ``is_causal=True`` SDPA path.
 
-Together with Phase D's nine bodies, this is **ten device-function
+Together with 's nine bodies, this is **ten device-function
 bodies, nine event tensors** in one persistent dynamic-scheduled
 megakernel that runs the exact mathematical sequence of an HF Llama
 decoder layer (modulo GQA, which the test slice collapses into MHA).
@@ -594,7 +594,7 @@ def run_llama_layer_rope(
     if any(t.dtype != torch.float32 for t in (
         x, w_norm1, w_q, w_k, w_v, w_o, w_norm2, w_gate, w_up, w_down, cos, sin,
     )):
-        raise TypeError("Phase E layer megakernel only supports float32")
+        raise TypeError(" layer megakernel only supports float32")
     if tuple(cos.shape) != (S, D_HEAD): raise ValueError(f"cos shape {tuple(cos.shape)} != ({S}, {D_HEAD})")
     if tuple(sin.shape) != (S, D_HEAD): raise ValueError(f"sin shape {tuple(sin.shape)} != ({S}, {D_HEAD})")
 

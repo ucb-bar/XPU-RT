@@ -1,4 +1,4 @@
-"""Phase A.1 acceptance — real TinyLlama-1.1B through ``compile_with_llm``.
+"""acceptance — real TinyLlama-1.1B through ``compile_with_llm``.
 
 Skip-gated by:
 
@@ -46,9 +46,7 @@ pytestmark = [
 def test_real_tinyllama_compiles_end_to_end() -> None:
     result = run_tinyllama_compile(seq_len=4, budget=2)
     assert result.compiled is not None
-    assert result.compiled.pipeline_result.passed, (
-        "pipeline gate did not pass on real TinyLlama-1.1B"
-    )
+    assert result.compiled.pipeline_result.passed, "pipeline gate did not pass on real TinyLlama-1.1B"
 
 
 def test_real_tinyllama_bundle_has_forward_c() -> None:
