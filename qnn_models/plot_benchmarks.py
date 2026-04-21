@@ -13,9 +13,18 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 MODEL_META = {
-    "dronet":       {"label": "DroNet",      "params": "300K params\n13M MACs"},
-    "mobilenet_v2": {"label": "MobileNetV2", "params": "3.5M params\n300M MACs"},
-    "yolov8s":      {"label": "YOLOv8s",     "params": "11.2M params\n14.4G MACs"},
+    "dronet":                  {"label": "DroNet",              "params": "300K params\n13M MACs"},
+    "mobilenet_v2":            {"label": "MobileNetV2",         "params": "3.5M params\n300M MACs"},
+    "yolov8s":                 {"label": "YOLOv8s",             "params": "11.2M params\n14.4G MACs"},
+    "action_in_projector":     {"label": "ActionIn\nProjector"},
+    "action_out_projector":    {"label": "ActionOut\nProjector"},
+    "state_projector":         {"label": "State\nProjector"},
+    "time_in_projector":       {"label": "TimeIn\nProjector"},
+    "time_out_projector":      {"label": "TimeOut\nProjector"},
+    "smolvlm_text":            {"label": "SmolVLM\nText"},
+    "smolvlm_vision":          {"label": "SmolVLM\nVision"},
+    "smolvlm_expert_decode":   {"label": "SmolVLM\nExpert Dec"},
+    "smolvlm_expert_prefill":  {"label": "SmolVLM\nExpert Pre"},
 }
 
 BACKENDS = ["CPU", "GPU", "DSP"]
@@ -36,10 +45,11 @@ def main():
     with open(results_path) as f:
         raw = json.load(f)
 
-    # Build ordered lists matching MODEL_META order
+    # Build ordered lists: known models first (MODEL_META order), then any extras
     models = [k for k in MODEL_META if k in raw]
-    labels = [MODEL_META[m]["label"] for m in models]
-    param_info = [MODEL_META[m]["params"] for m in models]
+    models += [k for k in sorted(raw) if k not in MODEL_META]
+    labels = [MODEL_META.get(m, {}).get("label", m) for m in models]
+    param_info = [MODEL_META.get(m, {}).get("params", "") for m in models]
 
     latency = {}
     for m in models:
@@ -48,7 +58,8 @@ def main():
             val = raw[m].get(b)
             latency[m][b] = float(val) if val is not None else None
 
-    fig, axes = plt.subplots(1, 2, figsize=(14, 5.5))
+    fig_width = max(14, len(models) * 1.8)
+    fig, axes = plt.subplots(1, 2, figsize=(fig_width, 6))
 
     x = np.arange(len(models))
     width = 0.25
@@ -71,7 +82,8 @@ def main():
     ax.set_ylabel("Latency (ms)", fontsize=11)
     ax.set_title("Inference Latency by Backend", fontsize=13, fontweight="bold")
     ax.set_xticks(x + width)
-    ax.set_xticklabels([f"{l}\n{p}" for l, p in zip(labels, param_info)], fontsize=9)
+    ax.set_xticklabels([f"{l}\n{p}" if p else l for l, p in zip(labels, param_info)],
+                       fontsize=8, rotation=45, ha="right")
     ax.legend(fontsize=10)
     ax.set_yscale("log")
     all_vals = [v for m in models for v in latency[m].values() if v]
@@ -98,7 +110,8 @@ def main():
     ax.set_ylabel("Throughput (FPS)", fontsize=11)
     ax.set_title("Inference Throughput by Backend", fontsize=13, fontweight="bold")
     ax.set_xticks(x + width)
-    ax.set_xticklabels([f"{l}\n{p}" for l, p in zip(labels, param_info)], fontsize=9)
+    ax.set_xticklabels([f"{l}\n{p}" if p else l for l, p in zip(labels, param_info)],
+                       fontsize=8, rotation=45, ha="right")
     ax.legend(fontsize=10)
     ax.set_yscale("log")
     all_fps = [1000.0 / v for v in all_vals]
