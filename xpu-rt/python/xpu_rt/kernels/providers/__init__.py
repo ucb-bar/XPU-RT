@@ -27,6 +27,7 @@ if TYPE_CHECKING:
 _PROVIDER_MAP = {
     "AutocompProvider": "compgen.kernels.providers.autocomp",
     "ExoProvider": "compgen.kernels.providers.autocomp",
+    "ExoRiscvOpuProvider": "compgen.kernels.providers.exo_riscv_opu",
     "KernelBlasterProvider": "compgen.kernels.providers.kernelblaster",
 }
 

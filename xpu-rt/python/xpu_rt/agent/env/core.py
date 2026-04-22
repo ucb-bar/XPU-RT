@@ -649,21 +649,58 @@ class CompilerEnv:
 
     def _apply_pass(self, action: ApplyPassAction) -> tuple[bool, str, list[str]]:
         """Apply a registered xDSL pass from the pass menu."""
+        from compgen.trace import DecisionPublisher, PassPublisher, get_ir_dump_writer
+
         assert self._module is not None and self._target is not None
         diagnostics: list[str] = []
 
         pass_entry = _PASS_MENU.get(action.pass_name)
         if pass_entry is None:
+            DecisionPublisher.emit(
+                decision_type="pass_select",
+                chosen=action.pass_name,
+                candidates=list(_PASS_MENU.keys()),
+                rationale="rejected: unknown pass",
+            )
             return False, f"Unknown pass: {action.pass_name}. Available: {list(_PASS_MENU.keys())}", diagnostics
 
-        try:
-            cloned = self._module.clone()
-            pass_instance = pass_entry["factory"](action.pass_args)
-            pass_instance.apply(None, cloned)
-            cloned.verify()
+        DecisionPublisher.emit(
+            decision_type="pass_select",
+            chosen=action.pass_name,
+            candidates=list(_PASS_MENU.keys()),
+            rationale=pass_entry.get("desc", ""),
+        )
+        dumper = get_ir_dump_writer()
+        import time as _env_time
 
-            self._module = cloned
-            self._regions = _extract_regions(self._module, self._target)
+        try:
+            with PassPublisher.span(
+                payload={"name": action.pass_name, "source": "env._apply_pass"}
+            ) as span_id:
+                t0 = _env_time.time()
+                cloned = self._module.clone()
+                if dumper is not None:
+                    dumper.dump(
+                        name=f"env_{action.pass_name}",
+                        phase="before",
+                        module=self._module,
+                        trace_event_id=span_id or "",
+                    )
+                pass_instance = pass_entry["factory"](action.pass_args)
+                pass_instance.apply(None, cloned)
+                cloned.verify()
+
+                self._module = cloned
+                self._regions = _extract_regions(self._module, self._target)
+                elapsed_ms = (_env_time.time() - t0) * 1000.0
+                if dumper is not None:
+                    dumper.dump(
+                        name=f"env_{action.pass_name}",
+                        phase="after",
+                        module=self._module,
+                        trace_event_id=span_id or "",
+                        duration_ms=elapsed_ms,
+                    )
             diagnostics.append(f"Applied pass '{action.pass_name}': {pass_entry['desc']}")
             return True, "", diagnostics
         except Exception as e:
@@ -672,6 +709,7 @@ class CompilerEnv:
     def _apply_analyze(self) -> tuple[bool, str, list[str]]:
         """Run network analysis on the FX graph."""
         from compgen.agent.analyzer import NetworkAnalyzer
+        from compgen.trace import AnalysisPublisher
 
         diagnostics: list[str] = []
 
@@ -681,7 +719,17 @@ class CompilerEnv:
         assert self._target is not None
         try:
             analyzer = NetworkAnalyzer()
-            self._analysis = analyzer.analyze(self._exported_program, self._target)
+            with AnalysisPublisher.span(
+                payload={"analysis": "NetworkAnalyzer", "target": getattr(self._target, "name", "")}
+            ):
+                self._analysis = analyzer.analyze(self._exported_program, self._target)
+
+            AnalysisPublisher.emit(
+                analysis="NetworkAnalyzer",
+                clusters=len(self._analysis.clusters),
+                unclustered=len(self._analysis.unclustered_ops or []),
+                opportunities=list(self._analysis.optimization_opportunities or []),
+            )
 
             diagnostics.append(f"ANALYSIS: {len(self._analysis.clusters)} pattern clusters detected")
             for c in self._analysis.clusters:

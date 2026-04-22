@@ -31,11 +31,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
 
 from compgen.kernels.contract_v3 import (
-    HardwareEnvelope,
-    KernelArchetype,
     KernelContractV3,
     MemoryTier,
 )
@@ -79,12 +76,18 @@ _LAUNCH_OVERHEAD_US: dict[str, float] = {
 
 def _arch_key(target_name: str) -> str:
     n = target_name.lower()
-    if "turing" in n or "titan-rtx" in n or "test-gpu-simt" in n: return "turing"
-    if "ampere" in n or "a100" in n: return "ampere"
-    if "hopper" in n or "h100" in n: return "hopper"
-    if "hexagon" in n or "openq" in n: return "hexagon"
-    if "cpu" in n or "host" in n: return "cpu"
-    if "rocm" in n or "mi" in n: return "rocm"
+    if "turing" in n or "titan-rtx" in n or "test-gpu-simt" in n:
+        return "turing"
+    if "ampere" in n or "a100" in n:
+        return "ampere"
+    if "hopper" in n or "h100" in n:
+        return "hopper"
+    if "hexagon" in n or "openq" in n:
+        return "hexagon"
+    if "cpu" in n or "host" in n:
+        return "cpu"
+    if "rocm" in n or "mi" in n:
+        return "rocm"
     return "ampere"
 
 
@@ -310,13 +313,37 @@ def should_fuse(
         max_lessons=5,
     )
 
-    return FusionVerdict(
+    verdict = FusionVerdict(
         decision=decision,
         est_speedup_ratio=ratio,
         reason=reason,
         cost_breakdown=costs,
         knowledge_brief=brief,
     )
+    _emit_advisory(
+        {
+            "target": target_name,
+            "producer": producer.op_name,
+            "consumer": consumer.op_name,
+            "verdict": verdict.decision.value,
+            "est_speedup": round(verdict.est_speedup_ratio, 3),
+            "cost_breakdown": dict(verdict.cost_breakdown),
+            "reason": verdict.reason,
+            "baseline_unfused_us": baseline_unfused_us,
+            "binding": False,
+        }
+    )
+    return verdict
+
+
+def _emit_advisory(payload: dict) -> None:
+    """Best-effort ``oracle_advisory`` emission for fusion verdicts."""
+    try:
+        from compgen.trace import OraclePublisher
+
+        OraclePublisher.emit(oracle="fusion", **payload)
+    except Exception:  # noqa: BLE001
+        pass
 
 
 __all__ = [

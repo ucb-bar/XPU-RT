@@ -19,6 +19,11 @@ from typing import Any
 from xdsl.dialects.builtin import ModuleOp, StringAttr, TensorType
 from xdsl.dialects.func import FuncOp, ReturnOp
 
+from compgen.agent.decisions import (
+    DecisionCandidate,
+    DecisionSite,
+    get_active_registry,
+)
 from compgen.stages.bundle import BundleStage
 from compgen.stages.dispatch import DispatchStage
 from compgen.stages.dispatch.stage import DISPATCH_ID_ATTR
@@ -31,13 +36,33 @@ from compgen.stages.templates.tiling import TILE_SIZES_ATTR, TilingStage
 from compgen.targets.capability import CapabilitySpec
 from compgen.targets.schema import TargetProfile
 
+
+def _op_site_key(op: Any) -> str:
+    """Build a stable site id from an op. Prefers ``compgen.region_id`` —
+    already stamped by the importer and FX-stable across stages —
+    falling back to a name+position key when no region id exists.
+    """
+    attrs = getattr(op, "attributes", {}) or {}
+    rid_attr = attrs.get("compgen.region_id") if attrs else None
+    if rid_attr is not None and hasattr(rid_attr, "data"):
+        return str(rid_attr.data)
+    return f"{op.name}@{id(op):x}"
+
 # ---------------------------------------------------------------------------
 # CUDA-specific plugins
 # ---------------------------------------------------------------------------
 
 
 class CudaEncodingPlugin:
-    """CUDA GPU encoding: prefer MMA-friendly layouts for matmul operands."""
+    """CUDA GPU encoding — surfaces every op's encoding as a decision site.
+
+    The plugin no longer hardcodes ``matmul → tiled_128x64, else row_major``.
+    Each tensor-producing op becomes a :class:`DecisionSite` with a
+    non-binding oracle recommendation; the agent can override via MCP
+    (``apply_decision``) before compilation or between compile phases.
+    When no agent override exists, the oracle's pick is applied with
+    ``source="fallback_oracle"`` so reviewers can tell the difference.
+    """
 
     @property
     def target_name(self) -> str:
@@ -51,16 +76,71 @@ class CudaEncodingPlugin:
         self._target = target
 
     def transform(self, module: ModuleOp) -> ModuleOp:
+        registry = get_active_registry()
         for op in module.walk():
             if isinstance(op, (ModuleOp, FuncOp, ReturnOp)):
                 continue
             if not any(isinstance(r.type, TensorType) for r in op.results):
                 continue
-            # Matmul-like ops get tiled layout, others get row_major
-            if "matmul" in op.name.lower():
-                op.attributes[ENCODING_ATTR] = StringAttr("tiled_128x64")
-            elif ENCODING_ATTR not in op.attributes:
-                op.attributes[ENCODING_ATTR] = StringAttr("row_major")
+
+            is_matmul = "matmul" in op.name.lower()
+            candidates = (
+                DecisionCandidate(
+                    id="tiled_128x64",
+                    value="tiled_128x64",
+                    source="oracle:encoding",
+                    oracle_verdict="recommended" if is_matmul else "allowed",
+                    oracle_reason="MMA-friendly 128x64 tile for tensor cores" if is_matmul
+                    else "non-matmul fallback",
+                    oracle_confidence=0.7 if is_matmul else 0.3,
+                ),
+                DecisionCandidate(
+                    id="row_major",
+                    value="row_major",
+                    source="oracle:encoding",
+                    oracle_verdict="recommended" if not is_matmul else "allowed",
+                    oracle_reason="default linear layout" if not is_matmul
+                    else "readable but non-MMA; may prevent tensor-core use",
+                    oracle_confidence=0.6 if not is_matmul else 0.2,
+                ),
+                DecisionCandidate(
+                    id="tiled_16x16x16",
+                    value="tiled_16x16x16",
+                    source="oracle:encoding",
+                    oracle_verdict="allowed",
+                    oracle_reason="MMA tile aligned to f16/bf16 warp-level shape",
+                    oracle_confidence=0.5 if is_matmul else 0.1,
+                ),
+            )
+            recommended_id = "tiled_128x64" if is_matmul else "row_major"
+            site_id = f"cuda.encoding:{_op_site_key(op)}"
+            context = {
+                "op": op.name,
+                "shapes": [
+                    list(r.type.get_shape())
+                    for r in op.results
+                    if isinstance(r.type, TensorType)
+                ],
+                "is_matmul": is_matmul,
+            }
+
+            if registry is None:
+                # Batch / no-MCP path: apply the oracle pick directly
+                # with a clear marker so the trace differentiates this
+                # from an agent decision.
+                op.attributes[ENCODING_ATTR] = StringAttr(recommended_id)
+                continue
+
+            site = DecisionSite(
+                site_id=site_id,
+                kind="encoding",
+                context=context,
+                candidates=candidates,
+                oracle_recommended_id=recommended_id,
+            )
+            registry.enqueue(site)
+            outcome = registry.resolve(site_id)
+            op.attributes[ENCODING_ATTR] = StringAttr(str(outcome.chosen_value))
         return module
 
     def get_artifacts(self) -> dict[str, Any]:
@@ -107,7 +187,7 @@ class CudaDispatchPlugin:
 
 
 class CudaTilingPlugin:
-    """CUDA GPU tiling: tile linalg ops to thread block dimensions."""
+    """CUDA GPU tiling — surfaces each op's tile shape as a decision site."""
 
     @property
     def target_name(self) -> str:
@@ -121,15 +201,85 @@ class CudaTilingPlugin:
         pass
 
     def transform(self, module: ModuleOp) -> ModuleOp:
+        registry = get_active_registry()
         for op in module.walk():
             if isinstance(op, (ModuleOp, FuncOp, ReturnOp)):
                 continue
             if not op.results:
                 continue
-            if "matmul" in op.name.lower():
-                op.attributes[TILE_SIZES_ATTR] = StringAttr("128x128x32")
-            elif op.name.startswith("linalg."):
-                op.attributes[TILE_SIZES_ATTR] = StringAttr("256")
+            is_matmul = "matmul" in op.name.lower()
+            is_linalg = op.name.startswith("linalg.")
+            if not (is_matmul or is_linalg):
+                continue
+
+            if is_matmul:
+                recommended = "128x128x32"
+                candidates = (
+                    DecisionCandidate(
+                        id="128x128x32",
+                        value="128x128x32",
+                        source="oracle:tile",
+                        oracle_verdict="recommended",
+                        oracle_reason="CUDA threadblock-shaped matmul tile; fits 48KB SMEM",
+                        oracle_confidence=0.7,
+                    ),
+                    DecisionCandidate(
+                        id="64x64x32",
+                        value="64x64x32",
+                        source="oracle:tile",
+                        oracle_verdict="allowed",
+                        oracle_reason="smaller tile, lower SMEM pressure",
+                        oracle_confidence=0.5,
+                    ),
+                    DecisionCandidate(
+                        id="128x256x64",
+                        value="128x256x64",
+                        source="oracle:tile",
+                        oracle_verdict="allowed",
+                        oracle_reason="larger tile, favours Hopper class",
+                        oracle_confidence=0.4,
+                    ),
+                )
+            else:
+                recommended = "256"
+                candidates = (
+                    DecisionCandidate(
+                        id="256",
+                        value="256",
+                        source="oracle:tile",
+                        oracle_verdict="recommended",
+                        oracle_reason="generic linalg tile size 256",
+                        oracle_confidence=0.5,
+                    ),
+                    DecisionCandidate(
+                        id="128",
+                        value="128",
+                        source="oracle:tile",
+                        oracle_verdict="allowed",
+                        oracle_reason="half tile; gentler on small shapes",
+                        oracle_confidence=0.4,
+                    ),
+                )
+            site_id = f"cuda.tiling:{_op_site_key(op)}"
+            context = {
+                "op": op.name,
+                "is_matmul": is_matmul,
+            }
+
+            if registry is None:
+                op.attributes[TILE_SIZES_ATTR] = StringAttr(recommended)
+                continue
+
+            site = DecisionSite(
+                site_id=site_id,
+                kind="tile",
+                context=context,
+                candidates=candidates,
+                oracle_recommended_id=recommended,
+            )
+            registry.enqueue(site)
+            outcome = registry.resolve(site_id)
+            op.attributes[TILE_SIZES_ATTR] = StringAttr(str(outcome.chosen_value))
         return module
 
     def get_artifacts(self) -> dict[str, Any]:

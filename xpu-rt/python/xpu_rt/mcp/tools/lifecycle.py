@@ -166,11 +166,23 @@ def load_model(
     session.model_hint = source
 
     def _compile() -> dict[str, Any]:
+        # Anchor the compile output dir under the MCP session scratch
+        # so the trace + IR dumps live next to the bundle for this
+        # session. ``compile_model`` installs the trace bus + IR-dump
+        # writer for this dir.
+        compile_out = session.scratch_dir / "compile"
+        compile_out.mkdir(parents=True, exist_ok=True)
+        # Bind the session's decision registry BEFORE compile_model runs
+        # so stage plugins enqueue their sites into the same registry
+        # the agent reads/writes via MCP tools.
+        session.require_decision_registry()
         compiled = compile_model(
             module,
             dev,
             objective=objective,
             sample_inputs=sample_inputs,
+            output_dir=compile_out,
+            session_id=session.session_id,
         )
         client, provider = _resolve_llm(llm)
         env = compiled.create_agent_env(budget=budget)
@@ -196,6 +208,9 @@ def load_model(
             "stages_run": compiled.pipeline_result.stages_run,
             "provider": provider,
             "driver_summary": driver.summary(),
+            # Expose the compile output dir so clients can read the
+            # trace and ir_dumps without guessing the path.
+            "output_dir": str(compile_out),
         }
 
     return _JOBS.run_inline_or_async("load_model", _compile)

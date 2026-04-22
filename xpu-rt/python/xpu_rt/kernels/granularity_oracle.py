@@ -27,15 +27,14 @@ Used by:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Sequence
+from collections.abc import Sequence
+from dataclasses import dataclass
 
 from compgen.kernels.contract_v3 import (
     Granularity,
     HardwareEnvelope,
     KernelArchetype,
     KernelContractV3,
-    MemoryTier,
 )
 from compgen.kernels.fusion_oracle import FusionDecision, should_fuse
 from compgen.memory.knowledge import shared_store
@@ -240,3 +239,37 @@ def recommend_granularity(
 
 
 __all__ = ["GranularityVerdict", "recommend_granularity"]
+
+
+def _emit_advisory(verdict: GranularityVerdict, *, target_name: str, region_size: int) -> None:
+    """Best-effort ``oracle_advisory`` emission for granularity verdicts."""
+    try:
+        from compgen.trace import OraclePublisher
+
+        OraclePublisher.emit(
+            oracle="granularity",
+            target=target_name,
+            region_size=region_size,
+            granularity=verdict.granularity.value,
+            confidence=verdict.confidence,
+            chain_speedup=verdict.chain_speedup_estimate,
+            reason=verdict.reason,
+            binding=False,
+        )
+    except Exception:  # noqa: BLE001
+        pass
+
+
+# Wrap the public ``recommend_granularity`` by replacing its return path.
+_orig_recommend_granularity = recommend_granularity
+
+
+def recommend_granularity(region, envelope, *, perf_target_us=None, is_inlined_callee=False):  # type: ignore[no-redef]
+    verdict = _orig_recommend_granularity(
+        region,
+        envelope,
+        perf_target_us=perf_target_us,
+        is_inlined_callee=is_inlined_callee,
+    )
+    _emit_advisory(verdict, target_name=envelope.target_name, region_size=len(region))
+    return verdict

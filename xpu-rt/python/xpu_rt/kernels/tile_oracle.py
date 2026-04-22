@@ -15,12 +15,10 @@ profiling overhead) — keeps the prompt tight.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any
+from dataclasses import dataclass
 
 from compgen.kernels.contract_v3 import HardwareEnvelope
 from compgen.memory.knowledge import shared_store
-
 
 # ---------------------------------------------------------------------------
 # Recommendation dataclass
@@ -106,6 +104,20 @@ def _arch_key(target_name: str) -> str:
 # ---------------------------------------------------------------------------
 
 
+def _emit_advisory(payload: dict) -> None:
+    """Best-effort ``oracle_advisory`` emission.
+
+    Deferred import so this module stays usable outside a compile
+    context. ``OraclePublisher.emit`` no-ops when no trace bus is installed.
+    """
+    try:
+        from compgen.trace import OraclePublisher
+
+        OraclePublisher.emit(oracle="tile", **payload)
+    except Exception:  # noqa: BLE001
+        pass
+
+
 def recommend_tile(
     op_family: str,
     shape: tuple[int | None, ...],
@@ -172,7 +184,7 @@ def recommend_tile(
         max_lessons=5,
     )
 
-    return TileRecommendation(
+    rec = TileRecommendation(
         block_m=bm if op_family in ("matmul", "batch_matmul") else None,
         block_n=bn,
         block_k=bk if op_family in ("matmul", "batch_matmul") else None,
@@ -183,6 +195,23 @@ def recommend_tile(
         confidence=confidence,
         knowledge_brief=brief,
     )
+    _emit_advisory(
+        {
+            "op_family": op_family,
+            "target": envelope.target_name,
+            "dtype": dtype,
+            "shape": list(shape),
+            "block_m": rec.block_m,
+            "block_n": rec.block_n,
+            "block_k": rec.block_k,
+            "num_warps": rec.num_warps,
+            "num_stages": rec.num_stages,
+            "confidence": rec.confidence,
+            "rationale": rec.rationale,
+            "binding": False,
+        }
+    )
+    return rec
 
 
 def recommend_packing(

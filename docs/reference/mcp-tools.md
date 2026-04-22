@@ -8,6 +8,9 @@ The client contract — name, description, input schema, phase — lives in
 `python/compgen/mcp/tools/`. Each tool handler takes a `SessionManager`
 plus keyword args and returns a JSON-serialisable dict.
 
+Counts in headings are indicative — see `compgen/mcp/tools/*.py` for the
+canonical set.
+
 ## lifecycle (5)
 
 Tools that open / close sessions, load models, and export bundles. You
@@ -28,8 +31,11 @@ checkpoints, diagnose model compatibility, scan vendor repos.
 - **`diagnose_model_compatibility`** — Summarise which operators lack a registered Payload lowering, classify each, and recommend a recovery tool.
 - **`diff_recipe`** — Diff the current Recipe IR against a prior checkpoint.
 - **`explain_verification`** — Return the latest `apply_recipe`'s per-obligation + per-script failures with typed remediation hints + suggested next steps.
+- **`analyze_graph`** — Return a shape-free graph digest: pattern histogram, dim/dtype/quant spectra, FLOP/byte distributions, critical path, bottleneck ops, region index. Pass `full=true` for the full structured dict (defaults to the compact prompt summary).
+- **`focus_chunk`** — Return a focused-chunk view of one region. Carries both oracle-enumerated `DecisionKnobs` (bounded, non-binding suggestions) and a `DoFDescription` (open-ended design space) so the LLM can pick safely or synthesize novel candidates.
 - **`get_context_brief`** — One-shot prompt-friendly brief of the most-relevant lessons for the given target × stage × topic × op_family.
 - **`get_dossier`** — Return the deterministic graph-analysis dossier for this session.
+- **`list_decisions`** — Enumerate every decision site in the session (candidates, oracle recommendation, status). See `docs/concepts/decision_sites.md`.
 - **`list_pending_bench_requests`** — List outstanding bench requests for the agent to fulfil.
 - **`list_pending_dispatch_decisions`** — List outstanding dispatch decisions for the agent to fulfil.
 - **`list_pending_kernel_requests`** — List all outstanding codegen requests in the session.
@@ -52,9 +58,12 @@ Tools that mutate session state: apply the recipe, record proposals,
 fulfil codegen / dispatch / bench requests, install decomps or
 translations, scaffold user-space vendor packages.
 
+- **`apply_decision`** — Commit an agent pick at a decision site. Works before or at enqueue time; `chosen_id="invent:..."` submits a novel value. Writes a `decision(source="agent")` trace event. See `docs/concepts/decision_sites.md`.
 - **`apply_recipe`** — Lower the session's accumulated Recipe IR (including any agent-proposed `propose_*` ops) and apply the resulting transform scripts + kernel jobs + verification obligations.
 - **`batch_propose`** — Submit a list of invent-slot proposals in one roundtrip. `atomic=True` rolls back recipe + payload on first rejection.
 - **`invoke_tool`** — Invoke a registered LLM Tool by name.
+- **`override_decision`** — Replace an already-resolved decision-site outcome. Emits `decision(source="override")`.
+- **`propose_decision`** — Record a non-binding proposal for a decision site. Writes a trace event only; no IR mutation.
 - **`promote_in_session_authored_tools`** — Promote authored tools with `>= min_passes` in-session trials into the session's driver registry.
 - **`propose_invent_slot`** — Submit a proposal to an invent-slot gate.
 - **`record_lesson`** — Append a lesson to the hierarchical knowledge store.

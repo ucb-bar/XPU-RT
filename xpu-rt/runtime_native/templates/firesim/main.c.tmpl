@@ -1,0 +1,76 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+/* Bare-metal FireSim / Spike harness for CompGen's embedded runtime.
+ *
+ * Links against picolibc + libgloss_htif (Chipyard's riscv-tools conda
+ * env), so plain printf routes through HTIF and FireSim's front-end
+ * captures the output in ``results-workload/.../uartlog``. The program
+ * exits cleanly via return from main() — libgloss_htif translates that
+ * into a ``tohost = 1`` poweroff.
+ *
+ * Template substitution (done at emit time by
+ * ``compgen.extensions.firesim.build_workload``):
+ *
+ *   @ARENA_BYTES@  -> arena size the lowered model requires
+ *   @INPUT_BYTES@  -> COMPGEN_MODEL_INPUT_BYTES (from compgen_model.h)
+ *   @OUTPUT_BYTES@ -> COMPGEN_MODEL_OUTPUT_BYTES
+ *
+ * The golden input tensor is supplied as a separate translation unit
+ * (input_blob.c, emitted beside this file) exposing
+ * ``compgen_input_bytes[COMPGEN_MODEL_INPUT_BYTES]``.
+ */
+
+#include <stdint.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "compgen_model.h"
+
+/* Provided by the adjacent input_blob.c. */
+extern const uint8_t compgen_input_bytes[];
+
+/* Cycle counter helper — FireSim's Rocket/Shuttle cores expose rdcycle. */
+static inline uint64_t compgen_rdcycle(void) {
+    uint64_t c;
+    __asm__ volatile ("rdcycle %0" : "=r"(c));
+    return c;
+}
+
+static uint8_t compgen_arena [@ARENA_BYTES@]  __attribute__((aligned(16)));
+static uint8_t compgen_input [@INPUT_BYTES@]  __attribute__((aligned(16)));
+static uint8_t compgen_output[@OUTPUT_BYTES@] __attribute__((aligned(16)));
+
+int main(void) {
+    printf("compgen: boot in=%u out=%u arena=%u\n",
+           (unsigned)sizeof(compgen_input),
+           (unsigned)sizeof(compgen_output),
+           (unsigned)sizeof(compgen_arena));
+    fflush(stdout);
+
+    memcpy(compgen_input, compgen_input_bytes, sizeof(compgen_input));
+
+    int rc = compgen_init(compgen_arena, sizeof(compgen_arena));
+    printf("compgen: init rc=%d\n", rc);
+    fflush(stdout);
+    if (rc != 0) return rc;
+
+    uint64_t t0 = compgen_rdcycle();
+    rc = compgen_invoke(compgen_input, sizeof(compgen_input),
+                        compgen_output, sizeof(compgen_output));
+    uint64_t t1 = compgen_rdcycle();
+    printf("compgen: invoke rc=%d cycles=%llu\n",
+           rc, (unsigned long long)(t1 - t0));
+    fflush(stdout);
+    if (rc != 0) return rc;
+
+    /* Full output bytes as hex — the host diffs against golden_outputs.pt. */
+    printf("compgen: out_hex=");
+    for (size_t i = 0; i < sizeof(compgen_output); ++i) {
+        printf("%02x", compgen_output[i]);
+    }
+    printf("\ncompgen: done\n");
+    fflush(stdout);
+
+    compgen_shutdown();
+    return 0;
+}

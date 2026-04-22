@@ -21,14 +21,17 @@ from __future__ import annotations
 from compgen.mcp.tools.autotune import AUTOTUNE_TOOLS
 from compgen.mcp.tools.batch import BATCH_TOOLS
 from compgen.mcp.tools.bench import BENCH_TOOLS
+from compgen.mcp.tools.decisions import DECISION_TOOLS
 from compgen.mcp.tools.diagnose import DIAGNOSE_TOOLS
 from compgen.mcp.tools.dispatch import DISPATCH_TOOLS
 from compgen.mcp.tools.explain import EXPLAIN_TOOLS
 from compgen.mcp.tools.graduate import GRADUATE_TOOLS
+from compgen.mcp.tools.graph_digest import GRAPH_DIGEST_TOOLS
 from compgen.mcp.tools.inspect import INSPECT_TOOLS
 from compgen.mcp.tools.kernel import KERNEL_TOOLS
 from compgen.mcp.tools.knowledge import KNOWLEDGE_TOOLS
 from compgen.mcp.tools.lifecycle import LIFECYCLE_TOOLS
+from compgen.mcp.tools.embedded import EMBEDDED_TOOLS
 from compgen.mcp.tools.recipe_apply import APPLY_RECIPE_TOOLS
 from compgen.mcp.tools.recovery import RECOVERY_TOOLS
 from compgen.mcp.tools.refinement import REFINEMENT_TOOLS
@@ -59,8 +62,11 @@ ALL_TOOLS: list[dict] = [
     *DISPATCH_TOOLS,
     *BENCH_TOOLS,
     *KNOWLEDGE_TOOLS,
+    *GRAPH_DIGEST_TOOLS,
+    *DECISION_TOOLS,
     *REFINEMENT_TOOLS,
     *AUTOTUNE_TOOLS,
+    *EMBEDDED_TOOLS,
     *_optimize_tools(),
 ]
 
@@ -70,14 +76,17 @@ __all__ = [
     "AUTOTUNE_TOOLS",
     "BATCH_TOOLS",
     "BENCH_TOOLS",
+    "DECISION_TOOLS",
     "DIAGNOSE_TOOLS",
     "DISPATCH_TOOLS",
     "EXPLAIN_TOOLS",
     "GRADUATE_TOOLS",
+    "GRAPH_DIGEST_TOOLS",
     "INSPECT_TOOLS",
     "KERNEL_TOOLS",
     "KNOWLEDGE_TOOLS",
     "LIFECYCLE_TOOLS",
+    "EMBEDDED_TOOLS",
     "RECOVERY_TOOLS",
     "REFINEMENT_TOOLS",
     "SUGGEST_TOOLS",

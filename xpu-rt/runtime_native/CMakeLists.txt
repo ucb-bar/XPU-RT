@@ -24,6 +24,8 @@ set(RUNTIME_CORE_SOURCES
   src/engine.c
   src/task.c
   src/transport_local.c
+  src/arena.c
+  src/ops.c
 )
 
 add_library(compgen_runtime STATIC ${RUNTIME_CORE_SOURCES})

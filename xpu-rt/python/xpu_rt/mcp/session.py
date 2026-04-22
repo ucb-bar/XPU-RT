@@ -66,6 +66,26 @@ class McpSession:
     refinement_cache: Any = None
     # In-session autotune cache (W8.3) — see compgen.mcp.tools.autotune
     autotune_cache: Any = None
+    # In-session decision-site registry. Stage plugins enqueue sites
+    # here via :mod:`compgen.agent.decisions`; MCP tools read/write
+    # them via :mod:`compgen.mcp.tools.decisions`.
+    decision_registry: Any = None
+
+    def require_decision_registry(self):
+        """Lazy-create and return this session's :class:`DecisionRegistry`.
+
+        Also installs it as the active registry so stage plugins in the
+        current context see it.
+        """
+        if self.decision_registry is None:
+            from compgen.agent.decisions import (
+                DecisionRegistry,
+                install_registry,
+            )
+
+            self.decision_registry = DecisionRegistry()
+            install_registry(self.decision_registry)
+        return self.decision_registry
 
     def require_device(self) -> CompGenDevice:
         if self.device is None:

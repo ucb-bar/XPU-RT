@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -25,16 +26,41 @@ def _iter_workspace_roots(workspace: WorkspaceConfig | None, keys: tuple[str, ..
     return roots
 
 
+def _iter_env_roots(env_vars: tuple[str, ...]) -> list[Path]:
+    out: list[Path] = []
+    for name in env_vars:
+        raw = os.environ.get(name)
+        if raw:
+            out.append(Path(raw))
+    return out
+
+
 def _resolve_existing_root(
-    workspace: WorkspaceConfig | None, *, keys: tuple[str, ...], defaults: tuple[str, ...]
+    workspace: WorkspaceConfig | None,
+    *,
+    keys: tuple[str, ...],
+    env_vars: tuple[str, ...] = (),
 ) -> Path:
+    """Resolve an external checkout root from workspace config or env vars.
+
+    Search order: ``workspace.external_roots[key]`` for each key in
+    ``keys``, then ``os.environ[var]`` for each name in ``env_vars``.
+    Raises :class:`FileNotFoundError` when nothing resolves — callers
+    should catch and supply their own remediation message.
+    """
     candidates = _iter_workspace_roots(workspace, keys)
-    candidates.extend(Path(path) for path in defaults)
+    candidates.extend(_iter_env_roots(env_vars))
     for candidate in candidates:
         expanded = candidate.expanduser()
         if expanded.exists():
             return expanded
-    raise FileNotFoundError(f"Unable to resolve external repo for keys={keys}")
+    hint = f"keys={list(keys)}"
+    if env_vars:
+        hint += f", env_vars={list(env_vars)}"
+    raise FileNotFoundError(
+        f"Unable to resolve external repo ({hint}); set one of the env "
+        f"vars or provide a WorkspaceConfig with a matching external_roots entry."
+    )
 
 
 def _ensure_sys_path(root: Path) -> None:
@@ -58,10 +84,7 @@ def load_smolvla_bundle(
     root = _resolve_existing_root(
         workspace,
         keys=("understanding_pi0", "Understanding-PI0"),
-        defaults=(
-            "/scratch2/agustin/merlin/third_party/Understanding-PI0",
-            "/scratch2/agustin/merlin/third_party/understanding_pi0",
-        ),
+        env_vars=("PI0_ROOT", "UNDERSTANDING_PI0_ROOT"),
     )
     _ensure_sys_path(root)
 
@@ -75,10 +98,7 @@ def load_smolvla_bundle(
             lerobot_root = _resolve_existing_root(
                 workspace,
                 keys=("lerobot",),
-                defaults=(
-                    "/scratch2/agustin/merlin/third_party/lerobot",
-                    "/scratch2/agustin/experimental/Understanding-PI0/lerobot",
-                ),
+                env_vars=("LEROBOT_ROOT",),
             )
             lerobot_src = lerobot_root / "src"
             _ensure_sys_path(lerobot_src if lerobot_src.exists() else lerobot_root)
