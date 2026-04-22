@@ -24,7 +24,6 @@ from __future__ import annotations
 from compgen.kernels.contract_v3 import HardwareEnvelope
 from compgen.targets.schema import ComputeUnit, DeviceSpec, MemoryLevel, TargetProfile
 
-
 # ---------------------------------------------------------------------------
 # Per-target codegen hints — authored; short list per target
 # ---------------------------------------------------------------------------
@@ -160,13 +159,10 @@ def envelope_from_target_profile(
         :class:`ExecutionEnvelope`.
     """
     if not profile.devices:
-        raise ValueError(
-            f"TargetProfile {profile.name!r} has no devices; can't derive envelope"
-        )
+        raise ValueError(f"TargetProfile {profile.name!r} has no devices; can't derive envelope")
     if device_index >= len(profile.devices):
         raise IndexError(
-            f"device_index={device_index} out of range "
-            f"({len(profile.devices)} devices in {profile.name!r})"
+            f"device_index={device_index} out of range ({len(profile.devices)} devices in {profile.name!r})"
         )
     device = profile.devices[device_index]
     unit = _pick_primary_compute_unit(device)

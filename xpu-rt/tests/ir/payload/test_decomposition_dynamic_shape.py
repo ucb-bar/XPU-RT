@@ -17,15 +17,13 @@ Both failures originally surfaced while importing real SmolVLA:
 
 from __future__ import annotations
 
-import pytest
+from compgen.ir.payload.decompositions import _scalar_to_tensor, _static_shape
 from xdsl.dialects.builtin import (
     BFloat16Type,
     Float16Type,
     Float32Type,
     TensorType,
 )
-
-from compgen.ir.payload.decompositions import _scalar_to_tensor, _static_shape
 
 
 class _FakeSymInt:

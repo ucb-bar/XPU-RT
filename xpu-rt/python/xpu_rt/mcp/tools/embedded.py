@@ -158,10 +158,7 @@ def compile_embedded(
     if len(supplied_spec) != 1:
         return {
             "ok": False,
-            "error": (
-                "exactly one of spec_demo/spec_path must be set; "
-                f"got {[k for k, _ in supplied_spec] or 'none'}"
-            ),
+            "error": (f"exactly one of spec_demo/spec_path must be set; got {[k for k, _ in supplied_spec] or 'none'}"),
             "session_id": session.session_id,
         }
 
@@ -213,9 +210,7 @@ def compile_embedded(
             "session_id": session.session_id,
         }
     target_name = spec.name
-    target_features = tuple(
-        sorted({ext.name.lower() for ext in spec.isa.extensions})
-    )
+    target_features = tuple(sorted({ext.name.lower() for ext in spec.isa.extensions}))
     constraints_common = {"features": list(target_features)}
 
     ukernels: list[Any] = []
@@ -244,9 +239,7 @@ def compile_embedded(
                 )
             )
         )
-    selected_lanes = sorted({
-        k.name.rsplit("_", 1)[-1] for k in ukernels
-    })  # e.g. {"xopu", "rvv"}
+    selected_lanes = sorted({k.name.rsplit("_", 1)[-1] for k in ukernels})  # e.g. {"xopu", "rvv"}
 
     options = EmbeddedOptions(
         model_name=model_name,
@@ -276,11 +269,7 @@ def compile_embedded(
         "blob_source": str(artifacts.blob_source),
         "makefile": str(artifacts.makefile),
         "ukernels": [p.name for p in artifacts.ukernel_sources],
-        "kernel_contracts": (
-            str(artifacts.kernel_contracts)
-            if artifacts.kernel_contracts is not None
-            else None
-        ),
+        "kernel_contracts": (str(artifacts.kernel_contracts) if artifacts.kernel_contracts is not None else None),
         "model_input_bytes": input_bytes,
         "model_output_bytes": output_bytes,
         "target_name": target_name,
@@ -358,11 +347,7 @@ def zephyr_overlay(
         "overlay_dir": str(result.paths.root),
         "build_command": result.build_command,
         "run_commands": dict(result.run_commands),
-        "files": sorted(
-            str(p.relative_to(result.paths.root))
-            for p in result.paths.root.rglob("*")
-            if p.is_file()
-        ),
+        "files": sorted(str(p.relative_to(result.paths.root)) for p in result.paths.root.rglob("*") if p.is_file()),
     }
 
 
@@ -454,10 +439,7 @@ def simulator_run(
     if missing or not sample_path.exists():
         return {
             "ok": False,
-            "error": (
-                f"cannot execute: missing tools={missing}, "
-                f"sample_exists={sample_path.exists()}"
-            ),
+            "error": (f"cannot execute: missing tools={missing}, sample_exists={sample_path.exists()}"),
             "session_id": session.session_id,
             "build_command": build_cmd,
             "simulator_command": simulator_cmd,
@@ -487,9 +469,7 @@ def simulator_run(
         if proc.returncode != 0:
             break
 
-    results["ok"] = all(
-        results.get(f"{k}_returncode") == 0 for k in ("build", "simulator")
-    )
+    results["ok"] = all(results.get(f"{k}_returncode") == 0 for k in ("build", "simulator"))
     results["session_id"] = session.session_id
     results["executed"] = True
     return results
@@ -600,15 +580,11 @@ def find_zephyr(sm: SessionManager, **_: Any) -> dict[str, Any]:
 
     remediation: list[str] = []
     if not zephyr_root:
-        remediation.append(
-            "set $ZEPHYR_CHIPYARD_SW (preferred) or $ZEPHYR_BASE to your Zephyr checkout"
-        )
+        remediation.append("set $ZEPHYR_CHIPYARD_SW (preferred) or $ZEPHYR_BASE to your Zephyr checkout")
     elif not zephyr_root_exists:
         remediation.append(f"$ZEPHYR_CHIPYARD_SW/$ZEPHYR_BASE points to a missing path: {zephyr_root}")
     if missing_bin:
-        remediation.append(
-            "install / PATH-expose: " + ", ".join(missing_bin)
-        )
+        remediation.append("install / PATH-expose: " + ", ".join(missing_bin))
     if not env_report.get("ZEPHYR_SDK_INSTALL_DIR"):
         remediation.append("set $ZEPHYR_SDK_INSTALL_DIR for west build")
 
@@ -642,8 +618,7 @@ EMBEDDED_TOOLS: list[dict[str, Any]] = [
                 "demo": {
                     "type": "string",
                     "description": (
-                        "Packaged demo name under compgen.examples (e.g. "
-                        "'saturn_opu_convnet'). See list_demos()."
+                        "Packaged demo name under compgen.examples (e.g. 'saturn_opu_convnet'). See list_demos()."
                     ),
                 },
                 "model_module": {
@@ -657,8 +632,7 @@ EMBEDDED_TOOLS: list[dict[str, Any]] = [
                 "spec_demo": {
                     "type": "string",
                     "description": (
-                        "Packaged HardwareSpec name under "
-                        "compgen.examples.hardware_specs (e.g. 'saturn_opu')."
+                        "Packaged HardwareSpec name under compgen.examples.hardware_specs (e.g. 'saturn_opu')."
                     ),
                 },
                 "spec_path": {
@@ -680,8 +654,7 @@ EMBEDDED_TOOLS: list[dict[str, Any]] = [
     {
         "name": "zephyr_overlay",
         "description": (
-            "Drop an embedded bundle into a Zephyr sample tree for any target "
-            "whose HardwareSpec deploys under Zephyr."
+            "Drop an embedded bundle into a Zephyr sample tree for any target whose HardwareSpec deploys under Zephyr."
         ),
         "phase": "lifecycle",
         "handler": zephyr_overlay,
@@ -727,8 +700,7 @@ EMBEDDED_TOOLS: list[dict[str, Any]] = [
     {
         "name": "firesim_workload",
         "description": (
-            "Emit a FireMarshal workload JSON for any bootable ELF, regardless "
-            "of which target produced it."
+            "Emit a FireMarshal workload JSON for any bootable ELF, regardless of which target produced it."
         ),
         "phase": "job",
         "handler": firesim_workload,

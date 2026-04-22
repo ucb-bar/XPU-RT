@@ -8,18 +8,15 @@ model so any regression in the trace/dump hooks breaks loudly.
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
 import pytest
 import torch
 import torch.nn as nn
-from xdsl.dialects.builtin import ModuleOp
-
+from compgen.agent.analyzer import NetworkAnalyzer
 from compgen.analysis.graph_digest import (
     build_chunk_view,
     build_digest,
 )
-from compgen.agent.analyzer import NetworkAnalyzer
 from compgen.capture.torch_export import capture_frontend_artifact
 from compgen.ir.payload.import_fx import fx_to_xdsl
 from compgen.llm.recorder import LLMRecorder
@@ -40,6 +37,7 @@ from compgen.trace import (
     install_ir_dump_writer,
     set_active_bus,
 )
+from xdsl.dialects.builtin import ModuleOp
 
 
 def _profile() -> TargetProfile:

@@ -49,10 +49,10 @@ def _rvv_only_spec(tmp_path: Path) -> str:
     """Derive a feature-stripped spec (no ``+xopu``) for A/B testing."""
     source = Path(SATURN_SPEC).read_text()
     stripped = source.replace(
-        "    - name: Xopu\n      version: \"1.0\"\n      description: \"Outer-product unit (VOPACC). 8x8 MACC array, 4 matrix regs.\"\n",
+        '    - name: Xopu\n      version: "1.0"\n      description: "Outer-product unit (VOPACC). 8x8 MACC array, 4 matrix regs."\n',
         "",
     ).replace(
-        "    - name: XopuMmt4d\n      version: \"1.0\"\n      description: \"Mmt4d s8s8s32 16x16x128 fast-path via encoding-swapped layouts.\"\n",
+        '    - name: XopuMmt4d\n      version: "1.0"\n      description: "Mmt4d s8s8s32 16x16x128 fast-path via encoding-swapped layouts."\n',
         "",
     )
     out = tmp_path / "saturn_rvv_only.yaml"

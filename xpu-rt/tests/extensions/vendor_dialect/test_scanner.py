@@ -5,7 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from compgen.extensions.vendor_dialect.scanner import scan_repo
 
 FIXTURE = Path(__file__).resolve().parents[2] / "fixtures" / "fake_vendor"

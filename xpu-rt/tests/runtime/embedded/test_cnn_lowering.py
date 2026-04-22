@@ -21,8 +21,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # fixtures
 
 import numpy as np
 import torch
-
 from compgen.runtime.embedded.cnn_lowering import lower_cnn_to_c
+
 from tests.fixtures.saturn_opu_convnet.model import build_model, default_inputs
 
 
@@ -42,6 +42,7 @@ def test_lowered_convnet_matches_torch(tmp_path: Path) -> None:
     # into tmp_path and compile. The foundational runtime lives on disk
     # at runtime/include + runtime/src; we copy from there.
     import shutil as _shutil
+
     runtime_root = Path(__file__).resolve().parents[3] / "runtime"
     (tmp_path / "compgen").mkdir()
     for name in ("types.h", "arena.h", "ops.h"):
@@ -60,8 +61,7 @@ def test_lowered_convnet_matches_torch(tmp_path: Path) -> None:
     blob_c.write_text(
         "#include <stddef.h>\n#include <stdint.h>\n"
         "__attribute__((aligned(16)))\n"
-        "const uint8_t compgen_model_blob[] = {\n"
-        + body + "\n};\n"
+        "const uint8_t compgen_model_blob[] = {\n" + body + "\n};\n"
         "const size_t compgen_model_blob_size = sizeof(compgen_model_blob);\n"
     )
 
@@ -80,21 +80,31 @@ def test_lowered_convnet_matches_torch(tmp_path: Path) -> None:
 
     so_path = tmp_path / "libconvnet.so"
     subprocess.run(
-        ["cc", "-O2", "-std=c17", "-Wall", "-Werror", "-fPIC", "-shared",
-         str(tmp_path / "arena.c"),
-         str(tmp_path / "ops.c"),
-         str(tmp_path / "compgen_model_forward.c"),
-         str(tmp_path / "model_blob.c"),
-         str(tmp_path / "shim.c"),
-         "-o", str(so_path),
-         f"-I{tmp_path}"],
-        check=True, capture_output=True, text=True,
+        [
+            "cc",
+            "-O2",
+            "-std=c17",
+            "-Wall",
+            "-Werror",
+            "-fPIC",
+            "-shared",
+            str(tmp_path / "arena.c"),
+            str(tmp_path / "ops.c"),
+            str(tmp_path / "compgen_model_forward.c"),
+            str(tmp_path / "model_blob.c"),
+            str(tmp_path / "shim.c"),
+            "-o",
+            str(so_path),
+            f"-I{tmp_path}",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
     )
 
     lib = ctypes.CDLL(str(so_path))
     lib.compgen_run.restype = None
-    lib.compgen_run.argtypes = [ctypes.POINTER(ctypes.c_float),
-                                 ctypes.POINTER(ctypes.c_float)]
+    lib.compgen_run.argtypes = [ctypes.POINTER(ctypes.c_float), ctypes.POINTER(ctypes.c_float)]
 
     x = inputs[0].detach().cpu().numpy().astype(np.float32).ravel()
     y = np.zeros(16, dtype=np.float32)
@@ -108,6 +118,5 @@ def test_lowered_convnet_matches_torch(tmp_path: Path) -> None:
     max_abs = float(np.max(np.abs(y - expected)))
     max_rel = float(np.max(np.abs(y - expected) / (np.abs(expected) + 1e-6)))
     assert np.allclose(y, expected, rtol=1e-3, atol=1e-3), (
-        f"mismatch: max_abs={max_abs:.3e} max_rel={max_rel:.3e}\n"
-        f"  expected={expected}\n  got     ={y}"
+        f"mismatch: max_abs={max_abs:.3e} max_rel={max_rel:.3e}\n  expected={expected}\n  got     ={y}"
     )

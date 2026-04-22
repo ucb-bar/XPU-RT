@@ -22,6 +22,7 @@ weights, not a hand-rolled miniature.
 from __future__ import annotations
 
 import importlib.util
+import os
 
 import pytest
 
@@ -32,8 +33,13 @@ from examples.real_models.tinyllama_compile import (
 )
 
 _HAS_TRANSFORMERS = importlib.util.find_spec("transformers") is not None
+_RUN_REAL_MODEL_TESTS = os.environ.get("COMPGEN_RUN_REAL_MODEL_TESTS") == "1"
 
 pytestmark = [
+    pytest.mark.skipif(
+        not _RUN_REAL_MODEL_TESTS,
+        reason="Set COMPGEN_RUN_REAL_MODEL_TESTS=1 to enable real-model acceptance tests.",
+    ),
     pytest.mark.skipif(not _HAS_TRANSFORMERS, reason="transformers not installed"),
     pytest.mark.skipif(
         not hf_cache_has(HF_REPO_ID),

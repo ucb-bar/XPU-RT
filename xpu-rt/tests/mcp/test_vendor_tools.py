@@ -6,11 +6,10 @@ from pathlib import Path
 
 import pytest
 import yaml
-
 from compgen.mcp.tools.vendor_dialect import (
     VENDOR_DIALECT_TOOLS,
-    scan_vendor_repo,
     scaffold_vendor_package,
+    scan_vendor_repo,
     verify_vendor_package,
 )
 

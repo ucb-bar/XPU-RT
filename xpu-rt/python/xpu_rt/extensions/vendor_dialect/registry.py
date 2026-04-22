@@ -48,10 +48,7 @@ class VendorAdapterRegistry:
         name = adapter.name
         with self._lock:
             if name in self._by_name and not replace:
-                raise ValueError(
-                    f"vendor adapter {name!r} already registered; "
-                    f"pass replace=True to override"
-                )
+                raise ValueError(f"vendor adapter {name!r} already registered; pass replace=True to override")
             self._by_name[name] = adapter
         log.info("vendor_registry.register", name=name, target=adapter.target)
 
@@ -67,10 +64,7 @@ class VendorAdapterRegistry:
         self._ensure_entry_points_loaded()
         with self._lock:
             if name not in self._by_name:
-                raise KeyError(
-                    f"vendor adapter {name!r} not registered "
-                    f"(available: {sorted(self._by_name)})"
-                )
+                raise KeyError(f"vendor adapter {name!r} not registered (available: {sorted(self._by_name)})")
             return self._by_name[name]
 
     def find_for_target(self, target: str) -> list[VendorDialectAdapter]:

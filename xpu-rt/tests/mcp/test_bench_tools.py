@@ -14,14 +14,20 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from compgen.kernels.contract_v3 import (
-    ExecutionEnvelope, HardwareEnvelope, IOContract, KernelArchetype,
-    KernelContractV3, OrchestrationSpec, ShapeClass, TensorIO,
+    ExecutionEnvelope,
+    HardwareEnvelope,
+    IOContract,
+    KernelArchetype,
+    KernelContractV3,
+    OrchestrationSpec,
+    ShapeClass,
+    TensorIO,
 )
 from compgen.mcp.session import SessionManager
 from compgen.mcp.tools.bench import (
-    BENCH_TOOLS, McpBenchFn,
+    BENCH_TOOLS,
+    McpBenchFn,
     bench_fingerprint,
     list_pending_bench_requests,
     lookup_bench_result,
@@ -29,7 +35,9 @@ from compgen.mcp.tools.bench import (
     request_kernel_bench,
 )
 from compgen.memory.kernel_db import (
-    KernelDB, KernelPerfRecord, set_shared_db,
+    KernelDB,
+    KernelPerfRecord,
+    set_shared_db,
 )
 
 
@@ -65,9 +73,9 @@ def test_bench_tools_registered_with_expected_names() -> None:
 
 def test_bench_tools_in_all_tools_bundle() -> None:
     from compgen.mcp.tools import ALL_TOOLS
+
     names = {t["name"] for t in ALL_TOOLS}
-    for n in ("request_kernel_bench", "register_bench_result",
-              "lookup_bench_result", "list_pending_bench_requests"):
+    for n in ("request_kernel_bench", "register_bench_result", "lookup_bench_result", "list_pending_bench_requests"):
         assert n in names
 
 
@@ -95,9 +103,13 @@ def test_fingerprint_differs_on_shape() -> None:
 
 def test_request_then_register_then_lookup(sm, isolated_db) -> None:
     out = request_kernel_bench(
-        sm, session_id="sess1",
-        kernel_fingerprint="kfp1", shape_signature="64x64",
-        dtype_signature="f16", target="cuda-a100", op_family="compute_tiled",
+        sm,
+        session_id="sess1",
+        kernel_fingerprint="kfp1",
+        shape_signature="64x64",
+        dtype_signature="f16",
+        target="cuda-a100",
+        op_family="compute_tiled",
         perf_target_us=100.0,
     )
     assert out["ok"] and not out["found_in_cache"]
@@ -110,32 +122,48 @@ def test_request_then_register_then_lookup(sm, isolated_db) -> None:
     assert pending["requests"][0]["request_id"] == rid
 
     reg = register_bench_result(
-        sm, session_id="sess1", request_id=rid,
-        perf_us=42.0, correct=True, notes="ok",
+        sm,
+        session_id="sess1",
+        request_id=rid,
+        perf_us=42.0,
+        correct=True,
+        notes="ok",
     )
     assert reg["ok"] and reg["fingerprint"] == fp
 
     lk = lookup_bench_result(
-        sm, session_id="sess1", kernel_fingerprint="kfp1",
-        shape_signature="64x64", dtype_signature="f16",
+        sm,
+        session_id="sess1",
+        kernel_fingerprint="kfp1",
+        shape_signature="64x64",
+        dtype_signature="f16",
     )
     assert lk["found"] and lk["perf_us"] == 42.0 and lk["correct"]
 
 
 def test_request_short_circuits_on_cached_fingerprint(sm, isolated_db) -> None:
     out = request_kernel_bench(
-        sm, session_id="sess1",
-        kernel_fingerprint="kfp2", shape_signature="32",
-        target="cuda-a100", op_family="pointwise",
+        sm,
+        session_id="sess1",
+        kernel_fingerprint="kfp2",
+        shape_signature="32",
+        target="cuda-a100",
+        op_family="pointwise",
     )
     register_bench_result(
-        sm, session_id="sess1", request_id=out["request_id"],
-        perf_us=10.0, correct=True,
+        sm,
+        session_id="sess1",
+        request_id=out["request_id"],
+        perf_us=10.0,
+        correct=True,
     )
     out2 = request_kernel_bench(
-        sm, session_id="sess1",
-        kernel_fingerprint="kfp2", shape_signature="32",
-        target="cuda-a100", op_family="pointwise",
+        sm,
+        session_id="sess1",
+        kernel_fingerprint="kfp2",
+        shape_signature="32",
+        target="cuda-a100",
+        op_family="pointwise",
     )
     assert out2["found_in_cache"] is True
     assert out2["perf_us"] == 10.0
@@ -148,13 +176,20 @@ def test_request_short_circuits_on_cached_fingerprint(sm, isolated_db) -> None:
 
 def test_register_persists_to_kernel_db(sm, isolated_db) -> None:
     out = request_kernel_bench(
-        sm, session_id="sess1",
-        kernel_fingerprint="kfp3", shape_signature="x",
-        target="cuda-a100", op_family="reduce",
+        sm,
+        session_id="sess1",
+        kernel_fingerprint="kfp3",
+        shape_signature="x",
+        target="cuda-a100",
+        op_family="reduce",
     )
     register_bench_result(
-        sm, session_id="sess1", request_id=out["request_id"],
-        perf_us=7.5, correct=True, notes="great",
+        sm,
+        session_id="sess1",
+        request_id=out["request_id"],
+        perf_us=7.5,
+        correct=True,
+        notes="great",
     )
     rec = isolated_db.best_kernel_perf("cuda-a100", "reduce", "kfp3")
     assert rec is not None
@@ -164,16 +199,25 @@ def test_register_persists_to_kernel_db(sm, isolated_db) -> None:
 
 def test_request_rehydrates_from_kernel_db_on_first_access(sm, isolated_db) -> None:
     # Pre-seed the KernelDB with a perf record.
-    isolated_db.record_kernel_perf(KernelPerfRecord(
-        target="cuda-a100", op_family="memory", fingerprint="kfp4",
-        perf_us=55.0, correctness_passed=True,
-        measured_at=12345.0, notes="seeded",
-    ))
+    isolated_db.record_kernel_perf(
+        KernelPerfRecord(
+            target="cuda-a100",
+            op_family="memory",
+            fingerprint="kfp4",
+            perf_us=55.0,
+            correctness_passed=True,
+            measured_at=12345.0,
+            notes="seeded",
+        )
+    )
     # Fresh request must surface the cached result without queueing.
     out = request_kernel_bench(
-        sm, session_id="sess1",
-        kernel_fingerprint="kfp4", shape_signature="",
-        target="cuda-a100", op_family="memory",
+        sm,
+        session_id="sess1",
+        kernel_fingerprint="kfp4",
+        shape_signature="",
+        target="cuda-a100",
+        op_family="memory",
     )
     assert out["found_in_cache"] is True
     assert out["perf_us"] == 55.0
@@ -186,21 +230,22 @@ def test_request_rehydrates_from_kernel_db_on_first_access(sm, isolated_db) -> N
 
 def _matmul_contract(target: str = "cuda-a100") -> KernelContractV3:
     env = HardwareEnvelope(
-        target_name=target, vector_lanes=64,
-        scratchpad_bytes=49152, register_bytes=256,
-        native_dtypes=("f16",), peak_bandwidth_gbps=672.0,
+        target_name=target,
+        vector_lanes=64,
+        scratchpad_bytes=49152,
+        register_bytes=256,
+        native_dtypes=("f16",),
+        peak_bandwidth_gbps=672.0,
     )
     return KernelContractV3(
-        op_name="matmul", archetype=KernelArchetype.COMPUTE_TILED,
+        op_name="matmul",
+        archetype=KernelArchetype.COMPUTE_TILED,
         io=IOContract(
             inputs=(
-                TensorIO(name="lhs", shape=ShapeClass(dims=(128, 256)),
-                         dtype_class=("f16",)),
-                TensorIO(name="rhs", shape=ShapeClass(dims=(256, 128)),
-                         dtype_class=("f16",)),
+                TensorIO(name="lhs", shape=ShapeClass(dims=(128, 256)), dtype_class=("f16",)),
+                TensorIO(name="rhs", shape=ShapeClass(dims=(256, 128)), dtype_class=("f16",)),
             ),
-            outputs=(TensorIO(name="out", shape=ShapeClass(dims=(128, 128)),
-                              dtype_class=("f16",)),),
+            outputs=(TensorIO(name="out", shape=ShapeClass(dims=(128, 128)), dtype_class=("f16",)),),
         ),
         orchestration=OrchestrationSpec(execution=ExecutionEnvelope(hardware=env)),
     )
@@ -225,8 +270,12 @@ def test_mcp_bench_fn_returns_recorded_perf_on_hit(sm, isolated_db) -> None:
     pending = list_pending_bench_requests(sm, session_id="sess1")
     rid = pending["requests"][0]["request_id"]
     register_bench_result(
-        sm, session_id="sess1", request_id=rid,
-        perf_us=15.0, correct=True, notes="agent measured",
+        sm,
+        session_id="sess1",
+        request_id=rid,
+        perf_us=15.0,
+        correct=True,
+        notes="agent measured",
     )
     # Second call hits the cache.
     second = bench(contract, codegen_result=None)

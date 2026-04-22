@@ -333,15 +333,12 @@ def emit_overlay(
     }
     missing = [name for name, path in required.items() if not path.exists()]
     if missing:
-        raise FileNotFoundError(
-            f"Bundle {bundle_dir} is missing required artifact(s): {sorted(missing)}"
-        )
+        raise FileNotFoundError(f"Bundle {bundle_dir} is missing required artifact(s): {sorted(missing)}")
 
     samples_dir = zephyr_root / "samples"
     if not samples_dir.is_dir():
         raise FileNotFoundError(
-            f"{zephyr_root} does not look like a zephyr-chipyard-sw clone "
-            f"(missing samples/ directory)"
+            f"{zephyr_root} does not look like a zephyr-chipyard-sw clone (missing samples/ directory)"
         )
 
     overlay_root = samples_dir / options.sample_name
@@ -372,15 +369,10 @@ def emit_overlay(
     shutil.copy2(required["model_blob.c"], model_blob)
     shutil.copy2(required["compgen_model.h"], model_header)
 
-    build_cmd = (
-        f"west build -p -b {options.board} samples/{options.sample_name}/"
-    )
+    build_cmd = f"west build -p -b {options.board} samples/{options.sample_name}/"
     run_commands = {
         "spike": "spike --isa=rv64gcv build/zephyr/zephyr.elf",
-        "firesim": (
-            "firesim runworkload -c "
-            f"deploy/workloads/{options.sample_name}.json"
-        ),
+        "firesim": (f"firesim runworkload -c deploy/workloads/{options.sample_name}.json"),
     }
 
     return OverlayResult(

@@ -14,7 +14,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from compgen.mcp.session import SessionManager
 from compgen.mcp.tools.knowledge import (
     KNOWLEDGE_TOOLS,
@@ -23,7 +22,8 @@ from compgen.mcp.tools.knowledge import (
     record_lesson,
 )
 from compgen.memory.knowledge import (
-    KnowledgeStore, set_shared_store,
+    KnowledgeStore,
+    set_shared_store,
 )
 
 
@@ -59,10 +59,14 @@ def test_knowledge_tools_registered_with_expected_names() -> None:
 
 def test_record_lesson_with_target_uses_most_specific_scope(sm, isolated_store) -> None:
     out = record_lesson(
-        sm, session_id="sess1",
-        category="perf", summary="Ampere mma 16x16x16 fp16 matmul peaks at 90% of theoretical TFLOPS",
+        sm,
+        session_id="sess1",
+        category="perf",
+        summary="Ampere mma 16x16x16 fp16 matmul peaks at 90% of theoretical TFLOPS",
         target="cuda-a100",
-        stage="kernel-gen", op_family="matmul", topic="tile-selection",
+        stage="kernel-gen",
+        op_family="matmul",
+        topic="tile-selection",
         tags=["mma", "fp16"],
     )
     assert out["ok"]
@@ -73,7 +77,8 @@ def test_record_lesson_with_target_uses_most_specific_scope(sm, isolated_store) 
 
 def test_record_lesson_with_explicit_scope(sm, isolated_store) -> None:
     out = record_lesson(
-        sm, session_id="sess1",
+        sm,
+        session_id="sess1",
         category="design",
         summary="Always promote DRAM→SCRATCHPAD before MEGA fusion",
         scope="general",
@@ -83,8 +88,10 @@ def test_record_lesson_with_explicit_scope(sm, isolated_store) -> None:
 
 def test_record_lesson_requires_target_or_scope(sm, isolated_store) -> None:
     out = record_lesson(
-        sm, session_id="sess1",
-        category="perf", summary="x",
+        sm,
+        session_id="sess1",
+        category="perf",
+        summary="x",
     )
     assert out["ok"] is False
     assert "scope" in out["error"]
@@ -92,8 +99,11 @@ def test_record_lesson_requires_target_or_scope(sm, isolated_store) -> None:
 
 def test_record_lesson_rejects_invalid_category(sm, isolated_store) -> None:
     out = record_lesson(
-        sm, session_id="sess1",
-        category="bogus", summary="x", target="cuda-a100",
+        sm,
+        session_id="sess1",
+        category="bogus",
+        summary="x",
+        target="cuda-a100",
     )
     assert out["ok"] is False
     assert "category" in out["error"]
@@ -101,8 +111,11 @@ def test_record_lesson_rejects_invalid_category(sm, isolated_store) -> None:
 
 def test_record_lesson_rejects_invalid_stage(sm, isolated_store) -> None:
     out = record_lesson(
-        sm, session_id="sess1",
-        category="perf", summary="x", target="cuda-a100",
+        sm,
+        session_id="sess1",
+        category="perf",
+        summary="x",
+        target="cuda-a100",
         stage="not-a-stage",
     )
     assert out["ok"] is False
@@ -116,13 +129,17 @@ def test_record_lesson_rejects_invalid_stage(sm, isolated_store) -> None:
 
 def test_query_walks_scope_chain_and_returns_lessons(sm, isolated_store) -> None:
     record_lesson(
-        sm, session_id="sess1",
-        category="design", summary="general cross-target lesson",
+        sm,
+        session_id="sess1",
+        category="design",
+        summary="general cross-target lesson",
         scope="general",
     )
     record_lesson(
-        sm, session_id="sess1",
-        category="perf", summary="ampere-specific tile size",
+        sm,
+        session_id="sess1",
+        category="perf",
+        summary="ampere-specific tile size",
         target="cuda-a100",
     )
     out = query_knowledge(sm, session_id="sess1", target="cuda-a100")
@@ -135,20 +152,29 @@ def test_query_walks_scope_chain_and_returns_lessons(sm, isolated_store) -> None
 
 def test_query_with_narrow_filters_intersects(sm, isolated_store) -> None:
     record_lesson(
-        sm, session_id="sess1",
-        category="perf", summary="matmul-tile lesson",
+        sm,
+        session_id="sess1",
+        category="perf",
+        summary="matmul-tile lesson",
         target="cuda-a100",
-        op_family="matmul", topic="tile-selection",
+        op_family="matmul",
+        topic="tile-selection",
     )
     record_lesson(
-        sm, session_id="sess1",
-        category="perf", summary="softmax fusion lesson",
+        sm,
+        session_id="sess1",
+        category="perf",
+        summary="softmax fusion lesson",
         target="cuda-a100",
-        op_family="softmax", topic="fusion-decision",
+        op_family="softmax",
+        topic="fusion-decision",
     )
     out = query_knowledge(
-        sm, session_id="sess1", target="cuda-a100",
-        op_family="matmul", topic="tile-selection",
+        sm,
+        session_id="sess1",
+        target="cuda-a100",
+        op_family="matmul",
+        topic="tile-selection",
     )
     summaries = [l["summary"] for l in out["lessons"]]
     assert "matmul-tile lesson" in summaries
@@ -162,16 +188,23 @@ def test_query_with_narrow_filters_intersects(sm, isolated_store) -> None:
 
 def test_get_context_brief_returns_non_empty_when_lessons_match(sm, isolated_store) -> None:
     record_lesson(
-        sm, session_id="sess1",
-        category="recipe", summary="Triton matmul on Turing: 64x64x16 + num_warps=4",
+        sm,
+        session_id="sess1",
+        category="recipe",
+        summary="Triton matmul on Turing: 64x64x16 + num_warps=4",
         target="cuda-titan-rtx",
-        stage="kernel-gen", op_family="matmul", topic="tile-selection",
+        stage="kernel-gen",
+        op_family="matmul",
+        topic="tile-selection",
     )
     out = get_context_brief(
-        sm, session_id="sess1",
-        target="cuda-titan-rtx", stage="kernel-gen",
-        op_family="matmul", topic="tile-selection",
+        sm,
+        session_id="sess1",
+        target="cuda-titan-rtx",
+        stage="kernel-gen",
+        op_family="matmul",
+        topic="tile-selection",
     )
     assert out["ok"]
-    assert out["brief"]    # non-empty
+    assert out["brief"]  # non-empty
     assert "64x64x16" in out["brief"] or "Turing" in out["brief"] or "matmul" in out["brief"]

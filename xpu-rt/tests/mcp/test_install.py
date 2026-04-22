@@ -30,11 +30,7 @@ def test_install_creates_fresh_file(tmp_path: Path):
 
 def test_install_preserves_other_servers(tmp_path: Path):
     target = tmp_path / "claude.json"
-    target.write_text(
-        json.dumps(
-            {"mcpServers": {"other": {"command": "other-mcp"}}, "unrelated": 1}
-        )
-    )
+    target.write_text(json.dumps({"mcpServers": {"other": {"command": "other-mcp"}}, "unrelated": 1}))
     result = install_mcp_server(target=target)
     assert result.action == "added"
     assert result.backup is not None and result.backup.exists()

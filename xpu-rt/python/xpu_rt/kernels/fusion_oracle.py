@@ -50,7 +50,7 @@ class FusionVerdict:
     """Outcome of ``should_fuse``."""
 
     decision: FusionDecision
-    est_speedup_ratio: float                    # 1.0 = no change; >1 = win; <1 = regression
+    est_speedup_ratio: float  # 1.0 = no change; >1 = win; <1 = regression
     reason: str
     eligibility_failures: tuple[str, ...] = ()
     cost_breakdown: dict[str, float] = field(default_factory=dict)
@@ -68,7 +68,7 @@ _LAUNCH_OVERHEAD_US: dict[str, float] = {
     "turing": 15.0,
     "ampere": 12.0,
     "hopper": 8.0,
-    "hexagon": 50.0,    # NPU dispatch is heavier
+    "hexagon": 50.0,  # NPU dispatch is heavier
     "cpu": 2.0,
     "rocm": 18.0,
 }
@@ -131,8 +131,7 @@ def _check_eligibility(
         cons_in_dtype = consumer.io.inputs[0].dtype_class
         if not set(prod_out_dtype).intersection(cons_in_dtype):
             failures.append(
-                f"dtype incompatible: producer outputs {prod_out_dtype} "
-                f"but consumer accepts {cons_in_dtype}"
+                f"dtype incompatible: producer outputs {prod_out_dtype} but consumer accepts {cons_in_dtype}"
             )
 
     # 2. Producer must permit being a non-boundary fusion source.
@@ -143,17 +142,13 @@ def _check_eligibility(
     # (or the set is empty meaning "fuse with anything reasonable").
     fw = producer.orchestration.fusion.fusable_with
     if fw and consumer.archetype.value not in fw:
-        failures.append(
-            f"consumer archetype {consumer.archetype.value!r} "
-            f"not in producer.fusable_with={fw}"
-        )
+        failures.append(f"consumer archetype {consumer.archetype.value!r} not in producer.fusable_with={fw}")
 
     # 4. SMEM budget: if both contracts declare scratchpad residency,
     # combined working set must fit.
     p_mem = producer.orchestration.memory
     c_mem = consumer.orchestration.memory
-    if (MemoryTier.SCRATCHPAD in p_mem.output_tiers
-            and MemoryTier.SCRATCHPAD in c_mem.input_tiers):
+    if MemoryTier.SCRATCHPAD in p_mem.output_tiers and MemoryTier.SCRATCHPAD in c_mem.input_tiers:
         # Both want scratchpad — that's the *good* case; just check budget.
         env = producer.orchestration.execution
         if env is not None:
@@ -162,10 +157,7 @@ def _check_eligibility(
             estimated = sum(_tensor_bytes(t) for t in producer.io.outputs)
             estimated += sum(_tensor_bytes(t) for t in consumer.io.inputs)
             if estimated > budget:
-                failures.append(
-                    f"combined scratchpad working set {estimated}B exceeds "
-                    f"target budget {budget}B"
-                )
+                failures.append(f"combined scratchpad working set {estimated}B exceeds target budget {budget}B")
 
     return (len(failures) == 0, failures)
 
@@ -181,7 +173,7 @@ def _estimate_costs(
     target_name: str,
 ) -> dict[str, float]:
     """Return per-component cost estimates in microseconds-equivalent."""
-    env = (producer.orchestration.execution or consumer.orchestration.execution)
+    env = producer.orchestration.execution or consumer.orchestration.execution
     if env is None:
         # No envelope → cannot estimate; return neutral
         return {
@@ -226,8 +218,7 @@ def _estimate_costs(
         # Approaching limit; penalty linear in pressure.
         scratchpad_pressure_us = (smem_use / smem_budget - 0.8) * launch_savings_us
 
-    net_us = (dram_savings_us + launch_savings_us
-              - register_pressure_us - scratchpad_pressure_us)
+    net_us = dram_savings_us + launch_savings_us - register_pressure_us - scratchpad_pressure_us
     return {
         "dram_savings_us": dram_savings_us,
         "launch_savings_us": launch_savings_us,
@@ -274,7 +265,7 @@ def should_fuse(
         )
 
     # 2. Resolve target name (use producer's envelope first)
-    env = (producer.orchestration.execution or consumer.orchestration.execution)
+    env = producer.orchestration.execution or consumer.orchestration.execution
     target_name = env.hardware.target_name if env is not None else "unknown"
 
     # 3. Cost model

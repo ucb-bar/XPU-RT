@@ -19,10 +19,8 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from compgen.kernels.contract_v3 import (
     ExecutionEnvelope,
-    HardwareEnvelope,
     IOContract,
     KernelArchetype,
     KernelContractV3,
@@ -41,7 +39,6 @@ from compgen.targets.schema import (
     TargetProfile,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -57,12 +54,14 @@ def _a100_profile() -> TargetProfile:
                 name="A100",
                 compute_units=[
                     ComputeUnit(
-                        name="tensor_core", count=432,
+                        name="tensor_core",
+                        count=432,
                         supported_dtypes={"bf16", "f16", "f32", "tf32"},
                         peak_tflops=312.0,
                     ),
                     ComputeUnit(
-                        name="cuda_core", count=6912,
+                        name="cuda_core",
+                        count=6912,
                         supported_dtypes={"f32", "f64"},
                     ),
                 ],
@@ -70,8 +69,7 @@ def _a100_profile() -> TargetProfile:
                     MemoryLevel(name="registers", size_bytes=256),
                     MemoryLevel(name="shared_memory", size_bytes=167936),
                     MemoryLevel(name="l2_cache", size_bytes=41943040),
-                    MemoryLevel(name="hbm", size_bytes=80 * 1024**3,
-                                bandwidth_gbps=1555.0),
+                    MemoryLevel(name="hbm", size_bytes=80 * 1024**3, bandwidth_gbps=1555.0),
                 ],
             )
         ],
@@ -89,8 +87,7 @@ def _unknown_target_profile() -> TargetProfile:
                 compute_units=[ComputeUnit(name="dsp_block", count=64)],
                 memory_hierarchy=[
                     MemoryLevel(name="bram", size_bytes=4 * 1024 * 1024),
-                    MemoryLevel(name="ddr4", size_bytes=16 * 1024**3,
-                                bandwidth_gbps=25.6),
+                    MemoryLevel(name="ddr4", size_bytes=16 * 1024**3, bandwidth_gbps=25.6),
                 ],
             )
         ],
@@ -163,9 +160,7 @@ def test_known_targets_all_have_at_least_one_hint() -> None:
     for key, hints in CODEGEN_HINTS.items():
         assert hints, f"CODEGEN_HINTS[{key!r}] is empty"
         for h in hints:
-            assert isinstance(h, str) and len(h) > 20, (
-                f"CODEGEN_HINTS[{key!r}] has an empty/short hint: {h!r}"
-            )
+            assert isinstance(h, str) and len(h) > 20, f"CODEGEN_HINTS[{key!r}] has an empty/short hint: {h!r}"
 
 
 # ---------------------------------------------------------------------------
@@ -176,12 +171,11 @@ def test_known_targets_all_have_at_least_one_hint() -> None:
 def test_hints_reach_kernel_codegen_via_kernel_facing() -> None:
     env = envelope_from_target_profile(_a100_profile())
     contract = KernelContractV3(
-        op_name="x", archetype=KernelArchetype.ACTIVATION,
+        op_name="x",
+        archetype=KernelArchetype.ACTIVATION,
         io=IOContract(
-            inputs=(TensorIO(name="in", shape=ShapeClass(dims=(None,)),
-                             dtype_class=("f32",)),),
-            outputs=(TensorIO(name="out", shape=ShapeClass(dims=(None,)),
-                              dtype_class=("f32",)),),
+            inputs=(TensorIO(name="in", shape=ShapeClass(dims=(None,)), dtype_class=("f32",)),),
+            outputs=(TensorIO(name="out", shape=ShapeClass(dims=(None,)), dtype_class=("f32",)),),
         ),
         orchestration=OrchestrationSpec(
             execution=ExecutionEnvelope(hardware=env),
@@ -216,16 +210,19 @@ def test_device_index_out_of_range_raises() -> None:
 EXEMPLAR_ROOT = Path(__file__).resolve().parents[1] / "targetgen" / "exemplars"
 
 
-@pytest.mark.parametrize("yaml_name", [
-    "test_gpu_simt.yaml",
-])
+@pytest.mark.parametrize(
+    "yaml_name",
+    [
+        "test_gpu_simt.yaml",
+    ],
+)
 def test_bridge_survives_real_yaml_exemplar(yaml_name: str) -> None:
     """The test/exemplar YAMLs that the existing suite uses must all
     survive the bridge without raising. We don't assert *specific* values
     here — just that the pipeline from YAML → envelope succeeds."""
-    from compgen.targetgen.load import load_hardware_spec
-    from compgen.targetgen.generate import generate_target
     import tempfile
+
+    from compgen.targetgen.generate import generate_target
 
     path = EXEMPLAR_ROOT / yaml_name
     pytest.importorskip("yaml")

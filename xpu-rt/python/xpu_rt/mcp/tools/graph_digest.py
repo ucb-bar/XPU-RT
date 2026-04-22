@@ -71,10 +71,7 @@ def analyze_graph(
         return {
             "ok": False,
             "session_id": session_id,
-            "error": (
-                "No compiled model in this session. Call load_model + "
-                "compile_model first."
-            ),
+            "error": ("No compiled model in this session. Call load_model + compile_model first."),
         }
     analysis, module, target = loaded
     digest = build_digest(analysis, module=module, target_name=target.name)

@@ -160,9 +160,7 @@ def verify_vendor_package(
 # --------------------------------------------------------------------------- #
 
 
-def _load_descriptor(
-    descriptor_yaml: str | None, descriptor_path: str | None
-) -> VendorDialectDescriptor:
+def _load_descriptor(descriptor_yaml: str | None, descriptor_path: str | None) -> VendorDialectDescriptor:
     if descriptor_yaml and descriptor_path:
         raise ValueError("pass descriptor_yaml OR descriptor_path, not both")
     if descriptor_yaml:
@@ -240,8 +238,7 @@ VENDOR_DIALECT_TOOLS: list[dict[str, Any]] = [
     {
         "name": "verify_vendor_package",
         "description": (
-            "Run the verification ladder (structural / matmul / workload) "
-            "against a scaffolded adapter package."
+            "Run the verification ladder (structural / matmul / workload) against a scaffolded adapter package."
         ),
         "phase": "inspect",
         "handler": verify_vendor_package,

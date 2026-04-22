@@ -25,8 +25,9 @@ Two safety nets:
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field
-from typing import Any, Sequence
+from collections.abc import Sequence
+from dataclasses import dataclass
+from typing import Any
 
 from compgen.kernels.contract_v3 import (
     DispatchModel,
@@ -47,7 +48,6 @@ from compgen.llm.base import (
 )
 from compgen.runtime.glue import RuntimeAdapter, select_adapter
 
-
 # ---------------------------------------------------------------------------
 # Decision records
 # ---------------------------------------------------------------------------
@@ -63,7 +63,7 @@ class TargetDispatchDecision:
     rationale: str
     confidence: float
     deterministic_prior: GranularityVerdict
-    legal: bool = True                         # adapter rejects this dispatch model?
+    legal: bool = True  # adapter rejects this dispatch model?
     illegal_reason: str = ""
 
 
@@ -91,10 +91,7 @@ def _summarise_region(region: Sequence[KernelContractV3]) -> str:
         return "<empty region>"
     if len(region) == 1:
         c = region[0]
-        return (
-            f"single-op region: {c.op_name} ({c.archetype.value}); "
-            f"{len(c.io.inputs)} in / {len(c.io.outputs)} out"
-        )
+        return f"single-op region: {c.op_name} ({c.archetype.value}); {len(c.io.inputs)} in / {len(c.io.outputs)} out"
     chain = " → ".join(c.op_name for c in region)
     return f"chain of {len(region)} ops: {chain}"
 
@@ -123,9 +120,9 @@ def _summarise_envelope(env: HardwareEnvelope) -> str:
 
 
 _GRANULARITY_TO_DISPATCH: dict[Granularity, DispatchModel] = {
-    Granularity.MICRO:  DispatchModel.INLINE,
+    Granularity.MICRO: DispatchModel.INLINE,
     Granularity.NORMAL: DispatchModel.SYNC,
-    Granularity.MEGA:   DispatchModel.PERSISTENT,
+    Granularity.MEGA: DispatchModel.PERSISTENT,
 }
 
 
@@ -133,19 +130,24 @@ def _adapter_supports(adapter: RuntimeAdapter, granularity: Granularity) -> tupl
     """Synthesise a stub contract with the canonical dispatch model for
     this granularity and ask the adapter whether it can host it."""
     from compgen.kernels.contract_v3 import (
-        DispatchSpec, IOContract, KernelArchetype, MemorySpec, MemoryTier,
-        OrchestrationSpec, ShapeClass, TensorIO,
+        DispatchSpec,
+        IOContract,
+        KernelArchetype,
+        MemorySpec,
+        MemoryTier,
+        OrchestrationSpec,
+        ShapeClass,
+        TensorIO,
     )
 
     model = _GRANULARITY_TO_DISPATCH[granularity]
     if granularity is Granularity.MICRO:
         stub = KernelContractV3(
-            op_name="probe", archetype=KernelArchetype.POINTWISE,
+            op_name="probe",
+            archetype=KernelArchetype.POINTWISE,
             io=IOContract(
-                inputs=(TensorIO(name="x", shape=ShapeClass(dims=(None,)),
-                                 dtype_class=("f32",)),),
-                outputs=(TensorIO(name="y", shape=ShapeClass(dims=(None,)),
-                                  dtype_class=("f32",)),),
+                inputs=(TensorIO(name="x", shape=ShapeClass(dims=(None,)), dtype_class=("f32",)),),
+                outputs=(TensorIO(name="y", shape=ShapeClass(dims=(None,)), dtype_class=("f32",)),),
             ),
             granularity=Granularity.MICRO,
             orchestration=OrchestrationSpec(
@@ -158,12 +160,11 @@ def _adapter_supports(adapter: RuntimeAdapter, granularity: Granularity) -> tupl
         )
     elif granularity is Granularity.MEGA:
         sub = KernelContractV3(
-            op_name="sub", archetype=KernelArchetype.POINTWISE,
+            op_name="sub",
+            archetype=KernelArchetype.POINTWISE,
             io=IOContract(
-                inputs=(TensorIO(name="x", shape=ShapeClass(dims=(None,)),
-                                 dtype_class=("f32",)),),
-                outputs=(TensorIO(name="y", shape=ShapeClass(dims=(None,)),
-                                  dtype_class=("f32",)),),
+                inputs=(TensorIO(name="x", shape=ShapeClass(dims=(None,)), dtype_class=("f32",)),),
+                outputs=(TensorIO(name="y", shape=ShapeClass(dims=(None,)), dtype_class=("f32",)),),
             ),
             orchestration=OrchestrationSpec(
                 memory=MemorySpec(
@@ -173,12 +174,11 @@ def _adapter_supports(adapter: RuntimeAdapter, granularity: Granularity) -> tupl
             ),
         )
         stub = KernelContractV3(
-            op_name="probe", archetype=KernelArchetype.POINTWISE,
+            op_name="probe",
+            archetype=KernelArchetype.POINTWISE,
             io=IOContract(
-                inputs=(TensorIO(name="x", shape=ShapeClass(dims=(None,)),
-                                 dtype_class=("f32",)),),
-                outputs=(TensorIO(name="y", shape=ShapeClass(dims=(None,)),
-                                  dtype_class=("f32",)),),
+                inputs=(TensorIO(name="x", shape=ShapeClass(dims=(None,)), dtype_class=("f32",)),),
+                outputs=(TensorIO(name="y", shape=ShapeClass(dims=(None,)), dtype_class=("f32",)),),
             ),
             granularity=Granularity.MEGA,
             orchestration=OrchestrationSpec(
@@ -188,21 +188,17 @@ def _adapter_supports(adapter: RuntimeAdapter, granularity: Granularity) -> tupl
         )
     else:
         stub = KernelContractV3(
-            op_name="probe", archetype=KernelArchetype.POINTWISE,
+            op_name="probe",
+            archetype=KernelArchetype.POINTWISE,
             io=IOContract(
-                inputs=(TensorIO(name="x", shape=ShapeClass(dims=(None,)),
-                                 dtype_class=("f32",)),),
-                outputs=(TensorIO(name="y", shape=ShapeClass(dims=(None,)),
-                                  dtype_class=("f32",)),),
+                inputs=(TensorIO(name="x", shape=ShapeClass(dims=(None,)), dtype_class=("f32",)),),
+                outputs=(TensorIO(name="y", shape=ShapeClass(dims=(None,)), dtype_class=("f32",)),),
             ),
             orchestration=OrchestrationSpec(dispatch=DispatchSpec(model=model)),
         )
     if adapter.supports(stub):
         return True, ""
-    return False, (
-        f"adapter {adapter.name!r} rejects dispatch model "
-        f"{model.value!r} (granularity={granularity.value})"
-    )
+    return False, (f"adapter {adapter.name!r} rejects dispatch model {model.value!r} (granularity={granularity.value})")
 
 
 # ---------------------------------------------------------------------------
@@ -214,11 +210,13 @@ def _rank_envelopes_by_throughput(
     envelopes: Sequence[HardwareEnvelope],
 ) -> list[HardwareEnvelope]:
     """Sort by (peak compute bandwidth, vector lanes) descending."""
+
     def key(e: HardwareEnvelope) -> tuple[float, int]:
         peak = 0.0
         if getattr(e, "peak_compute_per_dtype", None):
             peak = max(e.peak_compute_per_dtype.values()) if e.peak_compute_per_dtype else 0.0
         return (peak, e.vector_lanes)
+
     return sorted(envelopes, key=key, reverse=True)
 
 
@@ -280,8 +278,7 @@ def _build_prompt(
         region=_summarise_region(region),
         envelopes="\n".join(f"  - {_summarise_envelope(e)}" for e in envelopes),
         priors="\n".join(
-            f"  - {name}: granularity={v.granularity.value} "
-            f"(confidence={v.confidence:.2f}); reason: {v.reason}"
+            f"  - {name}: granularity={v.granularity.value} (confidence={v.confidence:.2f}); reason: {v.reason}"
             for name, v in priors.items()
         ),
         budget=f"{perf_budget_us:.1f} us" if perf_budget_us else "unspecified",
@@ -311,9 +308,9 @@ def _parse_llm_decision(text: str) -> dict[str, Any] | None:
 def _granularity_from_str(s: str) -> Granularity | None:
     s = (s or "").strip().lower()
     return {
-        "micro":  Granularity.MICRO,
+        "micro": Granularity.MICRO,
         "normal": Granularity.NORMAL,
-        "mega":   Granularity.MEGA,
+        "mega": Granularity.MEGA,
     }.get(s)
 
 
@@ -355,7 +352,9 @@ def decide_dispatch(
     priors: dict[str, GranularityVerdict] = {}
     for env in envelopes:
         priors[env.target_name] = recommend_granularity(
-            region, env, perf_target_us=perf_budget_us,
+            region,
+            env,
+            perf_target_us=perf_budget_us,
         )
 
     # 2. Optional LLM override.
@@ -371,15 +370,12 @@ def decide_dispatch(
             prompt_template=prompt,
             context=PromptContext(
                 model_ir_summary=_summarise_region(region),
-                target_profile_summary="\n".join(
-                    _summarise_envelope(e) for e in envelopes
-                ),
+                target_profile_summary="\n".join(_summarise_envelope(e) for e in envelopes),
                 available_transforms=[],
                 kernel_contracts=[],
                 objective=objective,
             ),
-            config=LLMConfig(model="dispatch-decision", temperature=0.2,
-                             max_tokens=512),
+            config=LLMConfig(model="dispatch-decision", temperature=0.2, max_tokens=512),
             artifact_type="dispatch_decision",
         )
         try:
@@ -394,7 +390,7 @@ def decide_dispatch(
                         llm_rationale[tname] = str(payload.get("rationale", ""))
                 llm_best = parsed.get("best_target")
                 llm_best_rationale = str(parsed.get("best_rationale", ""))
-        except Exception as exc:                 # noqa: BLE001
+        except Exception as exc:  # noqa: BLE001
             llm_rationale["__error__"] = f"LLM call failed: {type(exc).__name__}: {exc}"
 
     # 3. Compose per-target decisions, validating legality.
@@ -422,8 +418,7 @@ def decide_dispatch(
                 fallback_legal, fallback_reason = _adapter_supports(adapter, fallback)
                 if fallback_legal:
                     rationale = (
-                        f"chose {chosen.value} but {illegal_reason}; "
-                        f"falling back to {fallback.value} ({prior.reason})"
+                        f"chose {chosen.value} but {illegal_reason}; falling back to {fallback.value} ({prior.reason})"
                     )
                     chosen = fallback
                     legal = True
@@ -453,9 +448,7 @@ def decide_dispatch(
         best_rationale = llm_best_rationale or per_target[best].rationale
     else:
         # Heuristic: highest-throughput envelope (or only-legal fall-through).
-        ranked = _rank_envelopes_by_throughput(
-            [e for e in envelopes if e.target_name in legal_targets]
-        )
+        ranked = _rank_envelopes_by_throughput([e for e in envelopes if e.target_name in legal_targets])
         best = ranked[0].target_name
         best_rationale = (
             f"heuristic ranker picked {best} as highest-throughput legal target; "

@@ -88,16 +88,12 @@ def install_mcp_server(
     """
     dest = target or (default_project_config() if project else default_claude_config())
     existing = _read(dest)
-    servers = existing.setdefault("mcpServers", {}) if not dry_run else {
-        **existing.get("mcpServers", {})
-    }
+    servers = existing.setdefault("mcpServers", {}) if not dry_run else {**existing.get("mcpServers", {})}
     entry = mcp_server_entry()
 
     if SERVER_NAME in servers:
         if servers[SERVER_NAME] == entry:
-            return InstallResult(
-                target=dest, backup=None, action="already-present", entry=entry
-            )
+            return InstallResult(target=dest, backup=None, action="already-present", entry=entry)
         if not force:
             raise RuntimeError(
                 f"{dest} already has an mcpServers.{SERVER_NAME} entry "

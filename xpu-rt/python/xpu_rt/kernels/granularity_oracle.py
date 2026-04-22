@@ -45,7 +45,7 @@ class GranularityVerdict:
     granularity: Granularity
     reason: str
     confidence: float = 0.5
-    chain_speedup_estimate: float = 1.0   # MEGA only — combined fusion ratio
+    chain_speedup_estimate: float = 1.0  # MEGA only — combined fusion ratio
     knowledge_brief: str = ""
 
 
@@ -120,7 +120,9 @@ def recommend_granularity(
 
     target_name = envelope.target_name
     brief = shared_store().context_brief(
-        target_name, stage="kernel-gen", topic="hardware-envelope",
+        target_name,
+        stage="kernel-gen",
+        topic="hardware-envelope",
         max_lessons=3,
     )
 
@@ -139,9 +141,11 @@ def recommend_granularity(
                 knowledge_brief=brief,
             )
 
-        if (_fits_in_registers(c, envelope)
-                and not c.orchestration.fusion.is_boundary
-                and c.archetype is not KernelArchetype.COMPUTE_TILED):
+        if (
+            _fits_in_registers(c, envelope)
+            and not c.orchestration.fusion.is_boundary
+            and c.archetype is not KernelArchetype.COMPUTE_TILED
+        ):
             return GranularityVerdict(
                 granularity=Granularity.MICRO,
                 reason=(
@@ -186,26 +190,19 @@ def recommend_granularity(
     for i in range(len(region) - 1):
         v = should_fuse(region[i], region[i + 1])
         pairwise_decisions.append(
-            f"{region[i].op_name}→{region[i + 1].op_name}: "
-            f"{v.decision.value} ({v.est_speedup_ratio:.2f}×)"
+            f"{region[i].op_name}→{region[i + 1].op_name}: {v.decision.value} ({v.est_speedup_ratio:.2f}×)"
         )
         if v.decision is FusionDecision.INELIGIBLE:
             return GranularityVerdict(
                 granularity=Granularity.NORMAL,
-                reason=(
-                    f"pair ineligible: {region[i].op_name}→{region[i + 1].op_name} "
-                    f"({v.reason})"
-                ),
+                reason=(f"pair ineligible: {region[i].op_name}→{region[i + 1].op_name} ({v.reason})"),
                 confidence=0.8,
                 knowledge_brief=brief,
             )
         if v.decision is FusionDecision.DONT_FUSE:
             return GranularityVerdict(
                 granularity=Granularity.NORMAL,
-                reason=(
-                    f"fusion oracle declined pair "
-                    f"{region[i].op_name}→{region[i + 1].op_name}: {v.reason}"
-                ),
+                reason=(f"fusion oracle declined pair {region[i].op_name}→{region[i + 1].op_name}: {v.reason}"),
                 confidence=0.7,
                 knowledge_brief=brief,
             )

@@ -35,10 +35,8 @@ from typing import Any
 
 from compgen.agent.hw_aware_dispatch import TargetDispatchDecision
 from compgen.agent.kernel_optimizer import (
-    BenchResult,
     CodegenResult,
     OptimizedModel,
-    fingerprint_for,
     optimize_model,
     optimize_model_multi_target,
 )
@@ -48,7 +46,6 @@ from compgen.kernels.contract_v3 import (
 )
 from compgen.llm.base import Objective
 from compgen.mcp.session import SessionManager
-
 
 # ---------------------------------------------------------------------------
 # CodegenFn that round-trips through the MCP kernel tools
@@ -79,12 +76,16 @@ class McpCodegenFn:
     ) -> CodegenResult:
         from compgen.agent.kernel_optimizer import _v3_to_fingerprint_dict
         from compgen.mcp.tools.kernel import (
-            lookup_cached_kernel, request_kernel_codegen,
+            lookup_cached_kernel,
+            request_kernel_codegen,
         )
+
         contract_dict = _v3_to_fingerprint_dict(contract)
         # Cache lookup first (cheap, no queueing).
         lk = lookup_cached_kernel(
-            self.sm, session_id=self.session_id, contract_v3=contract_dict,
+            self.sm,
+            session_id=self.session_id,
+            contract_v3=contract_dict,
         )
         if lk.get("found"):
             kernel_source = lk.get("kernel_code", "")
@@ -92,12 +93,14 @@ class McpCodegenFn:
             return CodegenResult(
                 callable_kernel=_make_python_callable(kernel_source),
                 provider_name=f"mcp_cache:{language}",
-                source=kernel_source, language=language,
+                source=kernel_source,
+                language=language,
             )
 
         # Miss → queue + return placeholder.
         request_kernel_codegen(
-            self.sm, session_id=self.session_id,
+            self.sm,
+            session_id=self.session_id,
             contract_v3=contract_dict,
         )
         return CodegenResult(
@@ -119,12 +122,12 @@ def _make_python_callable(source: str) -> Callable[..., Any]:
     try:
         scope: dict[str, Any] = {}
         compiled = compile(source, "<mcp_kernel>", "exec")
-        exec(compiled, scope)            # noqa: S102 — agent-supplied kernel
+        exec(compiled, scope)  # noqa: S102 — agent-supplied kernel
         for name in ("kernel", "main", "run"):
             fn = scope.get(name)
             if callable(fn):
                 return fn
-    except Exception:                    # noqa: BLE001
+    except Exception:  # noqa: BLE001
         pass
     return lambda *a, **kw: None
 
@@ -157,17 +160,25 @@ def optimize_via_mcp(
     from compgen.mcp.tools.dispatch import McpDispatchLLM
 
     llm = McpDispatchLLM(
-        sm=sm, session_id=session_id,
-        perf_budget_us=perf_budget_us, objective=objective,
+        sm=sm,
+        session_id=session_id,
+        perf_budget_us=perf_budget_us,
+        objective=objective,
     )
     codegen_fn = McpCodegenFn(sm=sm, session_id=session_id)
     bench_fn = McpBenchFn(sm=sm, session_id=session_id)
     return optimize_model(
-        model_fn=model_fn, target=target, contracts=contracts,
-        envelope=envelope, perf_budget_us=perf_budget_us,
-        objective=objective, llm=llm,
-        codegen_fn=codegen_fn, bench_fn=bench_fn,
-        capture_graph=capture_graph, sample_inputs=sample_inputs,
+        model_fn=model_fn,
+        target=target,
+        contracts=contracts,
+        envelope=envelope,
+        perf_budget_us=perf_budget_us,
+        objective=objective,
+        llm=llm,
+        codegen_fn=codegen_fn,
+        bench_fn=bench_fn,
+        capture_graph=capture_graph,
+        sample_inputs=sample_inputs,
     )
 
 
@@ -189,17 +200,25 @@ def optimize_via_mcp_multi_target(
     from compgen.mcp.tools.dispatch import McpDispatchLLM
 
     llm = McpDispatchLLM(
-        sm=sm, session_id=session_id,
-        perf_budget_us=perf_budget_us, objective=objective,
+        sm=sm,
+        session_id=session_id,
+        perf_budget_us=perf_budget_us,
+        objective=objective,
     )
     codegen_fn = McpCodegenFn(sm=sm, session_id=session_id)
     bench_fn = McpBenchFn(sm=sm, session_id=session_id)
     return optimize_model_multi_target(
-        model_fn=model_fn, targets=targets, contracts=contracts,
-        envelopes=envelopes, perf_budget_us=perf_budget_us,
-        objective=objective, llm=llm,
-        codegen_fn=codegen_fn, bench_fn=bench_fn,
-        capture_graph=capture_graph, sample_inputs=sample_inputs,
+        model_fn=model_fn,
+        targets=targets,
+        contracts=contracts,
+        envelopes=envelopes,
+        perf_budget_us=perf_budget_us,
+        objective=objective,
+        llm=llm,
+        codegen_fn=codegen_fn,
+        bench_fn=bench_fn,
+        capture_graph=capture_graph,
+        sample_inputs=sample_inputs,
     )
 
 
@@ -221,7 +240,7 @@ def _progress(session) -> _OptimizationProgress:
     cur: _OptimizationProgress | None = getattr(session, "optim_progress", None)
     if cur is None:
         cur = _OptimizationProgress()
-        session.optim_progress = cur     # type: ignore[attr-defined]
+        session.optim_progress = cur  # type: ignore[attr-defined]
     return cur
 
 
@@ -253,12 +272,16 @@ def request_model_optimization(
     from compgen.mcp.tools.bench import list_pending_bench_requests
     from compgen.mcp.tools.dispatch import list_pending_dispatch_decisions
     from compgen.mcp.tools.kernel import list_pending_kernel_requests
+
     pending_codegen = list_pending_kernel_requests(sm, session_id=session_id)
     pending_dispatch = list_pending_dispatch_decisions(sm, session_id=session_id)
     pending_bench = list_pending_bench_requests(sm, session_id=session_id)
     return {
-        "ok": True, "session_id": session_id, "target": target,
-        "objective": objective, "perf_budget_us": perf_budget_us,
+        "ok": True,
+        "session_id": session_id,
+        "target": target,
+        "objective": objective,
+        "perf_budget_us": perf_budget_us,
         "contracts_tracked": len(progress.contracts_seen),
         "pending": {
             "codegen": pending_codegen.get("pending_count", 0),
@@ -288,7 +311,8 @@ def register_optimization_progress(
     if completed_passes is not None:
         progress.completed_passes = int(completed_passes)
     return {
-        "ok": True, "session_id": session_id,
+        "ok": True,
+        "session_id": session_id,
         "completed_passes": progress.completed_passes,
         "last_summary": progress.last_summary,
     }

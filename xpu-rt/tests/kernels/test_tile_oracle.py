@@ -13,10 +13,8 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from compgen.kernels.contract_v3 import HardwareEnvelope
 from compgen.kernels.tile_oracle import (
-    TileRecommendation,
     recommend_packing,
     recommend_tile,
 )
@@ -27,7 +25,7 @@ from compgen.memory.seed_lessons import install as install_seed
 @pytest.fixture(autouse=True)
 def _isolated_store(tmp_path: Path):
     set_shared_store(KnowledgeStore(root=tmp_path / "knowledge"))
-    install_seed()    # populate so context_brief has content
+    install_seed()  # populate so context_brief has content
     yield
     set_shared_store(None)
 
@@ -35,15 +33,17 @@ def _isolated_store(tmp_path: Path):
 def _envelope(target_name: str, *, mma_shapes: dict | None = None) -> HardwareEnvelope:
     return HardwareEnvelope(
         target_name=target_name,
-        vector_lanes=72, scratchpad_bytes=49152, register_bytes=256,
-        native_dtypes=("f16", "f32"), peak_bandwidth_gbps=672.0,
+        vector_lanes=72,
+        scratchpad_bytes=49152,
+        register_bytes=256,
+        native_dtypes=("f16", "f32"),
+        peak_bandwidth_gbps=672.0,
         mma_shapes=mma_shapes or {},
     )
 
 
 def test_recommend_tile_for_matmul_on_turing_uses_rule_table() -> None:
-    rec = recommend_tile("matmul", (None, None), "f16",
-                         _envelope("test-gpu-simt"))
+    rec = recommend_tile("matmul", (None, None), "f16", _envelope("test-gpu-simt"))
     assert rec.block_m == 64
     assert rec.block_n == 64
     assert rec.block_k == 32
@@ -54,8 +54,7 @@ def test_recommend_tile_for_matmul_on_turing_uses_rule_table() -> None:
 
 
 def test_recommend_tile_for_matmul_on_ampere_uses_bigger_tiles() -> None:
-    rec = recommend_tile("matmul", (None, None), "bf16",
-                         _envelope("cuda-a100"))
+    rec = recommend_tile("matmul", (None, None), "bf16", _envelope("cuda-a100"))
     # Ampere rule is 128×128×32 with num_warps=8, num_stages=3
     assert rec.block_m == 128
     assert rec.block_n == 128
@@ -68,7 +67,9 @@ def test_recommend_tile_bumps_block_k_to_mma_k_multiple() -> None:
     """If the envelope declares an MMA shape with K=16, BLOCK_K=32 is
     already a multiple. Make sure a non-multiple bumps up."""
     rec = recommend_tile(
-        "matmul", (None, None), "f16",
+        "matmul",
+        (None, None),
+        "f16",
         _envelope("test-gpu-simt", mma_shapes={"f16": (16, 8, 24)}),  # K=24 unusual
     )
     # Default block_k=32; 32 % 24 != 0 → bump to 48
@@ -77,8 +78,7 @@ def test_recommend_tile_bumps_block_k_to_mma_k_multiple() -> None:
 
 
 def test_recommend_tile_falls_through_for_unknown_combo() -> None:
-    rec = recommend_tile("exotic_op", (None,), "f32",
-                         _envelope("cuda-a100"))
+    rec = recommend_tile("exotic_op", (None,), "f32", _envelope("cuda-a100"))
     assert rec.confidence < 0.5
     assert "No rule" in rec.rationale
 
@@ -87,7 +87,9 @@ def test_recommend_tile_brief_contains_only_tile_selection_lessons() -> None:
     """Containerised query — brief must NOT include profiling lessons,
     even though they exist for the same target."""
     rec = recommend_tile(
-        "matmul", (None, None), "f16",
+        "matmul",
+        (None, None),
+        "f16",
         _envelope("test-gpu-simt"),
     )
     brief = rec.knowledge_brief

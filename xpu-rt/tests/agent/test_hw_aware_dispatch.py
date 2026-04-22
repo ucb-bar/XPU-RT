@@ -15,22 +15,26 @@ Locks in:
 from __future__ import annotations
 
 import pytest
-
 from compgen.agent.hw_aware_dispatch import (
     MultiTargetDispatchDecision,
-    TargetDispatchDecision,
     decide_dispatch,
 )
 from compgen.kernels.contract_v3 import (
-    DispatchModel, DispatchSpec,
-    ExecutionEnvelope, Granularity, HardwareEnvelope,
-    IOContract, KernelArchetype, KernelContractV3,
-    MemorySpec, MemoryTier, OrchestrationSpec, ShapeClass, TensorIO,
+    ExecutionEnvelope,
+    Granularity,
+    HardwareEnvelope,
+    IOContract,
+    KernelArchetype,
+    KernelContractV3,
+    OrchestrationSpec,
+    ShapeClass,
+    TensorIO,
 )
 from compgen.llm.base import (
-    GenerationRequest, GenerationResponse, LLMConfig, Objective, PromptContext,
+    GenerationRequest,
+    GenerationResponse,
+    Objective,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -39,25 +43,26 @@ from compgen.llm.base import (
 
 def _envelope(name: str, *, peak: float = 672.0, lanes: int = 64) -> HardwareEnvelope:
     return HardwareEnvelope(
-        target_name=name, vector_lanes=lanes,
-        scratchpad_bytes=49152, register_bytes=256,
-        native_dtypes=("f16", "f32"), peak_bandwidth_gbps=peak,
+        target_name=name,
+        vector_lanes=lanes,
+        scratchpad_bytes=49152,
+        register_bytes=256,
+        native_dtypes=("f16", "f32"),
+        peak_bandwidth_gbps=peak,
     )
 
 
 def _normal_pointwise(target: str = "cuda-a100") -> KernelContractV3:
     env = _envelope(target)
     return KernelContractV3(
-        op_name="addf", archetype=KernelArchetype.POINTWISE,
+        op_name="addf",
+        archetype=KernelArchetype.POINTWISE,
         io=IOContract(
             inputs=(
-                TensorIO(name="a", shape=ShapeClass(dims=(None,)),
-                         dtype_class=("f32",)),
-                TensorIO(name="b", shape=ShapeClass(dims=(None,)),
-                         dtype_class=("f32",)),
+                TensorIO(name="a", shape=ShapeClass(dims=(None,)), dtype_class=("f32",)),
+                TensorIO(name="b", shape=ShapeClass(dims=(None,)), dtype_class=("f32",)),
             ),
-            outputs=(TensorIO(name="o", shape=ShapeClass(dims=(None,)),
-                              dtype_class=("f32",)),),
+            outputs=(TensorIO(name="o", shape=ShapeClass(dims=(None,)), dtype_class=("f32",)),),
         ),
         orchestration=OrchestrationSpec(execution=ExecutionEnvelope(hardware=env)),
     )
@@ -138,6 +143,7 @@ class _StaticLLM:
 
     def generate(self, request: GenerationRequest) -> GenerationResponse:
         import json as _json
+
         return GenerationResponse(
             raw_text=_json.dumps(self._payload),
             parsed_artifacts=[],
@@ -151,16 +157,18 @@ class _StaticLLM:
 def test_llm_decision_overrides_oracle_when_legal() -> None:
     region = [_normal_pointwise("cuda-a100")]
     env = _envelope("cuda-a100")
-    llm = _StaticLLM({
-        "per_target": {
-            "cuda-a100": {
-                "granularity": "normal",
-                "rationale":  "LLM picked NORMAL because boundary fusion enabled",
-            }
-        },
-        "best_target": "cuda-a100",
-        "best_rationale": "only target available",
-    })
+    llm = _StaticLLM(
+        {
+            "per_target": {
+                "cuda-a100": {
+                    "granularity": "normal",
+                    "rationale": "LLM picked NORMAL because boundary fusion enabled",
+                }
+            },
+            "best_target": "cuda-a100",
+            "best_rationale": "only target available",
+        }
+    )
     out = decide_dispatch(region, envelopes=[env], llm=llm)
     assert out.used_llm is True
     decision = out.per_target["cuda-a100"]
@@ -173,13 +181,13 @@ def test_llm_picking_illegal_granularity_falls_back_through_chain() -> None:
     oracle prior and finally NORMAL (universally legal)."""
     a = _normal_pointwise("cpu-host")
     cpu_env = _envelope("cpu-host", peak=50.0)
-    llm = _StaticLLM({
-        "per_target": {
-            "cpu-host": {"granularity": "mega", "rationale": "fictitious mega"}
-        },
-        "best_target": "cpu-host",
-        "best_rationale": "only target",
-    })
+    llm = _StaticLLM(
+        {
+            "per_target": {"cpu-host": {"granularity": "mega", "rationale": "fictitious mega"}},
+            "best_target": "cpu-host",
+            "best_rationale": "only target",
+        }
+    )
     out = decide_dispatch([a], envelopes=[cpu_env], llm=llm)
     decision = out.per_target["cpu-host"]
     # NORMAL is the universal fallback that CPU always supports.
@@ -196,8 +204,10 @@ def test_llm_response_with_garbage_text_falls_back_to_oracle() -> None:
         def generate(self, request):
             return GenerationResponse(
                 raw_text="lorem ipsum, no JSON here",
-                parsed_artifacts=[], model_id="garbage",
+                parsed_artifacts=[],
+                model_id="garbage",
             )
+
         def generate_structured(self, *a, **kw):
             return self.generate(None)
 
@@ -216,14 +226,16 @@ def test_llm_best_target_overrides_throughput_ranker_when_legal() -> None:
     region = [_normal_pointwise("cuda-a100")]
     cuda = _envelope("cuda-a100", peak=2000.0)
     cpu = _envelope("cpu-host", peak=50.0)
-    llm = _StaticLLM({
-        "per_target": {
-            "cuda-a100": {"granularity": "normal", "rationale": "fast"},
-            "cpu-host":  {"granularity": "normal", "rationale": "fits budget"},
-        },
-        "best_target": "cpu-host",
-        "best_rationale": "energy budget tight; CPU is enough",
-    })
+    llm = _StaticLLM(
+        {
+            "per_target": {
+                "cuda-a100": {"granularity": "normal", "rationale": "fast"},
+                "cpu-host": {"granularity": "normal", "rationale": "fits budget"},
+            },
+            "best_target": "cpu-host",
+            "best_rationale": "energy budget tight; CPU is enough",
+        }
+    )
     out = decide_dispatch(region, envelopes=[cuda, cpu], llm=llm)
     assert out.best_target == "cpu-host"
     assert "energy" in out.best_rationale.lower()
@@ -251,16 +263,21 @@ def test_objective_is_passed_through_to_prompt_with_llm() -> None:
         def generate(self, request: GenerationRequest) -> GenerationResponse:
             captured["prompt"] = request.prompt_template
             import json as _json
+
             return GenerationResponse(
-                raw_text=_json.dumps({
-                    "per_target": {"cuda-a100": {"granularity": "normal", "rationale": "x"}},
-                    "best_target": "cuda-a100", "best_rationale": "y",
-                }),
-                parsed_artifacts=[], model_id="cap",
+                raw_text=_json.dumps(
+                    {
+                        "per_target": {"cuda-a100": {"granularity": "normal", "rationale": "x"}},
+                        "best_target": "cuda-a100",
+                        "best_rationale": "y",
+                    }
+                ),
+                parsed_artifacts=[],
+                model_id="cap",
             )
+
         def generate_structured(self, *a, **kw):
             return self.generate(*a, **kw)
 
-    decide_dispatch(region, envelopes=[env],
-                    objective=Objective.ENERGY, llm=_CapturingLLM())
+    decide_dispatch(region, envelopes=[env], objective=Objective.ENERGY, llm=_CapturingLLM())
     assert "energy" in captured["prompt"].lower()

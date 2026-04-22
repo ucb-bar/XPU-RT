@@ -29,11 +29,8 @@ autocomp-escalation decisions live; glue ops are 1% of wall-time.
 
 from __future__ import annotations
 
-import dataclasses
-import time
-from collections import defaultdict
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 import torch
@@ -41,13 +38,10 @@ import torch.nn.functional as F
 
 from compgen.bench.flash_attention_kernel import flash_attention_fp16
 from compgen.bench.turing_kernels import (
-    bmm_fp16,
     matmul_fp16_v3,
     rmsnorm_fp16,
     silu_fp16,
-    softmax_fp32_last_dim,
 )
-
 
 # ---------------------------------------------------------------------------
 # Per-kernel timing accumulator
@@ -100,27 +94,11 @@ class NoOpProfiler:
     def time(self, _name: str, fn: Callable[[], Any]) -> Any:
         return fn()
 
-    def snapshot(self) -> list:
+    def snapshot(self) -> list[KernelTime]:
         return []
 
     def render(self) -> str:
         return "(no-op profiler — no measurements)"
-
-    def snapshot(self) -> list[KernelTime]:
-        return [b for b in self._bins.values() if b.calls > 0]
-
-    def render(self) -> str:
-        rows = sorted(self.snapshot(), key=lambda r: -r.total_us)
-        total = sum(r.total_us for r in rows)
-        lines = [f"{'op':22s} {'calls':>6s} {'total_us':>12s} {'avg_us':>10s} {'% of total':>10s}"]
-        for r in rows:
-            pct = 100.0 * r.total_us / total if total else 0.0
-            lines.append(
-                f"{r.name:22s} {r.calls:>6d} {r.total_us:>12.1f} "
-                f"{r.avg_us:>10.2f} {pct:>9.1f}%"
-            )
-        lines.append(f"\nTOTAL: {total:.1f} μs ({total/1000:.2f} ms)")
-        return "\n".join(lines)
 
 
 # ---------------------------------------------------------------------------
@@ -128,7 +106,9 @@ class NoOpProfiler:
 # ---------------------------------------------------------------------------
 
 
-def make_rope_tables(seq_len: int, head_dim: int, base: float, device: str, dtype: torch.dtype) -> tuple[torch.Tensor, torch.Tensor]:
+def make_rope_tables(
+    seq_len: int, head_dim: int, base: float, device: str, dtype: torch.dtype
+) -> tuple[torch.Tensor, torch.Tensor]:
     """Standard HF Llama RoPE cos/sin, half-rotate form."""
     inv_freq = 1.0 / (base ** (torch.arange(0, head_dim, 2, device=device, dtype=torch.float32) / head_dim))
     t = torch.arange(seq_len, device=device, dtype=torch.float32)
@@ -141,7 +121,7 @@ def apply_rope(x: torch.Tensor, cos: torch.Tensor, sin: torch.Tensor) -> torch.T
     """x: (B, S, H, D). cos/sin: (S, D)."""
     # HF's rotate-half: split last dim in two halves, negate the second.
     d = x.shape[-1]
-    x1, x2 = x[..., :d // 2], x[..., d // 2:]
+    x1, x2 = x[..., : d // 2], x[..., d // 2 :]
     rot = torch.cat((-x2, x1), dim=-1)
     return x * cos[None, :, None, :] + rot * sin[None, :, None, :]
 
@@ -155,22 +135,22 @@ def apply_rope(x: torch.Tensor, cos: torch.Tensor, sin: torch.Tensor) -> torch.T
 class LayerWeights:
     """Flat struct of one TinyLlama decoder layer's weights (fp16 tensors)."""
 
-    input_layernorm: torch.Tensor   # (D,)
-    q_proj: torch.Tensor            # (D, D)   — linear weight as (out, in)
-    k_proj: torch.Tensor            # (D_kv, D)
-    v_proj: torch.Tensor            # (D_kv, D)
-    o_proj: torch.Tensor            # (D, D)
+    input_layernorm: torch.Tensor  # (D,)
+    q_proj: torch.Tensor  # (D, D)   — linear weight as (out, in)
+    k_proj: torch.Tensor  # (D_kv, D)
+    v_proj: torch.Tensor  # (D_kv, D)
+    o_proj: torch.Tensor  # (D, D)
     post_attention_layernorm: torch.Tensor
-    gate_proj: torch.Tensor         # (I, D)
-    up_proj: torch.Tensor           # (I, D)
-    down_proj: torch.Tensor         # (D, I)
+    gate_proj: torch.Tensor  # (I, D)
+    up_proj: torch.Tensor  # (I, D)
+    down_proj: torch.Tensor  # (D, I)
 
 
 @dataclass
 class ModelConfig:
     hidden_size: int
     num_heads: int
-    num_kv_heads: int       # TinyLlama uses GQA (32/4)
+    num_kv_heads: int  # TinyLlama uses GQA (32/4)
     head_dim: int
     intermediate_size: int
     rms_eps: float
@@ -178,11 +158,12 @@ class ModelConfig:
 
 
 def decoder_layer_forward(
-    x: torch.Tensor,           # (B, S, D) fp16
+    x: torch.Tensor,  # (B, S, D) fp16
     w: LayerWeights,
     cfg: ModelConfig,
-    cos: torch.Tensor, sin: torch.Tensor,   # (S, D_h)
-    attention_mask: torch.Tensor,            # (B, 1, S, S) or None
+    cos: torch.Tensor,
+    sin: torch.Tensor,  # (S, D_h)
+    attention_mask: torch.Tensor,  # (B, 1, S, S) or None
     prof: KernelProfiler,
 ) -> torch.Tensor:
     B, S, D = x.shape
@@ -191,13 +172,21 @@ def decoder_layer_forward(
 
     # ---- Self-attention block ----
     residual = x
-    x_norm = prof.time("rmsnorm", lambda: rmsnorm_fp16(x.reshape(-1, D), w.input_layernorm, cfg.rms_eps).reshape(B, S, D))
+    x_norm = prof.time(
+        "rmsnorm", lambda: rmsnorm_fp16(x.reshape(-1, D), w.input_layernorm, cfg.rms_eps).reshape(B, S, D)
+    )
 
     # Q/K/V linears: torch.Linear applies weight.T, i.e. (in) @ (out,in).T.
     # Our matmul takes (M,K) @ (K,N), so we pass weight.T as rhs.
-    q = prof.time("matmul_linear", lambda: matmul_fp16_v3(x_norm.reshape(-1, D), w.q_proj.T.contiguous())).reshape(B, S, H,   D_h)
-    k = prof.time("matmul_linear", lambda: matmul_fp16_v3(x_norm.reshape(-1, D), w.k_proj.T.contiguous())).reshape(B, S, H_kv, D_h)
-    v = prof.time("matmul_linear", lambda: matmul_fp16_v3(x_norm.reshape(-1, D), w.v_proj.T.contiguous())).reshape(B, S, H_kv, D_h)
+    q = prof.time("matmul_linear", lambda: matmul_fp16_v3(x_norm.reshape(-1, D), w.q_proj.T.contiguous())).reshape(
+        B, S, H, D_h
+    )
+    k = prof.time("matmul_linear", lambda: matmul_fp16_v3(x_norm.reshape(-1, D), w.k_proj.T.contiguous())).reshape(
+        B, S, H_kv, D_h
+    )
+    v = prof.time("matmul_linear", lambda: matmul_fp16_v3(x_norm.reshape(-1, D), w.v_proj.T.contiguous())).reshape(
+        B, S, H_kv, D_h
+    )
 
     q = prof.time("rope_apply", lambda: apply_rope(q, cos, sin))
     k = prof.time("rope_apply", lambda: apply_rope(k, cos, sin))
@@ -215,7 +204,7 @@ def decoder_layer_forward(
 
     # FlashAttention MEGA — fused QKᵀ→softmax→·V in one kernel, online softmax.
     # Replaces the bmm + softmax + bmm trio. The (S,S) scores never hit DRAM.
-    scale = 1.0 / (D_h ** 0.5)
+    scale = 1.0 / (D_h**0.5)
     BH = B * H
     q2 = q.reshape(BH, S, D_h).contiguous()
     k2 = k.reshape(BH, S, D_h).contiguous()
@@ -226,12 +215,16 @@ def decoder_layer_forward(
     ).reshape(B, H, S, D_h)
     attn_out = prof.time("transpose_reshape", lambda: attn_out.transpose(1, 2).contiguous().reshape(B, S, D))
 
-    attn_proj = prof.time("matmul_linear", lambda: matmul_fp16_v3(attn_out.reshape(-1, D), w.o_proj.T.contiguous())).reshape(B, S, D)
+    attn_proj = prof.time(
+        "matmul_linear", lambda: matmul_fp16_v3(attn_out.reshape(-1, D), w.o_proj.T.contiguous())
+    ).reshape(B, S, D)
     x = prof.time("residual_add", lambda: residual + attn_proj)
 
     # ---- MLP block ----
     residual = x
-    x_norm = prof.time("rmsnorm", lambda: rmsnorm_fp16(x.reshape(-1, D), w.post_attention_layernorm, cfg.rms_eps).reshape(B, S, D))
+    x_norm = prof.time(
+        "rmsnorm", lambda: rmsnorm_fp16(x.reshape(-1, D), w.post_attention_layernorm, cfg.rms_eps).reshape(B, S, D)
+    )
 
     gate = prof.time("matmul_linear", lambda: matmul_fp16_v3(x_norm.reshape(-1, D), w.gate_proj.T.contiguous()))
     up = prof.time("matmul_linear", lambda: matmul_fp16_v3(x_norm.reshape(-1, D), w.up_proj.T.contiguous()))
@@ -250,15 +243,15 @@ def decoder_layer_forward(
 
 @dataclass
 class TinyLlamaWeights:
-    embed: torch.Tensor                     # (V, D)
+    embed: torch.Tensor  # (V, D)
     layers: list[LayerWeights]
-    final_norm: torch.Tensor                # (D,)
-    lm_head: torch.Tensor                   # (V, D)   (Llama ties weights to embed by default)
+    final_norm: torch.Tensor  # (D,)
+    lm_head: torch.Tensor  # (V, D)   (Llama ties weights to embed by default)
     cfg: ModelConfig
 
 
 def tinyllama_forward(
-    input_ids: torch.Tensor,           # (B, S) long
+    input_ids: torch.Tensor,  # (B, S) long
     weights: TinyLlamaWeights,
     prof: KernelProfiler | NoOpProfiler | None = None,
 ) -> torch.Tensor:
@@ -295,7 +288,9 @@ def tinyllama_forward(
 
     # Final RMS + LM head
     x = prof.time("rmsnorm", lambda: rmsnorm_fp16(x.reshape(-1, D), weights.final_norm, cfg.rms_eps).reshape(B, S, D))
-    logits = prof.time("matmul_linear", lambda: matmul_fp16_v3(x.reshape(-1, D), weights.lm_head.T.contiguous())).reshape(B, S, -1)
+    logits = prof.time(
+        "matmul_linear", lambda: matmul_fp16_v3(x.reshape(-1, D), weights.lm_head.T.contiguous())
+    ).reshape(B, S, -1)
 
     return logits
 
@@ -327,34 +322,48 @@ def load_tinyllama_weights(hf_state_dict: dict, cfg: ModelConfig, device: str = 
 
     num_layers = 0
     while True:
-        if f"layers.{num_layers}.input_layernorm.weight" in d or f"model.layers.{num_layers}.input_layernorm.weight" in d:
+        if (
+            f"layers.{num_layers}.input_layernorm.weight" in d
+            or f"model.layers.{num_layers}.input_layernorm.weight" in d
+        ):
             num_layers += 1
         else:
             break
 
     layers = []
     for i in range(num_layers):
-        layers.append(LayerWeights(
-            input_layernorm=pick(f"layers.{i}.input_layernorm.weight"),
-            q_proj=pick(f"layers.{i}.self_attn.q_proj.weight"),
-            k_proj=pick(f"layers.{i}.self_attn.k_proj.weight"),
-            v_proj=pick(f"layers.{i}.self_attn.v_proj.weight"),
-            o_proj=pick(f"layers.{i}.self_attn.o_proj.weight"),
-            post_attention_layernorm=pick(f"layers.{i}.post_attention_layernorm.weight"),
-            gate_proj=pick(f"layers.{i}.mlp.gate_proj.weight"),
-            up_proj=pick(f"layers.{i}.mlp.up_proj.weight"),
-            down_proj=pick(f"layers.{i}.mlp.down_proj.weight"),
-        ))
+        layers.append(
+            LayerWeights(
+                input_layernorm=pick(f"layers.{i}.input_layernorm.weight"),
+                q_proj=pick(f"layers.{i}.self_attn.q_proj.weight"),
+                k_proj=pick(f"layers.{i}.self_attn.k_proj.weight"),
+                v_proj=pick(f"layers.{i}.self_attn.v_proj.weight"),
+                o_proj=pick(f"layers.{i}.self_attn.o_proj.weight"),
+                post_attention_layernorm=pick(f"layers.{i}.post_attention_layernorm.weight"),
+                gate_proj=pick(f"layers.{i}.mlp.gate_proj.weight"),
+                up_proj=pick(f"layers.{i}.mlp.up_proj.weight"),
+                down_proj=pick(f"layers.{i}.mlp.down_proj.weight"),
+            )
+        )
 
     return TinyLlamaWeights(
-        embed=embed, layers=layers, final_norm=final_norm,
-        lm_head=lm_head, cfg=cfg,
+        embed=embed,
+        layers=layers,
+        final_norm=final_norm,
+        lm_head=lm_head,
+        cfg=cfg,
     )
 
 
 __all__ = [
-    "KernelProfiler", "KernelTime",
-    "LayerWeights", "ModelConfig", "TinyLlamaWeights",
-    "apply_rope", "decoder_layer_forward",
-    "load_tinyllama_weights", "make_rope_tables", "tinyllama_forward",
+    "KernelProfiler",
+    "KernelTime",
+    "LayerWeights",
+    "ModelConfig",
+    "TinyLlamaWeights",
+    "apply_rope",
+    "decoder_layer_forward",
+    "load_tinyllama_weights",
+    "make_rope_tables",
+    "tinyllama_forward",
 ]

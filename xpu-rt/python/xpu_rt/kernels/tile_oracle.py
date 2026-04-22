@@ -62,22 +62,22 @@ class TileRecommendation:
 # Returns the BLOCK_M, BLOCK_N, BLOCK_K, num_warps, num_stages tuple.
 _RULES: dict[tuple[str, str], tuple[int, int, int, int, int]] = {
     # Turing (sm_75) — small SMEM, no async copy
-    ("matmul", "turing"):       (64, 64, 32, 4, 2),
+    ("matmul", "turing"): (64, 64, 32, 4, 2),
     ("batch_matmul", "turing"): (64, 64, 32, 4, 2),
-    ("softmax", "turing"):      (1, 1024, 0, 4, 1),         # row-per-CTA
-    ("rmsnorm", "turing"):      (1, 1024, 0, 4, 1),
-    ("silu", "turing"):         (1, 1024, 0, 4, 1),
+    ("softmax", "turing"): (1, 1024, 0, 4, 1),  # row-per-CTA
+    ("rmsnorm", "turing"): (1, 1024, 0, 4, 1),
+    ("silu", "turing"): (1, 1024, 0, 4, 1),
     # Ampere (sm_80) — bigger tiles + async copy
-    ("matmul", "ampere"):       (128, 128, 32, 8, 3),
+    ("matmul", "ampere"): (128, 128, 32, 8, 3),
     ("batch_matmul", "ampere"): (64, 64, 32, 4, 3),
-    ("softmax", "ampere"):      (1, 2048, 0, 8, 2),
-    ("rmsnorm", "ampere"):      (1, 2048, 0, 8, 2),
+    ("softmax", "ampere"): (1, 2048, 0, 8, 2),
+    ("rmsnorm", "ampere"): (1, 2048, 0, 8, 2),
     # Hopper (sm_90)
-    ("matmul", "hopper"):       (128, 256, 64, 8, 4),
+    ("matmul", "hopper"): (128, 256, 64, 8, 4),
     # Hexagon NPU
-    ("matmul", "hexagon"):      (32, 32, 32, 1, 1),
+    ("matmul", "hexagon"): (32, 32, 32, 1, 1),
     # CPU (no tensor cores; cache-line-aligned tiles)
-    ("matmul", "cpu"):          (32, 32, 64, 1, 1),
+    ("matmul", "cpu"): (32, 32, 64, 1, 1),
 }
 
 
@@ -148,15 +148,13 @@ def recommend_tile(
         # Fall back to a conservative default: small tile, single warp
         rule = (32, 32, 32, 1, 1)
         rationale = (
-            f"No rule for ({op_family!r}, {arch!r}); using conservative "
-            "32×32×32 first pass — autotune will correct."
+            f"No rule for ({op_family!r}, {arch!r}); using conservative 32×32×32 first pass — autotune will correct."
         )
         confidence = 0.2
     else:
         bm, bn, bk, nw, ns = rule
         rationale_parts = [
-            f"({op_family}, {arch}) → BLOCK_M={bm} BLOCK_N={bn} BLOCK_K={bk} "
-            f"num_warps={nw} num_stages={ns}"
+            f"({op_family}, {arch}) → BLOCK_M={bm} BLOCK_N={bn} BLOCK_K={bk} num_warps={nw} num_stages={ns}"
         ]
         # MMA-aware adjustment: if envelope declares an MMA shape for this
         # dtype, prefer BLOCK_K to be a multiple of the MMA K-dim.
@@ -165,9 +163,7 @@ def recommend_tile(
             mma_k = mma[2]
             if bk % mma_k != 0:
                 bk = ((bk + mma_k - 1) // mma_k) * mma_k
-                rationale_parts.append(
-                    f"BLOCK_K bumped to {bk} to align with MMA K={mma_k}"
-                )
+                rationale_parts.append(f"BLOCK_K bumped to {bk} to align with MMA K={mma_k}")
                 rule = (bm, bn, bk, nw, ns)
         rationale = "; ".join(rationale_parts)
         confidence = 0.6
@@ -190,7 +186,7 @@ def recommend_tile(
         block_k=bk if op_family in ("matmul", "batch_matmul") else None,
         num_warps=nw,
         num_stages=ns,
-        group_m=8,                 # safe default; overridable per call
+        group_m=8,  # safe default; overridable per call
         rationale=rationale,
         confidence=confidence,
         knowledge_brief=brief,

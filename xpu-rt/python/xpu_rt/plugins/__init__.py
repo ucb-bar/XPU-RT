@@ -38,11 +38,11 @@ log = logging.getLogger(__name__)
 
 
 # Entry-point group names — keep in sync with the docstring above.
-GROUP_KERNEL_PROVIDERS   = "compgen.kernels.providers"
-GROUP_DECOMPOSITIONS     = "compgen.transforms.decompositions"
-GROUP_FUSION_RULES       = "compgen.kernels.fusion_rules"
-GROUP_TARGET_BACKENDS    = "compgen.targets.backends"
-GROUP_KERNEL_CONTRACTS   = "compgen.kernels.contracts"
+GROUP_KERNEL_PROVIDERS = "compgen.kernels.providers"
+GROUP_DECOMPOSITIONS = "compgen.transforms.decompositions"
+GROUP_FUSION_RULES = "compgen.kernels.fusion_rules"
+GROUP_TARGET_BACKENDS = "compgen.targets.backends"
+GROUP_KERNEL_CONTRACTS = "compgen.kernels.contracts"
 
 
 KNOWN_GROUPS = (
@@ -83,8 +83,7 @@ def _validate_fusion_rule(obj: Any) -> tuple[bool, str]:
 
 
 def _validate_target_backend(obj: Any) -> tuple[bool, str]:
-    required = ("supports_target", "get_options", "get_compilation_stages",
-                "compile_stage", "validate")
+    required = ("supports_target", "get_options", "get_compilation_stages", "compile_stage", "validate")
     missing = [m for m in required if not hasattr(obj, m)]
     if missing:
         return (False, f"missing TargetBackend methods: {missing}")
@@ -98,11 +97,11 @@ def _validate_kernel_contract_factory(obj: Any) -> tuple[bool, str]:
 
 
 _VALIDATORS: dict[str, Callable[[Any], tuple[bool, str]]] = {
-    GROUP_KERNEL_PROVIDERS:  _validate_kernel_provider,
-    GROUP_DECOMPOSITIONS:    _validate_decomposition,
-    GROUP_FUSION_RULES:      _validate_fusion_rule,
-    GROUP_TARGET_BACKENDS:   _validate_target_backend,
-    GROUP_KERNEL_CONTRACTS:  _validate_kernel_contract_factory,
+    GROUP_KERNEL_PROVIDERS: _validate_kernel_provider,
+    GROUP_DECOMPOSITIONS: _validate_decomposition,
+    GROUP_FUSION_RULES: _validate_fusion_rule,
+    GROUP_TARGET_BACKENDS: _validate_target_backend,
+    GROUP_KERNEL_CONTRACTS: _validate_kernel_contract_factory,
 }
 
 
@@ -114,9 +113,9 @@ _VALIDATORS: dict[str, Callable[[Any], tuple[bool, str]]] = {
 @dataclass
 class LoadedPlugin:
     group: str
-    name: str                # entry-point name (user-chosen)
-    object: Any              # the loaded callable / class / instance
-    distribution: str = ""   # package that supplied it
+    name: str  # entry-point name (user-chosen)
+    object: Any  # the loaded callable / class / instance
+    distribution: str = ""  # package that supplied it
     notes: str = ""
 
 
@@ -164,11 +163,16 @@ def reset_registry() -> None:
 def _try_load(ep: EntryPoint, group: str) -> LoadedPlugin | None:
     try:
         obj = ep.load()
-    except Exception as exc:           # noqa: BLE001
+    except Exception as exc:  # noqa: BLE001
         _REGISTRY.failures.append((group, ep.name, f"load: {type(exc).__name__}: {exc}"))
-        log.warning("extension.load_failed", extra={
-            "group": group, "name": ep.name, "error": str(exc),
-        })
+        log.warning(
+            "extension.load_failed",
+            extra={
+                "group": group,
+                "name": ep.name,
+                "error": str(exc),
+            },
+        )
         return None
 
     validator = _VALIDATORS.get(group)
@@ -176,14 +180,19 @@ def _try_load(ep: EntryPoint, group: str) -> LoadedPlugin | None:
         ok, reason = validator(obj)
         if not ok:
             _REGISTRY.failures.append((group, ep.name, f"validate: {reason}"))
-            log.warning("extension.validate_failed", extra={
-                "group": group, "name": ep.name, "reason": reason,
-            })
+            log.warning(
+                "extension.validate_failed",
+                extra={
+                    "group": group,
+                    "name": ep.name,
+                    "reason": reason,
+                },
+            )
             return None
 
     dist = ""
     try:
-        dist = ep.dist.name if ep.dist is not None else ""    # type: ignore[union-attr]
+        dist = ep.dist.name if ep.dist is not None else ""  # type: ignore[union-attr]
     except Exception:
         pass
 
@@ -312,10 +321,7 @@ def discover_everything() -> DiscoveryReport:
         report.user_space_root = str(result.root)
         report.user_space_tools = list(result.tool_names())
         report.user_space_slots = list(result.slot_names())
-        report.user_space_errors = [
-            (str(e.path), e.error or "unknown")
-            for e in result.errors()
-        ]
+        report.user_space_errors = [(str(e.path), e.error or "unknown") for e in result.errors()]
     except Exception as exc:  # noqa: BLE001
         log.warning("plugins.user_space.error", extra={"error": str(exc)})
 

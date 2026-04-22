@@ -73,11 +73,7 @@ def v3_to_v1_contract(
     # Use the FIRST input's layout as the v1 "layout" (v1 only carries
     # one). The kernel_facing view inside constraints carries the full
     # per-operand layout info for v3-aware providers.
-    layout_v1 = (
-        _v3_layout_to_v1(v3.io.inputs[0].layout)
-        if v3.io.inputs
-        else "row_major"
-    )
+    layout_v1 = _v3_layout_to_v1(v3.io.inputs[0].layout) if v3.io.inputs else "row_major"
 
     # Target / hardware identity from the execution envelope (v3) or
     # selection metadata (v3 fallback).

@@ -52,7 +52,7 @@ from compgen.kernels.contract_v3_references import (
     reference_softmax_contract,
 )
 from compgen.kernels.envelope_bridge import envelope_from_target_profile
-from compgen.kernels.fusion_oracle import FusionDecision, should_fuse
+from compgen.kernels.fusion_oracle import should_fuse
 from compgen.kernels.granularity_oracle import recommend_granularity
 from compgen.kernels.tile_oracle import TileRecommendation, recommend_tile
 from compgen.targets.schema import TargetProfile
@@ -383,9 +383,7 @@ class GraphDigester:
     ) -> None:
         self.analysis = analysis
         self.module = module
-        self.target_name = target_name or (
-            analysis.dossier.model_name if analysis.dossier is not None else ""
-        )
+        self.target_name = target_name or (analysis.dossier.model_name if analysis.dossier is not None else "")
 
     def digest(self) -> GraphDigest:
         dossier: GraphAnalysisDossier | None = self.analysis.dossier
@@ -451,11 +449,7 @@ class GraphDigester:
             critical_path = tuple(dossier.critical_path)
             region_index = tuple(r.region_id for r in dossier.regions)
 
-        fusion_opps = sum(
-            1
-            for opp in self.analysis.optimization_opportunities
-            if "fus" in opp.lower()
-        )
+        fusion_opps = sum(1 for opp in self.analysis.optimization_opportunities if "fus" in opp.lower())
 
         # Fallback: if the FX-level analyzer returned zero FLOPs (happens
         # on some captures where shape meta is missing), walk the IR and
@@ -557,8 +551,7 @@ class ChunkExtractor:
 
         ops_payload = tuple({"name": n} for n in cluster.node_names)
         edges_payload = tuple(
-            {"src": a, "dst": b, "operand_idx": 0}
-            for a, b in zip(cluster.node_names, cluster.node_names[1:])
+            {"src": a, "dst": b, "operand_idx": 0} for a, b in zip(cluster.node_names, cluster.node_names[1:])
         )
         symbolic_shapes = tuple(tuple(None for _ in s) for s in cluster.input_shapes.values())
         concrete_shapes: tuple[tuple[int, ...], ...] = ()
@@ -923,10 +916,7 @@ class ChunkExtractor:
         for opp in self.analysis.optimization_opportunities:
             if cluster.cluster_id in opp or cluster.pattern_type in opp:
                 heuristic_hints.append(opp)
-        fusion_boundaries = tuple(
-            f"{a}→{b}"
-            for a, b in zip(cluster.node_names, cluster.node_names[1:])
-        )
+        fusion_boundaries = tuple(f"{a}→{b}" for a, b in zip(cluster.node_names, cluster.node_names[1:]))
         return DoFDescription(
             axes=tuple(axes[:8]),
             memory_tiers=tuple(t.value for t in MemoryTier),
@@ -954,7 +944,6 @@ def _contract_for_pattern(pattern: str, *, envelope: HardwareEnvelope) -> Kernel
 
     from compgen.kernels.contract_v3 import (
         ExecutionEnvelope,
-        OrchestrationSpec,
     )
 
     pat = pattern.lower()

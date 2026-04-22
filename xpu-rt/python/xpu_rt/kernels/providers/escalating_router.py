@@ -23,9 +23,8 @@ contract-cost analysis in ``docs/architecture/kernel_contracts.md``.
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any
 
 from compgen.kernels.provider import (
     KernelContract,
@@ -36,10 +35,10 @@ from compgen.kernels.provider import (
 
 
 class EscalationReason(Enum):
-    NONE = "none"                   # accepted on first try
-    NOT_FOUND = "not_found"          # provider returned found=False
-    CORRECTNESS = "correctness"      # gate rejected as wrong
-    PERFORMANCE = "performance"      # exceeded perf_target_us × slack
+    NONE = "none"  # accepted on first try
+    NOT_FOUND = "not_found"  # provider returned found=False
+    CORRECTNESS = "correctness"  # gate rejected as wrong
+    PERFORMANCE = "performance"  # exceeded perf_target_us × slack
     PROVIDER_ERROR = "provider_error"  # provider raised
 
 
@@ -136,8 +135,7 @@ class EscalatingProviderRouter:
                 last_reason = EscalationReason.CORRECTNESS
                 # Tag the gate reason on the result for the next tier.
                 last_result = ProviderResult(
-                    **{**result.__dict__,
-                       "metadata": {**result.metadata, "gate_reason": gate_reason}},
+                    **{**result.__dict__, "metadata": {**result.metadata, "gate_reason": gate_reason}},
                 )
                 continue
 

@@ -33,7 +33,7 @@ from compgen.trace.events import Phase, TraceEvent, utc_now_iso
 
 log = structlog.get_logger()
 
-_active_bus: ContextVar["TraceBus | None"] = ContextVar("compgen_trace_bus", default=None)
+_active_bus: ContextVar[TraceBus | None] = ContextVar("compgen_trace_bus", default=None)
 _parent_stack: ContextVar[tuple[str, ...]] = ContextVar("compgen_trace_parent_stack", default=())
 
 # Process-wide fallback so a bus installed in one task survives when a
@@ -41,7 +41,7 @@ _parent_stack: ContextVar[tuple[str, ...]] = ContextVar("compgen_trace_parent_st
 # a new anyio task). ``ContextVar`` is still primary — it gives correct
 # per-task parent-stack isolation — but if the ContextVar is unset we
 # fall through to the last bus ``install_bus`` created in this process.
-_PROCESS_BUS: "TraceBus | None" = None
+_PROCESS_BUS: TraceBus | None = None
 
 # The event_id of the most recent ``llm_response`` event in this context.
 # :class:`DecisionPublisher` reads this so every ``decision`` event has a

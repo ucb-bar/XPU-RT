@@ -118,9 +118,7 @@ def scan_repo(repo_path: str | Path) -> ScanResult:
     td_ops = _parse_td_ops(root, td_files)
     python_bindings = _collect_by_glob(root, ["**/python/**/*.py", "**/bindings/**/*.py"])
     cli_tools = _collect_cli_tools(root)
-    test_examples = _collect_by_glob(
-        root, ["test/**/*.py", "tests/**/*.py", "test/**/*.mlir", "tests/**/*.mlir"]
-    )
+    test_examples = _collect_by_glob(root, ["test/**/*.py", "tests/**/*.py", "test/**/*.mlir", "tests/**/*.mlir"])
     tutorial_docs = _collect_by_glob(root, ["docs/**/*.md", "tutorials/**/*.md"])
     dialect_names = _extract_dialect_names(root, td_files, td_ops)
 

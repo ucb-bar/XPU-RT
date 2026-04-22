@@ -10,8 +10,6 @@ Locks in:
 
 from __future__ import annotations
 
-import pytest
-
 from compgen.analysis.dim_semantics import (
     DimRole,
     analyze_op,
@@ -24,6 +22,7 @@ from compgen.analysis.dim_semantics import (
 class _FakeType:
     def __init__(self, shape: tuple[int, ...]) -> None:
         self._shape = shape
+
     def get_shape(self) -> tuple[int, ...]:
         return self._shape
 
@@ -39,8 +38,11 @@ class _FakeOp:
         self.results = [_FakeResult(shape)]
         self.attributes: dict = {}
         if hint is not None:
+
             class _H:
-                def __init__(self, d): self.data = d
+                def __init__(self, d):
+                    self.data = d
+
             self.attributes["compgen._pattern_hint"] = _H(hint)
 
 
@@ -87,7 +89,7 @@ def test_pointwise_ops_are_all_parallel() -> None:
 
 def test_annotate_dim_roles_round_trips_through_ir_attrs() -> None:
     """Writing + reading-back via the compgen.dim_role attr."""
-    from xdsl.dialects.builtin import ArrayAttr, Float32Type, ModuleOp, StringAttr, TensorType
+    from xdsl.dialects.builtin import Float32Type, ModuleOp, TensorType
     from xdsl.dialects.func import FuncOp, ReturnOp
     from xdsl.dialects.linalg import MatmulOp
     from xdsl.dialects.tensor import EmptyOp
@@ -113,7 +115,7 @@ def test_annotate_dim_roles_round_trips_through_ir_attrs() -> None:
     module = ModuleOp([func])
 
     n = annotate_dim_roles(module)
-    assert n >= 1   # matmul (and tensor.empty if it counts) annotated
+    assert n >= 1  # matmul (and tensor.empty if it counts) annotated
 
     roles = dim_roles_for_op(mm)
     assert roles == (DimRole.PARALLEL, DimRole.PARALLEL)

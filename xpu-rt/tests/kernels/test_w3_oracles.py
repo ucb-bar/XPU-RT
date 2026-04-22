@@ -16,7 +16,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from compgen.kernels.compute_dag import (
     ComputeDAG,
     ComputeNode,
@@ -25,9 +24,6 @@ from compgen.kernels.compute_dag import (
     to_prompt_text,
 )
 from compgen.kernels.contract_v3 import (
-    AliasPair,
-    DispatchSpec,
-    EventDecl,
     ExecutionEnvelope,
     FusionPolicy,
     Granularity,
@@ -35,14 +31,11 @@ from compgen.kernels.contract_v3 import (
     IOContract,
     KernelArchetype,
     KernelContractV3,
-    LayoutKind,
     MemorySpec,
     MemoryTier,
-    NumericsSpec,
     OrchestrationSpec,
     ShapeClass,
     StaticAttr,
-    SyncSpec,
     TensorIO,
 )
 from compgen.kernels.fusion_oracle import (
@@ -52,7 +45,6 @@ from compgen.kernels.fusion_oracle import (
 from compgen.kernels.granularity_oracle import recommend_granularity
 from compgen.memory.knowledge import KnowledgeStore, set_shared_store
 from compgen.memory.seed_lessons import install as install_seed
-
 
 # ---------------------------------------------------------------------------
 # Fixtures + helpers
@@ -80,8 +72,10 @@ def _ampere_envelope(scratchpad_bytes: int = 164_000) -> HardwareEnvelope:
 
 
 def _matmul_contract(
-    *, output_tier: MemoryTier = MemoryTier.SCRATCHPAD,
-    is_boundary: bool = True, fusable_with: tuple = (),
+    *,
+    output_tier: MemoryTier = MemoryTier.SCRATCHPAD,
+    is_boundary: bool = True,
+    fusable_with: tuple = (),
     envelope: HardwareEnvelope | None = None,
 ) -> KernelContractV3:
     env = envelope or _ampere_envelope()
@@ -159,14 +153,17 @@ def test_compute_dag_empty_region_is_classified_empty() -> None:
 
 
 def test_compute_dag_single_node_is_classified_single_op() -> None:
-    dag = ComputeDAG(nodes=[
-        ComputeNode(id="n_0", kind=NodeKind.COMPUTE, op_name="linalg.matmul"),
-    ])
+    dag = ComputeDAG(
+        nodes=[
+            ComputeNode(id="n_0", kind=NodeKind.COMPUTE, op_name="linalg.matmul"),
+        ]
+    )
     assert dag.shape_summary() == "single_op"
 
 
 def test_compute_dag_chain_classified_linear() -> None:
     from compgen.kernels.compute_dag import ComputeEdge
+
     dag = ComputeDAG(
         nodes=[
             ComputeNode(id="n_0", kind=NodeKind.COMPUTE, op_name="linalg.matmul"),
@@ -183,13 +180,20 @@ def test_compute_dag_chain_classified_linear() -> None:
 
 def test_to_prompt_text_includes_nodes_and_edges() -> None:
     from compgen.kernels.compute_dag import ComputeEdge
+
     dag = ComputeDAG(
         nodes=[
-            ComputeNode(id="n_0", kind=NodeKind.COMPUTE, op_name="linalg.matmul",
-                        output_shape=(128, 128), output_dtype="bf16",
-                        dim_roles=("parallel", "parallel")),
-            ComputeNode(id="n_1", kind=NodeKind.POINTWISE, op_name="silu",
-                        output_shape=(128, 128), output_dtype="bf16"),
+            ComputeNode(
+                id="n_0",
+                kind=NodeKind.COMPUTE,
+                op_name="linalg.matmul",
+                output_shape=(128, 128),
+                output_dtype="bf16",
+                dim_roles=("parallel", "parallel"),
+            ),
+            ComputeNode(
+                id="n_1", kind=NodeKind.POINTWISE, op_name="silu", output_shape=(128, 128), output_dtype="bf16"
+            ),
         ],
         edges=[ComputeEdge(src="n_0", dst="n_1")],
     )
@@ -274,8 +278,7 @@ def test_fusion_blocked_when_consumer_archetype_not_fusable() -> None:
 def test_fusion_blocked_when_combined_smem_overflows() -> None:
     """Tiny scratchpad budget + big tensors → overflow."""
     env = _ampere_envelope(scratchpad_bytes=4096)  # tiny SMEM
-    p = _matmul_contract(is_boundary=False, fusable_with=("activation",),
-                         envelope=env)
+    p = _matmul_contract(is_boundary=False, fusable_with=("activation",), envelope=env)
     c = _silu_contract(envelope=env)
     v = should_fuse(p, c)
     assert v.decision is FusionDecision.INELIGIBLE
@@ -330,18 +333,19 @@ def test_granularity_compute_tiled_single_op_returns_normal() -> None:
 def test_granularity_chain_recommends_mega_when_speedup_above_threshold() -> None:
     """matmul → silu → softmax chain should fuse into MEGA on Ampere if
     every pair recommends FUSE and combined speedup ≥ threshold."""
-    p = _matmul_contract(is_boundary=False,
-                         fusable_with=("activation", "pointwise", "reduce"))
+    p = _matmul_contract(is_boundary=False, fusable_with=("activation", "pointwise", "reduce"))
     s = _silu_contract()
     sm = _softmax_contract()
     # Override silu's fusable_with so it accepts reduce neighbour
     s = KernelContractV3(
-        **{**s.__dict__,
-           "orchestration": OrchestrationSpec(
-               execution=s.orchestration.execution,
-               memory=s.orchestration.memory,
-               fusion=FusionPolicy(fusable_with=("reduce", "pointwise")),
-           )}
+        **{
+            **s.__dict__,
+            "orchestration": OrchestrationSpec(
+                execution=s.orchestration.execution,
+                memory=s.orchestration.memory,
+                fusion=FusionPolicy(fusable_with=("reduce", "pointwise")),
+            ),
+        }
     )
     v = recommend_granularity([p, s, sm], _ampere_envelope())
     # On Ampere with huge SMEM budget, this is plausibly MEGA.
@@ -353,9 +357,8 @@ def test_granularity_chain_recommends_mega_when_speedup_above_threshold() -> Non
 
 
 def test_granularity_chain_falls_back_to_normal_when_smem_overflows() -> None:
-    env = _ampere_envelope(scratchpad_bytes=512)   # absurdly small
-    p = _matmul_contract(is_boundary=False, fusable_with=("activation",),
-                         envelope=env)
+    env = _ampere_envelope(scratchpad_bytes=512)  # absurdly small
+    p = _matmul_contract(is_boundary=False, fusable_with=("activation",), envelope=env)
     s = _silu_contract(envelope=env)
     v = recommend_granularity([p, s], env)
     assert v.granularity is Granularity.NORMAL
@@ -369,7 +372,7 @@ def test_granularity_chain_falls_back_when_fusion_oracle_declines() -> None:
     fire first; we want the fusion-boundary refusal to be the cause.
     """
     env = _ampere_envelope(scratchpad_bytes=4 * 1024 * 1024)  # 4 MB plenty
-    p = _matmul_contract(is_boundary=True, envelope=env)   # boundary blocks fusion
+    p = _matmul_contract(is_boundary=True, envelope=env)  # boundary blocks fusion
     s = _silu_contract(envelope=env)
     v = recommend_granularity([p, s], env)
     assert v.granularity is Granularity.NORMAL

@@ -23,29 +23,14 @@ caused 50 silent decomp failures on TinyLlama
 from __future__ import annotations
 
 import pytest
-from xdsl.dialects.builtin import Float32Type, TensorType
-from xdsl.dialects.func import CallOp, FuncOp
-from xdsl.ir import Block, Region, SSAValue
-
 from compgen.ir.payload.decompositions import (
     DECOMPOSITION_TABLE,
     decompose_add_tensor,
-    decompose_arange,
-    decompose_any_dim,
-    decompose_bitwise_and,
-    decompose_compare,
-    decompose_cos,
-    decompose_cumsum,
-    decompose_full,
-    decompose_full_like,
-    decompose_index_tensor,
-    decompose_logical_not,
     decompose_mul_tensor,
-    decompose_scalar_tensor,
-    decompose_sin,
-    decompose_to_copy,
-    decompose_where_self,
 )
+from xdsl.dialects.builtin import Float32Type, TensorType
+from xdsl.dialects.func import CallOp
+from xdsl.ir import Block, SSAValue
 
 
 def _ssa(shape: tuple[int, ...]) -> SSAValue:
@@ -57,9 +42,11 @@ def _ssa(shape: tuple[int, ...]) -> SSAValue:
 def _meta(shape: tuple[int, ...] = (4, 8), *, fx_args: tuple = ()) -> dict:
     class _V:
         pass
+
     v = _V()
     v.shape = shape
     import torch
+
     v.dtype = torch.float32
     return {"val": v, "_fx_args": fx_args, "_fx_kwargs": {}}
 

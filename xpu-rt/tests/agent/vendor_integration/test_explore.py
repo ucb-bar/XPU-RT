@@ -48,9 +48,7 @@ def test_explore_with_mock_llm_prefers_llm_classification() -> None:
         "notes": "cli tools + tutorial show a linalg ingress",
     }
     llm = _LLM([f"Here is my answer:\n{json.dumps(payload)}"])
-    result = explore_vendor_repo(
-        FIXTURE, target="nvidia-h100", workloads=("tinyllama",), llm_client=llm
-    )
+    result = explore_vendor_repo(FIXTURE, target="nvidia-h100", workloads=("tinyllama",), llm_client=llm)
     d = result.descriptor
     assert result.llm_used
     assert d.input_ir == ("linalg",)
@@ -63,9 +61,7 @@ def test_explore_with_mock_llm_prefers_llm_classification() -> None:
 
 def test_explore_ignores_unparseable_llm_response() -> None:
     llm = _LLM(["I am not JSON and never will be"])
-    result = explore_vendor_repo(
-        FIXTURE, target="nvidia-h100", workloads=(), llm_client=llm
-    )
+    result = explore_vendor_repo(FIXTURE, target="nvidia-h100", workloads=(), llm_client=llm)
     assert not result.llm_used  # fell back to deterministic classification
 
 
@@ -90,9 +86,7 @@ def test_propose_adapter_llm_overrides_strategies() -> None:
         "verification_hooks": ["structural", "matmul_diff"],
     }
     llm = _LLM([json.dumps(payload)])
-    proposal = propose_adapter_layout(
-        result.descriptor, workloads=("tinyllama",), llm_client=llm
-    )
+    proposal = propose_adapter_layout(result.descriptor, workloads=("tinyllama",), llm_client=llm)
     assert proposal.llm_used
     by_fam = {r.op_family: r.strategy for r in proposal.rules}
     assert by_fam == {"matmul": "template", "softmax": "llm"}

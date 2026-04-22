@@ -50,7 +50,6 @@ from compgen.stages.templates.tiling import TILE_SIZES_ATTR, TilingStage
 from compgen.targets.capability import CapabilitySpec
 from compgen.targets.schema import TargetProfile
 
-
 # ---------------------------------------------------------------------------
 # ROCm-specific plugins
 # ---------------------------------------------------------------------------

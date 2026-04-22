@@ -104,9 +104,9 @@ class KernelBlasterConfig:
     override env vars.
     """
 
-    mode: str = ""                    # "local" | "docker" | "" (auto)
-    repo_root: Path | None = None     # source checkout for "local" mode
-    image: str = ""                   # docker image for "docker" mode
+    mode: str = ""  # "local" | "docker" | "" (auto)
+    repo_root: Path | None = None  # source checkout for "local" mode
+    image: str = ""  # docker image for "docker" mode
     openai_api_key: str = ""
     model: str = DEFAULT_MODEL
     gpu_type: str = DEFAULT_GPU_TYPE
@@ -145,9 +145,7 @@ class KernelBlasterConfig:
             gpu_type=_pick("COMPGEN_KERNELBLASTER_GPU_TYPE", "GPU_TYPE", default=DEFAULT_GPU_TYPE),
             dataset=_pick("COMPGEN_KERNELBLASTER_DATASET", "DATASET", default=DEFAULT_DATASET),
             precision=_pick("COMPGEN_KERNELBLASTER_PRECISION", "PRECISION", default=DEFAULT_PRECISION),
-            experiment_name=_pick(
-                "COMPGEN_KERNELBLASTER_EXPERIMENT", "EXPERIMENT_NAME", default=DEFAULT_EXPERIMENT
-            ),
+            experiment_name=_pick("COMPGEN_KERNELBLASTER_EXPERIMENT", "EXPERIMENT_NAME", default=DEFAULT_EXPERIMENT),
             rl_experiment_name=_pick(
                 "COMPGEN_KERNELBLASTER_RL_EXPERIMENT", "RL_EXPERIMENT_NAME", default=DEFAULT_RL_EXPERIMENT
             ),
@@ -381,8 +379,10 @@ class KernelBlasterAdapter:
         env = {**os.environ, **kb_env}
 
         script_args = [
-            "--problem-numbers", problem_id,
-            "--subset", level,
+            "--problem-numbers",
+            problem_id,
+            "--subset",
+            level,
         ]
 
         if mode == "local":
@@ -399,17 +399,23 @@ class KernelBlasterAdapter:
 
         if mode == "docker":
             argv = [
-                "docker", "run", "--rm",
-                "--gpus", "all",
-                "-v", f"{workdir}:/workspace",
-                "-w", "/workspace",
+                "docker",
+                "run",
+                "--rm",
+                "--gpus",
+                "all",
+                "-v",
+                f"{workdir}:/workspace",
+                "-w",
+                "/workspace",
             ]
             for key, value in kb_env.items():
                 argv += ["-e", f"{key}={value}"]
             argv += list(self.config.docker_extra_args)
             argv += [
                 self.config.image,
-                "bash", "scripts/run_single_kernelblaster.sh",
+                "bash",
+                "scripts/run_single_kernelblaster.sh",
                 *script_args,
             ]
             return argv, env
@@ -440,9 +446,7 @@ class KernelBlasterAdapter:
                 check=False,
             )
         except subprocess.TimeoutExpired as exc:
-            raise KernelBlasterUnavailable(
-                f"KernelBlaster invocation timed out after {timeout}s"
-            ) from exc
+            raise KernelBlasterUnavailable(f"KernelBlaster invocation timed out after {timeout}s") from exc
         except FileNotFoundError as exc:
             raise KernelBlasterUnavailable(f"cannot invoke KernelBlaster: {exc}") from exc
 
@@ -556,7 +560,11 @@ def _extract_knowledge(
                     metadata={
                         "provider": "kernelblaster",
                         "target": contract.target_name,
-                        **{k: v for k, v in lesson.items() if k not in {"kind", "scope", "scope_key", "content", "summary"}},
+                        **{
+                            k: v
+                            for k, v in lesson.items()
+                            if k not in {"kind", "scope", "scope_key", "content", "summary"}
+                        },
                     },
                     confidence=float(lesson.get("confidence", 0.6)),
                 )
@@ -580,8 +588,7 @@ def _extract_knowledge(
                 scope="operator_family",
                 scope_key=contract.op_family,
                 content=(
-                    f"KernelBlaster optimised {contract.op_family} on "
-                    f"{contract.hardware_key or contract.target_name}"
+                    f"KernelBlaster optimised {contract.op_family} on {contract.hardware_key or contract.target_name}"
                 ),
                 metadata={
                     "provider": "kernelblaster",

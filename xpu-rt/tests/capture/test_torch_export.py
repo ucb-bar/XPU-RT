@@ -87,17 +87,17 @@ def test_capture_frontend_artifact_collects_boundary_metadata() -> None:
     assert "aten.permute.default" in prepared_targets
 
 
-class _SinModel(torch.nn.Module):
+class _ErfModel(torch.nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return torch.sin(x)
+        return torch.erf(x)
 
 
 def test_capture_frontend_artifact_recovers_simple_unsupported_ops() -> None:
     """Simple unsupported ATen ops should get a synthesized recovery plan."""
-    artifact = capture_frontend_artifact(_SinModel(), (torch.randn(4, 8),))
+    artifact = capture_frontend_artifact(_ErfModel(), (torch.randn(4, 8),))
 
     assert len(artifact.unsupported_resolutions) >= 1
-    resolution = next(r for r in artifact.unsupported_resolutions if r.target == "aten.sin.default")
+    resolution = next(r for r in artifact.unsupported_resolutions if r.target == "aten.erf.default")
     assert resolution.classification.strategy == "synthesized_external_call"
     assert resolution.translation is not None
     assert resolution.verification.schema_ok

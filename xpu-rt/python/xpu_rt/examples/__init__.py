@@ -43,29 +43,19 @@ def list_demos() -> list[str]:
 def list_specs() -> list[str]:
     """Return names (without ``.yaml``) of shipped hardware specs (schema v2.0)."""
     pkg = resources.files(_SPEC_PACKAGE)
-    return sorted(
-        entry.name[:-5]
-        for entry in pkg.iterdir()
-        if entry.is_file() and entry.name.endswith(".yaml")
-    )
+    return sorted(entry.name[:-5] for entry in pkg.iterdir() if entry.is_file() and entry.name.endswith(".yaml"))
 
 
 def list_target_profiles() -> list[str]:
     """Return names (without ``.yaml``) of shipped declarative target profiles."""
     pkg = resources.files(_TARGET_PROFILE_PACKAGE)
-    return sorted(
-        entry.name[:-5]
-        for entry in pkg.iterdir()
-        if entry.is_file() and entry.name.endswith(".yaml")
-    )
+    return sorted(entry.name[:-5] for entry in pkg.iterdir() if entry.is_file() and entry.name.endswith(".yaml"))
 
 
 def resolve_demo_module(name: str) -> str:
     """Return the dotted module path for a shipped demo's ``model`` module."""
     if find_spec(f"{_DEMO_PACKAGE}.{name}.model") is None:
-        raise ValueError(
-            f"unknown demo '{name}'; available: {', '.join(list_demos()) or '(none)'}"
-        )
+        raise ValueError(f"unknown demo '{name}'; available: {', '.join(list_demos()) or '(none)'}")
     return f"{_DEMO_PACKAGE}.{name}.model"
 
 
@@ -74,9 +64,7 @@ def resolve_spec_path(name: str) -> Path:
     filename = name if name.endswith(".yaml") else f"{name}.yaml"
     resource = resources.files(_SPEC_PACKAGE).joinpath(filename)
     if not resource.is_file():
-        raise ValueError(
-            f"unknown spec '{name}'; available: {', '.join(list_specs()) or '(none)'}"
-        )
+        raise ValueError(f"unknown spec '{name}'; available: {', '.join(list_specs()) or '(none)'}")
     return Path(str(resource))
 
 
@@ -85,10 +73,7 @@ def resolve_target_profile_path(name: str) -> Path:
     filename = name if name.endswith(".yaml") else f"{name}.yaml"
     resource = resources.files(_TARGET_PROFILE_PACKAGE).joinpath(filename)
     if not resource.is_file():
-        raise ValueError(
-            f"unknown target profile '{name}'; available: "
-            f"{', '.join(list_target_profiles()) or '(none)'}"
-        )
+        raise ValueError(f"unknown target profile '{name}'; available: {', '.join(list_target_profiles()) or '(none)'}")
     return Path(str(resource))
 
 

@@ -358,9 +358,7 @@ class EmbeddedEmitter:
         kernels: tuple[UkernelEmission, ...] = tuple(ukernels or ())
 
         if kernels:
-            kernel_decls = "\n".join(
-                "/* Ukernel: " + k.name + " */\n" + k.header_decl for k in kernels
-            )
+            kernel_decls = "\n".join("/* Ukernel: " + k.name + " */\n" + k.header_decl for k in kernels)
             extra_decls = f"\n\n/* Exo-generated ukernels */\n{kernel_decls}\n"
         else:
             extra_decls = ""
@@ -417,25 +415,19 @@ class EmbeddedEmitter:
             # is the single source of truth.
             import shutil
 
-            runtime_root = (
-                Path(__file__).resolve().parents[3].parent / "runtime"
-            )
+            runtime_root = Path(__file__).resolve().parents[3].parent / "runtime"
             # ↑ python/compgen/runtime/embedded/emitter.py -> repo root -> runtime/
             include_dst = out / "compgen"
             include_dst.mkdir(exist_ok=True)
             for name in ("types.h", "arena.h", "ops.h"):
                 src = runtime_root / "include" / "compgen" / name
                 if not src.exists():
-                    raise FileNotFoundError(
-                        f"compgen foundational runtime header missing: {src}"
-                    )
+                    raise FileNotFoundError(f"compgen foundational runtime header missing: {src}")
                 shutil.copy2(src, include_dst / name)
             for name in ("arena.c", "ops.c"):
                 src = runtime_root / "src" / name
                 if not src.exists():
-                    raise FileNotFoundError(
-                        f"compgen foundational runtime source missing: {src}"
-                    )
+                    raise FileNotFoundError(f"compgen foundational runtime source missing: {src}")
                 shutil.copy2(src, out / name)
             ops_header_path = include_dst / "ops.h"
             ops_src_path = out / "ops.c"
@@ -517,7 +509,9 @@ def emit_embedded(
 ) -> EmbeddedArtifacts:
     """Convenience wrapper around :class:`EmbeddedEmitter`."""
     return EmbeddedEmitter(options).emit(
-        output_dir, model_blob=model_blob, ukernels=ukernels,
+        output_dir,
+        model_blob=model_blob,
+        ukernels=ukernels,
         lowered_model=lowered_model,
     )
 

@@ -108,9 +108,7 @@ def explore_vendor_repo(
 # --------------------------------------------------------------------------- #
 
 
-def _classify_with_llm(
-    scan: ScanResult, llm_client: object | None
-) -> tuple[dict[str, Any], bool]:
+def _classify_with_llm(scan: ScanResult, llm_client: object | None) -> tuple[dict[str, Any], bool]:
     """Run the explore prompt; return classification + whether LLM was used."""
     if llm_client is None:
         return _default_classification(scan), False

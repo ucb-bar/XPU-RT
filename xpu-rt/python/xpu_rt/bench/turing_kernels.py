@@ -22,7 +22,6 @@ import torch
 import triton
 import triton.language as tl
 
-
 # ---------------------------------------------------------------------------
 # 1. COMPUTE_TILED — matmul fp16 × fp16 → fp32 acc → fp16 out
 # ---------------------------------------------------------------------------
@@ -30,11 +29,18 @@ import triton.language as tl
 
 @triton.jit
 def _matmul_fp16_kernel(
-    A, B, C,
-    M, N, K,
-    stride_am, stride_ak,
-    stride_bk, stride_bn,
-    stride_cm, stride_cn,
+    A,
+    B,
+    C,
+    M,
+    N,
+    K,
+    stride_am,
+    stride_ak,
+    stride_bk,
+    stride_bn,
+    stride_cm,
+    stride_cn,
     BLOCK_M: tl.constexpr,
     BLOCK_N: tl.constexpr,
     BLOCK_K: tl.constexpr,
@@ -53,7 +59,7 @@ def _matmul_fp16_kernel(
         k_mask = (k + offs_k) < K
         a = tl.load(a_ptrs, mask=(offs_m[:, None] < M) & k_mask[None, :], other=0.0)
         b = tl.load(b_ptrs, mask=k_mask[:, None] & (offs_n[None, :] < N), other=0.0)
-        acc += tl.dot(a, b, allow_tf32=False)   # HMMA fp16×fp16→fp32 on Turing
+        acc += tl.dot(a, b, allow_tf32=False)  # HMMA fp16×fp16→fp32 on Turing
         a_ptrs += BLOCK_K * stride_ak
         b_ptrs += BLOCK_K * stride_bk
 
@@ -76,11 +82,21 @@ def matmul_fp16(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
     BLOCK_M, BLOCK_N, BLOCK_K = 64, 64, 32
     grid = (triton.cdiv(M, BLOCK_M), triton.cdiv(N, BLOCK_N))
     _matmul_fp16_kernel[grid](
-        a, b, out, M, N, K,
-        a.stride(0), a.stride(1),
-        b.stride(0), b.stride(1),
-        out.stride(0), out.stride(1),
-        BLOCK_M=BLOCK_M, BLOCK_N=BLOCK_N, BLOCK_K=BLOCK_K,
+        a,
+        b,
+        out,
+        M,
+        N,
+        K,
+        a.stride(0),
+        a.stride(1),
+        b.stride(0),
+        b.stride(1),
+        out.stride(0),
+        out.stride(1),
+        BLOCK_M=BLOCK_M,
+        BLOCK_N=BLOCK_N,
+        BLOCK_K=BLOCK_K,
         num_warps=4,
     )
     return out
@@ -106,29 +122,30 @@ def matmul_fp16(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
 
 
 _MATMUL_V2_CONFIGS = [
-    triton.Config({"BLOCK_M": 64,  "BLOCK_N": 64,  "BLOCK_K": 32, "GROUP_M": 8},
-                  num_warps=4, num_stages=2),
-    triton.Config({"BLOCK_M": 128, "BLOCK_N": 64,  "BLOCK_K": 32, "GROUP_M": 8},
-                  num_warps=4, num_stages=2),
-    triton.Config({"BLOCK_M": 64,  "BLOCK_N": 128, "BLOCK_K": 32, "GROUP_M": 8},
-                  num_warps=4, num_stages=2),
-    triton.Config({"BLOCK_M": 128, "BLOCK_N": 128, "BLOCK_K": 32, "GROUP_M": 8},
-                  num_warps=8, num_stages=2),
-    triton.Config({"BLOCK_M": 128, "BLOCK_N": 128, "BLOCK_K": 32, "GROUP_M": 8},
-                  num_warps=8, num_stages=3),
-    triton.Config({"BLOCK_M": 64,  "BLOCK_N": 64,  "BLOCK_K": 64, "GROUP_M": 8},
-                  num_warps=4, num_stages=2),
+    triton.Config({"BLOCK_M": 64, "BLOCK_N": 64, "BLOCK_K": 32, "GROUP_M": 8}, num_warps=4, num_stages=2),
+    triton.Config({"BLOCK_M": 128, "BLOCK_N": 64, "BLOCK_K": 32, "GROUP_M": 8}, num_warps=4, num_stages=2),
+    triton.Config({"BLOCK_M": 64, "BLOCK_N": 128, "BLOCK_K": 32, "GROUP_M": 8}, num_warps=4, num_stages=2),
+    triton.Config({"BLOCK_M": 128, "BLOCK_N": 128, "BLOCK_K": 32, "GROUP_M": 8}, num_warps=8, num_stages=2),
+    triton.Config({"BLOCK_M": 128, "BLOCK_N": 128, "BLOCK_K": 32, "GROUP_M": 8}, num_warps=8, num_stages=3),
+    triton.Config({"BLOCK_M": 64, "BLOCK_N": 64, "BLOCK_K": 64, "GROUP_M": 8}, num_warps=4, num_stages=2),
 ]
 
 
 @triton.autotune(configs=_MATMUL_V2_CONFIGS, key=["M", "N", "K"])
 @triton.jit
 def _matmul_fp16_kernel_v2(
-    A, B, C,
-    M, N, K,
-    stride_am, stride_ak,
-    stride_bk, stride_bn,
-    stride_cm, stride_cn,
+    A,
+    B,
+    C,
+    M,
+    N,
+    K,
+    stride_am,
+    stride_ak,
+    stride_bk,
+    stride_bn,
+    stride_cm,
+    stride_cn,
     BLOCK_M: tl.constexpr,
     BLOCK_N: tl.constexpr,
     BLOCK_K: tl.constexpr,
@@ -158,18 +175,15 @@ def _matmul_fp16_kernel_v2(
     acc = tl.zeros((BLOCK_M, BLOCK_N), dtype=tl.float32)
     for k in range(0, tl.cdiv(K, BLOCK_K)):
         k_mask = (k * BLOCK_K + offs_k) < K
-        a = tl.load(a_ptrs,
-                    mask=(offs_m[:, None] < M) & k_mask[None, :], other=0.0)
-        b = tl.load(b_ptrs,
-                    mask=k_mask[:, None] & (offs_n[None, :] < N), other=0.0)
+        a = tl.load(a_ptrs, mask=(offs_m[:, None] < M) & k_mask[None, :], other=0.0)
+        b = tl.load(b_ptrs, mask=k_mask[:, None] & (offs_n[None, :] < N), other=0.0)
         acc += tl.dot(a, b, allow_tf32=False)
         a_ptrs += BLOCK_K * stride_ak
         b_ptrs += BLOCK_K * stride_bk
 
     out = acc.to(tl.float16)
     c_ptrs = C + offs_m[:, None] * stride_cm + offs_n[None, :] * stride_cn
-    tl.store(c_ptrs, out,
-             mask=(offs_m[:, None] < M) & (offs_n[None, :] < N))
+    tl.store(c_ptrs, out, mask=(offs_m[:, None] < M) & (offs_n[None, :] < N))
 
 
 def matmul_fp16_v2(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
@@ -183,10 +197,18 @@ def matmul_fp16_v2(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
         return (triton.cdiv(M, meta["BLOCK_M"]) * triton.cdiv(N, meta["BLOCK_N"]),)
 
     _matmul_fp16_kernel_v2[_grid](
-        a, b, out, M, N, K,
-        a.stride(0), a.stride(1),
-        b.stride(0), b.stride(1),
-        out.stride(0), out.stride(1),
+        a,
+        b,
+        out,
+        M,
+        N,
+        K,
+        a.stride(0),
+        a.stride(1),
+        b.stride(0),
+        b.stride(1),
+        out.stride(0),
+        out.stride(1),
     )
     return out
 
@@ -211,35 +233,33 @@ def matmul_fp16_v2(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
 
 
 _MATMUL_V3_CONFIGS = [
-    triton.Config({"BLOCK_M": 64,  "BLOCK_N": 64,  "BLOCK_K": 32, "GROUP_M": 8},
-                  num_warps=4, num_stages=2),
-    triton.Config({"BLOCK_M": 64,  "BLOCK_N": 64,  "BLOCK_K": 32, "GROUP_M": 8},
-                  num_warps=4, num_stages=3),
-    triton.Config({"BLOCK_M": 128, "BLOCK_N": 64,  "BLOCK_K": 32, "GROUP_M": 8},
-                  num_warps=4, num_stages=2),
-    triton.Config({"BLOCK_M": 128, "BLOCK_N": 64,  "BLOCK_K": 32, "GROUP_M": 8},
-                  num_warps=8, num_stages=3),
-    triton.Config({"BLOCK_M": 64,  "BLOCK_N": 128, "BLOCK_K": 32, "GROUP_M": 8},
-                  num_warps=4, num_stages=2),
-    triton.Config({"BLOCK_M": 64,  "BLOCK_N": 128, "BLOCK_K": 32, "GROUP_M": 8},
-                  num_warps=8, num_stages=3),
-    triton.Config({"BLOCK_M": 128, "BLOCK_N": 128, "BLOCK_K": 32, "GROUP_M": 8},
-                  num_warps=8, num_stages=2),
-    triton.Config({"BLOCK_M": 64,  "BLOCK_N": 64,  "BLOCK_K": 64, "GROUP_M": 8},
-                  num_warps=4, num_stages=2),
-    triton.Config({"BLOCK_M": 64,  "BLOCK_N": 64,  "BLOCK_K": 64, "GROUP_M": 8},
-                  num_warps=4, num_stages=3),
+    triton.Config({"BLOCK_M": 64, "BLOCK_N": 64, "BLOCK_K": 32, "GROUP_M": 8}, num_warps=4, num_stages=2),
+    triton.Config({"BLOCK_M": 64, "BLOCK_N": 64, "BLOCK_K": 32, "GROUP_M": 8}, num_warps=4, num_stages=3),
+    triton.Config({"BLOCK_M": 128, "BLOCK_N": 64, "BLOCK_K": 32, "GROUP_M": 8}, num_warps=4, num_stages=2),
+    triton.Config({"BLOCK_M": 128, "BLOCK_N": 64, "BLOCK_K": 32, "GROUP_M": 8}, num_warps=8, num_stages=3),
+    triton.Config({"BLOCK_M": 64, "BLOCK_N": 128, "BLOCK_K": 32, "GROUP_M": 8}, num_warps=4, num_stages=2),
+    triton.Config({"BLOCK_M": 64, "BLOCK_N": 128, "BLOCK_K": 32, "GROUP_M": 8}, num_warps=8, num_stages=3),
+    triton.Config({"BLOCK_M": 128, "BLOCK_N": 128, "BLOCK_K": 32, "GROUP_M": 8}, num_warps=8, num_stages=2),
+    triton.Config({"BLOCK_M": 64, "BLOCK_N": 64, "BLOCK_K": 64, "GROUP_M": 8}, num_warps=4, num_stages=2),
+    triton.Config({"BLOCK_M": 64, "BLOCK_N": 64, "BLOCK_K": 64, "GROUP_M": 8}, num_warps=4, num_stages=3),
 ]
 
 
 @triton.autotune(configs=_MATMUL_V3_CONFIGS, key=["M", "N", "K"])
 @triton.jit
 def _matmul_fp16_kernel_v3(
-    A, B, C,
-    M, N, K,
-    stride_am, stride_ak,
-    stride_bk, stride_bn,
-    stride_cm, stride_cn,
+    A,
+    B,
+    C,
+    M,
+    N,
+    K,
+    stride_am,
+    stride_ak,
+    stride_bk,
+    stride_bn,
+    stride_cm,
+    stride_cn,
     NUM_SMS: tl.constexpr,
     BLOCK_M: tl.constexpr,
     BLOCK_N: tl.constexpr,
@@ -279,11 +299,13 @@ def _matmul_fp16_kernel_v3(
             k_mask = (k * BLOCK_K + offs_k) < K
             a = tl.load(
                 a_ptrs,
-                mask=(offs_m[:, None] < M) & k_mask[None, :], other=0.0,
+                mask=(offs_m[:, None] < M) & k_mask[None, :],
+                other=0.0,
             )
             b = tl.load(
                 b_ptrs,
-                mask=k_mask[:, None] & (offs_n[None, :] < N), other=0.0,
+                mask=k_mask[:, None] & (offs_n[None, :] < N),
+                other=0.0,
             )
             acc += tl.dot(a, b, allow_tf32=False)
             a_ptrs += BLOCK_K * stride_ak
@@ -291,8 +313,7 @@ def _matmul_fp16_kernel_v3(
 
         out = acc.to(tl.float16)
         c_ptrs = C + offs_m[:, None] * stride_cm + offs_n[None, :] * stride_cn
-        tl.store(c_ptrs, out,
-                 mask=(offs_m[:, None] < M) & (offs_n[None, :] < N))
+        tl.store(c_ptrs, out, mask=(offs_m[:, None] < M) & (offs_n[None, :] < N))
 
 
 def matmul_fp16_v3(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
@@ -305,10 +326,18 @@ def matmul_fp16_v3(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
     num_sms = torch.cuda.get_device_properties(a.device).multi_processor_count
 
     _matmul_fp16_kernel_v3[(num_sms,)](
-        a, b, out, M, N, K,
-        a.stride(0), a.stride(1),
-        b.stride(0), b.stride(1),
-        out.stride(0), out.stride(1),
+        a,
+        b,
+        out,
+        M,
+        N,
+        K,
+        a.stride(0),
+        a.stride(1),
+        b.stride(0),
+        b.stride(1),
+        out.stride(0),
+        out.stride(1),
         NUM_SMS=num_sms,
     )
     return out
@@ -337,11 +366,18 @@ def matmul_fp16_v3(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
 @triton.autotune(configs=_MATMUL_V3_CONFIGS, key=["M", "N", "K"])
 @triton.jit
 def _matmul_fp16_kernel_v4(
-    A, B, C,
-    M, N, K,
-    stride_am, stride_ak,
-    stride_bk, stride_bn,
-    stride_cm, stride_cn,
+    A,
+    B,
+    C,
+    M,
+    N,
+    K,
+    stride_am,
+    stride_ak,
+    stride_bk,
+    stride_bn,
+    stride_cm,
+    stride_cn,
     NUM_SMS: tl.constexpr,
     BLOCK_M: tl.constexpr,
     BLOCK_N: tl.constexpr,
@@ -413,10 +449,18 @@ def matmul_fp16_v4(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
 
     num_sms = torch.cuda.get_device_properties(a.device).multi_processor_count
     _matmul_fp16_kernel_v4[(num_sms,)](
-        a, b, out, M, N, K,
-        a.stride(0), a.stride(1),
-        b.stride(0), b.stride(1),
-        out.stride(0), out.stride(1),
+        a,
+        b,
+        out,
+        M,
+        N,
+        K,
+        a.stride(0),
+        a.stride(1),
+        b.stride(0),
+        b.stride(1),
+        out.stride(0),
+        out.stride(1),
         NUM_SMS=num_sms,
     )
     return out
@@ -437,27 +481,32 @@ def matmul_fp16_v4(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
 
 
 _BMM_FP16_CONFIGS = [
-    triton.Config({"BLOCK_M": 32,  "BLOCK_N": 32,  "BLOCK_K": 32},
-                  num_warps=4, num_stages=2),
-    triton.Config({"BLOCK_M": 64,  "BLOCK_N": 32,  "BLOCK_K": 32},
-                  num_warps=4, num_stages=2),
-    triton.Config({"BLOCK_M": 32,  "BLOCK_N": 64,  "BLOCK_K": 32},
-                  num_warps=4, num_stages=2),
-    triton.Config({"BLOCK_M": 64,  "BLOCK_N": 64,  "BLOCK_K": 32},
-                  num_warps=4, num_stages=2),
-    triton.Config({"BLOCK_M": 64,  "BLOCK_N": 64,  "BLOCK_K": 32},
-                  num_warps=4, num_stages=3),
+    triton.Config({"BLOCK_M": 32, "BLOCK_N": 32, "BLOCK_K": 32}, num_warps=4, num_stages=2),
+    triton.Config({"BLOCK_M": 64, "BLOCK_N": 32, "BLOCK_K": 32}, num_warps=4, num_stages=2),
+    triton.Config({"BLOCK_M": 32, "BLOCK_N": 64, "BLOCK_K": 32}, num_warps=4, num_stages=2),
+    triton.Config({"BLOCK_M": 64, "BLOCK_N": 64, "BLOCK_K": 32}, num_warps=4, num_stages=2),
+    triton.Config({"BLOCK_M": 64, "BLOCK_N": 64, "BLOCK_K": 32}, num_warps=4, num_stages=3),
 ]
 
 
 @triton.autotune(configs=_BMM_FP16_CONFIGS, key=["M", "N", "K"])
 @triton.jit
 def _bmm_fp16_kernel(
-    A, B, C,
-    M, N, K,
-    stride_ab, stride_am, stride_ak,
-    stride_bb, stride_bk, stride_bn,
-    stride_cb, stride_cm, stride_cn,
+    A,
+    B,
+    C,
+    M,
+    N,
+    K,
+    stride_ab,
+    stride_am,
+    stride_ak,
+    stride_bb,
+    stride_bk,
+    stride_bn,
+    stride_cb,
+    stride_cm,
+    stride_cn,
     BLOCK_M: tl.constexpr,
     BLOCK_N: tl.constexpr,
     BLOCK_K: tl.constexpr,
@@ -475,30 +524,21 @@ def _bmm_fp16_kernel(
     offs_n = pid_n * BLOCK_N + tl.arange(0, BLOCK_N)
     offs_k = tl.arange(0, BLOCK_K)
 
-    a_ptrs = (A + bid * stride_ab
-              + offs_m[:, None] * stride_am
-              + offs_k[None, :] * stride_ak)
-    b_ptrs = (B + bid * stride_bb
-              + offs_k[:, None] * stride_bk
-              + offs_n[None, :] * stride_bn)
+    a_ptrs = A + bid * stride_ab + offs_m[:, None] * stride_am + offs_k[None, :] * stride_ak
+    b_ptrs = B + bid * stride_bb + offs_k[:, None] * stride_bk + offs_n[None, :] * stride_bn
 
     acc = tl.zeros((BLOCK_M, BLOCK_N), dtype=tl.float32)
     for k in range(0, tl.cdiv(K, BLOCK_K)):
         k_mask = (k * BLOCK_K + offs_k) < K
-        a = tl.load(a_ptrs,
-                    mask=(offs_m[:, None] < M) & k_mask[None, :], other=0.0)
-        b = tl.load(b_ptrs,
-                    mask=k_mask[:, None] & (offs_n[None, :] < N), other=0.0)
+        a = tl.load(a_ptrs, mask=(offs_m[:, None] < M) & k_mask[None, :], other=0.0)
+        b = tl.load(b_ptrs, mask=k_mask[:, None] & (offs_n[None, :] < N), other=0.0)
         acc += tl.dot(a, b, allow_tf32=False)
         a_ptrs += BLOCK_K * stride_ak
         b_ptrs += BLOCK_K * stride_bk
 
     out = acc.to(tl.float16)
-    c_ptrs = (C + bid * stride_cb
-              + offs_m[:, None] * stride_cm
-              + offs_n[None, :] * stride_cn)
-    tl.store(c_ptrs, out,
-             mask=(offs_m[:, None] < M) & (offs_n[None, :] < N))
+    c_ptrs = C + bid * stride_cb + offs_m[:, None] * stride_cm + offs_n[None, :] * stride_cn
+    tl.store(c_ptrs, out, mask=(offs_m[:, None] < M) & (offs_n[None, :] < N))
 
 
 def bmm_fp16(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
@@ -513,10 +553,21 @@ def bmm_fp16(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
         return (triton.cdiv(M, meta["BLOCK_M"]) * triton.cdiv(N, meta["BLOCK_N"]), 1, B)
 
     _bmm_fp16_kernel[_grid](
-        a, b, out, M, N, K,
-        a.stride(0), a.stride(1), a.stride(2),
-        b.stride(0), b.stride(1), b.stride(2),
-        out.stride(0), out.stride(1), out.stride(2),
+        a,
+        b,
+        out,
+        M,
+        N,
+        K,
+        a.stride(0),
+        a.stride(1),
+        a.stride(2),
+        b.stride(0),
+        b.stride(1),
+        b.stride(2),
+        out.stride(0),
+        out.stride(1),
+        out.stride(2),
     )
     return out
 
@@ -528,7 +579,11 @@ def bmm_fp16(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
 
 @triton.jit
 def _softmax_fp32_kernel(
-    X, Y, stride_m, stride_n, N,
+    X,
+    Y,
+    stride_m,
+    stride_n,
+    N,
     BLOCK_N: tl.constexpr,
 ):
     row = tl.program_id(0)
@@ -553,8 +608,13 @@ def softmax_fp32_last_dim(x: torch.Tensor) -> torch.Tensor:
     BLOCK_N = triton.next_power_of_2(N)
     num_warps = 4 if BLOCK_N < 2048 else 8
     _softmax_fp32_kernel[(M,)](
-        x2, out, x2.stride(0), x2.stride(1), N,
-        BLOCK_N=BLOCK_N, num_warps=num_warps,
+        x2,
+        out,
+        x2.stride(0),
+        x2.stride(1),
+        N,
+        BLOCK_N=BLOCK_N,
+        num_warps=num_warps,
     )
     return out.reshape(orig_shape)
 
@@ -590,7 +650,12 @@ def silu_fp16(x: torch.Tensor) -> torch.Tensor:
 
 @triton.jit
 def _rmsnorm_fp16_kernel(
-    X, W, Y, stride_m, N, EPS,
+    X,
+    W,
+    Y,
+    stride_m,
+    N,
+    EPS,
     BLOCK_N: tl.constexpr,
 ):
     row = tl.program_id(0)
@@ -613,8 +678,14 @@ def rmsnorm_fp16(x: torch.Tensor, weight: torch.Tensor, eps: float = 1e-5) -> to
     BLOCK_N = triton.next_power_of_2(N)
     num_warps = 4 if BLOCK_N < 2048 else 8
     _rmsnorm_fp16_kernel[(M,)](
-        x2, weight, out, x2.stride(0), N, eps,
-        BLOCK_N=BLOCK_N, num_warps=num_warps,
+        x2,
+        weight,
+        out,
+        x2.stride(0),
+        N,
+        eps,
+        BLOCK_N=BLOCK_N,
+        num_warps=num_warps,
     )
     return out.reshape(orig_shape)
 
@@ -644,19 +715,24 @@ def _autoload_autotune_caches() -> None:
         from compgen.bench.autotune_cache import load_all
     except ImportError:
         return
-    load_all([
-        _matmul_fp16_kernel_v2,
-        _matmul_fp16_kernel_v3,
-        _matmul_fp16_kernel_v4,
-        _bmm_fp16_kernel,
-    ])
+    load_all(
+        [
+            _matmul_fp16_kernel_v2,
+            _matmul_fp16_kernel_v3,
+            _matmul_fp16_kernel_v4,
+            _bmm_fp16_kernel,
+        ]
+    )
 
 
 _autoload_autotune_caches()
 
 
 def attention_block_fp16(
-    q: torch.Tensor, k: torch.Tensor, v: torch.Tensor, scale: float,
+    q: torch.Tensor,
+    k: torch.Tensor,
+    v: torch.Tensor,
+    scale: float,
 ) -> torch.Tensor:
     """Scaled dot-product attention using OUR matmul + softmax kernels.
 
@@ -668,7 +744,7 @@ def attention_block_fp16(
     """
     # QKᵀ: q @ k.T  — with a manual transpose since our matmul takes (M,K)×(K,N).
     kt = k.transpose(0, 1).contiguous()
-    scores = matmul_fp16(q, kt) * scale            # (M, N) fp16
-    probs = softmax_fp32_last_dim(scores.float()).to(torch.float16)   # (M, N) fp16
-    out = matmul_fp16(probs, v)                    # (M, D) fp16
+    scores = matmul_fp16(q, kt) * scale  # (M, N) fp16
+    probs = softmax_fp32_last_dim(scores.float()).to(torch.float16)  # (M, N) fp16
+    out = matmul_fp16(probs, v)  # (M, D) fp16
     return out

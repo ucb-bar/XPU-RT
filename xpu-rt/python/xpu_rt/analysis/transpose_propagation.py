@@ -126,11 +126,13 @@ def detect_transpose_chains(module: ModuleOp) -> list[TransposeChain]:
             cur = users[0].operation
 
         consumer = cur if cur is not None and not _is_transpose_op(cur) else None
-        chains.append(TransposeChain(
-            ops=chain_ops,
-            consumer=consumer,
-            composed_permutation=composed or (),
-        ))
+        chains.append(
+            TransposeChain(
+                ops=chain_ops,
+                consumer=consumer,
+                composed_permutation=composed or (),
+            )
+        )
     return chains
 
 
@@ -142,14 +144,16 @@ def propose_transpose_cancellations(
     out: list[TransposeCancellation] = []
     for chain in detect_transpose_chains(module):
         if chain.is_identity and chain.ops:
-            out.append(TransposeCancellation(
-                chain=chain,
-                ops_to_remove=tuple(chain.ops),
-                reason=(
-                    f"chain of {len(chain.ops)} transposes composes to identity "
-                    f"{chain.composed_permutation} — delete all"
-                ),
-            ))
+            out.append(
+                TransposeCancellation(
+                    chain=chain,
+                    ops_to_remove=tuple(chain.ops),
+                    reason=(
+                        f"chain of {len(chain.ops)} transposes composes to identity "
+                        f"{chain.composed_permutation} — delete all"
+                    ),
+                )
+            )
     return out
 
 

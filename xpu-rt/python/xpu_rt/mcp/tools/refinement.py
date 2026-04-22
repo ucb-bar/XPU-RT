@@ -25,15 +25,12 @@ same kernel cluster under one history entry.
 
 from __future__ import annotations
 
-import hashlib
-import json
 import time
 import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
 from compgen.mcp.session import McpSession, SessionManager
-
 
 # ---------------------------------------------------------------------------
 # Data types
@@ -81,7 +78,7 @@ def _refinement_cache(session: McpSession) -> RefinementCache:
     cache: RefinementCache | None = getattr(session, "refinement_cache", None)
     if cache is None:
         cache = RefinementCache()
-        session.refinement_cache = cache    # type: ignore[attr-defined]
+        session.refinement_cache = cache  # type: ignore[attr-defined]
     return cache
 
 
@@ -97,10 +94,7 @@ def _render_refinement_prompt(
     perf_target_us: float | None,
     attempt_index: int,
 ) -> str:
-    target_line = (
-        f"PERF TARGET: ≤{perf_target_us}μs"
-        if perf_target_us is not None else "PERF TARGET: unspecified"
-    )
+    target_line = f"PERF TARGET: ≤{perf_target_us}μs" if perf_target_us is not None else "PERF TARGET: unspecified"
     lines = [
         f"Refine kernel {kernel_fingerprint!r} (attempt #{attempt_index}).",
         "",
@@ -147,7 +141,8 @@ def request_refinement(
         # Already converged — return the last attempt's source instead of queueing.
         last = history.attempts[-1] if history.attempts else None
         return {
-            "ok": True, "session_id": session_id,
+            "ok": True,
+            "session_id": session_id,
             "converged": True,
             "kernel_fingerprint": kernel_fingerprint,
             "attempt_count": len(history.attempts),
@@ -157,17 +152,22 @@ def request_refinement(
 
     rid = request_id or f"refine_{uuid.uuid4().hex[:12]}"
     prompt = _render_refinement_prompt(
-        kernel_fingerprint, prior_source, diagnosis_summary,
-        perf_target_us, attempt_index=len(history.attempts) + 1,
+        kernel_fingerprint,
+        prior_source,
+        diagnosis_summary,
+        perf_target_us,
+        attempt_index=len(history.attempts) + 1,
     )
     cache.pending[rid] = PendingRefinement(
-        request_id=rid, prompt=prompt,
+        request_id=rid,
+        prompt=prompt,
         kernel_fingerprint=kernel_fingerprint,
         attempt_index=len(history.attempts) + 1,
         perf_target_us=perf_target_us,
     )
     return {
-        "ok": True, "session_id": session_id,
+        "ok": True,
+        "session_id": session_id,
         "converged": False,
         "request_id": rid,
         "kernel_fingerprint": kernel_fingerprint,
@@ -175,10 +175,15 @@ def request_refinement(
         "prompt": prompt,
         "next_call": {
             "tool": "register_refinement_attempt",
-            "args": {"session_id": session_id, "request_id": rid,
-                     "kernel_source": "<refined source>",
-                     "perf_us": "<float|null>", "correct": "<bool>",
-                     "done": "<bool>", "rationale": "<string>"},
+            "args": {
+                "session_id": session_id,
+                "request_id": rid,
+                "kernel_source": "<refined source>",
+                "perf_us": "<float|null>",
+                "correct": "<bool>",
+                "done": "<bool>",
+                "rationale": "<string>",
+            },
         },
     }
 
@@ -201,19 +206,23 @@ def register_refinement_attempt(
     cache = _refinement_cache(session)
     pending = cache.pending.pop(request_id, None)
     if pending is None:
-        return {"ok": False, "session_id": session_id,
-                "error": f"unknown or already-fulfilled request_id {request_id!r}"}
+        return {
+            "ok": False,
+            "session_id": session_id,
+            "error": f"unknown or already-fulfilled request_id {request_id!r}",
+        }
     if not kernel_source.strip():
         cache.pending[request_id] = pending
-        return {"ok": False, "session_id": session_id,
-                "error": "kernel_source is empty; re-queued"}
+        return {"ok": False, "session_id": session_id, "error": "kernel_source is empty; re-queued"}
     history = cache.histories.setdefault(
-        pending.kernel_fingerprint, RefinementHistory(),
+        pending.kernel_fingerprint,
+        RefinementHistory(),
     )
     attempt = RefinementAttempt(
         attempt_id=f"a{pending.attempt_index:03d}",
         kernel_source=kernel_source,
-        perf_us=perf_us, correct=bool(correct),
+        perf_us=perf_us,
+        correct=bool(correct),
         diagnosis_summary="",
         rationale=rationale,
         timestamp=time.time(),
@@ -222,7 +231,8 @@ def register_refinement_attempt(
     if done:
         history.converged = True
     return {
-        "ok": True, "session_id": session_id,
+        "ok": True,
+        "session_id": session_id,
         "kernel_fingerprint": pending.kernel_fingerprint,
         "attempt_id": attempt.attempt_id,
         "attempt_count": len(history.attempts),
@@ -240,11 +250,17 @@ def lookup_refinement_history(
     cache = _refinement_cache(session)
     history = cache.histories.get(kernel_fingerprint)
     if history is None:
-        return {"ok": True, "session_id": session_id,
-                "kernel_fingerprint": kernel_fingerprint,
-                "attempt_count": 0, "converged": False, "attempts": []}
+        return {
+            "ok": True,
+            "session_id": session_id,
+            "kernel_fingerprint": kernel_fingerprint,
+            "attempt_count": 0,
+            "converged": False,
+            "attempts": [],
+        }
     return {
-        "ok": True, "session_id": session_id,
+        "ok": True,
+        "session_id": session_id,
         "kernel_fingerprint": kernel_fingerprint,
         "attempt_count": len(history.attempts),
         "converged": history.converged,
@@ -263,12 +279,15 @@ def lookup_refinement_history(
 
 
 def list_pending_refinements(
-    sm: SessionManager, *, session_id: str,
+    sm: SessionManager,
+    *,
+    session_id: str,
 ) -> dict[str, Any]:
     session = sm.get(session_id)
     cache = _refinement_cache(session)
     return {
-        "ok": True, "session_id": session_id,
+        "ok": True,
+        "session_id": session_id,
         "pending_count": len(cache.pending),
         "requests": [
             {
@@ -309,8 +328,7 @@ REFINEMENT_TOOLS: list[dict[str, Any]] = [
     {
         "name": "register_refinement_attempt",
         "description": (
-            "Fulfill a pending refinement with a new kernel source. "
-            "Setting done=true marks the kernel converged."
+            "Fulfill a pending refinement with a new kernel source. Setting done=true marks the kernel converged."
         ),
         "phase": "transform",
         "handler": register_refinement_attempt,

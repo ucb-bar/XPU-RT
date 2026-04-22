@@ -31,9 +31,8 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
-from compgen.kernels.store import KernelStore, shared_store
+from compgen.kernels.store import shared_store
 from compgen.mcp.session import McpSession, SessionManager
-
 
 # ---------------------------------------------------------------------------
 # In-session cache structures
@@ -119,8 +118,7 @@ def contract_fingerprint(contract_v3: dict) -> str:
         "io": contract_v3.get("io"),
         # Target name lives under orchestration.execution.hardware
         "target": (
-            ((contract_v3.get("orchestration") or {}).get("execution") or {})
-            .get("hardware", {}).get("target_name")
+            ((contract_v3.get("orchestration") or {}).get("execution") or {}).get("hardware", {}).get("target_name")
         ),
     }
     payload = json.dumps(relevant, sort_keys=True, default=str)
@@ -136,8 +134,7 @@ def _render_prompt(contract_v3: dict, perf_target_us: float | None) -> str:
     archetype = contract_v3.get("archetype", "?")
     op_name = contract_v3.get("op_name", "?")
     target = (
-        ((contract_v3.get("orchestration") or {}).get("execution") or {})
-        .get("hardware", {}).get("target_name", "?")
+        ((contract_v3.get("orchestration") or {}).get("execution") or {}).get("hardware", {}).get("target_name", "?")
     )
     io = contract_v3.get("io", {})
     inputs = io.get("inputs", [])
@@ -149,15 +146,19 @@ def _render_prompt(contract_v3: dict, perf_target_us: float | None) -> str:
         f"Generate a {archetype} kernel for {op_name!r} on target {target!r}.",
         "",
         "INPUTS:",
-        *[f"  - {t.get('name')}: shape={t.get('shape', {}).get('dims')} "
-          f"dtype_class={t.get('dtype_class')} layout={t.get('layout')} "
-          f"alignment={t.get('alignment_bytes')}B"
-          for t in inputs],
+        *[
+            f"  - {t.get('name')}: shape={t.get('shape', {}).get('dims')} "
+            f"dtype_class={t.get('dtype_class')} layout={t.get('layout')} "
+            f"alignment={t.get('alignment_bytes')}B"
+            for t in inputs
+        ],
         "",
         "OUTPUTS:",
-        *[f"  - {t.get('name')}: shape={t.get('shape', {}).get('dims')} "
-          f"dtype_class={t.get('dtype_class')} layout={t.get('layout')}"
-          for t in outputs],
+        *[
+            f"  - {t.get('name')}: shape={t.get('shape', {}).get('dims')} "
+            f"dtype_class={t.get('dtype_class')} layout={t.get('layout')}"
+            for t in outputs
+        ],
         "",
         f"ATTRIBUTES: {attrs}",
         f"NUMERICS:   {numerics}",
@@ -166,8 +167,7 @@ def _render_prompt(contract_v3: dict, perf_target_us: float | None) -> str:
         lines.append(f"PERF TARGET: ≤{perf_target_us}μs")
     lines.append("")
     lines.append(
-        "Respond by calling register_kernel_result with the kernel source "
-        "(no markdown fences, no explanation)."
+        "Respond by calling register_kernel_result with the kernel source (no markdown fences, no explanation)."
     )
     return "\n".join(lines)
 
@@ -210,8 +210,7 @@ def request_kernel_codegen(
     rid = request_id or f"req_{uuid.uuid4().hex[:12]}"
     prompt = _render_prompt(contract_v3, perf_target_us)
     target_name = (
-        ((contract_v3.get("orchestration") or {}).get("execution") or {})
-        .get("hardware", {}).get("target_name", "")
+        ((contract_v3.get("orchestration") or {}).get("execution") or {}).get("hardware", {}).get("target_name", "")
     )
     cache.pending[rid] = PendingRequest(
         request_id=rid,
@@ -232,9 +231,12 @@ def request_kernel_codegen(
         "prompt": prompt,
         "next_call": {
             "tool": "register_kernel_result",
-            "args": {"session_id": session_id, "request_id": rid,
-                     "kernel_code": "<your kernel source>",
-                     "language": "<triton|cuda|c|python|...>"},
+            "args": {
+                "session_id": session_id,
+                "request_id": rid,
+                "kernel_code": "<your kernel source>",
+                "language": "<triton|cuda|c|python|...>",
+            },
         },
     }
 
@@ -402,9 +404,7 @@ KERNEL_TOOLS: list[dict[str, Any]] = [
     },
     {
         "name": "lookup_cached_kernel",
-        "description": (
-            "Check whether a kernel for this v3 contract is already cached."
-        ),
+        "description": ("Check whether a kernel for this v3 contract is already cached."),
         "phase": "inspect",
         "handler": lookup_cached_kernel,
         "input_schema": {
@@ -419,8 +419,7 @@ KERNEL_TOOLS: list[dict[str, Any]] = [
     {
         "name": "list_pending_kernel_requests",
         "description": (
-            "List all outstanding codegen requests in the session so the "
-            "agent can fulfill them in a batch."
+            "List all outstanding codegen requests in the session so the agent can fulfill them in a batch."
         ),
         "phase": "inspect",
         "handler": list_pending_kernel_requests,

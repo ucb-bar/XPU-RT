@@ -13,15 +13,12 @@ from __future__ import annotations
 import pytest
 
 torch = pytest.importorskip("torch")
-pytestmark = pytest.mark.skipif(
-    not torch.cuda.is_available(), reason="GPU required"
-)
+pytestmark = pytest.mark.skipif(not torch.cuda.is_available(), reason="GPU required")
 triton = pytest.importorskip("triton")
 
 from compgen.bench.flash_attention_kernel import flash_attention_fp16
 from compgen.bench.kernel_bench import format_bench_result, run_microbench
 from compgen.bench.turing_kernels import bmm_fp16, softmax_fp32_last_dim
-
 
 # ---------------------------------------------------------------------------
 # Correctness
@@ -30,11 +27,15 @@ from compgen.bench.turing_kernels import bmm_fp16, softmax_fp32_last_dim
 
 def _sdpa_reference(q, k, v, scale, *, causal):
     """torch.nn.functional.scaled_dot_product_attention reference."""
-    q4 = q.unsqueeze(0)        # (1, BH, S, D) — sdpa wants (B, H, S, D)
+    q4 = q.unsqueeze(0)  # (1, BH, S, D) — sdpa wants (B, H, S, D)
     k4 = k.unsqueeze(0)
     v4 = v.unsqueeze(0)
     out = torch.nn.functional.scaled_dot_product_attention(
-        q4, k4, v4, is_causal=causal, scale=scale,
+        q4,
+        k4,
+        v4,
+        is_causal=causal,
+        scale=scale,
     )
     return out.squeeze(0)
 
@@ -47,7 +48,7 @@ def test_flash_attention_matches_sdpa(S: int, causal: bool) -> None:
     q = torch.randn((BH, S, D), device="cuda", dtype=torch.float16)
     k = torch.randn((BH, S, D), device="cuda", dtype=torch.float16)
     v = torch.randn((BH, S, D), device="cuda", dtype=torch.float16)
-    scale = 1.0 / (D ** 0.5)
+    scale = 1.0 / (D**0.5)
 
     ours = flash_attention_fp16(q, k, v, scale, causal=causal)
     ref = _sdpa_reference(q, k, v, scale, causal=causal)
@@ -83,12 +84,12 @@ def test_flash_attention_perf_vs_three_kernel_composition(capsys) -> None:
     on Ampere because we lack async copy. Soft assert at ≤1.2× of the
     trio (i.e. within 20% slower at worst); print numbers either way.
     """
-    BH, S, D = 32, 128, 64        # mimics TinyLlama prefill of 128 tokens
+    BH, S, D = 32, 128, 64  # mimics TinyLlama prefill of 128 tokens
     torch.manual_seed(2026)
     q = torch.randn((BH, S, D), device="cuda", dtype=torch.float16)
     k = torch.randn((BH, S, D), device="cuda", dtype=torch.float16)
     v = torch.randn((BH, S, D), device="cuda", dtype=torch.float16)
-    scale = 1.0 / (D ** 0.5)
+    scale = 1.0 / (D**0.5)
 
     # Warm autotune for both
     _ = flash_attention_fp16(q, k, v, scale, causal=True)
@@ -99,13 +100,15 @@ def test_flash_attention_perf_vs_three_kernel_composition(capsys) -> None:
         f"flash_attention BH={BH} S={S} D={D}",
         our_fn=lambda: flash_attention_fp16(q, k, v, scale, causal=True),
         eager_ref=lambda: _sdpa_reference(q, k, v, scale, causal=True),
-        atol=5e-2, rtol=5e-2,
+        atol=5e-2,
+        rtol=5e-2,
     )
     trio = run_microbench(
         f"three_kernel    BH={BH} S={S} D={D}",
         our_fn=lambda: _three_kernel_attention(q, k, v, scale, causal=True),
         eager_ref=lambda: _sdpa_reference(q, k, v, scale, causal=True),
-        atol=5e-2, rtol=5e-2,
+        atol=5e-2,
+        rtol=5e-2,
     )
 
     with capsys.disabled():
@@ -115,12 +118,10 @@ def test_flash_attention_perf_vs_three_kernel_composition(capsys) -> None:
         speedup = trio.our_us / fa.our_us
         print(f"\nFA vs 3-kernel: {speedup:.2f}x  ({fa.our_us:.1f}μs vs {trio.our_us:.1f}μs)")
         sdpa_us = fa.eager_us
-        print(f"FA vs sdpa(FA-2): {fa.our_us / sdpa_us:.2f}x  "
-              f"({fa.our_us:.1f}μs vs {sdpa_us:.1f}μs)")
+        print(f"FA vs sdpa(FA-2): {fa.our_us / sdpa_us:.2f}x  ({fa.our_us:.1f}μs vs {sdpa_us:.1f}μs)")
 
     # Soft assertion: FA should not be dramatically slower than the trio
     # (it's the whole point). On Turing it might be only marginal.
     assert fa.our_us < 1.5 * trio.our_us, (
-        f"FA is unexpectedly slower than the 3-kernel composition: "
-        f"FA={fa.our_us}μs vs trio={trio.our_us}μs"
+        f"FA is unexpectedly slower than the 3-kernel composition: FA={fa.our_us}μs vs trio={trio.our_us}μs"
     )

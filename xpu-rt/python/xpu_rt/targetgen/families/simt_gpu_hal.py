@@ -106,17 +106,11 @@ class GpuEncodingPlugin:
             )
             # Dedup by value (tile_str can equal row_major)
             seen: set[str] = set()
-            unique = tuple(
-                c for c in candidates if not (c.id in seen or seen.add(c.id))
-            )
+            unique = tuple(c for c in candidates if not (c.id in seen or seen.add(c.id)))
             site_id = f"simt.encoding:{_op_site_key(op)}"
             context = {
                 "op": op.name,
-                "shapes": [
-                    list(r.type.get_shape())
-                    for r in op.results
-                    if isinstance(r.type, TensorType)
-                ],
+                "shapes": [list(r.type.get_shape()) for r in op.results if isinstance(r.type, TensorType)],
                 "is_matmul": is_matmul,
                 "engine_tile": tile_str,
             }

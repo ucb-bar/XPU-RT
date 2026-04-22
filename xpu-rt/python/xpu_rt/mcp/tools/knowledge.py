@@ -19,13 +19,13 @@ from __future__ import annotations
 
 from typing import Any
 
+from compgen.mcp.session import SessionManager
 from compgen.memory.knowledge import (
     KnowledgeStore,
     Lesson,
     scope_chain_for_target,
     shared_store,
 )
-from compgen.mcp.session import SessionManager
 
 
 def _store(_sm: SessionManager) -> KnowledgeStore:
@@ -60,23 +60,29 @@ def record_lesson(
     """
     if not scope:
         if not target:
-            return {"ok": False, "session_id": session_id,
-                    "error": "either 'scope' or 'target' is required"}
+            return {"ok": False, "session_id": session_id, "error": "either 'scope' or 'target' is required"}
         scope = scope_chain_for_target(target)[0]
 
     try:
         lesson = Lesson(
-            scope=scope, category=category, summary=summary,
-            stage=stage, op_family=op_family, topic=topic,
-            tags=tuple(tags or ()), applicability=applicability,
-            next_action=next_action, evidence=dict(evidence or {}),
+            scope=scope,
+            category=category,
+            summary=summary,
+            stage=stage,
+            op_family=op_family,
+            topic=topic,
+            tags=tuple(tags or ()),
+            applicability=applicability,
+            next_action=next_action,
+            evidence=dict(evidence or {}),
         )
     except ValueError as exc:
         return {"ok": False, "session_id": session_id, "error": str(exc)}
 
     persisted = _store(sm).add(lesson)
     return {
-        "ok": True, "session_id": session_id,
+        "ok": True,
+        "session_id": session_id,
         "lesson_id": persisted.id,
         "scope": persisted.scope,
         "timestamp": persisted.timestamp,
@@ -99,13 +105,16 @@ def query_knowledge(
     chain = scope_chain_for_target(target)
     lessons = _store(sm).query(
         scope_chain=chain,
-        stage=stage, op_family=op_family, topic=topic,
+        stage=stage,
+        op_family=op_family,
+        topic=topic,
         categories=tuple(categories) if categories else None,
         tags=tuple(tags) if tags else None,
         limit=limit,
     )
     return {
-        "ok": True, "session_id": session_id,
+        "ok": True,
+        "session_id": session_id,
         "target": target,
         "scope_chain": chain,
         "lesson_count": len(lessons),
@@ -140,13 +149,20 @@ def get_context_brief(
 ) -> dict[str, Any]:
     """Return a prompt-friendly one-shot brief for the agent's context."""
     brief = _store(sm).context_brief(
-        target, stage=stage, topic=topic, op_family=op_family,
+        target,
+        stage=stage,
+        topic=topic,
+        op_family=op_family,
         max_lessons=max_lessons,
     )
     return {
-        "ok": True, "session_id": session_id,
-        "target": target, "stage": stage, "topic": topic,
-        "op_family": op_family, "brief": brief,
+        "ok": True,
+        "session_id": session_id,
+        "target": target,
+        "stage": stage,
+        "topic": topic,
+        "op_family": op_family,
+        "brief": brief,
     }
 
 
@@ -165,9 +181,7 @@ KNOWLEDGE_TOOLS: list[dict[str, Any]] = [
             "type": "object",
             "properties": {
                 "session_id": {"type": "string"},
-                "category": {"type": "string",
-                             "enum": ["perf", "correctness", "limit",
-                                      "design", "recipe"]},
+                "category": {"type": "string", "enum": ["perf", "correctness", "limit", "design", "recipe"]},
                 "summary": {"type": "string"},
                 "target": {"type": ["string", "null"]},
                 "scope": {"type": ["string", "null"]},
@@ -199,8 +213,7 @@ KNOWLEDGE_TOOLS: list[dict[str, Any]] = [
                 "stage": {"type": ["string", "null"]},
                 "op_family": {"type": ["string", "null"]},
                 "topic": {"type": ["string", "null"]},
-                "categories": {"type": ["array", "null"],
-                               "items": {"type": "string"}},
+                "categories": {"type": ["array", "null"], "items": {"type": "string"}},
                 "tags": {"type": ["array", "null"], "items": {"type": "string"}},
                 "limit": {"type": ["integer", "null"]},
             },

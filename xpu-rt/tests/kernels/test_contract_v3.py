@@ -18,36 +18,25 @@ Locks in:
 from __future__ import annotations
 
 import pytest
-
 from compgen.kernels.contract_v3 import (
-    AliasPair,
-    BufferLifetime,
     CONTRACT_VERSION,
     CompilerOnlyView,
-    ConcurrencyUnit,
     DispatchModel,
     DispatchSpec,
     EventDecl,
-    ExecutionEnvelope,
     FusionPolicy,
     Granularity,
-    HardwareEnvelope,
     InternalEventEdge,
     IOContract,
     KernelArchetype,
     KernelContractV3,
     KernelFacingView,
-    LayoutKind,
     MemoryResidencyView,
     MemorySpec,
     MemoryTier,
-    NumericsSpec,
-    ObservabilitySpec,
     OrchestrationSpec,
     PaddingPolicy,
-    PerformancePriority,
     ShapeClass,
-    StaticAttr,
     SyncSpec,
     TensorIO,
 )
@@ -62,7 +51,6 @@ from compgen.kernels.contract_v3_references import (
     reference_where_contract,
 )
 
-
 # ---------------------------------------------------------------------------
 # Reference instances — archetype + granularity coverage, all well-formed
 # ---------------------------------------------------------------------------
@@ -71,21 +59,27 @@ from compgen.kernels.contract_v3_references import (
 @pytest.mark.parametrize(
     "factory,expected_archetype,expected_granularity,expected_op",
     [
-        (reference_matmul_contract,        KernelArchetype.COMPUTE_TILED,  Granularity.NORMAL, "linalg.matmul"),
-        (reference_softmax_contract,       KernelArchetype.REDUCE,         Granularity.NORMAL, "softmax"),
-        (reference_pointwise_add_contract, KernelArchetype.POINTWISE,      Granularity.NORMAL, "arith.addf"),
-        (reference_where_contract,         KernelArchetype.MEMORY,         Granularity.NORMAL, "aten_where"),
-        (reference_silu_contract,          KernelArchetype.ACTIVATION,     Granularity.NORMAL, "silu"),
-        (reference_dtype_cast_contract,    KernelArchetype.TYPE_CONV_INDEX,Granularity.NORMAL, "dtype_cast"),
-        (reference_micro_matmul_tile_contract, KernelArchetype.COMPUTE_TILED, Granularity.MICRO,
-         "ukernel.matmul_tile_16x16x16_fp16"),
-        (reference_mega_attention_block_contract, KernelArchetype.COMPUTE_TILED, Granularity.MEGA,
-         "megakernel.attention_block"),
+        (reference_matmul_contract, KernelArchetype.COMPUTE_TILED, Granularity.NORMAL, "linalg.matmul"),
+        (reference_softmax_contract, KernelArchetype.REDUCE, Granularity.NORMAL, "softmax"),
+        (reference_pointwise_add_contract, KernelArchetype.POINTWISE, Granularity.NORMAL, "arith.addf"),
+        (reference_where_contract, KernelArchetype.MEMORY, Granularity.NORMAL, "aten_where"),
+        (reference_silu_contract, KernelArchetype.ACTIVATION, Granularity.NORMAL, "silu"),
+        (reference_dtype_cast_contract, KernelArchetype.TYPE_CONV_INDEX, Granularity.NORMAL, "dtype_cast"),
+        (
+            reference_micro_matmul_tile_contract,
+            KernelArchetype.COMPUTE_TILED,
+            Granularity.MICRO,
+            "ukernel.matmul_tile_16x16x16_fp16",
+        ),
+        (
+            reference_mega_attention_block_contract,
+            KernelArchetype.COMPUTE_TILED,
+            Granularity.MEGA,
+            "megakernel.attention_block",
+        ),
     ],
 )
-def test_reference_contract_well_formed(
-    factory, expected_archetype, expected_granularity, expected_op
-) -> None:
+def test_reference_contract_well_formed(factory, expected_archetype, expected_granularity, expected_op) -> None:
     c = factory()
     assert c.archetype is expected_archetype
     assert c.granularity is expected_granularity
@@ -105,8 +99,7 @@ def test_mega_attention_body_and_internal_events_well_formed() -> None:
     # All sub-buffers are scratchpad-resident — the megakernel keeps
     # intermediates in fast memory.
     for sub in c.body:
-        for tier in (*sub.orchestration.memory.input_tiers,
-                     *sub.orchestration.memory.output_tiers):
+        for tier in (*sub.orchestration.memory.input_tiers, *sub.orchestration.memory.output_tiers):
             assert tier in (MemoryTier.SCRATCHPAD, MemoryTier.REGISTER)
 
 
@@ -116,8 +109,7 @@ def test_micro_matmul_tile_is_inlined_and_eventless() -> None:
     assert c.orchestration.sync.event_decls == ()
     assert c.orchestration.sync.wait_on == ()
     # All tiers register-resident; tile shape is exact (no padding).
-    for tier in (*c.orchestration.memory.input_tiers,
-                 *c.orchestration.memory.output_tiers):
+    for tier in (*c.orchestration.memory.input_tiers, *c.orchestration.memory.output_tiers):
         assert tier is MemoryTier.REGISTER
     assert c.orchestration.execution.padding is PaddingPolicy.NONE
 
@@ -149,9 +141,14 @@ def test_kernel_facing_excludes_compiler_only_fields() -> None:
     view = reference_matmul_contract().kernel_facing()
     public = set(view.__dataclass_fields__.keys())
     assert public == {
-        "op_name", "archetype", "granularity",
-        "io", "execution", "memory_residency",
-        "event_decls", "dispatch_model",
+        "op_name",
+        "archetype",
+        "granularity",
+        "io",
+        "execution",
+        "memory_residency",
+        "event_decls",
+        "dispatch_model",
     }
     for forbidden in ("wait_on", "blocking", "lifetimes", "fusion", "observability"):
         assert not hasattr(view, forbidden)
@@ -167,8 +164,12 @@ def test_compiler_only_view_carries_planner_fields_only() -> None:
     # Compiler view does NOT carry IO / dispatch_model / event_decls / residency
     public = set(view.__dataclass_fields__.keys())
     assert public == {
-        "wait_on", "blocking", "lifetimes", "fusion",
-        "observability", "dispatch_max_concurrent",
+        "wait_on",
+        "blocking",
+        "lifetimes",
+        "fusion",
+        "observability",
+        "dispatch_max_concurrent",
         "retry_on_recoverable_error",
     }
     for forbidden in ("io", "dispatch_model", "event_decls", "memory_residency"):
@@ -183,12 +184,10 @@ def test_compiler_only_view_carries_planner_fields_only() -> None:
 def _io(n_in: int = 1, n_out: int = 1, attributes=()) -> IOContract:
     return IOContract(
         inputs=tuple(
-            TensorIO(name=f"in{i}", shape=ShapeClass(dims=(None,)), dtype_class=("f32",))
-            for i in range(n_in)
+            TensorIO(name=f"in{i}", shape=ShapeClass(dims=(None,)), dtype_class=("f32",)) for i in range(n_in)
         ),
         outputs=tuple(
-            TensorIO(name=f"out{i}", shape=ShapeClass(dims=(None,)), dtype_class=("f32",))
-            for i in range(n_out)
+            TensorIO(name=f"out{i}", shape=ShapeClass(dims=(None,)), dtype_class=("f32",)) for i in range(n_out)
         ),
         attributes=attributes,
     )
@@ -232,7 +231,8 @@ def _normal_micro_io() -> IOContract:
 def test_micro_with_event_decls_rejected() -> None:
     with pytest.raises(ValueError, match="MICRO.*must not declare event_decls"):
         KernelContractV3(
-            op_name="bad", archetype=KernelArchetype.POINTWISE,
+            op_name="bad",
+            archetype=KernelArchetype.POINTWISE,
             io=_normal_micro_io(),
             granularity=Granularity.MICRO,
             orchestration=OrchestrationSpec(
@@ -245,7 +245,8 @@ def test_micro_with_event_decls_rejected() -> None:
 def test_micro_with_async_dispatch_rejected() -> None:
     with pytest.raises(ValueError, match="MICRO.*DispatchModel.INLINE"):
         KernelContractV3(
-            op_name="bad", archetype=KernelArchetype.POINTWISE,
+            op_name="bad",
+            archetype=KernelArchetype.POINTWISE,
             io=_normal_micro_io(),
             granularity=Granularity.MICRO,
             orchestration=OrchestrationSpec(
@@ -257,7 +258,8 @@ def test_micro_with_async_dispatch_rejected() -> None:
 def test_micro_with_dram_tier_rejected() -> None:
     with pytest.raises(ValueError, match="MICRO.*REGISTER or SCRATCHPAD"):
         KernelContractV3(
-            op_name="bad", archetype=KernelArchetype.POINTWISE,
+            op_name="bad",
+            archetype=KernelArchetype.POINTWISE,
             io=_normal_micro_io(),
             granularity=Granularity.MICRO,
             orchestration=OrchestrationSpec(
@@ -273,11 +275,13 @@ def test_micro_with_dram_tier_rejected() -> None:
 def test_micro_with_body_rejected() -> None:
     with pytest.raises(ValueError, match="MICRO.*body/internal_events"):
         sub = KernelContractV3(
-            op_name="sub", archetype=KernelArchetype.POINTWISE,
+            op_name="sub",
+            archetype=KernelArchetype.POINTWISE,
             io=_normal_micro_io(),
         )
         KernelContractV3(
-            op_name="bad", archetype=KernelArchetype.POINTWISE,
+            op_name="bad",
+            archetype=KernelArchetype.POINTWISE,
             io=_normal_micro_io(),
             granularity=Granularity.MICRO,
             orchestration=OrchestrationSpec(dispatch=DispatchSpec(model=DispatchModel.INLINE)),
@@ -314,7 +318,8 @@ def _stub_normal_compute() -> KernelContractV3:
 def test_mega_without_persistent_dispatch_rejected() -> None:
     with pytest.raises(ValueError, match="MEGA.*DispatchModel.PERSISTENT"):
         KernelContractV3(
-            op_name="bad", archetype=KernelArchetype.COMPUTE_TILED,
+            op_name="bad",
+            archetype=KernelArchetype.COMPUTE_TILED,
             io=_io(2, 1),
             granularity=Granularity.MEGA,
             body=(_stub_normal_compute(),),
@@ -324,7 +329,8 @@ def test_mega_without_persistent_dispatch_rejected() -> None:
 def test_mega_with_empty_body_rejected() -> None:
     with pytest.raises(ValueError, match="MEGA.*non-empty body"):
         KernelContractV3(
-            op_name="bad", archetype=KernelArchetype.COMPUTE_TILED,
+            op_name="bad",
+            archetype=KernelArchetype.COMPUTE_TILED,
             io=_io(2, 1),
             granularity=Granularity.MEGA,
             orchestration=OrchestrationSpec(dispatch=DispatchSpec(model=DispatchModel.PERSISTENT)),
@@ -342,7 +348,8 @@ def test_mega_with_nested_mega_rejected() -> None:
     )
     with pytest.raises(ValueError, match="must not contain nested MEGA"):
         KernelContractV3(
-            op_name="bad", archetype=KernelArchetype.COMPUTE_TILED,
+            op_name="bad",
+            archetype=KernelArchetype.COMPUTE_TILED,
             io=_io(2, 1),
             granularity=Granularity.MEGA,
             orchestration=OrchestrationSpec(dispatch=DispatchSpec(model=DispatchModel.PERSISTENT)),
@@ -371,7 +378,8 @@ def test_mega_sub_with_dram_tier_rejected() -> None:
     )
     with pytest.raises(ValueError, match="megakernel intermediates stay resident"):
         KernelContractV3(
-            op_name="bad", archetype=KernelArchetype.COMPUTE_TILED,
+            op_name="bad",
+            archetype=KernelArchetype.COMPUTE_TILED,
             io=_io(2, 1),
             granularity=Granularity.MEGA,
             orchestration=OrchestrationSpec(dispatch=DispatchSpec(model=DispatchModel.PERSISTENT)),
@@ -383,7 +391,8 @@ def test_mega_with_out_of_range_internal_event_rejected() -> None:
     sub = _stub_normal_compute()
     with pytest.raises(ValueError, match="producer_idx=5 out of range"):
         KernelContractV3(
-            op_name="bad", archetype=KernelArchetype.COMPUTE_TILED,
+            op_name="bad",
+            archetype=KernelArchetype.COMPUTE_TILED,
             io=_io(2, 1),
             granularity=Granularity.MEGA,
             orchestration=OrchestrationSpec(dispatch=DispatchSpec(model=DispatchModel.PERSISTENT)),
@@ -400,7 +409,8 @@ def test_mega_with_out_of_range_internal_event_rejected() -> None:
 def test_normal_with_inline_dispatch_rejected() -> None:
     with pytest.raises(ValueError, match="NORMAL.*must not use DispatchModel.INLINE"):
         KernelContractV3(
-            op_name="bad", archetype=KernelArchetype.POINTWISE,
+            op_name="bad",
+            archetype=KernelArchetype.POINTWISE,
             io=_normal_micro_io(),
             granularity=Granularity.NORMAL,
             orchestration=OrchestrationSpec(dispatch=DispatchSpec(model=DispatchModel.INLINE)),
@@ -410,7 +420,8 @@ def test_normal_with_inline_dispatch_rejected() -> None:
 def test_normal_with_body_rejected() -> None:
     with pytest.raises(ValueError, match="NORMAL.*body/internal_events.*MEGA-only"):
         KernelContractV3(
-            op_name="bad", archetype=KernelArchetype.POINTWISE,
+            op_name="bad",
+            archetype=KernelArchetype.POINTWISE,
             io=_normal_micro_io(),
             granularity=Granularity.NORMAL,
             body=(_stub_normal_compute(),),
@@ -425,7 +436,8 @@ def test_normal_with_body_rejected() -> None:
 def test_memory_input_tier_arity_must_match_inputs() -> None:
     with pytest.raises(ValueError, match="memory.input_tiers length"):
         KernelContractV3(
-            op_name="x", archetype=KernelArchetype.POINTWISE,
+            op_name="x",
+            archetype=KernelArchetype.POINTWISE,
             io=_io(2, 1),
             orchestration=OrchestrationSpec(
                 memory=MemorySpec(input_tiers=(MemoryTier.SCRATCHPAD,)),

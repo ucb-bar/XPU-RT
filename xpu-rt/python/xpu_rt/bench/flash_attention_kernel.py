@@ -40,7 +40,6 @@ import torch
 import triton
 import triton.language as tl
 
-
 # ---------------------------------------------------------------------------
 # Autotune config grid — Turing-friendly (no async copy, smaller smem)
 # ---------------------------------------------------------------------------
@@ -48,12 +47,12 @@ import triton.language as tl
 
 _FLASH_ATTN_CONFIGS = [
     # BLOCK_M, BLOCK_N, num_warps, num_stages
-    triton.Config({"BLOCK_M": 32,  "BLOCK_N": 32},  num_warps=4, num_stages=2),
-    triton.Config({"BLOCK_M": 64,  "BLOCK_N": 32},  num_warps=4, num_stages=2),
-    triton.Config({"BLOCK_M": 64,  "BLOCK_N": 64},  num_warps=4, num_stages=2),
-    triton.Config({"BLOCK_M": 64,  "BLOCK_N": 64},  num_warps=8, num_stages=2),
-    triton.Config({"BLOCK_M": 128, "BLOCK_N": 32},  num_warps=4, num_stages=2),
-    triton.Config({"BLOCK_M": 128, "BLOCK_N": 64},  num_warps=8, num_stages=2),
+    triton.Config({"BLOCK_M": 32, "BLOCK_N": 32}, num_warps=4, num_stages=2),
+    triton.Config({"BLOCK_M": 64, "BLOCK_N": 32}, num_warps=4, num_stages=2),
+    triton.Config({"BLOCK_M": 64, "BLOCK_N": 64}, num_warps=4, num_stages=2),
+    triton.Config({"BLOCK_M": 64, "BLOCK_N": 64}, num_warps=8, num_stages=2),
+    triton.Config({"BLOCK_M": 128, "BLOCK_N": 32}, num_warps=4, num_stages=2),
+    triton.Config({"BLOCK_M": 128, "BLOCK_N": 64}, num_warps=8, num_stages=2),
 ]
 
 
@@ -65,34 +64,42 @@ _FLASH_ATTN_CONFIGS = [
 @triton.autotune(configs=_FLASH_ATTN_CONFIGS, key=["S", "D"])
 @triton.jit
 def _flash_attention_fwd_kernel(
-    Q, K, V, Out,
-    L,                           # logsumexp output, optional (set to dummy if not needed)
-    stride_qb, stride_qs, stride_qd,
-    stride_kb, stride_ks, stride_kd,
-    stride_vb, stride_vs, stride_vd,
-    stride_ob, stride_os, stride_od,
+    Q,
+    K,
+    V,
+    Out,
+    L,  # logsumexp output, optional (set to dummy if not needed)
+    stride_qb,
+    stride_qs,
+    stride_qd,
+    stride_kb,
+    stride_ks,
+    stride_kd,
+    stride_vb,
+    stride_vs,
+    stride_vd,
+    stride_ob,
+    stride_os,
+    stride_od,
     SCALE,
-    S, D,
+    S,
+    D,
     CAUSAL: tl.constexpr,
     BLOCK_M: tl.constexpr,
     BLOCK_N: tl.constexpr,
-    BLOCK_D: tl.constexpr,         # padded D to next power of 2
+    BLOCK_D: tl.constexpr,  # padded D to next power of 2
 ):
     # Each program processes BLOCK_M rows of one head.
     pid_m = tl.program_id(0)
-    pid_b = tl.program_id(1)       # batch-head index
+    pid_b = tl.program_id(1)  # batch-head index
 
     offs_m = pid_m * BLOCK_M + tl.arange(0, BLOCK_M)
     offs_d = tl.arange(0, BLOCK_D)
     offs_n = tl.arange(0, BLOCK_N)
 
     # Load Q tile once — stays resident across the K/V loop.
-    q_ptrs = (Q + pid_b * stride_qb
-              + offs_m[:, None] * stride_qs
-              + offs_d[None, :] * stride_qd)
-    q = tl.load(q_ptrs,
-                mask=(offs_m[:, None] < S) & (offs_d[None, :] < D),
-                other=0.0)
+    q_ptrs = Q + pid_b * stride_qb + offs_m[:, None] * stride_qs + offs_d[None, :] * stride_qd
+    q = tl.load(q_ptrs, mask=(offs_m[:, None] < S) & (offs_d[None, :] < D), other=0.0)
 
     # Online softmax accumulators.
     m_i = tl.full((BLOCK_M,), -float("inf"), dtype=tl.float32)
@@ -110,20 +117,12 @@ def _flash_attention_fwd_kernel(
         n_offs = n_start + offs_n
 
         # Load K tile (BLOCK_N, BLOCK_D)
-        k_ptrs = (K + pid_b * stride_kb
-                  + n_offs[:, None] * stride_ks
-                  + offs_d[None, :] * stride_kd)
-        k = tl.load(k_ptrs,
-                    mask=(n_offs[:, None] < S) & (offs_d[None, :] < D),
-                    other=0.0)
+        k_ptrs = K + pid_b * stride_kb + n_offs[:, None] * stride_ks + offs_d[None, :] * stride_kd
+        k = tl.load(k_ptrs, mask=(n_offs[:, None] < S) & (offs_d[None, :] < D), other=0.0)
 
         # Load V tile (BLOCK_N, BLOCK_D)
-        v_ptrs = (V + pid_b * stride_vb
-                  + n_offs[:, None] * stride_vs
-                  + offs_d[None, :] * stride_vd)
-        v = tl.load(v_ptrs,
-                    mask=(n_offs[:, None] < S) & (offs_d[None, :] < D),
-                    other=0.0)
+        v_ptrs = V + pid_b * stride_vb + n_offs[:, None] * stride_vs + offs_d[None, :] * stride_vd
+        v = tl.load(v_ptrs, mask=(n_offs[:, None] < S) & (offs_d[None, :] < D), other=0.0)
 
         # S = Q @ K.T  (BLOCK_M, BLOCK_N)  scaled
         s = tl.dot(q, tl.trans(k), allow_tf32=False) * SCALE
@@ -148,11 +147,8 @@ def _flash_attention_fwd_kernel(
     acc = acc / l_i[:, None]
     out = acc.to(tl.float16)
 
-    o_ptrs = (Out + pid_b * stride_ob
-              + offs_m[:, None] * stride_os
-              + offs_d[None, :] * stride_od)
-    tl.store(o_ptrs, out,
-             mask=(offs_m[:, None] < S) & (offs_d[None, :] < D))
+    o_ptrs = Out + pid_b * stride_ob + offs_m[:, None] * stride_os + offs_d[None, :] * stride_od
+    tl.store(o_ptrs, out, mask=(offs_m[:, None] < S) & (offs_d[None, :] < D))
 
 
 # ---------------------------------------------------------------------------
@@ -196,12 +192,26 @@ def flash_attention_fp16(
         return (triton.cdiv(S, meta["BLOCK_M"]), BH)
 
     _flash_attention_fwd_kernel[_grid](
-        q, k, v, out, L,
-        q.stride(0), q.stride(1), q.stride(2),
-        k.stride(0), k.stride(1), k.stride(2),
-        v.stride(0), v.stride(1), v.stride(2),
-        out.stride(0), out.stride(1), out.stride(2),
-        scale, S, D,
+        q,
+        k,
+        v,
+        out,
+        L,
+        q.stride(0),
+        q.stride(1),
+        q.stride(2),
+        k.stride(0),
+        k.stride(1),
+        k.stride(2),
+        v.stride(0),
+        v.stride(1),
+        v.stride(2),
+        out.stride(0),
+        out.stride(1),
+        out.stride(2),
+        scale,
+        S,
+        D,
         CAUSAL=causal,
         BLOCK_D=BLOCK_D,
     )

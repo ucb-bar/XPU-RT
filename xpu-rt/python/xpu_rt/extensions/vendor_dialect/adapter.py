@@ -129,9 +129,7 @@ class VendorDialectAdapter:
         adapter should delegate per-op kernel synthesis to the attached
         :class:`KernelProvider`.
         """
-        raise NotImplementedError(
-            f"{type(self).__name__}.lower_payload must be overridden"
-        )
+        raise NotImplementedError(f"{type(self).__name__}.lower_payload must be overridden")
 
     def emit_artifact(
         self,
@@ -141,9 +139,7 @@ class VendorDialectAdapter:
         options: dict[str, Any] | None = None,
     ) -> CompiledArtifact:
         """Drive the vendor toolchain to produce a runnable artifact."""
-        raise NotImplementedError(
-            f"{type(self).__name__}.emit_artifact must be overridden"
-        )
+        raise NotImplementedError(f"{type(self).__name__}.emit_artifact must be overridden")
 
     def validate(
         self,

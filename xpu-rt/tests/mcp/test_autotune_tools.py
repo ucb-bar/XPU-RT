@@ -3,11 +3,9 @@
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
 
 import pytest
-
 from compgen.mcp.session import SessionManager
 from compgen.mcp.tools.autotune import (
     AUTOTUNE_TOOLS,
@@ -36,22 +34,30 @@ def sm(tmp_path: Path) -> SessionManager:
 def test_autotune_tools_registered_with_expected_names() -> None:
     names = {t["name"] for t in AUTOTUNE_TOOLS}
     assert names == {
-        "request_autotune_trial", "register_autotune_pick",
-        "lookup_autotune_pick", "list_pending_autotune_trials",
+        "request_autotune_trial",
+        "register_autotune_pick",
+        "lookup_autotune_pick",
+        "list_pending_autotune_trials",
     }
 
 
 def test_autotune_tools_in_all_tools_bundle() -> None:
     from compgen.mcp.tools import ALL_TOOLS
+
     names = {t["name"] for t in ALL_TOOLS}
-    for n in ("request_autotune_trial", "register_autotune_pick",
-              "lookup_autotune_pick", "list_pending_autotune_trials"):
+    for n in (
+        "request_autotune_trial",
+        "register_autotune_pick",
+        "lookup_autotune_pick",
+        "list_pending_autotune_trials",
+    ):
         assert n in names
 
 
 def test_request_then_register_then_lookup(sm, isolated_autotune_dir) -> None:
     out = request_autotune_trial(
-        sm, session_id="sess1",
+        sm,
+        session_id="sess1",
         kernel_qualname="matmul_kernel",
         key_repr="(512,512,512)",
         candidate_configs=[{"BLOCK_M": 64, "BLOCK_N": 64, "BLOCK_K": 32}],
@@ -65,16 +71,22 @@ def test_request_then_register_then_lookup(sm, isolated_autotune_dir) -> None:
     assert pending["pending_count"] == 1
 
     reg = register_autotune_pick(
-        sm, session_id="sess1", request_id=rid,
+        sm,
+        session_id="sess1",
+        request_id=rid,
         kwargs={"BLOCK_M": 128, "BLOCK_N": 64, "BLOCK_K": 32},
-        num_warps=8, num_stages=3,
-        perf_us=42.0, notes="bigger M block won",
+        num_warps=8,
+        num_stages=3,
+        perf_us=42.0,
+        notes="bigger M block won",
     )
     assert reg["ok"] and reg["cached_picks"] == 1
 
     lk = lookup_autotune_pick(
-        sm, session_id="sess1",
-        kernel_qualname="matmul_kernel", key_repr="(512,512,512)",
+        sm,
+        session_id="sess1",
+        kernel_qualname="matmul_kernel",
+        key_repr="(512,512,512)",
     )
     assert lk["found"]
     assert lk["pick"]["num_warps"] == 8
@@ -83,16 +95,23 @@ def test_request_then_register_then_lookup(sm, isolated_autotune_dir) -> None:
 
 def test_request_short_circuits_on_cached_pick(sm, isolated_autotune_dir) -> None:
     out = request_autotune_trial(
-        sm, session_id="sess1",
-        kernel_qualname="k1", key_repr="(64,)",
+        sm,
+        session_id="sess1",
+        kernel_qualname="k1",
+        key_repr="(64,)",
     )
     register_autotune_pick(
-        sm, session_id="sess1", request_id=out["request_id"],
-        kwargs={"BLOCK": 64}, num_warps=4,
+        sm,
+        session_id="sess1",
+        request_id=out["request_id"],
+        kwargs={"BLOCK": 64},
+        num_warps=4,
     )
     out2 = request_autotune_trial(
-        sm, session_id="sess1",
-        kernel_qualname="k1", key_repr="(64,)",
+        sm,
+        session_id="sess1",
+        kernel_qualname="k1",
+        key_repr="(64,)",
     )
     assert out2["found_in_cache"] is True
     assert out2["pick"]["num_warps"] == 4
@@ -100,13 +119,20 @@ def test_request_short_circuits_on_cached_pick(sm, isolated_autotune_dir) -> Non
 
 def test_register_persists_pick_to_disk(sm, isolated_autotune_dir) -> None:
     out = request_autotune_trial(
-        sm, session_id="sess1",
-        kernel_qualname="ondisk_kernel", key_repr="(128,128,128)",
+        sm,
+        session_id="sess1",
+        kernel_qualname="ondisk_kernel",
+        key_repr="(128,128,128)",
     )
     register_autotune_pick(
-        sm, session_id="sess1", request_id=out["request_id"],
-        kwargs={"BLOCK_M": 64}, num_warps=2, num_stages=4,
-        perf_us=15.0, notes="agent pick",
+        sm,
+        session_id="sess1",
+        request_id=out["request_id"],
+        kwargs={"BLOCK_M": 64},
+        num_warps=2,
+        num_stages=4,
+        perf_us=15.0,
+        notes="agent pick",
     )
     disk_file = isolated_autotune_dir / "ondisk_kernel.json"
     assert disk_file.exists()
@@ -118,16 +144,27 @@ def test_register_persists_pick_to_disk(sm, isolated_autotune_dir) -> None:
 def test_request_rehydrates_pick_from_disk(sm, isolated_autotune_dir) -> None:
     """Pre-seed the disk cache; first request must surface the pick."""
     isolated_autotune_dir.mkdir(parents=True, exist_ok=True)
-    (isolated_autotune_dir / "seeded_kernel.json").write_text(json.dumps({
-        "(32,)": {
-            "kwargs": {"BLOCK": 32}, "num_warps": 8, "num_stages": 2,
-            "num_ctas": 1, "maxnreg": None, "perf_us": 5.0,
-            "notes": "seeded", "timestamp": 0.0,
-        }
-    }))
+    (isolated_autotune_dir / "seeded_kernel.json").write_text(
+        json.dumps(
+            {
+                "(32,)": {
+                    "kwargs": {"BLOCK": 32},
+                    "num_warps": 8,
+                    "num_stages": 2,
+                    "num_ctas": 1,
+                    "maxnreg": None,
+                    "perf_us": 5.0,
+                    "notes": "seeded",
+                    "timestamp": 0.0,
+                }
+            }
+        )
+    )
     out = request_autotune_trial(
-        sm, session_id="sess1",
-        kernel_qualname="seeded_kernel", key_repr="(32,)",
+        sm,
+        session_id="sess1",
+        kernel_qualname="seeded_kernel",
+        key_repr="(32,)",
     )
     assert out["found_in_cache"] is True
     assert out["pick"]["num_warps"] == 8
@@ -135,7 +172,9 @@ def test_request_rehydrates_pick_from_disk(sm, isolated_autotune_dir) -> None:
 
 def test_register_unknown_request_id_errors(sm, isolated_autotune_dir) -> None:
     res = register_autotune_pick(
-        sm, session_id="sess1", request_id="nope",
+        sm,
+        session_id="sess1",
+        request_id="nope",
         kwargs={"BLOCK": 1},
     )
     assert res["ok"] is False
@@ -144,7 +183,9 @@ def test_register_unknown_request_id_errors(sm, isolated_autotune_dir) -> None:
 
 def test_lookup_miss_returns_found_false(sm, isolated_autotune_dir) -> None:
     res = lookup_autotune_pick(
-        sm, session_id="sess1",
-        kernel_qualname="never_tried", key_repr="(0,)",
+        sm,
+        session_id="sess1",
+        kernel_qualname="never_tried",
+        key_repr="(0,)",
     )
     assert res["found"] is False

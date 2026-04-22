@@ -49,7 +49,7 @@ class KernelPerfRecord:
     perf_us: float
     correctness_passed: bool
     source_path: str = ""
-    measured_at: float = 0.0       # unix ts
+    measured_at: float = 0.0  # unix ts
     notes: str = ""
 
 
@@ -58,7 +58,7 @@ class FusionDecisionRecord:
     target: str
     producer_role: str
     consumer_role: str
-    decision: str                  # "fuse" | "dont_fuse" | "ineligible"
+    decision: str  # "fuse" | "dont_fuse" | "ineligible"
     predicted_speedup: float
     observed_speedup: float | None  # None = not yet measured
     measured_at: float = 0.0
@@ -130,14 +130,24 @@ class KernelDB:
                (target, op_family, fingerprint, perf_us, correctness_passed,
                 source_path, measured_at, notes)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-            (rec.target, rec.op_family, rec.fingerprint, rec.perf_us,
-             1 if rec.correctness_passed else 0, rec.source_path,
-             rec.measured_at or time.time(), rec.notes),
+            (
+                rec.target,
+                rec.op_family,
+                rec.fingerprint,
+                rec.perf_us,
+                1 if rec.correctness_passed else 0,
+                rec.source_path,
+                rec.measured_at or time.time(),
+                rec.notes,
+            ),
         )
         self._conn.commit()
 
     def best_kernel_perf(
-        self, target: str, op_family: str, fingerprint: str,
+        self,
+        target: str,
+        op_family: str,
+        fingerprint: str,
     ) -> KernelPerfRecord | None:
         """Lowest-perf_us record that passed correctness, or ``None``."""
         cur = self._conn.execute(
@@ -153,7 +163,9 @@ class KernelDB:
         return _row_to_kernel_perf(row) if row else None
 
     def list_kernel_perf(
-        self, target: str | None = None, op_family: str | None = None,
+        self,
+        target: str | None = None,
+        op_family: str | None = None,
     ) -> list[KernelPerfRecord]:
         sql = "SELECT target, op_family, fingerprint, perf_us, correctness_passed, source_path, measured_at, notes FROM kernel_perf"
         params: list = []
@@ -177,14 +189,24 @@ class KernelDB:
                (target, producer_role, consumer_role, decision,
                 predicted_speedup, observed_speedup, measured_at, notes)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-            (rec.target, rec.producer_role, rec.consumer_role, rec.decision,
-             rec.predicted_speedup, rec.observed_speedup,
-             rec.measured_at or time.time(), rec.notes),
+            (
+                rec.target,
+                rec.producer_role,
+                rec.consumer_role,
+                rec.decision,
+                rec.predicted_speedup,
+                rec.observed_speedup,
+                rec.measured_at or time.time(),
+                rec.notes,
+            ),
         )
         self._conn.commit()
 
     def fusion_history(
-        self, target: str, producer_role: str, consumer_role: str,
+        self,
+        target: str,
+        producer_role: str,
+        consumer_role: str,
     ) -> list[FusionDecisionRecord]:
         cur = self._conn.execute(
             """SELECT target, producer_role, consumer_role, decision,
@@ -197,7 +219,10 @@ class KernelDB:
         return [_row_to_fusion_decision(r) for r in cur]
 
     def average_observed_speedup(
-        self, target: str, producer_role: str, consumer_role: str,
+        self,
+        target: str,
+        producer_role: str,
+        consumer_role: str,
     ) -> float | None:
         """Mean of ``observed_speedup`` over the history, ignoring NULL.
 
@@ -217,17 +242,27 @@ class KernelDB:
 
 def _row_to_kernel_perf(row) -> KernelPerfRecord:
     return KernelPerfRecord(
-        target=row[0], op_family=row[1], fingerprint=row[2],
-        perf_us=row[3], correctness_passed=bool(row[4]),
-        source_path=row[5], measured_at=row[6], notes=row[7],
+        target=row[0],
+        op_family=row[1],
+        fingerprint=row[2],
+        perf_us=row[3],
+        correctness_passed=bool(row[4]),
+        source_path=row[5],
+        measured_at=row[6],
+        notes=row[7],
     )
 
 
 def _row_to_fusion_decision(row) -> FusionDecisionRecord:
     return FusionDecisionRecord(
-        target=row[0], producer_role=row[1], consumer_role=row[2],
-        decision=row[3], predicted_speedup=row[4],
-        observed_speedup=row[5], measured_at=row[6], notes=row[7],
+        target=row[0],
+        producer_role=row[1],
+        consumer_role=row[2],
+        decision=row[3],
+        predicted_speedup=row[4],
+        observed_speedup=row[5],
+        measured_at=row[6],
+        notes=row[7],
     )
 
 

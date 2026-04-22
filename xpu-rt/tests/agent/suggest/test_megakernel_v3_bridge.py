@@ -13,7 +13,6 @@ Locks in:
 from __future__ import annotations
 
 import pytest
-
 from compgen.agent.suggest.megakernel_v3_bridge import (
     MegakernelBridgeResult,
     build_mega_contract_from_proposal,
@@ -33,7 +32,6 @@ from compgen.kernels.contract_v3 import (
     TensorIO,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -41,9 +39,12 @@ from compgen.kernels.contract_v3 import (
 
 def _envelope() -> HardwareEnvelope:
     return HardwareEnvelope(
-        target_name="cuda-a100", vector_lanes=64,
-        scratchpad_bytes=49152, register_bytes=256,
-        native_dtypes=("f16", "f32"), peak_bandwidth_gbps=672.0,
+        target_name="cuda-a100",
+        vector_lanes=64,
+        scratchpad_bytes=49152,
+        register_bytes=256,
+        native_dtypes=("f16", "f32"),
+        peak_bandwidth_gbps=672.0,
     )
 
 
@@ -53,9 +54,7 @@ def _io(name: str) -> IOContract:
             TensorIO(name=f"{name}_a", shape=ShapeClass(dims=(None,)), dtype_class=("f32",)),
             TensorIO(name=f"{name}_b", shape=ShapeClass(dims=(None,)), dtype_class=("f32",)),
         ),
-        outputs=(
-            TensorIO(name=f"{name}_o", shape=ShapeClass(dims=(None,)), dtype_class=("f32",)),
-        ),
+        outputs=(TensorIO(name=f"{name}_o", shape=ShapeClass(dims=(None,)), dtype_class=("f32",)),),
     )
 
 
@@ -188,8 +187,7 @@ def test_dram_subkernels_get_promoted_to_scratchpad() -> None:
         envelope=_envelope(),
     )
     for sub in res.contract.body:
-        for t in (*sub.orchestration.memory.input_tiers,
-                  *sub.orchestration.memory.output_tiers):
+        for t in (*sub.orchestration.memory.input_tiers, *sub.orchestration.memory.output_tiers):
             assert t in (MemoryTier.SCRATCHPAD, MemoryTier.REGISTER)
 
 
@@ -247,6 +245,7 @@ def test_nested_mega_subkernels_are_filtered_out_with_note() -> None:
 
 def test_all_nested_mega_subkernels_raises() -> None:
     """If every region was nested-MEGA, nothing eligible remains."""
+
     def factory(rid: str) -> KernelContractV3:
         return _nested_mega_sub()
 
@@ -275,8 +274,12 @@ def test_resulting_contract_satisfies_mega_invariants() -> None:
     c = res.contract
     # Re-instantiating with the same arguments must also pass.
     KernelContractV3(
-        op_name=c.op_name, archetype=c.archetype, io=c.io,
-        granularity=c.granularity, orchestration=c.orchestration,
-        body=c.body, internal_events=c.internal_events,
+        op_name=c.op_name,
+        archetype=c.archetype,
+        io=c.io,
+        granularity=c.granularity,
+        orchestration=c.orchestration,
+        body=c.body,
+        internal_events=c.internal_events,
         metadata=c.metadata,
     )

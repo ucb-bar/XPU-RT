@@ -68,7 +68,7 @@ class LLMCompileResult:
     driver: LLMDrivenCompiler | None = None
     provider: str = ""
     transcript_dir: Path | None = None
-    mcp_optimized: Any = None      # OptimizedModel | None — populated by W8.1
+    mcp_optimized: Any = None  # OptimizedModel | None — populated by W8.1
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         """Forward to ``CompiledModel.__call__`` so the result is benchmark-ready."""
@@ -334,17 +334,22 @@ def compile_with_llm(
     mcp_optimized: Any = None
     if mcp_session is not None and mcp_contracts:
         from compgen.agent.mcp_optimizer import optimize_via_mcp
+
         sm, sid = mcp_session
-        log.info("api_llm.mcp_optimize.start", target=dev.profile.name,
-                 contracts=len(mcp_contracts))
+        log.info("api_llm.mcp_optimize.start", target=dev.profile.name, contracts=len(mcp_contracts))
         mcp_optimized = optimize_via_mcp(
-            model_fn=None, target=dev.profile.name,
-            contracts=mcp_contracts, sm=sm, session_id=sid,
+            model_fn=None,
+            target=dev.profile.name,
+            contracts=mcp_contracts,
+            sm=sm,
+            session_id=sid,
             perf_budget_us=mcp_perf_budget_us,
         )
-        log.info("api_llm.mcp_optimize.done",
-                 decisions=len(mcp_optimized.decisions),
-                 cache_hits=sum(1 for d in mcp_optimized.decisions if d.cached))
+        log.info(
+            "api_llm.mcp_optimize.done",
+            decisions=len(mcp_optimized.decisions),
+            cache_hits=sum(1 for d in mcp_optimized.decisions if d.cached),
+        )
 
     return LLMCompileResult(
         compiled=compiled,

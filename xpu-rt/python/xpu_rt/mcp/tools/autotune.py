@@ -25,7 +25,6 @@ from typing import Any
 
 from compgen.mcp.session import McpSession, SessionManager
 
-
 # ---------------------------------------------------------------------------
 # Data types
 # ---------------------------------------------------------------------------
@@ -65,7 +64,7 @@ def _autotune_cache(session: McpSession) -> AutotuneCache:
     cache: AutotuneCache | None = getattr(session, "autotune_cache", None)
     if cache is None:
         cache = AutotuneCache()
-        session.autotune_cache = cache    # type: ignore[attr-defined]
+        session.autotune_cache = cache  # type: ignore[attr-defined]
     return cache
 
 
@@ -81,6 +80,7 @@ def _autotune_key(kernel_qualname: str, key_repr: str) -> str:
 def _disk_path(kernel_qualname: str):
     """Path to the JSON file ``compgen.bench.autotune_cache`` writes."""
     from compgen.bench.autotune_cache import default_cache_root
+
     safe = "".join(c if c.isalnum() or c in "._-" else "_" for c in kernel_qualname)
     return default_cache_root() / f"{safe}.json"
 
@@ -142,25 +142,27 @@ def _render_autotune_prompt(
     candidate_configs: list[dict[str, Any]],
     perf_target_us: float | None,
 ) -> str:
-    cfgs_text = "\n".join(
-        f"  - {json.dumps(c, sort_keys=True)}" for c in candidate_configs
-    ) or "  (no shortlist supplied — agent should pick from the standard grid)"
-    target = (f"PERF TARGET: ≤{perf_target_us}μs"
-              if perf_target_us else "PERF TARGET: unspecified")
-    return "\n".join([
-        f"Pick the best autotune config for kernel {kernel_qualname!r}.",
-        "",
-        f"KEY:    {key_repr}",
-        target,
-        "",
-        "CANDIDATE CONFIGS:",
-        cfgs_text,
-        "",
-        "Reply by calling register_autotune_pick with the winning config:",
-        "  num_warps, num_stages, num_ctas, maxnreg, kwargs (BLOCK_M etc.)",
-        "  perf_us:    measured median latency",
-        "  notes:      one short sentence",
-    ])
+    cfgs_text = (
+        "\n".join(f"  - {json.dumps(c, sort_keys=True)}" for c in candidate_configs)
+        or "  (no shortlist supplied — agent should pick from the standard grid)"
+    )
+    target = f"PERF TARGET: ≤{perf_target_us}μs" if perf_target_us else "PERF TARGET: unspecified"
+    return "\n".join(
+        [
+            f"Pick the best autotune config for kernel {kernel_qualname!r}.",
+            "",
+            f"KEY:    {key_repr}",
+            target,
+            "",
+            "CANDIDATE CONFIGS:",
+            cfgs_text,
+            "",
+            "Reply by calling register_autotune_pick with the winning config:",
+            "  num_warps, num_stages, num_ctas, maxnreg, kwargs (BLOCK_M etc.)",
+            "  perf_us:    measured median latency",
+            "  notes:      one short sentence",
+        ]
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -195,7 +197,8 @@ def request_autotune_trial(
     cached = cache.picks.get(full_key)
     if cached is not None:
         return {
-            "ok": True, "session_id": session_id,
+            "ok": True,
+            "session_id": session_id,
             "found_in_cache": True,
             "kernel_qualname": kernel_qualname,
             "key_repr": key_repr,
@@ -212,23 +215,28 @@ def request_autotune_trial(
 
     rid = request_id or f"tune_{uuid.uuid4().hex[:12]}"
     prompt = _render_autotune_prompt(
-        kernel_qualname, key_repr, candidate_configs or [], perf_target_us,
+        kernel_qualname,
+        key_repr,
+        candidate_configs or [],
+        perf_target_us,
     )
     cache.pending[rid] = PendingAutotuneTrial(
-        request_id=rid, prompt=prompt,
-        kernel_qualname=kernel_qualname, key_repr=key_repr,
+        request_id=rid,
+        prompt=prompt,
+        kernel_qualname=kernel_qualname,
+        key_repr=key_repr,
         candidate_configs=list(candidate_configs or []),
         perf_target_us=perf_target_us,
     )
     return {
-        "ok": True, "session_id": session_id,
+        "ok": True,
+        "session_id": session_id,
         "found_in_cache": False,
         "request_id": rid,
         "prompt": prompt,
         "next_call": {
             "tool": "register_autotune_pick",
-            "args": {"session_id": session_id, "request_id": rid,
-                     "kwargs": "<dict>", "num_warps": 4, "num_stages": 2},
+            "args": {"session_id": session_id, "request_id": rid, "kwargs": "<dict>", "num_warps": 4, "num_stages": 2},
         },
     }
 
@@ -251,25 +259,36 @@ def register_autotune_pick(
     cache = _autotune_cache(session)
     pending = cache.pending.pop(request_id, None)
     if pending is None:
-        return {"ok": False, "session_id": session_id,
-                "error": f"unknown or already-fulfilled request_id {request_id!r}"}
+        return {
+            "ok": False,
+            "session_id": session_id,
+            "error": f"unknown or already-fulfilled request_id {request_id!r}",
+        }
     pick = AutotunePick(
         kwargs=dict(kwargs or {}),
-        num_warps=int(num_warps), num_stages=int(num_stages),
-        num_ctas=int(num_ctas), maxnreg=maxnreg,
-        perf_us=perf_us, notes=notes, timestamp=time.time(),
+        num_warps=int(num_warps),
+        num_stages=int(num_stages),
+        num_ctas=int(num_ctas),
+        maxnreg=maxnreg,
+        perf_us=perf_us,
+        notes=notes,
+        timestamp=time.time(),
     )
     full_key = _autotune_key(pending.kernel_qualname, pending.key_repr)
     cache.picks[full_key] = pick
     try:
         _persist_disk_pick(pending.kernel_qualname, pending.key_repr, pick)
     except OSError as exc:
-        return {"ok": True, "session_id": session_id,
-                "warning": f"in-memory cached but disk persist failed: {exc}",
-                "kernel_qualname": pending.kernel_qualname,
-                "key_repr": pending.key_repr}
+        return {
+            "ok": True,
+            "session_id": session_id,
+            "warning": f"in-memory cached but disk persist failed: {exc}",
+            "kernel_qualname": pending.kernel_qualname,
+            "key_repr": pending.key_repr,
+        }
     return {
-        "ok": True, "session_id": session_id,
+        "ok": True,
+        "session_id": session_id,
         "kernel_qualname": pending.kernel_qualname,
         "key_repr": pending.key_repr,
         "cached_picks": len(cache.picks),
@@ -291,27 +310,41 @@ def lookup_autotune_pick(
             cache.picks.setdefault(k, p)
     pick = cache.picks.get(full_key)
     if pick is None:
-        return {"ok": True, "session_id": session_id, "found": False,
-                "kernel_qualname": kernel_qualname, "key_repr": key_repr}
+        return {
+            "ok": True,
+            "session_id": session_id,
+            "found": False,
+            "kernel_qualname": kernel_qualname,
+            "key_repr": key_repr,
+        }
     return {
-        "ok": True, "session_id": session_id, "found": True,
-        "kernel_qualname": kernel_qualname, "key_repr": key_repr,
+        "ok": True,
+        "session_id": session_id,
+        "found": True,
+        "kernel_qualname": kernel_qualname,
+        "key_repr": key_repr,
         "pick": {
-            "kwargs": pick.kwargs, "num_warps": pick.num_warps,
-            "num_stages": pick.num_stages, "num_ctas": pick.num_ctas,
-            "maxnreg": pick.maxnreg, "perf_us": pick.perf_us,
+            "kwargs": pick.kwargs,
+            "num_warps": pick.num_warps,
+            "num_stages": pick.num_stages,
+            "num_ctas": pick.num_ctas,
+            "maxnreg": pick.maxnreg,
+            "perf_us": pick.perf_us,
             "notes": pick.notes,
         },
     }
 
 
 def list_pending_autotune_trials(
-    sm: SessionManager, *, session_id: str,
+    sm: SessionManager,
+    *,
+    session_id: str,
 ) -> dict[str, Any]:
     session = sm.get(session_id)
     cache = _autotune_cache(session)
     return {
-        "ok": True, "session_id": session_id,
+        "ok": True,
+        "session_id": session_id,
         "pending_count": len(cache.pending),
         "requests": [
             {
@@ -343,8 +376,7 @@ AUTOTUNE_TOOLS: list[dict[str, Any]] = [
                 "session_id": {"type": "string"},
                 "kernel_qualname": {"type": "string"},
                 "key_repr": {"type": "string"},
-                "candidate_configs": {"type": ["array", "null"],
-                                      "items": {"type": "object"}},
+                "candidate_configs": {"type": ["array", "null"], "items": {"type": "object"}},
                 "perf_target_us": {"type": ["number", "null"]},
                 "request_id": {"type": ["string", "null"]},
             },
@@ -354,8 +386,7 @@ AUTOTUNE_TOOLS: list[dict[str, Any]] = [
     {
         "name": "register_autotune_pick",
         "description": (
-            "Fulfill a pending autotune trial with the agent's pick. "
-            "Persists to ~/.compgen/autotune/<kernel>.json."
+            "Fulfill a pending autotune trial with the agent's pick. Persists to ~/.compgen/autotune/<kernel>.json."
         ),
         "phase": "transform",
         "handler": register_autotune_pick,

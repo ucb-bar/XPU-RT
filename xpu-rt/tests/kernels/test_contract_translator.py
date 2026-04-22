@@ -13,7 +13,6 @@ Locks in:
 from __future__ import annotations
 
 import pytest
-
 from compgen.kernels.contract_translator import (
     AutocompContractTranslator,
     AutocompProblem,
@@ -27,25 +26,20 @@ from compgen.kernels.contract_translator import (
 from compgen.kernels.contract_v3 import (
     DispatchModel,
     DispatchSpec,
-    EventDecl,
     ExecutionEnvelope,
     Granularity,
     HardwareEnvelope,
-    InternalEventEdge,
     IOContract,
     KernelArchetype,
     KernelContractV3,
-    LayoutKind,
     MemorySpec,
     MemoryTier,
     NumericsSpec,
     OrchestrationSpec,
     ShapeClass,
     StaticAttr,
-    SyncSpec,
     TensorIO,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -54,9 +48,12 @@ from compgen.kernels.contract_v3 import (
 
 def _envelope(name: str) -> HardwareEnvelope:
     return HardwareEnvelope(
-        target_name=name, vector_lanes=64,
-        scratchpad_bytes=49152, register_bytes=256,
-        native_dtypes=("f16", "f32"), peak_bandwidth_gbps=672.0,
+        target_name=name,
+        vector_lanes=64,
+        scratchpad_bytes=49152,
+        register_bytes=256,
+        native_dtypes=("f16", "f32"),
+        peak_bandwidth_gbps=672.0,
         codegen_hints=("hint A", "hint B"),
     )
 
@@ -68,13 +65,10 @@ def _matmul(target: str = "cuda-a100") -> KernelContractV3:
         archetype=KernelArchetype.COMPUTE_TILED,
         io=IOContract(
             inputs=(
-                TensorIO(name="lhs", shape=ShapeClass(dims=(None, None)),
-                         dtype_class=("f16",)),
-                TensorIO(name="rhs", shape=ShapeClass(dims=(None, None)),
-                         dtype_class=("f16",)),
+                TensorIO(name="lhs", shape=ShapeClass(dims=(None, None)), dtype_class=("f16",)),
+                TensorIO(name="rhs", shape=ShapeClass(dims=(None, None)), dtype_class=("f16",)),
             ),
-            outputs=(TensorIO(name="out", shape=ShapeClass(dims=(None, None)),
-                              dtype_class=("f16",)),),
+            outputs=(TensorIO(name="out", shape=ShapeClass(dims=(None, None)), dtype_class=("f16",)),),
             numerics=NumericsSpec(accumulator_dtype="f32"),
         ),
         orchestration=OrchestrationSpec(execution=ExecutionEnvelope(hardware=env)),
@@ -87,10 +81,8 @@ def _softmax(target: str = "cuda-a100") -> KernelContractV3:
         op_name="softmax",
         archetype=KernelArchetype.REDUCE,
         io=IOContract(
-            inputs=(TensorIO(name="x", shape=ShapeClass(dims=(None, None)),
-                             dtype_class=("f32",)),),
-            outputs=(TensorIO(name="y", shape=ShapeClass(dims=(None, None)),
-                              dtype_class=("f32",)),),
+            inputs=(TensorIO(name="x", shape=ShapeClass(dims=(None, None)), dtype_class=("f32",)),),
+            outputs=(TensorIO(name="y", shape=ShapeClass(dims=(None, None)), dtype_class=("f32",)),),
             attributes=(StaticAttr(name="axis", value=-1),),
         ),
         orchestration=OrchestrationSpec(execution=ExecutionEnvelope(hardware=env)),
@@ -102,14 +94,17 @@ def _softmax(target: str = "cuda-a100") -> KernelContractV3:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("target,expected_translator_name", [
-    ("cuda-a100",       "triton"),
-    ("rocm-mi250",      "triton"),
-    ("test-gpu-simt",   "triton"),
-    ("openq_5165rb",    "hexagon_c"),
-    ("hexagon-v69",     "hexagon_c"),
-    ("totally-unknown", "triton"),     # default fallback
-])
+@pytest.mark.parametrize(
+    "target,expected_translator_name",
+    [
+        ("cuda-a100", "triton"),
+        ("rocm-mi250", "triton"),
+        ("test-gpu-simt", "triton"),
+        ("openq_5165rb", "hexagon_c"),
+        ("hexagon-v69", "hexagon_c"),
+        ("totally-unknown", "triton"),  # default fallback
+    ],
+)
 def test_select_translator_matches_target_taxonomy(target, expected_translator_name) -> None:
     t = select_translator(target)
     assert t.name == expected_translator_name
@@ -143,7 +138,7 @@ def test_triton_translation_carries_skeleton_and_grid() -> None:
     # Prompt context surfaces the IO + hints
     assert "linalg.matmul" in out.prompt_context
     assert "lhs" in out.prompt_context
-    assert "hint A" in out.prompt_context     # codegen_hints surfaced
+    assert "hint A" in out.prompt_context  # codegen_hints surfaced
 
 
 def test_triton_translation_arch_for_rocm_target() -> None:
@@ -157,7 +152,8 @@ def test_triton_translation_notes_mega_compatibility() -> None:
     kernel codegen + body splicing."""
     env = _envelope("cuda-a100")
     sub = KernelContractV3(
-        op_name="sub", archetype=KernelArchetype.COMPUTE_TILED,
+        op_name="sub",
+        archetype=KernelArchetype.COMPUTE_TILED,
         io=IOContract(
             inputs=(
                 TensorIO(name="a", shape=ShapeClass(dims=(None,)), dtype_class=("f32",)),

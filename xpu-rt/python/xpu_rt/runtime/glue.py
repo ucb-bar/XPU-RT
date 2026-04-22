@@ -40,7 +40,6 @@ from compgen.kernels.contract_v3 import (
     MemoryTier,
 )
 
-
 # ---------------------------------------------------------------------------
 # Buffer + dispatch primitives
 # ---------------------------------------------------------------------------
@@ -62,7 +61,7 @@ class Buffer:
     adapter-specific handle the dispatcher passes to the kernel."""
 
     spec: BufferSpec
-    handle: Any            # adapter-specific (a torch.Tensor, an mmap, …)
+    handle: Any  # adapter-specific (a torch.Tensor, an mmap, …)
     adapter_name: str = ""
 
 
@@ -71,7 +70,7 @@ class CapturedGraph:
     """A captured execution graph the adapter can replay cheaply."""
 
     backend: str
-    handle: Any            # adapter-specific (cudaGraph_t, …)
+    handle: Any  # adapter-specific (cudaGraph_t, …)
     input_shapes: tuple[tuple, ...] = ()
     metadata: dict[str, Any] = field(default_factory=dict)
 
@@ -80,8 +79,8 @@ class CapturedGraph:
 class DispatchResult:
     """What ``dispatch`` returns."""
 
-    output: Any                                     # kernel result(s)
-    elapsed_us: float | None = None                 # when the adapter measured it
+    output: Any  # kernel result(s)
+    elapsed_us: float | None = None  # when the adapter measured it
     adapter_name: str = ""
     used_graph_replay: bool = False
 
@@ -186,12 +185,15 @@ class CudaRuntimeAdapter:
         sample_inputs: tuple,
     ) -> CapturedGraph | None:
         import torch
+
         if not torch.cuda.is_available():
             return None
 
         from compgen.runtime.cuda_graph_wrapper import CudaGraphCaptureWrapper
+
         wrapper = CudaGraphCaptureWrapper(
-            model_fn=lambda x: model_fn(x), warmup_iters=3,
+            model_fn=lambda x: model_fn(x),
+            warmup_iters=3,
         )
         # Trigger capture for the sample shape
         if sample_inputs:
@@ -208,16 +210,23 @@ class CudaRuntimeAdapter:
 
     def synchronize(self) -> None:
         import torch
+
         if torch.cuda.is_available():
             torch.cuda.synchronize()
 
     def allocate_buffer(self, spec: BufferSpec) -> Buffer:
         import torch
+
         device = "cuda" if torch.cuda.is_available() else "cpu"
         # Map dtype string → torch dtype
         dtype_map = {
-            "f16": torch.float16, "bf16": torch.bfloat16, "f32": torch.float32,
-            "f64": torch.float64, "i8": torch.int8, "i32": torch.int32, "i64": torch.int64,
+            "f16": torch.float16,
+            "bf16": torch.bfloat16,
+            "f32": torch.float32,
+            "f64": torch.float64,
+            "i8": torch.int8,
+            "i32": torch.int32,
+            "i64": torch.int64,
         }
         td = dtype_map.get(spec.dtype, torch.float32)
         elements = max(spec.nbytes // td.itemsize, 1)
@@ -242,11 +251,16 @@ class CpuRuntimeAdapter:
         # CPU doesn't do PERSISTENT (no host-side persistent worker model)
         # or INLINE (no codegen-time inlining for dispatched ops).
         return contract.orchestration.dispatch.model in (
-            DispatchModel.SYNC, DispatchModel.ASYNC,
+            DispatchModel.SYNC,
+            DispatchModel.ASYNC,
         )
 
     def dispatch(
-        self, contract, callable_kernel, args, kwargs,
+        self,
+        contract,
+        callable_kernel,
+        args,
+        kwargs,
     ) -> DispatchResult:
         out = callable_kernel(*args, **kwargs)
         return DispatchResult(output=out, adapter_name=self.name)
@@ -265,9 +279,15 @@ class CpuRuntimeAdapter:
 
     def allocate_buffer(self, spec: BufferSpec) -> Buffer:
         import torch
+
         dtype_map = {
-            "f16": torch.float16, "bf16": torch.bfloat16, "f32": torch.float32,
-            "f64": torch.float64, "i8": torch.int8, "i32": torch.int32, "i64": torch.int64,
+            "f16": torch.float16,
+            "bf16": torch.bfloat16,
+            "f32": torch.float32,
+            "f64": torch.float64,
+            "i8": torch.int8,
+            "i32": torch.int32,
+            "i64": torch.int64,
         }
         td = dtype_map.get(spec.dtype, torch.float32)
         elements = max(spec.nbytes // td.itemsize, 1)
@@ -295,7 +315,9 @@ class BaremetalRuntimeAdapter:
     def supports(self, contract: KernelContractV3) -> bool:
         # Baremetal targets typically use SYNC + ASYNC; INLINE for ukernels.
         return contract.orchestration.dispatch.model in (
-            DispatchModel.SYNC, DispatchModel.ASYNC, DispatchModel.INLINE,
+            DispatchModel.SYNC,
+            DispatchModel.ASYNC,
+            DispatchModel.INLINE,
         )
 
     def dispatch(self, contract, callable_kernel, args, kwargs) -> DispatchResult:
@@ -306,7 +328,7 @@ class BaremetalRuntimeAdapter:
         return DispatchResult(output=out, adapter_name=self.name)
 
     def capture_graph(self, model_fn, sample_inputs) -> CapturedGraph | None:
-        return None     # baremetal models the entire program as one C bundle
+        return None  # baremetal models the entire program as one C bundle
 
     def replay(self, graph: CapturedGraph, inputs: tuple) -> Any:
         raise NotImplementedError
@@ -316,6 +338,7 @@ class BaremetalRuntimeAdapter:
 
     def allocate_buffer(self, spec: BufferSpec) -> Buffer:
         import torch
+
         # On host we use torch tensors; in real deployment this maps to
         # the NPU's allocator (the bundle's memory_plan.yaml drives it).
         t = torch.empty(max(spec.nbytes // 4, 1), device="cpu", dtype=torch.float32)
@@ -339,7 +362,7 @@ class RocmRuntimeAdapter:
         return self.name_str
 
     def supports(self, contract: KernelContractV3) -> bool:
-        return False    # not implemented yet — falls through to CPU adapter
+        return False  # not implemented yet — falls through to CPU adapter
 
     def dispatch(self, contract, callable_kernel, args, kwargs):
         raise NotImplementedError("ROCm adapter is W5 placeholder")
@@ -377,7 +400,7 @@ def select_adapter(target_name: str) -> RuntimeAdapter:
         return BaremetalRuntimeAdapter()
     if n.startswith("cpu") or "host" in n or "riscv" in n:
         return CpuRuntimeAdapter()
-    return CpuRuntimeAdapter()         # safest fall-back
+    return CpuRuntimeAdapter()  # safest fall-back
 
 
 __all__ = [

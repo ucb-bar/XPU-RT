@@ -138,6 +138,7 @@ def test_import_reconciles_func_signature_with_body_return_type() -> None:
 
 def test_coerce_static_dim_keeps_concrete_dims() -> None:
     from compgen.ir.payload.import_fx import _coerce_static_dim
+
     assert _coerce_static_dim(7) == 7
     assert _coerce_static_dim(0) == 0
 

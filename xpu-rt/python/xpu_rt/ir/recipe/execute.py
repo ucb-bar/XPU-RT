@@ -193,15 +193,11 @@ class RecipeExecutor:
             if _looks_like_mlir_transform(script):
                 mutator_handled += 1
                 continue
-            python_scripts.append(
-                TransformScript(name=f"recipe_transform_{i}", content=script)
-            )
+            python_scripts.append(TransformScript(name=f"recipe_transform_{i}", content=script))
 
         if not python_scripts:
             if mutator_handled:
-                diagnostics.append(
-                    f"Transforms: {mutator_handled} applied via payload_mutator"
-                )
+                diagnostics.append(f"Transforms: {mutator_handled} applied via payload_mutator")
             return module, mutator_handled, 0, diagnostics
 
         applicator = TransformApplicator()

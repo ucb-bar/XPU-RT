@@ -10,11 +10,6 @@ Locks in:
 from __future__ import annotations
 
 import pytest
-from xdsl.dialects.builtin import ModuleOp, StringAttr, TensorType, f16, i32
-from xdsl.dialects.func import FuncOp, ReturnOp
-from xdsl.dialects.tensor import EmptyOp
-from xdsl.ir import Block, Region
-
 from compgen.stages.dispatch.stage import DISPATCH_ID_ATTR
 from compgen.stages.encoding.stage import ENCODING_ATTR
 from compgen.stages.targets.rocm_gpu import (
@@ -27,20 +22,26 @@ from compgen.stages.targets.rocm_gpu import (
 )
 from compgen.stages.templates.codegen import CODEGEN_BACKEND_ATTR
 from compgen.stages.templates.tiling import TILE_SIZES_ATTR
-
+from xdsl.dialects.builtin import ModuleOp, StringAttr, TensorType, f16
+from xdsl.dialects.func import FuncOp, ReturnOp
+from xdsl.dialects.tensor import EmptyOp
+from xdsl.ir import Block, Region
 
 # ---------------------------------------------------------------------------
 # Plugin protocol conformance
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("plugin_cls,stage_name", [
-    (RocmEncodingPlugin, "encoding"),
-    (RocmLayoutPlugin,   "layout"),
-    (RocmDispatchPlugin, "dispatch"),
-    (RocmTilingPlugin,   "tiling"),
-    (RocmCodegenPlugin,  "codegen"),
-])
+@pytest.mark.parametrize(
+    "plugin_cls,stage_name",
+    [
+        (RocmEncodingPlugin, "encoding"),
+        (RocmLayoutPlugin, "layout"),
+        (RocmDispatchPlugin, "dispatch"),
+        (RocmTilingPlugin, "tiling"),
+        (RocmCodegenPlugin, "codegen"),
+    ],
+)
 def test_plugin_satisfies_protocol(plugin_cls, stage_name) -> None:
     from compgen.stages.base import TargetStagePlugin
 
@@ -60,9 +61,7 @@ def test_create_rocm_stack_has_6_stages_and_5_plugins(tmp_path) -> None:
     assert stack.target_name == "rocm_mi250"
     assert len(stack.stages) == 6
     assert len(stack.plugins) == 5
-    assert set(stack.plugins.keys()) == {
-        "encoding", "layout", "dispatch", "tiling", "codegen"
-    }
+    assert set(stack.plugins.keys()) == {"encoding", "layout", "dispatch", "tiling", "codegen"}
 
 
 def test_create_rocm_stack_stage_order(tmp_path) -> None:
@@ -93,9 +92,9 @@ def test_rocm_codegen_plugin_tags_triton_rocm_backend() -> None:
     mod = _matmul_module()
     out = plugin.transform(mod)
     tagged = [
-        op for op in out.walk()
-        if not isinstance(op, (ModuleOp, FuncOp, ReturnOp))
-        and any(isinstance(r.type, TensorType) for r in op.results)
+        op
+        for op in out.walk()
+        if not isinstance(op, (ModuleOp, FuncOp, ReturnOp)) and any(isinstance(r.type, TensorType) for r in op.results)
     ]
     assert tagged, "plugin should have tagged at least one op"
     for op in tagged:
@@ -126,9 +125,9 @@ def test_rocm_tiling_plugin_uses_64x64x16_for_matmul_named_ops() -> None:
     mod = _matmul_module()
     out = plugin.transform(mod)
     tagged = [
-        op for op in out.walk()
-        if not isinstance(op, (ModuleOp, FuncOp, ReturnOp))
-        and any(isinstance(r.type, TensorType) for r in op.results)
+        op
+        for op in out.walk()
+        if not isinstance(op, (ModuleOp, FuncOp, ReturnOp)) and any(isinstance(r.type, TensorType) for r in op.results)
     ]
     assert tagged
     for op in tagged:
@@ -142,9 +141,9 @@ def test_rocm_encoding_plugin_tags_row_major_for_non_matmul_tensor_ops() -> None
     mod = _matmul_module()
     out = plugin.transform(mod)
     tagged = [
-        op for op in out.walk()
-        if not isinstance(op, (ModuleOp, FuncOp, ReturnOp))
-        and any(isinstance(r.type, TensorType) for r in op.results)
+        op
+        for op in out.walk()
+        if not isinstance(op, (ModuleOp, FuncOp, ReturnOp)) and any(isinstance(r.type, TensorType) for r in op.results)
     ]
     assert tagged
     for op in tagged:
@@ -175,7 +174,6 @@ def test_plugins_accept_configure_call() -> None:
     target = load_profile("examples/target_profiles/cuda_a100.yaml")
     caps = infer_capabilities(target)
 
-    for plugin_cls in (RocmEncodingPlugin, RocmLayoutPlugin,
-                       RocmDispatchPlugin, RocmTilingPlugin, RocmCodegenPlugin):
+    for plugin_cls in (RocmEncodingPlugin, RocmLayoutPlugin, RocmDispatchPlugin, RocmTilingPlugin, RocmCodegenPlugin):
         p = plugin_cls()
         p.configure(target, caps)  # must not raise

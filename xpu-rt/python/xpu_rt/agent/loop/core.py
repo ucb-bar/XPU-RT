@@ -438,9 +438,7 @@ class AgenticCompilationLoop:
                 )
 
                 mutation_report = apply_recipe_to_payload(recipe_module, payload_after)
-                result.runtime_artifacts["recipe_payload_mutations"] = (
-                    mutation_report.to_dict()
-                )
+                result.runtime_artifacts["recipe_payload_mutations"] = mutation_report.to_dict()
 
                 executor = RecipeExecutor()
                 exec_result = executor.execute(payload_after, lowered, target)

@@ -78,9 +78,7 @@ class KernelBlasterProvider:
         """
         target = contract.target_name.lower()
         hardware = contract.hardware_key.lower()
-        is_cuda = any(
-            kw in target or kw in hardware for kw in _CUDA_TARGET_KEYWORDS
-        )
+        is_cuda = any(kw in target or kw in hardware for kw in _CUDA_TARGET_KEYWORDS)
         if not is_cuda:
             return False
         kb = contract.constraints.get("kernelblaster") or {}

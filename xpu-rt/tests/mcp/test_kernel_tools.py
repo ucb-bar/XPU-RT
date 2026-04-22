@@ -19,7 +19,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from compgen.kernels.contract_v3 import KernelContractV3
 from compgen.kernels.contract_v3_references import reference_matmul_contract
 from compgen.kernels.provider import SearchBudget
@@ -38,7 +37,6 @@ from compgen.mcp.tools.kernel import (
     register_kernel_result,
     request_kernel_codegen,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers — serialise a v3 contract to the dict shape the tools accept
@@ -83,11 +81,7 @@ def _serialise_v3(c: KernelContractV3) -> dict:
         "orchestration": {
             "execution": {
                 "hardware": {
-                    "target_name": (
-                        c.orchestration.execution.hardware.target_name
-                        if c.orchestration.execution
-                        else ""
-                    )
+                    "target_name": (c.orchestration.execution.hardware.target_name if c.orchestration.execution else "")
                 }
             }
         },
@@ -131,8 +125,12 @@ def test_kernel_tools_appear_in_all_tools_bundle() -> None:
     from compgen.mcp.tools import ALL_TOOLS
 
     names = {t["name"] for t in ALL_TOOLS}
-    for kt in ("request_kernel_codegen", "register_kernel_result",
-               "lookup_cached_kernel", "list_pending_kernel_requests"):
+    for kt in (
+        "request_kernel_codegen",
+        "register_kernel_result",
+        "lookup_cached_kernel",
+        "list_pending_kernel_requests",
+    ):
         assert kt in names, f"{kt} missing from ALL_TOOLS"
 
 
@@ -167,8 +165,10 @@ def test_request_then_register_then_lookup_round_trip(session_manager: SessionMa
 
     # 1. request — queues, returns rendered prompt + request_id
     req = request_kernel_codegen(
-        session_manager, session_id="sess1",
-        contract_v3=contract_dict, perf_target_us=100.0,
+        session_manager,
+        session_id="sess1",
+        contract_v3=contract_dict,
+        perf_target_us=100.0,
     )
     assert req["ok"] and not req["found_in_cache"]
     rid = req["request_id"]
@@ -183,7 +183,8 @@ def test_request_then_register_then_lookup_round_trip(session_manager: SessionMa
 
     # 3. register — agent fulfils
     fulfilled = register_kernel_result(
-        session_manager, session_id="sess1",
+        session_manager,
+        session_id="sess1",
         request_id=rid,
         kernel_code="@triton.jit\ndef matmul(...): ...\n",
         language="triton",
@@ -196,8 +197,7 @@ def test_request_then_register_then_lookup_round_trip(session_manager: SessionMa
     assert list_pending_kernel_requests(session_manager, session_id="sess1")["pending_count"] == 0
 
     # 4. lookup — hits
-    hit = lookup_cached_kernel(session_manager, session_id="sess1",
-                               contract_v3=contract_dict)
+    hit = lookup_cached_kernel(session_manager, session_id="sess1", contract_v3=contract_dict)
     assert hit["found"] is True
     assert hit["language"] == "triton"
     assert "@triton.jit" in hit["kernel_code"]
@@ -207,14 +207,12 @@ def test_request_short_circuits_on_cached_fingerprint(session_manager: SessionMa
     """A second request for the same v3 contract returns the cached
     kernel directly — no new pending entry."""
     contract_dict = _serialise_v3(reference_matmul_contract())
-    req = request_kernel_codegen(session_manager, session_id="sess1",
-                                 contract_v3=contract_dict)
-    register_kernel_result(session_manager, session_id="sess1",
-                           request_id=req["request_id"],
-                           kernel_code="// cached body\n", language="c")
+    req = request_kernel_codegen(session_manager, session_id="sess1", contract_v3=contract_dict)
+    register_kernel_result(
+        session_manager, session_id="sess1", request_id=req["request_id"], kernel_code="// cached body\n", language="c"
+    )
 
-    req2 = request_kernel_codegen(session_manager, session_id="sess1",
-                                  contract_v3=contract_dict)
+    req2 = request_kernel_codegen(session_manager, session_id="sess1", contract_v3=contract_dict)
     assert req2["found_in_cache"] is True
     assert req2["kernel_code"] == "// cached body\n"
     # No new pending entry was queued.
@@ -224,11 +222,13 @@ def test_request_short_circuits_on_cached_fingerprint(session_manager: SessionMa
 def test_register_with_empty_kernel_code_requeues(session_manager: SessionManager) -> None:
     """Empty body should re-queue, not poison the cache."""
     req = request_kernel_codegen(
-        session_manager, session_id="sess1",
+        session_manager,
+        session_id="sess1",
         contract_v3=_serialise_v3(reference_matmul_contract()),
     )
     out = register_kernel_result(
-        session_manager, session_id="sess1",
+        session_manager,
+        session_id="sess1",
         request_id=req["request_id"],
         kernel_code="   \n",
     )
@@ -240,7 +240,8 @@ def test_register_with_empty_kernel_code_requeues(session_manager: SessionManage
 
 def test_register_with_unknown_request_id_errors(session_manager: SessionManager) -> None:
     out = register_kernel_result(
-        session_manager, session_id="sess1",
+        session_manager,
+        session_id="sess1",
         request_id="req_does_not_exist",
         kernel_code="// whatever\n",
     )
@@ -250,7 +251,8 @@ def test_register_with_unknown_request_id_errors(session_manager: SessionManager
 
 def test_lookup_miss_returns_found_false(session_manager: SessionManager) -> None:
     out = lookup_cached_kernel(
-        session_manager, session_id="sess1",
+        session_manager,
+        session_id="sess1",
         contract_v3=_serialise_v3(reference_matmul_contract()),
     )
     assert out["found"] is False
@@ -274,10 +276,10 @@ def test_in_session_codegen_returns_cached_kernel_to_provider(session_manager: S
     contract_dict = _serialise_v3(contract_v3)
 
     # Step 1: pre-populate cache.
-    req = request_kernel_codegen(session_manager, session_id="sess1",
-                                 contract_v3=contract_dict)
+    req = request_kernel_codegen(session_manager, session_id="sess1", contract_v3=contract_dict)
     register_kernel_result(
-        session_manager, session_id="sess1",
+        session_manager,
+        session_id="sess1",
         request_id=req["request_id"],
         kernel_code="@triton.jit\ndef k(...): pass\n",
         language="triton",
@@ -332,7 +334,8 @@ def test_kernel_persists_across_session_restart(tmp_path: Path) -> None:
     sm_a.open(session_id="sess_a")
     req = request_kernel_codegen(sm_a, session_id="sess_a", contract_v3=contract_dict)
     register_kernel_result(
-        sm_a, session_id="sess_a",
+        sm_a,
+        session_id="sess_a",
         request_id=req["request_id"],
         kernel_code=expected_kernel,
         language="triton",
@@ -367,13 +370,15 @@ def test_disk_store_writes_files_to_user_folder_layout(tmp_path: Path) -> None:
     # Use the MICRO ukernel reference because it carries a real
     # ExecutionEnvelope (and therefore a target_name we can assert on).
     from compgen.kernels.contract_v3_references import reference_micro_matmul_tile_contract
+
     contract = reference_micro_matmul_tile_contract()
     contract_dict = _serialise_v3(contract)
     target_name = contract.orchestration.execution.hardware.target_name
 
     req = request_kernel_codegen(sm, session_id="s1", contract_v3=contract_dict)
     register_kernel_result(
-        sm, session_id="s1",
+        sm,
+        session_id="s1",
         request_id=req["request_id"],
         kernel_code="@triton.jit\ndef mm(...): pass\n",
         language="triton",
@@ -386,6 +391,7 @@ def test_disk_store_writes_files_to_user_folder_layout(tmp_path: Path) -> None:
     assert manifest_path.exists(), "manifest.json must be written"
 
     import json
+
     manifest = json.loads(manifest_path.read_text())
     fp = req["fingerprint"]
     assert fp in manifest, f"fingerprint {fp} missing from manifest"

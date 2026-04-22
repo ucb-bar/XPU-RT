@@ -172,9 +172,7 @@ def test_accepts_contract_requires_cuda_target():
 def test_accepts_contract_requires_kb_payload():
     provider = KernelBlasterProvider()
     bare = KernelContract(target_name="cuda", hardware_key="H100")
-    partial = KernelContract(
-        target_name="cuda", constraints={"kernelblaster": {"init_cu": "x"}}
-    )
+    partial = KernelContract(target_name="cuda", constraints={"kernelblaster": {"init_cu": "x"}})
     assert not provider.accepts_contract(bare)
     assert not provider.accepts_contract(partial)
 
@@ -398,9 +396,7 @@ def test_nonzero_return_is_not_found(tmp_path: Path):
 def test_contract_missing_payload_raises_value_error(tmp_path: Path):
     cfg = _local_config(tmp_path)
     adapter = KernelBlasterAdapter(config=cfg, _run=_make_runner()[0])
-    bad = KernelContract(
-        target_name="cuda", constraints={"kernelblaster": {"init_cu": "x"}}
-    )
+    bad = KernelContract(target_name="cuda", constraints={"kernelblaster": {"init_cu": "x"}})
     with pytest.raises(ValueError, match="init_cu"):
         adapter.search_kernel(bad, SearchBudget())
 

@@ -12,13 +12,12 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
+from compgen.memory import seed_lessons
 from compgen.memory.knowledge import (
     KnowledgeStore,
     Lesson,
     scope_chain_for_target,
 )
-from compgen.memory import seed_lessons
 
 
 @pytest.fixture
@@ -52,9 +51,11 @@ def test_scope_chain_for_unknown_target_falls_back_by_prefix() -> None:
 
 def test_add_then_query_round_trips(store: KnowledgeStore) -> None:
     l = Lesson(
-        scope="general", category="design",
+        scope="general",
+        category="design",
         summary="opt-in instrumentation",
-        stage="instrumentation", topic="profiling",
+        stage="instrumentation",
+        topic="profiling",
         tags=("profiling",),
     )
     store.add(l)
@@ -83,21 +84,40 @@ def test_lesson_rejects_invalid_stage() -> None:
 def _populate_test_lessons(store: KnowledgeStore) -> None:
     # Note: this lesson is intentionally topic="" so it matches *any* topic filter
     # (semantics: empty topic = universal applicability).
-    store.add(Lesson(scope="general", category="design",
-                     summary="general design lesson",
-                     stage="any"))
-    store.add(Lesson(scope="general", category="recipe",
-                     summary="general matmul recipe",
-                     stage="kernel-gen", op_family="matmul",
-                     topic="tile-selection", tags=("matmul",)))
-    store.add(Lesson(scope="backends/gpu/nvidia/turing", category="limit",
-                     summary="turing-specific matmul limit",
-                     stage="kernel-gen", op_family="matmul",
-                     topic="perf-ceiling", tags=("matmul", "turing")))
-    store.add(Lesson(scope="backends/gpu/nvidia/turing", category="recipe",
-                     summary="turing-specific softmax recipe",
-                     stage="kernel-gen", op_family="softmax",
-                     topic="tile-selection", tags=("softmax", "turing")))
+    store.add(Lesson(scope="general", category="design", summary="general design lesson", stage="any"))
+    store.add(
+        Lesson(
+            scope="general",
+            category="recipe",
+            summary="general matmul recipe",
+            stage="kernel-gen",
+            op_family="matmul",
+            topic="tile-selection",
+            tags=("matmul",),
+        )
+    )
+    store.add(
+        Lesson(
+            scope="backends/gpu/nvidia/turing",
+            category="limit",
+            summary="turing-specific matmul limit",
+            stage="kernel-gen",
+            op_family="matmul",
+            topic="perf-ceiling",
+            tags=("matmul", "turing"),
+        )
+    )
+    store.add(
+        Lesson(
+            scope="backends/gpu/nvidia/turing",
+            category="recipe",
+            summary="turing-specific softmax recipe",
+            stage="kernel-gen",
+            op_family="softmax",
+            topic="tile-selection",
+            tags=("softmax", "turing"),
+        )
+    )
 
 
 def test_query_by_op_family_excludes_unrelated_ops(store: KnowledgeStore) -> None:
@@ -135,8 +155,8 @@ def test_query_by_stage_filters_correctly(store: KnowledgeStore) -> None:
         stage="instrumentation",
     )
     summaries_p = {l.summary for l in profiling}
-    assert "general design lesson" in summaries_p           # any-stage ✓
-    assert "general matmul recipe" not in summaries_p       # kernel-gen ✗
+    assert "general design lesson" in summaries_p  # any-stage ✓
+    assert "general matmul recipe" not in summaries_p  # kernel-gen ✗
     assert "turing-specific matmul limit" not in summaries_p
 
 
@@ -147,10 +167,10 @@ def test_query_by_topic_narrows_to_one_topic(store: KnowledgeStore) -> None:
         topic="tile-selection",
     )
     summaries = {l.summary for l in tile}
-    assert "general matmul recipe" in summaries          # tile-selection ✓
+    assert "general matmul recipe" in summaries  # tile-selection ✓
     assert "turing-specific softmax recipe" in summaries  # tile-selection ✓
     assert "turing-specific matmul limit" not in summaries  # perf-ceiling ✗
-    assert "general design lesson" in summaries           # topic="" matches all
+    assert "general design lesson" in summaries  # topic="" matches all
 
 
 def test_intersected_filters_narrow_to_one_lesson(store: KnowledgeStore) -> None:
@@ -181,10 +201,12 @@ def test_context_brief_renders_only_relevant_lessons(store: KnowledgeStore) -> N
     _populate_test_lessons(store)
     brief = store.context_brief(
         "cuda-titan-rtx",
-        stage="kernel-gen", op_family="matmul", topic="tile-selection",
+        stage="kernel-gen",
+        op_family="matmul",
+        topic="tile-selection",
     )
     assert "general matmul recipe" in brief
-    assert "turing-specific softmax recipe" not in brief    # different op_family
+    assert "turing-specific softmax recipe" not in brief  # different op_family
     # Header carries the filter values
     assert "cuda-titan-rtx" in brief
     assert "kernel-gen" in brief
@@ -207,7 +229,7 @@ def test_seed_install_is_idempotent(store: KnowledgeStore) -> None:
     n1 = seed_lessons.install(store)
     assert n1 > 0
     n2 = seed_lessons.install(store)
-    assert n2 == 0          # nothing new added on second run
+    assert n2 == 0  # nothing new added on second run
 
 
 def test_seed_lessons_cover_known_scopes(store: KnowledgeStore) -> None:

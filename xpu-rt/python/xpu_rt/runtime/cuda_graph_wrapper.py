@@ -38,9 +38,9 @@ class _CapturedGraph:
     """One captured graph keyed by (B, S) shape tuple."""
 
     graph: torch.cuda.CUDAGraph
-    static_input: torch.Tensor      # the graph reads from this tensor
-    static_output: torch.Tensor     # the graph writes to this tensor
-    pool: Any = None                # private memory pool handle
+    static_input: torch.Tensor  # the graph reads from this tensor
+    static_output: torch.Tensor  # the graph writes to this tensor
+    pool: Any = None  # private memory pool handle
 
 
 @dataclass

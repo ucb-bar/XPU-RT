@@ -167,8 +167,7 @@ def test_segment_function_handles_multi_block_func_body() -> None:
     """A real HF Llama capture emits func bodies with multiple blocks
     (e.g. attention-mask conditionals). The segmenter must walk every
     block, not assume single-block via ``Region.block``."""
-    from xdsl.dialects.builtin import IntegerType
-    from xdsl.dialects.builtin import IntegerAttr
+    from xdsl.dialects.builtin import IntegerAttr, IntegerType
 
     i32 = IntegerType(32)
     b0 = Block()

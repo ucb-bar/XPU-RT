@@ -808,65 +808,47 @@ def decompose_matmul(operands, meta, node_name):
 
 def decompose_to_copy(operands, meta, node_name):
     """aten._to_copy.default — dtype/device cast. Emits a DTYPE_CAST kernel."""
-    return _opaque_decomp(
-        "aten_to_dtype", operands[:1], meta, "cast", pattern_hint="dtype_cast"
-    )
+    return _opaque_decomp("aten_to_dtype", operands[:1], meta, "cast", pattern_hint="dtype_cast")
 
 
 def decompose_where_self(operands, meta, node_name):
     """aten.where.self(condition, x, y) — elementwise selection."""
-    return _opaque_decomp(
-        "aten_where", operands[:3], meta, "select", pattern_hint="where"
-    )
+    return _opaque_decomp("aten_where", operands[:3], meta, "select", pattern_hint="where")
 
 
 def decompose_scalar_tensor(operands, meta, node_name):
     """aten.scalar_tensor.default(value, ...) — 0-rank constant fill."""
-    return _opaque_decomp(
-        "aten_scalar_tensor", [], meta, "fill", pattern_hint="fill"
-    )
+    return _opaque_decomp("aten_scalar_tensor", [], meta, "fill", pattern_hint="fill")
 
 
 def decompose_full_like(operands, meta, node_name):
     """aten.full_like.default(input, fill_value, ...) — same-shape fill."""
-    return _opaque_decomp(
-        "aten_full_like", operands[:1], meta, "fill", pattern_hint="fill"
-    )
+    return _opaque_decomp("aten_full_like", operands[:1], meta, "fill", pattern_hint="fill")
 
 
 def decompose_full(operands, meta, node_name):
     """aten.full.default(size, fill_value, ...) — explicit-shape fill."""
-    return _opaque_decomp(
-        "aten_full", [], meta, "fill", pattern_hint="fill"
-    )
+    return _opaque_decomp("aten_full", [], meta, "fill", pattern_hint="fill")
 
 
 def decompose_arange(operands, meta, node_name):
     """aten.arange.start_step(start, end, step, ...) — index generator."""
-    return _opaque_decomp(
-        "aten_arange", [], meta, "arange", pattern_hint="arange"
-    )
+    return _opaque_decomp("aten_arange", [], meta, "arange", pattern_hint="arange")
 
 
 def decompose_logical_not(operands, meta, node_name):
     """aten.logical_not.default — pointwise boolean NOT."""
-    return _opaque_decomp(
-        "aten_logical_not", operands[:1], meta, "logical", pattern_hint="logical_not"
-    )
+    return _opaque_decomp("aten_logical_not", operands[:1], meta, "logical", pattern_hint="logical_not")
 
 
 def decompose_bitwise_and(operands, meta, node_name):
     """aten.bitwise_and.Tensor — pointwise bitwise AND."""
-    return _opaque_decomp(
-        "aten_bitwise_and", operands[:2], meta, "bitwise", pattern_hint="bitwise_and"
-    )
+    return _opaque_decomp("aten_bitwise_and", operands[:2], meta, "bitwise", pattern_hint="bitwise_and")
 
 
 def decompose_any_dim(operands, meta, node_name):
     """aten.any.dim(input, dim, keepdim) — boolean OR reduction along dim."""
-    return _opaque_decomp(
-        "aten_any_dim", operands[:1], meta, "bool_reduce", pattern_hint="bool_reduce"
-    )
+    return _opaque_decomp("aten_any_dim", operands[:1], meta, "bool_reduce", pattern_hint="bool_reduce")
 
 
 def decompose_index_tensor(operands, meta, node_name):
@@ -874,37 +856,27 @@ def decompose_index_tensor(operands, meta, node_name):
     tensors arrive via meta['_fx_args'][1] as a list."""
     # Forward only the source SSA value; the index list is a Python list of
     # tensors that the kernel will receive via the contract metadata.
-    return _opaque_decomp(
-        "aten_index", operands[:1], meta, "gather", pattern_hint="gather"
-    )
+    return _opaque_decomp("aten_index", operands[:1], meta, "gather", pattern_hint="gather")
 
 
 def decompose_compare(operands, meta, node_name):
     """aten.{eq,ne,le,lt,gt,ge}.{Tensor,Scalar} — pointwise comparison."""
-    return _opaque_decomp(
-        "aten_compare", operands[:2], meta, "compare", pattern_hint="compare"
-    )
+    return _opaque_decomp("aten_compare", operands[:2], meta, "compare", pattern_hint="compare")
 
 
 def decompose_cos(operands, meta, node_name):
     """aten.cos.default — pointwise cosine (RoPE)."""
-    return _opaque_decomp(
-        "aten_cos", operands[:1], meta, "trig", pattern_hint="cos"
-    )
+    return _opaque_decomp("aten_cos", operands[:1], meta, "trig", pattern_hint="cos")
 
 
 def decompose_sin(operands, meta, node_name):
     """aten.sin.default — pointwise sine (RoPE)."""
-    return _opaque_decomp(
-        "aten_sin", operands[:1], meta, "trig", pattern_hint="sin"
-    )
+    return _opaque_decomp("aten_sin", operands[:1], meta, "trig", pattern_hint="sin")
 
 
 def decompose_cumsum(operands, meta, node_name):
     """aten.cumsum.default — prefix sum along dim."""
-    return _opaque_decomp(
-        "aten_cumsum", operands[:1], meta, "scan", pattern_hint="cumsum"
-    )
+    return _opaque_decomp("aten_cumsum", operands[:1], meta, "scan", pattern_hint="cumsum")
 
 
 def decompose_slice_tensor(operands, meta, node_name):

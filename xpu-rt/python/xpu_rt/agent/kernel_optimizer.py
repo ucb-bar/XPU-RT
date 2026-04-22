@@ -30,8 +30,6 @@ Usage::
 
 from __future__ import annotations
 
-import hashlib
-import json
 import time
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
@@ -41,10 +39,6 @@ from compgen.agent.hw_aware_dispatch import (
     MultiTargetDispatchDecision,
     TargetDispatchDecision,
     decide_dispatch,
-)
-from compgen.kernels.contract_translator import (
-    KernelContractTranslator,
-    select_translator,
 )
 from compgen.kernels.contract_v3 import (
     Granularity,
@@ -58,7 +52,6 @@ from compgen.memory.kernel_db import (
     shared_db,
 )
 from compgen.runtime.glue import CapturedGraph, RuntimeAdapter, select_adapter
-
 
 # ---------------------------------------------------------------------------
 # Records
@@ -160,6 +153,7 @@ def _v3_to_fingerprint_dict(c: KernelContractV3) -> dict[str, Any]:
 def fingerprint_for(contract: KernelContractV3) -> str:
     """Stable fingerprint that matches the MCP cache scheme."""
     from compgen.mcp.tools.kernel import contract_fingerprint
+
     return contract_fingerprint(_v3_to_fingerprint_dict(contract))
 
 
@@ -178,9 +172,9 @@ class CodegenResult:
 
     callable_kernel: Callable[..., Any]
     provider_name: str
-    source: str = ""           # raw kernel source — persisted to KernelStore
+    source: str = ""  # raw kernel source — persisted to KernelStore
     language: str = "python"
-    translation_artifact: Any = None   # output of the v3-translator if used
+    translation_artifact: Any = None  # output of the v3-translator if used
 
 
 @dataclass(frozen=True)
@@ -199,13 +193,16 @@ class BenchResult:
 
 
 def _identity_codegen(
-    contract: KernelContractV3, decision: TargetDispatchDecision,
+    contract: KernelContractV3,
+    decision: TargetDispatchDecision,
 ) -> CodegenResult:
     """Tiny default for tests / smoke-runs. Real users pass their own."""
+
     def _kernel(*args, **kwargs):
         if args:
             return args[0]
         return None
+
     return CodegenResult(
         callable_kernel=_kernel,
         provider_name="identity_default",
@@ -244,14 +241,17 @@ def _optimise_region(
         # Cache hit: return a no-op callable handle and the recorded perf.
         # Real systems re-load the kernel source from KernelStore here;
         # callers supply their own loader for that.
-        kernel: Callable[..., Any] = lambda *a, **kw: None       # noqa: E731
+        kernel: Callable[..., Any] = lambda *a, **kw: None  # noqa: E731
         return (
             KernelDecision(
-                contract=contract, fingerprint=fp,
+                contract=contract,
+                fingerprint=fp,
                 granularity=decision.granularity,
-                adapter_name=adapter.name, target=target,
+                adapter_name=adapter.name,
+                target=target,
                 provider_name="cache",
-                cached=True, perf_us=cached.perf_us,
+                cached=True,
+                perf_us=cached.perf_us,
                 rationale=f"cache hit ({cached.perf_us:.1f}us under {target})",
             ),
             kernel,
@@ -260,24 +260,31 @@ def _optimise_region(
     # Miss → codegen → bench → persist.
     cg = codegen_fn(contract, decision)
     bench = bench_fn(contract, cg)
-    db.record_kernel_perf(KernelPerfRecord(
-        target=target, op_family=op_family, fingerprint=fp,
-        perf_us=float(bench.perf_us or 0.0),
-        correctness_passed=bool(bench.correct),
-        source_path="", measured_at=time.time(), notes=cg.provider_name,
-    ))
+    db.record_kernel_perf(
+        KernelPerfRecord(
+            target=target,
+            op_family=op_family,
+            fingerprint=fp,
+            perf_us=float(bench.perf_us or 0.0),
+            correctness_passed=bool(bench.correct),
+            source_path="",
+            measured_at=time.time(),
+            notes=cg.provider_name,
+        )
+    )
     translator_name = ""
     if cg.translation_artifact is not None:
-        translator_name = (
-            getattr(cg.translation_artifact, "name", None) or "<unknown>"
-        )
+        translator_name = getattr(cg.translation_artifact, "name", None) or "<unknown>"
     return (
         KernelDecision(
-            contract=contract, fingerprint=fp,
+            contract=contract,
+            fingerprint=fp,
             granularity=decision.granularity,
-            adapter_name=adapter.name, target=target,
+            adapter_name=adapter.name,
+            target=target,
             provider_name=cg.provider_name,
-            cached=False, perf_us=bench.perf_us,
+            cached=False,
+            perf_us=bench.perf_us,
             rationale=decision.rationale,
             translator_name=translator_name,
         ),
@@ -357,13 +364,20 @@ def optimize_model(
 
     for contract in contracts:
         verdict: MultiTargetDispatchDecision = decide_dispatch(
-            region=[contract], envelopes=[env],
-            perf_budget_us=perf_budget_us, objective=objective, llm=llm,
+            region=[contract],
+            envelopes=[env],
+            perf_budget_us=perf_budget_us,
+            objective=objective,
+            llm=llm,
         )
         decision = verdict.per_target[env.target_name]
         kd, kernel = _optimise_region(
-            contract, decision,
-            adapter=adapter, codegen_fn=codegen, bench_fn=bench, db=kdb,
+            contract,
+            decision,
+            adapter=adapter,
+            codegen_fn=codegen,
+            bench_fn=bench,
+            db=kdb,
         )
         decisions.append(kd)
         bound_kernels[kd.fingerprint] = kernel
@@ -374,11 +388,13 @@ def optimize_model(
     if model_fn is not None and capture_graph:
         try:
             captured = adapter.capture_graph(model_fn, sample_inputs)
-        except Exception:                          # noqa: BLE001
+        except Exception:  # noqa: BLE001
             captured = None
         if captured is not None:
+
             def _replay(*args, **_kwargs):
                 return adapter.replay(captured, args)
+
             forward = _replay
         else:
             forward = model_fn
@@ -455,10 +471,18 @@ def optimize_model_multi_target(
                 codegen_hints=base_env.codegen_hints,
             )
         out[target] = optimize_model(
-            model_fn=model_fn, target=target, contracts=contracts,
-            envelope=env, perf_budget_us=perf_budget_us, objective=objective,
-            llm=llm, codegen_fn=codegen_fn, bench_fn=bench_fn, db=db,
-            capture_graph=capture_graph, sample_inputs=sample_inputs,
+            model_fn=model_fn,
+            target=target,
+            contracts=contracts,
+            envelope=env,
+            perf_budget_us=perf_budget_us,
+            objective=objective,
+            llm=llm,
+            codegen_fn=codegen_fn,
+            bench_fn=bench_fn,
+            db=db,
+            capture_graph=capture_graph,
+            sample_inputs=sample_inputs,
         )
     return out
 

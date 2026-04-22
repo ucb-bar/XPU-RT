@@ -16,10 +16,9 @@ Covers:
 
 from __future__ import annotations
 
-from compgen.kernels.contract_v3 import KernelArchetype, Granularity
+from compgen.kernels.contract_v3 import Granularity, KernelArchetype
 from compgen.kernels.contract_v3_references import reference_matmul_contract
 from compgen.kernels.provider import (
-    KernelContract,
     KnowledgeExport,
     ProviderResult,
     SearchBudget,
@@ -34,7 +33,6 @@ from compgen.kernels.providers.escalating_router import (
     EscalationReason,
 )
 
-
 # ---------------------------------------------------------------------------
 # Bridge: v3 → v1 keeps the v1 fields and attaches the rich kernel_facing
 # ---------------------------------------------------------------------------
@@ -46,7 +44,7 @@ def test_bridge_preserves_v1_fields_and_attaches_kernel_facing_view() -> None:
 
     assert v1.op_family == "linalg.matmul"
     assert v1.region_id == "r_42"
-    assert len(v1.input_shapes) == 2     # matmul has 2 inputs
+    assert len(v1.input_shapes) == 2  # matmul has 2 inputs
     assert len(v1.output_shapes) == 1
     # dtype set is the UNION across all IO (bf16/f16/f32 + bf16 output)
     assert "bf16" in v1.dtypes
@@ -206,7 +204,7 @@ def test_router_escalates_on_perf_miss() -> None:
     outcome = router.route(
         v3_to_v1_contract(reference_matmul_contract()),
         SearchBudget(),
-        perf_target_us=100.0,   # 500us > 100us × 2.0 → escalate; 80us ≤ 200us → accept
+        perf_target_us=100.0,  # 500us > 100us × 2.0 → escalate; 80us ≤ 200us → accept
     )
     assert outcome.chosen_provider == "autocomp"
     assert outcome.final_reason is EscalationReason.NONE
@@ -221,7 +219,7 @@ def test_router_returns_last_result_when_all_tiers_escalate() -> None:
     router = EscalatingProviderRouter(
         providers=[
             _ConstantProvider("claude_code", ProviderResult(found=True, kernel_code="// 1\n")),
-            _ConstantProvider("autocomp",    ProviderResult(found=True, kernel_code="// 2\n")),
+            _ConstantProvider("autocomp", ProviderResult(found=True, kernel_code="// 2\n")),
         ],
         gate=gate_always_fail,
     )
@@ -235,13 +233,17 @@ def test_router_returns_last_result_when_all_tiers_escalate() -> None:
 def test_router_treats_provider_exception_as_escalate() -> None:
     class _Boom:
         name_str = "boom"
+
         @property
         def name(self):
             return self.name_str
+
         def accepts_contract(self, _c):
             return True
+
         def search(self, _c, _b):
             raise ValueError("provider crashed")
+
         def export_knowledge(self):
             return []
 
@@ -260,13 +262,17 @@ def test_router_treats_provider_exception_as_escalate() -> None:
 def test_router_skips_providers_that_decline_the_contract() -> None:
     class _DeclinesAll:
         name_str = "declines"
+
         @property
         def name(self):
             return self.name_str
+
         def accepts_contract(self, _c):
             return False
+
         def search(self, *_):
             raise AssertionError("should not be called")
+
         def export_knowledge(self):
             return []
 

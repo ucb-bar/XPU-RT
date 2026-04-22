@@ -313,20 +313,14 @@ def _run_with_report(
         hash_before = ""
         hash_after = ""
         if dumper is not None and module_ref is not None:
-            _, hash_before = dumper.dump(
-                name=name, phase="before", module=module_ref, trace_event_id=span_id or ""
-            )
+            _, hash_before = dumper.dump(name=name, phase="before", module=module_ref, trace_event_id=span_id or "")
         try:
             stats = passes[fn_key](*args, **kwargs)
         except Exception as exc:  # noqa: BLE001
             log.warning(f"pipeline.{name}.failed", error=str(exc))
-            return PipelineStageReport(
-                name=name, group=group, skipped=True, skipped_reason=f"error: {exc}"
-            )
+            return PipelineStageReport(name=name, group=group, skipped=True, skipped_reason=f"error: {exc}")
         if dumper is not None and module_ref is not None:
-            _, hash_after = dumper.dump(
-                name=name, phase="after", module=module_ref, trace_event_id=span_id or ""
-            )
+            _, hash_after = dumper.dump(name=name, phase="after", module=module_ref, trace_event_id=span_id or "")
         # Emit a point event summarising the pass result so ``trace.jsonl``
         # carries stats + IR-hash deltas without re-reading the dump files.
         from compgen.trace import EventKind, Phase, get_active_bus

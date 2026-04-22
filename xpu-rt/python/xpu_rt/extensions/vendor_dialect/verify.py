@@ -22,9 +22,10 @@ import importlib
 import importlib.util
 import sys
 import time
+from collections.abc import Callable
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import structlog
 
@@ -113,11 +114,7 @@ def verify_package(
         )
 
     # Gate 3 — workload diff-test
-    want_workload = (
-        run_workload_gate
-        if run_workload_gate is not None
-        else descriptor.verification.workload_diff_test
-    )
+    want_workload = run_workload_gate if run_workload_gate is not None else descriptor.verification.workload_diff_test
     if want_workload and golden_inputs is not None and golden_output is not None:
         report.gates.append(
             _run_gate(
@@ -278,10 +275,7 @@ def _load_scaffolded_adapter(package_path: Path) -> VendorDialectAdapter:
         raise AttributeError(f"{pkg_name}.load_adapter not found")
     adapter = factory()
     if not isinstance(adapter, VendorDialectAdapter):
-        raise TypeError(
-            f"{pkg_name}.load_adapter returned {type(adapter).__name__}, "
-            f"expected VendorDialectAdapter"
-        )
+        raise TypeError(f"{pkg_name}.load_adapter returned {type(adapter).__name__}, expected VendorDialectAdapter")
     return adapter
 
 

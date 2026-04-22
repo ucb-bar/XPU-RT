@@ -12,7 +12,6 @@ Locks in:
 from __future__ import annotations
 
 import pytest
-
 from compgen.plugins import (
     GROUP_DECOMPOSITIONS,
     GROUP_FUSION_RULES,
@@ -53,10 +52,17 @@ def test_known_groups_match_documented_set() -> None:
 
 class _GoodKernelProvider:
     """Satisfies the KernelProvider protocol surface."""
+
     name = "test_provider"
-    def accepts_contract(self, contract): return True
-    def search(self, contract, budget):  return None
-    def export_knowledge(self):           return []
+
+    def accepts_contract(self, contract):
+        return True
+
+    def search(self, contract, budget):
+        return None
+
+    def export_knowledge(self):
+        return []
 
 
 def test_register_kernel_provider_loads_and_lists_it() -> None:
@@ -70,15 +76,17 @@ def test_register_kernel_provider_loads_and_lists_it() -> None:
 
 def test_register_rejects_invalid_kernel_provider() -> None:
     """Object missing the required protocol methods → ValueError."""
+
     class _Incomplete:
-        name = "x"   # missing search / accepts_contract / export_knowledge
+        name = "x"  # missing search / accepts_contract / export_knowledge
+
     with pytest.raises(ValueError, match="missing KernelProvider methods"):
         register(GROUP_KERNEL_PROVIDERS, "bad", _Incomplete())
 
 
 def test_register_decomposition_must_be_callable() -> None:
     with pytest.raises(ValueError, match="must be callable"):
-        register(GROUP_DECOMPOSITIONS, "bad", object())   # not callable
+        register(GROUP_DECOMPOSITIONS, "bad", object())  # not callable
 
 
 def test_register_fusion_rule_must_be_callable() -> None:
@@ -88,11 +96,20 @@ def test_register_fusion_rule_must_be_callable() -> None:
 
 def test_register_target_backend_must_have_required_methods() -> None:
     class _GoodBackend:
-        def supports_target(self, name):     return True
-        def get_options(self):               return {}
-        def get_compilation_stages(self):    return []
-        def compile_stage(self, *a, **k):    return None
-        def validate(self, *a, **k):         return True
+        def supports_target(self, name):
+            return True
+
+        def get_options(self):
+            return {}
+
+        def get_compilation_stages(self):
+            return []
+
+        def compile_stage(self, *a, **k):
+            return None
+
+        def validate(self, *a, **k):
+            return True
 
     register(GROUP_TARGET_BACKENDS, "good_be", _GoodBackend())
     assert "good_be" in registry().names_in(GROUP_TARGET_BACKENDS)
@@ -117,6 +134,4 @@ def test_discover_all_runs_clean_with_no_plugins() -> None:
 
 def test_registry_failures_list_is_empty_when_no_failures() -> None:
     discover_all()
-    assert registry().failures == [] or all(
-        isinstance(f, tuple) and len(f) == 3 for f in registry().failures
-    )
+    assert registry().failures == [] or all(isinstance(f, tuple) and len(f) == 3 for f in registry().failures)

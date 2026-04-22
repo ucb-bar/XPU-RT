@@ -83,9 +83,7 @@ def scaffold_package(
     pkg_root = out / descriptor.package_name
     if pkg_root.exists():
         if not overwrite:
-            raise FileExistsError(
-                f"{pkg_root} already exists; pass overwrite=True to replace"
-            )
+            raise FileExistsError(f"{pkg_root} already exists; pass overwrite=True to replace")
         shutil.rmtree(pkg_root)
     pkg_root.mkdir(parents=True, exist_ok=False)
 

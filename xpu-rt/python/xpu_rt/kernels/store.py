@@ -31,7 +31,6 @@ under the user's home directory and any future session — including
 
 from __future__ import annotations
 
-import hashlib
 import json
 import os
 from collections.abc import Iterator
@@ -39,7 +38,6 @@ from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
-
 
 # ---------------------------------------------------------------------------
 # Default location
@@ -88,7 +86,7 @@ class StoredKernel:
     fingerprint: str
     target: str
     language: str
-    path: str                    # relative to store root
+    path: str  # relative to store root
     op_name: str = ""
     archetype: str = ""
     granularity: str = ""
@@ -173,8 +171,7 @@ class KernelStore:
         raw = manifest.get(fingerprint)
         if raw is None:
             return None
-        entry = StoredKernel(**{k: v for k, v in raw.items()
-                                if k in StoredKernel.__dataclass_fields__})
+        entry = StoredKernel(**{k: v for k, v in raw.items() if k in StoredKernel.__dataclass_fields__})
         full_path = self.root / entry.path
         if not full_path.exists():
             # Manifest is stale — drop the entry.
@@ -196,8 +193,7 @@ class KernelStore:
     def list_all(self) -> list[StoredKernel]:
         manifest = self._read_manifest()
         return [
-            StoredKernel(**{k: v for k, v in raw.items()
-                            if k in StoredKernel.__dataclass_fields__})
+            StoredKernel(**{k: v for k, v in raw.items() if k in StoredKernel.__dataclass_fields__})
             for raw in manifest.values()
         ]
 

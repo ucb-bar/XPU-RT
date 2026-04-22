@@ -17,7 +17,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from compgen.agent.hw_aware_dispatch import TargetDispatchDecision
 from compgen.agent.kernel_optimizer import (
     BenchResult,
@@ -29,11 +28,16 @@ from compgen.agent.kernel_optimizer import (
     optimize_model_multi_target,
 )
 from compgen.kernels.contract_v3 import (
-    ExecutionEnvelope, HardwareEnvelope, IOContract, KernelArchetype,
-    KernelContractV3, OrchestrationSpec, ShapeClass, TensorIO,
+    ExecutionEnvelope,
+    HardwareEnvelope,
+    IOContract,
+    KernelArchetype,
+    KernelContractV3,
+    OrchestrationSpec,
+    ShapeClass,
+    TensorIO,
 )
 from compgen.memory.kernel_db import KernelDB
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -42,25 +46,26 @@ from compgen.memory.kernel_db import KernelDB
 
 def _envelope(target: str = "cuda-a100") -> HardwareEnvelope:
     return HardwareEnvelope(
-        target_name=target, vector_lanes=64,
-        scratchpad_bytes=49152, register_bytes=256,
-        native_dtypes=("f16", "f32"), peak_bandwidth_gbps=672.0,
+        target_name=target,
+        vector_lanes=64,
+        scratchpad_bytes=49152,
+        register_bytes=256,
+        native_dtypes=("f16", "f32"),
+        peak_bandwidth_gbps=672.0,
     )
 
 
 def _matmul(target: str = "cuda-a100") -> KernelContractV3:
     env = _envelope(target)
     return KernelContractV3(
-        op_name="matmul", archetype=KernelArchetype.COMPUTE_TILED,
+        op_name="matmul",
+        archetype=KernelArchetype.COMPUTE_TILED,
         io=IOContract(
             inputs=(
-                TensorIO(name="lhs", shape=ShapeClass(dims=(None, None)),
-                         dtype_class=("f16",)),
-                TensorIO(name="rhs", shape=ShapeClass(dims=(None, None)),
-                         dtype_class=("f16",)),
+                TensorIO(name="lhs", shape=ShapeClass(dims=(None, None)), dtype_class=("f16",)),
+                TensorIO(name="rhs", shape=ShapeClass(dims=(None, None)), dtype_class=("f16",)),
             ),
-            outputs=(TensorIO(name="out", shape=ShapeClass(dims=(None, None)),
-                              dtype_class=("f16",)),),
+            outputs=(TensorIO(name="out", shape=ShapeClass(dims=(None, None)), dtype_class=("f16",)),),
         ),
         orchestration=OrchestrationSpec(execution=ExecutionEnvelope(hardware=env)),
     )
@@ -69,16 +74,14 @@ def _matmul(target: str = "cuda-a100") -> KernelContractV3:
 def _pointwise(target: str = "cuda-a100", op: str = "addf") -> KernelContractV3:
     env = _envelope(target)
     return KernelContractV3(
-        op_name=op, archetype=KernelArchetype.POINTWISE,
+        op_name=op,
+        archetype=KernelArchetype.POINTWISE,
         io=IOContract(
             inputs=(
-                TensorIO(name="a", shape=ShapeClass(dims=(None,)),
-                         dtype_class=("f32",)),
-                TensorIO(name="b", shape=ShapeClass(dims=(None,)),
-                         dtype_class=("f32",)),
+                TensorIO(name="a", shape=ShapeClass(dims=(None,)), dtype_class=("f32",)),
+                TensorIO(name="b", shape=ShapeClass(dims=(None,)), dtype_class=("f32",)),
             ),
-            outputs=(TensorIO(name="o", shape=ShapeClass(dims=(None,)),
-                              dtype_class=("f32",)),),
+            outputs=(TensorIO(name="o", shape=ShapeClass(dims=(None,)), dtype_class=("f32",)),),
         ),
         orchestration=OrchestrationSpec(execution=ExecutionEnvelope(hardware=env)),
     )
@@ -130,14 +133,16 @@ def test_fingerprint_matches_mcp_scheme() -> None:
 
 def test_optimize_model_requires_at_least_one_contract(isolated_db) -> None:
     with pytest.raises(ValueError, match="at least one contract"):
-        optimize_model(model_fn=None, target="cuda-a100",
-                       contracts=[], db=isolated_db)
+        optimize_model(model_fn=None, target="cuda-a100", contracts=[], db=isolated_db)
 
 
 def test_optimize_model_multi_target_requires_at_least_one_target(isolated_db) -> None:
     with pytest.raises(ValueError, match="at least one target"):
         optimize_model_multi_target(
-            model_fn=None, targets=[], contracts=[_matmul()], db=isolated_db,
+            model_fn=None,
+            targets=[],
+            contracts=[_matmul()],
+            db=isolated_db,
         )
 
 
@@ -162,8 +167,12 @@ def _stub_bench(contract, result) -> BenchResult:
 def test_optimize_model_runs_loop_and_returns_decisions(isolated_db) -> None:
     contracts = [_matmul(), _pointwise()]
     optim = optimize_model(
-        model_fn=None, target="cuda-a100", contracts=contracts,
-        codegen_fn=_stub_codegen, bench_fn=_stub_bench, db=isolated_db,
+        model_fn=None,
+        target="cuda-a100",
+        contracts=contracts,
+        codegen_fn=_stub_codegen,
+        bench_fn=_stub_bench,
+        db=isolated_db,
     )
     assert isinstance(optim, OptimizedModel)
     assert optim.target == "cuda-a100"
@@ -171,15 +180,19 @@ def test_optimize_model_runs_loop_and_returns_decisions(isolated_db) -> None:
     assert len(optim.decisions) == 2
     for d in optim.decisions:
         assert isinstance(d, KernelDecision)
-        assert d.cached is False           # first run — nothing cached
+        assert d.cached is False  # first run — nothing cached
         assert d.provider_name == "stub_provider"
         assert d.perf_us == 10.0
 
 
 def test_optimize_model_persists_to_kernel_db(isolated_db) -> None:
     optim = optimize_model(
-        model_fn=None, target="cuda-a100", contracts=[_matmul()],
-        codegen_fn=_stub_codegen, bench_fn=_stub_bench, db=isolated_db,
+        model_fn=None,
+        target="cuda-a100",
+        contracts=[_matmul()],
+        codegen_fn=_stub_codegen,
+        bench_fn=_stub_bench,
+        db=isolated_db,
     )
     fp = optim.decisions[0].fingerprint
     rec = isolated_db.best_kernel_perf("cuda-a100", "compute_tiled", fp)
@@ -192,13 +205,21 @@ def test_second_run_hits_cache(isolated_db) -> None:
     contracts = [_matmul()]
     # First run — populates cache
     optimize_model(
-        model_fn=None, target="cuda-a100", contracts=contracts,
-        codegen_fn=_stub_codegen, bench_fn=_stub_bench, db=isolated_db,
+        model_fn=None,
+        target="cuda-a100",
+        contracts=contracts,
+        codegen_fn=_stub_codegen,
+        bench_fn=_stub_bench,
+        db=isolated_db,
     )
     # Second run — same contract, should hit the cache.
     second = optimize_model(
-        model_fn=None, target="cuda-a100", contracts=contracts,
-        codegen_fn=_stub_codegen, bench_fn=_stub_bench, db=isolated_db,
+        model_fn=None,
+        target="cuda-a100",
+        contracts=contracts,
+        codegen_fn=_stub_codegen,
+        bench_fn=_stub_bench,
+        db=isolated_db,
     )
     assert second.decisions[0].cached is True
     assert second.decisions[0].provider_name == "cache"
@@ -206,12 +227,20 @@ def test_second_run_hits_cache(isolated_db) -> None:
 
 def test_optimize_model_summary_includes_cache_count(isolated_db) -> None:
     optimize_model(
-        model_fn=None, target="cuda-a100", contracts=[_matmul()],
-        codegen_fn=_stub_codegen, bench_fn=_stub_bench, db=isolated_db,
+        model_fn=None,
+        target="cuda-a100",
+        contracts=[_matmul()],
+        codegen_fn=_stub_codegen,
+        bench_fn=_stub_bench,
+        db=isolated_db,
     )
     second = optimize_model(
-        model_fn=None, target="cuda-a100", contracts=[_matmul()],
-        codegen_fn=_stub_codegen, bench_fn=_stub_bench, db=isolated_db,
+        model_fn=None,
+        target="cuda-a100",
+        contracts=[_matmul()],
+        codegen_fn=_stub_codegen,
+        bench_fn=_stub_bench,
+        db=isolated_db,
     )
     summary = second.summary()
     assert "regions optimised: 1" in summary
@@ -226,12 +255,17 @@ def test_optimize_model_summary_includes_cache_count(isolated_db) -> None:
 def test_optimize_model_returns_model_fn_when_capture_unsupported(isolated_db) -> None:
     """CPU adapter returns None for capture_graph → forward is the
     user-supplied model_fn, not a graph replay wrapper."""
+
     def my_model(x):
         return x * 2
 
     optim = optimize_model(
-        model_fn=my_model, target="cpu-host", contracts=[_pointwise("cpu-host")],
-        codegen_fn=_stub_codegen, bench_fn=_stub_bench, db=isolated_db,
+        model_fn=my_model,
+        target="cpu-host",
+        contracts=[_pointwise("cpu-host")],
+        codegen_fn=_stub_codegen,
+        bench_fn=_stub_bench,
+        db=isolated_db,
         sample_inputs=(7,),
     )
     assert optim.captured_graph is None
@@ -241,8 +275,12 @@ def test_optimize_model_returns_model_fn_when_capture_unsupported(isolated_db) -
 
 def test_optimize_model_with_no_model_fn_returns_noop_callable(isolated_db) -> None:
     optim = optimize_model(
-        model_fn=None, target="cuda-a100", contracts=[_matmul()],
-        codegen_fn=_stub_codegen, bench_fn=_stub_bench, db=isolated_db,
+        model_fn=None,
+        target="cuda-a100",
+        contracts=[_matmul()],
+        codegen_fn=_stub_codegen,
+        bench_fn=_stub_bench,
+        db=isolated_db,
     )
     # forward is callable but returns None (placeholder).
     assert callable(optim.forward)
@@ -257,9 +295,12 @@ def test_optimize_model_with_no_model_fn_returns_noop_callable(isolated_db) -> N
 def test_multi_target_returns_one_model_per_target(isolated_db) -> None:
     contracts = [_matmul()]
     out = optimize_model_multi_target(
-        model_fn=None, targets=["cuda-a100", "cpu-host"],
+        model_fn=None,
+        targets=["cuda-a100", "cpu-host"],
         contracts=contracts,
-        codegen_fn=_stub_codegen, bench_fn=_stub_bench, db=isolated_db,
+        codegen_fn=_stub_codegen,
+        bench_fn=_stub_bench,
+        db=isolated_db,
     )
     assert set(out.keys()) == {"cuda-a100", "cpu-host"}
     assert out["cuda-a100"].adapter_name == "cuda"
@@ -271,17 +312,23 @@ def test_multi_target_cache_is_per_target(isolated_db) -> None:
     independently per target — fingerprint includes target."""
     contracts = [_matmul()]
     out1 = optimize_model_multi_target(
-        model_fn=None, targets=["cuda-a100", "cpu-host"],
+        model_fn=None,
+        targets=["cuda-a100", "cpu-host"],
         contracts=contracts,
-        codegen_fn=_stub_codegen, bench_fn=_stub_bench, db=isolated_db,
+        codegen_fn=_stub_codegen,
+        bench_fn=_stub_bench,
+        db=isolated_db,
     )
     # First run — neither cached.
     assert out1["cuda-a100"].decisions[0].cached is False
     assert out1["cpu-host"].decisions[0].cached is False
     out2 = optimize_model_multi_target(
-        model_fn=None, targets=["cuda-a100", "cpu-host"],
+        model_fn=None,
+        targets=["cuda-a100", "cpu-host"],
         contracts=contracts,
-        codegen_fn=_stub_codegen, bench_fn=_stub_bench, db=isolated_db,
+        codegen_fn=_stub_codegen,
+        bench_fn=_stub_bench,
+        db=isolated_db,
     )
     # Second run — both should hit cache, but ONLY because we used
     # different envelopes per target.
@@ -292,20 +339,29 @@ def test_multi_target_cache_is_per_target(isolated_db) -> None:
 def test_multi_target_propagates_explicit_envelopes(isolated_db) -> None:
     contracts = [_matmul()]
     cuda_env = HardwareEnvelope(
-        target_name="cuda-a100", vector_lanes=128,
-        scratchpad_bytes=99000, register_bytes=512,
-        native_dtypes=("f16",), peak_bandwidth_gbps=2000.0,
+        target_name="cuda-a100",
+        vector_lanes=128,
+        scratchpad_bytes=99000,
+        register_bytes=512,
+        native_dtypes=("f16",),
+        peak_bandwidth_gbps=2000.0,
     )
     cpu_env = HardwareEnvelope(
-        target_name="cpu-host", vector_lanes=8,
-        scratchpad_bytes=4096, register_bytes=128,
-        native_dtypes=("f32",), peak_bandwidth_gbps=50.0,
+        target_name="cpu-host",
+        vector_lanes=8,
+        scratchpad_bytes=4096,
+        register_bytes=128,
+        native_dtypes=("f32",),
+        peak_bandwidth_gbps=50.0,
     )
     out = optimize_model_multi_target(
-        model_fn=None, targets=["cuda-a100", "cpu-host"],
+        model_fn=None,
+        targets=["cuda-a100", "cpu-host"],
         contracts=contracts,
         envelopes=[cuda_env, cpu_env],
-        codegen_fn=_stub_codegen, bench_fn=_stub_bench, db=isolated_db,
+        codegen_fn=_stub_codegen,
+        bench_fn=_stub_bench,
+        db=isolated_db,
     )
     # The metadata records the envelope target the loop saw.
     assert out["cuda-a100"].metadata["envelope_target"] == "cuda-a100"

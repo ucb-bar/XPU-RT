@@ -86,8 +86,8 @@ def _cuda_event_time_us(fn: Callable[[], Any], *, warmup: int, timed: int) -> fl
         fn()
         end.record()
         torch.cuda.synchronize()
-        samples_ms.append(start.elapsed_time(end))   # ms
-    return statistics.median(samples_ms) * 1_000.0   # → μs
+        samples_ms.append(start.elapsed_time(end))  # ms
+    return statistics.median(samples_ms) * 1_000.0  # → μs
 
 
 # ---------------------------------------------------------------------------
@@ -175,9 +175,7 @@ def run_microbench(
 def format_bench_result(r: BenchResult) -> str:
     """One-line tabular render."""
     tc_col = f"{r.torch_compile_us:>7.1f}" if r.torch_compile_us is not None else "    n/a"
-    ratio_tc = (
-        f"{r.us_ratio_vs_torch_compile:>5.2f}x" if r.us_ratio_vs_torch_compile is not None else "  n/a"
-    )
+    ratio_tc = f"{r.us_ratio_vs_torch_compile:>5.2f}x" if r.us_ratio_vs_torch_compile is not None else "  n/a"
     status = "PASS" if r.passed else "FAIL"
     return (
         f"[{status}] {r.name:45s}  "

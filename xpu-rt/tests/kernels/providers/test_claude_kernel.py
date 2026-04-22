@@ -47,9 +47,7 @@ def _pack() -> PromptPack:
 
 
 def test_accepts_contract_requires_op_family() -> None:
-    prov = ClaudeKernelProvider(
-        name="fake", prompt_pack=_pack(), target_name="nvidia-h100", llm_client=_FakeLLM([])
-    )
+    prov = ClaudeKernelProvider(name="fake", prompt_pack=_pack(), target_name="nvidia-h100", llm_client=_FakeLLM([]))
     assert prov.accepts_contract(_contract())
     empty = KernelContract(target_name="nvidia-h100")
     assert not prov.accepts_contract(empty)
@@ -57,9 +55,7 @@ def test_accepts_contract_requires_op_family() -> None:
 
 def test_search_succeeds_first_try() -> None:
     llm = _FakeLLM([_GOOD_MLIR])
-    prov = ClaudeKernelProvider(
-        name="fake", prompt_pack=_pack(), target_name="nvidia-h100", llm_client=llm
-    )
+    prov = ClaudeKernelProvider(name="fake", prompt_pack=_pack(), target_name="nvidia-h100", llm_client=llm)
     result = prov.search(_contract(), SearchBudget(max_iterations=3))
     assert result.found
     assert "func.func @matmul" in result.kernel_code
@@ -116,9 +112,7 @@ def test_search_gives_up_when_exceeding_budget() -> None:
 
 def test_export_knowledge_drains_buffer() -> None:
     llm = _FakeLLM([_GOOD_MLIR])
-    prov = ClaudeKernelProvider(
-        name="fake", prompt_pack=_pack(), target_name="nvidia-h100", llm_client=llm
-    )
+    prov = ClaudeKernelProvider(name="fake", prompt_pack=_pack(), target_name="nvidia-h100", llm_client=llm)
     prov.search(_contract(), SearchBudget(max_iterations=2))
     knowledge = prov.export_knowledge()
     assert len(knowledge) == 1
@@ -132,9 +126,7 @@ def test_forbidden_substrings_reject_candidate() -> None:
     banned = "```mlir\nBANNED content\n```"
     llm = _FakeLLM([banned, good])
 
-    prov = ClaudeKernelProvider(
-        name="fake", prompt_pack=pack, target_name="nvidia-h100", llm_client=llm
-    )
+    prov = ClaudeKernelProvider(name="fake", prompt_pack=pack, target_name="nvidia-h100", llm_client=llm)
     result = prov.search(_contract(), SearchBudget(max_iterations=2))
     assert result.found
     assert result.iterations_used == 2

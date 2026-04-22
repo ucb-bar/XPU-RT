@@ -24,10 +24,7 @@ def _c_byte_array(data: bytes, name: str, *, width: int = 32) -> str:
         chunk = data[start : start + width]
         rows.append("    " + ", ".join(f"0x{b:02x}" for b in chunk))
     body = ",\n".join(rows)
-    return (
-        f"static const uint8_t {name}[] __attribute__((aligned(16))) = {{\n"
-        f"{body}\n}};\n"
-    )
+    return f"static const uint8_t {name}[] __attribute__((aligned(16))) = {{\n{body}\n}};\n"
 
 
 def emit_convnet_main_c(

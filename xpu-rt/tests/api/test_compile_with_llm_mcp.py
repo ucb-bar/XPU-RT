@@ -15,16 +15,20 @@ from pathlib import Path
 import pytest
 import torch
 import torch.nn as nn
-
 from compgen.api_llm import LLMCompileResult, compile_with_llm
 from compgen.kernels.contract_v3 import (
-    ExecutionEnvelope, HardwareEnvelope, IOContract, KernelArchetype,
-    KernelContractV3, OrchestrationSpec, ShapeClass, TensorIO,
+    ExecutionEnvelope,
+    HardwareEnvelope,
+    IOContract,
+    KernelArchetype,
+    KernelContractV3,
+    OrchestrationSpec,
+    ShapeClass,
+    TensorIO,
 )
 from compgen.kernels.store import KernelStore, set_shared_store
 from compgen.mcp.session import SessionManager
 from compgen.memory.kernel_db import KernelDB, set_shared_db
-
 
 EXEMPLAR_TARGET = Path(__file__).resolve().parents[1] / "targetgen" / "exemplars" / "test_gpu_simt.yaml"
 
@@ -58,28 +62,31 @@ class _Identity(nn.Module):
 
 def _matmul_contract(target: str = "test-gpu-simt") -> KernelContractV3:
     env = HardwareEnvelope(
-        target_name=target, vector_lanes=64,
-        scratchpad_bytes=49152, register_bytes=256,
-        native_dtypes=("f16",), peak_bandwidth_gbps=672.0,
+        target_name=target,
+        vector_lanes=64,
+        scratchpad_bytes=49152,
+        register_bytes=256,
+        native_dtypes=("f16",),
+        peak_bandwidth_gbps=672.0,
     )
     return KernelContractV3(
-        op_name="matmul", archetype=KernelArchetype.COMPUTE_TILED,
+        op_name="matmul",
+        archetype=KernelArchetype.COMPUTE_TILED,
         io=IOContract(
             inputs=(
-                TensorIO(name="lhs", shape=ShapeClass(dims=(64, 64)),
-                         dtype_class=("f16",)),
-                TensorIO(name="rhs", shape=ShapeClass(dims=(64, 64)),
-                         dtype_class=("f16",)),
+                TensorIO(name="lhs", shape=ShapeClass(dims=(64, 64)), dtype_class=("f16",)),
+                TensorIO(name="rhs", shape=ShapeClass(dims=(64, 64)), dtype_class=("f16",)),
             ),
-            outputs=(TensorIO(name="out", shape=ShapeClass(dims=(64, 64)),
-                              dtype_class=("f16",)),),
+            outputs=(TensorIO(name="out", shape=ShapeClass(dims=(64, 64)), dtype_class=("f16",)),),
         ),
         orchestration=OrchestrationSpec(execution=ExecutionEnvelope(hardware=env)),
     )
 
 
 def test_compile_with_llm_runs_mcp_optimizer_when_session_supplied(
-    sm, isolated_db, tmp_path,
+    sm,
+    isolated_db,
+    tmp_path,
 ) -> None:
     """The mcp_session+mcp_contracts opt-in must populate
     ``mcp_optimized`` on the returned result. We use the mock LLM so
@@ -104,7 +111,9 @@ def test_compile_with_llm_runs_mcp_optimizer_when_session_supplied(
 
 
 def test_compile_with_llm_no_mcp_session_leaves_mcp_optimized_none(
-    sm, isolated_db, tmp_path,
+    sm,
+    isolated_db,
+    tmp_path,
 ) -> None:
     """Backwards-compat: omitting the new args preserves legacy behaviour."""
     res = compile_with_llm(

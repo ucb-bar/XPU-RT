@@ -11,17 +11,24 @@ Locks in:
 from __future__ import annotations
 
 import pytest
-
 from compgen.kernels.contract_v3 import (
-    DispatchModel, DispatchSpec, Granularity, IOContract, KernelArchetype,
-    KernelContractV3, MemorySpec, MemoryTier, OrchestrationSpec, ShapeClass, TensorIO,
+    DispatchModel,
+    DispatchSpec,
+    Granularity,
+    IOContract,
+    KernelArchetype,
+    KernelContractV3,
+    MemorySpec,
+    MemoryTier,
+    OrchestrationSpec,
+    ShapeClass,
+    TensorIO,
 )
 from compgen.runtime.glue import (
     BaremetalRuntimeAdapter,
-    Buffer, BufferSpec,
+    BufferSpec,
     CpuRuntimeAdapter,
     CudaRuntimeAdapter,
-    DispatchResult,
     RocmRuntimeAdapter,
     RuntimeAdapter,
     select_adapter,
@@ -31,27 +38,26 @@ from compgen.runtime.glue import (
 def _io(n_in: int = 1, n_out: int = 1) -> IOContract:
     return IOContract(
         inputs=tuple(
-            TensorIO(name=f"in{i}", shape=ShapeClass(dims=(None,)), dtype_class=("f32",))
-            for i in range(n_in)
+            TensorIO(name=f"in{i}", shape=ShapeClass(dims=(None,)), dtype_class=("f32",)) for i in range(n_in)
         ),
         outputs=tuple(
-            TensorIO(name=f"out{i}", shape=ShapeClass(dims=(None,)), dtype_class=("f32",))
-            for i in range(n_out)
+            TensorIO(name=f"out{i}", shape=ShapeClass(dims=(None,)), dtype_class=("f32",)) for i in range(n_out)
         ),
     )
 
 
 def _contract(model: DispatchModel) -> KernelContractV3:
     """Build a contract honoring v3 invariants:
-       INLINE → MICRO + register/scratchpad tiers
-       PERSISTENT → MEGA (which requires body[]) — for runtime tests
-                    we use a minimal MEGA contract with a NORMAL stub body
-       SYNC/ASYNC → NORMAL (default).
+    INLINE → MICRO + register/scratchpad tiers
+    PERSISTENT → MEGA (which requires body[]) — for runtime tests
+                 we use a minimal MEGA contract with a NORMAL stub body
+    SYNC/ASYNC → NORMAL (default).
     """
     if model is DispatchModel.INLINE:
         # MICRO ukernel: register-resident, no events.
         return KernelContractV3(
-            op_name="test", archetype=KernelArchetype.POINTWISE,
+            op_name="test",
+            archetype=KernelArchetype.POINTWISE,
             io=_io(),
             granularity=Granularity.MICRO,
             orchestration=OrchestrationSpec(
@@ -65,7 +71,8 @@ def _contract(model: DispatchModel) -> KernelContractV3:
     if model is DispatchModel.PERSISTENT:
         # MEGA contract with a NORMAL stub sub-kernel
         sub = KernelContractV3(
-            op_name="sub", archetype=KernelArchetype.POINTWISE,
+            op_name="sub",
+            archetype=KernelArchetype.POINTWISE,
             io=_io(),
             orchestration=OrchestrationSpec(
                 memory=MemorySpec(
@@ -75,17 +82,14 @@ def _contract(model: DispatchModel) -> KernelContractV3:
             ),
         )
         return KernelContractV3(
-            op_name="test", archetype=KernelArchetype.COMPUTE_TILED,
+            op_name="test",
+            archetype=KernelArchetype.COMPUTE_TILED,
             io=IOContract(
                 inputs=tuple(
-                    TensorIO(name=f"in{i}", shape=ShapeClass(dims=(None,)),
-                             dtype_class=("f32",))
-                    for i in range(2)
+                    TensorIO(name=f"in{i}", shape=ShapeClass(dims=(None,)), dtype_class=("f32",)) for i in range(2)
                 ),
                 outputs=tuple(
-                    TensorIO(name=f"out{i}", shape=ShapeClass(dims=(None,)),
-                             dtype_class=("f32",))
-                    for i in range(1)
+                    TensorIO(name=f"out{i}", shape=ShapeClass(dims=(None,)), dtype_class=("f32",)) for i in range(1)
                 ),
             ),
             granularity=Granularity.MEGA,
@@ -95,7 +99,8 @@ def _contract(model: DispatchModel) -> KernelContractV3:
             body=(sub,),
         )
     return KernelContractV3(
-        op_name="test", archetype=KernelArchetype.POINTWISE,
+        op_name="test",
+        archetype=KernelArchetype.POINTWISE,
         io=_io(),
         orchestration=OrchestrationSpec(dispatch=DispatchSpec(model=model)),
     )
@@ -106,18 +111,21 @@ def _contract(model: DispatchModel) -> KernelContractV3:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("target,expected_name", [
-    ("cuda-a100",       "cuda"),
-    ("cuda-titan-rtx",  "cuda"),
-    ("test-gpu-simt",   "cuda"),
-    ("rocm-mi250",      "rocm"),
-    ("hexagon-v69",     "baremetal"),
-    ("openq_5165rb",    "baremetal"),
-    ("trainium1",       "baremetal"),
-    ("cpu-host",        "cpu"),
-    ("riscv-soc",       "cpu"),
-    ("totally-unknown", "cpu"),
-])
+@pytest.mark.parametrize(
+    "target,expected_name",
+    [
+        ("cuda-a100", "cuda"),
+        ("cuda-titan-rtx", "cuda"),
+        ("test-gpu-simt", "cuda"),
+        ("rocm-mi250", "rocm"),
+        ("hexagon-v69", "baremetal"),
+        ("openq_5165rb", "baremetal"),
+        ("trainium1", "baremetal"),
+        ("cpu-host", "cpu"),
+        ("riscv-soc", "cpu"),
+        ("totally-unknown", "cpu"),
+    ],
+)
 def test_select_adapter_matches_target_taxonomy(target: str, expected_name: str) -> None:
     adapter = select_adapter(target)
     assert adapter.name == expected_name
@@ -167,7 +175,8 @@ def test_cpu_dispatch_round_trips_a_callable() -> None:
     result = cpu.dispatch(
         _contract(DispatchModel.SYNC),
         callable_kernel=lambda x: x * 2,
-        args=(21,), kwargs={},
+        args=(21,),
+        kwargs={},
     )
     assert result.output == 42
     assert result.adapter_name == "cpu"
@@ -179,7 +188,8 @@ def test_cuda_dispatch_rejects_inline_model() -> None:
         cuda.dispatch(
             _contract(DispatchModel.INLINE),
             callable_kernel=lambda: None,
-            args=(), kwargs={},
+            args=(),
+            kwargs={},
         )
 
 
@@ -201,4 +211,4 @@ def test_cpu_adapter_does_not_capture_graphs() -> None:
 
 def test_cpu_synchronize_is_a_noop() -> None:
     cpu = CpuRuntimeAdapter()
-    cpu.synchronize()    # must not raise
+    cpu.synchronize()  # must not raise

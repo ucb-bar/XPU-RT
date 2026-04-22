@@ -67,7 +67,7 @@ class TracingLLMRecorder:
     installed still emits events once the bus appears.
     """
 
-    def __init__(self, inner: "LLMRecorder", bus: TraceBus | None) -> None:
+    def __init__(self, inner: LLMRecorder, bus: TraceBus | None) -> None:
         self._inner = inner
         self._bus = bus
         _mark(inner, bus)
@@ -135,7 +135,7 @@ class TracingLLMRecorder:
         return getattr(self._inner, name)
 
     @classmethod
-    def wrap(cls, recorder: "LLMRecorder", bus: TraceBus | None = None) -> Any:
+    def wrap(cls, recorder: LLMRecorder, bus: TraceBus | None = None) -> Any:
         if bus is None:
             bus = get_active_bus()
         if _is_bound(recorder):
@@ -177,7 +177,7 @@ def _response_payload(response: Any, recorder: LLMRecorder, prompt_hash: str) ->
 class TracingToolCallRecorder:
     """Wrap a :class:`ToolCallRecorder` to also publish a ``tool_call`` event per record."""
 
-    def __init__(self, inner: "ToolCallRecorder", bus: TraceBus | None) -> None:
+    def __init__(self, inner: ToolCallRecorder, bus: TraceBus | None) -> None:
         self._inner = inner
         self._bus = bus
         _mark(inner, bus)
@@ -210,11 +210,11 @@ class TracingToolCallRecorder:
         return getattr(self._inner, name)
 
     @property
-    def inner(self) -> "ToolCallRecorder":
+    def inner(self) -> ToolCallRecorder:
         return self._inner
 
     @classmethod
-    def wrap(cls, recorder: "ToolCallRecorder", bus: TraceBus | None = None) -> Any:
+    def wrap(cls, recorder: ToolCallRecorder, bus: TraceBus | None = None) -> Any:
         if bus is None:
             bus = get_active_bus()
         if _is_bound(recorder):
@@ -230,7 +230,7 @@ class TracingToolCallRecorder:
 class TracingMcpTranscriptRecorder:
     """Wrap an :class:`McpTranscriptRecorder` and emit ``mcp_call`` events."""
 
-    def __init__(self, inner: "McpTranscriptRecorder", bus: TraceBus | None) -> None:
+    def __init__(self, inner: McpTranscriptRecorder, bus: TraceBus | None) -> None:
         self._inner = inner
         self._bus = bus
         _mark(inner, bus)
@@ -260,11 +260,11 @@ class TracingMcpTranscriptRecorder:
         return getattr(self._inner, name)
 
     @property
-    def inner(self) -> "McpTranscriptRecorder":
+    def inner(self) -> McpTranscriptRecorder:
         return self._inner
 
     @classmethod
-    def wrap(cls, recorder: "McpTranscriptRecorder", bus: TraceBus | None = None) -> Any:
+    def wrap(cls, recorder: McpTranscriptRecorder, bus: TraceBus | None = None) -> Any:
         if bus is None:
             bus = get_active_bus()
         if _is_bound(recorder):

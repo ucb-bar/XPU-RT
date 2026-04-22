@@ -50,7 +50,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-
 # ---------------------------------------------------------------------------
 # Roots
 # ---------------------------------------------------------------------------
@@ -80,23 +79,23 @@ SCOPE_DRIVERS = "drivers"
 # walks it the other way for queries.
 _TARGET_SCOPE_RULES: dict[str, list[str]] = {
     # NVIDIA GPUs
-    "cuda-a100":      ["backends/gpu/nvidia/ampere", "backends/gpu/nvidia/general", "backends/gpu/general", "general"],
-    "cuda-h100":      ["backends/gpu/nvidia/hopper", "backends/gpu/nvidia/general", "backends/gpu/general", "general"],
-    "cuda-v100":      ["backends/gpu/nvidia/volta",  "backends/gpu/nvidia/general", "backends/gpu/general", "general"],
+    "cuda-a100": ["backends/gpu/nvidia/ampere", "backends/gpu/nvidia/general", "backends/gpu/general", "general"],
+    "cuda-h100": ["backends/gpu/nvidia/hopper", "backends/gpu/nvidia/general", "backends/gpu/general", "general"],
+    "cuda-v100": ["backends/gpu/nvidia/volta", "backends/gpu/nvidia/general", "backends/gpu/general", "general"],
     "cuda-titan-rtx": ["backends/gpu/nvidia/turing", "backends/gpu/nvidia/general", "backends/gpu/general", "general"],
-    "test-gpu-simt":  ["backends/gpu/nvidia/turing", "backends/gpu/nvidia/general", "backends/gpu/general", "general"],
+    "test-gpu-simt": ["backends/gpu/nvidia/turing", "backends/gpu/nvidia/general", "backends/gpu/general", "general"],
     # AMD GPUs
-    "rocm-mi300":     ["backends/gpu/amd/cdna3", "backends/gpu/amd/general", "backends/gpu/general", "general"],
-    "rocm-mi250":     ["backends/gpu/amd/cdna2", "backends/gpu/amd/general", "backends/gpu/general", "general"],
+    "rocm-mi300": ["backends/gpu/amd/cdna3", "backends/gpu/amd/general", "backends/gpu/general", "general"],
+    "rocm-mi250": ["backends/gpu/amd/cdna2", "backends/gpu/amd/general", "backends/gpu/general", "general"],
     # NPUs
-    "openq_5165rb":   ["backends/npu/hexagon/v69",  "backends/npu/hexagon/general", "backends/npu/general", "general"],
-    "trainium1":      ["backends/npu/trainium/v1",  "backends/npu/trainium/general", "backends/npu/general", "general"],
-    "trainium2":      ["backends/npu/trainium/v2",  "backends/npu/trainium/general", "backends/npu/general", "general"],
-    "tpu-v5":         ["backends/npu/tpu/v5",       "backends/npu/tpu/general",      "backends/npu/general", "general"],
+    "openq_5165rb": ["backends/npu/hexagon/v69", "backends/npu/hexagon/general", "backends/npu/general", "general"],
+    "trainium1": ["backends/npu/trainium/v1", "backends/npu/trainium/general", "backends/npu/general", "general"],
+    "trainium2": ["backends/npu/trainium/v2", "backends/npu/trainium/general", "backends/npu/general", "general"],
+    "tpu-v5": ["backends/npu/tpu/v5", "backends/npu/tpu/general", "backends/npu/general", "general"],
     # CPUs
-    "cpu-host":       ["backends/cpu/x86/general",  "backends/cpu/general",          "general"],
-    "cpu-arm-neon":   ["backends/cpu/arm/general",  "backends/cpu/general",          "general"],
-    "riscv-soc":      ["backends/cpu/riscv/general", "backends/cpu/general",         "general"],
+    "cpu-host": ["backends/cpu/x86/general", "backends/cpu/general", "general"],
+    "cpu-arm-neon": ["backends/cpu/arm/general", "backends/cpu/general", "general"],
+    "riscv-soc": ["backends/cpu/riscv/general", "backends/cpu/general", "general"],
 }
 
 
@@ -146,18 +145,18 @@ def scope_chain_for_profile(profile: Any) -> list[str]:
 
 _VALID_CATEGORIES = ("perf", "correctness", "limit", "design", "recipe")
 _VALID_STAGES = (
-    "any",                # cross-stage principle
-    "capture",            # FX / torch.export capture
-    "decomp",             # FX→xDSL decomposition
-    "recipe",             # Recipe IR generation / lowering
-    "kernel-gen",         # generating Triton/CUDA/C kernel source
-    "kernel-tune",        # autotune / refinement loop
-    "fusion",             # fusion-decision logic
-    "dispatch",           # runtime dispatch / sync
-    "memory-plan",        # buffer / lifetime planning
-    "verification",       # correctness / numeric gates
-    "instrumentation",    # profiling / measurement
-    "deployment",         # cold-start / persistence / packaging
+    "any",  # cross-stage principle
+    "capture",  # FX / torch.export capture
+    "decomp",  # FX→xDSL decomposition
+    "recipe",  # Recipe IR generation / lowering
+    "kernel-gen",  # generating Triton/CUDA/C kernel source
+    "kernel-tune",  # autotune / refinement loop
+    "fusion",  # fusion-decision logic
+    "dispatch",  # runtime dispatch / sync
+    "memory-plan",  # buffer / lifetime planning
+    "verification",  # correctness / numeric gates
+    "instrumentation",  # profiling / measurement
+    "deployment",  # cold-start / persistence / packaging
 )
 
 
@@ -204,15 +203,9 @@ class Lesson:
 
     def __post_init__(self) -> None:
         if self.category not in _VALID_CATEGORIES:
-            raise ValueError(
-                f"Lesson.category must be one of {_VALID_CATEGORIES} "
-                f"(got {self.category!r})"
-            )
+            raise ValueError(f"Lesson.category must be one of {_VALID_CATEGORIES} (got {self.category!r})")
         if self.stage not in _VALID_STAGES:
-            raise ValueError(
-                f"Lesson.stage must be one of {_VALID_STAGES} "
-                f"(got {self.stage!r})"
-            )
+            raise ValueError(f"Lesson.stage must be one of {_VALID_STAGES} (got {self.stage!r})")
 
 
 # ---------------------------------------------------------------------------
@@ -319,8 +312,12 @@ class KnowledgeStore:
     ) -> list[Lesson]:
         return self.query(
             scope_chain_for_target(target_name),
-            stage=stage, op_family=op_family, topic=topic,
-            categories=categories, tags=tags, limit=limit,
+            stage=stage,
+            op_family=op_family,
+            topic=topic,
+            categories=categories,
+            tags=tags,
+            limit=limit,
         )
 
     # --- containerised contexts ---
@@ -342,7 +339,10 @@ class KnowledgeStore:
         ``max_lessons`` so context doesn't bloat.
         """
         lessons = self.query_for_target(
-            target_name, stage=stage, op_family=op_family, topic=topic,
+            target_name,
+            stage=stage,
+            op_family=op_family,
+            topic=topic,
             limit=max_lessons,
         )
         if not lessons:

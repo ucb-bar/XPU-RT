@@ -31,18 +31,14 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any
 
 from compgen.bench.diagnosis import (
-    Bottleneck,
     KernelDiagnosis,
     diagnose,
-    format_diagnosis,
 )
 from compgen.bench.kernel_bench import BenchResult
 from compgen.bench.refinement import build_refinement_prompt
 from compgen.kernels.contract_v3 import KernelContractV3
-
 
 # ---------------------------------------------------------------------------
 # Callable contracts
@@ -68,11 +64,11 @@ BenchCallable = Callable[[str, KernelContractV3], BenchResult]
 
 @dataclass
 class IterationAttempt:
-    attempt: int                  # 1-indexed
+    attempt: int  # 1-indexed
     kernel_source: str
     bench: BenchResult
     diagnosis: KernelDiagnosis
-    prompt_used: str              # the prompt that produced kernel_source (or "" on attempt 1)
+    prompt_used: str  # the prompt that produced kernel_source (or "" on attempt 1)
 
 
 @dataclass
@@ -147,7 +143,9 @@ def iterate_kernel(
         # 1. Ask codegen for a kernel — with refinement context when available.
         refinement_prompt = (
             build_refinement_prompt(
-                contract, prior_source, prior_diag,
+                contract,
+                prior_source,
+                prior_diag,
                 perf_target_us=perf_target_us,
             )
             if prior_source is not None and prior_diag is not None
@@ -161,20 +159,19 @@ def iterate_kernel(
         # 3. Distill.
         diag = diagnose(contract, bench)
 
-        outcome.attempts.append(IterationAttempt(
-            attempt=i,
-            kernel_source=source,
-            bench=bench,
-            diagnosis=diag,
-            prompt_used=refinement_prompt or "",
-        ))
+        outcome.attempts.append(
+            IterationAttempt(
+                attempt=i,
+                kernel_source=source,
+                bench=bench,
+                diagnosis=diag,
+                prompt_used=refinement_prompt or "",
+            )
+        )
 
         # 4. Converged?
         passes_correctness = bench.passed
-        passes_perf = (
-            perf_target_us is None
-            or (passes_correctness and bench.our_us <= perf_target_us)
-        )
+        passes_perf = perf_target_us is None or (passes_correctness and bench.our_us <= perf_target_us)
         if passes_correctness and passes_perf and perf_target_us is not None:
             outcome.converged = True
             outcome.best_attempt_idx = i - 1
@@ -194,7 +191,8 @@ def iterate_kernel(
         # Nothing passed correctness — return the lowest-latency anyway (caller
         # will see passed=False and route accordingly).
         best_idx, _best = min(
-            enumerate(outcome.attempts), key=lambda kv: kv[1].bench.our_us,
+            enumerate(outcome.attempts),
+            key=lambda kv: kv[1].bench.our_us,
         )
         outcome.best_attempt_idx = best_idx
 

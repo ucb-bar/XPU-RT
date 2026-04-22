@@ -36,15 +36,12 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
-from compgen.kernels.contract_v3 import HardwareEnvelope
 from compgen.llm.base import (
-    CompGenLLMProtocol,
     GenerationRequest,
     GenerationResponse,
     Objective,
 )
 from compgen.mcp.session import McpSession, SessionManager
-
 
 # ---------------------------------------------------------------------------
 # Data types
@@ -88,7 +85,7 @@ def _dispatch_cache(session: McpSession) -> DispatchCache:
     cache: DispatchCache | None = getattr(session, "dispatch_cache", None)
     if cache is None:
         cache = DispatchCache()
-        session.dispatch_cache = cache    # type: ignore[attr-defined]
+        session.dispatch_cache = cache  # type: ignore[attr-defined]
     return cache
 
 
@@ -329,23 +326,30 @@ def lookup_dispatch_decision(
     entry = cache.entries.get(fp)
     if entry is None:
         return {
-            "ok": True, "session_id": session_id,
-            "found": False, "fingerprint": fp,
+            "ok": True,
+            "session_id": session_id,
+            "found": False,
+            "fingerprint": fp,
         }
     return {
-        "ok": True, "session_id": session_id,
-        "found": True, "fingerprint": fp,
+        "ok": True,
+        "session_id": session_id,
+        "found": True,
+        "fingerprint": fp,
         "decision_json": entry.decision_json,
     }
 
 
 def list_pending_dispatch_decisions(
-    sm: SessionManager, *, session_id: str,
+    sm: SessionManager,
+    *,
+    session_id: str,
 ) -> dict[str, Any]:
     session = sm.get(session_id)
     cache = _dispatch_cache(session)
     return {
-        "ok": True, "session_id": session_id,
+        "ok": True,
+        "session_id": session_id,
         "pending_count": len(cache.pending),
         "requests": [
             {
@@ -409,16 +413,20 @@ class McpDispatchLLM:
             if "target=" in line
         ]
         op_names = [region_summary]
-        objective = (ctx.objective.value if ctx.objective else self.objective.value)
+        objective = ctx.objective.value if ctx.objective else self.objective.value
         cached = lookup_dispatch_decision(
-            self.sm, session_id=self.session_id,
-            region_op_names=op_names, envelope_targets=target_names,
-            perf_budget_us=self.perf_budget_us, objective=objective,
+            self.sm,
+            session_id=self.session_id,
+            region_op_names=op_names,
+            envelope_targets=target_names,
+            perf_budget_us=self.perf_budget_us,
+            objective=objective,
         )
         if cached.get("found"):
             return GenerationResponse(
                 raw_text=cached["decision_json"],
-                parsed_artifacts=[], model_id="mcp-dispatch-cache",
+                parsed_artifacts=[],
+                model_id="mcp-dispatch-cache",
             )
         # Miss → queue it for the agent. Return empty so the caller's
         # parser falls back to the deterministic oracle this pass.
@@ -433,7 +441,8 @@ class McpDispatchLLM:
             if d:
                 envelopes_dicts.append(d)
         request_dispatch_decision(
-            self.sm, session_id=self.session_id,
+            self.sm,
+            session_id=self.session_id,
             region_summary=region_summary,
             region_op_names=op_names,
             envelopes=envelopes_dicts,
@@ -442,7 +451,8 @@ class McpDispatchLLM:
         )
         return GenerationResponse(
             raw_text="",
-            parsed_artifacts=[], model_id="mcp-dispatch-pending",
+            parsed_artifacts=[],
+            model_id="mcp-dispatch-pending",
         )
 
     def generate_structured(self, request, schema):  # noqa: ANN001
@@ -499,8 +509,7 @@ DISPATCH_TOOLS: list[dict[str, Any]] = [
     {
         "name": "lookup_dispatch_decision",
         "description": (
-            "Check whether a dispatch decision for this region × target list "
-            "is already cached in the session."
+            "Check whether a dispatch decision for this region × target list is already cached in the session."
         ),
         "phase": "inspect",
         "handler": lookup_dispatch_decision,

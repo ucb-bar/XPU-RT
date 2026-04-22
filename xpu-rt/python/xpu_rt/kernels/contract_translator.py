@@ -29,14 +29,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Protocol, runtime_checkable
 
-from compgen.kernels.compute_dag import ComputeDAG, to_prompt_text
 from compgen.kernels.contract_v3 import (
     DispatchModel,
     Granularity,
     KernelArchetype,
     KernelContractV3,
 )
-
 
 # ---------------------------------------------------------------------------
 # Outputs
@@ -47,10 +45,10 @@ from compgen.kernels.contract_v3 import (
 class TritonTranslation:
     """What ``TritonContractTranslator.translate()`` returns."""
 
-    kernel_skeleton: str            # Triton stub the codegen fills in
-    autotune_configs: tuple[dict[str, Any], ...]   # ``triton.Config``-shaped dicts
-    prompt_context: str             # human-readable prompt string for codegen
-    target_arch: str                # "cuda" | "rocm"
+    kernel_skeleton: str  # Triton stub the codegen fills in
+    autotune_configs: tuple[dict[str, Any], ...]  # ``triton.Config``-shaped dicts
+    prompt_context: str  # human-readable prompt string for codegen
+    target_arch: str  # "cuda" | "rocm"
     compatibility_notes: tuple[str, ...] = ()
 
 
@@ -58,8 +56,8 @@ class TritonTranslation:
 class HexagonTranslation:
     """Output for Hexagon NPU C codegen."""
 
-    c_header: str                   # function signature + buffer decls
-    isa_hints: tuple[str, ...]      # vmpyubacc, vrmpybu, etc.
+    c_header: str  # function signature + buffer decls
+    isa_hints: tuple[str, ...]  # vmpyubacc, vrmpybu, etc.
     prompt_context: str
     compatibility_notes: tuple[str, ...] = ()
 
@@ -74,10 +72,10 @@ class AutocompProblem:
     actual autocomp invocation site does the lazy import + adaptation.
     """
 
-    prob_type: str                  # autocomp's op-family taxonomy
-    prob_id: int                    # generated stable id
-    context: str                    # prompt-friendly description
-    test_file: Path | None = None   # path to a generated test (optional)
+    prob_type: str  # autocomp's op-family taxonomy
+    prob_id: int  # generated stable id
+    context: str  # prompt-friendly description
+    test_file: Path | None = None  # path to a generated test (optional)
     sol_file: Path | None = None
     tests: list[Any] = field(default_factory=list)
 
@@ -112,7 +110,7 @@ def _arch_for_triton(target_name: str) -> str:
     n = target_name.lower()
     if n.startswith("rocm") or n.startswith("mi"):
         return "rocm"
-    return "cuda"        # default
+    return "cuda"  # default
 
 
 def _triton_autotune_grid(contract: KernelContractV3) -> tuple[dict, ...]:
@@ -124,8 +122,8 @@ def _triton_autotune_grid(contract: KernelContractV3) -> tuple[dict, ...]:
     arch = contract.archetype
     if arch is KernelArchetype.COMPUTE_TILED:
         return (
-            {"BLOCK_M": 64,  "BLOCK_N": 64,  "BLOCK_K": 32, "num_warps": 4, "num_stages": 2},
-            {"BLOCK_M": 128, "BLOCK_N": 64,  "BLOCK_K": 32, "num_warps": 4, "num_stages": 2},
+            {"BLOCK_M": 64, "BLOCK_N": 64, "BLOCK_K": 32, "num_warps": 4, "num_stages": 2},
+            {"BLOCK_M": 128, "BLOCK_N": 64, "BLOCK_K": 32, "num_warps": 4, "num_stages": 2},
             {"BLOCK_M": 128, "BLOCK_N": 128, "BLOCK_K": 32, "num_warps": 8, "num_stages": 3},
         )
     if arch is KernelArchetype.REDUCE:
@@ -200,13 +198,11 @@ class TritonContractTranslator:
         ]
         for t in view.io.inputs:
             prompt_lines.append(
-                f"  IN  {t.name}: shape={t.shape.dims} dtype_class={t.dtype_class} "
-                f"layout={t.layout.value}"
+                f"  IN  {t.name}: shape={t.shape.dims} dtype_class={t.dtype_class} layout={t.layout.value}"
             )
         for t in view.io.outputs:
             prompt_lines.append(
-                f"  OUT {t.name}: shape={t.shape.dims} dtype_class={t.dtype_class} "
-                f"layout={t.layout.value}"
+                f"  OUT {t.name}: shape={t.shape.dims} dtype_class={t.dtype_class} layout={t.layout.value}"
             )
         if view.io.attributes:
             prompt_lines.append("")
@@ -275,14 +271,13 @@ class HexagonContractTranslator:
         params = []
         for t in (*contract.io.inputs, *contract.io.outputs):
             dt = t.dtype_class[0] if t.dtype_class else "f32"
-            ctype = {"f16": "float16_t", "bf16": "bfloat16_t", "f32": "float",
-                     "i8": "int8_t", "i32": "int32_t"}.get(dt, "void")
+            ctype = {"f16": "float16_t", "bf16": "bfloat16_t", "f32": "float", "i8": "int8_t", "i32": "int32_t"}.get(
+                dt, "void"
+            )
             params.append(f"{ctype} const* {t.name}")
         c_header = (
             f"// {contract.op_name} ({contract.archetype.value}, target={target})\n"
-            f"void {contract.op_name.replace('.', '_')}(\n  "
-            + ",\n  ".join(params)
-            + "\n);\n"
+            f"void {contract.op_name.replace('.', '_')}(\n  " + ",\n  ".join(params) + "\n);\n"
         )
 
         notes: list[str] = []
@@ -353,11 +348,11 @@ class AutocompContractTranslator:
     def translate(self, contract: KernelContractV3) -> AutocompProblem:
         # Map archetype → autocomp prob_type taxonomy.
         prob_type = {
-            KernelArchetype.COMPUTE_TILED:   "matmul",
-            KernelArchetype.REDUCE:          "reduce",
-            KernelArchetype.POINTWISE:       "pointwise",
-            KernelArchetype.MEMORY:          "memory",
-            KernelArchetype.ACTIVATION:      "activation",
+            KernelArchetype.COMPUTE_TILED: "matmul",
+            KernelArchetype.REDUCE: "reduce",
+            KernelArchetype.POINTWISE: "pointwise",
+            KernelArchetype.MEMORY: "memory",
+            KernelArchetype.ACTIVATION: "activation",
             KernelArchetype.TYPE_CONV_INDEX: "type_conv",
         }.get(contract.archetype, "generic")
 
@@ -381,9 +376,7 @@ class AutocompContractTranslator:
         context_lines.append("")
         context_lines.append("## Outputs")
         for t in view.io.outputs:
-            context_lines.append(
-                f"  - {t.name}: shape={t.shape.dims} dtype_class={t.dtype_class}"
-            )
+            context_lines.append(f"  - {t.name}: shape={t.shape.dims} dtype_class={t.dtype_class}")
         if view.io.attributes:
             context_lines.append("")
             context_lines.append("## Static attributes")
@@ -422,7 +415,7 @@ class AutocompContractTranslator:
         """
         translation = self.translate(contract)
         try:
-            from autocomp.search.prob import Prob       # type: ignore[import-not-found]
+            from autocomp.search.prob import Prob  # type: ignore[import-not-found]
         except ImportError as exc:
             raise ImportError(
                 "autocomp package is not installed; install third_party/autocomp "

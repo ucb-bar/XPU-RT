@@ -14,8 +14,7 @@ def _make_fake_bundle(root: Path) -> Path:
     bundle.mkdir()
     (bundle / "libcompgen_model.a").write_bytes(b"!<arch>\n")  # valid ar header byte
     (bundle / "model_blob.c").write_text(
-        "const unsigned char compgen_model_blob[] = {0};\n"
-        "const unsigned compgen_model_blob_size = 1;\n"
+        "const unsigned char compgen_model_blob[] = {0};\nconst unsigned compgen_model_blob_size = 1;\n"
     )
     (bundle / "compgen_model.h").write_text(
         "#pragma once\n"

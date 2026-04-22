@@ -24,6 +24,7 @@ from compgen.mcp.tools.bench import BENCH_TOOLS
 from compgen.mcp.tools.decisions import DECISION_TOOLS
 from compgen.mcp.tools.diagnose import DIAGNOSE_TOOLS
 from compgen.mcp.tools.dispatch import DISPATCH_TOOLS
+from compgen.mcp.tools.embedded import EMBEDDED_TOOLS
 from compgen.mcp.tools.explain import EXPLAIN_TOOLS
 from compgen.mcp.tools.graduate import GRADUATE_TOOLS
 from compgen.mcp.tools.graph_digest import GRAPH_DIGEST_TOOLS
@@ -31,7 +32,6 @@ from compgen.mcp.tools.inspect import INSPECT_TOOLS
 from compgen.mcp.tools.kernel import KERNEL_TOOLS
 from compgen.mcp.tools.knowledge import KNOWLEDGE_TOOLS
 from compgen.mcp.tools.lifecycle import LIFECYCLE_TOOLS
-from compgen.mcp.tools.embedded import EMBEDDED_TOOLS
 from compgen.mcp.tools.recipe_apply import APPLY_RECIPE_TOOLS
 from compgen.mcp.tools.recovery import RECOVERY_TOOLS
 from compgen.mcp.tools.refinement import REFINEMENT_TOOLS
@@ -43,6 +43,7 @@ from compgen.mcp.tools.vendor_dialect import VENDOR_DIALECT_TOOLS
 def _optimize_tools() -> list[dict]:
     """Imported lazily to avoid an import cycle with compgen.agent."""
     from compgen.agent.mcp_optimizer import OPTIMIZE_TOOLS
+
     return OPTIMIZE_TOOLS
 
 

@@ -66,10 +66,10 @@ def _rvv_only_spec(tmp_path: Path) -> str:
     """Feature-stripped HardwareSpec for A/B comparability (no ``+xopu``)."""
     source = Path(SATURN_SPEC).read_text()
     stripped = source.replace(
-        "    - name: Xopu\n      version: \"1.0\"\n      description: \"Outer-product unit (VOPACC). 8x8 MACC array, 4 matrix regs.\"\n",
+        '    - name: Xopu\n      version: "1.0"\n      description: "Outer-product unit (VOPACC). 8x8 MACC array, 4 matrix regs."\n',
         "",
     ).replace(
-        "    - name: XopuMmt4d\n      version: \"1.0\"\n      description: \"Mmt4d s8s8s32 16x16x128 fast-path via encoding-swapped layouts.\"\n",
+        '    - name: XopuMmt4d\n      version: "1.0"\n      description: "Mmt4d s8s8s32 16x16x128 fast-path via encoding-swapped layouts."\n',
         "",
     )
     out = tmp_path / "saturn_rvv_only.yaml"
@@ -160,6 +160,7 @@ def test_spike_runs_compgen_convnet() -> None:
     # Spike's stock build lacks +xopu — use the RVV-only spec so the
     # capability-driven pipeline routes mmt4d to the pure RVV fallback.
     import tempfile
+
     with tempfile.TemporaryDirectory() as td:
         spec = _rvv_only_spec(Path(td))
         compile_result = compile_embedded(

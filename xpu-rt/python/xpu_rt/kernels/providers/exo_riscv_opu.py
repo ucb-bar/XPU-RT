@@ -74,9 +74,7 @@ class UkernelEmission:
 class ExoRiscvOpuConfig:
     """Provider configuration; overridable for tests and tuning."""
 
-    target_names: frozenset[str] = field(
-        default_factory=lambda: frozenset(_SUPPORTED_TARGETS)
-    )
+    target_names: frozenset[str] = field(default_factory=lambda: frozenset(_SUPPORTED_TARGETS))
 
 
 def _is_mmt4d_contract(contract: KernelContract) -> bool:
@@ -92,9 +90,7 @@ def _is_mmt4d_contract(contract: KernelContract) -> bool:
 
 
 def _is_im2col_contract(contract: KernelContract) -> bool:
-    return contract.op_family in {"im2col", "conv2d_im2col"} and (
-        not contract.dtypes or contract.dtypes[0] == "int8"
-    )
+    return contract.op_family in {"im2col", "conv2d_im2col"} and (not contract.dtypes or contract.dtypes[0] == "int8")
 
 
 def _emit_mmt4d_s8s8s32_16x16x128_xopu() -> UkernelEmission:
@@ -430,10 +426,7 @@ class ExoRiscvOpuProvider:
                 kind="exo_schedule",
                 scope="target",
                 scope_key="saturn-opu-v128d64",
-                content=(
-                    f"{k.name}: tile={k.tile_shape}; "
-                    f"notes={' | '.join(k.schedule_notes)}"
-                ),
+                content=(f"{k.name}: tile={k.tile_shape}; notes={' | '.join(k.schedule_notes)}"),
                 metadata={"instructions": list(k.instruction_tags)},
                 confidence=0.8,
             )
@@ -462,9 +455,7 @@ class ExoRiscvOpuProvider:
             contract_feedback=feedback,
             metadata={
                 "kernels": [k.name for k in kernels],
-                "instruction_tags": {
-                    k.name: list(k.instruction_tags) for k in kernels
-                },
+                "instruction_tags": {k.name: list(k.instruction_tags) for k in kernels},
             },
         )
 

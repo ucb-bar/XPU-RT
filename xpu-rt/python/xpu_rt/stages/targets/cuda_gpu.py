@@ -48,6 +48,7 @@ def _op_site_key(op: Any) -> str:
         return str(rid_attr.data)
     return f"{op.name}@{id(op):x}"
 
+
 # ---------------------------------------------------------------------------
 # CUDA-specific plugins
 # ---------------------------------------------------------------------------
@@ -90,8 +91,7 @@ class CudaEncodingPlugin:
                     value="tiled_128x64",
                     source="oracle:encoding",
                     oracle_verdict="recommended" if is_matmul else "allowed",
-                    oracle_reason="MMA-friendly 128x64 tile for tensor cores" if is_matmul
-                    else "non-matmul fallback",
+                    oracle_reason="MMA-friendly 128x64 tile for tensor cores" if is_matmul else "non-matmul fallback",
                     oracle_confidence=0.7 if is_matmul else 0.3,
                 ),
                 DecisionCandidate(
@@ -99,7 +99,8 @@ class CudaEncodingPlugin:
                     value="row_major",
                     source="oracle:encoding",
                     oracle_verdict="recommended" if not is_matmul else "allowed",
-                    oracle_reason="default linear layout" if not is_matmul
+                    oracle_reason="default linear layout"
+                    if not is_matmul
                     else "readable but non-MMA; may prevent tensor-core use",
                     oracle_confidence=0.6 if not is_matmul else 0.2,
                 ),
@@ -116,11 +117,7 @@ class CudaEncodingPlugin:
             site_id = f"cuda.encoding:{_op_site_key(op)}"
             context = {
                 "op": op.name,
-                "shapes": [
-                    list(r.type.get_shape())
-                    for r in op.results
-                    if isinstance(r.type, TensorType)
-                ],
+                "shapes": [list(r.type.get_shape()) for r in op.results if isinstance(r.type, TensorType)],
                 "is_matmul": is_matmul,
             }
 

@@ -15,7 +15,7 @@ strings, one per output-tensor dim. The agent reads this via
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 
 from xdsl.dialects.builtin import ArrayAttr, ModuleOp, StringAttr
@@ -26,10 +26,10 @@ from xdsl.ir import Operation
 class DimRole(Enum):
     """One per output-tensor dim of an op."""
 
-    PARALLEL = "parallel"      # output dim corresponds to a parallel axis (no reduction)
-    REDUCE = "reduce"          # this dim is reduced over (matmul K, softmax axis)
-    BROADCAST = "broadcast"    # this dim is broadcast (size 1, expanded by consumer)
-    BATCH = "batch"            # outer batch dim — parallel but special (scheduling unit)
+    PARALLEL = "parallel"  # output dim corresponds to a parallel axis (no reduction)
+    REDUCE = "reduce"  # this dim is reduced over (matmul K, softmax axis)
+    BROADCAST = "broadcast"  # this dim is broadcast (size 1, expanded by consumer)
+    BATCH = "batch"  # outer batch dim — parallel but special (scheduling unit)
     UNKNOWN = "unknown"
 
 
@@ -170,9 +170,7 @@ def annotate_dim_roles(module: ModuleOp) -> int:
         ann = analyze_op(op)
         if ann is None:
             continue
-        op.attributes["compgen.dim_role"] = ArrayAttr(
-            [StringAttr(r.value) for r in ann.output_roles]
-        )
+        op.attributes["compgen.dim_role"] = ArrayAttr([StringAttr(r.value) for r in ann.output_roles])
         annotated += 1
     return annotated
 

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from compgen.extensions.vendor_dialect.adapter import LoweringResult, VendorDialectAdapter
 from compgen.extensions.vendor_dialect.descriptor import (
     BundlePlan,

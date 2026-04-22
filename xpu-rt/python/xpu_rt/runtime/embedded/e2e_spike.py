@@ -84,7 +84,9 @@ def build_e2e_artifacts(
         shutil.rmtree(bundle_dir)
     bundle_dir.mkdir(parents=True)
     lowered = lower_cnn_to_c(
-        model, sample_input_shape=sample_input_shape, model_name=sample_name,
+        model,
+        sample_input_shape=sample_input_shape,
+        model_name=sample_name,
     )
     emit_embedded(
         bundle_dir,

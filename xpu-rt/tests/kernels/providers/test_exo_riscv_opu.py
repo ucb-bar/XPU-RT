@@ -140,8 +140,7 @@ def test_host_reference_mmt4d_matches_numpy(tmp_path: Path) -> None:
     src.write_text(mmt4d.c_source)
     so_path = tmp_path / "libmmt4d.so"
     subprocess.run(
-        ["cc", "-O2", "-std=c17", "-Wall", "-Werror", "-fPIC", "-shared",
-         str(src), "-o", str(so_path)],
+        ["cc", "-O2", "-std=c17", "-Wall", "-Werror", "-fPIC", "-shared", str(src), "-o", str(so_path)],
         check=True,
     )
     lib = ctypes.CDLL(str(so_path))
@@ -196,8 +195,7 @@ def test_rvv_fallback_numerically_matches_opu(tmp_path: Path) -> None:
         src.write_text(k.c_source)
         so = tmp_path / f"{variant}.so"
         subprocess.run(
-            ["cc", "-O2", "-std=c17", "-Wall", "-Werror", "-fPIC", "-shared",
-             str(src), "-o", str(so)],
+            ["cc", "-O2", "-std=c17", "-Wall", "-Werror", "-fPIC", "-shared", str(src), "-o", str(so)],
             check=True,
         )
         lib = ctypes.CDLL(str(so))
@@ -243,8 +241,7 @@ def test_host_reference_im2col_matches_torch(tmp_path: Path) -> None:
     src.write_text(im2col.c_source)
     so_path = tmp_path / "libim2col.so"
     subprocess.run(
-        ["cc", "-O2", "-std=c17", "-Wall", "-Werror", "-fPIC", "-shared",
-         str(src), "-o", str(so_path)],
+        ["cc", "-O2", "-std=c17", "-Wall", "-Werror", "-fPIC", "-shared", str(src), "-o", str(so_path)],
         check=True,
     )
     lib = ctypes.CDLL(str(so_path))
@@ -252,7 +249,11 @@ def test_host_reference_im2col_matches_torch(tmp_path: Path) -> None:
     lib.compgen_im2col_s8_rvv.argtypes = [
         ctypes.POINTER(ctypes.c_int8),
         ctypes.POINTER(ctypes.c_int8),
-        ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int,
+        ctypes.c_int,
+        ctypes.c_int,
+        ctypes.c_int,
+        ctypes.c_int,
+        ctypes.c_int,
     ]
 
     H, W, C, KH, KW = 4, 4, 3, 3, 3
@@ -262,7 +263,11 @@ def test_host_reference_im2col_matches_torch(tmp_path: Path) -> None:
     lib.compgen_im2col_s8_rvv(
         out.ctypes.data_as(ctypes.POINTER(ctypes.c_int8)),
         inp.ravel().ctypes.data_as(ctypes.POINTER(ctypes.c_int8)),
-        H, W, C, KH, KW,
+        H,
+        W,
+        C,
+        KH,
+        KW,
     )
 
     # Reference: zero-padded im2col matching the kernel's loop order.
@@ -273,9 +278,7 @@ def test_host_reference_im2col_matches_torch(tmp_path: Path) -> None:
                 for kw in range(KW):
                     for c in range(C):
                         ih, iw = h + kh, w + kw
-                        expected.append(
-                            inp[ih, iw, c] if (ih < H and iw < W) else 0
-                        )
+                        expected.append(inp[ih, iw, c] if (ih < H and iw < W) else 0)
     np.testing.assert_array_equal(out, np.array(expected, dtype=np.int8))
 
 

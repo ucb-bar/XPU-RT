@@ -5,7 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from compgen.targetgen.classify import TargetFamily, classify_hardware
 from compgen.targetgen.generate import generate_target
 from compgen.targetgen.load import load_hardware_spec

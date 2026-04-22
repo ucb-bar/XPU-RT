@@ -8,7 +8,6 @@ import sys
 from pathlib import Path
 
 import pytest
-
 from compgen.extensions.vendor_dialect.descriptor import (
     BundlePlan,
     CompileEntry,
@@ -90,9 +89,7 @@ def test_scaffolded_package_imports(tmp_path: Path, monkeypatch) -> None:
     assert adapter.target == "toy-target"
 
 
-def test_scaffolded_package_with_kernel_authoring_defers_provider(
-    tmp_path: Path, monkeypatch
-) -> None:
+def test_scaffolded_package_with_kernel_authoring_defers_provider(tmp_path: Path, monkeypatch) -> None:
     """When kernel_authoring_required=True, ``kernels.py`` wires a provider.
 
     Phase-A does not yet ship :class:`ClaudeKernelProvider`, so importing

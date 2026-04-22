@@ -51,22 +51,17 @@ class FiresimWorkload:
     workload_json: Path
 
 
-def _render_main_c(
-    lowered: LoweredModel, out_path: Path
-) -> None:
+def _render_main_c(lowered: LoweredModel, out_path: Path) -> None:
     tmpl = (_TEMPLATE_DIR / "main.c.tmpl").read_text()
     rendered = (
-        tmpl
-        .replace("@ARENA_BYTES@",  str(max(lowered.arena_bytes, 1 << 20)))
-        .replace("@INPUT_BYTES@",  "COMPGEN_MODEL_INPUT_BYTES")
+        tmpl.replace("@ARENA_BYTES@", str(max(lowered.arena_bytes, 1 << 20)))
+        .replace("@INPUT_BYTES@", "COMPGEN_MODEL_INPUT_BYTES")
         .replace("@OUTPUT_BYTES@", "COMPGEN_MODEL_OUTPUT_BYTES")
     )
     out_path.write_text(rendered)
 
 
-def _emit_input_blob(
-    out_path: Path, raw: bytes
-) -> None:
+def _emit_input_blob(out_path: Path, raw: bytes) -> None:
     rows = []
     for i in range(0, len(raw), 32):
         rows.append("    " + ", ".join(f"0x{b:02x}" for b in raw[i : i + 32]))
@@ -141,7 +136,9 @@ def build_firesim_workload(
 
     # --- Lower + emit bundle --------------------------------------
     lowered = lower_cnn_to_c(
-        model, sample_input_shape=sample_input_shape, model_name=workload_name,
+        model,
+        sample_input_shape=sample_input_shape,
+        model_name=workload_name,
     )
     bundle_dir = bundle_dir or Path(f"/tmp/compgen_firesim_{workload_name}")
     if bundle_dir.exists():
@@ -191,14 +188,20 @@ def build_firesim_workload(
     ]
     cmd = [
         riscv_gcc,
-        f"-march={arch}", f"-mabi={abi}", "-mcmodel=medany",
-        "-O2", "-std=gnu99", "-Wall",
-        "-fno-common", "-fno-builtin-printf",
+        f"-march={arch}",
+        f"-mabi={abi}",
+        "-mcmodel=medany",
+        "-O2",
+        "-std=gnu99",
+        "-Wall",
+        "-fno-common",
+        "-fno-builtin-printf",
         "-specs=htif_nano.specs",
         f"-I{bundle_dir}",
         *map(str, c_sources),
         "-static",
-        "-o", str(elf_path),
+        "-o",
+        str(elf_path),
     ]
     subprocess.run(cmd, check=True)
 

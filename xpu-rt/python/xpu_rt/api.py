@@ -289,7 +289,6 @@ def compile_model(
     from compgen.trace import (
         IRDumpWriter,
         dump_enabled_from_env,
-        get_active_bus,
         install_bus,
         install_ir_dump_writer,
     )
@@ -454,9 +453,7 @@ def compile_model(
 
     # Stage 1.5: Graph dossier
     log.info("api.compile.analyze")
-    with AnalysisPublisher.span(
-        payload={"analysis": "NetworkAnalyzer", "target": target_device.profile.name}
-    ):
+    with AnalysisPublisher.span(payload={"analysis": "NetworkAnalyzer", "target": target_device.profile.name}):
         analysis = NetworkAnalyzer().analyze(
             capture_artifact.exported_program,
             target_device.profile,
@@ -616,9 +613,7 @@ def compile_with_vendor(
     from compgen.extensions.vendor_dialect.adapter import VendorDialectAdapter
 
     if not isinstance(vendor_adapter, VendorDialectAdapter):
-        raise TypeError(
-            f"vendor_adapter must be a VendorDialectAdapter, got {type(vendor_adapter).__name__}"
-        )
+        raise TypeError(f"vendor_adapter must be a VendorDialectAdapter, got {type(vendor_adapter).__name__}")
     if sample_inputs is None:
         sample_inputs = (torch.randn(1, 64),)
 

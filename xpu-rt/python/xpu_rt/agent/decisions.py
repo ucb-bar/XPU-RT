@@ -87,7 +87,7 @@ class DecisionSite:
     oracle_recommended_id: str = ""
     trace_event_id: str = ""
     status: str = "pending"
-    outcome: "DecisionOutcome | None" = None
+    outcome: DecisionOutcome | None = None
 
     def candidate_by_id(self, cid: str) -> DecisionCandidate | None:
         for c in self.candidates:
@@ -229,17 +229,13 @@ class DecisionRegistry:
         chosen_id = site.oracle_recommended_id or (site.candidates[0].id if site.candidates else "")
         candidate = site.candidate_by_id(chosen_id) if chosen_id else None
         if candidate is None:
-            raise RuntimeError(
-                f"site {site_id!r} has no candidates and no oracle recommendation; "
-                "cannot resolve"
-            )
+            raise RuntimeError(f"site {site_id!r} has no candidates and no oracle recommendation; cannot resolve")
         outcome = DecisionOutcome(
             site_id=site_id,
             chosen_id=candidate.id,
             chosen_value=candidate.value,
             source="fallback_oracle",
-            rationale=candidate.oracle_reason
-            or f"oracle recommended {candidate.id!r} (no agent override)",
+            rationale=candidate.oracle_reason or f"oracle recommended {candidate.id!r} (no agent override)",
         )
         return self._commit_outcome(site, outcome)
 
@@ -272,17 +268,14 @@ class DecisionRegistry:
         with self._lock:
             site = self._sites.get(site_id)
             if site is not None and site.outcome is not None:
-                raise RuntimeError(
-                    f"site {site_id!r} already resolved; use override() to replace"
-                )
+                raise RuntimeError(f"site {site_id!r} already resolved; use override() to replace")
 
             value = chosen_value
             if site is not None and value is None:
                 candidate = site.candidate_by_id(chosen_id)
                 if candidate is None and not chosen_id.startswith("invent:"):
                     raise KeyError(
-                        f"candidate {chosen_id!r} not in site {site_id!r}; "
-                        f"valid ids: {[c.id for c in site.candidates]}"
+                        f"candidate {chosen_id!r} not in site {site_id!r}; valid ids: {[c.id for c in site.candidates]}"
                     )
                 if candidate is not None:
                     value = candidate.value
@@ -321,9 +314,7 @@ class DecisionRegistry:
             if value is None:
                 candidate = site.candidate_by_id(chosen_id)
                 if candidate is None and not chosen_id.startswith("invent:"):
-                    raise KeyError(
-                        f"candidate {chosen_id!r} not in site {site_id!r}"
-                    )
+                    raise KeyError(f"candidate {chosen_id!r} not in site {site_id!r}")
                 if candidate is not None:
                     value = candidate.value
             outcome = DecisionOutcome(
@@ -384,10 +375,10 @@ class DecisionRegistry:
 
 import contextvars as _contextvars
 
-_active_registry: _contextvars.ContextVar["DecisionRegistry | None"] = _contextvars.ContextVar(
+_active_registry: _contextvars.ContextVar[DecisionRegistry | None] = _contextvars.ContextVar(
     "compgen_decision_registry", default=None
 )
-_process_registry: "DecisionRegistry | None" = None
+_process_registry: DecisionRegistry | None = None
 
 
 def install_registry(registry: DecisionRegistry | None) -> None:

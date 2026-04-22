@@ -30,8 +30,8 @@ from __future__ import annotations
 import os
 import re
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Callable
 
 import structlog
 
@@ -161,9 +161,13 @@ class ClaudeKernelProvider:
             if time.monotonic() > deadline:
                 log.info("claude_kernel.deadline", provider=self._name, iteration=iteration)
                 break
-            turn_prompt = prompt if not diagnostic else (
-                f"{prompt}\n\n---\nPrevious attempt failed the structural gate "
-                f"with:\n{diagnostic}\nFix the issue and re-emit the module."
+            turn_prompt = (
+                prompt
+                if not diagnostic
+                else (
+                    f"{prompt}\n\n---\nPrevious attempt failed the structural gate "
+                    f"with:\n{diagnostic}\nFix the issue and re-emit the module."
+                )
             )
             try:
                 responses = _client_chat(client, turn_prompt, model=self._model)
@@ -257,9 +261,7 @@ class ClaudeKernelProvider:
     def _hits_forbidden(self, code: str) -> bool:
         return any(tok and tok in code for tok in self._pack.forbidden_substrings)
 
-    def _derive_feedback(
-        self, contract: KernelContract, candidate: str
-    ) -> list[ContractFeedback]:
+    def _derive_feedback(self, contract: KernelContract, candidate: str) -> list[ContractFeedback]:
         feedback: list[ContractFeedback] = []
         # Minimal: record the layout the candidate appears to target.
         if contract.layout == "row_major" and "col_major" in candidate:

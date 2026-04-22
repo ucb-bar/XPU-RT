@@ -50,7 +50,6 @@ from compgen.kernels.contract_v3 import (
     TensorIO,
 )
 
-
 # ---------------------------------------------------------------------------
 # COMPUTE_TILED — matmul
 # ---------------------------------------------------------------------------
@@ -120,16 +119,12 @@ def reference_matmul_contract() -> KernelContractV3:
             ),
             fusion=FusionPolicy(is_boundary=True),
             dispatch=DispatchSpec(model=DispatchModel.ASYNC),
-            observability=ObservabilitySpec(
-                emit_completion_event=True, cost_emit_period=100
-            ),
+            observability=ObservabilitySpec(emit_completion_event=True, cost_emit_period=100),
         ),
         selection=SelectionHints(
             providers=(
-                ProviderHint(name="autocomp", weight=1.0,
-                             rationale="primary kernel-search backend"),
-                ProviderHint(name="triton_template", weight=0.5,
-                             rationale="fallback if autocomp budget blown"),
+                ProviderHint(name="autocomp", weight=1.0, rationale="primary kernel-search backend"),
+                ProviderHint(name="triton_template", weight=0.5, rationale="fallback if autocomp budget blown"),
             ),
         ),
     )
@@ -175,9 +170,7 @@ def reference_softmax_contract() -> KernelContractV3:
         io=io,
         orchestration=OrchestrationSpec(
             sync=SyncSpec(
-                event_decls=(
-                    EventDecl(name="softmax_done", scope="block"),
-                ),
+                event_decls=(EventDecl(name="softmax_done", scope="block"),),
                 wait_on=("matmul_done",),
                 aliasing=(AliasPair(input_idx=0, output_idx=0),),
             ),
@@ -365,7 +358,7 @@ def _hexagon_envelope() -> HardwareEnvelope:
     return HardwareEnvelope(
         target_name="openq_5165rb",
         vector_lanes=128,
-        scratchpad_bytes=8 * 1024 * 1024,   # 8 MB VTCM
+        scratchpad_bytes=8 * 1024 * 1024,  # 8 MB VTCM
         register_bytes=64,
         native_dtypes=("f16", "bf16", "i8"),
         peak_bandwidth_gbps=68.0,
@@ -406,7 +399,7 @@ def reference_micro_matmul_tile_contract() -> KernelContractV3:
         numerics=NumericsSpec(
             accumulator_dtype="f32",
             fast_math=False,
-            max_relative_error=0.0,   # bit-exact at the tile level
+            max_relative_error=0.0,  # bit-exact at the tile level
             deterministic=True,
         ),
     )
@@ -418,16 +411,16 @@ def reference_micro_matmul_tile_contract() -> KernelContractV3:
         orchestration=OrchestrationSpec(
             execution=ExecutionEnvelope(
                 hardware=_hexagon_envelope(),
-                memory_budget_bytes=2048,         # tile working set
+                memory_budget_bytes=2048,  # tile working set
                 concurrency_unit=ConcurrencyUnit.WARP,
-                padding=PaddingPolicy.NONE,        # tile shape is exact
+                padding=PaddingPolicy.NONE,  # tile shape is exact
                 priority=PerformancePriority.LATENCY,
             ),
-            sync=SyncSpec(),                       # MICRO: no events, no waits
+            sync=SyncSpec(),  # MICRO: no events, no waits
             memory=MemorySpec(
                 input_tiers=(MemoryTier.REGISTER, MemoryTier.REGISTER),
                 output_tiers=(MemoryTier.REGISTER,),
-                in_place_safe=True,                # acc += lhs @ rhs is canonical
+                in_place_safe=True,  # acc += lhs @ rhs is canonical
             ),
             fusion=FusionPolicy(is_boundary=False),
             dispatch=DispatchSpec(model=DispatchModel.INLINE),
@@ -460,7 +453,7 @@ def reference_mega_attention_block_contract() -> KernelContractV3:
     # [0] Q×Kᵀ
     qk_io = IOContract(
         inputs=(
-            TensorIO(name="q",  shape=ShapeClass(dims=(None, None)), dtype_class=("bf16",)),
+            TensorIO(name="q", shape=ShapeClass(dims=(None, None)), dtype_class=("bf16",)),
             TensorIO(name="kt", shape=ShapeClass(dims=(None, None)), dtype_class=("bf16",)),
         ),
         outputs=(TensorIO(name="scores", shape=ShapeClass(dims=(None, None)), dtype_class=("f32",)),),
@@ -482,7 +475,7 @@ def reference_mega_attention_block_contract() -> KernelContractV3:
     # [1] softmax(scores)
     sm_io = IOContract(
         inputs=(TensorIO(name="scores", shape=ShapeClass(dims=(None, None)), dtype_class=("f32",)),),
-        outputs=(TensorIO(name="probs",  shape=ShapeClass(dims=(None, None)), dtype_class=("f32",)),),
+        outputs=(TensorIO(name="probs", shape=ShapeClass(dims=(None, None)), dtype_class=("f32",)),),
         attributes=(StaticAttr(name="axis", value=-1), StaticAttr(name="numerically_stable", value=True)),
         numerics=NumericsSpec(accumulator_dtype="f32"),
     )
@@ -506,7 +499,7 @@ def reference_mega_attention_block_contract() -> KernelContractV3:
     av_io = IOContract(
         inputs=(
             TensorIO(name="probs", shape=ShapeClass(dims=(None, None)), dtype_class=("f32",)),
-            TensorIO(name="v",     shape=ShapeClass(dims=(None, None)), dtype_class=("bf16",)),
+            TensorIO(name="v", shape=ShapeClass(dims=(None, None)), dtype_class=("bf16",)),
         ),
         outputs=(TensorIO(name="out", shape=ShapeClass(dims=(None, None)), dtype_class=("bf16",)),),
         numerics=NumericsSpec(accumulator_dtype="f32"),
@@ -543,7 +536,7 @@ def reference_mega_attention_block_contract() -> KernelContractV3:
         orchestration=OrchestrationSpec(
             execution=ExecutionEnvelope(
                 hardware=env,
-                memory_budget_bytes=512 * 1024,    # 512 KB scratchpad budget
+                memory_budget_bytes=512 * 1024,  # 512 KB scratchpad budget
                 concurrency_unit=ConcurrencyUnit.BLOCK,
                 padding=PaddingPolicy.KERNEL_HANDLES,
                 priority=PerformancePriority.LATENCY,
@@ -560,7 +553,7 @@ def reference_mega_attention_block_contract() -> KernelContractV3:
         ),
         body=(qk, sm, av),
         internal_events=(
-            InternalEventEdge(event_name="qk_done",      producer_idx=0, consumer_idx=1),
+            InternalEventEdge(event_name="qk_done", producer_idx=0, consumer_idx=1),
             InternalEventEdge(event_name="softmax_done", producer_idx=1, consumer_idx=2),
         ),
     )

@@ -31,7 +31,6 @@ layout matches PyTorch bit-for-bit so the weights need no relayout.
 
 from __future__ import annotations
 
-import struct
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -203,9 +202,7 @@ def _validate_block(block: nn.Module) -> None:
     if not isinstance(block.bn2, nn.BatchNorm2d):
         raise NotImplementedError("bn2 must be nn.BatchNorm2d")
     if not (isinstance(block.shortcut, nn.Identity) or _is_conv_bn_pair(block.shortcut)):
-        raise NotImplementedError(
-            "ConvBlock shortcut must be nn.Identity or nn.Sequential(Conv2d, BatchNorm2d)"
-        )
+        raise NotImplementedError("ConvBlock shortcut must be nn.Identity or nn.Sequential(Conv2d, BatchNorm2d)")
 
 
 def lower_cnn_to_c(
@@ -244,8 +241,7 @@ def lower_cnn_to_c(
     for attr in ("stem", "stage1", "stage2", "stage3", "pool", "head"):
         if not hasattr(model, attr):
             raise NotImplementedError(
-                f"cnn_lowering: model missing attribute '{attr}' — "
-                "this lowerer targets the ConvNet family only."
+                f"cnn_lowering: model missing attribute '{attr}' — this lowerer targets the ConvNet family only."
             )
     if not isinstance(model.stem, nn.Sequential):
         raise NotImplementedError("model.stem must be nn.Sequential(Conv, BN, ReLU)")
@@ -296,7 +292,12 @@ def lower_cnn_to_c(
         assert conv.bias is None, "conv before BN must have bias=False"
         assert abs(bn.eps - _BN_EPS) < 1e-9, f"unexpected BN eps {bn.eps}"
         w_f, b_f = _fold_bn_into_conv(
-            conv.weight, bn.weight, bn.bias, bn.running_mean, bn.running_var, bn.eps,
+            conv.weight,
+            bn.weight,
+            bn.bias,
+            bn.running_mean,
+            bn.running_var,
+            bn.eps,
         )
         wref = bb.add(f"{prefix}_w", w_f)
         bref = bb.add(f"{prefix}_b", b_f)
@@ -315,7 +316,10 @@ def lower_cnn_to_c(
             w1, b1 = _pack_conv_bn(f"{prefix}_c1", blk.conv1, blk.bn1)
             w2, b2 = _pack_conv_bn(f"{prefix}_c2", blk.conv2, blk.bn2)
             refs = {
-                "c1_w": w1, "c1_b": b1, "c2_w": w2, "c2_b": b2,
+                "c1_w": w1,
+                "c1_b": b1,
+                "c2_w": w2,
+                "c2_b": b2,
                 "stride": blk.conv1.stride[0],
                 "in_ch": blk.conv1.in_channels,
                 "out_ch": blk.conv1.out_channels,
@@ -393,9 +397,19 @@ def lower_cnn_to_c(
     so = stem_out.shape[1:]
     assert tuple(so) == (32, 32, 32), f"unexpected stem out shape {so}"
     emit(f"    /* stem: Conv2d({Cin}→32, 3x3, s=2, p=1) + BN + ReLU */")
-    emit(_fmt_conv("input_f32", "A", (Cin, Hin, Win), (32, 32, 32),
-                   stride=2, pad=1, kernel=3,
-                   w_off=stem_w.offset_floats, b_off=stem_b.offset_floats))
+    emit(
+        _fmt_conv(
+            "input_f32",
+            "A",
+            (Cin, Hin, Win),
+            (32, 32, 32),
+            stride=2,
+            pad=1,
+            kernel=3,
+            w_off=stem_w.offset_floats,
+            b_off=stem_b.offset_floats,
+        )
+    )
     op_counts["conv2d"] += 1
     emit(_fmt_relu("A", 32 * 32 * 32))
     op_counts["relu"] += 1
@@ -416,37 +430,64 @@ def lower_cnn_to_c(
             in_ch = refs["in_ch"]
             assert in_ch == cur_shape[0], f"block input channel mismatch: {in_ch} vs {cur_shape[0]}"
             mid_shape = out_shape  # conv1 + conv2 outputs have same spatial as the block output
-            emit(f"    /* stage{stage_idx + 1} block{within_stage}: "
-                 f"in={cur_shape} out={out_shape} stride={stride} "
-                 f"{'res=1x1conv' if refs['has_shortcut'] else 'res=identity'} */")
+            emit(
+                f"    /* stage{stage_idx + 1} block{within_stage}: "
+                f"in={cur_shape} out={out_shape} stride={stride} "
+                f"{'res=1x1conv' if refs['has_shortcut'] else 'res=identity'} */"
+            )
             # h1 = conv1(current) -> other
-            emit(_fmt_conv(current, other, cur_shape, mid_shape,
-                           stride=stride, pad=1, kernel=3,
-                           w_off=refs["c1_w"].offset_floats,
-                           b_off=refs["c1_b"].offset_floats))
+            emit(
+                _fmt_conv(
+                    current,
+                    other,
+                    cur_shape,
+                    mid_shape,
+                    stride=stride,
+                    pad=1,
+                    kernel=3,
+                    w_off=refs["c1_w"].offset_floats,
+                    b_off=refs["c1_b"].offset_floats,
+                )
+            )
             op_counts["conv2d"] += 1
             emit(_fmt_relu(other, mid_shape[0] * mid_shape[1] * mid_shape[2]))
             op_counts["relu"] += 1
             # h2 = conv2(other) -> R
-            emit(_fmt_conv(other, "R", mid_shape, out_shape,
-                           stride=1, pad=1, kernel=3,
-                           w_off=refs["c2_w"].offset_floats,
-                           b_off=refs["c2_b"].offset_floats))
+            emit(
+                _fmt_conv(
+                    other,
+                    "R",
+                    mid_shape,
+                    out_shape,
+                    stride=1,
+                    pad=1,
+                    kernel=3,
+                    w_off=refs["c2_w"].offset_floats,
+                    b_off=refs["c2_b"].offset_floats,
+                )
+            )
             op_counts["conv2d"] += 1
             if refs["has_shortcut"]:
                 # sc = conv1x1(current, stride) -> S
-                emit(_fmt_conv(current, "S", cur_shape, out_shape,
-                               stride=stride, pad=0, kernel=1,
-                               w_off=refs["sc_w"].offset_floats,
-                               b_off=refs["sc_b"].offset_floats))
+                emit(
+                    _fmt_conv(
+                        current,
+                        "S",
+                        cur_shape,
+                        out_shape,
+                        stride=stride,
+                        pad=0,
+                        kernel=1,
+                        w_off=refs["sc_w"].offset_floats,
+                        b_off=refs["sc_b"].offset_floats,
+                    )
+                )
                 op_counts["conv2d"] += 1
                 # current = relu(R + S) -> current (OK: current buffer may have larger shape; fine because we're writing less)
-                emit(_fmt_add("R", "S", current,
-                              out_shape[0] * out_shape[1] * out_shape[2]))
+                emit(_fmt_add("R", "S", current, out_shape[0] * out_shape[1] * out_shape[2]))
             else:
                 # current = relu(R + current) -> current
-                emit(_fmt_add("R", current, current,
-                              out_shape[0] * out_shape[1] * out_shape[2]))
+                emit(_fmt_add("R", current, current, out_shape[0] * out_shape[1] * out_shape[2]))
             op_counts["add"] += 1
             emit(_fmt_relu(current, out_shape[0] * out_shape[1] * out_shape[2]))
             op_counts["relu"] += 1
@@ -456,8 +497,7 @@ def lower_cnn_to_c(
 
     # Global avgpool: current [C, H, W] -> other [C]
     emit(f"    /* pool: AdaptiveAvgPool2d(1) over {cur_shape} -> [{cur_shape[0]}] */")
-    emit(f"    cg_global_avgpool_f32({current}, {other}, "
-         f"{cur_shape[0]}, {cur_shape[1]}, {cur_shape[2]});")
+    emit(f"    cg_global_avgpool_f32({current}, {other}, {cur_shape[0]}, {cur_shape[1]}, {cur_shape[2]});")
     op_counts["avgpool"] += 1
     emit("")
 
@@ -465,13 +505,17 @@ def lower_cnn_to_c(
     assert head_w.num_floats == model.head.in_features * model.head.out_features
     emit(f"    /* head: Linear({model.head.in_features} -> {model.head.out_features}) */")
     if head_b is not None:
-        emit(f"    cg_linear_f32({other}, output_f32, "
-             f"{model.head.in_features}, {model.head.out_features}, "
-             f"blob_f32({head_w.offset_floats}), blob_f32({head_b.offset_floats}));")
+        emit(
+            f"    cg_linear_f32({other}, output_f32, "
+            f"{model.head.in_features}, {model.head.out_features}, "
+            f"blob_f32({head_w.offset_floats}), blob_f32({head_b.offset_floats}));"
+        )
     else:
-        emit(f"    cg_linear_f32({other}, output_f32, "
-             f"{model.head.in_features}, {model.head.out_features}, "
-             f"blob_f32({head_w.offset_floats}), (const float *)0);")
+        emit(
+            f"    cg_linear_f32({other}, output_f32, "
+            f"{model.head.in_features}, {model.head.out_features}, "
+            f"blob_f32({head_w.offset_floats}), (const float *)0);"
+        )
     op_counts["linear"] += 1
     emit("    return CG_STATUS_OK;")
     emit("}")

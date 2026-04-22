@@ -28,7 +28,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
 
 from compgen.bench.kernel_bench import BenchResult
 from compgen.kernels.contract_v3 import (
@@ -36,7 +35,6 @@ from compgen.kernels.contract_v3 import (
     KernelArchetype,
     KernelContractV3,
 )
-
 
 # ---------------------------------------------------------------------------
 # Bottleneck taxonomy
@@ -46,7 +44,7 @@ from compgen.kernels.contract_v3 import (
 class Bottleneck(Enum):
     BANDWIDTH_BOUND = "bandwidth_bound"
     COMPUTE_BOUND = "compute_bound"
-    LATENCY_BOUND = "latency_bound"         # launch + sync overhead dominates
+    LATENCY_BOUND = "latency_bound"  # launch + sync overhead dominates
     CORRECTNESS_BOUND = "correctness_bound"  # refinement should fix math, not perf
     UNKNOWN = "unknown"
 
@@ -68,7 +66,7 @@ class KernelDiagnosis:
     hypotheses: tuple[str, ...]
     supporting_metrics: dict[str, float] = field(default_factory=dict)
     # Raw pointers that the refinement-prompt builder uses verbatim.
-    compared_to: str = ""       # e.g. "cuBLAS 36.8μs = 85% peak compute"
+    compared_to: str = ""  # e.g. "cuBLAS 36.8μs = 85% peak compute"
     previous_attempt_summary: str = ""
 
 
@@ -87,8 +85,9 @@ def _tensor_size_bytes(shape: list[int], dtype_bytes: int) -> int:
 
 
 def _dtype_bytes(dt: str) -> int:
-    return {"f64": 8, "f32": 4, "f16": 2, "bf16": 2, "i64": 8, "i32": 4,
-            "i16": 2, "i8": 1, "i1": 1, "tf32": 4}.get(dt, 4)
+    return {"f64": 8, "f32": 4, "f16": 2, "bf16": 2, "i64": 8, "i32": 4, "i16": 2, "i8": 1, "i1": 1, "tf32": 4}.get(
+        dt, 4
+    )
 
 
 def _estimate_flops_and_bytes(
@@ -111,12 +110,16 @@ def _estimate_flops_and_bytes(
         _tensor_size_bytes(s, _dtype_bytes(t.dtype_class[0] if t.dtype_class else "f32"))
         for s, t in zip(in_shapes, contract.io.inputs, strict=False)
     )
-    output_bytes = sum(
-        _tensor_size_bytes(s, _dtype_bytes(t.dtype_class[0] if t.dtype_class else "f32"))
-        for s, t in zip(out_shapes, contract.io.outputs, strict=False)
-    ) if out_shapes else sum(
-        _tensor_size_bytes(s, _dtype_bytes(t.dtype_class[0] if t.dtype_class else "f32"))
-        for s, t in zip(in_shapes[:len(contract.io.outputs)], contract.io.outputs, strict=False)
+    output_bytes = (
+        sum(
+            _tensor_size_bytes(s, _dtype_bytes(t.dtype_class[0] if t.dtype_class else "f32"))
+            for s, t in zip(out_shapes, contract.io.outputs, strict=False)
+        )
+        if out_shapes
+        else sum(
+            _tensor_size_bytes(s, _dtype_bytes(t.dtype_class[0] if t.dtype_class else "f32"))
+            for s, t in zip(in_shapes[: len(contract.io.outputs)], contract.io.outputs, strict=False)
+        )
     )
 
     # FLOPs — archetype-specific.
@@ -156,7 +159,10 @@ def _estimate_flops_and_bytes(
 
 
 def _roofline(
-    flops: int, bytes_: int, elapsed_us: float, hw: HardwareEnvelope,
+    flops: int,
+    bytes_: int,
+    elapsed_us: float,
+    hw: HardwareEnvelope,
 ) -> tuple[Bottleneck, float, dict[str, float]]:
     """Decide compute vs bandwidth bound + return achieved/peak ratios.
 
@@ -315,18 +321,22 @@ def diagnose(
         contract.orchestration.execution.hardware
         if contract.orchestration.execution is not None
         else HardwareEnvelope(
-            target_name="unknown", vector_lanes=1, scratchpad_bytes=0,
-            register_bytes=0, native_dtypes=()
+            target_name="unknown", vector_lanes=1, scratchpad_bytes=0, register_bytes=0, native_dtypes=()
         )
     )
 
     flops, bytes_ = _estimate_flops_and_bytes(
-        contract, bench.input_shapes, output_shapes=None,
+        contract,
+        bench.input_shapes,
+        output_shapes=None,
     )
     bottleneck, eff, metrics = _roofline(flops, bytes_, bench.our_us, hw)
 
     hypos = _archetype_hypotheses(
-        contract.archetype, bottleneck, eff, metrics,
+        contract.archetype,
+        bottleneck,
+        eff,
+        metrics,
         vs_eager_ratio=bench.us_ratio_vs_eager,
     )
 
@@ -348,10 +358,7 @@ def diagnose(
         hypotheses=hypos,
         supporting_metrics=metrics,
         compared_to=compared_to,
-        previous_attempt_summary=(
-            f"{bench.our_us:.1f}μs, {bottleneck.value}, "
-            f"{eff*100:.0f}% of peak roof"
-        ),
+        previous_attempt_summary=(f"{bench.our_us:.1f}μs, {bottleneck.value}, {eff * 100:.0f}% of peak roof"),
     )
 
 
@@ -360,7 +367,7 @@ def format_diagnosis(d: KernelDiagnosis) -> str:
     lines = [
         f"DIAGNOSIS for {d.kernel_name} ({d.archetype.value})",
         f"  bottleneck : {d.primary_bottleneck.value}",
-        f"  efficiency : {d.roofline_efficiency*100:.1f}% of peak roof",
+        f"  efficiency : {d.roofline_efficiency * 100:.1f}% of peak roof",
         f"  compared_to: {d.compared_to}",
         "",
         "  metrics:",

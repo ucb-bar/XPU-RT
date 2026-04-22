@@ -27,7 +27,7 @@ Two safety nets:
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 from compgen.kernels.contract_v3 import (
@@ -39,13 +39,11 @@ from compgen.kernels.contract_v3 import (
     HardwareEnvelope,
     InternalEventEdge,
     IOContract,
-    KernelArchetype,
     KernelContractV3,
     MemorySpec,
     MemoryTier,
     NumericsSpec,
     OrchestrationSpec,
-    ShapeClass,
     SyncSpec,
     TensorIO,
 )
@@ -68,20 +66,15 @@ def _force_to_scratchpad_or_register(c: KernelContractV3) -> KernelContractV3:
     promotion in metadata so the diagnosis can flag if it harms perf.
     """
     m = c.orchestration.memory
-    needs_promo = any(
-        t not in (MemoryTier.REGISTER, MemoryTier.SCRATCHPAD)
-        for t in (*m.input_tiers, *m.output_tiers)
-    )
+    needs_promo = any(t not in (MemoryTier.REGISTER, MemoryTier.SCRATCHPAD) for t in (*m.input_tiers, *m.output_tiers))
     if not needs_promo:
         return c
 
     new_input_tiers = tuple(
-        MemoryTier.SCRATCHPAD if t not in (MemoryTier.REGISTER, MemoryTier.SCRATCHPAD) else t
-        for t in m.input_tiers
+        MemoryTier.SCRATCHPAD if t not in (MemoryTier.REGISTER, MemoryTier.SCRATCHPAD) else t for t in m.input_tiers
     )
     new_output_tiers = tuple(
-        MemoryTier.SCRATCHPAD if t not in (MemoryTier.REGISTER, MemoryTier.SCRATCHPAD) else t
-        for t in m.output_tiers
+        MemoryTier.SCRATCHPAD if t not in (MemoryTier.REGISTER, MemoryTier.SCRATCHPAD) else t for t in m.output_tiers
     )
     new_memory = MemorySpec(
         input_tiers=new_input_tiers,
@@ -140,9 +133,7 @@ def build_mega_contract_from_proposal(
     """
     refs: list[str] = list(proposal_chosen.get("fused_region_refs", []))
     if not refs:
-        raise ValueError(
-            "proposal_chosen has no 'fused_region_refs'; cannot build MEGA contract"
-        )
+        raise ValueError("proposal_chosen has no 'fused_region_refs'; cannot build MEGA contract")
 
     # 1. Pull each sub-contract from the recipe + force scratchpad-residency.
     sub_contracts: list[KernelContractV3] = []
@@ -151,28 +142,25 @@ def build_mega_contract_from_proposal(
         sub = contract_for_region(rid)
         if sub.granularity is Granularity.MEGA:
             # Nested MEGA forbidden; either skip or fall back to NORMAL.
-            notes.append(
-                f"sub-region {rid!r} was already MEGA; skipping "
-                "(MEGA cannot nest MEGA)"
-            )
+            notes.append(f"sub-region {rid!r} was already MEGA; skipping (MEGA cannot nest MEGA)")
             continue
         sub_contracts.append(_force_to_scratchpad_or_register(sub))
 
     if not sub_contracts:
-        raise ValueError(
-            "no eligible sub-contracts after filtering nested MEGAs"
-        )
+        raise ValueError("no eligible sub-contracts after filtering nested MEGAs")
 
     # 2. Internal sync edges — naive linear chain (sub_i → sub_{i+1}).
     # Real codegen (Wave 5+) uses event_tensor analysis; here we just
     # wire a sequential chain so the v3 invariants pass.
     internal_events: list[InternalEventEdge] = []
     for i in range(len(sub_contracts) - 1):
-        internal_events.append(InternalEventEdge(
-            event_name=f"{sub_contracts[i].op_name}_done",
-            producer_idx=i,
-            consumer_idx=i + 1,
-        ))
+        internal_events.append(
+            InternalEventEdge(
+                event_name=f"{sub_contracts[i].op_name}_done",
+                producer_idx=i,
+                consumer_idx=i + 1,
+            )
+        )
 
     # 3. Outer IO — first sub's inputs + last sub's outputs (linearised).
     first = sub_contracts[0]
@@ -181,16 +169,20 @@ def build_mega_contract_from_proposal(
         inputs=tuple(
             TensorIO(
                 name=f"mega_in_{i}_{t.name}",
-                shape=t.shape, dtype_class=t.dtype_class,
-                layout=t.layout, alignment_bytes=t.alignment_bytes,
+                shape=t.shape,
+                dtype_class=t.dtype_class,
+                layout=t.layout,
+                alignment_bytes=t.alignment_bytes,
             )
             for i, t in enumerate(first.io.inputs)
         ),
         outputs=tuple(
             TensorIO(
                 name=f"mega_out_{i}_{t.name}",
-                shape=t.shape, dtype_class=t.dtype_class,
-                layout=t.layout, alignment_bytes=t.alignment_bytes,
+                shape=t.shape,
+                dtype_class=t.dtype_class,
+                layout=t.layout,
+                alignment_bytes=t.alignment_bytes,
             )
             for i, t in enumerate(last.io.outputs)
         ),
@@ -205,9 +197,7 @@ def build_mega_contract_from_proposal(
     )
 
     # 4. Outer orchestration — PERSISTENT dispatch, fires one external event.
-    outer_op_name = op_name or proposal_chosen.get(
-        "megakernel_name", f"megakernel.{first.op_name}_to_{last.op_name}"
-    )
+    outer_op_name = op_name or proposal_chosen.get("megakernel_name", f"megakernel.{first.op_name}_to_{last.op_name}")
     orch = OrchestrationSpec(
         execution=ExecutionEnvelope(hardware=envelope),
         sync=SyncSpec(
@@ -222,7 +212,7 @@ def build_mega_contract_from_proposal(
 
     contract = KernelContractV3(
         op_name=outer_op_name,
-        archetype=first.archetype,         # outer archetype = leading op's
+        archetype=first.archetype,  # outer archetype = leading op's
         io=outer_io,
         granularity=Granularity.MEGA,
         orchestration=orch,

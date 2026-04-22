@@ -32,26 +32,26 @@ from xdsl.ir import Operation
 class NodeKind(Enum):
     """High-level family for each node — determines how codegen lowers it."""
 
-    INPUT = "input"               # entry tensor (kernel argument)
-    OUTPUT = "output"             # exit tensor (kernel result)
-    COMPUTE = "compute"           # arithmetic / matmul / dot
-    REDUCE = "reduce"             # sum / max / mean over an axis
-    BROADCAST = "broadcast"       # implicit broadcast
-    POINTWISE = "pointwise"       # elementwise math (add/mul/silu/...)
-    LOAD = "load"                 # explicit load from a non-input buffer
-    STORE = "store"               # explicit store to a non-output buffer
+    INPUT = "input"  # entry tensor (kernel argument)
+    OUTPUT = "output"  # exit tensor (kernel result)
+    COMPUTE = "compute"  # arithmetic / matmul / dot
+    REDUCE = "reduce"  # sum / max / mean over an axis
+    BROADCAST = "broadcast"  # implicit broadcast
+    POINTWISE = "pointwise"  # elementwise math (add/mul/silu/...)
+    LOAD = "load"  # explicit load from a non-input buffer
+    STORE = "store"  # explicit store to a non-output buffer
 
 
 @dataclass(frozen=True)
 class ComputeNode:
     """One node in the in-kernel DAG."""
 
-    id: str                                   # unique within the DAG (e.g. "n_0")
+    id: str  # unique within the DAG (e.g. "n_0")
     kind: NodeKind
-    op_name: str                              # original op name / pattern hint
+    op_name: str  # original op name / pattern hint
     output_shape: tuple[int | None, ...] = ()  # symbolic dims as None
     output_dtype: str = "f32"
-    dim_roles: tuple[str, ...] = ()           # parallel/reduce/broadcast/batch
+    dim_roles: tuple[str, ...] = ()  # parallel/reduce/broadcast/batch
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
@@ -61,7 +61,7 @@ class ComputeEdge:
 
     src: str
     dst: str
-    operand_idx: int = 0                      # which operand on dst this feeds
+    operand_idx: int = 0  # which operand on dst this feeds
 
 
 @dataclass
@@ -70,7 +70,7 @@ class ComputeDAG:
 
     nodes: list[ComputeNode] = field(default_factory=list)
     edges: list[ComputeEdge] = field(default_factory=list)
-    inputs: list[str] = field(default_factory=list)   # node ids
+    inputs: list[str] = field(default_factory=list)  # node ids
     outputs: list[str] = field(default_factory=list)  # node ids
 
     def by_id(self, nid: str) -> ComputeNode | None:
@@ -191,14 +191,16 @@ def from_payload_region(region: Operation, *, dag_id: str = "") -> ComputeDAG:
         nid = f"n_{i}"
         ann = analyze_op(op)
         roles = tuple(r.value for r in (ann.output_roles if ann else ()))
-        dag.nodes.append(ComputeNode(
-            id=nid,
-            kind=_classify(op),
-            op_name=op.name,
-            output_shape=_shape_of(op),
-            output_dtype=_dtype_of(op),
-            dim_roles=roles,
-        ))
+        dag.nodes.append(
+            ComputeNode(
+                id=nid,
+                kind=_classify(op),
+                op_name=op.name,
+                output_shape=_shape_of(op),
+                output_dtype=_dtype_of(op),
+                dim_roles=roles,
+            )
+        )
         if op.results:
             val_to_node[op.results[0]] = nid
 
@@ -251,16 +253,15 @@ def to_prompt_text(dag: ComputeDAG, *, max_nodes: int = 32) -> str:
     for n in dag.nodes[:max_nodes]:
         roles_str = f" roles=({', '.join(n.dim_roles)})" if n.dim_roles else ""
         lines.append(
-            f"  {n.id} [{n.kind.value:9s}] {n.op_name:20s} "
-            f"shape={n.output_shape}  dtype={n.output_dtype}{roles_str}"
+            f"  {n.id} [{n.kind.value:9s}] {n.op_name:20s} shape={n.output_shape}  dtype={n.output_dtype}{roles_str}"
         )
     if len(dag.nodes) > max_nodes:
         lines.append(f"  … +{len(dag.nodes) - max_nodes} more nodes elided")
     lines.append("edges:")
-    for e in dag.edges[:max_nodes * 2]:
+    for e in dag.edges[: max_nodes * 2]:
         lines.append(f"  {e.src} → {e.dst}[{e.operand_idx}]")
     if len(dag.edges) > max_nodes * 2:
-        lines.append(f"  … +{len(dag.edges) - max_nodes*2} more edges elided")
+        lines.append(f"  … +{len(dag.edges) - max_nodes * 2} more edges elided")
     return "\n".join(lines)
 
 

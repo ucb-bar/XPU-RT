@@ -88,10 +88,7 @@ def propose_decision(
         return {
             "ok": False,
             "session_id": session_id,
-            "error": (
-                f"candidate {chosen_id!r} not in site; valid ids: "
-                f"{[c.id for c in site.candidates]}"
-            ),
+            "error": (f"candidate {chosen_id!r} not in site; valid ids: {[c.id for c in site.candidates]}"),
         }
     from compgen.trace import DecisionPublisher, get_current_llm_turn_id
 
@@ -99,9 +96,7 @@ def propose_decision(
         decision_type=f"{site.kind}_proposal",
         site_id=site_id,
         chosen=chosen_id,
-        chosen_value=chosen_value if chosen_value is not None else (
-            candidate.value if candidate is not None else None
-        ),
+        chosen_value=chosen_value if chosen_value is not None else (candidate.value if candidate is not None else None),
         source=source,
         rationale=rationale,
         candidates=[c.id for c in site.candidates],
@@ -271,10 +266,7 @@ DECISION_TOOLS: list[dict[str, Any]] = [
     },
     {
         "name": "override_decision",
-        "description": (
-            "Replace an already-resolved outcome for a site. Fails "
-            "when the site is still pending."
-        ),
+        "description": ("Replace an already-resolved outcome for a site. Fails when the site is still pending."),
         "phase": "transform",
         "handler": override_decision,
         "input_schema": {

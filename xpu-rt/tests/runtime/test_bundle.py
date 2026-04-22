@@ -89,7 +89,5 @@ def test_bundle_carries_lowered_recipe_metadata_for_promotion() -> None:
     )
     serialized = json.dumps(bundle.to_dict())
     parsed = json.loads(serialized)
-    assert parsed["metadata"]["transform_scripts"] == [
-        "%0 = transform.match ..."
-    ]
+    assert parsed["metadata"]["transform_scripts"] == ["%0 = transform.match ..."]
     assert parsed["metadata"]["kernel_jobs"][0]["name"] == "matmul_kernel"

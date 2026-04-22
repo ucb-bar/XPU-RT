@@ -59,9 +59,10 @@ from typing import Any
 from compgen.ir.payload.contracts import (
     AutocompCostBudget,
     CostEstimate,
+)
+from compgen.ir.payload.contracts import (
     KernelContract as KernelContractV2,
 )
-
 
 CONTRACT_VERSION = 3
 
@@ -81,9 +82,9 @@ class KernelArchetype(Enum):
 
 
 class Granularity(Enum):
-    MICRO = "micro"     # ukernel — inlined, register/scratchpad-only, no events
-    NORMAL = "normal"   # one op = one dispatch (default)
-    MEGA = "mega"       # persistent composite — owns sub-kernels + internal sync
+    MICRO = "micro"  # ukernel — inlined, register/scratchpad-only, no events
+    NORMAL = "normal"  # one op = one dispatch (default)
+    MEGA = "mega"  # persistent composite — owns sub-kernels + internal sync
 
 
 # ===========================================================================
@@ -198,17 +199,17 @@ class HardwareEnvelope:
     # W2 additions — drive the tile / packing oracle
     mma_shapes: dict[str, tuple[int, int, int]] = field(default_factory=dict)
     peak_compute_per_dtype: dict[str, float] = field(default_factory=dict)
-    register_quota_per_thread: int = 256          # bytes per-thread soft cap
-    max_concurrent_blocks: int = 0                # 0 = unbounded by the contract
+    register_quota_per_thread: int = 256  # bytes per-thread soft cap
+    max_concurrent_blocks: int = 0  # 0 = unbounded by the contract
 
 
 class PaddingPolicy(Enum):
     """How to handle shapes that don't divide tile / vector width."""
 
-    NONE = "none"                       # shape always divides; no pad logic
-    ZERO_FILL = "zero_fill"             # pad with zeros; kernel reads padded region
-    KERNEL_HANDLES = "kernel_handles"   # kernel masks the boundary itself
-    PLANNER_PADS = "planner_pads"       # planner allocates padded buffer
+    NONE = "none"  # shape always divides; no pad logic
+    ZERO_FILL = "zero_fill"  # pad with zeros; kernel reads padded region
+    KERNEL_HANDLES = "kernel_handles"  # kernel masks the boundary itself
+    PLANNER_PADS = "planner_pads"  # planner allocates padded buffer
 
 
 class ConcurrencyUnit(Enum):
@@ -237,7 +238,7 @@ class ExecutionEnvelope:
     """
 
     hardware: HardwareEnvelope
-    memory_budget_bytes: int = 0   # 0 = unbounded
+    memory_budget_bytes: int = 0  # 0 = unbounded
     concurrency_unit: ConcurrencyUnit = ConcurrencyUnit.CTA
     padding: PaddingPolicy = PaddingPolicy.KERNEL_HANDLES
     priority: PerformancePriority = PerformancePriority.BALANCED
@@ -253,7 +254,7 @@ class EventDecl:
     """One event the kernel fires on completion (kernel-readable)."""
 
     name: str
-    scope: str = "block"              # "block" | "device" | "host"
+    scope: str = "block"  # "block" | "device" | "host"
     wait_count: int = 1
 
 
@@ -324,10 +325,10 @@ class FusionPolicy:
 class DispatchModel(Enum):
     """How the dispatcher launches this kernel."""
 
-    SYNC = "sync"           # host blocks until completion
-    ASYNC = "async"         # fire-and-forget, completion via events
+    SYNC = "sync"  # host blocks until completion
+    ASYNC = "async"  # fire-and-forget, completion via events
     PERSISTENT = "persistent"  # long-lived worker; megakernel
-    INLINE = "inline"       # not dispatched at all — emitted into caller (MICRO)
+    INLINE = "inline"  # not dispatched at all — emitted into caller (MICRO)
 
 
 @dataclass(frozen=True)
@@ -468,7 +469,7 @@ class KernelContractV3:
     orchestration: OrchestrationSpec = field(default_factory=OrchestrationSpec)
     selection: SelectionHints = field(default_factory=SelectionHints)
     cost: CostEstimate = field(default_factory=CostEstimate)
-    body: tuple["KernelContractV3", ...] = ()
+    body: tuple[KernelContractV3, ...] = ()
     internal_events: tuple[InternalEventEdge, ...] = ()
     legacy: KernelContractV2 | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
@@ -506,13 +507,11 @@ class KernelContractV3:
         m = self.orchestration.memory
         if m.input_tiers and len(m.input_tiers) != n_in:
             raise ValueError(
-                f"memory.input_tiers length ({len(m.input_tiers)}) "
-                f"!= input arity ({n_in}) for {self.op_name!r}"
+                f"memory.input_tiers length ({len(m.input_tiers)}) != input arity ({n_in}) for {self.op_name!r}"
             )
         if m.output_tiers and len(m.output_tiers) != n_out:
             raise ValueError(
-                f"memory.output_tiers length ({len(m.output_tiers)}) "
-                f"!= output arity ({n_out}) for {self.op_name!r}"
+                f"memory.output_tiers length ({len(m.output_tiers)}) != output arity ({n_out}) for {self.op_name!r}"
             )
 
     # --- granularity invariants (dispatch unit) ---
@@ -530,14 +529,11 @@ class KernelContractV3:
             if s.wait_on:
                 raise ValueError(f"MICRO {self.op_name!r} must not declare wait_on; caller orchestrates sync")
             if d.model is not DispatchModel.INLINE:
-                raise ValueError(
-                    f"MICRO {self.op_name!r} must use DispatchModel.INLINE (got {d.model.value!r})"
-                )
+                raise ValueError(f"MICRO {self.op_name!r} must use DispatchModel.INLINE (got {d.model.value!r})")
             for tier in (*m.input_tiers, *m.output_tiers):
                 if tier not in (MemoryTier.REGISTER, MemoryTier.SCRATCHPAD):
                     raise ValueError(
-                        f"MICRO {self.op_name!r} memory tier must be REGISTER or SCRATCHPAD "
-                        f"(got {tier.value!r})"
+                        f"MICRO {self.op_name!r} memory tier must be REGISTER or SCRATCHPAD (got {tier.value!r})"
                     )
             if f.is_boundary:
                 raise ValueError(f"MICRO {self.op_name!r} cannot be a fusion boundary (it is always inlined)")
@@ -546,17 +542,12 @@ class KernelContractV3:
 
         elif g is Granularity.MEGA:
             if d.model is not DispatchModel.PERSISTENT:
-                raise ValueError(
-                    f"MEGA {self.op_name!r} must use DispatchModel.PERSISTENT "
-                    f"(got {d.model.value!r})"
-                )
+                raise ValueError(f"MEGA {self.op_name!r} must use DispatchModel.PERSISTENT (got {d.model.value!r})")
             if not self.body:
                 raise ValueError(f"MEGA {self.op_name!r} must declare a non-empty body of sub-kernels")
             for sub in self.body:
                 if sub.granularity is Granularity.MEGA:
-                    raise ValueError(
-                        f"MEGA {self.op_name!r} body must not contain nested MEGA sub-kernels"
-                    )
+                    raise ValueError(f"MEGA {self.op_name!r} body must not contain nested MEGA sub-kernels")
                 for tier in (*sub.orchestration.memory.input_tiers, *sub.orchestration.memory.output_tiers):
                     if tier not in (MemoryTier.REGISTER, MemoryTier.SCRATCHPAD):
                         raise ValueError(
@@ -585,10 +576,7 @@ class KernelContractV3:
                 # not strictly illegal; permit but document.
                 pass
             if self.body or self.internal_events:
-                raise ValueError(
-                    f"NORMAL {self.op_name!r} must not declare body/internal_events; "
-                    "those are MEGA-only"
-                )
+                raise ValueError(f"NORMAL {self.op_name!r} must not declare body/internal_events; those are MEGA-only")
 
     # --- audience-controlled views ---
 

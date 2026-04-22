@@ -16,9 +16,7 @@ from __future__ import annotations
 
 from compgen.memory.knowledge import KnowledgeStore, Lesson
 
-
 SEED_LESSONS: list[Lesson] = [
-
     # ----- General compiler design -----
     Lesson(
         scope="general",
@@ -81,7 +79,6 @@ SEED_LESSONS: list[Lesson] = [
         applicability="any Triton kernel with autotune",
         next_action="auto-load autotune cache on module import",
     ),
-
     # ----- Any GPU -----
     Lesson(
         scope="backends/gpu/general",
@@ -115,7 +112,6 @@ SEED_LESSONS: list[Lesson] = [
         tags=("flash-attention", "attention", "perf-analysis"),
         applicability="small batch + small sequence + large hidden_dim",
     ),
-
     # ----- NVIDIA-general -----
     Lesson(
         scope="backends/gpu/nvidia/general",
@@ -149,7 +145,6 @@ SEED_LESSONS: list[Lesson] = [
         tags=("matmul", "swizzle", "L2-cache"),
         applicability="any Triton matmul on NVIDIA",
     ),
-
     # ----- Turing (sm_75 — TITAN RTX) -----
     Lesson(
         scope="backends/gpu/nvidia/turing",
@@ -183,7 +178,6 @@ SEED_LESSONS: list[Lesson] = [
         tags=("persistent-cta", "scheduling", "matmul"),
         applicability="Triton matmul on Turing/Ampere with > 1024 output tiles",
     ),
-
     # ----- Ampere (sm_80) -----
     Lesson(
         scope="backends/gpu/nvidia/ampere",
@@ -200,7 +194,6 @@ SEED_LESSONS: list[Lesson] = [
         tags=("ampere", "sm_80", "flash-attention", "tensor-core"),
         applicability="A100, H100, RTX 30+ series",
     ),
-
     # ----- CUDA driver -----
     Lesson(
         scope="drivers/cuda/general",
@@ -239,6 +232,7 @@ def install(store: KnowledgeStore | None = None) -> int:
     Returns number of new lessons added.
     """
     from compgen.memory.knowledge import shared_store
+
     s = store or shared_store()
 
     added = 0

@@ -30,9 +30,7 @@ def test_mcp_print_config_emits_canonical_snippet():
 def test_mcp_install_creates_fresh_file(tmp_path: Path):
     target = tmp_path / "claude.json"
     runner = CliRunner()
-    result = runner.invoke(
-        cli_main, ["mcp", "install", "--target", str(target)]
-    )
+    result = runner.invoke(cli_main, ["mcp", "install", "--target", str(target)])
     assert result.exit_code == 0, result.output
     assert target.exists()
     data = json.loads(target.read_text())
@@ -43,9 +41,7 @@ def test_mcp_install_is_idempotent(tmp_path: Path):
     target = tmp_path / "claude.json"
     runner = CliRunner()
     runner.invoke(cli_main, ["mcp", "install", "--target", str(target)])
-    result = runner.invoke(
-        cli_main, ["mcp", "install", "--target", str(target)]
-    )
+    result = runner.invoke(cli_main, ["mcp", "install", "--target", str(target)])
     assert result.exit_code == 0
     assert "already-present" in result.output
 
@@ -54,9 +50,7 @@ def test_mcp_install_refuses_conflict_without_force(tmp_path: Path):
     target = tmp_path / "claude.json"
     target.write_text(json.dumps({"mcpServers": {"compgen": {"command": "other"}}}))
     runner = CliRunner()
-    result = runner.invoke(
-        cli_main, ["mcp", "install", "--target", str(target)]
-    )
+    result = runner.invoke(cli_main, ["mcp", "install", "--target", str(target)])
     assert result.exit_code != 0
     assert "differs" in result.output or "--force" in result.output
 

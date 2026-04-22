@@ -27,18 +27,15 @@ on gate failure or perf miss does it escalate to autocomp.
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
 from compgen.kernels.provider import (
-    ContractFeedback,
     KernelContract,
     KnowledgeExport,
     ProviderResult,
     SearchBudget,
 )
-
 
 # ---------------------------------------------------------------------------
 # Codegen callable — pluggable execution mode
@@ -101,7 +98,7 @@ class InSessionCodegen(CodegenCallable):
     session's pocket, no Anthropic API call fires.
     """
 
-    sm: Any   # SessionManager — typed Any to avoid import cycle
+    sm: Any  # SessionManager — typed Any to avoid import cycle
     session_id: str
 
     def __call__(self, prompt: str, contract: KernelContract) -> str:
@@ -133,22 +130,26 @@ def _fingerprint_from_view(view: Any, contract: KernelContract) -> str:
     target = contract.target_name or ""
     io_inputs = []
     for t in view.io.inputs:
-        io_inputs.append({
-            "name": t.name,
-            "shape": {"dims": list(t.shape.dims)},
-            "dtype_class": list(t.dtype_class),
-            "layout": t.layout.value,
-            "alignment_bytes": t.alignment_bytes,
-        })
+        io_inputs.append(
+            {
+                "name": t.name,
+                "shape": {"dims": list(t.shape.dims)},
+                "dtype_class": list(t.dtype_class),
+                "layout": t.layout.value,
+                "alignment_bytes": t.alignment_bytes,
+            }
+        )
     io_outputs = []
     for t in view.io.outputs:
-        io_outputs.append({
-            "name": t.name,
-            "shape": {"dims": list(t.shape.dims)},
-            "dtype_class": list(t.dtype_class),
-            "layout": t.layout.value,
-            "alignment_bytes": t.alignment_bytes,
-        })
+        io_outputs.append(
+            {
+                "name": t.name,
+                "shape": {"dims": list(t.shape.dims)},
+                "dtype_class": list(t.dtype_class),
+                "layout": t.layout.value,
+                "alignment_bytes": t.alignment_bytes,
+            }
+        )
     n = view.io.numerics
     contract_dict = {
         "op_name": view.op_name,
@@ -157,9 +158,7 @@ def _fingerprint_from_view(view: Any, contract: KernelContract) -> str:
         "io": {
             "inputs": io_inputs,
             "outputs": io_outputs,
-            "attributes": [
-                {"name": a.name, "value": a.value} for a in view.io.attributes
-            ],
+            "attributes": [{"name": a.name, "value": a.value} for a in view.io.attributes],
             "numerics": {
                 "accumulator_dtype": n.accumulator_dtype,
                 "fast_math": n.fast_math,
@@ -283,8 +282,7 @@ class ClaudeCodeKernelProvider:
             f"dtypes       : {contract.dtypes}",
         ]
         if contract.constraints:
-            extras = {k: v for k, v in contract.constraints.items()
-                      if k != "kernel_facing_view"}
+            extras = {k: v for k, v in contract.constraints.items() if k != "kernel_facing_view"}
             if extras:
                 lines.append(f"constraints  : {extras}")
         if facing is not None:
@@ -292,9 +290,7 @@ class ClaudeCodeKernelProvider:
             lines.append("KernelFacingView (v3) — exhaustive kernel-readable spec:")
             lines.append(repr(facing))
         lines.append("")
-        lines.append(
-            "Output only the kernel source. No explanation, no markdown fences."
-        )
+        lines.append("Output only the kernel source. No explanation, no markdown fences.")
         return "\n".join(lines)
 
     def _guess_language(self, code: str) -> str:
