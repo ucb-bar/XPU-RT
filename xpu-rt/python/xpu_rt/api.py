@@ -241,6 +241,10 @@ def compile_model(
     drive_loop_phases: tuple[int, ...] = (2, 3),
     recover_unsupported: bool = False,
     recovery_llm_client: Any = None,
+    *,
+    output_dir: str | Path | None = None,
+    dump_ir: bool | None = None,
+    session_id: str | None = None,
 ) -> CompiledModel:
     """Capture, optimise, and compile a PyTorch model for a target device.
 
@@ -275,16 +279,146 @@ def compile_model(
     if sample_inputs is None:
         sample_inputs = (torch.randn(1, 64),)
 
+    # Resolve output_dir + session_id and install the trace bus + IR-dump
+    # writer before doing anything else, so capture / import / pipeline all
+    # emit into the same linked trace. Local imports avoid a module-load
+    # cycle with :mod:`compgen.trace.adapters`.
+    import uuid
+
+    from compgen.mcp.transcript import default_session_root
+    from compgen.trace import (
+        IRDumpWriter,
+        dump_enabled_from_env,
+        get_active_bus,
+        install_bus,
+        install_ir_dump_writer,
+    )
+
+    if session_id is None:
+        session_id = f"sess_{uuid.uuid4().hex[:10]}"
+    resolved_out_dir: Path
+    if output_dir is None:
+        resolved_out_dir = Path("compgen_output") / session_id
+    else:
+        resolved_out_dir = Path(output_dir).expanduser()
+    resolved_out_dir.mkdir(parents=True, exist_ok=True)
+
+    session_mirror = default_session_root() / session_id / "trace.jsonl"
+    # Always install a fresh bus for this compile. The process-level
+    # fallback used by MCP async handlers would otherwise cause a
+    # previous compile's bus (from session N-1) to capture this
+    # compile's events, dropping trace files for every compile after
+    # the first. ``install_bus`` both sets the ContextVar and updates
+    # the process-level bus, so subsequent MCP calls in this same
+    # process find the latest bus.
+    install_bus(
+        output_dir=resolved_out_dir,
+        session_id=session_id,
+        session_mirror=session_mirror,
+    )
+    dump_enabled = bool(dump_ir) if dump_ir is not None else dump_enabled_from_env()
+    ir_dump_writer = IRDumpWriter(resolved_out_dir, enabled=dump_enabled)
+    install_ir_dump_writer(ir_dump_writer)
+
+    # Install a decision registry for this compile so stage plugins can
+    # enqueue their choices and the agent can read/override them via MCP
+    # tools. Re-use any registry already installed for this context
+    # (e.g. from an MCP session that pre-loaded the model).
+    from compgen.agent.decisions import (
+        DecisionRegistry,
+        get_active_registry,
+        install_registry,
+    )
+
+    if get_active_registry() is None:
+        install_registry(DecisionRegistry())
+
     log.info(
         "api.compile.start",
         model=type(model).__name__,
         target=target_device.profile.name,
         objective=objective,
+        output_dir=str(resolved_out_dir),
+        session_id=session_id,
+        dump_ir=dump_enabled,
     )
+
+    # Every top-level compile step fires a ``pass_run`` span so the
+    # trace carries true per-pass granularity (gap #2). Each span also
+    # measures its own duration and records before/after IR dumps for
+    # operations that mutate the module.
+    from compgen.trace import (
+        AnalysisPublisher,
+        DecisionPublisher,
+        PassPublisher,
+        get_ir_dump_writer,
+    )
+
+    def _traced_step(
+        name: str,
+        fn,
+        *,
+        module_before: ModuleOp | None = None,
+        extra: dict[str, Any] | None = None,
+    ) -> Any:
+        """Run ``fn`` inside a ``pass_run`` span with IR before/after dumps.
+
+        ``module_before`` is optional — when supplied and ``fn`` mutates
+        (returns) a module, we dump both sides and record the hash delta
+        in the span's end payload. Measured duration is real.
+        """
+        import time as _time
+
+        dumper = get_ir_dump_writer()
+        hash_before = ""
+        with PassPublisher.span(
+            payload={"name": name, "source": "api.compile_model", **(extra or {})},
+        ) as span_id:
+            t0 = _time.time()
+            if dumper is not None and module_before is not None:
+                _, hash_before = dumper.dump(
+                    name=name, phase="before", module=module_before, trace_event_id=span_id or ""
+                )
+            result = fn()
+            result_module = result if isinstance(result, ModuleOp) else module_before
+            elapsed_ms = (_time.time() - t0) * 1000.0
+            hash_after = ""
+            if dumper is not None and result_module is not None:
+                _, hash_after = dumper.dump(
+                    name=name,
+                    phase="after",
+                    module=result_module,
+                    trace_event_id=span_id or "",
+                    duration_ms=elapsed_ms,
+                )
+            # Emit a terminal point event so consumers can grep for
+            # "pass_run" + "phase: point" without reconstructing start/end pairs.
+            from compgen.trace import EventKind, Phase, get_active_bus
+
+            bus = get_active_bus()
+            if bus is not None:
+                bus.publish(
+                    kind=EventKind.PASS_RUN.value,
+                    phase=Phase.POINT.value,
+                    parent_event_id=span_id or "",
+                    elapsed_ms=elapsed_ms,
+                    payload={
+                        "name": name,
+                        "source": "api.compile_model",
+                        "ir_hash_before": hash_before,
+                        "ir_hash_after": hash_after,
+                        "duration_ms": elapsed_ms,
+                        "span_id": span_id or "",
+                    },
+                )
+            return result
 
     # Stage 0: Capture
     log.info("api.compile.capture")
-    capture_artifact = capture_frontend_artifact(model, sample_inputs)
+    capture_artifact = _traced_step(
+        "capture_frontend",
+        lambda: capture_frontend_artifact(model, sample_inputs),
+    )
 
     # Stage 0.5: Optional LLM-driven unsupported-op recovery.
     recovery_plan_obj: Any = None
@@ -309,18 +443,44 @@ def compile_model(
 
     # Stage 1: FX -> xDSL Payload IR
     log.info("api.compile.import_fx")
-    module, diagnostics = fx_to_xdsl(
-        capture_artifact.exported_program,
-        **capture_artifact.strict_import_options(),
-    )
+
+    def _run_fx_to_xdsl():
+        return fx_to_xdsl(
+            capture_artifact.exported_program,
+            **capture_artifact.strict_import_options(),
+        )
+
+    module, diagnostics = _traced_step("fx_to_xdsl", _run_fx_to_xdsl)
 
     # Stage 1.5: Graph dossier
     log.info("api.compile.analyze")
-    analysis = NetworkAnalyzer().analyze(
-        capture_artifact.exported_program,
-        target_device.profile,
-        model_name=type(model).__name__,
+    with AnalysisPublisher.span(
+        payload={"analysis": "NetworkAnalyzer", "target": target_device.profile.name}
+    ):
+        analysis = NetworkAnalyzer().analyze(
+            capture_artifact.exported_program,
+            target_device.profile,
+            model_name=type(model).__name__,
+        )
+    AnalysisPublisher.emit(
+        analysis="NetworkAnalyzer",
+        clusters=len(getattr(analysis, "clusters", []) or []),
+        unclustered=len(getattr(analysis, "unclustered_ops", []) or []),
+        opportunities=list(getattr(analysis, "optimization_opportunities", []) or []),
     )
+    # First real decision the compiler makes: the target class (drives
+    # whether triton/baremetal/ukernel backends are used). Surface it
+    # to the trace so the chain "target_class -> stage plugin -> kernel
+    # output" is auditable. Guarded against test stubs where
+    # ``capabilities`` is None.
+    _cap = getattr(target_device, "capabilities", None)
+    if _cap is not None and getattr(_cap, "target_class", None) is not None:
+        DecisionPublisher.emit(
+            decision_type="target_class",
+            chosen=_cap.target_class.value,
+            candidates=[c.value for c in type(_cap.target_class)],
+            rationale=f"capabilities derived from {target_device.profile.name!r}",
+        )
 
     # Stage 1.75: Annotate ops with ukernel matches
     log.info("api.compile.ukernel_annotate")
@@ -337,11 +497,16 @@ def compile_model(
             _target_features.add(f"has_{_feat}")
     _device_type = target_device.profile.devices[0].device_type if target_device.profile.devices else ""
 
-    ukernel_annotations = annotate_ukernel_ops(
-        module,
-        ukernel_registry,
-        target_features=frozenset(_target_features),
-        device_type=_device_type,
+    ukernel_annotations = _traced_step(
+        "ukernel_annotate",
+        lambda: annotate_ukernel_ops(
+            module,
+            ukernel_registry,
+            target_features=frozenset(_target_features),
+            device_type=_device_type,
+        ),
+        module_before=module,
+        extra={"target_features": sorted(_target_features), "device_type": _device_type},
     )
     log.info("api.compile.ukernel_annotate.done", annotated=ukernel_annotations)
 
@@ -366,7 +531,11 @@ def compile_model(
 
     # Stage 2: Equality saturation
     log.info("api.compile.eqsat")
-    eqsat_result = run_eqsat_pass(module)
+    eqsat_result = _traced_step(
+        "eqsat",
+        lambda: run_eqsat_pass(module),
+        module_before=module,
+    )
 
     # Stage 3+: Target pipeline
     log.info("api.compile.pipeline")
@@ -380,6 +549,12 @@ def compile_model(
         target_device.profile,
         target_device.capabilities,
     )
+
+    # Emit the final glued module (kernels remain separate under
+    # ``generated_kernels/``). No-op when ``dump_ir`` is False.
+    ir_dump_writer.write_final(module)
+    # Detach so subsequent compiles get a fresh writer.
+    install_ir_dump_writer(None)
 
     log.info(
         "api.compile.done",

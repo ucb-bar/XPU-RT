@@ -179,7 +179,11 @@ def _run_async_server() -> None:
         log.warning("mcp.discovery.failed", error=str(exc))
 
     sm = SessionManager()
-    recorder = McpTranscriptRecorder.from_env()
+    # Wrap the transcript recorder so every MCP tool invocation also
+    # lands on the active trace bus (no-op when no bus is installed).
+    from compgen.trace import TracingMcpTranscriptRecorder
+
+    recorder = TracingMcpTranscriptRecorder.wrap(McpTranscriptRecorder.from_env())
     server: Any = Server("compgen")
 
     tool_by_name = {t["name"]: t for t in ALL_TOOLS}

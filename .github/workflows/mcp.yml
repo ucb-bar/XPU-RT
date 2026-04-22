@@ -36,8 +36,8 @@ jobs:
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-      - name: Install dependencies (mcp + dev extras)
-        run: uv sync --frozen --extra dev --extra mcp
+      - name: Install dependencies (dev extras; mcp is in base)
+        run: uv sync --frozen --extra dev
       - name: Pytest tests/mcp
         run: uv run pytest tests/mcp -q
       - name: Tool-surface lock
@@ -77,8 +77,8 @@ jobs:
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-      - name: Install dependencies (mcp + dev extras)
-        run: uv sync --frozen --extra dev --extra mcp
+      - name: Install dependencies (dev extras; mcp is in base)
+        run: uv sync --frozen --extra dev
       - name: Boot compgen-mcp + drive initialize/tools.list/tools.call
         run: uv run python scripts/ci/mcp_stdio_smoke.py
       - name: Run demo_agentic_compile.py

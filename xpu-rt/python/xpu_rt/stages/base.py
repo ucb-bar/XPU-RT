@@ -231,61 +231,116 @@ class CompilationStage(abc.ABC):
 
         This is NOT abstract — the template method pattern handles sequencing.
         """
+        # Delayed import: the trace package depends on ``xdsl`` already
+        # being loaded, which transitively pulls this module.
+        import time as _stage_time
+
+        from compgen.trace import StagePublisher, get_ir_dump_writer
+
         diagnostics: list[str] = []
         violations: list[str] = []
+        dumper = get_ir_dump_writer()
+        stage_t0 = _stage_time.time()
+        shared_t0 = shared_t1 = plugin_t0 = plugin_t1 = 0.0
 
-        # 1. Verify input contract
-        input_violations = self.verify_contract(module, self.input_contract())
-        if input_violations:
-            return StageResult(
-                stage_name=self.name,
-                module=module,
-                passed=False,
-                contract_violations=[f"INPUT: {v}" for v in input_violations],
-            )
+        with StagePublisher.span(
+            payload={
+                "stage": self.name,
+                "target": getattr(target, "name", ""),
+                "llm_phase": self.llm_phase,
+            }
+        ) as span_id:
+            if dumper is not None:
+                dumper.dump(name=f"stage_{self.name}", phase="entry", module=module, trace_event_id=span_id or "")
 
-        # 2. Run shared passes
-        try:
-            module = self.shared_passes(module, target)
-            diagnostics.append(f"{self.name}: shared passes complete")
-        except Exception as e:
-            return StageResult(
-                stage_name=self.name,
-                module=module,
-                passed=False,
-                contract_violations=[f"shared_passes failed: {e}"],
-            )
+            # 1. Verify input contract
+            input_violations = self.verify_contract(module, self.input_contract())
+            if input_violations:
+                return StageResult(
+                    stage_name=self.name,
+                    module=module,
+                    passed=False,
+                    contract_violations=[f"INPUT: {v}" for v in input_violations],
+                )
 
-        # 3. Run target-specific passes
-        try:
-            module = self.target_specific_passes(module, target, capabilities)
+            # 2. Run shared passes
+            shared_t0 = _stage_time.time()
+            try:
+                module = self.shared_passes(module, target)
+                diagnostics.append(f"{self.name}: shared passes complete")
+            except Exception as e:
+                return StageResult(
+                    stage_name=self.name,
+                    module=module,
+                    passed=False,
+                    contract_violations=[f"shared_passes failed: {e}"],
+                )
+            shared_t1 = _stage_time.time()
+            shared_ms = (shared_t1 - shared_t0) * 1000.0
+            if dumper is not None:
+                dumper.dump(
+                    name=f"stage_{self.name}_shared",
+                    phase="after",
+                    module=module,
+                    trace_event_id=span_id or "",
+                    duration_ms=shared_ms,
+                )
+
+            # 3. Run target-specific passes
+            plugin_t0 = _stage_time.time()
+            try:
+                module = self.target_specific_passes(module, target, capabilities)
+                if self._plugin is not None:
+                    diagnostics.append(f"{self.name}: plugin '{self._plugin.target_name}' complete")
+            except Exception as e:
+                return StageResult(
+                    stage_name=self.name,
+                    module=module,
+                    passed=False,
+                    contract_violations=[f"target_specific_passes failed: {e}"],
+                )
+            plugin_t1 = _stage_time.time()
+            plugin_ms = (plugin_t1 - plugin_t0) * 1000.0
+            if dumper is not None:
+                dumper.dump(
+                    name=f"stage_{self.name}_plugin",
+                    phase="after",
+                    module=module,
+                    trace_event_id=span_id or "",
+                    duration_ms=plugin_ms,
+                )
+
+            # 4. Verify output contract
+            output_violations = self.verify_contract(module, self.output_contract())
+            violations.extend(f"OUTPUT: {v}" for v in output_violations)
+
+            # 5. Collect artifacts from plugin
+            artifacts: dict[str, Any] = {}
             if self._plugin is not None:
-                diagnostics.append(f"{self.name}: plugin '{self._plugin.target_name}' complete")
-        except Exception as e:
+                artifacts = self._plugin.get_artifacts()
+
+            stage_ms = (_stage_time.time() - stage_t0) * 1000.0
+            if dumper is not None:
+                dumper.dump(
+                    name=f"stage_{self.name}",
+                    phase="exit",
+                    module=module,
+                    trace_event_id=span_id or "",
+                    duration_ms=stage_ms,
+                    meta={
+                        "shared_ms": round(shared_ms, 3),
+                        "plugin_ms": round(plugin_ms, 3),
+                    },
+                )
+
             return StageResult(
                 stage_name=self.name,
                 module=module,
-                passed=False,
-                contract_violations=[f"target_specific_passes failed: {e}"],
+                passed=len(violations) == 0,
+                contract_violations=violations,
+                diagnostics=diagnostics,
+                artifacts=artifacts,
             )
-
-        # 4. Verify output contract
-        output_violations = self.verify_contract(module, self.output_contract())
-        violations.extend(f"OUTPUT: {v}" for v in output_violations)
-
-        # 5. Collect artifacts from plugin
-        artifacts: dict[str, Any] = {}
-        if self._plugin is not None:
-            artifacts = self._plugin.get_artifacts()
-
-        return StageResult(
-            stage_name=self.name,
-            module=module,
-            passed=len(violations) == 0,
-            contract_violations=violations,
-            diagnostics=diagnostics,
-            artifacts=artifacts,
-        )
 
     # -- Verification --
 

@@ -126,7 +126,7 @@ class LLMDrivenCompiler:
     # internal state
     _session_id: str = field(default="", init=False)
     _llm_recorder: LLMRecorder | None = field(default=None, init=False)
-    _tool_recorder: ToolCallRecorder | None = field(default=None, init=False)
+    _tool_recorder: Any | None = field(default=None, init=False)
     _loop: AgenticCompilationLoop | None = field(default=None, init=False)
     _checkpoints: dict[str, DriverCheckpoint] = field(default_factory=dict, init=False)
     _step_index: int = field(default=0, init=False)
@@ -162,6 +162,27 @@ class LLMDrivenCompiler:
                 self.transcript_dir = Path("~/.compgen/transcripts").expanduser()
         self.transcript_dir.mkdir(parents=True, exist_ok=True)
 
+        # Install a trace bus for this session so every LLM call, tool call,
+        # pass, analysis and decision lands in a single correlated JSONL.
+        # If a bus has already been installed (e.g. by ``api.compile_model``)
+        # we reuse it; otherwise the trace lives under the session dir.
+        # Local imports to avoid a circular dep: ``compgen.trace.adapters``
+        # imports :class:`McpTranscriptRecorder`, whose package transitively
+        # imports this module.
+        from compgen.trace import (
+            TracingLLMRecorder,
+            TracingToolCallRecorder,
+            get_active_bus,
+            install_bus,
+        )
+
+        bus = get_active_bus()
+        if bus is None:
+            bus = install_bus(
+                output_dir=self.transcript_dir / self._session_id,
+                session_id=self._session_id,
+            )
+
         # Wire recorders. If the caller passed a bare client, wrap it.
         if isinstance(self.llm_client, LLMRecorder):
             self._llm_recorder = self.llm_client
@@ -171,13 +192,18 @@ class LLMDrivenCompiler:
                 log_dir=self.transcript_dir / self._session_id / "llm",
                 enabled=True,
             )
-            # Route env + loop through the recorder.
-            self.llm_client = self._llm_recorder  # type: ignore[assignment]
 
-        self._tool_recorder = ToolCallRecorder(
+        # Route env + loop through the tracing wrapper so every call
+        # emits an llm_prompt / llm_response trace event. ``wrap`` is
+        # idempotent — a second call on an already-wrapped recorder
+        # returns it unchanged.
+        self.llm_client = TracingLLMRecorder.wrap(self._llm_recorder, bus)  # type: ignore[assignment]
+
+        raw_tool_recorder = ToolCallRecorder(
             log_path=self.transcript_dir / self._session_id / "tools.jsonl",
             enabled=True,
         )
+        self._tool_recorder = TracingToolCallRecorder.wrap(raw_tool_recorder, bus)
 
         # Turn on recipe tracking so we can serve LLM views + diffs.
         if self.env.recipe is None:

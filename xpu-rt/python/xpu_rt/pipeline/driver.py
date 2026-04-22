@@ -49,6 +49,7 @@ from compgen.capture.torch_mlir_bridge import bridge_fx_graph
 from compgen.options import CompGenOptions
 from compgen.runtime.execution_plan import ExecutionPlan
 from compgen.runtime.plan_builder import ExecutionPlanBuilder
+from compgen.trace import PassPublisher, get_ir_dump_writer
 
 log = structlog.get_logger()
 
@@ -273,6 +274,22 @@ def _build_minimal_execution_plan(
 # --- driver ----------------------------------------------------------------
 
 
+def _module_from_args(args: tuple, kwargs: dict) -> ModuleOp | None:
+    """Best-effort retrieval of the ``ModuleOp`` that a pass mutates.
+
+    Every pipeline pass used by :func:`compile_through_pipeline` accepts
+    the module as the first positional argument (or as a ``module``
+    keyword). Callers that differ return ``None`` and we skip dumping
+    for that pass — safe no-op.
+    """
+    if args and isinstance(args[0], ModuleOp):
+        return args[0]
+    module = kwargs.get("module") if kwargs else None
+    if isinstance(module, ModuleOp):
+        return module
+    return None
+
+
 def _run_with_report(
     passes: dict[str, Any],
     fn_key: str,
@@ -287,12 +304,50 @@ def _run_with_report(
         kwargs = {}
     if not enabled:
         return PipelineStageReport(name=name, group=group, skipped=True, skipped_reason="disabled")
-    try:
-        stats = passes[fn_key](*args, **kwargs)
+
+    module_ref = _module_from_args(args, kwargs)
+    dumper = get_ir_dump_writer()
+    with PassPublisher.span(
+        payload={"name": name, "group": group, "wraps_pass": fn_key},
+    ) as span_id:
+        hash_before = ""
+        hash_after = ""
+        if dumper is not None and module_ref is not None:
+            _, hash_before = dumper.dump(
+                name=name, phase="before", module=module_ref, trace_event_id=span_id or ""
+            )
+        try:
+            stats = passes[fn_key](*args, **kwargs)
+        except Exception as exc:  # noqa: BLE001
+            log.warning(f"pipeline.{name}.failed", error=str(exc))
+            return PipelineStageReport(
+                name=name, group=group, skipped=True, skipped_reason=f"error: {exc}"
+            )
+        if dumper is not None and module_ref is not None:
+            _, hash_after = dumper.dump(
+                name=name, phase="after", module=module_ref, trace_event_id=span_id or ""
+            )
+        # Emit a point event summarising the pass result so ``trace.jsonl``
+        # carries stats + IR-hash deltas without re-reading the dump files.
+        from compgen.trace import EventKind, Phase, get_active_bus
+
+        bus = get_active_bus()
+        if bus is not None:
+            bus.publish(
+                kind=EventKind.PASS_RUN.value,
+                phase=Phase.POINT.value,
+                parent_event_id=span_id or "",
+                payload={
+                    "name": name,
+                    "group": group,
+                    "wraps_pass": fn_key,
+                    "ir_hash_before": hash_before,
+                    "ir_hash_after": hash_after,
+                    "stats": stats if isinstance(stats, dict) else {"value": repr(stats)},
+                    "span_id": span_id or "",
+                },
+            )
         return PipelineStageReport(name=name, group=group, stats=stats)
-    except Exception as exc:  # noqa: BLE001
-        log.warning(f"pipeline.{name}.failed", error=str(exc))
-        return PipelineStageReport(name=name, group=group, skipped=True, skipped_reason=f"error: {exc}")
 
 
 def compile_through_pipeline(

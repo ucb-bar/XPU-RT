@@ -1,10 +1,9 @@
 """``CompGenOptions`` -- single dataclass of compilation knobs.
 
-Mirrors hexagon-mlir's ``HexagonOptions``
-(see `/scratch2/agustin/CompGen/tmp/hexagon-mlir/qcom_hexagon_backend/backend/hexagon_options.py`):
-hash-able, serializable to/from a flat string-dict, with one flag per
-optional pass or tunable. Waves 2+ passes accept a ``CompGenOptions``
-argument and read their own switch from it.
+Shape mirrors hexagon-mlir's ``HexagonOptions``: hash-able, serializable
+to/from a flat string-dict, with one flag per optional pass or tunable.
+Waves 2+ passes accept a ``CompGenOptions`` argument and read their own
+switch from it.
 
 Why a single top-level dataclass instead of per-pass configs:
 
@@ -146,6 +145,16 @@ class CompGenOptions:
     enable_differential_test: bool = True
     regression_tolerance_atol: float = 1e-3
     regression_tolerance_rtol: float = 1e-3
+
+    # --- observability / IR dumps ------------------------------------
+
+    #: When True, write ``<output_dir>/ir_dumps/NNN_<pass>_{before,after}.mlir``
+    #: for every pass and ``final.mlir`` for the glued module. Also honoured
+    #: when ``COMPGEN_DUMP_IR=1`` is set in the environment.
+    dump_ir: bool = False
+    #: Optional override for the dump directory. When ``None`` the dumps
+    #: live inside the compilation ``output_dir``.
+    dump_ir_dir: str = ""
 
     # --- misc ---------------------------------------------------------
 
