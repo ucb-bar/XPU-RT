@@ -361,12 +361,13 @@ def create_workload_from_network_hierarchy(
         For now:
           1) Compute a worst-case horizon H (ms):
                - If hardware.profile + profiled results.csv can be resolved, prefer
-                 H = S_np / F_p  where
+                 H = S_np / (1 - F_p)  where
                    S_np = sum of worst-case layer times (max over CPU_P/CPU_E per
                           dispatch node) for all non-periodic, non-window-slice networks
-                   F_p  = max over periodic workloads of (S_p / W), i.e. the same
-                          "window fraction" as scripts/worst_case_periodic_window_fraction.py
-                 (equivalently: nonperiodic script total / periodic window fraction.)
+                   F_p  = max over periodic workloads of (S_p / T) — utilization
+                          fraction over the period (NOT window). Periodic tasks
+                          consume F_p of CPU per unit time on average; nonperiodic
+                          gets (1 - F_p), so its wall time is S_np / (1 - F_p).
                - Else fall back to:
                    H = 2.0 * sum_over_nonperiodic_ops( worst_machine_duration(op) )
              where worst_machine_duration(op) is the max duration across machines.
@@ -439,6 +440,13 @@ def create_workload_from_network_hierarchy(
             if T <= 0:
                 continue
             num_instances = int(np.ceil(horizon / T))
+            # Per-network override: lets the toplevel JSON cap periodic
+            # instance count directly. Useful when the horizon heuristic
+            # over-estimates (e.g. profile data is being pinned per-network
+            # so the cross-product worst-case bloats).
+            forced = net_info.get("num_instances", None)
+            if isinstance(forced, int) and forced > 0:
+                num_instances = forced
             periodic_counts[net_id] = max(1, num_instances)
 
         return periodic_counts
