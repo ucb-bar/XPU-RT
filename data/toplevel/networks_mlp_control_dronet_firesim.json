@@ -1,0 +1,35 @@
+{
+  "_comment": "Real-RTL schedule: mlp_control + dronet on FireSim quad-rocket-saturn (4 RVV rocket cores). Profile data collected via the multi-model pool-sweep harness — 2 models x 3 pool sizes = 6 results.csv files per topo_<cores> dir. Each scheduled 'machine' here gets a single RVV core (topo_0 profile), since the FireSim measurements showed pthreadpool dispatch overhead dwarfs the work for these op sizes — a pair of single-core machines beats one shared 4-core pool.",
+  "hardware": {
+    "machines": { "cpu_p": 1, "cpu_e": 1 },
+    "profile_hw": { "cpu_p": "RVV", "cpu_e": "RVV" },
+    "profile": {
+      "target": "firesim_rocket_saturn",
+      "topo_tag": "topo_0",
+      "topo_tag_override": true
+    }
+  },
+  "scheduler": {
+    "random_seed": 42,
+    "solver_verbosity": 2,
+    "time_limit": 60,
+    "use_profiled": true,
+    "prune_periodic": true,
+    "restrict_makespan_to_nonperiodic": true
+  },
+  "networks": {
+    "mlp_control": {
+      "id": 0,
+      "identifier": "mlp_control",
+      "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/mlp_control/generic_riscv64/RVV/mlp_control.fp32/mlp_control.fp32_dispatch_graph.json",
+      "preferred_hw": "RVV"
+    },
+    "dronet": {
+      "id": 1,
+      "identifier": "dronet",
+      "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/dronet/generic_riscv64/RVV/dronet.fp32/dronet.fp32_dispatch_graph.json",
+      "preferred_hw": "RVV"
+    }
+  },
+  "edges": []
+}

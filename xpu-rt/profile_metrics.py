@@ -186,10 +186,23 @@ def worst_case_layer_sum_ms_for_network(
     topo: str,
     hw_p: str,
     hw_e: str,
+    *,
+    per_dispatch: str = "max",
 ) -> Optional[float]:
     """
-    Sum over dispatch-graph nodes of max(time_cpu_p, time_cpu_e) in ms.
+    Sum over dispatch-graph nodes of {max,min}(time_cpu_p, time_cpu_e) in ms.
+
+    `per_dispatch` controls the per-node aggregation:
+      - "max": worst HW per op (legacy default, used by external callers
+        that want a robust upper bound across HW assignments).
+      - "min": best HW per op — i.e. the schedule's best-case lower bound.
+        Used by `profile_based_horizon_ms` because the horizon already
+        adds the periodic-interference factor 1/(1-F_p) on top; per-op
+        max would double-count by assuming the scheduler picks the worst
+        HW for every op AND that periodic still steals (1-F_p) of CPU.
     """
+    if per_dispatch not in ("max", "min"):
+        raise ValueError(f"per_dispatch must be 'max' or 'min', got {per_dispatch!r}")
     # Lazy import avoids circular import at module load.
     from workload_factory import resolve_dispatch_deps_path
 
@@ -240,7 +253,8 @@ def worst_case_layer_sum_ms_for_network(
         elif t_e is None:
             total += float(t_p)
         else:
-            total += max(float(t_p), float(t_e))
+            agg = max if per_dispatch == "max" else min
+            total += agg(float(t_p), float(t_e))
     if n_used == 0:
         return None
     return total
@@ -258,9 +272,16 @@ def max_periodic_window_fraction(
     window_epsilon: float = 1e-6,
 ) -> Optional[float]:
     """
-    Largest S_p / W among periodic workloads:
-      - JSON automatic periodic: W = window_duration
-      - Windowed slice groups (same identifier + dispatch_deps_path): W = max_end_t - min_start_t
+    Largest S_p / D among periodic workloads, where D is the period T for
+    JSON automatic-periodic entries (when present) and the slice window W
+    otherwise. The period denominator is the queuing-theory utilization
+    fraction (worst-case CPU consumed by the periodic per unit time);
+    using window_duration overestimates utilization when W < T.
+      - JSON automatic periodic: D = period (falls back to window_duration
+        when period is absent)
+      - Windowed slice groups (same identifier + dispatch_deps_path):
+        D = max_end_t - min_start_t (matches the legacy semantics —
+        these slices have no separate period field)
     """
     frac_max = 0.0
 
@@ -269,11 +290,17 @@ def max_periodic_window_fraction(
             continue
         if not _is_automatic_periodic(net_info):
             continue
+        # Prefer period T; fall back to window_duration if T is absent.
         try:
-            wdur = float(net_info["window_duration"])
-        except (TypeError, ValueError, KeyError):
-            continue
-        if wdur <= 0:
+            period = float(net_info.get("period")) if net_info.get("period") is not None else None
+        except (TypeError, ValueError):
+            period = None
+        try:
+            wdur = float(net_info.get("window_duration")) if net_info.get("window_duration") is not None else None
+        except (TypeError, ValueError):
+            wdur = None
+        denom = period if (period is not None and period > 0) else wdur
+        if denom is None or denom <= 0:
             continue
         s_p = worst_case_layer_sum_ms_for_network(
             repo_base_path,
@@ -287,7 +314,7 @@ def max_periodic_window_fraction(
         )
         if s_p is None or s_p <= 0:
             continue
-        frac_max = max(frac_max, s_p / wdur)
+        frac_max = max(frac_max, s_p / denom)
 
     windowed_groups: Dict[Tuple[str, str], List[Tuple[str, dict]]] = defaultdict(list)
     for net_key, net_info in networks.items():
@@ -342,10 +369,15 @@ def nonperiodic_worst_case_layer_sum_ms(
     topo: str,
     hw_p: str,
     hw_e: str,
+    *,
+    per_dispatch: str = "max",
 ) -> Optional[float]:
     """
-    Sum of worst-case layer sums for networks that are neither automatic periodic
-    nor windowed time-slice instances (matches scripts/worst_case_nonperiodic_duration.py).
+    Sum of per-network worst-case layer sums for networks that are neither
+    automatic periodic nor windowed time-slice instances. `per_dispatch`
+    is forwarded to worst_case_layer_sum_ms_for_network and controls
+    whether each dispatch is summed at its worst-HW (default; matches
+    scripts/worst_case_nonperiodic_duration.py) or best-HW choice.
     """
     total = 0.0
     any_ok = False
@@ -365,6 +397,7 @@ def nonperiodic_worst_case_layer_sum_ms(
             topo,
             hw_p,
             hw_e,
+            per_dispatch=per_dispatch,
         )
         if s is None:
             continue
@@ -377,15 +410,15 @@ def nonperiodic_worst_case_layer_sum_ms(
 
 def profile_based_horizon_ms(networks_data: dict, repo_base_path: str) -> Optional[float]:
     """
-    Horizon (ms) = S_np / F_p where:
+    Horizon (ms) = S_np / (1 - F_p) where:
       S_np = sum of worst-case per-graph layer sums for non-periodic, non-windowed networks
-      F_p  = max over periodic groups of (S_p / W)  (window fraction)
+      F_p  = max over periodic groups of (S_p / T)  — utilization fraction over the
+             period (NOT window): periodic tasks consume f of CPU per unit time on
+             average, so nonperiodic gets (1 - f) of CPU and needs S_np / (1 - f)
+             wall time to complete.
 
-    Same ratio as:
-      worst_case_nonperiodic_duration / worst_case_periodic_window_fraction
-    when there is a single periodic group.
-
-    Returns None if hardware/profile data or CSVs are missing or metrics cannot be computed.
+    Returns None if hardware/profile data or CSVs are missing, metrics cannot be
+    computed, or F_p >= 1 (periodic is unschedulable on its own).
     """
     parsed = parse_profile_hardware(networks_data)
     if parsed is None:
@@ -395,12 +428,23 @@ def profile_based_horizon_ms(networks_data: dict, repo_base_path: str) -> Option
     if not isinstance(networks, dict):
         return None
 
+    # Best-HW-per-op for nonperiodic. Combined with the 1/(1-F_p)
+    # interference factor below, this approximates the schedule the
+    # scheduler will actually find: each op runs on its best HW, but
+    # periodic slices steal F_p of CPU on average. Per-op max here would
+    # double-count (worst HW + interference) and inflate the horizon
+    # 5-10x for heterogeneous configs (e.g. dronet RVV=39ms scalar=297ms).
     s_np = nonperiodic_worst_case_layer_sum_ms(
-        networks, repo_base_path, gen_root, target, topo, hw_p, hw_e
+        networks, repo_base_path, gen_root, target, topo, hw_p, hw_e,
+        per_dispatch="min",
     )
     f_p = max_periodic_window_fraction(
         networks, repo_base_path, gen_root, target, topo, hw_p, hw_e
     )
     if s_np is None or s_np <= 0.0 or f_p is None or f_p <= 0.0:
         return None
-    return s_np / f_p
+    if f_p >= 1.0:
+        # Periodic alone already saturates its period. Caller must
+        # decide what to do — we can't bound a horizon meaningfully.
+        return None
+    return s_np / (1.0 - f_p)
