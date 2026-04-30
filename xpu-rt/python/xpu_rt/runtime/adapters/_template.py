@@ -4,7 +4,6 @@ Implement an adapter for a specific execution runtime (device simulator,
 cloud service, FPGA fabric, etc.).
 
 See ``compgen.runtime.local_executor`` for a working example (local CPU/GPU).
-See ``compgen.runtime.iree_adapter`` for another example (IREE runtime).
 
 Steps:
     1. Copy this file: ``cp _template.py my_runtime.py``

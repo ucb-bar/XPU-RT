@@ -8,10 +8,6 @@ Invariants:
     - Every op has a ``region`` field identifying what it applies to.
     - Ops are order-independent unless explicitly sequenced.
     - Unknown or invalid ops are rejected by ``validate.py``.
-
-TODO: Implement Recipe IR interpreter that lowers ops to concrete outputs.
-TODO: Add op validation rules (e.g., tile params must be positive).
-TODO: Add op cost estimation for search guidance.
 """
 
 from __future__ import annotations

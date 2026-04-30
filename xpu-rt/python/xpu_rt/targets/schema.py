@@ -13,10 +13,6 @@ Invariants:
     - All fields have explicit types and defaults.
     - Profiles are serializable to/from YAML without loss.
     - The schema is versioned (schema_version field).
-
-TODO: Implement load_profile() from YAML with validation.
-TODO: Implement to_yaml() serialization.
-TODO: Add JSON schema generation for external validation tools.
 """
 
 from __future__ import annotations

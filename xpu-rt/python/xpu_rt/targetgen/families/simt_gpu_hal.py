@@ -167,11 +167,14 @@ class GpuCodegenPlugin:
         return {"codegen_strategy": "gpu_triton"}
 
 
-def create_gpu_stack(spec: HardwareSpec, output_dir: str | None = None) -> TargetDialectStack:
-    """Create SIMT GPU compilation pipeline from spec."""
-    import tempfile
+def create_gpu_stack(spec: HardwareSpec, output_dir: str | Path) -> TargetDialectStack:
+    """Create SIMT GPU compilation pipeline from spec.
 
-    bundle_dir = Path(output_dir) if output_dir else Path(tempfile.mkdtemp(prefix="gpu_bundle_"))
+    ``output_dir`` is mandatory; see :func:`create_cuda_gpu_stack`.
+    """
+    if output_dir is None:
+        raise ValueError("create_gpu_stack requires output_dir; pass a session-scoped path")
+    bundle_dir = Path(output_dir)
     return TargetDialectStack(
         target_name=spec.name,
         stages=[EncodingStage(), DispatchStage(), TilingStage(), CodegenStage(), BundleStage(output_dir=bundle_dir)],

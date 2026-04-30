@@ -53,11 +53,14 @@ class MatrixLoweringPlugin:
         return {"matrix_lowering": "vendor_extension", "extensions": [e.name for e in self._spec.isa.extensions]}
 
 
-def create_vendor_matrix_stack(spec: HardwareSpec, output_dir: str | None = None) -> TargetDialectStack:
-    """Create RISC-V vendor matrix extension pipeline (6 stages)."""
-    import tempfile
+def create_vendor_matrix_stack(spec: HardwareSpec, output_dir: str | Path) -> TargetDialectStack:
+    """Create RISC-V vendor matrix extension pipeline (6 stages).
 
-    bundle_dir = Path(output_dir) if output_dir else Path(tempfile.mkdtemp(prefix="matrix_bundle_"))
+    ``output_dir`` is mandatory; see :func:`create_cuda_gpu_stack`.
+    """
+    if output_dir is None:
+        raise ValueError("create_vendor_matrix_stack requires output_dir; pass a session-scoped path")
+    bundle_dir = Path(output_dir)
     return TargetDialectStack(
         target_name=spec.name,
         stages=[

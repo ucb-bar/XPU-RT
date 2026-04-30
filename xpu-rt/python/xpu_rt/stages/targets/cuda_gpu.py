@@ -14,6 +14,7 @@ works end-to-end.
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from xdsl.dialects.builtin import ModuleOp, StringAttr, TensorType
@@ -351,15 +352,17 @@ class CudaCodegenPlugin:
 # ---------------------------------------------------------------------------
 
 
-def create_cuda_gpu_stack(output_dir: str | None = None) -> TargetDialectStack:
+def create_cuda_gpu_stack(output_dir: str | Path) -> TargetDialectStack:
     """Create the CUDA GPU compilation pipeline.
 
     Stack: encoding → dispatch → tiling → codegen → bundle
-    """
-    import tempfile
-    from pathlib import Path
 
-    bundle_dir = Path(output_dir) if output_dir else Path(tempfile.mkdtemp(prefix="cuda_bundle_"))
+    ``output_dir`` is mandatory: bundles written to an ephemeral
+    tempdir are invisible to the caller and break the artifact contract.
+    """
+    if output_dir is None:
+        raise ValueError("create_cuda_gpu_stack requires output_dir; pass a session-scoped path")
+    bundle_dir = Path(output_dir)
 
     return TargetDialectStack(
         target_name="cuda_a100",  # matches target profile name

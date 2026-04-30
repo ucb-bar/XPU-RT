@@ -107,16 +107,23 @@ class TestCudaPlugins:
 
 
 class TestCudaStack:
-    def test_create_stack(self) -> None:
-        stack = create_cuda_gpu_stack()
+    def test_create_stack(self, tmp_path) -> None:
+        stack = create_cuda_gpu_stack(output_dir=str(tmp_path / "out"))
         assert stack.target_name == "cuda_a100"
         assert len(stack.stages) == 6
         assert len(stack.plugins) == 5
 
-    def test_stack_stage_names(self) -> None:
-        stack = create_cuda_gpu_stack()
+    def test_stack_stage_names(self, tmp_path) -> None:
+        stack = create_cuda_gpu_stack(output_dir=str(tmp_path / "out"))
         names = [s.name for s in stack.stages]
         assert names == ["encoding", "layout", "dispatch", "tiling", "codegen", "bundle"]
+
+    def test_create_stack_requires_output_dir(self) -> None:
+        """Factory must reject None output_dir — no volatile /tmp fallback."""
+        import pytest
+
+        with pytest.raises(ValueError, match="output_dir"):
+            create_cuda_gpu_stack(output_dir=None)  # type: ignore[arg-type]
 
 
 # ============================================================================
@@ -165,10 +172,10 @@ class TestCudaPipeline:
         assert result.passed, f"Pipeline failed at {result.first_failure}: {violations}"
         assert result.stages_run == 6
 
-    def test_pipeline_produces_per_stage_results(self, target, capabilities) -> None:
+    def test_pipeline_produces_per_stage_results(self, target, capabilities, tmp_path) -> None:
         """Each stage should produce a StageResult."""
         registry = StageRegistry()
-        stack = create_cuda_gpu_stack()
+        stack = create_cuda_gpu_stack(output_dir=str(tmp_path / "out"))
         stack.target_name = target.name
         registry.register_target_stack(stack)
 
@@ -181,10 +188,10 @@ class TestCudaPipeline:
             assert sr.stage_name in {"encoding", "layout", "dispatch", "tiling", "codegen", "bundle"}
             assert len(sr.diagnostics) > 0  # Each stage should log something
 
-    def test_pipeline_collects_artifacts(self, target, capabilities) -> None:
+    def test_pipeline_collects_artifacts(self, target, capabilities, tmp_path) -> None:
         """Pipeline should aggregate artifacts from all stages."""
         registry = StageRegistry()
-        stack = create_cuda_gpu_stack()
+        stack = create_cuda_gpu_stack(output_dir=str(tmp_path / "out"))
         stack.target_name = target.name
         registry.register_target_stack(stack)
 
@@ -198,9 +205,9 @@ class TestCudaPipeline:
         assert "tiling_strategy" in result.all_artifacts
         assert "codegen_strategy" in result.all_artifacts
 
-    def test_variable_depth_vs_fixed(self, target, capabilities) -> None:
+    def test_variable_depth_vs_fixed(self, target, capabilities, tmp_path) -> None:
         """CUDA stack has 6 stages; a simpler target could have 3."""
-        cuda_stack = create_cuda_gpu_stack()
+        cuda_stack = create_cuda_gpu_stack(output_dir=str(tmp_path / "cuda_out"))
         assert len(cuda_stack.stages) == 6
 
         # A minimal stack with just encoding + dispatch + bundle
@@ -211,7 +218,7 @@ class TestCudaPipeline:
 
         mini_stack = TargetDialectStack(
             target_name=target.name,
-            stages=[EncodingStage(), DispatchStage(), BundleStage()],
+            stages=[EncodingStage(), DispatchStage(), BundleStage(output_dir=tmp_path / "mini_out")],
         )
         assert len(mini_stack.stages) == 3
 

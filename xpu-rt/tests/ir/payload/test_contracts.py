@@ -45,9 +45,16 @@ def test_kernel_contract_construction() -> None:
 
 
 def test_extract_contracts() -> None:
-    """extract_contracts should walk an xDSL module and emit KernelContracts."""
+    """extract_contracts should walk an xDSL module and emit KernelContracts.
+
+    REQ-026: only ops carrying ``compgen.region_id`` surface as
+    contracts — the importer (and downstream annotation passes) stamp
+    this on every dispatch-boundary op. Hand-built test modules must
+    do the same, otherwise ``module.walk()`` would incorrectly recurse
+    into ``linalg.matmul``'s implicit body.
+    """
     from compgen.ir.payload.contracts import extract_contracts
-    from xdsl.dialects.builtin import Float32Type, ModuleOp, TensorType
+    from xdsl.dialects.builtin import Float32Type, ModuleOp, StringAttr, TensorType
     from xdsl.dialects.func import FuncOp, ReturnOp
     from xdsl.dialects.linalg import MatmulOp
     from xdsl.dialects.tensor import EmptyOp
@@ -58,27 +65,26 @@ def test_extract_contracts() -> None:
     rhs_type = TensorType(f32, [128, 256])
     out_type = TensorType(f32, [64, 256])
 
-    # Build a minimal function with a matmul
     block = Block(arg_types=[lhs_type, rhs_type])
     empty = EmptyOp([], out_type)
+    empty.attributes["compgen.region_id"] = StringAttr("r0")
     matmul = MatmulOp(
         inputs=[block.args[0], block.args[1]],
         outputs=[empty.results[0]],
         res=[out_type],
     )
+    matmul.attributes["compgen.region_id"] = StringAttr("r1")
     ret = ReturnOp(matmul)
     block.add_ops([empty, matmul, ret])
     func_op = FuncOp("main", ([lhs_type, rhs_type], [out_type]), Region(block))
     module = ModuleOp([func_op])
 
     contracts = extract_contracts(module)
-    # Should have contracts for EmptyOp and MatmulOp (skip FuncOp/ReturnOp/ModuleOp)
     assert len(contracts) >= 1
-    # Find the matmul contract
     matmul_contracts = [c for c in contracts if "matmul" in c.op_name]
     assert len(matmul_contracts) == 1
     mc = matmul_contracts[0]
-    assert mc.fusable is False  # matmul is a kernel boundary
+    assert mc.fusable is False
     assert mc.cost.flops > 0
     assert mc.cost.bytes_read > 0
 

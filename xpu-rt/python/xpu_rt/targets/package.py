@@ -24,10 +24,6 @@ Invariants:
     - A target package is a directory with a manifest.
     - Packages are self-contained (all paths relative to package root).
     - Generation is incremental (can re-generate parts without losing others).
-
-TODO: Implement generate_target_package() with full scaffolding.
-TODO: Implement load_target_package() from directory.
-TODO: Implement validate_target_package() for completeness checks.
 """
 
 from __future__ import annotations

@@ -20,7 +20,7 @@ def test_version_string() -> None:
 
 
 def test_version_value() -> None:
-    """Version should be 0.1.0 for the scaffold."""
+    """Version pinned to the value in ``pyproject.toml``."""
     from compgen import __version__
 
-    assert __version__ == "0.1.0"
+    assert __version__ == "0.2.0"

@@ -82,11 +82,15 @@ class RvvCodegenPlugin:
         return {"codegen_strategy": "llvm_rvv"}
 
 
-def create_rvv_cpu_stack(spec: HardwareSpec, output_dir: str | None = None) -> TargetDialectStack:
-    """Create RVV CPU extension pipeline from spec."""
-    import tempfile
+def create_rvv_cpu_stack(spec: HardwareSpec, output_dir: str | Path) -> TargetDialectStack:
+    """Create RVV CPU extension pipeline from spec.
 
-    bundle_dir = Path(output_dir) if output_dir else Path(tempfile.mkdtemp(prefix="rvv_bundle_"))
+    ``output_dir`` is mandatory; the bundle must land in a session-scoped
+    path, never a volatile tempdir.
+    """
+    if output_dir is None:
+        raise ValueError("create_rvv_cpu_stack requires output_dir; pass a session-scoped path")
+    bundle_dir = Path(output_dir)
     return TargetDialectStack(
         target_name=spec.name,
         stages=[EncodingStage(), DispatchStage(), TilingStage(), CodegenStage(), BundleStage(output_dir=bundle_dir)],

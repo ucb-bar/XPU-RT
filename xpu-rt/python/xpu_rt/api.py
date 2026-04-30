@@ -49,6 +49,16 @@ from compgen.targets.schema import TargetProfile
 log = structlog.get_logger()
 
 
+# Phase-7 sentinel — read by
+# :func:`compgen.testing.etc_conformance._check_etc_routing_ready`.
+# True when the conformance harness's ETC dispatch path is wired
+# (workload factory + ``_compile_and_evaluate`` populated). The set
+# of currently-wired workloads is enumerated by
+# :data:`compgen.testing.workloads.WORKLOAD_FACTORIES`; workloads
+# absent there fail loud rather than silently route through a stub.
+_ETC_DISPATCH_READY: bool = True
+
+
 @dataclass(frozen=True)
 class CompGenDevice:
     """Handle representing a target device ready for compilation.
@@ -118,6 +128,8 @@ class CompiledModel:
         *args: Any,
         num_iterations: int = 100,
         warmup: int = 10,
+        mode: str = "eager",
+        device: str = "cpu",
     ) -> BenchmarkResult:
         """Benchmark the model on the local executor.
 
@@ -125,18 +137,29 @@ class CompiledModel:
             *args: Input tensors for the model.
             num_iterations: Number of timed iterations.
             warmup: Warmup iterations before timing.
+            mode: Execution mode.  ``"eager"`` (default — original
+                PyTorch model), ``"compiled"`` (via ``torch.compile``),
+                or ``"compgen_ir"`` (runs the compiled xDSL payload
+                through :func:`compgen.runtime.cpu_executor.execute`).
+            device: ``"cpu"`` or ``"cuda"``.  ``mode="compgen_ir"`` is
+                CPU-only today; it is silently routed to CPU if ``"cuda"``
+                is requested.
 
         Returns:
-            BenchmarkResult with real hardware measurements.
+            BenchmarkResult with real hardware measurements. When
+            ``mode="compgen_ir"``, the result's ``sample_output`` can be
+            diffed against an ``mode="eager"`` run for correctness.
         """
         executor = LocalExecutor()
         return executor.benchmark(
             model=self.model,
             sample_inputs=args,
-            device="cpu",
-            mode="eager",
+            device=device,
+            mode=mode,
             num_iterations=num_iterations,
             warmup=warmup,
+            payload_module=self.payload_module if mode == "compgen_ir" else None,
+            exported_program=(self.capture_artifact.exported_program if mode == "compgen_ir" else None),
         )
 
     def create_agent_env(self, *, budget: int = 50) -> CompilerEnv:
@@ -174,6 +197,403 @@ class CompiledModel:
         if with_recipe:
             return loop.run_with_recipe(self.device.profile)
         return loop.run(self.device.profile)
+
+
+@dataclass(frozen=True)
+class MegakernelBundle:
+    """A compiled Event Tensor Compiler bundle ready for dispatch.
+
+    Returned by :func:`compile_to_megakernel`. Wraps the
+    bundle directory + decision metadata + a ``dispatch`` callable.
+
+    The agentic-compilation contract: a PyPI user (or their agent)
+    calls ``compile_to_megakernel(model, sample_inputs)`` with no
+    flags and gets a callable bundle back. The agent doesn't need
+    to know about cuBLASDx, cu13 NVRTC, or SM tags — those are
+    resolved by :func:`compgen.runtime.autotune.probe_device` and
+    surfaced in :attr:`backend_choice` for audit.
+
+    Attributes:
+        bundle_dir: Path to the on-disk bundle. Layout matches the
+            artifact contract — ``megakernel/source.cu``,
+            ``megakernel/manifest.yaml``, ``compile_context.json``.
+        decision: :class:`compgen.runtime.lowering.LoweringDecision`
+            output (pattern, per-op backend, schedule hints).
+        backend_choice: Resolved
+            :class:`compgen.runtime.autotune.BackendChoice` snapshot
+            for the audit-via-MCP story. ``None`` when the user
+            passed explicit flags rather than ``backend="auto"``.
+        kernel_name: NVRTC entry-point symbol.
+        manifest: Emitted manifest dict (queue tables, event-tensor
+            allocs, launch config).
+        elapsed_ms: Wall-clock cost of the compile.
+    """
+
+    bundle_dir: Path
+    decision: dict[str, Any]
+    backend_choice: dict[str, Any] | None
+    kernel_name: str
+    manifest: dict[str, Any]
+    elapsed_ms: float
+    #: Roofline cost prediction (etc_us / eager_us / passes_gate /
+    #: per-component breakdown) emitted at compile time by
+    #: :func:`compgen.kernels.cost.predict_etc_dispatch`. The agent
+    #: queries ``cost_prediction["passes_gate"]`` to decide whether
+    #: to dispatch through ETC or fall through to eager. ``None``
+    #: when the prediction couldn't be computed.
+    cost_prediction: dict[str, Any] | None = None
+
+    def dispatch(self, *args: torch.Tensor) -> Any:
+        """Run the compiled bundle on real input tensors.
+
+        Wraps :func:`compgen.mcp.tools.compile.compgen_run_compiled_bundle`
+        so Python callers don't need to go through the MCP tool's
+        base64/pickle JSON interface. GPU-only — raises
+        :class:`compgen.runtime.native.cuda.CudaUnavailableError`
+        on hosts without ``libcompgen_rt-cuda.so`` reachable.
+
+        Args:
+            *args: Input tensors. Must match the shape the bundle
+                was compiled for (the bundle's ``compile_context.json``
+                pins ``sample_input_shape``).
+
+        Returns:
+            Whatever ``compgen_run_compiled_bundle`` returns —
+            ``{"status": "ok", "outputs_pickle_b64": ..., "etc_us":
+            ..., "eager_us": ..., "speedup_vs_eager": ..., ...}``.
+            Errors land in ``status`` rather than raising.
+        """
+        import base64
+        import pickle
+
+        from compgen.mcp.tools.compile import compgen_run_compiled_bundle
+
+        return compgen_run_compiled_bundle(
+            bundle_dir=str(self.bundle_dir),
+            input_pickle_b64=base64.b64encode(pickle.dumps(args)).decode(),
+        )
+
+
+def compile_to_megakernel(
+    model: nn.Module,
+    sample_inputs: tuple[torch.Tensor, ...],
+    *,
+    target: str = "auto",
+    output_dir: str | Path | None = None,
+    backend_overrides: dict[str, Any] | None = None,
+    fail_when_wont_win: bool = False,
+    perf_threshold: float = 1.2,
+) -> MegakernelBundle:
+    """Compile a torch ``nn.Module`` to an Event Tensor Compiler bundle.
+
+    The flagless agentic-compilation entry. With default arguments
+    everything is auto-detected:
+
+    - **Backend selection** (NVRTC version, cuBLASDx availability,
+      precision, SM tag, tile shape) via
+      :func:`compgen.runtime.autotune.probe_device`.
+    - **Pattern matching** (diamond, FFN, etc.) via
+      :func:`compgen.runtime.lowering.lower_torch_to_megakernel`.
+    - **Bundle layout** under ``output_dir`` per the artifact contract.
+
+    The agent doesn't need to know about cuBLASDx, cu13 NVRTC, or
+    SM tags — the probe handles those, and the resolved choice
+    lands in :attr:`MegakernelBundle.backend_choice` for audit.
+
+    Args:
+        model: PyTorch ``nn.Module`` to compile. Must match a
+            registered pattern (diamond, FFN); generic fallback is
+            Wave 2 work.
+        sample_inputs: Concrete input tensors. Their shape pins
+            the bundle (no symbolic-shape support yet).
+        target: ``"auto"`` (default) → probe the local device.
+            Any other string is passed through as the NVRTC arch
+            (``"sm_100"``, ``"sm_90"``, etc.) for cross-compilation.
+        output_dir: Where to write the bundle. ``None`` (default)
+            → ``./compgen_output/megakernel_<short-uuid>``.
+        backend_overrides: Optional dict of per-flag overrides on
+            top of the probe (e.g. ``{"cublasdx_precision": "fp32"}``
+            to force fp32 even on Blackwell). Each non-None key
+            replaces the probe's value; None / missing keys keep
+            the probe's choice. The agent uses this when it needs
+            to pin one knob without giving up the rest of
+            auto-detection.
+        fail_when_wont_win: When True, raise
+            :class:`compgen.kernels.cost.WontWinError` if the
+            roofline cost model predicts ETC won't beat eager by
+            ``perf_threshold``. Default False — the bundle is still
+            emitted with the prediction stamped in
+            :attr:`MegakernelBundle.cost_prediction` so the agent
+            can decide whether to dispatch ETC or fall through to
+            eager.
+        perf_threshold: Speedup gate (eager_us / etc_us) for the
+            cost-model decision. Default 1.2× per the conformance
+            harness.
+
+    Returns:
+        :class:`MegakernelBundle` callable for ``.dispatch(*args)``.
+
+    Raises:
+        UnsupportedShape: No registered pattern matched the model.
+            The exception message lists every matcher's reason. (A
+            generic FX→megakernel fallback that handles any model
+            is Wave 2.2.)
+    """
+    import time
+    import uuid
+    from pathlib import Path as _Path
+
+    from compgen.runtime.autotune import probe_device
+    from compgen.runtime.lowering import (
+        lower_torch_to_megakernel,
+    )
+    from compgen.transforms.emit_cuda_megakernel import emit_cuda_megakernel
+    from compgen.transforms.event_static_schedule import compute_static_schedule
+
+    t0 = time.perf_counter()
+
+    if output_dir is None:
+        out = _Path("compgen_output") / f"megakernel_{uuid.uuid4().hex[:8]}"
+    else:
+        out = _Path(output_dir).expanduser()
+    out.mkdir(parents=True, exist_ok=True)
+
+    # 1. Probe → BackendChoice.
+    choice = probe_device(target=target)
+    if backend_overrides:
+        import dataclasses
+
+        # Translate user-facing override keys to BackendChoice fields.
+        # We accept the same keys the MCP tool accepts so callers can
+        # use one mental model.
+        normalised: dict[str, Any] = {}
+        if "prefer_cublasdx_for_linears" in backend_overrides:
+            normalised["use_cublasdx_for_linears"] = bool(backend_overrides["prefer_cublasdx_for_linears"])
+        for key in ("cublasdx_precision", "use_cu13_nvrtc"):
+            if key in backend_overrides:
+                normalised[key] = backend_overrides[key]
+        if "target_arch" in backend_overrides:
+            normalised["target_arch"] = backend_overrides["target_arch"]
+        if normalised:
+            choice = dataclasses.replace(choice, **normalised)
+
+    # 2. Lower torch → MegakernelGraph.
+    result = lower_torch_to_megakernel(
+        model,
+        sample_inputs,
+        backend_choice=choice,
+    )
+
+    # Wave 1.8 — when the matcher accepted via the submodule
+    # fallback (decision.submodule_path is set), the bundle must
+    # store the SUBMODULE not the wrapper. Otherwise dispatch's
+    # weight-extraction (``effective_model.up.weight`` etc.) blows
+    # up because the wrapper doesn't have ``up`` directly.
+    # Substitute now, before we pickle into compile_context.json.
+    effective_model: nn.Module = model
+    submodule_path = getattr(result.decision, "submodule_path", "") or ""
+    if submodule_path:
+        effective_model = model.get_submodule(submodule_path)
+
+    # 3. Schedule + emit + write bundle.
+    sm_count = _resolve_sm_count_for_target(choice.target_arch)
+    # Wave 1.6 — cluster-launch wiring. When the probe set
+    # ``supports_clusters=True`` (Blackwell), pass the chosen
+    # cluster shape to the static schedule. Multi-block-per-task
+    # cooperation is the structural fix bridge #108 identified for
+    # the cooperative-grid-sync overhead. ``None`` for non-Blackwell
+    # keeps the legacy single-block-per-task path.
+    cluster_dim: tuple[int, int, int] | None
+    if choice.supports_clusters and choice.cluster_dim_x is not None:
+        cluster_dim = (
+            choice.cluster_dim_x,
+            choice.cluster_dim_y or 1,
+            choice.cluster_dim_z or 1,
+        )
+    else:
+        cluster_dim = None
+
+    schedule = compute_static_schedule(
+        result.megakernel_graph,
+        sm_count=sm_count,
+        block_dim=(32, 32, 1),
+        supports_clusters=choice.supports_clusters,
+        cluster_dim=cluster_dim,
+    )
+    emit = emit_cuda_megakernel(
+        schedule,
+        device_function_sources=result.device_function_sources,
+        user_buffer_count=len(result.user_buffer_layout),
+    )
+
+    bundle_dir = out / "bundle"
+    bundle_dir.mkdir(parents=True, exist_ok=True)
+    emit.write_to_bundle(bundle_dir / "megakernel")
+
+    import base64
+    import json
+    import pickle
+
+    (bundle_dir / "compile_context.json").write_text(
+        json.dumps(
+            {
+                "user_buffer_layout": list(result.user_buffer_layout),
+                "target_arch": choice.target_arch,
+                "sample_input_shape": list(sample_inputs[0].shape),
+                "decision": result.decision.to_dict(),
+                "kernel_name": emit.kernel_name,
+                "model_pickle_b64": base64.b64encode(pickle.dumps(effective_model)).decode(),
+                "submodule_path": submodule_path,
+                "wrapper_class": type(model).__name__,
+                "nvrtc_include_paths": list(result.decision.nvrtc_include_paths),
+                "nvrtc_extra_options": list(result.decision.nvrtc_extra_options),
+                "prefer_cublasdx_for_linears": choice.use_cublasdx_for_linears,
+                "cublasdx_precision": choice.cublasdx_precision,
+                "use_cu13_nvrtc": choice.use_cu13_nvrtc,
+                "backend_choice": choice.to_dict(),
+                "backend_mode": "auto" if not backend_overrides else "auto+overrides",
+            },
+            indent=2,
+        )
+    )
+
+    # 4. Cost prediction (Wave 1.3) — predict whether ETC will beat
+    # eager. Stamp the prediction into the bundle so the agent's
+    # dispatch decision is auditable. When fail_when_wont_win=True,
+    # raise so the caller can fall through to eager.
+    from compgen.kernels.cost import (
+        WontWinError,
+        predict_etc_dispatch,
+    )
+
+    # Model dtype drives the eager-rate lookup (per bridge #121):
+    # ``cublasdx_precision`` is the compgen path's compute precision
+    # (bf16+fp32-acc on Blackwell), but eager runs the user's model
+    # in its parameter dtype. Sniff the dominant linear-weight dtype
+    # so eager_us reflects what cuBLAS actually delivers for THIS
+    # model. Falls back to fp32 (torch's default) when the model has
+    # no parameters or the sample input drives the choice.
+    def _sniff_model_dtype(m: nn.Module, samples: tuple[torch.Tensor, ...]) -> str:
+        try:
+            params = list(m.parameters())
+            if params:
+                dt = params[0].dtype
+            else:
+                dt = samples[0].dtype if samples else torch.float32
+        except Exception:  # noqa: BLE001
+            dt = torch.float32
+        if dt == torch.float32:
+            return "fp32"
+        if dt in (torch.bfloat16,):
+            return "bf16"
+        if dt in (torch.float16,):
+            return "fp16"
+        if dt == torch.float64:
+            return "fp32"  # cuBLAS routes fp64 GEMM via fp32 path for our purposes
+        if hasattr(torch, "float8_e4m3fn") and dt == getattr(torch, "float8_e4m3fn"):
+            return "fp8"
+        if hasattr(torch, "float8_e5m2") and dt == getattr(torch, "float8_e5m2"):
+            return "fp8"
+        return "fp32"
+
+    model_dtype = _sniff_model_dtype(model, sample_inputs)
+
+    cost_prediction_dict: dict[str, Any] | None = None
+    try:
+        prediction = predict_etc_dispatch(
+            sample_input_shape=tuple(sample_inputs[0].shape),
+            decision=result.decision.to_dict(),
+            backend_choice=choice.to_dict(),
+            threshold=perf_threshold,
+            model_dtype=model_dtype,
+        )
+        cost_prediction_dict = {
+            "etc_us": prediction.etc_us,
+            "eager_us": prediction.eager_us,
+            "speedup": prediction.speedup,
+            "threshold": prediction.threshold,
+            "passes_gate": prediction.passes_gate,
+            "components": prediction.components,
+            "reason": prediction.reason,
+        }
+        # Stamp the prediction into the bundle's verification report
+        # so compgen_run_compiled_bundle + the agent's audit query
+        # see it without re-running the predictor.
+        (bundle_dir / "verification_report.json").write_text(
+            json.dumps({"cost_prediction": cost_prediction_dict}, indent=2)
+        )
+        # Per bridge #129: also surface the prediction inside
+        # ``compile_context.json`` so the dispatch path
+        # (``compgen_run_compiled_bundle``) and any audit-via-MCP query
+        # can read components like ``intra_cluster_edge_fraction``,
+        # ``num_linear_waves``, ``num_pointwise_waves`` without having
+        # to re-run the predictor or load a second JSON file. Read +
+        # update + write so a predictor crash earlier above doesn't
+        # leave the context file half-written.
+        ctx_path = bundle_dir / "compile_context.json"
+        try:
+            ctx = json.loads(ctx_path.read_text())
+            ctx["cost_prediction"] = cost_prediction_dict
+            ctx_path.write_text(json.dumps(ctx, indent=2))
+        except (OSError, ValueError) as ctx_exc:  # noqa: BLE001
+            log.warning(
+                "compgen.compile_to_megakernel.cost_predict_ctx_update_failed",
+                error=repr(ctx_exc),
+            )
+        if fail_when_wont_win and not prediction.passes_gate:
+            raise WontWinError(prediction)
+    except WontWinError:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        # Cost prediction is best-effort. Never fail the compile
+        # because the predictor couldn't compute (e.g. shape decoder
+        # has gaps). Log and continue.
+        log.warning(
+            "compgen.compile_to_megakernel.cost_predict_failed",
+            error=repr(exc),
+        )
+
+    elapsed_ms = (time.perf_counter() - t0) * 1000
+    log.info(
+        "compgen.compile_to_megakernel.ok",
+        pattern=result.decision.pattern_name,
+        target_arch=choice.target_arch,
+        use_cublasdx=choice.use_cublasdx_for_linears,
+        bundle_dir=str(bundle_dir),
+        elapsed_ms=elapsed_ms,
+        passes_perf_gate=(cost_prediction_dict["passes_gate"] if cost_prediction_dict else None),
+    )
+
+    return MegakernelBundle(
+        bundle_dir=bundle_dir,
+        decision=result.decision.to_dict(),
+        backend_choice=choice.to_dict(),
+        kernel_name=emit.kernel_name,
+        manifest=emit.manifest,
+        elapsed_ms=elapsed_ms,
+        cost_prediction=cost_prediction_dict,
+    )
+
+
+def _resolve_sm_count_for_target(target_arch: str) -> int:
+    """SM count default for the static scheduler. Production code
+    will probe live; for compile-time scheduling we use a per-arch
+    default that's correct for the canonical hardware.
+
+    - sm_100 (B100/B200 datacenter): 132 SMs.
+    - sm_120 (workstation Blackwell): 188 SMs.
+    - sm_90 (H100): 132 SMs.
+    - else: 80 (conservative).
+    """
+    a = target_arch.lower().lstrip("sm_").rstrip("a")
+    return {
+        "100": 132,
+        "120": 188,
+        "90": 132,
+        "89": 128,
+        "86": 84,
+        "80": 108,
+    }.get(a, 80)
 
 
 def device(
@@ -232,6 +652,57 @@ def device(
     )
 
 
+def _run_inline_verification(
+    *,
+    module: ModuleOp,
+    target_profile: TargetProfile,
+    model: nn.Module,
+    sample_inputs: tuple[Any, ...],
+    bundle_dir: Path,
+    exported_program: Any | None = None,
+) -> dict[str, Any]:
+    """Run the verify stage on the compiled module and return its payload.
+
+    ``compile_model(verify=True)`` calls this so ``verification_report.json``
+    is always part of a production bundle. The returned dict is what
+    gets serialised into ``verification_report.json``; shape mirrors
+    ``TransformVerificationResult`` but adds the per-level strings from
+    the ``details`` dict so the JSON is self-describing.
+
+    Failure of any verify level does not raise — the caller decides
+    whether a failed verify is fatal. But every level that ran is
+    reported; nothing is silently "PASSED".
+    """
+    from compgen.transforms.verify import (
+        TransformVerifier,
+        VerificationLevel,
+    )
+
+    verifier = TransformVerifier(
+        levels=[
+            VerificationLevel.STRUCTURAL,
+            VerificationLevel.DIFFERENTIAL,
+            VerificationLevel.NUMERIC,
+        ]
+    )
+    result = verifier.verify(
+        module,
+        module,
+        sample_inputs,
+        model=model,
+        exported_program=exported_program,
+    )
+    return {
+        "target": target_profile.name,
+        "bundle_dir": str(bundle_dir),
+        "passed": bool(result.passed),
+        "max_abs_error": float(result.max_abs_error) if result.max_abs_error is not None else None,
+        "levels_run": [lvl.value for lvl in result.levels_run],
+        "levels_passed": [lvl.value for lvl in result.levels_passed],
+        "details": dict(result.details),
+    }
+
+
 def compile_model(
     model: nn.Module,
     target_device: CompGenDevice,
@@ -245,6 +716,10 @@ def compile_model(
     output_dir: str | Path | None = None,
     dump_ir: bool | None = None,
     session_id: str | None = None,
+    verify: bool = True,
+    strict_artifacts: bool = True,
+    run_compile_baseline: bool = True,
+    memory: Any = None,
 ) -> CompiledModel:
     """Capture, optimise, and compile a PyTorch model for a target device.
 
@@ -283,18 +758,20 @@ def compile_model(
     # writer before doing anything else, so capture / import / pipeline all
     # emit into the same linked trace. Local imports avoid a module-load
     # cycle with :mod:`compgen.trace.adapters`.
-    import uuid
-
     from compgen.mcp.transcript import default_session_root
     from compgen.trace import (
         IRDumpWriter,
+        build_session_id,
         dump_enabled_from_env,
         install_bus,
         install_ir_dump_writer,
     )
 
     if session_id is None:
-        session_id = f"sess_{uuid.uuid4().hex[:10]}"
+        # Human-readable id: YYYYMMDD-HHMMSS_<model>_<target>_<short>.
+        # Sorts by wall clock, identifies the run at a glance, stays
+        # unique via the random suffix.
+        session_id = build_session_id(model=model, target_device=target_device)
     resolved_out_dir: Path
     if output_dir is None:
         resolved_out_dir = Path("compgen_output") / session_id
@@ -552,6 +1029,112 @@ def compile_model(
     ir_dump_writer.write_final(module)
     # Detach so subsequent compiles get a fresh writer.
     install_ir_dump_writer(None)
+
+    # Extended artefact emission — every failure surfaces.
+    # The bundle stage writes payload.mlir + manifest.json; the call
+    # below fills in the rest of the 14-artifact contract and returns
+    # a BundleEmissionReport. We honestly propagate per-artifact
+    # failures via manifest.json::extended_artifacts + the trace bus,
+    # and raise BundleEmissionError if any artifact is in "failed"
+    # status (unless the caller opts out via strict_artifacts=False).
+    bundle_dir_str = pipeline_result.all_artifacts.get("bundle_dir") if pipeline_result else None
+    emission_report = None
+    if bundle_dir_str:
+        from compgen.runtime.bundle_emit import emit_extended_artefacts
+        from compgen.runtime.errors import BundleEmissionError
+
+        # Gather optional inputs for the three slots that need upstream
+        # data threaded through: transforms, generated_kernels, verify.
+        pipeline_artifacts = pipeline_result.all_artifacts if pipeline_result is not None else None
+
+        # When the auto-generated codegen stage couldn't ship a native
+        # kernel (Triton declined / target_class isn't triton-friendly),
+        # dispatch to any registered KernelProvider whose
+        # accepts_contract() is True. The result feeds straight into
+        # the ``generated_kernels`` artifact slot. Provider knowledge
+        # is persisted into ``memory`` if the caller supplied one;
+        # contract feedback is always surfaced via ``pipeline_artifacts``
+        # so callers without memory can still consume it.
+        if pipeline_artifacts is not None and not pipeline_artifacts.get("generated_kernels"):
+            try:
+                from compgen.kernels.codegen_fallback import run_provider_fallback
+
+                feedback_buf: list[Any] = []
+                fallback_kernels = run_provider_fallback(
+                    module,
+                    target_device.profile,
+                    sample_inputs=sample_inputs,
+                    memory=memory,
+                    feedback_out=feedback_buf,
+                )
+                if fallback_kernels:
+                    pipeline_artifacts["generated_kernels"] = fallback_kernels
+                if feedback_buf:
+                    pipeline_artifacts["provider_contract_feedback"] = [
+                        {
+                            "field": fb.field,
+                            "current_value": fb.current_value,
+                            "suggested_value": fb.suggested_value,
+                            "reason": fb.reason,
+                            "measured_gain": fb.measured_gain,
+                        }
+                        for fb in feedback_buf
+                    ]
+            except Exception as exc:  # noqa: BLE001
+                log.warning(
+                    "api.compile.codegen_fallback_failed",
+                    error=str(exc),
+                )
+
+        verification_payload: dict[str, Any] | None = None
+        if verify:
+            verification_payload = _run_inline_verification(
+                module=module,
+                target_profile=target_device.profile,
+                model=model,
+                sample_inputs=sample_inputs,
+                bundle_dir=Path(bundle_dir_str),
+                exported_program=getattr(capture_artifact, "exported_program", None),
+            )
+
+        emission_report = emit_extended_artefacts(
+            bundle_dir_str,
+            capture_artifact=capture_artifact,
+            sample_inputs=sample_inputs,
+            model=model,
+            run_compile_baseline=run_compile_baseline,
+            payload_module=module,
+            target_profile=target_device.profile,
+            analysis=analysis,
+            pipeline_artifacts=pipeline_artifacts,
+            verification_report=verification_payload,
+        )
+        log.info(
+            "api.compile.extended_artefact_report",
+            ok=[s.name for s in emission_report.ok],
+            failed=[s.name for s in emission_report.failed],
+            skipped=[s.name for s in emission_report.skipped],
+        )
+        if strict_artifacts and emission_report.failed:
+            raise BundleEmissionError(emission_report)
+    else:
+        log.warning(
+            "api.compile.no_bundle_dir",
+            hint="bundle stage did not expose a bundle_dir; extended artefacts skipped",
+        )
+
+    # Render the human-readable companion ``trace.log`` next to the
+    # canonical NDJSON ``trace.jsonl``. Pure function of the JSONL —
+    # nothing else in the pipeline reads it, so rendering once at the
+    # end is enough and keeps the hot path free of string formatting.
+    try:
+        from compgen.trace import get_active_bus, render_trace
+
+        bus_ref = get_active_bus()
+        if bus_ref is not None:
+            render_trace(bus_ref.trace_path)
+    except Exception as _render_exc:  # noqa: BLE001
+        log.debug("api.compile.trace_render_failed", error=str(_render_exc))
 
     log.info(
         "api.compile.done",

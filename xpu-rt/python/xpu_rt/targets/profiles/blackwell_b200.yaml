@@ -1,0 +1,111 @@
+# NVIDIA B200 / GB100 (datacenter Blackwell, sm_100).
+#
+# Source: NVIDIA Blackwell architecture brief + B200 product page.
+# Numbers are the published spec sheet — Phase-6's runtime probe
+# (compgen.runtime.probe.probe_cuda_device) overrides any field
+# observed live on the actual silicon.
+#
+# This profile is the *target* the original ETC paper (Jin et al.,
+# MLSys '26) was evaluated against. Workstation Blackwell users
+# should use blackwell_rtx_pro_6000.yaml instead — sm_120, fewer
+# SMs, PCIe (no NVLink between cards in the same chassis).
+
+name: blackwell-b200
+schema_version: "1.0"
+
+devices:
+  - device_type: gpu
+    name: "NVIDIA B200"
+    vendor: nvidia
+    compute_units:
+      - name: tensor_core_5th_gen
+        count: 132
+        # FP8 e4m3 tensor-core peak. FP4 peak is ~2x; FP16/BF16
+        # peak is ~0.5x. Phase-2 roofline picks the dtype-correct
+        # value via metadata when available.
+        peak_tflops: 2500.0
+        supported_dtypes:
+          - fp4
+          - fp8
+          - fp16
+          - bf16
+          - fp32
+          - tf32
+      - name: cuda_core
+        count: 132
+        peak_tflops: 67.0
+        supported_dtypes: [fp32, fp64]
+    memory_hierarchy:
+      - name: registers
+        size_bytes: 4194304   # 32K × 132 SMs × 4 B
+        bandwidth_gbps: 0     # not metered
+      - name: shared_memory
+        size_bytes: 30277632  # 228 KB × 132 SMs (opt-in shared)
+        bandwidth_gbps: 19000
+      - name: l2_cache
+        size_bytes: 50331648  # 48 MB
+        bandwidth_gbps: 12000
+      - name: hbm3e
+        size_bytes: 192000000000  # 192 GB HBM3e
+        bandwidth_gbps: 8000      # 8 TB/s
+        latency_ns: 400
+    supported_ops:
+      - matmul
+      - conv2d
+      - gemm
+      - batched_gemm
+      - reduce
+      - reduce_scatter
+      - all_gather
+      - all_reduce
+    features:
+      - tma                       # Tensor Memory Accelerator
+      - clusters                  # Cluster launch + DSMEM
+      - fp8_tensor_cores
+      - fp4_tensor_cores
+      - cooperative_launch
+      - persistent_kernels
+      - graph_capture
+    kernel_backends:
+      - triton
+      - cutile
+      - cublas
+      - cudnn
+
+interconnects:
+  # NVLink-5 between B200 dies / cards. Spec: 1.8 TB/s aggregate
+  # per GPU on NVL72 boards. Lower for HGX-style boards; assume
+  # 900 GB/s effective per-GPU as a conservative default.
+  - topology: nvlink
+    bandwidth_gbps: 900.0
+    latency_us: 0.5
+    devices: [0, 1]
+
+cost_model:
+  # Defaults consumed by compgen.kernels.cost.roofline.predict when
+  # device_traits.metadata isn't populated yet. The probe overrides
+  # these with measured values.
+  fp8_tflops: 2500.0
+  bf16_tflops: 1250.0
+  hbm_bandwidth_tbps: 8.0
+
+metadata:
+  # Architectural traits — Phase-6 forwards these into
+  # DeviceTraits.metadata via _FORWARDED_METADATA_KEYS.
+  compute_capability_major: 10
+  compute_capability_minor: 0
+  sm_count: 132
+  supports_tma: true
+  supports_clusters: true
+  supports_fp8: true
+  supports_fp4: true
+  supports_ondevice_scheduler: true
+  peak_flops_per_s: 2.5e+15
+  peak_bandwidth_bps: 8.0e+12
+  peak_bandwidth_level: hbm3e
+  interconnect_topology: nvlink
+  interconnect_bandwidth_gbps: 900.0
+
+  # ETC paper tuning — values cited in Jin et al., MLSys '26 §4.
+  paper_anchored: true
+  paper_evaluation_hardware: B200_NVL_8GPU

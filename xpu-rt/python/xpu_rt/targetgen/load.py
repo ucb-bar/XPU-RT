@@ -24,6 +24,7 @@ from compgen.targetgen.hardware_spec import (
     PatchSpec,
     PlatformSpec,
     RuntimeContractSpec,
+    RuntimeMathSpec,
     TileGeometry,
     VerificationSurfaceSpec,
 )
@@ -36,7 +37,13 @@ from compgen.targets.schema import (
 
 
 def _build_platform(d: dict[str, Any]) -> PlatformSpec:
-    return PlatformSpec(**{k: v for k, v in d.items() if k in PlatformSpec.__dataclass_fields__})
+    fields = {k: v for k, v in d.items() if k in PlatformSpec.__dataclass_fields__}
+    # Required fields — default missing values to empty strings so minimal
+    # specs (e.g. sim-only test fixtures) load without forcing every caller
+    # to fill out vendor/family/chip_name boilerplate.
+    for required in ("vendor", "family", "chip_name"):
+        fields.setdefault(required, "")
+    return PlatformSpec(**fields)
 
 
 def _build_execution_model(d: dict[str, Any]) -> ExecutionModelSpec:
@@ -48,6 +55,7 @@ def _build_execution_model(d: dict[str, Any]) -> ExecutionModelSpec:
 def _build_isa(d: dict[str, Any]) -> ISASpec:
     extensions = [ISAExtension(**ext) for ext in d.get("extensions", [])]
     fields = {k: v for k, v in d.items() if k in ISASpec.__dataclass_fields__ and k != "extensions"}
+    fields.setdefault("base_isa", "unknown")
     return ISASpec(extensions=extensions, **fields)
 
 
@@ -84,6 +92,19 @@ def _build_numeric(d: dict[str, Any]) -> NumericContractSpec:
     )
 
 
+def _build_runtime_contract(d: dict[str, Any]) -> RuntimeContractSpec:
+    """Build a :class:`RuntimeContractSpec`, including the nested
+    ``math`` block (REQ-025) when present in the YAML."""
+    math_block = d.get("math", {}) or {}
+    math = RuntimeMathSpec(
+        has_libm=bool(math_block.get("has_libm", False)),
+        has_libc=bool(math_block.get("has_libc", False)),
+        intrinsics=list(math_block.get("intrinsics", []) or []),
+    )
+    fields = {k: v for k, v in d.items() if k in RuntimeContractSpec.__dataclass_fields__ and k != "math"}
+    return RuntimeContractSpec(math=math, **fields)
+
+
 def _build_patches(d: dict[str, Any]) -> PatchSpec:
     reqs = [PatchRequirement(**r) for r in d.get("requirements", [])]
     return PatchSpec(
@@ -109,7 +130,7 @@ def load_hardware_spec(path: str | Path) -> HardwareSpec:
         engine_geometry=_build_geometry(data.get("engine_geometry", {})),
         memory_model=_build_memory(data.get("memory_model", {})),
         numeric_contract=_build_numeric(data.get("numeric_contract", {})),
-        runtime_contract=RuntimeContractSpec(**data.get("runtime_contract", {})),
+        runtime_contract=_build_runtime_contract(data.get("runtime_contract", {})),
         verification_surface=VerificationSurfaceSpec(**data.get("verification_surface", {})),
         patches=_build_patches(data.get("patches", {})),
         constraints=data.get("constraints", {}),
@@ -189,6 +210,19 @@ def extract_target_profile(spec: HardwareSpec) -> TargetProfile:
         kernel_backends=kernel_backends,
     )
 
+    # REQ-025: surface runtime math capabilities through the profile's
+    # metadata dict so providers (via :func:`spec_to_provider_contract`)
+    # can branch on libm/intrinsic availability.
+    metadata = dict(spec.metadata)
+    metadata.setdefault(
+        "runtime_math",
+        {
+            "has_libm": spec.runtime_contract.math.has_libm,
+            "has_libc": spec.runtime_contract.math.has_libc,
+            "intrinsics": list(spec.runtime_contract.math.intrinsics),
+        },
+    )
+
     return TargetProfile(
         name=spec.name,
         schema_version=spec.schema_version,
@@ -196,7 +230,7 @@ def extract_target_profile(spec: HardwareSpec) -> TargetProfile:
         interconnects=[],
         constraints=spec.constraints,
         cost_model=spec.cost_model,
-        metadata=spec.metadata,
+        metadata=metadata,
     )
 
 

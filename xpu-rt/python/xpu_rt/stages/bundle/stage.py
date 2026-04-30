@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import io
 import json
-import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -32,11 +31,22 @@ class BundleStage(CompilationStage):
 
     Packages compilation artifacts into a deployable bundle.
     The module is passed through unchanged; the bundle is an artifact.
+
+    ``output_dir`` is mandatory: bundles that vanish into ``/tmp`` are
+    invisible to callers and defeat the artifact contract. Upstream
+    orchestrators (``compile_model`` in ``api.py`` and the family plan
+    templates in ``targetgen.families``) derive an explicit session-scoped
+    path and must pass it here.
     """
 
-    def __init__(self, output_dir: Path | None = None) -> None:
+    def __init__(self, output_dir: Path) -> None:
         super().__init__()
-        self._output_dir = output_dir or Path(tempfile.mkdtemp(prefix="compgen_bundle_"))
+        if output_dir is None:
+            raise ValueError(
+                "BundleStage requires an explicit output_dir; tempdir fallbacks "
+                "hide bundles from the caller. Derive one from the session dir."
+            )
+        self._output_dir = Path(output_dir)
 
     @property
     def name(self) -> str:

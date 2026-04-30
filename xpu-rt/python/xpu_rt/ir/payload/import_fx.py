@@ -120,13 +120,25 @@ def _coerce_static_dim(dim: Any) -> int:
 
 
 def _tensor_type_from_meta(val: Any) -> TensorType | None:
-    """Extract a TensorType from an FX node's meta['val']."""
+    """Extract a TensorType from an FX node's meta['val'].
+
+    Tuple/list-returning ops (``aten.native_layer_norm`` →
+    ``(out, mean, rstd)``, ``aten.var_mean`` → ``(mean, var)``, …)
+    surface as Python tuples in ``meta['val']``. We use the *primary*
+    element (index 0) as the node's representative type; downstream
+    ``operator.getitem(node, 0)`` consumers then resolve to the
+    decomposition's single-tensor result rather than crashing as
+    orphan opaque calls (REQ-020).
+    """
     if val is None:
         return None
     if hasattr(val, "shape") and hasattr(val, "dtype"):
         elem = _torch_dtype_to_xdsl(val.dtype)
         shape = [_coerce_static_dim(d) for d in val.shape]
         return TensorType(elem, shape)
+    if isinstance(val, (tuple, list)) and val:
+        # Tuple-returning op — recurse on the primary element.
+        return _tensor_type_from_meta(val[0])
     return None
 
 
@@ -273,6 +285,56 @@ class FXImporter:
                 )
                 continue
 
+            # REQ-020: ``operator.getitem`` on a tuple-producing aten op
+            # (``native_layer_norm`` returns ``(out, mean, rstd)``,
+            # ``var_mean`` returns ``(mean, var)``, etc.) shows up as
+            # ``getitem(producer_node, idx)`` after FX export. The
+            # producer was decomposed to a single-tensor representative
+            # (the primary output, index 0), so:
+            #
+            # - ``getitem(_, 0)`` → resolve to the producer's tensor.
+            # - ``getitem(_, k)`` for ``k > 0`` → drop the node entirely
+            #   (auxiliary outputs that user code typically doesn't
+            #   reference; if anything DOES reference them, it'll fail
+            #   loudly downstream — preferable to emitting an opaque
+            #   ``<built-in function getitem>`` op no provider can match).
+            #
+            # Acceptance per REQ-020: ``<built-in function getitem>``
+            # never appears in payload.mlir.
+            if (
+                target_str == "<built-in function getitem>"
+                and len(node.args) >= 2
+                and hasattr(node.args[0], "name")
+                and node.args[0].name in value_map
+            ):
+                idx = node.args[1]
+                if idx == 0:
+                    value_map[node.name] = value_map[node.args[0].name]
+                    self.diagnostics.append(
+                        ImportDiagnostic(
+                            fx_node=node.name,
+                            level="info",
+                            message=(
+                                f"Resolved getitem({node.args[0].name}, 0) → primary result of decomposed tuple op"
+                            ),
+                        )
+                    )
+                else:
+                    # Drop the auxiliary getitem; no IR emission, no
+                    # value_map entry. Consumers that reference this
+                    # node will surface as missing operands downstream.
+                    self.diagnostics.append(
+                        ImportDiagnostic(
+                            fx_node=node.name,
+                            level="info",
+                            message=(
+                                f"Dropped getitem({node.args[0].name}, {idx}) — "
+                                f"auxiliary output of decomposed tuple op (REQ-020)"
+                            ),
+                        )
+                    )
+                continue
+
             # Resolve operands
             operands: list[SSAValue] = []
             for arg in node.args:
@@ -396,6 +458,15 @@ class FXImporter:
         all_ops = list(extern_funcs) + [main_func]
         module = ModuleOp(all_ops)
 
+        # REQ-023 (generalised): every ``linalg.transpose`` gets a
+        # ``compgen.region_id`` + ``dispatch_id`` so the dispatch
+        # graph can resolve consumers' operands. When a transpose
+        # with permutation ``[1, 0]`` feeds a ``linalg.matmul``'s
+        # B operand, the matmul is also tagged with
+        # ``compgen.transposed_b="true"`` so providers can short-
+        # circuit by emitting a B^T kernel.
+        _annotate_transposes_and_matmuls(module)
+
         try:
             module.verify()
         except Exception as e:
@@ -414,6 +485,88 @@ class FXImporter:
         stream = io.StringIO()
         Printer(stream=stream).print(module)
         return stream.getvalue()
+
+
+def _annotate_transposes_and_matmuls(module: ModuleOp) -> None:
+    """Generalised dispatch-region annotation (REQ-023 + REQ-026).
+
+    Walks the module once and stamps:
+
+    - Every ``linalg.transpose`` with ``compgen.region_id`` +
+      ``compgen.dispatch_id`` (idempotent — respects pre-existing
+      tags from in-tree decompositions).
+    - Every ``linalg.matmul`` whose B operand is a permutation-
+      ``[1, 0]`` transpose with ``compgen.transposed_b="true"``.
+    - Every ``func.call`` op (the opaque-fallback shape
+      ``func.call @aten_relu_default`` for unmapped ATen ops) with
+      ``compgen.region_id`` + ``compgen.dispatch_id``. Without this
+      tag, codegen-fallback's contract extractor can't surface them
+      as kernel boundaries (REQ-026's blocker for any opaque-call op).
+
+    Counters are kept distinct per-op-family so synthesised ids
+    don't collide with what decompositions assign.
+    """
+    from xdsl.dialects.func import CallOp
+    from xdsl.dialects.linalg import MatmulOp, TransposeOp
+
+    transpose_counter = 0
+    for op in module.walk():
+        if isinstance(op, TransposeOp):
+            existing_rid = op.attributes.get("compgen.region_id")
+            if existing_rid is None:
+                rid = f"transpose_{transpose_counter}"
+                transpose_counter += 1
+                op.attributes["compgen.region_id"] = StringAttr(rid)
+            else:
+                rid = existing_rid.data if isinstance(existing_rid, StringAttr) else None
+            if rid and "compgen.dispatch_id" not in op.attributes:
+                op.attributes["compgen.dispatch_id"] = StringAttr(rid)
+
+    # Opaque func.call annotation (REQ-026). Per-callee counters so
+    # ids stay readable: ``aten_relu_default_0``, ``aten_add_1``, etc.
+    callee_counters: dict[str, int] = {}
+    for op in module.walk():
+        if not isinstance(op, CallOp):
+            continue
+        if not (hasattr(op, "callee") and hasattr(op.callee, "string_value")):
+            continue
+        # External func declarations also surface as CallOps elsewhere
+        # but those have no `results`; skip them defensively.
+        if not op.results:
+            continue
+        existing_rid = op.attributes.get("compgen.region_id")
+        if existing_rid is None:
+            callee = op.callee.string_value()
+            stem = callee.lstrip("@") if callee else "call"
+            count = callee_counters.get(stem, 0)
+            callee_counters[stem] = count + 1
+            rid = f"{stem}_{count}"
+            op.attributes["compgen.region_id"] = StringAttr(rid)
+        else:
+            rid = existing_rid.data if isinstance(existing_rid, StringAttr) else None
+        if rid and "compgen.dispatch_id" not in op.attributes:
+            op.attributes["compgen.dispatch_id"] = StringAttr(rid)
+
+    for op in module.walk():
+        if not isinstance(op, MatmulOp):
+            continue
+        if "compgen.transposed_b" in op.attributes:
+            continue  # already tagged by a decomposition
+        if len(op.operands) < 2:
+            continue
+        b_operand = op.operands[1]
+        producer = b_operand.owner
+        if not isinstance(producer, TransposeOp):
+            continue
+        # Check the permutation is [1, 0] — the only shape that's
+        # safe to advertise as "transposed B" for a 2D matmul.
+        perm_attr = producer.permutation
+        try:
+            perm = list(perm_attr.get_values()) if hasattr(perm_attr, "get_values") else None
+        except Exception:
+            perm = None
+        if perm == [1, 0]:
+            op.attributes["compgen.transposed_b"] = StringAttr("true")
 
 
 def fx_to_xdsl(

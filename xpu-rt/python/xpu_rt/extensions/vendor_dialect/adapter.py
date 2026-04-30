@@ -40,6 +40,19 @@ log = structlog.get_logger()
 class LoweringResult:
     """Output of Payload-IR → vendor-IR lowering.
 
+    Returned by :meth:`VendorDialectAdapter.lower_payload`. Note this
+    dataclass does NOT carry the input ``payload_mlir`` text — that's
+    a method *argument*, not a result field. Per bridge #137: real
+    cuda-tile wrappers should populate:
+
+    - ``vendor_mlir``: the lowered text in the vendor dialect (e.g.
+      ``cuda_tile`` MLIR text from ``tileiras``).
+    - ``kernels``: ``{kernel_name: source}`` for any per-region kernel
+      sources the lowering produced. Empty when the adapter has no
+      kernel provider (most vendor lowerings).
+    - ``metadata``: free-form diagnostics — pass stats, LLM iterations,
+      paths to on-disk artifacts the host should preserve.
+
     Attributes:
         vendor_mlir: Text of the lowered MLIR module in the vendor dialect.
         kernels: Per-region kernel sources keyed by region id (filled when
@@ -110,6 +123,32 @@ class VendorDialectAdapter:
 
     def get_compilation_stages(self) -> list[str]:
         return ["lower_to_vendor", "emit"]
+
+    def capabilities(self) -> dict[str, Any]:
+        """Adapter-specific capability declaration for the agent's
+        pre-screen routing.
+
+        Per bridge #130: the agent's ``compgen_describe_vendor_dialect``
+        tool surfaces this so the agent can ask "given this FX subgraph,
+        can the adapter lower it?" before committing to compile. The
+        default returns a static snapshot from the descriptor; subclasses
+        SHOULD override to declare op-type / dtype / shape support
+        explicitly.
+
+        Recommended keys:
+            - ``"supported_op_types"``: list[str], e.g. ``["linear", "relu"]``
+            - ``"supported_dtypes"``:    list[str], e.g. ``["fp32", "bf16"]``
+            - ``"supported_shapes"``:    dict, e.g. ``{"min_dim": 64, "alignment": 64}``
+            - ``"target_archs"``:        list[str], e.g. ``["sm_90", "sm_100"]``
+            - ``"performance_profile"``: str, e.g. ``"tcgen05-tier"``
+        """
+        return {
+            "supported_op_types": list(getattr(self.descriptor, "supported_ops", []) or []),
+            "supported_dtypes": list(getattr(self.descriptor, "supported_dtypes", []) or []),
+            "target_archs": [self.descriptor.target],
+            "version": getattr(self.descriptor, "version", "unknown"),
+            "source": "default",  # subclasses override → "adapter-declared"
+        }
 
     # ------------------------------------------------------------------ #
     # Abstract hooks

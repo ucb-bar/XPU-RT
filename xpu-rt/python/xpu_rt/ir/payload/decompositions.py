@@ -156,6 +156,15 @@ def decompose_linear(
         permutation=perm,
         result=wt_type,
     )
+    # REQ-023: tag the transpose with its own region_id + dispatch_id
+    # so the dispatch graph can resolve the matmul's B operand to a
+    # producer node. Providers that don't want to materialize the
+    # transpose can ignore this region and use the matmul's
+    # ``compgen.transposed_b`` flag instead.
+    transpose_rid = _next_region_id("transpose")
+    _attach_region_id(transpose, transpose_rid)
+    transpose.attributes["compgen.dispatch_id"] = StringAttr(transpose_rid)
+    region_ids.append(transpose_rid)
     ops.append(transpose)
 
     # Step 2: Matmul: x [M, K] @ w^T [K, N] -> [M, N]
@@ -169,6 +178,13 @@ def decompose_linear(
     )
     rid = _next_region_id("matmul")
     _attach_region_id(matmul, rid)
+    matmul.attributes["compgen.dispatch_id"] = StringAttr(rid)
+    # REQ-023: declare that this matmul's B operand is logically a
+    # transposed weight. Providers that prefer to short-circuit the
+    # transpose op (e.g. emit a B^T kernel kernel directly against
+    # the original weight) can read this flag and skip the
+    # transpose region.
+    matmul.attributes["compgen.transposed_b"] = StringAttr("true")
     region_ids.append(rid)
     ops.append(matmul)
 
@@ -464,6 +480,12 @@ def _opaque_decomp(
     from xdsl.dialects.func import CallOp
 
     val: Any = meta["val"]
+    # Tuple-returning ops (``native_layer_norm``, ``var_mean``, …) put a
+    # tuple in ``meta['val']``. Surface only the primary tensor (index 0)
+    # since that's what downstream ``getitem(_, 0)`` consumers care
+    # about; auxiliary outputs (mean / rstd / etc.) are folded away.
+    if isinstance(val, (tuple, list)) and val:
+        val = val[0]
     result_type = TensorType(Float32Type(), _static_shape(val.shape))
     rid = _next_region_id(region_prefix)
     call = CallOp(op_name, operands, [result_type])
@@ -553,22 +575,167 @@ def decompose_mean_dim(operands, meta, node_name):
 
 
 def decompose_convolution(operands, meta, node_name):
-    """aten.convolution.default(input, weight, bias, stride, padding, ...).
+    """aten.convolution.default → im2col + linalg.matmul + reshape (REQ-021).
 
-    The full decomposition to linalg.conv_2d_nhwc_hwcf depends on the
-    stride/padding/groups fields which live in operands[3:]. For MVP
-    we tag pattern_hint='convolution' and keep the call opaque so the
-    Phase 2 ``lower_conv_to_img2col`` pass can still annotate it.
+    Most SIMT targets ship a matmul provider but no conv provider.
+    Decomposing here means every such target gets conv "for free" via
+    its existing matmul kernel, with no per-pack convolution lowering.
+
+    Shape contract:
+
+    - ``input``: ``(N, C, H, W)``
+    - ``weight``: ``(F, C, kH, kW)``
+    - ``output``: ``(N, F, H', W')`` — read straight off ``meta['val'].shape``.
+
+    Decomposition (im2col + matmul):
+
+    - ``im2col``  ``(N, C, H, W)`` → ``(K, N*H'*W')`` where ``K = C*kH*kW``
+    - ``matmul``  ``W_flat (F, K) @ im2col (K, N*H'*W')`` → ``(F, N*H'*W')``
+    - ``reshape`` ``(F, N*H'*W')`` → ``(N, F, H', W')``
+
+    The im2col + reshape steps are opaque ``func.call``s with their own
+    ``region_id``s — providers can claim them or skip them (the pack
+    composer falls back to its own im2col helper when no provider
+    matches). The middle matmul is a real ``linalg.matmul`` with
+    ``compgen.region_id`` so any matmul provider claims it.
+
+    For unusual conv shapes (no static dimensions / non-MVP groups /
+    transposed conv), this falls back to the prior opaque-conv path.
     """
-    # convolution may have >= 3 tensor operands (input, weight, optional bias);
-    # pass only the tensor operands to the opaque call (scalars become func-level).
-    tensor_operands = [op for op in operands[:3]]
-    return _opaque_decomp(
-        "aten_convolution",
-        tensor_operands,
-        meta,
-        "convolution",
-        pattern_hint="convolution",
+    from xdsl.dialects.func import CallOp
+
+    # Need at least input + weight; bias is optional.
+    if len(operands) < 2:
+        return _opaque_decomp(
+            "aten_convolution",
+            list(operands[:3]),
+            meta,
+            "convolution",
+            pattern_hint="convolution",
+        )
+
+    in_v = operands[0]
+    w_v = operands[1]
+
+    # Pull static shapes off operand types. Bail to opaque for any
+    # non-rank-4 / dynamic-shape case; the existing opaque path is the
+    # safety net.
+    in_type = in_v.type
+    w_type = w_v.type
+    if not (isinstance(in_type, TensorType) and isinstance(w_type, TensorType)):
+        return _opaque_decomp(
+            "aten_convolution",
+            list(operands[:3]),
+            meta,
+            "convolution",
+            pattern_hint="convolution",
+        )
+    in_shape = in_type.get_shape()
+    w_shape = w_type.get_shape()
+    if len(in_shape) != 4 or len(w_shape) != 4:
+        return _opaque_decomp(
+            "aten_convolution",
+            list(operands[:3]),
+            meta,
+            "convolution",
+            pattern_hint="convolution",
+        )
+    if any(d <= 0 for d in (*in_shape, *w_shape)):
+        return _opaque_decomp(
+            "aten_convolution",
+            list(operands[:3]),
+            meta,
+            "convolution",
+            pattern_hint="convolution",
+        )
+
+    val: Any = meta.get("val")
+    if val is None or not hasattr(val, "shape"):
+        return _opaque_decomp(
+            "aten_convolution",
+            list(operands[:3]),
+            meta,
+            "convolution",
+            pattern_hint="convolution",
+        )
+    out_shape = _static_shape(val.shape)
+    if len(out_shape) != 4 or any(d <= 0 for d in out_shape):
+        return _opaque_decomp(
+            "aten_convolution",
+            list(operands[:3]),
+            meta,
+            "convolution",
+            pattern_hint="convolution",
+        )
+
+    n_in, c_in, _h_in, _w_in = in_shape
+    f_out, c_w, kh, kw = w_shape
+    n_out, f_check, h_out, w_out = out_shape
+    if n_in != n_out or f_out != f_check or c_in != c_w:
+        # Group conv / weird channel layout — opaque fallback.
+        return _opaque_decomp(
+            "aten_convolution",
+            list(operands[:3]),
+            meta,
+            "convolution",
+            pattern_hint="convolution",
+        )
+
+    elem = w_type.element_type
+    k_dim = c_in * kh * kw
+    nhw = n_out * h_out * w_out
+
+    ops: list[Operation] = []
+    region_ids: list[str] = []
+
+    # 1. im2col: (N, C, H, W) → (K, N*H'*W'), opaque (target may
+    # ship a real im2col kernel, or the pack composer can do it).
+    im2col_type = TensorType(elem, [k_dim, nhw])
+    im2col_call = CallOp("aten_im2col", [in_v], [im2col_type])
+    im2col_rid = _next_region_id("im2col")
+    _attach_region_id(im2col_call, im2col_rid)
+    im2col_call.attributes["compgen.dispatch_id"] = StringAttr(im2col_rid)
+    region_ids.append(im2col_rid)
+    ops.append(im2col_call)
+
+    # 2. flatten weight (F, C, kH, kW) → (F, K) — opaque.
+    w_flat_type = TensorType(elem, [f_out, k_dim])
+    w_flat_call = CallOp("aten_flatten_weight", [w_v], [w_flat_type])
+    w_flat_rid = _next_region_id("flatten")
+    _attach_region_id(w_flat_call, w_flat_rid)
+    w_flat_call.attributes["compgen.dispatch_id"] = StringAttr(w_flat_rid)
+    region_ids.append(w_flat_rid)
+    ops.append(w_flat_call)
+
+    # 3. linalg.matmul: W_flat (F, K) @ im2col (K, N*H'*W') → (F, N*H'*W').
+    mm_out_type = TensorType(elem, [f_out, nhw])
+    mm_empty = _make_empty(mm_out_type)
+    ops.append(mm_empty)
+    matmul = MatmulOp(
+        inputs=[w_flat_call.res[0], im2col_call.res[0]],
+        outputs=[mm_empty.results[0]],
+        res=[mm_out_type],
+    )
+    mm_rid = _next_region_id("matmul")
+    _attach_region_id(matmul, mm_rid)
+    matmul.attributes["compgen.dispatch_id"] = StringAttr(mm_rid)
+    region_ids.append(mm_rid)
+    ops.append(matmul)
+
+    # 4. reshape (F, N*H'*W') → (N, F, H', W') — opaque.
+    out_type = TensorType(elem, [n_out, f_out, h_out, w_out])
+    reshape_call = CallOp("aten_reshape", [matmul.res[0]], [out_type])
+    reshape_rid = _next_region_id("reshape")
+    _attach_region_id(reshape_call, reshape_rid)
+    reshape_call.attributes["compgen.dispatch_id"] = StringAttr(reshape_rid)
+    region_ids.append(reshape_rid)
+    ops.append(reshape_call)
+
+    return DecompResult(
+        ops=ops,
+        result=reshape_call.res[0],
+        region_ids=region_ids,
+        pattern_hint="convolution_im2col_matmul",
     )
 
 
@@ -1443,6 +1610,10 @@ DECOMPOSITION_TABLE: dict[str, DecompFn] = {
     "aten.pow.Tensor_Scalar": decompose_pow_tensor_scalar,
     "aten.mean.dim": decompose_mean_dim,
     "aten.convolution.default": decompose_convolution,
+    # ``nn.Conv2d`` lowers to ``aten.conv2d.default`` after FX export
+    # (not ``aten.convolution.default``). Same shape contract; same
+    # decomposition function consumes both.
+    "aten.conv2d.default": decompose_convolution,
     "aten.embedding.default": decompose_embedding,
     "aten.sigmoid.default": decompose_sigmoid,
     "aten.neg.default": decompose_neg,

@@ -43,7 +43,24 @@ jobs:
               exit 1
             fi
           fi
-      - name: Build
+      - name: Build native CPU runtime
+        # Always build the CPU-only libcompgen_rt so the wheel ships a
+        # working native fallback. No CUDA toolkit needed.
+        run: |
+          if command -v cmake >/dev/null 2>&1; then
+            make build-cpu-rt || echo "build-cpu-rt failed; wheel will ship without prebuilt CPU lib"
+          else
+            echo "cmake not available; wheel will ship without prebuilt CPU lib"
+          fi
+      - name: Build native CUDA runtime
+        # Opt-in: only bundles the CUDA variant when a toolkit is present.
+        # Self-hosted CUDA runners enable this via env CG_BUILD_CUDA=1; the
+        # default GitHub-hosted runner skips it cleanly. The wheel still
+        # builds and installs without the CUDA .so — the [cuda] extra just
+        # raises a typed error at import time on a CUDA-less install.
+        if: env.CG_BUILD_CUDA == '1'
+        run: make build-cuda-rt
+      - name: Build wheel
         run: uv build
       - name: Metadata check
         run: |
@@ -55,10 +72,85 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+  smoke:
+    name: Wheel install + smoke
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 10
+    # Install the freshly-built wheel into a clean venv and run the
+    # most basic public surface — the CLI version banner + the
+    # ``--probe-device-only`` path of the conformance harness, which
+    # falls back cleanly on a CPU-only runner. This guards against
+    # packaging regressions (missing entry points, broken
+    # ``package_data`` includes, sdist-only artefacts, etc.) that
+    # ``twine check`` doesn't notice.
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install wheel into fresh venv
+        run: |
+          python -m venv /tmp/cg-smoke
+          /tmp/cg-smoke/bin/pip install --upgrade pip
+          # Pick the wheel deterministically — there should be exactly one.
+          wheel=$(ls dist/*.whl | head -1)
+          echo "Installing $wheel"
+          /tmp/cg-smoke/bin/pip install "$wheel"
+      - name: Console scripts present
+        run: |
+          # Both entry points must respond to a non-blocking probe.
+          # ``compgen-mcp`` is a long-running stdio server otherwise;
+          # ``--version`` is the cheapest gate that proves the script
+          # is on PATH + the package's __version__ resolves.
+          out=$(/tmp/cg-smoke/bin/compgen-mcp --version)
+          echo "$out"
+          echo "$out" | grep -q "compgen-mcp 0\."
+          /tmp/cg-smoke/bin/compgen-run-conformance --help | head -3
+      - name: probe-device-only on CPU runner
+        # CPU-only host; the harness writes a fallback device_probe.json
+        # rather than failing. Exit code is the gate.
+        run: |
+          mkdir -p /tmp/cg-smoke-probe
+          /tmp/cg-smoke/bin/compgen-run-conformance \
+            --probe-device-only \
+            --output-dir /tmp/cg-smoke-probe
+          test -f /tmp/cg-smoke-probe/device_probe.json
+          /tmp/cg-smoke/bin/python -c "
+          import json, pathlib
+          p = json.loads(pathlib.Path('/tmp/cg-smoke-probe/device_probe.json').read_text())
+          assert p.get('probe_source') in ('torch', 'fallback', 'native_hal'), p
+          print('probe_source =', p['probe_source'])
+          "
+      - name: Importable surface — public API + native HAL fallback
+        run: |
+          /tmp/cg-smoke/bin/python - <<'PY'
+          import compgen
+          assert hasattr(compgen, "__version__"), "missing __version__"
+          print("compgen", compgen.__version__)
+          # has_cuda_runtime() must not crash even without the .so.
+          print("has_cuda_runtime:", compgen.has_cuda_runtime())
+          # Conformance harness public types are importable.
+          from compgen.testing.etc_conformance import (
+              ConformanceWorkload, PassGate, run_conformance, gate_for,
+          )
+          assert "diamond_dag" in {w.value for w in ConformanceWorkload}
+          # Workload factories registry.
+          from compgen.testing.workloads import WORKLOAD_FACTORIES
+          assert {"diamond_dag", "decoder_layer", "gemm_rs"} <= set(WORKLOAD_FACTORIES)
+          # MCP tools are listable (the public extension surface).
+          from compgen.mcp.tools import conformance as conf_tools
+          assert hasattr(conf_tools, "etc_conformance_run")
+          print("public surface OK")
+          PY
+
   publish:
     name: Publish to PyPI
     runs-on: ubuntu-latest
-    needs: build
+    needs: [build, smoke]
     timeout-minutes: 10
     # Trusted Publishing: no stored PyPI token. The `pypi` / `testpypi`
     # environments must be configured on GitHub with the matching

@@ -10,9 +10,12 @@ Scope limit (honest): this lowerer is intentionally topology-aware.
 It recognises the ConvNet family used by the Saturn OPU bring-up
 (``tests/fixtures/saturn_opu_convnet``): a stem, three stages of
 basic residual blocks, global avgpool, linear head. Anything else
-raises :class:`NotImplementedError` with a specific message. Generic
-support comes from the FX / payload-IR path; this module exists so
-the bring-up has a path that works *today* for the real model.
+raises :class:`~compgen.runtime.errors.UnsupportedTopologyError`
+with a specific message. Generic support comes from the FX /
+payload-IR path; this module exists so the bring-up has a path that
+works *today* for the real model. The typed error makes the scope
+boundary explicit: these are deliberate guards, not "unimplemented"
+bugs.
 
 Memory plan
 -----------
@@ -36,6 +39,8 @@ from typing import Any
 
 import torch
 import torch.nn as nn
+
+from compgen.runtime.errors import UnsupportedTopologyError
 
 _BN_EPS = 1e-5  # PyTorch default; assert at lowering time.
 
@@ -189,20 +194,20 @@ def _is_conv_bn_pair(seq: Any) -> bool:
 def _validate_block(block: nn.Module) -> None:
     for attr in ("conv1", "bn1", "conv2", "bn2", "shortcut"):
         if not hasattr(block, attr):
-            raise NotImplementedError(
+            raise UnsupportedTopologyError(
                 f"cnn_lowering: block {type(block).__name__} is missing attribute "
                 f"'{attr}' — this lowerer only handles ConvBlock-shaped residual blocks."
             )
     if not isinstance(block.conv1, nn.Conv2d):
-        raise NotImplementedError("conv1 must be nn.Conv2d")
+        raise UnsupportedTopologyError("conv1 must be nn.Conv2d")
     if not isinstance(block.bn1, nn.BatchNorm2d):
-        raise NotImplementedError("bn1 must be nn.BatchNorm2d")
+        raise UnsupportedTopologyError("bn1 must be nn.BatchNorm2d")
     if not isinstance(block.conv2, nn.Conv2d):
-        raise NotImplementedError("conv2 must be nn.Conv2d")
+        raise UnsupportedTopologyError("conv2 must be nn.Conv2d")
     if not isinstance(block.bn2, nn.BatchNorm2d):
-        raise NotImplementedError("bn2 must be nn.BatchNorm2d")
+        raise UnsupportedTopologyError("bn2 must be nn.BatchNorm2d")
     if not (isinstance(block.shortcut, nn.Identity) or _is_conv_bn_pair(block.shortcut)):
-        raise NotImplementedError("ConvBlock shortcut must be nn.Identity or nn.Sequential(Conv2d, BatchNorm2d)")
+        raise UnsupportedTopologyError("ConvBlock shortcut must be nn.Identity or nn.Sequential(Conv2d, BatchNorm2d)")
 
 
 def lower_cnn_to_c(
@@ -240,25 +245,25 @@ def lower_cnn_to_c(
     # Topology validation up-front — fail loud, not deep in emission.
     for attr in ("stem", "stage1", "stage2", "stage3", "pool", "head"):
         if not hasattr(model, attr):
-            raise NotImplementedError(
+            raise UnsupportedTopologyError(
                 f"cnn_lowering: model missing attribute '{attr}' — this lowerer targets the ConvNet family only."
             )
     if not isinstance(model.stem, nn.Sequential):
-        raise NotImplementedError("model.stem must be nn.Sequential(Conv, BN, ReLU)")
+        raise UnsupportedTopologyError("model.stem must be nn.Sequential(Conv, BN, ReLU)")
     if len(model.stem) != 3 or not (
         isinstance(model.stem[0], nn.Conv2d)
         and isinstance(model.stem[1], nn.BatchNorm2d)
         and isinstance(model.stem[2], nn.ReLU)
     ):
-        raise NotImplementedError("unexpected stem layout")
+        raise UnsupportedTopologyError("unexpected stem layout")
     if not isinstance(model.pool, nn.AdaptiveAvgPool2d):
-        raise NotImplementedError("model.pool must be nn.AdaptiveAvgPool2d")
+        raise UnsupportedTopologyError("model.pool must be nn.AdaptiveAvgPool2d")
     if not isinstance(model.head, nn.Linear):
-        raise NotImplementedError("model.head must be nn.Linear")
+        raise UnsupportedTopologyError("model.head must be nn.Linear")
     for stage_name in ("stage1", "stage2", "stage3"):
         stage = getattr(model, stage_name)
         if not isinstance(stage, nn.Sequential):
-            raise NotImplementedError(f"model.{stage_name} must be nn.Sequential")
+            raise UnsupportedTopologyError(f"model.{stage_name} must be nn.Sequential")
         for blk in stage:
             _validate_block(blk)
 

@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import threading
 from importlib import metadata as importlib_metadata
+from typing import Any
 
 import structlog
 
@@ -76,6 +77,21 @@ class VendorAdapterRegistry:
         self._ensure_entry_points_loaded()
         with self._lock:
             return sorted(self._by_name)
+
+    def describe(self, name: str) -> Any:
+        """Return the descriptor for a registered adapter (audit query).
+
+        Per bridge #130: the agent's ``compgen_describe_vendor_dialect``
+        MCP tool needs descriptor data per-name. The existing ``get(name)``
+        returns the adapter; ``describe(name)`` is the descriptor-only
+        convenience. Returns a
+        :class:`compgen.extensions.vendor_dialect.descriptor.VendorDialectDescriptor`.
+
+        Raises:
+            KeyError: ``name`` is not a registered adapter.
+        """
+        adapter = self.get(name)
+        return adapter.descriptor
 
     # ------------------------------------------------------------------ #
     # Entry-point discovery

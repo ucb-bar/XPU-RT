@@ -8,9 +8,6 @@ Invariants:
     - Every UkernelCallOp must have a matching UkernelContract.
     - Contracts are checked at verification time.
     - Contracts are serializable for LLM context.
-
-TODO: Implement contract matching (call vs declaration).
-TODO: Implement contract serialization.
 """
 
 from __future__ import annotations

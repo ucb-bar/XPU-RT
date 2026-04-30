@@ -126,11 +126,23 @@ class TestDispatchSpecific:
 
 class TestBundleContracts(StageContractTestSuite):
     @pytest.fixture(autouse=True)
-    def setup(self, target, capabilities, sample_module):
-        self.stage = BundleStage()
+    def setup(self, target, capabilities, sample_module, tmp_path):
+        self.stage = BundleStage(output_dir=tmp_path / "bundle")
         self.target = target
         self.capabilities = capabilities
         self.sample_module = sample_module
+        self._tmp_path = tmp_path
+
+    def test_graceful_without_plugin(self) -> None:
+        """BundleStage requires output_dir, but must still run graceful
+        without a target plugin (graceful degradation). Override the
+        generic suite test because ``BundleStage()`` (no args) is
+        intentionally rejected."""
+        from compgen.stages.base import StageResult
+
+        stage_copy = BundleStage(output_dir=self._tmp_path / "bundle_copy")
+        result = stage_copy.run(self.sample_module.clone(), self.target, self.capabilities)
+        assert isinstance(result, StageResult)
 
 
 class TestBundleSpecific:
@@ -141,18 +153,23 @@ class TestBundleSpecific:
         assert (tmp_path / "bundle" / "payload.mlir").exists()
         assert (tmp_path / "bundle" / "manifest.json").exists()
 
-    def test_module_unchanged(self, target, capabilities, sample_module) -> None:
+    def test_module_unchanged(self, target, capabilities, sample_module, tmp_path) -> None:
         from compgen.eqsat.pipeline import _print_ir
 
-        stage = BundleStage()
+        stage = BundleStage(output_dir=tmp_path / "bundle")
         result = stage.run(sample_module, target, capabilities)
         ir_after = _print_ir(result.module)
         # Bundle stage should not modify the IR beyond adding attributes
         assert "arith.addi" in ir_after
 
-    def test_requirements_doc_exists(self) -> None:
-        stage = BundleStage()
+    def test_requirements_doc_exists(self, tmp_path) -> None:
+        stage = BundleStage(output_dir=tmp_path / "bundle")
         assert stage.requirements_doc_path().exists()
+
+    def test_bundle_stage_requires_output_dir(self) -> None:
+        """BundleStage must reject None output_dir — no volatile /tmp fallback."""
+        with pytest.raises(ValueError, match="output_dir"):
+            BundleStage(output_dir=None)  # type: ignore[arg-type]
 
 
 # ============================================================================

@@ -16,6 +16,11 @@ The public surface is small by design:
 from __future__ import annotations
 
 from compgen.extensions.vendor_dialect.adapter import LoweringResult, VendorDialectAdapter
+from compgen.extensions.vendor_dialect.builtins import (
+    list_builtin_adapters,
+    make_builtin_adapter,
+    register_builtin_adapter,
+)
 from compgen.extensions.vendor_dialect.descriptor import (
     BundlePlan,
     CompileEntry,
@@ -56,7 +61,10 @@ __all__ = [
     "adapters_for_target",
     "available_adapters",
     "get_adapter",
+    "list_builtin_adapters",
+    "make_builtin_adapter",
     "register_adapter",
+    "register_builtin_adapter",
     "reset_registry",
     "scaffold_package",
     "scan_repo",

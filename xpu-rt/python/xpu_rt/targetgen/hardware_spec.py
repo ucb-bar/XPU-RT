@@ -197,8 +197,39 @@ class NumericContractSpec:
 
 
 @dataclass(frozen=True)
+class RuntimeMathSpec:
+    """What math runtime the target makes available to emitted kernels.
+
+    Providers branch on these flags to decide whether they can emit
+    ``__builtin_expf`` (libm), one of the target's intrinsics, or a
+    polynomial approximation (or reject the contract entirely).
+
+    Attributes:
+        has_libm: ``true`` when libc's ``math.h`` symbols (``expf``,
+            ``sqrtf``, ``sinf``, …) are linkable from emitted kernels.
+            False on bare-metal targets that ship no libm.
+        has_libc: ``true`` when libc symbols beyond ``math.h``
+            (``printf``, ``memcpy``, …) are linkable.
+        intrinsics: List of available custom intrinsics by name
+            (e.g. ``["mu_fexp", "mu_fnexp"]`` on Muon). A provider
+            checks ``"mu_fexp" in contract.runtime.intrinsics`` to
+            decide if it can lower softmax via the f16 exp intrinsic.
+    """
+
+    has_libm: bool = False
+    has_libc: bool = False
+    intrinsics: list[str] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
 class RuntimeContractSpec:
-    """Runtime contract."""
+    """Runtime contract.
+
+    Attributes:
+        math: Runtime math capabilities — see :class:`RuntimeMathSpec`.
+            Providers consult this to choose between libm calls,
+            target intrinsics, or polynomial fallbacks.
+    """
 
     calling_convention: str = "c_abi"
     kernel_launch: str = "function_call"
@@ -207,6 +238,7 @@ class RuntimeContractSpec:
     error_handling: str = "return_codes"
     requires_runtime_library: str = ""
     workspace_allocation: str = "caller"
+    math: RuntimeMathSpec = field(default_factory=RuntimeMathSpec)
 
 
 # ---- Section 7b: Profiling Capabilities ----
@@ -370,10 +402,40 @@ class TopologySpec:
 
 @dataclass(frozen=True)
 class VerificationSurfaceSpec:
-    """Verification surface."""
+    """Verification surface.
+
+    Attributes:
+        has_simulator: Whether a simulator is available for this target.
+        simulator_command: Shell command (or templated command — see
+            :func:`compgen.mcp.tools.embedded._simulator_command`) that
+            launches the simulator on a compiled ELF.
+        build_command: Optional shell command run before the simulator
+            when ``simulator_run(execute=True)``. When empty (the default),
+            the helper falls back to its Zephyr ``west build`` flow if a
+            Zephyr root + sample directory are reachable, and otherwise
+            skips the build step entirely. Set this to a target-specific
+            command (e.g. ``"make -C $CHIPYARD/sims/vcs"``) when the
+            simulator_command itself doesn't perform the build.
+        sim_backend: Simulator backend name. One of ``"vcs"``,
+            ``"verilator"``, ``"firesim"``. Plugged into
+            :func:`compgen.mcp.tools.embedded._simulator_command`'s
+            substitution as ``{sim_backend}`` so a single
+            ``simulator_command`` template can resolve to any of
+            ``sims/vcs/``, ``sims/verilator/``, ``sims/firesim/``.
+            Defaults to ``"verilator"`` (the open-source default for
+            Chipyard targets).
+        has_emulator: Whether a software emulator is available.
+        golden_model: Reference model for output comparison.
+        max_acceptable_ulp: Maximum acceptable ULP error.
+        performance_counters: Performance counter names exposed by sim.
+        trace_support: Trace support kind.
+        formal_model: Whether a formal model is available.
+    """
 
     has_simulator: bool = False
     simulator_command: str = ""
+    build_command: str = ""
+    sim_backend: str = "verilator"
     has_emulator: bool = False
     golden_model: str = "pytorch_cpu"
     max_acceptable_ulp: float = 1.0

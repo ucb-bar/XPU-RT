@@ -83,11 +83,14 @@ class NpuIsaPlugin:
         return {"npu_isa_lowering": "text_isa", "instructions": instrs}
 
 
-def create_npu_stack(spec: HardwareSpec, output_dir: str | None = None) -> TargetDialectStack:
-    """Create structured NPU pipeline (7 stages, multi-dialect lowering)."""
-    import tempfile
+def create_npu_stack(spec: HardwareSpec, output_dir: str | Path) -> TargetDialectStack:
+    """Create structured NPU pipeline (7 stages, multi-dialect lowering).
 
-    bundle_dir = Path(output_dir) if output_dir else Path(tempfile.mkdtemp(prefix="npu_bundle_"))
+    ``output_dir`` is mandatory; see :func:`create_cuda_gpu_stack`.
+    """
+    if output_dir is None:
+        raise ValueError("create_npu_stack requires output_dir; pass a session-scoped path")
+    bundle_dir = Path(output_dir)
     return TargetDialectStack(
         target_name=spec.name,
         stages=[

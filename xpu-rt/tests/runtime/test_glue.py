@@ -29,7 +29,6 @@ from compgen.runtime.glue import (
     BufferSpec,
     CpuRuntimeAdapter,
     CudaRuntimeAdapter,
-    RocmRuntimeAdapter,
     RuntimeAdapter,
     select_adapter,
 )
@@ -117,7 +116,8 @@ def _contract(model: DispatchModel) -> KernelContractV3:
         ("cuda-a100", "cuda"),
         ("cuda-titan-rtx", "cuda"),
         ("test-gpu-simt", "cuda"),
-        ("rocm-mi250", "rocm"),
+        # rocm intentionally omitted — ROCm routing now raises
+        # AdapterUnavailableError (see test_rocm_target_raises_adapter_unavailable).
         ("hexagon-v69", "baremetal"),
         ("openq_5165rb", "baremetal"),
         ("trainium1", "baremetal"),
@@ -159,10 +159,19 @@ def test_baremetal_supports_sync_async_inline_not_persistent() -> None:
     assert not bm.supports(_contract(DispatchModel.PERSISTENT))
 
 
-def test_rocm_skeleton_does_not_support_anything_yet() -> None:
-    rocm = RocmRuntimeAdapter()
-    for m in DispatchModel:
-        assert not rocm.supports(_contract(m))
+def test_rocm_target_raises_adapter_unavailable() -> None:
+    """ROCm target used to route to a skeleton that returned unsupported
+    for every dispatch model. The skeleton has been deleted; requesting
+    a rocm target now raises :class:`AdapterUnavailableError` with a
+    structured reason so the caller sees the scope boundary."""
+    import pytest
+    from compgen.runtime.errors import AdapterUnavailableError
+    from compgen.runtime.glue import select_adapter
+
+    with pytest.raises(AdapterUnavailableError) as exc_info:
+        select_adapter("rocm-mi250")
+    assert exc_info.value.adapter_name == "rocm"
+    assert "no in-tree ROCm target profile" in exc_info.value.reason
 
 
 # ---------------------------------------------------------------------------

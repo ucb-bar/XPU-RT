@@ -218,6 +218,17 @@ class CompilationStage(abc.ABC):
             return self._plugin.transform(module)
         return module
 
+    def get_shared_artifacts(self) -> dict[str, Any]:
+        """Return artefacts produced by ``shared_passes``.
+
+        Override in subclasses that write on-disk side-products (e.g.
+        :class:`BundleStage` writes ``payload.mlir`` + ``manifest.json``
+        and exposes the bundle directory here). Merged into
+        ``StageResult.artifacts`` alongside plugin artefacts in
+        :meth:`run`.
+        """
+        return {}
+
     # -- Execution (template method) --
 
     def run(
@@ -314,10 +325,16 @@ class CompilationStage(abc.ABC):
             output_violations = self.verify_contract(module, self.output_contract())
             violations.extend(f"OUTPUT: {v}" for v in output_violations)
 
-            # 5. Collect artifacts from plugin
+            # 5. Collect artifacts from shared passes + plugin.
+            # Shared artefacts win where names collide (plugins can
+            # augment, but the stage's core on-disk outputs are
+            # authoritative).
             artifacts: dict[str, Any] = {}
             if self._plugin is not None:
-                artifacts = self._plugin.get_artifacts()
+                artifacts = dict(self._plugin.get_artifacts())
+            shared = self.get_shared_artifacts()
+            if shared:
+                artifacts.update(shared)
 
             stage_ms = (_stage_time.time() - stage_t0) * 1000.0
             if dumper is not None:

@@ -15,6 +15,8 @@ pipeline subsystems.
 
 from __future__ import annotations
 
+import shutil
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -825,9 +827,13 @@ def scaffold_target(
 @main.command("scaffold-pack")
 @click.option(
     "--kind",
-    type=click.Choice(["quantization", "target", "provider", "dialect", "runtime"]),
+    type=click.Choice(["quantization", "target", "provider", "dialect", "runtime", "target_pack"]),
     required=True,
-    help="Extension point this pack extends.",
+    help=(
+        "Extension point this pack extends. ``target_pack`` is the "
+        "multi-surface 'full target' shape (Backend + Provider + MCP + "
+        "HardwareSpec + smoke test, all four entry-point groups wired)."
+    ),
 )
 @click.option(
     "--name",
@@ -1162,6 +1168,212 @@ def ext_doctor() -> None:
         click.echo("[ext doctor] all clean")
     else:
         raise click.ClickException("one or more extensions failed validation")
+
+
+@main.group()
+def rt() -> None:
+    """Build and inspect the native ``libcompgen_rt`` runtime."""
+
+
+@rt.command("build")
+@click.option(
+    "--triple",
+    type=str,
+    required=True,
+    help=(
+        "Target triple. Either a built-in name (e.g. 'host', "
+        "'riscv64-zephyr-elf') that maps to a shipped toolchain file, or "
+        "an arbitrary label when --toolchain-file is also passed."
+    ),
+)
+@click.option(
+    "--toolchain-file",
+    "toolchain_file",
+    type=click.Path(exists=True, dir_okay=False),
+    default=None,
+    help=(
+        "Path to a CMake toolchain file. Required for triples not "
+        "shipped under runtime/native/libcompgen_rt/toolchains/."
+    ),
+)
+@click.option(
+    "--platform",
+    "platform",
+    type=click.Choice(["posix", "bare"]),
+    default=None,
+    help=("Override CG_RT_PLATFORM. Defaults to 'posix' for host triples and 'bare' for cross triples."),
+)
+@click.option(
+    "--with-cuda/--without-cuda",
+    "with_cuda",
+    default=None,
+    help="Override CG_RT_WITH_CUDA. Defaults to OFF for cross triples.",
+)
+@click.option(
+    "--build-dir",
+    "build_dir",
+    type=click.Path(file_okay=False),
+    default=None,
+    help=("Build directory. Defaults to runtime/native/libcompgen_rt/build-<triple>."),
+)
+@click.option("--jobs", "-j", type=int, default=0, help="Parallel build jobs (0 = auto).")
+@click.option("--clean", is_flag=True, default=False, help="Wipe the build dir before configuring.")
+@click.option(
+    "--cmake",
+    "cmake_bin",
+    type=click.Path(),
+    default=None,
+    help=(
+        "Path to cmake. Defaults to /usr/bin/cmake if present, else the "
+        "first cmake on PATH. Set this when PATH points at a vendor-bundled "
+        "cmake that's too old or has broken shared deps."
+    ),
+)
+@click.option(
+    "--rt-root",
+    "rt_root",
+    type=click.Path(exists=True, file_okay=False),
+    default=None,
+    help="Override the libcompgen_rt source root. Defaults to the in-tree path.",
+)
+def rt_build(
+    triple: str,
+    toolchain_file: str | None,
+    platform: str | None,
+    with_cuda: bool | None,
+    build_dir: str | None,
+    jobs: int,
+    clean: bool,
+    cmake_bin: str | None,
+    rt_root: str | None,
+) -> None:
+    """Materialise ``libcompgen_rt_static.a`` for ``--triple``.
+
+    Wraps ``cmake -B <build> -S <rt_root>`` + ``cmake --build <build>``.
+    Resolves the toolchain file by name when one ships in-tree
+    (``riscv64-zephyr-elf``, ``host``); otherwise the caller passes
+    ``--toolchain-file <path>``.
+    """
+    import multiprocessing
+
+    if rt_root:
+        rt_root_path = Path(rt_root).resolve()
+    else:
+        # Default: <repo>/runtime/native/libcompgen_rt — derived from this
+        # module's install path (Path(compgen.__file__).parents[2] is the
+        # repo root in editable installs).
+        rt_root_path = Path(__file__).resolve().parents[2] / "runtime" / "native" / "libcompgen_rt"
+    if not rt_root_path.is_dir():
+        raise click.ClickException(f"libcompgen_rt source root not found: {rt_root_path}")
+
+    # Resolve toolchain file: explicit > shipped name > host (no toolchain).
+    toolchain_path: Path | None = None
+    if toolchain_file:
+        toolchain_path = Path(toolchain_file).resolve()
+    elif triple != "host":
+        candidate = rt_root_path / "toolchains" / f"{triple}.cmake"
+        if candidate.is_file():
+            toolchain_path = candidate
+        else:
+            shipped = sorted(p.stem for p in (rt_root_path / "toolchains").glob("*.cmake"))
+            raise click.ClickException(
+                f"no toolchain file for triple {triple!r}. "
+                f"Shipped triples: {shipped}. "
+                f"Pass --toolchain-file <path> to use a custom toolchain."
+            )
+
+    is_cross = toolchain_path is not None
+    resolved_platform = platform or ("bare" if is_cross else "posix")
+    resolved_with_cuda = with_cuda if with_cuda is not None else (not is_cross)
+
+    if build_dir:
+        build_path = Path(build_dir).resolve()
+    else:
+        build_path = rt_root_path / f"build-{triple}"
+
+    if cmake_bin:
+        cmake = cmake_bin
+    else:
+        # Prefer the system cmake at /usr/bin/cmake — vendor toolchains
+        # (Vitis, etc.) often inject older cmakes with broken shared
+        # deps that take precedence on PATH.
+        cmake = "/usr/bin/cmake" if Path("/usr/bin/cmake").is_file() else shutil.which("cmake")
+    if cmake is None or not Path(cmake).is_file():
+        raise click.ClickException("cmake not found; pass --cmake <path>")
+
+    if clean and build_path.exists():
+        click.echo(f"[rt build] cleaning {build_path}")
+        shutil.rmtree(build_path)
+
+    configure_cmd: list[str] = [
+        cmake,
+        "-B",
+        str(build_path),
+        "-S",
+        str(rt_root_path),
+        f"-DCG_RT_PLATFORM={resolved_platform}",
+        f"-DCG_RT_WITH_CUDA={'ON' if resolved_with_cuda else 'OFF'}",
+    ]
+    if toolchain_path is not None:
+        configure_cmd.append(f"-DCMAKE_TOOLCHAIN_FILE={toolchain_path}")
+
+    click.echo(f"[rt build] triple:         {triple}")
+    click.echo(f"[rt build] toolchain:      {toolchain_path or '<host>'}")
+    click.echo(f"[rt build] platform:       {resolved_platform}")
+    click.echo(f"[rt build] cuda:           {'ON' if resolved_with_cuda else 'OFF'}")
+    click.echo(f"[rt build] build dir:      {build_path}")
+    click.echo(f"[rt build] configure:      {' '.join(configure_cmd)}")
+
+    rc = subprocess.call(configure_cmd)
+    if rc != 0:
+        raise click.ClickException(f"cmake configure failed (exit {rc})")
+
+    parallel = jobs if jobs > 0 else max(1, multiprocessing.cpu_count())
+    build_cmd = [cmake, "--build", str(build_path), "-j", str(parallel)]
+    click.echo(f"[rt build] build:          {' '.join(build_cmd)}")
+    rc = subprocess.call(build_cmd)
+    if rc != 0:
+        raise click.ClickException(f"cmake build failed (exit {rc})")
+
+    artifact = build_path / "libcompgen_rt_static.a"
+    if not artifact.is_file():
+        # The CMake target may have been named differently; search.
+        candidates = sorted(build_path.glob("**/libcompgen_rt_static*.a"))
+        if not candidates:
+            candidates = sorted(build_path.glob("**/libcompgen_rt*.a"))
+        if not candidates:
+            raise click.ClickException(f"build succeeded but no libcompgen_rt*.a found under {build_path}")
+        artifact = candidates[0]
+
+    size_kb = artifact.stat().st_size // 1024
+    click.echo(f"[rt build] artifact:       {artifact} ({size_kb} KB)")
+    click.echo("[rt build] OK")
+    # Echo the absolute path on its own line so shell consumers can grab it
+    # via `compgen rt build … | tail -1`.
+    click.echo(str(artifact))
+
+
+@rt.command("list-triples")
+@click.option(
+    "--rt-root",
+    "rt_root",
+    type=click.Path(exists=True, file_okay=False),
+    default=None,
+    help="Override the libcompgen_rt source root.",
+)
+def rt_list_triples(rt_root: str | None) -> None:
+    """List triples that ship with a CMake toolchain file."""
+    if rt_root:
+        rt_root_path = Path(rt_root).resolve()
+    else:
+        rt_root_path = Path(__file__).resolve().parents[2] / "runtime" / "native" / "libcompgen_rt"
+    toolchains_dir = rt_root_path / "toolchains"
+    if not toolchains_dir.is_dir():
+        raise click.ClickException(f"toolchains dir not found: {toolchains_dir}")
+    click.echo("Built-in triples:")
+    click.echo("  host  (no toolchain file — uses host compiler)")
+    for tc in sorted(toolchains_dir.glob("*.cmake")):
+        click.echo(f"  {tc.stem}  ({tc.relative_to(rt_root_path)})")
 
 
 if __name__ == "__main__":

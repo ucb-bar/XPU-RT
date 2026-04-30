@@ -26,8 +26,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-from xdsl.dialects.builtin import ModuleOp, TensorType
-from xdsl.dialects.func import FuncOp, ReturnOp
+from xdsl.dialects.builtin import ModuleOp, StringAttr, TensorType
+from xdsl.dialects.func import CallOp, FuncOp, ReturnOp
 from xdsl.dialects.linalg import GenericOp, MatmulOp, TransposeOp
 from xdsl.ir import Operation
 
@@ -161,16 +161,40 @@ def _dtype_bytes(dtype_name: str) -> int:
 
 
 def _extract_op_contract(op: Operation) -> KernelContract | None:
-    """Extract a KernelContract from a single xDSL operation."""
+    """Extract a KernelContract from a single xDSL operation.
+
+    REQ-026: only return contracts for ops that carry
+    ``compgen.region_id`` — those are the explicit dispatch boundaries
+    set by decompositions (or by the post-import generalised
+    annotation pass). Without this filter, ``module.walk()`` recurses
+    into ``linalg.matmul``'s implicit body and surfaces spurious
+    ``arith.mulf`` / ``arith.addf`` / ``tensor.empty`` ops as
+    "kernels", which collides region-id assignment downstream.
+    """
     if isinstance(op, (ModuleOp, FuncOp, ReturnOp)):
         return None
     if not op.results:
         return None
 
-    op_name = op.name
+    rid_attr = op.attributes.get("compgen.region_id")
+    if not isinstance(rid_attr, StringAttr):
+        return None
+    region_id = rid_attr.data
+    did_attr = op.attributes.get("compgen.dispatch_id")
+    dispatch_id = did_attr.data if isinstance(did_attr, StringAttr) else region_id
+
+    # ``func.call`` wraps the actual op (``aten_add``, ``aten_mul`` …)
+    # behind the callee symbol. Use the callee name so kernel providers
+    # see the real op family rather than a useless ``"call"`` token.
+    if isinstance(op, CallOp) and hasattr(op, "callee") and hasattr(op.callee, "string_value"):
+        op_name = op.callee.string_value()
+    else:
+        op_name = op.name
     input_layouts: list[LayoutRequirement] = []
     output_layouts: list[LayoutRequirement] = []
     dtypes: set[str] = set()
+    input_shapes: list[tuple[int, ...]] = []
+    output_shapes: list[tuple[int, ...]] = []
     flops = 0
     bytes_read = 0
     bytes_written = 0
@@ -180,7 +204,8 @@ def _extract_op_contract(op: Operation) -> KernelContract | None:
     for operand in op.operands:
         input_layouts.append(LayoutRequirement(kind=LayoutKind.ROW_MAJOR))
         if isinstance(operand.type, TensorType):
-            shape = operand.type.get_shape()
+            shape = tuple(operand.type.get_shape())
+            input_shapes.append(shape)
             dtype_str = str(operand.type.element_type)
             dtypes.add(dtype_str)
             elem_bytes = _dtype_bytes(dtype_str)
@@ -194,7 +219,8 @@ def _extract_op_contract(op: Operation) -> KernelContract | None:
     for result in op.results:
         output_layouts.append(LayoutRequirement(kind=LayoutKind.ROW_MAJOR))
         if isinstance(result.type, TensorType):
-            shape = result.type.get_shape()
+            shape = tuple(result.type.get_shape())
+            output_shapes.append(shape)
             dtype_str = str(result.type.element_type)
             dtypes.add(dtype_str)
             elem_bytes = _dtype_bytes(dtype_str)
@@ -209,6 +235,22 @@ def _extract_op_contract(op: Operation) -> KernelContract | None:
     supports_prepacked_lhs = False
     supports_prepacked_rhs = False
     tile_layout_family: str | None = None
+
+    # Elementwise / unary ops wrapped behind ``func.call`` look like
+    # opaque calls to the cost model — but their FLOP count is at least
+    # the output element count (1 FLOP per element). Without this, the
+    # downstream ``spec_to_provider_contract`` shape-synthesis branch
+    # (which is gated on ``cost.flops > 0``) never fires for them.
+    if isinstance(op, CallOp):
+        elementwise_flops = 0
+        for result_shape in output_shapes:
+            n = 1
+            for dim in result_shape:
+                if dim > 0:
+                    n *= dim
+            elementwise_flops += n
+        flops = elementwise_flops
+        fusable = True
 
     if isinstance(op, MatmulOp):
         flops = _estimate_matmul_flops(op)
@@ -249,6 +291,18 @@ def _extract_op_contract(op: Operation) -> KernelContract | None:
         supports_prepacked_lhs=supports_prepacked_lhs,
         supports_prepacked_rhs=supports_prepacked_rhs,
         tile_layout_family=tile_layout_family,
+        # Concrete tensor shapes pulled directly from operand/result
+        # types — providers consume these via the Spec→Provider bridge.
+        # Stored in metadata so older serialisers stay happy. The
+        # region_id / dispatch_id pair (REQ-026) lets the codegen-
+        # fallback dispatcher cross-link contracts with payload.mlir
+        # annotations without a separate walk.
+        metadata={
+            "input_shapes": input_shapes,
+            "output_shapes": output_shapes,
+            "region_id": region_id,
+            "dispatch_id": dispatch_id,
+        },
     )
 
 

@@ -33,6 +33,7 @@ stack would (Triton handles the HIP backend selection at install time).
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from xdsl.dialects.builtin import ModuleOp, StringAttr, TensorType
@@ -217,17 +218,18 @@ class RocmCodegenPlugin:
 
 
 def create_rocm_gpu_stack(
-    output_dir: str | None = None,
+    output_dir: str | Path,
     target_name: str = "rocm_mi250",
 ) -> TargetDialectStack:
     """Create the ROCm GPU compilation pipeline.
 
     Stack mirrors CUDA: encoding → layout → dispatch → tiling → codegen → bundle.
-    """
-    import tempfile
-    from pathlib import Path
 
-    bundle_dir = Path(output_dir) if output_dir else Path(tempfile.mkdtemp(prefix="rocm_bundle_"))
+    ``output_dir`` is mandatory; see :func:`create_cuda_gpu_stack`.
+    """
+    if output_dir is None:
+        raise ValueError("create_rocm_gpu_stack requires output_dir; pass a session-scoped path")
+    bundle_dir = Path(output_dir)
 
     return TargetDialectStack(
         target_name=target_name,

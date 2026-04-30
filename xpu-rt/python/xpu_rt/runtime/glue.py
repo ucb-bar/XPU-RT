@@ -20,7 +20,8 @@ Implementations:
   * ``CpuRuntimeAdapter`` — wraps the existing ``cpu_executor.execute``.
   * ``BaremetalRuntimeAdapter`` — wraps the C-codegen path
     (``runtime/baremetal/c_codegen.py``); skeleton for now.
-  * ``RocmRuntimeAdapter`` — Wave 5 skeleton.
+  * (ROCm was removed — ``select_adapter`` raises
+    :class:`AdapterUnavailableError` for rocm/mi targets.)
 
 A single ``select_adapter(target_name) → RuntimeAdapter`` factory
 walks the existing target-name → backend mapping (mirrors the
@@ -271,7 +272,15 @@ class CpuRuntimeAdapter:
         return None
 
     def replay(self, graph: CapturedGraph, inputs: tuple) -> Any:
-        raise NotImplementedError("CPU adapter does not capture graphs")
+        # CPU adapter documents its own scope: no graph capture ⇒ no
+        # replay. Typed error so callers don't confuse it with
+        # "unimplemented work item".
+        from compgen.runtime.errors import AdapterUnavailableError
+
+        raise AdapterUnavailableError(
+            adapter_name=self.name,
+            reason="CPU adapter has no graph capture; replay is intentionally unsupported",
+        )
 
     def synchronize(self) -> None:
         # CPU is synchronous by construction.
@@ -331,7 +340,20 @@ class BaremetalRuntimeAdapter:
         return None  # baremetal models the entire program as one C bundle
 
     def replay(self, graph: CapturedGraph, inputs: tuple) -> Any:
-        raise NotImplementedError
+        # Baremetal bundle is AOT-built. "Replay" = re-invoke dispatch
+        # on the same captured graph. Because this adapter already
+        # collapses capture into ``model_fn`` and dispatches via the
+        # cpu_executor fallback in the bundle-export flow, replay is
+        # simply running the graph callable again on the new inputs.
+        graph_callable = getattr(graph, "callable", None)
+        if graph_callable is None:
+            from compgen.runtime.errors import AdapterUnavailableError
+
+            raise AdapterUnavailableError(
+                adapter_name=self.name,
+                reason="CapturedGraph has no callable; baremetal replay requires the graph capture to record one",
+            )
+        return graph_callable(*inputs)
 
     def synchronize(self) -> None:
         return
@@ -346,41 +368,6 @@ class BaremetalRuntimeAdapter:
 
 
 # ---------------------------------------------------------------------------
-# ROCm skeleton — wave 5 will flesh this out
-# ---------------------------------------------------------------------------
-
-
-@dataclass
-class RocmRuntimeAdapter:
-    """Skeleton. Wraps HIP / ROCm-Triton stack; same protocol as CUDA
-    but routes to AMD's runtime. Wave 5 fills in dispatch + capture."""
-
-    name_str: str = "rocm"
-
-    @property
-    def name(self) -> str:
-        return self.name_str
-
-    def supports(self, contract: KernelContractV3) -> bool:
-        return False  # not implemented yet — falls through to CPU adapter
-
-    def dispatch(self, contract, callable_kernel, args, kwargs):
-        raise NotImplementedError("ROCm adapter is W5 placeholder")
-
-    def capture_graph(self, model_fn, sample_inputs):
-        return None
-
-    def replay(self, graph, inputs):
-        raise NotImplementedError("ROCm adapter is W5 placeholder")
-
-    def synchronize(self) -> None:
-        return
-
-    def allocate_buffer(self, spec: BufferSpec) -> Buffer:
-        raise NotImplementedError("ROCm adapter is W5 placeholder")
-
-
-# ---------------------------------------------------------------------------
 # Factory — pick adapter from target name
 # ---------------------------------------------------------------------------
 
@@ -391,11 +378,19 @@ def select_adapter(target_name: str) -> RuntimeAdapter:
     Mirrors the knowledge-store target-name → backend mapping so
     adapter selection and lesson lookup share the same target taxonomy.
     """
+    from compgen.runtime.errors import AdapterUnavailableError
+
     n = (target_name or "").lower()
     if n.startswith("cuda") or "titan-rtx" in n or "test-gpu-simt" in n:
         return CudaRuntimeAdapter()
     if n.startswith("rocm") or n.startswith("mi"):
-        return RocmRuntimeAdapter()
+        raise AdapterUnavailableError(
+            adapter_name="rocm",
+            reason=(
+                "no in-tree ROCm target profile — the previous W5 skeleton was removed. "
+                "File a GitHub issue with your target profile if ROCm support is needed."
+            ),
+        )
     if n.startswith("hexagon") or n.startswith("openq") or n.startswith("trainium"):
         return BaremetalRuntimeAdapter()
     if n.startswith("cpu") or "host" in n or "riscv" in n:
@@ -411,7 +406,6 @@ __all__ = [
     "CpuRuntimeAdapter",
     "CudaRuntimeAdapter",
     "DispatchResult",
-    "RocmRuntimeAdapter",
     "RuntimeAdapter",
     "select_adapter",
 ]

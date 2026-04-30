@@ -14,9 +14,6 @@ Invariants:
     - Maturity is monotonically increasing (never downgrades silently).
     - Each level requires all previous levels.
     - Assessment is deterministic given the same target package state.
-
-TODO: Implement assess_maturity() from target package state.
-TODO: Implement level requirements as checkable predicates.
 """
 
 from __future__ import annotations

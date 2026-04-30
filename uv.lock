@@ -473,7 +473,7 @@ wheels = [
 
 [[package]]
 name = "compgen"
-version = "0.1.0"
+version = "0.2.0"
 source = { editable = "." }
 dependencies = [
     { name = "click" },
@@ -491,9 +491,36 @@ dependencies = [
 benchmarks = [
     { name = "matplotlib" },
 ]
+blackwell = [
+    { name = "cuda-python", version = "12.9.4", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'emscripten' and sys_platform != 'win32'" },
+    { name = "cuda-python", version = "13.2.0", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'emscripten' or sys_platform == 'win32'" },
+    { name = "numpy" },
+    { name = "nvidia-cuda-cccl-cu12" },
+    { name = "nvidia-cuda-nvrtc-cu13", marker = "sys_platform == 'linux'" },
+    { name = "nvidia-cuda-runtime-cu12" },
+    { name = "nvidia-cudnn-cu12" },
+    { name = "nvidia-nccl-cu12" },
+]
 compile = [
     { name = "torch" },
     { name = "xdsl" },
+]
+cuda = [
+    { name = "cuda-python", version = "12.9.4", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'emscripten' and sys_platform != 'win32'" },
+    { name = "cuda-python", version = "13.2.0", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'emscripten' or sys_platform == 'win32'" },
+    { name = "numpy" },
+    { name = "nvidia-cuda-cccl-cu12" },
+    { name = "nvidia-cuda-nvrtc-cu13", marker = "sys_platform == 'linux'" },
+    { name = "nvidia-cuda-runtime-cu12" },
+]
+cuda-triton = [
+    { name = "cuda-python", version = "12.9.4", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'emscripten' and sys_platform != 'win32'" },
+    { name = "cuda-python", version = "13.2.0", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'emscripten' or sys_platform == 'win32'" },
+    { name = "numpy" },
+    { name = "nvidia-cuda-cccl-cu12" },
+    { name = "nvidia-cuda-nvrtc-cu13", marker = "sys_platform == 'linux'" },
+    { name = "nvidia-cuda-runtime-cu12" },
+    { name = "triton" },
 ]
 demo = [
     { name = "accelerate" },
@@ -509,10 +536,6 @@ dev = [
 docs = [
     { name = "mkdocs" },
     { name = "mkdocs-material" },
-]
-iree = [
-    { name = "iree-compiler" },
-    { name = "iree-runtime" },
 ]
 llm = [
     { name = "anthropic" },
@@ -537,10 +560,11 @@ requires-dist = [
     { name = "accelerate", marker = "extra == 'demo'", specifier = ">=0.33" },
     { name = "anthropic", marker = "extra == 'llm'", specifier = ">=0.30" },
     { name = "click", specifier = ">=8.1" },
+    { name = "compgen", extras = ["cuda"], marker = "extra == 'blackwell'" },
+    { name = "compgen", extras = ["cuda"], marker = "extra == 'cuda-triton'" },
+    { name = "cuda-python", marker = "extra == 'cuda'", specifier = ">=12.6" },
     { name = "fastapi", marker = "extra == 'ray'", specifier = ">=0.110" },
     { name = "google-genai", marker = "extra == 'llm'", specifier = ">=1.0" },
-    { name = "iree-compiler", marker = "extra == 'iree'", specifier = ">=3.0" },
-    { name = "iree-runtime", marker = "extra == 'iree'", specifier = ">=3.0" },
     { name = "jinja2", specifier = ">=3.1" },
     { name = "jsonschema", specifier = ">=4.20" },
     { name = "matplotlib", marker = "extra == 'benchmarks'", specifier = ">=3.8" },
@@ -548,6 +572,12 @@ requires-dist = [
     { name = "mkdocs", marker = "extra == 'docs'", specifier = ">=1.6" },
     { name = "mkdocs-material", marker = "extra == 'docs'", specifier = ">=9.5" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10" },
+    { name = "numpy", marker = "extra == 'cuda'", specifier = ">=1.26" },
+    { name = "nvidia-cuda-cccl-cu12", marker = "extra == 'cuda'", specifier = ">=12.6" },
+    { name = "nvidia-cuda-nvrtc-cu13", marker = "sys_platform == 'linux' and extra == 'cuda'" },
+    { name = "nvidia-cuda-runtime-cu12", marker = "extra == 'cuda'", specifier = ">=12.6" },
+    { name = "nvidia-cudnn-cu12", marker = "extra == 'blackwell'", specifier = ">=9.3" },
+    { name = "nvidia-nccl-cu12", marker = "extra == 'blackwell'", specifier = ">=2.22" },
     { name = "openai", marker = "extra == 'llm'", specifier = ">=1.0" },
     { name = "ortools", marker = "extra == 'solve'", specifier = ">=9.8" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=3.7" },
@@ -565,11 +595,12 @@ requires-dist = [
     { name = "torch", marker = "extra == 'compile'", specifier = ">=2.4" },
     { name = "torchao", marker = "extra == 'quantization'", specifier = ">=0.16" },
     { name = "transformers", marker = "extra == 'demo'", specifier = ">=4.44" },
+    { name = "triton", marker = "extra == 'cuda-triton'", specifier = ">=3.0.0" },
     { name = "xdsl", specifier = ">=0.24" },
     { name = "xdsl", marker = "extra == 'compile'", specifier = ">=0.24" },
     { name = "z3-solver", marker = "extra == 'solve'", specifier = ">=4.12" },
 ]
-provides-extras = ["llm", "dev", "solve", "quantization", "iree", "benchmarks", "docs", "ray", "compile", "kernels", "demo"]
+provides-extras = ["llm", "dev", "solve", "quantization", "cuda", "cuda-triton", "blackwell", "benchmarks", "docs", "ray", "compile", "kernels", "demo"]
 
 [[package]]
 name = "contourpy"
@@ -820,16 +851,53 @@ wheels = [
 name = "cuda-bindings"
 version = "12.9.4"
 source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.12.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version < '3.12' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+]
 dependencies = [
     { name = "cuda-pathfinder", marker = "sys_platform != 'emscripten' and sys_platform != 'win32'" },
 ]
 wheels = [
+    { url = "https://files.pythonhosted.org/packages/a9/2b/ebcbb60aa6dba830474cd360c42e10282f7a343c0a1f58d24fbd3b7c2d77/cuda_bindings-12.9.4-cp311-cp311-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:a6a429dc6c13148ff1e27c44f40a3dd23203823e637b87fd0854205195988306", size = 11840604, upload-time = "2025-10-21T14:51:34.565Z" },
     { url = "https://files.pythonhosted.org/packages/45/e7/b47792cc2d01c7e1d37c32402182524774dadd2d26339bd224e0e913832e/cuda_bindings-12.9.4-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:c912a3d9e6b6651853eed8eed96d6800d69c08e94052c292fec3f282c5a817c9", size = 12210593, upload-time = "2025-10-21T14:51:36.574Z" },
+    { url = "https://files.pythonhosted.org/packages/0c/c2/65bfd79292b8ff18be4dd7f7442cea37bcbc1a228c1886f1dea515c45b67/cuda_bindings-12.9.4-cp312-cp312-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:694ba35023846625ef471257e6b5a4bc8af690f961d197d77d34b1d1db393f56", size = 11760260, upload-time = "2025-10-21T14:51:40.79Z" },
     { url = "https://files.pythonhosted.org/packages/a9/c1/dabe88f52c3e3760d861401bb994df08f672ec893b8f7592dc91626adcf3/cuda_bindings-12.9.4-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:fda147a344e8eaeca0c6ff113d2851ffca8f7dfc0a6c932374ee5c47caa649c8", size = 12151019, upload-time = "2025-10-21T14:51:43.167Z" },
+    { url = "https://files.pythonhosted.org/packages/05/8b/b4b2d1c7775fa403b64333e720cfcfccef8dcb9cdeb99947061ca5a77628/cuda_bindings-12.9.4-cp313-cp313-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:cf8bfaedc238f3b115d957d1fd6562b7e8435ba57f6d0e2f87d0e7149ccb2da5", size = 11570071, upload-time = "2025-10-21T14:51:47.472Z" },
     { url = "https://files.pythonhosted.org/packages/63/56/e465c31dc9111be3441a9ba7df1941fe98f4aa6e71e8788a3fb4534ce24d/cuda_bindings-12.9.4-cp313-cp313-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:32bdc5a76906be4c61eb98f546a6786c5773a881f3b166486449b5d141e4a39f", size = 11906628, upload-time = "2025-10-21T14:51:49.905Z" },
+    { url = "https://files.pythonhosted.org/packages/ec/07/6aff13bc1e977e35aaa6b22f52b172e2890c608c6db22438cf7ed2bf43a6/cuda_bindings-12.9.4-cp313-cp313t-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:3adf4958dcf68ae7801a59b73fb00a8b37f8d0595060d66ceae111b1002de38d", size = 11566797, upload-time = "2025-10-21T14:51:54.581Z" },
     { url = "https://files.pythonhosted.org/packages/a3/84/1e6be415e37478070aeeee5884c2022713c1ecc735e6d82d744de0252eee/cuda_bindings-12.9.4-cp313-cp313t-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:56e0043c457a99ac473ddc926fe0dc4046694d99caef633e92601ab52cbe17eb", size = 11925991, upload-time = "2025-10-21T14:51:56.535Z" },
+    { url = "https://files.pythonhosted.org/packages/1e/b5/96a6696e20c4ffd2b327f54c7d0fde2259bdb998d045c25d5dedbbe30290/cuda_bindings-12.9.4-cp314-cp314-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:1f53a7f453d4b2643d8663d036bafe29b5ba89eb904c133180f295df6dc151e5", size = 11624530, upload-time = "2025-10-21T14:52:01.539Z" },
     { url = "https://files.pythonhosted.org/packages/d1/af/6dfd8f2ed90b1d4719bc053ff8940e494640fe4212dc3dd72f383e4992da/cuda_bindings-12.9.4-cp314-cp314-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:8b72ee72a9cc1b531db31eebaaee5c69a8ec3500e32c6933f2d3b15297b53686", size = 11922703, upload-time = "2025-10-21T14:52:03.585Z" },
+    { url = "https://files.pythonhosted.org/packages/39/73/d2fc40c043bac699c3880bf88d3cebe9d88410cd043795382826c93a89f0/cuda_bindings-12.9.4-cp314-cp314t-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:20f2699d61d724de3eb3f3369d57e2b245f93085cab44fd37c3bea036cea1a6f", size = 11565056, upload-time = "2025-10-21T14:52:08.338Z" },
     { url = "https://files.pythonhosted.org/packages/6c/19/90ac264acc00f6df8a49378eedec9fd2db3061bf9263bf9f39fd3d8377c3/cuda_bindings-12.9.4-cp314-cp314t-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:d80bffc357df9988dca279734bc9674c3934a654cab10cadeed27ce17d8635ee", size = 11924658, upload-time = "2025-10-21T14:52:10.411Z" },
+]
+
+[[package]]
+name = "cuda-bindings"
+version = "13.2.0"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.14' and sys_platform == 'win32'",
+    "python_full_version >= '3.14' and sys_platform == 'emscripten'",
+    "python_full_version == '3.13.*' and sys_platform == 'win32'",
+    "python_full_version == '3.12.*' and sys_platform == 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'emscripten'",
+    "python_full_version == '3.12.*' and sys_platform == 'emscripten'",
+    "python_full_version < '3.12' and sys_platform == 'win32'",
+    "python_full_version < '3.12' and sys_platform == 'emscripten'",
+]
+dependencies = [
+    { name = "cuda-pathfinder", marker = "sys_platform == 'emscripten' or sys_platform == 'win32'" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/29/5a/0ce1731c48bcd9f40996a4ef1abbf634f1a7fe4a15c5050b1e75ce3a7acf/cuda_bindings-13.2.0-cp311-cp311-win_amd64.whl", hash = "sha256:debb51b211d246f8326f6b6e982506a5d0d9906672c91bc478b66addc7ecc60a", size = 5631363, upload-time = "2026-03-11T00:12:41.58Z" },
+    { url = "https://files.pythonhosted.org/packages/bb/a5/d7f01a415e134546248cef612adad8153c9f1eb10ec79505a7cd8294370b/cuda_bindings-13.2.0-cp312-cp312-win_amd64.whl", hash = "sha256:45815daeb595bf3b405c52671a2542b1f8e9329f3b029494acbfcc74aeaa1f2d", size = 5840830, upload-time = "2026-03-11T00:12:48.43Z" },
+    { url = "https://files.pythonhosted.org/packages/c4/84/d3b6220b51cbc02ca14db7387e97445126b4ff5125aaa6c5dd7dcb75e679/cuda_bindings-13.2.0-cp313-cp313-win_amd64.whl", hash = "sha256:8cebe3ce4aeeca5af9c490e175f76c4b569bbf4a35a62294b777bc77bf7ac4d8", size = 5796512, upload-time = "2026-03-11T00:12:54.483Z" },
+    { url = "https://files.pythonhosted.org/packages/e3/73/98bcb069778fe420226db75aff54b5dd6c3ecfd0912edabab723326e80b7/cuda_bindings-13.2.0-cp314-cp314-win_amd64.whl", hash = "sha256:bd658bb5c0e55b7b3e5dd0ed509c6addb298c665db26a9bfba35e1e626000ba2", size = 5938605, upload-time = "2026-03-11T00:13:01.639Z" },
+    { url = "https://files.pythonhosted.org/packages/52/49/4e01cc06447d39476e138d1b1adec8d35c0d04eccd2c8d69befc08cd66e8/cuda_bindings-13.2.0-cp314-cp314t-win_amd64.whl", hash = "sha256:6ccf14e0c1def3b7200100aafff3a9f7e210ecb6e409329e92dcf6cd2c00d5c7", size = 6662637, upload-time = "2026-03-11T00:13:07.881Z" },
 ]
 
 [[package]]
@@ -838,6 +906,45 @@ version = "1.4.3"
 source = { registry = "https://pypi.org/simple" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c0/59/911a1a597264f1fb7ac176995a0f0b6062e37f8c1b6e0f23071a76838507/cuda_pathfinder-1.4.3-py3-none-any.whl", hash = "sha256:4345d8ead1f701c4fb8a99be6bc1843a7348b6ba0ef3b031f5a2d66fb128ae4c", size = 47951, upload-time = "2026-03-16T21:31:25.526Z" },
+]
+
+[[package]]
+name = "cuda-python"
+version = "12.9.4"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.12.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version < '3.12' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+]
+dependencies = [
+    { name = "cuda-bindings", version = "12.9.4", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'emscripten' and sys_platform != 'win32'" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/af/f3/6b032a554019cfb3447e671798c1bd3e79b5f1af20d10253f56cea269ef2/cuda_python-12.9.4-py3-none-any.whl", hash = "sha256:d2cacea882a69863f1e7d27ee71d75f0684f4c76910aff839067e4f89c902279", size = 7594, upload-time = "2025-10-21T14:55:12.846Z" },
+]
+
+[[package]]
+name = "cuda-python"
+version = "13.2.0"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.14' and sys_platform == 'win32'",
+    "python_full_version >= '3.14' and sys_platform == 'emscripten'",
+    "python_full_version == '3.13.*' and sys_platform == 'win32'",
+    "python_full_version == '3.12.*' and sys_platform == 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'emscripten'",
+    "python_full_version == '3.12.*' and sys_platform == 'emscripten'",
+    "python_full_version < '3.12' and sys_platform == 'win32'",
+    "python_full_version < '3.12' and sys_platform == 'emscripten'",
+]
+dependencies = [
+    { name = "cuda-bindings", version = "13.2.0", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'emscripten' or sys_platform == 'win32'" },
+    { name = "cuda-pathfinder", marker = "sys_platform == 'emscripten' or sys_platform == 'win32'" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/4a/da/b4dbe129f941afe1c24a09ba53521b78875626763d96414798a74763282f/cuda_python-13.2.0-py3-none-any.whl", hash = "sha256:2f092b0ec13a860115fa595411889ee939ad203450ea4f91e9461b174ea7b084", size = 8145, upload-time = "2026-03-11T13:55:19.143Z" },
 ]
 
 [[package]]
@@ -1374,55 +1481,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/72/34/14ca021ce8e5dfedc35312d08ba8bf51fdd999c576889fc2c24cb97f4f10/iniconfig-2.3.0.tar.gz", hash = "sha256:c76315c77db068650d49c5b56314774a7804df16fee4402c1f19d6d15d8c4730", size = 20503, upload-time = "2025-10-18T21:55:43.219Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/cb/b1/3846dd7f199d53cb17f49cba7e651e9ce294d8497c8c150530ed11865bb8/iniconfig-2.3.0-py3-none-any.whl", hash = "sha256:f631c04d2c48c52b84d0d0549c99ff3859c98df65b3101406327ecc7d53fbf12", size = 7484, upload-time = "2025-10-18T21:55:41.639Z" },
-]
-
-[[package]]
-name = "iree-compiler"
-version = "20241104.1068"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "numpy" },
-    { name = "sympy" },
-]
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/db/d8/e5ff81b96ca02008fb639370480a149102a7ad854d9946fd4be72a2fcd57/iree_compiler-20241104.1068-cp311-cp311-macosx_13_0_universal2.whl", hash = "sha256:7d674456d46fc1ea861a00642fa5ad9045d6f9c7d5482dd7f8bab3ca462543bb", size = 57583974, upload-time = "2024-11-05T23:33:38.226Z" },
-    { url = "https://files.pythonhosted.org/packages/24/e7/c0d50c74f1613e17ddeef509f885194ba0a75ee6bb83cac1c886a9be3adf/iree_compiler-20241104.1068-cp311-cp311-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:740d5f34aad78aa509038c27df0b9d4c43781fc6db48152257934046da15ae3d", size = 71919533, upload-time = "2024-11-05T23:33:43.431Z" },
-    { url = "https://files.pythonhosted.org/packages/13/84/b50c55d6727d6aa04cc413aac0f0e38920c6d14ff9a9cb2fbeecca439064/iree_compiler-20241104.1068-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:aeac74cc2e3eb34a453427df2c5ddbe85e9d8ee942dc97eae42ead6fc8f24fa8", size = 70733516, upload-time = "2024-11-05T23:33:48.71Z" },
-    { url = "https://files.pythonhosted.org/packages/b0/f8/ee5591301ee2e3119aaa0838d9d8fa1d6007fcc558417bdbe0c3f15b3ef9/iree_compiler-20241104.1068-cp311-cp311-win_amd64.whl", hash = "sha256:62a64945b5b269d9a3f20c80dc1dc335ca1961365e6ec4ee31c27b0e5197cfec", size = 49797842, upload-time = "2024-11-05T23:33:54.126Z" },
-    { url = "https://files.pythonhosted.org/packages/d5/86/1bd674964d67effad4d9187afa75814ce8505bb6998b4e1bdaa73a46e355/iree_compiler-20241104.1068-cp312-cp312-macosx_13_0_universal2.whl", hash = "sha256:2077182344235f75b8c7707586f24a3b68d556ccc5771e0926f14819d6115e03", size = 57591226, upload-time = "2024-11-05T23:33:58.704Z" },
-    { url = "https://files.pythonhosted.org/packages/28/ee/4e6bbeace037bb449dd539912afcba3ea5a88f2fe9494d74161a200f1532/iree_compiler-20241104.1068-cp312-cp312-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:87f49105a10825a68055226e7e3fbf313590d766ad208ab70d35f6ab79044775", size = 71931372, upload-time = "2024-11-05T23:34:04.302Z" },
-    { url = "https://files.pythonhosted.org/packages/3b/6e/87756b7be8b2235c398283589e7591f917b8df4c5cef1d660ea43d15ec85/iree_compiler-20241104.1068-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:39eb1c01a208399c844ac961ef52aeb6be780db4f87fac59ceeb59b8d8c68719", size = 70763482, upload-time = "2024-11-05T23:34:10.82Z" },
-    { url = "https://files.pythonhosted.org/packages/0f/c5/ccb4a5355c3231d2d9d55740b4024cf6b1f3a1155a1a5268db0425c59ca3/iree_compiler-20241104.1068-cp312-cp312-win_amd64.whl", hash = "sha256:2e7e88b4e63caf529c0ad4f1e55cfd7624e0ac0bf4034cd7e0f935f23251073c", size = 49804740, upload-time = "2024-11-05T23:34:15.776Z" },
-    { url = "https://files.pythonhosted.org/packages/27/96/1b982d87add6118ac4afb09790fc020000818636c675d31ea6cef2484b63/iree_compiler-20241104.1068-cp313-cp313-macosx_13_0_universal2.whl", hash = "sha256:ec522b9abf8b8375f6d36c71025dd93e53d033571125476ee4495bcf1a79c355", size = 57592644, upload-time = "2024-11-05T23:34:21.128Z" },
-    { url = "https://files.pythonhosted.org/packages/1a/e9/3d07d305f38655bd8b15fba78f7e517bd61c0d80c880c62b1a0205e8c152/iree_compiler-20241104.1068-cp313-cp313-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:e681d701bf8742f7eff15e3ecae7cffd15f07c67d50d0a76aa0f9e47ef5a5259", size = 71931292, upload-time = "2024-11-05T23:34:26.486Z" },
-    { url = "https://files.pythonhosted.org/packages/2b/00/49e9ab9be2d34aebc8126642bdad101508010cfc16397ba5d61be4ddaf02/iree_compiler-20241104.1068-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:77cec392929afb4cbfb5cb58e9f0a6f65767d97a4a3a0939ee7f537a514b3dea", size = 70763956, upload-time = "2024-11-05T23:34:33.671Z" },
-    { url = "https://files.pythonhosted.org/packages/18/41/137e323b7bc74974d147ebb76c2b959871db666a5f2063f711286af7a456/iree_compiler-20241104.1068-cp313-cp313-win_amd64.whl", hash = "sha256:9ee4298a94fa92bb1a9a7546a94be71dd49c81b16e0f38f8f1a8ccd74f8b014b", size = 49804757, upload-time = "2024-11-05T23:34:53.497Z" },
-    { url = "https://files.pythonhosted.org/packages/ff/bf/4055a81bb98c42dc4e96b01a37d48b8666278b75820e3876f4ba8bfe3d9a/iree_compiler-20241104.1068-cp313-cp313t-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:bb3cd1253976408dc8382be403a95f8158fb419edeb6c54d54003def57a83a41", size = 72069014, upload-time = "2024-11-05T23:34:41.671Z" },
-    { url = "https://files.pythonhosted.org/packages/aa/06/cc8197584f8d926eb9479297929dcf343504829a03640e449b7e337497ea/iree_compiler-20241104.1068-cp313-cp313t-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:83e40093462c3c7047ebfa134c0a2130b2adbaa0325778515f5009335eea0dd1", size = 70878973, upload-time = "2024-11-05T23:34:47.66Z" },
-]
-
-[[package]]
-name = "iree-runtime"
-version = "20241104.1068"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "numpy" },
-]
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/c5/7d/4cb7af5459ddded9854ded4a342a4d2993e3b84789eef488ae5a8ae25efb/iree_runtime-20241104.1068-cp311-cp311-macosx_13_0_universal2.whl", hash = "sha256:e2f2c188965114a4dda5d93d457c414ed63c915866a9699e9a9676d1e87e642c", size = 3812770, upload-time = "2024-11-05T23:43:37.759Z" },
-    { url = "https://files.pythonhosted.org/packages/fd/11/2454a66f7ffc2b86ac188c9bcc0e4c1cda3737eb425639fc4414a56ec200/iree_runtime-20241104.1068-cp311-cp311-manylinux_2_28_aarch64.whl", hash = "sha256:83e880b45e7f82e73be17f04dd4a6793a0e3f1c3e058c6642932ca091c7ebded", size = 7941895, upload-time = "2024-11-05T23:43:40.098Z" },
-    { url = "https://files.pythonhosted.org/packages/b0/e2/0ce63cc3b6b7e71dc71441830eb34a5fe415cce8d21ca915a18548ef6c6c/iree_runtime-20241104.1068-cp311-cp311-manylinux_2_28_x86_64.whl", hash = "sha256:50b35be116589b154ae807747727c9ecc8851958d7137a440d58592b4b1adbb8", size = 8039523, upload-time = "2024-11-05T23:43:42.543Z" },
-    { url = "https://files.pythonhosted.org/packages/f8/af/a1d19d316b8fd22620e44047a62c497ddfcae7b5f5f5081c4db439083e43/iree_runtime-20241104.1068-cp311-cp311-win_amd64.whl", hash = "sha256:cfa02dfae6644bb6ce3a9c3995cb6287ebb13de5881304aa21cd21ab44fbc7b5", size = 5282077, upload-time = "2024-11-05T23:43:44.809Z" },
-    { url = "https://files.pythonhosted.org/packages/21/e4/aebf18d31aa0a9c820371a97bdd3f9834f780ab5aeeebcad751139555acf/iree_runtime-20241104.1068-cp312-cp312-macosx_13_0_universal2.whl", hash = "sha256:4a0c52dfe2443bdc47c2990d55423579d9cd9e0da7d0df50c685d6b8b474c3ee", size = 3812435, upload-time = "2024-11-05T23:43:46.595Z" },
-    { url = "https://files.pythonhosted.org/packages/92/ec/4eab1dd626d2e7e48c424c31678196a622d0374b0f718091e809464ee75f/iree_runtime-20241104.1068-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:488efb65428d0525bfec628380c49662cd27a7a3f2fb510e9b0f50fa0058fa47", size = 7940985, upload-time = "2024-11-05T23:43:49.128Z" },
-    { url = "https://files.pythonhosted.org/packages/33/1e/f55daece2adafb20c3ae23ba6a78cf582a7aa1b1ff468d3c4e4d92fcd899/iree_runtime-20241104.1068-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:38a052b97c81a71c6c5c7a82e8395d0537bd88cbf0e2847575512464a7f04f8c", size = 8041669, upload-time = "2024-11-05T23:43:51.498Z" },
-    { url = "https://files.pythonhosted.org/packages/d3/7c/17976da37bd02e508e6f8062a6eb5396f2d69f80346ced04ef213b7d9a56/iree_runtime-20241104.1068-cp312-cp312-win_amd64.whl", hash = "sha256:8f1b288773a63ef0289ab492396cc12399e1fcd6e5c6841547a4f6f658143c50", size = 5283903, upload-time = "2024-11-05T23:43:53.861Z" },
-    { url = "https://files.pythonhosted.org/packages/39/23/7d26c7bf70ed6c5d39450e27e466eb6bb0f99c8d1d63b87df49cca845377/iree_runtime-20241104.1068-cp313-cp313-macosx_13_0_universal2.whl", hash = "sha256:820a4c881589caefea0eff331f6171b17a15cfda400214cdc79d911d1c9fe9b4", size = 3812405, upload-time = "2024-11-05T23:43:56.173Z" },
-    { url = "https://files.pythonhosted.org/packages/f8/5f/264a0b3cd5a789c87c5308b9ac6898cb5c1d5bd3d9fb057b58a22c5d5ed7/iree_runtime-20241104.1068-cp313-cp313-manylinux_2_28_aarch64.whl", hash = "sha256:849a41f3141443857fb6858c855a5f48e7bd2f9979b44c6666cebe08686c239f", size = 7940909, upload-time = "2024-11-05T23:43:59.153Z" },
-    { url = "https://files.pythonhosted.org/packages/d7/10/73323398958da41e7d1e9d00c40c8c93041ede54c4118a5c54980a8abafe/iree_runtime-20241104.1068-cp313-cp313-manylinux_2_28_x86_64.whl", hash = "sha256:ed59ae027d860fd924493772f0fe8f63b794b121fe487d4bf9652a66486fdbbb", size = 8041592, upload-time = "2024-11-05T23:44:01.941Z" },
-    { url = "https://files.pythonhosted.org/packages/95/32/1ad033240ee2f6d214c77aee4588c11ebc46d6d09af5cf003bb561e904b7/iree_runtime-20241104.1068-cp313-cp313-win_amd64.whl", hash = "sha256:1d51e504b7afa980d3784e7e52df99166d438177bf55b7558a962ae73eb96c2e", size = 5283963, upload-time = "2024-11-05T23:44:10.216Z" },
-    { url = "https://files.pythonhosted.org/packages/3c/b9/945f157d9d8fe45e33d90e39a9c6b04b6ee38f465d0677911dbb72f5963a/iree_runtime-20241104.1068-cp313-cp313t-manylinux_2_28_aarch64.whl", hash = "sha256:ababebdca6044f336bc3ce76f9e709c8cacf9e6b538e62d35c93cfce7967eb6b", size = 7959429, upload-time = "2024-11-05T23:44:04.611Z" },
-    { url = "https://files.pythonhosted.org/packages/e5/08/f9fbb1a7b1defece46a7b1704ad1b6b18fb1d118a470fb30cd0866a2a001/iree_runtime-20241104.1068-cp313-cp313t-manylinux_2_28_x86_64.whl", hash = "sha256:0a61714ed4ed2b18e37b618596b9a05fcb2f8f2897a37dc2e4d09a3073833dfe", size = 8053995, upload-time = "2024-11-05T23:44:07.259Z" },
 ]
 
 [[package]]
@@ -2328,7 +2386,19 @@ name = "nvidia-cublas-cu12"
 version = "12.8.4.1"
 source = { registry = "https://pypi.org/simple" }
 wheels = [
+    { url = "https://files.pythonhosted.org/packages/29/99/db44d685f0e257ff0e213ade1964fc459b4a690a73293220e98feb3307cf/nvidia_cublas_cu12-12.8.4.1-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:b86f6dd8935884615a0683b663891d43781b819ac4f2ba2b0c9604676af346d0", size = 590537124, upload-time = "2025-03-07T01:43:53.556Z" },
     { url = "https://files.pythonhosted.org/packages/dc/61/e24b560ab2e2eaeb3c839129175fb330dfcfc29e5203196e5541a4c44682/nvidia_cublas_cu12-12.8.4.1-py3-none-manylinux_2_27_x86_64.whl", hash = "sha256:8ac4e771d5a348c551b2a426eda6193c19aa630236b418086020df5ba9667142", size = 594346921, upload-time = "2025-03-07T01:44:31.254Z" },
+    { url = "https://files.pythonhosted.org/packages/70/61/7d7b3c70186fb651d0fbd35b01dbfc8e755f69fd58f817f3d0f642df20c3/nvidia_cublas_cu12-12.8.4.1-py3-none-win_amd64.whl", hash = "sha256:47e9b82132fa8d2b4944e708049229601448aaad7e6f296f630f2d1a32de35af", size = 567544208, upload-time = "2025-03-07T01:53:30.535Z" },
+]
+
+[[package]]
+name = "nvidia-cuda-cccl-cu12"
+version = "12.9.27"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/61/7e/82e49956b046bdc506c789235c587d9b3ef58b8bc1782258c1e247229647/nvidia_cuda_cccl_cu12-12.9.27-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:d7898b38aa68beaa234d48f0868273702342a196d6e2e9d0ef058dca2390ebea", size = 3152245, upload-time = "2025-05-01T19:32:04.802Z" },
+    { url = "https://files.pythonhosted.org/packages/18/2a/d4cd8506d2044e082f8cd921be57392e6a9b5ccd3ffdf050362430a3d5d5/nvidia_cuda_cccl_cu12-12.9.27-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:37869e17ce2e1ecec6eddf1927cca0f8c34e64fd848d40453df559091e2d7117", size = 3152243, upload-time = "2025-05-01T19:32:13.955Z" },
+    { url = "https://files.pythonhosted.org/packages/ce/9b/1daf405620c7ac371b76b823c6336dd742673d41a150d9a04eec2c690379/nvidia_cuda_cccl_cu12-12.9.27-py3-none-win_amd64.whl", hash = "sha256:72106f95a9bb3be18472806b4f663ebf0f9248a86d14b4ae3305725b855d9d92", size = 3152175, upload-time = "2025-05-01T19:45:11.372Z" },
 ]
 
 [[package]]
@@ -2348,11 +2418,19 @@ wheels = [
 ]
 
 [[package]]
+name = "nvidia-cuda-nvrtc-cu13"
+version = "0.0.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/d8/f8/c9c6560daf79d80703459485129cf12dd600dbb5ecdca923b78374299013/nvidia_cuda_nvrtc_cu13-0.0.1.tar.gz", hash = "sha256:8907dbe6783714506c831e47648789a7dc8895395b58643b85e97512c59b15af", size = 1373, upload-time = "2025-10-31T20:37:18.617Z" }
+
+[[package]]
 name = "nvidia-cuda-runtime-cu12"
 version = "12.8.90"
 source = { registry = "https://pypi.org/simple" }
 wheels = [
+    { url = "https://files.pythonhosted.org/packages/7c/75/f865a3b236e4647605ea34cc450900854ba123834a5f1598e160b9530c3a/nvidia_cuda_runtime_cu12-12.8.90-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:52bf7bbee900262ffefe5e9d5a2a69a30d97e2bc5bb6cc866688caa976966e3d", size = 965265, upload-time = "2025-03-07T01:39:43.533Z" },
     { url = "https://files.pythonhosted.org/packages/0d/9b/a997b638fcd068ad6e4d53b8551a7d30fe8b404d6f1804abf1df69838932/nvidia_cuda_runtime_cu12-12.8.90-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:adade8dcbd0edf427b7204d480d6066d33902cab2a4707dcfc48a2d0fd44ab90", size = 954765, upload-time = "2025-03-07T01:40:01.615Z" },
+    { url = "https://files.pythonhosted.org/packages/30/a5/a515b7600ad361ea14bfa13fb4d6687abf500adc270f19e89849c0590492/nvidia_cuda_runtime_cu12-12.8.90-py3-none-win_amd64.whl", hash = "sha256:c0c6027f01505bfed6c3b21ec546f69c687689aad5f1a377554bc6ca4aa993a8", size = 944318, upload-time = "2025-03-07T01:51:01.794Z" },
 ]
 
 [[package]]
@@ -2360,10 +2438,12 @@ name = "nvidia-cudnn-cu12"
 version = "9.10.2.21"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cublas-cu12", marker = "sys_platform != 'emscripten' and sys_platform != 'win32'" },
+    { name = "nvidia-cublas-cu12" },
 ]
 wheels = [
+    { url = "https://files.pythonhosted.org/packages/fa/41/e79269ce215c857c935fd86bcfe91a451a584dfc27f1e068f568b9ad1ab7/nvidia_cudnn_cu12-9.10.2.21-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:c9132cc3f8958447b4910a1720036d9eff5928cc3179b0a51fb6d167c6cc87d8", size = 705026878, upload-time = "2025-06-06T21:52:51.348Z" },
     { url = "https://files.pythonhosted.org/packages/ba/51/e123d997aa098c61d029f76663dedbfb9bc8dcf8c60cbd6adbe42f76d049/nvidia_cudnn_cu12-9.10.2.21-py3-none-manylinux_2_27_x86_64.whl", hash = "sha256:949452be657fa16687d0930933f032835951ef0892b37d2d53824d1a84dc97a8", size = 706758467, upload-time = "2025-06-06T21:54:08.597Z" },
+    { url = "https://files.pythonhosted.org/packages/3d/90/0bd6e586701b3a890fd38aa71c387dab4883d619d6e5ad912ccbd05bfd67/nvidia_cudnn_cu12-9.10.2.21-py3-none-win_amd64.whl", hash = "sha256:c6288de7d63e6cf62988f0923f96dc339cea362decb1bf5b3141883392a7d65e", size = 692992268, upload-time = "2025-06-06T21:55:18.114Z" },
 ]
 
 [[package]]
@@ -2430,6 +2510,7 @@ name = "nvidia-nccl-cu12"
 version = "2.27.5"
 source = { registry = "https://pypi.org/simple" }
 wheels = [
+    { url = "https://files.pythonhosted.org/packages/bb/1c/857979db0ef194ca5e21478a0612bcdbbe59458d7694361882279947b349/nvidia_nccl_cu12-2.27.5-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:31432ad4d1fb1004eb0c56203dc9bc2178a1ba69d1d9e02d64a6938ab5e40e7a", size = 322400625, upload-time = "2025-06-26T04:11:04.496Z" },
     { url = "https://files.pythonhosted.org/packages/6e/89/f7a07dc961b60645dbbf42e80f2bc85ade7feb9a491b11a1e973aa00071f/nvidia_nccl_cu12-2.27.5-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:ad730cf15cb5d25fe849c6e6ca9eb5b76db16a80f13f425ac68d8e2e55624457", size = 322348229, upload-time = "2025-06-26T04:11:28.385Z" },
 ]
 
@@ -4058,7 +4139,7 @@ name = "torch"
 version = "2.10.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cuda-bindings", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
+    { name = "cuda-bindings", version = "12.9.4", source = { registry = "https://pypi.org/simple" }, marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
     { name = "filelock" },
     { name = "fsspec" },
     { name = "jinja2" },
@@ -4165,11 +4246,17 @@ name = "triton"
 version = "3.6.0"
 source = { registry = "https://pypi.org/simple" }
 wheels = [
+    { url = "https://files.pythonhosted.org/packages/0f/2c/96f92f3c60387e14cc45aed49487f3486f89ea27106c1b1376913c62abe4/triton-3.6.0-cp311-cp311-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:49df5ef37379c0c2b5c0012286f80174fcf0e073e5ade1ca9a86c36814553651", size = 176081190, upload-time = "2026-01-20T16:16:00.523Z" },
     { url = "https://files.pythonhosted.org/packages/e0/12/b05ba554d2c623bffa59922b94b0775673de251f468a9609bc9e45de95e9/triton-3.6.0-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:e8e323d608e3a9bfcc2d9efcc90ceefb764a82b99dea12a86d643c72539ad5d3", size = 188214640, upload-time = "2026-01-20T16:00:35.869Z" },
+    { url = "https://files.pythonhosted.org/packages/17/5d/08201db32823bdf77a0e2b9039540080b2e5c23a20706ddba942924ebcd6/triton-3.6.0-cp312-cp312-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:374f52c11a711fd062b4bfbb201fd9ac0a5febd28a96fb41b4a0f51dde3157f4", size = 176128243, upload-time = "2026-01-20T16:16:07.857Z" },
     { url = "https://files.pythonhosted.org/packages/ab/a8/cdf8b3e4c98132f965f88c2313a4b493266832ad47fb52f23d14d4f86bb5/triton-3.6.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:74caf5e34b66d9f3a429af689c1c7128daba1d8208df60e81106b115c00d6fca", size = 188266850, upload-time = "2026-01-20T16:00:43.041Z" },
+    { url = "https://files.pythonhosted.org/packages/3c/12/34d71b350e89a204c2c7777a9bba0dcf2f19a5bfdd70b57c4dbc5ffd7154/triton-3.6.0-cp313-cp313-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:448e02fe6dc898e9e5aa89cf0ee5c371e99df5aa5e8ad976a80b93334f3494fd", size = 176133521, upload-time = "2026-01-20T16:16:13.321Z" },
     { url = "https://files.pythonhosted.org/packages/f9/0b/37d991d8c130ce81a8728ae3c25b6e60935838e9be1b58791f5997b24a54/triton-3.6.0-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:10c7f76c6e72d2ef08df639e3d0d30729112f47a56b0c81672edc05ee5116ac9", size = 188289450, upload-time = "2026-01-20T16:00:49.136Z" },
+    { url = "https://files.pythonhosted.org/packages/ce/4e/41b0c8033b503fd3cfcd12392cdd256945026a91ff02452bef40ec34bee7/triton-3.6.0-cp313-cp313t-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:1722e172d34e32abc3eb7711d0025bb69d7959ebea84e3b7f7a341cd7ed694d6", size = 176276087, upload-time = "2026-01-20T16:16:18.989Z" },
     { url = "https://files.pythonhosted.org/packages/35/f8/9c66bfc55361ec6d0e4040a0337fb5924ceb23de4648b8a81ae9d33b2b38/triton-3.6.0-cp313-cp313t-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:d002e07d7180fd65e622134fbd980c9a3d4211fb85224b56a0a0efbd422ab72f", size = 188400296, upload-time = "2026-01-20T16:00:56.042Z" },
+    { url = "https://files.pythonhosted.org/packages/49/55/5ecf0dcaa0f2fbbd4420f7ef227ee3cb172e91e5fede9d0ecaddc43363b4/triton-3.6.0-cp314-cp314-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:ef5523241e7d1abca00f1d240949eebdd7c673b005edbbce0aca95b8191f1d43", size = 176138577, upload-time = "2026-01-20T16:16:25.426Z" },
     { url = "https://files.pythonhosted.org/packages/df/3d/9e7eee57b37c80cec63322c0231bb6da3cfe535a91d7a4d64896fcb89357/triton-3.6.0-cp314-cp314-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:a17a5d5985f0ac494ed8a8e54568f092f7057ef60e1b0fa09d3fd1512064e803", size = 188273063, upload-time = "2026-01-20T16:01:07.278Z" },
+    { url = "https://files.pythonhosted.org/packages/48/db/56ee649cab5eaff4757541325aca81f52d02d4a7cd3506776cad2451e060/triton-3.6.0-cp314-cp314t-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:0b3a97e8ed304dfa9bd23bb41ca04cdf6b2e617d5e782a8653d616037a5d537d", size = 176274804, upload-time = "2026-01-20T16:16:31.528Z" },
     { url = "https://files.pythonhosted.org/packages/f6/56/6113c23ff46c00aae423333eb58b3e60bdfe9179d542781955a5e1514cb3/triton-3.6.0-cp314-cp314t-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:46bd1c1af4b6704e554cad2eeb3b0a6513a980d470ccfa63189737340c7746a7", size = 188397994, upload-time = "2026-01-20T16:01:14.236Z" },
 ]
 

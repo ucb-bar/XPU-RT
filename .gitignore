@@ -234,9 +234,10 @@ calibration_data/
 
 # MLIR build artifacts
 mlir_build/
-tmp/*
-!tmp/agentic_documentation/
-!tmp/agentic_documentation/**
+tmp/
+sessions/
+tmp/agentic_documentation/
+tmp/agentic_documentation/**
 compgen_output
 .claude
 
@@ -265,6 +266,15 @@ third_party/**/.pytest_cache/
 # Benchmark outputs
 benchmarks/results/
 benchmarks/tmp/
+
+# Pytest / test-suite scratch dropped at repo root by stray fixtures
+pytest-of-*/
+compgen-test-home-*/
+torchinductor_*/
+
+# Native runtime CMake build directories (out-of-tree per triple)
+runtime/native/libcompgen_rt/build/
+runtime/native/libcompgen_rt/build-*/
 
 # Paper metrics artifacts
 artifacts/paper/

@@ -114,3 +114,95 @@ def test_cli_scaffold_pack_bad_kind_errors(tmp_path: Path) -> None:
         ["scaffold-pack", "--kind", "bogus", "--name", "mypack", "--out", str(tmp_path)],
     )
     assert result.exit_code != 0
+
+
+# ---------------------------------------------------------------------------
+# target_pack — full multi-surface scaffold
+# ---------------------------------------------------------------------------
+
+
+def test_target_pack_emits_full_radiance_shaped_layout(tmp_path: Path) -> None:
+    """``target_pack`` produces Backend + Provider + MCP + HardwareSpec + tests."""
+    result = scaffold_pack(kind="target_pack", name="acme_npu", out_dir=tmp_path)
+
+    pkg = result.package_root
+    assert (pkg / "__init__.py").exists()
+    assert (pkg / "manifest.yaml").exists()
+    assert (pkg / "backend.py").exists()
+    assert (pkg / "kernels.py").exists()
+    assert (pkg / "mcp.py").exists()
+    assert (pkg / "specs" / "acme_npu.yaml").exists()
+    assert (result.pack_root / "tests" / "test_pack_smoke.py").exists()
+
+
+def test_target_pack_pyproject_declares_all_four_entry_points(tmp_path: Path) -> None:
+    result = scaffold_pack(kind="target_pack", name="acme_npu", out_dir=tmp_path)
+    content = result.pyproject_path.read_text()
+    assert '[project.entry-points."compgen.packs"]' in content
+    assert '[project.entry-points."compgen.targets.backends"]' in content
+    assert '[project.entry-points."compgen.kernels.providers"]' in content
+    assert '[project.entry-points."compgen.mcp.tools"]' in content
+    # Class-name derivation: snake_case → CamelCase.
+    assert "AcmeNpuBackend" in content
+    assert "AcmeNpuProvider" in content
+    assert "ACME_NPU_TOOLS" in content
+
+
+def test_target_pack_provider_declines_by_default(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Stub Provider must satisfy the ``KernelProvider`` Protocol but
+    decline every contract until the user fills it in."""
+    scaffold_pack(kind="target_pack", name="acme_npu", out_dir=tmp_path)
+    monkeypatch.syspath_prepend(str(tmp_path / "acme_npu" / "src"))
+
+    try:
+        from compgen.kernels.provider import KernelContract, SearchBudget
+
+        provider_module = __import__("acme_npu.kernels", fromlist=["AcmeNpuProvider"])
+        provider = provider_module.AcmeNpuProvider()
+        contract = KernelContract(
+            region_id="r0",
+            op_family="add",
+            input_shapes=((4,),),
+            output_shapes=((4,),),
+            dtypes=("f32",),
+            target_name="acme_npu",
+            hardware_key="",
+            objective="latency",
+        )
+        assert provider.name == "acme_npu"
+        assert provider.accepts_contract(contract) is False
+        result = provider.search(contract, SearchBudget())
+        assert result.found is False
+    finally:
+        sys.modules.pop("acme_npu", None)
+        sys.modules.pop("acme_npu.kernels", None)
+        sys.modules.pop("acme_npu.backend", None)
+        sys.modules.pop("acme_npu.mcp", None)
+
+
+def test_target_pack_hardware_spec_loads(tmp_path: Path) -> None:
+    """The scaffolded HardwareSpec stub must load through CompGen's loader."""
+    from compgen.targetgen.load import load_hardware_spec
+
+    result = scaffold_pack(kind="target_pack", name="acme_npu", out_dir=tmp_path)
+    spec_path = result.package_root / "specs" / "acme_npu.yaml"
+    spec = load_hardware_spec(str(spec_path))
+    assert spec.name == "acme_npu"
+
+
+def test_target_pack_mcp_tools_list_validates(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Empty MCP tools list passes the ``compgen.mcp.tools`` validator."""
+    scaffold_pack(kind="target_pack", name="acme_npu", out_dir=tmp_path)
+    monkeypatch.syspath_prepend(str(tmp_path / "acme_npu" / "src"))
+
+    try:
+        from compgen.plugins import _VALIDATORS
+
+        mcp_module = __import__("acme_npu.mcp", fromlist=["ACME_NPU_TOOLS"])
+        validator = _VALIDATORS["compgen.mcp.tools"]
+        ok, _msg = validator(mcp_module.ACME_NPU_TOOLS)
+        assert ok, f"validator rejected the scaffolded MCP tools list: {_msg}"
+    finally:
+        for k in list(sys.modules):
+            if k == "acme_npu" or k.startswith("acme_npu."):
+                sys.modules.pop(k, None)

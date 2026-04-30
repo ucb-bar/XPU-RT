@@ -199,15 +199,35 @@ def _aten_clone(args: list[torch.Tensor], **kw) -> torch.Tensor:
     return args[0].clone()
 
 
+def _aten_relu(args: list[torch.Tensor], **kw) -> torch.Tensor:
+    return F.relu(args[0])
+
+
+def _aten_bias_add(args: list[torch.Tensor], **kw) -> torch.Tensor:
+    """``torch.ops.aten.bias_add``-style elementwise add with broadcast.
+
+    The decomposition emitted by ``torch.export`` for ``nn.Linear``
+    (with bias) generates a separate ``aten.bias_add`` call instead of
+    folding bias into the matmul. The semantics are identical to
+    elementwise add with broadcasting on the trailing dim:
+    ``output = input + bias`` where ``bias.shape == (out_features,)``
+    and ``input.shape == (..., out_features)``.
+    """
+    x, bias = args[0], args[1]
+    return x + bias
+
+
 _ATEN_DISPATCH: dict[str, Any] = {
     "aten_layer_norm": _aten_layer_norm,
     "aten_native_layer_norm": _aten_layer_norm,
     "aten_softmax": _aten_softmax,
     "aten_gelu": _aten_gelu,
     "aten_silu": _aten_silu,
+    "aten_relu": _aten_relu,
     "aten_matmul": _aten_matmul,
     "aten_bmm": _aten_bmm,
     "aten_add": _aten_add,
+    "aten_bias_add": _aten_bias_add,
     "aten_mul": _aten_mul,
     "aten_sub": _aten_sub,
     "aten_div": _aten_div,

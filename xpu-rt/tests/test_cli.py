@@ -31,7 +31,7 @@ def test_cli_version() -> None:
     runner = CliRunner()
     result = runner.invoke(main, ["--version"])
     assert result.exit_code == 0
-    assert "0.1.0" in result.output
+    assert "0.2.0" in result.output
 
 
 def test_cli_llm_show_respects_global_selection() -> None:
@@ -96,4 +96,4 @@ def test_cli_module_entrypoint_runs() -> None:
         check=False,
     )
     assert result.returncode == 0
-    assert "0.1.0" in result.stdout
+    assert "0.2.0" in result.stdout

@@ -1,6 +1,6 @@
 [project]
 name = "compgen"
-version = "0.1.0"
+version = "0.2.0"
 description = "An LLM-driven compiler generator for heterogeneous hardware targets"
 readme = "README.md"
 license = "Apache-2.0"
@@ -59,9 +59,47 @@ solve = [
 quantization = [
     "torchao>=0.16",
 ]
-iree = [
-    "iree-compiler>=3.0",
-    "iree-runtime>=3.0",
+# CUDA dispatch path for the Event Tensor Compiler runtime.
+# Pulls cuda-python (which ships the Tile IR Python builder used by
+# `compgen.transforms.emit_cuda_megakernel`) plus NVIDIA's runtime libs
+# so callers don't need a system CUDA toolkit. NVRTC is statically
+# linked into libcompgen_rt — no separate nvcc dependency at install
+# time. Wheel ships a prebuilt `libcompgen_rt-cuda.so` for this extra.
+#
+# cu13 NVRTC: required for Blackwell tensor-core paths since
+# `__CUDA_ARCH__ == 1000` is needed for cuBLASDx's tcgen05.mma /
+# mma.sync dispatchers (per bridge #089/#095). cu12 NVRTC silently
+# falls back to SIMT on sm_100/sm_120, killing the perf gate.
+# Pinned defensively here so `pip install --force-reinstall
+# 'compgen[cuda]'` doesn't tear down torch's cu13 deps and break
+# the cu13 NVRTC discovery (per bridge #099).
+cuda = [
+    "cuda-python>=12.6",
+    "nvidia-cuda-runtime-cu12>=12.6",
+    "nvidia-cuda-cccl-cu12>=12.6",
+    # cu13 NVRTC: pulled in transitively via torch>=2.6 on Linux,
+    # which lays libnvrtc.so.13 under nvidia/cu13/lib/. The pip
+    # package nvidia-cuda-nvrtc-cu13 is a placeholder (0.0.1) so
+    # we can't pin a real version; pulling torch>=2.6 is the
+    # actual mechanism. Listed here without version pin so a
+    # ``--force-reinstall`` of compgen still names the dep.
+    "nvidia-cuda-nvrtc-cu13; sys_platform == 'linux'",
+    "numpy>=1.26",
+]
+# Opt-in Triton lowering for op-families that don't yet have a
+# Tile-IR template. NOT a fallback for missing Tile IR — Tile IR is
+# the primary lowering and `[cuda]` already pulls it.
+cuda-triton = [
+    "compgen[cuda]",
+    "triton>=3.0.0",
+]
+# Blackwell-class hardware: enables the multi-GPU NCCL-inside-megakernel
+# path (Phase 4b). Requires NCCL 2.22+ for user-buffer registration on
+# Blackwell. cuDNN ships for the kernel templates that opt into it.
+blackwell = [
+    "compgen[cuda]",
+    "nvidia-nccl-cu12>=2.22",
+    "nvidia-cudnn-cu12>=9.3",
 ]
 benchmarks = [
     "matplotlib>=3.8",
@@ -95,6 +133,7 @@ demo = [
 [project.scripts]
 compgen = "compgen.cli:main"
 compgen-mcp = "compgen.mcp.server:main"
+compgen-run-conformance = "compgen.testing.etc_conformance:_cli"
 
 # Entry-point groups CompGen discovers at startup. Each group is declared
 # here (even when empty in-repo) so user packages can rely on a stable name
@@ -130,6 +169,19 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["python/compgen"]
+# Include compiled artifacts (`.so`, `.dylib`, `.dll`) from the prebuilt
+# native runtime directory. Without this list, hatch's default file-include
+# pattern strips compiled binaries as build artifacts. The CMake build is
+# run as a pre-step (see Makefile target `build-cuda-rt` and
+# .github/workflows/release.yml) which stages libcompgen_rt-{cuda,cpu}.{so,dylib,dll}
+# under python/compgen/runtime/native/prebuilt/. When the dir holds only
+# the placeholder README, the wheel ships pure-Python — the [cuda] extra
+# raises a typed error at import time in that case.
+artifacts = [
+    "python/compgen/runtime/native/prebuilt/*.so",
+    "python/compgen/runtime/native/prebuilt/*.dylib",
+    "python/compgen/runtime/native/prebuilt/*.dll",
+]
 
 [tool.ruff]
 line-length = 120
@@ -176,9 +228,6 @@ addopts = [
     "--ignore=tests/benchmarks/test_torchbench_adapter.py",
     # Env-gated: requires Understanding-PI0 checkout + 450M SmolVLA.
     "--ignore=tests/test_smolvla_e2e.py",
-    # LLM-path flakes.
-    "--ignore=tests/agent/test_gepa_loop.py",
-    "--ignore=tests/agent/test_pipeline_e2e.py",
     # Individual known-flaky test ids.
     "--deselect=tests/agent/invent_slots/test_registrar.py::test_registrar_registers_all_slots",
     "--deselect=tests/agent/policies/test_default.py::test_policy_against_real_registry",

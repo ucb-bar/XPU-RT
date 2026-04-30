@@ -27,11 +27,29 @@ from compgen.targets.options import TargetOptions
 class CompiledArtifact:
     """Result of compiling a kernel or model for a target.
 
+    Returned by :meth:`VendorDialectAdapter.emit_artifact` and similar
+    backend-emit methods. There is **no** ``artifact_path`` field —
+    when the artifact lands on disk (e.g. a ``.tilebc`` bytecode
+    written under ``output_dir``), put the path in ``metadata`` (e.g.
+    ``metadata["artifact_path"] = str(out / "kernel.tilebc")``) and
+    set ``code`` to either the inline source/text or a base64-encoded
+    handle. Per bridge #137: agentic-compilation wrappers should
+    declare ``format`` explicitly (e.g. ``"cuda-tile-bitcode"``) so
+    the host's verify gate knows whether to read ``code`` directly
+    or open ``metadata["artifact_path"]``.
+
     Attributes:
         code: Generated code (assembly, MLIR, Python, C, etc.).
-        format: Code format identifier.
+            For binary artifacts: base64 string or text excerpt with
+            a path-handle in ``metadata``.
+        format: Code format identifier (e.g. ``"python"``,
+            ``"mlir-cuda-tile"``, ``"cuda-tile-bitcode"``,
+            ``"ptx"``). Distinguishes which downstream consumer can
+            handle the code.
         target_name: Which target this was compiled for.
         metadata: Compilation metadata (pass stats, timing, etc.).
+            Recommended keys when the artifact is on disk:
+            ``"artifact_path"`` (str), ``"artifact_size_bytes"`` (int).
     """
 
     code: str = ""

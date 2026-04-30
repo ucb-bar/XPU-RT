@@ -18,30 +18,73 @@ compiler infrastructure executes them, and verification decides what ships.
 
 from __future__ import annotations
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = [
     "__version__",
     "CompGenDevice",
     "CompiledModel",
     "LLMCompileResult",
+    "MegakernelBundle",
     "compile_model",
+    "compile_to_megakernel",
     "compile_with_llm",
     "device",
+    "has_cuda_runtime",
     "open_llm_session",
 ]
+
+
+def has_cuda_runtime() -> bool:
+    """Return True if a CUDA-enabled libcompgen_rt is available.
+
+    Used by the remote-Blackwell sanity check
+    (``python -c 'import compgen; assert compgen.has_cuda_runtime()'``).
+    Returns ``False`` on dev installs without the prebuilt CUDA library
+    or hosts where ``torch.cuda.is_available()`` returns False.
+    """
+    try:
+        import torch
+    except Exception:
+        return False
+    if not torch.cuda.is_available():
+        return False
+    # Existence of the prebuilt CUDA library is the second precondition.
+    # The CPU-only library exists on every install; only the CUDA variant
+    # is gated by the wheel's ``[cuda]`` extra.
+    from pathlib import Path
+
+    prebuilt_dir = Path(__file__).parent / "runtime" / "native" / "prebuilt"
+    cuda_lib = list(prebuilt_dir.glob("libcompgen_rt-cuda*.so"))
+    return len(cuda_lib) > 0
 
 
 def __getattr__(name: str):
     """Lazily expose the top-level API without importing heavy deps at package import time."""
 
-    if name in {"CompGenDevice", "CompiledModel", "compile_model", "device"}:
-        from compgen.api import CompGenDevice, CompiledModel, compile_model, device
+    if name in {
+        "CompGenDevice",
+        "CompiledModel",
+        "MegakernelBundle",
+        "compile_model",
+        "compile_to_megakernel",
+        "device",
+    }:
+        from compgen.api import (
+            CompGenDevice,
+            CompiledModel,
+            MegakernelBundle,
+            compile_model,
+            compile_to_megakernel,
+            device,
+        )
 
         exports = {
             "CompGenDevice": CompGenDevice,
             "CompiledModel": CompiledModel,
+            "MegakernelBundle": MegakernelBundle,
             "compile_model": compile_model,
+            "compile_to_megakernel": compile_to_megakernel,
             "device": device,
         }
         return exports[name]

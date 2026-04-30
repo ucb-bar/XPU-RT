@@ -59,11 +59,14 @@ class RoccAccelLoweringPlugin:
         return {"accel_lowering": "rocc", "custom_instructions": custom_instrs}
 
 
-def create_rocc_stack(spec: HardwareSpec, output_dir: str | None = None) -> TargetDialectStack:
-    """Create RoCC accelerator pipeline (7 stages)."""
-    import tempfile
+def create_rocc_stack(spec: HardwareSpec, output_dir: str | Path) -> TargetDialectStack:
+    """Create RoCC accelerator pipeline (7 stages).
 
-    bundle_dir = Path(output_dir) if output_dir else Path(tempfile.mkdtemp(prefix="rocc_bundle_"))
+    ``output_dir`` is mandatory; see :func:`create_cuda_gpu_stack`.
+    """
+    if output_dir is None:
+        raise ValueError("create_rocc_stack requires output_dir; pass a session-scoped path")
+    bundle_dir = Path(output_dir)
     return TargetDialectStack(
         target_name=spec.name,
         stages=[

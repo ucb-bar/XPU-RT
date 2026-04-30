@@ -9,15 +9,14 @@ IR text. Used for:
 
 This is verification ladder level 1 (structural). It does NOT check semantics.
 
+Supports: ``CHECK``, ``CHECK-NOT``, ``CHECK-LABEL``, ``CHECK-SAME``,
+``CHECK-COUNT``. Patterns are substring-match by default.
+
 Invariants:
     - CHECK lines must be unambiguous (unique matches in the IR text).
     - CHECK-NOT lines must not match anywhere in the IR.
     - CHECK-LABEL scopes subsequent checks to a labeled region.
     - All check failures produce actionable diagnostics.
-
-TODO: Implement check_ir() with CHECK, CHECK-NOT, CHECK-LABEL, CHECK-SAME.
-TODO: Add CHECK-COUNT for counting op occurrences.
-TODO: Support regex patterns in check lines.
 """
 
 from __future__ import annotations

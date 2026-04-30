@@ -17,10 +17,6 @@ Invariants:
     - Every op in the workload gets a capability entry.
     - Classification is deterministic given the same profile.
     - Unknown ops default to FALLBACK lane.
-
-TODO: Implement classify_target() from TargetProfile features + kernel_backends.
-TODO: Implement infer_capabilities() from profile + op list.
-TODO: Support user overrides (force an op to a specific lane).
 """
 
 from __future__ import annotations
