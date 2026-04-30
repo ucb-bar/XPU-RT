@@ -102,12 +102,20 @@ class ExoAdapter:
             proc_name=seed.name,
         )
 
+        # The seed proc hasn't been scheduled or compiled yet, so we
+        # have no runnable kernel to measure. Use ``math.nan`` instead
+        # of the old placeholder ``0.0`` so downstream selectors don't
+        # confuse "unmeasured" with "zero latency" — the sort in
+        # ``exo_schedule_agent`` relies on this distinction once real
+        # scheduled variants start producing measured numbers.
+        import math
+
         return ExoKernelResult(
             cluster_id=f"exo_{op_name}_{self._target_name}",
             proc_code=seed.proc_source,
             scheduled_code=seed.proc_source,  # unscheduled for now
             c_code=seed.c_skeleton,
-            latency_us=0.0,  # no benchmark yet
+            latency_us=math.nan,  # unscheduled: no kernel to benchmark yet
             correct=True,  # assumed correct (unscheduled identity)
             schedule_ops_applied=0,
         )

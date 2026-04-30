@@ -16,6 +16,7 @@ from compgen.plugins import (
     GROUP_DECOMPOSITIONS,
     GROUP_FUSION_RULES,
     GROUP_KERNEL_PROVIDERS,
+    GROUP_LOWERINGS,
     GROUP_TARGET_BACKENDS,
     KNOWN_GROUPS,
     discover_all,
@@ -42,7 +43,9 @@ def test_known_groups_match_documented_set() -> None:
     assert GROUP_DECOMPOSITIONS in KNOWN_GROUPS
     assert GROUP_FUSION_RULES in KNOWN_GROUPS
     assert GROUP_TARGET_BACKENDS in KNOWN_GROUPS
-    assert len(KNOWN_GROUPS) == 5
+    assert GROUP_LOWERINGS in KNOWN_GROUPS  # Wave 2.3 user-dialect entrypoint
+    # Also: GROUP_KERNEL_CONTRACTS, GROUP_MCP_TOOLS.
+    assert len(KNOWN_GROUPS) == 7
 
 
 # ---------------------------------------------------------------------------

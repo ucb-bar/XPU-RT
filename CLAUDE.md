@@ -24,7 +24,7 @@ and verification decides what ships.
 These are locked. Do not propose alternatives. Do not drift from them.
 
 1. **Python-first + MLIR backend** -- Python control plane, MLIR/xDSL execution spine, Triton kernel substrate.
-2. **Standalone first** -- Optional IREE/PJRT adapters later. NOT built on top of IREE.
+2. **Standalone first** -- NOT built on top of IREE. (IREE/PJRT adapters were removed; re-add only with an in-tree target profile that needs them.)
 3. **LLM as proposal engine** -- Generates recipes (transform scripts, policies, kernel plans). NOT compiler codebases.
 4. **Provider-agnostic LLM interface** -- Gemini API primary. Reuse autocomp's LLMClient for kernel search.
 5. **Autocomp integrated** -- Kernel search via `third_party/autocomp`, wrapped by `kernels/autocomp_adapter.py`.
@@ -74,12 +74,22 @@ The generation pipeline produces these exact artifacts:
     verification_report.json      # Verify: full ladder results
 ```
 
+Every slot has a typed status in ``manifest.json::extended_artifacts``
+(``ok`` | ``skipped`` | ``failed``). ``skipped`` carries a reason
+("no analysis passed", "torch.compile failed on model X", ...);
+``failed`` raises :class:`~compgen.runtime.errors.BundleEmissionError`
+from ``compile_model`` unless the caller explicitly passes
+``strict_artifacts=False``. Bundle directories never fall back to
+``/tmp`` — ``BundleStage`` rejects ``output_dir=None``. See
+`python/compgen/runtime/bundle_emit.py` for the canonical mapping of
+slot → source data.
+
 ## Code Conventions
 
 - **Python 3.11+**, always `from __future__ import annotations`
 - **Type hints everywhere** -- all public APIs fully annotated
 - **Formatting/linting**: `ruff` (line-length 120)
-- **Type checking**: `mypy` (strict mode, ignore_missing_imports)
+- **Type checking**: `mypy` with `check_untyped_defs = true`, `warn_return_any = true`, `ignore_missing_imports = true`. Full `strict = true` is a roadmap item — see `pyproject.toml:[tool.mypy]` for the authoritative config.
 - **Logging**: `structlog` -- never `print()`
 - **Docstrings**: Google style, required on all public classes and functions
 - **No functional code in `__init__.py`** beyond re-exports

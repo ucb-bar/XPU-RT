@@ -289,13 +289,39 @@ class AutocompAdapter:
             if "best_code" in results:
                 best_code = results["best_code"]
 
+        # Speedup-vs-baseline needs BOTH a measured candidate latency
+        # and a measured (or rooflined) baseline on the same hardware.
+        # ``best_latency`` is the candidate; the baseline timing is
+        # whatever was written as ``baseline_score`` (if the search
+        # strategy recorded one), else NaN. We never return a
+        # placeholder ``1.0`` — an unknown speedup stays NaN so
+        # downstream selectors can skip the candidate instead of
+        # treating "no improvement" and "unmeasured" as identical.
+        import math
+
+        baseline_latency = math.nan
+        if results_file.exists():
+            results = json.loads(results_file.read_text())
+            if "baseline_score" in results:
+                baseline_latency = float(results["baseline_score"])
+
+        if (
+            math.isfinite(baseline_latency)
+            and baseline_latency > 0
+            and math.isfinite(best_latency)
+            and best_latency > 0
+        ):
+            speedup_vs_baseline = baseline_latency / best_latency
+        else:
+            speedup_vs_baseline = math.nan
+
         return KernelResult(
             cluster_id=cluster_id,
             kernel_code=best_code,
             language="cuda",
             latency_us=best_latency,
             correct=best_latency < float("inf"),
-            speedup_vs_baseline=1.0,  # TODO: compute from reference
+            speedup_vs_baseline=speedup_vs_baseline,
             iterations_used=0,
             total_candidates=total_candidates,
             search_cost_tokens=0,

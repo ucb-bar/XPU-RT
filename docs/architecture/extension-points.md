@@ -168,14 +168,13 @@ my_dialect = DialectSpec(
 
 ## Extension Point 5: Runtime Adapters
 
-**Purpose**: Execute compiled artifacts on different runtimes (local CPU, IREE, PJRT, device simulator, etc.).
+**Purpose**: Execute compiled artifacts on different runtimes (local CPU, native accelerator HAL, device simulator, etc.).
 
 **Where**: `python/compgen/runtime/adapters/`
 
 **Existing adapters**:
 - `local_executor.py` — Local CPU/GPU benchmarking
-- `iree_adapter.py` — IREE runtime
-- `pjrt_adapter.py` — PJRT (JAX/XLA runtime)
+- `runtime/glue.py::{CpuRuntimeAdapter, CudaRuntimeAdapter, BaremetalRuntimeAdapter}` — native HAL dispatch via `runtime/native/libcompgen_rt/`
 
 ## Extension Point 6: Transform Templates
 

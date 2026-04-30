@@ -43,6 +43,14 @@ GROUP_DECOMPOSITIONS = "compgen.transforms.decompositions"
 GROUP_FUSION_RULES = "compgen.kernels.fusion_rules"
 GROUP_TARGET_BACKENDS = "compgen.targets.backends"
 GROUP_KERNEL_CONTRACTS = "compgen.kernels.contracts"
+GROUP_MCP_TOOLS = "compgen.mcp.tools"
+# User-supplied pattern matchers + custom MLIR-dialect lowerings.
+# The agentic-compilation surface for "I have a custom dialect"
+# (cuda-tile, etc.). Registered functions are tried by
+# :func:`compgen.runtime.lowering.lower_torch_to_megakernel` before
+# the built-in diamond/FFN matchers, so a user can plug in a
+# domain-specific pattern without forking the matcher list.
+GROUP_LOWERINGS = "compgen.runtime.lowerings"
 
 
 KNOWN_GROUPS = (
@@ -51,6 +59,8 @@ KNOWN_GROUPS = (
     GROUP_FUSION_RULES,
     GROUP_TARGET_BACKENDS,
     GROUP_KERNEL_CONTRACTS,
+    GROUP_MCP_TOOLS,
+    GROUP_LOWERINGS,
 )
 
 
@@ -96,12 +106,65 @@ def _validate_kernel_contract_factory(obj: Any) -> tuple[bool, str]:
     return (True, "")
 
 
+def _validate_lowering(obj: Any) -> tuple[bool, str]:
+    """User-supplied pattern matcher / MLIR-dialect lowering.
+
+    Contract: ``obj(model, sample_inputs, *, backend_choice=None) ->
+    LoweringResult``. The function may raise
+    :class:`compgen.runtime.lowering.UnsupportedShape` to indicate
+    "this pattern doesn't match", letting the matcher cascade
+    continue to the next registered lowering or the built-ins.
+    """
+    if not callable(obj):
+        return (False, "lowering entry must be callable")
+    import inspect
+
+    try:
+        sig = inspect.signature(obj)
+    except (TypeError, ValueError):
+        # Built-in or C-extension callable; trust it.
+        return (True, "")
+    params = list(sig.parameters.values())
+    # Need at least 2 positional args (model, sample_inputs).
+    pos_count = sum(
+        1 for p in params if p.kind in (inspect.Parameter.POSITIONAL_OR_KEYWORD, inspect.Parameter.POSITIONAL_ONLY)
+    )
+    if pos_count < 2:
+        return (
+            False,
+            f"lowering must accept (model, sample_inputs); got {pos_count} positional",
+        )
+    return (True, "")
+
+
+def _validate_mcp_tool(obj: Any) -> tuple[bool, str]:
+    """Each entry must be a tool-dict or iterable of tool-dicts.
+
+    A tool-dict has keys ``name``, ``description``, ``input_schema``,
+    ``handler`` (callable), and ``phase``. Shape mirrors what the
+    in-tree ``compgen.mcp.tools`` modules already export.
+    """
+    items = obj if isinstance(obj, (list, tuple)) else [obj]
+    required = ("name", "description", "input_schema", "handler", "phase")
+    for item in items:
+        if not isinstance(item, dict):
+            return (False, f"mcp tool entry must be a dict, got {type(item).__name__}")
+        missing = [k for k in required if k not in item]
+        if missing:
+            return (False, f"mcp tool dict missing keys: {missing}")
+        if not callable(item.get("handler")):
+            return (False, "mcp tool 'handler' must be callable")
+    return (True, "")
+
+
 _VALIDATORS: dict[str, Callable[[Any], tuple[bool, str]]] = {
     GROUP_KERNEL_PROVIDERS: _validate_kernel_provider,
     GROUP_DECOMPOSITIONS: _validate_decomposition,
     GROUP_FUSION_RULES: _validate_fusion_rule,
     GROUP_TARGET_BACKENDS: _validate_target_backend,
     GROUP_KERNEL_CONTRACTS: _validate_kernel_contract_factory,
+    GROUP_MCP_TOOLS: _validate_mcp_tool,
+    GROUP_LOWERINGS: _validate_lowering,
 }
 
 
@@ -169,7 +232,10 @@ def _try_load(ep: EntryPoint, group: str) -> LoadedPlugin | None:
             "extension.load_failed",
             extra={
                 "group": group,
-                "name": ep.name,
+                # ``name`` collides with LogRecord's reserved attribute
+                # and turns the original load failure into a noisy
+                # KeyError that masks what really went wrong.
+                "plugin_name": ep.name,
                 "error": str(exc),
             },
         )
@@ -184,7 +250,7 @@ def _try_load(ep: EntryPoint, group: str) -> LoadedPlugin | None:
                 "extension.validate_failed",
                 extra={
                     "group": group,
-                    "name": ep.name,
+                    "plugin_name": ep.name,
                     "reason": reason,
                 },
             )
@@ -335,6 +401,7 @@ __all__ = [
     "GROUP_FUSION_RULES",
     "GROUP_KERNEL_CONTRACTS",
     "GROUP_KERNEL_PROVIDERS",
+    "GROUP_MCP_TOOLS",
     "GROUP_TARGET_BACKENDS",
     "KNOWN_GROUPS",
     "LoadedPlugin",

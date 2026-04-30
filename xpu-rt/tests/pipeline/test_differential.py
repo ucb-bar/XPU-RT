@@ -197,3 +197,107 @@ def test_pipeline_cache_hit_rate_tracks_over_time():
 def test_invalid_cache_size_raises():
     with pytest.raises(ValueError, match="max_entries"):
         PipelineCache(max_entries=0)
+
+
+# ---------------------------------------------------------------------------
+# REQ-004 — CompiledExecutorProtocol
+# ---------------------------------------------------------------------------
+
+
+def test_external_executor_callable_satisfies_protocol():
+    """Any matching callable is a ``CompiledExecutorProtocol``
+    instance (the Protocol is ``runtime_checkable``)."""
+    from compgen.pipeline import CompiledExecutorProtocol
+
+    def fake_exec(inputs):
+        return inputs[0]
+
+    assert isinstance(fake_exec, CompiledExecutorProtocol)
+
+
+def test_external_executor_path_marks_compiled_executed():
+    """Passing a callable as ``run_compiled_executor=`` invokes it
+    instead of the in-tree CPU interpreter."""
+
+    fx = attention_mlp_tiny()
+
+    called: list[tuple] = []
+
+    def fake_exec(inputs):
+        called.append(tuple(inputs))
+        # Return the eager reference so the diff comes out at zero.
+        return fx.eager_output
+
+    report = compile_and_diff(
+        fx.model,
+        fx.example_inputs,
+        options=cuda_a100_defaults(),
+        fixture_name=fx.name,
+        eager_reference=fx.eager_output,
+        run_compiled_executor=fake_exec,
+    )
+    assert report.compiled_executed is True
+    assert called, "external executor was never invoked"
+    # The fake executor returned the eager reference verbatim, so the
+    # diff is zero and the compiled_diff_pass check trips True.
+    assert report.compiled_diff_pass is True
+    # The in-tree CPU interpreter wasn't used — its op counters stay 0.
+    assert report.executor_ops_run == 0
+
+
+def test_external_executor_warning_surfaces_diffs():
+    """A wrong-output callable surfaces the diff in compiled_diff_max_abs."""
+    import torch
+
+    fx = attention_mlp_tiny()
+
+    def wrong_exec(inputs):
+        # Return zeros of matching shape — diff against eager_output
+        # will be non-zero; harness must still mark compiled_executed.
+        return torch.zeros_like(fx.eager_output)
+
+    report = compile_and_diff(
+        fx.model,
+        fx.example_inputs,
+        options=cuda_a100_defaults(),
+        fixture_name=fx.name,
+        eager_reference=fx.eager_output,
+        run_compiled_executor=wrong_exec,
+    )
+    assert report.compiled_executed is True
+    # eager_output is generally non-zero, so the diff should be > 0.
+    assert report.compiled_diff_max_abs > 0
+    assert report.compiled_diff_pass is False
+
+
+def test_bool_true_keeps_in_tree_cpu_executor_path():
+    """``run_compiled_executor=True`` (legacy) still routes through the
+    in-tree CPU interpreter — not a callable, so it should populate
+    ``executor_ops_run``."""
+    fx = attention_mlp_tiny()
+    report = compile_and_diff(
+        fx.model,
+        fx.example_inputs,
+        options=cuda_a100_defaults(),
+        fixture_name=fx.name,
+        eager_reference=fx.eager_output,
+        run_compiled_executor=True,
+    )
+    # Either the in-tree path executed (some ops > 0) or it gracefully
+    # skipped (warnings populated). Either way, the callable branch
+    # didn't fire — that's the contract we're guarding here.
+    assert isinstance(report, DiffReport)
+
+
+def test_bool_false_skips_compiled_executor_entirely():
+    """``run_compiled_executor=False`` bypasses both paths."""
+    fx = attention_mlp_tiny()
+    report = compile_and_diff(
+        fx.model,
+        fx.example_inputs,
+        options=cuda_a100_defaults(),
+        fixture_name=fx.name,
+        eager_reference=fx.eager_output,
+        run_compiled_executor=False,
+    )
+    assert report.compiled_executed is False

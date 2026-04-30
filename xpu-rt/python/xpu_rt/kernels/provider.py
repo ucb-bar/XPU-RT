@@ -21,6 +21,25 @@ from typing import Any, Protocol, runtime_checkable
 
 
 @dataclass(frozen=True)
+class RuntimeCapabilities:
+    """What math runtime the target makes available to emitted kernels.
+
+    Mirrors the spec-level :class:`RuntimeMathSpec`. Surfaced to
+    providers via ``KernelContract.runtime`` so a provider's
+    ``accepts_contract`` / ``search`` can branch on what's reachable
+    from the target's link unit:
+
+    * ``runtime.has_libm`` → emit ``__builtin_expf`` / ``sqrtf`` / …
+    * ``"mu_fexp" in runtime.intrinsics`` → cast to f16, use intrinsic.
+    * neither → emit polynomial fallback (or reject).
+    """
+
+    has_libm: bool = False
+    has_libc: bool = False
+    intrinsics: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
 class KernelContract:
     """What CompGen asks a provider to generate.
 
@@ -40,6 +59,10 @@ class KernelContract:
     constraints: dict[str, Any] = field(default_factory=dict)
     # Hints from previous provider feedback
     provider_hints: dict[str, str] = field(default_factory=dict)
+    # Target runtime capabilities (REQ-025) — what libm / intrinsics
+    # the emitted kernel can call. Defaults to "nothing available"
+    # so providers fail closed when the spec says nothing.
+    runtime: RuntimeCapabilities = field(default_factory=RuntimeCapabilities)
 
 
 @dataclass(frozen=True)
@@ -86,12 +109,66 @@ class ContractFeedback:
 
 
 @dataclass(frozen=True)
+class DispatchGeometry:
+    """How a kernel wants to be launched on its target.
+
+    Hand-tuned kernels know the right ``num_warps`` /
+    ``threadblock_shape`` / ``grid_shape`` for a given input size; the
+    consumer (pack composer / runtime ABI) consumes these to issue a
+    matching dispatch. SIMT targets typically populate ``num_warps``
+    and ``threadblock_shape``; CUDA-style backends populate ``grid_shape``.
+    """
+
+    num_warps: int = 1
+    threadblock_shape: tuple[int, ...] = (1,)
+    grid_shape: tuple[int, ...] = (1,)
+
+
+@dataclass(frozen=True)
 class ProviderResult:
-    """What a provider returns after search."""
+    """What a provider returns after search.
+
+    Attributes:
+        found: True when the provider produced a usable kernel.
+        kernel_code: Primary source text (also used as the
+            ``index.json`` entry's primary file).
+        language: Free-form language tag — drives the bundle file
+            extension (``"triton"``, ``"cuda"``, ``"cpp"``, …).
+        emit_mode: Shape of the emitted source.
+            ``"compute_callback"`` (default): a function with a known
+            signature that the consuming pack composer wraps with
+            ``main`` / data / dispatch.
+            ``"self_contained"``: a complete translation unit with
+            its own ``main``, dispatch geometry, and data — the
+            consumer concatenates and compiles without wrapping.
+        dispatch_geometry: Optional dispatch shape. When set, the
+            consumer's runtime call should honour these
+            (``num_warps`` / threadblock / grid) instead of guessing.
+        kernel_files: Optional multi-file bundle. When set, every
+            entry is written into ``bundle/generated_kernels/<provider>/<op>/``
+            as a directory; the canonical entry point is the file
+            whose key matches ``<op>.<ext>``. Header files, helper
+            ``.inc``s, lookup tables, etc. live here.
+        expected_inputs: Optional symbol-layout map describing the
+            input symbols the (typically self-contained) kernel
+            expects. The bundle materializes these as a side
+            ``<op>.data.h`` so the pack composer can ``#include`` it
+            without inventing names. See REQ-016 for schema.
+        latency_us / correct / plan / speedup / iterations_used /
+        total_candidates: search-loop diagnostics.
+        knowledge_exports / contract_feedback: bidirectional
+        knowledge channel — see :class:`KnowledgeExport` /
+        :class:`ContractFeedback`.
+        metadata: free-form provider-specific dict.
+    """
 
     found: bool = False
     kernel_code: str = ""
     language: str = ""
+    emit_mode: str = "compute_callback"
+    dispatch_geometry: DispatchGeometry | None = None
+    kernel_files: dict[str, str] | None = None
+    expected_inputs: dict[str, dict[str, Any]] | None = None
     latency_us: float = 0.0
     correct: bool = False
     plan: str = ""
@@ -109,6 +186,13 @@ class KernelProvider(Protocol):
 
     Every kernel generator (autocomp, KernelBlaster, KernelEvolve,
     vendor tools, custom search) implements this protocol.
+
+    Optional attributes (read with ``getattr(p, name, default)``):
+
+    - ``priority: int`` (default 0) — when multiple providers accept
+      the same contract, the highest-priority one wins. Lets a pack
+      ship a hand-tuned fast path (priority=10) alongside a generic
+      fallback (priority=0) without depending on entry-point load order.
     """
 
     @property
@@ -143,9 +227,11 @@ class KernelProvider(Protocol):
 
 __all__ = [
     "ContractFeedback",
+    "DispatchGeometry",
     "KernelContract",
     "KernelProvider",
     "KnowledgeExport",
     "ProviderResult",
+    "RuntimeCapabilities",
     "SearchBudget",
 ]

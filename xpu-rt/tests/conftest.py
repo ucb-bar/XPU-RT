@@ -13,11 +13,76 @@ process-wide registry stays pristine.
 
 from __future__ import annotations
 
+import importlib
 import os
 import tempfile
 from pathlib import Path
 
 import pytest
+
+# ---------------------------------------------------------------------------
+# Marker-driven auto-skip: `requires_gpu`, `requires_mlir`, `requires_ray`.
+# ---------------------------------------------------------------------------
+#
+# These markers are declared in pyproject.toml and used throughout the
+# suite. Rather than making every test author manage skip-logic manually,
+# we check capability once per session and have the collection hook skip
+# any marked test whose capability isn't present. That means:
+#
+# - On a CPU-only laptop, ``pytest tests/`` green-passes because
+#   ``requires_gpu`` tests auto-skip.
+# - On a GPU CI runner, ``pytest -m requires_gpu tests/`` runs them.
+#
+# Capability probes are cheap (single import or attribute check) and
+# cached in module-level dicts so they fire once per session, not per test.
+
+
+def _probe_gpu() -> bool:
+    try:
+        import torch
+
+        return bool(torch.cuda.is_available())
+    except Exception:
+        return False
+
+
+def _probe_mlir() -> bool:
+    try:
+        importlib.import_module("xdsl")
+        return True
+    except Exception:
+        return False
+
+
+def _probe_ray() -> bool:
+    try:
+        importlib.import_module("ray")
+        return True
+    except Exception:
+        return False
+
+
+_MARKER_PROBES = {
+    "requires_gpu": _probe_gpu,
+    "requires_mlir": _probe_mlir,
+    "requires_ray": _probe_ray,
+}
+
+
+_CAPABILITY_CACHE: dict[str, bool] = {}
+
+
+def pytest_collection_modifyitems(config, items):  # noqa: ANN001
+    """Auto-skip marker-guarded tests when the capability isn't present."""
+    for marker_name, probe in _MARKER_PROBES.items():
+        if marker_name not in _CAPABILITY_CACHE:
+            _CAPABILITY_CACHE[marker_name] = probe()
+    for item in items:
+        for marker_name, present in _CAPABILITY_CACHE.items():
+            if present:
+                continue
+            if item.get_closest_marker(marker_name) is not None:
+                item.add_marker(pytest.mark.skip(reason=f"{marker_name}: capability not available on this host"))
 
 
 @pytest.fixture(autouse=True, scope="session")

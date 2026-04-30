@@ -114,9 +114,16 @@ def build_kernel_contracts(
         # Priority: higher FLOPs = higher priority
         priority = contract.cost.flops
 
+        # Carry concrete tensor shapes from the IR contract through the
+        # spec so providers see real shapes instead of empty tuples.
+        ir_input_shapes = contract.metadata.get("input_shapes", []) if contract.metadata else []
+        ir_output_shapes = contract.metadata.get("output_shapes", []) if contract.metadata else []
+
         specs.append(
             KernelSpec(
                 contract=contract,
+                input_shapes=list(ir_input_shapes),
+                output_shapes=list(ir_output_shapes),
                 perf_target_us=perf_target,
                 priority=priority,
             )
@@ -142,6 +149,16 @@ def spec_to_provider_contract(
     ir_contract = spec.contract
     op_name = ir_contract.op_name
     op_family = op_name.split(".")[-1] if "." in op_name else op_name
+    # ``func.call`` callees come in as ``aten_add`` / ``aten_mul`` /
+    # ``aten_relu_default`` etc. Strip the framework prefix and any
+    # overload suffix (``_default``, ``_Tensor``, ``_Scalar``, …) so
+    # providers can pattern-match on the operator family directly.
+    if op_family.startswith("aten_"):
+        op_family = op_family.removeprefix("aten_")
+        for suffix in ("_default", "_Tensor", "_Scalar", "_self_int"):
+            if op_family.endswith(suffix):
+                op_family = op_family[: -len(suffix)]
+                break
 
     # Map IR op_family names to template-compatible names
     _aliases = {
@@ -163,10 +180,31 @@ def spec_to_provider_contract(
             input_shapes = ((1, 8, 8, 3), (3, 3, 3, 16))
         else:
             input_shapes = ((1, 64),)
-    dtypes = tuple(ir_contract.supported_dtypes) if ir_contract.supported_dtypes else ("float32",)
+    # Pass IR-extracted dtypes through verbatim — MLIR-canonical names
+    # (``f32``/``f16``/``bf16``/``i32``/…) read straight off the operand
+    # tensor types in :func:`_extract_op_contract`. Falling back to a
+    # default loses the f16/bf16/i32 signal providers gate on; keep the
+    # default in canonical-MLIR form so a provider whose
+    # ``accepts_contract`` filter reads ``("f32",)`` matches both the
+    # explicit and the implicit case.
+    dtypes = tuple(ir_contract.supported_dtypes) if ir_contract.supported_dtypes else ("f32",)
 
     target_name = target.name
     hardware_key = target.devices[0].name if target.devices else ""
+
+    # REQ-025: surface the target's runtime math capabilities to the
+    # provider. The HardwareSpec's ``runtime_contract.math`` block
+    # carries libm/libc availability + named intrinsics, routed through
+    # the TargetProfile ``metadata['runtime_math']`` slot by
+    # :func:`compgen.targetgen.load.extract_target_profile`.
+    from compgen.kernels.provider import RuntimeCapabilities
+
+    raw_math = (getattr(target, "metadata", {}) or {}).get("runtime_math", {}) or {}
+    runtime = RuntimeCapabilities(
+        has_libm=bool(raw_math.get("has_libm", False)),
+        has_libc=bool(raw_math.get("has_libc", False)),
+        intrinsics=tuple(raw_math.get("intrinsics", []) or ()),
+    )
 
     return ProviderContract(
         region_id=region_id,
@@ -177,6 +215,7 @@ def spec_to_provider_contract(
         target_name=target_name,
         hardware_key=hardware_key,
         objective="latency",
+        runtime=runtime,
     )
 
 

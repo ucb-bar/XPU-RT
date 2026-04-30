@@ -22,12 +22,12 @@ from typing import Any
 class SMTSolver:
     """SMT solver backend using Z3.
 
+    Supports ``check_sat`` (satisfiability), ``prove`` (validity via
+    negation), and ``get_model`` (counterexample extraction). Timeouts
+    are always enforced.
+
     Attributes:
         timeout_ms: Solver timeout.
-
-    TODO: Implement check_sat() for satisfiability queries.
-    TODO: Implement prove() for validity queries.
-    TODO: Implement get_model() for counterexample extraction.
     """
 
     timeout_ms: int = 30000

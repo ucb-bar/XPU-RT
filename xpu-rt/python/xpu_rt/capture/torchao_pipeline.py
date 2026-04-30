@@ -8,10 +8,6 @@ Invariants:
     - Quantization config must be serializable (part of the recipe).
     - Accuracy degradation from quantization is measured and reported.
     - Quantized models produce separate golden outputs for verification.
-
-TODO: Implement apply_quantization() with TorchAO quantize_() API.
-TODO: Implement verify_quant_accuracy() comparing original vs quantized.
-TODO: Support int8, int4, fp8, and structured sparsity configs.
 """
 
 from __future__ import annotations

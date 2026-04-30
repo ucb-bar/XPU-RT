@@ -19,8 +19,12 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
+import structlog
+
 from compgen.kernels.contracts import KernelSpec
 from compgen.targets.schema import TargetProfile
+
+log = structlog.get_logger(__name__)
 
 # Lazy import to avoid circular dependencies
 _ukernel_registry = None
@@ -290,8 +294,8 @@ class KernelSelector:
                 m = getattr(self.llm_client, "model", None)
                 if m is not None and isinstance(m, str):
                     model_id = m
-            except Exception:
-                pass
+            except Exception as exc:
+                log.warning("kernel_selector.model_id_lookup_failed", error=str(exc))
             request = GenerationRequest(
                 prompt_template=prompt,
                 context=PromptContext(
@@ -313,8 +317,15 @@ class KernelSelector:
                     strategy=strategy,
                     reason=f"LLM: {result.get('reason', 'no reason')}",
                 )
-        except Exception:
-            pass
+        except Exception as exc:
+            # LLM-driven strategy hinting is best-effort; caller falls
+            # back to deterministic rules. Log so the failure is
+            # visible in the trace even when we don't raise.
+            log.warning(
+                "kernel_selector.llm_strategy_hint_failed",
+                op=getattr(spec, "op_name", "unknown"),
+                error=str(exc),
+            )
         return None
 
 

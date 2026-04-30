@@ -31,7 +31,7 @@ Usage::
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Protocol, runtime_checkable
 
 import structlog
 
@@ -39,6 +39,42 @@ from compgen.options import CompGenOptions
 from compgen.pipeline.driver import PipelineResult, compile_through_pipeline
 
 log = structlog.get_logger()
+
+
+@runtime_checkable
+class CompiledExecutorProtocol(Protocol):
+    """Callable contract for arbitrary compiled-executor backends.
+
+    Any callable matching this signature can be passed to
+    :func:`compile_and_diff` via ``run_compiled_executor=…`` to get a
+    real compiled-vs-eager diff. The Protocol is intentionally
+    minimal — it deliberately doesn't say *how* the inputs run
+    (in-process interpreter, RTL sim, FPGA, physical hardware, remote
+    process), only that the executor takes the example inputs and
+    returns a tensor (or tuple of tensors) shaped like what eager
+    PyTorch would produce.
+
+    Implementations:
+
+    - In-tree default: ``compgen.runtime.cpu_executor.execute`` wrapped
+      to match this signature (the bool=True path keeps doing this).
+    - Subprocess-backed (RTL sim, FPGA, physical): wrap the post-sim
+      result-readback as a callable that takes the example inputs,
+      issues whatever build/run/parse pipeline the target needs, and
+      returns a torch.Tensor.
+    - Remote: similar — wrap the RPC.
+
+    The harness treats whatever this returns as the "compiled output"
+    and diffs it against ``eager_reference`` with the configured
+    tolerances. No type adapter is applied; ``len`` / ``tuple`` /
+    ``shape`` semantics on the returned object are the executor's
+    responsibility.
+    """
+
+    def __call__(
+        self,
+        inputs: tuple[Any, ...],
+    ) -> Any: ...
 
 
 @dataclass
@@ -112,7 +148,7 @@ def compile_and_diff(
     opaque_rate_threshold: float = 0.50,
     atol: float = 1e-3,
     rtol: float = 1e-3,
-    run_compiled_executor: bool = False,
+    run_compiled_executor: bool | CompiledExecutorProtocol = False,
     exported_program: Any = None,
 ) -> DiffReport:
     """Compile ``model`` and run the differential check.
@@ -200,44 +236,62 @@ def compile_and_diff(
         except Exception as exc:  # noqa: BLE001
             report.warnings.append(f"eager diff skipped: {exc}")
 
-    # --- 6. Compiled executor (CPU interpreter of the xDSL module) ---
+    # --- 6. Compiled executor ---
+    # Two modes (REQ-004):
+    #   ``run_compiled_executor=True``   → in-tree CPU interpreter
+    #                                      (compgen.runtime.cpu_executor.execute).
+    #   ``run_compiled_executor=<callable>`` → an external executor
+    #                                          satisfying CompiledExecutorProtocol.
+    #                                          Lets RTL sim, FPGA, physical-HW,
+    #                                          or remote-process backends plug
+    #                                          straight in without changing
+    #                                          this harness.
     if run_compiled_executor and example_inputs is not None and eager_reference is not None:
         try:
             import torch
 
-            from compgen.runtime.cpu_executor import ExecutorStats, execute
+            external_exec = run_compiled_executor if callable(run_compiled_executor) else None
 
-            ep = exported_program
-            if ep is None and hasattr(model, "graph_signature"):
-                ep = model  # already an ExportedProgram
-            if ep is None:
-                try:
-                    ep = torch.export.export(model, example_inputs)
-                except Exception as exc:  # noqa: BLE001
-                    report.warnings.append(f"exported_program reconstruct failed: {exc}")
-                    ep = None
-            if ep is not None and pr.module is not None:
-                exec_stats = ExecutorStats()
-                out = execute(pr.module, ep, example_inputs, stats=exec_stats)
+            if external_exec is not None:
+                # Out-of-process / external executor — just call it.
+                out = external_exec(tuple(example_inputs))
                 report.compiled_executed = True
-                report.executor_ops_run = exec_stats.ops_executed
-                report.executor_ops_skipped = exec_stats.ops_skipped
-                if isinstance(out, torch.Tensor) and isinstance(eager_reference, torch.Tensor):
-                    if tuple(out.shape) == tuple(eager_reference.shape):
-                        finite = torch.isfinite(out).all() and torch.isfinite(eager_reference).all()
-                        if finite:
-                            diff = (out - eager_reference).abs().max().item()
-                        else:
-                            diff = float("nan")
-                        report.compiled_diff_max_abs = diff
-                        tol = atol + rtol * eager_reference.abs().max().item()
-                        report.compiled_diff_pass = diff == diff and diff <= tol  # nan-safe
-                        if not report.compiled_diff_pass:
-                            report.warnings.append(f"compiled vs eager diff {diff:.6f} > tol {tol:.6f}")
+            else:
+                from compgen.runtime.cpu_executor import ExecutorStats, execute
+
+                ep = exported_program
+                if ep is None and hasattr(model, "graph_signature"):
+                    ep = model  # already an ExportedProgram
+                if ep is None:
+                    try:
+                        ep = torch.export.export(model, example_inputs)
+                    except Exception as exc:  # noqa: BLE001
+                        report.warnings.append(f"exported_program reconstruct failed: {exc}")
+                        ep = None
+                out = None
+                if ep is not None and pr.module is not None:
+                    exec_stats = ExecutorStats()
+                    out = execute(pr.module, ep, example_inputs, stats=exec_stats)
+                    report.compiled_executed = True
+                    report.executor_ops_run = exec_stats.ops_executed
+                    report.executor_ops_skipped = exec_stats.ops_skipped
+
+            if out is not None and isinstance(out, torch.Tensor) and isinstance(eager_reference, torch.Tensor):
+                if tuple(out.shape) == tuple(eager_reference.shape):
+                    finite = torch.isfinite(out).all() and torch.isfinite(eager_reference).all()
+                    if finite:
+                        diff = (out - eager_reference).abs().max().item()
                     else:
-                        report.warnings.append(
-                            f"compiled output shape {tuple(out.shape)} != eager {tuple(eager_reference.shape)}"
-                        )
+                        diff = float("nan")
+                    report.compiled_diff_max_abs = diff
+                    tol = atol + rtol * eager_reference.abs().max().item()
+                    report.compiled_diff_pass = diff == diff and diff <= tol  # nan-safe
+                    if not report.compiled_diff_pass:
+                        report.warnings.append(f"compiled vs eager diff {diff:.6f} > tol {tol:.6f}")
+                else:
+                    report.warnings.append(
+                        f"compiled output shape {tuple(out.shape)} != eager {tuple(eager_reference.shape)}"
+                    )
         except Exception as exc:  # noqa: BLE001
             report.warnings.append(f"compiled executor failed: {exc}")
 
@@ -255,6 +309,7 @@ def compile_and_diff(
 
 
 __all__ = [
+    "CompiledExecutorProtocol",
     "DiffReport",
     "compile_and_diff",
 ]

@@ -222,7 +222,38 @@ def _run_async_server() -> None:
 
 
 def main() -> None:
-    """Entry-point for the ``compgen-mcp`` script."""
+    """Entry-point for the ``compgen-mcp`` script.
+
+    Honours ``--version`` and ``--help`` ahead of starting the
+    blocking server. Without arguments the script behaves as
+    before — a long-running stdio MCP transport that an editor or
+    Claude Code spawns and connects to.
+    """
+    import sys
+
+    args = sys.argv[1:]
+    if args and args[0] in ("-V", "--version"):
+        from compgen import __version__
+
+        print(f"compgen-mcp {__version__}")
+        sys.exit(0)
+    if args and args[0] in ("-h", "--help"):
+        from compgen import __version__
+
+        print(
+            f"compgen-mcp {__version__} — Compgen Model Context Protocol server\n"
+            "\n"
+            "Usage:\n"
+            "  compgen-mcp                 # blocking stdio server (typical use)\n"
+            "  compgen-mcp --version       # print version + exit\n"
+            "  compgen-mcp --help          # this message\n"
+            "\n"
+            "Wire into Claude Code by adding the following to your\n"
+            "~/.config/claude-code/mcp.json:\n"
+            "\n"
+            '  {"mcpServers": {"compgen": {"command": "compgen-mcp"}}}\n'
+        )
+        sys.exit(0)
     _run_async_server()
 
 

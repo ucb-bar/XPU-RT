@@ -463,10 +463,15 @@ class TritonTemplateProvider:
             triton_available=_TRITON_AVAILABLE,
         )
 
-        # Validation (best-effort when Triton + CUDA are present)
+        # Validation (best-effort when Triton + CUDA are present).
+        # Unmeasurable cases carry ``math.nan``, never 0.0 — so the
+        # escalating router's ``latency_us > 0`` check correctly
+        # refuses to compare against a ghost measurement.
+        import math
+
         validation_diags: list[str] = []
         correct = False
-        latency_us = 0.0
+        latency_us: float = math.nan
 
         if _TRITON_AVAILABLE:
             try:
@@ -500,6 +505,11 @@ class TritonTemplateProvider:
         ]
         self._accumulated_knowledge.extend(knowledge)
 
+        # ``cost_source`` records whether ``latency_us`` came from a
+        # real measurement or couldn't be measured. Downstream
+        # selectors must consult this metadata when the value is NaN
+        # to decide whether to escalate or roofline.
+        cost_source = "measured_gpu" if math.isfinite(latency_us) else "unmeasured"
         return ProviderResult(
             found=True,
             kernel_code=kernel_code,
@@ -514,6 +524,7 @@ class TritonTemplateProvider:
                 "description": description,
                 "triton_available": _TRITON_AVAILABLE,
                 "validation": validation_diags,
+                "cost_source": cost_source,
             },
         )
 
@@ -667,26 +678,34 @@ def _validate_on_gpu(
     except Exception as exc:
         return False, 0.0, diags + [f"Execution failed: {exc}"]
 
-    # 4. Latency measurement
-    latency_us = 0.0
+    # 4. Latency measurement — use the blessed measure_kernel path so
+    # every provider produces comparable numbers. Failures surface via
+    # ``math.nan`` (not 0.0, which would lie about being 0 latency)
+    # plus a diagnostic; the escalating router's ``latency_us > 0``
+    # comparison treats NaN the same as "unmeasured".
+    import math
+
+    from compgen.kernels.errors import UnmeasurableKernelError
+    from compgen.kernels.measure import measure_kernel
+
+    latency_us = math.nan
     if correct:
         try:
-            for _ in range(3):
-                kernel_fn(*test_inputs)
-            torch.cuda.synchronize()
-
-            start = torch.cuda.Event(enable_timing=True)
-            end = torch.cuda.Event(enable_timing=True)
-            n_iters = 20
-            start.record()
-            for _ in range(n_iters):
-                kernel_fn(*test_inputs)
-            end.record()
-            torch.cuda.synchronize()
-            latency_us = start.elapsed_time(end) * 1000.0 / n_iters
-            diags.append(f"Performance: {latency_us:.1f} us/iter ({n_iters} iters)")
-        except Exception:
-            pass  # best-effort
+            measurement = measure_kernel(
+                runnable=kernel_fn,
+                golden_inputs=test_inputs,
+                warmup=3,
+                iters=20,
+            )
+            latency_us = measurement.latency_us
+            diags.append(
+                f"Performance: {latency_us:.1f} us/iter ({measurement.iters} iters, "
+                f"stddev {measurement.latency_stddev_us:.2f} us, source={measurement.source})"
+            )
+        except UnmeasurableKernelError as exc:
+            # Explicit unmeasurable — don't substitute 0.0. The caller
+            # sees NaN + the diagnostic and decides how to escalate.
+            diags.append(f"Performance: unmeasurable ({exc})")
 
     return correct, latency_us, diags
 

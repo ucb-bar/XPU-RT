@@ -21,7 +21,17 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from compgen.promotion.errors import (
+    PromotionBlockedError,
+    PromotionBlockReason,
+    VerificationGateResult,
+)
 from compgen.runtime.bundle import Bundle
+
+# Verification levels that must be present + passing before a bundle
+# can be promoted. Levels not in this set are tolerated as SKIPPED.
+# Keep this set aligned with ``compgen.transforms.verify.VerificationLevel``.
+_REQUIRED_VERIFY_LEVELS: frozenset[str] = frozenset({"structural", "differential"})
 
 
 @dataclass(frozen=True)
@@ -68,6 +78,138 @@ def _compute_hash(value: str) -> str:
     return hashlib.sha256(value.encode()).hexdigest()[:12]
 
 
+def _bundle_root(bundle: Bundle) -> Path | None:
+    """Return the on-disk root of a bundle, if recorded."""
+    root = bundle.metadata.get("bundle_root") if bundle.metadata else None
+    return Path(root) if root else None
+
+
+def _inspect_verification(bundle: Bundle) -> VerificationGateResult:
+    """Read the bundle's ``verification_report.json`` and decide.
+
+    Gate semantics:
+
+    1. The bundle must record ``verification_report`` in its manifest
+       artifacts AND the referenced file must exist.
+    2. The file must parse as JSON with the schema written by
+       :func:`compgen.api._run_inline_verification`:
+       ``{passed: bool, levels_run: [str], levels_passed: [str],
+         max_abs_error: float|null, details: {...}}``.
+    3. ``passed`` must be ``True``.
+    4. Every level in :data:`_REQUIRED_VERIFY_LEVELS` must appear in
+       both ``levels_run`` and ``levels_passed``. If a required level
+       is present in ``levels_run`` but NOT in ``levels_passed``, that
+       is a failure. If it isn't run at all, the gate also fails — a
+       production bundle must have its core ladder exercised.
+
+    Returns:
+        A :class:`VerificationGateResult` with ``passed`` and, when
+        failing, a list of :class:`PromotionBlockReason` entries.
+    """
+    reasons: list[PromotionBlockReason] = []
+    artifacts = bundle.artifacts if bundle.artifacts else {}
+    verify_rel = artifacts.get("verification_report")
+    root = _bundle_root(bundle)
+
+    if not verify_rel:
+        reasons.append(
+            PromotionBlockReason(
+                code="missing_verification_report",
+                detail="bundle manifest has no 'verification_report' entry under artifacts",
+            )
+        )
+        return VerificationGateResult(passed=False, reasons=reasons)
+
+    if root is None:
+        reasons.append(
+            PromotionBlockReason(
+                code="missing_verification_report",
+                detail="bundle has no metadata.bundle_root; can't locate verification_report.json",
+            )
+        )
+        return VerificationGateResult(passed=False, reasons=reasons)
+
+    report_path = root / verify_rel
+    if not report_path.is_file():
+        reasons.append(
+            PromotionBlockReason(
+                code="missing_verification_report",
+                detail=f"verification_report.json does not exist at {report_path}",
+                path=str(report_path),
+            )
+        )
+        return VerificationGateResult(passed=False, reasons=reasons)
+
+    try:
+        report = json.loads(report_path.read_text())
+    except Exception as exc:
+        reasons.append(
+            PromotionBlockReason(
+                code="verification_report_unreadable",
+                detail=f"{report_path}: {exc!r}",
+                path=str(report_path),
+            )
+        )
+        return VerificationGateResult(passed=False, reasons=reasons)
+
+    passed_top = bool(report.get("passed", False))
+    levels_run = set(report.get("levels_run") or [])
+    levels_passed = set(report.get("levels_passed") or [])
+    details = report.get("details") or {}
+
+    if not passed_top:
+        reasons.append(
+            PromotionBlockReason(
+                code="verification_failed",
+                detail=(
+                    "verification_report.passed is False; "
+                    f"max_abs_error={report.get('max_abs_error')!r}; "
+                    f"details={details!r}"
+                ),
+                path=str(report_path),
+            )
+        )
+
+    missing_required = _REQUIRED_VERIFY_LEVELS - levels_run
+    if missing_required:
+        reasons.append(
+            PromotionBlockReason(
+                code="level_skipped",
+                detail=f"required verification level(s) not run: {sorted(missing_required)}",
+                path=str(report_path),
+            )
+        )
+
+    failing_required = _REQUIRED_VERIFY_LEVELS & levels_run - levels_passed
+    if failing_required:
+        reasons.append(
+            PromotionBlockReason(
+                code="level_failed_strict",
+                detail=f"required verification level(s) failed: {sorted(failing_required)}",
+                path=str(report_path),
+            )
+        )
+
+    # An explicit "SKIPPED" substring in the details surfaces required
+    # levels that claim PASS but actually did no work.
+    for lvl in _REQUIRED_VERIFY_LEVELS:
+        msg = str(details.get(lvl, ""))
+        if "SKIPPED" in msg.upper():
+            reasons.append(
+                PromotionBlockReason(
+                    code="level_skipped",
+                    detail=f"required level '{lvl}' reported SKIPPED in details: {msg!r}",
+                    path=str(report_path),
+                )
+            )
+
+    return VerificationGateResult(
+        passed=(len(reasons) == 0),
+        reasons=reasons,
+        report=report,
+    )
+
+
 @dataclass
 class RecipePromoter:
     """Promotes verified bundles to the recipe library.
@@ -81,13 +223,37 @@ class RecipePromoter:
     def promote(self, bundle: Bundle, force: bool = False) -> PromotionResult:
         """Promote a verified bundle to the recipe library.
 
+        Enforces the verification gate: the bundle's
+        ``verification_report.json`` must exist, be parseable, and
+        report ``passed=True`` with every required level in
+        :data:`_REQUIRED_VERIFY_LEVELS` actually run (not SKIPPED).
+
         Args:
             bundle: The bundle manifest (must reference a valid bundle directory).
-            force: Promote even if verification has warnings.
+            force: Skip the verification gate. Use only when you're
+                knowingly promoting an unverified bundle (e.g. a
+                baseline capture) — the gate is there to prevent
+                promoting a broken compile.
 
         Returns:
-            PromotionResult.
+            :class:`PromotionResult`.
+
+        Raises:
+            PromotionBlockedError: ``force=False`` and the bundle
+                failed the verification gate.
         """
+        # Verification gate — production-grade, not advisory. This used
+        # to be absent; the docstring on this module promised
+        # "Promotion requires a passing verification_report.json" but
+        # the code happily promoted anything. Fixed here.
+        if not force:
+            gate = _inspect_verification(bundle)
+            if not gate.passed:
+                raise PromotionBlockedError(
+                    reasons=gate.reasons,
+                    bundle_root=_bundle_root(bundle),
+                )
+
         # Compute promotion key from bundle metadata
         target_hash = _compute_hash(bundle.target_profile or "unknown")
         model_hash = _compute_hash(bundle.model_hash or "unknown")

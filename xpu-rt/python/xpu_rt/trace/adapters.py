@@ -88,7 +88,7 @@ class TracingLLMRecorder:
             payload={
                 "prompt_hash": prompt_hash,
                 "artifact_type": getattr(request, "artifact_type", ""),
-                "prompt_preview": prompt_text[:200],
+                "prompt_preview": prompt_text[:500],
             },
         )
         response = self._inner.generate(request)
@@ -100,6 +100,7 @@ class TracingLLMRecorder:
         # Expose this turn's id so any ``DecisionPublisher.emit`` that
         # follows in this context can back-reference it via ``llm_turn_id``.
         set_current_llm_turn_id(turn_id)
+        _render_turn_markdown(self._inner, bus, turn_id, prompt_text, response)
         return response
 
     def generate_structured(self, request: Any, schema: dict[str, Any]) -> Any:
@@ -115,15 +116,17 @@ class TracingLLMRecorder:
                 "prompt_hash": prompt_hash,
                 "artifact_type": getattr(request, "artifact_type", ""),
                 "structured": True,
-                "prompt_preview": prompt_text[:200],
+                "prompt_preview": prompt_text[:500],
             },
         )
         response = self._inner.generate_structured(request, schema)
-        bus.publish(
+        turn_id = bus.publish(
             kind=EventKind.LLM_RESPONSE.value,
             phase=Phase.POINT.value,
             payload=_response_payload(response, self._inner, prompt_hash),
         )
+        set_current_llm_turn_id(turn_id)
+        _render_turn_markdown(self._inner, bus, turn_id, prompt_text, response)
         return response
 
     @property
@@ -157,16 +160,99 @@ def _hash_text(text: str) -> str:
 
 
 def _response_payload(response: Any, recorder: LLMRecorder, prompt_hash: str) -> dict[str, Any]:
+    """Build the ``llm_response`` trace payload.
+
+    Points at the full-text log file written by :meth:`LLMRecorder._record`
+    (relative to the recorder's ``log_dir.parent``) so the renderer can
+    jump to the complete prompt + response + parsed artifacts without
+    re-fetching. No extra LLM call — we only reference data the inner
+    recorder just wrote.
+    """
+    log_file = ""
+    try:
+        path = getattr(recorder, "last_log_path", None)
+        if path is not None:
+            # Expose a path relative to the session dir for the renderer.
+            log_file = str(path.relative_to(recorder.log_dir.parent))
+    except (ValueError, AttributeError):
+        log_file = str(getattr(recorder, "last_log_path", "") or "")
+
+    meta = getattr(response, "metadata", None) or {}
+    reasoning = meta.get("reasoning") or meta.get("thought_process") or meta.get("thinking") or ""
     return {
         "prompt_hash": prompt_hash,
         "model": getattr(response, "model_id", ""),
         "prompt_tokens": getattr(response, "prompt_tokens", 0),
         "completion_tokens": getattr(response, "completion_tokens", 0),
         "latency_ms": getattr(response, "latency_ms", 0),
-        "raw_text_preview": getattr(response, "raw_text", "")[:200],
+        "raw_text_preview": getattr(response, "raw_text", "")[:500],
+        "has_reasoning": bool(reasoning),
+        "reasoning_preview": str(reasoning)[:500] if reasoning else "",
         "num_artifacts": len(getattr(response, "parsed_artifacts", []) or []),
         "call_id": recorder.total_calls,
+        "log_file": log_file,
     }
+
+
+def _render_turn_markdown(recorder: LLMRecorder, bus: Any, turn_id: str, prompt_text: str, response: Any) -> None:
+    """Write ``trace/turns/NNNN_<turn>.md`` — a human-readable turn file.
+
+    Pure view over data the recorder already has on disk (prompt,
+    response, metadata). No additional LLM round trip.
+    """
+    try:
+        trace_dir = bus.output_dir / "trace" / "turns"
+        trace_dir.mkdir(parents=True, exist_ok=True)
+        call_id = recorder.total_calls
+        safe_turn = turn_id.replace(":", "_") or f"turn_{call_id}"
+        out = trace_dir / f"{call_id:04d}_{safe_turn}.md"
+        meta = getattr(response, "metadata", None) or {}
+        reasoning = (
+            meta.get("reasoning") or meta.get("thought_process") or meta.get("thinking") or meta.get("reasoning_text")
+        )
+        artifacts = list(getattr(response, "parsed_artifacts", []) or [])
+        lines = [
+            f"# LLM turn {call_id} — `{turn_id}`",
+            "",
+            f"- model: `{getattr(response, 'model_id', '')}`",
+            f"- prompt_tokens: {getattr(response, 'prompt_tokens', 0)}",
+            f"- completion_tokens: {getattr(response, 'completion_tokens', 0)}",
+            f"- latency_ms: {getattr(response, 'latency_ms', 0)}",
+            f"- artifacts: {len(artifacts)}",
+            "",
+            "## Prompt",
+            "",
+            "```",
+            prompt_text,
+            "```",
+            "",
+        ]
+        if reasoning:
+            lines += [
+                "## Reasoning (provider-returned; no extra tokens requested)",
+                "",
+                "```",
+                str(reasoning),
+                "```",
+                "",
+            ]
+        lines += [
+            "## Response (raw)",
+            "",
+            "```",
+            getattr(response, "raw_text", ""),
+            "```",
+            "",
+        ]
+        if artifacts:
+            lines += ["## Parsed artifacts", ""]
+            for i, art in enumerate(artifacts):
+                lines += [f"### Artifact {i}", "", "```", str(art), "```", ""]
+        out.write_text("\n".join(lines))
+    except Exception:  # noqa: BLE001
+        # Rendering is best-effort — never block the agent loop on a
+        # markdown write failure.
+        pass
 
 
 # ---------------------------------------------------------------------------

@@ -33,12 +33,22 @@ class LLMRecorder:
     """Recording middleware for LLM interactions.
 
     Wraps any CompGenLLMProtocol client and logs all calls to disk.
+
+    Cost: **no extra LLM traffic**. The recorder only captures the
+    request we were already sending and the response the provider was
+    already returning. ``reasoning`` / ``thought_process`` fields are
+    only persisted if the provider surfaced them in
+    :attr:`GenerationResponse.metadata` (some APIs expose native
+    chain-of-thought as a side-channel at no extra cost).
     """
 
     wrapped: CompGenLLMProtocol
     log_dir: Path
     enabled: bool = True
     _call_count: int = 0
+    # Path of the JSON file written by the most recent ``_record`` call.
+    # :class:`TracingLLMRecorder` reads it to stamp the trace event.
+    last_log_path: Path | None = None
 
     def generate(self, request: GenerationRequest) -> GenerationResponse:
         """Forward to wrapped client and record the interaction."""
@@ -60,10 +70,10 @@ class LLMRecorder:
         response: GenerationResponse,
         start_time: float,
         schema: dict[str, Any] | None = None,
-    ) -> None:
-        """Write interaction to disk as JSON."""
+    ) -> Path | None:
+        """Write interaction to disk as JSON. Returns the written path or None."""
         if not self.enabled:
-            return
+            return None
 
         self._call_count += 1
         self.log_dir.mkdir(parents=True, exist_ok=True)
@@ -71,6 +81,13 @@ class LLMRecorder:
         # Build prompt text for hashing
         prompt_text = render_request_prompt(request)
         prompt_hash = hashlib.sha256(prompt_text.encode()).hexdigest()[:12]
+
+        # Some providers return native reasoning as a side-channel on
+        # ``metadata`` — capture it when present (does NOT request it).
+        meta = response.metadata or {}
+        reasoning = (
+            meta.get("reasoning") or meta.get("thought_process") or meta.get("thinking") or meta.get("reasoning_text")
+        )
 
         record = {
             "call_id": self._call_count,
@@ -99,20 +116,30 @@ class LLMRecorder:
             },
             "response": {
                 "raw_text_length": len(response.raw_text),
-                "raw_text_preview": response.raw_text[:200],
+                # Full text — previously only a 200-char preview was
+                # persisted, which made the agent's decision process
+                # opaque. Preview is kept as a separate field for
+                # quick scans.
+                "raw_text": response.raw_text,
+                "raw_text_preview": response.raw_text[:500],
+                "parsed_artifacts": list(response.parsed_artifacts or []),
                 "num_artifacts": len(response.parsed_artifacts),
+                "reasoning": reasoning,
                 "prompt_tokens": response.prompt_tokens,
                 "completion_tokens": response.completion_tokens,
                 "latency_ms": response.latency_ms,
             },
-            "metadata": response.metadata,
+            "metadata": meta,
         }
 
         if schema:
             record["schema"] = schema
 
         filename = f"{self._call_count:04d}_{prompt_hash}.json"
-        (self.log_dir / filename).write_text(json.dumps(record, indent=2, default=str))
+        out_path = self.log_dir / filename
+        out_path.write_text(json.dumps(record, indent=2, default=str))
+        self.last_log_path = out_path
+        return out_path
 
     def replay_log(self, log_path: Path) -> GenerationResponse:
         """Load a previously recorded response from a log file."""

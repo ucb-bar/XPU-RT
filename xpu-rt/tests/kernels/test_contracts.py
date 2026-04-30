@@ -76,20 +76,39 @@ def test_build_kernel_contracts_from_matmul() -> None:
 
 
 def test_build_kernel_contracts_from_arith() -> None:
-    """build_kernel_contracts on simple arith ops."""
+    """REQ-026: only ops carrying ``compgen.region_id`` surface as
+    contracts. Ops without that annotation (default for raw arith /
+    tensor.empty / structured-op body) are deliberately filtered to
+    avoid drowning the dispatch list in non-kernel pseudo-ops.
+
+    A synthetic ``arith.addi`` with the annotation surfaces; without
+    it, it doesn't.
+    """
     from xdsl.dialects import arith, func
-    from xdsl.dialects.builtin import IndexType, ModuleOp
+    from xdsl.dialects.builtin import IndexType, ModuleOp, StringAttr
     from xdsl.ir import Block, Region
 
     idx = IndexType()
-    block = Block(arg_types=[idx, idx])
-    a, b = block.args
-    add = arith.AddiOp(a, b)
-    block.add_op(add)
-    block.add_op(func.ReturnOp(add.result))
-    module = ModuleOp([func.FuncOp("test", ([idx, idx], [idx]), Region([block]))])
 
+    # Untagged arith op — does NOT surface as a contract (REQ-026).
+    block_a = Block(arg_types=[idx, idx])
+    a, b = block_a.args
+    add_a = arith.AddiOp(a, b)
+    block_a.add_op(add_a)
+    block_a.add_op(func.ReturnOp(add_a.result))
+    untagged = ModuleOp([func.FuncOp("test", ([idx, idx], [idx]), Region([block_a]))])
     target = load_profile("examples/target_profiles/cuda_a100.yaml")
-    specs = build_kernel_contracts(module, target)
-    assert len(specs) >= 1
+    assert build_kernel_contracts(untagged, target) == []
+
+    # Tagged with ``compgen.region_id`` → surfaces.
+    block_b = Block(arg_types=[idx, idx])
+    a2, b2 = block_b.args
+    add_b = arith.AddiOp(a2, b2)
+    add_b.attributes["compgen.region_id"] = StringAttr("addi_0")
+    block_b.add_op(add_b)
+    block_b.add_op(func.ReturnOp(add_b.result))
+    tagged = ModuleOp([func.FuncOp("test2", ([idx, idx], [idx]), Region([block_b]))])
+    specs = build_kernel_contracts(tagged, target)
+    assert len(specs) == 1
     assert specs[0].contract.op_name == "arith.addi"
+    assert (specs[0].contract.metadata or {}).get("region_id") == "addi_0"

@@ -9,7 +9,11 @@ summary.
 from __future__ import annotations
 
 from compgen.pipeline.cache import PipelineCache, PipelineCacheStats
-from compgen.pipeline.differential import DiffReport, compile_and_diff
+from compgen.pipeline.differential import (
+    CompiledExecutorProtocol,
+    DiffReport,
+    compile_and_diff,
+)
 from compgen.pipeline.driver import (
     PipelineResult,
     PipelineStageReport,
@@ -17,6 +21,7 @@ from compgen.pipeline.driver import (
 )
 
 __all__ = [
+    "CompiledExecutorProtocol",
     "DiffReport",
     "PipelineCache",
     "PipelineCacheStats",

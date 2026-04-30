@@ -22,12 +22,15 @@ class _StubSessionManager:
 
 def test_tool_registry_lists_all_four_tools() -> None:
     names = [t["name"] for t in VENDOR_DIALECT_TOOLS]
-    assert set(names) == {
+    # The integration-flow tools (scan / propose / scaffold / verify) plus
+    # the entry-point-driven tools (list / compile-with-vendor) all live
+    # in the same VENDOR_DIALECT_TOOLS registry.
+    assert {
         "scan_vendor_repo",
         "propose_vendor_spec",
         "scaffold_vendor_package",
         "verify_vendor_package",
-    }
+    }.issubset(set(names))
     for tool in VENDOR_DIALECT_TOOLS:
         assert callable(tool["handler"])
         assert "input_schema" in tool

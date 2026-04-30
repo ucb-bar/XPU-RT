@@ -25,7 +25,6 @@ Responsibilities:
 from __future__ import annotations
 
 import time
-import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -134,7 +133,22 @@ class LLMDrivenCompiler:
     _last_view: dict[str, Any] | None = field(default=None, init=False)
 
     def __post_init__(self) -> None:
-        self._session_id = f"sess_{uuid.uuid4().hex[:10]}"
+        # Pull model/target from the env so the session id is
+        # descriptive when available. The env may not have been reset
+        # yet; both lookups are best-effort.
+        _env = getattr(self, "env", None)
+        _model = getattr(_env, "_pytorch_model", None) if _env is not None else None
+        _target = getattr(_env, "_target", None) if _env is not None else None
+        from compgen.trace.session_id import build_session_id as _build_sid
+
+        self._session_id = _build_sid(
+            model=_model,
+            # env stores a TargetProfile directly — wrap it in a
+            # structural proxy so build_session_id's profile lookup
+            # still works.
+            target_device=type("_TD", (), {"profile": _target})() if _target is not None else None,
+            prefix="drv",
+        )
         if self.registry is None:
             self.registry = get_registry()
         # Ensure canonical invent slots are registered so an MCP-driven

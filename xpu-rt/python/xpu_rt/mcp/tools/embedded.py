@@ -351,16 +351,53 @@ def zephyr_overlay(
     }
 
 
+class _DefaultDict(dict):
+    """``dict`` that returns the literal ``{key}`` for misses, so
+    :py:meth:`str.format_map` leaves typos in placeholder names visible
+    instead of silently dropping them. Callers with a real slot to fill
+    pass it explicitly via ``substitutions=`` or get it from the spec's
+    ``verification_surface`` block.
+
+    Earlier revisions returned ``""`` to satisfy a loose pack-side
+    test assertion; that test now passes ``substitutions`` explicitly,
+    so the strict policy is back. A misspelled ``{cypath_root}`` will
+    surface verbatim in the rendered command instead of evaporating
+    into thin air."""
+
+    def __missing__(self, key: str) -> str:
+        return "{" + key + "}"
+
+
+_SIM_PLACEHOLDERS: tuple[str, ...] = (
+    "{elf}",
+    "{binary}",
+    "{config}",
+    "{chipyard_root}",
+    "{sim_backend}",
+    "{extra_make_args}",
+)
+
+
 def _simulator_command(
     spec: Any,
     elf_path: Path,
     override: str | None,
+    *,
+    substitutions: dict[str, str] | None = None,
+    extra_make_args: dict[str, str] | None = None,
 ) -> tuple[str, str]:
     """Return ``(simulator_name, command_line)`` for a spec + ELF.
 
-    Reads ``verification_surface.simulator_command`` from the spec
-    and appends the ELF path. Caller may override the whole command
-    line via ``override`` — useful for one-off re-runs.
+    Reads ``verification_surface.simulator_command`` from the spec.
+    If the template contains any of the placeholders ``{elf}``,
+    ``{binary}``, ``{config}``, ``{chipyard_root}``, ``{sim_backend}``,
+    or ``{extra_make_args}``, named-slot substitution is performed via
+    :py:meth:`str.format_map` and the ELF is *not* appended. Otherwise
+    the helper falls back to appending the ELF (legacy Spike-style
+    positional CLIs).
+
+    Caller may override the whole command line via ``override`` —
+    useful for one-off re-runs.
     """
     if override:
         return ("override", override)
@@ -368,8 +405,35 @@ def _simulator_command(
     if not cmd:
         # Reasonable default for Zephyr/Chipyard RISC-V targets.
         cmd = "spike --isa=rv64gcv"
+
+    if any(p in cmd for p in _SIM_PLACEHOLDERS):
+        subs = dict(substitutions or {})
+        subs.setdefault("elf", str(elf_path))
+        subs.setdefault("binary", str(elf_path))
+        # Default {sim_backend} from the spec when the caller didn't
+        # supply one explicitly. Lets a single template resolve to any
+        # of sims/{vcs,verilator,firesim} based on the spec's choice.
+        spec_sim_backend = getattr(spec.verification_surface, "sim_backend", "") or ""
+        if spec_sim_backend:
+            subs.setdefault("sim_backend", spec_sim_backend)
+        if extra_make_args:
+            subs["extra_make_args"] = " ".join(f"{k}={v}" for k, v in extra_make_args.items())
+        else:
+            subs.setdefault("extra_make_args", "")
+        cmd = cmd.format_map(_DefaultDict(subs))
+        # Collapse runs of whitespace introduced by empty placeholders
+        # (e.g. ``{extra_make_args}`` rendering to ``""``).
+        cmd = " ".join(cmd.split())
+        parts = cmd.split()
+        name = parts[0] if parts else "sim"
+        return name, cmd
+
+    # Legacy append-mode for Spike-style positional CLIs.
     name = cmd.split()[0]
     return name, f"{cmd} {elf_path}"
+
+
+_BUILD_CMD_DEFAULT: str = "__zephyr_default__"
 
 
 def simulator_run(
@@ -381,16 +445,33 @@ def simulator_run(
     board: str = "spike_riscv64",
     elf_path: str | None = None,
     simulator_override: str | None = None,
+    extra_make_args: dict[str, str] | None = None,
+    substitutions: dict[str, str] | None = None,
+    build_command: str | None = _BUILD_CMD_DEFAULT,
     execute: bool = False,
     timeout_s: int = 120,
     session_id: str | None = None,
 ) -> dict[str, Any]:
-    """Produce (or run) the ``west build`` + simulator command pair.
+    """Produce (or run) a build + simulator command pair.
 
     The simulator invocation is read from the HardwareSpec's
     ``verification_surface.simulator_command`` — so Spike, vendor
     sims, or RTL sims all go through the same verb. Pass
     ``simulator_override`` to pin a one-off command.
+
+    The build step is configurable. Resolution order:
+
+    1. ``build_command=""`` (explicit empty) — skip build entirely.
+       Use for chipyard/RTL-sim flows where the simulator_command
+       already does its own build (``make -C sims/vcs run-binary …``).
+    2. ``build_command="<cmd>"`` (explicit non-empty) — run that
+       command before the simulator.
+    3. Otherwise, fall back to ``verification_surface.build_command``
+       from the spec when set.
+    4. Otherwise, fall back to the legacy Zephyr ``west build`` flow.
+       The Zephyr fallback only runs when ``west`` is on PATH and the
+       sample directory exists; if either is missing, the build is
+       skipped and only the simulator runs.
     """
     from compgen.targetgen.load import load_hardware_spec
 
@@ -413,15 +494,34 @@ def simulator_run(
         }
 
     zephyr_root = zephyr_root or _default_zephyr_root()
-    zephyr_path = Path(zephyr_root).expanduser()
+    # Chipyard / RTL-sim flows don't need a Zephyr tree — only a concrete
+    # ELF + a templated simulator_command. Fall back to the cwd so path
+    # arithmetic below stays well-defined.
+    zephyr_path = Path(zephyr_root).expanduser() if zephyr_root else Path.cwd()
     if sample_name is None:
         overlay = session.metadata.get("embedded_overlay", "")
         sample_name = Path(overlay).name if overlay else "compgen_app"
     sample_path = zephyr_path / "samples" / sample_name
     elf = Path(elf_path) if elf_path else zephyr_path / "build" / "zephyr" / "zephyr.elf"
 
-    build_cmd = f"west build -p -b {board} samples/{sample_name}/"
-    simulator_name, simulator_cmd = _simulator_command(spec, elf, simulator_override)
+    simulator_name, simulator_cmd = _simulator_command(
+        spec,
+        elf,
+        simulator_override,
+        substitutions=substitutions,
+        extra_make_args=extra_make_args,
+    )
+
+    # Resolve the build command. Empty string ⇒ no build; non-empty ⇒
+    # run that command verbatim; ``_BUILD_CMD_DEFAULT`` (the default
+    # arg) means "let the spec / Zephyr fallback decide".
+    build_cmd = _resolve_build_command(
+        explicit=build_command,
+        spec=spec,
+        board=board,
+        sample_name=sample_name,
+        sample_path=sample_path,
+    )
 
     if not execute:
         return {
@@ -435,8 +535,14 @@ def simulator_run(
         }
 
     tool0 = simulator_cmd.split()[0]
-    missing = [tool for tool in ("west", tool0) if shutil.which(tool) is None]
-    if missing or not sample_path.exists():
+    required_tools: list[str] = [tool0]
+    if build_cmd:
+        required_tools.append(shlex.split(build_cmd)[0])
+    missing = [tool for tool in required_tools if shutil.which(tool) is None]
+    # Sample dir is a Zephyr-flow precondition; only enforce it when
+    # we're actually about to do a Zephyr build.
+    needs_sample = build_cmd.startswith("west build")
+    if missing or (needs_sample and not sample_path.exists()):
         return {
             "ok": False,
             "error": (f"cannot execute: missing tools={missing}, sample_exists={sample_path.exists()}"),
@@ -450,7 +556,11 @@ def simulator_run(
         "simulator_command": simulator_cmd,
         "simulator_name": simulator_name,
     }
-    for label, cmd in (("build", build_cmd), ("simulator", simulator_cmd)):
+    steps: list[tuple[str, str]] = []
+    if build_cmd:
+        steps.append(("build", build_cmd))
+    steps.append(("simulator", simulator_cmd))
+    for label, cmd in steps:
         try:
             proc = subprocess.run(
                 shlex.split(cmd),
@@ -469,10 +579,39 @@ def simulator_run(
         if proc.returncode != 0:
             break
 
-    results["ok"] = all(results.get(f"{k}_returncode") == 0 for k in ("build", "simulator"))
+    # ``ok`` only requires the steps we actually ran to succeed —
+    # callers without a build step shouldn't be penalised for it.
+    results["ok"] = all(results.get(f"{label}_returncode") == 0 for label, _ in steps)
     results["session_id"] = session.session_id
     results["executed"] = True
     return results
+
+
+def _resolve_build_command(
+    *,
+    explicit: str | None,
+    spec: Any,
+    board: str,
+    sample_name: str,
+    sample_path: Path,
+) -> str:
+    """Pick a build command following the documented resolution order.
+
+    Returns the empty string when no build should run. See
+    :func:`simulator_run` for the four-step resolution order.
+    """
+    # 1 + 2: explicit caller arg (other than the sentinel).
+    if explicit != _BUILD_CMD_DEFAULT:
+        return explicit or ""
+    # 3: spec-supplied build command.
+    spec_build = getattr(spec.verification_surface, "build_command", "") or ""
+    if spec_build:
+        return spec_build
+    # 4: legacy Zephyr default — only meaningful when west + samples/
+    # are reachable. Otherwise return "" so the caller skips build.
+    if shutil.which("west") is not None and sample_path.exists():
+        return f"west build -p -b {board} samples/{sample_name}/"
+    return ""
 
 
 def firesim_workload(
@@ -690,6 +829,31 @@ EMBEDDED_TOOLS: list[dict[str, Any]] = [
                 "board": {"type": "string"},
                 "elf_path": {"type": "string"},
                 "simulator_override": {"type": "string"},
+                "extra_make_args": {
+                    "type": "object",
+                    "additionalProperties": {"type": "string"},
+                    "description": (
+                        "KEY=VAL pairs space-joined into the {extra_make_args} "
+                        "placeholder of the spec's simulator_command template."
+                    ),
+                },
+                "substitutions": {
+                    "type": "object",
+                    "additionalProperties": {"type": "string"},
+                    "description": (
+                        "Named-slot values for {chipyard_root}, {config}, "
+                        "{sim_backend}, etc. in the simulator_command template."
+                    ),
+                },
+                "build_command": {
+                    "type": "string",
+                    "description": (
+                        "Optional build step run before the simulator. "
+                        "Empty string skips the build entirely; omit to "
+                        "fall back to the spec's verification_surface."
+                        "build_command, then to the legacy Zephyr default."
+                    ),
+                },
                 "execute": {"type": "boolean", "default": False},
                 "timeout_s": {"type": "integer"},
                 "session_id": {"type": "string"},
