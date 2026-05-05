@@ -36,14 +36,25 @@
       "created_at_utc": "2026-05-05T00:00:00Z",
       "evidence_paths": [
         "python/compgen/audit/negative_controls.py",
-        "python/compgen/audit/errors.py"
+        "python/compgen/audit/errors.py",
+        "python/compgen/passes/cards.py",
+        "python/compgen/passes/verification.py",
+        "python/compgen/analysis/invalidation.py",
+        "docs/generated/pass_cards/set_tile_params.yaml",
+        "docs/generated/pass_cards/fuse_producer_consumer.yaml",
+        "docs/generated/pass_cards/fold_transposes_into_dots.yaml",
+        "tests/passes/test_pass_card.py",
+        "tests/passes/test_seed_cards.py",
+        "tests/passes/test_verification_gates.py",
+        "tests/analysis/test_invalidation.py",
+        "tests/audit/test_negative_controls.py"
       ],
       "id": "negative_controls_pass_card_placeholder",
       "is_bug": false,
       "last_verified_at_utc": "2026-05-05T00:00:00Z",
-      "notes": "M-31A ships placeholder typed errors for pass-card / precondition / invalidation negative controls. Full implementations land in M-31 (pass cards), which ships behind this gate. Until then the negative-control test asserts the typed-error machinery exists and is wired through trust_report.",
-      "required_to_close": "M-31 lands a real pass-card registry; replace placeholder negative controls with real fault injection against MissingPassCard / PreconditionViolation / StaleAnalysisAudit",
-      "status": "open"
+      "notes": "M-31 shipped the real pass-card registry; M-33 ships the verification-certificate gate and the producer-side invalidation discipline. All three previously-placeholder negative controls are now real fault injection: MissingPassCard (M-31; build a registry with a card missing and ask the validator to resolve both ids), PreconditionViolation (M-33; declare a card with a required verification rung, emit no certificate, assert VerificationGateMissing fires — note the test parametrize records the actual class raised), StaleAnalysisAudit (M-33; pass mutates graph_dossier_v3 but only claims semantic_obligations as invalidated, transitive closure check raises UnannouncedInvalidation which subclasses StaleAnalysisAudit).",
+      "required_to_close": "Resolved by M-33. A future M-34 will add per-pass IR-level precondition checking (currently the closest typed error is VerificationGateMissing) and consumer-side stale-read detection (currently producer-side only).",
+      "status": "resolved"
     }
   ]
 }

@@ -562,6 +562,31 @@ def run_graph_compilation(
                 ledger_path, stage_id="recipe_planning",
                 event="artifact_written", note="post_lowering (M-08): finish",
             )
+            # M-33.2: emit a verification certificate wrapping the
+            # post-lowering report so the agent's pass-card
+            # ``verification: [structural]`` rung is checkable.
+            try:
+                from compgen.passes.verification import (
+                    emit_certificate_from_post_lowering_report,
+                )
+
+                _cert = emit_certificate_from_post_lowering_report(
+                    run_dir=out_dir,
+                )
+                _append_ledger(
+                    ledger_path, stage_id="trust_audit",
+                    event="artifact_written",
+                    note=(
+                        f"verification_certificate (structural): "
+                        f"{_cert.status if _cert else 'not_emitted'}"
+                    ),
+                )
+            except Exception as exc:  # noqa: BLE001 - best effort
+                _append_ledger(
+                    ledger_path, stage_id="trust_audit",
+                    event="artifact_written",
+                    note=f"structural cert error {type(exc).__name__}: {exc}",
+                )
         # M-09 differential / reference verification runs as a sub-step
         # when stop_after >= differential-verification. Strips compgen
         # metadata and proves the M-08 transformation is semantically
@@ -586,6 +611,29 @@ def run_graph_compilation(
                 event="artifact_written",
                 note="differential_verification (M-09): finish",
             )
+            # M-33.2: differential certificate wrapper.
+            try:
+                from compgen.passes.verification import (
+                    emit_certificate_from_differential_report,
+                )
+
+                _cert = emit_certificate_from_differential_report(
+                    run_dir=out_dir,
+                )
+                _append_ledger(
+                    ledger_path, stage_id="trust_audit",
+                    event="artifact_written",
+                    note=(
+                        f"verification_certificate (differential): "
+                        f"{_cert.status if _cert else 'not_emitted'}"
+                    ),
+                )
+            except Exception as exc:  # noqa: BLE001 - best effort
+                _append_ledger(
+                    ledger_path, stage_id="trust_audit",
+                    event="artifact_written",
+                    note=f"differential cert error {type(exc).__name__}: {exc}",
+                )
         # M-11A real-transform eligibility audit: read-only audit that
         # classifies the selected recipe against the narrow real-matmul-
         # tiling MVP. Emits 03_recipe_planning/real_transform_eligibility

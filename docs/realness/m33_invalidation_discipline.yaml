@@ -1,0 +1,60 @@
+claim: |
+  Pass cards' invalidates / verification / preserves_refinement fields
+  are no longer informational. The pipeline emits typed verification
+  certificates wrapping the post_lowering and differential_verification
+  reports; the validator checks that every required rung has a passing
+  cert, that a recipe's claimed refinement does not exceed the weakest
+  preserves_refinement across applied passes, and that any analysis
+  summary mutated by a pass is in the transitive closure of that
+  pass's invalidates list. Producer-side lying passes raise
+  UnannouncedInvalidation; refinement over-claims raise
+  RefinementMonotonicityViolation; missing or failing certificates
+  raise VerificationGateMissing / VerificationGateFailed.
+commit: 56d7aebd26519c6a269106328b6373c55b3db493
+created_at_utc: 2026-05-05T00:00:00Z
+feature_id: m33_invalidation_discipline
+forbidden:
+- silent invalidation (mutating a summary without declaring it in invalidates)
+- missing verification certificate when a rung is required
+- refinement downgrade without explicit relax_refinement
+- precomputed verification certificate shipped in repo
+realness_level: production_path
+required_evidence:
+- python/compgen/analysis/invalidation.py
+- python/compgen/analysis/checkpoints.py (AnalysisIndex.diff, AnalysisSummary.generation)
+- python/compgen/passes/verification.py
+- python/compgen/passes/refinement.py
+- python/compgen/audit/errors.py (UnannouncedInvalidation, RefinementMonotonicityViolation, VerificationGateMissing, VerificationGateFailed)
+- python/compgen/audit/negative_controls.py (real fault injection for all three previously-placeholder controls)
+- python/compgen/graph_compilation/agent_decision.py (3 new validator rows)
+- python/compgen/graph_compilation/run.py (cert emit hooks at post_lowering + differential_verification)
+- tests/analysis/test_invalidation.py
+- tests/passes/test_verification_gates.py
+- tests/passes/test_refinement_chain.py
+- tests/audit/test_negative_controls.py
+- a real merlin_mlp_wide run that emits both certificates with status=pass
+- 5 newly-authored cards for ported XLA / IREE passes (fold_transposes_into_dots, propagate_transposes, plan_reduction, lower_quantized_matmul, fuse_softmax_to_triton) verified by registry load + cross-link
+notes: |
+  Section 20 / M-33. Third milestone behind the M-31A audit gate. The
+  user's framing motivates the design: pass ordering is a hard
+  problem; the LLM gets freedom to pick which pass + region +
+  candidate, but the deterministic skeleton enforces correctness
+  invariants the LLM cannot invent its way around.
+
+  Five sub-milestones shipped:
+
+    M-33.1  generation tracking + invalidation log + diff primitive
+    M-33.2  verification certificate gate (structural / differential;
+            formal stays SKIPPABLE pending semantic-IR work)
+    M-33.3  refinement monotonicity (RefinementLevel total order;
+            assert_refinement_chain_valid; validator wire-in)
+    M-33.4  real PreconditionViolation + StaleAnalysisAudit controls;
+            negative_controls_pass_card_placeholder caveat resolved
+    M-33.5  realness contract + trust report
+
+  As an organizational follow-up: 33 additional ported passes from
+  XLA / IREE / hexagon-mlir / Event Tensor Compiler exist under
+  python/compgen/ir/payload/passes/rewrites/ but only the 5
+  priority-1 cards shipped here. M-34 will author the remaining
+  cards as part of the multi-pass scheduling story. Tracked as
+  paper-internal scope, not blocking.

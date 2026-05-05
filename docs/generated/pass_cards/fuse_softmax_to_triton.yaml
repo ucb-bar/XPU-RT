@@ -1,0 +1,59 @@
+schema_version: pass_card_v1
+pass_id: fuse_softmax_to_triton
+display_name: Fuse softmax into a Triton kernel
+level: payload
+family: fusion
+reads:
+  - 01_payload_lowering/payload.mlir
+  - 02_graph_analysis/candidate_actions.json
+  - 02_graph_analysis/tensor_use_def_graph.json
+writes:
+  - 03_recipe_planning/post_lowering/transformed_payload.mlir
+  - 03_recipe_planning/post_lowering/applied_transform_manifest.json
+preconditions:
+  - "softmax pattern: max -> sub -> exp -> sum -> div"
+  - "softmax inputs and outputs are shape-known"
+  - "target supports the Triton ukernel call (ukernel.softmax)"
+  - "no consumer of intermediate sub/exp/sum tensors outside this region"
+invalidates:
+  - payload_summary
+  - graph_dossier_v3
+  - tensor_use_def_graph
+  - cost_preview
+  - kernel_contracts
+preserves_refinement: tolerance_eps
+verification:
+  - structural
+  - differential
+cost: medium
+failure_modes:
+  - "softmax_pattern_partial_match"
+  - "intermediate_tensor_has_external_consumer"
+  - "unsupported_softmax_axis"
+  - "ukernel_target_unavailable"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+example_invocation:
+  schema_version: agent_decision_response_v1
+  selected_candidate_id: fuse_softmax_attention_block_0
+  rationale:
+    why: "softmax pattern detected; fused kernel saves 4 launches and one full memory round-trip"
+    references:
+      - "candidate.cost_preview.static_relative_cost"
+      - "region.tensor_use_def_graph.consumer_count"
+notes: |
+  Reconstruction of XLA's softmax fusion as a CompGen PatternRewriter
+  (python/compgen/ir/payload/passes/rewrites/fuse_softmax_to_triton.py).
+  Detects the canonical softmax decomposition (max -> sub -> exp -> sum
+  -> div) and replaces the entire region with a single ukernel.softmax
+  call backed by a Triton implementation in the kernel store.
+
+  preserves_refinement is tolerance_eps because the fused softmax uses
+  the standard online-softmax algorithm: it produces results within
+  tolerance_eps of eager but is not bit-equal (different summation
+  order in the partial-sum stage). A bit-equal variant exists for
+  small last-axis sizes that fit a single block; that variant is a
+  separate card (deferred).
+
+  Source: XLA SoftmaxFusion. LLM-tool signature declared in the
+  source: wraps_pass=CompGen:FuseSoftmaxToTriton,
+  invent_slot=pattern_library/fused_softmax.

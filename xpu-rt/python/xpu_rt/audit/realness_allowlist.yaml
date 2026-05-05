@@ -301,6 +301,18 @@ allowed_nonproduction_symbols:
     reason: "Operator-facing realness policy doc; quotes the red-team prompt that names the words the audit looks for. Meta-reference, not a residual"
     forbidden_in: []
 
+  - path: docs/realness/m31_pass_card_registry.yaml
+    reason: "M-31's realness contract; the forbidden list names the residual words it bans (hardcoded passes_allowed list). Meta-reference, not a residual"
+    forbidden_in: []
+
+  - path: docs/realness/m32_multi_level_analysis.yaml
+    reason: "M-32's realness contract; meta-reference, not a residual"
+    forbidden_in: []
+
+  - path: docs/realness/m33_invalidation_discipline.yaml
+    reason: "M-33's realness contract; the forbidden list names the residual words it bans (silent invalidation, missing certificate). Meta-reference, not a residual"
+    forbidden_in: []
+
 # Patterns we tolerate inside any source file (e.g. comment markers in
 # docs / generated stubs / strings). The base scanner already excludes
 # .compgen_cache, .crg-artifacts, results/, __pycache__, .git, and tests/

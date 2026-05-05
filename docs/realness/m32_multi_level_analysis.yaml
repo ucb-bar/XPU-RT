@@ -1,0 +1,47 @@
+claim: |
+  Every analysis summary the pipeline emits — at every IR level (FX,
+  Payload, Graph, Recipe, Semantic, Tile, Kernel, Plan, Runtime) — is
+  registered in compgen.analysis.checkpoints.KNOWN_SUMMARIES with a
+  stable id, declared dependencies, and the canonical artifact path.
+  AnalysisIndex.from_run_dir walks a finished run, computes a
+  content_hash for each summary, marks availability, and surfaces the
+  full index in agent_decision_request.analysis_summaries. Pass cards'
+  invalidates lists cross-link to known summary ids — the registry
+  refuses to load a card that references an unknown id.
+commit: 1f8b14a4d2ea8f1b677b238fe8ac741e6819b1c9
+created_at_utc: 2026-05-05T00:00:00Z
+feature_id: m32_multi_level_analysis
+forbidden:
+- mock analysis index
+- silent acceptance of unknown invalidates id
+- analysis summary without declared dependencies
+- one-level-only analysis (FX-only)
+realness_level: production_path
+required_evidence:
+- python/compgen/analysis/checkpoints.py
+- python/compgen/passes/cards.py (invalidates cross-link)
+- python/compgen/graph_compilation/agent_decision.py (analysis_summaries block)
+- tests/analysis/test_checkpoints.py
+- tests/passes/test_pass_card.py (invalidates-cross-link tests)
+- agent_decision_request.json on a real run carries analysis_summaries (verified on merlin_mlp_wide; 37 summaries known, 32 available, 7 levels)
+notes: |
+  Section 20 / M-32. Second milestone behind the M-31A audit gate.
+
+  Levels covered (ANALYSIS_LEVELS): fx, payload, graph, recipe,
+  semantic, tile, kernel, plan, runtime. The ``graph`` level is the
+  payload-derived graph-dossier bucket — a real intermediate level
+  that earlier specifications collapsed into A1 (Payload) but which
+  has its own dependency cluster (graph_dossier_v3 → region_map →
+  candidate_actions → cost_preview → llm_action_space).
+
+  M-32 is read-only: it indexes summaries already on disk; it does
+  NOT generate new analysis. The pipeline already emits these; M-32
+  types them. M-33 will use the dependency graph to enforce
+  invalidation discipline (running a pass with
+  invalidates: [graph_dossier_v3] must invalidate every transitive
+  dependent before any downstream consumer reads).
+
+  Cross-link: PassCardRegistry.load now validates that every card's
+  invalidates id resolves to a registered summary. The
+  validate_summary_invalidates flag exists for tests that build
+  registries in isolation, but production callers leave it at True.

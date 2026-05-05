@@ -94,7 +94,38 @@ class PreconditionViolation(AuditError):
 
 
 class StaleAnalysisAudit(AuditError):
-    """A consumer used an analysis summary that should have been invalidated."""
+    """A consumer used an analysis summary that should have been invalidated.
+
+    M-31A.5 introduced this as a typed-error placeholder. M-33 turns it
+    into the family root for stale-summary failures — both
+    producer-side ("a pass mutated something it didn't declare";
+    :class:`UnannouncedInvalidation`) and consumer-side ("a reader
+    consumed a summary an upstream pass invalidated"; lands in M-34)
+    inherit from this class so existing M-31A.5 references and
+    pytest.raises(StaleAnalysisAudit) calls keep working."""
+
+
+class UnannouncedInvalidation(StaleAnalysisAudit):
+    """A pass mutated an analysis summary it did not declare in its
+    ``invalidates`` list (M-33). The dependency closure of the claim
+    was checked too — this fires when even the transitive closure
+    misses the observed mutation."""
+
+
+class RefinementMonotonicityViolation(AuditError):
+    """A recipe claims a refinement (e.g. ``bit_equality``) stronger
+    than the weakest refinement preserved across its applied passes
+    (M-33)."""
+
+
+class VerificationGateMissing(AuditError):
+    """A pass card declares a required verification rung (e.g.
+    ``differential``) but no certificate is on disk (M-33)."""
+
+
+class VerificationGateFailed(AuditError):
+    """A verification certificate exists but reports
+    ``status != "pass"`` (M-33)."""
 
 
 class ContractHashMismatch(AuditError):

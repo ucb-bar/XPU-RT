@@ -1,0 +1,57 @@
+schema_version: pass_card_v1
+pass_id: fuse_producer_consumer
+display_name: Fuse producer-consumer pointwise pair
+level: payload
+family: fusion
+reads:
+  - 01_payload_lowering/payload.mlir
+  - 02_graph_analysis/candidate_actions.json
+  - 02_graph_analysis/llm_action_space.json
+  - 02_graph_analysis/tensor_use_def_graph.json
+writes:
+  - 03_recipe_planning/real_fusion/transformed_payload.real.mlir
+  - 03_recipe_planning/real_fusion/real_fusion_manifest.json
+preconditions:
+  - "candidate.kind == fuse_producer_consumer"
+  - "candidate.legality.ok == true"
+  - "producer.kind in [add, mul, sub, bias_add]"
+  - "consumer.kind in [relu, sigmoid, tanh, gelu, silu]"
+  - "producer output tensor has exactly one consumer"
+  - "shapes are pointwise-broadcastable"
+invalidates:
+  - payload_summary
+  - cost_preview
+  - kernel_contracts
+  - graph_dossier_v3
+  - tensor_use_def_graph
+preserves_refinement: bit_equality
+verification:
+  - structural
+  - differential
+cost: cheap
+failure_modes:
+  - "multi_consumer_tensor"
+  - "unsupported_producer_op"
+  - "unsupported_consumer_op"
+  - "shape_mismatch"
+  - "numerical_reassociation"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+example_invocation:
+  schema_version: agent_decision_response_v1
+  selected_candidate_id: fuse_add_relu_region_0
+  rationale:
+    why: "single-consumer pointwise pair; saves one launch + one round-trip to memory"
+    references:
+      - "candidate.cost_preview.static_relative_cost"
+      - "region.tensor_use_def_graph.consumer_count"
+notes: |
+  fuse_producer_consumer is the pointwise-pair fusion MVP. It collapses
+  a two-op pointwise chain (e.g. add → relu) into a single fused
+  region, eliminating the intermediate materialisation. The pass is
+  bit-equal to eager whenever the operations are mathematically
+  associative under floating-point — for the MVP whitelist (add, mul,
+  sub, bias_add → relu, sigmoid, tanh, gelu, silu) reordering does not
+  reassociate accumulations, so bit-equality holds. matmul→add is
+  *not* on the whitelist because matmul accumulation order differs from
+  eager when fused; that pair is honestly blocked rather than silently
+  degraded.

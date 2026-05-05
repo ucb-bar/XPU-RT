@@ -277,14 +277,31 @@ def control_replay_input_hash_mismatch(tmp_path: Path) -> NegativeControlOutcome
 
 
 def control_pass_card_missing(tmp_path: Path) -> NegativeControlOutcome:
-    """Placeholder: when M-31 ships pass cards, this control will remove
-    a card for an exposed pass and verify request generation fails. For
-    M-31A the typed-error machinery is the deliverable."""
+    """M-31 real fault injection: build a registry containing only one
+    of the production passes, then ask the validator to resolve a
+    request that references the OTHER one. The validator must raise
+    :class:`MissingPassCard`.
+
+    This catches the failure mode where the agent's vocabulary
+    drifts ahead of the registry (a pass id is exposed but its card
+    was never authored).
+    """
+    import shutil
+    from compgen.passes.cards import PassCardRegistry
+
+    real_root = Path(__file__).resolve().parents[3] / "docs" / "generated" / "pass_cards"
+    fake_root = tmp_path / "pass_cards"
+    fake_root.mkdir(parents=True, exist_ok=True)
+    # Copy ONLY one card; pretend the other was never authored.
+    src = real_root / "set_tile_params.yaml"
+    if src.exists():
+        shutil.copy(src, fake_root / "set_tile_params.yaml")
+
     def _fn() -> None:
-        raise MissingPassCard(
-            "pass 'set_tile_params' has no pass card "
-            "(placeholder; full implementation lands with M-31)"
-        )
+        registry = PassCardRegistry.load(fake_root)
+        # The agent's vocabulary references both; the registry knows only one.
+        registry.assert_resolvable(["set_tile_params", "fuse_producer_consumer"])
+
     return _expect(
         name="pass_card_missing",
         expected_error=MissingPassCard,
@@ -293,27 +310,77 @@ def control_pass_card_missing(tmp_path: Path) -> NegativeControlOutcome:
 
 
 def control_pass_precondition_violation(tmp_path: Path) -> NegativeControlOutcome:
-    """Placeholder: pass run on IR that fails its preconditions."""
+    """M-33 real fault injection: a pass card declares a verification
+    rung, the rung's certificate is missing, and the validator raises
+    :class:`VerificationGateMissing`. This is the producer-side
+    pre-condition: a downstream consumer of the pass output cannot
+    safely proceed without the certificate."""
+    from compgen.passes.cards import PassCard
+    from compgen.passes.verification import (
+        assert_required_rungs_discharged,
+    )
+    from compgen.audit.errors import VerificationGateMissing
+
+    # Author a card declaring the differential rung but emit no
+    # certificate. assert_required_rungs_discharged must raise.
+    card = PassCard(
+        schema_version="pass_card_v1",
+        pass_id="injected_test_pass",
+        display_name="injected test pass",
+        level="payload",
+        family="tiling",
+        reads=("a.json",),
+        writes=("b.json",),
+        preconditions=("region.kind == matmul",),
+        invalidates=("payload_summary",),
+        preserves_refinement="bit_equality",
+        verification=("differential",),
+        cost="cheap",
+        failure_modes=("test_only",),
+    )
+    run_dir = tmp_path / "run"
+    run_dir.mkdir(parents=True, exist_ok=True)
+
     def _fn() -> None:
-        raise PreconditionViolation(
-            "pass 'fuse_producer_consumer' precondition "
-            "'tensor has single consumer' violated (placeholder)"
-        )
+        assert_required_rungs_discharged(card, run_dir)
+
+    # The closest existing typed error for "preconditions for safe
+    # consumption are not satisfied" is VerificationGateMissing.
+    # PreconditionViolation remains as the family-level alias for
+    # M-34 when per-pass precondition checking lands on real IR.
     return _expect(
         name="pass_precondition_violation",
-        expected_error=PreconditionViolation,
+        expected_error=VerificationGateMissing,
         fn=_fn,
     )
 
 
 def control_stale_analysis_consumed(tmp_path: Path) -> NegativeControlOutcome:
-    """Placeholder: a consumer used a Payload summary that was
-    invalidated by an upstream pass."""
+    """M-33 real fault injection: a pass declares ``invalidates:
+    [semantic_obligations]`` but in the actual run mutated
+    ``graph_dossier_v3``. The producer-side guard
+    :func:`assert_invalidations_match_claim` raises
+    :class:`StaleAnalysisAudit` (an alias for
+    :class:`UnannouncedInvalidation`).
+    """
+    from compgen.analysis.invalidation import (
+        InvalidationDiff,
+        assert_invalidations_match_claim,
+    )
+
+    diff = InvalidationDiff(
+        mutated=("graph_dossier_v3",),
+        appeared=(),
+        removed=(),
+    )
+
     def _fn() -> None:
-        raise StaleAnalysisAudit(
-            "consumer 'cost_preview_v2' read 'payload_summary' that was "
-            "invalidated by 'set_tile_params' (placeholder)"
+        # Claim only ``semantic_obligations`` — its closure does NOT
+        # include graph_dossier_v3, so the mutation is unannounced.
+        assert_invalidations_match_claim(
+            diff, ["semantic_obligations"], pass_id="injected_test_pass",
         )
+
     return _expect(
         name="stale_analysis_consumed",
         expected_error=StaleAnalysisAudit,

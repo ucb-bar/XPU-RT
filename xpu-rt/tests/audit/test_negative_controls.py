@@ -32,7 +32,17 @@ from compgen.audit.negative_controls import (
     (control_applies_when_predicate_violated, "AppliesWhenViolation"),
     (control_certificate_artifact_hash_changed, "CertificateInvalidated"),
     (control_pass_card_missing, "MissingPassCard"),
-    (control_pass_precondition_violation, "PreconditionViolation"),
+    # M-33: real fault injection now raises VerificationGateMissing
+    # (the closest existing typed error for "preconditions for safe
+    # consumption are not satisfied"). PreconditionViolation remains
+    # as the family-level placeholder for M-34's per-pass IR-level
+    # precondition check.
+    (control_pass_precondition_violation, "VerificationGateMissing"),
+    # M-33: StaleAnalysisAudit is the family root for stale-summary
+    # failures; UnannouncedInvalidation is a subclass. The control
+    # declares expected_error=StaleAnalysisAudit so a future
+    # consumer-side stale-read injection can also resolve to the same
+    # row without a parametrize-table change.
     (control_stale_analysis_consumed, "StaleAnalysisAudit"),
 ])
 def test_synthetic_controls_raise_expected(control, expected, tmp_path: Path) -> None:

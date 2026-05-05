@@ -1,0 +1,58 @@
+schema_version: pass_card_v1
+pass_id: lower_quantized_matmul
+display_name: Lower quantized matmul to dequant + matmul
+level: payload
+family: quant
+reads:
+  - 01_payload_lowering/payload.mlir
+  - 02_graph_analysis/candidate_actions.json
+  - 02_graph_analysis/numerical_sensitivity_audit.json
+writes:
+  - 03_recipe_planning/post_lowering/transformed_payload.mlir
+  - 03_recipe_planning/post_lowering/applied_transform_manifest.json
+preconditions:
+  - "matmul whose weight operand is int4 or int8 packed"
+  - "scale tensor present and shape-compatible"
+  - "target accepts dequant + matmul lowering"
+invalidates:
+  - payload_summary
+  - graph_dossier_v3
+  - cost_preview
+  - kernel_contracts
+  - numerical_sensitivity_audit
+preserves_refinement: tolerance_eps
+verification:
+  - structural
+  - differential
+cost: medium
+failure_modes:
+  - "weight_not_packed_int"
+  - "scale_shape_mismatch"
+  - "unsupported_zero_point_layout"
+  - "asymmetric_quantization_outside_scope"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+example_invocation:
+  schema_version: agent_decision_response_v1
+  selected_candidate_id: lower_int4_matmul_region_0
+  rationale:
+    why: "int4 weight matmul; dequant + matmul lets downstream tiling work on a standard fp shape"
+    references:
+      - "candidate.cost_preview.static_relative_cost"
+      - "region.numerical_sensitivity_audit.tolerance_budget"
+notes: |
+  Reconstruction of IREE's quantized-matmul lowering as a CompGen
+  PatternRewriter (python/compgen/ir/payload/passes/rewrites/
+  lower_quantized_matmul.py). Lowers an int4/int8 packed-weight GEMM
+  into an explicit dequantize + standard fp matmul pair so downstream
+  tiling, fusion, and codegen passes can treat it like a normal
+  matmul.
+
+  preserves_refinement is tolerance_eps: the dequant introduces a
+  rounding step that does not bit-match a single-pass fused-int matmul
+  on most targets. A bit-equal lowering (when the target has an
+  int-matmul instruction the recipe library exercises) is a future
+  variant.
+
+  Source: IREE quantized-matmul lowering. LLM-tool signature declared
+  in the source: wraps_pass=CompGen:LowerQuantizedMatmul,
+  invent_slot=pattern_library/quant_lowering.

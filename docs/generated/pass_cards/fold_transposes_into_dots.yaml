@@ -1,0 +1,56 @@
+schema_version: pass_card_v1
+pass_id: fold_transposes_into_dots
+display_name: Fold transposes into dot operands
+level: payload
+family: layout
+reads:
+  - 01_payload_lowering/payload.mlir
+  - 02_graph_analysis/candidate_actions.json
+writes:
+  - 03_recipe_planning/post_lowering/transformed_payload.mlir
+  - 03_recipe_planning/post_lowering/applied_transform_manifest.json
+preconditions:
+  - "linalg.matmul whose operand is a 2D transpose with perm [1, 0]"
+  - "OR transpose(transpose(x, p1), p2) where p2 @ p1 == identity"
+  - "operands are not consumed by other ops outside this matmul"
+invalidates:
+  - payload_summary
+  - graph_dossier_v3
+  - cost_preview
+  - kernel_contracts
+preserves_refinement: bit_equality
+verification:
+  - structural
+  - differential
+cost: cheap
+failure_modes:
+  - "non_2d_transpose"
+  - "non_identity_permutation"
+  - "transpose_has_multiple_consumers"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+example_invocation:
+  schema_version: agent_decision_response_v1
+  selected_candidate_id: fold_transpose_b_into_matmul_0
+  rationale:
+    why: "matmul has a transposed operand; folding eliminates the materialised transpose tensor"
+    references:
+      - "candidate.cost_preview.static_relative_cost"
+notes: |
+  Reconstruction of XLA's TransposeFolding pass as a CompGen
+  PatternRewriter (python/compgen/ir/payload/passes/rewrites/
+  fold_transposes_into_dots.py). Two patterns run in the same greedy
+  applier:
+
+    1. matmul(transpose(a), b) and matmul(a, transpose(b)) -- absorb
+       the 2D transpose by rewriting indexing_maps; new matmul reads
+       the operand directly.
+    2. Double-transpose elimination when the perms compose to identity.
+
+  Only 2D transposes with perm [1, 0] participate in the matmul fold;
+  higher-rank or non-[1,0] cases route to propagate_transposes.
+
+  Source: XLA TransposeFolding (TensorFlow Inc.). LLM-tool signature
+  declared in the source: tool_name=fold_transposes_into_dots,
+  wraps_pass=CompGen:TransposeFolding,
+  invent_slot=pattern_library/algebraic_fold,
+  policy=AbsorbEvery2DTransposeIntoDot.

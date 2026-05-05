@@ -1,0 +1,50 @@
+schema_version: pass_card_v1
+pass_id: set_tile_params
+display_name: Set tile parameters
+level: payload
+family: tiling
+reads:
+  - 01_payload_lowering/payload.mlir
+  - 02_graph_analysis/candidate_actions.json
+  - 02_graph_analysis/llm_action_space.json
+writes:
+  - 03_recipe_planning/real_set_tile/transformed_payload.real.mlir
+  - 03_recipe_planning/real_set_tile/real_set_tile_manifest.json
+preconditions:
+  - "region.kind == matmul"
+  - "candidate.kind == set_tile_params"
+  - "candidate.legality.ok == true"
+  - "candidate references tile_M, tile_N, tile_K integers"
+invalidates:
+  - payload_summary
+  - cost_preview
+  - kernel_contracts
+  - graph_dossier_v3
+preserves_refinement: bit_equality
+verification:
+  - structural
+  - differential
+cost: medium
+failure_modes:
+  - "non_divisible_tile"
+  - "boundary_handling_required"
+  - "unsupported_op_in_region"
+  - "tile_dimension_non_positive"
+  - "missing_or_zero_tile_param"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+example_invocation:
+  schema_version: agent_decision_response_v1
+  selected_candidate_id: tile_M16_N16_K16
+  rationale:
+    why: "smallest predicted runtime in cost_preview_v2"
+    references:
+      - "candidate.cost_preview.static_relative_cost"
+      - "candidate.m21_analytical_cost.predicted_us"
+notes: |
+  set_tile_params is the canonical tiling pass for matmul regions.
+  When the picked tile divides every region dimension cleanly, the
+  emitted payload reaches mode=executable_real_set_tile and is
+  bit-equal to eager. When dimensions don't divide cleanly the pass
+  still emits a structural-only IR (mode=non_executable_structural_ir)
+  so the readiness matrix records an honest typed-blocked outcome
+  rather than silently degrading.

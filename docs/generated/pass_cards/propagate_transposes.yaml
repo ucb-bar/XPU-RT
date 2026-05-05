@@ -1,0 +1,51 @@
+schema_version: pass_card_v1
+pass_id: propagate_transposes
+display_name: Propagate transposes through elementwise chains
+level: payload
+family: layout
+reads:
+  - 01_payload_lowering/payload.mlir
+  - 02_graph_analysis/tensor_use_def_graph.json
+writes:
+  - 03_recipe_planning/post_lowering/transformed_payload.mlir
+  - 03_recipe_planning/post_lowering/applied_transform_manifest.json
+preconditions:
+  - "transpose feeds an elementwise op (relu, add, mul, etc.)"
+  - "downstream chain is uniformly transposable"
+  - "transpose has a single consumer OR all consumers are elementwise"
+invalidates:
+  - payload_summary
+  - graph_dossier_v3
+  - tensor_use_def_graph
+  - cost_preview
+  - kernel_contracts
+preserves_refinement: bit_equality
+verification:
+  - structural
+  - differential
+cost: cheap
+failure_modes:
+  - "transpose_blocks_on_non_elementwise_consumer"
+  - "rank_mismatch_in_chain"
+  - "shape_mismatch_under_perm"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+example_invocation:
+  schema_version: agent_decision_response_v1
+  selected_candidate_id: propagate_transpose_through_relu_chain_0
+  rationale:
+    why: "bubbles the transpose past pointwise ops so a downstream fold can absorb it"
+    references:
+      - "region.tensor_use_def_graph.consumer_count"
+notes: |
+  Reconstruction of IREE's transpose-propagation pass as a CompGen
+  PatternRewriter (python/compgen/ir/payload/passes/rewrites/
+  propagate_transposes.py). Bubbles 2D and higher-rank transposes
+  through elementwise op chains so they can be absorbed by downstream
+  contractions or eliminated when two transposes meet.
+
+  Often runs *before* fold_transposes_into_dots: propagation moves the
+  transpose into a position where the fold pattern matches.
+
+  Source: IREE TransposePropagation. LLM-tool signature declared in
+  the source: wraps_pass=CompGen:TransposePropagation,
+  invent_slot=pattern_library/layout_propagation.
