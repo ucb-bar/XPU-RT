@@ -32,6 +32,7 @@ SQLite errors degrade to an empty result, never raise.
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -200,6 +201,12 @@ def retrieve_for_region(
         (exact_contract first, then region_pattern). Empty list when
         nothing matches or the library does not exist.
     """
+    # M-31A.2: COMPGEN_DISABLE_RECIPE_MEMORY=1 forces a cold run by
+    # short-circuiting the retrieval. The agent_decision_request writer
+    # records this in the request's `disabled_by_env` field so the audit
+    # trail explains why no promoted candidates surfaced.
+    if os.environ.get("COMPGEN_DISABLE_RECIPE_MEMORY") == "1":
+        return []
     if not region_signature and not contract_hash:
         return []
 

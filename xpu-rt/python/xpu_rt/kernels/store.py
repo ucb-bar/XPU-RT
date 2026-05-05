@@ -166,7 +166,14 @@ class KernelStore:
         return entry
 
     def get(self, fingerprint: str) -> tuple[StoredKernel, str] | None:
-        """Return ``(StoredKernel, kernel_source)`` or None."""
+        """Return ``(StoredKernel, kernel_source)`` or None.
+
+        M-31A.2: ``COMPGEN_DISABLE_KERNEL_CACHE=1`` forces a cold lookup
+        (always returns None) so audit runs can prove a kernel is being
+        recomputed, not retrieved.
+        """
+        if os.environ.get("COMPGEN_DISABLE_KERNEL_CACHE") == "1":
+            return None
         manifest = self._read_manifest()
         raw = manifest.get(fingerprint)
         if raw is None:

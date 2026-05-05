@@ -1,0 +1,49 @@
+{
+  "caveats": [
+    {
+      "blocks_paper_claim": false,
+      "claim_affected": "portable_recipe_promotion",
+      "created_at_utc": "2026-05-05T00:00:00Z",
+      "evidence_paths": [
+        "docs/architecture/promotion-and-memory.md",
+        "docs/realness/m29_promotion_gates.yaml"
+      ],
+      "id": "portable_gate_single_target",
+      "is_bug": false,
+      "last_verified_at_utc": "2026-05-05T00:00:00Z",
+      "notes": "Migrated from M-30 honest-residual list. Closed by running canonical-22 with COMPGEN_RUN_KERNELS=1 on a host with cuda hardware AND host_cpu, so the same region_signature observes >=2 distinct target_class values.",
+      "required_to_close": "run same region_signature on >=2 target_class values (need cuda hardware on the audit host)",
+      "status": "blocked_by_hardware"
+    },
+    {
+      "blocks_paper_claim": false,
+      "claim_affected": "fresh_claude_session_reproducibility",
+      "created_at_utc": "2026-05-05T00:00:00Z",
+      "evidence_paths": [
+        "docs/reference/realness_policy.md",
+        "python/compgen/audit/fresh_agent_modes.py"
+      ],
+      "id": "fresh_claude_session_operator_driven",
+      "is_bug": false,
+      "last_verified_at_utc": "2026-05-05T00:00:00Z",
+      "notes": "CI cannot spawn a Claude Code session against the task pack; doing so would defeat the no-private-context goal of the audit. The greedy baseline is the contractual reproducibility floor; the fresh-Claude run is recorded as an operator evidence row with a quarterly cadence.",
+      "required_to_close": "operator runs a fresh Claude Code session against the task pack and records the outcome via compgen.audit.fresh_agent_modes.record_manual_session_result every quarter",
+      "status": "blocked_by_external"
+    },
+    {
+      "blocks_paper_claim": false,
+      "claim_affected": "negative_control_pass_card_machinery",
+      "created_at_utc": "2026-05-05T00:00:00Z",
+      "evidence_paths": [
+        "python/compgen/audit/negative_controls.py",
+        "python/compgen/audit/errors.py"
+      ],
+      "id": "negative_controls_pass_card_placeholder",
+      "is_bug": false,
+      "last_verified_at_utc": "2026-05-05T00:00:00Z",
+      "notes": "M-31A ships placeholder typed errors for pass-card / precondition / invalidation negative controls. Full implementations land in M-31 (pass cards), which ships behind this gate. Until then the negative-control test asserts the typed-error machinery exists and is wired through trust_report.",
+      "required_to_close": "M-31 lands a real pass-card registry; replace placeholder negative controls with real fault injection against MissingPassCard / PreconditionViolation / StaleAnalysisAudit",
+      "status": "open"
+    }
+  ]
+}

@@ -356,6 +356,27 @@ def collect_model(run_dir: Path, suite: str, model_id: str) -> ModelEvidence:
 # --------------------------------------------------------------------------- #
 
 
+def is_holdout_model(model_yaml_path: Path) -> bool:
+    """Return True when a model YAML has ``holdout: true``.
+
+    M-31A.4: holdout models are deliberately not part of canonical-22.
+    They live in a separate ``holdout`` suite so the evidence pack
+    does not conflate "we tested 22 in-distribution models" with
+    "we also stress-tested perturbed shapes".
+    """
+    import yaml as _yaml
+
+    if not model_yaml_path.exists():
+        return False
+    try:
+        raw = _yaml.safe_load(model_yaml_path.read_text(encoding="utf-8"))
+    except _yaml.YAMLError:
+        return False
+    if not isinstance(raw, dict):
+        return False
+    return bool(raw.get("holdout", False))
+
+
 def walk_suite(suite_root: Path, suite_label: str) -> list[ModelEvidence]:
     """Walk every model subdirectory under ``suite_root`` and collect
     its evidence. ``suite_root`` is the directory that contains one

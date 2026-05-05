@@ -318,7 +318,11 @@ target_packages/
 
 # Graph-compilation pipeline outputs (regeneratable; e.g. evidence packs,
 # per-suite run dirs, paper tables). Default output root for build scripts.
-results/
+results/*
+# But keep the M-31A audit subtree tracked (seed data + caveat ledgers).
+!results/audit/
+results/audit/*
+!results/audit/_seed/
 
 # Local extension workspace (machine-specific absolute paths + verification
 # timestamps; populated by gap-closure / extension materialization).

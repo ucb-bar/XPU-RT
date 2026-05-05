@@ -571,6 +571,32 @@ def build_agent_decision_request(
             if path.exists() else None
         )
 
+    # M-31A.3: bound the agent's vocabulary at the request level. The
+    # legal-candidate gate already restricts which candidate_ids it can
+    # pick; passes_allowed and forbidden_actions name the *kinds* of
+    # actions it can / cannot take. These are constant for now (no pass
+    # registry yet — that lands in M-31). When M-31 ships pass cards,
+    # this list becomes per-region.
+    passes_allowed = [
+        "set_tile_params",
+        "fuse_producer_consumer",
+    ]
+    forbidden_actions = [
+        "edit_payload_directly",
+        "invent_candidate_id",
+        "invent_pass_id",
+        "invent_tile_sizes",
+    ]
+
+    # M-31A.2: surface whether the recipe-memory cache was consulted
+    # this run. The retrieval path honors COMPGEN_DISABLE_RECIPE_MEMORY;
+    # echoing it back tells the audit "no, this run didn't use cached
+    # promoted recipes."
+    import os as _os_for_env
+    disabled_by_env = (
+        _os_for_env.environ.get("COMPGEN_DISABLE_RECIPE_MEMORY") == "1"
+    )
+
     request = {
         "schema_version": "agent_decision_request_v1",
         "model_id": llm_view.get("model_id", ""),
@@ -587,6 +613,11 @@ def build_agent_decision_request(
         },
         "sources": sources,
         "candidate_ids_allowed": candidate_ids_allowed,
+        # M-31A.3: action vocabulary. ``passes_allowed`` names the kinds
+        # of compiler actions the agent can request; ``forbidden_actions``
+        # names anti-patterns the agent must not take.
+        "passes_allowed": passes_allowed,
+        "forbidden_actions": forbidden_actions,
         "visible_regions": visible_regions,
         # M-28: top-level summary of every promoted candidate found
         # across all regions. Per-region matches live inside
@@ -595,9 +626,34 @@ def build_agent_decision_request(
         # before region_pattern). Empty when the recipe library is
         # cold or holds no matches for any region.
         "promoted_candidates": promoted_candidates_total,
+        "promotion_retrieval_disabled_by_env": disabled_by_env,
         "agent_guidance": _build_agent_guidance(),
         "generated_at_utc": _utcnow(),
     }
+    # M-31A.3: deterministic decision_id. Computed AFTER the rest of the
+    # request is finalized, so it's a function of the request body
+    # itself (modulo the decision_id field). Two runs with the same
+    # legal candidates / sources / promoted matches produce the same
+    # decision_id. The response must echo this id.
+    try:
+        from compgen.audit.trace_replay import compute_decision_id
+
+        # Hash the request body (without decision_id) to seed the id.
+        _request_hash_seed = hashlib.sha256(
+            json.dumps(request, sort_keys=True).encode("utf-8")
+        ).hexdigest()
+        request["decision_id"] = compute_decision_id(
+            run_id=request.get("model_id", ""),
+            region_id="",  # request is multi-region; per-region traces refine
+            decision_index=0,
+            request_hash=_request_hash_seed,
+        )
+    except Exception:  # noqa: BLE001 - decision_id is best-effort
+        # If trace_replay is unavailable for any reason, omit the field
+        # rather than crash request emission. validate_agent_decision_response
+        # treats decision_id as additive.
+        pass
+
     request_path = out_dir / "agent_decision_request.json"
     request_path.write_text(
         json.dumps(request, indent=2, sort_keys=True), encoding="utf-8",
@@ -689,6 +745,36 @@ def validate_agent_decision_response(
     _add("response_schema_valid", schema_ok, schema_detail)
     if not schema_ok:
         failures.append(f"response schema invalid: {schema_detail}")
+
+    # 2b. M-31A.3 decision-id discipline — when the request carries a
+    # decision_id AND the response carries one, they must match. A
+    # missing response.decision_id is tolerated (pre-M-31A agents won't
+    # know to echo it); an explicitly-different value is a hard fail.
+    # The check stays additive so existing agent-file tests keep
+    # passing during the transition; the strict variant will land once
+    # all agent flows emit decision_id natively.
+    req_decision_id = request.get("decision_id")
+    if req_decision_id:
+        resp_decision_id = response.get("decision_id")
+        if resp_decision_id is None:
+            _add(
+                "decision_id_matches_request", True,
+                "response missing decision_id (pre-M-31A agent; tolerated)",
+            )
+        else:
+            decision_id_ok = resp_decision_id == req_decision_id
+            _add(
+                "decision_id_matches_request",
+                decision_id_ok,
+                "" if decision_id_ok
+                else f"response.decision_id={resp_decision_id!r} "
+                     f"!= request.decision_id={req_decision_id!r}",
+            )
+            if not decision_id_ok:
+                failures.append(
+                    f"decision_id mismatch: response={resp_decision_id!r} "
+                    f"request={req_decision_id!r}"
+                )
 
     selected_id = response.get("selected_candidate_id", "") or ""
     cand_by_id = {

@@ -403,6 +403,54 @@ The headline falsifiable claim:
 > `gemini_token_delta < 0` while every correctness gate in
 > `verification_report.json` still passes.
 
+## Trust + Realness Audit (M-31A)
+
+Every milestone after Section 19 must clear a permanent audit gate
+before its claims are paper-eligible. The gate enforces eight rules
+documented in `docs/reference/realness_policy.md`:
+
+1. Clean checkout rebuild (no checked-in outputs)
+2. No stubs / mocks / placeholders on production paths
+3. Production-import provenance clean
+4. At least one negative control fires per gate
+5. Fresh-agent reproducibility (greedy baseline + operator-recorded
+   fresh-Claude run)
+6. Caveat ledger up to date
+7. Hash-replayable agent decisions
+8. Holdout / perturbation evidence
+
+Quick links:
+
+- Trust report CLI: `scripts/dev/build_trust_report.py`
+- Realness scan CLI: `scripts/dev/audit_realness.py`
+- Import-provenance CLI: `scripts/dev/audit_production_imports.py`
+- Trace replay CLI: `scripts/dev/replay_agent_decision.py`
+- Task pack builder CLI: `scripts/dev/fresh_agent_task_pack.py`
+- Realness contracts: `docs/realness/<feature_id>.yaml`
+- Caveat ledger seed: `results/audit/_seed/caveat_ledger.json`
+- Operator policy: `docs/reference/realness_policy.md`
+
+## Upcoming sections (deferred behind M-31A)
+
+The next research milestones are scoped but **not implemented** until
+M-31A is green and every Section-19 milestone has a passing trust
+report:
+
+- **Section 20 — Agentic pass orchestration and multi-level analysis**:
+  passes become typed pass cards (preconditions, invalidation rules,
+  refinement obligations); analysis runs at multiple IR levels (FX /
+  Payload / Recipe / Semantic / Tile / Kernel / Plan / Runtime); Claude
+  Code schedules from a bounded pass pool. M-31..M-37.
+- **Section 21 — Promotion-aware deployment and end-to-end reuse**:
+  warm-cache deployment, cross-target recipe reuse.
+- **Section 22 — Runtime emission and bundle execution.**
+- **Section 23 — Cross-target portability.**
+
+Section 20's milestones (pass-card registry, multi-level analysis
+checkpoints, invalidation discipline, scheduler request, fresh-Claude
+reproducibility harness, pass-pool ablation, promotion-aware reuse) all
+ship *behind* the M-31A gate. No Section-20 code lands until then.
+
 ## Repository Hygiene Rules
 
 - Preserve user changes and unrelated worktree state

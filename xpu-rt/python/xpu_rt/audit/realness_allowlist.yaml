@@ -1,0 +1,332 @@
+# Allowlist for the no-stub source scan (M-31A.2).
+#
+# Each entry names a path glob (relative to repo root) where one or more
+# scan-pattern hits are intentionally tolerated, and a list of production
+# paths the symbol is NOT allowed to be imported on. The realness_scan
+# CLI fails on any hit OUTSIDE this allowlist; the import_provenance
+# audit fails if any allowlisted-but-restricted symbol is loaded by a
+# production run.
+#
+# Add entries deliberately. Every entry is a small admission that
+# something synthetic exists in the tree; better to declare it than to
+# pretend it doesn't.
+
+allowed_nonproduction_symbols:
+  - path: python/compgen/llm/mock_client.py
+    reason: "test/offline LLM provider; selected explicitly via mock-client modes"
+    forbidden_in:
+      - graph_compilation.run
+      - evidence_pack
+      - promotion_gates
+      - fresh_agent_task_pack
+      - trust_report
+
+  - path: python/compgen/memory/embeddings.py
+    reason: "MockEmbeddingProvider is a fallback when sentence-transformers is absent; CI installs the real package, so this path is dead in production"
+    forbidden_in:
+      - evidence_pack
+      - fresh_agent_task_pack
+
+  - path: python/compgen/runtime/transport.py
+    reason: "StubNetworkTransport is the test-only transport for the distributed runtime"
+    forbidden_in:
+      - graph_compilation.run
+      - evidence_pack
+      - promotion_gates
+
+  - path: python/compgen/kernels/providers/claude_code_default.py
+    reason: "StubCodegen is the no-op codegen used when no provider is configured; legitimate fallback, but flagged outside production lanes"
+    forbidden_in:
+      - evidence_pack
+      - promotion_gates
+
+  - path: python/compgen/capture/unsupported/synthesize_fake.py
+    reason: "Synthesizes a typed-blocked record for an unsupported op (this IS the production handling of unsupported ops)"
+    forbidden_in: []  # legitimate production behavior
+
+  - path: python/compgen/ir/quant/ops.py
+    reason: "FakeQuantOp is the canonical PyTorch quantization op name; not a stub"
+    forbidden_in: []  # legitimate IR op
+
+  - path: python/compgen/ir/payload/passes/runtime_stubs.py
+    reason: "Placeholder runtime passes pre-dating the M-26 promotion bridge; flagged until renamed"
+    forbidden_in:
+      - graph_compilation.run
+
+  - path: python/compgen/api.py
+    reason: "Public API; comments discuss the no-silent-stub policy. Auditing the comments keeps the policy honest, but the file itself does not contain stubs"
+    forbidden_in: []
+
+  - path: python/compgen/api_llm.py
+    reason: "Provider dispatch; the literal string \"mock\" is a public API value selecting MockLLMClient. The dispatch IS production behavior"
+    forbidden_in: []
+
+  - path: python/compgen/kernels/measure.py
+    reason: "Measurement module whose docstring enforces the no-placeholder discipline (\"Every placeholder latency_us=0.0 is a bug\"). Audit-friendly because it discusses the rule it enforces"
+    forbidden_in: []
+
+  - path: python/compgen/kernels/errors.py
+    reason: "Typed kernel errors; docstring describes the real-vs-placeholder distinction. No stubs"
+    forbidden_in: []
+
+  - path: python/compgen/kernels/contract_translator.py
+    reason: "Triton-template code generator that emits a deliberate '# TODO: codegen body' marker inside the template so missing-codegen kernels fail loud, not silent. The TODO is an intentional placeholder in *generated* code, not a stub in compgen"
+    forbidden_in: []
+
+  - path: python/compgen/kernels/tile_oracle.py
+    reason: "Packing-oracle docstring uses the word 'Stub' to describe a hint-returning function. Real implementation; legacy docstring wording"
+    forbidden_in: []
+
+  - path: python/compgen/kernels/exo_adapter.py
+    reason: "Exo backend adapter; 'for now' / 'placeholder' phrasing in comments documents incremental scheduling residuals. Tracked separately"
+    forbidden_in:
+      - graph_compilation.run
+
+  - path: python/compgen/kernels/autocomp_adapter.py
+    reason: "Autocomp adapter raises NotImplementedError for genuinely-unsupported pattern types and uses 'placeholder 1.0' as a typed sentinel for unknown speedups. The sentinel is the production behavior — the alternative is silent zero"
+    forbidden_in: []
+
+  - path: python/compgen/kernels/exo_schedule_agent.py
+    reason: "Exo schedule agent has one placeholder line tracked as a follow-up. Forbidden on production graph_compilation paths"
+    forbidden_in:
+      - graph_compilation.run
+
+  - path: python/compgen/runtime/bundle_emit.py
+    reason: "Runtime bundle emitter; 'placeholder' refers to FX graph placeholder nodes (a PyTorch domain term, NOT a stub)"
+    forbidden_in: []
+
+  - path: python/compgen/runtime/errors.py
+    reason: "Typed-error module whose docstring documents the older silent-stub pattern that was REPLACED. NotImplementedError subclasses (UnsupportedTopologyError, SymbolicShapeUnsupportedError) are legitimate Python idiom"
+    forbidden_in: []
+
+  - path: python/compgen/runtime/glue.py
+    reason: "Runtime glue layer with one 'skeleton for now' comment tracked as residual"
+    forbidden_in:
+      - graph_compilation.run
+
+  - path: python/compgen/runtime/gpu_diff.py
+    reason: "GPU diffing module with one 'for now' comment about launch-overhead measurement. Tracked residual"
+    forbidden_in:
+      - graph_compilation.run
+
+  - path: python/compgen/runtime/probe.py
+    reason: "Native-HAL probe layer; 'placeholder for the C-side' is a residual tracked in the libcompgen_rt project memory"
+    forbidden_in:
+      - graph_compilation.run
+
+  # ---- User-extension and vendor templates (intentional fill-points) ---------
+  - path: python/compgen/extensions/vendor_dialect/adapter.py
+    reason: "Abstract base class for vendor adapters; abstract methods raise NotImplementedError as the Pythonic protocol marker. This IS the production behavior"
+    forbidden_in: []
+
+  - path: python/compgen/kernels/providers/_template.py
+    reason: "Provider-template scaffold; TODOs are user fill-points for new providers"
+    forbidden_in:
+      - graph_compilation.run
+
+  - path: python/compgen/runtime/adapters/_template.py
+    reason: "Runtime-adapter template scaffold; TODOs are user fill-points for new adapters"
+    forbidden_in:
+      - graph_compilation.run
+
+  - path: python/compgen/quantization/methods/_template.py
+    reason: "Quantization-method template scaffold; TODOs are user fill-points for new methods"
+    forbidden_in:
+      - graph_compilation.run
+
+  - path: python/compgen/targets/_template/body_emitter.py
+    reason: "Target-template body emitter; abstract NotImplementedError is the user fill-point"
+    forbidden_in:
+      - graph_compilation.run
+
+  - path: python/compgen/targets/_template/runtime.py
+    reason: "Target-template runtime; NotImplementedError marks abstract methods users override"
+    forbidden_in:
+      - graph_compilation.run
+
+  - path: python/compgen/extensions/vendor_dialect/templates/user_package/compgen_pkg/kernels.py.j2
+    reason: "Jinja template for user-scaffolded vendor packages; TODOs are intentional fill-points (Phase-D)"
+    forbidden_in: []
+
+  - path: python/compgen/extensions/vendor_dialect/templates/user_package/compgen_pkg/bundle.py.j2
+    reason: "Jinja template for user-scaffolded vendor packages; TODOs are intentional fill-points (Phase-D)"
+    forbidden_in: []
+
+  - path: python/compgen/extensions/vendor_dialect/templates/user_package/compgen_pkg/lowering.py.j2
+    reason: "Jinja template for user-scaffolded vendor packages; TODOs are intentional fill-points (Phase-D)"
+    forbidden_in: []
+
+  - path: python/compgen/extensions/vendor_dialect/templates/user_package/examples/workload.py.j2
+    reason: "Jinja template for user-scaffolded vendor packages; TODOs are intentional fill-points (Phase-D)"
+    forbidden_in: []
+
+  - path: python/compgen/extensions/mlir_cppgen/templates/ops_cpp.j2
+    reason: "Jinja template for the mlir_cppgen C++ generator; TODOs mark spots where the generator emits user-fill-points into the produced C++ code"
+    forbidden_in: []
+
+  - path: python/compgen/extensions/mlir_cppgen/pass_emitter.py
+    reason: "C++ pass emitter that writes TODO markers into generated code so missing implementations fail loud rather than silent. Production behavior"
+    forbidden_in: []
+
+  # ---- Generated-code emitters that write TODO markers into output -----------
+  - path: python/compgen/targetgen/soc_codegen.py
+    reason: "SoC codegen emits a placeholder body marker into generated C++ ('/* TODO: generated dispatch logic */') so missing dispatch logic fails loud, not silent"
+    forbidden_in: []
+
+  - path: python/compgen/runtime/baremetal/emitter.py
+    reason: "Bare-metal C runtime emitter that writes TODO markers into generated firmware (NPU register init, DMA programming) so unfinished arch ports fail loud"
+    forbidden_in:
+      - graph_compilation.run
+
+  - path: python/compgen/graph_compilation/extension_materialize.py
+    reason: "Extension materializer that emits 'raise NotImplementedError' into generated extension code so missing user implementations fail loud"
+    forbidden_in: []
+
+  - path: python/compgen/graph_compilation/agent_decision.py
+    reason: "Agent decision emitter has one tracked 'For now write a placeholder' comment for the post-commit decision-trace path; not on the production agent_decision_request path"
+    forbidden_in: []
+
+  # ---- Conformance / testing workloads ---------------------------------------
+  - path: python/compgen/testing/etc_conformance.py
+    reason: "End-to-end conformance test harness; raise NotImplementedError is the production behavior for unsupported builders (ag_gemm, MoE forward) until Phase 4b lands. Forbidden on graph_compilation production paths"
+    forbidden_in:
+      - graph_compilation.run
+
+  - path: python/compgen/testing/etc_dispatch.py
+    reason: "Conformance dispatch harness; comment notes one hardcoded value in the static-scheduler path"
+    forbidden_in:
+      - graph_compilation.run
+
+  - path: python/compgen/testing/workloads/gemm_reduce_scatter.py
+    reason: "Conformance workload; raise NotImplementedError matches the etc_conformance behavior for unsupported workloads"
+    forbidden_in:
+      - graph_compilation.run
+
+  # ---- Real residuals tracked as known limitations ---------------------------
+  - path: python/compgen/bench/flash_attention_kernel.py
+    reason: "Flash-attention benchmark kernel; logsumexp 'for now' comment is a documented residual (autograd path not used externally yet)"
+    forbidden_in:
+      - graph_compilation.run
+
+  - path: python/compgen/graph_compilation/gaps.py
+    reason: "Gap-discovery comment 'for now everything opaque is need_kernel' documents the current heuristic. Strict-but-honest classification"
+    forbidden_in: []
+
+  - path: python/compgen/graph_compilation/extension_verify.py
+    reason: "Extension verification comment 'static shapes only for now' documents the current scope"
+    forbidden_in: []
+
+  - path: python/compgen/transforms/synthesize.py
+    reason: "Transform synthesizer; 'Generate 1 for now' is a documented bound on candidate count"
+    forbidden_in: []
+
+  - path: python/compgen/agent/decisions.py
+    reason: "Agent decisions docstring describes the OLDER 'hardcoded heuristics or oracle picks' that this module REPLACED. Audit-friendly because the comment names the rule it enforces"
+    forbidden_in: []
+
+  - path: python/compgen/kernels/providers/contract_bridge.py
+    reason: "Contract-bridge mapping; 'one-to-one for now' documents the current mapping policy"
+    forbidden_in: []
+
+  - path: python/compgen/kernels/cost/etc_predict.py
+    reason: "Cost-prediction module; 'for now it's the bridge-derived empirical' documents the current calibration source"
+    forbidden_in: []
+
+  - path: python/compgen/runtime/lowering/fx_generic.py
+    reason: "Generic FX lowering; 'For now: same input' documents the current threading scope"
+    forbidden_in:
+      - graph_compilation.run
+
+  - path: python/compgen/semantic/backends/xdsl_smt/pdl_backend.py
+    reason: "Semantic SMT backend; 'For now we use the callable path' documents the current PDL→SMT lowering route"
+    forbidden_in: []
+
+  - path: python/compgen/targets/backends/_template.py
+    reason: "Target-backend template scaffold; TODOs are user fill-points for new backends"
+    forbidden_in:
+      - graph_compilation.run
+
+  - path: python/compgen/targets/gpu/nvidia/blackwell/cost.py
+    reason: "Blackwell cost model 'for now these are good-enough for the universal candidate' is a documented current-scope note"
+    forbidden_in: []
+
+  - path: python/compgen/targets/cpu/x86/__init__.py
+    reason: "x86 CPU target docstring notes 'Stubs for now (scalar fmaf C++, no SIMD intrinsics)'; SIMD path is a tracked follow-up"
+    forbidden_in: []
+
+  - path: python/compgen/agent/loop/core.py
+    reason: "Agent loop core has one 'for now generates standard hooks' comment documenting the current hook generation"
+    forbidden_in:
+      - graph_compilation.run
+
+  - path: python/compgen/agent/env/helpers.py
+    reason: "Agent env helpers; two TODOs document data-flow graph + per-device cost-model follow-ups"
+    forbidden_in:
+      - graph_compilation.run
+
+  - path: python/compgen/agent/env/core.py
+    reason: "Agent env core; 'temporary e-graph' refers to a deliberate scratch e-graph for inspection (legitimate domain term)"
+    forbidden_in: []
+
+  - path: python/compgen/eqsat/rules/algebraic.py
+    reason: "Algebraic e-graph rules; 'For now, assume transpose(transpose(x)) = x' documents a current rule scope"
+    forbidden_in: []
+
+  - path: python/compgen/transforms/layout/cuda_resolver.py
+    reason: "CUDA layout resolver; 'For now, it is built-in' documents the current resolution policy"
+    forbidden_in: []
+
+  - path: python/compgen/solve/backends/milp.py
+    reason: "MILP solver backend; 'Uniform device speed for now' documents the current cost model"
+    forbidden_in: []
+
+  - path: python/compgen/packs/scaffolding/generator.py
+    reason: "Pack scaffolding generator; TODOs are emitted into generated user code as fill-points (HardwareSpec compatibility, per-stage lowering, op-family handling, contract source rendering)"
+    forbidden_in:
+      - graph_compilation.run
+
+  - path: python/compgen/ir/recipe/serialize.py
+    reason: "Recipe IR JSON serializer; 'For now, parse to dicts and go through MLIR text as bridge' documents the current round-trip strategy"
+    forbidden_in: []
+
+  - path: docs/realness/m31a_audit_layer.yaml
+    reason: "M-31A's own realness contract names the words it bans; meta-reference, not a residual"
+    forbidden_in: []
+
+  - path: docs/guides/bring-up-a-target.md
+    reason: "Bring-up guide explicitly tells users 'compgen scaffold-target is still a stub. For now, use the Python API directly' — this IS the documented current state"
+    forbidden_in: []
+
+  - path: docs/reference/realness_policy.md
+    reason: "Operator-facing realness policy doc; quotes the red-team prompt that names the words the audit looks for. Meta-reference, not a residual"
+    forbidden_in: []
+
+# Patterns we tolerate inside any source file (e.g. comment markers in
+# docs / generated stubs / strings). The base scanner already excludes
+# .compgen_cache, .crg-artifacts, results/, __pycache__, .git, and tests/
+# (tests/ inclusion is opt-in via --include-tests flag).
+content_pattern_exemptions:
+  - pattern_substring: "TODO"
+    reason: "Free-form TODO inside docstrings is acceptable in non-production helpers; prefer to delete rather than file new TODOs in code on production paths"
+    paths:
+      - "docs/**"
+      - "scripts/dev/**"
+      - "third_party/**"
+
+  - pattern_substring: "FIXME"
+    reason: "FIXME markers in third_party/ are upstream's, not ours"
+    paths:
+      - "third_party/**"
+
+# Paths excluded entirely from scanning (never even read).
+exclude_paths:
+  - "**/__pycache__/**"
+  - ".compgen_cache/**"
+  - ".crg-artifacts/**"
+  - "results/**"
+  - ".git/**"
+  - "third_party/**"
+  - "**/*.lock"
+  - "**/*.pyc"
+  - "user_extensions/**"
+  - "tmp/**"

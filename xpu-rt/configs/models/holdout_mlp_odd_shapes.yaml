@@ -1,0 +1,12 @@
+schema_version: graphcomp_model_config_v1
+model_id: holdout_mlp_odd_shapes
+model_path: tests/graph_compilation/models/holdout_mlp_odd_shapes.py
+factory: get_model_and_inputs
+seed: 0
+holdout: true
+capture:
+  primary: torch_dynamo
+  also_try_torch_export: true
+  fullgraph: false
+  dynamic_shapes: null
+  run_default_decompositions: true

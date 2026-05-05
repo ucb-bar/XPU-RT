@@ -1,0 +1,37 @@
+claim: |
+  Every milestone after Section 19 must clear a permanent audit gate that
+  proves the implementation is not relying on hidden chat context, stale
+  artifacts, mocks, hardcoded cases, or undocumented caveats. The gate
+  enforces realness contracts, no-stub source scans, production-import
+  provenance, deterministic trace replay, fresh-agent task packs, holdout
+  models, perturbations, negative controls, a machine-readable caveat
+  ledger, and a single-page trust report.
+commit: 5244e94e3730bdf6f2bff89c72b174ac0ee03fa6
+created_at_utc: 2026-05-05T00:00:00Z
+feature_id: m31a_audit_layer
+forbidden:
+- mock audit results
+- silent gate skip
+- prose-only caveats
+- hidden chat-context dependencies
+realness_level: production_path
+required_evidence:
+- python/compgen/audit/contracts.py
+- python/compgen/audit/caveat_ledger.py
+- python/compgen/audit/realness_scan.py
+- python/compgen/audit/import_provenance.py
+- python/compgen/audit/trace_replay.py
+- python/compgen/audit/fresh_agent.py
+- python/compgen/audit/perturbations.py
+- python/compgen/audit/negative_controls.py
+- python/compgen/audit/trust_report.py
+- scripts/dev/audit_realness.py
+- scripts/dev/audit_production_imports.py
+- scripts/dev/replay_agent_decision.py
+- scripts/dev/fresh_agent_task_pack.py
+- scripts/dev/build_trust_report.py
+- tests/audit/
+- docs/reference/realness_policy.md
+- results/audit/<commit>/trust_report.json
+notes: 'M-31A. This contract self-applies: it must itself be exercised by an
+  end-to-end trust-report run.'
