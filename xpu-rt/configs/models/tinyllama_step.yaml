@@ -1,0 +1,37 @@
+schema_version: model_config_v1
+model_id: tinyllama_step
+family: llm
+source:
+  provider: huggingface
+  model_ref: TinyLlama/TinyLlama-1.1B-Chat-v1.0
+  repo_url: https://huggingface.co/TinyLlama/TinyLlama-1.1B-Chat-v1.0
+  docs_url: https://huggingface.co/TinyLlama/TinyLlama-1.1B-Chat-v1.0
+  revision: fe8a4ea1ffedaf415f4da2f062534de366a451e6
+  verified_at: '2026-05-01T06:06:09+00:00'
+  verified_by: agustin@garden
+  source_verified: true
+loader:
+  kind: hf_transformers_llm
+  trust_remote_code: false
+  dtype: float32
+  device_policy: auto
+inputs:
+  kind: text_decode
+  processor_required: false
+compile:
+  mode: torch_compile_admission
+  backend: inductor
+  fullgraph: false
+  dynamic: true
+support:
+  mode: full_or_slice_smoke
+  full_model_blocking: true
+  reason: ''
+expected:
+  can_eager_run: true
+  can_torch_compile: true
+  can_dynamo_capture: true
+  can_slice_compile: true
+notes:
+- Small (1.1B) chat LLM that fits comfortably in CPU memory.
+- Already in HF cache; useful as a real-model admission baseline for the LLM family.

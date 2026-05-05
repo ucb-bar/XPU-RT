@@ -1,0 +1,45 @@
+schema_version: model_config_v1
+model_id: florence2_base_step
+family: vlm
+source:
+  provider: huggingface
+  model_ref: microsoft/Florence-2-base
+  repo_url: https://huggingface.co/microsoft/Florence-2-base
+  docs_url: https://huggingface.co/microsoft/Florence-2-base
+  revision: 5ca5edf5bd017b9919c05d08aebef5e4c7ac3bac
+  verified_at: '2026-05-01T18:07:23+00:00'
+  verified_by: agustin@garden
+  source_verified: true
+loader:
+  kind: hf_transformers_vlm
+  trust_remote_code: true
+  dtype: bfloat16
+  device_policy: auto
+  adapter: compgen.model_admission.adapters.florence2
+inputs:
+  kind: single_image_qa
+  processor_required: true
+compile:
+  mode: torch_compile_admission
+  backend: inductor
+  fullgraph: false
+  dynamic: true
+  # Bundled remote_code targets transformers 4.41 era (uses forced_bos_token_id).
+  transformers_pin: "4.41.0"
+support:
+  mode: full_or_slice_smoke
+  full_model_blocking: false
+  reason: 'Bundled remote_code unconditionally imports flash_attn at module level. flash-attn 2.x requires CC>=8.0 (Ampere/Hopper); this host is TITAN RTX CC=7.5. Probe will flip to available on A100/H100/RTX-4090 hosts.'
+  hardware_requirements:
+    min_compute_capability: "8.0"
+    min_vram_gb: 4.0
+    required_runtime_packages:
+      - flash_attn
+    notes: 'Florence-2 base 1B; needs Ampere-or-newer for flash_attn import to succeed.'
+expected:
+  can_eager_run: true
+  can_torch_compile: true
+  can_dynamo_capture: true
+  can_slice_compile: true
+notes:
+- Microsoft Florence-2-base small-VLM admission baseline (~1B).

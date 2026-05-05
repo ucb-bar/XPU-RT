@@ -315,3 +315,12 @@ python/compgen/extensions/promoted/
 !benchmarks/**/*.jsonl
 # Generated target packages
 target_packages/
+
+# Graph-compilation pipeline outputs (regeneratable; e.g. evidence packs,
+# per-suite run dirs, paper tables). Default output root for build scripts.
+results/
+
+# Local extension workspace (machine-specific absolute paths + verification
+# timestamps; populated by gap-closure / extension materialization).
+.crg-artifacts/
+user_extensions/

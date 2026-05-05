@@ -1,0 +1,35 @@
+schema_version: model_config_v1
+model_id: proxy_diffusion_vla
+family: proxy
+source:
+  provider: local
+  model_ref: TO_BE_VERIFIED_ONLINE
+  repo_url: TO_BE_VERIFIED_ONLINE
+  docs_url: TO_BE_VERIFIED_ONLINE
+  revision: null
+  verified_at: null
+  verified_by: null
+  source_verified: false
+loader:
+  kind: proxy
+  proxy_module: compgen.model_admission.proxies.proxy_diffusion_vla
+  device_policy: auto
+inputs:
+  kind: one_step_policy
+  processor_required: false
+compile:
+  mode: torch_compile_admission
+  backend: inductor
+  fullgraph: false
+  dynamic: true
+support:
+  mode: full_or_slice_smoke
+  full_model_blocking: true
+  reason: ''
+expected:
+  can_eager_run: true
+  can_torch_compile: true
+  can_dynamo_capture: true
+  can_slice_compile: true
+notes:
+  - 'Proxy module under compgen.model_admission.proxies; real (tiny) torch.nn.Module.'

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://compgen.dev/schemas/v1/model_admission/fx_report.schema.json",
+  "title": "fx_report_v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "model_id", "status"],
+  "properties": {
+    "schema_version": { "const": "fx_report_v1" },
+    "model_id": { "type": "string" },
+    "slice_id": { "type": "string" },
+    "status": { "type": "string", "enum": ["pass", "fail", "skipped"] },
+    "node_count": { "type": "integer" },
+    "op_histogram": { "type": "object" },
+    "error": { "type": ["string", "null"] }
+  }
+}

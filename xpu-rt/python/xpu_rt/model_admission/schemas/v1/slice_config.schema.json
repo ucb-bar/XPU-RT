@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://compgen.dev/schemas/v1/model_admission/slice_config.schema.json",
+  "title": "slice_config_v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "slice_id", "parent_model_id"],
+  "properties": {
+    "schema_version": { "const": "slice_config_v1" },
+    "slice_id": { "type": "string", "minLength": 1 },
+    "parent_model_id": { "type": "string", "minLength": 1 },
+    "description": { "type": "string" },
+    "inputs": { "type": "object" },
+    "loader_override": { "type": ["object", "null"] },
+    "expected": { "type": "object" }
+  }
+}

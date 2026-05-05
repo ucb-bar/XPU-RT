@@ -1,0 +1,13 @@
+schema_version: slice_config_v1
+slice_id: proxy_qwen_vl_single_image_qa
+parent_model_id: proxy_qwen_vl
+description: 'Proxy VLM single image+text forward.'
+inputs:
+  kind: single_image_qa
+  processor_required: false
+loader_override: null
+expected:
+  can_eager_run: true
+  can_torch_compile: true
+  can_dynamo_capture: true
+  can_slice_compile: true

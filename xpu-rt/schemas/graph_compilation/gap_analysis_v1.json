@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://compgen.dev/schemas/graph_compilation/gap_analysis_v1.json",
+  "title": "gap_analysis_v1",
+  "description": "Descriptive analysis emitted alongside gap_action_queue.json: per-region classification + summary histogram.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["schema_version", "regions_total", "ops", "summary"],
+  "properties": {
+    "schema_version": { "const": "gap_analysis_v1" },
+    "model_id": { "type": "string" },
+    "target_id": { "type": "string" },
+    "regions_total": { "type": "integer", "minimum": 0 },
+    "ops": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["region_id", "module_id", "fx_target", "classification"],
+        "properties": {
+          "region_id": { "type": "string" },
+          "module_id": { "type": "string" },
+          "fx_node": { "type": "string" },
+          "fx_target": { "type": "string" },
+          "shape_signature": { "type": "object" },
+          "dtype_signature": { "type": "object" },
+          "classification": { "enum": ["native", "library", "need_kernel", "unsupported"] },
+          "reason": { "type": "string" },
+          "on_critical_path": { "type": "boolean" }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["native", "library", "need_kernel", "unsupported", "critical_path_count"],
+      "properties": {
+        "native": { "type": "integer", "minimum": 0 },
+        "library": { "type": "integer", "minimum": 0 },
+        "need_kernel": { "type": "integer", "minimum": 0 },
+        "unsupported": { "type": "integer", "minimum": 0 },
+        "critical_path_count": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

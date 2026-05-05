@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://compgen.dev/schemas/v1/model_admission/dynamo_report.schema.json",
+  "title": "dynamo_report_v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "model_id", "status"],
+  "properties": {
+    "schema_version": { "const": "dynamo_report_v1" },
+    "model_id": { "type": "string" },
+    "slice_id": { "type": "string" },
+    "status": { "type": "string", "enum": ["pass", "fail", "skipped"] },
+    "graph_count": { "type": "integer" },
+    "op_count": { "type": "integer" },
+    "graph_break_count": { "type": "integer" },
+    "graph_breaks": { "type": "array" },
+    "warnings": { "type": "array" },
+    "error": { "type": ["string", "null"] }
+  }
+}

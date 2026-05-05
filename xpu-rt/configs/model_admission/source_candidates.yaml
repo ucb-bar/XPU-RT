@@ -1,0 +1,97 @@
+schema_version: model_admission_source_candidates_v1
+
+# One row per real model_id. ``candidate_ref`` is a *proposed* HuggingFace
+# repo identifier; ``python -m compgen.model_admission verify-sources`` will
+# confirm each via HfApi().model_info() and rewrite configs/models/<id>.yaml
+# with the canonical ref + revision SHA + source_verified=true on success.
+#
+# Edit candidate_ref to the correct upstream repo BEFORE running verify-sources
+# if you know the right one. Empty / TO_BE_VERIFIED candidates are skipped.
+#
+# The verifier only does a single read-only API call per row -- no downloads.
+
+candidates:
+  - model_id: qwen3_vl_8b
+    candidate_ref: Qwen/Qwen3-VL-8B-Instruct
+    # FP8 / AWQ variants exist (Qwen3-VL-8B-Instruct-FP8 and -AWQ) but neither
+    # works on a compute-capability 7.5 GPU like TITAN RTX. Keep BF16 here.
+
+  - model_id: qwen3_vl_235b_a22b_instruct
+    candidate_ref: Qwen/Qwen3-VL-235B-A22B-Instruct
+
+  - model_id: qwen2_5_vl
+    candidate_ref: Qwen/Qwen2.5-VL-7B-Instruct
+    # AWQ variant exists (Qwen2.5-VL-7B-Instruct-AWQ) but its CPU kernel mis-shapes
+    # and the GPU AWQ kernel needs newer CUDA. Keep BF16 here.
+
+  - model_id: llava
+    candidate_ref: llava-hf/llava-1.5-7b-hf
+
+  - model_id: deepseek_ocr_3b
+    candidate_ref: deepseek-ai/DeepSeek-OCR
+
+  - model_id: smolvla_step
+    candidate_ref: lerobot/smolvla_base
+
+  - model_id: openvla_step
+    candidate_ref: openvla/openvla-7b
+
+  - model_id: octo_step
+    candidate_ref: rail-berkeley/octo-base-1.5
+
+  - model_id: pi0_step
+    candidate_ref: lerobot/pi0
+
+  - model_id: rtx_rt1x_step
+    candidate_ref: TO_BE_VERIFIED_ONLINE
+
+  - model_id: llama4_scout_text
+    candidate_ref: meta-llama/Llama-4-Scout-17B-16E-Instruct
+
+  - model_id: deepseek_v4_flash_text
+    candidate_ref: TO_BE_VERIFIED_ONLINE
+
+  - model_id: agibot_go1_step
+    candidate_ref: TO_BE_VERIFIED_ONLINE
+
+  - model_id: agibot_go2_step
+    candidate_ref: TO_BE_VERIFIED_ONLINE
+
+  - model_id: lingbot_world_step
+    candidate_ref: TO_BE_VERIFIED_ONLINE
+
+  - model_id: tinyllama_step
+    candidate_ref: TinyLlama/TinyLlama-1.1B-Chat-v1.0
+
+  - model_id: smolvlm2_step
+    candidate_ref: HuggingFaceTB/SmolVLM2-500M-Video-Instruct
+
+  - model_id: phi3_mini_step
+    candidate_ref: microsoft/Phi-3-mini-4k-instruct
+  - model_id: phi2_step
+    candidate_ref: microsoft/phi-2
+  - model_id: moondream2_step
+    candidate_ref: vikhyatk/moondream2
+  - model_id: smollm2_step
+    candidate_ref: HuggingFaceTB/SmolLM2-1.7B-Instruct
+
+  - model_id: qwen2_5_0_5b_step
+    candidate_ref: Qwen/Qwen2.5-0.5B-Instruct
+  - model_id: qwen2_5_1_5b_step
+    candidate_ref: Qwen/Qwen2.5-1.5B-Instruct
+  - model_id: phi3_5_mini_step
+    candidate_ref: microsoft/Phi-3.5-mini-instruct
+  - model_id: smollm2_360m_step
+    candidate_ref: HuggingFaceTB/SmolLM2-360M-Instruct
+  - model_id: smollm_135m_step
+    candidate_ref: HuggingFaceTB/SmolLM-135M
+  - model_id: llama32_1b_step
+    candidate_ref: meta-llama/Llama-3.2-1B-Instruct
+  - model_id: gemma2_2b_step
+    candidate_ref: google/gemma-2-2b-it
+  - model_id: florence2_base_step
+    candidate_ref: microsoft/Florence-2-base
+  - model_id: paligemma_3b_step
+    candidate_ref: google/paligemma-3b-mix-224
+  - model_id: blip2_opt_step
+    candidate_ref: Salesforce/blip2-opt-2.7b

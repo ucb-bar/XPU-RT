@@ -24,6 +24,10 @@ from pathlib import Path
 from typing import Any
 
 from compgen.agent.analyzer import PatternCluster
+from compgen.observability.gemini_usage import (
+    install_genai_instrumentation,
+    tracking_source,
+)
 from compgen.targets.schema import TargetProfile
 
 
@@ -70,6 +74,10 @@ def _ensure_google_api_key() -> None:
                         break
         if gemmini_key:
             os.environ["GOOGLE_API_KEY"] = gemmini_key
+    # Patch the google-genai SDK so autocomp's LLMClient calls flow into
+    # the same usage tracker as our own GeminiClient. Idempotent + safe
+    # when the SDK isn't importable.
+    install_genai_instrumentation()
 
 
 def _generate_reference_code(cluster: PatternCluster) -> str:
@@ -254,8 +262,15 @@ class AutocompAdapter:
             translate_score=False,
         )
 
-        # Run search
-        strategy.optimize(iterations)
+        # Run search — every Gemini call autocomp issues during this
+        # block is tagged with source="autocomp" in the usage log.
+        with tracking_source(
+            "autocomp",
+            cluster_id=cluster.cluster_id,
+            pattern_type=cluster.pattern_type,
+            iterations=iterations,
+        ):
+            strategy.optimize(iterations)
 
         # Extract best result
         best = self._extract_best(strategy, cluster.cluster_id, output_dir)

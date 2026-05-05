@@ -14,10 +14,31 @@ Invariants:
 from __future__ import annotations
 
 import io
+import re
 from dataclasses import dataclass, field
 from typing import Any
 
 import torch
+
+
+# Strip Python object memory addresses from built-in callable names so
+# region/dispatch ids are deterministic across reruns. dynamo records
+# certain targets as ``<built-in method tanh of type object at 0x...>``;
+# the address moves heap-randomly and would leak into the MLIR func.call
+# callee name and every downstream identifier (region_id, candidate_id,
+# region_dossier filenames). Mirrors lower.py::_canonicalize_target_string
+# but applied at the IR-emission step rather than only on diagnostics.
+_HEX_ADDR_RE = re.compile(r" at 0x[0-9a-fA-F]+>")
+
+
+def _canonicalize_fx_target_str(s: str) -> str:
+    """Return a canonical, address-free string for an FX target.
+
+    For ``<built-in method tanh of type object at 0x70adfe129b40>``
+    returns ``<built-in method tanh of type object>`` (stable across
+    reruns / machines). Other forms pass through unchanged.
+    """
+    return _HEX_ADDR_RE.sub(">", s)
 from xdsl.dialects.builtin import (
     BFloat16Type,
     FlatSymbolRefAttr,
@@ -273,7 +294,7 @@ class FXImporter:
 
         # Process call_function nodes
         for node in call_nodes:
-            target_str = str(node.target)
+            target_str = _canonicalize_fx_target_str(str(node.target))
             result_type = node_types.get(node.name)
             if result_type is None:
                 self.diagnostics.append(

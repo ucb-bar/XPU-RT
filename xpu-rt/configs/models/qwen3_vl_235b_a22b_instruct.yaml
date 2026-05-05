@@ -1,0 +1,35 @@
+schema_version: model_config_v1
+model_id: qwen3_vl_235b_a22b_instruct
+family: vlm
+source:
+  provider: huggingface
+  model_ref: Qwen/Qwen3-VL-235B-A22B-Instruct
+  repo_url: https://huggingface.co/Qwen/Qwen3-VL-235B-A22B-Instruct
+  docs_url: https://huggingface.co/Qwen/Qwen3-VL-235B-A22B-Instruct
+  revision: 710c13861be6c466e66de3f484069440b8f31389
+  verified_at: '2026-05-01T05:35:03+00:00'
+  verified_by: agustin@garden
+  source_verified: true
+loader:
+  kind: hf_transformers_vlm
+  trust_remote_code: true
+  dtype: bfloat16
+  device_policy: unavailable_for_full_local
+inputs:
+  kind: single_image_qa
+  processor_required: true
+compile:
+  mode: torch_compile_admission
+  backend: inductor
+  fullgraph: false
+  dynamic: true
+support:
+  mode: slice_only
+  full_model_blocking: false
+  reason: huge_model_not_required_for_local_admission
+expected:
+  can_eager_run: false
+  can_torch_compile: false
+  can_dynamo_capture: false
+  can_slice_compile: true
+notes: []

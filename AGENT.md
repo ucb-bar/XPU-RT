@@ -336,6 +336,46 @@ Document what you validated in `CHANGELOG.md` if the change was meaningful.
 - Keep CompGen's `llm/` package focused on graph-level generation, not kernel search
 - Treat `third_party/autocomp/` as the upstream integration point
 
+## Gemini API Spend Tracking
+
+CompGen records every Gemini API call to a local append-only log so that
+token use and dollar cost can be verified at any time without hitting
+Google's billing dashboard. Tracking is installed by patching the
+`google.genai` SDK's `Models.generate_content` (sync) and
+`AsyncModels.generate_content` (async) — so calls from
+`compgen.llm.gemini_client` *and* from autocomp's `LLMClient`
+(`third_party/autocomp/autocomp/common/llm_utils.py`) are both captured
+through the same hook. Source attribution flows via a `ContextVar`:
+GeminiClient calls are tagged `gemini_client.generate*`, the autocomp
+adapter wraps `strategy.optimize` in `tracking_source("autocomp", ...)`,
+and any other caller defaults to `genai_sdk`.
+
+**On-disk locations** (all under the repo root, gitignored):
+
+- `.compgen/gemini_usage/events.jsonl` — one JSON line per call (model,
+  tokens, cost_usd, latency, source, timestamp)
+- `.compgen/gemini_usage/summary.json` — derived snapshot: cumulative
+  totals, per-month buckets (`YYYY-MM`), per-model breakdown
+- `.compgen/gemini_usage/budget.json` — optional limits
+
+**How to inspect** (any session, any user):
+
+- `uv run compgen-gemini-usage` — formatted snapshot (status table)
+- `uv run compgen-gemini-usage watch` — live-updating dashboard (Rich Live)
+- `uv run compgen-gemini-usage json` — machine-readable summary
+- `uv run compgen-gemini-usage budget set --monthly-usd 50` — set limits
+- Direct read: `cat .compgen/gemini_usage/summary.json`
+
+**For agents:** before kicking off a long Gemini-driven workflow, read
+`summary.json` (cheap, <10ms) to confirm the current month's spend and
+remaining budget headroom. The tracker module
+(`compgen.observability.gemini_usage`) exposes `record_call`,
+`load_summary`, `evaluate_budget`, and is best-effort — it never raises.
+
+Pricing table lives in `compgen.observability.gemini_usage.PRICING` and
+can be overridden by dropping `configs/gemini_pricing.yaml`. Update the
+table when Google AI Studio rates change.
+
 ## Repository Hygiene Rules
 
 - Preserve user changes and unrelated worktree state

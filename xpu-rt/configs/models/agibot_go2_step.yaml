@@ -1,0 +1,39 @@
+schema_version: model_config_v1
+model_id: agibot_go2_step
+family: vla
+source:
+  provider: huggingface
+  model_ref: TO_BE_VERIFIED_ONLINE
+  repo_url: TO_BE_VERIFIED_ONLINE
+  docs_url: TO_BE_VERIFIED_ONLINE
+  revision: null
+  verified_at: null
+  verified_by: null
+  source_verified: false
+loader:
+  kind: unavailable
+  trust_remote_code: false
+  dtype: bfloat16
+  device_policy: auto
+inputs:
+  kind: one_step_policy
+  processor_required: false
+compile:
+  mode: torch_compile_admission
+  backend: inductor
+  fullgraph: false
+  dynamic: true
+support:
+  mode: admission_only
+  full_model_blocking: false
+  reason: AGIBOT Go2 weights not publicly identified on HuggingFace. Reinstate when
+    a verified upstream ref is added to source_candidates.yaml.
+  hardware_requirements:
+    notes: 'Weights not publicly available -- hardware does not unblock this.'
+expected:
+  can_eager_run: false
+  can_torch_compile: false
+  can_dynamo_capture: false
+  can_slice_compile: false
+notes:
+- Exact model_ref must be verified online before marking source_verified.

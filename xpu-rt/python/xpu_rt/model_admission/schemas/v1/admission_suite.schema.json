@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://compgen.dev/schemas/v1/model_admission/admission_suite.schema.json",
+  "title": "model_admission_suite_v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version"],
+  "properties": {
+    "schema_version": { "const": "model_admission_suite_v1" },
+    "required_proxy": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Entry" }
+    },
+    "required_real_if_available": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Entry" }
+    },
+    "slice_only_stress": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Entry" }
+    }
+  },
+  "$defs": {
+    "Entry": {
+      "type": "object",
+      "required": ["model_id"],
+      "properties": {
+        "model_id": { "type": "string", "minLength": 1 },
+        "slice_id": { "type": "string" }
+      }
+    }
+  }
+}

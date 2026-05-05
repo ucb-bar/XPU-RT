@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TensorUseDefGraph",
+  "type": "object",
+  "required": ["schema_version", "totals", "tensors"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": "tensor_use_def_graph_v1" },
+    "totals": {
+      "type": "object",
+      "required": ["tensors"],
+      "properties": {
+        "tensors": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "tensors": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Tensor" }
+    }
+  },
+  "$defs": {
+    "Tensor": {
+      "type": "object",
+      "required": [
+        "tensor_id", "module_id", "ssa", "shape", "dtype", "bytes",
+        "producer_region", "consumer_regions", "consumer_count",
+        "reuse_horizon", "producer_lifetime_class", "is_reduction_input",
+        "reduction_axis"
+      ],
+      "properties": {
+        "tensor_id": { "type": "string" },
+        "module_id": { "type": "string" },
+        "ssa": { "type": "string" },
+        "shape": {
+          "type": "array",
+          "items": { "type": ["integer", "null"] }
+        },
+        "dtype": { "type": "string" },
+        "bytes": { "type": "integer", "minimum": 0 },
+        "producer_region": { "type": "string" },
+        "consumer_regions": { "type": "array", "items": { "type": "string" } },
+        "consumer_count": { "type": "integer", "minimum": 0 },
+        "reuse_horizon": { "type": "integer" },
+        "producer_lifetime_class": {
+          "enum": ["transient", "weight", "input", "output"]
+        },
+        "is_reduction_input": { "type": "boolean" },
+        "reduction_axis": { "type": ["integer", "null"] }
+      }
+    }
+  }
+}

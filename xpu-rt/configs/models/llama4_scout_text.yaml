@@ -1,0 +1,37 @@
+schema_version: model_config_v1
+model_id: llama4_scout_text
+family: llm_moe
+source:
+  provider: huggingface
+  model_ref: meta-llama/Llama-4-Scout-17B-16E-Instruct
+  repo_url: https://huggingface.co/meta-llama/Llama-4-Scout-17B-16E-Instruct
+  docs_url: https://huggingface.co/meta-llama/Llama-4-Scout-17B-16E-Instruct
+  revision: 92f3b1597a195b523d8d9e5700e57e4fbb8f20d3
+  verified_at: '2026-05-01T05:35:03+00:00'
+  verified_by: agustin@garden
+  source_verified: true
+loader:
+  kind: hf_transformers_llm
+  trust_remote_code: true
+  dtype: bfloat16
+  device_policy: unavailable_for_full_local
+inputs:
+  kind: text_decode
+  processor_required: false
+compile:
+  mode: torch_compile_admission
+  backend: inductor
+  fullgraph: false
+  dynamic: true
+support:
+  mode: text_slice_or_serving
+  full_model_blocking: true
+  reason: ''
+expected:
+  can_eager_run: false
+  can_torch_compile: false
+  can_dynamo_capture: false
+  can_slice_compile: true
+notes:
+- gated repo — admission probe still requires HF token + license acceptance.
+- gated repo — admission probe still requires HF token + license acceptance.

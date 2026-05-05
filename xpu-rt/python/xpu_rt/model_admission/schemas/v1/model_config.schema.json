@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://compgen.dev/schemas/v1/model_admission/model_config.schema.json",
+  "title": "model_config_v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "model_id", "family", "loader"],
+  "properties": {
+    "schema_version": { "const": "model_config_v1" },
+    "model_id": { "type": "string", "minLength": 1 },
+    "family": {
+      "type": "string",
+      "enum": [
+        "vlm",
+        "llm",
+        "llm_moe",
+        "ocr",
+        "vla",
+        "vla_diffusion",
+        "embodied_vlm_vla",
+        "robot_policy",
+        "proxy"
+      ]
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "provider": { "type": "string" },
+        "model_ref": { "type": "string" },
+        "repo_url": { "type": "string" },
+        "docs_url": { "type": "string" },
+        "revision": { "type": ["string", "null"] },
+        "verified_at": { "type": ["string", "null"] },
+        "verified_by": { "type": ["string", "null"] },
+        "source_verified": { "type": "boolean" }
+      }
+    },
+    "loader": {
+      "type": "object",
+      "required": ["kind"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "compgen_model_spec",
+            "hf_transformers_vlm",
+            "hf_transformers_llm",
+            "hf_transformers_ocr",
+            "hf_transformers_vla",
+            "proxy",
+            "unavailable"
+          ]
+        },
+        "model_spec_id": { "type": "string" },
+        "proxy_module": { "type": "string" },
+        "trust_remote_code": { "type": "boolean" },
+        "dtype": { "type": "string" },
+        "device_policy": { "type": "string" }
+      }
+    },
+    "inputs": { "type": "object" },
+    "compile": {
+      "type": "object",
+      "properties": {
+        "mode": { "type": "string" },
+        "backend": { "type": "string" },
+        "fullgraph": { "type": "boolean" },
+        "dynamic": { "type": "boolean" }
+      }
+    },
+    "support": {
+      "type": "object",
+      "properties": {
+        "mode": { "type": "string" },
+        "full_model_blocking": { "type": "boolean" },
+        "reason": { "type": "string" }
+      }
+    },
+    "expected": {
+      "type": "object",
+      "properties": {
+        "can_eager_run": { "type": "boolean" },
+        "can_torch_compile": { "type": "boolean" },
+        "can_dynamo_capture": { "type": "boolean" },
+        "can_slice_compile": { "type": "boolean" }
+      }
+    },
+    "notes": { "type": "array", "items": { "type": "string" } }
+  }
+}

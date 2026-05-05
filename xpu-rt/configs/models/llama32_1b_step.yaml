@@ -1,0 +1,37 @@
+schema_version: model_config_v1
+model_id: llama32_1b_step
+family: llm
+source:
+  provider: huggingface
+  model_ref: meta-llama/Llama-3.2-1B-Instruct
+  repo_url: https://huggingface.co/meta-llama/Llama-3.2-1B-Instruct
+  docs_url: https://huggingface.co/meta-llama/Llama-3.2-1B-Instruct
+  revision: 9213176726f574b556790deb65791e0c5aa438b6
+  verified_at: '2026-05-01T18:07:23+00:00'
+  verified_by: agustin@garden
+  source_verified: true
+loader:
+  kind: hf_transformers_llm
+  trust_remote_code: true
+  dtype: bfloat16
+  device_policy: auto
+inputs:
+  kind: text_decode
+  processor_required: false
+compile:
+  mode: torch_compile_admission
+  backend: inductor
+  fullgraph: false
+  dynamic: true
+support:
+  mode: full_or_slice_smoke
+  full_model_blocking: true
+  reason: ''
+expected:
+  can_eager_run: true
+  can_torch_compile: true
+  can_dynamo_capture: true
+  can_slice_compile: true
+notes:
+- Llama-3.2-1B-Instruct admission baseline (gated; HF_TOKEN required).
+- gated repo — admission probe still requires HF token + license acceptance.

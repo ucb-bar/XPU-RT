@@ -1,0 +1,36 @@
+schema_version: model_config_v1
+model_id: phi3_mini_step
+family: llm
+source:
+  provider: huggingface
+  model_ref: microsoft/Phi-3-mini-4k-instruct
+  repo_url: https://huggingface.co/microsoft/Phi-3-mini-4k-instruct
+  docs_url: https://huggingface.co/microsoft/Phi-3-mini-4k-instruct
+  revision: f39ac1d28e925b323eae81227eaba4464caced4e
+  verified_at: '2026-05-01T07:41:25+00:00'
+  verified_by: agustin@garden
+  source_verified: true
+loader:
+  kind: hf_transformers_llm
+  trust_remote_code: true
+  dtype: bfloat16
+  device_policy: auto
+inputs:
+  kind: text_decode
+  processor_required: false
+compile:
+  mode: torch_compile_admission
+  backend: inductor
+  fullgraph: false
+  dynamic: true
+support:
+  mode: full_or_slice_smoke
+  full_model_blocking: true
+  reason: ''
+expected:
+  can_eager_run: true
+  can_torch_compile: true
+  can_dynamo_capture: true
+  can_slice_compile: true
+notes:
+- Standard 3.8B CausalLM admission baseline (Phi-3-mini-4k-instruct).

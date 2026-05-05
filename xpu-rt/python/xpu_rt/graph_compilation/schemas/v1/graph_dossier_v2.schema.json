@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GraphDossierV2",
+  "type": "object",
+  "required": [
+    "schema_version", "model_id", "target_id", "source",
+    "summary", "critical_path",
+    "top_regions_by_estimated_latency", "region_dossiers"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": "graph_dossier_v2" },
+    "model_id": { "type": "string" },
+    "target_id": { "type": "string" },
+    "source": {
+      "type": "object",
+      "required": ["graph_analysis_ir", "region_map",
+                   "tensor_use_def_graph", "region_graph"],
+      "additionalProperties": { "type": "string" }
+    },
+    "summary": {
+      "type": "object",
+      "required": ["total_regions", "total_tensors", "total_flops", "total_bytes",
+                   "structured_fraction", "opaque_fraction", "bottleneck_class"]
+    },
+    "critical_path": { "type": "array", "items": { "type": "string" } },
+    "top_regions_by_estimated_latency": { "type": "array" },
+    "region_dossiers": { "type": "object", "additionalProperties": { "type": "string" } }
+  }
+}

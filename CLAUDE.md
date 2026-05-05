@@ -3,6 +3,29 @@
 > `AGENT.md` is now the canonical and more complete repository-local operating
 > manual. Read it first. This file remains for compatibility and legacy context.
 
+> **Driving CompGen as Claude Code (or Codex):** when the user asks to
+> "compile X", "run CompGen on X", "build a recipe for X", or anything
+> equivalent, **invoke the `/compgen-compile` skill** (or its short
+> alias `/compgen`). The skill drives the whole workflow through the
+> typed MCP tools (`mcp__compgen__compgen_emit_agent_decision_request`,
+> `compgen_commit_agent_decision_response`,
+> `compgen_pipeline_status`, `compgen_inspect_pipeline_run`). Do NOT
+> shell out to `python -m compgen.graph_compilation` directly unless an
+> MCP tool genuinely fails — the MCP tools return typed dicts (no
+> stdout/stderr parsing) and run in-process by default (no subprocess
+> startup cost). The selection mode in this Claude-Code-driven path is
+> always `agent-file` (this session is the agent); never set
+> `GEMMINI_API`, `ANTHROPIC_API_KEY`, or any LLM provider env var.
+
+> **Gemini spend visibility:** every Gemini API call is logged to
+> `.compgen/gemini_usage/events.jsonl` with a derived snapshot in
+> `summary.json`. Run `uv run compgen-gemini-usage` for a status table or
+> `uv run compgen-gemini-usage watch` for a live feed. See the
+> "Gemini API Spend Tracking" section in `AGENT.md` for details. (The
+> Gemini provider is the secondary `--selection-mode llm-live` path,
+> only used when explicitly opted-in; the default agentic path is
+> Claude-Code-driven `agent-file`, no token spend.)
+
 This file defines the rules, conventions, and constraints for AI agents
 working on the CompGen codebase. Read this before making any changes.
 
@@ -132,6 +155,32 @@ Scopes: `agent`, `analysis`, `api`, `benchmarks`, `capture`, `cli`, `docs`, `eqs
 - Promotion requires ALL verification levels to pass
 - Never trust LLM output without verification -- not even for "simple" transforms
 - Always generate up-to date documentation inside of `docs`
+
+## Format Policy (canonical source of truth)
+
+CompGen artifacts have three roles:
+
+1. **YAML** -- human-authored configuration and editable workspace
+   manifests. Examples: `configs/models/*.yaml`, `configs/targets/*.yaml`,
+   `user_extensions/registry.yaml`,
+   `.crg-artifacts/extensions/*/manifest.yaml`. YAML is **not** the
+   canonical representation of compiler decisions.
+
+2. **JSON / JSONL** -- generated reports, schema-validated API messages,
+   audit logs, and LLM-readable projections. JSON artifacts may be
+   consumed by agents, but if they describe compiler semantics they must
+   be derived from IR (the IR is the source of truth; the JSON is the view).
+
+3. **MLIR / xDSL IR** -- canonical representation for programs, analysis
+   facts, action spaces, Recipe decisions, contracts, semantic
+   obligations, schedules, memory plans, and proof certificates.
+
+The LLM reads compact JSON projections and selects stable IDs. The
+compiler resolves those IDs against IR and applies typed IR operations.
+
+Any artifact that is verified, transformed, optimized, replayed, or
+promoted must have an IR representation. JSON / YAML twins exist as
+views, not authority.
 
 ## Key Terminology
 

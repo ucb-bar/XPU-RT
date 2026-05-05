@@ -1,0 +1,13 @@
+schema_version: slice_config_v1
+slice_id: qwen3_vl_235b_vision_projector_slice
+parent_model_id: qwen3_vl_235b_a22b_instruct
+description: 'Vision tower + projector slice.'
+inputs:
+  kind: single_image_qa
+  processor_required: false
+loader_override: null
+expected:
+  can_eager_run: true
+  can_torch_compile: true
+  can_dynamo_capture: true
+  can_slice_compile: true

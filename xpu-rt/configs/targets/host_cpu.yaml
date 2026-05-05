@@ -1,0 +1,48 @@
+schema_version: graphcomp_target_config_v1
+target_id: host_cpu
+device_kind: cpu
+description: |
+  Host CPU target for graph compilation. No device-specific lowering is required at
+  the graph_capture stage; this profile exists so the artifact contract carries a real
+  target_id + config_sha256.
+
+# Region Dossier V2 (Milestone 03) reads the fields below to compute
+# estimated latency, working-set fit, and placement envelopes. Values are
+# rough, sustained, single-thread numbers for a modern x86 server CPU.
+# Override per-target for richer hardware models.
+peak_compute_gflops: 100.0
+peak_bandwidth_gb_s: 30.0
+memory_tiers:
+  scratchpad_bytes: 32768       # ~L1d (32 KiB)
+  l2_bytes: 524288              # ~L2 (512 KiB)
+  l3_bytes: 16777216            # ~L3 (16 MiB)
+  system_bytes: 17179869184     # 16 GiB host RAM, conservative
+supported_dtypes:
+  - fp32
+  - fp16
+# Tolerance budgets used to bucket numerical_sensitivity status. The
+# values are monotone in dtype precision so that for the SAME region
+# the per-dtype status ordering is at-least:
+#   safer_than(fp32) >= safer_than(fast_math) >= safer_than(fp16_accum)
+#                    >= safer_than(fp8_e4m3)
+# (where safer_than(safe) > safer_than(risky) > safer_than(exceeds_budget)).
+# A post-pass in ``region_dossier`` enforces monotonicity in case a
+# user override or an unusual region-shape would otherwise invert it.
+numerical_budgets:
+  fp32: 1.0e-3
+  fast_math: 5.0e-3
+  fp16_accum: 1.0e-2
+  fp8_e4m3: 1.0e-1
+# Tile candidates for the working-set curve.
+working_set_tiles:
+  matmul:
+    - { M: 16,  N: 16,  K: 16 }
+    - { M: 32,  N: 32,  K: 32 }
+    - { M: 64,  N: 64,  K: 32 }
+    - { M: 128, N: 128, K: 32 }
+    - { M: 256, N: 256, K: 64 }
+    - { M: 512, N: 512, K: 64 }     # 1.25 MB live — exceeds L2 on host_cpu — exercises illegal tiling path
+  elementwise:
+    - { numel: 1024 }
+    - { numel: 4096 }
+    - { numel: 16384 }

@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://compgen.dev/schemas/v1/validation_report.schema.json",
+  "title": "validation_report_v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "run_dir", "overall", "rules"],
+  "properties": {
+    "schema_version": { "const": "validation_report_v1" },
+    "run_dir": { "type": "string", "minLength": 1 },
+    "overall": { "enum": ["pass", "fail"] },
+    "rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["rule_id", "status", "detail", "offending_path"],
+        "properties": {
+          "rule_id": { "type": "string", "minLength": 1 },
+          "status": { "enum": ["pass", "fail", "skipped"] },
+          "detail": { "type": "string" },
+          "offending_path": {
+            "anyOf": [{ "type": "null" }, { "type": "string", "minLength": 1 }]
+          }
+        }
+      }
+    }
+  }
+}

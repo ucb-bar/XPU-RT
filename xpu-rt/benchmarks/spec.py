@@ -170,8 +170,10 @@ class WorkloadSpec:
         """Load the workload for execution or analysis."""
 
         if self.model_spec is not None:
-            return self.model_spec.load(workspace)
-        return self.loader()
+            result: tuple[Any, tuple[Any, ...]] = self.model_spec.load(workspace)
+            return result
+        result = self.loader()
+        return result
 
 
 @dataclass(frozen=True)

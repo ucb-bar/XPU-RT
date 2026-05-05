@@ -1,0 +1,215 @@
+schema_version: model_registry_v1
+
+models:
+  # VLM / OCR
+  - model_id: qwen3_vl_235b_a22b_instruct
+    family: vlm
+    scale_class: huge
+    support_mode: slice_only
+    blocking: false
+    requires_online_verification: true
+
+  - model_id: qwen3_vl_8b
+    family: vlm
+    scale_class: medium
+    support_mode: full_or_slice_smoke
+    blocking: true
+    requires_online_verification: true
+
+  - model_id: qwen2_5_vl
+    family: vlm
+    scale_class: medium
+    support_mode: full_or_slice_smoke
+    blocking: true
+    requires_online_verification: true
+
+  - model_id: llava
+    family: vlm
+    scale_class: medium
+    support_mode: full_or_slice_smoke
+    blocking: true
+    requires_online_verification: true
+
+  - model_id: deepseek_ocr_3b
+    family: ocr
+    scale_class: medium
+    support_mode: full_or_slice_smoke
+    blocking: true
+    requires_online_verification: true
+
+  # VLA / robotics
+  - model_id: smolvla_step
+    family: vla
+    scale_class: small
+    support_mode: one_step_policy
+    blocking: true
+    requires_online_verification: true
+
+  - model_id: openvla_step
+    family: vla
+    scale_class: medium
+    support_mode: one_step_policy
+    blocking: true
+    requires_online_verification: true
+
+  - model_id: octo_step
+    family: vla_diffusion
+    scale_class: medium
+    support_mode: one_step_policy
+    blocking: true
+    requires_online_verification: true
+
+  - model_id: pi0_step
+    family: vla
+    scale_class: medium
+    support_mode: one_step_policy
+    blocking: false
+    requires_online_verification: true
+
+  - model_id: rtx_rt1x_step
+    family: robot_policy
+    scale_class: medium
+    support_mode: one_step_policy
+    blocking: false
+    requires_online_verification: true
+
+  # Server LLM / MoE
+  - model_id: llama4_scout_text
+    family: llm_moe
+    scale_class: huge
+    support_mode: text_slice_or_serving
+    blocking: true
+    requires_online_verification: true
+
+  - model_id: deepseek_v4_flash_text
+    family: llm_moe
+    scale_class: huge
+    support_mode: text_slice_or_serving
+    blocking: true
+    requires_online_verification: true
+
+  # Stretch / admission
+  - model_id: agibot_go1_step
+    family: vla
+    scale_class: medium
+    support_mode: admission_only
+    blocking: false
+    requires_online_verification: true
+
+  - model_id: agibot_go2_step
+    family: vla
+    scale_class: medium
+    support_mode: admission_only
+    blocking: false
+    requires_online_verification: true
+
+  - model_id: lingbot_world_step
+    family: embodied_vlm_vla
+    scale_class: medium
+    support_mode: admission_only
+    blocking: false
+    requires_online_verification: true
+
+  # Small models that ship cached on this host and serve as real-model
+  # admission baselines (LLM and VLM families).
+  - model_id: tinyllama_step
+    family: llm
+    scale_class: small
+    support_mode: full_or_slice_smoke
+    blocking: true
+    requires_online_verification: true
+
+  - model_id: smolvlm2_step
+    family: vlm
+    scale_class: small
+    support_mode: full_or_slice_smoke
+    blocking: true
+    requires_online_verification: true
+
+  # Additional small standard-architecture models (already provisioned).
+  - model_id: phi3_mini_step
+    family: llm
+    scale_class: small
+    support_mode: full_or_slice_smoke
+    blocking: true
+    requires_online_verification: true
+  - model_id: phi2_step
+    family: llm
+    scale_class: small
+    support_mode: full_or_slice_smoke
+    blocking: true
+    requires_online_verification: true
+  - model_id: moondream2_step
+    family: vlm
+    scale_class: small
+    support_mode: full_or_slice_smoke
+    blocking: true
+    requires_online_verification: true
+  - model_id: smollm2_step
+    family: llm
+    scale_class: small
+    support_mode: full_or_slice_smoke
+    blocking: true
+    requires_online_verification: true
+
+  # Round 3: more small standard models for broader admission coverage.
+  - model_id: qwen2_5_0_5b_step
+    family: llm
+    scale_class: small
+    support_mode: full_or_slice_smoke
+    blocking: true
+    requires_online_verification: true
+  - model_id: qwen2_5_1_5b_step
+    family: llm
+    scale_class: small
+    support_mode: full_or_slice_smoke
+    blocking: true
+    requires_online_verification: true
+  - model_id: phi3_5_mini_step
+    family: llm
+    scale_class: small
+    support_mode: full_or_slice_smoke
+    blocking: true
+    requires_online_verification: true
+  - model_id: smollm2_360m_step
+    family: llm
+    scale_class: small
+    support_mode: full_or_slice_smoke
+    blocking: true
+    requires_online_verification: true
+  - model_id: smollm_135m_step
+    family: llm
+    scale_class: small
+    support_mode: full_or_slice_smoke
+    blocking: true
+    requires_online_verification: true
+  - model_id: llama32_1b_step
+    family: llm
+    scale_class: small
+    support_mode: full_or_slice_smoke
+    blocking: true
+    requires_online_verification: true
+  - model_id: gemma2_2b_step
+    family: llm
+    scale_class: small
+    support_mode: full_or_slice_smoke
+    blocking: true
+    requires_online_verification: true
+  - model_id: florence2_base_step
+    family: vlm
+    scale_class: small
+    support_mode: full_or_slice_smoke
+    blocking: true
+    requires_online_verification: true
+  - model_id: paligemma_3b_step
+    family: vlm
+    scale_class: small
+    support_mode: full_or_slice_smoke
+    blocking: true
+    requires_online_verification: true
+  - model_id: blip2_opt_step
+    family: vlm
+    scale_class: small
+    support_mode: full_or_slice_smoke
+    blocking: true
+    requires_online_verification: true

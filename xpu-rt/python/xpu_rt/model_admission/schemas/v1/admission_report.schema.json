@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://compgen.dev/schemas/v1/model_admission/admission_report.schema.json",
+  "title": "admission_report_v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "model_id", "status"],
+  "properties": {
+    "schema_version": { "const": "admission_report_v1" },
+    "model_id": { "type": "string" },
+    "slice_id": { "type": "string" },
+    "status": {
+      "type": "string",
+      "enum": [
+        "available",
+        "available_slice_only",
+        "unavailable_missing_weights",
+        "unavailable_gated_access",
+        "unavailable_missing_dependency",
+        "unavailable_too_large",
+        "failed_eager",
+        "failed_torch_compile"
+      ]
+    },
+    "reason": { "type": "string" },
+    "eager_report_path": { "type": "string" },
+    "torch_compile_report_path": { "type": "string" },
+    "dynamo_report_path": { "type": "string" },
+    "environment_path": { "type": "string" },
+    "error_path": { "type": ["string", "null"] },
+    "recommended_next_step": { "type": "string" }
+  }
+}

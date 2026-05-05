@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RegionMap",
+  "type": "object",
+  "required": ["schema_version", "totals", "regions"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": "region_map_v1" },
+    "totals": {
+      "type": "object",
+      "required": ["regions", "modules"],
+      "properties": {
+        "regions": { "type": "integer", "minimum": 0 },
+        "modules": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "regions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Region" }
+    }
+  },
+  "$defs": {
+    "Region": {
+      "type": "object",
+      "required": [
+        "region_id", "module_id", "kind", "source_classification",
+        "fx_nodes", "payload_ops", "inputs", "outputs",
+        "estimated", "gap_refs", "extension_refs"
+      ],
+      "properties": {
+        "region_id": { "type": "string", "minLength": 1 },
+        "module_id": { "type": "string", "minLength": 1 },
+        "kind": { "type": "string" },
+        "source_classification": { "type": "string" },
+        "fx_nodes": { "type": "array", "items": { "type": "string" } },
+        "payload_ops": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/PayloadOpRef" }
+        },
+        "inputs": { "type": "array", "items": { "$ref": "#/$defs/TensorPort" } },
+        "outputs": { "type": "array", "items": { "$ref": "#/$defs/TensorPort" } },
+        "estimated": {
+          "type": "object",
+          "required": ["flops", "bytes", "arithmetic_intensity"],
+          "properties": {
+            "flops": { "type": "integer", "minimum": 0 },
+            "bytes": { "type": "integer", "minimum": 0 },
+            "arithmetic_intensity": { "type": "number", "minimum": 0 }
+          }
+        },
+        "gap_refs": { "type": "array", "items": { "type": "string" } },
+        "extension_refs": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "PayloadOpRef": {
+      "type": "object",
+      "required": ["op_name", "payload_ref"],
+      "properties": {
+        "op_name": { "type": "string" },
+        "region_id": { "type": ["string", "null"] },
+        "dispatch_id": { "type": ["string", "null"] },
+        "callee": { "type": ["string", "null"] },
+        "results": { "type": "array", "items": { "type": "string" } },
+        "operands": { "type": "array", "items": { "type": "string" } },
+        "payload_ref": { "type": "string" }
+      }
+    },
+    "TensorPort": {
+      "type": "object",
+      "required": ["tensor_id", "ssa"],
+      "properties": {
+        "tensor_id": { "type": "string" },
+        "ssa": { "type": "string" }
+      }
+    }
+  }
+}

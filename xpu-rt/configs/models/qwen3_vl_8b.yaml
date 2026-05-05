@@ -1,0 +1,35 @@
+schema_version: model_config_v1
+model_id: qwen3_vl_8b
+family: vlm
+source:
+  provider: huggingface
+  model_ref: Qwen/Qwen3-VL-8B-Instruct
+  repo_url: https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct
+  docs_url: https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct
+  revision: 0c351dd01ed87e9c1b53cbc748cba10e6187ff3b
+  verified_at: '2026-05-01T07:12:48+00:00'
+  verified_by: agustin@garden
+  source_verified: true
+loader:
+  kind: hf_transformers_vlm
+  trust_remote_code: true
+  dtype: bfloat16
+  device_policy: auto
+inputs:
+  kind: single_image_qa
+  processor_required: true
+compile:
+  mode: torch_compile_admission
+  backend: inductor
+  fullgraph: false
+  dynamic: true
+support:
+  mode: full_or_slice_smoke
+  full_model_blocking: true
+  reason: ''
+expected:
+  can_eager_run: true
+  can_torch_compile: true
+  can_dynamo_capture: true
+  can_slice_compile: true
+notes: []

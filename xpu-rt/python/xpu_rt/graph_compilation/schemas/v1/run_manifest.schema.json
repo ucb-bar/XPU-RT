@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://compgen.dev/schemas/v1/run_manifest.schema.json",
+  "title": "run_manifest_v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "created_at_utc",
+    "git_commit",
+    "model",
+    "target",
+    "seed",
+    "stages"
+  ],
+  "properties": {
+    "schema_version": { "const": "run_manifest_v1" },
+    "run_id": { "type": "string", "pattern": "^[A-Za-z0-9_\\-]+$" },
+    "created_at_utc": { "type": "string", "minLength": 1 },
+    "git_commit": {
+      "anyOf": [
+        { "type": "null" },
+        { "type": "string", "pattern": "^[0-9a-f]{40}$" }
+      ]
+    },
+    "model": { "$ref": "#/$defs/ModelRef" },
+    "target": { "$ref": "#/$defs/TargetRef" },
+    "seed": { "type": "integer" },
+    "stages": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/StageRecord" }
+    }
+  },
+  "$defs": {
+    "ModelRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["config_path", "model_id", "config_sha256"],
+      "properties": {
+        "config_path": { "type": "string", "minLength": 1 },
+        "model_id": { "type": "string", "minLength": 1 },
+        "config_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      }
+    },
+    "TargetRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["config_path", "target_id", "config_sha256"],
+      "properties": {
+        "config_path": { "type": "string", "minLength": 1 },
+        "target_id": { "type": "string", "minLength": 1 },
+        "config_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      }
+    },
+    "ArtifactRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "size_bytes", "kind"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "size_bytes": { "type": "integer", "minimum": 0 },
+        "kind": { "enum": ["file", "tree"] }
+      }
+    },
+    "StageRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stage_id",
+        "status",
+        "inputs",
+        "outputs",
+        "report_path",
+        "input_hash",
+        "output_hash",
+        "llm_calls",
+        "started_at_utc",
+        "finished_at_utc"
+      ],
+      "properties": {
+        "stage_id": {
+          "enum": [
+            "graph_capture",
+            "payload_lowering",
+            "graph_analysis",
+            "recipe_planning",
+            "gap_discovery",
+            "gap_closure"
+          ]
+        },
+        "status": { "enum": ["pass", "fail", "skipped"] },
+        "inputs": { "type": "array", "items": { "$ref": "#/$defs/ArtifactRef" } },
+        "outputs": { "type": "array", "items": { "$ref": "#/$defs/ArtifactRef" } },
+        "report_path": { "type": "string", "minLength": 1 },
+        "input_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "output_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "llm_calls": { "type": "integer", "minimum": 0 },
+        "started_at_utc": { "type": "string", "minLength": 1 },
+        "finished_at_utc": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

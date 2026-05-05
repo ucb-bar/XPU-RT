@@ -13,6 +13,10 @@ from dataclasses import dataclass
 from typing import Any
 
 from compgen.llm._env import resolve_api_key
+from compgen.observability.gemini_usage import (
+    install_genai_instrumentation,
+    tracking_source,
+)
 from compgen.llm._prompt import (
     extract_markdown_artifacts,
     parse_json_payload,
@@ -46,6 +50,9 @@ class GeminiClient:
         key = self.api_key or _ensure_api_key()
         if not key:
             raise RuntimeError("No Gemini API key. Set GEMMINI_API in .env or GOOGLE_API_KEY in environment.")
+        # Patch the SDK so every call (ours + autocomp + anyone else) is
+        # logged. Idempotent and best-effort.
+        install_genai_instrumentation()
         return genai.Client(api_key=key)
 
     def generate(self, request: GenerationRequest) -> GenerationResponse:
@@ -59,15 +66,16 @@ class GeminiClient:
         model = request.config.model or self.model
 
         t0 = time.perf_counter()
-        response = client.models.generate_content(
-            model=model,
-            contents=prompt,
-            config={
-                "temperature": request.config.temperature,
-                "max_output_tokens": request.config.max_tokens,
-                "top_p": request.config.top_p,
-            },
-        )
+        with tracking_source("gemini_client.generate"):
+            response = client.models.generate_content(
+                model=model,
+                contents=prompt,
+                config={
+                    "temperature": request.config.temperature,
+                    "max_output_tokens": request.config.max_tokens,
+                    "top_p": request.config.top_p,
+                },
+            )
         latency_ms = (time.perf_counter() - t0) * 1000
 
         raw_text = response.text or ""
@@ -111,11 +119,12 @@ class GeminiClient:
                 "max_output_tokens": request.config.max_tokens,
                 "response_mime_type": "application/json",
             }
-        response = client.models.generate_content(
-            model=model,
-            contents=prompt,
-            config=config,
-        )
+        with tracking_source("gemini_client.generate_structured"):
+            response = client.models.generate_content(
+                model=model,
+                contents=prompt,
+                config=config,
+            )
         latency_ms = (time.perf_counter() - t0) * 1000
 
         raw_text = response.text or ""

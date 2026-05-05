@@ -1,0 +1,13 @@
+schema_version: slice_config_v1
+slice_id: agibot_go1_single_step
+parent_model_id: agibot_go1_step
+description: 'One-step policy forward.'
+inputs:
+  kind: one_step_policy
+  processor_required: false
+loader_override: null
+expected:
+  can_eager_run: true
+  can_torch_compile: true
+  can_dynamo_capture: true
+  can_slice_compile: true

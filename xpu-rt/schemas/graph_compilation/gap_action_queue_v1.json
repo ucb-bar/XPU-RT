@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://compgen.dev/schemas/graph_compilation/gap_action_queue_v1.json",
+  "title": "gap_action_queue_v1",
+  "description": "Typed, actionable queue produced by Gap Discovery (stage 02). Consumed by Extension Closure.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "gaps", "summary"],
+  "properties": {
+    "schema_version": { "const": "gap_action_queue_v1" },
+    "model_id": { "type": "string" },
+    "target_id": { "type": "string" },
+    "gaps": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Gap" }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["count", "by_kind", "by_severity"],
+      "properties": {
+        "count": { "type": "integer", "minimum": 0 },
+        "by_kind": { "type": "object" },
+        "by_severity": { "type": "object" }
+      }
+    }
+  },
+  "$defs": {
+    "Gap": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "gap_id", "gap_kind", "semantic_name", "slug",
+        "extension_id", "suggested_extension_path", "target_id",
+        "severity", "allowed_actions", "required_evidence",
+        "fx_target", "fx_node",
+        "shape_signature", "dtype_signature",
+        "source", "source_artifacts", "payload_ref", "reason",
+        "module_id", "region_id"
+      ],
+      "properties": {
+        "gap_id": { "type": "string", "pattern": "^gap_[0-9]{4}$" },
+        "gap_kind": {
+          "enum": [
+            "unsupported_op",
+            "unsupported_dtype",
+            "unsupported_quant_format",
+            "unsupported_layout",
+            "unsupported_dynamic_shape",
+            "missing_kernel",
+            "missing_target_capability"
+          ]
+        },
+        "semantic_name": { "type": "string", "minLength": 1 },
+        "slug": { "type": "string", "pattern": "^[A-Za-z0-9_]+$" },
+        "extension_id": {
+          "type": "string",
+          "pattern": "^[a-z_]+__[A-Za-z0-9_]+__[A-Za-z0-9_]+__[0-9a-f]{8}$"
+        },
+        "suggested_extension_path": { "type": "string", "minLength": 1 },
+        "target_id": { "type": "string", "minLength": 1 },
+        "severity": {
+          "enum": ["critical_path", "performance_blocker", "coverage_gap", "noncritical"]
+        },
+        "allowed_actions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "enum": [
+              "decompose_to_supported_ops",
+              "create_payload_lowering_extension",
+              "create_kernel_contract",
+              "create_quant_format_adapter",
+              "create_pack_unpack_extension",
+              "create_dequantize_to_supported_format_fallback",
+              "route_to_vendor_library",
+              "keep_as_fallback"
+            ]
+          }
+        },
+        "required_evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" }
+        },
+        "fx_target": { "type": "string", "minLength": 1 },
+        "fx_node": { "type": "string" },
+        "module_id": { "type": "string" },
+        "region_id": { "type": "string" },
+        "shape_signature": { "type": "object" },
+        "dtype_signature": { "type": "object" },
+        "source": {
+          "type": "object",
+          "required": ["unsupported_op_id", "payload_mlir", "lowering_report"],
+          "properties": {
+            "unsupported_op_id": { "type": "string" },
+            "payload_mlir": { "type": "string" },
+            "lowering_report": { "type": "string" }
+          }
+        },
+        "source_artifacts": { "type": "object" },
+        "payload_ref": { "type": "object" },
+        "reason": { "type": "string" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "gap_kind": { "const": "unsupported_op" } } },
+          "then": {
+            "properties": {
+              "required_evidence": {
+                "type": "array",
+                "contains": { "const": "reference_semantics" },
+                "allOf": [{ "contains": { "const": "differential_tests" } }]
+              }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "gap_kind": { "const": "unsupported_quant_format" } } },
+          "then": {
+            "properties": {
+              "required_evidence": {
+                "type": "array",
+                "contains": { "const": "quant_format_spec" }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,36 @@
+schema_version: model_config_v1
+model_id: smolvlm2_step
+family: vlm
+source:
+  provider: huggingface
+  model_ref: HuggingFaceTB/SmolVLM2-500M-Video-Instruct
+  repo_url: https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct
+  docs_url: https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct
+  revision: 7b375e1b73b11138ff12fe22c8f2822d8fe03467
+  verified_at: '2026-05-01T06:06:09+00:00'
+  verified_by: agustin@garden
+  source_verified: true
+loader:
+  kind: hf_transformers_vlm
+  trust_remote_code: true
+  dtype: float32
+  device_policy: auto
+inputs:
+  kind: single_image_qa
+  processor_required: true
+compile:
+  mode: torch_compile_admission
+  backend: inductor
+  fullgraph: false
+  dynamic: true
+support:
+  mode: full_or_slice_smoke
+  full_model_blocking: true
+  reason: ''
+expected:
+  can_eager_run: true
+  can_torch_compile: true
+  can_dynamo_capture: true
+  can_slice_compile: true
+notes:
+- Small (500M) video-instruct VLM. Already in HF cache; serves as the small-VLM admission baseline.

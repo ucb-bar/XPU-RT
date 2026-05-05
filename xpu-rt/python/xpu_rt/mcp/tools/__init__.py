@@ -20,6 +20,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from compgen.mcp.tools.agent_decision import AGENT_DECISION_TOOLS
 from compgen.mcp.tools.autotune import AUTOTUNE_TOOLS
 from compgen.mcp.tools.batch import BATCH_TOOLS
 from compgen.mcp.tools.bench import BENCH_TOOLS
@@ -99,6 +100,7 @@ _IN_TREE_TOOLS: list[dict] = [
     *KNOWLEDGE_TOOLS,
     *GRAPH_DIGEST_TOOLS,
     *DECISION_TOOLS,
+    *AGENT_DECISION_TOOLS,
     *REFINEMENT_TOOLS,
     *AUTOTUNE_TOOLS,
     *EMBEDDED_TOOLS,
