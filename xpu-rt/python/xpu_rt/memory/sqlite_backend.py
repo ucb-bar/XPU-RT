@@ -98,7 +98,12 @@ CREATE TABLE IF NOT EXISTS promotions (
     reason TEXT DEFAULT '',
     measured_gain REAL DEFAULT 0.0,
     verified_by TEXT DEFAULT '',
-    created_at TEXT DEFAULT ''
+    created_at TEXT DEFAULT '',
+    -- M-26 two-tier cache key (additive; empty for legacy rows).
+    region_signature TEXT DEFAULT '',
+    contract_hash TEXT DEFAULT '',
+    -- M-29 promotion gate level (string form of PromotionLevel enum).
+    gate_level TEXT DEFAULT ''
 );
 
 CREATE TABLE IF NOT EXISTS episode_steps (
@@ -132,6 +137,21 @@ CREATE INDEX IF NOT EXISTS idx_state_hardware ON state_signatures(hardware_signa
 """
 
 
+# Idempotent additive migrations applied after the CREATE TABLE script.
+# Each entry must be safe to run repeatedly: failing on
+# ``sqlite3.OperationalError`` (column already exists) is the contract.
+_ADDITIVE_MIGRATIONS: tuple[str, ...] = (
+    # M-26 promotion two-tier cache key.
+    "ALTER TABLE promotions ADD COLUMN region_signature TEXT DEFAULT ''",
+    "ALTER TABLE promotions ADD COLUMN contract_hash TEXT DEFAULT ''",
+    # M-29 promotion gate level.
+    "ALTER TABLE promotions ADD COLUMN gate_level TEXT DEFAULT ''",
+    # Indexes for two-tier retrieval.
+    "CREATE INDEX IF NOT EXISTS idx_promotions_region ON promotions(region_signature)",
+    "CREATE INDEX IF NOT EXISTS idx_promotions_contract ON promotions(contract_hash)",
+)
+
+
 class SQLiteBackend:
     """SQLite-backed metadata store.
 
@@ -155,9 +175,21 @@ class SQLiteBackend:
         return self._conn
 
     def _ensure_schema(self) -> None:
-        """Create tables if they don't exist."""
+        """Create tables if they don't exist, then run additive migrations.
+
+        Migrations are idempotent: each ``ALTER TABLE ADD COLUMN`` is
+        wrapped in a try/except on ``sqlite3.OperationalError`` so the
+        same code is safe whether the column was added by this call or
+        pre-existed from a CREATE TABLE on a fresh DB.
+        """
         conn = self._get_conn()
         conn.executescript(_SCHEMA_SQL)
+        for migration in _ADDITIVE_MIGRATIONS:
+            try:
+                conn.execute(migration)
+            except sqlite3.OperationalError:
+                # Column already exists (idempotent re-run).
+                pass
         conn.commit()
 
     def execute(self, sql: str, params: tuple = ()) -> sqlite3.Cursor:

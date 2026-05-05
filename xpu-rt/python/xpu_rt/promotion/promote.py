@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -38,21 +38,37 @@ _REQUIRED_VERIFY_LEVELS: frozenset[str] = frozenset({"structural", "differential
 class RecipeKey:
     """Promotion key for a recipe.
 
+    The on-disk directory name uses the model-level tier
+    (``target_hash_model_hash_objective_hash_vN``) for backwards
+    compatibility with :class:`RecipeCache`. The two pattern-level
+    dimensions — ``contract_hash`` and ``region_signature`` — are
+    additive: they ride along in ``manifest.json`` and the
+    ``memory.promotions`` SQLite index so the bridge can look up
+    recipes by region pattern across models.
+
     Attributes:
         target_hash: Hash of the target profile.
         model_hash: Hash of the model IR.
         objective_hash: Hash of the objective.
         version: Recipe version (monotonically increasing).
+        contract_hash: Optional kernel-contract hash (M-26 two-tier
+            cache key, exact-kernel reuse). Empty string when no
+            kernel contract is associated with the recipe.
+        region_signature: Optional region pattern hash (M-26 two-tier
+            cache key, cross-model pattern reuse). Empty string when
+            no region pattern can be derived from the recipe.
     """
 
     target_hash: str
     model_hash: str
     objective_hash: str
     version: int = 1
+    contract_hash: str = ""
+    region_signature: str = ""
 
     @property
     def key(self) -> str:
-        """Full promotion key string."""
+        """Full promotion key string (model-tier directory name)."""
         return f"{self.target_hash}_{self.model_hash}_{self.objective_hash}_v{self.version}"
 
 
@@ -71,6 +87,63 @@ class PromotionResult:
     key: RecipeKey | None = None
     recipe_path: Path | None = None
     reason: str = ""
+
+
+@dataclass(frozen=True)
+class PromotedRecipe:
+    """Full description of a promoted recipe (M-26).
+
+    Wraps :class:`RecipeKey` with the metadata a future run needs to
+    decide whether to apply, rank, or reject this recipe — the bridge
+    serialises this to the recipe directory's ``promoted_recipe.json``
+    sidecar and indexes the same fields in ``memory.promotions``.
+
+    Attributes:
+        recipe_id: Stable human-readable id (e.g.
+            ``recipe_matmul_tile_64x64x16_cuda_sm75_v1``).
+        recipe_signature: Region pattern signature; pairs with
+            :attr:`RecipeKey.region_signature`.
+        recipe_ir_path: Relative path inside the recipe directory to
+            the canonical Recipe IR text (``recipe.mlir``).
+        evidence_summary: Compact JSON projection of readiness rows /
+            differential outcomes / measured cost fields. Stored as
+            a dict so future readers can lift fields without parsing.
+        applies_when: Ordered list of fact predicates that must hold
+            for the recipe to be applicable (e.g.
+            ``["fact.tile_divisible[16]", "fact.contiguous_layout"]``).
+        fallback_chain: Ordered list of alternative candidate ids to
+            try if this recipe is rejected at apply time.
+        certificates: Map of certificate name → artifact hash
+            (e.g. ``differential_report_sha256``).
+        validity: Map of free-form validity predicates expressed as
+            strings (target capability flags, dtype constraints, ...).
+        gate_level: Highest :class:`PromotionLevel` (M-29) the recipe
+            satisfied — stored as the enum's string value. Empty
+            string when M-26 ships before M-29 is wired in.
+    """
+
+    recipe_id: str
+    recipe_signature: str = ""
+    recipe_ir_path: str = ""
+    evidence_summary: dict[str, Any] = field(default_factory=dict)
+    applies_when: tuple[str, ...] = ()
+    fallback_chain: tuple[str, ...] = ()
+    certificates: dict[str, str] = field(default_factory=dict)
+    validity: dict[str, str] = field(default_factory=dict)
+    gate_level: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "recipe_id": self.recipe_id,
+            "recipe_signature": self.recipe_signature,
+            "recipe_ir_path": self.recipe_ir_path,
+            "evidence_summary": dict(self.evidence_summary),
+            "applies_when": list(self.applies_when),
+            "fallback_chain": list(self.fallback_chain),
+            "certificates": dict(self.certificates),
+            "validity": dict(self.validity),
+            "gate_level": self.gate_level,
+        }
 
 
 def _compute_hash(value: str) -> str:
@@ -366,4 +439,40 @@ def promote_recipe(
     return result
 
 
-__all__ = ["PromotionResult", "RecipeKey", "RecipePromoter", "promote_recipe"]
+def write_promoted_recipe_sidecar(
+    recipe_path: Path, key: RecipeKey, promoted: PromotedRecipe
+) -> Path:
+    """Write ``promoted_recipe.json`` next to ``manifest.json`` (M-26).
+
+    The sidecar carries the two-tier cache key plus the
+    :class:`PromotedRecipe` body so a future run can locate the recipe
+    by ``contract_hash`` or ``region_signature`` without parsing the
+    bundle manifest.
+    """
+    sidecar_path = recipe_path / "promoted_recipe.json"
+    body = {
+        "schema_version": "promoted_recipe_v1",
+        "key": {
+            "target_hash": key.target_hash,
+            "model_hash": key.model_hash,
+            "objective_hash": key.objective_hash,
+            "version": key.version,
+            "contract_hash": key.contract_hash,
+            "region_signature": key.region_signature,
+        },
+        "recipe": promoted.to_dict(),
+    }
+    sidecar_path.write_text(
+        json.dumps(body, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    return sidecar_path
+
+
+__all__ = [
+    "PromotedRecipe",
+    "PromotionResult",
+    "RecipeKey",
+    "RecipePromoter",
+    "promote_recipe",
+    "write_promoted_recipe_sidecar",
+]

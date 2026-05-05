@@ -471,8 +471,17 @@ class CompilerMemory:
         reason: str = "",
         measured_gain: float = 0.0,
         verified_by: str = "",
+        region_signature: str = "",
+        contract_hash: str = "",
+        gate_level: str = "",
     ) -> Promotion:
-        """Promote a candidate to the immutable L3 library."""
+        """Promote a candidate to the immutable L3 library.
+
+        ``region_signature`` and ``contract_hash`` (M-26) ride along as
+        the two-tier cache-key index so future runs can locate the
+        recipe by region pattern across models. ``gate_level`` (M-29)
+        records the highest promotion gate the bundle satisfied.
+        """
         # Find next version for this promotion key
         row = self.db.fetchone(
             "SELECT MAX(version) as v FROM promotions WHERE promotion_key = ?",
@@ -489,9 +498,21 @@ class CompilerMemory:
             measured_gain=measured_gain,
             verified_by=verified_by,
             created_at=_now(),
+            region_signature=region_signature,
+            contract_hash=contract_hash,
+            gate_level=gate_level,
         )
+        # Explicit column names: the table now has 11 columns after the
+        # M-26 / M-29 migrations and a positional VALUES list would
+        # silently shift values into the wrong columns on schema drift.
         self.db.execute(
-            "INSERT INTO promotions VALUES (?,?,?,?,?,?,?,?)",
+            (
+                "INSERT INTO promotions ("
+                "promotion_id, candidate_id, promotion_key, version, reason, "
+                "measured_gain, verified_by, created_at, "
+                "region_signature, contract_hash, gate_level"
+                ") VALUES (?,?,?,?,?,?,?,?,?,?,?)"
+            ),
             (
                 promotion.promotion_id,
                 promotion.candidate_id,
@@ -501,6 +522,9 @@ class CompilerMemory:
                 promotion.measured_gain,
                 promotion.verified_by,
                 promotion.created_at,
+                promotion.region_signature,
+                promotion.contract_hash,
+                promotion.gate_level,
             ),
         )
         self.update_candidate_status(candidate_id, CandidateStatus.PROMOTED)

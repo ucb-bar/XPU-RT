@@ -19,7 +19,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 import structlog
-from xdsl.dialects.builtin import IntegerAttr, ModuleOp, StringAttr, SymbolRefAttr
+from xdsl.dialects.builtin import ArrayAttr, IntegerAttr, ModuleOp, StringAttr, SymbolRefAttr
 from xdsl.ir import Operation
 
 from compgen.ir.recipe.ops_candidate import (
@@ -48,6 +48,7 @@ from compgen.ir.recipe.ops_propose import (
     ProposeMegakernelSynthesisOp,
     ProposePayload,
 )
+from compgen.ir.recipe.ops_provenance import PromoteOp
 from compgen.ir.recipe.ops_scope import RecipeGuardOp
 from compgen.ir.recipe.ops_verify import (
     RequireCheckFileOp,
@@ -92,6 +93,12 @@ class LoweringOutput:
     eqsat_jobs: list[dict[str, Any]] = field(default_factory=list)
     guard_verdicts: list[dict[str, Any]] = field(default_factory=list)
     feedback_events: list[dict[str, Any]] = field(default_factory=list)
+    # M-27 — one entry per recipe.promote op with the pattern-level
+    # attrs (recipe_signature, applies_when, evidence_summary,
+    # fallback_chain, target_class) projected into JSON-stable form so
+    # downstream callers (M-28 retrieval, M-30 efficiency report) can
+    # consume the promoted set without re-walking the IR.
+    promoted_recipe_records: list[dict[str, Any]] = field(default_factory=list)
     diagnostics: list[str] = field(default_factory=list)
 
 
@@ -113,6 +120,7 @@ def lower_recipe(
     eqsat_jobs: list[dict[str, Any]] = []
     guard_verdicts: list[dict[str, Any]] = []
     feedback_events: list[dict[str, Any]] = []
+    promoted_recipe_records: list[dict[str, Any]] = []
     diagnostics: list[str] = []
     runtime = GuardRuntime(guard_registry) if guard_registry is not None else None
     guard_ops = {op.sym_name.data: op for op in module.walk() if isinstance(op, RecipeGuardOp)}
@@ -134,6 +142,7 @@ def lower_recipe(
                 resolved_fact_index,
                 guard_verdicts,
                 feedback_events,
+                promoted_recipe_records,
                 diagnostics,
             )
         except Exception as e:
@@ -158,6 +167,7 @@ def lower_recipe(
         eqsat_jobs=eqsat_jobs,
         guard_verdicts=guard_verdicts,
         feedback_events=feedback_events,
+        promoted_recipe_records=promoted_recipe_records,
         diagnostics=diagnostics,
     )
 
@@ -174,6 +184,7 @@ def _lower_op(
     fact_index: RecipeFactIndex | None,
     guard_verdicts: list[dict[str, Any]],
     feedback_events: list[dict[str, Any]],
+    promoted_recipe_records: list[dict[str, Any]],
     diagnostics: list[str],
 ) -> None:
     """Dispatch a single op to its lowering handler."""
@@ -251,7 +262,11 @@ def _lower_op(
     elif isinstance(op, RequireProfileBudgetOp):
         _lower_require_profile(op, verification_obligations)
 
-    # Scope, fact, provenance ops don't lower to anything — they are metadata
+    # --- Provenance ops with downstream consumers (M-27 PromoteOp) ---
+    elif isinstance(op, PromoteOp):
+        _lower_promote(op, promoted_recipe_records)
+
+    # Scope, fact, other-provenance ops don't lower to anything — metadata only
 
 
 # ---- Transform script lowering ----
@@ -722,6 +737,46 @@ def _lower_require_profile(op: RequireProfileBudgetOp, out: list[dict[str, Any]]
     if op.device:
         obligation["device_index"] = op.device.index.value.data
     out.append(obligation)
+
+
+# ---- Promote-op lowering (M-27 — pattern-level promotion record) -----------
+
+
+def _array_sym_refs(attr: ArrayAttr | None) -> list[str]:
+    """Project an ArrayAttr of SymbolRefAttr to a list of root names."""
+    if attr is None:
+        return []
+    out: list[str] = []
+    for item in attr.data:
+        if isinstance(item, SymbolRefAttr):
+            out.append(item.root_reference.data)
+    return out
+
+
+def _lower_promote(op: PromoteOp, out: list[dict[str, Any]]) -> None:
+    """Project a ``recipe.promote`` op into a JSON-stable record.
+
+    Mirrors the structure of
+    :class:`compgen.promotion.promote.PromotedRecipe` so M-28 retrieval
+    can consume the lowering output without a separate IR walk.
+    """
+    record: dict[str, Any] = {
+        "candidate_ref": _sym_ref_str(op.candidate_ref),
+        "recipe_key": _str_attr_val(op.recipe_key),
+        "version": _int_attr_val(op.version),
+        "recipe_signature": (
+            _str_attr_val(op.recipe_signature) if op.recipe_signature else ""
+        ),
+        "applies_when": _array_sym_refs(op.applies_when),
+        "evidence_summary": (
+            _str_attr_val(op.evidence_summary) if op.evidence_summary else ""
+        ),
+        "fallback_chain": _array_sym_refs(op.fallback_chain),
+        "target_class": (
+            _str_attr_val(op.target_class) if op.target_class else ""
+        ),
+    }
+    out.append(record)
 
 
 # ---- Exo kernel job lowering ----

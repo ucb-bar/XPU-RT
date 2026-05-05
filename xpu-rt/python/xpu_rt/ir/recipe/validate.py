@@ -25,7 +25,33 @@ from xdsl.utils.exceptions import VerifyException
 
 from compgen.ir.recipe.ops import RecipeOp
 from compgen.ir.recipe.ops_candidate import PlaceOnDeviceOp
+from compgen.ir.recipe.ops_provenance import PromoteOp
 from compgen.ir.recipe.ops_scope import AnchorOp, RecipeGuardOp, RecipeRegionOp, SegmentOp
+
+# M-27: known target-class strings accepted on ``recipe.promote.target_class``.
+# Validators enforce membership; new classes get added here as new targets
+# come online (cuda_sm75 / cuda_sm80 / cuda_sm90 / triton_friendly /
+# host_cpu / blackwell / cublasdx / etc.). The empty string is accepted
+# so legacy three-field PromoteOps without the M-27 attrs don't trip.
+_KNOWN_TARGET_CLASSES: frozenset[str] = frozenset({
+    "",
+    "host_cpu",
+    "cuda_sm70",
+    "cuda_sm75",
+    "cuda_sm80",
+    "cuda_sm86",
+    "cuda_sm89",
+    "cuda_sm90",
+    "cuda_sm100",
+    "blackwell",
+    "hopper",
+    "ampere",
+    "turing",
+    "triton_friendly",
+    "accel_native",
+    "ukernel_runtime",
+    "hybrid",
+})
 
 log = structlog.get_logger()
 
@@ -182,6 +208,26 @@ def validate_recipe_module(module: ModuleOp) -> RecipeValidationResult:
                     )
             else:
                 device_assignments[region_id] = (device_index, i)
+
+    # --- Step 5: Validate PromoteOp M-27 attrs --------------------------------
+    # ``applies_when`` and ``fallback_chain`` SymbolRef resolution is
+    # already covered by the generic _collect_symbol_refs walk in
+    # Step 3. Here we additionally enforce the target_class enum.
+    for i, op in enumerate(module.walk()):
+        if isinstance(op, PromoteOp) and op.target_class is not None:
+            tc = op.target_class.data
+            if tc not in _KNOWN_TARGET_CLASSES:
+                errors.append(
+                    RecipeValidationError(
+                        op_index=i,
+                        op_type="PromoteOp",
+                        message=(
+                            f"Unknown target_class {tc!r} on recipe.promote; "
+                            f"add it to _KNOWN_TARGET_CLASSES in "
+                            f"compgen.ir.recipe.validate or use a known value."
+                        ),
+                    )
+                )
 
     valid = len(errors) == 0
     log.info(

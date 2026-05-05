@@ -88,13 +88,50 @@ class RejectOp(IRDLOperation):
 
 @irdl_op_definition
 class PromoteOp(IRDLOperation):
-    """Records that a candidate was promoted into the recipe library."""
+    """Records that a candidate was promoted into the recipe library.
+
+    M-27 (Section 19) extends the original three-field op
+    ``(candidate_ref, recipe_key, version)`` with five optional
+    pattern-level attrs that let a future run decide whether the
+    promoted recipe applies, rank it among alternatives, or reject it
+    cleanly:
+
+    - ``recipe_signature``: JSON projection of the region pattern this
+      recipe was promoted *for* (op_family / dtype / layout /
+      shape_class / target_class). Pairs with the
+      :class:`compgen.promotion.region_signature.RegionSignature` hash
+      stored in :class:`compgen.promotion.promote.RecipeKey`.
+    - ``applies_when``: ``ArrayAttr`` of ``SymbolRefAttr`` references to
+      ``recipe.fact_*`` ops that must hold for the recipe to apply
+      (e.g. ``@fact_tile_divisible_16`` or ``@fact_contiguous_layout``).
+      Validated by :func:`validate_recipe_module` to resolve.
+    - ``evidence_summary``: compact JSON projection of readiness rows /
+      gate level / certificate hashes — written by the M-26 bridge,
+      mirrored into the recipe sidecar so the agent can rank promoted
+      candidates without re-reading the bundle.
+    - ``fallback_chain``: ``ArrayAttr`` of ``SymbolRefAttr`` candidate
+      references to try (in order) if this recipe is rejected at apply
+      time. Empty by default.
+    - ``target_class``: canonical target-class string (e.g.
+      ``host_cpu``, ``cuda_sm75``, ``triton_friendly``). Validated
+      against an enum-like allowlist by ``validate_recipe_module``.
+
+    All five are optional so the existing three-field PromoteOp surface
+    keeps working for legacy callers.
+    """
 
     name = "recipe.promote"
 
     candidate_ref = prop_def(SymbolRefAttr)
     recipe_key = prop_def(StringAttr)
     version = prop_def(IntegerAttr)
+
+    # M-27 additions — optional for backward compatibility.
+    recipe_signature = opt_prop_def(StringAttr)
+    applies_when = opt_prop_def(ArrayAttr)
+    evidence_summary = opt_prop_def(StringAttr)
+    fallback_chain = opt_prop_def(ArrayAttr)
+    target_class = opt_prop_def(StringAttr)
 
     traits = traits_def(Pure())
 

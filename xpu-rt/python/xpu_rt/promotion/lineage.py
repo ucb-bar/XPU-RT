@@ -53,6 +53,15 @@ class LineageGraph:
     root_id: str
 
 
+def _row_get(row: Any, key: str, default: Any = "") -> Any:
+    """Tolerant column read — returns ``default`` when the column is
+    absent (legacy DBs without the M-26/M-29 migrations applied)."""
+    try:
+        return row[key]
+    except (KeyError, IndexError):
+        return default
+
+
 def _row_to_promotion(row: Any) -> Promotion:
     """Convert a SQLite Row to a Promotion dataclass."""
     return Promotion(
@@ -64,6 +73,9 @@ def _row_to_promotion(row: Any) -> Promotion:
         measured_gain=row["measured_gain"],
         verified_by=row["verified_by"],
         created_at=row["created_at"],
+        region_signature=_row_get(row, "region_signature", ""),
+        contract_hash=_row_get(row, "contract_hash", ""),
+        gate_level=_row_get(row, "gate_level", ""),
     )
 
 

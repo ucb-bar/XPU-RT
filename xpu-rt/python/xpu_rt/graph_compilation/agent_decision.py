@@ -80,6 +80,47 @@ def _sha256_or_none(path: Path) -> str | None:
 
 
 # --------------------------------------------------------------------------- #
+# M-28 promotion retrieval helper
+# --------------------------------------------------------------------------- #
+
+
+def _retrieve_promoted_for_region(
+    *, run_dir: Path, region_id: str, target_id: str, kind: str
+) -> list[Any]:
+    """Look up promoted recipes whose region pattern matches.
+
+    Best-effort: degrades to an empty list on any error. Imports are
+    deferred so a cold or broken recipe cache never breaks the
+    request emission.
+    """
+    if not region_id:
+        return []
+    try:
+        from compgen.graph_compilation.promotion_bridge import (
+            derive_region_signature,
+        )
+        from compgen.graph_compilation.promotion_retrieval import (
+            retrieve_for_region,
+        )
+
+        region_sig_hash, _fields = derive_region_signature(
+            run_dir=run_dir,
+            region_id=region_id,
+            target_id=target_id,
+            kind=kind,
+        )
+        if not region_sig_hash:
+            return []
+        return retrieve_for_region(
+            region_signature=region_sig_hash,
+            contract_hash="",  # M-26 ships without contract_hash plumbing.
+            target_class=target_id,
+        )
+    except Exception:  # noqa: BLE001 - retrieval is best-effort
+        return []
+
+
+# --------------------------------------------------------------------------- #
 # Banned phrases that signal forbidden correctness/perf claims
 # --------------------------------------------------------------------------- #
 
@@ -361,6 +402,16 @@ def build_agent_decision_request(
     The request's ``candidate_ids_allowed`` is the union of every
     legal candidate listed in ``llm_action_space.ranked_sites[].
     legal_candidates[]``. The agent MUST pick from this list.
+
+    M-28 (Section 19): per-region ``promoted_candidates`` block is
+    attached when the on-disk recipe library
+    (``.compgen_cache/recipes/``) holds matches for the region's
+    pattern signature or kernel contract. Promoted candidates carry
+    their gate level + evidence summary so the agent can rank them
+    above fresh candidates, but they do **not** join
+    ``candidate_ids_allowed``: the legal-candidate gate stays narrow.
+    The agent surfaces the promoted recipe through the regular
+    response path (selecting its referenced ``candidate_ref``).
     """
     run_dir = Path(run_dir).resolve()
     ga = run_dir / "02_graph_analysis"
@@ -376,9 +427,23 @@ def build_agent_decision_request(
         c["candidate_id"]: c for c in candidate_actions.get("candidates", [])
     }
 
+    # M-28: prepare promoted-candidate retrieval context. Read the
+    # target_id from the run manifest so we can filter promoted
+    # recipes by target_class (a recipe proven on host_cpu must not
+    # surface for cuda_sm75).
+    target_id_for_retrieval = ""
+    try:
+        manifest = _read_json(run_dir / "run_manifest.json")
+        target_id_for_retrieval = (
+            manifest.get("target", {}).get("target_id", "") if manifest else ""
+        )
+    except Exception:  # noqa: BLE001 - retrieval is best-effort
+        target_id_for_retrieval = ""
+
     # candidate_ids_allowed: every legal candidate visible to the agent.
     candidate_ids_allowed: list[str] = []
     visible_regions: list[dict[str, Any]] = []
+    promoted_candidates_total: list[dict[str, Any]] = []
     seen: set[str] = set()
     for site in llm_view.get("ranked_sites", []):
         region_id = site.get("region_id", "")
@@ -406,6 +471,23 @@ def build_agent_decision_request(
                     "fits_l2": (c.get("cost_preview") or {}).get("fits_l2"),
                 }
             )
+
+        # M-28: attach promoted candidates that match this region's
+        # pattern signature. Best-effort: errors degrade to an empty
+        # block, never break the request emission.
+        site_promoted: list[dict[str, Any]] = []
+        try:
+            promoted = _retrieve_promoted_for_region(
+                run_dir=run_dir,
+                region_id=region_id,
+                target_id=target_id_for_retrieval,
+                kind=site.get("kind", ""),
+            )
+            site_promoted = [p.to_dict() for p in promoted]
+            promoted_candidates_total.extend(site_promoted)
+        except Exception:  # noqa: BLE001 - retrieval is best-effort
+            site_promoted = []
+
         visible_regions.append(
             {
                 "region_id": region_id,
@@ -414,6 +496,7 @@ def build_agent_decision_request(
                 "priority": site.get("priority"),
                 "why": site.get("why", ""),
                 "legal_candidates": site_legal,
+                "promoted_candidates": site_promoted,
             }
         )
 
@@ -470,6 +553,13 @@ def build_agent_decision_request(
         "sources": sources,
         "candidate_ids_allowed": candidate_ids_allowed,
         "visible_regions": visible_regions,
+        # M-28: top-level summary of every promoted candidate found
+        # across all regions. Per-region matches live inside
+        # ``visible_regions[*].promoted_candidates``; this list is the
+        # flattened union, ordered by match strength (exact_contract
+        # before region_pattern). Empty when the recipe library is
+        # cold or holds no matches for any region.
+        "promoted_candidates": promoted_candidates_total,
         "agent_guidance": _build_agent_guidance(),
         "generated_at_utc": _utcnow(),
     }
