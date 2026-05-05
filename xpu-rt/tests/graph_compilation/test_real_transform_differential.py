@@ -294,7 +294,15 @@ def test_non_positive_tile_dim_is_blocked(merlin_mlp_wide_run: Path) -> None:
     result = run_real_transform_differential(merlin_mlp_wide_run)
     assert result.overall == "blocked"
     rep = _read(result.report_path)
-    assert "tile dimension non-positive" in rep["blocked_reason"]
+    # Accept either the legacy phrase or the current ``tile.<axis>
+    # missing/zero`` phrasing — the implementation tightened the
+    # message to name the offending axis. Both still mean the same
+    # block reason: a non-positive tile dim.
+    blocked_reason = rep["blocked_reason"]
+    assert (
+        "tile dimension non-positive" in blocked_reason
+        or "missing/zero" in blocked_reason
+    ), blocked_reason
 
 
 def test_corrupted_evaluator_produces_counterexample(

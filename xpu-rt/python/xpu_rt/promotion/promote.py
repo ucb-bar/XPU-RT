@@ -366,17 +366,22 @@ class RecipePromoter:
         manifest_path = dest / "manifest.json"
         manifest_path.write_text(json.dumps(bundle.to_dict(), indent=2))
 
-        # Record audit event
+        # Record audit event. M-29: include gate_level when the
+        # caller (typically the M-26 bridge) recorded one in
+        # bundle.metadata; absent for legacy callers.
         try:
             from compgen.promotion.audit import AuditLog, create_event
 
             audit = AuditLog(self.library_path / "audit.jsonl")
-            audit.record(
-                create_event(
-                    "promotion",
-                    data={"key": key.key, "target": bundle.target_profile, "version": version},
-                )
-            )
+            audit_data: dict[str, Any] = {
+                "key": key.key,
+                "target": bundle.target_profile,
+                "version": version,
+            }
+            md = bundle.metadata or {}
+            if md.get("gate_level"):
+                audit_data["gate_level"] = md["gate_level"]
+            audit.record(create_event("promotion", data=audit_data))
         except Exception:
             pass  # Audit is best-effort
 

@@ -1188,38 +1188,6 @@ def run_graph_compilation(
                 f"surface."
             )
 
-        # M-26 promotion bridge (Section 19, write side). Best-effort:
-        # reads candidate_selection.json + recipe.mlir + Phase B
-        # differential reports and lands a promoted recipe in
-        # ``.compgen_cache/recipes/`` keyed by the two-tier
-        # (target,model,objective) + (region_signature, contract_hash)
-        # scheme. Writes synthesized verification_report under
-        # 04_promotion/ to keep the R009 hash chain monotonic. Errors
-        # are logged to the ledger but never raise the pipeline.
-        from compgen.graph_compilation.promotion_bridge import (
-            emit as _promotion_emit,
-        )
-
-        try:
-            _pe = _promotion_emit(out_dir)
-            _append_ledger(
-                ledger_path, stage_id="recipe_planning",
-                event="artifact_written",
-                note=(
-                    f"promotion_bridge (M-26): {_pe.status} "
-                    f"(reason={_pe.reason!r})"
-                ),
-            )
-        except Exception as exc:  # noqa: BLE001 - best-effort
-            _append_ledger(
-                ledger_path, stage_id="recipe_planning",
-                event="artifact_written",
-                note=(
-                    f"promotion_bridge (M-26): error "
-                    f"{type(exc).__name__}: {exc}"
-                ),
-            )
-
     # ------------------------------------------------------------------ #
     # Gap Discovery (when stop_after >= gap-discovery)
     # ------------------------------------------------------------------ #
@@ -1311,6 +1279,39 @@ def run_graph_compilation(
     manifest_path.write_text(
         json.dumps(manifest.to_dict(), indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
+
+    # M-26 promotion bridge (Section 19, write side). Must fire AFTER
+    # run_manifest.json is on disk: the bridge reads the manifest to
+    # learn model_id / target_id / created_at_utc, and the synthetic
+    # tests inadvertently masked this ordering by writing the manifest
+    # first. Best-effort: errors land in the ledger, never raise.
+    # Writes its own artifacts under 04_promotion/ which is not
+    # covered by any earlier stage's output_hash (R009-safe), so this
+    # post-manifest emission does not invalidate the hash chain.
+    if needs_recipe_planning:
+        from compgen.graph_compilation.promotion_bridge import (
+            emit as _promotion_emit,
+        )
+
+        try:
+            _pe = _promotion_emit(out_dir)
+            _append_ledger(
+                ledger_path, stage_id="recipe_planning",
+                event="artifact_written",
+                note=(
+                    f"promotion_bridge (M-26): {_pe.status} "
+                    f"(reason={_pe.reason!r})"
+                ),
+            )
+        except Exception as exc:  # noqa: BLE001 - best-effort
+            _append_ledger(
+                ledger_path, stage_id="recipe_planning",
+                event="artifact_written",
+                note=(
+                    f"promotion_bridge (M-26): error "
+                    f"{type(exc).__name__}: {exc}"
+                ),
+            )
 
     return RunResult(
         run_dir=out_dir,

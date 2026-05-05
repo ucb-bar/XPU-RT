@@ -376,6 +376,33 @@ Pricing table lives in `compgen.observability.gemini_usage.PRICING` and
 can be overridden by dropping `configs/gemini_pricing.yaml`. Update the
 table when Google AI Studio rates change.
 
+## Recipe Promotion + Optimization Memory (Section 19)
+
+After M-26..M-30, every successful Phase B run lands a promoted recipe
+in `.compgen_cache/recipes/` keyed by a two-tier scheme
+(`target_hash_model_hash_objective_hash_vN` directory + sidecar
+`(contract_hash, region_signature)`). Future runs query the library
+before emitting an `agent_decision_request.json` and surface matching
+recipes as `visible_regions[*].promoted_candidates`.
+
+Read the full reference at `docs/architecture/promotion-and-memory.md`.
+Quick links:
+
+- Bridge (write side): `compgen.graph_compilation.promotion_bridge.emit`
+- Retrieval (read side):
+  `compgen.graph_compilation.promotion_retrieval.retrieve_for_region`
+- Gate ladder (six levels): `compgen.promotion.gates.evaluate_gate`
+- Falsifiability harness:
+  `scripts/dev/measure_promotion_efficiency.py`
+- Aggregator: `compgen.graph_compilation.efficiency_report`
+
+The headline falsifiable claim:
+
+> Cold-run vs warm-run on the same suite shows
+> `fresh_emit_count_warm < fresh_emit_count_cold` and
+> `gemini_token_delta < 0` while every correctness gate in
+> `verification_report.json` still passes.
+
 ## Repository Hygiene Rules
 
 - Preserve user changes and unrelated worktree state

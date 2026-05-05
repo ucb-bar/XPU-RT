@@ -204,3 +204,6 @@ views, not authority.
 | **Target class** | Classification: Triton-friendly, accel-native, ukernel-runtime, or hybrid |
 | **CapabilitySpec** | What a target CAN DO (op-to-backend-lane map), distinct from TargetProfile (what it IS) |
 | **Target maturity** | L0 recognized -> L1 correct -> L2 optimized -> L3 promoted |
+| **Promoted recipe** | Verified recipe in `.compgen_cache/recipes/` with two-tier cache key, evidence summary, gate level, and `applies_when` predicates (Section 19; see `docs/architecture/promotion-and-memory.md`) |
+| **Region signature** | Pattern-level cache key — SHA256[:16] of (op_family, dtype, layout, abstracted shape, target_class). Two regions share a signature iff their shapes match under `int` / `None` / `{"mod": k}` abstraction |
+| **Promotion gate level** | Six-level evidence ladder: `observed` → `verified_fx` → `verified_kernel` → `characterized` → `promoted` → `portable` (M-29 / `compgen.promotion.gates`) |
