@@ -87,6 +87,8 @@ class PromotedCandidate:
     evidence_summary: dict[str, Any] = field(default_factory=dict)
     applies_when: tuple[str, ...] = ()
     fallback_chain: tuple[str, ...] = ()
+    pass_id: str = ""  # M-37.1: cross-link to the pass card that generated this recipe
+    candidate_id: str = ""  # M-37.1: original candidate label (e.g. "tile_M16_N16_K16")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -101,6 +103,8 @@ class PromotedCandidate:
             "evidence_summary": dict(self.evidence_summary),
             "applies_when": list(self.applies_when),
             "fallback_chain": list(self.fallback_chain),
+            "pass_id": self.pass_id,
+            "candidate_id": self.candidate_id,
         }
 
 
@@ -134,6 +138,24 @@ def _candidate_from_sidecar(
         else recipe_dir.name
     )
 
+    # M-37.1: extract pass_id + candidate_id from the sidecar. The
+    # bridge nests them under ``recipe.evidence_summary``:
+    #   evidence_summary.candidate_kind        → pass_id
+    #   evidence_summary.selected_candidate_id → candidate_id
+    # We also accept top-level fields for forward compatibility (a
+    # future bridge variant could promote them out of evidence_summary).
+    evidence = recipe.get("evidence_summary") or {}
+    pass_id_str = str(
+        evidence.get("candidate_kind", "")
+        or recipe.get("candidate_kind", "")
+        or recipe.get("pass_id", "")
+    )
+    candidate_id_str = str(
+        evidence.get("selected_candidate_id", "")
+        or recipe.get("candidate_id", "")
+        or recipe.get("candidate_label", "")
+    )
+
     return PromotedCandidate(
         recipe_id=str(recipe.get("recipe_id", "") or recipe_dir.name),
         recipe_key=recipe_key_str,
@@ -146,6 +168,8 @@ def _candidate_from_sidecar(
         evidence_summary=dict(recipe.get("evidence_summary") or {}),
         applies_when=tuple(recipe.get("applies_when") or ()),
         fallback_chain=tuple(recipe.get("fallback_chain") or ()),
+        pass_id=pass_id_str,
+        candidate_id=candidate_id_str,
     )
 
 

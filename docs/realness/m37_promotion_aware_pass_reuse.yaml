@@ -1,0 +1,61 @@
+claim: |
+  Promoted recipes (Section 19) are cross-linked to the M-31 pass-card
+  registry: every PromotedCandidate carries a pass_id naming the pass
+  card that produced it (when the M-26 promotion bridge recorded
+  candidate_kind in the sidecar's evidence_summary). The pass_pool
+  ablation harness (M-36) is extended with two metrics per cell:
+  promoted_candidates_count (how many M-28 retrieval matches surfaced
+  in the request) and promoted_hit (whether the agent's pick matched
+  any promoted candidate). The aggregated promoted_hit_rate is the
+  warm-cache-effectiveness number Section 20 measures: greedy mode
+  ignores promoted candidates (rate=0); a warm-aware agent mode
+  should drive the rate up.
+commit: 032c19c0b3b2c8a9ffdd84d21709f45323cdeb73
+created_at_utc: 2026-05-05T00:00:00Z
+feature_id: m37_promotion_aware_pass_reuse
+forbidden:
+- pass_id surfaced by retrieval that does not resolve in the registry
+- silent fall-through that hides promoted_hit when a candidate matches
+- ablation summary that omits warm-cache effectiveness
+realness_level: production_path
+required_evidence:
+- python/compgen/graph_compilation/promotion_retrieval.py (PromotedCandidate.pass_id, candidate_id)
+- python/compgen/benchmarks/pass_pool_ablation.py (promoted_candidates_count, promoted_hit, promoted_hit_rate)
+- scripts/dev/run_pass_pool_ablation.py (warm-cache effectiveness section in markdown)
+- tests/graph_compilation/test_promotion_retrieval.py (test_pass_id_extracted_from_evidence_summary, test_pass_id_resolves_against_card_registry)
+- tests/benchmarks/test_pass_pool_ablation.py
+- a real ablation run on merlin_mlp_wide + proxy_vla showing promoted_candidates_count > 0 and the warm-cache effectiveness section in the rendered markdown
+notes: |
+  Section 20 / M-37. Final milestone of Section 20 — bridges the
+  M-31..M-34 pass-card surface to the Section 19 promotion memory.
+
+  Three sub-milestones shipped:
+
+    M-37.1  PromotedCandidate gains pass_id + candidate_id; retrieval
+            extracts them from recipe.evidence_summary in the M-26
+            sidecar; tests assert the pass_id resolves against the
+            card registry
+    M-37.2  AblationResult gains promoted_candidates_count +
+            promoted_hit; AblationPack summary surfaces a per-mode
+            promoted_hit_count and a top-level promoted_hit_rate;
+            the markdown renderer adds a "Warm-cache effectiveness"
+            section
+    M-37.3  realness contract + trust report
+
+  Why the falsifiable claim is honest with rate=0 today:
+    Greedy mode (the only mode the harness drives without API keys)
+    picks the locally-best candidate from cost_preview_v2; it does
+    not consult promoted_candidates. So promoted_hit_rate=0 in
+    greedy mode is the *expected* baseline. A warm-aware agent
+    mode (operator-driven, llm-live, or future per-card scheduler)
+    would raise the rate. M-30 already proved warm-vs-cold
+    fresh_emit reduction at run-level; M-37.2 measures it at
+    decision-level so future modes can be compared.
+
+  Honest residuals (declared, deferred):
+  - Greedy mode does not consult promoted_candidates today. A
+    "greedy_warm_aware" variant would prefer a promoted candidate
+    over a fresh equivalent — that's a Section 21+ scope item.
+  - Pre-M-37 sidecars (recipes promoted before this milestone) lack
+    candidate_kind in evidence_summary; their pass_id surfaces as
+    empty. The agent treats absence as no cross-link.

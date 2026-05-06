@@ -1,0 +1,41 @@
+claim: |
+  The fresh-agent task pack carries the entire post-M-34 agentic
+  surface a Claude Code session needs to drive a CompGen compile
+  without prior chat context: 60 typed pass cards organized by
+  family, the auto-generated INDEX.md taxonomy, all 10 realness
+  contracts (M-26 through M-34), the 3 compgen skills, the realness
+  policy doc, and a task prompt that explains the multi-step
+  pass_plan path with phase ordering + pair contract rules. A fresh
+  agent can read the realness contract for any subsystem and the
+  pass card for any pass it might invoke without browsing source.
+commit: 676c82ebac52a6c37c98228ea64df68865d5b048
+created_at_utc: 2026-05-05T00:00:00Z
+feature_id: m35_fresh_agent_acceptance
+forbidden:
+- task pack missing any of the 10 realness contracts
+- task pack missing any of the 60 pass cards
+- task prompt that hides the pass_plan / phase invariants from the agent
+- agent vocabulary surface that requires source-code reading to use
+realness_level: production_path
+required_evidence:
+- python/compgen/audit/fresh_agent.py (build_task_pack with full allowlist)
+- docs/generated/pass_cards/INDEX.md (auto-generated taxonomy)
+- tests/audit/test_fresh_agent_post_m34_surface.py
+- a real task pack containing 60 pass cards, 10 realness contracts, and the 3 compgen skills
+notes: |
+  Section 20 / M-35. M-31A.4 shipped the task-pack builder + holdout
+  models + greedy baseline; M-35 closes the loop by asserting the
+  pack now carries every artifact M-31..M-34 produced. The "fresh
+  Claude Code session can use the tools through the public repo
+  surface" claim is now testable end-to-end.
+
+  Operator workflow unchanged from M-31A.4:
+    1. operator builds task pack via scripts/dev/fresh_agent_task_pack.py
+    2. opens fresh Claude Code session in the pack
+    3. runs the task prompt
+    4. records outcome via compgen.audit.fresh_agent_modes.record_manual_session_result
+
+  Honest residual: spawning a fresh Claude Code session is operator-
+  driven (CI cannot do it without defeating the no-private-context
+  goal). The greedy baseline is the deterministic reproducibility
+  floor; fresh-Claude is recorded in the caveat ledger.

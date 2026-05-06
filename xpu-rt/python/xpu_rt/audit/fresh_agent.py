@@ -316,11 +316,37 @@ artifacts in this task pack. The acceptance contract:
 1. Use the MCP tools (or the `/compgen-compile` skill if you are
    running in Claude Code) to drive the compile.
 2. Do not edit source code.
-3. Do not invent candidate IDs, pass IDs, or tile sizes.
+3. Do not invent candidate IDs, pass IDs, tile sizes, or summary
+   ids. Every reference must resolve in the registry.
 4. Read the realness contracts under `docs/realness/` to learn
-   what each subsystem promises.
-5. Reach a verified compile OR produce a typed-blocked outcome
-   from `compgen.runtime.errors`. A silent partial pass is failure.
+   what each subsystem promises (M-26 through M-34).
+5. Browse the available compiler passes via
+   `docs/generated/pass_cards/INDEX.md` (60 cards across 12 families).
+   Each card declares preconditions, invalidates, preserves_refinement,
+   verification rungs, phase, requires_after / excludes contracts.
+6. If you propose a multi-pass plan, ensure phase ordering is strict
+   (canonicalize → analyze → optimize → verify → emit) and pair
+   contracts hold. The validator will refuse a plan that breaks any
+   invariant; you'll see typed errors in
+   `agent_decision_validation.json`.
+7. Reach a verified compile OR produce a typed-blocked outcome from
+   `compgen.runtime.errors`. A silent partial pass is failure.
+
+What the pipeline gives you (read these in this order):
+
+- `agent_decision_request.json` — full inline pass cards + analysis
+  summaries + bounded candidate list
+- `llm_graph_view.json` — bounded view of legal candidates per region
+- `cost_preview_v2.json` — predicted relative cost per candidate
+- `analysis_summaries` block in the request — every summary's
+  content_hash + dependency closure (M-32)
+
+What you write back:
+
+- `agent_decision_response.json` with either
+  - `selected_candidate_id` (single-step path), or
+  - `pass_plan: [{{pass_id, region_id, candidate_id, rationale}}, ...]`
+    for an ordered multi-step plan (M-34.3).
 
 When done, record the outcome in the caveat ledger via
 `compgen.audit.fresh_agent_modes.record_manual_session_result(...)`

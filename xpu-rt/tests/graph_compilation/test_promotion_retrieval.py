@@ -199,6 +199,88 @@ def test_skips_recipes_without_sidecar(tmp_path: Path) -> None:
     assert out[0].recipe_id == "recipe_modern"
 
 
+def test_pass_id_extracted_from_evidence_summary(tmp_path: Path) -> None:
+    """M-37.1: pass_id + candidate_id are extracted from
+    recipe.evidence_summary (where the M-26 promotion bridge writes them)
+    so the agent can cross-link the promoted recipe to its source pass card."""
+    library = tmp_path / "library"
+    _write_sidecar(
+        library,
+        region_signature="rs_m37_passid",
+        contract_hash="ch_m37",
+        evidence_summary={
+            "candidate_kind": "set_tile_params",
+            "selected_candidate_id": "tile_M16_N16_K16",
+            "region_id": "matmul_0",
+        },
+    )
+    matches = retrieve_for_region(
+        region_signature="rs_m37_passid",
+        contract_hash="ch_m37",
+        target_class="host_cpu",
+        library_path=library,
+    )
+    assert len(matches) == 1
+    assert matches[0].pass_id == "set_tile_params"
+    assert matches[0].candidate_id == "tile_M16_N16_K16"
+    # Round-trip through to_dict
+    raw = matches[0].to_dict()
+    assert raw["pass_id"] == "set_tile_params"
+    assert raw["candidate_id"] == "tile_M16_N16_K16"
+
+
+def test_pass_id_empty_for_pre_m37_sidecar(tmp_path: Path) -> None:
+    """A pre-M-37 sidecar (no candidate_kind in evidence_summary)
+    yields empty pass_id; agent treats as no cross-link."""
+    library = tmp_path / "library"
+    _write_sidecar(
+        library,
+        region_signature="rs_pre_m37",
+        contract_hash="ch_pre_m37",
+        evidence_summary={"region_id": "matmul_0"},  # no candidate_kind
+    )
+    matches = retrieve_for_region(
+        region_signature="rs_pre_m37",
+        contract_hash="ch_pre_m37",
+        target_class="host_cpu",
+        library_path=library,
+    )
+    assert len(matches) == 1
+    assert matches[0].pass_id == ""
+    assert matches[0].candidate_id == ""
+
+
+def test_pass_id_resolves_against_card_registry(tmp_path: Path) -> None:
+    """The pass_id surfaced by promotion retrieval must resolve against
+    the live pass-card registry — otherwise the agent would surface a
+    promoted recipe whose pass card doesn't exist."""
+    from compgen.passes.cards import PassCardRegistry, default_registry_root
+
+    library = tmp_path / "library"
+    _write_sidecar(
+        library,
+        region_signature="rs_card_link",
+        contract_hash="ch_card_link",
+        evidence_summary={
+            "candidate_kind": "set_tile_params",
+            "selected_candidate_id": "tile_M16_N16_K16",
+        },
+    )
+    matches = retrieve_for_region(
+        region_signature="rs_card_link",
+        contract_hash="ch_card_link",
+        target_class="host_cpu",
+        library_path=library,
+    )
+    registry = PassCardRegistry.load(default_registry_root())
+    # Skip the test if the pass_id wasn't surfaced (legacy sidecar)
+    if matches[0].pass_id:
+        assert matches[0].pass_id in registry, (
+            f"pass_id {matches[0].pass_id!r} from promoted recipe does "
+            f"not resolve to a card in the registry"
+        )
+
+
 def test_promoted_candidate_to_dict_round_trip(tmp_path: Path) -> None:
     """PromotedCandidate.to_dict() is serializable + complete."""
     library = tmp_path / "library"
