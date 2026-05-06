@@ -36,6 +36,8 @@ example_invocation:
     why: "bubbles the transpose past pointwise ops so a downstream fold can absorb it"
     references:
       - "region.tensor_use_def_graph.consumer_count"
+source: IREE
+impl_path: python/compgen/ir/payload/passes/rewrites/propagate_transposes.py
 notes: |
   Reconstruction of IREE's transpose-propagation pass as a CompGen
   PatternRewriter (python/compgen/ir/payload/passes/rewrites/

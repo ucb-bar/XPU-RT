@@ -1,0 +1,31 @@
+schema_version: pass_card_v1
+pass_id: megakernel_static_schedule
+display_name: Static megakernel scheduler (legacy)
+level: plan
+family: event_tensor
+source: Event Tensor Compiler
+impl_path: python/compgen/ir/payload/passes/megakernel_static_schedule.py
+reads:
+  - 01_payload_lowering/payload.mlir
+  - 02_graph_analysis/region_graph.json
+writes:
+  - 03_recipe_planning/event_schedule/megakernel_static_schedule.json
+preconditions:
+  - "event_tensor ops lowered"
+  - "kernels grouped into a single megakernel target"
+invalidates:
+  - payload_summary
+  - kernel_contracts
+preserves_refinement: bit_equality
+verification:
+  - structural
+cost: medium
+failure_modes:
+  - "kernel_grouping_unresolved"
+  - "schedule_size_exceeds_register_budget"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+notes: |
+  Earlier static-scheduling transformation for Event Tensor
+  megakernels. Distinct from event_static_schedule (the newer
+  paper-aligned variant). Kept as a card for backward compatibility
+  with target packs that still use it.

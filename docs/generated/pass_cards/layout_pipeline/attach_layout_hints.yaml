@@ -1,0 +1,30 @@
+schema_version: pass_card_v1
+pass_id: attach_layout_hints
+display_name: Layout pipeline (2/10) — attach layout hints
+level: payload
+family: layout_pipeline
+source: homemade
+impl_path: python/compgen/transforms/layout/attach_layout_hints.py
+reads:
+  - 01_payload_lowering/payload.mlir
+writes:
+  - 03_recipe_planning/post_lowering/transformed_payload.mlir
+  - 03_recipe_planning/post_lowering/applied_transform_manifest.json
+preconditions:
+  - "canonicalize_transposes ran"
+  - "ops have known op family"
+invalidates:
+  - payload_summary
+  - graph_dossier_v3
+  - kernel_contracts
+preserves_refinement: bit_equality
+verification:
+  - structural
+cost: cheap
+failure_modes:
+  - "no_known_op_family"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+notes: |
+  Layout pipeline step 2: tags ops with hint attributes naming the
+  layout family they prefer (e.g. matmul → row-major-aligned). Hints
+  guide propagate_layouts later.

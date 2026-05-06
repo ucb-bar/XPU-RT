@@ -1,0 +1,36 @@
+schema_version: pass_card_v1
+pass_id: eqsat_python_rules
+display_name: E-graph saturation — Python-defined custom rules
+level: payload
+family: eqsat
+source: homemade
+impl_path: python/compgen/eqsat/rules/python_rules.py
+reads:
+  - 01_payload_lowering/payload.mlir
+writes:
+  - 03_recipe_planning/post_lowering/transformed_payload.mlir
+  - 03_recipe_planning/post_lowering/applied_transform_manifest.json
+preconditions:
+  - "e-graph extraction backend is available"
+  - "user-defined Python rules registered with the registry"
+  - "saturation budget is finite"
+invalidates:
+  - payload_summary
+  - graph_dossier_v3
+  - cost_preview
+  - kernel_contracts
+preserves_refinement: unknown
+verification:
+  - structural
+  - differential
+cost: expensive
+failure_modes:
+  - "saturation_budget_exhausted"
+  - "user_rule_violates_termination"
+  - "user_rule_breaks_type_safety"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+notes: |
+  Python-defined custom e-graph rules registered by users. Refinement
+  is "unknown" by default because the rules are user-supplied — the
+  user can declare a tighter bound per-rule via the rule registry.
+  Required differential verification.

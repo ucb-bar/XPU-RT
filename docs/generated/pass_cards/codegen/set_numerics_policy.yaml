@@ -1,0 +1,34 @@
+schema_version: pass_card_v1
+pass_id: set_numerics_policy
+display_name: Tag ops with numerics / rounding policy
+level: payload
+family: codegen
+source: XLA
+impl_path: python/compgen/ir/payload/passes/rewrites/set_numerics_policy.py
+reads:
+  - 01_payload_lowering/payload.mlir
+  - 02_graph_analysis/numerical_sensitivity_audit.json
+writes:
+  - 03_recipe_planning/post_lowering/transformed_payload.mlir
+  - 03_recipe_planning/post_lowering/applied_transform_manifest.json
+preconditions:
+  - "fp ops present without explicit rounding policy"
+  - "numerical sensitivity audit available"
+invalidates:
+  - payload_summary
+  - graph_dossier_v3
+  - kernel_contracts
+  - numerical_sensitivity_audit
+preserves_refinement: bit_equality
+verification:
+  - structural
+cost: cheap
+failure_modes:
+  - "conflicting_policy_attribute"
+  - "no_audit_available"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+notes: |
+  Reconstruction of XLA's FloatNormalizationPass. Annotates fp ops
+  with a precision/rounding policy attribute so downstream codegen
+  emits the right rounding mode. The annotation is metadata; bit-
+  equal to eager.

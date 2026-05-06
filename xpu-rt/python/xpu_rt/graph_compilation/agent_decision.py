@@ -913,6 +913,57 @@ def validate_agent_decision_response(
             f"{type(exc).__name__}: {exc}",
         )
 
+    # 2e. M-34.3 pass_plan validation — when the response carries an
+    # optional ``pass_plan`` list, run the scheduler invariants
+    # (structural, phase, requires_after, excludes). Plans are
+    # additive: a response without pass_plan continues to use
+    # selected_candidate_id only. The validator emits one row per
+    # invariant so the agent can localize a failure precisely.
+    pass_plan_raw = response.get("pass_plan")
+    if pass_plan_raw:
+        try:
+            from compgen.passes.cards import (
+                PassCardRegistry,
+                default_registry_root,
+            )
+            from compgen.passes.scheduler import inspect_pass_plan
+
+            registry = PassCardRegistry.load(default_registry_root())
+            cand_ids = request.get("candidate_ids_allowed") or []
+            plan_report = inspect_pass_plan(
+                pass_plan_raw,
+                registry=registry,
+                candidate_ids_allowed=cand_ids,
+            )
+            _add(
+                "pass_plan_structural", plan_report.structural_ok,
+                plan_report.structural_detail,
+            )
+            _add(
+                "pass_plan_phase_ordering", plan_report.phase_ok,
+                plan_report.phase_detail,
+            )
+            _add(
+                "pass_plan_requires_after", plan_report.requires_after_ok,
+                plan_report.requires_after_detail,
+            )
+            _add(
+                "pass_plan_excludes", plan_report.excludes_ok,
+                plan_report.excludes_detail,
+            )
+            if not plan_report.holds:
+                failures.append(
+                    f"pass_plan invalid: {plan_report.detail}"
+                )
+        except Exception as exc:  # noqa: BLE001
+            _add(
+                "pass_plan_check_error", False,
+                f"{type(exc).__name__}: {exc}",
+            )
+            failures.append(
+                f"pass_plan check error: {type(exc).__name__}: {exc}"
+            )
+
     # 2b. M-31A.3 decision-id discipline — when the request carries a
     # decision_id AND the response carries one, they must match. A
     # missing response.decision_id is tolerated (pre-M-31A agents won't

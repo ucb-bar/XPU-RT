@@ -1,0 +1,31 @@
+schema_version: pass_card_v1
+pass_id: insert_all_gather
+display_name: Insert all-gather for replication
+level: payload
+family: memory
+source: homemade
+impl_path: python/compgen/ir/payload/passes/rewrites/insert_all_gather.py
+reads:
+  - 01_payload_lowering/payload.mlir
+  - 02_graph_analysis/region_graph.json
+writes:
+  - 03_recipe_planning/post_lowering/transformed_payload.mlir
+  - 03_recipe_planning/post_lowering/applied_transform_manifest.json
+preconditions:
+  - "SPMD partition spec present"
+  - "downstream consumer requires fully replicated tensor"
+invalidates:
+  - payload_summary
+  - graph_dossier_v3
+  - kernel_contracts
+preserves_refinement: bit_equality
+verification:
+  - structural
+cost: cheap
+failure_modes:
+  - "missing_partition_spec"
+  - "shape_mismatch_after_gather"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+notes: |
+  Inserts all_gather collectives where a downstream op needs a fully
+  replicated tensor. Bit-equal: gather is a deterministic combine.

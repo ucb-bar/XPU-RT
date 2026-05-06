@@ -1,0 +1,31 @@
+schema_version: pass_card_v1
+pass_id: insert_host_offload
+display_name: Insert host-offload boundaries
+level: payload
+family: memory
+source: XLA
+impl_path: python/compgen/ir/payload/passes/rewrites/insert_host_offload.py
+reads:
+  - 01_payload_lowering/payload.mlir
+writes:
+  - 03_recipe_planning/post_lowering/transformed_payload.mlir
+  - 03_recipe_planning/post_lowering/applied_transform_manifest.json
+preconditions:
+  - "ops marked for CPU fallback OR memory pressure exceeds budget"
+  - "host runtime adapter available"
+invalidates:
+  - payload_summary
+  - graph_dossier_v3
+  - kernel_contracts
+preserves_refinement: bit_equality
+verification:
+  - structural
+cost: cheap
+failure_modes:
+  - "no_host_runtime_adapter"
+  - "host_offload_introduces_cycle"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+notes: |
+  Reconstruction of XLA's HostOffloader. Wraps regions marked for
+  host execution with offload boundaries so the runtime ferries
+  data and waits on the CPU result.

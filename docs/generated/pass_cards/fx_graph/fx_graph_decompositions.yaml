@@ -1,0 +1,32 @@
+schema_version: pass_card_v1
+pass_id: fx_graph_decompositions
+display_name: FX graph decompositions (IREE-inspired)
+level: fx
+family: fx_graph
+source: IREE
+impl_path: python/compgen/transforms/graph_passes.py
+reads:
+  - 00_graph_capture/export_graph.json
+writes:
+  - 00_graph_capture/decomposed_graph.json
+preconditions:
+  - "torch.export captured the graph"
+  - "FX-level patterns (composite ops) detected"
+invalidates:
+  - export_graph
+  - dynamo_summary
+  - payload_summary
+  - graph_dossier_v3
+preserves_refinement: bit_equality
+verification:
+  - structural
+cost: cheap
+failure_modes:
+  - "unrecognized_composite_op"
+  - "decomposition_breaks_dtype"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+notes: |
+  IREE-inspired FX graph decomposition pipeline running before payload
+  lowering. Detects composite-op patterns, raises them where
+  beneficial, applies multi-pass decomposition. Distinct from
+  payload-level passes — this runs on torch.fx graphs.

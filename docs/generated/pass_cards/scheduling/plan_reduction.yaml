@@ -36,6 +36,8 @@ example_invocation:
     references:
       - "candidate.m21_analytical_cost.predicted_us"
       - "candidate.cost_preview.static_relative_cost"
+source: XLA
+impl_path: python/compgen/ir/payload/passes/rewrites/plan_reduction.py
 notes: |
   Reconstruction of XLA's reduction-strategy planner as a CompGen
   PatternRewriter (python/compgen/ir/payload/passes/rewrites/

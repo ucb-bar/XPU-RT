@@ -1,0 +1,39 @@
+schema_version: pass_card_v1
+pass_id: fuse_gemm_and_reduce_scatter
+display_name: Fuse GEMM + reduce-scatter (collective)
+level: payload
+family: fusion
+source: XLA
+impl_path: python/compgen/ir/payload/passes/rewrites/fuse_gemm_and_reduce_scatter.py
+reads:
+  - 01_payload_lowering/payload.mlir
+  - 02_graph_analysis/candidate_actions.json
+writes:
+  - 03_recipe_planning/post_lowering/transformed_payload.mlir
+  - 03_recipe_planning/post_lowering/applied_transform_manifest.json
+preconditions:
+  - "matmul output is consumed by a reduce_scatter collective"
+  - "shard layout is compatible with the SPMD partition spec"
+  - "no other consumer of the matmul output"
+invalidates:
+  - payload_summary
+  - graph_dossier_v3
+  - cost_preview
+  - kernel_contracts
+preserves_refinement: tolerance_eps
+verification:
+  - structural
+  - differential
+cost: medium
+failure_modes:
+  - "matmul_has_multiple_consumers"
+  - "incompatible_shard_layout"
+  - "non_associative_combine_in_collective"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+notes: |
+  Mirrors XLA's AsyncCollectiveCreator + hexagon-mlir's static
+  collective scheduling. Fuses a matmul with its downstream
+  reduce_scatter so the partial sums accumulate inside the
+  collective transfer rather than first materialising the full
+  output tensor. preserves_refinement: tolerance_eps because
+  cross-rank atomic combine reorders accumulation.

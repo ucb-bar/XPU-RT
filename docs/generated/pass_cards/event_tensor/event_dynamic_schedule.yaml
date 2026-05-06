@@ -1,0 +1,32 @@
+schema_version: pass_card_v1
+pass_id: event_dynamic_schedule
+display_name: Dynamic event-tensor schedule (Paper §3.2)
+level: plan
+family: event_tensor
+source: Event Tensor Compiler
+impl_path: python/compgen/transforms/event_dynamic_schedule.py
+reads:
+  - 01_payload_lowering/payload.mlir
+  - 02_graph_analysis/region_graph.json
+writes:
+  - 03_recipe_planning/event_schedule/dynamic_schedule.json
+  - 03_recipe_planning/event_schedule/dynamic_schedule.md
+preconditions:
+  - "event_tensor.signal / event_tensor.wait ops present"
+  - "task graph has data-dependent control flow"
+  - "target supports on-GPU push/pop queue"
+invalidates:
+  - payload_summary
+  - kernel_contracts
+preserves_refinement: bit_equality
+verification:
+  - structural
+cost: medium
+failure_modes:
+  - "target_lacks_on_gpu_queue"
+  - "task_count_exceeds_queue_capacity"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+notes: |
+  Dynamic on-GPU push/pop queue scheduling per Event Tensor paper
+  §3.2. Used when the task graph has data-dependent control flow
+  that the static schedule cannot resolve.

@@ -1,0 +1,32 @@
+schema_version: pass_card_v1
+pass_id: alias_io_buffers
+display_name: Alias input/output buffers
+level: payload
+family: memory
+source: XLA
+impl_path: python/compgen/ir/payload/passes/rewrites/alias_io_buffers.py
+reads:
+  - 01_payload_lowering/payload.mlir
+  - 02_graph_analysis/tensor_use_def_graph.json
+writes:
+  - 03_recipe_planning/post_lowering/transformed_payload.mlir
+  - 03_recipe_planning/post_lowering/applied_transform_manifest.json
+preconditions:
+  - "input tensor lifetimes do not overlap with their potential output aliases"
+  - "use-def graph is acyclic"
+invalidates:
+  - payload_summary
+  - graph_dossier_v3
+  - kernel_contracts
+preserves_refinement: bit_equality
+verification:
+  - structural
+cost: cheap
+failure_modes:
+  - "alias_lifetime_overlap"
+  - "input_consumed_by_multiple_outputs"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+notes: |
+  Reconstruction of XLA's OptimizeInputOutputBufferAlias. Aliases
+  input/output buffers when their lifetimes don't overlap so the
+  runtime reuses memory.

@@ -1,0 +1,63 @@
+claim: |
+  Pass cards declare a phase from PASS_PHASES (canonicalize, analyze,
+  optimize, verify, emit) plus optional pair contracts (requires_after,
+  excludes). The agent's response can carry a pass_plan list that the
+  validator checks against four invariants: structural (every pass_id
+  resolves; no duplicates; candidate_id in allowlist), phase ordering
+  (a phase-N step cannot appear before any phase-(<N) step),
+  requires_after (declared follow-up passes appear strictly later),
+  and excludes (mutually-exclusive passes never co-appear in a plan).
+  Consumer-side stale-read detection complements the M-33 producer-
+  side guard: each summary read records the generation observed; a
+  later read at a strictly lower generation raises StaleAnalysisAudit.
+commit: 61f0870f0c80249df202d99a53632c24efed0cfb
+created_at_utc: 2026-05-05T00:00:00Z
+feature_id: m34_pass_scheduling
+forbidden:
+- pass plan that violates phase ordering
+- pass plan that violates a requires_after / excludes contract
+- pass exposed in a plan without a card in the registry
+- consumer-side stale read that would observe an older generation than a prior read
+realness_level: production_path
+required_evidence:
+- python/compgen/passes/cards.py (PASS_PHASES, default_phase_for_family, phase_index, requires_after, excludes)
+- python/compgen/passes/scheduler.py (PassPlanStep, inspect_pass_plan, assert_pass_plan_valid)
+- python/compgen/analysis/invalidation.py (SummaryRead, append_read_log, assert_no_stale_reads)
+- python/compgen/audit/errors.py (PhaseTransitionViolation, PairContractViolation, PassPlanInvalid)
+- python/compgen/graph_compilation/agent_decision.py (4 new validator rows)
+- tests/passes/test_scheduler.py (24 tests covering all 4 invariants on synthetic + real cards)
+- tests/analysis/test_invalidation.py (8 new tests for SummaryRead + assert_no_stale_reads)
+- a real merlin_mlp_wide run that emits agent_decision_request with effective_phase populated on every card
+notes: |
+  Section 20 / M-34. Fourth milestone behind the M-31A audit gate.
+  Closes the multi-pass scheduling story: the LLM proposes ordered
+  pass plans, the deterministic skeleton enforces phase boundaries
+  + pair contracts + stale-read discipline.
+
+  Five sub-milestones shipped:
+
+    M-34.1  PASS_PHASES + PassCard.phase + default_phase_for_family
+            (60 cards inherit phase from family without manual backfill)
+    M-34.2  PassCard.requires_after + PassCard.excludes; PassPlanValidator
+    M-34.3  pass_plan list field on agent_decision_response (additive);
+            4 new validator check rows (structural, phase, requires_after,
+            excludes)
+    M-34.4  consumer-side stale-read detection (SummaryRead +
+            assert_no_stale_reads); StaleAnalysisAudit fires when a
+            later reader observes a strictly older generation than a
+            prior reader saw
+    M-34.5  realness contract + trust report
+
+  Schema version: still pass_card_v1 — every new field is additive
+  with a default. Plans are also additive: a response without
+  pass_plan continues to use selected_candidate_id only.
+
+  Honest residuals (declared, deferred):
+  - Phase brackets are a static check (against the cards' declared
+    phases). A future M-35+ could introduce per-region phase
+    transitions where the same card runs in different phases on
+    different regions. Not needed today.
+  - The consumer-side stale-read check requires consumers to log
+    their reads. Existing pipeline consumers (cost_preview_v2,
+    kernel_readiness) don't log yet — that wire-in is a separate
+    follow-up; M-34 ships the machinery + tests.

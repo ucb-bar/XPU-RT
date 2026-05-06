@@ -44,6 +44,8 @@ example_invocation:
     references:
       - "candidate.cost_preview.static_relative_cost"
       - "region.tensor_use_def_graph.consumer_count"
+source: homemade
+impl_path: python/compgen/graph_compilation/real_fusion.py
 notes: |
   fuse_producer_consumer is the pointwise-pair fusion MVP. It collapses
   a two-op pointwise chain (e.g. add → relu) into a single fused

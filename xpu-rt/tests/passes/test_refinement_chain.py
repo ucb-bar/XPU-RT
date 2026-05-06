@@ -7,7 +7,9 @@ from pathlib import Path
 import pytest
 
 from compgen.audit.errors import RefinementMonotonicityViolation
-from compgen.passes.cards import PassCard, default_registry_root, load_card
+from compgen.passes.cards import (
+    PassCard, default_registry_root, load_card, resolve_card_path,
+)
 from compgen.passes.refinement import (
     RefinementChainReport,
     RefinementLevel,
@@ -177,8 +179,8 @@ def test_inspect_invalid_claim_returns_holds_false() -> None:
 def test_seed_cards_chain_supports_bit_equality() -> None:
     """The two production seed cards both preserve bit_equality, so a
     recipe applying both can legitimately claim bit_equality."""
-    set_tile = load_card(default_registry_root() / "set_tile_params.yaml")
-    fuse = load_card(default_registry_root() / "fuse_producer_consumer.yaml")
+    set_tile = load_card(resolve_card_path("set_tile_params"))
+    fuse = load_card(resolve_card_path("fuse_producer_consumer"))
     chain = [set_tile, fuse]
     assert_refinement_chain_valid(chain, "bit_equality")
     rpt = inspect_refinement_chain(chain, "bit_equality")

@@ -40,6 +40,8 @@ example_invocation:
     references:
       - "candidate.cost_preview.static_relative_cost"
       - "region.tensor_use_def_graph.consumer_count"
+source: XLA
+impl_path: python/compgen/ir/payload/passes/rewrites/fuse_softmax_to_triton.py
 notes: |
   Reconstruction of XLA's softmax fusion as a CompGen PatternRewriter
   (python/compgen/ir/payload/passes/rewrites/fuse_softmax_to_triton.py).

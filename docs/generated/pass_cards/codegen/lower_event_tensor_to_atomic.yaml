@@ -1,0 +1,33 @@
+schema_version: pass_card_v1
+pass_id: lower_event_tensor_to_atomic
+display_name: Lower event tensors to atomic synchronization
+level: payload
+family: codegen
+source: Event Tensor Compiler
+impl_path: python/compgen/ir/payload/passes/rewrites/lower_event_tensor_to_atomic.py
+reads:
+  - 01_payload_lowering/payload.mlir
+  - 02_graph_analysis/candidate_actions.json
+writes:
+  - 03_recipe_planning/post_lowering/transformed_payload.mlir
+  - 03_recipe_planning/post_lowering/applied_transform_manifest.json
+preconditions:
+  - "event_tensor.signal / event_tensor.wait ops present"
+  - "target supports atomic primitives"
+invalidates:
+  - payload_summary
+  - graph_dossier_v3
+  - kernel_contracts
+preserves_refinement: bit_equality
+verification:
+  - structural
+cost: cheap
+failure_modes:
+  - "target_lacks_atomics"
+  - "circular_signal_wait_dependency"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+notes: |
+  Reconstruction of the Event Tensor Compiler's "Lowering to Minimal
+  Atomic" pass. Turns abstract signal/wait pairs into atomic memory
+  operations. Required before the event-tensor megakernel can emit
+  CUDA C++.

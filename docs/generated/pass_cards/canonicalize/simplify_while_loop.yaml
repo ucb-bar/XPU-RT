@@ -1,0 +1,32 @@
+schema_version: pass_card_v1
+pass_id: simplify_while_loop
+display_name: Simplify degenerate while loops
+level: payload
+family: canonicalize
+source: XLA
+impl_path: python/compgen/ir/payload/passes/rewrites/simplify_while_loop.py
+reads:
+  - 01_payload_lowering/payload.mlir
+writes:
+  - 03_recipe_planning/post_lowering/transformed_payload.mlir
+  - 03_recipe_planning/post_lowering/applied_transform_manifest.json
+preconditions:
+  - "scf.while or compgen-equivalent while op present"
+  - "trip count statically known OR loop invariant identified"
+invalidates:
+  - payload_summary
+  - graph_dossier_v3
+  - kernel_contracts
+preserves_refinement: bit_equality
+verification:
+  - structural
+cost: cheap
+failure_modes:
+  - "non_static_trip_count"
+  - "side_effecting_loop_body"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+notes: |
+  Mirror of XLA's WhileLoopSimplifier. Critical for autoregressive
+  decoder graphs where dynamo emits trivially-iterating while loops.
+  Unrolls degenerate cases, hoists loop-invariants, removes dead loop
+  carry values.

@@ -11,7 +11,9 @@ from compgen.audit.errors import (
     VerificationGateFailed,
     VerificationGateMissing,
 )
-from compgen.passes.cards import PassCard, default_registry_root, load_card
+from compgen.passes.cards import (
+    PassCard, default_registry_root, load_card, resolve_card_path,
+)
 from compgen.passes.verification import (
     ALLOWED_RUNGS,
     CERT_SCHEMA_VERSION,
@@ -245,13 +247,13 @@ def test_artifact_freshness_skips_certificates_without_artifact(tmp_path: Path) 
 
 
 def test_seed_card_set_tile_params_required_rungs() -> None:
-    card = load_card(default_registry_root() / "set_tile_params.yaml")
+    card = load_card(resolve_card_path("set_tile_params"))
     # The card declares structural + differential
     assert "structural" in card.verification
     assert "differential" in card.verification
 
 
 def test_seed_card_fuse_producer_consumer_required_rungs() -> None:
-    card = load_card(default_registry_root() / "fuse_producer_consumer.yaml")
+    card = load_card(resolve_card_path("fuse_producer_consumer"))
     assert "structural" in card.verification
     assert "differential" in card.verification

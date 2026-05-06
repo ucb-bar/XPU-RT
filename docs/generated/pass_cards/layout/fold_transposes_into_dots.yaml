@@ -35,6 +35,8 @@ example_invocation:
     why: "matmul has a transposed operand; folding eliminates the materialised transpose tensor"
     references:
       - "candidate.cost_preview.static_relative_cost"
+source: XLA
+impl_path: python/compgen/ir/payload/passes/rewrites/fold_transposes_into_dots.py
 notes: |
   Reconstruction of XLA's TransposeFolding pass as a CompGen
   PatternRewriter (python/compgen/ir/payload/passes/rewrites/

@@ -230,3 +230,131 @@ def append_invalidation_log(
     }
     out_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
     return out_path
+
+
+# --------------------------------------------------------------------------- #
+# M-34.4: consumer-side stale-read detection
+# --------------------------------------------------------------------------- #
+
+
+@dataclass(frozen=True)
+class SummaryRead:
+    """One summary read as observed by a consumer.
+
+    Records the generation the consumer observed when it read the
+    summary. M-34.4 raises :class:`compgen.audit.errors.StaleAnalysisAudit`
+    when a later read at a lower generation is detected — i.e. the
+    invalidation log has bumped the generation past what the consumer
+    saw.
+    """
+
+    summary_id: str
+    consumer_id: str  # e.g. "cost_preview_v2", "kernel_readiness"
+    generation_observed: int
+    timestamp_utc: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "summary_id": self.summary_id,
+            "consumer_id": self.consumer_id,
+            "generation_observed": self.generation_observed,
+            "timestamp_utc": self.timestamp_utc,
+        }
+
+    @classmethod
+    def from_dict(cls, raw: dict[str, Any]) -> SummaryRead:
+        return cls(
+            summary_id=str(raw["summary_id"]),
+            consumer_id=str(raw["consumer_id"]),
+            generation_observed=int(raw["generation_observed"]),
+            timestamp_utc=str(raw.get("timestamp_utc", "")),
+        )
+
+
+def _read_log_path(run_dir: Path) -> Path:
+    return run_dir / "03_recipe_planning" / "summary_read_log.json"
+
+
+def append_read_log(run_dir: Path, read: SummaryRead) -> Path:
+    """Append a :class:`SummaryRead` to the per-run read log.
+
+    Used by consumers (cost_preview_v2 builder, kernel_readiness, etc.)
+    to record which generation of each summary they observed. The
+    audit then checks: at no point does any reader observe a generation
+    less than what later readers / the invalidation_log show as
+    current.
+    """
+    out_dir = run_dir / "03_recipe_planning"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_path = _read_log_path(run_dir)
+    if out_path.exists():
+        existing = json.loads(out_path.read_text())
+        reads_raw = existing.get("reads", []) or []
+    else:
+        reads_raw = []
+    record = dict(read.to_dict())
+    if not record["timestamp_utc"]:
+        record["timestamp_utc"] = _utc_now()
+    reads_raw.append(record)
+    payload = {
+        "schema_version": "summary_read_log_v1",
+        "run_dir": str(run_dir),
+        "generated_at_utc": _utc_now(),
+        "read_count": len(reads_raw),
+        "reads": reads_raw,
+    }
+    out_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+    return out_path
+
+
+def load_read_log(run_dir: Path) -> list[SummaryRead]:
+    out_path = _read_log_path(run_dir)
+    if not out_path.exists():
+        return []
+    raw = json.loads(out_path.read_text())
+    return [SummaryRead.from_dict(r) for r in (raw.get("reads") or [])]
+
+
+def assert_no_stale_reads(
+    run_dir: Path,
+    *,
+    current_generations: dict[str, int] | None = None,
+) -> None:
+    """Raise :class:`StaleAnalysisAudit` on any consumer-side stale read.
+
+    Walks the read log and the invalidation log. For each summary,
+    derives the current generation (number of invalidation_log entries
+    that include the summary in their closure). A read is *stale* when
+    its ``generation_observed`` is strictly less than the current
+    generation AND a later read of the same summary observed a higher
+    generation (showing the value DID change in this run).
+
+    The asymmetric "later read at higher generation" requirement
+    avoids false positives: if a consumer reads gen=0 and the run
+    just hasn't bumped the summary, there's no stale read.
+    """
+    from compgen.audit.errors import StaleAnalysisAudit
+
+    reads = load_read_log(run_dir)
+    if not reads:
+        return  # nothing to check
+
+    # Group reads by summary_id, preserving order.
+    by_summary: dict[str, list[SummaryRead]] = {}
+    for r in reads:
+        by_summary.setdefault(r.summary_id, []).append(r)
+
+    for summary_id, summary_reads in by_summary.items():
+        max_seen = -1
+        for r in summary_reads:
+            if r.generation_observed < max_seen:
+                raise StaleAnalysisAudit(
+                    f"consumer {r.consumer_id!r} read summary "
+                    f"{summary_id!r} at generation "
+                    f"{r.generation_observed} after a previous reader "
+                    f"observed generation {max_seen}; the summary was "
+                    f"invalidated between reads but {r.consumer_id!r} "
+                    f"did not refresh"
+                )
+            if r.generation_observed > max_seen:
+                max_seen = r.generation_observed

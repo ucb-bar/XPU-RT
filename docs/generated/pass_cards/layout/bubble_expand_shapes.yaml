@@ -1,0 +1,32 @@
+schema_version: pass_card_v1
+pass_id: bubble_expand_shapes
+display_name: Bubble expand_shape ops past elementwise
+level: payload
+family: layout
+source: homemade
+impl_path: python/compgen/ir/payload/passes/rewrites/bubble_expand_shapes.py
+reads:
+  - 01_payload_lowering/payload.mlir
+  - 02_graph_analysis/candidate_actions.json
+writes:
+  - 03_recipe_planning/post_lowering/transformed_payload.mlir
+  - 03_recipe_planning/post_lowering/applied_transform_manifest.json
+preconditions:
+  - "tensor.expand_shape feeds elementwise op chain"
+  - "shape expansion is broadcastable through the chain"
+invalidates:
+  - payload_summary
+  - graph_dossier_v3
+  - cost_preview
+  - kernel_contracts
+preserves_refinement: bit_equality
+verification:
+  - structural
+cost: cheap
+failure_modes:
+  - "non_broadcastable_chain"
+  - "rank_mismatch_after_bubble"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+notes: |
+  Bubbles tensor.expand_shape past elementwise ops so reshape +
+  pointwise sequences collapse into a single fusable region.

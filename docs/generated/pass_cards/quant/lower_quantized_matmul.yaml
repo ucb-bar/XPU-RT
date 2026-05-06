@@ -39,6 +39,8 @@ example_invocation:
     references:
       - "candidate.cost_preview.static_relative_cost"
       - "region.numerical_sensitivity_audit.tolerance_budget"
+source: IREE
+impl_path: python/compgen/ir/payload/passes/rewrites/lower_quantized_matmul.py
 notes: |
   Reconstruction of IREE's quantized-matmul lowering as a CompGen
   PatternRewriter (python/compgen/ir/payload/passes/rewrites/

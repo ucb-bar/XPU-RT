@@ -1,0 +1,37 @@
+schema_version: pass_card_v1
+pass_id: fuse_dequant_matmul
+display_name: Fuse dequantize into matmul
+level: payload
+family: fusion
+source: IREE
+impl_path: python/compgen/ir/payload/passes/rewrites/fuse_dequant_matmul.py
+reads:
+  - 01_payload_lowering/payload.mlir
+  - 02_graph_analysis/candidate_actions.json
+writes:
+  - 03_recipe_planning/post_lowering/transformed_payload.mlir
+  - 03_recipe_planning/post_lowering/applied_transform_manifest.json
+preconditions:
+  - "linalg.matmul whose weight operand chain is dequantize(packed_int)"
+  - "dequantize op has a single matmul consumer"
+  - "scale tensor shape-compatible with weight"
+invalidates:
+  - payload_summary
+  - graph_dossier_v3
+  - cost_preview
+  - kernel_contracts
+preserves_refinement: tolerance_eps
+verification:
+  - structural
+  - differential
+cost: medium
+failure_modes:
+  - "dequant_has_multiple_consumers"
+  - "scale_shape_mismatch"
+  - "unsupported_packed_dtype"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+notes: |
+  Reconstruction of IREE's FuseDequantizationMatmulPass. Fuses an
+  int4/int8 dequantize+matmul pair so the dequant computation runs
+  inline in the matmul kernel rather than materialising a full fp
+  weight tensor in main memory.

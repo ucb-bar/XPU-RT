@@ -1,0 +1,31 @@
+schema_version: pass_card_v1
+pass_id: fuse_layout_into_producers
+display_name: Layout pipeline (6/10) — fuse layout into producers
+level: payload
+family: layout_pipeline
+source: homemade
+impl_path: python/compgen/transforms/layout/fuse_layout_into_producers.py
+reads:
+  - 01_payload_lowering/payload.mlir
+writes:
+  - 03_recipe_planning/post_lowering/transformed_payload.mlir
+  - 03_recipe_planning/post_lowering/applied_transform_manifest.json
+preconditions:
+  - "hoist_layout_ops ran"
+  - "producer is fusable + has single layout consumer"
+invalidates:
+  - payload_summary
+  - graph_dossier_v3
+  - kernel_contracts
+preserves_refinement: bit_equality
+verification:
+  - structural
+cost: cheap
+failure_modes:
+  - "producer_has_multiple_consumers"
+  - "non_fusable_producer"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+notes: |
+  Layout pipeline step 6: when a layout op (set_layout, pack) has a
+  single producer that's fusable, fold the layout into the producer
+  so the producer emits the encoded layout directly.

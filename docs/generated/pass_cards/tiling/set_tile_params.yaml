@@ -40,6 +40,8 @@ example_invocation:
     references:
       - "candidate.cost_preview.static_relative_cost"
       - "candidate.m21_analytical_cost.predicted_us"
+source: homemade
+impl_path: python/compgen/graph_compilation/recipe_lowering.py
 notes: |
   set_tile_params is the canonical tiling pass for matmul regions.
   When the picked tile divides every region dimension cleanly, the

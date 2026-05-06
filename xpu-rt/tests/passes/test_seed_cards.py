@@ -16,6 +16,7 @@ from compgen.passes.cards import (
     default_registry_root,
     iter_cards,
     load_card,
+    resolve_card_path,
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -35,7 +36,7 @@ SEED_CARDS = (
 
 @pytest.mark.parametrize("pass_id", SEED_CARDS)
 def test_seed_card_loads(pass_id: str) -> None:
-    path = SEED_ROOT / f"{pass_id}.yaml"
+    path = resolve_card_path(pass_id, SEED_ROOT)
     assert path.exists(), f"{path} missing"
     card = load_card(path)
     assert card.pass_id == pass_id
@@ -57,7 +58,7 @@ def test_default_registry_root_finds_seeds() -> None:
 
 
 def test_seed_card_set_tile_params_is_tiling_payload() -> None:
-    card = load_card(SEED_ROOT / "set_tile_params.yaml")
+    card = load_card(resolve_card_path("set_tile_params", SEED_ROOT))
     assert card.level == "payload"
     assert card.family == "tiling"
     assert card.preserves_refinement == "bit_equality"
@@ -68,7 +69,7 @@ def test_seed_card_set_tile_params_is_tiling_payload() -> None:
 
 
 def test_seed_card_fuse_producer_consumer_is_fusion_payload() -> None:
-    card = load_card(SEED_ROOT / "fuse_producer_consumer.yaml")
+    card = load_card(resolve_card_path("fuse_producer_consumer", SEED_ROOT))
     assert card.level == "payload"
     assert card.family == "fusion"
     assert card.preserves_refinement == "bit_equality"
@@ -117,9 +118,16 @@ def test_emitted_request_pass_cards_match_registry(tmp_path: Path) -> None:
     assert a == b
 
 
-def test_iter_seed_cards_returns_full_set() -> None:
+def test_iter_seed_cards_includes_known_set() -> None:
+    """The 7 historical seed cards must still resolve.
+
+    M-33.6 expanded the registry to 60+ cards; this test checks that
+    the original set is still a subset (catches accidental deletion).
+    Comprehensive coverage is verified by tests/passes/test_full_coverage.py.
+    """
     cards = list(iter_cards(SEED_ROOT))
-    assert {c.pass_id for c in cards} == set(SEED_CARDS), (
-        f"expected exactly {sorted(SEED_CARDS)}, got "
-        f"{sorted(c.pass_id for c in cards)}"
+    pass_ids = {c.pass_id for c in cards}
+    missing = set(SEED_CARDS) - pass_ids
+    assert not missing, (
+        f"historical seed cards missing from registry: {missing}"
     )

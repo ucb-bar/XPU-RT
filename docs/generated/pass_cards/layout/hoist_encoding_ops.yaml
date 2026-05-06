@@ -1,0 +1,33 @@
+schema_version: pass_card_v1
+pass_id: hoist_encoding_ops
+display_name: Hoist encoding ops to dominating positions
+level: payload
+family: layout
+source: IREE
+impl_path: python/compgen/ir/payload/passes/rewrites/hoist_encoding_ops.py
+reads:
+  - 01_payload_lowering/payload.mlir
+  - 02_graph_analysis/candidate_actions.json
+writes:
+  - 03_recipe_planning/post_lowering/transformed_payload.mlir
+  - 03_recipe_planning/post_lowering/applied_transform_manifest.json
+preconditions:
+  - "tensor encoding ops (set_layout, pack) present in inner regions"
+  - "encoding op operands are loop-invariant"
+invalidates:
+  - payload_summary
+  - graph_dossier_v3
+  - cost_preview
+  - kernel_contracts
+preserves_refinement: bit_equality
+verification:
+  - structural
+cost: cheap
+failure_modes:
+  - "loop_variant_operand"
+  - "encoding_chain_breaks_under_hoist"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+notes: |
+  Mirror of IREE's HoistEncodingOps + MaterializeEncodings. Lifts
+  loop-invariant encoding operations out of inner loops so they run
+  once and the loop body sees the encoded tensor directly.

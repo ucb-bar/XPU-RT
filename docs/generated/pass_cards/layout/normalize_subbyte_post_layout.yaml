@@ -1,0 +1,34 @@
+schema_version: pass_card_v1
+pass_id: normalize_subbyte_post_layout
+display_name: Normalize sub-byte tensor packing (post-layout)
+level: payload
+family: layout
+source: XLA
+impl_path: python/compgen/ir/payload/passes/rewrites/normalize_subbyte_post_layout.py
+reads:
+  - 01_payload_lowering/payload.mlir
+  - 02_graph_analysis/candidate_actions.json
+writes:
+  - 03_recipe_planning/post_lowering/transformed_payload.mlir
+  - 03_recipe_planning/post_lowering/applied_transform_manifest.json
+preconditions:
+  - "layout pipeline has finalised tensor encodings"
+  - "sub-byte elements present in encoded tensors"
+invalidates:
+  - payload_summary
+  - graph_dossier_v3
+  - cost_preview
+  - kernel_contracts
+preserves_refinement: bit_equality
+verification:
+  - structural
+cost: cheap
+failure_modes:
+  - "layout_not_finalised"
+  - "inconsistent_packing_after_layout"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+notes: |
+  Reconstruction of XLA's SubByteNormalization run after the layout
+  pipeline finalises tensor encodings. Re-aligns sub-byte packing to
+  match the chosen layout. Distinct from normalize_subbyte (the pre-
+  layout variant).

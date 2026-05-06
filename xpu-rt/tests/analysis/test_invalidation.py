@@ -273,3 +273,129 @@ def test_analysis_summary_explicit_generation() -> None:
     )
     assert s.generation == 3
     assert s.to_dict()["generation"] == 3
+
+
+# --------------------------------------------------------------------------- #
+# M-34.4: consumer-side stale-read detection
+# --------------------------------------------------------------------------- #
+
+
+def test_summary_read_round_trip() -> None:
+    from compgen.analysis.invalidation import SummaryRead
+
+    r = SummaryRead(
+        summary_id="graph_dossier_v3",
+        consumer_id="cost_preview_v2",
+        generation_observed=2,
+        timestamp_utc="2026-05-05T00:00:00Z",
+    )
+    assert SummaryRead.from_dict(r.to_dict()) == r
+
+
+def test_append_read_log_writes(tmp_path: Path) -> None:
+    from compgen.analysis.invalidation import (
+        SummaryRead,
+        append_read_log,
+        load_read_log,
+    )
+
+    r1 = SummaryRead(
+        summary_id="graph_dossier_v3",
+        consumer_id="cost_preview_v2",
+        generation_observed=0,
+    )
+    r2 = SummaryRead(
+        summary_id="graph_dossier_v3",
+        consumer_id="kernel_readiness",
+        generation_observed=1,
+    )
+    append_read_log(tmp_path, r1)
+    append_read_log(tmp_path, r2)
+    reads = load_read_log(tmp_path)
+    assert len(reads) == 2
+    assert reads[0].consumer_id == "cost_preview_v2"
+    assert reads[1].consumer_id == "kernel_readiness"
+
+
+def test_assert_no_stale_reads_clean(tmp_path: Path) -> None:
+    """All consumers observing the same generation: clean."""
+    from compgen.analysis.invalidation import (
+        SummaryRead,
+        append_read_log,
+        assert_no_stale_reads,
+    )
+
+    append_read_log(tmp_path, SummaryRead(
+        summary_id="graph_dossier_v3", consumer_id="c1", generation_observed=2,
+    ))
+    append_read_log(tmp_path, SummaryRead(
+        summary_id="graph_dossier_v3", consumer_id="c2", generation_observed=2,
+    ))
+    assert_no_stale_reads(tmp_path)  # no raise
+
+
+def test_assert_no_stale_reads_strictly_increasing(tmp_path: Path) -> None:
+    """Consumers reading later see higher generations: clean."""
+    from compgen.analysis.invalidation import (
+        SummaryRead,
+        append_read_log,
+        assert_no_stale_reads,
+    )
+
+    append_read_log(tmp_path, SummaryRead(
+        summary_id="graph_dossier_v3", consumer_id="c1", generation_observed=0,
+    ))
+    append_read_log(tmp_path, SummaryRead(
+        summary_id="graph_dossier_v3", consumer_id="c2", generation_observed=1,
+    ))
+    append_read_log(tmp_path, SummaryRead(
+        summary_id="graph_dossier_v3", consumer_id="c3", generation_observed=2,
+    ))
+    assert_no_stale_reads(tmp_path)
+
+
+def test_assert_no_stale_reads_raises_on_regression(tmp_path: Path) -> None:
+    """A later reader observing an OLDER generation than an earlier one
+    is the failure mode: someone bumped the summary, then a later
+    consumer used a stale value."""
+    from compgen.analysis.invalidation import (
+        SummaryRead,
+        append_read_log,
+        assert_no_stale_reads,
+    )
+    from compgen.audit.errors import StaleAnalysisAudit
+
+    append_read_log(tmp_path, SummaryRead(
+        summary_id="graph_dossier_v3", consumer_id="c1", generation_observed=2,
+    ))
+    append_read_log(tmp_path, SummaryRead(
+        summary_id="graph_dossier_v3",
+        consumer_id="lying_consumer",
+        generation_observed=1,  # older!
+    ))
+    with pytest.raises(StaleAnalysisAudit, match="lying_consumer"):
+        assert_no_stale_reads(tmp_path)
+
+
+def test_assert_no_stale_reads_no_log_is_clean(tmp_path: Path) -> None:
+    from compgen.analysis.invalidation import assert_no_stale_reads
+
+    assert_no_stale_reads(tmp_path)  # no log → no-op
+
+
+def test_assert_no_stale_reads_per_summary_isolated(tmp_path: Path) -> None:
+    """Stale read on one summary must not contaminate another summary's check."""
+    from compgen.analysis.invalidation import (
+        SummaryRead,
+        append_read_log,
+        assert_no_stale_reads,
+    )
+
+    append_read_log(tmp_path, SummaryRead(
+        summary_id="graph_dossier_v3", consumer_id="c1", generation_observed=5,
+    ))
+    # c2 reads cost_preview at gen=0 — that's fine for cost_preview
+    append_read_log(tmp_path, SummaryRead(
+        summary_id="cost_preview", consumer_id="c2", generation_observed=0,
+    ))
+    assert_no_stale_reads(tmp_path)  # no raise — different summaries

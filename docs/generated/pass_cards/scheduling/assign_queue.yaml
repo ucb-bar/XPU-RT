@@ -1,0 +1,32 @@
+schema_version: pass_card_v1
+pass_id: assign_queue
+display_name: Assign queue IDs for runtime dispatch
+level: payload
+family: scheduling
+source: XLA
+impl_path: python/compgen/ir/payload/passes/rewrites/assign_queue.py
+reads:
+  - 01_payload_lowering/payload.mlir
+  - 02_graph_analysis/region_graph.json
+writes:
+  - 03_recipe_planning/post_lowering/transformed_payload.mlir
+  - 03_recipe_planning/post_lowering/applied_transform_manifest.json
+preconditions:
+  - "ops are in topological order"
+  - "target supports a multi-queue runtime"
+invalidates:
+  - payload_summary
+  - graph_dossier_v3
+  - kernel_contracts
+preserves_refinement: bit_equality
+verification:
+  - structural
+cost: cheap
+failure_modes:
+  - "queue_count_exceeds_target_capacity"
+  - "non_topological_order"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+notes: |
+  Reconstruction of XLA's queue_id annotation (Stream Executor
+  dispatch). Tags ops with a queue id so the runtime can dispatch
+  along multiple stream queues concurrently.

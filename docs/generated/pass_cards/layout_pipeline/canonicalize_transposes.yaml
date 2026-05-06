@@ -1,0 +1,30 @@
+schema_version: pass_card_v1
+pass_id: canonicalize_transposes
+display_name: Layout pipeline (1/10) — canonicalize transposes
+level: payload
+family: layout_pipeline
+source: homemade
+impl_path: python/compgen/transforms/layout/canonicalize_transposes.py
+reads:
+  - 01_payload_lowering/payload.mlir
+writes:
+  - 03_recipe_planning/post_lowering/transformed_payload.mlir
+  - 03_recipe_planning/post_lowering/applied_transform_manifest.json
+preconditions:
+  - "transposes appear in the payload"
+  - "permutation attributes are statically known"
+invalidates:
+  - payload_summary
+  - graph_dossier_v3
+  - kernel_contracts
+preserves_refinement: bit_equality
+verification:
+  - structural
+cost: cheap
+failure_modes:
+  - "non_static_permutation"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+notes: |
+  Layout pipeline step 1: folds double transposes, normalizes
+  commutative transpose orderings. First step before
+  attach_layout_hints.

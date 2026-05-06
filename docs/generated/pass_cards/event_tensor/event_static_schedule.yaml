@@ -1,0 +1,33 @@
+schema_version: pass_card_v1
+pass_id: event_static_schedule
+display_name: Static event-tensor schedule (Paper Algorithm 1)
+level: plan
+family: event_tensor
+source: Event Tensor Compiler
+impl_path: python/compgen/transforms/event_static_schedule.py
+reads:
+  - 01_payload_lowering/payload.mlir
+  - 02_graph_analysis/region_graph.json
+writes:
+  - 03_recipe_planning/event_schedule/static_schedule.json
+  - 03_recipe_planning/event_schedule/static_schedule.md
+preconditions:
+  - "event_tensor.signal / event_tensor.wait ops present"
+  - "lower_event_tensor_to_atomic has run"
+  - "target SM count is known"
+invalidates:
+  - payload_summary
+  - kernel_contracts
+preserves_refinement: bit_equality
+verification:
+  - structural
+cost: medium
+failure_modes:
+  - "sm_count_unknown"
+  - "circular_dependency_in_event_graph"
+  - "task_count_exceeds_partition_capacity"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+notes: |
+  Per-SM task scheduling per Event Tensor paper Algorithm 1. Walks
+  the event-tensor graph and assigns each task to a specific SM
+  based on the static dependency closure.

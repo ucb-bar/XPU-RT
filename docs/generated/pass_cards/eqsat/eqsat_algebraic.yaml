@@ -1,0 +1,35 @@
+schema_version: pass_card_v1
+pass_id: eqsat_algebraic
+display_name: E-graph saturation — algebraic rewrite rules
+level: payload
+family: eqsat
+source: homemade
+impl_path: python/compgen/eqsat/rules/algebraic.py
+reads:
+  - 01_payload_lowering/payload.mlir
+writes:
+  - 03_recipe_planning/post_lowering/transformed_payload.mlir
+  - 03_recipe_planning/post_lowering/applied_transform_manifest.json
+preconditions:
+  - "e-graph extraction backend is available"
+  - "algebraic identities (associativity, distributivity, identity) apply"
+  - "saturation budget is finite"
+invalidates:
+  - payload_summary
+  - graph_dossier_v3
+  - cost_preview
+  - kernel_contracts
+preserves_refinement: bit_equality
+verification:
+  - structural
+  - differential
+cost: expensive
+failure_modes:
+  - "saturation_budget_exhausted"
+  - "rule_set_violates_termination"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+notes: |
+  Algebraic e-graph rewrite rules: distributivity, associativity,
+  identity elimination. Operates as a saturation phase rather than
+  a single sequential pass. Bit-equal because algebraic identities
+  preserve fp accumulation order under the eqsat extraction policy.

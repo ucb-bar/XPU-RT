@@ -128,6 +128,31 @@ class VerificationGateFailed(AuditError):
     ``status != "pass"`` (M-33)."""
 
 
+class PhaseTransitionViolation(AuditError):
+    """A pass plan attempted to run a phase-N pass before all
+    phase-(<N) passes had completed (M-34.1).
+
+    The phase order is strict:
+    ``canonicalize → analyze → optimize → verify → emit``. An
+    optimize-phase pass cannot be scheduled before canonicalize
+    finishes; a verify-phase pass cannot be scheduled while there
+    are still optimize-phase passes pending."""
+
+
+class PairContractViolation(AuditError):
+    """A pass plan violated a card's ``requires_after`` or ``excludes``
+    contract (M-34.2). A required-after pass was missing from the plan,
+    or two mutually-exclusive passes were scheduled together."""
+
+
+class PassPlanInvalid(AuditError):
+    """An agent's ``pass_plan`` field violated a structural invariant —
+    duplicate steps, references to unknown pass_ids, references to
+    illegal candidate_ids, etc. (M-34.3). Distinct from
+    :class:`PhaseTransitionViolation` and :class:`PairContractViolation`
+    so the validator can attribute failures precisely."""
+
+
 class ContractHashMismatch(AuditError):
     """A promoted recipe's contract_hash does not match the caller's region."""
 

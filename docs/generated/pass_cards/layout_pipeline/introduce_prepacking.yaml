@@ -1,0 +1,29 @@
+schema_version: pass_card_v1
+pass_id: introduce_prepacking
+display_name: Layout pipeline (7/10) — introduce prepacking
+level: payload
+family: layout_pipeline
+source: homemade
+impl_path: python/compgen/transforms/layout/introduce_prepacking.py
+reads:
+  - 01_payload_lowering/payload.mlir
+writes:
+  - 03_recipe_planning/post_lowering/transformed_payload.mlir
+  - 03_recipe_planning/post_lowering/applied_transform_manifest.json
+preconditions:
+  - "fuse_layout_into_producers ran"
+  - "weight tensors known to be loop-invariant"
+invalidates:
+  - payload_summary
+  - graph_dossier_v3
+  - kernel_contracts
+preserves_refinement: bit_equality
+verification:
+  - structural
+cost: cheap
+failure_modes:
+  - "weight_tensor_not_invariant"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+notes: |
+  Layout pipeline step 7: introduces a prepack op on loop-invariant
+  weight tensors so the runtime materialises the packed layout once.
