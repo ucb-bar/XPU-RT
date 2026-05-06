@@ -78,16 +78,24 @@ def _utcnow() -> str:
 def _select_greedy(
     decision_sites: dict[str, Any],
     candidate_actions: dict[str, Any],
+    promoted_ids: set[str] | None = None,
 ) -> tuple[dict[str, Any] | None, list[SelectionTraceEntry], str]:
-    """Greedy single-pick policy:
+    """Greedy single-pick policy (M-37.5: warm-aware):
 
     1. Sort sites by ``priority`` ascending (lower number = higher priority).
     2. Within each site, pick the legal candidate with the lowest
-       ``static_relative_cost``; ties broken by candidate_id lex order.
+       ``(0 if id in promoted_ids else 1, static_relative_cost,
+       candidate_id)`` tuple. The promoted-bit dominates; among
+       promoted candidates ties go to lowest cost; among non-promoted
+       ties go to lowest cost. This makes greedy "warm-aware":
+       a promoted recipe matching a legal candidate is always picked
+       over a fresh equivalent. M-37.5 closes the residual flagged in
+       the M-37 contract ("greedy doesn't consult promoted_candidates").
     3. Return the first such selection.
 
     Returns ``(selected_candidate_json, trace, primary_reason)``.
     """
+    promoted_ids = promoted_ids or set()
     cand_by_id = {c["candidate_id"]: c for c in candidate_actions["candidates"]}
     sites_sorted = sorted(
         decision_sites["sites"],
@@ -157,11 +165,15 @@ def _select_greedy(
 
         legal_in_site.sort(
             key=lambda c: (
+                # M-37.5: 0 if promoted, 1 otherwise — promoted-bit
+                # dominates the sort.
+                0 if c["candidate_id"] in promoted_ids else 1,
                 float(c["cost_preview"].get("static_relative_cost", 1.0)),
                 c["candidate_id"],
             )
         )
         chosen = legal_in_site[0]
+        chosen_was_promoted = chosen["candidate_id"] in promoted_ids
         trace.append(
             SelectionTraceEntry(
                 timestamp_utc=_utcnow(),
@@ -177,15 +189,25 @@ def _select_greedy(
                 decision="selected",
                 reason=(
                     f"highest-priority site (priority={site['priority']}); "
-                    f"lowest static_relative_cost legal candidate"
+                    + (
+                        "warm-cache hit (promoted candidate)"
+                        if chosen_was_promoted
+                        else "lowest static_relative_cost legal candidate"
+                    )
                 ),
             )
         )
         selected = chosen
         primary = (
             f"greedy: highest-priority site {site['site_id']!r} "
-            f"(priority={site['priority']}); lowest-cost legal candidate "
-            f"({chosen['cost_preview'].get('static_relative_cost', 1.0)})"
+            f"(priority={site['priority']}); "
+            + (
+                f"warm-cache hit on promoted candidate "
+                f"{chosen['candidate_id']!r}"
+                if chosen_was_promoted
+                else f"lowest-cost legal candidate "
+                     f"({chosen['cost_preview'].get('static_relative_cost', 1.0)})"
+            )
         )
         return selected, trace, primary
 
@@ -440,8 +462,44 @@ def run_recipe_planning(
         )
         selected_json = sel_cand
     else:
+        # M-37.5: warm-aware greedy. Scan the recipe library for any
+        # sidecar whose ``recipe.evidence_summary.selected_candidate_id``
+        # matches a candidate in this run's candidate_actions. M-31's
+        # candidate_ids are region-scoped (the trailing 8-char hash is
+        # the region signature), so a cross-region false positive would
+        # require both region and shape to collide — same as M-28's
+        # exact-contract match strength. The selector then prefers a
+        # candidate whose id is in this set over a fresh cost-preview
+        # pick. We do this here (rather than reading
+        # agent_decision_request.json) because recipe_planning runs
+        # before M-14A request emission.
+        promoted_ids: set[str] = set()
+        if selection_mode == "greedy":
+            try:
+                library_path = Path(".compgen_cache") / "recipes"
+                if library_path.is_dir():
+                    for sidecar_path in library_path.rglob("promoted_recipe.json"):
+                        try:
+                            body = json.loads(
+                                sidecar_path.read_text(encoding="utf-8")
+                            )
+                        except (OSError, json.JSONDecodeError):
+                            continue
+                        recipe = body.get("recipe") or {}
+                        ev = recipe.get("evidence_summary") or {}
+                        cid = ev.get("selected_candidate_id")
+                        if cid:
+                            promoted_ids.add(str(cid))
+            except Exception:  # noqa: BLE001 - warm-awareness is best-effort
+                promoted_ids = set()
+
         selector = _SELECTORS[selection_mode]
-        selected_json, trace, primary = selector(decision_sites, candidate_actions)
+        if selection_mode == "greedy":
+            selected_json, trace, primary = selector(
+                decision_sites, candidate_actions, promoted_ids,
+            )
+        else:
+            selected_json, trace, primary = selector(decision_sites, candidate_actions)
 
     # Resolve through the canonical IR — this is the firewall against
     # JSON-only fakery. The resolver re-checks every cross-projection

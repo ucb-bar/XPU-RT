@@ -52,10 +52,28 @@ notes: |
     fresh_emit reduction at run-level; M-37.2 measures it at
     decision-level so future modes can be compared.
 
-  Honest residuals (declared, deferred):
-  - Greedy mode does not consult promoted_candidates today. A
-    "greedy_warm_aware" variant would prefer a promoted candidate
-    over a fresh equivalent — that's a Section 21+ scope item.
-  - Pre-M-37 sidecars (recipes promoted before this milestone) lack
-    candidate_kind in evidence_summary; their pass_id surfaces as
-    empty. The agent treats absence as no cross-link.
+  M-37.4..6 close every residual the original M-37 contract declared:
+
+    M-37.4  Pre-M-37 sidecar migration: compgen.promotion.migrate_sidecars
+            backfills missing candidate_kind / selected_candidate_id
+            on legacy sidecars by inferring from recipe_id (longest-
+            known pass_id prefix from the live registry) and
+            recipe_signature. 10/10 tests green.
+    M-37.5  Warm-aware greedy: _select_greedy now takes promoted_ids,
+            sorts (0 if id in promoted_ids else 1, cost, id) so a
+            promoted candidate that matches a legal candidate always
+            wins over a fresh equivalent. Verified end-to-end on
+            merlin_mlp_wide: rationale reads "warm-cache hit on
+            promoted candidate 'cand_tile_matmul_0_tile_M16_N16_K16__3bebae8e'".
+            Real ablation re-run shows promoted_hit_rate=100% (2/2)
+            on the populated cache, up from 0% before.
+    M-37.6  Multi-step pass-plan executor MVP:
+            compgen.passes.executor.execute_pass_plan validates a
+            plan against M-34 invariants, writes
+            03_recipe_planning/pass_plan_execution_log.json, applies
+            step 0 (writes agent_decision_response.json carrying the
+            full plan + the step-0 candidate), marks step 1+ as
+            deferred_to_future_run with a typed reason. Pipeline
+            resumability (continue from post-step-0 IR) remains a
+            Section 21+ item but the executor + log + typed deferred
+            status close the agent-facing contract today.

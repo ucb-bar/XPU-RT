@@ -131,14 +131,17 @@ def _extract_response(run_dir: Path) -> tuple[str, str]:
     if not resp:
         # Greedy mode does not always emit a response file — fall back
         # to candidate_selection.json which always exists when
-        # recipe_planning ran. The schema is flat (single decision per
-        # file): candidate_kind + label + region_id + rationale.
+        # recipe_planning ran. M-37.2: prefer ``selected_candidate_id``
+        # (the full region-scoped id, e.g.
+        # "cand_tile_matmul_0_tile_M16_N16_K16__3bebae8e") over
+        # ``label`` (the human-readable suffix), so promoted_hit
+        # comparison against promoted_candidates' candidate_id works.
         sel = _read_json(run_dir / "03_recipe_planning" / "candidate_selection.json")
         if sel:
-            # The candidate id is encoded as ``label`` (e.g.
-            # "tile_M16_N16_K16"); ``candidate_kind`` is the pass id.
             return (
-                sel.get("label", "") or sel.get("candidate_id", ""),
+                sel.get("selected_candidate_id", "")
+                or sel.get("candidate_id", "")
+                or sel.get("label", ""),
                 sel.get("candidate_kind", ""),
             )
         return ("", "")
