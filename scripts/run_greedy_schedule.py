@@ -16,9 +16,22 @@ import numpy as np
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from workload import Workload, Operation
-from workload_factory import create_workload_from_dependencies
+from workload_factory import (
+    create_workload_from_dependencies,
+    create_workload_from_network_hierarchy,
+    build_machine_combinations,
+    machine_type_prefix,
+)
+from profile_loader import load_profiled_processing_times
 import plot
 from schedule_validation import overlap_fixer, count_overlaps, validate_schedule
+
+# Reuse the toplevel-JSON loader and CPU constants from the MILP runner so
+# `--networks-json` accepts exactly the same spec.  The greedy path mirrors
+# the workload setup (machine combinations, profile loading, periodic
+# expansion) end-to-end and only swaps `schedule()` for `greedy_schedule()`.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from run_xpurt_schedule import load_networks_config, CPU_P, CPU_E  # noqa: E402
 
 class OperationWithCombinations(Operation):
     """
@@ -184,13 +197,38 @@ def greedy_schedule(workload: Workload) -> tuple:
                     
                     pred_ready_time = pred_end_time + transfer_time
                     earliest_start = max(earliest_start, pred_ready_time)
-                
+
+                # Honor periodic / windowed time-bounds carried by the
+                # Operation (set by create_workload_from_network_hierarchy
+                # when expanding periodic networks: instance i gets
+                # min_start_t = start + i*period, max_end_t = min_start +
+                # window_duration).  Without this, all periodic instances
+                # collapse to t=0 since they have no predecessors and the
+                # only nonzero floor was the prior op on the machine.
+                if op.min_start_t is not None:
+                    earliest_start = max(earliest_start, float(op.min_start_t))
+
                 # Get duration for this combination
                 duration = workload.operations[i].get_duration_for_combination(
                     combo_idx, machine_combinations, machines
                 )
                 completion_time = earliest_start + duration
-                
+
+                # If this combo can't finish within the window
+                # (max_end_t), skip it — the scheduler must pick a faster
+                # combo or another op.  When ALL combos miss the window,
+                # we fall back to the best (latest-ending) one and let
+                # validation flag it; that's the best a non-backtracking
+                # greedy can do.
+                if op.max_end_t is not None and completion_time > float(op.max_end_t):
+                    # Track as a fallback only if nothing else fits.
+                    if completion_time < best_completion_time:
+                        best_completion_time = completion_time
+                        best_op_idx = i
+                        best_combination_idx = combo_idx
+                        best_start_time = earliest_start
+                    continue
+
                 if completion_time < best_completion_time:
                     best_completion_time = completion_time
                     best_op_idx = i
@@ -1677,9 +1715,320 @@ def schedule_iree_networks(use_glpdepth=False, use_profiled=False, use_grouped=F
     
     return combined_workload, t, alpha
 
+def greedy_schedule_iree_networks(
+    networks_json_path: str,
+    *,
+    use_profiled: bool = True,
+    p_core_speedup: float | None = None,
+    random_seed: int | None = None,
+    max_periodic_iters: int = 4,
+    save_outputs: bool = True,
+) -> tuple[Workload, np.ndarray, np.ndarray, float]:
+    """Greedy-schedule a toplevel networks JSON (same spec as run_xpurt_schedule).
+
+    Mirrors `schedule_iree_networks` in run_xpurt_schedule.py up to the
+    workload-creation step, then swaps the MILP `schedule()` call for the
+    greedy `greedy_schedule()` defined in this module.  The result is a
+    fast pessimistic makespan estimate that bounds what the MILP can
+    achieve under the same dependency / hardware constraints — useful as
+    a horizon for periodic-instance count, and as a sanity check for the
+    MILP's solution.
+
+    Periodic networks are expanded by `create_workload_from_network_hierarchy`,
+    so this entry point handles spec files with `period` / `window_duration`
+    fields directly — no manual periodic unrolling needed.
+
+    Periodic-count refinement: after the first greedy pass we compare the
+    achieved makespan against ceil(makespan/period) for every periodic
+    network.  If any network is short of that count, inject a
+    `num_instances` override into networks_data and re-run greedy.  We
+    iterate up to `max_periodic_iters` times or until counts converge —
+    in practice 2-3 passes are enough.  This is the "greedy-bootstrapped
+    horizon" suggestion: instead of the analytical
+    `s_np / (1 - F_p)` heuristic in workload_factory, we use the actual
+    greedy makespan, which already accounts for DAG serialisation and
+    HW contention.
+
+    Returns (workload, t, alpha, makespan) for the final (converged) pass.
+    """
+    repo_base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+    print("=" * 60)
+    print("Greedy scheduler: loading network hierarchy from JSON...")
+    print("=" * 60)
+    print(f"\nLoading networks from: {networks_json_path}")
+
+    networks_data, cfg = load_networks_config(networks_json_path)
+    if p_core_speedup is not None:
+        cfg["p_core_speedup"] = p_core_speedup
+    if random_seed is not None:
+        cfg["random_seed"] = random_seed
+    if use_profiled is not None:
+        cfg["use_profiled"] = use_profiled
+
+    machine_core_counts = cfg["machine_core_counts"]
+    cpu_p_profile_hw = cfg["cpu_p_profile_hw"]
+    cpu_e_profile_hw = cfg["cpu_e_profile_hw"]
+    profile_target = cfg["profile_target"]
+    profile_topo_tag = cfg["profile_topo_tag"]
+    profile_topo_tag_override = cfg["profile_topo_tag_override"]
+    profile_topo_tag_per_hw = cfg["profile_topo_tag_per_hw"]
+    effective_p_core_speedup = cfg["p_core_speedup"]
+    effective_random_seed = cfg["random_seed"]
+    effective_use_profiled = cfg["use_profiled"]
+    # Honor the schedule's restrict_makespan_to_nonperiodic flag in the
+    # iterative-greedy refinement loop. Without it, each pass measures
+    # makespan over ALL ops (including periodic), which feeds back into
+    # ceil(makespan/period) and makes the scheduler add MORE periodic
+    # instances each iteration, runaway. The right semantic is
+    # makespan = max-end-time of non-periodic ops (the actual workload
+    # boundary); periodic instances are then sized to cover that.
+    effective_restrict_makespan_to_nonperiodic = bool(
+        cfg.get("restrict_makespan_to_nonperiodic", True)
+    )
+
+    rng = np.random.default_rng(effective_random_seed)
+
+    networks = networks_data.get("networks", {})
+    edges = networks_data.get("edges", [])
+    print(f"\nFound {len(networks)} networks:")
+    for network_id, network_info in networks.items():
+        period = network_info.get("period")
+        ann = f" (periodic: period={period}ms)" if period is not None else ""
+        print(f"  - {network_id} (id: {network_info.get('id')}){ann}")
+    if edges:
+        print(f"\nFound {len(edges)} network-level dependencies")
+
+    print("\nResolved runtime configuration:")
+    print(f"  Machine core counts: {machine_core_counts}")
+    print(f"  Profile HW mapping: {CPU_P}->{cpu_p_profile_hw}, {CPU_E}->{cpu_e_profile_hw}")
+    print(f"  Profile target/topology: target={profile_target}, topo_tag={profile_topo_tag}")
+
+    machines, machine_combinations = build_machine_combinations(machine_core_counts)
+    n_cores = len(machines)
+    transfer_times = np.zeros((n_cores, n_cores))
+
+    combo_hw = []
+    for combo in machine_combinations:
+        core_type = machine_type_prefix(combo[0])
+        combo_hw.append(cpu_p_profile_hw if core_type == CPU_P else cpu_e_profile_hw)
+
+    processing_times = None
+    if effective_use_profiled:
+        print("\nUsing profiled runtimes where available...")
+        if profile_topo_tag_per_hw:
+            tt_override = dict(profile_topo_tag_per_hw)
+        elif profile_topo_tag_override:
+            tt_override = profile_topo_tag
+        else:
+            tt_override = None
+        processing_times, _, _ = load_profiled_processing_times(
+            networks=networks,
+            repo_base_path=repo_base_path,
+            machine_combinations=machine_combinations,
+            combo_hw=combo_hw,
+            profile_target=profile_target,
+            cpu_p_profile_hw=cpu_p_profile_hw,
+            cpu_e_profile_hw=cpu_e_profile_hw,
+            rng=rng,
+            p_core_speedup=effective_p_core_speedup,
+            topo_tag_override=tt_override,
+        )
+
+    # Iterative greedy: build workload, run greedy, measure makespan.  If
+    # any periodic network's instance count is below ceil(makespan/period),
+    # inject a num_instances override and re-run.  Converges when no
+    # network needs more instances.
+    #
+    # When restrict_makespan_to_nonperiodic is set, do an initial
+    # zero-periodic pass first: build a workload with num_instances=1
+    # for every periodic network (the smallest model the workload
+    # factory will accept) and use the resulting non-periodic makespan
+    # as the seed for periodic-count sizing. The default
+    # profile_horizon already inflates by 1/(1-F_p) to account for
+    # periodic CPU steal, which produces a high initial periodic
+    # count; under that count, the joint greedy schedule finds
+    # equilibria where yolov8 *also* runs to that horizon (because the
+    # 24 dronet instances contend with yolov8 on hart 1), so the loop
+    # converges immediately at the inflated count without ever testing
+    # whether fewer periodic instances would let non-periodic finish
+    # sooner.  Seeding from no-contention finish gives a much tighter
+    # starting point; the iter loop then grows from there if real
+    # contention pushes non-periodic finish out.
+    workload = None
+    t = None
+    alpha = None
+    makespan = 0.0
+    prev_counts: dict[str, int] = {}
+
+    if effective_restrict_makespan_to_nonperiodic:
+        for net_id, net_info in networks.items():
+            if net_info.get("period") is not None:
+                networks_data["networks"][net_id]["num_instances"] = 1
+
+    for it in range(max_periodic_iters):
+        print(f"\n--- Greedy iteration {it + 1} ---")
+        print("Creating workload from network hierarchy...")
+        workload = create_workload_from_network_hierarchy(
+            networks_data=networks_data,
+            repo_base_path=repo_base_path,
+            machines=machines,
+            transfer_times=transfer_times,
+            p_core_speedup=effective_p_core_speedup,
+            random_seed=effective_random_seed,
+            processing_times=processing_times,
+            machine_combinations=machine_combinations,
+        )
+        print(f"  Total operations: {len(workload.operations)}")
+        print(f"  Job names: {workload.job_names}")
+
+        print("Greedy-scheduling combined workload...")
+        t, alpha = greedy_schedule(workload)
+
+        machine_combinations_list = workload.get_machine_combinations()
+        # Identify periodic networks so we can optionally exclude their
+        # ops from the makespan reference. job_names look like
+        # "<id>0", "<id>1", ... for periodic instances; non-periodic
+        # job_names equal the network id.
+        periodic_net_ids = {
+            net_id for net_id, info in networks.items()
+            if info.get("period") is not None
+        }
+        def _is_periodic_op(op_idx: int) -> bool:
+            jn = workload.job_names[op_idx] if op_idx < len(workload.job_names) else ""
+            if not isinstance(jn, str):
+                return False
+            for nid in periodic_net_ids:
+                # periodic instance: "<id><digits>" with non-empty digits.
+                if jn.startswith(nid) and jn[len(nid):].isdigit() and jn != nid:
+                    return True
+            return False
+        makespan = 0.0
+        makespan_all = 0.0  # for diagnostic
+        for i, op in enumerate(workload.operations):
+            combo_idx = int(np.argmax(alpha[i]))
+            dur = op.get_duration_for_combination(
+                combo_idx, machine_combinations_list, workload.machines
+            )
+            finish = float(t[i]) + float(dur)
+            if finish > makespan_all:
+                makespan_all = finish
+            if effective_restrict_makespan_to_nonperiodic and _is_periodic_op(i):
+                continue
+            if finish > makespan:
+                makespan = finish
+        if effective_restrict_makespan_to_nonperiodic:
+            print(f"  Makespan: {makespan:.2f} ms (non-periodic only; "
+                  f"all-ops max-end = {makespan_all:.2f} ms)")
+        else:
+            print(f"  Makespan: {makespan:.2f} ms")
+
+        # For each periodic network, count current instances (#networks
+        # whose identifier starts with `<base>` and has a numeric suffix)
+        # vs the count needed to fully cover the makespan.  Bump via
+        # num_instances override if short.  Don't shrink — periodic
+        # workloads only need to grow to cover larger makespans.
+        needed_counts: dict[str, int] = {}
+        for net_id, net_info in networks.items():
+            period = net_info.get("period")
+            window_duration = net_info.get("window_duration")
+            if period is None or window_duration is None:
+                continue
+            try:
+                T = float(period)
+            except (TypeError, ValueError):
+                continue
+            if T <= 0:
+                continue
+            needed = max(1, int(np.ceil(makespan / T)))
+            current = int(net_info.get("num_instances") or prev_counts.get(net_id, 0))
+            if current == 0:
+                # No prior override — count from job_names ('<id>0', '<id>1', ...).
+                current = sum(
+                    1 for n in workload.job_names
+                    if isinstance(n, str) and n.startswith(net_id) and n[len(net_id):].isdigit()
+                )
+            print(f"  Periodic '{net_id}': period={T:.0f}ms current={current} needed={needed}")
+            needed_counts[net_id] = needed
+            prev_counts[net_id] = current
+
+        # If every periodic network already has enough instances, we're done.
+        if all(prev_counts.get(k, 0) >= v for k, v in needed_counts.items()):
+            print("  All periodic counts cover makespan — converged.")
+            break
+
+        # Otherwise, inject overrides and iterate.  Bump only the ones that
+        # are short; leave the rest alone so we don't over-grow networks
+        # whose makespan share is small.
+        bumped = []
+        for net_id, needed in needed_counts.items():
+            cur = prev_counts.get(net_id, 0)
+            if cur < needed:
+                networks_data["networks"][net_id]["num_instances"] = needed
+                bumped.append((net_id, cur, needed))
+        if not bumped:
+            break
+        print("  Bumping num_instances:", ", ".join(f"{n}: {a}->{b}" for n, a, b in bumped))
+
+    print(f"\nFinal greedy makespan: {makespan:.2f} ms (after {it + 1} iteration{'s' if it else ''})")
+
+    if save_outputs:
+        # Mirror run_xpurt_schedule.py's outputs but tagged "greedy" so
+        # they sit alongside MILP runs without overwriting.
+        from postprocessing import output_scheduled_json
+
+        os.makedirs("plots", exist_ok=True)
+        os.makedirs("schedules", exist_ok=True)
+
+        json_basename = os.path.splitext(os.path.basename(networks_json_path))[0]
+        suffix = "_profiled" if effective_use_profiled else ""
+        plot_path = f"plots/{json_basename}_greedy{suffix}.png"
+        sched_path = f"schedules/scheduled_{json_basename}_greedy{suffix}.json"
+
+        # Title + counts
+        num_jobs = sum(1 for op in workload.operations if not op.predecessors)
+        network_names_in_plot = [
+            workload.job_names[i] if i < len(workload.job_names) else f"Job {i}"
+            for i in sorted(set(op.job_id for op in workload.operations))
+        ]
+        title = " + ".join(name.capitalize() for name in network_names_in_plot)
+
+        plot.plot_optimization_schedule(
+            workload.get_durations(),
+            t,
+            alpha,
+            num_jobs,
+            len(workload.machines),
+            workload.machines,
+            workload.get_transfer_times(),
+            save_path=plot_path,
+            plot_title=f"{title} Greedy Schedule ({n_cores} cores) — makespan {makespan:.0f} ms",
+            workload=workload,
+        )
+        print(f"Plot saved to {plot_path}")
+
+        output_scheduled_json(
+            combined_workload=workload,
+            t=t,
+            alpha=alpha,
+            output_path=sched_path,
+        )
+        print(f"Scheduled JSON saved to {sched_path}")
+
+    return workload, t, alpha, makespan
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Schedule IREE dispatch graphs (fast/glpdepth, dronet, and MLP/MobilenetV2/Diffusion) on a dual-core device using greedy scheduling"
+    )
+    parser.add_argument(
+        "--networks-json",
+        type=str,
+        default=None,
+        help="Path to a toplevel networks_*.json (same spec as run_xpurt_schedule.py). "
+             "When provided, runs the network-hierarchy path with periodic expansion "
+             "and prints the greedy makespan; bypasses the legacy hardcoded-network mode."
     )
     parser.add_argument(
         "--use-glpdepth",
@@ -1717,11 +2066,19 @@ if __name__ == "__main__":
         help="Only schedule a single MLP instance instead of 5 (for debugging)."
     )
     args = parser.parse_args()
-    
+
+    # Network-hierarchy path (preferred): same JSON format as run_xpurt_schedule.
+    if args.networks_json:
+        greedy_schedule_iree_networks(
+            networks_json_path=args.networks_json,
+            use_profiled=args.use_profiled if args.use_profiled else True,
+        )
+        sys.exit(0)
+
     # Check mutual exclusivity: mlp_debug is exclusive with mobilenet/diffusion
     if args.mlp_debug and (args.use_mobilenet or args.diffusion):
         parser.error("--mlp-debug is mutually exclusive with --use-mobilenet and --diffusion")
-    
+
     schedule_iree_networks(
         use_glpdepth=args.use_glpdepth,
         use_profiled=args.use_profiled,

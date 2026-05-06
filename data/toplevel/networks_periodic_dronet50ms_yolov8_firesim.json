@@ -1,0 +1,41 @@
+{
+  "_comment": "Heterogeneous FireSim schedule: periodic dronet at period=50ms (vs the 200ms variant in networks_periodic_dronet_yolov8_firesim.json) + non-periodic yolov8_nano on the dual-rocket-saturn-gemmini bitstream. With yolov8's no-contention greedy makespan ≈ 141ms (gemmini hart at 110ms is the bottleneck; per-op routing drops total work from gemmini-standalone 422ms via faster RVV silu/sigmoid LUTs), a 50ms dronet period fits ceil(141/50)=3 instances within yolov8's window — exercises overlapping cross-kind dispatch (dronet dispatches arriving every 50ms while yolov8 is mid-inference). Same hardware setup as the 200ms variant: cpu_p=gemmini@hart0, cpu_e=RVV@hart1, profile_target=firesim_rocket_saturn, topo_0. Profile data shared with sweep_v8 — see zephyr-chipyard-sw/agents/notes/firesim_sweep_v8_results.md.",
+
+  "hardware": {
+    "machines": { "cpu_p": 1, "cpu_e": 1 },
+    "profile_hw": { "cpu_p": "gemmini", "cpu_e": "RVV" },
+    "profile": {
+      "target": "firesim_rocket_saturn",
+      "topo_tag": "topo_0",
+      "topo_tag_override": true,
+      "gen_root": "zephyr-chipyard-sw/gen"
+    },
+    "p_core_speedup": 1.0
+  },
+
+  "scheduler": {
+    "random_seed": 42,
+    "solver_verbosity": 2,
+    "time_limit": 60,
+    "use_profiled": true,
+    "prune_periodic": true,
+    "restrict_makespan_to_nonperiodic": true
+  },
+
+  "networks": {
+    "dronet": {
+      "id": 0,
+      "identifier": "dronet",
+      "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/dronet/firesim_rocket_saturn/gemmini/dronet.int8/dronet.int8_dispatch_graph.json",
+      "period": 50,
+      "window_duration": 50
+    },
+    "yolov8_nano": {
+      "id": 1,
+      "identifier": "yolov8_nano",
+      "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/yolov8_nano/firesim_rocket_saturn/gemmini/yolov8_nano.int8/yolov8_nano.int8_dispatch_graph.json"
+    }
+  },
+
+  "edges": []
+}

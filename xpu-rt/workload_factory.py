@@ -423,8 +423,21 @@ def create_workload_from_network_hierarchy(
             return periodic_counts
 
         profile_horizon = profile_based_horizon_ms(networks_data, repo_base_path)
+        # The min-per-op based horizon (profile_horizon) is a LOWER bound
+        # on the makespan — it assumes every op runs on its best HW with
+        # ideal parallelism.  In practice the scheduler can't always reach
+        # that bound: dependency chains serialise large fractions of the
+        # DAG, and ops without per-HW alternatives (e.g. yolov8 silu_s8
+        # falling back to scalar on every backend) cap concurrency.
+        # `total_worst_nonperiodic` (sum of max-per-op for all non-periodic
+        # ops) is the corresponding UPPER bound — it's what you'd see if
+        # every op landed on its slowest available HW with no overlap.
+        # Take the max so periodic-instance counts always cover at least
+        # the worst-case makespan.  Without this, periodic networks are
+        # truncated short of the actual schedule (caller sees a periodic
+        # workload that "ends" before the makespan does).
         if profile_horizon is not None and profile_horizon > 0.0:
-            horizon = float(profile_horizon)
+            horizon = max(float(profile_horizon), total_worst_nonperiodic)
         else:
             horizon = 2.0 * total_worst_nonperiodic
         periodic_counts: Dict[str, int] = {}
@@ -457,10 +470,19 @@ def create_workload_from_network_hierarchy(
     expanded_networks: Dict[str, Dict] = {}
     periodic_network_to_instances: Dict[str, List[str]] = {}  # Maps periodic network -> list of instance identifiers
     periodic_base_to_instances: Dict[str, str] = {}  # Maps instance identifier -> base periodic network identifier
-    
+
     # Pre-generate processing times for periodic networks to ensure consistency across instances
     periodic_processing_times_cache: Dict[Tuple[str, str], List[float]] = {}  # (base_network_id, dispatch_name) -> proc_times
-    
+
+    # Track all user-provided base IDs so periodic instance IDs don't
+    # collide with another network's id.  Previously we used `base_id + i`
+    # which overlaps when a non-periodic network has id == base_id+i;
+    # the resulting shared job_id silently merged operations under one
+    # job (and confused downstream printers / plotters that key on
+    # job_names[job_id]).  Use a counter past the max user-provided id.
+    _user_ids = [int(n.get('id', 0)) for n in networks.values()]
+    next_periodic_instance_id = (max(_user_ids) + 1) if _user_ids else 0
+
     for network_identifier, network_info in networks.items():
         # Check if this network is periodic
         period = network_info.get('period', None)
@@ -500,10 +522,18 @@ def create_workload_from_network_hierarchy(
                 instance_identifier = f"{network_identifier}{i}"
                 instance_min_start_t = start_time + i * period
                 instance_max_end_t = start_time + i * period + window_duration
-                
-                # Create instance network info
+
+                # Create instance network info.  The first instance keeps
+                # the base network id so the user-facing legend still says
+                # "<network>0".  Later instances get fresh ids past the
+                # max user-provided id, avoiding collisions with another
+                # network whose id happens to equal base_id+i.
                 instance_info = network_info.copy()
-                instance_info['id'] = base_id + i  # Each instance gets a unique ID
+                if i == 0:
+                    instance_info['id'] = base_id
+                else:
+                    instance_info['id'] = next_periodic_instance_id
+                    next_periodic_instance_id += 1
                 instance_info['identifier'] = f"{base_identifier}{i}"
                 instance_info['min_start_t'] = instance_min_start_t
                 instance_info['max_end_t'] = instance_max_end_t

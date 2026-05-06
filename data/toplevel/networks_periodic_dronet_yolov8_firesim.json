@@ -1,0 +1,41 @@
+{
+  "_comment": "Heterogeneous FireSim schedule: periodic dronet (period=200ms) + non-periodic yolov8_nano on the dual-rocket-saturn-gemmini bitstream. cpu_p is the gemmini-accelerated rocket (target=firesim_rocket_saturn, hw=gemmini, topo_0); cpu_e is the saturn-RVV-only rocket (hw=RVV, topo_0). The cpu_p/cpu_e naming follows the scheduler's convention (run_xpurt_schedule.py reads profile_hw[\"cpu_p\"] / profile_hw[\"cpu_e\"]); cpu_p here is just the gemmini-equipped rocket regardless of clock — the dual-rocket-saturn-gemmini bitstream has identical rocket cores, only the accelerator attachment differs. Profile data comes from agents/examples/multi_demo/.../sweep_v8 — see zephyr-chipyard-sw/agents/notes/firesim_sweep_v8_results.md for the methodology. dronet and yolov8 are int8; the gemmini conv2d_s8 path uses tiled_conv_auto with the gemmini_fence() drain fix.",
+
+  "hardware": {
+    "machines": { "cpu_p": 1, "cpu_e": 1 },
+    "profile_hw": { "cpu_p": "gemmini", "cpu_e": "RVV" },
+    "profile": {
+      "target": "firesim_rocket_saturn",
+      "topo_tag": "topo_0",
+      "topo_tag_override": true,
+      "gen_root": "zephyr-chipyard-sw/gen"
+    },
+    "p_core_speedup": 1.0
+  },
+
+  "scheduler": {
+    "random_seed": 42,
+    "solver_verbosity": 2,
+    "time_limit": 60,
+    "use_profiled": true,
+    "prune_periodic": true,
+    "restrict_makespan_to_nonperiodic": true
+  },
+
+  "networks": {
+    "dronet": {
+      "id": 0,
+      "identifier": "dronet",
+      "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/dronet/firesim_rocket_saturn/gemmini/dronet.int8/dronet.int8_dispatch_graph.json",
+      "period": 200,
+      "window_duration": 200
+    },
+    "yolov8_nano": {
+      "id": 1,
+      "identifier": "yolov8_nano",
+      "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/yolov8_nano/firesim_rocket_saturn/gemmini/yolov8_nano.int8/yolov8_nano.int8_dispatch_graph.json"
+    }
+  },
+
+  "edges": []
+}
