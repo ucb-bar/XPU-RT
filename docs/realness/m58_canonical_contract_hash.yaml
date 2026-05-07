@@ -1,0 +1,115 @@
+claim: |
+  M-58 (Phase D, Section 7 step 4): introduces the canonical
+  shape-class hash so contracts that differ only in concrete shape
+  values within the same class collide on a single hash, enabling
+  cross-model recipe-library lookup. The historical
+  ``hash_contract`` is renamed ``instance_contract_hash`` (with a
+  backward-compatible alias) and a new ``canonical_contract_hash``
+  ships alongside it.
+
+  Hard contract:
+
+  1. ``promotion/contract_hash.py`` exposes three functions:
+     - ``instance_contract_hash(contract)`` — the historical hash,
+       keyed on concrete kernel-facing fields (including dim ints).
+     - ``canonical_contract_hash(contract)`` — same projection, but
+       every IO ``shape.dims`` entry passes through
+       :func:`compgen.promotion.region_signature._abstract_dim`
+       before hashing. Concrete int dims are preserved verbatim;
+       ``None`` becomes ``{"dynamic": true}``; pre-abstracted
+       ``{"mod": k}`` entries are normalised. Two contracts with
+       concrete dims that match within the same class hash
+       identically.
+     - ``hash_contract(contract)`` — backward-compatible alias for
+       ``instance_contract_hash``. Phase B/C callers continue to
+       work without churn; Phase D code uses the explicit names.
+  2. Compiler-only fields (FusionPolicy, ObservabilitySpec, etc.)
+     are excluded from BOTH hashes by construction — only fields the
+     kernel codegen is allowed to read participate.
+  3. ``KernelCertificate`` (M-45) gains a ``canonical_contract_hash``
+     field. ``emit_certificate`` derives it from the materialised
+     contract; the cert filename keeps the instance-hash convention
+     for backward compatibility (Phase C cert lookups still work).
+  4. ``find_certificate_by_canonical_hash(run_dir, canonical_hash)``
+     in ``kernels/kernel_certificate.py`` walks
+     ``04_kernel_codegen/certificates/*.json`` and returns the first
+     cert whose ``canonical_contract_hash`` matches. This is the
+     cross-model lookup primitive the M-63 coverage-first scheduler
+     consumes.
+  5. ``RegionKernelBinding`` (M-46) and ``BindingRow``
+     (graph_compilation/execution_plan_emit.py) gain a
+     ``canonical_contract_hash`` field. The plan emit pulls it from
+     the certificate body; ``region_kernel_bindings.json`` carries
+     both hashes so a downstream plan executor can perform the
+     cross-model lookup without re-hashing.
+commit: 0a58000000000000000000000000000000000000
+created_at_utc: 2026-05-07T00:00:00Z
+forbidden:
+- canonical_contract_hash including compiler-only fields (FusionPolicy, ObservabilitySpec, dispatch concurrency_limit, observability hooks, lifetimes)
+- canonical_contract_hash being computed off something other than kernel_facing() projection (the contract author defines the boundary; M-58 must not extend it)
+- breaking the existing hash_contract contract (Phase B/C callers must continue working — hash_contract returns the instance hash, identical bytes)
+- emitting a certificate without populating canonical_contract_hash (the helper is best-effort, but the field must always exist; empty string is the only acceptable degraded value)
+- region_kernel_bindings.json dropping the canonical_contract_hash key (every bound row carries it; round-trip through to_dict/from_dict preserves it)
+realness_level: production_path
+required_evidence:
+- python/compgen/promotion/contract_hash.py (canonical_contract_hash + instance_contract_hash + _abstract_shape_dims_in_payload)
+- python/compgen/kernels/kernel_certificate.py (canonical_contract_hash field on KernelCertificate, emit_certificate stamps it via _derive_canonical_hash, find_certificate_by_canonical_hash)
+- python/compgen/runtime/execution_plan.py (canonical_contract_hash on RegionKernelBinding + serialisation)
+- python/compgen/graph_compilation/execution_plan_emit.py (canonical_contract_hash on BindingRow + binding row plumbing)
+- tests/kernels/test_canonical_contract_hash.py
+feature_id: m58_canonical_contract_hash
+notes: |
+  Phase D step 4. The cross-model cache leverage half of Section 7
+  (Job 3 — caching). M-55..M-57 already gave the auction a way to
+  produce verified kernels; M-58 makes those kernels reusable across
+  models that share a shape class.
+
+  Pre-existing scaffolding consumed:
+  - ``encode_shape_class`` + ``_abstract_dim`` from
+    ``promotion/region_signature.py`` (Phase B). M-58 lifts the
+    abstraction primitive into the contract-hash pipeline rather
+    than duplicating it.
+  - ``hash_contract`` (M-41 / M-42 / M-43 / M-44 / M-45 / M-46
+    callers) — kept as a thin alias so no Phase C call site needs
+    churn.
+  - ``KernelCertificate`` schema (M-45). The new field is appended
+    with a default of ``""``, so ``from_dict`` on pre-M-58 cert
+    bodies still works.
+
+  Real-driven evidence (`/tmp/m57_e2e` from M-57 stress, regenerated):
+  - ``04_kernel_codegen/certificates/4838412db0b5c6b8.json`` now
+    carries ``canonical_contract_hash: 4838412db0b5c6b8`` (concrete
+    contract → canonical == instance, as expected).
+  - ``05_execution_plan/region_kernel_bindings.json`` bound row for
+    matmul_0 carries the same canonical hash.
+  - Test ``test_dynamic_concrete_pair_differ_on_instance_match_on_canonical``
+    proves a contract with all dynamic dims hashes differently from
+    its concrete instantiations under both functions — and the
+    dynamic canonical hash is byte-stable across reruns.
+
+  Tests: 11 in tests/kernels/test_canonical_contract_hash.py covering
+  instance-vs-canonical equality on concrete contracts (3),
+  byte-stability (2), kernel_facing field sensitivity + compiler_only
+  invariance (2), certificate carries canonical (3), binding carries
+  canonical (1). Phase C/D regression preserved (74/74 across
+  test_kernel_certificate, test_contract_verifier, test_provider_bid,
+  test_region_kernel_binding, test_kernel_codegen_response,
+  test_kernel_auction, test_registry_wired, test_contract_hash).
+
+  Honest residuals:
+  - The shape-class abstraction today only handles ``None`` (dynamic)
+    and ``{"mod": k}`` / ``{"dynamic": true}`` pre-abstracted entries.
+    True divisibility classes (e.g. "any K divisible by 16")
+    require ShapeClass to carry richer abstraction metadata —
+    deferred to a future M-58.1 (or M-64's refinement-contract path).
+  - The cert filename remains keyed on instance hash. Migrating to
+    canonical-hash filenames is a deeper change (M-46 and the M-43
+    commit path both index by filename); that's deferred until the
+    coverage-first scheduler (M-63) actually exercises cross-model
+    lookup at scale.
+  - Promotion library (``promotion/promote.py``) does not yet route
+    cache hits via canonical hash; it still keys promoted recipes
+    on instance hash + region signature. M-63 will exercise the
+    canonical path at scale; until then, M-58's cross-model
+    primitive (find_certificate_by_canonical_hash) is the
+    integration point.

@@ -80,10 +80,18 @@ class KernelCertificate:
     contract_path: str = ""
     request_path: str = ""
 
+    # M-58: companion shape-class hash for cross-model lookup. The cert
+    # filename and ``contract_hash`` field stay keyed on the concrete
+    # ``instance_contract_hash`` for backward compatibility; this field
+    # carries the canonical hash so a recipe-library lookup can locate
+    # this cert by shape-class (cross-model leverage).
+    canonical_contract_hash: str = ""
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "schema_version": self.schema_version,
             "contract_hash": self.contract_hash,
+            "canonical_contract_hash": self.canonical_contract_hash,
             "task_id": self.task_id,
             "region_id": self.region_id,
             "candidate_id": self.candidate_id,
@@ -119,6 +127,7 @@ class KernelCertificate:
             fallback_reason=str(data.get("fallback_reason", "")),
             contract_path=str(data.get("contract_path", "")),
             request_path=str(data.get("request_path", "")),
+            canonical_contract_hash=str(data.get("canonical_contract_hash", "")),
         )
 
 
@@ -192,6 +201,11 @@ def emit_certificate(
 
     verifier_report_hash = _hash_file(verifier_report_path)
 
+    # M-58: derive the canonical (shape-class) hash from the contract
+    # body so cross-model recipe-library lookup works. Best-effort —
+    # if the contract file is missing or unparseable, leave empty.
+    canonical_hash = _derive_canonical_hash(run_dir=run_dir, request_body=request_body)
+
     cert = KernelCertificate(
         schema_version=_CERT_SCHEMA_VERSION,
         contract_hash=contract_hash,
@@ -212,6 +226,7 @@ def emit_certificate(
             (run_dir / "04_kernel_codegen" / "requests" / f"{task_id}.request.json")
             .relative_to(run_dir)
         ),
+        canonical_contract_hash=canonical_hash,
     )
 
     out_dir = _certificate_dir(run_dir)
@@ -231,6 +246,64 @@ def load_certificate(
     if not path.exists():
         return None
     return KernelCertificate.from_dict(json.loads(path.read_text(encoding="utf-8")))
+
+
+def _derive_canonical_hash(
+    *, run_dir: Path, request_body: dict[str, Any],
+) -> str:
+    """Best-effort canonical-hash derivation for cert emit.
+
+    Reads the materialised contract pointed to by the request, runs it
+    through :func:`compgen.promotion.contract_hash.canonical_contract_hash`,
+    and returns the 16-char shape-class hash. On any failure (missing
+    contract path, parse error, etc.) returns an empty string — the
+    cert still emits with the canonical field empty rather than
+    failing the M-45 emit step.
+    """
+    try:
+        from compgen.graph_compilation.kernel_codegen_response import (
+            _reconstruct_contract_from_dict,
+        )
+        from compgen.promotion.contract_hash import canonical_contract_hash
+
+        contract_rel = request_body.get("contract_paths", {}).get("full", "")
+        if not contract_rel:
+            return ""
+        contract_path = run_dir / contract_rel
+        if not contract_path.exists():
+            return ""
+        body = json.loads(contract_path.read_text(encoding="utf-8"))
+        contract = _reconstruct_contract_from_dict(body)
+        return canonical_contract_hash(contract)
+    except Exception:  # noqa: BLE001
+        return ""
+
+
+def find_certificate_by_canonical_hash(
+    *, run_dir: Path, canonical_hash: str,
+) -> KernelCertificate | None:
+    """M-58 cross-model lookup: locate a certificate by its
+    ``canonical_contract_hash`` field rather than the filename's
+    instance hash.
+
+    Walks ``04_kernel_codegen/certificates/*.json`` and returns the
+    first cert whose ``canonical_contract_hash`` matches. Returns
+    ``None`` when no cert matches. The canonical-hash slot lets the
+    M-63 coverage-first scheduler find a kernel emitted for one
+    concrete shape and reuse it for another concrete shape that
+    matches the same shape class.
+    """
+    cert_dir = _certificate_dir(run_dir)
+    if not cert_dir.exists():
+        return None
+    for path in sorted(cert_dir.glob("*.json")):
+        try:
+            body = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            continue
+        if str(body.get("canonical_contract_hash", "")) == canonical_hash:
+            return KernelCertificate.from_dict(body)
+    return None
 
 
 # --------------------------------------------------------------------------- #

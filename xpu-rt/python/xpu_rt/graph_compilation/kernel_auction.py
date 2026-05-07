@@ -555,6 +555,10 @@ def run_kernel_auction(
 
     fulfilled_records: list[_FulfillRecord] = []
     verified_records: list[_VerifyRecord] = []
+    # M-59: aggregate per-provider contract_feedback from each
+    # fulfilled bid. Routed into write_auction_feedback_artifacts at
+    # the end of the auction.
+    per_provider_feedback: list[tuple[str, list[Any]]] = []
 
     legacy_contract = _v3_to_legacy_contract(contract_v3)
     from compgen.kernels.provider import SearchBudget
@@ -625,6 +629,11 @@ def run_kernel_auction(
                 found=True,
                 artifact_dir_rel=str(provider_dir.relative_to(run_dir)),
             )
+        )
+
+        # M-59: capture this bid's contract_feedback for routing.
+        per_provider_feedback.append(
+            (provider.name, list(getattr(result, "contract_feedback", []) or []))
         )
 
         # Verify via M-44 (re-using the existing verifier path).
@@ -747,6 +756,27 @@ def run_kernel_auction(
         verified=verified_records,
         winner_provider=winner_provider or "",
     )
+
+    # M-59: write the contract_feedback artifacts (auction-local + run-wide
+    # aggregate). Always called, even when feedback is empty — the
+    # downstream agent_decision_request emit can rely on the file's
+    # existence to decide whether to surface advisory rows.
+    try:
+        from compgen.graph_compilation.contract_feedback_apply import (
+            write_auction_feedback_artifacts,
+        )
+
+        write_auction_feedback_artifacts(
+            run_dir=run_dir,
+            task_id=task_id,
+            contract_hash=contract_hash,
+            per_provider_feedback=per_provider_feedback,
+        )
+    except Exception as exc:  # noqa: BLE001
+        log.warning(
+            "auction.m59_feedback_persist_failed",
+            error=f"{type(exc).__name__}: {exc}",
+        )
 
     # Persist auction_report.json + winner.json + runners_up.json.
     report_path = auction_root / "auction_report.json"

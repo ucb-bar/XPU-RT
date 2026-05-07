@@ -50,12 +50,14 @@ class BindingRow:
     kernel_artifact: str = ""
     dispatch_model: str = "sync"
     unbound_reason: str = ""
+    canonical_contract_hash: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "region_id": self.region_id,
             "status": self.status,
             "contract_hash": self.contract_hash,
+            "canonical_contract_hash": self.canonical_contract_hash,
             "certificate_path": self.certificate_path,
             "kernel_artifact": self.kernel_artifact,
             "dispatch_model": self.dispatch_model,
@@ -199,6 +201,8 @@ def _bindings_for_run(run_dir: Path) -> list[BindingRow]:
                     .get("dispatch", {}).get("model", "sync")
                 )
 
+        canonical_hash = str(cert.get("canonical_contract_hash", "") or "")
+
         rows.append(BindingRow(
             region_id=region_id,
             status="bound",
@@ -206,6 +210,7 @@ def _bindings_for_run(run_dir: Path) -> list[BindingRow]:
             certificate_path=cert_rel,
             kernel_artifact=kernel_artifact,
             dispatch_model=dispatch_model,
+            canonical_contract_hash=canonical_hash,
         ))
     return rows
 
@@ -236,6 +241,7 @@ def emit_execution_plan(run_dir: Path) -> ExecutionPlanEmitResult:
             certificate_path=r.certificate_path,
             kernel_artifact=r.kernel_artifact,
             dispatch_model=r.dispatch_model,
+            canonical_contract_hash=r.canonical_contract_hash,
         )
         for r in bound
     ]

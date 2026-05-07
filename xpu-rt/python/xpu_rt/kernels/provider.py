@@ -99,6 +99,19 @@ class ContractFeedback:
     Example: a provider discovers that column-major layout is 2x faster
     for this op family, and feeds that back. CompGen updates the
     KernelContract for future requests.
+
+    Phase D / M-59 adds two fields:
+
+    * ``kind`` — typed feedback category. The M-59 typed-allowlist
+      auto-applies entries whose ``kind`` is one of
+      ``{layout_swap, dtype_widen, accumulator_widen,
+      alignment_request, fast_math_opt_in}``. Empty ``kind`` is a
+      backward-compatible signal — M-59's classifier infers it from
+      ``field`` via a small heuristic.
+    * ``applies_when`` — a free-text predicate the agent can read
+      to decide whether the suggestion is conditional (e.g.
+      ``"K >= 64"``). Currently informational; the M-61 predicate
+      DSL can later evaluate it programmatically.
     """
 
     field: str = ""
@@ -106,6 +119,19 @@ class ContractFeedback:
     suggested_value: str = ""
     reason: str = ""
     measured_gain: float = 0.0
+    kind: str = ""
+    applies_when: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "field": self.field,
+            "current_value": self.current_value,
+            "suggested_value": self.suggested_value,
+            "reason": self.reason,
+            "measured_gain": self.measured_gain,
+            "kind": self.kind,
+            "applies_when": self.applies_when,
+        }
 
 
 @dataclass(frozen=True)

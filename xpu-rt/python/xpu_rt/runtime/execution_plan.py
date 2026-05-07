@@ -183,6 +183,10 @@ class RegionKernelBinding:
     certificate_path: str    # 04_kernel_codegen/certificates/<contract_hash>.json
     kernel_artifact: str = ""  # path to kernel_source within artifact_dir
     dispatch_model: str = "sync"  # sync | async | persistent | inline
+    # M-58: shape-class companion hash. Sourced from the cert's
+    # ``canonical_contract_hash`` field; lets a downstream cross-model
+    # cache lookup find this binding without re-hashing.
+    canonical_contract_hash: str = ""
 
 
 @dataclass
@@ -468,6 +472,7 @@ class ExecutionPlan:
                 {
                     "region_id": b.region_id,
                     "contract_hash": b.contract_hash,
+                    "canonical_contract_hash": b.canonical_contract_hash,
                     "certificate_path": b.certificate_path,
                     "kernel_artifact": b.kernel_artifact,
                     "dispatch_model": b.dispatch_model,
@@ -572,6 +577,7 @@ class ExecutionPlan:
                     certificate_path=b["certificate_path"],
                     kernel_artifact=b.get("kernel_artifact", ""),
                     dispatch_model=b.get("dispatch_model", "sync"),
+                    canonical_contract_hash=b.get("canonical_contract_hash", ""),
                 )
                 for b in data.get("region_kernel_bindings", [])
             ],
