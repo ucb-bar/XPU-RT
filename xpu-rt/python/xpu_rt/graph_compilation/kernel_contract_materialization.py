@@ -340,6 +340,35 @@ def kernel_facing_to_dict(view: KernelFacingView) -> dict[str, Any]:
 # --------------------------------------------------------------------------- #
 
 
+def _dispatch_mode_override_for(
+    *, run_dir: Path, region_id: str,
+) -> str | None:
+    """M-50: scan candidate_selection for a sibling SetDispatchMode op
+    that sets the dispatch mode for this region. Returns the mode
+    string ("sync"|"async"|"persistent"|"inline") or None when no
+    override was selected.
+
+    The agent records SetDispatchMode picks under the same
+    ``recipe_delta`` field that records SetTileParams. We walk the
+    delta looking for ``op == "SetDispatchMode"`` entries scoped to
+    ``region_id``.
+    """
+    sel_path = run_dir / "03_recipe_planning" / "candidate_selection.json"
+    body = _read_json_or_none(sel_path)
+    if not body:
+        return None
+    for op in body.get("recipe_delta") or []:
+        if (
+            op.get("op") == "SetDispatchMode"
+            and op.get("region") == region_id
+        ):
+            return str(op.get("mode") or "")
+    # Also look at sibling selections — the agent may have committed
+    # multiple decisions across runs. For M-50, we only honour the
+    # in-current-selection delta.
+    return None
+
+
 def materialize_contract_from_run_dir(
     *,
     run_dir: Path,
@@ -359,6 +388,10 @@ def materialize_contract_from_run_dir(
     other than ``set_tile_params``). Callers fall back to an empty
     string for the contract_hash in that case — region-signature-only
     retrieval still works.
+
+    M-50: when a sibling SetDispatchMode op is recorded for the same
+    region, the contract's dispatch.model reflects the agent's
+    chosen mode rather than the SYNC default.
     """
     candidate_kind = candidate_selection.get("candidate_kind", "")
     if candidate_kind != "set_tile_params":
@@ -374,12 +407,16 @@ def materialize_contract_from_run_dir(
     declared_refinement = _declared_refinement_for(
         run_dir, candidate_selection.get("selected_candidate_id", "") or "",
     )
+    dispatch_mode_override = _dispatch_mode_override_for(
+        run_dir=run_dir, region_id=region_id,
+    )
     try:
         return KernelContractV3.from_recipe(
             candidate_selection=candidate_selection,
             region_dossier=region_dossier,
             target_profile=target_profile,
             declared_refinement=declared_refinement,
+            dispatch_mode_override=dispatch_mode_override,
         )
     except ValueError:
         return None

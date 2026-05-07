@@ -322,6 +322,36 @@ class FusionPolicy:
     prefer_inline_into: str | None = None
 
 
+def _resolve_dispatch_mode_override(override: str | None) -> "DispatchModel":
+    """M-50: turn a string override (from a SetDispatchMode candidate's
+    recipe_delta) into the DispatchModel enum. Defaults to SYNC; rejects
+    PERSISTENT and INLINE on NORMAL granularity (the only granularity
+    M-40 materialises today). The action_space already gates these;
+    this is defence-in-depth so a hand-edited candidate response
+    cannot smuggle PERSISTENT past the contract.
+    """
+    if override is None or override == "":
+        return DispatchModel.SYNC
+    norm = override.lower().strip()
+    if norm == "sync":
+        return DispatchModel.SYNC
+    if norm == "async":
+        return DispatchModel.ASYNC
+    if norm == "persistent":
+        raise ValueError(
+            "M-50: PERSISTENT dispatch requires MEGA granularity; "
+            "M-40 materialises only NORMAL contracts today. The "
+            "action_space marks PERSISTENT illegal-by-granularity; "
+            "a candidate response that selects it is rejected here."
+        )
+    if norm == "inline":
+        raise ValueError(
+            "M-50: INLINE dispatch requires MICRO granularity; "
+            "ukernel path not yet wired."
+        )
+    raise ValueError(f"M-50: unknown dispatch mode override {override!r}")
+
+
 class DispatchModel(Enum):
     """How the dispatcher launches this kernel."""
 
@@ -588,6 +618,7 @@ class KernelContractV3:
         region_dossier: dict[str, Any],
         target_profile: dict[str, Any],
         declared_refinement: str = "unknown",
+        dispatch_mode_override: str | None = None,
     ) -> "KernelContractV3":
         """Materialize a KernelContractV3 from a selected Recipe IR
         decision plus region facts (M-40 / Section 21).
@@ -780,7 +811,14 @@ class KernelContractV3:
                 lifetimes=(BufferLifetime(output_idx=0, live_after="next_consumer"),),
             ),
             fusion=FusionPolicy(is_boundary=True),
-            dispatch=DispatchSpec(model=DispatchModel.SYNC),
+            # M-50: dispatch model defaults to SYNC; M-50's
+            # SetDispatchMode candidate can override via
+            # dispatch_mode_override. NORMAL granularity admits SYNC
+            # and ASYNC; PERSISTENT requires MEGA, INLINE requires
+            # MICRO (both deferred).
+            dispatch=DispatchSpec(
+                model=_resolve_dispatch_mode_override(dispatch_mode_override),
+            ),
             observability=ObservabilitySpec(
                 emit_completion_event=True, cost_emit_period=0,
             ),

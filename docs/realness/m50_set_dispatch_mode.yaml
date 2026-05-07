@@ -1,0 +1,75 @@
+claim: |
+  M-50 (Phase C): SetDispatchMode is a first-class Recipe IR decision.
+  The action_space surfaces, per kernel-bearing region, four
+  set_dispatch_mode candidates — one per DispatchModel value (SYNC,
+  ASYNC, PERSISTENT, INLINE). Two are legal on NORMAL granularity
+  (SYNC, ASYNC); the other two are emitted illegal-by-granularity
+  with typed reasons. The legal candidates surface in
+  agent_decision_request.candidate_ids_allowed alongside the existing
+  set_tile_params + fuse_producer_consumer families.
+
+  When an agent's recipe_delta carries ``{"op": "SetDispatchMode",
+  "region": <region_id>, "mode": <sync|async>}``, the contract
+  materialiser reads the override and threads it into
+  KernelContractV3.from_recipe(dispatch_mode_override=...). The
+  contract's orchestration.dispatch.model is then SYNC or ASYNC per
+  the agent's decision instead of the implicit SYNC default.
+
+  This means: the dispatch decision has shifted from a hidden
+  compile-time constant to a typed Recipe IR decision, surfaced to
+  the agent via the same protocol as tiling, with the same
+  legality gating (granularity must match), the same byte-stable
+  candidate IDs, and the same downstream contract shape.
+commit: ce11750000000000000000000000000000000000
+created_at_utc: 2026-05-07T00:00:00Z
+forbidden:
+- silently defaulting dispatch.model to SYNC when a SetDispatchMode op is present in recipe_delta
+- emitting set_dispatch_mode candidates that bypass DispatchModel.requires_granularity gating
+- accepting "persistent" or "inline" dispatch_mode_override on a NORMAL-granularity contract
+- skipping the legality field on illegal candidates (every illegal candidate must carry a typed reason)
+- changing the contract_hash for two contracts that differ ONLY in dispatch.model — the hash MUST change because dispatch is in the kernel-facing projection
+realness_level: decision_affecting
+required_evidence:
+- python/compgen/graph_compilation/action_space.py (Family 6 _gen_dispatch_modes)
+- python/compgen/kernels/contract_v3.py (_resolve_dispatch_mode_override + from_recipe dispatch_mode_override kwarg)
+- python/compgen/graph_compilation/kernel_contract_materialization.py (_dispatch_mode_override_for + materializer wiring)
+- tests/graph_compilation/test_set_dispatch_mode.py
+- "real merlin_mlp_wide run: 12 set_dispatch_mode candidates emitted, 6 legal in agent_decision_request"
+feature_id: m50_set_dispatch_mode
+notes: |
+  Phase C M-50 — SetDispatchMode as Recipe IR decision. Real-driven
+  stress test (merlin_mlp_wide on host_cpu, --stop-after
+  agent-decision-request):
+
+  - 12 set_dispatch_mode candidates emitted (3 matmul regions × 4
+    DispatchModel values).
+  - 6 legal candidates (sync + async per region) surface in
+    agent_decision_request.candidate_ids_allowed.
+  - PERSISTENT correctly emitted illegal-by-granularity (NORMAL
+    contract; PERSISTENT requires MEGA).
+  - INLINE correctly emitted illegal-by-granularity (NORMAL contract;
+    INLINE requires MICRO).
+  - Decision sites carry one ``dispatch`` site per kernel-bearing
+    region with priority=3 (lower than tiling=1) and exactly 4
+    candidate IDs each.
+  - Byte-stable: two reruns produce identical sorted candidate IDs.
+
+  Materialiser stress test: appending ``{"op": "SetDispatchMode",
+  "region": "matmul_0", "mode": "async"}`` to candidate_selection
+  recipe_delta flips contract.orchestration.dispatch.model from
+  SYNC → ASYNC. PERSISTENT override on NORMAL granularity correctly
+  returns None (defence-in-depth gate; the action_space already
+  blocks PERSISTENT, this catches a hand-edited delta).
+
+  Honest residuals:
+  - The emitted M-47 SYNC executor still hardcodes the SYNC dispatch
+    path. M-51 (CPU ASYNC + EventTensor) is the milestone that
+    teaches the emitter to honour ``dispatch.model == ASYNC``. Until
+    M-51 lands, an ASYNC-decision contract still runs through the
+    SYNC executor end-to-end — the decision is recorded in the
+    contract honestly, but the runtime behaviour is unchanged.
+  - PERSISTENT and INLINE remain unreachable on canonical models
+    (no MEGA / MICRO contracts materialise yet). Their candidates
+    exist in the action_space and surface as illegal with typed
+    reasons; the path that would accept them in a future MEGA
+    contract is exercised only by the unit tests, not by a real run.

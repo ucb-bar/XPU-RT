@@ -449,6 +449,125 @@ def _gen_tiling(
     return site, candidates
 
 
+# ---- Family 6: dispatch mode (M-50) ------------------------------------- #
+
+
+# Legal dispatch modes per archetype/granularity. Today's contracts are
+# all NORMAL granularity → SYNC and ASYNC are legal. PERSISTENT requires
+# MEGA granularity (megakernel work, not yet wired). INLINE requires
+# MICRO granularity (ukernel work, not yet wired). Both PERSISTENT and
+# INLINE are emitted as ILLEGAL candidates with typed reasons so the
+# action space surfaces the option without admitting it.
+_DISPATCH_MODES_FOR_NORMAL = ("sync", "async")
+_DISPATCH_MODES_FOR_MEGA = ("persistent",)
+_DISPATCH_MODES_FOR_MICRO = ("inline",)
+_ALL_DISPATCH_MODES = ("sync", "async", "persistent", "inline")
+
+
+def _gen_dispatch_modes(
+    region: dict[str, Any],
+    dossier: dict[str, Any],
+    region_dossier_ref: str,
+) -> tuple[_Site | None, list[_Cand]]:
+    """Emit one site per kernel-bearing region with a candidate per
+    dispatch mode (M-50). Legal modes track the contract's granularity
+    (NORMAL / MEGA / MICRO); illegal-by-granularity modes still appear
+    as candidates with typed legality.reason so the agent surface
+    sees the bounded option set.
+
+    Today every contract that lands here is NORMAL granularity (M-40
+    materialises only NORMAL contracts). PERSISTENT and INLINE
+    candidates are emitted ILLEGAL until M-MEGA / M-MICRO land.
+    """
+    if not _is_matmul_like(region["kind"]):
+        return None, []
+    rid = region["region_id"]
+    site_id = _site_id("dispatch", rid)
+
+    candidates: list[_Cand] = []
+    legal_modes = set(_DISPATCH_MODES_FOR_NORMAL)
+    for mode in _ALL_DISPATCH_MODES:
+        legal: dict[str, Any]
+        if mode in legal_modes:
+            legal = {"ok": True}
+        elif mode == "persistent":
+            legal = {
+                "ok": False,
+                "reason": (
+                    "PERSISTENT requires MEGA granularity; M-40 "
+                    "materialises only NORMAL contracts today"
+                ),
+            }
+        elif mode == "inline":
+            legal = {
+                "ok": False,
+                "reason": (
+                    "INLINE requires MICRO granularity; ukernel "
+                    "dispatch path not yet wired"
+                ),
+            }
+        else:  # pragma: no cover — defensive
+            legal = {"ok": False, "reason": f"unknown dispatch mode {mode!r}"}
+
+        label = f"dispatch_{mode}"
+        cid = _candidate_id(
+            "dispatch", rid, label,
+            region_extra=_region_content_hash(dossier),
+        )
+        candidates.append(
+            _Cand(
+                candidate_id=cid,
+                site_id=site_id,
+                kind="set_dispatch_mode",
+                region_id=rid,
+                label=label,
+                recipe_delta=[
+                    {
+                        "op": "SetDispatchMode",
+                        "region": rid,
+                        "mode": mode,
+                    }
+                ],
+                legality=legal,
+                cost_preview={
+                    # All modes have the same static-cost-relative-to-each-other
+                    # at this layer; the M-49 differential is what actually
+                    # measures runtime cost.
+                    "static_relative_cost": 1.0 if mode == "sync" else (
+                        0.95 if mode == "async" else 0.0
+                    ),
+                    "dispatch_model": mode,
+                },
+                evidence={
+                    "region_dossier": region_dossier_ref,
+                    "payload_ref": (
+                        dossier["source"]["payload_ops"][0]["payload_ref"]
+                        if dossier["source"]["payload_ops"]
+                        else ""
+                    ),
+                },
+            )
+        )
+
+    site = _Site(
+        site_id=site_id,
+        kind="dispatch",
+        region_id=rid,
+        # Dispatch is lower-priority than tiling — the tile choice
+        # changes the kernel; the dispatch mode changes when/how it
+        # runs. Greedy will pick tile first.
+        priority=3,
+        reason=(
+            f"dispatch-mode site for {rid} with "
+            f"{sum(1 for c in candidates if c.legality['ok'])}/{len(candidates)} "
+            f"legal modes (NORMAL granularity)"
+        ),
+        candidate_ids=[c.candidate_id for c in candidates],
+        extra={"granularity": "normal"},
+    )
+    return site, candidates
+
+
 # ---- Family 3: numerics ------------------------------------------------- #
 
 
@@ -890,6 +1009,17 @@ def build_action_space(
         if s2 is not None:
             sites.append(s2)
             candidates.extend(c2)
+
+        # Family 6 (M-50): dispatch mode — emit a site per kernel-bearing
+        # region with one candidate per legal mode (sync/async legal for
+        # NORMAL granularity; persistent/inline emitted as illegal until
+        # MEGA/MICRO granularity contracts ship). Same placement
+        # condition as tiling — only matmul-like regions get dispatch
+        # candidates today.
+        s6, c6 = _gen_dispatch_modes(region, dossier, ref)
+        if s6 is not None:
+            sites.append(s6)
+            candidates.extend(c6)
 
         # Family 3: numerics
         s3, c3 = _gen_numerics(region, dossier, ref, profile)

@@ -1404,18 +1404,27 @@ def run_graph_compilation(
     # ------------------------------------------------------------------ #
     needs_glue_emit = stop_after in ("glue-emit", "glue-differential", "gap-discovery", "gap-closure")
     if needs_glue_emit:
-        from compgen.runtime.glue_emit import emit_python_sync_executor
+        from compgen.runtime.glue_emit import (
+            emit_python_async_executor,
+            emit_python_cuda_executor,
+            emit_python_sync_executor,
+        )
 
         _append_ledger(ledger_path, stage_id="glue_emit", event="start")
         try:
             _ge = emit_python_sync_executor(out_dir)
+            _ae = emit_python_async_executor(out_dir)
+            _ce = emit_python_cuda_executor(out_dir)
             _append_ledger(
                 ledger_path, stage_id="glue_emit",
                 event="artifact_written",
                 note=(
                     f"glue_emit (M-47): {_ge.overall} "
                     f"(bound={len(_ge.bound_regions)}, "
-                    f"unbound={len(_ge.unbound_regions)})"
+                    f"unbound={len(_ge.unbound_regions)}); "
+                    f"async (M-51): {_ae.overall} "
+                    f"(async_regions={len(_ae.async_regions)}); "
+                    f"cuda (M-52): {_ce.overall}"
                 ),
             )
         except Exception as exc:  # noqa: BLE001
@@ -1423,7 +1432,7 @@ def run_graph_compilation(
                 ledger_path, stage_id="glue_emit",
                 event="artifact_written",
                 note=(
-                    f"glue_emit (M-47): error {type(exc).__name__}: {exc}"
+                    f"glue_emit (M-47/M-51/M-52): error {type(exc).__name__}: {exc}"
                 ),
             )
             raise
