@@ -47,6 +47,7 @@ SUPPORTED_STOP_AFTER: tuple[str, ...] = (
     "agent-decision-request",
     "kernel-specialization-request",
     "kernel-codegen-request",
+    "kernel-auction",
     "execution-plan-emit",
     "glue-emit", "glue-differential",
     "glue-differential",
@@ -310,6 +311,8 @@ def run_graph_compilation(
     agent_max_retries: int = 3,
     live_provider_config: object | None = None,
     resume_from: str | None = None,
+    auction_mode: str = "multi-bidder",
+    bid_cutoff: int = 3,
 ) -> RunResult:
     """Materialise a graph compilation run directory rooted at ``out_dir``.
 
@@ -438,7 +441,7 @@ def run_graph_compilation(
         "payload-lowering", "graph-analysis",
         "recipe-planning", "recipe-verification", "recipe-lowering",
         "post-lowering-verification", "differential-verification",
-        "real-transform-eligibility", "real-set-tile-transform", "real-transform-differential", "cost-preview-v2", "agent-decision-request", "kernel-specialization-request", "kernel-codegen-request", "execution-plan-emit", "glue-emit", "glue-differential",
+        "real-transform-eligibility", "real-set-tile-transform", "real-transform-differential", "cost-preview-v2", "agent-decision-request", "kernel-specialization-request", "kernel-codegen-request", "kernel-auction", "execution-plan-emit", "glue-emit", "glue-differential",
         "gap-discovery", "gap-closure",
     ) and not _resume_skip_early
     if needs_lowering:
@@ -513,7 +516,7 @@ def run_graph_compilation(
         "graph-analysis", "recipe-planning", "recipe-verification",
         "recipe-lowering", "post-lowering-verification",
         "differential-verification", "real-transform-eligibility",
-        "real-set-tile-transform", "real-transform-differential", "cost-preview-v2", "agent-decision-request", "kernel-specialization-request", "kernel-codegen-request", "execution-plan-emit", "glue-emit", "glue-differential",
+        "real-set-tile-transform", "real-transform-differential", "cost-preview-v2", "agent-decision-request", "kernel-specialization-request", "kernel-codegen-request", "kernel-auction", "execution-plan-emit", "glue-emit", "glue-differential",
         "gap-discovery", "gap-closure",
     ) and not _resume_skip_early
     if needs_graph_analysis:
@@ -537,7 +540,7 @@ def run_graph_compilation(
     needs_recipe_planning = stop_after in (
         "recipe-planning", "recipe-verification", "recipe-lowering",
         "post-lowering-verification", "differential-verification",
-        "real-transform-eligibility", "real-set-tile-transform", "real-transform-differential", "cost-preview-v2", "agent-decision-request", "kernel-specialization-request", "kernel-codegen-request", "execution-plan-emit", "glue-emit", "glue-differential",
+        "real-transform-eligibility", "real-set-tile-transform", "real-transform-differential", "cost-preview-v2", "agent-decision-request", "kernel-specialization-request", "kernel-codegen-request", "kernel-auction", "execution-plan-emit", "glue-emit", "glue-differential",
         "gap-discovery", "gap-closure",
     ) and not _resume_skip_early
     if needs_recipe_planning:
@@ -565,7 +568,7 @@ def run_graph_compilation(
         if stop_after in (
             "recipe-verification", "recipe-lowering",
             "post-lowering-verification", "differential-verification",
-            "real-transform-eligibility", "real-set-tile-transform", "real-transform-differential", "cost-preview-v2", "agent-decision-request", "kernel-specialization-request", "kernel-codegen-request", "execution-plan-emit", "glue-emit", "glue-differential",
+            "real-transform-eligibility", "real-set-tile-transform", "real-transform-differential", "cost-preview-v2", "agent-decision-request", "kernel-specialization-request", "kernel-codegen-request", "kernel-auction", "execution-plan-emit", "glue-emit", "glue-differential",
             "gap-discovery", "gap-closure",
         ):
             from compgen.graph_compilation.recipe_gate import run_recipe_gate
@@ -584,7 +587,7 @@ def run_graph_compilation(
         if stop_after in (
             "recipe-lowering", "post-lowering-verification",
             "differential-verification", "real-transform-eligibility",
-            "real-set-tile-transform", "real-transform-differential", "cost-preview-v2", "agent-decision-request", "kernel-specialization-request", "kernel-codegen-request", "execution-plan-emit", "glue-emit", "glue-differential",
+            "real-set-tile-transform", "real-transform-differential", "cost-preview-v2", "agent-decision-request", "kernel-specialization-request", "kernel-codegen-request", "kernel-auction", "execution-plan-emit", "glue-emit", "glue-differential",
             "gap-discovery", "gap-closure",
         ):
             from compgen.graph_compilation.recipe_lowering import (
@@ -606,7 +609,7 @@ def run_graph_compilation(
         # byte-identical.
         if stop_after in (
             "post-lowering-verification", "differential-verification",
-            "real-transform-eligibility", "real-set-tile-transform", "real-transform-differential", "cost-preview-v2", "agent-decision-request", "kernel-specialization-request", "kernel-codegen-request", "execution-plan-emit", "glue-emit", "glue-differential",
+            "real-transform-eligibility", "real-set-tile-transform", "real-transform-differential", "cost-preview-v2", "agent-decision-request", "kernel-specialization-request", "kernel-codegen-request", "kernel-auction", "execution-plan-emit", "glue-emit", "glue-differential",
             "gap-discovery", "gap-closure"
         ):
             from compgen.graph_compilation.post_lowering import (
@@ -653,7 +656,7 @@ def run_graph_compilation(
         # inert; re-checks Stage-0 goldens; validates contract drafts.
         if stop_after in (
             "differential-verification", "real-transform-eligibility",
-            "real-set-tile-transform", "real-transform-differential", "cost-preview-v2", "agent-decision-request", "kernel-specialization-request", "kernel-codegen-request", "execution-plan-emit", "glue-emit", "glue-differential",
+            "real-set-tile-transform", "real-transform-differential", "cost-preview-v2", "agent-decision-request", "kernel-specialization-request", "kernel-codegen-request", "kernel-auction", "execution-plan-emit", "glue-emit", "glue-differential",
             "gap-discovery", "gap-closure"
         ):
             from compgen.graph_compilation.differential_verification import (
@@ -699,7 +702,7 @@ def run_graph_compilation(
         # tiling MVP. Emits 03_recipe_planning/real_transform_eligibility
         # .json + .md. No payload mutation; no transformed real artifact.
         if stop_after in (
-            "real-transform-eligibility", "real-set-tile-transform", "real-transform-differential", "cost-preview-v2", "agent-decision-request", "kernel-specialization-request", "kernel-codegen-request", "execution-plan-emit", "glue-emit", "glue-differential",
+            "real-transform-eligibility", "real-set-tile-transform", "real-transform-differential", "cost-preview-v2", "agent-decision-request", "kernel-specialization-request", "kernel-codegen-request", "kernel-auction", "execution-plan-emit", "glue-emit", "glue-differential",
             "gap-discovery", "gap-closure"
         ):
             from compgen.graph_compilation.real_transform_eligibility import (
@@ -720,7 +723,7 @@ def run_graph_compilation(
         # M-11B real SetTileParams transform MVP: emits a tiled
         # transformed_payload.real.mlir for eligible matmuls.
         if stop_after in (
-            "real-set-tile-transform", "real-transform-differential", "cost-preview-v2", "agent-decision-request", "kernel-specialization-request", "kernel-codegen-request", "execution-plan-emit", "glue-emit", "glue-differential", "gap-discovery", "gap-closure"
+            "real-set-tile-transform", "real-transform-differential", "cost-preview-v2", "agent-decision-request", "kernel-specialization-request", "kernel-codegen-request", "kernel-auction", "execution-plan-emit", "glue-emit", "glue-differential", "gap-discovery", "gap-closure"
         ):
             from compgen.graph_compilation.real_lowering import (
                 run_real_lowering,
@@ -764,7 +767,7 @@ def run_graph_compilation(
         # real_transform_differential_check via Path A executable
         # evaluator (eligible cases) or emits a blocked report (Path B).
         if stop_after in (
-            "real-transform-differential", "cost-preview-v2", "agent-decision-request", "kernel-specialization-request", "kernel-codegen-request", "execution-plan-emit", "glue-emit", "glue-differential", "gap-discovery", "gap-closure"
+            "real-transform-differential", "cost-preview-v2", "agent-decision-request", "kernel-specialization-request", "kernel-codegen-request", "kernel-auction", "execution-plan-emit", "glue-emit", "glue-differential", "gap-discovery", "gap-closure"
         ):
             from compgen.graph_compilation.real_transform_differential import (
                 run_real_transform_differential,
@@ -844,7 +847,7 @@ def run_graph_compilation(
         # 02_graph_analysis/ pinned by graph_analysis.output_hash are not
         # touched. Same hash-chain pattern as M-10B.
         if stop_after in (
-            "cost-preview-v2", "agent-decision-request", "kernel-specialization-request", "kernel-codegen-request", "execution-plan-emit", "glue-emit", "glue-differential", "gap-discovery", "gap-closure"
+            "cost-preview-v2", "agent-decision-request", "kernel-specialization-request", "kernel-codegen-request", "kernel-auction", "execution-plan-emit", "glue-emit", "glue-differential", "gap-discovery", "gap-closure"
         ):
             from compgen.graph_compilation.cost_preview_v2 import (
                 run_cost_preview_v2,
@@ -1330,7 +1333,7 @@ def run_graph_compilation(
     # rather than skip silently.
     # ------------------------------------------------------------------ #
     needs_kernel_specialization = stop_after in (
-        "kernel-specialization-request", "kernel-codegen-request", "execution-plan-emit", "glue-emit", "glue-differential",
+        "kernel-specialization-request", "kernel-codegen-request", "kernel-auction", "execution-plan-emit", "glue-emit", "glue-differential",
         "gap-discovery",
         "gap-closure",
     ) and not _resume_skip_early
@@ -1411,6 +1414,59 @@ def run_graph_compilation(
             ledger_path, stage_id="kernel_specialization_request",
             event="finish",
         )
+
+    # ------------------------------------------------------------------ #
+    # M-57 Auction: multi-bidder kernel codegen.
+    # Runs whenever stop_after permits AND auction_mode != "disabled".
+    # No-op when there are no applicable providers (today's clean
+    # checkout); produces winner.json + auction_report.json + promotes
+    # the winner to the standard M-43 response path so M-46 binds.
+    # ------------------------------------------------------------------ #
+    needs_auction = (
+        auction_mode != "disabled"
+        and stop_after
+        in (
+            "kernel-auction",
+            "execution-plan-emit",
+            "glue-emit",
+            "glue-differential",
+            "gap-discovery",
+            "gap-closure",
+        )
+    )
+    if needs_auction:
+        _append_ledger(ledger_path, stage_id="kernel_auction", event="start")
+        try:
+            from compgen.graph_compilation.kernel_auction import run_kernel_auction
+
+            _au = run_kernel_auction(
+                run_dir=out_dir,
+                mode=auction_mode,
+                bid_cutoff=bid_cutoff,
+            )
+            _append_ledger(
+                ledger_path,
+                stage_id="kernel_auction",
+                event="artifact_written",
+                note=(
+                    f"kernel_auction (M-57): {_au.overall} "
+                    f"mode={_au.mode} winner={_au.winner_provider!r} "
+                    f"bids={len(_au.bids)} fulfilled={len(_au.fulfilled)} "
+                    f"verified={len(_au.verified)}"
+                ),
+            )
+        except Exception as exc:  # noqa: BLE001
+            _append_ledger(
+                ledger_path,
+                stage_id="kernel_auction",
+                event="artifact_written",
+                note=(
+                    f"kernel_auction (M-57): error "
+                    f"{type(exc).__name__}: {exc}"
+                ),
+            )
+            raise
+        _append_ledger(ledger_path, stage_id="kernel_auction", event="finish")
 
     # ------------------------------------------------------------------ #
     # Execution-plan emit (M-46): bind certified kernels to regions and

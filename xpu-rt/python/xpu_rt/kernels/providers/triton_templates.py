@@ -18,6 +18,7 @@ from typing import Any
 import structlog
 
 from compgen.kernels.provider import (
+    BidPreview,
     KernelContract,
     KnowledgeExport,
     ProviderResult,
@@ -533,6 +534,97 @@ class TritonTemplateProvider:
         exports = list(self._accumulated_knowledge)
         self._accumulated_knowledge.clear()
         return exports
+
+    # -- Phase D / M-56: bid() ------------------------------------------------
+
+    def bid(self, contract_v3: Any) -> BidPreview:
+        """Cheap pre-codegen estimate over a :class:`KernelContractV3`.
+
+        Match logic:
+
+        * Map contract archetype + op_name onto the template family.
+          ``COMPUTE_TILED`` + ``matmul``-shaped op_name → ``matmul``.
+          ``POINTWISE`` + recognised activation → matching template.
+        * If a template matches: high confidence (0.7), fast generate
+          time (~0.1s — pure string substitution), real perf
+          estimate from a roofline based on tile shape.
+        * If no template matches: confidence=0.0 placeholder so the
+          auction skips this provider.
+        """
+        family = _archetype_to_family(contract_v3)
+        if family is None or family not in _TEMPLATES:
+            return BidPreview(
+                provider_name=self.name,
+                confidence=0.0,
+                rationale=f"no_template_for_archetype_{family or 'unknown'}",
+            )
+
+        # Roofline: estimated compute / peak_compute_per_dtype, with a
+        # nominal launch overhead of 5us. The actual numbers don't have
+        # to be tight — they're a relative ordering signal for the
+        # auction.
+        try:
+            inputs = contract_v3.io.inputs
+            dim_m = int(inputs[0].shape.dims[0]) if inputs[0].shape.dims else 128
+            dim_k = int(inputs[0].shape.dims[1]) if len(inputs[0].shape.dims) > 1 else 128
+            dim_n = (
+                int(inputs[1].shape.dims[1])
+                if len(inputs) > 1 and len(inputs[1].shape.dims) > 1
+                else 128
+            )
+            flops = 2.0 * dim_m * dim_n * dim_k
+            # Default to 1 TFLOP/s if envelope doesn't carry peak.
+            tflops_per_s = 1.0e12
+            try:
+                peak_dict = contract_v3.orchestration.execution.hardware.peak_compute_per_dtype
+                if peak_dict:
+                    # First entry — same dtype the kernel emits.
+                    tflops_per_s = float(next(iter(peak_dict.values()))) * 1.0e12
+            except (AttributeError, TypeError, ValueError, StopIteration):
+                pass
+            est_us = max(1.0, (flops / tflops_per_s) * 1e6 + 5.0)
+        except Exception:  # noqa: BLE001
+            est_us = float("inf")
+
+        return BidPreview(
+            provider_name=self.name,
+            perf_estimate_us=est_us,
+            confidence=0.7,
+            time_to_generate_s_estimate=0.1,
+            rationale=f"template_match_{family}",
+            cache_hit=False,
+        )
+
+
+def _archetype_to_family(contract_v3: Any) -> str | None:
+    """Map a v3 archetype + op_name onto a TritonTemplateProvider family key.
+
+    Returns ``None`` when the contract isn't covered by any template.
+    """
+    try:
+        archetype = contract_v3.archetype.value
+        op_name = contract_v3.op_name.lower()
+    except AttributeError:
+        return None
+
+    if archetype == "compute_tiled":
+        if "matmul_bias_gelu" in op_name:
+            return "matmul_bias_gelu"
+        if "matmul_bias_relu" in op_name:
+            return "matmul_bias_relu"
+        if "matmul" in op_name:
+            return "matmul"
+    if archetype == "pointwise":
+        if "gelu" in op_name:
+            return "elementwise_gelu"
+        if "add_relu" in op_name or ("add" in op_name and "relu" in op_name):
+            return "add_relu"
+    if archetype == "reduce":
+        if "softmax" in op_name:
+            return "softmax"
+        if "layer_norm" in op_name or "layernorm" in op_name:
+            return "layer_norm"
+    return None
 
 
 # ---------------------------------------------------------------------------

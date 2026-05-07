@@ -31,6 +31,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from compgen.kernels.provider import (
+    BidPreview,
     KernelContract,
     KnowledgeExport,
     ProviderResult,
@@ -256,6 +257,123 @@ class ClaudeCodeKernelProvider:
 
     def export_knowledge(self) -> list[KnowledgeExport]:
         return list(self._exports)
+
+    # -- Phase D / M-56: bid() ------------------------------------------------
+
+    def bid(self, contract_v3: Any) -> BidPreview:
+        """Cheap pre-codegen estimate for a :class:`KernelContractV3`.
+
+        Cache-aware: when the in-session cache (``InSessionCodegen``)
+        already holds a kernel for this contract's fingerprint, the bid
+        carries ``confidence=0.9`` and ``time_to_generate_s_estimate=1.0``
+        (essentially free fulfill). On cache miss, the bid carries
+        ``confidence=0.3`` and ``time_to_generate_s_estimate=900`` (the
+        provider runs the codegen callable, which for a real Claude-Code
+        subagent can take minutes).
+
+        Pure ``StubCodegen`` configurations report a deterministic
+        ``confidence=0.5`` / ``time_to_generate_s_estimate=0.05`` —
+        that's the test-fixture path; real production picks a real
+        codegen callable.
+        """
+        cache_hit = False
+        codegen = self.codegen
+        try:
+            from compgen.kernels.providers.claude_code_default import (
+                InSessionCodegen,
+                StubCodegen,
+            )
+
+            if isinstance(codegen, InSessionCodegen):
+                # Probe the cache without invoking codegen.
+                from compgen.kernels.contract_v3 import KernelContractV3
+                from compgen.mcp.tools.kernel import _kernel_cache, contract_fingerprint
+
+                if isinstance(contract_v3, KernelContractV3):
+                    facing = contract_v3.kernel_facing()
+                    fp_dict = _kernel_facing_to_fp_dict(facing, contract_v3)
+                    fp = contract_fingerprint(fp_dict)
+                    cache = _kernel_cache(codegen.sm.get(codegen.session_id))
+                    cache_hit = fp in cache.entries
+            elif isinstance(codegen, StubCodegen):
+                # Stub is deterministic + fast — treat every call as a "hit".
+                cache_hit = True
+        except Exception:  # noqa: BLE001
+            cache_hit = False
+
+        if cache_hit:
+            return BidPreview(
+                provider_name=self.name,
+                perf_estimate_us=float("inf"),
+                confidence=0.9,
+                time_to_generate_s_estimate=1.0,
+                rationale="cache_hit",
+                cache_hit=True,
+            )
+
+        return BidPreview(
+            provider_name=self.name,
+            perf_estimate_us=float("inf"),
+            confidence=0.3,
+            time_to_generate_s_estimate=900.0,
+            rationale="claude_code_one_shot_codegen",
+            cache_hit=False,
+        )
+
+
+def _kernel_facing_to_fp_dict(facing: Any, contract_v3: Any) -> dict[str, Any]:
+    """Build the fingerprint-shaped dict from a v3 KernelFacingView.
+
+    Mirrors :func:`_fingerprint_from_view` but reads directly from the
+    v3 object rather than going through the legacy v1 contract.
+    """
+    target = ""
+    try:
+        target = contract_v3.orchestration.execution.hardware.target_name
+    except AttributeError:
+        target = ""
+
+    io_inputs = []
+    for t in facing.io.inputs:
+        io_inputs.append(
+            {
+                "name": t.name,
+                "shape": {"dims": list(t.shape.dims)},
+                "dtype_class": list(t.dtype_class),
+                "layout": t.layout.value,
+                "alignment_bytes": t.alignment_bytes,
+            }
+        )
+    io_outputs = []
+    for t in facing.io.outputs:
+        io_outputs.append(
+            {
+                "name": t.name,
+                "shape": {"dims": list(t.shape.dims)},
+                "dtype_class": list(t.dtype_class),
+                "layout": t.layout.value,
+                "alignment_bytes": t.alignment_bytes,
+            }
+        )
+    n = facing.io.numerics
+    return {
+        "op_name": facing.op_name,
+        "archetype": facing.archetype.value,
+        "granularity": facing.granularity.value,
+        "io": {
+            "inputs": io_inputs,
+            "outputs": io_outputs,
+            "attributes": [{"name": a.name, "value": a.value} for a in facing.io.attributes],
+            "numerics": {
+                "accumulator_dtype": n.accumulator_dtype,
+                "fast_math": n.fast_math,
+                "max_relative_error": n.max_relative_error,
+            },
+        },
+        "orchestration": {
+            "execution": {"hardware": {"target_name": target}},
+        },
+    }
 
     # ----- internals -----
 

@@ -1,0 +1,81 @@
+claim: |
+  M-55 (Phase D, Section 7 integration step 1): the M-42 kernel-codegen
+  pipeline stage now consults the entry-point ``ProviderRegistry`` and
+  emits a byte-deterministic ``04_kernel_codegen/registry_resolution.json``
+  recording which providers *could* bid on the materialized
+  ``KernelContractV3``.
+
+  Hard contract:
+
+  1. ``ProviderRegistry.applicable(contract: KernelContractV3) -> list[ProviderApplicability]``
+     is a pure static-metadata filter — no provider methods are invoked,
+     no codegen runs. The filter reads two optional class-level
+     attributes on each provider (``applicable_targets``,
+     ``applicable_archetypes``); empty tuple is wildcard. Legacy
+     providers without these attributes are wildcard-matched (today's
+     behaviour preserved exactly).
+  2. ``registry_resolution.json`` is emitted whenever the M-42 stage
+     runs, regardless of whether any providers matched. Schema:
+     ``registry_resolution_v1`` with fields ``schema_version``,
+     ``generated_at_utc``, ``task_id``, ``region_id``, ``candidate_id``,
+     ``contract_hash``, ``request_kind``, ``providers_considered``,
+     ``applicable_provider_names``, ``fallback_used``, ``fallback_path``.
+     All fields except ``generated_at_utc`` are byte-stable across
+     reruns of the same selection.
+  3. When ``applicable_provider_names`` is empty, ``fallback_used: true``
+     and ``fallback_path: claude_code_subagent_via_m43`` — today's
+     Claude-Code subagent path runs unchanged via the M-43 commit
+     flow. M-55 does not change the kernel-codegen behaviour;
+     M-56/M-57 will consume this resolution.
+  4. The M-42 ``requests/<task_id>.request.json`` and
+     ``kernel_codegen_summary.json`` artefacts are byte-identical to
+     pre-M-55 runs — the resolution file is added alongside them.
+commit: 0a55000000000000000000000000000000000000
+created_at_utc: 2026-05-07T00:00:00Z
+forbidden:
+- ProviderRegistry.applicable invoking provider.search / accepts_contract / bid (M-55 is metadata-only; provider methods are reserved for M-56+)
+- registry_resolution.json missing when 04_kernel_codegen/requests/ has a request file
+- treating absence of registry_resolution.json as equivalent to fallback_used=true (the file must always exist when M-42 runs)
+- changing M-42's request schema, summary schema, or task_id derivation in this milestone (those land in M-56+)
+- silently swallowing provider-discovery exceptions; resolution errors must surface in resolution_error
+realness_level: production_path
+required_evidence:
+- python/compgen/kernels/registry.py (ProviderApplicability, applicable() method, default_registry, discover_default_providers)
+- python/compgen/graph_compilation/kernel_codegen.py (_emit_registry_resolution + run_kernel_codegen_request integration)
+- tests/graph_compilation/test_registry_wired.py
+feature_id: m55_registry_wired
+notes: |
+  Phase D bootstrap. The Phase C path emitted a kernel-codegen task
+  unconditionally for the Claude-Code subagent. Phase D's auction
+  protocol (M-57) needs a stable, on-disk record of which providers
+  could bid before any provider runs. M-55 lands that record.
+
+  Pre-existing scaffolding consumed:
+  - ``ProviderRegistry`` (kernels/registry.py) — extended with
+    ``applicable()`` + ``ProviderApplicability`` dataclass.
+  - Entry-point discovery already lived in
+    ``codegen_fallback._discover_providers``; promoted to public
+    ``discover_default_providers()`` in registry.py so M-42 can call
+    it without reaching into a Phase B fallback module.
+  - Provider applicability metadata (``applicable_targets``,
+    ``applicable_archetypes``, ``priority``) is read with
+    ``getattr(p, attr, default)`` so today's 9 shipped provider impls
+    work without modification.
+
+  Tests: 7 in tests/graph_compilation/test_registry_wired.py covering
+  applicable() unit cases (wildcard, target filter, archetype filter,
+  priority sort), resolution-file emit (existence + schema +
+  byte-stability across reruns), and the e2e invariant that today's
+  M-42 request still lands when the registry has no applicable
+  providers (fallback_used=true).
+
+  Honest residuals:
+  - The Claude-Code subagent path is not yet represented as a
+    KernelProvider in the registry. That formalisation lands in
+    M-56 when the ``bid()`` interface is introduced — naturally
+    expressed as a low-confidence, high-cost bid for the subagent.
+  - ``applicable()`` does not yet consider numerics (accumulator
+    dtype, deterministic) or memory residency. Those filter axes
+    activate alongside the predicate DSL in M-61.
+  - ``default_registry()`` does not load filesystem-resident
+    user-space providers yet; that path is M-62.

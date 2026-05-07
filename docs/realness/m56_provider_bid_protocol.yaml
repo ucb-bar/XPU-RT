@@ -1,0 +1,114 @@
+claim: |
+  M-56 (Phase D, Section 7 integration step 2): adds a two-stage
+  ``KernelProvider`` protocol so the auction (M-57) can prune candidate
+  providers before any codegen runs. Every provider may now implement
+  an optional ``bid(contract_v3) -> BidPreview`` method that returns a
+  cheap, declarative pre-codegen estimate.
+
+  Hard contract:
+
+  1. ``BidPreview`` is a frozen dataclass at ``kernels/provider.py``
+     with fields ``provider_name``, ``contract_hash``,
+     ``perf_estimate_us``, ``confidence`` (in [0, 1]),
+     ``time_to_generate_s_estimate``, ``registers_used``, ``occupancy``,
+     ``smem_bytes``, ``rationale``, ``cache_hit``. ``perf_estimate_us``
+     accepts ``+inf`` as the "no estimate" sentinel; JSON serialisation
+     uses the literal ``"+inf"`` string for round-trip stability.
+  2. ``compute_bid(provider, contract_v3, *, expected_hash=None)`` in
+     ``kernels/registry.py`` invokes ``provider.bid()`` if present;
+     legacy providers without ``bid()`` get a placeholder returning
+     ``confidence=0.0`` and ``rationale="no_bid_method"`` so the
+     auction treats them as last-resort. Provider-internal exceptions
+     are caught and converted to a placeholder bid with
+     ``rationale="bid_raised:<ExcType>"`` so one buggy provider does
+     not abort the auction.
+  3. ``ProviderProtocolViolation`` (typed ``ValueError`` subclass)
+     fires when ``bid()`` returns a structurally-malformed
+     ``BidPreview``: out-of-range confidence / occupancy, negative
+     perf_estimate / registers / smem, NaN perf_estimate /
+     time_to_generate, or a ``contract_hash`` that disagrees with the
+     canonical hash.
+  4. ``compute_bid`` stamps the canonical contract hash onto the
+     returned ``BidPreview`` if the provider didn't supply one;
+     ``collect_bids(providers, contract_v3)`` runs over a list of
+     applicable providers, hashes the contract once, and returns one
+     bid per provider in input order.
+  5. ``ClaudeCodeKernelProvider.bid()`` is cache-aware: in-session
+     cache hit → ``confidence=0.9, time_to_generate_s=1.0,
+     cache_hit=True``; ``StubCodegen`` (test fixture) treats every
+     call as a cache hit; cache miss → ``confidence=0.3,
+     time_to_generate_s=900``.
+  6. ``TritonTemplateProvider.bid()`` matches archetype + op_name
+     against the existing 7-template family table; on match,
+     ``confidence=0.7``, ``time_to_generate_s=0.1`` (string
+     substitution), and a roofline ``perf_estimate_us`` derived from
+     ``hardware_envelope.peak_compute_per_dtype`` × tile flops; on
+     miss, ``confidence=0.0`` with rationale ``no_template_for_archetype_*``.
+commit: 0a56000000000000000000000000000000000000
+created_at_utc: 2026-05-07T00:00:00Z
+forbidden:
+- adding bid() to the @runtime_checkable Protocol surface (would break isinstance(p, KernelProvider) for legacy providers; bid() is read with getattr fallback)
+- compute_bid silently swallowing ProviderProtocolViolation (typed errors must propagate; only bare exceptions degrade to placeholder)
+- BidPreview.perf_estimate_us defaulting to 0.0 (sentinel is +inf; 0.0 means "instant kernel" which is a real ranking signal we'd misinterpret)
+- providers writing artifacts during bid() (bid is metadata-only; codegen runs in fulfill())
+- skipping the canonical-hash stamp on the returned BidPreview (downstream auction relies on every bid carrying the contract_hash it's bidding on)
+realness_level: production_path
+required_evidence:
+- python/compgen/kernels/provider.py (BidPreview, ProviderProtocolViolation, make_default_bid)
+- python/compgen/kernels/registry.py (compute_bid, collect_bids, _validate_bid)
+- python/compgen/kernels/providers/claude_code_default.py (bid + _kernel_facing_to_fp_dict cache-aware probe)
+- python/compgen/kernels/providers/triton_templates.py (bid + _archetype_to_family roofline)
+- tests/kernels/test_provider_bid.py
+feature_id: m56_provider_bid_protocol
+notes: |
+  Phase D step 2. M-55 made the registry's applicability surface
+  explicit; M-56 makes the registry's bidding surface explicit. M-57
+  composes both into the multi-bidder auction.
+
+  Pre-existing scaffolding consumed:
+  - ``KernelProvider`` Protocol (kernels/provider.py) — extended with
+    BidPreview / ProviderProtocolViolation; the Protocol body is
+    unchanged so legacy providers stay isinstance-conformant.
+  - ``ProviderRegistry`` (kernels/registry.py) — new ``compute_bid`` /
+    ``collect_bids`` helpers that work over the list returned by
+    ``applicable()`` (M-55).
+  - ``ClaudeCodeKernelProvider`` (claude_code_default.py) — gains
+    ``bid()`` + a private ``_kernel_facing_to_fp_dict`` helper that
+    builds the same fingerprint shape ``InSessionCodegen`` reads, so a
+    cache-hit bid is honest (the cache really would serve the kernel).
+  - ``TritonTemplateProvider`` (triton_templates.py) — gains ``bid()``
+    that maps v3 archetype + op_name onto the existing template-
+    family table (matmul / matmul_bias_gelu / matmul_bias_relu /
+    elementwise_gelu / softmax / layer_norm / add_relu).
+
+  Real-driven stress (`/tmp/m56_stress`):
+  - Run merlin_mlp_wide pipeline → 04_kernel_codegen/contracts/<h>.json.
+  - Reconstruct V3 contract via ``_reconstruct_contract_from_dict``.
+  - Build ProviderRegistry with ClaudeCodeKernelProvider(StubCodegen) +
+    TritonTemplateProvider + a legacy ``c_reference_stub`` (no bid).
+  - ``collect_bids`` returns 3 bids: claude_code_default conf=0.90
+    (stub treated as cache hit), triton_templates conf=0.70
+    perf=5.02us (real roofline), c_reference_stub conf=0.00
+    rationale=no_bid_method.
+  - All three share contract_hash=4838412db0b5c6b8 (matches M-55).
+
+  Tests: 13 in tests/kernels/test_provider_bid.py covering BidPreview
+  schema (round-trip + +inf), legacy fallback, validation
+  (out-of-range confidence, negative perf, internal exception, wrong
+  contract_hash, returning None), ClaudeCodeKernelProvider bid (stub
+  vs unknown codegen), TritonTemplateProvider bid (matmul match vs
+  unknown archetype), collect_bids over a 3-provider list.
+
+  Honest residuals:
+  - 7 of the 9 shipped providers (ClaudeKernel, KernelBlaster, Autocomp,
+    Exo, ExoRiscvOpu, Megakernel, _Template) do not yet implement
+    bid(); they fall back to ``confidence=0.0`` placeholders. M-57 may
+    light up additional providers as they prove auction-relevant; the
+    fallback path is the contract.
+  - bid() correctness is unverified at bid time. Misleading bids waste
+    top-K capacity; the contract-driven verifier (M-44) catches
+    real-world divergence on the fulfilled artifact.
+  - The cache-aware ClaudeCode bid only fires for ``InSessionCodegen``;
+    the ``CliSubprocessCallable`` and ``ApiCallable`` paths fall to
+    the cache-miss branch (confidence=0.3). The MCP tool layer's
+    persistent kernel store will surface those as cache hits in M-62.

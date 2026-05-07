@@ -73,6 +73,7 @@ def _build_parser() -> argparse.ArgumentParser:
             "agent-decision-request",
             "kernel-specialization-request",
             "kernel-codegen-request",
+            "kernel-auction",
             "execution-plan-emit",
             "glue-emit",
             "glue-differential",
@@ -195,6 +196,30 @@ def _build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Root for materialized extensions (default: <repo>/.crg-artifacts/extensions).",
     )
+    run.add_argument(
+        "--auction-mode",
+        choices=("multi-bidder", "first-fit", "disabled"),
+        default="multi-bidder",
+        help=(
+            "M-57: kernel-auction mode. multi-bidder (default): every "
+            "applicable provider bids; top-K (--bid-cutoff) fulfill; "
+            "all verify; selector picks by perf_estimate. first-fit: "
+            "stop at the first verified bid in priority order. disabled: "
+            "skip the auction entirely (today's M-43 commit path "
+            "remains canonical)."
+        ),
+    )
+    run.add_argument(
+        "--bid-cutoff",
+        type=int,
+        default=3,
+        help=(
+            "M-57: top-K bidders that proceed to fulfill() in multi-bidder "
+            "mode. Lower values cap the auction's wall-clock + budget "
+            "footprint; higher values surface more comparative data in "
+            "auction_report.json. Default 3."
+        ),
+    )
 
     # run-suite (multi-model run from a YAML manifest)
     run_suite = sub.add_parser(
@@ -224,6 +249,7 @@ def _build_parser() -> argparse.ArgumentParser:
             "agent-decision-request",
             "kernel-specialization-request",
             "kernel-codegen-request",
+            "kernel-auction",
             "execution-plan-emit",
             "glue-emit",
             "glue-differential",
@@ -697,6 +723,8 @@ def _run_pipeline(
     agent_max_retries: int = 3,
     live_provider_config: object | None = None,
     resume_from: str | None = None,
+    auction_mode: str = "multi-bidder",
+    bid_cutoff: int = 3,
 ) -> int:
     from compgen.graph_compilation.run import run_graph_compilation
 
@@ -739,6 +767,8 @@ def _run_pipeline(
         agent_max_retries=agent_max_retries,
         live_provider_config=live_provider_config,
         resume_from=resume_from,
+        auction_mode=auction_mode,
+        bid_cutoff=bid_cutoff,
     )
     print(f"run_dir: {result.run_dir}")
     for s in result.stages:
@@ -1536,6 +1566,8 @@ def main(argv: list[str] | None = None) -> int:
                 agent_max_retries=getattr(args, "agent_max_retries", 3),
                 live_provider_config=live_cfg,
                 resume_from=getattr(args, "resume_from", None),
+                auction_mode=getattr(args, "auction_mode", "multi-bidder"),
+                bid_cutoff=getattr(args, "bid_cutoff", 3),
             )
         if args.command == "lower":
             return _run_lower(args.capture_run, args.target, args.out, args.run_id)

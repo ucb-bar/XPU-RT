@@ -180,6 +180,163 @@ class ProviderResult:
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
+# ===========================================================================
+# Phase D / M-56 — two-stage provider protocol: bid → fulfill
+# ===========================================================================
+#
+# Today's provider interface has one method that performs codegen
+# (``search`` / ``ProviderResult``). The Phase D auction (M-57) needs
+# a *cheap* pre-codegen estimate so it can pick the top-K bidders to
+# actually invoke. M-56 introduces ``BidPreview`` for that:
+#
+#   * Every provider may implement an optional ``bid(contract_v3)
+#     -> BidPreview`` method.
+#   * Legacy providers without ``bid()`` are bridged via
+#     :func:`compgen.kernels.registry.compute_bid`, which returns a
+#     low-confidence placeholder.
+#   * The auction ranks by ``perf_estimate_us / confidence`` and sends
+#     the top-K to ``fulfill()`` (today's ``search()`` semantics).
+#
+# Bid honesty is *unverified at bid time* — the auction trusts bids
+# only as a ranking signal. The contract-driven verifier (M-44) still
+# runs on every fulfilled bid. Misleading bids waste top-K capacity,
+# they do not let unsafe artifacts through.
+
+
+class ProviderProtocolViolation(ValueError):
+    """A provider returned a structurally-malformed BidPreview / ProviderResult.
+
+    M-56 raises this from :func:`compgen.kernels.registry.compute_bid`
+    when ``bid()`` returns a ``BidPreview`` with out-of-range fields
+    (negative confidence, non-finite perf_estimate, contract_hash that
+    disagrees with the canonical hash, etc.). The auction treats this
+    as a fatal protocol violation for the offending provider — its bid
+    is dropped, the rest of the auction proceeds.
+    """
+
+
+@dataclass(frozen=True)
+class BidPreview:
+    """A provider's cheap, pre-codegen bid on a :class:`KernelContractV3`.
+
+    The provider declares (a) what it *thinks* it can deliver, (b) how
+    confident it is, (c) how long ``fulfill()`` will take. The auction
+    (M-57) uses this to decide whether the provider gets to run at all.
+
+    Attributes:
+        provider_name: Mirrors :attr:`KernelProvider.name` so the
+            BidPreview is self-describing on disk.
+        contract_hash: The canonical hash of the contract this bid
+            is for. Empty string is a sentinel — :func:`compute_bid`
+            stamps the canonical hash if the provider didn't supply one.
+            If the provider supplied a non-empty hash and it disagrees
+            with the canonical hash, the bid is rejected as a protocol
+            violation.
+        perf_estimate_us: Estimated kernel latency (microseconds).
+            ``+inf`` is the placeholder for "no estimate".
+        confidence: Self-reported [0, 1]. 0 = pure placeholder; 1 =
+            the provider is sure (e.g. cache hit). The auction
+            multiplies this with ``perf_estimate`` for ranking.
+        time_to_generate_s_estimate: How long ``fulfill()`` will take
+            in wall-clock seconds. Auction uses this to short-circuit
+            providers that won't fit the per-task budget.
+        registers_used / occupancy / smem_bytes: Resource claims for
+            informational ranking. Verifier (M-44) may cross-check.
+        rationale: One-line justification — surfaced in
+            ``auction_report.json`` for tactician analysis.
+        cache_hit: True iff the provider can serve from a verified
+            cache, in which case ``fulfill()`` is essentially free.
+            The auction uses this to prefer cached over fresh bids.
+    """
+
+    provider_name: str
+    contract_hash: str = ""
+    perf_estimate_us: float = float("inf")
+    confidence: float = 0.0
+    time_to_generate_s_estimate: float = 900.0
+    registers_used: int = 0
+    occupancy: float = 0.0
+    smem_bytes: int = 0
+    rationale: str = ""
+    cache_hit: bool = False
+
+    def to_dict(self) -> dict[str, Any]:
+        # ``perf_estimate_us`` may be +inf — JSON cannot serialise that
+        # losslessly; we use the string "+inf" sentinel that
+        # :meth:`from_dict` reads back.
+        import math
+
+        perf = self.perf_estimate_us
+        if math.isinf(perf):
+            perf_repr: float | str = "+inf" if perf > 0 else "-inf"
+        elif math.isnan(perf):
+            perf_repr = "nan"
+        else:
+            perf_repr = float(perf)
+        return {
+            "provider_name": self.provider_name,
+            "contract_hash": self.contract_hash,
+            "perf_estimate_us": perf_repr,
+            "confidence": self.confidence,
+            "time_to_generate_s_estimate": self.time_to_generate_s_estimate,
+            "registers_used": self.registers_used,
+            "occupancy": self.occupancy,
+            "smem_bytes": self.smem_bytes,
+            "rationale": self.rationale,
+            "cache_hit": self.cache_hit,
+        }
+
+    @classmethod
+    def from_dict(cls, body: dict[str, Any]) -> "BidPreview":
+        perf_raw = body.get("perf_estimate_us", float("inf"))
+        if isinstance(perf_raw, str):
+            if perf_raw == "+inf":
+                perf = float("inf")
+            elif perf_raw == "-inf":
+                perf = float("-inf")
+            else:
+                perf = float("nan")
+        else:
+            perf = float(perf_raw)
+        return cls(
+            provider_name=str(body.get("provider_name", "")),
+            contract_hash=str(body.get("contract_hash", "")),
+            perf_estimate_us=perf,
+            confidence=float(body.get("confidence", 0.0)),
+            time_to_generate_s_estimate=float(
+                body.get("time_to_generate_s_estimate", 900.0)
+            ),
+            registers_used=int(body.get("registers_used", 0)),
+            occupancy=float(body.get("occupancy", 0.0)),
+            smem_bytes=int(body.get("smem_bytes", 0)),
+            rationale=str(body.get("rationale", "")),
+            cache_hit=bool(body.get("cache_hit", False)),
+        )
+
+
+def make_default_bid(
+    *,
+    provider_name: str,
+    contract_hash: str,
+    rationale: str = "no_bid_method",
+) -> BidPreview:
+    """Build a placeholder :class:`BidPreview` for a legacy provider that
+    has no ``bid()`` method.
+
+    Returns ``confidence=0.0`` so the auction treats the provider as a
+    last-resort bidder; real providers must override ``bid()`` to
+    surface non-zero confidence.
+    """
+    return BidPreview(
+        provider_name=provider_name,
+        contract_hash=contract_hash,
+        perf_estimate_us=float("inf"),
+        confidence=0.0,
+        time_to_generate_s_estimate=900.0,
+        rationale=rationale,
+    )
+
+
 @runtime_checkable
 class KernelProvider(Protocol):
     """Protocol for pluggable kernel generation backends.
@@ -225,13 +382,26 @@ class KernelProvider(Protocol):
         ...
 
 
+# Phase D / M-56 — providers may optionally implement::
+#
+#     def bid(self, contract: KernelContractV3) -> BidPreview: ...
+#
+# The Protocol above does NOT declare ``bid`` so legacy providers
+# remain ``isinstance(p, KernelProvider)``-conformant. Use
+# :func:`compgen.kernels.registry.compute_bid` to safely invoke it
+# with a placeholder fallback.
+
+
 __all__ = [
+    "BidPreview",
     "ContractFeedback",
     "DispatchGeometry",
     "KernelContract",
     "KernelProvider",
     "KnowledgeExport",
+    "ProviderProtocolViolation",
     "ProviderResult",
     "RuntimeCapabilities",
     "SearchBudget",
+    "make_default_bid",
 ]

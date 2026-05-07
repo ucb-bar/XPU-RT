@@ -300,6 +300,86 @@ def compgen_inspect_kernel_codegen_task(
     }
 
 
+# --------------------------------------------------------------------------- #
+# M-57: compgen_compare_kernel_bids — read-only auction summary
+# --------------------------------------------------------------------------- #
+
+
+def compgen_compare_kernel_bids(
+    *,
+    run_dir: str,
+    task_id: str,
+) -> dict[str, Any]:
+    """Read-only ranked summary of an M-57 auction.
+
+    Returns one row per provider that bid on the task, with:
+
+    * ``provider_name``
+    * ``rank`` (1 = best by score)
+    * ``score`` (lower is better; perf / confidence)
+    * ``confidence``, ``perf_estimate_us``, ``time_to_generate_s_estimate``,
+      ``cache_hit``, ``rationale``
+    * ``fulfilled``, ``verifier_status``, ``paper_claimable``
+    * ``certificate_path`` (when verified)
+
+    The agent uses this to make pruning / re-ranking decisions without
+    reading every full ProviderResult or BidPreview JSON. When no
+    auction has run for the task, returns ``{"ok": False, ...}``.
+    """
+    run_dir_path = Path(run_dir).resolve()
+    auction_root = run_dir_path / "04_kernel_codegen" / "auction" / task_id
+    report_path = auction_root / "auction_report.json"
+    if not report_path.exists():
+        return {
+            "ok": False,
+            "task_id": task_id,
+            "error": "no_auction_report",
+        }
+
+    report = _read_json(report_path)
+    bids = report.get("bids", []) or []
+    fulfilled = {f["provider_name"]: f for f in (report.get("fulfilled") or [])}
+    verified = {v["provider_name"]: v for v in (report.get("verified") or [])}
+
+    rows: list[dict[str, Any]] = []
+    for record in bids:
+        bid = record.get("bid", {}) or {}
+        name = record.get("provider_name", "")
+        ful = fulfilled.get(name, {})
+        ver = verified.get(name, {})
+        rows.append(
+            {
+                "provider_name": name,
+                "rank": record.get("rank"),
+                "score": record.get("score"),
+                "confidence": bid.get("confidence"),
+                "perf_estimate_us": bid.get("perf_estimate_us"),
+                "time_to_generate_s_estimate": bid.get("time_to_generate_s_estimate"),
+                "cache_hit": bid.get("cache_hit", False),
+                "rationale": bid.get("rationale", ""),
+                "fulfilled": bool(ful.get("found", False)),
+                "fulfill_error": ful.get("error", ""),
+                "verifier_status": ver.get("overall", "skipped"),
+                "verifier_failure_kind": ver.get("failure_kind", ""),
+                "certificate_path": ver.get("certificate_path", ""),
+                "paper_claimable": (
+                    ver.get("overall") == "pass"
+                    and not bid.get("cache_hit", False)
+                ),
+            }
+        )
+
+    return {
+        "ok": True,
+        "task_id": task_id,
+        "contract_hash": report.get("contract_hash", ""),
+        "mode": report.get("mode", ""),
+        "overall": report.get("overall", ""),
+        "winner_provider": report.get("winner_provider", ""),
+        "rows": rows,
+    }
+
+
 def _resolve_certificate(run_dir: Path, request: dict[str, Any]) -> dict[str, Any] | None:
     """Best-effort: load the kernel certificate keyed by the request's
     contract_hash. Returns None when no cert exists yet."""
