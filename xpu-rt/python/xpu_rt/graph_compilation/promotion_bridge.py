@@ -304,36 +304,33 @@ def derive_contract_hash(
     candidate_selection: dict[str, Any],
     region_signature_fields: dict[str, str],
 ) -> str:
-    """Synthesize the M-26 exact-kernel ``contract_hash``.
+    """Deprecated (M-41). Kept as a thin shim that raises a typed
+    error so any remaining production caller is fixed loud.
 
-    Phase B does not currently persist :class:`KernelContractV3`
-    objects to disk for every region (the lowering manifest reports
-    ``kernel_contracts: 0`` for ``SetTileParams`` recipes), so the
-    bridge constructs the kernel-identity hash directly from the
-    candidate's recipe_delta plus the region's dtype/layout/shape
-    facts and target_class. Two regions whose recipe_delta + facts
-    canonicalise identically produce the same hash; the M-28
-    retrieval can then surface a previously-compiled kernel as an
-    exact-contract match without re-codegenning.
+    The canonical contract hash is now
+    ``compgen.promotion.contract_hash.hash_contract`` applied to the
+    full ``KernelContractV3`` materialised via
+    ``KernelContractV3.from_recipe`` (M-40). Production callers must
+    route through
+    ``compgen.graph_compilation.kernel_contract_materialization.hash_contract_from_run_dir``
+    which loads the dossier + target profile + recipe-gate verdict and
+    produces the canonical hash.
 
-    The hash is stable across runs (same model + tile spec + target
-    on the same machine produces the same key).
+    Reason for retiring: pre-M-40 there was no materialised contract
+    on disk, so this function synthesised a hash from raw dicts. That
+    parallel hashing scheme could drift from the canonical
+    ``hash_contract`` (which keys the promotion library) and produce
+    silent cache misses. M-41 collapses both schemes into one.
     """
-    payload: dict[str, Any] = {
-        "candidate_kind": candidate_selection.get("candidate_kind", ""),
-        "recipe_delta": list(candidate_selection.get("recipe_delta") or []),
-        "region": {
-            "op_family": region_signature_fields.get("op_family", ""),
-            "dtype": region_signature_fields.get("dtype", ""),
-            "layout": region_signature_fields.get("layout", ""),
-            "shape_class": region_signature_fields.get("shape_class", ""),
-            "target_class": region_signature_fields.get("target_class", ""),
-        },
-    }
-    encoded = json.dumps(
-        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False,
+    raise RuntimeError(
+        "derive_contract_hash is retired in M-41; use "
+        "compgen.graph_compilation.kernel_contract_materialization."
+        "hash_contract_from_run_dir(run_dir, candidate_selection, "
+        "region_id, target_id) instead. The canonical hash is "
+        "compgen.promotion.contract_hash.hash_contract applied to a "
+        "KernelContractV3 materialised via "
+        "KernelContractV3.from_recipe (M-40)."
     )
-    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()[:16]
 
 
 def _derive_region_signature(
@@ -648,12 +645,17 @@ def _emit_impl(
         kind=region_kind,
     )
 
-    # M-26 contract_hash — exact-kernel reuse tier. Synthesized from
-    # candidate_selection + region facts because Phase B doesn't yet
-    # persist full KernelContractV3 objects to disk for every region.
-    contract_hash_str = derive_contract_hash(
+    # M-26 contract_hash — exact-kernel reuse tier. M-41: route through
+    # the canonical hash_contract(KernelContractV3) so promotion-write
+    # and promotion-read derive byte-identical keys.
+    from compgen.graph_compilation.kernel_contract_materialization import (
+        hash_contract_from_run_dir,
+    )
+    contract_hash_str = hash_contract_from_run_dir(
+        run_dir=run_dir,
         candidate_selection=selection,
-        region_signature_fields=region_sig_fields,
+        region_id=region_id,
+        target_id=target_id,
     )
 
     # M-29: evaluate the promotion-gate ladder before constructing

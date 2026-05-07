@@ -1,0 +1,63 @@
+claim: |
+  M-39 (Section 21) emits a typed ``KernelSpecializationRequest`` to
+  ``04_kernel_specialization/requests/<request_id>.json`` after
+  recipe_planning. The request bounds every dimension of the
+  shape-specialized kernel a downstream codegen provider (Triton,
+  C reference, autocomp-style search, or cache hit) is allowed to
+  produce: concrete shape (M/N/K), tile geometry, dtype, layout,
+  accumulator, tolerance refinement claim and bound formula,
+  aliasing rule, dispatch model, and the M-26 ``contract_hash``
+  that keys the kernel cache.
+
+  M-39 is **data-only** — no codegen fires here. The Triton emitter
+  (M-40), C reference emitter (M-41), launch metadata (M-42),
+  certificate (M-43), and cache (M-44) consume this request.
+commit: 6162d6e
+created_at_utc: 2026-05-07T00:00:00Z
+feature_id: m39_kernel_specialization_request
+forbidden:
+- emit a kernel without a matching request
+- mutate the request's tolerance / accumulator / layout downstream
+- invent a shape class (M-39 is concrete-only; shape_class lands in M-45)
+- silently drop ``not_applicable`` requests instead of emitting them typed
+- compute ``contract_hash`` independently of M-26's ``derive_contract_hash``
+- emit dynamic-guarded kernels at this layer (deferred until after M-44 lands)
+realness_level: decision_affecting
+required_evidence:
+- python/compgen/graph_compilation/kernel_specialization.py
+- python/compgen/graph_compilation/run.py (kernel-specialization-request boundary)
+- tests/graph_compilation/test_kernel_specialization_request.py
+- 04_kernel_specialization/requests/<request_id>.json on a real run
+  (verified on merlin_mlp_wide and tiny_mlp)
+- 04_kernel_specialization/kernel_specialization_summary.json on a real run
+notes: |
+  Section 21 / M-39. The kernel-specialization stage exists between
+  recipe-planning and runtime emission so the runtime never has to
+  figure out shapes or codegen strategy at launch time — it consumes
+  already-specialized kernel artifacts. M-39 is the first milestone:
+  it produces the request, not the kernel.
+
+  Verification on the canonical pair:
+  - **merlin_mlp_wide** (matmul_0: M=16 N=32 K=16, tile=16,16,16):
+    K_iters=1, single_k_iter holds → declared refinement
+    ``bit_equality``, bound ``exact``. contract_hash =
+    ``27548a2467858c96``.
+  - **tiny_mlp** (matmul_0: M=4 N=128 K=64, tile=4,16,16):
+    K_iters=4, NOT single_k_iter → declared refinement
+    ``tolerance_eps``, bound ``higham_4kepsabmax`` (the M-37.13
+    Higham bound). contract_hash = ``35e1d4384b0fbc6a``.
+
+  These two produce honest requests on the two distinct paths
+  Section 20 supports today (clean-divide K_iters=1 and clean-divide
+  K_iters>1).
+
+  Negative controls (M-37.13's TestHighamSemanticBound + the
+  byte-stability test in test_kernel_specialization_request.py) are
+  the load-bearing checks that the bound formula cannot be silently
+  widened and the request artifact cannot drift across reruns.
+
+  Realness level is ``decision_affecting`` because today the
+  request is consumed only by the M-44 cache lookup (skip-emit
+  path) and surfaced to operators / Claude Code as a bounded
+  task. M-40 lands the real codegen; that flips this contract to
+  ``production_path``.

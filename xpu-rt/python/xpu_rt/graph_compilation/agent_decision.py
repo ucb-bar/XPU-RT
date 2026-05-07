@@ -107,8 +107,10 @@ def _retrieve_promoted_for_region(
         return []
     try:
         from compgen.graph_compilation.promotion_bridge import (
-            derive_contract_hash,
             derive_region_signature,
+        )
+        from compgen.graph_compilation.kernel_contract_materialization import (
+            hash_contract_from_run_dir,
         )
         from compgen.graph_compilation.promotion_retrieval import (
             retrieve_for_region,
@@ -123,12 +125,17 @@ def _retrieve_promoted_for_region(
         if not region_sig_hash:
             return []
 
+        # M-41: route through the canonical hash. We keep
+        # region_sig_fields above only because retrieve_for_region's
+        # second tier still keys on it.
         contract_hash_str = ""
         if candidate_selection:
             try:
-                contract_hash_str = derive_contract_hash(
+                contract_hash_str = hash_contract_from_run_dir(
+                    run_dir=run_dir,
                     candidate_selection=candidate_selection,
-                    region_signature_fields=region_sig_fields,
+                    region_id=region_id,
+                    target_id=target_id,
                 )
             except Exception:  # noqa: BLE001
                 contract_hash_str = ""

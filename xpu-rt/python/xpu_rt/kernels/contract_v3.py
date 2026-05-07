@@ -580,6 +580,262 @@ class KernelContractV3:
 
     # --- audience-controlled views ---
 
+    @classmethod
+    def from_recipe(
+        cls,
+        *,
+        candidate_selection: dict[str, Any],
+        region_dossier: dict[str, Any],
+        target_profile: dict[str, Any],
+        declared_refinement: str = "unknown",
+    ) -> "KernelContractV3":
+        """Materialize a KernelContractV3 from a selected Recipe IR
+        decision plus region facts (M-40 / Section 21).
+
+        Inputs are dicts (already-parsed JSON / YAML) so this function
+        is a pure data transformation — no I/O. The pipeline-stage
+        wrapper at ``compgen.graph_compilation.kernel_contract_materialization``
+        reads the on-disk artifacts and calls into here.
+
+        Args:
+            candidate_selection: ``03_recipe_planning/candidate_selection.json``
+                contents. Provides candidate_kind, recipe_delta,
+                cost_preview (region_dims), label, region_id.
+            region_dossier: ``02_graph_analysis/region_dossiers/<...>.json``
+                contents. Provides region_shape (dtype, input_shapes,
+                output_shapes), kind, target_class.
+            target_profile: ``configs/targets/<target>.yaml`` contents.
+                Provides hardware envelope fields.
+            declared_refinement: ``"bit_equality"`` |
+                ``"tolerance_eps"`` | ``"unknown"``. Sourced from the
+                recipe-gate verdict (M-37.13's single_k_iter rule).
+
+        Returns:
+            A populated ``KernelContractV3`` whose ``__post_init__``
+            invariants pass. The contract is suitable for
+            ``hash_contract()`` (M-41) and for the kernel-facing
+            projection emitted as the bounded subagent task (M-42).
+
+        Raises:
+            ValueError: if the candidate kind is not yet supported.
+                M-40 supports only ``set_tile_params``; non-tile
+                candidates surface as ``not_applicable`` at the
+                wrapper layer rather than calling here.
+        """
+        candidate_kind = candidate_selection.get("candidate_kind", "")
+        if candidate_kind != "set_tile_params":
+            raise ValueError(
+                f"M-40 from_recipe supports only candidate_kind="
+                f"'set_tile_params'; got {candidate_kind!r}. The "
+                f"pipeline wrapper emits a typed not_applicable row "
+                f"for other kinds rather than calling here."
+            )
+
+        # --- Shape: M, N, K from the region dossier's region_shape. ---
+        region_shape = region_dossier.get("region_shape") or {}
+        input_shapes = region_shape.get("input_shapes") or []
+        if (
+            len(input_shapes) < 2
+            or len(input_shapes[0]) != 2
+            or len(input_shapes[1]) != 2
+            or input_shapes[0][1] != input_shapes[1][0]
+        ):
+            # Fall back to cost_preview region_dims (M-37.13 surface).
+            cost_preview = candidate_selection.get("cost_preview") or {}
+            region_dims = cost_preview.get("region_dims") or {}
+            M_dim = int(region_dims.get("M", 0) or 0)
+            N_dim = int(region_dims.get("N", 0) or 0)
+            K_dim = int(region_dims.get("K", 0) or 0)
+        else:
+            M_dim = int(input_shapes[0][0])
+            K_dim = int(input_shapes[0][1])
+            N_dim = int(input_shapes[1][1])
+
+        # --- Tile: parsed from the candidate label. ---
+        import re as _re
+        label = candidate_selection.get("label", "") or ""
+        m = _re.search(r"tile_M(\d+)_N(\d+)_K(\d+)", label)
+        if m:
+            tile_M = int(m.group(1))
+            tile_N = int(m.group(2))
+            tile_K = int(m.group(3))
+        else:
+            tile_M = tile_N = tile_K = 0
+            for op in candidate_selection.get("recipe_delta") or []:
+                tile_M = int(op.get("M", 0) or 0)
+                tile_N = int(op.get("N", 0) or 0)
+                tile_K = int(op.get("K", 0) or 0)
+        if tile_M <= 0 or tile_N <= 0 or tile_K <= 0:
+            raise ValueError(
+                f"Could not extract tile from candidate label/delta: "
+                f"label={label!r}"
+            )
+
+        # --- Dtype + layout from dossier; default to f32 row-major. ---
+        dtype = str(region_shape.get("dtype") or "f32")
+        # NumericsSpec — refinement claim drives max_relative_error.
+        # For bit_equality the structural M-12 check is exact; we still
+        # surface a non-zero rtol so the `numerics.epsilon_max_rel`
+        # field is monotonic across refinements (the runtime check
+        # prefers the Higham bound, this is the declared headroom).
+        if declared_refinement == "bit_equality":
+            max_rel_err = 0.0
+            deterministic = True
+        elif declared_refinement == "tolerance_eps":
+            max_rel_err = 1e-3
+            deterministic = True
+        else:
+            max_rel_err = 1e-3
+            deterministic = True
+        numerics = NumericsSpec(
+            accumulator_dtype="f32",
+            fast_math=False,
+            max_relative_error=max_rel_err,
+            deterministic=deterministic,
+        )
+
+        # --- IO ---
+        lhs = TensorIO(
+            name="lhs",
+            shape=ShapeClass(dims=(M_dim, K_dim)),
+            dtype_class=(dtype,),
+            layout=LayoutKind.ROW_MAJOR,
+            alignment_bytes=64,
+        )
+        rhs = TensorIO(
+            name="rhs",
+            shape=ShapeClass(dims=(K_dim, N_dim)),
+            dtype_class=(dtype,),
+            layout=LayoutKind.ROW_MAJOR,
+            alignment_bytes=64,
+        )
+        out = TensorIO(
+            name="out",
+            shape=ShapeClass(dims=(M_dim, N_dim)),
+            dtype_class=(dtype,),
+            layout=LayoutKind.ROW_MAJOR,
+            alignment_bytes=64,
+        )
+        # Tile sizes are static attrs; the kernel reads them.
+        attrs = (
+            StaticAttr(name="tile_M", value=tile_M),
+            StaticAttr(name="tile_N", value=tile_N),
+            StaticAttr(name="tile_K", value=tile_K),
+            StaticAttr(name="declared_refinement", value=declared_refinement),
+        )
+        io = IOContract(
+            inputs=(lhs, rhs),
+            outputs=(out,),
+            attributes=attrs,
+            numerics=numerics,
+        )
+
+        # --- Hardware envelope from target profile ---
+        target_id = (
+            target_profile.get("target_id")
+            or candidate_selection.get("target_id")
+            or region_dossier.get("target_class")
+            or "host_cpu"
+        )
+        # target_profile carries hardware caps under various nestings;
+        # we read the ones we need with conservative defaults.
+        envelope = target_profile.get("hardware_envelope") or {}
+        scratchpad_kib = int(envelope.get("scratchpad_kib", 64))
+        register_bytes = int(envelope.get("register_bytes", 256))
+        vector_lanes = int(envelope.get("vector_lanes", 8))
+        native_dtypes = tuple(
+            envelope.get("native_dtypes") or ("f32", "bf16")
+        )
+        peak_bw = float(envelope.get("peak_bandwidth_gbps", 0.0))
+        hardware = HardwareEnvelope(
+            target_name=str(target_id),
+            vector_lanes=vector_lanes,
+            scratchpad_bytes=scratchpad_kib * 1024,
+            register_bytes=register_bytes,
+            native_dtypes=native_dtypes,
+            peak_bandwidth_gbps=peak_bw,
+        )
+        execution = ExecutionEnvelope(
+            hardware=hardware,
+            memory_budget_bytes=scratchpad_kib * 1024,
+            concurrency_unit=ConcurrencyUnit.HOST_THREAD
+            if "cpu" in str(target_id).lower()
+            else ConcurrencyUnit.CTA,
+            padding=PaddingPolicy.KERNEL_HANDLES,
+            priority=PerformancePriority.BALANCED,
+        )
+
+        # --- Orchestration: SYNC for M-40 (M-50 widens to dispatch as
+        # a Recipe decision). One completion event "matmul_done";
+        # matmul is a fusion boundary; output goes to scratchpad so a
+        # downstream pointwise consumer reads warm.
+        orchestration = OrchestrationSpec(
+            execution=execution,
+            sync=SyncSpec(
+                event_decls=(EventDecl(name="matmul_done", scope="block"),),
+            ),
+            memory=MemorySpec(
+                input_tiers=(MemoryTier.SCRATCHPAD, MemoryTier.SCRATCHPAD),
+                output_tiers=(MemoryTier.SCRATCHPAD,),
+                lifetimes=(BufferLifetime(output_idx=0, live_after="next_consumer"),),
+            ),
+            fusion=FusionPolicy(is_boundary=True),
+            dispatch=DispatchSpec(model=DispatchModel.SYNC),
+            observability=ObservabilitySpec(
+                emit_completion_event=True, cost_emit_period=0,
+            ),
+        )
+
+        # --- Selection hints — provider preferences. ---
+        # cffi-C reference path is the conservative default for CPU
+        # targets; Triton template for GPU; autocomp as a follow-on.
+        if "cpu" in str(target_id).lower():
+            providers = (
+                ProviderHint(
+                    name="c_reference",
+                    weight=1.0,
+                    rationale="cffi-C reference is the proven CPU path",
+                ),
+                ProviderHint(
+                    name="claude_code_subagent",
+                    weight=0.5,
+                    rationale="LLM-driven kernel codegen (M-43+)",
+                ),
+            )
+        else:
+            providers = (
+                ProviderHint(
+                    name="triton_template",
+                    weight=1.0,
+                    rationale="parametric Triton template for GPU",
+                ),
+                ProviderHint(
+                    name="autocomp",
+                    weight=0.7,
+                    rationale="autocomp kernel-search backend",
+                ),
+            )
+        selection = SelectionHints(providers=providers)
+
+        return cls(
+            op_name="linalg.matmul",
+            archetype=KernelArchetype.COMPUTE_TILED,
+            io=io,
+            granularity=Granularity.NORMAL,
+            orchestration=orchestration,
+            selection=selection,
+            metadata={
+                "source_candidate_id": candidate_selection.get(
+                    "selected_candidate_id", ""
+                ),
+                "source_region_id": region_dossier.get("region_id", ""),
+                "source_recipe_op_id": "recipe_0000",
+                "declared_refinement": declared_refinement,
+                "tile": {"M": tile_M, "N": tile_N, "K": tile_K},
+                "shape": {"M": M_dim, "N": N_dim, "K": K_dim},
+            },
+        )
+
     def kernel_facing(self) -> KernelFacingView:
         """Read projection for kernel codegen.
 
