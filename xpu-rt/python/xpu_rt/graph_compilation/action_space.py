@@ -72,8 +72,57 @@ def _site_id(kind: str, region_id: str, *, suffix: str = "") -> str:
     return base + (f"_{suffix}" if suffix else "")
 
 
-def _candidate_id(kind: str, region_id: str, label: str) -> str:
-    return f"cand_{kind}_{_safe(region_id)}_{_safe(label)}__{_short_hash(region_id + '/' + label)}"
+def _candidate_id(
+    kind: str, region_id: str, label: str, *, region_extra: str = "",
+) -> str:
+    """Stable id for a candidate.
+
+    M-37.9 (Fix 1): when ``region_extra`` is supplied, it is mixed
+    into the hash so two regions named ``matmul_0`` in different
+    models with different shapes produce distinct candidate_ids. Pass
+    empty (the default) for backward compatibility with proposers
+    that don't yet have a content-aware extra (their ids stay
+    region_id-named).
+    """
+    hash_input = f"{region_id}/{label}"
+    if region_extra:
+        hash_input += f"@{region_extra}"
+    return (
+        f"cand_{kind}_{_safe(region_id)}_{_safe(label)}__{_short_hash(hash_input)}"
+    )
+
+
+def _region_content_hash(dossier: dict[str, Any]) -> str:
+    """Shape-distinctive hash over a region's actual tensor shape.
+
+    Two regions in different models that share a region_id but have
+    different shapes (e.g. tiny_mlp matmul_0 with M=4,K=64,N=128 vs
+    holdout_mlp_odd_shapes matmul_0 with M=7,K=63,N=129) hash
+    differently because their ``region_shape`` projections differ.
+
+    Falls back to a working_set_curve + legality + source hash for
+    legacy dossiers (region_dossier_v1) that don't carry the
+    ``region_shape`` field. Empty / missing dossier yields empty
+    string.
+    """
+    if not dossier:
+        return ""
+    region_shape = dossier.get("region_shape")
+    if region_shape:
+        payload = json.dumps(
+            region_shape, sort_keys=True, separators=(",", ":"),
+        )
+    else:
+        payload = json.dumps(
+            {
+                "source": dossier.get("source", {}),
+                "working_set_curve": dossier.get("working_set_curve", []),
+                "legality_constraints": dossier.get("legality_constraints", []),
+                "kind": dossier.get("kind", ""),
+            },
+            sort_keys=True, separators=(",", ":"),
+        )
+    return _short_hash(payload)
 
 
 # --------------------------------------------------------------------------- #
@@ -277,6 +326,29 @@ def _gen_tiling(
     # Baseline live_bytes for relative-cost normalization: max live_bytes seen.
     max_live = max(t["live_bytes"] for t in curve) or 1
 
+    # M-37.9 Fix 3b: derive the region's actual M/N/K (when matmul) so the
+    # cost preview can penalize tiles that would force boundary handling.
+    # Greedy sorts by static_relative_cost; without this penalty it
+    # always picks the smallest tile (cheapest cache footprint) even
+    # when that tile doesn't divide cleanly and the differential check
+    # will then fail. The penalty steers greedy toward clean-divide
+    # tiles when one exists at the same legality level.
+    region_dims: dict[str, int] = {}
+    region_shape = (dossier or {}).get("region_shape") or {}
+    if region_shape.get("kind") == "matmul":
+        inp = region_shape.get("input_shapes") or []
+        if (
+            len(inp) >= 2
+            and len(inp[0]) == 2
+            and len(inp[1]) == 2
+            and inp[0][1] == inp[1][0]
+        ):
+            region_dims = {
+                "M": int(inp[0][0]),
+                "K": int(inp[0][1]),
+                "N": int(inp[1][1]),
+            }
+
     candidates: list[_Cand] = []
     for tile_entry in curve:
         tile = tile_entry["tile"]
@@ -287,13 +359,37 @@ def _gen_tiling(
         # tracks how much pressure the tile places on caches.
         rel_cost = round((live / max_live) ** 0.5, 4)
 
+        # M-37.9 Fix 3b: boundary penalty. When the region's actual
+        # dimensions are known and the tile does NOT divide them
+        # cleanly, multiply the cost by 1.5 so a clean-divide tile
+        # (when one exists) sorts ahead. The penalty value is tuned
+        # so a clean-divide tile twice the cache footprint (cost
+        # ~sqrt(2) ≈ 1.41) still wins. ``boundary_required`` is
+        # surfaced in cost_preview so the validator + agent can see it.
+        boundary_required = False
+        if region_dims and {"M", "N", "K"} <= set(tile):
+            tM = int(tile.get("M", 0)) or 0
+            tN = int(tile.get("N", 0)) or 0
+            tK = int(tile.get("K", 0)) or 0
+            if tM > 0 and tN > 0 and tK > 0:
+                boundary_required = not (
+                    region_dims["M"] % tM == 0
+                    and region_dims["N"] % tN == 0
+                    and region_dims["K"] % tK == 0
+                )
+        if boundary_required:
+            rel_cost = round(rel_cost * 1.5, 4)
+
         # Tile-size label: M_N_K for matmul, raw dict otherwise.
         if {"M", "N", "K"} <= set(tile):
             label = f"tile_M{tile['M']}_N{tile['N']}_K{tile['K']}"
         else:
             label = "tile_" + "_".join(f"{k}{v}" for k, v in sorted(tile.items()))
 
-        cid = _candidate_id("tile", rid, label)
+        cid = _candidate_id(
+            "tile", rid, label,
+            region_extra=_region_content_hash(dossier),
+        )
         legality: dict[str, Any] = (
             {"ok": True}
             if fits_l2
@@ -320,6 +416,11 @@ def _gen_tiling(
                     "live_bytes": live,
                     "fits_scratchpad": fits_scratchpad,
                     "fits_l2": fits_l2,
+                    # M-37.9 Fix 3b: surface boundary requirement so
+                    # the agent / validator can read it without
+                    # re-deriving from shape + tile.
+                    "boundary_required": boundary_required,
+                    "region_dims": dict(region_dims) if region_dims else None,
                 },
                 evidence={
                     "region_dossier": region_dossier_ref,

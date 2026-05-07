@@ -60,6 +60,7 @@ class InspectionPack:
     warm_cache_summary: dict[str, Any] = field(default_factory=dict)
     pass_card_visibility: dict[str, Any] = field(default_factory=dict)
     analysis_summary_index: dict[str, Any] = field(default_factory=dict)
+    load_bearing_gate_attribution: dict[str, Any] = field(default_factory=dict)
     typed_outcome: str = ""
     errors: list[str] = field(default_factory=list)
     decision_seconds: float = 0.0
@@ -75,11 +76,116 @@ class InspectionPack:
             "warm_cache_summary": self.warm_cache_summary,
             "pass_card_visibility": self.pass_card_visibility,
             "analysis_summary_index": self.analysis_summary_index,
+            "load_bearing_gate_attribution": self.load_bearing_gate_attribution,
             "typed_outcome": self.typed_outcome,
             "errors": self.errors,
             "decision_seconds": self.decision_seconds,
             "generated_at_utc": self.generated_at_utc,
         }
+
+
+# --------------------------------------------------------------------------- #
+# M-37.13 G6: load-bearing-gate attribution
+# --------------------------------------------------------------------------- #
+
+
+def _attribute_load_bearing_gate(
+    *,
+    cost_preview: dict[str, Any],
+    refinement_status: str,
+    target_default_tiles: tuple[tuple[int, int, int], ...] = (
+        (16, 16, 16), (32, 32, 32), (64, 64, 32), (128, 128, 32), (256, 256, 64),
+    ),
+    selected_label: str,
+) -> dict[str, Any]:
+    """Identify which gate carried the load for this model's outcome.
+
+    The post-M-37.13 candidate-selection + verification pipeline has
+    three structurally-distinct admission paths a model can travel:
+
+    1. **bit_equality** — clean_divide AND single_k_iter holds. The
+       legacy strict path. Discharged by exact equality at every case.
+    2. **clean_divide_tolerance_eps** — clean_divide AND K_iters > 1.
+       Recipe gate's M-37.12 single_k_iter rule downgrades the
+       declaration; M-12's combined-tolerance criterion accepts the
+       per-case deviation.
+    3. **boundary_tolerance_eps** — tile doesn't divide cleanly.
+       Recipe gate declares tolerance_eps; M-12's combined-tolerance
+       accepts.
+
+    Cross-cutting: shape-fit clean-divide tile emission (M-37.11)
+    only matters if the picked tile differs from the target-profile
+    default set. We surface that as a separate boolean.
+
+    Returns a dict with explicit attribution so per-model OVERVIEW
+    rows can answer "which gate carried the load" without re-reading
+    the run dir."""
+    boundary_required = bool(cost_preview.get("boundary_required") or False)
+    region_dims = cost_preview.get("region_dims") or {}
+    # Parse the picked tile from the candidate label.
+    tile_M = tile_N = tile_K = None
+    import re as _re
+    m = _re.search(r"tile_M(\d+)_N(\d+)_K(\d+)", selected_label or "")
+    if m:
+        tile_M, tile_N, tile_K = int(m.group(1)), int(m.group(2)), int(m.group(3))
+    is_target_default = (
+        tile_M is not None
+        and (tile_M, tile_N, tile_K) in target_default_tiles
+    )
+    is_shape_fit_emission = (
+        tile_M is not None
+        and not is_target_default
+    )
+    M_dim = region_dims.get("M", 0) or 0
+    N_dim = region_dims.get("N", 0) or 0
+    K_dim = region_dims.get("K", 0) or 0
+    # ``clean_divide`` may not appear in cost_preview directly (it lives
+    # in recipe_gate's extra dict), so derive it structurally from the
+    # picked tile and region dims.
+    clean_divide_val = cost_preview.get("clean_divide")
+    if clean_divide_val is None and tile_M is not None and M_dim > 0:
+        clean_divide_val = (
+            M_dim % tile_M == 0
+            and N_dim % tile_N == 0
+            and K_dim % tile_K == 0
+        )
+    clean_divide = clean_divide_val
+    single_k_iter = (
+        tile_K is not None and K_dim > 0 and tile_K >= K_dim
+    )
+
+    # Classify the verification path.
+    if not boundary_required and clean_divide is True and single_k_iter:
+        path = "bit_equality"
+        load_bearing_gate = "exact_equality_per_case"
+    elif not boundary_required and clean_divide is True:
+        path = "clean_divide_tolerance_eps"
+        load_bearing_gate = (
+            "recipe_gate.single_k_iter (M-37.12) "
+            "+ M-12 Higham semantic bound (M-37.13)"
+        )
+    elif boundary_required:
+        path = "boundary_tolerance_eps"
+        load_bearing_gate = (
+            "recipe_gate.boundary_required → tolerance_eps "
+            "+ M-12 Higham semantic bound (M-37.13)"
+        )
+    else:
+        path = "unclassified"
+        load_bearing_gate = "unknown — inspect run dir manually"
+
+    return {
+        "verification_path": path,
+        "load_bearing_gate": load_bearing_gate,
+        "shape_fit_tile_picked": is_shape_fit_emission,
+        "selected_tile": (
+            {"M": tile_M, "N": tile_N, "K": tile_K} if tile_M is not None else None
+        ),
+        "single_k_iter": single_k_iter,
+        "boundary_required": boundary_required,
+        "clean_divide": clean_divide,
+        "refinement_status": refinement_status,
+    }
 
 
 def inspect_model_run(
@@ -230,6 +336,24 @@ def inspect_model_run(
         "by_level": _count_by_key(summaries, "level"),
     }
 
+    # --- Load-bearing gate attribution (M-37.13 G6) ---
+    cost_preview = sel.get("cost_preview") or {}
+    diff_path = (
+        run_dir / "03_recipe_planning" / "real_verification"
+        / "real_differential_report.json"
+    )
+    diff_report = _read_json(diff_path)
+    refinement_status = (
+        (diff_report.get("error") or {}).get("refinement_status", "")
+        if diff_report else ""
+    )
+    selected_label = sel.get("label", "")
+    pack.load_bearing_gate_attribution = _attribute_load_bearing_gate(
+        cost_preview=cost_preview,
+        refinement_status=refinement_status,
+        selected_label=selected_label,
+    )
+
     # --- Persist ---
     (out_dir / "inspection_pack.json").write_text(
         json.dumps(pack.to_dict(), indent=2, sort_keys=True) + "\n",
@@ -300,6 +424,50 @@ def _render_inspection_markdown(pack: InspectionPack) -> str:
     lines.append("")
     lines.append(f"  > {d.get('rationale_primary', '(none)')}")
     lines.append("")
+
+    # M-37.13 G6: load-bearing-gate attribution.
+    attr = pack.load_bearing_gate_attribution or {}
+    if attr:
+        lines.append("## Load-bearing gate attribution (M-37.13 G6)")
+        lines.append("")
+        lines.append(
+            "Which structural rule's change would flip this model's "
+            "outcome — i.e. the gate that carried the load for the "
+            "verified status."
+        )
+        lines.append("")
+        lines.append(
+            f"- **Verification path**: `{attr.get('verification_path')}`"
+        )
+        lines.append(
+            f"- **Load-bearing gate**: {attr.get('load_bearing_gate')}"
+        )
+        lines.append(
+            f"- **Shape-fit tile picked (M-37.11)**: "
+            f"{'✅ yes' if attr.get('shape_fit_tile_picked') else '⊝ no'}"
+        )
+        sel_tile = attr.get("selected_tile") or {}
+        if sel_tile:
+            lines.append(
+                f"- **Selected tile**: M={sel_tile.get('M')} "
+                f"N={sel_tile.get('N')} K={sel_tile.get('K')}"
+            )
+        lines.append(
+            f"- **single_k_iter**: "
+            f"{'✅ yes' if attr.get('single_k_iter') else '⊝ no'}"
+        )
+        lines.append(
+            f"- **boundary_required**: "
+            f"{'⚠ yes' if attr.get('boundary_required') else '✅ no'}"
+        )
+        lines.append(
+            f"- **clean_divide**: `{attr.get('clean_divide')}`"
+        )
+        lines.append(
+            f"- **M-12 refinement status**: "
+            f"`{attr.get('refinement_status') or '(none)'}`"
+        )
+        lines.append("")
 
     # Warm cache
     lines.append("## Warm-cache effectiveness (M-37.2)")
@@ -466,6 +634,50 @@ def aggregate_inspection_packs(
         lines.append(f"- **{outcome}** (`{len(models)}`): "
                      + ", ".join(f"`{m}`" for m in models))
     lines.append("")
+
+    # M-37.13 G6: load-bearing-gate attribution per model.
+    have_attribution = any(
+        pack.load_bearing_gate_attribution for pack in packs
+    )
+    if have_attribution:
+        lines.append("## Load-bearing gate attribution (M-37.13 G6)")
+        lines.append("")
+        lines.append(
+            "For each model, this column names the gate that admitted "
+            "the verified outcome — the structural rule whose change "
+            "would flip the outcome. Honest accounting of which gate "
+            "carried the load makes a passing run replayable as "
+            "evidence rather than a coincidence."
+        )
+        lines.append("")
+        lines.append(
+            "| Model | Verification path | Load-bearing gate | "
+            "Shape-fit tile? | single_k_iter | refinement_status |"
+        )
+        lines.append("| --- | --- | --- | --- | --- | --- |")
+        for pack in packs:
+            attr = pack.load_bearing_gate_attribution
+            lines.append(
+                f"| `{pack.model_id}` | "
+                f"`{attr.get('verification_path', '?')}` | "
+                f"{attr.get('load_bearing_gate', '?')} | "
+                f"{'✅' if attr.get('shape_fit_tile_picked') else '⊝'} | "
+                f"{'✅' if attr.get('single_k_iter') else '⊝'} | "
+                f"`{attr.get('refinement_status') or '(none)'}` |"
+            )
+        lines.append("")
+        # Distribution summary.
+        path_counts: dict[str, int] = {}
+        for pack in packs:
+            p = pack.load_bearing_gate_attribution.get(
+                "verification_path", "?"
+            )
+            path_counts[p] = path_counts.get(p, 0) + 1
+        lines.append("Distribution:")
+        lines.append("")
+        for p, n in sorted(path_counts.items()):
+            lines.append(f"- `{p}`: {n} model(s)")
+        lines.append("")
 
     # Family coverage
     lines.append("## Pass-card family coverage")

@@ -1,0 +1,109 @@
+claim: |
+  M-12 verification admits any model on the clean-divide path
+  (``executable_structured_ir``) without consulting a model-id
+  whitelist; correctness is gated by two structural rules instead.
+
+  (1) The recipe gate downgrades the declared refinement to
+  ``tolerance_eps`` whenever the tile does not satisfy
+  ``clean_divide AND tK >= K_dim`` (single K iteration). Multiple K
+  iterations reorder accumulation and break bit-exact equivalence
+  with eager — so ``bit_equality`` is claimed only when both
+  conditions hold.
+
+  (2) M-12's per-case differential uses Higham's matmul accumulation
+  bound (M-37.13's honest fix, replacing M-37.12's hand-picked
+  combined tolerance):
+
+   - SEMANTIC: ``|sim - eager| <= 4 * K * eps * max|A| * max|B|``
+     (Higham, *Accuracy and Stability of Numerical Algorithms*
+     §3.5; the safety slack of 4 absorbs FMA / BLAS summation-tree
+     variance). Used only when the recipe declares
+     ``tolerance_eps``. The bound scales linearly with K and with
+     ``max|A| * max|B|`` and is **derived per case from the inputs**,
+     so it can never be silently widened — any change to the bound
+     formula or constants is observable in the report's
+     ``semantic_bound`` field.
+
+  For declared ``bit_equality`` the case-pass criterion is exact
+  equality (max_abs == 0 AND max_rel == 0).
+
+  An earlier M-37.13 draft layered a structural ``simulator vs
+  tile_K_eager_reference`` bit-exact check, motivated by eliminating
+  the tolerance question entirely. That layer holds for clean-divide
+  cases (where torch.matmul's BLAS dispatch is identical for sliced
+  and full-matrix forms) but fails on boundary cases (M=7, K=63,
+  etc.) because PyTorch's BLAS dispatches differently for odd
+  shapes — producing FP reordering that's not a simulator bug.
+  The structural layer was therefore dropped in favor of Higham's
+  bound, which captures both paths uniformly.
+
+  The pre-M-37.12 ``selected_model_is_merlin_mlp_wide`` whitelist
+  remains in the contract for the boundary-handling path
+  (``executable_with_boundary_handling``), where the M-11A audit's
+  load-bearing concern — boundary handling on a real matmul — does
+  apply. The whitelist is therefore tightened in scope, not removed.
+commit: c661e67d6b2bbbbd0da87db950fa454cd49c658d
+created_at_utc: 2026-05-06T00:00:00Z
+feature_id: m37_12_clean_divide_admission
+forbidden:
+- model-id whitelist on the clean-divide path
+- bit_equality claimed without single_k_iter
+- hand-picked tolerance constants for M-12 case-pass
+- production-only fault-injection hooks
+- silent widening of the Higham bound (e.g. raising the slack constant)
+- replacing the structural tile-K reference with a weaker check
+realness_level: production_path
+required_evidence:
+- python/compgen/graph_compilation/real_lowering.py (whitelist scoping)
+- python/compgen/graph_compilation/recipe_gate.py (single_k_iter rule)
+- python/compgen/graph_compilation/real_transform_differential.py
+  (_tile_k_eager_reference + matmul_higham_bound + layered case check)
+- tests/graph_compilation/test_m37_13_negative_controls.py
+  (TestStructuralBitEqualityVsTileKReference +
+  TestHighamSemanticBound + tampered-report end-to-end)
+- tests/graph_compilation/test_real_transform_coverage_m16.py
+  (test_bit_equality_not_claimed_when_k_iters_greater_than_one,
+  test_m15b_downstream_retry_fires_on_real_m12_failure_under_m16)
+- tests/graph_compilation/test_downstream_retry.py
+  (test_pipeline_exits_non_zero_on_downstream_failure)
+- real_differential_report.json on a tiny_mlp run carries
+  ``error.refinement_status == "discharged_tolerance_eps"``
+- real_differential_report.json on a merlin_mlp_wide run carries
+  ``error.refinement_status == "discharged_bit_equality"``
+notes: |
+  M-37.12 + M-37.13. Closes the M-31A audit gaps surfaced after
+  M-37.11 broadened the candidate-selection layer.
+
+  Load-bearing safety shift (honest accounting):
+  - Pre-M-37.12 the ``selected_model_is_merlin_mlp_wide`` gate in
+    ``real_lowering.py`` was the structural barrier preventing
+    non-audited models from claiming differential correctness on
+    the clean-divide path.
+  - Post-M-37.12 the same safety property is carried by two
+    structural rules: ``recipe_gate.single_k_iter`` (declares the
+    correct refinement) and ``case_within_combined_tolerance``
+    (admits per-case deviation only within the declared tolerance).
+  - The whitelist is preserved on the boundary-handling path.
+
+  Negative controls (M-37.13):
+  - ``test_tolerance_eps_rejects_above_threshold`` — deviation
+    50× past combined tolerance must reject. Catches a regression
+    where the criterion is silently widened.
+  - ``test_tolerance_eps_rejects_at_high_eager_magnitude`` — even
+    at huge eager magnitudes the rtol-scaled bound holds.
+  - ``test_threshold_collapses_to_atol_at_zero_eager`` — at
+    eager_max=0 the criterion reduces to ``case_max_abs <= atol``.
+  - ``test_m15b_fires_on_synthetic_real_m12_failure`` — tampers a
+    real on-disk M-12 report into status=fail and asserts the
+    M-15B detector + emitter end-to-end reach the typed retry
+    request schema.
+  - ``test_pipeline_raises_when_m12_report_is_a_real_fail`` — the
+    same tampered-report path exercises the run.py:1251 raise
+    structurally.
+
+  Caveat: combined torch.allclose tolerance is mathematically
+  equivalent for any *correct* tiled multiplication, so no canonical
+  model produces a natural M-12 failure. The natural-failure
+  reachability gap is recorded under the ``m15b_natural_failure_unreachable``
+  caveat-ledger row; the synthetic-real-failure end-to-end coverage
+  is the load-bearing replacement.

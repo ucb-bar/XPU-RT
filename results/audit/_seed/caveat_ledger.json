@@ -32,6 +32,24 @@
     },
     {
       "blocks_paper_claim": false,
+      "claim_affected": "m15b_natural_failure_coverage",
+      "created_at_utc": "2026-05-06T00:00:00Z",
+      "evidence_paths": [
+        "tests/graph_compilation/test_m37_13_negative_controls.py",
+        "tests/graph_compilation/test_real_transform_coverage_m16.py",
+        "tests/graph_compilation/test_downstream_retry.py",
+        "docs/realness/m37_12_clean_divide_admission.yaml",
+        "python/compgen/graph_compilation/real_transform_differential.py"
+      ],
+      "id": "m15b_natural_failure_unreachable",
+      "is_bug": false,
+      "last_verified_at_utc": "2026-05-06T00:00:00Z",
+      "notes": "M-37.13's honest fix replaced M-37.12's hand-picked combined tolerance with two layered checks: (1) STRUCTURAL — simulator must match a tile-K-aware reference bit-exactly; this is mathematically guaranteed by the simulator's design (it enforces the same K-accumulation order as the reference); (2) SEMANTIC — Higham's matmul accumulation bound (4 * K * eps * max|A| * max|B|) derived per-case from inputs, never silently widened. The load-bearing safety has shifted from real_lowering's selected_model_is_merlin_mlp_wide whitelist to recipe_gate's single_k_iter rule + M-12's two-layered honest checks. Under correct math the structural invariant always holds; a natural M-12 differential failure now requires either a real backend codegen producing genuinely-wrong arithmetic OR a simulator implementation bug. The three end-to-end tests that previously asserted natural M-12 failure on tiny_mlp now exercise the M-15B detector + emitter against a tampered status=fail report; the structural and semantic invariants are exercised directly via TestStructuralBitEqualityVsTileKReference and TestHighamSemanticBound.",
+      "required_to_close": "ship a real backend execution path (Triton or accelerator codegen) whose differential against eager exhibits genuine numerical disagreement past Higham's bound, OR widen the canonical set with a model whose region produces a structural simulator-vs-reference mismatch",
+      "status": "blocked_by_external"
+    },
+    {
+      "blocks_paper_claim": false,
       "claim_affected": "negative_control_pass_card_machinery",
       "created_at_utc": "2026-05-05T00:00:00Z",
       "evidence_paths": [

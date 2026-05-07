@@ -80,17 +80,26 @@ def _select_greedy(
     candidate_actions: dict[str, Any],
     promoted_ids: set[str] | None = None,
 ) -> tuple[dict[str, Any] | None, list[SelectionTraceEntry], str]:
-    """Greedy single-pick policy (M-37.5: warm-aware):
+    """Greedy single-pick policy (M-37.5 warm-aware + M-37.11 boundary-aware):
 
     1. Sort sites by ``priority`` ascending (lower number = higher priority).
     2. Within each site, pick the legal candidate with the lowest
-       ``(0 if id in promoted_ids else 1, static_relative_cost,
-       candidate_id)`` tuple. The promoted-bit dominates; among
-       promoted candidates ties go to lowest cost; among non-promoted
-       ties go to lowest cost. This makes greedy "warm-aware":
-       a promoted recipe matching a legal candidate is always picked
-       over a fresh equivalent. M-37.5 closes the residual flagged in
-       the M-37 contract ("greedy doesn't consult promoted_candidates").
+       4-tier sort tuple
+       ``(boundary_required, not_promoted, static_relative_cost,
+       candidate_id)``. The tier order matters:
+
+       - **Tier 0 — boundary_required**: a clean-divide tile is strictly
+         better than a boundary-required tile (bit_equality vs
+         tolerance_eps refinement; no boundary mask cost). M-37.11 makes
+         this dominate over warm-cache so we don't pick a stale boundary
+         tile when a fresh clean-divide tile is also legal.
+       - **Tier 1 — promoted**: among same-boundary-status candidates,
+         prefer one whose id matches a promoted recipe (warm-cache hit).
+         M-37.5 — closes the M-37 residual ("greedy doesn't consult
+         promoted_candidates").
+       - **Tier 2 — static_relative_cost**: ascending.
+       - **Tier 3 — candidate_id**: lexicographic, deterministic
+         tie-break.
     3. Return the first such selection.
 
     Returns ``(selected_candidate_json, trace, primary_reason)``.
@@ -165,15 +174,34 @@ def _select_greedy(
 
         legal_in_site.sort(
             key=lambda c: (
-                # M-37.5: 0 if promoted, 1 otherwise — promoted-bit
-                # dominates the sort.
+                # M-37.11 tier 0: boundary-required tiles are strictly
+                # worse than clean-divide tiles (refinement downgrade
+                # to tolerance_eps, plus boundary-mask cost). This
+                # dominates over warm-cache hit.
+                1 if c["cost_preview"].get("boundary_required") else 0,
+                # M-37.5 tier 1: promoted-bit (warm-cache hit).
                 0 if c["candidate_id"] in promoted_ids else 1,
+                # Tier 2: ascending static_relative_cost.
                 float(c["cost_preview"].get("static_relative_cost", 1.0)),
+                # Tier 3: deterministic lexicographic tie-break.
                 c["candidate_id"],
             )
         )
         chosen = legal_in_site[0]
         chosen_was_promoted = chosen["candidate_id"] in promoted_ids
+        chosen_is_boundary = bool(
+            chosen["cost_preview"].get("boundary_required")
+        )
+        if not chosen_is_boundary and chosen_was_promoted:
+            tier_reason = "clean-divide + warm-cache hit (best of both)"
+        elif not chosen_is_boundary:
+            tier_reason = "clean-divide (no boundary handling)"
+        elif chosen_was_promoted:
+            tier_reason = (
+                "boundary-required, warm-cache hit (empirical evidence)"
+            )
+        else:
+            tier_reason = "boundary-required, fresh (speculative)"
         trace.append(
             SelectionTraceEntry(
                 timestamp_utc=_utcnow(),
@@ -189,25 +217,17 @@ def _select_greedy(
                 decision="selected",
                 reason=(
                     f"highest-priority site (priority={site['priority']}); "
-                    + (
-                        "warm-cache hit (promoted candidate)"
-                        if chosen_was_promoted
-                        else "lowest static_relative_cost legal candidate"
-                    )
+                    f"{tier_reason}"
                 ),
             )
         )
         selected = chosen
         primary = (
             f"greedy: highest-priority site {site['site_id']!r} "
-            f"(priority={site['priority']}); "
-            + (
-                f"warm-cache hit on promoted candidate "
-                f"{chosen['candidate_id']!r}"
-                if chosen_was_promoted
-                else f"lowest-cost legal candidate "
-                     f"({chosen['cost_preview'].get('static_relative_cost', 1.0)})"
-            )
+            f"(priority={site['priority']}); {tier_reason} — "
+            f"chose {chosen['candidate_id']!r} "
+            f"(cost="
+            f"{chosen['cost_preview'].get('static_relative_cost', 1.0)})"
         )
         return selected, trace, primary
 

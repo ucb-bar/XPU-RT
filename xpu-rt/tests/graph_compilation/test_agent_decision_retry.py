@@ -47,7 +47,7 @@ def _write(p: Path, body: dict) -> None:
 def _good_response_for_merlin_mlp_wide() -> dict:
     return {
         "schema_version": "agent_decision_response_v1",
-        "selected_candidate_id": "cand_tile_matmul_0_tile_M16_N16_K16__3bebae8e",
+        "selected_candidate_id": "cand_tile_matmul_0_tile_M16_N16_K16__ccb97c43",
         "rationale": {
             "summary": "Selecting the M-12-verified SetTileParams tile on matmul_0.",
             "evidence": [
@@ -80,7 +80,7 @@ def _bad_response_nonexistent() -> dict:
 def _bad_response_correctness_claim() -> dict:
     return {
         "schema_version": "agent_decision_response_v1",
-        "selected_candidate_id": "cand_tile_matmul_0_tile_M16_N16_K16__3bebae8e",
+        "selected_candidate_id": "cand_tile_matmul_0_tile_M16_N16_K16__ccb97c43",
         "rationale": {
             "summary": "this transform is verified correct end-to-end",
             "evidence": [
@@ -94,7 +94,7 @@ def _bad_response_correctness_claim() -> dict:
 def _bad_response_perf_claim() -> dict:
     return {
         "schema_version": "agent_decision_response_v1",
-        "selected_candidate_id": "cand_tile_matmul_0_tile_M16_N16_K16__3bebae8e",
+        "selected_candidate_id": "cand_tile_matmul_0_tile_M16_N16_K16__ccb97c43",
         "rationale": {
             "summary": "we benchmarked this and measured fastest",
             "evidence": [
@@ -108,7 +108,7 @@ def _bad_response_perf_claim() -> dict:
 def _bad_response_missing_evidence() -> dict:
     return {
         "schema_version": "agent_decision_response_v1",
-        "selected_candidate_id": "cand_tile_matmul_0_tile_M16_N16_K16__3bebae8e",
+        "selected_candidate_id": "cand_tile_matmul_0_tile_M16_N16_K16__ccb97c43",
         "rationale": {"summary": "test", "evidence": []},
     }
 
@@ -268,7 +268,7 @@ def test_bad_then_good_retry_commits(fresh_run: Path, tmp_path: Path) -> None:
     assert summary["attempts"][1]["status"] == "pass"
     assert (
         summary["attempts"][1]["selected_candidate_id"]
-        == "cand_tile_matmul_0_tile_M16_N16_K16__3bebae8e"
+        == "cand_tile_matmul_0_tile_M16_N16_K16__ccb97c43"
     )
 
     # attempts/attempt_000 + attempt_001 both exist.
@@ -289,14 +289,14 @@ def test_bad_then_good_retry_commits(fresh_run: Path, tmp_path: Path) -> None:
     assert final_validation["overall"] == "pass"
     assert (
         final_validation["selected_candidate_id"]
-        == "cand_tile_matmul_0_tile_M16_N16_K16__3bebae8e"
+        == "cand_tile_matmul_0_tile_M16_N16_K16__ccb97c43"
     )
 
     # recipe.mlir references the corrected candidate.
     recipe = (fresh_run / "03_recipe_planning" / "recipe.mlir").read_text(
         encoding="utf-8",
     )
-    assert "cand_tile_matmul_0_tile_M16_N16_K16__3bebae8e" in recipe
+    assert "cand_tile_matmul_0_tile_M16_N16_K16__ccb97c43" in recipe
 
 
 # --------------------------------------------------------------------------- #
@@ -477,7 +477,7 @@ def test_mcp_commit_tool_returns_committed_on_pass(
     assert r["validation_overall"] == "pass"
     assert (
         r["selected_candidate_id"]
-        == "cand_tile_matmul_0_tile_M16_N16_K16__3bebae8e"
+        == "cand_tile_matmul_0_tile_M16_N16_K16__ccb97c43"
     )
 
 

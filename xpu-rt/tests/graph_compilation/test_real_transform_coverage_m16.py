@@ -73,12 +73,18 @@ def _invoke(
 def test_previously_blocked_models_now_run_path_a(
     model: str, tmp_path: Path,
 ) -> None:
-    """Greedy picks the cheapest tile (16x16x16) which doesn't divide
-    K cleanly for these models. Pre-M-16: M-12 returned mode=blocked.
-    Post-M-16: mode=executable_real_transform with the boundary-aware
-    evaluator. Bit-equality may not hold (K_iters > 1 reorders sums)
-    — that's reported honestly as fail_refinement_mismatch, but Path A
-    is exercised."""
+    """Pre-M-16: M-12 returned ``mode=blocked`` for these models.
+    Post-M-16: M-12 reaches Path A (mode=executable_real_transform).
+
+    M-37.11 evolution: greedy now derives shape-fit tile candidates
+    and prefers clean-divide tiles over boundary-handled ones (the
+    boundary-aware path is still emitted as a fallback when no clean
+    tile fits). For these three models the shape-fit candidate
+    (``tile_M*_N16_K16`` chosen to divide M and K cleanly) wins, so
+    Path A runs as ``executable_structured_ir`` (the strictly-better
+    refinement). The test still pins Path A; it accepts either
+    real_transform_kind because the goal is "Path A reached", not
+    "boundary path forced"."""
     out = tmp_path / model
     res = _invoke(model=model, out_dir=out)
     # Pipeline raises via M-15B if downstream fails. We don't care
@@ -93,13 +99,19 @@ def test_previously_blocked_models_now_run_path_a(
     assert rep["mode"] == "executable_real_transform", (
         f"{model}: expected Path A, got mode={rep.get('mode')}"
     )
-    assert rep["transform"]["real_transform_kind"] == (
-        "executable_with_boundary_handling"
-    )
+    real_kind = rep["transform"]["real_transform_kind"]
+    assert real_kind in (
+        "executable_structured_ir",            # M-37.11 clean-divide path
+        "executable_with_boundary_handling",   # legacy boundary path
+    ), f"{model}: unexpected real_transform_kind={real_kind!r}"
     bh = rep["boundary_handling"]
-    assert bh["enabled"] is True
-    assert bh["boundary_required"] is True
-    assert bh["full_tiles_seen"] + bh["boundary_tiles_seen"] >= 1
+    if real_kind == "executable_with_boundary_handling":
+        assert bh["enabled"] is True
+        assert bh["boundary_required"] is True
+        assert bh["full_tiles_seen"] + bh["boundary_tiles_seen"] >= 1
+    else:
+        # Clean-divide path: boundary handling is not exercised.
+        assert bh.get("boundary_required") is False
 
 
 def test_merlin_mlp_wide_still_passes_clean_divides_path(
@@ -248,20 +260,41 @@ def test_boundary_handling_block_includes_iter_counts(
 def test_bit_equality_not_claimed_when_k_iters_greater_than_one(
     tmp_path: Path,
 ) -> None:
-    """Honest behavior: with greedy's tile_16 on tiny_mlp (K=64, K_iters=4),
-    accumulation order differs from eager → max_abs_error > 0.
-    Status must be fail_refinement_mismatch, NOT discharged_bit_equality."""
+    """Honest behavior: with K_iters > 1, accumulation order differs
+    from eager → max_abs_error > 0. The recipe gate must NOT claim
+    bit_equality.
+
+    Pre-M-37.12: M-12 reported ``fail_refinement_mismatch`` because the
+    obligation declared ``bit_equality`` (overly optimistic) and the
+    differential observed non-zero error.
+
+    Post-M-37.12: the recipe gate downgrades the declaration to
+    ``tolerance_eps`` whenever clean_divide AND K_iters > 1 (M-37.12 Fix).
+    M-12 then discharges ``tolerance_eps`` honestly. The invariant the
+    test checks is: ``refinement_status != discharged_bit_equality``
+    AND ``max_abs_error > 0`` (proof that K_iters > 1 reordered
+    accumulation). On tiny_mlp (M=4 K=64, tile_M4_N16_K16, K_iters=4)
+    this surfaces as ``discharged_tolerance_eps``."""
     out = tmp_path / "tiny_mlp_no_bit_eq"
     _invoke(model="tiny_mlp", out_dir=out)
     rep = _read(
         out / "03_recipe_planning" / "real_verification"
         / "real_differential_report.json"
     )
-    assert rep["status"] == "fail"
-    assert rep["error"]["refinement_status"] == "fail_refinement_mismatch"
+    refinement_status = rep["error"]["refinement_status"]
+    # The load-bearing claim: bit-equality is NEVER claimed when
+    # K_iters > 1, regardless of whether the differential overall
+    # passes or fails.
+    assert refinement_status != "discharged_bit_equality", (
+        f"bit_equality must not be discharged with K_iters > 1; "
+        f"got refinement_status={refinement_status!r}"
+    )
     # max_abs_error is not exactly 0 because accumulation reorder
     # caused float rounding to differ.
     assert rep["error"]["max_abs_error"] > 0.0
+    # And the post-M-37.12 happy path: status pass, discharged_tolerance_eps.
+    if rep["status"] == "pass":
+        assert refinement_status == "discharged_tolerance_eps"
 
 
 # --------------------------------------------------------------------------- #
@@ -295,15 +328,50 @@ def test_non_set_tile_params_models_still_blocked_after_m16(
 def test_m15b_downstream_retry_fires_on_real_m12_failure_under_m16(
     tmp_path: Path,
 ) -> None:
-    """M-16 made tile_16 + non-clean K dims a REAL execution path (Path
-    A with boundary handling). When K_iters>1 reorders accumulation,
-    bit-equality fails honestly — and M-15B detects the failure and
-    emits a downstream_retry_request. No test injection."""
+    """M-15B downstream-retry plumbing fires when any real downstream
+    stage rejects the recipe.
+
+    History:
+
+    - Pre-M-37.11: tile_M16_N16_K16 + K=64 → boundary-aware Path A
+      fails bit-equality → M-15B fires on real_transform_differential.
+    - M-37.11: shape-fit tile candidates landed; tiny_mlp picks
+      tile_M4_N16_K16 (clean-divide). M-11B whitelist became the
+      blocker → M-15B fires on real_transform_validation.
+    - M-37.12: whitelist relaxed; combined torch.allclose tolerance.
+      No canonical-set model produces a natural M-12 failure anymore.
+    - M-37.13: coverage restored by tampering an M-12 status=pass
+      report into a status=fail report on disk and exercising the
+      M-15B detector + emitter end-to-end. The natural-failure path
+      itself is unreachable under correct math; the gap was always
+      "M-15B plumbing has zero real-failure coverage", and the
+      tampered-report test exercises exactly that plumbing.
+
+    See tests/graph_compilation/test_m37_13_negative_controls.py for
+    the restored end-to-end coverage. This test now delegates to it.
+    """
+    from compgen.graph_compilation.downstream_retry import (
+        detect_downstream_failure,
+    )
     out = tmp_path / "m12_real_fail_under_m16"
     res = _invoke(model="tiny_mlp", out_dir=out)
-    assert res.returncode != 0  # M-15B raises on real failure
-    rr = _read(
-        out / "03_recipe_planning" / "downstream_retry"
-        / "downstream_retry_request.json"
+    assert res.returncode == 0, (
+        f"tiny_mlp pipeline must succeed under M-37.12 before tampering"
     )
-    assert rr["failed_stage"] == "real_transform_differential"
+    report_path = (
+        out / "03_recipe_planning" / "real_verification"
+        / "real_differential_report.json"
+    )
+    assert report_path.exists()
+    body = json.loads(report_path.read_text(encoding="utf-8"))
+    body["status"] = "fail"
+    body["failure_reasons"] = [
+        "M-37.13 fault injection — synthetic real M-12 failure",
+    ]
+    body["error"]["max_abs_error"] = 1e6
+    body["error"]["refinement_status"] = "fail_outside_tolerance"
+    report_path.write_text(json.dumps(body, indent=2, sort_keys=True))
+    failure = detect_downstream_failure(out)
+    assert failure is not None
+    assert failure.failed_stage == "real_transform_differential"
+    assert failure.failed_check == "real_transform_differential_check"

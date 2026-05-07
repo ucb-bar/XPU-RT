@@ -198,6 +198,169 @@ def _reduction_dimension(region: dict[str, Any], tensor_lookup: dict[str, dict[s
     return max(candidates) if candidates else 1
 
 
+_MLIR_TENSOR_RE = re.compile(r"tensor<([0-9x]+)x([a-z0-9]+)>")
+_MLIR_MATMUL_RE = re.compile(
+    r'linalg\.matmul\s+\{[^}]*compgen\.region_id\s*=\s*"([^"]+)"[^}]*\}'
+    r"\s+ins\([^:]*:\s*(tensor<[^>]+>)\s*,\s*(tensor<[^>]+>)\s*\)"
+)
+
+
+def _parse_mlir_tensor_type(text: str) -> tuple[list[int], str]:
+    """Parse ``tensor<8x27xf32>`` into ([8, 27], "f32"). Empty on failure."""
+    m = _MLIR_TENSOR_RE.search(text)
+    if not m:
+        return [], ""
+    dim_str, dtype = m.group(1), m.group(2)
+    try:
+        dims = [int(d) for d in dim_str.split("x") if d]
+    except ValueError:
+        return [], ""
+    return dims, dtype
+
+
+def _shape_from_payload_mlir(
+    region_id: str, payload_path: Path,
+) -> tuple[list[list[int]], list[list[int]], str]:
+    """Parse payload.mlir for ``linalg.matmul`` matching ``region_id``.
+
+    Used as a fallback when the FX-level ``tensor_lookup`` doesn't
+    carry shapes for a region — typical for regions produced by
+    intermediate lowerings (e.g. conv → im2col → matmul where the
+    matmul's tensor metadata is below the FX layer). The shape IS
+    deterministically derivable from the conv's input + kernel +
+    padding + stride; rather than re-running that derivation, we
+    just read the lowered MLIR (which already has the answer).
+
+    Returns (input_shapes, output_shapes, dtype). Empty when the
+    payload is missing, the region isn't matched, or the matmul's
+    K dims don't pair (``ins(MxK, KxN)``).
+    """
+    if not payload_path.exists():
+        return [], [], ""
+    try:
+        text = payload_path.read_text(encoding="utf-8")
+    except OSError:
+        return [], [], ""
+    for match in _MLIR_MATMUL_RE.finditer(text):
+        rid, lhs_t, rhs_t = match.group(1), match.group(2), match.group(3)
+        if rid != region_id:
+            continue
+        lhs_dims, lhs_dtype = _parse_mlir_tensor_type(lhs_t)
+        rhs_dims, _ = _parse_mlir_tensor_type(rhs_t)
+        if (
+            len(lhs_dims) == 2 and len(rhs_dims) == 2
+            and lhs_dims[1] == rhs_dims[0]
+        ):
+            # linalg.matmul: ins(MxK, KxN) outs(MxN)
+            out_dims = [lhs_dims[0], rhs_dims[1]]
+            return [lhs_dims, rhs_dims], [out_dims], lhs_dtype
+    return [], [], ""
+
+
+def _region_shape(
+    region: dict[str, Any],
+    tensor_lookup: dict[str, dict[str, Any]],
+    *,
+    run_dir: Path | None = None,
+) -> dict[str, Any]:
+    """Distinctive shape signature for a region (M-37.9 Fix 1).
+
+    Captures the *actual* tensor shapes the region operates on so two
+    regions named ``matmul_0`` in different models with different
+    shapes produce distinct downstream candidate_ids. Returns:
+
+      {
+        "input_shapes":  [[M, K], [K, N], ...],
+        "output_shapes": [[M, N], ...],
+        "kind":          "matmul" | ...,
+        "summary":       "matmul/4x128x64/f32",
+        "source":        "fx_tensor_lookup" | "payload_mlir_fallback"
+      }
+
+    Two-tier extraction:
+
+    1. **FX tensor_lookup** — cheap, in-memory; covers regions lifted
+       directly from torch.export.
+    2. **Payload MLIR fallback** — parses ``linalg.matmul ins/outs``
+       text directly when the FX layer doesn't have the shape (e.g.
+       conv → im2col → matmul). Same answer every run, no laziness.
+    """
+    def _ports_shapes(ports: list) -> list[list[int]]:
+        out: list[list[int]] = []
+        for port in ports or []:
+            t = tensor_lookup.get(port.get("tensor_id"))
+            if not t:
+                continue
+            shape = [
+                int(d) for d in t.get("shape", [])
+                if isinstance(d, int) and d > 0
+            ]
+            if shape:
+                out.append(shape)
+        return out
+
+    inp = _ports_shapes(region.get("inputs", []))
+    outp = _ports_shapes(region.get("outputs", []))
+    kind = region.get("kind", "")
+    dtype = ""
+    source = "fx_tensor_lookup"
+    for port in region.get("inputs", []):
+        t = tensor_lookup.get(port.get("tensor_id"))
+        if t and t.get("dtype"):
+            dtype = str(t["dtype"])
+            break
+
+    # MLIR fallback when FX didn't give us a 2-input MxK × KxN matmul.
+    # We fall through in three cases:
+    #   1. Fewer than 2 input shapes recorded (rare).
+    #   2. The first two shapes aren't both rank-2.
+    #   3. The first two shapes are rank-2 but their K dims don't pair
+    #      — typical for conv → im2col → matmul where FX records the
+    #      output buffer + operands in mixed order.
+    fx_pair_invalid = False
+    if kind == "matmul":
+        if len(inp) < 2 or len(inp[0]) != 2 or len(inp[1]) != 2:
+            fx_pair_invalid = True
+        elif inp[0][1] != inp[1][0]:
+            fx_pair_invalid = True
+    if kind == "matmul" and run_dir is not None and fx_pair_invalid:
+        payload_ref = ""
+        for po in region.get("payload_ops", []):
+            if po.get("region_id") == region.get("region_id"):
+                payload_ref = po.get("payload_ref", "")
+                break
+        if payload_ref:
+            inp_mlir, outp_mlir, dtype_mlir = _shape_from_payload_mlir(
+                region.get("region_id", ""), run_dir / payload_ref,
+            )
+            if inp_mlir:
+                inp = inp_mlir
+                outp = outp_mlir
+                if dtype_mlir:
+                    dtype = dtype_mlir
+                source = "payload_mlir_fallback"
+
+    summary = f"{kind}/unknown"
+    if kind == "matmul" and len(inp) >= 2 and len(inp[0]) == 2 and len(inp[1]) == 2:
+        m, k0 = inp[0]
+        k1, n = inp[1]
+        if k0 == k1:
+            summary = f"matmul/{m}x{n}x{k0}" + (f"/{dtype}" if dtype else "")
+    elif outp and outp[0]:
+        summary = f"{kind}/" + "x".join(str(d) for d in outp[0]) + (
+            f"/{dtype}" if dtype else ""
+        )
+
+    return {
+        "input_shapes": inp,
+        "output_shapes": outp,
+        "kind": kind,
+        "dtype": dtype,
+        "summary": summary,
+        "source": source,
+    }
+
+
 def _kind_multiplier(kind: str) -> float:
     """Convert raw ``K * unit_roundoff`` to ``eps_out`` per op family."""
     if kind in {"matmul", "conv"}:
@@ -359,10 +522,68 @@ def _output_dtype_size(region: dict[str, Any], tensor_lookup: dict[str, dict[str
     return 4
 
 
+def _shape_fit_dim(d: int, *, max_tile: int = 16) -> int:
+    """Largest divisor of ``d`` that is also <= ``max_tile``.
+
+    M-37.11 (Improvement A): used to derive shape-fit matmul tiles
+    that cleanly divide the region's actual dimensions, breaking the
+    dead-end where the only proposed tiles start at 16 and a region
+    with M=4 has no clean-divide option.
+
+    Walks the standard cache-friendly sizes (16, 8, 4, 2, 1) and picks
+    the largest that divides ``d``. For composite ``d`` this finds
+    a useful tile; for prime ``d`` it returns 1 (caller can choose to
+    skip). Returns ``d`` itself when ``d <= max_tile`` (use the whole
+    dim — a single tile, no boundary).
+    """
+    if d <= 0:
+        return 0
+    if d <= max_tile:
+        return d
+    for v in (16, 8, 4, 2, 1):
+        if v <= max_tile and d % v == 0:
+            return v
+    return 1
+
+
+def _shape_fit_tile_for_matmul(
+    shape_info: dict[str, Any],
+    *,
+    max_tile: int = 16,
+) -> dict[str, int] | None:
+    """Derive a clean-divide matmul tile from a region's actual shape.
+
+    Returns ``None`` when the shape is unknown, when any dim is too
+    small to be useful (< 2), or when the resulting tile is degenerate
+    (any dim == 1). The candidate proposer skips degenerate tiles —
+    a (M=7, N=1, K=1) tile is not a useful action.
+    """
+    if not shape_info or shape_info.get("kind") != "matmul":
+        return None
+    inp = shape_info.get("input_shapes") or []
+    if (
+        len(inp) < 2
+        or len(inp[0]) != 2
+        or len(inp[1]) != 2
+        or inp[0][1] != inp[1][0]
+    ):
+        return None
+    M, K = inp[0]
+    _, N = inp[1]
+    tM = _shape_fit_dim(M, max_tile=max_tile)
+    tN = _shape_fit_dim(N, max_tile=max_tile)
+    tK = _shape_fit_dim(K, max_tile=max_tile)
+    if tM < 2 or tN < 2 or tK < 2:
+        return None
+    return {"M": tM, "N": tN, "K": tK}
+
+
 def _working_set_curve(
     region: dict[str, Any],
     profile: TargetProfile,
     tensor_lookup: dict[str, dict[str, Any]],
+    *,
+    region_shape: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     kind = region["kind"]
     if _is_opaque_kind(kind) or kind in _ALLOCATOR_KINDS or kind == "unknown":
@@ -370,10 +591,29 @@ def _working_set_curve(
     dtype_size = _output_dtype_size(region, tensor_lookup)
     curve: list[dict[str, Any]] = []
     if _is_matmul_like(kind):
-        for tile in profile.working_set_tiles_matmul:
+        # M-37.11 Improvement A: append a shape-fit tile when the
+        # region's actual M/N/K are known and the standard profile
+        # tiles all force boundary handling. The shape-fit tile is
+        # guaranteed to cleanly divide every region dim it covers
+        # (whole-dim when dim < max_tile, largest divisor otherwise).
+        # Composite shapes get a clean-divide option; prime shapes
+        # honestly stay boundary-only.
+        seen_tiles: set[tuple[int, int, int]] = set()
+        all_tiles = list(profile.working_set_tiles_matmul)
+        if region_shape:
+            shape_fit = _shape_fit_tile_for_matmul(region_shape)
+            if shape_fit is not None:
+                # Prepend so it surfaces first in the curve (smallest
+                # cache footprint typically).
+                all_tiles = [shape_fit] + all_tiles
+        for tile in all_tiles:
             M = int(tile.get("M", 0))
             N = int(tile.get("N", 0))
             K = int(tile.get("K", 0))
+            key = (M, N, K)
+            if key in seen_tiles:
+                continue
+            seen_tiles.add(key)
             live_bytes = (M * K + K * N + M * N) * dtype_size
             curve.append(
                 {
@@ -801,7 +1041,16 @@ def build_region_dossiers(
             "reuse": reuse,
             "numerical_sensitivity": sensitivity,
         }
-        wsc = _working_set_curve(region, profile, tensor_lookup)
+        # M-37.9 Fix 1 / M-37.11 Improvement A: compute region_shape
+        # FIRST so the working_set_curve can derive shape-fit tiles
+        # that cleanly divide the region's actual dimensions.
+        region_shape_info = _region_shape(
+            region, tensor_lookup, run_dir=run_dir,
+        )
+        wsc = _working_set_curve(
+            region, profile, tensor_lookup,
+            region_shape=region_shape_info,
+        )
         placement = _placement_envelope(region, profile, cost)
         partial["working_set_curve"] = wsc
         partial["placement_envelope"] = placement
@@ -840,6 +1089,10 @@ def build_region_dossiers(
             "working_set_curve": wsc,
             "placement_envelope": placement,
             "legality_constraints": legality,
+            # M-37.9 Fix 1: actual region shape, used by action_space
+            # candidate_id construction to disambiguate same-named
+            # regions across models.
+            "region_shape": region_shape_info,
         }
 
         fname = _safe_filename(rid)

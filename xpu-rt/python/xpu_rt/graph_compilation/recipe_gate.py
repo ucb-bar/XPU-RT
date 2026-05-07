@@ -242,6 +242,55 @@ def _gate_set_tile_params(
                 else:
                     failures.append("tile working set does not fit L2")
 
+            # M-37.9 Fix 3a: derive declared_refinement from tile-vs-shape
+            # divisibility. SetTileParams preserves bit_equality only when
+            # every region dimension is divisible by its tile size — that
+            # keeps accumulation order stable. When boundary handling is
+            # required (any non-clean divide), we downgrade to
+            # tolerance_eps so the recipe-level claim matches what the
+            # M-15B differential check measures.
+            region_shape = d.get("region_shape") or {}
+            extra["region_shape_summary"] = region_shape.get("summary", "")
+            extra["clean_divide"] = None
+            extra["boundary_required"] = None
+            if (
+                region_shape
+                and region_shape.get("kind") == "matmul"
+                and our_tile
+            ):
+                inp = region_shape.get("input_shapes") or []
+                if (
+                    len(inp) >= 2
+                    and len(inp[0]) == 2
+                    and len(inp[1]) == 2
+                    and inp[0][1] == inp[1][0]
+                ):
+                    M_dim, K_dim = inp[0]
+                    _, N_dim = inp[1]
+                    tM = our_tile.get("M", 0) or 0
+                    tN = our_tile.get("N", 0) or 0
+                    tK = our_tile.get("K", 0) or 0
+                    clean = (
+                        tM > 0 and M_dim % tM == 0
+                        and tN > 0 and N_dim % tN == 0
+                        and tK > 0 and K_dim % tK == 0
+                    )
+                    # M-37.12 Fix: bit_equality requires NOT just
+                    # clean-divide but also a single K iteration. With
+                    # K_iters > 1 the partial sums accumulate in a
+                    # different order than eager (eager: one running
+                    # sum across K; tiled: sum-of-tile-sums). The
+                    # values agree mathematically but float rounding
+                    # differs at ~1e-6. So bit_equality only holds
+                    # when tK >= K_dim (whole K in one tile).
+                    single_k_iter = tK > 0 and tK >= K_dim
+                    extra["clean_divide"] = clean
+                    extra["boundary_required"] = not clean
+                    extra["single_k_iter"] = single_k_iter
+                    extra["region_dims"] = {
+                        "M": M_dim, "N": N_dim, "K": K_dim,
+                    }
+
     # source payload_ref must exist
     for po in resolved.recipe_delta:
         # SetTileParams recipe_delta entries don't have payload_ref directly;
@@ -254,13 +303,29 @@ def _gate_set_tile_params(
         else:
             failures.append(f"payload_ref does not exist: {payload_ref}")
 
+    # M-37.12 Fix: claimable refinement matches the differential reality.
+    # bit_equality requires BOTH clean_divide AND single K iteration —
+    # multiple K iters reorder accumulation even with clean divides
+    # (verified empirically on tiny_mlp's tile_M4_N16_K16, K_iters=4 →
+    # max_abs ~5.7e-6). When boundary handling is needed (any non-clean
+    # divide) OR when K_iters > 1, downgrade to tolerance_eps.
+    # ``unknown`` is the conservative fallback when shape is missing.
+    if extra.get("clean_divide") is True and extra.get("single_k_iter") is True:
+        derived_refinement = "bit_equality"
+    elif extra.get("clean_divide") is True:
+        derived_refinement = "tolerance_eps"  # clean but K_iters > 1
+    elif extra.get("clean_divide") is False:
+        derived_refinement = "tolerance_eps"
+    else:
+        derived_refinement = "unknown"
+
     return GateOpVerdict(
         recipe_op_id=op.recipe_op_id,
         source_candidate=op.attrs.get("source_candidate", resolved.candidate_id),
         op=op.op_camel,
         region=region_id,
         gate_status="pass" if not failures else "fail",
-        declared_refinement="bit_equality",
+        declared_refinement=derived_refinement,
         proof_stage="post_lowering",
         verifier_chain=["structural", "differential"],
         semantic_obligation=f"obl_{op.recipe_op_id}",

@@ -329,6 +329,14 @@ allowed_nonproduction_symbols:
     reason: "M-37's realness contract; meta-reference, not a residual"
     forbidden_in: []
 
+  - path: docs/realness/m37_11_shape_fit_tile_candidates.yaml
+    reason: "M-37.11's realness contract; meta-reference, not a residual"
+    forbidden_in: []
+
+  - path: docs/realness/m37_12_clean_divide_admission.yaml
+    reason: "M-37.12 + M-37.13's realness contract; meta-reference, not a residual"
+    forbidden_in: []
+
 # Patterns we tolerate inside any source file (e.g. comment markers in
 # docs / generated stubs / strings). The base scanner already excludes
 # .compgen_cache, .crg-artifacts, results/, __pycache__, .git, and tests/

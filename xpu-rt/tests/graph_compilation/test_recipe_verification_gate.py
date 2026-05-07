@@ -318,8 +318,15 @@ def test_tampered_recipe_tile_to_invented_size_fails(
     shutil.copytree(src, work)
     recipe_path = work / "03_recipe_planning" / "recipe.mlir"
     text = recipe_path.read_text()
-    # Inject an invented tile dimension.
-    text = text.replace("M = 16 : i64", "M = 999 : i64")
+    # Inject an invented tile dimension. Locate whatever ``M = N : i64``
+    # value the planner picked (post-M-37.11 this varies — tiny_mlp's
+    # shape-fit tile is M=4, while older runs used M=16) and bump it
+    # to the invented 999.
+    import re as _re
+    m_match = _re.search(r"M\s*=\s*(\d+)\s*:\s*i64", text)
+    assert m_match is not None, f"recipe.mlir has no M tile attr: {text}"
+    actual_m = m_match.group(1)
+    text = text.replace(f"M = {actual_m} : i64", "M = 999 : i64", 1)
     recipe_path.write_text(text)
     verdict = _gate_run(work)
     # Tampering source_candidate is unchanged so resolver still passes,

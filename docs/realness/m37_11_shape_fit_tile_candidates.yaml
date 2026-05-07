@@ -1,0 +1,50 @@
+claim: |
+  Greedy candidate selection considers shape-fit clean-divide tiles
+  derived from each region's actual M/N/K, in addition to the
+  fixed tiles enumerated by the target profile. The
+  ``_select_greedy`` policy sorts candidates with a 4-tier key —
+  ``(boundary_required, not_promoted_in_warm_cache,
+  static_relative_cost, candidate_id)`` — so a clean-divide tile
+  always beats a boundary-required tile, regardless of warm-cache
+  status. Region shape is captured from the FX tensor lookup or, on
+  fall-through, from the payload MLIR text via the
+  ``payload_mlir_fallback`` extractor.
+commit: c661e67d6b2bbbbd0da87db950fa454cd49c658d
+created_at_utc: 2026-05-06T00:00:00Z
+feature_id: m37_11_shape_fit_tile_candidates
+forbidden:
+- hardcoded tile dims
+- shape extracted only from FX lookup with no MLIR fallback
+- warm-cache status overriding clean-divide preference
+- silent fallback to the legacy fixed-tile pool
+realness_level: decision_affecting
+required_evidence:
+- python/compgen/graph_compilation/region_dossier.py
+- python/compgen/graph_compilation/recipe_planning.py (boundary-aware sort)
+- tests/graph_compilation/test_real_transform_coverage_m16.py
+- tests/graph_compilation/test_recipe_verification_gate.py
+- candidate_selection.json on a real run carries cost_preview.region_dims
+  and a shape-fit candidate id when the region M/N/K admit a clean-divide
+  tile <= max_tile=16
+notes: |
+  M-37.11. Closes the dead-end loop where small / odd-shape models could
+  pick only a boundary-required cached tile and never promote.
+
+  Verification: tests/graph_compilation/test_real_transform_coverage_m16.py
+  asserts greedy now picks tile_M4_N16_K16 on tiny_mlp (M=4 N=128 K=64),
+  tile_M8_N16_K16 on tiny_attention. The existing M-15B end-to-end test
+  ``test_m15b_downstream_retry_fires_on_real_m12_failure_under_m16``
+  exercises the boundary-required fallback path; M-37.13 added direct
+  fault-injection coverage of the M-15B detector.
+
+  Negative control: removing the shape-fit emitter from
+  ``_propose_tile_candidates`` causes greedy on tiny_mlp to fall back
+  to ``tile_M16_N16_K16`` (boundary=True, K_iters=4) and the recipe
+  gate downgrades to tolerance_eps. The shape-fit emitter therefore
+  changes the picked candidate; not just an emitted artifact.
+
+  Holdout coverage: holdout_mlp_odd_shapes (M=7 K=63 N=129) has prime
+  dims so shape-fit cannot produce a useful clean-divide tile and the
+  legacy ``tile_M16_N16_K16`` is picked. This is the documented
+  honest residual — the boundary path runs and discharges
+  tolerance_eps via the M-37.12 combined-tolerance criterion.
