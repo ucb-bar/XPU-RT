@@ -16,12 +16,23 @@ import pytest
 
 torch = pytest.importorskip("torch")
 pytest.importorskip("triton")
+# transformers is in the optional `demo` extra (heavy HF dep). When the
+# CompGen install doesn't include it, skip rather than fail at import-time
+# of the example module — matches the torch/triton importorskip pattern.
+pytest.importorskip(
+    "transformers",
+    reason="HF parity tests require the `demo` extra (uv sync --extra demo)",
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-sys.modules.setdefault("torchvision", None)
+try:
+    import torchvision as _tv  # real install — let transformers use it
+    del _tv
+except ImportError:
+    sys.modules.setdefault("torchvision", None)
 
 
 pytestmark = pytest.mark.skipif(not torch.cuda.is_available(), reason="real-example tests require CUDA")

@@ -35,7 +35,11 @@ import torch
 
 import sys
 # transformers' top-level import drags in torchvision; bypass it.
-sys.modules.setdefault("torchvision", None)
+try:
+    import torchvision as _tv  # real install — let transformers use it
+    del _tv
+except ImportError:
+    sys.modules.setdefault("torchvision", None)
 
 from transformers.models.llama.configuration_llama import LlamaConfig
 from transformers.models.llama.modeling_llama import LlamaDecoderLayer

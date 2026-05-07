@@ -21,7 +21,11 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-sys.modules.setdefault("torchvision", None)
+try:
+    import torchvision as _tv  # real install — let transformers use it
+    del _tv
+except ImportError:
+    sys.modules.setdefault("torchvision", None)
 
 
 pytestmark = pytest.mark.skipif(not torch.cuda.is_available(), reason="real-example tests require CUDA")

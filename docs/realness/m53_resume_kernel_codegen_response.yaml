@@ -1,0 +1,104 @@
+claim: |
+  M-53 (Phase C, gap closure): the pipeline supports
+  ``--resume-from kernel-codegen-response`` so an operator-driven
+  agentic kernel-codegen flow runs end-to-end through the CLI alone.
+
+  Without this mode, every ``compgen.graph_compilation run`` invocation
+  rm-rfs ``out_dir`` at the top of the run (``run.py:343``), destroying
+  the committed response, the M-43 attempts trail, the M-45
+  certificate, and the provider's compiled artefacts. With this mode,
+  the wipe is suppressed, the early stages (graph_capture,
+  payload_lowering, graph_analysis, recipe_planning,
+  kernel_specialization_request) are skipped, and M-46 + M-47 + M-49
+  are driven on the existing artefacts.
+
+  Hard contract:
+
+  1. ``--resume-from kernel-codegen-response`` REQUIRES that
+     ``04_kernel_codegen/requests/`` already contains a committed
+     request and ``04_kernel_codegen/contracts/`` already contains a
+     materialised contract. Missing prerequisites raise a typed
+     ``ValueError`` with the missing-path detail (no silent skip).
+  2. Resume MUST preserve the on-disk state of:
+     ``04_kernel_codegen/{requests,contracts,views,artifacts,
+     responses,attempts,certificates,validation}``. The cardinal
+     M-53 invariant is that the operator-committed response, the
+     M-43 attempts trail, and the M-45 certificate survive the
+     pipeline-restart boundary.
+  3. After resume, M-46 ``execution_plan_emit`` MUST surface every
+     committed certificate as a bound region. M-47 ``glue_emit`` MUST
+     emit ``generated_plan_executor.py`` whose ``KERNEL_BINDINGS``
+     contains the bound region(s).
+  4. The full chain — kernel-codegen-request → operator commits real
+     response → resume → glue-emit → import emitted executor → run
+     against eager — is exercised by the M-54 real-chain stress test
+     (`test_real_chain_via_cli_only`), driving merlin_mlp_wide with
+     a real cffi-compiled C matmul and verifying the emitted
+     executor's output against ``torch.matmul`` within the M-37.13
+     Higham bound.
+commit: 0a47a30000000000000000000000000000000000
+created_at_utc: 2026-05-07T00:00:00Z
+forbidden:
+- silently destroying out_dir contents under --resume-from kernel-codegen-response
+- silently skipping the resume mode when prerequisites are missing (must raise typed ValueError)
+- treating --resume-from as equivalent to a fresh run when out_dir already exists
+- running graph_capture / payload_lowering / graph_analysis / recipe_planning / kernel_specialization_request stages under --resume-from (the prior run produced their artefacts)
+- M-46 emitting an empty bindings.json after resume when valid certificates exist on disk (the resume must thread cert visibility through to M-46)
+realness_level: production_path
+required_evidence:
+- python/compgen/graph_compilation/run.py (resume_from kwarg + skip-early gating + sandbox-preserve guard)
+- python/compgen/graph_compilation/__main__.py (--resume-from CLI flag + thread to _run_pipeline)
+- tests/graph_compilation/test_resume_from_kernel_codegen_response.py
+- "real-driven CLI smoke (/tmp/m53_smoke.py): kernel-codegen-request → real cffi commit → --resume-from → emitted compgen_run produced (16,32) tensor matching torch.matmul within Higham bound 1.07e-4"
+feature_id: m53_resume_kernel_codegen_response
+notes: |
+  Phase C M-53 — closes the agentic-CLI-flow gap surfaced by the
+  Phase C honest real-execution audit. The audit drove M-40 → M-47
+  with a real cffi-compiled C matmul and discovered that the only way
+  to keep the operator-committed response alive across the pipeline
+  restart was to drop into Python and call M-46/M-47 emitters
+  in-process. M-53 makes the same chain run from the CLI alone.
+
+  Real-driven CLI smoke (/tmp/m53_smoke.py — preserved as evidence):
+
+  Step 1: ``compgen.graph_compilation run --stop-after kernel-codegen-request``
+  produces ``04_kernel_codegen/{requests,contracts,views}``.
+
+  Step 2: operator writes a real cffi-C matmul (16x16 @ 16x32 = 16x32),
+  compiles via ``ffi.compile(tmpdir=...)``, and calls
+  ``kernel_codegen_response.commit_response()``. M-44 verifier
+  accepts; M-45 emits ``certificates/4838412db0b5c6b8.json``.
+
+  Step 3: ``compgen.graph_compilation run --stop-after glue-emit
+  --resume-from kernel-codegen-response`` runs in 1.5s (vs ~12s
+  full pipeline). cert + .so + attempts trail all SURVIVED. M-46
+  emitted ``region_kernel_bindings.json`` with ``bound_count=1``.
+  M-47 emitted ``generated_plan_executor.py`` with
+  ``KERNEL_BINDINGS=['matmul_0']``.
+
+  Step 4: imported the executor, plugged in the real cffi kernel,
+  ran ``compgen_run({A, B}, kernels, runtime=CpuRuntimeAdapter())``.
+  Output shape ``(16, 32)``, ``max_abs vs torch.matmul = 1.91e-6``,
+  Higham bound ``1.07e-4`` — within bound.
+
+  Tests: 5 in tests/graph_compilation/test_resume_from_kernel_codegen_response.py
+  (preserve-artifacts-on-resume, drive-M-46-to-glue-emit, honest
+  errors when requests dir missing, honest errors when contracts dir
+  missing, real-chain end-to-end via CLI alone with cffi-C kernel +
+  Higham bound check). The end-to-end test is the M-54 real-chain
+  stress test landing in the same milestone.
+
+  Honest residuals:
+  - Resume mode does not yet support ``--stop-after glue-differential``
+    re-runs that need golden inputs/outputs — those are still produced
+    by the full pipeline. Glue-differential is the M-49 paper-facing
+    surface, separately green; M-53's scope is the
+    request→response→cert→bind→glue-emit chain only.
+  - The M-31A trust report's
+    ``import_provenance_and_no_subprocess_modules`` gate runs against
+    a fresh capture; resume runs do not re-execute graph_capture, so
+    the trust report should be run on the original capture artefacts
+    (this is documented in phase_c_status.md, not enforced in code).
+  - Real audit script preserved at ``/tmp/m53_smoke.py`` and the
+    evidence-bearing test ``test_real_chain_via_cli_only`` in
+    ``tests/graph_compilation/test_resume_from_kernel_codegen_response.py``.

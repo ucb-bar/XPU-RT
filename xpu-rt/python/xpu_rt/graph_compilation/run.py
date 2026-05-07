@@ -309,11 +309,22 @@ def run_graph_compilation(
     agent_decision_response_paths: list[Path] | None = None,
     agent_max_retries: int = 3,
     live_provider_config: object | None = None,
+    resume_from: str | None = None,
 ) -> RunResult:
     """Materialise a graph compilation run directory rooted at ``out_dir``.
 
     If ``out_dir`` exists it is replaced (the run directory is always
     produced fresh and deterministically).
+
+    M-53: when ``resume_from == "kernel-codegen-response"``, an existing
+    ``out_dir`` is preserved and the pipeline skips every stage up to
+    and including the M-40 + M-42 kernel-codegen-request emission. This
+    is the only path that lets the agentic provider chain run from CLI
+    after the operator has committed a response (the response, attempt
+    trail, and certificates would otherwise be wiped at the top of
+    every fresh run). Resuming requires that ``04_kernel_codegen/
+    requests/`` and ``04_kernel_codegen/contracts/`` already exist;
+    otherwise a typed error fires.
     """
     # Backward-compat: old code passed ``stop_after="capture"``.
     if stop_after == "capture":
@@ -324,6 +335,14 @@ def run_graph_compilation(
             f"supported: {SUPPORTED_STOP_AFTER}"
         )
 
+    _SUPPORTED_RESUME_FROM = (None, "kernel-codegen-response")
+    if resume_from not in _SUPPORTED_RESUME_FROM:
+        raise ValueError(
+            f"--resume-from={resume_from!r} not supported; "
+            f"supported: {[r for r in _SUPPORTED_RESUME_FROM if r]}"
+        )
+    _resume_skip_early = resume_from == "kernel-codegen-response"
+
     out_dir = Path(out_dir).resolve()
     # M-31A.2: COMPGEN_FORCE_REBUILD=1 inverts the default. By default
     # run_graph_compilation rm-rfs out_dir for convenience; under
@@ -331,6 +350,10 @@ def run_graph_compilation(
     # require the operator to clean up first. This is the audit-mode
     # safety check: an audit run that overwrote a prior run would
     # confuse cold/warm reasoning.
+    #
+    # M-53: resume mode preserves out_dir; the operator-committed
+    # response, attempts trail, and certificates survive across the
+    # pipeline-restart boundary.
     _force_rebuild = os.environ.get("COMPGEN_FORCE_REBUILD") == "1"
     if out_dir.exists():
         if _force_rebuild and any(out_dir.iterdir()):
@@ -339,9 +362,30 @@ def run_graph_compilation(
                 f"COMPGEN_FORCE_REBUILD=1 set, but {out_dir} is non-empty. "
                 "Either rm -rf the directory first, or unset the env var."
             )
-        if not _force_rebuild:
+        if not _force_rebuild and not _resume_skip_early:
             shutil.rmtree(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
+
+    if _resume_skip_early:
+        _resume_requests_dir = out_dir / "04_kernel_codegen" / "requests"
+        _resume_contracts_dir = out_dir / "04_kernel_codegen" / "contracts"
+        if not _resume_requests_dir.exists() or not any(
+            _resume_requests_dir.glob("*.request.json")
+        ):
+            raise ValueError(
+                f"--resume-from=kernel-codegen-response: "
+                f"{_resume_requests_dir.relative_to(out_dir)} has no "
+                f"committed requests; run --stop-after "
+                f"kernel-codegen-request first to emit them"
+            )
+        if not _resume_contracts_dir.exists() or not any(
+            _resume_contracts_dir.glob("*.json")
+        ):
+            raise ValueError(
+                f"--resume-from=kernel-codegen-response: "
+                f"{_resume_contracts_dir.relative_to(out_dir)} has no "
+                f"materialized contracts; the prior run did not reach M-40"
+            )
 
     model_cfg = ModelConfig.load(Path(model_config_path))
     target_cfg = TargetConfig.load(Path(target_config_path))
@@ -359,22 +403,33 @@ def run_graph_compilation(
     _import_snapshot_before = ImportSnapshot.take("before")
 
     ledger_path = out_dir / "stage_ledger.jsonl"
-    ledger_path.write_text("", encoding="utf-8")
+    if not _resume_skip_early:
+        ledger_path.write_text("", encoding="utf-8")
+    elif not ledger_path.exists():
+        ledger_path.write_text("", encoding="utf-8")
 
     # ------------------------------------------------------------------ #
-    # Graph Capture
+    # Graph Capture (skipped under M-53 resume mode — prior run produced it)
     # ------------------------------------------------------------------ #
-    _append_ledger(ledger_path, stage_id="graph_capture", event="start")
-    capture_stage = run_graph_capture(model_cfg, target_cfg, out_dir)
-    for ref in capture_stage.outputs:
+    if _resume_skip_early:
         _append_ledger(
-            ledger_path,
-            stage_id="graph_capture",
-            event="artifact_written",
-            note=f"path={ref.path} sha={ref.sha256[:12]}",
+            ledger_path, stage_id="graph_capture", event="start",
+            note="M-53 resume: skipped (prior run's artifacts preserved)",
         )
-    _append_ledger(ledger_path, stage_id="graph_capture", event="finish")
-    stages: list[StageRecord] = [capture_stage]
+        _append_ledger(ledger_path, stage_id="graph_capture", event="finish")
+        stages: list[StageRecord] = []
+    else:
+        _append_ledger(ledger_path, stage_id="graph_capture", event="start")
+        capture_stage = run_graph_capture(model_cfg, target_cfg, out_dir)
+        for ref in capture_stage.outputs:
+            _append_ledger(
+                ledger_path,
+                stage_id="graph_capture",
+                event="artifact_written",
+                note=f"path={ref.path} sha={ref.sha256[:12]}",
+            )
+        _append_ledger(ledger_path, stage_id="graph_capture", event="finish")
+        stages = [capture_stage]
 
     # ------------------------------------------------------------------ #
     # Payload Lowering (when stop_after >= payload-lowering)
@@ -385,7 +440,7 @@ def run_graph_compilation(
         "post-lowering-verification", "differential-verification",
         "real-transform-eligibility", "real-set-tile-transform", "real-transform-differential", "cost-preview-v2", "agent-decision-request", "kernel-specialization-request", "kernel-codegen-request", "execution-plan-emit", "glue-emit", "glue-differential",
         "gap-discovery", "gap-closure",
-    )
+    ) and not _resume_skip_early
     if needs_lowering:
         from compgen.graph_compilation.lower import run_payload_lowering
 
@@ -460,7 +515,7 @@ def run_graph_compilation(
         "differential-verification", "real-transform-eligibility",
         "real-set-tile-transform", "real-transform-differential", "cost-preview-v2", "agent-decision-request", "kernel-specialization-request", "kernel-codegen-request", "execution-plan-emit", "glue-emit", "glue-differential",
         "gap-discovery", "gap-closure",
-    )
+    ) and not _resume_skip_early
     if needs_graph_analysis:
         _append_ledger(ledger_path, stage_id="graph_analysis", event="start")
         ga_stage = run_graph_analysis_stage(
@@ -484,7 +539,7 @@ def run_graph_compilation(
         "post-lowering-verification", "differential-verification",
         "real-transform-eligibility", "real-set-tile-transform", "real-transform-differential", "cost-preview-v2", "agent-decision-request", "kernel-specialization-request", "kernel-codegen-request", "execution-plan-emit", "glue-emit", "glue-differential",
         "gap-discovery", "gap-closure",
-    )
+    ) and not _resume_skip_early
     if needs_recipe_planning:
         from compgen.graph_compilation.recipe_planning import (
             run_recipe_planning,
@@ -1278,7 +1333,7 @@ def run_graph_compilation(
         "kernel-specialization-request", "kernel-codegen-request", "execution-plan-emit", "glue-emit", "glue-differential",
         "gap-discovery",
         "gap-closure",
-    )
+    ) and not _resume_skip_early
     if needs_kernel_specialization:
         # Phase C unified kernel-codegen boundary. M-39's legacy
         # request emitter is superseded by M-42; the legacy

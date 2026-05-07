@@ -109,6 +109,23 @@ def _build_parser() -> argparse.ArgumentParser:
         ),
     )
     run.add_argument(
+        "--resume-from",
+        choices=("kernel-codegen-response",),
+        default=None,
+        help=(
+            "M-53: resume the pipeline after the operator has committed a "
+            "kernel-codegen response via the M-43 API. Requires --out to "
+            "point at a previous run that already reached "
+            "--stop-after=kernel-codegen-request. Skips the wipe + early "
+            "stages (graph_capture, payload_lowering, graph_analysis, "
+            "recipe_planning, kernel_specialization_request) so the "
+            "committed response, attempts trail, and certificates survive "
+            "across the pipeline-restart boundary. Drives M-46 "
+            "(execution_plan_emit) → M-47 (glue_emit) → M-49 "
+            "(glue_differential) on the existing artifacts."
+        ),
+    )
+    run.add_argument(
         "--agent-max-retries",
         type=int,
         default=3,
@@ -679,6 +696,7 @@ def _run_pipeline(
     agent_decision_response_paths: list[Path] | None = None,
     agent_max_retries: int = 3,
     live_provider_config: object | None = None,
+    resume_from: str | None = None,
 ) -> int:
     from compgen.graph_compilation.run import run_graph_compilation
 
@@ -720,6 +738,7 @@ def _run_pipeline(
         agent_decision_response_paths=rest,
         agent_max_retries=agent_max_retries,
         live_provider_config=live_provider_config,
+        resume_from=resume_from,
     )
     print(f"run_dir: {result.run_dir}")
     for s in result.stages:
@@ -1516,6 +1535,7 @@ def main(argv: list[str] | None = None) -> int:
                 ),
                 agent_max_retries=getattr(args, "agent_max_retries", 3),
                 live_provider_config=live_cfg,
+                resume_from=getattr(args, "resume_from", None),
             )
         if args.command == "lower":
             return _run_lower(args.capture_run, args.target, args.out, args.run_id)

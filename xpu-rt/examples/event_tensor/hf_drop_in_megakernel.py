@@ -34,7 +34,11 @@ n_attention_heads).
 from __future__ import annotations
 
 import sys
-sys.modules.setdefault("torchvision", None)
+try:
+    import torchvision as _tv  # real install — let transformers use it
+    del _tv
+except ImportError:
+    sys.modules.setdefault("torchvision", None)
 
 from dataclasses import dataclass
 
