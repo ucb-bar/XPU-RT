@@ -25,6 +25,7 @@ every W6 runtime pass rewrites.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Literal
 
 ResourceKind = Literal["compute", "memory", "transfer", "synchronization"]
@@ -162,6 +163,29 @@ class FallbackTransition:
 
 
 @dataclass
+class RegionKernelBinding:
+    """M-46 (Phase C): bind one region to a certified kernel.
+
+    The plan executor (M-47) refuses to call any kernel whose
+    contract_hash does not have a matching certificate
+    (``04_kernel_codegen/certificates/<contract_hash>.json``).
+    Validation re-checks both:
+
+    1. The certificate file exists at ``certificate_path``.
+    2. The certificate's ``contract_hash`` matches the binding's
+       ``contract_hash``.
+
+    Paths are relative to the run directory.
+    """
+
+    region_id: str
+    contract_hash: str
+    certificate_path: str    # 04_kernel_codegen/certificates/<contract_hash>.json
+    kernel_artifact: str = ""  # path to kernel_source within artifact_dir
+    dispatch_model: str = "sync"  # sync | async | persistent | inline
+
+
+@dataclass
 class ExecutionPlan:
     """The full Phase 5 artifact.
 
@@ -182,6 +206,11 @@ class ExecutionPlan:
     buffers: list[BufferDescriptor] = field(default_factory=list)
     fallback_transitions: list[FallbackTransition] = field(default_factory=list)
     summary: dict[str, Any] = field(default_factory=dict)
+    # M-46 (Phase C): bind certified kernels to regions. Validated
+    # cross-reference against the per-region placements; the plan
+    # executor (M-47) only calls kernels whose binding's certificate
+    # matches the cert on disk.
+    region_kernel_bindings: list[RegionKernelBinding] = field(default_factory=list)
 
     # --- accessor helpers -----------------------------------------------
 
@@ -265,6 +294,88 @@ class ExecutionPlan:
         for q in self.queue_timeline:
             if q.region_id not in seen_regions:
                 raise ValueError(f"queue_timeline entry refers to unknown region {q.region_id!r}")
+
+        # M-46 (Phase C) — region_kernel_bindings invariants.
+        # validate() is run_dir-agnostic for back-compat (existing
+        # callers pass no path); validate_with_run_dir() below is the
+        # M-46 strict variant that re-loads + re-validates the
+        # certificate. Here we only enforce the structural invariants
+        # that don't need disk access.
+        seen_binding_regions: set[str] = set()
+        for binding in self.region_kernel_bindings:
+            if binding.region_id in seen_binding_regions:
+                raise ValueError(
+                    f"duplicate region_kernel_binding for "
+                    f"region_id {binding.region_id!r}"
+                )
+            seen_binding_regions.add(binding.region_id)
+            if binding.region_id not in seen_regions:
+                raise ValueError(
+                    f"region_kernel_binding references unknown "
+                    f"region_id {binding.region_id!r}"
+                )
+            if not binding.contract_hash:
+                raise ValueError(
+                    f"region_kernel_binding[{binding.region_id!r}]: "
+                    f"contract_hash must be non-empty"
+                )
+            if not binding.certificate_path:
+                raise ValueError(
+                    f"region_kernel_binding[{binding.region_id!r}]: "
+                    f"certificate_path must be non-empty"
+                )
+            if binding.dispatch_model not in (
+                "sync", "async", "persistent", "inline",
+            ):
+                raise ValueError(
+                    f"region_kernel_binding[{binding.region_id!r}]: "
+                    f"dispatch_model {binding.dispatch_model!r} not in "
+                    f"(sync|async|persistent|inline)"
+                )
+
+    def validate_with_run_dir(self, run_dir: Path) -> None:
+        """Strict validation that resolves region_kernel_bindings
+        against the on-disk certificate (M-46). Calls ``validate()``
+        first for structural invariants, then:
+
+        1. Verifies every certificate file exists at the binding's
+           ``certificate_path``.
+        2. Verifies the certificate's ``contract_hash`` field matches
+           the binding's ``contract_hash``.
+
+        Raises ``ValueError`` with a typed message naming the failed
+        binding so the M-47+ executor can refuse to bind.
+        """
+        # Local import to avoid a circular import at module load —
+        # kernel_certificate imports nothing from runtime.
+        from compgen.kernels.kernel_certificate import KernelCertificate
+        import json as _json
+
+        self.validate()
+        for binding in self.region_kernel_bindings:
+            cert_path = Path(run_dir) / binding.certificate_path
+            if not cert_path.exists():
+                raise ValueError(
+                    f"region_kernel_binding[{binding.region_id!r}]: "
+                    f"certificate file missing at {binding.certificate_path}; "
+                    f"M-45 must emit it before the plan can be bound"
+                )
+            try:
+                body = _json.loads(cert_path.read_text(encoding="utf-8"))
+                cert = KernelCertificate.from_dict(body)
+            except Exception as exc:  # noqa: BLE001 - typed validation
+                raise ValueError(
+                    f"region_kernel_binding[{binding.region_id!r}]: "
+                    f"certificate at {binding.certificate_path} could not be "
+                    f"loaded: {type(exc).__name__}: {exc}"
+                ) from exc
+            if cert.contract_hash != binding.contract_hash:
+                raise ValueError(
+                    f"region_kernel_binding[{binding.region_id!r}]: "
+                    f"certificate contract_hash={cert.contract_hash!r} "
+                    f"does not match binding contract_hash="
+                    f"{binding.contract_hash!r}"
+                )
 
     # --- serialization --------------------------------------------------
 
@@ -353,6 +464,16 @@ class ExecutionPlan:
                 for f in self.fallback_transitions
             ],
             "summary": dict(self.summary),
+            "region_kernel_bindings": [
+                {
+                    "region_id": b.region_id,
+                    "contract_hash": b.contract_hash,
+                    "certificate_path": b.certificate_path,
+                    "kernel_artifact": b.kernel_artifact,
+                    "dispatch_model": b.dispatch_model,
+                }
+                for b in self.region_kernel_bindings
+            ],
         }
 
     @classmethod
@@ -444,6 +565,16 @@ class ExecutionPlan:
                 for f in data.get("fallback_transitions", [])
             ],
             summary=dict(data.get("summary", {})),
+            region_kernel_bindings=[
+                RegionKernelBinding(
+                    region_id=b["region_id"],
+                    contract_hash=b["contract_hash"],
+                    certificate_path=b["certificate_path"],
+                    kernel_artifact=b.get("kernel_artifact", ""),
+                    dispatch_model=b.get("dispatch_model", "sync"),
+                )
+                for b in data.get("region_kernel_bindings", [])
+            ],
         )
 
 
@@ -472,6 +603,7 @@ __all__ = [
     "Ownership",
     "QueueAssignment",
     "QueueEntry",
+    "RegionKernelBinding",
     "RegionPlacement",
     "Resource",
     "ResourceKind",

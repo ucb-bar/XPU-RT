@@ -131,6 +131,15 @@ _DOWNSTREAM_REPORTS: tuple[
     ("region_compiled_differential",
      "02_graph_analysis/kernel_execution/region_compiled_differential_report.json",
      "status", "compiled_kernel_differential_check"),
+    # M-49 (Phase C) glue-emit differential. status=fail means the
+    # M-47-emitted plan executor produced a numerical mismatch vs
+    # eager torch.matmul that exceeds the contract's claimed
+    # refinement (bit_equality or Higham-bounded tolerance_eps).
+    # The retry filter excludes the failed candidate id; the agent
+    # should pick a different SetTileParams candidate to unblock.
+    ("glue_differential",
+     "06_glue_emit/glue_differential_report.json",
+     "status", "glue_differential_check"),
     # M-23 compiled fusion verification. status=fail means the fused
     # producer→consumer kernel produced a numerical mismatch vs eager
     # unfused chain (a real correctness regression). The retry filter

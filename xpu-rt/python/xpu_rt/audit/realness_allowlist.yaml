@@ -357,6 +357,22 @@ allowed_nonproduction_symbols:
     reason: "M-45's realness contract; meta-reference, not a residual"
     forbidden_in: []
 
+  - path: docs/realness/m46_plan_kernel_binding.yaml
+    reason: "M-46's realness contract; meta-reference, not a residual"
+    forbidden_in: []
+
+  - path: docs/realness/m47_python_sync_executor.yaml
+    reason: "M-47's realness contract; meta-reference, not a residual"
+    forbidden_in: []
+
+  - path: docs/realness/m48_plan_assertions.yaml
+    reason: "M-48's realness contract; meta-reference, not a residual"
+    forbidden_in: []
+
+  - path: docs/realness/m49_glue_differential.yaml
+    reason: "M-49's paper-facing realness contract; meta-reference, not a residual"
+    forbidden_in: []
+
   - path: docs/realness/phase_c_status_tracker.yaml
     reason: "Phase C bootstrap contract; meta-reference, not a residual"
     forbidden_in: []

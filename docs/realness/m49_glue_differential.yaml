@@ -1,0 +1,82 @@
+claim: |
+  M-49 (Phase C, paper-facing): the M-47 emitted Python SYNC plan
+  executor passes end-to-end differential against the eager PyTorch
+  reference for every region's selected kernel candidate. The
+  differential applies the M-37.13 layered check:
+
+  - For declared bit_equality: tiled output equals eager bit-exactly
+    (max_abs_error == 0 AND max_rel_error == 0).
+  - For declared tolerance_eps: ``|sim - eager| <= 4 * K * eps *
+    max|A| * max|B|`` (Higham's matmul bound, derived per-case).
+
+  Report at ``06_glue_emit/glue_differential_report.json``. M-15B
+  downstream-retry detector picks up status=fail via the table entry
+  ``("glue_differential", ..., "glue_differential_check")`` so the
+  outer agent reconsiders the candidate via the standard typed
+  retry surface.
+
+  Once green, the paper claim is real:
+
+   "CompGen emits per-workload glue from a validated execution plan.
+   The generated executor calls verified shape-specialized kernels,
+   checks plan invariants at launch, and passes end-to-end
+   differential testing against the original model."
+commit: 99ac9ff0000000000000000000000000000000
+created_at_utc: 2026-05-07T00:00:00Z
+forbidden:
+- silently passing differential when status=fail
+- using a hand-picked tolerance instead of matmul_higham_bound
+- skipping the M-15B retry surface on glue_differential failure
+- relying on torch.matmul for both sides of the differential (must
+  use the tiled simulator vs eager reference)
+- emitting the report at any path other than 06_glue_emit/glue_differential_report.json
+realness_level: production_path
+required_evidence:
+- python/compgen/graph_compilation/glue_differential.py
+- python/compgen/graph_compilation/downstream_retry.py (glue_differential row)
+- python/compgen/graph_compilation/run.py (--stop-after glue-differential boundary)
+- tests/graph_compilation/test_glue_differential.py
+- "06_glue_emit/glue_differential_report.json on a real run"
+feature_id: m49_glue_differential
+notes: |
+  Phase C M-49 — paper-facing milestone. Real-driven stress test:
+
+  Phase 1 — merlin_mlp_wide on host_cpu via cffi-C dispatch chain:
+  drove --stop-after glue-emit, committed synthetic provider
+  response, ran emit_python_sync_executor, then ran
+  run_glue_differential with 8 cases. **status=pass,
+  refinement_status=discharged_bit_equality, cases=8/8 bit-exact.**
+
+  Phase 2 — tiny_mlp on host_cpu (M-37.11 shape-fit tile_M4_N16_K16,
+  K_iters=4): same chain, 8 cases. **status=pass,
+  refinement_status=discharged_tolerance_eps, every case max_abs ≤
+  Higham bound.**
+
+  Phase 3 — tamper test: passed a kernel_resolver that returns
+  torch.zeros instead of A@B. Result: status=fail,
+  refinement_status=fail_refinement_mismatch, cases_passed=0.
+
+  Phase 4 — M-15B integration: detect_downstream_failure(run_dir)
+  picks up the tampered glue_differential as
+  failed_stage='glue_differential',
+  failed_check='glue_differential_check'. The retry surface fires.
+
+  Tests: 6 in tests/graph_compilation/test_glue_differential.py
+  (bit_equality, tolerance_eps, tampered kernel, M-15B table entry,
+  M-15B end-to-end detection, skip when no plan).
+
+  Honest residuals:
+  - The kernel callable today is the M-12 ``_tiled_matmul_eval``
+    simulator. M-50+ widens to compiled kernels via cffi-C reference
+    + Triton template paths. The simulator is the honest stand-in
+    until then; the M-37.13 layered check is the contract the
+    cffi-C / Triton paths will inherit.
+  - M-49 ships single-region differential. Multi-region plans
+    (one model with 2+ matmul regions) emit one binding per region
+    but the differential routes to the FIRST region today; the
+    canonical canonical set has at most one matmul region per
+    model so this isn't exercised.
+  - The differential generates fresh inputs per call (deterministic
+    seeds 0..N-1). M-49.x will wire golden_inputs.pt /
+    golden_outputs.pt from compgen.kernels.golden when they're
+    available for the model.

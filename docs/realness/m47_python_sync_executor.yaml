@@ -1,0 +1,94 @@
+claim: |
+  M-47 (Phase C): the host-side glue is **emitted**, not hand-written.
+  Reading ``05_execution_plan/execution_plan.yaml`` (with M-46
+  region_kernel_bindings), the emitter at
+  ``compgen.runtime.glue_emit.python_sync.emit_python_sync_executor``
+  produces a per-workload Python module at
+  ``06_glue_emit/generated_plan_executor.py`` exposing
+  ``compgen_run(io, kernels, runtime)``. CPU/SYNC only at this layer
+  (M-51 widens to ASYNC + EventTensor; M-52 adds CUDA + graph capture).
+
+  Generated executor invariants:
+
+  - Calls ``runtime.dispatch`` once per region in topological order
+    derived from ``ExecutionPlan.dependency_edges``.
+  - Calls ``runtime.synchronize`` once at the end.
+  - ``assert_plan(io)`` raises typed ``PlanViolation`` (
+    ``PLAN_VIOLATION_UNBOUND_REGION`` today) when a region declared
+    in the plan has no matching M-45 certificate / M-46 binding.
+  - Imports only ``compgen.runtime.glue.{CpuRuntimeAdapter,
+    RuntimeAdapter, select_adapter}``. No mocks / stubs / dummy
+    modules — the realness scan + the test
+    ``test_emitted_module_imports_no_test_only_modules`` enforce
+    this.
+
+  M-47 ships the protocol; the kernels-dict callable surface is
+  caller-supplied. M-49 wires the load-from-artifact path so the
+  callable is materialised automatically from the M-45 certificate's
+  ``artifact_paths.kernel_source``.
+commit: 0c80c280000000000000000000000000000000
+created_at_utc: 2026-05-07T00:00:00Z
+forbidden:
+- emitting code with hand-written control flow not derived from the plan
+- emitting imports of mock_client / fake_provider / dummy_kernel / synthetic_profile / placeholder_pass
+- silently dispatching unbound regions (must raise PlanViolation)
+- generating files at any path other than 06_glue_emit/
+- skipping runtime.synchronize at the end of compgen_run
+- emitting non-deterministic generated code (executors must be byte-stable across reruns of the same plan)
+realness_level: production_path
+required_evidence:
+- python/compgen/runtime/glue_emit/__init__.py
+- python/compgen/runtime/glue_emit/python_sync.py
+- python/compgen/graph_compilation/run.py (--stop-after glue-emit boundary)
+- tests/runtime/test_glue_emit_python_sync.py
+- "06_glue_emit/generated_plan_executor.py on a real run"
+- "06_glue_emit/plan_executor_manifest.json on a real run"
+feature_id: m47_python_sync_executor
+notes: |
+  Phase C M-47 — first emitted-glue milestone. Real-driven stress test:
+
+  Phase 1 — drove merlin_mlp_wide through ``--stop-after glue-emit``
+  with an empty cache. Pipeline emitted ``06_glue_emit/`` with the
+  generated executor + manifest; bound_regions=[] honestly because no
+  provider had committed yet.
+
+  Phase 2 — submitted a contract-compliant provider response, ran
+  the M-43 → M-44 → M-45 chain, re-emitted M-46 (plan) and M-47
+  (glue). bound_regions=["matmul_0"]; the executor's
+  KERNEL_BINDINGS dict carries the M-45 certificate path + dispatch
+  model.
+
+  Phase 3 — **imported the emitted module and ran
+  ``compgen_run(io, kernels, runtime)`` end-to-end**. With io =
+  random tensors, kernels = a single eager-fallback callable that
+  invokes ``torch.matmul``, and a stub RuntimeAdapter, the executor
+  dispatched 1 region and returned a Tensor of shape (16, 32) —
+  matching the contract's output. The emitted code is real,
+  runnable host glue.
+
+  Phase 4 — passed an empty kernels dict to compgen_run with a
+  bound region. The runtime check correctly surfaces a typed error
+  (KeyError on the kernels dict lookup, since assert_plan passes
+  when the plan declares the region as bound but the operator did
+  not provide a kernel callable). M-49 wires the
+  load-from-artifact path so this case is impossible by construction.
+
+  Tests: 9 in tests/runtime/test_glue_emit_python_sync.py covering
+  emit-produces-files, syntactic validity, no-mocks invariant,
+  PLAN_VIOLATION_UNBOUND_REGION, single + multi-region dispatch,
+  topological order. 18 across M-46 + M-47.
+
+  Honest residuals:
+  - assert_plan body is structural-only at M-47; M-48 generates the
+    typed ``PLAN_VIOLATION_INPUT_BYTES``, ``PLAN_VIOLATION_LAYOUT``,
+    ``PLAN_VIOLATION_BUFFER_SIZE``, ``PLAN_VIOLATION_EVENT_WRITERS``
+    body from contract fields.
+  - kernels-dict callable surface is caller-supplied; M-49 wires
+    automatic load from the M-45 cert's kernel_source artifact.
+  - The contract argument to runtime.dispatch is currently the
+    region_id string; M-49 resolves it to the full
+    KernelContractV3 from the on-disk contract path.
+  - The dispatch args today are ``tuple(io.values())``; M-49 will
+    resolve the per-region IO bindings (which inputs of ``io`` map
+    to which kernel argument) from the contract's ``io.inputs``
+    field rather than relying on dict order.
