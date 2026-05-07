@@ -1,0 +1,72 @@
+claim: |
+  M-45 (Phase C): when M-44's contract-driven verifier accepts a
+  kernel response, M-43's commit tool emits a typed
+  ``KernelCertificate`` at
+  ``04_kernel_codegen/certificates/<contract_hash>.json``. The
+  certificate is the single artifact M-46 (plan ↔ kernel binding) is
+  allowed to consult — kernels without a matching certificate cannot
+  be bound into an execution plan.
+
+  The cert binds (contract_hash, task_id, region_id, candidate_id,
+  per-artifact sha256[:16], verifier_report_hash, frozen claims,
+  accepted_at_utc, paper_claimable, fallback_used). It is keyed by
+  contract_hash so M-46 looks up by the canonical key from M-41.
+
+  ``validate_certificate`` re-hashes every artifact + the verifier
+  report and compares to the cert's recorded hashes. Any drift is a
+  typed ``artifact_hash_drift`` or ``verifier_report_drift``. Missing
+  files yield ``missing_artifact`` / ``missing_verifier_report``.
+  This mirrors the M-37.13
+  ``certificate_artifact_hash_changed`` negative-control pattern.
+
+  ``paper_claimable`` is ``True`` only when no fallback was used
+  during kernel codegen (e.g. the operator did NOT pass
+  ``--kernel-fallback-policy explicit-reference-only``).
+commit: ea69e040000000000000000000000000000000
+created_at_utc: 2026-05-07T00:00:00Z
+forbidden:
+- emitting a certificate for a response the M-44 verifier did not accept
+- accepting a kernel call whose contract_hash has no certificate
+- silently accepting a stale certificate (drifted artifact / verifier report)
+- marking paper_claimable=True when a fallback path was used
+- writing the certificate anywhere other than 04_kernel_codegen/certificates/<contract_hash>.json
+- mutating an emitted certificate post-write (immutable artefact)
+realness_level: production_path
+required_evidence:
+- python/compgen/kernels/kernel_certificate.py
+- python/compgen/graph_compilation/kernel_codegen_response.py (M-45 hook in commit_response)
+- python/compgen/mcp/tools/kernel_codegen.py (inspect surfaces cert + validation)
+- tests/kernels/test_kernel_certificate.py
+- "04_kernel_codegen/certificates/<contract_hash>.json on a real run"
+feature_id: m45_kernel_certificate
+notes: |
+  Phase C M-45. Real-driven stress test:
+
+  Phase 1 — drive 6 canonical models through the full M-40 → M-42
+  → M-43 → M-44 → M-45 chain. 5/5 set_tile_params models produced a
+  certificate at the canonical path, all paper_claimable=True (no
+  fallback used). proxy_vla honestly emitted not_applicable
+  (fusion candidate; M-50+ widens scope).
+
+  Phase 2 — tamper test: edited merlin_mlp_wide's kernel_source.c
+  AFTER the certificate was emitted. Pre-tamper validate=True;
+  post-tamper validate=False with failure_kind=artifact_hash_drift
+  and drifted={"kernel_source"}. The cert correctly detects the
+  drift and would refuse a downstream M-46 binding attempt.
+
+  Tests: 12 cases in tests/kernels/test_kernel_certificate.py
+  covering schema round-trip, emit, paper_claimable=False on
+  fallback, and 5 typed-drift negative controls (artifact drift,
+  report drift, missing artifact, missing report, fresh cert
+  validates).
+
+  Honest residuals:
+  - The certificate is emitted only when the M-44 verifier returns
+    overall=pass. When deferred verdicts dominate (e.g. matmul-only
+    differential, M-47/M-48 deferred memory/event checks), the
+    response surfaces as next_action=verifier_pending and no cert
+    is emitted yet — the certificate is only meaningful with a
+    completed verification.
+  - Fallback policy is wired in M-43 (CLI flag), but the operator
+    must opt in explicitly. The cert truthfully records the
+    fallback state via paper_claimable.

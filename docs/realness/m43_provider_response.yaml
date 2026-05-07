@@ -1,0 +1,102 @@
+claim: |
+  M-43 (Phase C): the kernel-codegen provider protocol — a typed
+  ``kernel_codegen_response_v1`` schema, a sandbox-enforcing
+  validator, a commit tool that writes the attempt trail, and four
+  MCP tools (emit, run, commit, inspect) — closes the kernel-codegen
+  subagent loop end-to-end.
+
+  Every provider response goes through ``commit_response`` which:
+
+  1. Persists the response (even malformed) under
+     ``04_kernel_codegen/attempts/<task_id>/attempt_<N>/response.json``.
+  2. Validates against the M-42 task contract via
+     ``validate_response``. Eleven typed failure_kind values bucketed
+     into four recoverability classes (recoverable_provider_failure,
+     provider_protocol_violation, transient,
+     protocol_or_contract_fatal).
+  3. Appends to the per-task attempts log
+     ``kernel_codegen_attempts.json`` (append-only).
+  4. Routes:
+     - accept → ``verifier_pending`` (M-44 takes over when it lands).
+     - recoverable failure → emits
+       ``kernel_codegen_retry_request.json`` with typed feedback.
+     - fatal failure → emits ``kernel_codegen_failure_report.json``
+       as a ``downstream_retry_request_v1`` so M-15B picks it up.
+     - 3 attempts exhausted → emits the same downstream-retry shape
+       with ``failed_check=kernel_codegen_attempts_exhausted`` so
+       the OUTER agent reconsiders the candidate.
+
+  Sandbox enforcement is the load-bearing M-43 invariant: every
+  ``response.artifacts[*]`` path MUST resolve under
+  ``request.artifact_dir``. Absolute paths reject; ``../`` escapes
+  reject. ``forbidden_path_write`` is unconditionally fatal.
+commit: cc428fe0000000000000000000000000000000
+created_at_utc: 2026-05-07T00:00:00Z
+feature_id: m43_provider_response
+forbidden:
+- accepting a response without validating contract_hash match
+- silently routing a fatal failure as recoverable
+- letting an artifact path escape the sandboxed artifact_dir
+- appending non-typed failure kinds to RECOVERABILITY (every key must bucket)
+- crashing on malformed JSON instead of recording it as schema_invalid
+- bypassing the attempt trail (every commit must append to attempts log)
+- emitting a kernel certificate (M-45's job) before M-44 verification runs
+realness_level: production_path
+required_evidence:
+- python/compgen/graph_compilation/kernel_codegen_response.py
+- python/compgen/mcp/tools/kernel_codegen.py
+- tests/graph_compilation/test_kernel_codegen_response.py
+- "04_kernel_codegen/attempts/<task_id>/attempt_<N>/{response,validation_report}.json on a real run"
+- "04_kernel_codegen/kernel_codegen_attempts.json (append-only) on a real run"
+- "04_kernel_codegen/kernel_codegen_retry_request.json on a recoverable-failure run"
+- "04_kernel_codegen/kernel_codegen_failure_report.json on a fatal/exhausted run"
+notes: |
+  Phase C M-43. Real-driven stress test:
+
+  Phase A — invalid JSON response. Submitted "not json" via the
+  commit MCP. Result: failure_kind=schema_invalid,
+  recoverability=recoverable_provider_failure, next_action=retry.
+  ``kernel_codegen_retry_request.json`` emitted with typed
+  suggested_fix.
+
+  Phase B — contract_hash mismatch. Submitted a well-shaped response
+  with a wrong contract_hash. Result: failure_kind=contract_hash_mismatch,
+  recoverability=protocol_or_contract_fatal, next_action=fatal_reject.
+  ``kernel_codegen_failure_report.json`` (downstream_retry_request_v1
+  shape) emitted.
+
+  Phase C — sandbox escape. Submitted artifacts pointing at absolute
+  paths (/tmp/escape.c, /etc/passwd). Result:
+  failure_kind=forbidden_path_write, immediate fatal. The validator
+  rejected without writing or reading any of the rogue paths.
+
+  Phase D — well-formed response. Submitted a real response with
+  artifacts under the sandbox. Result: accepted=True,
+  next_action=verifier_pending (awaiting M-44 + M-45).
+
+  Phase E — final inspection. The append-only log shows all 4
+  attempts in order, each with its typed status. The MCP inspect tool
+  surfaces request, attempts (including the malformed one as a
+  bounded-preview), attempts_log, retry_request, and failure_report.
+
+  Bug surfaced + fixed by the stress test: ``_read_json_or_none`` in
+  the MCP inspect tool initially crashed on a non-JSON
+  ``response.json`` written by a rejected attempt. Now it degrades
+  gracefully and the inspect view labels the response as
+  ``{"_malformed": true, "preview": "..."}``.
+
+  Caveat: M-44 (the verifier) is not yet implemented. Until it lands,
+  ``next_action=verifier_pending`` is the most honest the commit
+  tool can return on accept. M-45's certificate is not emitted by
+  M-43; that's wired when both M-44 and M-45 land.
+
+  M-43.1 follow-up: the ``compgen_run_kernel_codegen_task`` MCP tool
+  currently returns ``operator_action_required=True`` for new tasks
+  — the harness-driven Claude Code subagent spawn is wired in M-43.1
+  (the parent MCP server gains an Agent-tool wrapper). The
+  file-based protocol works without it (operator writes the response
+  by hand or via any other path).
+
+  Tests: 14 cases in test_kernel_codegen_response.py covering all
+  failure-class buckets + attempt trail + accept path + MCP inspect
+  + recoverability-table-completeness invariant.

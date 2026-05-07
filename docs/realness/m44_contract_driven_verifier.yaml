@@ -1,0 +1,81 @@
+claim: |
+  M-44 (Phase C, LOAD-BEARING): the verifier obligation list is
+  generated mechanically from ``KernelContractV3`` fields. There is
+  no hardcoded check list; every contract field that has a verifiable
+  invariant maps to one obligation, and every obligation maps to one
+  ``verify_*`` callable. Adding a contract field without adding a
+  verifier (or vice versa) breaks
+  ``test_obligation_count_matches_contract_fields`` loud.
+
+  Mapping (Section 7's table):
+
+  ::
+
+      io.inputs[*].shape           → input_shape_match
+      io.inputs[*].dtype_class     → input_dtype_match
+      io.inputs[*].layout          → input_layout_match
+      io.outputs[*].shape          → output_shape_match
+      numerics.accumulator_dtype   → accumulator_dtype_match
+      numerics.max_relative_error  → differential_within_higham_bound
+      numerics.deterministic       → deterministic_repeat_run (deferred to M-47)
+      sync.event_decls             → event_signalled_once
+      memory.input_tiers           → memory_tier_match (deferred to M-48)
+      memory.output_tiers          → memory_tier_match (deferred to M-48)
+      dispatch.model               → dispatch_model_match
+      hardware.target_name         → target_name_match
+
+  The differential check uses the M-37.13 Higham bound
+  (``matmul_higham_bound``); never a hand-picked constant.
+  Verification report lives at
+  ``04_kernel_codegen/validation/<task_id>.validation.json``.
+  Wired into the M-43 commit flow: an accepted response is verified
+  immediately; a fail returns the typed failure_kind to the M-43
+  retry policy; deferred obligations (memory tier, runtime
+  determinism) wait for M-47/M-48.
+commit: 0df601b0000000000000000000000000000000
+created_at_utc: 2026-05-07T00:00:00Z
+feature_id: m44_contract_driven_verifier
+forbidden:
+- hardcoded check lists not derived from contract fields
+- silent pass on a missing verifier — every obligation must dispatch
+- tolerance constants (Higham bound or exact equality only)
+- bypassing write_validation_report on accept (the report is the
+  certificate's input)
+- adding a new contract field without adding a verifier
+- adding a new verifier without an obligation in generate_obligations
+realness_level: production_path
+required_evidence:
+- python/compgen/kernels/contract_verifier.py
+- python/compgen/graph_compilation/kernel_codegen_response.py (M-44 hook)
+- tests/kernels/test_contract_verifier.py
+- "04_kernel_codegen/validation/<task_id>.validation.json on a real run"
+notes: |
+  Phase C M-44 — the load-bearing verifier. Real-driven stress test:
+
+  Phase 1 — drive 6 canonical models through the full pipeline +
+  contract-compliant synthetic provider response. 5/5 set_tile_params
+  models emitted 16 typed obligations and ALL passed
+  (overall=pass, accepted=True, next_action=verified). proxy_vla
+  honestly emitted not_applicable (fusion candidate).
+
+  Phase 2 — tamper: rewrote merlin_mlp_wide's kernel_metadata.json
+  to declare wrong input shape (99x99 instead of 16x16). Re-commit
+  routed:
+  - validate_response: accepted (sandbox + schema OK)
+  - M-44 verifier: failure_kind=shape_mismatch
+  - M-43 retry policy: next_action=retry (recoverable_provider_failure)
+  - kernel_codegen_retry_request.json emitted with typed feedback
+
+  Tests: 12 cases in tests/kernels/test_contract_verifier.py
+  covering schema + per-verifier failure modes + e2e write of the
+  validation report. All M-43 + M-44 together: 46 pass.
+
+  Honest residuals:
+  - Determinism check is deferred to M-47 (real repeated execution).
+  - Memory tier check is deferred to M-48 (runtime PLAN_VIOLATION).
+  - Differential check accepts deferred status when the metadata
+    doesn't yet declare measured_max_abs_error / declared_higham_bound;
+    M-49's glue differential wires the real measurement.
+  - Other archetypes (REDUCE, POINTWISE, ACTIVATION) emit
+    obligations but the differential verifier is matmul-only today;
+    their runs surface deferred verdicts honestly.
