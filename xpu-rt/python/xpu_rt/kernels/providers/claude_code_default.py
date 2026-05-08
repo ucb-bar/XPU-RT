@@ -320,6 +320,54 @@ class ClaudeCodeKernelProvider:
             cache_hit=False,
         )
 
+    # ----- internals -----
+
+    def _build_prompt(self, contract: KernelContract) -> str:
+        """Render the contract as a prompt the codegen callable can read.
+
+        When the contract carries a v3 ``kernel_facing()`` projection in
+        its ``constraints['kernel_facing_view']`` slot (the bridge
+        injects it), we surface that explicitly. Otherwise we fall back
+        to v1's terse ``op_family / shapes / dtypes / target`` render.
+        """
+        facing = (contract.constraints or {}).get("kernel_facing_view")
+        lines = [
+            "Generate a kernel for the following contract.",
+            "",
+            f"op_family    : {contract.op_family}",
+            f"region_id    : {contract.region_id}",
+            f"target       : {contract.target_name}",
+            f"hardware_key : {contract.hardware_key}",
+            f"objective    : {contract.objective}",
+            f"layout       : {contract.layout}",
+            f"input shapes : {contract.input_shapes}",
+            f"output shapes: {contract.output_shapes}",
+            f"dtypes       : {contract.dtypes}",
+        ]
+        if contract.constraints:
+            extras = {k: v for k, v in contract.constraints.items() if k != "kernel_facing_view"}
+            if extras:
+                lines.append(f"constraints  : {extras}")
+        if facing is not None:
+            lines.append("")
+            lines.append("KernelFacingView (v3) — exhaustive kernel-readable spec:")
+            lines.append(repr(facing))
+        lines.append("")
+        lines.append("Output only the kernel source. No explanation, no markdown fences.")
+        return "\n".join(lines)
+
+    def _guess_language(self, code: str) -> str:
+        head = code.lstrip()[:120].lower()
+        if head.startswith("@triton.jit") or "import triton" in head:
+            return "triton"
+        if "__global__" in head or "#include <cuda" in head:
+            return "cuda"
+        if "#include" in head:
+            return "c"
+        if "def " in head or "import " in head:
+            return "python"
+        return "unknown"
+
 
 def _kernel_facing_to_fp_dict(facing: Any, contract_v3: Any) -> dict[str, Any]:
     """Build the fingerprint-shaped dict from a v3 KernelFacingView.
@@ -374,54 +422,6 @@ def _kernel_facing_to_fp_dict(facing: Any, contract_v3: Any) -> dict[str, Any]:
             "execution": {"hardware": {"target_name": target}},
         },
     }
-
-    # ----- internals -----
-
-    def _build_prompt(self, contract: KernelContract) -> str:
-        """Render the contract as a prompt the codegen callable can read.
-
-        When the contract carries a v3 ``kernel_facing()`` projection in
-        its ``constraints['kernel_facing_view']`` slot (the bridge
-        injects it), we surface that explicitly. Otherwise we fall back
-        to v1's terse ``op_family / shapes / dtypes / target`` render.
-        """
-        facing = (contract.constraints or {}).get("kernel_facing_view")
-        lines = [
-            "Generate a kernel for the following contract.",
-            "",
-            f"op_family    : {contract.op_family}",
-            f"region_id    : {contract.region_id}",
-            f"target       : {contract.target_name}",
-            f"hardware_key : {contract.hardware_key}",
-            f"objective    : {contract.objective}",
-            f"layout       : {contract.layout}",
-            f"input shapes : {contract.input_shapes}",
-            f"output shapes: {contract.output_shapes}",
-            f"dtypes       : {contract.dtypes}",
-        ]
-        if contract.constraints:
-            extras = {k: v for k, v in contract.constraints.items() if k != "kernel_facing_view"}
-            if extras:
-                lines.append(f"constraints  : {extras}")
-        if facing is not None:
-            lines.append("")
-            lines.append("KernelFacingView (v3) — exhaustive kernel-readable spec:")
-            lines.append(repr(facing))
-        lines.append("")
-        lines.append("Output only the kernel source. No explanation, no markdown fences.")
-        return "\n".join(lines)
-
-    def _guess_language(self, code: str) -> str:
-        head = code.lstrip()[:120].lower()
-        if head.startswith("@triton.jit") or "import triton" in head:
-            return "triton"
-        if "__global__" in head or "#include <cuda" in head:
-            return "cuda"
-        if "#include" in head:
-            return "c"
-        if "def " in head or "import " in head:
-            return "python"
-        return "unknown"
 
 
 __all__ = [

@@ -40,7 +40,7 @@ loud, not silently") has real fault-injection coverage.
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -68,6 +68,9 @@ class _RegionAssertions:
     aliasing: list[dict[str, int]]  # input_idx, output_idx
     in_place_safe: bool
     event_decls: list[dict[str, Any]]  # name, wait_count
+    # M-61 — typed predicates lifted from the contract.
+    preconditions: list[dict[str, Any]] = field(default_factory=list)
+    postconditions: list[dict[str, Any]] = field(default_factory=list)
 
 
 def _bytes_for(dims: list[int | None], dtype_class: list[str]) -> int:
@@ -128,6 +131,8 @@ def _region_assertions_from_contract(
         {"name": e.get("name", ""), "wait_count": int(e.get("wait_count", 1))}
         for e in (sync.get("event_decls") or [])
     ]
+    preconditions = list(contract.get("preconditions") or [])
+    postconditions = list(contract.get("postconditions") or [])
     return _RegionAssertions(
         region_id=region_id,
         contract_hash="",  # filled by caller
@@ -137,6 +142,8 @@ def _region_assertions_from_contract(
         aliasing=aliasing,
         in_place_safe=bool(memory.get("in_place_safe", False)),
         event_decls=event_decls,
+        preconditions=preconditions,
+        postconditions=postconditions,
     )
 
 
@@ -173,6 +180,8 @@ def collect_region_assertions(
             aliasing=ra.aliasing,
             in_place_safe=ra.in_place_safe,
             event_decls=ra.event_decls,
+            preconditions=ra.preconditions,
+            postconditions=ra.postconditions,
         ))
     return rows
 
@@ -343,6 +352,111 @@ def render_assert_plan_body(
                 )
             seen_events[name] = ra.region_id
 
+    # M-61: predicate-driven precondition checks. Currently emitted
+    # for ModEq (the load-bearing one — block-size constraint) +
+    # ByteSizeLe + DtypeIn. NoAlias and NumericalWithinEps are
+    # postcondition-bound and surface in the M-44 verifier rather
+    # than the runtime fast-path.
+    flat_in_idx_for_region: dict[str, list[int]] = {}
+    seen_idx = 0
+    for ra in region_assertions:
+        flat_in_idx_for_region[ra.region_id] = []
+        for _ in ra.inputs:
+            flat_in_idx_for_region[ra.region_id].append(seen_idx)
+            seen_idx += 1
+
+    for ra in region_assertions:
+        for pred in ra.preconditions:
+            kind = pred.get("kind", "")
+            if kind == "mod_eq":
+                arg_dim = pred.get("arg_dim", "")
+                k = int(pred.get("k", 0))
+                if k <= 0 or not arg_dim:
+                    continue
+                # Resolve arg_dim: convention is a single uppercase
+                # letter naming the contract-level dim (e.g. "K"). For
+                # matmul, K is dims[1] of inputs[0] AND dims[0] of
+                # inputs[1]; we check the first input's K dim by
+                # convention (the kernel's inner-loop bound).
+                indices = flat_in_idx_for_region.get(ra.region_id, [])
+                if not indices:
+                    continue
+                check_idx = indices[0]
+                # K-dim is the LAST dim of input[0] for matmul.
+                lines.append(
+                    f"    # M-61 precondition: {arg_dim} mod {k} == 0"
+                )
+                lines.append(
+                    f"    _t = actual_inputs[{check_idx}]"
+                )
+                lines.append(
+                    "    _t_shape = tuple(getattr(_t, 'shape', ()))"
+                )
+                lines.append(
+                    f"    if _t_shape and _t_shape[-1] % {k} != 0:"
+                )
+                lines.append(
+                    f"        raise PLAN_VIOLATION_PRECONDITION_MOD_EQ("
+                )
+                lines.append(
+                    f"            f\"region={ra.region_id!r}: precondition \""
+                )
+                lines.append(
+                    f"            f\"{arg_dim} mod {k} == 0 violated; got \""
+                )
+                lines.append(
+                    f"            f\"{arg_dim}={{_t_shape[-1]}}\""
+                )
+                lines.append(
+                    "        )"
+                )
+                lines.append("")
+            elif kind == "dtype_in":
+                # Already covered structurally by PLAN_VIOLATION_INPUT_DTYPE
+                # for the first dtype_class entry. Skip redundant emit.
+                continue
+            elif kind == "byte_size_le":
+                arg = pred.get("arg", "")
+                max_bytes = int(pred.get("max_bytes", 0))
+                if not arg or max_bytes <= 0:
+                    continue
+                # Find the input index matching arg name.
+                target_idx: int | None = None
+                for j, inp in enumerate(ra.inputs):
+                    if inp.get("name") == arg:
+                        target_idx = flat_in_idx_for_region[ra.region_id][j]
+                        break
+                if target_idx is None:
+                    continue
+                lines.append(
+                    f"    # M-61 precondition: {arg} numel*element_size <= {max_bytes}"
+                )
+                lines.append(
+                    f"    _t = actual_inputs[{target_idx}]"
+                )
+                lines.append(
+                    "    _t_bytes = _t.numel() * _t.element_size()"
+                )
+                lines.append(
+                    f"    if _t_bytes > {max_bytes}:"
+                )
+                lines.append(
+                    f"        raise PLAN_VIOLATION_PRECONDITION_BYTE_SIZE_LE("
+                )
+                lines.append(
+                    f"            f\"region={ra.region_id!r}: precondition \""
+                )
+                lines.append(
+                    f"            f\"{arg} bytes <= {max_bytes} violated; got \""
+                )
+                lines.append(
+                    "            f\"bytes={_t_bytes}\""
+                )
+                lines.append(
+                    "        )"
+                )
+                lines.append("")
+
     return "\n".join(lines) + "\n"
 
 
@@ -353,6 +467,12 @@ def render_plan_violation_classes() -> str:
         "INPUT_COUNT", "INPUT_DTYPE", "INPUT_SHAPE", "INPUT_BYTES",
         "LAYOUT", "BUFFER_SIZE", "EVENT_WRITERS", "UNBOUND_REGION",
         "IO_TYPE",
+        # M-61 — predicate-driven precondition / postcondition kinds.
+        "PRECONDITION_MOD_EQ",
+        "PRECONDITION_BYTE_SIZE_LE",
+        "PRECONDITION_NO_ALIAS",
+        "PRECONDITION_DTYPE_IN",
+        "POSTCONDITION_NUMERICAL_WITHIN_EPS",
     ]
     lines: list[str] = [
         "class PlanViolation(RuntimeError):",

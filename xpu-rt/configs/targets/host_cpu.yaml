@@ -33,6 +33,23 @@ numerical_budgets:
   fast_math: 5.0e-3
   fp16_accum: 1.0e-2
   fp8_e4m3: 1.0e-1
+# Phase D / M-60 — kernel-facing hardware envelope. Read by
+# KernelContractV3.from_recipe to populate HardwareEnvelope.
+# CPU-friendly defaults; CPUs don't have hardware MMA tiles, so
+# mma_shapes is empty (the kernel codegen doesn't try to align inner
+# loops to native instructions). codegen_hints carry guidance the
+# kernel-codegen provider may surface in its prompt context.
+peak_compute_per_dtype:
+  f32: 0.1                # 100 GFLOPS = 0.1 TFLOPS sustained single-thread
+  fp32: 0.1
+mma_shapes: {}             # CPU: no hardware MMA tiles
+codegen_hints:
+  - "use AVX2/AVX-512 SIMD intrinsics where available"
+  - "prefer row-major contiguous access patterns; touch each input cache line once"
+  - "accumulator stays in registers across the inner K-loop"
+register_quota_per_thread: 256   # bytes per-thread soft cap (8 GP + 32 zmm rough)
+max_concurrent_blocks: 0          # 0 = unbounded by the contract; runtime decides
+
 # Tile candidates for the working-set curve.
 working_set_tiles:
   matmul:

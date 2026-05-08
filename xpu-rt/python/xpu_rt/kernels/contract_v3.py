@@ -484,6 +484,107 @@ class CompilerOnlyView:
 
 
 # ===========================================================================
+# M-60 — derive MemorySpec from region dossier reuse facts
+# ===========================================================================
+
+
+def _lifetime_class_to_tier(lifetime_class: str) -> "MemoryTier":
+    """Map a region-dossier ``lifetime_class`` to a ``MemoryTier``.
+
+    The region dossier (M-17.1) tags each tensor's role:
+
+    * ``input`` — comes from outside the region (cold read from main
+      memory; HOST on CPUs, DEVICE_DRAM on GPUs — we default to HOST
+      since the contract pipeline is CPU-first).
+    * ``transient`` — produced + consumed within the region's reach;
+      lives in scratchpad while warm.
+    * ``persistent`` — long-lived (e.g. weights); main memory.
+
+    The mapping is deliberately conservative — providers can specialise
+    further when they know better. The "DRAM" alias used in earlier
+    drafts maps onto HOST here; the contract's hardware target_name
+    disambiguates HOST (CPU main memory) vs DEVICE_DRAM (GPU global
+    memory) when a downstream consumer needs that resolution.
+    """
+    cls = (lifetime_class or "").lower()
+    if cls == "transient":
+        return MemoryTier.SCRATCHPAD
+    if cls == "persistent":
+        return MemoryTier.HOST
+    return MemoryTier.HOST  # default: input or unknown
+
+
+def _live_after_for_consumer_count(consumer_count: int) -> str:
+    """Translate a region-dossier consumer count into a ``BufferLifetime.live_after``."""
+    if consumer_count <= 0:
+        return "end_of_region"
+    if consumer_count == 1:
+        return "next_consumer"
+    return "all_consumers"
+
+
+def _derive_memory_spec(
+    *,
+    region_dossier: dict[str, Any],
+    input_count: int,
+    output_count: int,
+) -> "MemorySpec":
+    """M-60: build a :class:`MemorySpec` from the region dossier's
+    ``reuse.inputs`` / ``reuse.outputs`` facts.
+
+    Falls back to a uniform-SCRATCHPAD default when the dossier omits
+    reuse facts (or when the recorded length is shorter than the
+    contract arity), defending the V3 ``__post_init__`` invariants.
+    """
+    reuse = region_dossier.get("reuse") or {}
+    inputs = list(reuse.get("inputs") or [])
+    outputs = list(reuse.get("outputs") or [])
+
+    # The dossier may report MORE tensors than the contract's arity
+    # (region-internal SSA values upstream of the kernel boundary). We
+    # take the first ``input_count`` / ``output_count`` entries — the
+    # canonical convention is that the region's external inputs come
+    # first in dossier order. If there aren't enough entries, fall back
+    # to the SCRATCHPAD default.
+    if len(inputs) >= input_count and inputs:
+        input_tiers = tuple(
+            _lifetime_class_to_tier(t.get("lifetime_class", ""))
+            for t in inputs[:input_count]
+        )
+    else:
+        input_tiers = tuple(MemoryTier.SCRATCHPAD for _ in range(input_count))
+
+    if len(outputs) >= output_count and outputs:
+        sliced = outputs[:output_count]
+        output_tiers = tuple(
+            _lifetime_class_to_tier(t.get("lifetime_class", ""))
+            for t in sliced
+        )
+        lifetimes = tuple(
+            BufferLifetime(
+                output_idx=idx,
+                live_after=_live_after_for_consumer_count(
+                    int(t.get("consumer_count", 0) or 0)
+                ),
+            )
+            for idx, t in enumerate(sliced)
+        )
+    else:
+        output_tiers = tuple(MemoryTier.SCRATCHPAD for _ in range(output_count))
+        lifetimes = tuple(
+            BufferLifetime(output_idx=i, live_after="next_consumer")
+            for i in range(output_count)
+        )
+
+    return MemorySpec(
+        input_tiers=input_tiers,
+        output_tiers=output_tiers,
+        lifetimes=lifetimes,
+        in_place_safe=False,
+    )
+
+
+# ===========================================================================
 # The contract
 # ===========================================================================
 
@@ -504,6 +605,13 @@ class KernelContractV3:
     legacy: KernelContractV2 | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
     contract_version: int = CONTRACT_VERSION
+    # M-61 — typed pre/post-condition predicates. Each entry is one of
+    # the dataclasses in :mod:`compgen.kernels.predicates`. The contract
+    # carries them as tuple[Any, ...] to avoid a forward import; the
+    # plan-assertion emitter and the verifier dispatch on
+    # ``predicate_kind(p)``.
+    preconditions: tuple[Any, ...] = ()
+    postconditions: tuple[Any, ...] = ()
 
     def __post_init__(self) -> None:
         self._check_archetype_invariants()
@@ -778,6 +886,51 @@ class KernelContractV3:
             envelope.get("native_dtypes") or ("f32", "bf16")
         )
         peak_bw = float(envelope.get("peak_bandwidth_gbps", 0.0))
+
+        # M-60: full hardware envelope from target profile. Each field
+        # is optional — when absent, the dataclass defaults preserve
+        # today's behaviour.
+        mma_shapes_raw = target_profile.get("mma_shapes")
+        if mma_shapes_raw is None:
+            mma_shapes_raw = envelope.get("mma_shapes") or {}
+        mma_shapes_dict: dict[str, tuple[int, int, int]] = {}
+        try:
+            for dtype, shp in (mma_shapes_raw or {}).items():
+                if shp and len(shp) == 3:
+                    mma_shapes_dict[str(dtype)] = (
+                        int(shp[0]), int(shp[1]), int(shp[2]),
+                    )
+        except Exception:  # noqa: BLE001
+            mma_shapes_dict = {}
+
+        peak_compute_raw = target_profile.get("peak_compute_per_dtype")
+        if peak_compute_raw is None:
+            peak_compute_raw = envelope.get("peak_compute_per_dtype") or {}
+        peak_compute_dict: dict[str, float] = {}
+        try:
+            for dtype, tflops in (peak_compute_raw or {}).items():
+                peak_compute_dict[str(dtype)] = float(tflops)
+        except Exception:  # noqa: BLE001
+            peak_compute_dict = {}
+
+        codegen_hints_raw = (
+            target_profile.get("codegen_hints")
+            or envelope.get("codegen_hints")
+            or ()
+        )
+        codegen_hints_tuple = tuple(str(h) for h in codegen_hints_raw)
+
+        register_quota = int(
+            target_profile.get("register_quota_per_thread")
+            or envelope.get("register_quota_per_thread")
+            or 256
+        )
+        max_concurrent = int(
+            target_profile.get("max_concurrent_blocks")
+            or envelope.get("max_concurrent_blocks")
+            or 0
+        )
+
         hardware = HardwareEnvelope(
             target_name=str(target_id),
             vector_lanes=vector_lanes,
@@ -785,6 +938,11 @@ class KernelContractV3:
             register_bytes=register_bytes,
             native_dtypes=native_dtypes,
             peak_bandwidth_gbps=peak_bw,
+            codegen_hints=codegen_hints_tuple,
+            mma_shapes=mma_shapes_dict,
+            peak_compute_per_dtype=peak_compute_dict,
+            register_quota_per_thread=register_quota,
+            max_concurrent_blocks=max_concurrent,
         )
         execution = ExecutionEnvelope(
             hardware=hardware,
@@ -805,10 +963,10 @@ class KernelContractV3:
             sync=SyncSpec(
                 event_decls=(EventDecl(name="matmul_done", scope="block"),),
             ),
-            memory=MemorySpec(
-                input_tiers=(MemoryTier.SCRATCHPAD, MemoryTier.SCRATCHPAD),
-                output_tiers=(MemoryTier.SCRATCHPAD,),
-                lifetimes=(BufferLifetime(output_idx=0, live_after="next_consumer"),),
+            memory=_derive_memory_spec(
+                region_dossier=region_dossier,
+                input_count=2,
+                output_count=1,
             ),
             fusion=FusionPolicy(is_boundary=True),
             # M-50: dispatch model defaults to SYNC; M-50's
@@ -855,6 +1013,34 @@ class KernelContractV3:
             )
         selection = SelectionHints(providers=providers)
 
+        # M-61 — typed pre/post-condition predicates.
+        # Preconditions: K must be a multiple of tile_K (the matmul
+        # kernel's inner-loop unroll requirement), and inputs must
+        # carry a recognised dtype.
+        from compgen.kernels.predicates import (
+            DtypeIn as _DtypeIn,
+        )
+        from compgen.kernels.predicates import (
+            ModEq as _ModEq,
+        )
+        from compgen.kernels.predicates import (
+            NumericalWithinEps as _NumericalWithinEps,
+        )
+
+        preconditions: tuple[Any, ...] = (
+            _ModEq(arg_dim="K", k=int(tile_K)),
+            _DtypeIn(arg="lhs", dtype_set=(dtype,)),
+            _DtypeIn(arg="rhs", dtype_set=(dtype,)),
+        )
+        # Postconditions: numerical equivalence within the declared
+        # refinement's eps. For bit_equality the eps is 0; for
+        # tolerance_eps the M-44 verifier will substitute the Higham
+        # bound at differential time.
+        post_eps = 0.0 if declared_refinement == "bit_equality" else max_rel_err
+        postconditions: tuple[Any, ...] = (
+            _NumericalWithinEps(out="out", ref="reference", eps=post_eps),
+        )
+
         return cls(
             op_name="linalg.matmul",
             archetype=KernelArchetype.COMPUTE_TILED,
@@ -862,6 +1048,8 @@ class KernelContractV3:
             granularity=Granularity.NORMAL,
             orchestration=orchestration,
             selection=selection,
+            preconditions=preconditions,
+            postconditions=postconditions,
             metadata={
                 "source_candidate_id": candidate_selection.get(
                     "selected_candidate_id", ""

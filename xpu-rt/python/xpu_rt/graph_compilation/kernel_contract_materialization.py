@@ -200,6 +200,14 @@ def contract_to_dict(c: KernelContractV3) -> dict[str, Any]:
                     "register_bytes": exe.hardware.register_bytes,
                     "native_dtypes": list(exe.hardware.native_dtypes),
                     "peak_bandwidth_gbps": exe.hardware.peak_bandwidth_gbps,
+                    # M-60 — extended hardware envelope.
+                    "codegen_hints": list(exe.hardware.codegen_hints),
+                    "mma_shapes": {
+                        k: list(v) for k, v in exe.hardware.mma_shapes.items()
+                    },
+                    "peak_compute_per_dtype": dict(exe.hardware.peak_compute_per_dtype),
+                    "register_quota_per_thread": exe.hardware.register_quota_per_thread,
+                    "max_concurrent_blocks": exe.hardware.max_concurrent_blocks,
                 },
                 "memory_budget_bytes": exe.memory_budget_bytes,
                 "concurrency_unit": exe.concurrency_unit.value,
@@ -249,6 +257,13 @@ def contract_to_dict(c: KernelContractV3) -> dict[str, Any]:
                 for p in c.selection.providers
             ],
         },
+        # M-61 — typed pre/post-condition predicates.
+        "preconditions": [
+            p.to_dict() for p in (c.preconditions or ())
+        ],
+        "postconditions": [
+            p.to_dict() for p in (c.postconditions or ())
+        ],
         "metadata": dict(c.metadata),
     }
 
