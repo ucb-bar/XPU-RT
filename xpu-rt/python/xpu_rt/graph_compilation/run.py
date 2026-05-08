@@ -313,6 +313,7 @@ def run_graph_compilation(
     resume_from: str | None = None,
     auction_mode: str = "multi-bidder",
     bid_cutoff: int = 3,
+    kernel_coverage_mode: str = "both",
 ) -> RunResult:
     """Materialise a graph compilation run directory rooted at ``out_dir``.
 
@@ -1508,6 +1509,56 @@ def run_graph_compilation(
         _append_ledger(
             ledger_path, stage_id="execution_plan_emit", event="finish",
         )
+
+    # ------------------------------------------------------------------ #
+    # M-63 coverage-first pass: walk every region dossier, derive
+    # canonical contract hashes, look up matching certs, and append
+    # coverage-inflated bindings. Runs after M-46 so it has the
+    # initial bindings to extend; before M-47 so the emitter sees
+    # the inflated count.
+    # ------------------------------------------------------------------ #
+    needs_coverage = (
+        kernel_coverage_mode != "disabled"
+        and stop_after
+        in (
+            "kernel-auction",
+            "execution-plan-emit",
+            "glue-emit",
+            "glue-differential",
+            "gap-discovery",
+            "gap-closure",
+        )
+    )
+    if needs_coverage and needs_plan_emit:
+        _append_ledger(ledger_path, stage_id="kernel_coverage_first", event="start")
+        try:
+            from compgen.graph_compilation.coverage_first import run_coverage_first
+
+            _cf = run_coverage_first(
+                run_dir=out_dir, mode=kernel_coverage_mode,
+            )
+            _append_ledger(
+                ledger_path,
+                stage_id="kernel_coverage_first",
+                event="artifact_written",
+                note=(
+                    f"kernel_coverage_first (M-63): {_cf.overall} "
+                    f"mode={_cf.mode} groups={len(_cf.groups)} "
+                    f"coverage_inflation_total={_cf.coverage_inflation_total}"
+                ),
+            )
+        except Exception as exc:  # noqa: BLE001
+            _append_ledger(
+                ledger_path,
+                stage_id="kernel_coverage_first",
+                event="artifact_written",
+                note=(
+                    f"kernel_coverage_first (M-63): error "
+                    f"{type(exc).__name__}: {exc}"
+                ),
+            )
+            raise
+        _append_ledger(ledger_path, stage_id="kernel_coverage_first", event="finish")
 
     # ------------------------------------------------------------------ #
     # Glue emit (M-47): generate the per-workload Python SYNC plan

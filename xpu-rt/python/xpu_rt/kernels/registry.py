@@ -575,6 +575,27 @@ def default_registry() -> ProviderRegistry:
             error=f"{type(exc).__name__}: {exc}",
         )
 
+    # M-62: user-space provider — only loaded when an index already
+    # exists on disk under .compgen/user_kernel_index/ (the
+    # discover skill / --user-kernel-path flag populates this).
+    try:
+        from compgen.kernels.providers.user_path import UserKernelProvider
+        from compgen.kernels.user_kernel_index import default_index_root
+
+        idx_root = default_index_root()
+        if idx_root.exists() and any(idx_root.glob("*/manifest.yaml")):
+            user_provider = UserKernelProvider(index_root=idx_root)
+            try:
+                object.__setattr__(user_provider, "_compgen_source", "user_path")
+            except Exception:  # noqa: BLE001
+                pass
+            reg.register(user_provider)
+    except Exception as exc:  # noqa: BLE001
+        log.warning(
+            "registry.user_path_load_failed",
+            error=f"{type(exc).__name__}: {exc}",
+        )
+
     for p in discover_default_providers():
         reg.register(p)
     return reg

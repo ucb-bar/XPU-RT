@@ -65,6 +65,24 @@ from compgen.ir.payload.contracts import (
 )
 
 CONTRACT_VERSION = 3
+CONTRACT_REFINEMENT_VERSION = (3, 1)  # M-64: (major, minor) of the latest refinement
+
+# M-64 — forward-compatible refinement protocol. Field names listed
+# here are recognised v3.1 optional fields; they ride in
+# ``KernelContractV3.optional_v3_1_fields`` keyed by name with
+# defaults captured below. Canonical + instance hash projections do
+# NOT include them, so adding a name to this set leaves cached v3
+# certificates valid.
+_OPTIONAL_V3_1_FIELD_NAMES: frozenset[str] = frozenset(
+    {
+        "prefetch_distance",      # int — CPU prefetch distance hint (0 = no hint)
+        "pin_inputs_to_cpu",      # bool — pin input tensors to CPU memory
+    }
+)
+_OPTIONAL_V3_1_FIELD_DEFAULTS: dict[str, Any] = {
+    "prefetch_distance": 0,
+    "pin_inputs_to_cpu": False,
+}
 
 
 # ===========================================================================
@@ -612,6 +630,13 @@ class KernelContractV3:
     # ``predicate_kind(p)``.
     preconditions: tuple[Any, ...] = ()
     postconditions: tuple[Any, ...] = ()
+    # M-64 — forward-compatible refinement slot. Fields added in v3.1+
+    # land here keyed by name; the canonical + instance hash projections
+    # never see them so adding a new field doesn't invalidate cached
+    # certificates. Recognized field names are declared in
+    # :data:`_OPTIONAL_V3_1_FIELD_NAMES` below; readers default missing
+    # keys to the field's documented default.
+    optional_v3_1_fields: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         self._check_archetype_invariants()
@@ -1105,6 +1130,7 @@ class KernelContractV3:
 __all__ = [
     "AliasPair",
     "BufferLifetime",
+    "CONTRACT_REFINEMENT_VERSION",
     "CONTRACT_VERSION",
     "CompilerOnlyView",
     "ConcurrencyUnit",

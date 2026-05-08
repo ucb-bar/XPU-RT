@@ -1,0 +1,138 @@
+claim: |
+  M-62 (Phase D, Section 7 step 8): users plug their own kernels into
+  the M-57 auction by pointing CompGen at a directory of
+  ``kernel_manifest.yaml`` + sibling kernel sources. The indexer
+  validates each manifest, sha256-hashes every locked file, and
+  persists derived index entries under
+  ``.compgen/user_kernel_index/<sha8>/manifest.yaml``. A
+  ``UserKernelProvider`` registered in ``default_registry()`` reads
+  the index at bid time, matches incoming ``KernelContractV3`` against
+  declared signatures, bids high-confidence on exact-dim match, and
+  fulfils from disk after a fresh locked-files audit.
+
+  Hard contract:
+
+  1. ``user_kernel_manifest_v1`` schema declares ``op_name``,
+     ``archetype``, ``target_name``, ``language``, ``kernel_source``
+     (path relative to manifest), ``entry_symbol``, ``inputs[*]``,
+     ``outputs[*]``, ``numerics``, ``dispatch_model``, optional
+     ``perf_priors``. Schema-version mismatch raises typed
+     ``UserKernelManifestError``; missing required fields raises the
+     same; ``kernel_source`` escaping the manifest's directory raises.
+  2. ``index_one_manifest`` writes the derived entry under
+     ``index_root/<index_id>/manifest.yaml`` where
+     ``index_id = sha8(absolute_manifest_path)``. ``locked_files``
+     records ``sha256[:16]`` for the manifest + every source file
+     declared in ``kernel_source``. ``reindex`` walks the search
+     path, indexes every manifest in lex order, and writes
+     ``registry.yaml`` summarising the entries.
+  3. ``audit_locked_files(entry)`` re-hashes every file and raises
+     :class:`UserKernelHashDriftError` on any mismatch (including
+     missing files). The provider calls this on every fulfil — a
+     kernel edited after indexing is rejected.
+  4. ``UserKernelProvider`` (``kernels/providers/user_path.py``)
+     implements the M-56 ``bid()`` interface:
+     - **exact-dim match** → ``confidence=0.95`` (or manifest's
+       ``perf_priors.confidence`` when set), ``cache_hit=True``.
+     - **archetype + target + dtype + layout match, dims differ** →
+       ``confidence=0.6`` (or ``perf_priors.confidence``).
+     - **no match** → ``confidence=0.0``.
+     The provider records ``_last_match`` so the auction's subsequent
+     ``search()`` call serves the right kernel.
+  5. ``default_registry()`` auto-registers ``UserKernelProvider`` when
+     ``.compgen/user_kernel_index/`` contains at least one entry.
+     Empty index = no provider registered (no overhead). Priority 20
+     beats the in-tree ``CReferenceProvider`` (5).
+  6. CLI ``--user-kernel-path <dir>`` flag and
+     ``COMPGEN_USER_KERNEL_PATH`` env var trigger reindex before the
+     pipeline runs (the auction sees a fresh index).
+  7. Three MCP tools:
+     - ``compgen_list_kernel_providers(target?)`` — enumerate every
+       registered provider with priority + applicability metadata.
+     - ``compgen_describe_kernel_provider(provider_id)`` — deep view;
+       for ``user_path``, surfaces every indexed kernel's manifest.
+     - ``compgen_discover_user_kernels(path)`` — drive the indexer.
+  8. Skill ``/compgen-discover-user-kernels`` orchestrates: agent
+     calls the MCP tool, surfaces the indexed signatures, and saves
+     the user-kernel-path location to memory.
+commit: 0a62000000000000000000000000000000000000
+created_at_utc: 2026-05-07T00:00:00Z
+forbidden:
+- writing index entries outside .compgen/user_kernel_index/ (the index_root is a closed sandbox; arbitrary writes to user paths are not allowed)
+- silently using a tampered kernel after the locked-files audit detects drift (UserKernelHashDriftError must propagate)
+- bidding without checking target_name match (a host_cpu kernel must not bid on a cuda_sm75 contract)
+- the indexer following symlinks outside the search_path (declared kernels must live alongside their manifest; cross-tree symlinks fail kernel_source-escapes-manifest-dir)
+- registering UserKernelProvider when the index is empty (no entries → no provider; lazy registration only)
+realness_level: production_path
+required_evidence:
+- python/compgen/kernels/user_kernel_index.py (entire module — schema + indexer + audit + registry write)
+- python/compgen/kernels/providers/user_path.py (UserKernelProvider — bid + search + match prioritisation)
+- python/compgen/kernels/registry.py (default_registry auto-registers user_path when index is non-empty)
+- python/compgen/mcp/tools/kernel_providers.py (three MCP tools)
+- python/compgen/graph_compilation/__main__.py (--user-kernel-path flag + env-var resolution + pre-run reindex)
+- .claude/skills/compgen-discover-user-kernels/SKILL.md
+- tests/kernels/test_user_kernel_index.py
+feature_id: m62_user_kernel_provider
+notes: |
+  Phase D step 8 — Section 7's "users can plug in other kernel
+  providers in their own user space" claim made real. Mirrors the
+  ``compgen.graph_compilation.extension_*`` pattern (manifest +
+  locked-files audit + sandboxed index dir).
+
+  Pre-existing scaffolding consumed:
+  - ``ProviderRegistry`` + ``default_registry()`` (M-55) — extended
+    to auto-register ``UserKernelProvider`` when the index has
+    entries.
+  - ``BidPreview`` + ``compute_bid`` (M-56) — the user-space
+    provider implements ``bid()`` natively; cache_hit=True signals
+    the auction that fulfil is essentially free (disk read +
+    audit).
+  - ``canonical_contract_hash`` (M-58) — used for exact-match
+    detection (the manifest declares concrete dims; the contract's
+    canonical hash matches when dims agree).
+  - Extension-materialize sandbox pattern (Phase B
+    extension_verify) — mirrored for kernel-source locked-files
+    audit.
+
+  Real-driven evidence (`/tmp/m62_stress` regenerated):
+  - User indexes a kernel at ``/tmp/m62_user_kernels/matmul`` with
+    perf_priors confidence=0.99, estimated_us=1.5.
+  - ``reindex`` produces ``.compgen/user_kernel_index/0b2572e4/``
+    + ``registry.yaml``; locked_files map carries SHAs for both
+    files.
+  - Pipeline runs ``--auction-mode multi-bidder``: 2 bids
+    (user_path conf=0.99 perf=1.5us rationale=exact_match:0b2572e4
+    + c_reference conf=0.85 perf=2.016us). Winner: ``user_path`` —
+    user kernel beats in-tree baseline on both confidence + perf.
+  - End-to-end auction.overall=pass; winner promoted to standard
+    M-43 response location.
+
+  Tests: 20 in tests/kernels/test_user_kernel_index.py covering
+  manifest schema (round-trip + missing fields + unknown version),
+  indexer (single + reindex + registry write), locked-files audit
+  (clean + tampered source + missing file), provider bid (no index +
+  exact match + compat match + target mismatch), provider search
+  (after bid + without bid + tampered refusal), MCP tools (discover +
+  list + describe), end-to-end auction (user kernel wins against
+  c_reference). Cross-suite regression preserved 158/158 across 15
+  test suites.
+
+  Honest residuals:
+  - Filesystem indexing only today. PyPI entry-point providers are
+    listed by ``compgen_list_kernel_providers`` but don't go
+    through ``compgen_discover_user_kernels`` (they're already
+    registered by the entry-point system).
+  - Multi-file kernels (e.g. Triton ``.py`` + ``.h``) need every
+    file declared in ``kernel_source`` today; the manifest schema
+    accepts a single path. Multi-file support is a future
+    extension.
+  - The provider's ``compat_match`` (archetype-match without
+    exact-dim) is informational only — the auction's M-44 verifier
+    still runs against the actual kernel artifact, so a misdeclared
+    user kernel that bids high but produces wrong outputs gets
+    caught honestly. Misleading bids waste top-K capacity but don't
+    let unsafe artifacts through.
+  - The skill saves the user-kernel-path location to memory for
+    future-session recall, but the underlying memory write is the
+    agent's responsibility (the skill instructs but the agent
+    executes via the standard memory protocol).

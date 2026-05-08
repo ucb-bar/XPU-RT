@@ -264,6 +264,8 @@ def contract_to_dict(c: KernelContractV3) -> dict[str, Any]:
         "postconditions": [
             p.to_dict() for p in (c.postconditions or ())
         ],
+        # M-64 — forward-compatible refinement slot.
+        "optional_v3_1_fields": dict(c.optional_v3_1_fields or {}),
         "metadata": dict(c.metadata),
     }
 

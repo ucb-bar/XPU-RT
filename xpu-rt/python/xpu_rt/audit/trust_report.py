@@ -351,6 +351,102 @@ def _gate_holdout_outcomes_honest() -> GateResult:
 # --------------------------------------------------------------------------- #
 
 
+def _gate_contract_version_consistency(
+    *, run_dir: Path | None,
+) -> GateResult:
+    """M-64 audit gate: every certificate's recorded
+    ``canonical_contract_hash`` must match a fresh re-derivation
+    after migrating the source contract body to v3.1.
+
+    Catches regressions where adding a v3.1 optional field would have
+    leaked into the canonical projection (and silently invalidated
+    every cached cert). Skipped when no run_dir is supplied.
+    """
+    if run_dir is None:
+        return GateResult(
+            name="contract_version_consistency",
+            status="skipped",
+            detail="no run-dir supplied; gate runs against on-disk certs",
+        )
+    cert_dir = run_dir / "04_kernel_codegen" / "certificates"
+    if not cert_dir.exists():
+        return GateResult(
+            name="contract_version_consistency",
+            status="skipped",
+            detail=f"no certificates directory at {cert_dir}",
+        )
+    cert_paths = sorted(cert_dir.glob("*.json"))
+    if not cert_paths:
+        return GateResult(
+            name="contract_version_consistency",
+            status="skipped",
+            detail="certificates directory empty",
+        )
+
+    try:
+        from compgen.graph_compilation.kernel_codegen_response import (
+            _reconstruct_contract_from_dict,
+        )
+        from compgen.kernels.contract_migration import (
+            migrate_contract_body_v3_to_v3_1,
+        )
+        from compgen.promotion.contract_hash import canonical_contract_hash
+    except Exception as exc:  # noqa: BLE001
+        return GateResult(
+            name="contract_version_consistency",
+            status="fail",
+            detail=f"import error: {type(exc).__name__}: {exc}",
+        )
+
+    drifted: list[dict[str, str]] = []
+    checked = 0
+    for cp in cert_paths:
+        try:
+            cert_body = json.loads(cp.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            continue
+        recorded = str(cert_body.get("canonical_contract_hash") or "")
+        contract_rel = cert_body.get("contract_path") or ""
+        if not recorded or not contract_rel:
+            continue
+        contract_full = run_dir / contract_rel
+        if not contract_full.exists():
+            continue
+        try:
+            contract_body = json.loads(contract_full.read_text(encoding="utf-8"))
+            migrated = migrate_contract_body_v3_to_v3_1(contract_body)
+            contract = _reconstruct_contract_from_dict(migrated)
+            re_derived = canonical_contract_hash(contract)
+        except Exception as exc:  # noqa: BLE001
+            drifted.append({
+                "cert_path": str(cp.relative_to(run_dir)),
+                "error": f"{type(exc).__name__}: {exc}",
+            })
+            continue
+        checked += 1
+        if recorded != re_derived:
+            drifted.append({
+                "cert_path": str(cp.relative_to(run_dir)),
+                "recorded": recorded,
+                "re_derived": re_derived,
+            })
+
+    if drifted:
+        return GateResult(
+            name="contract_version_consistency",
+            status="fail",
+            detail=(
+                f"{len(drifted)} cert(s) drifted after v3.1 migration: "
+                f"{drifted}"
+            ),
+        )
+    return GateResult(
+        name="contract_version_consistency",
+        status="pass",
+        detail=f"{checked} cert(s) re-hash-stable under v3→v3.1 migration",
+    )
+
+
 def _utc_now() -> str:
     return datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -385,6 +481,8 @@ def build_trust_report(
     report.gates.append(_gate_trace_replay_self_check(tmp_path))
     report.gates.append(_gate_task_pack_buildable(tmp_path))
     report.gates.append(_gate_holdout_outcomes_honest())
+    # M-64 — contract version consistency. Skipped when no run-dir.
+    report.gates.append(_gate_contract_version_consistency(run_dir=run_dir))
     if report.skip_count > 0:
         report.notes.append(
             f"{report.skip_count} gate(s) skipped — likely "

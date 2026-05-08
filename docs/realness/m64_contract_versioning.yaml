@@ -1,0 +1,113 @@
+claim: |
+  M-64 (Phase D, Section 7 Dream 5 step 1): adds the forward-compatible
+  contract refinement protocol so adding a new optional field
+  (e.g. ``prefetch_distance``) does not invalidate cached v3
+  certificates. New fields land in
+  ``KernelContractV3.optional_v3_1_fields`` keyed by name; the
+  canonical and instance hash projections never see the slot, so
+  cached cert hashes remain byte-stable across version refinements.
+  A new ``contract_version_consistency`` gate in the M-31A trust
+  report re-derives every cert's canonical hash post-migration and
+  fails loudly if any drift would have broken cache.
+
+  Hard contract:
+
+  1. ``KernelContractV3.optional_v3_1_fields: dict[str, Any]``
+     defaults to ``{}``. The slot is NOT in ``kernel_facing()`` or
+     ``compiler_only()`` so both ``canonical_contract_hash`` and
+     ``instance_contract_hash`` projections naturally exclude it.
+  2. Recognised v3.1 field names live in
+     ``compgen.kernels.contract_v3._OPTIONAL_V3_1_FIELD_NAMES``;
+     defaults in ``_OPTIONAL_V3_1_FIELD_DEFAULTS``. Initial set:
+     ``prefetch_distance: 0`` and ``pin_inputs_to_cpu: False``.
+     Adding new names to this set must NOT change cached cert hashes
+     — proven by the audit gate.
+  3. ``compgen.kernels.contract_migration.migrate_contract_body_v3_to_v3_1(body)``
+     is a defensive-copy migration: if the body lacks
+     ``optional_v3_1_fields`` (pre-M-64 cert), populates it with the
+     recognised defaults; if a value is supplied, preserves it; if
+     a recognised field is missing, fills the default. Idempotent
+     on already-v3.1 bodies.
+  4. ``get_optional_v3_1_field(contract, name)`` reads the slot
+     defensively. Unknown names raise typed
+     ``ContractRefinementError``; recognised names default to the
+     declared default when missing.
+  5. ``contract_to_dict`` (M-40 materializer) and
+     ``_reconstruct_contract_from_dict`` (M-44 verifier path) both
+     round-trip the slot. The deserializer always invokes
+     ``migrate_contract_body_v3_to_v3_1`` so a pre-M-64 cert body
+     loads with defaults populated.
+  6. New audit gate ``contract_version_consistency`` (added to
+     ``compgen.audit.trust_report``): walks
+     ``04_kernel_codegen/certificates/*.json``; for each cert,
+     reads the source contract body, migrates, re-derives
+     ``canonical_contract_hash``, and compares to the recorded
+     value. Drift → typed gate failure listing the affected certs.
+     Skipped (status="skipped") when no run-dir is supplied.
+commit: 0a64000000000000000000000000000000000000
+created_at_utc: 2026-05-07T00:00:00Z
+forbidden:
+- adding a v3.1 field outside the optional_v3_1_fields slot (would change kernel_facing() and invalidate cached certs)
+- the canonical or instance hash projection peeking at optional_v3_1_fields (would defeat the cache-invariance goal)
+- migrate_contract_body_v3_to_v3_1 silently mutating the input dict (must defensive-copy)
+- skipping the audit gate's drift check on a cert with a missing source contract path (must be silent skip, not silent pass)
+- adding a recognised v3.1 field without updating both _OPTIONAL_V3_1_FIELD_NAMES and _OPTIONAL_V3_1_FIELD_DEFAULTS (the migrator reads from defaults; missing default is a typed bug)
+realness_level: production_path
+required_evidence:
+- python/compgen/kernels/contract_v3.py (optional_v3_1_fields field on KernelContractV3 + _OPTIONAL_V3_1_FIELD_NAMES/_DEFAULTS + CONTRACT_REFINEMENT_VERSION)
+- python/compgen/kernels/contract_migration.py (entire module — migrate_contract_body_v3_to_v3_1 + get_optional_v3_1_field + ContractRefinementError + is_compatible_with)
+- python/compgen/graph_compilation/kernel_contract_materialization.py (contract_to_dict M-64 round-trip line)
+- python/compgen/graph_compilation/kernel_codegen_response.py (_reconstruct_contract_from_dict M-64 migrate + slot populate)
+- python/compgen/audit/trust_report.py (_gate_contract_version_consistency added + wired into build_trust_report)
+- tests/kernels/test_contract_versioning.py
+feature_id: m64_contract_versioning
+notes: |
+  Phase D step 10 — Section 7 Dream 5 (refinement contracts) made
+  real. The mechanism is the simplest possible: a slot whose
+  contents never participate in the hash, plus a migration helper
+  that fills defaults so pre-M-64 readers + writers see consistent
+  state. Parametric contracts (Section 7 Dream 5's other half —
+  contracts parameterised by target capability bits) remain a
+  future extension; M-64 lays the slot.
+
+  Pre-existing scaffolding consumed:
+  - ``canonical_contract_hash`` / ``instance_contract_hash`` (M-58) —
+    both projections naturally exclude the slot since
+    ``kernel_facing()`` / ``compiler_only()`` enumerate explicit
+    fields.
+  - M-31A trust report (audit/trust_report.py) — extended with the
+    9th gate ``contract_version_consistency``.
+
+  Real-driven evidence (`/tmp/m64_trust`):
+  - Trust report 8/8 → 9/9 PASS with the new gate at
+    ``contract_version_consistency``.
+  - Real cert from /tmp/m63_stress re-derives byte-stable canonical
+    hash through the migration. Removing the optional_v3_1_fields
+    key from a cert body and re-loading produces an identical hash
+    + populated defaults (test_body_without_optional_slot_loads_with_defaults).
+
+  Tests: 11 in tests/kernels/test_contract_versioning.py covering
+  optional field default-empty (1), set-but-no-hash-change (1),
+  kernel-facing field still affects hash (sanity, 1), migration
+  fills defaults + idempotent + non-mutating (3), unknown-field
+  rejection + recognised-default + recognised-with-value (3),
+  pre-M-64 body loads with same hash (1), audit gate passes on
+  clean run (1).
+
+  Honest residuals:
+  - The recognised v3.1 field set (`prefetch_distance`,
+    `pin_inputs_to_cpu`) is starter — these are real CPU
+    optimisation hints but the providers don't yet read them. They
+    exist to prove the mechanism + give M-66 a path to surface
+    optimisations without hash churn.
+  - Major-version migration (v3 → v4) is not in scope; M-64 covers
+    only minor-version refinements within the v3 major.
+  - The audit gate runs against on-disk certs; it doesn't cover
+    in-memory KernelContractV3 instances. Programmatic uses of
+    ``KernelContractV3.from_recipe`` still need to ensure the slot
+    is populated; today every call site goes through
+    ``contract_to_dict`` + reconstruct round-trip on serialisation
+    so this is implicitly covered.
+  - ``CONTRACT_REFINEMENT_VERSION`` is an informational tuple;
+    nothing yet keys on it. When v3.2 lands, code that wants to
+    surface the version can read it.

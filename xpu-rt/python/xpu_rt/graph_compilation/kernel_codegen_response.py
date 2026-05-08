@@ -949,6 +949,14 @@ def _reconstruct_contract_from_dict(body: dict[str, Any]) -> Any:
     preconditions = predicates_from_list(body.get("preconditions") or [])
     postconditions = predicates_from_list(body.get("postconditions") or [])
 
+    # M-64 — migrate the body so missing optional_v3_1_fields default
+    # to recognised values; canonical hash stays invariant.
+    from compgen.kernels.contract_migration import (
+        migrate_contract_body_v3_to_v3_1,
+    )
+
+    migrated = migrate_contract_body_v3_to_v3_1(body)
+
     return KernelContractV3(
         op_name=body["op_name"],
         archetype=KernelArchetype(body["archetype"]),
@@ -959,6 +967,7 @@ def _reconstruct_contract_from_dict(body: dict[str, Any]) -> Any:
         preconditions=preconditions,
         postconditions=postconditions,
         metadata=dict(body.get("metadata") or {}),
+        optional_v3_1_fields=dict(migrated.get("optional_v3_1_fields") or {}),
     )
 
 
