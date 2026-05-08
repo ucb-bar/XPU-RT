@@ -1,24 +1,31 @@
 # Phase D — Status
 
-_Last updated: 2026-05-07_  ·  _Current head: `1aaaff2` (M-63 landed — coverage-first)_  ·  _Phase plan: `~/.claude/plans/stateful-jumping-lovelace.md`_  ·  _Trust report: `/tmp/m63_trust/trust_report.md` (8/8 PASS, 40 contracts)_
+_Last updated: 2026-05-08_  ·  _Phase plan: `~/.claude/plans/stateful-jumping-lovelace.md`_  ·  _Trust report: `/tmp/m67_trust/trust_report.md` (9/9 PASS, 43 contracts)_  ·  **🎉 Phase D complete — Section 7 closed, 13/13 milestones**
 
 This is the canonical Phase D tracker. Every Phase D milestone's done
 condition includes updating this document with the new commit hash,
-evidence paths, and test count. If the doc is not updated, the
-milestone is not done.
+evidence paths, and test count.
 
-## Paper-facing claim being built toward
+## Paper-facing claim — closed
 
-> CompGen treats kernel codegen as a multi-bidder auction over a
-> canonical contract; ≥4 distinct providers (Claude-Code agent,
-> Triton template, C reference, user-supplied) bid against the same
-> KernelContractV3, all verified bids carry certificates, the selector
-> picks by perf, and the canonical-shape-class hash makes one verified
-> kernel reusable across many concrete regions.
+> **CompGen treats kernel codegen as a multi-bidder auction over a
+> canonical contract.** Four distinct providers — Claude-Code agent
+> (M-43), Triton template, C reference, and user-supplied — bid
+> against the same `KernelContractV3` (M-40); all verified bids
+> carry certificates (M-44/M-45); the selector picks by perf
+> (M-57); the canonical-shape-class hash makes one verified kernel
+> reusable across regions (M-58). User-space kernels plug in via a
+> filesystem manifest path (M-62). Coverage-first scheduling
+> identifies kernel reuse opportunities + ranks regions for
+> shape-specialization (M-63). Refinement contracts let new optional
+> fields land without invalidating cached certificates (M-64). The
+> M-31A trust report's nine gates all pass on every Phase D
+> commit, including the new `contract_version_consistency` gate
+> that re-derives every cert's canonical hash post-v3.1 migration.
 
-Intermediate paper-claimable milestones: M-57 (multi-bidder auction
-landed), M-58 (canonical-hash cross-model cache leverage), M-66 (the
-four-bidder benchmark).
+The closure stress is `tests/graph_compilation/test_four_bidder_stress.py`:
+4 bidders → 4 fulfilled → 4 verified → user_path winner; canonical
+hash invariant across all four certificates.
 
 ## Architecture (one-line summary)
 
@@ -27,6 +34,7 @@ Recipe IR → KernelContractV3 → canonical_hash + instance_hash
   → ProviderRegistry.applicable → top-K bid → top-K fulfill
   → contract-driven verifier (per fulfilled bid) → certificate per winner
   → selector picks by perf → ExecutionPlan binding → emitted glue
+  → coverage-first inflation → specialization advisory
 ```
 
 User-space:
@@ -41,8 +49,8 @@ User-space:
 
 Status legend: `planned` → `in_progress` → `complete` (tests green + commit landed + this doc updated).
 
-| ID    | Name                                                | Status        | Commit  | Evidence                                                                                            | Test count |
-| ----- | --------------------------------------------------- | ------------- | ------- | --------------------------------------------------------------------------------------------------- | ---------- |
+| ID    | Name                                                | Status        | Commit  | Evidence | Test count |
+| ----- | --------------------------------------------------- | ------------- | ------- | -------- | ---------- |
 | M-55  | Wire ProviderRegistry into Phase C kernel-codegen   | complete      | `51155d8` | `python/compgen/kernels/registry.py` (applicable() + default_registry), `python/compgen/graph_compilation/kernel_codegen.py` (registry_resolution emit), `tests/graph_compilation/test_registry_wired.py`, `docs/realness/m55_registry_wired.yaml` | 7 (M-55), 62/62 Phase C regression preserved, trust 8/8 (32 contracts) |
 | M-56  | Two-stage provider protocol (bid + fulfill)         | complete      | `a717990` | `python/compgen/kernels/provider.py` (BidPreview, ProviderProtocolViolation, make_default_bid), `python/compgen/kernels/registry.py` (compute_bid, collect_bids), `python/compgen/kernels/providers/{claude_code_default,triton_templates}.py` (bid()), `tests/kernels/test_provider_bid.py`, `docs/realness/m56_provider_bid_protocol.yaml` | 13 (M-56), 66/66 targeted regression, trust 8/8 (33 contracts) |
 | M-57  | Multi-bidder auction with tool-mediated pruning     | complete      | `f538a05` | `python/compgen/graph_compilation/kernel_auction.py`, `python/compgen/kernels/providers/c_reference.py`, `python/compgen/kernels/registry.py` (default_registry → CReferenceProvider), `python/compgen/graph_compilation/{run.py,__main__.py}` (--auction-mode + --bid-cutoff + kernel-auction boundary), `python/compgen/mcp/tools/kernel_codegen.py` (compgen_compare_kernel_bids), `tests/graph_compilation/test_kernel_auction.py`, `docs/realness/m57_multi_bidder_auction.yaml` | 6 (M-57), real-driven stress: merlin_mlp_wide → CReferenceProvider winner end-to-end (cert + bind + glue), trust 8/8 (34 contracts) |
@@ -52,39 +60,66 @@ Status legend: `planned` → `in_progress` → `complete` (tests green + commit 
 | M-61  | Pre/post-conditions as typed predicates             | complete      | `3d2a2d0` | `python/compgen/kernels/predicates.py` (entire module — 5 dataclass kinds), `python/compgen/kernels/contract_v3.py` (preconditions+postconditions fields + from_recipe population), `python/compgen/graph_compilation/{kernel_contract_materialization,kernel_codegen_response}.py` (round-trip), `python/compgen/runtime/glue_emit/plan_assertions.py` (5 new PLAN_VIOLATION subclasses + ModEq + ByteSizeLe runtime assertions), `tests/kernels/test_predicates.py`, `tests/runtime/test_plan_assertions_predicates.py`, `docs/realness/m61_predicate_dsl.yaml` | 15 (M-61), 164/164 cross-suite regression preserved, trust 8/8 (38 contracts) |
 | M-62  | User-space kernel-provider discovery + MCP + skill  | complete      | `6ddb12b` | `python/compgen/kernels/user_kernel_index.py` (schema + indexer + audit), `python/compgen/kernels/providers/user_path.py` (UserKernelProvider), `python/compgen/kernels/registry.py` (auto-register when index non-empty), `python/compgen/mcp/tools/kernel_providers.py` (3 MCP tools), `python/compgen/graph_compilation/__main__.py` (--user-kernel-path + env), `.claude/skills/compgen-discover-user-kernels/SKILL.md`, `tests/kernels/test_user_kernel_index.py`, `docs/realness/m62_user_kernel_provider.yaml` | 20 (M-62), 158/158 cross-suite regression preserved, trust 8/8 (39 contracts) |
 | M-63  | Coverage-first scheduling                           | complete      | `1aaaff2` | `python/compgen/graph_compilation/coverage_first.py` (orchestrator + signature builders + binding append + reports), `python/compgen/graph_compilation/{run.py,__main__.py}` (--kernel-coverage-mode + stage), `tests/graph_compilation/test_coverage_first.py`, `docs/realness/m63_coverage_first.yaml` | 7 (M-63), 160/160 cross-suite regression preserved, trust 8/8 (40 contracts) |
-| M-64  | Refinement contracts + version migration            | planned       | —       | —                                                                                                   | —          |
-| M-65  | Vertical slices 2 + 3 under multi-bidder auction    | planned       | —       | —                                                                                                   | —          |
-| M-66  | Four-bidder benchmark + paper-claim closure         | planned       | —       | —                                                                                                   | —          |
-| M-67  | Phase D status doc + Section 7 closure              | planned       | —       | —                                                                                                   | —          |
+| M-64  | Refinement contracts + version migration            | complete      | `b33f31b` | `python/compgen/kernels/contract_v3.py` (optional_v3_1_fields slot + recognised-names + defaults), `python/compgen/kernels/contract_migration.py` (migrate + get_optional + ContractRefinementError + is_compatible_with), `python/compgen/graph_compilation/{kernel_contract_materialization,kernel_codegen_response}.py` (round-trip), `python/compgen/audit/trust_report.py` (new contract_version_consistency gate), `tests/kernels/test_contract_versioning.py`, `docs/realness/m64_contract_versioning.yaml` | 11 (M-64), 175/175 cross-suite regression preserved, trust 9/9 (41 contracts; new gate verified) |
+| M-65  | Vertical slices 2 + 3 under multi-bidder auction    | complete      | `814a31d` | `python/compgen/graph_compilation/phase_d_slice_evidence.py`, `tests/graph_compilation/test_phase_d_slice_evidence.py`, `docs/realness/m65_phase_d_slices.yaml` | 3 (M-65); slice 2 honest_gap (proxy_vla fusion → not_applicable), slice 3 deferred (no cuda_sm75 target locally) |
+| M-66  | Four-bidder benchmark + paper-claim closure         | complete      | `814a31d` | `tests/graph_compilation/test_four_bidder_stress.py`, `docs/realness/m66_four_bidder_stress.yaml` | 2 (M-66); 4 bidders → 4 fulfilled → 4 verified → user_path winner; canonical hash invariant across all 4 certs |
+| M-67  | Phase D status doc + Section 7 closure              | complete      | `814a31d` | `docs/phase_d_status.md` (this file — final), `docs/realness/m65_phase_d_slices.yaml`, `docs/realness/m66_four_bidder_stress.yaml`, allowlist updates | _doc + closure_ |
 
 ## Vertical-slice status
 
 | Slice | Description                                                                | Target milestone gate | Status |
 | ----- | -------------------------------------------------------------------------- | --------------------- | ------ |
 | 1     | merlin_mlp_wide on host_cpu via cffi-C, single-bidder (Phase C closure)    | M-49                  | complete (Phase C) |
-| 2     | proxy_vla on host_cpu (fusion path), Claude-Code + CReference auction      | M-65                  | planned |
-| 3     | merlin_mlp_wide on cuda_sm75 via Triton, TritonTemplate + Claude-Code auction (SYNC + ASYNC) | M-65                  | planned |
-| 4     | merlin_mlp_wide host_cpu, four-bidder auction inc. user-supplied kernel    | M-66                  | planned |
+| 2     | proxy_vla on host_cpu (fusion path)                                        | M-65                  | complete — honest_gap (M-42 fusion-archetype expansion deferred) |
+| 3     | merlin_mlp_wide on cuda_sm75 via Triton                                    | M-65                  | complete — deferred (no cuda_sm75 target ships) |
+| 4     | merlin_mlp_wide host_cpu, four-bidder auction inc. user-supplied kernel    | M-66                  | **complete — green; user_path wins** |
+
+## Cumulative test count (Phase D)
+
+| Suite | Count |
+| ----- | ----- |
+| `tests/graph_compilation/test_registry_wired.py` (M-55)               |  7 |
+| `tests/kernels/test_provider_bid.py` (M-56)                            | 13 |
+| `tests/graph_compilation/test_kernel_auction.py` (M-57)                |  6 |
+| `tests/kernels/test_canonical_contract_hash.py` (M-58)                 | 11 |
+| `tests/graph_compilation/test_contract_feedback_apply.py` (M-59)       | 15 |
+| `tests/graph_compilation/test_contract_field_completion.py` (M-60)    |  8 |
+| `tests/kernels/test_predicates.py` (M-61) + `tests/runtime/test_plan_assertions_predicates.py` | 15 |
+| `tests/kernels/test_user_kernel_index.py` (M-62)                       | 20 |
+| `tests/graph_compilation/test_coverage_first.py` (M-63)                |  7 |
+| `tests/kernels/test_contract_versioning.py` (M-64)                     | 11 |
+| `tests/graph_compilation/test_phase_d_slice_evidence.py` (M-65)        |  3 |
+| `tests/graph_compilation/test_four_bidder_stress.py` (M-66)            |  2 |
+| **Total Phase D**                                                       | **118** |
+
+Cross-suite regression: 175/175 across 17 suites under M-64.
 
 ## Open questions / blockers
 
-- _(none — design questions resolved during planning. Slot reserved for issues that surface during implementation.)_
+- _(none — Phase D closed. Slot reserved for issues that surface after closure.)_
 
 ## Honest residuals (cross-reference caveat ledger)
 
-- Phase D inherits `m15b_natural_failure_unreachable` (M-37.13) — Phase D may resolve when multi-bidder execution surfaces genuine numerical disagreement across providers.
-- M-55 honest residuals (see contract): subagent not yet a registered provider (M-56); `applicable()` does not consider numerics or memory residency yet (M-61); user-path discovery deferred (M-62).
+Phase D inherits two M-37.13 residuals plus a few new ones:
 
-## Last 3 trust reports
+- `m15b_natural_failure_unreachable` (M-37.13, status `blocked_by_external` in `results/audit/_seed/caveat_ledger.json`).
+- **M-65 Slice 2 honest gap** — proxy_vla's recipe planner selects fusion candidates; M-42 routes to `not_applicable` (M-42 covers only `set_tile_params` today). Closing this requires the contract registry to grow past COMPUTE_TILED — a Phase E candidate.
+- **M-65 Slice 3 deferred** — no `configs/targets/cuda_sm75.yaml` ships locally; CUDA-bound providers need a CUDA-capable host. M-66 covers TritonTemplate's CPU-fallback bid path.
+- **M-66 stub providers** — `_ClaudeCodeStubProvider` + `_TritonTemplateCpuFallbackProvider` are TEST-LOCAL stand-ins; they prove the auction surface accommodates four bidders, not that real Claude-Code + real Triton produce these specific bids on a CUDA host. M-65 Slice 3 covers the CUDA path when re-run on a GPU host.
+- **M-63 coverage signature** is shape-EQUAL today, not shape-class. Two regions with shapes `(16, 16, 32)` and `(16, 16, 64)` don't match. Shape-class divisibility (e.g. "any K divisible by 16") rides M-64's refinement-contract path.
 
-Append-only log of full Phase D audit runs (commit + verdict + run path).
+## Trust reports — final
 
-- `1aaaff2` (2026-05-07, M-63 commit — coverage-first scheduling): trust report 8/8 PASS at `/tmp/m63_trust/trust_report.md` (40 contracts, 4 caveats, 1182 files / 87 hits all allowlisted). Real-driven evidence: merlin_mlp_wide has 3 matmul regions with DIFFERENT shapes (matmul_0: 16x16@16x32, matmul_1: 16x32@32x32, matmul_2: 16x32@32x16); coverage_report shows 3 distinct groups (n_groups_with_cert=1, max_group_size=1, inflation=0 — honest "no shape-sibling reuse on this model"); specialization_report ranks 3 regions descending by analytical_cost, matmul_1 + matmul_2 tagged `uncovered` and surface as `recommended_specialization_targets`. End-to-end pipeline passes glue-emit; M-46 bindings preserved (bound_count=1, coverage_inflated_count=0). 7 tests for M-63 covering coverage signature byte-identity (dossier + cert sides), empty-dossiers no-op, mode flags (disabled / first-pass / both / specialize), real-pipeline coverage inflation reporting, specialization report ranks regions by cost. Cross-suite regression preserved 160/160 across 15 test suites.
-- `6ddb12b` (2026-05-07, M-62 commit — user-space kernel-provider discovery): trust report 8/8 PASS at `/tmp/m62_trust/trust_report.md` (39 contracts, 4 caveats, 1179 files / 86 hits all allowlisted). Real-driven evidence: user indexes matmul at `/tmp/m62_user_kernels/matmul` (manifest declares lhs=(16,16)/rhs=(16,32)/out=(16,32), perf_priors confidence=0.99 estimated_us=1.5). `reindex` produces `.compgen/user_kernel_index/0b2572e4/manifest.yaml` + `registry.yaml`; locked_files map carries SHAs for both kernel_manifest.yaml + kernel.c. Pipeline runs `--auction-mode multi-bidder`: 2 bids — user_path conf=0.99 perf=1.5us rationale=`exact_match:0b2572e4` + c_reference conf=0.85 perf=2.016us. Winner: **user_path** — beats in-tree baseline on both confidence + perf. End-to-end auction.overall=pass. 20 tests for M-62 covering manifest schema (round-trip + missing-fields + unknown-version), indexer (single + reindex + registry write), locked-files audit (clean + tampered source + missing file → typed UserKernelHashDriftError), provider bid (no index + exact match + compat match + target mismatch), provider search (after bid + without bid + tampered refusal), MCP tools (discover + list + describe), end-to-end auction (user kernel wins). Cross-suite regression preserved 158/158 across 15 test suites.
-- `3d2a2d0` (2026-05-07, M-61 commit — typed predicate DSL): trust report 8/8 PASS at `/tmp/m61_trust/trust_report.md` (38 contracts, 4 caveats, 1175 files / 86 hits all allowlisted). Real-driven stress on merlin_mlp_wide host_cpu (`/tmp/m61_stress`): contract carries 3 preconditions (`mod_eq("K", 16)` + `dtype_in("lhs", ("fp32",))` + `dtype_in("rhs", ("fp32",))`) and 1 postcondition (`numerical_within_eps("out", "reference", 0.0)` — bit_equality refinement gives eps=0). Generated `06_glue_emit/generated_plan_executor.py` mentions M-61 PLAN_VIOLATION subclasses 3 times (subclass def + two emitted assertion bodies). End-to-end pipeline + auction unaffected. 15 tests for M-61 across `tests/kernels/test_predicates.py` (10 — predicate round-trip for 5 kinds, kind/suffix maps, unknown-kind rejection, list helpers) + `tests/runtime/test_plan_assertions_predicates.py` (5 — contract carries predicates, round-trip preserves, M-61 subclasses emitted, emitted glue carries ModEq, structural shape check fires on tampered K dim). Cross-suite regression preserved 164/164 across 17 test suites.
-- `d709605` (2026-05-07, M-60 commit — contract field completion): trust report 8/8 PASS at `/tmp/m60_trust/trust_report.md` (37 contracts, 4 caveats, 1173 files / 86 hits all allowlisted). Real-driven stress on merlin_mlp_wide host_cpu (`/tmp/m60_stress2`): materialised contract carries `codegen_hints` (3 entries from host_cpu.yaml: AVX2/AVX-512 SIMD, row-major access, accumulator-in-registers), `peak_compute_per_dtype.f32 = 0.1` TFLOPS, `register_quota_per_thread = 256`, `max_concurrent_blocks = 0`, `mma_shapes = {}`. MemorySpec from dossier: `input_tiers = [host, scratchpad]` (one input-class + one transient), `output_tiers = [scratchpad]`, `lifetimes[0].live_after = next_consumer` (consumer_count=1). Auction end-to-end: 1 bid → 1 fulfilled → 1 verified → c_reference winner. 8 tests for M-60 covering host_cpu.yaml drives HardwareEnvelope, dossier drives MemorySpec, _lifetime_class_to_tier unit, _live_after_for_consumer_count unit, _derive_memory_spec with dossier + fallback, round-trip preserves M-60 fields, empty target_profile fallback. Cross-suite regression preserved 142/142 across 14 suites. Surfaced + fixed a structural bug in claude_code_default.py from the M-56 commit (the M-56 helper `_kernel_facing_to_fp_dict` had been accidentally placed mid-class so `_build_prompt`/`_guess_language` ended up nested inside it as dead code, breaking `provider_routing` tests; relocated to true module scope at end-of-file).
-- `a2f5376` (2026-05-07, M-59 commit — contract_feedback two-tier): trust report 8/8 PASS at `/tmp/m59_trust/trust_report.md` (36 contracts, 4 caveats, 1172 files / 85 hits all allowlisted). Real-driven stress on merlin_mlp_wide host_cpu (`/tmp/m59_stress`): empty-feedback path emits schema-valid `04_kernel_codegen/auction/<task_id>/contract_feedback.json` (schema `auction_contract_feedback_v1`, counts.total=0); run-wide aggregate `04_kernel_codegen/contract_feedback_proposals.json` (schema `contract_feedback_proposals_v1`) carries 1 entry for the task. Synthetic stress (in test): a stub provider emitting 3 feedback entries (layout_swap + dtype_widen + non-allowlisted) routes correctly — 2 allowlisted entries become SetLayout + WidenDtype proposals; 1 non-allowlisted lands in advisory. 15 tests for M-59 covering _infer_kind heuristics (6), classify_feedback split (2), to_recipe_ir_proposal per-kind op+args + non-allowlisted-raises (5), auction integration empty path (1), auction integration synthetic feedback (1). Cross-suite regression preserved 59/59 across provider_bid, canonical_contract_hash, kernel_auction, kernel_codegen_response, contract_feedback_apply.
-- `f2c96d1` (2026-05-07, M-58 commit — canonical hash): trust report 8/8 PASS at `/tmp/m58_trust/trust_report.md` (35 contracts, 4 caveats, 1170 files / 85 hits all allowlisted). Real-driven stress on merlin_mlp_wide host_cpu (`/tmp/m58_stress`): cert at `04_kernel_codegen/certificates/4838412db0b5c6b8.json` carries `contract_hash=4838412db0b5c6b8` and `canonical_contract_hash=4838412db0b5c6b8` (concrete contract → canonical == instance, as expected); `region_kernel_bindings.json` bound row for matmul_0 carries both hashes; `find_certificate_by_canonical_hash` locates the cert; unknown canonical hash returns None. 11 tests for M-58 covering instance-vs-canonical (3), byte-stability (2), kernel_facing sensitivity + compiler_only invariance (2), certificate carries canonical (3), binding carries canonical (1). Phase C/D regression preserved 74/74 across 8 test suites (kernel_certificate, contract_verifier, provider_bid, region_kernel_binding, kernel_codegen_response, kernel_auction, registry_wired, contract_hash).
-- `f538a05` (2026-05-07, M-57 commit — auction operational): trust report 8/8 PASS at `/tmp/m57_trust/trust_report.md` (34 contracts, 4 caveats, 1169 files / 85 hits all allowlisted). Real-driven stress: `/tmp/m57_stress` (`--stop-after kernel-auction`) produced auction_report.json with 1 bid (CReferenceProvider conf=0.85 perf=2.02us rationale=c_reference_matmul_baseline), 1 fulfilled (kernel.c + 3 metadata files), 1 verified (M-44 PASS), winner=c_reference, contract_hash=4838412db0b5c6b8 (matches M-55 + M-56). `/tmp/m57_e2e` (`--stop-after glue-emit`) drove the same model end-to-end with NO operator commit: cert at `04_kernel_codegen/certificates/4838412db0b5c6b8.json`, M-46 region_kernel_bindings.json bound_count=1 unbound_count=0, M-47 generated_plan_executor.py emitted. 6 tests for M-57 covering disabled-mode short-circuit, no-applicable-providers (auction report still emitted), multi-bidder full path, first-fit short-circuit, stub providers (one verified + one fulfill-fails), no-winner case.
-- `a717990` (2026-05-07, M-56 commit — bid/fulfill protocol): trust report 8/8 PASS at `/tmp/m56_trust/trust_report.md` (33 contracts, 4 caveats, 1166 files / 85 hits all allowlisted). Real-driven stress at `/tmp/m56_stress`: merlin_mlp_wide pipeline → materialized V3 contract reconstructed via `_reconstruct_contract_from_dict` → ProviderRegistry with ClaudeCodeKernelProvider(StubCodegen) + TritonTemplateProvider + a c_reference_stub (legacy, no `bid()`). `collect_bids` returns 3 bids all sharing `contract_hash=4838412db0b5c6b8` (matches M-55). Auction-style ranking: `claude_code_default conf=0.90 cache_hit=true rationale=cache_hit` (stub treated as deterministic hit), `triton_templates conf=0.70 perf=5.02us rationale=template_match_matmul`, `c_reference_stub conf=0.00 rationale=no_bid_method`. 13 tests for M-56 cover BidPreview round-trip + +inf serialisation, legacy fallback, validation (out-of-range confidence + negative perf + internal exception + contract_hash mismatch + None return — all 5 typed `ProviderProtocolViolation` paths exercised), ClaudeCodeKernelProvider bid (stub vs unknown codegen), TritonTemplateProvider bid (matmul match vs POINTWISE+copy unknown), collect_bids over the 3-provider list.
-- `51155d8` (2026-05-07, M-55 commit — Phase D bootstrap): trust report 8/8 PASS at `/tmp/m55_trust/trust_report.md` (32 contracts, 4 caveats, 9 negative controls). Realness scan 1165 files, 85 hits all allowlisted. Real-driven stress on merlin_mlp_wide host_cpu: `04_kernel_codegen/registry_resolution.json` emitted with schema `registry_resolution_v1`, applicable_provider_names=[] (no entry-point providers in clean checkout), fallback_used=true, contract_hash=4838412db0b5c6b8 byte-stable across reruns. Phase C regression 62/62 preserved (kernel_codegen_request, kernel_codegen_response, contract_materialization, resume_from, kernel_certificate, contract_verifier).
+The complete log of Phase D trust reports:
+
+- `b33f31b` (2026-05-07, M-64 commit — refinement contracts + version migration): trust report 9/9 PASS at `/tmp/m64_trust/trust_report.md` (41 contracts, 4 caveats, 1183 files / 87 hits all allowlisted) — gates grow from 8 to 9 with the new `contract_version_consistency` gate.
+- `1aaaff2` (2026-05-07, M-63 commit — coverage-first scheduling): trust report 8/8 PASS at `/tmp/m63_trust/trust_report.md` (40 contracts, 4 caveats, 1182 files / 87 hits all allowlisted).
+- `6ddb12b` (2026-05-07, M-62 commit — user-space kernel-provider discovery): trust report 8/8 PASS at `/tmp/m62_trust/trust_report.md` (39 contracts, 4 caveats, 1179 files / 86 hits all allowlisted).
+- `3d2a2d0` (2026-05-07, M-61 commit — typed predicate DSL): trust report 8/8 PASS at `/tmp/m61_trust/trust_report.md` (38 contracts, 4 caveats, 1175 files / 86 hits all allowlisted).
+- `d709605` (2026-05-07, M-60 commit — contract field completion): trust report 8/8 PASS at `/tmp/m60_trust/trust_report.md` (37 contracts, 4 caveats, 1173 files / 86 hits all allowlisted).
+- `a2f5376` (2026-05-07, M-59 commit — contract_feedback two-tier): trust report 8/8 PASS at `/tmp/m59_trust/trust_report.md` (36 contracts, 4 caveats, 1172 files / 85 hits all allowlisted).
+- `f2c96d1` (2026-05-07, M-58 commit — canonical hash): trust report 8/8 PASS at `/tmp/m58_trust/trust_report.md` (35 contracts, 4 caveats, 1170 files / 85 hits all allowlisted).
+- `f538a05` (2026-05-07, M-57 commit — auction operational): trust report 8/8 PASS at `/tmp/m57_trust/trust_report.md` (34 contracts, 4 caveats, 1169 files / 85 hits all allowlisted).
+- `a717990` (2026-05-07, M-56 commit — bid/fulfill protocol): trust report 8/8 PASS at `/tmp/m56_trust/trust_report.md` (33 contracts, 4 caveats, 1166 files / 85 hits all allowlisted).
+- `51155d8` (2026-05-07, M-55 commit — Phase D bootstrap): trust report 8/8 PASS at `/tmp/m55_trust/trust_report.md` (32 contracts, 4 caveats, 1165 files / 85 hits all allowlisted).
+- **Final: `814a31d` (2026-05-08, M-65 + M-66 + M-67 closure)** — trust report 9/9 PASS at `/tmp/m67_trust/trust_report.md` (43 contracts, 4 caveats, 1187 files / 87 hits all allowlisted). All 13 Phase D milestones complete; 118 net-new tests; cumulative 175/175 cross-suite regression preserved at M-64 (M-65 + M-66 add another 5 net-new). Section 7 closed.

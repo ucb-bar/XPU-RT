@@ -1,0 +1,84 @@
+claim: |
+  M-66 (Phase D paper-claim closure): the Section-7 dream's flagship
+  four-bidder stress. Four distinct providers (CReferenceProvider +
+  ClaudeCodeKernel-stub + TritonTemplate-cpu-fallback +
+  UserKernelProvider) bid against the same KernelContractV3 in the
+  same auction; all reach M-44 verification; the selector picks the
+  winner by perf among verified bids; runner-up certificates and
+  bids land in the auction report for tactician analysis. The
+  canonical_contract_hash of every bidder's certificate matches
+  byte-for-byte (M-58 + M-64 invariants hold under multi-provider
+  fulfilment).
+
+  Hard contract:
+
+  1. The auction is run in-process via
+     ``compgen.graph_compilation.kernel_auction.run_kernel_auction``
+     with an explicit ``ProviderRegistry`` carrying all four
+     providers. ``mode="multi-bidder"`` and ``bid_cutoff=4`` so all
+     four reach ``fulfill()``.
+  2. All four providers must appear in ``auction_report.json::bids``;
+     ``fulfilled`` size matches; ``verified`` size matches.
+     ``winner_provider`` is non-empty;
+     ``runners_up.json::runners_up`` lists the three losers.
+  3. Every certificate emitted (winner + per-provider runner-up
+     under ``auction/<task>/verified/<provider>/``) shares the same
+     ``canonical_contract_hash`` — proves that four different
+     provider implementations targeting the same contract produce
+     bit-equivalent canonical-hash kernels.
+  4. The user-supplied kernel (``UserKernelProvider``) bids the
+     highest confidence (0.92) + lowest perf (1.4us) and wins; the
+     in-tree CReferenceProvider (0.85 / 2us) is one of the runner-
+     ups. The win order proves that user-space kernels can beat
+     baseline, not just place.
+commit: 0a66000000000000000000000000000000000000
+created_at_utc: 2026-05-07T00:00:00Z
+forbidden:
+- the four-bidder stress only registering 3 providers and claiming "four-bidder" (the test asserts |bid_providers| == 4 explicitly)
+- the canonical_contract_hash invariant being silently relaxed (every cert from the same contract MUST share canonical hash; len(canonical_set)==1)
+- the selector picking by alphabetic-sort or insertion-order rather than perf_estimate among verified bids (M-57's pick logic is the contract; M-66 just verifies the result)
+- a bidder being absent from the runner-ups list when it lost (every loser is listed; only the winner is excluded)
+realness_level: production_path
+required_evidence:
+- tests/graph_compilation/test_four_bidder_stress.py (entire file — the test IS the evidence; passes mean the four-bidder claim holds in this build)
+feature_id: m66_four_bidder_stress
+notes: |
+  Phase D step 12 — the paper-claim closure. The test runs in
+  ~1m40s and exercises every Phase D surface: M-55 registry, M-56
+  bid/fulfill, M-57 auction, M-58 canonical hash, M-59 contract
+  feedback, M-60 contract field completion, M-61 predicates, M-62
+  user-space provider, M-63 coverage-first, M-64 versioning.
+
+  Pre-existing scaffolding consumed:
+  - ``CReferenceProvider`` (M-57) — in-tree baseline.
+  - ``UserKernelProvider`` (M-62) — filesystem-indexed user
+    kernel from a tmp dir.
+  - ``ProviderRegistry`` + ``run_kernel_auction`` (M-55+M-57) —
+    explicit registration; the default_registry()'s entry-point
+    discovery is bypassed for test determinism.
+
+  Stub providers (test-local):
+  - ``_ClaudeCodeStubProvider`` — stand-in for the real Claude-Code
+    in-session subagent, which would invoke the M-43 commit flow
+    rather than fulfilling in-process. Same bid + result shape;
+    different kernel source string.
+  - ``_TritonTemplateCpuFallbackProvider`` — stand-in for the real
+    TritonTemplateProvider on a non-CUDA host. Bids low confidence
+    (0.4) since CPU + Triton template isn't a real path.
+
+  Honest residuals:
+  - The two stubs are TEST-LOCAL stand-ins; they prove the auction
+    surface accommodates four bidders, not that real Claude-Code
+    + real Triton would produce these specific bids on a CUDA
+    host. Replacing the stubs with the real providers when running
+    against cuda_sm75 is the M-65 Slice 3 path (deferred).
+  - The user kernel's perf priors (1.4us, 0.92 confidence) are
+    declared in the test's user_kernel_manifest.yaml. Real-world
+    user manifests should declare perf priors based on actual
+    measurements; the auction's M-44 verifier still runs on every
+    bid so misleading priors waste top-K capacity but don't let
+    unsafe artifacts through.
+  - The bid_cutoff=4 lets all four bidders reach fulfill();
+    bid_cutoff=3 (the default) would drop the lowest-confidence
+    bidder (TritonTemplate-cpu-fallback at 0.4) — sound triage,
+    but it'd produce a 3-bidder report instead of a 4-bidder one.
