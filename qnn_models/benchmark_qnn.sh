@@ -22,14 +22,18 @@ export ADSP_LIBRARY_PATH="${QNN_SDK_ROOT}/lib/hexagon-v66;/dsp/cdsp;/dsp"
 QNN_NET_RUN=$QNN_SDK_ROOT/bin/target/qnn-net-run
 MODEL_FP="$MODEL_DIR/${MODEL_NAME}.dlc"
 MODEL_Q8="$MODEL_DIR/${MODEL_NAME}_quantized.dlc"
-INPUT_RAW="$MODEL_DIR/input.raw"
+INPUT_LIST="$MODEL_DIR/input_list.txt"
 
 # Generate multi-iteration input list
+# Each line in input_list.txt = one inference (space-separated paths for multi-input models)
+# Repeat each line $ITERS times
 MULTI_INPUT="$MODEL_DIR/input_list_multi.txt"
 python3 -c "
-for _ in range($ITERS):
-    print('$INPUT_RAW')
-" > "$MULTI_INPUT"
+line = open('$INPUT_LIST').read().strip().splitlines()[0]
+with open('$MULTI_INPUT', 'w') as f:
+    for _ in range($ITERS):
+        f.write(line + '\n')
+"
 
 # Backends: name:library:model
 # CPU/GPU use float32 DLC; DSP requires int8 quantized DLC
@@ -51,6 +55,14 @@ for entry in "${BACKENDS[@]}"; do
     OUTDIR="$MODEL_DIR/output_${NAME,,}"
 
     echo "--- $NAME backend ---"
+
+    if [ ! -f "$DLC" ]; then
+        echo "  SKIPPED (missing $DLC)"
+        echo "RESULT:${MODEL_NAME}:${NAME}:FAILED"
+        echo ""
+        continue
+    fi
+
     rm -rf "$OUTDIR"
 
     START_NS=$(date +%s%N)
