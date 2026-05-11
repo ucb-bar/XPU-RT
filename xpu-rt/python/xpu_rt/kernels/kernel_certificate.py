@@ -286,23 +286,51 @@ def find_certificate_by_canonical_hash(
     ``canonical_contract_hash`` field rather than the filename's
     instance hash.
 
-    Walks ``04_kernel_codegen/certificates/*.json`` and returns the
-    first cert whose ``canonical_contract_hash`` matches. Returns
-    ``None`` when no cert matches. The canonical-hash slot lets the
-    M-63 coverage-first scheduler find a kernel emitted for one
-    concrete shape and reuse it for another concrete shape that
-    matches the same shape class.
+    Gap #2 closure — walks both:
+
+    * ``04_kernel_codegen/certificates/*.json`` (winners' canonical
+      slot — written by ``emit_certificate`` for the winner).
+    * ``04_kernel_codegen/auction/*/verified/*/*.certificate.json``
+      (per-provider runner-up certs from M-57's auction).
+
+    Returns the first cert whose ``canonical_contract_hash`` matches.
+    Searching the auction tree means a runner-up provider's
+    canonical-hash kernel can serve a sibling region even when it
+    didn't win the original auction — the runner-up library has
+    leverage too.
     """
-    cert_dir = _certificate_dir(run_dir)
-    if not cert_dir.exists():
-        return None
-    for path in sorted(cert_dir.glob("*.json")):
-        try:
-            body = json.loads(path.read_text(encoding="utf-8"))
-        except json.JSONDecodeError:
+    canonical_dirs = [
+        _certificate_dir(run_dir),
+        run_dir / "04_kernel_codegen" / "auction",
+    ]
+    for root in canonical_dirs:
+        if not root.exists():
             continue
-        if str(body.get("canonical_contract_hash", "")) == canonical_hash:
-            return KernelCertificate.from_dict(body)
+        # Canonical certificates live at ``certificates/<hash>.json``
+        # while auction-tree certs live at
+        # ``auction/<task>/verified/<provider>/<provider>.certificate.json``.
+        # ``rglob('*.json')`` covers both cases.
+        for path in sorted(root.rglob("*.json")):
+            # Skip non-certificate JSON in the auction tree (e.g.
+            # runners_up.json, winner.json, auction_report.json,
+            # validation reports).
+            name = path.name
+            if root.name == "auction" and not name.endswith(".certificate.json"):
+                continue
+            try:
+                body = json.loads(path.read_text(encoding="utf-8"))
+            except json.JSONDecodeError:
+                continue
+            if not isinstance(body, dict):
+                continue
+            if str(body.get("schema_version", "")) and "certificate" not in str(
+                body.get("schema_version", "")
+            ).lower():
+                # Auction-tree non-cert files might still parse; skip them.
+                if "contract_hash" not in body:
+                    continue
+            if str(body.get("canonical_contract_hash", "")) == canonical_hash:
+                return KernelCertificate.from_dict(body)
     return None
 
 

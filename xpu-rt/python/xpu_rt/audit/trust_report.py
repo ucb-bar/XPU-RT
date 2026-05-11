@@ -351,6 +351,40 @@ def _gate_holdout_outcomes_honest() -> GateResult:
 # --------------------------------------------------------------------------- #
 
 
+def _autodiscover_latest_run_dir() -> Path | None:
+    """Gap #15 closure: scan the conventional run roots for the most
+    recently-touched run that has a certificates/ dir.
+
+    Walks ``results/`` and ``/tmp/`` non-recursively for compatibly-
+    named run directories (containing ``04_kernel_codegen/certificates``).
+    Returns the newest one or ``None`` when none exist.
+    """
+    candidates: list[Path] = []
+    for root in (REPO_ROOT / "results", Path("/tmp")):
+        try:
+            if not root.exists():
+                continue
+            for child in root.iterdir():
+                if not child.is_dir():
+                    continue
+                cert_dir = child / "04_kernel_codegen" / "certificates"
+                try:
+                    if cert_dir.exists() and any(cert_dir.glob("*.json")):
+                        candidates.append(child)
+                except (PermissionError, OSError):
+                    # Other users' tmp dirs — skip gracefully.
+                    continue
+        except (PermissionError, OSError):
+            continue
+    if not candidates:
+        return None
+    try:
+        candidates.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+    except (PermissionError, OSError):
+        candidates.sort(key=lambda p: str(p), reverse=True)
+    return candidates[0]
+
+
 def _gate_contract_version_consistency(
     *, run_dir: Path | None,
 ) -> GateResult:
@@ -360,13 +394,20 @@ def _gate_contract_version_consistency(
 
     Catches regressions where adding a v3.1 optional field would have
     leaked into the canonical projection (and silently invalidated
-    every cached cert). Skipped when no run_dir is supplied.
+    every cached cert). Gap #15 closure: when ``run_dir`` is None,
+    auto-discover the most recently-touched run with a non-empty
+    certs dir under ``results/`` or ``/tmp/``.
     """
+    if run_dir is None:
+        run_dir = _autodiscover_latest_run_dir()
     if run_dir is None:
         return GateResult(
             name="contract_version_consistency",
             status="skipped",
-            detail="no run-dir supplied; gate runs against on-disk certs",
+            detail=(
+                "no run-dir supplied + no auto-discovered run "
+                "(checked results/ + /tmp/ for runs with certs)"
+            ),
         )
     cert_dir = run_dir / "04_kernel_codegen" / "certificates"
     if not cert_dir.exists():

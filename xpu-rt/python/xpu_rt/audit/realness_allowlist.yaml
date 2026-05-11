@@ -437,6 +437,10 @@ allowed_nonproduction_symbols:
     reason: "M-66's realness contract; meta-reference, not a residual"
     forbidden_in: []
 
+  - path: docs/realness/phase_d_gap_closure.yaml
+    reason: "Phase D post-closure gap-closure meta-contract; meta-reference"
+    forbidden_in: []
+
   - path: docs/realness/phase_c_status_tracker.yaml
     reason: "Phase C bootstrap contract; meta-reference, not a residual"
     forbidden_in: []

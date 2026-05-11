@@ -52,6 +52,19 @@ _COVERAGE_SCHEMA = "coverage_report_v1"
 _SPECIALIZATION_SCHEMA = "specialization_report_v1"
 
 
+# Gap #10: archetypes the coverage pass considers. matmul is the
+# original M-63 target; pointwise + reduce families ride this list
+# so the coverage analysis surfaces non-matmul reuse opportunities
+# too.
+_COVERED_KINDS: frozenset[str] = frozenset({
+    "matmul", "bias_add",
+    "elementwise_relu", "elementwise_gelu",
+    "elementwise_add", "elementwise_mul", "elementwise_sub",
+    "softmax", "layer_norm", "batch_norm",
+    "reduce_sum", "reduce_mean", "reduce_max", "argmax",
+})
+
+
 @dataclass(frozen=True)
 class CoverageGroup:
     """One ``(canonical_contract_hash → list[region_id])`` group."""
@@ -135,26 +148,43 @@ def _coverage_signature(
     input_shapes = region_shape.get("input_shapes") or []
     output_shapes = region_shape.get("output_shapes") or []
     dtype = (region_shape.get("dtype") or "f32").lower()
+    kind = (dossier.get("kind") or "").lower()
 
-    if (
-        len(input_shapes) < 2
-        or len(input_shapes[0]) != 2
-        or len(input_shapes[1]) != 2
-    ):
-        return ""
-    if not output_shapes or len(output_shapes[0]) != 2:
+    # Gap #10 closure: per-archetype arity. matmul = 2 inputs, 1 output.
+    # pointwise = 1+ inputs, 1 output. reduce = 1 input, 1 output.
+    if kind in ("matmul",):
+        if (
+            len(input_shapes) < 2
+            or len(input_shapes[0]) != 2
+            or len(input_shapes[1]) != 2
+        ):
+            return ""
+        if not output_shapes or len(output_shapes[0]) != 2:
+            return ""
+        archetype = "compute_tiled"
+        sig_inputs = input_shapes[:2]
+    elif kind.startswith("elementwise_") or kind in ("bias_add",):
+        archetype = "pointwise"
+        # Pointwise: take first 1-2 inputs (output shape = input shape).
+        if not input_shapes:
+            return ""
+        sig_inputs = input_shapes[: max(1, min(2, len(input_shapes)))]
+        # Output may be omitted for unary; fall back to input shape.
+        if not output_shapes and sig_inputs:
+            output_shapes = [sig_inputs[0]]
+    elif kind.startswith("reduce_") or kind in ("softmax", "layer_norm", "batch_norm", "argmax"):
+        archetype = "reduce"
+        if not input_shapes:
+            return ""
+        sig_inputs = input_shapes[:1]
+        if not output_shapes:
+            return ""
+    else:
         return ""
 
-    # The dossier may report MORE input shapes than the matmul
-    # contract uses (e.g. a fused bias_add reports 3 inputs but the
-    # matmul kernel reads only lhs + rhs). The contract carries
-    # exactly 2 inputs; slice to the first 2 so the coverage
-    # signature aligns with the cert side.
-    matmul_inputs = input_shapes[:2]
-    in_repr = ";".join(",".join(str(d) for d in s) for s in matmul_inputs)
-    out_repr = ";".join(",".join(str(d) for d in s) for s in output_shapes)
-    archetype = "compute_tiled"  # coverage targets matmul today
-    layout = "row_major"  # M-60 default; multi-layout coverage rides M-65
+    in_repr = ";".join(",".join(str(d) for d in s) for s in sig_inputs)
+    out_repr = ";".join(",".join(str(d) for d in s) for s in output_shapes[:1])
+    layout = "row_major"  # M-60 default
     return (
         f"{target_name}|{archetype}|{dtype}|{layout}|{in_repr}|{out_repr}"
     )
@@ -162,7 +192,12 @@ def _coverage_signature(
 
 def _signature_from_certificate(*, run_dir: Path, cert: Any) -> str:
     """Derive the coverage signature for an existing cert by reading
-    its source contract file from disk."""
+    its source contract file from disk.
+
+    Gap #10 closure: archetype is read from the contract body so
+    pointwise + reduce certs sign correctly (was previously
+    locked to compute_tiled).
+    """
     contract_rel = getattr(cert, "contract_path", "") or ""
     if not contract_rel:
         return ""
@@ -177,6 +212,7 @@ def _signature_from_certificate(*, run_dir: Path, cert: Any) -> str:
             .get("hardware", {})
             .get("target_name", "")
         )
+        archetype = str(body.get("archetype") or "compute_tiled").lower()
         # Reconstruct input/output shape strings.
         io_body = body.get("io") or {}
         in_dims = [
@@ -190,9 +226,17 @@ def _signature_from_certificate(*, run_dir: Path, cert: Any) -> str:
             for t in (io_body.get("inputs") or [])
         ]
         dtype = (dtypes[0] if dtypes else "f32").lower()
+        # Slice to per-archetype arity (matches dossier-side signature).
+        if archetype == "compute_tiled":
+            in_dims = in_dims[:2]
+        elif archetype == "pointwise":
+            in_dims = in_dims[: max(1, min(2, len(in_dims)))]
+        elif archetype == "reduce":
+            in_dims = in_dims[:1]
         in_repr = ";".join(",".join(str(d) for d in s) for s in in_dims)
-        out_repr = ";".join(",".join(str(d) for d in s) for s in out_dims)
-        return f"{target}|compute_tiled|{dtype}|row_major|{in_repr}|{out_repr}"
+        out_repr = ";".join(",".join(str(d) for d in s) for s in out_dims[:1])
+        layout = "row_major"
+        return f"{target}|{archetype}|{dtype}|{layout}|{in_repr}|{out_repr}"
     except Exception:  # noqa: BLE001
         return ""
 
@@ -301,12 +345,13 @@ def run_coverage_first(
     target_name = _resolve_target_name(run_dir)
     target_profile = _load_target_profile(run_dir)  # noqa: F841 — reserved for M-65
 
+    # Gap #10: pointwise + reduce coverage in addition to matmul.
+    # Signature arity is enforced inside _coverage_signature.
     # Build coverage_signature → [(region_id, dossier)] groups.
     groups_dict: dict[str, list[tuple[str, dict[str, Any]]]] = {}
     for region_id, dossier in dossiers:
-        if (dossier.get("kind") or "").lower() != "matmul":
-            # M-63 covers compute_tiled (matmul) only; pointwise +
-            # reduce ride a future expansion.
+        kind = (dossier.get("kind") or "").lower()
+        if kind not in _COVERED_KINDS:
             continue
         signature = _coverage_signature(
             dossier=dossier, target_name=target_name,
@@ -419,7 +464,7 @@ def run_coverage_first(
                 covered_region_ids.update(g.region_ids)
 
         for region_id, dossier in dossiers:
-            if (dossier.get("kind") or "").lower() != "matmul":
+            if (dossier.get("kind") or "").lower() not in _COVERED_KINDS:
                 continue
             cost = dossier.get("cost") or {}
             latency_us = float(cost.get("latency_us") or 0.0)

@@ -752,6 +752,7 @@ class KernelContractV3:
         target_profile: dict[str, Any],
         declared_refinement: str = "unknown",
         dispatch_mode_override: str | None = None,
+        shape_policy: str = "concrete",
     ) -> "KernelContractV3":
         """Materialize a KernelContractV3 from a selected Recipe IR
         decision plus region facts (M-40 / Section 21).
@@ -859,23 +860,54 @@ class KernelContractV3:
         )
 
         # --- IO ---
+        # Gap #9: tile_M/tile_N/tile_K induce divisibility on the
+        # corresponding contract dims. The canonical hash reads
+        # divisibility (when set) so two regions with the same
+        # archetype + dtype + layout + target whose dims agree under
+        # the divisibility class share a kernel.
+        # Gap #14 (shape_policy="class"): substitute concrete dims with
+        # None so the canonical hash falls all the way to dynamic — one
+        # canonical kernel covers any concrete instantiation under the
+        # declared divisibility.
+        if shape_policy == "class":
+            lhs_dims_concrete: tuple[int | None, int | None] = (None, None)
+            rhs_dims_concrete: tuple[int | None, int | None] = (None, None)
+            out_dims_concrete: tuple[int | None, int | None] = (None, None)
+        elif shape_policy == "concrete":
+            lhs_dims_concrete = (M_dim, K_dim)
+            rhs_dims_concrete = (K_dim, N_dim)
+            out_dims_concrete = (M_dim, N_dim)
+        else:
+            raise ValueError(
+                f"unknown shape_policy {shape_policy!r}; expected "
+                f"'concrete' or 'class'"
+            )
         lhs = TensorIO(
             name="lhs",
-            shape=ShapeClass(dims=(M_dim, K_dim)),
+            shape=ShapeClass(
+                dims=lhs_dims_concrete,
+                divisibility=(tile_M, tile_K),
+            ),
             dtype_class=(dtype,),
             layout=LayoutKind.ROW_MAJOR,
             alignment_bytes=64,
         )
         rhs = TensorIO(
             name="rhs",
-            shape=ShapeClass(dims=(K_dim, N_dim)),
+            shape=ShapeClass(
+                dims=rhs_dims_concrete,
+                divisibility=(tile_K, tile_N),
+            ),
             dtype_class=(dtype,),
             layout=LayoutKind.ROW_MAJOR,
             alignment_bytes=64,
         )
         out = TensorIO(
             name="out",
-            shape=ShapeClass(dims=(M_dim, N_dim)),
+            shape=ShapeClass(
+                dims=out_dims_concrete,
+                divisibility=(tile_M, tile_N),
+            ),
             dtype_class=(dtype,),
             layout=LayoutKind.ROW_MAJOR,
             alignment_bytes=64,
@@ -1084,6 +1116,185 @@ class KernelContractV3:
                 "declared_refinement": declared_refinement,
                 "tile": {"M": tile_M, "N": tile_N, "K": tile_K},
                 "shape": {"M": M_dim, "N": N_dim, "K": K_dim},
+            },
+        )
+
+    @classmethod
+    def from_recipe_fusion(
+        cls,
+        *,
+        candidate_selection: dict[str, Any],
+        producer_dossier: dict[str, Any],
+        consumer_dossier: dict[str, Any],
+        region_dossier: dict[str, Any],
+        target_profile: dict[str, Any],
+    ) -> "KernelContractV3":
+        """Gap #6 closure (Phase D Batch B): minimal-viable
+        materialiser for ``fuse_producer_consumer`` candidates.
+
+        Builds a POINTWISE contract whose IO uses the producer's
+        first input as the contract input and the consumer's output
+        as the contract output. Pointwise→pointwise fusion (e.g.
+        ``add_0 → relu_default_0``) is the proxy_vla case and the
+        common Phase D fusion path.
+
+        For more complex fusions (matmul + bias + relu, etc.), the
+        contract registry will need richer fusion archetypes; this
+        method handles the unary-pointwise → unary-pointwise case
+        that unlocks Slice 2.
+        """
+        # Producer input → consumer output IO contract.
+        producer_inputs = (
+            (producer_dossier.get("region_shape") or {}).get("input_shapes") or []
+        )
+        consumer_outputs = (
+            (consumer_dossier.get("region_shape") or {}).get("output_shapes") or []
+        )
+        # The consumer dossier may omit output_shapes for unary ops
+        # (relu, gelu, etc.) where output shape equals input shape.
+        # Fall back to consumer input or producer output as last resort.
+        if not consumer_outputs:
+            consumer_outputs = (
+                (consumer_dossier.get("region_shape") or {}).get("input_shapes")
+                or (producer_dossier.get("region_shape") or {}).get("output_shapes")
+                or []
+            )
+        if not producer_inputs or not consumer_outputs:
+            raise ValueError(
+                "from_recipe_fusion requires producer.input_shapes plus "
+                "either consumer.output_shapes or consumer.input_shapes; "
+                f"got producer_inputs={producer_inputs!r}, "
+                f"consumer_outputs={consumer_outputs!r}"
+            )
+        dtype = (
+            (producer_dossier.get("region_shape") or {}).get("dtype")
+            or "f32"
+        ).lower()
+        if dtype.startswith("fp"):
+            dtype = "f" + dtype[2:]
+
+        in_dims = tuple(int(d) if d is not None else None for d in producer_inputs[0])
+        out_dims = tuple(int(d) if d is not None else None for d in consumer_outputs[0])
+        in_io = TensorIO(
+            name="in", shape=ShapeClass(dims=in_dims),
+            dtype_class=(dtype,), layout=LayoutKind.ROW_MAJOR,
+            alignment_bytes=64,
+        )
+        out_io = TensorIO(
+            name="out", shape=ShapeClass(dims=out_dims),
+            dtype_class=(dtype,), layout=LayoutKind.ROW_MAJOR,
+            alignment_bytes=64,
+        )
+        io = IOContract(
+            inputs=(in_io,), outputs=(out_io,),
+            attributes=(
+                StaticAttr(name="fusion_label", value=str(
+                    candidate_selection.get("label") or ""
+                )),
+                StaticAttr(name="producer_op", value=str(
+                    producer_dossier.get("region_id") or ""
+                )),
+                StaticAttr(name="consumer_op", value=str(
+                    consumer_dossier.get("region_id") or ""
+                )),
+            ),
+            numerics=NumericsSpec(
+                accumulator_dtype="f32",
+                fast_math=False,
+                max_relative_error=1e-5,
+                deterministic=True,
+            ),
+        )
+
+        # Hardware envelope from target profile (M-60 path).
+        target_id = (
+            target_profile.get("target_id")
+            or candidate_selection.get("target_id")
+            or "host_cpu"
+        )
+        envelope = target_profile.get("hardware_envelope") or {}
+        # Read mma_shapes from the target profile so the fusion path
+        # carries the same hardware envelope the matmul path does.
+        mma_shapes_dict: dict[str, tuple[int, int, int]] = {}
+        for k, v in (target_profile.get("mma_shapes") or {}).items():
+            try:
+                if v and len(v) == 3:
+                    mma_shapes_dict[str(k)] = (int(v[0]), int(v[1]), int(v[2]))
+            except (TypeError, ValueError):
+                continue
+        hardware = HardwareEnvelope(
+            target_name=str(target_id),
+            vector_lanes=int(envelope.get("vector_lanes", 8)),
+            scratchpad_bytes=int(envelope.get("scratchpad_kib", 64)) * 1024,
+            register_bytes=int(envelope.get("register_bytes", 256)),
+            native_dtypes=tuple(envelope.get("native_dtypes") or (dtype,)),
+            peak_bandwidth_gbps=float(envelope.get("peak_bandwidth_gbps", 0.0)),
+            codegen_hints=tuple(target_profile.get("codegen_hints") or ()),
+            mma_shapes=mma_shapes_dict,
+            peak_compute_per_dtype={
+                str(k): float(v)
+                for k, v in (target_profile.get("peak_compute_per_dtype") or {}).items()
+            },
+            register_quota_per_thread=int(
+                target_profile.get("register_quota_per_thread") or 256
+            ),
+            max_concurrent_blocks=int(
+                target_profile.get("max_concurrent_blocks") or 0
+            ),
+        )
+        execution = ExecutionEnvelope(
+            hardware=hardware,
+            memory_budget_bytes=int(envelope.get("scratchpad_kib", 64)) * 1024,
+            concurrency_unit=(
+                ConcurrencyUnit.HOST_THREAD
+                if "cpu" in str(target_id).lower()
+                else ConcurrencyUnit.CTA
+            ),
+            padding=PaddingPolicy.KERNEL_HANDLES,
+            priority=PerformancePriority.BALANCED,
+        )
+
+        orchestration = OrchestrationSpec(
+            execution=execution,
+            sync=SyncSpec(
+                event_decls=(EventDecl(name="fusion_done", scope="block"),),
+            ),
+            memory=MemorySpec(
+                input_tiers=(MemoryTier.HOST,),
+                output_tiers=(MemoryTier.SCRATCHPAD,),
+                lifetimes=(BufferLifetime(output_idx=0, live_after="next_consumer"),),
+            ),
+            fusion=FusionPolicy(is_boundary=True),
+            dispatch=DispatchSpec(model=DispatchModel.SYNC),
+            observability=ObservabilitySpec(
+                emit_completion_event=True, cost_emit_period=0,
+            ),
+        )
+
+        selection = SelectionHints(
+            providers=(
+                ProviderHint(
+                    name="c_reference", weight=0.5,
+                    rationale="cffi-C fallback for fused pointwise"
+                ),
+            ),
+        )
+        return cls(
+            op_name="linalg.fused_pointwise",
+            archetype=KernelArchetype.POINTWISE,
+            io=io,
+            granularity=Granularity.NORMAL,
+            orchestration=orchestration,
+            selection=selection,
+            metadata={
+                "source_candidate_id": candidate_selection.get(
+                    "selected_candidate_id", ""
+                ),
+                "source_region_id": region_dossier.get("region_id", ""),
+                "source_recipe_op_id": "recipe_fusion",
+                "fusion_label": candidate_selection.get("label", ""),
+                "producer_region_id": producer_dossier.get("region_id", ""),
+                "consumer_region_id": consumer_dossier.get("region_id", ""),
             },
         )
 

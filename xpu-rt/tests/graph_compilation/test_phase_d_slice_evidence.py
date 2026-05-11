@@ -51,18 +51,14 @@ def _invoke_pipeline(
 
 class TestSlice2:
     def test_proxy_vla_fusion_path(self, tmp_path: Path) -> None:
-        """Run the pipeline + emit slice evidence. proxy_vla's
-        candidate is a fusion (set_tile_params is M-42's only
-        supported kind today), so the request_kind comes back as
-        ``not_applicable``; the slice evidence records this as an
-        honest gap."""
+        """Run the pipeline + emit slice evidence. With gap #6 closed,
+        proxy_vla's fusion candidate produces a kernel_codegen
+        request; M-40 materialises a POINTWISE fused contract; the
+        auction runs with c_reference's pointwise baseline as bidder."""
         result = _invoke_pipeline(
             model="proxy_vla", out_dir=tmp_path / "run",
             stop_after="kernel-auction",
         )
-        # The pipeline runs through kernel-auction even when the
-        # M-42 task is not_applicable (the auction stage short-
-        # circuits). It should not error.
         assert result.returncode == 0, result.stderr
 
         from compgen.graph_compilation.phase_d_slice_evidence import (
@@ -73,23 +69,23 @@ class TestSlice2:
         evidence_path = emit_slice_evidence(
             run_dir=run_dir, slice_id="2", slice_name="proxy_vla_fusion",
             model="proxy_vla", target="host_cpu",
-            overall="honest_gap",
+            overall="green",
             overall_reason=(
-                "M-42 supports only candidate_kind='set_tile_params' today; "
-                "proxy_vla's recipe planner selects fusion candidates "
-                "which route to not_applicable. Auction never bids; "
-                "fusion-archetype contract registry expansion is the next "
-                "milestone."
+                "Gap #6 closure: fusion candidate produces a real "
+                "kernel_codegen request; auction runs and verifies. "
+                "Fusion-archetype contract carries POINTWISE archetype + "
+                "fused IO (producer input → consumer output)."
             ),
-            notes="See 04_kernel_codegen/kernel_codegen_summary.json::not_applicable_reason",
+            notes="See 04_kernel_codegen/contracts/<fusion_label>.<hash>.json",
         )
         body = json.loads(evidence_path.read_text())
 
         assert body["schema_version"] == "phase_d_slice_evidence_v1"
         assert body["slice_id"] == "2"
-        assert body["overall"] == "honest_gap"
-        # Auction didn't run (not_applicable request).
-        assert body["auction_summary"]["ran"] is False
+        assert body["overall"] == "green"
+        # Gap #6: auction now runs for fusion candidates.
+        assert body["auction_summary"]["ran"] is True
+        assert body["auction_summary"]["overall"] == "pass"
 
 
 # --------------------------------------------------------------------------- #
@@ -97,39 +93,51 @@ class TestSlice2:
 # --------------------------------------------------------------------------- #
 
 
-class TestSlice3Deferred:
-    def test_cuda_sm75_target_not_present_locally(
-        self, tmp_path: Path,
-    ) -> None:
-        """No configs/targets/cuda_sm75.yaml ships in the repo today;
-        slice 3 must record the deferral honestly."""
+class TestSlice3CudaSm75Contracts:
+    def test_cuda_sm75_target_now_ships(self, tmp_path: Path) -> None:
+        """Gap #7 closure: configs/targets/cuda_sm75.yaml now ships.
+        Pipeline contract emit works on a non-CUDA host; real kernel
+        execution + verification stays GPU-host-conditional and is
+        reflected in the slice evidence."""
         cuda_yaml = REPO_ROOT / "configs" / "targets" / "cuda_sm75.yaml"
-        # Documented residual: cuda_sm75 not configured locally.
-        assert not cuda_yaml.exists()
+        assert cuda_yaml.exists()
 
         from compgen.graph_compilation.phase_d_slice_evidence import (
-            emit_deferred_slice_evidence,
+            emit_slice_evidence,
         )
 
-        evidence_path = emit_deferred_slice_evidence(
-            out_dir=tmp_path,
+        result = subprocess.run(
+            [
+                sys.executable, "-m", "compgen.graph_compilation", "run",
+                "--model", str(REPO_ROOT / "configs/models/merlin_mlp_wide.yaml"),
+                "--target", str(cuda_yaml),
+                "--out", str(tmp_path / "run"),
+                "--stop-after", "kernel-codegen-request",
+                "--selection-mode", "greedy",
+                "--auction-mode", "disabled",
+            ],
+            cwd=REPO_ROOT, capture_output=True, text=True,
+        )
+        assert result.returncode == 0, result.stderr
+
+        evidence_path = emit_slice_evidence(
+            run_dir=tmp_path / "run",
             slice_id="3",
             slice_name="merlin_mlp_wide_cuda_sm75",
             model="merlin_mlp_wide",
             target="cuda_sm75",
-            deferred_reason=(
-                "configs/targets/cuda_sm75.yaml does not ship with the "
-                "repo; running CUDA-bound providers (TritonTemplate, "
-                "Claude-Code GPU codegen) requires a CUDA-capable host "
-                "and a target YAML. M-66 covers the CUDA path under a "
-                "GPU-host-conditional run."
+            overall="green",
+            overall_reason=(
+                "Gap #7 closure: cuda_sm75 target YAML ships. Contract "
+                "materialization works on non-CUDA hosts; auction "
+                "fulfillment with real Triton kernels stays "
+                "GPU-host-conditional."
             ),
         )
         body = json.loads(evidence_path.read_text())
         assert body["schema_version"] == "phase_d_slice_evidence_v1"
         assert body["slice_id"] == "3"
-        assert body["overall"] == "deferred"
-        assert "configs/targets/cuda_sm75.yaml" in body["overall_reason"]
+        assert body["overall"] == "green"
 
 
 # --------------------------------------------------------------------------- #

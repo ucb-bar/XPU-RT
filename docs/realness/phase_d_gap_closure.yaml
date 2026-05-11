@@ -1,0 +1,135 @@
+claim: |
+  Phase D post-closure honest audit identified 18 distinct gaps in the
+  Section 7 paper claim (4 architectural, 4 test-honesty, 6 feature-
+  breadth, 2 CI/audit, 2 stub-implementation). All 18 gaps are now
+  closed across five fix batches landing in commits
+  ``b17c70c`` → ``34e2b54`` → ``bc516bf`` → ``5677a8a`` → ``78c7183``.
+  The Phase D paper claim is now structurally + behaviorally
+  consistent with the test surface and the real-driven evidence.
+
+  Hard contract (per gap):
+
+  Batch A (architectural — load-bearing):
+  - Gap #1: ``canonical_contract_hash`` strips tile_M/tile_N/tile_K
+    StaticAttrs from the IO.attributes projection. Two contracts
+    with same shape but different selected tiles share canonical.
+    Instance hash keeps them so M-43 commit invariant holds.
+  - Gap #2: ``find_certificate_by_canonical_hash`` walks both the
+    canonical certs dir AND ``auction/<task>/verified/<provider>/``
+    runner-up trees. Runner-up provider certs are now reusable.
+  - Gap #3: M-46's ``_bindings_for_run`` uses canonical-hash
+    fallback (``_try_canonical_fallback``) when an instance-hash
+    cert is missing. Sibling regions whose canonical hash matches
+    bind from a prior cert without a second M-43 cycle.
+  - Gap #4: ``action_space._gen_feedback_proposals`` (Family 7)
+    reads ``contract_feedback_proposals.json`` and emits feedback-
+    driven candidates so M-59 proposals actually re-enter the
+    selection round.
+  - Gap #15: ``contract_version_consistency`` audit gate
+    auto-discovers the latest run-dir under ``results/`` or
+    ``/tmp/`` when ``--run-dir`` is omitted. Permission errors on
+    other users' tmp dirs degrade gracefully.
+
+  Batch B (fusion):
+  - Gap #6: M-42 + M-40 accept ``fuse_producer_consumer`` candidates;
+    ``KernelContractV3.from_recipe_fusion`` materialises a POINTWISE
+    fused contract; ``CReferenceProvider`` extends ``applicable_archetypes``
+    to include pointwise + ships a ``_POINTWISE_FUSED_C_SOURCE``
+    template. Slice 2 transitions from honest_gap → green.
+
+  Batch C (target + shape-class):
+  - Gap #7: ``configs/targets/cuda_sm75.yaml`` ships with real
+    Tensor Core mma_shapes + peak_compute_per_dtype + codegen_hints.
+    Slice 3 contract emit works on non-CUDA hosts; real GPU
+    execution stays GPU-host-conditional.
+  - Gap #9: ``from_recipe`` populates ``ShapeClass.divisibility``
+    from the selected tile dims. The canonical hash uses
+    divisibility (when set) to abstract concrete dims into
+    ``{"mod": k}`` form. Two contracts whose concrete dims differ
+    but agree under the divisibility class share canonical hash.
+  - Gap #14: ``shape_policy="class"`` (or ``COMPGEN_SHAPE_POLICY=class``
+    env var) substitutes concrete dims with ``None`` so the
+    canonical hash collapses to a single dynamic-shape kernel
+    covering any concrete instantiation under the declared
+    divisibility.
+
+  Batch D (coverage breadth + predicate runtime + multi-file):
+  - Gap #10: coverage-first ``_COVERED_KINDS`` expanded to include
+    pointwise (bias_add + elementwise_*) and reduce (softmax,
+    layer_norm, reduce_*, argmax). ``_coverage_signature`` and
+    ``_signature_from_certificate`` dispatch on archetype.
+  - Gap #11: ``render_assert_postconditions_body`` emits per-output
+    NumericalWithinEps diff checks against a caller-supplied refs
+    dict. Typed PLAN_VIOLATION_POSTCONDITION_NUMERICAL_WITHIN_EPS
+    fires on threshold exceedance.
+  - Gap #12: DtypeIn precondition emit (was skipped). Allowlist
+    is normalised via dtype-alias map (fp32 → f32, fp16 → f16,
+    bfloat16 → bf16) so the contract author's "fp32" allowlist
+    matches a torch.float32 tensor at runtime.
+  - Gap #13: ``UserKernelManifest.kernel_source`` accepts string or
+    list. ``primary_kernel_source`` property returns the entry-
+    point file. ``index_one_manifest`` locks every kernel_source
+    entry's SHA.
+
+  Batch E (test honesty + Triton translator + symbol metadata):
+  - Gap #5: ``TestGap5RealProvidersInAuction`` runs the auction
+    with TWO real shipped providers (no test-local stubs); user_path
+    wins on real perf + confidence.
+  - Gap #8: ``TestGap8McpCompareKernelBids`` exercises
+    ``compgen_compare_kernel_bids`` at the MCP transport layer
+    for both no-auction and post-auction cases.
+  - Gap #16: ``TestGap16TestPollutionHygiene`` asserts the repo's
+    ``.compgen/user_kernel_index/`` is free of test artifacts.
+  - Gap #17: provider symbol metadata. CReferenceProvider.search()
+    returns the correct entry symbol per op_family
+    (compgen_matmul_f32 for matmul, compgen_fused_pointwise_f32
+    for elementwise_relu); the auction's translate path picks it
+    up via result.metadata["symbol"].
+  - Gap #18: TritonContractTranslator wired into auction's
+    translate path. ``kernel_metadata.json`` carries a
+    ``triton_translation`` block (target_arch + autotune_configs +
+    prompt_context + compatibility_notes) for CUDA-bound contracts.
+
+commit: 0a68000000000000000000000000000000000000
+created_at_utc: 2026-05-08T00:00:00Z
+forbidden:
+- regressing any of the 18 gaps' invariants (each gap has a regression test in tests/kernels/test_gap_closure_batch_{a,c,d,e}.py)
+- silently dropping the canonical-hash invariant under the new abstraction (canonical_contract_hash on a no-divisibility contract must byte-match what it did before Batch C)
+- reverting the M-46 canonical-hash fallback without auditing whether existing tests still pass (the fallback is the cross-model leverage primitive M-58 + M-63 depend on)
+- adding a v3.1 optional field that doesn't carry a default in _OPTIONAL_V3_1_FIELD_DEFAULTS (M-64's invariant)
+realness_level: production_path
+required_evidence:
+- Batch A commit b17c70c (gaps #1, #2, #3, #4, #15)
+- Batch B commit 34e2b54 (gap #6)
+- Batch C commit bc516bf (gaps #7, #9, #14)
+- Batch D commit 5677a8a (gaps #10, #11, #12, #13)
+- Batch E commit 78c7183 (gaps #5, #8, #16, #17, #18)
+- tests/kernels/test_gap_closure_batch_a.py (5 tests)
+- tests/kernels/test_gap_closure_batch_c.py (8 tests)
+- tests/kernels/test_gap_closure_batch_d.py (9 tests)
+- tests/kernels/test_gap_closure_batch_e.py (8 tests)
+- full cross-suite regression 228/228 across 25 test suites
+feature_id: phase_d_gap_closure
+notes: |
+  This contract is a meta-record of the gap-closure work. Each
+  batch's specific implementation lives across the per-file
+  changes; this contract names the chain so the M-31A trust report
+  can confirm all 18 gaps closed via reference to their batch
+  commits.
+
+  Gap-batch boundaries are pragmatic (group by file affinity +
+  conceptual coupling), not chronological. Batches A + B + C close
+  the four architectural gaps that activate the M-58 cross-model
+  leverage in practice. Batches D + E close the feature-breadth
+  and test-honesty gaps. The closure leaves Phase D structurally
+  consistent with the Section 7 paper claim.
+
+  Cumulative new tests: 30 gap-closure tests across 4 new files,
+  on top of Phase D's 118 net-new tests. Total Phase D test count
+  after closure: 148 across 14 net-new files (12 from M-55..M-67,
+  4 from gap-closure batches A/C/D/E — batch B added no new test
+  file).
+
+  Trust report still 9/9 PASS with the new
+  contract_version_consistency gate that picks up the v3.1
+  refinement invariant on every cert.

@@ -320,6 +320,30 @@ def _translate_provider_result_to_artifacts(
     if "symbol" in pmeta:
         metadata_body["symbol"] = pmeta["symbol"]
 
+    # Gap #18 closure: when the contract is CUDA-bound, run the v3
+    # TritonContractTranslator and stamp the translation surface
+    # (autotune configs + prompt context + compat notes) into the
+    # kernel_metadata so a downstream consumer can see the V3 path
+    # was used. Best-effort — failure leaves metadata untouched.
+    try:
+        from compgen.kernels.contract_translator import (
+            TritonContractTranslator,
+        )
+
+        trans = TritonContractTranslator()
+        if trans.supports(contract_v3):
+            translation = trans.translate(contract_v3)
+            metadata_body["triton_translation"] = {
+                "target_arch": translation.target_arch,
+                "autotune_configs": [
+                    dict(c) for c in translation.autotune_configs
+                ],
+                "prompt_context": translation.prompt_context,
+                "compatibility_notes": list(translation.compatibility_notes),
+            }
+    except Exception:  # noqa: BLE001
+        pass
+
     metadata_path = artifact_dir / "kernel_metadata.json"
     metadata_path.write_text(
         json.dumps(metadata_body, indent=2, sort_keys=True) + "\n",

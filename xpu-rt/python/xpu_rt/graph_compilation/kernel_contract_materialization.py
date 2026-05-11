@@ -495,15 +495,83 @@ def materialize_contract_for_run(
 
     rows: list[ContractMaterializationRow] = []
 
-    if candidate_kind != "set_tile_params":
+    if candidate_kind == "fuse_producer_consumer":
+        # Gap #6 closure (Phase D Batch B): materialise a fusion
+        # contract for pointwise→pointwise fusions. The producer +
+        # consumer dossier paths come in via candidate_selection.evidence;
+        # we synthesize a POINTWISE contract whose IO is the producer's
+        # inputs + the consumer's output.
+        try:
+            dossier_path = _resolve_region_dossier(run_dir, region_id)
+            region_dossier = _read_json(dossier_path) if dossier_path else {}
+            target_yaml_path = _resolve_target_profile(run_dir, target_id)
+            target_profile = (
+                _read_yaml_or_none(target_yaml_path) if target_yaml_path else {}
+            ) or {}
+            evidence = sel.get("evidence") or {}
+            producer_path = evidence.get("producer_dossier") or ""
+            consumer_path = evidence.get("consumer_dossier") or ""
+            producer_dossier: dict[str, Any] = {}
+            consumer_dossier: dict[str, Any] = {}
+            if producer_path:
+                pd = run_dir / producer_path
+                if pd.exists():
+                    producer_dossier = _read_json(pd)
+            if consumer_path:
+                cd = run_dir / consumer_path
+                if cd.exists():
+                    consumer_dossier = _read_json(cd)
+
+            contract = KernelContractV3.from_recipe_fusion(
+                candidate_selection=sel,
+                producer_dossier=producer_dossier,
+                consumer_dossier=consumer_dossier,
+                region_dossier=region_dossier,
+                target_profile=target_profile,
+            )
+            ch = hash_contract(contract)
+            fusion_region_id = sel.get("label") or region_id
+            contract_path = contracts_dir / f"{fusion_region_id}.{ch}.json"
+            view_path = views_dir / f"{fusion_region_id}.kernel_facing.json"
+            contract_path.write_text(
+                json.dumps(contract_to_dict(contract), indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+            view_path.write_text(
+                json.dumps(kernel_facing_to_dict(contract.kernel_facing()),
+                           indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+            rows.append(ContractMaterializationRow(
+                region_id=region_id,
+                candidate_id=candidate_id,
+                candidate_kind=candidate_kind,
+                status="materialized",
+                contract_hash=ch,
+                contract_path=str(contract_path.relative_to(run_dir)),
+                kernel_facing_path=str(view_path.relative_to(run_dir)),
+            ))
+        except Exception as exc:  # noqa: BLE001
+            rows.append(ContractMaterializationRow(
+                region_id=region_id,
+                candidate_id=candidate_id,
+                candidate_kind=candidate_kind,
+                status="error",
+                not_applicable_reason=(
+                    f"M-40 fusion materialization failed: "
+                    f"{type(exc).__name__}: {exc}"
+                ),
+            ))
+    elif candidate_kind != "set_tile_params":
         rows.append(ContractMaterializationRow(
             region_id=region_id,
             candidate_id=candidate_id,
             candidate_kind=candidate_kind,
             status="not_applicable",
             not_applicable_reason=(
-                f"M-40 supports only candidate_kind='set_tile_params'; "
-                f"got {candidate_kind!r}. M-42 widens supported kinds."
+                f"M-40 supports candidate_kind in "
+                f"['set_tile_params', 'fuse_producer_consumer']; "
+                f"got {candidate_kind!r}."
             ),
         ))
     else:
@@ -516,11 +584,20 @@ def materialize_contract_for_run(
             ) or {}
             declared_refinement = _declared_refinement_for(run_dir, candidate_id)
 
+            # Gap #14: COMPGEN_SHAPE_POLICY=class makes from_recipe
+            # substitute concrete dims with None so the canonical
+            # hash falls all the way to dynamic.
+            import os as _os
+
+            shape_policy = _os.environ.get("COMPGEN_SHAPE_POLICY", "concrete")
+            if shape_policy not in ("concrete", "class"):
+                shape_policy = "concrete"
             contract = KernelContractV3.from_recipe(
                 candidate_selection=sel,
                 region_dossier=region_dossier,
                 target_profile=target_profile,
                 declared_refinement=declared_refinement,
+                shape_policy=shape_policy,
             )
             ch = hash_contract(contract)
             contract_path = contracts_dir / f"{region_id}.{ch}.json"

@@ -691,6 +691,114 @@ def _numerics_cost_estimate(op: str) -> float:
     return 1.00
 
 
+# ---- Family 7: contract_feedback proposals (gap #4) ---------------------- #
+
+
+def _gen_feedback_proposals(
+    *,
+    run_dir: Path,
+    regions_by_id: dict[str, dict[str, Any]],
+) -> tuple[list[_Site], list[_Cand]]:
+    """Read ``04_kernel_codegen/contract_feedback_proposals.json``
+    (M-59 aggregate, written by the auction's M-59 hook) and emit one
+    candidate per allowlisted proposal at the matching region.
+
+    The candidate's ``recipe_delta`` is the proposal's typed Recipe-IR
+    op + args (e.g. ``SetLayout`` / ``WidenDtype`` / etc.) so the
+    selection round surfaces it as a real action. When the proposal
+    file is absent (first iteration) Family 7 is a no-op.
+    """
+    sites: list[_Site] = []
+    candidates: list[_Cand] = []
+    aggregate_path = run_dir / "04_kernel_codegen" / "contract_feedback_proposals.json"
+    if not aggregate_path.exists():
+        return sites, candidates
+    try:
+        body = json.loads(aggregate_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return sites, candidates
+
+    entries = body.get("entries") or []
+    # Group proposals by region — the aggregate keys by task_id, but
+    # the M-57 auction's task_id encodes the region via the request
+    # body. We re-read the request to recover the region.
+    requests_dir = run_dir / "04_kernel_codegen" / "requests"
+    region_by_task: dict[str, str] = {}
+    if requests_dir.exists():
+        for rp in sorted(requests_dir.glob("*.request.json")):
+            try:
+                rb = json.loads(rp.read_text(encoding="utf-8"))
+                region_by_task[str(rb.get("task_id", ""))] = str(
+                    rb.get("region_id", "") or ""
+                )
+            except (OSError, json.JSONDecodeError):
+                continue
+
+    for entry in entries:
+        task_id = str(entry.get("task_id", ""))
+        region_id = region_by_task.get(task_id, "")
+        if not region_id or region_id not in regions_by_id:
+            continue
+        proposals = entry.get("proposals") or []
+        if not proposals:
+            continue
+        site_id = _site_id("feedback_proposal", region_id)
+        cand_ids: list[str] = []
+        for i, p in enumerate(proposals):
+            op = str(p.get("op") or "")
+            args = dict(p.get("args") or {})
+            if not op:
+                continue
+            cand_id = _candidate_id(
+                kind="feedback_proposal",
+                region_id=region_id,
+                label=f"{op}_{i}",
+            )
+            cand_ids.append(cand_id)
+            label = f"feedback_{op}_{p.get('source_kind', '')}"
+            recipe_delta = [{
+                "op": op,
+                "args": args,
+                "source_kind": p.get("source_kind", ""),
+                "source_provider": p.get("source_provider", ""),
+                "applies_when": p.get("applies_when", ""),
+            }]
+            candidates.append(_Cand(
+                candidate_id=cand_id,
+                site_id=site_id,
+                kind="feedback_proposal",
+                region_id=region_id,
+                label=label,
+                recipe_delta=recipe_delta,
+                legality={"allowed": True, "reason": "from_typed_allowlist"},
+                cost_preview={
+                    "expected_perf_gain": float(p.get("measured_gain", 0.0) or 0.0),
+                },
+                evidence={
+                    "source_proposals_file": str(
+                        aggregate_path.relative_to(run_dir)
+                    ),
+                    "source_task_id": task_id,
+                },
+            ))
+        if cand_ids:
+            sites.append(_Site(
+                site_id=site_id,
+                kind="feedback_proposal",
+                region_id=region_id,
+                priority=20,
+                reason=(
+                    "M-59 contract_feedback proposals from prior auction; "
+                    "applying the recommendation re-enters the action space"
+                ),
+                candidate_ids=cand_ids,
+                extra={"source_proposals_file": str(
+                    aggregate_path.relative_to(run_dir)
+                )},
+            ))
+    return sites, candidates
+
+
 # ---- Family 4: fusion ---------------------------------------------------- #
 
 
@@ -1038,6 +1146,19 @@ def build_action_space(
     )
     sites.extend(s4)
     candidates.extend(c4)
+
+    # Family 7: contract_feedback proposals (M-59 + gap #4 closure).
+    # Reads any contract_feedback_proposals.json left by a prior
+    # iteration's auction and emits one candidate per allowlisted
+    # proposal at the matching region. The candidate's recipe_delta
+    # records the suggested change so the next selection round
+    # surfaces it as an actionable Recipe-IR op.
+    s7, c7 = _gen_feedback_proposals(
+        run_dir=run_dir,
+        regions_by_id={r["region_id"]: r for r in region_map.get("regions", []) or []},
+    )
+    sites.extend(s7)
+    candidates.extend(c7)
 
     # ------------------------------------------------------------------ #
     # 1. action_space.mlir (canonical)

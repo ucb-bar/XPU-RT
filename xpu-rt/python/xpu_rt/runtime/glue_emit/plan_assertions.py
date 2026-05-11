@@ -412,9 +412,66 @@ def render_assert_plan_body(
                 )
                 lines.append("")
             elif kind == "dtype_in":
-                # Already covered structurally by PLAN_VIOLATION_INPUT_DTYPE
-                # for the first dtype_class entry. Skip redundant emit.
-                continue
+                # Gap #12 closure: emit a typed DtypeIn precondition
+                # check independent of the structural INPUT_DTYPE
+                # check. The structural check enforces dtype_class
+                # membership; this predicate enforces a (possibly
+                # narrower) explicit allowlist supplied by the
+                # contract author.
+                arg = pred.get("arg", "")
+                dtype_set = list(pred.get("dtype_set") or [])
+                if not arg or not dtype_set:
+                    continue
+                target_idx: int | None = None
+                for j, inp in enumerate(ra.inputs):
+                    if inp.get("name") == arg:
+                        target_idx = flat_in_idx_for_region[ra.region_id][j]
+                        break
+                if target_idx is None:
+                    continue
+                lines.append(
+                    f"    # M-61 precondition: {arg} dtype in {dtype_set!r}"
+                )
+                lines.append(
+                    f"    _t = actual_inputs[{target_idx}]"
+                )
+                lines.append(
+                    "    _t_dtype = _normalise_dtype(getattr(_t, 'dtype', None))"
+                )
+                # Normalise the allowlist entries the same way the
+                # runtime's _normalise_dtype maps torch dtypes (fp32 →
+                # f32, fp16 → f16, etc.).
+                _dtype_alias = {
+                    "fp32": "f32", "fp16": "f16",
+                    "fp64": "f64", "float32": "f32",
+                    "float16": "f16", "float64": "f64",
+                    "bfloat16": "bf16",
+                }
+                normalised_set = sorted({
+                    _dtype_alias.get(str(d), str(d)) for d in dtype_set
+                })
+                lines.append(
+                    f"    _allowed_dtypes = {normalised_set!r}"
+                )
+                lines.append(
+                    "    if _t_dtype not in _allowed_dtypes:"
+                )
+                lines.append(
+                    f"        raise PLAN_VIOLATION_PRECONDITION_DTYPE_IN("
+                )
+                lines.append(
+                    f"            f\"region={ra.region_id!r}: precondition \""
+                )
+                lines.append(
+                    f"            f\"dtype_in({arg!r}, {dtype_set!r}) violated; \""
+                )
+                lines.append(
+                    "            f\"got {_t_dtype!r}\""
+                )
+                lines.append(
+                    "        )"
+                )
+                lines.append("")
             elif kind == "byte_size_le":
                 arg = pred.get("arg", "")
                 max_bytes = int(pred.get("max_bytes", 0))
@@ -457,6 +514,83 @@ def render_assert_plan_body(
                 )
                 lines.append("")
 
+    return "\n".join(lines) + "\n"
+
+
+def render_assert_postconditions_body(
+    region_assertions: list[_RegionAssertions],
+) -> str:
+    """Gap #11 closure: render the body of
+    ``assert_postconditions(outputs, refs)`` — fires postcondition
+    predicates (NumericalWithinEps) against a caller-supplied
+    reference dict.
+
+    The caller passes ``outputs`` (the kernel's actual outputs) and
+    ``refs`` (a dict from output-name → expected tensor or callable).
+    For each :class:`NumericalWithinEps` postcondition on a region,
+    we compute max relative error vs the reference and raise the
+    typed ``PLAN_VIOLATION_POSTCONDITION_NUMERICAL_WITHIN_EPS`` when
+    it exceeds ``eps``.
+
+    When ``refs`` is None or doesn't contain a reference for an
+    output, the postcondition is logged as skipped — the caller
+    didn't provide ground truth to check against.
+    """
+    if not region_assertions or not any(
+        ra.postconditions for ra in region_assertions
+    ):
+        return (
+            "    # M-61 postconditions: none declared; no-op.\n"
+            "    return\n"
+        )
+
+    lines: list[str] = [
+        "    # M-61 postcondition checks (gap #11).",
+        "    if refs is None:",
+        "        return",
+    ]
+    for ra in region_assertions:
+        for pc in ra.postconditions:
+            kind = pc.get("kind", "")
+            if kind != "numerical_within_eps":
+                continue
+            out = pc.get("out", "")
+            ref = pc.get("ref", "reference")
+            eps = float(pc.get("eps", 0.0))
+            if not out:
+                continue
+            lines.append(
+                f"    # region={ra.region_id!r}: "
+                f"numerical_within_eps({out!r}, ref={ref!r}, eps={eps})"
+            )
+            lines.append(f"    if {out!r} in outputs and {out!r} in refs:")
+            lines.append(f"        _y = outputs[{out!r}]")
+            lines.append(f"        _r = refs[{out!r}]")
+            lines.append("        # Best-effort numerical diff. Tensors with")
+            lines.append("        # a .float() method ride through PyTorch's")
+            lines.append("        # ops; plain numpy / floats fall back to")
+            lines.append("        # max abs / max rel manually.")
+            lines.append("        try:")
+            lines.append("            _delta = (_y - _r).abs()")
+            lines.append("            _max_rel = float(")
+            lines.append("                (_delta / (_r.abs() + 1e-12)).max()")
+            lines.append("            )")
+            lines.append("        except Exception:")
+            lines.append("            _max_rel = float('inf')")
+            lines.append(f"        if _max_rel > {eps}:")
+            lines.append(
+                f"            raise PLAN_VIOLATION_POSTCONDITION_NUMERICAL_WITHIN_EPS("
+            )
+            lines.append(
+                f"                f\"region={ra.region_id!r}: postcondition \""
+            )
+            lines.append(
+                f"                f\"numerical_within_eps({out!r}, "
+                f"ref={ref!r}, eps={eps}) \""
+            )
+            lines.append("                f\"violated; max_rel={_max_rel:.3e}\"")
+            lines.append("            )")
+    lines.append("    return")
     return "\n".join(lines) + "\n"
 
 

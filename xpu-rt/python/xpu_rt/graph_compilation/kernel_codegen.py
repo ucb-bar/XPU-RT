@@ -239,13 +239,14 @@ def build_kernel_codegen_request(run_dir: Path) -> KernelCodegenRequest:
                 materialized_row = row
                 break
 
-    # Non-set_tile_params: emit a typed not_applicable request. M-40
-    # would also have emitted not_applicable; we cross-reference.
-    if candidate_kind != "set_tile_params":
+    # Gap #6 closure: fusion candidates also produce a kernel_codegen
+    # request now (M-40 + M-42 grew past set_tile_params-only).
+    if candidate_kind not in ("set_tile_params", "fuse_producer_consumer"):
         reason = _NOT_APPLICABLE_REASONS.get(
             candidate_kind,
-            f"M-42 supports only set_tile_params; got candidate_kind="
-            f"{candidate_kind!r}",
+            f"M-42 supports candidate_kind in "
+            f"['set_tile_params', 'fuse_producer_consumer']; "
+            f"got {candidate_kind!r}",
         )
         return KernelCodegenRequest(
             schema_version=_SCHEMA_VERSION,

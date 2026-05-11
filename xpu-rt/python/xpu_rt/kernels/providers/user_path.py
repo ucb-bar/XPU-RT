@@ -223,7 +223,10 @@ class UserKernelProvider:
         # Tamper detection.
         audit_locked_files(entry)
 
-        kernel_path = Path(entry.source_dir) / entry.manifest.kernel_source
+        # Gap #13: kernel_source is a tuple — read the primary entry.
+        kernel_path = (
+            Path(entry.source_dir) / entry.manifest.primary_kernel_source
+        )
         try:
             kernel_code = kernel_path.read_text(encoding="utf-8")
         except OSError as exc:

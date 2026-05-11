@@ -112,6 +112,46 @@ def _resolve_workload_id(run_dir: Path) -> str:
     return ""
 
 
+def _try_canonical_fallback(
+    *,
+    run_dir: Path,
+    request: dict[str, Any],
+) -> Any:
+    """Gap #3 fallback: derive the request's contract canonical hash
+    and look up a sibling region's cert that matches.
+
+    Returns the matching :class:`KernelCertificate` or ``None`` when
+    no canonical-hash sibling exists.
+    """
+    contract_rel = (request.get("contract_paths") or {}).get("full", "")
+    if not contract_rel:
+        return None
+    contract_path = run_dir / contract_rel
+    body = _read_json_or_none(contract_path)
+    if body is None:
+        return None
+    try:
+        from compgen.graph_compilation.kernel_codegen_response import (
+            _reconstruct_contract_from_dict,
+        )
+        from compgen.kernels.contract_migration import (
+            migrate_contract_body_v3_to_v3_1,
+        )
+        from compgen.kernels.kernel_certificate import (
+            find_certificate_by_canonical_hash,
+        )
+        from compgen.promotion.contract_hash import canonical_contract_hash
+
+        migrated = migrate_contract_body_v3_to_v3_1(body)
+        contract = _reconstruct_contract_from_dict(migrated)
+        canonical = canonical_contract_hash(contract)
+    except Exception:  # noqa: BLE001
+        return None
+    return find_certificate_by_canonical_hash(
+        run_dir=run_dir, canonical_hash=canonical,
+    )
+
+
 def _bindings_for_run(run_dir: Path) -> list[BindingRow]:
     """Walk every kernel-codegen request and produce a binding row.
 
@@ -153,6 +193,38 @@ def _bindings_for_run(run_dir: Path) -> list[BindingRow]:
         )
         cert_path = run_dir / cert_rel
         if not cert_path.exists():
+            # Gap #3 closure — canonical-hash fallback. The instance-
+            # hash cert is missing (this region wasn't M-43-committed),
+            # but a sibling region's cert may share canonical hash.
+            # ``find_certificate_by_canonical_hash`` walks both the
+            # canonical certs dir AND the auction tree (gap #2).
+            fallback_cert = _try_canonical_fallback(
+                run_dir=run_dir, request=request,
+            )
+            if fallback_cert is not None:
+                fallback_rel = (
+                    f"04_kernel_codegen/certificates/"
+                    f"{fallback_cert.contract_hash}.json"
+                )
+                # Pick the kernel_source artifact off the fallback cert.
+                kernel_artifact = ""
+                for n, p in (fallback_cert.artifact_paths or {}).items():
+                    if n == "kernel_source":
+                        kernel_artifact = p
+                        break
+                rows.append(BindingRow(
+                    region_id=region_id,
+                    status="bound",
+                    contract_hash=fallback_cert.contract_hash,
+                    canonical_contract_hash=getattr(
+                        fallback_cert, "canonical_contract_hash", ""
+                    ),
+                    certificate_path=fallback_rel,
+                    kernel_artifact=kernel_artifact,
+                    dispatch_model="sync",
+                    unbound_reason="",
+                ))
+                continue
             rows.append(BindingRow(
                 region_id=region_id, status="unbound",
                 contract_hash=contract_hash,

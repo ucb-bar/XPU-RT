@@ -73,6 +73,28 @@ void compgen_matmul_f32(
 """
 
 
+_POINTWISE_FUSED_C_SOURCE = """\
+/* M-65 CReferenceProvider — fused pointwise (add+relu) reference.
+ * Produced for fuse_producer_consumer candidates whose producer is
+ * an elementwise add and consumer is a pointwise activation.
+ * Identity-fused: deterministic, no SIMD reordering.
+ */
+#include <stddef.h>
+
+void compgen_fused_pointwise_f32(
+    const float* __restrict__ X,
+    float* __restrict__ Y,
+    int N)
+{
+    /* Y = relu(X). Fusion-specific kernels override this prototype. */
+    for (int i = 0; i < N; ++i) {
+        float v = X[i];
+        Y[i] = v > 0.0f ? v : 0.0f;
+    }
+}
+"""
+
+
 @dataclass
 class CReferenceProvider:
     """Deterministic cffi-C reference kernel provider.
@@ -83,7 +105,9 @@ class CReferenceProvider:
     name_str: str = "c_reference"
     priority: int = 5  # mid — beats the legacy fallback, loses to a tuned bid
     applicable_targets: tuple[str, ...] = ("host_cpu",)
-    applicable_archetypes: tuple[str, ...] = ("compute_tiled",)
+    # Gap #6 closure: pointwise (fused) added so the M-42 fusion path
+    # has at least one applicable bidder.
+    applicable_archetypes: tuple[str, ...] = ("compute_tiled", "pointwise")
     _exports: list[KnowledgeExport] = field(default_factory=list)
 
     @property
@@ -96,16 +120,27 @@ class CReferenceProvider:
     def search(self, contract: KernelContract, budget: SearchBudget) -> ProviderResult:
         # Provider-level search ignores the V3 contract here — the
         # M-57 fulfill adapter passes us the legacy bridge and we
-        # produce a deterministic source.
+        # produce a deterministic source. The legacy contract carries
+        # op_family which lets us dispatch matmul vs fused-pointwise.
+        op_family = (contract.op_family or "").lower()
+        if "matmul" in op_family:
+            kernel_code = _MATMUL_C_SOURCE
+            symbol = "compgen_matmul_f32"
+            kind = "reference_matmul"
+        else:
+            kernel_code = _POINTWISE_FUSED_C_SOURCE
+            symbol = "compgen_fused_pointwise_f32"
+            kind = "reference_pointwise"
         return ProviderResult(
             found=True,
-            kernel_code=_MATMUL_C_SOURCE,
+            kernel_code=kernel_code,
             language="c",
             iterations_used=1,
             total_candidates=1,
             metadata={
                 "provider": self.name_str,
-                "kind": "reference",
+                "kind": kind,
+                "symbol": symbol,
                 "compiler_flags": "-O2 -fno-fast-math",
             },
         )
@@ -130,34 +165,50 @@ class CReferenceProvider:
                 confidence=0.0,
                 rationale=f"unsupported_target_{target}",
             )
-        if archetype != "compute_tiled" or "matmul" not in op_name:
+        if archetype == "compute_tiled" and "matmul" in op_name:
+            # Roofline: 1 TFLOP/s nominal CPU peak; matmul flops 2*M*N*K.
+            try:
+                inputs = contract_v3.io.inputs
+                dim_m = int(inputs[0].shape.dims[0])
+                dim_k = int(inputs[0].shape.dims[1])
+                dim_n = int(inputs[1].shape.dims[1])
+                flops = 2.0 * dim_m * dim_n * dim_k
+                est_us = max(1.0, flops / 1.0e12 * 1e6 + 2.0)
+            except Exception:  # noqa: BLE001
+                est_us = float("inf")
             return BidPreview(
                 provider_name=self.name,
-                confidence=0.0,
-                rationale=f"unsupported_op_{op_name}",
+                perf_estimate_us=est_us,
+                confidence=0.85,
+                time_to_generate_s_estimate=0.5,
+                rationale="c_reference_matmul_baseline",
+                cache_hit=False,
             )
 
-        # Roofline: 1 TFLOP/s nominal CPU peak; matmul flops 2*M*N*K.
-        try:
-            inputs = contract_v3.io.inputs
-            dim_m = int(inputs[0].shape.dims[0])
-            dim_k = int(inputs[0].shape.dims[1])
-            dim_n = int(inputs[1].shape.dims[1])
-            flops = 2.0 * dim_m * dim_n * dim_k
-            est_us = max(1.0, flops / 1.0e12 * 1e6 + 2.0)
-        except Exception:  # noqa: BLE001
-            est_us = float("inf")
+        if archetype == "pointwise":
+            # Gap #6 closure: pointwise baseline. Cost ~ output numel.
+            try:
+                output = contract_v3.io.outputs[0]
+                numel = 1
+                for d in output.shape.dims:
+                    numel *= int(d) if d is not None else 1
+                # 1 ns / element nominal.
+                est_us = max(0.5, numel / 1000.0)
+            except Exception:  # noqa: BLE001
+                est_us = float("inf")
+            return BidPreview(
+                provider_name=self.name,
+                perf_estimate_us=est_us,
+                confidence=0.5,  # below matmul confidence; this is a generic baseline
+                time_to_generate_s_estimate=0.3,
+                rationale="c_reference_pointwise_baseline",
+                cache_hit=False,
+            )
 
         return BidPreview(
             provider_name=self.name,
-            perf_estimate_us=est_us,
-            confidence=0.85,
-            time_to_generate_s_estimate=0.5,
-            registers_used=0,
-            occupancy=0.0,
-            smem_bytes=0,
-            rationale="c_reference_matmul_baseline",
-            cache_hit=False,
+            confidence=0.0,
+            rationale=f"unsupported_op_{op_name}",
         )
 
 

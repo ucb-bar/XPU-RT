@@ -96,14 +96,21 @@ def _sha16(path: Path) -> str:
 
 @dataclass(frozen=True)
 class UserKernelManifest:
-    """Parsed user-supplied manifest (``kernel_manifest.yaml``)."""
+    """Parsed user-supplied manifest (``kernel_manifest.yaml``).
+
+    Gap #13 closure: ``kernel_source`` accepts either a single
+    string (single-file kernel — the original M-62 semantics) or a
+    tuple of strings (multi-file: ``main.py`` + ``helpers.h``,
+    Triton kernel + headers, etc.). The first entry is the primary
+    source; additional entries are locked-files-audited the same way.
+    """
 
     schema_version: str
     op_name: str
     archetype: str
     target_name: str
     language: str
-    kernel_source: str
+    kernel_source: tuple[str, ...]  # Always a tuple internally (gap #13).
     entry_symbol: str
     inputs: tuple[dict[str, Any], ...]
     outputs: tuple[dict[str, Any], ...]
@@ -111,14 +118,26 @@ class UserKernelManifest:
     dispatch_model: str = "sync"
     perf_priors: dict[str, Any] = field(default_factory=dict)
 
+    @property
+    def primary_kernel_source(self) -> str:
+        """The first ``kernel_source`` entry — the entry-point file
+        that carries the ``entry_symbol``."""
+        return self.kernel_source[0] if self.kernel_source else ""
+
     def to_dict(self) -> dict[str, Any]:
+        # Backward compat: single-file manifests serialise as string;
+        # multi-file as list. Round-trip preserves both.
+        if len(self.kernel_source) == 1:
+            ks: Any = self.kernel_source[0]
+        else:
+            ks = list(self.kernel_source)
         return {
             "schema_version": self.schema_version,
             "op_name": self.op_name,
             "archetype": self.archetype,
             "target_name": self.target_name,
             "language": self.language,
-            "kernel_source": self.kernel_source,
+            "kernel_source": ks,
             "entry_symbol": self.entry_symbol,
             "inputs": [dict(t) for t in self.inputs],
             "outputs": [dict(t) for t in self.outputs],
@@ -145,13 +164,27 @@ class UserKernelManifest:
             raise UserKernelManifestError(
                 f"manifest missing required fields: {missing}"
             )
+        # Gap #13: kernel_source accepts string OR list.
+        ks_raw = body["kernel_source"]
+        if isinstance(ks_raw, str):
+            kernel_source = (ks_raw,)
+        elif isinstance(ks_raw, (list, tuple)):
+            kernel_source = tuple(str(p) for p in ks_raw)
+        else:
+            raise UserKernelManifestError(
+                f"kernel_source must be str or list[str]; got {type(ks_raw).__name__}"
+            )
+        if not kernel_source:
+            raise UserKernelManifestError(
+                "kernel_source must have at least one entry"
+            )
         return cls(
             schema_version=str(body["schema_version"]),
             op_name=str(body["op_name"]),
             archetype=str(body["archetype"]),
             target_name=str(body["target_name"]),
             language=str(body["language"]),
-            kernel_source=str(body["kernel_source"]),
+            kernel_source=kernel_source,
             entry_symbol=str(body["entry_symbol"]),
             inputs=tuple(dict(t) for t in body["inputs"]),
             outputs=tuple(dict(t) for t in body["outputs"]),
@@ -241,23 +274,22 @@ def index_one_manifest(
     parsed = UserKernelManifest.from_dict(body)
 
     source_dir = manifest_path.parent
-    kernel_path = (source_dir / parsed.kernel_source).resolve()
-    if not kernel_path.exists():
-        raise UserKernelManifestError(
-            f"kernel_source {parsed.kernel_source!r} not found relative to "
-            f"manifest {manifest_path}"
-        )
-    if source_dir not in kernel_path.parents and source_dir != kernel_path.parent:
-        raise UserKernelManifestError(
-            f"kernel_source {parsed.kernel_source!r} escapes the manifest's "
-            f"directory ({source_dir}); user kernels must live alongside "
-            f"their manifest"
-        )
-
-    locked_files = {
-        manifest_path.name: _sha16(manifest_path),
-        parsed.kernel_source: _sha16(kernel_path),
-    }
+    # Gap #13: lock every kernel_source entry (multi-file kernels).
+    locked_files = {manifest_path.name: _sha16(manifest_path)}
+    for src in parsed.kernel_source:
+        kp = (source_dir / src).resolve()
+        if not kp.exists():
+            raise UserKernelManifestError(
+                f"kernel_source {src!r} not found relative to "
+                f"manifest {manifest_path}"
+            )
+        if source_dir not in kp.parents and source_dir != kp.parent:
+            raise UserKernelManifestError(
+                f"kernel_source {src!r} escapes the manifest's "
+                f"directory ({source_dir}); user kernels must live "
+                f"alongside their manifest"
+            )
+        locked_files[src] = _sha16(kp)
 
     index_id = _sha8(str(manifest_path).encode("utf-8"))
     entry_dir = Path(index_root).resolve() / index_id

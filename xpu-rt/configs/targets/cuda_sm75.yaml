@@ -1,0 +1,62 @@
+schema_version: graphcomp_target_config_v1
+target_id: cuda_sm75
+device_kind: gpu
+description: |
+  NVIDIA SM 7.5 target (Turing — RTX 20xx, T4). Phase D Batch C
+  (gap #7) ships this profile so the M-65 Slice 3 stress can
+  materialise contracts on hosts WITHOUT a CUDA-capable runtime.
+  Real kernel execution + verification stays GPU-host-conditional;
+  the contract emit + auction bid surfaces are exercised in CI.
+
+# Region Dossier V2 — single-precision FP32 + FP16 mixed-precision
+# Tensor Core path. Numbers are sustained, single-SM, conservative.
+peak_compute_gflops: 8100.0          # 8.1 TFLOPS sustained f32 on T4
+peak_bandwidth_gb_s: 320.0           # ~320 GB/s on T4 GDDR6
+memory_tiers:
+  scratchpad_bytes: 65536            # 64 KiB shared memory per SM
+  l2_bytes: 4194304                  # 4 MiB L2 (T4)
+  l3_bytes: 0                        # GPUs don't have L3
+  system_bytes: 17179869184          # 16 GiB device DRAM
+supported_dtypes:
+  - fp32
+  - fp16
+  - bf16
+numerical_budgets:
+  fp32: 1.0e-3
+  fast_math: 5.0e-3
+  fp16_accum: 1.0e-2
+  fp8_e4m3: 1.0e-1
+
+# Phase D / M-60 — kernel-facing hardware envelope. Triton-friendly
+# defaults; codegen_hints prompt the kernel codegen to use Tensor
+# Cores when applicable.
+peak_compute_per_dtype:
+  f32: 8.1                           # TFLOPS
+  fp32: 8.1
+  f16: 65.0                          # TFLOPS Tensor Core
+  fp16: 65.0
+  bf16: 65.0
+mma_shapes:
+  f16: [16, 16, 16]                  # Tensor Core MMA m16n16k16
+  bf16: [16, 16, 16]
+  fp16: [16, 16, 16]
+codegen_hints:
+  - "use tl.dot with f16 inputs + f32 accumulate to hit Tensor Cores"
+  - "BLOCK_M, BLOCK_N, BLOCK_K should be multiples of 16 for MMA alignment"
+  - "shared memory budget is 64 KiB per SM; keep tile + double-buffer under 49 KiB"
+  - "TF32 inputs (set @triton.jit input_precision='tf32') give Tensor Core perf at f32 precision"
+register_quota_per_thread: 256       # bytes per-thread soft cap (256 / 4 = 64 fp32 regs)
+max_concurrent_blocks: 32            # T4 has 40 SMs; conservative concurrency cap
+
+# Tile candidates for the working-set curve.
+working_set_tiles:
+  matmul:
+    - { M: 64, N: 64, K: 32 }
+    - { M: 128, N: 128, K: 32 }
+    - { M: 128, N: 256, K: 32 }
+    - { M: 256, N: 128, K: 32 }
+    - { M: 256, N: 256, K: 64 }
+  elementwise:
+    - { numel: 16384 }
+    - { numel: 65536 }
+    - { numel: 262144 }
