@@ -547,7 +547,9 @@ def coalesce_segments(sched: dict, slot_to_be: dict[str, tuple[str, str]]) -> li
 
 
 def emit_dispatch_table(segs: list[Segment],
-                          manifest: dict | None = None) -> str:
+                          manifest: dict | None = None,
+                          graph_index: dict | None = None,
+                          conv_name_resolver: dict | None = None) -> str:
     """Emit a C source array of segment records the worker walker reads."""
     lines = []
     lines.append(HEADER)
@@ -572,6 +574,8 @@ def emit_dispatch_table(segs: list[Segment],
     lines.append("    const char* const* input_tensor_names;   /* boundary input names — for cross-segment handoff */")
     lines.append("    int          n_output_tensors;")
     lines.append("    const char* const* output_tensor_names;")
+    lines.append("    const char*  ctx_bin_name;     /* optional override for the .bin filename (multi-graph ctx). Empty = legacy single-graph path */")
+    lines.append("    const char*  graph_name;       /* which graph inside the ctx to retrieve (empty = use the first/only graph for legacy ctx) */")
     lines.append("};")
     lines.append("")
 
@@ -627,10 +631,33 @@ def emit_dispatch_table(segs: list[Segment],
             lines.append(f"static const int seg{s.seg_id}_deps[] = {{ 0 }};  /* unused, n_deps=0 */")
 
     lines.append("")
+    # Helper: look up (ctx_bin_name, graph_name) for a segment from the
+    # graph_index. The graph_index is keyed by graph_name then by backend
+    # (upper-cased: CPU / DSP / HTA). For our v3 bundle case the
+    # segment_name in the schedule == graph_name in the ctx binary.
+    # If no graph_index given OR no match for this segment, both fields
+    # empty (legacy single-graph path).
+    def _graph_lookup(seg):
+        if not graph_index:
+            return ("", "")
+        g_name = seg.backend_label
+        # If the schedule used a synthetic conv pseudo-name (e.g.
+        # 'dsp_seg_01_conv1'), translate to the real conv-node-name from
+        # segment_perf.json so it matches the graph name inside the conv DLC.
+        if conv_name_resolver and g_name in conv_name_resolver:
+            g_name = conv_name_resolver[g_name]
+        be = (seg.actual_backend or "").upper()
+        bemap = graph_index.get(g_name)
+        if not bemap: return ("", "")
+        info = bemap.get(be)
+        if not info: return ("", "")
+        return (info["bin"], g_name)
+
     lines.append(f"#define SCHEDULE_N_ENTRIES {len(segs)}")
     lines.append("static const ScheduleEntry SCHEDULE_TABLE[SCHEDULE_N_ENTRIES] = {")
     for s in segs:
         ins, outs = seg_io.get(s.seg_id, ([], []))
+        ctx_bin, gname = _graph_lookup(s)
         lines.append(
             f"    {{ {s.seg_id}, {s.ctx_seg_id}, \"{s.network}\", {s.instance}, "
             f"\"{s.kind}\", \"{s.backend_label}\", \"{s.actual_backend or '?'}\", "
@@ -638,7 +665,8 @@ def emit_dispatch_table(segs: list[Segment],
             f"seg{s.seg_id}_ops, {s.start_time_ms:.6f}, {s.duration_ms:.6f}, "
             f"{len(s.deps)}, seg{s.seg_id}_deps, "
             f"{len(ins)}, seg{s.seg_id}_in_names, "
-            f"{len(outs)}, seg{s.seg_id}_out_names }},"
+            f"{len(outs)}, seg{s.seg_id}_out_names, "
+            f"\"{ctx_bin}\", \"{gname}\" }},"
         )
     lines.append("};")
     return "\n".join(lines) + "\n"
@@ -782,11 +810,12 @@ struct SharedBackend {
 };
 static std::unordered_map<std::string, std::shared_ptr<SharedBackend>> g_shared_backends;
 
-struct LoadedCtx {
-    std::string                       label;       // HTA_split / CPU / ...
-    std::string                       network;     // dronet / yolov8n
-    std::shared_ptr<SharedBackend>    sb;          // borrowed handle, see above
-    Qnn_ContextHandle_t               ctx   = nullptr;
+// One graph within a (possibly multi-graph) context binary. graphExecute
+// operates on this; the parent LoadedCtx is just the shared backend +
+// the QNN context handle. Per-graph state (handle, I/O buffers, mutex)
+// lives here so two workers can run different graphs in the same ctx
+// concurrently.
+struct GraphInfo {
     Qnn_GraphHandle_t                 graph = nullptr;
     std::string                       graphName;
     std::vector<Qnn_Tensor_t>         inputs;
@@ -796,6 +825,16 @@ struct LoadedCtx {
     std::vector<std::vector<uint32_t>> dimStorage;
     std::vector<std::string>          nameStorage;
     std::mutex                        m;          // guards graphExecute
+};
+
+struct LoadedCtx {
+    std::string                       label;       // HTA_split / CPU / ...
+    std::string                       network;     // dronet / yolov8n
+    std::shared_ptr<SharedBackend>    sb;          // borrowed handle, see above
+    Qnn_ContextHandle_t               ctx   = nullptr;
+    // All graphs that live in this context binary, keyed by graph name.
+    // For legacy single-graph .bins this map has size 1.
+    std::unordered_map<std::string, std::unique_ptr<GraphInfo>> graphs;
     // Convenience accessor — most callers want bc.iface; keep it
     // through the shared handle.
     const QNN_INTERFACE_VER_TYPE& iface() const { return sb->iface; }
@@ -924,78 +963,94 @@ static void bringup(LoadedCtx& bc, const std::string& bin_path,
         nG=binInfo->contextBinaryInfoV3.numGraphs; gs=binInfo->contextBinaryInfoV3.graphs;
     }
     if (!nG) { std::fprintf(stderr, "no graphs in %s\n", bin_path.c_str()); std::exit(1); }
-    const auto& g = gs[0];
-    const char* nm=nullptr; uint32_t nIn=0,nOut=0; const Qnn_Tensor_t* inT=nullptr,*outT=nullptr;
-    if      (g.version==QNN_SYSTEM_CONTEXT_GRAPH_INFO_VERSION_1) {
-        nm=g.graphInfoV1.graphName; nIn=g.graphInfoV1.numGraphInputs;
-        inT=g.graphInfoV1.graphInputs; nOut=g.graphInfoV1.numGraphOutputs;
-        outT=g.graphInfoV1.graphOutputs;
-    } else if (g.version==QNN_SYSTEM_CONTEXT_GRAPH_INFO_VERSION_2) {
-        nm=g.graphInfoV2.graphName; nIn=g.graphInfoV2.numGraphInputs;
-        inT=g.graphInfoV2.graphInputs; nOut=g.graphInfoV2.numGraphOutputs;
-        outT=g.graphInfoV2.graphOutputs;
-    } else if (g.version==QNN_SYSTEM_CONTEXT_GRAPH_INFO_VERSION_3) {
-        nm=g.graphInfoV3.graphName; nIn=g.graphInfoV3.numGraphInputs;
-        inT=g.graphInfoV3.graphInputs; nOut=g.graphInfoV3.numGraphOutputs;
-        outT=g.graphInfoV3.graphOutputs;
+    sys.free(sysHandle);   // names point into binInfo, but we'll grab refs below; safer to free later
+    // Re-create sysHandle so we can re-read after contextCreateFromBinary
+    QnnSystemContext_Handle_t sysHandle2=nullptr;
+    CHECK(sys.create(&sysHandle2));
+    const QnnSystemContext_BinaryInfo_t* binInfo2=nullptr;
+    Qnn_ContextBinarySize_t binInfoSz2=0;
+    CHECK(sys.getBinaryInfo(sysHandle2, bin.data(), bin.size(), &binInfo2, &binInfoSz2));
+    if (binInfo2->version==QNN_SYSTEM_CONTEXT_BINARY_INFO_VERSION_1) {
+        nG=binInfo2->contextBinaryInfoV1.numGraphs; gs=binInfo2->contextBinaryInfoV1.graphs;
+    } else if (binInfo2->version==QNN_SYSTEM_CONTEXT_BINARY_INFO_VERSION_2) {
+        nG=binInfo2->contextBinaryInfoV2.numGraphs; gs=binInfo2->contextBinaryInfoV2.graphs;
+    } else if (binInfo2->version==QNN_SYSTEM_CONTEXT_BINARY_INFO_VERSION_3) {
+        nG=binInfo2->contextBinaryInfoV3.numGraphs; gs=binInfo2->contextBinaryInfoV3.graphs;
     }
-    bc.graphName = nm?nm:"";
-    bc.inputs.assign(inT, inT+nIn);
-    bc.outputs.assign(outT, outT+nOut);
-    bc.dimStorage.resize(nIn+nOut);
-    bc.nameStorage.resize(nIn+nOut);
-    for (size_t i=0;i<bc.inputs.size();++i)
-        rebind_tensor(bc.inputs[i],  bc.dimStorage[i], bc.nameStorage[i]);
-    for (size_t i=0;i<bc.outputs.size();++i)
-        rebind_tensor(bc.outputs[i], bc.dimStorage[nIn+i], bc.nameStorage[nIn+i]);
-    sys.free(sysHandle);
 
+    // Create the QNN context once; all graphs in this binary live under it.
     CHECK(iface.contextCreateFromBinary(bc.sb->backend, nullptr, nullptr,
         bin.data(), bin.size(), &bc.ctx, nullptr));
-    CHECK(iface.graphRetrieve(bc.ctx, bc.graphName.c_str(), &bc.graph));
 
-    bc.inputBufs.resize(bc.inputs.size());
-    for (size_t i=0;i<bc.inputs.size();++i) {
-        size_t sz = tensor_byte_size(bc.inputs[i]);
-        bc.inputBufs[i].assign(sz, 0);
-        set_tensor_buffer(bc.inputs[i], bc.inputBufs[i].data(), (uint32_t)sz);
-    }
-    bc.outputBufs.resize(bc.outputs.size());
-    for (size_t i=0;i<bc.outputs.size();++i) {
-        size_t sz = tensor_byte_size(bc.outputs[i]);
-        bc.outputBufs[i].assign(sz, 0);
-        set_tensor_buffer(bc.outputs[i], bc.outputBufs[i].data(), (uint32_t)sz);
-    }
-    std::fprintf(stderr, "[bringup] %s/%s graph=%s in=%zu(%zu B) out=%zu\n",
-        network.c_str(), be.label.c_str(), bc.graphName.c_str(),
-        bc.inputs.size(), bc.inputBufs.empty()?0:bc.inputBufs[0].size(),
-        bc.outputs.size());
-
-    // Warmup runs. The first graphExecute on a fresh context pays
-    // cold-start cost (JIT codegen, driver code paging on cDSP/HTA, cache
-    // misses) that the cost model — derived from profile_segments.cpp's
-    // post-warmup mean — doesn't capture. Without this, the first
-    // periodic instance of each network can take 5-30x longer than
-    // predicted and miss its deadline on the first ~2 periods. Two warm
-    // runs are enough on v66; HTA paging stabilises after 1.
+    // Enumerate ALL graphs in the binary, set up a GraphInfo per graph.
     int warmup_iters = 2;
     if (const char* env = std::getenv("QNN_RUNTIME_WARMUP_ITERS")) {
         warmup_iters = std::atoi(env);
     }
-    double t_w0 = now_ms();
-    for (int w = 0; w < warmup_iters; ++w) {
-        Qnn_ErrorHandle_t werr = iface.graphExecute(bc.graph,
-            bc.inputs.data(),  (uint32_t)bc.inputs.size(),
-            bc.outputs.data(), (uint32_t)bc.outputs.size(),
-            nullptr, nullptr);
-        if (werr != QNN_SUCCESS) {
-            std::fprintf(stderr, "[bringup] WARN: warmup #%d on %s/%s failed: 0x%llx\n",
-                w, network.c_str(), be.label.c_str(), (unsigned long long)werr);
-            break;
+    for (uint32_t gi_idx = 0; gi_idx < nG; ++gi_idx) {
+        const auto& g = gs[gi_idx];
+        const char* nm=nullptr; uint32_t nIn=0,nOut=0;
+        const Qnn_Tensor_t *inT=nullptr,*outT=nullptr;
+        if      (g.version==QNN_SYSTEM_CONTEXT_GRAPH_INFO_VERSION_1) {
+            nm=g.graphInfoV1.graphName; nIn=g.graphInfoV1.numGraphInputs;
+            inT=g.graphInfoV1.graphInputs; nOut=g.graphInfoV1.numGraphOutputs;
+            outT=g.graphInfoV1.graphOutputs;
+        } else if (g.version==QNN_SYSTEM_CONTEXT_GRAPH_INFO_VERSION_2) {
+            nm=g.graphInfoV2.graphName; nIn=g.graphInfoV2.numGraphInputs;
+            inT=g.graphInfoV2.graphInputs; nOut=g.graphInfoV2.numGraphOutputs;
+            outT=g.graphInfoV2.graphOutputs;
+        } else if (g.version==QNN_SYSTEM_CONTEXT_GRAPH_INFO_VERSION_3) {
+            nm=g.graphInfoV3.graphName; nIn=g.graphInfoV3.numGraphInputs;
+            inT=g.graphInfoV3.graphInputs; nOut=g.graphInfoV3.numGraphOutputs;
+            outT=g.graphInfoV3.graphOutputs;
         }
+        auto gi = std::make_unique<GraphInfo>();
+        gi->graphName = nm ? nm : "";
+        gi->inputs.assign(inT, inT+nIn);
+        gi->outputs.assign(outT, outT+nOut);
+        gi->dimStorage.resize(nIn+nOut);
+        gi->nameStorage.resize(nIn+nOut);
+        for (size_t i=0;i<gi->inputs.size();++i)
+            rebind_tensor(gi->inputs[i],  gi->dimStorage[i], gi->nameStorage[i]);
+        for (size_t i=0;i<gi->outputs.size();++i)
+            rebind_tensor(gi->outputs[i], gi->dimStorage[nIn+i], gi->nameStorage[nIn+i]);
+        CHECK(iface.graphRetrieve(bc.ctx, gi->graphName.c_str(), &gi->graph));
+        gi->inputBufs.resize(gi->inputs.size());
+        for (size_t i=0;i<gi->inputs.size();++i) {
+            size_t sz = tensor_byte_size(gi->inputs[i]);
+            gi->inputBufs[i].assign(sz, 0);
+            set_tensor_buffer(gi->inputs[i], gi->inputBufs[i].data(), (uint32_t)sz);
+        }
+        gi->outputBufs.resize(gi->outputs.size());
+        for (size_t i=0;i<gi->outputs.size();++i) {
+            size_t sz = tensor_byte_size(gi->outputs[i]);
+            gi->outputBufs[i].assign(sz, 0);
+            set_tensor_buffer(gi->outputs[i], gi->outputBufs[i].data(), (uint32_t)sz);
+        }
+        // Warmup this graph. First graphExecute on a fresh ctx pays a
+        // cold-start cost the cost model doesn't capture; two warmups
+        // smooth that out for downstream measurements.
+        for (int w = 0; w < warmup_iters; ++w) {
+            Qnn_ErrorHandle_t werr = iface.graphExecute(gi->graph,
+                gi->inputs.data(),  (uint32_t)gi->inputs.size(),
+                gi->outputs.data(), (uint32_t)gi->outputs.size(),
+                nullptr, nullptr);
+            if (werr != QNN_SUCCESS) {
+                std::fprintf(stderr, "[bringup] WARN: warmup #%d on %s/%s graph=%s failed: 0x%llx\n",
+                    w, network.c_str(), be.label.c_str(),
+                    gi->graphName.c_str(), (unsigned long long)werr);
+                break;
+            }
+        }
+        bc.graphs[gi->graphName] = std::move(gi);
     }
-    std::fprintf(stderr, "[bringup] %s/%s warmup x%d in %.2f ms\n",
-        network.c_str(), be.label.c_str(), warmup_iters, now_ms() - t_w0);
+    sys.free(sysHandle2);
+
+    std::fprintf(stderr, "[bringup] %s/%s ctx loaded with %zu graph(s): ",
+        network.c_str(), be.label.c_str(), bc.graphs.size());
+    for (auto& kv : bc.graphs)
+        std::fprintf(stderr, "%s ", kv.first.c_str());
+    std::fprintf(stderr, "\n");
 }
 
 // ----------------------------------------------------------------------
@@ -1154,7 +1209,7 @@ static void reset_backend_unlocked(const char* lib_substr, const char* tag,
         LoadedCtx& bc = *cit->second;
         if (bc.ctx) bc.iface().contextFree(bc.ctx, nullptr);
         bc.ctx = nullptr;
-        bc.graph = nullptr;
+        bc.graphs.clear();   // invalidates all GraphInfo handles owned by this ctx
         g_ctx.erase(cit);
     }
     lru.clear();
@@ -1538,16 +1593,39 @@ static void worker(const std::string my_kind,
         if (g_trace[i].actual_backend.empty())
             g_trace[i].actual_backend = backend_short_name(bc.sb->lib_path);
 
+        // Pick the right graph within the ctx. For multi-graph .bins,
+        // e.graph_name is set at generation time; for legacy single-graph
+        // .bins we just take the only graph in the map.
+        GraphInfo* gi_ptr = nullptr;
+        if (e.graph_name && e.graph_name[0] != '\0') {
+            auto git = bc.graphs.find(e.graph_name);
+            if (git == bc.graphs.end()) {
+                std::fprintf(stderr, "[worker:%s] graph '%s' not found in ctx '%s' "
+                              "(holds %zu graphs)\n",
+                              e.kind, e.graph_name, kit->second.c_str(),
+                              bc.graphs.size());
+                sem_release(i); continue;
+            }
+            gi_ptr = git->second.get();
+        } else if (bc.graphs.size() == 1) {
+            gi_ptr = bc.graphs.begin()->second.get();
+        } else {
+            std::fprintf(stderr, "[worker:%s] no graph_name set but ctx holds %zu graphs\n",
+                          e.kind, bc.graphs.size());
+            sem_release(i); continue;
+        }
+        GraphInfo& gi = *gi_ptr;
+
         // Cross-segment tensor handoff (numeric-validation mode only —
         // when --manifest gave us per-segment input_tensor_names). For
         // each declared input tensor: try the cache; on miss the
         // runtime keeps whatever's in the input buffer (typically
         // zero, or whatever the previous instance of this aliased
         // ctx left behind).
-        for (int t = 0; t < e.n_input_tensors && t < (int)bc.inputs.size(); ++t) {
+        for (int t = 0; t < e.n_input_tensors && t < (int)gi.inputs.size(); ++t) {
             const std::string nm = e.input_tensor_names[t];
             if (nm.empty()) continue;
-            cache_get(nm, bc.inputBufs[t].data(), bc.inputBufs[t].size());
+            cache_get(nm, gi.inputBufs[t].data(), gi.inputBufs[t].size());
         }
 
         double t0 = now_ms();
@@ -1568,10 +1646,10 @@ static void worker(const std::string my_kind,
                 g_hta_exec_mu, std::defer_lock);
             if (exec_is_dsp) dsp_sl.lock();
             if (exec_is_hta) hta_sl.lock();
-            std::lock_guard<std::mutex> lock(bc.m);
-            CHECK(bc.iface().graphExecute(bc.graph,
-                bc.inputs.data(),  (uint32_t)bc.inputs.size(),
-                bc.outputs.data(), (uint32_t)bc.outputs.size(),
+            std::lock_guard<std::mutex> lock(gi.m);
+            CHECK(bc.iface().graphExecute(gi.graph,
+                gi.inputs.data(),  (uint32_t)gi.inputs.size(),
+                gi.outputs.data(), (uint32_t)gi.outputs.size(),
                 nullptr, nullptr));
         }
         double t1 = now_ms();
@@ -1579,10 +1657,10 @@ static void worker(const std::string my_kind,
 
         // Push outputs into the cache by name so consuming segments
         // can pull them.
-        for (int t = 0; t < e.n_output_tensors && t < (int)bc.outputs.size(); ++t) {
+        for (int t = 0; t < e.n_output_tensors && t < (int)gi.outputs.size(); ++t) {
             const std::string nm = e.output_tensor_names[t];
             if (nm.empty()) continue;
-            cache_put(nm, bc.outputBufs[t].data(), bc.outputBufs[t].size());
+            cache_put(nm, gi.outputBufs[t].data(), gi.outputBufs[t].size());
         }
         std::printf("[run] seg=%-4d net=%s#%d kind=%s n_ops=%d  "
                     "predicted=%.3f ms actual=%.3f ms (start_off=%.3f, late=%+.3f ms)\n",
@@ -1715,19 +1793,33 @@ int main(int argc, char** argv) {
     for (int i = 0; i < SCHEDULE_N_ENTRIES; ++i) {
         const ScheduleEntry& e = SCHEDULE_TABLE[i];
         std::string be_suffix = title_case_be(e.actual_backend ? e.actual_backend : "");
-        // alias must include actual_backend — two periodic instances of
-        // the same (net, label, op_ids) routed to different physical
-        // backends need separate ctx files.
-        std::string alias = std::string(e.network) + "|" + e.backend_label + "|"
-                            + be_suffix + "|" + op_ids_key(e);
+
+        // Multi-graph path: if the dispatch table baked in ctx_bin_name +
+        // graph_name (via --graph-index), MANY dispatches share one ctx
+        // (the multi-graph .bin), and we alias all of them to a single
+        // ctx_key derived from the .bin filename. The runtime then loads
+        // that ctx ONCE (with all N graphs inside) and looks up the
+        // right graph at execute time.
+        bool multi_graph = (e.ctx_bin_name && e.ctx_bin_name[0] != '\0');
+        std::string alias;
+        if (multi_graph) {
+            alias = std::string("MG|") + e.ctx_bin_name;
+        } else {
+            // alias must include actual_backend — two periodic instances of
+            // the same (net, label, op_ids) routed to different physical
+            // backends need separate ctx files.
+            alias = std::string(e.network) + "|" + e.backend_label + "|"
+                    + be_suffix + "|" + op_ids_key(e);
+        }
         auto ait = alias_to_ctx_key.find(alias);
         if (ait != alias_to_ctx_key.end()) {
-            // Periodic instance — alias to an already-loaded context.
+            // Already registered this ctx (either periodic instance or
+            // another dispatch in the same multi-graph bin).
             g_seg_to_ctx_key[e.seg_id] = ait->second;
             g_ctx_remaining_uses[ait->second] += 1;
             continue;
         }
-        // First time seeing this segment shape: register its bringup spec.
+        // First time seeing this ctx: register its bringup spec.
         auto it = KIND_TO_BE.find(e.kind);
         if (it == KIND_TO_BE.end()) {
             std::fprintf(stderr, "no backend mapping for kind=%s\n", e.kind);
@@ -1737,10 +1829,19 @@ int main(int argc, char** argv) {
         BackendSpec be{ be_default.label,
                         resolve_lib(e.network, e.kind, be_default.lib,
                                     be_default.label) };
-        std::string ctx_key = std::string(e.network) + "_" + e.backend_label
-                               + "_seg" + std::to_string(e.ctx_seg_id);
-        if (!be_suffix.empty()) ctx_key += "__" + be_suffix;
-        std::string bin = CTX_DIR + "/ctx_" + ctx_key + ".bin";
+        std::string ctx_key;
+        std::string bin;
+        if (multi_graph) {
+            // The ctx file name was baked at generation time; ctx_key uses
+            // the .bin filename so multiple dispatches alias correctly.
+            ctx_key = std::string("mg/") + e.ctx_bin_name;
+            bin = CTX_DIR + "/" + e.ctx_bin_name;
+        } else {
+            ctx_key = std::string(e.network) + "_" + e.backend_label
+                      + "_seg" + std::to_string(e.ctx_seg_id);
+            if (!be_suffix.empty()) ctx_key += "__" + be_suffix;
+            bin = CTX_DIR + "/ctx_" + ctx_key + ".bin";
+        }
         std::ifstream chk(bin, std::ios::binary);
         if (!chk) {
             std::fprintf(stderr, "[bringup] SKIP seg %d (%s/%s): missing %s\n",
@@ -2058,6 +2159,20 @@ def main():
                          "validation mode). Without this, the runtime runs ops "
                          "with zero-initialised input buffers — fine for timing "
                          "studies but not for correctness checks.")
+    ap.add_argument("--graph-index", action="append", default=[],
+                    help="optional path(s) to build_multi_graph_ctx.py output "
+                         "*_graph_index.json files. When provided, the dispatch "
+                         "table is emitted with per-entry ctx_bin_name and "
+                         "graph_name fields so the runtime loads one multi-graph "
+                         "ctx and graphRetrieves each graph by name (collapses "
+                         "the firmware ctx-count). Pass multiple --graph-index "
+                         "args to merge across backends.")
+    ap.add_argument("--seg-perf", default=None,
+                    help="optional segment_perf.json from profiling. Used to "
+                         "translate synthetic conv pseudo-names like "
+                         "'dsp_seg_01_conv1' into actual graph names like "
+                         "'dsp_seg_01_node_MatMul_549_conv1x1' when looking "
+                         "them up in --graph-index.")
     args = ap.parse_args()
 
     with open(args.schedule) as f:
@@ -2146,7 +2261,48 @@ def main():
     manifest = None
     if args.manifest:
         with open(args.manifest) as f: manifest = json.load(f)
-    with open(table_path, "w") as f: f.write(emit_dispatch_table(segs, manifest))
+
+    # Optional: load segment_perf.json so we can translate synthetic
+    # conv pseudo-names ('dsp_seg_01_conv1' / '_conv2') into the actual
+    # graph names used in the conv DLCs. The mapping comes from the
+    # 'convs' list inside each segment's Hta entry (conv #0 = _conv1, #1 = _conv2).
+    conv_name_resolver: dict[str, str] = {}
+    if args.seg_perf:
+        with open(args.seg_perf) as f:
+            perf = json.load(f)
+        for seg_name, data in perf.items():
+            convs = data.get("Hta", {}).get("convs", [])
+            for i, c in enumerate(convs):
+                pseudo = f"{seg_name}_conv{i+1}"
+                real   = c.get("name", "")
+                if real:
+                    conv_name_resolver[pseudo] = real
+
+    # Merge any number of graph-index files (one per backend bundle). The
+    # entries are keyed by graph name and carry their own "backend" field.
+    graph_index = None
+    if args.graph_index:
+        graph_index = {}
+        for p in args.graph_index:
+            with open(p) as f: gi = json.load(f)
+            for gname, info in gi.items():
+                # Collisions across backends are expected (same graph name on
+                # Cpu and Dsp variants). The dispatch table picks the right
+                # entry by matching backend at emit time.
+                # Store as list to disambiguate; the picker uses backend tag.
+                graph_index.setdefault(gname, []).append(info)
+        # Flatten: store as map[graph_name] -> map[backend_upper] -> info.
+        flat: dict[str, dict[str, dict]] = {}
+        for gname, infos in graph_index.items():
+            for info in infos:
+                be = info.get("backend", "").upper()
+                flat.setdefault(gname, {})[be] = info
+        graph_index = flat
+        # Convert the picker function in emit_dispatch_table to use this
+        # nested layout. The new layout is signaled by the values being
+        # dicts of backend->info rather than info directly.
+    with open(table_path, "w") as f:
+        f.write(emit_dispatch_table(segs, manifest, graph_index, conv_name_resolver))
     with open(main_path,  "w") as f:
         f.write(emit_runtime_main(networks, slot_to_be, per_net_lib, args.ctx_dir))
     # Cache the source schedule next to the gen output so downstream
