@@ -1,0 +1,544 @@
+{
+  "dot_file": "",
+  "dispatch_vmfb_dir": "slices",
+  "_comment": "Fine-grained smolvlm_vision v3: 25 DSP + 24 CPU segments in a linear chain.",
+  "dispatches": {
+    "dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "vmfb_path": "slices/dsp_seg_00.dlc",
+      "segment_name": "dsp_seg_00",
+      "segment_type": "dsp"
+    },
+    "dispatch_1": {
+      "id": 1,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_0"
+      ],
+      "vmfb_path": "slices/cpu_seg_00.dlc",
+      "segment_name": "cpu_seg_00",
+      "segment_type": "cpu"
+    },
+    "dispatch_2": {
+      "id": 2,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_1"
+      ],
+      "vmfb_path": "slices/dsp_seg_01.dlc",
+      "segment_name": "dsp_seg_01",
+      "segment_type": "dsp"
+    },
+    "dispatch_3": {
+      "id": 3,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_2"
+      ],
+      "vmfb_path": "slices/cpu_seg_01.dlc",
+      "segment_name": "cpu_seg_01",
+      "segment_type": "cpu"
+    },
+    "dispatch_4": {
+      "id": 4,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_3"
+      ],
+      "vmfb_path": "slices/dsp_seg_02.dlc",
+      "segment_name": "dsp_seg_02",
+      "segment_type": "dsp"
+    },
+    "dispatch_5": {
+      "id": 5,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_4"
+      ],
+      "vmfb_path": "slices/cpu_seg_02.dlc",
+      "segment_name": "cpu_seg_02",
+      "segment_type": "cpu"
+    },
+    "dispatch_6": {
+      "id": 6,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_5"
+      ],
+      "vmfb_path": "slices/dsp_seg_03.dlc",
+      "segment_name": "dsp_seg_03",
+      "segment_type": "dsp"
+    },
+    "dispatch_7": {
+      "id": 7,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_6"
+      ],
+      "vmfb_path": "slices/cpu_seg_03.dlc",
+      "segment_name": "cpu_seg_03",
+      "segment_type": "cpu"
+    },
+    "dispatch_8": {
+      "id": 8,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_7"
+      ],
+      "vmfb_path": "slices/dsp_seg_04.dlc",
+      "segment_name": "dsp_seg_04",
+      "segment_type": "dsp"
+    },
+    "dispatch_9": {
+      "id": 9,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_8"
+      ],
+      "vmfb_path": "slices/cpu_seg_04.dlc",
+      "segment_name": "cpu_seg_04",
+      "segment_type": "cpu"
+    },
+    "dispatch_10": {
+      "id": 10,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_9"
+      ],
+      "vmfb_path": "slices/dsp_seg_05.dlc",
+      "segment_name": "dsp_seg_05",
+      "segment_type": "dsp"
+    },
+    "dispatch_11": {
+      "id": 11,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_10"
+      ],
+      "vmfb_path": "slices/cpu_seg_05.dlc",
+      "segment_name": "cpu_seg_05",
+      "segment_type": "cpu"
+    },
+    "dispatch_12": {
+      "id": 12,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_11"
+      ],
+      "vmfb_path": "slices/dsp_seg_06.dlc",
+      "segment_name": "dsp_seg_06",
+      "segment_type": "dsp"
+    },
+    "dispatch_13": {
+      "id": 13,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_12"
+      ],
+      "vmfb_path": "slices/cpu_seg_06.dlc",
+      "segment_name": "cpu_seg_06",
+      "segment_type": "cpu"
+    },
+    "dispatch_14": {
+      "id": 14,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_13"
+      ],
+      "vmfb_path": "slices/dsp_seg_07.dlc",
+      "segment_name": "dsp_seg_07",
+      "segment_type": "dsp"
+    },
+    "dispatch_15": {
+      "id": 15,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_14"
+      ],
+      "vmfb_path": "slices/cpu_seg_07.dlc",
+      "segment_name": "cpu_seg_07",
+      "segment_type": "cpu"
+    },
+    "dispatch_16": {
+      "id": 16,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_15"
+      ],
+      "vmfb_path": "slices/dsp_seg_08.dlc",
+      "segment_name": "dsp_seg_08",
+      "segment_type": "dsp"
+    },
+    "dispatch_17": {
+      "id": 17,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_16"
+      ],
+      "vmfb_path": "slices/cpu_seg_08.dlc",
+      "segment_name": "cpu_seg_08",
+      "segment_type": "cpu"
+    },
+    "dispatch_18": {
+      "id": 18,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_17"
+      ],
+      "vmfb_path": "slices/dsp_seg_09.dlc",
+      "segment_name": "dsp_seg_09",
+      "segment_type": "dsp"
+    },
+    "dispatch_19": {
+      "id": 19,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_18"
+      ],
+      "vmfb_path": "slices/cpu_seg_09.dlc",
+      "segment_name": "cpu_seg_09",
+      "segment_type": "cpu"
+    },
+    "dispatch_20": {
+      "id": 20,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_19"
+      ],
+      "vmfb_path": "slices/dsp_seg_10.dlc",
+      "segment_name": "dsp_seg_10",
+      "segment_type": "dsp"
+    },
+    "dispatch_21": {
+      "id": 21,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_20"
+      ],
+      "vmfb_path": "slices/cpu_seg_10.dlc",
+      "segment_name": "cpu_seg_10",
+      "segment_type": "cpu"
+    },
+    "dispatch_22": {
+      "id": 22,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_21"
+      ],
+      "vmfb_path": "slices/dsp_seg_11.dlc",
+      "segment_name": "dsp_seg_11",
+      "segment_type": "dsp"
+    },
+    "dispatch_23": {
+      "id": 23,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_22"
+      ],
+      "vmfb_path": "slices/cpu_seg_11.dlc",
+      "segment_name": "cpu_seg_11",
+      "segment_type": "cpu"
+    },
+    "dispatch_24": {
+      "id": 24,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_23"
+      ],
+      "vmfb_path": "slices/dsp_seg_12.dlc",
+      "segment_name": "dsp_seg_12",
+      "segment_type": "dsp"
+    },
+    "dispatch_25": {
+      "id": 25,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_24"
+      ],
+      "vmfb_path": "slices/cpu_seg_12.dlc",
+      "segment_name": "cpu_seg_12",
+      "segment_type": "cpu"
+    },
+    "dispatch_26": {
+      "id": 26,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_25"
+      ],
+      "vmfb_path": "slices/dsp_seg_13.dlc",
+      "segment_name": "dsp_seg_13",
+      "segment_type": "dsp"
+    },
+    "dispatch_27": {
+      "id": 27,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_26"
+      ],
+      "vmfb_path": "slices/cpu_seg_13.dlc",
+      "segment_name": "cpu_seg_13",
+      "segment_type": "cpu"
+    },
+    "dispatch_28": {
+      "id": 28,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_27"
+      ],
+      "vmfb_path": "slices/dsp_seg_14.dlc",
+      "segment_name": "dsp_seg_14",
+      "segment_type": "dsp"
+    },
+    "dispatch_29": {
+      "id": 29,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_28"
+      ],
+      "vmfb_path": "slices/cpu_seg_14.dlc",
+      "segment_name": "cpu_seg_14",
+      "segment_type": "cpu"
+    },
+    "dispatch_30": {
+      "id": 30,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_29"
+      ],
+      "vmfb_path": "slices/dsp_seg_15.dlc",
+      "segment_name": "dsp_seg_15",
+      "segment_type": "dsp"
+    },
+    "dispatch_31": {
+      "id": 31,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_30"
+      ],
+      "vmfb_path": "slices/cpu_seg_15.dlc",
+      "segment_name": "cpu_seg_15",
+      "segment_type": "cpu"
+    },
+    "dispatch_32": {
+      "id": 32,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_31"
+      ],
+      "vmfb_path": "slices/dsp_seg_16.dlc",
+      "segment_name": "dsp_seg_16",
+      "segment_type": "dsp"
+    },
+    "dispatch_33": {
+      "id": 33,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_32"
+      ],
+      "vmfb_path": "slices/cpu_seg_16.dlc",
+      "segment_name": "cpu_seg_16",
+      "segment_type": "cpu"
+    },
+    "dispatch_34": {
+      "id": 34,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_33"
+      ],
+      "vmfb_path": "slices/dsp_seg_17.dlc",
+      "segment_name": "dsp_seg_17",
+      "segment_type": "dsp"
+    },
+    "dispatch_35": {
+      "id": 35,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_34"
+      ],
+      "vmfb_path": "slices/cpu_seg_17.dlc",
+      "segment_name": "cpu_seg_17",
+      "segment_type": "cpu"
+    },
+    "dispatch_36": {
+      "id": 36,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_35"
+      ],
+      "vmfb_path": "slices/dsp_seg_18.dlc",
+      "segment_name": "dsp_seg_18",
+      "segment_type": "dsp"
+    },
+    "dispatch_37": {
+      "id": 37,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_36"
+      ],
+      "vmfb_path": "slices/cpu_seg_18.dlc",
+      "segment_name": "cpu_seg_18",
+      "segment_type": "cpu"
+    },
+    "dispatch_38": {
+      "id": 38,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_37"
+      ],
+      "vmfb_path": "slices/dsp_seg_19.dlc",
+      "segment_name": "dsp_seg_19",
+      "segment_type": "dsp"
+    },
+    "dispatch_39": {
+      "id": 39,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_38"
+      ],
+      "vmfb_path": "slices/cpu_seg_19.dlc",
+      "segment_name": "cpu_seg_19",
+      "segment_type": "cpu"
+    },
+    "dispatch_40": {
+      "id": 40,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_39"
+      ],
+      "vmfb_path": "slices/dsp_seg_20.dlc",
+      "segment_name": "dsp_seg_20",
+      "segment_type": "dsp"
+    },
+    "dispatch_41": {
+      "id": 41,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_40"
+      ],
+      "vmfb_path": "slices/cpu_seg_20.dlc",
+      "segment_name": "cpu_seg_20",
+      "segment_type": "cpu"
+    },
+    "dispatch_42": {
+      "id": 42,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_41"
+      ],
+      "vmfb_path": "slices/dsp_seg_21.dlc",
+      "segment_name": "dsp_seg_21",
+      "segment_type": "dsp"
+    },
+    "dispatch_43": {
+      "id": 43,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_42"
+      ],
+      "vmfb_path": "slices/cpu_seg_21.dlc",
+      "segment_name": "cpu_seg_21",
+      "segment_type": "cpu"
+    },
+    "dispatch_44": {
+      "id": 44,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_43"
+      ],
+      "vmfb_path": "slices/dsp_seg_22.dlc",
+      "segment_name": "dsp_seg_22",
+      "segment_type": "dsp"
+    },
+    "dispatch_45": {
+      "id": 45,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_44"
+      ],
+      "vmfb_path": "slices/cpu_seg_22.dlc",
+      "segment_name": "cpu_seg_22",
+      "segment_type": "cpu"
+    },
+    "dispatch_46": {
+      "id": 46,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_45"
+      ],
+      "vmfb_path": "slices/dsp_seg_23.dlc",
+      "segment_name": "dsp_seg_23",
+      "segment_type": "dsp"
+    },
+    "dispatch_47": {
+      "id": 47,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_46"
+      ],
+      "vmfb_path": "slices/cpu_seg_23.dlc",
+      "segment_name": "cpu_seg_23",
+      "segment_type": "cpu"
+    },
+    "dispatch_48": {
+      "id": 48,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_47"
+      ],
+      "vmfb_path": "slices/dsp_seg_24.dlc",
+      "segment_name": "dsp_seg_24",
+      "segment_type": "dsp"
+    }
+  }
+}

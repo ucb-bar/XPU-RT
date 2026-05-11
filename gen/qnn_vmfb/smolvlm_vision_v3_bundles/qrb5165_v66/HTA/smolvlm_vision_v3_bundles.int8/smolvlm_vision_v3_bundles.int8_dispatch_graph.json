@@ -1,0 +1,1266 @@
+{
+  "dot_file": "",
+  "dispatch_vmfb_dir": "slices",
+  "_comment": "Expanded v3 vision dispatch graph with placement variants. Each DSP segment maps to either 1 dispatch (DSP-mono or CPU-mono) or 5 dispatches (HTA-bundle: tramp_p0 CPU \u2192 conv1 HTA \u2192 tramp_p1 CPU \u2192 conv2 HTA \u2192 tramp_p2 CPU). Variants chosen per-segment from honest profile data (segment_perf.json + trampolines_perf.json). CPU segments stay as 1 dispatch on CPU.",
+  "dispatches": {
+    "dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "vmfb_path": "slices/dsp_seg_00.dlc",
+      "segment_name": "dsp_seg_00",
+      "segment_type": "cpu_mono",
+      "source_segment": "dsp_seg_00",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_1": {
+      "id": 1,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_0"
+      ],
+      "vmfb_path": "slices/cpu_seg_00.dlc",
+      "segment_name": "cpu_seg_00",
+      "segment_type": "cpu_seg",
+      "source_segment": "cpu_seg_00",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_2": {
+      "id": 2,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_1"
+      ],
+      "vmfb_path": "slices/dsp_seg_01_tramp_p0.dlc",
+      "segment_name": "dsp_seg_01_tramp_p0",
+      "segment_type": "tramp_p0",
+      "source_segment": "dsp_seg_01",
+      "preferred_hw": "DSP"
+    },
+    "dispatch_3": {
+      "id": 3,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_2"
+      ],
+      "vmfb_path": "slices/dsp_seg_01_conv1.dlc",
+      "segment_name": "dsp_seg_01_conv1",
+      "segment_type": "conv1",
+      "source_segment": "dsp_seg_01",
+      "preferred_hw": "HTA"
+    },
+    "dispatch_4": {
+      "id": 4,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_3"
+      ],
+      "vmfb_path": "slices/dsp_seg_01_tramp_p1.dlc",
+      "segment_name": "dsp_seg_01_tramp_p1",
+      "segment_type": "tramp_p1",
+      "source_segment": "dsp_seg_01",
+      "preferred_hw": "DSP"
+    },
+    "dispatch_5": {
+      "id": 5,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_4"
+      ],
+      "vmfb_path": "slices/dsp_seg_01_conv2.dlc",
+      "segment_name": "dsp_seg_01_conv2",
+      "segment_type": "conv2",
+      "source_segment": "dsp_seg_01",
+      "preferred_hw": "HTA"
+    },
+    "dispatch_6": {
+      "id": 6,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_5"
+      ],
+      "vmfb_path": "slices/dsp_seg_01_tramp_p2.dlc",
+      "segment_name": "dsp_seg_01_tramp_p2",
+      "segment_type": "tramp_p2",
+      "source_segment": "dsp_seg_01",
+      "preferred_hw": "DSP"
+    },
+    "dispatch_7": {
+      "id": 7,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_6"
+      ],
+      "vmfb_path": "slices/cpu_seg_01.dlc",
+      "segment_name": "cpu_seg_01",
+      "segment_type": "cpu_seg",
+      "source_segment": "cpu_seg_01",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_8": {
+      "id": 8,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_7"
+      ],
+      "vmfb_path": "slices/dsp_seg_02.dlc",
+      "segment_name": "dsp_seg_02",
+      "segment_type": "cpu_mono",
+      "source_segment": "dsp_seg_02",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_9": {
+      "id": 9,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_8"
+      ],
+      "vmfb_path": "slices/cpu_seg_02.dlc",
+      "segment_name": "cpu_seg_02",
+      "segment_type": "cpu_seg",
+      "source_segment": "cpu_seg_02",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_10": {
+      "id": 10,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_9"
+      ],
+      "vmfb_path": "slices/dsp_seg_03_tramp_p0.dlc",
+      "segment_name": "dsp_seg_03_tramp_p0",
+      "segment_type": "tramp_p0",
+      "source_segment": "dsp_seg_03",
+      "preferred_hw": "DSP"
+    },
+    "dispatch_11": {
+      "id": 11,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_10"
+      ],
+      "vmfb_path": "slices/dsp_seg_03_conv1.dlc",
+      "segment_name": "dsp_seg_03_conv1",
+      "segment_type": "conv1",
+      "source_segment": "dsp_seg_03",
+      "preferred_hw": "HTA"
+    },
+    "dispatch_12": {
+      "id": 12,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_11"
+      ],
+      "vmfb_path": "slices/dsp_seg_03_tramp_p1.dlc",
+      "segment_name": "dsp_seg_03_tramp_p1",
+      "segment_type": "tramp_p1",
+      "source_segment": "dsp_seg_03",
+      "preferred_hw": "DSP"
+    },
+    "dispatch_13": {
+      "id": 13,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_12"
+      ],
+      "vmfb_path": "slices/dsp_seg_03_conv2.dlc",
+      "segment_name": "dsp_seg_03_conv2",
+      "segment_type": "conv2",
+      "source_segment": "dsp_seg_03",
+      "preferred_hw": "HTA"
+    },
+    "dispatch_14": {
+      "id": 14,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_13"
+      ],
+      "vmfb_path": "slices/dsp_seg_03_tramp_p2.dlc",
+      "segment_name": "dsp_seg_03_tramp_p2",
+      "segment_type": "tramp_p2",
+      "source_segment": "dsp_seg_03",
+      "preferred_hw": "DSP"
+    },
+    "dispatch_15": {
+      "id": 15,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_14"
+      ],
+      "vmfb_path": "slices/cpu_seg_03.dlc",
+      "segment_name": "cpu_seg_03",
+      "segment_type": "cpu_seg",
+      "source_segment": "cpu_seg_03",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_16": {
+      "id": 16,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_15"
+      ],
+      "vmfb_path": "slices/dsp_seg_04.dlc",
+      "segment_name": "dsp_seg_04",
+      "segment_type": "cpu_mono",
+      "source_segment": "dsp_seg_04",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_17": {
+      "id": 17,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_16"
+      ],
+      "vmfb_path": "slices/cpu_seg_04.dlc",
+      "segment_name": "cpu_seg_04",
+      "segment_type": "cpu_seg",
+      "source_segment": "cpu_seg_04",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_18": {
+      "id": 18,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_17"
+      ],
+      "vmfb_path": "slices/dsp_seg_05_tramp_p0.dlc",
+      "segment_name": "dsp_seg_05_tramp_p0",
+      "segment_type": "tramp_p0",
+      "source_segment": "dsp_seg_05",
+      "preferred_hw": "DSP"
+    },
+    "dispatch_19": {
+      "id": 19,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_18"
+      ],
+      "vmfb_path": "slices/dsp_seg_05_conv1.dlc",
+      "segment_name": "dsp_seg_05_conv1",
+      "segment_type": "conv1",
+      "source_segment": "dsp_seg_05",
+      "preferred_hw": "HTA"
+    },
+    "dispatch_20": {
+      "id": 20,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_19"
+      ],
+      "vmfb_path": "slices/dsp_seg_05_tramp_p1.dlc",
+      "segment_name": "dsp_seg_05_tramp_p1",
+      "segment_type": "tramp_p1",
+      "source_segment": "dsp_seg_05",
+      "preferred_hw": "DSP"
+    },
+    "dispatch_21": {
+      "id": 21,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_20"
+      ],
+      "vmfb_path": "slices/dsp_seg_05_conv2.dlc",
+      "segment_name": "dsp_seg_05_conv2",
+      "segment_type": "conv2",
+      "source_segment": "dsp_seg_05",
+      "preferred_hw": "HTA"
+    },
+    "dispatch_22": {
+      "id": 22,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_21"
+      ],
+      "vmfb_path": "slices/dsp_seg_05_tramp_p2.dlc",
+      "segment_name": "dsp_seg_05_tramp_p2",
+      "segment_type": "tramp_p2",
+      "source_segment": "dsp_seg_05",
+      "preferred_hw": "DSP"
+    },
+    "dispatch_23": {
+      "id": 23,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_22"
+      ],
+      "vmfb_path": "slices/cpu_seg_05.dlc",
+      "segment_name": "cpu_seg_05",
+      "segment_type": "cpu_seg",
+      "source_segment": "cpu_seg_05",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_24": {
+      "id": 24,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_23"
+      ],
+      "vmfb_path": "slices/dsp_seg_06.dlc",
+      "segment_name": "dsp_seg_06",
+      "segment_type": "cpu_mono",
+      "source_segment": "dsp_seg_06",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_25": {
+      "id": 25,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_24"
+      ],
+      "vmfb_path": "slices/cpu_seg_06.dlc",
+      "segment_name": "cpu_seg_06",
+      "segment_type": "cpu_seg",
+      "source_segment": "cpu_seg_06",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_26": {
+      "id": 26,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_25"
+      ],
+      "vmfb_path": "slices/dsp_seg_07_tramp_p0.dlc",
+      "segment_name": "dsp_seg_07_tramp_p0",
+      "segment_type": "tramp_p0",
+      "source_segment": "dsp_seg_07",
+      "preferred_hw": "DSP"
+    },
+    "dispatch_27": {
+      "id": 27,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_26"
+      ],
+      "vmfb_path": "slices/dsp_seg_07_conv1.dlc",
+      "segment_name": "dsp_seg_07_conv1",
+      "segment_type": "conv1",
+      "source_segment": "dsp_seg_07",
+      "preferred_hw": "HTA"
+    },
+    "dispatch_28": {
+      "id": 28,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_27"
+      ],
+      "vmfb_path": "slices/dsp_seg_07_tramp_p1.dlc",
+      "segment_name": "dsp_seg_07_tramp_p1",
+      "segment_type": "tramp_p1",
+      "source_segment": "dsp_seg_07",
+      "preferred_hw": "DSP"
+    },
+    "dispatch_29": {
+      "id": 29,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_28"
+      ],
+      "vmfb_path": "slices/dsp_seg_07_conv2.dlc",
+      "segment_name": "dsp_seg_07_conv2",
+      "segment_type": "conv2",
+      "source_segment": "dsp_seg_07",
+      "preferred_hw": "HTA"
+    },
+    "dispatch_30": {
+      "id": 30,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_29"
+      ],
+      "vmfb_path": "slices/dsp_seg_07_tramp_p2.dlc",
+      "segment_name": "dsp_seg_07_tramp_p2",
+      "segment_type": "tramp_p2",
+      "source_segment": "dsp_seg_07",
+      "preferred_hw": "DSP"
+    },
+    "dispatch_31": {
+      "id": 31,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_30"
+      ],
+      "vmfb_path": "slices/cpu_seg_07.dlc",
+      "segment_name": "cpu_seg_07",
+      "segment_type": "cpu_seg",
+      "source_segment": "cpu_seg_07",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_32": {
+      "id": 32,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_31"
+      ],
+      "vmfb_path": "slices/dsp_seg_08.dlc",
+      "segment_name": "dsp_seg_08",
+      "segment_type": "cpu_mono",
+      "source_segment": "dsp_seg_08",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_33": {
+      "id": 33,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_32"
+      ],
+      "vmfb_path": "slices/cpu_seg_08.dlc",
+      "segment_name": "cpu_seg_08",
+      "segment_type": "cpu_seg",
+      "source_segment": "cpu_seg_08",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_34": {
+      "id": 34,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_33"
+      ],
+      "vmfb_path": "slices/dsp_seg_09_tramp_p0.dlc",
+      "segment_name": "dsp_seg_09_tramp_p0",
+      "segment_type": "tramp_p0",
+      "source_segment": "dsp_seg_09",
+      "preferred_hw": "DSP"
+    },
+    "dispatch_35": {
+      "id": 35,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_34"
+      ],
+      "vmfb_path": "slices/dsp_seg_09_conv1.dlc",
+      "segment_name": "dsp_seg_09_conv1",
+      "segment_type": "conv1",
+      "source_segment": "dsp_seg_09",
+      "preferred_hw": "HTA"
+    },
+    "dispatch_36": {
+      "id": 36,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_35"
+      ],
+      "vmfb_path": "slices/dsp_seg_09_tramp_p1.dlc",
+      "segment_name": "dsp_seg_09_tramp_p1",
+      "segment_type": "tramp_p1",
+      "source_segment": "dsp_seg_09",
+      "preferred_hw": "DSP"
+    },
+    "dispatch_37": {
+      "id": 37,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_36"
+      ],
+      "vmfb_path": "slices/dsp_seg_09_conv2.dlc",
+      "segment_name": "dsp_seg_09_conv2",
+      "segment_type": "conv2",
+      "source_segment": "dsp_seg_09",
+      "preferred_hw": "HTA"
+    },
+    "dispatch_38": {
+      "id": 38,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_37"
+      ],
+      "vmfb_path": "slices/dsp_seg_09_tramp_p2.dlc",
+      "segment_name": "dsp_seg_09_tramp_p2",
+      "segment_type": "tramp_p2",
+      "source_segment": "dsp_seg_09",
+      "preferred_hw": "DSP"
+    },
+    "dispatch_39": {
+      "id": 39,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_38"
+      ],
+      "vmfb_path": "slices/cpu_seg_09.dlc",
+      "segment_name": "cpu_seg_09",
+      "segment_type": "cpu_seg",
+      "source_segment": "cpu_seg_09",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_40": {
+      "id": 40,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_39"
+      ],
+      "vmfb_path": "slices/dsp_seg_10.dlc",
+      "segment_name": "dsp_seg_10",
+      "segment_type": "cpu_mono",
+      "source_segment": "dsp_seg_10",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_41": {
+      "id": 41,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_40"
+      ],
+      "vmfb_path": "slices/cpu_seg_10.dlc",
+      "segment_name": "cpu_seg_10",
+      "segment_type": "cpu_seg",
+      "source_segment": "cpu_seg_10",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_42": {
+      "id": 42,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_41"
+      ],
+      "vmfb_path": "slices/dsp_seg_11_tramp_p0.dlc",
+      "segment_name": "dsp_seg_11_tramp_p0",
+      "segment_type": "tramp_p0",
+      "source_segment": "dsp_seg_11",
+      "preferred_hw": "DSP"
+    },
+    "dispatch_43": {
+      "id": 43,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_42"
+      ],
+      "vmfb_path": "slices/dsp_seg_11_conv1.dlc",
+      "segment_name": "dsp_seg_11_conv1",
+      "segment_type": "conv1",
+      "source_segment": "dsp_seg_11",
+      "preferred_hw": "HTA"
+    },
+    "dispatch_44": {
+      "id": 44,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_43"
+      ],
+      "vmfb_path": "slices/dsp_seg_11_tramp_p1.dlc",
+      "segment_name": "dsp_seg_11_tramp_p1",
+      "segment_type": "tramp_p1",
+      "source_segment": "dsp_seg_11",
+      "preferred_hw": "DSP"
+    },
+    "dispatch_45": {
+      "id": 45,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_44"
+      ],
+      "vmfb_path": "slices/dsp_seg_11_conv2.dlc",
+      "segment_name": "dsp_seg_11_conv2",
+      "segment_type": "conv2",
+      "source_segment": "dsp_seg_11",
+      "preferred_hw": "HTA"
+    },
+    "dispatch_46": {
+      "id": 46,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_45"
+      ],
+      "vmfb_path": "slices/dsp_seg_11_tramp_p2.dlc",
+      "segment_name": "dsp_seg_11_tramp_p2",
+      "segment_type": "tramp_p2",
+      "source_segment": "dsp_seg_11",
+      "preferred_hw": "DSP"
+    },
+    "dispatch_47": {
+      "id": 47,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_46"
+      ],
+      "vmfb_path": "slices/cpu_seg_11.dlc",
+      "segment_name": "cpu_seg_11",
+      "segment_type": "cpu_seg",
+      "source_segment": "cpu_seg_11",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_48": {
+      "id": 48,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_47"
+      ],
+      "vmfb_path": "slices/dsp_seg_12.dlc",
+      "segment_name": "dsp_seg_12",
+      "segment_type": "cpu_mono",
+      "source_segment": "dsp_seg_12",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_49": {
+      "id": 49,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_48"
+      ],
+      "vmfb_path": "slices/cpu_seg_12.dlc",
+      "segment_name": "cpu_seg_12",
+      "segment_type": "cpu_seg",
+      "source_segment": "cpu_seg_12",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_50": {
+      "id": 50,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_49"
+      ],
+      "vmfb_path": "slices/dsp_seg_13_tramp_p0.dlc",
+      "segment_name": "dsp_seg_13_tramp_p0",
+      "segment_type": "tramp_p0",
+      "source_segment": "dsp_seg_13",
+      "preferred_hw": "DSP"
+    },
+    "dispatch_51": {
+      "id": 51,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_50"
+      ],
+      "vmfb_path": "slices/dsp_seg_13_conv1.dlc",
+      "segment_name": "dsp_seg_13_conv1",
+      "segment_type": "conv1",
+      "source_segment": "dsp_seg_13",
+      "preferred_hw": "HTA"
+    },
+    "dispatch_52": {
+      "id": 52,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_51"
+      ],
+      "vmfb_path": "slices/dsp_seg_13_tramp_p1.dlc",
+      "segment_name": "dsp_seg_13_tramp_p1",
+      "segment_type": "tramp_p1",
+      "source_segment": "dsp_seg_13",
+      "preferred_hw": "DSP"
+    },
+    "dispatch_53": {
+      "id": 53,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_52"
+      ],
+      "vmfb_path": "slices/dsp_seg_13_conv2.dlc",
+      "segment_name": "dsp_seg_13_conv2",
+      "segment_type": "conv2",
+      "source_segment": "dsp_seg_13",
+      "preferred_hw": "HTA"
+    },
+    "dispatch_54": {
+      "id": 54,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_53"
+      ],
+      "vmfb_path": "slices/dsp_seg_13_tramp_p2.dlc",
+      "segment_name": "dsp_seg_13_tramp_p2",
+      "segment_type": "tramp_p2",
+      "source_segment": "dsp_seg_13",
+      "preferred_hw": "DSP"
+    },
+    "dispatch_55": {
+      "id": 55,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_54"
+      ],
+      "vmfb_path": "slices/cpu_seg_13.dlc",
+      "segment_name": "cpu_seg_13",
+      "segment_type": "cpu_seg",
+      "source_segment": "cpu_seg_13",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_56": {
+      "id": 56,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_55"
+      ],
+      "vmfb_path": "slices/dsp_seg_14.dlc",
+      "segment_name": "dsp_seg_14",
+      "segment_type": "cpu_mono",
+      "source_segment": "dsp_seg_14",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_57": {
+      "id": 57,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_56"
+      ],
+      "vmfb_path": "slices/cpu_seg_14.dlc",
+      "segment_name": "cpu_seg_14",
+      "segment_type": "cpu_seg",
+      "source_segment": "cpu_seg_14",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_58": {
+      "id": 58,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_57"
+      ],
+      "vmfb_path": "slices/dsp_seg_15_tramp_p0.dlc",
+      "segment_name": "dsp_seg_15_tramp_p0",
+      "segment_type": "tramp_p0",
+      "source_segment": "dsp_seg_15",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_59": {
+      "id": 59,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_58"
+      ],
+      "vmfb_path": "slices/dsp_seg_15_conv1.dlc",
+      "segment_name": "dsp_seg_15_conv1",
+      "segment_type": "conv1",
+      "source_segment": "dsp_seg_15",
+      "preferred_hw": "HTA"
+    },
+    "dispatch_60": {
+      "id": 60,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_59"
+      ],
+      "vmfb_path": "slices/dsp_seg_15_tramp_p1.dlc",
+      "segment_name": "dsp_seg_15_tramp_p1",
+      "segment_type": "tramp_p1",
+      "source_segment": "dsp_seg_15",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_61": {
+      "id": 61,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_60"
+      ],
+      "vmfb_path": "slices/dsp_seg_15_conv2.dlc",
+      "segment_name": "dsp_seg_15_conv2",
+      "segment_type": "conv2",
+      "source_segment": "dsp_seg_15",
+      "preferred_hw": "HTA"
+    },
+    "dispatch_62": {
+      "id": 62,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_61"
+      ],
+      "vmfb_path": "slices/dsp_seg_15_tramp_p2.dlc",
+      "segment_name": "dsp_seg_15_tramp_p2",
+      "segment_type": "tramp_p2",
+      "source_segment": "dsp_seg_15",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_63": {
+      "id": 63,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_62"
+      ],
+      "vmfb_path": "slices/cpu_seg_15.dlc",
+      "segment_name": "cpu_seg_15",
+      "segment_type": "cpu_seg",
+      "source_segment": "cpu_seg_15",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_64": {
+      "id": 64,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_63"
+      ],
+      "vmfb_path": "slices/dsp_seg_16.dlc",
+      "segment_name": "dsp_seg_16",
+      "segment_type": "cpu_mono",
+      "source_segment": "dsp_seg_16",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_65": {
+      "id": 65,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_64"
+      ],
+      "vmfb_path": "slices/cpu_seg_16.dlc",
+      "segment_name": "cpu_seg_16",
+      "segment_type": "cpu_seg",
+      "source_segment": "cpu_seg_16",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_66": {
+      "id": 66,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_65"
+      ],
+      "vmfb_path": "slices/dsp_seg_17_tramp_p0.dlc",
+      "segment_name": "dsp_seg_17_tramp_p0",
+      "segment_type": "tramp_p0",
+      "source_segment": "dsp_seg_17",
+      "preferred_hw": "DSP"
+    },
+    "dispatch_67": {
+      "id": 67,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_66"
+      ],
+      "vmfb_path": "slices/dsp_seg_17_conv1.dlc",
+      "segment_name": "dsp_seg_17_conv1",
+      "segment_type": "conv1",
+      "source_segment": "dsp_seg_17",
+      "preferred_hw": "HTA"
+    },
+    "dispatch_68": {
+      "id": 68,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_67"
+      ],
+      "vmfb_path": "slices/dsp_seg_17_tramp_p1.dlc",
+      "segment_name": "dsp_seg_17_tramp_p1",
+      "segment_type": "tramp_p1",
+      "source_segment": "dsp_seg_17",
+      "preferred_hw": "DSP"
+    },
+    "dispatch_69": {
+      "id": 69,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_68"
+      ],
+      "vmfb_path": "slices/dsp_seg_17_conv2.dlc",
+      "segment_name": "dsp_seg_17_conv2",
+      "segment_type": "conv2",
+      "source_segment": "dsp_seg_17",
+      "preferred_hw": "HTA"
+    },
+    "dispatch_70": {
+      "id": 70,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_69"
+      ],
+      "vmfb_path": "slices/dsp_seg_17_tramp_p2.dlc",
+      "segment_name": "dsp_seg_17_tramp_p2",
+      "segment_type": "tramp_p2",
+      "source_segment": "dsp_seg_17",
+      "preferred_hw": "DSP"
+    },
+    "dispatch_71": {
+      "id": 71,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_70"
+      ],
+      "vmfb_path": "slices/cpu_seg_17.dlc",
+      "segment_name": "cpu_seg_17",
+      "segment_type": "cpu_seg",
+      "source_segment": "cpu_seg_17",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_72": {
+      "id": 72,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_71"
+      ],
+      "vmfb_path": "slices/dsp_seg_18.dlc",
+      "segment_name": "dsp_seg_18",
+      "segment_type": "cpu_mono",
+      "source_segment": "dsp_seg_18",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_73": {
+      "id": 73,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_72"
+      ],
+      "vmfb_path": "slices/cpu_seg_18.dlc",
+      "segment_name": "cpu_seg_18",
+      "segment_type": "cpu_seg",
+      "source_segment": "cpu_seg_18",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_74": {
+      "id": 74,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_73"
+      ],
+      "vmfb_path": "slices/dsp_seg_19_tramp_p0.dlc",
+      "segment_name": "dsp_seg_19_tramp_p0",
+      "segment_type": "tramp_p0",
+      "source_segment": "dsp_seg_19",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_75": {
+      "id": 75,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_74"
+      ],
+      "vmfb_path": "slices/dsp_seg_19_conv1.dlc",
+      "segment_name": "dsp_seg_19_conv1",
+      "segment_type": "conv1",
+      "source_segment": "dsp_seg_19",
+      "preferred_hw": "HTA"
+    },
+    "dispatch_76": {
+      "id": 76,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_75"
+      ],
+      "vmfb_path": "slices/dsp_seg_19_tramp_p1.dlc",
+      "segment_name": "dsp_seg_19_tramp_p1",
+      "segment_type": "tramp_p1",
+      "source_segment": "dsp_seg_19",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_77": {
+      "id": 77,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_76"
+      ],
+      "vmfb_path": "slices/dsp_seg_19_conv2.dlc",
+      "segment_name": "dsp_seg_19_conv2",
+      "segment_type": "conv2",
+      "source_segment": "dsp_seg_19",
+      "preferred_hw": "HTA"
+    },
+    "dispatch_78": {
+      "id": 78,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_77"
+      ],
+      "vmfb_path": "slices/dsp_seg_19_tramp_p2.dlc",
+      "segment_name": "dsp_seg_19_tramp_p2",
+      "segment_type": "tramp_p2",
+      "source_segment": "dsp_seg_19",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_79": {
+      "id": 79,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_78"
+      ],
+      "vmfb_path": "slices/cpu_seg_19.dlc",
+      "segment_name": "cpu_seg_19",
+      "segment_type": "cpu_seg",
+      "source_segment": "cpu_seg_19",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_80": {
+      "id": 80,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_79"
+      ],
+      "vmfb_path": "slices/dsp_seg_20.dlc",
+      "segment_name": "dsp_seg_20",
+      "segment_type": "cpu_mono",
+      "source_segment": "dsp_seg_20",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_81": {
+      "id": 81,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_80"
+      ],
+      "vmfb_path": "slices/cpu_seg_20.dlc",
+      "segment_name": "cpu_seg_20",
+      "segment_type": "cpu_seg",
+      "source_segment": "cpu_seg_20",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_82": {
+      "id": 82,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_81"
+      ],
+      "vmfb_path": "slices/dsp_seg_21_tramp_p0.dlc",
+      "segment_name": "dsp_seg_21_tramp_p0",
+      "segment_type": "tramp_p0",
+      "source_segment": "dsp_seg_21",
+      "preferred_hw": "DSP"
+    },
+    "dispatch_83": {
+      "id": 83,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_82"
+      ],
+      "vmfb_path": "slices/dsp_seg_21_conv1.dlc",
+      "segment_name": "dsp_seg_21_conv1",
+      "segment_type": "conv1",
+      "source_segment": "dsp_seg_21",
+      "preferred_hw": "HTA"
+    },
+    "dispatch_84": {
+      "id": 84,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_83"
+      ],
+      "vmfb_path": "slices/dsp_seg_21_tramp_p1.dlc",
+      "segment_name": "dsp_seg_21_tramp_p1",
+      "segment_type": "tramp_p1",
+      "source_segment": "dsp_seg_21",
+      "preferred_hw": "DSP"
+    },
+    "dispatch_85": {
+      "id": 85,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_84"
+      ],
+      "vmfb_path": "slices/dsp_seg_21_conv2.dlc",
+      "segment_name": "dsp_seg_21_conv2",
+      "segment_type": "conv2",
+      "source_segment": "dsp_seg_21",
+      "preferred_hw": "HTA"
+    },
+    "dispatch_86": {
+      "id": 86,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_85"
+      ],
+      "vmfb_path": "slices/dsp_seg_21_tramp_p2.dlc",
+      "segment_name": "dsp_seg_21_tramp_p2",
+      "segment_type": "tramp_p2",
+      "source_segment": "dsp_seg_21",
+      "preferred_hw": "DSP"
+    },
+    "dispatch_87": {
+      "id": 87,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_86"
+      ],
+      "vmfb_path": "slices/cpu_seg_21.dlc",
+      "segment_name": "cpu_seg_21",
+      "segment_type": "cpu_seg",
+      "source_segment": "cpu_seg_21",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_88": {
+      "id": 88,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_87"
+      ],
+      "vmfb_path": "slices/dsp_seg_22.dlc",
+      "segment_name": "dsp_seg_22",
+      "segment_type": "cpu_mono",
+      "source_segment": "dsp_seg_22",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_89": {
+      "id": 89,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_88"
+      ],
+      "vmfb_path": "slices/cpu_seg_22.dlc",
+      "segment_name": "cpu_seg_22",
+      "segment_type": "cpu_seg",
+      "source_segment": "cpu_seg_22",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_90": {
+      "id": 90,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_89"
+      ],
+      "vmfb_path": "slices/dsp_seg_23_tramp_p0.dlc",
+      "segment_name": "dsp_seg_23_tramp_p0",
+      "segment_type": "tramp_p0",
+      "source_segment": "dsp_seg_23",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_91": {
+      "id": 91,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_90"
+      ],
+      "vmfb_path": "slices/dsp_seg_23_conv1.dlc",
+      "segment_name": "dsp_seg_23_conv1",
+      "segment_type": "conv1",
+      "source_segment": "dsp_seg_23",
+      "preferred_hw": "HTA"
+    },
+    "dispatch_92": {
+      "id": 92,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_91"
+      ],
+      "vmfb_path": "slices/dsp_seg_23_tramp_p1.dlc",
+      "segment_name": "dsp_seg_23_tramp_p1",
+      "segment_type": "tramp_p1",
+      "source_segment": "dsp_seg_23",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_93": {
+      "id": 93,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_92"
+      ],
+      "vmfb_path": "slices/dsp_seg_23_conv2.dlc",
+      "segment_name": "dsp_seg_23_conv2",
+      "segment_type": "conv2",
+      "source_segment": "dsp_seg_23",
+      "preferred_hw": "HTA"
+    },
+    "dispatch_94": {
+      "id": 94,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_93"
+      ],
+      "vmfb_path": "slices/dsp_seg_23_tramp_p2.dlc",
+      "segment_name": "dsp_seg_23_tramp_p2",
+      "segment_type": "tramp_p2",
+      "source_segment": "dsp_seg_23",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_95": {
+      "id": 95,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_94"
+      ],
+      "vmfb_path": "slices/cpu_seg_23.dlc",
+      "segment_name": "cpu_seg_23",
+      "segment_type": "cpu_seg",
+      "source_segment": "cpu_seg_23",
+      "preferred_hw": "CPU"
+    },
+    "dispatch_96": {
+      "id": 96,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dispatch_95"
+      ],
+      "vmfb_path": "slices/dsp_seg_24.dlc",
+      "segment_name": "dsp_seg_24",
+      "segment_type": "cpu_mono",
+      "source_segment": "dsp_seg_24",
+      "preferred_hw": "CPU"
+    }
+  }
+}

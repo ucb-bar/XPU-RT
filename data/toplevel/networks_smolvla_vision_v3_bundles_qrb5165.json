@@ -1,0 +1,39 @@
+{
+  "_comment": "v3 vision encoder with PLACEMENT-VARIANT expansion. Each DSP segment is modeled as one of three variants chosen from honest profile data: DSP-mono (1 dispatch on DSP), CPU-mono (1 dispatch on CPU), or HTA-bundle (5 dispatches: trampoline_p0 CPU \u2192 conv1 HTA \u2192 trampoline_p1 CPU \u2192 conv2 HTA \u2192 trampoline_p2 CPU). The expanded dispatch graph has 97 dispatches (was 49). Profile CSVs use prohibitive costs on non-preferred backends to steer the scheduler. cpu_seg_XX segments stay CPU-only.",
+  "hardware": {
+    "machines": {
+      "cpu_p": 1,
+      "cpu_e": 1,
+      "cpu_x": 1
+    },
+    "profile_hw": {
+      "cpu_p": "HTA",
+      "cpu_e": "DSP",
+      "cpu_x": "CPU"
+    },
+    "profile": {
+      "target": "qrb5165_v66",
+      "topo_tag": "topo_0",
+      "topo_tag_override": true,
+      "gen_root": "gen"
+    },
+    "p_core_speedup": 1.0
+  },
+  "scheduler": {
+    "random_seed": 42,
+    "solver_verbosity": 0,
+    "time_limit": 30,
+    "use_profiled": true,
+    "prune_periodic": false,
+    "restrict_makespan_to_nonperiodic": false,
+    "enforce_same_processor_combinations": false
+  },
+  "networks": {
+    "vision_v3": {
+      "id": 0,
+      "identifier": "smolvlm_vision_v3_bundles",
+      "dispatch_deps_path": "gen/qnn_vmfb/smolvlm_vision_v3_bundles/qrb5165_v66/CPU/smolvlm_vision_v3_bundles.int8/smolvlm_vision_v3_bundles.int8_dispatch_graph.json"
+    }
+  },
+  "edges": []
+}
