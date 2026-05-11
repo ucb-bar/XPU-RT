@@ -1,0 +1,1452 @@
+{
+  "dot_file": "combined_schedule_periodic.json",
+  "dispatches": {
+    "vision_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 7.75,
+      "duration": 68.49210000000001,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_00",
+      "time_dependency": "text_dispatch_0"
+    },
+    "vision_dispatch_1": {
+      "id": 1,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_0"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 76.24210000000001,
+      "duration": 36.0713,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_00"
+    },
+    "vision_dispatch_2": {
+      "id": 2,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_1"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 112.3134,
+      "duration": 12.398950000000001,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_01",
+      "time_dependency": "vision_dispatch_1"
+    },
+    "vision_dispatch_3": {
+      "id": 3,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_2"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 124.71235,
+      "duration": 9.16893,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_01",
+      "time_dependency": "vision_dispatch_2"
+    },
+    "vision_dispatch_4": {
+      "id": 4,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_3"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 133.88128,
+      "duration": 22.15456,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_02",
+      "time_dependency": "vision_dispatch_3"
+    },
+    "vision_dispatch_5": {
+      "id": 5,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_4"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 156.03584,
+      "duration": 36.09918,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_02",
+      "time_dependency": "vision_dispatch_4"
+    },
+    "vision_dispatch_6": {
+      "id": 6,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_5"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 192.13502,
+      "duration": 12.72744,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_03",
+      "time_dependency": "vision_dispatch_5"
+    },
+    "vision_dispatch_7": {
+      "id": 7,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_6"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 204.86246,
+      "duration": 9.16552,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_03",
+      "time_dependency": "vision_dispatch_6"
+    },
+    "vision_dispatch_8": {
+      "id": 8,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_7"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 214.02798,
+      "duration": 22.39772,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_04",
+      "time_dependency": "vision_dispatch_7"
+    },
+    "vision_dispatch_9": {
+      "id": 9,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_8"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 236.4257,
+      "duration": 36.04357,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_04",
+      "time_dependency": "vision_dispatch_8"
+    },
+    "vision_dispatch_10": {
+      "id": 10,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_9"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 272.46927,
+      "duration": 12.63922,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_05",
+      "time_dependency": "vision_dispatch_9"
+    },
+    "vision_dispatch_11": {
+      "id": 11,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_10"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 285.10849,
+      "duration": 9.144219999999999,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_05",
+      "time_dependency": "vision_dispatch_10"
+    },
+    "vision_dispatch_12": {
+      "id": 12,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_11"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 294.25271000000004,
+      "duration": 21.52244,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_06",
+      "time_dependency": "vision_dispatch_11"
+    },
+    "vision_dispatch_13": {
+      "id": 13,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_12"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 315.77515000000005,
+      "duration": 36.44542,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_06",
+      "time_dependency": "vision_dispatch_12"
+    },
+    "vision_dispatch_14": {
+      "id": 14,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_13"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 352.22057000000007,
+      "duration": 12.3826,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_07",
+      "time_dependency": "vision_dispatch_13"
+    },
+    "vision_dispatch_15": {
+      "id": 15,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_14"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 364.6031700000001,
+      "duration": 9.16465,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_07",
+      "time_dependency": "vision_dispatch_14"
+    },
+    "vision_dispatch_16": {
+      "id": 16,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_15"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 373.7678200000001,
+      "duration": 21.73524,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_08",
+      "time_dependency": "vision_dispatch_15"
+    },
+    "vision_dispatch_17": {
+      "id": 17,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_16"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 395.50306000000006,
+      "duration": 36.04495,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_08",
+      "time_dependency": "vision_dispatch_16"
+    },
+    "vision_dispatch_18": {
+      "id": 18,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_17"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 431.5480100000001,
+      "duration": 12.561309999999999,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_09",
+      "time_dependency": "vision_dispatch_17"
+    },
+    "vision_dispatch_19": {
+      "id": 19,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_18"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 444.1093200000001,
+      "duration": 9.18687,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_09",
+      "time_dependency": "vision_dispatch_18"
+    },
+    "vision_dispatch_20": {
+      "id": 20,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_19"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 453.2961900000001,
+      "duration": 22.015040000000003,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_10",
+      "time_dependency": "vision_dispatch_19"
+    },
+    "vision_dispatch_21": {
+      "id": 21,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_20"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 475.3112300000001,
+      "duration": 36.16732,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_10",
+      "time_dependency": "vision_dispatch_20"
+    },
+    "vision_dispatch_22": {
+      "id": 22,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_21"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 511.4785500000001,
+      "duration": 12.41583,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_11",
+      "time_dependency": "vision_dispatch_21"
+    },
+    "vision_dispatch_23": {
+      "id": 23,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_22"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 523.8943800000001,
+      "duration": 9.16189,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_11",
+      "time_dependency": "vision_dispatch_22"
+    },
+    "vision_dispatch_24": {
+      "id": 24,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_23"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 533.05627,
+      "duration": 22.278689999999997,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_12",
+      "time_dependency": "vision_dispatch_23"
+    },
+    "vision_dispatch_25": {
+      "id": 25,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_24"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 555.33496,
+      "duration": 36.08575,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_12",
+      "time_dependency": "vision_dispatch_24"
+    },
+    "vision_dispatch_26": {
+      "id": 26,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_25"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 591.42071,
+      "duration": 12.45725,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_13",
+      "time_dependency": "vision_dispatch_25"
+    },
+    "vision_dispatch_27": {
+      "id": 27,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_26"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 603.87796,
+      "duration": 9.16078,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_13",
+      "time_dependency": "vision_dispatch_26"
+    },
+    "vision_dispatch_28": {
+      "id": 28,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_27"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 613.0387400000001,
+      "duration": 22.17225,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_14",
+      "time_dependency": "vision_dispatch_27"
+    },
+    "vision_dispatch_29": {
+      "id": 29,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_28"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 635.21099,
+      "duration": 36.83811,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_14",
+      "time_dependency": "vision_dispatch_28"
+    },
+    "vision_dispatch_30": {
+      "id": 30,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_29"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 672.0491000000001,
+      "duration": 12.44251,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_15",
+      "time_dependency": "vision_dispatch_29"
+    },
+    "vision_dispatch_31": {
+      "id": 31,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_30"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 684.49161,
+      "duration": 9.16556,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_15",
+      "time_dependency": "vision_dispatch_30"
+    },
+    "vision_dispatch_32": {
+      "id": 32,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_31"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 693.6571700000001,
+      "duration": 22.00707,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_16",
+      "time_dependency": "vision_dispatch_31"
+    },
+    "vision_dispatch_33": {
+      "id": 33,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_32"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 715.6642400000001,
+      "duration": 36.22583,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_16",
+      "time_dependency": "vision_dispatch_32"
+    },
+    "vision_dispatch_34": {
+      "id": 34,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_33"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 751.89007,
+      "duration": 12.49432,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_17",
+      "time_dependency": "vision_dispatch_33"
+    },
+    "vision_dispatch_35": {
+      "id": 35,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_34"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 764.38439,
+      "duration": 9.16941,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_17",
+      "time_dependency": "vision_dispatch_34"
+    },
+    "vision_dispatch_36": {
+      "id": 36,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_35"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 773.5538,
+      "duration": 21.75403,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_18",
+      "time_dependency": "vision_dispatch_35"
+    },
+    "vision_dispatch_37": {
+      "id": 37,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_36"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 795.30783,
+      "duration": 36.32844,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_18",
+      "time_dependency": "vision_dispatch_36"
+    },
+    "vision_dispatch_38": {
+      "id": 38,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_37"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 831.63627,
+      "duration": 12.58338,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_19",
+      "time_dependency": "vision_dispatch_37"
+    },
+    "vision_dispatch_39": {
+      "id": 39,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_38"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 844.21965,
+      "duration": 9.17272,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_19",
+      "time_dependency": "vision_dispatch_38"
+    },
+    "vision_dispatch_40": {
+      "id": 40,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_39"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 853.39237,
+      "duration": 22.08322,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_20",
+      "time_dependency": "vision_dispatch_39"
+    },
+    "vision_dispatch_41": {
+      "id": 41,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_40"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 875.47559,
+      "duration": 36.51008,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_20",
+      "time_dependency": "vision_dispatch_40"
+    },
+    "vision_dispatch_42": {
+      "id": 42,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_41"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 911.98567,
+      "duration": 12.5169,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_21",
+      "time_dependency": "vision_dispatch_41"
+    },
+    "vision_dispatch_43": {
+      "id": 43,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_42"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 924.50257,
+      "duration": 9.164549999999998,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_21",
+      "time_dependency": "vision_dispatch_42"
+    },
+    "vision_dispatch_44": {
+      "id": 44,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_43"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 933.66712,
+      "duration": 22.271919999999998,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_22",
+      "time_dependency": "vision_dispatch_43"
+    },
+    "vision_dispatch_45": {
+      "id": 45,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_44"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 955.93904,
+      "duration": 35.88802,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_22",
+      "time_dependency": "vision_dispatch_44"
+    },
+    "vision_dispatch_46": {
+      "id": 46,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_45"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 991.82706,
+      "duration": 12.55803,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_23",
+      "time_dependency": "vision_dispatch_45"
+    },
+    "vision_dispatch_47": {
+      "id": 47,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_46"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 1004.38509,
+      "duration": 9.16309,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_23",
+      "time_dependency": "vision_dispatch_46"
+    },
+    "vision_dispatch_48": {
+      "id": 48,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_47"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 1013.54818,
+      "duration": 77.80431,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_24",
+      "time_dependency": "vision_dispatch_0"
+    },
+    "text_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 1.33,
+      "duration": 6.42,
+      "job_name": "smolvlm_text_coarse",
+      "module_name": "smolvlm_text_full",
+      "time_dependency": "state_proj_dispatch_0"
+    },
+    "state_proj_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 0.0,
+      "duration": 1.33,
+      "job_name": "state_projector_coarse",
+      "module_name": "state_projector_full"
+    },
+    "prefill_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_dispatch_48",
+        "text_dispatch_0",
+        "state_proj_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 1091.35249,
+      "duration": 583.76,
+      "job_name": "smolvlm_expert_prefill_coarse",
+      "module_name": "smolvlm_expert_prefill_full",
+      "time_dependency": "vision_dispatch_48"
+    },
+    "action_in_0_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "prefill_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 1675.11249,
+      "duration": 4.68,
+      "job_name": "action_in_projector_coarse",
+      "module_name": "action_in_projector_full",
+      "time_dependency": "prefill_dispatch_0"
+    },
+    "time_in_0_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "action_in_0_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 1679.79249,
+      "duration": 5.85,
+      "job_name": "time_in_projector_coarse",
+      "module_name": "time_in_projector_full",
+      "time_dependency": "action_in_0_dispatch_0"
+    },
+    "time_out_0_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "time_in_0_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 1685.64249,
+      "duration": 5.37,
+      "job_name": "time_out_projector_coarse",
+      "module_name": "time_out_projector_full",
+      "time_dependency": "time_in_0_dispatch_0"
+    },
+    "decode_0_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "time_out_0_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 1691.0124899999998,
+      "duration": 149.61,
+      "job_name": "smolvlm_expert_decode_coarse",
+      "module_name": "smolvlm_expert_decode_full",
+      "time_dependency": "time_out_0_dispatch_0"
+    },
+    "action_out_0_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "decode_0_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 1840.6224899999997,
+      "duration": 2.15,
+      "job_name": "action_out_projector_coarse",
+      "module_name": "action_out_projector_full",
+      "time_dependency": "decode_0_dispatch_0"
+    },
+    "action_in_1_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "action_out_0_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 1842.7724899999998,
+      "duration": 4.68,
+      "job_name": "action_in_projector_coarse",
+      "module_name": "action_in_projector_full",
+      "time_dependency": "action_out_0_dispatch_0"
+    },
+    "time_in_1_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "action_in_1_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 1847.45249,
+      "duration": 5.85,
+      "job_name": "time_in_projector_coarse",
+      "module_name": "time_in_projector_full",
+      "time_dependency": "action_in_1_dispatch_0"
+    },
+    "time_out_1_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "time_in_1_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 1853.3024899999998,
+      "duration": 5.37,
+      "job_name": "time_out_projector_coarse",
+      "module_name": "time_out_projector_full",
+      "time_dependency": "time_in_1_dispatch_0"
+    },
+    "decode_1_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "time_out_1_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 1858.6724899999997,
+      "duration": 149.61,
+      "job_name": "smolvlm_expert_decode_coarse",
+      "module_name": "smolvlm_expert_decode_full",
+      "time_dependency": "time_out_1_dispatch_0"
+    },
+    "action_out_1_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "decode_1_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 2008.2824899999996,
+      "duration": 2.15,
+      "job_name": "action_out_projector_coarse",
+      "module_name": "action_out_projector_full",
+      "time_dependency": "decode_1_dispatch_0"
+    },
+    "action_in_2_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "action_out_1_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 2010.4324899999997,
+      "duration": 4.68,
+      "job_name": "action_in_projector_coarse",
+      "module_name": "action_in_projector_full",
+      "time_dependency": "action_out_1_dispatch_0"
+    },
+    "time_in_2_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "action_in_2_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 2015.1124899999998,
+      "duration": 5.85,
+      "job_name": "time_in_projector_coarse",
+      "module_name": "time_in_projector_full",
+      "time_dependency": "action_in_2_dispatch_0"
+    },
+    "time_out_2_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "time_in_2_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 2020.9624899999997,
+      "duration": 5.37,
+      "job_name": "time_out_projector_coarse",
+      "module_name": "time_out_projector_full",
+      "time_dependency": "time_in_2_dispatch_0"
+    },
+    "decode_2_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "time_out_2_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 2026.3324899999996,
+      "duration": 149.61,
+      "job_name": "smolvlm_expert_decode_coarse",
+      "module_name": "smolvlm_expert_decode_full",
+      "time_dependency": "time_out_2_dispatch_0"
+    },
+    "action_out_2_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "decode_2_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 2175.9424899999995,
+      "duration": 2.15,
+      "job_name": "action_out_projector_coarse",
+      "module_name": "action_out_projector_full",
+      "time_dependency": "decode_2_dispatch_0"
+    },
+    "action_in_3_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "action_out_2_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 2178.0924899999995,
+      "duration": 4.68,
+      "job_name": "action_in_projector_coarse",
+      "module_name": "action_in_projector_full",
+      "time_dependency": "action_out_2_dispatch_0"
+    },
+    "time_in_3_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "action_in_3_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 2182.7724899999994,
+      "duration": 5.85,
+      "job_name": "time_in_projector_coarse",
+      "module_name": "time_in_projector_full",
+      "time_dependency": "action_in_3_dispatch_0"
+    },
+    "time_out_3_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "time_in_3_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 2188.6224899999993,
+      "duration": 5.37,
+      "job_name": "time_out_projector_coarse",
+      "module_name": "time_out_projector_full",
+      "time_dependency": "time_in_3_dispatch_0"
+    },
+    "decode_3_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "time_out_3_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 2193.992489999999,
+      "duration": 149.61,
+      "job_name": "smolvlm_expert_decode_coarse",
+      "module_name": "smolvlm_expert_decode_full",
+      "time_dependency": "time_out_3_dispatch_0"
+    },
+    "action_out_3_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "decode_3_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 2343.6024899999993,
+      "duration": 2.15,
+      "job_name": "action_out_projector_coarse",
+      "module_name": "action_out_projector_full",
+      "time_dependency": "decode_3_dispatch_0"
+    },
+    "action_in_4_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "action_out_3_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 2345.7524899999994,
+      "duration": 4.68,
+      "job_name": "action_in_projector_coarse",
+      "module_name": "action_in_projector_full",
+      "time_dependency": "action_out_3_dispatch_0"
+    },
+    "time_in_4_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "action_in_4_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 2350.4324899999992,
+      "duration": 5.85,
+      "job_name": "time_in_projector_coarse",
+      "module_name": "time_in_projector_full",
+      "time_dependency": "action_in_4_dispatch_0"
+    },
+    "time_out_4_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "time_in_4_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 2356.282489999999,
+      "duration": 5.37,
+      "job_name": "time_out_projector_coarse",
+      "module_name": "time_out_projector_full",
+      "time_dependency": "time_in_4_dispatch_0"
+    },
+    "decode_4_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "time_out_4_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 2361.652489999999,
+      "duration": 149.61,
+      "job_name": "smolvlm_expert_decode_coarse",
+      "module_name": "smolvlm_expert_decode_full",
+      "time_dependency": "time_out_4_dispatch_0"
+    },
+    "action_out_4_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "decode_4_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 2511.262489999999,
+      "duration": 2.15,
+      "job_name": "action_out_projector_coarse",
+      "module_name": "action_out_projector_full",
+      "time_dependency": "decode_4_dispatch_0"
+    },
+    "action_in_5_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "action_out_4_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 2513.4124899999993,
+      "duration": 4.68,
+      "job_name": "action_in_projector_coarse",
+      "module_name": "action_in_projector_full",
+      "time_dependency": "action_out_4_dispatch_0"
+    },
+    "time_in_5_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "action_in_5_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 2518.092489999999,
+      "duration": 5.85,
+      "job_name": "time_in_projector_coarse",
+      "module_name": "time_in_projector_full",
+      "time_dependency": "action_in_5_dispatch_0"
+    },
+    "time_out_5_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "time_in_5_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 2523.942489999999,
+      "duration": 5.37,
+      "job_name": "time_out_projector_coarse",
+      "module_name": "time_out_projector_full",
+      "time_dependency": "time_in_5_dispatch_0"
+    },
+    "decode_5_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "time_out_5_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 2529.312489999999,
+      "duration": 149.61,
+      "job_name": "smolvlm_expert_decode_coarse",
+      "module_name": "smolvlm_expert_decode_full",
+      "time_dependency": "time_out_5_dispatch_0"
+    },
+    "action_out_5_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "decode_5_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 2678.922489999999,
+      "duration": 2.15,
+      "job_name": "action_out_projector_coarse",
+      "module_name": "action_out_projector_full",
+      "time_dependency": "decode_5_dispatch_0"
+    },
+    "action_in_6_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "action_out_5_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 2681.072489999999,
+      "duration": 4.68,
+      "job_name": "action_in_projector_coarse",
+      "module_name": "action_in_projector_full",
+      "time_dependency": "action_out_5_dispatch_0"
+    },
+    "time_in_6_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "action_in_6_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 2685.752489999999,
+      "duration": 5.85,
+      "job_name": "time_in_projector_coarse",
+      "module_name": "time_in_projector_full",
+      "time_dependency": "action_in_6_dispatch_0"
+    },
+    "time_out_6_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "time_in_6_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 2691.602489999999,
+      "duration": 5.37,
+      "job_name": "time_out_projector_coarse",
+      "module_name": "time_out_projector_full",
+      "time_dependency": "time_in_6_dispatch_0"
+    },
+    "decode_6_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "time_out_6_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 2696.9724899999987,
+      "duration": 149.61,
+      "job_name": "smolvlm_expert_decode_coarse",
+      "module_name": "smolvlm_expert_decode_full",
+      "time_dependency": "time_out_6_dispatch_0"
+    },
+    "action_out_6_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "decode_6_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 2846.582489999999,
+      "duration": 2.15,
+      "job_name": "action_out_projector_coarse",
+      "module_name": "action_out_projector_full",
+      "time_dependency": "decode_6_dispatch_0"
+    },
+    "action_in_7_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "action_out_6_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 2848.732489999999,
+      "duration": 4.68,
+      "job_name": "action_in_projector_coarse",
+      "module_name": "action_in_projector_full",
+      "time_dependency": "action_out_6_dispatch_0"
+    },
+    "time_in_7_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "action_in_7_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 2853.412489999999,
+      "duration": 5.85,
+      "job_name": "time_in_projector_coarse",
+      "module_name": "time_in_projector_full",
+      "time_dependency": "action_in_7_dispatch_0"
+    },
+    "time_out_7_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "time_in_7_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 2859.2624899999987,
+      "duration": 5.37,
+      "job_name": "time_out_projector_coarse",
+      "module_name": "time_out_projector_full",
+      "time_dependency": "time_in_7_dispatch_0"
+    },
+    "decode_7_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "time_out_7_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 2864.6324899999986,
+      "duration": 149.61,
+      "job_name": "smolvlm_expert_decode_coarse",
+      "module_name": "smolvlm_expert_decode_full",
+      "time_dependency": "time_out_7_dispatch_0"
+    },
+    "action_out_7_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "decode_7_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 3014.2424899999987,
+      "duration": 2.15,
+      "job_name": "action_out_projector_coarse",
+      "module_name": "action_out_projector_full",
+      "time_dependency": "decode_7_dispatch_0"
+    },
+    "action_in_8_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "action_out_7_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 3016.392489999999,
+      "duration": 4.68,
+      "job_name": "action_in_projector_coarse",
+      "module_name": "action_in_projector_full",
+      "time_dependency": "action_out_7_dispatch_0"
+    },
+    "time_in_8_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "action_in_8_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 3021.0724899999987,
+      "duration": 5.85,
+      "job_name": "time_in_projector_coarse",
+      "module_name": "time_in_projector_full",
+      "time_dependency": "action_in_8_dispatch_0"
+    },
+    "time_out_8_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "time_in_8_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 3026.9224899999986,
+      "duration": 5.37,
+      "job_name": "time_out_projector_coarse",
+      "module_name": "time_out_projector_full",
+      "time_dependency": "time_in_8_dispatch_0"
+    },
+    "decode_8_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "time_out_8_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 3032.2924899999985,
+      "duration": 149.61,
+      "job_name": "smolvlm_expert_decode_coarse",
+      "module_name": "smolvlm_expert_decode_full",
+      "time_dependency": "time_out_8_dispatch_0"
+    },
+    "action_out_8_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "decode_8_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 3181.9024899999986,
+      "duration": 2.15,
+      "job_name": "action_out_projector_coarse",
+      "module_name": "action_out_projector_full",
+      "time_dependency": "decode_8_dispatch_0"
+    },
+    "action_in_9_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "action_out_8_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 3184.0524899999987,
+      "duration": 4.68,
+      "job_name": "action_in_projector_coarse",
+      "module_name": "action_in_projector_full",
+      "time_dependency": "action_out_8_dispatch_0"
+    },
+    "time_in_9_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "action_in_9_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 3188.7324899999985,
+      "duration": 5.85,
+      "job_name": "time_in_projector_coarse",
+      "module_name": "time_in_projector_full",
+      "time_dependency": "action_in_9_dispatch_0"
+    },
+    "time_out_9_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "time_in_9_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 3194.5824899999984,
+      "duration": 5.37,
+      "job_name": "time_out_projector_coarse",
+      "module_name": "time_out_projector_full",
+      "time_dependency": "time_in_9_dispatch_0"
+    },
+    "decode_9_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "time_out_9_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 3199.9524899999983,
+      "duration": 149.61,
+      "job_name": "smolvlm_expert_decode_coarse",
+      "module_name": "smolvlm_expert_decode_full",
+      "time_dependency": "time_out_9_dispatch_0"
+    },
+    "action_out_9_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "decode_9_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 3349.5624899999984,
+      "duration": 2.15,
+      "job_name": "action_out_projector_coarse",
+      "module_name": "action_out_projector_full",
+      "time_dependency": "decode_9_dispatch_0"
+    }
+  },
+  "metadata": {
+    "makespan": 3351.7124899999985,
+    "num_operations": 102,
+    "machines": [
+      "CPU_P#0",
+      "CPU_E#0",
+      "CPU_X#0"
+    ],
+    "machine_combinations": [
+      [
+        "CPU_P#0"
+      ],
+      [
+        "CPU_E#0"
+      ],
+      [
+        "CPU_X#0"
+      ]
+    ],
+    "profile_hw": {
+      "CPU_P": "HTA",
+      "CPU_E": "DSP",
+      "CPU_X": "CPU"
+    }
+  }
+}

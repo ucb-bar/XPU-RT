@@ -1,0 +1,39 @@
+{
+  "_comment": "SmolVLA vision encoder v3-sliced: 49 dispatches (25 DSP + 24 CPU segments). Three-way heterogeneous scheduling across HTA, DSP, and CPU. The scheduler picks the fastest backend per segment based on profiled times. CPU segments (Softmax-blocks + Tanh) always run on CPU; DSP segments get profiled on all three to find the best mapping.",
+
+  "hardware": {
+    "machines": { "cpu_p": 1, "cpu_e": 1, "cpu_x": 1 },
+    "profile_hw": {
+      "cpu_p": "HTA",
+      "cpu_e": "DSP",
+      "cpu_x": "CPU"
+    },
+    "profile": {
+      "target": "qrb5165_v66",
+      "topo_tag": "topo_0",
+      "topo_tag_override": true,
+      "gen_root": "gen"
+    },
+    "p_core_speedup": 1.0
+  },
+
+  "scheduler": {
+    "random_seed": 42,
+    "solver_verbosity": 0,
+    "time_limit": 30,
+    "use_profiled": true,
+    "prune_periodic": false,
+    "restrict_makespan_to_nonperiodic": false,
+    "enforce_same_processor_combinations": false
+  },
+
+  "networks": {
+    "vision_v3": {
+      "id": 0,
+      "identifier": "smolvlm_vision_v3",
+      "dispatch_deps_path": "gen/qnn_vmfb/smolvlm_vision_v3/qrb5165_v66/CPU/smolvlm_vision_v3.int8/smolvlm_vision_v3.int8_dispatch_graph.json"
+    }
+  },
+
+  "edges": []
+}

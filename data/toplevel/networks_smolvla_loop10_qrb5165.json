@@ -1,0 +1,52 @@
+{
+  "_comment": "SmolVLA with 10-iteration denoise loop on QRB5165: prefix chain runs once, then each denoise component fires periodically at 170 ms cadence (≈1 decode step) so 10 instances cover the full flow-matching loop. The prefill→action_in edge keeps the periodic instances from spawning before prefill finishes. With the heavy three on CPU only, the schedule is essentially: vision (3.5 s on CPU) → prefill (0.76 s on CPU) → 10 × denoise step (≈170 ms each) ≈ 6 s total per inference cycle. To run inference at action-chunk rate (50 actions × 30 Hz = 1.67 s/chunk) we'd need pipeline depth and overlap, or a chip with HTP/v68+ where the heavy three accelerate ~10×.",
+
+  "hardware": {
+    "machines": { "cpu_p": 1, "cpu_e": 1, "cpu_x": 1 },
+    "profile_hw": {
+      "cpu_p": "HTA",
+      "cpu_e": "DSP",
+      "cpu_x": "CPU"
+    },
+    "profile": {
+      "target": "qrb5165_v66",
+      "topo_tag": "topo_0",
+      "topo_tag_override": false,
+      "gen_root": "gen"
+    },
+    "p_core_speedup": 1.0
+  },
+
+  "scheduler": {
+    "random_seed": 42,
+    "solver_verbosity": 0,
+    "time_limit": 60,
+    "use_profiled": true,
+    "prune_periodic": true,
+    "restrict_makespan_to_nonperiodic": false
+  },
+
+  "networks": {
+    "vision":     { "id": 0, "identifier": "smolvlm_vision_coarse",         "dispatch_deps_path": "gen/qnn_vmfb/smolvlm_vision_coarse/qrb5165_v66/CPU/smolvlm_vision_coarse.int8/smolvlm_vision_coarse.int8_dispatch_graph.json" },
+    "text":       { "id": 1, "identifier": "smolvlm_text_coarse",           "dispatch_deps_path": "gen/qnn_vmfb/smolvlm_text_coarse/qrb5165_v66/DSP/smolvlm_text_coarse.int8/smolvlm_text_coarse.int8_dispatch_graph.json" },
+    "state_proj": { "id": 2, "identifier": "state_projector_coarse",        "dispatch_deps_path": "gen/qnn_vmfb/state_projector_coarse/qrb5165_v66/HTA/state_projector_coarse.int8/state_projector_coarse.int8_dispatch_graph.json" },
+    "prefill":    { "id": 3, "identifier": "smolvlm_expert_prefill_coarse", "dispatch_deps_path": "gen/qnn_vmfb/smolvlm_expert_prefill_coarse/qrb5165_v66/CPU/smolvlm_expert_prefill_coarse.int8/smolvlm_expert_prefill_coarse.int8_dispatch_graph.json" },
+
+    "action_in":  { "id": 4, "identifier": "action_in_projector_coarse",    "dispatch_deps_path": "gen/qnn_vmfb/action_in_projector_coarse/qrb5165_v66/HTA/action_in_projector_coarse.int8/action_in_projector_coarse.int8_dispatch_graph.json",      "period": 170, "window_duration": 170 },
+    "time_in":    { "id": 5, "identifier": "time_in_projector_coarse",      "dispatch_deps_path": "gen/qnn_vmfb/time_in_projector_coarse/qrb5165_v66/HTA/time_in_projector_coarse.int8/time_in_projector_coarse.int8_dispatch_graph.json",          "period": 170, "window_duration": 170 },
+    "time_out":   { "id": 6, "identifier": "time_out_projector_coarse",     "dispatch_deps_path": "gen/qnn_vmfb/time_out_projector_coarse/qrb5165_v66/HTA/time_out_projector_coarse.int8/time_out_projector_coarse.int8_dispatch_graph.json",        "period": 170, "window_duration": 170 },
+    "decode":     { "id": 7, "identifier": "smolvlm_expert_decode_coarse",  "dispatch_deps_path": "gen/qnn_vmfb/smolvlm_expert_decode_coarse/qrb5165_v66/CPU/smolvlm_expert_decode_coarse.int8/smolvlm_expert_decode_coarse.int8_dispatch_graph.json", "period": 170, "window_duration": 170 },
+    "action_out": { "id": 8, "identifier": "action_out_projector_coarse",   "dispatch_deps_path": "gen/qnn_vmfb/action_out_projector_coarse/qrb5165_v66/HTA/action_out_projector_coarse.int8/action_out_projector_coarse.int8_dispatch_graph.json",    "period": 170, "window_duration": 170 }
+  },
+
+  "edges": [
+    { "from": "vision",     "to": "prefill" },
+    { "from": "text",       "to": "prefill" },
+    { "from": "state_proj", "to": "prefill" },
+    { "from": "prefill",    "to": "action_in" },
+    { "from": "action_in",  "to": "time_in" },
+    { "from": "time_in",    "to": "time_out" },
+    { "from": "time_out",   "to": "decode" },
+    { "from": "decode",     "to": "action_out" }
+  ]
+}

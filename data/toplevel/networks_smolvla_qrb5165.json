@@ -1,0 +1,51 @@
+{
+  "_comment": "SmolVLA deployment graph on QRB5165: prefix chain (vision+text+state+prefill, runs once per inference) + ONE denoise step (action_in→time_in→time_out→decode→action_out). MVP scope: one inference cycle, no periodic loop yet — once the schedule shape is right we'll either chain N=10 denoise iterations explicitly or mark them periodic with a prefill→denoise edge so periodics stack after the prefix. Backend routing informed by qrb5165_v66 benchmark data: projectors → HTA (2.6-6.7 ms each), smolvlm_text → DSP (38 ms), the heavy three (vision/prefill/decode) → CPU because v66 DSP/HTA can't compile them (Sin/Tanh/ScatterND op gaps).",
+
+  "hardware": {
+    "machines": { "cpu_p": 1, "cpu_e": 1, "cpu_x": 1 },
+    "profile_hw": {
+      "cpu_p": "HTA",
+      "cpu_e": "DSP",
+      "cpu_x": "CPU"
+    },
+    "profile": {
+      "target": "qrb5165_v66",
+      "topo_tag": "topo_0",
+      "topo_tag_override": false,
+      "gen_root": "gen"
+    },
+    "p_core_speedup": 1.0
+  },
+
+  "scheduler": {
+    "random_seed": 42,
+    "solver_verbosity": 0,
+    "time_limit": 60,
+    "use_profiled": true,
+    "prune_periodic": true,
+    "restrict_makespan_to_nonperiodic": true
+  },
+
+  "networks": {
+    "vision":     { "id": 0, "identifier": "smolvlm_vision_coarse",         "dispatch_deps_path": "gen/qnn_vmfb/smolvlm_vision_coarse/qrb5165_v66/CPU/smolvlm_vision_coarse.int8/smolvlm_vision_coarse.int8_dispatch_graph.json" },
+    "text":       { "id": 1, "identifier": "smolvlm_text_coarse",           "dispatch_deps_path": "gen/qnn_vmfb/smolvlm_text_coarse/qrb5165_v66/DSP/smolvlm_text_coarse.int8/smolvlm_text_coarse.int8_dispatch_graph.json" },
+    "state_proj": { "id": 2, "identifier": "state_projector_coarse",        "dispatch_deps_path": "gen/qnn_vmfb/state_projector_coarse/qrb5165_v66/HTA/state_projector_coarse.int8/state_projector_coarse.int8_dispatch_graph.json" },
+    "prefill":    { "id": 3, "identifier": "smolvlm_expert_prefill_coarse", "dispatch_deps_path": "gen/qnn_vmfb/smolvlm_expert_prefill_coarse/qrb5165_v66/CPU/smolvlm_expert_prefill_coarse.int8/smolvlm_expert_prefill_coarse.int8_dispatch_graph.json" },
+    "action_in":  { "id": 4, "identifier": "action_in_projector_coarse",    "dispatch_deps_path": "gen/qnn_vmfb/action_in_projector_coarse/qrb5165_v66/HTA/action_in_projector_coarse.int8/action_in_projector_coarse.int8_dispatch_graph.json" },
+    "time_in":    { "id": 5, "identifier": "time_in_projector_coarse",      "dispatch_deps_path": "gen/qnn_vmfb/time_in_projector_coarse/qrb5165_v66/HTA/time_in_projector_coarse.int8/time_in_projector_coarse.int8_dispatch_graph.json" },
+    "time_out":   { "id": 6, "identifier": "time_out_projector_coarse",     "dispatch_deps_path": "gen/qnn_vmfb/time_out_projector_coarse/qrb5165_v66/HTA/time_out_projector_coarse.int8/time_out_projector_coarse.int8_dispatch_graph.json" },
+    "decode":     { "id": 7, "identifier": "smolvlm_expert_decode_coarse",  "dispatch_deps_path": "gen/qnn_vmfb/smolvlm_expert_decode_coarse/qrb5165_v66/CPU/smolvlm_expert_decode_coarse.int8/smolvlm_expert_decode_coarse.int8_dispatch_graph.json" },
+    "action_out": { "id": 8, "identifier": "action_out_projector_coarse",   "dispatch_deps_path": "gen/qnn_vmfb/action_out_projector_coarse/qrb5165_v66/HTA/action_out_projector_coarse.int8/action_out_projector_coarse.int8_dispatch_graph.json" }
+  },
+
+  "edges": [
+    { "from": "vision",     "to": "prefill" },
+    { "from": "text",       "to": "prefill" },
+    { "from": "state_proj", "to": "prefill" },
+    { "from": "prefill",    "to": "action_in" },
+    { "from": "action_in",  "to": "time_in" },
+    { "from": "time_in",    "to": "time_out" },
+    { "from": "time_out",   "to": "decode" },
+    { "from": "decode",     "to": "action_out" }
+  ]
+}
