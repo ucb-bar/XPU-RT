@@ -6,6 +6,17 @@
 
 This project is under active development. If you would love to contribute or if you find any issues, please do so by opening a [pull request](https://github.com/ucb-bar/XPURT/pulls) or [filing an issue](https://github.com/ucb-bar/XPURT/issues) on GitHub.
 
+### Documentation
+
+* [`docs/end_to_end_xpurt_firesim.md`](docs/end_to_end_xpurt_firesim.md)
+  — full walkthrough from a multi-network workload spec to a FireSim
+  run with trace plots (scheduler → codegen → build → run → analyze),
+  on the Saturn-Gemmini-Q31 path.
+* [`zephyr-chipyard-sw/agents/examples/microros_demo/ROS_FLOW.md`](zephyr-chipyard-sw/agents/examples/microros_demo/ROS_FLOW.md)
+  — micro-ROS fixed-pinning baseline flow (the reference against which
+  the scheduler is benchmarked).
+* The sections below cover the Merlin/SpacemiT path (BananaPi).
+
 ### Repository Initialization
 
 ```bash
