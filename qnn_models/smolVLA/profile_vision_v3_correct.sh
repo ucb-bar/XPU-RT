@@ -18,9 +18,23 @@
 #   - QAIRT 2.45 installed at /root/qairt on board
 #
 # Usage:
-#   ./profile_vision_v3_correct.sh              # full sweep
+#   ./profile_vision_v3_correct.sh              # full sweep (physical board, default profile dir)
 #   ./profile_vision_v3_correct.sh --iters 100  # more iterations
 #   ./profile_vision_v3_correct.sh --skip-build # skip context binary gen
+#
+# Env overrides (for retargeting to a different board / output dir):
+#   QNN_BOARD_HOST        SSH host (default: root@10.44.120.201)
+#   PROFILE_DIR           output dir (default: <repo>/qnn_models/boards/qrb5165_v66/profiles/smolvlm_vision_v3)
+#   REMOTE_BASE           on-board workspace (default: /root/models/smolvlm_vision_v3)
+#   ADSP_EXTRA_PATHS      semi-colon-separated paths prepended to ADSP_LIBRARY_PATH
+#                         (cloud QRB5165 needs "$QNN/lib/hexagon-v66/unsigned")
+#
+# Example — retarget to cloud QRB5165 with cloud-specific output dir:
+#   QNN_BOARD_HOST=qrb_cloud \
+#   PROFILE_DIR=qnn_models/boards/qrb5165_v66_cloud/profiles/smolvlm_vision_v3 \
+#   REMOTE_BASE=/root/profile_v3 \
+#   ADSP_EXTRA_PATHS=/root/qairt/lib/hexagon-v66/unsigned \
+#       ./profile_vision_v3_correct.sh --iters 30
 
 set -euo pipefail
 
@@ -28,13 +42,23 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 RUNTIME_DIR="$REPO_ROOT/qnn_models/runtime"
 DLC_DIR="$SCRIPT_DIR/vision_slices_v3/dlc"
-PROFILE_DIR="$REPO_ROOT/qnn_models/boards/qrb5165_v66/profiles/smolvlm_vision_v3"
+PROFILE_DIR="${PROFILE_DIR:-$REPO_ROOT/qnn_models/boards/qrb5165_v66/profiles/smolvlm_vision_v3}"
 
 BOARD="${QNN_BOARD_HOST:-root@10.44.120.201}"
-REMOTE_BASE="/root/models/smolvlm_vision_v3"
+REMOTE_BASE="${REMOTE_BASE:-/root/models/smolvlm_vision_v3}"
 REMOTE_CTX="$REMOTE_BASE/ctx"
 ITERS="${ITERS:-50}"
 SKIP_BUILD=false
+
+# Build the ADSP_LIBRARY_PATH used on the board for all DSP/HTA calls.
+# Defaults match the physical board layout; cloud sets ADSP_EXTRA_PATHS.
+# The value is fully expanded here (board SDK is at /root/qairt) so we
+# can pass it through SSH heredocs without parent-shell escape games.
+ADSP_PATH_BASE="/root/qairt/lib/hexagon-v66;/dsp/cdsp;/dsp"
+if [ -n "${ADSP_EXTRA_PATHS:-}" ]; then
+    ADSP_PATH_BASE="$ADSP_EXTRA_PATHS;$ADSP_PATH_BASE"
+fi
+export ADSP_PATH_BASE
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -56,13 +80,13 @@ echo ""
 echo "--- Step 1: Build profile_seg on board ---"
 ssh "$BOARD" "mkdir -p $REMOTE_BASE/{dlc,ctx}"
 scp -q "$RUNTIME_DIR/profile_segments.cpp" "$BOARD:$REMOTE_BASE/"
-ssh "$BOARD" bash <<'EOF'
+ssh "$BOARD" bash <<EOF
 set -e
-cd /root/models/smolvlm_vision_v3
+cd $REMOTE_BASE
 QNN=/root/qairt
 if [ ! -f profile_seg ] || [ profile_segments.cpp -nt profile_seg ]; then
-    g++ -std=c++2a -O2 -Wall -Wno-unused-variable -pthread \
-        -I"$QNN/include" -I"$QNN/include/QNN" \
+    g++ -std=c++2a -O2 -Wall -Wno-unused-variable -pthread \\
+        -I"\$QNN/include" -I"\$QNN/include/QNN" \\
         profile_segments.cpp -o profile_seg -ldl
     echo "  Built profile_seg"
 else
@@ -117,7 +141,7 @@ cd $REMOTE_CTX
 QNN=/root/qairt
 [ -f "$bin_name" ] && { echo "  skip $seg/$be_short (exists)"; exit 0; }
 export LD_LIBRARY_PATH=\$QNN/lib/target
-export ADSP_LIBRARY_PATH="\$QNN/lib/hexagon-v66;/dsp/cdsp;/dsp"
+export ADSP_LIBRARY_PATH="$ADSP_PATH_BASE"
 SRC=$REMOTE_BASE/dlc/${seg}_quantized.dlc
 [ -f "\$SRC" ] || { echo "  SKIP $seg/$be_short (no DLC)"; exit 0; }
 echo -n "  $seg/$be_short ... "
@@ -181,7 +205,7 @@ cd $REMOTE_CTX
 QNN=/root/qairt
 [ -f "$bin_name" ] && { echo "EXISTS"; exit 0; }
 export LD_LIBRARY_PATH=\$QNN/lib/target
-export ADSP_LIBRARY_PATH="\$QNN/lib/hexagon-v66;/dsp/cdsp;/dsp"
+export ADSP_LIBRARY_PATH="$ADSP_PATH_BASE"
 SRC=$REMOTE_BASE/hta_dlc/$(basename "$hta_dlc")
 [ -f "\$SRC" ] || { echo "NO_DLC"; exit 0; }
 \$QNN/bin/target/qnn-context-binary-generator \
@@ -225,7 +249,7 @@ profile_one() {
 
     line=$(ssh "$BOARD" bash <<EOF 2>/dev/null
 export LD_LIBRARY_PATH=/root/qairt/lib/target
-export ADSP_LIBRARY_PATH="/root/qairt/lib/hexagon-v66;/dsp/cdsp;/dsp"
+export ADSP_LIBRARY_PATH="$ADSP_PATH_BASE"
 cd $REMOTE_CTX
 [ -f "$bin_name" ] || { echo '{"status":"no_ctx"}'; exit 0; }
 $REMOTE_BASE/profile_seg "$bin_name" /root/qairt/lib/target/$lib $ITERS 2>/dev/null | grep '^{'
@@ -285,7 +309,7 @@ for i in $(seq 0 24); do
         hta_bin="ctx_${conv_name}__Hta.bin"
         hta_line=$(ssh "$BOARD" bash <<EOF 2>/dev/null
 export LD_LIBRARY_PATH=/root/qairt/lib/target
-export ADSP_LIBRARY_PATH="/root/qairt/lib/hexagon-v66;/dsp/cdsp;/dsp"
+export ADSP_LIBRARY_PATH="$ADSP_PATH_BASE"
 cd $REMOTE_CTX
 [ -f "$hta_bin" ] || { echo '{"status":"no_ctx"}'; exit 0; }
 $REMOTE_BASE/profile_seg "$hta_bin" /root/qairt/lib/target/libQnnHta.so $ITERS 2>/dev/null | grep '^{'

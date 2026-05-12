@@ -30,11 +30,15 @@ Output: vision_slices_decode_v1/
 
 from __future__ import annotations
 
-import os
-import shutil
 from pathlib import Path
 
 import onnx
+
+from onnx_slice_lib import (
+    ranges_complement,
+    write_segments,
+    compute_segment_io,
+)
 
 _HERE = Path(__file__).parent
 _DECODE_ONNX = _HERE / "smolvlm_expert_decode_patched3.onnx"
@@ -146,127 +150,42 @@ def find_cpu_ranges(graph) -> list[tuple[int, int, str]]:
     return merged
 
 
-def compute_segment_io(graph, start: int, end: int, init_names: set[str]):
-    """Compute external inputs and outputs for nodes [start, end)."""
-    seg_produced = set()
-    for i in range(start, end):
-        for out in graph.node[i].output:
-            seg_produced.add(out)
-
-    external_inputs = []
-    seen_inputs = set()
-    for i in range(start, end):
-        for inp in graph.node[i].input:
-            if inp in init_names or inp in seg_produced or inp in seen_inputs or inp == "":
-                continue
-            external_inputs.append(inp)
-            seen_inputs.add(inp)
-
-    graph_output_names = {out.name for out in graph.output}
-    seg_node_indices = set(range(start, end))
-
-    external_outputs = []
-    seen_outputs = set()
-    for i in range(start, end):
-        for out in graph.node[i].output:
-            if out in seen_outputs:
-                continue
-            is_external = out in graph_output_names
-            if not is_external:
-                for j, node in enumerate(graph.node):
-                    if j in seg_node_indices:
-                        continue
-                    if out in node.input:
-                        is_external = True
-                        break
-            if is_external:
-                external_outputs.append(out)
-                seen_outputs.add(out)
-
-    return external_inputs, external_outputs
-
-
-def slice_model(src_path: str, out_path: str, input_names: list[str],
-                output_names: list[str]):
-    os.makedirs(os.path.dirname(out_path), exist_ok=True)
-    onnx.utils.extract_model(str(src_path), str(out_path),
-                              input_names, output_names)
-    model = onnx.load(str(out_path))
-    try:
-        onnx.checker.check_model(model, full_check=False)
-    except Exception as e:
-        print(f"    warn: checker {e}")
-    return model
-
-
 def main():
     print(f"Loading {_DECODE_ONNX} ...")
     model = onnx.load(str(_DECODE_ONNX))
-    graph = model.graph
-    print(f"  {len(graph.node)} nodes")
+    print(f"  {len(model.graph.node)} nodes")
 
-    init_names = {init.name for init in graph.initializer}
-    cpu_ranges = find_cpu_ranges(graph)
-
+    cpu_ranges = find_cpu_ranges(model.graph)
     sb = sum(1 for _, _, t in cpu_ranges if "softmax" in t)
     rs = sum(1 for _, _, t in cpu_ranges if "rotary" in t)
-    print(f"  Found {len(cpu_ranges)} CPU segments (softmax_block × {sb}, "
-          f"rotary_scatter × {rs})")
+    print(f"  Found {len(cpu_ranges)} CPU segments "
+           f"(softmax_block × {sb}, rotary_scatter × {rs})")
 
-    if _OUT_DIR.exists():
-        shutil.rmtree(_OUT_DIR)
-    _OUT_DIR.mkdir(parents=True)
-
-    # DSP segment boundaries from CPU range gaps
-    dsp_ranges = []
-    prev_end = 0
-    for cpu_start, cpu_end, _ in cpu_ranges:
-        if cpu_start > prev_end:
-            dsp_ranges.append((prev_end, cpu_start))
-        prev_end = cpu_end
-    if prev_end < len(graph.node):
-        dsp_ranges.append((prev_end, len(graph.node)))
+    dsp_ranges = ranges_complement(cpu_ranges, len(model.graph.node))
     print(f"  Implied {len(dsp_ranges)} DSP segments\n")
 
-    # Emit DSP and CPU segments
-    n_dsp = 0
-    n_cpu = 0
-    for i, (s, e) in enumerate(dsp_ranges):
-        ins, outs = compute_segment_io(graph, s, e, init_names)
-        op_counts = {}
-        for j in range(s, e):
-            ot = graph.node[j].op_type
-            op_counts[ot] = op_counts.get(ot, 0) + 1
-        if not ins or not outs:
-            print(f"  skip empty/degenerate dsp_seg_{n_dsp:02d}: in={ins} out={outs}")
-            continue
-        op_summary = ", ".join(f"{k}×{v}" for k,v in sorted(op_counts.items(),
-                                                              key=lambda x: -x[1])[:6])
-        print(f"  dsp_seg_{n_dsp:02d}  [{s:>4}..{e-1:>4}]  {e-s:>3} ops  "
-              f"in={len(ins)} out={len(outs)}  ({op_summary})")
-        slice_model(_DECODE_ONNX, _OUT_DIR / f"dsp_seg_{n_dsp:02d}.onnx",
-                     ins, outs)
-        n_dsp += 1
+    # Filter out empty/degenerate ranges (decode can produce zero-IO sub-graphs)
+    init_names = {init.name for init in model.graph.initializer}
+    def keep(ranges, with_label):
+        kept = []
+        for r in ranges:
+            s, e = r[0], r[1]
+            ins, outs = compute_segment_io(model.graph, s, e, init_names)
+            if not ins or not outs:
+                print(f"  skip empty/degenerate [{s}..{e-1}]: in={ins} out={outs}")
+                continue
+            kept.append(r)
+        return kept
 
-    for i, (s, e, lbl) in enumerate(cpu_ranges):
-        ins, outs = compute_segment_io(graph, s, e, init_names)
-        if not ins or not outs:
-            print(f"  skip empty/degenerate cpu_seg_{n_cpu:02d}: in={ins} out={outs}")
-            continue
-        op_counts = {}
-        for j in range(s, e):
-            ot = graph.node[j].op_type
-            op_counts[ot] = op_counts.get(ot, 0) + 1
-        op_summary = ", ".join(f"{k}×{v}" for k,v in sorted(op_counts.items(),
-                                                              key=lambda x: -x[1])[:5])
-        print(f"  cpu_seg_{n_cpu:02d}  [{s:>4}..{e-1:>4}]  {e-s:>3} ops  "
-              f"({lbl:<22})  ({op_summary})")
-        slice_model(_DECODE_ONNX, _OUT_DIR / f"cpu_seg_{n_cpu:02d}.onnx",
-                     ins, outs)
-        n_cpu += 1
+    dsp_ranges = keep(dsp_ranges, with_label=False)
+    cpu_ranges = keep(cpu_ranges, with_label=True)
+
+    range_groups = {"dsp_seg": dsp_ranges, "cpu_seg": cpu_ranges}
+    write_segments(model, _DECODE_ONNX, _OUT_DIR, range_groups)
 
     print()
-    print(f"  Emitted: {n_dsp} DSP + {n_cpu} CPU = {n_dsp + n_cpu} segments")
+    print(f"  Emitted: {len(dsp_ranges)} DSP + {len(cpu_ranges)} CPU = "
+           f"{len(dsp_ranges) + len(cpu_ranges)} segments")
     print(f"  Output dir: {_OUT_DIR}")
 
 

@@ -1,5 +1,25 @@
 # Multi-Graph Context Refactor Plan
 
+> **STATUS (2026-05-12): IMPLEMENTED BUT NOT IN USE.**
+>
+> The refactor itself works end-to-end: bundles build, the runtime walks
+> the schedule, all dispatches return `QNN_SUCCESS`. **However**, loading
+> a multi-graph context binary silently crashes the cDSP user process
+> domain on this firmware (QRB5165 v66). The host runtime cannot see the
+> crash and reports a clean run while the DSP has been dead for most of
+> it. Confirmed via on-board ramdumps and kernel `fastrpc_mem_map_to_dsp`
+> failures — see `qnn_models/QRB5165_MULTIGRAPH_CDSP_CRASH_FORENSICS.md`.
+>
+> **Do not enable in production.** The canonical schedule continues to
+> use single-graph contexts at budget=9 (2561 ms / 1.24× speedup).
+>
+> The pipeline (`bundles_from_schedule.py` → on-board build script →
+> `deploy_and_run.sh`) is preserved end-to-end so that, when the
+> firmware is fixed (or we move to a chip with a usable op-package),
+> enabling multi-graph is a one-line schedule-side change. The
+> ~2272 ms / 1.40× target documented below remains the *theoretical*
+> ceiling — not the current achievable.
+
 ## Why
 
 QRB5165 v66 firmware caps simultaneous DSP/HTA contexts at ~30 and
