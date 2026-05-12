@@ -4,6 +4,13 @@ Status: end-to-end pipeline working; the budgeted-context runtime ran the
 v3 bundle-aware schedule to completion with measured wall close to
 prediction. See `plots/v3_bundles_vs_baseline.png` for the full comparison.
 
+> **Multi-graph context binaries are NOT enabled in the canonical run.**
+> The refactor exists end-to-end (build pipeline + runtime support) but
+> triggers a cDSP user-PD crash on this firmware. Documented in
+> `MULTIGRAPH_REFACTOR_PLAN.md` and `qnn_models/QRB5165_MULTIGRAPH_CDSP_CRASH_FORENSICS.md`.
+> The working demo at 2561 ms / 1.24× uses single-graph contexts (one
+> graph per `.bin` file).
+
 ## Canonical run
 
 The "budgeted" runtime configuration that we'll keep as the working
