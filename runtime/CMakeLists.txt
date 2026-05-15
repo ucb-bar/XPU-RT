@@ -71,3 +71,36 @@ target_link_libraries(json_dispatch_runner PRIVATE
   ${CMAKE_DL_LIBS}
   m
 )
+
+#-------------------------------------------------------------------------------
+# xpurt_scheduler_runner
+#
+# Two-cluster scheduled dispatch runner — same shape as the SpacemiT main.c
+# in merlin/samples/SpacemiTX60/dispatch_scheduler/, but parameterized by a
+# built-in target preset table so the same binary covers spacemit_x60,
+# qrb5165, and host. Driven by:
+#   ./xpurt_scheduler_runner schedule.json --target=<name> \
+#       --vmfb_dir=<path> [--telemetry_jsonl=...] [--schedule_next=...]
+#-------------------------------------------------------------------------------
+add_executable(xpurt_scheduler_runner
+  tools/xpurt_scheduler_runner.c
+)
+
+target_include_directories(xpurt_scheduler_runner PRIVATE
+  "${CMAKE_CURRENT_SOURCE_DIR}/../merlin/samples/common"
+)
+
+# Same whole-archive incantation as json_dispatch_runner — IREE's HAL
+# drivers and executable loaders register via static initializers /
+# weak symbols and would be dropped by the linker without it.
+target_link_libraries(xpurt_scheduler_runner PRIVATE
+  "-Wl,--whole-archive"
+  "${XPURT_STANDALONE_LIB_PATH}"
+  "-Wl,--no-whole-archive"
+  ${_XPURT_EXTRA_ARCHIVES}
+)
+target_link_libraries(xpurt_scheduler_runner PRIVATE
+  Threads::Threads
+  ${CMAKE_DL_LIBS}
+  m
+)

@@ -160,6 +160,10 @@ cmake -B "${BUILD_DIR}" -S "${SCRIPT_DIR}" \
   "${CMAKE_EXTRA_ARGS[@]}"
 
 cmake --build "${BUILD_DIR}" --target json_dispatch_runner
+cmake --build "${BUILD_DIR}" --target xpurt_scheduler_runner
 
-echo "Done. Binary is in: ${BUILD_DIR}"
+echo "Done. Binaries in: ${BUILD_DIR}"
+echo "  json_dispatch_runner    — baseline topo-order runner"
+echo "  xpurt_scheduler_runner  — two-cluster scheduled runner (telemetry +"
+echo "                            hot-swap; --target=spacemit_x60|qrb5165|host)"
 

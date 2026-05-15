@@ -7,3 +7,5 @@ runtime/build-host/
 runtime/build-spacemit/
 runtime/dispatch_from_schedule_async/
 .ve
+tmp
+paper
