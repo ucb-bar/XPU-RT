@@ -35,8 +35,8 @@
       "claim_affected": "m15b_natural_failure_coverage",
       "created_at_utc": "2026-05-06T00:00:00Z",
       "evidence_paths": [
-        "tests/graph_compilation/test_m37_13_negative_controls.py",
-        "tests/graph_compilation/test_real_transform_coverage_m16.py",
+        "tests/graph_compilation/test_negative_controls.py",
+        "tests/graph_compilation/test_real_transform_coverage.py",
         "tests/graph_compilation/test_downstream_retry.py",
         "docs/realness/m37_12_clean_divide_admission.yaml",
         "python/compgen/graph_compilation/real_transform_differential.py"
@@ -46,6 +46,49 @@
       "last_verified_at_utc": "2026-05-06T00:00:00Z",
       "notes": "M-37.13's honest fix replaced M-37.12's hand-picked combined tolerance with two layered checks: (1) STRUCTURAL — simulator must match a tile-K-aware reference bit-exactly; this is mathematically guaranteed by the simulator's design (it enforces the same K-accumulation order as the reference); (2) SEMANTIC — Higham's matmul accumulation bound (4 * K * eps * max|A| * max|B|) derived per-case from inputs, never silently widened. The load-bearing safety has shifted from real_lowering's selected_model_is_merlin_mlp_wide whitelist to recipe_gate's single_k_iter rule + M-12's two-layered honest checks. Under correct math the structural invariant always holds; a natural M-12 differential failure now requires either a real backend codegen producing genuinely-wrong arithmetic OR a simulator implementation bug. The three end-to-end tests that previously asserted natural M-12 failure on tiny_mlp now exercise the M-15B detector + emitter against a tampered status=fail report; the structural and semantic invariants are exercised directly via TestStructuralBitEqualityVsTileKReference and TestHighamSemanticBound.",
       "required_to_close": "ship a real backend execution path (Triton or accelerator codegen) whose differential against eager exhibits genuine numerical disagreement past Higham's bound, OR widen the canonical set with a model whose region produces a structural simulator-vs-reference mismatch",
+      "status": "blocked_by_external"
+    },
+    {
+      "blocks_paper_claim": false,
+      "claim_affected": "phase_e_solver_substrate",
+      "created_at_utc": "2026-05-11T00:00:00Z",
+      "evidence_paths": [
+        "docs/realness/m66b_solver_backend_probe.yaml",
+        "docs/realness/m66d_solver_memory_planner.yaml"
+      ],
+      "id": "mosek_license_unavailable",
+      "is_bug": false,
+      "last_verified_at_utc": "2026-05-11T00:00:00Z",
+      "notes": "MOSEK is an optional licensed numeric backend. When the repo-local mosek.lic is missing or its token cannot be obtained, the planner falls back to HiGHS. The HiGHS fallback is sufficient for the M-66D memory MILP formulation; quadratic / conic formulations remain blocked by HiGHS capability (see highs_milp_fallback_limited).",
+      "required_to_close": "ship a host with MOSEK installed AND a valid license at <repo>/mosek.lic OR MOSEKLM_LICENSE_FILE",
+      "status": "blocked_by_external"
+    },
+    {
+      "blocks_paper_claim": false,
+      "claim_affected": "phase_e_overlap_glue_integration",
+      "created_at_utc": "2026-05-11T00:00:00Z",
+      "evidence_paths": [
+        "docs/realness/m68_overlap_planner.yaml"
+      ],
+      "id": "cuda_hardware_unavailable_overlap_glue_skipped",
+      "is_bug": false,
+      "last_verified_at_utc": "2026-05-11T00:00:00Z",
+      "notes": "M-68 emits a typed overlap_schedule.solved.json; consuming it inside the ASYNC glue + measuring a real CUDA differential requires CUDA hardware on the audit host. When CUDA is unavailable the glue-differential test is skipped honestly rather than faked green.",
+      "required_to_close": "run the M-68 -> ASYNC glue pipeline on a host with CUDA hardware and record the differential",
+      "status": "blocked_by_hardware"
+    },
+    {
+      "blocks_paper_claim": false,
+      "claim_affected": "phase_e_milp_fallback_capability",
+      "created_at_utc": "2026-05-11T00:00:00Z",
+      "evidence_paths": [
+        "docs/realness/m66d_solver_memory_planner.yaml"
+      ],
+      "id": "highs_milp_fallback_limited",
+      "is_bug": false,
+      "last_verified_at_utc": "2026-05-11T00:00:00Z",
+      "notes": "HiGHS's MILP capability is narrower than MOSEK's; quadratic and conic constraints that MOSEK accepts are not supported under HiGHS. When such a formulation arrives and MOSEK is unavailable, the planner returns SolverStatus.BLOCKED with this caveat in the response, not a degraded greedy heuristic.",
+      "required_to_close": "ship MOSEK with a valid license, OR add an osqp/clarabel backend that handles the quadratic/conic case",
       "status": "blocked_by_external"
     },
     {

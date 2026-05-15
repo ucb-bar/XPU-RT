@@ -38,7 +38,7 @@ forbidden:
 realness_level: production_path
 required_evidence:
 - python/compgen/graph_compilation/phase_d_slice_evidence.py (entire module)
-- tests/graph_compilation/test_phase_d_slice_evidence.py
+- tests/graph_compilation/test_vertical_slice_evidence.py
 feature_id: m65_phase_d_slices
 notes: |
   Phase D step 11 — the cross-cutting stress that proves the prior

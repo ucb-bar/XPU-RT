@@ -204,7 +204,7 @@ def test_m15b_fires_on_synthetic_real_m12_failure(tmp_path: Path) -> None:
     M-15B detector + retry-request emitter on the tampered report.
 
     This restores the end-to-end coverage that the three skipped
-    tests in test_real_transform_coverage_m16.py and
+    tests in test_real_transform_coverage.py and
     test_downstream_retry.py used to provide. The fault injection
     happens entirely on the on-disk report; no production code path
     is altered. If the M-15B detector ever silently stops scanning

@@ -20,7 +20,7 @@ realness_level: production_path
 required_evidence:
 - python/compgen/audit/fresh_agent.py (build_task_pack with full allowlist)
 - docs/generated/pass_cards/INDEX.md (auto-generated taxonomy)
-- tests/audit/test_fresh_agent_post_m34_surface.py
+- tests/audit/test_fresh_agent_pass_scheduling_surface.py
 - a real task pack containing 60 pass cards, 10 realness contracts, and the 3 compgen skills
 notes: |
   Section 20 / M-35. M-31A.4 shipped the task-pack builder + holdout

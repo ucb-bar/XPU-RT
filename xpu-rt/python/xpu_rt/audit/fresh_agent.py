@@ -1,4 +1,4 @@
-"""Fresh-agent task pack builder (M-31A.4).
+"""Fresh-agent task pack builder.
 
 Builds a directory containing exactly the files a fresh Claude Code
 session needs to run a CompGen compile task — and nothing more. The
@@ -202,8 +202,8 @@ def build_task_pack(
             metadata only; the actual file contents come from the
             current working tree.
         repo_root: Source root (defaults to the resolved package root).
-        task_prompt: Override the bundled task prompt. When None, the
-            default ``compile_holdout.md`` prompt is used.
+        task_prompt: Override the bundled task prompt. When None, a
+            generated default is used (see :func:`_default_task_prompt`).
         task_model: Holdout model id for the bundled prompt.
         task_target: Target id for the bundled prompt.
         skip_python_package: When True, omit ``python/compgen/**`` from

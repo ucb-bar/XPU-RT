@@ -21,7 +21,7 @@ realness_level: decision_affecting
 required_evidence:
 - python/compgen/graph_compilation/region_dossier.py
 - python/compgen/graph_compilation/recipe_planning.py (boundary-aware sort)
-- tests/graph_compilation/test_real_transform_coverage_m16.py
+- tests/graph_compilation/test_real_transform_coverage.py
 - tests/graph_compilation/test_recipe_verification_gate.py
 - candidate_selection.json on a real run carries cost_preview.region_dims
   and a shape-fit candidate id when the region M/N/K admit a clean-divide
@@ -30,7 +30,7 @@ notes: |
   M-37.11. Closes the dead-end loop where small / odd-shape models could
   pick only a boundary-required cached tile and never promote.
 
-  Verification: tests/graph_compilation/test_real_transform_coverage_m16.py
+  Verification: tests/graph_compilation/test_real_transform_coverage.py
   asserts greedy now picks tile_M4_N16_K16 on tiny_mlp (M=4 N=128 K=64),
   tile_M8_N16_K16 on tiny_attention. The existing M-15B end-to-end test
   ``test_m15b_downstream_retry_fires_on_real_m12_failure_under_m16``

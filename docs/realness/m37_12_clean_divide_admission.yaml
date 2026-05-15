@@ -58,10 +58,10 @@ required_evidence:
 - python/compgen/graph_compilation/recipe_gate.py (single_k_iter rule)
 - python/compgen/graph_compilation/real_transform_differential.py
   (_tile_k_eager_reference + matmul_higham_bound + layered case check)
-- tests/graph_compilation/test_m37_13_negative_controls.py
+- tests/graph_compilation/test_negative_controls.py
   (TestStructuralBitEqualityVsTileKReference +
   TestHighamSemanticBound + tampered-report end-to-end)
-- tests/graph_compilation/test_real_transform_coverage_m16.py
+- tests/graph_compilation/test_real_transform_coverage.py
   (test_bit_equality_not_claimed_when_k_iters_greater_than_one,
   test_m15b_downstream_retry_fires_on_real_m12_failure_under_m16)
 - tests/graph_compilation/test_downstream_retry.py

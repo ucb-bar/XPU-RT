@@ -114,6 +114,15 @@ allowed_nonproduction_symbols:
     forbidden_in:
       - graph_compilation.run
 
+  # ---- M-66 solver dispatch (per-kind not-implemented is the typed contract) -
+  - path: python/compgen/solve/_mosek_solve_impl.py
+    reason: "MOSEK per-kind dispatch; raising NotImplementedError on unsupported problem_kind is the typed contract — the backend converts it to SolverStatus.UNSUPPORTED in the response envelope (M-66B)"
+    forbidden_in: []
+
+  - path: python/compgen/solve/_highs_solve_impl.py
+    reason: "HiGHS per-kind dispatch; raising NotImplementedError on unsupported problem_kind is the typed contract — the backend converts it to SolverStatus.UNSUPPORTED in the response envelope (M-66B)"
+    forbidden_in: []
+
   # ---- User-extension and vendor templates (intentional fill-points) ---------
   - path: python/compgen/extensions/vendor_dialect/adapter.py
     reason: "Abstract base class for vendor adapters; abstract methods raise NotImplementedError as the Pythonic protocol marker. This IS the production behavior"
@@ -435,14 +444,6 @@ allowed_nonproduction_symbols:
 
   - path: docs/realness/m66_four_bidder_stress.yaml
     reason: "M-66's realness contract; meta-reference, not a residual"
-    forbidden_in: []
-
-  - path: docs/realness/phase_d_gap_closure.yaml
-    reason: "Phase D post-closure gap-closure meta-contract; meta-reference"
-    forbidden_in: []
-
-  - path: docs/realness/phase_c_status_tracker.yaml
-    reason: "Phase C bootstrap contract; meta-reference, not a residual"
     forbidden_in: []
 
   - path: docs/realness/m40_contract_materialization.yaml

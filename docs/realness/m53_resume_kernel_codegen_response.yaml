@@ -98,7 +98,7 @@ notes: |
     ``import_provenance_and_no_subprocess_modules`` gate runs against
     a fresh capture; resume runs do not re-execute graph_capture, so
     the trust report should be run on the original capture artefacts
-    (this is documented in phase_c_status.md, not enforced in code).
+    (operator convention, not enforced in code).
   - Real audit script preserved at ``/tmp/m53_smoke.py`` and the
     evidence-bearing test ``test_real_chain_via_cli_only`` in
     ``tests/graph_compilation/test_resume_from_kernel_codegen_response.py``.

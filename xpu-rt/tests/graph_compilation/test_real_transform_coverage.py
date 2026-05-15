@@ -347,7 +347,7 @@ def test_m15b_downstream_retry_fires_on_real_m12_failure_under_m16(
       "M-15B plumbing has zero real-failure coverage", and the
       tampered-report test exercises exactly that plumbing.
 
-    See tests/graph_compilation/test_m37_13_negative_controls.py for
+    See tests/graph_compilation/test_negative_controls.py for
     the restored end-to-end coverage. This test now delegates to it.
     """
     from compgen.graph_compilation.downstream_retry import (
