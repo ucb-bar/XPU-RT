@@ -1,0 +1,126 @@
+feature_id: phase_e_validation_framework
+claim: |
+  CompGen's solver layer is validated at five levels per the
+  user's solver-validation spec:
+
+  1. **Backend availability + routing** —
+     ``tests/solve/test_solver_backend_probe.py`` (9),
+     ``tests/solve/test_solver_routing.py`` (10),
+     ``scripts/dev/probe_solver_backends.py`` emits typed
+     ``solver_backend_status.json``.
+
+  2. **Solver correctness on known problems** —
+     ``tests/solve/test_z3_obligations.py`` (18) for proof,
+     ``tests/solve/test_placement_planner_ortools.py`` (8),
+     ``tests/solve/test_overlap_planner_ortools.py`` (7),
+     ``tests/solve/test_memory_planner_mosek_highs.py`` (10),
+     ``tests/solve/test_bandwidth_allocation.py`` (9).
+
+  3. **Negative-control failure behavior** —
+     ``tests/solve/test_solver_negative_controls.py`` (21)
+     consolidates the spec §12 table: invalid Z3 rewrites yield
+     concrete counterexamples; impossible placements / schedules
+     / memory capacities return typed INFEASIBLE; MOSEK
+     unavailable falls back to HiGHS or returns BLOCKED; corrupt
+     responses are rejected by the schema loader; backend
+     preference cannot route verification kinds to MOSEK or
+     placement kinds to Z3 (hard-typed UNSUPPORTED at the backend
+     boundary, not just at routing).
+
+  4. **Integration into CompGen artifacts** —
+     ``tests/solve/test_solver_artifact_integration.py`` (10)
+     drives all four planners, persists JSON request/response
+     pairs + ``*.solved.json``, verifies the 5 M-69 trust gates
+     pass on the resulting tree, round-trips each solved JSON
+     through its loader, and pins formulation-hash stability
+     across reruns.
+
+  5. **End-to-end execution and evidence-pack claims** —
+     ``scripts/dev/build_solver_evidence_pack.py`` emits the
+     spec §15 layout (7 CSVs + JSON + Markdown + 8 figures);
+     ``tests/solve/test_solver_evidence_pack.py`` (7) pins the
+     file layout, the claim-matrix schema (with
+     ``negative_controls_passed`` flag), and the rule that
+     ``implemented`` requires both real evidence AND verified
+     negative controls. ``scripts/dev/eval_tinyllama_solvers.py``
+     + ``tests/runtime/test_tinyllama_solver_eval.py`` (2) drive
+     the four planners against the real TinyLlama-1.1B topology
+     end-to-end.
+
+  Schema + hashing invariants (spec §3) pinned separately by
+  ``tests/solve/test_solver_schema_hashing.py`` (21).
+  Metamorphic properties (spec §13) pinned by
+  ``tests/solve/test_solver_metamorphic.py`` (14).
+  Architecture guards (spec §14) pinned by
+  ``tests/architecture/test_solver_architecture_guard.py`` (31)
+  + ``scripts/dev/audit_solver_architecture.py`` (905 files
+  scanned, no leaks).
+
+  Hard contracts (enforced by tests):
+
+  * Every backend's ``solve()`` checks ``supports()`` upfront;
+    misrouted calls return ``SolverStatus.UNSUPPORTED`` with a
+    typed ``"solver-purpose violation"`` reason. This is the
+    architectural guard that makes backend_preference safe even
+    when a caller bypasses routing.
+  * Every solver response carries ``formulation_hash``,
+    ``selected_backend``, ``status``, ``time_ms``. The schema
+    loader rejects bodies missing any required field with
+    ``KeyError``.
+  * MOSEK ``selected_backend`` is honest: the MOSEK native MILP
+    path is pinned by a test that patches ``scipy.optimize.milp``
+    to raise; the MOSEK path completes without falling through.
+  * Z3 ``unknown`` maps to ``TIMEOUT``, never to ``PROVED``.
+  * Evidence-pack claim-matrix rows tagged ``implemented`` only
+    when negative controls have passed AND evidence files are
+    non-empty.
+
+  Total Phase E solver-test count after the validation framework
+  lands: 259 (Phase E was 144 before).
+realness_level: production_path
+forbidden:
+  - regressing any of the five test levels without explicit
+    acknowledgement in the caveat ledger
+  - removing the ``supports()`` upfront check on a backend's
+    ``solve()``
+  - emitting an evidence-pack ``implemented`` row without
+    negative controls verified
+  - silent fallback paths in the MOSEK / HiGHS / Z3 backends
+required_evidence:
+  - tests/solve/test_solver_backend_probe.py
+  - tests/solve/test_solver_routing.py
+  - tests/solve/test_solver_schema_hashing.py
+  - tests/solve/test_z3_obligations.py
+  - tests/solve/test_placement_planner_ortools.py
+  - tests/solve/test_overlap_planner_ortools.py
+  - tests/solve/test_memory_planner_mosek_highs.py
+  - tests/solve/test_bandwidth_allocation.py
+  - tests/solve/test_solver_metamorphic.py
+  - tests/solve/test_solver_negative_controls.py
+  - tests/solve/test_solver_artifact_integration.py
+  - tests/solve/test_solver_evidence_pack.py
+  - tests/architecture/test_solver_architecture_guard.py
+  - scripts/dev/probe_solver_backends.py
+  - scripts/dev/audit_solver_architecture.py
+  - scripts/dev/build_solver_evidence_pack.py
+  - scripts/dev/eval_tinyllama_solvers.py
+  - python/compgen/solve/bandwidth_planner.py
+commit: 0ea0000000000000000000000000000000000000
+created_at_utc: 2026-05-12T00:00:00Z
+notes: |
+  The validation framework is "production_path" because every
+  test exercises the real shipped solver (MOSEK 11.1.11 native
+  API, HiGHS 1.14.0 via highspy, OR-Tools 9.15.6755 via cp_model,
+  Z3 4.16.0) on either small known-answer problems or the real
+  TinyLlama topology. No mocks, no greedy fallbacks. The
+  HiGHS-fallback test path patches MOSEK to ``LICENSE_MISSING``
+  and verifies the response label is honestly ``selected_backend
+  =highs``.
+
+  The architecture audit lives in
+  ``scripts/dev/audit_solver_architecture.py``; it walks the
+  ``python/compgen/`` tree and rejects any optional-solver
+  import outside the allowlist. A planted-leak test
+  (``test_audit_detects_a_leak_when_planted``) confirms the
+  audit detects a forbidden ``import mosek`` inside a synthetic
+  repo under ``python/compgen/leaky/bad.py``.

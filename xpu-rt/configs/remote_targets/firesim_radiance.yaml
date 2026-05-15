@@ -1,0 +1,12 @@
+target_id: radiance_muon
+transport: ssh
+host: ""
+user: ""
+workdir: /tmp/compgen_remote
+toolchain_probe_cmd: "riscv32-unknown-elf-gcc --version"
+build_cmd_template: "make -C $RADIANCE_KERNELS_ROOT {source} OUT={workdir}"
+run_cmd_template: "cyclotron --kernel kernel.radiance.elf --soc kernel.soc.elf"
+timeout_s: 3600
+extras:
+  provider_id: radiance_muon
+  expected_devices: ["chipyard_radiance"]

@@ -1,0 +1,96 @@
+feature_id: m84_unsupported_op_task
+claim: |
+  M-84: unsupported-op / extension-task flow end-to-end.
+
+  Implementation:
+
+  * ``python/compgen/extensions/task_flow.py`` — typed flow for
+    the four entry points:
+    - ``emit_extension_task(task, tasks_root=...,
+      kernel_facing_contract=..., region_dossier=...,
+      payload_ir_summary=...)`` writes
+      ``.rcg-artifacts/tasks/<task_id>/{extension_task.json,
+      kernel_facing_contract.json, region_dossier.json,
+      payload_ir_summary.json, allowed_outputs.json}``.
+    - ``list_extension_tasks(tasks_root=...)`` discovers task
+      directories.
+    - ``commit_extension_response(task_dir,
+      extensions_root=...)`` validates that the task's
+      ``output_dir`` contains a sandboxed
+      ``compgen_extension.yaml``, builds a per-run
+      :class:`ExtensionRegistry`, and returns a typed
+      :class:`CommitOutcome`.
+    - ``resume_after_extension(outcome)`` returns a typed
+      :class:`ResumeDecision` (``proceeded`` /
+      ``still_blocked``).
+    - ``write_commit_log(outcome, task_dir=...)`` persists the
+      typed outcome alongside the task for audit replay.
+
+  Typed enums (closed sets):
+
+  * ``COMMIT_STATUSES = (accepted, missing_extension_dir,
+    missing_manifest, rejected)``.
+  * ``RESUME_STATUSES = (proceeded, still_blocked)``.
+  * ``CommitOutcome.failed_check`` reuses the
+    :class:`RejectedExtension` enum from M-83
+    (``manifest_schema``, ``extension_sandbox_violation``,
+    ``duplicate_extension_id``) plus
+    ``missing_extension_dir`` / ``missing_manifest`` /
+    ``""`` (accepted).
+
+  Hard rule discipline:
+
+  1. **No fake registration.** A missing extension directory or
+     missing manifest produces ``status=missing_extension_dir`` /
+     ``status=missing_manifest`` — never a silent register.
+  2. **Sandbox enforced on commit.** A response declaring
+     ``allowed_write_root: ../../somewhere`` is rejected as
+     ``failed_check=extension_sandbox_violation``.
+  3. **Schema enforced.** A response with wrong
+     ``schema_version`` is rejected as
+     ``failed_check=manifest_schema``.
+  4. **Resume reflects truth.** ``proceeded`` only when
+     ``commit.status == accepted``; otherwise ``still_blocked``
+     with the typed reason.
+
+  End-to-end test exercises the full loop:
+
+  * Pipeline emits ``ext_e2e`` task with kernel-facing contract +
+    region dossier + payload IR summary.
+  * Agent writes a sandboxed ``.rcg-artifacts/extensions/ext_e2e/``
+    with a valid ``compgen_extension.yaml``.
+  * ``commit_extension_response`` validates → ``accepted``.
+  * ``resume_after_extension`` → ``proceeded``.
+  * The registry contains the new extension's provider id.
+
+  Tests (14/14 green):
+
+  * ``tests/extensions/test_unsupported_op_task.py``
+    - 3 emission tests (artifact set, round-trip, allowed_outputs
+      typing).
+    - 2 discovery tests.
+    - 5 commit tests covering accepted + every failure mode.
+    - 2 resume tests pinning proceeded / still_blocked semantics.
+    - 1 audit-log serialization test.
+    - 1 end-to-end loop test.
+realness_level: production_path
+forbidden:
+  - registering an extension before probe + schema validator pass
+  - resuming compilation without typed proceeded status
+  - commit-response bypassing manifest schema validation
+  - emitting an extension task without a kernel_facing_contract
+  - sandbox escape via task.output_dir
+required_evidence:
+  - python/compgen/extensions/task_flow.py
+  - python/compgen/extensions/manifest.py
+  - python/compgen/extensions/registry.py
+  - tests/extensions/test_unsupported_op_task.py
+  - docs/architecture/EXTENSION_PROVIDER_ARCHITECTURE.md
+commit: 35ee97f497bc69c0716c25b935f575c3cd7d63f4
+created_at_utc: 2026-05-12T00:00:00Z
+notes: |
+  Phase F-6. MCP wiring (``compgen_emit_extension_task``,
+  ``compgen_commit_extension_response``, ``compgen_list_extension_tasks``,
+  ``compgen_resume_after_extension``) is orchestration above the
+  substrate; those tools wrap the four functions in this module.
+  The substrate-level contract is what M-84 pins.

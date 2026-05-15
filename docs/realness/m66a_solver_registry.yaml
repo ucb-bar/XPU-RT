@@ -1,0 +1,40 @@
+feature_id: m66a_solver_registry
+claim: |
+  M-66A (Phase E): every solver invocation in CompGen passes through
+  a typed SolverRequest / SolverResponse envelope with a canonical
+  ``formulation_hash``. A deterministic ``ROUTING_TABLE`` maps each
+  ``SolverProblemKind`` to a small ordered preference list of
+  backends; semantic-proof kinds route ONLY to Z3, discrete
+  placement/schedule/no-overlap routes ONLY to OR-Tools CP-SAT, and
+  numeric LP/MILP prefers MOSEK with HiGHS as the open-source
+  fallback. When no available backend handles the kind, the caller
+  receives ``SolverStatus.BLOCKED`` and MUST NOT silently fall back
+  to a greedy heuristic.
+realness_level: production_path
+forbidden:
+  - routing semantic-proof kinds to MOSEK or HiGHS (the
+    ``_allowed_for_kind`` hard separation must reject this even if a
+    contributor edits ROUTING_TABLE)
+  - routing placement/schedule/overlap kinds to Z3 (same hard
+    separation)
+  - emitting a SolverResponse without ``formulation_hash`` /
+    ``selected_backend`` / ``status`` / ``time_ms``
+  - mutating SolverRequest / SolverResponse fields after construction
+    (both are frozen dataclasses)
+required_evidence:
+  - python/compgen/solve/solver_types.py
+  - python/compgen/solve/backend_registry.py
+  - python/compgen/solve/backends/base.py
+  - python/compgen/solve/routing.py
+  - python/compgen/solve/reports.py
+  - tests/solve/test_solver_types.py
+  - tests/solve/test_solver_registry.py
+  - tests/solve/test_solver_routing.py
+commit: 0e80000000000000000000000000000000000000
+created_at_utc: 2026-05-11T00:00:00Z
+notes: |
+  The envelope is consumed by every downstream planner (M-66C
+  z3_obligations, M-66D memory_planner, M-67 placement_planner,
+  M-68 overlap_planner). Backends are registered lazily via
+  ``default_registry()``; a fresh ``SolverBackendRegistry()`` lets
+  tests bypass the global cache.

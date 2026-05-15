@@ -59,6 +59,14 @@ solve = [
     "ortools>=9.8",
     "z3-solver>=4.12",
     "scipy>=1.11",
+    "highspy>=1.7",
+    "numpy>=1.26",
+]
+# Optional licensed MILP backend. The repo-local mosek.lic is auto-
+# picked up by compgen.solve.backends.mosek_backend. Without this
+# extra, memory-planner falls back to HiGHS for LP/MILP cases.
+solve-mosek = [
+    "mosek>=10.1",
 ]
 quantization = [
     "torchao>=0.16",
@@ -129,6 +137,36 @@ compile = [
 # then users pick it up via the dev bootstrap (`scripts/dev-bootstrap.sh`).
 kernels = [
 ]
+# KernelBlaster GPU sidecar (minimal): brings up the standalone GPU
+# server (`scripts/start_gpu_server.py` → `src.kernelblaster.servers.gpu`)
+# cleanly. Enough for the substrate side of the KB provider. NOT
+# the full RL search — that needs the langchain + transformers + RAG
+# stack (see ``third_party/kernelblaster/docker/requirements.txt``).
+kernelblaster-sidecar = [
+    "fastapi>=0.110",
+    "uvicorn>=0.30",
+    "pydantic>=2.0",
+    "python-multipart>=0.0.20",
+    "python-dotenv>=1.0",
+    "loguru>=0.7",
+    "requests>=2.31",
+    "psutil>=5.9",
+]
+# Full KernelBlaster RL search stack: langchain agentic loop +
+# Gemini/OpenAI clients + tokenizer for prompt accounting. Pulls
+# the sidecar extras transitively. Heavy (~2GB of wheels) — install
+# only when actually exercising the RL flow (`scripts/dev/
+# run_kernelblaster_evidence.py`).
+kernelblaster-rl = [
+    "compgen[kernelblaster-sidecar]",
+    "langchain>=0.3,<0.4",
+    "langchain-community>=0.3,<0.4",
+    "langgraph>=0.2,<0.3",
+    "openai>=1.40",
+    "transformers>=4.40",
+    "tokenizers>=0.20",
+    "pytest-asyncio>=0.23",
+]
 demo = [
     "transformers>=4.44",
     "accelerate>=0.33",
@@ -139,6 +177,9 @@ compgen = "compgen.cli:main"
 compgen-mcp = "compgen.mcp.server:main"
 compgen-run-conformance = "compgen.testing.etc_conformance:_cli"
 compgen-gemini-usage = "compgen.observability.cli:main"
+# Generic ToolCard runner. Alias for ``compgen tool …`` so every
+# registered tool gets a stable, audit-checkable CLI entry.
+compgen-tool = "compgen.cli:tool_main"
 
 # Entry-point groups CompGen discovers at startup. Each group is declared
 # here (even when empty in-repo) so user packages can rely on a stable name

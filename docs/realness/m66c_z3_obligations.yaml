@@ -1,0 +1,34 @@
+feature_id: m66c_z3_obligations
+claim: |
+  M-66C (Phase E): Z3 discharges three classes of semantic
+  obligation as real SMT queries: ``tile_index_bounds`` (LIA proof
+  that boundary-aware tiled slicing stays in bounds for all integer
+  iterations), ``copy_identity`` (Array-theory proof that an
+  inserted copy preserves values over a bounded range), and
+  ``shape_predicate_implication`` (LIA proof that a promoted
+  recipe's ``applies_when`` predicates imply a contract
+  precondition). Each proof returns ``proved`` /
+  ``sat_counterexample`` (with a concrete witness) / ``timeout`` /
+  ``unsupported`` — never a silent pass. ``KernelCertificate`` gains
+  a ``z3_obligation_report_ref`` so a cert can point at its proof
+  artifact.
+realness_level: production_path
+forbidden:
+  - returning ``proved`` when Z3 returns ``unknown`` (must map to
+    ``timeout``)
+  - returning ``proved`` when Z3 returns ``sat`` for the negation
+    (must map to ``sat_counterexample`` with the model)
+  - silently widening the obligation scope at the call site
+required_evidence:
+  - python/compgen/solve/z3_obligations.py
+  - python/compgen/kernels/kernel_certificate.py (z3_obligation_report_ref)
+  - tests/solve/test_z3_obligations.py
+commit: 0e80000000000000000000000000000000000000
+created_at_utc: 2026-05-11T00:00:00Z
+notes: |
+  The negative-control coverage is real: an off-by-one tile-bound
+  formula yields ``sat_counterexample`` with a concrete (dim, iter)
+  witness; a tampered ``out[i] = in[i] + 1`` copy yields a
+  counterexample for the existential index; a too-strong
+  ``divisible_by`` implication yields a concrete K that satisfies
+  the premise but not the conclusion.

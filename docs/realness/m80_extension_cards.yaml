@@ -1,0 +1,113 @@
+feature_id: m80_extension_cards
+claim: |
+  M-80: official provider / target / dialect cards land under
+  ``python/compgen/{providers,targets,dialects}/cards/*.yaml``.
+
+  Shipped inventory:
+
+  * **19 provider cards** (1 over the original 18 — adds the
+    existing ``claude_kernel`` agent-driven provider).
+    paper_claimable=true only on ``cffi_c`` (promote) and ``triton``
+    (promote); every other external-SDK provider stays at
+    ``probe``. ``python_reference`` is at ``verify`` (correctness
+    fallback, not paper-claimable). ``autocomp``, ``kernelblaster``,
+    ``claude_kernel`` at ``generate``.
+  * **13 target cards** spanning host_cpu, cuda_sm75/80/90,
+    rocm_gpu, aws_neuron_trn/inf, google_tpu_v5e/v6e, gemmini_mx,
+    radiance_muon, hexagon_npu, saturn_opu.
+  * **10 dialect provider cards** for cuda_tile_ir, hexagon_mlir,
+    pallas, nki, exo, gemmini_c, radiance_muon, iree, triton_mlir,
+    stablehlo.
+
+  ``python/compgen/providers/card_loader.py`` discovers cards and
+  exposes ``iter_provider_cards``, ``iter_target_cards``,
+  ``iter_dialect_cards``, ``load_all_cards``.
+
+  Hard contract enforced by ``tests/providers/test_card_inventory.py``:
+
+  1. Every card under the three roots loads via the M-79 schema.
+  2. The complete Phase F roadmap inventory is present (no missing
+     IDs).
+  3. ``paper_claimable: true`` only at ``integration_level`` of
+     ``verify`` or ``promote`` (hard rule 6).
+  4. Every SDK-gated provider declares non-empty ``required_env`` /
+     ``required_python_imports`` / ``required_commands`` so the
+     M-81 probe can block honestly (no silent disappearance).
+  5. The verify/promote count never outweighs probe/generate at
+     a 2:3 ratio — catches paper-claim inflation drift.
+  6. Every ``target_family`` a provider references has a matching
+     ``TargetCard`` (modulo synthetic ``custom_accelerator`` /
+     ``riscv_opu`` catch-alls).
+
+  Tests (12/12 green):
+
+  * ``tests/providers/test_card_inventory.py``
+
+  Vendoring confirmed forbidden: every external-SDK card uses
+  env vars (``CUDA_TILE_ROOT``, ``HEXAGON_MLIR_ROOT``,
+  ``CUTLASS_ROOT``, ``THUNDERKITTENS_ROOT``, ``CHIPYARD_ROOT``,
+  ``GEMMINI_ROOT``, ``RADIANCE_KERNELS_ROOT``,
+  ``RISCV_TOOLCHAIN_PATH``, ``NEURON_HOME``, ``AUTOCOMP_ROOT``,
+  ``KERNELBLASTER_ROOT``, ``KERNELBENCH_ROOT``, ``CAESAR_ROOT``,
+  ``MIRAGE_ROOT``, ``TILELANG_ROOT``, ``IREE_ROOT``) — never a
+  vendored checkout.
+realness_level: production_path
+forbidden:
+  - card without integration_level
+  - card with paper_claimable=true at integration_level <= probe
+  - vendoring external repositories
+  - declaring a status outside the typed enum
+  - SDK-gated provider with empty required_env/imports/commands
+  - paper-claim inflation (verify+promote outweighing probe+generate)
+required_evidence:
+  - python/compgen/providers/cards/cffi_c.yaml
+  - python/compgen/providers/cards/python_reference.yaml
+  - python/compgen/providers/cards/triton.yaml
+  - python/compgen/providers/cards/autocomp.yaml
+  - python/compgen/providers/cards/kernelblaster.yaml
+  - python/compgen/providers/cards/exo.yaml
+  - python/compgen/providers/cards/tilelang.yaml
+  - python/compgen/providers/cards/cutlass_cute.yaml
+  - python/compgen/providers/cards/bitblas.yaml
+  - python/compgen/providers/cards/thunderkittens.yaml
+  - python/compgen/providers/cards/mirage.yaml
+  - python/compgen/providers/cards/kernelbench_caesar.yaml
+  - python/compgen/providers/cards/cuda_tile_ir.yaml
+  - python/compgen/providers/cards/hexagon_mlir.yaml
+  - python/compgen/providers/cards/pallas.yaml
+  - python/compgen/providers/cards/nki.yaml
+  - python/compgen/providers/cards/gemmini_c.yaml
+  - python/compgen/providers/cards/radiance_muon.yaml
+  - python/compgen/providers/cards/claude_kernel.yaml
+  - python/compgen/targets/cards/host_cpu.yaml
+  - python/compgen/targets/cards/cuda_sm75.yaml
+  - python/compgen/targets/cards/cuda_sm80.yaml
+  - python/compgen/targets/cards/cuda_sm90.yaml
+  - python/compgen/targets/cards/rocm_gpu.yaml
+  - python/compgen/targets/cards/aws_neuron_trn.yaml
+  - python/compgen/targets/cards/aws_neuron_inf.yaml
+  - python/compgen/targets/cards/google_tpu_v5e.yaml
+  - python/compgen/targets/cards/google_tpu_v6e.yaml
+  - python/compgen/targets/cards/gemmini_mx.yaml
+  - python/compgen/targets/cards/radiance_muon.yaml
+  - python/compgen/targets/cards/hexagon_npu.yaml
+  - python/compgen/targets/cards/saturn_opu.yaml
+  - python/compgen/dialects/cards/cuda_tile_ir.yaml
+  - python/compgen/dialects/cards/hexagon_mlir.yaml
+  - python/compgen/dialects/cards/pallas.yaml
+  - python/compgen/dialects/cards/nki.yaml
+  - python/compgen/dialects/cards/exo.yaml
+  - python/compgen/dialects/cards/gemmini_c.yaml
+  - python/compgen/dialects/cards/radiance_muon.yaml
+  - python/compgen/dialects/cards/iree.yaml
+  - python/compgen/dialects/cards/triton_mlir.yaml
+  - python/compgen/dialects/cards/stablehlo.yaml
+  - python/compgen/providers/card_loader.py
+  - tests/providers/test_card_inventory.py
+commit: 35ee97f497bc69c0716c25b935f575c3cd7d63f4
+created_at_utc: 2026-05-11T00:00:00Z
+notes: |
+  Phase F-2. 19+13+10 = 42 cards. Adapter implementations for
+  most providers land in M-82 and beyond — cards-only is honest
+  here: the probe (M-81) will report ``blocked`` for every
+  external SDK that isn't installed in the current environment.

@@ -19,6 +19,14 @@ static const cg_rt_driver_vtable_t *kDrivers[] = {
 #ifdef CG_RT_WITH_CUDA
     &cg_rt_cuda_vtable,
 #endif
+    /* Scaffold backends. Each registers its driver name in the
+     * registry so ``cg_rt_instance_create("<name>", ...)`` resolves
+     * the vtable. Without the matching CG_RT_WITH_<NAME> build flag the
+     * driver returns CG_RT_ERR_UNSUPPORTED from every entry; with the
+     * flag set, the follow-up wiring binds the real vendor primitives. */
+    &cg_rt_hip_vtable,
+    &cg_rt_vulkan_vtable,
+    &cg_rt_firesim_vtable,
 };
 
 static const size_t kNumDrivers = sizeof(kDrivers) / sizeof(kDrivers[0]);

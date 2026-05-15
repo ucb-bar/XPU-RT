@@ -27,6 +27,11 @@ set(CG_RT_SOURCES
     src/core/cpu_executor.c
     src/core/queue.c
     src/drivers/cpu_sync/cpu_sync.c
+    # Phase G — backend scaffolds. Vtables compile unconditionally
+    # and return CG_RT_ERR_UNSUPPORTED until CG_RT_WITH_<NAME> is on.
+    src/drivers/hip/hip_driver.c
+    src/drivers/vulkan/vulkan_driver.c
+    src/drivers/firesim/firesim_driver.c
 )
 
 if(CG_RT_PLATFORM STREQUAL "posix")
@@ -265,6 +270,7 @@ if(CG_RT_PLATFORM STREQUAL "posix")
         tests/test_command_buffer.c
         tests/test_integration.c
         tests/test_cpu_task.c
+        tests/test_phase_g_scaffolds.c
     )
     if(CG_RT_HAVE_CUDA)
         list(APPEND CG_RT_TESTS tests/test_cuda.c)

@@ -1,0 +1,102 @@
+claim: |
+  M-91 (Phase G — §12 Dream 6): the emitted Layer-1 plan executor
+  is a **verification target**, not just an executor. Three
+  mechanical post-emit gates run on every emit and reject any
+  Layer-1 that drifts from the plan it was generated from:
+
+  1. ``compgen.runtime.verification.plan_refinement.check_plan_refinement``
+     — parses the emitted ``.c`` / ``.cpp`` and confirms every plan
+     op corresponds to one ``cg_rt_command_buffer_dispatch`` of the
+     matching ``compgen_kernel_<region_id>`` extern, in the
+     declared topological order. Failure kinds:
+     ``count_mismatch``, ``missing_dispatch``, ``unknown_dispatch``,
+     ``order_mismatch``.  Raises ``RuntimeRefinementError`` naming
+     the kind.
+  2. ``compgen.runtime.verification.abi_conformance.check_abi_conformance``
+     — scans the emit for every function-call symbol (after
+     stripping comments + string literals) and rejects any that
+     isn't ``cg_rt_*`` / ``compgen_kernel_*`` / a small allowlist
+     of control-flow keywords. Vendor primitives (``cudaMalloc``,
+     ``cuLaunchKernel``, ``hipMalloc``, ``vkCmdDispatch``, ...) are
+     named explicitly in the typed ``AbiConformanceError``.
+  3. ``compgen.runtime.verification.resource_budget.check_resource_budget``
+     — checks the emit's static allocations (push-constants bytes,
+     binding slots, kernel-extern count) against the plan-declared
+     budget and the libcompgen_rt static caps (256 bytes push
+     constants, 32 binding slots). Raises ``ResourceBudgetError``
+     naming the resource that overcommits.
+
+  ``compgen.runtime.verification.run_runtime_verification`` is the
+  aggregator: it runs all three with ``raise_on_fail=False`` so the
+  report is complete, persists
+  ``06_glue_emit/runtime_verification_report.json``, and only then
+  re-raises the first failing gate's typed error. The report's
+  schema is ``runtime_verification_report_v1``.
+
+  All three typed errors are real, named subclasses of
+  ``RuntimeError`` in ``compgen.runtime.errors`` —
+  ``RuntimeRefinementError``, ``AbiConformanceError``,
+  ``ResourceBudgetError``. Each carries the structured payload an
+  operator needs to triage (kind / symbols / resource & numeric
+  budget delta).
+
+  Test coverage (13 in tests/runtime/test_runtime_verification.py):
+  happy paths on the C11 and C++ emits; three plan-refinement
+  negative controls (drop dispatch, add phantom dispatch, swap
+  order); three ABI-conformance negative controls (inject
+  ``cudaMalloc`` / ``hipLaunchKernel`` / ``vkCmdDispatch``);
+  two resource-budget negative controls (push-constants /
+  binding-slots overcommit); one aggregator test
+  (report persisted on failure).
+commit: m91_phase_g_runtime_three_layer_closure
+created_at_utc: 2026-05-12T00:00:00Z
+forbidden:
+- silently passing the gate when the emit drifts from the plan
+- raising ``RuntimeError`` instead of the named typed subclass
+- writing a report that disagrees with the raised exception
+- ABI gate skipping symbols in macros or include files (must scan the emit source as written)
+- resource-budget gate using "soft" warnings instead of typed errors
+realness_level: production_path
+required_evidence:
+- python/compgen/runtime/verification/__init__.py
+- python/compgen/runtime/verification/plan_refinement.py
+- python/compgen/runtime/verification/abi_conformance.py
+- python/compgen/runtime/verification/resource_budget.py
+- python/compgen/runtime/verification/runner.py
+- python/compgen/runtime/errors.py (RuntimeRefinementError / AbiConformanceError / ResourceBudgetError)
+- tests/runtime/test_runtime_verification.py
+- "06_glue_emit/runtime_verification_report.json on a real run"
+feature_id: m91_runtime_refinement
+notes: |
+  Phase G M-91 — closes §12 Dream 6 ("runtime as a verification
+  target, not just an executor"). The §12 framing was that "the
+  emitted C is a refinement of the plan", "ABI conformance is
+  mechanical", and "resource budget is trivially checkable" — all
+  three are now mechanical checks with named typed errors and
+  negative-control coverage.
+
+  Negative controls (the §3 verification ladder's analogue for
+  the runtime layer): each gate has at least one fault-injection
+  test that proves the gate is real, not decorative.
+
+  - plan-refinement: drop a dispatch / add a phantom dispatch /
+    swap order → RuntimeRefinementError with the named kind.
+  - ABI conformance: inject cudaMalloc / hipLaunchKernel /
+    vkCmdDispatch → AbiConformanceError listing the symbol.
+  - resource budget: overcommit push-constants / binding slots →
+    ResourceBudgetError naming the resource.
+
+  Honest residuals:
+  - The ABI gate runs on the raw emit source, not the
+    pre-processed translation unit. M-88 / M-89 never emit user
+    macros, so this is fine in practice; if M-94 baremetal codegen
+    starts emitting macros, the gate gains a ``preproces=true``
+    option.
+  - Per-region resource budgets (e.g. each kernel's declared
+    shared-memory footprint) are not checked here; that lives in
+    the M-44 verifier (kernel-level) + M-67 placement planner
+    (plan-level) and is consumed by M-91 only when the plan's
+    manifest carries the budgets.
+  - The gate writes its report under ``06_glue_emit/`` regardless
+    of which emit (C11 / C++) it inspected; if both emits exist
+    the C11 emit is checked first by convention.

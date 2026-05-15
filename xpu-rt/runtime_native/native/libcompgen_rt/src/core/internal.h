@@ -209,4 +209,12 @@ extern const cg_rt_driver_vtable_t cg_rt_cpu_task_vtable;
 extern const cg_rt_driver_vtable_t cg_rt_cuda_vtable;
 #endif
 
+/* Additional backend scaffolds — HIP, Vulkan, FireSim.
+ * The vtables compile unconditionally; without the matching
+ * CG_RT_WITH_<NAME> flag every entry returns CG_RT_ERR_UNSUPPORTED
+ * so callers receive a typed response rather than a link failure. */
+extern const cg_rt_driver_vtable_t cg_rt_hip_vtable;
+extern const cg_rt_driver_vtable_t cg_rt_vulkan_vtable;
+extern const cg_rt_driver_vtable_t cg_rt_firesim_vtable;
+
 #endif /* COMPGEN_RT_INTERNAL_H_ */

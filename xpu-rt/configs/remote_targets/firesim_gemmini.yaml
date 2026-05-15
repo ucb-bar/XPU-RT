@@ -1,0 +1,12 @@
+target_id: gemmini_mx
+transport: ssh
+host: ""
+user: ""
+workdir: /tmp/compgen_remote
+toolchain_probe_cmd: "riscv64-unknown-elf-gcc --version"
+build_cmd_template: "riscv64-unknown-elf-gcc -O2 -static -o kernel.elf {source} -lgemmini"
+run_cmd_template: "spike pk kernel.elf"
+timeout_s: 3600
+extras:
+  provider_id: gemmini_c
+  expected_devices: ["chipyard_gemmini"]

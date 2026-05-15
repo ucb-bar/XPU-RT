@@ -1,0 +1,12 @@
+target_id: hexagon_npu
+transport: ssh
+host: ""
+user: ""
+workdir: /tmp/compgen_remote
+toolchain_probe_cmd: "hexagon-clang --version"
+build_cmd_template: "hexagon-clang -O3 -c {source} -o kernel.o"
+run_cmd_template: "hexagon-sim kernel.o"
+timeout_s: 1800
+extras:
+  provider_id: hexagon_mlir
+  expected_devices: ["hexagon_npu"]

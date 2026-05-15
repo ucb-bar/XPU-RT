@@ -1,0 +1,83 @@
+claim: |
+  M-89 (Phase G — §12 Dream 1, companion to M-88): a **C++ host plan
+  executor is emitted** per-workload from the same M-46 plan that
+  M-88 (C11) and M-47/M-51/M-52 (Python) consume, baked for the
+  ``cuda`` driver. The emitter at
+  ``compgen.runtime.glue_emit.cpp_host.emit_cpp_host_executor``
+  produces three artefacts under ``06_glue_emit/`` (sharing the
+  ``generated_plan_executor.h`` ABI with M-88):
+
+  - ``generated_plan_executor.cpp`` — ``extern "C" compgen_run`` that
+    opens a ``cuda`` device via ``cg_rt_instance_create("cuda", ...)``,
+    builds a command buffer, dispatches one
+    ``cg_rt_command_buffer_dispatch`` per region in topological order
+    with the CUDA push-constants layout (6 × uint32: grid_xyz,
+    block_xyz), submits with a timeline semaphore, and waits for
+    completion before returning.
+  - ``generated_plan_executor.h`` — same ABI header M-88 emits.
+  - ``plan_executor_cpp_host_manifest.json`` — schema-versioned;
+    ``abi.driver_name = "cuda"``, ``abi.push_constants_layout =
+    "u32[6]:grid_xyz,block_xyz"``, ``abi.uses_only_cg_rt = true``.
+
+  Differential acceptance against M-88: both emitters consume the
+  same plan, both produce the same ``region_order``, the same
+  ``bound_regions`` list, and the same PLAN_VIOLATION code map.
+  The M-91 D6 plan-refinement gate generalises this invariant:
+  every plan op corresponds to exactly one emit launch in the
+  declared order, regardless of the emit target.
+
+  Compilation acceptance: the emit compiles cleanly with
+  ``c++ -std=c++17 -Wall -Wextra -fsyntax-only`` against
+  ``runtime/native/libcompgen_rt/include`` (verified by
+  ``test_emit_parses_with_cxx_fsyntax_only``).
+commit: m89_phase_g_runtime_three_layer_closure
+created_at_utc: 2026-05-12T00:00:00Z
+forbidden:
+- calling vendor primitives directly (cudaMalloc, cuLaunchKernel, cuMemcpy*) — must go through cg_rt_*
+- emitting C++ source with hand-written control flow not derived from the plan
+- omitting any PLAN_VIOLATION_<KIND> check covered by M-48 / M-61
+- emitting non-deterministic source (the .cpp must be byte-stable across reruns)
+- generating files at any path other than 06_glue_emit/
+- skipping cg_rt_semaphore_wait at the end of compgen_run
+realness_level: production_path
+required_evidence:
+- python/compgen/runtime/glue_emit/__init__.py
+- python/compgen/runtime/glue_emit/cpp_host.py
+- python/compgen/runtime/glue_emit/c11_baremetal.py
+- tests/runtime/test_glue_emit_cpp_host.py
+- runtime/native/libcompgen_rt/include/compgen_rt/compgen_rt.h
+- "06_glue_emit/generated_plan_executor.cpp on a real run"
+- "06_glue_emit/plan_executor_cpp_host_manifest.json on a real run"
+feature_id: m89_cpp_host_emitter
+notes: |
+  Phase G M-89 — second §12 Dream-1 emit target. Twin of M-88.
+
+  Tests landed: 11 in tests/runtime/test_glue_emit_cpp_host.py:
+  - schema (emit produces .cpp + .h + manifest);
+  - manifest carries driver_name=cuda + push_constants_layout;
+  - byte stability across reruns;
+  - c++ -fsyntax-only syntactic validity (compiler-gated);
+  - ABI lint: only cg_rt_* and compgen_kernel_* externs;
+  - differential vs M-88 C11 emit on the same plan: same
+    region_order, same bound_regions, same PLAN_VIOLATION codes;
+  - dispatch count = bound region count;
+  - unbound region triggers PLAN_VIOLATION_UNBOUND_REGION path;
+  - header coexists with M-88's emit in the same 06_glue_emit dir.
+
+  Architectural framing: the emit is just **the same shape** as
+  M-88 with a different driver name baked in. This is exactly the
+  §12 Dream-1 invariant: the plan is the same; the emit target
+  differs. M-90 (PlanDispatchTable) generalises this so a single
+  emit can carry several plans, each one a Dream-1 sibling.
+
+  Honest residuals:
+  - End-to-end CUDA execution differential against M-52's Python
+    CUDA emitter is gated on real CUDA hardware; the gated test
+    lives in ``tests/native/test_cpp_host_cuda_integration.py``
+    (not auto-run in CI without a CUDA device).
+  - The push-constants block is reserved with placeholder grid/block
+    dims (1,1,1, 64,1,1); M-49's binding map writes the real launch
+    geometry per-region.
+  - The kernel-pack TU (``compgen_kernel_*`` definitions) is M-49's
+    territory; the M-89 emit is the host launch loop that M-49's
+    kernels register against.

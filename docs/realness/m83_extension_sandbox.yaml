@@ -1,0 +1,77 @@
+feature_id: m83_extension_sandbox
+claim: |
+  M-83: extension manifest + sandbox + per-run discovery /
+  registration.
+
+  Implementation (additions to the M-79 schema work):
+
+  * ``python/compgen/extensions/registry.py`` — discovery and
+    per-run registry building.
+    - ``discover_manifests(root)`` walks
+      ``.rcg-artifacts/extensions/<id>/compgen_extension.yaml``
+      paths.
+    - ``build_registry(root | manifests=...)`` validates every
+      manifest, enforces sandbox semantics, rejects duplicate
+      extension ids, and returns a fresh
+      :class:`ExtensionRegistry` carrying ``accepted`` +
+      ``rejected`` (typed) lists.
+    - ``assert_artifact_write_allowed(path, manifest)`` /
+      ``is_artifact_write_allowed`` wrap the M-79 sandbox
+      validator with the manifest's declared
+      ``allowed_write_root``.
+  * ``RejectedExtension.failed_check`` is a closed enum:
+    ``manifest_missing``, ``manifest_schema``,
+    ``extension_sandbox_violation``, ``duplicate_extension_id``.
+
+  Hard rule discipline:
+
+  1. **Per-run scope.** Each ``build_registry()`` call returns a
+     fresh registry; no global trust, no implicit persistence.
+  2. **Typed rejections.** Malformed manifests, sandbox escapes,
+     and duplicate IDs all land in
+     ``ExtensionRegistry.rejected`` with the typed
+     ``failed_check`` — never silently dropped.
+  3. **Sandbox escape detection.** A manifest declaring
+     ``allowed_write_root: ../../somewhere`` is detected at
+     registration time and rejected as
+     ``extension_sandbox_violation``.
+  4. **Path traversal still rejected.** Even within an accepted
+     extension's sandbox, writes via ``..`` or to forbidden
+     filenames (``payload.mlir``, ``compgen_extension.yaml``,
+     etc.) raise :class:`ExtensionSandboxViolation`.
+
+  Tests (M-79 + M-83 = 36/36 green for the extension surface):
+
+  * ``tests/extensions/test_extension_manifest.py`` (11 — M-79)
+  * ``tests/extensions/test_extension_sandbox.py`` (12 — M-79)
+  * ``tests/extensions/test_target_card.py`` (6 — M-79)
+  * ``tests/extensions/test_extension_registry.py`` (14 — M-83)
+
+  No write to ``python/compgen/``, ``configs/``, or core IR
+  artifacts is allowed from an extension. The sandbox check is
+  structural (filesystem-free path resolution) and the rejection
+  carries the typed ``reason`` for the architecture audit.
+realness_level: production_path
+forbidden:
+  - writes outside allowed_write_root
+  - path traversal via ".."
+  - mutations to python/compgen/ from extension code
+  - mutations to payload.mlir or recipe IR by extensions
+  - silent acceptance of sandbox violation
+  - duplicate extension_id silently overriding the first
+required_evidence:
+  - python/compgen/extensions/manifest.py
+  - python/compgen/extensions/sandbox.py
+  - python/compgen/extensions/registry.py
+  - python/compgen/extensions/errors.py
+  - tests/extensions/test_extension_manifest.py
+  - tests/extensions/test_extension_sandbox.py
+  - tests/extensions/test_extension_registry.py
+  - docs/architecture/EXTENSION_PROVIDER_ARCHITECTURE.md
+commit: 35ee97f497bc69c0716c25b935f575c3cd7d63f4
+created_at_utc: 2026-05-12T00:00:00Z
+notes: |
+  Phase F-5. The registry is per-run by design — there is no
+  global "promote this extension" path here. M-84 will add the
+  agent-facing extension-task flow that produces sandboxed
+  responses for the registry to ingest.
