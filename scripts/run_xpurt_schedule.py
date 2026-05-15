@@ -355,7 +355,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--networks-json",
         type=str,
-        default="data/toplevel/networks_periodic_profile.json",
+        default="xpu-rt/data/toplevel/networks_periodic_profile.json",
         help="Path to the top-level networks dependencies JSON file (default: data/toplevel/networks_periodic_profile.json)"
     )
     parser.add_argument(

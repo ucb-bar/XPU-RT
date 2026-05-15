@@ -47,7 +47,7 @@ sys.path.insert(0, str(_XPU_RT_ROOT))
 _MERLIN = pathlib.Path("/scratch2/agustin/merlin")
 sys.path.insert(0, str(_MERLIN / "tools" / "kernels"))
 
-from qnn_scheduler.cost_table import CostTable  # noqa: E402
+from xpu_rt.targets.backends.qnn.cost_table import CostTable  # noqa: E402
 
 
 _OP_SUMMARY_RE = re.compile(r"conv_(\d+)x(\d+)x(\d+)x(\d+)x(\d+)x(\d+)_")
@@ -391,7 +391,7 @@ def main() -> int:
     ap.add_argument("--breakdowns", type=pathlib.Path,
                     default=_MERLIN / "build/het/qrb5165_cpu/breakdowns")
     ap.add_argument("--cost-table", type=pathlib.Path,
-                    default=_XPU_RT_ROOT / "qnn_scheduler/qrb5165_costs.json")
+                    default=_XPU_RT_ROOT / "xpu-rt/python/xpu_rt/targets/backends/qnn/qrb5165_costs.json")
     ap.add_argument("--cache-dir", type=pathlib.Path,
                     default=_MERLIN / "build/qnn_per_dispatch_cache")
     ap.add_argument("--work-dir", type=pathlib.Path,

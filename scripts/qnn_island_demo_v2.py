@@ -31,15 +31,15 @@ _HERE = pathlib.Path(__file__).resolve()
 _ROOT = _HERE.parent.parent
 sys.path.insert(0, str(_ROOT))
 
-from qnn_scheduler.cost_table import CostTable  # noqa: E402
-from qnn_scheduler.island_dag import (  # noqa: E402
+from xpu_rt.targets.backends.qnn.cost_table import CostTable  # noqa: E402
+from xpu_rt.targets.backends.qnn.island_dag import (  # noqa: E402
     IslandCandidate,
     IslandVariantGroup,
     QParams,
     TensorSpec,
 )
-from qnn_scheduler.scheduler import schedule_groups  # noqa: E402
-from qnn_scheduler.seed_table_qrb5165 import seed  # noqa: E402
+from xpu_rt.targets.backends.qnn.scheduler import schedule_groups  # noqa: E402
+from xpu_rt.targets.backends.qnn.seed_table_qrb5165 import seed  # noqa: E402
 
 
 def _ts(name: str, shape: tuple[int, ...], dtype: str,

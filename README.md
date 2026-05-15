@@ -56,17 +56,20 @@ XPU-RT/
 │   ├── native/libxpu_rt/         # core C/CUDA runtime + drivers
 │   ├── src/  include/  templates/
 │   └── tools/                    # json_dispatch_runner, xpurt_scheduler_runner
-├── qnn_scheduler/                # QRB5165 cost model + island DAG scheduler
-├── qnn_models/                   # ONNX → TFLite → QNN DLC conversion flow
+│   └── targets/backends/qnn/     # QRB5165 cost model + island DAG scheduler
+│                                 # (CompGen backend pattern; was qnn_scheduler/)
+├── models/qnn/                   # ONNX → TFLite → QNN DLC conversion tooling
 ├── sims/IsaacLab/                # robotics simulation environment (submodule)
 ├── merlin/                       # SpacemiT/QRB5165 compiler toolchain (submodule)
 ├── zephyr-chipyard-sw/           # embedded RTOS support (submodule)
-├── paper/  plots/  docs/         # documentation and analysis
+├── docs/                         # documentation
 ├── third_party/                  # vendored: autocomp, kernelblaster, llvm-project,
 │                                 #           npu_model, pi0-quant, zephyr, cuda-tile
 ├── scripts/                      # heterogeneous_loop, qnn_island_demo,
 │                                 # run_xpurt_schedule, profiling, MCP helpers
-└── data/  results/               # op-definition KB + audit-seed evidence
+├── xpu-rt/data/                  # op-definition KB + per-model fixtures
+├── xpu-rt/audit_seed/            # tracked input seeds for the audit framework
+└── build/                        # gitignored: paper/, plots/, results/ generated outputs
 ```
 
 ## Compiler generator (`xpu-rt`)

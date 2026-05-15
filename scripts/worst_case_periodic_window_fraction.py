@@ -77,7 +77,7 @@ def main() -> None:
     parser.add_argument(
         "--networks-json",
         type=str,
-        default="data/toplevel/networks_periodic_profile.json",
+        default="xpu-rt/data/toplevel/networks_periodic_profile.json",
     )
     parser.add_argument("--repo-root", type=str, default=_repo_root)
     parser.add_argument(

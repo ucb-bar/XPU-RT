@@ -310,7 +310,7 @@ def main() -> None:
     parser.add_argument(
         "--networks-json",
         type=str,
-        default="data/toplevel/networks_periodic_profile.json",
+        default="xpu-rt/data/toplevel/networks_periodic_profile.json",
         help="Networks JSON (same shape as run_xpurt_schedule).",
     )
     parser.add_argument(

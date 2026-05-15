@@ -49,7 +49,7 @@ _HERE = pathlib.Path(__file__).resolve()
 _XPU_RT_ROOT = _HERE.parent.parent
 sys.path.insert(0, str(_XPU_RT_ROOT))
 
-from qnn_scheduler.cost_table import CostTable  # noqa: E402
+from xpu_rt.targets.backends.qnn.cost_table import CostTable  # noqa: E402
 
 _DTYPE_MAP = {
     "f32": "fp32", "f16": "fp16",
@@ -142,7 +142,7 @@ def main() -> int:
                     default="/scratch2/agustin/merlin/build/het/qrb5165_cpu/breakdowns",
                     type=pathlib.Path)
     ap.add_argument("--cost-table",
-                    default=_XPU_RT_ROOT / "qnn_scheduler" / "qrb5165_costs.json",
+                    default=_XPU_RT_ROOT / "xpu-rt" / "python" / "xpu_rt" / "targets" / "backends" / "qnn" / "qrb5165_costs.json",
                     type=pathlib.Path)
     ap.add_argument("--out-dir",
                     default=_XPU_RT_ROOT / "build" / "het",

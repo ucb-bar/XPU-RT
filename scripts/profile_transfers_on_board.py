@@ -43,7 +43,7 @@ from typing import Iterable
 _HERE = pathlib.Path(__file__).resolve()
 _ROOT = _HERE.parent.parent
 sys.path.insert(0, str(_ROOT))
-from qnn_scheduler.cost_table import CostTable  # noqa: E402
+from xpu_rt.targets.backends.qnn.cost_table import CostTable  # noqa: E402
 
 _BPE = {"uint8": 1, "fp16": 2, "fp32": 4}
 
@@ -221,7 +221,7 @@ def _yolov8_unique_volumes() -> list[int]:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--cost-table",
-                    default=_ROOT / "qnn_scheduler" / "qrb5165_costs.json",
+                    default=_ROOT / "xpu-rt" / "python" / "xpu_rt" / "targets" / "backends" / "qnn" / "qrb5165_costs.json",
                     type=pathlib.Path)
     ap.add_argument("--ssh-host", default="qdev")
     ap.add_argument("--iters", default=100, type=int)

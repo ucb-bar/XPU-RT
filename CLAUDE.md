@@ -8,7 +8,7 @@
 > `xpu-rt/python/xpu_rt/` with tests at `xpu-rt/tests/`); (2) the original
 > XPU-RT scheduling + runtime stack (CVX scheduler at
 > `xpu-rt/python/xpu_rt/scheduler/`, native C runtime at `runtime/`, QNN
-> scheduler at `qnn_scheduler/`, plus the `merlin/`, `sims/`,
+> scheduler at `xpu-rt/python/xpu_rt/targets/backends/qnn/`, plus the `merlin/`, `sims/`,
 > `zephyr-chipyard-sw/` submodules at the repo root). The Python package name
 > is `xpu_rt` (snake_case); the CLI binaries are `xpu-rt`, `xpu-rt-mcp`,
 > `xpu-rt-tool`, `xpu-rt-run-conformance`, `xpu-rt-gemini-usage` (kebab-case).

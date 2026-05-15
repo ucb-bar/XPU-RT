@@ -136,8 +136,10 @@ This is the minimum map every agent should keep in mind:
 | `xpu-rt/tests/` | Executable truth for behavior and coverage |
 | `xpu-rt/{configs,schemas,benchmarks,userpacks,contrib,infra}/` | Compiler-side resources |
 | `runtime/` | Native C/CUDA runtime (libxpu_rt) + Merlin/IREE dispatch runners |
-| `qnn_scheduler/` | QRB5165 cost model + island DAG scheduler (XPU-RT origin) |
-| `qnn_models/` | ONNX → TFLite → QNN DLC conversion flow |
+| `xpu-rt/python/xpu_rt/targets/backends/qnn/` | QRB5165 cost model + island DAG scheduler (XPU-RT origin, fits CompGen's targets/backends/ pattern alongside npu/, saturn_opu/) |
+| `models/qnn/` | ONNX → TFLite → QNN DLC conversion tooling (Docker + shell + per-model export scripts) |
+| `xpu-rt/audit_seed/` | Tracked seed inputs for the audit framework (was results/audit/_seed/) |
+| `build/` | Gitignored — generated paper, plots, results land here |
 | `merlin/` | SpacemiT/QRB5165 compiler toolchain (git submodule) |
 | `zephyr-chipyard-sw/` | Embedded RTOS support (git submodule) |
 | `sims/IsaacLab/` | Robotics simulation environment (git submodule) |
@@ -436,7 +438,7 @@ Quick links:
 - Trace replay CLI: `scripts/dev/replay_agent_decision.py`
 - Task pack builder CLI: `scripts/dev/fresh_agent_task_pack.py`
 - Realness contracts: `docs/realness/<feature_id>.yaml`
-- Caveat ledger seed: `results/audit/_seed/caveat_ledger.json`
+- Caveat ledger seed: `xpu-rt/audit_seed/caveat_ledger.json`
 - Operator policy: `docs/reference/realness_policy.md`
 
 ## Upcoming sections

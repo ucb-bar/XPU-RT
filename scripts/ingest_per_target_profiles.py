@@ -30,7 +30,7 @@ _HERE = pathlib.Path(__file__).resolve()
 _ROOT = _HERE.parent.parent
 sys.path.insert(0, str(_ROOT))
 
-from qnn_scheduler.cost_table import CostTable  # noqa: E402
+from xpu_rt.targets.backends.qnn.cost_table import CostTable  # noqa: E402
 
 
 # Map IREE-MLIR element types to our dtype tags.
