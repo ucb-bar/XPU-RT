@@ -4,27 +4,32 @@
 
 # Fast developer loop.
 test:
-	uv run pytest tests/ -v
+	uv run pytest xpu-rt/tests/ -v
 
 test-fast:
-	uv run pytest tests/ -v -x --timeout=120
+	uv run pytest xpu-rt/tests/ -v -x --timeout=120
 
 # Lint + format (auto-fix).
 lint:
-	uv run ruff check python/ benchmarks/ tests/
+	uv run ruff check xpu-rt/python/ xpu-rt/benchmarks/ xpu-rt/tests/
 
 format:
-	uv run ruff format python/ benchmarks/ tests/
+	uv run ruff format xpu-rt/python/ xpu-rt/benchmarks/ xpu-rt/tests/
 
 # CI-equivalent lint + format check (no mutations).
 lint-check:
-	uv run ruff check python/ benchmarks/ tests/
+	uv run ruff check xpu-rt/python/ xpu-rt/benchmarks/ xpu-rt/tests/
 
 format-check:
-	uv run ruff format --check python/ benchmarks/ tests/
+	uv run ruff format --check xpu-rt/python/ xpu-rt/benchmarks/ xpu-rt/tests/
 
 typecheck:
-	uv run mypy python/xpu_rt/
+	uv run mypy xpu-rt/python/xpu_rt/
+
+# Run the legacy XPU-RT scheduler tests (cvxpy/MOSEK two-cluster scheduler).
+# Needs the [scheduler] extra installed: pip install -e ".[scheduler]"
+scheduler-test:
+	uv run pytest xpu-rt/python/xpu_rt/scheduler/ -v
 
 lockfile-check:
 	uv lock --check
@@ -38,9 +43,9 @@ docs-strict:
 
 # Smoke: exercise the scaffold-pack + load_pack flow (mirrors pr.yml smoke-cli).
 smoke:
-	uv run xpu_rt --version
+	uv run xpu-rt --version
 	rm -rf /tmp/xpu_rt-smoke
-	uv run xpu_rt scaffold-pack --kind quantization --name smoke_pack --out /tmp/xpu_rt-smoke
+	uv run xpu-rt scaffold-pack --kind quantization --name smoke_pack --out /tmp/xpu_rt-smoke
 	PYTHONPATH=/tmp/xpu_rt-smoke/smoke_pack/src uv run python -c \
 	  "from xpu_rt.packs import load_pack; l=load_pack('smoke_pack'); print(l.manifest.name, l.manifest.kinds)"
 
@@ -61,7 +66,7 @@ clean-generated:
 
 # --- Native runtime build targets -------------------------------------------
 # build-cpu-rt:  Builds the CPU-only libxpu_rt and stages the .so into
-#                python/xpu_rt/runtime/native/prebuilt/ so the wheel
+#                xpu-rt/python/xpu_rt/runtime/native/prebuilt/ so the wheel
 #                ships it via package_data.
 # build-cuda-rt: Same but with -DCG_RT_WITH_CUDA=ON. Needs CUDA toolkit
 #                (>= 12.6) on PATH. Compiles for SM_90 (Hopper) +
@@ -69,7 +74,7 @@ clean-generated:
 #                SM_120 (workstation Blackwell, GB202).
 # clean-rt:      Wipes the prebuilt dir.
 
-PREBUILT_DIR := python/xpu_rt/runtime/native/prebuilt
+PREBUILT_DIR := xpu-rt/python/xpu_rt/runtime/native/prebuilt
 
 build-cpu-rt:
 	cmake -S runtime/native/libxpu_rt -B build/rt-cpu \

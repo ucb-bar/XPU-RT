@@ -71,6 +71,17 @@ solve-mosek = [
 quantization = [
     "torchao>=0.16",
 ]
+# CVX-based two-cluster scheduler (xpu_rt.scheduler.*) inherited from the
+# original XPU-RT scheduling stack. Disjoint from the compiler pipeline:
+# install with `pip install -e ".[scheduler]"` only if you need run_xpurt_schedule
+# / qnn_island_demo / the MOSEK-driver subprocesses.
+scheduler = [
+    "cvxpy>=1.4",
+    "pandas>=2.0",
+    "matplotlib>=3.7",
+    "scipy>=1.11",
+    "numpy>=1.26",
+]
 # CUDA dispatch path for the Event Tensor Compiler runtime.
 # Pulls cuda-python (which ships the Tile IR Python builder used by
 # `xpu_rt.transforms.emit_cuda_megakernel`) plus NVIDIA's runtime libs
@@ -173,11 +184,11 @@ demo = [
 ]
 
 [project.scripts]
-xpu_rt = "xpu_rt.cli:main"
+xpu-rt = "xpu_rt.cli:main"
 xpu-rt-mcp = "xpu_rt.mcp.server:main"
 xpu-rt-run-conformance = "xpu_rt.testing.etc_conformance:_cli"
 xpu-rt-gemini-usage = "xpu_rt.observability.cli:main"
-# Generic ToolCard runner. Alias for ``xpu_rt tool …`` so every
+# Generic ToolCard runner. Alias for ``xpu-rt tool …`` so every
 # registered tool gets a stable, audit-checkable CLI entry.
 xpu-rt-tool = "xpu_rt.cli:tool_main"
 
@@ -214,19 +225,19 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["python/xpu_rt"]
+packages = ["xpu-rt/python/xpu_rt"]
 # Include compiled artifacts (`.so`, `.dylib`, `.dll`) from the prebuilt
 # native runtime directory. Without this list, hatch's default file-include
 # pattern strips compiled binaries as build artifacts. The CMake build is
 # run as a pre-step (see Makefile target `build-cuda-rt` and
 # .github/workflows/release.yml) which stages libxpu_rt-{cuda,cpu}.{so,dylib,dll}
-# under python/xpu_rt/runtime/native/prebuilt/. When the dir holds only
+# under xpu-rt/python/xpu_rt/runtime/native/prebuilt/. When the dir holds only
 # the placeholder README, the wheel ships pure-Python — the [cuda] extra
 # raises a typed error at import time in that case.
 artifacts = [
-    "python/xpu_rt/runtime/native/prebuilt/*.so",
-    "python/xpu_rt/runtime/native/prebuilt/*.dylib",
-    "python/xpu_rt/runtime/native/prebuilt/*.dll",
+    "xpu-rt/python/xpu_rt/runtime/native/prebuilt/*.so",
+    "xpu-rt/python/xpu_rt/runtime/native/prebuilt/*.dylib",
+    "xpu-rt/python/xpu_rt/runtime/native/prebuilt/*.dll",
 ]
 
 [tool.ruff]
@@ -253,7 +264,7 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 # npu_contracts emits a Python-3.12-only f-string escape; ignored until rewritten.
-"python/xpu_rt/kernels/providers/npu_contracts.py" = ["F821"]
+"xpu-rt/python/xpu_rt/kernels/providers/npu_contracts.py" = ["F821"]
 
 [tool.mypy]
 python_version = "3.11"
@@ -263,21 +274,22 @@ ignore_missing_imports = true
 check_untyped_defs = true
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["xpu-rt/tests"]
 python_files = "test_*.py"
+pythonpath = ["xpu-rt/python", "."]
 # Centralized flake / env-gated exclusions shared by `make test`,
 # local runs, and CI. Override with `pytest --override-ini="addopts="
 # <path>` when you need to exercise one of these deliberately.
 addopts = [
     # Env-gated: external benchmark deps.
-    "--ignore=tests/benchmarks/test_runner.py",
-    "--ignore=tests/benchmarks/test_torchbench_adapter.py",
+    "--ignore=xpu-rt/tests/benchmarks/test_runner.py",
+    "--ignore=xpu-rt/tests/benchmarks/test_torchbench_adapter.py",
     # Env-gated: requires Understanding-PI0 checkout + 450M SmolVLA.
-    "--ignore=tests/test_smolvla_e2e.py",
+    "--ignore=xpu-rt/tests/test_smolvla_e2e.py",
     # Individual known-flaky test ids.
-    "--deselect=tests/agent/invent_slots/test_registrar.py::test_registrar_registers_all_slots",
-    "--deselect=tests/agent/policies/test_default.py::test_policy_against_real_registry",
-    "--deselect=tests/kernels/megakernel/test_llama_decoder_layer.py::test_tinyllama_layernorm_scales_are_loaded_from_real_checkpoint",
+    "--deselect=xpu-rt/tests/agent/invent_slots/test_registrar.py::test_registrar_registers_all_slots",
+    "--deselect=xpu-rt/tests/agent/policies/test_default.py::test_policy_against_real_registry",
+    "--deselect=xpu-rt/tests/kernels/megakernel/test_llama_decoder_layer.py::test_tinyllama_layernorm_scales_are_loaded_from_real_checkpoint",
 ]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
