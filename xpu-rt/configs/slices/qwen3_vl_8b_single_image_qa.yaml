@@ -1,0 +1,13 @@
+schema_version: slice_config_v1
+slice_id: qwen3_vl_8b_single_image_qa
+parent_model_id: qwen3_vl_8b
+description: 'Single (image, text) input.'
+inputs:
+  kind: single_image_qa
+  processor_required: false
+loader_override: null
+expected:
+  can_eager_run: true
+  can_torch_compile: true
+  can_dynamo_capture: true
+  can_slice_compile: true

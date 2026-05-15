@@ -1,0 +1,29 @@
+name: chipyard
+version: "0.1.0"
+kinds: ["TargetPack", "RuntimePack", "LLVMForkPack", "ProfilerPack"]
+owned_surfaces:
+  - soc_generator
+  - runtime_shell
+  - simulator_truth
+  - llvm_intrinsics
+sealed_surfaces:
+  - soc_generator
+  - runtime_shell
+  - simulator_truth
+generation_apertures:
+  - xdsl_dialect_generation
+  - llvm_patch_generation
+  - topology_plans
+  - runtime_policies
+integration_mode: fork_branch
+benchmark_suite: pack_integrations
+benchmark_targets: ["chipyard_smoke"]
+reference_runner: chipyard
+workspace_keys: ["chipyard"]
+third_party_names: ["chipyard"]
+expected_files: ["README.md"]
+available_profilers: ["iree_cpu_events", "iree_tracy"]
+llvm_fork_key: chipyard
+metadata:
+  vendor: ucb-bar
+

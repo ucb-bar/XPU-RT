@@ -1,0 +1,15 @@
+schema_version: provider_card_v1
+provider_id: thunderkittens
+integration_level: probe
+target_families: [cuda]
+contract_kinds: [matmul, attention, fused_region]
+emits: [cu_source, cubin]
+entrypoint: compgen.providers.adapters.thunderkittens:ThunderKittensProvider
+paper_claimable: false
+required_env: [THUNDERKITTENS_ROOT]
+required_commands: [nvcc]
+required_python_imports: []
+description: |
+  ThunderKittens peak-tile-kernel provider. Hopper-class
+  performance targets. Probe blocks with ``env_missing`` when
+  ``THUNDERKITTENS_ROOT`` is unset; not vendored.

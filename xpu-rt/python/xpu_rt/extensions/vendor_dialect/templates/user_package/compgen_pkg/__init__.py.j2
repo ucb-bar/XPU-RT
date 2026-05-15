@@ -1,0 +1,25 @@
+"""User-space CompGen vendor adapter for {{ vendor_name }}.
+
+The ``load_adapter`` factory is referenced by the
+``compgen.vendor_dialects`` entry point so that a ``pip install -e .``
+makes the adapter visible to CompGen automatically.
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+from compgen.extensions.vendor_dialect.descriptor import VendorDialectDescriptor
+
+from .adapter import {{ adapter_class_name }}
+
+_DESCRIPTOR_PATH = Path(__file__).resolve().parent / "descriptor.yaml"
+
+
+def load_adapter() -> "{{ adapter_class_name }}":
+    """Entry-point factory. Returns a fresh adapter instance."""
+    descriptor = VendorDialectDescriptor.load(_DESCRIPTOR_PATH)
+    return {{ adapter_class_name }}(descriptor)
+
+
+__all__ = ["{{ adapter_class_name }}", "load_adapter"]

@@ -1,0 +1,20 @@
+claim: |
+  Promotion is no longer all-or-nothing. The six-level gate ladder
+  (observed -> verified_fx -> verified_kernel -> characterized -> promoted ->
+  portable) demands specific evidence per level. Stripping evidence demotes
+  the level monotonically.
+commit: 5244e94e3730bdf6f2bff89c72b174ac0ee03fa6
+created_at_utc: 2026-05-05T00:00:00Z
+feature_id: m29_promotion_gates
+forbidden:
+- silent gate downgrade
+- placeholder gate evidence
+- mock verification reports
+realness_level: production_path
+required_evidence:
+- python/compgen/promotion/gates.py
+- python/compgen/promotion/promote.py (_inspect_verification hook)
+- tests/promotion/test_gates.py
+- audit.jsonl entries showing non-trivial gate_level values across canonical-22
+notes: 'Section 19 / M-29. Portable level requires >=2 distinct target_class
+  values; see caveat portable_gate_single_target.'

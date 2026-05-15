@@ -1,0 +1,101 @@
+# CompGen Target Profile: Saturn OPU (RISC-V + custom vector+outer-product unit)
+#
+# Chipyard generator: `chipyard/generators/saturn` (OPUV128D64ShuttleConfig).
+# Matches Merlin's `models/saturn_opu.yaml` so the toolchain flags agree,
+# but classifies the target for CompGen's own lowering pipeline — not IREE.
+#
+# Vector width: 128-bit VLEN (16 i8 lanes).
+# Outer-product accumulator: 8×8 MACC array, 4×(16×16) matrix regs, VOPACC
+# 4-cycle pipeline. Peak: 64 MACs/cycle (mul+add → 128 ops/cycle).
+
+name: saturn-opu-v128d64
+schema_version: "1.0"
+
+devices:
+  - device_type: accelerator
+    name: Saturn-OPU-V128D64-Shuttle
+    vendor: ucb-bar
+    compute_units:
+      - name: shuttle_rv64
+        count: 1
+        supported_dtypes: [float32, float16, int32, int8]
+        peak_tflops: 0.05
+      - name: saturn_vector
+        count: 1
+        supported_dtypes: [float32, float16, int32, int16, int8]
+        peak_tflops: 0.2
+      - name: opu_matmul
+        count: 1
+        supported_dtypes: [int8]
+        peak_tflops: 0.256  # 128 ops/cycle × 1 GHz × 2 (mul+add already counted)
+    memory_hierarchy:
+      - name: l1d
+        size_bytes: 65536       # 64 KiB Shuttle default
+        bandwidth_gbps: 64.0
+        latency_ns: 4.0
+      - name: dram
+        size_bytes: 536870912   # 512 MiB
+        bandwidth_gbps: 6.4
+        latency_ns: 80.0
+    supported_ops:
+      # int8 matmul whose inner tile matches 16x16x128 → OPU-accelerated.
+      # All other ops fall through to RVV via the vector unit.
+      - matmul
+      - conv2d
+      - im2col
+      - add
+      - mul
+      - relu
+      - layernorm
+      - softmax
+      - reduction
+    features:
+      - rv64gcv
+      - zvl128b
+      - xopu
+      - xopu_mmt4d_s8s8s32_16x16x128
+    kernel_backends:
+      - ukernel
+      - exo
+
+interconnects: []
+
+constraints:
+  max_power_w: 5
+  max_memory_gb: 0.5
+
+cost_model:
+  op_latencies:
+    mmt4d_16x16x128_xopu_cycles: 4.0     # VOPACC pipeline depth
+    rvv_matmul_16x16x128_cycles: 36.0    # strided vlse8.v baseline
+  memory_bandwidth:
+    dram: 6.4
+    l1d: 64.0
+
+metadata:
+  architecture: riscv64
+  target_class: accel_native
+  target_triple: riscv64-unknown-elf
+  target_abi: lp64d
+  mcpu_features: "+m,+a,+f,+d,+c,+v,+zvl128b,+xopu"
+  deployment_model: embedded_bare_metal
+  host_runtime: zephyr_rtos
+  chipyard_config: OPUV128D64ShuttleConfig
+  dram_base: "0x80000000"
+  # CapabilitySpec lanes exposed to the stage pipeline. Order matters:
+  # preferred → alternatives → fallback.
+  capability_lanes:
+    matmul_int8_16x16x128:
+      preferred: exo
+      alternatives: [ukernel, native_lowering]
+      feature_gate: xopu_mmt4d_s8s8s32_16x16x128
+    matmul_generic:
+      preferred: exo
+      alternatives: [native_lowering]
+      feature_gate: rv64gcv
+    conv2d:
+      preferred: exo
+      alternatives: [native_lowering]
+      feature_gate: rv64gcv
+    default:
+      preferred: native_lowering

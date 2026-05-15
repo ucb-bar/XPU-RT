@@ -1,0 +1,39 @@
+claim: |
+  Every compiler pass the agent can request has a typed pass card
+  declaring its level, family, reads/writes, preconditions,
+  invalidates, preserves_refinement, verification rungs, cost,
+  failure_modes, and example_invocation. The agent_decision_request
+  emits passes_allowed (derived from the registry) plus pass_cards
+  (full inline projections); validate_agent_decision_response asserts
+  every passes_allowed id resolves to a real card. Removing a card
+  for an exposed pass causes the typed MissingPassCard error to fire.
+commit: fade4c90677489b02a3dfbb2f25999a748b37111
+created_at_utc: 2026-05-05T00:00:00Z
+feature_id: m31_pass_card_registry
+forbidden:
+- hardcoded passes_allowed list
+- pass exposed without a card
+- silent fallback when card lookup fails
+realness_level: production_path
+required_evidence:
+- python/compgen/passes/cards.py
+- docs/generated/pass_cards/set_tile_params.yaml
+- docs/generated/pass_cards/fuse_producer_consumer.yaml
+- python/compgen/graph_compilation/agent_decision.py (registry-driven passes_allowed)
+- python/compgen/audit/negative_controls.py (real MissingPassCard control)
+- tests/passes/test_pass_card.py
+- tests/passes/test_seed_cards.py
+- agent_decision_request.json on a real run carries pass_cards block (verified on merlin_mlp_wide)
+notes: |
+  Section 20 / M-31. First milestone behind the M-31A audit gate. The
+  hardcoded passes_allowed list introduced in M-31A.3 is replaced by
+  PassCardRegistry.load(default_registry_root()) — every id is now
+  guaranteed to map to a typed metadata record. Two seed cards ship
+  for the production passes (set_tile_params, fuse_producer_consumer);
+  M-32..M-37 build on this foundation.
+
+  The MissingPassCard placeholder negative control from M-31A.5 is
+  now real fault injection (build a registry with one card missing,
+  ask the validator to resolve both ids, assert the typed error).
+  PreconditionViolation and StaleAnalysisAudit remain placeholders
+  pending M-32 / M-33.

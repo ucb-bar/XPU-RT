@@ -1,0 +1,97 @@
+# CompGen Target Profile: Heterogeneous CPU + GPU
+#
+# Multi-device profile demonstrating heterogeneous deployment.
+# CPU handles lightweight ops; GPU handles compute-intensive ops.
+
+name: cpu-plus-a100
+schema_version: "1.0"
+
+devices:
+  # Device 0: CPU
+  - device_type: cpu
+    name: Intel-Xeon-8380
+    vendor: intel
+    compute_units:
+      - name: avx512_core
+        count: 40
+        supported_dtypes: [float64, float32, float16, bfloat16, int32, int8]
+        peak_tflops: 2.0
+    memory_hierarchy:
+      - name: l1_cache
+        size_bytes: 49152  # 48 KB per core
+      - name: l2_cache
+        size_bytes: 1310720  # 1.25 MB per core
+      - name: l3_cache
+        size_bytes: 62914560  # 60 MB shared
+      - name: dram
+        size_bytes: 274877906944  # 256 GB
+        bandwidth_gbps: 204.8
+    supported_ops:
+      - matmul
+      - conv2d
+      - layernorm
+      - softmax
+      - gelu
+      - add
+      - mul
+      - embedding
+      - scatter
+      - gather
+    features:
+      - avx512
+      - amx
+      - vnni
+    kernel_backends:
+      - mkl
+      - onednn
+
+  # Device 1: GPU
+  - device_type: gpu
+    name: A100-SXM4-80GB
+    vendor: nvidia
+    compute_units:
+      - name: tensor_core
+        count: 432
+        supported_dtypes: [float32, tf32, float16, bfloat16, int8]
+        peak_tflops: 312.0
+    memory_hierarchy:
+      - name: shared_memory
+        size_bytes: 167936
+      - name: l2_cache
+        size_bytes: 41943040
+        bandwidth_gbps: 6144.0
+      - name: hbm
+        size_bytes: 85899345920
+        bandwidth_gbps: 2039.0
+    supported_ops:
+      - matmul
+      - conv2d
+      - layernorm
+      - softmax
+      - gelu
+      - attention
+    features:
+      - tf32
+      - fp16
+      - bf16
+      - cuda_graphs
+    kernel_backends:
+      - triton
+      - cutlass
+      - cublas
+
+interconnects:
+  - topology: pcie
+    bandwidth_gbps: 31.5  # PCIe Gen4 x16
+    latency_us: 5.0
+    devices: [0, 1]
+
+constraints:
+  max_power_w: 700  # CPU + GPU combined
+  max_memory_gb: 336  # 256 GB DRAM + 80 GB HBM
+
+metadata:
+  description: "CPU handles embedding/scatter/gather; GPU handles matmul/attention/compute"
+  placement_hints:
+    cpu_preferred_ops: [embedding, scatter, gather, data_preprocessing]
+    gpu_preferred_ops: [matmul, attention, conv2d, layernorm, softmax]

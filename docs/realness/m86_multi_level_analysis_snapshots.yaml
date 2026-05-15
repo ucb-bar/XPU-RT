@@ -1,0 +1,78 @@
+feature_id: m86_multi_level_analysis_snapshots
+claim: |
+  M-86: multi-level IR analysis snapshots — typed per-level
+  summaries the agent reads instead of raw IR.
+
+  Implementation:
+
+  * ``python/compgen/analysis/ir_snapshots.py`` —
+    ``IRAnalysisSnapshot`` (schema ``ir_analysis_snapshot_v1``),
+    ``RegionSummary``, ``UnsupportedProvider``,
+    ``make_available`` / ``make_not_available`` factories,
+    ``write_snapshots`` bulk writer, ``discover_snapshots`` /
+    ``load_snapshot`` loaders.
+
+  Eight closed levels::
+
+      fx_graph
+      payload_ir
+      recipe_ir
+      tile_ir
+      dialect_ir
+      kernel_artifact
+      execution_plan
+      runtime_profile
+
+  Closed ``not_available_reason`` enum::
+
+      stage_not_run | artifact_missing |
+      level_unsupported_for_run | extraction_failed
+
+  Hard rule discipline (enforced at construction time):
+
+  1. **Unknown level** → ``IRSnapshotError``.
+  2. **Status outside {``available``, ``not_available``}** → reject.
+  3. **``not_available`` without a typed reason** → reject.
+  4. **``not_available`` carrying regions** → reject.
+  5. **``available`` carrying a ``not_available_reason``** → reject.
+  6. **No silent omission.** ``write_snapshots({...}, out_dir)``
+     auto-fills every missing level with a typed
+     ``not_available + stage_not_run`` entry; the agent surface is
+     always complete with eight files.
+  7. **Mislabeled snapshot** (snapshot.level ≠ key) →
+     ``IRSnapshotError``.
+
+  Tests (17/17 green):
+
+  * ``tests/analysis/test_multi_level_analysis_snapshots.py``
+    - 8 schema-discipline tests (level enum, status enum, typed
+      reason discipline, regions-with-not_available reject, etc.).
+    - 2 round-trip tests (dict + JSON file).
+    - 4 bulk-writer tests including the "no silent omission of
+      levels" hard-rule check that every one of the 8 levels gets a
+      file even when ``write_snapshots({})`` is called.
+    - 2 RegionSummary tests.
+    - 1 filename-convention test.
+
+  M-86 is substrate; M-87 wires the snapshot emission into the
+  evidence pack so each Phase F run produces a complete agent-
+  readable layered IR view.
+realness_level: production_path
+forbidden:
+  - silent omission of a snapshot level
+  - untyped unsupported_provider reasons
+  - claiming "implemented" with empty regions[]
+  - hiding raw-IR diffs as analysis summaries
+  - status=available + not_available_reason set
+required_evidence:
+  - python/compgen/analysis/ir_snapshots.py
+  - tests/analysis/test_multi_level_analysis_snapshots.py
+  - docs/architecture/EXTENSION_PROVIDER_ARCHITECTURE.md
+commit: 35ee97f497bc69c0716c25b935f575c3cd7d63f4
+created_at_utc: 2026-05-12T00:00:00Z
+notes: |
+  Phase F-8. The substrate ships ahead of producer wiring on
+  purpose — every Phase F stage that lands afterward (kernel
+  codegen audit, execution-plan emitter, runtime profiler) can
+  attach to this layer without re-negotiating the schema. M-87's
+  evidence pack will consume the bulk-written set.

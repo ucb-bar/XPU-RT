@@ -1,0 +1,31 @@
+schema_version: pass_card_v1
+pass_id: specialize_layouts
+display_name: Layout pipeline (8/10) — specialize layouts
+level: payload
+family: layout_pipeline
+source: homemade
+impl_path: python/compgen/transforms/layout/specialize_layouts.py
+reads:
+  - 01_payload_lowering/payload.mlir
+writes:
+  - 03_recipe_planning/post_lowering/transformed_payload.mlir
+  - 03_recipe_planning/post_lowering/applied_transform_manifest.json
+preconditions:
+  - "introduce_prepacking ran"
+  - "target layout vocabulary available"
+invalidates:
+  - payload_summary
+  - graph_dossier_v3
+  - kernel_contracts
+preserves_refinement: bit_equality
+verification:
+  - structural
+cost: medium
+failure_modes:
+  - "no_target_layout_vocabulary"
+  - "ambiguous_specialization"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+notes: |
+  Layout pipeline step 8: replaces virtual encodings with concrete
+  target-specific layouts (e.g. tile_4x4_row_major). Bridge from
+  abstract layout pipeline to target-specific kernel contracts.

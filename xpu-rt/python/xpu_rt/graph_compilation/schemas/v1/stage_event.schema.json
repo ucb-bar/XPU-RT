@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://compgen.dev/schemas/v1/stage_event.schema.json",
+  "title": "stage_event_v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "stage_id",
+    "event",
+    "artifact_path",
+    "sha256",
+    "timestamp_utc",
+    "note"
+  ],
+  "properties": {
+    "schema_version": { "const": "stage_event_v1" },
+    "stage_id": { "type": "string", "minLength": 1 },
+    "event": {
+      "enum": [
+        "start",
+        "finish",
+        "artifact_written",
+        "validation_pass",
+        "validation_fail"
+      ]
+    },
+    "artifact_path": {
+      "anyOf": [{ "type": "null" }, { "type": "string", "minLength": 1 }]
+    },
+    "sha256": {
+      "anyOf": [{ "type": "null" }, { "type": "string", "pattern": "^[0-9a-f]{64}$" }]
+    },
+    "timestamp_utc": { "type": "string", "minLength": 1 },
+    "note": {
+      "anyOf": [{ "type": "null" }, { "type": "string" }]
+    }
+  }
+}

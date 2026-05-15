@@ -1,0 +1,16 @@
+schema_version: provider_card_v1
+provider_id: gemmini_c
+integration_level: probe
+target_families: [gemmini, custom_accelerator]
+contract_kinds: [matmul, pointwise, fused_region]
+emits: [c_source, elf]
+entrypoint: compgen.providers.adapters.gemmini_c:GemminiCProvider
+paper_claimable: false
+required_env: [CHIPYARD_ROOT, GEMMINI_ROOT]
+required_commands: [riscv64-unknown-elf-gcc]
+required_python_imports: []
+description: |
+  Gemmini C / libgemmini provider for Chipyard Gemmini MX
+  accelerator. Targets RISC-V toolchain and FireSim-style
+  evaluation. Blocks with ``env_missing`` until Chipyard + Gemmini
+  are checked out and the RISC-V GCC toolchain is on ``$PATH``.

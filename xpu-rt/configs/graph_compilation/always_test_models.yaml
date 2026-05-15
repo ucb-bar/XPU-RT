@@ -1,0 +1,43 @@
+# Canonical 6-model "always test" suite for the graph_compilation pipeline.
+#
+# These are the smallest models that exercise every interesting surface of
+# the capture → lower → graph-analyze → discover-gaps → close loop without
+# any external HF weight downloads. CI / acceptance audits run this suite
+# end-to-end on every change.
+#
+# Used by:
+#   python -m compgen.graph_compilation run-suite \
+#       --suite configs/graph_compilation/always_test_models.yaml \
+#       --out results/graph_compilation/<name> \
+#       --stop-after <stage>
+#
+# schema_version: graph_compilation_suite_v1
+
+schema_version: graph_compilation_suite_v1
+suite_id: always_test_models
+description: |
+  Canonical 6-model smoke suite. Each model exercises a different op
+  surface (mlp, attention, conv, multimodal proxy, robotics proxy,
+  custom unsupported op) so a regression in any one of them gets caught.
+
+target: configs/targets/host_cpu.yaml
+
+models:
+  - id: tiny_mlp
+    config: configs/models/tiny_mlp.yaml
+    role: simplest decomposition path; proves linalg.matmul / tensor / arith emission
+  - id: tiny_attention
+    config: configs/models/tiny_attention.yaml
+    role: attention surface; opaque + structural mix
+  - id: tiny_conv_block
+    config: configs/models/tiny_conv_block.yaml
+    role: conv surface; batch_norm decomposition behavior
+  - id: proxy_vlm
+    config: configs/models/proxy_vlm.yaml
+    role: multimodal proxy (img enc + text enc)
+  - id: proxy_vla
+    config: configs/models/proxy_vla.yaml
+    role: robotics policy proxy (img enc + state enc + action head)
+  - id: custom_unsupported_op
+    config: configs/models/custom_unsupported_op.yaml
+    role: explicit unsupported op surface; exercises gap_discovery + extension closure

@@ -1,0 +1,80 @@
+feature_id: m82_provider_normalization
+claim: |
+  M-82: cffi-C and Triton kernel paths are normalized as cards
+  under the M-79 substrate.
+
+  Implementation:
+
+  * ``python/compgen/providers/adapters/base.py`` —
+    ``resolve_provider_class(card)`` lazily imports the module
+    declared in ``card.entrypoint`` and returns the named class.
+    Failures map to typed ``AdapterResolutionError`` with one of
+    ``bad_entrypoint_syntax`` /  ``module_not_importable`` /
+    ``symbol_not_in_module``. No raw ``ImportError`` escapes.
+  * Existing kernel codegen modules
+    (``compgen.kernels.providers.c_reference.CReferenceProvider``
+    and
+    ``compgen.kernels.providers.triton_templates.TritonTemplateProvider``)
+    are referenced by the M-80 cards. No duplication: the
+    adapter is just an entrypoint string + a resolver. The
+    existing kernel-verifier + certificate + glue-differential
+    path is untouched.
+
+  Hard rule 1 — providers do not certify themselves — proven by
+  test::
+
+      ProviderResult is not KernelCertificate
+      ProviderResult(...) is not isinstance(..., KernelCertificate)
+
+  End-to-end: the real ``CReferenceProvider.search()`` on a
+  matmul ``KernelContract(64,64,64,f32)`` emits a real
+  ``ProviderResult`` with non-empty C source. Hard-rule check
+  ``not isinstance(result, KernelCertificate)`` passes.
+
+  Tests (9/9 green):
+
+  * ``tests/providers/test_provider_normalization.py``
+    - cffi_c resolves to ``CReferenceProvider``
+      (``KernelProvider`` Protocol-satisfying).
+    - triton resolves to ``TritonTemplateProvider``.
+    - python_reference resolves to ``CReferenceProvider``.
+    - ``ProviderResult`` is provably not a ``KernelCertificate``.
+    - Every shipped card either resolves cleanly OR raises typed
+      ``AdapterResolutionError`` (no untyped failures).
+    - Three negative controls: ``bad_entrypoint_syntax`` /
+      ``module_not_importable`` / ``symbol_not_in_module`` each
+      raise the typed reason.
+    - End-to-end ``CReferenceProvider.search()`` returns a real
+      ``ProviderResult`` whose class is not a Certificate.
+
+  No code duplication: ``python/compgen/kernels/providers/`` stays
+  exactly as it was. The M-80 card for ``triton`` was corrected to
+  reference ``TritonTemplateProvider`` (singular) to match the
+  actual class name in
+  ``compgen.kernels.providers.triton_templates``.
+realness_level: production_path
+forbidden:
+  - duplicating kernel codegen logic outside the existing provider modules
+  - bypassing the kernel verifier between ProviderResult and Certificate
+  - treating ProviderResult.status == "generated" as proof of correctness
+  - raising raw ImportError from resolve_provider_class
+  - card entrypoint not in 'module:Symbol' form
+required_evidence:
+  - python/compgen/providers/adapters/__init__.py
+  - python/compgen/providers/adapters/base.py
+  - tests/providers/test_provider_normalization.py
+  - python/compgen/kernels/providers/c_reference.py
+  - python/compgen/kernels/providers/triton_templates.py
+  - python/compgen/kernels/provider.py
+  - python/compgen/kernels/kernel_certificate.py
+  - python/compgen/providers/cards/cffi_c.yaml
+  - python/compgen/providers/cards/triton.yaml
+  - python/compgen/providers/cards/python_reference.yaml
+commit: 35ee97f497bc69c0716c25b935f575c3cd7d63f4
+created_at_utc: 2026-05-12T00:00:00Z
+notes: |
+  Phase F-4. Adapter pattern is intentionally thin — M-82 proves
+  the substrate composes with existing code without rewriting
+  it. M-84's unsupported-op flow will exercise this path further
+  when a card's entrypoint resolves to a newly-authored extension
+  provider.

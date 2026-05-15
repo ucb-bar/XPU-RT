@@ -1,0 +1,105 @@
+claim: |
+  M-52 (Phase C): when the M-46 plan's target is CUDA-class
+  (matches :func:`compgen.runtime.glue.select_adapter`'s CUDA family
+  predicate — names starting with ``cuda``, or matching ``titan-rtx``
+  / ``test-gpu-simt``), emit
+  ``06_glue_emit/generated_plan_executor_cuda.py`` alongside the M-47
+  SYNC and M-51 ASYNC executors. The CUDA executor exposes
+  ``compgen_run_cuda(io, kernels, runtime, *, mode, capture=False,
+  timeout_s=30.0)``.
+
+  Modes and behavioural guarantees:
+
+  1. ``mode="sync"``: each region dispatches sequentially with
+     ``runtime.synchronize()`` between launches; matches M-47's
+     contract topologically; output is the terminal region's value.
+  2. ``mode="async"``: per-region threading + EventTensor handshake
+     (mirrors M-51's CPU async pattern but routed through
+     :class:`CudaRuntimeAdapter`). Producer→consumer dependency edges
+     enforce ordering through ``EventTensor.notify`` /
+     ``EventTensor.wait``. Honours ``timeout_s`` for missing-notify
+     deadlock detection.
+  3. ``mode="bogus"`` raises ``ValueError`` honestly — no silent
+     fallback to "sync".
+  4. ``capture=True`` with exactly one bound region wraps the region's
+     dispatch via :class:`CudaGraphCaptureWrapper` (through the
+     adapter's ``capture_graph`` / ``replay`` methods) and returns
+     ``{"output": <out>, "captured_graph": <handle>,
+     "capture_status": "captured"}``. When the adapter reports
+     capture is unavailable (CPU-only host, no CUDA), the call falls
+     back to a single dispatch and returns
+     ``"capture_status": "unavailable_no_cuda"`` rather than silently
+     pretending capture worked.
+  5. ``capture=True`` with multi-region plan raises ``ValueError``
+     honestly — multi-region graph capture is not supported in this
+     milestone.
+
+  Non-CUDA targets skip the emit (``overall=skipped``) — the
+  M-47/M-51 files are the artifacts. The default-adapter selection
+  via ``select_adapter(PLAN_TARGET)`` on a CUDA target returns a
+  :class:`CudaRuntimeAdapter`, completing the
+  dispatch-mode-as-Recipe-decision protocol started in M-50.
+commit: 8edd7d2000000000000000000000000000000000
+created_at_utc: 2026-05-07T00:00:00Z
+forbidden:
+- emitting the CUDA executor when the plan target is not CUDA-class (must skip with overall="skipped")
+- silently substituting compute paths when capture_graph returns None instead of returning capture_status="unavailable_no_cuda"
+- accepting an invalid mode= value (only "sync" and "async" are honoured; everything else raises ValueError)
+- supporting capture=True on multi-region plans without honest ValueError (multi-region graph capture is out of scope here)
+- duplicating M-48's PLAN_VIOLATION classes or M-51's EventTensor handshake template (must be reused)
+realness_level: production_path
+required_evidence:
+- python/compgen/runtime/glue_emit/python_cuda.py
+- python/compgen/runtime/glue_emit/__init__.py (re-export)
+- python/compgen/graph_compilation/run.py (M-52 wired after M-51 in glue-emit stage)
+- tests/runtime/test_glue_emit_python_cuda.py
+- "real-driven stress: /tmp/m52_stress.py 5 phases (sync, async, capture-multi-rejected, capture-available, capture-unavailable-honest)"
+feature_id: m52_cuda_async_executor
+notes: |
+  Phase C M-52 — CUDA ASYNC + graph capture executor. Real-driven
+  stress test (5 phases on a 2-region plan with target="cuda_sm75"):
+
+  Phase A — mode="sync": 2-region linear plan; dispatch_calls=2,
+  synchronize_calls=3 (one between regions × 2, plus end), terminal
+  output==bias_out.
+
+  Phase B — mode="async": per-region threading + EventTensor
+  handshake. Sleep injected into matmul; observed order
+  ['matmul_0', 'bias_add_0']; terminal output==bias_out. Same M-51
+  semantics routed through the CUDA stub adapter.
+
+  Phase C — capture multi-region rejected: capture=True on a 2-region
+  plan raises ValueError("requires exactly one bound region; this
+  plan has 2") instead of degrading to per-region capture.
+
+  Phase D — capture available: rebuilt single-region plan; capture
+  returned a non-None handle; replay called; capture_status=captured.
+
+  Phase E — capture unavailable honest: stub adapter returns None
+  from capture_graph; M-52 fell back to a single dispatch and
+  returned capture_status=unavailable_no_cuda + captured_graph=None.
+
+  Tests: 12 in tests/runtime/test_glue_emit_python_cuda.py
+  (skip-on-non-cuda, emit-on-cuda, parses + imports, sync, async,
+  bogus mode, capture-unavailable, capture-available, capture-multi
+  rejected, unbound region plan violation, default adapter selection).
+
+  Honest residuals:
+  - The emitted code passes ``contract=<region_id>`` (a string) to
+    ``runtime.dispatch``; the real :class:`CudaRuntimeAdapter`
+    expects a real :class:`KernelContractV3` object. M-49+ wiring of
+    the contract-load-from-disk protocol is the milestone that fixes
+    this for SYNC, ASYNC, and CUDA adapters jointly. Tests therefore
+    use a stub CUDA adapter that emulates the runtime protocol
+    without inspecting the contract object. The
+    ``test_default_adapter_is_cuda`` test only verifies adapter
+    SELECTION, not real dispatch.
+  - Multi-region graph capture (one big captured graph spanning
+    several dispatched regions) is out of scope. The single-region
+    capture path mirrors :class:`CudaGraphCaptureWrapper`'s contract;
+    multi-region capture would require a fused-region forward fn
+    that the M-46 plan does not yet emit.
+  - The async path uses Python threading for the host-side spawn
+    (matches M-51). True CUDA-stream-level concurrency (a per-region
+    stream + cross-stream events) is a follow-on once the contract
+    object protocol lands.

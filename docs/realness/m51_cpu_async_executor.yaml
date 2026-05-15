@@ -1,0 +1,109 @@
+claim: |
+  M-51 (Phase C): when at least one M-46 region binding has
+  ``dispatch_model="async"``, the pipeline emits
+  ``06_glue_emit/generated_plan_executor_async.py`` alongside the
+  M-47 SYNC executor. The async executor allocates one
+  :class:`EventTensor` per producer region (one cell, ``int64``
+  counter, ``wait_count_default = max(1, consumer_count)``), runs
+  each region in its own thread, and wires producer/consumer pairs
+  through ``dependency_edges`` from the M-46 plan via
+  ``EventTensor.notify`` / ``EventTensor.wait``.
+
+  Behavioural guarantees (each backed by tests + a real-driven
+  stress phase):
+
+  1. Equivalence: on a linear dependency chain (or any DAG with
+     deterministic kernels), ``compgen_run_async`` returns the same
+     terminal output as the M-47 ``compgen_run``. The wait/notify
+     pairs serialise the producer→consumer edges so nothing reorders
+     past a value dependency.
+  2. Deterministic timeout: when a kernel never returns,
+     ``compgen_run_async(timeout_s=...)`` raises ``TimeoutError`` at
+     the deadline; sibling waiters wake via the
+     ``EventTensor._cancel`` propagation rather than hanging.
+  3. Exception propagation: a kernel raising inside any worker
+     re-raises the original exception out of ``compgen_run_async``
+     to the main thread (first failure wins; siblings cancel via the
+     event tensors).
+  4. Plan invariants: M-48's typed ``PLAN_VIOLATION_<KIND>`` classes
+     are reused unchanged, including the static
+     ``PLAN_VIOLATION_EVENT_WRITERS`` check (every event name must
+     have exactly one declaring region).
+
+  When all bindings are SYNC, ``emit_python_async_executor`` writes a
+  manifest with ``overall=skipped`` and does NOT write the executor
+  file. The M-47 SYNC file remains the only artifact.
+
+  This milestone, paired with M-50's SetDispatchMode Recipe IR
+  decision, makes the dispatch path agentically selectable on
+  CPU: an agent that picks ASYNC for a region in
+  ``candidate_selection.recipe_delta`` produces a contract with
+  ``dispatch.model=ASYNC``, and the M-46+M-51 chain emits an
+  executor that honours that choice end-to-end.
+commit: 9eaa70d000000000000000000000000000000000
+created_at_utc: 2026-05-07T00:00:00Z
+forbidden:
+- emitting the async executor when no binding has dispatch_model="async" (must be skipped instead)
+- replacing EventTensor with a hand-rolled threading.Event/threading.Condition (the EventTensor primitive is the contract surface)
+- silently swallowing kernel exceptions in worker threads instead of re-raising to the main caller
+- skipping the assert_plan call in compgen_run_async (every executor must run plan invariants before any dispatch)
+- replacing torch-tensor EventTensor counters with Python int counters (the int64 backing is part of the dialect contract)
+realness_level: production_path
+required_evidence:
+- python/compgen/runtime/glue_emit/python_async.py
+- python/compgen/runtime/glue_emit/__init__.py (re-export)
+- python/compgen/graph_compilation/run.py (M-51 emit wired after M-47)
+- tests/runtime/test_glue_emit_python_async.py
+- "real-driven stress: /tmp/m51_real_stress.py 3 phases (handshake, timeout, exception)"
+- "M-50→M-51 chain: SetDispatchMode(async) materialises ASYNC contract"
+feature_id: m51_cpu_async_executor
+notes: |
+  Phase C M-51 — CPU ASYNC executor with EventTensor. Real-driven
+  stress test (3 phases):
+
+  Phase A — handshake: a 2-region linear plan
+  (matmul_0 → bias_add_0) with both bindings dispatch_model=async.
+  EventTensor for matmul_0_done has wait_count_default=1 (one
+  consumer). Sleep injected into matmul kernel; observed ordering
+  ['matmul_0', 'bias_add_0'] in 100% of runs (10/10). dispatch_calls=2,
+  synchronize_called=True, terminal output==bias_out.
+
+  Phase B — missing notify: matmul kernel hangs for 10s; called
+  with timeout_s=0.5. TimeoutError fired with worker name in message
+  ("worker compgen-async-matmul_0 still running"). All threads
+  cleaned up via the EventTensor cancellation primitive; the test
+  process did not deadlock.
+
+  Phase C — kernel exception: matmul kernel raises
+  RuntimeError("kernel failed"). Exception propagated to the main
+  caller; siblings released via ``_cancel``.
+
+  M-50→M-51 chain stress: appended {"op": "SetDispatchMode",
+  "region": "matmul_0", "mode": "async"} to merlin_mlp_wide
+  candidate_selection.recipe_delta; materialise produced contract
+  with orchestration.dispatch.model = DispatchModel.ASYNC; canonical
+  hash_contract = 30e8bed909330277.
+
+  Tests: 10 in tests/runtime/test_glue_emit_python_async.py
+  (skip-on-sync-only, async emit, syntactic validity, single-region
+  dispatch, two-region handshake, timeout, exception propagation,
+  unbound-region plan violation, sync/async parity).
+
+  Honest residuals:
+  - The async executor uses one EventTensor per producer region
+    rather than per ``event_decl`` from the contract's
+    ``orchestration.sync.event_decls``. The M-40 contract today
+    declares a single per-region ``matmul_done`` event; M-51's
+    ``<region_id>_done`` naming is an emitter convention until
+    M-52+ wires multi-event-per-region cases (paper Fig. 5b's
+    trigger / update primitives are stubbed in
+    ``EventTensor.update`` / ``EventTensor.trigger`` already, but
+    no contract exercises them yet).
+  - persistent_launch is intentionally NOT used; the per-region
+    threading.Thread spawn is simpler and matches the M-46 plan's
+    region granularity. M-52's CUDA path will switch to graph
+    capture rather than persistent_launch.
+  - The TerminalRegion convention (last bound region in topo order)
+    is a single-output simplification. Multi-output plans require
+    M-49.x to wire the return-value protocol; for canonical models
+    today the chain is linear so terminal-region is unambiguous.

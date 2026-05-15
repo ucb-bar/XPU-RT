@@ -1,0 +1,128 @@
+# NVIDIA RTX PRO 6000 Blackwell Workstation Edition (GB202, sm_120).
+#
+# Source: NVIDIA RTX PRO 6000 Blackwell product page + the live probe
+# data from `bwrc-bwell` reported in REMOTE bridge block #008
+# (sm_count=188, compute_capability=(12,0), driver 580.82.09).
+#
+# Differences vs blackwell_b200.yaml:
+#  - sm_120 (workstation/consumer Blackwell) vs sm_100 (datacenter).
+#  - 188 SMs vs 132 (workstation chip is denser per die; the chip is
+#    GB202 not GB100).
+#  - GDDR7 (1.79 TB/s) vs HBM3e (8 TB/s).
+#  - PCIe Gen5 between GPUs in the same chassis (no NVLink/NVSwitch
+#    on the workstation cards). Multi-GPU TP workloads run over PCIe.
+#  - No FP4 confirmed yet (paper-faithful 8-way TP is unreachable on
+#    this hardware regardless; sm_120 supports cluster + TMA + FP8
+#    but FP4 support is left to runtime probe).
+#
+# This profile is the primary in-tree workstation Blackwell target.
+# Datacenter B200/B100 users should use blackwell_b200.yaml.
+
+name: blackwell-rtx-pro-6000
+schema_version: "1.0"
+
+devices:
+  - device_type: gpu
+    name: "NVIDIA RTX PRO 6000 Blackwell Workstation Edition"
+    vendor: nvidia
+    compute_units:
+      - name: tensor_core_5th_gen
+        count: 188
+        # FP8 e4m3 tensor-core peak. ~17 TFLOPS/SM × 188 SMs ≈ 3200
+        # TFLOPS. Higher SM count compensates for lower per-SM peak
+        # vs B200; aggregate FP8 throughput is comparable.
+        peak_tflops: 3200.0
+        supported_dtypes:
+          - fp8
+          - fp16
+          - bf16
+          - fp32
+          - tf32
+      - name: cuda_core
+        count: 188
+        peak_tflops: 95.0
+        supported_dtypes: [fp32, fp64]
+    memory_hierarchy:
+      - name: registers
+        size_bytes: 5963776    # 32K × 188 SMs × 4 B
+        bandwidth_gbps: 0
+      - name: shared_memory
+        size_bytes: 19267584   # 100 KB × 188 SMs (workstation has
+                               # smaller smem-per-SM than datacenter)
+        bandwidth_gbps: 14000
+      - name: l2_cache
+        size_bytes: 100663296  # 96 MB
+        bandwidth_gbps: 8000
+      - name: gddr7
+        size_bytes: 103079215104  # 96 GB GDDR7
+        bandwidth_gbps: 1790      # 1.79 TB/s
+        latency_ns: 600
+    supported_ops:
+      - matmul
+      - conv2d
+      - gemm
+      - batched_gemm
+      - reduce
+    features:
+      - tma                  # Confirmed on Blackwell architecture
+      - clusters             # cluster launch flag pending live probe
+                             # confirmation on sm_120 — see metadata
+      - fp8_tensor_cores
+      - cooperative_launch
+      - persistent_kernels
+      - graph_capture
+    kernel_backends:
+      - triton
+      - cutile
+      - cublas
+      - cudnn
+
+interconnects:
+  # PCIe Gen5 x16 between the two GPUs on the bwrc-bwell box (and on
+  # any 2-card workstation chassis). 64 GB/s effective per direction.
+  # No NVLink — this is the headline workstation/datacenter difference.
+  - topology: pcie
+    bandwidth_gbps: 64.0
+    latency_us: 5.0
+    devices: [0, 1]
+
+cost_model:
+  fp8_tflops: 3200.0
+  bf16_tflops: 1600.0
+  gddr7_bandwidth_tbps: 1.79
+
+metadata:
+  # Probe data confirmed via REMOTE block #008 (bwrc-bwell, 2026-04-25):
+  #   compute_capability=(12,0), sm_count=188, GPU 0+1 PCIe-connected.
+  compute_capability_major: 12
+  compute_capability_minor: 0
+  sm_count: 188
+  supports_tma: true
+  # Probe-confirmed on bwrc-bwell 2026-04-26 via REMOTE bridge block
+  # #011 (cudaDevAttrClusterLaunch=1, supports_clusters=true). The
+  # workstation Blackwell die exposes cluster launch + distributed
+  # shared memory the same way datacenter Blackwell does.
+  supports_clusters: true
+  supports_fp8: true
+  # Probe-confirmed: sm_120 reports supports_fp4=true.
+  supports_fp4: true
+  supports_ondevice_scheduler: true
+  # Surfaced by the live probe; useful for Phase-2 cost model fallback
+  # when targeting the bwrc-bwell box.
+  l2_cache_bytes: 134217728   # 128 MiB
+  max_shared_memory_per_block_optin_bytes: 101376  # 99 KiB
+  max_threads_per_multiprocessor: 1536
+  peak_flops_per_s: 3.2e+15
+  peak_bandwidth_bps: 1.79e+12
+  peak_bandwidth_level: gddr7
+  interconnect_topology: pcie
+  interconnect_bandwidth_gbps: 64.0
+  driver_version_baseline: "580.82.09"
+
+  # Conformance harness tuning — paper-faithful 8-way TP workloads
+  # are unreachable on this hardware. The harness skips them with a
+  # clear reason; 2-GPU PCIe-NCCL surrogates run for correctness only.
+  paper_anchored: false
+  paper_evaluation_hardware: B200_NVL_8GPU
+  conformance_max_gpus: 2
+  conformance_skip_8gpu_tp_workloads: true

@@ -1,0 +1,95 @@
+feature_id: m79_extension_substrate
+claim: |
+  M-79: extension substrate. Adds the typed schemas and registries
+  every later milestone depends on.
+
+  Module set delivered:
+
+  * ``python/compgen/providers/provider_types.py`` —
+    ``ProviderCard`` (5-level ``integration_level`` ladder),
+    ``ProviderProbeResult`` (typed status + typed blocked_reason).
+  * ``python/compgen/targets/target_types.py`` — ``TargetCard``
+    (typed ``dispatch_modes`` + ``memory_tiers`` enums).
+  * ``python/compgen/dialects/dialect_provider_types.py`` —
+    ``DialectProviderCard``.
+  * ``python/compgen/pass_tools/pass_tool_types.py`` —
+    ``PassToolCard`` (rejects ``writes: [payload_ir]`` at schema
+    level — hard rule 4).
+  * ``python/compgen/extensions/manifest.py`` —
+    ``ExtensionManifest`` (``compgen_extension_v1``) and
+    ``ExtensionTask`` (``extension_task_v1``).
+  * ``python/compgen/extensions/sandbox.py`` —
+    ``validate_sandboxed_path`` (rejects ``..`` traversal,
+    out-of-root writes, and forbidden filenames like
+    ``payload.mlir`` / ``compgen_extension.yaml``).
+  * ``python/compgen/extensions/errors.py`` — typed errors
+    (``ExtensionManifestError``, ``ExtensionSandboxViolation``,
+    ``ExtensionTaskError``).
+
+  Legacy kernel-only types (``BidPreview`` / ``ProviderResult`` /
+  ``KernelProvider``) in :mod:`compgen.kernels.provider` are NOT
+  duplicated — they remain the canonical types for kernel-codegen
+  code. The Phase F substrate is the card-driven layer wrapping
+  them.
+
+  Hard contract enforced at schema-construction time:
+
+  1. ``integration_level`` must be one of the five documented
+     levels; unknown values raise ``ProviderCardError``.
+  2. ``paper_claimable: true`` is rejected at ``integration_level``
+     of ``card_only`` / ``probe`` / ``generate`` — only ``verify``
+     and ``promote`` may carry it.
+  3. ``ProviderProbeResult`` requires a typed ``blocked_reason`` for
+     every non-``available`` status; raw exceptions in probes must
+     map to ``probe_error`` + ``blocked_reason=probe_exception``.
+  4. ``PassToolCard`` with ``writes: [payload_ir]`` raises at load
+     time — pass tools may only emit ``recipe_delta``.
+  5. Extension manifests with ``sandbox_required: true`` and an
+     empty ``allowed_write_root`` are rejected.
+
+  Tests (64/64 green):
+
+  * ``tests/providers/test_provider_cards.py`` (23 tests)
+  * ``tests/extensions/test_extension_sandbox.py`` (12 tests)
+  * ``tests/extensions/test_extension_manifest.py`` (11 tests)
+  * ``tests/extensions/test_target_card.py`` (6 tests)
+  * ``tests/pass_tools/test_pass_tool_registry.py`` (6 tests)
+  * ``tests/dialects/test_dialect_provider_cards.py`` (5 tests)
+
+  No regression: 665 existing tests across
+  ``tests/{kernels,passes,targets}`` still pass.
+realness_level: production_path
+forbidden:
+  - duplicating types from compgen.kernels.provider
+  - declaring integration_level outside the five-level ladder
+  - importing optional providers at module import time
+  - treating ProviderResult as a certificate
+  - paper_claimable=true at integration_level card_only / probe / generate
+  - "pass tools declaring writes=[payload_ir]"
+  - sandbox bypass via ".." path traversal or forbidden filenames
+required_evidence:
+  - python/compgen/providers/__init__.py
+  - python/compgen/providers/provider_types.py
+  - python/compgen/targets/target_types.py
+  - python/compgen/dialects/__init__.py
+  - python/compgen/dialects/dialect_provider_types.py
+  - python/compgen/pass_tools/__init__.py
+  - python/compgen/pass_tools/pass_tool_types.py
+  - python/compgen/extensions/errors.py
+  - python/compgen/extensions/manifest.py
+  - python/compgen/extensions/sandbox.py
+  - tests/providers/test_provider_cards.py
+  - tests/extensions/test_extension_sandbox.py
+  - tests/extensions/test_extension_manifest.py
+  - tests/extensions/test_target_card.py
+  - tests/pass_tools/test_pass_tool_registry.py
+  - tests/dialects/test_dialect_provider_cards.py
+  - docs/architecture/EXTENSION_PROVIDER_ARCHITECTURE.md
+commit: 35ee97f497bc69c0716c25b935f575c3cd7d63f4
+created_at_utc: 2026-05-11T00:00:00Z
+notes: |
+  Phase F-1. M-79 is pure substrate — schemas + sandbox path
+  enforcement, no I/O beyond YAML/JSON parsing. Registries that
+  *use* these schemas (auto-discovery, routing) land in M-80/M-81.
+  M-82 will exercise the substrate by porting cffi-C and Triton
+  through it as the first real adapters.

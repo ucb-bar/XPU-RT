@@ -1,0 +1,23 @@
+claim: |
+  Phase B graph_compilation runs synthesize a verification report and call
+  RecipePromoter.promote() so verified runs land under .compgen_cache/recipes/
+  with two-tier cache keys (contract_hash + region_signature) and a sidecar
+  promoted_recipe.json.
+commit: 5244e94e3730bdf6f2bff89c72b174ac0ee03fa6
+created_at_utc: 2026-05-05T00:00:00Z
+feature_id: m26_promotion_bridge
+forbidden:
+- mock implementation
+- precomputed promoted recipes shipped in repo
+- silent fallback when manifest missing
+notes: 'Section 19 / promotion-and-memory.md M-26.'
+realness_level: production_path
+required_evidence:
+- python/compgen/graph_compilation/promotion_bridge.py
+- python/compgen/promotion/contract_hash.py
+- python/compgen/promotion/region_signature.py
+- python/compgen/graph_compilation/run.py (bridge call site)
+- tests/promotion/test_contract_hash.py
+- tests/promotion/test_region_signature.py
+- tests/graph_compilation/test_promotion_bridge.py
+- end-to-end run on merlin_mlp_wide producing .compgen_cache/recipes/<key>/promoted_recipe.json

@@ -1,0 +1,44 @@
+schema_version: model_config_v1
+model_id: moondream2_step
+family: vlm
+source:
+  provider: huggingface
+  model_ref: vikhyatk/moondream2
+  repo_url: https://huggingface.co/vikhyatk/moondream2
+  docs_url: https://huggingface.co/vikhyatk/moondream2
+  revision: 6b714b26eea5cbd9f31e4edb2541c170afa935ba
+  verified_at: '2026-05-01T07:41:25+00:00'
+  verified_by: agustin@garden
+  source_verified: true
+loader:
+  kind: hf_transformers_vlm
+  trust_remote_code: true
+  dtype: bfloat16
+  device_policy: auto
+  # Moondream2's HfMoondream uses encode_image() / query() instead of a
+  # standard processor + forward. The adapter wraps it into a clean
+  # forward(pixel_values) -> embedding nn.Module.
+  adapter: compgen.model_admission.adapters.moondream2
+inputs:
+  kind: single_image_qa
+  processor_required: true
+compile:
+  mode: torch_compile_admission
+  backend: inductor
+  fullgraph: false
+  dynamic: true
+  # Bundled HfMoondream class predates transformers 5.x (missing all_tied_weights_keys).
+  transformers_pin: "4.52.4"
+  extra_pins:
+    - "pyvips"
+support:
+  mode: full_or_slice_smoke
+  full_model_blocking: true
+  reason: ''
+expected:
+  can_eager_run: true
+  can_torch_compile: true
+  can_dynamo_capture: true
+  can_slice_compile: true
+notes:
+- Tiny VLM (~1.9B) admission baseline; single (image, prompt) forward.

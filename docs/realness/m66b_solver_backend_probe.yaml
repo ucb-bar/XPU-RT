@@ -1,0 +1,38 @@
+feature_id: m66b_solver_backend_probe
+claim: |
+  M-66B (Phase E): four shipped solver backends (Z3, OR-Tools
+  CP-SAT, MOSEK, HiGHS) each implement a ``probe()`` that runs a
+  tiny real solve and maps every failure (``ImportError``, license
+  errors, runtime errors) to a typed
+  ``BackendAvailabilityStatus``. A CLI
+  ``scripts/dev/probe_solver_backends.py`` emits a typed JSON +
+  Markdown status report at
+  ``<out>/solver_backend_status.{json,md}``. MOSEK license absence
+  is honest (``license_missing`` / ``license_token_unavailable``);
+  the repo-local ``mosek.lic`` is auto-detected and
+  ``MOSEKLM_LICENSE_FILE`` is set silently without reading the
+  license body. The required baseline is Z3 + OR-Tools + at least
+  one of HiGHS / MOSEK.
+realness_level: hardware_backed
+forbidden:
+  - probe raising on missing optional deps (must return
+    ``import_missing``)
+  - probe reading / logging the MOSEK license body
+  - probe overwriting an existing ``MOSEKLM_LICENSE_FILE`` env var
+  - reporting MOSEK as ``available`` when the optimize call did not
+    return ``solsta.optimal`` on the probe LP
+required_evidence:
+  - python/compgen/solve/backends/z3_backend.py
+  - python/compgen/solve/backends/ortools_cp_sat_backend.py
+  - python/compgen/solve/backends/mosek_backend.py
+  - python/compgen/solve/backends/highs_backend.py
+  - scripts/dev/probe_solver_backends.py
+  - tests/solve/test_solver_backend_probe.py
+  - results/solver_probe/solver_backend_status.json on a real run
+commit: 0e80000000000000000000000000000000000000
+created_at_utc: 2026-05-11T00:00:00Z
+notes: |
+  Hardware-backed because the probe actually constructs and solves
+  a tiny LP / SAT / MILP problem on this host — not just an
+  ``import``. MOSEK absence is acceptable and is reported as a
+  typed availability status, not a failure.

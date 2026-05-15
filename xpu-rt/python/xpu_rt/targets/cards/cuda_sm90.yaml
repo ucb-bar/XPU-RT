@@ -1,0 +1,12 @@
+schema_version: target_card_v1
+target_id: cuda_sm90
+family: cuda
+vendor: nvidia
+dispatch_modes: [sync, async, static_plan, megakernel]
+memory_tiers:
+  - {name: global, kind: global, capacity_bytes: 85899345920}
+  - {name: shared, kind: shared, capacity_bytes: 233472}
+  - {name: registers, kind: registers}
+description: |
+  NVIDIA Hopper H100 (SM90) — TMA + WGMMA + cluster mode; the
+  baseline for CUDA Tile IR / ThunderKittens claims.

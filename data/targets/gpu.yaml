@@ -1,0 +1,142 @@
+- target_class: gpu
+  category: memory_hierarchy
+  pattern_name: shared_memory_staging
+  description: Stage data from global memory into shared memory (scratchpad) for reuse across threads within a thread block.  Amortises
+    the cost of high-latency HBM reads over many compute operations.
+  implementation_notes:
+  - 'Allocate shared memory tile: __shared__ float tile[TILE_M][TILE_K].'
+  - 'Cooperative load: each thread loads one or more elements from global memory.'
+  - __syncthreads() before consuming the tile.
+  - Pad shared memory to TILE_K+1 columns to avoid 32-bank conflicts.
+  - 'Double-buffer: overlap next tile''s load with current tile''s compute.'
+  source: CUTLASS/Triton
+  confidence: high
+- target_class: gpu
+  category: memory_hierarchy
+  pattern_name: l2_persistent_kernels
+  description: 'Persistent kernel design: launch exactly as many thread blocks as the GPU has SMs, and loop over work items
+    within each block.  Improves L2 cache residency by keeping the working set in L2 across iterations.'
+  implementation_notes:
+  - Set grid_dim = num_SMs (or 2 * num_SMs for latency hiding).
+  - 'Each block loops: while (tile_idx = atomicAdd(&counter, 1)) < total_tiles.'
+  - Tile ordering (Hilbert curve or row-major) affects L2 hit rate.
+  - Use cudaFuncSetAttribute to set max shared memory if needed.
+  source: CUTLASS
+  confidence: medium
+- target_class: gpu
+  category: memory_hierarchy
+  pattern_name: register_tiling
+  description: Tile the innermost compute loop into registers.  Each thread computes a small output sub-tile (e.g., 8x8 fp16
+    elements) entirely in registers, maximising arithmetic intensity before writing back.
+  implementation_notes:
+  - 'Declare register arrays: float acc[TM][TN] for the output sub-tile.'
+  - Load A and B fragments into registers from shared memory.
+  - 'Compute outer product: acc[i][j] += a[i] * b[j] in the inner loop.'
+  - 'Monitor register usage: NVIDIA GPUs have 256 32-bit registers per thread; exceeding this causes spills to local memory.'
+  source: CUTLASS/Triton
+  confidence: high
+- target_class: gpu
+  category: parallelism
+  pattern_name: output_tile_mapping
+  description: Map each thread block to one output tile.  The 2D grid covers the output matrix (or tensor), and each block
+    computes its tile by iterating over the reduction (K) dimension.
+  implementation_notes:
+  - grid_dim = (ceil(M/TILE_M), ceil(N/TILE_N)).
+  - block_dim = (WARP_M * 32, WARP_N) where warps tile the output tile.
+  - K-loop is sequential within each block.
+  - For batched ops, add a third grid dimension for the batch.
+  source: CUDA programming guide
+  confidence: high
+- target_class: gpu
+  category: parallelism
+  pattern_name: warp_cooperative_ops
+  description: Use warp-level matrix operations (mma.sync / WMMA) to exploit tensor cores.  Multiple threads in a warp cooperatively
+    compute a small matrix multiply (e.g., 16x16x16).
+  implementation_notes:
+  - Use nvcuda::wmma or inline PTX mma.sync.aligned.m16n8k16.
+  - 'Fragment types: matrix_a (row_major), matrix_b (col_major), accumulator.'
+  - Each warp computes one fragment-sized output; warps tile the thread block's output.
+  - 'Supported types: fp16, bf16, tf32, int8, fp8 (Hopper).'
+  source: NVIDIA PTX guide
+  confidence: high
+- target_class: gpu
+  category: parallelism
+  pattern_name: wave_quantisation
+  description: Choose grid dimensions so that the total number of thread blocks is a multiple of the number of SMs.  Partial
+    waves (the last wave with fewer blocks than SMs) waste GPU resources.
+  implementation_notes:
+  - Compute num_blocks = ceil(M/TILE_M) * ceil(N/TILE_N).
+  - Adjust TILE_M, TILE_N so num_blocks % num_SMs == 0 (or close to 0).
+  - For small problems, consider reducing tile sizes to fill more SMs.
+  - A100 has 108 SMs; H100 has 132 SMs.  Target multiples of these.
+  source: CUDA programming guide
+  confidence: high
+- target_class: gpu
+  category: data_movement
+  pattern_name: async_copy
+  description: Use cp.async (Ampere+) to overlap global-to-shared-memory copies with computation.  The copy bypasses L1 cache
+    and runs in the background while the SM executes math instructions.
+  implementation_notes:
+  - Use cp.async.cg.shared.global for 16-byte copies.
+  - Group copies with cp.async.commit_group and cp.async.wait_group.
+  - 'Combine with double buffering: compute on buffer 0 while loading buffer 1.'
+  - Hopper TMA (Tensor Memory Accelerator) further automates this.
+  source: CUTLASS/CUDA toolkit
+  confidence: high
+- target_class: gpu
+  category: data_movement
+  pattern_name: double_buffering
+  description: Allocate two shared memory buffers.  While the kernel computes on one buffer, the next tile is being loaded
+    into the other.  Hides memory latency behind compute.
+  implementation_notes:
+  - Declare smem[2][TILE_M][TILE_K] for double buffering.
+  - 'Iteration i: compute on smem[i % 2], load into smem[(i+1) % 2].'
+  - 'Requires careful sync: __syncthreads() between compute and next load.'
+  - Increases shared memory usage by 2x; ensure it fits in the SM budget.
+  source: CUTLASS
+  confidence: high
+- target_class: gpu
+  category: data_movement
+  pattern_name: l1_prefetch
+  description: Prefetch data into L1 cache for subsequent access.  Useful when access patterns are predictable but shared
+    memory staging is not needed.
+  implementation_notes:
+  - Use __ldg() for read-only data (uses texture cache path on some arches).
+  - LDG.128 (128-bit loads) maximise bandwidth utilisation.
+  - 'Cache hints: prefetch.global.L1 for data needed soon.'
+  source: CUDA toolkit
+  confidence: medium
+- target_class: gpu
+  category: instruction_selection
+  pattern_name: tensor_core_mma
+  description: Select tensor core instructions (mma.sync) for matrix multiply-accumulate operations in fp16, bf16, tf32, int8,
+    or fp8.  Delivers 2-16x higher throughput than CUDA cores for supported types.
+  implementation_notes:
+  - 'fp16 mma.sync.aligned.m16n8k16: 256 FLOPs per instruction per warp.'
+  - 'tf32 mma: use float inputs truncated to tf32 for 8x throughput with ~fp16 accuracy.'
+  - 'int8 mma: for quantised inference, 2x throughput over fp16.'
+  - 'Hopper fp8 (e4m3/e5m2): 2x throughput over fp16 mma.'
+  source: NVIDIA PTX guide
+  confidence: high
+- target_class: gpu
+  category: instruction_selection
+  pattern_name: vector_loads
+  description: Use 128-bit vector loads (LDG.128) to maximise memory bandwidth.  Each load fetches 4 fp32 or 8 fp16 elements
+    in one transaction.
+  implementation_notes:
+  - Align data to 16 bytes for LDG.128.
+  - Use float4 or half8 types for 128-bit loads.
+  - Ensure consecutive threads access consecutive 128-bit words for coalescing.
+  source: NVIDIA PTX guide
+  confidence: high
+- target_class: gpu
+  category: instruction_selection
+  pattern_name: fma_instructions
+  description: Use fused multiply-add (FMA) instructions for better accuracy and throughput.  One FMA = 2 FLOPs with a single
+    rounding.
+  implementation_notes:
+  - 'CUDA FMA: fmaf(a, b, c) or __fmaf_rn(a, b, c).'
+  - Most compilers emit FMA automatically; verify with SASS disassembly.
+  - FMA count is the basis for roofline peak FLOPS calculations.
+  source: NVIDIA PTX guide
+  confidence: high

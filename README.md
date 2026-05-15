@@ -1,170 +1,111 @@
-# XPU-RT Scheduling and Runtime Integration
+# CompGen
 
-## Project Description
+CompGen is an LLM-driven compiler generator for heterogeneous hardware targets.
+It does not replace your compiler — it generates the target-specific *recipe*
+around one: the transforms, kernel decisions, placement/scheduling plans,
+runtime packaging, and verification outputs that turn a PyTorch program into a
+verified deployment bundle for a given hardware profile.
 
-**XPU-RT** is an adaptable full-stack end-to-end (E2E) compilation and scheduling flow for efficient mapping of robotic multi-model workloads onto heterogeneous shared-memory SoCs.
+The primary way to drive CompGen is through Claude Code via its MCP server.
+Every pipeline stage is exposed as an MCP tool, so the LLM can inspect, propose,
+and verify compilation decisions interactively.
 
-This project is under active development. If you would love to contribute or if you find any issues, please do so by opening a [pull request](https://github.com/ucb-bar/XPURT/pulls) or [filing an issue](https://github.com/ucb-bar/XPURT/issues) on GitHub.
-
-### Repository Initialization
-
-```bash
-git clone https://github.com/ucb-bar/XPU-RT.git
-cd XPU-RT
-git submodule update --init --recursive
-```
-
-### Set up `merlin`
-
-Merlin provides the compiler toolchain, IREE runtime, and cross-compilation
-support used by XPU-RT. It ships as a git submodule under `merlin/`.
-
-#### Prerequisites
-
-- [Conda](https://docs.conda.io/) (Miniconda or Mamba)
-- Internet access for initial setup (toolchain downloads, submodule clones)
-
-#### 1) Install Environment
+## Install
 
 ```bash
-conda env create -f merlin/env_linux.yml
-conda activate merlin-dev
-uv sync
+pip install compgen
 ```
 
-#### 2) Build compiler tools, target runtime and toolchain
+Installs the compiler generator + the MCP server (`compgen-mcp`). For the
+optional extras, see [docs/getting-started/installation.md](docs/getting-started/installation.md).
 
-The one-step setup script handles everything (toolchain + host compiler + target runtime):
+## Wire up Claude Code
 
 ```bash
-bash setup.sh
+compgen mcp install          # merges into ~/.claude.json (backup on edit)
+compgen mcp doctor           # verifies tools load and discovery works
 ```
 
-Or run merlin commands individually (from within the `merlin/` directory):
+Then restart Claude Code and the `compgen` server appears in the tool picker.
+Prefer to paste the config yourself? `compgen mcp print-config` emits the
+snippet to stdout. Project-scoped `.mcp.json` works too: `compgen mcp install --project`.
+
+## Extend it in user space
+
+When you need something CompGen doesn't ship — a new kernel provider, a new
+target backend, a custom vendor MLIR dialect adapter — scaffold it locally and
+the running MCP server picks it up on next restart:
 
 ```bash
-cd merlin
-
-# Install SpacemiT cross-compilation toolchain
-uv run tools/merlin.py setup toolchain --toolchain-target spacemit
-
-# Build host compiler tools
-uv run tools/merlin.py build --profile vanilla --config release
-
-# Build SpacemiT target runtime (includes xpu-rt plugin)
-uv run tools/merlin.py build --profile spacemit --config perf
-
-cd ..
+compgen ext new provider my_chip       # scaffolds a pip-installable pack
+cd my_chip && pip install -e .
+compgen ext list                       # verify discovery
 ```
 
-See `merlin/docs/getting_started.md` and `merlin/docs/reference/cli.md` for the
-full Merlin CLI reference.
+Drop-in Python tools at `~/.compgen/extensions/*.py` are discovered without any
+`pip install` step — useful for one-off experimentation. See
+[docs/getting-started/extension-authoring.md](docs/getting-started/extension-authoring.md).
 
-#### 3) Compile models and profile on target
+## Python API
 
-After building merlin, run these from the XPU-RT root:
+```python
+import torch, torch.nn as nn
+from compgen.options import cuda_a100_defaults
+from compgen.pipeline import compile_and_diff
+
+class Block(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.fc = nn.Linear(64, 64)
+    def forward(self, x):
+        return torch.relu(self.fc(x))
+
+model, x = Block().eval(), torch.randn(1, 4, 64)
+report = compile_and_diff(
+    model, (x,),
+    options=cuda_a100_defaults(),
+    fixture_name="my_block",
+    eager_reference=model(x).detach(),
+    run_compiled_executor=True,
+)
+print("passed:", report.passed, "opaque rate:", report.opaque_rate)
+```
+
+## What's in the box
+
+- Staged xDSL pipeline covering structural, quantization, layout, distributed,
+  control-flow, and runtime-side passes.
+- Custom dialects `compgen.quant`, `compgen.tensor_ext`, `compgen.linalg_ext`,
+  `compgen.event`, `compgen.collective`, plus FP8 + HMX tile primitives on
+  `compgen.accel`.
+- `CompGenOptions` presets (`cuda_a100`, `cuda_h100`, `npu_fp8`), an LRU
+  pipeline cache, differential test harness, Triton kernel emitter, autotuner,
+  benchmark harness.
+- Real-workload fixtures under `tests/_fixtures/` (SmolVLA, Gemma, TinyLlama,
+  Qwen-MoE, VLA-decoder) used by the pipeline probes.
+- MCP server (`compgen-mcp`) exposing every stage as a first-class tool that
+  Claude Code (or any MCP client) can drive.
+
+## Documentation
+
+- [Docs Home](docs/index.md)
+- [Installation](docs/getting-started/installation.md)
+- [MCP Setup](docs/getting-started/mcp-setup.md)
+- [Extension Authoring](docs/getting-started/extension-authoring.md)
+- [Quickstart](docs/getting-started/quickstart.md)
+- [CLI Reference](docs/reference/cli.md)
+- [Python API](docs/reference/python-api.md)
+- [Extension Points](docs/reference/extension-points.md)
+
+## From source (contributors)
 
 ```bash
-runtime/scripts/compile_all_models.sh   # compile VMFB files for all models
-runtime/scripts/profile_remote.sh       # profile on target device (e.g. BananaPi)
+git clone --recurse-submodules https://github.com/compgen-project/compgen.git
+cd compgen && ./scripts/bootstrap.sh
 ```
 
-For runtime-specific setup and usage details, see [runtime/README.md](runtime/README.md).
+See [AGENT.md](AGENT.md) for the repository-local operating manual.
 
-#### Developer note: using a separate merlin checkout
+## License
 
-During active merlin development, you can use a standalone merlin checkout
-instead of the submodule. Either symlink it:
-
-```bash
-rm -rf merlin && ln -s /path/to/your/merlin merlin
-```
-
-Or set the `MERLIN_DIR` environment variable (respected by `setup.sh`,
-`compile_all_models.sh`, and `build_runtime.sh`):
-
-```bash
-export MERLIN_DIR=/path/to/your/merlin
-bash setup.sh
-```
-
-#### Config your model parameters
-Create `data/toplevel/networks_periodic_profile.json` if there is none, and add entries like:
-
-```text
-"mlp": {
-  "id": 1,
-  "identifier":            # model name
-  "dispatch_deps_path":    # path to model json 
-  "period":                # Duration in millisec between excution windows (inverse of frequency)
-  "window_duration":       # Duration in millisec for model to finish after window start 
-}
-```
-
-### Run XPU-RT Scheduler
-Run basic demos on top-level network graph:
-
-```bash
-python scripts/run_xpurt_schedule.py --profiled
-```
-The optimal schedule of your workloads on your target will be found in `schedules/scheduled_networks_periodic_profiled.json` with visualization in 'plots/iree_combined_schedule_period.png' after it finishes.
-
-
-### [Optional] Run Baseline greedy Scheduler
-
-Run greedy scheduler variant:
-
-```bash
-python scripts/run_greedy_schedule.py --use-grouped
-```
-
-## Repository Map
-
-```text
-XPU-RT/
-├── xpu-rt/                    # Python scheduler core modules
-│   ├── scheduler.py
-│   ├── workload.py
-│   ├── workload_factory.py
-│   ├── packing.py
-│   ├── plot.py
-│   ├── schedule_validation.py
-│   └── pytorch_workload/      # Sample model artifacts + dispatch JSON inputs
-├── scripts/                   # Python entry points for experiments/scheduling
-├── runtime/                   # Scripts for compile/profile flow + optional custom tools
-│   ├── scripts/*.sh           #   compile_all_models, profile_remote, etc.
-│   └── tools/                 #   Custom tool sources (links merlin's xpu-rt archive)
-├── data/                      # Collected benchmark/profile/scheduling outputs
-├── merlin/                    # Git submodule (compiler/runtime/tooling upstream)
-│   ├── tools/merlin.py        #   Unified CLI: build, compile, setup, benchmark, ...
-│   ├── samples/common/xpu-rt/ #   XPU-RT runtime library (baseline + scheduler runners)
-│   ├── samples/SpacemiTX60/   #   SpacemiT-specific sample binaries
-│   └── models/                #   Model definitions (MLIR/ONNX sources)
-├── env.yml                    # Conda environment
-└── setup.py                   # Editable pip install config
-```
-
-
-### File-Level Integration Points
-
-1. `runtime/scripts/compile_all_models.sh` -> calls `merlin/tools/merlin.py compile`
-2. `runtime/scripts/compile_all_models.sh` -> compiles models under `merlin/models/...`
-3. Pre-built runner binaries come from `merlin/build/<profile>/runtime/plugins/merlin-samples/`:
-   - `merlin-baseline-async` — baseline topo-order dispatch runner
-   - `merlin-dispatch-scheduler` — two-cluster scheduled dispatch runner
-4. XPU-RT runtime C API headers: `merlin/samples/common/xpu-rt/*.h`
-5. Standalone archive for custom tools / Zephyr:
-   `merlin/build/<build-name>/runtime/src/iree/runtime/libxpurt_standalone.a`
-
-### Data/Artifact Flow Between This Repo and `merlin`
-
-1. `runtime/scripts/compile_all_models.sh` generates VMFB + graph artifacts into `gen/vmfb/...` (using Merlin compiler).
-2. `runtime/scripts/profile_remote.sh` runs topology benchmarks remotely and writes CSV results to `gen/profile/...`.
-3. `scripts/run_xpurt_schedule.py` reads profiled CSVs from `gen/profile/...` and combines them with dispatch graph JSON inputs to produce schedules.
-4. Final scheduling outputs and logs are stored under `data/...` and script output directories.
-
-## Notes
-
-1. The Python scheduler modules are sourced from `xpu-rt/*.py` and installed via `setup.py`.
-2. Runtime C tooling in `runtime/` is separate from Python scheduling code and is focused on Merlin/IREE integration.
-3. If submodule contents are missing, runtime build/profile scripts will fail early.
+Apache License 2.0. See [LICENSE](LICENSE).

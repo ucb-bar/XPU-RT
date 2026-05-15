@@ -1,0 +1,12 @@
+schema_version: dialect_provider_card_v1
+dialect_provider_id: stablehlo
+dialect_name: stablehlo
+integration_level: card_only
+consumes: [torch_fx, jax_jaxpr]
+emits: [stablehlo, mhlo]
+entrypoint: compgen.providers.adapters.stablehlo:StableHloDialectProvider
+required_env: []
+description: |
+  StableHLO / MHLO interchange dialect. Card-only frontend bridge
+  for XLA / JAX-style model interchange; CompGen ingestion still
+  goes through torch.fx primarily.

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DossierValidation",
+  "type": "object",
+  "required": ["schema_version", "overall", "totals", "checks"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": "dossier_validation_v1" },
+    "overall": { "enum": ["pass", "fail"] },
+    "totals": { "type": "object" },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "status"],
+        "properties": {
+          "name": { "type": "string" },
+          "status": { "enum": ["pass", "fail", "skipped"] },
+          "detail": { "type": "string" }
+        }
+      }
+    }
+  }
+}

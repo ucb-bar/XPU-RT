@@ -1,0 +1,33 @@
+schema_version: pass_card_v1
+pass_id: dma_overlap
+display_name: Overlap DMA with compute
+level: payload
+family: memory
+source: hexagon-mlir
+impl_path: python/compgen/ir/payload/passes/rewrites/dma_overlap.py
+reads:
+  - 01_payload_lowering/payload.mlir
+  - 02_graph_analysis/region_graph.json
+writes:
+  - 03_recipe_planning/post_lowering/transformed_payload.mlir
+  - 03_recipe_planning/post_lowering/applied_transform_manifest.json
+preconditions:
+  - "memory space assignments include DMA-able transfers"
+  - "compute regions identified"
+  - "target supports concurrent DMA + compute"
+invalidates:
+  - payload_summary
+  - graph_dossier_v3
+  - kernel_contracts
+preserves_refinement: bit_equality
+verification:
+  - structural
+cost: medium
+failure_modes:
+  - "no_concurrent_dma_capability"
+  - "dependency_blocks_overlap"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+notes: |
+  Port of hexagon-mlir's two-stage DMA-overlap pair. Splits compute
+  regions and inserts DMA prefetch / writeback at boundaries so the
+  runtime overlaps memory with compute.

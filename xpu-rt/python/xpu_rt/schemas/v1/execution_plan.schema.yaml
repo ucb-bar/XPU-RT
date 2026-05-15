@@ -1,0 +1,147 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "compgen://user_perspective/schemas/execution_plan.schema.yaml"
+title: ExecutionPlan
+description: >
+  User-side execution plan. Mirrors
+  compgen.runtime.planner.ExecutionPlan.to_dict() with added
+  `synchronization[]` edges and a sync_kind abstraction so we are not
+  locked into fence/event/timeline/frontier prematurely.
+  Producers of this artifact: scripts/06_plan_execution.py (Phase 8).
+
+type: object
+required: [target, placements, execution_order, memory_plans, objectives, synchronization]
+additionalProperties: false
+
+properties:
+  target:
+    type: string
+    description: Target name (matches TargetResource.name).
+  placements:
+    type: array
+    minItems: 1
+    items:
+      type: object
+      required: [op, device]
+      properties:
+        op: { type: string }
+        device: { type: integer, minimum: 0 }
+        reason: { type: string, default: "" }
+      additionalProperties: false
+  copies:
+    type: array
+    default: []
+    items:
+      type: object
+      required: [tensor, src, dst, bytes]
+      properties:
+        tensor: { type: string }
+        src: { type: integer, minimum: 0 }
+        dst: { type: integer, minimum: 0 }
+        bytes: { type: integer, minimum: 0 }
+        async: { type: boolean, default: true }
+      additionalProperties: false
+  dma_ops:
+    type: array
+    default: []
+    items:
+      type: object
+      required: [tensor, src_space, dst_space, bytes]
+      properties:
+        tensor: { type: string }
+        src_space: { type: string }
+        dst_space: { type: string }
+        src_offset: { type: integer, minimum: 0, default: 0 }
+        dst_offset: { type: integer, minimum: 0, default: 0 }
+        bytes: { type: integer, minimum: 0 }
+        stride_pattern:
+          type: string
+          enum: [contiguous, 2d_strided, nd_strided]
+          default: contiguous
+        async: { type: boolean, default: true }
+      additionalProperties: false
+  execution_order:
+    type: array
+    items: { type: string }
+  memory_plans:
+    type: array
+    items:
+      type: object
+      required: [device, peak_bytes]
+      properties:
+        device: { type: integer, minimum: 0 }
+        peak_bytes: { type: integer, minimum: 0 }
+        address_space: { type: string, default: global }
+        physical_offset: { type: integer, default: 0 }
+        buffers:
+          type: array
+          default: []
+          items:
+            type: object
+            required: [name, lifetime_class]
+            properties:
+              name: { type: string }
+              offset: { type: integer }
+              size: { type: integer, minimum: 0 }
+              alignment: { type: integer, minimum: 1, default: 16 }
+              lifetime_class:
+                type: string
+                enum: [persistent, ephemeral, cache, reusable]
+            additionalProperties: false
+      additionalProperties: false
+  synchronization:
+    type: array
+    description: Explicit sync edges between dependent ops/copies.
+    items:
+      type: object
+      required: [producer, consumer, sync_kind]
+      properties:
+        producer: { type: string }
+        consumer: { type: string }
+        sync_kind:
+          type: string
+          enum: [fence, event, timeline_semaphore, frontier, host_join]
+        transport:
+          type: string
+          description: Which interconnect/transport carries this dependency.
+      additionalProperties: false
+  objectives:
+    type: object
+    required: [latency_us_estimate]
+    properties:
+      latency_us_estimate:
+        type: [number, "null"]
+      memory_peak_bytes:
+        type: integer
+        minimum: 0
+      copy_bytes_total:
+        type: integer
+        minimum: 0
+      critical_path_us:
+        type: number
+        minimum: 0
+    additionalProperties: false
+  node_assignments:
+    type: object
+    description: Partition → topology node mapping.
+    additionalProperties: { type: string }
+    default: {}
+  transport_config:
+    type: object
+    additionalProperties: { type: string }
+    default: {}
+  fallbacks:
+    type: array
+    default: []
+    items:
+      type: object
+      required: [op, kind]
+      properties:
+        op: { type: string }
+        kind: { type: string, enum: [eager, native, decompose, error] }
+        reason: { type: string, default: "" }
+      additionalProperties: false
+  provenance:
+    type: object
+    description: How this plan was produced (solver settings, seed, etc.).
+    additionalProperties: true
+    default: {}

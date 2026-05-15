@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://compgen.dev/schemas/v1/model_admission/torch_compile_report.schema.json",
+  "title": "torch_compile_report_v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "model_id", "attempted", "status"],
+  "properties": {
+    "schema_version": { "const": "torch_compile_report_v1" },
+    "model_id": { "type": "string" },
+    "slice_id": { "type": "string" },
+    "attempted": { "type": "boolean" },
+    "status": { "type": "string", "enum": ["pass", "fail", "skipped"] },
+    "backend": { "type": "string" },
+    "fullgraph": { "type": "boolean" },
+    "dynamic": { "type": "boolean" },
+    "compile_time_s": { "type": "number" },
+    "first_run_time_s": { "type": "number" },
+    "second_run_time_s": { "type": "number" },
+    "graph_break_count": { "type": "integer" },
+    "error": { "type": ["string", "null"] }
+  }
+}

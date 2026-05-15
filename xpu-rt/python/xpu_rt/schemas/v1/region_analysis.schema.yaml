@@ -1,0 +1,126 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "compgen://user_perspective/schemas/region_analysis.schema.yaml"
+title: RegionAnalysis
+description: >
+  Per-region annotations produced by scripts/03_graph_analysis.py.
+  Machine-first: designed for an LLM or scheduler to consume directly.
+  Derived from Payload IR walk + GraphAnalysisDossier. Five of the eight
+  annotations are heuristic in Phase 3 (explicitly noted); they are the
+  swappable points where a proposer could refine the values later.
+
+type: object
+required: [workload, target, regions, summary]
+additionalProperties: false
+
+properties:
+  workload: { type: string }
+  target: { type: string }
+  schema_version: { type: string, enum: ["1.0"], default: "1.0" }
+  regions:
+    type: array
+    minItems: 1
+    items: { $ref: "#/$defs/Region" }
+  summary:
+    type: object
+    properties:
+      total_regions: { type: integer, minimum: 0 }
+      regions_by_kind:
+        type: object
+        additionalProperties: { type: integer, minimum: 0 }
+      bottleneck_region_ids:
+        type: array
+        items: { type: string }
+        default: []
+      heuristic_fields:
+        type: array
+        description: Which fields were derived heuristically this run.
+        items: { type: string }
+        default: []
+    additionalProperties: true
+
+$defs:
+  Region:
+    type: object
+    required:
+      - region_id
+      - semantic_kind
+      - shape_regime
+      - data_movement
+      - fusion_opportunity
+      - kernel_coverage_potential
+      - placement_affinity
+      - sync_sensitivity
+      - accuracy_sensitivity
+    additionalProperties: false
+    properties:
+      region_id:
+        type: string
+        description: Matches the `compgen.region_id` attached by fx_to_xdsl.
+      ops:
+        type: array
+        items: { type: string }
+        description: Operator identifiers contained in this region.
+      dtype:
+        type: string
+      input_shapes:
+        type: array
+        items:
+          type: array
+          items: { type: integer, minimum: 0 }
+      output_shapes:
+        type: array
+        items:
+          type: array
+          items: { type: integer, minimum: 0 }
+      semantic_kind:
+        type: string
+        enum:
+          - matmul
+          - attention
+          - conv
+          - elementwise
+          - reduction
+          - normalization
+          - layout_op
+          - copy
+          - cache_update
+          - image_preprocessing
+          - action_head
+          - other
+      shape_regime:
+        type: string
+        enum: [static, bounded_dynamic, highly_dynamic]
+      data_movement:
+        type: string
+        enum: [read_heavy, write_heavy, reuse_heavy, pack_candidate, neutral]
+      fusion_opportunity:
+        type: string
+        enum: [obviously_fusible, maybe_fusible, keep_separate]
+      kernel_coverage_potential:
+        type: string
+        enum: [single_family, multi_family, library_fallback]
+      placement_affinity:
+        type: array
+        description: Acceptable placements in order of preference.
+        items:
+          type: string
+          enum: [cpu, rvv_cpu, gpu, dsp, npu, mixed_stage]
+      sync_sensitivity:
+        type: string
+        enum: [independent, producer_consumer_chain, fan_out, fan_in, long_lived_memory]
+      accuracy_sensitivity:
+        type: string
+        enum: [quantization_safe, quantization_sensitive, precision_critical]
+      estimated_flops:
+        type: integer
+        minimum: 0
+      estimated_bytes:
+        type: integer
+        minimum: 0
+      rationale:
+        type: string
+        description: Short note on why these labels were chosen (helps debugging).
+      provenance:
+        type: string
+        enum: [ir_derived, heuristic, llm_refined]
+        default: ir_derived

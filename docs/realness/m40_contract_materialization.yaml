@@ -1,0 +1,78 @@
+claim: |
+  M-40 (Phase C): a selected Recipe IR decision plus the region's
+  dossier facts and the target profile materialize into a fully-
+  populated ``KernelContractV3``. The contract is the calling
+  convention every Phase C consumer trusts:
+  ``compgen.promotion.contract_hash.hash_contract`` keys the cache
+  (M-41); the ``kernel_facing()`` projection bounds what a kernel-
+  codegen provider may read (M-42 + M-43); the ``compiler_only()``
+  projection is strictly invisible to the kernel.
+
+  Pipeline-stage wrapper at
+  ``compgen.graph_compilation.kernel_contract_materialization`` reads
+  ``03_recipe_planning/candidate_selection.json``, the recipe-gate
+  verdict, the region dossier, and the target YAML; emits two artifacts
+  per selected ``set_tile_params`` candidate:
+
+  - ``04_kernel_codegen/contracts/<region_id>.<contract_hash>.json`` —
+    the full materialized contract.
+  - ``04_kernel_codegen/views/<region_id>.kernel_facing.json`` — the
+    kernel-facing projection, sandbox-safe.
+
+  Plus a per-run summary at
+  ``04_kernel_codegen/contract_materialization_summary.json``.
+
+  Non-``set_tile_params`` candidates emit a typed ``not_applicable``
+  row — never silently skipped.
+commit: 806f5580000000000000000000000000000000
+created_at_utc: 2026-05-07T00:00:00Z
+feature_id: m40_contract_materialization
+forbidden:
+- compiler-only fields (wait_on, blocking, lifetimes, fusion, observability,
+  max_concurrent_invocations, providers, metadata) leaking into the
+  kernel_facing view
+- silently skipping unsupported candidate kinds (must emit not_applicable)
+- contract content drifting across reruns (byte-stability across reruns)
+- hand-authored contracts in the production path (must use from_recipe)
+- bypassing hash_contract for the canonical contract hash
+- emitting a contract without an associated kernel_facing view file
+realness_level: decision_affecting
+required_evidence:
+- python/compgen/kernels/contract_v3.py (KernelContractV3.from_recipe)
+- python/compgen/graph_compilation/kernel_contract_materialization.py
+- python/compgen/graph_compilation/run.py (M-40 wired into kernel-specialization-request boundary)
+- tests/graph_compilation/test_kernel_contract_materialization.py
+- 04_kernel_codegen/contracts/<region>.<hash>.json on a real merlin_mlp_wide run
+- 04_kernel_codegen/views/<region>.kernel_facing.json on a real run
+- 04_kernel_codegen/contract_materialization_summary.json on a real run
+notes: |
+  Phase C M-40 — first milestone of the contract-as-spine track.
+
+  Verified on canonical pair:
+  - merlin_mlp_wide (matmul_0: M=16 N=32 K=16, tile_M16_N16_K16):
+    declared_refinement=bit_equality, max_relative_error=0.0,
+    contract_hash=4838412db0b5c6b8.
+  - tiny_mlp (matmul_0: M=4 N=128 K=64, tile_M4_N16_K16 from M-37.11
+    shape-fit): declared_refinement=tolerance_eps,
+    max_relative_error=1e-3, contract_hash=45a9df00c6234506.
+
+  Distinct contract_hash per region+tile, byte-stable across reruns
+  (negative control: test_e2e_byte_stable_across_reruns).
+
+  Load-bearing invariant (M-40's negative control):
+  ``kernel_facing_to_dict`` MUST NOT serialize any field present only
+  in ``compiler_only()``. The test
+  ``TestKernelFacingNoLeak.test_no_compiler_only_fields_in_view`` and
+  its on-disk counterpart
+  ``test_e2e_view_does_not_leak_compiler_only_fields_on_real_run``
+  fail loud if a regression introduces a leak. List of forbidden
+  field names: ``wait_on``, ``blocking``, ``lifetimes``, ``fusion``,
+  ``is_boundary``, ``fusable_with``, ``prefer_inline_into``,
+  ``observability``, ``emit_dispatch_event``, ``emit_completion_event``,
+  ``cost_emit_period``, ``max_concurrent_invocations``,
+  ``retry_on_recoverable_error``, ``providers``, ``metadata``.
+
+  M-41 unifies all callers on hash_contract (today M-39's emitter
+  still uses derive_contract_hash; M-41 retires it).
+  M-42 supersedes M-39's request schema and unifies the directory
+  layout under 04_kernel_codegen/.

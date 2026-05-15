@@ -1,0 +1,38 @@
+feature_id: m69_solver_planning_evidence_pack
+claim: |
+  M-69 (Phase E): a paper-facing evidence pack aggregates solver
+  artifacts from one or more run-dirs into a typed report. Five
+  new M-31A trust-report gates audit the solver layer:
+  ``solver_backend_status``, ``solver_response_schema``,
+  ``no_fake_solver_success``, ``formulation_hash_stability``, and
+  ``solver_artifact_traceability``. The trust report grows from 9
+  gates (Phase D) to 14 gates. Three caveats are registered in
+  the caveat ledger: ``mosek_license_unavailable``,
+  ``cuda_hardware_unavailable_overlap_glue_skipped``,
+  ``highs_milp_fallback_limited``. The claim matrix has 8 rows,
+  each carrying ``status`` ∈
+  {``implemented``, ``implemented_partial_scope``, ``blocked``,
+  ``not_run``}; no row claims ``implemented`` when a blocking
+  caveat is present.
+realness_level: production_path
+forbidden:
+  - emitting an evidence pack that hides a failed gate
+  - claiming ``implemented`` on a row whose blocking caveats are
+    present
+  - figures generated from anything other than the JSON / CSV
+    artifacts in the same pack
+required_evidence:
+  - scripts/dev/build_solver_planning_evidence_pack.py
+  - scripts/dev/run_solver_planning_demo.py
+  - python/compgen/audit/solver_gates.py
+  - python/compgen/audit/trust_report.py (gate registration)
+  - tests/solve/test_solver_planning_evidence_pack.py
+  - results/solver_planning_evidence_pack/solver_planning_summary.md on a real run
+commit: 0e80000000000000000000000000000000000000
+created_at_utc: 2026-05-11T00:00:00Z
+notes: |
+  The pack distinguishes solved_and_executed,
+  solved_not_executed_hardware_unavailable, blocked_solver_unavailable,
+  infeasible, and skipped. Hardware-execution rows stay honest:
+  without a 06_glue_emit dir in the input run-dirs, those rows show
+  ``not_run`` with the corresponding caveat — never fake green.

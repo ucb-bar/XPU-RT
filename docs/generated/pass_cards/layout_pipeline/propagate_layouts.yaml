@@ -1,0 +1,31 @@
+schema_version: pass_card_v1
+pass_id: propagate_layouts
+display_name: Layout pipeline (4/10) — propagate layout encodings
+level: payload
+family: layout_pipeline
+source: homemade
+impl_path: python/compgen/transforms/layout/propagate_layouts.py
+reads:
+  - 01_payload_lowering/payload.mlir
+writes:
+  - 03_recipe_planning/post_lowering/transformed_payload.mlir
+  - 03_recipe_planning/post_lowering/applied_transform_manifest.json
+preconditions:
+  - "set_virtual_encodings ran"
+  - "consumer ops are layout-transparent OR have explicit hints"
+invalidates:
+  - payload_summary
+  - graph_dossier_v3
+  - kernel_contracts
+preserves_refinement: bit_equality
+verification:
+  - structural
+cost: medium
+failure_modes:
+  - "incompatible_consumer_layout"
+  - "encoding_propagation_diverges"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+notes: |
+  Layout pipeline step 4: pushes virtual encodings through transparent
+  ops (broadcasts, elementwise) so the encoding flows from producer
+  to consumer chains.

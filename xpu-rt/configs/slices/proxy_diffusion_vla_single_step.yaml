@@ -1,0 +1,13 @@
+schema_version: slice_config_v1
+slice_id: proxy_diffusion_vla_single_step
+parent_model_id: proxy_diffusion_vla
+description: 'Proxy diffusion VLA single denoising step.'
+inputs:
+  kind: one_step_policy
+  processor_required: false
+loader_override: null
+expected:
+  can_eager_run: true
+  can_torch_compile: true
+  can_dynamo_capture: true
+  can_slice_compile: true

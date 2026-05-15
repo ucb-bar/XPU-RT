@@ -1,0 +1,112 @@
+claim: |
+  M-90 (Phase G — §12 Dream 5): a **multi-plan dispatch table** lets
+  a single Layer-1 emit carry several plans, each independently
+  verified, with the dispatcher itself a trivial typed lookup.
+
+  Two pieces ship together:
+
+  1. ``recipe.plan_dispatch_table`` op (xDSL, registered in the
+     Recipe dialect) authors the dispatcher in IR. It declares
+     ``feature_keys`` (the runtime feature names — ``batch``,
+     ``seqlen``, ``dtype``, ...), an ordered list of
+     ``entries`` (each a ``{features → plan_ref}`` dict), and a
+     ``default_plan_ref``. The op's ``verify_`` rejects empty
+     entries, unknown feature keys, and missing defaults.
+  2. ``compgen.runtime.glue_emit.dispatch_table.emit_dispatch_table``
+     consumes a normalised :class:`PlanDispatchSpec` and emits the
+     dispatcher in **all three Layer-1 targets**:
+
+     - ``generated_plan_dispatcher.py`` — ``select_plan_ref`` +
+       ``compgen_dispatch_run(runtime_features, io, kernels, runtime,
+       plan_loader)``.
+     - ``generated_plan_dispatcher.c`` — ``compgen_select_plan_ref``
+       over a typed ``compgen_features_t`` struct + a static
+       ``COMPGEN_DISPATCH_ENTRIES`` table.
+     - ``generated_plan_dispatcher.cpp`` — same as the C11 emit
+       under ``extern "C"`` linkage.
+
+     The manifest at ``plan_dispatch_table_manifest.json`` carries
+     the spec hash, the feature keys, the entry table, the default
+     plan ref, and every emit path so the M-91 D6 plan-refinement
+     gate can verify "the dispatcher resolves to a verified plan
+     for every reachable runtime feature vector".
+
+  Selection invariants (proven by 19 unit tests):
+
+  - Entries are tried in declaration order; first match wins.
+  - Multi-feature entries require **all** declared features to
+    equal the runtime vector (no partial match).
+  - Unknown features fall through to ``default_plan_ref``.
+  - Deterministic across 1 000 randomised feature vectors —
+    ``select_plan(spec, fv)`` is byte-stable across reruns.
+  - The Python emit's ``select_plan_ref`` matches the pure
+    ``select_plan`` selector on every randomised feature vector.
+
+  Compilation acceptance: both the C11 and C++ dispatcher emits
+  pass ``cc/c++ -std=c11/-std=c++17 -fsyntax-only`` (compiler-gated
+  tests).
+commit: m90_phase_g_runtime_three_layer_closure
+created_at_utc: 2026-05-12T00:00:00Z
+forbidden:
+- silent fallback paths (dispatchers must always have a default plan)
+- raising at the dispatcher level — the runtime contract is total
+- non-deterministic match order (entries are tried in declaration order)
+- emitting dispatchers without a matching manifest (would block M-91 D6 gate)
+- accepting entries with feature keys outside the declared feature_keys set
+realness_level: production_path
+required_evidence:
+- python/compgen/ir/recipe/ops_dispatch.py
+- python/compgen/runtime/glue_emit/dispatch_table.py
+- python/compgen/runtime/glue_emit/__init__.py
+- tests/runtime/test_multi_plan_dispatch.py
+- "06_glue_emit/generated_plan_dispatcher.py on a real run"
+- "06_glue_emit/generated_plan_dispatcher.c on a real run"
+- "06_glue_emit/plan_dispatch_table_manifest.json on a real run"
+feature_id: m90_plan_dispatch_table
+notes: |
+  Phase G M-90 — closes §12 Dream 5 ("multi-plan dispatch for dynamic
+  workloads"). The dream's central claim is that **each plan is
+  independently verified; the dispatcher is trivial**. This is the
+  exact structure the implementation produces: each inner plan is
+  an M-47/M-51/M-52/M-88/M-89 emit, individually verifiable; the
+  dispatcher is a typed lookup table the M-91 D6 gate can certify
+  against the spec hash.
+
+  Tests landed: 19 in tests/runtime/test_multi_plan_dispatch.py:
+  - 4 spec-validation tests (empty entries, missing default, etc.);
+  - 4 ``select_plan`` determinism tests (first match wins; multi-
+    feature; default fallback; 1 000-vector determinism);
+  - 2 Python-emit tests (parses, imports, matches pure selector);
+  - 3 native-emit tests (C11 produces typed entries; cc + c++ -
+    fsyntax-only pass);
+  - 1 byte-stability test (two emits identical for all three
+    targets);
+  - 1 manifest schema test (round-trip);
+  - 3 Recipe IR op tests (round-trip, empty-entries rejected,
+    unknown-feature rejected);
+  - 1 ABI-lint test (C dispatcher calls only control-flow + its
+    own selector — no vendor primitives).
+
+  Architectural framing: the per-plan inner emits (M-47/M-51/M-52
+  for Python; M-88/M-89 for native) are §12 Dream-1 outputs. M-90
+  is §12 Dream-5 — it composes those outputs into a single emit
+  that handles dynamic shapes without sacrificing static-plan
+  performance. The dispatcher itself is small enough (under 100
+  LOC of generated source) that it pays the static-plan cost only
+  once per workload.
+
+  Honest residuals:
+  - The Recipe IR ``plan_dispatch_table`` op is registered but no
+    Recipe-IR-side seed generator emits it automatically yet —
+    operators construct it explicitly when authoring a dynamic-
+    shape recipe. M-90.1 will add the seed-time emission.
+  - The Python dispatcher's ``plan_loader`` callable is operator-
+    supplied; the convention is ``operator.import_module(plan_ref)``
+    where each ``plan_ref`` resolves to a per-plan generated
+    executor module under ``06_glue_emit_<plan_ref>/``.
+  - String-typed features (``dtype="f32"``) are accepted; the C11
+    emit uses a stable enum mapping the manifest serialises.
+  - Resolution of ``plan_ref`` symbols to on-disk
+    ``05_execution_plan/<plan_name>/`` directories is the M-91 D6
+    gate's job; M-90 emits and verifies the dispatcher, not the
+    plans it points at.

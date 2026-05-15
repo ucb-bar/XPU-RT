@@ -1,0 +1,122 @@
+claim: |
+  M-63 (Phase D): adds a coverage-first scheduling analysis pass that
+  walks every region dossier under
+  ``02_graph_analysis/region_dossiers/``, derives a coverage signature
+  for each compute_tiled (matmul) region, and looks up matching M-45
+  certificates. Sibling regions whose shape signature matches an
+  existing cert get coverage-inflated bindings appended to the M-46
+  ``region_kernel_bindings.json``. A second pass produces a
+  specialization report ranking regions by analytical cost so a
+  downstream tactician can pick high-value candidates for shape-
+  specialized auction rounds.
+
+  Hard contract:
+
+  1. ``run_coverage_first(run_dir, *, mode)`` in
+     ``graph_compilation/coverage_first.py`` is the orchestrator. Mode
+     in ``{both (default), first-pass-coverage, specialize, disabled}``.
+     ``disabled`` is a strict no-op.
+  2. ``_coverage_signature(dossier, target_name)`` returns a stable
+     string of the form
+     ``"<target>|compute_tiled|<dtype>|row_major|<input_shapes>|<output_shapes>"``
+     with the dossier's first 2 input shapes (matmul kernel reads
+     lhs + rhs only; trailing fused-bias shapes are sliced off).
+     Returns empty string when the dossier doesn't have enough
+     shape information.
+  3. ``_signature_from_certificate(run_dir, cert)`` reads the cert's
+     source contract file from disk and produces the same signature
+     so dossier-side and cert-side hashes align byte-for-byte for
+     identical region shapes.
+  4. The coverage pass appends rows to
+     ``05_execution_plan/region_kernel_bindings.json`` with
+     ``coverage_source: True`` flag so the M-47 emitter audits the
+     M-63 addition. ``bound_count`` is recomputed;
+     ``coverage_inflated_count`` records the size of the M-63
+     addition.
+  5. ``coverage_report.json`` (schema ``coverage_report_v1``)
+     records per-signature groups + cert presence + inflation count.
+     ``specialization_report.json`` (schema
+     ``specialization_report_v1``) records every compute_tiled
+     region sorted by analytical_cost descending with covered/
+     uncovered status; the top-N uncovered are tagged as
+     ``recommended_specialization_targets``.
+  6. CLI flag ``--kernel-coverage-mode {both, first-pass-coverage,
+     specialize, disabled}`` (default ``both``); the pipeline stage
+     runs after ``execution-plan-emit`` and before ``glue-emit``.
+commit: 0a63000000000000000000000000000000000000
+created_at_utc: 2026-05-07T00:00:00Z
+forbidden:
+- coverage-inflated bindings being emitted without an existing cert (the inflation requires a cert to point at; un-bindable signatures stay un-bound and surface in the specialization report)
+- coverage_first overwriting the original M-46 bindings (M-63 only APPENDS rows; original bound_count from M-46 stays in the merged total)
+- the coverage signature including tile-choice attributes (tile_M/tile_N/tile_K are candidate-selection artifacts; the coverage signature must reflect only kernel-shape facts so two regions with the same shape but different chosen tiles still match)
+- the specialization report including covered regions among the top-N targets (covered regions already have a kernel; the recommended_specialization_targets list MUST be uncovered-only)
+- a target_profile mismatch between dossier-side and cert-side signature builders (they must produce byte-identical strings for the same region shape)
+realness_level: production_path
+required_evidence:
+- python/compgen/graph_compilation/coverage_first.py (entire module — orchestrator + signature builders + binding append + report writers)
+- python/compgen/graph_compilation/run.py (kernel_coverage_first stage wired after execution_plan_emit, before glue_emit)
+- python/compgen/graph_compilation/__main__.py (--kernel-coverage-mode CLI flag + threading)
+- tests/graph_compilation/test_coverage_first.py
+feature_id: m63_coverage_first
+notes: |
+  Phase D step 9 — Section 7's "maximum model coverage with the least
+  amount of kernels" claim made real. The pass is analytical: it
+  doesn't trigger additional auction rounds (that's M-66 stress
+  territory); it produces reports that surface what coverage-first
+  WOULD save and what regions WOULD benefit from shape-specialization.
+
+  Pre-existing scaffolding consumed:
+  - ``KernelCertificate.canonical_contract_hash`` (M-58) — surfaced in
+    the coverage report; the matching primitive is the per-shape
+    signature, not the canonical hash directly (the canonical hash
+    today includes tile-choice attrs that aren't a kernel-shape
+    fact; M-66 may pivot once the contract schema separates tile
+    from shape).
+  - ``find_certificate_by_canonical_hash`` (M-58) — present but
+    unused for now (signature comparison is more direct on
+    today's contract schema). Reserved for the M-66 stress.
+  - ``RegionKernelBinding`` (M-46) — extended with a
+    ``coverage_source: True`` flag in inflated rows; the M-46
+    bindings file format is preserved (M-47 reads it unchanged).
+
+  Real-driven evidence (`/tmp/m63_stress`):
+  - merlin_mlp_wide has 3 matmul regions with DIFFERENT shapes
+    (matmul_0: 16x16 @ 16x32, matmul_1: 16x32 @ 32x32, matmul_2:
+    16x32 @ 32x16). coverage_report shows 3 distinct groups,
+    1 with a cert (matmul_0), inflation=0 (no shape-sibling).
+  - specialization_report ranks all 3 regions; matmul_1 and
+    matmul_2 are tagged ``uncovered`` and recommended for
+    specialization. Honest output — merlin_mlp_wide isn't a
+    "share one kernel across many regions" model. M-66's
+    four-bidder stress on a model with sibling matmuls (or a
+    multi-layer model where every layer's matmul has the same
+    shape) will exercise the inflation path.
+  - End-to-end pipeline still passes glue-emit; original M-46
+    bindings preserved (bound_count=1, coverage_inflated_count=0).
+
+  Tests: 7 in tests/graph_compilation/test_coverage_first.py
+  covering coverage signature byte-identity (dossier + cert sides),
+  empty-dossiers no-op, mode flags (disabled / first-pass / both /
+  specialize), real-pipeline coverage inflation, specialization
+  report ranks regions descending by cost. Cross-suite regression
+  preserved 160/160 across 15 test suites.
+
+  Honest residuals:
+  - Coverage matching is shape-EQUAL today (not shape-class). When
+    one matmul covers (16, 16, 32) and another is (16, 16, 64),
+    coverage-first today says "different signatures, no reuse".
+    Shape-class match (e.g. "any K divisible by 16") needs the
+    contract schema to expose dim divisibility, which is M-64's
+    refinement work.
+  - The pass is post-hoc — doesn't yet trigger additional auction
+    rounds for the recommended_specialization_targets. The
+    specialization report is advisory; iterating the pipeline +
+    auction on the top-N uncovered regions is M-66's plumbing.
+  - Pointwise + reduce families are not covered today. The pass
+    filters on ``dossier.kind == "matmul"`` — extending to
+    pointwise add_relu / softmax / layer_norm rides the M-65
+    vertical-slice 2 fusion path.
+  - The dossier-side signature slices to the first 2 inputs (matmul
+    kernel arity = 2). When fused matmul + bias (3 dossier inputs)
+    promotes to a fused contract via M-65, the slice will need
+    archetype-aware adjustment.

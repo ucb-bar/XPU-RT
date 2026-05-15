@@ -1,0 +1,56 @@
+claim: |
+  CompGen ships an ablation harness that runs the same model under
+  multiple selection modes (greedy, agent-file, optionally llm-live)
+  and emits a typed AblationPack with per-cell results
+  (selected_candidate_id, pass_id, validation_overall, decision_seconds,
+  typed_outcome) plus a divergence table identifying models where
+  modes disagreed on candidate. The pack is emitted as both
+  ablation_pack.json and a paper-ready ablation_pack.md table.
+  Real runs on canonical models exercise the harness end-to-end:
+  greedy mode picks set_tile_params/tile_M16_N16_K16 on
+  merlin_mlp_wide and fuse_producer_consumer on proxy_vla; holdout
+  models hit honest M-15B typed-blocked outcomes.
+commit: 676c82ebac52a6c37c98228ea64df68865d5b048
+created_at_utc: 2026-05-05T00:00:00Z
+feature_id: m36_pass_pool_ablation
+forbidden:
+- mock ablation results
+- silent skip when a cell errors
+- typed_outcome that hides verification status
+- divergence detection that misses two-mode disagreement
+realness_level: production_path
+required_evidence:
+- python/compgen/benchmarks/pass_pool_ablation.py
+- scripts/dev/run_pass_pool_ablation.py
+- tests/benchmarks/test_pass_pool_ablation.py (7 tests including 2 real-workload runs)
+- a real ablation_pack.json on merlin_mlp_wide + proxy_vla + holdout_mlp_odd_shapes
+notes: |
+  Section 20 / M-36. Fifth milestone behind the M-31A audit gate.
+  Closes the "does the agent's choice differ from greedy?" question
+  with a measurement harness that emits typed cells and detects
+  divergence automatically.
+
+  Three sub-milestones shipped:
+
+    M-36.1  AblationResult / AblationPack / run_one_cell / run_suite
+            library + CLI wrapper
+    M-36.2  Real ablation runs on merlin_mlp_wide + proxy_vla +
+            holdout_mlp_odd_shapes confirming the harness extracts
+            greedy-resolver choices end-to-end:
+              - merlin_mlp_wide  → set_tile_params/tile_M16_N16_K16
+              - proxy_vla        → fuse_producer_consumer/fuse_add_0_into_aten_relu_default_0
+              - holdout_mlp_odd_shapes → no candidate (M-15B blocked)
+    M-36.3  realness contract + trust report
+
+  Honest residuals (declared, deferred):
+  - The pipeline does not yet *execute* multi-step pass plans —
+    M-34 ships the validator, not the executor. The harness compares
+    single-step decisions today. Multi-pass-plan execution is a
+    Section 21+ scope item.
+  - llm-live mode requires API keys + network. The CLI does not drive
+    it; an operator can record a live decision and feed it into
+    agent-file mode.
+  - Verification rate per mode requires running stop_after >=
+    differential-verification, which is heavier. Today the harness
+    runs to agent-decision-request; deeper runs are an operator
+    parameter.

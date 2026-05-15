@@ -1,0 +1,38 @@
+op_family: transpose
+tiling_guidance:
+- target_class: gpu
+  tile_sizes:
+  - 32
+  - 32
+  rationale: '32x32 tile in shared memory: read a 32x32 tile with coalesced loads, transpose in shared memory, write back
+    with coalesced stores.  Padding shared memory to 33 columns avoids bank conflicts.'
+  source: CUDA handbook
+  confidence: high
+fusion_opportunities:
+- pattern: transpose+matmul
+  description: Avoid explicit transpose by using transposed GEMM variant (e.g., CUTLASS TN/NT layout).  The matmul kernel
+    reads the matrix in transposed order directly.
+  conditions:
+  - Transpose feeds directly into a matmul operand.
+  source: CUTLASS
+  confidence: high
+layout_preferences: []
+backend_guidance:
+- target_class: gpu
+  recommended_backend: Triton or vendor kernel
+  conditions: Standalone transpose required
+  rationale: Triton generates shared-memory-based transpose kernels.  Prefer fusing into consumer when possible.
+  source: Triton
+- target_class: cpu
+  recommended_backend: native (loop interchange)
+  conditions: Any transpose
+  rationale: Cache-oblivious recursive transpose or tiled copy.
+  source: BLIS
+pitfalls:
+- Naive GPU transpose causes completely uncoalesced writes (or reads), reducing effective bandwidth by up to 10x.  Always
+  use shared memory staging.
+- Permutations of more than 2 dimensions may require multiple passes or generalised copy kernels; check if a view/stride change
+  suffices.
+performance_bounds:
+- 'Memory-bound: 2 * tensor_size bytes transferred (read + write).'
+- 'Achievable bandwidth: 80-90% of peak HBM bandwidth with shared memory staging.'

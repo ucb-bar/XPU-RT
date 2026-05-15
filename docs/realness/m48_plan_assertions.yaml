@@ -1,0 +1,77 @@
+claim: |
+  M-48 (Phase C): the body of ``assert_plan(io)`` in the M-47 emitted
+  executor is GENERATED from each region's M-40 contract + the M-46
+  binding. Every check fires a typed ``PLAN_VIOLATION_<KIND>``
+  subclass naming the failed invariant.
+
+  Generated typed kinds:
+
+  ::
+
+      PLAN_VIOLATION_IO_TYPE          io is not a dict
+      PLAN_VIOLATION_INPUT_COUNT      not enough io tensors for contract inputs
+      PLAN_VIOLATION_INPUT_DTYPE      io tensor dtype not in contract.dtype_class
+      PLAN_VIOLATION_INPUT_SHAPE      io tensor shape != contract dims
+      PLAN_VIOLATION_INPUT_BYTES      numel * element_size != expected bytes
+      PLAN_VIOLATION_LAYOUT           tensor non-contiguous when contract says row_major
+      PLAN_VIOLATION_BUFFER_SIZE      planner-allocated buffer size mismatch (M-49 wires)
+      PLAN_VIOLATION_EVENT_WRITERS    >1 producer for an event
+      PLAN_VIOLATION_UNBOUND_REGION   region declared in plan with no certified kernel
+
+  All subclasses inherit from ``PlanViolation(RuntimeError)`` so
+  callers can ``except PlanViolation`` for any of them. The test
+  suite asserts every kind is reachable via fault injection.
+commit: 543edd40000000000000000000000000000000
+created_at_utc: 2026-05-07T00:00:00Z
+forbidden:
+- raising bare RuntimeError instead of a typed PLAN_VIOLATION_<KIND>
+- silently passing assert_plan when an invariant is violated
+- adding a new contract field with a runtime invariant without
+  generating a corresponding PLAN_VIOLATION_<KIND>
+- hand-writing assertion bodies (must come from
+  collect_region_assertions + render_assert_plan_body)
+- emitting an unreachable PLAN_VIOLATION subclass (every kind must
+  have a negative-control test)
+realness_level: production_path
+required_evidence:
+- python/compgen/runtime/glue_emit/plan_assertions.py
+- python/compgen/runtime/glue_emit/python_sync.py (M-48 wiring)
+- tests/runtime/test_plan_assertions.py
+- "06_glue_emit/generated_plan_executor.py on a real run carries the typed PlanViolation classes + generated assert_plan body"
+feature_id: m48_plan_assertions
+notes: |
+  Phase C M-48. Real-driven stress test:
+
+  Phase 1 — drove merlin_mlp_wide through ``--stop-after glue-emit``
+  with a contract-compliant provider response. The emitted module
+  carries the M-48 typed PlanViolation hierarchy and the generated
+  per-region assertion body.
+
+  Phase 2 — for each typed kind, injected one fault and asserted the
+  matching subclass fires:
+   - PLAN_VIOLATION_IO_TYPE: io = "not a dict" ✓
+   - PLAN_VIOLATION_INPUT_COUNT: only 1 input when contract requires 2 ✓
+   - PLAN_VIOLATION_INPUT_SHAPE: A.shape = (99, 99) instead of (16, 16) ✓
+   - PLAN_VIOLATION_INPUT_DTYPE: A is float64 instead of float32 ✓
+   - PLAN_VIOLATION_INPUT_BYTES: synthetic Tensor reports wrong numel/element_size ✓
+
+  Phase 3 — well-formed io passes all assertions and dispatches; the
+  runtime returns a Tensor of expected shape (16, 32). The asserts
+  do not produce false positives.
+
+  Tests: 7 in tests/runtime/test_plan_assertions.py covering each
+  PLAN_VIOLATION_<KIND> negative control + the type-hierarchy
+  invariant (every typed subclass is a PlanViolation).
+
+  Honest residuals:
+  - PLAN_VIOLATION_BUFFER_SIZE is declared as a typed class but the
+    fault-injection path requires M-49 (the executor allocating
+    planned buffers from the contract memory tier spec) before the
+    assertion can fire. Today it's a forward-looking subclass.
+  - PLAN_VIOLATION_EVENT_WRITERS is declared and the static check is
+    generated, but only fires on multi-region plans where two
+    regions declare the same event name. M-51 wires the runtime
+    "exactly-N writers" check on EventTensor.
+  - The IO binding is positional today (dict insertion order →
+    contract input order). M-49 wires named binding (operator
+    passes a dict that's resolved against contract input names).

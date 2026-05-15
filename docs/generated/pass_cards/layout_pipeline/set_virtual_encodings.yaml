@@ -1,0 +1,30 @@
+schema_version: pass_card_v1
+pass_id: set_virtual_encodings
+display_name: Layout pipeline (3/10) — set virtual encodings
+level: payload
+family: layout_pipeline
+source: homemade
+impl_path: python/compgen/transforms/layout/set_virtual_encodings.py
+reads:
+  - 01_payload_lowering/payload.mlir
+writes:
+  - 03_recipe_planning/post_lowering/transformed_payload.mlir
+  - 03_recipe_planning/post_lowering/applied_transform_manifest.json
+preconditions:
+  - "attach_layout_hints ran"
+  - "tensor types support encoding attributes"
+invalidates:
+  - payload_summary
+  - graph_dossier_v3
+  - kernel_contracts
+preserves_refinement: bit_equality
+verification:
+  - structural
+cost: cheap
+failure_modes:
+  - "tensor_type_lacks_encoding_slot"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+notes: |
+  Layout pipeline step 3: attaches virtual encoding attributes to
+  tensors. The encodings are virtual until materialize_layout_boundaries
+  step turns them concrete.

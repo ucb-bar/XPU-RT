@@ -1,0 +1,25 @@
+name: npu_model
+version: "0.1.0"
+kinds: ["TargetPack", "PerfModelPack", "LLVMForkPack"]
+owned_surfaces:
+  - perf_model_truth
+  - llvm_intrinsics
+sealed_surfaces:
+  - perf_model_truth
+generation_apertures:
+  - xdsl_dialect_generation
+  - llvm_patch_generation
+  - backend_plan_generation
+  - schedule_generation
+integration_mode: fork_branch
+benchmark_suite: pack_integrations
+benchmark_targets: ["npu_model_smoke"]
+reference_runner: npu_model
+workspace_keys: ["npu_model"]
+third_party_names: ["npu_model"]
+expected_files: ["README.md"]
+available_profilers: ["iree_cpu_events"]
+llvm_fork_key: npu_model
+metadata:
+  vendor: ucb-ee194-tapeout
+

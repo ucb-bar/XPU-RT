@@ -1,0 +1,28 @@
+name: hexagon_mlir
+version: "0.1.0"
+kinds: ["DialectPack", "RuntimePack", "KernelPack"]
+owned_surfaces:
+  - runtime_abi
+  - dialect_semantics
+  - hexagon_codegen_driver
+sealed_surfaces:
+  - runtime_abi
+  - dialect_semantics
+  - hexagon_codegen_driver
+generation_apertures:
+  - payload_to_hexagon_lowering
+  - guard_generation
+  - kernel_selection
+  - schedule_generation
+  - unsupported_op_translation
+integration_mode: overlay_branch
+benchmark_suite: pack_integrations
+benchmark_targets: ["hexagon_mlir_smoke"]
+reference_runner: hexagon_mlir
+workspace_keys: ["hexagon_mlir"]
+third_party_names: ["hexagon-mlir"]
+expected_files: ["README.md"]
+available_profilers: ["hexagon_profile"]
+metadata:
+  vendor: qualcomm
+

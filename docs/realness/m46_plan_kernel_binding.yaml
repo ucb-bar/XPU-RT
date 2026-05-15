@@ -1,0 +1,73 @@
+claim: |
+  M-46 (Phase C): the ``ExecutionPlan`` carries one
+  ``RegionKernelBinding`` per region whose M-45 certificate exists.
+  The pipeline emits ``05_execution_plan/execution_plan.yaml`` plus a
+  per-region sidecar ``05_execution_plan/region_kernel_bindings.json``
+  describing the (region_id, contract_hash, certificate_path,
+  kernel_artifact, dispatch_model) tuples.
+
+  Hard rule: ``ExecutionPlan.validate_with_run_dir(run_dir)`` rejects
+  any binding whose certificate file is missing OR whose certificate
+  contract_hash does not match the binding contract_hash. The plan
+  executor (M-47) refuses to call any kernel without a passing
+  binding.
+
+  Regions whose certificates do not yet exist (provider response not
+  committed, or M-44 verification rejected) surface as ``unbound``
+  with a typed ``unbound_reason``. The plan is still emitted — M-47's
+  runtime check will refuse to dispatch unbound regions, never
+  silently elide them.
+commit: 62a2bc60000000000000000000000000000000
+created_at_utc: 2026-05-07T00:00:00Z
+forbidden:
+- emitting a binding for a region with no matching certificate
+- accepting a binding whose certificate contract_hash mismatches
+- silently dropping unbound regions from the plan / sidecar
+- duplicating bindings for the same region_id
+- using a dispatch_model not in (sync|async|persistent|inline)
+- bypassing validate_with_run_dir before handing the plan to M-47+
+realness_level: production_path
+required_evidence:
+- python/compgen/runtime/execution_plan.py (RegionKernelBinding + validate_with_run_dir)
+- python/compgen/graph_compilation/execution_plan_emit.py
+- python/compgen/graph_compilation/run.py (--stop-after execution-plan-emit boundary)
+- tests/runtime/test_region_kernel_binding.py
+- "05_execution_plan/execution_plan.yaml on a real run (post-cert)"
+- "05_execution_plan/region_kernel_bindings.json on a real run (post-cert)"
+feature_id: m46_plan_kernel_binding
+notes: |
+  Phase C M-46. Real-driven stress test:
+
+  Phase 1 — drove 6 canonical models through
+  --stop-after execution-plan-emit BEFORE submitting any provider
+  response. All 6 emitted the plan with bound=0/unbound=N rows, each
+  carrying a typed unbound_reason ("no_certificate; provider response
+  not yet committed").
+
+  Phase 2 — for each set_tile_params model, synthesized a contract-
+  compliant provider response, ran commit_response (M-43 → M-44 →
+  M-45 chain), and re-emitted the plan. All 5 flipped from
+  unbound=1 to bound=1; the binding's certificate_path resolved to
+  a real M-45 certificate; validate_with_run_dir passes. proxy_vla
+  honestly remained not_applicable (fusion candidate, M-50+ widens).
+
+  Phase 3 — tamper test: edited merlin_mlp_wide's kernel.c AFTER
+  the bind. M-46's validate_with_run_dir alone passes (it checks
+  cert file existence + contract_hash match), but the M-45
+  certificate validator (validate_certificate) immediately returns
+  valid=False with failure_kind=artifact_hash_drift. M-47 chains
+  both checks before dispatch.
+
+  Tests: 10 cases in tests/runtime/test_region_kernel_binding.py
+  covering schema round-trip, structural invariants (duplicate
+  bindings, unknown region, empty fields, unknown dispatch_model),
+  and run_dir-strict validation (missing cert, mismatched hash,
+  well-formed). M-46 + M-45 together: 22 pass.
+
+  Honest residuals:
+  - The plan emits even when bound=0; M-47 surfaces this as a
+    runtime PLAN_VIOLATION when the executor tries to dispatch
+    unbound regions.
+  - Multi-region plans (one model with 2+ matmul regions) emit one
+    binding per region. Today's canonical set has at most one
+    matmul region per model so this isn't exercised end-to-end yet.

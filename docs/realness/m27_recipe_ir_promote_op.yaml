@@ -1,0 +1,19 @@
+claim: |
+  Recipe IR's PromoteOp carries the five attributes a future run needs to
+  apply or reject a promoted recipe (recipe_signature, applies_when,
+  evidence_summary, fallback_chain, target_class) and round-trips through
+  MLIR text and JSON projections without loss.
+commit: 5244e94e3730bdf6f2bff89c72b174ac0ee03fa6
+created_at_utc: 2026-05-05T00:00:00Z
+feature_id: m27_recipe_ir_promote_op
+forbidden:
+- mock IR ops
+- placeholder attributes
+realness_level: decision_affecting
+required_evidence:
+- python/compgen/ir/recipe/ops_provenance.py
+- python/compgen/ir/recipe/serialize.py
+- python/compgen/ir/recipe/lower.py
+- python/compgen/ir/recipe/validate.py
+- tests/ir/recipe/test_promote_op_extended.py
+notes: 'Section 19 / M-27.'

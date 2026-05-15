@@ -1,0 +1,68 @@
+# CompGen Target Profile: AWS Trainium 1 (trn1.2xlarge)
+#
+# Single-device accelerator profile for AWS Trainium.
+# Values from AWS documentation and NeuronSDK references.
+
+name: trainium1
+schema_version: "1.0"
+
+devices:
+  - device_type: accelerator
+    name: Trainium1-NeuronCore
+    vendor: aws
+    compute_units:
+      - name: tensor_engine
+        count: 2  # 2 NeuronCores per trn1.2xlarge
+        supported_dtypes: [float32, float16, bfloat16, int8]
+        peak_tflops: 95.0  # FP16/BF16 per device
+      - name: vector_engine
+        count: 2
+        supported_dtypes: [float32, float16, bfloat16]
+      - name: scalar_engine
+        count: 2
+        supported_dtypes: [float32, int32]
+      - name: gpsimd_engine
+        count: 2
+        supported_dtypes: [float32, float16, bfloat16]
+    memory_hierarchy:
+      - name: sbuf
+        size_bytes: 25165824  # 24 MB SRAM per NeuronCore
+        bandwidth_gbps: 6553.6
+      - name: psum
+        size_bytes: 4194304  # 4 MB accumulator per NeuronCore
+      - name: hbm
+        size_bytes: 34359738368  # 32 GB HBM per trn1.2xlarge
+        bandwidth_gbps: 820.0
+    supported_ops:
+      - matmul
+      - conv2d
+      - layernorm
+      - softmax
+      - gelu
+      - attention
+      - transpose
+      - reduce
+    features:
+      - nki  # Neuron Kernel Interface
+      - stochastic_rounding
+      - mixed_precision
+    kernel_backends:
+      - nki
+
+constraints:
+  max_memory_gb: 32
+  partition_dim_max: 128
+  psum_free_dim_max: 512
+
+cost_model:
+  op_latencies:
+    matmul_1024x1024: 50.0
+    layernorm_1024: 8.0
+  memory_bandwidth:
+    hbm: 820.0  # GB/s
+    sbuf: 6553.6  # GB/s
+
+metadata:
+  instance_type: trn1.2xlarge
+  neuron_sdk_version: "2.x"
+  neuron_cores: 2

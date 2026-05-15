@@ -1,0 +1,52 @@
+claim: |
+  Baremetal C codegen (``compgen.runtime.baremetal.c_codegen``)
+  lowers a Payload-IR ``ModuleOp`` to ANSI C that targets the
+  ``npu_*`` ukernel-library boundary. The walker emits one
+  ``GeneratedCFunction`` per ``func.func``, preserving body order;
+  passthrough ``aten_*`` functions emit as extern declarations;
+  ``@forward`` emits a typed C body that dispatches through
+  ``npu_call_<callee>``.
+
+  Two **real compilation gates** layer on top of the existing
+  structural tests:
+
+  - the emitted ``@forward`` body compiles cleanly with
+    ``cc -std=c11 -Wall -Wextra -Wno-unused -fsyntax-only`` when
+    paired with the stub header that declares the ``npu_*``
+    boundary it references;
+  - the emitted ``aten_*`` extern declarations also pass
+    ``cc -fsyntax-only`` (catches drift between the walker's
+    declaration emit and the production npu_driver.h surface).
+
+  This makes ``c_codegen.py`` ``decision_affecting`` realness: any
+  future change to the walker that breaks the C-text shape fails the
+  compilation gate in CI, not just at the production
+  baremetal-build time.
+commit: m94_phase_g_runtime_three_layer_closure
+created_at_utc: 2026-05-12T00:00:00Z
+forbidden:
+- emitting C that uses non-ANSI extensions (GCC builtins, statement expressions, VLAs)
+- referencing identifiers outside the npu_driver.h boundary
+- silently dropping FuncOps from the emit (every funcop must produce a GeneratedCFunction)
+- changing the npu_call_<callee> boundary signature without bumping the npu_driver.h stub
+realness_level: decision_affecting
+required_evidence:
+- python/compgen/runtime/baremetal/c_codegen.py
+- tests/runtime/baremetal/test_c_codegen.py
+- tests/runtime/baremetal/test_c_codegen_compilation.py
+feature_id: m94_baremetal_codegen
+notes: |
+  Baremetal C-codegen hardening.
+
+  Realness level stops at ``decision_affecting`` rather than
+  ``production_path`` because:
+
+  - the npu_driver.h surface this codegen targets is a real but
+    incomplete library — Saturn OPU bring-up is in progress and
+    not every npu_* call has a production implementation yet;
+  - integration acceptance against a real Saturn OPU runs in the
+    in-flight bring-up demo, not in the CI suite.
+
+  Once the Saturn bring-up demo lands, the realness level will
+  graduate to ``production_path`` with the full hardware-backed
+  differential.

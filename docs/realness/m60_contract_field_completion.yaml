@@ -1,0 +1,121 @@
+claim: |
+  M-60 (Phase D): populates today-empty kernel-facing contract fields
+  from the target profile YAML and the M-17.1 region dossier. Every
+  field a real kernel codegen provider would use is now non-default
+  for at least one canonical model.
+
+  Hard contract:
+
+  1. ``KernelContractV3.from_recipe`` reads five new optional fields
+     from ``target_profile``:
+     - ``peak_compute_per_dtype`` (dict[str, float], TFLOPS per dtype)
+     - ``mma_shapes`` (dict[str, tuple[int,int,int]] — empty on CPUs)
+     - ``codegen_hints`` (tuple[str, ...] — provider prompt context)
+     - ``register_quota_per_thread`` (int, bytes — defaults 256)
+     - ``max_concurrent_blocks`` (int — defaults 0 = unbounded)
+     Each is read with a sensible default so pre-M-60 target YAMLs
+     still work unchanged.
+  2. ``configs/targets/host_cpu.yaml`` ships the M-60 fields:
+     ``peak_compute_per_dtype: {f32: 0.1, fp32: 0.1}``;
+     ``codegen_hints`` carrying AVX2/AVX-512 SIMD guidance, row-major
+     access preference, and accumulator-in-registers; empty
+     ``mma_shapes`` (CPUs have no hardware MMA tiles);
+     ``register_quota_per_thread: 256``; ``max_concurrent_blocks: 0``.
+  3. ``KernelContractV3.from_recipe`` now derives ``MemorySpec``
+     (input_tiers, output_tiers, lifetimes) from the region dossier's
+     ``reuse.inputs[*].lifetime_class`` and ``reuse.outputs[*]``
+     facts via the new module-level helpers ``_lifetime_class_to_tier``
+     and ``_live_after_for_consumer_count``.
+     The mapping: ``transient`` → ``MemoryTier.SCRATCHPAD``;
+     ``persistent`` / ``input`` / unknown → ``MemoryTier.HOST``
+     (CPUs main memory; CPUs are the contract pipeline default).
+     Per-output ``BufferLifetime.live_after`` is derived from
+     ``consumer_count``: 0 → ``end_of_region``, 1 → ``next_consumer``,
+     >1 → ``all_consumers``.
+  4. ``contract_to_dict`` (kernel_contract_materialization.py) and
+     ``_reconstruct_contract_from_dict`` (kernel_codegen_response.py)
+     both round-trip the M-60 hardware fields. Pre-M-60 cert bodies
+     still load (defaults preserve compatibility); fresh runs carry
+     the new fields verbatim.
+  5. ``_derive_memory_spec`` falls back to today's hardcoded
+     SCRATCHPAD-everywhere default when the dossier lacks reuse facts,
+     defending the V3 ``__post_init__`` arity invariants on dossier
+     omissions. ``in_place_safe`` stays False; matmul outputs do not
+     alias matmul inputs by contract.
+commit: 0a60000000000000000000000000000000000000
+created_at_utc: 2026-05-07T00:00:00Z
+forbidden:
+- HardwareEnvelope new fields leaking into compiler_only() (they belong in kernel_facing(); the kernel codegen genuinely needs codegen_hints + mma_shapes + peak_compute to make register/tile decisions)
+- contract_to_dict dropping any of the M-60 hardware fields (round-trip must preserve every kernel-facing field, otherwise the M-44 verifier reads a different shape than M-40 wrote)
+- region dossier omissions raising — _derive_memory_spec falls back to defaults (the dossier may lawfully omit reuse facts on partial pipelines)
+- silently using SCRATCHPAD for input tensors when the dossier marks them as "input" (input-class tensors come from main memory; mapping them to SCRATCHPAD would break the M-44 memory-tier obligation)
+- target YAMLs declaring a non-CPU mma_shapes value as an empty list (mma_shapes is a dict; empty dict is the CPU default; any list-typed value is malformed and should fall back to {})
+realness_level: production_path
+required_evidence:
+- python/compgen/kernels/contract_v3.py (HardwareEnvelope wiring + _derive_memory_spec + _lifetime_class_to_tier + _live_after_for_consumer_count)
+- configs/targets/host_cpu.yaml (M-60 hardware envelope block)
+- python/compgen/graph_compilation/kernel_contract_materialization.py (contract_to_dict M-60 hardware section)
+- python/compgen/graph_compilation/kernel_codegen_response.py (_reconstruct_contract_from_dict M-60 hardware section)
+- tests/graph_compilation/test_contract_field_completion.py
+feature_id: m60_contract_field_completion
+notes: |
+  Phase D step 6 — closes Section 7's "the contract is the calling
+  convention" claim by populating the kernel-facing fields a real
+  codegen provider would use.
+
+  Pre-existing scaffolding consumed:
+  - ``HardwareEnvelope`` dataclass (kernels/contract_v3.py from
+    Phase B). M-60 was always going to be a population pass, not a
+    schema change — the fields existed; from_recipe just left them
+    at default.
+  - ``MemoryTier`` enum (REGISTER, SCRATCHPAD, L2, DEVICE_DRAM, HOST)
+    — M-60 picks the right enum value per lifetime_class.
+  - Region dossier (M-17.1) ``reuse.inputs`` / ``reuse.outputs``
+    fields — the canonical lifetime + consumer-count facts.
+
+  Real-driven evidence (`/tmp/m60_stress`, regenerated post-fix):
+  - Materialised contract for merlin_mlp_wide matmul_0 carries
+    ``codegen_hints`` (3 entries from host_cpu.yaml),
+    ``peak_compute_per_dtype.f32 = 0.1``,
+    ``register_quota_per_thread = 256``,
+    ``max_concurrent_blocks = 0``,
+    ``mma_shapes = {}``.
+  - ``input_tiers = [host, scratchpad]`` (one input-class, one
+    transient-class), ``output_tiers = [scratchpad]`` (transient).
+    ``lifetimes[0].live_after = "next_consumer"`` (consumer_count=1).
+  - Round-trip through M-44 reconstruct + canonical_contract_hash
+    yields a stable hash; tampering compiler-only fields doesn't
+    change it.
+
+  Tests: 8 in tests/graph_compilation/test_contract_field_completion.py
+  covering host_cpu.yaml drives HardwareEnvelope, dossier drives
+  MemorySpec input/output tiers + lifetimes,
+  _lifetime_class_to_tier unit, _live_after_for_consumer_count unit,
+  _derive_memory_spec with dossier + fallback when missing,
+  round-trip preserves every M-60 field, empty target_profile falls
+  back to defaults.
+
+  Cross-suite regression: 142/142 across 14 test suites
+  (test_provider_routing, test_provider_bid, test_kernel_certificate,
+  test_contract_verifier, test_canonical_contract_hash,
+  test_kernel_codegen_request, test_kernel_codegen_response,
+  test_kernel_contract_materialization, test_kernel_auction,
+  test_registry_wired, test_contract_feedback_apply,
+  test_contract_field_completion, test_contract_hash,
+  test_region_kernel_binding).
+
+  Honest residuals:
+  - Only host_cpu.yaml ships M-60 fields today; cuda_sm75 etc. fall
+    back to defaults. M-65's vertical slice 3 will exercise GPU
+    targets; populating GPU mma_shapes / peak_compute_per_dtype
+    happens then.
+  - The ``HOST`` tier is used as the default for input-class /
+    persistent / unknown lifetime_class. CPU contracts get the
+    correct mapping; GPU contracts will need the bridge to use
+    ``DEVICE_DRAM`` instead. That's a 4-line target-aware refinement
+    in M-65.
+  - M-44 verifier obligations cover input/output shape, dtype,
+    layout, accumulator, dispatch_model. M-60's new HardwareEnvelope
+    fields don't yet drive verifier obligations (the contract just
+    carries them through to the provider). M-61's predicate DSL adds
+    obligations that consume them.

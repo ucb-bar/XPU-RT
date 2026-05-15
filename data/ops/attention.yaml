@@ -1,0 +1,64 @@
+op_family: attention
+tiling_guidance:
+- target_class: gpu
+  tile_sizes:
+  - 64
+  - 64
+  rationale: FlashAttention tiles over sequence length in blocks of 64.  Each thread block computes a 64-token slice of Q
+    against 64-token blocks of K/V, accumulating the softmax statistics in registers (online softmax).
+  source: FlashAttention
+  confidence: high
+- target_class: gpu
+  tile_sizes:
+  - 128
+  - 128
+  rationale: FlashAttention-2 uses larger tiles (128) for better tensor core utilisation on Hopper GPUs with larger shared
+    memory.
+  source: FlashAttention-2
+  confidence: high
+fusion_opportunities:
+- pattern: Q@K^T -> scale -> softmax -> @V
+  description: 'FlashAttention pattern: the entire multi-head attention computation is fused into a single kernel that never
+    materialises the N x N attention matrix in global memory.  Uses online softmax (log-sum-exp tracking) to compute exact
+    softmax in a single pass.'
+  conditions:
+  - Standard multi-head attention (Q, K, V with compatible shapes).
+  - Causal or non-causal masking (both supported).
+  - Head dimension is a power of 2 and <= 256.
+  source: FlashAttention/Triton
+  confidence: high
+- pattern: attention+dropout
+  description: Dropout mask is generated and applied inside the fused attention kernel, avoiding materialisation of the dropout
+    mask tensor.
+  conditions:
+  - Training mode with dropout probability > 0.
+  source: FlashAttention
+  confidence: high
+layout_preferences:
+- target_class: gpu
+  preferred_layout: (batch, heads, seq_len, head_dim) contiguous
+  rationale: FlashAttention expects Q, K, V in (B, H, S, D) layout with the last dimension contiguous for coalesced loads.
+  source: FlashAttention
+backend_guidance:
+- target_class: gpu
+  recommended_backend: Triton (FlashAttention)
+  conditions: Sequence length > 128, head_dim in {64, 128}
+  rationale: Triton FlashAttention kernel achieves near-peak memory bandwidth and avoids O(N^2) memory for the attention matrix.
+  source: FlashAttention/Triton
+- target_class: cpu
+  recommended_backend: fused attention kernel
+  conditions: Inference with moderate sequence lengths
+  rationale: CPU fused attention avoids materialising the attention matrix; block-wise computation fits in L2 cache.
+  source: oneDNN/PyTorch
+pitfalls:
+- Naive attention materialises an O(N^2) intermediate matrix (seq_len x seq_len), causing OOM for long sequences (e.g., 8192+
+  tokens on 40 GB GPU).
+- 'Memory-bound for long sequences even with FlashAttention: total I/O scales as O(N^2 * d / M) where M is SRAM size.'
+- Causal masking requires careful handling in the tiled kernel to avoid wasted computation on masked-out tiles (skip fully-masked
+  blocks).
+- 'Numerical precision: online softmax must track running max and log-sum-exp carefully to match the numerics of the unfused
+  version.'
+performance_bounds:
+- Memory-bound for seq_len > 512 on most GPUs when not using FlashAttention.
+- 'FlashAttention is IO-aware: complexity is O(N^2 * d^2 / M) HBM accesses vs O(N^2 * d + N^2) for standard attention.'
+- Compute-bound with FlashAttention when head_dim is large (128+) and seq_len is moderate (< 2048).

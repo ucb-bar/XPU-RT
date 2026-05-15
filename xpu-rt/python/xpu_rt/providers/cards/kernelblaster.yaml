@@ -1,0 +1,16 @@
+schema_version: provider_card_v1
+provider_id: kernelblaster
+integration_level: generate
+target_families: [cuda]
+contract_kinds: [matmul, fused_region]
+emits: [triton_source]
+entrypoint: compgen.kernels.providers.kernelblaster:KernelBlasterProvider
+paper_claimable: false
+required_env: [KERNELBLASTER_ROOT]
+required_commands: []
+required_python_imports: []
+description: |
+  KernelBlaster autotuning provider. Adapter wraps an external
+  search/autotune driver and surfaces its best candidates through
+  ProviderResult. paper_claimable=false until M-31A trust-report
+  gates run successfully on KernelBlaster output.

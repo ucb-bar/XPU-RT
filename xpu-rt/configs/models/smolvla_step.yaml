@@ -1,0 +1,34 @@
+schema_version: model_config_v1
+model_id: smolvla_step
+family: vla
+source:
+  provider: huggingface
+  model_ref: lerobot/smolvla_base
+  repo_url: https://huggingface.co/lerobot/smolvla_base
+  docs_url: https://huggingface.co/lerobot/smolvla_base
+  revision: c83c3163b8ca9b7e67c509fffd9121e66cb96205
+  verified_at: '2026-05-01T05:35:03+00:00'
+  verified_by: agustin@garden
+  source_verified: true
+loader:
+  kind: compgen_model_spec
+  model_spec_id: smolvla_one_step
+  device_policy: auto
+inputs:
+  kind: one_step_policy
+  processor_required: false
+compile:
+  mode: torch_compile_admission
+  backend: inductor
+  fullgraph: false
+  dynamic: true
+support:
+  mode: one_step_policy
+  full_model_blocking: true
+  reason: ''
+expected:
+  can_eager_run: true
+  can_torch_compile: true
+  can_dynamo_capture: true
+  can_slice_compile: true
+notes: []

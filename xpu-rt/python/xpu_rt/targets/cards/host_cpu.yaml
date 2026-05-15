@@ -1,0 +1,12 @@
+schema_version: target_card_v1
+target_id: host_cpu
+family: host_cpu
+vendor: generic
+dispatch_modes: [sync, async]
+memory_tiers:
+  - {name: dram, kind: host, capacity_bytes: 0}
+description: |
+  Generic host-CPU target. dram capacity_bytes=0 means
+  "unspecified" — the planner reads the actual machine via the
+  capability probe. This is the correctness anchor for every
+  hardware-free run.

@@ -1,0 +1,23 @@
+op_family: gather
+tiling_guidance: []
+fusion_opportunities: []
+layout_preferences: []
+backend_guidance:
+- target_class: gpu
+  recommended_backend: custom Triton kernel
+  conditions: Irregular index patterns
+  rationale: Triton's tl.load with mask handles irregular gather patterns.  No vendor library covers the general case well.
+  source: Triton
+- target_class: cpu
+  recommended_backend: native loops
+  conditions: Any gather/scatter
+  rationale: AVX-512 has vpgatherdd/vpscatterdd but throughput is limited; scalar loops may be faster for irregular patterns.
+  source: Intel intrinsics guide
+pitfalls:
+- Irregular access patterns defeat caching and vectorisation.  Pre-sort indices when possible to improve spatial locality.
+- Scatter with duplicate indices has undefined order; use atomic operations or segment-based reduction for correctness.
+- GPU gather/scatter is limited by L2 cache hit rate on the index pattern.  Random indices achieve only 10-20% of peak bandwidth.
+performance_bounds:
+- Throughput depends entirely on index pattern locality.
+- 'Best case (sequential indices): approaches memcpy bandwidth.'
+- 'Worst case (random indices): limited by cache line fetch rate.'

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://compgen.dev/schemas/v1/model_admission/eager_report.schema.json",
+  "title": "eager_report_v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "model_id", "status"],
+  "properties": {
+    "schema_version": { "const": "eager_report_v1" },
+    "model_id": { "type": "string" },
+    "slice_id": { "type": "string" },
+    "status": { "type": "string", "enum": ["pass", "fail", "skipped"] },
+    "wall_time_s": { "type": "number" },
+    "output_summary": { "type": "object" },
+    "error": { "type": ["string", "null"] }
+  }
+}

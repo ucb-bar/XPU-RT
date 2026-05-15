@@ -1,0 +1,39 @@
+schema_version: model_config_v1
+model_id: whisper_tiny
+family: speech
+source:
+  provider: huggingface
+  model_ref: openai/whisper-tiny
+  repo_url: https://huggingface.co/openai/whisper-tiny
+  docs_url: https://huggingface.co/docs/transformers/model_doc/whisper
+  revision: main
+  source_verified: true
+loader:
+  kind: hf_transformers_seq2seq
+  trust_remote_code: false
+  dtype: float16
+  device_policy: cuda
+inputs:
+  kind: audio_transcribe
+  processor_required: true
+  sample_seconds: 30
+  batch: 1
+compile:
+  mode: torch_compile_admission
+  backend: inductor
+  fullgraph: false
+  dynamic: true
+support:
+  mode: full_or_slice_smoke
+  full_model_blocking: false
+  reason: ''
+expected:
+  can_eager_run: true
+  can_torch_compile: true
+  can_dynamo_capture: true
+  can_slice_compile: true
+headline_workload: true
+notes:
+  - "Whisper-tiny — P4 workload #3 (speech regime)."
+  - "Conv frontend + transformer + autoregressive decode."
+  - "Cached locally via HF snapshot_download."

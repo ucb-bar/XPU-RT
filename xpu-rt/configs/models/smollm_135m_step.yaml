@@ -1,0 +1,36 @@
+schema_version: model_config_v1
+model_id: smollm_135m_step
+family: llm
+source:
+  provider: huggingface
+  model_ref: HuggingFaceTB/SmolLM-135M
+  repo_url: https://huggingface.co/HuggingFaceTB/SmolLM-135M
+  docs_url: https://huggingface.co/HuggingFaceTB/SmolLM-135M
+  revision: 1d461723eec654e65efdc40cf49301c89c0c92f4
+  verified_at: '2026-05-01T18:07:23+00:00'
+  verified_by: agustin@garden
+  source_verified: true
+loader:
+  kind: hf_transformers_llm
+  trust_remote_code: true
+  dtype: bfloat16
+  device_policy: auto
+inputs:
+  kind: text_decode
+  processor_required: false
+compile:
+  mode: torch_compile_admission
+  backend: inductor
+  fullgraph: false
+  dynamic: true
+support:
+  mode: full_or_slice_smoke
+  full_model_blocking: true
+  reason: ''
+expected:
+  can_eager_run: true
+  can_torch_compile: true
+  can_dynamo_capture: true
+  can_slice_compile: true
+notes:
+- Tiny (135M) SmolLM admission baseline -- smallest cleanly-loadable LLM in the suite.

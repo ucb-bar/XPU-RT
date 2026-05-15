@@ -1,0 +1,92 @@
+feature_id: m85_pass_tool_registry
+claim: |
+  M-85: pass tools as agent-callable, with typed
+  ``pass_tool_result_v1`` results and a hard-rule audit that
+  prevents direct Payload-IR mutation.
+
+  Implementation:
+
+  * ``python/compgen/pass_tools/pass_tool_result.py`` — typed
+    ``PassToolResult`` (``proposal`` / ``no_op`` / ``blocked``).
+    Status discipline enforced at construction time:
+    ``status=proposal`` requires non-empty ``recipe_delta``;
+    other statuses must NOT carry one. Every delta entry must
+    have an ``op`` field.
+  * ``python/compgen/pass_tools/pass_tool_registry.py`` —
+    ``PassToolRegistry`` + ``apply_pass_tool``. Resolves
+    entrypoints lazily; typed failures (``bad_entrypoint_syntax``,
+    ``module_not_importable``, ``symbol_not_in_module``,
+    ``entrypoint_not_callable``, ``unknown_tool_id``,
+    ``duplicate_tool_id``). At invocation time validates:
+    - result is a :class:`PassToolResult`;
+    - ``result.tool_id`` matches the registry entry;
+    - every recipe-delta op is in the card's
+      ``allowed_recipe_ops`` set.
+  * ``python/compgen/pass_tools/cards/fuse_matmul_bias_relu.yaml``
+    — first shipped pass-tool card.
+  * ``python/compgen/pass_tools/builtin/fuse_matmul_bias_relu.py``
+    — first shipped pass-tool entrypoint (pattern: matmul →
+    bias_add → relu with single matmul consumer; emits
+    ``FuseElementwise`` + ``SetAccumulator`` delta).
+
+  Hard rule 4 enforcement (pass tools propose Recipe-IR deltas
+  only):
+
+  1. ``PassToolCard.writes`` containing ``payload_ir`` rejected at
+     load time (M-79).
+  2. ``PassToolResult`` carrying a recipe-delta op outside the
+     card's ``allowed_recipe_ops`` is rejected at
+     ``apply_pass_tool`` time.
+  3. Pass tools that return non-``PassToolResult`` values are
+     rejected.
+  4. Pass tools that return a result claiming a different
+     ``tool_id`` are rejected.
+
+  Tests (26/26 green):
+
+  * ``tests/pass_tools/test_pass_tool_invocation.py`` (20):
+    - 4 tests on ``PassToolResult`` status / recipe-delta
+      discipline.
+    - 3 tests on round-trip + helper functions.
+    - 3 tests on registry discovery + unknown-tool / duplicate
+      rejection.
+    - 3 negative-control tests on entrypoint resolution.
+    - 3 invocation tests on the built-in
+      ``fuse_matmul_bias_relu`` (match → proposal, no-match →
+      no_op, multi-consumer → no_op).
+    - 3 hard-rule-4 enforcement tests (rogue recipe op, tool_id
+      mismatch, non-result return).
+    - 1 inventory test pinning every shipped card loads.
+  * ``tests/pass_tools/test_pass_tool_registry.py`` (6 — M-79
+    schema discipline).
+
+  Real invocation: applying ``fuse_matmul_bias_relu`` on
+  ``ops=(matmul, bias_add, relu, single_consumer=True)`` emits a
+  proposal with the two-op recipe delta. The verifier downstream
+  (existing M-29 / M-31A path) decides whether to apply it — the
+  pass tool never mutates Payload IR.
+realness_level: production_path
+forbidden:
+  - direct mutation of payload.mlir from a pass tool entrypoint
+  - producing outputs other than recipe_delta
+  - registering a pass tool without a verifier kind
+  - skipping the verifier between pass-tool result and recipe-IR application
+  - returning a recipe-delta op outside card.allowed_recipe_ops
+required_evidence:
+  - python/compgen/pass_tools/pass_tool_types.py
+  - python/compgen/pass_tools/pass_tool_result.py
+  - python/compgen/pass_tools/pass_tool_registry.py
+  - python/compgen/pass_tools/cards/fuse_matmul_bias_relu.yaml
+  - python/compgen/pass_tools/builtin/__init__.py
+  - python/compgen/pass_tools/builtin/fuse_matmul_bias_relu.py
+  - tests/pass_tools/test_pass_tool_invocation.py
+  - tests/pass_tools/test_pass_tool_registry.py
+commit: 35ee97f497bc69c0716c25b935f575c3cd7d63f4
+created_at_utc: 2026-05-12T00:00:00Z
+notes: |
+  Phase F-7. One built-in pass tool ships today. M-87 will source-
+  scan the rest of ``python/compgen/ir/payload/passes/`` for
+  candidates to lift into pass-tool cards in a follow-up.
+  Critical: this milestone proves the contract — emitting a
+  recipe-delta op outside ``allowed_recipe_ops`` is rejected by
+  the registry, not by social convention.

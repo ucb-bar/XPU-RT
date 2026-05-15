@@ -1,0 +1,33 @@
+schema_version: pass_card_v1
+pass_id: eqsat_layout
+display_name: E-graph saturation — layout-related rules
+level: payload
+family: eqsat
+source: homemade
+impl_path: python/compgen/eqsat/rules/layout.py
+reads:
+  - 01_payload_lowering/payload.mlir
+writes:
+  - 03_recipe_planning/post_lowering/transformed_payload.mlir
+  - 03_recipe_planning/post_lowering/applied_transform_manifest.json
+preconditions:
+  - "e-graph extraction backend is available"
+  - "transpose / reshape ops present"
+  - "saturation budget is finite"
+invalidates:
+  - payload_summary
+  - graph_dossier_v3
+  - kernel_contracts
+preserves_refinement: bit_equality
+verification:
+  - structural
+cost: expensive
+failure_modes:
+  - "saturation_budget_exhausted"
+  - "layout_rewrite_breaks_rank"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+notes: |
+  Layout-related e-graph rewrite rules: transpose-of-transpose
+  cancellation, reshape commutativity, layout-encoding equivalences.
+  Operates in saturation phase. Complements but does NOT replace the
+  layout_pipeline family (which is sequential, not e-graph-driven).

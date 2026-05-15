@@ -1,0 +1,19 @@
+claim: |
+  Before Phase B emits an agent_decision_request, promotion_retrieval queries
+  RecipeCache + CompilerMemory for matching region signatures and surfaces
+  promoted candidates in the bounded view the agent sees.
+commit: 5244e94e3730bdf6f2bff89c72b174ac0ee03fa6
+created_at_utc: 2026-05-05T00:00:00Z
+feature_id: m28_promotion_retrieval
+forbidden:
+- mock retrieval
+- bypassing candidate-allowlist legality
+- precomputed promoted_candidates shipped in repo
+realness_level: decision_affecting
+required_evidence:
+- python/compgen/graph_compilation/promotion_retrieval.py
+- python/compgen/graph_compilation/agent_decision.py (retrieval hook)
+- python/compgen/graph_compilation/llm_graph_view.py (rendering)
+- tests/graph_compilation/test_promotion_retrieval.py
+- warm/cold ablation showing fresh_emit_count_warm < fresh_emit_count_cold
+notes: 'Section 19 / M-28.'

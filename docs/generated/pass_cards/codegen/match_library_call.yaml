@@ -1,0 +1,37 @@
+schema_version: pass_card_v1
+pass_id: match_library_call
+display_name: Pattern-match regions for library dispatch
+level: payload
+family: codegen
+source: XLA
+impl_path: python/compgen/ir/payload/passes/rewrites/match_library_call.py
+reads:
+  - 01_payload_lowering/payload.mlir
+  - 02_graph_analysis/candidate_actions.json
+writes:
+  - 03_recipe_planning/post_lowering/transformed_payload.mlir
+  - 03_recipe_planning/post_lowering/applied_transform_manifest.json
+preconditions:
+  - "region matches a registered library-call pattern (gemm, attention, etc.)"
+  - "target has the library dependency available"
+  - "operand layouts match the library call's requirement"
+invalidates:
+  - payload_summary
+  - graph_dossier_v3
+  - cost_preview
+  - kernel_contracts
+preserves_refinement: tolerance_eps
+verification:
+  - structural
+  - differential
+cost: medium
+failure_modes:
+  - "no_matching_library_pattern"
+  - "library_unavailable_on_target"
+  - "operand_layout_mismatch"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+notes: |
+  Reconstruction of XLA's GemmRewriter + library matchers. Replaces
+  pattern-matched regions with calls to vendor libraries (cuBLAS,
+  cuDNN, oneDNN). preserves_refinement: tolerance_eps because the
+  library may use a different accumulation order than eager.

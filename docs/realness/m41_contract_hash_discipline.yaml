@@ -1,0 +1,81 @@
+claim: |
+  M-41 (Phase C): the M-26 exact-kernel ``contract_hash`` is derived
+  via exactly one canonical path —
+  ``compgen.promotion.contract_hash.hash_contract`` applied to the
+  ``KernelContractV3`` materialised by ``KernelContractV3.from_recipe``
+  (M-40). Every callsite in the production tree routes through
+  ``compgen.graph_compilation.kernel_contract_materialization.hash_contract_from_run_dir``;
+  the legacy ``derive_contract_hash`` in ``promotion_bridge.py`` is
+  retired (raises a typed runtime error if called).
+
+  Pre-M-41 there were two parallel hashing schemes:
+
+  - ``derive_contract_hash`` (raw-dict hash of candidate_kind +
+    recipe_delta + region_signature_fields).
+  - ``hash_contract`` (canonical SHA256 of the ``kernel_facing()``
+    projection).
+
+  They could drift. M-41 collapses them; promotion-write,
+  promotion-read, and agent-decision-time retrieval all derive
+  byte-identical keys because they hash byte-identical
+  ``KernelContractV3`` content.
+commit: b28b9de0000000000000000000000000000000
+created_at_utc: 2026-05-07T00:00:00Z
+feature_id: m41_contract_hash_discipline
+forbidden:
+- adding a new ``derive_contract_hash``-style raw-dict hashing function
+- bypassing ``hash_contract_from_run_dir`` for production contract hashes
+- callsites that compute contract_hash without going through ``KernelContractV3.from_recipe``
+- mixing the legacy hash and the canonical hash in the same retrieval surface
+realness_level: production_path
+required_evidence:
+- python/compgen/graph_compilation/kernel_contract_materialization.py (materialize_contract_from_run_dir, hash_contract_from_run_dir)
+- python/compgen/graph_compilation/promotion_bridge.py (legacy derive_contract_hash retired)
+- python/compgen/graph_compilation/agent_decision.py (routed through canonical hash)
+- python/compgen/graph_compilation/kernel_specialization.py (M-39 emitter routed through canonical hash)
+- "04_kernel_codegen/contract_materialization_summary.json + 04_kernel_codegen/requests/*.request.json on a real run carry the same contract_hash for the same selected candidate"
+- ".compgen_cache/recipes/<key>/promoted_recipe.json produced post-M-41 carries the canonical hash; cold-then-warm run finds it as match_kind=exact_contract"
+notes: |
+  Real-driven stress test (the user's framing — drive a workload, not
+  more pytests):
+
+  Phase 1 — read/write parity across 6 models. Drove
+  merlin_mlp_wide / tiny_mlp / tiny_attention / tiny_conv_block /
+  holdout_mlp_odd_shapes / proxy_vla through the
+  --stop-after kernel-specialization-request boundary. For each model,
+  read the contract_hash that M-39's request emitter wrote AND the
+  contract_hash that M-40 materialised independently. 5/5 set_tile_params
+  models matched bit-for-bit; proxy_vla (fuse_producer_consumer)
+  honestly produced an empty contract_hash on both paths, since
+  M-40 emits ``not_applicable`` for non-tile candidates (M-42 widens scope).
+  Distinct contract_hashes per (model, region, tile) — no collisions.
+
+  Phase 2 — byte-stability across processes. Ran merlin_mlp_wide
+  twice from clean output dirs. Contract bodies and hashes
+  byte-identical. (Hash 4838412db0b5c6b8 in both processes.)
+
+  Phase 3 — end-to-end warm-cache loop. Wiped .compgen_cache, ran
+  merlin_mlp_wide cold (populated cache with new hash), then ran
+  again warm. Warm run surfaced the just-cached recipe as
+  ``match_kind=exact_contract`` with hash 4838412db0b5c6b8 — the
+  canonical write→read roundtrip works under M-41.
+
+  Phase 4 — graceful degradation against pre-M-41 cache.
+  Restored the original 1875-recipe cache (whose entries were
+  written under the old derive_contract_hash). Re-ran merlin_mlp_wide.
+  19568 promoted candidates surfaced (69 ``exact_contract`` matches
+  from happens-to-align hashes; 19499 ``region_pattern`` matches from
+  graceful fallback). Selected candidate identical to pre-M-41
+  (cand_tile_matmul_0_tile_M16_N16_K16__ccb97c43). No regression in
+  end-to-end behaviour.
+
+  Phase 5 — full inspection harness. Ran scripts/dev/inspect_models.py
+  on the canonical 6 small models. **6/6 warm-cache hits**, matching
+  the M-37.12 baseline. Outcome distribution unchanged.
+
+  Honest residual: existing pre-M-41 promoted recipes are
+  unfindable by exact_contract under the new hash. Region-signature
+  fallback still works. New runs populate the cache under the
+  canonical hash; the cache organically migrates over time. No
+  paper-claimable behaviour change — warm-cache hit rate measured
+  per workload, not per individual recipe entry.

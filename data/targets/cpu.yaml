@@ -1,0 +1,132 @@
+- target_class: cpu
+  category: memory_hierarchy
+  pattern_name: l1_tiling
+  description: Tile innermost loops so the working set fits in L1 cache (32-64 KB per core).  For matmul, this means the micro-kernel's
+    A panel and B panel must fit in L1.
+  implementation_notes:
+  - 'Typical L1 tile: 6 rows of A (6 * K * 4B) + one column-panel of B (K * 16 * 4B).'
+  - 'Total: ~(6 + 16) * K * 4B; for K=512, this is ~44 KB -- fits in 48 KB L1d.'
+  - Access pattern must be sequential to benefit from hardware prefetcher.
+  - Align tiles to cache line boundaries (64 bytes).
+  source: oneDNN/BLIS
+  confidence: high
+- target_class: cpu
+  category: memory_hierarchy
+  pattern_name: l2_tiling
+  description: Tile outer loops so the working set fits in L2 cache (256 KB - 1 MB per core).  The GEBP (General Block Panel)
+    pattern keeps a block of A in L2 while streaming panels of B through.
+  implementation_notes:
+  - 'GEBP: A block is MC x KC, B panel is KC x NC.'
+  - MC * KC * elem_size should fit in L2 (e.g., 256 * 512 * 4B = 512 KB).
+  - Iterate over NC-wide panels of B, reusing A block from L2.
+  - Pack A and B into contiguous buffers for sequential access.
+  source: BLIS/Exo
+  confidence: high
+- target_class: cpu
+  category: memory_hierarchy
+  pattern_name: register_blocking
+  description: Block the micro-kernel to use all available SIMD registers as accumulators.  For AVX-512, this means filling
+    32 ZMM registers with output tiles.
+  implementation_notes:
+  - 'AVX-512: 32 ZMM registers, each holding 16 fp32 or 32 bf16 elements.'
+  - 'Typical micro-kernel: 6x16 (6 rows x 16 cols = 6 ZMM accumulators), leaving registers for A and B fragments.'
+  - 'AMX: 8 tile registers of 16x16 bytes each; use for int8/bf16 matmul.'
+  - Register blocking is the innermost tiling level.
+  source: Exo/oneDNN
+  confidence: high
+- target_class: cpu
+  category: parallelism
+  pattern_name: openmp_outer_parallel
+  description: Parallelise outer loops with OpenMP.  Each thread gets a chunk of the output to compute independently, minimising
+    synchronisation.
+  implementation_notes:
+  - '#pragma omp parallel for schedule(static) on the outermost loop.'
+  - Chunk size should give each thread at least one L2 tile.
+  - 'Avoid false sharing: ensure thread-local output tiles are on separate cache lines.'
+  - Thread count = number of physical cores (not hyperthreads) for compute-bound work.
+  source: oneDNN/MKL
+  confidence: high
+- target_class: cpu
+  category: parallelism
+  pattern_name: simd_vectorisation
+  description: Vectorise inner loops with SIMD instructions (AVX-512, AVX2, NEON).  Process multiple data elements per instruction
+    cycle.
+  implementation_notes:
+  - 'AVX-512: 16 fp32 elements per instruction (512 bits).'
+  - 'AVX2: 8 fp32 elements per instruction (256 bits).'
+  - 'ARM NEON/SVE: 4-16 fp32 elements depending on vector length.'
+  - Use intrinsics or let the compiler auto-vectorise with -O3 -march=native.
+  - Ensure loop trip count is a multiple of vector width (or add remainder loop).
+  source: oneDNN/MKL
+  confidence: high
+- target_class: cpu
+  category: parallelism
+  pattern_name: numa_aware_allocation
+  description: Allocate data on the NUMA node where it will be consumed.  Cross-node memory access has 2-3x higher latency
+    and lower bandwidth.
+  implementation_notes:
+  - Use numactl --membind or libnuma's numa_alloc_onnode().
+  - 'First-touch policy: initialise data on the thread that will use it.'
+  - For multi-socket systems, partition work so each socket operates on local memory.
+  - Check topology with numactl -H or hwloc.
+  source: oneDNN
+  confidence: high
+- target_class: cpu
+  category: data_movement
+  pattern_name: software_prefetch
+  description: Issue software prefetch instructions to bring data into cache before it is needed, hiding memory latency for
+    predictable access patterns.
+  implementation_notes:
+  - _mm_prefetch(ptr, _MM_HINT_T0) for L1 prefetch.
+  - _mm_prefetch(ptr, _MM_HINT_T1) for L2 prefetch.
+  - Prefetch 2-4 cache lines ahead of the current access.
+  - Effective for sequential and strided access; useless for random access.
+  source: BLIS/MKL
+  confidence: medium
+- target_class: cpu
+  category: data_movement
+  pattern_name: cache_line_alignment
+  description: Align data structures and allocation boundaries to cache line size (typically 64 bytes) to avoid false sharing
+    and partial cache line loads.
+  implementation_notes:
+  - Use aligned_alloc(64, size) or posix_memalign(&ptr, 64, size).
+  - Pad structure members to 64-byte boundaries for thread-local data.
+  - Matrix leading dimensions should be multiples of 16 (64B / 4B per float).
+  source: BLIS/oneDNN
+  confidence: high
+- target_class: cpu
+  category: data_movement
+  pattern_name: matrix_packing
+  description: Pack matrices into contiguous buffers with the micro-kernel's access pattern.  Converts arbitrary stride layouts
+    into sequential access, eliminating TLB misses on large matrices.
+  implementation_notes:
+  - Pack B into column-panels of width NR (e.g., 16 for AVX-512).
+  - Pack A into row-panels of height MR (e.g., 6 for the 6x16 micro-kernel).
+  - Packing is O(N^2) for an NxN matrix; amortised over the O(N^3) compute.
+  - Pack into pre-allocated buffers to avoid allocation overhead.
+  source: BLIS/MKL
+  confidence: high
+- target_class: cpu
+  category: instruction_selection
+  pattern_name: avx512_fp32
+  description: Use AVX-512 instructions for fp32 computation.  Process 16 fp32 elements per instruction with ZMM registers.
+  implementation_notes:
+  - 'vfmadd231ps: fused multiply-add, 16 FLOPs per instruction.'
+  - vmovups/vmovaps for 512-bit loads/stores.
+  - vbroadcastss for scalar broadcast into ZMM register.
+  - 'Throughput: 2 FMA per cycle on Skylake-X and later (64 FLOPs/cycle/core).'
+  source: Exo/oneDNN
+  confidence: high
+- target_class: cpu
+  category: instruction_selection
+  pattern_name: amx_matmul
+  description: Use Intel AMX (Advanced Matrix Extensions) for int8 and bf16 matrix multiply.  Each TDPB* instruction computes
+    a 16x16 tile in one cycle.
+  implementation_notes:
+  - 8 tile registers (tmm0-tmm7), each 16 rows x 64 bytes (16x16 int32 accumulator).
+  - 'TDPBSSD: int8 matmul with int32 accumulation.'
+  - 'TDPBF16PS: bf16 matmul with fp32 accumulation.'
+  - Requires explicit tile configuration via LDTILECFG.
+  - Available on Sapphire Rapids and later.
+  source: Exo/oneDNN
+  confidence: high

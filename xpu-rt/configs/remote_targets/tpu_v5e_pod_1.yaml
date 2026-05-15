@@ -1,0 +1,12 @@
+target_id: google_tpu_v5e
+transport: ssh
+host: ""  # fill in with the SSH hostname when the user provisions access
+user: ""
+workdir: /tmp/compgen_remote
+toolchain_probe_cmd: "python -c 'import jax; import jax.experimental.pallas as pl; print(jax.__version__)'"
+build_cmd_template: "echo 'no build phase for pallas'"
+run_cmd_template: "python {source}"
+timeout_s: 1800
+extras:
+  provider_id: pallas
+  expected_devices: ["tpu"]

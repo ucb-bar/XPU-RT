@@ -1,0 +1,20 @@
+name: reduction_gpu_tree
+op_family: reduction
+target_class: gpu
+steps:
+- action: parallel_reduce
+  parameters:
+    scope: thread_block
+  rationale: Each block reduces a tile
+- action: tree_reduce
+  parameters:
+    method: shfl_down
+    steps: log2
+  rationale: Log2 steps with __shfl_down within warp
+- action: cross_block_reduce
+  parameters:
+    method: atomic_or_multipass
+  rationale: Final reduction across blocks
+expected_speedup: Near bandwidth-bound peak
+source: CUDA reduction best practices
+confidence: high

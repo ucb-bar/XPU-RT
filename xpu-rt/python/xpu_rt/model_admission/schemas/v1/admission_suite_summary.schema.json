@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://compgen.dev/schemas/v1/model_admission/admission_suite_summary.schema.json",
+  "title": "admission_suite_summary_v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "rows", "total"],
+  "properties": {
+    "schema_version": { "const": "admission_suite_summary_v1" },
+    "suite_path": { "type": "string" },
+    "out_dir": { "type": "string" },
+    "total": { "type": "integer" },
+    "available": { "type": "integer" },
+    "available_slice_only": { "type": "integer" },
+    "unavailable": { "type": "integer" },
+    "failed": { "type": "integer" },
+    "rows": { "type": "array" }
+  }
+}

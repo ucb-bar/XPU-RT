@@ -1,0 +1,54 @@
+name: matmul_cpu_avx2
+op_family: matmul
+target_class: cpu
+steps:
+- action: tile
+  parameters:
+    tile_sizes:
+    - 256
+    - 256
+    - 512
+    labels:
+    - MC
+    - NC
+    - KC
+  rationale: L2 cache blocking
+- action: tile
+  parameters:
+    tile_sizes:
+    - 6
+    - 16
+    labels:
+    - MR
+    - NR
+    level: inner
+  rationale: Register blocking for AVX2 (6 rows x 2 YMM regs)
+- action: interchange
+  parameters:
+    move_to_outermost: K
+  rationale: Output-stationary accumulation in registers
+- action: stage_mem
+  parameters:
+    operand: C_reg
+    target: registers
+  rationale: Keep accumulator in YMM registers
+- action: divide_dim
+  parameters:
+    operand: C_reg
+    factor: 8
+  rationale: Map to individual YMM registers (8 floats each)
+- action: set_memory
+  parameters:
+    operand: C_reg
+    memory: AVX2
+  rationale: Pin to vector registers
+- action: replace_intrinsics
+  parameters:
+    instructions:
+    - mm256_loadu_ps
+    - mm256_fmadd_ps
+    - mm256_broadcast_ss
+  rationale: Replace loads/stores/FMA with AVX2 intrinsics
+expected_speedup: 80-95% of MKL
+source: Exo AVX2 matmul tutorial
+confidence: high

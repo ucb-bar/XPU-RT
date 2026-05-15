@@ -1,0 +1,27 @@
+feature_id: m67_placement_planner
+claim: |
+  M-67 (Phase E): region-to-device placement runs as a real CP-SAT
+  problem in ``placement_planner.plan_placement``. Binary
+  ``x[r,d]`` variables enforce one device per region; per-device
+  memory capacity is a linear constraint; transfer cost between
+  regions on different devices contributes to the objective via
+  linearized ``y[e,d1,d2]`` indicators. Warm-start hints from the
+  agent / greedy heuristic are passed through ``AddHint`` but never
+  promoted to constraints — the solver is free to discard them.
+  Infeasible problems return ``SolverStatus.INFEASIBLE`` with no
+  fabricated assignment; timeouts return
+  ``SolverStatus.TIMEOUT`` with a typed reason.
+realness_level: production_path
+forbidden:
+  - emitting an assignment when CP-SAT returned INFEASIBLE / unknown
+  - silently promoting warm-start hints to hard constraints
+  - allowing a region to be placed on a device not in
+    ``allowed_devices``
+required_evidence:
+  - python/compgen/solve/placement_planner.py
+  - tests/solve/test_placement_planner_ortools.py
+commit: 0e80000000000000000000000000000000000000
+created_at_utc: 2026-05-11T00:00:00Z
+notes: |
+  Replaces the legacy ``solve/placement.py``; the old API survives
+  as a one-cycle deprecation shim.

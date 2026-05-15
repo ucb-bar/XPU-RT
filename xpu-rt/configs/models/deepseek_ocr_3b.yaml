@@ -1,0 +1,43 @@
+schema_version: model_config_v1
+model_id: deepseek_ocr_3b
+family: ocr
+source:
+  provider: huggingface
+  model_ref: deepseek-ai/DeepSeek-OCR
+  repo_url: https://huggingface.co/deepseek-ai/DeepSeek-OCR
+  docs_url: https://huggingface.co/deepseek-ai/DeepSeek-OCR
+  revision: 9f30c71f441d010e5429c532364a86705536c53a
+  verified_at: '2026-05-01T05:35:03+00:00'
+  verified_by: agustin@garden
+  source_verified: true
+loader:
+  kind: hf_transformers_ocr
+  trust_remote_code: true
+  dtype: bfloat16
+  device_policy: auto
+  # DeepSeek-OCR's forward expects ``images=[(crop, ori)]``. The adapter
+  # wraps that into a standard forward(input_ids, images_crop, images_ori).
+  adapter: compgen.model_admission.adapters.deepseek_ocr
+inputs:
+  kind: page_crop
+  processor_required: true
+compile:
+  mode: torch_compile_admission
+  backend: inductor
+  fullgraph: false
+  dynamic: true
+  # Bundled remote_code imports LlamaFlashAttention2 (removed in transformers 5.x).
+  transformers_pin: "4.46.3"
+  extra_pins:
+    - "addict"
+    - "easydict"
+support:
+  mode: full_or_slice_smoke
+  full_model_blocking: true
+  reason: ''
+expected:
+  can_eager_run: true
+  can_torch_compile: true
+  can_dynamo_capture: true
+  can_slice_compile: true
+notes: []

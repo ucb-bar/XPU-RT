@@ -1,0 +1,90 @@
+{
+  "created_at_utc": "2026-04-30T00:00:00Z",
+  "git_commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "model": {
+    "config_path": "configs/models/synth.yaml",
+    "config_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+    "model_id": "synth_tiny"
+  },
+  "run_id": "synth_run_001",
+  "schema_version": "run_manifest_v1",
+  "seed": 0,
+  "stages": [
+    {
+      "finished_at_utc": "2026-04-30T00:00:01Z",
+      "input_hash": "0f9ad49cc8e5e2c5ac5ddd427d9c525ec96d27d003343fdc0372e9246a8793a5",
+      "inputs": [],
+      "llm_calls": 0,
+      "output_hash": "b58577498f3cfa851cb71590d2e3a1cea23995585882488c0a7fcd20e6133831",
+      "outputs": [
+        {
+          "kind": "file",
+          "path": "00_graph_capture/exported_program.pt2",
+          "sha256": "d45e92192193cda7455f08996e5a545be91f5718992b16f1e02bd2afc74f0f9c",
+          "size_bytes": 23
+        }
+      ],
+      "report_path": "00_graph_capture/capture_report.json",
+      "stage_id": "graph_capture",
+      "started_at_utc": "2026-04-30T00:00:00Z",
+      "status": "pass"
+    },
+    {
+      "finished_at_utc": "2026-04-30T00:00:01Z",
+      "input_hash": "b58577498f3cfa851cb71590d2e3a1cea23995585882488c0a7fcd20e6133831",
+      "inputs": [
+        {
+          "kind": "file",
+          "path": "00_graph_capture/exported_program.pt2",
+          "sha256": "d45e92192193cda7455f08996e5a545be91f5718992b16f1e02bd2afc74f0f9c",
+          "size_bytes": 23
+        }
+      ],
+      "llm_calls": 0,
+      "output_hash": "c16b7bc3e6829753817dbee3eaa840d40e6a3811eb51ab71fe1ee48db5a93d93",
+      "outputs": [
+        {
+          "kind": "file",
+          "path": "01_payload_lowering/payload.mlir",
+          "sha256": "27a43272c716c5b6d1b3dea2b01705ca079276aeb510bc69452b88ce96e266d3",
+          "size_bytes": 40
+        }
+      ],
+      "report_path": "01_payload_lowering/lowering_report.json",
+      "stage_id": "payload_lowering",
+      "started_at_utc": "2026-04-30T00:00:00Z",
+      "status": "pass"
+    },
+    {
+      "finished_at_utc": "2026-04-30T00:00:01Z",
+      "input_hash": "c16b7bc3e6829753817dbee3eaa840d40e6a3811eb51ab71fe1ee48db5a93d93",
+      "inputs": [
+        {
+          "kind": "file",
+          "path": "01_payload_lowering/payload.mlir",
+          "sha256": "27a43272c716c5b6d1b3dea2b01705ca079276aeb510bc69452b88ce96e266d3",
+          "size_bytes": 40
+        }
+      ],
+      "llm_calls": 0,
+      "output_hash": "2a966716a0fc2c4ebfb3eba6bdc3c0bd0bea0eb736d0c5e00909ae46e87ea2ca",
+      "outputs": [
+        {
+          "kind": "file",
+          "path": "02_gap_discovery/gap_analysis.json",
+          "sha256": "788c97a36380a55536dde9607ab5bb9b01ab2a08ba04cf28128252223806dd8c",
+          "size_bytes": 68
+        }
+      ],
+      "report_path": "02_gap_discovery/gap_report.json",
+      "stage_id": "gap_discovery",
+      "started_at_utc": "2026-04-30T00:00:00Z",
+      "status": "pass"
+    }
+  ],
+  "target": {
+    "config_path": "configs/targets/host_cpu.yaml",
+    "config_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+    "target_id": "host_cpu"
+  }
+}

@@ -1,0 +1,78 @@
+schema_version: compgen_tool_card_v1
+tool_id: compgen_echo
+maturity: T2
+phase: evidence
+description: |
+  Reference ToolCard implementation. Echoes a text payload to a file
+  under the caller-provided ``out_dir``. Anchors the M-90 runner
+  exercise + M-91 CLI exercise + M-94 MCP bridge exercise; T5+ rungs
+  require a skill / fresh-agent harness / promotion log entry — echo
+  stays at T2 by design, but the MCP entrypoint is declared so the
+  bridge has at least one card to register and the schema-equivalence
+  test has a real subject.
+
+entrypoints:
+  python: compgen.tools.builtin.echo:run
+  cli: compgen-tool run compgen_echo
+  mcp: compgen_echo
+
+input_schema:
+  type: object
+  required: [text]
+  properties:
+    text:
+      type: string
+      minLength: 1
+    count:
+      type: integer
+      minimum: 1
+      maximum: 1024
+  additionalProperties: false
+
+output_schema:
+  type: object
+  required: [status, lines_written, artifacts]
+  properties:
+    status:
+      enum: [ok, error]
+    lines_written:
+      type: integer
+      minimum: 0
+    artifacts:
+      type: array
+      items: { type: string }
+    reason:
+      type: string
+  additionalProperties: false
+
+writes:
+  allowed_roots:
+    - ${run_dir}/
+
+forbidden:
+  - mutate_payload_ir
+  - mutate_recipe_ir
+  - bypass_verifier
+  - write_outside_artifact_dir
+
+promotion_requirements:
+  unit_tests: true            # tests/tools/test_tool_runner.py covers this
+  negative_controls: true     # 6 negative-control branches in the same file
+  cli_wrapper: true           # M-91: ``compgen tool run compgen_echo``
+  artifact_outputs: false     # writes echo.txt but not a structured report
+  skill_doc: false
+  mcp_wrapper: false
+  fresh_agent_harness: false
+  phase_menu_listing: false
+
+tests:
+  positive:
+    - tests.tools.test_tool_runner::test_run_echo_positive
+  negative_controls:
+    - tests.tools.test_tool_runner::test_run_echo_bad_output_status
+    - tests.tools.test_tool_runner::test_run_echo_writes_outside_out_dir
+    - tests.tools.test_tool_runner::test_run_echo_entrypoint_crash
+
+skill_path: ""
+fresh_agent_task_id: ""
+owner: core

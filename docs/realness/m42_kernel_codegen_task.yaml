@@ -1,0 +1,86 @@
+claim: |
+  M-42 (Phase C): the kernel-codegen task is the canonical bounded
+  surface a kernel-codegen provider (cffi-C, Triton template, Claude
+  Code subagent, autocomp) sees. The pipeline emits one
+  ``kernel_codegen_request_v1`` per selected kernel-bearing region
+  to ``04_kernel_codegen/requests/<task_id>.request.json`` and
+  creates a sandboxed per-task artifact directory at
+  ``04_kernel_codegen/artifacts/<task_id>/`` that the M-43 commit
+  tool will treat as the only legal write location for provider
+  outputs.
+
+  M-42 supersedes M-39's ``kernel_specialization_request_v1`` schema:
+
+  - directory unified under ``04_kernel_codegen/`` (legacy
+    ``04_kernel_specialization/`` is no longer written).
+  - request POINTS to the M-40 materialised contract files via
+    ``contract_paths.full`` and ``contract_paths.kernel_facing``
+    instead of embedding shape/tile/layout/dtype inline.
+  - ``forbidden`` list and ``allowed_backends`` are explicit;
+    ``required_outputs`` names the four files the provider MUST
+    produce inside ``artifact_dir/``.
+  - ``task_id`` is deterministic from (region_id, candidate_id) so
+    the same task is byte-stable across reruns.
+
+  The legacy emitter
+  ``compgen.graph_compilation.kernel_specialization`` is converted
+  to a deprecated shim — its ``run_kernel_specialization_request``
+  and ``build_kernel_specialization_request`` raise
+  ``DeprecationError`` so any rogue caller fails loud.
+commit: dc756d90000000000000000000000000000000
+created_at_utc: 2026-05-07T00:00:00Z
+feature_id: m42_kernel_codegen_task
+forbidden:
+- writing to the legacy 04_kernel_specialization/ directory in production
+- emitting a request without a matching M-40 materialised contract
+- request.contract_paths pointing at files outside 04_kernel_codegen/
+- artifact_dir being absent or shared across distinct task_ids
+- kernel-facing surface leaking compiler-only fields (the M-40 invariant)
+- non-deterministic task_id (timestamps, RNG, pid)
+- silently widening the forbidden / required_outputs / allowed_backends list
+realness_level: decision_affecting
+required_evidence:
+- python/compgen/graph_compilation/kernel_codegen.py
+- python/compgen/graph_compilation/run.py (M-42 wired into kernel-specialization-request boundary)
+- python/compgen/graph_compilation/kernel_specialization.py (deprecated shim)
+- python/compgen/graph_compilation/__main__.py (--stop-after kernel-codegen-request flag)
+- tests/graph_compilation/test_kernel_codegen_request.py
+- "04_kernel_codegen/requests/<task_id>.request.json on a real run"
+- "04_kernel_codegen/artifacts/<task_id>/ on a real run (sandboxed, empty post-M-42)"
+- "04_kernel_codegen/kernel_codegen_summary.json on a real run"
+notes: |
+  Phase C M-42. Real-driven stress test:
+
+  Phase 1 — clean migration. Drove merlin_mlp_wide /
+  tiny_mlp / tiny_attention / tiny_conv_block /
+  holdout_mlp_odd_shapes / proxy_vla through
+  --stop-after kernel-codegen-request. None of them created the
+  legacy 04_kernel_specialization/ directory. All 6 created the
+  04_kernel_codegen/{requests,contracts,views,artifacts} layout.
+
+  Phase 2 — request schema fidelity. 5/6 set_tile_params runs
+  produced kernel_codegen request_kind with full
+  contract_paths.{full, kernel_facing} resolving on disk; proxy_vla
+  produced not_applicable with a typed reason (fusion candidate not
+  yet supported).
+
+  Phase 3 — sandbox enforcement readiness. All 6 runs created
+  04_kernel_codegen/artifacts/<task_id>/ as an EMPTY directory
+  awaiting M-43's provider response. Distinct task_ids per (region,
+  candidate); no collisions.
+
+  Phase 4 — kernel_facing leakage check on disk. Read each emitted
+  view file; none contained any compiler-only field (wait_on,
+  blocking, lifetimes, fusion, observability, max_concurrent,
+  providers, metadata). Confirms M-40's negative-control
+  invariant carries through M-42's pointer surface.
+
+  Phase 5 — alias compatibility. The pre-M-42 flag
+  --stop-after kernel-specialization-request still works (the
+  boundary block runs both M-40 and M-42 unconditionally). Makes
+  the migration safe for callers that still pass the old flag.
+
+  Tests: 12 e2e + schema + negative controls in
+  tests/graph_compilation/test_kernel_codegen_request.py. 23 total
+  pass when combined with M-40's 11. 764/1 pass across
+  promotion+passes+analysis+audit+ir.recipe+memory.

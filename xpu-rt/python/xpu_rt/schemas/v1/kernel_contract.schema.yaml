@@ -1,0 +1,154 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "compgen://user_perspective/schemas/kernel_contract.schema.yaml"
+title: KernelContract
+description: >
+  User-side kernel contract. Union of
+  compgen.kernels.provider.KernelContract and
+  compgen.ir.payload.contracts.KernelContract. This is the interface
+  between graph-level reasoning (global) and kernel generation (leaf).
+  Producers of this artifact: scripts/04_emit_kernel_contracts.py (Phase 6).
+
+type: object
+required:
+  - contract_id
+  - region_id
+  - op_family
+  - input_specs
+  - output_specs
+  - target_name
+  - objective
+  - candidate_backends
+  - verification
+additionalProperties: false
+
+properties:
+  contract_id:
+    type: string
+    description: Stable ID suitable as a filename stem.
+  region_id:
+    type: string
+    description: Refers to a compgen.region_id attached during fx_to_xdsl.
+  op_family:
+    type: string
+    enum: [gemm, attention, conv, reduction, normalization, elementwise,
+           pack_unpack, cache_update, preprocess, action_head, custom]
+  input_specs:
+    type: array
+    minItems: 1
+    items: { $ref: "#/$defs/TensorSpec" }
+  output_specs:
+    type: array
+    minItems: 1
+    items: { $ref: "#/$defs/TensorSpec" }
+  reduction_axes:
+    type: array
+    items: { type: integer, minimum: 0 }
+    default: []
+  tile_hint:
+    type: object
+    description: Optional producer-side tile-size suggestion.
+    additionalProperties: true
+  aliasing:
+    type: array
+    description: Input-index/output-index alias pairs.
+    items:
+      type: array
+      minItems: 2
+      maxItems: 2
+      items: { type: integer, minimum: 0 }
+    default: []
+  mutability:
+    type: string
+    enum: [pure, writes_output_only, mutates_state]
+    default: pure
+  side_metadata:
+    type: object
+    description: >
+      Extra metadata the generated kernel must honor (scale factors, zero
+      points, KV-cache pointers, camera format descriptors, etc.).
+    additionalProperties: true
+    default: {}
+  target_name:
+    type: string
+  hardware_key:
+    type: string
+    description: Deterministic hash of the target profile slice that matters for this contract.
+    default: ""
+  objective:
+    type: string
+    enum: [latency, throughput, energy, balanced]
+  cost_estimate:
+    type: object
+    properties:
+      flops: { type: integer, minimum: 0 }
+      bytes_read: { type: integer, minimum: 0 }
+      bytes_written: { type: integer, minimum: 0 }
+      latency_us_estimate: { type: number, minimum: 0 }
+    additionalProperties: false
+  candidate_backends:
+    type: array
+    minItems: 1
+    items:
+      type: string
+      enum: [triton, cutlass, cublas, cudnn, native_lowering, ukernel,
+             vendor_library, autocomp, exo, fallback]
+  preferred_backend:
+    type: string
+  verification:
+    type: object
+    required: [strategy]
+    properties:
+      strategy:
+        type: string
+        enum: [structural, differential, check_assertions, compiler_feedback, formal]
+      tolerances:
+        type: object
+        additionalProperties: true
+    additionalProperties: false
+  fallback:
+    type: object
+    properties:
+      strategy: { type: string, enum: [eager, native, decompose, error] }
+      note: { type: string }
+    default: { strategy: eager }
+  provider_hints:
+    type: object
+    description: Hints fed back by kernel providers (e.g., preferred tile, layout).
+    additionalProperties: true
+    default: {}
+  fusable:
+    type: boolean
+    default: false
+
+$defs:
+  TensorSpec:
+    type: object
+    required: [name, dtype, shape_range, layout]
+    properties:
+      name: { type: string }
+      dtype:
+        type: string
+        enum: [float64, float32, float16, bfloat16, float8_e4m3, float8_e5m2,
+               int64, int32, int16, int8, uint8, bool]
+      shape_range:
+        type: array
+        description: Per-dim ranges. Each item is [min, max] with min==max for static.
+        items:
+          type: array
+          minItems: 2
+          maxItems: 2
+          items: { type: integer, minimum: 0 }
+      layout:
+        type: string
+        enum: [row_major, column_major, tiled_16x16, tiled_32x32, blocked, nhwc, nchw, custom]
+      alignment_bytes:
+        type: integer
+        minimum: 1
+        default: 16
+      strides:
+        type: array
+        items: { type: integer, minimum: 1 }
+      packing:
+        type: string
+        enum: [none, block_int8, block_fp8, vnni, mma_16x16x16]
+        default: none

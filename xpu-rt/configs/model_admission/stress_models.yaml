@@ -1,0 +1,30 @@
+schema_version: model_admission_suite_v1
+
+# Huge / slice-only / admission-only entries. Never gate CI on this suite;
+# it exists to record the set we *attempted* and what each one returned.
+
+required_proxy: []
+
+required_real_if_available: []
+
+slice_only_stress:
+  - model_id: qwen3_vl_235b_a22b_instruct
+    slice_id: qwen3_vl_235b_text_moe_slice
+  - model_id: qwen3_vl_235b_a22b_instruct
+    slice_id: qwen3_vl_235b_vision_projector_slice
+  - model_id: llama4_scout_text
+    slice_id: llama4_scout_decoder_pair
+  - model_id: deepseek_v4_flash_text
+    slice_id: deepseek_v4_flash_hybrid_attention
+  - model_id: deepseek_v4_flash_text
+    slice_id: deepseek_v4_flash_moe_block
+  - model_id: pi0_step
+    slice_id: pi0_single_step
+  - model_id: rtx_rt1x_step
+    slice_id: rtx_rt1x_single_step
+  - model_id: agibot_go1_step
+    slice_id: agibot_go1_single_step
+  - model_id: agibot_go2_step
+    slice_id: agibot_go2_single_step
+  - model_id: lingbot_world_step
+    slice_id: lingbot_world_single_step

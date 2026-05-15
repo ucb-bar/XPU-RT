@@ -1,0 +1,37 @@
+schema_version: model_config_v1
+model_id: pi0_step
+family: vla
+source:
+  provider: huggingface
+  model_ref: lerobot/pi0_old
+  repo_url: https://huggingface.co/lerobot/pi0_old
+  docs_url: https://huggingface.co/lerobot/pi0_old
+  revision: e4ed526af508e58f6008b29e9e48f1098278fdb5
+  verified_at: '2026-05-01T05:35:03+00:00'
+  verified_by: agustin@garden
+  source_verified: true
+loader:
+  kind: unavailable
+  trust_remote_code: false
+  dtype: bfloat16
+  device_policy: auto
+inputs:
+  kind: one_step_policy
+  processor_required: false
+compile:
+  mode: torch_compile_admission
+  backend: inductor
+  fullgraph: false
+  dynamic: true
+support:
+  mode: one_step_policy
+  full_model_blocking: false
+  reason: 'lerobot upstream Python 3.12 dataclass bug (backbone_cfg follows default arg). Reinstate when lerobot/pi0 modeling fixes the dataclass ordering.'
+  hardware_requirements:
+    notes: 'No torch hardware constraint. Blocked by an upstream code bug in lerobot.policies.pi0 -- not GPU-related.'
+expected:
+  can_eager_run: false
+  can_torch_compile: false
+  can_dynamo_capture: false
+  can_slice_compile: false
+notes: []

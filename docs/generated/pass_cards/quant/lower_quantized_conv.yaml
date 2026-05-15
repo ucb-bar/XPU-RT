@@ -1,0 +1,37 @@
+schema_version: pass_card_v1
+pass_id: lower_quantized_conv
+display_name: Lower quantized convolution
+level: payload
+family: quant
+source: IREE
+impl_path: python/compgen/ir/payload/passes/rewrites/lower_quantized_conv.py
+reads:
+  - 01_payload_lowering/payload.mlir
+  - 02_graph_analysis/candidate_actions.json
+writes:
+  - 03_recipe_planning/post_lowering/transformed_payload.mlir
+  - 03_recipe_planning/post_lowering/applied_transform_manifest.json
+preconditions:
+  - "linalg.conv_2d (or variant) with int4/int8 weight"
+  - "scale + zero-point tensors present and shape-compatible"
+invalidates:
+  - payload_summary
+  - graph_dossier_v3
+  - cost_preview
+  - kernel_contracts
+  - numerical_sensitivity_audit
+preserves_refinement: tolerance_eps
+verification:
+  - structural
+  - differential
+cost: medium
+failure_modes:
+  - "weight_not_packed_int"
+  - "asymmetric_quantization_unsupported"
+  - "non_2d_conv_not_supported"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+notes: |
+  Reconstruction of IREE's QuantizedConvToConv. Lowers int4/int8
+  quantized convolution into an explicit dequant + standard fp conv
+  pair so downstream tiling, fusion, and codegen treat it as a
+  normal conv.

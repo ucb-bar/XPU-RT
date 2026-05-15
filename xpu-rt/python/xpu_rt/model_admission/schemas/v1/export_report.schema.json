@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://compgen.dev/schemas/v1/model_admission/export_report.schema.json",
+  "title": "export_report_v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "model_id", "status"],
+  "properties": {
+    "schema_version": { "const": "export_report_v1" },
+    "model_id": { "type": "string" },
+    "slice_id": { "type": "string" },
+    "status": { "type": "string", "enum": ["pass", "fail", "skipped"] },
+    "graph_node_count": { "type": "integer" },
+    "op_histogram": { "type": "object" },
+    "has_dynamic_shapes": { "type": "boolean" },
+    "error": { "type": ["string", "null"] }
+  }
+}

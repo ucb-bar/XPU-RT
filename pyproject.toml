@@ -1,0 +1,287 @@
+[project]
+name = "compgen"
+version = "0.2.0"
+description = "An LLM-driven compiler generator for heterogeneous hardware targets"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.11"
+authors = [
+    { name = "CompGen Contributors" },
+]
+keywords = ["compiler", "mlir", "llm", "heterogeneous", "code-generation"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Compilers",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+# MCP is a first-class entry point; users reach CompGen through Claude Code by
+# default, so the MCP SDK ships in base. torch/xdsl stay in base for now
+# because almost every MCP tool transitively exercises the compile path; the
+# `[compile]` extra exists as a forward-compatible alias for a future lean
+# split. See docs/getting-started/installation.md.
+dependencies = [
+    "torch>=2.4",
+    "xdsl>=0.24",
+    "pyyaml>=6.0",
+    "jsonschema>=4.20",
+    "jinja2>=3.1",
+    "rich>=13.0",
+    "click>=8.1",
+    "structlog>=24.1",
+    "mcp>=1.0",
+    "pillow>=12.1.1",
+    "torchvision>=0.25.0",
+    "num2words>=0.5.14",
+    "lerobot>=0.4.4",
+]
+
+[project.optional-dependencies]
+llm = [
+    "google-genai>=1.0",
+    "openai>=1.0",
+    "anthropic>=0.30",
+]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "ruff>=0.5",
+    "mypy>=1.10",
+    "pre-commit>=3.7",
+]
+solve = [
+    "ortools>=9.8",
+    "z3-solver>=4.12",
+    "scipy>=1.11",
+    "highspy>=1.7",
+    "numpy>=1.26",
+]
+# Optional licensed MILP backend. The repo-local mosek.lic is auto-
+# picked up by compgen.solve.backends.mosek_backend. Without this
+# extra, memory-planner falls back to HiGHS for LP/MILP cases.
+solve-mosek = [
+    "mosek>=10.1",
+]
+quantization = [
+    "torchao>=0.16",
+]
+# CUDA dispatch path for the Event Tensor Compiler runtime.
+# Pulls cuda-python (which ships the Tile IR Python builder used by
+# `compgen.transforms.emit_cuda_megakernel`) plus NVIDIA's runtime libs
+# so callers don't need a system CUDA toolkit. NVRTC is statically
+# linked into libcompgen_rt — no separate nvcc dependency at install
+# time. Wheel ships a prebuilt `libcompgen_rt-cuda.so` for this extra.
+#
+# cu13 NVRTC: required for Blackwell tensor-core paths since
+# `__CUDA_ARCH__ == 1000` is needed for cuBLASDx's tcgen05.mma /
+# mma.sync dispatchers (per bridge #089/#095). cu12 NVRTC silently
+# falls back to SIMT on sm_100/sm_120, killing the perf gate.
+# Pinned defensively here so `pip install --force-reinstall
+# 'compgen[cuda]'` doesn't tear down torch's cu13 deps and break
+# the cu13 NVRTC discovery (per bridge #099).
+cuda = [
+    "cuda-python>=12.6",
+    "nvidia-cuda-runtime-cu12>=12.6",
+    "nvidia-cuda-cccl-cu12>=12.6",
+    # cu13 NVRTC: pulled in transitively via torch>=2.6 on Linux,
+    # which lays libnvrtc.so.13 under nvidia/cu13/lib/. The pip
+    # package nvidia-cuda-nvrtc-cu13 is a placeholder (0.0.1) so
+    # we can't pin a real version; pulling torch>=2.6 is the
+    # actual mechanism. Listed here without version pin so a
+    # ``--force-reinstall`` of compgen still names the dep.
+    "nvidia-cuda-nvrtc-cu13; sys_platform == 'linux'",
+    "numpy>=1.26",
+]
+# Opt-in Triton lowering for op-families that don't yet have a
+# Tile-IR template. NOT a fallback for missing Tile IR — Tile IR is
+# the primary lowering and `[cuda]` already pulls it.
+cuda-triton = [
+    "compgen[cuda]",
+    "triton>=3.0.0",
+]
+# Blackwell-class hardware: enables the multi-GPU NCCL-inside-megakernel
+# path (Phase 4b). Requires NCCL 2.22+ for user-buffer registration on
+# Blackwell. cuDNN ships for the kernel templates that opt into it.
+blackwell = [
+    "compgen[cuda]",
+    "nvidia-nccl-cu12>=2.22",
+    "nvidia-cudnn-cu12>=9.3",
+]
+benchmarks = [
+    "matplotlib>=3.8",
+]
+docs = [
+    "mkdocs>=1.6",
+    "mkdocs-material>=9.5",
+]
+ray = [
+    "ray[default]>=2.9",
+    "ray[serve]>=2.9",
+    "ray[tune]>=2.9",
+    "fastapi>=0.110",
+]
+# Placeholder for a future lean split: today torch/xdsl ship in base because
+# every MCP tool touches the compile path. Once the MCP tool tree lazy-imports
+# torch/xdsl, base will drop them and this extra will re-include them.
+compile = [
+    "torch>=2.4",
+    "xdsl>=0.24",
+]
+# Kernel-search backends. `compgen-autocomp` is published separately; until
+# then users pick it up via the dev bootstrap (`scripts/dev-bootstrap.sh`).
+kernels = [
+]
+# KernelBlaster GPU sidecar (minimal): brings up the standalone GPU
+# server (`scripts/start_gpu_server.py` → `src.kernelblaster.servers.gpu`)
+# cleanly. Enough for the substrate side of the KB provider. NOT
+# the full RL search — that needs the langchain + transformers + RAG
+# stack (see ``third_party/kernelblaster/docker/requirements.txt``).
+kernelblaster-sidecar = [
+    "fastapi>=0.110",
+    "uvicorn>=0.30",
+    "pydantic>=2.0",
+    "python-multipart>=0.0.20",
+    "python-dotenv>=1.0",
+    "loguru>=0.7",
+    "requests>=2.31",
+    "psutil>=5.9",
+]
+# Full KernelBlaster RL search stack: langchain agentic loop +
+# Gemini/OpenAI clients + tokenizer for prompt accounting. Pulls
+# the sidecar extras transitively. Heavy (~2GB of wheels) — install
+# only when actually exercising the RL flow (`scripts/dev/
+# run_kernelblaster_evidence.py`).
+kernelblaster-rl = [
+    "compgen[kernelblaster-sidecar]",
+    "langchain>=0.3,<0.4",
+    "langchain-community>=0.3,<0.4",
+    "langgraph>=0.2,<0.3",
+    "openai>=1.40",
+    "transformers>=4.40",
+    "tokenizers>=0.20",
+    "pytest-asyncio>=0.23",
+]
+demo = [
+    "transformers>=4.44",
+    "accelerate>=0.33",
+]
+
+[project.scripts]
+compgen = "compgen.cli:main"
+compgen-mcp = "compgen.mcp.server:main"
+compgen-run-conformance = "compgen.testing.etc_conformance:_cli"
+compgen-gemini-usage = "compgen.observability.cli:main"
+# Generic ToolCard runner. Alias for ``compgen tool …`` so every
+# registered tool gets a stable, audit-checkable CLI entry.
+compgen-tool = "compgen.cli:tool_main"
+
+# Entry-point groups CompGen discovers at startup. Each group is declared
+# here (even when empty in-repo) so user packages can rely on a stable name
+# and `pip show` surfaces the hook points. See docs/reference/extension-points.md.
+#
+# User-space vendor MLIR dialect adapters.
+[project.entry-points."compgen.vendor_dialects"]
+
+# User KernelProvider implementations (see compgen.plugins.GROUP_KERNEL_PROVIDERS).
+[project.entry-points."compgen.kernels.providers"]
+
+# User FX-decomposition functions (see compgen.plugins.GROUP_DECOMPOSITIONS).
+[project.entry-points."compgen.transforms.decompositions"]
+
+# User fusion-rule predicates (see compgen.plugins.GROUP_FUSION_RULES).
+[project.entry-points."compgen.kernels.fusion_rules"]
+
+# User TargetBackendProtocol implementations (see compgen.plugins.GROUP_TARGET_BACKENDS).
+[project.entry-points."compgen.targets.backends"]
+
+# User KernelContractV3 factories (see compgen.plugins.GROUP_KERNEL_CONTRACTS).
+[project.entry-points."compgen.kernels.contracts"]
+
+[project.urls]
+Homepage = "https://github.com/compgen-project/compgen"
+Documentation = "https://github.com/compgen-project/compgen/tree/main/docs"
+Repository = "https://github.com/compgen-project/compgen"
+Issues = "https://github.com/compgen-project/compgen/issues"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["python/compgen"]
+# Include compiled artifacts (`.so`, `.dylib`, `.dll`) from the prebuilt
+# native runtime directory. Without this list, hatch's default file-include
+# pattern strips compiled binaries as build artifacts. The CMake build is
+# run as a pre-step (see Makefile target `build-cuda-rt` and
+# .github/workflows/release.yml) which stages libcompgen_rt-{cuda,cpu}.{so,dylib,dll}
+# under python/compgen/runtime/native/prebuilt/. When the dir holds only
+# the placeholder README, the wheel ships pure-Python — the [cuda] extra
+# raises a typed error at import time in that case.
+artifacts = [
+    "python/compgen/runtime/native/prebuilt/*.so",
+    "python/compgen/runtime/native/prebuilt/*.dylib",
+    "python/compgen/runtime/native/prebuilt/*.dll",
+]
+
+[tool.ruff]
+line-length = 120
+# Target Python 3.12 for linting: CI + lockfile pin 3.12, and one template
+# in kernels/providers/npu_contracts.py uses a 3.12 f-string escape.
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP"]
+# Tech-debt ignores. Revisit when the baseline is clean.
+ignore = [
+    "N802",   # invalid-function-name
+    "N803",   # invalid-argument-name
+    "N806",   # non-lowercase-variable-in-function (torch/MLIR math naming)
+    "N812",   # lowercase-imported-as-non-lowercase
+    "N818",   # error-suffix-on-exception-name
+    "E402",   # module-import-not-at-top-of-file (legitimate lazy imports)
+    "E501",   # line-too-long (prefer judgement over hard width)
+    "E741",   # ambiguous-variable-name (single-letter math vars)
+    "F841",   # local-variable-assigned-but-not-used
+    "UP042",  # replace-str-enum (non-breaking suggestion)
+]
+
+[tool.ruff.lint.per-file-ignores]
+# npu_contracts emits a Python-3.12-only f-string escape; ignored until rewritten.
+"python/compgen/kernels/providers/npu_contracts.py" = ["F821"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+check_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+# Centralized flake / env-gated exclusions shared by `make test`,
+# local runs, and CI. Override with `pytest --override-ini="addopts="
+# <path>` when you need to exercise one of these deliberately.
+addopts = [
+    # Env-gated: external benchmark deps.
+    "--ignore=tests/benchmarks/test_runner.py",
+    "--ignore=tests/benchmarks/test_torchbench_adapter.py",
+    # Env-gated: requires Understanding-PI0 checkout + 450M SmolVLA.
+    "--ignore=tests/test_smolvla_e2e.py",
+    # Individual known-flaky test ids.
+    "--deselect=tests/agent/invent_slots/test_registrar.py::test_registrar_registers_all_slots",
+    "--deselect=tests/agent/policies/test_default.py::test_policy_against_real_registry",
+    "--deselect=tests/kernels/megakernel/test_llama_decoder_layer.py::test_tinyllama_layernorm_scales_are_loaded_from_real_checkpoint",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "requires_gpu: marks tests that need GPU hardware",
+    "requires_mlir: marks tests that need MLIR/xDSL installed",
+    "requires_ray: marks tests that need Ray installed",
+]

@@ -1,0 +1,85 @@
+name: test-npu-text-isa
+schema_version: "2.0"
+
+platform:
+  vendor: test_vendor
+  family: structured_npu_text_isa
+  chip_name: test_npu_chip
+  host_arch: riscv64
+  deployment_model: firmware
+
+execution_model:
+  model: text_isa_npu
+  thread_model: single_thread
+  dispatch_model: async_dma
+  parallelism: pipeline_parallel
+  has_hardware_scheduler: true
+
+isa:
+  base_isa: custom_npu
+  instruction_encoding: custom_prefix
+  custom_instructions:
+    npu_load: "Load tensor from DRAM to local memory"
+    npu_store: "Store tensor from local to DRAM"
+    npu_matmul: "Execute matmul on NPU engine"
+    npu_activate: "Apply activation function"
+  compiler_intrinsics: false
+  inline_asm_supported: false
+
+native_ops:
+  families:
+    - name: matrix_multiply
+      ops: [matmul]
+      constraints:
+        max_m: 64
+        max_n: 64
+      fallback: error
+    - name: activation
+      ops: [relu, gelu, sigmoid]
+      fallback: decompose
+
+engine_geometry:
+  systolic_array_dim: [64, 64]
+  tiles:
+    - name: npu_tile
+      dimensions: [64, 64]
+      element_bits: 8
+
+memory_model:
+  address_spaces:
+    - name: local_memory
+      id: 0
+      size_bytes: 524288
+      dma_accessible: true
+    - name: dram
+      id: 1
+      size_bytes: 2147483648
+  coherence: non_coherent
+  dma_model: nd_strided
+  double_buffering: true
+
+numeric_contract:
+  supported_dtypes:
+    - name: int8
+      native: true
+      accumulator_dtype: int32
+  denormal_handling: unsupported
+  nan_handling: undefined
+
+runtime_contract:
+  calling_convention: firmware_api
+  kernel_launch: mailbox
+  synchronization: polling
+  memory_allocation: firmware_managed
+  requires_runtime_library: npu_runtime
+
+verification_surface:
+  has_simulator: true
+  simulator_command: "npu_sim --tick"
+  golden_model: pytorch_cpu
+  max_acceptable_ulp: 0.0
+  trace_support: memory_trace
+
+patches:
+  new_dialects_needed: [test_npu_kernel, test_npu_schedule, test_npu_isa]
+  new_stages_needed: [kernel_contract, isa_lowering, memory_plan]

@@ -1,0 +1,75 @@
+name: test-rvv-cpu
+schema_version: "2.0"
+
+platform:
+  vendor: test_vendor
+  family: rvv_cpu_extension
+  chip_name: test_rvv_chip
+  host_arch: riscv64
+  toolchain: llvm-18
+  deployment_model: linux_userspace
+
+execution_model:
+  model: simd_vector
+  thread_model: single_thread
+  dispatch_model: synchronous
+  parallelism: data_parallel
+
+isa:
+  base_isa: rv64gcv
+  extensions:
+    - name: Zvl256b
+      version: "1.0"
+      description: "256-bit minimum vector length"
+    - name: Zve32f
+      version: "1.0"
+  instruction_encoding: standard
+  compiler_intrinsics: true
+
+native_ops:
+  families:
+    - name: elementwise
+      ops: [add, mul, sub, div]
+      fallback: decompose
+    - name: reduction
+      ops: [reduce_sum, reduce_max]
+      fallback: decompose
+
+engine_geometry:
+  vector_length_bits: 256
+  tiles:
+    - name: vector_tile
+      dimensions: [8]
+      element_bits: 32
+      layout: row_major
+
+memory_model:
+  address_spaces:
+    - name: registers
+      size_bytes: 4096
+    - name: l1_cache
+      size_bytes: 32768
+    - name: dram
+      size_bytes: 8589934592
+  coherence: coherent
+
+numeric_contract:
+  supported_dtypes:
+    - name: float32
+      native: true
+    - name: float16
+      native: true
+      accumulator_dtype: float32
+    - name: int8
+      native: true
+      accumulator_dtype: int32
+
+runtime_contract:
+  calling_convention: c_abi
+  kernel_launch: function_call
+  synchronization: none
+  memory_allocation: static
+
+verification_surface:
+  golden_model: pytorch_cpu
+  has_simulator: false

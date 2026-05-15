@@ -1,0 +1,9 @@
+schema_version: target_card_v1
+target_id: google_tpu_v5e
+family: tpu
+vendor: google
+dispatch_modes: [sync, static_plan]
+memory_tiers:
+  - {name: hbm, kind: global, capacity_bytes: 17179869184}
+  - {name: vmem, kind: explicit, capacity_bytes: 33554432}
+description: Google TPU v5e — Pallas / JAX target.

@@ -1,0 +1,27 @@
+feature_id: m68_overlap_planner
+claim: |
+  M-68 (Phase E): copy / compute overlap scheduling runs as a real
+  CP-SAT interval problem in
+  ``overlap_planner.plan_overlap``. Each operation has an interval
+  variable with discrete duration; per-resource ``AddNoOverlap``
+  prevents conflicts; dependencies enforce ``end[A] <= start[B]``;
+  the objective minimizes makespan. The legacy
+  ``solve/schedule.py`` forwards to this planner. Infeasible
+  deadlines return ``SolverStatus.INFEASIBLE`` honestly; timeouts
+  return ``SolverStatus.TIMEOUT``.
+realness_level: production_path
+forbidden:
+  - returning a schedule that violates dependency or no-overlap
+    constraints
+  - silently widening a deadline to accommodate an infeasible
+    formulation
+required_evidence:
+  - python/compgen/solve/overlap_planner.py
+  - tests/solve/test_overlap_planner_ortools.py
+commit: 0e80000000000000000000000000000000000000
+created_at_utc: 2026-05-11T00:00:00Z
+notes: |
+  ASYNC-glue integration (mapping ``schedule`` -> ``sync_edges``)
+  is a follow-up; the planner itself emits an
+  ``overlap_schedule.solved.json`` that the runtime emitter can
+  consume.

@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://compgen.dev/schemas/v1/model_admission/model_registry.schema.json",
+  "title": "model_registry_v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "models"],
+  "properties": {
+    "schema_version": { "const": "model_registry_v1" },
+    "models": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["model_id", "family", "scale_class", "support_mode", "blocking"],
+        "properties": {
+          "model_id": { "type": "string" },
+          "family": { "type": "string" },
+          "scale_class": { "type": "string", "enum": ["small", "medium", "large", "huge"] },
+          "support_mode": { "type": "string" },
+          "blocking": { "type": "boolean" },
+          "requires_online_verification": { "type": "boolean" }
+        }
+      }
+    }
+  }
+}

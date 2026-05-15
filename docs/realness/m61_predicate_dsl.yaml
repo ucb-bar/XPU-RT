@@ -1,0 +1,126 @@
+claim: |
+  M-61 (Phase D): adds a typed pre/post-condition predicate DSL to
+  ``KernelContractV3`` and threads predicates through to runtime
+  PLAN_VIOLATION assertions in the emitted plan executor. Section 7's
+  "preconditions hold at entry" / "postconditions hold at exit" claim
+  becomes a finite, mechanically-checked list rather than free-form
+  prose.
+
+  Hard contract:
+
+  1. ``compgen/kernels/predicates.py`` ships five frozen-dataclass
+     predicate kinds with stable wire-format ``kind`` strings:
+     - ``mod_eq`` (ModEq) — ``arg_dim`` divisible by ``k``
+     - ``byte_size_le`` (ByteSizeLe) — ``arg`` numel*element_size ≤ max
+     - ``no_alias`` (NoAlias) — two args don't share storage
+     - ``dtype_in`` (DtypeIn) — ``arg`` dtype in allowlist
+     - ``numerical_within_eps`` (NumericalWithinEps) — output within
+       eps of reference (M-44 differential)
+     ``predicate_kind`` returns the wire-format kind;
+     ``predicate_plan_violation_suffix`` returns the
+     ``PLAN_VIOLATION_*_<SUFFIX>`` token for the emitted assertion
+     class. ``predicate_from_dict`` rejects unknown kinds with typed
+     ``ValueError``.
+  2. ``KernelContractV3`` gains ``preconditions: tuple[Any, ...] = ()``
+     and ``postconditions: tuple[Any, ...] = ()`` fields. The
+     dataclass uses ``Any`` to avoid a forward import of
+     ``predicates``; the predicate-aware code paths dispatch on
+     ``predicate_kind(p)``.
+  3. ``KernelContractV3.from_recipe`` populates matmul preconditions
+     ``(ModEq("K", tile_K), DtypeIn("lhs", (dtype,)),
+     DtypeIn("rhs", (dtype,)))`` and the postcondition
+     ``(NumericalWithinEps("out", "reference", eps),)`` where eps is
+     0.0 for ``bit_equality`` refinement and ``max_relative_error``
+     for ``tolerance_eps``.
+  4. ``contract_to_dict`` serialises both lists; the deserializer in
+     ``kernel_codegen_response.py`` reconstructs them via
+     ``predicates_from_list`` so M-44 verifier reads the predicates
+     back. Pre-M-61 contract bodies still load (defaults preserve).
+  5. ``runtime/glue_emit/plan_assertions.py``:
+     - ``_RegionAssertions`` carries ``preconditions`` /
+       ``postconditions``. ``collect_region_assertions`` lifts them
+       from each binding's contract.
+     - ``render_plan_violation_classes`` emits five new typed
+       subclasses: ``PLAN_VIOLATION_PRECONDITION_MOD_EQ``,
+       ``PLAN_VIOLATION_PRECONDITION_BYTE_SIZE_LE``,
+       ``PLAN_VIOLATION_PRECONDITION_NO_ALIAS``,
+       ``PLAN_VIOLATION_PRECONDITION_DTYPE_IN``,
+       ``PLAN_VIOLATION_POSTCONDITION_NUMERICAL_WITHIN_EPS``.
+     - ``render_assert_plan_body`` extends with predicate-driven
+       assertions: ``mod_eq`` checks ``actual_inputs[i].shape[-1]
+       % k == 0``; ``byte_size_le`` checks numel*element_size.
+       ``dtype_in`` is structurally redundant with the IO-level
+       dtype check and is skipped to avoid duplicate emit.
+       ``no_alias`` and ``numerical_within_eps`` are
+       postcondition-bound and surface in the M-44 verifier rather
+       than the runtime fast-path.
+commit: 0a61000000000000000000000000000000000000
+created_at_utc: 2026-05-07T00:00:00Z
+forbidden:
+- predicates module growing without an explicit predicate_plan_violation_suffix mapping (each kind names exactly one PLAN_VIOLATION subclass)
+- predicate_from_dict silently accepting unknown kinds (typed ValueError must fire)
+- contract_to_dict / _reconstruct_contract_from_dict dropping a predicate kind (round-trip must preserve every kernel-facing predicate)
+- the emitted glue raising a generic AssertionError for a predicate violation (must be the typed PLAN_VIOLATION subclass so the M-31A audit gate sees a real assertion fire)
+- preconditions /postconditions appearing in compiler_only() (they belong in kernel_facing(); the kernel codegen + M-44 verifier both need them)
+realness_level: production_path
+required_evidence:
+- python/compgen/kernels/predicates.py (entire module)
+- python/compgen/kernels/contract_v3.py (preconditions + postconditions fields + from_recipe population)
+- python/compgen/graph_compilation/kernel_contract_materialization.py (contract_to_dict M-61 lines)
+- python/compgen/graph_compilation/kernel_codegen_response.py (_reconstruct_contract_from_dict M-61 lines)
+- python/compgen/runtime/glue_emit/plan_assertions.py (5 new PLAN_VIOLATION subclasses + predicate-driven assertion emit)
+- tests/kernels/test_predicates.py
+- tests/runtime/test_plan_assertions_predicates.py
+feature_id: m61_predicate_dsl
+notes: |
+  Phase D step 7 — Section 7's "preconditions / postconditions"
+  claim made real. The DSL is small (5 kinds) but covers the
+  archetypal needs: divisibility (mod_eq drives kernel-block
+  alignment), capacity (byte_size_le drives buffer planning),
+  aliasing (no_alias drives memory hazard analysis), dtype
+  (dtype_in drives codegen routing), numerical equivalence
+  (numerical_within_eps drives M-44 differential).
+
+  Pre-existing scaffolding consumed:
+  - ``KernelContractV3`` dataclass (kernels/contract_v3.py from
+    Phase B) — extended with two new tuple fields.
+  - ``contract_to_dict`` + ``_reconstruct_contract_from_dict``
+    (M-40 / M-44 round-trip) — extended with predicate lists.
+  - ``render_plan_violation_classes`` + ``render_assert_plan_body``
+    (M-48 from Phase C) — extended with M-61 subclasses + emit.
+
+  Real-driven evidence (`/tmp/m61_stress`, regenerated):
+  - merlin_mlp_wide matmul_0 contract carries 3 preconditions
+    (mod_eq("K", 16) + dtype_in("lhs"|"rhs", ("fp32",))) and 1
+    postcondition (numerical_within_eps("out", "reference", 0.0) —
+    bit_equality refinement gives eps=0).
+  - generated_plan_executor.py mentions the M-61 PLAN_VIOLATION
+    classes 3 times (subclass def + the two emitted assertion
+    bodies).
+  - End-to-end pipeline still passes glue-emit; auction unaffected.
+
+  Tests: 15 in tests/kernels/test_predicates.py +
+  tests/runtime/test_plan_assertions_predicates.py covering
+  predicate round-trip (5 kinds), kind/suffix maps, unknown-kind
+  rejection, list helpers, contract carries predicates, round-trip
+  through M-44 reconstruct, plan_violation classes emit M-61
+  subclasses, emitted glue carries ModEq check, structural-shape
+  assert fires on tampered K dim. Cross-suite regression preserved
+  164/164 across 17 test suites.
+
+  Honest residuals:
+  - The ModEq check resolves ``arg_dim="K"`` by checking
+    ``actual_inputs[0].shape[-1] % k`` (matmul convention: K is
+    last dim of input[0]). Other archetypes will need an
+    archetype-aware resolver (deferred to M-65 vertical slice 2's
+    fusion path).
+  - ``NumericalWithinEps`` is currently postcondition-only; the
+    runtime emit doesn't run a per-call differential against a
+    reference (that's the M-44 verifier's job at compile time).
+    Per-call runtime equivalence checks would be a follow-on.
+  - ``NoAlias`` is declared but not yet runtime-checked (storage-
+    pointer comparison is platform-specific). The M-44 verifier's
+    static-analysis pass picks this up; runtime emit defers.
+  - ``DtypeIn`` is structurally redundant with the existing
+    PLAN_VIOLATION_INPUT_DTYPE check; M-61's emit path skips it to
+    avoid double-firing on the same fault.

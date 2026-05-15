@@ -1,0 +1,32 @@
+name: depthwise_conv2d_gpu
+op_family: conv2d
+target_class: gpu
+steps:
+- action: map_channels
+  parameters:
+    strategy: one_channel_per_block
+  rationale: Each thread block handles one output channel
+- action: tile
+  parameters:
+    tile_sizes:
+    - H_tile
+    - W_tile
+    dims:
+    - height
+    - width
+  rationale: Tile spatial dimensions for shared memory reuse
+- action: stage_mem
+  parameters:
+    operand: input_tile
+    target: shared
+    halo: true
+  rationale: Load input patch with halo into shared memory
+- action: fuse
+  parameters:
+    ops:
+    - bias
+    - relu
+  rationale: Epilogue fusion avoids extra kernel launch
+expected_speedup: 3-10x over naive, within 85% of cuDNN
+source: EfficientNet / MobileNet optimization guides
+confidence: medium

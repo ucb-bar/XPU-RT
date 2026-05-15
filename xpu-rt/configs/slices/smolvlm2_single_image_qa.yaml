@@ -1,0 +1,13 @@
+schema_version: slice_config_v1
+slice_id: smolvlm2_single_image_qa
+parent_model_id: smolvlm2_step
+description: 'Single image + text prompt forward pass.'
+inputs:
+  kind: single_image_qa
+  processor_required: true
+loader_override: null
+expected:
+  can_eager_run: true
+  can_torch_compile: true
+  can_dynamo_capture: true
+  can_slice_compile: true

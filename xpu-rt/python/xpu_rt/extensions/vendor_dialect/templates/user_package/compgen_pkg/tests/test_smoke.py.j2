@@ -1,0 +1,29 @@
+"""Smoke tests for the scaffolded {{ vendor_name }} adapter.
+
+These tests do NOT require the vendor toolchain — they exercise the
+Python surface only. Phase-D integration adds real toolchain tests.
+"""
+
+from __future__ import annotations
+
+from {{ package_name }} import load_adapter
+
+
+def test_load_adapter() -> None:
+    adapter = load_adapter()
+    assert adapter.name == "{{ vendor_name }}"
+    assert adapter.target == "{{ target }}"
+
+
+def test_descriptor_loaded() -> None:
+    adapter = load_adapter()
+    d = adapter.descriptor
+    assert d.name == "{{ vendor_name }}"
+    assert d.package_name == "{{ package_name }}"
+
+
+def test_lower_passthrough() -> None:
+    adapter = load_adapter()
+    payload = "module { /* empty */ }"
+    result = adapter.lower_payload(payload, output_dir="/tmp/{{ vendor_name }}_smoke")
+    assert result.vendor_mlir

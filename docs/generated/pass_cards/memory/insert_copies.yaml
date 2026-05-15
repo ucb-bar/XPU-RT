@@ -1,0 +1,31 @@
+schema_version: pass_card_v1
+pass_id: insert_copies
+display_name: Insert copy ops at layout boundaries
+level: payload
+family: memory
+source: XLA
+impl_path: python/compgen/ir/payload/passes/rewrites/insert_copies.py
+reads:
+  - 01_payload_lowering/payload.mlir
+writes:
+  - 03_recipe_planning/post_lowering/transformed_payload.mlir
+  - 03_recipe_planning/post_lowering/applied_transform_manifest.json
+preconditions:
+  - "consecutive ops have incompatible layouts OR memory spaces"
+  - "use-def graph is finalised"
+invalidates:
+  - payload_summary
+  - graph_dossier_v3
+  - kernel_contracts
+preserves_refinement: bit_equality
+verification:
+  - structural
+cost: cheap
+failure_modes:
+  - "no_layout_resolution_path"
+  - "circular_layout_dependency"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+notes: |
+  Reconstruction of XLA's CopyInsertion + hexagon-mlir's tile-buffer
+  copy insertion. Adds explicit copy ops between layout-incompatible
+  ops so the runtime materialises the conversion explicitly.

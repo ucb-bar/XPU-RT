@@ -1,0 +1,23 @@
+claim: |
+  A cold-vs-warm run on the canonical-22 suite shows
+  fresh_emit_count_warm < fresh_emit_count_cold while every correctness gate
+  in verification_report.json still passes. CompGen gets cheaper to run on a
+  model whose region patterns it has seen before, without weakening any
+  verification gate.
+commit: 5244e94e3730bdf6f2bff89c72b174ac0ee03fa6
+created_at_utc: 2026-05-05T00:00:00Z
+feature_id: m30_efficiency_report
+forbidden:
+- mock efficiency aggregates
+- precomputed efficiency_pack.json shipped in repo
+- silent skip on cold-run failure
+realness_level: hardware_backed
+required_evidence:
+- python/compgen/graph_compilation/efficiency_report.py
+- scripts/dev/measure_promotion_efficiency.py
+- docs/architecture/promotion-and-memory.md
+- tests/graph_compilation/test_efficiency_report.py
+- e2e cold/warm run table showing -12 fresh emits per model on merlin_mlp_wide and proxy_vla
+notes: 'Section 19 / M-30. The hardware_backed claim refers to real torch
+  execution + cache hit/miss accounting; see caveat
+  portable_gate_single_target for the cuda residual.'

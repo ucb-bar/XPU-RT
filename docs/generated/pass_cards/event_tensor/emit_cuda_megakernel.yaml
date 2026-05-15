@@ -1,0 +1,34 @@
+schema_version: pass_card_v1
+pass_id: emit_cuda_megakernel
+display_name: Emit CUDA C++ megakernel
+level: kernel
+family: event_tensor
+source: Event Tensor Compiler
+impl_path: python/compgen/transforms/emit_cuda_megakernel.py
+reads:
+  - 03_recipe_planning/event_schedule/static_schedule.json
+  - 01_payload_lowering/payload.mlir
+writes:
+  - 03_recipe_planning/megakernel/megakernel.cu
+  - 03_recipe_planning/megakernel/megakernel_manifest.json
+preconditions:
+  - "event_static_schedule OR event_dynamic_schedule has run"
+  - "lower_event_tensor_to_atomic has run"
+  - "all referenced kernels have CUDA templates available"
+invalidates:
+  - kernel_contracts
+preserves_refinement: bit_equality
+verification:
+  - structural
+  - differential
+cost: expensive
+failure_modes:
+  - "missing_kernel_template"
+  - "schedule_not_realized"
+  - "cuda_compiler_unavailable"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+notes: |
+  Emits a self-contained CUDA C++ source string that contains every
+  task in the event schedule as a single megakernel. Imports the
+  scheduled task list and the lowered atomic ops; produces a
+  compilable .cu file the runtime can nvcc-compile.

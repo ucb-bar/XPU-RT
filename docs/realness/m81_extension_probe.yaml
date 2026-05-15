@@ -1,0 +1,84 @@
+feature_id: m81_extension_probe
+claim: |
+  M-81: provider / target / dialect / pass-tool probing + matrix
+  report.
+
+  Implementation:
+
+  * ``python/compgen/providers/provider_probe.py`` — turns a
+    ``ProviderCard`` / ``DialectProviderCard`` into a typed
+    ``ProviderProbeResult``. Hard rule 5 enforced: every
+    ``required_env`` / ``required_commands`` /
+    ``required_python_imports`` miss produces a typed ``blocked``
+    status with the matching typed ``blocked_reason``
+    (``env_missing`` / ``command_missing`` /
+    ``python_package_missing``). Probe-time exceptions degrade to
+    ``probe_error`` + ``blocked_reason=probe_exception`` — never
+    raise.
+  * ``python/compgen/providers/provider_reports.py`` — writes
+    typed JSON statuses, CSV matrices, and a markdown summary.
+  * ``scripts/dev/probe_extension_providers.py`` — CLI that
+    materializes the report set into
+    ``results/extension_provider_probe/``.
+
+  Outputs::
+
+      results/extension_provider_probe/
+        provider_status.json         (schema: provider_status_v1)
+        target_status.json           (schema: target_status_v1)
+        dialect_status.json          (schema: dialect_status_v1)
+        pass_tool_status.json        (typed stub; M-85 populates)
+        provider_target_matrix.csv
+        provider_contract_matrix.csv
+        probe_summary.md
+
+  Probe result on this environment (2026-05-12):
+
+  * Baseline available: yes (cffi_c)
+  * 4/19 providers available: cffi_c, claude_kernel,
+    python_reference, triton
+  * 15/19 blocked with typed reasons: env_missing (10),
+    python_package_missing (4), command_missing (1)
+  * No silent disappearance: every shipped card appears in
+    ``provider_status.json`` (verified by
+    ``test_no_provider_silently_disappears_from_report``).
+
+  Tests (15/15 green):
+
+  * ``tests/providers/test_provider_probe.py``
+    - 6 negative-control tests pinning typed ``blocked``
+      generation for missing env / command / package.
+    - 2 stability tests pinning that every shipped card and
+      dialect card produces a typed ``ProviderProbeResult`` (no
+      exceptions escape).
+    - 7 end-to-end tests on the report set: schema versions,
+      no-silent-disappearance, baseline-available, typed-reason +
+      detail on every blocked entry, paper_claimable fidelity.
+realness_level: production_path
+forbidden:
+  - silent provider disappearance
+  - untyped blocked_reason
+  - raw exception traceback as status
+  - paper_claimable on a blocked provider
+  - probe raising on a structurally valid card
+required_evidence:
+  - python/compgen/providers/provider_probe.py
+  - python/compgen/providers/provider_reports.py
+  - scripts/dev/probe_extension_providers.py
+  - tests/providers/test_provider_probe.py
+  - results/extension_provider_probe/provider_status.json
+  - results/extension_provider_probe/target_status.json
+  - results/extension_provider_probe/dialect_status.json
+  - results/extension_provider_probe/pass_tool_status.json
+  - results/extension_provider_probe/provider_target_matrix.csv
+  - results/extension_provider_probe/provider_contract_matrix.csv
+  - results/extension_provider_probe/probe_summary.md
+  - docs/architecture/EXTENSION_PROVIDER_ARCHITECTURE.md
+commit: 35ee97f497bc69c0716c25b935f575c3cd7d63f4
+created_at_utc: 2026-05-12T00:00:00Z
+notes: |
+  Phase F-3. The probe is structural only — verifies toolchain
+  preconditions, never invokes ``propose()`` or ``can_bid()``.
+  ``status=available`` therefore means "could be invoked", not
+  "would succeed on a real contract"; M-82 onward exercises the
+  invocation paths for the available providers.

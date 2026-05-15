@@ -1,0 +1,21 @@
+schema_version: pass_tool_card_v1
+tool_id: fuse_matmul_bias_relu
+phase: recipe_authoring
+reads:
+  - graph_dossier
+  - payload_ir_summary
+  - region_dossier
+writes:
+  - recipe_delta
+allowed_recipe_ops:
+  - FuseElementwise
+  - SetAccumulator
+refinement:
+  kind: tolerance_eps
+  verifier: differential_then_z3_if_promoted
+entrypoint: compgen.pass_tools.builtin.fuse_matmul_bias_relu:run
+description: |
+  Pattern: matmul → bias_add → relu with a single matmul
+  consumer. Proposes a fused-elementwise Recipe-IR delta. The
+  verifier (differential, escalating to Z3 if promoted)
+  adjudicates. The pass tool never mutates Payload IR directly.

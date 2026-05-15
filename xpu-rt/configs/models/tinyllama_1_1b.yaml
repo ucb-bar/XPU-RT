@@ -1,0 +1,40 @@
+schema_version: model_config_v1
+model_id: tinyllama_1_1b
+family: llm
+source:
+  provider: huggingface
+  model_ref: TinyLlama/TinyLlama-1.1B-Chat-v1.0
+  repo_url: https://huggingface.co/TinyLlama/TinyLlama-1.1B-Chat-v1.0
+  docs_url: https://huggingface.co/TinyLlama/TinyLlama-1.1B-Chat-v1.0
+  revision: fe8a4ea1ffedaf415f4da2f062534de366a451e6
+  source_verified: true
+loader:
+  kind: hf_transformers_llm
+  trust_remote_code: false
+  dtype: float16
+  device_policy: cuda
+inputs:
+  kind: text_decode
+  processor_required: false
+  prompt: "Hello, my name is"
+  seq_lengths: [128, 512, 2048]
+  batch: 1
+compile:
+  mode: torch_compile_admission
+  backend: inductor
+  fullgraph: false
+  dynamic: true
+support:
+  mode: full_or_slice_smoke
+  full_model_blocking: false
+  reason: ''
+expected:
+  can_eager_run: true
+  can_torch_compile: true
+  can_dynamo_capture: true
+  can_slice_compile: true
+headline_workload: true
+notes:
+  - "TinyLlama-1.1B-Chat — P4 workload #1 (LLM regime)."
+  - "Already cached locally under HF cache root."
+  - "Greedy decode with three sequence lengths."

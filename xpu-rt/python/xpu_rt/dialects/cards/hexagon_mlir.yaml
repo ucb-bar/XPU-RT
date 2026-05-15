@@ -1,0 +1,11 @@
+schema_version: dialect_provider_card_v1
+dialect_provider_id: hexagon_mlir
+dialect_name: hexagon
+integration_level: probe
+consumes: [kernel_contract_v3, linalg, vector]
+emits: [hexagon_mlir, elf]
+entrypoint: compgen.providers.adapters.hexagon_mlir:HexagonDialectProvider
+required_env: [HEXAGON_MLIR_ROOT]
+description: |
+  MLIR dialect provider for Qualcomm Hexagon NPU. Lowers linalg /
+  vector through the Hexagon-MLIR stack to ELF artifacts.

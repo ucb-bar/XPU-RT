@@ -1,0 +1,38 @@
+schema_version: model_config_v1
+model_id: blip2_opt_step
+family: vlm
+source:
+  provider: huggingface
+  model_ref: Salesforce/blip2-opt-2.7b
+  repo_url: https://huggingface.co/Salesforce/blip2-opt-2.7b
+  docs_url: https://huggingface.co/Salesforce/blip2-opt-2.7b
+  revision: 59a1ef6c1e5117b3f65523d1c6066825bcf315e3
+  verified_at: '2026-05-01T18:07:23+00:00'
+  verified_by: agustin@garden
+  source_verified: true
+loader:
+  kind: unavailable
+  trust_remote_code: false
+  dtype: float32
+  device_policy: auto
+inputs:
+  kind: single_image_qa
+  processor_required: true
+compile:
+  mode: torch_compile_admission
+  backend: inductor
+  fullgraph: false
+  dynamic: true
+support:
+  mode: full_or_slice_smoke
+  full_model_blocking: false
+  reason: 'CUDA device-side assert during eager forward on synthetic inputs. Likely OPT decoder vocab / Q-Former query shape mismatch with our generic VLM input cascade. Needs a BLIP-2-specific adapter; tracked as a code task, not a hardware constraint.'
+  hardware_requirements:
+    notes: 'No torch port hardware constraint. Blocked by adapter code, not GPU.'
+expected:
+  can_eager_run: true
+  can_torch_compile: true
+  can_dynamo_capture: true
+  can_slice_compile: true
+notes:
+- Salesforce BLIP-2 (OPT-2.7B) VLM admission baseline.

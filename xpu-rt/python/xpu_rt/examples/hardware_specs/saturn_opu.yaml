@@ -1,0 +1,132 @@
+# CompGen HardwareSpec: Saturn OPU (RVV + outer-product-unit accelerator)
+#
+# Chipyard generator: chipyard/generators/saturn  (OPUV128D64ShuttleConfig).
+# Driven by CompGen's RVV_CPU_EXTENSION lowering family: Saturn OPU is an
+# in-vector-unit extension (`+xopu`), not a RoCC coprocessor.
+#
+# This spec is the v2.0 input to `compgen.api.device(...)`; the legacy v1.0
+# TargetProfile view lives at ``examples/target_profiles/saturn_opu.yaml``
+# for backward compatibility with tooling that reads the flat profile.
+
+name: saturn-opu-v128d64
+schema_version: "2.0"
+
+platform:
+  vendor: ucb-bar
+  family: rvv_cpu_extension
+  chip_name: saturn_opu_v128d64
+  host_arch: riscv64
+  toolchain: llvm-18
+  sdk: zephyr
+  sdk_version: "3.7"
+  deployment_model: zephyr_rtos
+
+execution_model:
+  model: simd_vector
+  thread_model: single_thread
+  dispatch_model: synchronous
+  parallelism: data_parallel
+
+isa:
+  base_isa: rv64gcv
+  extensions:
+    - name: Zvl128b
+      version: "1.0"
+      description: "128-bit minimum vector length"
+    - name: Xopu
+      version: "1.0"
+      description: "Outer-product unit (VOPACC). 8x8 MACC array, 4 matrix regs."
+    - name: XopuMmt4d
+      version: "1.0"
+      description: "Mmt4d s8s8s32 16x16x128 fast-path via encoding-swapped layouts."
+  instruction_encoding: custom_prefix
+  compiler_intrinsics: true
+  custom_instructions:
+    vopacc: "Outer-product accumulate into matrix register (.insn r 0x57, 0x2, 0x51)"
+
+native_ops:
+  families:
+    - name: matrix_multiply
+      ops: [matmul, batch_matmul]
+      constraints:
+        preferred_tile: [16, 16, 128]
+        preferred_dtype: int8
+      fallback: decompose
+    - name: convolution
+      ops: [conv2d]
+      fallback: decompose
+    - name: elementwise
+      ops: [add, mul, sub, relu]
+      fallback: decompose
+    - name: reduction
+      ops: [reduce_sum, reduce_max, layernorm, softmax]
+      fallback: decompose
+
+engine_geometry:
+  vector_length_bits: 128
+  dlen_bits: 64
+  opu_tile_shape: [16, 16]
+  opu_num_matrix_regs: 4
+  tiles:
+    - name: vector_tile
+      dimensions: [16]
+      element_bits: 8
+      layout: row_major
+    - name: opu_outer_product_tile
+      dimensions: [16, 16]
+      element_bits: 8
+      alignment_bytes: 16
+
+memory_model:
+  address_spaces:
+    - name: registers
+      size_bytes: 4096
+    - name: l1d
+      size_bytes: 65536
+    - name: dram
+      size_bytes: 536870912
+  coherence: coherent
+  preferred_layouts: [row_major, mmt4d_encoding_swap]
+
+numeric_contract:
+  supported_dtypes:
+    - name: float32
+      native: true
+    - name: float16
+      native: true
+      accumulator_dtype: float32
+    - name: int8
+      native: true
+      accumulator_dtype: int32
+
+runtime_contract:
+  calling_convention: c_abi
+  kernel_launch: function_call
+  synchronization: none
+  memory_allocation: static
+
+verification_surface:
+  has_simulator: true
+  simulator_command: "spike --isa=rv64gcv"
+  golden_model: pytorch_cpu
+  trace_support: instruction_trace
+
+patches:
+  new_dialects_needed: []
+  new_stages_needed: [opu_lane_select, embedded_runtime]
+  requirements:
+    - component: kernels
+      description: "Exo provider emits VOPACC sequences for mmt4d_s8s8s32_16x16x128"
+      priority: required
+      estimated_effort: medium
+    - component: runtime
+      description: "Embedded C ABI emitter + Zephyr overlay generator"
+      priority: required
+      estimated_effort: medium
+
+metadata:
+  chipyard_config: OPUV128D64ShuttleConfig
+  dram_base: "0x80000000"
+  mcpu_features: "+m,+a,+f,+d,+c,+v,+zvl128b,+xopu"
+  target_abi: lp64d
+  target_triple: riscv64-unknown-elf

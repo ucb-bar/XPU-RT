@@ -1,0 +1,12 @@
+target_id: aws_neuron_trn
+transport: ssh
+host: ""
+user: ""
+workdir: /tmp/compgen_remote
+toolchain_probe_cmd: "neuronx-cc --version"
+build_cmd_template: "neuronx-cc compile --target=trn1 {source}"
+run_cmd_template: "python {source}"
+timeout_s: 1800
+extras:
+  provider_id: nki
+  expected_devices: ["trainium"]

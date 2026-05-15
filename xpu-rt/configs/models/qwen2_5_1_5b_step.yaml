@@ -1,0 +1,36 @@
+schema_version: model_config_v1
+model_id: qwen2_5_1_5b_step
+family: llm
+source:
+  provider: huggingface
+  model_ref: Qwen/Qwen2.5-1.5B-Instruct
+  repo_url: https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct
+  docs_url: https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct
+  revision: 989aa7980e4cf806f80c7fef2b1adb7bc71aa306
+  verified_at: '2026-05-01T18:07:23+00:00'
+  verified_by: agustin@garden
+  source_verified: true
+loader:
+  kind: hf_transformers_llm
+  trust_remote_code: true
+  dtype: bfloat16
+  device_policy: auto
+inputs:
+  kind: text_decode
+  processor_required: false
+compile:
+  mode: torch_compile_admission
+  backend: inductor
+  fullgraph: false
+  dynamic: true
+support:
+  mode: full_or_slice_smoke
+  full_model_blocking: true
+  reason: ''
+expected:
+  can_eager_run: true
+  can_torch_compile: true
+  can_dynamo_capture: true
+  can_slice_compile: true
+notes:
+- Small (1.5B) standard-CausalLM admission baseline.

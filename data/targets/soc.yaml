@@ -1,0 +1,61 @@
+- target_class: soc
+  category: data_movement
+  pattern_name: minimise_cross_domain_transfers
+  description: 'Minimise data transfers between heterogeneous domains (e.g., host CPU to accelerator, CPU to GPU, FPGA to
+    CPU).  Cross-domain transfers incur high latency (PCIe: ~5-15 us, on-chip bus: ~100-500 ns) and limited bandwidth.'
+  implementation_notes:
+  - Batch multiple ops on the accelerator before transferring results back.
+  - 'Use device-resident tensors: keep data on the accelerator across op boundaries.'
+  - Profile transfer costs with the runtime profiler; compare to compute savings.
+  - Consider computation duplication on both domains if transfer cost exceeds recompute.
+  source: Zephyr RTOS patterns
+  confidence: high
+- target_class: soc
+  category: data_movement
+  pattern_name: dma_bulk_transfer
+  description: Use DMA engines for bulk data transfers between domains.  DMA avoids tying up the CPU for data movement and
+    can achieve higher bandwidth than programmed I/O.
+  implementation_notes:
+  - 'Configure DMA channel: source, destination, size, callback.'
+  - Use scatter-gather DMA for non-contiguous buffers.
+  - 'Double-buffer: CPU fills buffer A while DMA transfers buffer B.'
+  - Align buffers to DMA burst size (typically 32-128 bytes).
+  source: Zephyr RTOS patterns
+  confidence: high
+- target_class: soc
+  category: data_movement
+  pattern_name: latency_sensitive_on_coordinator
+  description: Keep latency-sensitive operations (control flow, branching, small scalar computations) on the host CPU (coordinator).  Only
+    offload compute-intensive parallel work to accelerators.
+  implementation_notes:
+  - Control flow (if/else, loop bounds) on CPU; data-parallel compute on accelerator.
+  - 'Scalar reductions: reduce on accelerator, transfer single scalar to CPU.'
+  - 'Dynamic shapes: compute on CPU, compile/dispatch static tiles to accelerator.'
+  - Runtime decision logic (scheduling, memory allocation) always on CPU.
+  source: CompGen runtime
+  confidence: high
+- target_class: soc
+  category: parallelism
+  pattern_name: heterogeneous_assignment
+  description: 'Assign operations to the most appropriate domain: compute-heavy parallel work to the accelerator (GPU/NPU),
+    sequential control to the host CPU, and I/O-bound work to DMA engines.'
+  implementation_notes:
+  - 'Profile each op: FLOPs, memory access, control flow complexity.'
+  - Ops with high arithmetic intensity -> accelerator.
+  - Ops with high branch divergence -> CPU.
+  - Ops with bulk sequential I/O -> DMA.
+  - Use the solver (CP-SAT) to optimise the assignment globally.
+  source: CompGen runtime
+  confidence: high
+- target_class: soc
+  category: parallelism
+  pattern_name: cross_domain_pipeline
+  description: 'Pipeline work across domains: CPU prepares inputs while accelerator computes previous batch, and DMA transfers
+    results from the batch before that.'
+  implementation_notes:
+  - 'Three-stage pipeline: CPU_prepare[i+1] | Accel_compute[i] | DMA_writeback[i-1].'
+  - Use event/semaphore signalling between domains for synchronisation.
+  - Pipeline depth trades latency for throughput.
+  - 'Monitor pipeline bubbles: if one stage is much slower, it bottlenecks the pipeline.'
+  source: CompGen runtime
+  confidence: medium

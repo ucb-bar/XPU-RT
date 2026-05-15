@@ -1,0 +1,10 @@
+schema_version: target_card_v1
+target_id: cuda_sm75
+family: cuda
+vendor: nvidia
+dispatch_modes: [sync, async, static_plan]
+memory_tiers:
+  - {name: global, kind: global, capacity_bytes: 16106127360}
+  - {name: shared, kind: shared, capacity_bytes: 65536}
+  - {name: registers, kind: registers}
+description: NVIDIA Turing (SM75) — Volta-class tensor cores; sm75 matmul.

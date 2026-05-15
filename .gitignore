@@ -1,11 +1,285 @@
+# Byte-compiled / optimized / DLL files
 __pycache__/
-*/plots/
+*.py[codz]
+*$py.class
 
-# Runtime build output and local test data
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py.cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+.pybuilder/
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+mosek.lic
+
+# pdm / pixi
+.pdm-python
+.pdm-build/
+.pixi
+
+# PEP 582
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.envrc
+.venv
+.ve
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+# ...but not the xpu_rt.agent.env package (virtualenv pattern collision)
+!python/compgen/agent/env/
+!xpu-rt/python/xpu_rt/agent/env/
+
+# Spyder / Rope project settings
+.spyderproject
+.spyproject
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre / pytype / Cython
+.pyre/
+.pytype/
+cython_debug/
+
+# Abstra
+.abstra/
+
+# Visual Studio Code
+.vscode/
+
+# Ruff stuff:
+.ruff_cache/
+
+# PyPI configuration file
+.pypirc
+
+# Cursor
+.cursorignore
+.cursorindexingignore
+
+# Marimo
+marimo/_static/
+marimo/_lsp/
+__marimo__/
+
+# === XPU-RT runtime build output and local test data ===
 runtime/build/
 runtime/build-host/
 runtime/build-spacemit/
 runtime/dispatch_from_schedule_async/
-.ve
-tmp
+*/plots/
 paper
+tmp
+
+# === Compiler-stack generated artifacts ===
+
+# Generated MLIR artifacts
+*.mlir
+!python/compgen/transforms/templates/*.mlir
+!xpu-rt/python/xpu_rt/transforms/templates/*.mlir
+
+# Generated kernels
+generated_kernels/
+
+# Verification outputs
+verification_output/
+
+# Recipe cache and library
+.compgen_cache/
+.xpu-rt_cache/
+recipe_library/
+
+# LLM interaction logs
+llm_logs/
+
+# Execution bundles
+bundles/
+
+# Calibration data
+calibration_data/
+
+# Hardware profiling results
+*.hwprof
+
+# MLIR build artifacts
+mlir_build/
+sessions/
+tmp/agentic_documentation/
+tmp/agentic_documentation/**
+compgen_output
+xpu-rt-output
+.claude
+
+# Target generation output
+compgen_output/targetgen/
+xpu-rt-output/targetgen/
+
+# LLVM build artifacts
+third_party/llvm-project/build/
+
+# Compiler generated artifacts (ephemeral)
+.compgen/
+.xpu-rt/
+artifacts/runs/
+artifacts/cache/
+artifacts/traces/
+artifacts/tmp/
+generated/staging/
+generated/scratch/
+
+# Local pack/build outputs
+third_party/**/build/
+third_party/**/.pixi/
+third_party/**/.snakemake/
+third_party/**/__pycache__/
+third_party/**/.pytest_cache/
+
+# Benchmark outputs
+benchmarks/results/
+benchmarks/tmp/
+
+# Pytest scratch
+pytest-of-*/
+compgen-test-home-*/
+xpu-rt-test-home-*/
+torchinductor_*/
+
+# Native runtime CMake build directories
+runtime/native/libcompgen_rt/build/
+runtime/native/libcompgen_rt/build-*/
+runtime/native/libxpu_rt/build/
+runtime/native/libxpu_rt/build-*/
+
+# Paper metrics artifacts
+artifacts/paper/
+
+# SmolVLA FP8 quantization run output
+artifacts/smolvla_fp8_npu/
+
+# mlir_cppgen generated C++ compiler tree
+artifacts/compiler/
+
+# Raw paper benchmark timings
+artifacts/paper_bench/
+
+# user_perspective/ is a disposable external-user sandbox
+user_perspective/
+
+# LLM / Agent generated artifacts
+*.db
+*.db-journal
+*.db-wal
+userpacks/**/.compgen_external/
+userpacks/**/.xpu-rt_external/
+python/compgen/generated/promoted/
+python/compgen/transforms/promoted/
+python/compgen/kernels/promoted/
+python/compgen/extensions/promoted/
+xpu-rt/python/xpu_rt/generated/promoted/
+xpu-rt/python/xpu_rt/transforms/promoted/
+xpu-rt/python/xpu_rt/kernels/promoted/
+xpu-rt/python/xpu_rt/extensions/promoted/
+.claude/worktrees/
+.env.local
+*.jsonl
+!benchmarks/**/*.jsonl
+target_packages/
+
+# Graph-compilation pipeline outputs
+results/*
+!results/audit/
+results/audit/*
+!results/audit/_seed/
+
+# Local extension workspace
+.crg-artifacts/
+.rcg-artifacts/
+user_extensions/

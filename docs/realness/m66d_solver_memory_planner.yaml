@@ -1,0 +1,39 @@
+feature_id: m66d_solver_memory_planner
+claim: |
+  M-66D (Phase E): memory tier + byte-offset planning runs as a
+  real MILP via ``scipy.optimize.milp`` (HiGHS backend) or MOSEK,
+  with a deterministic canonical-pack post-pass that snaps
+  offsets to a stable layout. Binary ``tier[b,t]`` variables plus
+  integer ``offset[b]`` variables encode the assignment; per-tier
+  capacity and overlapping-lifetime non-overlap are enforced as
+  linear constraints. The planner replaces ``solve/memory.py``'s
+  greedy first-fit; the legacy module remains as a one-cycle shim
+  that forwards to ``memory_planner.plan_memory``. When MOSEK is
+  unavailable, the planner falls back to HiGHS automatically; when
+  neither is available, it returns ``SolverStatus.BLOCKED`` —
+  never a hidden heuristic. ``ExecutionPlan.BufferDescriptor``
+  gains ``offset_bytes`` and ``ExecutionPlan.validate()`` rejects
+  overlapping byte ranges between buffers with overlapping
+  lifetimes in the same tier.
+realness_level: production_path
+forbidden:
+  - falling back to a greedy heuristic when MOSEK / HiGHS are both
+    unavailable (must return BLOCKED)
+  - emitting ``optimal`` / ``feasible`` without a populated
+    ``solution`` block carrying tier + offset_bytes per buffer
+  - silently allowing two buffers in the same memory_space with
+    overlapping lifetimes to share a byte range (validate() must
+    raise)
+required_evidence:
+  - python/compgen/solve/memory_planner.py
+  - python/compgen/solve/_mosek_solve_impl.py
+  - python/compgen/solve/_highs_solve_impl.py
+  - python/compgen/runtime/execution_plan.py (offset_bytes + overlap check)
+  - tests/solve/test_memory_planner_mosek_highs.py
+commit: 0e80000000000000000000000000000000000000
+created_at_utc: 2026-05-11T00:00:00Z
+notes: |
+  ``_canonical_pack`` is the determinism layer: the MILP is free to
+  pick any feasible offset (symmetric solutions exist when alias
+  candidates are declared), but the canonical post-pass produces
+  byte-identical reruns by sorting by buffer_id within each tier.

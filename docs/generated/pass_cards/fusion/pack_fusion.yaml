@@ -1,0 +1,36 @@
+schema_version: pass_card_v1
+pass_id: pack_fusion
+display_name: Fuse pack into producer
+level: payload
+family: fusion
+source: IREE
+impl_path: python/compgen/ir/payload/passes/rewrites/pack_fusion.py
+reads:
+  - 01_payload_lowering/payload.mlir
+  - 02_graph_analysis/candidate_actions.json
+writes:
+  - 03_recipe_planning/post_lowering/transformed_payload.mlir
+  - 03_recipe_planning/post_lowering/applied_transform_manifest.json
+preconditions:
+  - "tensor_ext.pack op fed by a linalg producer"
+  - "producer is fusable (single-block, pure)"
+  - "pack tile sizes divide producer output dims"
+invalidates:
+  - payload_summary
+  - graph_dossier_v3
+  - cost_preview
+  - kernel_contracts
+preserves_refinement: bit_equality
+verification:
+  - structural
+  - differential
+cost: cheap
+failure_modes:
+  - "non_divisible_pack_tiles"
+  - "producer_has_multiple_consumers"
+  - "non_pure_producer"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+notes: |
+  Mirror of IREE's PackFusionPass. When a tensor_ext.pack feeds an
+  encoded matmul, fold the pack into its producer so the producer
+  emits the packed layout directly — eliminates one materialisation.

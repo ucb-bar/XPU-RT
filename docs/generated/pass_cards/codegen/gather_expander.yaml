@@ -1,0 +1,32 @@
+schema_version: pass_card_v1
+pass_id: gather_expander
+display_name: Expand gather to lower-level ops
+level: payload
+family: codegen
+source: XLA
+impl_path: python/compgen/ir/payload/passes/rewrites/gather_expander.py
+reads:
+  - 01_payload_lowering/payload.mlir
+writes:
+  - 03_recipe_planning/post_lowering/transformed_payload.mlir
+  - 03_recipe_planning/post_lowering/applied_transform_manifest.json
+preconditions:
+  - "high-level gather op present"
+  - "gather indices have known dtype"
+invalidates:
+  - payload_summary
+  - graph_dossier_v3
+  - kernel_contracts
+preserves_refinement: bit_equality
+verification:
+  - structural
+  - differential
+cost: cheap
+failure_modes:
+  - "unsupported_gather_dimension_numbers"
+  - "dynamic_indices_unsupported"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+notes: |
+  Reconstruction of XLA's GatherExpander. Lowers high-level gather to
+  while-loop + dynamic-slice so target backends without native gather
+  can still execute the op.

@@ -1,0 +1,104 @@
+claim: |
+  M-59 (Phase D): wakes the dormant ``ProviderResult.contract_feedback``
+  channel. Every fulfilled bid in the M-57 auction surfaces its
+  provider's feedback through a two-tier classifier: typed-allowlist
+  entries (``layout_swap``, ``dtype_widen``, ``accumulator_widen``,
+  ``alignment_request``, ``fast_math_opt_in``) become structured
+  Recipe-IR proposals; non-allowlisted entries land as advisory data
+  the outer agent can consume.
+
+  Hard contract:
+
+  1. ``ContractFeedback`` (``kernels/provider.py``) gains two fields:
+     ``kind`` (typed category — empty signals "infer from field via
+     heuristic") and ``applies_when`` (free-text predicate, e.g.
+     ``"K >= 64"``). Both default to empty for backward compatibility;
+     existing providers continue to work without changes.
+  2. ``classify_feedback(provider_name, feedbacks) -> (allowlisted,
+     non_allowlisted)`` in ``graph_compilation/contract_feedback_apply.py``
+     splits the entries. ``_infer_kind`` heuristic maps
+     ``field`` substrings (``layout``, ``dtype``, ``accumulator``,
+     ``align``, ``fast_math``) onto allowlisted kinds when the
+     provider didn't supply one. Provider-supplied ``kind`` always
+     wins.
+  3. ``to_recipe_ir_proposal(entry) -> FeedbackProposal`` translates
+     each allowlisted entry into a typed dict with ``op`` (one of
+     ``SetLayout``, ``WidenDtype``, ``WidenAccumulator``,
+     ``SetAlignment``, ``EnableFastMath``) and per-kind ``args``.
+     Calling on a non-allowlisted entry raises typed ``ValueError``.
+  4. ``write_auction_feedback_artifacts(run_dir, task_id,
+     contract_hash, per_provider_feedback)`` writes:
+     - ``04_kernel_codegen/auction/<task_id>/contract_feedback.json``
+       (schema ``auction_contract_feedback_v1``) with both buckets
+       and the structured proposals.
+     - ``04_kernel_codegen/contract_feedback_proposals.json`` (schema
+       ``contract_feedback_proposals_v1``) — run-wide aggregate, the
+       next iteration of the agent_decision request emit can read it.
+  5. ``run_kernel_auction`` (M-57) collects every fulfilled bid's
+     ``ProviderResult.contract_feedback`` into ``per_provider_feedback``
+     and routes through ``write_auction_feedback_artifacts`` at the
+     end of the auction. Always called, even when feedback is empty —
+     the file's existence is the gate, not its contents.
+commit: 0a59000000000000000000000000000000000000
+created_at_utc: 2026-05-07T00:00:00Z
+forbidden:
+- the auction silently dropping a fulfilled bid's contract_feedback (every entry must end up in one of the two buckets — empty kind goes to non-allowlisted)
+- the typed allowlist growing without an explicit Recipe-IR op mapping in _KIND_TO_RECIPE_OP (each kind names exactly one op)
+- write_auction_feedback_artifacts raising on no-feedback runs (CReferenceProvider emits no feedback today; the empty case must produce the empty-but-valid artifact)
+- to_recipe_ir_proposal silently classifying a non-allowlisted entry as allowlisted (the function raises ValueError; only classify_feedback decides allowlist membership)
+- aggregate file appending duplicate task_id entries (idempotent re-runs replace the prior entry for the same task_id)
+realness_level: production_path
+required_evidence:
+- python/compgen/kernels/provider.py (ContractFeedback gains kind + applies_when fields + to_dict)
+- python/compgen/graph_compilation/contract_feedback_apply.py (entire module — classifier + proposal generator + persistence)
+- python/compgen/graph_compilation/kernel_auction.py (per_provider_feedback collection + write_auction_feedback_artifacts call)
+- tests/graph_compilation/test_contract_feedback_apply.py
+feature_id: m59_contract_feedback_apply
+notes: |
+  Phase D step 5 — Section 7 Job 4 (bidirectional negotiation) made
+  real. The dream said "kernel layer telling the compiler what it
+  needs"; M-59 lands the data layer. Future milestones thread the
+  proposals through to the action_space generator so they re-enter
+  the candidate list.
+
+  Pre-existing scaffolding consumed:
+  - ``ProviderResult.contract_feedback`` (provider.py) — the
+    long-dormant feedback channel finally has a live consumer.
+  - ``ProviderRegistry.collect_feedback`` /
+    ``ProviderRegistry.evolve_contract`` (registry.py from Phase B)
+    — kept as legacy v1-contract callers; M-59's auction-side
+    routing uses the structured V3 path.
+  - M-57 auction's ``per_provider_feedback`` aggregator wires the
+    feedback into M-59 at the end of the bid loop.
+
+  Tests: 15 in tests/graph_compilation/test_contract_feedback_apply.py
+  covering _infer_kind heuristics (6 cases), classify_feedback split
+  semantics (2), to_recipe_ir_proposal per-kind op + args (5),
+  auction integration empty path (CReferenceProvider — 1), auction
+  integration synthetic stub provider emitting layout_swap +
+  dtype_widen + non-allowlisted (1).
+
+  Real-driven evidence:
+  - Empty path on merlin_mlp_wide host_cpu: contract_feedback.json
+    written with counts.total=0 / proposals=0; aggregate file
+    contains one entry for the task.
+  - Synthetic stub injected into the registry: 3 feedback entries
+    routed correctly (2 allowlisted → SetLayout + WidenDtype
+    proposals; 1 non-allowlisted → advisory), aggregate file
+    mirrors.
+
+  Honest residuals:
+  - Recipe-IR proposals are written as JSON dicts; full
+    materialisation as Recipe-IR Op instances + threading through to
+    action_space.py's Family 7 candidate generation is the M-63
+    coverage-first scheduler's plumbing job.
+  - The agent_decision_request advisory block surfacing
+    non-allowlisted entries is conservative — present in the
+    contract_feedback.json schema, but
+    ``compgen.graph_compilation.agent_decision`` is unchanged in
+    M-59. Threading the advisory through to the next agent
+    decision is a follow-on (M-59.1 if needed).
+  - ``measured_gain`` from the provider is unverified at feedback
+    time. The auction trusts it only as ranking signal; if a
+    proposal materialises into a real candidate, the M-44
+    contract-driven verifier still runs on the resulting kernel.

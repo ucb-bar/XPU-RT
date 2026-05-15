@@ -1,0 +1,38 @@
+schema_version: model_config_v1
+model_id: smolvla_inference
+family: vla
+source:
+  provider: huggingface
+  model_ref: lerobot/smolvla_base
+  repo_url: https://huggingface.co/lerobot/smolvla_base
+  docs_url: https://huggingface.co/docs/lerobot/main/en/smolvla
+  revision: main
+  source_verified: true
+loader:
+  kind: lerobot_policy
+  trust_remote_code: false
+  dtype: float16
+  device_policy: cuda
+inputs:
+  kind: vla_action_inference
+  processor_required: true
+  batch: 1
+compile:
+  mode: torch_compile_admission
+  backend: inductor
+  fullgraph: false
+  dynamic: false
+support:
+  mode: full_or_slice_smoke
+  full_model_blocking: false
+  reason: ''
+expected:
+  can_eager_run: true
+  can_torch_compile: true
+  can_dynamo_capture: true
+  can_slice_compile: true
+headline_workload: true
+notes:
+  - "smolVLA base — P4 workload #2 (multimodal VLA regime)."
+  - "Cached locally. Single-step action inference."
+  - "Vision encoder + cross-attn + action head — fusion-heavy."

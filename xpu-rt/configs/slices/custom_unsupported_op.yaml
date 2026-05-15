@@ -1,0 +1,16 @@
+schema_version: slice_config_v1
+slice_id: custom_unsupported_op
+parent_model_id: custom_unsupported_op
+description: |
+  Single forward pass through ``crgtoy::affine_gelu`` — a real custom op
+  with no entry in ``compgen.ir.payload.decompositions``. Drives the
+  Payload Lowering opaque/unsupported inventories.
+inputs:
+  kind: one_step_policy
+  processor_required: false
+loader_override: null
+expected:
+  can_eager_run: true
+  can_torch_compile: true
+  can_dynamo_capture: true
+  can_slice_compile: true

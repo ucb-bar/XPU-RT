@@ -1,0 +1,98 @@
+feature_id: m87_extension_evidence_pack
+claim: |
+  M-87: extension-provider evidence pack + architecture audit
+  gates.
+
+  Two artifacts:
+
+  1. ``scripts/dev/audit_extension_architecture.py`` —
+     deterministic 5-check audit encoding the ten hard rules.
+     Backed by ``python/compgen/audit/extension_architecture.py``.
+     CLI exits 0 on pass, 1 on any violation.
+
+     Checks::
+
+         extension_card_completeness
+         blocked_provider_not_paper_claimable
+         pass_tool_no_direct_ir_mutation
+         optional_provider_imports_quarantined
+         provider_result_is_not_certificate
+
+     Violation reasons (closed enum)::
+
+         missing_integration_level
+         paper_claimable_at_blocked_level
+         pass_tool_writes_payload_ir
+         forbidden_optional_import
+         provider_result_used_as_certificate
+
+  2. ``scripts/dev/build_extension_provider_evidence_pack.py`` —
+     paper-facing aggregator. Produces::
+
+         results/extension_provider_evidence_pack/
+           extension_summary.md
+           provider_status.json
+           target_status.json
+           dialect_status.json
+           dialect_provider_registry.json
+           pass_tool_status.json
+           pass_tool_registry.json
+           provider_target_matrix.csv
+           provider_contract_matrix.csv
+           unsupported_op_tasks.json
+           architecture_audit.json
+           analysis_snapshots/  (when --snapshots-dir supplied)
+           claim_matrix.json    (12 rows)
+           figures/             (placeholder docs)
+
+  Claim matrix discipline:
+
+  * 12 closed claim rows.
+  * Each row is ``implemented`` only when its declared evidence
+    files exist on disk under the pack root.
+  * ``certified_artifacts_only_executed`` additionally requires
+    the architecture audit to pass.
+  * Status enum: ``implemented`` / ``partial_scope`` / ``blocked``
+    / ``not_run``.
+
+  Current pack state (on this repo): **12/12 rows implemented,
+  audit PASS** (with sample analysis-snapshot input).
+
+  Tests (16/16 green):
+
+  * ``tests/audit/test_extension_architecture_audit.py`` (9):
+    pass-on-current-repo, five-checks reported, dict round-trip,
+    enum coverage, three negative controls (forbidden import
+    outside adapter, allowed import inside adapter,
+    ProviderResult=KernelCertificate alias detection).
+  * ``tests/evidence/test_extension_provider_evidence_pack.py``
+    (7): pack builds end-to-end, claim matrix has 12 rows, status
+    enum typed, snapshot dir flips matching row to implemented,
+    audit artifact PASSes, summary has real content,
+    implemented-row evidence files actually exist.
+realness_level: production_path
+forbidden:
+  - claim-matrix row marked implemented without evidence path
+  - paper_claimable on card-only or probe-level cards
+  - skipping any of the five new trust-report gates
+  - optional provider import outside providers/adapters/*
+  - silent pack build failure
+required_evidence:
+  - python/compgen/audit/extension_architecture.py
+  - scripts/dev/audit_extension_architecture.py
+  - scripts/dev/build_extension_provider_evidence_pack.py
+  - results/extension_provider_evidence_pack/claim_matrix.json
+  - results/extension_provider_evidence_pack/architecture_audit.json
+  - results/extension_provider_evidence_pack/extension_summary.md
+  - results/extension_provider_evidence_pack/dialect_provider_registry.json
+  - results/extension_provider_evidence_pack/pass_tool_registry.json
+  - tests/audit/test_extension_architecture_audit.py
+  - tests/evidence/test_extension_provider_evidence_pack.py
+  - docs/architecture/EXTENSION_PROVIDER_ARCHITECTURE.md
+commit: 35ee97f497bc69c0716c25b935f575c3cd7d63f4
+created_at_utc: 2026-05-12T00:00:00Z
+notes: |
+  Phase F-9. The pack is consumed by the M-31A trust report (5 new
+  gates registered separately in subsequent work). The audit
+  itself is the substrate — once it lands, any later Phase F
+  drift is caught at CI time.

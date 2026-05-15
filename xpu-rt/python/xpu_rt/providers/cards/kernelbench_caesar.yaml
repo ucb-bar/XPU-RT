@@ -1,0 +1,15 @@
+schema_version: provider_card_v1
+provider_id: kernelbench_caesar
+integration_level: probe
+target_families: [cuda]
+contract_kinds: [matmul, pointwise, fused_region]
+emits: [triton_source, cu_source]
+entrypoint: compgen.providers.adapters.kernelbench_caesar:KernelBenchCaesarProvider
+paper_claimable: false
+required_env: [KERNELBENCH_ROOT, CAESAR_ROOT]
+required_commands: []
+required_python_imports: []
+description: |
+  KernelBench + Caesar search/LLM-evaluation provider. Card-level
+  declaration. Blocks with ``env_missing`` until both external
+  checkouts are rooted.

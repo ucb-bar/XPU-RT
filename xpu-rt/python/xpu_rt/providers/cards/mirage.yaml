@@ -1,0 +1,14 @@
+schema_version: provider_card_v1
+provider_id: mirage
+integration_level: probe
+target_families: [cuda]
+contract_kinds: [matmul, fused_region, attention]
+emits: [cu_source, megakernel]
+entrypoint: compgen.providers.adapters.mirage:MirageProvider
+paper_claimable: false
+required_env: [MIRAGE_ROOT]
+required_commands: []
+required_python_imports: [mirage]
+description: |
+  Mirage / MPK megakernel-search provider. Card + probe only;
+  blocks with ``env_missing`` or ``python_package_missing``.

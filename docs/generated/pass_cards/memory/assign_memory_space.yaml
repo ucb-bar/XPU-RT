@@ -1,0 +1,33 @@
+schema_version: pass_card_v1
+pass_id: assign_memory_space
+display_name: Assign memory space (HBM/SRAM/DRAM)
+level: payload
+family: memory
+source: IREE
+impl_path: python/compgen/ir/payload/passes/rewrites/assign_memory_space.py
+reads:
+  - 01_payload_lowering/payload.mlir
+  - 02_graph_analysis/tensor_use_def_graph.json
+writes:
+  - 03_recipe_planning/post_lowering/transformed_payload.mlir
+  - 03_recipe_planning/post_lowering/applied_transform_manifest.json
+preconditions:
+  - "target carries a memory-hierarchy spec"
+  - "tensor sizes are known"
+invalidates:
+  - payload_summary
+  - graph_dossier_v3
+  - cost_preview
+  - kernel_contracts
+preserves_refinement: bit_equality
+verification:
+  - structural
+cost: cheap
+failure_modes:
+  - "missing_memory_hierarchy_spec"
+  - "tensor_too_large_for_smallest_space"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+notes: |
+  Reconstruction of IREE's HAL memory-space assignment + hexagon-
+  mlir's tile-buffer placement. Annotates each tensor with the
+  memory space the runtime will allocate it in.

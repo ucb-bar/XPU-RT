@@ -1,0 +1,34 @@
+schema_version: pass_card_v1
+pass_id: decompose_concat
+display_name: Decompose concat into slice + insert
+level: payload
+family: codegen
+source: IREE
+impl_path: python/compgen/ir/payload/passes/rewrites/decompose_concat.py
+reads:
+  - 01_payload_lowering/payload.mlir
+  - 02_graph_analysis/candidate_actions.json
+writes:
+  - 03_recipe_planning/post_lowering/transformed_payload.mlir
+  - 03_recipe_planning/post_lowering/applied_transform_manifest.json
+preconditions:
+  - "tensor.concat or compgen.tensor_ext.concat present"
+  - "concat axis is statically known"
+  - "concatenated tensors have compatible non-axis dims"
+invalidates:
+  - payload_summary
+  - graph_dossier_v3
+  - cost_preview
+  - kernel_contracts
+preserves_refinement: bit_equality
+verification:
+  - structural
+cost: cheap
+failure_modes:
+  - "dynamic_concat_axis"
+  - "non_compatible_non_axis_dims"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+notes: |
+  Reconstruction of IREE's DecomposeConcatPass. Lowers concat ops to
+  tensor.empty + a chain of tensor.insert_slice. Identify-and-annotate
+  variant is the MVP; full destructive rewrite is in progress.

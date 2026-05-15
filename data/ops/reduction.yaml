@@ -1,0 +1,50 @@
+op_family: reduction
+tiling_guidance:
+- target_class: gpu
+  tile_sizes:
+  - 256
+  rationale: 256-thread block for intra-block tree reduction using shared memory.  Warp-level reductions via __shfl_down_sync
+    for the final 32 elements, then shared memory for cross-warp combination.
+  source: Triton/CUDA handbook
+  confidence: high
+- target_class: cpu
+  tile_sizes:
+  - 16
+  rationale: 'SIMD horizontal reduction: reduce 16 fp32 elements (AVX-512) per instruction, then scalar reduction across lanes.'
+  source: oneDNN
+  confidence: high
+fusion_opportunities:
+- pattern: reduction+broadcast+elementwise
+  description: 'Softmax pattern: reduce(max) -> subtract -> exp -> reduce(sum) -> divide.  Fusing the entire chain avoids
+    multiple kernel launches and intermediate tensor allocations.'
+  conditions:
+  - Reduction and broadcast are along the same dimension.
+  - Elementwise ops are between reductions.
+  source: Triton/TVM
+  confidence: high
+layout_preferences:
+- target_class: gpu
+  preferred_layout: Reduce along contiguous (innermost) dimension
+  rationale: Coalesced reads when reducing along the last dimension.  Reducing along non-contiguous dimensions requires a
+    transpose or strided access.
+  source: CUDA handbook
+backend_guidance:
+- target_class: gpu
+  recommended_backend: Triton
+  conditions: Any reduction axis, any dtype
+  rationale: Triton's tl.reduce primitives generate efficient warp-shuffle and shared-memory reduction code.
+  source: Triton
+- target_class: cpu
+  recommended_backend: native vectorisation
+  conditions: Reduction over contiguous axis
+  rationale: LLVM auto-vectorises simple reductions effectively with -O3.
+  source: LLVM/oneDNN
+pitfalls:
+- Cross-warp reduction on GPU requires __shfl instructions (warp shuffle); naive shared memory atomic approach causes serialisation.
+- Global atomics have severe contention for large grids; prefer a two-pass approach (per-block partial reduction, then final
+  reduction kernel).
+- 'Softmax numerical stability: always subtract the row maximum before exp() to avoid overflow in fp16/bf16.'
+- Reduction along non-contiguous dimensions is much slower; consider transposing first if the reduction is the bottleneck.
+performance_bounds:
+- 'Reduction is almost always memory-bound: one pass over input data with minimal compute per element.'
+- Theoretical throughput limited by memory bandwidth / element_size.

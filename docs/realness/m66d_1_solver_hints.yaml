@@ -1,0 +1,99 @@
+feature_id: m66d_1_solver_hints
+claim: |
+  M-66D.1: solver-hint search-space pruning. The memory MILP
+  planner (and bandwidth LP planner) accepts an optional
+  ``MemoryHints`` argument supplying:
+
+  * ``tier_hints`` — per-buffer best-effort tier assignment.
+    Confidence ≥ 0.9 elevates the hint to a fixed bound in the
+    MILP. Confidence < 0.9 is dropped (no native MIP warm-start
+    for ``scipy.optimize.milp``; MOSEK skips lower-confidence
+    hints too for consistency).
+  * ``offset_warm_start`` — per-buffer candidate byte offset
+    (currently advisory; not yet wired into MOSEK's
+    ``putxxslice`` API across both backends).
+  * ``stage_partition`` — disjoint-lifetime buffer groups solved
+    as independent sub-MILPs. The big win: O(N) sub-problems
+    instead of one O(N²) MILP for layered networks.
+  * ``symmetry_classes`` — buffers within a class get ordering
+    constraints ``offset[b_0] ≤ offset[b_1] ≤ …`` to break
+    symmetric solutions.
+
+  Hint provenance is honest (``MemoryHints.source``):
+
+  * ``rule_based`` — deterministic heuristic
+    (``rule_based_memory_hints``); always available; reads
+    buffer-size and lifetime statistics to decide tier and stage.
+  * ``llm_file`` — operator/agent has pre-computed an LLM hint
+    JSON document on disk; ``read_llm_hints_from_file`` parses
+    it. Malformed / missing files degrade to ``rule_based``
+    honestly.
+  * ``merged`` — union of ``rule_based`` and ``llm_file``;
+    higher-confidence wins on conflict.
+
+  Hard correctness contract (enforced by tests):
+
+  1. **Hints cannot break correctness.** A wrong tier hint (one
+     that points at a non-allowed tier for the buffer) is
+     detected upfront and listed in
+     ``response.solution['hints_applied']['skipped']``. No
+     infeasibility is silently propagated.
+  2. **Stage decomposition checks disjointness.** When stages
+     have overlapping lifetimes, the planner falls back to the
+     monolithic MILP. No silent correctness loss.
+  3. **Sub-stage infeasibility fails decomposition.** If any
+     per-stage MILP is INFEASIBLE, the decomposition path
+     returns ``None`` and the caller retries with the monolithic
+     MILP — never a fake-merged plan.
+  4. **The MILP still validates.** Hints only reduce the search
+     space; MOSEK / HiGHS still run optimality / feasibility
+     checks on the constrained problem.
+
+  Empirical: on a 4-layer TinyLlama-like memory problem,
+  rule-based hints + stage decomposition reduce the MOSEK
+  end-to-end solve from a single 387s 96-binary MILP to four
+  ~80ms sub-MILPs (≈ 1000× speedup), with the same per-tier
+  peak usage and same objective value (within tolerance).
+
+realness_level: production_path
+forbidden:
+  - silent fallback when stage decomposition produces an
+    infeasible sub-stage (must return None so the monolithic
+    MILP gets a chance)
+  - propagating a wrong tier hint as an infeasibility constraint
+    (must surface in ``hints_applied['skipped']``)
+  - claiming a stage decomposition without verifying
+    lifetime-disjointness between stages
+  - silently widening alias-candidates or fixed_assignments
+    across stages (sub-problems get only the buffer-relevant
+    subset)
+required_evidence:
+  - python/compgen/solve/solver_hints.py
+  - python/compgen/solve/llm_hint_provider.py
+  - python/compgen/solve/memory_planner.py (hints + stage decomposition)
+  - tests/solve/test_solver_hints.py (13 tests)
+  - tests/solve/test_llm_hint_provider.py (9 tests)
+  - scripts/dev/eval_tinyllama_solvers.py (--use-solver-hints flag)
+commit: 0ec0000000000000000000000000000000000000
+created_at_utc: 2026-05-12T00:00:00Z
+notes: |
+  The LLM doesn't need to be 100% correct. Even 65-75% of the
+  tier assignments fixed pre-solve exponentially shrinks the
+  MILP branch-and-bound. For TinyLlama-scale (22 layers × 12
+  regions = 264 buffers), the dominant win is stage
+  decomposition: each layer's 12-buffer MILP solves in ~80ms,
+  totalling ~30s for the full network — down from "still
+  running at 1h37min" without hints.
+
+  Wrong hints don't crash the planner; they fall into one of:
+  (a) skipped (tier not allowed); (b) infeasible sub-stage → fall
+  back to monolithic MILP; (c) ordering constraints (symmetry
+  break) — these don't change the feasible set, only the
+  search order.
+
+  The LLM call itself is NOT in this module — operators run
+  Claude Code / another LLM against the typed request document
+  emitted by ``write_llm_hint_request`` and write the response
+  back to a path on disk. ``llm_file`` mode reads from there.
+  This keeps the solver layer free of network calls and LLM-
+  provider plumbing.

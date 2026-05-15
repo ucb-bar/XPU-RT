@@ -1,0 +1,41 @@
+schema_version: model_admission_suite_v1
+
+# Subset of always_test_models that has blocking=true in model_registry.yaml.
+# Used by CI gates that should fail loudly when a blocking model regresses,
+# but never block on huge / slice-only / admission_only models.
+
+required_proxy:
+  - model_id: proxy_qwen_vl
+    slice_id: proxy_qwen_vl_single_image_qa
+  - model_id: proxy_llava
+    slice_id: proxy_llava_single_image_qa
+  - model_id: proxy_ocr
+    slice_id: proxy_ocr_page_crop
+  - model_id: proxy_openvla
+    slice_id: proxy_openvla_single_step
+  - model_id: proxy_diffusion_vla
+    slice_id: proxy_diffusion_vla_single_step
+
+required_real_if_available:
+  - model_id: qwen3_vl_8b
+    slice_id: qwen3_vl_8b_single_image_qa
+  - model_id: qwen2_5_vl
+    slice_id: qwen2_5_vl_single_image_qa
+  - model_id: llava
+    slice_id: llava_single_image_qa
+  - model_id: deepseek_ocr_3b
+    slice_id: deepseek_ocr_page_crop
+  - model_id: smolvla_step
+    slice_id: smolvla_single_step
+  - model_id: openvla_step
+    slice_id: openvla_single_step
+  - model_id: octo_step
+    slice_id: octo_single_step
+
+slice_only_stress:
+  - model_id: llama4_scout_text
+    slice_id: llama4_scout_decoder_pair
+  - model_id: deepseek_v4_flash_text
+    slice_id: deepseek_v4_flash_hybrid_attention
+  - model_id: deepseek_v4_flash_text
+    slice_id: deepseek_v4_flash_moe_block

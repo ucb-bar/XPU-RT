@@ -1,0 +1,121 @@
+claim: |
+  M-57 (Phase D): the kernel-codegen pipeline now runs a multi-bidder
+  auction over ``KernelContractV3`` between every applicable provider.
+  Default mode is ``multi-bidder``: collect bids from all applicable
+  providers, fulfil top-K (default 3), verify each via M-44, emit M-45
+  certificate per verified bid, and select the winner by
+  ``perf_estimate_us``. The winner is promoted into the standard M-43
+  response location so M-46+ work unchanged.
+
+  Hard contract:
+
+  1. ``run_kernel_auction(run_dir, *, mode, bid_cutoff, registry=None)``
+     in ``graph_compilation/kernel_auction.py`` is the orchestrator.
+     Mode in ``{"multi-bidder", "first-fit", "disabled"}``;
+     ``"disabled"`` is a strict no-op (today's M-43 commit path
+     remains canonical). The CLI flag ``--auction-mode`` defaults to
+     ``"multi-bidder"`` and ``--bid-cutoff`` defaults to 3.
+  2. New ``--stop-after kernel-auction`` boundary lands the auction
+     report without proceeding to M-46. Existing
+     ``--stop-after kernel-codegen-request`` is unchanged.
+  3. Artifact layout under
+     ``04_kernel_codegen/auction/<task_id>/``:
+     ``fulfilled/<provider_name>/{kernel.<ext>, kernel_metadata.json,
+     launch_config.json, provider_claims.json}``,
+     ``verified/<provider_name>/<provider_name>.certificate.json``,
+     ``auction_report.json`` (schema ``auction_report_v1``),
+     ``winner.json``, ``runners_up.json``.
+  4. ``CReferenceProvider`` (``kernels/providers/c_reference.py``) is
+     an in-tree always-on baseline: deterministic cffi-C matmul,
+     ``-O2 -fno-fast-math``, accumulator f32, row-major. Bids
+     ``confidence=0.85, perf_estimate_us=2*M*N*K/1e12*1e6+2us,
+     time_to_generate_s=0.5``. Registered by ``default_registry()``
+     ahead of entry-point providers so the auction always has at
+     least one bidder for host_cpu+matmul contracts.
+  5. The auction is contract-faithful: every fulfilled bid runs the
+     M-44 contract-driven verifier (M-44's ``_run_m44_verifier``
+     unchanged); only verified bids are eligible to win. The winner's
+     M-45 certificate carries ``paper_claimable=True`` (no fallback);
+     loser certificates land in the auction tree under
+     ``verified/<provider_name>/`` for tactician analysis.
+  6. ``compgen_compare_kernel_bids(run_dir, task_id) -> dict`` MCP
+     tool surfaces a ranked summary of every bid + fulfill +
+     verifier verdict + certificate path so the agent can re-rank
+     without reading the full per-bid JSON.
+  7. ``--auction-mode disabled`` short-circuits before the auction
+     stage runs; with this mode the M-43 commit path remains the
+     canonical kernel-codegen surface.
+commit: 0a57000000000000000000000000000000000000
+created_at_utc: 2026-05-07T00:00:00Z
+forbidden:
+- the auction promoting a non-verified bid to the M-43 response location (winner promotion is gated on M-44 overall=pass)
+- skipping M-44 on a fulfilled bid (every bid that goes through fulfill() must verify; only verified bids are auction-eligible)
+- silently picking a winner whose contract_hash disagrees with the canonical contract_hash from the M-42 request
+- the auction mutating the materialised KernelContractV3 (auction reads through reconstruct_contract_from_dict; never writes back)
+- writing artifacts outside auction/<task_id>/ (winner promotion is the only path that writes outside; it goes through the canonical M-43 sandbox)
+realness_level: production_path
+required_evidence:
+- python/compgen/graph_compilation/kernel_auction.py (orchestrator + AuctionResult + _build_response_body + _promote_winner + _v3_to_legacy_contract + _translate_provider_result_to_artifacts)
+- python/compgen/kernels/providers/c_reference.py (in-tree baseline provider)
+- python/compgen/kernels/registry.py (default_registry now registers CReferenceProvider)
+- python/compgen/graph_compilation/run.py (--auction-mode + --bid-cutoff threading + auction stage between M-42 and M-46)
+- python/compgen/graph_compilation/__main__.py (--auction-mode + --bid-cutoff CLI flags + dispatch)
+- python/compgen/mcp/tools/kernel_codegen.py (compgen_compare_kernel_bids MCP tool)
+- tests/graph_compilation/test_kernel_auction.py
+feature_id: m57_multi_bidder_auction
+notes: |
+  Phase D centerpiece. M-55 made registry applicability explicit; M-56
+  introduced bid()/fulfill(); M-57 composes both into the auction.
+
+  Pre-existing scaffolding consumed (Phase D zero-new-design
+  philosophy):
+  - ``ProviderRegistry.applicable`` (M-55) — the auction's bid-source
+    list.
+  - ``collect_bids`` + ``compute_bid`` (M-56) — the auction's pre-codegen
+    pruning.
+  - ``KernelProvider.search`` (legacy v1 contract) — the auction's
+    fulfill() path uses this unchanged via the
+    ``_v3_to_legacy_contract`` bridge.
+  - ``_run_m44_verifier`` + ``_reconstruct_contract_from_dict``
+    (kernel_codegen_response.py from Phase C) — the auction's
+    verification per bid.
+  - ``emit_certificate`` (kernel_certificate.py from M-45) —
+    certificate emission for the winner; loser certificates land in
+    a per-provider auxiliary slot.
+
+  Real-driven stress (`/tmp/m57_stress` and `/tmp/m57_e2e`):
+  - merlin_mlp_wide host_cpu pipeline → kernel-auction stop boundary →
+    `auction_report.json` shows: 1 bid (CReferenceProvider conf=0.85,
+    perf_estimate=2.02us), 1 fulfilled (kernel.c written),
+    1 verified (M-44 PASS), winner=c_reference,
+    contract_hash=4838412db0b5c6b8 (matches M-55 + M-56).
+  - Same model with `--stop-after glue-emit`: cert at
+    `04_kernel_codegen/certificates/4838412db0b5c6b8.json`,
+    `region_kernel_bindings.json` shows bound_count=1 unbound_count=0,
+    emitted `06_glue_emit/generated_plan_executor.py` lands.
+
+  Tests: 6 in tests/graph_compilation/test_kernel_auction.py covering
+  disabled-mode short-circuit, no-applicable-providers + auction
+  report still emitted, multi-bidder full path with CReferenceProvider
+  winning on merlin_mlp_wide, first-fit mode, stub providers (one
+  succeeding + one failing fulfill — selector picks the verified
+  one), no-winner case (all fulfills fail).
+
+  Honest residuals:
+  - The auction picks by ``perf_estimate_us`` from the BidPreview;
+    those numbers are unverified at bid time (M-56 documented
+    residual). M-66's four-bidder stress will land genuine perf
+    measurements via M-22.1's profiler harness — at that point the
+    winner becomes "lowest measured-perf among verified bids" not
+    "lowest claimed-perf".
+  - Loser certificates currently land in
+    ``auction/<task_id>/verified/<provider_name>/``; promotion to
+    the global ``certificates/`` directory keys on the winner only
+    (since the canonical filename is contract-hash-keyed).
+  - ``CReferenceProvider`` only covers matmul today; pointwise +
+    reduce families wait for the corresponding archetype tests in
+    M-65 vertical slice 2.
+  - The CLI flag ``--auction-mode multi-bidder`` is the default but
+    the auction is a no-op when no applicable providers are
+    registered (clean checkout). Adding more providers (entry-point,
+    user-space M-62) lights up real auctions automatically.

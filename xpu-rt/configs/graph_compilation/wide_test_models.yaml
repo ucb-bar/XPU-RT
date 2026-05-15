@@ -1,0 +1,87 @@
+# Wide-coverage suite. Goes BEYOND ``always_test_models.yaml`` (the
+# canonical 6-model smoke suite) to exercise the full pipeline against
+# a much broader set of model types:
+#
+#   - 6 canonical smoke models (synthetic + custom unsupported op)
+#   - 2 additional CompGen graph-shape edge cases (graph_break_mlp,
+#     residual_branch)
+#   - 5 admission proxies built to mimic real foundation-model
+#     architectures (proxy_qwen_vl, proxy_llava, proxy_openvla,
+#     proxy_diffusion_vla, proxy_ocr) — these use the
+#     ``model_config_v1`` admission schema and are routed through
+#     ``admission_bridge`` automatically
+#   - 3 self-contained merlin models
+#     (/scratch2/agustin/merlin/models/{mlp,mlp_wide,dronet}) wrapped
+#     by adapters under tests/graph_compilation/models/merlin_*.py
+#
+# Run with ``--continue-on-failure`` so a single capture-failure
+# (e.g. an admission proxy that requires an unavailable processor)
+# does not block the rest of the suite from producing evidence.
+#
+# schema_version: graph_compilation_suite_v1
+
+schema_version: graph_compilation_suite_v1
+suite_id: wide_test_models
+description: |
+  Wide-coverage verification suite covering 16 model types: synthetic
+  CompGen toys, edge-case graph shapes, real-architecture admission
+  proxies, and external (merlin) production model definitions.
+
+target: configs/targets/host_cpu.yaml
+
+models:
+  # 6-model canonical smoke suite (already verified)
+  - id: tiny_mlp
+    config: configs/models/tiny_mlp.yaml
+    role: simplest decomposition path; baseline
+  - id: tiny_attention
+    config: configs/models/tiny_attention.yaml
+    role: attention surface; opaque + structural mix
+  - id: tiny_conv_block
+    config: configs/models/tiny_conv_block.yaml
+    role: conv + batchnorm decomposition behavior
+  - id: proxy_vlm
+    config: configs/models/proxy_vlm.yaml
+    role: vision-language proxy (img enc + text enc + fusion)
+  - id: proxy_vla
+    config: configs/models/proxy_vla.yaml
+    role: robotics policy proxy (img + state + action head)
+  - id: custom_unsupported_op
+    config: configs/models/custom_unsupported_op.yaml
+    role: explicit unsupported op surface
+
+  # CompGen graph-shape edge cases
+  - id: graph_break_mlp
+    config: configs/models/graph_break_mlp.yaml
+    role: dynamo graph-break recovery (multiple captured partitions)
+  - id: residual_branch
+    config: configs/models/residual_branch.yaml
+    role: residual / skip-connection branching pattern
+
+  # Admission proxies (real foundation-model shape, no HF download)
+  - id: proxy_qwen_vl
+    config: configs/models/proxy_qwen_vl.yaml
+    role: Qwen-VL-style multimodal proxy via admission bridge
+  - id: proxy_llava
+    config: configs/models/proxy_llava.yaml
+    role: LLaVA-style multimodal proxy
+  - id: proxy_openvla
+    config: configs/models/proxy_openvla.yaml
+    role: OpenVLA-style robotics proxy
+  - id: proxy_diffusion_vla
+    config: configs/models/proxy_diffusion_vla.yaml
+    role: Diffusion-VLA-style robotics policy proxy
+  - id: proxy_ocr
+    config: configs/models/proxy_ocr.yaml
+    role: OCR/document-understanding proxy
+
+  # External merlin production model definitions
+  - id: merlin_mlp
+    config: configs/models/merlin_mlp.yaml
+    role: upstream production SimpleMLP (merlin/models/mlp)
+  - id: merlin_mlp_wide
+    config: configs/models/merlin_mlp_wide.yaml
+    role: OPU-tile-aligned wide MLP (merlin/models/mlp_wide)
+  - id: merlin_dronet
+    config: configs/models/merlin_dronet.yaml
+    role: real CNN regression head (merlin/models/dronet)

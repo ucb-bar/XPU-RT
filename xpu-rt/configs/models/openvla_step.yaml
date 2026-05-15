@@ -1,0 +1,40 @@
+schema_version: model_config_v1
+model_id: openvla_step
+family: vla
+source:
+  provider: huggingface
+  model_ref: openvla/openvla-7b
+  repo_url: https://huggingface.co/openvla/openvla-7b
+  docs_url: https://huggingface.co/openvla/openvla-7b
+  revision: 47a0ec7fc4ec123775a391911046cf33cf9ed83f
+  verified_at: '2026-05-01T05:35:03+00:00'
+  verified_by: agustin@garden
+  source_verified: true
+loader:
+  kind: hf_transformers_vla
+  trust_remote_code: true
+  dtype: bfloat16
+  device_policy: auto
+inputs:
+  kind: one_step_policy
+  processor_required: false
+compile:
+  mode: torch_compile_admission
+  backend: inductor
+  fullgraph: false
+  dynamic: true
+  # Bundled remote_code targets transformers 4.40 (missing _supports_sdpa).
+  transformers_pin: "4.40.1"
+  # Bundled prismatic asserts ``0.9.10 <= timm < 1.0``.
+  extra_pins:
+    - "timm>=0.9.10,<1.0"
+support:
+  mode: one_step_policy
+  full_model_blocking: true
+  reason: ''
+expected:
+  can_eager_run: true
+  can_torch_compile: true
+  can_dynamo_capture: true
+  can_slice_compile: true
+notes: []

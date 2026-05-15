@@ -1,0 +1,34 @@
+schema_version: pass_card_v1
+pass_id: insert_reduce_scatter
+display_name: Insert reduce-scatter at SPMD boundaries
+level: payload
+family: memory
+source: homemade
+impl_path: python/compgen/ir/payload/passes/rewrites/insert_reduce_scatter.py
+reads:
+  - 01_payload_lowering/payload.mlir
+  - 02_graph_analysis/region_graph.json
+writes:
+  - 03_recipe_planning/post_lowering/transformed_payload.mlir
+  - 03_recipe_planning/post_lowering/applied_transform_manifest.json
+preconditions:
+  - "SPMD partition spec present"
+  - "downstream consumer wants a partitioned (not replicated) tensor"
+invalidates:
+  - payload_summary
+  - graph_dossier_v3
+  - kernel_contracts
+preserves_refinement: tolerance_eps
+verification:
+  - structural
+  - differential
+cost: cheap
+failure_modes:
+  - "missing_partition_spec"
+  - "non_associative_reduction"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+notes: |
+  Inserts reduce_scatter collectives at boundaries where a partial
+  sum can be reduced + scattered in one collective rather than
+  all_reduce + slice. preserves_refinement: tolerance_eps because
+  cross-rank atomic combine reorders accumulation.

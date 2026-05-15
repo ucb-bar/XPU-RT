@@ -1,0 +1,23 @@
+name: softmax_gpu_online
+op_family: softmax
+target_class: gpu
+steps:
+- action: online_max
+  parameters:
+    method: running_max
+  rationale: Track running max to avoid separate max-reduction pass
+- action: online_sum
+  parameters:
+    method: rescaled_accumulation
+  rationale: Accumulate exp(x - running_max) with correction factors
+- action: normalize
+  parameters:
+    fused: true
+  rationale: Divide by final sum in same kernel
+- action: vectorize
+  parameters:
+    width_bits: 128
+  rationale: Coalesced access for memory-bound workload
+expected_speedup: 1.5-2x over two-pass (max then softmax)
+source: Online softmax / FlashAttention
+confidence: high

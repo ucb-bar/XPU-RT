@@ -1,0 +1,32 @@
+schema_version: pass_card_v1
+pass_id: plan_buffers
+display_name: Plan buffer offsets / pool by size + liveness
+level: payload
+family: memory
+source: hexagon-mlir
+impl_path: python/compgen/ir/payload/passes/rewrites/plan_buffers.py
+reads:
+  - 01_payload_lowering/payload.mlir
+  - 02_graph_analysis/tensor_use_def_graph.json
+writes:
+  - 03_recipe_planning/post_lowering/transformed_payload.mlir
+  - 03_recipe_planning/post_lowering/applied_transform_manifest.json
+preconditions:
+  - "memory spaces assigned (assign_memory_space ran first)"
+  - "tensor liveness intervals computed"
+invalidates:
+  - payload_summary
+  - graph_dossier_v3
+  - kernel_contracts
+preserves_refinement: bit_equality
+verification:
+  - structural
+cost: medium
+failure_modes:
+  - "memory_space_unassigned"
+  - "buffer_pool_overflow"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+notes: |
+  Port of hexagon-mlir's MemoryOffsetsPass. Pools buffer allocations
+  by size + liveness so concurrent live tensors share offsets where
+  possible.

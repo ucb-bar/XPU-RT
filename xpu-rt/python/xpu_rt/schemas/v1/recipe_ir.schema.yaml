@@ -1,0 +1,130 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "compgen://user_perspective/schemas/recipe_ir.schema.yaml"
+title: RecipeIRYamlView
+description: >
+  User-facing YAML mirror of Recipe IR. This is what the LLM sees and
+  edits. The MLIR Recipe IR (produced by compgen.ir.recipe.seed.seed_recipe_ir)
+  is the deterministic ground truth; this YAML is its machine-friendly
+  textual wrapper with an explicit proposal_mode distinction.
+
+type: object
+required: [recipe_id, target, workload, proposal_mode, regions, candidates]
+additionalProperties: false
+
+properties:
+  recipe_id:
+    type: string
+  target:
+    type: string
+    description: Matches TargetResource.name.
+  workload:
+    type: string
+    description: Matches workload config id (smolvla_slice / gemma_decode_slice).
+  objective:
+    type: string
+    enum: [latency, throughput, energy, balanced]
+    default: latency
+  proposal_mode:
+    type: string
+    enum: [select, invent]
+    description: >
+      `select` means the LLM picks from enumerated options; output must have
+      `invented: false` on every candidate. `invent` allows new options and
+      requires stronger verification before promotion — every candidate
+      with `invented: true` must carry `verification_strength: strong_required`.
+  regions:
+    type: array
+    description: Region identities (match compgen.region_id attrs).
+    minItems: 1
+    items:
+      type: object
+      required: [region_id, op_kind]
+      properties:
+        region_id: { type: string }
+        op_kind: { type: string }
+        shape_regime: { type: string, enum: [static, bounded_dynamic, highly_dynamic] }
+        dtype: { type: string }
+      additionalProperties: true
+  candidates:
+    type: array
+    description: Candidate optimization decisions for this recipe.
+    items: { $ref: "#/$defs/Candidate" }
+  verification_obligations:
+    type: array
+    default: []
+    items:
+      type: object
+      required: [region_id, obligation]
+      properties:
+        region_id: { type: string }
+        obligation:
+          type: string
+          enum: [structural, differential, check_assertions, compiler_feedback, formal]
+        tolerance:
+          type: object
+          additionalProperties: true
+      additionalProperties: false
+  provenance:
+    type: object
+    additionalProperties: true
+    default: {}
+
+$defs:
+  Candidate:
+    type: object
+    required: [candidate_id, region_ids, kind, invented, rationale]
+    properties:
+      candidate_id: { type: string }
+      region_ids:
+        type: array
+        items: { type: string }
+        minItems: 1
+      kind:
+        type: string
+        enum:
+          - fuse
+          - tile
+          - layout_change
+          - pack
+          - request_triton
+          - request_ukernel
+          - request_autocomp
+          - select_backend
+          - place
+          - set_quantization_policy
+          - set_sync_strategy
+          - blackbox
+      allowed_choices:
+        type: array
+        description: Enumerated options in select mode; empty in invent mode.
+        items: { type: string }
+        default: []
+      chosen:
+        type: string
+        description: The chosen option (one of allowed_choices in select mode; free text in invent).
+      invented:
+        type: boolean
+        description: True when this candidate is not in the enumerated set.
+      verification_strength:
+        type: string
+        enum: [none, structural_only, standard, strong_required]
+        default: standard
+      confidence:
+        type: number
+        minimum: 0
+        maximum: 1
+        default: 0.5
+      rationale:
+        type: string
+        description: Short, machine-readable justification.
+      metadata:
+        type: object
+        additionalProperties: true
+        default: {}
+    allOf:
+      - if:
+          properties: { invented: { const: true } }
+        then:
+          properties:
+            verification_strength: { const: strong_required }
+    additionalProperties: false

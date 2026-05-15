@@ -1,0 +1,13 @@
+schema_version: slice_config_v1
+slice_id: qwen3_vl_235b_text_moe_slice
+parent_model_id: qwen3_vl_235b_a22b_instruct
+description: 'Single text-MoE block extracted from Qwen3-VL-235B-A22B.'
+inputs:
+  kind: text_decode
+  processor_required: false
+loader_override: null
+expected:
+  can_eager_run: true
+  can_torch_compile: true
+  can_dynamo_capture: true
+  can_slice_compile: true

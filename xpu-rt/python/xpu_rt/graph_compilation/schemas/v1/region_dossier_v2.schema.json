@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RegionDossierV2",
+  "type": "object",
+  "required": [
+    "schema_version", "region_id", "module_id", "kind",
+    "source", "cost", "reuse", "numerical_sensitivity",
+    "working_set_curve", "placement_envelope", "legality_constraints"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": "region_dossier_v2" },
+    "region_id": { "type": "string" },
+    "module_id": { "type": "string" },
+    "kind": { "type": "string" },
+    "source": {
+      "type": "object",
+      "required": ["fx_nodes", "fx_targets", "payload_ops", "source_classification"],
+      "properties": {
+        "fx_nodes": { "type": "array", "items": { "type": "string" } },
+        "fx_targets": { "type": "array", "items": { "type": "string" } },
+        "payload_ops": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["op_name", "payload_ref"],
+            "properties": {
+              "op_name": { "type": "string" },
+              "region_id": { "type": ["string", "null"] },
+              "dispatch_id": { "type": ["string", "null"] },
+              "callee": { "type": ["string", "null"] },
+              "payload_ref": { "type": "string" }
+            }
+          }
+        },
+        "source_classification": { "type": "string" }
+      }
+    },
+    "cost": {
+      "type": "object",
+      "required": ["flops", "bytes", "arithmetic_intensity",
+                   "estimated_latency_us", "bottleneck_resource"],
+      "properties": {
+        "flops": { "type": "integer", "minimum": 0 },
+        "bytes": { "type": "integer", "minimum": 0 },
+        "arithmetic_intensity": { "type": "number", "minimum": 0 },
+        "estimated_latency_us": { "type": "object" },
+        "bottleneck_resource": { "type": "object" }
+      }
+    },
+    "reuse": {
+      "type": "object",
+      "required": ["inputs", "outputs"],
+      "properties": {
+        "inputs": { "type": "array" },
+        "outputs": { "type": "array" }
+      }
+    },
+    "numerical_sensitivity": {
+      "type": "object",
+      "required": ["fp32", "fp16_accum", "fp8_e4m3", "fast_math"],
+      "additionalProperties": {
+        "type": "object",
+        "required": ["eps_out", "budget_remaining", "status"],
+        "properties": {
+          "eps_out": { "type": "number" },
+          "budget_remaining": { "type": "number" },
+          "status": {
+            "enum": ["safe", "risky", "exceeds_budget", "requires_reference"]
+          }
+        }
+      }
+    },
+    "working_set_curve": { "type": "array" },
+    "placement_envelope": {
+      "type": "object",
+      "required": ["devices"],
+      "properties": {
+        "devices": { "type": "array" }
+      }
+    },
+    "legality_constraints": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["constraint", "ok"],
+        "properties": {
+          "constraint": { "type": "string" },
+          "ok": { "type": "boolean" },
+          "reason": { "type": "string" }
+        }
+      }
+    }
+  }
+}

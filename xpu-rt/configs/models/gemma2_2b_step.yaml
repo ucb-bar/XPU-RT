@@ -1,0 +1,37 @@
+schema_version: model_config_v1
+model_id: gemma2_2b_step
+family: llm
+source:
+  provider: huggingface
+  model_ref: google/gemma-2-2b-it
+  repo_url: https://huggingface.co/google/gemma-2-2b-it
+  docs_url: https://huggingface.co/google/gemma-2-2b-it
+  revision: 299a8560bedf22ed1c72a8a11e7dce4a7f9f51f8
+  verified_at: '2026-05-01T18:07:23+00:00'
+  verified_by: agustin@garden
+  source_verified: true
+loader:
+  kind: hf_transformers_llm
+  trust_remote_code: true
+  dtype: bfloat16
+  device_policy: auto
+inputs:
+  kind: text_decode
+  processor_required: false
+compile:
+  mode: torch_compile_admission
+  backend: inductor
+  fullgraph: false
+  dynamic: true
+support:
+  mode: full_or_slice_smoke
+  full_model_blocking: true
+  reason: ''
+expected:
+  can_eager_run: true
+  can_torch_compile: true
+  can_dynamo_capture: true
+  can_slice_compile: true
+notes:
+- Gemma-2-2B-it admission baseline (gated; HF_TOKEN required).
+- gated repo — admission probe still requires HF token + license acceptance.

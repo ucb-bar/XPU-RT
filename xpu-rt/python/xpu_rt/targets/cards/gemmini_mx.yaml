@@ -1,0 +1,10 @@
+schema_version: target_card_v1
+target_id: gemmini_mx
+family: gemmini
+vendor: berkeley
+dispatch_modes: [sync, static_plan]
+memory_tiers:
+  - {name: dram, kind: host, capacity_bytes: 0}
+  - {name: scratchpad, kind: explicit, capacity_bytes: 262144}
+  - {name: accumulator, kind: explicit, capacity_bytes: 65536}
+description: Chipyard Gemmini MX accelerator — systolic-array matmul target.

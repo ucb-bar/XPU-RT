@@ -1,0 +1,31 @@
+schema_version: pass_card_v1
+pass_id: raise_special_ops
+display_name: Raise hint annotations to dialect ops
+level: payload
+family: codegen
+source: IREE
+impl_path: python/compgen/ir/payload/passes/rewrites/raise_special_ops.py
+reads:
+  - 01_payload_lowering/payload.mlir
+writes:
+  - 03_recipe_planning/post_lowering/transformed_payload.mlir
+  - 03_recipe_planning/post_lowering/applied_transform_manifest.json
+preconditions:
+  - "hint annotations or attributes present from upstream"
+  - "matched dialect op exists in registry"
+invalidates:
+  - payload_summary
+  - graph_dossier_v3
+  - kernel_contracts
+preserves_refinement: bit_equality
+verification:
+  - structural
+cost: cheap
+failure_modes:
+  - "no_matching_dialect_op"
+  - "ambiguous_hint_annotation"
+mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+notes: |
+  Reconstruction of IREE's RaiseSpecialOpsPass. Lifts hint annotations
+  (softmax, layer-norm, attention) into dedicated dialect ops so
+  pattern-based fusion and codegen can recognise them.

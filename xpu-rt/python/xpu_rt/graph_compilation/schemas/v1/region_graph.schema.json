@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RegionGraph",
+  "type": "object",
+  "required": ["schema_version", "totals", "nodes", "edges", "critical_path"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": "region_graph_v1" },
+    "totals": {
+      "type": "object",
+      "required": ["nodes", "edges", "is_dag"],
+      "properties": {
+        "nodes": { "type": "integer", "minimum": 0 },
+        "edges": { "type": "integer", "minimum": 0 },
+        "is_dag": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["region_id", "module_id", "kind", "flops", "bytes"],
+        "properties": {
+          "region_id": { "type": "string" },
+          "module_id": { "type": "string" },
+          "kind": { "type": "string" },
+          "flops": { "type": "integer", "minimum": 0 },
+          "bytes": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["src", "dst", "tensor_id", "bytes"],
+        "properties": {
+          "src": { "type": "string" },
+          "dst": { "type": "string" },
+          "tensor_id": { "type": "string" },
+          "bytes": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "critical_path": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}

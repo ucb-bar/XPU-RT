@@ -1,0 +1,111 @@
+claim: |
+  M-88 (Phase G — §12 Dream 1): a **C11 plan executor is emitted**
+  per-workload from ``05_execution_plan/execution_plan.yaml`` and
+  the M-46 region_kernel_bindings, calling the same ``libcompgen_rt``
+  ABI (``cg_rt_*``) that the existing CPU + CUDA + cpu_task drivers
+  already implement. The emitter at
+  ``compgen.runtime.glue_emit.c11_baremetal.emit_c11_baremetal_executor``
+  produces three artefacts under ``06_glue_emit/``:
+
+  - ``generated_plan_executor.c`` — the ``compgen_run(io, status)``
+    entry point. Asserts plan invariants at the top of the function
+    and stores a named ``COMPGEN_PLAN_VIOLATION_<KIND>`` code into
+    ``status->code`` on failure (§12 D4). Calls only ``cg_rt_*``
+    symbols; M-49 supplies the kernel pack with
+    ``compgen_kernel_<region_id>`` externs.
+  - ``generated_plan_executor.h`` — the public ABI: ``compgen_io_t``,
+    ``compgen_tensor_t``, ``compgen_status_t``, the dtype + layout
+    enums, and the ``COMPGEN_PLAN_VIOLATION_<KIND>`` code macros.
+  - ``plan_executor_c11_manifest.json`` — schema-versioned manifest
+    listing the emit, the bound/unbound regions, the topological
+    region order, the stable PLAN_VIOLATION code map, and an
+    ``abi.uses_only_cg_rt`` flag the M-91 D6 gate consumes.
+
+  Generated executor invariants (proven by 15 unit tests):
+
+  - Calls ``cg_rt_command_buffer_dispatch`` exactly once per bound
+    region in the topological order shared with M-47's Python SYNC
+    emitter.
+  - Calls ``cg_rt_queue_submit`` and ``cg_rt_semaphore_wait`` exactly
+    once each per invocation.
+  - Inlines typed ``COMPGEN_PLAN_VIOLATION_<KIND>`` checks for every
+    M-48 invariant: ``INPUT_COUNT``, ``INPUT_DTYPE``, ``INPUT_SHAPE``,
+    ``INPUT_BYTES``, ``LAYOUT``, ``UNBOUND_REGION``, ``EVENT_WRITERS``,
+    and the M-61 predicate kinds ``PRECONDITION_MOD_EQ``,
+    ``PRECONDITION_BYTE_SIZE_LE``, ``PRECONDITION_DTYPE_IN``.
+  - Calls **only** ``cg_rt_*`` and ``compgen_kernel_*`` externs; the
+    M-91 ABI-conformance gate rejects any emit that calls a vendor
+    primitive directly.
+  - Byte-stable across reruns of the same plan; the manifest carries
+    a single ``generated_at_utc`` field that is stripped from
+    equality checks.
+
+  Compilation acceptance: the emit compiles cleanly with
+  ``cc -std=c11 -Wall -Wextra -fsyntax-only`` against
+  ``runtime/native/libcompgen_rt/include`` (verified by
+  ``test_emit_parses_with_cc_fsyntax_only``).
+commit: m88_phase_g_runtime_three_layer_closure
+created_at_utc: 2026-05-12T00:00:00Z
+forbidden:
+- emitting C source with hand-written control flow not derived from the plan
+- calling vendor primitives directly (cudaMalloc, hipMalloc, vkCreate*) — must go through cg_rt_*
+- omitting any PLAN_VIOLATION_<KIND> check covered by M-48 / M-61
+- emitting non-deterministic source (the .c + .h must be byte-stable across reruns)
+- generating files at any path other than 06_glue_emit/
+- skipping cg_rt_semaphore_wait at the end of compgen_run
+realness_level: production_path
+required_evidence:
+- python/compgen/runtime/glue_emit/__init__.py
+- python/compgen/runtime/glue_emit/c11_baremetal.py
+- tests/runtime/test_glue_emit_c11_baremetal.py
+- runtime/native/libcompgen_rt/include/compgen_rt/compgen_rt.h
+- "06_glue_emit/generated_plan_executor.c on a real run"
+- "06_glue_emit/generated_plan_executor.h on a real run"
+- "06_glue_emit/plan_executor_c11_manifest.json on a real run"
+feature_id: m88_c11_baremetal_emitter
+notes: |
+  Phase G M-88 — first §12 Dream-1 emit target beyond Python.
+
+  Architectural framing: the dream is that "the runtime is part of
+  the recipe". M-47/M-51/M-52 already emit Python plan executors;
+  M-88 emits the same shape of artefact in C11 so the same plan
+  can drive a baremetal / Saturn-OPU target without a Python
+  interpreter in the launch loop. The C emit calls libcompgen_rt
+  (the §12 Layer-2 HAL); the operator links a kernel pack (the §12
+  Layer-3 artefact pool) that defines the ``compgen_kernel_*``
+  externs the emit references.
+
+  Tests landed: 15 in tests/runtime/test_glue_emit_c11_baremetal.py
+  covering:
+  - schema (emit produces .c + .h + manifest);
+  - byte stability across reruns;
+  - cc -fsyntax-only syntactic validity (compiler-gated);
+  - ABI lint: only cg_rt_* and compgen_kernel_* externs (the
+    M-91 D6 pre-check);
+  - topology: multi-region emits respect dependency-edge order;
+  - unbound region triggers PLAN_VIOLATION_UNBOUND_REGION path;
+  - PLAN_VIOLATION codes are present in header + manifest with
+    stable integer values;
+  - contract-driven dtype/shape/bytes/layout checks emit the right
+    C-level PLAN_VIOLATION_<KIND> sites;
+  - M-61 predicates (mod_eq, byte_size_le, dtype_in) emit named
+    typed checks.
+  - negative control: dropping a dispatch call from a corrupted emit
+    is detectable by the M-91 D6 plan-refinement gate.
+
+  Honest residuals:
+  - The kernel pack (compgen_kernel_<region_id> externs) is M-49's
+    responsibility; M-88 emits the references and expects the
+    operator's build system to link them in. Without a kernel pack
+    the emit links but unresolved-symbol-errors at load time — the
+    typed error path is M-89's territory (CUDA driver) and M-94's
+    (baremetal codegen).
+  - Push-constants and bindings arrays are reserved 256-byte and
+    32-slot blocks today; the M-49 binding map (which region inputs
+    populate which slots) wires the real contents.
+  - The driver name is fixed to "cpu_sync" in M-88; M-89 overrides
+    to "cuda"; M-90's PlanDispatchTable can pick per-plan.
+  - The M-91 D6 ABI-conformance gate runs the same allowlist check
+    end-to-end on the emitted .c; the M-88 ABI lint test is a
+    pre-check using the same allowlist so the gate can never reject
+    an emit M-88 produced.
