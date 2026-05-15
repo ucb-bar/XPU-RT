@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 96" role="img" aria-label="XPU-RT logo">
+  <!-- Placeholder logo for XPU-RT. Swap docs/assets/xpu-rt-logo.svg for the
+       real branding asset when it's available. The mkdocs theme picks this
+       up via theme.logo. -->
+  <defs>
+    <linearGradient id="grad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4C6EF5"/>
+      <stop offset="100%" stop-color="#15AABF"/>
+    </linearGradient>
+  </defs>
+  <!-- mark -->
+  <g transform="translate(8 12)">
+    <rect x="0" y="0" width="72" height="72" rx="14" ry="14" fill="url(#grad)"/>
+    <!-- stylised X formed by two thick strokes -->
+    <path d="M16 18 L56 58 M56 18 L16 58" stroke="white" stroke-width="9" stroke-linecap="round" fill="none"/>
+    <!-- centre dot suggesting a runtime dispatch / event -->
+    <circle cx="36" cy="38" r="6" fill="white"/>
+  </g>
+  <!-- wordmark -->
+  <g transform="translate(98 0)" font-family="'Inter','Segoe UI',sans-serif" font-weight="700" fill="#1F2937">
+    <text x="0" y="58" font-size="42" letter-spacing="-1.2">XPU<tspan fill="#4C6EF5">-</tspan>RT</text>
+    <text x="2" y="80" font-size="13" font-weight="500" fill="#6B7280" letter-spacing="0.6">
+      compiler + scheduler + runtime
+    </text>
+  </g>
+</svg>

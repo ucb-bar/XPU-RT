@@ -3,10 +3,10 @@
 > Status: design contract for the MCP→CLI migration. Lock the shape here before
 > code lands so every migrated subcommand looks the same.
 >
-> Audience: contributors migrating tools out of `python/xpu_rt/mcp/tools/`
-> into `python/xpu_rt/cli.py`. Read alongside
-> [`feedback_agentic_cli_first`](../../python/xpu_rt/) (memory) and the
-> migration audit in the project tracker.
+> Audience: contributors migrating tools out of `xpu-rt/python/xpu_rt/mcp/tools/`
+> into `xpu-rt/python/xpu_rt/cli.py`. Read alongside the
+> `feedback_agentic_cli_first` memory entry and the migration audit in
+> the project tracker.
 
 ## 1. Why this exists
 

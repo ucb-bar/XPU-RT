@@ -1,30 +1,71 @@
 site_name: XPU-RT
-site_description: User-facing documentation for XPU-RT, an LLM-driven compiler generator.
-repo_url: https://github.com/xpu_rt-project/xpu_rt
+site_description: >-
+  XPU-RT is an end-to-end compilation, scheduling, and runtime flow for
+  efficient mapping of robotic and AI workloads onto heterogeneous SoCs —
+  combining an LLM-driven compiler generator (formerly CompGen) with a
+  CVX/MILP-based two-cluster scheduler and a native C/CUDA runtime.
+site_url: https://ucb-bar.github.io/XPU-RT/
+repo_url: https://github.com/ucb-bar/XPU-RT
+repo_name: ucb-bar/XPU-RT
+edit_uri: edit/main/docs/
+
 theme:
   name: material
+  logo: assets/xpu-rt-logo.svg
+  favicon: assets/xpu-rt-logo.svg
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: teal
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: teal
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
   features:
     - navigation.instant
     - navigation.sections
+    - navigation.indexes
+    - navigation.top
     - content.code.copy
+    - content.code.annotate
+
 markdown_extensions:
   - admonition
   - attr_list
   - def_list
   - fenced_code
   - tables
+  - md_in_html
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
   - toc:
       permalink: true
+
 nav:
   - Home: index.md
+
   - Getting Started:
       - Installation: getting-started/installation.md
       - MCP Setup: getting-started/mcp-setup.md
       - Quickstart: getting-started/quickstart.md
       - Extension Authoring: getting-started/extension-authoring.md
       - What Works Today: getting-started/what-works-today.md
+
   - Concepts:
-      - What XPU-RT Is: concepts/what-is-xpu_rt.md
+      - What XPU-RT Is: concepts/what-is-xpu-rt.md
       - Architecture Overview: concepts/architecture.md
       - Verification Model: concepts/verification.md
       - Semantic IR Verification: concepts/semantic_ir_verification.md
@@ -32,6 +73,15 @@ nav:
       - Decision Sites: concepts/decision_sites.md
       - Graph Digest: concepts/graph_digest.md
       - Compilation Trace & IR Dumps: concepts/compilation_trace.md
+
+  - XPU-RT Scheduling Stack:
+      - Overview: scheduling/overview.md
+      - Two-Cluster Scheduler: scheduling/two-cluster-scheduler.md
+      - QNN Backend: scheduling/qnn-backend.md
+      - Solver-Backend Integration: scheduling/solver-backend.md
+      - Merlin Integration: scheduling/merlin-integration.md
+      - On-Board Telemetry → Calibration: scheduling/telemetry-feedback.md
+
   - User Guides:
       - Use the Demo: guides/use-the-demo.md
       - Bring Up a Target: guides/bring-up-a-target.md
@@ -40,13 +90,24 @@ nav:
       - Custom Quantization: guides/custom-quantization.md
       - NPU Kernel Generation: guides/npu-kernel-generation.md
       - KernelBlaster Provider: guides/kernelblaster.md
+      - Chipyard Readback: guides/chipyard_readback.md
+
   - Architecture:
       - Compiler Generation: architecture/compiler-generation.md
       - Event Tensor Integration: architecture/event_tensor.md
       - Runtime Model: architecture/runtime-model.md
       - Target Backend Model: architecture/target-backend-model.md
+      - Target Hierarchy: architecture/target-hierarchy.md
+      - Target Hierarchy Inventory: architecture/target-hierarchy-inventory.md
+      - Target Pack: architecture/target_pack.md
+      - Add a New Target: architecture/add-a-new-target.md
       - Triton Integration: architecture/triton-integration-spec.md
       - Extension Points: architecture/extension-points.md
+      - Extension Provider Architecture: architecture/EXTENSION_PROVIDER_ARCHITECTURE.md
+      - Promotion and Memory: architecture/promotion-and-memory.md
+      - CLI Shape: architecture/cli-shape.md
+      - Agentic E2E Audit: architecture/agentic_e2e_audit.md
+
   - Reference:
       - CLI Reference: reference/cli.md
       - Python API: reference/python-api.md
@@ -55,8 +116,34 @@ nav:
       - Target Profile Schema: reference/target-profile-schema.md
       - Target Packages: reference/target-packages.md
       - Tested Stack: reference/tested-stack.md
+      - Realness Policy: reference/realness_policy.md
+      - Pass Card Index: generated/pass_cards/INDEX.md
       - Troubleshooting: reference/troubleshooting.md
       - Vendor Dialects: vendor_dialects.md
+
+  - Model Setup:
+      - SmolVLA: model_setup/smolvla.md
+      - OpenVLA: model_setup/openvla.md
+      - Pi-Zero: model_setup/pi0.md
+      - Octo: model_setup/octo.md
+      - RT-X RT-1X: model_setup/rtx_rt1x.md
+      - LLaVA: model_setup/llava.md
+      - DeepSeek OCR: model_setup/deepseek_ocr.md
+      - DeepSeek V4 Flash: model_setup/deepseek_v4_flash.md
+      - Llama-4 Scout: model_setup/llama4_scout.md
+      - Qwen2.5-VL: model_setup/qwen2_5_vl.md
+      - Qwen3-VL: model_setup/qwen3_vl.md
+      - AgiBot: model_setup/agibot.md
+      - Lingbot World: model_setup/lingbot_world.md
+      - Verifying Sources: model_setup/verifying_sources.md
+
+  - Realness Contracts:
+      - Index: realness/index.md
+
   - Contributing:
       - GPU CI: contributing/gpu_ci.md
       - Releasing: contributing/releasing.md
+
+  - Integration Notes:
+      - CompGen → XPU-RT Integration: xpu-rt_integration.md
+      - Merlin Integration (legacy notes): merlin_integration.md
