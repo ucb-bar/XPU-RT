@@ -77,5 +77,5 @@ notes: |
   unfindable by exact_contract under the new hash. Region-signature
   fallback still works. New runs populate the cache under the
   canonical hash; the cache organically migrates over time. No
-  paper-claimable behaviour change — warm-cache hit rate measured
+  officially claimable behaviour change — warm-cache hit rate measured
   per workload, not per individual recipe entry.

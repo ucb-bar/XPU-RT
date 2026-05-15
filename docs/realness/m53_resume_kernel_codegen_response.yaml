@@ -91,7 +91,7 @@ notes: |
   Honest residuals:
   - Resume mode does not yet support ``--stop-after glue-differential``
     re-runs that need golden inputs/outputs — those are still produced
-    by the full pipeline. Glue-differential is the M-49 paper-facing
+    by the full pipeline. Glue-differential is the M-49 release-facing
     surface, separately green; M-53's scope is the
     request→response→cert→bind→glue-emit chain only.
   - The M-31A trust report's

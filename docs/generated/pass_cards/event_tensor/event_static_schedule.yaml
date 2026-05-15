@@ -1,6 +1,6 @@
 schema_version: pass_card_v1
 pass_id: event_static_schedule
-display_name: Static event-tensor schedule (Paper Algorithm 1)
+display_name: Static event-tensor schedule (static algorithm)
 level: plan
 family: event_tensor
 source: Event Tensor Compiler
@@ -28,6 +28,6 @@ failure_modes:
   - "task_count_exceeds_partition_capacity"
 mcp_tool: mcp__xpu_rt__xpu_rt_emit_agent_decision_request
 notes: |
-  Per-SM task scheduling per Event Tensor paper Algorithm 1. Walks
+  Per-SM task scheduling per the original Event Tensor static algorithm. Walks
   the event-tensor graph and assigns each task to a specific SM
   based on the static dependency closure.

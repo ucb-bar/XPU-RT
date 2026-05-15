@@ -149,4 +149,4 @@ Each suite run writes:
 - per-run normalized JSON files under a `normalized/` subdirectory
 - any parsed metrics or suite artifacts referenced from `record.artifacts.artifact_paths`
 
-The normalized export is the right format for cross-suite dashboards and paper tables. The `RunRecord` files remain the source of truth for detailed debugging and artifact inspection.
+The normalized export is the right format for cross-suite dashboards and report tables. The `RunRecord` files remain the source of truth for detailed debugging and artifact inspection.

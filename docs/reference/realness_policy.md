@@ -2,7 +2,7 @@
 
 The trust audit enforces a checkable definition of *fully
 implemented*. Every shipped feature must satisfy this policy before its
-claims are paper-eligible.
+claims are officially eligible.
 
 ## The eight rules
 
@@ -23,7 +23,7 @@ A feature is *done* iff:
    use the milestone, a fresh task-pack run (greedy baseline plus an
    operator-recorded fresh-Claude session) reaches an honest outcome.
 6. **Caveat ledger up to date.** Every limitation that affects a
-   paper-claimable row is in
+   claimable row is in
    `results/audit/<commit>/caveat_ledger.json`, schema-valid, and
    freshly verified within the staleness window.
 7. **Hash-replayable agent decisions.** Every agent decision the
@@ -81,7 +81,7 @@ The file is the canonical claim; the audit proves or rejects it.
 
 Realness levels (ascending strength):
 
-| Level | Meaning | Paper-claimable? |
+| Level | Meaning | Officially claimable? |
 | --- | --- | --- |
 | `schema_only` | Format exists, not consumed | No |
 | `write_only` | Artifact emitted, not used downstream | No |

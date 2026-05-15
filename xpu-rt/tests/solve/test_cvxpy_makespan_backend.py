@@ -70,6 +70,35 @@ def test_probe_reports_installed_solvers_when_available() -> None:
     assert "makespan_schedule" in probe.supports
 
 
+def test_probe_requires_mosek_when_cvxpy_present() -> None:
+    """XPU-RT hardcodes solver=cp.MOSEK; missing MOSEK must surface as
+    a typed BLOCKED-grade availability so the registry never silently
+    falls back to another solver that would produce different schedules.
+    """
+
+    backend = CvxpyMakespanBackend()
+    probe = backend.probe()
+    # If the probe reports AVAILABLE, MOSEK MUST be in the supports tuple.
+    # If MOSEK is missing the probe MUST be LICENSE_MISSING / IMPORT_MISSING,
+    # never AVAILABLE.
+    if probe.availability is BackendAvailabilityStatus.AVAILABLE:
+        assert "MOSEK" in probe.supports, (
+            f"probe is AVAILABLE but MOSEK is not in supports={probe.supports!r}"
+        )
+        # First entry should announce the preferred solver visually.
+        assert probe.supports[0] == "preferred_solver:MOSEK"
+    else:
+        # Either mosek package missing (IMPORT_MISSING) or installed but
+        # cvxpy didn't register it (LICENSE_MISSING).
+        assert probe.availability in {
+            BackendAvailabilityStatus.IMPORT_MISSING,
+            BackendAvailabilityStatus.LICENSE_MISSING,
+            BackendAvailabilityStatus.PROBE_ERROR,
+        }
+        # Detail must mention MOSEK so the user knows why the path is blocked.
+        assert "MOSEK" in (probe.detail or "") or "mosek" in (probe.detail or "")
+
+
 def test_supports_only_makespan_and_probe() -> None:
     backend = CvxpyMakespanBackend()
     assert backend.supports(SolverProblemKind.MAKESPAN_SCHEDULE)

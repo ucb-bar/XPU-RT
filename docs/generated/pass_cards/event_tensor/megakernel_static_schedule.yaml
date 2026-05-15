@@ -27,5 +27,5 @@ mcp_tool: mcp__xpu_rt__xpu_rt_emit_agent_decision_request
 notes: |
   Earlier static-scheduling transformation for Event Tensor
   megakernels. Distinct from event_static_schedule (the newer
-  paper-aligned variant). Kept as a card for backward compatibility
+  reference-design variant). Kept as a card for backward compatibility
   with target packs that still use it.

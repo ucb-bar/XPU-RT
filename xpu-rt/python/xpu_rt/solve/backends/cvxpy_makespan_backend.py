@@ -76,10 +76,20 @@ class CvxpyMakespanBackend(SolverBackend):
         return problem_kind in _SUPPORTED_KINDS
 
     def probe(self) -> BackendProbeResult:
+        # XPU-RT's two-cluster scheduler (xpu_rt.scheduler.scheduler.schedule)
+        # hard-codes ``solver=cp.MOSEK`` at every cvxpy.Problem.solve() site
+        # (4 occurrences). That's a deliberate choice from the original
+        # XPU-RT design — MOSEK's interior-point solver is what produced
+        # the reference scheduling results. We mirror that requirement here:
+        # if MOSEK can't be reached, the registry MUST return BLOCKED rather
+        # than silently letting cvxpy fall back to a different solver that
+        # would produce subtly different schedules.
+
         # Make the repo-local MOSEK license visible to cvxpy without
         # forcing users to export the env var. Mirrors what the MOSEK
         # backend does in its own probe.
         ensure_mosek_license_env()
+
         try:
             import cvxpy  # type: ignore[import-not-found]
         except ImportError as exc:
@@ -88,7 +98,8 @@ class CvxpyMakespanBackend(SolverBackend):
                 availability=BackendAvailabilityStatus.IMPORT_MISSING,
                 detail=f"cvxpy not installed: {exc}",
             )
-        # Tiny LP to confirm cvxpy + some MILP-capable solver are present.
+
+        # Tiny LP to confirm cvxpy itself works.
         try:
             x = cvxpy.Variable()
             prob = cvxpy.Problem(cvxpy.Minimize(x), [x >= 1])
@@ -106,19 +117,54 @@ class CvxpyMakespanBackend(SolverBackend):
                 detail=str(exc),
             )
 
-        # Report installed MILP-capable solvers so audit can see what
-        # the makespan call will actually dispatch to.
-        installed = ()
+        # Enumerate cvxpy's installed solvers — MOSEK MUST be in here.
+        installed: tuple[str, ...] = ()
         try:
             installed = tuple(sorted(cvxpy.installed_solvers()))
         except Exception:  # pragma: no cover
             pass
 
+        if "MOSEK" not in installed:
+            # Distinguish "mosek Python package missing" from "license
+            # missing" so the audit log says the right thing.
+            try:
+                import mosek  # type: ignore[import-not-found]  # noqa: F401
+
+                availability = BackendAvailabilityStatus.LICENSE_MISSING
+                detail = (
+                    "mosek package importable but cvxpy did not register the "
+                    "MOSEK solver (likely license issue). XPU-RT's scheduler "
+                    "hard-codes solver=cp.MOSEK, so other solvers will not "
+                    f"substitute. Installed cvxpy solvers: {installed!r}"
+                )
+            except ImportError:
+                availability = BackendAvailabilityStatus.IMPORT_MISSING
+                detail = (
+                    "mosek not installed. XPU-RT's two-cluster scheduler "
+                    "hard-codes solver=cp.MOSEK; install with "
+                    "`uv pip install -e \".[solve-mosek]\"`. Installed "
+                    f"cvxpy solvers: {installed!r}"
+                )
+            return BackendProbeResult(
+                backend=self.name,
+                availability=availability,
+                version=getattr(cvxpy, "__version__", None),
+                supports=("milp", "makespan_schedule") + installed,
+                detail=detail,
+            )
+
+        # MOSEK present — preferred solver is wired up. Report it FIRST in
+        # the supports tuple so audit / probe output makes the choice
+        # visually obvious.
         return BackendProbeResult(
             backend=self.name,
             availability=BackendAvailabilityStatus.AVAILABLE,
             version=getattr(cvxpy, "__version__", None),
-            supports=("milp", "makespan_schedule") + installed,
+            supports=("preferred_solver:MOSEK", "milp", "makespan_schedule") + installed,
+            detail=(
+                "cvxpy with MOSEK; XPU-RT's scheduler hard-codes "
+                "solver=cp.MOSEK at every Problem.solve() site"
+            ),
         )
 
     def solve(self, request: SolverRequest) -> SolverResponse:
@@ -248,6 +294,20 @@ class CvxpyMakespanBackend(SolverBackend):
             "scheduler_meta": meta,
         }
 
+        # Surface the actual MILP solver cvxpy ran for audit purposes. The
+        # original scheduler hard-codes MOSEK, so under healthy probe state
+        # this is always "MOSEK"; if downstream code is ever changed to
+        # accept a fallback, this caveat will flag the substitution.
+        caveats: tuple[str, ...] = ()
+        if isinstance(meta, dict):
+            actual_solver = meta.get("solver_name") or meta.get("solver")
+            if actual_solver and str(actual_solver).upper() != "MOSEK":
+                caveats = (
+                    f"cvxpy_makespan ran on solver={actual_solver!r}, NOT MOSEK; "
+                    "XPU-RT's reference results were produced with MOSEK — "
+                    "the schedule may differ from the canonical run",
+                )
+
         return SolverResponse(
             problem_id=request.problem_id,
             problem_kind=request.problem_kind,
@@ -259,4 +319,5 @@ class CvxpyMakespanBackend(SolverBackend):
             objective_value=objective_value,
             solution=solution,
             infeasibility_reason=infeasibility_reason,
+            caveats=caveats,
         )

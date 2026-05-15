@@ -1,5 +1,5 @@
 claim: |
-  M-66 (Phase D paper-claim closure): the Section-7 dream's flagship
+  M-66 (Phase D claim closure): the Section-7 dream's flagship
   four-bidder stress. Four distinct providers (CReferenceProvider +
   ClaudeCodeKernel-stub + TritonTemplate-cpu-fallback +
   UserKernelProvider) bid against the same KernelContractV3 in the
@@ -43,7 +43,7 @@ required_evidence:
 - tests/graph_compilation/test_four_bidder_stress.py (entire file — the test IS the evidence; passes mean the four-bidder claim holds in this build)
 feature_id: m66_four_bidder_stress
 notes: |
-  Phase D step 12 — the paper-claim closure. The test runs in
+  Phase D step 12 — the claim closure. The test runs in
   ~1m40s and exercises every Phase D surface: M-55 registry, M-56
   bid/fulfill, M-57 auction, M-58 canonical hash, M-59 contract
   feedback, M-60 contract field completion, M-61 predicates, M-62

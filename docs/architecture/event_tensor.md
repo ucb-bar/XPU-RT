@@ -3,7 +3,7 @@
 XPU-RT integrates the Event Tensor abstraction from Jin et al.,
 *"Event Tensor: A Unified Abstraction for Compiling Dynamic
 Megakernel"* (MLSys '26), without taking a TVM dependency. Both the
-static-schedule and dynamic-schedule flavours of the paper are
+static-schedule and dynamic-schedule flavours of the design are
 supported, and the combined pipeline runs end-to-end from a real
 PyTorch model to a single persistent Triton megakernel.
 
@@ -26,7 +26,7 @@ handle MoE and dynamic batch sizes ahead of time.
 
 ## Mapping into XPU-RT's IR stack
 
-| Paper concept | XPU-RT home |
+| Design concept | XPU-RT home |
 |---|---|
 | `EventTensor` type | `xpu_rt.event.event_tensor<…>` (Payload IR) |
 | `event.notify` / `event.wait` | `xpu_rt.event.notify`, `xpu_rt.event.wait` |
@@ -54,7 +54,7 @@ xpu_rt.event graph construction
     │
     ▼
 static or dynamic scheduling pass
-    │   (Algorithm 1 or 2 from the paper)
+    │   (the static or dynamic scheduling algorithm)
     ▼
 lower_event_tensor_to_atomic
     │   (atomic counter runtime)
@@ -114,4 +114,4 @@ PyTorch reference.
   rest of the serving layer are out of scope for this integration.
 - **Warm-up cost is real**: Triton's first-run JIT on the full-dim
   TinyLlama configuration is ~100 s on a TITAN RTX, which matches the
-  order of magnitude of the paper's Table 1 AOT numbers.
+  expected order of magnitude for AOT compilation.

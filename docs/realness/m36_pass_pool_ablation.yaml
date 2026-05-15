@@ -5,7 +5,7 @@ claim: |
   (selected_candidate_id, pass_id, validation_overall, decision_seconds,
   typed_outcome) plus a divergence table identifying models where
   modes disagreed on candidate. The pack is emitted as both
-  ablation_pack.json and a paper-ready ablation_pack.md table.
+  ablation_pack.json and a report-ready ablation_pack.md table.
   Real runs on canonical models exercise the harness end-to-end:
   greedy mode picks set_tile_params/tile_M16_N16_K16 on
   merlin_mlp_wide and fuse_producer_consumer on proxy_vla; holdout

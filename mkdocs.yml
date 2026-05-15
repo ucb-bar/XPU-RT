@@ -137,9 +137,6 @@ nav:
       - Lingbot World: model_setup/lingbot_world.md
       - Verifying Sources: model_setup/verifying_sources.md
 
-  - Realness Contracts:
-      - Index: realness/index.md
-
   - Contributing:
       - GPU CI: contributing/gpu_ci.md
       - Releasing: contributing/releasing.md

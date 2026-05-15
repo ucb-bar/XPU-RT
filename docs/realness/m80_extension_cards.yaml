@@ -10,7 +10,7 @@ claim: |
     paper_claimable=true only on ``cffi_c`` (promote) and ``triton``
     (promote); every other external-SDK provider stays at
     ``probe``. ``python_reference`` is at ``verify`` (correctness
-    fallback, not paper-claimable). ``autocomp``, ``kernelblaster``,
+    fallback, not officially claimable). ``autocomp``, ``kernelblaster``,
     ``claude_kernel`` at ``generate``.
   * **13 target cards** spanning host_cpu, cuda_sm75/80/90,
     rocm_gpu, aws_neuron_trn/inf, google_tpu_v5e/v6e, gemmini_mx,
@@ -34,7 +34,7 @@ claim: |
      ``required_python_imports`` / ``required_commands`` so the
      M-81 probe can block honestly (no silent disappearance).
   5. The verify/promote count never outweighs probe/generate at
-     a 2:3 ratio — catches paper-claim inflation drift.
+     a 2:3 ratio — catches claim inflation drift.
   6. Every ``target_family`` a provider references has a matching
      ``TargetCard`` (modulo synthetic ``custom_accelerator`` /
      ``riscv_opu`` catch-alls).
@@ -58,7 +58,7 @@ forbidden:
   - vendoring external repositories
   - declaring a status outside the typed enum
   - SDK-gated provider with empty required_env/imports/commands
-  - paper-claim inflation (verify+promote outweighing probe+generate)
+  - claim inflation (verify+promote outweighing probe+generate)
 required_evidence:
   - python/xpu_rt/providers/cards/cffi_c.yaml
   - python/xpu_rt/providers/cards/python_reference.yaml

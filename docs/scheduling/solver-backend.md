@@ -50,17 +50,37 @@ from xpu_rt.solve.solver_types import SolverBackendName
 
 reg = default_registry()
 probe = reg.probe(SolverBackendName.CVXPY_MAKESPAN)
-print(probe.availability.value)      # "available" when cvxpy installed
+print(probe.availability.value)      # "available" only when cvxpy AND MOSEK are present
 print(probe.version)                  # cvxpy version string
-print(probe.supports)                 # ('milp', 'makespan_schedule', 'CLARABEL', 'HIGHS', 'MOSEK', ...)
+print(probe.supports)                 # ('preferred_solver:MOSEK', 'milp', 'makespan_schedule', 'CLARABEL', 'HIGHS', 'MOSEK', ...)
 ```
 
-The probe runs a tiny LP to confirm cvxpy works end-to-end, reports the
-installed solver list (so audit can see which MILP solver will actually
-run), and calls
-`xpu_rt.solve.backends.mosek_backend.ensure_mosek_license_env()` so the
-repo-local `mosek.lic` is auto-discovered exactly as it is for memory
-planning.
+The probe:
+
+1. Calls `xpu_rt.solve.backends.mosek_backend.ensure_mosek_license_env()`
+   so the repo-local `mosek.lic` is auto-discovered exactly as it is for
+   memory planning.
+2. Confirms cvxpy is importable and runs a tiny LP to validate the install.
+3. **Requires MOSEK be in `cvxpy.installed_solvers()`**. XPU-RT's
+   `scheduler.py` hard-codes `solver=cp.MOSEK` at every
+   `cvxpy.Problem.solve()` site (4 occurrences) — that's a deliberate
+   choice from the original XPU-RT design, since MOSEK's interior-point
+   solver produced the reference scheduling results. If MOSEK is missing,
+   the probe returns `LICENSE_MISSING` (mosek package present, license
+   not registered) or `IMPORT_MISSING` (mosek package absent), and the
+   registry routes the call to `BLOCKED` rather than silently letting
+   cvxpy fall back to a different solver that would produce subtly
+   different schedules.
+4. When MOSEK is present, the `supports` tuple opens with the literal
+   string `"preferred_solver:MOSEK"` so probe output (and the
+   `compgen-solver-planning` MCP skill) make the choice visually obvious.
+
+To install MOSEK with the repo's license:
+
+```bash
+uv pip install -e ".[solve-mosek]"
+# mosek.lic at the repo root is auto-discovered; no env var needed
+```
 
 ## Routing table
 

@@ -139,7 +139,7 @@ emits:
 
 - `promotion_efficiency_pack.json` — per-model `EfficiencyDelta` with
   `fresh_emit_delta`, `gemini_token_delta`, `claim_supported`.
-- `promotion_efficiency_pack.md` — paper-ready table.
+- `promotion_efficiency_pack.md` — report table.
 
 Exit code is 0 iff **every** model satisfies the claim. Honest
 errors (a model that hits a downstream rejection unrelated to

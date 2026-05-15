@@ -95,7 +95,7 @@ notes: |
     ``orchestration.sync.event_decls``. The M-40 contract today
     declares a single per-region ``matmul_done`` event; M-51's
     ``<region_id>_done`` naming is an emitter convention until
-    M-52+ wires multi-event-per-region cases (paper Fig. 5b's
+    M-52+ wires multi-event-per-region cases (the original design's multi-event variant
     trigger / update primitives are stubbed in
     ``EventTensor.update`` / ``EventTensor.trigger`` already, but
     no contract exercises them yet).

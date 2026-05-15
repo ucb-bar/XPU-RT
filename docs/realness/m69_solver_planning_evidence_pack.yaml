@@ -1,6 +1,6 @@
 feature_id: m69_solver_planning_evidence_pack
 claim: |
-  M-69 (Phase E): a paper-facing evidence pack aggregates solver
+  M-69 (Phase E): a release-facing evidence pack aggregates solver
   artifacts from one or more run-dirs into a typed report. Five
   new M-31A trust-report gates audit the solver layer:
   ``solver_backend_status``, ``solver_response_schema``,

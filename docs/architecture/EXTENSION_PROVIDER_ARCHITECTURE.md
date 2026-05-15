@@ -66,7 +66,7 @@ Violation of any rule fails CI.
    never a silent disappearance.
 6. **Provider cards are not evidence of support.** Only verified /
    certified artifacts are evidence. Cards with `integration_level:
-   card_only` or `probe` are never `paper_claimable: true`.
+   card_only` or `probe` are never `officially_claimable: true`.
 7. **Core code depends on provider interfaces, not implementations.**
    `from cuda_tile import ...` outside `providers/adapters/*` is a hard
    error.
@@ -75,7 +75,7 @@ Violation of any rule fails CI.
 9. **Every provider decision is auditable via the chain**
    `ProviderProbeResult → BidPreview → ProviderResult → VerifierReport →
    Certificate`. Skipping any link breaks the audit trail.
-10. **No generated artifact is paper-claimable unless the evidence pack
+10. **No generated artifact is officially claimable unless the evidence pack
     contains a certificate or typed execution report.** "Implemented"
     in a claim matrix requires a concrete evidence-artifact path.
 
@@ -84,7 +84,7 @@ Violation of any rule fails CI.
 Every `ProviderCard`, `TargetCard`, `DialectProviderCard`, and
 `PassToolCard` declares one of:
 
-| Level         | Meaning                                                     | `paper_claimable` |
+| Level         | Meaning                                                     | `officially_claimable` |
 |---------------|-------------------------------------------------------------|-------------------|
 | `card_only`   | XPU-RT knows this provider exists.                         | false             |
 | `probe`       | XPU-RT can detect installed-or-blocked + emit typed status.| false             |
@@ -160,7 +160,7 @@ after probe + sandbox + verifier all return green.
 
 | Type | Purpose |
 |---|---|
-| `ProviderCard` | Static declaration of a kernel provider: id, integration_level, target_families, contract_kinds, emits, probe spec, paper_claimable. |
+| `ProviderCard` | Static declaration of a kernel provider: id, integration_level, target_families, contract_kinds, emits, probe spec, officially_claimable. |
 | `TargetCard` | Static declaration of a target: family, vendor, dispatch_modes, memory_tiers. |
 | `DialectProviderCard` | Static declaration of a dialect provider: dialect_name, consumes, emits, entrypoint. |
 | `PassToolCard` | Static declaration of an agent-callable pass: phase, reads, writes, allowed_recipe_ops, refinement, verifier. |

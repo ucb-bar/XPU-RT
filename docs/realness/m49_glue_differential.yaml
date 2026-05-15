@@ -1,5 +1,5 @@
 claim: |
-  M-49 (Phase C, paper-facing): the M-47 emitted Python SYNC plan
+  M-49 (Phase C, release-facing): the M-47 emitted Python SYNC plan
   executor passes end-to-end differential against the eager PyTorch
   reference for every region's selected kernel candidate. The
   differential applies the M-37.13 layered check:
@@ -15,7 +15,7 @@ claim: |
   outer agent reconsiders the candidate via the standard typed
   retry surface.
 
-  Once green, the paper claim is real:
+  Once green, the the claim is real:
 
    "XPU-RT emits per-workload glue from a validated execution plan.
    The generated executor calls verified shape-specialized kernels,
@@ -39,7 +39,7 @@ required_evidence:
 - "06_glue_emit/glue_differential_report.json on a real run"
 feature_id: m49_glue_differential
 notes: |
-  Phase C M-49 — paper-facing milestone. Real-driven stress test:
+  Phase C M-49 — release-facing milestone. Real-driven stress test:
 
   Phase 1 — merlin_mlp_wide on host_cpu via cffi-C dispatch chain:
   drove --stop-after glue-emit, committed synthetic provider

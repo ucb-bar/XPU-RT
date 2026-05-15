@@ -56,5 +56,5 @@ notes: |
     ``TritonTemplate-cpu-fallback`` provider exercises the
     template's bid + fulfil path on CPU as a stand-in.
   - The four-summary block design carries forward into M-66's
-    auction report — slice evidence is the surface a future paper
+    auction report — slice evidence is the surface a future writeup
     figures off.
