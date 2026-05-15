@@ -477,9 +477,9 @@ class CompilerMemory:
     ) -> Promotion:
         """Promote a candidate to the immutable L3 library.
 
-        ``region_signature`` and ``contract_hash`` (M-26) ride along as
+        ``region_signature`` and ``contract_hash`` ride along as
         the two-tier cache-key index so future runs can locate the
-        recipe by region pattern across models. ``gate_level`` (M-29)
+        recipe by region pattern across models. ``gate_level``
         records the highest promotion gate the bundle satisfied.
         """
         # Find next version for this promotion key
@@ -503,7 +503,7 @@ class CompilerMemory:
             gate_level=gate_level,
         )
         # Explicit column names: the table now has 11 columns after the
-        # M-26 / M-29 migrations and a positional VALUES list would
+        #  migrations and a positional VALUES list would
         # silently shift values into the wrong columns on schema drift.
         self.db.execute(
             (

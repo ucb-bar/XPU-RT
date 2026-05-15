@@ -1,4 +1,4 @@
-"""Tests for compgen.passes.cards (M-31.1)."""
+"""Tests for compgen.passes.cards."""
 
 from __future__ import annotations
 
@@ -215,7 +215,7 @@ def test_iter_cards_returns_sorted(tmp_path: Path) -> None:
 
 
 def test_registry_rejects_unknown_invalidates_id(tmp_path: Path) -> None:
-    """M-32 cross-link: invalidates ids must resolve to known summaries."""
+    """cross-link: invalidates ids must resolve to known summaries."""
     raw = _good_card_dict()
     raw["invalidates"] = ["totally_made_up_summary"]
     (tmp_path / "demo_pass.yaml").write_text(yaml.safe_dump(raw))

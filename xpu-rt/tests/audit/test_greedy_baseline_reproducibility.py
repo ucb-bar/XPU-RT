@@ -1,4 +1,4 @@
-"""Greedy-baseline reproducibility test (M-31A.4).
+"""Greedy-baseline reproducibility test.
 
 The contract: a fresh task pack on a holdout model can complete a
 greedy/no-LLM run. If the public doc surface is sufficient for the

@@ -1,6 +1,6 @@
-"""Materialize KernelContractV3 from selected Recipe IR decisions (M-40).
+"""Materialize KernelContractV3 from selected Recipe IR decisions.
 
-Section 21 / M-40. Pipeline-stage wrapper around
+Section 21 /. Pipeline-stage wrapper around
 :meth:`compgen.kernels.contract_v3.KernelContractV3.from_recipe`. Reads
 on-disk artifacts (``candidate_selection.json``, the region dossier,
 the target YAML, the recipe-gate verdict) and emits two artifacts per
@@ -9,7 +9,7 @@ selected kernel-bearing region:
 - ``04_kernel_codegen/contracts/<region_id>.<contract_hash>.json`` —
   the full materialized contract.
 - ``04_kernel_codegen/views/<region_id>.kernel_facing.json`` — the
-  ``kernel_facing()`` projection ONLY. M-42 and M-43 hand this to the
+  ``kernel_facing`` projection ONLY. hand this to the
   Claude Code subagent as the bounded surface.
 
 Plus a per-run summary at
@@ -17,12 +17,12 @@ Plus a per-run summary at
 
 Non-``set_tile_params`` candidates (today: fusion, kernel-contract
 creation) emit a typed ``not_applicable`` row in the summary instead
-of a contract file. M-42 widens the supported kinds.
+of a contract file. widens the supported kinds.
 
 This module is intentionally thin: it's a reader + an adapter + a
 serialiser. The semantic work (mapping fields) lives in
 ``KernelContractV3.from_recipe``; the canonical hash lives in
-``compgen.promotion.contract_hash.hash_contract``. Phase C M-41 will
+``compgen.promotion.contract_hash.hash_contract``. Phase C will
 unify all callers on the latter.
 """
 
@@ -113,7 +113,7 @@ def _read_yaml_or_none(path: Path) -> dict[str, Any] | None:
 
 def _resolve_region_dossier(run_dir: Path, region_id: str) -> Path | None:
     """Locate the region's dossier JSON. Mirrors the lookup logic in
-    M-39's emitter so the same precedence applies everywhere."""
+    's emitter so the same precedence applies everywhere."""
     rd_dir = run_dir / "02_graph_analysis" / "region_dossiers"
     if rd_dir.is_dir():
         exact = rd_dir / f"{region_id}.json"
@@ -153,7 +153,7 @@ def _declared_refinement_for(
 ) -> str:
     """Read the recipe-gate verdict for the declared refinement.
 
-    M-37.13's single_k_iter rule writes ``declared_refinement`` per
+    's single_k_iter rule writes ``declared_refinement`` per
     checked recipe op into ``recipe_gate_verdict.json``. We look up
     by source_candidate.
     """
@@ -200,7 +200,7 @@ def contract_to_dict(c: KernelContractV3) -> dict[str, Any]:
                     "register_bytes": exe.hardware.register_bytes,
                     "native_dtypes": list(exe.hardware.native_dtypes),
                     "peak_bandwidth_gbps": exe.hardware.peak_bandwidth_gbps,
-                    # M-60 — extended hardware envelope.
+                    # extended hardware envelope.
                     "codegen_hints": list(exe.hardware.codegen_hints),
                     "mma_shapes": {
                         k: list(v) for k, v in exe.hardware.mma_shapes.items()
@@ -257,14 +257,14 @@ def contract_to_dict(c: KernelContractV3) -> dict[str, Any]:
                 for p in c.selection.providers
             ],
         },
-        # M-61 — typed pre/post-condition predicates.
+        # typed pre/post-condition predicates.
         "preconditions": [
             p.to_dict() for p in (c.preconditions or ())
         ],
         "postconditions": [
             p.to_dict() for p in (c.postconditions or ())
         ],
-        # M-64 — forward-compatible refinement slot.
+        # forward-compatible refinement slot.
         "optional_v3_1_fields": dict(c.optional_v3_1_fields or {}),
         "metadata": dict(c.metadata),
     }
@@ -304,14 +304,14 @@ def kernel_facing_to_dict(view: KernelFacingView) -> dict[str, Any]:
     """JSON-friendly projection of the kernel-facing view ONLY.
 
     This is the BOUNDED surface a kernel-codegen provider may read
-    (M-43+ hands this file to the spawned Claude Code agent). It MUST
+    (+ hands this file to the spawned Claude Code agent). It MUST
     exclude every field present only in the compiler-only view: no
     ``wait_on``, no ``blocking``, no ``lifetimes``, no ``fusion``, no
     ``observability``, no ``dispatch.max_concurrent_invocations``, no
     ``selection`` providers (those are scheduler hints), no
     ``metadata`` (compiler bookkeeping).
 
-    A negative control in the M-40 tests asserts none of these
+    A negative control in the tests asserts none of these
     field names appear in the serialized output.
     """
     exe = view.execution
@@ -353,14 +353,14 @@ def kernel_facing_to_dict(view: KernelFacingView) -> dict[str, Any]:
 
 
 # --------------------------------------------------------------------------- #
-# In-memory materialization (M-41 — used by every contract_hash caller)
+# In-memory materialization (used by every contract_hash caller)
 # --------------------------------------------------------------------------- #
 
 
 def _dispatch_mode_override_for(
     *, run_dir: Path, region_id: str,
 ) -> str | None:
-    """M-50: scan candidate_selection for a sibling SetDispatchMode op
+    """scan candidate_selection for a sibling SetDispatchMode op
     that sets the dispatch mode for this region. Returns the mode
     string ("sync"|"async"|"persistent"|"inline") or None when no
     override was selected.
@@ -381,7 +381,7 @@ def _dispatch_mode_override_for(
         ):
             return str(op.get("mode") or "")
     # Also look at sibling selections — the agent may have committed
-    # multiple decisions across runs. For M-50, we only honour the
+    # multiple decisions across runs. , we only honour the
     # in-current-selection delta.
     return None
 
@@ -394,10 +394,10 @@ def materialize_contract_from_run_dir(
     target_id: str,
 ) -> KernelContractV3 | None:
     """Materialize a ``KernelContractV3`` in memory from on-disk
-    artifacts, without writing the contract back to disk (M-41).
+    artifacts, without writing the contract back to disk.
 
     This is the single helper every ``hash_contract`` caller routes
-    through, so promotion-write, promotion-read, M-39's request emit,
+    through, so promotion-write, promotion-read, 's request emit,
     and any future hashing site all derive from byte-identical
     contract content.
 
@@ -406,7 +406,7 @@ def materialize_contract_from_run_dir(
     string for the contract_hash in that case — region-signature-only
     retrieval still works.
 
-    M-50: when a sibling SetDispatchMode op is recorded for the same
+    when a sibling SetDispatchMode op is recorded for the same
     region, the contract's dispatch.model reflects the agent's
     chosen mode rather than the SYNC default.
     """
@@ -496,7 +496,7 @@ def materialize_contract_for_run(
     rows: list[ContractMaterializationRow] = []
 
     if candidate_kind == "fuse_producer_consumer":
-        # Gap #6 closure (Phase D Batch B): materialise a fusion
+        #  closure (Phase D Batch B): materialise a fusion
         # contract for pointwise→pointwise fusions. The producer +
         # consumer dossier paths come in via candidate_selection.evidence;
         # we synthesize a POINTWISE contract whose IO is the producer's
@@ -584,7 +584,7 @@ def materialize_contract_for_run(
             ) or {}
             declared_refinement = _declared_refinement_for(run_dir, candidate_id)
 
-            # Gap #14: COMPGEN_SHAPE_POLICY=class makes from_recipe
+            # : COMPGEN_SHAPE_POLICY=class makes from_recipe
             # substitute concrete dims with None so the canonical
             # hash falls all the way to dynamic.
             import os as _os

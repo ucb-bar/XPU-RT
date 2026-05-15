@@ -8,15 +8,15 @@ Two hashes — one keyed on concrete shapes, one keyed on shape *class*:
   field the kernel codegen is allowed to read is byte-identical.
   Used for: per-binding plan keys, the standard
   ``04_kernel_codegen/certificates/<hash>.json`` filename, the
-  M-43 commit path's hash invariant.
-- :func:`canonical_contract_hash` — Phase D / M-58. Same projection,
+  commit path's hash invariant.
+:func:`canonical_contract_hash` Phase D /. Same projection,
   but IO ``dims`` are passed through
   :func:`compgen.promotion.region_signature.encode_shape_class` first
   so dynamic dims (``None``) become ``{"dynamic": true}`` and
   divisibility-class dims become ``{"mod": k}``. Two contracts with
   concrete dim values that match under shape-class abstraction hash
   identically. Used for: cross-model recipe library lookup, the
-  M-63 coverage-first kernel-per-archetype scheduler.
+  coverage-first kernel-per-archetype scheduler.
 
 Compiler-only fields (fusion policy, observability hooks, output-buffer
 lifetimes, dispatch concurrency caps, selection hints, cost estimates)
@@ -54,7 +54,7 @@ def _normalize(obj: Any) -> Any:
     return obj
 
 
-# Gap #1 closure: tile-choice StaticAttrs (``tile_M``, ``tile_N``,
+#  closure: tile-choice StaticAttrs (``tile_M``, ``tile_N``,
 # ``tile_K``) are candidate-selection artifacts injected by
 # ``KernelContractV3.from_recipe`` for traceability. They live in
 # ``io.attributes`` because the dataclass keeps a single attrs slot,
@@ -72,8 +72,8 @@ def _strip_tile_attrs_in_payload(payload: Any) -> Any:
     These are added by ``from_recipe`` for traceability but are NOT
     kernel-shape facts (different tile choices for the same shape
     should still share a kernel). Stripping them is the canonical-
-    hash-only fix for gap #1; the instance hash keeps them so the
-    M-43 commit path's strict invariant still holds.
+    hash-only fix for ; the instance hash keeps them so the
+    commit path's strict invariant still holds.
     """
     if isinstance(payload, dict):
         out: dict[str, Any] = {}
@@ -99,7 +99,7 @@ def _abstract_shape_dims_in_payload(payload: Any) -> Any:
     ``shape.dims`` entry through ``_abstract_dim`` so the resulting
     JSON encodes shape-class form rather than concrete dims.
 
-    Gap #9 closure: when ``shape.divisibility[i]`` is non-None, the
+     closure: when ``shape.divisibility[i]`` is non-None, the
     canonical projection rewrites ``dims[i]`` to ``{"mod": k}``
     instead of the concrete int. Two regions with concrete dims
     K=32 and K=64, both declared divisible by 16, then collide on
@@ -150,7 +150,7 @@ def instance_contract_hash(contract: KernelContractV3) -> str:
 
     Two contracts hash identically iff every kernel-facing field is
     byte-equal — including concrete shape dims. This is the per-binding
-    cache key used by the M-43 commit path and the M-45 certificate
+    cache key used by the commit path and the certificate
     filename.
     """
     view = contract.kernel_facing()
@@ -169,7 +169,7 @@ def canonical_contract_hash(contract: KernelContractV3) -> str:
     :func:`compgen.promotion.region_signature.encode_shape_class`
     abstraction before hashing AND tile-choice StaticAttrs
     (``tile_M``/``tile_N``/``tile_K``) are stripped from
-    ``io.attributes`` (gap #1: tile choice is a candidate-selection
+    ``io.attributes`` (: tile choice is a candidate-selection
     artifact, not a kernel-shape fact). This makes contracts that
     differ only in concrete shape values OR selected-tile
     annotations within the same shape class collide on a single
@@ -188,7 +188,7 @@ def canonical_contract_hash(contract: KernelContractV3) -> str:
 def hash_contract(contract: KernelContractV3) -> str:
     """Backward-compatible alias for :func:`instance_contract_hash`.
 
-    Kept so existing Phase B/C callers (M-41 / M-43 / M-44 / M-45 / M-46)
+    Kept so existing Phase B/C callers
     continue to work without churn. New code should use
     :func:`instance_contract_hash` (concrete-shape) or
     :func:`canonical_contract_hash` (shape-class) explicitly.

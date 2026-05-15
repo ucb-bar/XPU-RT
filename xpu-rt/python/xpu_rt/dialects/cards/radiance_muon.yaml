@@ -1,0 +1,11 @@
+schema_version: dialect_provider_card_v1
+dialect_provider_id: radiance_muon
+dialect_name: radiance
+integration_level: probe
+consumes: [kernel_contract_v3]
+emits: [radiance_kernel_source, radiance_elf, soc_elf]
+entrypoint: compgen.providers.adapters.radiance_muon:RadianceDialectProvider
+required_env: [RADIANCE_KERNELS_ROOT, RISCV_TOOLCHAIN_PATH]
+description: |
+  Radiance / Muon dialect provider for the Chipyard Radiance SIMT
+  research accelerator.

@@ -1,4 +1,4 @@
-"""Tests for M-11A Real Transform Eligibility Audit.
+"""Tests Real Transform Eligibility Audit.
 
 Read-only audit. Tests verify that:
 

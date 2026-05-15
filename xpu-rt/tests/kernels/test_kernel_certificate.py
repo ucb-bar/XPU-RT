@@ -1,4 +1,4 @@
-"""M-45 kernel certificate tests.
+"""kernel certificate tests.
 
 Layered coverage:
 - Schema round-trip (to_dict / from_dict).
@@ -165,7 +165,7 @@ class TestEmit:
 
 
 # --------------------------------------------------------------------------- #
-# Negative controls — drift detection (the M-37.13 pattern)
+# Negative controls — drift detection (the pattern)
 # --------------------------------------------------------------------------- #
 
 

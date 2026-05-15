@@ -401,7 +401,6 @@ class CudaMegakernelLauncher:
         # ``[ctypes.c_void_p(int(a)) ...]`` would put the argument
         # values into the pointer slots; the driver would then try to
         # dereference the values as host pointers and segfault.
-        #
         # Build the indirection explicitly: stash each arg in a
         # ctypes uint64 container (kept alive on ``arg_storage`` until
         # the launch returns), and the ``arg_ptr_array`` we pass holds
@@ -539,7 +538,6 @@ class CudaModule:
         # with CUDA_ERROR_INVALID_CONTEXT (201). Torch users have one
         # implicitly via torch.cuda.init(), but cuda-python-only callers
         # (the wheel's spec) don't, so we bring up our own.
-        #
         # Multi-GPU: the caller passes ``device_index`` so the module
         # is loaded into the right rank's context; otherwise the
         # default rank-0 ctx wins. ``cuModuleLoadData`` binds the
@@ -579,7 +577,6 @@ _CUDA_PRIMARY_CTX: dict[int, Any] = {}
 
 # ---------------------------------------------------------------------------
 # cuBLASDx discovery — Phase 10b
-#
 # Wave 1.14 — moved to ``targets/gpu/nvidia/common/discovery.py``.
 # Re-exported here for one round of backward compatibility; new
 # callers should import from the new location.
@@ -643,7 +640,6 @@ def _nvrtc_check(result: tuple[Any, ...]) -> Any:
 
 # ---------------------------------------------------------------------------
 # Cu13 NVRTC ctypes wrapper (Phase-10c+ tensor-core path)
-#
 # Wave 1.14 — moved to ``targets/gpu/nvidia/blackwell/cu13_nvrtc.py``
 # (Blackwell-specific because cu13 NVRTC is what gates
 # ``__CUDA_ARCH__ == 1000``). Re-exported here for backward compat;

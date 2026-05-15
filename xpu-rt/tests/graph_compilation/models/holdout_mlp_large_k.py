@@ -1,4 +1,4 @@
-"""Holdout MLP with extreme K dimension (M-31A.4).
+"""Holdout MLP with extreme K dimension.
 
 K=8192, N=64, M=64 — tests that working-set / register-pressure
 analyses behave on a skewed shape that doesn't fit the typical

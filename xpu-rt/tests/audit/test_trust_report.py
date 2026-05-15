@@ -1,4 +1,4 @@
-"""Tests for compgen.audit.trust_report (M-31A.5)."""
+"""Tests for compgen.audit.trust_report."""
 
 from __future__ import annotations
 

@@ -1,11 +1,11 @@
-"""Holdout-model honesty tests (M-31A.4).
+"""Holdout-model honesty tests.
 
 Each holdout model must reach a verified outcome OR a typed-blocked
 outcome — never a silent partial pass. We exercise capture + payload
 lowering for each, then assert the run dir contains either:
 
 - A successful manifest reaching the requested ``stop_after``, OR
-- A typed-blocked surface (M-15B downstream_retry_request, or a typed
+A typed-blocked surface (downstream_retry_request, or a typed
   exception name in the stage_ledger).
 """
 
@@ -74,7 +74,7 @@ def test_holdout_run_reaches_honest_outcome(
     except Exception as exc:  # noqa: BLE001 - classify
         type_name = type(exc).__name__
         msg = str(exc)
-        # Typed-blocked outcomes: M-15B downstream-rejection, typed
+        # Typed-blocked outcomes: downstream-rejection, typed
         # runtime errors, capture-stage typed errors. Any of these
         # is honest. Generic AssertionError / KeyError / etc. is not.
         honest_markers = (

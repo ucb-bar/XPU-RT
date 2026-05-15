@@ -1,4 +1,4 @@
-"""Tests for compgen.analysis.invalidation (M-33.1)."""
+"""Tests for compgen.analysis.invalidation."""
 
 from __future__ import annotations
 
@@ -133,8 +133,8 @@ def test_unannounced_invalidation_raises() -> None:
 
 
 def test_stale_analysis_audit_is_alias() -> None:
-    """M-33 keeps StaleAnalysisAudit as a subclass alias of
-    UnannouncedInvalidation so M-31A.5 negative-control references
+    """keeps StaleAnalysisAudit as a subclass alias of
+    UnannouncedInvalidation so negative-control references
     still resolve."""
     diff = InvalidationDiff(
         mutated=("graph_dossier_v3",), appeared=(), removed=()
@@ -276,7 +276,7 @@ def test_analysis_summary_explicit_generation() -> None:
 
 
 # --------------------------------------------------------------------------- #
-# M-34.4: consumer-side stale-read detection
+# consumer-side stale-read detection
 # --------------------------------------------------------------------------- #
 
 

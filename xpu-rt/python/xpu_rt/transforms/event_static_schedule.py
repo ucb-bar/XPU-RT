@@ -277,7 +277,6 @@ def compute_static_schedule(
     # Longest-Processing-Time-first when ``order`` happens to be
     # cost-sorted; for a topo order it's still a reasonable
     # approximation and keeps the pass deterministic + trace-auditable.
-    #
     # Wave 1.6b — cluster-aware partitioning. When clusters are
     # enabled, prefer SMs in clusters that already host one of the
     # task's predecessors (so the predecessor → successor event-tensor
@@ -362,7 +361,6 @@ def compute_static_schedule(
                     cross_cluster_edges += 1
 
     # --- 2b. Per-cell intra-cluster mask (Wave 1.6b emitter half). --------
-    #
     # We need to know — per *cell* on each TaskDescriptor — whether
     # every peer task connected to that cell is on the same cluster.
     # The dependency graph is cell-granular (see
@@ -370,7 +368,6 @@ def compute_static_schedule(
     # between predecessor P and successor S whenever P has an
     # out-edge and S has an in-edge that resolve to the same
     # ``(event_name, cell)``.
-    #
     # Algorithm:
     #   1. For each (event_name, cell) build {producers, consumers}.
     #   2. For a successor's in-cell, mark intra-cluster IFF every
@@ -382,7 +379,6 @@ def compute_static_schedule(
     #   4. Cells with no peers (e.g. initial out-edges with no
     #      consumer in this graph) default to False — keep the safe
     #      global path.
-    #
     # When ``cluster_aware`` is False the masks are all-False so the
     # emitter falls back to the existing pure-global-atomic path.
     in_cluster_mask_for: dict[int, tuple[bool, ...]] = {}
@@ -434,7 +430,6 @@ def compute_static_schedule(
             # Out-cell mask: a notify on cell C is intra-cluster only
             # if every consumer of C is on the same cluster as us AND
             # this task is the unique producer of C within the cluster.
-            #
             # The second condition is a correctness gate: the
             # intra-cluster notify path is a *relaxed* (non-atomic)
             # decrement of the local cluster-DSM view. When two

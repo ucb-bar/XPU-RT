@@ -1,4 +1,4 @@
-"""M-52 emitted Python CUDA plan executor tests.
+"""emitted Python CUDA plan executor tests.
 
 Coverage (CPU-side, never requires a real GPU):
 - Schema: emit_python_cuda_executor produces both files when target is
@@ -436,7 +436,7 @@ def test_default_adapter_is_cuda(tmp_path: Path) -> None:
     """When ``runtime`` is not passed, ``select_adapter(PLAN_TARGET)``
     is invoked. For a CUDA target this returns a CudaRuntimeAdapter
     (real class); we verify only the type, not GPU dispatch — the
-    real adapter's dispatch needs a real KernelContractV3 (M-49+
+    real adapter's dispatch needs a real KernelContractV3 (+
     wiring), which is honestly not yet in the emitted code path."""
     from compgen.runtime.glue import CudaRuntimeAdapter, select_adapter
     run_dir = _make_cuda_run_dir(tmp_path, [

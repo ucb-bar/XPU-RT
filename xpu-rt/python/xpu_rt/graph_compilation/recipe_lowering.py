@@ -35,7 +35,7 @@ from pathlib import Path
 from typing import Any
 
 from compgen.graph_compilation.hashing import sha256_file, sha256_tree
-from compgen.graph_compilation.recipe_gate import (  # parser from M-06
+from compgen.graph_compilation.recipe_gate import (  # parser
     _parse_recipe_mlir,
     _ParsedRecipeOp,
 )
@@ -380,7 +380,7 @@ _LOWERING_DISPATCH: dict[str, tuple[Any, str]] = {
 
 
 def run_recipe_lowering(run_dir: Path) -> RecipeLoweringResult:
-    """Run the M-07 lowering against an existing recipe-verification output.
+    """Run the lowering against an existing recipe-verification output.
 
     Reads (read-only):
 

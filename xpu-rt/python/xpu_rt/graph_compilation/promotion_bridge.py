@@ -1,14 +1,14 @@
-"""Phase B → promotion bridge (M-26, write side).
+"""Phase B → promotion bridge (, write side).
 
 Reads a completed graph_compilation run directory and writes a promoted
 recipe to ``.compgen_cache/recipes/`` via the existing
 :class:`compgen.promotion.promote.RecipePromoter` plus the
 ``memory.promotions`` SQLite index.
 
-This module is the *seam* described in Section 19: before M-26, every
+This module is the *seam* described in Section 19: , every
 Phase B run dies in ``results/graph_compilation/<run>/`` and a second
 run on the same model (let alone a *different* model with the same
-region pattern) re-emits every candidate. After M-26, the run dir's
+region pattern) re-emits every candidate. , the run dir's
 :file:`03_recipe_planning/candidate_selection.json`,
 :file:`recipe.mlir`, and any present differential reports are folded
 into a :class:`compgen.runtime.bundle.Bundle`, the bundle's
@@ -29,10 +29,10 @@ status:
 The bridge keeps the existing ``RecipeKey`` directory naming
 (``target_hash_model_hash_objective_hash_vN``) — adding two more
 underscore-separated fields would break the parser at
-``cache.py:99-123``. The two M-26 dimensions
+``cache.py:99-123``. The two dimensions
 (``contract_hash`` and ``region_signature``) ride along inside the
 recipe directory's ``promoted_recipe.json`` sidecar plus the
-``memory.promotions`` SQLite index, which is what M-28 retrieval
+``memory.promotions`` SQLite index, which is what retrieval
 queries against.
 """
 
@@ -68,7 +68,7 @@ log = structlog.get_logger(__name__)
 # (``.compgen_cache/recipes/`` is the gitignored deterministic
 # library). Resolved against the repo root rather than cwd so the
 # bridge writes to the same library regardless of where the pipeline
-# was invoked from. Caught during M-30 real-workload validation:
+# was invoked from. Caught during real-workload validation:
 # ``Path(".compgen_cache")`` was cwd-relative, which silently put
 # different runs into different libraries when cwd drifted.
 _REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -232,7 +232,7 @@ def _synthesize_verification_report(
     ``run_dir`` root: that subdir is not covered by any earlier stage's
     ``output_hash``, so writing into it after the recipe stage record
     has been snapshotted does not break the R009 hash-chain (same
-    pattern as M-10B / M-13 / M-22.1).
+    pattern as ).
 
     Returns a (path, reason) pair. ``path`` is ``None`` when no Phase B
     evidence is present — in that case the caller should bail out
@@ -245,7 +245,7 @@ def _synthesize_verification_report(
     levels_passed: list[str] = []
     details: dict[str, str] = {}
 
-    # Structural — sourced from M-08 post-lowering verification.
+    # Structural — sourced post-lowering verification.
     pl = outcomes.get("post_lowering")
     if pl is not None:
         levels_run.append("structural")
@@ -254,7 +254,7 @@ def _synthesize_verification_report(
         if status == "pass":
             levels_passed.append("structural")
 
-    # Differential — prefer M-09; fall back to M-12 then M-16.2.
+    # Differential — prefer ; fall back to then .
     diff = outcomes.get("differential") or outcomes.get("real_transform") or outcomes.get("real_fusion")
     if diff is not None:
         levels_run.append("differential")
@@ -293,7 +293,7 @@ def _synthesize_verification_report(
 def derive_region_signature(
     *, run_dir: Path, region_id: str, target_id: str, kind: str
 ) -> tuple[str, dict[str, str]]:
-    """Public M-28 entry point — see :func:`_derive_region_signature`."""
+    """Public entry point — see :func:`_derive_region_signature`."""
     return _derive_region_signature(
         run_dir=run_dir, region_id=region_id, target_id=target_id, kind=kind,
     )
@@ -304,23 +304,23 @@ def derive_contract_hash(
     candidate_selection: dict[str, Any],
     region_signature_fields: dict[str, str],
 ) -> str:
-    """Deprecated (M-41). Kept as a thin shim that raises a typed
+    """Deprecated. Kept as a thin shim that raises a typed
     error so any remaining production caller is fixed loud.
 
     The canonical contract hash is now
     ``compgen.promotion.contract_hash.hash_contract`` applied to the
     full ``KernelContractV3`` materialised via
-    ``KernelContractV3.from_recipe`` (M-40). Production callers must
+    ``KernelContractV3.from_recipe``. Production callers must
     route through
     ``compgen.graph_compilation.kernel_contract_materialization.hash_contract_from_run_dir``
     which loads the dossier + target profile + recipe-gate verdict and
     produces the canonical hash.
 
-    Reason for retiring: pre-M-40 there was no materialised contract
+    Reason for retiring: pre-there was no materialised contract
     on disk, so this function synthesised a hash from raw dicts. That
     parallel hashing scheme could drift from the canonical
     ``hash_contract`` (which keys the promotion library) and produce
-    silent cache misses. M-41 collapses both schemes into one.
+    silent cache misses. collapses both schemes into one.
     """
     raise RuntimeError(
         "derive_contract_hash is retired in M-41; use "
@@ -336,11 +336,11 @@ def derive_contract_hash(
 def _derive_region_signature(
     *, run_dir: Path, region_id: str, target_id: str, kind: str
 ) -> tuple[str, dict[str, str]]:
-    """Construct a region pattern signature from the M-10 dossier.
+    """Construct a region pattern signature from the dossier.
 
     Fields not derivable from the dossier degrade to ``"unknown"`` —
-    M-26 ships with this degradation explicit. Future milestones
-    (M-27 ops_provenance, M-28 retrieval) will tighten the signature
+    ships with this degradation explicit. Future milestones
+    (ops_provenance, retrieval) will tighten the signature
     once Recipe IR carries the full pattern.
     """
     dossier_path = _resolve_region_dossier(run_dir, region_id)
@@ -395,7 +395,7 @@ def _derive_applies_when(dossier: dict[str, Any] | None) -> tuple[str, ...]:
     decide whether a promoted recipe still applies — they're spread
     across ``legality_constraints``, ``numerical_sensitivity``, and
     ``placement_envelope``. We project each into a stable string
-    predicate so the M-26 sidecar can carry them and M-28 retrieval
+    predicate so the sidecar can carry them and retrieval
     can filter or rank by them.
 
     Predicate string forms (informal but stable):
@@ -492,7 +492,7 @@ def _build_promoted_recipe(
         "layout": region_signature_fields.get("layout", ""),
     }
 
-    # M-29: fold gate-evaluation evidence + level into the recipe.
+    # fold gate-evaluation evidence + level into the recipe.
     if gate_evaluation is not None:
         evidence_summary["gate_level"] = str(gate_evaluation.level)
         evidence_summary["gate_reasons"] = dict(gate_evaluation.reasons)
@@ -645,7 +645,7 @@ def _emit_impl(
         kind=region_kind,
     )
 
-    # M-26 contract_hash — exact-kernel reuse tier. M-41: route through
+    # contract_hash — exact-kernel reuse tier. route through
     # the canonical hash_contract(KernelContractV3) so promotion-write
     # and promotion-read derive byte-identical keys.
     from compgen.graph_compilation.kernel_contract_materialization import (
@@ -658,7 +658,7 @@ def _emit_impl(
         target_id=target_id,
     )
 
-    # M-29: evaluate the promotion-gate ladder before constructing
+    # evaluate the promotion-gate ladder before constructing
     # the bundle so the gate level rides along in the sidecar +
     # memory index.
     gate_eval: GateEvaluation | None = None
@@ -716,7 +716,7 @@ def _emit_impl(
         "run_id": manifest.get("run_id", ""),
     }
     if gate_eval is not None:
-        # M-29: surface the gate level into RecipePromoter so the
+        # surface the gate level into RecipePromoter so the
         # audit log records it alongside the basic promotion event.
         bundle_metadata["gate_level"] = str(gate_eval.level)
     bundle = Bundle(
@@ -759,7 +759,7 @@ def _emit_impl(
         region_signature=region_sig_hash,
     )
 
-    # M-30 gap #3: derive applies_when from the region dossier.
+    # : derive applies_when from the region dossier.
     dossier_path_for_facts = _resolve_region_dossier(run_dir, region_id)
     dossier_for_facts = (
         _read_json(dossier_path_for_facts) if dossier_path_for_facts else None

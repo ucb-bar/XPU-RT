@@ -1,19 +1,19 @@
 """Post-Lowering Verification (Milestone 08).
 
-Applies the M-07 lowering artifacts to a *copy* of Payload IR and runs
+Applies the lowering artifacts to a *copy* of Payload IR and runs
 structural verification. This is the first stage that produces a
 modified IR artifact (``transformed_payload.mlir``).
 
 Hard invariants:
 
 - ``01_payload_lowering/**/payload.mlir`` is **never** mutated. Every
-  byte must round-trip identically across a complete M-08 invocation.
+  byte must round-trip identically across a complete invocation.
 - ``transformed_payload.mlir`` lives **only** under
   ``03_recipe_planning/post_lowering/``. Writing it under
   ``01_payload_lowering/`` is a hard fail.
-- M-08 makes no claim of full semantic equivalence. Structural
+makes no claim of full semantic equivalence. Structural
   obligations are marked ``partially_discharged_structural``;
-  differential checks are recorded as ``pending`` for M-09 to discharge.
+  differential checks are recorded as ``pending`` to discharge.
 - ``CreateKernelContract`` recipes do **not** produce a
   ``transformed_payload.mlir``. They emit
   ``contract_structural_validation.json`` and leave the contract
@@ -68,7 +68,7 @@ def _read_json(path: Path) -> dict[str, Any]:
 
 
 # --------------------------------------------------------------------------- #
-# Transform-script comment-header parser (M-07 emits structured headers)
+# Transform-script comment-header parser (emits structured headers)
 # --------------------------------------------------------------------------- #
 
 
@@ -76,7 +76,7 @@ _HEADER_LINE_RE = re.compile(r"^//\s*([A-Za-z_][A-Za-z0-9_]*)\s*:\s*(.+?)\s*$")
 
 
 def _parse_transform_header(text: str) -> dict[str, str]:
-    """Pull the leading ``// key: value`` block out of an M-07-emitted
+    """Pull the leading ``// key: value`` block out of an -emitted
     transform / contract artifact. Stops at the first non-comment line."""
     out: dict[str, str] = {}
     for line in text.splitlines():
@@ -210,7 +210,7 @@ def _line_count_diff(a: str, b: str) -> int:
 
 
 def run_post_lowering_verification(run_dir: Path) -> PostLoweringResult:
-    """Apply M-07 lowering artifacts on a copy and emit M-08 reports.
+    """Apply lowering artifacts on a copy and emit reports.
 
     Reads:
 
@@ -331,7 +331,7 @@ def run_post_lowering_verification(run_dir: Path) -> PostLoweringResult:
                         f"({payload_rel} != {chosen_payload_rel})"
                     )
                     continue
-                # Forbid opaque endpoints (M-07 already filtered, but
+                # Forbid opaque endpoints (already filtered, but
                 # belt-and-suspenders).
                 p_region = _find_region(region_map, fuse["producer"])
                 c_region = _find_region(region_map, fuse["consumer"])
@@ -340,11 +340,11 @@ def run_post_lowering_verification(run_dir: Path) -> PostLoweringResult:
                         f"{recipe_op_id}: producer/consumer missing in region_map"
                     )
                     continue
-                # "Opaque" here is the M-04 sense: kind starts with
+                # "Opaque" here is the sense: kind starts with
                 # "opaque_". A region whose lead op is a func.call but
                 # whose kind is e.g. "elementwise_relu" (because the
                 # callee name resolves to a known elementwise family) is
-                # legal for fusion under M-04's policy.
+                # legal for fusion 's policy.
                 p_kind = str(p_region.get("kind", ""))
                 c_kind = str(c_region.get("kind", ""))
                 if p_kind.startswith("opaque_") or c_kind.startswith("opaque_"):

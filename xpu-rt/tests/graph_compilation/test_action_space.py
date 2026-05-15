@@ -1,6 +1,6 @@
-"""Acceptance tests for M-04: Decision Sites + Candidate Actions.
+"""Acceptance tests for Decision Sites + Candidate Actions.
 
-Asserts the M-04 acceptance checklist on the canonical 6-model suite,
+Asserts the acceptance checklist on the canonical 6-model suite,
 including target sensitivity (default vs. discovered profile must
 produce different priorities or costs).
 

@@ -1,4 +1,4 @@
-"""Acceptance tests for M-25 — Kernel Section Evidence Pack.
+"""Acceptance tests for Kernel Section Evidence Pack.
 
 Mirrors test_graph_section_evidence_pack.py shape, but for kernel-
 level signals. Uses a tiny synthetic suite root to keep tests fast;
@@ -238,13 +238,13 @@ def test_figures_emit_valid_pngs(evidence_pack: Path) -> None:
 
 
 # --------------------------------------------------------------------------- #
-# Read-only invariant (M-25 must not mutate suite source artifacts)
+# Read-only invariant (must not mutate suite source artifacts)
 # --------------------------------------------------------------------------- #
 
 
 def test_pack_is_read_only(tiny_suite: Path) -> None:
     """SHA-snapshot the entire suite-source tree; rebuild the pack;
-    compare. This is the same invariant M-17 enforces."""
+    compare. This is the same invariant enforces."""
     suite_files: list[Path] = []
     for sub in (tiny_suite / "canonical", tiny_suite / "wide"):
         if not sub.is_dir():

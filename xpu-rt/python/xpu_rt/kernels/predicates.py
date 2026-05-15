@@ -1,12 +1,12 @@
-"""M-61 — Typed predicate DSL for contract pre/post-conditions.
+"""Typed predicate DSL for contract pre/post-conditions.
 
 Section 7 of the dream lists predicate verification as a load-bearing
 verifier obligation: "M * N * 2 ≤ output_buffer_size", "K mod 16 == 0",
-"Y[i,j] = relu(...) within epsilon_max_rel". M-61 lands the typed DSL
+"Y[i,j] = relu(...) within epsilon_max_rel". lands the typed DSL
 that backs those obligations.
 
 Five predicate kinds, each a frozen dataclass, all with ``to_dict`` /
-``from_dict`` for round-trip stability through the M-40 contract
+``from_dict`` for round-trip stability through the contract
 serializer:
 
 * :class:`ModEq` — ``arg_dim`` divisible by ``k`` (e.g. ``ModEq("K", 16)``).
@@ -20,7 +20,7 @@ The ``Predicate`` type is a :class:`typing.Union` over these five.
 ``predicate_kind(p)`` returns a stable string used as the
 ``PLAN_VIOLATION_PRECONDITION_<KIND>`` /
 ``PLAN_VIOLATION_POSTCONDITION_<KIND>`` typed-error suffix in the
-emitted glue (M-48 extension).
+emitted glue (extension).
 
 The DSL is deliberately small. Sections that need richer predicates
 (e.g. relational constraints between dims) can extend the union; the
@@ -102,7 +102,7 @@ class NumericalWithinEps:
     """Postcondition: output within ``eps`` relative-error of reference.
 
     The ``ref`` field names the reference flavour: ``"reference"`` for
-    the M-44 differential-against-eager check; an explicit name when
+    the differential-against-eager check; an explicit name when
     the contract pins a specific reference function.
     """
 

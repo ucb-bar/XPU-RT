@@ -1,10 +1,10 @@
-"""Acceptance tests for M-22.1 — real `torch.profiler` (CUDA) +
+"""Acceptance tests for real `torch.profiler` (CUDA) +
 `linux perf` (CPU) measurement layer.
 
 Verifies:
 
-- M-22.1 emits a typed report when M-22 produced compiled measurements.
-- M-22.1 emits typed `not_run` when M-22 didn't produce evidence
+emits a typed report when produced compiled measurements.
+emits typed `not_run` when didn't produce evidence
   (kernels OFF or no SetTileParams candidates).
 - The GPU track populates `cuda_collected` evidence with non-zero
   per-kernel timing when CUDA is available.
@@ -12,13 +12,13 @@ Verifies:
   `kernel.perf_event_paranoid >= 3` (no root). This IS the typical
   user-environment state; the test asserts the typed fallback shape,
   NOT a perf success.
-- M-22.1 layers `profiler_evidence` onto M-22's per-region
-  `compiled_evidence` block, replacing the M-22 `cache_evidence:
+layers `profiler_evidence` onto the per-region
+  `compiled_evidence` block, replacing the `cache_evidence:
   not_collected` placeholder with a concrete typed value.
 - The hardware_resource_report's `compiled_evidence.cache_evidence`
   picks up the same value (cross-overlay invariant).
-- Ledger captures the M-22.1 stage event.
-- Hash chain (R009) stays intact through the M-22.1 writes.
+Ledger captures the stage event.
+Hash chain (R009) stays intact through the writes.
 - No compiler-core imports.
 """
 
@@ -64,8 +64,8 @@ def _run(model: str, out_dir: Path, *, run_kernels: bool) -> None:
 
 @pytest.fixture(scope="module")
 def kernels_run(tmp_path_factory) -> Path:  # type: ignore[no-untyped-def]
-    """merlin_mlp_wide with M-19/M-20 ON — gives us per-region kernels
-    for M-22.1 to re-profile."""
+    """merlin_mlp_wide with /ON — gives us per-region kernels
+     to re-profile."""
     out = tmp_path_factory.mktemp("m221_kernels") / "run"
     _run("merlin_mlp_wide", out, run_kernels=True)
     return out
@@ -121,7 +121,7 @@ def test_artifact_schema_version(kernels_run: Path) -> None:
 
 @pytest.mark.requires_gpu
 def test_gpu_track_collects_cuda_evidence(kernels_run: Path) -> None:
-    """When CUDA is available, every region with an M-19 GPU
+    """When CUDA is available, every region with an GPU
     measurement should have profiler_status=cuda_collected and
     non-zero self_cuda_us_per_iter."""
     try:
@@ -164,7 +164,7 @@ def test_cpu_track_degrades_typed_when_perf_paranoid(
 ) -> None:
     """In environments where kernel.perf_event_paranoid >= 3 (the
     typical user environment), perf cache events fail for non-root.
-    M-22.1 must NOT crash; it must emit a typed perf_unavailable
+    must NOT crash; it must emit a typed perf_unavailable
     block with a reason. This is the most common user-environment
     state — the test asserts the GRACEFUL DEGRADATION, not a success."""
     paranoid = 0
@@ -202,17 +202,17 @@ def test_cpu_track_degrades_typed_when_perf_paranoid(
 
 # --------------------------------------------------------------------------- #
 # Cross-overlay: hardware_resource_report.compiled_evidence picks up
-# M-22.1's cache_evidence value (replacing M-22's "not_collected")
+# the cache_evidence value (replacing the "not_collected")
 # --------------------------------------------------------------------------- #
 
 
 def test_compiled_evidence_cache_evidence_replaced_by_m221(
     kernels_run: Path,
 ) -> None:
-    """After M-22.1 runs, hardware_resource_report.regions[*]
+    """ runs, hardware_resource_report.regions[*]
     .compiled_evidence.cache_evidence should be one of:
     cuda_collected | perf_collected | perf_unavailable | not_collected.
-    NOT just the M-22 placeholder."""
+    NOT just the placeholder."""
     hrr = _read(
         kernels_run / "02_graph_analysis" / "readiness"
         / "hardware_resource_report.json"
@@ -279,7 +279,7 @@ def test_compiled_bottleneck_picks_up_profiler_evidence_overlay(
 
 
 def test_ledger_records_m22_1_event(kernels_run: Path) -> None:
-    """The pipeline ledger must record the M-22.1 stage event with
+    """The pipeline ledger must record the stage event with
     a typed note reflecting its outcome."""
     ledger_path = kernels_run / "stage_ledger.jsonl"
     assert ledger_path.exists()
@@ -301,7 +301,7 @@ def test_ledger_records_m22_1_event(kernels_run: Path) -> None:
 
 
 def test_ledger_records_full_kernel_pipeline(kernels_run: Path) -> None:
-    """A run with kernels ON must record M-19, M-20, M-21, M-22, M-22.1
+    """A run with kernels ON must record
     events in order under graph_analysis."""
     ledger_path = kernels_run / "stage_ledger.jsonl"
     events = [
@@ -315,7 +315,7 @@ def test_ledger_records_full_kernel_pipeline(kernels_run: Path) -> None:
             f"ledger missing {tag} stage event"
         )
 
-    # Order: M-19 before M-20 before M-21 before M-22 before M-22.1.
+    # Order: .
     indices = {
         tag: next(i for i, n in enumerate(notes) if tag in n)
         for tag in ("M-19", "M-20", "M-21", "M-22", "M-22.1")
@@ -330,7 +330,7 @@ def test_run_manifest_hash_chain_intact_with_m221(
     kernels_run: Path,
 ) -> None:
     """R009 invariant: stage[i].input_hash == stage[i-1].output_hash.
-    M-22.1 writes happen inside graph_analysis stage and must not break
+    writes happen inside graph_analysis stage and must not break
     the chain."""
     manifest = _read(kernels_run / "run_manifest.json")
     stages = manifest.get("stages", [])

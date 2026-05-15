@@ -1,4 +1,4 @@
-"""Tests for compgen.analysis.checkpoints (M-32.1, M-32.2)."""
+"""Tests for compgen.analysis.checkpoints."""
 
 from __future__ import annotations
 
@@ -230,7 +230,7 @@ def test_transitively_invalidated_by_unknown_raises(tmp_path: Path) -> None:
 
 
 def test_analysis_index_against_real_run() -> None:
-    """The /tmp/m31_smoke run from the M-31 smoke must index cleanly.
+    """The /tmp/m31_smoke run from the smoke must index cleanly.
 
     We skip if that directory doesn't exist (e.g. on CI without a
     prior smoke run); the holdout-baseline test below covers the same
@@ -241,7 +241,7 @@ def test_analysis_index_against_real_run() -> None:
         pytest.skip("/tmp/m31_smoke not available; covered by holdout-run test")
     idx = AnalysisIndex.from_run_dir(real)
     avail_ids = {s.id for s in idx.available_summaries()}
-    # Every summary the M-31 smoke produces must be indexable
+    # Every summary the smoke produces must be indexable
     must_be_available = {
         "capture_report", "dynamo_summary", "export_graph",
         "payload_summary", "dialect_coverage", "lowering_diagnostics",

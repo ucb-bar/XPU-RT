@@ -1,12 +1,12 @@
 """Recipe Planning stage (Milestone 05).
 
-Selects a candidate from the M-04 action space and commits the
+Selects a candidate from the action space and commits the
 embedded Recipe delta to ``03_recipe_planning/recipe.mlir``.
 
 This is the first milestone where the agent role actually *acts*. The
 LLM (or its deterministic stand-ins) selects only candidate IDs; the
 compiler resolves each ID against ``02_graph_analysis/action_space.mlir``
-via the M-04.5 resolver and appends the verified Recipe op to
+via the resolver and appends the verified Recipe op to
 ``recipe.mlir``.
 
 Selection modes:
@@ -26,7 +26,7 @@ This stage does **not**:
 
 - apply transforms,
 - mutate Payload IR,
-- run verifier gates beyond legality recorded by M-04,
+run verifier gates beyond legality recorded ,
 - benchmark, profile, or call any kernel codegen,
 - modify compiler core.
 """
@@ -80,7 +80,7 @@ def _select_greedy(
     candidate_actions: dict[str, Any],
     promoted_ids: set[str] | None = None,
 ) -> tuple[dict[str, Any] | None, list[SelectionTraceEntry], str]:
-    """Greedy single-pick policy (M-37.5 warm-aware + M-37.11 boundary-aware):
+    """Greedy single-pick policy (warm-aware + boundary-aware):
 
     1. Sort sites by ``priority`` ascending (lower number = higher priority).
     2. Within each site, pick the legal candidate with the lowest
@@ -90,12 +90,12 @@ def _select_greedy(
 
        - **Tier 0 — boundary_required**: a clean-divide tile is strictly
          better than a boundary-required tile (bit_equality vs
-         tolerance_eps refinement; no boundary mask cost). M-37.11 makes
+         tolerance_eps refinement; no boundary mask cost). makes
          this dominate over warm-cache so we don't pick a stale boundary
          tile when a fresh clean-divide tile is also legal.
        - **Tier 1 — promoted**: among same-boundary-status candidates,
          prefer one whose id matches a promoted recipe (warm-cache hit).
-         M-37.5 — closes the M-37 residual ("greedy doesn't consult
+         closes the residual ("greedy doesn't consult
          promoted_candidates").
        - **Tier 2 — static_relative_cost**: ascending.
        - **Tier 3 — candidate_id**: lexicographic, deterministic
@@ -174,12 +174,12 @@ def _select_greedy(
 
         legal_in_site.sort(
             key=lambda c: (
-                # M-37.11 tier 0: boundary-required tiles are strictly
+                # tier 0: boundary-required tiles are strictly
                 # worse than clean-divide tiles (refinement downgrade
                 # to tolerance_eps, plus boundary-mask cost). This
                 # dominates over warm-cache hit.
                 1 if c["cost_preview"].get("boundary_required") else 0,
-                # M-37.5 tier 1: promoted-bit (warm-cache hit).
+                # tier 1: promoted-bit (warm-cache hit).
                 0 if c["candidate_id"] in promoted_ids else 1,
                 # Tier 2: ascending static_relative_cost.
                 float(c["cost_preview"].get("static_relative_cost", 1.0)),
@@ -349,9 +349,9 @@ def run_recipe_planning(
     agent_max_retries: int = 3,
     live_provider_config: Any | None = None,
 ) -> RecipePlanningResult:
-    """Run the M-05 recipe-planning stage on an existing run directory.
+    """Run the recipe-planning stage on an existing run directory.
 
-    When ``selection_mode != "greedy"``, the M-14A agent-decision
+    When ``selection_mode != "greedy"``, the agent-decision
     protocol runs first: it emits ``agent_decision_request.json``,
     obtains a response (user-provided for ``agent-file``, real LLM
     HTTP call for ``llm-live``), validates it, and only then proceeds
@@ -383,7 +383,7 @@ def run_recipe_planning(
     action_space_ir_sha256 = decision_sites["source"]["action_space_ir_sha256"]
 
     # ------------------------------------------------------------------ #
-    # M-14A agent-decision protocol (agent-file + llm-live modes).
+    # agent-decision protocol (agent-file + llm-live modes).
     # ------------------------------------------------------------------ #
     agent_selected_id: str | None = None
     if selection_mode in ("agent-file", "llm-live"):
@@ -392,7 +392,7 @@ def run_recipe_planning(
             run_agent_decision_iterative,
         )
 
-        # M-15A: when a list of response paths is provided (or just
+        # when a list of response paths is provided (or just
         # a single one), use the iterative wrapper so the retry trail
         # accumulates under attempts/attempt_<N>/ and retry_summary.json
         # gets the full history. The single-path call is a special
@@ -482,17 +482,17 @@ def run_recipe_planning(
         )
         selected_json = sel_cand
     else:
-        # M-37.5: warm-aware greedy. Scan the recipe library for any
+        # warm-aware greedy. Scan the recipe library for any
         # sidecar whose ``recipe.evidence_summary.selected_candidate_id``
-        # matches a candidate in this run's candidate_actions. M-31's
+        # matches a candidate in this run's candidate_actions. 's
         # candidate_ids are region-scoped (the trailing 8-char hash is
         # the region signature), so a cross-region false positive would
-        # require both region and shape to collide — same as M-28's
+        # require both region and shape to collide — same as 's
         # exact-contract match strength. The selector then prefers a
         # candidate whose id is in this set over a fresh cost-preview
         # pick. We do this here (rather than reading
         # agent_decision_request.json) because recipe_planning runs
-        # before M-14A request emission.
+        #  request emission.
         promoted_ids: set[str] = set()
         if selection_mode == "greedy":
             try:
@@ -669,7 +669,7 @@ def run_recipe_planning(
         json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8"
     )
 
-    # M-14A: backfill the agent-decision trace with the committed
+    # backfill the agent-decision trace with the committed
     # recipe_op id (always recipe_0000 for the single-candidate MVP).
     if (
         selection_mode in ("agent-file", "llm-live")

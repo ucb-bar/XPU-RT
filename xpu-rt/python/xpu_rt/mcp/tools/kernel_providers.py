@@ -1,4 +1,4 @@
-"""M-62 — MCP tools for kernel-provider discovery + user-kernel indexing.
+"""MCP tools for kernel-provider discovery + user-kernel indexing.
 
 Three tools surface the registry + indexer to a Claude Code agent:
 
@@ -94,7 +94,7 @@ def compgen_describe_kernel_provider(*, provider_id: str) -> dict[str, Any]:
             "applicable_archetypes": list(getattr(p, "applicable_archetypes", ()) or ()),
             "summary": _provider_summary(p),
         }
-        # M-62 — surface user-path index entries when the provider is
+        # surface user-path index entries when the provider is
         # the user-space kind.
         entries = getattr(p, "_entries", None)
         if entries:

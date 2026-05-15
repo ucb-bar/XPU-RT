@@ -1,6 +1,6 @@
 """Real SetTileParams Transform MVP (Milestone 11B).
 
-For an eligible ``SetTileParams`` recipe (per M-11A's
+For an eligible ``SetTileParams`` recipe ('s
 ``real_transform_eligibility.json``), emit a real tiled IR artifact that
 replaces the selected ``linalg.matmul`` op with a triple-nested
 ``scf.for`` loop nest. The result is a derived artifact under
@@ -27,12 +27,12 @@ Hard invariants:
 - ``01_payload_lowering/`` is read-only. The payload tree must be
   byte-identical pre/post.
 - ``03_recipe_planning/post_lowering/transformed_payload.mlir``
-  (the M-08 metadata-only artifact) must not be touched.
+  (the metadata-only artifact) must not be touched.
 - The real transformed file lives ONLY under
   ``03_recipe_planning/real_lowering/``. Writing it under
   ``01_payload_lowering/`` is a hard fail.
 - This stage makes NO claim of semantic equivalence with the source.
-  Differential verification of a real transform is M-12's job. M-11B
+  Differential verification of a real transform is 's job.
   emits the IR artifact and structural validation only.
 """
 
@@ -66,35 +66,30 @@ class RealLoweringResult:
     failures: tuple[str, ...]
 
 
-# Whitelist of model IDs that the M-11A audit covered for the executable
-# path. M-11A audited differential correctness on ``merlin_mlp_wide`` only.
-#
-# M-37.12 + M-37.13 — load-bearing safety shift (honest accounting):
-#
-# The pre-M-37.12 ``selected_model_is_merlin_mlp_wide`` gate was the
+# Whitelist of model IDs that the audit covered for the executable
+# path. audited differential correctness on ``merlin_mlp_wide`` only.
+#  load-bearing safety shift (honest accounting):
+# The pre-``selected_model_is_merlin_mlp_wide`` gate was the
 # structural barrier preventing non-audited models from claiming
-# differential correctness on the clean-divide path. M-37.12 admits
+# differential correctness on the clean-divide path. admits
 # any model on the ``executable_structured_ir`` path. The same safety
 # property is now carried by two structural rules in adjacent gates:
-#
 #   1. ``recipe_gate.single_k_iter`` — ``bit_equality`` is claimed
 #      only when the tile divides every region dim cleanly AND
 #      ``tK >= K_dim`` (single K iteration). Otherwise the recipe
 #      declares ``tolerance_eps``. Multiple K iterations reorder
 #      accumulation and break bit-exact equivalence with eager.
-#
-#   2. ``real_transform_differential.matmul_higham_bound`` (M-37.13)
+#   2. ``real_transform_differential.matmul_higham_bound``
 #      — for declared ``tolerance_eps`` cases the per-case criterion
 #      is ``|sim - eager| <= 4 * K * eps * max|A| * max|B|`` (Higham's
 #      matmul accumulation bound, derived per-case from inputs;
 #      never silently widened, scales linearly with K and with input
 #      magnitude). For declared ``bit_equality`` the criterion is
 #      exact equality. Negative controls in
-#      ``tests/graph_compilation/test_m37_13_negative_controls.py``
+#      ``tests/graph_compilation/test_negative_controls.py``
 #      exercise both crafted-input boundaries.
-#
 # The whitelist is preserved (not removed) because it still fires on
-# ``executable_with_boundary_handling``, where the M-11A audit's
+# ``executable_with_boundary_handling``, where the audit's
 # load-bearing concern (boundary handling on a real matmul) DOES
 # apply. See ``docs/realness/m37_12_clean_divide_admission.yaml``
 # for the full contract and forbidden constructs.
@@ -367,23 +362,23 @@ def _classify_real_transform_kind(
     }
     if not boundary_required:
         return "executable_structured_ir", flags
-    # M-16: boundary cases now route through M-12's boundary-aware
+    # boundary cases now route through 's boundary-aware
     # evaluator (Python-side ``min()``-based slicing). The MLIR is
     # still structural (no per-iteration dynamic-shape extract_slice
     # in the emitted IR — that's a future MLIR-level upgrade), but
-    # the kind signals to M-12 that the evaluator handles boundaries
+    # the kind signals to that the evaluator handles boundaries
     # correctly so verification IS executable.
     return "executable_with_boundary_handling", flags
 
 
 def run_real_lowering(run_dir: Path) -> RealLoweringResult:
-    """Apply M-11A's eligibility verdict to emit a real tiled IR artifact.
+    """Apply 's eligibility verdict to emit a real tiled IR artifact.
 
     Reads:
 
-    - ``03_recipe_planning/real_transform_eligibility.json`` (M-11A)
+    ``03_recipe_planning/real_transform_eligibility.json``
     - the source ``payload.mlir`` indicated by the eligibility report
-    - ``03_recipe_planning/post_lowering/transformed_payload.mlir`` (M-08;
+    ``03_recipe_planning/post_lowering/transformed_payload.mlir`` (;
       read-only, must not be modified)
 
     Writes (under ``03_recipe_planning/real_lowering/``):
@@ -421,7 +416,7 @@ def run_real_lowering(run_dir: Path) -> RealLoweringResult:
             target.unlink()
 
     # Pre-snapshot SHAs of every payload.mlir under 01_payload_lowering/
-    # and the M-08 metadata-only transformed payload, so we can prove
+    # and the metadata-only transformed payload, so we can prove
     # they were not touched.
     pre_payload_shas: dict[str, str] = {
         str(p.relative_to(run_dir)): _sha256_file(p)
@@ -454,7 +449,7 @@ def run_real_lowering(run_dir: Path) -> RealLoweringResult:
     recipe_kind = selected.get("recipe_kind", "")
     # The eligibility report's ``model_id`` is the FX-importer module id
     # (e.g. ``export_program``). The user-facing model_id from the YAML
-    # config is what the M-11B spec's
+    # config is what the spec's
     # ``selected_model_is_merlin_mlp_wide`` check expects.
     # ``00_graph_capture/capture_report.json::model_id`` is written
     # early in the run and is the canonical source. ``run_manifest.json``
@@ -494,7 +489,7 @@ def run_real_lowering(run_dir: Path) -> RealLoweringResult:
         # Skipped path: no transform attempted. This is NOT a pipeline
         # failure; it is the documented behavior for ineligible models.
         # The skipped_reason field carries the precise eligibility
-        # rejection from M-11A. Invariant checks below still run.
+        # rejection. Invariant checks below still run.
         real_kind = "unsupported_real_transform"
         skipped_reasons = list(eligibility.get("rejection_reasons", []) or [])
         if not skipped_reasons:
@@ -551,7 +546,7 @@ def run_real_lowering(run_dir: Path) -> RealLoweringResult:
 
                 _add(
                     "tile_matches_verified_recipe",
-                    True,  # M-11A already enforced this; we re-confirm by surfacing the values
+                    True,  # already enforced this; we re-confirm by surfacing the values
                     f"tile=({tM},{tN},{tK}) matmul=({M},{N},{K})",
                 )
 
@@ -666,7 +661,7 @@ def run_real_lowering(run_dir: Path) -> RealLoweringResult:
         )
 
     # ------------------------------------------------------------------ #
-    # Spec'd named checks (M-11B). Path-aware: ``pass`` on the path
+    # Spec'd named checks. Path-aware: ``pass`` on the path
     # they apply to, ``skipped`` on the others. Skipped checks do not
     # contribute to ``overall=fail``.
     # ------------------------------------------------------------------ #
@@ -681,18 +676,17 @@ def run_real_lowering(run_dir: Path) -> RealLoweringResult:
     else:
         # Eligible path (executable or structural-only).
         _add("eligibility_passed", eligible, "")
-        # M-37.12 + M-37.13: the named M-11B check is preserved
+        # : the named check is preserved
         # (downstream tooling reads the name), but its semantics
         # evolved with explicit safety-shift accounting.
-        #
         # - ``executable_structured_ir`` (clean-divide): admits any
         #   model. Load-bearing safety has shifted to two adjacent
         #   structural gates: recipe_gate.single_k_iter (correct
-        #   refinement declaration) and the M-37.13 Higham-bounded
+        #   refinement declaration) and the Higham-bounded
         #   semantic check (no hand-picked tolerance constants).
         #   See module-level whitelist comment.
         # - ``executable_with_boundary_handling``: skipped on this
-        #   path; the M-11A audit's boundary-handling concern still
+        #   path; the audit's boundary-handling concern still
         #   speaks but additional audits have not landed.
         # - Other non-executable paths: skipped.
         if real_kind == "executable_structured_ir":
@@ -746,9 +740,9 @@ def run_real_lowering(run_dir: Path) -> RealLoweringResult:
             else "no transformed artifact emitted",
         )
 
-    # Per-spec rename + invariant: M-11B never claims differential
+    # Per-spec rename + invariant: never claims differential
     # correctness; the manifest carries ``no_correctness_claim: true``
-    # and this check pins it. M-12 owns differential correctness.
+    # and this check pins it. owns differential correctness.
     _add(
         "metadata_only_artifact_not_overwritten", metadata_only_unchanged,
         "" if metadata_only_unchanged
@@ -765,7 +759,7 @@ def run_real_lowering(run_dir: Path) -> RealLoweringResult:
     # `overall` reflects ONLY invariant + transform-attempt outcomes.
     # Ineligibility (skipped path) is not a failure: the audit ran
     # cleanly and recorded `real_transform_kind=unsupported_real_transform`
-    # with the precise reason from M-11A in `skipped_reason`. Status
+    # with the precise reason in `skipped_reason`. Status
     # ``skipped`` on individual checks is informational and does NOT
     # contribute to ``overall=fail``.
     overall = (

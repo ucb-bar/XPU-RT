@@ -2,19 +2,19 @@
 
 Read-only, deterministic, target-and-tile-sensitive cost-preview
 augmentation that lets the agent reason about consequences instead of
-just legality. For every legal candidate, M-13 emits a
+just legality. For every legal candidate, emits a
 ``cost_preview_v2`` record with:
 
 - ``baseline_static_latency_us`` (pre-transform roofline)
 - ``candidate_static_latency_us`` (post-transform roofline)
 - ``relative_cost`` (candidate / baseline)
 - ``confidence`` (lower for opaque/contract; higher for structured
-  linalg with M-12 verification evidence)
+  linalg with verification evidence)
 - ``features`` (flops, bytes, arithmetic_intensity, tile, fits_*,
   real_transform_verified)
 - ``known_limitations`` (explicit honesty about what the static model
   doesn't capture)
-- ``evidence`` (paths to region_dossier and, when available, the M-12
+``evidence`` (paths to region_dossier and, when available, the
   ``real_differential_report.json``)
 
 Hard non-goals:
@@ -25,7 +25,7 @@ Hard non-goals:
 - No mutation of ``candidate_actions.json`` or ``action_space.mlir``
   (both pinned by ``graph_analysis.output_hash``). Cost-preview-v2 is a
   derived join artifact under ``02_graph_analysis/`` byte-pinned via
-  its own internal source SHAs (same pattern as M-10B v3).
+  its own internal source SHAs (same pattern as v3).
 
 The cost model is a deliberately simple roofline:
 
@@ -55,7 +55,6 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-
 
 # --------------------------------------------------------------------------- #
 # Result + helpers
@@ -217,7 +216,7 @@ def _matmul_tiled_cost(
         working_set_bytes=tile_bytes, target=target,
     )
     # Iter counts: ceil(dim / tile), but capped at 1 if tile >= dim
-    # (the M-11B degenerate-single-iter case).
+    # (the degenerate-single-iter case).
     iters_M = max(1, (M + tM - 1) // tM)
     iters_N = max(1, (N + tN - 1) // tN)
     iters_K = max(1, (K + tK - 1) // tK)
@@ -289,7 +288,7 @@ def _build_candidate_cost_preview(
 
     confidence = _CANDIDATE_CONFIDENCE.get(candidate_kind, 0.30)
 
-    # Verification evidence: only flag when M-12 has actually
+    # Verification evidence: only flag when has actually
     # discharged this candidate's obligation (not just any pass).
     real_transform_verified = False
     verification_evidence_path: str | None = None
@@ -301,7 +300,7 @@ def _build_candidate_cost_preview(
     ):
         real_transform_verified = True
         verification_evidence_path = real_diff_report_rel
-        # M-12 evidence raises confidence on the verified candidate.
+        # evidence raises confidence on the verified candidate.
         confidence = max(confidence, 0.75)
 
     # Compute baseline + candidate latency.
@@ -381,7 +380,7 @@ def _build_candidate_cost_preview(
                 cost_diag["candidate"] = cand_diag
             else:
                 # Other kinds (contract, fallback, placement, numerics):
-                # treat as baseline (no perf claim from M-13).
+                # treat as baseline (no perf claim ).
                 candidate_us = baseline_us
                 cost_diag["candidate"] = {
                     "comment": "no perf delta claimed for this candidate kind",
@@ -545,7 +544,7 @@ def _validate(
     if structured_confs and opaque_confs:
         max_opaque = max(opaque_confs)
         min_structured = min(structured_confs)
-        # M-12-verified candidates can boost above the default; check
+        # -verified candidates can boost above the default; check
         # that the typical structured baseline (without verification)
         # is still > opaque max. Use the unboosted SetTileParams default.
         unboosted_structured = [
@@ -565,7 +564,7 @@ def _validate(
             )
     _add("CPV2R003_structured_confidence_higher_than_opaque", fdetails)
 
-    # CPV2R004 — real_transform_verified flag is grounded in M-12.
+    # CPV2R004 — real_transform_verified flag is grounded .
     fdetails = []
     for cp in cost_previews:
         rtv = (cp.get("features") or {}).get("real_transform_verified")
@@ -691,6 +690,126 @@ def _inline_cost_preview_into_v3(
 
 
 # --------------------------------------------------------------------------- #
+# P2.2 dominance prune (wire-in G1)
+# --------------------------------------------------------------------------- #
+
+
+def _annotate_dominance(cost_previews: list[dict[str, Any]]) -> None:
+    """Annotate each cost_preview with ``dominated_by`` + ``is_survivor``.
+
+    Delegates to :func:`compgen.agent.cost_preview.compute_cost_previews`
+    so the dominance rule lives in exactly one place. Existing fields
+    on the dicts are preserved — this is additive.
+
+    A candidate is *legal* iff ``legality_ok`` is True (i.e. the
+    structural detector accepted it). Among legal candidates, a strict
+    dominance relation applies: ``b`` dominates ``a`` iff
+    ``b.relative_cost < a.relative_cost``. Ties never dominate.
+    Illegal candidates are neither dominators nor dominated — the LLM
+    needs to see their typed blocked state intact.
+    """
+
+    from compgen.agent.cost_preview import (
+        CandidateInput,
+        compute_cost_previews,
+    )
+
+    inputs = []
+    seen_ids: set[str] = set()
+    for cp in cost_previews:
+        cid = str(cp.get("candidate_id") or "")
+        if not cid:
+            # Skip cards without an id — they cannot participate in the
+            # dominance relation (no key to refer to them by). The
+            # validator catches these elsewhere.
+            continue
+        if cid in seen_ids:
+            # Defensive: a duplicate id would make CandidateInput
+            # construction raise. The audit catches this upstream.
+            continue
+        seen_ids.add(cid)
+        inputs.append(
+            CandidateInput(
+                candidate_id=cid,
+                delta_static=float(cp.get("relative_cost", 1.0)),
+                legality="ok" if cp.get("legality_ok") else "blocked",
+            )
+        )
+
+    previews = compute_cost_previews(inputs)
+    dom_by_id = {p.candidate_id: p for p in previews}
+    for cp in cost_previews:
+        cid = str(cp.get("candidate_id") or "")
+        p = dom_by_id.get(cid)
+        if p is None:
+            cp["dominated_by"] = []
+            cp["is_survivor"] = False
+            continue
+        cp["dominated_by"] = list(p.dominated_by)
+        cp["is_survivor"] = bool(p.is_survivor)
+
+
+def _emit_dominance_report(
+    ga_dir: Path, cost_previews: list[dict[str, Any]]
+) -> Path:
+    """Write the sidecar ``dominance_report.json`` next to ``cost_preview_v2.json``.
+
+    Shape::
+
+        {
+          "schema_version": "cost_preview_dominance_report_v1",
+          "generated_at_utc": "...",
+          "summary": {"survivors": N, "dominated": M, "blocked": K},
+          "rows": [
+            {"candidate_id": "...", "is_survivor": bool,
+             "dominated_by": ["..."], "legality_ok": bool,
+             "relative_cost": float}
+          ]
+        }
+    """
+
+    rows: list[dict[str, Any]] = []
+    survivors = 0
+    dominated = 0
+    blocked = 0
+    for cp in cost_previews:
+        legal = bool(cp.get("legality_ok"))
+        is_survivor = bool(cp.get("is_survivor"))
+        if not legal:
+            blocked += 1
+        elif is_survivor:
+            survivors += 1
+        else:
+            dominated += 1
+        rows.append(
+            {
+                "candidate_id": cp.get("candidate_id", ""),
+                "is_survivor": is_survivor,
+                "dominated_by": list(cp.get("dominated_by") or []),
+                "legality_ok": legal,
+                "relative_cost": cp.get("relative_cost"),
+            }
+        )
+    payload = {
+        "schema_version": "cost_preview_dominance_report_v1",
+        "generated_at_utc": _utcnow(),
+        "summary": {
+            "survivors": survivors,
+            "dominated": dominated,
+            "blocked": blocked,
+            "total": len(cost_previews),
+        },
+        "rows": rows,
+    }
+    out_path = ga_dir / "dominance_report.json"
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8"
+    )
+    return out_path
+
+
+# --------------------------------------------------------------------------- #
 # Top-level entry point
 # --------------------------------------------------------------------------- #
 
@@ -759,6 +878,16 @@ def run_cost_preview_v2(
         if (c.get("legality") or {}).get("ok") is True
     )
 
+    # --- P2.2 dominance prune (wire-in G1) ---
+    # Annotate each cost_preview row with `dominated_by` + `is_survivor`
+    # so the agent_decision_request builder can filter to survivors.
+    # Implementation lives in compgen.agent.cost_preview — pure-function
+    # over CandidateInput / CostPreview dataclasses. Existing fields on
+    # the dicts are preserved; this is additive.
+    _annotate_dominance(cost_previews)
+    survivor_count = sum(1 for cp in cost_previews if cp.get("is_survivor"))
+    _emit_dominance_report(ga, cost_previews)
+
     cost_preview_obj = {
         "schema_version": "cost_preview_v2_v1",
         "model_id": (region_map.get("model_id") or "")
@@ -779,6 +908,10 @@ def run_cost_preview_v2(
             "verified_candidates": sum(
                 1 for cp in cost_previews
                 if (cp["features"] or {}).get("real_transform_verified")
+            ),
+            "survivor_count": survivor_count,
+            "dominated_count": len(cost_previews) - survivor_count - (
+                len(cost_previews) - legal_count
             ),
         },
         "source": {
@@ -834,7 +967,7 @@ def run_cost_preview_v2(
         f"- peak_compute: `{target.peak_compute_flops / 1e9:.1f} GFLOPS`  "
         f"\n- peak_bandwidth: `{target.peak_bandwidth_bytes_per_sec / 1e9:.1f} GB/s`"
     )
-    md_lines.append(f"\n## Summary\n")
+    md_lines.append("\n## Summary\n")
     md_lines.append(f"- candidates_total: {len(cost_previews)}")
     md_lines.append(f"- legal_candidates: {legal_count}")
     md_lines.append(

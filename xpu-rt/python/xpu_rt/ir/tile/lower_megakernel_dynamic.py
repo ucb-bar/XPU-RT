@@ -241,7 +241,6 @@ def _gather_tasks(
             for slot, edge in enumerate(out_edges_per_task[tid]):
                 ev_name, linear_idx = edge
                 # Default decrement = 1 unless the original coord said otherwise.
-                #
                 outs.append((ev_name, linear_idx, 1))
 
             tasks.append(

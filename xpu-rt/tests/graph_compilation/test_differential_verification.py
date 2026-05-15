@@ -1,4 +1,4 @@
-"""Tests for M-09 Differential / Reference Verification.
+"""Tests Differential / Reference Verification.
 
 Covers:
 
@@ -6,7 +6,7 @@ Covers:
 - Top-level ``run_differential_verification`` against a real prepared
   run dir copied per-test from the canonical
   ``differential_verification_suite/`` results.
-- Negative tests required by M-09:
+Negative tests required :
    * deleting transformed_payload for transform-like models fails.
    * creating transformed_payload for contract-only models fails.
    * mutating non-compgen payload semantics in transformed_payload
@@ -203,7 +203,7 @@ def test_creating_transformed_payload_for_contract_only_fails(
 def test_mutating_non_compgen_payload_semantics_fails(tiny_mlp_run: Path) -> None:
     """Strongest negative test: change `linalg.matmul` -> `func.call` in the
     transformed payload. After stripping compgen metadata, the normalized
-    payloads differ and M-09 must fail."""
+    payloads differ and must fail."""
     tp = (
         tiny_mlp_run / "03_recipe_planning" / "post_lowering"
         / "transformed_payload.mlir"
@@ -231,7 +231,7 @@ def test_false_real_transform_discharge_claim_is_overwritten(
     tiny_mlp_run: Path,
 ) -> None:
     """A previous (or hand-edited) report claiming
-    ``discharged_real_transform`` must be rejected when M-09 reruns. The
+    ``discharged_real_transform`` must be rejected when reruns. The
     stage clears stale outputs and writes the honest discharge level."""
     cdir = tiny_mlp_run / "03_recipe_planning" / "differential_verification"
     cdir.mkdir(parents=True, exist_ok=True)

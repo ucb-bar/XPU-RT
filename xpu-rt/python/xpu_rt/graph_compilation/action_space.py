@@ -20,14 +20,14 @@ Outputs:
 All four JSON files include ``source.action_space_ir_sha256`` so a
 downstream auditor can pin the exact IR state they were derived from.
 
-Candidate families (per the M-04 spec):
+Candidate families (per the spec):
 
 1. **extension_closure** for ``source_classification == opaque_fallback``
 2. **set_tile_params** for matmul-like regions, drawn from the dossier's
    ``working_set_curve`` (no invented tile sizes).
 3. **set_accumulator_fp16 / quantize_fp8 / enable_fast_math** for
    structured compute-heavy regions; legality decided by the
-   ``numerical_sensitivity`` audit (M-03.5 made this trustworthy).
+   ``numerical_sensitivity`` audit (made this trustworthy).
 4. **fuse_producer_consumer** for transient single-consumer edges in
    ``tensor_use_def_graph`` where neither end is opaque.
 5. **assign_device** for every region (single-device baseline), so the
@@ -77,7 +77,7 @@ def _candidate_id(
 ) -> str:
     """Stable id for a candidate.
 
-    M-37.9 (Fix 1): when ``region_extra`` is supplied, it is mixed
+    (Fix 1): when ``region_extra`` is supplied, it is mixed
     into the hash so two regions named ``matmul_0`` in different
     models with different shapes produce distinct candidate_ids. Pass
     empty (the default) for backward compatibility with proposers
@@ -326,7 +326,7 @@ def _gen_tiling(
     # Baseline live_bytes for relative-cost normalization: max live_bytes seen.
     max_live = max(t["live_bytes"] for t in curve) or 1
 
-    # M-37.9 Fix 3b: derive the region's actual M/N/K (when matmul) so the
+    # Fix 3b: derive the region's actual M/N/K (when matmul) so the
     # cost preview can penalize tiles that would force boundary handling.
     # Greedy sorts by static_relative_cost; without this penalty it
     # always picks the smallest tile (cheapest cache footprint) even
@@ -359,7 +359,7 @@ def _gen_tiling(
         # tracks how much pressure the tile places on caches.
         rel_cost = round((live / max_live) ** 0.5, 4)
 
-        # M-37.9 Fix 3b: boundary penalty. When the region's actual
+        # Fix 3b: boundary penalty. When the region's actual
         # dimensions are known and the tile does NOT divide them
         # cleanly, multiply the cost by 1.5 so a clean-divide tile
         # (when one exists) sorts ahead. The penalty value is tuned
@@ -416,7 +416,7 @@ def _gen_tiling(
                     "live_bytes": live,
                     "fits_scratchpad": fits_scratchpad,
                     "fits_l2": fits_l2,
-                    # M-37.9 Fix 3b: surface boundary requirement so
+                    # Fix 3b: surface boundary requirement so
                     # the agent / validator can read it without
                     # re-deriving from shape + tile.
                     "boundary_required": boundary_required,
@@ -449,7 +449,7 @@ def _gen_tiling(
     return site, candidates
 
 
-# ---- Family 6: dispatch mode (M-50) ------------------------------------- #
+# ---- Family 6: dispatch mode ------------------------------------- #
 
 
 # Legal dispatch modes per archetype/granularity. Today's contracts are
@@ -470,12 +470,12 @@ def _gen_dispatch_modes(
     region_dossier_ref: str,
 ) -> tuple[_Site | None, list[_Cand]]:
     """Emit one site per kernel-bearing region with a candidate per
-    dispatch mode (M-50). Legal modes track the contract's granularity
+    dispatch mode. Legal modes track the contract's granularity
     (NORMAL / MEGA / MICRO); illegal-by-granularity modes still appear
     as candidates with typed legality.reason so the agent surface
     sees the bounded option set.
 
-    Today every contract that lands here is NORMAL granularity (M-40
+    Today every contract that lands here is NORMAL granularity (
     materialises only NORMAL contracts). PERSISTENT and INLINE
     candidates are emitted ILLEGAL until M-MEGA / M-MICRO land.
     """
@@ -531,7 +531,7 @@ def _gen_dispatch_modes(
                 legality=legal,
                 cost_preview={
                     # All modes have the same static-cost-relative-to-each-other
-                    # at this layer; the M-49 differential is what actually
+                    # at this layer; the differential is what actually
                     # measures runtime cost.
                     "static_relative_cost": 1.0 if mode == "sync" else (
                         0.95 if mode == "async" else 0.0
@@ -691,7 +691,7 @@ def _numerics_cost_estimate(op: str) -> float:
     return 1.00
 
 
-# ---- Family 7: contract_feedback proposals (gap #4) ---------------------- #
+# ---- Family 7: contract_feedback proposals ---------------------- #
 
 
 def _gen_feedback_proposals(
@@ -700,7 +700,7 @@ def _gen_feedback_proposals(
     regions_by_id: dict[str, dict[str, Any]],
 ) -> tuple[list[_Site], list[_Cand]]:
     """Read ``04_kernel_codegen/contract_feedback_proposals.json``
-    (M-59 aggregate, written by the auction's M-59 hook) and emit one
+    (aggregate, written by the auction's hook) and emit one
     candidate per allowlisted proposal at the matching region.
 
     The candidate's ``recipe_delta`` is the proposal's typed Recipe-IR
@@ -720,7 +720,7 @@ def _gen_feedback_proposals(
 
     entries = body.get("entries") or []
     # Group proposals by region — the aggregate keys by task_id, but
-    # the M-57 auction's task_id encodes the region via the request
+    # the auction's task_id encodes the region via the request
     # body. We re-read the request to recover the region.
     requests_dir = run_dir / "04_kernel_codegen" / "requests"
     region_by_task: dict[str, str] = {}
@@ -1118,7 +1118,7 @@ def build_action_space(
             sites.append(s2)
             candidates.extend(c2)
 
-        # Family 6 (M-50): dispatch mode — emit a site per kernel-bearing
+        # Family 6: dispatch mode — emit a site per kernel-bearing
         # region with one candidate per legal mode (sync/async legal for
         # NORMAL granularity; persistent/inline emitted as illegal until
         # MEGA/MICRO granularity contracts ship). Same placement
@@ -1147,7 +1147,7 @@ def build_action_space(
     sites.extend(s4)
     candidates.extend(c4)
 
-    # Family 7: contract_feedback proposals (M-59 + gap #4 closure).
+    # Family 7: contract_feedback proposals (+ closure).
     # Reads any contract_feedback_proposals.json left by a prior
     # iteration's auction and emits one candidate per allowlisted
     # proposal at the matching region. The candidate's recipe_delta

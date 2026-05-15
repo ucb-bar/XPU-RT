@@ -1,4 +1,4 @@
-"""M-30 tests for promotion efficiency aggregator (Section 19)."""
+"""tests for promotion efficiency aggregator (Section 19)."""
 
 from __future__ import annotations
 

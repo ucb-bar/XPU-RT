@@ -1,25 +1,25 @@
-"""Acceptance tests for M-24 Kernel Section Readiness Lock.
+"""Acceptance tests Kernel Section Readiness Lock.
 
-Mirrors M-17.1's test shape but for kernel-level evidence aggregation.
+Mirrors the test shape but for kernel-level evidence aggregation.
 Verifies:
 
 - Always-on emission (no env var needed for the matrix; the rows
   themselves report not_run when their evidence isn't on disk).
 - 6 typed reports + matrix shape with required fields.
-- Row 1 (compiled_precision) reflects M-19/M-20 refinement_status.
-- Row 2 (compiled_working_set) reflects M-22 utilizations.
+Row 1 (compiled_precision) reflects /refinement_status.
+Row 2 (compiled_working_set) reflects utilizations.
 - Row 3 (compiled_lifetime) is ready_for_m24_1 (honest non-claim
   for register-pressure / occupancy without ncu).
 - Row 4 (compiled_candidate_evidence) cross-references legal
   SetTileParams candidates.
 - Row 5 (compiled_agent_view) cross-references candidate_ids_allowed
-  ⊇ M-22 measured candidates.
-- Row 6 (compiled_bottleneck) reflects M-22 kernel_calibration_status.
+  ⊇ measured candidates.
+Row 6 (compiled_bottleneck) reflects kernel_calibration_status.
 - overall=pass iff every row in {ready, ready_for_m24_1}.
 - not_run propagates honestly when no kernel evidence.
-- M-19/M-20/M-22/M-22.1/M-23 source artifacts byte-identical (read-only).
+////source artifacts byte-identical (read-only).
 - Byte-stable across reruns (deterministic; modulo timestamp).
-- Ledger captures the M-24 stage event.
+Ledger captures the stage event.
 - No compiler-core imports.
 """
 
@@ -112,7 +112,7 @@ def test_kernel_readiness_dir_exists_when_kernels_on(
 def test_kernel_readiness_dir_exists_when_kernels_off(
     no_kernels_run: Path,
 ) -> None:
-    """M-24 is always-on; even without kernels the matrix + 6 reports
+    """is always-on; even without kernels the matrix + 6 reports
     exist (rows are not_run honestly)."""
     base = no_kernels_run / "02_graph_analysis" / "kernel_readiness"
     if not base.is_dir():
@@ -133,7 +133,7 @@ def test_matrix_schema_version(kernels_run: Path) -> None:
 
 
 def test_matrix_overall_pass_on_full_kernel_run(kernels_run: Path) -> None:
-    """merlin_mlp_wide with kernels ON + M-24.1 introspection
+    """merlin_mlp_wide with kernels ON + introspection
     should reach overall=pass with all 6 rows ready."""
     m = _read(
         kernels_run / "02_graph_analysis" / "kernel_readiness"
@@ -143,8 +143,8 @@ def test_matrix_overall_pass_on_full_kernel_run(kernels_run: Path) -> None:
         f"expected overall=pass, got {m['overall']!r} with rows "
         f"{[(r['row'], r['status']) for r in m['slide_rows']]}"
     )
-    # With M-24.1, all 6 rows reach ready (row 3 flips from
-    # ready_for_m24_1 → ready). Without M-24.1, expect 5 ready + 1
+    # With , all 6 rows reach ready (row 3 flips from
+    # ready_for_m24_1 → ready). Without , expect 5 ready + 1
     # ready_for_m24_1.
     assert (m["ready_count"] + m["ready_for_m24_1_count"]) == 6
     assert m["ready_count"] >= 5
@@ -187,14 +187,14 @@ def test_row2_compiled_working_set(kernels_run: Path) -> None:
 def test_row3_compiled_lifetime_after_m24_1(
     kernels_run: Path,
 ) -> None:
-    """After M-24.1 (Triton CompiledKernel introspection), row 3
+    """ (Triton CompiledKernel introspection), row 3
     flips ready_for_m24_1 → ready. The honest-non-claims invariant
     is that EITHER:
     - status=ready iff every region with kernel events also has
       register_pressure + register_spills + shared_memory_bytes +
       theoretical_occupancy populated
     - status=ready_for_m24_1 iff some regions have CUDA events but
-      M-24.1 introspection didn't populate static fields"""
+      introspection didn't populate static fields"""
     r = _read(
         kernels_run / "02_graph_analysis" / "kernel_readiness"
         / "lifetime_report.json"
@@ -272,7 +272,7 @@ def test_row6_compiled_bottleneck(kernels_run: Path) -> None:
 
 
 def test_byte_identical_matrix_across_reruns(kernels_run: Path) -> None:
-    """Re-running the M-24 builder produces a byte-identical matrix
+    """Re-running the builder produces a byte-identical matrix
     (modulo generated_at_utc)."""
     from compgen.graph_compilation.kernel_readiness import (
         run_kernel_section_readiness,
@@ -294,8 +294,8 @@ def test_byte_identical_matrix_across_reruns(kernels_run: Path) -> None:
 
 
 def test_m24_does_not_mutate_source_artifacts(kernels_run: Path) -> None:
-    """M-24 is read-only: M-19/M-20/M-22/M-22.1/M-23 source reports
-    are byte-identical after re-running M-24."""
+    """is read-only: ////source reports
+    are byte-identical after re-running ."""
     from compgen.graph_compilation.kernel_readiness import (
         run_kernel_section_readiness,
     )
@@ -330,7 +330,7 @@ def test_row6_status_matches_m22_kernel_calibration_status(
     kernels_run: Path,
 ) -> None:
     """Row 6's reported kernel_calibration_status must equal
-    M-22's standalone value."""
+    the standalone value."""
     cb = _read(
         kernels_run / "02_graph_analysis" / "compiled_bottleneck"
         / "compiled_bottleneck_report.json"
@@ -345,7 +345,7 @@ def test_row6_status_matches_m22_kernel_calibration_status(
 def test_row4_region_count_matches_m22_evidence(
     kernels_run: Path,
 ) -> None:
-    """Row 4's region count must match the count of M-22 evidence
+    """Row 4's region count must match the count of evidence
     regions (after filtering to legal SetTileParams candidates)."""
     cb = _read(
         kernels_run / "02_graph_analysis" / "compiled_bottleneck"
@@ -361,7 +361,7 @@ def test_row4_region_count_matches_m22_evidence(
             if x.get("model_status") == "ok"
         )
         # Row 4 covers regions with at least one legal SetTileParams
-        # candidate; M-22 has evidence for SetTileParams selected
+        # candidate; has evidence for SetTileParams selected
         # candidates. Row 4's regions_with_evidence ≤ row 4 total
         # AND ≤ cb_ok_regions (when both nonzero).
         s = r.get("summary", {}) or {}
@@ -395,8 +395,8 @@ def test_ledger_records_m24_event(kernels_run: Path) -> None:
             encoding="utf-8"
         ).splitlines() if line.strip()
     ]
-    # Filter exactly to the M-24 (kernel_section_readiness) event,
-    # not M-24.1 (kernel_lifetime).
+    # Filter exactly to the (kernel_section_readiness) event,
+    # not (kernel_lifetime).
     m24_events = [
         e for e in events
         if e.get("note") and "kernel_section_readiness" in e["note"]

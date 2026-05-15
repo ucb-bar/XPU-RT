@@ -1,16 +1,16 @@
-"""Kernel certificate (M-45).
+"""Kernel certificate.
 
-Phase C M-45. The certificate is the single load-bearing artifact M-46
+Phase C. The certificate is the single load-bearing artifact
 (plan ↔ kernel binding) consults to decide whether a kernel is
-trustworthy enough to call. M-43's commit tool emits the certificate
-when M-44's contract-driven verifier accepts; M-46+ refuse to bind a
+trustworthy enough to call. 's commit tool emits the certificate
+when 's contract-driven verifier accepts; + refuse to bind a
 kernel without a matching certificate.
 
 The certificate binds:
 
 ::
 
-    contract_hash               (the M-26 / M-41 canonical key)
+    contract_hash (the canonical key)
     task_id                     (links back to 04_kernel_codegen/requests/<task_id>.request.json)
     artifact_hashes             (per-artifact sha256[:16] at certify time)
     verifier_report_hash        (sha256[:16] of the validation report)
@@ -22,7 +22,7 @@ Certificate validation (``validate_certificate``):
 
   - re-hashes every kernel artifact and compares to the cert's
     ``artifact_hashes``. Any drift is a typed ``artifact_hash_drift``
-    failure (mirrors M-37.13's ``certificate_artifact_hash_changed``
+    failure (mirrors 's ``certificate_artifact_hash_changed``
     negative control pattern).
   - re-hashes the validation report and compares to
     ``verifier_report_hash``. Any drift means the verifier report
@@ -30,7 +30,7 @@ Certificate validation (``validate_certificate``):
   - checks that all referenced files still exist.
 
 The cert lives at ``04_kernel_codegen/certificates/<contract_hash>.json``.
-The same contract_hash → same cert path; M-46 looks up by hash.
+The same contract_hash → same cert path; looks up by hash.
 """
 
 from __future__ import annotations
@@ -68,7 +68,7 @@ class KernelCertificate:
     verifier_report_path: str
     verifier_report_hash: str
 
-    # Frozen provider claims at accept time (M-46+ reads these).
+    # Frozen provider claims at accept time (+ reads these).
     claims: dict[str, Any]
 
     # Paper-claimable only when no fallback was used.
@@ -80,12 +80,19 @@ class KernelCertificate:
     contract_path: str = ""
     request_path: str = ""
 
-    # M-58: companion shape-class hash for cross-model lookup. The cert
+    # companion shape-class hash for cross-model lookup. The cert
     # filename and ``contract_hash`` field stay keyed on the concrete
     # ``instance_contract_hash`` for backward compatibility; this field
     # carries the canonical hash so a recipe-library lookup can locate
     # this cert by shape-class (cross-model leverage).
     canonical_contract_hash: str = ""
+
+    # when a Z3 obligation harness ran during contract
+    # verification, this points at the per-cert obligation report
+    # (relative to run_dir). Empty string means no Z3 proof was
+    # required for this contract (the structural-only path is
+    # still the default).
+    z3_obligation_report_ref: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -106,6 +113,7 @@ class KernelCertificate:
             "fallback_reason": self.fallback_reason,
             "contract_path": self.contract_path,
             "request_path": self.request_path,
+            "z3_obligation_report_ref": self.z3_obligation_report_ref,
         }
 
     @classmethod
@@ -128,6 +136,7 @@ class KernelCertificate:
             contract_path=str(data.get("contract_path", "")),
             request_path=str(data.get("request_path", "")),
             canonical_contract_hash=str(data.get("canonical_contract_hash", "")),
+            z3_obligation_report_ref=str(data.get("z3_obligation_report_ref", "")),
         )
 
 
@@ -152,7 +161,7 @@ def _utcnow() -> str:
 
 def _hash_file(path: Path) -> str:
     """sha256[:16] of file contents — same shorthash convention as
-    M-37.13 verification certificates."""
+    verification certificates."""
     return hashlib.sha256(path.read_bytes()).hexdigest()[:16]
 
 
@@ -162,7 +171,7 @@ def _certificate_dir(run_dir: Path) -> Path:
 
 def certificate_path_for(*, run_dir: Path, contract_hash: str) -> Path:
     """The single canonical path the certificate lives at, indexed by
-    contract_hash (M-46 looks up here)."""
+    contract_hash (looks up here)."""
     return _certificate_dir(run_dir) / f"{contract_hash}.json"
 
 
@@ -185,7 +194,7 @@ def emit_certificate(
 
     The cert is keyed by contract_hash, so re-emission for the same
     contract overwrites — the fresher cert is the source of truth.
-    Caller invariant: only call after M-44 verifier returns
+    Caller invariant: only call verifier returns
     overall=pass.
     """
     run_dir = Path(run_dir).resolve()
@@ -201,7 +210,7 @@ def emit_certificate(
 
     verifier_report_hash = _hash_file(verifier_report_path)
 
-    # M-58: derive the canonical (shape-class) hash from the contract
+    # derive the canonical (shape-class) hash from the contract
     # body so cross-model recipe-library lookup works. Best-effort —
     # if the contract file is missing or unparseable, leave empty.
     canonical_hash = _derive_canonical_hash(run_dir=run_dir, request_body=request_body)
@@ -258,7 +267,7 @@ def _derive_canonical_hash(
     and returns the 16-char shape-class hash. On any failure (missing
     contract path, parse error, etc.) returns an empty string — the
     cert still emits with the canonical field empty rather than
-    failing the M-45 emit step.
+    failing the emit step.
     """
     try:
         from compgen.graph_compilation.kernel_codegen_response import (
@@ -282,16 +291,16 @@ def _derive_canonical_hash(
 def find_certificate_by_canonical_hash(
     *, run_dir: Path, canonical_hash: str,
 ) -> KernelCertificate | None:
-    """M-58 cross-model lookup: locate a certificate by its
+    """cross-model lookup: locate a certificate by its
     ``canonical_contract_hash`` field rather than the filename's
     instance hash.
 
-    Gap #2 closure — walks both:
+     closure — walks both:
 
     * ``04_kernel_codegen/certificates/*.json`` (winners' canonical
       slot — written by ``emit_certificate`` for the winner).
     * ``04_kernel_codegen/auction/*/verified/*/*.certificate.json``
-      (per-provider runner-up certs from M-57's auction).
+      (per-provider runner-up certs 's auction).
 
     Returns the first cert whose ``canonical_contract_hash`` matches.
     Searching the auction tree means a runner-up provider's
@@ -343,9 +352,9 @@ def validate_certificate(
     *, run_dir: Path, cert: KernelCertificate,
 ) -> CertificateValidation:
     """Re-hash every artifact + the verifier report and compare to
-    the cert's recorded hashes. Catches the M-37.13-style negative
+    the cert's recorded hashes. Catches the -style negative
     control: edit the kernel artifact post-certify → cert no longer
-    validates → M-46 refuses to bind."""
+    validates → refuses to bind."""
     run_dir = Path(run_dir).resolve()
     drifted: dict[str, str] = {}
 

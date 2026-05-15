@@ -1,0 +1,17 @@
+schema_version: provider_card_v1
+provider_id: claude_kernel
+integration_level: generate
+target_families: [cuda, host_cpu]
+contract_kinds: [matmul, pointwise, fused_region, attention]
+emits: [triton_source, c_source]
+entrypoint: compgen.kernels.providers.claude_kernel:ClaudeKernelProvider
+paper_claimable: false
+required_env: []
+required_commands: []
+required_python_imports: []
+description: |
+  Claude Code / agent-driven kernel provider. Existing CompGen
+  path where the active agent session (this one) authors a kernel
+  in response to an agent-decision request. The kernel still goes
+  through the same verifier + glue differential — the provider
+  proposes, the verifier certifies.

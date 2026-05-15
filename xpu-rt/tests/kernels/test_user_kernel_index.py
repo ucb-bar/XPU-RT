@@ -1,4 +1,4 @@
-"""M-62 — User-space kernel-provider discovery + indexing tests.
+"""User-space kernel-provider discovery + indexing tests.
 
 Coverage:
 

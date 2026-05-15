@@ -1,11 +1,11 @@
-"""M-24.1 — Kernel Lifetime Evidence (register pressure, occupancy,
+"""Kernel Lifetime Evidence (register pressure, occupancy,
 shared memory, optional ncu dynamic counters).
 
-Fills the gap M-24 row 3 (compiled_lifetime) explicitly leaves open
+Fills the gap row 3 (compiled_lifetime) explicitly leaves open
 in its honest non-claims. Two complementary data sources:
 
 1. **Triton CompiledKernel introspection** (PRIMARY; always available,
-   no perms required). Re-runs each M-19/M-20 Triton kernel and
+   no perms required). Re-runs each /Triton kernel and
    captures from the resulting ``triton.compiler.CompiledKernel``:
 
    - ``n_regs``                   register count per thread
@@ -24,15 +24,15 @@ in its honest non-claims. Two complementary data sources:
    memory throughput, cache hit rates. When admin-only is set
    (typical user environment), emits typed ``ncu_admin_only``.
 
-The combination flips M-24 row 3 (compiled_lifetime) from
+The combination flips row 3 (compiled_lifetime) from
 ``ready_for_m24_1`` → ``ready`` when Triton introspection succeeds
 (no admin needed). Dynamic counters are an additive refinement.
 
 Hard non-goals:
 - No new measurement (kernels are re-run, not regenerated).
 - No compiler-core imports.
-- No mutation of M-19/M-20/M-22/M-22.1/M-23 source artifacts.
-- fp32 only (matches M-19/M-20/M-23).
+No mutation of ////source artifacts.
+fp32 only (matches //).
 - Best-effort everywhere: missing torch / triton / kernel source /
   ncu blocked → typed unavailable. Never raises.
 """
@@ -197,7 +197,7 @@ def _introspect_triton_kernel(
     matmul_shape: tuple[int, int, int],
     tile: tuple[int, int, int],
 ) -> dict[str, Any]:
-    """Re-run an M-19-emitted Triton kernel once to obtain the
+    """Re-run an -emitted Triton kernel once to obtain the
     ``CompiledKernel`` object and extract static attributes. Returns
     a dict with register_pressure, register_spills, shared_memory_bytes,
     theoretical_occupancy, etc."""
@@ -252,7 +252,7 @@ def _introspect_triton_kernel(
                         device=device, generator=gen)
         C = torch.zeros(M, N, dtype=torch.float32, device=device)
         grid = ((M + tM - 1) // tM, (N + tN - 1) // tN)
-        # Try matmul_kernel signature first (M-19 layout).
+        # Try matmul_kernel signature first (layout).
         try:
             compiled = kernel_callable[grid](
                 A, B, C,
@@ -264,7 +264,7 @@ def _introspect_triton_kernel(
                 num_warps=4, num_stages=2,
             )
         except TypeError:
-            # Fall back to fused_kernel signature (M-23 layout).
+            # Fall back to fused_kernel signature (layout).
             n_elems = M * N
             bias_len = N
             BLOCK = max(16, ((N + 15) // 16) * 16)
@@ -501,7 +501,7 @@ class KernelLifetimeResult:
 def _kernel_src_for_region(
     *, run_dir: Path, region_id: str,
 ) -> Path | None:
-    """Find the M-19/M-20-emitted Triton source file for a region."""
+    """Find the /-emitted Triton source file for a region."""
     base = run_dir / "02_graph_analysis" / "kernel_execution"
     candidates = [
         base / "regions" / region_id / f"triton_kernel_{region_id}.py",
@@ -516,7 +516,7 @@ def _kernel_src_for_region(
 def run_kernel_lifetime_evidence(
     run_dir: Path,
 ) -> KernelLifetimeResult:
-    """Build M-24.1 kernel-lifetime evidence layer. Best-effort;
+    """Build kernel-lifetime evidence layer. Best-effort;
     never raises."""
     run_dir = Path(run_dir).resolve()
     ga = run_dir / "02_graph_analysis"
@@ -524,7 +524,7 @@ def run_kernel_lifetime_evidence(
     out_dir.mkdir(parents=True, exist_ok=True)
     report_path = out_dir / "kernel_lifetime_evidence_report.json"
 
-    # Source: M-22's region list (every region with compiled evidence).
+    # Source: 's region list (every region with compiled evidence).
     cb = _read_json(
         ga / "compiled_bottleneck" / "compiled_bottleneck_report.json"
     )

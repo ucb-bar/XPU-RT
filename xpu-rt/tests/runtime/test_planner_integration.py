@@ -154,18 +154,28 @@ class TestMultiDevicePipeline:
             assert mp.peak_bytes >= 0
 
     def test_metadata_contains_solver_info(self) -> None:
-        """Plan metadata should contain solver timing and feasibility info."""
+        """Plan metadata carries typed-envelope solver info for all three planners.
+
+        Post-Phase-E: placement, schedule, and memory each emit
+        ``<name>_status`` / ``<name>_backend`` / ``<name>_time_ms`` /
+        ``<name>_formulation_hash``. This is the production-path
+        metadata shape; the older ``placement_gap`` / ``memory_feasible``
+        field names were legacy-solver-specific.
+        """
         target = _make_two_device_target()
         module = _make_simple_module()
 
         plan = plan_execution(module, target)
 
-        assert "placement_gap" in plan.metadata
-        assert "placement_time_ms" in plan.metadata
-        assert "schedule_feasible" in plan.metadata
-        assert "schedule_time_ms" in plan.metadata
-        assert "memory_feasible" in plan.metadata
-        assert "memory_time_ms" in plan.metadata
+        for prefix in ("placement", "schedule", "memory"):
+            for key in (f"{prefix}_status", f"{prefix}_backend", f"{prefix}_time_ms", f"{prefix}_formulation_hash"):
+                assert key in plan.metadata, f"missing metadata key: {key}"
+        assert plan.metadata["placement_status"] in {"optimal", "feasible", "infeasible", "timeout", "blocked", "error"}
+        assert plan.metadata["memory_status"] in {"optimal", "feasible", "infeasible", "timeout", "blocked", "error"}
+        # Backend labels are honest: each call routes to the registry-
+        # selected backend (real solve, no silent fallback).
+        assert plan.metadata["placement_backend"] == "ortools_cp_sat"
+        assert plan.metadata["memory_backend"] in {"mosek", "highs"}
 
     def test_estimated_latency_from_schedule(self) -> None:
         """Estimated latency should come from the scheduling solver's makespan."""
@@ -177,7 +187,7 @@ class TestMultiDevicePipeline:
         assert plan.estimated_latency_us is not None
         assert plan.estimated_latency_us > 0
         # Should be the schedule makespan (feasible case)
-        if plan.metadata.get("schedule_feasible"):
+        if plan.metadata.get("schedule_status") in {"optimal", "feasible"}:
             # Makespan should be less than or equal to serial sum
             from compgen.solve.partition import partition_graph
 

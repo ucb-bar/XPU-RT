@@ -100,7 +100,7 @@ def test_build_target_yaml_writes_loadable_profile(tmp_path: Path) -> None:
     assert profile.target_id == "test_host_cpu"
     assert profile.peak_compute_gflops == obj["peak_compute_gflops"]
     assert profile.scratchpad_bytes >= 4096
-    # Numerical budgets monotone (M-03.5 invariant).
+    # Numerical budgets monotone (invariant).
     nb = profile.numerical_budgets
     assert nb["fp32"] <= nb["fast_math"] <= nb["fp16_accum"] <= nb["fp8_e4m3"]
 

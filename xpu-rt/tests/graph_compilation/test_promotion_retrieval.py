@@ -1,4 +1,4 @@
-"""Tests for :mod:`compgen.graph_compilation.promotion_retrieval` (M-28)."""
+"""Tests for :mod:`compgen.graph_compilation.promotion_retrieval`."""
 
 from __future__ import annotations
 
@@ -200,8 +200,8 @@ def test_skips_recipes_without_sidecar(tmp_path: Path) -> None:
 
 
 def test_pass_id_extracted_from_evidence_summary(tmp_path: Path) -> None:
-    """M-37.1: pass_id + candidate_id are extracted from
-    recipe.evidence_summary (where the M-26 promotion bridge writes them)
+    """pass_id + candidate_id are extracted from
+    recipe.evidence_summary (where the promotion bridge writes them)
     so the agent can cross-link the promoted recipe to its source pass card."""
     library = tmp_path / "library"
     _write_sidecar(
@@ -230,7 +230,7 @@ def test_pass_id_extracted_from_evidence_summary(tmp_path: Path) -> None:
 
 
 def test_pass_id_empty_for_pre_m37_sidecar(tmp_path: Path) -> None:
-    """A pre-M-37 sidecar (no candidate_kind in evidence_summary)
+    """A pre-sidecar (no candidate_kind in evidence_summary)
     yields empty pass_id; agent treats as no cross-link."""
     library = tmp_path / "library"
     _write_sidecar(

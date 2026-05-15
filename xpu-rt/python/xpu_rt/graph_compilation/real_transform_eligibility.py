@@ -16,13 +16,13 @@ restrictive:
 
 This stage is purely an audit. It does not apply transforms, it does not
 mutate Payload IR, and it does not emit ``transformed_payload.real.mlir``.
-M-11B will use the resulting eligibility report to drive a real
+will use the resulting eligibility report to drive a real
 SetTileParams transform for the eligible cases.
 
 Hard non-goals:
 
-- No real loop tiling (M-11B).
-- No differential verification (M-12).
+No real loop tiling.
+No differential verification.
 - No codegen, benchmarks, profiler feedback.
 - No compiler-core changes.
 
@@ -612,12 +612,11 @@ def run_real_transform_eligibility(
 
     # ------------------------------------------------------------------ #
     # 6. divides-or-boundary observation (informational; never rejects).
-    #
-    # Per the M-11A spec the tile may either divide the matmul dimensions
+    # Per the spec the tile may either divide the matmul dimensions
     # cleanly OR be handled via explicit boundary tiles — including the
     # degenerate "tile >= dim" case which lowers to a single-iteration
     # loop. Passing `tile_exists_in_working_set_curve` is the legality
-    # gate; this check is only a recorded hint for the M-11B transformer
+    # gate; this check is only a recorded hint for the transformer
     # so it knows whether to emit a clean tiling or boundary-aware code.
     # ------------------------------------------------------------------ #
     tile_geometry: dict[str, Any] | None = None

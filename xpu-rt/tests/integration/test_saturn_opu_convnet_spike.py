@@ -82,7 +82,7 @@ def _rvv_only_spec(tmp_path: Path) -> str:
 def test_pipeline_produces_complete_overlay(tmp_path: Path, flavour: str) -> None:
     """Verify both capability-driven paths (OPU / RVV-only) emit a complete overlay.
 
-    This is the CompGen-side half of the M5 kill-test — it asserts the
+    This is the CompGen-side half of the kill-test — it asserts the
     Python pipeline produces every artifact ``west build`` needs,
     *without* requiring the Zephyr SDK or Spike. Spec selection drives
     which ukernel lane is emitted; no ``use_opu`` toggle.

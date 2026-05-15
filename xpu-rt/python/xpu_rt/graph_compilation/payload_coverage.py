@@ -108,7 +108,6 @@ ALLOWED_CLASSIFICATIONS: frozenset[str] = frozenset(
 )
 
 # MLIR op-line regex.
-#
 # Matches optional ``%name = `` (or ``%a, %b = ``) followed by ``dialect.op``.
 # Captures the SSA result name(s), the dialect, and the op stem.
 _OP_LINE_RE = re.compile(

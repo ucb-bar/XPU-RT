@@ -1,18 +1,18 @@
-"""Execution-plan emission with M-46 region_kernel_bindings.
+"""Execution-plan emission with region_kernel_bindings.
 
-Phase C M-46: emit ``05_execution_plan/execution_plan.yaml`` plus a
+Phase C emit ``05_execution_plan/execution_plan.yaml`` plus a
 sidecar ``05_execution_plan/region_kernel_bindings.json`` describing
 the (region_id, contract_hash, certificate_path, kernel_artifact,
-dispatch_model) tuples for every region whose M-45 certificate exists.
+dispatch_model) tuples for every region whose certificate exists.
 
 Hard rule: a region is bound only if its certificate file exists AND
-the certificate's ``contract_hash`` matches what M-42's request +
-M-44's verification + M-45's emit produced. Otherwise the region is
-recorded as ``unbound`` in the sidecar with a typed reason; M-47's
+the certificate's ``contract_hash`` matches what 's request +
+'s verification + 's emit produced. Otherwise the region is
+recorded as ``unbound`` in the sidecar with a typed reason; 's
 plan executor will refuse to call those regions.
 
 This stage runs after ``--stop-after kernel-codegen-request`` (where
-M-40-M-42 emit the contract + request) and after the M-43/M-44/M-45
+-emit the contract + request) and after the //
 chain has had a chance to write certificates. In the operator-driven
 flow, the operator has already submitted a provider response and the
 certificate is on disk before this stage runs.
@@ -21,7 +21,7 @@ When no certificates exist (e.g. fresh greedy run with no provider
 response yet), the plan is emitted with an empty
 ``region_kernel_bindings`` list and a sidecar that names the
 unbound regions with ``no_certificate`` as the reason. This makes
-M-47's downstream check honest — a plan that bound zero kernels
+'s downstream check honest — a plan that bound zero kernels
 fails the runtime-bound-kernel check rather than silently running.
 """
 
@@ -117,7 +117,7 @@ def _try_canonical_fallback(
     run_dir: Path,
     request: dict[str, Any],
 ) -> Any:
-    """Gap #3 fallback: derive the request's contract canonical hash
+    """ fallback: derive the request's contract canonical hash
     and look up a sibling region's cert that matches.
 
     Returns the matching :class:`KernelCertificate` or ``None`` when
@@ -156,7 +156,7 @@ def _bindings_for_run(run_dir: Path) -> list[BindingRow]:
     """Walk every kernel-codegen request and produce a binding row.
 
     The request is the source of truth for which regions need a
-    binding. The certificate (M-45) is the source of truth for whether
+    binding. The certificate is the source of truth for whether
     that region is bindable.
     """
     rows: list[BindingRow] = []
@@ -193,11 +193,11 @@ def _bindings_for_run(run_dir: Path) -> list[BindingRow]:
         )
         cert_path = run_dir / cert_rel
         if not cert_path.exists():
-            # Gap #3 closure — canonical-hash fallback. The instance-
-            # hash cert is missing (this region wasn't M-43-committed),
+            #  closure — canonical-hash fallback. The instance-
+            # hash cert is missing (this region wasn't -committed),
             # but a sibling region's cert may share canonical hash.
             # ``find_certificate_by_canonical_hash`` walks both the
-            # canonical certs dir AND the auction tree (gap #2).
+            # canonical certs dir AND the auction tree .
             fallback_cert = _try_canonical_fallback(
                 run_dir=run_dir, request=request,
             )
@@ -251,7 +251,7 @@ def _bindings_for_run(run_dir: Path) -> list[BindingRow]:
             ))
             continue
 
-        # Pick the kernel_source artifact to record; M-47 imports from
+        # Pick the kernel_source artifact to record; imports from
         # this path.
         kernel_artifact = ""
         for name, p in (cert.get("artifact_paths") or {}).items():
@@ -288,13 +288,13 @@ def _bindings_for_run(run_dir: Path) -> list[BindingRow]:
 
 
 def emit_execution_plan(run_dir: Path) -> ExecutionPlanEmitResult:
-    """Build a minimal ExecutionPlan with M-46 region_kernel_bindings,
+    """Build a minimal ExecutionPlan with region_kernel_bindings,
     serialise it to ``05_execution_plan/execution_plan.yaml``, and
     write the per-region binding sidecar.
 
-    The plan is intentionally minimal at M-46 — placement, dependency,
-    sync, and copy edges land in M-47/M-51/M-52 when the executor is
-    actually emitted. M-46's only goal is to bind certified kernels
+    The plan is intentionally minimal at placement, dependency,
+    sync, and copy edges land //when the executor is
+    actually emitted. 's only goal is to bind certified kernels
     to regions and validate that the bindings agree with on-disk
     certificates.
     """
@@ -351,7 +351,7 @@ def emit_execution_plan(run_dir: Path) -> ExecutionPlanEmitResult:
     )
     # Structural validation (run-dir-agnostic).
     plan.validate()
-    # Strict validation against on-disk certificates — M-46's load-bearing
+    # Strict validation against on-disk certificates — 's load-bearing
     # check. If a cert references a missing/mismatched contract_hash we
     # surface it as an unbound row (fall back gracefully); validate_with_run_dir
     # only fires on bindings that truly have a cert path.

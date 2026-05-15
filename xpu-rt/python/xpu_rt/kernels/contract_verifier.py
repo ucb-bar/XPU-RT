@@ -1,6 +1,6 @@
-"""Contract-driven kernel verifier (M-44, LOAD-BEARING).
+"""Contract-driven kernel verifier (, LOAD-BEARING).
 
-Phase C M-44: stop hardcoding kernel checks. Generate the verifier
+Phase C stop hardcoding kernel checks. Generate the verifier
 obligation list mechanically from ``KernelContractV3`` fields. Each
 contract field maps to a typed obligation; each obligation maps to a
 concrete ``verify_*`` callable.
@@ -18,36 +18,32 @@ Mapping (Section 7's "contract field → verifier check" table):
     numerics.max_relative_error  → obl_differential_within_higham_bound
     numerics.deterministic       → obl_deterministic_repeat_run
     sync.event_decls             → obl_each_event_signalled_once
-    memory.input_tiers           → obl_memory_tier_match  (M-48 runtime assert)
+    memory.input_tiers → obl_memory_tier_match (runtime assert)
     dispatch.model               → obl_dispatch_model_match
     hardware.target_name         → obl_target_name_match
 
-The differential check is anchored to the M-37.13 Higham bound, never
+The differential check is anchored to the Higham bound, never
 to hand-picked constants. Tampered metadata, output, or dispatch each
-fire a distinct typed failure_kind that maps directly into the M-43
+fire a distinct typed failure_kind that maps directly into the
 recoverability taxonomy (numerical_mismatch / shape_mismatch /
 metadata_mismatch / semantic_contract_violation).
 
 Output: ``04_kernel_codegen/validation/<task_id>.validation.json``
-listing every obligation + its verdict. M-45 wraps an accepted
+listing every obligation + its verdict. wraps an accepted
 verification report into a kernel certificate.
 """
 
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from compgen.kernels.contract_v3 import (
-    DispatchModel,
     KernelContractV3,
-    LayoutKind,
-    MemoryTier,
 )
-
 
 # --------------------------------------------------------------------------- #
 # Schema
@@ -58,7 +54,7 @@ from compgen.kernels.contract_v3 import (
 class VerifierObligation:
     """One obligation derived from a contract field. The verifier walks
     obligations in order; the first failure short-circuits with a
-    typed verdict the M-43 recovery taxonomy maps to a failure_kind."""
+    typed verdict the recovery taxonomy maps to a failure_kind."""
 
     obl_id: str
     contract_field: str        # human-readable origin (for audit)
@@ -79,17 +75,25 @@ class ObligationVerdict:
     obl_id: str
     verifier_kind: str
     status: str                # "pass" | "fail" | "deferred"
-    failure_kind: str = ""     # one of M-43 RECOVERABILITY keys (when fail)
+    failure_kind: str = ""     # one of RECOVERABILITY keys (when fail)
     detail: str = ""
+    # G2 wire-in: optional typed Counterexample populated when the
+    # failure is well-characterised (numerical mismatch, contract
+    # violation with a known op-level cause). Backward-compatible:
+    # legacy verdicts have counterexample=None.
+    counterexample: Any = None  # compgen.agent.counterexample.Counterexample
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        body: dict[str, Any] = {
             "obl_id": self.obl_id,
             "verifier_kind": self.verifier_kind,
             "status": self.status,
             "failure_kind": self.failure_kind,
             "detail": self.detail,
         }
+        if self.counterexample is not None:
+            body["counterexample"] = self.counterexample.to_dict()
+        return body
 
 
 @dataclass(frozen=True)
@@ -125,7 +129,7 @@ def generate_obligations(contract: KernelContractV3) -> list[VerifierObligation]
     """Walk ``contract`` fields and emit one obligation per field that
     has a verifiable invariant. The list is the verifier's checklist;
     no obligation can be added or removed without going through this
-    function (that's the M-44 invariant — verifier and contract stay
+    function (that's the invariant — verifier and contract stay
     in lockstep)."""
     obligations: list[VerifierObligation] = []
     io = contract.io
@@ -191,8 +195,8 @@ def generate_obligations(contract: KernelContractV3) -> list[VerifierObligation]
             expected={"event": e.name, "wait_count": e.wait_count},
         ))
 
-    # memory.input_tiers — runtime assertion (M-48 wires the actual
-    # buffer-allocation check; M-44 declares the obligation as
+    # memory.input_tiers — runtime assertion (wires the actual
+    # buffer-allocation check; declares the obligation as
     # "deferred to runtime").
     mem = contract.orchestration.memory
     for i, t in enumerate(mem.input_tiers):
@@ -232,7 +236,87 @@ def generate_obligations(contract: KernelContractV3) -> list[VerifierObligation]
             },
         ))
 
+    # wire-up: when the contract opts in via
+    # ``optional_v3_1_fields["z3_proof_required"] = True``, every
+    # supported precondition becomes a Z3 proof obligation. The
+    # ``predicate_proof_via_z3`` verifier discharges them through
+    # :mod:`compgen.solve.z3_obligations`.
+    if contract.optional_v3_1_fields.get("z3_proof_required"):
+        for i, pred in enumerate(contract.preconditions or ()):
+            obligations.append(VerifierObligation(
+                obl_id=f"obl_precondition_{i}_z3_proof",
+                contract_field=f"preconditions[{i}]",
+                verifier_kind="predicate_proof_via_z3",
+                expected={
+                    "predicate_index": i,
+                    "predicate": _predicate_to_proof_dict(pred),
+                },
+            ))
+
     return obligations
+
+
+def _predicate_to_proof_dict(pred: Any) -> dict[str, Any]:
+    """Translate a typed :class:`Predicate` into the parameters the
+    Z3 obligation harness consumes.
+
+    Supported mappings:
+
+    * ``ModEq(arg_dim, k)`` — emits ``divisible_by(<dim_name>, k)``
+      under a single bounded integer variable.
+    * ``DtypeIn(arg, dtype_set)`` — no Z3 proof needed; expressed as
+      a finite ``in_set`` over the dtype symbol mapped to integer
+      codepoints.
+
+    Anything else returns ``{"unsupported": True, ...}``; the
+    verifier maps that to ``status=deferred`` so the obligation is
+    visible in the report but does not fail the cert.
+    """
+
+    from compgen.kernels.predicates import (
+        ByteSizeLe,
+        DtypeIn,
+        ModEq,
+        NoAlias,
+        NumericalWithinEps,
+        predicate_kind,
+    )
+
+    if isinstance(pred, ModEq):
+        return {
+            "obligation_kind": "shape_predicate_implication",
+            "params": {
+                "variables": {pred.arg_dim: {"min": 1, "max": 65536}},
+                "applies_when": [],
+                "precondition": {
+                    "op": "divisible_by", "var": pred.arg_dim, "k": pred.k,
+                },
+            },
+        }
+    if isinstance(pred, DtypeIn):
+        return {
+            "obligation_kind": "shape_predicate_implication",
+            "params": {
+                "variables": {pred.arg: {"min": 0, "max": 16}},
+                "applies_when": [],
+                "precondition": {
+                    "op": "in_set", "var": pred.arg, "values": [hash(d) & 0xFFFF for d in pred.dtype_set],
+                },
+            },
+        }
+    if isinstance(pred, (ByteSizeLe, NoAlias, NumericalWithinEps)):
+        # No Z3 lowering yet; report as unsupported so the verifier
+        # marks it ``deferred`` honestly.
+        return {
+            "unsupported": True,
+            "kind": predicate_kind(pred),
+            "reason": "no Z3 lowering implemented yet",
+        }
+    return {
+        "unsupported": True,
+        "kind": type(pred).__name__,
+        "reason": "unknown predicate type",
+    }
 
 
 # --------------------------------------------------------------------------- #
@@ -421,7 +505,7 @@ def _verify_event_signalled_once(
     if got_count is None:
         return ObligationVerdict(
             obl_id=obl.obl_id, verifier_kind=obl.verifier_kind,
-            status="deferred",  # M-48 wires the runtime check
+            status="deferred",  # wires the runtime check
             detail=(
                 f"metadata does not declare signals_emitted[{expected_event!r}]; "
                 f"deferred to M-48 runtime assertion"
@@ -444,7 +528,7 @@ def _verify_event_signalled_once(
 def _verify_memory_tier_runtime_deferred(
     *, obl: VerifierObligation, **_: Any,
 ) -> ObligationVerdict:
-    """M-44 declares the obligation; M-48 runtime assertion checks at
+    """declares the obligation; runtime assertion checks at
     launch. Always status=deferred at this layer."""
     return ObligationVerdict(
         obl_id=obl.obl_id, verifier_kind=obl.verifier_kind,
@@ -461,9 +545,9 @@ def _verify_differential_within_higham_bound(
     metadata: dict[str, Any], **_: Any,
 ) -> ObligationVerdict:
     """For COMPUTE_TILED matmul kernels we can run the differential
-    here using M-37.13's Higham bound. Other archetypes are deferred
-    to a M-44.x follow-on (the verifier emits 'deferred' rather than
-    silently passing — staying loud is the M-31A discipline)."""
+    here using 's Higham bound. Other archetypes are deferred
+    to a .x follow-on (the verifier emits 'deferred' rather than
+    silently passing — staying loud is the discipline)."""
     archetype = contract.archetype.value
     if archetype != "compute_tiled":
         return ObligationVerdict(
@@ -478,8 +562,8 @@ def _verify_differential_within_higham_bound(
     # For matmul: the metadata must declare the per-case max_abs_error
     # and we compare against Higham's bound derived from the contract
     # shape. Real run wires this through the kernel artifact's
-    # measured outputs vs eager BLAS; M-44 surfaces the obligation
-    # mechanically and accepts the metadata-declared signal until M-49
+    # measured outputs vs eager BLAS; surfaces the obligation
+    # mechanically and accepts the metadata-declared signal until
     # runs the executor end-to-end.
     declared = metadata.get("declared_max_abs_error")
     declared_bound = metadata.get("declared_higham_bound")
@@ -494,6 +578,12 @@ def _verify_differential_within_higham_bound(
             ),
         )
     if float(declared) > float(declared_bound):
+        cex = _build_numerical_counterexample(
+            obl=obl,
+            contract=contract,
+            declared=float(declared),
+            declared_bound=float(declared_bound),
+        )
         return ObligationVerdict(
             obl_id=obl.obl_id, verifier_kind=obl.verifier_kind,
             status="fail", failure_kind="numerical_mismatch",
@@ -501,9 +591,90 @@ def _verify_differential_within_higham_bound(
                 f"declared_max_abs_error={declared} > Higham bound "
                 f"{declared_bound}"
             ),
+            counterexample=cex,
         )
     return ObligationVerdict(
         obl_id=obl.obl_id, verifier_kind=obl.verifier_kind, status="pass",
+    )
+
+
+def _build_numerical_counterexample(
+    *,
+    obl: VerifierObligation,
+    contract: KernelContractV3,
+    declared: float,
+    declared_bound: float,
+) -> Any:
+    """Build a typed :class:`compgen.agent.counterexample.Counterexample`
+    for a numerical-mismatch failure.
+
+    The verifier knows the archetype + contract shape + declared
+    error but not a specific failing index — those come from the
+    real-differential runner. Until that ships, we emit the
+    Counterexample with empty indices but populated names + IR slice
+    so the agent's :mod:`compgen.agent.primitives.explain_counterexample`
+    has typed structure to reason about.
+    """
+
+    from compgen.agent.counterexample import (
+        Counterexample,
+        InputSlice,
+        IRSlice,
+        OutputSlice,
+        RemediationHint,
+        classify_rejection,
+    )
+
+    # Numerical-mismatch is recoverable iff a remediation hint exists;
+    # at this layer we don't have a concrete candidate id, so the
+    # class lands as "surprising" — the LLM-call-site primitive
+    # explain_counterexample will promote it to tactic_recoverable
+    # when it can offer a hint.
+    rejection_class = classify_rejection(
+        legality_was_blocked=False,
+        numerical_only=True,
+        remediation_known=False,
+    )
+
+    return Counterexample(
+        gate="differential_higham",
+        rejection_class=rejection_class,
+        input_slice=InputSlice(
+            name="matmul_input_a",
+            indices={},  # will populate when the real runner lands
+        ),
+        output_slice=OutputSlice(
+            name="matmul_output",
+            indices={},
+            actual=declared,
+            reference=declared_bound,
+            abs_error=max(0.0, declared - declared_bound),
+        ),
+        ir_slice=IRSlice(
+            region_id=obl.contract_field,  # e.g. "numerics.max_relative_error"
+            op=f"archetype={contract.archetype.value}",
+            annotation=(
+                f"accumulator_dtype="
+                f"{contract.io.numerics.accumulator_dtype or 'unspecified'}; "
+                f"declared_max_abs_error={declared}, "
+                f"Higham bound={declared_bound}"
+            ),
+        ),
+        likely_cause=(
+            "declared_max_abs_error exceeded Higham bound — "
+            "accumulator precision is likely insufficient for this "
+            "matmul shape"
+        ),
+        remediation=RemediationHint(
+            kind="param_change",
+            suggest=None,
+            confidence=0.5,
+            rationale=(
+                "Promote accumulator to a higher-precision dtype "
+                "(e.g. fp32 for an fp16 matmul); no specific candidate "
+                "id resolvable at the verifier layer"
+            ),
+        ),
     )
 
 
@@ -511,7 +682,7 @@ def _verify_deterministic_repeat_run(
     *, obl: VerifierObligation, claims: dict[str, Any], **_: Any,
 ) -> ObligationVerdict:
     """The provider claims expected_numerics; ``deterministic`` is
-    asserted once the executor (M-47) repeats the run."""
+    asserted once the executor repeats the run."""
     if claims.get("expected_numerics") in ("bit_equality", "tolerance_eps"):
         return ObligationVerdict(
             obl_id=obl.obl_id, verifier_kind=obl.verifier_kind,
@@ -531,6 +702,107 @@ def _verify_deterministic_repeat_run(
     )
 
 
+def _verify_predicate_proof_via_z3(
+    *,
+    obl: VerifierObligation,
+    contract: KernelContractV3,
+    metadata: dict[str, Any],
+    z3_obligation_report: dict[str, Any] | None = None,
+    **_: Any,
+) -> ObligationVerdict:
+    """Discharge a contract precondition through the Z3 obligation harness.
+
+    wire-up. Reads the per-predicate ``proof_dict`` from
+    ``obl.expected['predicate']``; when it carries ``unsupported:
+    True``, we honestly report ``deferred``. Otherwise we route the
+    obligation through :mod:`compgen.solve.z3_obligations` and append
+    its typed response into ``z3_obligation_report`` (mutated in
+    place by the caller).
+
+    Status mapping:
+
+    * Z3 ``proved`` → ``pass``.
+    * Z3 ``sat_counterexample`` → ``fail`` (counterexample is
+      included in the obligation report).
+    * Z3 ``timeout`` / ``unsupported`` / ``error`` → ``deferred``
+      with the typed reason.
+    """
+
+    pred_proof = obl.expected.get("predicate") or {}
+    if pred_proof.get("unsupported"):
+        return ObligationVerdict(
+            obl_id=obl.obl_id, verifier_kind=obl.verifier_kind,
+            status="deferred",
+            detail=(
+                f"precondition kind {pred_proof.get('kind')!r} has no Z3 "
+                f"lowering yet: {pred_proof.get('reason', '')}"
+            ),
+        )
+
+    from compgen.solve.backend_registry import default_registry
+    from compgen.solve.solver_types import (
+        SolverProblemKind,
+        SolverRequest,
+        SolverStatus,
+    )
+
+    registry = default_registry()
+    request = SolverRequest(
+        problem_id=obl.obl_id,
+        problem_kind=SolverProblemKind.SHAPE_PREDICATE_VERIFY,
+        formulation=pred_proof,
+    )
+    from compgen.solve.solver_types import SolverBackendName
+
+    z3_backend = registry.get_backend(SolverBackendName.Z3)
+    if z3_backend is None:
+        return ObligationVerdict(
+            obl_id=obl.obl_id, verifier_kind=obl.verifier_kind,
+            status="deferred",
+            detail="Z3 backend not registered",
+        )
+    response = z3_backend.solve(request)
+    if z3_obligation_report is not None:
+        z3_obligation_report.setdefault("obligations", []).append(
+            {
+                "obl_id": obl.obl_id,
+                "predicate_index": obl.expected.get("predicate_index"),
+                "obligation_kind": pred_proof.get("obligation_kind"),
+                "status": response.status.value,
+                "selected_backend": response.selected_backend.value,
+                "formulation_hash": response.formulation_hash,
+                "time_ms": response.time_ms,
+                "counterexample": response.counterexample,
+                "infeasibility_reason": response.infeasibility_reason,
+            }
+        )
+    if response.status is SolverStatus.PROVED:
+        return ObligationVerdict(
+            obl_id=obl.obl_id, verifier_kind=obl.verifier_kind, status="pass",
+            detail=(
+                f"Z3 proved precondition (formulation_hash="
+                f"{response.formulation_hash})"
+            ),
+        )
+    if response.status is SolverStatus.SAT_COUNTEREXAMPLE:
+        return ObligationVerdict(
+            obl_id=obl.obl_id, verifier_kind=obl.verifier_kind,
+            status="fail", failure_kind="semantic_contract_violation",
+            detail=(
+                f"Z3 found counterexample: {response.counterexample!r} "
+                f"(formulation_hash={response.formulation_hash})"
+            ),
+        )
+    return ObligationVerdict(
+        obl_id=obl.obl_id, verifier_kind=obl.verifier_kind,
+        status="deferred",
+        detail=(
+            f"Z3 returned {response.status.value}: "
+            f"{response.infeasibility_reason or ''}"
+        ),
+    )
+
+
 # Dispatch table.
 _VERIFIERS: dict[str, Callable[..., ObligationVerdict]] = {
     "input_shape_match": _verify_input_shape_match,
@@ -544,6 +816,7 @@ _VERIFIERS: dict[str, Callable[..., ObligationVerdict]] = {
     "memory_tier_match_runtime_deferred": _verify_memory_tier_runtime_deferred,
     "dispatch_model_match": _verify_dispatch_model_match,
     "target_name_match": _verify_target_name_match,
+    "predicate_proof_via_z3": _verify_predicate_proof_via_z3,
 }
 
 
@@ -554,16 +827,21 @@ def verify_kernel(
     contract_hash: str,
     kernel_metadata_path: Path | None,
     provider_claims_path: Path | None,
+    z3_obligation_report: dict[str, Any] | None = None,
 ) -> VerificationReport:
     """Run every obligation against the kernel's metadata + provider
     claims. Returns a typed report.
 
     Inputs:
-      - ``contract`` — the materialised KernelContractV3 (M-40).
+      ``contract`` — the materialised KernelContractV3.
       - ``kernel_metadata_path`` — points at the provider's
         ``kernel_metadata.json`` (under the sandboxed artifact_dir).
       - ``provider_claims_path`` — points at the provider's
         ``provider_claims.json``.
+      - ``z3_obligation_report`` — optional dict the
+        ``predicate_proof_via_z3`` verifier mutates to record each
+        Z3 obligation's typed response (wire-up). Caller
+        persists this via :func:`write_z3_obligation_report`.
     """
     metadata = _read_json_or_none(kernel_metadata_path) if kernel_metadata_path else None
     claims = _read_json_or_none(provider_claims_path) if provider_claims_path else None
@@ -613,6 +891,7 @@ def verify_kernel(
                 v = runner(
                     obl=obl, contract=contract,
                     metadata=metadata, claims=claims,
+                    z3_obligation_report=z3_obligation_report,
                 )
             except Exception as exc:  # noqa: BLE001 — surface as typed
                 v = ObligationVerdict(
@@ -646,6 +925,36 @@ def write_validation_report(
     path = out_dir / f"{task_id}.validation.json"
     path.write_text(
         json.dumps(report.to_dict(), indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return path
+
+
+def write_z3_obligation_report(
+    *, run_dir: Path, task_id: str, body: dict[str, Any],
+) -> Path:
+    """Persist the Z3 obligation report under
+    ``04_kernel_codegen/solver/<task_id>.z3_obligations.json``.
+
+    Caller pattern (wire-up)::
+
+        z3_report: dict = {
+            "schema_version": "z3_obligations_index_v1",
+            "task_id": task_id,
+            "obligations": [],
+        }
+        verify_kernel(..., z3_obligation_report=z3_report)
+        path = write_z3_obligation_report(
+            run_dir=run_dir, task_id=task_id, body=z3_report,
+        )
+        # path is recorded on KernelCertificate.z3_obligation_report_ref.
+    """
+
+    out_dir = run_dir.resolve() / "04_kernel_codegen" / "solver"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    path = out_dir / f"{task_id}.z3_obligations.json"
+    path.write_text(
+        json.dumps(body, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
     return path

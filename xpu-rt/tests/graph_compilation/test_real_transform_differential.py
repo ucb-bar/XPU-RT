@@ -1,4 +1,4 @@
-"""Tests for M-12 Real Transform Differential Harness.
+"""Tests Real Transform Differential Harness.
 
 Path A (executable real transform) is exercised on ``merlin_mlp_wide``;
 Path B (blocked) is exercised on every other wide-suite model. Negative
@@ -143,7 +143,7 @@ def test_tiled_evaluator_matches_torch_matmul_for_clean_dims() -> None:
 
 
 def test_tiled_evaluator_handles_boundary_tiles_under_m16() -> None:
-    """M-16: the evaluator no longer asserts divisibility — boundary
+    """the evaluator no longer asserts divisibility — boundary
     tiles are computed via min()-based slicing. With K=16, tile_K=16 →
     K_iters=1, so accumulation order matches eager; bit-equality
     holds even with M=15 (boundary in M)."""
@@ -170,7 +170,7 @@ def test_tiled_evaluator_rejects_non_positive_tile_dim() -> None:
 
 
 def test_summarise_boundary_geometry_counts_full_vs_boundary() -> None:
-    """The boundary-handling block in M-12 reports must accurately
+    """The boundary-handling block reports must accurately
     count full-tile vs boundary-tile iterations."""
     from compgen.graph_compilation.real_transform_differential import (
         _summarise_boundary_geometry,
@@ -254,10 +254,10 @@ def test_non_executable_kind_produces_blocked_not_pass(
 def test_boundary_required_no_longer_blocks_after_m16(
     merlin_mlp_wide_run: Path,
 ) -> None:
-    """M-16 reframed: ``boundary_required=true`` no longer blocks when
+    """reframed: ``boundary_required=true`` no longer blocks when
     the kind is ``executable_with_boundary_handling``. The boundary-
     aware Python evaluator handles partial tiles via ``min()``-based
-    slicing, so M-12 runs Path A and the run is mode=
+    slicing, so runs Path A and the run is mode=
     ``executable_real_transform`` — not blocked."""
     mp = (
         merlin_mlp_wide_run / "03_recipe_planning"
@@ -281,7 +281,7 @@ def test_boundary_required_no_longer_blocks_after_m16(
 
 
 def test_non_positive_tile_dim_is_blocked(merlin_mlp_wide_run: Path) -> None:
-    """M-16 reframed: arbitrary non-divisor tiles are no longer blocked
+    """reframed: arbitrary non-divisor tiles are no longer blocked
     (the boundary-aware evaluator handles them). Only pathological
     non-positive dims still block."""
     mp = (
@@ -309,7 +309,7 @@ def test_corrupted_evaluator_produces_counterexample(
     merlin_mlp_wide_run: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Inject an evaluator that adds a constant +1.0 — reference and
-    transformed outputs disagree, M-12 emits counterexamples for every
+    transformed outputs disagree, emits counterexamples for every
     case and fails."""
     from compgen.graph_compilation import real_transform_differential as mod
 
@@ -363,7 +363,7 @@ def test_non_set_tile_params_recipe_blocks(merlin_mlp_wide_run: Path) -> None:
 def test_report_claiming_discharge_without_cases_is_overwritten(
     merlin_mlp_wide_run: Path,
 ) -> None:
-    """Plant a forged report claiming discharge with 0 cases. M-12
+    """Plant a forged report claiming discharge with 0 cases.
     re-run must overwrite with the honest counts."""
     rv = merlin_mlp_wide_run / "03_recipe_planning" / "real_verification"
     rv.mkdir(parents=True, exist_ok=True)

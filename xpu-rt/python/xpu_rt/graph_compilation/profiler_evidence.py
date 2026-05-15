@@ -1,8 +1,8 @@
-"""M-22.1 — Real `torch.profiler` (GPU) + `linux perf` (CPU) evidence
+"""Real `torch.profiler` (GPU) + `linux perf` (CPU) evidence
 for compiled regions.
 
-Layered ON TOP of M-22's deterministic post-hoc utilization derivation.
-M-22.1 re-runs each compiled kernel under a profiler / perf wrapper
+Layered ON TOP of 's deterministic post-hoc utilization derivation.
+re-runs each compiled kernel under a profiler / perf wrapper
 and records:
 
 - GPU: per-kernel ``self_cuda_time_total``, ``cuda_memory_usage``,
@@ -11,15 +11,15 @@ and records:
   ``cache-misses``, ``LLC-loads``, ``LLC-load-misses`` from
   ``perf stat -e <events> --json``.
 
-The result is layered onto M-22's per-region ``compiled_evidence`` block
-as a sibling ``profiler_evidence`` field. M-22's own
+The result is layered onto 's per-region ``compiled_evidence`` block
+as a sibling ``profiler_evidence`` field. 's own
 ``cache_evidence: not_collected`` placeholder is replaced with a
 typed status: ``cuda_collected | perf_collected | perf_unavailable |
 profiler_unavailable | not_collected``.
 
 Hard non-goals:
 
-- Does not modify M-22's analytical or post-hoc fields.
+Does not modify 's analytical or post-hoc fields.
 - Does not require root.
 - Best-effort everywhere: missing torch.profiler / unavailable perf /
   raised exceptions all degrade to typed ``not_collected`` with a
@@ -111,7 +111,7 @@ def _profile_triton_kernel(
     iterations: int,
     warmup: int,
 ) -> dict[str, Any]:
-    """Re-run an M-19-emitted Triton kernel under
+    """Re-run an -emitted Triton kernel under
     ``torch.profiler.profile(activities=[CUDA])`` and return aggregated
     per-kernel CUDA stats."""
     try:
@@ -148,7 +148,7 @@ def _profile_triton_kernel(
 
     try:
         g = torch.Generator(device=device)
-        g.manual_seed(0xC0DE221)  # different seed; doesn't need to match M-19
+        g.manual_seed(0xC0DE221)  # different seed; doesn't need to match
         A = torch.randn(M, K, dtype=torch.float32, device=device, generator=g)
         B = torch.randn(K, N, dtype=torch.float32, device=device, generator=g)
         C = torch.zeros(M, N, dtype=torch.float32, device=device)
@@ -254,7 +254,7 @@ def _perf_collect_cpu(
     iterations: int,
     warmup: int,
 ) -> dict[str, Any]:
-    """Wrap a Python subprocess that loads + executes the M-19 CPU
+    """Wrap a Python subprocess that loads + executes the CPU
     kernel ``iterations`` times under ``perf stat -e <events>``.
     Returns parsed cycles / instructions / cache_references /
     cache_misses / LLC_loads / LLC_load_misses, or a typed
@@ -263,7 +263,7 @@ def _perf_collect_cpu(
     if not available:
         return {"profiler_status": "perf_unavailable", "reason": reason}
 
-    # We need a C kernel to wrap. The M-19 CPU track emits a .c file
+    # We need a C kernel to wrap. The CPU track emits a .c file
     # next to each region; if absent, we can't do anything.
     cffi_dir = kernel_src_path.parent
     c_files = list(cffi_dir.glob("cpu_kernel_*.c"))
@@ -394,7 +394,7 @@ def _perf_collect_cpu(
 
 
 # --------------------------------------------------------------------------- #
-# Top-level entry point — fans out across regions M-22 has evidence for
+# Top-level entry point — fans out across regions has evidence for
 # --------------------------------------------------------------------------- #
 
 
@@ -412,14 +412,14 @@ class ProfilerEvidenceResult:
 def _kernel_src_for_region(
     *, run_dir: Path, region_id: str, track: str,
 ) -> Path | None:
-    """Find the M-19/M-20 emitted kernel source file for a region."""
+    """Find the /emitted kernel source file for a region."""
     base = run_dir / "02_graph_analysis" / "kernel_execution"
-    # M-20 fan-out: regions/<region>/triton_kernel_<region>.py
+    # fan-out: regions/<region>/triton_kernel_<region>.py
     candidates = [
         base / "regions" / region_id / f"triton_kernel_{region_id}.py"
         if track == "gpu" else
         base / "regions" / region_id / f"cpu_kernel_{region_id}.c",
-        # M-19 single-region: triton_kernel_<region>.py at top
+        # single-region: triton_kernel_<region>.py at top
         base / f"triton_kernel_{region_id}.py"
         if track == "gpu" else
         base / f"cpu_kernel_{region_id}.c",
@@ -436,7 +436,7 @@ def run_profiler_evidence(
     iterations: int = 64,
     warmup: int = 8,
 ) -> ProfilerEvidenceResult:
-    """Build M-22.1 profiler-evidence layer. Best-effort; never raises."""
+    """Build profiler-evidence layer. Best-effort; never raises."""
     run_dir = Path(run_dir).resolve()
 
     ga = run_dir / "02_graph_analysis"
@@ -577,7 +577,7 @@ def run_profiler_evidence(
         json.dumps(body, indent=2, sort_keys=True), encoding="utf-8",
     )
 
-    # Layer onto M-22's compiled_bottleneck_report.regions[*] AND onto
+    # Layer onto 's compiled_bottleneck_report.regions[*] AND onto
     # hardware_resource_report.regions[*].compiled_evidence as
     # profiler_evidence + replace cache_evidence value.
     _apply_overlays(
@@ -629,7 +629,7 @@ def _apply_overlays(
     2. ``hardware_resource_report.regions[*].compiled_evidence
        .profiler_evidence`` AND
        ``hardware_resource_report.regions[*].compiled_evidence
-       .cache_evidence`` (replacing the M-22 ``not_collected`` value).
+       .cache_evidence`` (replacing the ``not_collected`` value).
     """
     by_region = {r["region_id"]: r for r in regions_out}
 
@@ -649,7 +649,7 @@ def _apply_overlays(
                         "cpu": ev.get("cpu"),
                         "cache_evidence": ev.get("cache_evidence"),
                     }
-                    # Replace the M-22 placeholder value.
+                    # Replace the placeholder value.
                     r["cache_evidence"] = ev.get("cache_evidence")
             cb_path.write_text(
                 json.dumps(doc, indent=2, sort_keys=True), encoding="utf-8",

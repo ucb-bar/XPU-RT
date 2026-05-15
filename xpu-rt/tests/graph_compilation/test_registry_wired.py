@@ -1,21 +1,21 @@
-"""M-55 — ProviderRegistry wired into the Phase C kernel-codegen path.
+"""ProviderRegistry wired into the Phase C kernel-codegen path.
 
-Three test classes, mirroring the M-42 layout:
+Three test classes, mirroring the layout:
 
 - ``TestApplicableMethod`` — unit tests for
   :meth:`compgen.kernels.registry.ProviderRegistry.applicable` over a
   KernelContractV3 fixture. Wildcards, target match, archetype match,
   ordering by priority.
-- ``TestRegistryResolutionEmit`` — the M-42 pipeline stage now also
+``TestRegistryResolutionEmit`` — the pipeline stage now also
   writes ``04_kernel_codegen/registry_resolution.json``. The file
   exists; schema_version matches; ``providers_considered`` is sorted
   deterministically.
 - ``TestEndToEndUnchanged`` — today's behaviour preserved: when no
   applicable providers are registered, ``fallback_used: true`` and the
-  M-43 commit path stays the canonical one (as proven by the existence
+  commit path stays the canonical one (as proven by the existence
   of ``requests/<task_id>.request.json``).
 
-No new flag, no new boundary. M-55 is a strict generalisation.
+No new flag, no new boundary. is a strict generalisation.
 """
 
 from __future__ import annotations
@@ -290,13 +290,13 @@ class TestEndToEndUnchanged:
         result = _invoke_pipeline(model="merlin_mlp_wide", out_dir=tmp_path / "run")
         assert result.returncode == 0, result.stderr
 
-        # Today's M-42 request still lands.
+        # Today's request still lands.
         requests_dir = tmp_path / "run" / "04_kernel_codegen" / "requests"
         request_files = list(requests_dir.glob("*.request.json"))
         assert len(request_files) == 1, "M-42 request must still be emitted"
 
         # Resolution file says fallback_used (no applicable providers
-        # in a clean checkout — Phase D wires real providers in M-56+).
+        # in a clean checkout Phase D wires real providers +).
         body = json.loads(
             (tmp_path / "run" / "04_kernel_codegen" / "registry_resolution.json").read_text()
         )

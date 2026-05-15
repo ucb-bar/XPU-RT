@@ -84,6 +84,83 @@ def dispatch_tool(
     """
 
     tool = tool_by_name.get(name)
+    # H2 — Phase-scoped discovery: when the strict gating env var is
+    # set AND the session has a ``current_phase``, refuse any tool not
+    # in the per-phase allowlist. Default off so legacy tests / callers
+    # see no behavior change.
+    import os as _os
+
+    if (
+        tool is not None
+        and _os.environ.get("COMPGEN_STRICT_PHASE_GATING") == "1"
+    ):
+        from compgen.mcp.phase_taxonomy import is_tool_allowed_in_phase
+
+        session_id_for_phase = arguments.get("session_id") or ""
+        try:
+            session = sm.get(session_id_for_phase) if session_id_for_phase else None
+        except KeyError:
+            session = None
+        current_phase = getattr(session, "current_phase", None) if session else None
+        if current_phase and not is_tool_allowed_in_phase(name, current_phase):
+            blocked = {
+                "ok": False,
+                "status": "blocked",
+                "blocked_reason": "phase_violation",
+                "tool": name,
+                "current_phase": current_phase,
+            }
+            if recorder is not None:
+                recorder.record(
+                    tool=name,
+                    args=arguments,
+                    result=blocked,
+                    session_id=session_id_for_phase or "unknown",
+                    duration_ms=0.0,
+                    error="phase_violation",
+                )
+            return blocked
+
+    # H3 — Capability gating: when the strict env flag is set AND a
+    # session is provided, refuse high-risk tools that don't carry
+    # their required tokens / role.
+    if (
+        tool is not None
+        and _os.environ.get("COMPGEN_STRICT_CAPABILITIES") == "1"
+    ):
+        from compgen.mcp.capabilities import missing_capabilities
+
+        session_id_for_caps = arguments.get("session_id") or ""
+        try:
+            session = sm.get(session_id_for_caps) if session_id_for_caps else None
+        except KeyError:
+            session = None
+        if session is not None:
+            missing, role_mismatch = missing_capabilities(
+                tool_name=name,
+                session_caps=getattr(session, "capabilities", frozenset()),
+                caller_role=getattr(session, "caller_role", "agent"),
+            )
+            if missing or role_mismatch is not None:
+                blocked = {
+                    "ok": False,
+                    "status": "blocked",
+                    "blocked_reason": "capability_missing",
+                    "tool": name,
+                    "missing_tokens": sorted(missing),
+                    "role_mismatch": role_mismatch,
+                }
+                if recorder is not None:
+                    recorder.record(
+                        tool=name,
+                        args=arguments,
+                        result=blocked,
+                        session_id=session_id_for_caps or "unknown",
+                        duration_ms=0.0,
+                        error="capability_missing",
+                    )
+                return blocked
+
     if tool is None:
         result: dict[str, Any] = {
             "ok": False,
@@ -101,6 +178,23 @@ def dispatch_tool(
             )
         return result
 
+    # H1 — Snapshot session state BEFORE the call so we can diff after.
+    from compgen.mcp.tool_delta import (
+        Cost,
+        SideEffects,
+        ToolDelta,
+        _snapshot_decision_keys,
+        _snapshot_modules,
+        build_state_changes,
+        canonical_args_hash,
+        now_timestamp,
+    )
+
+    pre_recipe_hash, pre_payload_hash = _snapshot_modules(sm)
+    pre_decisions = _snapshot_decision_keys(sm)
+    envelope_timestamp = now_timestamp()
+    args_hash = canonical_args_hash(arguments)
+
     started = time.perf_counter()
     error: str | None = None
     try:
@@ -114,6 +208,40 @@ def dispatch_tool(
     session_id = (
         arguments.get("session_id") or (result.get("session_id") if isinstance(result, dict) else None) or "unknown"
     )
+
+    # H1 — Build the typed ``ToolDelta`` envelope. Additive: the raw
+    # ``result`` dict still flows back unchanged to the caller; the
+    # envelope flows to the recorder so the trace bus has a structured
+    # record. Honest residual: ``state_changes`` only diffs the
+    # cheap-to-hash IR + decision-registry keys today; full op-level
+    # diffs are a follow-up.
+    state_changes = build_state_changes(
+        sm=sm,
+        pre_recipe=pre_recipe_hash,
+        pre_payload=pre_payload_hash,
+        pre_decisions=pre_decisions,
+    )
+    envelope = ToolDelta(
+        tool=name,
+        args_hash=args_hash,
+        timestamp=envelope_timestamp,
+        state_changes=state_changes,
+        side_effects=SideEffects(),
+        return_value=result if isinstance(result, dict) else None,
+        cost=Cost(wall_ms=duration_ms),
+        status="error" if error else "ok",
+        blocked_reason=None,
+    )
+    log.debug(
+        "mcp.tool.delta",
+        tool=name,
+        args_hash=envelope.args_hash,
+        recipe_changed=state_changes.recipe_hash_before != state_changes.recipe_hash_after,
+        payload_changed=state_changes.payload_hash_before != state_changes.payload_hash_after,
+        new_decisions=len(state_changes.decisions),
+        status=envelope.status,
+    )
+
     if recorder is not None:
         recorder.record(
             tool=name,

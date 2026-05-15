@@ -1,4 +1,4 @@
-"""Tests for :mod:`compgen.graph_compilation.promotion_bridge` (M-26)."""
+"""Tests for :mod:`compgen.graph_compilation.promotion_bridge`."""
 
 from __future__ import annotations
 
@@ -187,7 +187,7 @@ def test_emit_promotes_when_evidence_passes(tmp_path: Path) -> None:
 
 
 def test_promoted_recipe_sidecar_carries_two_tier_key(tmp_path: Path) -> None:
-    """The sidecar must record region_signature so M-28 retrieval can find it."""
+    """The sidecar must record region_signature so retrieval can find it."""
     run_dir = _build_minimal_run_dir(tmp_path)
     library = tmp_path / "library"
 

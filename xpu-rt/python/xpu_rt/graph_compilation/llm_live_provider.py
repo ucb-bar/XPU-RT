@@ -3,7 +3,7 @@
 Bounded interface that takes an ``agent_decision_request.json`` plus the
 compact ``llm_graph_view.json``, builds a constrained prompt, and calls
 a provider to obtain an ``agent_decision_response.json``-shaped dict.
-The compiler then runs the unchanged M-14A validator before any Recipe
+The compiler then runs the unchanged validator before any Recipe
 IR commit; this module does NOT bypass that gate.
 
 **This is the secondary agent path.** The recommended default for any
@@ -16,7 +16,7 @@ for the rationale.
 
 Hard non-goals:
 
-- No multi-turn retry. (M-15 territory.)
+No multi-turn retry. (territory.)
 - No streaming UI.
 - No tool calling.
 - No new candidate generation.
@@ -154,7 +154,7 @@ Visible graph view:
 {view_json}
 """
 
-# Forbidden phrases the M-14A validator rejects. Keep in sync with
+# Forbidden phrases the validator rejects. Keep in sync with
 # `agent_guidance.forbidden_phrase_patterns` and the hard-coded regex
 # in `agent_decision.py::_no_correctness_claim` /
 # `_no_measured_performance_claim`.
@@ -191,7 +191,7 @@ def build_prompt(
 
 
 # --------------------------------------------------------------------------- #
-# Real provider adapters (M-14C). stdlib-only via urllib.request to avoid
+# Real provider adapters. stdlib-only via urllib.request to avoid
 # pulling provider SDKs into the compiler trust boundary.
 # --------------------------------------------------------------------------- #
 
@@ -590,7 +590,7 @@ def parse_provider_response_text(text: str) -> dict[str, Any]:
 
     Raises ``ProviderError`` for everything else (prose, broken JSON,
     multiple objects). The parsed object is then run through the
-    M-14A validator.
+    validator.
     """
     if not text or not text.strip():
         raise ProviderError("provider response was empty")

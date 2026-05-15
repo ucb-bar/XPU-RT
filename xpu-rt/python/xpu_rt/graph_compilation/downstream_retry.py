@@ -1,8 +1,8 @@
 """Downstream-Gate Rejection Retry (Milestone 15B).
 
-When an agent_decision response passes the M-14A validator and the
-recipe is committed, but a downstream gate (M-08 post-lowering, M-09
-differential, M-11B real-lowering, M-12 real-transform-differential)
+When an agent_decision response passes the validator and the
+recipe is committed, but a downstream gate (post-lowering,
+differential, real-lowering, real-transform-differential)
 reports ``status=fail``, this module:
 
 1. Detects which stage failed and what the failed candidate was.
@@ -17,25 +17,25 @@ reports ``status=fail``, this module:
 
 The compiler does NOT auto-retry — Claude Code reads the request,
 selects an alternative legal candidate, and re-invokes the pipeline
-with a new agent_decision_response. The unchanged M-14A validator + the
+with a new agent_decision_response. The unchanged validator + the
 action_space.mlir resolver still gate the retry.
 
 Failures that count:
 
-- M-08 post_lowering_verification_report.status == "fail"
-- M-09 differential_verification_report.status == "fail"
-- M-11B real_transform_validation.overall == "fail"
-- M-12 real_differential_report.status == "fail"
+post_lowering_verification_report.status == "fail"
+differential_verification_report.status == "fail"
+real_transform_validation.overall == "fail"
+real_differential_report.status == "fail"
 
 Failures that do NOT count (these are path-aware skipped/blocked):
 
-- M-11A eligibility=false (the candidate kind doesn't qualify; not a
+eligibility=false (the candidate kind doesn't qualify; not a
   "candidate is bad" signal — typical for FuseProducerConsumer or
   CreateKernelContract recipes)
-- M-11B real_transform_kind="unsupported_real_transform" (skipped)
-- M-11B real_transform_kind="non_executable_structural_ir" (the
+real_transform_kind="unsupported_real_transform" (skipped)
+real_transform_kind="non_executable_structural_ir" (the
   artifact is structural-only by design)
-- M-12 status="blocked" (no executable evaluator)
+status="blocked" (no executable evaluator)
 
 Hard non-goals:
 
@@ -44,9 +44,9 @@ Hard non-goals:
 - No edits to verifier reports or transformed payloads.
 - No compiler-core changes.
 
-There is no test-only failure injection. M-15B is exercised by tests
+There is no test-only failure injection. is exercised by tests
 that produce *real* downstream failures (e.g. greedy on tiny_mlp
-selects tile_16, which makes M-12's bit-equality check fail honestly).
+selects tile_16, which makes 's bit-equality check fail honestly).
 """
 
 from __future__ import annotations
@@ -114,16 +114,16 @@ _DOWNSTREAM_REPORTS: tuple[
     ("real_transform_differential",
      "03_recipe_planning/real_verification/real_differential_report.json",
      "status", "real_transform_differential_check"),
-    # M-16.2 fusion-side counterpart. Same retry semantics: a fail
+    # fusion-side counterpart. Same retry semantics: a fail
     # status means the agent's selected fusion candidate did not
     # discharge the obligation, and the agent must pick a different
     # candidate. The retry filter excludes the failed candidate id.
     ("real_fusion_differential",
      "03_recipe_planning/real_verification/real_fusion_differential_report.json",
      "status", "real_fusion_differential_check"),
-    # M-20 region-level compiled differential. status=fail means at
+    # region-level compiled differential. status=fail means at
     # least one matmul region produced an out-of-tolerance compiled
-    # kernel. The retry detector treats this the same as M-12: the
+    # kernel. The retry detector treats this the same as the
     # agent should pick a different SetTileParams candidate (or a
     # different family) to unblock. Note: status=pass with
     # tolerance_eps does NOT trigger retry — that's expected for
@@ -131,8 +131,8 @@ _DOWNSTREAM_REPORTS: tuple[
     ("region_compiled_differential",
      "02_graph_analysis/kernel_execution/region_compiled_differential_report.json",
      "status", "compiled_kernel_differential_check"),
-    # M-49 (Phase C) glue-emit differential. status=fail means the
-    # M-47-emitted plan executor produced a numerical mismatch vs
+    # (Phase C) glue-emit differential. status=fail means the
+    # -emitted plan executor produced a numerical mismatch vs
     # eager torch.matmul that exceeds the contract's claimed
     # refinement (bit_equality or Higham-bounded tolerance_eps).
     # The retry filter excludes the failed candidate id; the agent
@@ -140,7 +140,7 @@ _DOWNSTREAM_REPORTS: tuple[
     ("glue_differential",
      "06_glue_emit/glue_differential_report.json",
      "status", "glue_differential_check"),
-    # M-23 compiled fusion verification. status=fail means the fused
+    # compiled fusion verification. status=fail means the fused
     # producer→consumer kernel produced a numerical mismatch vs eager
     # unfused chain (a real correctness regression). The retry filter
     # excludes the failed candidate id; the agent should pick a
@@ -189,7 +189,7 @@ def detect_downstream_failure(run_dir: Path) -> DownstreamFailure | None:
                 obligation = ostat.get("obligation", "")
                 remaining = list(ostat.get("remaining", []) or [])
                 break
-        # M-12 has its own obligation block.
+        # has its own obligation block.
         if not obligation:
             for ob in body.get("obligations", []) or []:
                 if ob.get("status", "") in ("remaining", "fail"):
@@ -234,7 +234,7 @@ def emit_downstream_retry_request(
     attempt_dir = out_dir / "attempts" / f"attempt_{attempt_index:03d}"
     attempt_dir.mkdir(parents=True, exist_ok=True)
 
-    # Resolve the failed candidate from M-05's commit.
+    # Resolve the failed candidate 's commit.
     selection = _read_json(
         run_dir / "03_recipe_planning" / "candidate_selection.json"
     ) or {}

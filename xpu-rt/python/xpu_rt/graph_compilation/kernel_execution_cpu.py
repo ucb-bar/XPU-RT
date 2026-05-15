@@ -1,4 +1,4 @@
-"""M-19.CPU sub-track — MLIR-derived C codegen + cffi compile + run.
+""".CPU sub-track MLIR-derived C codegen + cffi compile + run.
 
 Emits a self-contained C function for tiled matmul with the
 SetTileParams candidate's tile baked in. Compiles via ``cffi`` (which
@@ -8,14 +8,14 @@ compares numerical output against eager ``torch.matmul``.
 
 The emitted C is straightforward: an outer triple-loop over tiles,
 inner triple-loop over the tile's matmul. No SIMD intrinsics; no
-threading. The point of M-19.CPU is to prove the
+threading. The point of .CPU is to prove the
 **MLIR → C → compiled binary → measured timing** pipeline works
 end-to-end with real numerical equivalence — not to be fast.
 
 Hard non-goals:
-- No MLIR-to-C lowering generality. M-19.CPU only handles the
-  matmul-tile-loop subset that M-11B emits for SetTileParams.
-- No SIMD / OpenMP / parallelism. M-22 territory.
+No MLIR-to-C lowering generality. .CPU only handles the
+  matmul-tile-loop subset that emits for SetTileParams.
+No SIMD / OpenMP / parallelism. territory.
 - No libcompgen_rt-specific runtime calls. The cffi-compiled .so is
   loaded via cffi's own dlopen; libcompgen_rt is referenced in the
   artifact for documentation only.
@@ -57,12 +57,12 @@ def _emit_c_source(
     float* C)`` that computes C = A @ B for fixed M, N, K with tiled
     structure tM, tN, tK. Row-major; no aliasing assumed.
 
-    The tile loops mirror M-11B's `transformed_payload.real.mlir` outer
+    The tile loops mirror 's `transformed_payload.real.mlir` outer
     nest; the inner micro-matmul is a straight (i, j, k) triple-loop
     that accumulates into a per-tile fp32 accumulator before storing.
     Accumulation order matches eager when tile_K == K (single
     K-iteration). For tile_K < K the C accumulation order matches
-    the M-16 `_tiled_matmul_eval` Python pattern.
+    the `_tiled_matmul_eval` Python pattern.
     """
     return f"""\
 /* M-19.CPU generated tiled matmul kernel.

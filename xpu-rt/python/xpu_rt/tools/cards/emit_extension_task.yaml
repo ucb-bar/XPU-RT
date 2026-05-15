@@ -1,0 +1,98 @@
+schema_version: compgen_tool_card_v1
+tool_id: compgen_emit_extension_task
+maturity: T6
+phase: extension_authoring
+description: |
+  Emit a typed extension-task package under ``${out_dir}/<task_id>/``
+  when CompGen encounters an unsupported op or provider gap. The
+  package contains ``extension_task.json`` + ``allowed_outputs.json``
+  plus the optional companion documents (kernel-facing contract,
+  region dossier, payload-IR summary). A fresh Claude / Codex session
+  then authors the extension code under the task's ``output_dir``;
+  the validator at compgen_validate_extension_manifest checks it.
+
+entrypoints:
+  python: compgen.tools.builtin.extension_authoring:emit_extension_task
+  cli: compgen-tool run compgen_emit_extension_task
+  mcp: compgen_emit_extension_task
+
+input_schema:
+  type: object
+  required: [task_id, reason]
+  properties:
+    task_id:
+      type: string
+      minLength: 1
+    reason:
+      type: string
+    op:
+      type: string
+    region_id:
+      type: string
+    contract_hash:
+      type: string
+    allowed_extension_types:
+      type: array
+      items: { type: string }
+    allowed_outputs:
+      type: array
+      items: { type: string }
+    forbidden:
+      type: array
+      items: { type: string }
+    verification_required:
+      type: array
+      items: { type: string }
+    kernel_facing_contract:
+      type: object
+    region_dossier:
+      type: object
+    payload_ir_summary:
+      type: object
+  additionalProperties: true
+
+output_schema:
+  type: object
+  required: [status, artifacts]
+  properties:
+    status:
+      enum: [ok, blocked, error]
+    task_id: { type: string }
+    task_dir: { type: string }
+    artifacts:
+      type: array
+      items: { type: string }
+    reason: { type: string }
+    detail: { type: string }
+
+writes:
+  allowed_roots:
+    - ${run_dir}/
+
+forbidden:
+  - mutate_payload_ir
+  - mutate_recipe_ir
+  - bypass_verifier
+  - write_outside_artifact_dir
+  - invent_certificate
+
+promotion_requirements:
+  unit_tests: true
+  negative_controls: true
+  cli_wrapper: true
+  artifact_outputs: true
+  skill_doc: true
+  mcp_wrapper: true
+  fresh_agent_harness: true
+  phase_menu_listing: false
+
+tests:
+  positive:
+    - tests.tools.test_extension_authoring_tools::test_emit_extension_task_positive
+  negative_controls:
+    - tests.tools.test_extension_authoring_tools::test_emit_extension_task_unknown_reason
+    - tests.tools.test_extension_authoring_tools::test_emit_extension_task_missing_task_id
+
+skill_path: .claude/skills/compgen-extension-authoring/SKILL.md
+fresh_agent_task_id: emit_extension_task_v1
+owner: core

@@ -51,10 +51,10 @@ class RecipeKey:
         model_hash: Hash of the model IR.
         objective_hash: Hash of the objective.
         version: Recipe version (monotonically increasing).
-        contract_hash: Optional kernel-contract hash (M-26 two-tier
+        contract_hash: Optional kernel-contract hash (two-tier
             cache key, exact-kernel reuse). Empty string when no
             kernel contract is associated with the recipe.
-        region_signature: Optional region pattern hash (M-26 two-tier
+        region_signature: Optional region pattern hash (two-tier
             cache key, cross-model pattern reuse). Empty string when
             no region pattern can be derived from the recipe.
     """
@@ -91,7 +91,7 @@ class PromotionResult:
 
 @dataclass(frozen=True)
 class PromotedRecipe:
-    """Full description of a promoted recipe (M-26).
+    """Full description of a promoted recipe.
 
     Wraps :class:`RecipeKey` with the metadata a future run needs to
     decide whether to apply, rank, or reject this recipe — the bridge
@@ -117,9 +117,9 @@ class PromotedRecipe:
             (e.g. ``differential_report_sha256``).
         validity: Map of free-form validity predicates expressed as
             strings (target capability flags, dtype constraints, ...).
-        gate_level: Highest :class:`PromotionLevel` (M-29) the recipe
+        gate_level: Highest :class:`PromotionLevel` the recipe
             satisfied — stored as the enum's string value. Empty
-            string when M-26 ships before M-29 is wired in.
+            string when ships is wired in.
     """
 
     recipe_id: str
@@ -366,8 +366,8 @@ class RecipePromoter:
         manifest_path = dest / "manifest.json"
         manifest_path.write_text(json.dumps(bundle.to_dict(), indent=2))
 
-        # Record audit event. M-29: include gate_level when the
-        # caller (typically the M-26 bridge) recorded one in
+        # Record audit event. include gate_level when the
+        # caller (typically the bridge) recorded one in
         # bundle.metadata; absent for legacy callers.
         try:
             from compgen.promotion.audit import AuditLog, create_event
@@ -447,7 +447,7 @@ def promote_recipe(
 def write_promoted_recipe_sidecar(
     recipe_path: Path, key: RecipeKey, promoted: PromotedRecipe
 ) -> Path:
-    """Write ``promoted_recipe.json`` next to ``manifest.json`` (M-26).
+    """Write ``promoted_recipe.json`` next to ``manifest.json``.
 
     The sidecar carries the two-tier cache key plus the
     :class:`PromotedRecipe` body so a future run can locate the recipe

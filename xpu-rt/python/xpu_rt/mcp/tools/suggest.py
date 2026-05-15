@@ -69,6 +69,30 @@ def suggest_proposals(
         target=compiled.device.profile,
         k=int(k),
     )
+
+    # G6 wire-in: reorder candidates through the P3.3 rank_candidates
+    # primitive. Under COMPGEN_DISABLE_LLM=1 (CI default) this falls
+    # back to descending expected_impact + alphabetical rationale —
+    # the same order the legacy _suggest already returns. With a live
+    # LLM, the primary path can re-rank against richer features.
+    # Importing here keeps the primitive registry side-effect from
+    # firing at module-load.
+    if candidates:
+        try:
+            from compgen.agent.primitives.rank_candidates import rank_candidates
+
+            ranking = rank_candidates(list(candidates))
+            # ranking["ranking"] is a list of {index, score, rationale};
+            # apply it as a permutation over the original candidate list.
+            order = [int(r["index"]) for r in ranking.get("ranking", [])]
+            if len(order) == len(candidates) and set(order) == set(range(len(candidates))):
+                candidates = [candidates[i] for i in order]
+        except Exception:  # noqa: BLE001
+            # The decorator's deterministic fallback never raises, so
+            # this branch only fires on truly unexpected import-time
+            # failures (e.g. primitive deregistered). Honest pass-through.
+            pass
+
     rendered = [
         {
             "rank": i,

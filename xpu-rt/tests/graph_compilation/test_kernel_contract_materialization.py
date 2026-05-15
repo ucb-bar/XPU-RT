@@ -1,4 +1,4 @@
-"""M-40 Contract materialization tests.
+"""Contract materialization tests.
 
 Three layers of coverage matching the plan's done condition:
 
@@ -10,7 +10,7 @@ Three layers of coverage matching the plan's done condition:
   declared refinement matches the recipe-gate verdict; non-set_tile_params
   candidates emit a typed not_applicable row.
 - **Negative control**: the kernel_facing view does NOT leak any
-  compiler-only field (the load-bearing M-40 invariant).
+  compiler-only field (the load-bearing invariant).
 """
 
 from __future__ import annotations
@@ -95,7 +95,7 @@ class TestFromRecipe:
         # bit_equality → max_rel_err = 0.0
         assert c.io.numerics.max_relative_error == 0.0
         assert c.io.numerics.deterministic is True
-        # Dispatch is SYNC for M-40 (M-50 widens).
+        # Dispatch is SYNC (widens).
         assert c.orchestration.dispatch.model is DispatchModel.SYNC
         # Sync declares matmul_done event.
         assert any(e.name == "matmul_done" for e in c.orchestration.sync.event_decls)
@@ -209,9 +209,9 @@ class TestCanonicalHash:
 
 class TestKernelFacingNoLeak:
     """The kernel_facing view is the BOUNDED surface a kernel codegen
-    provider may read (M-43+ hands this to the spawned Claude Code
+    provider may read (+ hands this to the spawned Claude Code
     agent). Compiler-only fields MUST NOT appear in the serialized
-    JSON. This is the load-bearing M-40 invariant."""
+    JSON. This is the load-bearing invariant."""
 
     _FORBIDDEN_FIELDS = (
         "wait_on",
@@ -320,7 +320,7 @@ def test_e2e_tiny_tolerance_eps(tiny_run: Path) -> None:
     body = json.loads(contract_path.read_text())
     attrs = {a["name"]: a["value"] for a in body["io"]["attributes"]}
     assert attrs["declared_refinement"] == "tolerance_eps"
-    assert attrs["tile_M"] == 4  # M-37.11 shape-fit
+    assert attrs["tile_M"] == 4  # shape-fit
     assert body["io"]["numerics"]["max_relative_error"] > 0.0
 
 

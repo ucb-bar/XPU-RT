@@ -1,4 +1,4 @@
-"""M-56 — two-stage provider protocol (bid + fulfill).
+"""two-stage provider protocol (bid + fulfill).
 
 Coverage:
 

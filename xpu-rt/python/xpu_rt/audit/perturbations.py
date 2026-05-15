@@ -1,4 +1,4 @@
-"""Perturbation utilities for catching hardcoded behavior (M-31A.4).
+"""Perturbation utilities for catching hardcoded behavior.
 
 The audit ladder demands that the pipeline still completes honestly
 under perturbations of inputs, paths, and library state. Each function
@@ -99,7 +99,7 @@ def vary_tile_divisibility(model_yaml_path: Path) -> PerturbationResult:
 def corrupt_promotion_library(library_path: Path) -> PerturbationResult:
     """Flip the contract_hash on every promoted-recipe sidecar.
 
-    A corrupted ``contract_hash`` should cause the M-28 retrieval to
+    A corrupted ``contract_hash`` should cause the retrieval to
     miss exact-contract matches; the audit verifies that the failure
     mode is "no exact match" rather than "silently use stale recipe".
     """

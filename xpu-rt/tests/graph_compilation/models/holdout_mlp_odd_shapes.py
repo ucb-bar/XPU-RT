@@ -1,4 +1,4 @@
-"""Holdout MLP with deliberately non-clean dimensions (M-31A.4).
+"""Holdout MLP with deliberately non-clean dimensions.
 
 K=63, N=129, M=257 — none divisible by 16/32/64 — exposes hidden
 clean-divide assumptions in the tiling pipeline. Reaching ``verified``

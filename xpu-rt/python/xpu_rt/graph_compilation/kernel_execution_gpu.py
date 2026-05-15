@@ -1,4 +1,4 @@
-"""M-19.GPU sub-track — Triton compile + launch + time.
+""".GPU sub-track Triton compile + launch + time.
 
 Emits a self-contained Triton kernel parameterised on the
 SetTileParams candidate's tile (BLOCK_M, BLOCK_N, BLOCK_K), compiles
@@ -47,7 +47,6 @@ def _sha256_text(text: str) -> str:
 # --------------------------------------------------------------------------- #
 # Triton matmul kernel template (parameterised on tile)
 # --------------------------------------------------------------------------- #
-#
 # The kernel carries the tile dims as Python-formatted constants so the
 # emitted source is byte-deterministic across runs (no triton.autotune).
 # It uses tl.dot(allow_tf32=False) to keep accumulation precision matching
@@ -153,7 +152,7 @@ def _emit_kernel_source_deterministic(
 
 
 def _make_inputs(M: int, K: int, N: int, device, dtype):  # type: ignore[no-untyped-def]
-    """Generate deterministic input tensors. Same seed used by M-18.3."""
+    """Generate deterministic input tensors. Same seed used ."""
     import torch
 
     g = torch.Generator(device=device)

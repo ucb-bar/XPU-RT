@@ -1,23 +1,23 @@
-"""Acceptance tests for M-22 Compiled Bottleneck Analysis.
+"""Acceptance tests Compiled Bottleneck Analysis.
 
 Verifies:
 
-- Deterministic post-hoc derivation: same M-19/M-20 + M-21 + target
-  YAML inputs → byte-identical M-22 output across reruns.
+Deterministic post-hoc derivation: same / + target
+  YAML inputs → byte-identical output across reruns.
 - Achieved compute/bandwidth fractions are correctly derived from
   measured time × analytical flops/bytes.
-- Bottleneck classification cross-references M-21's analytical
+Bottleneck classification cross-references the analytical
   prediction; agreement / disagreement counted explicitly.
 - ``compiled_evidence`` overlay is layered onto
   ``hardware_resource_report.json`` per region (additive only —
-  M-17.1's existing fields stay untouched).
+  the existing fields stay untouched).
 - Top-level ``kernel_calibration_status`` flips ``not_kernel_calibrated``
   → ``kernel_calibrated`` (or ``partial_kernel_calibration``) based on
   region coverage.
-- M-21 analytical_cost / cost_preview_v2 / region_map / candidate_actions
-  byte-identical across M-22 reruns (M-22 only writes to its own
+analytical_cost / cost_preview_v2 / region_map / candidate_actions
+  byte-identical across reruns (only writes to its own
   directory + the hardware_resource_report overlay).
-- Best-effort: missing M-19/M-20 measurements → typed ``no_measurements``
+Best-effort: missing /measurements → typed ``no_measurements``
   with kernel_calibration_status=not_kernel_calibrated; never raises.
 - No compiler-core imports.
 """
@@ -73,7 +73,7 @@ def _run(model: str, out_dir: Path, *, run_kernels: bool) -> None:
 
 @pytest.fixture(scope="module")
 def kernels_run(tmp_path_factory) -> Path:  # type: ignore[no-untyped-def]
-    """merlin_mlp_wide with M-19/M-20 kernels ON — gives us per-region
+    """merlin_mlp_wide with /kernels ON — gives us per-region
     compiled measurements to derive utilization from."""
     out = tmp_path_factory.mktemp("m22_kernels") / "run"
     _run("merlin_mlp_wide", out, run_kernels=True)
@@ -82,7 +82,7 @@ def kernels_run(tmp_path_factory) -> Path:  # type: ignore[no-untyped-def]
 
 @pytest.fixture(scope="module")
 def no_kernels_run(tmp_path_factory) -> Path:  # type: ignore[no-untyped-def]
-    """merlin_mlp_wide with kernels OFF — M-22 emits no_measurements."""
+    """merlin_mlp_wide with kernels OFF — emits no_measurements."""
     out = tmp_path_factory.mktemp("m22_no_kernels") / "run"
     _run("merlin_mlp_wide", out, run_kernels=False)
     return out
@@ -135,7 +135,7 @@ def test_artifact_schema_version(kernels_run: Path) -> None:
 def test_byte_identical_reruns(kernels_run: Path) -> None:
     """Calling run_compiled_bottleneck twice on the same run dir must
     produce byte-identical JSON output (modulo generated_at_utc and
-    M-22.1's profiler_evidence overlay, which is layered post-hoc by
+    the profiler_evidence overlay, which is layered post-hoc by
     a separate pass)."""
     from compgen.graph_compilation.compiled_bottleneck import (
         run_compiled_bottleneck,
@@ -150,9 +150,9 @@ def test_byte_identical_reruns(kernels_run: Path) -> None:
     d2 = _read(p)
     d1.pop("generated_at_utc", None)
     d2.pop("generated_at_utc", None)
-    # M-22.1 layers profiler_evidence and replaces cache_evidence after
-    # M-22 finishes. Re-running M-22 alone overwrites the file without
-    # the M-22.1 overlay; strip both fields before comparing M-22's
+    # layers profiler_evidence and replaces cache_evidence after
+    # finishes. Re-running alone overwrites the file without
+    # the overlay; strip both fields before comparing 's
     # own determinism.
     for d in (d1, d2):
         for r in d.get("regions", []) or []:
@@ -268,8 +268,8 @@ def test_measured_bottleneck_classification() -> None:
 def test_every_compiled_region_is_in_m22_report(
     kernels_run: Path,
 ) -> None:
-    """Every region with an M-19 or M-20 compiled measurement should
-    appear in M-22's per-region list with model_status=ok."""
+    """Every region with an compiled measurement should
+    appear 's per-region list with model_status=ok."""
     base = kernels_run / "02_graph_analysis" / "kernel_execution"
     m20_path = base / "region_compiled_differential_report.json"
     if not m20_path.exists():
@@ -356,8 +356,8 @@ def test_hardware_resource_report_has_compiled_evidence_overlay(
 def test_hardware_resource_calibration_status_field_unchanged(
     kernels_run: Path,
 ) -> None:
-    """M-17.1's deterministic-baseline ``calibration_status`` field
-    must stay ``not_profiler_calibrated``. M-22 only adds a NEW
+    """the deterministic-baseline ``calibration_status`` field
+    must stay ``not_profiler_calibrated``. only adds a NEW
     ``kernel_calibration_status`` field; it does not mutate the
     existing field."""
     hrr = _read(
@@ -380,15 +380,15 @@ def test_kernel_calibration_status_enum(kernels_run: Path) -> None:
 
 
 # --------------------------------------------------------------------------- #
-# Cross-reference with M-21
+# Cross-reference with
 # --------------------------------------------------------------------------- #
 
 
 def test_m21_analytical_bottleneck_matches_m22_evidence(
     kernels_run: Path,
 ) -> None:
-    """For every M-22 ok-region, the analytical_bottleneck recorded
-    must match M-21's standalone report for the same candidate."""
+    """For every ok-region, the analytical_bottleneck recorded
+    must match the standalone report for the same candidate."""
     m21 = _read(
         kernels_run / "02_graph_analysis" / "analytical_cost"
         / "per_candidate_analytical_cost.json"
@@ -437,7 +437,7 @@ def test_agreement_count_matches_region_evidence(kernels_run: Path) -> None:
 
 
 # --------------------------------------------------------------------------- #
-# Byte-identity of unrelated artifacts (M-22 only writes its own dir +
+# Byte-identity of unrelated artifacts (only writes its own dir +
 # hardware_resource_report overlay)
 # --------------------------------------------------------------------------- #
 
@@ -503,7 +503,7 @@ def test_m20_report_unchanged_by_m22(kernels_run: Path) -> None:
 def test_hardware_resource_overlay_byte_stable_across_m22_reruns(
     kernels_run: Path,
 ) -> None:
-    """After the FIRST M-22 run, re-running M-22 produces a byte-
+    """After the FIRST run, re-running produces a byte-
     identical hardware_resource_report (the overlay is deterministic)."""
     from compgen.graph_compilation.compiled_bottleneck import (
         run_compiled_bottleneck,

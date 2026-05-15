@@ -104,12 +104,10 @@ def matmul_fp16(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
 
 # ---------------------------------------------------------------------------
 # 1b. COMPUTE_TILED v2 — refined from diagnosis feedback
-#
 # Diagnosis on v1 said:
 #   1. Tiles aren't re-using lhs/rhs across the K-loop. Try 128×128 + num_stages=3.
 #   2. triton.autotune over (BLOCK_M, BLOCK_N, BLOCK_K, num_warps, num_stages).
 #   3. The autotune curve itself is strong signal.
-#
 # v2 changes:
 #   * @triton.autotune with 6 configs (small → large tiles, 4/8 warps, 2/3 stages)
 #   * GROUP_M swizzle — L2 re-use pattern: warps cooperate on nearby output
@@ -215,13 +213,11 @@ def matmul_fp16_v2(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
 
 # ---------------------------------------------------------------------------
 # 1c. COMPUTE_TILED v3 — persistent CTA + more configs + multiple_of hints
-#
 # Diagnosis after v2 (147μs vs 29.6μs eager):
 #   * Autotune picked the SAME 64×64×32 as v1 → tile-bound path isn't the fix
 #   * Still 5× vs cuBLAS → launch/scheduling overhead + register usage matter
 #   * Next levers: persistent CTA (amortize launch), pipelined async loads
 #     via num_stages=3, tl.multiple_of hints for the compiler
-#
 # v3 changes:
 #   * Persistent scheduling — launch exactly NUM_SMS CTAs (72 on TITAN RTX);
 #     each iterates over a strided slice of the output-tile space. Removes
@@ -345,7 +341,6 @@ def matmul_fp16_v3(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
 
 # ---------------------------------------------------------------------------
 # 1d. COMPUTE_TILED v4 — ALGORITHMIC rewrite, not just knob tuning
-#
 # The real body changes:
 #   * ``tl.make_block_ptr`` for A, B, C — gives the compiler a structured
 #     tensor view; emits vectorised coalesced loads + handles boundaries
@@ -357,7 +352,6 @@ def matmul_fp16_v3(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
 #     add. Direct win on the inner loop.
 #   * Structured store via ``tl.store(c_block_ptr, ...)`` with
 #     ``boundary_check`` — proper strided writes.
-#
 # Knobs unchanged: same autotune grid as v3, same persistent-CTA shell,
 # same GROUP_M swizzle. Any delta here is purely from the body rewrite.
 # ---------------------------------------------------------------------------
@@ -468,11 +462,9 @@ def matmul_fp16_v4(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
 
 # ---------------------------------------------------------------------------
 # 1e. COMPUTE_TILED — proper batched matmul
-#
 # Replaces the Python loop over per-batch 2D matmul we were doing for
 # attention scores + output. 3D launch: grid_z indexes the batch dim.
 # Shape: (B_dim, M, K) × (B_dim, K, N) → (B_dim, M, N)
-#
 # The bmm case is the dominant overhead at warm-cache steady state:
 # 51.6% of TinyLlama wall-time was the Python-loop-over-2D-matmul
 # pattern (1408 wasted launches). One fused 3D kernel collapses that
@@ -701,7 +693,6 @@ def rmsnorm_fp16(x: torch.Tensor, weight: torch.Tensor, eps: float = 1e-5) -> to
 
 # ---------------------------------------------------------------------------
 # Auto-load persisted autotune picks at import time.
-#
 # Triton's binary cache is automatic (~/.triton/cache); ours sits beside
 # it at ~/.compgen/autotune/. With both populated, deployment cold start
 # drops from ~10 s to ~hundreds of ms (only the kernel binary loads

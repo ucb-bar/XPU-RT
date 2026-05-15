@@ -453,13 +453,11 @@ def decompose_addmm(
 # ============================================================================
 #  expansion — real-model coverage (smolVLA + Gemma-decode)
 # ============================================================================
-#
 # Each entry below follows the established MVP pattern:
 # - emit a real linalg op where cleanly supported (bmm, convolution as GEMM)
 # - otherwise emit an opaque func.call (same pattern as decompose_gelu today)
 # - set ``pattern_hint`` so downstream Phase 2 passes can reason about intent
 #   even when the body is a black box.
-#
 # Destructive lowerings into full linalg.generic bodies land in a follow-up
 # wave alongside the MVP-annotator → real-rewrite upgrade.
 

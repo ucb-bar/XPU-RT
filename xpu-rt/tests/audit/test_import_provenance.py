@@ -1,4 +1,4 @@
-"""Tests for compgen.audit.import_provenance (M-31A.2)."""
+"""Tests for compgen.audit.import_provenance."""
 
 from __future__ import annotations
 

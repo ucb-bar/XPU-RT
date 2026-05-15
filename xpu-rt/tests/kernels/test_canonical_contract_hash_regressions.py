@@ -8,7 +8,7 @@ Covers gaps #1, #2, #3, #4, #15:
 - #2: ``find_certificate_by_canonical_hash`` walks both
   ``04_kernel_codegen/certificates/`` and the auction's
   ``auction/<task>/verified/<provider>/`` runner-up cert tree.
-- #3: M-46's ``_bindings_for_run`` uses canonical-hash fallback
+#3: the ``_bindings_for_run`` uses canonical-hash fallback
   when an instance-hash cert is missing for a region.
 - #4: ``action_space._gen_feedback_proposals`` reads
   ``contract_feedback_proposals.json`` and emits Family-7
@@ -31,7 +31,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 def _build_v3_matmul_with_tile(*, tile_n: int):
-    """Same shape, different tile_N attribute — gap #1 test fixture."""
+    """Same shape, different tile_N attribute — test fixture."""
     from compgen.kernels.contract_v3 import KernelContractV3
 
     cs = {
@@ -58,7 +58,7 @@ def _build_v3_matmul_with_tile(*, tile_n: int):
 
 
 # --------------------------------------------------------------------------- #
-# Gap #1 — canonical hash strips tile attrs
+# canonical hash strips tile attrs
 # --------------------------------------------------------------------------- #
 
 
@@ -78,7 +78,7 @@ class TestGap1CanonicalStripsTileAttrs:
 
         c_a = _build_v3_matmul_with_tile(tile_n=16)
         # Surgical replace of just the tile_N StaticAttr — keep
-        # divisibility intact so gap #9 doesn't separate them.
+        # divisibility intact so doesn't separate them.
         new_attrs = []
         for attr in c_a.io.attributes:
             if attr.name == "tile_N":
@@ -94,7 +94,7 @@ class TestGap1CanonicalStripsTileAttrs:
 
 
 # --------------------------------------------------------------------------- #
-# Gap #2 — cross-model lookup walks auction tree
+# cross-model lookup walks auction tree
 # --------------------------------------------------------------------------- #
 
 
@@ -144,7 +144,7 @@ class TestGap2CrossModelWalksAuctionTree:
 
 
 # --------------------------------------------------------------------------- #
-# Gap #4 — Family 7 reads proposals + emits candidates
+# Family 7 reads proposals + emits candidates
 # --------------------------------------------------------------------------- #
 
 
@@ -230,7 +230,7 @@ class TestGap4FeedbackProposalsFamily7:
 
 
 # --------------------------------------------------------------------------- #
-# Gap #15 — trust gate auto-discovers run-dir
+# trust gate auto-discovers run-dir
 # --------------------------------------------------------------------------- #
 
 

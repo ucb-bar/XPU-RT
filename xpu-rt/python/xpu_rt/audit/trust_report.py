@@ -1,4 +1,4 @@
-"""Trust report aggregator (M-31A.5).
+"""Trust report aggregator.
 
 A single-page artifact that proves the system is honest. The report
 runs every audit gate and emits both a JSON record and a human-readable
@@ -352,7 +352,7 @@ def _gate_holdout_outcomes_honest() -> GateResult:
 
 
 def _autodiscover_latest_run_dir() -> Path | None:
-    """Gap #15 closure: scan the conventional run roots for the most
+    """ closure: scan the conventional run roots for the most
     recently-touched run that has a certificates/ dir.
 
     Walks ``results/`` and ``/tmp/`` non-recursively for compatibly-
@@ -388,13 +388,13 @@ def _autodiscover_latest_run_dir() -> Path | None:
 def _gate_contract_version_consistency(
     *, run_dir: Path | None,
 ) -> GateResult:
-    """M-64 audit gate: every certificate's recorded
+    """audit gate: every certificate's recorded
     ``canonical_contract_hash`` must match a fresh re-derivation
     after migrating the source contract body to v3.1.
 
     Catches regressions where adding a v3.1 optional field would have
     leaked into the canonical projection (and silently invalidated
-    every cached cert). Gap #15 closure: when ``run_dir`` is None,
+    every cached cert). closure: when ``run_dir`` is None,
     auto-discover the most recently-touched run with a non-empty
     certs dir under ``results/`` or ``/tmp/``.
     """
@@ -488,6 +488,50 @@ def _gate_contract_version_consistency(
     )
 
 
+def _gate_extension_architecture() -> GateResult:
+    """ aggregate the 6-check Phase F audit
+    (card completeness, blocked-not-paper-claimable, pass-tool
+    payload purity, optional-import quarantine, provider-result-
+    is-not-certificate, execution_evidence).
+
+    Pass = zero violations across all six. Failure = the
+    underlying ``AuditReport.violations`` list, surfaced verbatim
+    so the trust-report consumer sees the typed reason.
+    """
+    try:
+        from compgen.audit.extension_architecture import run_audit
+    except ImportError as exc:
+        return GateResult(
+            name="extension_architecture",
+            status="skipped",
+            detail=f"extension_architecture audit unavailable: {exc}",
+        )
+    report = run_audit()
+    if report.passed:
+        return GateResult(
+            name="extension_architecture",
+            status="pass",
+            detail=(
+                f"all 6 sub-checks passed: cards_audited="
+                f"{report.summary.get('cards_audited', 0)}, "
+                f"evidence available="
+                f"{report.summary.get('execution_evidence_available', 0)}, "
+                f"evidence blocked="
+                f"{report.summary.get('execution_evidence_blocked', 0)}"
+            ),
+        )
+    violations_summary = ", ".join(
+        f"{v.check}:{v.reason}" for v in report.violations[:8]
+    )
+    if len(report.violations) > 8:
+        violations_summary += f" (+{len(report.violations) - 8} more)"
+    return GateResult(
+        name="extension_architecture",
+        status="fail",
+        detail=f"{len(report.violations)} violation(s): {violations_summary}",
+    )
+
+
 def _utc_now() -> str:
     return datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -522,8 +566,14 @@ def build_trust_report(
     report.gates.append(_gate_trace_replay_self_check(tmp_path))
     report.gates.append(_gate_task_pack_buildable(tmp_path))
     report.gates.append(_gate_holdout_outcomes_honest())
-    # M-64 — contract version consistency. Skipped when no run-dir.
+    # contract version consistency. Skipped when no run-dir.
     report.gates.append(_gate_contract_version_consistency(run_dir=run_dir))
+    # solver substrate gates (5).
+    from compgen.audit.solver_gates import all_solver_gates
+
+    report.gates.extend(all_solver_gates(run_dir=run_dir))
+    #  Phase F extension/provider architecture audit (6 sub-checks).
+    report.gates.append(_gate_extension_architecture())
     if report.skip_count > 0:
         report.notes.append(
             f"{report.skip_count} gate(s) skipped — likely "

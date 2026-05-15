@@ -6,7 +6,7 @@ human) select one legal candidate from the bounded
 ``agent_decision_request.json``, validates the agent's
 ``agent_decision_response.json`` against several spec'd checks, and
 then commits the agent-selected candidate into Recipe IR via the
-existing M-05 pipeline.
+existing pipeline.
 
 Selection modes:
 
@@ -22,8 +22,8 @@ Selection modes:
 Hard non-goals:
 
 - No new candidate generation.
-- No real transforms (M-11B/M-12 territory).
-- No cost-model changes (M-13).
+No real transforms (/territory).
+No cost-model changes.
 - No compiler-core changes.
 """
 
@@ -80,7 +80,7 @@ def _sha256_or_none(path: Path) -> str | None:
 
 
 # --------------------------------------------------------------------------- #
-# M-28 promotion retrieval helper
+# promotion retrieval helper
 # --------------------------------------------------------------------------- #
 
 
@@ -99,7 +99,7 @@ def _retrieve_promoted_for_region(
     request emission.
 
     When ``candidate_selection`` is provided, the function also
-    computes the M-26 ``contract_hash`` for exact-kernel reuse and
+    computes the ``contract_hash`` for exact-kernel reuse and
     passes it to retrieval — exact matches are ranked above
     region-pattern matches.
     """
@@ -125,7 +125,7 @@ def _retrieve_promoted_for_region(
         if not region_sig_hash:
             return []
 
-        # M-41: route through the canonical hash. We keep
+        # route through the canonical hash. We keep
         # region_sig_fields above only because retrieve_for_region's
         # second tier still keys on it.
         contract_hash_str = ""
@@ -143,7 +143,7 @@ def _retrieve_promoted_for_region(
         # Resolve library_path against the repo root (parents[3] from
         # this file, mirroring run.py). Bare ``Path('.compgen_cache')``
         # is cwd-relative and the pipeline's cwd is not always the
-        # repo — caught during M-30 real-workload validation.
+        # repo — caught during real-workload validation.
         from pathlib import Path as _P
         repo_root = _P(__file__).resolve().parents[3]
         library = repo_root / ".compgen_cache" / "recipes"
@@ -433,14 +433,14 @@ def build_agent_decision_request(
     - ``action_space.mlir`` (canonical IR; used by the resolver).
     - ``graph_dossier_v3.json`` / ``cost_preview_v2.json`` /
       ``llm_graph_view.json`` are referenced when present (they
-      become available when M-13 has run; for the request emitted
+      become available when has run; for the request emitted
       pre-decision they're recorded as ``null``).
 
     The request's ``candidate_ids_allowed`` is the union of every
     legal candidate listed in ``llm_action_space.ranked_sites[].
     legal_candidates[]``. The agent MUST pick from this list.
 
-    M-28 (Section 19): per-region ``promoted_candidates`` block is
+    (Section 19): per-region ``promoted_candidates`` block is
     attached when the on-disk recipe library
     (``.compgen_cache/recipes/``) holds matches for the region's
     pattern signature or kernel contract. Promoted candidates carry
@@ -464,17 +464,17 @@ def build_agent_decision_request(
         c["candidate_id"]: c for c in candidate_actions.get("candidates", [])
     }
 
-    # M-28: prepare promoted-candidate retrieval context. Pull
+    # prepare promoted-candidate retrieval context. Pull
     # target_id from llm_action_space (already loaded above) — the
-    # run_manifest.json doesn't exist yet at M-14A explicit-emission
+    # run_manifest.json doesn't exist yet at explicit-emission
     # time, so reading it would yield empty and the bridge's
     # signature derivation would diverge from the read-side
-    # derivation. Caught during M-30 real-workload validation.
+    # derivation. Caught during real-workload validation.
     target_id_for_retrieval = llm_view.get("target_id", "") or ""
     # candidate_selection.json may or may not exist yet — agent-file /
     # llm-live modes emit the request INLINE before the resolver
-    # writes the selection; greedy mode emits via M-14A after the
-    # selection lands. When present, we use it to derive the M-26
+    # writes the selection; greedy mode emits after the
+    # selection lands. When present, we use it to derive the
     # contract_hash for exact-kernel retrieval (preferred over
     # region-pattern matches).
     candidate_selection_for_retrieval = _read_json_or_none(
@@ -513,7 +513,7 @@ def build_agent_decision_request(
                 }
             )
 
-        # M-28: attach promoted candidates that match this region's
+        # attach promoted candidates that match this region's
         # pattern signature. Best-effort: errors degrade to an empty
         # block, never break the request emission.
         site_promoted: list[dict[str, Any]] = []
@@ -578,13 +578,12 @@ def build_agent_decision_request(
             if path.exists() else None
         )
 
-    # M-31: pass-card registry. ``passes_allowed`` is now derived from
+    # pass-card registry. ``passes_allowed`` is now derived from
     # the on-disk pass-card registry (docs/generated/pass_cards/) rather
     # than a hardcoded list — every id resolves to a typed PassCard the
     # agent can read inline via the ``pass_cards`` field below. The
     # registry asserts uniqueness at load time, so duplicate ids would
     # have raised before reaching this point.
-    #
     # The forbidden_actions list remains a constant: these are
     # categorical anti-patterns (editing IR directly, inventing ids)
     # that cannot be expressed as missing pass cards.
@@ -605,17 +604,17 @@ def build_agent_decision_request(
     # that re-introduce hardcoded ids.
     _pass_registry.assert_resolvable(passes_allowed)
 
-    # M-32: multi-level analysis index. Walk the run dir for every
+    # multi-level analysis index. Walk the run dir for every
     # known analysis summary, record its content_hash + dependencies +
     # availability. The agent reads this to know which inputs are
-    # fresh (M-33 enforces invalidation discipline; for M-32 the
+    # fresh (enforces invalidation discipline; the
     # block is informative only).
     from compgen.analysis.checkpoints import AnalysisIndex
 
     _analysis_index = AnalysisIndex.from_run_dir(run_dir)
     analysis_summaries_inline = [s.to_dict() for s in _analysis_index]
 
-    # M-31A.2: surface whether the recipe-memory cache was consulted
+    # surface whether the recipe-memory cache was consulted
     # this run. The retrieval path honors COMPGEN_DISABLE_RECIPE_MEMORY;
     # echoing it back tells the audit "no, this run didn't use cached
     # promoted recipes."
@@ -640,24 +639,24 @@ def build_agent_decision_request(
         },
         "sources": sources,
         "candidate_ids_allowed": candidate_ids_allowed,
-        # M-31A.3 + M-31: action vocabulary. ``passes_allowed`` names
+        # : action vocabulary. ``passes_allowed`` names
         # the kinds of compiler actions the agent can request, derived
-        # from the on-disk pass-card registry (M-31). ``pass_cards`` is
+        # from the on-disk pass-card registry. ``pass_cards`` is
         # the typed inline projection of every card so the agent can
         # read preconditions / invalidates / failure_modes without an
         # extra fetch. ``forbidden_actions`` names categorical
         # anti-patterns (not pass-shaped, so not in the registry).
         "passes_allowed": passes_allowed,
         "pass_cards": pass_cards_inline,
-        # M-32: multi-level analysis index. One entry per known summary
+        # multi-level analysis index. One entry per known summary
         # the pipeline can emit; ``available=true`` rows carry a
         # content_hash. Pass cards' ``invalidates`` field references
-        # entries here by id; M-33 will turn that cross-reference into
+        # entries here by id; will turn that cross-reference into
         # an enforceable invalidation contract.
         "analysis_summaries": analysis_summaries_inline,
         "forbidden_actions": forbidden_actions,
         "visible_regions": visible_regions,
-        # M-28: top-level summary of every promoted candidate found
+        # top-level summary of every promoted candidate found
         # across all regions. Per-region matches live inside
         # ``visible_regions[*].promoted_candidates``; this list is the
         # flattened union, ordered by match strength (exact_contract
@@ -668,7 +667,7 @@ def build_agent_decision_request(
         "agent_guidance": _build_agent_guidance(),
         "generated_at_utc": _utcnow(),
     }
-    # M-31A.3: deterministic decision_id. Computed AFTER the rest of the
+    # deterministic decision_id. Computed AFTER the rest of the
     # request is finalized, so it's a function of the request body
     # itself (modulo the decision_id field). Two runs with the same
     # legal candidates / sources / promoted matches produce the same
@@ -784,7 +783,7 @@ def validate_agent_decision_response(
     if not schema_ok:
         failures.append(f"response schema invalid: {schema_detail}")
 
-    # 2a. M-31 pass-card resolvability — every id in passes_allowed
+    # 2a. pass-card resolvability — every id in passes_allowed
     # must resolve to a real card on disk. This is the request-side
     # check; if a pass were exposed without a card, the agent would
     # see a name with no semantics and might invent behavior.
@@ -811,10 +810,10 @@ def validate_agent_decision_response(
                 f"passes_allowed contains ids without pass cards: {exc}"
             )
 
-    # 2c. M-33.2 verification-certificate gate — when the recipe-planning
+    # 2c. verification-certificate gate — when the recipe-planning
     # stage has produced post_lowering and / or differential reports,
     # the corresponding verification certificates must be on disk. If
-    # the report exists but the cert is missing (e.g. on a pre-M-33
+    # the report exists but the cert is missing (e.g. on a pre-
     # cached fixture run), the validator emits the cert lazily from
     # the report — the invariant is "cert co-located with report",
     # not "cert was emitted by run.py". Lazy emission preserves the
@@ -862,7 +861,7 @@ def validate_agent_decision_response(
             f"{type(exc).__name__}: {exc}",
         )
 
-    # 2d. M-33.3 refinement monotonicity — the recipe's claimable
+    # 2d. refinement monotonicity — the recipe's claimable
     # refinement is the weakest preserves_refinement across every
     # applied pass. Reading the chain from candidate_selection.json is
     # the simplest source: each entry carries its candidate_kind, and
@@ -912,7 +911,7 @@ def validate_agent_decision_response(
                         f"refinement monotonicity: {report_chain.detail}"
                     )
     except Exception as exc:  # noqa: BLE001
-        # M-33.3 is informational at this stage; a malformed
+        # is informational at this stage; a malformed
         # candidate_selection should not fail the validator.
         _add(
             "refinement_monotonicity_check",
@@ -920,7 +919,7 @@ def validate_agent_decision_response(
             f"{type(exc).__name__}: {exc}",
         )
 
-    # 2e. M-34.3 pass_plan validation — when the response carries an
+    # 2e. pass_plan validation — when the response carries an
     # optional ``pass_plan`` list, run the scheduler invariants
     # (structural, phase, requires_after, excludes). Plans are
     # additive: a response without pass_plan continues to use
@@ -971,9 +970,9 @@ def validate_agent_decision_response(
                 f"pass_plan check error: {type(exc).__name__}: {exc}"
             )
 
-    # 2b. M-31A.3 decision-id discipline — when the request carries a
+    # 2b. decision-id discipline — when the request carries a
     # decision_id AND the response carries one, they must match. A
-    # missing response.decision_id is tolerated (pre-M-31A agents won't
+    # missing response.decision_id is tolerated (pre-agents won't
     # know to echo it); an explicitly-different value is a hard fail.
     # The check stays additive so existing agent-file tests keep
     # passing during the transition; the strict variant will land once
@@ -1132,7 +1131,7 @@ def validate_agent_decision_response(
 
 
 # --------------------------------------------------------------------------- #
-# Provider-redaction audit (M-14C)
+# Provider-redaction audit
 # --------------------------------------------------------------------------- #
 
 
@@ -1240,7 +1239,7 @@ def _emit_redaction_audit(
 
 
 # --------------------------------------------------------------------------- #
-# Reviewer-facing notes (M-14C)
+# Reviewer-facing notes
 # --------------------------------------------------------------------------- #
 
 
@@ -1394,11 +1393,11 @@ def _emit_retry_request(
     validation: dict[str, Any],
     run_dir: Path,
 ) -> Path:
-    """Write a typed ``retry_request.json`` (M-15A) explaining why the
+    """Write a typed ``retry_request.json`` explaining why the
     attempt failed and what the agent should fix next time.
 
     The recommended-debug-fields list is the canonical evidence-field
-    surface the M-14A validator resolves; the agent must reference
+    surface the validator resolves; the agent must reference
     fields from this set in its corrected response.
     """
     failed_checks = [
@@ -1519,7 +1518,7 @@ def run_agent_decision(
     """Emit + (load|stub) + validate the agent decision artifacts.
 
     Returns a result whose ``selected_candidate_id`` is the candidate
-    the recipe-planning M-05 selector should commit. ``overall == "fail"``
+    the recipe-planning selector should commit. ``overall == "fail"``
     means the recipe must NOT be committed; the caller should propagate
     the failure before any recipe.mlir is written.
     """
@@ -1540,7 +1539,7 @@ def run_agent_decision(
     if selection_mode == "llm-live":
         # Provider-backed mode. The provider call returns a parsed
         # response (or raises ProviderError). Validation still happens
-        # downstream — providers cannot bypass the M-14A gate.
+        # downstream — providers cannot bypass the gate.
         from compgen.graph_compilation.llm_live_provider import (
             ProviderError,
             build_prompt,
@@ -1549,7 +1548,7 @@ def run_agent_decision(
         )
 
         cfg = live_config or LiveProviderConfig()
-        # Read llm_graph_view if available (post-M-13). For pre-M-13
+        # Read llm_graph_view if available (post-). For pre-
         # request emission, fall back to the legal-only llm_action_space
         # which is always available at decision time.
         llm_view: dict[str, Any] | None = _read_json_or_none(
@@ -1766,7 +1765,7 @@ def run_agent_decision(
         json.dumps(validation, indent=2, sort_keys=True), encoding="utf-8",
     )
 
-    # M-15A: snapshot this attempt under attempts/attempt_<N>/. Always
+    # snapshot this attempt under attempts/attempt_<N>/. Always
     # done so the audit trail is preserved regardless of pass/fail.
     # On fail, also emit retry_request.json (top-level + per-attempt).
     _snapshot_attempt(
@@ -1812,7 +1811,7 @@ def run_agent_decision(
         provider_block=provider_block,
     )
 
-    # M-14C: emit provider-redaction audit AFTER all artifacts are
+    # emit provider-redaction audit AFTER all artifacts are
     # written so the scan covers everything in the agent_decision/
     # subdir. Runs unconditionally (not just for llm-live) because the
     # audit also catches accidental key writes during stub/agent-file.
@@ -1823,7 +1822,7 @@ def run_agent_decision(
         out_dir=out_dir, provider_name=redaction_provider_name,
     )
 
-    # M-14C: emit a reviewer-facing markdown summary explaining what
+    # emit a reviewer-facing markdown summary explaining what
     # the agent picked and why. Only meaningful when the agent
     # actually made a decision (skip path: agent-file,
     # llm-live). Greedy doesn't run this code path.
@@ -1871,7 +1870,7 @@ def update_trace_with_recipe_op(
 
 
 # --------------------------------------------------------------------------- #
-# M-15A: iterative agent-decision (in-process retry)
+# iterative agent-decision (in-process retry)
 # --------------------------------------------------------------------------- #
 
 

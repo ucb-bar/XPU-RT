@@ -355,6 +355,109 @@ _ADD_RELU_TEMPLATE = textwrap.dedent("""\
         return output
 """)
 
+# Flash Attention 1: single-head, non-causal, fp16. The
+# template implements the classic FlashAttention-1 tiling: per-
+# query block, stream K/V tiles, online-softmax-normalize the
+# accumulator. ``kernel(Q, K, V)`` runs on a ``(B, H, S, D)``
+# 4D layout and matches ``torch.nn.functional.scaled_dot_product_attention``.
+_FLASH_ATTENTION_V1_TEMPLATE = textwrap.dedent("""\
+    import triton
+    import triton.language as tl
+    import torch
+    import math
+
+    @triton.jit
+    def flash_attn_v1_kernel(
+        Q_ptr, K_ptr, V_ptr, O_ptr,
+        sm_scale,
+        stride_qb, stride_qh, stride_qs, stride_qd,
+        stride_kb, stride_kh, stride_ks, stride_kd,
+        stride_vb, stride_vh, stride_vs, stride_vd,
+        stride_ob, stride_oh, stride_os, stride_od,
+        S: tl.constexpr,
+        D: tl.constexpr,
+        BLOCK_M: tl.constexpr,
+        BLOCK_N: tl.constexpr,
+    ):
+        # program_id(0) = query-block along sequence; program_id(1) = (B*H) flat
+        pid_m = tl.program_id(0)
+        pid_bh = tl.program_id(1)
+
+        # Compute base pointers for this (B, H) slice.
+        q_base = Q_ptr + pid_bh * stride_qh
+        k_base = K_ptr + pid_bh * stride_kh
+        v_base = V_ptr + pid_bh * stride_vh
+        o_base = O_ptr + pid_bh * stride_oh
+
+        offs_m = pid_m * BLOCK_M + tl.arange(0, BLOCK_M)
+        offs_n = tl.arange(0, BLOCK_N)
+        offs_d = tl.arange(0, D)
+        mask_m = offs_m < S
+
+        # Load Q tile [BLOCK_M, D] in fp32 (cast from fp16) for accum precision.
+        q_ptrs = q_base + offs_m[:, None] * stride_qs + offs_d[None, :] * stride_qd
+        q = tl.load(q_ptrs, mask=mask_m[:, None], other=0.0).to(tl.float32)
+
+        # Online softmax state: max, running sum, accumulator.
+        m_i = tl.full([BLOCK_M], -float("inf"), dtype=tl.float32)
+        l_i = tl.zeros([BLOCK_M], dtype=tl.float32)
+        acc = tl.zeros([BLOCK_M, D], dtype=tl.float32)
+
+        for start_n in range(0, S, BLOCK_N):
+            cur_n = start_n + offs_n
+            mask_n = cur_n < S
+
+            k_ptrs = k_base + cur_n[:, None] * stride_ks + offs_d[None, :] * stride_kd
+            v_ptrs = v_base + cur_n[:, None] * stride_vs + offs_d[None, :] * stride_vd
+            k = tl.load(k_ptrs, mask=mask_n[:, None], other=0.0).to(tl.float32)
+            v = tl.load(v_ptrs, mask=mask_n[:, None], other=0.0).to(tl.float32)
+
+            # qk_ij = (Q @ K^T) * scale, with masked-out positions = -inf.
+            qk = tl.dot(q, tl.trans(k)) * sm_scale
+            qk = tl.where(mask_n[None, :], qk, float("-inf"))
+
+            # Online softmax update.
+            m_new = tl.maximum(m_i, tl.max(qk, axis=1))
+            alpha = tl.exp(m_i - m_new)
+            p = tl.exp(qk - m_new[:, None])
+            l_i = alpha * l_i + tl.sum(p, axis=1)
+            acc = acc * alpha[:, None] + tl.dot(p, v)
+            m_i = m_new
+
+        # Normalize and write back in the original (fp16) precision.
+        out = (acc / l_i[:, None]).to(O_ptr.dtype.element_ty)
+        o_ptrs = o_base + offs_m[:, None] * stride_os + offs_d[None, :] * stride_od
+        tl.store(o_ptrs, out, mask=mask_m[:, None])
+
+
+    def kernel(Q: torch.Tensor, K: torch.Tensor, V: torch.Tensor) -> torch.Tensor:
+        B, H, S, D = Q.shape
+        assert Q.shape == K.shape == V.shape
+        BLOCK_M = {block_m}
+        BLOCK_N = {block_n}
+        sm_scale = 1.0 / math.sqrt(D)
+        O = torch.empty_like(Q)
+        grid = ((S + BLOCK_M - 1) // BLOCK_M, B * H)
+        # Flatten the (B, H) dims so the kernel walks a single stride
+        # per "batch slot".
+        Qf = Q.reshape(B * H, S, D)
+        Kf = K.reshape(B * H, S, D)
+        Vf = V.reshape(B * H, S, D)
+        Of = O.reshape(B * H, S, D)
+        flash_attn_v1_kernel[grid](
+            Qf, Kf, Vf, Of,
+            sm_scale,
+            0, Qf.stride(0), Qf.stride(1), Qf.stride(2),
+            0, Kf.stride(0), Kf.stride(1), Kf.stride(2),
+            0, Vf.stride(0), Vf.stride(1), Vf.stride(2),
+            0, Of.stride(0), Of.stride(1), Of.stride(2),
+            S=S, D=D,
+            BLOCK_M=BLOCK_M, BLOCK_N=BLOCK_N,
+        )
+        return O
+""")
+
+
 # Map from op_family tag to template string and description.
 _TEMPLATES: dict[str, tuple[str, str]] = {
     "matmul": (_MATMUL_TEMPLATE, "Matrix multiply (C = A @ B)"),
@@ -364,6 +467,10 @@ _TEMPLATES: dict[str, tuple[str, str]] = {
     "softmax": (_SOFTMAX_TEMPLATE, "Row-wise softmax"),
     "layer_norm": (_LAYERNORM_TEMPLATE, "Fused layer normalization"),
     "add_relu": (_ADD_RELU_TEMPLATE, "Elementwise add + ReLU"),
+    "flash_attention": (
+        _FLASH_ATTENTION_V1_TEMPLATE,
+        "FlashAttention-1: single-head non-causal, online softmax",
+    ),
 }
 
 
@@ -535,7 +642,7 @@ class TritonTemplateProvider:
         self._accumulated_knowledge.clear()
         return exports
 
-    # -- Phase D / M-56: bid() ------------------------------------------------
+    # -- Phase D / bid ------------------------------------------------
 
     def bid(self, contract_v3: Any) -> BidPreview:
         """Cheap pre-codegen estimate over a :class:`KernelContractV3`.
@@ -636,8 +743,23 @@ def _shapes_from_contract(contract: KernelContract) -> tuple[int, int, int]:
     """Extract ``(dim_m, dim_n, dim_k)`` from the contract shapes.
 
     Falls back to sensible defaults when shape information is absent.
+
+    For ``flash_attention`` contracts (4D ``(B, H, S, D)`` Q/K/V
+    shapes), ``dim_m`` carries S (sequence length, used for the
+    M-tile grid), ``dim_n`` carries S as well (K/V sequence length
+    — equal in non-cross-attention case), and ``dim_k`` carries D
+    (head dim, threaded into the template as ``D: tl.constexpr``).
     """
     dim_m, dim_n, dim_k = 128, 128, 256
+
+    if contract.op_family == "flash_attention" and contract.input_shapes:
+        q_shape = contract.input_shapes[0]
+        if len(q_shape) >= 4:
+            # (B, H, S, D) — return (S, S, D).
+            S, D = q_shape[2], q_shape[3]
+            return S, S, D
+        if len(q_shape) >= 2:
+            return q_shape[-2], q_shape[-2], q_shape[-1]
 
     if contract.input_shapes:
         first = contract.input_shapes[0]
@@ -672,6 +794,13 @@ def _instantiate(
             block_size = max(default_block, 1 << max(dim_n.bit_length(), 4))
             block_size = min(block_size, 8192)  # cap to avoid excessive shared memory
         return template.format(block_size=block_size)
+
+    if op == "flash_attention":
+        # FA-1 only needs BLOCK_M / BLOCK_N tile sizes; D
+        # is constexpr from the contract.
+        block_m = 64 if dim_m >= 64 else 32
+        block_n = 64 if dim_n >= 64 else 32
+        return template.format(block_m=block_m, block_n=block_n)
 
     block_m, block_n, block_k = _pick_tile_sizes(dim_m, dim_n, dim_k)
     return template.format(block_m=block_m, block_n=block_n, block_k=block_k)
@@ -748,6 +877,15 @@ def _validate_on_gpu(
         b = torch.randn(dim_m, dim_n, device=device, dtype=torch.float32)
         ref_out = torch.relu(a + b)
         test_inputs = (a, b)
+    elif op == "flash_attention":
+        # _shapes_from_contract returned (S, S, D) for FA-1.
+        S, D = dim_m, dim_k
+        B, H = 1, 1
+        q = torch.randn(B, H, S, D, device=device, dtype=torch.float16)
+        k = torch.randn(B, H, S, D, device=device, dtype=torch.float16)
+        v = torch.randn(B, H, S, D, device=device, dtype=torch.float16)
+        ref_out = torch.nn.functional.scaled_dot_product_attention(q, k, v)
+        test_inputs = (q, k, v)
     else:
         a_mat = torch.randn(dim_m, dim_k, device=device, dtype=torch.float32)
         b_mat = torch.randn(dim_k, dim_n, device=device, dtype=torch.float32)
@@ -764,7 +902,12 @@ def _validate_on_gpu(
         diff = actual.float() - ref_out.float()
         l2 = float(torch.norm(diff).item())
         max_abs = float(torch.max(torch.abs(diff)).item())
-        tol = 1e-2  # GELU approximation needs wider tolerance
+        # Per-op tolerance: GELU needs wider tol; fp16 attention
+        # carries accumulated softmax error so it needs wider still.
+        if op == "flash_attention":
+            tol = 5e-2
+        else:
+            tol = 1e-2
         correct = max_abs <= tol
         diags.append(f"Correctness: {'PASS' if correct else 'FAIL'} (l2={l2:.6f}, max_abs={max_abs:.6f}, tol={tol})")
     except Exception as exc:

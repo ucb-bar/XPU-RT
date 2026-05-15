@@ -1,4 +1,4 @@
-"""Tests for M-10B Graph Dossier V3 unified agent view.
+"""Tests Graph Dossier V3 unified agent view.
 
 Cross-checks the four emitted artifacts against the existing
 graph-analysis and recipe-planning artifacts. Read-only against the
@@ -8,7 +8,7 @@ suite results directories produced by:
   ``--stop-after differential-verification``.
 - ``results/graph_compilation/dossier_v3_postlowering_suite/`` — partial
   pipeline, ``--stop-after post-lowering-verification`` (used for
-  V3R007 M-08-fallback test).
+  V3R007 -fallback test).
 
 Negative tests use ``tmp_path`` to mutate a copy of a real run dir and
 re-call the builder.
@@ -58,7 +58,7 @@ def _need_suites() -> None:
 
 
 # --------------------------------------------------------------------------- #
-# Positive tests over the canonical 6-model M-09 suite
+# Positive tests over the canonical 6-model suite
 # --------------------------------------------------------------------------- #
 
 
@@ -125,7 +125,7 @@ def test_obligation_status_source_is_m09_when_m09_ran() -> None:
     assert d["summary"]["obligation_status_source_stage"] == "differential_verification"
     sel = next(r["selected"] for r in d["regions"] if r["selected"] is not None)
     assert sel["obligation_status"]["source_stage"] == "differential_verification"
-    # M-09 status carries `discharged`; M-08 does not.
+    # status carries `discharged`; does not.
     assert "discharged" in sel["obligation_status"]
 
 
@@ -135,7 +135,7 @@ def test_obligation_status_source_is_m08_when_m09_absent() -> None:
     assert d["summary"]["obligation_status_source_stage"] == "post_lowering"
     sel = next(r["selected"] for r in d["regions"] if r["selected"] is not None)
     assert sel["obligation_status"]["source_stage"] == "post_lowering"
-    # M-08 v1 schema does NOT have a discharged list; v3 must not invent one.
+    # v1 schema does NOT have a discharged list; v3 must not invent one.
     assert "discharged" not in sel["obligation_status"]
 
 
@@ -312,7 +312,7 @@ def test_selected_illegal_candidate_fails_validation(tmp_path: Path) -> None:
 def test_no_compiler_core_imports_in_v3_module() -> None:
     """v3 is read-only aggregation. Asserts the module does not import
     from compiler-core packages that are explicitly out of scope per
-    M-10B's hard non-goals."""
+    the hard non-goals."""
     src = (
         REPO_ROOT / "python" / "compgen" / "graph_compilation"
         / "graph_dossier_v3.py"

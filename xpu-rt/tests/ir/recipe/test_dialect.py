@@ -15,13 +15,14 @@ def test_dialect_name() -> None:
 
 
 def test_dialect_op_count() -> None:
-    """Dialect contains exactly 65 operations.
+    """Dialect contains exactly 66 operations.
 
     53 original ops (scope=5, fact=14, candidate=14, choice=7, verify=6,
     provenance=7) + 12 propose ops (10 original + 2 megakernel/scheduling
-    added for the Event Tensor Compiler integration).
+    added for the Event Tensor Compiler integration) + 1 dispatch op
+    (plan_dispatch_table Phase G §12 Dream 5).
     """
-    assert len(ALL_OPS) == 65
+    assert len(ALL_OPS) == 66
 
 
 def test_dialect_attr_count() -> None:

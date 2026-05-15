@@ -107,7 +107,6 @@ def run_insert_copies(
         # buffer exists on that device) or the consumer-device's
         # default. We use the producer buffer's memory space as the
         # signal: if different from the consumer's, we need a copy.
-        #
         # For this pass we synthesize a new "staging" buffer in the
         # consumer's memory space (heuristically ``"dram"`` when we
         # can't tell). 's pipeline driver will set the

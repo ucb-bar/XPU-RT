@@ -1,4 +1,4 @@
-"""Tests for compgen.audit.trace_replay (M-31A.3)."""
+"""Tests for compgen.audit.trace_replay."""
 
 from __future__ import annotations
 
@@ -163,7 +163,7 @@ def test_replay_lenient_returns_report(tmp_path: Path) -> None:
 
 
 def test_assert_decision_ids_match_no_op_when_request_lacks_id() -> None:
-    # Pre-M-31A requests have no decision_id; the assert is a no-op
+    # Pre-requests have no decision_id; the assert is a no-op
     assert_decision_ids_match(
         request={"schema_version": "old"},
         response={"selected_candidate_id": "cand_a"},

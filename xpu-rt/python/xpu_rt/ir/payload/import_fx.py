@@ -312,14 +312,12 @@ class FXImporter:
             # ``getitem(producer_node, idx)`` after FX export. The
             # producer was decomposed to a single-tensor representative
             # (the primary output, index 0), so:
-            #
             # - ``getitem(_, 0)`` → resolve to the producer's tensor.
             # - ``getitem(_, k)`` for ``k > 0`` → drop the node entirely
             #   (auxiliary outputs that user code typically doesn't
             #   reference; if anything DOES reference them, it'll fail
             #   loudly downstream — preferable to emitting an opaque
             #   ``<built-in function getitem>`` op no provider can match).
-            #
             # Acceptance per REQ-020: ``<built-in function getitem>``
             # never appears in payload.mlir.
             if (

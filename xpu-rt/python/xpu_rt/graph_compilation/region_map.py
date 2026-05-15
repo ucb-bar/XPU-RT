@@ -33,7 +33,6 @@ from typing import Any
 # Top-level op line. Captures result SSA names (optional), operand SSA names,
 # the dialect.op stem, the inline-attr region_id (optional), and the trailing
 # type annotation block.
-#
 # We anchor at non-blank line start; we tolerate leading whitespace.
 _OP_LINE_RE = re.compile(
     r"""

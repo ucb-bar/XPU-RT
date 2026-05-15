@@ -7,15 +7,15 @@ Verifies:
   rationale-field examples, response shape, and forbidden phrases.
 - The block is byte-stable across reruns (deterministic; no
   measurement, no system state).
-- ``cost_column_priority`` ranks the four post-M-12 cost columns
+``cost_column_priority`` ranks the four post-cost columns
   in a defensible order.
-- The candidate-selection skill content covers the post-M-12 evidence
-  paths (M-21 m21_analytical_cost overlay, M-22 compiled_evidence
+The candidate-selection skill content covers the post-evidence
+  paths (m21_analytical_cost overlay, compiled_evidence
   overlay, kernel_calibration_status, bottleneck_classification_agreement).
 - The llm-live ``build_prompt`` emits a system prompt that includes
   the same hard rules + cost-matrix interpretation rules.
 - The forbidden_phrase_patterns block in the request matches the
-  hard-coded forbidden patterns the M-14A validator regex rejects.
+  hard-coded forbidden patterns the validator regex rejects.
 """
 
 from __future__ import annotations
@@ -143,7 +143,7 @@ def test_rationale_field_examples_include_post_m21_m22_paths(
 ) -> None:
     g = _request(run_dir)["agent_guidance"]
     examples = g["rationale_field_examples"]
-    # Must include at least one M-21 path and one M-22 path.
+    # Must include at least one path and one path.
     has_m21 = any(
         "m21_analytical_cost" in p
         for p in examples
@@ -158,7 +158,7 @@ def test_rationale_field_examples_include_post_m21_m22_paths(
 
 def test_forbidden_phrase_patterns_match_validator(run_dir: Path) -> None:
     """The forbidden phrases shown to the agent in agent_guidance must
-    match the regex patterns the M-14A validator actually rejects."""
+    match the regex patterns the validator actually rejects."""
     g = _request(run_dir)["agent_guidance"]
     declared = set(g["forbidden_phrase_patterns"])
     # These are the patterns the validator's regex actually rejects;
@@ -219,18 +219,18 @@ def test_sources_block_lists_optional_evidence_artifacts(
     req = _request(run_dir)
     sources = req["sources"]
     for required_key in (
-        "analytical_cost_report",      # M-21 (always-on)
-        "readiness_matrix",            # M-17.1
-        "hardware_resource_report",    # M-17.1
-        "compiled_bottleneck_report",  # M-22 (may be null when kernels off)
-        "region_compiled_differential_report",  # M-20
-        "calibration_report",          # M-18 (may be null)
-        "candidate_calibration_report",  # M-18.3 (may be null)
+        "analytical_cost_report",      # (always-on)
+        "readiness_matrix",            #
+        "hardware_resource_report",    #
+        "compiled_bottleneck_report",  # (may be null when kernels off)
+        "region_compiled_differential_report",  #
+        "calibration_report",          # (may be null)
+        "candidate_calibration_report",  # (may be null)
     ):
         assert required_key in sources, (
             f"agent_decision_request.sources missing key {required_key}"
         )
-    # M-21 analytical_cost is always-on, so it should be non-null.
+    # analytical_cost is always-on, so it should be non-null.
     assert sources["analytical_cost_report"] is not None, (
         "M-21 analytical_cost_report should be non-null (always-on)"
     )
@@ -276,7 +276,7 @@ def test_llm_live_build_prompt_includes_cost_matrix_rules() -> None:
 
 
 # --------------------------------------------------------------------------- #
-# Skill content covers post-M-12 evidence
+# Skill content covers post-evidence
 # --------------------------------------------------------------------------- #
 
 
@@ -292,7 +292,7 @@ def test_candidate_selection_skill_mentions_m21_m22_evidence() -> None:
     # Cost-matrix section must exist.
     assert "How to read the cost matrix" in src
 
-    # Each post-M-12 cost column is named.
+    # Each post-cost column is named.
     for col in (
         "compiled_evidence",
         "m21_analytical_cost",

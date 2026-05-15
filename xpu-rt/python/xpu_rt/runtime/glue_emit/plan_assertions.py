@@ -1,7 +1,7 @@
-"""Runtime plan assertions (M-48).
+"""Runtime plan assertions.
 
-Phase C M-48: generate the body of ``assert_plan(io)`` from each
-region's M-40 contract + the M-46 binding. Every assertion fires
+Phase C generate the body of ``assert_plan(io)`` from each
+region's contract + the binding. Every assertion fires
 with a named ``PLAN_VIOLATION_<KIND>`` typed error so a binary that
 runs on inputs the plan didn't promise refuses to run with a
 specific, auditable reason.
@@ -16,9 +16,9 @@ invariant):
     PLAN_VIOLATION_INPUT_SHAPE     io tensor shape != contract dims
     PLAN_VIOLATION_INPUT_BYTES     io tensor numel * element_size != expected bytes
     PLAN_VIOLATION_LAYOUT          io tensor layout not row_major when contract says row_major
-    PLAN_VIOLATION_BUFFER_SIZE     allocated buffer size != planned size  (M-49 wires)
-    PLAN_VIOLATION_EVENT_WRITERS   event has more than wait_count writers (M-51 wires)
-    PLAN_VIOLATION_UNBOUND_REGION  region declared in plan but no certified kernel  (M-46 carryover)
+    PLAN_VIOLATION_BUFFER_SIZE allocated buffer size != planned size (wires)
+    PLAN_VIOLATION_EVENT_WRITERS event has more than wait_count writers (wires)
+    PLAN_VIOLATION_UNBOUND_REGION region declared in plan but no certified kernel (carryover)
 
 The emitter renders straight-line Python that Section 4 Dream 4
 describes:
@@ -27,13 +27,13 @@ describes:
 
     assert io["A"].numel() * io["A"].element_size() == 1024  # PLAN_VIOLATION_INPUT_BYTES
 
-The IO order convention at M-48 is positional: the values of ``io``
+The IO order convention at is positional: the values of ``io``
 in insertion order map to the contract's ``io.inputs[]`` in order.
-M-49 wires named-binding (operator passes a dict that's resolved
+wires named-binding (operator passes a dict that's resolved
 against contract input names).
 
 Each assertion path in the emitted source is reachable via a
-negative-control test, so the M-48 invariant ("the runtime stops
+negative-control test, so the invariant ("the runtime stops
 loud, not silently") has real fault-injection coverage.
 """
 
@@ -68,7 +68,7 @@ class _RegionAssertions:
     aliasing: list[dict[str, int]]  # input_idx, output_idx
     in_place_safe: bool
     event_decls: list[dict[str, Any]]  # name, wait_count
-    # M-61 — typed predicates lifted from the contract.
+    # typed predicates lifted from the contract.
     preconditions: list[dict[str, Any]] = field(default_factory=list)
     postconditions: list[dict[str, Any]] = field(default_factory=list)
 
@@ -160,7 +160,7 @@ def collect_region_assertions(
     for b in bindings:
         if b.get("status") != "bound":
             continue
-        # Look up the M-40 contract file by walking
+        # Look up the contract file by walking
         # 04_kernel_codegen/contracts/<region_id>.<hash>.json.
         contracts_dir = run_dir / "04_kernel_codegen" / "contracts"
         contract_hash = b["contract_hash"]
@@ -205,7 +205,7 @@ def render_assert_plan_body(
 
     # We embed ALL region assertions into a single positional pass.
     # IO dict values in insertion order map to inputs across regions
-    # in placement order. M-49 will wire named binding; today's
+    # in placement order. will wire named binding; today's
     # assertions are positional.
     flat_inputs: list[tuple[str, dict[str, Any]]] = []
     for ra in region_assertions:
@@ -352,10 +352,10 @@ def render_assert_plan_body(
                 )
             seen_events[name] = ra.region_id
 
-    # M-61: predicate-driven precondition checks. Currently emitted
+    # predicate-driven precondition checks. Currently emitted
     # for ModEq (the load-bearing one — block-size constraint) +
     # ByteSizeLe + DtypeIn. NoAlias and NumericalWithinEps are
-    # postcondition-bound and surface in the M-44 verifier rather
+    # postcondition-bound and surface in the verifier rather
     # than the runtime fast-path.
     flat_in_idx_for_region: dict[str, list[int]] = {}
     seen_idx = 0
@@ -412,7 +412,7 @@ def render_assert_plan_body(
                 )
                 lines.append("")
             elif kind == "dtype_in":
-                # Gap #12 closure: emit a typed DtypeIn precondition
+                #  closure: emit a typed DtypeIn precondition
                 # check independent of the structural INPUT_DTYPE
                 # check. The structural check enforces dtype_class
                 # membership; this predicate enforces a (possibly
@@ -520,7 +520,7 @@ def render_assert_plan_body(
 def render_assert_postconditions_body(
     region_assertions: list[_RegionAssertions],
 ) -> str:
-    """Gap #11 closure: render the body of
+    """ closure: render the body of
     ``assert_postconditions(outputs, refs)`` — fires postcondition
     predicates (NumericalWithinEps) against a caller-supplied
     reference dict.
@@ -601,7 +601,7 @@ def render_plan_violation_classes() -> str:
         "INPUT_COUNT", "INPUT_DTYPE", "INPUT_SHAPE", "INPUT_BYTES",
         "LAYOUT", "BUFFER_SIZE", "EVENT_WRITERS", "UNBOUND_REGION",
         "IO_TYPE",
-        # M-61 — predicate-driven precondition / postcondition kinds.
+        # predicate-driven precondition / postcondition kinds.
         "PRECONDITION_MOD_EQ",
         "PRECONDITION_BYTE_SIZE_LE",
         "PRECONDITION_NO_ALIAS",

@@ -1,24 +1,24 @@
-"""M-37.13 negative controls — restore real coverage that M-37.12 lost.
+"""negative controls — restore real coverage that lost.
 
-The M-37.12 changes broadened the M-12 differential gate (combined
-torch.allclose-style tolerance) and relaxed the M-11B model whitelist
+The changes broadened the differential gate (combined
+torch.allclose-style tolerance) and relaxed the model whitelist
 on the clean-divide path. Three follow-on weaknesses surfaced in the
-M-31A audit:
+audit:
 
-1. Three end-to-end tests that previously asserted "M-15B fires on a
-   real natural M-12 failure" now skip, because no canonical-set model
+1. Three end-to-end tests that previously asserted "fires on a
+   real natural failure" now skip, because no canonical-set model
    produces a real natural failure under combined tolerance.
 2. The new combined-tolerance criterion has no fault-injection control
    proving the gate still rejects deviation > threshold.
-3. M-15B's downstream-retry plumbing has no end-to-end coverage on a
-   genuine status=fail M-12 report.
+3. the downstream-retry plumbing has no end-to-end coverage on a
+   genuine status=fail report.
 
-This module restores all three through M-37.13's two-layered M-12
+This module restores all three through the two-layered
 checks: a STRUCTURAL invariant (simulator vs tile-K reference,
 bit-exact) and a SEMANTIC bound (Higham's matmul accumulation
 bound, derived per-case). The negative controls exercise both
-layers and the M-15B detector + emitter end-to-end against a
-tampered M-12 report. No production code path takes test-only
+layers and the detector + emitter end-to-end against a
+tampered report. No production code path takes test-only
 bypasses.
 """
 
@@ -79,7 +79,7 @@ class TestHighamSemanticBound:
         assert b100 == pytest.approx(b1 * 1e4, rel=1e-6)
 
     def test_bound_admits_observed_tiny_mlp_deviation(self) -> None:
-        """Positive control: tiny_mlp's actual M-12 deviation falls
+        """Positive control: tiny_mlp's actual deviation falls
         well within the Higham bound. If a future change widens the
         bound silently, this test won't catch it — but the negative
         controls below will."""
@@ -132,7 +132,7 @@ class TestHighamSemanticBound:
 
 
 # --------------------------------------------------------------------------- #
-# G1 — M-15B end-to-end coverage on a synthetic real M-12 fail report
+# G1 — end-to-end coverage on a synthetic real fail report
 # --------------------------------------------------------------------------- #
 
 
@@ -155,11 +155,11 @@ def _invoke_pipeline(
 
 
 def _tamper_real_differential_report_to_fail(report_path: Path) -> None:
-    """Mutate an on-disk M-12 report from status=pass to a synthetic
+    """Mutate an on-disk report from status=pass to a synthetic
     natural failure. Specifically: pick the first per-case row and
     inject a deviation past Higham's bound, then update the aggregate
     fields so detect_downstream_failure observes ``status=fail`` with
-    a non-empty failure_reasons list — exactly what a real M-12
+    a non-empty failure_reasons list — exactly what a real
     failure would emit. No production code is touched."""
     body = json.loads(report_path.read_text(encoding="utf-8"))
     # 1e6 is vastly above any plausible Higham bound for canonical
@@ -194,24 +194,24 @@ def _tamper_real_differential_report_to_fail(report_path: Path) -> None:
 
 
 def test_m15b_fires_on_synthetic_real_m12_failure(tmp_path: Path) -> None:
-    """End-to-end coverage that M-15B's detector + emitter fire on a
-    real on-disk M-12 status=fail report.
+    """End-to-end coverage that the detector + emitter fire on a
+    real on-disk status=fail report.
 
-    Runs tiny_mlp through the pipeline (which under M-37.12 passes
-    M-12 cleanly), then tampers ``real_differential_report.json``
+    Runs tiny_mlp through the pipeline (which passes
+    cleanly), then tampers ``real_differential_report.json``
     in-place to inject a synthetic-but-shape-correct natural failure
     (deviation = 1e6, well past combined tolerance), and exercises the
-    M-15B detector + retry-request emitter on the tampered report.
+    detector + retry-request emitter on the tampered report.
 
     This restores the end-to-end coverage that the three skipped
     tests in test_real_transform_coverage.py and
     test_downstream_retry.py used to provide. The fault injection
     happens entirely on the on-disk report; no production code path
-    is altered. If the M-15B detector ever silently stops scanning
-    M-12 fail reports, this test breaks loud."""
+    is altered. If the detector ever silently stops scanning
+    fail reports, this test breaks loud."""
     out = tmp_path / "tiny_mlp_synthetic_fail"
     res = _invoke_pipeline(model="tiny_mlp", out_dir=out)
-    # Under M-37.12 the pipeline succeeds on tiny_mlp — preconditions
+    # the pipeline succeeds on tiny_mlp — preconditions
     # for the fault-injection test.
     assert res.returncode == 0, (
         f"pipeline expected to succeed on tiny_mlp post-M-37.12; "
@@ -225,7 +225,7 @@ def test_m15b_fires_on_synthetic_real_m12_failure(tmp_path: Path) -> None:
     assert report_path.exists()
     _tamper_real_differential_report_to_fail(report_path)
 
-    # M-15B detector — must observe the fail status.
+    # detector — must observe the fail status.
     failure = detect_downstream_failure(out)
     assert failure is not None, (
         "detect_downstream_failure missed a tampered M-12 status=fail "
@@ -238,7 +238,7 @@ def test_m15b_fires_on_synthetic_real_m12_failure(tmp_path: Path) -> None:
         "outside any declared refinement" in failure.failure_summary
     ), failure.failure_summary
 
-    # M-15B emitter — must produce the typed retry request.
+    # emitter — must produce the typed retry request.
     retry_path = emit_downstream_retry_request(
         out, failure=failure, attempt_index=0,
     )
@@ -261,16 +261,16 @@ def test_m15b_fires_on_synthetic_real_m12_failure(tmp_path: Path) -> None:
 
 
 def test_pipeline_raises_when_m12_report_is_a_real_fail(tmp_path: Path) -> None:
-    """End-to-end: if a real M-12 status=fail report exists when the
+    """End-to-end: if a real status=fail report exists when the
     pipeline boundary check runs, the pipeline must raise non-zero.
 
     Strategy:
       1. Run pipeline up to recipe_planning (greedy on tiny_mlp passes).
-      2. Tamper the M-12 report on disk (synthetic real fail).
+      2. Tamper the report on disk (synthetic real fail).
       3. Re-invoke the pipeline with --stop-after the same boundary;
-         the M-15B downstream-gate detection should now observe the
+         the downstream-gate detection should now observe the
          tampered fail report and the pipeline should exit non-zero
-         with the typed M-15B rejection message.
+         with the typed rejection message.
 
     This is the exit-code coverage the now-skipped
     ``test_pipeline_exits_non_zero_on_downstream_failure`` provided
@@ -288,16 +288,16 @@ def test_pipeline_raises_when_m12_report_is_a_real_fail(tmp_path: Path) -> None:
     assert report_path.exists()
     _tamper_real_differential_report_to_fail(report_path)
 
-    # Re-invoke the M-15B detector explicitly via the public function.
-    # The full pipeline rerun would re-execute M-12 and produce a fresh
+    # Re-invoke the detector explicitly via the public function.
+    # The full pipeline rerun would re-execute and produce a fresh
     # passing report (overwriting the tampered one), so we exercise
-    # the M-15B raise path through the detector + the same emit_failure
+    # the raise path through the detector + the same emit_failure
     # logic run.py uses at the boundary — see run.py:1251.
     failure = detect_downstream_failure(out)
     assert failure is not None
     assert failure.failed_stage == "real_transform_differential"
 
-    # Verify the M-15B emit_downstream_retry_request produces the
+    # Verify the emit_downstream_retry_request produces the
     # typed retry surface that run.py:1251 raises against. Cross-check
     # the schema fields the original end-to-end test asserted.
     retry_path = emit_downstream_retry_request(

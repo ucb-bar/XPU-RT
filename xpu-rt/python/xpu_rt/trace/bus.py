@@ -47,7 +47,7 @@ _PROCESS_BUS: TraceBus | None = None
 
 # The event_id of the most recent ``llm_response`` event in this context.
 # :class:`DecisionPublisher` reads this so every ``decision`` event has a
-# back-reference to the LLM turn that produced it, closing gap #7.
+# back-reference to the LLM turn that produced it, closing .
 _current_llm_turn: ContextVar[str] = ContextVar("compgen_trace_llm_turn", default="")
 
 

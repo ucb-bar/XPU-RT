@@ -1,4 +1,4 @@
-"""M-17.1 readiness figures — matplotlib only, no seaborn.
+"""readiness figures — matplotlib only, no seaborn.
 
 Five PNGs derived from the readiness reports. Each figure is a
 self-contained summary; render fails are caught at the caller level so

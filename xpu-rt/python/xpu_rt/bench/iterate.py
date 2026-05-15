@@ -31,6 +31,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from typing import Any
 
 from compgen.bench.diagnosis import (
     KernelDiagnosis,
@@ -118,6 +119,25 @@ class IterationOutcome:
 # ---------------------------------------------------------------------------
 
 
+def _contract_fingerprint(contract: KernelContractV3) -> str:
+    """Deterministic fingerprint for surrogate bucketing.
+
+    Combines op_name + per-input shape + dtype_class so structurally
+    equivalent matmul/conv/elementwise regions land in the same
+    bucket. Keys are intentionally coarse — the surrogate's tiers
+    (exact bucket → per-candidate → global) handle finer matching.
+    """
+
+    parts: list[str] = [contract.op_name]
+    for t in contract.io.inputs:
+        dims = "x".join(
+            str(d) if d is not None else "?" for d in t.shape.dims
+        )
+        dtypes = ",".join(t.dtype_class)
+        parts.append(f"{t.name}:{dims}:{dtypes}")
+    return "|".join(parts)
+
+
 def iterate_kernel(
     contract: KernelContractV3,
     codegen: CodegenCallable,
@@ -125,6 +145,7 @@ def iterate_kernel(
     *,
     perf_target_us: float | None = None,
     max_attempts: int = 3,
+    surrogate: Any | None = None,
 ) -> IterationOutcome:
     """Run the cheap refinement loop.
 
@@ -132,6 +153,15 @@ def iterate_kernel(
     attempt passes correctness AND meets the target. When ``None`` the
     loop runs to ``max_attempts`` and returns the best (lowest latency
     that passed correctness).
+
+    ``surrogate`` — optional :class:`compgen.bench.surrogate.Surrogate`
+    that accumulates ``(region_fingerprint, candidate_id,
+    measured_latency_us)`` samples from each *passing* bench. The
+    surrogate's predictions then feed
+    :func:`compgen.agent.cost_preview.compute_cost_previews` as
+    ``surrogate_deltas`` so the agent's pre-commit preview learns
+    online. Backward-compatible: when ``None`` the loop behaves
+    exactly as before.
     """
     outcome = IterationOutcome(contract=contract, perf_target_us=perf_target_us)
 
@@ -168,6 +198,28 @@ def iterate_kernel(
                 prompt_used=refinement_prompt or "",
             )
         )
+
+        # G5 wire-in: append a Sample to the optional online surrogate
+        # whenever the bench passed correctness — bad numerical results
+        # would poison the predictor. The (region_fingerprint,
+        # candidate_id) key derives from the contract + attempt index
+        # so repeat-runs of the same (contract, source) bucket their
+        # samples together.
+        if surrogate is not None and bench.passed:
+            try:
+                from compgen.bench.surrogate import Sample
+
+                surrogate.update(
+                    Sample(
+                        region_fingerprint=_contract_fingerprint(contract),
+                        candidate_id=f"attempt_{i}",
+                        measured_latency_us=float(bench.our_us),
+                    )
+                )
+            except Exception:  # noqa: BLE001
+                # Surrogate update is observational only — a malformed
+                # state must never break the iteration loop.
+                pass
 
         # 4. Converged?
         passes_correctness = bench.passed

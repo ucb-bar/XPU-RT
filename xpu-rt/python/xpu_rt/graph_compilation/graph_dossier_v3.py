@@ -30,7 +30,7 @@ Hard invariants:
   populate). That means ``graph_analysis.output_hash`` recorded by the
   manifest pre-dates v3; v3 is byte-pinned by its own internal
   ``source.<input>_sha256`` fields instead.
-- Idempotent: running M-10B twice on the same run dir produces
+Idempotent: running twice on the same run dir produces
   byte-identical artifacts (no timestamps in the body — every
   ``generated_at_utc`` field is recorded in a ``meta`` block excluded
   from the idempotence test, and JSON is always emitted with
@@ -242,7 +242,7 @@ def _build_region_row(
             recipe_op_id = obligation_for_selected.get("recipe_op_id", "")
             obligation_id = obligation_for_selected.get("id", "")
         # Project the obligation status record into a normalized shape
-        # (V3R007: M-09 wins over M-08; v2 status carries `discharged`).
+        # (V3R007: wins over ; v2 status carries `discharged`).
         obligation_status: dict[str, Any] | None = None
         if obligation_status_record is not None:
             declared = obligation_status_record.get("declared_refinement", "")
@@ -680,7 +680,7 @@ def _validate_v3(
 
 def build_graph_dossier_v3(run_dir: Path) -> GraphDossierV3Result:
     """Aggregate the existing graph-analysis + planning artifacts into the
-    M-10B unified agent view. Read-only against every input."""
+    unified agent view. Read-only against every input."""
     run_dir = Path(run_dir).resolve()
     ga_dir = run_dir / "02_graph_analysis"
     rp_dir = run_dir / "03_recipe_planning"
@@ -733,7 +733,7 @@ def build_graph_dossier_v3(run_dir: Path) -> GraphDossierV3Result:
 
     region_dossiers_map = graph_dossier_v2.get("region_dossiers", {}) or {}
 
-    # Obligation status precedence: M-09 > M-08 > none.
+    # Obligation status precedence: > > none.
     obligation_status_source_stage: str | None
     chosen_status_records: dict[str, dict[str, Any]] = {}
     if dv_status is not None:

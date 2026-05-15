@@ -1,4 +1,4 @@
-"""Promotion gates ladder (M-29, Section 19).
+"""Promotion gates ladder (, Section 19).
 
 Six-level promotion ladder that replaces the all-or-nothing
 verification gate from
@@ -11,17 +11,17 @@ Levels (low → high):
 - ``observed``: a candidate ran. The action was generated and selected
   but no verification has been discharged. Useful for record-keeping;
   not safe to apply without further checks.
-- ``verified_fx``: graph-level differential evidence passed. M-12 /
-  M-16.2 reported ``status=pass`` (or ``tolerance_eps``/``bit_equality``)
+``verified_fx``: graph-level differential evidence passed. /
+  reported ``status=pass`` (or ``tolerance_eps``/``bit_equality``)
   on the FX-level transformation. The recipe is *correct* at the graph
   level but kernel codegen has not been validated yet.
 - ``verified_kernel``: compiled-kernel differential evidence passed.
-  M-19 / M-20 / M-23 confirm the lowered kernel agrees with the eager
+   confirm the lowered kernel agrees with the eager
   reference within tolerance. The recipe is *correct end-to-end*.
-- ``characterized``: measured cost evidence recorded. M-21 analytical
-  cost AND (M-22 OR M-22.1) measured cost both present so the recipe
+``characterized``: measured cost evidence recorded. analytical
+  cost AND (OR ) measured cost both present so the recipe
   carries usable performance characterization, not just correctness.
-- ``promoted``: full readiness pack passes. M-17.1 / M-24 readiness
+``promoted``: full readiness pack passes. readiness
   matrices report ``overall=pass`` AND certificate hashes are
   recorded. This is the default minimum to promote — the recipe is
   correct, characterized, and audit-traceable.
@@ -169,7 +169,7 @@ def _check_observed(rp: Path) -> tuple[bool, str]:
 
 
 def _check_verified_fx(rp: Path) -> tuple[bool, str, dict[str, Any]]:
-    """M-12 (real_transform_differential) or M-16.2 (real_fusion) pass.
+    """(real_transform_differential) or (real_fusion) pass.
 
     Phase B writes these reports under per-stage subdirs
     (``real_verification/``, ``real_fusion_verification/``,
@@ -205,7 +205,7 @@ def _check_verified_fx(rp: Path) -> tuple[bool, str, dict[str, Any]]:
 
 
 def _check_verified_kernel(run_dir: Path) -> tuple[bool, str, dict[str, Any]]:
-    """M-19 / M-20 / M-23 compiled-kernel differential pass."""
+    """ compiled-kernel differential pass."""
     ga = run_dir / "02_graph_analysis"
     summary: dict[str, Any] = {}
 
@@ -231,7 +231,7 @@ def _check_verified_kernel(run_dir: Path) -> tuple[bool, str, dict[str, Any]]:
 def _nested_count(report: dict[str, Any] | None, key: str) -> int:
     """Read a count from a Phase B report — top-level OR nested under summary.
 
-    M-21 / M-22 / M-22.1 reports keep their counts in a ``summary``
+     reports keep their counts in a ``summary``
     sub-block (e.g. ``summary.candidates_modeled = 15`` instead of
     ``candidates_modeled = 15`` at top-level). Real-workload smoke
     test caught the gate evaluator reading the wrong layer.
@@ -245,7 +245,7 @@ def _nested_count(report: dict[str, Any] | None, key: str) -> int:
 
 
 def _check_characterized(run_dir: Path) -> tuple[bool, str, dict[str, Any]]:
-    """M-21 analytical cost AND (M-22 OR M-22.1) measured cost present."""
+    """analytical cost AND (OR ) measured cost present."""
     ga = run_dir / "02_graph_analysis"
     summary: dict[str, Any] = {}
 
@@ -271,7 +271,7 @@ def _check_characterized(run_dir: Path) -> tuple[bool, str, dict[str, Any]]:
 
 
 def _check_promoted(run_dir: Path) -> tuple[bool, str, dict[str, Any]]:
-    """M-17.1 / M-24 readiness ``overall=pass`` AND certificates recorded."""
+    """ readiness ``overall=pass`` AND certificates recorded."""
     ga = run_dir / "02_graph_analysis"
     summary: dict[str, Any] = {}
 
@@ -279,7 +279,7 @@ def _check_promoted(run_dir: Path) -> tuple[bool, str, dict[str, Any]]:
     fx_overall = (fx_matrix or {}).get("overall") or "missing"
     summary["m17_1_fx_readiness"] = fx_overall
 
-    # M-24 readiness matrix has lived at two paths historically; check both.
+    # readiness matrix has lived at two paths historically; check both.
     kernel_matrix = (
         _read_json(ga / "kernel_readiness" / "kernel_section_readiness_matrix.json")
         or _read_json(ga / "kernel_section_readiness" / "kernel_section_readiness_matrix.json")
@@ -287,7 +287,7 @@ def _check_promoted(run_dir: Path) -> tuple[bool, str, dict[str, Any]]:
     kernel_overall = (kernel_matrix or {}).get("overall") or "missing"
     summary["m24_kernel_readiness"] = kernel_overall
 
-    # Certificate hashes are recorded by the M-26 bridge in the
+    # Certificate hashes are recorded by the bridge in the
     # synthesised verification_report.json under 04_promotion/.
     verify = _read_json(run_dir / "04_promotion" / "verification_report.json")
     has_certs = bool(verify and verify.get("passed"))

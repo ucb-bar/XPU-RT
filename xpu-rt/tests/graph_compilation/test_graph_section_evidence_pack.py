@@ -1,4 +1,4 @@
-"""Acceptance tests for M-17 Graph Section Evidence Pack.
+"""Acceptance tests Graph Section Evidence Pack.
 
 Verifies the evidence pack:
 
@@ -47,7 +47,7 @@ def _run_one(*, model: str, out_dir: Path) -> None:
         "--stop-after", "real-transform-differential",
         "--selection-mode", "greedy",
     ]
-    # Pipeline may exit non-zero on M-12 fail / M-15B raise — that's fine
+    # Pipeline may exit non-zero on fail / raise — that's fine
     # for our purposes; the typed reports still land on disk and the
     # evidence pack must summarize them honestly.
     subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True)
@@ -58,7 +58,7 @@ def fixture_pack(tmp_path_factory) -> dict:  # type: ignore[no-untyped-def]
     """Build a small fixture pack covering both transform families.
 
     Models:
-      - tiny_mlp        → set_tile path; greedy fails M-12 (real fail).
+      tiny_mlp → set_tile path; greedy fails (real fail).
       - proxy_vla       → fusion path; greedy passes (add_0 → relu_0).
       - merlin_mlp_wide → set_tile path; greedy passes (clean divides).
 
@@ -204,7 +204,7 @@ def test_claim_matrix_includes_required_statuses(fixture_pack: dict) -> None:
     assert cm["schema_version"] == "graph_section_claim_matrix_v1"
     statuses = {c["status"] for c in cm["claims"]}
     assert "implemented" in statuses
-    # M-16.2 fusion is partial-scope; cost preview is partially_implemented.
+    # fusion is partial-scope; cost preview is partially_implemented.
     assert any(s in statuses for s in ("partially_implemented", "implemented_partial_scope"))
 
 
@@ -270,8 +270,8 @@ def test_real_transform_families_discharged_at_least_two(
 def test_unsupported_path_appears(fixture_pack: dict) -> None:
     """tiny_mlp evidence row exists.
 
-    Pre-M-37.12: tile_16 → K_iters=4 → bit-equality fail → row=fail/blocked.
-    Post-M-37.12: shape-fit clean-divide tile + tolerance_eps + combined
+    Pre-tile_16 → K_iters=4 → bit-equality fail → row=fail/blocked.
+    Post-shape-fit clean-divide tile + tolerance_eps + combined
     torch.allclose → row=pass. The test now just checks the row exists
     (any of pass/fail/blocked is acceptable; what matters is that
     tiny_mlp is *represented* in the evidence pack)."""
@@ -291,10 +291,10 @@ def test_unsupported_path_appears(fixture_pack: dict) -> None:
 def test_retry_events_csv_records_downstream_retries(fixture_pack: dict) -> None:
     """retry_events.csv exists and is well-formed.
 
-    Pre-M-37.12: tiny_mlp tripped M-15B (bit-equality fail), populating
-    the table. Post-M-37.12: the canonical-set models all pass M-12
+    Pre-tiny_mlp tripped (bit-equality fail), populating
+    the table. Post-the canonical-set models all pass
     (combined torch.allclose tolerance), so retry_events.csv may be
-    empty. The test now verifies the file exists and parses; the M-15B
+    empty. The test now verifies the file exists and parses; the
     plumbing itself is covered by detector unit tests in
     test_downstream_retry.py."""
     out = fixture_pack["out"]
@@ -310,8 +310,8 @@ def test_retry_events_csv_records_downstream_retries(fixture_pack: dict) -> None
 def test_aggregate_records_downstream_retry(fixture_pack: dict) -> None:
     """Aggregate retry count is non-negative.
 
-    Pre-M-37.12 it was always >= 1 (tiny_mlp). Post-M-37.12 it may be
-    0 because every canonical-set model now passes M-12."""
+    Pre-it was always >= 1 (tiny_mlp). Post-it may be
+    0 because every canonical-set model now passes ."""
     agg = _read(fixture_pack["out"] / "graph_section_evidence_tables.json")
     assert agg["downstream_retry_count"] >= 0
 

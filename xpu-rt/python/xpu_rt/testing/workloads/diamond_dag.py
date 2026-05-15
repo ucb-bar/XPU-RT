@@ -40,7 +40,6 @@ from compgen.runtime.megakernel import (
 from compgen.transforms.emit_cuda_megakernel import DeviceFunctionSource
 
 # Model dimensions.
-#
 # Each linear is (B, IN) × (IN, OUT) → (B, OUT). The output is
 # tiled into (B/TILE_M) × (OUT/TILE_N) sub-tiles; one DeviceCall per
 # op + ``task_shape=(num_tiles,)`` lets the static scheduler fan

@@ -1,15 +1,15 @@
-"""Tests for M-15B Downstream Gate Rejection Retry.
+"""Tests Downstream Gate Rejection Retry.
 
 Verifies the retry protocol around downstream gate failures using REAL
-M-12 failures (no test injection). When greedy picks tile_16 on a
+failures (no test injection). When greedy picks tile_16 on a
 model whose K dim is not 16 (e.g. tiny_mlp with K=64, K_iters=4), the
 boundary-aware evaluator runs Path A but accumulation reorder makes
-bit-equality fail honestly. M-15B then maps that failure back to the
+bit-equality fail honestly. then maps that failure back to the
 selected candidate via the downstream-retry protocol.
 
 Verifies:
 
-- A real M-12 failure produces a typed
+A real failure produces a typed
   ``downstream_retry_request.json`` mapping the failure back to the
   selected candidate.
 - The failed candidate is excluded from the next-attempt allowed set.
@@ -62,22 +62,22 @@ def _invoke(
 
 @pytest.fixture(scope="module")
 def real_failed_run(tmp_path_factory) -> Path:  # type: ignore[no-untyped-def]
-    """A real M-12 differential failure on tiny_mlp.
+    """A real differential failure on tiny_mlp.
 
-    Pre-M-37.11: greedy picked ``tile_M16_N16_K16`` (cheapest), which
+    Pre-greedy picked ``tile_M16_N16_K16`` (cheapest), which
     didn't divide K cleanly → boundary-aware Path A → bit-equality
-    fails → M-15B emits a retry request with
+    fails → emits a retry request with
     ``failed_stage=real_transform_differential``.
 
-    Post-M-37.11: greedy now derives a shape-fit clean-divide tile
-    (``tile_M4_N16_K16``), so M-12 differential passes; the surviving
-    typed-blocker for tiny_mlp is the M-11B model whitelist, which
+    Post-greedy now derives a shape-fit clean-divide tile
+    (``tile_M4_N16_K16``), so differential passes; the surviving
+    typed-blocker for tiny_mlp is the model whitelist, which
     fires on ``real_transform_validation`` (the differential report is
     not even produced). Most tests in this file pin
     ``failed_stage=real_transform_differential`` and read
     ``real_differential_report.json``, so we skip them when the
     failure is at a different stage rather than rewriting every
-    assertion. Once the M-11B whitelist is broadened (a separate
+    assertion. Once the whitelist is broadened (a separate
     follow-on) the differential failure will reappear naturally."""
     out = tmp_path_factory.mktemp("m15b_real_fail") / "tiny_mlp_fail"
     res = _invoke(out_dir=out, model="tiny_mlp")
@@ -116,7 +116,7 @@ def _failed_candidate_id(run_dir: Path) -> str:
 
 
 # --------------------------------------------------------------------------- #
-# Real M-12 failure produces a typed retry request
+# Real failure produces a typed retry request
 # --------------------------------------------------------------------------- #
 
 
@@ -201,18 +201,18 @@ def test_attempt_000_snapshot_preserves_failed_state(
 def test_pipeline_exits_non_zero_on_downstream_failure(tmp_path: Path) -> None:
     """Exit code is observable per-invocation; needs a fresh run.
 
-    M-37.13: under combined torch.allclose tolerance no canonical-set
-    model produces a natural M-12 failure, so the original tiny_mlp
+    under combined torch.allclose tolerance no canonical-set
+    model produces a natural failure, so the original tiny_mlp
     natural-failure assertion is unreachable. Instead we exercise the
     same code path by:
       1. Running pipeline successfully on tiny_mlp.
-      2. Tampering the M-12 report on disk to status=fail.
-      3. Calling the same M-15B detection + raise path
+      2. Tampering the report on disk to status=fail.
+      3. Calling the same detection + raise path
          ``run.py:1251`` would invoke at the boundary.
 
     This restores the load-bearing invariant the original test
-    asserted: a real M-12 status=fail produces non-zero exit AND
-    emits the typed M-15B retry surface."""
+    asserted: a real status=fail produces non-zero exit AND
+    emits the typed retry surface."""
     from compgen.graph_compilation.downstream_retry import (
         detect_downstream_failure, emit_downstream_retry_request,
     )
@@ -257,7 +257,7 @@ def test_pipeline_exits_non_zero_on_downstream_failure(tmp_path: Path) -> None:
 def test_recipe_mlir_committed_for_failed_candidate(
     real_failed_run: Path,
 ) -> None:
-    """M-05 commits recipe.mlir BEFORE M-12 runs. The failed run still
+    """commits recipe.mlir runs. The failed run still
     has a recipe.mlir on disk pointing at the failed candidate."""
     recipe = (real_failed_run / "03_recipe_planning" / "recipe.mlir").read_text(
         encoding="utf-8",
@@ -298,7 +298,7 @@ def _find_clean_divides_tile_candidate(run_dir: Path, K: int) -> dict | None:
 def test_successful_retry_commits_clean_recipe(
     real_failed_run: Path, tmp_path: Path,
 ) -> None:
-    """End-to-end retry: first run greedy on tiny_mlp fails M-12. Second
+    """End-to-end retry: first run greedy on tiny_mlp fails. Second
     run with agent-file selecting a tile candidate whose tile_K==K
     (K_iters=1) succeeds."""
     # tiny_mlp K=64.
@@ -397,8 +397,8 @@ def test_detector_returns_none_when_no_downstream_failures(tmp_path: Path) -> No
 
 
 def test_detector_skipped_path_does_not_trigger_retry(tmp_path: Path) -> None:
-    """A model that takes the skipped/blocked path through M-11A/B/M-12
-    (e.g. ``proxy_vlm`` selects FuseProducerConsumer, which makes M-12
+    """A model that takes the skipped/blocked path through /B/
+    (e.g. ``proxy_vlm`` selects FuseProducerConsumer, which makes
     emit ``status=blocked`` rather than ``status=fail``) must NOT emit
     a downstream_retry_request — blocked is not the candidate's fault."""
     out = tmp_path / "blocked"

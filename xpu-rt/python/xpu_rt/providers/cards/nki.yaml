@@ -1,0 +1,16 @@
+schema_version: provider_card_v1
+provider_id: nki
+integration_level: probe
+target_families: [aws_neuron]
+contract_kinds: [matmul, pointwise, attention, fused_region]
+emits: [nki_source, neff]
+entrypoint: compgen.providers.adapters.nki:NkiProvider
+paper_claimable: false
+required_env: [NEURON_HOME]
+required_commands: [neuronx-cc]
+required_python_imports: [neuronxcc]
+description: |
+  AWS NKI (Neuron Kernel Interface) provider for Trainium /
+  Inferentia. Blocks with ``env_missing`` when ``NEURON_HOME`` is
+  unset and ``command_missing`` when ``neuronx-cc`` is unavailable.
+  Hardware-backed claims require AWS Neuron access.

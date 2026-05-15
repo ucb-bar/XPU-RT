@@ -1,6 +1,6 @@
 """Differential / Reference Verification (Milestone 09).
 
-Discharge obligations on the M-08 metadata-only post-lowering MVP. Given
+Discharge obligations on the metadata-only post-lowering MVP. Given
 that the current ``transformed_payload.mlir`` differs from the source
 only by injected ``compgen.*`` attributes, this stage proves
 *semantic-inert-by-metadata*: stripping every ``compgen.*`` attribute
@@ -357,7 +357,7 @@ def _check_contracts(
 ) -> tuple[dict[str, Any], list[str]]:
     """Validate contract drafts referenced by the lowering manifest.
 
-    Reads the M-08 ``contract_structural_validation.json`` for the
+    Reads the ``contract_structural_validation.json`` for the
     structural verdict and re-verifies that each contract still
     references a known semantic obligation and a payload ref that
     exists on disk.
@@ -393,7 +393,7 @@ def _check_contracts(
         proof_ok = proof_stage == "kernel_contract_generation"
         region_ok = bool(region_id)
 
-        # Mirror the M-08 structural finding for this contract, if any.
+        # Mirror the structural finding for this contract, if any.
         m08_record = next(
             (r for r in pl_validation_records if r.get("contract_path") == art["path"]),
             None,
@@ -455,7 +455,7 @@ def _check_contracts(
 
 
 def run_differential_verification(run_dir: Path) -> DifferentialVerificationResult:
-    """Run M-09 differential / reference verification.
+    """Run differential / reference verification.
 
     Operates in two modes depending on the recipes in the lowering
     manifest:
@@ -706,7 +706,7 @@ def run_differential_verification(run_dir: Path) -> DifferentialVerificationResu
         _add("golden_reference_reproducible", True)
 
     # ------------------------------------------------------------------ #
-    # semantic_obligations_status.json — M-09 view
+    # semantic_obligations_status.json — view
     # ------------------------------------------------------------------ #
     pl_statuses = (
         _read_json(rp / "post_lowering" / "semantic_obligations_status.json")
@@ -789,7 +789,7 @@ def run_differential_verification(run_dir: Path) -> DifferentialVerificationResu
         )
     _add("source_payload_unchanged", payload_unchanged)
 
-    # Reject any false discharge claims in the M-09 status output.
+    # Reject any false discharge claims in the status output.
     forbidden = {
         "discharged_real_transform",
         "discharged_real_transform_differential_check",

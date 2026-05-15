@@ -21,7 +21,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 # --------------------------------------------------------------------------- #
-# Gap #10 — coverage covers pointwise + reduce
+# coverage covers pointwise + reduce
 # --------------------------------------------------------------------------- #
 
 
@@ -72,7 +72,7 @@ class TestGap10CoverageBreadth:
 
 
 # --------------------------------------------------------------------------- #
-# Gap #11 — NumericalWithinEps runtime
+# NumericalWithinEps runtime
 # --------------------------------------------------------------------------- #
 
 
@@ -111,7 +111,7 @@ class TestGap11NumericalWithinEpsRuntime:
 
 
 # --------------------------------------------------------------------------- #
-# Gap #12 — DtypeIn precondition emit
+# DtypeIn precondition emit
 # --------------------------------------------------------------------------- #
 
 
@@ -146,7 +146,7 @@ class TestGap12DtypeInEmit:
 
 
 # --------------------------------------------------------------------------- #
-# Gap #13 — multi-file user kernels
+# multi-file user kernels
 # --------------------------------------------------------------------------- #
 
 

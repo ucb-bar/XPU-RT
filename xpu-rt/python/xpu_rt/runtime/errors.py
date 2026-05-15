@@ -125,6 +125,54 @@ class UnsupportedTopologyError(NotImplementedError):
     """
 
 
+class RuntimeRefinementError(RuntimeError):
+    """An emitted Layer-1 plan executor is not a refinement of its
+    source ``ExecutionPlan`` (D6).
+
+    Raised when the mechanical post-emit check finds that the emit
+    drops, reorders, or duplicates a dispatch site relative to the
+    plan's declared region order. The exact violation kind lives in
+    ``self.kind`` (one of ``missing_dispatch``,
+    ``unknown_dispatch``, ``order_mismatch``, ``count_mismatch``).
+    """
+
+    def __init__(self, kind: str, detail: str) -> None:
+        self.kind = kind
+        self.detail = detail
+        super().__init__(f"runtime refinement failed [{kind}]: {detail}")
+
+
+class AbiConformanceError(RuntimeError):
+    """An emitted Layer-1 plan executor calls a non-``cg_rt_*`` extern
+    (D6). Lists every forbidden symbol found in the emit.
+    """
+
+    def __init__(self, symbols: tuple[str, ...], emit_path: str) -> None:
+        self.symbols = symbols
+        self.emit_path = emit_path
+        super().__init__(
+            f"emit at {emit_path!r} calls forbidden non-cg_rt extern(s): "
+            f"{', '.join(symbols)}"
+        )
+
+
+class ResourceBudgetError(RuntimeError):
+    """An emitted Layer-1 plan executor's static allocations exceed the
+    plan's declared resource budget (D6)."""
+
+    def __init__(
+        self, resource: str, declared: int, observed: int, emit_path: str,
+    ) -> None:
+        self.resource = resource
+        self.declared = declared
+        self.observed = observed
+        self.emit_path = emit_path
+        super().__init__(
+            f"emit at {emit_path!r} overcommits {resource!r}: "
+            f"declared budget={declared}, observed={observed}"
+        )
+
+
 class SymbolicShapeUnsupportedError(NotImplementedError):
     """Runtime path hit symbolic / data-dependent shapes it can't handle yet.
 
@@ -140,10 +188,13 @@ class SymbolicShapeUnsupportedError(NotImplementedError):
 
 
 __all__ = [
+    "AbiConformanceError",
     "AdapterUnavailableError",
     "ArtifactStatus",
     "BundleEmissionError",
     "BundleEmissionReport",
+    "ResourceBudgetError",
+    "RuntimeRefinementError",
     "SymbolicShapeUnsupportedError",
     "UnsupportedTopologyError",
 ]

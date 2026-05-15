@@ -1,4 +1,4 @@
-"""Acceptance tests for M-21 Per-Candidate Deterministic Analytical Cost.
+"""Acceptance tests Per-Candidate Deterministic Analytical Cost.
 
 Verifies:
 
@@ -16,11 +16,11 @@ Verifies:
 - Roofline math sanity: compute_time_us = flops / peak_GFLOPS;
   memory_time_us = bytes / effective_bw; predicted_us = max(compute,
   memory) + overhead.
-- Cross-reference: when M-19/M-20 measurements are on disk, the
+Cross-reference: when /measurements are on disk, the
   per-candidate entry includes ``calibration_delta``.
 - Always-on: emits without env vars (it's pure analytical, no I/O cost).
 - Layered onto ``cost_preview_v2`` and ``llm_graph_view`` via an
-  additive ``m21_analytical_cost`` block (same pattern as M-18.3's
+  additive ``m21_analytical_cost`` block (same pattern as 's
   ``calibration`` overlay). Region map / candidate_actions are NOT
   mutated. The overlay is byte-stable across reruns.
 - No compiler-core imports.
@@ -94,7 +94,7 @@ def no_kernels_run(tmp_path_factory) -> Path:  # type: ignore[no-untyped-def]
 
 
 def test_analytical_cost_emits_without_any_opt_in(no_kernels_run: Path) -> None:
-    """M-21 is always-on; no env var needed."""
+    """is always-on; no env var needed."""
     base = no_kernels_run / "02_graph_analysis" / "analytical_cost"
     assert base.is_dir()
     assert (base / "per_candidate_analytical_cost.json").exists()
@@ -334,7 +334,7 @@ def test_predicted_us_equals_max_bottleneck_plus_overhead() -> None:
 
 
 # --------------------------------------------------------------------------- #
-# Cross-reference with M-19 / M-20 measurements
+# Cross-reference with measurements
 # --------------------------------------------------------------------------- #
 
 
@@ -343,7 +343,7 @@ def test_calibration_delta_present_when_kernels_ran(kernels_run: Path) -> None:
         kernels_run / "02_graph_analysis" / "analytical_cost"
         / "per_candidate_analytical_cost.json"
     )
-    # At least one candidate (the greedy-selected one or an M-20
+    # At least one candidate (the greedy-selected one or an
     # per-region pick) should have a calibration_delta.
     with_cal = [
         c for c in r["candidates"]
@@ -363,7 +363,7 @@ def test_calibration_absent_when_kernels_off(no_kernels_run: Path) -> None:
         no_kernels_run / "02_graph_analysis" / "analytical_cost"
         / "per_candidate_analytical_cost.json"
     )
-    # Without M-19/M-20 measurements, calibration_delta should be
+    # Without /measurements, calibration_delta should be
     # missing for all candidates.
     with_cal = [
         c for c in r["candidates"]
@@ -373,7 +373,7 @@ def test_calibration_absent_when_kernels_off(no_kernels_run: Path) -> None:
 
 
 # --------------------------------------------------------------------------- #
-# Layered overlay onto cost_preview_v2 + llm_graph_view (M-21.2)
+# Layered overlay onto cost_preview_v2 + llm_graph_view
 # --------------------------------------------------------------------------- #
 
 
@@ -474,8 +474,8 @@ def test_m21_does_not_mutate_region_map_or_candidate_actions(
     no_kernels_run: Path,
 ) -> None:
     """region_map.json and candidate_actions.json are immutable through
-    M-21 (by design — they're the canonical regions/candidates frozen
-    at M-13/M-14)."""
+    (by design — they're the canonical regions/candidates frozen
+    at /)."""
     rm_path = no_kernels_run / "02_graph_analysis" / "region_map.json"
     ca_path = no_kernels_run / "02_graph_analysis" / "candidate_actions.json"
 
@@ -495,10 +495,10 @@ def test_m21_does_not_mutate_region_map_or_candidate_actions(
 def test_m21_overlay_does_not_clobber_m183_calibration(
     no_kernels_run: Path,
 ) -> None:
-    """If an M-18.3 ``calibration`` block exists on a cost_preview_v2
-    entry, M-21's overlay must not clobber it. (This fixture has no
-    M-18.3 calibration on; we install a synthetic one and verify the
-    M-21 rerun preserves it.)"""
+    """If an ``calibration`` block exists on a cost_preview_v2
+    entry, the overlay must not clobber it. (This fixture has no
+    calibration on; we install a synthetic one and verify the
+    rerun preserves it.)"""
     from compgen.graph_compilation.analytical_cost import run_analytical_cost
 
     cp_path = no_kernels_run / "02_graph_analysis" / "cost_preview_v2.json"

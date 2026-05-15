@@ -22,7 +22,6 @@ from typing import Any
 # ---------------------------------------------------------------------------
 # Hint catalogue
 # ---------------------------------------------------------------------------
-#
 # Keys match the ``reason`` strings populated by the structural and
 # differential gates. Each entry supplies:
 #   - hint: short imperative sentence for the LLM

@@ -302,7 +302,7 @@ def test_top_regions_link_to_existing_dossiers(
 
 
 # --------------------------------------------------------------------------- #
-# M-03.5 — Numerical Sensitivity Sanity Audit
+# Numerical Sensitivity Sanity Audit
 # --------------------------------------------------------------------------- #
 
 

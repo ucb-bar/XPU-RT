@@ -1,4 +1,4 @@
-"""Tests for compgen.passes.refinement (M-33.3)."""
+"""Tests for compgen.passes.refinement."""
 
 from __future__ import annotations
 

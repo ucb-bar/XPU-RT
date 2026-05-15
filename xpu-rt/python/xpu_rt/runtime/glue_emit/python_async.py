@@ -1,13 +1,13 @@
-"""Python ASYNC plan executor emitter (M-51).
+"""Python ASYNC plan executor emitter.
 
-Phase C M-51: second emitted-glue milestone. When the plan's bindings
+Phase C second emitted-glue milestone. When the plan's bindings
 include any region with ``dispatch_model="async"``, emit
-``06_glue_emit/generated_plan_executor_async.py`` alongside the M-47
+``06_glue_emit/generated_plan_executor_async.py`` alongside the
 SYNC executor. The async executor allocates one
 :class:`compgen.runtime.event_tensor.EventTensor` per producer region
 (named after the region's ``event_decls``), runs each region in its
 own thread, and wires producer/consumer pairs through the
-``dependency_edges`` from the M-46 plan.
+``dependency_edges`` from the plan.
 
 Generated shape:
 
@@ -42,14 +42,14 @@ The ASYNC executor:
 - Times out deterministically when a producer fails to ``notify`` its
   completion event within ``timeout_s`` (default 30s).
 - The static event-writer assertion (every event name has exactly one
-  declaring region) lives in M-48's ``assert_plan``; this emitter does
+  declaring region) lives 's ``assert_plan``; this emitter does
   not bypass it.
 
 Hard rules:
 
 - Emitter only fires when at least one binding has
   ``dispatch_model == "async"``. SYNC-only plans skip the emit (the
-  M-47 executor is the only one written).
+  executor is the only one written).
 - Worker threads catch the kernel exception, mark the EventTensor
   cancelled (so siblings stop waiting), and re-raise to the main thread
   via the standard ``persistent_launch`` cancellation primitive. We
@@ -127,11 +127,56 @@ def _topological_region_order(plan: ExecutionPlan) -> list[str]:
 
 def _event_name_for(region_id: str) -> str:
     """Convention: each producer region's completion event is
-    ``<region_id>_done``. This matches the M-40 default
+    ``<region_id>_done``. This matches the default
     ``EventDecl(name="matmul_done")`` widened across regions and lets
-    the static event-writer check (M-48) confirm uniqueness.
+    the static event-writer check confirm uniqueness.
     """
     return f"{region_id}_done"
+
+
+def _load_overlap_schedule(run_dir: Path) -> dict[str, int] | None:
+    """Read ``05_execution_plan/overlap_schedule.solved.json`` if present.
+
+    Returns ``{region_id: start_tick}`` or ``None`` when no solved
+    schedule exists. wires the overlap planner's output into the
+    ASYNC spawn order so threads start in the planner's preferred
+    sequence; EventTensor dependencies still enforce correctness, but
+    schedule-ordered spawn avoids OS-scheduler roulette on independent
+    producers.
+    """
+
+    candidate = run_dir / "05_execution_plan" / "overlap_schedule.solved.json"
+    if not candidate.is_file():
+        return None
+    try:
+        body = json.loads(candidate.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+    sched = body.get("schedule")
+    if not isinstance(sched, list):
+        return None
+    return {
+        str(entry["op_id"]): int(entry["start_tick"])
+        for entry in sched
+        if isinstance(entry, dict) and "op_id" in entry and "start_tick" in entry
+    }
+
+
+def _apply_overlap_schedule(
+    region_order: list[str], schedule: dict[str, int] | None
+) -> list[str]:
+    """Re-order ``region_order`` by the solved schedule's start_tick.
+
+    Regions not in the schedule keep their topo-order position
+    (appended after the scheduled ones). Stable across ties.
+    """
+
+    if not schedule:
+        return region_order
+    in_schedule = [r for r in region_order if r in schedule]
+    not_in_schedule = [r for r in region_order if r not in schedule]
+    in_schedule.sort(key=lambda r: (schedule[r], region_order.index(r)))
+    return in_schedule + not_in_schedule
 
 
 def _consumer_count_per_event(plan: ExecutionPlan) -> dict[str, int]:
@@ -155,9 +200,15 @@ def _emit_async_executor_source(
     plan: ExecutionPlan,
     plan_path: str,
     region_assertions_body: str,
+    overlap_schedule: dict[str, int] | None = None,
 ) -> str:
     bindings_by_region = {b.region_id: b for b in plan.region_kernel_bindings}
     region_order = _topological_region_order(plan)
+    # wire-up: when an ``overlap_schedule.solved.json`` is present,
+    # threads spawn in the planner's preferred order. Dependencies are
+    # still enforced by EventTensor wait/notify — this only orders the
+    # initial spawn, never the wait edges.
+    region_order = _apply_overlap_schedule(region_order, overlap_schedule)
     consumer_counts = _consumer_count_per_event(plan)
     deps_in: dict[str, list[str]] = {r: [] for r in region_order}
     for edge in plan.dependency_edges:
@@ -414,9 +465,9 @@ if __name__ == "__main__":
 
 
 def emit_python_async_executor(run_dir: Path) -> AsyncGlueEmitResult:
-    """Read the M-46 plan from disk; emit the ASYNC executor when at
+    """Read the plan from disk; emit the ASYNC executor when at
     least one binding has ``dispatch_model == "async"``. SYNC-only
-    plans skip the emit (overall="skipped"); the M-47 SYNC file is the
+    plans skip the emit (overall="skipped"); the SYNC file is the
     only artifact in that case.
     """
     run_dir = Path(run_dir).resolve()
@@ -485,12 +536,14 @@ def emit_python_async_executor(run_dir: Path) -> AsyncGlueEmitResult:
     )
     region_assertions_body = render_assert_plan_body(region_assertions)
 
+    overlap_schedule = _load_overlap_schedule(run_dir)
     executor_path = out_dir / "generated_plan_executor_async.py"
     executor_path.write_text(
         _emit_async_executor_source(
             plan=plan,
             plan_path=str(plan_path.relative_to(run_dir)),
             region_assertions_body=region_assertions_body,
+            overlap_schedule=overlap_schedule,
         ),
         encoding="utf-8",
     )
@@ -508,6 +561,21 @@ def emit_python_async_executor(run_dir: Path) -> AsyncGlueEmitResult:
             "async_regions": [b.region_id for b in async_bindings],
             "sync_regions": [b.region_id for b in sync_bindings],
             "default_timeout_s": _DEFAULT_TIMEOUT_S,
+            # wire-up evidence: when the overlap planner has run
+            # and persisted a solved schedule, record that the emit
+            # consumed it. ``solver_schedule_consumed=false`` is the
+            # honest default for runs without a solver step.
+            "solver_schedule_consumed": overlap_schedule is not None,
+            "solver_schedule_path": (
+                "05_execution_plan/overlap_schedule.solved.json"
+                if overlap_schedule is not None else None
+            ),
+            "solver_schedule_region_order": (
+                _apply_overlap_schedule(
+                    _topological_region_order(plan), overlap_schedule
+                )
+                if overlap_schedule is not None else None
+            ),
             "kernel_bindings": [
                 {
                     "region_id": b.region_id,

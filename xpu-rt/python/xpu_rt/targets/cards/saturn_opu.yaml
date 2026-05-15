@@ -1,0 +1,9 @@
+schema_version: target_card_v1
+target_id: saturn_opu
+family: custom_accelerator
+vendor: berkeley
+dispatch_modes: [sync, static_plan]
+memory_tiers:
+  - {name: dram, kind: host, capacity_bytes: 0}
+  - {name: scratchpad, kind: explicit, capacity_bytes: 131072}
+description: Saturn / RISC-V OPU research accelerator (Exo lowering target).

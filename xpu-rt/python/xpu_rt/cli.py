@@ -1376,5 +1376,26 @@ def rt_list_triples(rt_root: str | None) -> None:
         click.echo(f"  {tc.stem}  ({tc.relative_to(rt_root_path)})")
 
 
+# register the ToolCard-driven ``compgen tool`` subcommand group.
+# Imported at end-of-module to avoid any chance of circular import via
+# compgen.tools → compgen.cli (today there is none, but the rule keeps
+# future refactors honest).
+from compgen.cli_tool import tool as _tool_group  # noqa: E402
+
+main.add_command(_tool_group)
+
+
+def tool_main() -> None:
+    """Entry-point for the ``compgen-tool`` console script.
+
+    Equivalent to ``compgen tool ...`` — exists so users can invoke
+    the tool runner without typing the parent group, and so the
+    audit can verify ``compgen-tool`` resolves on PATH (the T1 gate
+    requires a real CLI command, not just a Python entrypoint).
+    """
+
+    _tool_group(prog_name="compgen-tool")  # pragma: no cover (entrypoint)
+
+
 if __name__ == "__main__":
     main()

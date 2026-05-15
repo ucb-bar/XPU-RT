@@ -1,4 +1,4 @@
-"""M-64 — Refinement contracts + version migration tests.
+"""Refinement contracts + version migration tests.
 
 Coverage:
 
@@ -10,7 +10,7 @@ Coverage:
 - ``TestUnknownFieldRejected`` — get_optional_v3_1_field with an
   unrecognised name raises typed ContractRefinementError.
 - ``TestPreM64BodyLoadsCleanly`` — a v3 cert body emitted before
-  M-64 (no optional_v3_1_fields key) still loads via the
+  (no optional_v3_1_fields key) still loads via the
   reconstruct path; canonical hash stays byte-identical to a fresh
   v3.1-emitted body.
 - ``TestAuditGate`` — the contract_version_consistency gate flags
@@ -107,7 +107,7 @@ class TestOptionalV3_1Field:
         assert instance_contract_hash(c1) == instance_contract_hash(c2)
 
     def test_changing_kernel_facing_still_changes_hash(self) -> None:
-        """Sanity: hash invariance is M-64-specific, not a regression."""
+        """Sanity: hash invariance is -specific, not a regression."""
         from dataclasses import replace
 
         from compgen.kernels.contract_v3 import LayoutKind
@@ -139,7 +139,7 @@ class TestMigration:
             migrate_contract_body_v3_to_v3_1,
         )
 
-        # Pre-M-64 body has no optional_v3_1_fields key at all.
+        # Pre-body has no optional_v3_1_fields key at all.
         v3_body = {"op_name": "x"}
         migrated = migrate_contract_body_v3_to_v3_1(v3_body)
         assert "optional_v3_1_fields" in migrated
@@ -209,7 +209,7 @@ class TestUnknownFieldRejected:
 
 
 # --------------------------------------------------------------------------- #
-# Pre-M-64 bodies still load + same hash
+# Pre-bodies still load + same hash
 # --------------------------------------------------------------------------- #
 
 
@@ -232,7 +232,7 @@ class TestPreM64BodyLoadsCleanly:
     def test_body_without_optional_slot_loads_with_defaults(
         self, tmp_path: Path,
     ) -> None:
-        """Simulate a pre-M-64 cert body: drop the optional_v3_1_fields
+        """Simulate a pre-cert body: drop the optional_v3_1_fields
         key + verify the reconstruct path fills it in via migration,
         and the canonical hash stays the same."""
         result = _invoke_pipeline(
@@ -245,7 +245,7 @@ class TestPreM64BodyLoadsCleanly:
             (run_dir / "04_kernel_codegen" / "contracts").glob("*.json")
         )[0]
         body_with = json.loads(contract_path.read_text())
-        # Strip M-64 slot.
+        # Strip slot.
         body_without = dict(body_with)
         body_without.pop("optional_v3_1_fields", None)
 
@@ -264,7 +264,7 @@ class TestPreM64BodyLoadsCleanly:
         assert canonical_contract_hash(c_with) == canonical_contract_hash(c_without)
         assert instance_contract_hash(c_with) == instance_contract_hash(c_without)
 
-        # Migration filled the slot for the pre-M-64 body.
+        # Migration filled the slot for the pre-body.
         assert "prefetch_distance" in c_without.optional_v3_1_fields
         assert c_without.optional_v3_1_fields["prefetch_distance"] == 0
 

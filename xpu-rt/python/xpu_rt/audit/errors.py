@@ -81,12 +81,12 @@ class HoldoutHonestyViolation(AuditError):
 
 
 # ---------------------------------------------------------------------------
-# Negative-control placeholders (full implementations land in M-31)
+# Negative-control placeholders (full implementations land )
 # ---------------------------------------------------------------------------
 
 
 class MissingPassCard(AuditError):
-    """An exposed pass has no pass card (placeholder until M-31)."""
+    """An exposed pass has no pass card (placeholder until )."""
 
 
 class PreconditionViolation(AuditError):
@@ -96,18 +96,18 @@ class PreconditionViolation(AuditError):
 class StaleAnalysisAudit(AuditError):
     """A consumer used an analysis summary that should have been invalidated.
 
-    M-31A.5 introduced this as a typed-error placeholder. M-33 turns it
+    introduced this as a typed-error placeholder. turns it
     into the family root for stale-summary failures — both
     producer-side ("a pass mutated something it didn't declare";
     :class:`UnannouncedInvalidation`) and consumer-side ("a reader
-    consumed a summary an upstream pass invalidated"; lands in M-34)
-    inherit from this class so existing M-31A.5 references and
+    consumed a summary an upstream pass invalidated"; lands )
+    inherit from this class so existing references and
     pytest.raises(StaleAnalysisAudit) calls keep working."""
 
 
 class UnannouncedInvalidation(StaleAnalysisAudit):
     """A pass mutated an analysis summary it did not declare in its
-    ``invalidates`` list (M-33). The dependency closure of the claim
+    ``invalidates`` list. The dependency closure of the claim
     was checked too — this fires when even the transitive closure
     misses the observed mutation."""
 
@@ -115,22 +115,22 @@ class UnannouncedInvalidation(StaleAnalysisAudit):
 class RefinementMonotonicityViolation(AuditError):
     """A recipe claims a refinement (e.g. ``bit_equality``) stronger
     than the weakest refinement preserved across its applied passes
-    (M-33)."""
+    ."""
 
 
 class VerificationGateMissing(AuditError):
     """A pass card declares a required verification rung (e.g.
-    ``differential``) but no certificate is on disk (M-33)."""
+    ``differential``) but no certificate is on disk."""
 
 
 class VerificationGateFailed(AuditError):
     """A verification certificate exists but reports
-    ``status != "pass"`` (M-33)."""
+    ``status != "pass"``."""
 
 
 class PhaseTransitionViolation(AuditError):
     """A pass plan attempted to run a phase-N pass before all
-    phase-(<N) passes had completed (M-34.1).
+    phase-(<N) passes had completed.
 
     The phase order is strict:
     ``canonicalize → analyze → optimize → verify → emit``. An
@@ -141,14 +141,14 @@ class PhaseTransitionViolation(AuditError):
 
 class PairContractViolation(AuditError):
     """A pass plan violated a card's ``requires_after`` or ``excludes``
-    contract (M-34.2). A required-after pass was missing from the plan,
+    contract. A required-after pass was missing from the plan,
     or two mutually-exclusive passes were scheduled together."""
 
 
 class PassPlanInvalid(AuditError):
     """An agent's ``pass_plan`` field violated a structural invariant —
     duplicate steps, references to unknown pass_ids, references to
-    illegal candidate_ids, etc. (M-34.3). Distinct from
+    illegal candidate_ids, etc.. Distinct from
     :class:`PhaseTransitionViolation` and :class:`PairContractViolation`
     so the validator can attribute failures precisely."""
 

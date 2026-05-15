@@ -1,4 +1,4 @@
-"""M-27 tests for the extended :class:`PromoteOp` (Section 19).
+"""tests for the extended :class:`PromoteOp` (Section 19).
 
 Covers the five new optional attrs added to ``recipe.promote`` —
 ``recipe_signature``, ``applies_when``, ``evidence_summary``,
@@ -34,7 +34,7 @@ def _i64(val: int) -> IntegerAttr:
 
 
 def _build_promote_full() -> PromoteOp:
-    """A PromoteOp with every M-27 attr populated."""
+    """A PromoteOp with every attr populated."""
     return PromoteOp.build(
         properties={
             "candidate_ref": SymbolRefAttr("c0"),
@@ -70,7 +70,7 @@ def test_promote_with_all_m27_attrs() -> None:
 
 
 def test_promote_legacy_three_field_still_works() -> None:
-    """Existing callers without M-27 attrs must keep building cleanly."""
+    """Existing callers without attrs must keep building cleanly."""
     op = PromoteOp.build(
         properties={
             "candidate_ref": SymbolRefAttr("c0"),
@@ -101,7 +101,7 @@ def test_promote_printable_with_m27_attrs() -> None:
 
 
 def test_promote_mlir_round_trip() -> None:
-    """A PromoteOp with all M-27 attrs survives MLIR text round-trip."""
+    """A PromoteOp with all attrs survives MLIR text round-trip."""
     from compgen.ir.recipe.serialize import mlir_to_recipe, recipe_to_mlir
 
     module = ModuleOp(Region(Block([_build_promote_full()])))

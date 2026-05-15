@@ -1,4 +1,4 @@
-"""Tests that the on-disk seed pass cards load + validate (M-31.2).
+"""Tests that the on-disk seed pass cards load + validate.
 
 The seed cards are the canonical descriptions of the two production
 passes the agent currently exposes. Every entry the agent's
@@ -25,7 +25,7 @@ SEED_ROOT = REPO_ROOT / "docs" / "generated" / "pass_cards"
 SEED_CARDS = (
     "set_tile_params",
     "fuse_producer_consumer",
-    # M-33: priority-1 ports (XLA / IREE), 5 production passes
+    # priority-1 ports (XLA / IREE), 5 production passes
     "fold_transposes_into_dots",
     "propagate_transposes",
     "plan_reduction",
@@ -88,7 +88,7 @@ def test_seed_cards_have_stable_content_hash() -> None:
 
 
 def test_agent_decision_uses_registry_not_hardcoded_constant() -> None:
-    """M-31.3 contract: agent_decision.py derives passes_allowed from
+    """contract: agent_decision.py derives passes_allowed from
     the on-disk registry rather than a hardcoded list. We assert the
     registry call is present AND no hardcoded ['set_tile_params',
     'fuse_producer_consumer'] literal list survives."""
@@ -121,7 +121,7 @@ def test_emitted_request_pass_cards_match_registry(tmp_path: Path) -> None:
 def test_iter_seed_cards_includes_known_set() -> None:
     """The 7 historical seed cards must still resolve.
 
-    M-33.6 expanded the registry to 60+ cards; this test checks that
+    expanded the registry to 60+ cards; this test checks that
     the original set is still a subset (catches accidental deletion).
     Comprehensive coverage is verified by tests/passes/test_full_coverage.py.
     """

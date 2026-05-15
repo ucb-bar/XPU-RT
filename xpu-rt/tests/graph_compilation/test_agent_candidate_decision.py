@@ -1,4 +1,4 @@
-"""Tests for M-14A Agent Candidate Decision Loop.
+"""Tests Agent Candidate Decision Loop.
 
 Covers the agent-driven selection mode (agent-file) end-to-end + the
 spec's required negative cases against a copy of a real run dir.
@@ -107,7 +107,7 @@ def test_greedy_mode_does_not_emit_agent_decision_artifacts() -> None:
         ad = (
             GREEDY_SUITE / model / "03_recipe_planning" / "agent_decision"
         )
-        # The post-M-13 emission writes agent_decision_request.json for
+        # The post-emission writes agent_decision_request.json for
         # any mode; that's allowed. But response/validation/trace must
         # NOT exist for greedy.
         assert not (ad / "agent_decision_response.json").exists(), (
@@ -426,7 +426,7 @@ def test_agent_file_mode_without_response_path_fails_cleanly(
 
 
 def test_invalid_response_fails_before_recipe_commit(tmp_path: Path) -> None:
-    """Run a fresh M-14A pipeline with --selection-mode agent-file and
+    """Run a fresh pipeline with --selection-mode agent-file and
     a response that selects an illegal candidate; recipe.mlir must NOT
     be written / must not reference the bad candidate."""
     _need_wide()

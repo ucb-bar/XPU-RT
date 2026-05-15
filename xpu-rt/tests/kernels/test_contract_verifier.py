@@ -1,4 +1,4 @@
-"""M-44 contract-driven verifier tests.
+"""contract-driven verifier tests.
 
 Layered coverage:
 - Schema: generate_obligations produces one obligation per applicable

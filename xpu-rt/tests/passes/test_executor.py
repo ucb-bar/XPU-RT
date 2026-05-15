@@ -1,4 +1,4 @@
-"""Tests for compgen.passes.executor (M-37.6)."""
+"""Tests for compgen.passes.executor."""
 
 from __future__ import annotations
 
@@ -44,7 +44,7 @@ def test_unknown_pass_id_raises_invalid(tmp_path: Path) -> None:
 
 
 def test_phase_violation_raises(tmp_path: Path) -> None:
-    """M-34.1: emit-phase pass before optimize-phase pass fails phase ordering."""
+    """emit-phase pass before optimize-phase pass fails phase ordering."""
     # event_static_schedule is plan-level / event_tensor family →
     # phase=emit. set_tile_params is tiling family → phase=optimize.
     plan = [

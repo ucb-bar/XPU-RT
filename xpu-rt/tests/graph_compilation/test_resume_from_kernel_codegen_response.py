@@ -1,11 +1,11 @@
-"""M-53 --resume-from kernel-codegen-response tests.
+"""--resume-from kernel-codegen-response tests.
 
 Coverage:
 - Resume preserves out_dir (cert + .so + attempts trail survive across the
   pipeline-restart boundary).
 - Resume errors honestly when the prerequisite artefacts are missing
   (no requests dir, no contracts dir).
-- Resume + commit + glue-emit closes M-46 → M-47 with a real cert.
+Resume + commit + glue-emit closes → with a real cert.
 """
 
 from __future__ import annotations
@@ -33,7 +33,7 @@ def _run_cli(args: list[str], cwd: Path = REPO_ROOT) -> subprocess.CompletedProc
 def merlin_kernel_codegen_run(tmp_path_factory) -> Path:  # type: ignore[no-untyped-def]
     """A merlin_mlp_wide run driven through --stop-after kernel-codegen-request.
 
-    Module-scoped: every M-53 test reuses the same baseline so we don't
+    Module-scoped: every test reuses the same baseline so we don't
     repeat the (slow) early-stage work for each case.
     """
     out = tmp_path_factory.mktemp("m53_baseline") / "run"
@@ -153,7 +153,7 @@ class TestResumePreservesArtifacts:
     def test_resume_does_not_wipe_committed_response(
         self, merlin_kernel_codegen_run: Path, tmp_path: Path,
     ) -> None:
-        """The cardinal M-53 invariant: the committed response, attempts
+        """The cardinal invariant: the committed response, attempts
         trail, certificate, and provider's compiled .so MUST survive a
         --resume-from run. Without this, the agentic provider chain
         cannot run from CLI."""
@@ -196,8 +196,8 @@ class TestResumePreservesArtifacts:
     def test_resume_drives_m46_to_glue_emit(
         self, merlin_kernel_codegen_run: Path, tmp_path: Path,
     ) -> None:
-        """After resume, the M-46 binding must surface the cert and
-        the M-47 emitted executor must list the bound region."""
+        """After resume, the binding must surface the cert and
+        the emitted executor must list the bound region."""
         run = tmp_path / "run"
         shutil.copytree(merlin_kernel_codegen_run, run)
         _commit_real_cffi_response(run)
@@ -279,11 +279,11 @@ class TestResumeEndToEnd:
     def test_real_chain_via_cli_only(
         self, merlin_kernel_codegen_run: Path, tmp_path: Path,
     ) -> None:
-        """The acceptance criterion: drive M-40 → M-47 with a real
+        """The acceptance criterion: drive → with a real
         cffi-compiled C matmul, run the emitted executor, and verify
         the output matches torch.matmul within Higham bound. The full
         chain works through the CLI alone (no operator drops into
-        Python, except to commit the response — which is the M-43 API
+        Python, except to commit the response — which is the API
         the operator owns).
         """
         sys.path.insert(0, str(REPO_ROOT / "python"))

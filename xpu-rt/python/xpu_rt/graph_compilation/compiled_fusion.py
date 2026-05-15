@@ -1,30 +1,30 @@
-"""M-23 Compiled Fusion Verification.
+"""Compiled Fusion Verification.
 
 Compiles a real fused producer→consumer kernel for FuseProducerConsumer
 candidates, runs it, and compares the output against the eager unfused
-chain on the same M-16.2 frozen input cases. Layered alongside M-16.2's
-existing differential — M-16.2's report stays byte-identical (M-23 only
+chain on the same frozen input cases. Layered alongside 's
+existing differential — 's report stays byte-identical (only
 ADDS a new sibling report + overlay).
 
 Scope (MVP — strict, honest non-claims):
 
-- Pointwise → pointwise only (matches M-16.2's whitelist).
+Pointwise → pointwise only (matches 's whitelist).
 - Binary producer + unary consumer is the canonical case (proxy_vla's
-  bias_add → relu). Other pairs in the M-16.2 whitelist (mul, sub,
+  bias_add → relu). Other pairs in the whitelist (mul, sub,
   unary→unary chains like sigmoid→tanh) are supported by the same
   compute-template; only the operator string differs in the kernel body.
 - fp32 only. f16/bf16 mixed-precision out of scope.
-- Single-consumer producer chains (M-16.2's existing constraint).
+Single-consumer producer chains ('s existing constraint).
 - No matmul fusion (matmul accumulation reorder is reduction-sensitive
-  and is M-16.4 territory; correctly blocked by M-16.2's pointwise gate).
+  and is territory; correctly blocked 's pointwise gate).
 
 Hard non-goals:
 
 - No new candidate generation.
 - No compiler-core imports.
-- No mutation of M-16.2's `real_fusion_manifest.json` /
+No mutation of 's `real_fusion_manifest.json` /
   `real_fusion_differential_report.json` (verified by tests).
-- No mutation of M-19/M-20/M-21/M-22/M-22.1 artifacts.
+No mutation of ////artifacts.
 - Best-effort: missing CUDA → typed `device_unavailable`; cffi/gcc
   missing → typed `library_unavailable`; raised exceptions → typed
   `compile_failed` / `run_failed` with note. Never raises.
@@ -75,7 +75,7 @@ def _read_json(path: Path) -> dict[str, Any] | None:
 # --------------------------------------------------------------------------- #
 # Pointwise op registry — Triton + C source fragments
 # --------------------------------------------------------------------------- #
-# Each entry maps a producer/consumer kind name (matching M-16.2's
+# Each entry maps a producer/consumer kind name (matching 's
 # `_pointwise_op_for` discriminator strings) to a tuple:
 #   (arity, triton_expr_template, c_expr_template)
 # where the templates use {a}, {b} placeholders (binary) or {x}
@@ -104,7 +104,7 @@ _CONSUMER_TEMPLATES = {
 
 
 def _classify_kind(kind: str) -> str:
-    """Map M-16.2's diagnostics.producer_kind / consumer_kind to a
+    """Map 's diagnostics.producer_kind / consumer_kind to a
     template registry key."""
     n = kind.strip().lower()
     # Producers
@@ -410,7 +410,7 @@ def _run_gpu_track(
 
     base["compile_status"] = "compiled"
 
-    # Generate frozen input cases (match M-16.2 conventions).
+    # Generate frozen input cases (match conventions).
     gen = torch.Generator(device="cuda")
     gen.manual_seed(int(seed))
     cases = []
@@ -794,7 +794,7 @@ def run_compiled_fusion(
     iterations: int = 32, warmup: int = 4,
     n_cases: int = 16, seed: int = 0xC0FFEE,
 ) -> CompiledFusionResult:
-    """Build the M-23 compiled-fusion verification artifact.
+    """Build the compiled-fusion verification artifact.
     Best-effort; never raises."""
     run_dir = Path(run_dir).resolve()
     ga = run_dir / "02_graph_analysis"

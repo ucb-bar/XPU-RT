@@ -20,4 +20,38 @@ NOT the full raw graph.
 
 from __future__ import annotations
 
-__all__: list[str] = []
+from compgen.solve.solver_types import (
+    BackendAvailabilityStatus,
+    BackendProbeResult,
+    SolverBackendName,
+    SolverProblemKind,
+    SolverRequest,
+    SolverResponse,
+    SolverStatus,
+    compute_formulation_hash,
+)
+from compgen.solve.backend_registry import SolverBackendRegistry, default_registry
+from compgen.solve.routing import ROUTING_TABLE, choose_backend
+from compgen.solve.reports import (
+    summarize_response_md,
+    write_solver_request,
+    write_solver_response,
+)
+
+__all__ = [
+    "BackendAvailabilityStatus",
+    "BackendProbeResult",
+    "SolverBackendName",
+    "SolverBackendRegistry",
+    "SolverProblemKind",
+    "SolverRequest",
+    "SolverResponse",
+    "SolverStatus",
+    "ROUTING_TABLE",
+    "choose_backend",
+    "compute_formulation_hash",
+    "default_registry",
+    "summarize_response_md",
+    "write_solver_request",
+    "write_solver_response",
+]

@@ -1,4 +1,4 @@
-"""Acceptance tests for M-19 Kernel Execution Foundation.
+"""Acceptance tests Kernel Execution Foundation.
 
 Verifies:
 
@@ -21,7 +21,7 @@ Verifies:
 - Kernel source SHA256 is byte-deterministic across reruns (the
   deterministic body, not the body with the UTC timestamp in the
   docstring).
-- Existing FX-level reports (M-12 / M-16.2 / M-18.3) are byte-identical
+Existing FX-level reports are byte-identical
   before vs after kernel_execution runs.
 - No compiler-core imports.
 - Best-effort: missing manifest → ``not_applicable`` cleanly.
@@ -70,7 +70,7 @@ def _run(model: str, out_dir: Path, *, run_kernels: bool) -> int:
 
 @pytest.fixture(scope="module")
 def kernels_run(tmp_path_factory) -> Path:  # type: ignore[no-untyped-def]
-    """merlin_mlp_wide → SetTileParams executable; M-19 fires."""
+    """merlin_mlp_wide → SetTileParams executable; fires."""
     out = tmp_path_factory.mktemp("m19_run") / "run"
     _run("merlin_mlp_wide", out, run_kernels=True)
     return out
@@ -86,7 +86,7 @@ def no_kernels_run(tmp_path_factory) -> Path:  # type: ignore[no-untyped-def]
 
 @pytest.fixture(scope="module")
 def fusion_run(tmp_path_factory) -> Path:  # type: ignore[no-untyped-def]
-    """proxy_vla → FuseProducerConsumer; M-19 emits not_applicable."""
+    """proxy_vla → FuseProducerConsumer; emits not_applicable."""
     out = tmp_path_factory.mktemp("m19_fusion") / "run"
     _run("proxy_vla", out, run_kernels=True)
     return out
@@ -239,7 +239,7 @@ def test_emit_kernel_source_deterministic_is_byte_identical() -> None:
 
 
 def test_fusion_run_emits_not_applicable(fusion_run: Path) -> None:
-    """proxy_vla greedy picks fusion; M-19 must mark itself
+    """proxy_vla greedy picks fusion; must mark itself
     not_applicable rather than try to run a tile kernel."""
     base = fusion_run / "02_graph_analysis" / "kernel_execution"
     assert base.is_dir()
@@ -258,11 +258,11 @@ def test_fusion_run_emits_not_applicable(fusion_run: Path) -> None:
 def test_fx_level_reports_unchanged_when_m19_reruns(
     no_kernels_run: Path,
 ) -> None:
-    """M-19 must not mutate any FX-level report when invoked. Snapshot
+    """must not mutate any FX-level report when invoked. Snapshot
     the protected files on a no-kernels run, then call run_kernel_execution
     in-place and re-snapshot — the protected reports must be byte-identical.
     (Comparing two separate full pipeline runs would fail on natural UTC
-    timestamp drift; this test isolates M-19's mutation surface.)
+    timestamp drift; this test isolates the mutation surface.)
     """
     protected = [
         "03_recipe_planning/real_verification/real_differential_report.json",
@@ -301,7 +301,7 @@ def test_fx_level_reports_unchanged_when_m19_reruns(
 
 
 def test_handles_missing_manifest(tmp_path: Path) -> None:
-    """If real_transform_manifest.json is absent, M-19 emits a typed
+    """If real_transform_manifest.json is absent, emits a typed
     not_applicable summary instead of raising."""
     fake = tmp_path / "fake_run"
     (fake / "02_graph_analysis").mkdir(parents=True)

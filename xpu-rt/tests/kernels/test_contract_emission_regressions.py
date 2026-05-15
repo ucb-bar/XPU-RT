@@ -2,7 +2,7 @@
 
 Covers gaps #7, #9, #14:
 
-- #7: ``configs/targets/cuda_sm75.yaml`` ships; M-42 emits a
+#7: ``configs/targets/cuda_sm75.yaml`` ships; emits a
   contract for cuda_sm75 even on a non-CUDA host.
 - #9: ``ShapeClass.divisibility`` populated by ``from_recipe`` from
   tile dims; canonical hash uses ``divisibility`` to abstract dims
@@ -29,7 +29,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 # --------------------------------------------------------------------------- #
-# Gap #7 — cuda_sm75 target
+# cuda_sm75 target
 # --------------------------------------------------------------------------- #
 
 
@@ -71,7 +71,7 @@ class TestGap7CudaSm75TargetShipsContract:
 
 
 # --------------------------------------------------------------------------- #
-# Gap #9 — ShapeClass.divisibility canonical-hash abstraction
+# ShapeClass.divisibility canonical-hash abstraction
 # --------------------------------------------------------------------------- #
 
 
@@ -136,7 +136,7 @@ class TestGap9ShapeClassDivisibility:
 
 
 # --------------------------------------------------------------------------- #
-# Gap #14 — dynamic-shape mode
+# dynamic-shape mode
 # --------------------------------------------------------------------------- #
 
 

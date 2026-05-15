@@ -1,4 +1,4 @@
-"""M-17.1 Graph Analysis Readiness Lock.
+"""Graph Analysis Readiness Lock.
 
 Read-only aggregator that converts the existing per-region dossier
 facts (numerical sensitivity, working-set curves, reuse blocks, cost
@@ -18,7 +18,7 @@ Plus the top-level ``graph_analysis_readiness_matrix.json`` and
 Hard non-goals:
 
 - No new optimization families.
-- No profiler calibration (M-18).
+No profiler calibration.
 - No kernel codegen.
 - No weakening of any existing gate.
 - No compiler-core (`compgen.ir`, `compgen.capture`, `compgen.pipeline`,
@@ -27,7 +27,7 @@ Hard non-goals:
 Every report carries an ``overall`` / ``status`` field and a typed
 ``checks[]`` block. The top-level matrix marks the hardware-resource
 row as ``ready_for_m18`` (not ``fully_calibrated``) to be honest about
-what M-18 is for.
+what is for.
 """
 
 from __future__ import annotations
@@ -799,7 +799,7 @@ def _build_agent_view_completeness_report(
         if sel_id and sel_id not in visible:
             selected_visible = False
 
-    # 5. Rationale fields reference real evidence (from M-14A validator).
+    # 5. Rationale fields reference real evidence ( validator).
     rationale_real = True
     if agent_validation is not None:
         for chk in agent_validation.get("checks", []) or []:
@@ -1025,7 +1025,7 @@ def _matrix_status(
             "status": "ready" if agent_view["status"] == "pass" else "blocked",
             "artifact": "agent_view_completeness_report.json",
         },
-        # Row 6 — flips from ready_for_m18 → calibrated when M-18
+        # Row 6 — flips from ready_for_m18 → calibrated when
         # calibration evidence exists and overall is calibrated.
         _row6(hw=hw, calibration=calibration),
     ]
@@ -1195,7 +1195,7 @@ def build_readiness_pack(
         region_dossiers=region_dossiers, target_cfg=target_cfg,
     )
 
-    # M-18 calibration evidence (best-effort: read whatever's on disk).
+    # calibration evidence (best-effort: read whatever's on disk).
     calibration = _read_json(
         ga / "calibration" / "profiler_calibration_report.json"
     )

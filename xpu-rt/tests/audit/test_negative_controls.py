@@ -1,4 +1,4 @@
-"""Tests for compgen.audit.negative_controls (M-31A.5).
+"""Tests for compgen.audit.negative_controls.
 
 Each control must raise its declared typed error. These tests prove
 the gates are real — that the audit doesn't silently swallow injected
@@ -32,13 +32,13 @@ from compgen.audit.negative_controls import (
     (control_applies_when_predicate_violated, "AppliesWhenViolation"),
     (control_certificate_artifact_hash_changed, "CertificateInvalidated"),
     (control_pass_card_missing, "MissingPassCard"),
-    # M-33: real fault injection now raises VerificationGateMissing
+    # real fault injection now raises VerificationGateMissing
     # (the closest existing typed error for "preconditions for safe
     # consumption are not satisfied"). PreconditionViolation remains
-    # as the family-level placeholder for M-34's per-pass IR-level
+    # as the family-level placeholder 's per-pass IR-level
     # precondition check.
     (control_pass_precondition_violation, "VerificationGateMissing"),
-    # M-33: StaleAnalysisAudit is the family root for stale-summary
+    # StaleAnalysisAudit is the family root for stale-summary
     # failures; UnannouncedInvalidation is a subclass. The control
     # declares expected_error=StaleAnalysisAudit so a future
     # consumer-side stale-read injection can also resolve to the same

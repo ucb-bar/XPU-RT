@@ -1,4 +1,4 @@
-"""Acceptance tests for M-20 Per-Region Compiled Differential.
+"""Acceptance tests Per-Region Compiled Differential.
 
 Verifies:
 
@@ -12,9 +12,9 @@ Verifies:
   results.
 - Per-region directories under ``kernel_execution/regions/`` contain
   their own ``compiled_kernel_run_gpu.json`` + ``compiled_kernel_run_cpu.json``.
-- M-15B detector includes ``compiled_kernel_differential_check`` so
+detector includes ``compiled_kernel_differential_check`` so
   kernel-level fails would trigger retry.
-- M-19's single-region artifact is preserved (M-20 layers alongside).
+the single-region artifact is preserved (layers alongside).
 - Existing FX-level reports are unchanged (regression invariant).
 - Models with no SetTileParams candidates (e.g. proxy_vla → fusion)
   emit a typed ``no_candidates`` report.
@@ -107,7 +107,7 @@ def test_default_off_no_region_report(no_kernels_run: Path) -> None:
 
 def test_region_report_covers_all_set_tile_regions(kernels_run: Path) -> None:
     """merlin_mlp_wide has 3 matmul regions, each with legal
-    SetTileParams candidates. M-20 must cover all 3."""
+    SetTileParams candidates. must cover all 3."""
     rep = _read(
         kernels_run / "02_graph_analysis" / "kernel_execution"
         / "region_compiled_differential_report.json"
@@ -155,7 +155,7 @@ def test_per_region_subdirectories_have_kernel_artifacts(
 
 
 def test_per_region_greedy_picks_lowest_cost(kernels_run: Path) -> None:
-    """For each region, M-20 must pick the lowest static_relative_cost
+    """For each region, must pick the lowest static_relative_cost
     legal SetTileParams candidate."""
     rep = _read(
         kernels_run / "02_graph_analysis" / "kernel_execution"
@@ -232,12 +232,12 @@ def test_summary_classification_counts_consistent(kernels_run: Path) -> None:
 
 
 # --------------------------------------------------------------------------- #
-# M-15B detector wiring
+# detector wiring
 # --------------------------------------------------------------------------- #
 
 
 def test_m15b_detector_includes_compiled_kernel_check() -> None:
-    """The downstream-retry detector must include the M-20 report so
+    """The downstream-retry detector must include the report so
     kernel-level fails would trigger retry."""
     from compgen.graph_compilation.downstream_retry import _DOWNSTREAM_REPORTS
 
@@ -252,17 +252,17 @@ def test_m15b_detector_includes_compiled_kernel_check() -> None:
 
 
 # --------------------------------------------------------------------------- #
-# M-19 single-region artifact preserved
+# single-region artifact preserved
 # --------------------------------------------------------------------------- #
 
 
 def test_m19_single_region_artifacts_still_emit(kernels_run: Path) -> None:
-    """M-20 layers ALONGSIDE M-19; both artifact sets exist."""
+    """layers ALONGSIDE ; both artifact sets exist."""
     base = kernels_run / "02_graph_analysis" / "kernel_execution"
-    # M-19 single-region (the SELECTED candidate's compiled run).
+    # single-region (the SELECTED candidate's compiled run).
     assert (base / "compiled_kernel_run_gpu.json").exists()
     assert (base / "compiled_kernel_run_cpu.json").exists()
-    # M-20 region fan-out.
+    # region fan-out.
     assert (base / "region_compiled_differential_report.json").exists()
     assert (base / "regions").is_dir()
 
@@ -317,7 +317,7 @@ def test_fx_artifacts_unchanged_when_m20_reruns(no_kernels_run: Path) -> None:
 
 def test_fusion_run_still_runs_on_matmul_regions(fusion_run: Path) -> None:
     """proxy_vla's SELECTED candidate is fusion, but its matmul regions
-    still have legal SetTileParams candidates. M-20 must run on them."""
+    still have legal SetTileParams candidates. must run on them."""
     rep = _read(
         fusion_run / "02_graph_analysis" / "kernel_execution"
         / "region_compiled_differential_report.json"
@@ -334,7 +334,7 @@ def test_fusion_run_still_runs_on_matmul_regions(fusion_run: Path) -> None:
 
 
 def test_handles_missing_inputs(tmp_path: Path) -> None:
-    """If candidate_actions or cost_preview_v2 is missing, M-20 emits
+    """If candidate_actions or cost_preview_v2 is missing, emits
     a typed not_run report."""
     fake = tmp_path / "fake_run"
     (fake / "02_graph_analysis").mkdir(parents=True)
@@ -348,7 +348,7 @@ def test_handles_missing_inputs(tmp_path: Path) -> None:
 
 
 def test_handles_no_set_tile_candidates(tmp_path: Path) -> None:
-    """If a model has no legal SetTileParams candidates at all, M-20
+    """If a model has no legal SetTileParams candidates at all,
     emits no_candidates."""
     fake = tmp_path / "fake_no_tiles"
     ga = fake / "02_graph_analysis"

@@ -3,7 +3,7 @@
 Three modes:
     1. MLIR canonical text — via xDSL Printer/Parser (primary,
        byte-stable round-trip).
-    2. JSON projection — for the M-26/M-27 promoted-recipe sidecar
+    2. JSON projection — for the /promoted-recipe sidecar
        and any agent-facing read of pattern-level attrs.
     3. YAML bridge — for LLM prompt injection and human inspection.
 
@@ -104,7 +104,7 @@ def _op_to_dict(op: Operation) -> dict[str, Any]:
     """Convert a Recipe IR op to a serializable dict.
 
     Walks ``op.properties`` so any optional prop that *is* populated
-    (e.g. M-27 ``recipe.promote.recipe_signature``,
+    (e.g. ``recipe.promote.recipe_signature``,
     ``applies_when``, ``evidence_summary``, ``fallback_chain``,
     ``target_class``) appears in the output without per-op handling.
     """
@@ -114,15 +114,15 @@ def _op_to_dict(op: Operation) -> dict[str, Any]:
     return d
 
 
-# --- JSON projection (M-27) --------------------------------------------------
+# --- JSON projection --------------------------------------------------
 
 
 def recipe_module_to_json(module: ModuleOp) -> str:
     """Serialise a Recipe IR module to canonical JSON.
 
     The output is deterministic (sorted keys, no whitespace) — suitable
-    for byte-stable storage in M-26 promoted-recipe sidecars and for
-    cross-process consumption by M-28 retrieval.
+    for byte-stable storage promoted-recipe sidecars and for
+    cross-process consumption retrieval.
 
     The schema mirrors :func:`recipe_module_to_yaml`: a list of op
     dicts, each with an ``_op`` key naming the op and the populated
@@ -144,7 +144,7 @@ def json_to_recipe_module(json_text: str) -> ModuleOp:
     through MLIR text directly via :func:`mlir_to_recipe`.
 
     Returns an empty module if the JSON is malformed or empty — the
-    M-26 bridge prefers this honest empty-result behaviour over
+    bridge prefers this honest empty-result behaviour over
     raising, since promoted-recipe sidecars are best-effort.
     """
     try:
@@ -154,7 +154,7 @@ def json_to_recipe_module(json_text: str) -> ModuleOp:
     if not isinstance(data, list) or not data:
         return ModuleOp(Region(Block()))
     # Phase 11 work: full JSON→op reconstruction. Until then we go
-    # through the MLIR-text path: the M-26 bridge stores recipe.mlir
+    # through the MLIR-text path: the bridge stores recipe.mlir
     # alongside the JSON projection, so callers should prefer
     # mlir_to_recipe(). This stub keeps the API stable.
     return ModuleOp(Region(Block()))

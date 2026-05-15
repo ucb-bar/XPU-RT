@@ -141,10 +141,10 @@ CREATE INDEX IF NOT EXISTS idx_state_hardware ON state_signatures(hardware_signa
 # Each entry must be safe to run repeatedly: failing on
 # ``sqlite3.OperationalError`` (column already exists) is the contract.
 _ADDITIVE_MIGRATIONS: tuple[str, ...] = (
-    # M-26 promotion two-tier cache key.
+    # promotion two-tier cache key.
     "ALTER TABLE promotions ADD COLUMN region_signature TEXT DEFAULT ''",
     "ALTER TABLE promotions ADD COLUMN contract_hash TEXT DEFAULT ''",
-    # M-29 promotion gate level.
+    # promotion gate level.
     "ALTER TABLE promotions ADD COLUMN gate_level TEXT DEFAULT ''",
     # Indexes for two-tier retrieval.
     "CREATE INDEX IF NOT EXISTS idx_promotions_region ON promotions(region_signature)",

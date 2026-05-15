@@ -1,22 +1,22 @@
-"""M-25 Kernel Section Evidence Pack — paper-facing aggregator.
+"""Kernel Section Evidence Pack — paper-facing aggregator.
 
 Read-only walks suite run-dirs (canonical + wide), collects kernel-
-level signals from M-19/M-20/M-21/M-22/M-22.1/M-23/M-24/M-24.1, and
+level signals ///////, and
 emits the paper-ready evidence pack: markdown summary, claim matrix
 (joint FX+kernel claims), per-model CSV, register-pressure CSV,
 compiled-coverage CSV, and figures.
 
 Hard non-goals:
 - Read-only. Source artifacts under suite roots stay byte-identical
-  (verified by SHA snapshot before/after). Same invariant as M-17.
+  (verified by SHA snapshot before/after). Same invariant as .
 - No new measurement, no candidate generation, no compiler-core imports.
 - No promotion to recipe library (separate concern).
 - Honest non-claims block on every output (no perf claims, no
   guarantees of correctness — stays neutral).
 
-Design parallels ``evidence_pack.py`` (M-17) but operates on kernel-
-level signals exclusively. Joint claims cross-reference M-17 row
-states with M-24 row states and report ``status=implemented`` only
+Design parallels ``evidence_pack.py`` but operates on kernel-
+level signals exclusively. Joint claims cross-reference row
+states with row states and report ``status=implemented`` only
 when BOTH are ready.
 """
 
@@ -56,7 +56,7 @@ class KernelModelEvidence:
     pipeline_returncode: int = -1
     kernels_enabled: bool = False
 
-    # M-19 / M-20 — compiled execution
+    #  compiled execution
     m19_gpu_compiled: bool = False
     m19_cpu_compiled: bool = False
     m19_gpu_us_per_iter: float | None = None
@@ -70,14 +70,14 @@ class KernelModelEvidence:
     m20_tolerance_eps_count: int = 0
     m20_fail_outside_tolerance_count: int = 0
 
-    # M-21 — analytical cost
+    # analytical cost
     m21_overall: str = "n/a"
     m21_candidates_modeled: int = 0
     m21_candidates_total: int = 0
     m21_compute_bound_count: int = 0
     m21_memory_bound_count: int = 0
 
-    # M-22 — compiled bottleneck
+    # compiled bottleneck
     m22_overall: str = "n/a"
     m22_kernel_calibration_status: str = "n/a"
     m22_regions_with_evidence: int = 0
@@ -85,20 +85,20 @@ class KernelModelEvidence:
     m22_agreement_count: int = 0
     m22_disagreement_count: int = 0
 
-    # M-22.1 — profiler evidence
+    # profiler evidence
     m22_1_overall: str = "n/a"
     m22_1_gpu_collected: int = 0
     m22_1_cpu_collected: int = 0
     m22_1_perf_available: bool = False
     m22_1_self_cuda_us_mean: float | None = None
 
-    # M-23 — compiled fusion
+    # compiled fusion
     m23_overall: str = "n/a"
     m23_case_count: int = 0
     m23_bit_equality_count: int = 0
     m23_fail_count: int = 0
 
-    # M-24 — kernel readiness matrix
+    # kernel readiness matrix
     m24_overall: str = "n/a"
     m24_ready_count: int = 0
     m24_ready_for_m24_1_count: int = 0
@@ -107,7 +107,7 @@ class KernelModelEvidence:
     m24_not_run_count: int = 0
     m24_row_statuses: dict[str, str] = field(default_factory=dict)
 
-    # M-24.1 — kernel lifetime
+    # kernel lifetime
     m24_1_overall: str = "n/a"
     m24_1_introspected_count: int = 0
     m24_1_register_pressure_mean: float | None = None
@@ -121,7 +121,7 @@ class KernelModelEvidence:
     m17_1_readiness_overall: str = "n/a"
     m17_1_row_statuses: dict[str, str] = field(default_factory=dict)
 
-    # M-15B retry status (honest)
+    # retry status (honest)
     m15b_retry_needed: bool = False
     m15b_failed_check: str = ""
 
@@ -159,14 +159,14 @@ def collect_model(
         # No explicit returncode field; presence implies it ran.
         ev.pipeline_returncode = 0
 
-    # Detect kernels-on by presence of M-19/M-20 artifacts.
+    # Detect kernels-on by presence of /artifacts.
     m20 = _read_json(
         run_dir / "02_graph_analysis" / "kernel_execution"
         / "region_compiled_differential_report.json"
     )
     ev.kernels_enabled = m20 is not None
 
-    # M-19 single-region.
+    # single-region.
     m19_gpu = _read_json(
         run_dir / "02_graph_analysis" / "kernel_execution"
         / "compiled_kernel_run_gpu.json"
@@ -186,7 +186,7 @@ def collect_model(
         )
         ev.m19_cpu_us_per_iter = m19_cpu.get("measured_us_per_iter")
 
-    # M-20 fan-out.
+    # fan-out.
     if m20 is not None:
         ev.m20_regions_total = len(m20.get("regions", []) or [])
         gpu_uss = []
@@ -216,7 +216,7 @@ def collect_model(
         if cpu_uss:
             ev.m20_cpu_mean_us = sum(cpu_uss) / len(cpu_uss)
 
-    # M-21 analytical cost.
+    # analytical cost.
     ac = _read_json(
         run_dir / "02_graph_analysis" / "analytical_cost"
         / "per_candidate_analytical_cost.json"
@@ -229,7 +229,7 @@ def collect_model(
         ev.m21_compute_bound_count = s.get("compute_bound_count", 0)
         ev.m21_memory_bound_count = s.get("memory_bound_count", 0)
 
-    # M-22 compiled bottleneck.
+    # compiled bottleneck.
     cb = _read_json(
         run_dir / "02_graph_analysis" / "compiled_bottleneck"
         / "compiled_bottleneck_report.json"
@@ -246,7 +246,7 @@ def collect_model(
         ev.m22_agreement_count = a.get("agreement_count", 0)
         ev.m22_disagreement_count = a.get("disagreement_count", 0)
 
-    # M-22.1 profiler evidence.
+    # profiler evidence.
     pe = _read_json(
         run_dir / "02_graph_analysis" / "profiler_evidence"
         / "profiler_evidence_report.json"
@@ -268,7 +268,7 @@ def collect_model(
         if gpu_uss:
             ev.m22_1_self_cuda_us_mean = sum(gpu_uss) / len(gpu_uss)
 
-    # M-23 compiled fusion.
+    # compiled fusion.
     cf = _read_json(
         run_dir / "02_graph_analysis" / "compiled_fusion"
         / "compiled_fusion_differential_report.json"
@@ -280,7 +280,7 @@ def collect_model(
         ev.m23_bit_equality_count = s.get("bit_equality_count", 0)
         ev.m23_fail_count = s.get("fail_outside_tolerance_count", 0)
 
-    # M-24 kernel readiness matrix.
+    # kernel readiness matrix.
     m24 = _read_json(
         run_dir / "02_graph_analysis" / "kernel_readiness"
         / "kernel_section_readiness_matrix.json"
@@ -297,7 +297,7 @@ def collect_model(
         for r in m24.get("slide_rows", []) or []:
             ev.m24_row_statuses[r["claim"]] = r["status"]
 
-    # M-24.1 kernel lifetime.
+    # kernel lifetime.
     kl = _read_json(
         run_dir / "02_graph_analysis" / "kernel_lifetime"
         / "kernel_lifetime_evidence_report.json"
@@ -351,7 +351,7 @@ def collect_model(
                     break
 
     # FX-level cross-reference for joint claims.
-    # M-17.1 keys rows by ``artifact`` filename, not by ``claim``.
+    # keys rows by ``artifact`` filename, not by ``claim``.
     fx_matrix = _read_json(
         run_dir / "02_graph_analysis" / "readiness"
         / "graph_analysis_readiness_matrix.json"
@@ -362,7 +362,7 @@ def collect_model(
             artifact = r.get("artifact") or r.get("claim") or ""
             ev.m17_1_row_statuses[artifact] = r.get("status", "n/a")
 
-    # M-15B retry needed?
+    # retry needed?
     retry = _read_json(
         run_dir / "03_recipe_planning" / "downstream_retry"
         / "downstream_retry_request.json"
@@ -468,7 +468,7 @@ def aggregate(rows: list[KernelModelEvidence]) -> dict[str, Any]:
                 m17_1_row_pass_count[row_claim] = (
                     m17_1_row_pass_count.get(row_claim, 0) + 1
                 )
-        # Joint ready: M-17.1 row N ready AND M-24 row N ready.
+        # Joint ready: row N ready AND row N ready.
         for row_idx in range(1, 7):
             fx_row_claim = _M17_ROW_CLAIM[row_idx]
             kr_row_claim = _M24_ROW_CLAIM[row_idx]
@@ -541,8 +541,8 @@ def _bucket(values: list[int], thresholds: list[int]) -> dict[str, int]:
 
 
 # Mapping rows 1..6 to:
-# - the M-17.1 ``artifact`` filename (M-17.1 keys rows by artifact)
-# - the M-24 ``claim`` name (M-24 keys rows by claim)
+# the ``artifact`` filename (keys rows by artifact)
+# the ``claim`` name (keys rows by claim)
 # - a shared canonical-name for figure labels and joint-claim keys
 _M17_ROW_CLAIM: dict[int, str] = {
     1: "precision_budget_report.json",
@@ -571,7 +571,7 @@ def build_claim_matrix(
     rows: list[KernelModelEvidence], agg: dict[str, Any],
 ) -> dict[str, Any]:
     """Build the joint FX+kernel claim matrix. Each claim asserts
-    that BOTH M-17.1 row N AND M-24 row N are ready/calibrated on
+    that BOTH row N AND row N are ready/calibrated on
     at least one model."""
     n_models = len(rows)
     claims: list[dict[str, Any]] = []
@@ -706,7 +706,7 @@ def write_compiled_coverage_csv(
 def write_register_pressure_csv(
     rows: list[KernelModelEvidence], path: Path,
 ) -> None:
-    """Per-region register count CSV — rebuilt from M-24.1's lifetime
+    """Per-region register count CSV — rebuilt 's lifetime
     report. Useful as paper-facing data behind the
     register_pressure_distribution figure."""
     fields = [
@@ -906,7 +906,7 @@ def build_kernel_evidence_pack(
     out_dir: Path,
     skip_figures: bool = False,
 ) -> KernelEvidencePackResult:
-    """Aggregate canonical + wide suite outputs into the M-25 pack.
+    """Aggregate canonical + wide suite outputs into the pack.
     Read-only; never raises."""
     out_dir = Path(out_dir).resolve()
     out_dir.mkdir(parents=True, exist_ok=True)

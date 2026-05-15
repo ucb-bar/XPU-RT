@@ -1,0 +1,17 @@
+schema_version: provider_card_v1
+provider_id: cuda_tile_ir
+integration_level: probe
+target_families: [cuda]
+contract_kinds: [matmul, attention, fused_region]
+emits: [cuda_tile_mlir, tilebc, cubin]
+entrypoint: compgen.providers.adapters.cuda_tile_ir:CudaTileIRProvider
+paper_claimable: false
+required_env: [CUDA_TILE_ROOT]
+required_commands: [tileiras]
+required_python_imports: []
+description: |
+  CUDA Tile IR provider. Targets NVIDIA tensor-core / tile
+  patterns through the MLIR tile dialect and the ``tileiras`` cubin
+  compiler. Probe blocks with ``env_missing`` when
+  ``CUDA_TILE_ROOT`` is unset and ``command_missing`` when
+  ``tileiras`` is unavailable on ``$PATH``.

@@ -1,6 +1,6 @@
 """CReferenceProvider — a deterministic cffi-C reference kernel provider.
 
-This is the in-tree "reference" provider in the M-57 auction. It produces
+This is the in-tree "reference" provider in the auction. It produces
 real, compilable cffi-C source for the contract at hand and emits real
 kernel artifacts. It's not optimised — that's the point: it gives the
 auction a guaranteed-correct, guaranteed-fast-to-emit baseline that any
@@ -10,7 +10,7 @@ Coverage:
 
 * matmul ``(M, K) @ (K, N) → (M, N)`` in row-major f32, accumulator f32.
   Triple-nested loop, ``-O2 -fno-fast-math``. Bit-exact under
-  M-37.13's Higham bound when the eager reference uses the same
+  's Higham bound when the eager reference uses the same
   accumulation order; otherwise refinement_status=tolerance_eps.
 
 That single shape covers the merlin_mlp_wide vertical slice. Future
@@ -99,13 +99,13 @@ void compgen_fused_pointwise_f32(
 class CReferenceProvider:
     """Deterministic cffi-C reference kernel provider.
 
-    M-57 auction baseline. Emits a compilable C reference for matmul.
+    auction baseline. Emits a compilable C reference for matmul.
     """
 
     name_str: str = "c_reference"
     priority: int = 5  # mid — beats the legacy fallback, loses to a tuned bid
     applicable_targets: tuple[str, ...] = ("host_cpu",)
-    # Gap #6 closure: pointwise (fused) added so the M-42 fusion path
+    #  closure: pointwise (fused) added so the fusion path
     # has at least one applicable bidder.
     applicable_archetypes: tuple[str, ...] = ("compute_tiled", "pointwise")
     _exports: list[KnowledgeExport] = field(default_factory=list)
@@ -119,7 +119,7 @@ class CReferenceProvider:
 
     def search(self, contract: KernelContract, budget: SearchBudget) -> ProviderResult:
         # Provider-level search ignores the V3 contract here — the
-        # M-57 fulfill adapter passes us the legacy bridge and we
+        # fulfill adapter passes us the legacy bridge and we
         # produce a deterministic source. The legacy contract carries
         # op_family which lets us dispatch matmul vs fused-pointwise.
         op_family = (contract.op_family or "").lower()
@@ -148,7 +148,7 @@ class CReferenceProvider:
     def export_knowledge(self) -> list[KnowledgeExport]:
         return list(self._exports)
 
-    # -- Phase D / M-56: bid() -----------------------------------------------
+    # -- Phase D / bid -----------------------------------------------
 
     def bid(self, contract_v3: Any) -> BidPreview:
         """Cheap deterministic estimate: matmul-only, host_cpu-only."""
@@ -186,7 +186,7 @@ class CReferenceProvider:
             )
 
         if archetype == "pointwise":
-            # Gap #6 closure: pointwise baseline. Cost ~ output numel.
+            #  closure: pointwise baseline. Cost ~ output numel.
             try:
                 output = contract_v3.io.outputs[0]
                 numel = 1

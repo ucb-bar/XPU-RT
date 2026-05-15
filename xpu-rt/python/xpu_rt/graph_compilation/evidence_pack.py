@@ -1,4 +1,4 @@
-"""M-17 Graph Section Evidence Pack — read-only paper-facing summary.
+"""Graph Section Evidence Pack — read-only paper-facing summary.
 
 Walks suite run directories (canonical and wide), reads the typed
 artifacts each model already emitted, and writes a self-contained
@@ -91,7 +91,7 @@ class ModelEvidence:
     strict_gate_root_cause: str = ""
     readiness_overall: str = "n/a"           # "pass" | "fail" | "n/a"
     readiness_rows: dict[str, str] = field(default_factory=dict)  # row→status
-    # M-18 calibration overlay (only populated when COMPGEN_CALIBRATE_PROFILER
+    # calibration overlay (only populated when COMPGEN_CALIBRATE_PROFILER
     # was on for the run that produced this directory).
     calibration_status: str = "n/a"          # "calibrated" | "partial_match" | "no_op_match" | "not_run" | "n/a"
     calibration_overall: str = "n/a"         # "calibrated" | "partial" | "not_run" | "n/a"
@@ -295,7 +295,7 @@ def collect_model(run_dir: Path, suite: str, model_id: str) -> ModelEvidence:
         ev.real_differential_status not in ("pass", "n/a")
     )
 
-    # --- Strict gate (M-08 status field if present) ---
+    # --- Strict gate (status field if present) ---
     pl_status = _read_json(
         run_dir / "03_recipe_planning" / "post_lowering"
         / "post_lowering_verification_report.json"
@@ -303,7 +303,7 @@ def collect_model(run_dir: Path, suite: str, model_id: str) -> ModelEvidence:
     if pl_status is not None:
         ev.strict_gate_status = str(pl_status.get("status") or "n/a")
 
-    # --- M-16.1 strict-gate report (typed payload-lowering verdict) ---
+    # --- strict-gate report (typed payload-lowering verdict) ---
     sg_path = (
         run_dir / "01_payload_lowering" / f"{model_id}_strict_gate_report.json"
     )
@@ -313,7 +313,7 @@ def collect_model(run_dir: Path, suite: str, model_id: str) -> ModelEvidence:
         rc = sg_report.get("root_cause") or {}
         ev.strict_gate_root_cause = str(rc.get("category") or "")
 
-    # --- M-17.1 readiness matrix ---
+    # --- readiness matrix ---
     rm_path = (
         run_dir / "02_graph_analysis" / "readiness"
         / "graph_analysis_readiness_matrix.json"
@@ -326,7 +326,7 @@ def collect_model(run_dir: Path, suite: str, model_id: str) -> ModelEvidence:
             slug = artifact.replace(".json", "").replace("_report", "")
             ev.readiness_rows[slug] = str(r.get("status") or "n/a")
 
-    # --- M-18 calibration ---
+    # --- calibration ---
     cal_path = (
         run_dir / "02_graph_analysis" / "calibration"
         / "profiler_calibration_report.json"
@@ -359,7 +359,7 @@ def collect_model(run_dir: Path, suite: str, model_id: str) -> ModelEvidence:
 def is_holdout_model(model_yaml_path: Path) -> bool:
     """Return True when a model YAML has ``holdout: true``.
 
-    M-31A.4: holdout models are deliberately not part of canonical-22.
+    holdout models are deliberately not part of canonical-22.
     They live in a separate ``holdout`` suite so the evidence pack
     does not conflate "we tested 22 in-distribution models" with
     "we also stress-tested perturbed shapes".
@@ -494,7 +494,7 @@ def aggregate(rows: list[ModelEvidence]) -> dict[str, Any]:
             f"{slug}={status}"
             for r in rows for slug, status in r.readiness_rows.items()
         ]),
-        # M-18 calibration aggregates.
+        # calibration aggregates.
         "calibrated_model_count": sum(
             1 for r in rows if r.calibration_overall == "calibrated"
         ),
@@ -1132,7 +1132,7 @@ def build_evidence_pack(
     out_dir: Path,
     skip_figures: bool = False,
 ) -> EvidencePackResult:
-    """Build the full M-17 evidence pack.
+    """Build the full evidence pack.
 
     Either or both suite roots may be ``None`` (skip that suite).
     """

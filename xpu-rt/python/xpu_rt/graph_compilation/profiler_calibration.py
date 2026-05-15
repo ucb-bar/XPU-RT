@@ -1,4 +1,4 @@
-"""M-18 Profiler-Calibrated Cost Preview.
+"""Profiler-Calibrated Cost Preview.
 
 Runs a measured profile of the captured exported program and joins the
 results with the deterministic-roofline ``cost_preview_v2`` /
@@ -25,7 +25,7 @@ Hard non-goals:
   reports are read-only.
 - No new optimization families.
 - No replacement of the deterministic-roofline baseline. The baseline
-  stays exactly as M-17.1 left it; this module LAYERS calibration
+  stays exactly as left it; this module LAYERS calibration
   evidence on top.
 - No claim of profiler-calibrated when measurements failed or no FX
   nodes matched any profiler op (status falls back to
@@ -613,7 +613,7 @@ def run_profiler_calibration(
     except Exception:  # noqa: BLE001
         pass
 
-    # M-18.4: layer measured_latency_us onto graph_dossier_v3 + llm_graph_view.
+    # layer measured_latency_us onto graph_dossier_v3 + llm_graph_view.
     # Best-effort — never break the pipeline if the dossier shape drifts.
     if overall == "calibrated":
         try:

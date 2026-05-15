@@ -208,7 +208,7 @@ def test_pattern_fan_in(scheduler) -> None:
     """M producers each notify E[0]; consumer waits with
     wait_count_default=M and must unblock only after all M notifies.
 
-    Grid layout: tasks 0..M-1 = producers, task M = consumer. The
+    Grid layout: tasks 0..= producers, task M = consumer. The
     consumer is placed **last** deliberately — the static scheduler
     is DAG-unaware (round-robin partition), so a consumer scheduled
     before producers on the same worker would deadlock that worker.
@@ -292,7 +292,7 @@ def test_pattern_gemm_reduce_scatter() -> None:
     downstream consumer per row waits on E[m] and reads a per-row
     aggregation.
 
-    Task grid layout: tasks 0..M*N-1 = producers, tasks M*N..M*N+M-1 =
+    Task grid layout: tasks 0..M*N-1 = producers, tasks M*N..M*N+=
     consumers. This matches the paper's GEMM + ReduceScatter shape.
     """
     M, N = 4, 3

@@ -1,8 +1,8 @@
-"""M-60 — Contract field completion from target profile + region dossier.
+"""Contract field completion from target profile + region dossier.
 
 Coverage:
 
-- ``TestHardwareEnvelopeFromTarget`` — host_cpu.yaml's M-60 fields
+``TestHardwareEnvelopeFromTarget`` — host_cpu.yaml's fields
   (peak_compute_per_dtype, codegen_hints, register_quota_per_thread,
   max_concurrent_blocks, mma_shapes) flow into the materialised
   KernelContractV3's HardwareEnvelope.
@@ -10,9 +10,9 @@ Coverage:
   the MemorySpec input/output tiers + lifetimes (matmul: input from
   DRAM, transient inputs/outputs in SCRATCHPAD).
 - ``TestRoundTripPreserves`` — contract_to_dict +
-  _reconstruct_contract_from_dict round-trip preserves every M-60
+  _reconstruct_contract_from_dict round-trip preserves every
   field; canonical hash unchanged across the round trip.
-- ``TestFallback`` — when the target_profile lacks the M-60 fields,
+``TestFallback`` — when the target_profile lacks the fields,
   defaults preserve today's behaviour (no exceptions, sensible
   HardwareEnvelope defaults).
 """
@@ -65,7 +65,7 @@ class TestHardwareEnvelopeFromTarget:
         body = json.loads(contracts[0].read_text())
         hw = body["orchestration"]["execution"]["hardware"]
 
-        # M-60 fields are present and non-default.
+        # fields are present and non-default.
         assert hw["target_name"] == "host_cpu"
         assert "f32" in hw["peak_compute_per_dtype"]
         assert hw["peak_compute_per_dtype"]["f32"] == pytest.approx(0.1)
@@ -172,7 +172,7 @@ class TestMemorySpecFromDossier:
 
 
 # --------------------------------------------------------------------------- #
-# Round-trip preserves M-60 fields
+# Round-trip preserves fields
 # --------------------------------------------------------------------------- #
 
 
@@ -201,7 +201,7 @@ class TestRoundTripPreserves:
         hash2 = canonical_contract_hash(_reconstruct_contract_from_dict(body))
         assert hash1 == hash2
 
-        # Reconstructed contract preserves the M-60 fields verbatim.
+        # Reconstructed contract preserves the fields verbatim.
         env = contract.orchestration.execution.hardware
         assert tuple(env.codegen_hints) == tuple(hw_before["codegen_hints"])
         assert env.peak_compute_per_dtype == hw_before["peak_compute_per_dtype"]
@@ -210,14 +210,14 @@ class TestRoundTripPreserves:
 
 
 # --------------------------------------------------------------------------- #
-# Fallback when target_profile lacks the M-60 fields
+# Fallback when target_profile lacks the fields
 # --------------------------------------------------------------------------- #
 
 
 class TestFallback:
     def test_empty_target_profile_falls_back(self) -> None:
         """An empty target_profile dict produces a contract with
-        default HardwareEnvelope values for the M-60 fields."""
+        default HardwareEnvelope values for the fields."""
         from compgen.kernels.contract_v3 import KernelContractV3
 
         candidate_selection = {
@@ -234,7 +234,7 @@ class TestFallback:
                 "outputs": [{"lifetime_class": "transient", "consumer_count": 1}],
             },
         }
-        target_profile = {"target_id": "host_cpu"}  # no M-60 fields
+        target_profile = {"target_id": "host_cpu"}  # no fields
 
         contract = KernelContractV3.from_recipe(
             candidate_selection=candidate_selection,

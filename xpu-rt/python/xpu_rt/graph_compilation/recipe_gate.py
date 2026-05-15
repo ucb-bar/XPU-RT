@@ -1,12 +1,12 @@
 """Recipe Verification Gate (Milestone 06).
 
-Verifies every Recipe op committed by M-05 against the canonical action
+Verifies every Recipe op committed against the canonical action
 space + region graph + dossier facts. This is a **pre-lowering gate**:
 it proves source consistency and family-specific preconditions, and
 declares the **semantic / refinement obligation** that a later
-lowering / verification stage (M-07 / M-08) must discharge.
+lowering / verification stage must discharge.
 
-Specifically, M-06:
+Specifically, :
 
 1. Replays every ``source_candidate`` against
    ``02_graph_analysis/action_space.mlir`` via :mod:`action_space_resolver`
@@ -236,19 +236,19 @@ def _gate_set_tile_params(
                 extra["live_bytes"] = tile_match["live_bytes"]
                 extra["fits_scratchpad"] = tile_match["fits_scratchpad"]
                 extra["fits_l2"] = tile_match["fits_l2"]
-                # Tile legality matches fits_l2 policy (M-04 invariant).
+                # Tile legality matches fits_l2 policy (invariant).
                 if tile_match["fits_l2"]:
                     discharged.append("working_set_fits_required_memory_tier")
                 else:
                     failures.append("tile working set does not fit L2")
 
-            # M-37.9 Fix 3a: derive declared_refinement from tile-vs-shape
+            # Fix 3a: derive declared_refinement from tile-vs-shape
             # divisibility. SetTileParams preserves bit_equality only when
             # every region dimension is divisible by its tile size — that
             # keeps accumulation order stable. When boundary handling is
             # required (any non-clean divide), we downgrade to
             # tolerance_eps so the recipe-level claim matches what the
-            # M-15B differential check measures.
+            # differential check measures.
             region_shape = d.get("region_shape") or {}
             extra["region_shape_summary"] = region_shape.get("summary", "")
             extra["clean_divide"] = None
@@ -275,7 +275,7 @@ def _gate_set_tile_params(
                         and tN > 0 and N_dim % tN == 0
                         and tK > 0 and K_dim % tK == 0
                     )
-                    # M-37.12 Fix: bit_equality requires NOT just
+                    # Fix: bit_equality requires NOT just
                     # clean-divide but also a single K iteration. With
                     # K_iters > 1 the partial sums accumulate in a
                     # different order than eager (eager: one running
@@ -303,7 +303,7 @@ def _gate_set_tile_params(
         else:
             failures.append(f"payload_ref does not exist: {payload_ref}")
 
-    # M-37.12 Fix: claimable refinement matches the differential reality.
+    # Fix: claimable refinement matches the differential reality.
     # bit_equality requires BOTH clean_divide AND single K iteration —
     # multiple K iters reorder accumulation even with clean divides
     # (verified empirically on tiny_mlp's tile_M4_N16_K16, K_iters=4 →
@@ -774,7 +774,7 @@ def run_recipe_gate(
     target_yaml_path: Path | None = None,
     allow_risky_numerics: bool = False,
 ) -> RecipeGateResult:
-    """Run the M-06 verification gate against an existing recipe_planning output.
+    """Run the verification gate against an existing recipe_planning output.
 
     Inputs (read-only):
 
@@ -893,7 +893,7 @@ def run_recipe_gate(
             _trace("source_candidate_missing", op.recipe_op_id, "fail", "")
             continue
 
-        # 1. Resolve via M-04.5 (hash-chain + recipe_delta cross-check).
+        # 1. Resolve (hash-chain + recipe_delta cross-check).
         try:
             resolved, _ = resolve_candidate(run_dir, cand_id)
             _trace("resolver_pass", op.recipe_op_id, "pass", cand_id)

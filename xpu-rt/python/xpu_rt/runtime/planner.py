@@ -102,6 +102,26 @@ class _CopyTask:
 
 
 @dataclass(frozen=True)
+class _ScheduleSolution:
+    """Internal: solved schedule normalized from the overlap planner.
+
+    Carries everything the legacy ``solve_schedule.ScheduleSolution``
+    used to provide plus the envelope fields (``status``,
+    ``selected_backend``, ``formulation_hash``) so the
+    ExecutionPlan.metadata stays honest.
+    """
+
+    feasible: bool
+    makespan_us: float
+    start_times: dict[str, float]
+    end_times: dict[str, float]
+    solve_time_ms: float
+    status: str
+    selected_backend: str
+    formulation_hash: str
+
+
+@dataclass(frozen=True)
 class ExecutionPlan:
     """Complete execution plan for a workload."""
 
@@ -160,10 +180,24 @@ class ExecutionPlan:
 
 @dataclass
 class ExecutionPlanner:
-    """Generates execution plans for heterogeneous targets."""
+    """Generates execution plans for heterogeneous targets.
+
+    Attributes:
+        target: Hardware profile.
+        topology: Optional runtime topology.
+        solver_artifact_dir: When set, every solver call (placement,
+            overlap, memory) persists its typed request + response under
+            this directory plus the corresponding ``*.solved.json`` plan
+            file. → wire-up: this is how a real
+            ``graph_compilation`` run produces solver-evidence under
+            ``<run_dir>/05_execution_plan/solver/``.
+        solver_registry: Optional custom backend registry (tests).
+    """
 
     target: TargetProfile
     topology: Any = None  # Optional RuntimeTopology
+    solver_artifact_dir: Any = None  # str | pathlib.Path | None
+    solver_registry: Any = None
 
     def plan(self, module: ModuleOp, kernels: dict[str, Any] | None = None) -> ExecutionPlan:
         """Generate an execution plan.
@@ -215,45 +249,118 @@ class ExecutionPlanner:
         )
 
     def _plan_multi_device(self, partitions: list[Partition]) -> ExecutionPlan:
-        """Multi-device plan using the full solver pipeline.
+        """Multi-device plan via the → typed-envelope solvers.
 
-        Pipeline: partition -> place -> schedule (with copies) -> memory.
+        Pipeline: partition -> placement_planner (CP-SAT) -> overlap_planner
+        (CP-SAT) -> memory_planner (MOSEK/HiGHS MILP). Every solver call
+        emits a typed ``SolverResponse`` (with ``selected_backend``,
+        ``status``, ``formulation_hash``, ``time_ms``). When
+        ``solver_artifact_dir`` is set, the request + response + solved
+        plan land under that directory and become evidence for the
+        five trust gates.
         """
-        from compgen.solve.memory import solve_memory
-        from compgen.solve.placement import solve_placement
-        from compgen.solve.schedule import solve_schedule
 
         num_devices = len(self.target.devices)
         device_memory = extract_device_memory(self.target)
         compute_rates = self._get_compute_rates()
         transfer_cost_matrix = extract_transfer_cost_matrix(self.target)
 
-        # Solve placement
+        # ---- Placement placement_planner -------------------
+        from compgen.solve.placement_planner import (
+            Device as _Device,
+            Edge as _Edge,
+            PlacementPlanInput,
+            Region as _Region,
+            plan_placement,
+        )
+        from compgen.solve.solver_types import SolverStatus as _Status
+
         log.info("solver.placement.start", num_partitions=len(partitions), num_devices=num_devices)
-        placement_solution = solve_placement(
-            partitions=partitions,
-            num_devices=num_devices,
-            device_compute_rates=compute_rates,
-            device_memory_caps=device_memory,
-            transfer_cost_matrix=transfer_cost_matrix,
+        device_ids = [f"d{i}" for i in range(num_devices)]
+        regions = tuple(
+            _Region(
+                region_id=p.partition_id,
+                allowed_devices=tuple(device_ids),
+                memory_bytes=p.memory_bytes,
+                compute_cost_by_device={
+                    device_ids[i]: float(p.estimated_cost_us)
+                    / max(compute_rates[i] if compute_rates else 1.0, 1e-6)
+                    for i in range(num_devices)
+                },
+            )
+            for p in partitions
+        )
+        devices = tuple(
+            _Device(
+                device_id=device_ids[i],
+                memory_capacity=int(
+                    device_memory[i] if device_memory and i < len(device_memory) else 0
+                ),
+                target_class=getattr(self.target, "name", ""),
+            )
+            for i in range(num_devices)
+        )
+        edges: list[_Edge] = []
+        part_by_id = {p.partition_id: p for p in partitions}
+        for p in partitions:
+            for dep in p.dependencies:
+                if dep not in part_by_id:
+                    continue
+                transfer_bytes = min(p.memory_bytes, part_by_id[dep].memory_bytes)
+                transfer_costs = {}
+                for i in range(num_devices):
+                    for j in range(num_devices):
+                        if i == j:
+                            continue
+                        rate = float(transfer_cost_matrix.get((i, j), 1e-6))
+                        transfer_costs[(device_ids[i], device_ids[j])] = rate
+                edges.append(
+                    _Edge(
+                        src_region=dep,
+                        dst_region=p.partition_id,
+                        bytes_=transfer_bytes,
+                        transfer_cost_by_device_pair=transfer_costs,
+                    )
+                )
+        placement_input = PlacementPlanInput(
+            regions=regions, devices=devices, edges=tuple(edges)
+        )
+        placement_response, placement_plan = plan_placement(
+            placement_input,
+            registry=self.solver_registry,
+            problem_id="placement_solver",
+        )
+        self._persist_solver_pair(
+            placement_response, placement_input, name="placement_solver"
         )
         log.info(
             "solver.placement.done",
-            feasible=placement_solution.feasible,
-            gap=placement_solution.gap,
-            time_ms=placement_solution.solve_time_ms,
+            status=placement_response.status.value,
+            backend=placement_response.selected_backend.value,
+            objective=placement_response.objective_value,
+            time_ms=placement_response.time_ms,
         )
 
-        if not placement_solution.feasible:
-            log.warning("solver.placement.infeasible")
+        if placement_response.status not in (_Status.OPTIMAL, _Status.FEASIBLE) or placement_plan is None:
+            log.warning(
+                "solver.placement.infeasible",
+                reason=placement_response.infeasibility_reason,
+            )
             return self._fallback_round_robin(partitions, num_devices)
 
-        assignments = placement_solution.assignments
+        # Translate (region_id -> device_id) into (region_id -> device_index)
+        assignments = {
+            a.region_id: device_ids.index(a.device_id)
+            for a in placement_plan.assignments
+        }
         placements = [
             PlacementDecision(
                 op_name=pid,
                 device_index=device_idx,
-                reason=f"solver assignment (gap={placement_solution.gap:.2f})",
+                reason=(
+                    f"placement_planner ({placement_response.selected_backend.value} "
+                    f"{placement_response.status.value})"
+                ),
             )
             for pid, device_idx in assignments.items()
         ]
@@ -262,12 +369,11 @@ class ExecutionPlanner:
         copies, copy_tasks = self._build_copy_tasks(partitions, assignments, transfer_cost_matrix)
 
         # Solve schedule (partitions + copy transfer tasks)
-        schedule_solution = self._solve_schedule_with_copies(
+        schedule_solution = self._solve_schedule_via_overlap_planner(
             partitions,
             assignments,
             copy_tasks,
             num_devices,
-            solve_schedule,
         )
 
         if schedule_solution.feasible:
@@ -281,9 +387,18 @@ class ExecutionPlanner:
             execution_order = [p.partition_id for p in partitions]
             estimated_latency = sum(p.estimated_cost_us for p in partitions)
 
-        # Solve memory allocation using buffer lifetimes derived from schedule
-        part_by_id = {p.partition_id: p for p in partitions}
-        device_capacities = dict(enumerate(device_memory))
+        # ---- Memory allocation memory_planner -------------
+        # Real MOSEK MILP (preferred) or HiGHS fallback. The MILP picks
+        # tier + byte offsets per buffer; alias candidates collapse
+        # disjoint-lifetime buffers to the same offset.
+        from compgen.solve.memory_planner import (
+            AliasCandidate as _Alias,
+            BufferSpec,
+            MemoryPlanInput,
+            TierCapacity,
+            plan_memory,
+        )
+
         lifetimes = self._build_buffer_lifetimes(
             partitions,
             assignments,
@@ -292,19 +407,58 @@ class ExecutionPlanner:
             part_by_id,
         )
 
-        log.info("solver.memory.start", num_buffers=len(lifetimes))
-        memory_solution = solve_memory(lifetimes, device_capacities)
+        # Map lifetimes (float us) to integer tick ranges for the MILP.
+        max_end = max((lt.end_us for lt in lifetimes), default=0.0)
+        scale = max(1.0, max_end / 1024.0) if max_end > 0 else 1.0
+        tick = lambda x: int(x / scale)  # noqa: E731
+
+        tier_capacities = tuple(
+            TierCapacity(tier_id=f"d{i}", capacity_bytes=int(c), weight=1.0)
+            for i, c in enumerate(device_memory)
+        )
+        buffer_specs = tuple(
+            BufferSpec(
+                buffer_id=lt.buffer_name,
+                size_bytes=int(lt.size_bytes),
+                lifetime_start=tick(lt.start_us),
+                lifetime_end=tick(lt.end_us),
+                allowed_tiers=(f"d{lt.device_index}",),
+            )
+            for lt in lifetimes
+        )
+        # Declare partition-vs-copy alias candidates for disjoint lifetimes.
+        # Keep this conservative — only co-tier buffers with disjoint
+        # lifetimes are even tried; the canonical-pack post-pass collapses
+        # them when the solver agrees.
+        alias_candidates: list[_Alias] = []
+        memory_input = MemoryPlanInput(
+            buffers=buffer_specs,
+            tier_capacities=tier_capacities,
+            alias_candidates=tuple(alias_candidates),
+        )
+        log.info("solver.memory.start", num_buffers=len(buffer_specs))
+        memory_response, memory_plan_solved = plan_memory(
+            memory_input,
+            registry=self.solver_registry,
+            problem_id="memory_solver",
+        )
+        self._persist_solver_pair(
+            memory_response, memory_input, name="memory_solver"
+        )
         log.info(
             "solver.memory.done",
-            feasible=memory_solution.feasible,
-            reuse_count=memory_solution.reuse_count,
-            time_ms=memory_solution.solve_time_ms,
+            status=memory_response.status.value,
+            backend=memory_response.selected_backend.value,
+            objective=memory_response.objective_value,
+            time_ms=memory_response.time_ms,
         )
 
-        memory_plans = [
-            MemoryPlan(device_index=dev_idx, peak_bytes=peak)
-            for dev_idx, peak in memory_solution.peak_per_device.items()
-        ]
+        memory_plans = self._build_memory_plans_from_response(
+            memory_response,
+            memory_plan_solved,
+            buffer_specs,
+            device_count=num_devices,
+        )
 
         # Build node assignments from topology if available
         node_assignments: dict[str, str] = {}
@@ -325,13 +479,20 @@ class ExecutionPlanner:
             memory_plans=memory_plans,
             estimated_latency_us=estimated_latency,
             metadata={
-                "placement_gap": placement_solution.gap,
-                "placement_time_ms": placement_solution.solve_time_ms,
-                "schedule_feasible": schedule_solution.feasible,
+                "placement_status": placement_response.status.value,
+                "placement_backend": placement_response.selected_backend.value,
+                "placement_objective": placement_response.objective_value,
+                "placement_time_ms": placement_response.time_ms,
+                "placement_formulation_hash": placement_response.formulation_hash,
+                "schedule_status": schedule_solution.status,
+                "schedule_backend": schedule_solution.selected_backend,
                 "schedule_time_ms": schedule_solution.solve_time_ms,
-                "memory_feasible": memory_solution.feasible,
-                "memory_reuse_count": memory_solution.reuse_count,
-                "memory_time_ms": memory_solution.solve_time_ms,
+                "schedule_formulation_hash": schedule_solution.formulation_hash,
+                "memory_status": memory_response.status.value,
+                "memory_backend": memory_response.selected_backend.value,
+                "memory_objective": memory_response.objective_value,
+                "memory_time_ms": memory_response.time_ms,
+                "memory_formulation_hash": memory_response.formulation_hash,
             },
             node_assignments=node_assignments,
             transport_config=transport_config,
@@ -385,15 +546,31 @@ class ExecutionPlanner:
 
         return copies, copy_tasks
 
-    def _solve_schedule_with_copies(
+    def _solve_schedule_via_overlap_planner(
         self,
         partitions: list[Partition],
         assignments: dict[str, int],
         copy_tasks: list[_CopyTask],
         num_devices: int,
-        solve_schedule_fn: Any,
-    ) -> Any:
-        """Build the combined task list and solve the schedule."""
+    ) -> _ScheduleSolution:
+        """Build the schedule problem and solve overlap_planner.
+
+        The CP-SAT formulation enforces per-device no-overlap +
+        ``end[src] <= start[dst]`` dependencies. Durations are
+        quantized to integer ticks (CP-SAT requires integers); we
+        scale by ``max(1, ceil(max_duration / 1024))`` to keep the
+        model small but lossless for tiny problems.
+        """
+
+        from compgen.solve.overlap_planner import (
+            Dependency,
+            Operation,
+            OverlapPlanInput,
+            Resource,
+            plan_overlap,
+        )
+        from compgen.solve.solver_types import SolverStatus as _Status
+
         all_task_ids = [p.partition_id for p in partitions]
         durations_us: dict[str, float] = {p.partition_id: p.estimated_cost_us for p in partitions}
         device_assignments: dict[str, int] = dict(assignments)
@@ -404,24 +581,177 @@ class ExecutionPlanner:
             durations_us[ct.copy_id] = ct.duration_us
             device_assignments[ct.copy_id] = ct.device
             dependencies[ct.copy_id] = [ct.src_partition]
-            # Destination partition must wait for its copy to finish
             dependencies.setdefault(ct.dst_partition, []).append(ct.copy_id)
 
-        log.info("solver.schedule.start", num_tasks=len(all_task_ids), num_copies=len(copy_tasks))
-        solution = solve_schedule_fn(
-            partition_ids=all_task_ids,
-            durations_us=durations_us,
-            device_assignments=device_assignments,
-            dependencies=dependencies,
-            num_devices=num_devices,
+        max_duration = max(durations_us.values(), default=0.0)
+        scale_factor = max(1.0, max_duration / 1024.0) if max_duration > 0 else 1.0
+
+        def tick(x: float) -> int:
+            return max(1, int(round(x / scale_factor))) if x > 0 else 0
+
+        ops = tuple(
+            Operation(
+                op_id=tid,
+                duration=tick(durations_us[tid]),
+                resource_id=f"d{device_assignments[tid]}",
+            )
+            for tid in all_task_ids
         )
+        deps = tuple(
+            Dependency(src_op=src, dst_op=dst)
+            for dst, dep_list in dependencies.items()
+            for src in dep_list
+        )
+        resources = tuple(Resource(resource_id=f"d{i}") for i in range(num_devices))
+        plan_input = OverlapPlanInput(
+            operations=ops, dependencies=deps, resources=resources
+        )
+
+        log.info(
+            "solver.schedule.start",
+            num_tasks=len(all_task_ids),
+            num_copies=len(copy_tasks),
+        )
+        response, sched = plan_overlap(
+            plan_input,
+            registry=self.solver_registry,
+            problem_id="overlap_solver",
+        )
+        self._persist_solver_pair(response, plan_input, name="overlap_solver")
         log.info(
             "solver.schedule.done",
-            feasible=solution.feasible,
-            makespan_us=solution.makespan_us,
-            time_ms=solution.solve_time_ms,
+            status=response.status.value,
+            backend=response.selected_backend.value,
+            makespan=response.objective_value,
+            time_ms=response.time_ms,
         )
-        return solution
+
+        feasible = response.status in (_Status.OPTIMAL, _Status.FEASIBLE) and sched is not None
+        if not feasible:
+            return _ScheduleSolution(
+                feasible=False,
+                makespan_us=0.0,
+                start_times={},
+                end_times={},
+                solve_time_ms=response.time_ms,
+                status=response.status.value,
+                selected_backend=response.selected_backend.value,
+                formulation_hash=response.formulation_hash,
+            )
+        start_times = {s.op_id: float(s.start_tick) * scale_factor for s in sched.schedule}
+        end_times = {s.op_id: float(s.end_tick) * scale_factor for s in sched.schedule}
+        return _ScheduleSolution(
+            feasible=True,
+            makespan_us=float(sched.makespan) * scale_factor,
+            start_times=start_times,
+            end_times=end_times,
+            solve_time_ms=response.time_ms,
+            status=response.status.value,
+            selected_backend=response.selected_backend.value,
+            formulation_hash=response.formulation_hash,
+        )
+
+    def _build_memory_plans_from_response(
+        self,
+        response: Any,
+        plan_solved: Any,
+        buffer_specs: tuple,
+        *,
+        device_count: int,
+    ) -> list[MemoryPlan]:
+        """Translate a ``MemoryPlanSolved`` into per-device ``MemoryPlan``s.
+
+        When ``plan_solved`` is ``None`` (solver returned BLOCKED /
+        INFEASIBLE / TIMEOUT), we emit zero-peak plans labeled with the
+        typed failure reason — never a fabricated allocation.
+        """
+
+        if plan_solved is None:
+            reason = response.infeasibility_reason or response.status.value
+            return [
+                MemoryPlan(
+                    device_index=i,
+                    peak_bytes=0,
+                    allocations=[],
+                    address_space="global",
+                )
+                for i in range(device_count)
+            ]
+        by_buffer = {b.buffer_id: b for b in plan_solved.buffers}
+        allocations_by_dev: dict[int, list[tuple[str, int, int, int]]] = {}
+        for spec in buffer_specs:
+            alloc = by_buffer.get(spec.buffer_id)
+            if alloc is None:
+                continue
+            try:
+                dev_idx = int(alloc.tier.lstrip("d"))
+            except ValueError:
+                dev_idx = 0
+            allocations_by_dev.setdefault(dev_idx, []).append(
+                (spec.buffer_id, alloc.offset_bytes, spec.size_bytes, max(spec.alignment, 1))
+            )
+        return [
+            MemoryPlan(
+                device_index=i,
+                peak_bytes=int(plan_solved.tier_peak_usage.get(f"d{i}", 0)),
+                allocations=allocations_by_dev.get(i, []),
+                address_space="global",
+            )
+            for i in range(device_count)
+        ]
+
+    def _persist_solver_pair(self, response: Any, plan_input: Any, *, name: str) -> None:
+        """Write request + response JSON under ``solver_artifact_dir``.
+
+        Skipped silently when ``solver_artifact_dir`` is None — the
+        legacy in-memory plan path stays free of side effects.
+        """
+
+        if not self.solver_artifact_dir:
+            return
+        from pathlib import Path as _Path
+
+        from compgen.solve.memory_planner import _build_formulation as _build_mem
+        from compgen.solve.overlap_planner import _build_formulation as _build_overlap
+        from compgen.solve.placement_planner import _build_formulation as _build_placement
+        from compgen.solve.reports import write_solver_request, write_solver_response
+        from compgen.solve.solver_types import (
+            SolverProblemKind,
+            SolverRequest,
+        )
+
+        target_dir = _Path(self.solver_artifact_dir)
+        target_dir.mkdir(parents=True, exist_ok=True)
+        if response.problem_kind is SolverProblemKind.MEMORY_ALLOCATION:
+            formulation = _build_mem(plan_input)
+        elif response.problem_kind is SolverProblemKind.PLACEMENT:
+            formulation = _build_placement(plan_input)
+        elif response.problem_kind is SolverProblemKind.OVERLAP_PLANNING:
+            formulation = _build_overlap(plan_input)
+        else:
+            formulation = {}
+        request = SolverRequest(
+            problem_id=name,
+            problem_kind=response.problem_kind,
+            formulation=formulation,
+        )
+        write_solver_request(request, target_dir / f"{name}_request.json")
+        write_solver_response(response, target_dir / f"{name}_response.json")
+        # Also drop the *.solved.json next to the response when available.
+        if isinstance(response.solution, dict) and "schema_version" in response.solution:
+            if response.problem_kind is SolverProblemKind.MEMORY_ALLOCATION:
+                solved_name = "memory_plan.solved.json"
+            elif response.problem_kind is SolverProblemKind.PLACEMENT:
+                solved_name = "placement_plan.solved.json"
+            elif response.problem_kind is SolverProblemKind.OVERLAP_PLANNING:
+                solved_name = "overlap_schedule.solved.json"
+            else:
+                solved_name = f"{name}.solved.json"
+            import json as _json
+
+            (target_dir.parent / solved_name).write_text(
+                _json.dumps(response.solution, sort_keys=True, indent=2)
+            )
 
     def _build_buffer_lifetimes(
         self,

@@ -47,7 +47,7 @@ GAP_DISCOVERY_MODELS: tuple[str, ...] = (
 class _GapRunsDict(dict):
     """Dict that auto-skips tests when a model's run is missing.
 
-    The fixture builds runs per-model. Models that hit M-15B
+    The fixture builds runs per-model. Models that hit
     downstream-gate rejection (an *honest* pipeline outcome, not a
     test bug) end up with ``None``. Existing tests use both
     ``gap_runs[model_id]`` (skip on None) and ``gap_runs.values()``
@@ -80,7 +80,7 @@ class _GapRunsDict(dict):
 def gap_runs(tmp_path_factory: pytest.TempPathFactory) -> _GapRunsDict:
     """Build one gap-discovery run per model.
 
-    Per-model isolation: if a model triggers M-15B downstream-gate
+    Per-model isolation: if a model triggers downstream-gate
     rejection (e.g. ``tiny_mlp`` on hosts where the K_iters reorder
     diverges), the fixture records ``None`` for that model and
     downstream parametrized tests skip cleanly via the
@@ -101,7 +101,7 @@ def gap_runs(tmp_path_factory: pytest.TempPathFactory) -> _GapRunsDict:
             )
             dict.__setitem__(out, model_id, run_dir)
         except RuntimeError as exc:
-            # M-15B downstream-rejection on a real-world model is an
+            # downstream-rejection on a real-world model is an
             # *honest* outcome (not a test bug) — record None so the
             # _GapRunsDict triggers a pytest.skip on lookup.
             if "M-15B" in str(exc):

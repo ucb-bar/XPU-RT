@@ -1,0 +1,12 @@
+schema_version: dialect_provider_card_v1
+dialect_provider_id: cuda_tile_ir
+dialect_name: cuda_tile
+integration_level: probe
+consumes: [kernel_contract_v3, compgen_tile_ir]
+emits: [cuda_tile_mlir, tilebc, cubin]
+entrypoint: compgen.providers.adapters.cuda_tile_ir:CudaTileDialectProvider
+required_env: [CUDA_TILE_ROOT]
+description: |
+  MLIR dialect provider for NVIDIA CUDA Tile IR. Lowers
+  KernelContractV3 + compgen tile-IR through the CUDA Tile MLIR
+  dialect and compiles via ``tileiras`` to cubin.

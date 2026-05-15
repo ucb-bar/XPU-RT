@@ -60,6 +60,19 @@ class KernelResult:
     plan: str
 
 
+def _disable_wandb_unless_logged_in() -> None:
+    """Prevent autocomp's search loop from blocking on wandb auth.
+
+    Upstream BeamSearchStrategy unconditionally calls
+    ``wandb.init(entity=None, project=None, config=...)``. If
+    ``WANDB_MODE`` is unset and the user isn't logged in to W&B,
+    that raises ``UsageError``. Default to ``disabled`` unless the
+    operator has explicitly configured wandb.
+    """
+    if "WANDB_MODE" not in os.environ and "WANDB_API_KEY" not in os.environ:
+        os.environ["WANDB_MODE"] = "disabled"
+
+
 def _ensure_google_api_key() -> None:
     """Set GOOGLE_API_KEY from GEMMINI_API if not already set."""
     if "GOOGLE_API_KEY" not in os.environ:
@@ -81,7 +94,16 @@ def _ensure_google_api_key() -> None:
 
 
 def _generate_reference_code(cluster: PatternCluster) -> str:
-    """Generate a reference PyTorch implementation for a pattern cluster."""
+    """Generate a reference PyTorch implementation for a pattern cluster.
+
+    Returns a Python module string that defines ``class Model``,
+    ``get_inputs``, and ``get_init_inputs`` — the shape that
+    :class:`CompGenTorchEvalBackend` consumes.
+    """
+    if cluster.pattern_type in ("flash_attention", "attention", "scaled_dot_product_attention"):
+        from compgen.kernels.eval_backends.fa1_reference import FA1_REF_SOURCE
+        return FA1_REF_SOURCE
+
     if cluster.pattern_type == "linear_chain":
         # MLP: linear → gelu → linear
         shapes = cluster.input_shapes
@@ -153,7 +175,7 @@ def check_correctness(test_fn, ref_fn, inputs):
 class AutocompAdapter:
     """Adapter between CompGen and autocomp kernel search."""
 
-    default_model: str = "gemini-2.0-flash"
+    default_model: str = "gemini-2.5-flash-lite"
     beam_size: int = 4
     max_iterations: int = 10
     num_plan_candidates: int = 4
@@ -178,12 +200,20 @@ class AutocompAdapter:
             KernelResult with the best kernel found.
         """
         _ensure_google_api_key()
+        _disable_wandb_unless_logged_in()
 
         from autocomp.agents.cuda.cuda_agent import CudaLLMAgent
         from autocomp.agents.llm_ensemble import LLMEnsemble
-        from autocomp.backend.kernelbench.kb_eval import KBEvalBackend
         from autocomp.hw_config import CudaHardwareConfig
         from autocomp.search.search import BeamSearchStrategy, Prob
+
+        # CompGen-native eval backend — replaces KBEvalBackend so we
+        # don't need a KernelBench checkout for CompGen contracts. The
+        # reference is in-process Python (the cluster's
+        # ``_generate_reference_code`` output).
+        from compgen.kernels.eval_backends.compgen_torch_eval import (
+            CompGenTorchEvalBackend,
+        )
 
         iterations = budget or self.max_iterations
 
@@ -196,6 +226,14 @@ class AutocompAdapter:
         # Generate reference code and test
         ref_code = _generate_reference_code(cluster)
         test_code = _generate_test_code(cluster)
+
+        # The eval backend uses ``ref_code`` (Model + harness) as the
+        # ground truth. The search loop's ``orig_code`` must already
+        # be a candidate ``ModelNew`` — derive it by renaming the ref
+        # class. The initial-eval pass then runs the candidate
+        # against the reference and confirms correctness before
+        # search begins.
+        orig_code = ref_code.replace("class Model(", "class ModelNew(", 1)
 
         # Write to files
         sol_file = output_dir / "reference.py"
@@ -228,23 +266,28 @@ class AutocompAdapter:
             cuda_version=torch.version.cuda or "12.0",
         )
 
-        # Create agent (LLMClient is managed internally by the agent)
+        # Create eval backend first (CudaLLMAgent constructor needs it).
+        # Use CompGen-native eval that runs the candidate against the
+        # in-process ref module — no KernelBench checkout required.
+        eval_backend = CompGenTorchEvalBackend(ref_source=ref_code)
+
+        # Create agent. Upstream autocomp's CudaLLMAgent signature is
+        # ``(model, hw_config, eval_backend)`` — a single model string.
         agent = CudaLLMAgent(
+            model=self.default_model,
             hw_config=hw_config,
-            models=[self.default_model],
-            code_models=[self.default_model],
+            eval_backend=eval_backend,
         )
-        ensemble = LLMEnsemble(agents=[agent])
+        ensemble = LLMEnsemble(llms=[agent])
 
-        # Create eval backend
-        eval_backend = KBEvalBackend(hw_config=hw_config)
-
-        # Create search strategy
+        # Create search strategy. Defaults are tight to keep smoke
+        # runs cheap on the Gemini side; tune via budget knobs once
+        # the end-to-end path is verified.
         strategy = BeamSearchStrategy(
             output_dir=output_dir,
             eval_backend=eval_backend,
             agent=ensemble,
-            orig_code=ref_code,
+            orig_code=orig_code,
             prob=prob,
             metric="latency",
             simulator="",
@@ -254,8 +297,21 @@ class AutocompAdapter:
             include_ancestors=True,
             plan_icl_examples=False,
             code_icl_examples=False,
+            num_analyses=1,
+            num_plan_candidates=1,
+            num_code_candidates=1,
+            beam_size=1,
+            num_pairs_to_combine=0,
+            num_gen_per_combine=0,
             dropout_menu_options=0.25,
+            # threshold>1 + iters high enough to never trigger
+            # exhaustive on short smoke runs (avoids upstream
+            # propose_optimizations_iter exhaustive-path bug).
+            trigger_exhaustive_threshold=100.0,
+            trigger_exhaustive_iters=999,
+            start_exhaustive_iters=-1,
             prevent_duplicate_level=1,
+            reimplement_failed=False,
             translate_iters=0,
             translate_perf_threshold=1.2,
             translate_drop_original=False,
@@ -282,43 +338,96 @@ class AutocompAdapter:
         cluster_id: str,
         output_dir: Path,
     ) -> KernelResult:
-        """Extract the best kernel from search results."""
-        # Read the results from the output directory
+        """Extract the best kernel from search-run artifacts.
+
+        Reads upstream autocomp's actual outputs:
+
+        * ``best_candidate_so_far.py`` — full source of the best
+          candidate. Carried verbatim into ProviderResult.kernel_code.
+        * ``run_metrics.json`` — per-iteration LLM token usage and
+          timings.
+        * ``metrics-iter-N.json`` — per-iteration score statistics.
+
+        ``initial_score`` is taken as the baseline for
+        ``speedup_vs_baseline``. ``best_score`` becomes
+        ``latency_us``. NaN speedup means "unmeasured" — never a
+        fake ``1.0``.
+        """
+
+        import math
+
         best_code = ""
         best_latency = float("inf")
         best_plan = ""
         total_candidates = 0
-
-        # Walk the output directory for candidate results
-        for candidate_dir in sorted(output_dir.glob("candidates-iter-*")):
-            for code_file in candidate_dir.glob("*.py"):
-                total_candidates += 1
-
-        # Try to find the best from the strategy's state
-        # The beam search keeps track of the best candidates
-        results_file = output_dir / "results.json"
-        if results_file.exists():
-            results = json.loads(results_file.read_text())
-            if "best_score" in results:
-                best_latency = results["best_score"]
-            if "best_code" in results:
-                best_code = results["best_code"]
-
-        # Speedup-vs-baseline needs BOTH a measured candidate latency
-        # and a measured (or rooflined) baseline on the same hardware.
-        # ``best_latency`` is the candidate; the baseline timing is
-        # whatever was written as ``baseline_score`` (if the search
-        # strategy recorded one), else NaN. We never return a
-        # placeholder ``1.0`` — an unknown speedup stays NaN so
-        # downstream selectors can skip the candidate instead of
-        # treating "no improvement" and "unmeasured" as identical.
-        import math
-
+        iterations_used = 0
+        search_cost_tokens = 0
         baseline_latency = math.nan
-        if results_file.exists():
-            results = json.loads(results_file.read_text())
-            if "baseline_score" in results:
-                baseline_latency = float(results["baseline_score"])
+
+        best_code_path = output_dir / "best_candidate_so_far.py"
+        if best_code_path.exists():
+            best_code = best_code_path.read_text()
+
+        run_metrics_path = output_dir / "run_metrics.json"
+        if run_metrics_path.exists():
+            metrics = json.loads(run_metrics_path.read_text())
+            iterations_used = len(metrics.get("iterations", []))
+            for it in metrics.get("iterations", []):
+                for phase_name in ("plan_generation", "code_generation"):
+                    phase = it.get(phase_name, {})
+                    for model_stats in phase.values():
+                        search_cost_tokens += int(
+                            model_stats.get("input_tokens", 0)
+                        ) + int(model_stats.get("output_tokens", 0))
+
+        # Per-iter metrics carry timing/token stats. The score for
+        # the initial code is recorded in eval-results-iter-0/, and
+        # per-candidate scores in eval-results-iter-N/.
+        iter_metric_paths = sorted(output_dir.glob("metrics-iter-*.json"))
+        for p in iter_metric_paths:
+            try:
+                body = json.loads(p.read_text())
+            except (json.JSONDecodeError, OSError):
+                continue
+            total_candidates += int(body.get("evaluation", {}).get("num_candidates", 0))
+
+        # Initial code score = baseline for speedup calculation.
+        initial_eval_dir = output_dir / "eval-results-iter-0"
+        if initial_eval_dir.is_dir():
+            for result_file in sorted(initial_eval_dir.glob("code_*_result.txt")):
+                try:
+                    init_body = json.loads(result_file.read_text())
+                except (json.JSONDecodeError, OSError):
+                    continue
+                if init_body.get("correct") and "latency" in init_body:
+                    baseline_latency = float(init_body["latency"])
+                    break
+
+        # Best candidate score: scan eval-results-iter-N/ for the
+        # minimum-latency correct candidate.
+        for eval_dir in sorted(output_dir.glob("eval-results-iter-*")):
+            if eval_dir.name == "eval-results-iter-0":
+                continue
+            for result_file in sorted(eval_dir.glob("code_*_result.txt")):
+                try:
+                    body = json.loads(result_file.read_text())
+                except (json.JSONDecodeError, OSError):
+                    continue
+                if not body.get("correct"):
+                    continue
+                lat = body.get("latency")
+                if lat is None:
+                    continue
+                try:
+                    lat_f = float(lat)
+                except (TypeError, ValueError):
+                    continue
+                if lat_f < best_latency:
+                    best_latency = lat_f
+
+        # Count any candidate files written across iterations.
+        for cand_dir in output_dir.glob("candidates-iter-*"):
+            total_candidates += len(list(cand_dir.glob("*.py")))
 
         if (
             math.isfinite(baseline_latency)
@@ -333,13 +442,13 @@ class AutocompAdapter:
         return KernelResult(
             cluster_id=cluster_id,
             kernel_code=best_code,
-            language="cuda",
+            language="python",
             latency_us=best_latency,
-            correct=best_latency < float("inf"),
+            correct=bool(best_code) and math.isfinite(best_latency),
             speedup_vs_baseline=speedup_vs_baseline,
-            iterations_used=0,
+            iterations_used=iterations_used,
             total_candidates=total_candidates,
-            search_cost_tokens=0,
+            search_cost_tokens=search_cost_tokens,
             plan=best_plan,
         )
 
@@ -355,6 +464,7 @@ class AutocompAdapter:
             return False
 
         _ensure_google_api_key()
+        _disable_wandb_unless_logged_in()
         if "GOOGLE_API_KEY" not in os.environ:
             return False
 

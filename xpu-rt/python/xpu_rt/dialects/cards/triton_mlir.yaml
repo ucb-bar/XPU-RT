@@ -1,0 +1,13 @@
+schema_version: dialect_provider_card_v1
+dialect_provider_id: triton_mlir
+dialect_name: triton
+integration_level: probe
+consumes: [kernel_contract_v3, triton_source]
+emits: [ttir, ttgir, ptx, cubin]
+entrypoint: compgen.providers.adapters.triton_mlir:TritonMLIRDialectProvider
+required_env: []
+description: |
+  Triton MLIR (TTIR / TTGIR) dialect provider. Exposes the
+  intermediate Triton dialects underneath the high-level Triton
+  kernel provider for compiler-level diagnostics and custom
+  passes.

@@ -1,4 +1,4 @@
-"""M-58 — Canonical shape-class hash tests.
+"""Canonical shape-class hash tests.
 
 Coverage:
 
@@ -302,7 +302,7 @@ class TestCertificateCarriesCanonical:
         body = json.loads(cert_files[0].read_text())
         assert "canonical_contract_hash" in body
         assert body["canonical_contract_hash"]
-        # Gap #1: tile attrs strip from canonical projection, so even
+        # : tile attrs strip from canonical projection, so even
         # a concrete contract has canonical != instance when the
         # contract carries tile_M/tile_N/tile_K StaticAttrs (every
         # from_recipe-materialised matmul does).
@@ -364,7 +364,7 @@ class TestBindingCarriesCanonical:
         bound_rows = [b for b in body["bindings"] if b["status"] == "bound"]
         for row in bound_rows:
             assert "canonical_contract_hash" in row
-            # Gap #1: canonical strips tile attrs; for from_recipe-
+            # : canonical strips tile attrs; for from_recipe-
             # materialised matmuls, canonical != instance because
             # tile_M/tile_N/tile_K are present in instance only.
             # Both fields are non-empty strings.

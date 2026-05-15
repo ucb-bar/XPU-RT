@@ -4,7 +4,7 @@ Wave 2 modules:
   * ``dim_semantics``         — per-dim role tagging (parallel/reduce/broadcast)
   * ``transpose_propagation`` — transpose-chain detection + cancellation
 
-Section 20 / M-32:
+Section 20 / :
   * ``checkpoints`` — multi-level analysis index (FX → runtime); pass
     cards' ``invalidates`` lists cross-link to ids registered here.
 """
@@ -34,7 +34,7 @@ from compgen.analysis.transpose_propagation import (
 )
 
 __all__ = [
-    # M-32 multi-level analysis
+    # multi-level analysis
     "ANALYSIS_LEVELS",
     "KNOWN_SUMMARIES",
     "AnalysisIndex",

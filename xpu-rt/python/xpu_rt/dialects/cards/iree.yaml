@@ -1,0 +1,13 @@
+schema_version: dialect_provider_card_v1
+dialect_provider_id: iree
+dialect_name: iree
+integration_level: card_only
+consumes: [stablehlo, linalg]
+emits: [iree_module, vmfb]
+entrypoint: compgen.providers.adapters.iree:IreeDialectProvider
+required_env: [IREE_ROOT]
+description: |
+  IREE Flow / HAL / Stream / Codegen dialect provider — portable
+  deployment path. Card-only: CompGen does not currently include
+  an IREE adapter; this card exists so the unsupported-op flow
+  can emit a typed extension task targeting it.

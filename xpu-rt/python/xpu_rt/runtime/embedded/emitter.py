@@ -9,7 +9,7 @@ Emits the three artifacts the Zephyr overlay links against:
   calls the Exo-generated ukernels (linked in separately). For
   bring-up, a reference implementation is emitted that copies inputs
   through a torch-equivalent scalar fallback; the Exo lane replaces
-  the inner call once M2 lands.
+  the inner call once lands.
 
 A Makefile is also emitted so the source tree builds into
 ``libcompgen_model.a`` with a cross-compiler via ``make ARCH=riscv64``.

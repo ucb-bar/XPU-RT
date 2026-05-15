@@ -106,12 +106,10 @@ PASS_SOURCES: tuple[str, ...] = (
     "homemade",
 )
 
-# M-34.1: pass phases. Five-stage ordered pipeline the LLM cannot
+# pass phases. Five-stage ordered pipeline the LLM cannot
 # reorder. Phase boundaries are deterministic; passes can only run
 # in their declared phase. The order is strict:
-#
 #     canonicalize  →  analyze  →  optimize  →  verify  →  emit
-#
 # A phase-N pass cannot run while any phase-M pass (M < N) is still
 # pending.
 PASS_PHASES: tuple[str, ...] = (
@@ -136,7 +134,7 @@ def phase_index(phase: str) -> int:
 def default_phase_for_family(family: str) -> str:
     """Conservative default: derive phase from family.
 
-    M-34.1 default policy:
+    default policy:
       - canonicalize family       → canonicalize phase
       - fx_graph                  → canonicalize (FX is upstream of payload)
       - layout, layout_pipeline   → optimize
@@ -215,11 +213,11 @@ class PassCard:
     mcp_tool: str = ""
     example_invocation: dict[str, Any] = field(default_factory=dict)
     notes: str = ""
-    source: str = ""  # M-33.6: provenance bucket from PASS_SOURCES
-    impl_path: str = ""  # M-33.6: relative path to the source-file impl
-    phase: str = ""  # M-34.1: phase from PASS_PHASES (default derived from family)
-    requires_after: tuple[str, ...] = ()  # M-34.2: pair contract — these passes must run after self
-    excludes: tuple[str, ...] = ()  # M-34.2: mutual exclusion in a single plan
+    source: str = ""  # provenance bucket from PASS_SOURCES
+    impl_path: str = ""  # relative path to the source-file impl
+    phase: str = ""  # phase from PASS_PHASES (default derived from family)
+    requires_after: tuple[str, ...] = ()  # pair contract — these passes must run after self
+    excludes: tuple[str, ...] = ()  # mutual exclusion in a single plan
     source_path: Path | None = None
 
     def to_dict(self) -> dict[str, Any]:
@@ -250,7 +248,7 @@ class PassCard:
     def effective_phase(self) -> str:
         """Return the declared phase, falling back to the family default.
 
-        M-34.1: a card may declare ``phase`` explicitly; otherwise we
+        a card may declare ``phase`` explicitly; otherwise we
         derive it from ``family`` via :func:`default_phase_for_family`.
         Cards that need an exception (e.g. a fusion-family pass that
         actually runs in canonicalize) just author the field.
@@ -339,7 +337,7 @@ def validate_card(card: PassCard) -> None:
         raise PassCardError(
             f"pass card {card.pass_id}: cost {card.cost!r} must be in {COST_KINDS}"
         )
-    # M-34.1: phase must resolve to a known value (declared or
+    # phase must resolve to a known value (declared or
     # family-default). The default-from-family helper raises if family
     # is unknown.
     if card.phase and card.phase not in PASS_PHASES:
@@ -369,7 +367,7 @@ def load_card(path: Path) -> PassCard:
 def iter_cards(root: Path) -> Iterator[PassCard]:
     """Yield every pass card under ``root`` (sorted by pass_id).
 
-    M-33.6: scan recursively. Cards may live in ``<root>/<family>/<id>.yaml``
+    scan recursively. Cards may live in ``<root>/<family>/<id>.yaml``
     so the directory tree doubles as taxonomy documentation. Files
     whose name starts with ``_`` are skipped (private fixtures).
     Files with leading ``_`` in any path component are also skipped
@@ -413,8 +411,8 @@ class PassCardRegistry:
 
         ``validate_summary_invalidates`` (default True) cross-links each
         card's ``invalidates`` field with the analysis-summary registry
-        (M-32). Unknown summary ids raise :class:`PassCardError`. The
-        flag exists so the M-32 schema tests can build a fresh registry
+        . Unknown summary ids raise :class:`PassCardError`. The
+        flag exists so the schema tests can build a fresh registry
         without circular-import drama; production callers should leave
         it at the default.
         """
@@ -433,8 +431,8 @@ class PassCardRegistry:
     def _cross_link_invalidates_to_summaries(self) -> None:
         """Assert every card's ``invalidates`` references a known summary id.
 
-        M-32 cross-link: pass cards declare which summaries they
-        invalidate; M-33 enforces that downstream consumers do not
+        cross-link: pass cards declare which summaries they
+        invalidate; enforces that downstream consumers do not
         read a stale summary. Without this cross-link, a typo in an
         ``invalidates`` field would be silently invisible to the
         invalidation tracker.
@@ -494,7 +492,7 @@ class PassCardRegistry:
         return [self.cards[p] for p in pass_ids]
 
     def cards_in_phase(self, phase: str) -> list[PassCard]:
-        """Return all cards whose effective_phase == ``phase`` (M-34.1)."""
+        """Return all cards whose effective_phase == ``phase``."""
         if phase not in PASS_PHASES:
             raise PassCardError(
                 f"phase {phase!r} must be one of {PASS_PHASES}"

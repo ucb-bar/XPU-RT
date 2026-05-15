@@ -1,4 +1,4 @@
-"""Promotion-efficiency report aggregator (M-30, Section 19).
+"""Promotion-efficiency report aggregator (, Section 19).
 
 Reads a graph_compilation run directory plus the recipe library audit
 log and emits ``efficiency_pack.json`` with the headline aggregates
@@ -16,7 +16,7 @@ Aggregates emitted per run:
 - ``agent_call_count`` — number of agent_decision_request emissions
   (always 0 for greedy mode, 1 for agent-file/llm-live).
 - ``kernel_codegen_count`` — number of kernel_execution events in
-  the stage ledger (M-19 fires once per region with a tile candidate;
+  the stage ledger (fires once per region with a tile candidate;
   warmer caches mean fewer fresh codegen attempts).
 - ``verifier_call_count`` — count of differential / post-lowering /
   fusion verification reports actually run (vs skipped).
@@ -100,7 +100,7 @@ class EfficiencyAggregate:
 
 
 def _count_kernel_codegen(ledger: list[dict[str, Any]]) -> int:
-    """Stage ledger events that name kernel_execution (M-19) artifacts."""
+    """Stage ledger events that name kernel_execution artifacts."""
     return sum(
         1
         for ev in ledger
@@ -145,7 +145,7 @@ def _count_agent_calls(request_path: Path) -> int:
 
 
 def _read_gate_distribution(library_audit: Path) -> dict[str, int]:
-    """Count audit events per gate_level (M-29)."""
+    """Count audit events per gate_level."""
     dist: dict[str, int] = {}
     for ev in _read_jsonl(library_audit):
         if ev.get("event_type") != "promotion":

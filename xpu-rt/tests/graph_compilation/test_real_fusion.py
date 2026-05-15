@@ -1,4 +1,4 @@
-"""Tests for M-16.2 Real FuseProducerConsumer Transform.
+"""Tests Real FuseProducerConsumer Transform.
 
 Pointwise-only MVP. Verifies:
 
@@ -18,8 +18,8 @@ Pointwise-only MVP. Verifies:
   populated.
 - ``bit_equality`` is claimed only when ``max_abs_error == 0`` AND
   ``max_rel_error == 0``.
-- M-15B downstream retry triggers on a real fusion failure.
-- SetTileParams M-16 behavior does not regress.
+downstream retry triggers on a real fusion failure.
+SetTileParams behavior does not regress.
 - No compiler-core files modified.
 """
 
@@ -65,7 +65,7 @@ def _invoke(
 @pytest.fixture(scope="module")
 def proxy_vla_greedy_fusion(tmp_path_factory) -> Path:  # type: ignore[no-untyped-def]
     """Greedy on proxy_vla picks the add_0 → aten_relu_default_0 fusion;
-    M-16.2 should validate + discharge bit_equality."""
+    should validate + discharge bit_equality."""
     out = tmp_path_factory.mktemp("m162_proxy_vla") / "run"
     res = _invoke(model="proxy_vla", out_dir=out)
     assert res.returncode == 0, (res.returncode, res.stderr[-2000:])
@@ -438,14 +438,14 @@ def test_validator_rejects_producer_mismatch(tmp_path: Path) -> None:
 
 
 # --------------------------------------------------------------------------- #
-# M-15B coupling: fusion failure triggers downstream retry
+# coupling: fusion failure triggers downstream retry
 # --------------------------------------------------------------------------- #
 
 
 def test_m15b_detector_picks_up_fusion_report() -> None:
-    """The M-15B detector must include the real_fusion_differential
+    """The detector must include the real_fusion_differential
     report in its scan list. This is a contract check on the detector
-    table — when fusion reports fail, M-15B emits a retry request."""
+    table — when fusion reports fail, emits a retry request."""
     from compgen.graph_compilation.downstream_retry import _DOWNSTREAM_REPORTS
     stages = {entry[0] for entry in _DOWNSTREAM_REPORTS}
     assert "real_fusion_differential" in stages
@@ -454,8 +454,8 @@ def test_m15b_detector_picks_up_fusion_report() -> None:
 def test_m15b_emits_retry_on_blocked_fusion(
     proxy_vla_action_space: Path, tmp_path: Path,
 ) -> None:
-    """When a non-pointwise fusion is selected (matmul→add), M-16.2
-    blocks. This is NOT a 'fail' status (it's 'blocked'), so M-15B
+    """When a non-pointwise fusion is selected (matmul→add),
+    blocks. This is NOT a 'fail' status (it's 'blocked'), so
     should NOT trigger retry — blocked is honest. Verify this
     distinction holds."""
     cas = _read(proxy_vla_action_space / "02_graph_analysis" / "candidate_actions.json")
@@ -485,13 +485,13 @@ def test_m15b_emits_retry_on_blocked_fusion(
 
 
 # --------------------------------------------------------------------------- #
-# SetTileParams M-16 must still work
+# SetTileParams must still work
 # --------------------------------------------------------------------------- #
 
 
 def test_set_tile_params_m16_unchanged_after_m162(tmp_path: Path) -> None:
-    """merlin_mlp_wide greedy → M-16 SetTileParams path → 16/16 cases
-    bit-equality. M-16.2 must not affect this."""
+    """merlin_mlp_wide greedy → SetTileParams path → 16/16 cases
+    bit-equality. must not affect this."""
     out = tmp_path / "merlin_mlp_wide_m16_regression"
     res = _invoke(model="merlin_mlp_wide", out_dir=out)
     assert res.returncode == 0, res.stderr[-1000:]

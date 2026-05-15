@@ -1,4 +1,4 @@
-"""Tests for compgen.audit.fresh_agent task pack builder (M-31A.4)."""
+"""Tests for compgen.audit.fresh_agent task pack builder."""
 
 from __future__ import annotations
 

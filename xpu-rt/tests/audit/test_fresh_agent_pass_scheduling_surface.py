@@ -1,9 +1,9 @@
-"""Fresh-agent task pack must include the post-M-34 agentic surface (M-35.1).
+"""Fresh-agent task pack must include the post-agentic surface.
 
-After M-31 (pass-card registry), M-32 (analysis checkpoints),
-M-33 (invalidation discipline), M-33.6 (full pass-card coverage), and
-M-34 (multi-pass scheduling), a fresh agent has a much richer surface
-to reason about than the M-31A baseline. This test asserts the task
+ (pass-card registry), (analysis checkpoints),
+(invalidation discipline), (full pass-card coverage), and
+(multi-pass scheduling), a fresh agent has a much richer surface
+to reason about than the baseline. This test asserts the task
 pack carries every artifact that surface depends on.
 """
 
@@ -30,7 +30,7 @@ def task_pack(tmp_path_factory: pytest.TempPathFactory) -> Path:
 
 
 # --------------------------------------------------------------------------- #
-# M-31: pass-card registry surface
+# pass-card registry surface
 # --------------------------------------------------------------------------- #
 
 
@@ -66,7 +66,7 @@ def test_pack_card_subdirectories_match_families(task_pack: Path) -> None:
 
 
 def test_pack_card_carries_phase_and_source(task_pack: Path) -> None:
-    """A representative card must carry M-33.6 source + M-34.1 phase."""
+    """A representative card must carry source + phase."""
     card = task_pack / "docs" / "generated" / "pass_cards" / "tiling" / "set_tile_params.yaml"
     raw = yaml.safe_load(card.read_text())
     assert raw.get("source"), "card missing source field"
@@ -75,7 +75,7 @@ def test_pack_card_carries_phase_and_source(task_pack: Path) -> None:
 
 
 # --------------------------------------------------------------------------- #
-# M-26 through M-34: realness contracts
+# through realness contracts
 # --------------------------------------------------------------------------- #
 
 
@@ -100,7 +100,7 @@ def test_pack_carries_all_realness_contracts(task_pack: Path) -> None:
 
 
 # --------------------------------------------------------------------------- #
-# M-31A audit + skills
+# audit + skills
 # --------------------------------------------------------------------------- #
 
 

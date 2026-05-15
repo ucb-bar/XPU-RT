@@ -1,19 +1,19 @@
-"""Pass-plan scheduler invariants (M-34.2 + M-34.3).
+"""Pass-plan scheduler invariants.
 
 The agent's response can carry a ``pass_plan`` — an ordered list of
 :class:`PassPlanStep` records — instead of a single
 ``selected_candidate_id``. The validator checks the plan against four
 invariants:
 
-1. **Phase ordering** (M-34.1): a phase-N pass cannot appear before
+1. **Phase ordering**: a phase-N pass cannot appear before
    any phase-(<N) pass in the plan.
-2. **Pair: requires_after** (M-34.2): if a card declares
+2. **Pair: requires_after**: if a card declares
    ``requires_after: [other_pass]``, the plan must contain ``other_pass``
    strictly later than self.
-3. **Pair: excludes** (M-34.2): if a card declares
+3. **Pair: excludes**: if a card declares
    ``excludes: [other_pass]``, the plan must not contain ``other_pass``
    anywhere.
-4. **Structural** (M-34.3): every ``pass_id`` resolves to a real card,
+4. **Structural**: every ``pass_id`` resolves to a real card,
    ``candidate_id`` resolves against the request's
    ``candidate_ids_allowed``, and no duplicate steps.
 

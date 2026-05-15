@@ -1,4 +1,4 @@
-"""Per-model inspection harness (M-37.7).
+"""Per-model inspection harness.
 
 Runs the full Section 20 stack on a single model and produces an
 organized inspection bundle a human can browse to assess quality.
@@ -11,7 +11,7 @@ Per-model artifacts captured (under ``<inspection_dir>/<model_id>/``):
 - ``validation_summary.json`` — every validator row + pass/fail/detail
 - ``warm_cache_summary.json`` — promoted_candidates count + hit/miss
 - ``pass_card_visibility.json`` — how many of the 60 cards reached the agent
-- ``analysis_summary_index.json`` — which M-32 summaries are available
+``analysis_summary_index.json`` — which summaries are available
 
 The cross-model aggregator (:func:`aggregate_inspection_packs`) emits
 ``OVERVIEW.md`` showing per-model status side by side.
@@ -85,7 +85,7 @@ class InspectionPack:
 
 
 # --------------------------------------------------------------------------- #
-# M-37.13 G6: load-bearing-gate attribution
+# G6: load-bearing-gate attribution
 # --------------------------------------------------------------------------- #
 
 
@@ -100,20 +100,20 @@ def _attribute_load_bearing_gate(
 ) -> dict[str, Any]:
     """Identify which gate carried the load for this model's outcome.
 
-    The post-M-37.13 candidate-selection + verification pipeline has
+    The post-candidate-selection + verification pipeline has
     three structurally-distinct admission paths a model can travel:
 
     1. **bit_equality** — clean_divide AND single_k_iter holds. The
        legacy strict path. Discharged by exact equality at every case.
     2. **clean_divide_tolerance_eps** — clean_divide AND K_iters > 1.
-       Recipe gate's M-37.12 single_k_iter rule downgrades the
-       declaration; M-12's combined-tolerance criterion accepts the
+       Recipe gate's single_k_iter rule downgrades the
+       declaration; 's combined-tolerance criterion accepts the
        per-case deviation.
     3. **boundary_tolerance_eps** — tile doesn't divide cleanly.
-       Recipe gate declares tolerance_eps; M-12's combined-tolerance
+       Recipe gate declares tolerance_eps; 's combined-tolerance
        accepts.
 
-    Cross-cutting: shape-fit clean-divide tile emission (M-37.11)
+    Cross-cutting: shape-fit clean-divide tile emission
     only matters if the picked tile differs from the target-profile
     default set. We surface that as a separate boolean.
 
@@ -336,7 +336,7 @@ def inspect_model_run(
         "by_level": _count_by_key(summaries, "level"),
     }
 
-    # --- Load-bearing gate attribution (M-37.13 G6) ---
+    # --- Load-bearing gate attribution (G6) ---
     cost_preview = sel.get("cost_preview") or {}
     diff_path = (
         run_dir / "03_recipe_planning" / "real_verification"
@@ -425,7 +425,7 @@ def _render_inspection_markdown(pack: InspectionPack) -> str:
     lines.append(f"  > {d.get('rationale_primary', '(none)')}")
     lines.append("")
 
-    # M-37.13 G6: load-bearing-gate attribution.
+    # G6: load-bearing-gate attribution.
     attr = pack.load_bearing_gate_attribution or {}
     if attr:
         lines.append("## Load-bearing gate attribution (M-37.13 G6)")
@@ -635,7 +635,7 @@ def aggregate_inspection_packs(
                      + ", ".join(f"`{m}`" for m in models))
     lines.append("")
 
-    # M-37.13 G6: load-bearing-gate attribution per model.
+    # G6: load-bearing-gate attribution per model.
     have_attribution = any(
         pack.load_bearing_gate_attribution for pack in packs
     )

@@ -4,7 +4,7 @@ These tools let Claude Code (or any MCP client — Codex etc.) drive a
 full CompGen compilation end-to-end without reaching out to an
 external LLM provider. The agent reads the bounded view, picks a
 candidate, and the compiler validates + commits the choice through
-the unchanged 11-check M-14A validator.
+the unchanged 11-check validator.
 
 Tools exposed:
 
@@ -118,7 +118,7 @@ def _run_in_process(
 
     Returns ``{ok, returncode, error, exception_type}``. ``returncode``
     is 0 on success, 1 on a typed compiler error
-    (``RuntimeError`` from M-15B etc.), 2 on unexpected exception.
+    (``RuntimeError`` etc.), 2 on unexpected exception.
     """
     try:
         from compgen.graph_compilation.run import run_graph_compilation
@@ -137,8 +137,8 @@ def _run_in_process(
         run_graph_compilation(**kwargs)
         return {"ok": True, "returncode": 0, "in_process": True}
     except RuntimeError as exc:
-        # Typed compiler-side failure (e.g. M-15B downstream rejection,
-        # M-14A validation reject, agent_max_retries exhausted). The
+        # Typed compiler-side failure (e.g. downstream rejection,
+        # validation reject, agent_max_retries exhausted). The
         # run dir's reports carry the structured detail.
         return {
             "ok": False, "returncode": 1, "in_process": True,
@@ -248,7 +248,7 @@ def _detect_failure_with_retry_hint(run_dir: Path) -> dict[str, Any] | None:
     Returns ``{failed_stage, failed_check, failed_candidate_id,
     failure_summary, retry_options[]}``.
     """
-    # M-15B already writes a typed downstream_retry_request.json when
+    # already writes a typed downstream_retry_request.json when
     # any downstream stage reports status=fail; reuse that.
     rr = _read_json(
         run_dir / "03_recipe_planning" / "downstream_retry"
@@ -267,7 +267,7 @@ def _detect_failure_with_retry_hint(run_dir: Path) -> dict[str, Any] | None:
             "report_path": rr.get("evidence", {}).get("report_path", ""),
         }
 
-    # M-14A validation failure (caught before recipe.mlir commit).
+    # validation failure (caught before recipe.mlir commit).
     val = _read_json(
         run_dir / "03_recipe_planning" / "agent_decision"
         / "agent_decision_validation.json"
@@ -352,10 +352,10 @@ def compgen_emit_agent_decision_request(
     )
     request = _read_json(request_path)
 
-    # Special case: greedy's probe pick may itself fail M-12 (e.g.
+    # Special case: greedy's probe pick may itself fail (e.g.
     # tiny_mlp tile_16 → K_iters=4 → bit-equality fails). When that
     # happens, the pipeline raises but the bounded-view artifacts are
-    # already on disk (they're emitted before M-15B's check). Surface
+    # already on disk (they're emitted 's check). Surface
     # the greedy_pick_warning so the agent knows to pick something
     # other than what greedy chose. This is "soft failure" — the emit
     # itself is successful (the agent has everything to make a good
@@ -490,7 +490,7 @@ def compgen_commit_agent_decision_response(
     force_subprocess: bool = False,
 ) -> dict[str, Any]:
     """Re-run the pipeline with ``--selection-mode agent-file`` using
-    the supplied response. The compiler's M-14A validator runs the
+    the supplied response. The compiler's validator runs the
     11 typed checks before any recipe.mlir commit.
 
     On failure the response includes typed retry hints (``failed_stage``,
@@ -731,7 +731,7 @@ def compgen_pipeline_status(
     Returns the latest event per stage from ``stage_ledger.jsonl``,
     plus tail lines of the most recent CLI subprocess (if any). Use
     this to give the user updates while a long compile is running:
-    *"capture done… payload-lowering done… running M-12 (12/16
+    *"capture done… payload-lowering done… running (12/16
     cases)…"*. Does NOT block; reads whatever's on disk now.
     """
     out_path = Path(out_dir).resolve()

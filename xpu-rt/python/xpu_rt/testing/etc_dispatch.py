@@ -784,7 +784,6 @@ def _compile_and_run_multi_gpu(
     # CudaModule (NVRTC compile per-rank-context), Device, launcher,
     # and dispatch state. NVRTC compile is duplicated across ranks
     # but cheap relative to the megakernel work.
-    #
     # Critical ordering: ``_ensure_cuda_driver_context(rank)`` MUST
     # fire before any rank-local cuda call. Without the explicit
     # set-current, the first iteration's ctx0 stays current for

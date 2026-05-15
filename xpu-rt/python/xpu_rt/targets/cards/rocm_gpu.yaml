@@ -1,0 +1,12 @@
+schema_version: target_card_v1
+target_id: rocm_gpu
+family: rocm
+vendor: amd
+dispatch_modes: [sync, async]
+memory_tiers:
+  - {name: global, kind: global, capacity_bytes: 0}
+  - {name: lds, kind: shared, capacity_bytes: 65536}
+  - {name: registers, kind: registers}
+description: |
+  AMD ROCm GPU baseline target. capacity_bytes=0 means
+  "unspecified" — actual capacity comes from a runtime probe.

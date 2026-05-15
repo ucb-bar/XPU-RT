@@ -1,4 +1,4 @@
-"""M-63 — Coverage-first scheduling tests.
+"""Coverage-first scheduling tests.
 
 Coverage:
 
@@ -130,7 +130,7 @@ class TestModeFlags:
 class TestCoverageInflation:
     def test_merlin_mlp_wide_inflates_to_three(self, tmp_path: Path) -> None:
         """merlin_mlp_wide has 3 matmul regions on host_cpu f32. The
-        recipe planner selects matmul_0 → 1 cert. M-63 coverage-first
+        recipe planner selects matmul_0 → 1 cert. coverage-first
         detects matmul_1 + matmul_2 share matmul_0's canonical hash
         and appends 2 coverage-inflated bindings."""
         result = _invoke_pipeline(

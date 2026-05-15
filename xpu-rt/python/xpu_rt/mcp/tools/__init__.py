@@ -82,6 +82,22 @@ def _pack_mcp_tools() -> list[dict]:
     return out
 
 
+def _bridge_tools() -> list[dict]:
+    """ToolCard-bridged MCP tools.
+
+    Loaded lazily so a malformed ToolCard YAML cannot prevent the rest
+    of the MCP server from starting; the bridge's own logging plus the
+    audit catch the malformed card on the next CI run.
+    """
+
+    try:
+        from compgen.mcp.tool_bridge import bridge_tools
+
+        return bridge_tools()
+    except Exception:  # noqa: BLE001
+        return []
+
+
 _IN_TREE_TOOLS: list[dict] = [
     *LIFECYCLE_TOOLS,
     *INSPECT_TOOLS,
@@ -108,6 +124,7 @@ _IN_TREE_TOOLS: list[dict] = [
     *COMPILE_TOOLS,
     *TARGET_TOOLS,
     *_optimize_tools(),
+    *_bridge_tools(),
 ]
 
 # Cached merged list (in-tree + entry-point-discovered pack tools).

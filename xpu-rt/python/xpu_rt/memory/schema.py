@@ -191,9 +191,9 @@ class KnowledgeItem:
 class Promotion:
     """Immutable promoted winner in the L3 library.
 
-    M-26 attaches the two-tier cache key (``region_signature`` and
+    attaches the two-tier cache key (``region_signature`` and
     ``contract_hash``) so the SQLite ``promotions`` table is the
-    queryable index for cross-model recipe retrieval. M-29 adds
+    queryable index for cross-model recipe retrieval. adds
     ``gate_level`` (string form of :class:`PromotionLevel`) so audit
     consumers can rank promoted recipes by evidence strength without
     re-reading the bundle.

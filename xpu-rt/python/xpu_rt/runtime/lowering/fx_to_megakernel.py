@@ -390,7 +390,6 @@ def lower_torch_to_megakernel(
     # combination of supported ops (linear / relu / add). Gives a
     # runnable bundle for arbitrary models — slower than
     # pattern-matched paths but correct.
-    #
     # Opt-in with ``allow_generic_fallback`` (default True). The
     # generic path raises UnsupportedShape with a list of unhandled
     # ops if the FX trace contains anything outside the supported

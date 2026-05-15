@@ -1,0 +1,9 @@
+schema_version: target_card_v1
+target_id: aws_neuron_trn
+family: aws_neuron
+vendor: aws
+dispatch_modes: [sync, static_plan]
+memory_tiers:
+  - {name: hbm, kind: global, capacity_bytes: 34359738368}
+  - {name: sbuf, kind: explicit, capacity_bytes: 25165824}
+description: AWS Trainium (trn1) — Neuron training accelerator; NKI target.

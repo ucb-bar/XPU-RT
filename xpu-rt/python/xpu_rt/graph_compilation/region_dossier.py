@@ -263,7 +263,7 @@ def _region_shape(
     *,
     run_dir: Path | None = None,
 ) -> dict[str, Any]:
-    """Distinctive shape signature for a region (M-37.9 Fix 1).
+    """Distinctive shape signature for a region (Fix 1).
 
     Captures the *actual* tensor shapes the region operates on so two
     regions named ``matmul_0`` in different models with different
@@ -525,7 +525,7 @@ def _output_dtype_size(region: dict[str, Any], tensor_lookup: dict[str, dict[str
 def _shape_fit_dim(d: int, *, max_tile: int = 16) -> int:
     """Largest divisor of ``d`` that is also <= ``max_tile``.
 
-    M-37.11 (Improvement A): used to derive shape-fit matmul tiles
+    (Improvement A): used to derive shape-fit matmul tiles
     that cleanly divide the region's actual dimensions, breaking the
     dead-end where the only proposed tiles start at 16 and a region
     with M=4 has no clean-divide option.
@@ -591,7 +591,7 @@ def _working_set_curve(
     dtype_size = _output_dtype_size(region, tensor_lookup)
     curve: list[dict[str, Any]] = []
     if _is_matmul_like(kind):
-        # M-37.11 Improvement A: append a shape-fit tile when the
+        # Improvement A: append a shape-fit tile when the
         # region's actual M/N/K are known and the standard profile
         # tiles all force boundary handling. The shape-fit tile is
         # guaranteed to cleanly divide every region dim it covers
@@ -851,7 +851,7 @@ def _build_numerical_sensitivity_audit(
     region_map_regions: list[dict[str, Any]],
     run_dir: Path,
 ) -> dict[str, Any]:
-    """Cross-region sanity audit (M-03.5).
+    """Cross-region sanity audit.
 
     Invariants enforced:
 
@@ -1041,7 +1041,7 @@ def build_region_dossiers(
             "reuse": reuse,
             "numerical_sensitivity": sensitivity,
         }
-        # M-37.9 Fix 1 / M-37.11 Improvement A: compute region_shape
+        # Fix 1 / Improvement A: compute region_shape
         # FIRST so the working_set_curve can derive shape-fit tiles
         # that cleanly divide the region's actual dimensions.
         region_shape_info = _region_shape(
@@ -1089,7 +1089,7 @@ def build_region_dossiers(
             "working_set_curve": wsc,
             "placement_envelope": placement,
             "legality_constraints": legality,
-            # M-37.9 Fix 1: actual region shape, used by action_space
+            # Fix 1: actual region shape, used by action_space
             # candidate_id construction to disambiguate same-named
             # regions across models.
             "region_shape": region_shape_info,
@@ -1352,7 +1352,7 @@ def build_region_dossiers(
     )
 
     # ------------------------------------------------------------------ #
-    # numerical_sensitivity_audit.json (M-03.5)
+    # numerical_sensitivity_audit.json
     # ------------------------------------------------------------------ #
     ns_audit = _build_numerical_sensitivity_audit(
         region_dossiers_summary, region_map.get("regions", []), run_dir
@@ -1361,7 +1361,7 @@ def build_region_dossiers(
     ns_audit_path.write_text(
         json.dumps(ns_audit, indent=2, sort_keys=True), encoding="utf-8"
     )
-    # Reflect the M-03.5 audit in dossier_validation as a top-level check
+    # Reflect the audit in dossier_validation as a top-level check
     # so a single ``dossier_validation.overall`` answers "is the dossier
     # decision-quality?". We rewrite validation_path with the additional
     # check folded in.

@@ -1,21 +1,21 @@
-"""M-57 — Multi-bidder kernel auction.
+"""Multi-bidder kernel auction.
 
-Bridges M-55 (registry applicability) + M-56 (bid/fulfill protocol) into
-a single orchestrator that runs after M-42 emits the kernel-codegen
-task and before M-43's commit-driven path produces a single response.
+Bridges (registry applicability) + (bid/fulfill protocol) into
+a single orchestrator that runs emits the kernel-codegen
+task and 's commit-driven path produces a single response.
 
 Flow:
 
 ::
 
-    [M-42 request] → applicable() → bid() per provider
+    [request] → applicable → bid per provider
                                    → top-K by score → fulfill() per top-K
                                    → translate ProviderResult to artifacts on disk
-                                   → M-44 verifier per fulfilled set
-                                   → M-45 certificate per verified set
+                                   → verifier per fulfilled set
+                                   → certificate per verified set
                                    → pick winner by perf_estimate_us
-                                   → promote winner → standard M-43 response location
-                                   → M-46 binds normally
+                                   → promote winner → standard response location
+                                   → binds normally
 
 Modes:
 
@@ -25,14 +25,14 @@ Modes:
   data. Selector picks the verified bid with the lowest
   ``claims.perf_estimate_us``.
 * ``first-fit``: stop at the first verified bid in priority order.
-* ``disabled``: no-op; today's M-43 commit path remains canonical.
+* ``disabled``: no-op; today's commit path remains canonical.
 
 Hard contract:
 
 * The auction never mutates the materialised ``KernelContractV3``.
 * Every fulfilled bid's artifacts are sandboxed under
   ``04_kernel_codegen/auction/<task_id>/fulfilled/<provider_name>/``.
-* The winner is *copied* (not moved) to the standard M-43 response
+* The winner is *copied* (not moved) to the standard response
   location so the runner-up trail stays inspectable.
 * Every bid (including losers) lands in ``auction_report.json`` with
   the verifier's verdict so a future tactician analysis can pick up
@@ -192,7 +192,7 @@ def _v3_to_legacy_contract(contract_v3: Any) -> Any:
 
     Lossy on orchestration (sync/wait_on/lifetimes/fusion not surfaced)
     — providers that need the full V3 should consume it directly via
-    M-56's ``bid()``.
+    's ``bid``.
     """
     from compgen.kernels.provider import KernelContract
 
@@ -266,7 +266,7 @@ def _translate_provider_result_to_artifacts(
     provider_name: str,
 ) -> dict[str, str]:
     """Write a provider's :class:`ProviderResult` to the on-disk artifact
-    layout the M-43 commit + M-44 verifier consume.
+    layout the commit + verifier consume.
 
     Returns the ``artifacts`` map (relative-to-run-dir paths) suitable
     for inclusion in a synthesized ``provider_response_v1`` body.
@@ -280,7 +280,7 @@ def _translate_provider_result_to_artifacts(
     src_path.write_text(getattr(result, "kernel_code", "") or "", encoding="utf-8")
 
     # Kernel metadata — derived from the V3 contract, not from the
-    # provider's free-form metadata. The verifier (M-44) cross-checks
+    # provider's free-form metadata. The verifier cross-checks
     # these against the contract.
     inputs_meta: list[dict[str, Any]] = []
     outputs_meta: list[dict[str, Any]] = []
@@ -320,7 +320,7 @@ def _translate_provider_result_to_artifacts(
     if "symbol" in pmeta:
         metadata_body["symbol"] = pmeta["symbol"]
 
-    # Gap #18 closure: when the contract is CUDA-bound, run the v3
+    #  closure: when the contract is CUDA-bound, run the v3
     # TritonContractTranslator and stamp the translation surface
     # (autotune configs + prompt context + compat notes) into the
     # kernel_metadata so a downstream consumer can see the V3 path
@@ -406,7 +406,7 @@ def _build_response_body(
 ) -> dict[str, Any]:
     """Synthesize a ``provider_response_v1`` body from auction artifacts.
 
-    M-43's verifier path consumes this same shape; the auction's
+    's verifier path consumes this same shape; the auction's
     fulfill path is just an in-process producer instead of an
     external operator.
     """
@@ -448,15 +448,15 @@ def run_kernel_auction(
     bid_cutoff: int = 3,
     registry: Any | None = None,  # ProviderRegistry override (tests)
 ) -> AuctionResult:
-    """Run the M-57 auction and write ``auction/<task_id>/auction_report.json``.
+    """Run the auction and write ``auction/<task_id>/auction_report.json``.
 
     A no-op when:
     * ``mode == "disabled"``
-    * The M-42 request is missing or ``request_kind != "kernel_codegen"``
+    * The request is missing or ``request_kind != "kernel_codegen"``
     * No applicable providers are registered
 
     On success, the winner's artifact set is also written to the
-    standard M-43 response location so M-46/M-47 work unchanged.
+    standard response location so /work unchanged.
     """
     run_dir = Path(run_dir).resolve()
 
@@ -466,7 +466,7 @@ def run_kernel_auction(
             f"['multi-bidder', 'first-fit', 'disabled']"
         )
 
-    # Locate the request — the auction is keyed off whatever M-42 emitted.
+    # Locate the request — the auction is keyed off whatever emitted.
     requests_dir = run_dir / "04_kernel_codegen" / "requests"
     request_files = sorted(requests_dir.glob("*.request.json")) if requests_dir.exists() else []
     if not request_files:
@@ -579,7 +579,7 @@ def run_kernel_auction(
 
     fulfilled_records: list[_FulfillRecord] = []
     verified_records: list[_VerifyRecord] = []
-    # M-59: aggregate per-provider contract_feedback from each
+    # aggregate per-provider contract_feedback from each
     # fulfilled bid. Routed into write_auction_feedback_artifacts at
     # the end of the auction.
     per_provider_feedback: list[tuple[str, list[Any]]] = []
@@ -655,12 +655,12 @@ def run_kernel_auction(
             )
         )
 
-        # M-59: capture this bid's contract_feedback for routing.
+        # capture this bid's contract_feedback for routing.
         per_provider_feedback.append(
             (provider.name, list(getattr(result, "contract_feedback", []) or []))
         )
 
-        # Verify via M-44 (re-using the existing verifier path).
+        # Verify (re-using the existing verifier path).
         response_body = _build_response_body(
             request_body=request_body,
             artifacts=rel_artifacts,
@@ -668,7 +668,7 @@ def run_kernel_auction(
         )
         from compgen.graph_compilation.kernel_codegen_response import _run_m44_verifier
 
-        # M-44 wants the response to live on disk under a per-provider
+        # wants the response to live on disk under a per-provider
         # validation directory so the verifier's report path doesn't
         # collide across bidders.
         verify_dir = auction_root / "verified" / provider.name
@@ -702,7 +702,7 @@ def run_kernel_auction(
                 )
                 # Move/copy the cert into the per-provider auction tree
                 # so the standard certificates/<contract_hash>.json slot
-                # only carries the winner cert (the M-43 commit path
+                # only carries the winner cert (the commit path
                 # owns that filename).
                 aux_cert = verify_dir / f"{provider.name}.certificate.json"
                 shutil.copy2(cert_path, aux_cert)
@@ -759,7 +759,7 @@ def run_kernel_auction(
                 "provider_claims": str((winner_dir / "provider_claims.json").relative_to(run_dir)),
             }
 
-    # Promote winner to the standard M-43 response location.
+    # Promote winner to the standard response location.
     if winner_provider and winner_artifacts:
         _promote_winner(
             run_dir=run_dir,
@@ -781,7 +781,7 @@ def run_kernel_auction(
         winner_provider=winner_provider or "",
     )
 
-    # M-59: write the contract_feedback artifacts (auction-local + run-wide
+    # write the contract_feedback artifacts (auction-local + run-wide
     # aggregate). Always called, even when feedback is empty — the
     # downstream agent_decision_request emit can rely on the file's
     # existence to decide whether to surface advisory rows.
@@ -884,9 +884,9 @@ def _promote_winner(
     winner_artifacts: dict[str, str],
     winner_provider: str,
 ) -> None:
-    """Copy the winner's artifacts into the standard M-43 response
-    location and re-emit the M-45 cert under the canonical contract
-    hash so M-46 binds normally."""
+    """Copy the winner's artifacts into the standard response
+    location and re-emit the cert under the canonical contract
+    hash so binds normally."""
     out_dir = run_dir / "04_kernel_codegen"
     task_id = request_body["task_id"]
     artifact_sandbox = out_dir / "artifacts" / task_id
@@ -900,7 +900,7 @@ def _promote_winner(
         shutil.copy2(src, dst)
         promoted[name] = str(dst.relative_to(run_dir))
 
-    # Write a canonical response file at the M-43 location.
+    # Write a canonical response file at the location.
     response_dir = out_dir / "responses"
     response_dir.mkdir(parents=True, exist_ok=True)
     response_path = response_dir / f"{task_id}.response.json"
@@ -914,7 +914,7 @@ def _promote_winner(
         encoding="utf-8",
     )
 
-    # Re-run M-44 against the promoted location to produce the canonical
+    # Re-run against the promoted location to produce the canonical
     # validation report under the original task_id, then emit the cert.
     from compgen.graph_compilation.kernel_codegen_response import _run_m44_verifier
     from compgen.kernels.kernel_certificate import emit_certificate

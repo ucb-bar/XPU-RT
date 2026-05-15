@@ -1,8 +1,8 @@
-"""M-62 — User-space kernel-provider discovery and indexing.
+"""User-space kernel-provider discovery and indexing.
 
 The dream's Section 7 calls for users to plug their own kernels into
 the auction by pointing CompGen at a directory of kernel sources +
-manifests. M-62 lands the filesystem indexing + locked-files audit
+manifests. lands the filesystem indexing + locked-files audit
 pattern, mirroring ``compgen.graph_compilation.extension_verify``.
 
 User-supplied directory layout::
@@ -98,8 +98,8 @@ def _sha16(path: Path) -> str:
 class UserKernelManifest:
     """Parsed user-supplied manifest (``kernel_manifest.yaml``).
 
-    Gap #13 closure: ``kernel_source`` accepts either a single
-    string (single-file kernel — the original M-62 semantics) or a
+     closure: ``kernel_source`` accepts either a single
+    string (single-file kernel — the original semantics) or a
     tuple of strings (multi-file: ``main.py`` + ``helpers.h``,
     Triton kernel + headers, etc.). The first entry is the primary
     source; additional entries are locked-files-audited the same way.
@@ -110,7 +110,7 @@ class UserKernelManifest:
     archetype: str
     target_name: str
     language: str
-    kernel_source: tuple[str, ...]  # Always a tuple internally (gap #13).
+    kernel_source: tuple[str, ...]  # Always a tuple internally .
     entry_symbol: str
     inputs: tuple[dict[str, Any], ...]
     outputs: tuple[dict[str, Any], ...]
@@ -164,7 +164,7 @@ class UserKernelManifest:
             raise UserKernelManifestError(
                 f"manifest missing required fields: {missing}"
             )
-        # Gap #13: kernel_source accepts string OR list.
+        # : kernel_source accepts string OR list.
         ks_raw = body["kernel_source"]
         if isinstance(ks_raw, str):
             kernel_source = (ks_raw,)
@@ -274,7 +274,7 @@ def index_one_manifest(
     parsed = UserKernelManifest.from_dict(body)
 
     source_dir = manifest_path.parent
-    # Gap #13: lock every kernel_source entry (multi-file kernels).
+    # : lock every kernel_source entry (multi-file kernels).
     locked_files = {manifest_path.name: _sha16(manifest_path)}
     for src in parsed.kernel_source:
         kp = (source_dir / src).resolve()

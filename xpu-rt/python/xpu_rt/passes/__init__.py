@@ -1,4 +1,4 @@
-"""Pass-card registry (M-31).
+"""Pass-card registry.
 
 Compiler passes are exposed to Claude Code as typed metadata, not as
 free-form tool calls. Every pass the agent can request must have a
@@ -10,7 +10,7 @@ free-form tool calls. Every pass the agent can request must have a
 - ``reads`` / ``writes``         — input + output artifact roles
 - ``preconditions``              — what must hold for the pass to run
 - ``invalidates``                — analyses the pass invalidates (multi-level
-                                    invalidation discipline; M-33 makes this
+                                    invalidation discipline; makes this
                                     enforceable)
 - ``preserves_refinement``       — ``bit_equality`` / ``tolerance_eps`` / ``unknown``
 - ``verification``               — required verification rungs (``structural``,

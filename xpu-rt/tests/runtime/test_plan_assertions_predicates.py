@@ -1,4 +1,4 @@
-"""M-61 — Pre/post-condition predicates as runtime plan assertions.
+"""Pre/post-condition predicates as runtime plan assertions.
 
 Coverage:
 
@@ -8,7 +8,7 @@ Coverage:
 - ``TestRoundTrip`` — contract_to_dict + _reconstruct_contract_from_dict
   preserve every predicate.
 - ``TestPlanViolationClasses`` — render_plan_violation_classes emits
-  the M-61 subclass names.
+  the subclass names.
 - ``TestModEqAssertion`` — emitted glue raises
   PLAN_VIOLATION_PRECONDITION_MOD_EQ on a tampered K-dim input.
 - ``TestByteSizeLeAssertion`` — render emits a byte-size check from
@@ -123,7 +123,7 @@ class TestRoundTrip:
 
 
 # --------------------------------------------------------------------------- #
-# Plan violation classes include M-61 subclasses
+# Plan violation classes include subclasses
 # --------------------------------------------------------------------------- #
 
 
@@ -188,7 +188,7 @@ class TestModEqAssertion:
         # Build a tampered input whose last dim is NOT divisible by tile_K
         # (the contract's matmul block size). Tile_K=16 by default; a
         # tensor of shape (16, 15) violates the precondition.
-        # The ModEq check is the first M-61 precondition emitted; it
+        # The ModEq check is the first precondition emitted; it
         # runs after the structural input/dtype/shape checks, so we
         # need an input that ALSO passes the structural shape check.
         # Easiest: feed a totally-wrong-shape input that bypasses the
@@ -198,7 +198,7 @@ class TestModEqAssertion:
         # carries dims (M, K) for input[0]; tile_K is set to 16 too, so
         # K=16 is divisible. A tampered tensor of shape (16, 15) will
         # fail the structural shape check FIRST. So this negative-control
-        # test asserts the structural check fires; if M-61 had NOT been
+        # test asserts the structural check fires; if had NOT been
         # added, the same input would just compute wrong silently.
         bad_a = torch.zeros((16, 15), dtype=torch.float32)
         good_b = torch.zeros((16, 32), dtype=torch.float32)

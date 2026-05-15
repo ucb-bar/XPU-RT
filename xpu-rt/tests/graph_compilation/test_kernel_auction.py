@@ -1,4 +1,4 @@
-"""M-57 — Multi-bidder kernel auction tests.
+"""Multi-bidder kernel auction tests.
 
 Coverage:
 
@@ -8,7 +8,7 @@ Coverage:
   ``overall='skipped'`` with ``error='no_applicable_providers'``.
 - ``TestMultiBidder`` — registry with CReferenceProvider runs the full
   pipeline against merlin_mlp_wide: 1 bid, 1 fulfilled, 1 verified, 1
-  winner, winner promoted to standard M-43 response location, M-46
+  winner, winner promoted to standard response location,
   binds.
 - ``TestFirstFit`` — ``mode='first-fit'`` short-circuits at the first
   verified bid (still 1 winner since CReferenceProvider is alone).
@@ -122,7 +122,7 @@ class TestMultiBidder:
         assert len(report["verified"]) >= 1
         assert any(v["overall"] == "pass" for v in report["verified"])
 
-        # Winner promoted to standard M-43 response path.
+        # Winner promoted to standard response path.
         task_id = report["task_id"]
         response_path = run_dir / "04_kernel_codegen" / "responses" / f"{task_id}.response.json"
         assert response_path.exists(), "winner must be promoted to M-43 response path"

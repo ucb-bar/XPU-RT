@@ -1,4 +1,4 @@
-"""Acceptance tests for M-05: Candidate Selection + Recipe IR Commit.
+"""Acceptance tests for Candidate Selection + Recipe IR Commit.
 
 Asserts:
 - recipe.mlir exists and references the selected candidate_id
@@ -120,7 +120,7 @@ def test_selection_trace_has_selected_event(
     model_id: str, recipe_runs: dict[str, Path]
 ) -> None:
     """Every canonical model must record a ``selected`` event
-    (M-05 acceptance: a candidate was actually picked)."""
+    (acceptance: a candidate was actually picked)."""
     run = recipe_runs[model_id]
     decisions: set[str] = set()
     with (run / "03_recipe_planning" / "selection_trace.jsonl").open() as f:
@@ -150,19 +150,19 @@ def test_selection_trace_skipped_illegal_seen_in_suite(
 
 
 # --------------------------------------------------------------------------- #
-# Determinism (M-05 acceptance)
+# Determinism (acceptance)
 # --------------------------------------------------------------------------- #
 
 
 def test_greedy_mode_is_deterministic_across_reruns(
     tmp_path: Path, recipe_runs: dict[str, Path],
 ) -> None:
-    """Re-running M-05 with greedy on the same graph-analysis output must
+    """Re-running with greedy on the same graph-analysis output must
     produce a byte-identical recipe.mlir."""
     src = recipe_runs["tiny_mlp"]
     work = tmp_path / "rerun"
     shutil.copytree(src, work)
-    # Wipe and re-run M-05 against the same graph-analysis state.
+    # Wipe and re-run against the same graph-analysis state.
     rp_dir = work / "03_recipe_planning"
     if rp_dir.exists():
         shutil.rmtree(rp_dir)
@@ -206,7 +206,7 @@ def test_modifying_candidate_actions_without_remitting_ir_is_caught(
     tmp_path: Path, recipe_runs: dict[str, Path],
 ) -> None:
     """Mutate candidate_actions.json's recipe_delta but DO NOT
-    re-emit action_space.mlir. M-05's resolver-backed pipeline must
+    re-emit action_space.mlir. the resolver-backed pipeline must
     refuse to use the tampered JSON.
 
     We mutate the candidate that greedy would otherwise pick and assert
@@ -262,7 +262,7 @@ def test_no_recipe_op_for_opaque_region_tile_selection(
     recipe_runs: dict[str, Path],
 ) -> None:
     """The greedy selector must never produce a recipe op that tiles an
-    opaque region — the M-04 contract guarantees no such candidate exists."""
+    opaque region — the contract guarantees no such candidate exists."""
     for run in recipe_runs.values():
         sel = json.loads((run / "03_recipe_planning" / "candidate_selection.json").read_text())
         if sel["selected_candidate_id"] is None:

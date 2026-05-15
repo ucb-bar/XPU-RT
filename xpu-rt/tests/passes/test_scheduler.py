@@ -1,4 +1,4 @@
-"""Tests for compgen.passes.scheduler (M-34.1 + M-34.2 + M-34.3)."""
+"""Tests for compgen.passes.scheduler."""
 
 from __future__ import annotations
 

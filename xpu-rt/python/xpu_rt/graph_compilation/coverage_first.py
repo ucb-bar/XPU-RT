@@ -1,18 +1,18 @@
-"""M-63 — Coverage-first scheduling.
+"""Coverage-first scheduling.
 
 The Phase C pipeline emits exactly one kernel-codegen task per run
 (for the recipe-planning-selected region). Other regions sharing the
 same shape class — and there can be many; merlin_mlp_wide has three
 matmul regions all on host_cpu with the same dtype + layout — go
-unbound. M-63 closes this with a *coverage-first* analysis pass:
+unbound. closes this with a *coverage-first* analysis pass:
 
 1. **Coverage pass** (``first-pass-coverage`` and ``both`` modes):
    walk every region dossier under
    ``02_graph_analysis/region_dossiers/``; for each compute-tiled
    region, derive a canonical contract hash from its shape facts;
-   look up a matching certificate via M-58's
+   look up a matching certificate 's
    :func:`find_certificate_by_canonical_hash`. When the hash matches,
-   emit an additional coverage binding so M-46's
+   emit an additional coverage binding so 's
    ``region_kernel_bindings.json`` reflects the reuse. The
    ``coverage_report.json`` records per-canonical-hash group sizes
    so a downstream tactician can see that one verified kernel
@@ -23,7 +23,7 @@ unbound. M-63 closes this with a *coverage-first* analysis pass:
    matching an existing cert), sorted by analytical-cost descending.
    The ``specialization_report.json`` is an advisory: a future
    iteration of the pipeline can pick the top-N entries for a
-   second auction round with shape-specialized contracts. M-63
+   second auction round with shape-specialized contracts.
    itself does not iterate the pipeline — it produces the report.
 
 Modes:
@@ -52,8 +52,8 @@ _COVERAGE_SCHEMA = "coverage_report_v1"
 _SPECIALIZATION_SCHEMA = "specialization_report_v1"
 
 
-# Gap #10: archetypes the coverage pass considers. matmul is the
-# original M-63 target; pointwise + reduce families ride this list
+# : archetypes the coverage pass considers. matmul is the
+# original target; pointwise + reduce families ride this list
 # so the coverage analysis surfaces non-matmul reuse opportunities
 # too.
 _COVERED_KINDS: frozenset[str] = frozenset({
@@ -150,7 +150,7 @@ def _coverage_signature(
     dtype = (region_shape.get("dtype") or "f32").lower()
     kind = (dossier.get("kind") or "").lower()
 
-    # Gap #10 closure: per-archetype arity. matmul = 2 inputs, 1 output.
+    #  closure: per-archetype arity. matmul = 2 inputs, 1 output.
     # pointwise = 1+ inputs, 1 output. reduce = 1 input, 1 output.
     if kind in ("matmul",):
         if (
@@ -184,7 +184,7 @@ def _coverage_signature(
 
     in_repr = ";".join(",".join(str(d) for d in s) for s in sig_inputs)
     out_repr = ";".join(",".join(str(d) for d in s) for s in output_shapes[:1])
-    layout = "row_major"  # M-60 default
+    layout = "row_major"  # default
     return (
         f"{target_name}|{archetype}|{dtype}|{layout}|{in_repr}|{out_repr}"
     )
@@ -194,7 +194,7 @@ def _signature_from_certificate(*, run_dir: Path, cert: Any) -> str:
     """Derive the coverage signature for an existing cert by reading
     its source contract file from disk.
 
-    Gap #10 closure: archetype is read from the contract body so
+     closure: archetype is read from the contract body so
     pointwise + reduce certs sign correctly (was previously
     locked to compute_tiled).
     """
@@ -266,7 +266,7 @@ def _load_target_profile(run_dir: Path) -> dict[str, Any]:
     Reads the manifest's recorded target_config_path; falls back to
     ``configs/targets/<target_id>.yaml`` rooted at the repo. Returns
     empty dict when nothing matches — from_recipe still works with
-    defaults but the M-60 hardware envelope fields stay unpopulated
+    defaults but the hardware envelope fields stay unpopulated
     (so the hash drifts from the materialised one).
     """
     manifest = _read_json_or_none(run_dir / "run_manifest.json")
@@ -316,15 +316,15 @@ def run_coverage_first(
     mode: str = "both",
     specialization_top_n: int = 5,
 ) -> CoverageResult:
-    """Run the M-63 coverage-first pass.
+    """Run the coverage-first pass.
 
     Reads the run's region dossiers + on-disk certificates; produces
     ``coverage_report.json`` and/or ``specialization_report.json``
     under ``04_kernel_codegen/`` according to ``mode``. When the
     coverage pass finds a region whose canonical hash matches an
     existing cert, it appends a binding row to
-    ``05_execution_plan/region_kernel_bindings.json`` so M-47's
-    emitter sees the reuse without a second M-43 commit cycle.
+    ``05_execution_plan/region_kernel_bindings.json`` so 's
+    emitter sees the reuse without a second commit cycle.
     """
     if mode not in ("both", "first-pass-coverage", "specialize", "disabled"):
         raise ValueError(
@@ -343,9 +343,9 @@ def run_coverage_first(
         return CoverageResult(overall="no_dossiers", mode=mode)
 
     target_name = _resolve_target_name(run_dir)
-    target_profile = _load_target_profile(run_dir)  # noqa: F841 — reserved for M-65
+    target_profile = _load_target_profile(run_dir)  # noqa: F841 — reserved
 
-    # Gap #10: pointwise + reduce coverage in addition to matmul.
+    # : pointwise + reduce coverage in addition to matmul.
     # Signature arity is enforced inside _coverage_signature.
     # Build coverage_signature → [(region_id, dossier)] groups.
     groups_dict: dict[str, list[tuple[str, dict[str, Any]]]] = {}
@@ -521,7 +521,7 @@ def run_coverage_first(
 
 
 def _existing_bindings(run_dir: Path) -> list[dict[str, Any]]:
-    """Read the M-46 bindings file. Returns empty list when absent."""
+    """Read the bindings file. Returns empty list when absent."""
     bp = run_dir / "05_execution_plan" / "region_kernel_bindings.json"
     body = _read_json_or_none(bp)
     if body is None:
@@ -537,9 +537,9 @@ def _build_coverage_binding(
 ) -> dict[str, Any]:
     """Construct a binding row for a coverage-inflated region.
 
-    The binding points at the existing cert (no second M-43 cycle);
+    The binding points at the existing cert (no second cycle);
     its kernel_artifact comes from the cert's recorded artifact_paths;
-    its dispatch_model defaults to 'sync' (M-50 widens later).
+    its dispatch_model defaults to 'sync' (widens later).
     """
     artifact_paths = cert.artifact_paths if hasattr(cert, "artifact_paths") else {}
     kernel_artifact = artifact_paths.get("kernel_source", "")
@@ -563,15 +563,15 @@ def _append_coverage_bindings(
 ) -> None:
     """Append coverage-inflated rows to ``region_kernel_bindings.json``.
 
-    The original bindings emitted by M-46 stay untouched; the coverage
+    The original bindings emitted stay untouched; the coverage
     rows extend the list. ``bound_count`` and ``unbound_count`` are
-    recomputed; ``coverage_inflated_count`` records the M-63 addition
-    so the M-47 emitter can audit it.
+    recomputed; ``coverage_inflated_count`` records the addition
+    so the emitter can audit it.
     """
     bp = run_dir / "05_execution_plan" / "region_kernel_bindings.json"
     body = _read_json_or_none(bp)
     if body is None:
-        # No prior bindings file — M-63 doesn't bootstrap one.
+        # No prior bindings file — doesn't bootstrap one.
         return
     existing = list(body.get("bindings") or [])
     merged = existing + new_bindings

@@ -55,7 +55,7 @@ class LineageGraph:
 
 def _row_get(row: Any, key: str, default: Any = "") -> Any:
     """Tolerant column read — returns ``default`` when the column is
-    absent (legacy DBs without the M-26/M-29 migrations applied)."""
+    absent (legacy DBs without the /migrations applied)."""
     try:
         return row[key]
     except (KeyError, IndexError):

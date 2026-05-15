@@ -1,4 +1,4 @@
-"""Acceptance tests for M-07: Recipe Lowering to Lowering Artifacts.
+"""Acceptance tests for Recipe Lowering to Lowering Artifacts.
 
 Asserts:
 - Required lowering artifacts are emitted for all canonical models
@@ -276,9 +276,9 @@ def test_no_payload_mutation_check_passes(
 def test_payload_unchanged_after_rerun(
     model_id: str, lowering_runs: dict[str, Path], tmp_path: Path,
 ) -> None:
-    """Snapshot 01_payload_lowering/, re-run M-07 on a copy, and verify
+    """Snapshot 01_payload_lowering/, re-run on a copy, and verify
     the directory is byte-identical afterwards. This is the hard
-    guarantee M-07 must keep."""
+    guarantee must keep."""
     src = lowering_runs[model_id]
     work = tmp_path / f"readonly_{model_id}"
     shutil.copytree(src, work)
@@ -324,7 +324,7 @@ def test_tampered_gate_status_fails_lowering(
     shutil.copytree(src, work)
     p = work / "03_recipe_planning" / "verified_recipe.mlir"
     text = p.read_text()
-    # Flip pass → fail on the recipe op so M-07 refuses to lower.
+    # Flip pass → fail on the recipe op so refuses to lower.
     text = text.replace('gate_status = "pass"', 'gate_status = "fail"', 2)
     p.write_text(text)
     result = run_recipe_lowering(work)

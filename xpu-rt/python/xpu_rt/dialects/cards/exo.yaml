@@ -1,0 +1,11 @@
+schema_version: dialect_provider_card_v1
+dialect_provider_id: exo
+dialect_name: exo
+integration_level: probe
+consumes: [kernel_contract_v3, compgen_tile_ir]
+emits: [c_source, elf]
+entrypoint: compgen.providers.adapters.exo:ExoDialectProvider
+required_env: []
+description: |
+  Exo dialect provider — scheduling-DSL lowering through the Exo
+  scheduling primitives to C and ELF artifacts.

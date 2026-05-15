@@ -1,4 +1,4 @@
-"""Trace replay + decision-id discipline (M-31A.3).
+"""Trace replay + decision-id discipline.
 
 Every agent decision must be deterministically reproducible from artifacts
 alone. This module emits a ``DecisionTrace`` per agent decision and
@@ -376,7 +376,7 @@ def assert_decision_ids_match(
     """If the request carries a ``decision_id``, the response must echo it."""
     req_id = request.get("decision_id")
     if not req_id:
-        return  # additive: pre-M-31A requests have no decision_id
+        return  # additive: pre-requests have no decision_id
     resp_id = response.get("decision_id")
     if resp_id != req_id:
         raise DecisionIdMismatch(

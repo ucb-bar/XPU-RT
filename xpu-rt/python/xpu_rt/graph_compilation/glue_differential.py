@@ -1,9 +1,9 @@
-"""End-to-end glue differential (M-49, paper-facing).
+"""End-to-end glue differential (, paper-facing).
 
-Phase C M-49: drive the M-47 emitted plan executor with golden
+Phase C drive the emitted plan executor with golden
 inputs, compare its output against the eager PyTorch reference
 (torch.matmul), and emit
-``06_glue_emit/glue_differential_report.json``. Wires into M-15B
+``06_glue_emit/glue_differential_report.json``. Wires into
 downstream-retry: a failing differential triggers the typed retry
 surface so the outer agent reconsiders the candidate.
 
@@ -14,7 +14,7 @@ This is the paper-facing milestone. Once green:
   checks plan invariants at launch, and passes end-to-end
   differential testing against the original model.
 
-The differential uses M-37.13's layered check:
+The differential uses 's layered check:
 
   - For declared bit_equality: tiled output must equal eager output
     bit-for-bit (max_abs_error == 0 AND max_rel_error == 0).
@@ -23,15 +23,15 @@ The differential uses M-37.13's layered check:
 
 Kernel callables:
 
-  M-49 wires the *eager-fallback* kernel callable for each region —
-  ``torch.matmul(A, B)`` for set_tile_params on a matmul. M-50+ widens
+  wires the *eager-fallback* kernel callable for each region —
+  ``torch.matmul(A, B)`` for set_tile_params on a matmul. + widens
   to compiled kernels via the cffi-C reference + Triton template
-  paths. The eager-fallback is honest because the M-44 verifier
+  paths. The eager-fallback is honest because the verifier
   already passed on the contract (shape, dtype, layout, accumulator),
-  and the M-37.13 differential we're applying here is exactly the
+  and the differential we're applying here is exactly the
   layered check the contract claims.
 
-  When the operator passes a custom ``kernel_resolver`` (M-50+ wires
+  When the operator passes a custom ``kernel_resolver`` (+ wires
   this), it overrides the eager fallback per region.
 """
 
@@ -81,13 +81,13 @@ def _eager_fallback_kernel_for_region(
 ) -> Callable[..., Any]:
     """Build the eager kernel callable for one region from its
     contract. Today: matmul archetype only. Returns
-    ``torch.matmul(A, B)`` regardless of tile sizes (M-49 documents
+    ``torch.matmul(A, B)`` regardless of tile sizes (documents
     that the differential check anchors to the contract's claimed
     refinement, not to the tile-K reference).
     """
     archetype = contract.get("archetype", "")
     if archetype != "compute_tiled":
-        # Other archetypes are deferred to M-49.x.
+        # Other archetypes are deferred to .x.
         def _not_yet_supported(*args, **kwargs):
             raise RuntimeError(
                 f"glue_differential: archetype {archetype!r} is not yet "
@@ -110,7 +110,7 @@ def _eager_fallback_kernel_for_region(
 def _tiled_kernel_for_region(
     *, contract: dict[str, Any],
 ) -> Callable[..., Any]:
-    """Build a TILED kernel callable that uses the M-12
+    """Build a TILED kernel callable that uses the
     ``_tiled_matmul_eval`` simulator with the contract's tile sizes.
 
     This is what the differential check is most useful with: tiled vs
@@ -211,13 +211,13 @@ def run_glue_differential(
     num_cases: int = _DEFAULT_NUM_CASES,
     kernel_resolver: Callable[[dict[str, Any]], Callable[..., Any]] | None = None,
 ) -> GlueDifferentialResult:
-    """Drive the M-47 emitted executor with synthesized cases and
-    compare its output against eager torch.matmul. Apply M-37.13's
+    """Drive the emitted executor with synthesized cases and
+    compare its output against eager torch.matmul. Apply 's
     layered check. Emit the report.
 
-    ``kernel_resolver`` is per-region: given the M-40 contract dict
+    ``kernel_resolver`` is per-region: given the contract dict
     for one region, returns the kernel callable to use. Defaults to
-    the M-12 tiled matmul evaluator (so bit_equality holds when
+    the tiled matmul evaluator (so bit_equality holds when
     K_iters=1 for the contract's tile, and tolerance_eps within
     Higham's bound otherwise).
     """
@@ -317,6 +317,34 @@ def run_glue_differential(
             kernels[region_id] = _tiled_kernel_for_region(contract=contract)
         region_order.append(region_id)
 
+    # Every binding referenced a contract file that doesn't exist on
+    # disk. This happens on synthetic runs that only exercise gap
+    # discovery (the bindings are emitted but the commit step is
+    # skipped). Treat the same way as the "no bindings" branch above:
+    # write a typed ``skipped`` report and return — never crash on
+    # ``region_order[0]``.
+    if not region_order:
+        body = {
+            "schema_version": _REPORT_SCHEMA_VERSION,
+            "generated_at_utc": _utcnow(),
+            "status": "skipped",
+            "refinement_status": "skipped",
+            "failure_summary": (
+                "no contract files resolved on disk for any binding; "
+                "commit a provider response (M-43) so "
+                "04_kernel_codegen/contracts/<region>.<hash>.json exists "
+                "before running the differential"
+            ),
+            "cases_total": 0, "cases_passed": 0, "case_records": [],
+        }
+        report_path.write_text(json.dumps(body, indent=2, sort_keys=True) + "\n")
+        return GlueDifferentialResult(
+            out_dir=out_dir, report_path=report_path,
+            status="skipped", refinement_status="skipped",
+            cases_passed=0, cases_total=0,
+            failure_summary=body["failure_summary"],
+        )
+
     # Import the emitted executor.
     module = _import_executor(executor_path)
 
@@ -334,8 +362,8 @@ def run_glue_differential(
     failure_summary = ""
 
     # The differential operates on the FIRST region's contract today
-    # (M-49 ships single-region; multi-region differential lands in
-    # M-49.x with proper IO routing).
+    # (ships single-region; multi-region differential lands in
+    # .x with proper IO routing).
     primary_region = region_order[0]
     primary_contract = contracts_by_region[primary_region]
     primary_attrs = {

@@ -1,4 +1,4 @@
-"""Invalidation diff + claim-vs-actual enforcement (M-33.1).
+"""Invalidation diff + claim-vs-actual enforcement.
 
 When a pass runs, the on-disk analysis summaries change. The pipeline
 captures two :class:`AnalysisIndex` snapshots — one before the pass,
@@ -15,7 +15,7 @@ one after — and asks this module:
 If a mutation is not covered, :func:`assert_invalidations_match_claim`
 raises :class:`compgen.audit.errors.UnannouncedInvalidation` (which
 :class:`compgen.audit.errors.StaleAnalysisAudit` aliases for backward
-compatibility with M-31A.5 negative controls).
+compatibility with negative controls).
 """
 
 from __future__ import annotations
@@ -233,7 +233,7 @@ def append_invalidation_log(
 
 
 # --------------------------------------------------------------------------- #
-# M-34.4: consumer-side stale-read detection
+# consumer-side stale-read detection
 # --------------------------------------------------------------------------- #
 
 
@@ -242,7 +242,7 @@ class SummaryRead:
     """One summary read as observed by a consumer.
 
     Records the generation the consumer observed when it read the
-    summary. M-34.4 raises :class:`compgen.audit.errors.StaleAnalysisAudit`
+    summary. raises :class:`compgen.audit.errors.StaleAnalysisAudit`
     when a later read at a lower generation is detected — i.e. the
     invalidation log has bumped the generation past what the consumer
     saw.

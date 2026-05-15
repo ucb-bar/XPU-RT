@@ -1,6 +1,6 @@
-"""Tests for M-15A Agent Decision Rejection / Retry Loop.
+"""Tests Agent Decision Rejection / Retry Loop.
 
-Verifies the bounded retry protocol around M-14A validation failures:
+Verifies the bounded retry protocol around validation failures:
 
 - Failed first attempt emits retry_request.json with typed reason.
 - Corrected second attempt commits recipe.
@@ -144,7 +144,7 @@ def _bad_response_illegal() -> dict:
 def fresh_run(tmp_path: Path) -> Path:
     """Yields a freshly-constructed run dir (via subprocess) that has
     been driven through agent-decision-request with greedy mode. The
-    M-14A request artifact is present; agent_decision/ is otherwise
+    request artifact is present; agent_decision/ is otherwise
     populated by the greedy run, so we wipe it before retry tests."""
     _need_wide()
     out = tmp_path / "m15a_run"
@@ -482,7 +482,7 @@ def test_mcp_commit_tool_returns_committed_on_pass(
 
 
 # --------------------------------------------------------------------------- #
-# Greedy still passes after M-15A
+# Greedy still passes
 # --------------------------------------------------------------------------- #
 
 

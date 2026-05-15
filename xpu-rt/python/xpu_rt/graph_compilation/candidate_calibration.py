@@ -1,13 +1,13 @@
-"""M-18.3 Per-Tile-Candidate Measured Cost.
+"""Per-Tile-Candidate Measured Cost.
 
-Layered on top of M-18 (region-level calibration). For each legal
+Layered on top of (region-level calibration). For each legal
 ``set_tile_params`` candidate, this module:
 
 1. Reconstructs the matmul shape (M, N, K) and the tile
    parameters (tM, tN, tK) from the candidate's ``recipe_delta`` +
    the cost_preview_v2 diagnostics.
 2. Generates a deterministic input pair on CPU.
-3. Times an un-tiled baseline (``torch.matmul``) and the M-16
+3. Times an un-tiled baseline (``torch.matmul``) and the
    ``_tiled_matmul_eval`` boundary-aware tiled evaluator, both with
    warmup + N iterations.
 4. Computes per-candidate ``measured_speedup``, ``rel_error`` vs
@@ -17,7 +17,7 @@ Layered on top of M-18 (region-level calibration). For each legal
 6. Layers ``calibration`` blocks onto each tile candidate's entry in
    ``cost_preview_v2.json`` and ``llm_graph_view.json``.
 
-This turns the dossier from "calibrated region facts" (M-18) into
+This turns the dossier from "calibrated region facts" into
 "calibrated candidate consequences" — the agent now sees, per
 candidate, both the deterministic prediction AND the measured cost.
 
@@ -119,7 +119,7 @@ def _measure_one_candidate(
     tM: int, tN: int, tK: int,
     iterations: int, warmup: int,
 ):  # type: ignore[no-untyped-def]
-    """Time both the un-tiled baseline (torch.matmul) and the M-16
+    """Time both the un-tiled baseline (torch.matmul) and the
     tiled evaluator. Returns (baseline_us_per_iter, tiled_us_per_iter)."""
     import torch
     from compgen.graph_compilation.real_transform_differential import (

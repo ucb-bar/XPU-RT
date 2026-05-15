@@ -45,6 +45,12 @@ class AutocompProvider:
     at all, so raising on unavailability is the right signal.
     """
 
+    # Provider preference (M-91a follow-up, 2026-05-15): autocomp is
+    # the fallback CUDA kernel-search provider. KernelBlaster
+    # (priority=90) wins applicability/auction ordering when both
+    # accept a contract — see KernelBlasterProvider for the rationale.
+    priority: int = 80
+
     def __init__(self) -> None:
         self._accumulated_knowledge: list[KnowledgeExport] = []
 
@@ -129,18 +135,42 @@ class AutocompProvider:
         When we can't build one, raise — don't pretend the search
         found nothing.
         """
-        from compgen.kernels.patterns.clustering import PatternCluster  # type: ignore[attr-defined]
+        from compgen.agent.analyzer import PatternCluster
         from compgen.targets.schema import TargetProfile
+
+        # Derive total_flops + total_bytes honestly from the contract
+        # shapes; the adapter uses these for cost-context strings.
+        def _shape_elems(shape: tuple[int, ...]) -> int:
+            n = 1
+            for d in shape:
+                n *= max(int(d), 1)
+            return n
+
+        in_elems = sum(_shape_elems(s) for s in contract.input_shapes)
+        out_elems = sum(_shape_elems(s) for s in contract.output_shapes)
+        bytes_per_elem = 2 if "f16" in contract.dtypes or "bf16" in contract.dtypes else 4
+        total_bytes = (in_elems + out_elems) * bytes_per_elem
+        # Conservative flops estimate: 2 * largest matmul-like dim^3.
+        largest = max(
+            (_shape_elems(s) for s in contract.input_shapes + contract.output_shapes),
+            default=0,
+        )
+        total_flops = 2 * largest
 
         try:
             cluster = PatternCluster(
                 cluster_id=contract.region_id or contract.op_family or "autocomp_search",
                 pattern_type=contract.op_family or "custom",
-                node_names=tuple(),  # contract doesn't carry node names
+                node_names=tuple(),
+                total_flops=total_flops,
+                total_bytes=total_bytes,
+                arithmetic_intensity=(total_flops / total_bytes) if total_bytes else 0.0,
+                estimated_latency_per_device={contract.target_name or "cuda-default": 0.0},
+                best_device=contract.target_name or "cuda-default",
+                is_bottleneck=True,
+                kernel_opportunity=contract.op_family or "custom",
                 input_shapes={f"in_{i}": tuple(s) for i, s in enumerate(contract.input_shapes)},
                 output_shapes={f"out_{i}": tuple(s) for i, s in enumerate(contract.output_shapes)},
-                total_flops=0,
-                total_bytes=0,
             )
         except Exception as exc:
             raise UnmeasurableKernelError(f"autocomp cannot build PatternCluster from contract: {exc!r}") from exc

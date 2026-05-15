@@ -1,4 +1,4 @@
-"""M-66 — Four-bidder benchmark + paper-claim closure stress test.
+"""Four-bidder benchmark + paper-claim closure stress test.
 
 The Section-7 dream's flagship claim: at least four distinct
 providers (ClaudeCodeKernel + CReferenceProvider + TritonTemplate +
@@ -13,13 +13,13 @@ host_cpu, and verifies:
 
 * All 4 bid (some may bid confidence=0 honestly when the contract
   doesn't match their applicability domain).
-* At least 2 reach M-44 verification.
+* At least 2 reach verification.
 * The winner is the highest-confidence verified bid with the
   lowest perf_estimate.
 * Auction report records every bid + the winner + verified runner-
   ups for tactician analysis.
 * The canonical_contract_hash of every certificate matches a fresh
-  re-derivation (M-58 + M-64 invariant holds under multi-provider
+  re-derivation ( invariant holds under multi-provider
   fulfilment).
 
 The test runs in-process (avoids subprocess overhead) and uses
@@ -107,7 +107,7 @@ def _write_user_kernel(*, root: Path, perf_priors: dict) -> None:
 class _ClaudeCodeStubProvider:
     """Stand-in for ClaudeCodeKernelProvider in this stress.
 
-    Real Claude-Code in-session codegen invokes the M-43 commit
+    Real Claude-Code in-session codegen invokes the commit
     flow; the auction stress wants a self-contained provider that
     bids + fulfills without external coordination, so we use a stub
     that produces a deterministic in-process kernel."""
@@ -289,7 +289,7 @@ class TestFourBidderStress:
         fulfilled_providers = {f.provider_name for f in result.fulfilled if f.found}
         assert fulfilled_providers == bid_providers
 
-        # All four verified (M-44 obligations are structural, so any
+        # All four verified (obligations are structural, so any
         # honest stub passes shape + dtype + layout + accumulator).
         verified_providers = {
             v.provider_name for v in result.verified if v.overall == "pass"
@@ -322,7 +322,7 @@ class TestFourBidderStress:
     ) -> None:
         """All four providers reach the same contract; their
         certificates must share the same canonical_contract_hash
-        (M-58 + M-64 invariant)."""
+        ( invariant)."""
         # Re-bootstrap.
         run_dir = tmp_path / "run"
         boot = subprocess.run(

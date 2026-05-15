@@ -1,4 +1,4 @@
-"""Acceptance tests for M-24.1 — Kernel Lifetime Evidence.
+"""Acceptance tests for Kernel Lifetime Evidence.
 
 Verifies:
 - Triton CompiledKernel introspection populates the 4 static
@@ -6,10 +6,10 @@ Verifies:
   shared_memory_bytes, theoretical_occupancy.
 - ncu honestly degrades typed when RmProfilingAdminOnly=1 (the
   user environment).
-- M-24 row 3 flips ready_for_m24_1 → ready when M-24.1 is on.
+row 3 flips ready_for_m24_1 → ready when is on.
 - Byte-stable across reruns (introspection is deterministic).
-- M-22.1 / M-22 / M-19 / M-20 source artifacts byte-identical
-  (M-24.1 is read-only).
+source artifacts byte-identical
+  (is read-only).
 - Theoretical occupancy is in [0.0, 1.0].
 - target_arch is the SM compute capability (e.g. 75 for TITAN RTX).
 - No compiler-core imports.
@@ -150,7 +150,7 @@ def test_introspection_populates_static_fields(kernels_run: Path) -> None:
 
 @pytest.mark.requires_gpu
 def test_no_register_spills_on_healthy_kernels(kernels_run: Path) -> None:
-    """On the standard M-19 matmul template, register_spills should
+    """On the standard matmul template, register_spills should
     be 0 — spills indicate the kernel is too register-heavy."""
     try:
         import torch
@@ -209,7 +209,7 @@ def test_target_arch_matches_cuda_device(kernels_run: Path) -> None:
 
 
 def test_ncu_admin_only_is_typed_unavailable(kernels_run: Path) -> None:
-    """In the typical user environment ncu is admin-only. M-24.1 must
+    """In the typical user environment ncu is admin-only. must
     NOT crash; it must emit ncu_admin_only with a reason. This is the
     GRACEFUL DEGRADATION path."""
     try:
@@ -234,13 +234,13 @@ def test_ncu_admin_only_is_typed_unavailable(kernels_run: Path) -> None:
 
 
 # --------------------------------------------------------------------------- #
-# M-24 row 3 flips ready
+# row 3 flips ready
 # --------------------------------------------------------------------------- #
 
 
 @pytest.mark.requires_gpu
 def test_m24_row3_flips_to_ready_after_m241(kernels_run: Path) -> None:
-    """With M-24.1 active, M-24 row 3 (compiled_lifetime) flips
+    """With active, row 3 (compiled_lifetime) flips
     ready_for_m24_1 → ready when every region has the 4 static
     fields populated."""
     try:
@@ -274,7 +274,7 @@ def test_m24_row3_flips_to_ready_after_m241(kernels_run: Path) -> None:
 def test_byte_identical_introspection_across_reruns(
     kernels_run: Path,
 ) -> None:
-    """Re-running M-24.1 produces a byte-identical static-fields
+    """Re-running produces a byte-identical static-fields
     snapshot (introspection IS deterministic). Modulo timestamp +
     ncu output (which carries some volatile fields)."""
     from compgen.graph_compilation.kernel_lifetime_evidence import (

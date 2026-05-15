@@ -7,8 +7,8 @@ bidirectional communication between CompGen and providers:
 2. Knowledge ingestion: collect exports from all providers into memory
 3. Contract evolution: apply provider feedback to update contracts
 
-Phase D / M-55: ``applicable()`` exposes a static-metadata filter over
-``KernelContractV3`` so the kernel-codegen pipeline (M-42) can log which
+Phase D / ``applicable`` exposes a static-metadata filter over
+``KernelContractV3`` so the kernel-codegen pipeline can log which
 providers *could* bid before any provider methods are invoked. The
 filter reads optional class-level attributes on each provider:
 
@@ -49,8 +49,8 @@ log = structlog.get_logger()
 class ProviderApplicability:
     """Why (or why not) a provider was deemed applicable for a contract.
 
-    M-55 emits one of these per registered provider into
-    ``04_kernel_codegen/registry_resolution.json`` so the M-57 auction
+    emits one of these per registered provider into
+    ``04_kernel_codegen/registry_resolution.json`` so the auction
     has a stable, byte-deterministic record of which providers it
     considered for a given task.
     """
@@ -256,7 +256,7 @@ class ProviderRegistry:
 
 
     # ------------------------------------------------------------------
-    # M-55 — static-metadata applicability over KernelContractV3
+    # static-metadata applicability over KernelContractV3
     # ------------------------------------------------------------------
 
     def applicable(
@@ -266,10 +266,10 @@ class ProviderRegistry:
         """Static-metadata filter: which providers could bid on this V3 contract?
 
         This is a *pure* metadata match — no provider methods are
-        invoked. M-56's ``bid()`` and M-57's ``fulfill()`` consume this
+        invoked. 's ``bid`` and 's ``fulfill`` consume this
         list. Until then, the codegen pipeline calls this and writes
         ``04_kernel_codegen/registry_resolution.json`` for traceability;
-        the actual codegen path (today: Claude-Code subagent via M-43
+        the actual codegen path (today: Claude-Code subagent
         commit) is unchanged.
 
         Args:
@@ -346,7 +346,7 @@ class ProviderRegistry:
 
 
 # ===========================================================================
-# M-56 — bid() invocation with legacy fallback
+# bid invocation with legacy fallback
 # ===========================================================================
 
 
@@ -356,7 +356,7 @@ def _validate_bid(bid: BidPreview, *, expected_hash: str) -> None:
     Raises :class:`ProviderProtocolViolation` on any structural
     violation. Bid honesty (i.e. whether ``perf_estimate_us`` reflects
     reality) is not checked here — the auction trusts the bid only as
-    a ranking signal; the contract-driven verifier (M-44) catches
+    a ranking signal; the contract-driven verifier catches
     real-world divergence on the fulfilled artifact.
     """
     import math
@@ -488,7 +488,7 @@ def collect_bids(
     """Run :func:`compute_bid` over a list of applicable providers.
 
     Hashes the contract once and reuses the canonical hash for every
-    provider. Returns the bids in the input order; the auction (M-57)
+    provider. Returns the bids in the input order; the auction
     is responsible for ranking them.
     """
     try:
@@ -553,7 +553,7 @@ def default_registry() -> ProviderRegistry:
     2. Entry-point providers via :func:`discover_default_providers`.
 
     The Claude-Code subagent path is not registered here — its bid is
-    cache-aware (M-56) and is added explicitly by callers that want
+    cache-aware and is added explicitly by callers that want
     in-session codegen. Tests inject stubs via a fresh
     ``ProviderRegistry()`` rather than this default.
     """
@@ -575,7 +575,7 @@ def default_registry() -> ProviderRegistry:
             error=f"{type(exc).__name__}: {exc}",
         )
 
-    # M-62: user-space provider — only loaded when an index already
+    # user-space provider — only loaded when an index already
     # exists on disk under .compgen/user_kernel_index/ (the
     # discover skill / --user-kernel-path flag populates this).
     try:
@@ -596,7 +596,13 @@ def default_registry() -> ProviderRegistry:
             error=f"{type(exc).__name__}: {exc}",
         )
 
-    for p in discover_default_providers():
+    # Discovered providers are sorted by `priority` (highest first)
+    # before registration so the registration-order search() and the
+    # V3 auction's priority-sorted applicable() agree on preference.
+    # See KernelBlasterProvider.priority / AutocompProvider.priority.
+    discovered = discover_default_providers()
+    discovered.sort(key=lambda p: (-int(getattr(p, "priority", 0)), getattr(p, "name", "")))
+    for p in discovered:
         reg.register(p)
     return reg
 

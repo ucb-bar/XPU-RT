@@ -1,4 +1,4 @@
-"""Acceptance tests for M-08: Post-Lowering Verification.
+"""Acceptance tests for Post-Lowering Verification.
 
 Asserts:
 - transformed_payload.mlir is emitted for transform-like recipes only
@@ -191,7 +191,7 @@ def test_create_kernel_contract_does_not_emit_transformed_payload(
 def test_source_payload_byte_identical(
     model_id: str, post_lowering_runs: dict[str, Path], tmp_path: Path,
 ) -> None:
-    """Re-run M-08 on a copy and verify ``01_payload_lowering/`` is
+    """Re-run on a copy and verify ``01_payload_lowering/`` is
     byte-identical afterwards."""
     src = post_lowering_runs[model_id]
     work = tmp_path / f"readonly_{model_id}"
@@ -331,7 +331,7 @@ def test_tampered_tile_in_transform_script_fails(
     p = work / "03_recipe_planning" / "lowering_artifacts" / "transforms" / "recipe_0000.mlir"
     text = p.read_text()
     # Mutate the M tile dim to 999 — disagrees with verified_recipe.mlir.
-    # Post-M-37.11 tiny_mlp's shape-fit tile is M=4 (was M=16 pre-M-37.11);
+    # Post-tiny_mlp's shape-fit tile is M=4 (was M=16 pre-);
     # match whichever value the planner picked.
     import re as _re
     m_match = _re.search(r"M\s*=\s*(\d+)\s*:\s*i64", text)
@@ -420,7 +420,7 @@ def test_source_payload_mutation_detected(
 def test_transformed_payload_under_01_payload_lowering_is_caught(
     tmp_path: Path, post_lowering_runs: dict[str, Path],
 ) -> None:
-    """If a malicious M-08 (or buggy refactor) writes
+    """If a malicious (or buggy refactor) writes
     ``transformed_payload`` under 01_payload_lowering, the
     ``transformed_payload_not_under_01_payload_lowering`` check fails."""
     src = post_lowering_runs["tiny_mlp"]

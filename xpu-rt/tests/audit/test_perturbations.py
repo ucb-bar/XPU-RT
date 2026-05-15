@@ -1,4 +1,4 @@
-"""Tests for compgen.audit.perturbations (M-31A.4)."""
+"""Tests for compgen.audit.perturbations."""
 
 from __future__ import annotations
 

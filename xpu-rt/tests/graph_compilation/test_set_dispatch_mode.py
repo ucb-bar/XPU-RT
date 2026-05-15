@@ -1,4 +1,4 @@
-"""M-50 SetDispatchMode tests.
+"""SetDispatchMode tests.
 
 Coverage:
 - action_space emits set_dispatch_mode candidates per matmul region

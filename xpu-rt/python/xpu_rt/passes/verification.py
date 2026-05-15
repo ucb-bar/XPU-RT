@@ -1,4 +1,4 @@
-"""Verification certificate gate (M-33.2).
+"""Verification certificate gate.
 
 Each pass card declares a list of ``verification`` rungs that must be
 discharged before downstream consumers can read the pass's outputs.
@@ -9,7 +9,7 @@ Today CompGen emits two real verification reports:
 - ``03_recipe_planning/differential_verification/differential_verification_report.json``
   (differential numerical verification)
 
-M-33 wraps each into a :class:`VerificationCertificate` JSON sidecar
+wraps each into a :class:`VerificationCertificate` JSON sidecar
 co-located with the report. The certificate carries:
 
 - ``rung``           — ``structural`` / ``differential`` / ``formal``
@@ -58,7 +58,7 @@ ALLOWED_STATUSES: tuple[str, ...] = ("pass", "fail", "skipped")
 
 # Rungs that may legitimately be ``skipped`` without failing the gate.
 # ``formal`` has no live emitter today — pass cards that declare it get
-# a skipped-with-typed-reason certificate. M-33's honest-residual list
+# a skipped-with-typed-reason certificate. 's honest-residual list
 # names this as the residual to close when semantic-IR formal
 # verification ships.
 SKIPPABLE_RUNGS: frozenset[str] = frozenset({"formal"})
@@ -139,7 +139,7 @@ class VerificationCertificate:
 def _certificate_path_for(run_dir: Path, rung: str) -> Path:
     """Canonical certificate location per rung.
 
-    M-33 colocates each certificate with the report it wraps:
+    colocates each certificate with the report it wraps:
       structural   → 03_recipe_planning/post_lowering/verification_certificate.json
       differential → 03_recipe_planning/differential_verification/verification_certificate.json
       formal       → 03_recipe_planning/formal_verification/verification_certificate.json

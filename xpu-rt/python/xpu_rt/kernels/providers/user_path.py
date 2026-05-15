@@ -1,4 +1,4 @@
-"""M-62 — :class:`UserKernelProvider`: bid + fulfill from indexed user kernels.
+""":class:`UserKernelProvider`: bid + fulfill from indexed user kernels.
 
 Reads the on-disk index produced by
 :func:`compgen.kernels.user_kernel_index.reindex`, matches incoming
@@ -207,7 +207,7 @@ class UserKernelProvider:
     def search(self, contract: KernelContract, budget: SearchBudget) -> ProviderResult:
         """Fulfill the most-recent matched bid.
 
-        The auction calls :meth:`bid` before :meth:`search` (M-57); the
+        The auction calls :meth:`bid` before :meth:`search`; the
         match recorded in ``_last_match`` tells us which kernel to
         serve. On hash drift, raises :class:`UserKernelHashDriftError`
         — the auction's error handler converts it into a typed
@@ -223,7 +223,7 @@ class UserKernelProvider:
         # Tamper detection.
         audit_locked_files(entry)
 
-        # Gap #13: kernel_source is a tuple — read the primary entry.
+        # : kernel_source is a tuple — read the primary entry.
         kernel_path = (
             Path(entry.source_dir) / entry.manifest.primary_kernel_source
         )

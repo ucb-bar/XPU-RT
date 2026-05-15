@@ -1,4 +1,4 @@
-"""Tests for M-16 Real Transform Coverage Expansion.
+"""Tests Real Transform Coverage Expansion.
 
 Verifies that:
 
@@ -12,7 +12,7 @@ Verifies that:
   typically when ``K_iters == 1``).
 - A previously-blocked model (tiny_attention with tile_M32_N32_K32)
   passes Path A with discharged_bit_equality.
-- M-15B downstream retry still fires when M-12 is forced to fail.
+downstream retry still fires when is forced to fail.
 - Non-SetTileParams / non-f32 / pathological cases remain blocked
   with precise reasons.
 - merlin_mlp_wide's clean-divides path is unchanged.
@@ -73,10 +73,10 @@ def _invoke(
 def test_previously_blocked_models_now_run_path_a(
     model: str, tmp_path: Path,
 ) -> None:
-    """Pre-M-16: M-12 returned ``mode=blocked`` for these models.
-    Post-M-16: M-12 reaches Path A (mode=executable_real_transform).
+    """Pre-returned ``mode=blocked`` for these models.
+    Post-reaches Path A (mode=executable_real_transform).
 
-    M-37.11 evolution: greedy now derives shape-fit tile candidates
+    evolution: greedy now derives shape-fit tile candidates
     and prefers clean-divide tiles over boundary-handled ones (the
     boundary-aware path is still emitted as a fallback when no clean
     tile fits). For these three models the shape-fit candidate
@@ -87,8 +87,8 @@ def test_previously_blocked_models_now_run_path_a(
     "boundary path forced"."""
     out = tmp_path / model
     res = _invoke(model=model, out_dir=out)
-    # Pipeline raises via M-15B if downstream fails. We don't care
-    # about exit code for this test; we care that the M-12 report
+    # Pipeline raises if downstream fails. We don't care
+    # about exit code for this test; we care that the report
     # exists and shows Path A was attempted.
     rep_path = (
         out / "03_recipe_planning" / "real_verification"
@@ -101,7 +101,7 @@ def test_previously_blocked_models_now_run_path_a(
     )
     real_kind = rep["transform"]["real_transform_kind"]
     assert real_kind in (
-        "executable_structured_ir",            # M-37.11 clean-divide path
+        "executable_structured_ir",            # clean-divide path
         "executable_with_boundary_handling",   # legacy boundary path
     ), f"{model}: unexpected real_transform_kind={real_kind!r}"
     bh = rep["boundary_handling"]
@@ -117,8 +117,8 @@ def test_previously_blocked_models_now_run_path_a(
 def test_merlin_mlp_wide_still_passes_clean_divides_path(
     tmp_path: Path,
 ) -> None:
-    """The pre-M-16 happy path: clean divides → executable_structured_ir
-    → bit-equality on 16/16 cases. M-16 must not regress this."""
+    """The pre-happy path: clean divides → executable_structured_ir
+    → bit-equality on 16/16 cases. must not regress this."""
     out = tmp_path / "merlin_mlp_wide"
     res = _invoke(model="merlin_mlp_wide", out_dir=out)
     assert res.returncode == 0
@@ -146,7 +146,7 @@ def test_merlin_mlp_wide_still_passes_clean_divides_path(
 def test_tiny_attention_passes_bit_equality_with_tile_32(
     tmp_path: Path,
 ) -> None:
-    """The headline M-16 bar: a previously-blocked SetTileParams model
+    """The headline bar: a previously-blocked SetTileParams model
     passes Path A with discharged_bit_equality.
 
     For tiny_attention (M=8, N=96, K=32), greedy picks tile=16x16x16
@@ -155,8 +155,8 @@ def test_tiny_attention_passes_bit_equality_with_tile_32(
     boundary-aware slicing for M (tm=8 < tile_M=32) and N (3×32, no
     boundary in N at boundary 96=3*32)."""
     # First run a probe to find the tile_32 candidate id. Stop at
-    # graph-analysis so M-12 (which would fail on the greedy tile_16
-    # pick and trigger M-15B) doesn't run during the probe.
+    # graph-analysis so (which would fail on the greedy tile_16
+    # pick and trigger ) doesn't run during the probe.
     probe = tmp_path / "probe"
     res = _invoke(
         model="tiny_attention", out_dir=probe,
@@ -264,13 +264,13 @@ def test_bit_equality_not_claimed_when_k_iters_greater_than_one(
     from eager → max_abs_error > 0. The recipe gate must NOT claim
     bit_equality.
 
-    Pre-M-37.12: M-12 reported ``fail_refinement_mismatch`` because the
+    Pre-reported ``fail_refinement_mismatch`` because the
     obligation declared ``bit_equality`` (overly optimistic) and the
     differential observed non-zero error.
 
-    Post-M-37.12: the recipe gate downgrades the declaration to
-    ``tolerance_eps`` whenever clean_divide AND K_iters > 1 (M-37.12 Fix).
-    M-12 then discharges ``tolerance_eps`` honestly. The invariant the
+    Post-the recipe gate downgrades the declaration to
+    ``tolerance_eps`` whenever clean_divide AND K_iters > 1 (Fix).
+    then discharges ``tolerance_eps`` honestly. The invariant the
     test checks is: ``refinement_status != discharged_bit_equality``
     AND ``max_abs_error > 0`` (proof that K_iters > 1 reordered
     accumulation). On tiny_mlp (M=4 K=64, tile_M4_N16_K16, K_iters=4)
@@ -292,7 +292,7 @@ def test_bit_equality_not_claimed_when_k_iters_greater_than_one(
     # max_abs_error is not exactly 0 because accumulation reorder
     # caused float rounding to differ.
     assert rep["error"]["max_abs_error"] > 0.0
-    # And the post-M-37.12 happy path: status pass, discharged_tolerance_eps.
+    # And the post-happy path: status pass, discharged_tolerance_eps.
     if rep["status"] == "pass":
         assert refinement_status == "discharged_tolerance_eps"
 
@@ -307,7 +307,7 @@ def test_non_set_tile_params_models_still_blocked_after_m16(
     model: str, tmp_path: Path,
 ) -> None:
     """Models whose greedy pick is FuseProducerConsumer or
-    CreateKernelContract still take Path B (blocked) — M-16 only
+    CreateKernelContract still take Path B (blocked) — only
     expanded SetTileParams coverage."""
     out = tmp_path / model
     res = _invoke(model=model, out_dir=out)
@@ -321,30 +321,30 @@ def test_non_set_tile_params_models_still_blocked_after_m16(
 
 
 # --------------------------------------------------------------------------- #
-# M-15B downstream retry still fires on REAL M-12 failures under M-16
+# downstream retry still fires on REAL failures
 # --------------------------------------------------------------------------- #
 
 
 def test_m15b_downstream_retry_fires_on_real_m12_failure_under_m16(
     tmp_path: Path,
 ) -> None:
-    """M-15B downstream-retry plumbing fires when any real downstream
+    """downstream-retry plumbing fires when any real downstream
     stage rejects the recipe.
 
     History:
 
-    - Pre-M-37.11: tile_M16_N16_K16 + K=64 → boundary-aware Path A
-      fails bit-equality → M-15B fires on real_transform_differential.
-    - M-37.11: shape-fit tile candidates landed; tiny_mlp picks
-      tile_M4_N16_K16 (clean-divide). M-11B whitelist became the
-      blocker → M-15B fires on real_transform_validation.
-    - M-37.12: whitelist relaxed; combined torch.allclose tolerance.
-      No canonical-set model produces a natural M-12 failure anymore.
-    - M-37.13: coverage restored by tampering an M-12 status=pass
+    Pre-tile_M16_N16_K16 + K=64 → boundary-aware Path A
+      fails bit-equality → fires on real_transform_differential.
+    shape-fit tile candidates landed; tiny_mlp picks
+      tile_M4_N16_K16 (clean-divide). whitelist became the
+      blocker → fires on real_transform_validation.
+    whitelist relaxed; combined torch.allclose tolerance.
+      No canonical-set model produces a natural failure anymore.
+    coverage restored by tampering an status=pass
       report into a status=fail report on disk and exercising the
-      M-15B detector + emitter end-to-end. The natural-failure path
+      detector + emitter end-to-end. The natural-failure path
       itself is unreachable under correct math; the gap was always
-      "M-15B plumbing has zero real-failure coverage", and the
+      "plumbing has zero real-failure coverage", and the
       tampered-report test exercises exactly that plumbing.
 
     See tests/graph_compilation/test_negative_controls.py for

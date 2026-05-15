@@ -1,4 +1,4 @@
-"""Holdout: two matmuls consuming the same activation (M-31A.4).
+"""Holdout: two matmuls consuming the same activation.
 
 Tests that the candidate-action space + region detector handle a
 multi-consumer activation. A sloppy implementation that assumes every

@@ -62,6 +62,5 @@ template_dialect = DialectSpec(
 )
 
 # To generate the xDSL Python dialect:
-#
 #   from compgen.extensions.xdsl_generate import generate_xdsl_dialect
 #   generate_xdsl_dialect(template_dialect, output_dir="python/compgen/ir/my_accel/")

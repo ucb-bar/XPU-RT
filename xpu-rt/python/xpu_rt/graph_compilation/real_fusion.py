@@ -148,10 +148,10 @@ def _selected_fusion(
     ``(candidate_id, recipe_op_id, producer, consumer, via_tensor)``.
     Otherwise return None.
 
-    Reads ``03_recipe_planning/candidate_selection.json`` (the typed M-05
+    Reads ``03_recipe_planning/candidate_selection.json`` (the typed
     summary). The recipe_delta there is the source of truth for the
     producer / consumer / via_tensor — it was set by action_space.py and
-    re-validated by the M-04.5 resolver.
+    re-validated by the resolver.
     """
     sel_path = run_dir / "03_recipe_planning" / "candidate_selection.json"
     sel = _read_json_or_none(sel_path)
@@ -423,7 +423,7 @@ def _emit_transformed_payload(
 
 
 def run_real_fusion_lowering(run_dir: Path) -> RealFusionLoweringResult | None:
-    """Run M-16.2 fusion lowering on a run directory whose committed
+    """Run fusion lowering on a run directory whose committed
     candidate is FuseProducerConsumer.
 
     Returns ``None`` (not a dataclass) if the selected candidate is NOT
@@ -743,7 +743,7 @@ def _eval_fused(
 def run_real_fusion_differential(
     run_dir: Path,
 ) -> RealFusionDifferentialResult | None:
-    """Run M-16.2 differential evaluator if a fusion manifest exists.
+    """Run differential evaluator if a fusion manifest exists.
 
     Returns None if no fusion manifest is present (no-op for runs whose
     selected candidate is not FuseProducerConsumer). Returns blocked
@@ -1003,7 +1003,7 @@ def run_real_fusion_differential(
     }
     payload_unchanged = pre_payload_shas == post_payload_shas
     if not payload_unchanged:
-        # Source payload was mutated during M-12 — that's a hard fail.
+        # Source payload was mutated during that's a hard fail.
         status = "fail"
         refinement = "fail_source_payload_mutated"
         failures.append("source payload SHAs changed during M-16.2 differential")

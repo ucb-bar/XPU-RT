@@ -1,10 +1,10 @@
-"""Kernel-codegen task emission (M-42, supersedes M-39's request emit).
+"""Kernel-codegen task emission (, supersedes 's request emit).
 
-Phase C M-42: replaces M-39's ``kernel_specialization_request_v1`` with
+Phase C replaces 's ``kernel_specialization_request_v1`` with
 ``kernel_codegen_request_v1`` and migrates the directory layout from
 ``04_kernel_specialization/`` to ``04_kernel_codegen/``. The new
 schema is leaner: the request POINTS to the materialised contract
-files (M-40 wrote them) instead of embedding shape/tile/layout/dtype
+files (wrote them) instead of embedding shape/tile/layout/dtype
 inline. The contract files are the source of truth; the request
 bounds **which** of those files the kernel-codegen provider may read,
 and **where** it may write its artifacts.
@@ -15,17 +15,17 @@ Directory layout under ``04_kernel_codegen/``:
 
     04_kernel_codegen/
       requests/<task_id>.request.json     (this module emits)
-      contracts/<region>.<hash>.json      (M-40 emits)
-      views/<region>.kernel_facing.json   (M-40 emits)
-      artifacts/<task_id>/                (sandbox; provider writes here at M-43)
+      contracts/<region>.<hash>.json (emits)
+      views/<region>.kernel_facing.json (emits)
+      artifacts/<task_id>/ (sandbox; provider writes here at )
       kernel_codegen_summary.json
 
-The sandbox dir is created empty so M-43's commit tool can enforce
+The sandbox dir is created empty so 's commit tool can enforce
 "every response artifact path lives under ``artifact_dir``" without
 having to recreate the directory. Forbidden-path-write is a fatal
-protocol violation in M-43.
+protocol violation .
 
-Critical invariant: the subagent (M-43+) only sees
+Critical invariant: the subagent (+) only sees
 ``contract_paths.kernel_facing`` — never ``contract_paths.full``. The
 ``compiler_only()`` projection (wait_on, blocking, lifetimes,
 fusion, observability, max_concurrent_invocations, providers,
@@ -146,7 +146,7 @@ def _task_id(*, candidate_id: str, region_id: str) -> str:
 
 
 # Forbidden-mutations the request lists explicitly. Names match the
-# M-43 commit-tool failure-class taxonomy (so `forbidden` strings on
+# commit-tool failure-class taxonomy (so `forbidden` strings on
 # the request can be cross-referenced with the rejection reasons the
 # commit tool emits).
 _FORBIDDEN_MUTATIONS: tuple[str, ...] = (
@@ -160,8 +160,8 @@ _FORBIDDEN_MUTATIONS: tuple[str, ...] = (
 )
 
 # Required output filenames the provider MUST produce inside
-# artifact_dir/. M-43's commit tool checks each one exists before
-# routing to the M-44 verifier.
+# artifact_dir/. 's commit tool checks each one exists before
+# routing to the verifier.
 _REQUIRED_OUTPUTS: tuple[str, ...] = (
     "kernel_source",       # kernel.py | kernel.c
     "kernel_metadata",     # kernel_metadata.json
@@ -173,14 +173,14 @@ _REQUIRED_OUTPUTS: tuple[str, ...] = (
 def _allowed_backends_for(target_class: str) -> tuple[str, ...]:
     """Pick the allowed-backend list per target class.
 
-    M-42 keeps this small. M-50+ widens (e.g., adds 'persistent' for
+    keeps this small. + widens (e.g., adds 'persistent' for
     MEGA dispatch). The list is the bounded surface the provider may
-    pick from; choosing anything outside it is rejected by M-43 as
+    pick from; choosing anything outside it is rejected as
     ``unsupported_backend``.
     """
     tc = target_class.lower()
     if "cuda" in tc or "gpu" in tc:
-        # Triton template is the proven GPU path (Phase B M-19/M-20).
+        # Triton template is the proven GPU path (Phase B /).
         return ("triton",)
     # Default — host_cpu and other CPU-class targets.
     return ("c_reference",)
@@ -202,7 +202,7 @@ class KernelCodegenResult:
 
 
 def build_kernel_codegen_request(run_dir: Path) -> KernelCodegenRequest:
-    """Build the M-42 request from on-disk recipe-planning + M-40
+    """Build the request from on-disk recipe-planning +
     materialised-contract artifacts.
 
     Pure function — reads only on-disk state. The wrapper
@@ -226,8 +226,8 @@ def build_kernel_codegen_request(run_dir: Path) -> KernelCodegenRequest:
     # Empty contract-paths struct — populated below for set_tile_params.
     contract_paths = _ContractPaths(full="", kernel_facing="")
 
-    # M-40 contract files for the same selected candidate. Read the
-    # M-40 summary to find the contract_hash + paths, NOT the global
+    # contract files for the same selected candidate. Read the
+    # summary to find the contract_hash + paths, NOT the global
     # filesystem (avoids races on rerun + scope creep).
     mat_summary = _read_json_or_none(
         run_dir / "04_kernel_codegen" / "contract_materialization_summary.json"
@@ -239,8 +239,8 @@ def build_kernel_codegen_request(run_dir: Path) -> KernelCodegenRequest:
                 materialized_row = row
                 break
 
-    # Gap #6 closure: fusion candidates also produce a kernel_codegen
-    # request now (M-40 + M-42 grew past set_tile_params-only).
+    #  closure: fusion candidates also produce a kernel_codegen
+    # request now ( grew past set_tile_params-only).
     if candidate_kind not in ("set_tile_params", "fuse_producer_consumer"):
         reason = _NOT_APPLICABLE_REASONS.get(
             candidate_kind,
@@ -269,7 +269,7 @@ def build_kernel_codegen_request(run_dir: Path) -> KernelCodegenRequest:
 
     # set_tile_params with materialized contract.
     if materialized_row is None or materialized_row.get("status") != "materialized":
-        # M-40 should have materialised this; if it didn't, surface
+        # should have materialised this; if it didn't, surface
         # the gap as an error-typed request (this is a real bug, not
         # a not_applicable case).
         return KernelCodegenRequest(
@@ -336,7 +336,7 @@ def build_kernel_codegen_request(run_dir: Path) -> KernelCodegenRequest:
 
 
 # --------------------------------------------------------------------------- #
-# M-55 — registry resolution
+# registry resolution
 # --------------------------------------------------------------------------- #
 
 
@@ -351,14 +351,14 @@ def _emit_registry_resolution(
     """Write ``04_kernel_codegen/registry_resolution.json`` listing the
     static-metadata applicability of every registered kernel provider.
 
-    M-55 — purely informational. The file records, byte-deterministically,
+    purely informational. The file records, byte-deterministically,
     which entry-point providers *could* bid on the materialized contract
-    for this task. M-57's auction will consume this list; until then,
-    today's Claude-Code subagent path runs unchanged via M-43.
+    for this task. 's auction will consume this list; until then,
+    today's Claude-Code subagent path runs unchanged .
 
     The file is also written for ``not_applicable`` requests with an
     empty applicable list — readers can rely on the file existing
-    whenever the M-42 stage runs.
+    whenever the stage runs.
     """
     out_dir = run_dir / "04_kernel_codegen"
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -374,7 +374,7 @@ def _emit_registry_resolution(
             from compgen.kernels.registry import default_registry
 
             # Reconstruct the V3 contract from the materialized JSON the
-            # request points at — same projection M-43/M-44 use.
+            # request points at — same projection /use.
             full_path = run_dir / request.contract_paths.full
             if full_path.exists():
                 from compgen.graph_compilation.kernel_codegen_response import (
@@ -437,7 +437,7 @@ def run_kernel_codegen_request(run_dir: Path) -> KernelCodegenResult:
         encoding="utf-8",
     )
 
-    # M-55 — emit registry resolution alongside the request.
+    # emit registry resolution alongside the request.
     _emit_registry_resolution(run_dir=run_dir, request=request)
 
     summary_path = out_dir / "kernel_codegen_summary.json"

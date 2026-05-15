@@ -1,17 +1,17 @@
-"""M-48 plan-assertion tests.
+"""plan-assertion tests.
 
 Each test fires one specific PLAN_VIOLATION_<KIND> with a typed
 subclass. The harness:
 
 1. Drives ``--stop-after glue-emit`` end-to-end on merlin_mlp_wide
    (after committing a synthetic provider response) so the emitted
-   module has all the M-48 generated assertions wired.
+   module has all the generated assertions wired.
 2. Imports the module.
 3. Calls ``compgen_run(io, kernels, runtime)`` with a tampered ``io``
    dict that violates exactly one invariant.
 4. Asserts the typed subclass fires.
 
-Catches the M-31A negative-control discipline: each PLAN_VIOLATION
+Catches the negative-control discipline: each PLAN_VIOLATION
 case is reachable via a fault injection in the test, not just by
 inspection of the emitted source.
 """
@@ -33,7 +33,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 def _build_run_with_provider_response(out: Path) -> tuple[Path, dict]:
     """Drive merlin_mlp_wide through the pipeline + commit a
     contract-compliant provider response so the emitted module has
-    bound regions + M-48 assertions wired. Returns (out, request)."""
+    bound regions + assertions wired. Returns (out, request)."""
     res = subprocess.run([
         sys.executable, "-m", "compgen.graph_compilation", "run",
         "--model", str(REPO_ROOT / "configs/models/merlin_mlp_wide.yaml"),
@@ -97,7 +97,7 @@ def _build_run_with_provider_response(out: Path) -> tuple[Path, dict]:
     from compgen.graph_compilation.kernel_codegen_response import commit_response
     commit_response(run_dir=out, task_id=request["task_id"], response=response)
 
-    # Re-emit M-46 + M-47.
+    # Re-emit .
     from compgen.graph_compilation.execution_plan_emit import emit_execution_plan
     from compgen.runtime.glue_emit import emit_python_sync_executor
     emit_execution_plan(out)

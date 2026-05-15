@@ -1,4 +1,4 @@
-"""M-42 Kernel-codegen task emitter tests (supersedes M-39's tests).
+"""Kernel-codegen task emitter tests (supersedes the tests).
 
 Three layers of coverage:
 
@@ -109,8 +109,8 @@ def _read_request(run_dir: Path) -> dict:
 
 
 def test_e2e_directory_layout(merlin_run: Path) -> None:
-    """M-42 unifies under 04_kernel_codegen/. Sub-dirs:
-    requests/, contracts/ (M-40), views/ (M-40), artifacts/ (sandbox)."""
+    """unifies under 04_kernel_codegen/. Sub-dirs:
+    requests/, contracts/, views/, artifacts/ (sandbox)."""
     out = merlin_run / "04_kernel_codegen"
     assert (out / "requests").is_dir()
     assert (out / "contracts").is_dir()
@@ -120,7 +120,7 @@ def test_e2e_directory_layout(merlin_run: Path) -> None:
 
 
 def test_e2e_legacy_dir_no_longer_written(merlin_run: Path) -> None:
-    """The pre-M-42 04_kernel_specialization/ path must not be created."""
+    """The pre-04_kernel_specialization/ path must not be created."""
     legacy = merlin_run / "04_kernel_specialization"
     assert not legacy.exists(), (
         "M-39 directory was created; M-42 migration is incomplete"
@@ -158,7 +158,7 @@ def test_e2e_contract_paths_resolve(merlin_run: Path) -> None:
 
 
 def test_e2e_artifact_dir_exists_and_is_empty(merlin_run: Path) -> None:
-    """The sandboxed artifact_dir is created empty by M-42; M-43's
+    """The sandboxed artifact_dir is created empty ; 's
     commit tool will reject any provider response that writes outside
     this directory."""
     body = _read_request(merlin_run)
@@ -169,8 +169,8 @@ def test_e2e_artifact_dir_exists_and_is_empty(merlin_run: Path) -> None:
 
 def test_e2e_kernel_facing_view_no_compiler_only_fields(merlin_run: Path) -> None:
     """Defense-in-depth — the view at the embedded path still excludes
-    compiler-only fields. Mirrors the M-40 negative control on the
-    on-disk artifact, this time triggered through the M-42 pointer."""
+    compiler-only fields. Mirrors the negative control on the
+    on-disk artifact, this time triggered through the pointer."""
     body = _read_request(merlin_run)
     facing_text = (merlin_run / body["contract_paths"]["kernel_facing"]).read_text()
     forbidden = (
@@ -223,7 +223,7 @@ def test_e2e_tiny_mlp_emits_request_too(tiny_run: Path) -> None:
     assert body["region_id"] == "matmul_0"
     assert body["allowed_backends"] == ["c_reference"]
     # tiny_mlp's tile_M4_N16_K16 should yield a tolerance_eps refinement
-    # in the materialised contract (M-40 puts it as a StaticAttr).
+    # in the materialised contract (puts it as a StaticAttr).
     full = tiny_run / body["contract_paths"]["full"]
     contract_body = json.loads(full.read_text())
     attrs = {a["name"]: a["value"] for a in contract_body["io"]["attributes"]}
@@ -238,7 +238,7 @@ def test_e2e_tiny_mlp_emits_request_too(tiny_run: Path) -> None:
 def test_e2e_stop_at_recipe_planning_does_not_emit_request(tmp_path: Path) -> None:
     """When stop_after is before kernel-codegen-request, no
     04_kernel_codegen/requests/ is created. The 04_kernel_codegen/
-    contracts dir may exist from M-40 if its boundary lower than this
+    contracts dir may exist if its boundary lower than this
     one — the request emit is what we're checking."""
     out = tmp_path / "no_request"
     res = _invoke(model="merlin_mlp_wide", out_dir=out, stop_after="agent-decision-request")
@@ -251,7 +251,7 @@ def test_e2e_stop_at_recipe_planning_does_not_emit_request(tmp_path: Path) -> No
 def test_e2e_kernel_specialization_request_alias_still_works(tmp_path: Path) -> None:
     """The legacy --stop-after kernel-specialization-request flag is
     kept as an alias of --stop-after kernel-codegen-request because the
-    boundary block runs both M-40 and M-42 unconditionally. Makes the
+    boundary block runs both unconditionally. Makes the
     migration safe for callers that still pass the old flag."""
     out = tmp_path / "alias"
     res = _invoke(model="merlin_mlp_wide", out_dir=out,

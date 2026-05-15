@@ -1,10 +1,10 @@
-"""Python SYNC plan executor emitter (M-47).
+"""Python SYNC plan executor emitter.
 
-Phase C M-47: first emitted-glue milestone. Generate a
+Phase C first emitted-glue milestone. Generate a
 ``compgen_run(io, kernels, runtime)`` Python module from
 ``05_execution_plan/execution_plan.yaml``. CPU/SYNC only via the
-existing :class:`compgen.runtime.glue.CpuRuntimeAdapter`. M-51 widens
-to ASYNC + EventTensor; M-52 adds CUDA + graph capture.
+existing :class:`compgen.runtime.glue.CpuRuntimeAdapter`. widens
+to ASYNC + EventTensor; adds CUDA + graph capture.
 
 Generated shape (per Phase C plan):
 
@@ -12,7 +12,7 @@ Generated shape (per Phase C plan):
 
     def compgen_run(io, kernels, runtime):
         assert_plan(io)
-        b0 = runtime.allocate_buffer(...)        # M-48 wires per-region buffer specs
+        b0 = runtime.allocate_buffer(...) # wires per-region buffer specs
         out0 = runtime.dispatch(contract_0, kernels["region_000"], args_0, {})
         runtime.synchronize()
         return out0
@@ -27,13 +27,13 @@ Hard rules at this layer:
 - The generated executor calls one ``runtime.dispatch`` per region in
   a topologically-sorted order derived from
   ``ExecutionPlan.dependency_edges``.
-- Each region's kernel callable is provided by the operator (M-49
-  wires the load-from-artifact path). M-47 ships the protocol; the
+Each region's kernel callable is provided by the operator (
+  wires the load-from-artifact path). ships the protocol; the
   callable surface is dict[str, Callable].
-- ``assert_plan(io)`` is a stub at M-47; M-48 generates the typed
+``assert_plan(io)`` is a stub at ; generates the typed
   ``PLAN_VIOLATION_<KIND>`` checks from the contract fields.
 - Bound regions are dispatched; unbound regions raise a typed
-  ``PlanViolation`` at runtime so M-46's "honest unbound" cannot
+  ``PlanViolation`` at runtime so 's "honest unbound" cannot
   silently elide a region.
 """
 
@@ -104,7 +104,7 @@ def _topological_region_order(plan: ExecutionPlan) -> list[str]:
             if in_degree[n] == 0:
                 queue.append(n)
     if len(out) != len(region_ids):
-        # Cycle — fall back to placement order; M-48 will reject the plan.
+        # Cycle — fall back to placement order; will reject the plan.
         return region_ids
     return out
 
@@ -176,7 +176,7 @@ def _emit_executor_source(
         indent=4, sort_keys=True,
     )
 
-    # M-48: render PlanViolation subclasses + assert_plan body.
+    # render PlanViolation subclasses + assert_plan body.
     from compgen.runtime.glue_emit.plan_assertions import (
         render_plan_violation_classes,
     )
@@ -293,10 +293,10 @@ if __name__ == "__main__":
 
 
 def emit_python_sync_executor(run_dir: Path) -> GlueEmitResult:
-    """Read the M-46 plan from disk, render the SYNC executor, and
+    """Read the plan from disk, render the SYNC executor, and
     persist it under ``06_glue_emit/``.
 
-    Caller invariant: M-46 has already emitted
+    Caller invariant: has already emitted
     ``05_execution_plan/execution_plan.yaml`` (or .json).
     """
     run_dir = Path(run_dir).resolve()
@@ -319,7 +319,7 @@ def emit_python_sync_executor(run_dir: Path) -> GlueEmitResult:
     out_dir = run_dir / "06_glue_emit"
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    # M-48: build the per-region assertion body from contract files.
+    # build the per-region assertion body from contract files.
     from compgen.runtime.glue_emit.plan_assertions import (
         collect_region_assertions,
         render_assert_plan_body,

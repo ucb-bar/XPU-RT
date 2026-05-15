@@ -1,10 +1,10 @@
-"""Migrate pre-M-37 promoted-recipe sidecars (M-37.4).
+"""Migrate pre-promoted-recipe sidecars.
 
-Sidecars promoted before M-37 may lack ``candidate_kind`` and
+Sidecars promoted may lack ``candidate_kind`` and
 ``selected_candidate_id`` in ``recipe.evidence_summary`` — the fields
-M-37 reads to cross-link a promoted recipe back to its source pass
-card. The M-26 bridge has been writing them since M-26 itself, so the
-residual only affects sidecars promoted before M-26 (or hand-authored
+reads to cross-link a promoted recipe back to its source pass
+card. The bridge has been writing them since itself, so the
+residual only affects sidecars promoted (or hand-authored
 fixtures).
 
 The migration is non-destructive: it backfills only the missing
@@ -118,7 +118,7 @@ def _infer_candidate_kind_from_recipe_id(recipe_id: str) -> str:
 
 
 def migrate_sidecar(sidecar_path: Path, *, dry_run: bool = False) -> MigrationResult:
-    """Backfill missing M-37 fields on a single sidecar.
+    """Backfill missing fields on a single sidecar.
 
     Returns a :class:`MigrationResult`. Non-destructive: existing
     fields are never overwritten. When ``dry_run=True``, no file is

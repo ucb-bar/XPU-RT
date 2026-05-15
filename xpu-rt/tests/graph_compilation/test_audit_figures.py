@@ -1,8 +1,8 @@
-"""Acceptance tests for M-06.5: Trust Audit Figures + Summary.
+"""Acceptance tests for Trust Audit Figures + Summary.
 
 Asserts the audit script reads the suite output and emits four PNGs +
 ``trust_audit_summary.md`` + ``trust_audit_tables.json`` with the
-shape required by the M-06.5 acceptance checklist.
+shape required by the acceptance checklist.
 
 The script does not change compiler behavior; these tests only verify
 that the reviewer-facing evidence pack is well-formed.
@@ -157,7 +157,7 @@ def test_refinement_table_at_least_two_distinct_types(
 ) -> None:
     """Acceptance: every checked recipe op is counted exactly once,
     and the suite produces at least two distinct refinement types
-    (M-06 is not a constant pass)."""
+    (is not a constant pass)."""
     obj = json.loads(
         (audit_artifacts["out"] / "trust_audit_tables.json").read_text()
     )

@@ -63,7 +63,6 @@ class X86Runtime:
         # Source goes to a temp file; .so lands next to it. Both
         # cleaned up when the bundle goes out of scope (the user
         # holds the CDLL handle which keeps the .so alive on disk).
-        #
         # Compile as C (``-x c``) rather than C++. Bodies don't use
         # any STL/C++ runtime; treating them as C avoids needing
         # libstdc++ on minimal Linux hosts (caught in Wave 1.15

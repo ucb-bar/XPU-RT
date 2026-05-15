@@ -90,7 +90,7 @@ class RejectOp(IRDLOperation):
 class PromoteOp(IRDLOperation):
     """Records that a candidate was promoted into the recipe library.
 
-    M-27 (Section 19) extends the original three-field op
+    (Section 19) extends the original three-field op
     ``(candidate_ref, recipe_key, version)`` with five optional
     pattern-level attrs that let a future run decide whether the
     promoted recipe applies, rank it among alternatives, or reject it
@@ -106,7 +106,7 @@ class PromoteOp(IRDLOperation):
       (e.g. ``@fact_tile_divisible_16`` or ``@fact_contiguous_layout``).
       Validated by :func:`validate_recipe_module` to resolve.
     - ``evidence_summary``: compact JSON projection of readiness rows /
-      gate level / certificate hashes — written by the M-26 bridge,
+      gate level / certificate hashes — written by the bridge,
       mirrored into the recipe sidecar so the agent can rank promoted
       candidates without re-reading the bundle.
     - ``fallback_chain``: ``ArrayAttr`` of ``SymbolRefAttr`` candidate
@@ -126,7 +126,7 @@ class PromoteOp(IRDLOperation):
     recipe_key = prop_def(StringAttr)
     version = prop_def(IntegerAttr)
 
-    # M-27 additions — optional for backward compatibility.
+    # additions — optional for backward compatibility.
     recipe_signature = opt_prop_def(StringAttr)
     applies_when = opt_prop_def(ArrayAttr)
     evidence_summary = opt_prop_def(StringAttr)

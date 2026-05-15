@@ -1,4 +1,4 @@
-"""M-46 RegionKernelBinding tests.
+"""RegionKernelBinding tests.
 
 Round-trip + cross-field validation + run_dir-strict validation.
 """

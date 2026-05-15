@@ -1,7 +1,7 @@
-"""M-37.13 G7 — fresh-agent reproducibility for M-37.11/M-37.12 surface.
+"""G7 — fresh-agent reproducibility /surface.
 
-Closes the M-31A audit gap: prove that a fresh-agent task pack
-contains everything needed to drive the M-37.11/M-37.12 candidate-
+Closes the audit gap: prove that a fresh-agent task pack
+contains everything needed to drive the /candidate-
 selection + verification surface to a typed outcome on a holdout
 model, without referencing any chat-context or session memory.
 
@@ -34,17 +34,17 @@ def test_greedy_baseline_against_task_pack_reaches_m37_11_surface(
     tmp_path: Path,
 ) -> None:
     """Build a fresh task pack, run greedy on holdout_mlp_odd_shapes, and
-    assert the M-37.11 shape-fit machinery + M-37.12 admission rules
+    assert the shape-fit machinery + admission rules
     actually fire on the run.
 
     Specifically:
     - Greedy reaches recipe_planning successfully (no chat-context).
     - candidate_selection.json reports cost_preview.region_dims and
-      cost_preview.boundary_required (the M-37.11 surfaced fields).
+      cost_preview.boundary_required (the surfaced fields).
     - real_differential_report.json reports a typed
       ``error.refinement_status`` value, never the empty string —
-      meaning M-12 ran and produced a typed outcome under the
-      M-37.12 admission semantics."""
+      meaning ran and produced a typed outcome under the
+      admission semantics."""
     pack_dir = tmp_path / "pack"
     out_dir = tmp_path / "run"
 
@@ -71,7 +71,7 @@ def test_greedy_baseline_against_task_pack_reaches_m37_11_surface(
         f"fresh task pack: {result.error}"
     )
 
-    # M-37.11 surface check: candidate_selection.json carries the new
+    # surface check: candidate_selection.json carries the new
     # region-aware cost_preview fields. If shape-fit emission was
     # silently deleted, region_dims would be missing.
     sel_path = (
@@ -88,7 +88,7 @@ def test_greedy_baseline_against_task_pack_reaches_m37_11_surface(
         "M-37.11 surface missing: cost_preview.boundary_required absent"
     )
 
-    # M-37.12 surface check: real_differential_report.json reports a
+    # surface check: real_differential_report.json reports a
     # typed refinement status (not empty). We cover both happy
     # outcomes (discharged_tolerance_eps / discharged_bit_equality)
     # and the fail outcomes — never the empty string.
@@ -115,12 +115,12 @@ def test_greedy_baseline_against_task_pack_reaches_m37_11_surface(
 def test_inspection_harness_attribution_runs_on_task_pack_run(
     tmp_path: Path,
 ) -> None:
-    """Verify the M-37.13 G6 load-bearing-gate attribution renders a
+    """Verify the G6 load-bearing-gate attribution renders a
     classified path (not 'unclassified') for a holdout run that
     discharges a real typed refinement status.
 
     This is the structural test that the attribution helper actually
-    classifies post-M-37.12 runs correctly — without it, the OVERVIEW
+    classifies post-runs correctly — without it, the OVERVIEW
     table would always show 'unclassified' and the user could not
     answer 'which gate carried the load?' from the artifact alone."""
     from compgen.benchmarks.model_inspection import (

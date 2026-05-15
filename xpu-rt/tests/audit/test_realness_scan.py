@@ -1,4 +1,4 @@
-"""Tests for compgen.audit.realness_scan (M-31A.2).
+"""Tests for compgen.audit.realness_scan.
 
 The contract is: source-level scan finds stub/mock/placeholder markers,
 the allowlist tolerates intentional ones, and unallowlisted hits raise

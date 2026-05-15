@@ -1,4 +1,4 @@
-"""Fault-injection negative controls (M-31A.5).
+"""Fault-injection negative controls.
 
 Positive tests prove the happy path works. Negative controls prove the
 gates are real — that introducing a specific fault causes the
@@ -9,18 +9,18 @@ The test parametrization in :mod:`tests.audit.test_negative_controls`
 walks this table. Each function here injects one specific break and
 asserts the named typed error fires.
 
-Notes on M-31A.5 placeholders
+Notes on placeholders
 -----------------------------
 
 Three rows of the negative-control table reference subsystems that
-land in M-31 (pass card registry):
+land (pass card registry):
 
 - ``MissingPassCard``        — pass card removed before agent request
 - ``PreconditionViolation``  — pass run on illegal IR
 - ``StaleAnalysisAudit``     — stale Payload summary consumed
 
-For M-31A, these controls assert the typed-error machinery exists and
-is wired through the audit. Real fault-injection lands in M-31. The
+these controls assert the typed-error machinery exists and
+is wired through the audit. Real fault-injection lands. The
 caveat ledger records the placeholder status as
 ``negative_controls_pass_card_placeholder``.
 """
@@ -130,9 +130,9 @@ def control_evidence_pack_source_missing(tmp_path: Path) -> NegativeControlOutco
     """Delete a declared evidence-pack source artifact and verify the
     pack builder fails loud.
 
-    For M-31A, we exercise this by raising the typed error directly when
+    we exercise this by raising the typed error directly when
     a "source artifact" is missing — the actual evidence_pack.py
-    integration check lands in M-31A.5's trust report.
+    integration check lands 's trust report.
     """
     def _fn() -> None:
         # Synthesize a fake source-missing condition.
@@ -272,12 +272,12 @@ def control_replay_input_hash_mismatch(tmp_path: Path) -> NegativeControlOutcome
 
 
 # --------------------------------------------------------------------------- #
-# Placeholder controls (full fault-injection lands in M-31)
+# Placeholder controls (full fault-injection lands )
 # --------------------------------------------------------------------------- #
 
 
 def control_pass_card_missing(tmp_path: Path) -> NegativeControlOutcome:
-    """M-31 real fault injection: build a registry containing only one
+    """real fault injection: build a registry containing only one
     of the production passes, then ask the validator to resolve a
     request that references the OTHER one. The validator must raise
     :class:`MissingPassCard`.
@@ -310,7 +310,7 @@ def control_pass_card_missing(tmp_path: Path) -> NegativeControlOutcome:
 
 
 def control_pass_precondition_violation(tmp_path: Path) -> NegativeControlOutcome:
-    """M-33 real fault injection: a pass card declares a verification
+    """real fault injection: a pass card declares a verification
     rung, the rung's certificate is missing, and the validator raises
     :class:`VerificationGateMissing`. This is the producer-side
     pre-condition: a downstream consumer of the pass output cannot
@@ -347,7 +347,7 @@ def control_pass_precondition_violation(tmp_path: Path) -> NegativeControlOutcom
     # The closest existing typed error for "preconditions for safe
     # consumption are not satisfied" is VerificationGateMissing.
     # PreconditionViolation remains as the family-level alias for
-    # M-34 when per-pass precondition checking lands on real IR.
+    # when per-pass precondition checking lands on real IR.
     return _expect(
         name="pass_precondition_violation",
         expected_error=VerificationGateMissing,
@@ -356,7 +356,7 @@ def control_pass_precondition_violation(tmp_path: Path) -> NegativeControlOutcom
 
 
 def control_stale_analysis_consumed(tmp_path: Path) -> NegativeControlOutcome:
-    """M-33 real fault injection: a pass declares ``invalidates:
+    """real fault injection: a pass declares ``invalidates:
     [semantic_obligations]`` but in the actual run mutated
     ``graph_dossier_v3``. The producer-side guard
     :func:`assert_invalidations_match_claim` raises

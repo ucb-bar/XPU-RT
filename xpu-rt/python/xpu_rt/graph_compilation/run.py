@@ -320,9 +320,9 @@ def run_graph_compilation(
     If ``out_dir`` exists it is replaced (the run directory is always
     produced fresh and deterministically).
 
-    M-53: when ``resume_from == "kernel-codegen-response"``, an existing
+    when ``resume_from == "kernel-codegen-response"``, an existing
     ``out_dir`` is preserved and the pipeline skips every stage up to
-    and including the M-40 + M-42 kernel-codegen-request emission. This
+    and including the kernel-codegen-request emission. This
     is the only path that lets the agentic provider chain run from CLI
     after the operator has committed a response (the response, attempt
     trail, and certificates would otherwise be wiped at the top of
@@ -348,14 +348,13 @@ def run_graph_compilation(
     _resume_skip_early = resume_from == "kernel-codegen-response"
 
     out_dir = Path(out_dir).resolve()
-    # M-31A.2: COMPGEN_FORCE_REBUILD=1 inverts the default. By default
+    # COMPGEN_FORCE_REBUILD=1 inverts the default. By default
     # run_graph_compilation rm-rfs out_dir for convenience; under
     # COMPGEN_FORCE_REBUILD we refuse to silently destroy data and
     # require the operator to clean up first. This is the audit-mode
     # safety check: an audit run that overwrote a prior run would
     # confuse cold/warm reasoning.
-    #
-    # M-53: resume mode preserves out_dir; the operator-committed
+    # resume mode preserves out_dir; the operator-committed
     # response, attempts trail, and certificates survive across the
     # pipeline-restart boundary.
     _force_rebuild = os.environ.get("COMPGEN_FORCE_REBUILD") == "1"
@@ -399,7 +398,7 @@ def run_graph_compilation(
     if run_id is None:
         run_id = f"graphcomp_{model_cfg.model_id}_{datetime.now().strftime('%Y%m%dT%H%M%S')}"
 
-    # M-31A.2: snapshot sys.modules at the top of the run so the post-run
+    # snapshot sys.modules at the top of the run so the post-run
     # diff names exactly the modules this run loaded. The snapshot is
     # cheap (one sorted list comprehension) and gives every run an
     # auditable import provenance.
@@ -413,7 +412,7 @@ def run_graph_compilation(
         ledger_path.write_text("", encoding="utf-8")
 
     # ------------------------------------------------------------------ #
-    # Graph Capture (skipped under M-53 resume mode — prior run produced it)
+    # Graph Capture (skipped resume mode — prior run produced it)
     # ------------------------------------------------------------------ #
     if _resume_skip_early:
         _append_ledger(
@@ -461,13 +460,12 @@ def run_graph_compilation(
                 event="artifact_written",
                 note=f"path={ref.path} sha={ref.sha256[:12]}",
             )
-        # M-16.1 strict-gate report. Read-only aggregator that turns
+        # strict-gate report. Read-only aggregator that turns
         # the lowering_summary status + silent-drop counts into a typed
         # <model_id>_strict_gate_report.json (+ summary.md). Always
         # emitted; ``status=pass`` for clean models, ``status=blocked``
         # with a typed root_cause for models like merlin_dronet whose
         # FX→Payload importer drops nodes lacking tensor_meta.
-        #
         # The strict-gate report writes new files into 01_payload_lowering/
         # AFTER ``run_payload_lowering`` has already computed
         # ``lowering_stage.output_hash``. Without rebuild, the
@@ -562,8 +560,8 @@ def run_graph_compilation(
             agent_max_retries=agent_max_retries,
             live_provider_config=live_provider_config,
         )
-        # M-06 verification gate runs as a sub-step of recipe_planning
-        # when stop_after >= recipe-verification. Both M-05 and M-06
+        # verification gate runs as a sub-step of recipe_planning
+        # when stop_after >= recipe-verification. Both
         # artifacts land in 03_recipe_planning/; the stage's output_hash
         # covers all of them.
         if stop_after in (
@@ -583,7 +581,7 @@ def run_graph_compilation(
                 ledger_path, stage_id="recipe_planning",
                 event="artifact_written", note="recipe_gate (M-06): finish",
             )
-        # M-07 lowering runs as a sub-step of recipe_planning when
+        # lowering runs as a sub-step of recipe_planning when
         # stop_after >= recipe-lowering. Same directory; no payload mutation.
         if stop_after in (
             "recipe-lowering", "post-lowering-verification",
@@ -604,7 +602,7 @@ def run_graph_compilation(
                 ledger_path, stage_id="recipe_planning",
                 event="artifact_written", note="recipe_lowering (M-07): finish",
             )
-        # M-08 post-lowering verification runs as a sub-step when
+        # post-lowering verification runs as a sub-step when
         # stop_after >= post-lowering-verification. Applies metadata
         # transforms to a copy of payload.mlir; the source remains
         # byte-identical.
@@ -626,7 +624,7 @@ def run_graph_compilation(
                 ledger_path, stage_id="recipe_planning",
                 event="artifact_written", note="post_lowering (M-08): finish",
             )
-            # M-33.2: emit a verification certificate wrapping the
+            # emit a verification certificate wrapping the
             # post-lowering report so the agent's pass-card
             # ``verification: [structural]`` rung is checkable.
             try:
@@ -651,9 +649,9 @@ def run_graph_compilation(
                     event="artifact_written",
                     note=f"structural cert error {type(exc).__name__}: {exc}",
                 )
-        # M-09 differential / reference verification runs as a sub-step
+        # differential / reference verification runs as a sub-step
         # when stop_after >= differential-verification. Strips compgen
-        # metadata and proves the M-08 transformation is semantically
+        # metadata and proves the transformation is semantically
         # inert; re-checks Stage-0 goldens; validates contract drafts.
         if stop_after in (
             "differential-verification", "real-transform-eligibility",
@@ -675,7 +673,7 @@ def run_graph_compilation(
                 event="artifact_written",
                 note="differential_verification (M-09): finish",
             )
-            # M-33.2: differential certificate wrapper.
+            # differential certificate wrapper.
             try:
                 from compgen.passes.verification import (
                     emit_certificate_from_differential_report,
@@ -698,7 +696,7 @@ def run_graph_compilation(
                     event="artifact_written",
                     note=f"differential cert error {type(exc).__name__}: {exc}",
                 )
-        # M-11A real-transform eligibility audit: read-only audit that
+        # real-transform eligibility audit: read-only audit that
         # classifies the selected recipe against the narrow real-matmul-
         # tiling MVP. Emits 03_recipe_planning/real_transform_eligibility
         # .json + .md. No payload mutation; no transformed real artifact.
@@ -721,7 +719,7 @@ def run_graph_compilation(
                 event="artifact_written",
                 note="real_transform_eligibility (M-11A): finish",
             )
-        # M-11B real SetTileParams transform MVP: emits a tiled
+        # real SetTileParams transform MVP: emits a tiled
         # transformed_payload.real.mlir for eligible matmuls.
         if stop_after in (
             "real-set-tile-transform", "real-transform-differential", "cost-preview-v2", "agent-decision-request", "kernel-specialization-request", "kernel-codegen-request", "kernel-auction", "execution-plan-emit", "glue-emit", "glue-differential", "gap-discovery", "gap-closure"
@@ -741,9 +739,9 @@ def run_graph_compilation(
                 event="artifact_written",
                 note="real_lowering (M-11B): finish",
             )
-            # M-16.2 real fusion lowering. Fires only when the committed
+            # real fusion lowering. Fires only when the committed
             # candidate is FuseProducerConsumer (otherwise it returns
-            # None and is a no-op). Sibling stage to M-11B: the two
+            # None and is a no-op). Sibling stage to the two
             # candidate kinds are mutually exclusive in the
             # single-candidate MVP.
             from compgen.graph_compilation.real_fusion import (
@@ -764,7 +762,7 @@ def run_graph_compilation(
                     f"({_fusion_lowering.mode if _fusion_lowering else 'no-op'})"
                 ),
             )
-        # M-12 real-transform differential harness: discharges
+        # real-transform differential harness: discharges
         # real_transform_differential_check via Path A executable
         # evaluator (eligible cases) or emits a blocked report (Path B).
         if stop_after in (
@@ -785,7 +783,7 @@ def run_graph_compilation(
                 event="artifact_written",
                 note="real_transform_differential (M-12): finish",
             )
-            # M-16.2 real fusion differential. Sibling to M-12; reads
+            # real fusion differential. Sibling to ; reads
             # real_fusion_manifest.json and emits
             # real_fusion_differential_report.json. No-op when the
             # committed candidate is not FuseProducerConsumer.
@@ -817,8 +815,7 @@ def run_graph_compilation(
             )
         _append_ledger(ledger_path, stage_id="recipe_planning", event="finish")
         stages.append(rp_stage)
-        # M-10B graph_dossier_v3 unified agent view (post-stage-record).
-        #
+        # graph_dossier_v3 unified agent view (post-stage-record).
         # Read-only aggregation that joins graph-analysis + planning
         # artifacts into a single agent surface. Emitted AFTER
         # `recipe_stage_record(...)` snapshots its input tree so the
@@ -842,11 +839,11 @@ def run_graph_compilation(
             event="artifact_written",
             note="graph_dossier_v3 (M-10B): finish",
         )
-        # M-13 cost preview v2: target+tile-sensitive static cost preview
+        # cost preview v2: target+tile-sensitive static cost preview
         # joined per candidate, inlined into v3 + llm_graph_view. Emitted
         # AFTER recipe_stage_record snapshot so source files in
         # 02_graph_analysis/ pinned by graph_analysis.output_hash are not
-        # touched. Same hash-chain pattern as M-10B.
+        # touched. Same hash-chain pattern as .
         if stop_after in (
             "cost-preview-v2", "agent-decision-request", "kernel-specialization-request", "kernel-codegen-request", "kernel-auction", "execution-plan-emit", "glue-emit", "glue-differential", "gap-discovery", "gap-closure"
         ):
@@ -867,8 +864,8 @@ def run_graph_compilation(
                 event="artifact_written",
                 note="cost_preview_v2 (M-13): finish",
             )
-            # M-18 profiler calibration. Best-effort measured profile of
-            # the captured exported program; layered on top of M-17.1's
+            # profiler calibration. Best-effort measured profile of
+            # the captured exported program; layered on top of 's
             # deterministic-roofline baseline. Gated on
             # ``COMPGEN_CALIBRATE_PROFILER`` (set or "1" to opt in;
             # "0" / unset to skip). Default OFF so suite runs stay
@@ -901,8 +898,8 @@ def run_graph_compilation(
                             f"{type(exc).__name__}: {exc}"
                         ),
                     )
-            # M-18.3 per-tile-candidate measured cost. Layered on top of
-            # M-18 (region-level). Opt-in via
+            # per-tile-candidate measured cost. Layered on top of
+            # (region-level). Opt-in via
             # ``COMPGEN_CALIBRATE_CANDIDATES=1``. Best-effort: errors
             # are logged to the ledger but never raise the pipeline.
             if os.environ.get("COMPGEN_CALIBRATE_CANDIDATES", "") in (
@@ -933,8 +930,8 @@ def run_graph_compilation(
                             f"{type(exc).__name__}: {exc}"
                         ),
                     )
-            # M-19 kernel execution foundation. Layered alongside the
-            # FX-level evidence (M-12 / M-16.2 / M-18 / M-18.3); never
+            # kernel execution foundation. Layered alongside the
+            # FX-level evidence; never
             # mutates any FX-level artifact. Opt-in via
             # ``COMPGEN_RUN_KERNELS=1``. Best-effort: errors are logged
             # to the ledger but never raise the pipeline.
@@ -965,10 +962,10 @@ def run_graph_compilation(
                             f"{type(exc).__name__}: {exc}"
                         ),
                     )
-                # M-20 per-region compiled differential. Layered on top
-                # of M-19 (whose single-region artifact stays). Fan-out
+                # per-region compiled differential. Layered on top
+                # of (whose single-region artifact stays). Fan-out
                 # across every region with a legal SetTileParams
-                # candidate. Same env-var gate as M-19.
+                # candidate. Same env-var gate as .
                 from compgen.graph_compilation.kernel_region_differential import (
                     run_region_compiled_differential,
                 )
@@ -996,7 +993,7 @@ def run_graph_compilation(
                             f"{type(exc).__name__}: {exc}"
                         ),
                     )
-            # M-17.1 graph-analysis readiness pack. Read-only aggregator
+            # graph-analysis readiness pack. Read-only aggregator
             # that turns the per-region dossier facts (numerical
             # sensitivity, working-set curves, reuse, cost preview v2,
             # action space, llm view) into 6 typed readiness reports +
@@ -1025,10 +1022,10 @@ def run_graph_compilation(
                         f"{type(exc).__name__}: {exc}"
                     ),
                 )
-            # M-21 deterministic per-candidate analytical cost. Pure
+            # deterministic per-candidate analytical cost. Pure
             # function of (target spec, matmul shape, tile geometry,
             # working_set fit). Always-on: cheap arithmetic, no I/O,
-            # byte-deterministic across reruns. When M-19/M-20
+            # byte-deterministic across reruns. When /
             # measurements are present, cross-references them as
             # calibration_delta in each per-candidate entry.
             from compgen.graph_compilation.analytical_cost import (
@@ -1056,14 +1053,14 @@ def run_graph_compilation(
                     ),
                 )
 
-            # M-22 compiled bottleneck analysis: deterministic post-hoc
+            # compiled bottleneck analysis: deterministic post-hoc
             # derivation of measured compute/bandwidth utilization from
-            # M-19/M-20 measured time × M-21 analytical flops/bytes.
-            # Best-effort: emits typed ``no_measurements`` when M-19/M-20
+            # /measured time × analytical flops/bytes.
+            # Best-effort: emits typed ``no_measurements`` when /
             # didn't run. Layers ``compiled_evidence`` per region onto
             # hardware_resource_report.json and adds a top-level
             # ``kernel_calibration_status`` field (additive — does not
-            # mutate M-17.1's existing fields).
+            # mutate 's existing fields).
             from compgen.graph_compilation.compiled_bottleneck import (
                 run_compiled_bottleneck,
             )
@@ -1090,11 +1087,11 @@ def run_graph_compilation(
                     ),
                 )
 
-            # M-22.1 profiler evidence: real torch.profiler CUDA + perf
-            # CPU measurement layered onto M-22's compiled_evidence.
+            # profiler evidence: real torch.profiler CUDA + perf
+            # CPU measurement layered onto 's compiled_evidence.
             # Best-effort; emits typed perf_unavailable when
             # kernel.perf_event_paranoid blocks non-root events. Only
-            # runs when M-22 has measurements (gated implicitly by
+            # runs when has measurements (gated implicitly by
             # COMPGEN_RUN_KERNELS=1 reaching here).
             from compgen.graph_compilation.profiler_evidence import (
                 run_profiler_evidence,
@@ -1123,10 +1120,10 @@ def run_graph_compilation(
                     ),
                 )
 
-            # M-23 compiled fusion verification: real Triton + cffi C
+            # compiled fusion verification: real Triton + cffi C
             # fused producer→consumer kernel; bit-equality vs eager
-            # unfused chain on M-16.2's frozen input cases. No-op when
-            # M-16.2 didn't pick a fusion candidate (typed not_run).
+            # unfused chain on 's frozen input cases. No-op when
+            # didn't pick a fusion candidate (typed not_run).
             from compgen.graph_compilation.compiled_fusion import (
                 run_compiled_fusion,
             )
@@ -1155,9 +1152,9 @@ def run_graph_compilation(
                     ),
                 )
 
-            # M-24.1 kernel lifetime evidence: Triton CompiledKernel
+            # kernel lifetime evidence: Triton CompiledKernel
             # introspection (always-on) + optional ncu dynamic counters.
-            # Populates row 3 of M-24 (compiled_lifetime) so it flips
+            # Populates row 3 of (compiled_lifetime) so it flips
             # ready_for_m24_1 → ready when register_pressure +
             # register_spills + shared_memory_bytes + theoretical_
             # occupancy are all present.
@@ -1188,7 +1185,7 @@ def run_graph_compilation(
                     ),
                 )
 
-        # M-14A: emit the canonical ``agent_decision_request.json`` at
+        # emit the canonical ``agent_decision_request.json`` at
         # the halt point so an external agent can read it. Only emit
         # when the user is HALTING here (stop-after=agent-decision-
         # request) AND no in-line emission has already happened during
@@ -1213,9 +1210,9 @@ def run_graph_compilation(
                 )
                 build_agent_decision_request(out_dir)
 
-        # M-24 kernel section readiness lock: read-only aggregator over
-        # M-19/M-20/M-22/M-22.1/M-23 + agent_decision_request. Runs
-        # AFTER M-14A so row 5 (compiled_agent_view) can cross-reference
+        # kernel section readiness lock: read-only aggregator over
+        # ////+ agent_decision_request. Runs
+        #  so row 5 (compiled_agent_view) can cross-reference
         # candidate_ids_allowed. Always-on (best-effort); emits typed
         # not_run on rows whose evidence isn't on disk.
         from compgen.graph_compilation.kernel_readiness import (
@@ -1245,10 +1242,10 @@ def run_graph_compilation(
                 ),
             )
 
-        # M-15B: detect downstream-gate rejection. After all sub-steps
-        # have run, scan the downstream stage reports (M-08, M-09,
-        # M-11B, M-12) for status=fail. If found AND a candidate was
-        # actually committed (i.e. M-14A passed and M-05 wrote
+        # detect downstream-gate rejection. After all sub-steps
+        # have run, scan the downstream stage reports (,
+        # ) for status=fail. If found AND a candidate was
+        # actually committed (i.e. passed and wrote
         # candidate_selection.json), emit downstream_retry_request.json
         # mapping the failure back to the failed candidate. The
         # pipeline still raises afterwards (the run is not "ok") but
@@ -1272,7 +1269,7 @@ def run_graph_compilation(
             # tools can inspect the partial-run state. The retry
             # request is also on disk; together they let Claude Code
             # validate the run and choose a new candidate. Without
-            # this, models that hit a real M-15B retry condition
+            # this, models that hit a real retry condition
             # (e.g. tiny_mlp's K_iters=4 accumulation reorder) lose
             # their manifest and fail every R009 / hash-chain audit.
             git_commit = _git_commit_or_none(repo_root)
@@ -1322,13 +1319,12 @@ def run_graph_compilation(
             )
 
     # ------------------------------------------------------------------ #
-    # Kernel Specialization Request emission (M-39 / Section 21).
-    #
+    # Kernel Specialization Request emission (/ Section 21).
     # When stop_after >= ``kernel-specialization-request`` we read the
     # selected Recipe IR decision + region facts and emit a typed
     # ``KernelSpecializationRequest`` to ``04_kernel_specialization/
-    # requests/<request_id>.json``. M-39 is data-only — no codegen
-    # fires here; M-40 (Triton emitter) and M-41 (C reference) consume
+    # requests/<request_id>.json``. is data-only — no codegen
+    # fires here; (Triton emitter) and (C reference) consume
     # the request. Non-applicable recipe kinds (today: anything except
     # ``set_tile_params``) emit a typed ``not_applicable`` request
     # rather than skip silently.
@@ -1339,14 +1335,14 @@ def run_graph_compilation(
         "gap-closure",
     ) and not _resume_skip_early
     if needs_kernel_specialization:
-        # Phase C unified kernel-codegen boundary. M-39's legacy
-        # request emitter is superseded by M-42; the legacy
+        # Phase C unified kernel-codegen boundary. 's legacy
+        # request emitter is superseded ; the legacy
         # 04_kernel_specialization/ directory is no longer written.
         # The boundary now runs two sibling sub-steps:
-        #   1. M-40 — materialize KernelContractV3 from the selected
+        #   1. materialize KernelContractV3 from the selected
         #      Recipe op (writes 04_kernel_codegen/contracts/... +
         #      kernel_facing view at 04_kernel_codegen/views/...).
-        #   2. M-42 — emit the kernel-codegen task that points at those
+        #   2. emit the kernel-codegen task that points at those
         #      contract files (writes 04_kernel_codegen/requests/... +
         #      creates the sandboxed artifact_dir).
         _append_ledger(
@@ -1354,7 +1350,7 @@ def run_graph_compilation(
             event="start",
         )
 
-        # M-40 — contract materialization.
+        # contract materialization.
         from compgen.graph_compilation.kernel_contract_materialization import (
             materialize_contract_for_run,
         )
@@ -1380,8 +1376,8 @@ def run_graph_compilation(
             )
             raise
 
-        # M-42 (Phase C): emit the kernel-codegen task that supersedes
-        # M-39's request schema. Reads the M-40 materialization summary
+        # (Phase C): emit the kernel-codegen task that supersedes
+        # 's request schema. Reads the materialization summary
         # to find contract_hash + paths; writes
         # 04_kernel_codegen/requests/<task_id>.request.json + creates
         # the sandboxed artifact_dir.
@@ -1417,11 +1413,11 @@ def run_graph_compilation(
         )
 
     # ------------------------------------------------------------------ #
-    # M-57 Auction: multi-bidder kernel codegen.
+    # Auction: multi-bidder kernel codegen.
     # Runs whenever stop_after permits AND auction_mode != "disabled".
     # No-op when there are no applicable providers (today's clean
     # checkout); produces winner.json + auction_report.json + promotes
-    # the winner to the standard M-43 response path so M-46 binds.
+    # the winner to the standard response path so binds.
     # ------------------------------------------------------------------ #
     needs_auction = (
         auction_mode != "disabled"
@@ -1470,10 +1466,10 @@ def run_graph_compilation(
         _append_ledger(ledger_path, stage_id="kernel_auction", event="finish")
 
     # ------------------------------------------------------------------ #
-    # Execution-plan emit (M-46): bind certified kernels to regions and
+    # Execution-plan emit: bind certified kernels to regions and
     # write 05_execution_plan/execution_plan.yaml + region_kernel_bindings.json.
     # Runs whenever stop_after permits — bindings will be empty until the
-    # operator submits a provider response and M-43/M-44/M-45 emit cert(s).
+    # operator submits a provider response and //emit cert(s).
     # ------------------------------------------------------------------ #
     needs_plan_emit = stop_after in (
         "execution-plan-emit", "glue-emit", "glue-differential", "gap-discovery", "gap-closure",
@@ -1511,10 +1507,10 @@ def run_graph_compilation(
         )
 
     # ------------------------------------------------------------------ #
-    # M-63 coverage-first pass: walk every region dossier, derive
+    # coverage-first pass: walk every region dossier, derive
     # canonical contract hashes, look up matching certs, and append
-    # coverage-inflated bindings. Runs after M-46 so it has the
-    # initial bindings to extend; before M-47 so the emitter sees
+    # coverage-inflated bindings. Runs so it has the
+    # initial bindings to extend; so the emitter sees
     # the inflated count.
     # ------------------------------------------------------------------ #
     needs_coverage = (
@@ -1561,8 +1557,8 @@ def run_graph_compilation(
         _append_ledger(ledger_path, stage_id="kernel_coverage_first", event="finish")
 
     # ------------------------------------------------------------------ #
-    # Glue emit (M-47): generate the per-workload Python SYNC plan
-    # executor under 06_glue_emit/. Reads M-46's execution_plan.yaml.
+    # Glue emit: generate the per-workload Python SYNC plan
+    # executor under 06_glue_emit/. Reads 's execution_plan.yaml.
     # ------------------------------------------------------------------ #
     needs_glue_emit = stop_after in ("glue-emit", "glue-differential", "gap-discovery", "gap-closure")
     if needs_glue_emit:
@@ -1601,10 +1597,10 @@ def run_graph_compilation(
         _append_ledger(ledger_path, stage_id="glue_emit", event="finish")
 
     # ------------------------------------------------------------------ #
-    # Glue differential (M-49 — paper-facing): drive the M-47 emitted
+    # Glue differential (paper-facing): drive the emitted
     # executor with synthesized cases and compare against eager
     # torch.matmul. Emits 06_glue_emit/glue_differential_report.json.
-    # M-15B picks up status=fail via the downstream-retry table.
+    # picks up status=fail via the downstream-retry table.
     # ------------------------------------------------------------------ #
     needs_glue_diff = stop_after in (
         "glue-differential", "gap-discovery", "gap-closure",
@@ -1732,7 +1728,7 @@ def run_graph_compilation(
         json.dumps(manifest.to_dict(), indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
 
-    # M-31A.2: write import_provenance.json. Anchored to the same seam
+    # write import_provenance.json. Anchored to the same seam
     # as the manifest so cross-references are stable (run_id matches).
     try:
         from compgen.audit.import_provenance import (
@@ -1765,7 +1761,7 @@ def run_graph_compilation(
             note=f"import_provenance error {type(exc).__name__}: {exc}",
         )
 
-    # M-26 promotion bridge (Section 19, write side). Must fire AFTER
+    # promotion bridge (Section 19, write side). Must fire AFTER
     # run_manifest.json is on disk: the bridge reads the manifest to
     # learn model_id / target_id / created_at_utc, and the synthetic
     # tests inadvertently masked this ordering by writing the manifest
@@ -1798,8 +1794,8 @@ def run_graph_compilation(
                 ),
             )
 
-    # M-31A.3: emit a decision trace per finished agent decision. Same
-    # post-manifest position as the M-26 bridge; the trace contains the
+    # emit a decision trace per finished agent decision. Same
+    # post-manifest position as the bridge; the trace contains the
     # request/llm_view/candidate_actions/promotion_library hashes that
     # let a future replay assert the decision was deterministic.
     if needs_recipe_planning:
@@ -1814,7 +1810,7 @@ def run_graph_compilation(
                 _trace = build_trace(
                     out_dir,
                     run_id=run_id,
-                    region_id="",  # request-level trace; per-region traces are M-31's job
+                    region_id="",  # request-level trace; per-region traces are 's job
                     decision_index=0,
                     commit=_git_commit_or_none(repo_root) or "",
                 )

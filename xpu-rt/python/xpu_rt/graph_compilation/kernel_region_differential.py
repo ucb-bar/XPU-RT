@@ -1,15 +1,15 @@
-"""M-20 Per-Region Compiled Differential.
+"""Per-Region Compiled Differential.
 
-Extends M-19's single-region compiled-kernel foundation to every
+Extends 's single-region compiled-kernel foundation to every
 matmul region in a model that has a legal ``set_tile_params``
 candidate. For each region, picks the lowest-cost legal tile (greedy
 per-region) and runs both the GPU and CPU compile+execute+verify
-tracks via M-19's primitives. Aggregates per-region results into a
+tracks 's primitives. Aggregates per-region results into a
 single ``region_compiled_differential_report.json`` that downstream
-tools (M-15B retry detector, M-25 evidence pack) can consume.
+tools (retry detector, evidence pack) can consume.
 
-Layered alongside M-19 (whose single-region artifact remains) and
-alongside the FX-level evidence (M-12 / M-16.2 / M-18 / M-18.3); never
+Layered alongside (whose single-region artifact remains) and
+alongside the FX-level evidence; never
 mutates any of those tracks.
 
 Hard non-goals:
@@ -18,7 +18,7 @@ Hard non-goals:
 - No compiler-core imports.
 - Best-effort: per-region failures emit typed entries; the aggregate
   never raises into the pipeline.
-- SetTileParams only. FuseProducerConsumer fan-out is M-23 territory.
+SetTileParams only. FuseProducerConsumer fan-out is territory.
 
 Output layout::
 
@@ -32,7 +32,7 @@ Output layout::
         region_compiled_differential_report.json
         region_compiled_differential_summary.md
 
-Opt-in via the same ``COMPGEN_RUN_KERNELS=1`` env var as M-19. Default
+Opt-in via the same ``COMPGEN_RUN_KERNELS=1`` env var as. Default
 OFF so suite runs stay deterministic.
 """
 
@@ -70,7 +70,7 @@ def _per_region_set_tile_picks(
 ) -> list[dict[str, Any]]:
     """For each region with at least one legal ``set_tile_params``
     candidate, return the lowest-cost legal candidate's metadata
-    sufficient to drive M-19's GPU/CPU tracks.
+    sufficient to drive 's GPU/CPU tracks.
 
     Returns a list of dicts, one per region::
 
@@ -80,7 +80,7 @@ def _per_region_set_tile_picks(
          "static_relative_cost": ..., "recipe_op_id": "recipe_0000"}
 
     M/N/K are derived from cost_preview_v2's
-    ``diagnostics.candidate.{tile,iters}`` (same approach M-18.3 uses).
+    ``diagnostics.candidate.{tile,iters}`` (same approach uses).
     """
     cp_by_id: dict[str, dict[str, Any]] = {}
     if cost_preview is not None:
@@ -229,7 +229,7 @@ def run_region_compiled_differential(
     iterations: int = 32,
     warmup: int = 4,
 ) -> RegionDifferentialResult:
-    """Per-region fan-out of M-19. Best-effort; never raises."""
+    """Per-region fan-out of. Best-effort; never raises."""
     run_dir = Path(run_dir).resolve()
     ga = run_dir / "02_graph_analysis"
     out_dir = ga / "kernel_execution"
@@ -301,7 +301,7 @@ def run_region_compiled_differential(
     target_id = (cap or {}).get("target_id", "")
     model_id = (cap or {}).get("model_id", "")
 
-    # Reuse M-19's GPU + CPU primitives.
+    # Reuse 's GPU + CPU primitives.
     from compgen.graph_compilation.kernel_execution_gpu import run_gpu_track
     from compgen.graph_compilation.kernel_execution_cpu import run_cpu_track
 

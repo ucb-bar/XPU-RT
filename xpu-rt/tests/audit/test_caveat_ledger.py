@@ -1,4 +1,4 @@
-"""Tests for compgen.audit.caveat_ledger (M-31A.1)."""
+"""Tests for compgen.audit.caveat_ledger."""
 
 from __future__ import annotations
 

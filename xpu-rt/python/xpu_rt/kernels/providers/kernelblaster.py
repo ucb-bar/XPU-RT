@@ -49,6 +49,15 @@ class KernelBlasterProvider:
     :class:`~compgen.memory.store.CompilerMemory`.
     """
 
+    # Provider preference (M-91a follow-up, 2026-05-15): KB is the
+    # preferred CUDA kernel-search provider — it runs a real RL search
+    # against a measured executor, where autocomp leans on a single
+    # LLM beam. When both providers are applicable to the same
+    # contract, KB is tried first and its bid is ranked first by the
+    # V3 auction. See ``default_registry()`` in ``registry.py`` for
+    # the registration-order machinery this hooks into.
+    priority: int = 90
+
     def __init__(
         self,
         *,

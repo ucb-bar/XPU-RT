@@ -93,10 +93,10 @@ class LoweringOutput:
     eqsat_jobs: list[dict[str, Any]] = field(default_factory=list)
     guard_verdicts: list[dict[str, Any]] = field(default_factory=list)
     feedback_events: list[dict[str, Any]] = field(default_factory=list)
-    # M-27 — one entry per recipe.promote op with the pattern-level
+    # one entry per recipe.promote op with the pattern-level
     # attrs (recipe_signature, applies_when, evidence_summary,
     # fallback_chain, target_class) projected into JSON-stable form so
-    # downstream callers (M-28 retrieval, M-30 efficiency report) can
+    # downstream callers (retrieval, efficiency report) can
     # consume the promoted set without re-walking the IR.
     promoted_recipe_records: list[dict[str, Any]] = field(default_factory=list)
     diagnostics: list[str] = field(default_factory=list)
@@ -262,7 +262,7 @@ def _lower_op(
     elif isinstance(op, RequireProfileBudgetOp):
         _lower_require_profile(op, verification_obligations)
 
-    # --- Provenance ops with downstream consumers (M-27 PromoteOp) ---
+    # --- Provenance ops with downstream consumers (PromoteOp) ---
     elif isinstance(op, PromoteOp):
         _lower_promote(op, promoted_recipe_records)
 
@@ -404,7 +404,6 @@ def _lower_fuse(op: FuseOp, out: list[str]) -> None:
 
 
 # ---- Propose-op lowerings (LLM invent-slot outputs) ------------------------
-#
 # Propose-ops are the LLM's accepted proposals, appended to the recipe
 # module by :func:`compgen.agent.recipe_bridge_invent.proposal_to_recipe_op`.
 # Here we turn them into the same downstream artifacts candidate ops produce
@@ -739,7 +738,7 @@ def _lower_require_profile(op: RequireProfileBudgetOp, out: list[dict[str, Any]]
     out.append(obligation)
 
 
-# ---- Promote-op lowering (M-27 — pattern-level promotion record) -----------
+# ---- Promote-op lowering (pattern-level promotion record) -----------
 
 
 def _array_sym_refs(attr: ArrayAttr | None) -> list[str]:
@@ -757,7 +756,7 @@ def _lower_promote(op: PromoteOp, out: list[dict[str, Any]]) -> None:
     """Project a ``recipe.promote`` op into a JSON-stable record.
 
     Mirrors the structure of
-    :class:`compgen.promotion.promote.PromotedRecipe` so M-28 retrieval
+    :class:`compgen.promotion.promote.PromotedRecipe` so retrieval
     can consume the lowering output without a separate IR walk.
     """
     record: dict[str, Any] = {

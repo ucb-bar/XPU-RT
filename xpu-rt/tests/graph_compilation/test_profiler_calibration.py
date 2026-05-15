@@ -1,4 +1,4 @@
-"""Acceptance tests for M-18 Profiler-Calibrated Cost Preview.
+"""Acceptance tests Profiler-Calibrated Cost Preview.
 
 Verifies:
 
@@ -22,7 +22,7 @@ Verifies:
   run calibration and row 6 stays ``ready_for_m18``.
 - The two PNG figures emit with valid magic bytes.
 - No compiler-core imports.
-- M-17.1 readiness matrix is otherwise unchanged (calibration is
+readiness matrix is otherwise unchanged (calibration is
   additive).
 """
 
@@ -322,7 +322,7 @@ def test_calibration_does_not_mutate_existing_graph_analysis_artifacts(
 ) -> None:
     """The calibration step is allowed to add ``calibration`` overlays
     to ``graph_dossier_v3.json`` and ``llm_graph_view.json`` (per
-    M-18.4) but must not touch the original baseline reports
+    ) but must not touch the original baseline reports
     (``cost_preview_v2.json``, ``hardware_resource_report.json``,
     ``precision_budget_report.json``, etc.)."""
     base = calibrated_run / "02_graph_analysis"

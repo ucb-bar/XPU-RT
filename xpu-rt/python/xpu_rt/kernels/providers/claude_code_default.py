@@ -258,7 +258,7 @@ class ClaudeCodeKernelProvider:
     def export_knowledge(self) -> list[KnowledgeExport]:
         return list(self._exports)
 
-    # -- Phase D / M-56: bid() ------------------------------------------------
+    # -- Phase D / bid ------------------------------------------------
 
     def bid(self, contract_v3: Any) -> BidPreview:
         """Cheap pre-codegen estimate for a :class:`KernelContractV3`.

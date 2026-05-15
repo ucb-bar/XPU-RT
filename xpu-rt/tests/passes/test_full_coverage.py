@@ -1,6 +1,6 @@
-"""Tests for full pass-card coverage (M-33.6).
+"""Tests for full pass-card coverage.
 
-Section 20 / M-33.6 contract: every ported compiler pass under
+Section 20 / contract: every ported compiler pass under
 ``python/compgen/`` has a typed pass card with a declared source
 (provenance) and impl_path (implementation file). The agent's
 vocabulary is now the registry; cards without provenance leave the
@@ -91,7 +91,7 @@ def test_every_family_has_at_least_one_card() -> None:
 
     Acceptable empties: families reserved for future milestones (e.g.
     `verify`, `profile`, `dispatch`, `promote`). We only assert
-    families used by the M-33.6 set.
+    families used by the set.
     """
     registry = PassCardRegistry.load(default_registry_root())
     used = {c.family for c in registry}
@@ -152,7 +152,7 @@ def test_agent_passes_allowed_lists_full_registry() -> None:
     """The constant in agent_decision.py builds passes_allowed from the
     registry — so the agent sees every card.
 
-    M-33 baseline: 7 cards. M-33.6: 60+. This test guards against
+    baseline: 7 cards. 60+. This test guards against
     regressions where the registry loads differently than the
     agent_decision pipeline expects.
     """

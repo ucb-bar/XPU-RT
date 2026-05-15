@@ -1,6 +1,6 @@
-"""M-43 provider-response validator + commit-tool tests.
+"""provider-response validator + commit-tool tests.
 
-The plan's 12 tests (failure classes 1-12), exercised on real M-42
+The plan's 12 tests (failure classes 1-12), exercised on real
 task surfaces produced by the pipeline. Each test drives
 ``commit_response`` against the canonical merlin_mlp_wide task
 and asserts the typed failure_kind + recoverability + next_action.
@@ -28,7 +28,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 # --------------------------------------------------------------------------- #
-# Pipeline driver — produces a real M-42 task to validate against
+# Pipeline driver — produces a real task to validate against
 # --------------------------------------------------------------------------- #
 
 
@@ -62,7 +62,7 @@ def merlin_task(tmp_path_factory) -> dict:  # type: ignore[no-untyped-def]
 
 def _contract_compliant_metadata(request_body: dict) -> dict:
     """Read the materialised contract and emit metadata that satisfies
-    M-44's contract-driven obligations. Real providers will derive
+    the contract-driven obligations. Real providers will derive
     these the same way."""
     full_path = Path(request_body["contract_paths"]["full"])
     return _metadata_from_contract_path(full_path)
@@ -75,7 +75,7 @@ def _metadata_from_contract_path(rel_path: Path) -> dict:
 
 
 def _write_minimal_artifacts(run_dir: Path, request_body: dict) -> dict[str, str]:
-    """Helper: drop M-44-compliant artifacts into the sandboxed
+    """Helper: drop -compliant artifacts into the sandboxed
     artifact_dir. Returns the artifacts dict the response declares."""
     artifact_dir = run_dir / request_body["artifact_dir"]
     artifact_dir.mkdir(parents=True, exist_ok=True)
@@ -388,12 +388,12 @@ class TestAcceptedResponse:
             run_dir=run_dir, task_id=merlin_task["task_id"], response=body,
         )
         assert result.accepted is True, result.failure_summary
-        # M-44 verifier ran; "verified" or "verifier_pending" depending on
+        # verifier ran; "verified" or "verifier_pending" depending on
         # whether all obligations short-circuit on metadata or stay deferred.
         assert result.next_action in ("verified", "verifier_pending"), (
             f"unexpected next_action {result.next_action!r}"
         )
-        # M-44 wrote a validation report.
+        # wrote a validation report.
         validation_dir = run_dir / "04_kernel_codegen" / "validation"
         assert validation_dir.is_dir()
         assert any(validation_dir.iterdir())
@@ -444,7 +444,7 @@ class TestMcpTools:
     def test_run_task_returns_operator_action_required_until_subagent_wired(
         self, merlin_task: dict,
     ) -> None:
-        """M-43 ships the file-based protocol; spawn helper is M-43.1+."""
+        """ships the file-based protocol; spawn helper is +."""
         from compgen.mcp.tools.kernel_codegen import (
             compgen_run_kernel_codegen_task,
         )

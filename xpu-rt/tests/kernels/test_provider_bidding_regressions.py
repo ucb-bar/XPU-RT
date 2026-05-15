@@ -27,7 +27,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 # --------------------------------------------------------------------------- #
-# Gap #16 — test-pollution hygiene
+# test-pollution hygiene
 # --------------------------------------------------------------------------- #
 
 
@@ -49,7 +49,7 @@ class TestGap16TestPollutionHygiene:
 
 
 # --------------------------------------------------------------------------- #
-# Gap #17 — provider symbol metadata
+# provider symbol metadata
 # --------------------------------------------------------------------------- #
 
 
@@ -84,7 +84,7 @@ class TestGap17SymbolMetadata:
 
 
 # --------------------------------------------------------------------------- #
-# Gap #18 — Triton translator wiring
+# Triton translator wiring
 # --------------------------------------------------------------------------- #
 
 
@@ -147,7 +147,7 @@ class TestGap18TritonTranslatorWiring:
             )
         )
         # On a non-CUDA host with no CUDA-applicable provider, this
-        # may be empty — record honestly that gap #18 wiring is
+        # may be empty — record honestly that wiring is
         # exercised when a fulfill happens. The TritonTranslator
         # supports the target; the wiring is present even when no
         # fulfill runs.
@@ -164,7 +164,7 @@ class TestGap18TritonTranslatorWiring:
 
 
 # --------------------------------------------------------------------------- #
-# Gap #8 — MCP-layer test for compgen_compare_kernel_bids
+# MCP-layer test for compgen_compare_kernel_bids
 # --------------------------------------------------------------------------- #
 
 
@@ -233,13 +233,13 @@ class TestGap8McpCompareKernelBids:
 
 
 # --------------------------------------------------------------------------- #
-# Gap #5 — real-driven (not stubbed) 4-bidder honesty
+# real-driven (not stubbed) 4-bidder honesty
 # --------------------------------------------------------------------------- #
 
 
 class TestGap5RealProvidersInAuction:
-    """The M-66 four-bidder test uses test-local stubs for Claude-Code
-    and Triton-template. Gap #5 closure: prove that real shipped
+    """The four-bidder test uses test-local stubs for Claude-Code
+    and Triton-template. closure: prove that real shipped
     providers (CReferenceProvider, UserKernelProvider) BOTH bid in
     the same auction, and the winner is the provider with the better
     perf — not a stub-tilted outcome."""

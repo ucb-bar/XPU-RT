@@ -66,17 +66,13 @@ class NpuQuantDecision:
 # ---------------------------------------------------------------------------
 # Complete operator mapping table
 # ---------------------------------------------------------------------------
-#
 # Every op from pi0-quant's operator inventory is covered, plus additional
 # ops needed for model infrastructure (softmax, embedding, etc.).
-#
 # Matrix ops (4):
 #   nn.Linear, Conv2d, SDPA score matmul, SDPA AV matmul
-#
 # Vector ops (18 from pi0-quant VectorQuantMode):
 #   add, sub, mul, div, pow, reciprocal, sqrt, sin, cos, tanh,
 #   log2, exp, exp2, amax, sum(default), sum(dim)
-#
 # Additional model ops:
 #   softmax, embedding, layer_norm, reshape, view, etc.
 

@@ -1,4 +1,4 @@
-"""Source-level no-stub scan (M-31A.2).
+"""Source-level no-stub scan.
 
 Greps the repository for stub/mock/placeholder markers and fails on any
 hit not covered by the realness allowlist. The scan is the first line of

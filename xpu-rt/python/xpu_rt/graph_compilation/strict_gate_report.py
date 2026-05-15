@@ -1,4 +1,4 @@
-"""M-16.1 Strict-Gate Report.
+"""Strict-Gate Report.
 
 Reads the typed payload-lowering artifacts already on disk and emits a
 typed ``<model_id>_strict_gate_report.json`` (+ summary markdown) that
@@ -237,7 +237,7 @@ def build_strict_gate_report(run_dir: Path) -> StrictGateReportResult:
     #   - ``fail``            — substantial drops (e.g. merlin_dronet's
     #                           44 conv/bn/pool/relu silently dropped),
     #                           downstream coverage is incomplete
-    # Per the M-16.1 contract, ``pass`` means the strict gate proceeds
+    # Per the contract, ``pass`` means the strict gate proceeds
     # downstream cleanly. ``partial_success`` and ``pass`` both qualify.
     # ``fail`` (or any other non-pass value) is treated as ``blocked``.
     is_pass = ls_status in ("pass", "partial_success")

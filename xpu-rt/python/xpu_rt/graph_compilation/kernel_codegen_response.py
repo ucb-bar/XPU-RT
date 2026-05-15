@@ -1,9 +1,9 @@
-"""Provider-response schema + validator + commit tool (M-43).
+"""Provider-response schema + validator + commit tool.
 
-Phase C M-43. Closes the kernel-codegen subagent loop: a provider
+Phase C. Closes the kernel-codegen subagent loop: a provider
 (spawned Claude Code agent, manual operator, autocomp, cache hit) writes
 a ``provider_response_v1`` JSON; the commit tool validates it against
-the M-42 task contract and routes the artifacts to the M-44 verifier.
+the task contract and routes the artifacts to the verifier.
 
 Failure-class taxonomy (per the user's refined plan):
 
@@ -16,7 +16,7 @@ Failure-class taxonomy (per the user's refined plan):
       unsupported_backend, semantic_contract_violation
     Transient (1 retry):
       timeout
-    Protocol_or_contract_fatal (NO retry — immediate M-15B reject):
+    Protocol_or_contract_fatal (NO retry — immediate reject):
       contract_hash_mismatch, contract_mutation, forbidden_path_write
 
 After 3 failed recoverable attempts the commit tool emits a
@@ -64,7 +64,7 @@ RECOVERABILITY: dict[str, str] = {
     "semantic_contract_violation": "provider_protocol_violation",
     # Transient.
     "timeout":                     "transient",
-    # Fatal — immediate M-15B downstream reject.
+    # Fatal — immediate downstream reject.
     "contract_hash_mismatch":      "protocol_or_contract_fatal",
     "contract_mutation":           "protocol_or_contract_fatal",
     "forbidden_path_write":        "protocol_or_contract_fatal",
@@ -122,7 +122,7 @@ class ProviderResponse:
 
     The provider proposes an artifact set + claims. It does NOT mark
     success — the parent's commit tool validates and either accepts
-    (route to M-44 verifier) or rejects with a typed failure_kind that
+    (route to verifier) or rejects with a typed failure_kind that
     drives the retry policy.
     """
 
@@ -456,7 +456,7 @@ class CommitResult:
     next_action: str = ""  # "retry" | "fatal_reject" | "verifier_pending" | "verified"
     attempt_dir: str = ""  # relative to run_dir
     retry_request_path: str = ""  # relative to run_dir, populated on exhaustion
-    certificate_path: str = ""    # populated when M-45 lands
+    certificate_path: str = ""    # populated when lands
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -480,10 +480,10 @@ def commit_response(
     response: dict[str, Any] | str | bytes,
     max_attempts: int = DEFAULT_MAX_ATTEMPTS,
 ) -> CommitResult:
-    """Validate and commit a provider response to the M-43 attempt
-    trail. Routes to M-44 (verifier — pending) on accept; emits a
+    """Validate and commit a provider response to the attempt
+    trail. Routes to (verifier — pending) on accept; emits a
     typed retry request on recoverable failure; emits a downstream
-    M-15B-style rejection on fatal failure or attempts-exhausted.
+    -style rejection on fatal failure or attempts-exhausted.
 
     Idempotent on accept (re-invoking with the same response body
     produces the same attempt record + same next_action).
@@ -571,8 +571,8 @@ def commit_response(
 
     # Decide next action.
     if result.accepted:
-        # M-44: run the contract-driven verifier checklist. The
-        # verifier reads the M-40 materialised contract + the
+        # run the contract-driven verifier checklist. The
+        # verifier reads the materialised contract + the
         # provider's kernel_metadata + claims, generates obligations
         # from contract fields, and writes a validation report.
         verification = _run_m44_verifier(
@@ -643,11 +643,11 @@ def commit_response(
             )
 
         # Verification accepted (overall=pass or pass+deferred).
-        # M-45: emit the kernel certificate ONLY when the verifier
+        # emit the kernel certificate ONLY when the verifier
         # produced overall=pass (deferred verdicts wait for
-        # M-47/M-48/M-49 to land their checks). On pass+deferred mix,
+        # //to land their checks). On pass+deferred mix,
         # the cert could be emitted with a deferred-state flag, but
-        # M-45 ships the strict-pass-only path — the certificate is
+        # ships the strict-pass-only path — the certificate is
         # only meaningful once verification is complete.
         certificate_path_str = ""
         if verification["overall"] == "pass" and isinstance(response, dict):
@@ -698,7 +698,7 @@ def commit_response(
 
     # Recoverable / protocol-violation / transient: bound retries.
     if attempt_index + 1 >= max_attempts:
-        # Exhausted — emit the M-15B-style downstream retry request.
+        # Exhausted — emit the -style downstream retry request.
         retry_path = _emit_retry_request(
             run_dir=run_dir, task_id=task_id, request_body=request_body,
             attempt_index=attempt_index, result=result,
@@ -739,7 +739,7 @@ def _run_m44_verifier(
     request_body: dict[str, Any],
     response_body: dict[str, Any] | None,
 ) -> dict[str, Any] | None:
-    """Run the M-44 contract-driven verifier on an accepted response.
+    """Run the contract-driven verifier on an accepted response.
 
     Returns ``{overall, failure_kind, failure_summary, validation_report_path}``
     on completion (pass or fail), or ``None`` if the verifier itself
@@ -766,10 +766,10 @@ def _run_m44_verifier(
     if body is None:
         return None
     # Reconstruct the contract from disk. We use the same code path
-    # M-40 used to write it, but inverted — read the canonicalised
-    # JSON and re-materialise. To keep M-44 honest we re-run
-    # from_recipe with the same inputs as M-40, OR we trust the
-    # serialised form. M-44 takes the trusted-serialisation path here:
+    # used to write it, but inverted — read the canonicalised
+    # JSON and re-materialise. To keep honest we re-run
+    # from_recipe with the same inputs as , OR we trust the
+    # serialised form. takes the trusted-serialisation path here:
     # the contract file is already canonical and immutable per
     # contract_mutation guard.
     try:
@@ -806,7 +806,7 @@ def _reconstruct_contract_from_dict(body: dict[str, Any]) -> Any:
 
     We use the same KernelContractV3 dataclasses + the same
     KernelArchetype / DispatchModel / etc. enums. The serialised form
-    is what M-40's ``contract_to_dict`` produced; this is the
+    is what 's ``contract_to_dict`` produced; this is the
     inverse.
     """
     from compgen.kernels.contract_v3 import (
@@ -867,8 +867,8 @@ def _reconstruct_contract_from_dict(body: dict[str, Any]) -> Any:
                 register_bytes=hw["register_bytes"],
                 native_dtypes=tuple(hw["native_dtypes"]),
                 peak_bandwidth_gbps=hw["peak_bandwidth_gbps"],
-                # M-60 — extended hardware envelope (defaults preserve
-                # backward compatibility with pre-M-60 cert bodies).
+                # extended hardware envelope (defaults preserve
+                # backward compatibility with pre-cert bodies).
                 codegen_hints=tuple(hw.get("codegen_hints") or ()),
                 mma_shapes={
                     str(k): (int(v[0]), int(v[1]), int(v[2]))
@@ -943,13 +943,13 @@ def _reconstruct_contract_from_dict(body: dict[str, Any]) -> Any:
             for p in body.get("selection", {}).get("providers") or []
         ),
     )
-    # M-61 — pre/post-condition predicates round-trip.
+    # pre/post-condition predicates round-trip.
     from compgen.kernels.predicates import predicates_from_list
 
     preconditions = predicates_from_list(body.get("preconditions") or [])
     postconditions = predicates_from_list(body.get("postconditions") or [])
 
-    # M-64 — migrate the body so missing optional_v3_1_fields default
+    # migrate the body so missing optional_v3_1_fields default
     # to recognised values; canonical hash stays invariant.
     from compgen.kernels.contract_migration import (
         migrate_contract_body_v3_to_v3_1,
@@ -1017,7 +1017,7 @@ def _emit_retry_request(
         }
     else:
         # Fatal or exhausted — emit a downstream_retry_request_v1 so
-        # the M-15B retry surface picks it up.
+        # the retry surface picks it up.
         path = out_dir / "kernel_codegen_failure_report.json"
         if kind == "fatal":
             failed_check = result.failure_kind

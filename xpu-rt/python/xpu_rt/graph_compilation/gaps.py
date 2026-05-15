@@ -1025,7 +1025,7 @@ def run_gap_discovery(
     finished_at = _utcnow()
     output_hash = sha256_tree(out_dir)
     # Hash chain: input = sha256_tree(<directly-prior stage dir>). The
-    # M-05 layout inserts ``03_recipe_planning`` between graph_analysis
+    # layout inserts ``03_recipe_planning`` between graph_analysis
     # and gap_discovery, so the predecessor preference is:
     #   recipe_planning → graph_analysis → payload_lowering
     rp_dir = run_dir / "03_recipe_planning"

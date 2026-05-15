@@ -1,4 +1,4 @@
-"""M-51 emitted Python ASYNC plan executor tests.
+"""emitted Python ASYNC plan executor tests.
 
 Coverage:
 - Schema: emit_python_async_executor produces both files when at least
@@ -112,7 +112,7 @@ def _import_async_module(run_dir: Path):
 
 
 # --------------------------------------------------------------------------- #
-# Stub runtime — same shape as the M-47 SYNC test stub.
+# Stub runtime — same shape as the SYNC test stub.
 # --------------------------------------------------------------------------- #
 
 
@@ -291,7 +291,7 @@ class TestBehaviour:
         )
 
     def test_missing_notify_times_out(self, tmp_path: Path) -> None:
-        """Inject a kernel that hangs; M-51 must time out deterministically."""
+        """Inject a kernel that hangs; must time out deterministically."""
         run_dir = _make_async_run_dir(
             tmp_path,
             bindings=[

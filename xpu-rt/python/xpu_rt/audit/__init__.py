@@ -1,4 +1,4 @@
-"""Trust, realness, and fresh-agent audit layer (M-31A).
+"""Trust, realness, and fresh-agent audit layer.
 
 This package implements the permanent audit gate every milestone after
 Section 19 must pass. It is the layer that turns "no stubs, real examples"

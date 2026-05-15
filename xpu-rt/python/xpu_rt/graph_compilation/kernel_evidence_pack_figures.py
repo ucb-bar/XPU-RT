@@ -1,4 +1,4 @@
-"""M-25 figure renderers (matplotlib only; no seaborn).
+"""figure renderers (matplotlib only; no seaborn).
 
 Six PNGs under ``results/.../kernel_evidence_pack/figures/``:
 - kernel_calibration_status_by_model.png

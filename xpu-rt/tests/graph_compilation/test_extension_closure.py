@@ -39,9 +39,9 @@ HOST_CPU_TARGET = REPO_ROOT / "configs" / "targets" / "host_cpu.yaml"
 
 
 def _run_or_skip_on_m15b(**kwargs: object) -> None:
-    """Run graph compilation, skipping the test on M-15B rejection.
+    """Run graph compilation, skipping the test on rejection.
 
-    tiny_mlp et al hit M-15B downstream-gate rejection
+    tiny_mlp et al hit downstream-gate rejection
     (real_transform_differential failure on the K_iters reorder)
     on some hosts — that's a pipeline-level outcome, not a test
     bug, and shouldn't fail extension-closure tests that don't

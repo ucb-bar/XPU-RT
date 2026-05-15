@@ -1,4 +1,4 @@
-"""Tests for M-11B Real SetTileParams Transform MVP.
+"""Tests Real SetTileParams Transform MVP.
 
 Covers:
 
@@ -12,7 +12,7 @@ Covers:
   with proper iter-arg threading.
 - The structural-only case emits a well-formed scf.for nest with an
   empty body (no extract_slice/matmul/insert_slice).
-- Source ``payload.mlir`` and the M-08 metadata-only artifact are
+Source ``payload.mlir`` and the metadata-only artifact are
   byte-identical pre/post.
 - Required negative cases: non-SetTileParams skipped, dynamic-shape
   fail, opaque region fail, tile mismatch fail, multiple matching
@@ -140,7 +140,7 @@ def test_eligible_models_emit_transformed_real_mlir(model: str) -> None:
     # but their boundary handling currently lowers to a structural-
     # only IR rather than the executable boundary-handling form. The
     # constant's name (``NONEXEC``) and the fixture's manifest agree.
-    # Accept either form so this test tracks the M-11B implementation
+    # Accept either form so this test tracks the implementation
     # state rather than asserting a specific lowering-strategy choice.
     assert m["real_transform_kind"] in {
         "non_executable_structural_ir",
@@ -438,14 +438,14 @@ def test_report_claiming_differential_correctness_is_rejected(
     merlin_mlp_wide_run: Path,
 ) -> None:
     """If a downstream consumer (or a manual edit) tries to claim that
-    M-11B's real transform is differentially verified, the next M-11B
+    the real transform is differentially verified, the next
     re-run must overwrite that claim with the honest
     ``no_correctness_claim: true`` invariant.
 
     The negative test plants a forged manifest claiming
     ``no_correctness_claim: false`` plus a fake passing differential
-    check, then re-runs M-11B. The rewritten manifest + validation
-    must restore the M-11B-owned ``no_correctness_claim: true`` and
+    check, then re-runs. The rewritten manifest + validation
+    must restore the -owned ``no_correctness_claim: true`` and
     keep the ``no_differential_correctness_claimed`` check at pass.
     """
     rl = (
@@ -486,7 +486,7 @@ def test_report_claiming_differential_correctness_is_rejected(
 
 
 def test_metadata_only_overwrite_is_detected(tiny_mlp_run: Path) -> None:
-    """Modify the M-08 transformed_payload.mlir mid-run by monkeypatching
+    """Modify the transformed_payload.mlir mid-run by monkeypatching
     `_sha256_file` to return different SHAs for it before vs after."""
     import shutil as _sh
 

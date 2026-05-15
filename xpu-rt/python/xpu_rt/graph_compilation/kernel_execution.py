@@ -1,12 +1,12 @@
-"""M-19 Kernel Execution Foundation.
+"""Kernel Execution Foundation.
 
-Read-only consumer of M-11B's `transformed_payload.real.mlir` artifact.
+Read-only consumer of 's `transformed_payload.real.mlir` artifact.
 Compiles + executes the SetTileParams matmul region on real hardware
 (GPU via Triton, CPU via libcompgen_rt + cffi C codegen) and verifies
 numerical equality vs the eager baseline.
 
-Layered alongside the FX-level evidence (M-12 / M-16.2 / M-18 /
-M-18.3); never mutates any FX-level artifact.
+Layered alongside the FX-level evidence ( /
+); never mutates any FX-level artifact.
 
 Hard non-goals:
 
@@ -20,8 +20,8 @@ Hard non-goals:
 Output layout::
 
     02_graph_analysis/kernel_execution/
-        compiled_kernel_run_gpu.json   # M-19.GPU artifact
-        compiled_kernel_run_cpu.json   # M-19.CPU artifact
+        compiled_kernel_run_gpu.json # .GPU artifact
+        compiled_kernel_run_cpu.json # .CPU artifact
         kernel_execution_summary.md
         triton_kernel_<region>.py      # generated Triton source (when GPU runs)
         cpu_kernel_<region>.c          # generated CPU C source (when CPU runs)
@@ -63,7 +63,7 @@ class KernelExecutionResult:
 
 
 def _selected_set_tile_params(run_dir: Path) -> dict[str, Any] | None:
-    """Return the M-11B real-transform manifest IFF the committed
+    """Return the real-transform manifest IFF the committed
     candidate is an executable SetTileParams. Otherwise None."""
     manifest_path = (
         run_dir / "03_recipe_planning" / "real_lowering"
@@ -83,7 +83,7 @@ def _selected_set_tile_params(run_dir: Path) -> dict[str, Any] | None:
 
 
 def run_kernel_execution(run_dir: Path) -> KernelExecutionResult:
-    """M-19 entry point. Reads the M-11B manifest; dispatches to GPU
+    """entry point. Reads the manifest; dispatches to GPU
     and CPU sub-tracks; emits typed artifacts and a short markdown
     summary. Best-effort on every step.
     """
@@ -97,7 +97,7 @@ def run_kernel_execution(run_dir: Path) -> KernelExecutionResult:
     manifest = _selected_set_tile_params(run_dir)
     if manifest is None:
         # Not applicable for this run (e.g. non-tile candidate, or
-        # M-11B didn't run because stop_after was too early).
+        # didn't run because stop_after was too early).
         body = (
             "# Kernel Execution — not_applicable\n\n"
             "- The committed candidate is not a SetTileParams executable "

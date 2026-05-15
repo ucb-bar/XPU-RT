@@ -100,17 +100,17 @@ class ContractFeedback:
     for this op family, and feeds that back. CompGen updates the
     KernelContract for future requests.
 
-    Phase D / M-59 adds two fields:
+    Phase D / adds two fields:
 
-    * ``kind`` — typed feedback category. The M-59 typed-allowlist
+    * ``kind`` — typed feedback category. The typed-allowlist
       auto-applies entries whose ``kind`` is one of
       ``{layout_swap, dtype_widen, accumulator_widen,
       alignment_request, fast_math_opt_in}``. Empty ``kind`` is a
-      backward-compatible signal — M-59's classifier infers it from
+      backward-compatible signal — 's classifier infers it from
       ``field`` via a small heuristic.
     * ``applies_when`` — a free-text predicate the agent can read
       to decide whether the suggestion is conditional (e.g.
-      ``"K >= 64"``). Currently informational; the M-61 predicate
+      ``"K >= 64"``). Currently informational; the predicate
       DSL can later evaluate it programmatically.
     """
 
@@ -207,14 +207,12 @@ class ProviderResult:
 
 
 # ===========================================================================
-# Phase D / M-56 — two-stage provider protocol: bid → fulfill
+# Phase D / two-stage provider protocol: bid → fulfill
 # ===========================================================================
-#
 # Today's provider interface has one method that performs codegen
-# (``search`` / ``ProviderResult``). The Phase D auction (M-57) needs
+# (``search`` / ``ProviderResult``). The Phase D auction needs
 # a *cheap* pre-codegen estimate so it can pick the top-K bidders to
-# actually invoke. M-56 introduces ``BidPreview`` for that:
-#
+# actually invoke. introduces ``BidPreview`` for that:
 #   * Every provider may implement an optional ``bid(contract_v3)
 #     -> BidPreview`` method.
 #   * Legacy providers without ``bid()`` are bridged via
@@ -222,9 +220,8 @@ class ProviderResult:
 #     low-confidence placeholder.
 #   * The auction ranks by ``perf_estimate_us / confidence`` and sends
 #     the top-K to ``fulfill()`` (today's ``search()`` semantics).
-#
 # Bid honesty is *unverified at bid time* — the auction trusts bids
-# only as a ranking signal. The contract-driven verifier (M-44) still
+# only as a ranking signal. The contract-driven verifier still
 # runs on every fulfilled bid. Misleading bids waste top-K capacity,
 # they do not let unsafe artifacts through.
 
@@ -232,7 +229,7 @@ class ProviderResult:
 class ProviderProtocolViolation(ValueError):
     """A provider returned a structurally-malformed BidPreview / ProviderResult.
 
-    M-56 raises this from :func:`compgen.kernels.registry.compute_bid`
+    raises this from :func:`compgen.kernels.registry.compute_bid`
     when ``bid()`` returns a ``BidPreview`` with out-of-range fields
     (negative confidence, non-finite perf_estimate, contract_hash that
     disagrees with the canonical hash, etc.). The auction treats this
@@ -247,7 +244,7 @@ class BidPreview:
 
     The provider declares (a) what it *thinks* it can deliver, (b) how
     confident it is, (c) how long ``fulfill()`` will take. The auction
-    (M-57) uses this to decide whether the provider gets to run at all.
+     uses this to decide whether the provider gets to run at all.
 
     Attributes:
         provider_name: Mirrors :attr:`KernelProvider.name` so the
@@ -267,7 +264,7 @@ class BidPreview:
             in wall-clock seconds. Auction uses this to short-circuit
             providers that won't fit the per-task budget.
         registers_used / occupancy / smem_bytes: Resource claims for
-            informational ranking. Verifier (M-44) may cross-check.
+            informational ranking. Verifier may cross-check.
         rationale: One-line justification — surfaced in
             ``auction_report.json`` for tactician analysis.
         cache_hit: True iff the provider can serve from a verified
@@ -408,10 +405,8 @@ class KernelProvider(Protocol):
         ...
 
 
-# Phase D / M-56 — providers may optionally implement::
-#
+# Phase D / providers may optionally implement::
 #     def bid(self, contract: KernelContractV3) -> BidPreview: ...
-#
 # The Protocol above does NOT declare ``bid`` so legacy providers
 # remain ``isinstance(p, KernelProvider)``-conformant. Use
 # :func:`compgen.kernels.registry.compute_bid` to safely invoke it

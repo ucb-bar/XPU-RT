@@ -1,0 +1,12 @@
+schema_version: dialect_provider_card_v1
+dialect_provider_id: nki
+dialect_name: nki
+integration_level: probe
+consumes: [kernel_contract_v3]
+emits: [nki_source, neff]
+entrypoint: compgen.providers.adapters.nki:NkiDialectProvider
+required_env: [NEURON_HOME]
+description: |
+  AWS NKI dialect provider for Trainium / Inferentia. Lowers
+  KernelContractV3 to NKI Python, then to ``.neff`` via the Neuron
+  compiler.

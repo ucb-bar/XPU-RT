@@ -42,28 +42,75 @@ logger = logging.getLogger(__name__)
 # exceeds ``long_threshold`` tokens. ``cached`` applies to the
 # context-cache hit portion of the prompt (Gemini reports
 # ``cached_content_token_count`` in usage_metadata).
-#
-# Rates verified against ai.google.dev/pricing as of 2026-05.
+# RATES VERIFIED against ai.google.dev/pricing on 2026-05-12. If you
+# update this table you MUST bump ``PRICING_VERIFIED_AT`` below and
+# re-run ``tests/observability/test_pricing_freshness.py`` so the
+# verifier catches drift in CI.
+# To override without touching code (e.g. for an as-yet-uncovered
+# model id), drop ``configs/gemini_pricing.yaml`` with the same shape
+# as this dict. The override is merged into PRICING at call time —
+# see :func:`load_pricing_overrides`.
+
+PRICING_VERIFIED_AT = "2026-05-12"
+PRICING_SOURCE_URL = "https://ai.google.dev/pricing"
 
 PRICING: dict[str, dict[str, float]] = {
+    # ---- Gemini 2.5 family (current) ----
     "gemini-2.5-pro": {
         "input": 1.25,
         "output": 10.00,
         "input_long": 2.50,
         "output_long": 15.00,
         "long_threshold": 200_000,
-        "cached": 0.31,
+        "cached": 0.125,
     },
     "gemini-2.5-flash": {
         "input": 0.30,
         "output": 2.50,
-        "cached": 0.075,
+        "cached": 0.03,
     },
     "gemini-2.5-flash-lite": {
         "input": 0.10,
         "output": 0.40,
+        "cached": 0.01,
+    },
+    # ---- Gemini 2.0 family (deprecated 2026-06-01 but still billed) ----
+    # gemini-2.0-flash audio inputs bill at $0.70/1M and cached audio at
+    # $0.175/1M. Our event schema only tracks aggregate ``prompt_tokens``
+    # so we use the text/image/video rate as the honest approximation;
+    # audio-heavy workloads will be slightly under-reported.
+    "gemini-2.0-flash": {
+        "input": 0.10,
+        "output": 0.40,
         "cached": 0.025,
     },
+    "gemini-2.0-flash-lite": {
+        "input": 0.075,
+        "output": 0.30,
+        # No published cached rate; reuse 25%-of-input as a documented
+        # placeholder. Cached_tokens=0 calls are unaffected.
+        "cached": 0.01875,
+    },
+    # ---- Gemini 3.x family (preview / newest) ----
+    "gemini-3.1-pro-preview": {
+        "input": 2.00,
+        "output": 12.00,
+        "input_long": 4.00,
+        "output_long": 18.00,
+        "long_threshold": 200_000,
+        "cached": 0.20,
+    },
+    "gemini-3.1-flash-lite": {
+        "input": 0.25,
+        "output": 1.50,
+        "cached": 0.025,
+    },
+    "gemini-3-flash-preview": {
+        "input": 0.50,
+        "output": 3.00,
+        "cached": 0.05,
+    },
+    # ---- Gemini 1.5 family (legacy; rates frozen at last-published) ----
     "gemini-1.5-pro": {
         "input": 1.25,
         "output": 5.00,
@@ -92,7 +139,12 @@ PRICING: dict[str, dict[str, float]] = {
 
 # Fallback used when a model id is unknown. We bias toward the
 # mid-tier flash rate so unknown models don't silently report $0.
-_FALLBACK_RATES = {"input": 0.30, "output": 2.50, "cached": 0.075}
+# Every fallback hit is **logged** so the user notices when a new
+# Gemini family lands and the table needs updating.
+_FALLBACK_RATES = {"input": 0.30, "output": 2.50, "cached": 0.03}
+
+# Models we've already warned about, so we don't spam the log on every call.
+_WARNED_FALLBACK_MODELS: set[str] = set()
 
 
 # ---------------------------------------------------------------------------
@@ -292,6 +344,35 @@ def load_pricing_overrides() -> dict[str, dict[str, float]]:
     return data
 
 
+def resolve_rates(model: str) -> tuple[dict[str, float], str]:
+    """Return ``(rates, resolved_key)`` for ``model``.
+
+    ``resolved_key`` is the PRICING key that matched, or
+    ``"_FALLBACK_RATES"`` when the model is unknown — in the
+    latter case a structured warning is logged exactly once per
+    unique model id so the user notices when a new Gemini family
+    needs adding to the table.
+    """
+    table = dict(PRICING)
+    table.update(load_pricing_overrides())
+    key = _normalize_model(model)
+    if key and key in table:
+        return table[key], key
+    if model and model not in _WARNED_FALLBACK_MODELS:
+        logger.warning(
+            "gemini pricing fallback for unknown model %r — using "
+            "mid-tier flash rates (in=%.2f, out=%.2f, cached=%.2f). "
+            "Update PRICING in compgen/observability/gemini_usage.py "
+            "or drop a configs/gemini_pricing.yaml override to silence.",
+            model,
+            _FALLBACK_RATES["input"],
+            _FALLBACK_RATES["output"],
+            _FALLBACK_RATES["cached"],
+        )
+        _WARNED_FALLBACK_MODELS.add(model)
+    return dict(_FALLBACK_RATES), "_FALLBACK_RATES"
+
+
 def compute_cost_usd(
     model: str,
     prompt_tokens: int,
@@ -303,10 +384,7 @@ def compute_cost_usd(
     Cached tokens are billed at the cached rate and are assumed to be a
     subset of ``prompt_tokens`` (consistent with Gemini usage_metadata).
     """
-    table = dict(PRICING)
-    table.update(load_pricing_overrides())
-    key = _normalize_model(model)
-    rates = table.get(key, _FALLBACK_RATES)
+    rates, _ = resolve_rates(model)
 
     threshold = rates.get("long_threshold")
     if threshold is not None and prompt_tokens > threshold:
@@ -376,7 +454,14 @@ def record_call(
     """
     try:
         ts = (timestamp or datetime.now(timezone.utc)).astimezone(timezone.utc).isoformat()
+        # Resolve rates first so we can stamp the resolved key into the
+        # event metadata (audit trail: was this call real-priced or
+        # fallback-priced?).
+        rates, rates_key = resolve_rates(model)
         cost = compute_cost_usd(model, prompt_tokens, completion_tokens, cached_tokens)
+        event_meta = dict(metadata or {})
+        event_meta.setdefault("rates_key", rates_key)
+        event_meta.setdefault("rates_verified_at", PRICING_VERIFIED_AT)
         event = UsageEvent(
             timestamp=ts,
             model=model,
@@ -386,7 +471,7 @@ def record_call(
             cost_usd=cost,
             latency_ms=float(latency_ms or 0.0),
             source=source,
-            metadata=dict(metadata or {}),
+            metadata=event_meta,
         )
         with _exclusive_lock():
             with events_path().open("a", encoding="utf-8") as f:
@@ -570,7 +655,6 @@ def record_from_response(
 # AsyncModels.generate_content (async) so every Gemini call routed through
 # the SDK is recorded — regardless of whether the caller is our own
 # GeminiClient, autocomp's LLMClient, or any other downstream consumer.
-#
 # Source attribution flows via a ContextVar so callers (autocomp adapter,
 # GeminiClient.generate, etc.) can tag their calls without changing the
 # patched function's signature.
@@ -688,3 +772,161 @@ def is_genai_instrumented() -> bool:
     sync_ok = getattr(getattr(genai_models, "Models", None), _INSTRUMENTED_FLAG, False)
     async_ok = getattr(getattr(genai_models, "AsyncModels", None), _INSTRUMENTED_FLAG, False)
     return bool(sync_ok and async_ok)
+
+
+def _record_openai_compat_call(
+    model: str,
+    response: Any,
+    started_at: float,
+    *,
+    is_gemini_endpoint: bool,
+) -> None:
+    """Record a call from the ``openai`` SDK pointed at ANY backend.
+
+    Used by :func:`install_openai_instrumentation` to capture calls
+    KernelBlaster and similar tools make via the OpenAI-compatible
+    surface of Google's Gemini API
+    (``https://generativelanguage.googleapis.com/v1beta/openai/``).
+
+    Only records calls flagged ``is_gemini_endpoint=True`` so we don't
+    accidentally double-record vanilla OpenAI calls (which aren't
+    Gemini and don't belong in this tracker).
+    """
+    if not is_gemini_endpoint:
+        return
+    usage = getattr(response, "usage", None)
+    prompt_tokens = int(getattr(usage, "prompt_tokens", 0) or 0)
+    completion_tokens = int(getattr(usage, "completion_tokens", 0) or 0)
+    cached_tokens = 0
+    # Newer OpenAI SDKs expose prompt_tokens_details.cached_tokens.
+    details = getattr(usage, "prompt_tokens_details", None)
+    if details is not None:
+        cached_tokens = int(getattr(details, "cached_tokens", 0) or 0)
+    latency_ms = (time.perf_counter() - started_at) * 1000.0
+    record_call(
+        model=model,
+        prompt_tokens=prompt_tokens,
+        completion_tokens=completion_tokens,
+        cached_tokens=cached_tokens,
+        latency_ms=latency_ms,
+        source=_current_source.get() or "openai_compat",
+        metadata={
+            **(_current_metadata.get() or {}),
+            "via": "openai_compat",
+        },
+    )
+
+
+def _is_gemini_endpoint(client: Any) -> bool:
+    """Heuristic: does the openai client point at Google's endpoint?"""
+    base_url = getattr(client, "base_url", "") or ""
+    base_url_str = str(base_url)
+    return "generativelanguage.googleapis.com" in base_url_str or "google" in base_url_str.lower()
+
+
+def install_openai_instrumentation() -> bool:
+    """Monkey-patch the ``openai`` SDK's ``chat.completions.create``
+    so calls routed to Google's OpenAI-compatible Gemini endpoint
+    flow into the usage tracker.
+
+    Idempotent. Returns True when the SDK was patched (or already
+    patched). Skips when ``openai`` isn't importable.
+
+    Critical for capturing KernelBlaster usage: KB uses
+    ``openai.AsyncOpenAI(base_url='.../v1beta/openai/')`` rather
+    than the ``google.genai`` SDK, so the ``install_genai_instrumentation``
+    patch alone misses every KB call.
+    """
+    try:
+        import openai  # type: ignore[import-not-found]
+    except ImportError:
+        return False
+
+    patched = False
+
+    # Sync resources class.
+    try:
+        from openai.resources.chat.completions import (  # type: ignore[import-not-found]
+            Completions as SyncCompletions,
+        )
+    except ImportError:
+        SyncCompletions = None  # type: ignore[assignment]
+
+    if SyncCompletions is not None and not getattr(
+        SyncCompletions, _INSTRUMENTED_FLAG, False
+    ):
+        original_sync = SyncCompletions.create
+
+        @functools.wraps(original_sync)
+        def patched_sync(self: Any, *args: Any, **kwargs: Any) -> Any:
+            t0 = time.perf_counter()
+            response = original_sync(self, *args, **kwargs)
+            try:
+                client = getattr(self, "_client", None)
+                if _is_gemini_endpoint(client):
+                    _record_openai_compat_call(
+                        model=str(kwargs.get("model", "") or ""),
+                        response=response,
+                        started_at=t0,
+                        is_gemini_endpoint=True,
+                    )
+            except Exception:  # noqa: BLE001
+                logger.exception("usage tracking failed for openai sync chat.completions.create")
+            return response
+
+        SyncCompletions.create = patched_sync  # type: ignore[method-assign]
+        setattr(SyncCompletions, _INSTRUMENTED_FLAG, True)
+        patched = True
+
+    # Async resources class.
+    try:
+        from openai.resources.chat.completions import (  # type: ignore[import-not-found]
+            AsyncCompletions,
+        )
+    except ImportError:
+        AsyncCompletions = None  # type: ignore[assignment]
+
+    if AsyncCompletions is not None and not getattr(
+        AsyncCompletions, _INSTRUMENTED_FLAG, False
+    ):
+        original_async = AsyncCompletions.create
+
+        @functools.wraps(original_async)
+        async def patched_async(self: Any, *args: Any, **kwargs: Any) -> Any:
+            t0 = time.perf_counter()
+            response = await original_async(self, *args, **kwargs)
+            try:
+                client = getattr(self, "_client", None)
+                if _is_gemini_endpoint(client):
+                    _record_openai_compat_call(
+                        model=str(kwargs.get("model", "") or ""),
+                        response=response,
+                        started_at=t0,
+                        is_gemini_endpoint=True,
+                    )
+            except Exception:  # noqa: BLE001
+                logger.exception("usage tracking failed for openai async chat.completions.create")
+            return response
+
+        AsyncCompletions.create = patched_async  # type: ignore[method-assign]
+        setattr(AsyncCompletions, _INSTRUMENTED_FLAG, True)
+        patched = True
+
+    if patched:
+        logger.debug("compgen.observability: instrumented openai SDK")
+    return True
+
+
+def is_openai_instrumented() -> bool:
+    """Whether openai's chat.completions has been patched in this process."""
+    try:
+        from openai.resources.chat.completions import (  # type: ignore[import-not-found]
+            AsyncCompletions,
+            Completions,
+        )
+    except ImportError:
+        return False
+    return bool(
+        getattr(Completions, _INSTRUMENTED_FLAG, False)
+        and getattr(AsyncCompletions, _INSTRUMENTED_FLAG, False)
+    )

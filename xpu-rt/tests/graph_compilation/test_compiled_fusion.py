@@ -1,21 +1,21 @@
-"""Acceptance tests for M-23 Compiled Fusion Verification.
+"""Acceptance tests Compiled Fusion Verification.
 
 Verifies:
 
-- M-23 emits a typed report when M-16.2 picked an `executable_real_fusion`
+emits a typed report when picked an `executable_real_fusion`
   candidate (proxy_vla canonical case: bias_add → relu).
 - Both GPU (Triton) and CPU (cffi C) tracks compile + run + discharge
   bit-equality vs eager unfused chain on 16 frozen input cases.
-- M-15B downstream-retry detector includes
+downstream-retry detector includes
   `compiled_fusion_differential_check` in its registry.
-- M-23 emits typed `not_run` when no fusion candidate was selected
+emits typed `not_run` when no fusion candidate was selected
   (e.g. merlin_mlp_wide picks SetTileParams, not fusion).
-- M-23 emits typed `blocked` when producer/consumer is outside the
+emits typed `blocked` when producer/consumer is outside the
   pointwise MVP whitelist.
-- M-16.2's existing artifacts stay byte-identical (M-23 layers
+the existing artifacts stay byte-identical (layers
   ALONGSIDE).
 - Generated kernel sources are byte-deterministic across reruns.
-- Ledger captures the M-23 stage event.
+Ledger captures the stage event.
 - No compiler-core imports.
 """
 
@@ -78,7 +78,7 @@ def fusion_run(tmp_path_factory) -> Path:  # type: ignore[no-untyped-def]
 
 @pytest.fixture(scope="module")
 def no_fusion_run(tmp_path_factory) -> Path:  # type: ignore[no-untyped-def]
-    """merlin_mlp_wide — greedy picks SetTileParams, NOT fusion. M-23
+    """merlin_mlp_wide — greedy picks SetTileParams, NOT fusion.
     must emit typed not_run rather than crash."""
     out = tmp_path_factory.mktemp("m23_no_fusion") / "run"
     _run("merlin_mlp_wide", out, run_kernels=True)
@@ -197,13 +197,13 @@ def test_kernel_sources_emitted(fusion_run: Path) -> None:
 
 
 # --------------------------------------------------------------------------- #
-# Layered alongside M-16.2 (no mutation)
+# Layered alongside (no mutation)
 # --------------------------------------------------------------------------- #
 
 
 def test_m162_artifacts_unchanged_after_m23(fusion_run: Path) -> None:
-    """M-16.2's manifest + differential report stay byte-identical
-    after M-23 runs (M-23 layers alongside)."""
+    """the manifest + differential report stay byte-identical
+     runs (layers alongside)."""
     rl_path = (
         fusion_run / "03_recipe_planning" / "real_lowering"
         / "real_fusion_manifest.json"
@@ -226,7 +226,7 @@ def test_m162_artifacts_unchanged_after_m23(fusion_run: Path) -> None:
 
 def test_m23_does_not_mutate_canonical_artifacts(fusion_run: Path) -> None:
     """region_map + candidate_actions + cost_preview_v2 stay
-    byte-identical through M-23."""
+    byte-identical through ."""
     rm_path = fusion_run / "02_graph_analysis" / "region_map.json"
     ca_path = fusion_run / "02_graph_analysis" / "candidate_actions.json"
     cp_path = fusion_run / "02_graph_analysis" / "cost_preview_v2.json"
@@ -270,12 +270,12 @@ def test_kernel_source_sha256_deterministic(fusion_run: Path) -> None:
 
 
 # --------------------------------------------------------------------------- #
-# M-15B downstream-retry coupling
+# downstream-retry coupling
 # --------------------------------------------------------------------------- #
 
 
 def test_m15b_includes_compiled_fusion_check() -> None:
-    """The downstream_retry detector must include the M-23 report in
+    """The downstream_retry detector must include the report in
     its registry so kernel-level fusion failures trigger retry."""
     from compgen.graph_compilation.downstream_retry import _DOWNSTREAM_REPORTS
 
@@ -284,7 +284,7 @@ def test_m15b_includes_compiled_fusion_check() -> None:
 
 
 def test_m15b_does_not_retry_on_pass(fusion_run: Path) -> None:
-    """status=pass on M-23 must NOT trigger a downstream-retry request."""
+    """status=pass on must NOT trigger a downstream-retry request."""
     from compgen.graph_compilation.downstream_retry import detect_downstream_failure
 
     r = _read(

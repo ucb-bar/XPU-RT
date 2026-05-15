@@ -1,7 +1,7 @@
-"""DEPRECATED — superseded by M-42 (``compgen.graph_compilation.kernel_codegen``).
+"""DEPRECATED — superseded (``compgen.graph_compilation.kernel_codegen``).
 
-This module shipped with M-39 as the data-only kernel-specialization
-request emitter. M-42 (Phase C) replaced its schema
+This module shipped with as the data-only kernel-specialization
+request emitter. (Phase C) replaced its schema
 (``kernel_specialization_request_v1``) with the leaner
 ``kernel_codegen_request_v1`` that points at materialised contract
 files instead of embedding shape/tile/layout/dtype inline. The
@@ -24,7 +24,7 @@ from typing import Any
 
 
 class DeprecationError(RuntimeError):
-    """Raised when a deprecated M-39 entry point is invoked."""
+    """Raised when a deprecated entry point is invoked."""
 
 
 def build_kernel_specialization_request(*args: Any, **kwargs: Any) -> Any:

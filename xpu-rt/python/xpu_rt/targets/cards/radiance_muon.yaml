@@ -1,0 +1,9 @@
+schema_version: target_card_v1
+target_id: radiance_muon
+family: radiance
+vendor: berkeley
+dispatch_modes: [sync, static_plan]
+memory_tiers:
+  - {name: dram, kind: host, capacity_bytes: 0}
+  - {name: shared, kind: shared, capacity_bytes: 65536}
+description: Chipyard Radiance SIMT research accelerator (Muon kernels).

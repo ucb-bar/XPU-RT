@@ -30,13 +30,11 @@ from __future__ import annotations
 # shared memory and synchronize via cluster_sync(). At 188 SMs
 # (sm_120) and 256 tasks per FFN this means ~128 clusters of 2,
 # half the per-stage sync cost vs single-block tasks.
-#
 # Larger clusters (4, 1, 1) and (8, 1, 1) are tunable. They
 # amortize sync further but require:
 # - Bigger smem budget per cluster (4× / 8× the per-block smem).
 # - Body emitter to actually use cluster-distributed memory; a
 #   non-cluster-aware body in a 4-block cluster wastes 3 of them.
-#
 # Wave 1.6 starts at 2; Wave 1.6b will autotune.
 DEFAULT_CLUSTER_DIM = (2, 1, 1)
 

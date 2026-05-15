@@ -1,0 +1,11 @@
+schema_version: dialect_provider_card_v1
+dialect_provider_id: gemmini_c
+dialect_name: gemmini
+integration_level: probe
+consumes: [kernel_contract_v3, compgen_tile_ir]
+emits: [c_source, elf, riscv_binary]
+entrypoint: compgen.providers.adapters.gemmini_c:GemminiDialectProvider
+required_env: [CHIPYARD_ROOT, GEMMINI_ROOT]
+description: |
+  Gemmini C dialect provider for the Chipyard Gemmini MX
+  systolic-array accelerator. Lowers to libgemmini C + RISC-V ELF.

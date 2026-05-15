@@ -1,15 +1,15 @@
-"""M-65 — Phase D vertical-slice evidence emitter.
+"""Phase D vertical-slice evidence emitter.
 
 The plan calls for two cross-cutting stress slices:
 
 * **Slice 2** — ``proxy_vla`` on ``host_cpu`` (fusion path).
 * **Slice 3** — ``merlin_mlp_wide`` on ``cuda_sm75`` via Triton.
 
-Both slices exercise the M-55..M-64 substrate end-to-end. M-65 is
+Both slices exercise the ..substrate end-to-end. is
 documentation + evidence: it walks an existing ``run_dir``, summarises
 what each Phase D milestone produced, and emits a slice-specific
 evidence JSON. The honest output stays honest — when a slice can't
-run (e.g. proxy_vla's selected candidate is a fusion, which M-42
+run (e.g. proxy_vla's selected candidate is a fusion, which
 deliberately routes to ``not_applicable``), the evidence file
 records the gap rather than papering over it.
 """
@@ -151,7 +151,7 @@ def _summarise_bindings(run_dir: Path) -> dict[str, Any]:
 
 def _summarise_contract_versioning(run_dir: Path) -> dict[str, Any]:
     """Re-derive every cert's canonical hash post-migration; fail-fast
-    summary so the slice evidence records whether M-64's invariant
+    summary so the slice evidence records whether 's invariant
     holds for the slice-specific certs."""
     cert_dir = run_dir / "04_kernel_codegen" / "certificates"
     if not cert_dir.exists():

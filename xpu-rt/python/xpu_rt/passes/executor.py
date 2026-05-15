@@ -1,9 +1,9 @@
-"""Multi-step pass-plan executor MVP (M-37.6).
+"""Multi-step pass-plan executor MVP.
 
-The agent's response can carry a ``pass_plan`` (M-34.3): an ordered
-list of pass steps. M-37.6 ships an executor that:
+The agent's response can carry a ``pass_plan``: an ordered
+list of pass steps. ships an executor that:
 
-1. Validates the plan against M-34's invariants (structural / phase /
+1. Validates the plan against 's invariants (structural / phase /
    requires_after / excludes). Invalid plans are rejected before any
    step runs.
 2. Optionally applies step 0 by writing a single-step
@@ -13,17 +13,17 @@ list of pass steps. M-37.6 ships an executor that:
    ``03_recipe_planning/pass_plan_execution_log.json``. Each step
    gets ``applied`` / ``deferred_to_future_run`` / ``rejected``.
 
-What's deferred to Section 21+ (declared in M-37.6's contract):
+What's deferred to Section 21+ (declared 's contract):
 
 The pipeline today applies one transform per run starting from
 ``payload.mlir``. To execute step 1, the operator would need a
 "continue from post-step-0 IR" mode where the second run starts from
 the already-transformed payload. That requires either resumability
-in ``run_graph_compilation`` or a copy-back step. M-37.6 explicitly
+in ``run_graph_compilation`` or a copy-back step. explicitly
 records ``deferred_to_future_run`` for steps 1+ so the agent doesn't
 silently believe its full plan executed.
 
-This MVP closes the M-37 residual ("multi-step pass plans aren't
+This MVP closes the residual ("multi-step pass plans aren't
 executed yet") by shipping the executor contract, the validation,
 the typed log, and a smoke-tested step-0 application path. The agent
 proposing a 3-step plan today gets:
@@ -144,9 +144,9 @@ def _write_response_for_step_zero(
 
     The response carries:
     - ``selected_candidate_id`` — step 0's candidate (compatible with
-      every pre-M-34 agent-file consumer).
+      every pre-agent-file consumer).
     - ``pass_plan`` — the full plan list, so a future executor /
-      validator can inspect intent (M-34.3 emission).
+      validator can inspect intent (emission).
     """
     out_dir = run_dir / "03_recipe_planning" / "agent_decision"
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -201,7 +201,7 @@ def execute_pass_plan(
     Raises:
         :class:`PassPlanInvalid` / :class:`PhaseTransitionViolation` /
         :class:`PairContractViolation` when the plan violates an
-        M-34 invariant. The log is written to disk before the raise
+        invariant. The log is written to disk before the raise
         so the operator can inspect what failed.
     """
     coerced: list[PassPlanStep] = []

@@ -1,4 +1,4 @@
-"""M-17 figures — matplotlib only, no seaborn.
+"""figures — matplotlib only, no seaborn.
 
 Each figure is rendered from the in-memory rows + aggregates that the
 evidence pack has already computed. PNGs are written under
@@ -18,7 +18,7 @@ def _setup() -> None:
 
 
 def render_all(rows, agg, figures_dir: Path) -> None:  # type: ignore[no-untyped-def]
-    """Render the 7 required figures + the M-18 calibration figure
+    """Render the 7 required figures + the calibration figure
     (rendered when at least one model has calibration evidence)."""
     _setup()
     figures_dir.mkdir(parents=True, exist_ok=True)

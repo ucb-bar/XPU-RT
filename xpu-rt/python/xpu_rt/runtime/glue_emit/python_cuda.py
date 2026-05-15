@@ -1,17 +1,17 @@
-"""Python CUDA plan executor emitter (M-52).
+"""Python CUDA plan executor emitter.
 
-Phase C M-52: third emitted-glue milestone. When the plan's target
+Phase C third emitted-glue milestone. When the plan's target
 starts with ``cuda`` (or matches the GPU target taxonomy understood
 by :func:`compgen.runtime.glue.select_adapter`), emit
-``06_glue_emit/generated_plan_executor_cuda.py`` alongside the M-47
-SYNC and M-51 ASYNC executors. The CUDA executor:
+``06_glue_emit/generated_plan_executor_cuda.py`` alongside the
+SYNC and ASYNC executors. The CUDA executor:
 
 - Exposes ``compgen_run_cuda(io, kernels, runtime, *, mode,
   capture=False)`` where ``mode in {"sync", "async"}``.
 - ``mode="sync"`` runs each region sequentially with
   ``runtime.synchronize()`` between dispatches (a synchronous CUDA
   stream model).
-- ``mode="async"`` mirrors M-51's per-region threading + EventTensor
+``mode="async"`` mirrors 's per-region threading + EventTensor
   handshake but routes the dispatch through the
   :class:`CudaRuntimeAdapter` (which fire-and-forgets on the CUDA
   stream and synchronizes at the end).
@@ -30,15 +30,15 @@ not silently pass.
 Hard rules:
 
 - Emitter only fires when ``plan.target`` matches the CUDA family.
-  Non-CUDA targets skip the emit (``overall=skipped``); the M-47 SYNC
-  and (when applicable) M-51 ASYNC executors are the artifacts.
+  Non-CUDA targets skip the emit (``overall=skipped``); the SYNC
+  and (when applicable) ASYNC executors are the artifacts.
 - The captured_graph payload is opt-in (``capture=True``); the default
   is plain dispatch so a CPU-only test can import and call
   ``compgen_run_cuda(mode="sync")`` against a stub adapter that
   emulates ``runtime.dispatch`` / ``runtime.synchronize`` without a
   GPU.
-- The CUDA emitter REUSES M-48's typed PLAN_VIOLATION classes and
-  M-51's per-region EventTensor handshake template — duplication is
+The CUDA emitter REUSES 's typed PLAN_VIOLATION classes and
+  's per-region EventTensor handshake template — duplication is
   forbidden by the realness contract.
 """
 
@@ -194,7 +194,7 @@ def _emit_cuda_executor_source(
     if not sync_lines:
         sync_lines.append("    last_out = ()  # no regions to dispatch")
 
-    # ASYNC worker bodies (mirrors M-51).
+    # ASYNC worker bodies (mirrors ).
     async_workers: list[str] = []
     for region_id in region_order:
         binding = bindings_by_region.get(region_id)
@@ -456,7 +456,7 @@ if __name__ == "__main__":
 
 
 def emit_python_cuda_executor(run_dir: Path) -> CudaGlueEmitResult:
-    """Read the M-46 plan; emit the CUDA executor when the target is
+    """Read the plan; emit the CUDA executor when the target is
     in the CUDA family. Non-CUDA targets skip emission (overall=skipped)."""
     run_dir = Path(run_dir).resolve()
     plan_path = run_dir / "05_execution_plan" / "execution_plan.yaml"

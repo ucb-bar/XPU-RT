@@ -1,4 +1,4 @@
-"""Tests for compgen.benchmarks.pass_pool_ablation (M-36.1)."""
+"""Tests for compgen.benchmarks.pass_pool_ablation."""
 
 from __future__ import annotations
 

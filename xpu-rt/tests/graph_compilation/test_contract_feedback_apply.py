@@ -1,4 +1,4 @@
-"""M-59 — Two-tier contract_feedback re-entry tests.
+"""Two-tier contract_feedback re-entry tests.
 
 Coverage:
 

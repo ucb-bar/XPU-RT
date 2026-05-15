@@ -1,4 +1,4 @@
-"""Fresh-agent run modes (M-31A.4).
+"""Fresh-agent run modes.
 
 Three modes ship the reproducibility argument:
 
@@ -103,7 +103,7 @@ def run_greedy_baseline(
                 typed_outcome="typed_blocked",
                 error=f"{type_name}: {exc}",
             )
-        # M-15B downstream-gate rejection is a typed retry signal.
+        # downstream-gate rejection is a typed retry signal.
         if "M-15B" in str(exc) or "downstream" in str(exc).lower():
             return GreedyBaselineResult(
                 success=True,

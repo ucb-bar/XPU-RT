@@ -52,7 +52,6 @@ from compgen.transforms.emit_cuda_megakernel import DeviceFunctionSource
 # Empirical scheduling overhead per task in the megakernel's
 # per-SM dispatch loop. Includes event-tensor wait + body invoke
 # + event-tensor notify cycle.
-#
 # Per bridge #099/#108: measured ~1.0 µs on Blackwell sm_120 in
 # the static-schedule path. AMD/Intel may differ; vendors override
 # via :meth:`GpuCostModel.scheduling_overhead_us`.

@@ -360,7 +360,7 @@ def _build_parser() -> argparse.ArgumentParser:
     lower.add_argument("--out", required=True, type=Path, help="Output run directory (will be replaced).")
     lower.add_argument("--run-id", default=None, help="Optional explicit run_id.")
 
-    # resolve-candidate (M-04.5: resolve a selected candidate_id against action_space.mlir)
+    # resolve-candidate (resolve a selected candidate_id against action_space.mlir)
     rc = sub.add_parser(
         "resolve-candidate",
         help="Resolve a selected candidate_id against action_space.mlir (M-04.5).",
@@ -890,7 +890,7 @@ def _run_suite(args: argparse.Namespace) -> int:
 
         run_dir = out_root / model_id
         t0 = _time.time()
-        # M-14A run-suite agent-file mode: look up a per-model
+        # run-suite agent-file mode: look up a per-model
         # response file in --agent-decision-response-dir.
         agent_response_path: Path | None = None
         adr_dir = getattr(args, "agent_decision_response_dir", None)
@@ -967,7 +967,7 @@ def _run_suite(args: argparse.Namespace) -> int:
 
 
 def _run_resolve_candidate(args: argparse.Namespace) -> int:
-    """Resolve a candidate_id against action_space.mlir (M-04.5)."""
+    """Resolve a candidate_id against action_space.mlir."""
     from compgen.graph_compilation.action_space_resolver import (
         ResolverError,
         resolve_candidate,
@@ -1583,7 +1583,7 @@ def main(argv: list[str] | None = None) -> int:
                     dry_run=getattr(args, "llm_live_dry_run", False),
                     fallback=getattr(args, "llm_live_fallback", "none"),
                 )
-            # M-62: re-index user-supplied kernels before the run
+            # re-index user-supplied kernels before the run
             # (auction picks them up via default_registry()).
             user_kernel_path = getattr(args, "user_kernel_path", None)
             try:

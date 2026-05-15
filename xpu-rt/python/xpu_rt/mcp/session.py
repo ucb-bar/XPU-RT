@@ -70,6 +70,19 @@ class McpSession:
     # here via :mod:`compgen.agent.decisions`; MCP tools read/write
     # them via :mod:`compgen.mcp.tools.decisions`.
     decision_registry: Any = None
+    # H2 — Section 11 Dream 1: phase-scoped discovery. ``None`` means
+    # legacy callers see the full tool catalogue (backwards-compat
+    # default); strict mode is opt-in via ``enter_phase`` + the env
+    # flag ``COMPGEN_STRICT_PHASE_GATING=1``.
+    current_phase: str | None = None
+    # H3 — Section 11 Dream 3: capability tokens. Empty set means no
+    # high-risk tool is callable; populated at session open by the
+    # operator who passes a list to ``open_target``.
+    capabilities: frozenset[str] = field(default_factory=frozenset)
+    # H3 — closed enum of the caller's role for ``caller_must_be``
+    # gating. ``agent`` is the default (this Claude Code session);
+    # other valid values: ``operator``, ``kernel_provider``.
+    caller_role: str = "agent"
 
     def require_decision_registry(self):
         """Lazy-create and return this session's :class:`DecisionRegistry`.

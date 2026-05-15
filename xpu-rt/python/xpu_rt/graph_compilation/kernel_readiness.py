@@ -1,23 +1,23 @@
-"""M-24 Kernel Section Readiness Lock.
+"""Kernel Section Readiness Lock.
 
-Parallel of M-17.1 for kernel-level evidence. M-17.1 turns the FX-level
+Parallel of for kernel-level evidence. turns the FX-level
 "Snapshot of Graph Analysis" slide's 6 rows into hard typed artifacts;
-M-24 does the same for the kernel-level twin slide where every row is
-backed by REAL COMPILED-KERNEL EVIDENCE from M-19/M-20/M-22/M-22.1/M-23.
+does the same for the kernel-level twin slide where every row is
+backed by REAL COMPILED-KERNEL EVIDENCE ////.
 
 Read-only aggregator. No new measurement, no compiler-core changes,
 no candidate generation, no mutation of source artifacts.
 
 The 6 slide rows:
 
-1. compiled_precision         — M-19/M-20 refinement_status per region
-2. compiled_working_set       — M-22 utilizations (compute/bandwidth)
-3. compiled_lifetime          — M-22.1 per-kernel CUDA events
+1. compiled_precision — /refinement_status per region
+2. compiled_working_set — utilizations (compute/bandwidth)
+3. compiled_lifetime — per-kernel CUDA events
                                 (ready_for_m24_1 — Nsight ncu integration
                                  needed for register-pressure / occupancy)
-4. compiled_candidate_evidence — M-19/M-20 measurements per legal candidate
-5. compiled_agent_view        — agent_decision_request × M-22 cross-ref
-6. compiled_bottleneck        — M-22 kernel_calibration_status
+4. compiled_candidate_evidence — /measurements per legal candidate
+5. compiled_agent_view — agent_decision_request × cross-ref
+6. compiled_bottleneck — kernel_calibration_status
 
 Output: 02_graph_analysis/kernel_readiness/{matrix, 6 reports, summary}.
 
@@ -25,7 +25,7 @@ Hard non-goals:
 - No new measurement.
 - No new candidate generation.
 - No compiler-core imports.
-- No mutation of M-19/M-20/M-22/M-22.1/M-23 reports.
+No mutation of ////reports.
 - fp32 only.
 """
 
@@ -63,8 +63,8 @@ _NOT_READY = "not_ready"
 
 
 def _kernels_were_on(run_dir: Path) -> bool:
-    """Heuristic: the M-22 report exists with overall=ok iff
-    COMPGEN_RUN_KERNELS=1 actually reached M-22 with measurements."""
+    """Heuristic: the report exists with overall=ok iff
+    COMPGEN_RUN_KERNELS=1 actually reached with measurements."""
     cb = _read_json(
         run_dir / "02_graph_analysis" / "compiled_bottleneck"
         / "compiled_bottleneck_report.json"
@@ -73,7 +73,7 @@ def _kernels_were_on(run_dir: Path) -> bool:
 
 
 # --------------------------------------------------------------------------- #
-# Row 1: Compiled precision (M-19/M-20 refinement_status)
+# Row 1: Compiled precision (/refinement_status)
 # --------------------------------------------------------------------------- #
 
 
@@ -176,7 +176,7 @@ def _build_compiled_precision_report(run_dir: Path) -> dict[str, Any]:
 
 
 # --------------------------------------------------------------------------- #
-# Row 2: Compiled working-set (M-22 utilizations)
+# Row 2: Compiled working-set (utilizations)
 # --------------------------------------------------------------------------- #
 
 
@@ -268,7 +268,7 @@ def _build_compiled_working_set_report(run_dir: Path) -> dict[str, Any]:
 
 
 # --------------------------------------------------------------------------- #
-# Row 3: Compiled lifetime (M-22.1 per-kernel CUDA events; ready_for_m24_1)
+# Row 3: Compiled lifetime (per-kernel CUDA events; ready_for_m24_1)
 # --------------------------------------------------------------------------- #
 
 
@@ -300,7 +300,7 @@ def _build_compiled_lifetime_report(run_dir: Path) -> dict[str, Any]:
             "generated_at_utc": _utcnow(),
         }
 
-    # Index M-24.1 lifetime evidence by region_id (when present).
+    # Index lifetime evidence by region_id (when present).
     lifetime_by_region: dict[str, dict[str, Any]] = {}
     if kl is not None and kl.get("overall") == "ok":
         for r in kl.get("regions", []) or []:
@@ -320,7 +320,7 @@ def _build_compiled_lifetime_report(run_dir: Path) -> dict[str, Any]:
         if kernel_events:
             has_kernel_events += 1
 
-        # M-24.1 static lifetime fields (Triton introspection).
+        # static lifetime fields (Triton introspection).
         kl_r = lifetime_by_region.get(rid) or {}
         ti = kl_r.get("triton_introspection") or {}
         register_pressure = (
@@ -367,7 +367,7 @@ def _build_compiled_lifetime_report(run_dir: Path) -> dict[str, Any]:
                 }
                 for ev in kernel_events[:3]
             ],
-            # M-24.1 fields (None when introspection didn't run):
+            # fields (None when introspection didn't run):
             "register_pressure": register_pressure,
             "register_spills": register_spills,
             "shared_memory_bytes": shared_memory_bytes,
@@ -377,7 +377,7 @@ def _build_compiled_lifetime_report(run_dir: Path) -> dict[str, Any]:
             "ncu_status": ncu_status,
         })
 
-    # ready when M-24.1 introspection populated static fields on every
+    # ready when introspection populated static fields on every
     # region with kernel events. ready_for_m24_1 is the previous fallback
     # (we have CUDA events but no static lifetime). not_run when no
     # regions at all.
@@ -506,7 +506,7 @@ def _build_compiled_candidate_evidence_report(
             f"{region_evidence_count}/{region_total} regions covered"
         )
     elif not m20_present:
-        # M-19/M-20 didn't run at all (kernels off). Honest not_run,
+        # /didn't run at all (kernels off). Honest not_run,
         # NOT not_ready — we never tried to measure these.
         status = _NOT_RUN
         reason = (
@@ -514,7 +514,7 @@ def _build_compiled_candidate_evidence_report(
             "(kernels off)"
         )
     else:
-        # M-19/M-20 ran but produced no compiled regions (every track
+        # /ran but produced no compiled regions (every track
         # failed to compile). That's a real coverage failure.
         status = _NOT_READY
         reason = "M-20 ran but no regions compiled successfully"
@@ -712,7 +712,7 @@ class KernelReadinessResult:
 
 
 def run_kernel_section_readiness(run_dir: Path) -> KernelReadinessResult:
-    """Build M-24's 6 typed kernel-readiness reports + matrix +
+    """Build 's 6 typed kernel-readiness reports + matrix +
     summary. Best-effort; never raises."""
     run_dir = Path(run_dir).resolve()
     out_dir = run_dir / "02_graph_analysis" / "kernel_readiness"
@@ -756,7 +756,7 @@ def run_kernel_section_readiness(run_dir: Path) -> KernelReadinessResult:
     not_ready = sum(1 for r in rows_out if r["status"] == _NOT_READY)
     not_run = sum(1 for r in rows_out if r["status"] == _NOT_RUN)
 
-    # overall status semantics (mirrors M-17.1):
+    # overall status semantics (mirrors ):
     #   pass    iff every row in {ready, ready_for_m24_1}
     #   partial iff some rows ready and some not_run/partial
     #   fail    iff any row not_ready

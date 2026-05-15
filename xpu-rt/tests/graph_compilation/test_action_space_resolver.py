@@ -1,4 +1,4 @@
-"""Acceptance tests for M-04.5: Action Space Resolver.
+"""Acceptance tests for Action Space Resolver.
 
 Asserts that ``resolve_candidate`` honours the canonical IR
 (``02_graph_analysis/action_space.mlir``) as the source of truth and
@@ -228,7 +228,7 @@ def test_decision_sites_sha_mismatch_raises(
 def test_opaque_region_tiling_candidate_does_not_exist(
     resolver_runs: dict[str, Path],
 ) -> None:
-    """Opaque regions never get tiling candidates (M-04 invariant), so an
+    """Opaque regions never get tiling candidates (invariant), so an
     LLM cannot select a tile on them. We assert the absence rather than
     expecting a specific error class."""
     run = resolver_runs["custom_unsupported_op"]  # has crgtoy.affine_gelu opaque

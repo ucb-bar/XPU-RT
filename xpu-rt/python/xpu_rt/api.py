@@ -820,7 +820,7 @@ def compile_model(
     )
 
     # Every top-level compile step fires a ``pass_run`` span so the
-    # trace carries true per-pass granularity (gap #2). Each span also
+    # trace carries true per-pass granularity. Each span also
     # measures its own duration and records before/after IR dumps for
     # operations that mutate the module.
     from compgen.trace import (
@@ -1142,6 +1142,31 @@ def compile_model(
         stages_run=pipeline_result.stages_run,
         eqsat_changed=eqsat_result.changed,
     )
+
+    #  emit multi-level IR analysis snapshots from the
+    # final run directory. Best-effort: snapshot emission is a
+    # post-hoc projection from on-disk artifacts and must never
+    # break the compile. Errors are logged + swallowed.
+    try:
+        from compgen.graph_compilation.snapshot_emitter import (
+            emit_snapshots_for_run,
+        )
+
+        snapshot_results = emit_snapshots_for_run(resolved_out_dir)
+        log.info(
+            "api.compile.snapshots_emitted",
+            available=sum(
+                1 for r in snapshot_results.values() if r.status == "available"
+            ),
+            not_available=sum(
+                1 for r in snapshot_results.values() if r.status != "available"
+            ),
+        )
+    except Exception as exc:  # noqa: BLE001
+        log.warning(
+            "api.compile.snapshot_emitter_failed",
+            error=f"{type(exc).__name__}: {exc}",
+        )
 
     return CompiledModel(
         model=model,

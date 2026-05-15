@@ -1,4 +1,4 @@
-"""Acceptance tests for M-16.1 Merlin-Dronet Strict-Gate Cleanup.
+"""Acceptance tests Merlin-Dronet Strict-Gate Cleanup.
 
 Verifies:
 
@@ -23,7 +23,7 @@ Verifies:
   (``strict_gate_report_status`` + ``strict_gate_root_cause`` columns).
 - No compiler-core files modified (the report module imports nothing
   from ``compgen.ir`` / ``compgen.capture`` / ``compgen.pipeline``).
-- M-16 + M-16.2 + M-17 still pass (regression).
+still pass (regression).
 """
 
 from __future__ import annotations

@@ -1,4 +1,4 @@
-"""Tests for compgen.promotion.migrate_sidecars (M-37.4)."""
+"""Tests for compgen.promotion.migrate_sidecars."""
 
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ def _write_sidecar(path: Path, body: dict) -> None:
 
 
 def _modern_sidecar() -> dict:
-    """A sidecar that already carries the M-37 cross-link fields."""
+    """A sidecar that already carries the cross-link fields."""
     return {
         "schema_version": "promoted_recipe_v1",
         "key": {"target_hash": "t", "model_hash": "m", "objective_hash": "o", "version": 1},
@@ -34,7 +34,7 @@ def _modern_sidecar() -> dict:
 
 
 def _legacy_sidecar_with_recipe_id() -> dict:
-    """Pre-M-37 sidecar where evidence_summary lacks candidate_kind
+    """Pre-sidecar where evidence_summary lacks candidate_kind
     but recipe_id encodes it."""
     return {
         "schema_version": "promoted_recipe_v1",
@@ -48,7 +48,7 @@ def _legacy_sidecar_with_recipe_id() -> dict:
 
 
 def _legacy_sidecar_unrecoverable() -> dict:
-    """Pre-M-37 sidecar with no recipe_id and no signature."""
+    """Pre-sidecar with no recipe_id and no signature."""
     return {
         "schema_version": "promoted_recipe_v1",
         "key": {"target_hash": "t", "model_hash": "m", "objective_hash": "o", "version": 1},

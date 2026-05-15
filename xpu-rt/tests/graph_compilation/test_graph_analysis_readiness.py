@@ -1,4 +1,4 @@
-"""Acceptance tests for M-17.1 Graph Analysis Readiness Lock.
+"""Acceptance tests Graph Analysis Readiness Lock.
 
 Verifies:
 
@@ -10,7 +10,7 @@ Verifies:
 - The 6 slide claims are each typed (``ready`` or ``ready_for_m18``).
 - Each report's per-region invariants hold (precision budget, working
   set, reuse / lifetime, counterfactuals, agent view, hardware).
-- The M-17 evidence pack ingests the readiness status (model matrix
+The evidence pack ingests the readiness status (model matrix
   + aggregates + claim matrix entry).
 - No compiler-core imports.
 """
@@ -393,7 +393,7 @@ def test_hardware_report_per_region_invariants(proxy_vla_run: Path) -> None:
 def test_evidence_pack_ingests_readiness(
     proxy_vla_run: Path, merlin_mlp_wide_run: Path, tmp_path: Path,
 ) -> None:
-    """The M-17 evidence pack must surface readiness_overall in the
+    """The evidence pack must surface readiness_overall in the
     model matrix + readiness counts in aggregates + a readiness claim
     in the claim matrix."""
     suite = tmp_path / "fixture_suite"

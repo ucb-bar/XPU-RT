@@ -1,4 +1,4 @@
-"""M-21 Per-Candidate Deterministic Analytical Cost Model.
+"""Per-Candidate Deterministic Analytical Cost Model.
 
 A pure-function analytical cost model rooted in the target hardware
 spec (target YAML) and the graph dossier facts (region shape, tile
@@ -9,15 +9,15 @@ randomness, no system calls.
 
 Layered alongside the existing cost tracks:
 
-- ``cost_preview_v2.json`` (M-13) — earlier static cost preview;
+``cost_preview_v2.json`` — earlier static cost preview;
   similar roofline; preserved.
-- ``candidate_calibration_report.json`` (M-18.3) — Python-evaluator
+``candidate_calibration_report.json`` Python-evaluator
   measured.
 - ``compiled_kernel_run_gpu.json`` / ``compiled_kernel_run_cpu.json``
-  (M-19) and ``region_compiled_differential_report.json`` (M-20) —
+   and ``region_compiled_differential_report.json`` —
   real compiled-kernel measured.
 
-M-21's contribution: an EXPLICIT, EXPLAINABLE, DETERMINISTIC
+'s contribution: an EXPLICIT, EXPLAINABLE, DETERMINISTIC
 per-candidate cost rooted in three sources only:
 
 1. Target YAML (peak_compute_gflops, peak_bandwidth_gb_s,
@@ -30,7 +30,7 @@ multipliers and explicit reload counts (LHS reloaded N/tN times,
 RHS reloaded M/tM times), giving the agent visibility into WHY a
 particular tile choice has a particular cost prediction.
 
-When M-19/M-20 measurements are present on disk, the per-candidate
+When /measurements are present on disk, the per-candidate
 entry includes a ``calibration_delta`` block (predicted/measured
 ratio). The model itself is unchanged — calibration is read-only
 ingestion.
@@ -42,12 +42,12 @@ Hard non-goals:
 - No compiler-core imports.
 - No mutation of region_dossiers / candidate_actions / region_map
   (which the integrity suite enforces).
-- SetTileParams only. FuseProducerConsumer cost model is M-23 territory.
+SetTileParams only. FuseProducerConsumer cost model is territory.
 
-M-21 *does* layer additive ``m21_analytical_cost`` blocks onto
+*does* layer additive ``m21_analytical_cost`` blocks onto
 ``cost_preview_v2.cost_previews[]`` and
 ``llm_graph_view.regions[].legal_candidates[]`` (same pattern as
-M-18.3's ``calibration`` overlay) so the agent sees all per-candidate
+'s ``calibration`` overlay) so the agent sees all per-candidate
 cost columns in one place.
 """
 
@@ -348,21 +348,21 @@ def _load_region_dossiers(ga: Path) -> dict[str, dict[str, Any]]:
 
 
 # --------------------------------------------------------------------------- #
-# Calibration cross-reference (read-only ingest of M-19 / M-20 measurements)
+# Calibration cross-reference (read-only ingest of measurements)
 # --------------------------------------------------------------------------- #
 
 
 def _calibration_cross_ref(
     *, run_dir: Path, candidate_id: str, region_id: str,
 ) -> dict[str, Any]:
-    """When M-19 / M-20 measurements are on disk for this candidate
+    """When measurements are on disk for this candidate
     or region, compute the predicted/measured ratio. Read-only;
     returns ``{"present": False}`` when no measurements exist."""
     base = run_dir / "02_graph_analysis" / "kernel_execution"
     if not base.is_dir():
         return {"present": False}
 
-    # M-19 single-region (the SELECTED candidate's compiled run).
+    # single-region (the SELECTED candidate's compiled run).
     measured_gpu = None
     measured_cpu = None
     for fname in ("compiled_kernel_run_gpu.json", "compiled_kernel_run_cpu.json"):
@@ -381,7 +381,7 @@ def _calibration_cross_ref(
         else:
             measured_cpu = float(us)
 
-    # M-20 per-region fan-out (matched by region_id, since M-20 picks
+    # per-region fan-out (matched by region_id, since picks
     # one tile per region).
     if measured_gpu is None or measured_cpu is None:
         m20_path = base / "region_compiled_differential_report.json"
@@ -457,9 +457,9 @@ def _apply_analytical_cost_overlay(
 ) -> None:
     """Layer ``m21_analytical_cost`` onto each cost_preview_v2.cost_previews[]
     and llm_graph_view.regions[].legal_candidates[] entry whose candidate_id
-    has an analytical cost result. Overwrites prior M-21 overlay if it
+    has an analytical cost result. Overwrites prior overlay if it
     exists (re-runs are byte-stable because the per-candidate result is
-    deterministic). Leaves M-18.3's ``calibration`` block untouched."""
+    deterministic). Leaves 's ``calibration`` block untouched."""
     ga = run_dir / "02_graph_analysis"
 
     cp_path = ga / "cost_preview_v2.json"
@@ -512,7 +512,7 @@ class AnalyticalCostResult:
 def run_analytical_cost(
     run_dir: Path, *, repo_root: Path | None = None,
 ) -> AnalyticalCostResult:
-    """Build the M-21 deterministic per-candidate analytical cost
+    """Build the deterministic per-candidate analytical cost
     report. Best-effort; never raises."""
     run_dir = Path(run_dir).resolve()
     repo_root = repo_root or Path(__file__).resolve().parents[3]
@@ -709,9 +709,9 @@ def run_analytical_cost(
 
     # Layer the per-candidate analytical cost onto cost_preview_v2 +
     # llm_graph_view (additive `m21_analytical_cost` block; same pattern
-    # as M-18.3's `calibration` overlay). Done before persisting the
+    # as 's `calibration` overlay). Done before persisting the
     # standalone report so the overlay write is part of the same logical
-    # M-21 step.
+    # step.
     results_by_id = {
         x["candidate_id"]: x for x in candidates_out
         if x.get("model_status") == "ok"

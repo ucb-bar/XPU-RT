@@ -1,4 +1,4 @@
-"""Tests for compgen.audit.contracts (M-31A.1)."""
+"""Tests for compgen.audit.contracts."""
 
 from __future__ import annotations
 

@@ -1,0 +1,12 @@
+schema_version: dialect_provider_card_v1
+dialect_provider_id: pallas
+dialect_name: pallas
+integration_level: probe
+consumes: [kernel_contract_v3, jax_jaxpr]
+emits: [pallas_source, tpu_mlir]
+entrypoint: compgen.providers.adapters.pallas:PallasDialectProvider
+required_env: []
+description: |
+  Pallas kernel-language adapter for TPU. Operates as a dialect
+  provider so the same KernelContractV3 surface can lower through
+  either Pallas (TPU) or Triton (CUDA).

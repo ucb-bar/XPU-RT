@@ -65,9 +65,9 @@ from compgen.ir.payload.contracts import (
 )
 
 CONTRACT_VERSION = 3
-CONTRACT_REFINEMENT_VERSION = (3, 1)  # M-64: (major, minor) of the latest refinement
+CONTRACT_REFINEMENT_VERSION = (3, 1)  # (major, minor) of the latest refinement
 
-# M-64 — forward-compatible refinement protocol. Field names listed
+# forward-compatible refinement protocol. Field names listed
 # here are recognised v3.1 optional fields; they ride in
 # ``KernelContractV3.optional_v3_1_fields`` keyed by name with
 # defaults captured below. Canonical + instance hash projections do
@@ -341,10 +341,10 @@ class FusionPolicy:
 
 
 def _resolve_dispatch_mode_override(override: str | None) -> "DispatchModel":
-    """M-50: turn a string override (from a SetDispatchMode candidate's
+    """turn a string override (from a SetDispatchMode candidate's
     recipe_delta) into the DispatchModel enum. Defaults to SYNC; rejects
     PERSISTENT and INLINE on NORMAL granularity (the only granularity
-    M-40 materialises today). The action_space already gates these;
+    materialises today). The action_space already gates these;
     this is defence-in-depth so a hand-edited candidate response
     cannot smuggle PERSISTENT past the contract.
     """
@@ -502,14 +502,14 @@ class CompilerOnlyView:
 
 
 # ===========================================================================
-# M-60 — derive MemorySpec from region dossier reuse facts
+# derive MemorySpec from region dossier reuse facts
 # ===========================================================================
 
 
 def _lifetime_class_to_tier(lifetime_class: str) -> "MemoryTier":
     """Map a region-dossier ``lifetime_class`` to a ``MemoryTier``.
 
-    The region dossier (M-17.1) tags each tensor's role:
+    The region dossier tags each tensor's role:
 
     * ``input`` — comes from outside the region (cold read from main
       memory; HOST on CPUs, DEVICE_DRAM on GPUs — we default to HOST
@@ -547,7 +547,7 @@ def _derive_memory_spec(
     input_count: int,
     output_count: int,
 ) -> "MemorySpec":
-    """M-60: build a :class:`MemorySpec` from the region dossier's
+    """build a :class:`MemorySpec` from the region dossier's
     ``reuse.inputs`` / ``reuse.outputs`` facts.
 
     Falls back to a uniform-SCRATCHPAD default when the dossier omits
@@ -623,14 +623,14 @@ class KernelContractV3:
     legacy: KernelContractV2 | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
     contract_version: int = CONTRACT_VERSION
-    # M-61 — typed pre/post-condition predicates. Each entry is one of
+    # typed pre/post-condition predicates. Each entry is one of
     # the dataclasses in :mod:`compgen.kernels.predicates`. The contract
     # carries them as tuple[Any, ...] to avoid a forward import; the
     # plan-assertion emitter and the verifier dispatch on
     # ``predicate_kind(p)``.
     preconditions: tuple[Any, ...] = ()
     postconditions: tuple[Any, ...] = ()
-    # M-64 — forward-compatible refinement slot. Fields added in v3.1+
+    # forward-compatible refinement slot. Fields added in v3.1+
     # land here keyed by name; the canonical + instance hash projections
     # never see them so adding a new field doesn't invalidate cached
     # certificates. Recognized field names are declared in
@@ -755,7 +755,7 @@ class KernelContractV3:
         shape_policy: str = "concrete",
     ) -> "KernelContractV3":
         """Materialize a KernelContractV3 from a selected Recipe IR
-        decision plus region facts (M-40 / Section 21).
+        decision plus region facts (/ Section 21).
 
         Inputs are dicts (already-parsed JSON / YAML) so this function
         is a pure data transformation — no I/O. The pipeline-stage
@@ -773,17 +773,17 @@ class KernelContractV3:
                 Provides hardware envelope fields.
             declared_refinement: ``"bit_equality"`` |
                 ``"tolerance_eps"`` | ``"unknown"``. Sourced from the
-                recipe-gate verdict (M-37.13's single_k_iter rule).
+                recipe-gate verdict ('s single_k_iter rule).
 
         Returns:
             A populated ``KernelContractV3`` whose ``__post_init__``
             invariants pass. The contract is suitable for
-            ``hash_contract()`` (M-41) and for the kernel-facing
-            projection emitted as the bounded subagent task (M-42).
+            ``hash_contract`` and for the kernel-facing
+            projection emitted as the bounded subagent task.
 
         Raises:
             ValueError: if the candidate kind is not yet supported.
-                M-40 supports only ``set_tile_params``; non-tile
+                supports only ``set_tile_params``; non-tile
                 candidates surface as ``not_applicable`` at the
                 wrapper layer rather than calling here.
         """
@@ -805,7 +805,7 @@ class KernelContractV3:
             or len(input_shapes[1]) != 2
             or input_shapes[0][1] != input_shapes[1][0]
         ):
-            # Fall back to cost_preview region_dims (M-37.13 surface).
+            # Fall back to cost_preview region_dims (surface).
             cost_preview = candidate_selection.get("cost_preview") or {}
             region_dims = cost_preview.get("region_dims") or {}
             M_dim = int(region_dims.get("M", 0) or 0)
@@ -839,7 +839,7 @@ class KernelContractV3:
         # --- Dtype + layout from dossier; default to f32 row-major. ---
         dtype = str(region_shape.get("dtype") or "f32")
         # NumericsSpec — refinement claim drives max_relative_error.
-        # For bit_equality the structural M-12 check is exact; we still
+        # For bit_equality the structural check is exact; we still
         # surface a non-zero rtol so the `numerics.epsilon_max_rel`
         # field is monotonic across refinements (the runtime check
         # prefers the Higham bound, this is the declared headroom).
@@ -860,12 +860,12 @@ class KernelContractV3:
         )
 
         # --- IO ---
-        # Gap #9: tile_M/tile_N/tile_K induce divisibility on the
+        # : tile_M/tile_N/tile_K induce divisibility on the
         # corresponding contract dims. The canonical hash reads
         # divisibility (when set) so two regions with the same
         # archetype + dtype + layout + target whose dims agree under
         # the divisibility class share a kernel.
-        # Gap #14 (shape_policy="class"): substitute concrete dims with
+        #  (shape_policy="class"): substitute concrete dims with
         # None so the canonical hash falls all the way to dynamic — one
         # canonical kernel covers any concrete instantiation under the
         # declared divisibility.
@@ -944,7 +944,7 @@ class KernelContractV3:
         )
         peak_bw = float(envelope.get("peak_bandwidth_gbps", 0.0))
 
-        # M-60: full hardware envelope from target profile. Each field
+        # full hardware envelope from target profile. Each field
         # is optional — when absent, the dataclass defaults preserve
         # today's behaviour.
         mma_shapes_raw = target_profile.get("mma_shapes")
@@ -1011,7 +1011,7 @@ class KernelContractV3:
             priority=PerformancePriority.BALANCED,
         )
 
-        # --- Orchestration: SYNC for M-40 (M-50 widens to dispatch as
+        # --- Orchestration: SYNC (widens to dispatch as
         # a Recipe decision). One completion event "matmul_done";
         # matmul is a fusion boundary; output goes to scratchpad so a
         # downstream pointwise consumer reads warm.
@@ -1026,7 +1026,7 @@ class KernelContractV3:
                 output_count=1,
             ),
             fusion=FusionPolicy(is_boundary=True),
-            # M-50: dispatch model defaults to SYNC; M-50's
+            # dispatch model defaults to SYNC; 's
             # SetDispatchMode candidate can override via
             # dispatch_mode_override. NORMAL granularity admits SYNC
             # and ASYNC; PERSISTENT requires MEGA, INLINE requires
@@ -1070,7 +1070,7 @@ class KernelContractV3:
             )
         selection = SelectionHints(providers=providers)
 
-        # M-61 — typed pre/post-condition predicates.
+        # typed pre/post-condition predicates.
         # Preconditions: K must be a multiple of tile_K (the matmul
         # kernel's inner-loop unroll requirement), and inputs must
         # carry a recognised dtype.
@@ -1091,7 +1091,7 @@ class KernelContractV3:
         )
         # Postconditions: numerical equivalence within the declared
         # refinement's eps. For bit_equality the eps is 0; for
-        # tolerance_eps the M-44 verifier will substitute the Higham
+        # tolerance_eps the verifier will substitute the Higham
         # bound at differential time.
         post_eps = 0.0 if declared_refinement == "bit_equality" else max_rel_err
         postconditions: tuple[Any, ...] = (
@@ -1129,7 +1129,7 @@ class KernelContractV3:
         region_dossier: dict[str, Any],
         target_profile: dict[str, Any],
     ) -> "KernelContractV3":
-        """Gap #6 closure (Phase D Batch B): minimal-viable
+        """ closure (Phase D Batch B): minimal-viable
         materialiser for ``fuse_producer_consumer`` candidates.
 
         Builds a POINTWISE contract whose IO uses the producer's
@@ -1206,7 +1206,7 @@ class KernelContractV3:
             ),
         )
 
-        # Hardware envelope from target profile (M-60 path).
+        # Hardware envelope from target profile (path).
         target_id = (
             target_profile.get("target_id")
             or candidate_selection.get("target_id")

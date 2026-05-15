@@ -1,4 +1,4 @@
-"""Pass-pool ablation harness (M-36.1).
+"""Pass-pool ablation harness.
 
 Compares CompGen pipeline behavior across selection modes on the same
 set of models. The headline question for Section 20:
@@ -20,7 +20,7 @@ Modes today:
                    response or synthesizes the same selection greedy
                    would have made (the "trivial agent" baseline).
 
-The pipeline does not yet *execute* multi-step pass plans — M-34
+The pipeline does not yet *execute* multi-step pass plans —
 ships the *validator*, not the executor. So this harness compares
 single-step decisions: which candidate did each mode pick, and were
 the validation rows the same?
@@ -68,8 +68,8 @@ class AblationResult:
     decision_seconds: float
     typed_outcome: str  # verified | typed_blocked | error
     error: str = ""
-    promoted_candidates_count: int = 0  # M-37.2: M-28 candidates surfaced in the request
-    promoted_hit: bool = False  # M-37.2: agent's pick matched a promoted candidate
+    promoted_candidates_count: int = 0  # candidates surfaced in the request
+    promoted_hit: bool = False  # agent's pick matched a promoted candidate
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -131,7 +131,7 @@ def _extract_response(run_dir: Path) -> tuple[str, str]:
     if not resp:
         # Greedy mode does not always emit a response file — fall back
         # to candidate_selection.json which always exists when
-        # recipe_planning ran. M-37.2: prefer ``selected_candidate_id``
+        # recipe_planning ran. prefer ``selected_candidate_id``
         # (the full region-scoped id, e.g.
         # "cand_tile_matmul_0_tile_M16_N16_K16__3bebae8e") over
         # ``label`` (the human-readable suffix), so promoted_hit
@@ -219,11 +219,11 @@ def run_one_cell(
     cid, kind = _extract_response(out_dir) if raised is None else ("", "")
     overall, failures = _extract_validation(out_dir) if raised is None else ("unknown", ())
 
-    # M-37.2: promoted-candidates count + promoted-hit detection. The
+    # promoted-candidates count + promoted-hit detection. The
     # request carries a promoted_candidates list; if the agent's pick
     # matches one (by candidate_id or recipe_id), record a hit. This
-    # is the warm-cache effectiveness metric the M-30 efficiency
-    # report measured at run-level; M-37.2 measures it at decision-
+    # is the warm-cache effectiveness metric the efficiency
+    # report measured at run-level; measures it at decision-
     # level (per cell) so the ablation can attribute hits to modes.
     promoted_count = 0
     promoted_hit = False
@@ -323,7 +323,7 @@ class AblationPack:
                     sum(c.decision_seconds for c in mode_cells) / len(mode_cells)
                     if mode_cells else 0.0
                 ),
-                # M-37.2: warm-cache effectiveness per mode.
+                # warm-cache effectiveness per mode.
                 "promoted_candidates_total": sum(
                     c.promoted_candidates_count for c in mode_cells
                 ),
@@ -337,7 +337,7 @@ class AblationPack:
             "cell_count": len(cells),
             "per_mode": per_mode,
             "divergence_count": len(self.divergences()),
-            # M-37.2: rolled-up across all cells.
+            # rolled-up across all cells.
             "promoted_hit_count_total": sum(1 for c in cells if c.promoted_hit),
             "promoted_hit_rate": (
                 sum(1 for c in cells if c.promoted_hit) / len(cells)

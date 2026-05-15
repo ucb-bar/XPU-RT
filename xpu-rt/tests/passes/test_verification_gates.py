@@ -1,4 +1,4 @@
-"""Tests for compgen.passes.verification (M-33.2)."""
+"""Tests for compgen.passes.verification."""
 
 from __future__ import annotations
 

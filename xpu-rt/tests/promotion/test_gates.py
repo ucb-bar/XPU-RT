@@ -1,4 +1,4 @@
-"""M-29 tests for the promotion-gate ladder (Section 19)."""
+"""tests for the promotion-gate ladder (Section 19)."""
 
 from __future__ import annotations
 
@@ -61,7 +61,7 @@ def _build_run_dir(
             {"status": "pass"},
         )
 
-    # M-21 analytical + M-22 measured — ``characterized``.
+    # analytical + measured — ``characterized``.
     if analytical_present:
         _write(
             ga / "analytical_cost" / "per_candidate_analytical_cost.json",

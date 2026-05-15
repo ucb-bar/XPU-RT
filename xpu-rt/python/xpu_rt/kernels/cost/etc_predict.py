@@ -31,7 +31,6 @@ from typing import Any
 # task body invoke + event-tensor notify) cycle on Blackwell sm_120
 # in the static-schedule path. Conservative — actual overhead may
 # be smaller at the 64-tile cuBLASDx path since fewer events fire.
-#
 # This constant is the load-bearing assumption of the cost model.
 # When bwell's per-task instrumentation (#099's request 2) lands
 # we'll calibrate it; for now it's the bridge-derived empirical.
@@ -43,13 +42,11 @@ _SCHEDULING_OVERHEAD_US_PER_TASK = 1.0
 _EAGER_LAUNCH_OVERHEAD_US = 10.0
 
 # Per-arch peak throughput tables.
-#
 # Wave 1.14c — moved to the per-arch leaf modules under
 # ``targets/gpu/nvidia/{blackwell,hopper,ampere}/cost.py``. The
 # universal predictor queries the leaves through
 # :func:`_lookup_arch_tflops` so adding a new arch is one
 # leaf-file change rather than touching this module.
-#
 # These local fallback tables stay so the predictor still works
 # when the leaves aren't importable (e.g. tests that mock the
 # registry, or older installs). Both old + new paths must agree
@@ -420,7 +417,6 @@ def predict_etc_dispatch(
 
     # Pointwise tasks (relu, add, etc.) are very cheap individually
     # but each still pays the overhead. Tally them in.
-    #
     # Per bridge #124: pool classification has to handle FFN's two
     # distinct linear ops (`linear_up` + `linear_down`) which carry
     # SEPARATE tile grids (``tile_grid_up`` / ``tile_grid_down``),
@@ -493,7 +489,6 @@ def predict_etc_dispatch(
     # rather than ``per_task_gemm_flops × num_linear_tasks`` which
     # collapsed FFN's K dims into one value and under-counted the
     # larger-K linear by ~3× at MLP-1.
-    #
     # The tile_shape that pairs with schedule_hints' tile_grid is the
     # one the matcher emitted INTO the schedule (e.g. 32×32×32 for the
     # fmaf path), NOT necessarily the same as backend_choice.tile_shape
@@ -528,7 +523,6 @@ def predict_etc_dispatch(
     # when tasks-per-SM > 1 (bridge #118: 230ms ETC at MLP-1 was
     # 90% sync, 10% per-task scheduling). num_waves = ceil(tasks /
     # sm_count); each wave pays one cooperative_grid_sync.
-    #
     # Per bridge #121 fix: pointwise tasks fan out across SMs the
     # same way linear tasks do; both pools contribute waves and
     # each wave pays the cooperative sync. Without summing both

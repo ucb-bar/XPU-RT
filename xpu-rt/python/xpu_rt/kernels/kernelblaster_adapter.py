@@ -65,6 +65,17 @@ from typing import Any
 
 import structlog
 
+
+class _NullCtx:
+    """No-op context manager used when keeping the workdir on disk."""
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        return False
+
+
 from compgen.kernels.provider import (
     ContractFeedback,
     KernelContract,
@@ -119,6 +130,13 @@ class KernelBlasterConfig:
         "HF_TOKEN",
         "HUGGINGFACE_TOKEN",
         "WANDB_API_KEY",
+        # CompGen integration: allow KB's GPU server to coexist
+        # with other CUDA workloads, and provide the Gemini key
+        # KB's OpenAI-compat client picks up.
+        "KERNELBLASTER_GPU_SERVER_SKIP_PROCESS_CHECK",
+        "GOOGLE_API_KEY",
+        "OPENAI_API_KEY",
+        "PERFLAB_KEY",
     )
 
     @classmethod
@@ -140,7 +158,11 @@ class KernelBlasterConfig:
             mode=mode,
             repo_root=Path(repo_root_s).expanduser() if repo_root_s else None,
             image=image,
-            openai_api_key=_pick("OPENAI_API_KEY"),
+            # KernelBlaster accepts any OpenAI-compatible key. We also
+            # let GOOGLE_API_KEY satisfy this slot because the forked
+            # KB ``query.py`` routes gemini-* models to Google's
+            # OpenAI-compatible endpoint when GOOGLE_API_KEY is set.
+            openai_api_key=_pick("OPENAI_API_KEY", "GOOGLE_API_KEY", "PERFLAB_KEY"),
             model=_pick("COMPGEN_KERNELBLASTER_MODEL", "MODEL", default=DEFAULT_MODEL),
             gpu_type=_pick("COMPGEN_KERNELBLASTER_GPU_TYPE", "GPU_TYPE", default=DEFAULT_GPU_TYPE),
             dataset=_pick("COMPGEN_KERNELBLASTER_DATASET", "DATASET", default=DEFAULT_DATASET),
@@ -213,7 +235,7 @@ class KernelBlasterAdapter:
         else:
             return (False, f"unknown KernelBlaster mode: {mode!r}")
         if not self.config.openai_api_key:
-            return (False, "OPENAI_API_KEY not set")
+            return (False, "no LLM key set (need one of OPENAI_API_KEY / GOOGLE_API_KEY / PERFLAB_KEY)")
         return (True, "")
 
     def search_kernel(
@@ -242,8 +264,19 @@ class KernelBlasterAdapter:
                 "and constraints.kernelblaster.driver_cpp (CUDA kernel + C++ harness)."
             )
 
-        with tempfile.TemporaryDirectory(prefix="compgen_kb_") as tmp_s:
+        # When COMPGEN_KERNELBLASTER_KEEP_WORKDIR=1, keep the workdir on
+        # disk for debugging instead of cleaning it up.
+        keep_workdir = os.environ.get("COMPGEN_KERNELBLASTER_KEEP_WORKDIR", "").lower() in ("1", "true", "yes")
+        if keep_workdir:
+            tmp_s = tempfile.mkdtemp(prefix="compgen_kb_kept_")
             workdir = Path(tmp_s)
+            log.info("kernelblaster.workdir.keeping", workdir=str(workdir))
+            workdir_ctx = _NullCtx()
+        else:
+            workdir_ctx = tempfile.TemporaryDirectory(prefix="compgen_kb_")
+            workdir = Path(workdir_ctx.name)
+
+        with workdir_ctx:
             # Overlay KB's repo root (local mode only) so the shell
             # script resolves its scripts/, src/, utils/ relative to our
             # workdir while reading data/ + writing out/ locally.
@@ -328,14 +361,24 @@ class KernelBlasterAdapter:
         return problem_dir
 
     def _overlay_kb_root(self, workdir: Path, kb_root: Path) -> None:
-        """Symlink every top-level KB item except ``data``/``out`` into workdir.
+        """Lay out a shadow KB tree under ``workdir``.
 
-        KB's ``run_single_kernelblaster.sh`` computes ``ROOT_DIR`` from
-        its own path and then ``cd``s there before reading ``data/``.
-        To avoid writing into the user's KB checkout, we stand up a
-        shadow tree where ``scripts/``, ``src/``, ``utils/``, ``docker/``,
-        ``docs/`` etc. are symlinks, but ``data/`` and ``out/`` live
-        inside ``workdir`` and get our staged inputs + KB's outputs.
+        Top-level items become symlinks except for ``data/`` (mixed)
+        and ``out/`` (writable). For ``data/``:
+
+        * The Python package files (``__init__.py``, ``dataset.py``,
+          ``kernelbench.py``, ``kernelbench_cuda.py``, etc.) are
+          symlinked so ``from data import get_dataset`` works.
+        * Each dataset subdirectory (e.g.
+          ``kernelbench-cuda/level1/001_*``) is symlinked so KB's
+          reference problems remain accessible.
+        * The staged CompGen problem (written later by
+          ``_stage_inputs``) lives alongside, in a fresh
+          subdirectory under
+          ``data/<dataset>/<level>/<problem_dirname>``.
+
+        ``.git``, ``out``, and the user's previous KB run artifacts
+        are excluded so the workdir is self-contained.
         """
         for child in kb_root.iterdir():
             if child.name in {"data", "out", ".git"}:
@@ -344,6 +387,50 @@ class KernelBlasterAdapter:
             if link.exists() or link.is_symlink():
                 continue
             link.symlink_to(child)
+
+        # Mirror data/ structure: package files symlinked, dataset
+        # directories symlinked, problem subdirectories under our
+        # configured (dataset, level) symlinked so KB sees a complete
+        # data tree.
+        kb_data = kb_root / "data"
+        workdir_data = workdir / "data"
+        workdir_data.mkdir(parents=True, exist_ok=True)
+
+        if not kb_data.exists():
+            # Fixture or stripped checkout without a populated data/
+            # tree — leave workdir_data empty for the caller to stage
+            # into via :meth:`_stage_inputs`.
+            return
+
+        for entry in kb_data.iterdir():
+            target = workdir_data / entry.name
+            if target.exists() or target.is_symlink():
+                continue
+            if entry.is_file():
+                target.symlink_to(entry)
+            else:
+                # Dataset directory (e.g. kernelbench-cuda). Mirror its
+                # structure: README files symlinked, each level
+                # directory mirrored, and inside the levels each
+                # problem subdir symlinked. This lets the staged
+                # CompGen problem land in a fresh sibling without
+                # colliding with KB's reference set.
+                target.mkdir(parents=True, exist_ok=True)
+                for sub in entry.iterdir():
+                    sub_target = target / sub.name
+                    if sub_target.exists() or sub_target.is_symlink():
+                        continue
+                    if sub.is_file():
+                        sub_target.symlink_to(sub)
+                    else:
+                        # level directory — mirror so we can add our
+                        # own problem subdir alongside.
+                        sub_target.mkdir(parents=True, exist_ok=True)
+                        for prob in sub.iterdir():
+                            prob_target = sub_target / prob.name
+                            if prob_target.exists() or prob_target.is_symlink():
+                                continue
+                            prob_target.symlink_to(prob)
 
     def _build_invocation(
         self,
@@ -360,6 +447,12 @@ class KernelBlasterAdapter:
         # KB's shell script accepts --problem-numbers and --subset;
         # map the budget onto a rollout cap via KB_MAX_ITERATIONS
         # (forwarded as env since the script reads env internally).
+        # Point KB at the workdir's data tree (workdir/data/<dataset>)
+        # so its optimization_rl_ncu node finds the staged problem
+        # files. Without this, KB's ``Path(__file__).resolve().parents[4]``
+        # follows the symlinked src/ back to the real kb checkout and
+        # looks for ``001_compgen_custom/init.cu`` there.
+        curated_data_dir = workdir / "data" / dataset
         kb_env = {
             "OPENAI_API_KEY": self.config.openai_api_key,
             "MODEL": self.config.model,
@@ -371,11 +464,31 @@ class KernelBlasterAdapter:
             "RL_EXPERIMENT_NAME": self.config.rl_experiment_name,
             "KB_MAX_ITERATIONS": str(budget.max_iterations),
             "KB_MAX_CANDIDATES": str(budget.max_candidates),
+            "KERNELBLASTER_CURATED_DATA_DIR": str(curated_data_dir),
         }
         for name in self.config.pass_through_env:
             value = os.environ.get(name)
             if value:
                 kb_env[name] = value
+        # Propagate CompGen's google.genai instrumentation into the KB
+        # subprocess so its Gemini API calls land in our usage tracker.
+        # We prepend a tiny ``sitecustomize.py`` dir onto PYTHONPATH;
+        # CPython auto-imports ``sitecustomize`` at startup from the
+        # first matching path entry. Best-effort — falls back silently
+        # if the bootstrap dir doesn't exist (e.g. truncated install).
+        from pathlib import Path as _Path
+        bootstrap_dir = (
+            _Path(__file__).resolve().parents[1]
+            / "observability"
+            / "_subprocess_bootstrap"
+        )
+        if bootstrap_dir.is_dir():
+            existing_pp = os.environ.get("PYTHONPATH", "")
+            kb_env["PYTHONPATH"] = (
+                f"{bootstrap_dir}{os.pathsep}{existing_pp}"
+                if existing_pp
+                else str(bootstrap_dir)
+            )
         env = {**os.environ, **kb_env}
 
         script_args = [

@@ -594,14 +594,12 @@ def _emit_constant_tables(
     n_out_off = max(len(out_offsets), 1)
 
     # Storage class selection — bridge #102 ceiling fix.
-    #
     # ptxas enforces a 64 KB cap per file on ``__constant__`` memory.
     # The static-schedule tables (task table + per-SM begin offsets +
     # in/out cell tables + offsets) scale linearly with task count,
     # so any non-trivial paper shape blows the cap:
     #   FFN h=4096: 2,304 tasks → ~104 KB → ❌
     #   MLP-1 (paper): 57,344 tasks → ~2.5 MB → ❌ (40× over)
-    #
     # We compute the total bytes the tables would need and switch to
     # ``__device__`` arrays (no cap, lives in global memory + cached
     # via L1/L2) when ``__constant__`` would overflow. Small bundles
@@ -629,7 +627,6 @@ def _emit_constant_tables(
         # (one DeviceCall with task_shape=(N,) → N tasks across SMs)
         # can index into per-tile buffer regions without one-DeviceCall-
         # per-tile boilerplate.
-        #
         # CgCell carries ``peer_rank`` (-1 = local) so the wrapper can
         # dispatch local vs cross-rank notify/wait without parallel
         # tables. Cross-rank cells fetch their event-tensor base
@@ -716,7 +713,6 @@ def _emit_wrapper(
     #   - intra_cluster (cluster-DSM-eligible vs global-atomic)
     # ``emit_cluster_sync`` gates the cluster path entirely; when it's
     # off we emit byte-identical code to the pre-Wave-1.6b emitter.
-    #
     # Wave 1.6b — wave-boundary cluster.sync() approach.
     # ----------------------------------------------------------------
     # We deliberately do NOT emit a per-edge ``cluster.sync()`` inside an
@@ -724,7 +720,6 @@ def _emit_wrapper(
     # ALL threads in ALL blocks of the cluster must enter or it
     # deadlocks. Different blocks have different in/out cell sets, so
     # per-edge gating would diverge between blocks and hang.
-    #
     # Instead: when the schedule has any intra-cluster edge, every
     # block in the cluster reaches a single ``cluster.sync()`` at the
     # END of every task — uniformly, without conditional branches.
@@ -733,7 +728,6 @@ def _emit_wrapper(
     # task's wait runs. The intra_cluster path therefore replaces the
     # per-edge global atomic with: relaxed write + uniform cluster
     # barrier.
-    #
     # Different blocks have different queue depths; we pad short
     # queues with no-op iterations so every block calls cluster.sync()
     # the same number of times. Padding iterations skip both wait and

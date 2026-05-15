@@ -1,4 +1,4 @@
-"""Tests that the M-08.5 wide model coverage gate is internally consistent.
+"""Tests that the wide model coverage gate is internally consistent.
 
 These tests do NOT re-run the suite. They cross-check the emitted JSON
 artifacts (`model_inventory.json`, `wide_suite_report.json`,

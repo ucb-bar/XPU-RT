@@ -131,6 +131,13 @@ class LLMDrivenCompiler:
     _step_index: int = field(default=0, init=False)
     _accepted_steps: int = field(default=0, init=False)
     _last_view: dict[str, Any] | None = field(default=None, init=False)
+    # G4: Strategist + Tactician wire-in. Populated lazily on the first
+    # ``current_view`` call when ``COMPGEN_USE_STRATEGIST_TACTICIAN=1``.
+    # When the flag is off, ``_plan`` stays ``None`` and the driver
+    # behaves exactly as before. The Tactician audit log records the
+    # Tactician's pick alongside the agent's proposal — non-binding.
+    _plan: Any | None = field(default=None, init=False)
+    _tactician_audit: list[dict[str, Any]] = field(default_factory=list, init=False)
 
     def __post_init__(self) -> None:
         # Pull model/target from the env so the session id is
@@ -262,7 +269,125 @@ class LLMDrivenCompiler:
                 verbatim inline of the named op plus its neighbours.
             max_ops: Override the session cap.
         """
+        # G4 wire-in: lazily build the Strategist's Plan on the first
+        # view call when the flag is on. Cached on ``self._plan``.
+        self._maybe_init_plan()
         return self._compute_view(focus=focus, max_ops=max_ops)
+
+    # ------------------------------------------------------------------
+    # G4 — Strategist + Tactician wire-in (flag-gated, additive)
+    # ------------------------------------------------------------------
+
+    def _strategist_tactician_enabled(self) -> bool:
+        """Return True iff the G4 wire-in is opted-in via env flag.
+
+        ``COMPGEN_USE_STRATEGIST_TACTICIAN=1`` opts the session in.
+        With the flag off (default) ``_plan`` stays ``None`` and the
+        driver behaves byte-identically to the pre-G4 codepath.
+        """
+        import os
+
+        return os.environ.get("COMPGEN_USE_STRATEGIST_TACTICIAN") == "1"
+
+    def _maybe_init_plan(self) -> None:
+        """Lazily emit a :class:`Plan` for the session.
+
+        Idempotent: only runs once per session. Read-only: never
+        mutates env state. Honest failure: any exception (e.g. the
+        env has no regions yet) leaves ``_plan`` as ``None`` and
+        future calls will retry.
+        """
+
+        if not self._strategist_tactician_enabled():
+            return
+        if self._plan is not None:
+            return
+        regions = getattr(self.env, "_regions", None)
+        if not regions:
+            return
+        try:
+            from compgen.agent.plan import Budget
+            from compgen.agent.strategist import (
+                DossierRegion,
+                StrategistInput,
+                plan_session,
+            )
+
+            dossier_regions = tuple(
+                DossierRegion(
+                    region_id=r.region_id,
+                    op_family=r.op_type,
+                )
+                for r in regions
+            )
+            inputs = StrategistInput(
+                session_id=self._session_id or "session",
+                global_objective="minimize_p50_latency",
+                budget=Budget(compile_seconds=60.0, llm_dollars=1.0),
+                regions=dossier_regions,
+            )
+            self._plan = plan_session(inputs)
+        except Exception as e:  # noqa: BLE001
+            # Honest residual: a region with a malformed op_type or
+            # missing field should never break ``current_view``.
+            log.debug("llm_driver.plan_session_skipped", error=str(e))
+            self._plan = None
+
+    def _consult_tactician_for_proposal(
+        self,
+        *,
+        action_type: str,
+        target: str,
+    ) -> dict[str, Any] | None:
+        """Compare an agent proposal against the Tactician's pick.
+
+        Returns a typed audit entry (or ``None`` when the wire-in is
+        off / the Plan is not ready / no region matches ``target``).
+        Non-binding: the Tactician's pick is *logged*, never substituted.
+        """
+
+        if self._plan is None:
+            return None
+        # Find a region in the plan whose id matches the proposal target.
+        region_plan = None
+        for rp in self._plan.region_partition:
+            if rp.region_id == target or (target and rp.region_id in target):
+                region_plan = rp
+                break
+        if region_plan is None:
+            return None
+        try:
+            from compgen.agent.cost_preview import CostPreview
+            from compgen.agent.tactician import pick_edit
+
+            # Build a minimal CostPreview for the agent's proposed action.
+            preview = CostPreview(
+                candidate_id=action_type or "agent_proposal",
+                delta_static=0.0,
+                delta_surrogate=None,
+                confidence=0.5,
+                legality="legal",
+                dominated_by=(),
+            )
+            decision = pick_edit(region_plan, cost_previews=[preview])
+            entry = {
+                "kind": "tactician_audit",
+                "region_id": region_plan.region_id,
+                "tactic": region_plan.tactic,
+                "agent_proposal": action_type,
+                "tactician_action": decision.next_action,
+                "tactician_chosen": decision.chosen_candidate_id,
+                "matches_agent": (
+                    decision.chosen_candidate_id == action_type
+                    or decision.chosen_candidate_id == (action_type or "agent_proposal")
+                ),
+                "reason": decision.reason,
+            }
+            self._tactician_audit.append(entry)
+            return entry
+        except Exception as e:  # noqa: BLE001
+            log.debug("llm_driver.tactician_audit_skipped", error=str(e))
+            return None
 
     def diff_since(self, ckpt_id: str) -> dict[str, Any]:
         """Diff the current Recipe-IR view against a named checkpoint.
@@ -691,6 +816,17 @@ class LLMDrivenCompiler:
             reason=reason,
             expected_improvement=0.0,
         )
+
+        # G4 wire-in: when the Strategist/Tactician path is opted in,
+        # consult the Tactician on whether the agent's proposal aligns
+        # with the planned tactic for this region. The result is a
+        # non-binding audit entry written to ``self._tactician_audit``.
+        # The agent's proposal is never silently overridden; mismatches
+        # surface in ``DriverStepResult.diagnostics`` for observability.
+        tactician_entry = self._consult_tactician_for_proposal(
+            action_type=action_type, target=target
+        )
+
         action: Action = self._loop._proposal_to_action(proposal)
 
         if isinstance(action, NoopAction):
@@ -739,6 +875,18 @@ class LLMDrivenCompiler:
 
         view_after = self._compute_view()
         after_hash = view_after.get("hash", before_hash)
+
+        # G4 audit diagnostic: thread the Tactician entry into the
+        # step's tool record so the JSONL transcript captures it.
+        if tactician_entry is not None:
+            log.info(
+                "llm_driver.tactician_audit",
+                region_id=tactician_entry["region_id"],
+                tactic=tactician_entry["tactic"],
+                agent_proposal=tactician_entry["agent_proposal"],
+                tactician_chosen=tactician_entry["tactician_chosen"],
+                matches_agent=tactician_entry["matches_agent"],
+            )
 
         self._record_tool(
             name=f"proposal:{action_type}",

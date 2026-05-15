@@ -386,10 +386,97 @@ def poll_job(
 
 
 # ---------------------------------------------------------------------------
+# H2 — enter_phase: closed-enum lifecycle transitions
+# ---------------------------------------------------------------------------
+
+
+def enter_phase(
+    sm: SessionManager,
+    *,
+    target_phase: str,
+    session_id: str | None = None,
+    unsafe: bool = False,
+) -> dict[str, Any]:
+    """Move a session into ``target_phase`` if the transition is legal.
+
+    Returns a typed dict carrying the prior phase + the new phase. A
+    ``status="blocked"`` row fires when:
+
+    * ``target_phase`` is not a known phase;
+    * the transition is not legal under
+      :func:`compgen.mcp.phase_taxonomy.is_legal_transition` and
+      ``unsafe`` is not set;
+    * the session does not exist.
+    """
+
+    from compgen.mcp.phase_taxonomy import (
+        PHASES,
+        is_known_phase,
+        is_legal_transition,
+    )
+
+    if not is_known_phase(target_phase):
+        return {
+            "ok": False,
+            "status": "blocked",
+            "blocked_reason": "unknown_phase",
+            "target_phase": target_phase,
+            "known_phases": list(PHASES),
+        }
+    session = _session(sm, session_id)
+    prior = session.current_phase
+    if not is_legal_transition(from_phase=prior, to_phase=target_phase, unsafe=unsafe):
+        return {
+            "ok": False,
+            "status": "blocked",
+            "blocked_reason": "illegal_transition",
+            "session_id": session.session_id,
+            "from_phase": prior,
+            "to_phase": target_phase,
+            "unsafe_required": True,
+        }
+    session.current_phase = target_phase
+    import structlog as _structlog
+
+    _structlog.get_logger().info(
+        "mcp.phase.entered",
+        session_id=session.session_id,
+        from_phase=prior,
+        to_phase=target_phase,
+        unsafe=unsafe,
+    )
+    return {
+        "ok": True,
+        "status": "ok",
+        "session_id": session.session_id,
+        "from_phase": prior,
+        "to_phase": target_phase,
+    }
+
+
+# ---------------------------------------------------------------------------
 # Tool descriptors (consumed by server.py + tests)
 # ---------------------------------------------------------------------------
 
 LIFECYCLE_TOOLS: list[dict[str, Any]] = [
+    {
+        "name": "enter_phase",
+        "description": (
+            "Move the session into a new phase. Closed-enum transitions; "
+            "backward / cross-phase moves require unsafe=true."
+        ),
+        "phase": "lifecycle",
+        "handler": enter_phase,
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "session_id": {"type": "string"},
+                "target_phase": {"type": "string"},
+                "unsafe": {"type": "boolean", "default": False},
+            },
+            "required": ["target_phase"],
+        },
+    },
     {
         "name": "open_target",
         "description": "Load a hardware-spec YAML and open a session.",

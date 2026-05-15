@@ -1,11 +1,11 @@
-"""M-49 glue-differential tests — paper-facing milestone.
+"""glue-differential tests — paper-facing milestone.
 
 End-to-end:
 - merlin_mlp_wide (K_iters=1, declared bit_equality) → 8/8 cases bit-equal,
   refinement_status=discharged_bit_equality.
 - tiny_mlp (K_iters>1, declared tolerance_eps) → all cases within Higham bound,
   refinement_status=discharged_tolerance_eps.
-- Tampered kernel (returns torch.zeros) → status=fail, M-15B retry trips.
+Tampered kernel (returns torch.zeros) → status=fail, retry trips.
 """
 
 from __future__ import annotations
@@ -127,13 +127,13 @@ def test_tiny_mlp_discharges_tolerance_eps(tmp_path: Path) -> None:
 
 
 # --------------------------------------------------------------------------- #
-# Tampered kernel — M-15B downstream-retry surface
+# Tampered kernel — downstream-retry surface
 # --------------------------------------------------------------------------- #
 
 
 def test_tampered_kernel_triggers_failure(tmp_path: Path) -> None:
     """A buggy kernel that returns torch.zeros instead of A@B fails the
-    differential with status=fail. The M-15B detector picks this up via
+    differential with status=fail. The detector picks this up via
     the downstream-retry table."""
     from compgen.graph_compilation.glue_differential import run_glue_differential
     out = tmp_path / "run"
@@ -158,7 +158,7 @@ def test_tampered_kernel_triggers_failure(tmp_path: Path) -> None:
 
 
 def test_glue_differential_picks_up_in_m15b_table() -> None:
-    """The M-15B downstream-retry detector must include
+    """The downstream-retry detector must include
     'glue_differential' so a fail status surfaces as a typed retry."""
     from compgen.graph_compilation.downstream_retry import _DOWNSTREAM_REPORTS
     stage_ids = [row[0] for row in _DOWNSTREAM_REPORTS]
@@ -167,7 +167,7 @@ def test_glue_differential_picks_up_in_m15b_table() -> None:
 
 def test_m15b_detects_glue_differential_failure(tmp_path: Path) -> None:
     """End-to-end: a tampered glue differential is detected as a
-    downstream failure by the M-15B retry table."""
+    downstream failure by the retry table."""
     from compgen.graph_compilation.glue_differential import run_glue_differential
     from compgen.graph_compilation.downstream_retry import (
         detect_downstream_failure,

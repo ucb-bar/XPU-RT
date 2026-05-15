@@ -1,4 +1,4 @@
-"""Refinement monotonicity (M-33.3).
+"""Refinement monotonicity.
 
 CompGen passes preserve refinement at one of four declared levels
 (see :data:`compgen.passes.cards.REFINEMENT_KINDS`):
@@ -19,7 +19,7 @@ recipe that claims ``bit_equality`` after applying any
 
 Monotonicity here means: a recipe's claimable refinement can only
 *decrease* across composition; it can never spontaneously increase
-without an explicit ``relax_refinement`` op (out of scope for M-33).
+without an explicit ``relax_refinement`` op (out of scope ).
 """
 
 from __future__ import annotations

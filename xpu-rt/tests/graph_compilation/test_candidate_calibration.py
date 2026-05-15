@@ -1,4 +1,4 @@
-"""Acceptance tests for M-18.3 Per-Tile-Candidate Measured Cost.
+"""Acceptance tests Per-Tile-Candidate Measured Cost.
 
 Verifies:
 
@@ -16,7 +16,7 @@ Verifies:
 - Default OFF: when env var unset, no candidate_calibration dir.
 - Best-effort: missing inputs → typed ``not_run`` report.
 - No compiler-core imports.
-- Existing M-18 region calibration is preserved.
+Existing region calibration is preserved.
 """
 
 from __future__ import annotations
@@ -43,7 +43,7 @@ def _run(model: str, out_dir: Path, *, calibrate_candidates: bool) -> None:
         env["COMPGEN_CALIBRATE_CANDIDATES"] = "1"
     else:
         env.pop("COMPGEN_CALIBRATE_CANDIDATES", None)
-    env.pop("COMPGEN_CALIBRATE_PROFILER", None)  # isolate M-18.3 from M-18
+    env.pop("COMPGEN_CALIBRATE_PROFILER", None)  # isolate
     subprocess.run(
         [
             sys.executable, "-m", "compgen.graph_compilation", "run",
@@ -165,14 +165,14 @@ def test_known_limitations_recorded(calibrated_run: Path) -> None:
 
 
 # --------------------------------------------------------------------------- #
-# Per-candidate variance — the core M-18.3 value claim
+# Per-candidate variance — the core value claim
 # --------------------------------------------------------------------------- #
 
 
 def test_different_candidates_have_different_measured_costs(
     calibrated_run: Path,
 ) -> None:
-    """The whole point of M-18.3: the agent can rank candidates by
+    """The whole point of the agent can rank candidates by
     measured evidence, not just static prediction. Different tiles
     must produce measurably different costs."""
     rep = _read(
@@ -270,7 +270,7 @@ def test_no_compiler_core_imports() -> None:
 def test_existing_artifacts_outside_overlay_unchanged(
     calibrated_run: Path,
 ) -> None:
-    """M-18.3 only touches cost_preview_v2.json + llm_graph_view.json
+    """only touches cost_preview_v2.json + llm_graph_view.json
     (overlay) and writes new files under candidate_calibration/. It
     must NOT mutate other artifacts."""
     base = calibrated_run / "02_graph_analysis"

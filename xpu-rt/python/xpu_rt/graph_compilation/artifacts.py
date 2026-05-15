@@ -31,9 +31,9 @@ CANONICAL_STAGE_ORDER: tuple[str, ...] = (
     "gap_closure",
 )
 
-# On-disk directory prefix per stage_id. The M-05 insertion of
+# On-disk directory prefix per stage_id. The insertion of
 # ``03_recipe_planning`` shifts ``gap_discovery`` to ``04_`` and
-# ``gap_closure`` to ``05_``. Earlier layouts (pre-M-05 and pre-M-B) are
+# ``gap_closure`` to ``05_``. Earlier layouts (pre-and pre-M-B) are
 # still readable via :func:`stage_dir` below.
 STAGE_DIR_PREFIXES: dict[str, str] = {
     "graph_capture": "00_graph_capture",
@@ -46,7 +46,7 @@ STAGE_DIR_PREFIXES: dict[str, str] = {
 # Legacy on-disk prefixes accepted by readers for backward compatibility.
 # Each list is "newest first" so the resolver picks the most-recent
 # layout it can find. These cover both the pre-M-B (no graph_analysis)
-# and pre-M-05 (no recipe_planning) generations.
+# and pre-(no recipe_planning) generations.
 LEGACY_STAGE_DIR_PREFIXES: dict[str, list[str]] = {
     "gap_discovery": ["03_gap_discovery", "02_gap_discovery"],
     "gap_closure": ["04_gap_closure", "03_gap_closure"],

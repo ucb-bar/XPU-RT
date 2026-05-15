@@ -20,6 +20,41 @@ from __future__ import annotations
 
 __version__ = "0.2.0"
 
+
+def _install_gemini_instrumentation_at_import() -> None:
+    """Install the google.genai monkey-patch ASAP so any caller in this
+    process — agent_decision, MCP tools, efficiency_report, etc. —
+    has its Gemini API calls captured by ``compgen-gemini-usage``.
+
+    Opt-out via ``COMPGEN_DISABLE_GEMINI_INSTRUMENTATION=1`` for users
+    who run their own observability stack. Best-effort: never raises.
+    Subprocess paths (KernelBlaster) still bypass this — for those use
+    ``scripts/dev/recover_kernelblaster_usage.py`` (post-hoc recovery).
+    """
+    import os
+
+    if os.environ.get("COMPGEN_DISABLE_GEMINI_INSTRUMENTATION", "").lower() in (
+        "1",
+        "true",
+        "yes",
+    ):
+        return
+    try:
+        from compgen.observability.gemini_usage import (
+            install_genai_instrumentation,
+            install_openai_instrumentation,
+        )
+
+        install_genai_instrumentation()
+        # OpenAI-compat SDK pointed at Google's endpoint (KB path).
+        install_openai_instrumentation()
+    except Exception:  # noqa: BLE001
+        # Observability is best-effort; never crash a compile.
+        pass
+
+
+_install_gemini_instrumentation_at_import()
+
 __all__ = [
     "__version__",
     "CompGenDevice",

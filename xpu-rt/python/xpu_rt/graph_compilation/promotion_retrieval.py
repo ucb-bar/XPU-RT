@@ -1,4 +1,4 @@
-"""Phase B promotion retrieval (M-28, read side).
+"""Phase B promotion retrieval (, read side).
 
 Before Phase B emits an ``agent_decision_request.json``, query the
 promotion cache + memory.promotions index and surface promoted recipes
@@ -7,10 +7,10 @@ deterministic resolver) ranks them ahead of fresh candidates so a
 recipe proven on one model can be reused on another with the same
 region signature without re-running the full search.
 
-This is the *read side* of Section 19. The bridge in M-26 writes
+This is the *read side* of Section 19. The bridge writes
 promoted recipes to ``.compgen_cache/recipes/<key>/`` with a
 ``promoted_recipe.json`` sidecar carrying the two-tier cache key
-(``contract_hash``, ``region_signature``). M-28 scans those sidecars
+(``contract_hash``, ``region_signature``). scans those sidecars
 plus the SQLite ``memory.promotions`` table.
 
 Two-tier lookup, in priority order:
@@ -42,7 +42,7 @@ import structlog
 log = structlog.get_logger(__name__)
 
 
-# Default library path mirrors the M-26 bridge default.
+# Default library path mirrors the bridge default.
 _DEFAULT_LIBRARY_PATH = Path(".compgen_cache") / "recipes"
 
 
@@ -50,7 +50,7 @@ _DEFAULT_LIBRARY_PATH = Path(".compgen_cache") / "recipes"
 class PromotedCandidate:
     """A promoted recipe that matches a region's pattern.
 
-    The fields mirror the M-26 ``promoted_recipe.json`` sidecar so the
+    The fields mirror the ``promoted_recipe.json`` sidecar so the
     agent can rank candidates by gate level, inspect evidence, and
     inspect ``applies_when`` predicates without opening the bundle.
 
@@ -66,13 +66,13 @@ class PromotedCandidate:
         recipe_path: Absolute path to the recipe directory on disk.
         match_kind: ``"exact_contract"`` or ``"region_pattern"`` —
             tells the agent how strong the match is.
-        gate_level: M-29 promotion-gate level if recorded
+        gate_level: promotion-gate level if recorded
             (``observed`` / ``verified_fx`` / ``verified_kernel`` /
             ``characterized`` / ``promoted`` / ``portable``).
-        evidence_summary: M-26 evidence projection (cost preview,
+        evidence_summary: evidence projection (cost preview,
             differential outcomes, etc.).
         applies_when: Fact predicates that must hold; empty when the
-            recipe was promoted before M-27 wired this up.
+            recipe was promoted wired this up.
         fallback_chain: Alternative candidate ids to try.
     """
 
@@ -87,8 +87,8 @@ class PromotedCandidate:
     evidence_summary: dict[str, Any] = field(default_factory=dict)
     applies_when: tuple[str, ...] = ()
     fallback_chain: tuple[str, ...] = ()
-    pass_id: str = ""  # M-37.1: cross-link to the pass card that generated this recipe
-    candidate_id: str = ""  # M-37.1: original candidate label (e.g. "tile_M16_N16_K16")
+    pass_id: str = ""  # cross-link to the pass card that generated this recipe
+    candidate_id: str = ""  # original candidate label (e.g. "tile_M16_N16_K16")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -138,7 +138,7 @@ def _candidate_from_sidecar(
         else recipe_dir.name
     )
 
-    # M-37.1: extract pass_id + candidate_id from the sidecar. The
+    # extract pass_id + candidate_id from the sidecar. The
     # bridge nests them under ``recipe.evidence_summary``:
     #   evidence_summary.candidate_kind        → pass_id
     #   evidence_summary.selected_candidate_id → candidate_id
@@ -176,7 +176,7 @@ def _candidate_from_sidecar(
 def _scan_library_for_sidecars(library_path: Path) -> list[tuple[Path, dict[str, Any]]]:
     """Walk the recipe library and return (recipe_dir, sidecar_body) pairs.
 
-    Skips ``.invalid`` directories and any recipe missing the M-26
+    Skips ``.invalid`` directories and any recipe missing the
     sidecar (legacy bundles still in the library).
     """
     if not library_path.exists() or not library_path.is_dir():
@@ -206,7 +206,7 @@ def retrieve_for_region(
         region_signature: 16-char hex hash from
             :func:`compgen.promotion.region_signature.hash_region_signature`.
             Required: an empty string yields no matches (nothing to
-            match against — the M-28 agent_decision write side calls
+            match against — the agent_decision write side calls
             this per region with the region's freshly-derived signature).
         contract_hash: Optional kernel-contract hash. When non-empty,
             exact-contract matches are returned with
@@ -225,7 +225,7 @@ def retrieve_for_region(
         (exact_contract first, then region_pattern). Empty list when
         nothing matches or the library does not exist.
     """
-    # M-31A.2: COMPGEN_DISABLE_RECIPE_MEMORY=1 forces a cold run by
+    # COMPGEN_DISABLE_RECIPE_MEMORY=1 forces a cold run by
     # short-circuiting the retrieval. The agent_decision_request writer
     # records this in the request's `disabled_by_env` field so the audit
     # trail explains why no promoted candidates surfaced.

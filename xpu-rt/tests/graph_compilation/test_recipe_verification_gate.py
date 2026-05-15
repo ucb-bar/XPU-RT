@@ -1,4 +1,4 @@
-"""Acceptance tests for M-06: Recipe Verification Gate.
+"""Acceptance tests for Recipe Verification Gate.
 
 Asserts:
 - Required gate artifacts emitted for all canonical models
@@ -319,7 +319,7 @@ def test_tampered_recipe_tile_to_invented_size_fails(
     recipe_path = work / "03_recipe_planning" / "recipe.mlir"
     text = recipe_path.read_text()
     # Inject an invented tile dimension. Locate whatever ``M = N : i64``
-    # value the planner picked (post-M-37.11 this varies — tiny_mlp's
+    # value the planner picked (post-this varies — tiny_mlp's
     # shape-fit tile is M=4, while older runs used M=16) and bump it
     # to the invented 999.
     import re as _re

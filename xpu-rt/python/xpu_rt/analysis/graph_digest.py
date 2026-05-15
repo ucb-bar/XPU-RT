@@ -453,7 +453,7 @@ class GraphDigester:
 
         # Fallback: if the FX-level analyzer returned zero FLOPs (happens
         # on some captures where shape meta is missing), walk the IR and
-        # estimate. Gap #8.
+        # estimate. .
         total_flops = self.analysis.total_flops
         flop_source = "analyzer"
         if total_flops == 0 and self.module is not None:

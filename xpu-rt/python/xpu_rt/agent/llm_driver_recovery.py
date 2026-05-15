@@ -51,12 +51,49 @@ class OpRecoveryDecision:
 
 
 @dataclass
+class RegionReplanEvent:
+    """One typed replan event recorded by the G3 wire-in.
+
+    Captures what happened when a per-op recovery failure was routed
+    through :func:`compgen.agent.plan.replan_on_reject`. The event
+    carries the rejection_class, the rung that was walked, and the new
+    plan version — enough for an evidence-pack consumer to reconstruct
+    the ladder traversal without re-running the recovery loop.
+    """
+
+    target: str
+    region_id: str
+    rejection_class: str  # tactic_fatal | tactic_recoverable | surprising
+    rung_before: str
+    rung_after: str
+    plan_version_before: int
+    plan_version_after: int
+    detail: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "target": self.target,
+            "region_id": self.region_id,
+            "rejection_class": self.rejection_class,
+            "rung_before": self.rung_before,
+            "rung_after": self.rung_after,
+            "plan_version_before": self.plan_version_before,
+            "plan_version_after": self.plan_version_after,
+            "detail": self.detail,
+        }
+
+
+@dataclass
 class RecoveryPlan:
     """Aggregate: how every unsupported op will be handled."""
 
     decisions: list[OpRecoveryDecision] = field(default_factory=list)
     llm_consulted: int = 0
     skipped: int = 0
+    # G3 wire-in: typed replan events recorded when a Plan-driven
+    # recovery walked the fallback ladder. Empty when the caller
+    # did not supply a region Plan (legacy path).
+    region_replan_events: list[RegionReplanEvent] = field(default_factory=list)
 
     def ok(self) -> bool:
         return all(d.ok for d in self.decisions)
@@ -83,6 +120,9 @@ class RecoveryPlan:
                     "error": d.error,
                 }
                 for d in self.decisions
+            ],
+            "region_replan_events": [
+                e.to_dict() for e in self.region_replan_events
             ],
         }
 
@@ -224,6 +264,8 @@ def plan_recovery(
     *,
     llm_client: CompGenLLMProtocol | None = None,
     consult_llm_on: tuple[str, ...] = ("low",),
+    region_plan: Any | None = None,
+    region_id_for_target: dict[str, str] | None = None,
 ) -> RecoveryPlan:
     """Decide + apply a recovery strategy for every unsupported op.
 
@@ -234,12 +276,24 @@ def plan_recovery(
         consult_llm_on: Confidence levels that trigger an LLM consult.
             Defaults to ``("low",)`` — the classifier only calls the LLM
             on ambiguous cases.
+        region_plan: Optional :class:`compgen.agent.plan.Plan` whose
+            fallback ladders describe per-region recovery rungs. When
+            supplied, per-op failures trigger
+            :func:`compgen.agent.plan.replan_on_reject` and the walk
+            is logged in :attr:`RecoveryPlan.region_replan_events`.
+            Backward-compatible: omit to get the legacy flat recovery.
+        region_id_for_target: Optional map from ``resolution.target``
+            (the FX node name) to its enclosing region id. Used only
+            when ``region_plan`` is supplied. Targets without a region
+            mapping are skipped for replan accounting (the original
+            recovery decision is still recorded).
 
     Returns:
         A :class:`RecoveryPlan` with one :class:`OpRecoveryDecision` per
         target. ``plan.ok()`` is True iff every decision applied cleanly.
     """
     plan = RecoveryPlan()
+    region_id_for_target = region_id_for_target or {}
 
     for resolution in artifact.unsupported_resolutions:
         strategy = _deterministic_default(resolution)
@@ -288,12 +342,80 @@ def plan_recovery(
         )
         if not ok:
             plan.skipped += 1
+            # G3 wire-in: when a region Plan is supplied, walk the
+            # fallback ladder for this region. The rejection_class is
+            # `tactic_fatal` for a hard recovery failure (no apply
+            # path landed) — the Strategist should drop this rung.
+            if region_plan is not None:
+                rid = region_id_for_target.get(resolution.target, "")
+                if rid:
+                    region_plan = _record_region_replan(
+                        plan, region_plan, rid, resolution.target,
+                        rejection_class="tactic_fatal",
+                        detail=error or "recovery_strategy_did_not_apply",
+                    )
 
     return plan
+
+
+def _record_region_replan(
+    recovery: RecoveryPlan,
+    region_plan: Any,
+    region_id: str,
+    target: str,
+    *,
+    rejection_class: str,
+    detail: str,
+) -> Any:
+    """Apply :func:`compgen.agent.plan.replan_on_reject` and record
+    the event on the RecoveryPlan. Returns the new plan version so
+    subsequent rejections walk further down the ladder.
+
+    On a malformed input (unknown region, unknown rejection class)
+    the helper returns the input plan unchanged and records nothing —
+    the existing recovery decision is the canonical signal.
+    """
+
+    try:
+        from compgen.agent.plan import PlanError, replan_on_reject
+    except ImportError:
+        return region_plan
+
+    try:
+        region_before = region_plan.get_region(region_id)
+    except PlanError:
+        return region_plan
+
+    try:
+        new_plan = replan_on_reject(
+            region_plan, region_id=region_id, rejection_class=rejection_class
+        )
+    except PlanError:
+        return region_plan
+
+    try:
+        region_after = new_plan.get_region(region_id)
+    except PlanError:
+        return new_plan
+
+    recovery.region_replan_events.append(
+        RegionReplanEvent(
+            target=target,
+            region_id=region_id,
+            rejection_class=rejection_class,
+            rung_before=region_before.tactic,
+            rung_after=region_after.tactic,
+            plan_version_before=region_plan.plan_version,
+            plan_version_after=new_plan.plan_version,
+            detail=detail,
+        )
+    )
+    return new_plan
 
 
 __all__ = [
     "OpRecoveryDecision",
     "RecoveryPlan",
+    "RegionReplanEvent",
     "plan_recovery",
 ]

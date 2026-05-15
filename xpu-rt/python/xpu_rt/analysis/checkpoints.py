@@ -1,4 +1,4 @@
-"""Analysis-summary registry + index (M-32).
+"""Analysis-summary registry + index.
 
 Every analysis the pipeline emits is registered in :data:`KNOWN_SUMMARIES`
 with:
@@ -437,9 +437,9 @@ def _utc_now() -> str:
 class AnalysisSummary:
     """One analysis summary as observed in a specific run dir.
 
-    M-33: ``generation`` tracks how many invalidation events have been
+    ``generation`` tracks how many invalidation events have been
     recorded against this summary id during the run. Default 0 keeps
-    pre-M-33 callers honest — they observe the same shape, just
+    pre-callers honest — they observe the same shape, just
     without monotonic-bump semantics.
     """
 
@@ -562,7 +562,7 @@ class AnalysisIndex:
         """Return every summary id whose state depends (transitively)
         on any id in ``invalidated_ids``.
 
-        M-33's invalidation enforcement consumes this.
+        's invalidation enforcement consumes this.
         """
         assert_resolvable(list(invalidated_ids))
         seed = set(invalidated_ids)
@@ -593,7 +593,7 @@ class AnalysisIndex:
         }
 
     # ------------------------------------------------------------------ #
-    # M-33: diff against another index
+    # diff against another index
     # ------------------------------------------------------------------ #
 
     def diff(self, other: AnalysisIndex) -> dict[str, tuple[str, ...]]:

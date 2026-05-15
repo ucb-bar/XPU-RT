@@ -41,6 +41,10 @@ from compgen.ir.recipe.ops_choice import (
     RequireSolverOp,
     SearchBudgetOp,
 )
+from compgen.ir.recipe.ops_dispatch import (
+    _DISPATCH_OPS,
+    PlanDispatchTableOp,
+)
 from compgen.ir.recipe.ops_fact import (
     BackendAvailableOp,
     BackendEligibleOp,
@@ -151,7 +155,16 @@ _PROVENANCE_OPS = [
     LineageOp,
 ]
 
-ALL_OPS = _SCOPE_OPS + _FACT_OPS + _CANDIDATE_OPS + _CHOICE_OPS + _VERIFY_OPS + _PROVENANCE_OPS + _PROPOSE_OPS
+ALL_OPS = (
+    _SCOPE_OPS
+    + _FACT_OPS
+    + _CANDIDATE_OPS
+    + _CHOICE_OPS
+    + _VERIFY_OPS
+    + _PROVENANCE_OPS
+    + _PROPOSE_OPS
+    + _DISPATCH_OPS
+)
 
 ALL_ATTRS = [
     ShapeSummaryAttr,

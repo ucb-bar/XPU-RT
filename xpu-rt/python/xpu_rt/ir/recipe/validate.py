@@ -28,11 +28,11 @@ from compgen.ir.recipe.ops_candidate import PlaceOnDeviceOp
 from compgen.ir.recipe.ops_provenance import PromoteOp
 from compgen.ir.recipe.ops_scope import AnchorOp, RecipeGuardOp, RecipeRegionOp, SegmentOp
 
-# M-27: known target-class strings accepted on ``recipe.promote.target_class``.
+# known target-class strings accepted on ``recipe.promote.target_class``.
 # Validators enforce membership; new classes get added here as new targets
 # come online (cuda_sm75 / cuda_sm80 / cuda_sm90 / triton_friendly /
 # host_cpu / blackwell / cublasdx / etc.). The empty string is accepted
-# so legacy three-field PromoteOps without the M-27 attrs don't trip.
+# so legacy three-field PromoteOps without the attrs don't trip.
 _KNOWN_TARGET_CLASSES: frozenset[str] = frozenset({
     "",
     "host_cpu",
@@ -209,7 +209,7 @@ def validate_recipe_module(module: ModuleOp) -> RecipeValidationResult:
             else:
                 device_assignments[region_id] = (device_index, i)
 
-    # --- Step 5: Validate PromoteOp M-27 attrs --------------------------------
+    # --- Step 5: Validate PromoteOp attrs --------------------------------
     # ``applies_when`` and ``fallback_chain`` SymbolRef resolution is
     # already covered by the generic _collect_symbol_refs walk in
     # Step 3. Here we additionally enforce the target_class enum.

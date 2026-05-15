@@ -1,4 +1,4 @@
-"""Runtime import provenance (M-31A.2).
+"""Runtime import provenance.
 
 Snapshots ``sys.modules`` at well-defined points around a production run
 and records which modules were imported. Production runs that import a

@@ -72,7 +72,6 @@ def _template_quant_transform(
 
 
 # To integrate with CompGen's pipeline, add to capture/torchao_pipeline.py:
-#
 #   if config.scheme == "my_quant":
 #       from compgen.quantization.methods.my_quant import TemplateQuantConfig
 #       quantize_(model, TemplateQuantConfig(**config.extra_args))

@@ -1,4 +1,4 @@
-"""Holdout: scaled-dot-product attention CompGen does not lower (M-31A.4).
+"""Holdout: scaled-dot-product attention CompGen does not lower.
 
 Expected outcome: typed-blocked with an ``unsupported_op`` reason.
 A silent partial pass — claiming it lowered but actually skipping

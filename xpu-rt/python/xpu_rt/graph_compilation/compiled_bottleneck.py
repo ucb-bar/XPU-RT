@@ -1,7 +1,7 @@
-"""M-22 Compiled Bottleneck Analysis.
+"""Compiled Bottleneck Analysis.
 
-Per-region MEASURED bottleneck classification. Cross-references M-19/M-20
-real compiled-kernel measurements with M-21's analytical flops/bytes
+Per-region MEASURED bottleneck classification. Cross-references /
+real compiled-kernel measurements with 's analytical flops/bytes
 predictions to produce per-region:
 
 - ``achieved_compute_gflops``    = flops / measured_time_s
@@ -10,20 +10,20 @@ predictions to produce per-region:
 - ``bandwidth_utilization``      = achieved_bandwidth_gb_s / peak_bandwidth_gb_s
 - ``measured_bottleneck``        = whichever utilization is higher
 
-These are deterministic post-hoc derivations: same M-19/M-20 + M-21 +
+These are deterministic post-hoc derivations: same / +
 target YAML inputs produce byte-identical output across reruns.
 
-The measured bottleneck is then compared with M-21's analytical
+The measured bottleneck is then compared with 's analytical
 ``bottleneck_resource`` prediction; agreements / disagreements are
 counted, and per-region disagreements are surfaced explicitly so the
 agent (and the paper) can see where the analytical model was wrong.
 
-M-22 layers an additive ``compiled_evidence`` block per region onto
+layers an additive ``compiled_evidence`` block per region onto
 ``02_graph_analysis/readiness/hardware_resource_report.json`` (same
-pattern M-21 uses on cost_preview_v2). M-17.1's
+pattern uses on cost_preview_v2). 's
 ``calibration_status="not_profiler_calibrated"`` field is deliberately
 left untouched (it documents the deterministic baseline). A NEW
-top-level field ``kernel_calibration_status`` carries the M-22 verdict:
+top-level field ``kernel_calibration_status`` carries the verdict:
 
 - ``not_kernel_calibrated``     — no compiled measurements available
 - ``partial_kernel_calibration`` — some regions have evidence
@@ -31,15 +31,15 @@ top-level field ``kernel_calibration_status`` carries the M-22 verdict:
 
 Hard non-goals:
 
-- No new measurement machinery (M-22.1 follow-up may add torch.profiler
+No new measurement machinery (follow-up may add torch.profiler
   CUDA activities + linux perf for cache fractions; this MVP derives
-  utilization from M-19/M-20's measured time + M-21's analytical
+  utilization /'s measured time + 's analytical
   flops/bytes).
 - No compiler-core imports.
 - Cache fractions / occupancy / launch-overhead breakdown are explicitly
   ``not_collected`` (cache_evidence: not_collected).
 - region_map / candidate_actions / cost_preview_v2 / llm_graph_view /
-  M-21 analytical_cost / M-19 / M-20 reports stay byte-identical.
+  analytical_cost / reports stay byte-identical.
 """
 
 from __future__ import annotations
@@ -132,7 +132,7 @@ def derive_utilization(
 
 
 # --------------------------------------------------------------------------- #
-# M-19/M-20 measurement loader
+# /measurement loader
 # --------------------------------------------------------------------------- #
 
 
@@ -150,8 +150,8 @@ class _CompiledMeasurement:
 def _load_compiled_measurements(
     run_dir: Path,
 ) -> list[_CompiledMeasurement]:
-    """Best-effort: load M-19 single-region run + M-20 per-region fan-out.
-    Per region, M-20 wins (it's the more recent / more complete view).
+    """Best-effort: load single-region run + per-region fan-out.
+    Per region, wins (it's the more recent / more complete view).
     Returns one measurement per region with at least one compiled track."""
     base = run_dir / "02_graph_analysis" / "kernel_execution"
     if not base.is_dir():
@@ -159,7 +159,7 @@ def _load_compiled_measurements(
 
     by_region: dict[str, _CompiledMeasurement] = {}
 
-    # M-19 single-region selected candidate.
+    # single-region selected candidate.
     m19_gpu = _read_json(base / "compiled_kernel_run_gpu.json")
     m19_cpu = _read_json(base / "compiled_kernel_run_cpu.json")
     if m19_gpu and m19_gpu.get("compile_status") == "compiled":
@@ -188,7 +188,7 @@ def _load_compiled_measurements(
                 source="m19",
             )
 
-    # M-20 per-region fan-out (overrides M-19 since it covers all regions).
+    # per-region fan-out (overrides since it covers all regions).
     m20 = _read_json(base / "region_compiled_differential_report.json")
     if m20 is not None:
         for r in m20.get("regions", []) or []:
@@ -230,12 +230,12 @@ def _load_compiled_measurements(
 
 
 # --------------------------------------------------------------------------- #
-# M-21 analytical lookup
+# analytical lookup
 # --------------------------------------------------------------------------- #
 
 
 def _index_m21_by_candidate(run_dir: Path) -> dict[str, dict[str, Any]]:
-    """Index M-21 per-candidate analytical entries by candidate_id.
+    """Index per-candidate analytical entries by candidate_id.
     Only ok-modeled entries are kept (we need flops/bytes/predicted)."""
     p = (
         run_dir / "02_graph_analysis" / "analytical_cost"
@@ -290,7 +290,7 @@ def _apply_hardware_resource_overlay(
 ) -> None:
     """Layer ``compiled_evidence`` per region onto
     hardware_resource_report.json AND add a top-level
-    ``kernel_calibration_status`` field. Additive only — M-17.1's
+    ``kernel_calibration_status`` field. Additive only — 's
     existing fields stay untouched."""
     p = (
         run_dir / "02_graph_analysis" / "readiness"
@@ -335,7 +335,7 @@ class CompiledBottleneckResult:
 def run_compiled_bottleneck(
     run_dir: Path, *, repo_root: Path | None = None,
 ) -> CompiledBottleneckResult:
-    """Build the M-22 deterministic compiled-bottleneck analysis.
+    """Build the deterministic compiled-bottleneck analysis.
     Best-effort; never raises."""
     run_dir = Path(run_dir).resolve()
     repo_root = repo_root or Path(__file__).resolve().parents[3]
@@ -355,7 +355,7 @@ def run_compiled_bottleneck(
     peak_compute = float(target.get("peak_compute_gflops", 0.0) or 0.0)
     peak_bw = float(target.get("peak_bandwidth_gb_s", 0.0) or 0.0)
 
-    # Read M-17.1 hardware_resource_report to count total non-opaque regions
+    # Read hardware_resource_report to count total non-opaque regions
     # for the calibration-coverage classification.
     hrr = _read_json(
         ga / "readiness" / "hardware_resource_report.json"

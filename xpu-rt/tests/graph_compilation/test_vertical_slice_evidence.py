@@ -1,9 +1,9 @@
-"""M-65 — Phase D vertical-slice evidence tests.
+"""Phase D vertical-slice evidence tests.
 
 Coverage:
 
 - ``TestSlice2`` — proxy_vla on host_cpu (fusion path). The selected
-  candidate is a fusion (``fuse_*``) which M-42 routes to
+  candidate is a fusion (``fuse_*``) which routes to
   ``not_applicable``; the slice evidence records this as
   ``honest_gap`` rather than papering over it.
 - ``TestSlice3Deferred`` — merlin_mlp_wide on cuda_sm75; no
@@ -51,9 +51,9 @@ def _invoke_pipeline(
 
 class TestSlice2:
     def test_proxy_vla_fusion_path(self, tmp_path: Path) -> None:
-        """Run the pipeline + emit slice evidence. With gap #6 closed,
+        """Run the pipeline + emit slice evidence. With closed,
         proxy_vla's fusion candidate produces a kernel_codegen
-        request; M-40 materialises a POINTWISE fused contract; the
+        request; materialises a POINTWISE fused contract; the
         auction runs with c_reference's pointwise baseline as bidder."""
         result = _invoke_pipeline(
             model="proxy_vla", out_dir=tmp_path / "run",
@@ -83,7 +83,7 @@ class TestSlice2:
         assert body["schema_version"] == "phase_d_slice_evidence_v1"
         assert body["slice_id"] == "2"
         assert body["overall"] == "green"
-        # Gap #6: auction now runs for fusion candidates.
+        # : auction now runs for fusion candidates.
         assert body["auction_summary"]["ran"] is True
         assert body["auction_summary"]["overall"] == "pass"
 
@@ -95,7 +95,7 @@ class TestSlice2:
 
 class TestSlice3CudaSm75Contracts:
     def test_cuda_sm75_target_now_ships(self, tmp_path: Path) -> None:
-        """Gap #7 closure: configs/targets/cuda_sm75.yaml now ships.
+        """ closure: configs/targets/cuda_sm75.yaml now ships.
         Pipeline contract emit works on a non-CUDA host; real kernel
         execution + verification stays GPU-host-conditional and is
         reflected in the slice evidence."""

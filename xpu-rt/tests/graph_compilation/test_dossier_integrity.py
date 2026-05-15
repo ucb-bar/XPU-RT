@@ -1,8 +1,8 @@
 """Cross-artifact dossier integrity test suite.
 
 Verifies that the multiple analysis tracks (FX dossier, readiness reports,
-M-18 region calibration, M-18.3 candidate calibration, M-16.1 strict
-gate, M-19 compiled kernel, M-17 evidence pack, recipe lowering, real
+region calibration, candidate calibration, strict
+gate, compiled kernel, evidence pack, recipe lowering, real
 verification) are mutually consistent. Every test isolates ONE
 cross-artifact invariant so a failure points at the exact place a
 dossier track has drifted.
@@ -10,11 +10,11 @@ dossier track has drifted.
 Three model-fixture runs cover the major paths:
 
 - ``merlin_mlp_wide`` — SetTileParams clean-divides; exercises every
-  opt-in including M-19 kernel execution (single-region foundation).
-- ``proxy_vla`` — FuseProducerConsumer pointwise; exercises the M-16.2
+  opt-in including kernel execution (single-region foundation).
+``proxy_vla`` FuseProducerConsumer pointwise; exercises the
   fusion track. Kernel execution emits ``not_applicable``.
-- ``tiny_mlp`` — SetTileParams with K_iters>1 → real M-12 failure.
-  Exercises the M-15B downstream-retry path (run exits non-zero but
+``tiny_mlp`` SetTileParams with K_iters>1 → real failure.
+  Exercises the downstream-retry path (run exits non-zero but
   the artifact tree is otherwise complete up to the failure).
 
 All fixtures run with the three calibration / kernel opt-ins enabled
@@ -24,7 +24,7 @@ Hard non-goals:
 
 - This file does not generate new artifacts; it only inspects existing
   on-disk state.
-- It does not assert correctness of values (M-12 / M-16.2 / M-19 own
+It does not assert correctness of values ( own
   that). It asserts cross-artifact consistency: same id appears
   identically everywhere; counts match; selected candidate traces
   through every applicable level; calibration overlays reference real
@@ -102,8 +102,8 @@ def run_proxy_vla(tmp_path_factory) -> Path:  # type: ignore[no-untyped-def]
 
 @pytest.fixture(scope="module")
 def run_tiny_mlp(tmp_path_factory) -> Path:  # type: ignore[no-untyped-def]
-    """SetTileParams K_iters>1 → real M-12 failure path. Pipeline
-    exits non-zero (M-15B raises) but artifacts up to the failure are
+    """SetTileParams K_iters>1 → real failure path. Pipeline
+    exits non-zero (raises) but artifacts up to the failure are
     on disk."""
     out = tmp_path_factory.mktemp("integrity_tiny_mlp") / "run"
     _run_full_optins("tiny_mlp", out)
@@ -351,14 +351,14 @@ def test_counterfactual_covers_every_candidate(
 
 
 # --------------------------------------------------------------------------- #
-# Group D: M-18 region-level calibration cross-references
+# Group D: region-level calibration cross-references
 # --------------------------------------------------------------------------- #
 
 
 def test_calibration_dossier_overlay_matches_report(
     run_merlin_mlp_wide: Path,
 ) -> None:
-    """When M-18 ran successfully, graph_dossier_v3's top-level
+    """When ran successfully, graph_dossier_v3's top-level
     calibration block must match the standalone profiler_calibration_report
     summary."""
     run_dir = run_merlin_mlp_wide
@@ -399,7 +399,7 @@ def test_calibration_per_region_overlay_uses_real_regions(
 
 
 # --------------------------------------------------------------------------- #
-# Group E: M-18.3 candidate calibration cross-references
+# Group E: candidate calibration cross-references
 # --------------------------------------------------------------------------- #
 
 
@@ -429,9 +429,9 @@ def test_candidate_calibration_only_legal_set_tile_candidates(
 def test_m24_kernel_readiness_row6_matches_m22(
     run_merlin_mlp_wide: Path,
 ) -> None:
-    """M-24 row 6 (compiled_bottleneck) must report the same
-    kernel_calibration_status as M-22's standalone report. The
-    integrity invariant catches drift if M-24 starts deriving its
+    """row 6 (compiled_bottleneck) must report the same
+    kernel_calibration_status as the standalone report. The
+    integrity invariant catches drift if starts deriving its
     own status independently."""
     run_dir = run_merlin_mlp_wide
     cb = _read_or_none(
@@ -452,7 +452,7 @@ def test_m24_kernel_readiness_row6_matches_m22(
 def test_m24_kernel_readiness_matrix_well_formed(
     run_merlin_mlp_wide: Path,
 ) -> None:
-    """The M-24 matrix counts (ready/ready_for_m24_1/partial/not_ready/
+    """The matrix counts (ready/ready_for_m24_1/partial/not_ready/
     not_run) must equal the number of rows."""
     run_dir = run_merlin_mlp_wide
     m = _read_or_none(
@@ -479,9 +479,9 @@ def test_m24_kernel_readiness_matrix_well_formed(
 def test_m22_compiled_bottleneck_overlays_match_standalone_report(
     run_merlin_mlp_wide: Path,
 ) -> None:
-    """For every M-22 ok-region, the compiled_evidence overlay on
+    """For every ok-region, the compiled_evidence overlay on
     hardware_resource_report must match the standalone
-    compiled_bottleneck_report. M-22 must not mutate the M-17.1
+    compiled_bottleneck_report. must not mutate the
     deterministic-baseline ``calibration_status`` field."""
     run_dir = run_merlin_mlp_wide
     m22_path = (
@@ -500,7 +500,7 @@ def test_m22_compiled_bottleneck_overlays_match_standalone_report(
     )
     hrr = _read(hrr_path)
 
-    # M-17.1's deterministic calibration_status is left untouched.
+    # the deterministic calibration_status is left untouched.
     assert hrr.get("calibration_status") == "not_profiler_calibrated", (
         "M-22 must not mutate M-17.1 calibration_status field"
     )
@@ -539,7 +539,7 @@ def test_m22_compiled_bottleneck_overlays_match_standalone_report(
 def test_m21_analytical_cost_overlays_match_standalone_report(
     run_merlin_mlp_wide: Path,
 ) -> None:
-    """Every modeled M-21 candidate's overlay block on cost_preview_v2
+    """Every modeled candidate's overlay block on cost_preview_v2
     must agree with the standalone per_candidate_analytical_cost.json
     report. Same for llm_graph_view.json."""
     run_dir = run_merlin_mlp_wide
@@ -631,15 +631,15 @@ def test_candidate_calibration_overlays_cost_preview_v2(
 
 
 # --------------------------------------------------------------------------- #
-# Group F: M-19 compiled-kernel cross-references
+# Group F: compiled-kernel cross-references
 # --------------------------------------------------------------------------- #
 
 
 def test_compiled_kernel_artifacts_match_real_transform_manifest(
     run_merlin_mlp_wide: Path,
 ) -> None:
-    """M-19's GPU + CPU artifacts must reference the SAME matmul_shape,
-    tile, region_id, candidate_id as M-11B's real_transform_manifest."""
+    """the GPU + CPU artifacts must reference the SAME matmul_shape,
+    tile, region_id, candidate_id as the real_transform_manifest."""
     run_dir = run_merlin_mlp_wide
     rtm = _read(
         run_dir / "03_recipe_planning" / "real_lowering"
@@ -684,7 +684,7 @@ def test_kernel_execution_not_applicable_for_fusion(
 
 
 # --------------------------------------------------------------------------- #
-# Group G: M-16.1 strict gate cross-references
+# Group G: strict gate cross-references
 # --------------------------------------------------------------------------- #
 
 
@@ -721,7 +721,7 @@ def test_strict_gate_status_consistent_with_lowering_summary(
 
 
 # --------------------------------------------------------------------------- #
-# Group H: M-17.1 readiness matrix consistency
+# Group H: readiness matrix consistency
 # --------------------------------------------------------------------------- #
 
 
@@ -812,13 +812,13 @@ def test_validate_run_overall_pass(
 
 
 # --------------------------------------------------------------------------- #
-# Group K: M-15B downstream-retry on real-fail path
+# Group K: downstream-retry on real-fail path
 # --------------------------------------------------------------------------- #
 
 
 def test_tiny_mlp_real_fail_emits_downstream_retry(run_tiny_mlp: Path) -> None:
     """tiny_mlp with greedy tile_16 → K_iters=4 → bit-equality fails →
-    M-15B emits a typed downstream_retry_request. The retry request's
+    emits a typed downstream_retry_request. The retry request's
     failed_candidate_id must be in candidate_actions and excluded from
     candidate_ids_allowed."""
     rr = _read_or_none(
@@ -971,14 +971,14 @@ def test_working_set_fit_includes_every_legal_set_tile_candidate(
 
 
 # --------------------------------------------------------------------------- #
-# Group P: M-17 evidence pack joint claim consistency
+# Group P: evidence pack joint claim consistency
 # --------------------------------------------------------------------------- #
 
 
 def test_evidence_pack_aggregate_matches_per_model_artifacts(
     run_merlin_mlp_wide: Path, run_proxy_vla: Path, tmp_path: Path,
 ) -> None:
-    """The M-17 evidence pack's aggregates must equal the sum of fields
+    """The evidence pack's aggregates must equal the sum of fields
     pulled directly from each model's artifacts (joint integrity)."""
     suite = tmp_path / "joint_suite"
     canonical = suite / "canonical"
@@ -1024,8 +1024,8 @@ def test_evidence_pack_aggregate_matches_per_model_artifacts(
 # Group P: Stress-audit invariants promoted to permanent tests (2026-05-04)
 # --------------------------------------------------------------------------- #
 # These came from a deep stress audit that caught two real bugs:
-#   1. run_manifest.json was lost when M-15B raised retry-required.
-#   2. M-22.1 cache_evidence drifted between compiled_bottleneck_report
+# 1. run_manifest.json was lost when raised retry-required.
+# 2. cache_evidence drifted between compiled_bottleneck_report
 #      and hardware_resource_report on some paths.
 # Each invariant below locks in one of those guarantees so the regression
 # never silently returns.
@@ -1046,14 +1046,14 @@ def _read_jsonl(p: Path) -> list[dict]:
     return out
 
 
-# --- P1: M-15B partial-manifest persistence (regression for the bug
-#         where run_manifest.json was lost when M-15B raised). ----------- #
+# --- P1: partial-manifest persistence (regression for the bug
+# where run_manifest.json was lost when raised). ----------- #
 
 
 def test_m15b_retry_required_run_still_writes_run_manifest(
     run_tiny_mlp: Path,
 ) -> None:
-    """tiny_mlp greedy hits a real M-12 K_iters>1 failure → M-15B
+    """tiny_mlp greedy hits a real K_iters>1 failure →
     raises retry-required → pipeline exits non-zero. The run dir must
     STILL contain a usable run_manifest.json with all stage records
     accumulated up to the failure point so audit/integrity tools can
@@ -1091,11 +1091,11 @@ def test_m15b_retry_partial_manifest_records_failed_stage(
     run_tiny_mlp: Path,
 ) -> None:
     """The partial manifest must include the stage record (with
-    output_hash) for the stage immediately PRECEDING the M-15B
+    output_hash) for the stage immediately PRECEDING the
     failure, so the agent can verify the chain up to that point."""
     manifest = _read(run_tiny_mlp / "run_manifest.json")
     stage_ids = [s.get("stage_id") for s in manifest.get("stages") or []]
-    # Stages that should be in any partial run reaching M-15B:
+    # Stages that should be in any partial run reaching :
     for required in ("graph_capture", "payload_lowering", "graph_analysis"):
         assert required in stage_ids, (
             f"partial manifest missing required stage {required}: "
@@ -1103,7 +1103,7 @@ def test_m15b_retry_partial_manifest_records_failed_stage(
         )
 
 
-# --- P2: M-22.1 cache_evidence cross-overlay consistency. ---------------- #
+# --- P2: cache_evidence cross-overlay consistency. ---------------- #
 
 
 @pytest.mark.parametrize("fixture_name", [
@@ -1112,7 +1112,7 @@ def test_m15b_retry_partial_manifest_records_failed_stage(
 def test_m221_cache_evidence_consistent_across_overlays(
     fixture_name: str, request: pytest.FixtureRequest,
 ) -> None:
-    """For every region with M-22 evidence, cache_evidence must match
+    """For every region with evidence, cache_evidence must match
     between compiled_bottleneck_report.regions[*] and
     hardware_resource_report.regions[*].compiled_evidence."""
     run_dir: Path = request.getfixturevalue(fixture_name)
@@ -1218,7 +1218,7 @@ def test_agent_decision_request_sources_lists_optional_evidence(
 
 
 # --- P4: cost_matrix_completeness — every legal SetTileParams candidate
-#         carries the M-21 overlay (M-21 is always-on). ----------------- #
+# carries the overlay (is always-on). ----------------- #
 
 
 @pytest.mark.parametrize("fixture_name", [
@@ -1259,8 +1259,8 @@ def test_every_modeled_m21_candidate_has_overlay(
 def test_ledger_records_full_kernel_pipeline_milestones(
     fixture_name: str, request: pytest.FixtureRequest,
 ) -> None:
-    """A run with COMPGEN_RUN_KERNELS=1 must record M-19, M-20, M-21,
-    M-22, M-22.1 ledger events. M-23 is recorded too (with not_run
+    """A run with COMPGEN_RUN_KERNELS=1 must record ,
+     ledger events. is recorded too (with not_run
     note when no fusion candidate)."""
     run_dir: Path = request.getfixturevalue(fixture_name)
     events = _read_jsonl(run_dir / "stage_ledger.jsonl")

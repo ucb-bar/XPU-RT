@@ -1,6 +1,6 @@
-"""M-18.0 closure tests for the evidence pack.
+"""closure tests for the evidence pack.
 
-Verifies the M-17 evidence pack ingests M-18 calibration correctly:
+Verifies the evidence pack ingests calibration correctly:
 
 - New CSV columns (calibration_status, calibration_overall,
   calibration_matched_regions, calibration_total_regions,
@@ -18,8 +18,8 @@ Verifies the M-17 evidence pack ingests M-18 calibration correctly:
 - Calibration figures (calibration_coverage_by_model.png,
   calibration_suite_scale_by_model.png) emit when at least one model
   has calibration evidence.
-- Markdown summary contains the M-18 calibration section AND the
-  M-18 limitations box.
+Markdown summary contains the calibration section AND the
+  limitations box.
 """
 
 from __future__ import annotations
@@ -229,7 +229,7 @@ def test_summary_md_has_m18_limitations_box(calibrated_pack: Path) -> None:
 def test_summary_md_does_not_claim_cost_model_accurate(
     calibrated_pack: Path,
 ) -> None:
-    """Per the M-18.0 closure note: do not say 'the cost model is
+    """Per the closure note: do not say 'the cost model is
     accurate'. Say it's calibrated and exposes its bias."""
     text = (calibrated_pack / "graph_section_evidence_summary.md").read_text(
         encoding="utf-8",

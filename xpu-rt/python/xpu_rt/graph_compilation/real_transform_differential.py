@@ -2,9 +2,9 @@
 
 Path A — executable real transform: discharge
 ``real_transform_differential_check`` for an ``executable_structured_ir``
-artifact emitted by M-11B. The harness:
+artifact emitted. The harness:
 
-1. Reads ``real_transform_manifest.json`` (M-11B) to confirm
+1. Reads ``real_transform_manifest.json`` to confirm
    ``real_transform_kind == "executable_structured_ir"``,
    ``recipe_kind == "SetTileParams"``,
    ``target_op == "linalg.matmul"``,
@@ -14,7 +14,7 @@ artifact emitted by M-11B. The harness:
 3. Computes the **eager reference output** with ``torch.matmul``.
 4. Computes the **tiled transformed output** with an explicit
    triple-nested loop using the recipe's M/N/K tile sizes — the same
-   semantics as M-11B's emitted ``scf.for`` body.
+   semantics as 's emitted ``scf.for`` body.
 5. Records ``max_abs_error`` and ``max_rel_error``.
 6. Discharges the obligation honestly:
 
@@ -26,13 +26,13 @@ artifact emitted by M-11B. The harness:
      ``fail_refinement_mismatch`` with a precise reason.
 
 Path B — non-executable / ineligible: emit a blocked report. Do NOT
-mark the obligation discharged. M-12 explicitly refuses to claim
+mark the obligation discharged. explicitly refuses to claim
 correctness for structural-only or skipped models.
 
 Hard non-goals:
 
 - No arbitrary-shape evaluator (boundary tiles → blocked).
-- No fusion verification (M-11B/M-12 are SetTileParams-only).
+No fusion verification (/are SetTileParams-only).
 - No codegen, benchmarking, profiler feedback, runtime execution of
   arbitrary MLIR.
 - No compiler-core changes.
@@ -88,7 +88,7 @@ def _sha256_file(path: Path) -> str:
 
 
 # --------------------------------------------------------------------------- #
-# Tiled evaluator (matches M-11B's scf.for body)
+# Tiled evaluator (matches 's scf.for body)
 # --------------------------------------------------------------------------- #
 
 
@@ -96,14 +96,14 @@ def _tiled_matmul_eval(
     A: Any, B: Any, *, tile_M: int, tile_N: int, tile_K: int,
 ) -> Any:
     """Compute ``A @ B`` using explicit triple-nested tile loops with
-    boundary handling (M-16).
+    boundary handling.
 
-    Mirrors the M-11B-emitted ``scf.for`` body but uses ``min(tile_dim,
+    Mirrors the -emitted ``scf.for`` body but uses ``min(tile_dim,
     dim - offset)`` so the last tile in any dimension is sized to the
     remaining elements. This handles all three cases uniformly:
 
-    - **Clean divides** (M-15B / merlin_mlp_wide): every iteration has
-      a full-size tile, identical to the pre-M-16 behavior.
+    **Clean divides** (/ merlin_mlp_wide): every iteration has
+      a full-size tile, identical to the pre-behavior.
     - **Degenerate single-iter** (tiny_mlp: M=4, tile_M=16): one
       iteration covering the whole short dimension.
     - **Boundary epilogue** (tiny_conv_block: K=27, tile_K=16): all but
@@ -152,7 +152,7 @@ def matmul_higham_bound(
     multiplying by a safety slack of 4 to absorb the FMA / BLAS
     summation-tree variance gives a defensible per-case bound.
 
-    Use this as the M-12 case-level tolerance when the recipe
+    Use this as the case-level tolerance when the recipe
     declares ``tolerance_eps``. The bound is **derived** from the
     inputs of each case rather than hand-picked, so it scales with
     input magnitude and never silently widens.
@@ -177,7 +177,7 @@ def matmul_higham_bound(
 def _summarise_boundary_geometry(
     *, M: int, N: int, K: int, tile_M: int, tile_N: int, tile_K: int,
 ) -> dict[str, Any]:
-    """Count boundary vs full tiles for the M-16 report.
+    """Count boundary vs full tiles for the report.
 
     A "boundary tile" is one whose effective size is smaller than the
     nominal tile in any dimension. A "full tile" matches the nominal
@@ -277,7 +277,7 @@ _TOLERANCE_EPS = (1e-5, 1e-4)  # (atol, rtol)
 def run_real_transform_differential(
     run_dir: Path,
 ) -> RealTransformDifferentialResult:
-    """Run M-12 against an M-11B run directory.
+    """Run against an run directory.
 
     Path A (executable real transform): synthesize cases, compare eager
     reference vs tiled evaluator, discharge the obligation honestly.
@@ -329,7 +329,7 @@ def run_real_transform_differential(
     boundary_required = bool(tile_class.get("boundary_required", True))
     tile = (manifest.get("selected_recipe") or {}).get("tile") or {}
 
-    # M-16: M-12 now accepts both clean-divides ``executable_structured_ir``
+    # now accepts both clean-divides ``executable_structured_ir``
     # AND ``executable_with_boundary_handling`` (boundary tiles handled
     # via min()-based slicing in the Python evaluator). The two modes
     # share the same evaluator entry point; only the report's
@@ -380,7 +380,7 @@ def run_real_transform_differential(
 
     M, N, K = int(sig["M"]), int(sig["N"]), int(sig["K"])
     tM, tN, tK = int(tile["M"]), int(tile["N"]), int(tile["K"])
-    # M-16: tile sizes are now allowed to be non-divisible OR larger
+    # tile sizes are now allowed to be non-divisible OR larger
     # than a matmul dim. The boundary-aware evaluator handles those
     # via min()-based slicing. We still reject pathological zeros.
     if tM <= 0 or tN <= 0 or tK <= 0:
@@ -404,11 +404,11 @@ def run_real_transform_differential(
             obligations_path=obligations_path,
         )
 
-    # M-37.12: read declared_refinement before the case loop so the
+    # read declared_refinement before the case loop so the
     # case-level pass criterion can apply tolerance when the recipe
-    # explicitly declares ``tolerance_eps``. Pre-M-37.12 every case
+    # explicitly declares ``tolerance_eps``. Pre-every case
     # was bit-exact-only — that was correct when only merlin_mlp_wide
-    # (with K_iters==1) reached this path, but M-37.11's shape-fit
+    # (with K_iters==1) reached this path, but 's shape-fit
     # tiles let other models reach it with K_iters>1, where the
     # accumulation-reorder produces ~1e-6 deviation. The recipe gate
     # now declares ``tolerance_eps`` for that exact case.
@@ -474,26 +474,22 @@ def run_real_transform_differential(
         case_max_rel = float((diff / denom).max().item()) if diff.numel() else 0.0
         max_abs = max(max_abs, case_max_abs)
         max_rel = max(max_rel, case_max_rel)
-        # M-37.13 honest fix — replace hand-picked combined tolerance
+        # honest fix — replace hand-picked combined tolerance
         # with Higham's matmul accumulation bound, derived per-case
         # from the actual inputs:
-        #
         #   ``|sim - eager| <= 4 * K * eps * max|A| * max|B|``
-        #
         # For declared ``tolerance_eps`` (clean_divide AND K_iters > 1,
         # OR boundary path) this is the case-pass criterion. For
         # declared ``bit_equality`` (clean_divide AND single_k_iter)
         # the criterion is exact equality.
-        #
         # Higham's bound is the standard accumulation-error result for
         # naive matmul (Accuracy and Stability of Numerical Algorithms,
         # §3.5). It scales linearly with K and with max|A|*max|B|, so
         # it cannot be silently widened — any change to the bound
         # formula or constants is observable in the report's
         # ``semantic_bound`` field per case.
-        #
         # Note on the structural-bit-equality variant: an earlier
-        # M-37.13 draft layered a structural ``simulator vs
+        # draft layered a structural ``simulator vs
         # tile_K_eager_reference`` bit-exact check, motivated by
         # eliminating the tolerance question entirely. That layer
         # holds for clean-divide cases (where torch.matmul's BLAS
@@ -580,8 +576,8 @@ def run_real_transform_differential(
 
     all_pass = cases_passed == len(cases) and not counterexample_ids
     bit_equal_observed = max_abs == 0.0 and max_rel == 0.0
-    # M-37.13: aggregate tolerance is "every case passed under the
-    # M-37.13 honest fix layered checks (structural bit-equality
+    # aggregate tolerance is "every case passed under the
+    # honest fix layered checks (structural bit-equality
     # against tile-K reference + semantic Higham bound against
     # eager)". By construction, if all_pass holds, the aggregate is
     # within the (per-case) Higham bound — there is no separate
@@ -699,7 +695,7 @@ def run_real_transform_differential(
             "boundary_required": boundary_required,
         },
         "boundary_handling": {
-            "enabled": True,  # M-16: evaluator always uses boundary-aware slicing
+            "enabled": True,  # evaluator always uses boundary-aware slicing
             **_summarise_boundary_geometry(
                 M=M, N=N, K=K, tile_M=tM, tile_N=tN, tile_K=tK,
             ),
@@ -809,7 +805,7 @@ def _emit_blocked(
     }
     payload_unchanged = pre_payload_shas == post_payload_shas
 
-    # Try to locate the previous M-09 status to tag obligations correctly.
+    # Try to locate the previous status to tag obligations correctly.
     obligations_obj = _read_json_or_none(obligations_path)
     obligations_block: list[dict[str, Any]] = []
     if obligations_obj is not None:

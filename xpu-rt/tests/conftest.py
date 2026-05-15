@@ -23,16 +23,13 @@ import pytest
 # ---------------------------------------------------------------------------
 # Marker-driven auto-skip: `requires_gpu`, `requires_mlir`, `requires_ray`.
 # ---------------------------------------------------------------------------
-#
 # These markers are declared in pyproject.toml and used throughout the
 # suite. Rather than making every test author manage skip-logic manually,
 # we check capability once per session and have the collection hook skip
 # any marked test whose capability isn't present. That means:
-#
 # - On a CPU-only laptop, ``pytest tests/`` green-passes because
 #   ``requires_gpu`` tests auto-skip.
 # - On a GPU CI runner, ``pytest -m requires_gpu tests/`` runs them.
-#
 # Capability probes are cheap (single import or attribute check) and
 # cached in module-level dicts so they fire once per session, not per test.
 

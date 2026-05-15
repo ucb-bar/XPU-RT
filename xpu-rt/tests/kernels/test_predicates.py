@@ -1,4 +1,4 @@
-"""M-61 — Typed predicate DSL unit tests.
+"""Typed predicate DSL unit tests.
 
 Coverage:
 

@@ -1,4 +1,4 @@
-"""M-64 — Forward-compatible contract refinement + version migration.
+"""Forward-compatible contract refinement + version migration.
 
 The dream's Section 7 Dream 5 calls for refinement contracts: a v3
 contract upgraded to v3.1 (e.g. by adding ``prefetch_distance``) must

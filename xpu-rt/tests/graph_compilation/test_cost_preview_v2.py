@@ -1,4 +1,4 @@
-"""Tests for M-13 Cost Preview V2.
+"""Tests Cost Preview V2.
 
 Cross-checks the cost-preview-v2 artifact against on-disk inputs and
 verifies target/tile sensitivity, confidence ordering, and verification
@@ -324,7 +324,7 @@ def test_opaque_confidence_lower_than_structured_linalg() -> None:
 
 def test_fake_real_transform_verified_without_m12_report_fails() -> None:
     """A cost preview claiming ``real_transform_verified=true`` without
-    a corresponding M-12 report must fail validation."""
+    a corresponding report must fail validation."""
     fake_cp = {
         "schema_version": "candidate_cost_preview_v2",
         "candidate_id": "cand_fake",
@@ -353,7 +353,7 @@ def test_fake_real_transform_verified_without_m12_report_fails() -> None:
     val = _validate(
         cost_previews=[fake_cp],
         candidate_actions=fake_cas,
-        real_diff_report=None,  # no M-12 report exists
+        real_diff_report=None,  # no report exists
         selected_candidate_id="cand_fake",
     )
     cpv2r004 = next(c for c in val["checks"] if c["id"].startswith("CPV2R004"))

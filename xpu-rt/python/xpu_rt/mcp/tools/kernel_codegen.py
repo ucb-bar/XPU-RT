@@ -1,6 +1,6 @@
-"""MCP tools for the M-43 kernel-codegen provider protocol.
+"""MCP tools for the kernel-codegen provider protocol.
 
-Four tools, parallel to M-14A's agent-decision pair:
+Four tools, parallel to 's agent-decision pair:
 
 - ``compgen_emit_kernel_codegen_request`` — runs the pipeline to
   ``--stop-after kernel-codegen-request`` and returns the task surface
@@ -10,9 +10,9 @@ Four tools, parallel to M-14A's agent-decision pair:
   collects its response. Optional; the operator-driven flow (write
   the response file by hand) still works without it.
 - ``compgen_commit_kernel_codegen_response`` — validates the provider
-  response against the M-42 task contract, writes the attempt trail,
-  and returns the typed next_action. On accept, routes to M-44
-  (verifier — pending until M-44 lands). On recoverable fail, emits a
+  response against the task contract, writes the attempt trail,
+  and returns the typed next_action. On accept, routes to
+  (verifier — pending until lands). On recoverable fail, emits a
   retry_request. On fatal / exhausted, emits a downstream_retry_request.
 - ``compgen_inspect_kernel_codegen_task`` — read-only view of the
   task surface (request, attempts, validation reports, certificates,
@@ -163,7 +163,7 @@ def compgen_run_kernel_codegen_task(
     """Convenience: spawn a Claude Code subagent (or other provider)
     on a task and collect its response.
 
-    M-43 ships this as a stub that returns a placeholder pointing at
+    ships this as a stub that returns a placeholder pointing at
     the operator-driven flow. The actual subagent invocation lands
     when this is wired to the parent MCP harness's Agent tool. Until
     then, the operator writes the response JSON by hand.
@@ -196,7 +196,7 @@ def compgen_run_kernel_codegen_task(
             "operator_action_required": False,
             "note": "response already exists; pass to compgen_commit_kernel_codegen_response",
         }
-    # M-43 ships the operator-driven flow only. The harness-driven
+    # ships the operator-driven flow only. The harness-driven
     # subagent spawn lands when the parent MCP server wires this to
     # the Agent tool — flag the outstanding work.
     return {
@@ -295,13 +295,13 @@ def compgen_inspect_kernel_codegen_task(
         "failure_report": _read_json_or_none(
             out_dir / "kernel_codegen_failure_report.json"
         ),
-        # M-45 kernel certificate, indexed by contract_hash.
+        # kernel certificate, indexed by contract_hash.
         "certificate": _resolve_certificate(run_dir_path, request),
     }
 
 
 # --------------------------------------------------------------------------- #
-# M-57: compgen_compare_kernel_bids — read-only auction summary
+# compgen_compare_kernel_bids — read-only auction summary
 # --------------------------------------------------------------------------- #
 
 
@@ -310,7 +310,7 @@ def compgen_compare_kernel_bids(
     run_dir: str,
     task_id: str,
 ) -> dict[str, Any]:
-    """Read-only ranked summary of an M-57 auction.
+    """Read-only ranked summary of an auction.
 
     Returns one row per provider that bid on the task, with:
 
@@ -393,7 +393,7 @@ def _resolve_certificate(run_dir: Path, request: dict[str, Any]) -> dict[str, An
     if body is None:
         return None
     # Validate the certificate is still consistent with its artifacts
-    # (catches post-cert mutation per the M-37.13 negative-control
+    # (catches post-cert mutation per the negative-control
     # pattern).
     try:
         from compgen.kernels.kernel_certificate import (

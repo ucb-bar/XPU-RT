@@ -1,4 +1,4 @@
-"""Holdout pointwise chain with non-canonical op order (M-31A.4).
+"""Holdout pointwise chain with non-canonical op order.
 
 Tests that fusion / region-signature pattern matching does not depend
 on a specific op-name ordering. Uses ``add → mul → relu`` (instead of

@@ -127,6 +127,11 @@ class BufferDescriptor:
     lifetime: Lifetime
     ownership: Ownership
     alias_of: str = ""
+    # byte offset within ``memory_space``. ``None`` keeps the
+    # legacy behavior (tier-only). When set, ``ExecutionPlan.validate``
+    # rejects overlapping byte ranges between buffers with overlapping
+    # lifetimes in the same tier.
+    offset_bytes: int | None = None
 
 
 # --- Phase-5-pass-specific views -------------------------------------------
@@ -164,9 +169,9 @@ class FallbackTransition:
 
 @dataclass
 class RegionKernelBinding:
-    """M-46 (Phase C): bind one region to a certified kernel.
+    """(Phase C): bind one region to a certified kernel.
 
-    The plan executor (M-47) refuses to call any kernel whose
+    The plan executor refuses to call any kernel whose
     contract_hash does not have a matching certificate
     (``04_kernel_codegen/certificates/<contract_hash>.json``).
     Validation re-checks both:
@@ -183,7 +188,7 @@ class RegionKernelBinding:
     certificate_path: str    # 04_kernel_codegen/certificates/<contract_hash>.json
     kernel_artifact: str = ""  # path to kernel_source within artifact_dir
     dispatch_model: str = "sync"  # sync | async | persistent | inline
-    # M-58: shape-class companion hash. Sourced from the cert's
+    # shape-class companion hash. Sourced from the cert's
     # ``canonical_contract_hash`` field; lets a downstream cross-model
     # cache lookup find this binding without re-hashing.
     canonical_contract_hash: str = ""
@@ -210,9 +215,9 @@ class ExecutionPlan:
     buffers: list[BufferDescriptor] = field(default_factory=list)
     fallback_transitions: list[FallbackTransition] = field(default_factory=list)
     summary: dict[str, Any] = field(default_factory=dict)
-    # M-46 (Phase C): bind certified kernels to regions. Validated
+    # (Phase C): bind certified kernels to regions. Validated
     # cross-reference against the per-region placements; the plan
-    # executor (M-47) only calls kernels whose binding's certificate
+    # executor only calls kernels whose binding's certificate
     # matches the cert on disk.
     region_kernel_bindings: list[RegionKernelBinding] = field(default_factory=list)
 
@@ -279,6 +284,36 @@ class ExecutionPlan:
             if b.alias_of and b.alias_of not in seen_buffers:
                 raise ValueError(f"buffer {b.buffer_id!r}: alias_of references unknown buffer {b.alias_of!r}")
 
+        # offset overlap check. When a solver-backed memory plan
+        # has assigned ``offset_bytes``, no two non-aliased buffers in
+        # the same ``memory_space`` may have overlapping byte ranges
+        # over overlapping lifetimes.
+        buffers_with_offsets = [
+            b for b in self.buffers if b.offset_bytes is not None
+        ]
+        for i in range(len(buffers_with_offsets)):
+            for j in range(i + 1, len(buffers_with_offsets)):
+                a = buffers_with_offsets[i]
+                b = buffers_with_offsets[j]
+                if a.memory_space != b.memory_space:
+                    continue
+                if a.alias_of == b.buffer_id or b.alias_of == a.buffer_id:
+                    # Explicit alias: byte-range overlap is the intent.
+                    continue
+                if not a.lifetime.overlaps(b.lifetime):
+                    continue
+                a_lo = a.offset_bytes  # type: ignore[assignment]
+                a_hi = a_lo + a.size_bytes  # type: ignore[operator]
+                b_lo = b.offset_bytes  # type: ignore[assignment]
+                b_hi = b_lo + b.size_bytes  # type: ignore[operator]
+                if a_lo < b_hi and b_lo < a_hi:
+                    raise ValueError(
+                        f"buffers {a.buffer_id!r} and {b.buffer_id!r}: "
+                        f"overlapping byte ranges [{a_lo}, {a_hi}) vs "
+                        f"[{b_lo}, {b_hi}) in memory_space "
+                        f"{a.memory_space!r} with overlapping lifetimes"
+                    )
+
         for e in self.copy_edges:
             if e.from_buffer not in seen_buffers:
                 raise ValueError(f"copy_edge from_buffer {e.from_buffer!r} is unknown")
@@ -299,10 +334,10 @@ class ExecutionPlan:
             if q.region_id not in seen_regions:
                 raise ValueError(f"queue_timeline entry refers to unknown region {q.region_id!r}")
 
-        # M-46 (Phase C) — region_kernel_bindings invariants.
+        # (Phase C) — region_kernel_bindings invariants.
         # validate() is run_dir-agnostic for back-compat (existing
         # callers pass no path); validate_with_run_dir() below is the
-        # M-46 strict variant that re-loads + re-validates the
+        # strict variant that re-loads + re-validates the
         # certificate. Here we only enforce the structural invariants
         # that don't need disk access.
         seen_binding_regions: set[str] = set()
@@ -339,7 +374,7 @@ class ExecutionPlan:
 
     def validate_with_run_dir(self, run_dir: Path) -> None:
         """Strict validation that resolves region_kernel_bindings
-        against the on-disk certificate (M-46). Calls ``validate()``
+        against the on-disk certificate. Calls ``validate``
         first for structural invariants, then:
 
         1. Verifies every certificate file exists at the binding's
@@ -348,7 +383,7 @@ class ExecutionPlan:
            the binding's ``contract_hash``.
 
         Raises ``ValueError`` with a typed message naming the failed
-        binding so the M-47+ executor can refuse to bind.
+        binding so the + executor can refuse to bind.
         """
         # Local import to avoid a circular import at module load —
         # kernel_certificate imports nothing from runtime.

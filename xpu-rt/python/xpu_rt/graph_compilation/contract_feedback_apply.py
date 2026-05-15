@@ -1,9 +1,9 @@
-"""M-59 — Two-tier ``contract_feedback`` re-entry into Recipe IR.
+"""Two-tier ``contract_feedback`` re-entry into Recipe IR.
 
-The Phase D auction (M-57) collects ``ProviderResult.contract_feedback``
+The Phase D auction collects ``ProviderResult.contract_feedback``
 from every fulfilled bid. Each entry is the provider proposing a
 contract refinement: "row-major B is 1.4× faster on sm_90 for K ≥ 64",
-"f16 inputs with f32 accumulator hits Tensor Cores", etc. M-59 routes
+"f16 inputs with f32 accumulator hits Tensor Cores", etc. routes
 these entries into the compiler in two tiers:
 
 1. **Typed allowlist** auto-applies. The kinds are a small bounded set:
@@ -14,7 +14,7 @@ these entries into the compiler in two tiers:
    * ``alignment_request`` — request stricter IO alignment
    * ``fast_math_opt_in`` — opt the contract into fast-math
 
-   For each allowlisted entry the M-59 generator emits a structured
+   For each allowlisted entry the generator emits a structured
    Recipe-IR proposal dict at
    ``04_kernel_codegen/contract_feedback_proposals.json`` which a
    subsequent iteration of the agent_decision request emit can
@@ -26,7 +26,7 @@ these entries into the compiler in two tiers:
    advisory data at
    ``04_kernel_codegen/auction/<task_id>/contract_feedback.json::non_allowlisted``
    and can later be surfaced in ``agent_decision_request.advisory`` so
-   the outer agent decides what to do. M-59 lands the data layer; the
+   the outer agent decides what to do. lands the data layer; the
    agent_decision_request advisory wiring is conservative — emitted
    when the file is present, ignored otherwise.
 
@@ -267,7 +267,7 @@ def write_auction_feedback_artifacts(
     contract_hash: str,
     per_provider_feedback: list[tuple[str, list[ContractFeedback]]],
 ) -> dict[str, Path]:
-    """Write the auction's two M-59 feedback artifacts:
+    """Write the auction's two feedback artifacts:
 
     1. ``04_kernel_codegen/auction/<task_id>/contract_feedback.json``
        with both buckets (allowlisted, non_allowlisted) plus the

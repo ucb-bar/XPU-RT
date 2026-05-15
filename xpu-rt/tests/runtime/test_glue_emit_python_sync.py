@@ -1,4 +1,4 @@
-"""M-47 emitted Python SYNC plan executor tests.
+"""emitted Python SYNC plan executor tests.
 
 Coverage:
 - Schema: emit_python_sync_executor produces both files at the right paths.
