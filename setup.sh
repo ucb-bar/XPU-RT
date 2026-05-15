@@ -7,7 +7,7 @@ set -euo pipefail
 #   - conda (Miniconda or Mamba)
 #   - git submodules initialized: git submodule update --init --recursive
 #   - conda env created and activated:
-#       conda env create -f merlin/env_linux.yml
+#       conda env create -f third_party/merlin/env_linux.yml
 #       conda activate merlin-dev
 #       uv sync
 #

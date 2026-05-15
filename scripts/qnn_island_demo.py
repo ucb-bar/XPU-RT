@@ -2,7 +2,7 @@
 """QNN heterogeneous island scheduling demo — XPU-RT-driven.
 
 Pipes a hand-coded multi-precision island DAG (the 7-island YOLOv8-stem-shaped
-parallel-branch fixture from merlin/tools/kernels/qnn_emit_recognizers/) into
+parallel-branch fixture from third_party/merlin/tools/kernels/qnn_emit_recognizers/) into
 XPU-RT's scheduler.
 
 The DAG models what real partitioning will produce on YOLOv8: an HTA-uint8

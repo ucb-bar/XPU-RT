@@ -2,7 +2,7 @@
 """Merlin → XPU-RT adapter.
 
 Bridges merlin's per-dispatch profile output (produced by
-`merlin/tools/board_roundtrip.py`) into XPU-RT's scheduler. Replaces three
+`third_party/merlin/tools/board_roundtrip.py`) into XPU-RT's scheduler. Replaces three
 merlin-side prototypes (xpu_rt_schedule.py, multi_model_workload.py,
 profiled_to_xpu_rt.py) with a single tool that lives next to the rest of
 XPU-RT's scheduling driver scripts.
@@ -57,7 +57,7 @@ def _load_manifest(merlin_dir: pathlib.Path) -> dict:
     p = merlin_dir / "breakdowns" / "profiled_manifest.json"
     if not p.exists():
         raise FileNotFoundError(
-            f"missing {p} — run merlin/tools/board_roundtrip.py first")
+            f"missing {p} — run third_party/merlin/tools/board_roundtrip.py first")
     return json.loads(p.read_text())
 
 

@@ -3,7 +3,7 @@
 Drives the per-island backend assignment for a partitioned MLIR module on
 QRB5165 (CPU + Adreno GPU + Hexagon HTA). The decision is made here, in
 XPU-RT, on top of the existing scheduler in `xpu-rt/scheduler.py`. Merlin
-owns the kernel-emission half: recognizers (`merlin/tools/kernels/
+owns the kernel-emission half: recognizers (`third_party/merlin/tools/kernels/
 qnn_emit_recognizers/`), .qnn.cpp emission, on-board ctxbin build.
 
 Pipeline:

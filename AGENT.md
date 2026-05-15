@@ -140,9 +140,10 @@ This is the minimum map every agent should keep in mind:
 | `models/qnn/` | ONNX → TFLite → QNN DLC conversion tooling (Docker + shell + per-model export scripts) |
 | `xpu-rt/audit_seed/` | Tracked seed inputs for the audit framework (was results/audit/_seed/) |
 | `build/` | Gitignored — generated paper, plots, results land here |
-| `merlin/` | SpacemiT/QRB5165 compiler toolchain (git submodule) |
-| `zephyr-chipyard-sw/` | Embedded RTOS support (git submodule) |
-| `sims/IsaacLab/` | Robotics simulation environment (git submodule) |
+| `third_party/merlin/` | SpacemiT/QRB5165 compiler toolchain (git submodule) |
+| `third_party/zephyr-chipyard-sw/` | Embedded RTOS support (git submodule) |
+| `third_party/IsaacLab/` | Robotics simulation environment (git submodule) |
+| `sims/` | XPU-RT IsaacLab task definitions + training scripts (Python; depends on `third_party/IsaacLab/`) |
 | `paper/  plots/` | Paper LaTeX source + plotting |
 | `third_party/` | Vendored deps (autocomp, kernelblaster, llvm-project, npu_model, pi0-quant, zephyr, cuda-tile) |
 | `tmp/agentic_documentation/` | Internal operational memory and design archive |

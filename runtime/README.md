@@ -17,14 +17,14 @@ After building merlin (`setup.sh` or `merlin build --profile spacemit`), the
 binaries are in:
 
 ```
-merlin/build/<profile>/runtime/plugins/merlin-samples/
+third_party/merlin/build/<profile>/runtime/plugins/merlin-samples/
 ```
 
 ### Example: run a dispatch graph on SpacemiT
 
 ```bash
 # From the XPU-RT root, after setup.sh:
-RUNNER=./merlin/build/spacemit-merlin-perf/runtime/plugins/merlin-samples/merlin-baseline-async
+RUNNER=./third_party/merlin/build/spacemit-merlin-perf/runtime/plugins/merlin-samples/merlin-baseline-async
 
 $RUNNER gen/vmfb/mlp/spacemit_x60/RVV/mlp.q.int8/mlp.q.int8_dispatch_graph.json \
   local-task 10 1 1
@@ -38,10 +38,10 @@ full IREE runtime in a single `.a`:
 
 ```bash
 ./runtime/build_runtime.sh --target spacemit \
-  --xpurt-lib ./merlin/build/spacemit-merlin-perf/runtime/src/iree/runtime/libxpurt_standalone.a
+  --xpurt-lib ./third_party/merlin/build/spacemit-merlin-perf/runtime/src/iree/runtime/libxpurt_standalone.a
 ```
 
-The header for the C API is at `merlin/samples/common/xpu-rt/baseline_runner.h`.
+The header for the C API is at `third_party/merlin/samples/common/xpu-rt/baseline_runner.h`.
 
 ### Zephyr integration
 

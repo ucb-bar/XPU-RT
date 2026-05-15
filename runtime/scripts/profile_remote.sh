@@ -27,7 +27,7 @@ set -euo pipefail
 #   KEEP_REMOTE_TMP=1
 #   CONTINUE_ON_ERROR=1
 #   USE_STAGED_INSTALL=1      Stage local install to remote tmp and use it (default: 1)
-#   LOCAL_INSTALL_DIR=...     Local install dir to stage (default: merlin/build/spacemit-merlin-perf/install)
+#   LOCAL_INSTALL_DIR=...     Local install dir to stage (default: third_party/merlin/build/spacemit-merlin-perf/install)
 #
 # Forwarded to run_all_topologies.sh (optional):
 #   DEVICE=local-task
@@ -47,7 +47,7 @@ PROFILE_ROOT="${PROFILE_ROOT:-${REPO_ROOT}/gen/profile}"
 KEEP_REMOTE_TMP="${KEEP_REMOTE_TMP:-0}"
 CONTINUE_ON_ERROR="${CONTINUE_ON_ERROR:-0}"
 USE_STAGED_INSTALL="${USE_STAGED_INSTALL:-1}"
-LOCAL_INSTALL_DIR="${LOCAL_INSTALL_DIR:-${REPO_ROOT}/merlin/build/spacemit-merlin-perf/install}"
+LOCAL_INSTALL_DIR="${LOCAL_INSTALL_DIR:-${REPO_ROOT}/third_party/merlin/build/spacemit-merlin-perf/install}"
 
 LOCAL_RUN_ALL="${REPO_ROOT}/runtime/scripts/run_all_topologies.sh"
 LOCAL_RUN_PY="${REPO_ROOT}/runtime/scripts/run_vmfb_benchmarks.py"

@@ -7,7 +7,7 @@ breakdowns/dispatch_*.shapes.json:
 
   1. Generate an NHWC fixture (`linalg.conv_2d_nhwc_hwcf_q`) at that
      shape with stub q-params + zero weights/bias. The fixture matches
-     the recognizer in `merlin/tools/kernels/qnn_emit_recognizers/
+     the recognizer in `third_party/merlin/tools/kernels/qnn_emit_recognizers/
      nhwc_int8_conv.py`, which emits a uint8 conv graph (with int8→uint8
      zp+128 remap) suitable for HTA and a structurally-equivalent fp16
      graph suitable for GPU.

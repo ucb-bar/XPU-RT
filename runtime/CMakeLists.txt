@@ -164,7 +164,7 @@ if(XPURT_STANDALONE_LIB_PATH)
   )
 
   target_include_directories(json_dispatch_runner PRIVATE
-    "${CMAKE_CURRENT_SOURCE_DIR}/../merlin/samples/common"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/merlin/samples/common"
   )
 
   target_link_libraries(json_dispatch_runner PRIVATE
@@ -187,7 +187,7 @@ if(XPURT_STANDALONE_LIB_PATH)
   )
 
   target_include_directories(xpurt_scheduler_runner PRIVATE
-    "${CMAKE_CURRENT_SOURCE_DIR}/../merlin/samples/common"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/merlin/samples/common"
   )
 
   target_link_libraries(xpurt_scheduler_runner PRIVATE

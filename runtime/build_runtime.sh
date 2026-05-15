@@ -27,7 +27,7 @@ Examples:
 
   # SpacemiT X60 build (uses Merlin-installed toolchain if RISCV_TOOLCHAIN_ROOT unset):
   $(basename "$0") --target spacemit \\
-    --xpurt-lib ./merlin/build/spacemit-merlin-perf/runtime/src/iree/runtime/libxpurt_standalone.a
+    --xpurt-lib ./third_party/merlin/build/spacemit-merlin-perf/runtime/src/iree/runtime/libxpurt_standalone.a
 EOF
 }
 

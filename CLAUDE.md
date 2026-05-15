@@ -8,8 +8,10 @@
 > `xpu-rt/python/xpu_rt/` with tests at `xpu-rt/tests/`); (2) the original
 > XPU-RT scheduling + runtime stack (CVX scheduler at
 > `xpu-rt/python/xpu_rt/scheduler/`, native C runtime at `runtime/`, QNN
-> scheduler at `xpu-rt/python/xpu_rt/targets/backends/qnn/`, plus the `merlin/`, `sims/`,
-> `zephyr-chipyard-sw/` submodules at the repo root). The Python package name
+> scheduler at `xpu-rt/python/xpu_rt/targets/backends/qnn/`, plus the
+> `third_party/merlin/`, `third_party/zephyr-chipyard-sw/`, and
+> `third_party/IsaacLab/` submodules — all submodules now live under
+> `third_party/`). The Python package name
 > is `xpu_rt` (snake_case); the CLI binaries are `xpu-rt`, `xpu-rt-mcp`,
 > `xpu-rt-tool`, `xpu-rt-run-conformance`, `xpu-rt-gemini-usage` (kebab-case).
 > `import xpu_rt` works from any cwd once `uv sync` has installed the package.

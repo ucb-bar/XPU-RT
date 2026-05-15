@@ -4,7 +4,7 @@ set -euo pipefail
 # Compile a set of Merlin models to VMFB and dump DOT graphs + artifacts.
 ##
 # Outputs are written by default under:
-#   merlin/build/compiled_models/<model>/<target>_<basename>/
+#   third_party/merlin/build/compiled_models/<model>/<target>_<basename>/
 # This wrapper overrides it to:
 #   gen/vmfb/<model>/<target>/<hw>/<basename>/
 # Merlin copies the source .mlir there, then iree-compile runs on that copy; compiler errors under

@@ -10,9 +10,9 @@ target-diversity weight, and (when Phase A2 is enabled) re-applies
 schedule-driven re-quantization to the source MLIR before re-iterating.
 
 Each round:
-  1. merlin/tools/compile_dispatch_matrix.py → per-target dispatch dumps
+  1. third_party/merlin/tools/compile_dispatch_matrix.py → per-target dispatch dumps
      + matrix.json (canonical dispatch list)
-  2. merlin/tools/profile_dispatch_matrix.py → profiled_manifest.json
+  2. third_party/merlin/tools/profile_dispatch_matrix.py → profiled_manifest.json
      (on-board mean_us per (dispatch, target))
   3. build workload + processing_times + transfer_times JSON, with
      per-edge transfer costs derived from XPU-RT's qrb5165_costs.json
@@ -327,7 +327,7 @@ def step_schedule(cfg: LoopConfig,
     """Invoke a self-contained MILP run via xpu-rt/workload_factory + scheduler.
 
     Uses a small inline driver because merlin_adapter.py expects a
-    merlin/breakdowns/ directory layout we don't produce here.
+    third_party/merlin/breakdowns/ directory layout we don't produce here.
     """
     sched_path = round_dir / "schedule.json"
     driver = round_dir / "_run_mosek.py"
@@ -559,7 +559,7 @@ def main(argv: list[str] | None = None) -> int:
                         "(with --run-on-board)")
     p.add_argument("--verify-against", type=pathlib.Path, default=None,
                    help="Reference output binary; after --run-on-board "
-                        "completes, calls merlin/tools/verify_het_e2e.py "
+                        "completes, calls third_party/merlin/tools/verify_het_e2e.py "
                         "compare to assert numerical equivalence within "
                         "--rtol/--atol (Phase G integration).")
     p.add_argument("--verify-shape", default=None,

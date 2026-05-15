@@ -1,11 +1,11 @@
-[submodule "merlin"]
-	path = merlin
+[submodule "third_party/merlin"]
+	path = third_party/merlin
 	url = https://github.com/ucb-bar/merlin.git
-[submodule "zephyr-chipyard-sw"]
-	path = zephyr-chipyard-sw
+[submodule "third_party/zephyr-chipyard-sw"]
+	path = third_party/zephyr-chipyard-sw
 	url = https://github.com/ucb-bar/zephyr-chipyard-sw.git
-[submodule "sims/IsaacLab"]
-	path = sims/IsaacLab
+[submodule "third_party/IsaacLab"]
+	path = third_party/IsaacLab
 	url = https://github.com/isaac-sim/IsaacLab.git
 [submodule "third_party/autocomp"]
 	path = third_party/autocomp

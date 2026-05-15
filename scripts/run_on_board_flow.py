@@ -3,7 +3,7 @@
 
 Phase F orchestrator. Given a schedule.json (from
 heterogeneous_loop.py) and a profiled_manifest.json (from
-merlin/tools/profile_dispatch_matrix.py), this script:
+third_party/merlin/tools/profile_dispatch_matrix.py), this script:
 
   1. Pushes each per-(canonical, target) VMFB to the board.
   2. Emits a flat plan file (TAB-separated) consumed by

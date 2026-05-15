@@ -34,7 +34,7 @@ profiled_manifest.json ──▶ scripts/merlin_adapter.py ──▶ schedule.js
 
 | Artifact                            | Producer                            | Consumer                                  | Optional? |
 | ----------------------------------- | ----------------------------------- | ----------------------------------------- | --------- |
-| `breakdowns/profiled_manifest.json` | `merlin/tools/board_roundtrip.py`   | `scripts/merlin_adapter.py`               | No        |
+| `breakdowns/profiled_manifest.json` | `third_party/merlin/tools/board_roundtrip.py`   | `scripts/merlin_adapter.py`               | No        |
 | `breakdowns/schedule.json`          | `scripts/merlin_adapter.py`         | `merlin compile --with-schedule`, runner  | No        |
 | `breakdowns/xpurt_feedback.json`    | `scripts/merlin_adapter.py --emit-feedback` | `ingest_xpurt_feedback` MCP tool   | **Yes**   |
 | `breakdowns/feedback.json`          | `ingest_xpurt_feedback` MCP tool    | `tools/compile_qnn.py`, `tools/compile.py --with-feedback`, SpaceMit scripts | **Yes**   |
@@ -92,7 +92,7 @@ schedules) lives in the consumer.
 | Mode       | Cadence              | Driver                              | Use case                  |
 | ---------- | -------------------- | ----------------------------------- | ------------------------- |
 | One-shot   | once per compile     | `scripts/merlin_adapter.py`         | Manual experiments        |
-| Batch loop | once per iter        | `merlin/tools/run_full_loop.py`     | Convergence (existing)    |
+| Batch loop | once per iter        | `third_party/merlin/tools/run_full_loop.py`     | Convergence (existing)    |
 | Streaming  | per-epoch on-board   | `scheduler_runner.cc` + `streaming_feedback.py` | HW-in-the-loop / robotics |
 
 All three speak the same schema. What changes is *who emits when* — the
@@ -112,7 +112,7 @@ python scripts/merlin_adapter.py schedule \
 ### Batch loop
 
 ```sh
-python merlin/tools/run_full_loop.py \
+python third_party/merlin/tools/run_full_loop.py \
     --merlin-dir eval/qrb5165/dronet \
     --remote-vmfb-dir /root/iree_run/dronet/breakdowns \
     --solver greedy --iters 3 --converge-on-stable-hints
@@ -129,7 +129,7 @@ python merlin/tools/run_full_loop.py \
 ### Streaming (HW-in-the-loop)
 
 ```sh
-python merlin/tools/run_full_loop.py \
+python third_party/merlin/tools/run_full_loop.py \
     --merlin-dir eval/qrb5165/dronet \
     --remote-vmfb-dir /root/iree_run/dronet/breakdowns \
     --solver greedy --iters 1 --stream-epochs 64
@@ -164,10 +164,10 @@ go through `run_full_loop.py`'s offline iteration.
 ## Backend wiring
 
 Each backend reads `<merlin_dir>/breakdowns/feedback.json` if present
-via the shared `merlin/tools/feedback_overlay.py:load_feedback_overlay()`
+via the shared `third_party/merlin/tools/feedback_overlay.py:load_feedback_overlay()`
 helper. Behavior is identical to today when the file is absent.
 
-### QNN (`merlin/tools/compile_qnn.py`)
+### QNN (`third_party/merlin/tools/compile_qnn.py`)
 
 - `pin_target=qnn-cpu|qnn-gpu|qnn-hta` → restricts the per-chunk
   `--backends` list to that single backend.
@@ -176,7 +176,7 @@ helper. Behavior is identical to today when the file is absent.
   compile log and recorded in `compile_qnn_summary.json`. Acting on
   them requires a re-run of `tools/chunk_extractor.py` upstream.
 
-### SpaceMit X60 (`merlin/tools/compile.py --with-feedback`)
+### SpaceMit X60 (`third_party/merlin/tools/compile.py --with-feedback`)
 
 - `compile.py` accepts `--with-feedback <path>` (analogous to
   `--with-schedule`). When set:
@@ -210,7 +210,7 @@ End-to-end smoke checklist (run from `/scratch2/agustin/XPU-RT`):
    unit tests that gate the derivation logic; manual smoke included
    in this doc's commit message.)
 
-3. **QNN convergence:** `merlin/tools/run_full_loop.py --merlin-dir
+3. **QNN convergence:** `third_party/merlin/tools/run_full_loop.py --merlin-dir
    eval/qrb5165/dronet --iters 3 --converge-on-stable-hints`. Expect
    makespan to decrease across iterations and the loop to exit early
    when the hint set stabilises.

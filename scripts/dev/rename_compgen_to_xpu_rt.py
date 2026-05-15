@@ -6,7 +6,7 @@ in the repo, except inside vendored upstream trees that must not be rewritten:
   - third_party/
   - merlin/
   - zephyr-chipyard-sw/
-  - sims/IsaacLab/
+  - (third_party/IsaacLab/ — covered by third_party/ skip)
   - .git/
 
 The standalone token `xpu_rt` has two destinations depending on context:
@@ -39,7 +39,7 @@ SKIP_DIR_PREFIXES = (
     "third_party/",
     "merlin/",
     "zephyr-chipyard-sw/",
-    "sims/IsaacLab/",
+    # (sims/IsaacLab moved under third_party/ as of integration/compgen-merge)
     ".git/",
 )
 

@@ -14,7 +14,7 @@ Design constraints:
       ``xpu_rt_shutdown``) is the only surface the Zephyr app sees.
       Keeps the app agnostic to how the model was compiled.
     - Mirrors the layout of
-      ``zephyr-chipyard-sw/samples/executorch/executor_runner/`` so
+      ``third_party/zephyr-chipyard-sw/samples/executorch/executor_runner/`` so
       Chipyard developers already familiar with that sample need no
       training to read ours.
 """
@@ -139,7 +139,7 @@ def _custom_sections_ld_unused() -> str:  # noqa: N802 — kept for docs
 
 
 def _custom_sections_ld_legacy() -> str:
-    # Mirror zephyr-chipyard-sw/samples/executorch/executor_runner/custom-sections.ld
+    # Mirror third_party/zephyr-chipyard-sw/samples/executorch/executor_runner/custom-sections.ld
     # with section names renamed to xpu_rt_*. Zephyr's
     # zephyr_linker_sources(DATA_SECTIONS ...) splices this into the
     # data region between .data and .bss, inside GROUP_DATA_LINK_IN so
