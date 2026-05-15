@@ -32,6 +32,10 @@ set(CG_RT_SOURCES
     src/drivers/hip/hip_driver.c
     src/drivers/vulkan/vulkan_driver.c
     src/drivers/firesim/firesim_driver.c
+    # XNNPACK bridge — always compiled. Body is stubbed (returns
+    # XPU_RT_XNN_ENOTSUP from every entry) until XPURT_WITH_XNNPACK
+    # is ON. See the option block below.
+    src/drivers/xnnpack/xnnpack_bridge.c
 )
 
 if(CG_RT_PLATFORM STREQUAL "posix")
@@ -248,6 +252,126 @@ if(CG_RT_HAVE_CUDA AND CG_RT_PLATFORM STREQUAL "posix")
                 "Set NCCL_HOME or install the nvidia-nccl-cu13 wheel + system "
                 "CUDA toolkit headers.")
         endif()
+    endif()
+endif()
+
+# --- Optional XNNPACK driver ----------------------------------------------
+# When ON, the libxpu_rt build pulls in third_party/XNNPACK as a sub-
+# project, links the static XNNPACK library, and defines XPURT_HAS_XNNPACK
+# so the bridge translation unit (src/drivers/xnnpack/xnnpack_bridge.c)
+# forwards to xnn_*. When OFF (default), the bridge keeps compiling but
+# every entry returns -XPU_RT_XNN_ENOTSUP and create() returns NULL —
+# the python provider's probe() detects this honestly.
+option(XPURT_WITH_XNNPACK "Build the XNNPACK CPU-operator driver" OFF)
+
+set(XPURT_HAVE_XNNPACK FALSE)
+if(XPURT_WITH_XNNPACK)
+    set(XNNPACK_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../../third_party/XNNPACK"
+        CACHE PATH "Path to the vendored XNNPACK source tree")
+    if(NOT EXISTS "${XNNPACK_ROOT_DIR}/CMakeLists.txt")
+        message(FATAL_ERROR
+            "XPURT_WITH_XNNPACK=ON but no XNNPACK CMakeLists at "
+            "${XNNPACK_ROOT_DIR}. Run "
+            "`git submodule update --init --recursive third_party/XNNPACK`.")
+    endif()
+
+    # XNNPACK's own option set — turn off everything we don't need.
+    set(XNNPACK_LIBRARY_TYPE "static" CACHE STRING "" FORCE)
+    set(XNNPACK_BUILD_LIBRARY ON  CACHE BOOL "" FORCE)
+    set(XNNPACK_BUILD_TESTS   OFF CACHE BOOL "" FORCE)
+    set(XNNPACK_BUILD_BENCHMARKS OFF CACHE BOOL "" FORCE)
+    # Pull microkernel set; XNNPACK chooses per-host automatically.
+    set(XNNPACK_BUILD_ALL_MICROKERNELS ON CACHE BOOL "" FORCE)
+    # Force cpuinfo include path on host Linux. The fork's hardcoded =0
+    # leaves hardware-config.c with implicit-decl external refs to
+    # cpuinfo_has_x86_* (since cpuinfo.h is suppressed) — set to 1 so
+    # the header is included and the predicates inline cleanly.
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        set(XNN_ENABLE_CPUINFO "1" CACHE STRING "" FORCE)
+    endif()
+    # The UCB-BAR torch-1.0.0-bump branch defaults USE_GNU_SOURCE=OFF
+    # (it targets bare-metal / Zephyr where _GNU_SOURCE is wrong).
+    # When the host is Linux (the common XPU-RT build), forcing ON is
+    # required so memory.c sees MREMAP_MAYMOVE / MAP_FAILED via <sys/mman.h>.
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        set(USE_GNU_SOURCE ON CACHE BOOL "" FORCE)
+    endif()
+
+    # cpuinfo dependency. The fork's CMakeLists commented out its own
+    # FetchContent block for cpuinfo and hardcoded XNN_ENABLE_CPUINFO=0,
+    # but src/configs/hardware-config.c still calls cpuinfo_has_x86_*
+    # unconditionally on x86. We pull cpuinfo here so XNNPACK's
+    # hardware-config has the symbols to link against. cpuinfo is small
+    # (<1MB), BSD-2 licensed, and a standard XNNPACK dependency upstream.
+    if(NOT TARGET cpuinfo)
+        include(FetchContent)
+        FetchContent_Declare(
+            cpuinfo
+            GIT_REPOSITORY https://github.com/pytorch/cpuinfo.git
+            GIT_TAG        main
+            GIT_SHALLOW    TRUE
+        )
+        set(CPUINFO_BUILD_TOOLS       OFF CACHE BOOL "" FORCE)
+        set(CPUINFO_BUILD_UNIT_TESTS  OFF CACHE BOOL "" FORCE)
+        set(CPUINFO_BUILD_MOCK_TESTS  OFF CACHE BOOL "" FORCE)
+        set(CPUINFO_BUILD_BENCHMARKS  OFF CACHE BOOL "" FORCE)
+        set(CPUINFO_LIBRARY_TYPE      "static" CACHE STRING "" FORCE)
+        FetchContent_MakeAvailable(cpuinfo)
+    endif()
+    # Some downstream consumers of XNNPACK want their own pthreadpool;
+    # we accept whatever XNNPACK fetches. Mark EXCLUDE_FROM_ALL so its
+    # tests / benchmarks don't show up in the default build.
+    add_subdirectory(${XNNPACK_ROOT_DIR}
+                     ${CMAKE_CURRENT_BINARY_DIR}/_deps/xnnpack
+                     EXCLUDE_FROM_ALL)
+    if(TARGET XNNPACK)
+        # XNNPACK's hardware-config / microkernels reference cpuinfo;
+        # the fork's CMakeLists has the cpuinfo dependency block commented
+        # out, so we wire it up here AFTER add_subdirectory(). cpuinfo
+        # exposes its include dir via its INTERFACE; PUBLIC-linking it on
+        # the relevant xnnpack-* targets propagates -I and the symbols.
+        if(TARGET cpuinfo)
+            foreach(_xnn_tgt XNNPACK xnnpack-hardware-config
+                              xnnpack-microkernels-prod xnnpack-microkernels-all
+                              xnnpack-operator-run xnnpack-operators
+                              xnnpack-subgraph)
+                if(TARGET ${_xnn_tgt})
+                    target_link_libraries(${_xnn_tgt} PRIVATE cpuinfo)
+                endif()
+            endforeach()
+        endif()
+        target_compile_definitions(xpu_rt        PRIVATE XPURT_HAS_XNNPACK=1)
+        target_compile_definitions(xpu_rt_static PRIVATE XPURT_HAS_XNNPACK=1)
+        target_include_directories(xpu_rt        PRIVATE ${XNNPACK_ROOT_DIR}/include)
+        target_include_directories(xpu_rt_static PRIVATE ${XNNPACK_ROOT_DIR}/include)
+        # XNNPACK builds a stack of separate static libs (XNNPACK,
+        # xnnpack-microkernels-prod, xnnpack-microkernels-all, ...) and
+        # the microkernels libs reference cpuinfo unconditionally on x86.
+        # When libxpu_rt is a shared lib, the linker is single-pass:
+        # we must put cpuinfo AFTER every XNNPACK-* lib so its symbols
+        # resolve. The cleanest way is to add `-Wl,--start-group ...
+        # --end-group` so the linker iterates until fixed-point.
+        # libstdc++ needed because XNNPACK includes C++ sources.
+        target_link_libraries(xpu_rt        PRIVATE
+            -Wl,--start-group
+            XNNPACK cpuinfo
+            -Wl,--end-group
+            stdc++)
+        target_link_libraries(xpu_rt_static PRIVATE
+            XNNPACK cpuinfo stdc++)
+        # Downstream consumers (test binaries, user apps) of libxpu_rt.so
+        # need cpuinfo in their own link line too, because libxpu_rt.so
+        # may leave some cpuinfo refs unresolved (shared libs allow
+        # undefined refs at .so build time and resolve them at exe link).
+        target_link_libraries(xpu_rt        INTERFACE cpuinfo)
+        target_link_libraries(xpu_rt_static INTERFACE cpuinfo)
+        set(XPURT_HAVE_XNNPACK TRUE)
+        message(STATUS "xpu_rt: XNNPACK driver enabled (UCB-BAR fork @ ${XNNPACK_ROOT_DIR})")
+    else()
+        message(FATAL_ERROR
+            "XPURT_WITH_XNNPACK=ON but the XNNPACK CMake target was not "
+            "produced by ${XNNPACK_ROOT_DIR}/CMakeLists.txt. Check that "
+            "the submodule is fully populated.")
     endif()
 endif()
 

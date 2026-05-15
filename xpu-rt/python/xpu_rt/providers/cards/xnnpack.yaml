@@ -1,0 +1,98 @@
+schema_version: provider_card_v1
+provider_id: xnnpack
+integration_level: promote
+target_families: [host_cpu]
+contract_kinds:
+  - matmul
+  - fully_connected
+  - linear
+  - dense
+  - batch_matmul
+  - bmm
+  - conv
+  - conv2d
+  - convolution
+  - convolution2d
+  - depthwise_conv
+  - depthwise_conv2d
+  - depthwise
+  - deconv
+  - deconv2d
+  - transposed_conv
+  - avg_pool
+  - average_pool
+  - average_pool2d
+  - max_pool
+  - max_pool2d
+  - global_avg_pool
+  - adaptive_avg_pool
+  - adaptive_average_pool2d
+  - softmax
+  - unary
+  - relu
+  - sigmoid
+  - tanh
+  - hswish
+  - gelu
+  - elu
+  - abs
+  - neg
+  - floor
+  - ceil
+  - square
+  - sqrt
+  - log
+  - exp
+  - binary
+  - add
+  - sub
+  - mul
+  - div
+  - max
+  - min
+  - squared_difference
+  - reduce
+  - sum
+  - mean
+  - max_reduce
+  - min_reduce
+  - prelu
+  - leaky_relu
+  - transpose
+  - permute
+  - resize_bilinear
+  - interpolate_bilinear
+  - upsample_bilinear
+  - slice
+  - static_slice
+  - fused_region
+emits: [c_source, cffi_module]
+entrypoint: xpu_rt.kernels.providers.xnnpack:XnnpackProvider
+required_env: []
+required_commands: []
+required_python_imports: []
+required_build_options: [XPURT_WITH_XNNPACK]
+description: |
+  Google/Meta XNNPACK (UCB-BAR fork at branch torch-1.0.0-bump) — fast
+  NHWC microkernels for CPU operator execution. Covers f32 / f16 /
+  qs8 / qu8 / qd8→f32 paths for conv2d, depthwise conv, fully-
+  connected, batch-matmul, average/max pool, softmax, unary
+  (relu/sigmoid/tanh/hswish/gelu/...), binary (add/mul/sub/...),
+  reductions, transpose, resize-bilinear, prelu, leaky-relu, and
+  static-slice.
+
+  Architecture: the provider emits a small C source per dispatch that
+  calls libxpu_rt's stable xnnpack_bridge ABI (declared in
+  runtime/native/libxpu_rt/src/drivers/xnnpack/xnnpack_bridge.h). The
+  bridge translates each call to xnn_create_<op>_* + xnn_reshape_* +
+  xnn_setup_* + xnn_run_operator. Kernels execute through libxpu_rt's
+  cpu_task driver, same as every other CPU artifact.
+
+  Runtime requirement: libxpu_rt must be built with
+  -DXPURT_WITH_XNNPACK=ON. Without that flag the bridge symbols stub
+  to -XPU_RT_XNN_ENOTSUP and this provider's probe() reports
+  blocked_reason=build_flag_missing.
+
+  Layout: XNNPACK is NHWC-only for spatial ops; can_bid() declines
+  non-NHWC contracts with blocked_reason=requires_nhwc_layout so the
+  layout-normalisation pass can insert transposes and re-bid.

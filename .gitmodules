@@ -25,3 +25,7 @@
 [submodule "third_party/kernelblaster"]
 	path = third_party/kernelblaster
 	url = https://github.com/NVlabs/KernelBlaster.git
+[submodule "third_party/XNNPACK"]
+	path = third_party/XNNPACK
+	url = https://github.com/ucb-bar/XNNPACK.git
+	branch = torch-1.0.0-bump

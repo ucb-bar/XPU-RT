@@ -32,14 +32,36 @@ INTEGRATION_LEVEL_RANK = {
 # When two cards have the same integration_level, prefer the one that
 # also appears in this hand-curated preference list (lower index wins).
 KIND_PREFERENCE: dict[str, tuple[str, ...]] = {
-    "matmul": ("cffi_c", "triton", "cutlass_cute", "tilelang", "autocomp"),
-    "pointwise": ("cffi_c", "triton", "tilelang", "autocomp"),
-    "fused_region": ("triton", "tilelang", "cutlass_cute", "autocomp", "kernelblaster"),
+    # xnnpack wins on host_cpu for the spatial / FC / softmax / pool /
+    # activation families — it's a tuned production library backed
+    # by libxpu_rt's xnnpack_bridge. cffi_c stays as the deterministic
+    # correctness anchor (last position).
+    "matmul": ("xnnpack", "cutlass_cute", "tilelang", "autocomp", "triton", "cffi_c"),
+    "fully_connected": ("xnnpack", "cffi_c"),
+    "linear": ("xnnpack", "cffi_c"),
+    "batch_matmul": ("xnnpack", "cutlass_cute", "tilelang", "triton", "cffi_c"),
+    "pointwise": ("xnnpack", "cffi_c", "triton", "tilelang", "autocomp"),
+    "fused_region": ("triton", "tilelang", "cutlass_cute", "autocomp", "kernelblaster", "xnnpack", "cffi_c"),
     "attention": ("triton", "thunderkittens", "autocomp", "kernelblaster"),
-    "softmax": ("triton", "cffi_c"),
-    "reduction": ("triton", "cffi_c"),
-    "quantized_matmul": ("bitblas", "cutlass_cute", "tilelang"),
-    "conv": ("cffi_c", "triton"),
+    "softmax": ("xnnpack", "triton", "cffi_c"),
+    "reduction": ("xnnpack", "triton", "cffi_c"),
+    "reduce": ("xnnpack", "triton", "cffi_c"),
+    "quantized_matmul": ("xnnpack", "bitblas", "cutlass_cute", "tilelang"),
+    "conv": ("xnnpack", "cffi_c", "triton"),
+    "conv2d": ("xnnpack", "cffi_c", "triton"),
+    "depthwise_conv": ("xnnpack", "cffi_c"),
+    "depthwise_conv2d": ("xnnpack", "cffi_c"),
+    "deconv": ("xnnpack",),
+    "avg_pool": ("xnnpack",),
+    "max_pool": ("xnnpack",),
+    "global_avg_pool": ("xnnpack",),
+    "unary": ("xnnpack", "triton", "cffi_c"),
+    "binary": ("xnnpack", "triton", "cffi_c"),
+    "prelu": ("xnnpack", "cffi_c"),
+    "leaky_relu": ("xnnpack", "cffi_c"),
+    "transpose": ("xnnpack", "triton"),
+    "resize_bilinear": ("xnnpack",),
+    "slice": ("xnnpack",),
 }
 
 

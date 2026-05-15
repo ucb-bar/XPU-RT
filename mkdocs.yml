@@ -102,6 +102,7 @@ nav:
       - Target Pack: architecture/target_pack.md
       - Add a New Target: architecture/add-a-new-target.md
       - Triton Integration: architecture/triton-integration-spec.md
+      - XNNPACK Provider: architecture/xnnpack-provider.md
       - Extension Points: architecture/extension-points.md
       - Extension Provider Architecture: architecture/EXTENSION_PROVIDER_ARCHITECTURE.md
       - Promotion and Memory: architecture/promotion-and-memory.md
