@@ -1,4 +1,4 @@
-"""M-91c — optional GPU providers carry typed blocked_proof when
+"""optional GPU providers carry typed blocked_proof when
 their SDK isn't installed."""
 
 from __future__ import annotations

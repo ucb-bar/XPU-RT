@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""CLI wrapper for production-import provenance audit (M-31A.2).
+"""CLI wrapper for production-import provenance audit.
 
 Reads ``<run_dir>/import_provenance.json`` and asserts no forbidden
 modules were imported by the production run.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""CLI wrapper for the realness scan (M-31A.2).
+"""CLI wrapper for the realness scan.
 
 Usage::
 

@@ -1,4 +1,4 @@
-"""Measure cold-vs-warm promotion efficiency on a model suite (M-30).
+"""Measure cold-vs-warm promotion efficiency on a model suite.
 
 Runs the canonical-22 (or any user-supplied) suite twice, and writes a
 paper-ready comparison table demonstrating Section 19's falsifiable
@@ -25,7 +25,7 @@ and emits ``promotion_efficiency_pack.json`` plus a Markdown summary.
 
 The script is best-effort: per-model failures are recorded in the
 output but do not abort the suite. This matters because some Phase
-B models (e.g. tiny_mlp) hit known M-15B downstream rejections that
+B models (e.g. tiny_mlp) hit known downstream rejections that
 are unrelated to Section 19; we still want a useful comparison
 across the rest of the suite.
 """

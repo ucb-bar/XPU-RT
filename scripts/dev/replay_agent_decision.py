@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""CLI wrapper for trace replay (M-31A.3).
+"""CLI wrapper for trace replay.
 
 Usage::
 

@@ -376,10 +376,10 @@ Pricing table lives in `compgen.observability.gemini_usage.PRICING` and
 can be overridden by dropping `configs/gemini_pricing.yaml`. Update the
 table when Google AI Studio rates change.
 
-## Recipe Promotion + Optimization Memory (Section 19)
+## Recipe Promotion + Optimization Memory
 
-After M-26..M-30, every successful Phase B run lands a promoted recipe
-in `.compgen_cache/recipes/` keyed by a two-tier scheme
+Every successful Phase B run lands a promoted recipe in
+`.compgen_cache/recipes/` keyed by a two-tier scheme
 (`target_hash_model_hash_objective_hash_vN` directory + sidecar
 `(contract_hash, region_signature)`). Future runs query the library
 before emitting an `agent_decision_request.json` and surface matching
@@ -403,11 +403,11 @@ The headline falsifiable claim:
 > `gemini_token_delta < 0` while every correctness gate in
 > `verification_report.json` still passes.
 
-## Trust + Realness Audit (M-31A)
+## Trust + Realness Audit
 
-Every milestone after Section 19 must clear a permanent audit gate
-before its claims are paper-eligible. The gate enforces eight rules
-documented in `docs/reference/realness_policy.md`:
+Every feature must clear a permanent audit gate before its claims are
+paper-eligible. The gate enforces eight rules documented in
+`docs/reference/realness_policy.md`:
 
 1. Clean checkout rebuild (no checked-in outputs)
 2. No stubs / mocks / placeholders on production paths
@@ -430,26 +430,25 @@ Quick links:
 - Caveat ledger seed: `results/audit/_seed/caveat_ledger.json`
 - Operator policy: `docs/reference/realness_policy.md`
 
-## Upcoming sections (deferred behind M-31A)
+## Upcoming sections
 
-The next research milestones are scoped but **not implemented** until
-M-31A is green and every Section-19 milestone has a passing trust
-report:
+The next research areas are scoped but **not implemented** until the
+trust + realness audit is green for every shipped feature:
 
-- **Section 20 — Agentic pass orchestration and multi-level analysis**:
-  passes become typed pass cards (preconditions, invalidation rules,
+- **Agentic pass orchestration and multi-level analysis**: passes
+  become typed pass cards (preconditions, invalidation rules,
   refinement obligations); analysis runs at multiple IR levels (FX /
   Payload / Recipe / Semantic / Tile / Kernel / Plan / Runtime); Claude
-  Code schedules from a bounded pass pool. M-31..M-37.
-- **Section 21 — Promotion-aware deployment and end-to-end reuse**:
-  warm-cache deployment, cross-target recipe reuse.
-- **Section 22 — Runtime emission and bundle execution.**
-- **Section 23 — Cross-target portability.**
+  Code schedules from a bounded pass pool.
+- **Promotion-aware deployment and end-to-end reuse**: warm-cache
+  deployment, cross-target recipe reuse.
+- **Runtime emission and bundle execution.**
+- **Cross-target portability.**
 
-Section 20's milestones (pass-card registry, multi-level analysis
+The pass-orchestration items (pass-card registry, multi-level analysis
 checkpoints, invalidation discipline, scheduler request, fresh-Claude
 reproducibility harness, pass-pool ablation, promotion-aware reuse) all
-ship *behind* the M-31A gate. No Section-20 code lands until then.
+ship *behind* the trust gate.
 
 ## Repository Hygiene Rules
 

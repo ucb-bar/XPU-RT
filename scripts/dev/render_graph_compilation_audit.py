@@ -7,7 +7,7 @@ figures plus a one-page Markdown summary and a machine-readable JSON
 backup of the underlying numbers.
 
 This script does **not** mutate any compiler artifact. It is a pure
-post-pass over the M-06 suite output.
+post-pass over the suite output.
 
 Outputs (under ``--out``):
 

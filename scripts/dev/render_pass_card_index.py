@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Render docs/generated/pass_cards/INDEX.md from the registry (M-33.6).
+"""Render docs/generated/pass_cards/INDEX.md from the registry.
 
 Walks every card under ``default_registry_root()`` and emits a
 human-readable index grouped by family + level. The index is the

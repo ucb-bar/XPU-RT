@@ -45,7 +45,7 @@ class AutocompProvider:
     at all, so raising on unavailability is the right signal.
     """
 
-    # Provider preference (M-91a follow-up, 2026-05-15): autocomp is
+    # Provider preference (follow-up, 2026-05-15): autocomp is
     # the fallback CUDA kernel-search provider. KernelBlaster
     # (priority=90) wins applicability/auction ordering when both
     # accept a contract — see KernelBlasterProvider for the rationale.

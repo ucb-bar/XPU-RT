@@ -921,7 +921,7 @@ _HONEST_NON_CLAIMS = """\
 - The current claim is bounded agentic compilation over typed
   candidates, not unconstrained autonomous compiler construction.
 
-## M-18 calibration limitations (when calibration ran)
+## Calibration limitations (when calibration ran)
 
 - CPU profiler activities only — no CUDA / Nsight / rocprof yet.
 - Partial op-level matching: profiler keys are mapped to FX nodes via

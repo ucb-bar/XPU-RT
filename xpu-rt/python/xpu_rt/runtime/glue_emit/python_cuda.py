@@ -288,7 +288,7 @@ EVENT_SPECS = {event_specs_repr}
 TERMINAL_REGION = {terminal_region!r}
 
 
-# M-48 typed PlanViolation classes (one per check kind).
+# Typed PlanViolation classes (one per check kind).
 {plan_violation_classes}
 
 

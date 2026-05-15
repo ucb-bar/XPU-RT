@@ -1,4 +1,4 @@
-"""Gemmini C / Chipyard adapter shell (M-91b).
+"""Gemmini C / Chipyard adapter shell.
 
 Hardware-gated — uses remote scaffold to ship RISC-V Gemmini
 kernels to a Chipyard / Spike / FireSim simulator via

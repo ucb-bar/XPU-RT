@@ -613,7 +613,7 @@ def write_summary_md(
 
 
 # --------------------------------------------------------------------------- #
-# Audit-figure regeneration (delegates to the existing M-06.5 script)
+# Audit-figure regeneration (delegates to the existing script)
 # --------------------------------------------------------------------------- #
 
 

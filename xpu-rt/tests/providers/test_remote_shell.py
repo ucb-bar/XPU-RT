@@ -1,4 +1,4 @@
-"""M-91b — remote-aware adapter shell tests."""
+"""remote-aware adapter shell tests."""
 
 from __future__ import annotations
 

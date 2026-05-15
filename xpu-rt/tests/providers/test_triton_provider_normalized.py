@@ -7,7 +7,7 @@ Pins:
 4. ``provider_id`` matches the card.
 
 Triton currently doesn't have a flash_attention template; the
-deepening of that path is M-91a. This test only pins the
+deepening of that path is. This test only pins the
 substrate / interface — not the kernel content.
 """
 

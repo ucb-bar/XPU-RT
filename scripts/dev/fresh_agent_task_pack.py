@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Build a fresh-agent task pack (M-31A.4).
+"""Build a fresh-agent task pack.
 
 Usage::
 

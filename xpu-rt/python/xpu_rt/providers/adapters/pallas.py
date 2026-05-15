@@ -1,4 +1,4 @@
-"""Google TPU / Pallas adapter shell (M-91b).
+"""Google TPU / Pallas adapter shell.
 
 Hardware-gated provider — relies on the remote-target
 scaffold to ship kernels to a remote TPU pod. Until the user

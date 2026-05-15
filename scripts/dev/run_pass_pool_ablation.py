@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Run the pass-pool ablation on a model set (M-36).
+"""Run the pass-pool ablation on a model set.
 
 Compares CompGen pipeline behavior across selection modes on the same
 models. Today the harness exercises ``greedy`` mode and any

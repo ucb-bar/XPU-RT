@@ -1,4 +1,4 @@
-"""Chipyard Radiance / Muon adapter shell (M-91b).
+"""Chipyard Radiance / Muon adapter shell.
 
 Hardware-gated — uses remote scaffold to ship RISC-V Muon
 SIMT kernels to a Chipyard FireSim simulator via

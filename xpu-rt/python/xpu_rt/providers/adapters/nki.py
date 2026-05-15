@@ -1,4 +1,4 @@
-"""AWS NKI (Neuron) adapter shell (M-91b).
+"""AWS NKI (Neuron) adapter shell.
 
 Hardware-gated — uses remote scaffold to ship kernels to a
 remote Trainium / Inferentia instance via

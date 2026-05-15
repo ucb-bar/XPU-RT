@@ -1,4 +1,4 @@
-"""Hexagon-MLIR adapter shell (M-91b).
+"""Hexagon-MLIR adapter shell.
 
 Hardware-gated — uses remote scaffold to ship kernels to a
 Qualcomm Hexagon dev board via

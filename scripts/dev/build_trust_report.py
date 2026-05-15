@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Build the CompGen trust report (M-31A.5).
+"""Build the CompGen trust report.
 
 Usage::
 

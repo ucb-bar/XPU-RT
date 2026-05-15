@@ -370,7 +370,7 @@ def test_ssh_runner_requires_host():
 
 def test_shipped_remote_configs_have_empty_host_initially():
     """The shipped descriptors carry empty host strings — the user
-    is expected to fill them in. The audit (M-91b) must surface
+    is expected to fill them in. The audit must surface
     this as a typed blocked_proof until they're populated."""
 
     for name in (

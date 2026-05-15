@@ -194,7 +194,7 @@ The executor exposes ``compgen_run(io, kernels, runtime)`` per the
 M-47 protocol. ``kernels`` is a dict mapping region_id to a callable
 the runtime adapter dispatches. ``runtime`` is a
 ``compgen.runtime.glue.RuntimeAdapter`` (default:
-``CpuRuntimeAdapter``). M-48 generates the typed assert_plan body
+``CpuRuntimeAdapter``). The plan generates the typed assert_plan body
 from contract fields; M-49 wires the load-kernel-from-artifact path.
 """
 from __future__ import annotations
@@ -216,12 +216,12 @@ PLAN_RUN_DIR_RELPATH = {run_dir_relpath!r}
 KERNEL_BINDINGS = {bindings_block_json}
 
 
-# M-48 typed PlanViolation classes (one per check kind).
+# Typed PlanViolation classes (one per check kind).
 {plan_violation_classes}
 
 
 def assert_plan(io):
-    """Plan invariants — generated from contract fields by M-48.
+    """Plan invariants — generated from contract fields.
 
     Each check fires a typed PLAN_VIOLATION_<KIND> subclass naming
     the failed invariant. The unbound-region check (M-46 carryover)

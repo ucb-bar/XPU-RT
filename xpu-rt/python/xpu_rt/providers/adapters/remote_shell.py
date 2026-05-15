@@ -1,4 +1,4 @@
-"""Remote-aware adapter shell (M-91b).
+"""Remote-aware adapter shell.
 
 Extends :class:`compgen.providers.adapters.blocked_shell.BlockedShellAdapter`
 so that hardware-gated providers (Pallas/TPU, NKI/Neuron,
@@ -235,7 +235,7 @@ class RemoteShellAdapter(KernelProvider):
         # backend that generates kernels — that's the provider-specific
         # work. We honestly mark this as "remote_runtime_only": the
         # remote can run, but no codegen pipeline has been wired in
-        # the M-91b shell yet. M-91b per-provider deepening (Pallas
+        # the shell yet. per-provider deepening (Pallas
         # kernel author, NKI kernel author, etc.) is a follow-up.
         return ProviderResultV1(
             schema_version=RESULT_SCHEMA_VERSION,

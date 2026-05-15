@@ -1,12 +1,12 @@
 # Realness policy
 
-The trust audit (M-31A) enforces a checkable definition of *fully
-implemented*. Every milestone after Section 19 must satisfy this policy
-before its claims are paper-eligible.
+The trust audit enforces a checkable definition of *fully
+implemented*. Every shipped feature must satisfy this policy before its
+claims are paper-eligible.
 
 ## The eight rules
 
-A milestone is *done* iff:
+A feature is *done* iff:
 
 1. **Clean checkout rebuild.** Its artifacts produce from source on a
    fresh clone, not from checked-in outputs.
@@ -75,7 +75,7 @@ supplied).
 
 ## Realness contracts
 
-Each milestone ships a `docs/realness/<feature_id>.yaml` declaring its
+Each feature ships a `docs/realness/<feature_id>.yaml` declaring its
 claim, realness level, forbidden constructs, and required evidence.
 The file is the canonical claim; the audit proves or rejects it.
 
@@ -90,9 +90,8 @@ Realness levels (ascending strength):
 | `production_path` | Affects real end-to-end run | Yes |
 | `hardware_backed` | Exercised with real kernel / profile / runtime evidence | Strongest |
 
-Section 19's contracts (M-26 through M-30) are seeded under
-`docs/realness/`. M-31A's own contract is
-`docs/realness/m31a_audit_layer.yaml`.
+The promotion-pipeline contracts are seeded under `docs/realness/`.
+The audit layer's own contract is `docs/realness/m31a_audit_layer.yaml`.
 
 ## Honest residuals
 

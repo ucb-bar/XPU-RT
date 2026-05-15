@@ -346,7 +346,7 @@ DO NOT EDIT — regenerate by re-running ``--stop-after glue-emit``.
 The executor exposes ``compgen_run_async(io, kernels, runtime, *,
 timeout_s=30.0)`` per the M-51 protocol. Each region runs in its own
 thread; producer→consumer dependencies are wired through EventTensor
-notify/wait pairs. M-48's typed PLAN_VIOLATION_<KIND> classes apply
+notify/wait pairs. The typed PLAN_VIOLATION_<KIND> classes apply
 unchanged. Output matches the M-47 SYNC executor on K_iters=1 plans.
 """
 from __future__ import annotations
@@ -371,12 +371,12 @@ EVENT_SPECS = {event_specs_repr}
 TERMINAL_REGION = {terminal_region!r}
 
 
-# M-48 typed PlanViolation classes (one per check kind).
+# Typed PlanViolation classes (one per check kind).
 {plan_violation_classes}
 
 
 def assert_plan(io):
-    """Plan invariants — generated from contract fields by M-48.
+    """Plan invariants — generated from contract fields.
 
     Each check fires a typed PLAN_VIOLATION_<KIND> subclass naming
     the failed invariant. The unbound-region check (M-46 carryover)

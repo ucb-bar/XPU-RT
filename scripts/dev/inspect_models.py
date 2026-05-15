@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """Run the Section 20 stack on a set of small models and produce
-per-model inspection packs + a cross-model OVERVIEW (M-37.7).
+per-model inspection packs + a cross-model OVERVIEW.
 
 Usage::
 
