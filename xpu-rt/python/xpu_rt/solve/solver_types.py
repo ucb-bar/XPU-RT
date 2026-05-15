@@ -77,6 +77,11 @@ class SolverProblemKind(str, Enum):
     BANDWIDTH_ALLOCATION = "bandwidth_allocation"
     COST_MODEL_FIT = "cost_model_fit"
 
+    # Heterogeneous makespan scheduling (cvxpy MILP through MOSEK/HiGHS).
+    # Wraps the absorbed XPU-RT two-cluster scheduler so it routes through
+    # the same registry as every other solver problem.
+    MAKESPAN_SCHEDULE = "makespan_schedule"
+
     # Meta
     BACKEND_PROBE = "backend_probe"
 
@@ -90,6 +95,7 @@ class SolverBackendName(str, Enum):
     HIGHS = "highs"
     OSQP_OPTIONAL = "osqp_optional"
     CLARABEL_OPTIONAL = "clarabel_optional"
+    CVXPY_MAKESPAN = "cvxpy_makespan"
 
 
 class SolverStatus(str, Enum):

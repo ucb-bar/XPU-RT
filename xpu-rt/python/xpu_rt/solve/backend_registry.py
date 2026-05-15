@@ -127,6 +127,7 @@ def default_registry() -> SolverBackendRegistry:
 
         registry = SolverBackendRegistry()
         # Lazy imports — each backend handles its own optional dep.
+        from xpu_rt.solve.backends.cvxpy_makespan_backend import CvxpyMakespanBackend
         from xpu_rt.solve.backends.highs_backend import HighsBackend
         from xpu_rt.solve.backends.mosek_backend import MosekBackend
         from xpu_rt.solve.backends.ortools_cp_sat_backend import OrToolsCpSatBackend
@@ -136,6 +137,7 @@ def default_registry() -> SolverBackendRegistry:
         registry.register(OrToolsCpSatBackend())
         registry.register(MosekBackend())
         registry.register(HighsBackend())
+        registry.register(CvxpyMakespanBackend())
 
         _DEFAULT_REGISTRY = registry
         return registry

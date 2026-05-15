@@ -45,12 +45,19 @@ ROUTING_TABLE: dict[SolverProblemKind, tuple[SolverBackendName, ...]] = {
     SolverProblemKind.BUFFER_ALIASING: (SolverBackendName.MOSEK, SolverBackendName.HIGHS),
     SolverProblemKind.BANDWIDTH_ALLOCATION: (SolverBackendName.MOSEK, SolverBackendName.HIGHS),
     SolverProblemKind.COST_MODEL_FIT: (SolverBackendName.MOSEK, SolverBackendName.HIGHS),
+    # Heterogeneous makespan scheduling — single backend (cvxpy in
+    # MILP mode). The CVXPY problem is dispatched internally to MOSEK
+    # when licensed; the original XPU-RT scheduler hard-coded MOSEK
+    # and CVXPY preserves that default. HiGHS / SCIP / GLPK serve as
+    # open-source fallbacks when no MOSEK license is present.
+    SolverProblemKind.MAKESPAN_SCHEDULE: (SolverBackendName.CVXPY_MAKESPAN,),
     # Meta
     SolverProblemKind.BACKEND_PROBE: (
         SolverBackendName.Z3,
         SolverBackendName.ORTOOLS_CP_SAT,
         SolverBackendName.MOSEK,
         SolverBackendName.HIGHS,
+        SolverBackendName.CVXPY_MAKESPAN,
     ),
 }
 
@@ -83,6 +90,11 @@ _NUMERIC_KINDS: frozenset[SolverProblemKind] = frozenset(
         SolverProblemKind.COST_MODEL_FIT,
     }
 )
+_MAKESPAN_KINDS: frozenset[SolverProblemKind] = frozenset(
+    {
+        SolverProblemKind.MAKESPAN_SCHEDULE,
+    }
+)
 
 
 def _allowed_for_kind(kind: SolverProblemKind, backend: SolverBackendName) -> bool:
@@ -97,6 +109,8 @@ def _allowed_for_kind(kind: SolverProblemKind, backend: SolverBackendName) -> bo
             SolverBackendName.OSQP_OPTIONAL,
             SolverBackendName.CLARABEL_OPTIONAL,
         }
+    if kind in _MAKESPAN_KINDS:
+        return backend is SolverBackendName.CVXPY_MAKESPAN
     return True
 
 
