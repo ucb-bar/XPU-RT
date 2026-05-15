@@ -7,9 +7,9 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import plot
-from scheduler import schedule_with_greedy_packing, schedule_with_convex_packing
-from workload_factory import create_syn_sequential_workload
+from xpu_rt.scheduler import plot
+from xpu_rt.scheduler.scheduler import schedule_with_greedy_packing, schedule_with_convex_packing
+from xpu_rt.scheduler.workload_factory import create_syn_sequential_workload
 import numpy as np
 
 def greedy_pack_test() -> float:

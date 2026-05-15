@@ -191,7 +191,7 @@ def worst_case_layer_sum_ms_for_network(
     Sum over dispatch-graph nodes of max(time_cpu_p, time_cpu_e) in ms.
     """
     # Lazy import avoids circular import at module load.
-    from workload_factory import resolve_dispatch_deps_path
+    from xpu_rt.scheduler.workload_factory import resolve_dispatch_deps_path
 
     rel = (net_info.get("dispatch_deps_path") or "").strip()
     full = resolve_dispatch_deps_path(repo_base_path, rel)

@@ -14,7 +14,7 @@ import os
 
 import numpy as np
 
-from workload_factory import (
+from xpu_rt.scheduler.workload_factory import (
     resolve_dispatch_deps_path,
     topo_tag_for_combination,
     machine_type_prefix,

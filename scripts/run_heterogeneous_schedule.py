@@ -35,8 +35,8 @@ _ROOT = _HERE.parent.parent
 sys.path.insert(0, str(_ROOT))
 sys.path.insert(0, str(_ROOT / "xpu-rt"))
 
-from workload_factory import create_workload_from_dependencies  # noqa
-from scheduler import schedule  # noqa
+from xpu_rt.scheduler.workload_factory import create_workload_from_dependencies  # noqa
+from xpu_rt.scheduler.scheduler import schedule  # noqa
 import plot as xpu_plot  # noqa
 
 

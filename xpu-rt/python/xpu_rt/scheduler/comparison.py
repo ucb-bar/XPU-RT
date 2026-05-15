@@ -4,11 +4,11 @@ from typing import Dict, Tuple
 from matplotlib import pyplot as plt
 import numpy as np
 import csv
-from workload import Workload, Operation
-import plot
-from scheduler import schedule
-from workload_factory import create_sequential_job
-from greedy import greedy
+from xpu_rt.scheduler.workload import Workload, Operation
+from xpu_rt.scheduler import plot
+from xpu_rt.scheduler.scheduler import schedule
+from xpu_rt.scheduler.workload_factory import create_sequential_job
+from xpu_rt.scheduler.greedy import greedy
 import matplotlib.pyplot as plt
 import os
 from typing import Dict, Tuple

@@ -1,8 +1,8 @@
 import cvxpy as cp
 import numpy as np
 
-from workload import Workload, Window
-from postprocessing import overlap_fixer, count_overlaps
+from xpu_rt.scheduler.workload import Workload, Window
+from xpu_rt.scheduler.postprocessing import overlap_fixer, count_overlaps
 from typing import List, Tuple
 
 def lp_schedule(workload: Workload) -> Tuple[np.ndarray, np.ndarray]:

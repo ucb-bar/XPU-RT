@@ -8,7 +8,7 @@ These fused operations are scheduled as one contiguous block on the same hardwar
 
 import numpy as np
 from typing import List, Tuple, Dict, Set
-from workload import Workload, Operation
+from xpu_rt.scheduler.workload import Workload, Operation
 
 
 class FusedOperation(Operation):

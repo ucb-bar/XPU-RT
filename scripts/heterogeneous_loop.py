@@ -351,11 +351,11 @@ def step_schedule(cfg: LoopConfig,
 _MOSEK_DRIVER_TEMPLATE = '''
 import json, sys
 XPURT_ROOT = "{xpurt_root}"
-sys.path.insert(0, XPURT_ROOT + "/xpu-rt")
-sys.path.insert(0, XPURT_ROOT)
-sys.path.insert(0, XPURT_ROOT + "/scripts")
-from workload_factory import create_workload_from_dependencies  # noqa
-from scheduler import schedule  # noqa
+# xpu_rt must be installed in the driver subprocess environment
+# (e.g. via `uv sync` in the repo root before running this script).
+sys.path.insert(0, XPURT_ROOT + "/xpu-rt/python")
+from xpu_rt.scheduler.workload_factory import create_workload_from_dependencies  # noqa
+from xpu_rt.scheduler.scheduler import schedule  # noqa
 import numpy as np
 
 workload_data = json.load(open("{workload}"))

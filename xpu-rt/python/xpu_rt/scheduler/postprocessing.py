@@ -1,12 +1,266 @@
-import numpy as np
-from typing import Dict, List, Tuple, Optional
-from workload import Workload, Operation
+"""
+Post-processing utilities for the XPU-RT scheduler.
+
+Handles trimming periodic operations and serializing the solved schedule to JSON.
+"""
+
+from __future__ import annotations
+
 import json
+import os
+import numpy as np
+
+from xpu_rt.scheduler.workload import Workload, Operation
+from typing import Dict, List, Tuple, Optional
+
 try:
-    from fusion import FusedOperation
+    from xpu_rt.scheduler.fusion import FusedOperation
 except ImportError:
     # FusedOperation might not be available
     FusedOperation = None
+
+def output_scheduled_json(
+    combined_workload: Workload,
+    t: np.ndarray,
+    alpha: np.ndarray,
+    output_path: str,
+    profiled_times_p: dict | None = None,
+    profiled_times_e: dict | None = None
+):
+    """
+    Output a combined JSON file with all dispatches, their hardware targets, and start times.
+
+    Args:
+        combined_workload: Combined workload after scheduling
+        t: Start times array from scheduling
+        alpha: Assignment matrix from scheduling
+        output_path: Path to save the output JSON file
+        profiled_times_p: Optional dict mapping dispatch_id -> {"time_ms": float, "module_name": str} for P-core
+        profiled_times_e: Optional dict mapping dispatch_id -> {"time_ms": float, "module_name": str} for E-core
+    """
+    machine_combinations = combined_workload.get_machine_combinations()
+
+    # First pass: collect all dispatch info with completion times
+    dispatch_info_list = []
+
+    for op_idx in range(len(combined_workload.operations)):
+        op = combined_workload.operations[op_idx]
+
+        # Get dispatch name from operation
+        dispatch_name = op.operation_name if hasattr(op, 'operation_name') and op.operation_name else f"op_{op_idx}"
+
+        # Get hardware target (which combination was assigned)
+        combo_idx = np.argmax(alpha[op_idx])
+        hardware_target = "+".join(machine_combinations[combo_idx]) if len(machine_combinations[combo_idx]) > 1 else machine_combinations[combo_idx][0]
+
+        # Get start time
+        start_time = float(t[op_idx])
+
+        # Get duration for the assigned combination
+        duration = op.get_duration_for_combination(
+            combo_idx, machine_combinations, combined_workload.machines
+        )
+
+        # Get dispatch ID
+        dispatch_id = op.operation_id if hasattr(op, 'operation_id') and op.operation_id is not None else op_idx
+
+        # Get job name
+        job_id = op.job_id if hasattr(op, 'job_id') and op.job_id is not None else 0
+        job_name = combined_workload.job_names[job_id] if job_id < len(combined_workload.job_names) else f"Job {job_id}"
+
+        # Get module name from profiled data if available
+        module_name = None
+        if profiled_times_p and isinstance(dispatch_id, int) and dispatch_id in profiled_times_p:
+            module_name = profiled_times_p[dispatch_id].get("module_name")
+        elif profiled_times_e and isinstance(dispatch_id, int) and dispatch_id in profiled_times_e:
+            module_name = profiled_times_e[dispatch_id].get("module_name")
+
+        completion_time = start_time + float(duration)
+
+        dispatch_info_list.append({
+            'op_idx': op_idx,
+            'dispatch_name': dispatch_name,
+            'dispatch_id': dispatch_id,
+            'hardware_target': hardware_target,
+            'start_time': start_time,
+            'duration': float(duration),
+            'completion_time': completion_time,
+            'job_name': job_name,
+            'module_name': module_name,
+            'op': op,
+        })
+
+    # Build time dependency mapping: for each hardware target, track dispatches sorted by completion time
+    hardware_dispatch_map = {}  # hardware_target -> list of (completion_time, dispatch_name, start_time)
+
+    for info in dispatch_info_list:
+        hw_target = info['hardware_target']
+        if hw_target not in hardware_dispatch_map:
+            hardware_dispatch_map[hw_target] = []
+        hardware_dispatch_map[hw_target].append((
+            info['completion_time'],
+            info['dispatch_name'],
+            info['start_time']
+        ))
+
+    # Sort each hardware target's dispatches by completion time
+    for hw_target in hardware_dispatch_map:
+        hardware_dispatch_map[hw_target].sort(key=lambda x: x[0])  # Sort by completion_time
+
+    # Build combined dispatches dictionary
+    combined_dispatches = {}
+
+    for info in dispatch_info_list:
+        dispatch_name = info['dispatch_name']
+        hardware_target = info['hardware_target']
+        start_time = info['start_time']
+        op = info['op']
+
+        # Get dependencies (from operation predecessors)
+        dependencies = []
+        for pred_op in op.predecessors:
+            # Find the index of this predecessor in the combined workload
+            pred_idx = None
+            for idx, combined_operation in enumerate(combined_workload.operations):
+                if combined_operation == pred_op:
+                    pred_idx = idx
+                    break
+            if pred_idx is not None:
+                pred_dispatch_name = combined_workload.operations[pred_idx].operation_name if hasattr(combined_workload.operations[pred_idx], 'operation_name') and combined_workload.operations[pred_idx].operation_name else f"op_{pred_idx}"
+                dependencies.append(pred_dispatch_name)
+
+        # Find time dependency: previous dispatch on same hardware target
+        time_dependency = None
+        if hardware_target in hardware_dispatch_map:
+            hw_dispatches = hardware_dispatch_map[hardware_target]
+            # Find the dispatch that finished most recently before this one starts
+            for completion_time, prev_dispatch_name, prev_start_time in hw_dispatches:
+                if completion_time <= start_time and prev_dispatch_name != dispatch_name:
+                    time_dependency = prev_dispatch_name
+                elif completion_time > start_time:
+                    break  # No need to check further (sorted by completion time)
+
+        # Create dispatch entry
+        dispatch_entry = {
+            "id": info['dispatch_id'],
+            "ordinal": 1,  # Keep original structure
+            "total": 1,
+            "dependencies": dependencies,
+            "hardware_target": hardware_target,
+            "start_time": start_time,
+            "duration": info['duration'],
+            "job_name": info['job_name']
+        }
+
+        # Add module_name if available
+        if info['module_name']:
+            dispatch_entry["module_name"] = info['module_name']
+
+        # Add time_dependency if found
+        if time_dependency:
+            dispatch_entry["time_dependency"] = time_dependency
+
+        combined_dispatches[dispatch_name] = dispatch_entry
+
+    # Create output JSON structure
+    output_data = {
+        "dot_file": "combined_schedule_periodic.json",
+        "dispatches": combined_dispatches,
+        "metadata": {
+            "makespan": float(max(
+                t[i] + combined_workload.operations[i].get_duration_for_combination(
+                    np.argmax(alpha[i]), machine_combinations, combined_workload.machines
+                )
+                for i in range(len(combined_workload.operations))
+            )),
+            "num_operations": len(combined_workload.operations),
+            "machines": combined_workload.machines,
+            "machine_combinations": [combo if isinstance(combo, list) else [combo] for combo in machine_combinations]
+        }
+    }
+
+    # Save to file
+    os.makedirs(os.path.dirname(output_path) if os.path.dirname(output_path) else '.', exist_ok=True)
+    with open(output_path, 'w') as f:
+        json.dump(output_data, f, indent=2)
+
+    print(f"\nScheduled JSON saved to: {output_path}")
+
+
+def trim_periodic_after_nonperiodic_makespan(workload: Workload, t: np.ndarray, alpha: np.ndarray) -> tuple[Workload, np.ndarray, np.ndarray]:
+    """
+    Post-process the schedule to discard periodic/background operations that occur
+    entirely after the last non-periodic operation completes.
+
+    An operation is considered periodic/background if it has a time-window bound
+    (min_start_t or max_end_t set). Non-periodic operations have both as None.
+
+    We:
+      1) Compute the makespan over non-periodic operations only.
+      2) Drop any periodic operation whose window starts at or after this makespan.
+         (i.e., its period does not overlap the non-periodic makespan interval).
+    """
+    if t is None or alpha is None or len(workload.operations) == 0:
+        return workload, t, alpha
+
+    # 1) Compute makespan over non-periodic operations
+    nonperiodic_completion_times: list[float] = []
+    for i, op in enumerate(workload.operations):
+        is_periodic = (getattr(op, "min_start_t", None) is not None) or (getattr(op, "max_end_t", None) is not None)
+        if is_periodic:
+            continue
+        # Completion time based on chosen machine
+        combo_idx = int(np.argmax(alpha[i]))
+        dur = op.get_duration_for_combination(combo_idx, workload.get_machine_combinations(), workload.machines)
+        nonperiodic_completion_times.append(float(t[i] + dur))
+
+    if not nonperiodic_completion_times:
+        # No non-periodic ops: nothing to trim
+        return workload, t, alpha
+
+    nonperiodic_makespan = max(nonperiodic_completion_times)
+
+    # 2) Build keep mask: always keep non-periodic ops; for periodic, keep only
+    #    those whose window overlaps [0, nonperiodic_makespan).
+    keep_indices: list[int] = []
+    for i, op in enumerate(workload.operations):
+        min_start_t = getattr(op, "min_start_t", None)
+        max_end_t = getattr(op, "max_end_t", None)
+        is_periodic = (min_start_t is not None) or (max_end_t is not None)
+
+        if not is_periodic:
+            keep_indices.append(i)
+            continue
+
+        # If no explicit window, treat as non-periodic (already handled above).
+        if min_start_t is None or max_end_t is None:
+            keep_indices.append(i)
+            continue
+
+        # Period window [min_start_t, max_end_t) overlaps [0, nonperiodic_makespan) iff:
+        #   min_start_t < nonperiodic_makespan and max_end_t > 0
+        if (min_start_t < nonperiodic_makespan) and (max_end_t > 0):
+            keep_indices.append(i)
+        # else: drop this periodic op (it is entirely after the relevant horizon)
+
+    if len(keep_indices) == len(workload.operations):
+        # Nothing trimmed
+        return workload, t, alpha
+
+    # Build trimmed workload and schedule arrays
+    trimmed_ops = [workload.operations[i] for i in keep_indices]
+    trimmed_t = np.array([t[i] for i in keep_indices])
+    trimmed_alpha = np.array([alpha[i] for i in keep_indices])
+
+    trimmed_workload = Workload(
+        trimmed_ops,
+        workload.machines,
+        workload.transfer_times,
+        job_names=workload.job_names,
+        machine_combinations=workload.machine_combinations,
+    )
+
+    return trimmed_workload, trimmed_t, trimmed_alpha
 
 def overlap_fixer(workload: Workload, t: np.ndarray, alpha: np.ndarray):
     """

@@ -16,8 +16,8 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'xpu-rt'))
 
 import numpy as np
-from workload import Workload, Operation
-import plot
+from xpu_rt.scheduler.workload import Workload, Operation
+from xpu_rt.scheduler import plot
 
 
 def load_and_plot(json_path: str, save_path: str | None = None):

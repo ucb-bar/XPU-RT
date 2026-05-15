@@ -41,7 +41,7 @@ for _p in (_sys_xpu, _repo_root):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-from workload_factory import resolve_dispatch_deps_path  # noqa: E402
+from xpu_rt.scheduler.workload_factory import resolve_dispatch_deps_path  # noqa: E402
 
 
 def _first_nonempty(*vals: Optional[str], default: str = "") -> str:

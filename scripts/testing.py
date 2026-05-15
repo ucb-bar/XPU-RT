@@ -1,12 +1,12 @@
 import time
 import os
-from workload import Workload, Operation
-import plot
-from scheduler import schedule
-from workload_factory import create_syn_sequential_workload, generate_syn_transfer_times
+from xpu_rt.scheduler.workload import Workload, Operation
+from xpu_rt.scheduler import plot
+from xpu_rt.scheduler.scheduler import schedule
+from xpu_rt.scheduler.workload_factory import create_syn_sequential_workload, generate_syn_transfer_times
 import numpy as np
 import csv
-from workload_factory import create_sequential_job
+from xpu_rt.scheduler.workload_factory import create_sequential_job
 
 def param_sweep():
     # Define parameter ranges for sweeping

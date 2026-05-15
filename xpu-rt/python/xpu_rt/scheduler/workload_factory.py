@@ -1,10 +1,10 @@
-from workload import Workload, Job, Operation, Window
+from xpu_rt.scheduler.workload import Workload, Job, Operation, Window
 import numpy as np
 import json
 import os
 from typing import Tuple, Dict, List, Optional
 
-from profile_metrics import profile_based_horizon_ms
+from xpu_rt.scheduler.profile_metrics import profile_based_horizon_ms
 
 # Hardware constants — SpacemiT x60
 CPU_P = "CPU_P"

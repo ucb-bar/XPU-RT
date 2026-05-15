@@ -15,9 +15,9 @@ import numpy as np
 # Add parent path to sys path to enable imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from workload import Workload, Operation
-from workload_factory import create_workload_from_dependencies
-import plot
+from xpu_rt.scheduler.workload import Workload, Operation
+from xpu_rt.scheduler.workload_factory import create_workload_from_dependencies
+from xpu_rt.scheduler import plot
 from schedule_validation import overlap_fixer, count_overlaps, validate_schedule
 
 class OperationWithCombinations(Operation):

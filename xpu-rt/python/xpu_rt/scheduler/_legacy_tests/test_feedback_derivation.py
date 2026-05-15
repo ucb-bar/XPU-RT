@@ -21,7 +21,7 @@ _HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(_HERE))  # xpu-rt/ on the path
 
 from feedback import derive_dispatch_hints  # noqa: E402
-from workload import Operation, Workload  # noqa: E402
+from xpu_rt.scheduler.workload import Operation, Workload  # noqa: E402
 
 
 def _two_machine_workload(ops):

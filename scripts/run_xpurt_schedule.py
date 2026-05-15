@@ -15,16 +15,16 @@ import numpy as np
 # Add parent path to sys path to enable imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from workload import Workload, Operation
-from workload_factory import (
+from xpu_rt.scheduler.workload import Workload, Operation
+from xpu_rt.scheduler.workload_factory import (
     create_workload_from_network_hierarchy,
     build_machine_combinations,
     machine_type_prefix,
 )
-from scheduler import schedule
-from profile_loader import load_profiled_processing_times
-from postprocessing import trim_periodic_after_nonperiodic_makespan, output_scheduled_json
-import plot
+from xpu_rt.scheduler.scheduler import schedule
+from xpu_rt.scheduler.profile_loader import load_profiled_processing_times
+from xpu_rt.scheduler.postprocessing import trim_periodic_after_nonperiodic_makespan, output_scheduled_json
+from xpu_rt.scheduler import plot
 
 # Hardware constants — SpacemiT x60
 CPU_P = "CPU_P"

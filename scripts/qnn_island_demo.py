@@ -39,7 +39,7 @@ _HERE = pathlib.Path(__file__).resolve()
 _XPU_RT_PY = _HERE.parent.parent / "xpu-rt"
 sys.path.insert(0, str(_XPU_RT_PY))
 
-from workload_factory import create_workload_from_dependencies  # noqa: E402
+from xpu_rt.scheduler.workload_factory import create_workload_from_dependencies  # noqa: E402
 
 
 # --- Measured costs on QRB5165 / QAIRT 2.45 -------------------------------
