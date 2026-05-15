@@ -129,11 +129,20 @@ This is the minimum map every agent should keep in mind:
 | `CLAUDE.md` | Legacy compatibility agent notes |
 | `mkdocs.yml` | Public docs site navigation |
 | `docs/` | User-facing documentation only |
-| `examples/` | Public examples for docs, demos, and experimentation |
-| `scripts/` | Bootstrap and demo utilities |
-| `python/xpu_rt/` | Main package code |
-| `tests/` | Executable truth for behavior and coverage |
-| `third_party/` | External dependencies and submodules |
+| `xpu-rt/examples/` | Public examples for docs, demos, and experimentation |
+| `scripts/` | Bootstrap, demo, dev, MCP, and heterogeneous-scheduling utilities |
+| `xpu-rt/python/xpu_rt/` | Main Python package (compiler generator + scheduler subpackage) |
+| `xpu-rt/python/xpu_rt/scheduler/` | CVX two-cluster scheduler (absorbed from XPU-RT origin) |
+| `xpu-rt/tests/` | Executable truth for behavior and coverage |
+| `xpu-rt/{configs,schemas,benchmarks,userpacks,contrib,infra}/` | Compiler-side resources |
+| `runtime/` | Native C/CUDA runtime (libxpu_rt) + Merlin/IREE dispatch runners |
+| `qnn_scheduler/` | QRB5165 cost model + island DAG scheduler (XPU-RT origin) |
+| `qnn_models/` | ONNX → TFLite → QNN DLC conversion flow |
+| `merlin/` | SpacemiT/QRB5165 compiler toolchain (git submodule) |
+| `zephyr-chipyard-sw/` | Embedded RTOS support (git submodule) |
+| `sims/IsaacLab/` | Robotics simulation environment (git submodule) |
+| `paper/  plots/` | Paper LaTeX source + plotting |
+| `third_party/` | Vendored deps (autocomp, kernelblaster, llvm-project, npu_model, pi0-quant, zephyr, cuda-tile) |
 | `tmp/agentic_documentation/` | Internal operational memory and design archive |
 | `tmp/` | Scratch and generated internal working area; not public docs |
 

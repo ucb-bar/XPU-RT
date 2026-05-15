@@ -1,110 +1,151 @@
 # XPU-RT
 
-XPU-RT is an LLM-driven compiler generator for heterogeneous hardware targets.
-It does not replace your compiler — it generates the target-specific *recipe*
-around one: the transforms, kernel decisions, placement/scheduling plans,
-runtime packaging, and verification outputs that turn a PyTorch program into a
-verified deployment bundle for a given hardware profile.
+**XPU-RT** is an adaptable full-stack end-to-end (E2E) compilation and
+scheduling flow for efficient mapping of robotic and AI workloads onto
+heterogeneous shared-memory SoCs.
 
-The primary way to drive XPU-RT is through Claude Code via its MCP server.
-Every pipeline stage is exposed as an MCP tool, so the LLM can inspect, propose,
-and verify compilation decisions interactively.
+It combines two complementary subsystems:
 
-## Install
+1. **A compiler generator** (formerly *CompGen*) — an LLM-driven
+   compiler-recipe generator for heterogeneous hardware targets. Given a
+   PyTorch program and a hardware profile, it produces a verified deployment
+   recipe: graph/lowering transforms, custom kernels, placement decisions, and
+   runtime artifacts. The LLM is a *proposal engine*; deterministic
+   verification decides what ships. Drive it through Claude Code via the
+   bundled MCP server (`xpu-rt-mcp`).
 
-```bash
-pip install xpu-rt
-```
+2. **A multi-cluster scheduler + runtime** — a CVX/MILP-based two-cluster
+   scheduling solver (CPU_P / CPU_E, with QNN-island and per-target cost
+   models), a C runtime dispatch layer that targets SpacemiT, QRB5165, and
+   host x86/ARM, and a Merlin/IREE integration for the actual compile-and-deploy
+   path on embedded SoCs.
 
-Installs the compiler generator + the MCP server (`xpu-rt-mcp`). For the
-optional extras, see [docs/getting-started/installation.md](docs/getting-started/installation.md).
+The two halves share `runtime/` (native libxpu_rt + dispatch runners), a
+single Python package (`xpu_rt`), and one pyproject.toml. The compiler
+pipeline produces deployment bundles that the scheduler+runtime then runs on
+hardware.
 
-## Wire up Claude Code
-
-```bash
-xpu-rt mcp install          # merges into ~/.claude.json (backup on edit)
-xpu-rt mcp doctor           # verifies tools load and discovery works
-```
-
-Then restart Claude Code and the `xpu-rt` server appears in the tool picker.
-Prefer to paste the config yourself? `xpu-rt mcp print-config` emits the
-snippet to stdout. Project-scoped `.mcp.json` works too: `xpu-rt mcp install --project`.
-
-## Extend it in user space
-
-When you need something XPU-RT doesn't ship — a new kernel provider, a new
-target backend, a custom vendor MLIR dialect adapter — scaffold it locally and
-the running MCP server picks it up on next restart:
+## Quick start
 
 ```bash
-xpu-rt ext new provider my_chip       # scaffolds a pip-installable pack
-cd my_chip && pip install -e .
-xpu-rt ext list                       # verify discovery
+git clone --recurse-submodules https://github.com/ucb-bar/XPU-RT.git
+cd XPU-RT
+./setup.sh                              # optional: existing XPU-RT bootstrap
+uv sync                                 # installs the xpu_rt Python package
+uv run xpu-rt --help                    # compiler generator CLI
+uv run xpu-rt-mcp                       # MCP server for Claude Code
 ```
 
-Drop-in Python tools at `~/.xpu_rt/extensions/*.py` are discovered without any
-`pip install` step — useful for one-off experimentation. See
-[docs/getting-started/extension-authoring.md](docs/getting-started/extension-authoring.md).
+For the scheduler stack:
 
-## Python API
+```bash
+uv pip install -e ".[scheduler]"        # cvxpy / pandas / matplotlib / scipy
+uv run python scripts/run_xpurt_schedule.py --help
+```
+
+## Layout
+
+```
+XPU-RT/
+├── xpu-rt/python/xpu_rt/         # unified Python package
+│   ├── agent/  capture/  ir/  passes/  stages/  ...   # compiler generator
+│   └── scheduler/                # CVX two-cluster scheduler (XPU-RT origin)
+├── xpu-rt/tests/                 # ~7500 pytest tests mirroring the package
+├── xpu-rt/{configs,schemas,examples,benchmarks,userpacks,contrib,infra}/
+├── runtime/                      # native runtime (libxpu_rt + dispatch runners)
+│   ├── native/libxpu_rt/         # core C/CUDA runtime + drivers
+│   ├── src/  include/  templates/
+│   └── tools/                    # json_dispatch_runner, xpurt_scheduler_runner
+├── qnn_scheduler/                # QRB5165 cost model + island DAG scheduler
+├── qnn_models/                   # ONNX → TFLite → QNN DLC conversion flow
+├── sims/IsaacLab/                # robotics simulation environment (submodule)
+├── merlin/                       # SpacemiT/QRB5165 compiler toolchain (submodule)
+├── zephyr-chipyard-sw/           # embedded RTOS support (submodule)
+├── paper/  plots/  docs/         # documentation and analysis
+├── third_party/                  # vendored: autocomp, kernelblaster, llvm-project,
+│                                 #           npu_model, pi0-quant, zephyr, cuda-tile
+├── scripts/                      # heterogeneous_loop, qnn_island_demo,
+│                                 # run_xpurt_schedule, profiling, MCP helpers
+└── data/  results/               # op-definition KB + audit-seed evidence
+```
+
+## Compiler generator (`xpu-rt`)
+
+The compiler generator drives compilation through bounded, declarative
+LLM-proposed artifacts (transform scripts, kernel recipes, policies), which
+deterministic compiler infrastructure executes. Only verified artifacts
+are promoted into a deterministic recipe library.
+
+```bash
+xpu-rt mcp install                       # wire into Claude Code's ~/.claude.json
+xpu-rt mcp doctor                        # verify MCP tools load
+xpu-rt ext new provider my_chip          # scaffold a user-space extension
+xpu-rt ext list                          # show discovered providers/dialects
+```
+
+Drop-in Python tools at `~/.xpu_rt/extensions/*.py` are discovered without
+`pip install`. See [docs/getting-started/extension-authoring.md](docs/getting-started/extension-authoring.md).
+
+The Python API:
 
 ```python
-import torch, torch.nn as nn
-from xpu_rt.options import cuda_a100_defaults
-from xpu_rt.pipeline import compile_and_diff
-
-class Block(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.fc = nn.Linear(64, 64)
-    def forward(self, x):
-        return torch.relu(self.fc(x))
-
-model, x = Block().eval(), torch.randn(1, 4, 64)
-report = compile_and_diff(
-    model, (x,),
-    options=cuda_a100_defaults(),
-    fixture_name="my_block",
-    eager_reference=model(x).detach(),
-    run_compiled_executor=True,
-)
-print("passed:", report.passed, "opaque rate:", report.opaque_rate)
+from xpu_rt.api import compile_model
+recipe = compile_model(model, target="spacemit_x60", out_dir="bundle/")
 ```
 
-## What's in the box
+## Scheduler + runtime (`xpu_rt.scheduler`)
 
-- Staged xDSL pipeline covering structural, quantization, layout, distributed,
-  control-flow, and runtime-side passes.
-- Custom dialects `xpu_rt.quant`, `xpu_rt.tensor_ext`, `xpu_rt.linalg_ext`,
-  `xpu_rt.event`, `xpu_rt.collective`, plus FP8 + HMX tile primitives on
-  `xpu_rt.accel`.
-- `CompGenOptions` presets (`cuda_a100`, `cuda_h100`, `npu_fp8`), an LRU
-  pipeline cache, differential test harness, Triton kernel emitter, autotuner,
-  benchmark harness.
-- Real-workload fixtures under `tests/_fixtures/` (SmolVLA, Gemma, TinyLlama,
-  Qwen-MoE, VLA-decoder) used by the pipeline probes.
-- MCP server (`xpu-rt-mcp`) exposing every stage as a first-class tool that
-  Claude Code (or any MCP client) can drive.
+The two-cluster CVX scheduler optimises makespan across CPU_P / CPU_E (or
+arbitrary heterogeneous units), respecting transfer times, dependency DAGs,
+and infeasible-machine constraints.
+
+```bash
+uv run python scripts/run_xpurt_schedule.py \
+  --workload dispatches.json --proc-times profiles.json --transfers xfer.json
+uv run python scripts/qnn_island_demo.py
+uv run python scripts/heterogeneous_loop.py
+```
+
+The runtime targets are built with CMake:
+
+```bash
+cmake -B runtime/build -S runtime           # CompGen-style native libxpu_rt
+cmake -B runtime/build -S runtime \
+      -DXPURT_STANDALONE_LIB_PATH=merlin/build/.../libxpurt_standalone.a
+cmake --build runtime/build --target xpurt_scheduler_runner json_dispatch_runner
+```
+
+## What ships in this repository
+
+- `xpu_rt` Python package: 43+ subpackages covering capture (torch.export →
+  payload IR), analysis, transforms, kernel search (autocomp adapter), kernel
+  contracts, target backends, audit/verification, agent integration, MCP
+  server, scheduler.
+- `libxpu_rt` C runtime: event-tensor execution, CPU/CUDA drivers, command
+  buffers, semaphores, perf-counter instrumentation, tracing hooks.
+- QNN island scheduler with QRB5165 calibration data.
+- Real-workload fixtures under `xpu-rt/tests/_fixtures/` (SmolVLA, Gemma,
+  TinyLlama, Qwen-MoE, VLA-decoder).
+- Paper LaTeX source and plotting infrastructure.
 
 ## Documentation
 
-- [Docs Home](docs/index.md)
+- [Operating manual for agents (CLAUDE.md)](CLAUDE.md)
+- [Repository-local operating manual (AGENT.md)](AGENT.md)
 - [Installation](docs/getting-started/installation.md)
-- [MCP Setup](docs/getting-started/mcp-setup.md)
-- [Extension Authoring](docs/getting-started/extension-authoring.md)
+- [MCP setup](docs/getting-started/mcp-setup.md)
+- [Extension authoring](docs/getting-started/extension-authoring.md)
 - [Quickstart](docs/getting-started/quickstart.md)
-- [CLI Reference](docs/reference/cli.md)
+- [CLI reference](docs/reference/cli.md)
 - [Python API](docs/reference/python-api.md)
-- [Extension Points](docs/reference/extension-points.md)
+- [Extension points](docs/reference/extension-points.md)
 
-## From source (contributors)
+## Contributors
 
-```bash
-git clone --recurse-submodules https://github.com/xpu-rt-project/xpu_rt.git
-cd xpu-rt && ./scripts/bootstrap.sh
-```
-
-See [AGENT.md](AGENT.md) for the repository-local operating manual.
+XPU-RT brings together work from Dima Nikiforov, Kris Dong, Minh Nguyen,
+ailsa-sun, Augustin Coppari Hollmann, and the UCB-BAR group. See
+`git shortlog -sn` for the full credit list and `git log --grep=Phase` for
+the architectural milestones.
 
 ## License
 

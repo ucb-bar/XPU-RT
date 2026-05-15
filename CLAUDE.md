@@ -3,6 +3,17 @@
 > `AGENT.md` is now the canonical and more complete repository-local operating
 > manual. Read it first. This file remains for compatibility and legacy context.
 
+> **Repo shape note.** XPU-RT is a merged repo combining two subsystems:
+> (1) the LLM-driven compiler generator (formerly *CompGen*, now under
+> `xpu-rt/python/xpu_rt/` with tests at `xpu-rt/tests/`); (2) the original
+> XPU-RT scheduling + runtime stack (CVX scheduler at
+> `xpu-rt/python/xpu_rt/scheduler/`, native C runtime at `runtime/`, QNN
+> scheduler at `qnn_scheduler/`, plus the `merlin/`, `sims/`,
+> `zephyr-chipyard-sw/` submodules at the repo root). The Python package name
+> is `xpu_rt` (snake_case); the CLI binaries are `xpu-rt`, `xpu-rt-mcp`,
+> `xpu-rt-tool`, `xpu-rt-run-conformance`, `xpu-rt-gemini-usage` (kebab-case).
+> `import xpu_rt` works from any cwd once `uv sync` has installed the package.
+
 > **Driving XPU-RT as Claude Code (or Codex):** when the user asks to
 > "compile X", "run XPU-RT on X", "build a recipe for X", or anything
 > equivalent, **invoke the `/xpu-rt-compile` skill** (or its short
@@ -104,7 +115,7 @@ Every slot has a typed status in ``manifest.json::extended_artifacts``
 from ``compile_model`` unless the caller explicitly passes
 ``strict_artifacts=False``. Bundle directories never fall back to
 ``/tmp`` — ``BundleStage`` rejects ``output_dir=None``. See
-`python/xpu_rt/runtime/bundle_emit.py` for the canonical mapping of
+`xpu-rt/python/xpu_rt/runtime/bundle_emit.py` for the canonical mapping of
 slot → source data.
 
 ## Code Conventions
@@ -142,7 +153,7 @@ Scopes: `agent`, `analysis`, `api`, `benchmarks`, `capture`, `cli`, `docs`, `eqs
 
 ## Test Conventions
 
-- Tests mirror source tree: `python/xpu_rt/ir/checks.py` -> `tests/ir/test_checks.py`
+- Tests mirror source tree: `xpu-rt/python/xpu_rt/ir/checks.py` -> `xpu-rt/tests/ir/test_checks.py`
 - Use `pytest` with markers: `slow`, `requires_gpu`, `requires_mlir`
 - Mock LLM calls by default (use `MockLLMClient` from `llm/mock_client.py`)
 - Golden tests use saved fixtures, not live API calls
@@ -213,4 +224,4 @@ views, not authority.
 | **Trust report** | Single-page audit aggregator at `results/audit/<commit>/trust_report.{md,json}`. Runs 8 gates: realness scan, negative controls, caveat ledger, realness contracts, import provenance, trace replay self-check, task pack buildable, holdout outcomes honest. Built via `uv run python scripts/dev/build_trust_report.py` |
 | **Negative control** | Fault-injection test that proves a gate is real. The audit table maps (feature, injected break, expected typed error); each row must raise the named typed error or the gate is decorative. `xpu_rt.audit.negative_controls.run_all_negative_controls` |
 | **Holdout model** | Model with `holdout: true` in its YAML, deliberately excluded from canonical-22 to surface hardcoded-shape / hardcoded-id assumptions (`configs/models/holdout_*.yaml`) |
-| **Task pack** | Operator-portable directory containing only public allowlisted files (`CLAUDE.md`, skills, docs, configs, `python/xpu_rt/**`); tested for forbidden-path leakage. Built via `scripts/dev/fresh_agent_task_pack.py` |
+| **Task pack** | Operator-portable directory containing only public allowlisted files (`CLAUDE.md`, skills, docs, configs, `xpu-rt/python/xpu_rt/**`); tested for forbidden-path leakage. Built via `scripts/dev/fresh_agent_task_pack.py` |
