@@ -265,6 +265,8 @@ user_perspective/
 *.db-wal
 userpacks/**/.xpu_rt_external/
 userpacks/**/.xpu-rt_external/
+xpu-rt/userpacks/**/.xpu_rt_external/
+xpu-rt/userpacks/**/.xpu-rt_external/
 python/xpu_rt/generated/promoted/
 python/xpu_rt/transforms/promoted/
 python/xpu_rt/kernels/promoted/
