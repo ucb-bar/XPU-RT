@@ -1,7 +1,7 @@
 feature_id: m80_extension_cards
 claim: |
   M-80: official provider / target / dialect cards land under
-  ``python/compgen/{providers,targets,dialects}/cards/*.yaml``.
+  ``python/xpu_rt/{providers,targets,dialects}/cards/*.yaml``.
 
   Shipped inventory:
 
@@ -19,7 +19,7 @@ claim: |
     pallas, nki, exo, gemmini_c, radiance_muon, iree, triton_mlir,
     stablehlo.
 
-  ``python/compgen/providers/card_loader.py`` discovers cards and
+  ``python/xpu_rt/providers/card_loader.py`` discovers cards and
   exposes ``iter_provider_cards``, ``iter_target_cards``,
   ``iter_dialect_cards``, ``load_all_cards``.
 
@@ -60,49 +60,49 @@ forbidden:
   - SDK-gated provider with empty required_env/imports/commands
   - paper-claim inflation (verify+promote outweighing probe+generate)
 required_evidence:
-  - python/compgen/providers/cards/cffi_c.yaml
-  - python/compgen/providers/cards/python_reference.yaml
-  - python/compgen/providers/cards/triton.yaml
-  - python/compgen/providers/cards/autocomp.yaml
-  - python/compgen/providers/cards/kernelblaster.yaml
-  - python/compgen/providers/cards/exo.yaml
-  - python/compgen/providers/cards/tilelang.yaml
-  - python/compgen/providers/cards/cutlass_cute.yaml
-  - python/compgen/providers/cards/bitblas.yaml
-  - python/compgen/providers/cards/thunderkittens.yaml
-  - python/compgen/providers/cards/mirage.yaml
-  - python/compgen/providers/cards/kernelbench_caesar.yaml
-  - python/compgen/providers/cards/cuda_tile_ir.yaml
-  - python/compgen/providers/cards/hexagon_mlir.yaml
-  - python/compgen/providers/cards/pallas.yaml
-  - python/compgen/providers/cards/nki.yaml
-  - python/compgen/providers/cards/gemmini_c.yaml
-  - python/compgen/providers/cards/radiance_muon.yaml
-  - python/compgen/providers/cards/claude_kernel.yaml
-  - python/compgen/targets/cards/host_cpu.yaml
-  - python/compgen/targets/cards/cuda_sm75.yaml
-  - python/compgen/targets/cards/cuda_sm80.yaml
-  - python/compgen/targets/cards/cuda_sm90.yaml
-  - python/compgen/targets/cards/rocm_gpu.yaml
-  - python/compgen/targets/cards/aws_neuron_trn.yaml
-  - python/compgen/targets/cards/aws_neuron_inf.yaml
-  - python/compgen/targets/cards/google_tpu_v5e.yaml
-  - python/compgen/targets/cards/google_tpu_v6e.yaml
-  - python/compgen/targets/cards/gemmini_mx.yaml
-  - python/compgen/targets/cards/radiance_muon.yaml
-  - python/compgen/targets/cards/hexagon_npu.yaml
-  - python/compgen/targets/cards/saturn_opu.yaml
-  - python/compgen/dialects/cards/cuda_tile_ir.yaml
-  - python/compgen/dialects/cards/hexagon_mlir.yaml
-  - python/compgen/dialects/cards/pallas.yaml
-  - python/compgen/dialects/cards/nki.yaml
-  - python/compgen/dialects/cards/exo.yaml
-  - python/compgen/dialects/cards/gemmini_c.yaml
-  - python/compgen/dialects/cards/radiance_muon.yaml
-  - python/compgen/dialects/cards/iree.yaml
-  - python/compgen/dialects/cards/triton_mlir.yaml
-  - python/compgen/dialects/cards/stablehlo.yaml
-  - python/compgen/providers/card_loader.py
+  - python/xpu_rt/providers/cards/cffi_c.yaml
+  - python/xpu_rt/providers/cards/python_reference.yaml
+  - python/xpu_rt/providers/cards/triton.yaml
+  - python/xpu_rt/providers/cards/autocomp.yaml
+  - python/xpu_rt/providers/cards/kernelblaster.yaml
+  - python/xpu_rt/providers/cards/exo.yaml
+  - python/xpu_rt/providers/cards/tilelang.yaml
+  - python/xpu_rt/providers/cards/cutlass_cute.yaml
+  - python/xpu_rt/providers/cards/bitblas.yaml
+  - python/xpu_rt/providers/cards/thunderkittens.yaml
+  - python/xpu_rt/providers/cards/mirage.yaml
+  - python/xpu_rt/providers/cards/kernelbench_caesar.yaml
+  - python/xpu_rt/providers/cards/cuda_tile_ir.yaml
+  - python/xpu_rt/providers/cards/hexagon_mlir.yaml
+  - python/xpu_rt/providers/cards/pallas.yaml
+  - python/xpu_rt/providers/cards/nki.yaml
+  - python/xpu_rt/providers/cards/gemmini_c.yaml
+  - python/xpu_rt/providers/cards/radiance_muon.yaml
+  - python/xpu_rt/providers/cards/claude_kernel.yaml
+  - python/xpu_rt/targets/cards/host_cpu.yaml
+  - python/xpu_rt/targets/cards/cuda_sm75.yaml
+  - python/xpu_rt/targets/cards/cuda_sm80.yaml
+  - python/xpu_rt/targets/cards/cuda_sm90.yaml
+  - python/xpu_rt/targets/cards/rocm_gpu.yaml
+  - python/xpu_rt/targets/cards/aws_neuron_trn.yaml
+  - python/xpu_rt/targets/cards/aws_neuron_inf.yaml
+  - python/xpu_rt/targets/cards/google_tpu_v5e.yaml
+  - python/xpu_rt/targets/cards/google_tpu_v6e.yaml
+  - python/xpu_rt/targets/cards/gemmini_mx.yaml
+  - python/xpu_rt/targets/cards/radiance_muon.yaml
+  - python/xpu_rt/targets/cards/hexagon_npu.yaml
+  - python/xpu_rt/targets/cards/saturn_opu.yaml
+  - python/xpu_rt/dialects/cards/cuda_tile_ir.yaml
+  - python/xpu_rt/dialects/cards/hexagon_mlir.yaml
+  - python/xpu_rt/dialects/cards/pallas.yaml
+  - python/xpu_rt/dialects/cards/nki.yaml
+  - python/xpu_rt/dialects/cards/exo.yaml
+  - python/xpu_rt/dialects/cards/gemmini_c.yaml
+  - python/xpu_rt/dialects/cards/radiance_muon.yaml
+  - python/xpu_rt/dialects/cards/iree.yaml
+  - python/xpu_rt/dialects/cards/triton_mlir.yaml
+  - python/xpu_rt/dialects/cards/stablehlo.yaml
+  - python/xpu_rt/providers/card_loader.py
   - tests/providers/test_card_inventory.py
 commit: 35ee97f497bc69c0716c25b935f575c3cd7d63f4
 created_at_utc: 2026-05-11T00:00:00Z

@@ -1,4 +1,4 @@
-"""Tests for :mod:`compgen.contrib.draft`.
+"""Tests for :mod:`xpu_rt.contrib.draft`.
 
 We use a real git worktree-like layout under tmp_path so the
 branch / commit steps are exercised without touching the actual
@@ -12,11 +12,11 @@ import json
 import subprocess
 from pathlib import Path
 
-from compgen.contrib import draft_pr, list_extensions, status
-from compgen.contrib.draft import _synthesize_test
+from xpu_rt.contrib import draft_pr, list_extensions, status
+from xpu_rt.contrib.draft import _synthesize_test
 
 _TOOL_EXT = """
-from compgen.llm.registry import Tool, ToolArg, ToolResult
+from xpu_rt.llm.registry import Tool, ToolArg, ToolResult
 
 TOOL = Tool(
     name="my_user_tool",
@@ -34,7 +34,7 @@ TOOL = Tool(
 
 
 def _bootstrap_ext_root(tmp_path: Path, invocation_counts: int = 5) -> Path:
-    """Populate a fake ~/.compgen/extensions with one tool + a state file."""
+    """Populate a fake ~/.xpu_rt/extensions with one tool + a state file."""
     root = tmp_path / "ext"
     root.mkdir()
     (root / "my_user_tool.py").write_text(_TOOL_EXT)
@@ -56,7 +56,7 @@ def _bootstrap_ext_root(tmp_path: Path, invocation_counts: int = 5) -> Path:
 
 def _bootstrap_repo(tmp_path: Path) -> Path:
     repo = tmp_path / "repo"
-    (repo / "python" / "compgen").mkdir(parents=True)
+    (repo / "python" / "xpu-rt").mkdir(parents=True)
     (repo / "tests").mkdir()
     (repo / "pyproject.toml").write_text("[project]\nname='x'\nversion='0.0'\n")
     # Initialise a fresh git repo so the draft commit workflow can run.
@@ -125,7 +125,7 @@ def test_draft_pr_without_tests_or_commit_copies_files(tmp_path: Path) -> None:
 
     # The upstream test imports the upstream module.
     body = result.upstream_test.read_text()
-    assert "compgen.agent.invent_slots.contrib.my_user_tool" in body
+    assert "xpu_rt.agent.invent_slots.contrib.my_user_tool" in body
 
     # Copied verbatim — the original `name="my_user_tool"` survives.
     assert "my_user_tool" in result.upstream_module.read_text()
@@ -187,5 +187,5 @@ def test_draft_pr_with_branch_and_commit(tmp_path: Path) -> None:
 def test_synthesize_test_embeds_slot_name_and_accepted_invocations() -> None:
     body = _synthesize_test("widget_fusion", [{"k": "v", "i": 1}])
     assert "widget_fusion" in body
-    assert "compgen.agent.invent_slots.contrib.widget_fusion" in body
+    assert "xpu_rt.agent.invent_slots.contrib.widget_fusion" in body
     assert "Accepted-invocation log" in body

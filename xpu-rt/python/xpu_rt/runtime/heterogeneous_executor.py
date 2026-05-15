@@ -24,15 +24,15 @@ from typing import Any
 
 import structlog
 
-from compgen.runtime.dispatch_strategy import (
+from xpu_rt.runtime.dispatch_strategy import (
     BulkSyncStrategy,
     DispatchStrategy,
     DispatchWave,
 )
-from compgen.runtime.instrumentation import InstrumentationConfig
-from compgen.runtime.planner import ExecutionPlan
-from compgen.runtime.topology import RuntimeTopology
-from compgen.runtime.transport import Transport, create_transport
+from xpu_rt.runtime.instrumentation import InstrumentationConfig
+from xpu_rt.runtime.planner import ExecutionPlan
+from xpu_rt.runtime.topology import RuntimeTopology
+from xpu_rt.runtime.transport import Transport, create_transport
 
 log = structlog.get_logger()
 

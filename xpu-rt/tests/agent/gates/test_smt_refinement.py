@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-from compgen.agent.gates import smt_refinement_gate
+from xpu_rt.agent.gates import smt_refinement_gate
 from xdsl.dialects.builtin import ModuleOp
 
 
@@ -33,13 +33,13 @@ def test_accepts_identical_modules() -> None:
 
 def test_rejects_on_translation_failure() -> None:
     """If validate_translation raises, the gate rejects cleanly."""
-    from compgen.agent.gates import smt_refinement as sr
+    from xpu_rt.agent.gates import smt_refinement as sr
 
     def _boom(*a, **k):  # type: ignore[no-untyped-def]
         raise RuntimeError("z3 blew up")
 
     with patch(
-        "compgen.ir.semantic.translation_validation.validate_translation",
+        "xpu_rt.ir.semantic.translation_validation.validate_translation",
         side_effect=_boom,
     ):
         m1 = ModuleOp([])

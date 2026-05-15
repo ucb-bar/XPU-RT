@@ -17,8 +17,8 @@ from pathlib import Path
 
 import torch
 import torch.nn as nn
-from compgen.capture.torch_export import capture_frontend_artifact
-from compgen.runtime.bundle_emit import emit_extended_artefacts
+from xpu_rt.capture.torch_export import capture_frontend_artifact
+from xpu_rt.runtime.bundle_emit import emit_extended_artefacts
 
 
 def _emit(model: nn.Module, sample_inputs: tuple[torch.Tensor, ...], tmp_path: Path) -> Path:
@@ -93,7 +93,7 @@ def test_golden_inputs_remains_user_only(tmp_path: Path) -> None:
 
 
 def test_no_exported_program_skips_golden_args(tmp_path: Path) -> None:
-    from compgen.runtime.bundle_emit import emit_extended_artefacts
+    from xpu_rt.runtime.bundle_emit import emit_extended_artefacts
 
     bundle_dir = tmp_path / "bundle"
     bundle_dir.mkdir()

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from compgen.ir.ukernel.contracts import UkernelContract
+from xpu_rt.ir.ukernel.contracts import UkernelContract
 
 
 def test_ukernel_contract() -> None:
@@ -13,8 +13,8 @@ def test_ukernel_contract() -> None:
 
 def test_contract_matching() -> None:
     """A call should match its contract."""
-    from compgen.ir.ukernel.contracts import check_contract
-    from compgen.ir.ukernel.ops import UkernelCallOp
+    from xpu_rt.ir.ukernel.contracts import check_contract
+    from xpu_rt.ir.ukernel.ops import UkernelCallOp
 
     contract = UkernelContract(
         kernel_name="my_matmul",

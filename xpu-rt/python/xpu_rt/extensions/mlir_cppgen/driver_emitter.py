@@ -1,6 +1,6 @@
-"""Emit the compgen-opt driver source file.
+"""Emit the xpu_rt-opt driver source file.
 
-Generates ``compgen-opt.cpp`` — the main entry point for the generated
+Generates ``xpu_rt-opt.cpp`` — the main entry point for the generated
 MLIR optimizer tool.
 """
 
@@ -11,7 +11,7 @@ from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader
 
-from compgen.extensions.mlir_cppgen.introspect import DialectInfo
+from xpu_rt.extensions.mlir_cppgen.introspect import DialectInfo
 
 _TEMPLATE_DIR = Path(__file__).parent / "templates"
 
@@ -41,7 +41,7 @@ def emit_opt_driver(
     *,
     dialects_with_passes: set[str] | None = None,
 ) -> str:
-    """Generate compgen-opt.cpp content."""
+    """Generate xpu_rt-opt.cpp content."""
     env = _make_env()
     tmpl = env.get_template("opt_driver.j2")
     dialects_with_passes = dialects_with_passes or set()
@@ -68,18 +68,18 @@ def write_opt_driver(
     *,
     dialects_with_passes: set[str] | None = None,
 ) -> Path:
-    """Write compgen-opt.cpp to the given directory.
+    """Write xpu_rt-opt.cpp to the given directory.
 
     Args:
         dialects: All dialects to register.
-        opt_dir: The ``compgen-opt/`` directory.
+        opt_dir: The ``xpu_rt-opt/`` directory.
         dialects_with_passes: Set of dialect prefixes that have passes.
 
     Returns:
         Path to the written file.
     """
     opt_dir.mkdir(parents=True, exist_ok=True)
-    path = opt_dir / "compgen-opt.cpp"
+    path = opt_dir / "xpu_rt-opt.cpp"
     path.write_text(emit_opt_driver(dialects, dialects_with_passes=dialects_with_passes or set()))
     return path
 

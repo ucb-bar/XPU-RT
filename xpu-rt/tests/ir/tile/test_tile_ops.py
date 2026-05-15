@@ -7,8 +7,8 @@ positive/negative cases.
 from __future__ import annotations
 
 import pytest
-from compgen.ir.tile.attrs import FragmentLayoutAttr, MemoryClassAttr, TileShapeAttr
-from compgen.ir.tile.ops import (
+from xpu_rt.ir.tile.attrs import FragmentLayoutAttr, MemoryClassAttr, TileShapeAttr
+from xpu_rt.ir.tile.ops import (
     TileAsyncCopyOp,
     TileBarrierOp,
     TileElementwiseOp,

@@ -49,9 +49,9 @@ forbidden:
 - aggregate file appending duplicate task_id entries (idempotent re-runs replace the prior entry for the same task_id)
 realness_level: production_path
 required_evidence:
-- python/compgen/kernels/provider.py (ContractFeedback gains kind + applies_when fields + to_dict)
-- python/compgen/graph_compilation/contract_feedback_apply.py (entire module — classifier + proposal generator + persistence)
-- python/compgen/graph_compilation/kernel_auction.py (per_provider_feedback collection + write_auction_feedback_artifacts call)
+- python/xpu_rt/kernels/provider.py (ContractFeedback gains kind + applies_when fields + to_dict)
+- python/xpu_rt/graph_compilation/contract_feedback_apply.py (entire module — classifier + proposal generator + persistence)
+- python/xpu_rt/graph_compilation/kernel_auction.py (per_provider_feedback collection + write_auction_feedback_artifacts call)
 - tests/graph_compilation/test_contract_feedback_apply.py
 feature_id: m59_contract_feedback_apply
 notes: |
@@ -95,7 +95,7 @@ notes: |
   - The agent_decision_request advisory block surfacing
     non-allowlisted entries is conservative — present in the
     contract_feedback.json schema, but
-    ``compgen.graph_compilation.agent_decision`` is unchanged in
+    ``xpu_rt.graph_compilation.agent_decision`` is unchanged in
     M-59. Threading the advisory through to the next agent
     decision is a follow-on (M-59.1 if needed).
   - ``measured_gain`` from the provider is unverified at feedback

@@ -8,7 +8,7 @@ Checks that a transformed Payload IR region refines the original by:
    is correct.
 
 This uses the Z3 Python API directly (not the xdsl-smt subprocess flow)
-for tighter integration with CompGen's agent loop.
+for tighter integration with XPU-RT's agent loop.
 """
 
 from __future__ import annotations
@@ -34,7 +34,7 @@ from xdsl.dialects.builtin import IntegerAttr, IntegerType, ModuleOp
 from xdsl.dialects.func import FuncOp, ReturnOp
 from xdsl.ir import Operation, SSAValue
 
-from compgen.semantic.backends.xdsl_smt.results import (
+from xpu_rt.semantic.backends.xdsl_smt.results import (
     StructuredCounterexample,
     TVResult,
 )

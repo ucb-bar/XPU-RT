@@ -13,7 +13,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from compgen.ir.accel.ops import (
+from xpu_rt.ir.accel.ops import (
     BarrierOp,
     DMAStartOp,
     DMAWaitOp,

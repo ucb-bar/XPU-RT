@@ -16,11 +16,11 @@ from typing import Any
 
 import structlog
 
-from compgen.runtime.transport import TransportMessage
+from xpu_rt.runtime.transport import TransportMessage
 
 log = structlog.get_logger()
 
-_INSTALL_MSG = "Ray is required for RayTransport. Install with: pip install 'compgen[ray]'"
+_INSTALL_MSG = "Ray is required for RayTransport. Install with: pip install 'xpu_rt[ray]'"
 
 
 def _require_ray() -> Any:
@@ -62,7 +62,7 @@ class RayTransport:
         """
         ray = _require_ray()
         if not ray.is_initialized():
-            ray.init(namespace="compgen")
+            ray.init(namespace="xpu-rt")
 
         from ray.util.queue import Queue
 

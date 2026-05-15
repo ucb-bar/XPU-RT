@@ -1,7 +1,7 @@
 schema_version: model_admission_source_candidates_v1
 
 # One row per real model_id. ``candidate_ref`` is a *proposed* HuggingFace
-# repo identifier; ``python -m compgen.model_admission verify-sources`` will
+# repo identifier; ``python -m xpu_rt.model_admission verify-sources`` will
 # confirm each via HfApi().model_info() and rewrite configs/models/<id>.yaml
 # with the canonical ref + revision SHA + source_verified=true on success.
 #

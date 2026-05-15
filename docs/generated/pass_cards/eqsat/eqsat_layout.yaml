@@ -4,7 +4,7 @@ display_name: E-graph saturation — layout-related rules
 level: payload
 family: eqsat
 source: homemade
-impl_path: python/compgen/eqsat/rules/layout.py
+impl_path: python/xpu_rt/eqsat/rules/layout.py
 reads:
   - 01_payload_lowering/payload.mlir
 writes:
@@ -25,7 +25,7 @@ cost: expensive
 failure_modes:
   - "saturation_budget_exhausted"
   - "layout_rewrite_breaks_rank"
-mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+mcp_tool: mcp__xpu_rt__xpu_rt_emit_agent_decision_request
 notes: |
   Layout-related e-graph rewrite rules: transpose-of-transpose
   cancellation, reshape commutativity, layout-encoding equivalences.

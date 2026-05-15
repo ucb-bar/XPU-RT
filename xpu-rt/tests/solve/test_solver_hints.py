@@ -21,14 +21,14 @@ import time
 
 import pytest
 
-from compgen.solve.memory_planner import (
+from xpu_rt.solve.memory_planner import (
     AliasCandidate,
     BufferSpec,
     MemoryPlanInput,
     TierCapacity,
     plan_memory,
 )
-from compgen.solve.solver_hints import (
+from xpu_rt.solve.solver_hints import (
     MemoryHints,
     StageGroup,
     SymmetryClass,
@@ -36,7 +36,7 @@ from compgen.solve.solver_hints import (
     merge_hints,
     rule_based_memory_hints,
 )
-from compgen.solve.solver_types import SolverStatus
+from xpu_rt.solve.solver_types import SolverStatus
 
 
 # ---------------------------------------------------------------------------

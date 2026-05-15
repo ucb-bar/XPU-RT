@@ -3,7 +3,7 @@ buffer plan.
 
 Reconstruction of XLA's ``OptimizeInputOutputBufferAlias`` +
 hexagon-mlir's ``hexagon-rvo`` (Return Value Optimization). Zero
-external references; CompGen owns the rewrite.
+external references; XPU-RT owns the rewrite.
 
 Operates on :class:`ExecutionPlan`. When a buffer's lifetime is
 exclusively "produced, then immediately consumed as a final
@@ -33,7 +33,7 @@ Config:
 LLM-tool signature:
 
     tool_name="alias_io_buffers"
-    wraps_pass="CompGen:XLAOptimizeInputOutputBufferAlias+HexagonRVO"
+    wraps_pass="XPU-RT:XLAOptimizeInputOutputBufferAlias+HexagonRVO"
     invent_slot="runtime/io_buffer_aliasing"
     policy="AliasLeafsInSameSpace"
 """
@@ -43,7 +43,7 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass
 
-from compgen.runtime.execution_plan import (
+from xpu_rt.runtime.execution_plan import (
     BufferDescriptor,
     ExecutionPlan,
 )

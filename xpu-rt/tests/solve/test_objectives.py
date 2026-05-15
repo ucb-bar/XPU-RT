@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from compgen.solve.objectives import (
+from xpu_rt.solve.objectives import (
     CompositeCost,
     EnergyCost,
     LatencyCost,
     MemoryCost,
     ThroughputCost,
 )
-from compgen.solve.partition import Partition
+from xpu_rt.solve.partition import Partition
 
 
 def test_latency_cost() -> None:

@@ -3,11 +3,11 @@ claim: |
   executor is emitted** per-workload from the same M-46 plan that
   M-88 (C11) and M-47/M-51/M-52 (Python) consume, baked for the
   ``cuda`` driver. The emitter at
-  ``compgen.runtime.glue_emit.cpp_host.emit_cpp_host_executor``
+  ``xpu_rt.runtime.glue_emit.cpp_host.emit_cpp_host_executor``
   produces three artefacts under ``06_glue_emit/`` (sharing the
   ``generated_plan_executor.h`` ABI with M-88):
 
-  - ``generated_plan_executor.cpp`` — ``extern "C" compgen_run`` that
+  - ``generated_plan_executor.cpp`` — ``extern "C" xpu_rt_run`` that
     opens a ``cuda`` device via ``cg_rt_instance_create("cuda", ...)``,
     builds a command buffer, dispatches one
     ``cg_rt_command_buffer_dispatch`` per region in topological order
@@ -28,7 +28,7 @@ claim: |
 
   Compilation acceptance: the emit compiles cleanly with
   ``c++ -std=c++17 -Wall -Wextra -fsyntax-only`` against
-  ``runtime/native/libcompgen_rt/include`` (verified by
+  ``runtime/native/libxpu_rt/include`` (verified by
   ``test_emit_parses_with_cxx_fsyntax_only``).
 commit: m89_phase_g_runtime_three_layer_closure
 created_at_utc: 2026-05-12T00:00:00Z
@@ -38,14 +38,14 @@ forbidden:
 - omitting any PLAN_VIOLATION_<KIND> check covered by M-48 / M-61
 - emitting non-deterministic source (the .cpp must be byte-stable across reruns)
 - generating files at any path other than 06_glue_emit/
-- skipping cg_rt_semaphore_wait at the end of compgen_run
+- skipping cg_rt_semaphore_wait at the end of xpu_rt_run
 realness_level: production_path
 required_evidence:
-- python/compgen/runtime/glue_emit/__init__.py
-- python/compgen/runtime/glue_emit/cpp_host.py
-- python/compgen/runtime/glue_emit/c11_baremetal.py
+- python/xpu_rt/runtime/glue_emit/__init__.py
+- python/xpu_rt/runtime/glue_emit/cpp_host.py
+- python/xpu_rt/runtime/glue_emit/c11_baremetal.py
 - tests/runtime/test_glue_emit_cpp_host.py
-- runtime/native/libcompgen_rt/include/compgen_rt/compgen_rt.h
+- runtime/native/libxpu_rt/include/xpu_rt/xpu_rt.h
 - "06_glue_emit/generated_plan_executor.cpp on a real run"
 - "06_glue_emit/plan_executor_cpp_host_manifest.json on a real run"
 feature_id: m89_cpp_host_emitter
@@ -57,7 +57,7 @@ notes: |
   - manifest carries driver_name=cuda + push_constants_layout;
   - byte stability across reruns;
   - c++ -fsyntax-only syntactic validity (compiler-gated);
-  - ABI lint: only cg_rt_* and compgen_kernel_* externs;
+  - ABI lint: only cg_rt_* and xpu_rt_kernel_* externs;
   - differential vs M-88 C11 emit on the same plan: same
     region_order, same bound_regions, same PLAN_VIOLATION codes;
   - dispatch count = bound region count;
@@ -78,6 +78,6 @@ notes: |
   - The push-constants block is reserved with placeholder grid/block
     dims (1,1,1, 64,1,1); M-49's binding map writes the real launch
     geometry per-region.
-  - The kernel-pack TU (``compgen_kernel_*`` definitions) is M-49's
+  - The kernel-pack TU (``xpu_rt_kernel_*`` definitions) is M-49's
     territory; the M-89 emit is the host launch loop that M-49's
     kernels register against.

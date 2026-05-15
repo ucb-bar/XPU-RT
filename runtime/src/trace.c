@@ -1,5 +1,5 @@
 /*
- * CompGen Trace — ring-buffer trace collector.
+ * XPU-RT Trace — ring-buffer trace collector.
  *
  * Collects trace events into a fixed-size ring buffer and exports
  * them as Chrome Trace Event Format JSON.
@@ -8,7 +8,7 @@
  * stubs so the linker is satisfied but zero code is generated.
  */
 
-#include "compgen/trace.h"
+#include "xpu_rt/trace.h"
 
 #include <stdio.h>
 #include <stdlib.h>

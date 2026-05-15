@@ -31,7 +31,7 @@ failure_modes:
   - "unsupported_op_in_region"
   - "tile_dimension_non_positive"
   - "missing_or_zero_tile_param"
-mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+mcp_tool: mcp__xpu_rt__xpu_rt_emit_agent_decision_request
 example_invocation:
   schema_version: agent_decision_response_v1
   selected_candidate_id: tile_M16_N16_K16
@@ -41,7 +41,7 @@ example_invocation:
       - "candidate.cost_preview.static_relative_cost"
       - "candidate.m21_analytical_cost.predicted_us"
 source: homemade
-impl_path: python/compgen/graph_compilation/recipe_lowering.py
+impl_path: python/xpu_rt/graph_compilation/recipe_lowering.py
 notes: |
   set_tile_params is the canonical tiling pass for matmul regions.
   When the picked tile divides every region dimension cleanly, the

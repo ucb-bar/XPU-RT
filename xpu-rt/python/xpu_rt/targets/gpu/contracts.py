@@ -3,7 +3,7 @@
 These are the abstractions the universal compile/dispatch path
 calls into. The matcher (``runtime/lowering/fx_to_megakernel.py``),
 the autotune probe (``runtime/autotune/``), and the dispatch
-runtime (``mcp/tools/compile.py::compgen_run_compiled_bundle``)
+runtime (``mcp/tools/compile.py::xpu_rt_run_compiled_bundle``)
 import only from here — never from vendor-specific modules.
 
 Every GPU vendor package (``targets/gpu/nvidia/``,
@@ -42,7 +42,7 @@ from __future__ import annotations
 
 from typing import Any, Protocol, runtime_checkable
 
-from compgen.transforms.emit_cuda_megakernel import DeviceFunctionSource
+from xpu_rt.transforms.emit_cuda_megakernel import DeviceFunctionSource
 
 # ---------------------------------------------------------------------------
 # Class-level constants — vendors can override
@@ -68,7 +68,7 @@ class GpuProbe(Protocol):
     """Detect what's available on the local GPU + vendor's libraries.
 
     The autotune layer calls into this once per process to populate
-    a :class:`compgen.runtime.autotune.BackendChoice`. The vendor
+    a :class:`xpu_rt.runtime.autotune.BackendChoice`. The vendor
     package returns vendor-shaped data; the Protocol only requires
     the universal subset.
     """
@@ -249,7 +249,7 @@ class GpuCostModel(Protocol):
     """Vendor-specific perf coefficients for the universal
     roofline + ETC-vs-eager predictor.
 
-    The predictor (``compgen.kernels.cost.predict_etc_dispatch``)
+    The predictor (``xpu_rt.kernels.cost.predict_etc_dispatch``)
     is vendor-blind; it asks the cost model for numbers and
     composes them. NVIDIA's per-arch TFLOPS table, AMD's CDNA3
     BF16 throughput, Intel's Xe-HPG numbers — all surface through

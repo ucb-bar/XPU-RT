@@ -21,7 +21,7 @@ from typing import Any
 
 import jsonschema
 
-from compgen.graph_compilation.artifacts import (
+from xpu_rt.graph_compilation.artifacts import (
     CANONICAL_STAGE_ORDER,
     ArtifactRef,
     RuleResult,
@@ -31,12 +31,12 @@ from compgen.graph_compilation.artifacts import (
     StageRecord,
     ValidationReport,
 )
-from compgen.graph_compilation.hashing import (
+from xpu_rt.graph_compilation.hashing import (
     SymlinkEscapeError,
     sha256_file,
     sha256_tree,
 )
-from compgen.graph_compilation.schemas import load_schema
+from xpu_rt.graph_compilation.schemas import load_schema
 
 # Order matters for the report. Each entry is (rule_id, summary).
 RULE_IDS: tuple[tuple[str, str], ...] = (

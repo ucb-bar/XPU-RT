@@ -1,6 +1,6 @@
 """Spec ingestion task — load and register a hardware spec.
 
-Wraps ``compgen.api.device()`` as a Ray remote task.
+Wraps ``xpu_rt.api.device()`` as a Ray remote task.
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ def ingest_spec(
     Returns:
         Serialized target summary dict.
     """
-    from compgen.api import device
+    from xpu_rt.api import device
 
     dev = device(spec_path, output_dir)
 

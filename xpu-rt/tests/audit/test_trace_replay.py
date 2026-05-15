@@ -1,4 +1,4 @@
-"""Tests for compgen.audit.trace_replay."""
+"""Tests for xpu_rt.audit.trace_replay."""
 
 from __future__ import annotations
 
@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from compgen.audit.errors import ReplayHashMismatch, DecisionIdMismatch
-from compgen.audit.trace_replay import (
+from xpu_rt.audit.errors import ReplayHashMismatch, DecisionIdMismatch
+from xpu_rt.audit.trace_replay import (
     DecisionTrace,
     TRACE_SCHEMA_VERSION,
     assert_decision_ids_match,

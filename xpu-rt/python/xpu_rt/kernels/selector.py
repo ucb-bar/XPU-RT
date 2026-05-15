@@ -21,8 +21,8 @@ from typing import Any
 
 import structlog
 
-from compgen.kernels.contracts import KernelSpec
-from compgen.targets.schema import TargetProfile
+from xpu_rt.kernels.contracts import KernelSpec
+from xpu_rt.targets.schema import TargetProfile
 
 log = structlog.get_logger(__name__)
 
@@ -34,7 +34,7 @@ def _get_ukernel_registry():
     """Get or build the default ukernel registry (lazy singleton)."""
     global _ukernel_registry
     if _ukernel_registry is None:
-        from compgen.ir.ukernel.builtins import build_default_registry
+        from xpu_rt.ir.ukernel.builtins import build_default_registry
 
         _ukernel_registry = build_default_registry()
     return _ukernel_registry
@@ -144,7 +144,7 @@ class KernelSelector:
 
     def _check_ukernel(self, spec: KernelSpec) -> bool:
         """Check if a registered ukernel can handle this spec."""
-        from compgen.ir.ukernel.constraints import ConstraintContext
+        from xpu_rt.ir.ukernel.constraints import ConstraintContext
 
         registry = _get_ukernel_registry()
 
@@ -267,10 +267,10 @@ class KernelSelector:
     def _ask_llm_for_strategy(self, spec: KernelSpec, op_name: str) -> StrategyDecision | None:
         """Ask LLM to select strategy for a borderline op."""
         try:
-            from compgen.agent.prompts.kernel_strategy import KERNEL_STRATEGY_SCHEMA, KernelStrategyContext
-            from compgen.agent.prompts.kernel_strategy import format_prompt as fmt_ks
-            from compgen.agent.prompts.kernel_strategy import parse_response as parse_ks
-            from compgen.llm.base import GenerationRequest, LLMConfig
+            from xpu_rt.agent.prompts.kernel_strategy import KERNEL_STRATEGY_SCHEMA, KernelStrategyContext
+            from xpu_rt.agent.prompts.kernel_strategy import format_prompt as fmt_ks
+            from xpu_rt.agent.prompts.kernel_strategy import parse_response as parse_ks
+            from xpu_rt.llm.base import GenerationRequest, LLMConfig
 
             op_family = op_name.split(".")[-1] if "." in op_name else op_name
             has_gpu = any(d.device_type == "gpu" for d in self.target.devices)
@@ -287,7 +287,7 @@ class KernelSelector:
             )
             prompt = fmt_ks(ctx)
 
-            from compgen.llm.base import Objective, PromptContext
+            from xpu_rt.llm.base import Objective, PromptContext
 
             model_id = "default"
             try:

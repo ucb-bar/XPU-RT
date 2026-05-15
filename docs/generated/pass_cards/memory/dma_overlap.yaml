@@ -4,7 +4,7 @@ display_name: Overlap DMA with compute
 level: payload
 family: memory
 source: hexagon-mlir
-impl_path: python/compgen/ir/payload/passes/rewrites/dma_overlap.py
+impl_path: python/xpu_rt/ir/payload/passes/rewrites/dma_overlap.py
 reads:
   - 01_payload_lowering/payload.mlir
   - 02_graph_analysis/region_graph.json
@@ -26,7 +26,7 @@ cost: medium
 failure_modes:
   - "no_concurrent_dma_capability"
   - "dependency_blocks_overlap"
-mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+mcp_tool: mcp__xpu_rt__xpu_rt_emit_agent_decision_request
 notes: |
   Port of hexagon-mlir's two-stage DMA-overlap pair. Splits compute
   regions and inserts DMA prefetch / writeback at boundaries so the

@@ -1,1 +1,1 @@
-"""Tests for the compgen.semantic.verify package."""
+"""Tests for the xpu_rt.semantic.verify package."""

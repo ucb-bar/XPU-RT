@@ -5,14 +5,14 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from compgen.memory.blobs import BlobStore
-from compgen.memory.schema import (
+from xpu_rt.memory.blobs import BlobStore
+from xpu_rt.memory.schema import (
     CandidateStatus,
     KnowledgeKind,
     ObjectKind,
     ScopeKind,
 )
-from compgen.memory.store import CompilerMemory
+from xpu_rt.memory.store import CompilerMemory
 
 
 @pytest.fixture

@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from compgen.agent.env import Observation
+from xpu_rt.agent.env import Observation
 
 
 @dataclass(frozen=True)

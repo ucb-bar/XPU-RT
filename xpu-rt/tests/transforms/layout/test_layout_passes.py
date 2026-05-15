@@ -8,8 +8,8 @@ available, falls back to hand-built modules otherwise.
 from __future__ import annotations
 
 import pytest
-from compgen.ir.layout.ops import SetLayoutOp, UnsetLayoutOp
-from compgen.stages.encoding.stage import ENCODING_ATTR
+from xpu_rt.ir.layout.ops import SetLayoutOp, UnsetLayoutOp
+from xpu_rt.stages.encoding.stage import ENCODING_ATTR
 from xdsl.dialects import arith, func
 from xdsl.dialects.builtin import (
     Float32Type,
@@ -68,14 +68,14 @@ def _add_encoding_attrs(module: ModuleOp) -> ModuleOp:
 
 class TestCanonicalizeTransposes:
     def test_no_crash_on_empty_module(self) -> None:
-        from compgen.transforms.layout.canonicalize_transposes import canonicalize_transposes
+        from xpu_rt.transforms.layout.canonicalize_transposes import canonicalize_transposes
 
         module = _make_arith_module()
         result = canonicalize_transposes(module)
         assert isinstance(result, ModuleOp)
 
     def test_no_crash_on_tensor_module(self) -> None:
-        from compgen.transforms.layout.canonicalize_transposes import canonicalize_transposes
+        from xpu_rt.transforms.layout.canonicalize_transposes import canonicalize_transposes
 
         module = _make_tensor_module()
         result = canonicalize_transposes(module)
@@ -84,7 +84,7 @@ class TestCanonicalizeTransposes:
 
 class TestAttachLayoutHints:
     def test_no_crash_on_empty_plans(self) -> None:
-        from compgen.transforms.layout.attach_layout_hints import attach_layout_hints
+        from xpu_rt.transforms.layout.attach_layout_hints import attach_layout_hints
 
         module = _make_arith_module()
         result = attach_layout_hints(module, {})
@@ -93,7 +93,7 @@ class TestAttachLayoutHints:
 
 class TestSetVirtualEncodings:
     def test_no_crash_on_arith_module(self) -> None:
-        from compgen.transforms.layout.set_virtual_encodings import set_virtual_encodings
+        from xpu_rt.transforms.layout.set_virtual_encodings import set_virtual_encodings
 
         module = _add_encoding_attrs(_make_arith_module())
         result = set_virtual_encodings(module)
@@ -102,7 +102,7 @@ class TestSetVirtualEncodings:
 
 class TestPropagateLayouts:
     def test_no_crash(self) -> None:
-        from compgen.transforms.layout.propagate_layouts import propagate_layouts
+        from xpu_rt.transforms.layout.propagate_layouts import propagate_layouts
 
         module = _make_arith_module()
         result = propagate_layouts(module)
@@ -111,7 +111,7 @@ class TestPropagateLayouts:
 
 class TestHoistLayoutOps:
     def test_no_crash(self) -> None:
-        from compgen.transforms.layout.hoist_layout_ops import hoist_layout_ops
+        from xpu_rt.transforms.layout.hoist_layout_ops import hoist_layout_ops
 
         module = _make_arith_module()
         result = hoist_layout_ops(module)
@@ -120,7 +120,7 @@ class TestHoistLayoutOps:
 
 class TestFuseLayoutIntoProducers:
     def test_no_crash(self) -> None:
-        from compgen.transforms.layout.fuse_layout_into_producers import fuse_layout_into_producers
+        from xpu_rt.transforms.layout.fuse_layout_into_producers import fuse_layout_into_producers
 
         module = _make_arith_module()
         result = fuse_layout_into_producers(module)
@@ -129,7 +129,7 @@ class TestFuseLayoutIntoProducers:
 
 class TestIntroducePrepacking:
     def test_no_crash(self) -> None:
-        from compgen.transforms.layout.introduce_prepacking import introduce_prepacking
+        from xpu_rt.transforms.layout.introduce_prepacking import introduce_prepacking
 
         module = _make_arith_module()
         result = introduce_prepacking(module)
@@ -138,7 +138,7 @@ class TestIntroducePrepacking:
 
 class TestSpecializeLayouts:
     def test_no_crash(self) -> None:
-        from compgen.transforms.layout.specialize_layouts import specialize_layouts
+        from xpu_rt.transforms.layout.specialize_layouts import specialize_layouts
 
         module = _make_arith_module()
         result = specialize_layouts(module)
@@ -147,7 +147,7 @@ class TestSpecializeLayouts:
 
 class TestMaterializeLayoutBoundaries:
     def test_no_crash(self) -> None:
-        from compgen.transforms.layout.materialize_layout_boundaries import materialize_layout_boundaries
+        from xpu_rt.transforms.layout.materialize_layout_boundaries import materialize_layout_boundaries
 
         module = _make_arith_module()
         result = materialize_layout_boundaries(module)
@@ -156,14 +156,14 @@ class TestMaterializeLayoutBoundaries:
 
 class TestCleanupLayoutArtifacts:
     def test_marks_module_clean(self) -> None:
-        from compgen.transforms.layout.cleanup_layout_artifacts import cleanup_layout_artifacts
+        from xpu_rt.transforms.layout.cleanup_layout_artifacts import cleanup_layout_artifacts
 
         module = _make_arith_module()
         result = cleanup_layout_artifacts(module)
-        assert "compgen.layout_clean" in result.attributes
+        assert "xpu_rt.layout_clean" in result.attributes
 
     def test_no_virtual_ops_remain(self) -> None:
-        from compgen.transforms.layout.cleanup_layout_artifacts import cleanup_layout_artifacts
+        from xpu_rt.transforms.layout.cleanup_layout_artifacts import cleanup_layout_artifacts
 
         module = _make_arith_module()
         result = cleanup_layout_artifacts(module)
@@ -178,16 +178,16 @@ class TestCleanupLayoutArtifacts:
 
 class TestRunLayoutPipeline:
     def test_full_pipeline_arith_module(self) -> None:
-        from compgen.transforms.layout import run_layout_pipeline
+        from xpu_rt.transforms.layout import run_layout_pipeline
 
         module = _add_encoding_attrs(_make_arith_module())
         result = run_layout_pipeline(module)
         assert isinstance(result, ModuleOp)
         # cleanup pass should mark module as layout-clean
-        assert "compgen.layout_clean" in result.attributes
+        assert "xpu_rt.layout_clean" in result.attributes
 
     def test_no_virtual_layout_ops_remain(self) -> None:
-        from compgen.transforms.layout import run_layout_pipeline
+        from xpu_rt.transforms.layout import run_layout_pipeline
 
         module = _add_encoding_attrs(_make_arith_module())
         result = run_layout_pipeline(module)
@@ -195,16 +195,16 @@ class TestRunLayoutPipeline:
             assert not isinstance(op, (SetLayoutOp, UnsetLayoutOp))
 
     def test_pipeline_with_tensor_module(self) -> None:
-        from compgen.transforms.layout import run_layout_pipeline
+        from xpu_rt.transforms.layout import run_layout_pipeline
 
         module = _add_encoding_attrs(_make_tensor_module())
         result = run_layout_pipeline(module)
         assert isinstance(result, ModuleOp)
-        assert "compgen.layout_clean" in result.attributes
+        assert "xpu_rt.layout_clean" in result.attributes
 
     def test_pipeline_with_plans(self) -> None:
-        from compgen.analysis.layout.planner import LayoutPlan
-        from compgen.transforms.layout import run_layout_pipeline
+        from xpu_rt.analysis.layout.planner import LayoutPlan
+        from xpu_rt.transforms.layout import run_layout_pipeline
 
         plans = {
             "region_0": LayoutPlan(
@@ -217,8 +217,8 @@ class TestRunLayoutPipeline:
         assert isinstance(result, ModuleOp)
 
     def test_pipeline_with_cuda_resolver(self) -> None:
-        from compgen.transforms.layout import run_layout_pipeline
-        from compgen.transforms.layout.cuda_resolver import CudaLayoutResolver
+        from xpu_rt.transforms.layout import run_layout_pipeline
+        from xpu_rt.transforms.layout.cuda_resolver import CudaLayoutResolver
 
         resolver = CudaLayoutResolver()
         module = _add_encoding_attrs(_make_arith_module())
@@ -240,7 +240,7 @@ class TestLayoutPipelineWithCapture:
         try:
             import torch
             import torch.nn as nn
-            from compgen.ir.import_fx import import_fx_to_xdsl
+            from xpu_rt.ir.import_fx import import_fx_to_xdsl
 
             class SimpleMLP(nn.Module):
                 def __init__(self) -> None:
@@ -260,9 +260,9 @@ class TestLayoutPipelineWithCapture:
             pytest.skip("torch.export or xDSL import not available")
 
     def test_encoding_then_pipeline(self, captured_module) -> None:
-        from compgen.stages.encoding.stage import EncodingStage
-        from compgen.targets.schema import ComputeUnit, DeviceSpec, MemoryLevel, TargetProfile
-        from compgen.transforms.layout import run_layout_pipeline
+        from xpu_rt.stages.encoding.stage import EncodingStage
+        from xpu_rt.targets.schema import ComputeUnit, DeviceSpec, MemoryLevel, TargetProfile
+        from xpu_rt.transforms.layout import run_layout_pipeline
 
         target = TargetProfile(
             name="test_gpu",
@@ -280,7 +280,7 @@ class TestLayoutPipelineWithCapture:
         encoded = stage.shared_passes(captured_module, target)
         result = run_layout_pipeline(encoded)
         assert isinstance(result, ModuleOp)
-        assert "compgen.layout_clean" in result.attributes
+        assert "xpu_rt.layout_clean" in result.attributes
 
         # Verify no virtual layout ops remain
         for op in result.walk():

@@ -49,7 +49,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from compgen.graph_compilation.action_space_resolver import (
+from xpu_rt.graph_compilation.action_space_resolver import (
     HashMismatchError,
     IllegalCandidateError,
     RecipeDeltaMismatchError,
@@ -58,7 +58,7 @@ from compgen.graph_compilation.action_space_resolver import (
     _parse_attrs_body,  # reuse the tiny MLIR-attr parser
     resolve_candidate,
 )
-from compgen.graph_compilation.region_dossier import (
+from xpu_rt.graph_compilation.region_dossier import (
     TargetProfile,
     load_target_profile,
 )
@@ -826,7 +826,7 @@ def run_recipe_gate(
     region_dossier_paths = dict(graph_dossier["region_dossiers"])
 
     # Optional gap_action_queue.json — index by region_id.
-    from compgen.graph_compilation.artifacts import stage_dir
+    from xpu_rt.graph_compilation.artifacts import stage_dir
 
     gap_lookup: dict[str, dict[str, Any]] = {}
     gd_dir = stage_dir(run_dir, "gap_discovery")

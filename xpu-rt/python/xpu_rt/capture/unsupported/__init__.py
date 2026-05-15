@@ -5,15 +5,15 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from compgen.capture.unsupported.classify import UnsupportedClassification, classify_operator_issue
-from compgen.capture.unsupported.detect import UnsupportedOperatorIssue, detect_unsupported_operators
-from compgen.capture.unsupported.introspect import UnsupportedOpDossier, build_operator_dossier
-from compgen.capture.unsupported.promote import PromotionRecord, build_promotion_record
-from compgen.capture.unsupported.synthesize_translation import (
+from xpu_rt.capture.unsupported.classify import UnsupportedClassification, classify_operator_issue
+from xpu_rt.capture.unsupported.detect import UnsupportedOperatorIssue, detect_unsupported_operators
+from xpu_rt.capture.unsupported.introspect import UnsupportedOpDossier, build_operator_dossier
+from xpu_rt.capture.unsupported.promote import PromotionRecord, build_promotion_record
+from xpu_rt.capture.unsupported.synthesize_translation import (
     SynthesizedPayloadTranslation,
     synthesize_payload_translation,
 )
-from compgen.capture.unsupported.verify import UnsupportedVerification, verify_unsupported_resolution
+from xpu_rt.capture.unsupported.verify import UnsupportedVerification, verify_unsupported_resolution
 
 
 @dataclass(frozen=True)

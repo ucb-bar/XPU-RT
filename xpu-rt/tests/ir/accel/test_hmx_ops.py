@@ -1,9 +1,9 @@
-"""Tests for W9 HMX tile primitives on the compgen.accel dialect."""
+"""Tests for W9 HMX tile primitives on the xpu_rt.accel dialect."""
 
 from __future__ import annotations
 
 import pytest
-from compgen.ir.accel.ops import (
+from xpu_rt.ir.accel.ops import (
     ACCEL_IR_OPS,
     HMXAccumulatorClearIROp,
     HMXDMAOverlapIROp,
@@ -209,10 +209,10 @@ def test_hmx_dma_overlap_rejects_zero_line_bytes():
 
 def test_accel_ops_includes_all_4_hmx_variants():
     names = {op.name for op in ACCEL_IR_OPS}
-    assert "compgen.accel.hmx_tile_load" in names
-    assert "compgen.accel.hmx_matrix_engine" in names
-    assert "compgen.accel.hmx_accumulator_clear" in names
-    assert "compgen.accel.hmx_dma_overlap" in names
+    assert "xpu_rt.accel.hmx_tile_load" in names
+    assert "xpu_rt.accel.hmx_matrix_engine" in names
+    assert "xpu_rt.accel.hmx_accumulator_clear" in names
+    assert "xpu_rt.accel.hmx_dma_overlap" in names
 
 
 def test_accel_dialect_has_10_total_ops():

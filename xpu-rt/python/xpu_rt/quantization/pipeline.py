@@ -3,7 +3,7 @@
 Chains: load → quantize → verify → capture → analyze → lower → bundle.
 Works with any ``nn.Module``, any quantization recipe, and any target op map.
 
-Produces the standard CompGen artifact contract output::
+Produces the standard XPU-RT artifact contract output::
 
     <output_dir>/
         golden_inputs.pt
@@ -17,7 +17,7 @@ Produces the standard CompGen artifact contract output::
 
 Usage::
 
-    from compgen.quantization.pipeline import QuantizedModelPipeline
+    from xpu_rt.quantization.pipeline import QuantizedModelPipeline
 
     pipeline = QuantizedModelPipeline(
         model=my_model,
@@ -44,17 +44,17 @@ import torch.nn as nn
 from xdsl.dialects.builtin import ModuleOp
 from xdsl.printer import Printer
 
-from compgen.capture.torch_export import CaptureArtifact, capture_dynamo_partitions
-from compgen.capture.torchao_pipeline import QuantizationConfig, apply_quantization
-from compgen.ir.payload.contracts import KernelContract, extract_contracts
-from compgen.ir.payload.import_fx import ImportDiagnostic, fx_to_xdsl
-from compgen.quantization.export_wrappers import rewrite_for_export
-from compgen.quantization.graph_analyzer import (
+from xpu_rt.capture.torch_export import CaptureArtifact, capture_dynamo_partitions
+from xpu_rt.capture.torchao_pipeline import QuantizationConfig, apply_quantization
+from xpu_rt.ir.payload.contracts import KernelContract, extract_contracts
+from xpu_rt.ir.payload.import_fx import ImportDiagnostic, fx_to_xdsl
+from xpu_rt.quantization.export_wrappers import rewrite_for_export
+from xpu_rt.quantization.graph_analyzer import (
     QuantizedGraphAnalysis,
     analyze_for_npu,
     analyze_fx_graphs,
 )
-from compgen.quantization.verify import NpuAlignmentResult, npu_alignment_check
+from xpu_rt.quantization.verify import NpuAlignmentResult, npu_alignment_check
 
 logger = structlog.get_logger()
 
@@ -227,11 +227,11 @@ class QuantizedModelPipeline:
             return
 
         try:
-            from compgen.kernels.golden.export import export_golden_data, export_test_harness
-            from compgen.kernels.golden.generator import generate_golden_for_pattern
-            from compgen.kernels.patterns.catalog import build_pattern_catalog, export_pattern_catalog
-            from compgen.kernels.patterns.detection import detect_patterns_in_graphs
-            from compgen.transforms.graph_passes import run_decomposition_on_graphs
+            from xpu_rt.kernels.golden.export import export_golden_data, export_test_harness
+            from xpu_rt.kernels.golden.generator import generate_golden_for_pattern
+            from xpu_rt.kernels.patterns.catalog import build_pattern_catalog, export_pattern_catalog
+            from xpu_rt.kernels.patterns.detection import detect_patterns_in_graphs
+            from xpu_rt.transforms.graph_passes import run_decomposition_on_graphs
 
             graphs = list(artifact.graphs)
 

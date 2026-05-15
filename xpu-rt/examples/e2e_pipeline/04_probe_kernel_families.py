@@ -15,8 +15,8 @@ Why one-family-per-region (rather than one-family-per-semantic-kind):
   and therefore land on different autocomp search trajectories. The
   coarse count by semantic_kind is also reported, for orientation.
 
-No CompGen imports — this probe consumes only pre-existing artifacts,
-so it works even if compgen.agent internals change.
+No XPU-RT imports — this probe consumes only pre-existing artifacts,
+so it works even if xpu_rt.agent internals change.
 
 Artifacts:
   artifacts/<workload>/stage_4_kernel_families/<target>/kernel_families_baseline.yaml

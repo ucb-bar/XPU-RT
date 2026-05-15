@@ -24,8 +24,8 @@ forbidden:
 required_evidence:
   - scripts/dev/build_solver_planning_evidence_pack.py
   - scripts/dev/run_solver_planning_demo.py
-  - python/compgen/audit/solver_gates.py
-  - python/compgen/audit/trust_report.py (gate registration)
+  - python/xpu_rt/audit/solver_gates.py
+  - python/xpu_rt/audit/trust_report.py (gate registration)
   - tests/solve/test_solver_planning_evidence_pack.py
   - results/solver_planning_evidence_pack/solver_planning_summary.md on a real run
 commit: 0e80000000000000000000000000000000000000

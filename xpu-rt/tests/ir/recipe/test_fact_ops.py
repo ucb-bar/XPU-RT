@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import io
 
-from compgen.ir.recipe.attrs import CostAttr, DeviceRefAttr
-from compgen.ir.recipe.ops_fact import (
+from xpu_rt.ir.recipe.attrs import CostAttr, DeviceRefAttr
+from xpu_rt.ir.recipe.ops_fact import (
     BackendAvailableOp,
     CalibrationOp,
     ExportIssueOp,

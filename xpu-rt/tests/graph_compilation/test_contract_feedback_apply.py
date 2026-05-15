@@ -38,41 +38,41 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 class TestInferKind:
     def test_provider_supplied_kind_wins(self) -> None:
-        from compgen.graph_compilation.contract_feedback_apply import _infer_kind
-        from compgen.kernels.provider import ContractFeedback
+        from xpu_rt.graph_compilation.contract_feedback_apply import _infer_kind
+        from xpu_rt.kernels.provider import ContractFeedback
 
         fb = ContractFeedback(field="dtype", kind="custom_kind")
         assert _infer_kind(fb) == "custom_kind"
 
     def test_layout_field_infers_layout_swap(self) -> None:
-        from compgen.graph_compilation.contract_feedback_apply import _infer_kind
-        from compgen.kernels.provider import ContractFeedback
+        from xpu_rt.graph_compilation.contract_feedback_apply import _infer_kind
+        from xpu_rt.kernels.provider import ContractFeedback
 
         assert _infer_kind(ContractFeedback(field="layout")) == "layout_swap"
         assert _infer_kind(ContractFeedback(field="io.input_layout")) == "layout_swap"
 
     def test_dtype_field_infers_dtype_widen(self) -> None:
-        from compgen.graph_compilation.contract_feedback_apply import _infer_kind
-        from compgen.kernels.provider import ContractFeedback
+        from xpu_rt.graph_compilation.contract_feedback_apply import _infer_kind
+        from xpu_rt.kernels.provider import ContractFeedback
 
         assert _infer_kind(ContractFeedback(field="dtype")) == "dtype_widen"
 
     def test_accumulator_takes_precedence_over_dtype(self) -> None:
-        from compgen.graph_compilation.contract_feedback_apply import _infer_kind
-        from compgen.kernels.provider import ContractFeedback
+        from xpu_rt.graph_compilation.contract_feedback_apply import _infer_kind
+        from xpu_rt.kernels.provider import ContractFeedback
 
         fb = ContractFeedback(field="numerics.accumulator_dtype")
         assert _infer_kind(fb) == "accumulator_widen"
 
     def test_align_field_infers_alignment_request(self) -> None:
-        from compgen.graph_compilation.contract_feedback_apply import _infer_kind
-        from compgen.kernels.provider import ContractFeedback
+        from xpu_rt.graph_compilation.contract_feedback_apply import _infer_kind
+        from xpu_rt.kernels.provider import ContractFeedback
 
         assert _infer_kind(ContractFeedback(field="alignment_bytes")) == "alignment_request"
 
     def test_unknown_field_returns_empty(self) -> None:
-        from compgen.graph_compilation.contract_feedback_apply import _infer_kind
-        from compgen.kernels.provider import ContractFeedback
+        from xpu_rt.graph_compilation.contract_feedback_apply import _infer_kind
+        from xpu_rt.kernels.provider import ContractFeedback
 
         assert _infer_kind(ContractFeedback(field="random_thing")) == ""
         assert _infer_kind(ContractFeedback()) == ""
@@ -85,8 +85,8 @@ class TestInferKind:
 
 class TestClassifyFeedback:
     def test_allowlisted_and_non_allowlisted_split(self) -> None:
-        from compgen.graph_compilation.contract_feedback_apply import classify_feedback
-        from compgen.kernels.provider import ContractFeedback
+        from xpu_rt.graph_compilation.contract_feedback_apply import classify_feedback
+        from xpu_rt.kernels.provider import ContractFeedback
 
         feedbacks = [
             ContractFeedback(field="layout", suggested_value="row_major"),
@@ -99,8 +99,8 @@ class TestClassifyFeedback:
         assert {x.kind for x in na} == {"", "invent_new_pattern"}
 
     def test_provider_name_carried(self) -> None:
-        from compgen.graph_compilation.contract_feedback_apply import classify_feedback
-        from compgen.kernels.provider import ContractFeedback
+        from xpu_rt.graph_compilation.contract_feedback_apply import classify_feedback
+        from xpu_rt.kernels.provider import ContractFeedback
 
         a, _ = classify_feedback(
             provider_name="my_provider",
@@ -116,11 +116,11 @@ class TestClassifyFeedback:
 
 class TestRecipeIRProposal:
     def test_layout_swap_yields_set_layout(self) -> None:
-        from compgen.graph_compilation.contract_feedback_apply import (
+        from xpu_rt.graph_compilation.contract_feedback_apply import (
             ClassifiedFeedback,
             to_recipe_ir_proposal,
         )
-        from compgen.kernels.provider import ContractFeedback
+        from xpu_rt.kernels.provider import ContractFeedback
 
         entry = ClassifiedFeedback(
             provider_name="p", kind="layout_swap", is_allowlisted=True,
@@ -143,11 +143,11 @@ class TestRecipeIRProposal:
         assert proposal.measured_gain == 0.4
 
     def test_alignment_request_parses_int(self) -> None:
-        from compgen.graph_compilation.contract_feedback_apply import (
+        from xpu_rt.graph_compilation.contract_feedback_apply import (
             ClassifiedFeedback,
             to_recipe_ir_proposal,
         )
-        from compgen.kernels.provider import ContractFeedback
+        from xpu_rt.kernels.provider import ContractFeedback
 
         entry = ClassifiedFeedback(
             provider_name="p", kind="alignment_request", is_allowlisted=True,
@@ -162,11 +162,11 @@ class TestRecipeIRProposal:
         assert p.args["new_alignment_bytes"] == 128
 
     def test_alignment_request_invalid_falls_to_zero(self) -> None:
-        from compgen.graph_compilation.contract_feedback_apply import (
+        from xpu_rt.graph_compilation.contract_feedback_apply import (
             ClassifiedFeedback,
             to_recipe_ir_proposal,
         )
-        from compgen.kernels.provider import ContractFeedback
+        from xpu_rt.kernels.provider import ContractFeedback
 
         entry = ClassifiedFeedback(
             provider_name="p", kind="alignment_request", is_allowlisted=True,
@@ -179,11 +179,11 @@ class TestRecipeIRProposal:
         assert p.args["new_alignment_bytes"] == 0
 
     def test_fast_math_opt_in_yields_enable_true(self) -> None:
-        from compgen.graph_compilation.contract_feedback_apply import (
+        from xpu_rt.graph_compilation.contract_feedback_apply import (
             ClassifiedFeedback,
             to_recipe_ir_proposal,
         )
-        from compgen.kernels.provider import ContractFeedback
+        from xpu_rt.kernels.provider import ContractFeedback
 
         entry = ClassifiedFeedback(
             provider_name="p", kind="fast_math_opt_in", is_allowlisted=True,
@@ -194,11 +194,11 @@ class TestRecipeIRProposal:
         assert p.args == {"enable": True}
 
     def test_non_allowlisted_raises(self) -> None:
-        from compgen.graph_compilation.contract_feedback_apply import (
+        from xpu_rt.graph_compilation.contract_feedback_apply import (
             ClassifiedFeedback,
             to_recipe_ir_proposal,
         )
-        from compgen.kernels.provider import ContractFeedback
+        from xpu_rt.kernels.provider import ContractFeedback
 
         entry = ClassifiedFeedback(
             provider_name="p", kind="random_kind", is_allowlisted=False,
@@ -216,7 +216,7 @@ class TestRecipeIRProposal:
 def _invoke_pipeline(*, model: str, out_dir: Path) -> subprocess.CompletedProcess:
     return subprocess.run(
         [
-            sys.executable, "-m", "compgen.graph_compilation", "run",
+            sys.executable, "-m", "xpu_rt.graph_compilation", "run",
             "--model", str(REPO_ROOT / f"configs/models/{model}.yaml"),
             "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
             "--out", str(out_dir),
@@ -271,7 +271,7 @@ class _FeedbackEmittingProvider:
     applicable_targets: tuple[str, ...] = ("host_cpu",)
     applicable_archetypes: tuple[str, ...] = ("compute_tiled",)
     priority: int = 10
-    _compgen_source: str = "in_tree"
+    _xpu_rt_source: str = "in_tree"
 
     @property
     def name(self) -> str:
@@ -281,7 +281,7 @@ class _FeedbackEmittingProvider:
         return True
 
     def search(self, contract, budget):  # noqa: ANN001
-        from compgen.kernels.provider import ContractFeedback, ProviderResult
+        from xpu_rt.kernels.provider import ContractFeedback, ProviderResult
 
         return ProviderResult(
             found=True,
@@ -318,7 +318,7 @@ class _FeedbackEmittingProvider:
         return []
 
     def bid(self, contract_v3):  # noqa: ANN001
-        from compgen.kernels.provider import BidPreview
+        from xpu_rt.kernels.provider import BidPreview
 
         return BidPreview(
             provider_name=self.name_str,
@@ -334,7 +334,7 @@ class TestAuctionWithSyntheticFeedback:
         run_dir = tmp_path / "run"
         result = subprocess.run(
             [
-                sys.executable, "-m", "compgen.graph_compilation", "run",
+                sys.executable, "-m", "xpu_rt.graph_compilation", "run",
                 "--model", str(REPO_ROOT / "configs/models/merlin_mlp_wide.yaml"),
                 "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
                 "--out", str(run_dir),
@@ -348,8 +348,8 @@ class TestAuctionWithSyntheticFeedback:
         return run_dir
 
     def test_provider_feedback_routed_into_buckets(self, tmp_path: Path) -> None:
-        from compgen.graph_compilation.kernel_auction import run_kernel_auction
-        from compgen.kernels.registry import ProviderRegistry
+        from xpu_rt.graph_compilation.kernel_auction import run_kernel_auction
+        from xpu_rt.kernels.registry import ProviderRegistry
 
         run_dir = self._bootstrap_run_dir(tmp_path)
         reg = ProviderRegistry()

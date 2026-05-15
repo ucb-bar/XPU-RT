@@ -1,6 +1,6 @@
 """Claude Code as the default kernel provider.
 
-Implements the contract from ``compgen.kernels.provider``: takes a
+Implements the contract from ``xpu_rt.kernels.provider``: takes a
 ``KernelContract`` (or v3 contract via the bridge), formulates a prompt
 from ``KernelContractV3.kernel_facing()`` if available, and asks Claude
 Code (or any pluggable code-generator callable) to produce a kernel
@@ -30,7 +30,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from compgen.kernels.provider import (
+from xpu_rt.kernels.provider import (
     BidPreview,
     KernelContract,
     KnowledgeExport,
@@ -103,7 +103,7 @@ class InSessionCodegen(CodegenCallable):
     session_id: str
 
     def __call__(self, prompt: str, contract: KernelContract) -> str:
-        from compgen.mcp.tools.kernel import _kernel_cache
+        from xpu_rt.mcp.tools.kernel import _kernel_cache
 
         # The bridge attaches the v3 view; we serialise its salient bits
         # the same way the MCP fingerprint does so cache hits work.
@@ -123,7 +123,7 @@ def _fingerprint_from_view(view: Any, contract: KernelContract) -> str:
     the JSON form. Keeps in-session cache lookups stable across the
     Python-object form (provider side) and the dict form (MCP side).
     """
-    from compgen.mcp.tools.kernel import contract_fingerprint
+    from xpu_rt.mcp.tools.kernel import contract_fingerprint
 
     # Reconstruct the v3-shape dict from the kernel_facing view + the v1
     # contract's target name. Only the fields contract_fingerprint reads
@@ -279,15 +279,15 @@ class ClaudeCodeKernelProvider:
         cache_hit = False
         codegen = self.codegen
         try:
-            from compgen.kernels.providers.claude_code_default import (
+            from xpu_rt.kernels.providers.claude_code_default import (
                 InSessionCodegen,
                 StubCodegen,
             )
 
             if isinstance(codegen, InSessionCodegen):
                 # Probe the cache without invoking codegen.
-                from compgen.kernels.contract_v3 import KernelContractV3
-                from compgen.mcp.tools.kernel import _kernel_cache, contract_fingerprint
+                from xpu_rt.kernels.contract_v3 import KernelContractV3
+                from xpu_rt.mcp.tools.kernel import _kernel_cache, contract_fingerprint
 
                 if isinstance(contract_v3, KernelContractV3):
                     facing = contract_v3.kernel_facing()

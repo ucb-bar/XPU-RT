@@ -16,14 +16,14 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from compgen.kernels.compute_dag import (
+from xpu_rt.kernels.compute_dag import (
     ComputeDAG,
     ComputeNode,
     NodeKind,
     from_payload_region,
     to_prompt_text,
 )
-from compgen.kernels.contract_v3 import (
+from xpu_rt.kernels.contract_v3 import (
     ExecutionEnvelope,
     FusionPolicy,
     Granularity,
@@ -38,13 +38,13 @@ from compgen.kernels.contract_v3 import (
     StaticAttr,
     TensorIO,
 )
-from compgen.kernels.fusion_oracle import (
+from xpu_rt.kernels.fusion_oracle import (
     FusionDecision,
     should_fuse,
 )
-from compgen.kernels.granularity_oracle import recommend_granularity
-from compgen.memory.knowledge import KnowledgeStore, set_shared_store
-from compgen.memory.seed_lessons import install as install_seed
+from xpu_rt.kernels.granularity_oracle import recommend_granularity
+from xpu_rt.memory.knowledge import KnowledgeStore, set_shared_store
+from xpu_rt.memory.seed_lessons import install as install_seed
 
 # ---------------------------------------------------------------------------
 # Fixtures + helpers
@@ -162,7 +162,7 @@ def test_compute_dag_single_node_is_classified_single_op() -> None:
 
 
 def test_compute_dag_chain_classified_linear() -> None:
-    from compgen.kernels.compute_dag import ComputeEdge
+    from xpu_rt.kernels.compute_dag import ComputeEdge
 
     dag = ComputeDAG(
         nodes=[
@@ -179,7 +179,7 @@ def test_compute_dag_chain_classified_linear() -> None:
 
 
 def test_to_prompt_text_includes_nodes_and_edges() -> None:
-    from compgen.kernels.compute_dag import ComputeEdge
+    from xpu_rt.kernels.compute_dag import ComputeEdge
 
     dag = ComputeDAG(
         nodes=[

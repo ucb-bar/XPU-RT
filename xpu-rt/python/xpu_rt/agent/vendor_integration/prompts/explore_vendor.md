@@ -1,6 +1,6 @@
 # Vendor-dialect exploration
 
-You are classifying a third-party MLIR dialect repository so CompGen can generate
+You are classifying a third-party MLIR dialect repository so XPU-RT can generate
 an adapter. The scanner output below is ground truth; do not invent facts.
 
 ## Scanner summary

@@ -29,7 +29,7 @@ from __future__ import annotations
 import time
 from typing import Any
 
-from compgen.solve.solver_types import (
+from xpu_rt.solve.solver_types import (
     BackendAvailabilityStatus,
     BackendProbeResult,
     SolverBackendName,

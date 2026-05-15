@@ -1,6 +1,6 @@
 """MCP tools — in-session HW-aware dispatch decisions.
 
-Mirror of ``compgen.mcp.tools.kernel`` but for the dispatch decision
+Mirror of ``xpu_rt.mcp.tools.kernel`` but for the dispatch decision
 flow (W6.4): the orchestration layer asks the agent (Claude Code) to
 read a region's hardware envelopes and decide which target +
 granularity is best.
@@ -36,12 +36,12 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
-from compgen.llm.base import (
+from xpu_rt.llm.base import (
     GenerationRequest,
     GenerationResponse,
     Objective,
 )
-from compgen.mcp.session import McpSession, SessionManager
+from xpu_rt.mcp.session import McpSession, SessionManager
 
 # ---------------------------------------------------------------------------
 # Data types

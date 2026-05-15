@@ -161,13 +161,13 @@ def _summarise_contract_versioning(run_dir: Path) -> dict[str, Any]:
         return {"ran": False, "reason": "no certificates"}
 
     try:
-        from compgen.graph_compilation.kernel_codegen_response import (
+        from xpu_rt.graph_compilation.kernel_codegen_response import (
             _reconstruct_contract_from_dict,
         )
-        from compgen.kernels.contract_migration import (
+        from xpu_rt.kernels.contract_migration import (
             migrate_contract_body_v3_to_v3_1,
         )
-        from compgen.promotion.contract_hash import canonical_contract_hash
+        from xpu_rt.promotion.contract_hash import canonical_contract_hash
     except Exception as exc:  # noqa: BLE001
         return {"ran": False, "reason": f"import error: {exc}"}
 

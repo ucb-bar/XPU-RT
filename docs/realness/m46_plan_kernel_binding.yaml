@@ -28,9 +28,9 @@ forbidden:
 - bypassing validate_with_run_dir before handing the plan to M-47+
 realness_level: production_path
 required_evidence:
-- python/compgen/runtime/execution_plan.py (RegionKernelBinding + validate_with_run_dir)
-- python/compgen/graph_compilation/execution_plan_emit.py
-- python/compgen/graph_compilation/run.py (--stop-after execution-plan-emit boundary)
+- python/xpu_rt/runtime/execution_plan.py (RegionKernelBinding + validate_with_run_dir)
+- python/xpu_rt/graph_compilation/execution_plan_emit.py
+- python/xpu_rt/graph_compilation/run.py (--stop-after execution-plan-emit boundary)
 - tests/runtime/test_region_kernel_binding.py
 - "05_execution_plan/execution_plan.yaml on a real run (post-cert)"
 - "05_execution_plan/region_kernel_bindings.json on a real run (post-cert)"

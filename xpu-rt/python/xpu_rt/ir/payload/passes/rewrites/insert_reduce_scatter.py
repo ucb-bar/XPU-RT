@@ -1,5 +1,5 @@
 """``insert_reduce_scatter`` -- materialize
-``compgen.collective.reduce_scatter`` where an op's sharding carries
+``xpu_rt.collective.reduce_scatter`` where an op's sharding carries
 a partial sum AND the consumer wants the result sharded.
 
 This is the fused variant of AllReduce+Scatter that saves bandwidth.
@@ -17,7 +17,7 @@ from xdsl.pattern_rewriter import (
     RewritePattern,
 )
 
-from compgen.ir.collective import ReduceKindAttr, ReduceScatterOp, ShardingSpecAttr
+from xpu_rt.ir.collective import ReduceKindAttr, ReduceScatterOp, ShardingSpecAttr
 
 
 @dataclass
@@ -38,8 +38,8 @@ class _InsertReduceScatterPattern(RewritePattern):
         self.stats = stats
 
     def match_and_rewrite(self, op: Operation, rewriter: PatternRewriter) -> None:
-        sharding = op.attributes.get("compgen.sharding")
-        scatter_axis_attr = op.attributes.get("compgen.scatter_axis")
+        sharding = op.attributes.get("xpu_rt.sharding")
+        scatter_axis_attr = op.attributes.get("xpu_rt.scatter_axis")
         if not isinstance(sharding, ShardingSpecAttr):
             return
         if scatter_axis_attr is None:
@@ -48,7 +48,7 @@ class _InsertReduceScatterPattern(RewritePattern):
         partial = sharding.partial.data
         if partial not in ("sum", "mean", "max", "min"):
             return
-        if "compgen.reduce_scatter_inserted" in op.attributes:
+        if "xpu_rt.reduce_scatter_inserted" in op.attributes:
             return
         if not op.results:
             return
@@ -76,7 +76,7 @@ class _InsertReduceScatterPattern(RewritePattern):
         parent = op.parent_block()
         if parent is not None:
             parent.insert_op_after(rs, op)
-        op.attributes["compgen.reduce_scatter_inserted"] = scatter_axis_attr
+        op.attributes["xpu_rt.reduce_scatter_inserted"] = scatter_axis_attr
         self.stats.reduce_scatters_inserted += 1
 
 

@@ -21,7 +21,7 @@ from typing import Any
 
 import structlog
 
-from compgen.extensions.vendor_dialect.descriptor import VendorDialectDescriptor
+from xpu_rt.extensions.vendor_dialect.descriptor import VendorDialectDescriptor
 
 log = structlog.get_logger()
 

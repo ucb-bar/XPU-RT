@@ -1,6 +1,6 @@
 """GPU runtime hookup: compile Triton sources + launch on CUDA.
 
-Takes a compiled CompGen module + the Triton emitter's artifact
+Takes a compiled XPU-RT module + the Triton emitter's artifact
 directory (`kernels/*.py` + `emission_manifest.json`) and:
 
 1. Imports each kernel's module via ``importlib``.
@@ -24,13 +24,13 @@ tensor.
 Usage (on a GPU host):
 
     from pathlib import Path
-    from compgen.runtime.gpu_executor import (
+    from xpu_rt.runtime.gpu_executor import (
         gpu_available, launch_triton_kernel,
     )
     assert gpu_available()
     out = launch_triton_kernel(
-        artifact_dir=Path("/tmp/compgen_triton"),
-        kernel_name="compgen_matmul_0",
+        artifact_dir=Path("/tmp/xpu_rt_triton"),
+        kernel_name="xpu_rt_matmul_0",
         args=[a_cuda, b_cuda, c_cuda, M, N, K, ...],
         grid=(grid_m, grid_n),
     )
@@ -94,7 +94,7 @@ class LaunchResult:
 
 def _load_kernel_module(path: Path, kernel_name: str) -> Any:
     """Import a single Triton kernel file and return the ``@triton.jit`` fn."""
-    spec = importlib.util.spec_from_file_location(f"compgen_kernel_{kernel_name}", path)
+    spec = importlib.util.spec_from_file_location(f"xpu_rt_kernel_{kernel_name}", path)
     if spec is None or spec.loader is None:
         raise ImportError(f"could not load spec for {path}")
     module = importlib.util.module_from_spec(spec)

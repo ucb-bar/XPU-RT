@@ -1,7 +1,7 @@
 """Dispatch stage — partition the graph into dispatch groups.
 
 Analogous to IREE's Flow dialect.  Determines which ops run together
-as a single kernel dispatch.  Assigns a ``compgen.dispatch_id`` attribute
+as a single kernel dispatch.  Assigns a ``xpu_rt.dispatch_id`` attribute
 to every op.
 
 Shared passes:
@@ -21,10 +21,10 @@ from pathlib import Path
 from xdsl.dialects.builtin import ModuleOp, StringAttr
 from xdsl.dialects.func import FuncOp, ReturnOp
 
-from compgen.stages.base import CompilationStage, IRInvariant, StageContract
-from compgen.targets.schema import TargetProfile
+from xpu_rt.stages.base import CompilationStage, IRInvariant, StageContract
+from xpu_rt.targets.schema import TargetProfile
 
-DISPATCH_ID_ATTR = "compgen.dispatch_id"
+DISPATCH_ID_ATTR = "xpu_rt.dispatch_id"
 
 
 def _all_ops_dispatched(module: ModuleOp) -> bool:

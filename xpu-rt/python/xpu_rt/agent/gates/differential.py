@@ -1,4 +1,4 @@
-"""Differential gate — wraps compgen.semantic.verify.verify_callable_against_reference.
+"""Differential gate — wraps xpu_rt.semantic.verify.verify_callable_against_reference.
 
 Caller provides two callables in the context::
 
@@ -35,7 +35,7 @@ def differential_gate(proposal: dict[str, Any], **ctx: Any) -> dict[str, Any]:
     try:
         import torch
 
-        from compgen.semantic.verify.compare import compare_tensors
+        from xpu_rt.semantic.verify.compare import compare_tensors
     except ImportError as e:  # pragma: no cover
         return {
             "status": "deferred",

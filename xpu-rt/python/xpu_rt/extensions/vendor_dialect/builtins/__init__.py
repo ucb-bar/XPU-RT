@@ -1,9 +1,9 @@
-"""First-party reference adapters bundled with CompGen.
+"""First-party reference adapters bundled with XPU-RT.
 
-Third-party adapters (e.g. ``compgen_cuda_tile`` on a Blackwell box)
-discover via the ``compgen.vendor_dialects`` entry-point group. The
+Third-party adapters (e.g. ``xpu_rt_cuda_tile`` on a Blackwell box)
+discover via the ``xpu_rt.vendor_dialects`` entry-point group. The
 adapters here are **reference implementations** that ship with the
-CompGen wheel itself — pip-installing CompGen gets them without any
+XPU-RT wheel itself — pip-installing XPU-RT gets them without any
 extra dependency. They serve three roles:
 
 1. **Reference for users authoring third-party adapters** — read the
@@ -12,7 +12,7 @@ extra dependency. They serve three roles:
 2. **Anchor for unit tests** — the lowering produces deterministic
    MLIR text that can be regression-tested without a vendor toolchain
    on PATH. Toolchain-driven gates are opt-in via fixture markers.
-3. **PyPI surface guarantee** — ``compgen_compile_torch_model_with_vendor``
+3. **PyPI surface guarantee** — ``xpu_rt_compile_torch_model_with_vendor``
    has at least one working adapter to point at out of the box.
 
 Reference adapters do NOT auto-register on import. Callers opt in via
@@ -22,11 +22,11 @@ users who don't need the reference.
 
 from __future__ import annotations
 
-from compgen.extensions.vendor_dialect.adapter import VendorDialectAdapter
-from compgen.extensions.vendor_dialect.builtins.cuda_tile import (
+from xpu_rt.extensions.vendor_dialect.adapter import VendorDialectAdapter
+from xpu_rt.extensions.vendor_dialect.builtins.cuda_tile import (
     make_adapter as make_cuda_tile_adapter,
 )
-from compgen.extensions.vendor_dialect.registry import register_adapter
+from xpu_rt.extensions.vendor_dialect.registry import register_adapter
 
 _BUILTIN_FACTORIES: dict[str, callable] = {
     "cuda_tile": make_cuda_tile_adapter,
@@ -34,7 +34,7 @@ _BUILTIN_FACTORIES: dict[str, callable] = {
 
 
 def list_builtin_adapters() -> list[str]:
-    """Names of reference adapters bundled with CompGen."""
+    """Names of reference adapters bundled with XPU-RT."""
     return sorted(_BUILTIN_FACTORIES)
 
 

@@ -22,7 +22,7 @@ import subprocess
 import time
 from pathlib import Path
 
-from compgen.runtime.remote_target import (
+from xpu_rt.runtime.remote_target import (
     REMOTE_SCHEMA_VERSION,
     RemoteProbeResult,
     RemoteRunPayload,
@@ -108,7 +108,7 @@ class SshRunner(RemoteTargetRunner):
 
     def probe(self) -> RemoteProbeResult:
         # 1. reach the host with a trivial command
-        rc, stdout, stderr = self._run_ssh("echo compgen_remote_probe", timeout=15)
+        rc, stdout, stderr = self._run_ssh("echo xpu_rt_remote_probe", timeout=15)
         if rc == 127:
             return RemoteProbeResult(
                 schema_version=REMOTE_SCHEMA_VERSION,

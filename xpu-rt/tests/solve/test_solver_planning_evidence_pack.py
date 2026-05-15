@@ -151,7 +151,7 @@ def test_solver_gates_audit_real_run(tmp_path):
         check=True,
     )
 
-    from compgen.audit.solver_gates import all_solver_gates
+    from xpu_rt.audit.solver_gates import all_solver_gates
 
     gates = all_solver_gates(run_dir=run_dir)
     failed = [g for g in gates if g.status == "fail"]

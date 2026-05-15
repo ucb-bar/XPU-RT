@@ -20,8 +20,8 @@ forbidden:
     (must map to ``sat_counterexample`` with the model)
   - silently widening the obligation scope at the call site
 required_evidence:
-  - python/compgen/solve/z3_obligations.py
-  - python/compgen/kernels/kernel_certificate.py (z3_obligation_report_ref)
+  - python/xpu_rt/solve/z3_obligations.py
+  - python/xpu_rt/kernels/kernel_certificate.py (z3_obligation_report_ref)
   - tests/solve/test_z3_obligations.py
 commit: 0e80000000000000000000000000000000000000
 created_at_utc: 2026-05-11T00:00:00Z

@@ -1,4 +1,4 @@
-# CompGen Target Profile: Heterogeneous RISC-V SoC
+# XPU-RT Target Profile: Heterogeneous RISC-V SoC
 #
 # A heterogeneous SoC with a host RISC-V CPU, an NPU accelerator,
 # and a DSP.  The NPU runs under Zephyr RTOS, the DSP is bare-metal,

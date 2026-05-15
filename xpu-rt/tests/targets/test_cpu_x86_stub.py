@@ -7,7 +7,7 @@ The acceptance test for the unified target hierarchy abstraction:
 - The body emitter produces compilable C++.
 - The runtime can JIT compile + dispatch a real GEMM body and
   produce correct output (validated against numpy).
-- ``compgen.targets`` import auto-registers the stub.
+- ``xpu_rt.targets`` import auto-registers the stub.
 
 If these tests pass on a Linux host with a C++ compiler available,
 the abstraction is real architecture, not just a renaming
@@ -30,8 +30,8 @@ def _has_cxx() -> bool:
 def _ensure_registered():
     """The autouse registry-reset in `test_registry.py` won't apply
     here — that's a different file. We just want the stub
-    registered; importing `compgen.targets` does it."""
-    import compgen.targets as targets_mod
+    registered; importing `xpu_rt.targets` does it."""
+    import xpu_rt.targets as targets_mod
 
     targets_mod._register_in_tree()
     yield
@@ -39,7 +39,7 @@ def _ensure_registered():
 
 class TestProbe:
     def test_probe_satisfies_basic_contract(self) -> None:
-        from compgen.targets.cpu.x86.probe import X86Probe
+        from xpu_rt.targets.cpu.x86.probe import X86Probe
 
         p = X86Probe()
         # Calls don't raise.
@@ -53,14 +53,14 @@ class TestProbe:
 
     def test_probe_no_clusters_no_tensor_cores(self) -> None:
         """CPU explicitly has neither — Protocol contract pinning."""
-        from compgen.targets.cpu.x86.probe import X86Probe
+        from xpu_rt.targets.cpu.x86.probe import X86Probe
 
         p = X86Probe()
         assert p.supports_clusters() is False
         assert p.supports_tensor_cores() is False
 
     def test_vendor_extras_carries_simd_width(self) -> None:
-        from compgen.targets.cpu.x86.probe import X86Probe
+        from xpu_rt.targets.cpu.x86.probe import X86Probe
 
         extras = X86Probe().vendor_extras()
         assert "simd_width_bits" in extras
@@ -71,7 +71,7 @@ class TestBodyEmitter:
     """The emitter produces source that compiles + runs."""
 
     def test_preferred_tile_shape(self) -> None:
-        from compgen.targets.cpu.x86.body_emitter import X86BodyEmitter
+        from xpu_rt.targets.cpu.x86.body_emitter import X86BodyEmitter
 
         emitter = X86BodyEmitter()
         assert emitter.preferred_tile_shape(op="gemm", dtype="fp32") == (32, 32, 32)
@@ -79,7 +79,7 @@ class TestBodyEmitter:
     def test_gemm_emits_valid_cpp(self) -> None:
         """Body source mentions the canonical bits — for / acc / fmaf-
         like loops + the right buffer indices."""
-        from compgen.targets.cpu.x86.body_emitter import X86BodyEmitter
+        from xpu_rt.targets.cpu.x86.body_emitter import X86BodyEmitter
 
         body = (
             X86BodyEmitter()
@@ -106,7 +106,7 @@ class TestBodyEmitter:
         assert "buffers[2]" in body
 
     def test_relu_emits_valid_cpp(self) -> None:
-        from compgen.targets.cpu.x86.body_emitter import X86BodyEmitter
+        from xpu_rt.targets.cpu.x86.body_emitter import X86BodyEmitter
 
         body = (
             X86BodyEmitter()
@@ -124,7 +124,7 @@ class TestBodyEmitter:
         assert "v > 0.0f" in body
 
     def test_unsupported_op_raises(self) -> None:
-        from compgen.targets.cpu.x86.body_emitter import X86BodyEmitter
+        from xpu_rt.targets.cpu.x86.body_emitter import X86BodyEmitter
 
         with pytest.raises(ValueError, match="unsupported op"):
             X86BodyEmitter().elementwise(
@@ -142,21 +142,21 @@ class TestProtocolStructuralChecks:
     fail, the abstraction is leaking GPU-specific concepts."""
 
     def test_x86_body_emitter_satisfies_cpu_protocol(self) -> None:
-        from compgen.targets.cpu.contracts import CpuBodyEmitter
-        from compgen.targets.cpu.x86.body_emitter import X86BodyEmitter
+        from xpu_rt.targets.cpu.contracts import CpuBodyEmitter
+        from xpu_rt.targets.cpu.x86.body_emitter import X86BodyEmitter
 
         assert isinstance(X86BodyEmitter(), CpuBodyEmitter)
 
     def test_x86_runtime_satisfies_cpu_protocol(self) -> None:
-        from compgen.targets.cpu.contracts import CpuRuntime
-        from compgen.targets.cpu.x86.runtime import X86Runtime
+        from xpu_rt.targets.cpu.contracts import CpuRuntime
+        from xpu_rt.targets.cpu.x86.runtime import X86Runtime
 
         assert isinstance(X86Runtime(), CpuRuntime)
 
 
 class TestRegistration:
     def test_x86_in_tree_registered(self) -> None:
-        from compgen.targets.registry import registry
+        from xpu_rt.targets.registry import registry
 
         pkg = registry().get("cpu.x86")
         assert pkg is not None
@@ -169,7 +169,7 @@ class TestRegistration:
     def test_audit_metadata_pinned(self) -> None:
         """Wave 1.15 metadata visible via the agent's describe()
         query — pin so the audit surface doesn't drift."""
-        from compgen.targets.registry import registry
+        from xpu_rt.targets.registry import registry
 
         pkg = registry().get("cpu.x86")
         assert pkg is not None
@@ -194,8 +194,8 @@ class TestEndToEndJIT:
         import ctypes
 
         import numpy as np
-        from compgen.targets.cpu.x86.body_emitter import X86BodyEmitter
-        from compgen.targets.cpu.x86.runtime import X86Runtime
+        from xpu_rt.targets.cpu.x86.body_emitter import X86BodyEmitter
+        from xpu_rt.targets.cpu.x86.runtime import X86Runtime
 
         # Emit a 32×32×32 GEMM body for the universal task signature.
         body = X86BodyEmitter().gemm(
@@ -255,8 +255,8 @@ void {symbol}(int task_id, int sm_id, void **buffers) {{
         import ctypes
 
         import numpy as np
-        from compgen.targets.cpu.x86.body_emitter import X86BodyEmitter
-        from compgen.targets.cpu.x86.runtime import X86Runtime
+        from xpu_rt.targets.cpu.x86.body_emitter import X86BodyEmitter
+        from xpu_rt.targets.cpu.x86.runtime import X86Runtime
 
         symbol = "test_relu"
         body = X86BodyEmitter().elementwise(

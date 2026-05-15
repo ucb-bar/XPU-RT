@@ -23,7 +23,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from xdsl.dialects.builtin import ModuleOp
 
-    from compgen.runtime.planner import ExecutionPlan
+    from xpu_rt.runtime.planner import ExecutionPlan
 
 
 @dataclass(frozen=True)

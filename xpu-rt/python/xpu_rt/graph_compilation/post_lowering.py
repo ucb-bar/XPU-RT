@@ -20,10 +20,10 @@ makes no claim of full semantic equivalence. Structural
   obligation as ``pending_kernel_contract_generation``.
 
 The current MVP is *metadata-only*: ``SetTileParams`` injects a
-``compgen.tile = [M, N, K]`` attribute on the matching ``linalg.matmul``
-op (identified by its ``compgen.region_id``); ``FuseProducerConsumer``
-injects ``compgen.fuse_producer`` / ``compgen.fuse_consumer`` /
-``compgen.fuse_via_tensor`` markers on the consumer op. Real loop
+``xpu_rt.tile = [M, N, K]`` attribute on the matching ``linalg.matmul``
+op (identified by its ``xpu_rt.region_id``); ``FuseProducerConsumer``
+injects ``xpu_rt.fuse_producer`` / ``xpu_rt.fuse_consumer`` /
+``xpu_rt.fuse_via_tensor`` markers on the consumer op. Real loop
 tiling and real fusion land in later milestones; this milestone
 guarantees the wiring + obligation tracking is correct.
 """
@@ -38,7 +38,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from compgen.graph_compilation.hashing import sha256_tree
+from xpu_rt.graph_compilation.hashing import sha256_tree
 
 # --------------------------------------------------------------------------- #
 # Result + entry point
@@ -123,21 +123,21 @@ def _parse_fuse_from_transform(text: str) -> dict[str, str] | None:
 
 # --------------------------------------------------------------------------- #
 # Payload-IR patcher: adds attributes to the inline `{...}` block of an op
-# anchored by its ``compgen.region_id`` value.
+# anchored by its ``xpu_rt.region_id`` value.
 # --------------------------------------------------------------------------- #
 
 
 def _inject_attrs_on_region(
     mlir_text: str, region_id: str, new_attrs: dict[str, str],
 ) -> tuple[str, int]:
-    """Find the (single) op carrying ``compgen.region_id = "<region_id>"``
+    """Find the (single) op carrying ``xpu_rt.region_id = "<region_id>"``
     and append the given attributes to its inline attributes block.
 
     ``new_attrs`` values are emitted verbatim (caller is responsible for
     quoting strings, formatting i64, etc.). Returns ``(new_text, n_changed)``.
     """
     needle_re = re.compile(
-        r'(\{[^{}]*compgen\.region_id\s*=\s*"' + re.escape(region_id) + r'"[^{}]*?)\}'
+        r'(\{[^{}]*xpu_rt\.region_id\s*=\s*"' + re.escape(region_id) + r'"[^{}]*?)\}'
     )
     match_count = 0
 
@@ -381,7 +381,7 @@ def run_post_lowering_verification(run_dir: Path) -> PostLoweringResult:
                         "recipe_op_id": recipe_op_id,
                         "kind": "annotation_added",
                         "anchor_region": anchor_region,
-                        "attribute": "compgen.fuse_consumer",
+                        "attribute": "xpu_rt.fuse_consumer",
                         "before": None,
                         "after": fuse["consumer"],
                     }
@@ -456,7 +456,7 @@ def run_post_lowering_verification(run_dir: Path) -> PostLoweringResult:
                         "recipe_op_id": recipe_op_id,
                         "kind": "annotation_added",
                         "region": region_id,
-                        "attribute": "compgen.tile",
+                        "attribute": "xpu_rt.tile",
                         "before": None,
                         "after": list(tile),
                     }
@@ -480,7 +480,7 @@ def run_post_lowering_verification(run_dir: Path) -> PostLoweringResult:
                             "recipe_op_id": recipe_op_id,
                             "kind": "annotation_added",
                             "region": region_id,
-                            "attribute": "compgen.recipe_op",
+                            "attribute": "xpu_rt.recipe_op",
                             "before": None,
                             "after": recipe_op_id,
                         }
@@ -519,9 +519,9 @@ def run_post_lowering_verification(run_dir: Path) -> PostLoweringResult:
                 N = rec["tile"]["N"]
                 K = rec["tile"]["K"]
                 attrs = {
-                    "compgen.tile": _format_tile_dense_array(M, N, K),
-                    "compgen.recipe_op": f'"{rec["recipe_op_id"]}"',
-                    "compgen.semantic_obligation": f'"{rec["semantic_obligation"]}"',
+                    "xpu_rt.tile": _format_tile_dense_array(M, N, K),
+                    "xpu_rt.recipe_op": f'"{rec["recipe_op_id"]}"',
+                    "xpu_rt.semantic_obligation": f'"{rec["semantic_obligation"]}"',
                 }
                 new_text, n = _inject_attrs_on_region(
                     new_text, rec["region"], attrs,
@@ -533,11 +533,11 @@ def run_post_lowering_verification(run_dir: Path) -> PostLoweringResult:
                     )
             elif kind == "FuseProducerConsumer":
                 attrs = {
-                    "compgen.fuse_producer": f'"{rec["producer"]}"',
-                    "compgen.fuse_consumer": f'"{rec["consumer"]}"',
-                    "compgen.fuse_via_tensor": f'"{rec["via_tensor"]}"',
-                    "compgen.recipe_op": f'"{rec["recipe_op_id"]}"',
-                    "compgen.semantic_obligation": f'"{rec["semantic_obligation"]}"',
+                    "xpu_rt.fuse_producer": f'"{rec["producer"]}"',
+                    "xpu_rt.fuse_consumer": f'"{rec["consumer"]}"',
+                    "xpu_rt.fuse_via_tensor": f'"{rec["via_tensor"]}"',
+                    "xpu_rt.recipe_op": f'"{rec["recipe_op_id"]}"',
+                    "xpu_rt.semantic_obligation": f'"{rec["semantic_obligation"]}"',
                 }
                 new_text, n = _inject_attrs_on_region(
                     new_text, rec["anchor_region"], attrs,
@@ -549,8 +549,8 @@ def run_post_lowering_verification(run_dir: Path) -> PostLoweringResult:
                     )
             else:
                 attrs = {
-                    "compgen.recipe_op": f'"{rec["recipe_op_id"]}"',
-                    "compgen.semantic_obligation": f'"{rec["semantic_obligation"]}"',
+                    "xpu_rt.recipe_op": f'"{rec["recipe_op_id"]}"',
+                    "xpu_rt.semantic_obligation": f'"{rec["semantic_obligation"]}"',
                 }
                 new_text, n = _inject_attrs_on_region(
                     new_text, rec.get("region", ""), attrs,

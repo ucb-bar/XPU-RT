@@ -8,7 +8,7 @@ End-to-end loop:
                          Tactician.pick_edit  →  TacticianDecision
 
 On rejection the orchestrator calls
-:func:`compgen.agent.plan.replan_on_reject` and re-invokes the
+:func:`xpu_rt.agent.plan.replan_on_reject` and re-invokes the
 Tactician. Tests assert the full chain produces deterministic typed
 outputs.
 """
@@ -16,20 +16,20 @@ outputs.
 from __future__ import annotations
 
 import pytest
-from compgen.agent.cost_preview import CandidateInput, compute_cost_previews
-from compgen.agent.plan import (
+from xpu_rt.agent.cost_preview import CandidateInput, compute_cost_previews
+from xpu_rt.agent.plan import (
     EXHAUSTED_TACTIC,
     Budget,
     RegionPlan,
     replan_on_reject,
 )
-from compgen.agent.strategist import (
+from xpu_rt.agent.strategist import (
     DEFAULT_FALLBACK_LADDER,
     DossierRegion,
     StrategistInput,
     plan_session,
 )
-from compgen.agent.tactician import TacticianDecision, pick_edit
+from xpu_rt.agent.tactician import TacticianDecision, pick_edit
 
 # ---------- Strategist ----------------------------------------------
 
@@ -213,7 +213,7 @@ def test_loop_strategist_replan_tactician():
 
 
 def test_tactician_decision_unknown_action_rejected():
-    from compgen.agent.tactician import TacticianError
+    from xpu_rt.agent.tactician import TacticianError
 
     with pytest.raises(TacticianError, match="next_action"):
         TacticianDecision(

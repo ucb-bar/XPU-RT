@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from compgen.ir.payload.contracts import (
+from xpu_rt.ir.payload.contracts import (
     AutocompCostBudget,
     CostEstimate,
     KernelContract,

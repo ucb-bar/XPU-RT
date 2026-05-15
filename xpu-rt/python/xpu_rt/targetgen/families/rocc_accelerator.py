@@ -12,17 +12,17 @@ from typing import Any
 from xdsl.dialects.builtin import ModuleOp, StringAttr
 from xdsl.dialects.func import FuncOp, ReturnOp
 
-from compgen.stages.bundle import BundleStage
-from compgen.stages.dispatch import DispatchStage
-from compgen.stages.encoding import EncodingStage
-from compgen.stages.registry import TargetDialectStack
-from compgen.stages.templates.lowering import LoweringStage
-from compgen.stages.templates.memory_plan import MemoryPlanStage
-from compgen.stages.templates.scheduling import SchedulingStage
-from compgen.stages.templates.tiling import TilingStage
-from compgen.targetgen.hardware_spec import HardwareSpec
-from compgen.targets.capability import CapabilitySpec
-from compgen.targets.schema import TargetProfile
+from xpu_rt.stages.bundle import BundleStage
+from xpu_rt.stages.dispatch import DispatchStage
+from xpu_rt.stages.encoding import EncodingStage
+from xpu_rt.stages.registry import TargetDialectStack
+from xpu_rt.stages.templates.lowering import LoweringStage
+from xpu_rt.stages.templates.memory_plan import MemoryPlanStage
+from xpu_rt.stages.templates.scheduling import SchedulingStage
+from xpu_rt.stages.templates.tiling import TilingStage
+from xpu_rt.targetgen.hardware_spec import HardwareSpec
+from xpu_rt.targets.capability import CapabilitySpec
+from xpu_rt.targets.schema import TargetProfile
 
 
 class RoccAccelLoweringPlugin:
@@ -47,11 +47,11 @@ class RoccAccelLoweringPlugin:
         for op in module.walk():
             if isinstance(op, (ModuleOp, FuncOp, ReturnOp)):
                 continue
-            if op.results and "compgen.accel_op" not in op.attributes:
+            if op.results and "xpu_rt.accel_op" not in op.attributes:
                 if "matmul" in op.name.lower():
-                    op.attributes["compgen.accel_op"] = StringAttr("compute")
+                    op.attributes["xpu_rt.accel_op"] = StringAttr("compute")
                 elif op.name.startswith("linalg."):
-                    op.attributes["compgen.accel_op"] = StringAttr("fallback_cpu")
+                    op.attributes["xpu_rt.accel_op"] = StringAttr("fallback_cpu")
         return module
 
     def get_artifacts(self) -> dict[str, Any]:

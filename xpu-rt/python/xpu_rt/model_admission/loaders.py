@@ -23,7 +23,7 @@ from typing import Any
 import structlog
 import torch.nn as nn
 
-from compgen.model_admission.schemas import (
+from xpu_rt.model_admission.schemas import (
     AdmissionStatus,
     ModelConfig,
     ModelLoaderConfig,
@@ -101,7 +101,7 @@ def load(model_cfg: ModelConfig, slice_cfg: SliceConfig | None = None) -> Loaded
             status = AdmissionStatus.UNAVAILABLE_HARDWARE_CONSTRAINT
         # Parse a structured ``hardware_requirements`` block from the YAML's
         # support section if present.
-        from compgen.model_admission.schemas import HardwareRequirements  # noqa: PLC0415
+        from xpu_rt.model_admission.schemas import HardwareRequirements  # noqa: PLC0415
 
         hwr = None
         hw_yaml = getattr(model_cfg.support, "hardware_requirements", None)
@@ -124,8 +124,8 @@ def load(model_cfg: ModelConfig, slice_cfg: SliceConfig | None = None) -> Loaded
 
     if kind == "proxy":
         return _load_proxy(model_cfg, slice_cfg, loader)
-    if kind == "compgen_model_spec":
-        return _load_compgen_model_spec(model_cfg, slice_cfg, loader)
+    if kind == "xpu_rt_model_spec":
+        return _load_xpu_rt_model_spec(model_cfg, slice_cfg, loader)
     if kind.startswith("hf_transformers_"):
         return _load_hf_transformers(model_cfg, slice_cfg, loader)
     raise LoaderUnavailable(
@@ -189,11 +189,11 @@ def _load_proxy(
 
 
 # --------------------------------------------------------------------------- #
-# Loader: compgen_model_spec (bridge to existing python/compgen/models catalog).
+# Loader: xpu_rt_model_spec (bridge to existing python/xpu_rt/models catalog).
 # --------------------------------------------------------------------------- #
 
 
-def _load_compgen_model_spec(
+def _load_xpu_rt_model_spec(
     model_cfg: ModelConfig,
     slice_cfg: SliceConfig | None,
     loader: ModelLoaderConfig,
@@ -202,14 +202,14 @@ def _load_compgen_model_spec(
     if not spec_id:
         raise LoaderUnavailable(
             AdmissionStatus.UNAVAILABLE_MISSING_DEPENDENCY,
-            reason="loader.model_spec_id empty for compgen_model_spec loader",
+            reason="loader.model_spec_id empty for xpu_rt_model_spec loader",
         )
     try:
-        from compgen.models import build_default_model_catalog  # type: ignore[import-not-found]
+        from xpu_rt.models import build_default_model_catalog  # type: ignore[import-not-found]
     except Exception as exc:
         raise LoaderUnavailable(
             AdmissionStatus.UNAVAILABLE_MISSING_DEPENDENCY,
-            reason="cannot import compgen.models.build_default_model_catalog",
+            reason="cannot import xpu_rt.models.build_default_model_catalog",
             error=repr(exc),
         ) from exc
     try:
@@ -223,7 +223,7 @@ def _load_compgen_model_spec(
     if spec_id not in catalog.models:
         raise LoaderUnavailable(
             AdmissionStatus.UNAVAILABLE_MISSING_DEPENDENCY,
-            reason=f"model_spec_id={spec_id!r} not in compgen.models catalog",
+            reason=f"model_spec_id={spec_id!r} not in xpu_rt.models catalog",
         )
     spec = catalog.get(spec_id)
     try:

@@ -49,14 +49,14 @@ def _read(p: Path) -> dict:
 def _run(model: str, out_dir: Path, *, run_kernels: bool) -> None:
     env = os.environ.copy()
     if run_kernels:
-        env["COMPGEN_RUN_KERNELS"] = "1"
+        env["XPU_RT_RUN_KERNELS"] = "1"
     else:
-        env.pop("COMPGEN_RUN_KERNELS", None)
-    env.pop("COMPGEN_CALIBRATE_PROFILER", None)
-    env.pop("COMPGEN_CALIBRATE_CANDIDATES", None)
+        env.pop("XPU_RT_RUN_KERNELS", None)
+    env.pop("XPU_RT_CALIBRATE_PROFILER", None)
+    env.pop("XPU_RT_CALIBRATE_CANDIDATES", None)
     subprocess.run(
         [
-            sys.executable, "-m", "compgen.graph_compilation", "run",
+            sys.executable, "-m", "xpu_rt.graph_compilation", "run",
             "--model", str(REPO_ROOT / f"configs/models/{model}.yaml"),
             "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
             "--out", str(out_dir),
@@ -120,7 +120,7 @@ def test_byte_identical_reruns(no_kernels_run: Path) -> None:
     """Calling run_analytical_cost twice on the same run dir must
     produce byte-identical JSON output (modulo the generated_at_utc
     timestamp). We compare the persistent bytes EXCEPT the timestamp."""
-    from compgen.graph_compilation.analytical_cost import run_analytical_cost
+    from xpu_rt.graph_compilation.analytical_cost import run_analytical_cost
 
     p = (
         no_kernels_run / "02_graph_analysis" / "analytical_cost"
@@ -136,7 +136,7 @@ def test_byte_identical_reruns(no_kernels_run: Path) -> None:
 
 
 def test_pure_function_predict_candidate_cost_is_deterministic() -> None:
-    from compgen.graph_compilation.analytical_cost import predict_candidate_cost
+    from xpu_rt.graph_compilation.analytical_cost import predict_candidate_cost
 
     args = dict(
         matmul_shape=(16, 32, 16),
@@ -161,7 +161,7 @@ def test_predicted_us_rooted_in_target_peak_compute() -> None:
     """Doubling peak_compute_gflops should approximately halve the
     compute_time_us (when compute-bound). This is the deterministic
     rooting in the target HW spec."""
-    from compgen.graph_compilation.analytical_cost import predict_candidate_cost
+    from xpu_rt.graph_compilation.analytical_cost import predict_candidate_cost
 
     base = predict_candidate_cost(
         matmul_shape=(64, 64, 64),
@@ -189,7 +189,7 @@ def test_predicted_us_rooted_in_target_peak_compute() -> None:
 
 
 def test_predicted_us_rooted_in_target_peak_bandwidth() -> None:
-    from compgen.graph_compilation.analytical_cost import predict_candidate_cost
+    from xpu_rt.graph_compilation.analytical_cost import predict_candidate_cost
 
     base = predict_candidate_cost(
         matmul_shape=(16, 16, 256),       # high arithmetic intensity → memory-bound likely
@@ -273,7 +273,7 @@ def test_modeled_candidates_match_legal_set_tile_in_candidate_actions(
 def test_tier_classification_from_memory_tiers() -> None:
     """A tile with working_set < scratchpad_bytes → 'scratchpad'.
     A tile with working_set > scratchpad but < l2 → 'l2'. Etc."""
-    from compgen.graph_compilation.analytical_cost import predict_candidate_cost
+    from xpu_rt.graph_compilation.analytical_cost import predict_candidate_cost
 
     tiers = {
         "scratchpad_bytes": 32768,
@@ -304,7 +304,7 @@ def test_tier_classification_from_memory_tiers() -> None:
 
 
 def test_compute_time_matches_flops_over_peak() -> None:
-    from compgen.graph_compilation.analytical_cost import predict_candidate_cost
+    from xpu_rt.graph_compilation.analytical_cost import predict_candidate_cost
 
     p = predict_candidate_cost(
         matmul_shape=(16, 32, 16), tile=(16, 16, 16), dtype_bytes=4,
@@ -318,7 +318,7 @@ def test_compute_time_matches_flops_over_peak() -> None:
 
 
 def test_predicted_us_equals_max_bottleneck_plus_overhead() -> None:
-    from compgen.graph_compilation.analytical_cost import predict_candidate_cost
+    from xpu_rt.graph_compilation.analytical_cost import predict_candidate_cost
 
     p = predict_candidate_cost(
         matmul_shape=(16, 32, 16), tile=(16, 16, 16), dtype_bytes=4,
@@ -453,7 +453,7 @@ def test_m21_overlay_byte_stable_across_reruns(no_kernels_run: Path) -> None:
     """Calling run_analytical_cost twice must produce a byte-identical
     cost_preview_v2.json (overlay is deterministic, like the standalone
     report). llm_graph_view.json must also be byte-identical."""
-    from compgen.graph_compilation.analytical_cost import run_analytical_cost
+    from xpu_rt.graph_compilation.analytical_cost import run_analytical_cost
 
     cp_path = no_kernels_run / "02_graph_analysis" / "cost_preview_v2.json"
     lv_path = no_kernels_run / "02_graph_analysis" / "llm_graph_view.json"
@@ -483,7 +483,7 @@ def test_m21_does_not_mutate_region_map_or_candidate_actions(
         return "sha256:" + hashlib.sha256(p.read_bytes()).hexdigest()
 
     before = {"region_map": _sha(rm_path), "candidate_actions": _sha(ca_path)}
-    from compgen.graph_compilation.analytical_cost import run_analytical_cost
+    from xpu_rt.graph_compilation.analytical_cost import run_analytical_cost
     run_analytical_cost(no_kernels_run)
     after = {"region_map": _sha(rm_path), "candidate_actions": _sha(ca_path)}
     assert before == after, (
@@ -499,7 +499,7 @@ def test_m21_overlay_does_not_clobber_m183_calibration(
     entry, the overlay must not clobber it. (This fixture has no
     calibration on; we install a synthetic one and verify the
     rerun preserves it.)"""
-    from compgen.graph_compilation.analytical_cost import run_analytical_cost
+    from xpu_rt.graph_compilation.analytical_cost import run_analytical_cost
 
     cp_path = no_kernels_run / "02_graph_analysis" / "cost_preview_v2.json"
     doc = _read(cp_path)
@@ -576,7 +576,7 @@ def test_handles_missing_candidate_actions(tmp_path: Path) -> None:
     fake = tmp_path / "fake_run"
     (fake / "02_graph_analysis").mkdir(parents=True)
     (fake / "00_graph_capture").mkdir(parents=True)
-    from compgen.graph_compilation.analytical_cost import run_analytical_cost
+    from xpu_rt.graph_compilation.analytical_cost import run_analytical_cost
 
     res = run_analytical_cost(fake)
     assert res.overall == "not_run"
@@ -584,16 +584,16 @@ def test_handles_missing_candidate_actions(tmp_path: Path) -> None:
 
 def test_no_compiler_core_imports() -> None:
     src = (
-        REPO_ROOT / "python" / "compgen" / "graph_compilation"
+        REPO_ROOT / "python" / "xpu-rt" / "graph_compilation"
         / "analytical_cost.py"
     ).read_text(encoding="utf-8")
     forbidden = (
-        "from compgen.ir.payload",
-        "import compgen.ir.payload",
-        "from compgen.capture",
-        "import compgen.capture",
-        "from compgen.pipeline",
-        "import compgen.pipeline",
+        "from xpu_rt.ir.payload",
+        "import xpu_rt.ir.payload",
+        "from xpu_rt.capture",
+        "import xpu_rt.capture",
+        "from xpu_rt.pipeline",
+        "import xpu_rt.pipeline",
     )
     for pat in forbidden:
         assert pat not in src, f"M-21 imports forbidden: {pat}"

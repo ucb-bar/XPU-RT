@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from compgen.agent.analyzer import NetworkAnalysis, PatternCluster
-from compgen.analysis.layout.planner import LayoutPlan, LayoutPlanner
-from compgen.targets.schema import ComputeUnit, DeviceSpec, MemoryLevel, TargetProfile
+from xpu_rt.agent.analyzer import NetworkAnalysis, PatternCluster
+from xpu_rt.analysis.layout.planner import LayoutPlan, LayoutPlanner
+from xpu_rt.targets.schema import ComputeUnit, DeviceSpec, MemoryLevel, TargetProfile
 
 
 def _mock_target() -> TargetProfile:

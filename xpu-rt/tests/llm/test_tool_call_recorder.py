@@ -1,4 +1,4 @@
-"""Tests for compgen.llm.recorder.ToolCallRecorder (P13)."""
+"""Tests for xpu_rt.llm.recorder.ToolCallRecorder (P13)."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 
 import pytest
-from compgen.llm import ToolCallRecorder
+from xpu_rt.llm import ToolCallRecorder
 
 
 @pytest.fixture

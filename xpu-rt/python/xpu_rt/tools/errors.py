@@ -5,8 +5,8 @@ type rather than message. Every error must be raised with a concrete
 ``tool_id`` (or ``source`` path for cards being constructed) so the
 audit log can attribute the failure.
 
-See :mod:`compgen.tools.tool_card` for the contract these errors
-defend, and :mod:`compgen.audit.tool_promotion` for the rollup that
+See :mod:`xpu_rt.tools.tool_card` for the contract these errors
+defend, and :mod:`xpu_rt.audit.tool_promotion` for the rollup that
 treats these as gate violations.
 """
 
@@ -20,7 +20,7 @@ class ToolCardError(ValueError):
 class ToolMaturityError(ValueError):
     """A tool was declared at a maturity level whose evidence is missing.
 
-    Raised by :mod:`compgen.audit.tool_promotion`, never by the runner.
+    Raised by :mod:`xpu_rt.audit.tool_promotion`, never by the runner.
     """
 
 

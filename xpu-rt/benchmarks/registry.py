@@ -1,4 +1,4 @@
-"""Built-in benchmark registry for the CompGen MLSys study."""
+"""Built-in benchmark registry for the XPU-RT MLSys study."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ from benchmarks.workloads import get_loader, get_model_spec
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_BASELINES = [
-    "compgen",
+    "xpu-rt",
     "torch_eager",
     "torch_compile",
     "expert_fixture",
@@ -205,9 +205,9 @@ def _register_targets(registry: BenchmarkRegistry) -> None:
 def _register_baselines(registry: BenchmarkRegistry) -> None:
     for baseline in [
         BaselineSpec(
-            baseline_id="compgen",
-            adapter="compgen",
-            description="CompGen full pipeline run",
+            baseline_id="xpu-rt",
+            adapter="xpu-rt",
+            description="XPU-RT full pipeline run",
             tags=["primary"],
         ),
         BaselineSpec(
@@ -364,7 +364,7 @@ def _register_cases_and_studies(registry: BenchmarkRegistry) -> None:
                 study_id="verification_red_team",
                 workload_id=workload_id,
                 target_id=target_id,
-                baseline_ids=["compgen"],
+                baseline_ids=["xpu-rt"],
                 tags=["verification", "paper_subset"],
             )
         )
@@ -384,7 +384,7 @@ def _register_cases_and_studies(registry: BenchmarkRegistry) -> None:
                 study_id="frontier_blocks",
                 workload_id=workload_id,
                 target_id="cuda_a100",
-                baseline_ids=["compgen"],
+                baseline_ids=["xpu-rt"],
                 tags=["frontier", "block"],
             )
         )
@@ -403,7 +403,7 @@ def _register_cases_and_studies(registry: BenchmarkRegistry) -> None:
                 study_id="frontier_robotics",
                 workload_id=workload_id,
                 target_id="multi_device",
-                baseline_ids=["compgen"],
+                baseline_ids=["xpu-rt"],
                 tags=["frontier", "robotics"],
             )
         )

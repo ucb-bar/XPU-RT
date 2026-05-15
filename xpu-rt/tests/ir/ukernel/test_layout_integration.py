@@ -7,8 +7,8 @@ layout propagation while opaque ones do not.
 
 from __future__ import annotations
 
-from compgen.transforms.layout import run_layout_pipeline
-from compgen.transforms.layout.propagate_layouts import _is_ukernel_transparent
+from xpu_rt.transforms.layout import run_layout_pipeline
+from xpu_rt.transforms.layout.propagate_layouts import _is_ukernel_transparent
 from xdsl.builder import Builder
 from xdsl.dialects.arith import ConstantOp
 from xdsl.dialects.builtin import ModuleOp, StringAttr, i32
@@ -27,11 +27,11 @@ class TestIsUkernelTransparent:
     """_is_ukernel_transparent returns True only for transparent attrs."""
 
     def test_transparent_attr_returns_true(self) -> None:
-        op = _FakeOp({"compgen.ukernel_transparency": StringAttr("transparent")})
+        op = _FakeOp({"xpu_rt.ukernel_transparency": StringAttr("transparent")})
         assert _is_ukernel_transparent(op) is True
 
     def test_opaque_attr_returns_false(self) -> None:
-        op = _FakeOp({"compgen.ukernel_transparency": StringAttr("opaque")})
+        op = _FakeOp({"xpu_rt.ukernel_transparency": StringAttr("opaque")})
         assert _is_ukernel_transparent(op) is False
 
     def test_missing_attr_returns_false(self) -> None:
@@ -39,7 +39,7 @@ class TestIsUkernelTransparent:
         assert _is_ukernel_transparent(op) is False
 
     def test_empty_string_attr_returns_false(self) -> None:
-        op = _FakeOp({"compgen.ukernel_transparency": StringAttr("")})
+        op = _FakeOp({"xpu_rt.ukernel_transparency": StringAttr("")})
         assert _is_ukernel_transparent(op) is False
 
 
@@ -65,8 +65,8 @@ class TestLayoutPipelineWithUkernels:
         """
         # Build the constant and annotate it
         cst_op = ConstantOp.from_int_and_width(42, i32)
-        cst_op.attributes["compgen.ukernel_transparency"] = StringAttr("transparent")
-        cst_op.attributes["compgen.encoding"] = StringAttr("nchw_tile_8x4")
+        cst_op.attributes["xpu_rt.ukernel_transparency"] = StringAttr("transparent")
+        cst_op.attributes["xpu_rt.encoding"] = StringAttr("nchw_tile_8x4")
 
         ret_op = ReturnOp(cst_op)
 
@@ -96,7 +96,7 @@ class TestLayoutPipelineWithUkernels:
             @Builder.implicit_region(())
             def func_body(args: tuple) -> None:  # type: ignore[type-arg]
                 cst = ConstantOp.from_int_and_width(7, i32)
-                cst.attributes["compgen.ukernel_transparency"] = StringAttr("transparent")
+                cst.attributes["xpu_rt.ukernel_transparency"] = StringAttr("transparent")
                 ReturnOp(cst)
 
             FuncOp("built_test", ([], [i32]), func_body)

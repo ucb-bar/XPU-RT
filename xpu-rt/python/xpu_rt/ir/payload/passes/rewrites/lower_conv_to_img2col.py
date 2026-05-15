@@ -2,14 +2,14 @@
 ``tensor.pack`` + ``linalg.matmul`` (the im2col algorithm).
 
 Reconstruction of IREE's ``ConvertConv2DToImg2ColPass``. Zero
-external references; CompGen owns the rewrite.
+external references; XPU-RT owns the rewrite.
 
 Classical im2col:
 
 - Input: ``[N, H, W, C]`` (NHWC) activation + ``[F, KH, KW, C]``
   (HWCF-like) filter.
 - Pack input into ``[N, OH, OW, KH, KW, C]`` -- one tile per output
-  location -- via ``compgen.tensor_ext.pack``.
+  location -- via ``xpu_rt.tensor_ext.pack``.
 - Collapse ``[N, OH, OW]`` into ``[N*OH*OW]`` (the output rows)
   and ``[KH, KW, C]`` into ``[KH*KW*C]`` (the reduction dim).
 - Do a ``linalg.matmul`` with shape ``[N*OH*OW, KH*KW*C] × [KH*KW*C, F] → [N*OH*OW, F]``.
@@ -26,8 +26,8 @@ So in  we ship a **scheduled lowering**: every
 ``func.call @aten_convolution`` with static-shape input + weight
 tensors gets:
 
-- ``compgen.img2col_scheduled`` tag with shape metadata.
-- A placeholder ``compgen.tensor_ext.pack`` emitted alongside the
+- ``xpu_rt.img2col_scheduled`` tag with shape metadata.
+- A placeholder ``xpu_rt.tensor_ext.pack`` emitted alongside the
   call, with ``inner_tiles`` carrying the (KH*KW*C) inner dim as
   a single packed axis -- the stable seam the tile-lowering path
   in  consumes.
@@ -40,14 +40,14 @@ follow-up when:
 1. The conv shape attrs (``stride``, ``dilation``, ``padding``,
    ``groups``) are threaded through the decomp table via
    ``node.args`` forwarding (already partially in place via
-   ``_fx_args`` in :mod:`compgen.ir.payload.decompositions`).
-2. ``tensor.collapse_shape`` lands in xDSL or we add a CompGen
-   equivalent (``compgen.tensor_ext.collapse``).
+   ``_fx_args`` in :mod:`xpu_rt.ir.payload.decompositions`).
+2. ``tensor.collapse_shape`` lands in xDSL or we add a XPU-RT
+   equivalent (``xpu_rt.tensor_ext.collapse``).
 
 LLM-tool signature:
 
     tool_name="lower_conv_to_img2col"
-    wraps_pass="CompGen:ConvertConv2DToImg2Col"
+    wraps_pass="XPU-RT:ConvertConv2DToImg2Col"
     invent_slot="structural/conv_lowering"
     policy="ScheduleConvForImg2Col"
 """
@@ -72,7 +72,7 @@ from xdsl.pattern_rewriter import (
     op_type_rewrite_pattern,
 )
 
-from compgen.ir.tensor_ext import PackOp
+from xpu_rt.ir.tensor_ext import PackOp
 
 
 @dataclass(frozen=True)
@@ -88,7 +88,7 @@ class LowerConvToImg2ColStats:
     convs_skipped_dynamic: int = 0
     convs_skipped_too_small: int = 0
     convs_skipped_wrong_rank: int = 0
-    # Number of convs for which a real ``compgen.tensor_ext.pack`` op
+    # Number of convs for which a real ``xpu_rt.tensor_ext.pack`` op
     # was emitted alongside the scheduling tag.
     pack_ops_emitted: int = 0
 
@@ -99,7 +99,7 @@ class LowerConvToImg2ColStats:
 def _is_convolution_call(op: Operation) -> bool:
     if not isinstance(op, CallOp):
         return False
-    hint = op.attributes.get("compgen._pattern_hint")
+    hint = op.attributes.get("xpu_rt._pattern_hint")
     if hint is None:
         return False
     if not isinstance(hint, StringAttr):
@@ -135,7 +135,7 @@ class _Img2ColSchedulePattern(RewritePattern):
         self.stats.convs_seen += 1
 
         # Already scheduled -> idempotent.
-        if "compgen.img2col_scheduled" in op.attributes:
+        if "xpu_rt.img2col_scheduled" in op.attributes:
             return
 
         input_shape = _operand_shape(op, 0)
@@ -173,13 +173,13 @@ class _Img2ColSchedulePattern(RewritePattern):
             return
 
         # Tag with shape metadata so  can structurally lower.
-        op.attributes["compgen.img2col_scheduled"] = StringAttr("true")
-        op.attributes["compgen.img2col_input_shape"] = StringAttr(",".join(str(d) for d in input_shape))
-        op.attributes["compgen.img2col_filter_shape"] = StringAttr(",".join(str(d) for d in filter_shape))
-        op.attributes["compgen.img2col_output_shape"] = StringAttr(",".join(str(d) for d in out_shape))
+        op.attributes["xpu_rt.img2col_scheduled"] = StringAttr("true")
+        op.attributes["xpu_rt.img2col_input_shape"] = StringAttr(",".join(str(d) for d in input_shape))
+        op.attributes["xpu_rt.img2col_filter_shape"] = StringAttr(",".join(str(d) for d in filter_shape))
+        op.attributes["xpu_rt.img2col_output_shape"] = StringAttr(",".join(str(d) for d in out_shape))
         self.stats.convs_scheduled += 1
 
-        # Emit a real ``compgen.tensor_ext.pack`` op on the conv's
+        # Emit a real ``xpu_rt.tensor_ext.pack`` op on the conv's
         # activation input that tiles the spatial dims (H, W) into
         # (H / KH, W / KW, KH, KW). This is the blocked layout
         # im2col rewrites rely on as its prep step -- the full
@@ -204,12 +204,12 @@ class _Img2ColSchedulePattern(RewritePattern):
             inner_tiles=[KH, KW],
             result_type=packed_type,
         )
-        pack.attributes["compgen.img2col_pack"] = StringAttr("true")
+        pack.attributes["xpu_rt.img2col_pack"] = StringAttr("true")
         rewriter.insert_op_before_matched_op(pack)
         # Tag the conv with the pack's buffer id so later passes can
         # find it.
-        op.attributes["compgen.img2col_pack_tile_kh"] = IntegerAttr(KH, IntegerType(64))
-        op.attributes["compgen.img2col_pack_tile_kw"] = IntegerAttr(KW, IntegerType(64))
+        op.attributes["xpu_rt.img2col_pack_tile_kh"] = IntegerAttr(KH, IntegerType(64))
+        op.attributes["xpu_rt.img2col_pack_tile_kw"] = IntegerAttr(KW, IntegerType(64))
         self.stats.pack_ops_emitted += 1
 
 

@@ -1,29 +1,29 @@
 # Wire up the MCP server
 
-CompGen ships an MCP (Model Context Protocol) server called `compgen-mcp`. It
+XPU-RT ships an MCP (Model Context Protocol) server called `xpu-rt-mcp`. It
 exposes every pipeline stage as a typed tool so Claude Code — or any
-MCP-compatible client — can drive CompGen interactively.
+MCP-compatible client — can drive XPU-RT interactively.
 
 ## 1. Install
 
 ```bash
-pip install compgen
+pip install xpu-rt
 ```
 
 Verify the entry points are on your `PATH`:
 
 ```bash
-which compgen compgen-mcp
+which xpu-rt xpu-rt-mcp
 ```
 
 ## 2. Register the server with Claude Code
 
 Pick one of:
 
-### Option A — let `compgen` do the merge
+### Option A — let `xpu-rt` do the merge
 
 ```bash
-compgen mcp install          # edits ~/.claude.json with a timestamped backup
+xpu-rt mcp install          # edits ~/.claude.json with a timestamped backup
 ```
 
 Add `--project` to write to the current directory's `.mcp.json` instead.
@@ -33,7 +33,7 @@ somewhere else.
 ### Option B — paste the snippet yourself
 
 ```bash
-compgen mcp print-config
+xpu-rt mcp print-config
 ```
 
 Copy the output into your config of choice. The canonical snippet is:
@@ -41,8 +41,8 @@ Copy the output into your config of choice. The canonical snippet is:
 ```json
 {
   "mcpServers": {
-    "compgen": {
-      "command": "compgen-mcp"
+    "xpu-rt": {
+      "command": "xpu-rt-mcp"
     }
   }
 }
@@ -51,18 +51,18 @@ Copy the output into your config of choice. The canonical snippet is:
 ## 3. Verify
 
 ```bash
-compgen mcp doctor
+xpu-rt mcp doctor
 ```
 
 `doctor` imports the tool tree, checks the MCP SDK, lists every discovered
-extension, and confirms `compgen-mcp` is on `PATH`. If every block comes back
-clean, restart Claude Code and the `compgen` server shows up in the tool
+extension, and confirms `xpu-rt-mcp` is on `PATH`. If every block comes back
+clean, restart Claude Code and the `xpu-rt` server shows up in the tool
 picker.
 
 ## 4. List the available tools
 
 ```bash
-compgen mcp tools
+xpu-rt mcp tools
 ```
 
 The same tool set is surfaced over MCP. Each tool declares a JSON schema and a
@@ -73,17 +73,17 @@ pipeline phase (`lifecycle`, `inspect`, `transform`, `job`).
 Useful for local debugging or driving it from a non-Claude-Code client:
 
 ```bash
-compgen mcp serve            # stdio transport, JSON-RPC
+xpu-rt mcp serve            # stdio transport, JSON-RPC
 ```
 
 ## Troubleshooting
 
-- **"compgen-mcp: command not found"** — the package installed into a venv
+- **"xpu-rt-mcp: command not found"** — the package installed into a venv
   that's not on your `PATH`. Activate the venv or use the full path Claude
   Code reports in its MCP logs.
-- **"failed to import compgen.mcp.tools"** — run `compgen mcp doctor`; the
+- **"failed to import xpu_rt.mcp.tools"** — run `xpu-rt mcp doctor`; the
   exception it prints is almost always a missing optional dep (e.g. `[solve]`
   or `[llm]`) for a tool whose handler module imports it at the top.
-- **Extensions not appearing** — `compgen ext list` shows what discovery
+- **Extensions not appearing** — `xpu-rt ext list` shows what discovery
   found; see [Extension Authoring](extension-authoring.md) for the discovery
   contract.

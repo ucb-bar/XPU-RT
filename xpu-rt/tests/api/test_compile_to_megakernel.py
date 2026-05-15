@@ -1,4 +1,4 @@
-"""Wave 1.4 — `compgen.compile_to_megakernel` agentic-compilation entry.
+"""Wave 1.4 — `xpu_rt.compile_to_megakernel` agentic-compilation entry.
 
 CPU-only tests. The flagless contract: a PyPI user (or their agent)
 calls ``compile_to_megakernel(model, sample_inputs)`` with no
@@ -40,25 +40,25 @@ class _DataDependent(nn.Module):
 
 class TestPublicSurface:
     def test_top_level_imports(self) -> None:
-        import compgen
+        import xpu_rt
 
-        assert hasattr(compgen, "compile_to_megakernel")
-        assert hasattr(compgen, "MegakernelBundle")
-        assert callable(compgen.compile_to_megakernel)
+        assert hasattr(xpu_rt, "compile_to_megakernel")
+        assert hasattr(xpu_rt, "MegakernelBundle")
+        assert callable(xpu_rt.compile_to_megakernel)
 
     def test_compile_to_megakernel_returns_bundle(self, tmp_path) -> None:
         """The agentic-compilation contract: zero flags, get a
         MegakernelBundle back."""
-        import compgen
+        import xpu_rt
 
         model = _Diamond()
         x = torch.randn(64, 64)
-        bundle = compgen.compile_to_megakernel(
+        bundle = xpu_rt.compile_to_megakernel(
             model,
             (x,),
             output_dir=str(tmp_path),
         )
-        assert isinstance(bundle, compgen.MegakernelBundle)
+        assert isinstance(bundle, xpu_rt.MegakernelBundle)
         assert bundle.bundle_dir.is_dir()
         assert (bundle.bundle_dir / "megakernel" / "source.cu").is_file()
         assert (bundle.bundle_dir / "megakernel" / "manifest.yaml").is_file()
@@ -69,9 +69,9 @@ class TestPublicSurface:
     def test_bundle_carries_backend_choice(self, tmp_path) -> None:
         """``backend_choice`` is the agent-audit surface — every
         decision the probe made lands here."""
-        import compgen
+        import xpu_rt
 
-        bundle = compgen.compile_to_megakernel(
+        bundle = xpu_rt.compile_to_megakernel(
             _Diamond(),
             (torch.randn(64, 64),),
             output_dir=str(tmp_path),
@@ -90,13 +90,13 @@ class TestPublicSurface:
 
     def test_compile_context_round_trips(self, tmp_path) -> None:
         """compile_context.json preserves the resolved choice so
-        ``compgen_run_compiled_bundle`` re-compiles against the same
+        ``xpu_rt_run_compiled_bundle`` re-compiles against the same
         backend selection on bwell."""
         import json
 
-        import compgen
+        import xpu_rt
 
-        bundle = compgen.compile_to_megakernel(
+        bundle = xpu_rt.compile_to_megakernel(
             _Diamond(),
             (torch.randn(64, 64),),
             output_dir=str(tmp_path),
@@ -110,15 +110,15 @@ class TestPublicSurface:
 
     def test_compile_context_carries_cost_prediction(self, tmp_path) -> None:
         """Bridge #129 — cost_prediction lives in compile_context.json
-        AND verification_report.json so ``compgen_run_compiled_bundle``
+        AND verification_report.json so ``xpu_rt_run_compiled_bundle``
         + audit-via-MCP queries can read it without re-running the
         predictor. Pin the schema so future schema drift fails here.
         """
         import json
 
-        import compgen
+        import xpu_rt
 
-        bundle = compgen.compile_to_megakernel(
+        bundle = xpu_rt.compile_to_megakernel(
             _Diamond(),
             (torch.randn(64, 64),),
             output_dir=str(tmp_path),
@@ -152,9 +152,9 @@ class TestPublicSurface:
         """The bundle exposes ``.dispatch(*args)`` — wraps the MCP
         run tool. Actual GPU dispatch tested on bwell; here we just
         pin the surface."""
-        import compgen
+        import xpu_rt
 
-        bundle = compgen.compile_to_megakernel(
+        bundle = xpu_rt.compile_to_megakernel(
             _Diamond(),
             (torch.randn(64, 64),),
             output_dir=str(tmp_path),
@@ -170,9 +170,9 @@ class TestBackendOverrides:
         win over the probe — but un-specified keys keep the probe's
         choice. This is the "advanced caller can pin one knob"
         story."""
-        import compgen
+        import xpu_rt
 
-        bundle = compgen.compile_to_megakernel(
+        bundle = xpu_rt.compile_to_megakernel(
             _Diamond(),
             (torch.randn(64, 64),),
             output_dir=str(tmp_path),
@@ -182,14 +182,14 @@ class TestBackendOverrides:
         assert bundle.backend_choice["cublasdx_precision"] == "fp32"
 
     def test_overrides_dont_change_probe_for_other_keys(self, tmp_path) -> None:
-        import compgen
+        import xpu_rt
 
-        b1 = compgen.compile_to_megakernel(
+        b1 = xpu_rt.compile_to_megakernel(
             _Diamond(),
             (torch.randn(64, 64),),
             output_dir=str(tmp_path / "b1"),
         )
-        b2 = compgen.compile_to_megakernel(
+        b2 = xpu_rt.compile_to_megakernel(
             _Diamond(),
             (torch.randn(64, 64),),
             output_dir=str(tmp_path / "b2"),
@@ -213,9 +213,9 @@ class TestClusterLaunchEndToEnd:
         """Default Blackwell-targeting probe → cluster_dim populated
         in backend_choice. Validates Wave 1.6's plumbing through
         compile_to_megakernel."""
-        import compgen
+        import xpu_rt
 
-        bundle = compgen.compile_to_megakernel(
+        bundle = xpu_rt.compile_to_megakernel(
             _Diamond(64, 32),
             (torch.randn(64, 64),),
             output_dir=str(tmp_path),
@@ -241,12 +241,12 @@ class TestErrorPaths:
         tensor-valued control flow that ``torch.fx.symbolic_trace``
         rejects.
         """
-        import compgen
+        import xpu_rt
         import pytest
-        from compgen.runtime.lowering import UnsupportedShape
+        from xpu_rt.runtime.lowering import UnsupportedShape
 
         with pytest.raises(UnsupportedShape):
-            compgen.compile_to_megakernel(
+            xpu_rt.compile_to_megakernel(
                 _DataDependent(),
                 (torch.randn(64, 64),),
                 output_dir=str(tmp_path),

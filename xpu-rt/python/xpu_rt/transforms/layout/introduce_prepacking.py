@@ -19,12 +19,12 @@ from xdsl.dialects.builtin import (
 )
 from xdsl.ir import Block
 
-from compgen.ir.layout.attrs import PackSpecAttr
-from compgen.ir.layout.ops import PackOp
+from xpu_rt.ir.layout.attrs import PackSpecAttr
+from xpu_rt.ir.layout.ops import PackOp
 
 log = structlog.get_logger()
 
-PREPACK_MARKER_ATTR = "compgen.prepack_applied"
+PREPACK_MARKER_ATTR = "xpu_rt.prepack_applied"
 
 
 def introduce_prepacking(
@@ -60,7 +60,7 @@ def introduce_prepacking(
             continue
 
         # Check if this op has a prepack hint
-        hint_attr = op.attributes.get("compgen.prepack_hint")
+        hint_attr = op.attributes.get("xpu_rt.prepack_hint")
         has_hint = hint_attr and hasattr(hint_attr, "data")
 
         # Check if any operand matches a prepack candidate

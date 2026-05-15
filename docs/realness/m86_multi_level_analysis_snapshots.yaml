@@ -5,7 +5,7 @@ claim: |
 
   Implementation:
 
-  * ``python/compgen/analysis/ir_snapshots.py`` —
+  * ``python/xpu_rt/analysis/ir_snapshots.py`` —
     ``IRAnalysisSnapshot`` (schema ``ir_analysis_snapshot_v1``),
     ``RegionSummary``, ``UnsupportedProvider``,
     ``make_available`` / ``make_not_available`` factories,
@@ -65,7 +65,7 @@ forbidden:
   - hiding raw-IR diffs as analysis summaries
   - status=available + not_available_reason set
 required_evidence:
-  - python/compgen/analysis/ir_snapshots.py
+  - python/xpu_rt/analysis/ir_snapshots.py
   - tests/analysis/test_multi_level_analysis_snapshots.py
   - docs/architecture/EXTENSION_PROVIDER_ARCHITECTURE.md
 commit: 35ee97f497bc69c0716c25b935f575c3cd7d63f4

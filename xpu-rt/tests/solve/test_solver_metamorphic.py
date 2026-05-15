@@ -12,35 +12,35 @@ import pytest
 
 z3 = pytest.importorskip("z3")
 
-from compgen.solve.bandwidth_planner import (
+from xpu_rt.solve.bandwidth_planner import (
     BandwidthPlanInput,
     LinkCapacity,
     TransferDemand,
     plan_bandwidth,
 )
-from compgen.solve.memory_planner import (
+from xpu_rt.solve.memory_planner import (
     AliasCandidate,
     BufferSpec,
     MemoryPlanInput,
     TierCapacity,
     plan_memory,
 )
-from compgen.solve.overlap_planner import (
+from xpu_rt.solve.overlap_planner import (
     Dependency,
     Operation,
     OverlapPlanInput,
     Resource,
     plan_overlap,
 )
-from compgen.solve.placement_planner import (
+from xpu_rt.solve.placement_planner import (
     Device,
     Edge,
     PlacementPlanInput,
     Region,
     plan_placement,
 )
-from compgen.solve.solver_types import SolverStatus
-from compgen.solve.z3_obligations import (
+from xpu_rt.solve.solver_types import SolverStatus
+from xpu_rt.solve.z3_obligations import (
     OBLIGATION_KIND_SHAPE_PREDICATE_IMPLICATION,
     prove_shape_predicate_implication,
 )

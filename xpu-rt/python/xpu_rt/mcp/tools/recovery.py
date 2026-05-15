@@ -2,13 +2,13 @@
 register_blackbox, resolve_unsupported_op.
 
 Each tool is a thin wrapper over the existing
-:mod:`compgen.capture.unsupported` synthesisers. Splitting them into
+:mod:`xpu_rt.capture.unsupported` synthesisers. Splitting them into
 four discrete tools (rather than one aggregate) is deliberate:
 
 * The LLM's tool-selection attribution is clearer — you can
   tell from the transcript which strategy was picked.
 * Each strategy becomes individually gradable in P3 (the
-  ``~/.compgen/extensions/_state.json`` tracks per-tool invocations
+  ``~/.xpu_rt/extensions/_state.json`` tracks per-tool invocations
   so the cross-session graduation loop can promote the exact wrapper
   the LLM picked).
 """
@@ -18,16 +18,16 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from compgen.capture.unsupported import UnsupportedOpResolution
-from compgen.capture.unsupported.classify import UnsupportedClassification
-from compgen.capture.unsupported.synthesize_decomp import (
+from xpu_rt.capture.unsupported import UnsupportedOpResolution
+from xpu_rt.capture.unsupported.classify import UnsupportedClassification
+from xpu_rt.capture.unsupported.synthesize_decomp import (
     SynthesizedDecomposition,
     synthesize_export_decomposition,
 )
-from compgen.capture.unsupported.synthesize_translation import (
+from xpu_rt.capture.unsupported.synthesize_translation import (
     synthesize_payload_translation,
 )
-from compgen.mcp.session import McpSession, SessionManager
+from xpu_rt.mcp.session import McpSession, SessionManager
 
 # ---------------------------------------------------------------------------
 # Per-session recovery state (lives on the session's metadata dict)
@@ -82,7 +82,7 @@ def synthesize_decomp(
     """Attempt an ATen allow-list decomposition for ``op_target``.
 
     Only the ATen allow-list in
-    :mod:`compgen.capture.unsupported.synthesize_decomp` can supply
+    :mod:`xpu_rt.capture.unsupported.synthesize_decomp` can supply
     a real decomp today. For off-list ops we return ``ok=False`` with
     ``reason='not_on_allow_list'`` so the LLM can fall back to
     ``register_blackbox`` or ``synthesize_translation``.

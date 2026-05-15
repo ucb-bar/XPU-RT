@@ -6,18 +6,18 @@ what is forbidden, and what evidence backs each rung of its maturity
 ladder.
 
 ToolCards are loaded from YAML files under
-``python/compgen/tools/cards/`` (see
-:mod:`compgen.tools.tool_registry`). They are *declarations*, not
+``python/xpu_rt/tools/cards/`` (see
+:mod:`xpu_rt.tools.tool_registry`). They are *declarations*, not
 runtime objects — the corresponding Python entrypoint is resolved
-lazily by :class:`compgen.tools.tool_runner.ToolRunner`.
+lazily by :class:`xpu_rt.tools.tool_runner.ToolRunner`.
 
 The schema is intentionally narrow. Closed enums (``MATURITY_LEVELS``,
 ``TOOL_PHASES``, ``FORBIDDEN_ACTIONS``, ``TOOL_STATUSES``,
 ``PROMOTION_REQUIREMENT_KEYS``) are checked at construction; unknown
-values raise :class:`compgen.tools.errors.ToolCardError` so a typo in
+values raise :class:`xpu_rt.tools.errors.ToolCardError` so a typo in
 YAML cannot quietly produce an under-audited tool.
 
-Mirrors :class:`compgen.providers.provider_types.ProviderCard` so
+Mirrors :class:`xpu_rt.providers.provider_types.ProviderCard` so
 future card families can lift the same loader pattern.
 """
 
@@ -27,9 +27,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Final
 
-from compgen.tools.errors import ToolCardError
+from xpu_rt.tools.errors import ToolCardError
 
-SCHEMA_VERSION: Final[str] = "compgen_tool_card_v1"
+SCHEMA_VERSION: Final[str] = "xpu_rt_tool_card_v1"
 
 # Eight-rung maturity ladder. Audit enforces evidence at each
 # rung; the runner treats T0+ as runnable but only validates
@@ -60,7 +60,7 @@ TOOL_PHASES: Final[tuple[str, ...]] = (
 # Status enum returned by every tool. The runner enforces that the
 # tool's output_schema constrains a top-level ``status`` field to
 # this set (or a subset). Refer to the docstring of
-# :class:`compgen.tools.tool_runner.ToolResult` for the contract.
+# :class:`xpu_rt.tools.tool_runner.ToolResult` for the contract.
 TOOL_STATUSES: Final[tuple[str, ...]] = (
     "ok",
     "blocked",
@@ -175,11 +175,11 @@ class ToolPromotionRequirements:
 class ToolCard:
     """Frozen declaration of an agent-callable tool.
 
-    Cards live under ``python/compgen/tools/cards/*.yaml`` and are
-    loaded by :func:`compgen.tools.tool_registry.iter_tool_cards`.
+    Cards live under ``python/xpu_rt/tools/cards/*.yaml`` and are
+    loaded by :func:`xpu_rt.tools.tool_registry.iter_tool_cards`.
     A card is not evidence that the tool *works*; it is the
-    contract :class:`compgen.tools.tool_runner.ToolRunner` validates
-    against and the surface :mod:`compgen.audit.tool_promotion`
+    contract :class:`xpu_rt.tools.tool_runner.ToolRunner` validates
+    against and the surface :mod:`xpu_rt.audit.tool_promotion`
     audits against.
     """
 

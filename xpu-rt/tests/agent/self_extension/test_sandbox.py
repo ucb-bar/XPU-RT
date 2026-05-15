@@ -1,8 +1,8 @@
-"""Tests for :mod:`compgen.agent.self_extension.sandbox`."""
+"""Tests for :mod:`xpu_rt.agent.self_extension.sandbox`."""
 
 from __future__ import annotations
 
-from compgen.agent.self_extension.sandbox import (
+from xpu_rt.agent.self_extension.sandbox import (
     sandbox_invoke,
 )
 
@@ -33,10 +33,10 @@ def run():
     assert "socket" in result.first_violation().detail
 
 
-def test_sandbox_allows_math_and_compgen() -> None:
+def test_sandbox_allows_math_and_xpu_rt() -> None:
     source = """
 import math
-from compgen.llm.registry import Tool
+from xpu_rt.llm.registry import Tool
 
 def run():
     return {"pi": math.pi, "has_Tool": Tool.__name__}

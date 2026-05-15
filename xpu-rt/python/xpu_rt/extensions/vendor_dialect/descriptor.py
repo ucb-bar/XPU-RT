@@ -95,15 +95,15 @@ class VerificationPlan:
 class VendorDialectDescriptor:
     """Frozen specification for integrating a third-party MLIR dialect.
 
-    Produced by :mod:`compgen.agent.vendor_integration.explore` and
-    consumed by :mod:`compgen.extensions.vendor_dialect.scaffold`.
+    Produced by :mod:`xpu_rt.agent.vendor_integration.explore` and
+    consumed by :mod:`xpu_rt.extensions.vendor_dialect.scaffold`.
 
     Attributes:
         name: Canonical vendor name (e.g. ``"cuda_tile"``, ``"hexagon"``).
         package_name: Python package name for the scaffolded user-space
-            adapter (e.g. ``"compgen_cuda_tile"``).
+            adapter (e.g. ``"xpu_rt_cuda_tile"``).
         repo_path: Absolute path to the cloned vendor repository.
-        target: CompGen target name this adapter binds to
+        target: XPU-RT target name this adapter binds to
             (e.g. ``"nvidia-h100"``).
         input_ir: Which IR(s) the vendor toolchain accepts as input.
         output_format: What the final compile artifact is
@@ -115,7 +115,7 @@ class VendorDialectDescriptor:
         bundle: The vendor-side pipeline to produce the artifact.
         verification: Verification gates this adapter must clear.
         kernel_authoring_required: Whether the adapter needs an LLM-backed
-            kernel provider (no direct linalg path from CompGen's Payload IR).
+            kernel provider (no direct linalg path from XPU-RT's Payload IR).
         dependencies: External tools / SDKs the user must install.
         license: Detected upstream license identifier (SPDX-like).
         extras: Free-form provenance (scanner version, explore-agent

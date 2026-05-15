@@ -24,7 +24,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from compgen.mcp.capabilities import (
+from xpu_rt.mcp.capabilities import (
     CAPABILITY_AGENT_ROLE,
     CAPABILITY_OPERATOR_OVERRIDE,
     CAPABILITY_TOKENS,
@@ -34,8 +34,8 @@ from compgen.mcp.capabilities import (
     is_known_token,
     missing_capabilities,
 )
-from compgen.mcp.server import dispatch_tool
-from compgen.mcp.session import SessionManager
+from xpu_rt.mcp.server import dispatch_tool
+from xpu_rt.mcp.session import SessionManager
 
 
 def test_capability_tokens_closed_enum() -> None:
@@ -95,7 +95,7 @@ def test_missing_capabilities_reports_role_mismatch() -> None:
 def test_dispatch_blocks_override_decision_without_token(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setenv("COMPGEN_STRICT_CAPABILITIES", "1")
+    monkeypatch.setenv("XPU_RT_STRICT_CAPABILITIES", "1")
     sm = SessionManager(scratch_root=tmp_path / "scratch")
     s = sm.open()
 
@@ -124,7 +124,7 @@ def test_dispatch_blocks_override_decision_without_token(
 def test_dispatch_allows_when_token_present(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setenv("COMPGEN_STRICT_CAPABILITIES", "1")
+    monkeypatch.setenv("XPU_RT_STRICT_CAPABILITIES", "1")
     sm = SessionManager(scratch_root=tmp_path / "scratch")
     s = sm.open()
     s.capabilities = frozenset({CAPABILITY_OPERATOR_OVERRIDE})
@@ -153,7 +153,7 @@ def test_dispatch_allows_when_token_present(
 def test_dispatch_capabilities_off_by_default(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.delenv("COMPGEN_STRICT_CAPABILITIES", raising=False)
+    monkeypatch.delenv("XPU_RT_STRICT_CAPABILITIES", raising=False)
     sm = SessionManager(scratch_root=tmp_path / "scratch")
     s = sm.open()
     s.capabilities = frozenset()  # no tokens
@@ -183,7 +183,7 @@ def test_dispatch_capabilities_off_by_default(
 def test_apply_recipe_requires_agent_role_token(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setenv("COMPGEN_STRICT_CAPABILITIES", "1")
+    monkeypatch.setenv("XPU_RT_STRICT_CAPABILITIES", "1")
     sm = SessionManager(scratch_root=tmp_path / "scratch")
     s = sm.open()
     s.capabilities = frozenset()  # missing agent_role

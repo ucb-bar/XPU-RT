@@ -1,6 +1,6 @@
 """Emit C++ MLIR pass implementations from Python layout transform passes.
 
-Translates CompGen's 10 layout passes from xDSL Python to C++ MLIR pass
+Translates XPU-RT's 10 layout passes from xDSL Python to C++ MLIR pass
 infrastructure. Generates:
   - {Prefix}Passes.td — TableGen pass declarations
   - {Prefix}Passes.h — pass registration header
@@ -25,7 +25,7 @@ from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader
 
-from compgen.extensions.mlir_cppgen.introspect import DialectInfo
+from xpu_rt.extensions.mlir_cppgen.introspect import DialectInfo
 
 _TEMPLATE_DIR = Path(__file__).parent / "templates"
 
@@ -93,11 +93,11 @@ _LAYOUT_PASSES: list[PassInfo] = [
             }
 
             if (isChain) {
-                op->setAttr("compgen.transpose_class",
+                op->setAttr("xpu_rt.transpose_class",
                             mlir::StringAttr::get(ctx, "eliminable"));
                 ++eliminated;
             } else {
-                op->setAttr("compgen.transpose_class",
+                op->setAttr("xpu_rt.transpose_class",
                             mlir::StringAttr::get(ctx, "simple"));
                 ++classified;
             }
@@ -112,13 +112,13 @@ _LAYOUT_PASSES: list[PassInfo] = [
         cpp_class="AttachLayoutHintsPass",
         cpp_file_name="AttachLayoutHints.cpp",
         summary="Annotate ops with layout hints from analysis plans.",
-        description="For each op with results, attach compgen.layout_hint if plan data is available.",
+        description="For each op with results, attach xpu_rt.layout_hint if plan data is available.",
         pattern="attr_annotation",
         body_code="""\
         // Layout hints are attached from analysis plans.
         // In the C++ compiler, plans are loaded from YAML.
         // This is a no-op stub — the Python pipeline attaches hints before
-        // handing MLIR text to compgen-opt.
+        // handing MLIR text to xpu_rt-opt.
         (void)module;
         (void)ctx;""",
         extra_includes=[],
@@ -144,13 +144,13 @@ _LAYOUT_PASSES: list[PassInfo] = [
         module.walk([&](mlir::Operation *op) {
             if (mlir::isa<mlir::func::FuncOp, mlir::func::ReturnOp>(op))
                 return;
-            if (op->hasAttr("compgen.has_virtual_encoding"))
+            if (op->hasAttr("xpu_rt.has_virtual_encoding"))
                 return;
 
             auto nameRef = op->getName().getStringRef();
             bool isBoundary = kernelBoundaryOps.contains(nameRef);
             // Also check ukernel boundaries
-            if (!isBoundary && op->hasAttr("compgen.ukernel_ref"))
+            if (!isBoundary && op->hasAttr("xpu_rt.ukernel_ref"))
                 isBoundary = true;
             if (!isBoundary)
                 return;
@@ -158,14 +158,14 @@ _LAYOUT_PASSES: list[PassInfo] = [
             // Get layout hint
             llvm::StringRef layoutStr = "rowmajor";
             if (auto hint = op->getAttrOfType<mlir::StringAttr>(
-                    "compgen.layout_hint"))
+                    "xpu_rt.layout_hint"))
                 layoutStr = hint.getValue();
             else if (auto enc = op->getAttrOfType<mlir::StringAttr>(
-                         "compgen.encoding"))
+                         "xpu_rt.encoding"))
                 layoutStr = enc.getValue();
 
             // Mark as processed
-            op->setAttr("compgen.has_virtual_encoding",
+            op->setAttr("xpu_rt.has_virtual_encoding",
                         mlir::StringAttr::get(ctx, "1"));
             ++inserted;
         });""",
@@ -197,8 +197,8 @@ _LAYOUT_PASSES: list[PassInfo] = [
 
         auto getEncoding = [](mlir::Operation *op) -> llvm::StringRef {
             for (llvm::StringRef key :
-                 {"compgen.propagated_encoding", "compgen.layout_hint",
-                  "compgen.encoding"}) {
+                 {"xpu_rt.propagated_encoding", "xpu_rt.layout_hint",
+                  "xpu_rt.encoding"}) {
                 if (auto attr = op->getAttrOfType<mlir::StringAttr>(key))
                     return attr.getValue();
             }
@@ -213,7 +213,7 @@ _LAYOUT_PASSES: list[PassInfo] = [
                 return true;
             // Transparent ukernels
             if (auto attr = op->getAttrOfType<mlir::StringAttr>(
-                    "compgen.ukernel_transparency"))
+                    "xpu_rt.ukernel_transparency"))
                 return attr.getValue() == "transparent";
             return false;
         };
@@ -232,11 +232,11 @@ _LAYOUT_PASSES: list[PassInfo] = [
 
             // Propagate to transparent ops
             if (isTransparent(op) &&
-                !op->hasAttr("compgen.propagated_encoding")) {
+                !op->hasAttr("xpu_rt.propagated_encoding")) {
                 for (mlir::Value operand : op->getOperands()) {
                     auto it = valueEncoding.find(operand);
                     if (it != valueEncoding.end()) {
-                        op->setAttr("compgen.propagated_encoding",
+                        op->setAttr("xpu_rt.propagated_encoding",
                                     mlir::StringAttr::get(ctx, it->second));
                         for (mlir::Value result : op->getResults())
                             valueEncoding[result] = it->second;
@@ -260,13 +260,13 @@ _LAYOUT_PASSES: list[PassInfo] = [
         cpp_class="HoistLayoutOpsPass",
         cpp_file_name="HoistLayoutOps.cpp",
         summary="Hoist layout encodings to dominating positions.",
-        description="If >=80%% of ops in a function share the same encoding, mark the function with compgen.hoisted_encoding.",
+        description="If >=80%% of ops in a function share the same encoding, mark the function with xpu_rt.hoisted_encoding.",
         pattern="attr_annotation",
         body_code="""\
         auto getEncoding = [](mlir::Operation *op) -> llvm::StringRef {
             for (llvm::StringRef key :
-                 {"compgen.propagated_encoding", "compgen.layout_hint",
-                  "compgen.encoding"}) {
+                 {"xpu_rt.propagated_encoding", "xpu_rt.layout_hint",
+                  "xpu_rt.encoding"}) {
                 if (auto attr = op->getAttrOfType<mlir::StringAttr>(key))
                     return attr.getValue();
             }
@@ -304,7 +304,7 @@ _LAYOUT_PASSES: list[PassInfo] = [
 
             double ratio = static_cast<double>(maxCount) / totalEncoded;
             if (ratio >= 0.8 && !dominant.empty()) {
-                funcOp->setAttr("compgen.hoisted_encoding",
+                funcOp->setAttr("xpu_rt.hoisted_encoding",
                                 mlir::StringAttr::get(ctx, dominant));
                 ++hoisted;
             }
@@ -327,8 +327,8 @@ _LAYOUT_PASSES: list[PassInfo] = [
         body_code="""\
         auto getEncoding = [](mlir::Operation *op) -> llvm::StringRef {
             for (llvm::StringRef key :
-                 {"compgen.propagated_encoding", "compgen.layout_hint",
-                  "compgen.encoding"}) {
+                 {"xpu_rt.propagated_encoding", "xpu_rt.layout_hint",
+                  "xpu_rt.encoding"}) {
                 if (auto attr = op->getAttrOfType<mlir::StringAttr>(key))
                     return attr.getValue();
             }
@@ -370,7 +370,7 @@ _LAYOUT_PASSES: list[PassInfo] = [
             }
 
             if (allMatch) {
-                op->setAttr("compgen.fused_layout",
+                op->setAttr("xpu_rt.fused_layout",
                             mlir::StringAttr::get(ctx, consumerEnc));
                 ++fused;
             }
@@ -388,19 +388,19 @@ _LAYOUT_PASSES: list[PassInfo] = [
         cpp_class="IntroducePrepackingPass",
         cpp_file_name="IntroducePrepacking.cpp",
         summary="Insert PackOp for constant operands with prepack hints.",
-        description="For ops with compgen.prepack_hint attribute, insert a PackOp before the op.",
+        description="For ops with xpu_rt.prepack_hint attribute, insert a PackOp before the op.",
         pattern="structural",
         body_code="""\
         int prepacked = 0;
 
         module.walk([&](mlir::Operation *op) {
-            if (op->hasAttr("compgen.prepack_applied"))
+            if (op->hasAttr("xpu_rt.prepack_applied"))
                 return;
-            if (!op->hasAttr("compgen.prepack_hint"))
+            if (!op->hasAttr("xpu_rt.prepack_hint"))
                 return;
 
             // Mark as processed (actual PackOp insertion requires builder)
-            op->setAttr("compgen.prepack_applied",
+            op->setAttr("xpu_rt.prepack_applied",
                         mlir::StringAttr::get(ctx, "1"));
             ++prepacked;
 
@@ -428,8 +428,8 @@ _LAYOUT_PASSES: list[PassInfo] = [
 
         auto getEncoding = [](mlir::Operation *op) -> llvm::StringRef {
             for (llvm::StringRef key :
-                 {"compgen.propagated_encoding", "compgen.layout_hint",
-                  "compgen.encoding"}) {
+                 {"xpu_rt.propagated_encoding", "xpu_rt.layout_hint",
+                  "xpu_rt.encoding"}) {
                 if (auto attr = op->getAttrOfType<mlir::StringAttr>(key))
                     return attr.getValue();
             }
@@ -439,7 +439,7 @@ _LAYOUT_PASSES: list[PassInfo] = [
         module.walk([&](mlir::Operation *op) {
             if (mlir::isa<mlir::func::FuncOp, mlir::func::ReturnOp>(op))
                 return;
-            if (op->hasAttr("compgen.layout_specialized"))
+            if (op->hasAttr("xpu_rt.layout_specialized"))
                 return;
 
             auto enc = getEncoding(op);
@@ -449,13 +449,13 @@ _LAYOUT_PASSES: list[PassInfo] = [
             // Build specialization key
             std::string specKey(enc);
             if (auto tileHint = op->getAttrOfType<mlir::StringAttr>(
-                    "compgen.ukernel_tile_family")) {
+                    "xpu_rt.ukernel_tile_family")) {
                 specKey += ":";
                 specKey += tileHint.getValue().str();
             }
 
             // Mark as specialized (resolver integration is target-specific)
-            op->setAttr("compgen.layout_specialized",
+            op->setAttr("xpu_rt.layout_specialized",
                         mlir::StringAttr::get(ctx, specKey));
             ++specialized;
         });""",
@@ -485,7 +485,7 @@ _LAYOUT_PASSES: list[PassInfo] = [
                 for (mlir::Operation *user : op->getBlock()->getOperations()) {
                     if (user == op)
                         continue;
-                    if (user->hasAttr("compgen.fused_layout")) {
+                    if (user->hasAttr("xpu_rt.fused_layout")) {
                         fused = true;
                         break;
                     }
@@ -538,7 +538,7 @@ _LAYOUT_PASSES: list[PassInfo] = [
         //  pack_spec equality checking)
 
         // Step 3: Mark module as layout-clean
-        module->setAttr("compgen.layout_clean",
+        module->setAttr("xpu_rt.layout_clean",
                         mlir::StringAttr::get(ctx, "1"));""",
         extra_includes=[
             "Layout/LayoutOps.h",

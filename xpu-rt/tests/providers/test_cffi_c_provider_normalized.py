@@ -16,14 +16,14 @@ from pathlib import Path
 
 import pytest
 
-from compgen.kernels.provider import KernelContract, SearchBudget
-from compgen.providers.kernel_provider import (
+from xpu_rt.kernels.provider import KernelContract, SearchBudget
+from xpu_rt.providers.kernel_provider import (
     KernelCodegenRequest,
     KernelProvider,
 )
-from compgen.providers.provider_registry import build_provider_registry
-from compgen.providers.provider_types import ProviderProbeResult
-from compgen.providers.result_v1 import ProviderResultV1
+from xpu_rt.providers.provider_registry import build_provider_registry
+from xpu_rt.providers.provider_types import ProviderProbeResult
+from xpu_rt.providers.result_v1 import ProviderResultV1
 
 
 class _Target:
@@ -81,7 +81,7 @@ def test_cffi_c_propose_emits_v1_for_matmul(tmp_path: Path):
     assert source_path.is_file()
     # Real C source — has #include, has the symbol name.
     text = source_path.read_text()
-    assert "#include" in text or "compgen_matmul" in text
+    assert "#include" in text or "xpu_rt_matmul" in text
 
 
 def test_cffi_c_declines_flash_attention(tmp_path: Path):

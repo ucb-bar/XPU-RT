@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from compgen.agent.gates import liveness_gate
-from compgen.solve.memory import BufferLifetime
+from xpu_rt.agent.gates import liveness_gate
+from xpu_rt.solve.memory import BufferLifetime
 
 
 def test_deferred_when_missing_ctx() -> None:

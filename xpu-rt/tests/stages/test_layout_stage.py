@@ -7,12 +7,12 @@ and integration with CudaLayoutPlugin.
 from __future__ import annotations
 
 import pytest
-from compgen.ir.layout.ops import SetLayoutOp, UnsetLayoutOp
-from compgen.stages.base import CompilationStage, StageContract
-from compgen.stages.encoding.stage import ENCODING_ATTR
-from compgen.stages.layout.stage import LayoutStage
-from compgen.targets.capability import infer_capabilities
-from compgen.targets.schema import (
+from xpu_rt.ir.layout.ops import SetLayoutOp, UnsetLayoutOp
+from xpu_rt.stages.base import CompilationStage, StageContract
+from xpu_rt.stages.encoding.stage import ENCODING_ATTR
+from xpu_rt.stages.layout.stage import LayoutStage
+from xpu_rt.targets.capability import infer_capabilities
+from xpu_rt.targets.schema import (
     ComputeUnit,
     DeviceSpec,
     MemoryLevel,
@@ -173,7 +173,7 @@ class TestLayoutStageSharedPasses:
         stage = LayoutStage()
         module = _add_encoding_attrs(_make_arith_module())
         result = stage.shared_passes(module, target)
-        assert "compgen.layout_clean" in result.attributes
+        assert "xpu_rt.layout_clean" in result.attributes
 
     def test_shared_passes_no_virtual_ops(self, target) -> None:
         stage = LayoutStage()
@@ -187,7 +187,7 @@ class TestLayoutStageSharedPasses:
         module = _add_encoding_attrs(_make_tensor_module())
         result = stage.shared_passes(module, target)
         assert isinstance(result, ModuleOp)
-        assert "compgen.layout_clean" in result.attributes
+        assert "xpu_rt.layout_clean" in result.attributes
 
 
 # ---------------------------------------------------------------------------
@@ -197,7 +197,7 @@ class TestLayoutStageSharedPasses:
 
 class TestLayoutStageWithCudaPlugin:
     def test_plugin_registration(self) -> None:
-        from compgen.stages.targets.cuda_gpu import CudaLayoutPlugin
+        from xpu_rt.stages.targets.cuda_gpu import CudaLayoutPlugin
 
         stage = LayoutStage()
         plugin = CudaLayoutPlugin()
@@ -205,19 +205,19 @@ class TestLayoutStageWithCudaPlugin:
         assert stage.has_plugin
 
     def test_plugin_stage_name_matches(self) -> None:
-        from compgen.stages.targets.cuda_gpu import CudaLayoutPlugin
+        from xpu_rt.stages.targets.cuda_gpu import CudaLayoutPlugin
 
         plugin = CudaLayoutPlugin()
         assert plugin.stage_name == "layout"
 
     def test_plugin_target_name(self) -> None:
-        from compgen.stages.targets.cuda_gpu import CudaLayoutPlugin
+        from xpu_rt.stages.targets.cuda_gpu import CudaLayoutPlugin
 
         plugin = CudaLayoutPlugin()
         assert plugin.target_name == "cuda_gpu"
 
     def test_full_run_with_plugin(self, target, capabilities) -> None:
-        from compgen.stages.targets.cuda_gpu import CudaLayoutPlugin
+        from xpu_rt.stages.targets.cuda_gpu import CudaLayoutPlugin
 
         stage = LayoutStage()
         plugin = CudaLayoutPlugin()
@@ -234,7 +234,7 @@ class TestLayoutStageWithCudaPlugin:
         assert result.stage_name == "layout"
 
     def test_run_produces_artifacts_with_plugin(self, target, capabilities) -> None:
-        from compgen.stages.targets.cuda_gpu import CudaLayoutPlugin
+        from xpu_rt.stages.targets.cuda_gpu import CudaLayoutPlugin
 
         stage = LayoutStage()
         plugin = CudaLayoutPlugin()
@@ -254,7 +254,7 @@ class TestLayoutStageWithCudaPlugin:
 class TestLayoutStageInPipeline:
     def test_encoding_then_layout(self, target, capabilities) -> None:
         """Encoding stage output feeds layout stage."""
-        from compgen.stages.encoding import EncodingStage
+        from xpu_rt.stages.encoding import EncodingStage
 
         enc_stage = EncodingStage()
         layout_stage = LayoutStage()

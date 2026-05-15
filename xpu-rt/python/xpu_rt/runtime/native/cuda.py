@@ -1,4 +1,4 @@
-"""ctypes wrapper for the libcompgen_rt CUDA driver — Phase 4.
+"""ctypes wrapper for the libxpu_rt CUDA driver — Phase 4.
 
 Exposes the four families of symbols the megakernel pipeline needs:
 
@@ -10,12 +10,12 @@ Exposes the four families of symbols the megakernel pipeline needs:
 - :class:`CudaDeviceProbe`    — Phase-6 native HAL backend.
 
 All four import lazily — instantiating any class on a CPU-only host
-or on a wheel without the CUDA-built ``libcompgen_rt`` raises
+or on a wheel without the CUDA-built ``libxpu_rt`` raises
 :class:`CudaUnavailableError` with the install instructions the
 remote agent should follow.
 
 This module does NOT import torch or cuda-python. The Python probe
-in :mod:`compgen.runtime.probe` falls back to those when this
+in :mod:`xpu_rt.runtime.probe` falls back to those when this
 module's symbols are missing; that path is the v0 setup. The native
 HAL path here is the Phase-4 replacement.
 """
@@ -36,7 +36,7 @@ log = logging.getLogger(__name__)
 
 
 class CudaUnavailableError(RuntimeError):
-    """The CUDA-built libcompgen_rt isn't loadable on this host."""
+    """The CUDA-built libxpu_rt isn't loadable on this host."""
 
 
 # ---------------------------------------------------------------------------
@@ -48,12 +48,12 @@ _CACHED_LIB: ctypes.CDLL | None = None
 
 
 def _load_lib() -> ctypes.CDLL:
-    """Resolve + load the CUDA-flavoured libcompgen_rt.
+    """Resolve + load the CUDA-flavoured libxpu_rt.
 
     Search order:
-      1. ``compgen/runtime/native/prebuilt/libcompgen_rt-cuda.so``
+      1. ``xpu_rt/runtime/native/prebuilt/libxpu_rt-cuda.so``
          (Phase-0 wheel-bundled location).
-      2. ``compgen/runtime/native/prebuilt/libcompgen_rt.so``
+      2. ``xpu_rt/runtime/native/prebuilt/libxpu_rt.so``
          (CMake's default install name; CUDA may or may not be wired
          into this build — we'll detect at first symbol resolution).
       3. ``LD_LIBRARY_PATH`` lookup as a last resort.
@@ -68,10 +68,10 @@ def _load_lib() -> ctypes.CDLL:
     here = Path(__file__).resolve().parent
     prebuilt = here / "prebuilt"
     candidates = [
-        prebuilt / "libcompgen_rt-cuda.so",
-        prebuilt / "libcompgen_rt.so",
-        Path("libcompgen_rt-cuda.so"),  # fallback to LD_LIBRARY_PATH
-        Path("libcompgen_rt.so"),
+        prebuilt / "libxpu_rt-cuda.so",
+        prebuilt / "libxpu_rt.so",
+        Path("libxpu_rt-cuda.so"),  # fallback to LD_LIBRARY_PATH
+        Path("libxpu_rt.so"),
     ]
     last_err: Exception | None = None
     for path in candidates:
@@ -87,7 +87,7 @@ def _load_lib() -> ctypes.CDLL:
             last_err = exc
             continue
     raise CudaUnavailableError(
-        "libcompgen_rt-cuda.so not loadable. Install the wheel built "
+        "libxpu_rt-cuda.so not loadable. Install the wheel built "
         "with `make build-cuda-rt` (Phase 0) on a CUDA-12 host. Last "
         f"loader error: {last_err!r}"
     )
@@ -98,7 +98,7 @@ def _load_lib() -> ctypes.CDLL:
 # ---------------------------------------------------------------------------
 
 
-# Mirror of cg_rt_status_t codes in compgen_rt.h. Zero is success;
+# Mirror of cg_rt_status_t codes in xpu_rt.h. Zero is success;
 # errors are negative (CG_RT_ERR_* macros). Keep in sync with the
 # public header.
 _STATUS_OK = 0
@@ -126,11 +126,11 @@ def _check(rc: int, where: str) -> None:
 
 
 class _CudaProbeStruct(ctypes.Structure):
-    """Mirror of cg_rt_cuda_probe_t in compgen_rt.h.
+    """Mirror of cg_rt_cuda_probe_t in xpu_rt.h.
 
     Field order MUST match the C header exactly. The ctypes-side dict
     converter at the bottom flattens this into the same shape as
-    :func:`compgen.runtime.probe.probe_via_torch` so downstream code
+    :func:`xpu_rt.runtime.probe.probe_via_torch` so downstream code
     is path-agnostic.
     """
 
@@ -168,8 +168,8 @@ class CudaDeviceProbe:
     """Phase-6 native HAL probe.
 
     Use as the Phase-4-onward replacement for the torch-backed probe
-    in :mod:`compgen.runtime.probe`. Returns the same dict shape so
-    :meth:`compgen.runtime.traits.DeviceTraits.with_probe` consumes
+    in :mod:`xpu_rt.runtime.probe`. Returns the same dict shape so
+    :meth:`xpu_rt.runtime.traits.DeviceTraits.with_probe` consumes
     both interchangeably.
     """
 
@@ -320,7 +320,7 @@ class CudaDynamicQueue:
 
 
 class _LaunchConfigStruct(ctypes.Structure):
-    """Mirror of cg_rt_cuda_megakernel_launch_t in compgen_rt.h."""
+    """Mirror of cg_rt_cuda_megakernel_launch_t in xpu_rt.h."""
 
     _fields_ = [
         ("kernel_handle", ctypes.c_void_p),
@@ -474,7 +474,7 @@ class CudaModule:
         except Exception as exc:  # noqa: BLE001
             raise CudaUnavailableError(
                 "cuda-python (>=12.6) is not importable. Install with "
-                "`pip install 'compgen[cuda]>=0.2.0'` on a host that "
+                "`pip install 'xpu_rt[cuda]>=0.2.0'` on a host that "
                 "has the CUDA 12.6+ runtime."
             ) from exc
 
@@ -582,7 +582,7 @@ _CUDA_PRIMARY_CTX: dict[int, Any] = {}
 # callers should import from the new location.
 # ---------------------------------------------------------------------------
 
-from compgen.targets.gpu.nvidia.common.discovery import (  # noqa: E402, F401
+from xpu_rt.targets.gpu.nvidia.common.discovery import (  # noqa: E402, F401
     cublasdx_available,
     cutlass_available,
     discover_cublasdx_include,
@@ -614,7 +614,7 @@ def _ensure_cuda_driver_context(device_index: int = 0) -> None:
         from cuda.bindings import driver as cu_driver  # type: ignore
     except Exception as exc:  # noqa: BLE001
         raise CudaUnavailableError(
-            "cuda-python (>=12.6) is not importable. Install with `pip install 'compgen[cuda]>=0.2.0'`."
+            "cuda-python (>=12.6) is not importable. Install with `pip install 'xpu_rt[cuda]>=0.2.0'`."
         ) from exc
 
     if not _CUDA_DRIVER_INIT_DONE:
@@ -646,7 +646,7 @@ def _nvrtc_check(result: tuple[Any, ...]) -> Any:
 # new callers should import from the new home.
 # ---------------------------------------------------------------------------
 
-from compgen.targets.gpu.nvidia.blackwell.cu13_nvrtc import (  # noqa: E402, F401
+from xpu_rt.targets.gpu.nvidia.blackwell.cu13_nvrtc import (  # noqa: E402, F401
     _CU13_NVRTC_LIB,
     _compile_via_cu13_nvrtc,
     _load_cu13_nvrtc,
@@ -671,15 +671,15 @@ class CudaCommGroup:
     Wraps a single-process multi-device NCCL communicator (one rank
     per local CUDA device). The C side enables peer access pairwise
     so cross-GPU peer-mapped event-tensor atomics work — see
-    :file:`runtime/native/libcompgen_rt/src/drivers/cuda/nccl_bridge.c`.
+    :file:`runtime/native/libxpu_rt/src/drivers/cuda/nccl_bridge.c`.
 
-    The wheel's prebuilt ``libcompgen_rt-cuda.so`` is built without
+    The wheel's prebuilt ``libxpu_rt-cuda.so`` is built without
     NCCL by default. Hosts that want the bridge must rebuild with
     ``-DCG_RT_WITH_NCCL=ON`` and ensure ``libnccl.so.2`` is in the
     loader path (typically via ``import torch`` ahead of time, which
     pulls in ``nvidia-nccl-cu13``'s ``libnccl.so.2``).
 
-    Constructing :class:`CudaCommGroup` on a host whose libcompgen_rt
+    Constructing :class:`CudaCommGroup` on a host whose libxpu_rt
     lacks NCCL raises :class:`CudaUnavailableError` with a clear
     install message.
 
@@ -699,7 +699,7 @@ class CudaCommGroup:
         self._lib = _load_lib()
         if not hasattr(self._lib, "cg_rt_cuda_comm_init_local"):
             raise CudaUnavailableError(
-                "libcompgen_rt was built without NCCL. Rebuild with "
+                "libxpu_rt was built without NCCL. Rebuild with "
                 "-DCG_RT_WITH_NCCL=ON and ensure libnccl.so.2 is "
                 "available (e.g. via `import torch` to pull in "
                 "nvidia-nccl-cu13)."

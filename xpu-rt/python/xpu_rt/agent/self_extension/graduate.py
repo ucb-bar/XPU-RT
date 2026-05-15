@@ -9,9 +9,9 @@ clears:
 * ``min_targets`` (default 2) — distinct target labels.
 
 The promotion step compiles the authored source in
-:func:`~compgen.agent.self_extension.sandbox.sandbox_invoke` at
+:func:`~xpu_rt.agent.self_extension.sandbox.sandbox_invoke` at
 registry-call time (so every invocation is still sandboxed) and
-registers a real :class:`~compgen.llm.registry.Tool` whose ``impl``
+registers a real :class:`~xpu_rt.llm.registry.Tool` whose ``impl``
 delegates into the sandbox.
 
 Idempotent: a state file alongside the trial log records which
@@ -30,14 +30,14 @@ from typing import TYPE_CHECKING, Any
 
 import structlog
 
-from compgen.agent.self_extension.authored_tool import (
+from xpu_rt.agent.self_extension.authored_tool import (
     AuthoredTool,
 )
-from compgen.agent.self_extension.sandbox import sandbox_invoke
-from compgen.agent.self_extension.trials import default_trial_log_path
+from xpu_rt.agent.self_extension.sandbox import sandbox_invoke
+from xpu_rt.agent.self_extension.trials import default_trial_log_path
 
 if TYPE_CHECKING:  # pragma: no cover
-    from compgen.llm.registry import Registry
+    from xpu_rt.llm.registry import Registry
 
 log = structlog.get_logger()
 
@@ -155,7 +155,7 @@ def _materialise_tool(
     author: AuthoredTool,
 ):
     """Build a :class:`Tool` whose impl sandboxes the authored source."""
-    from compgen.llm.registry import Tool, ToolArg, ToolResult
+    from xpu_rt.llm.registry import Tool, ToolArg, ToolResult
 
     source_snapshot = author.source.source
     entry_name = author.source.entry_name

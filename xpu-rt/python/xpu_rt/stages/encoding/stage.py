@@ -21,11 +21,11 @@ from pathlib import Path
 from xdsl.dialects.builtin import ModuleOp, StringAttr, TensorType
 from xdsl.ir import Operation
 
-from compgen.stages.base import CompilationStage, IRInvariant, StageContract
-from compgen.targets.schema import TargetProfile
+from xpu_rt.stages.base import CompilationStage, IRInvariant, StageContract
+from xpu_rt.targets.schema import TargetProfile
 
 # Attribute key used to mark encoding decisions
-ENCODING_ATTR = "compgen.encoding"
+ENCODING_ATTR = "xpu_rt.encoding"
 
 
 def _has_tensor_results(op: Operation) -> bool:

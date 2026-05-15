@@ -1,6 +1,6 @@
 """Extension discovery + per-run registry.
 
-Discovers ``compgen_extension.yaml`` manifests under a configured
+Discovers ``xpu_rt_extension.yaml`` manifests under a configured
 extensions root (default ``.rcg-artifacts/extensions/``), validates
 each through the schema, sandboxes their declared
 ``allowed_write_root``, and registers them into an in-memory
@@ -19,20 +19,20 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Final
 
-from compgen.extensions.errors import (
+from xpu_rt.extensions.errors import (
     ExtensionError,
     ExtensionManifestError,
     ExtensionSandboxViolation,
 )
-from compgen.extensions.manifest import (
+from xpu_rt.extensions.manifest import (
     ExtensionManifest,
     load_manifest,
 )
-from compgen.extensions.sandbox import is_under_sandbox
+from xpu_rt.extensions.sandbox import is_under_sandbox
 
 DEFAULT_EXTENSIONS_ROOT: Final[Path] = Path(".rcg-artifacts/extensions")
 
-EXTENSION_MANIFEST_FILENAME: Final[str] = "compgen_extension.yaml"
+EXTENSION_MANIFEST_FILENAME: Final[str] = "xpu_rt_extension.yaml"
 
 
 @dataclass(frozen=True)
@@ -106,7 +106,7 @@ class ExtensionRegistry:
 
 
 def discover_manifests(root: Path | None = None) -> Iterator[Path]:
-    """Yield every ``compgen_extension.yaml`` path under ``root``.
+    """Yield every ``xpu_rt_extension.yaml`` path under ``root``.
 
     A non-existent or empty root is honored: no manifests yielded,
     no exception raised.
@@ -226,7 +226,7 @@ def assert_artifact_write_allowed(
     extension described by ``manifest``.
 
     Raises :class:`ExtensionSandboxViolation` per
-    :func:`compgen.extensions.sandbox.validate_sandboxed_path`
+    :func:`xpu_rt.extensions.sandbox.validate_sandboxed_path`
     semantics. Convenience wrapper that injects the manifest's
     declared ``allowed_write_root``.
     """
@@ -239,7 +239,7 @@ def assert_artifact_write_allowed(
         )
     extension_dir = manifest.source_path.parent
     allowed = (extension_dir / manifest.security.allowed_write_root).resolve()
-    from compgen.extensions.sandbox import validate_sandboxed_path
+    from xpu_rt.extensions.sandbox import validate_sandboxed_path
     return validate_sandboxed_path(target_path, allowed_write_root=allowed)
 
 

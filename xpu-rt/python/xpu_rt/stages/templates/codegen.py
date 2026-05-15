@@ -1,7 +1,7 @@
 """Codegen stage template — generate executable source code per dispatch.
 
 For targets that generate kernel source code (Triton, CUDA, LLVM).
-Marks each dispatch with a ``compgen.codegen_backend`` attribute
+Marks each dispatch with a ``xpu_rt.codegen_backend`` attribute
 indicating which backend handles it.
 
 Reuses: kernels/autocomp_adapter.py, kernels/validate.py, transforms/apply.py.
@@ -14,10 +14,10 @@ from pathlib import Path
 from xdsl.dialects.builtin import ModuleOp, StringAttr
 from xdsl.dialects.func import FuncOp, ReturnOp
 
-from compgen.stages.base import CompilationStage, StageContract
-from compgen.targets.schema import TargetProfile
+from xpu_rt.stages.base import CompilationStage, StageContract
+from xpu_rt.targets.schema import TargetProfile
 
-CODEGEN_BACKEND_ATTR = "compgen.codegen_backend"
+CODEGEN_BACKEND_ATTR = "xpu_rt.codegen_backend"
 
 
 class CodegenStage(CompilationStage):

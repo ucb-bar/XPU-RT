@@ -23,7 +23,7 @@ from xdsl.dialects.builtin import IntAttr, ModuleOp
 from xdsl.ir import Operation
 
 if TYPE_CHECKING:
-    from compgen.targets.schema import TargetProfile
+    from xpu_rt.targets.schema import TargetProfile
 
 
 @dataclass

@@ -18,18 +18,18 @@ contract):
 
 Both tools auto-register on import (consistent with the
 ``observability`` / ``verification`` modules) so the LLM registry knows
-about them as soon as ``compgen.llm.tools`` is imported.
+about them as soon as ``xpu_rt.llm.tools`` is imported.
 """
 
 from __future__ import annotations
 
 from typing import Any
 
-from compgen.agent.invent_slots.seeds import (
+from xpu_rt.agent.invent_slots.seeds import (
     propose_megakernel_synthesis_seed,
     propose_scheduling_policy_seed,
 )
-from compgen.llm.registry import (
+from xpu_rt.llm.registry import (
     Tool,
     ToolArg,
     ToolResult,
@@ -214,7 +214,7 @@ def register() -> list[str]:
 
 
 # Auto-register so the registry knows about both tools as soon as
-# ``compgen.llm.tools`` is imported.
+# ``xpu_rt.llm.tools`` is imported.
 register()
 
 

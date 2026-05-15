@@ -19,7 +19,7 @@ import pytest
 
 def _make_contract(op_family: str = "matmul"):
     """Minimal KernelContract for a matmul-like op."""
-    from compgen.kernels.provider import KernelContract
+    from xpu_rt.kernels.provider import KernelContract
 
     return KernelContract(
         region_id="r0",
@@ -33,7 +33,7 @@ def _make_contract(op_family: str = "matmul"):
 
 class TestTritonTemplateProviderSurface:
     def test_import_public_symbols(self) -> None:
-        from compgen.kernels.providers.triton_templates import (
+        from xpu_rt.kernels.providers.triton_templates import (
             TritonTemplateProvider,
             triton_available,
         )
@@ -42,13 +42,13 @@ class TestTritonTemplateProviderSurface:
         assert TritonTemplateProvider is not None
 
     def test_provider_has_name(self) -> None:
-        from compgen.kernels.providers.triton_templates import TritonTemplateProvider
+        from xpu_rt.kernels.providers.triton_templates import TritonTemplateProvider
 
         p = TritonTemplateProvider()
         assert p.name == "triton_templates"
 
     def test_accepts_matmul_family(self) -> None:
-        from compgen.kernels.providers.triton_templates import TritonTemplateProvider
+        from xpu_rt.kernels.providers.triton_templates import TritonTemplateProvider
 
         p = TritonTemplateProvider()
         c = _make_contract("matmul")
@@ -57,7 +57,7 @@ class TestTritonTemplateProviderSurface:
     def test_rejects_unknown_family(self) -> None:
         """The provider only claims op families it has templates for —
         everything else gets passed to the next provider in the chain."""
-        from compgen.kernels.providers.triton_templates import TritonTemplateProvider
+        from xpu_rt.kernels.providers.triton_templates import TritonTemplateProvider
 
         p = TritonTemplateProvider()
         c = _make_contract("conv3d_transpose")  # not a provided template
@@ -74,8 +74,8 @@ class TestCostSourceMetadata:
         provider must tag the result ``cost_source="unmeasured"``
         rather than claiming ``latency_us=0.0``."""
         import torch
-        from compgen.kernels.provider import SearchBudget
-        from compgen.kernels.providers.triton_templates import TritonTemplateProvider
+        from xpu_rt.kernels.provider import SearchBudget
+        from xpu_rt.kernels.providers.triton_templates import TritonTemplateProvider
 
         p = TritonTemplateProvider()
         c = _make_contract("matmul")
@@ -99,8 +99,8 @@ class TestTritonRealCompile:
     as ``measured_gpu``."""
 
     def test_matmul_template_measured_on_gpu(self) -> None:
-        from compgen.kernels.provider import SearchBudget
-        from compgen.kernels.providers.triton_templates import (
+        from xpu_rt.kernels.provider import SearchBudget
+        from xpu_rt.kernels.providers.triton_templates import (
             TritonTemplateProvider,
             triton_available,
         )

@@ -20,14 +20,14 @@ import json
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from compgen.graph_compilation.artifacts import ArtifactRef
-from compgen.graph_compilation.hashing import sha256_file
+from xpu_rt.graph_compilation.artifacts import ArtifactRef
+from xpu_rt.graph_compilation.hashing import sha256_file
 
 if TYPE_CHECKING:  # avoid circular import at runtime
-    from compgen.graph_compilation.lower import ModuleLoweringResult
+    from xpu_rt.graph_compilation.lower import ModuleLoweringResult
 
 
-_LOWERING_API = "compgen.ir.payload.import_fx.FXImporter"
+_LOWERING_API = "xpu_rt.ir.payload.import_fx.FXImporter"
 
 
 def emit_top_level_reports(
@@ -132,7 +132,7 @@ def emit_top_level_reports(
         passes.append(
             {
                 "name": f"fx_importer_import_graph_{r.module_id}",
-                "implementation": "compgen.ir.payload.import_fx.FXImporter.import_graph",
+                "implementation": "xpu_rt.ir.payload.import_fx.FXImporter.import_graph",
                 "status": r.status,
                 "input_hash": r.input_graph_sha256,
                 "output_hash": r.payload_mlir_sha256,

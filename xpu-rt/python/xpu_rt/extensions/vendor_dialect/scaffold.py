@@ -9,8 +9,8 @@ variables are present, rendered otherwise.
 
 The scaffolded package:
 
-* Declares a ``compgen.vendor_dialects`` entry point so
-  :func:`compgen.extensions.vendor_dialect.registry.get_adapter` finds it
+* Declares a ``xpu_rt.vendor_dialects`` entry point so
+  :func:`xpu_rt.extensions.vendor_dialect.registry.get_adapter` finds it
   after ``pip install -e .``.
 * Carries a frozen ``descriptor.yaml`` alongside the Python modules so
   the adapter, kernel provider, and bundle step always have access to
@@ -30,7 +30,7 @@ from typing import Any
 import structlog
 from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
 
-from compgen.extensions.vendor_dialect.descriptor import VendorDialectDescriptor
+from xpu_rt.extensions.vendor_dialect.descriptor import VendorDialectDescriptor
 
 log = structlog.get_logger()
 
@@ -101,8 +101,8 @@ def scaffold_package(
             continue
         rel = tmpl_path.relative_to(tpack)
         rel_str = str(rel)
-        # Rewrite ``compgen_pkg`` placeholder dir to the real package name.
-        target_rel = rel_str.replace("compgen_pkg", descriptor.package_name)
+        # Rewrite ``xpu_rt_pkg`` placeholder dir to the real package name.
+        target_rel = rel_str.replace("xpu_rt_pkg", descriptor.package_name)
         # Strip the ``.j2`` suffix used to mark rendered files.
         if target_rel.endswith(".j2"):
             target_rel = target_rel[: -len(".j2")]

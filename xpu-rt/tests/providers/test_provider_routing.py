@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from compgen.providers.provider_routing import (
+from xpu_rt.providers.provider_routing import (
     INTEGRATION_LEVEL_RANK,
     KIND_PREFERENCE,
     route_for,
@@ -12,7 +12,7 @@ from compgen.providers.provider_routing import (
     supported_kinds,
     supported_target_families,
 )
-from compgen.providers.provider_types import ProviderCard
+from xpu_rt.providers.provider_types import ProviderCard
 
 
 def _card(provider_id: str, **overrides):

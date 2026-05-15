@@ -8,9 +8,9 @@ Uses MockLLMClient for deterministic testing without API keys.
 
 from __future__ import annotations
 
-from compgen.eqsat.llm_interface import validate_rule_code
-from compgen.eqsat.pipeline import run_eqsat_pass
-from compgen.transforms.verify import VerificationLevel, verify_transform
+from xpu_rt.eqsat.llm_interface import validate_rule_code
+from xpu_rt.eqsat.pipeline import run_eqsat_pass
+from xpu_rt.transforms.verify import VerificationLevel, verify_transform
 from xdsl.dialects import arith, func
 from xdsl.dialects.builtin import IndexType, ModuleOp
 from xdsl.ir import Block, Region

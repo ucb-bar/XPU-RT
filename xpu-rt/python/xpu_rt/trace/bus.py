@@ -1,8 +1,8 @@
 """Trace bus: single writer for every compilation-trace event.
 
-The bus is the one place in CompGen that decides where trace lines go.
-Publishers (:mod:`compgen.trace.publishers`) and recorder adapters
-(:mod:`compgen.trace.adapters`) push :class:`TraceEvent` records here;
+The bus is the one place in XPU-RT that decides where trace lines go.
+Publishers (:mod:`xpu_rt.trace.publishers`) and recorder adapters
+(:mod:`xpu_rt.trace.adapters`) push :class:`TraceEvent` records here;
 the bus assigns monotonic IDs, tracks the parent-event stack via
 :class:`contextvars.ContextVar`, and serializes writes through a single
 lock so the resulting ``trace.jsonl`` is always append-ordered.
@@ -31,12 +31,12 @@ from typing import Any
 
 import structlog
 
-from compgen.trace.events import Phase, TraceEvent, default_level_for, utc_now_iso
+from xpu_rt.trace.events import Phase, TraceEvent, default_level_for, utc_now_iso
 
 log = structlog.get_logger()
 
-_active_bus: ContextVar[TraceBus | None] = ContextVar("compgen_trace_bus", default=None)
-_parent_stack: ContextVar[tuple[str, ...]] = ContextVar("compgen_trace_parent_stack", default=())
+_active_bus: ContextVar[TraceBus | None] = ContextVar("xpu_rt_trace_bus", default=None)
+_parent_stack: ContextVar[tuple[str, ...]] = ContextVar("xpu_rt_trace_parent_stack", default=())
 
 # Process-wide fallback so a bus installed in one task survives when a
 # sibling task starts fresh (MCP stdio server dispatches each request in
@@ -48,7 +48,7 @@ _PROCESS_BUS: TraceBus | None = None
 # The event_id of the most recent ``llm_response`` event in this context.
 # :class:`DecisionPublisher` reads this so every ``decision`` event has a
 # back-reference to the LLM turn that produced it, closing .
-_current_llm_turn: ContextVar[str] = ContextVar("compgen_trace_llm_turn", default="")
+_current_llm_turn: ContextVar[str] = ContextVar("xpu_rt_trace_llm_turn", default="")
 
 
 def set_current_llm_turn_id(event_id: str) -> None:
@@ -293,15 +293,15 @@ def set_active_bus(bus: TraceBus | None) -> None:
 
 
 def _best_effort_git_commit(start_dir: Path) -> str:
-    """Return the short commit hash of the compgen source tree.
+    """Return the short commit hash of the xpu_rt source tree.
 
     Tries ``start_dir`` first (lets callers override by running inside
-    a vendor repo) then falls back to the compgen package source. We
+    a vendor repo) then falls back to the xpu_rt package source. We
     swallow every failure (not a git repo, git missing) because the
     trace must keep working even when we can't pin the code version.
     """
     # Candidate dirs: the output dir (user may run from a repo), then
-    # the compgen package source (always useful), then CWD.
+    # the xpu_rt package source (always useful), then CWD.
     candidates: list[Path] = []
     if start_dir and Path(start_dir).exists():
         candidates.append(Path(start_dir))

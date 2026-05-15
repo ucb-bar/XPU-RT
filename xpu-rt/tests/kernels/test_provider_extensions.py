@@ -21,20 +21,20 @@ from pathlib import Path
 
 import torch
 import torch.nn as nn
-from compgen.capture.torch_export import capture_model
-from compgen.ir.payload.import_fx import fx_to_xdsl
-from compgen.kernels.codegen_fallback import run_provider_fallback
-from compgen.kernels.provider import (
+from xpu_rt.capture.torch_export import capture_model
+from xpu_rt.ir.payload.import_fx import fx_to_xdsl
+from xpu_rt.kernels.codegen_fallback import run_provider_fallback
+from xpu_rt.kernels.provider import (
     DispatchGeometry,
     KnowledgeExport,
     ProviderResult,
     SearchBudget,
 )
-from compgen.kernels.provider import (
+from xpu_rt.kernels.provider import (
     KernelContract as ProviderContract,
 )
-from compgen.runtime.bundle_emit import emit_extended_artefacts
-from compgen.targets.schema import load_profile
+from xpu_rt.runtime.bundle_emit import emit_extended_artefacts
+from xpu_rt.targets.schema import load_profile
 
 _TARGET = "examples/target_profiles/cuda_a100.yaml"
 
@@ -156,7 +156,7 @@ def test_two_regions_with_same_op_name_do_not_clobber_each_other(tmp_path: Path)
     # Each file must exist on disk — no clobbering.
     assert len(files) == len(out), [p.name for p in files]
     # Filenames must be unique. Either the IR's explicit
-    # ``compgen.region_id`` (e.g. ``add_0_aten_add.cpp``) or the
+    # ``xpu_rt.region_id`` (e.g. ``add_0_aten_add.cpp``) or the
     # synthesised ``region_<i>`` prefix is acceptable; what matters is
     # that no two files collapse to the same name.
     assert len({f.name for f in files}) == len(files), [f.name for f in files]

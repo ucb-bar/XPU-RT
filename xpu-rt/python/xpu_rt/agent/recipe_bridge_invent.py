@@ -1,6 +1,6 @@
 """Bridge between LLM invent-slot proposals and Recipe IR propose-ops.
 
-Parallel to :mod:`compgen.agent.recipe_bridge` (which converts typed
+Parallel to :mod:`xpu_rt.agent.recipe_bridge` (which converts typed
 env Actions ↔ candidate recipe ops). This module handles the *invent*
 path: when :meth:`LLMDrivenCompiler.step_invent` gets an ``accepted``
 gate result from the registered slot, it calls
@@ -29,8 +29,8 @@ from typing import Any
 from xdsl.dialects.builtin import ArrayAttr, StringAttr, SymbolRefAttr
 from xdsl.ir import Operation
 
-from compgen.ir.recipe.attrs import ProvenanceAttr
-from compgen.ir.recipe.ops_propose import (
+from xpu_rt.ir.recipe.attrs import ProvenanceAttr
+from xpu_rt.ir.recipe.ops_propose import (
     ProposeDequantFusionOp,
     ProposeFusionOp,
     ProposeLayoutPlanOp,

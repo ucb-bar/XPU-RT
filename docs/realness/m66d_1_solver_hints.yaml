@@ -68,9 +68,9 @@ forbidden:
     across stages (sub-problems get only the buffer-relevant
     subset)
 required_evidence:
-  - python/compgen/solve/solver_hints.py
-  - python/compgen/solve/llm_hint_provider.py
-  - python/compgen/solve/memory_planner.py (hints + stage decomposition)
+  - python/xpu_rt/solve/solver_hints.py
+  - python/xpu_rt/solve/llm_hint_provider.py
+  - python/xpu_rt/solve/memory_planner.py (hints + stage decomposition)
   - tests/solve/test_solver_hints.py (13 tests)
   - tests/solve/test_llm_hint_provider.py (9 tests)
   - scripts/dev/eval_tinyllama_solvers.py (--use-solver-hints flag)

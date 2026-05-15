@@ -12,15 +12,15 @@ from typing import Any
 from xdsl.dialects.builtin import ModuleOp, StringAttr
 from xdsl.dialects.func import FuncOp, ReturnOp
 
-from compgen.stages.bundle import BundleStage
-from compgen.stages.dispatch import DispatchStage
-from compgen.stages.encoding import EncodingStage
-from compgen.stages.registry import TargetDialectStack
-from compgen.stages.templates.codegen import CODEGEN_BACKEND_ATTR, CodegenStage
-from compgen.stages.templates.tiling import TILE_SIZES_ATTR, TilingStage
-from compgen.targetgen.hardware_spec import HardwareSpec
-from compgen.targets.capability import CapabilitySpec
-from compgen.targets.schema import TargetProfile
+from xpu_rt.stages.bundle import BundleStage
+from xpu_rt.stages.dispatch import DispatchStage
+from xpu_rt.stages.encoding import EncodingStage
+from xpu_rt.stages.registry import TargetDialectStack
+from xpu_rt.stages.templates.codegen import CODEGEN_BACKEND_ATTR, CodegenStage
+from xpu_rt.stages.templates.tiling import TILE_SIZES_ATTR, TilingStage
+from xpu_rt.targetgen.hardware_spec import HardwareSpec
+from xpu_rt.targets.capability import CapabilitySpec
+from xpu_rt.targets.schema import TargetProfile
 
 
 class RvvTilingPlugin:

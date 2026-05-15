@@ -1,6 +1,6 @@
 """Audit trail and replay.
 
-Every significant event in CompGen is recorded:
+Every significant event in XPU-RT is recorded:
 - LLM generation calls (via llm.recorder)
 - Verification results
 - Promotion events

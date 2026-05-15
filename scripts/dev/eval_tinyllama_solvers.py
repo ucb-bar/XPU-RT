@@ -43,8 +43,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from compgen.solve.backend_registry import default_registry
-from compgen.solve.memory_planner import (
+from xpu_rt.solve.backend_registry import default_registry
+from xpu_rt.solve.memory_planner import (
     AliasCandidate,
     BufferSpec,
     MemoryPlanInput,
@@ -52,7 +52,7 @@ from compgen.solve.memory_planner import (
     _build_formulation as _build_mem_formulation,
     plan_memory,
 )
-from compgen.solve.overlap_planner import (
+from xpu_rt.solve.overlap_planner import (
     Dependency,
     Operation,
     OverlapPlanInput,
@@ -60,7 +60,7 @@ from compgen.solve.overlap_planner import (
     _build_formulation as _build_overlap_formulation,
     plan_overlap,
 )
-from compgen.solve.placement_planner import (
+from xpu_rt.solve.placement_planner import (
     Device,
     Edge,
     PlacementPlanInput,
@@ -68,15 +68,15 @@ from compgen.solve.placement_planner import (
     _build_formulation as _build_placement_formulation,
     plan_placement,
 )
-from compgen.solve.reports import write_solver_request, write_solver_response
-from compgen.solve.solver_types import (
+from xpu_rt.solve.reports import write_solver_request, write_solver_response
+from xpu_rt.solve.solver_types import (
     BackendAvailabilityStatus,
     SolverBackendName,
     SolverProblemKind,
     SolverRequest,
     SolverStatus,
 )
-from compgen.solve.z3_obligations import (
+from xpu_rt.solve.z3_obligations import (
     OBLIGATION_KIND_SHAPE_PREDICATE_IMPLICATION,
 )
 
@@ -715,7 +715,7 @@ def main(argv: list[str] | None = None) -> int:
     memory_input = _build_memory(regions, placement_map, schedule_map, devices_def)
     memory_hints = None
     if args.use_solver_hints:
-        from compgen.solve.llm_hint_provider import get_memory_hints
+        from xpu_rt.solve.llm_hint_provider import get_memory_hints
 
         memory_hints = get_memory_hints(
             memory_input,

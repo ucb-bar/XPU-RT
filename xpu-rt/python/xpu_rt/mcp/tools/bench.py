@@ -1,7 +1,7 @@
 """MCP tools — agent-driven kernel bench.
 
 Mirrors the request/register/lookup/list pattern of
-``compgen.mcp.tools.kernel``. Lets the agent (Claude Code) be the entity
+``xpu_rt.mcp.tools.kernel``. Lets the agent (Claude Code) be the entity
 that runs (or routes) bench measurements:
 
   1. ``request_kernel_bench`` — orchestration queues a bench request
@@ -32,8 +32,8 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
-from compgen.mcp.session import McpSession, SessionManager
-from compgen.memory.kernel_db import KernelPerfRecord, shared_db
+from xpu_rt.mcp.session import McpSession, SessionManager
+from xpu_rt.memory.kernel_db import KernelPerfRecord, shared_db
 
 # ---------------------------------------------------------------------------
 # Cache primitives
@@ -316,7 +316,7 @@ def list_pending_bench_requests(
 
 
 # ---------------------------------------------------------------------------
-# BenchFn adapter for compgen.agent.kernel_optimizer
+# BenchFn adapter for xpu_rt.agent.kernel_optimizer
 # ---------------------------------------------------------------------------
 
 
@@ -334,7 +334,7 @@ class McpBenchFn:
     session_id: str
 
     def __call__(self, contract, codegen_result):  # noqa: ANN001
-        from compgen.agent.kernel_optimizer import (
+        from xpu_rt.agent.kernel_optimizer import (
             BenchResult,
             fingerprint_for,
         )

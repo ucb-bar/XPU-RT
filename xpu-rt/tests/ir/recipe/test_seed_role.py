@@ -1,7 +1,7 @@
 """P7.1 — semantic role tags propagated from payload _pattern_hint to
 ``RecipeRegionOp.role``.
 
-A real captured Gemma payload has ``compgen._pattern_hint`` on every
+A real captured Gemma payload has ``xpu_rt._pattern_hint`` on every
 op (matmul / softmax / rmsnorm / silu / view / cat ...). The seed
 recipe used to drop that on the floor; with P7.1 it's threaded into
 each ``RecipeRegionOp.role``, which agents reach via ``view_recipe``,
@@ -14,9 +14,9 @@ from pathlib import Path
 
 import torch
 import torch.nn as nn
-from compgen.api import compile_model
-from compgen.api import device as _device
-from compgen.ir.recipe.seed import generate_seed_recipe
+from xpu_rt.api import compile_model
+from xpu_rt.api import device as _device
+from xpu_rt.ir.recipe.seed import generate_seed_recipe
 
 EXEMPLAR = Path(__file__).resolve().parents[2] / "targetgen" / "exemplars" / "test_gpu_simt.yaml"
 
@@ -47,7 +47,7 @@ def _seed_recipe():
 
 def test_recipe_region_op_has_role_property_defined() -> None:
     """Constructing a RecipeRegionOp with role= must succeed + verify."""
-    from compgen.ir.recipe.ops_scope import RecipeRegionOp
+    from xpu_rt.ir.recipe.ops_scope import RecipeRegionOp
     from xdsl.dialects.builtin import StringAttr
 
     op = RecipeRegionOp.build(
@@ -112,12 +112,12 @@ def test_role_is_optional_when_no_pattern_hint() -> None:
 
 def test_dossier_region_map_carries_role_when_present() -> None:
     """End-to-end via get_dossier."""
-    from compgen.agent.invent_slots.registrar import register_invent_slots
-    from compgen.agent.llm_driver import LLMDrivenCompiler
-    from compgen.llm.mock_client import MockLLMClient
-    from compgen.llm.registry import Registry
-    from compgen.mcp.session import SessionManager
-    from compgen.mcp.tools.inspect import get_dossier
+    from xpu_rt.agent.invent_slots.registrar import register_invent_slots
+    from xpu_rt.agent.llm_driver import LLMDrivenCompiler
+    from xpu_rt.llm.mock_client import MockLLMClient
+    from xpu_rt.llm.registry import Registry
+    from xpu_rt.mcp.session import SessionManager
+    from xpu_rt.mcp.tools.inspect import get_dossier
 
     sm = SessionManager()
     session = sm.open()

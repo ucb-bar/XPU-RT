@@ -25,7 +25,7 @@ After 3 failed recoverable attempts the commit tool emits a
 reconsiders the candidate, not just patches kernel code forever.
 
 This module is data-only — no MCP wrapping here. The MCP entry points
-live in ``compgen.mcp.tools.kernel_codegen`` and call into here.
+live in ``xpu_rt.mcp.tools.kernel_codegen`` and call into here.
 """
 
 from __future__ import annotations
@@ -652,7 +652,7 @@ def commit_response(
         certificate_path_str = ""
         if verification["overall"] == "pass" and isinstance(response, dict):
             try:
-                from compgen.kernels.kernel_certificate import (
+                from xpu_rt.kernels.kernel_certificate import (
                     emit_certificate,
                 )
                 report_path = run_dir / verification["validation_report_path"]
@@ -749,11 +749,11 @@ def _run_m44_verifier(
     if response_body is None:
         return None
     try:
-        from compgen.kernels.contract_verifier import (
+        from xpu_rt.kernels.contract_verifier import (
             verify_kernel,
             write_validation_report,
         )
-        from compgen.kernels.contract_v3 import KernelContractV3
+        from xpu_rt.kernels.contract_v3 import KernelContractV3
     except Exception:  # noqa: BLE001 — be defensive about dialect import
         return None
 
@@ -809,7 +809,7 @@ def _reconstruct_contract_from_dict(body: dict[str, Any]) -> Any:
     is what 's ``contract_to_dict`` produced; this is the
     inverse.
     """
-    from compgen.kernels.contract_v3 import (
+    from xpu_rt.kernels.contract_v3 import (
         AliasPair, BufferLifetime, ConcurrencyUnit, DispatchModel,
         DispatchSpec, EventDecl, ExecutionEnvelope, FusionPolicy,
         Granularity, HardwareEnvelope, IOContract, KernelArchetype,
@@ -944,14 +944,14 @@ def _reconstruct_contract_from_dict(body: dict[str, Any]) -> Any:
         ),
     )
     # pre/post-condition predicates round-trip.
-    from compgen.kernels.predicates import predicates_from_list
+    from xpu_rt.kernels.predicates import predicates_from_list
 
     preconditions = predicates_from_list(body.get("preconditions") or [])
     postconditions = predicates_from_list(body.get("postconditions") or [])
 
     # migrate the body so missing optional_v3_1_fields default
     # to recognised values; canonical hash stays invariant.
-    from compgen.kernels.contract_migration import (
+    from xpu_rt.kernels.contract_migration import (
         migrate_contract_body_v3_to_v3_1,
     )
 

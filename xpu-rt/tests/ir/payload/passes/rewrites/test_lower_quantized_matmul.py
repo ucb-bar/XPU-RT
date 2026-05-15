@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import pytest
-from compgen.ir.payload.passes.rewrites.lower_quantized_matmul import (
+from xpu_rt.ir.payload.passes.rewrites.lower_quantized_matmul import (
     LowerQuantizedMatmulConfig,
     LowerQuantizedMatmulStats,
     run_lower_quantized_matmul,
 )
-from compgen.ir.quant import (
+from xpu_rt.ir.quant import (
     WeightInt4PackMMOp,
     WeightInt8PackMMOp,
 )
@@ -83,7 +83,7 @@ def test_int8_pack_mm_rewrites_to_dequant_plus_matmul():
     m, _ = _int8_module()
     stats = run_lower_quantized_matmul(m)
     assert stats.int8_rewritten == 1
-    assert count_ops(m, "compgen.quant.weight_int8pack_mm") == 0
+    assert count_ops(m, "xpu_rt.quant.weight_int8pack_mm") == 0
     assert count_ops(m, "linalg.generic") == 1
     assert count_ops(m, "linalg.matmul") == 1
     assert_module_verifies(m)
@@ -109,10 +109,10 @@ def test_int8_dequant_reads_int8_scales_f32():
 
 def test_int8_region_id_preserved():
     m, q = _int8_module()
-    q.attributes["compgen.region_id"] = StringAttr("mm_0")
+    q.attributes["xpu_rt.region_id"] = StringAttr("mm_0")
     run_lower_quantized_matmul(m)
     mm = next(op for op in m.walk() if op.name == "linalg.matmul")
-    assert mm.attributes["compgen.region_id"].data == "mm_0"
+    assert mm.attributes["xpu_rt.region_id"].data == "mm_0"
 
 
 # --- int4 (partial lowering -> attribute tag) ----------------------------
@@ -123,9 +123,9 @@ def test_int4_pack_mm_is_tagged_not_expanded():
     stats = run_lower_quantized_matmul(m)
     assert stats.int4_rewritten == 1
     # The op remains but carries a scheduling tag for .
-    assert count_ops(m, "compgen.quant.weight_int4pack_mm") == 1
-    op = next(o for o in m.walk() if o.name == "compgen.quant.weight_int4pack_mm")
-    assert op.attributes["compgen.int4_lowering_scheduled"].data == "true"
+    assert count_ops(m, "xpu_rt.quant.weight_int4pack_mm") == 1
+    op = next(o for o in m.walk() if o.name == "xpu_rt.quant.weight_int4pack_mm")
+    assert op.attributes["xpu_rt.int4_lowering_scheduled"].data == "true"
 
 
 # --- policy gating --------------------------------------------------------
@@ -139,7 +139,7 @@ def test_skip_policy_does_nothing():
     )
     assert stats.int8_rewritten == 0
     assert stats.skipped_policy >= 1
-    assert count_ops(m, "compgen.quant.weight_int8pack_mm") == 1
+    assert count_ops(m, "xpu_rt.quant.weight_int8pack_mm") == 1
 
 
 def test_zp_zero_only_policy_allows_default_symmetric():
@@ -180,7 +180,7 @@ def test_idempotent_second_run_is_noop():
 def test_lower_quantized_matmul_on_tiny_int8_linear_captured():
     """End-to-end: build a tiny nn.Module with int8-packed weight,
     capture via torch.export → FX importer → run the pass. Verifies
-    that the pass detects the compgen.quant.* op emitted by the
+    that the pass detects the xpu_rt.quant.* op emitted by the
     decomposition table and lowers it.
     """
 

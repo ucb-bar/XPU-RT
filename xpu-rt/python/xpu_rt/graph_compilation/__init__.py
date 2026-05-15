@@ -7,13 +7,13 @@ trusting its own manifest.
 It is intentionally thin: it does not perform capture, lowering, or
 analysis. Those responsibilities live in:
 
-- ``compgen.capture.torch_export.capture_frontend_artifact`` (Stage 0)
-- ``compgen.capture.torch_mlir_bridge.bridge_fx_graph`` /
-  ``compgen.ir.payload.import_fx.FXImporter`` (Stage 1)
-- ``compgen.pipeline.driver.compile_through_pipeline`` (deterministic
+- ``xpu_rt.capture.torch_export.capture_frontend_artifact`` (Stage 0)
+- ``xpu_rt.capture.torch_mlir_bridge.bridge_fx_graph`` /
+  ``xpu_rt.ir.payload.import_fx.FXImporter`` (Stage 1)
+- ``xpu_rt.pipeline.driver.compile_through_pipeline`` (deterministic
   pass ordering)
-- ``compgen.analysis.graph_digest`` and
-  ``compgen.agent.analyzer.NetworkAnalyzer`` (Stage 2)
+- ``xpu_rt.analysis.graph_digest`` and
+  ``xpu_rt.agent.analyzer.NetworkAnalyzer`` (Stage 2)
 
 Later graph compilation tasks wrap those modules and write the staged
 ``00_graph_capture/`` / ``01_payload_lowering/`` / ``02_graph_analysis/``
@@ -22,13 +22,13 @@ enforces. graph_compilation artifact contract only defines and validates
 the contract.
 
 Schema location note: schemas live under
-``compgen/graph_compilation/schemas/v1/`` so the contract owner owns its
-schema, rather than the repo-wide ``compgen/schemas/v1/`` directory.
+``xpu_rt/graph_compilation/schemas/v1/`` so the contract owner owns its
+schema, rather than the repo-wide ``xpu_rt/schemas/v1/`` directory.
 """
 
 from __future__ import annotations
 
-from compgen.graph_compilation.artifacts import (
+from xpu_rt.graph_compilation.artifacts import (
     CANONICAL_STAGE_ORDER,
     LEGACY_STAGE_DIR_PREFIXES,
     STAGE_DIR_PREFIXES,
@@ -43,8 +43,8 @@ from compgen.graph_compilation.artifacts import (
     stage_dir,
     stage_dir_canonical,
 )
-from compgen.graph_compilation.hashing import sha256_file, sha256_tree
-from compgen.graph_compilation.validate import validate_run
+from xpu_rt.graph_compilation.hashing import sha256_file, sha256_tree
+from xpu_rt.graph_compilation.validate import validate_run
 
 __all__ = [
     "ArtifactRef",

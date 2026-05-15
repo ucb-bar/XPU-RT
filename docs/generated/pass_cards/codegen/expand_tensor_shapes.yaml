@@ -4,7 +4,7 @@ display_name: Expand symbolic-shape tensors
 level: payload
 family: codegen
 source: XLA
-impl_path: python/compgen/ir/payload/passes/rewrites/expand_tensor_shapes.py
+impl_path: python/xpu_rt/ir/payload/passes/rewrites/expand_tensor_shapes.py
 reads:
   - 01_payload_lowering/payload.mlir
 writes:
@@ -24,7 +24,7 @@ cost: cheap
 failure_modes:
   - "unsatisfiable_shape_constraint"
   - "missing_constraint_for_dim"
-mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+mcp_tool: mcp__xpu_rt__xpu_rt_emit_agent_decision_request
 notes: |
   Reconstruction of XLA's ExpandTensorShapes. Resolves symbolic dim
   sizes against the collected constraint set so downstream passes

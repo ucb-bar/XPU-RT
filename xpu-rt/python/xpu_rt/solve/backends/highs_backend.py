@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import time
 
-from compgen.solve.backends.base import SolverBackend
-from compgen.solve.solver_types import (
+from xpu_rt.solve.backends.base import SolverBackend
+from xpu_rt.solve.solver_types import (
     BackendAvailabilityStatus,
     BackendProbeResult,
     SolverBackendName,
@@ -172,7 +172,7 @@ class HighsBackend(SolverBackend):
                 solution={"probe_ok": True, "version": probe.version, "detail": probe.detail},
             )
         t0 = time.perf_counter()
-        from compgen.solve import _highs_solve_impl
+        from xpu_rt.solve import _highs_solve_impl
 
         try:
             return _highs_solve_impl.solve(request, probe=probe)

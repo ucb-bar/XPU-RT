@@ -1,4 +1,4 @@
-"""``insert_all_reduce`` -- materialize ``compgen.collective.all_reduce``
+"""``insert_all_reduce`` -- materialize ``xpu_rt.collective.all_reduce``
 at every op whose sharding spec is marked ``partial="sum"``.
 
 Reconstruction of the insertion half of XLA's SPMD lowering pipeline.
@@ -16,7 +16,7 @@ from xdsl.pattern_rewriter import (
     RewritePattern,
 )
 
-from compgen.ir.collective import AllReduceOp, ReduceKindAttr, ShardingSpecAttr
+from xpu_rt.ir.collective import AllReduceOp, ReduceKindAttr, ShardingSpecAttr
 
 
 @dataclass
@@ -38,7 +38,7 @@ class _InsertAllReducePattern(RewritePattern):
         self.stats = stats
 
     def match_and_rewrite(self, op: Operation, rewriter: PatternRewriter) -> None:
-        sharding = op.attributes.get("compgen.sharding")
+        sharding = op.attributes.get("xpu_rt.sharding")
         if not isinstance(sharding, ShardingSpecAttr):
             return
         self.stats.ops_seen += 1
@@ -46,7 +46,7 @@ class _InsertAllReducePattern(RewritePattern):
         if partial not in ("sum", "mean", "max", "min"):
             self.stats.skipped_no_partial += 1
             return
-        if "compgen.all_reduce_inserted" in op.attributes:
+        if "xpu_rt.all_reduce_inserted" in op.attributes:
             return
         if not op.results:
             return
@@ -76,7 +76,7 @@ class _InsertAllReducePattern(RewritePattern):
         parent = op.parent_block()
         if parent is not None:
             parent.insert_op_after(ar, op)
-        op.attributes["compgen.all_reduce_inserted"] = sharding.partial
+        op.attributes["xpu_rt.all_reduce_inserted"] = sharding.partial
         self.stats.all_reduces_inserted += 1
 
 

@@ -5,7 +5,7 @@ The registry discovers and instantiates adapters based on the
 ``ProfilingSpec`` declared in the hardware spec.
 
 The agentic LLM can register custom adapters at runtime via
-:func:`~compgen.runtime.profiling.registry.register_adapter`.
+:func:`~xpu_rt.runtime.profiling.registry.register_adapter`.
 """
 
 from __future__ import annotations

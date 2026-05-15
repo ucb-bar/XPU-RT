@@ -1,13 +1,13 @@
-"""CompGen CLI -- the command surface for the compiler generator.
+"""XPU-RT CLI -- the command surface for the compiler generator.
 
 Subcommands map to pipeline stages:
 
-    compgen init-target   -- Initialize / validate a target profile
-    compgen analyze       -- Capture model, baseline, gap analysis
-    compgen generate      -- Run LLM generation pipeline
-    compgen verify        -- Run verification ladder on a bundle
-    compgen run           -- Execute a bundle locally
-    compgen promote       -- Promote verified bundle to recipe library
+    xpu_rt init-target   -- Initialize / validate a target profile
+    xpu_rt analyze       -- Capture model, baseline, gap analysis
+    xpu_rt generate      -- Run LLM generation pipeline
+    xpu_rt verify        -- Run verification ladder on a bundle
+    xpu_rt run           -- Execute a bundle locally
+    xpu_rt promote       -- Promote verified bundle to recipe library
 
 Every command validates its arguments and wires into the appropriate
 pipeline subsystems.
@@ -22,8 +22,8 @@ from pathlib import Path
 
 import click
 
-from compgen import __version__
-from compgen.llm import (
+from xpu_rt import __version__
+from xpu_rt.llm import (
     SUPPORTED_PROVIDERS,
     LLMSelection,
     PromptContext,
@@ -32,7 +32,7 @@ from compgen.llm import (
     resolve_llm_selection,
     selection_status,
 )
-from compgen.llm.base import GenerationRequest, LLMConfig, Objective
+from xpu_rt.llm.base import GenerationRequest, LLMConfig, Objective
 
 
 @dataclass(frozen=True)
@@ -83,7 +83,7 @@ def main(
     llm_record_dir: Path | None,
     llm_no_record: bool,
 ) -> None:
-    """CompGen -- an LLM-driven compiler generator for heterogeneous hardware targets."""
+    """XPU-RT -- an LLM-driven compiler generator for heterogeneous hardware targets."""
     selection = resolve_llm_selection(
         llm_backend,
         model=llm_model,
@@ -179,7 +179,7 @@ def init_target(cli: CLIContext, profile: str) -> None:
     click.echo("  Artifact path:   <profile>.validated.yaml")
 
     try:
-        from compgen.targets.schema import load_profile
+        from xpu_rt.targets.schema import load_profile
 
         target_profile = load_profile(Path(profile))
         click.echo(f"  Name:          {target_profile.name}")
@@ -196,7 +196,7 @@ def init_target(cli: CLIContext, profile: str) -> None:
 @click.argument("model", type=click.Path(exists=True))
 @click.option("--inputs", type=click.Path(exists=True), required=True, help="Path to input spec YAML")
 @click.option("--target", type=click.Path(exists=True), required=True, help="Path to target profile YAML")
-@click.option("--output-dir", type=click.Path(), default="compgen_output", help="Output directory")
+@click.option("--output-dir", type=click.Path(), default="xpu-rt-output", help="Output directory")
 @click.pass_obj
 def analyze(cli: CLIContext, model: str, inputs: str, target: str, output_dir: str) -> None:
     """Capture model, run baseline, and perform gap analysis.
@@ -232,7 +232,7 @@ def analyze(cli: CLIContext, model: str, inputs: str, target: str, output_dir: s
     out.mkdir(parents=True, exist_ok=True)
 
     # Load target profile
-    from compgen.targets.schema import load_profile
+    from xpu_rt.targets.schema import load_profile
 
     try:
         target_profile = load_profile(Path(target))
@@ -251,7 +251,7 @@ def analyze(cli: CLIContext, model: str, inputs: str, target: str, output_dir: s
     click.echo("[analyze] Stage 0: Capture & baseline")
     artifact = None
     try:
-        from compgen.capture.torch_export import capture_frontend_artifact
+        from xpu_rt.capture.torch_export import capture_frontend_artifact
 
         artifact = capture_frontend_artifact(model, (input_spec,) if not isinstance(input_spec, tuple) else input_spec)
         click.echo(f"  Export valid:  {artifact.validation.valid}")
@@ -263,7 +263,7 @@ def analyze(cli: CLIContext, model: str, inputs: str, target: str, output_dir: s
     # Stage 1: IR build
     click.echo("[analyze] Stage 1: Build payload IR")
     try:
-        from compgen.ir.payload.import_fx import fx_to_xdsl
+        from xpu_rt.ir.payload.import_fx import fx_to_xdsl
 
         if artifact is not None and artifact.exported_program is not None:
             module, diagnostics = fx_to_xdsl(artifact.exported_program)
@@ -286,7 +286,7 @@ def analyze(cli: CLIContext, model: str, inputs: str, target: str, output_dir: s
     # Stage 2: Gap analysis
     click.echo("[analyze] Stage 2: Gap analysis")
     try:
-        from compgen.agent.analyzer import NetworkAnalyzer
+        from xpu_rt.agent.analyzer import NetworkAnalyzer
 
         if artifact is not None and artifact.exported_program is not None:
             analyzer = NetworkAnalyzer()
@@ -310,7 +310,7 @@ def analyze(cli: CLIContext, model: str, inputs: str, target: str, output_dir: s
 @click.option("--target", type=click.Path(exists=True), required=True, help="Path to target profile YAML")
 @click.option("--objective", type=click.Choice(["latency", "throughput", "memory", "energy"]), default="latency")
 @click.option("--analysis-dir", type=click.Path(exists=True), required=True, help="Output from 'analyze' command")
-@click.option("--output-dir", type=click.Path(), default="compgen_output", help="Output directory")
+@click.option("--output-dir", type=click.Path(), default="xpu-rt-output", help="Output directory")
 @click.option("--budget", type=int, default=50, help="Max LLM generation iterations")
 @click.pass_obj
 def generate(
@@ -351,7 +351,7 @@ def generate(
     out.mkdir(parents=True, exist_ok=True)
 
     # Load target profile
-    from compgen.targets.schema import load_profile
+    from xpu_rt.targets.schema import load_profile
 
     try:
         target_profile = load_profile(Path(target))
@@ -532,7 +532,7 @@ def verify(cli: CLIContext, bundle_path: str, level: str, report: str | None) ->
             elif lvl == "formal":
                 # Formal verification is optional and solver-backed
                 try:
-                    from compgen.semantic.executor import VerificationExecutor
+                    from xpu_rt.semantic.executor import VerificationExecutor
 
                     executor = VerificationExecutor(enable_tv=False)
                     results[lvl] = {"status": "pass", "detail": "formal checks skipped (no TV obligations)"}
@@ -694,8 +694,8 @@ def promote(cli: CLIContext, bundle_path: str, library: str, force: bool) -> Non
 
     # Promote via RecipePromoter
     try:
-        from compgen.promotion.promote import RecipePromoter
-        from compgen.runtime.bundle import BundleManifest
+        from xpu_rt.promotion.promote import RecipePromoter
+        from xpu_rt.runtime.bundle import BundleManifest
 
         bundle_manifest = BundleManifest(
             target_profile=manifest_data.get("target_profile", ""),
@@ -782,8 +782,8 @@ def scaffold_target(
     """
     import yaml
 
-    from compgen.targets.package import generate_target_package
-    from compgen.targets.schema import load_profile
+    from xpu_rt.targets.package import generate_target_package
+    from xpu_rt.targets.schema import load_profile
 
     spec_path = Path(hardware_spec)
     output_root = Path(output_dir)
@@ -795,7 +795,7 @@ def scaffold_target(
         profile = load_profile(spec_path)
         click.echo(f"[scaffold-target] Loaded target profile directly: {hardware_spec}")
     else:
-        from compgen.targetgen.generate import generate_target
+        from xpu_rt.targetgen.generate import generate_target
 
         generated = generate_target(spec_path, generated_output)
         profile = generated.profile
@@ -863,17 +863,17 @@ def scaffold_pack_cmd(
     out_dir: str,
     overwrite: bool,
 ) -> None:
-    """Scaffold a pip-installable CompGen extension pack.
+    """Scaffold a pip-installable XPU-RT extension pack.
 
-    The generated package declares a ``compgen.packs`` entry point and ships a
-    ``manifest.yaml`` plus a starter extension module seeded from the CompGen
+    The generated package declares a ``xpu_rt.packs`` entry point and ships a
+    ``manifest.yaml`` plus a starter extension module seeded from the XPU-RT
     in-tree template. After scaffolding:
 
         pip install -e <out>/<name>
 
-    CompGen's pack discovery picks the pack up automatically.
+    XPU-RT's pack discovery picks the pack up automatically.
     """
-    from compgen.packs.scaffolding import scaffold_pack
+    from xpu_rt.packs.scaffolding import scaffold_pack
 
     result = scaffold_pack(kind=kind, name=name, out_dir=out_dir, overwrite=overwrite)
     click.echo(f"[scaffold-pack] Kind:           {kind}")
@@ -887,7 +887,7 @@ def scaffold_pack_cmd(
     click.echo("Next steps:")
     click.echo(f"  cd {result.pack_root}")
     click.echo("  pip install -e .")
-    click.echo('  python -c "from compgen.packs import load_pack; print(load_pack(\\"' + name + '\\").manifest.name)"')
+    click.echo('  python -c "from xpu_rt.packs import load_pack; print(load_pack(\\"' + name + '\\").manifest.name)"')
 
 
 @main.group()
@@ -898,11 +898,11 @@ def contrib() -> None:
 @contrib.command("list")
 def contrib_list() -> None:
     """List every local user extension + its invocation count."""
-    from compgen.contrib import list_extensions
+    from xpu_rt.contrib import list_extensions
 
     exts = list_extensions()
     if not exts:
-        click.echo("No local extensions under ~/.compgen/extensions.")
+        click.echo("No local extensions under ~/.xpu_rt/extensions.")
         return
     for e in exts:
         tag = "eligible" if e.eligible else e.eligibility_reason
@@ -912,7 +912,7 @@ def contrib_list() -> None:
 @contrib.command("status")
 def contrib_status() -> None:
     """Show which local extensions are eligible for upstream drafting."""
-    from compgen.contrib import status
+    from xpu_rt.contrib import status
 
     info = status()
     click.echo(f"Root:     {info['root']}")
@@ -938,7 +938,7 @@ def contrib_draft(
     no_branch: bool,
 ) -> None:
     """Draft an upstream contribution from a local extension."""
-    from compgen.contrib import draft_pr
+    from xpu_rt.contrib import draft_pr
 
     result = draft_pr(
         slot_name,
@@ -962,13 +962,13 @@ def contrib_draft(
 
 @main.group()
 def mcp() -> None:
-    """Run or inspect the CompGen MCP stdio server."""
+    """Run or inspect the XPU-RT MCP stdio server."""
 
 
 @mcp.command("serve")
 def mcp_serve() -> None:
-    """Run the ``compgen-mcp`` stdio server (requires the [mcp] extra)."""
-    from compgen.mcp.server import main as mcp_main
+    """Run the ``xpu-rt-mcp`` stdio server (requires the [mcp] extra)."""
+    from xpu_rt.mcp.server import main as mcp_main
 
     mcp_main()
 
@@ -976,7 +976,7 @@ def mcp_serve() -> None:
 @mcp.command("tools")
 def mcp_tools() -> None:
     """List the MCP tools this server exposes."""
-    from compgen.mcp.tools import ALL_TOOLS
+    from xpu_rt.mcp.tools import ALL_TOOLS
 
     for t in ALL_TOOLS:
         click.echo(f"  [{t['phase']:<9}] {t['name']:<32} {t['description']}")
@@ -985,8 +985,8 @@ def mcp_tools() -> None:
 @mcp.command("print-config")
 @click.option("--indent", type=int, default=2, show_default=True, help="JSON indentation width.")
 def mcp_print_config(indent: int) -> None:
-    """Print the JSON snippet to add CompGen to a Claude Code / .mcp.json config."""
-    from compgen.mcp.config import mcp_server_json
+    """Print the JSON snippet to add XPU-RT to a Claude Code / .mcp.json config."""
+    from xpu_rt.mcp.config import mcp_server_json
 
     click.echo(mcp_server_json(indent=indent))
 
@@ -1003,11 +1003,11 @@ def mcp_print_config(indent: int) -> None:
     default=None,
     help="Explicit target path. Overrides --project.",
 )
-@click.option("--force", is_flag=True, help="Overwrite an existing mcpServers.compgen entry.")
+@click.option("--force", is_flag=True, help="Overwrite an existing mcpServers.xpu_rt entry.")
 @click.option("--dry-run", is_flag=True, help="Show what would happen without writing.")
 def mcp_install(project: bool, target: Path | None, force: bool, dry_run: bool) -> None:
-    """Merge the CompGen MCP server entry into a client config, with backup."""
-    from compgen.mcp.install import install_mcp_server
+    """Merge the XPU-RT MCP server entry into a client config, with backup."""
+    from xpu_rt.mcp.install import install_mcp_server
 
     try:
         result = install_mcp_server(target=target, project=project, force=force, dry_run=dry_run)
@@ -1020,7 +1020,7 @@ def mcp_install(project: bool, target: Path | None, force: bool, dry_run: bool) 
         click.echo(f"[mcp install] Backup:  {result.backup}")
     click.echo(f"[mcp install] Entry:   {result.entry}")
     if result.action == "already-present":
-        click.echo("[mcp install] No change — the config already points at compgen-mcp.")
+        click.echo("[mcp install] No change — the config already points at xpu-rt-mcp.")
     elif not dry_run:
         click.echo("[mcp install] Restart Claude Code to pick up the new server.")
 
@@ -1032,11 +1032,11 @@ def mcp_doctor() -> None:
 
     click.echo("[mcp doctor] Imports")
     try:
-        from compgen.mcp.tools import ALL_TOOLS
+        from xpu_rt.mcp.tools import ALL_TOOLS
 
         click.echo(f"  tools:         {len(ALL_TOOLS)} registered")
     except Exception as exc:  # noqa: BLE001
-        raise click.ClickException(f"failed to import compgen.mcp.tools: {exc}") from exc
+        raise click.ClickException(f"failed to import xpu_rt.mcp.tools: {exc}") from exc
 
     try:
         import mcp as _mcp  # noqa: F401
@@ -1046,7 +1046,7 @@ def mcp_doctor() -> None:
         click.echo(f"  mcp SDK:       missing ({exc})")
 
     try:
-        from compgen.plugins import discover_everything
+        from xpu_rt.plugins import discover_everything
 
         report = discover_everything()
         click.echo("[mcp doctor] Discovery")
@@ -1063,20 +1063,20 @@ def mcp_doctor() -> None:
     except Exception as exc:  # noqa: BLE001
         click.echo(f"[mcp doctor] Discovery failed: {exc}")
 
-    exe = shutil.which("compgen-mcp")
+    exe = shutil.which("xpu-rt-mcp")
     click.echo("[mcp doctor] Binary")
-    click.echo(f"  compgen-mcp:   {exe or '<not on PATH>'}")
+    click.echo(f"  xpu-rt-mcp:   {exe or '<not on PATH>'}")
 
 
 @main.group()
 def ext() -> None:
-    """Inspect and scaffold CompGen user extensions."""
+    """Inspect and scaffold XPU-RT user extensions."""
 
 
 @ext.command("list")
 def ext_list() -> None:
     """List every user extension discovered across all paths."""
-    from compgen.plugins import discover_everything
+    from xpu_rt.plugins import discover_everything
 
     report = discover_everything()
     click.echo(f"User-space root: {report.user_space_root}")
@@ -1124,14 +1124,14 @@ def ext_list() -> None:
 )
 @click.option("--overwrite", is_flag=True, help="Replace an existing directory at the target path.")
 def ext_new(kind: str, name: str, out_dir: str | None, overwrite: bool) -> None:
-    """Scaffold a pip-installable CompGen extension pack of KIND with NAME.
+    """Scaffold a pip-installable XPU-RT extension pack of KIND with NAME.
 
-    Thin alias for ``compgen scaffold-pack``: scaffolds into ``--out`` (or
+    Thin alias for ``xpu_rt scaffold-pack``: scaffolds into ``--out`` (or
     the current directory). To make the scaffold visible to the running
     MCP server, either ``pip install -e`` the scaffold, or copy its
-    starter module into ``~/.compgen/extensions/``.
+    starter module into ``~/.xpu_rt/extensions/``.
     """
-    from compgen.packs.scaffolding import scaffold_pack
+    from xpu_rt.packs.scaffolding import scaffold_pack
 
     dest = out_dir or str(Path.cwd())
     result = scaffold_pack(kind=kind, name=name, out_dir=dest, overwrite=overwrite)
@@ -1143,13 +1143,13 @@ def ext_new(kind: str, name: str, out_dir: str | None, overwrite: bool) -> None:
     click.echo("Next steps:")
     click.echo(f"  cd {result.pack_root}")
     click.echo("  pip install -e .        # so entry points register")
-    click.echo("  compgen ext list        # verify discovery")
+    click.echo("  xpu_rt ext list        # verify discovery")
 
 
 @ext.command("doctor")
 def ext_doctor() -> None:
     """Re-run every discovery validator and report failures."""
-    from compgen.plugins import discover_everything
+    from xpu_rt.plugins import discover_everything
 
     report = discover_everything()
     ok = True
@@ -1172,7 +1172,7 @@ def ext_doctor() -> None:
 
 @main.group()
 def rt() -> None:
-    """Build and inspect the native ``libcompgen_rt`` runtime."""
+    """Build and inspect the native ``libxpu_rt`` runtime."""
 
 
 @rt.command("build")
@@ -1193,7 +1193,7 @@ def rt() -> None:
     default=None,
     help=(
         "Path to a CMake toolchain file. Required for triples not "
-        "shipped under runtime/native/libcompgen_rt/toolchains/."
+        "shipped under runtime/native/libxpu_rt/toolchains/."
     ),
 )
 @click.option(
@@ -1214,7 +1214,7 @@ def rt() -> None:
     "build_dir",
     type=click.Path(file_okay=False),
     default=None,
-    help=("Build directory. Defaults to runtime/native/libcompgen_rt/build-<triple>."),
+    help=("Build directory. Defaults to runtime/native/libxpu_rt/build-<triple>."),
 )
 @click.option("--jobs", "-j", type=int, default=0, help="Parallel build jobs (0 = auto).")
 @click.option("--clean", is_flag=True, default=False, help="Wipe the build dir before configuring.")
@@ -1234,7 +1234,7 @@ def rt() -> None:
     "rt_root",
     type=click.Path(exists=True, file_okay=False),
     default=None,
-    help="Override the libcompgen_rt source root. Defaults to the in-tree path.",
+    help="Override the libxpu_rt source root. Defaults to the in-tree path.",
 )
 def rt_build(
     triple: str,
@@ -1247,7 +1247,7 @@ def rt_build(
     cmake_bin: str | None,
     rt_root: str | None,
 ) -> None:
-    """Materialise ``libcompgen_rt_static.a`` for ``--triple``.
+    """Materialise ``libxpu_rt_static.a`` for ``--triple``.
 
     Wraps ``cmake -B <build> -S <rt_root>`` + ``cmake --build <build>``.
     Resolves the toolchain file by name when one ships in-tree
@@ -1259,12 +1259,12 @@ def rt_build(
     if rt_root:
         rt_root_path = Path(rt_root).resolve()
     else:
-        # Default: <repo>/runtime/native/libcompgen_rt — derived from this
-        # module's install path (Path(compgen.__file__).parents[2] is the
+        # Default: <repo>/runtime/native/libxpu_rt — derived from this
+        # module's install path (Path(xpu_rt.__file__).parents[2] is the
         # repo root in editable installs).
-        rt_root_path = Path(__file__).resolve().parents[2] / "runtime" / "native" / "libcompgen_rt"
+        rt_root_path = Path(__file__).resolve().parents[2] / "runtime" / "native" / "libxpu_rt"
     if not rt_root_path.is_dir():
-        raise click.ClickException(f"libcompgen_rt source root not found: {rt_root_path}")
+        raise click.ClickException(f"libxpu_rt source root not found: {rt_root_path}")
 
     # Resolve toolchain file: explicit > shipped name > host (no toolchain).
     toolchain_path: Path | None = None
@@ -1335,21 +1335,21 @@ def rt_build(
     if rc != 0:
         raise click.ClickException(f"cmake build failed (exit {rc})")
 
-    artifact = build_path / "libcompgen_rt_static.a"
+    artifact = build_path / "libxpu_rt_static.a"
     if not artifact.is_file():
         # The CMake target may have been named differently; search.
-        candidates = sorted(build_path.glob("**/libcompgen_rt_static*.a"))
+        candidates = sorted(build_path.glob("**/libxpu_rt_static*.a"))
         if not candidates:
-            candidates = sorted(build_path.glob("**/libcompgen_rt*.a"))
+            candidates = sorted(build_path.glob("**/libxpu_rt*.a"))
         if not candidates:
-            raise click.ClickException(f"build succeeded but no libcompgen_rt*.a found under {build_path}")
+            raise click.ClickException(f"build succeeded but no libxpu_rt*.a found under {build_path}")
         artifact = candidates[0]
 
     size_kb = artifact.stat().st_size // 1024
     click.echo(f"[rt build] artifact:       {artifact} ({size_kb} KB)")
     click.echo("[rt build] OK")
     # Echo the absolute path on its own line so shell consumers can grab it
-    # via `compgen rt build … | tail -1`.
+    # via `xpu_rt rt build … | tail -1`.
     click.echo(str(artifact))
 
 
@@ -1359,14 +1359,14 @@ def rt_build(
     "rt_root",
     type=click.Path(exists=True, file_okay=False),
     default=None,
-    help="Override the libcompgen_rt source root.",
+    help="Override the libxpu_rt source root.",
 )
 def rt_list_triples(rt_root: str | None) -> None:
     """List triples that ship with a CMake toolchain file."""
     if rt_root:
         rt_root_path = Path(rt_root).resolve()
     else:
-        rt_root_path = Path(__file__).resolve().parents[2] / "runtime" / "native" / "libcompgen_rt"
+        rt_root_path = Path(__file__).resolve().parents[2] / "runtime" / "native" / "libxpu_rt"
     toolchains_dir = rt_root_path / "toolchains"
     if not toolchains_dir.is_dir():
         raise click.ClickException(f"toolchains dir not found: {toolchains_dir}")
@@ -1376,25 +1376,25 @@ def rt_list_triples(rt_root: str | None) -> None:
         click.echo(f"  {tc.stem}  ({tc.relative_to(rt_root_path)})")
 
 
-# register the ToolCard-driven ``compgen tool`` subcommand group.
+# register the ToolCard-driven ``xpu_rt tool`` subcommand group.
 # Imported at end-of-module to avoid any chance of circular import via
-# compgen.tools → compgen.cli (today there is none, but the rule keeps
+# xpu_rt.tools → xpu_rt.cli (today there is none, but the rule keeps
 # future refactors honest).
-from compgen.cli_tool import tool as _tool_group  # noqa: E402
+from xpu_rt.cli_tool import tool as _tool_group  # noqa: E402
 
 main.add_command(_tool_group)
 
 
 def tool_main() -> None:
-    """Entry-point for the ``compgen-tool`` console script.
+    """Entry-point for the ``xpu-rt-tool`` console script.
 
-    Equivalent to ``compgen tool ...`` — exists so users can invoke
+    Equivalent to ``xpu_rt tool ...`` — exists so users can invoke
     the tool runner without typing the parent group, and so the
-    audit can verify ``compgen-tool`` resolves on PATH (the T1 gate
+    audit can verify ``xpu-rt-tool`` resolves on PATH (the T1 gate
     requires a real CLI command, not just a Python entrypoint).
     """
 
-    _tool_group(prog_name="compgen-tool")  # pragma: no cover (entrypoint)
+    _tool_group(prog_name="xpu-rt-tool")  # pragma: no cover (entrypoint)
 
 
 if __name__ == "__main__":

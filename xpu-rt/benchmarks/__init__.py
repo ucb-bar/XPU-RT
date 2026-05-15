@@ -1,4 +1,4 @@
-"""CompGen benchmarks and MLSys study harness."""
+"""XPU-RT benchmarks and MLSys study harness."""
 
 from __future__ import annotations
 

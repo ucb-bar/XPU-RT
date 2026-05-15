@@ -3,18 +3,18 @@
 ## What This Stage Does
 
 The Encoding stage resolves data layout and dtype decisions for every tensor
-in the program.  It annotates ops with `compgen.encoding` attributes that
+in the program.  It annotates ops with `xpu_rt.encoding` attributes that
 downstream stages use for tiling, dispatch, and codegen decisions.
 
 ## Input Contract
 
 - Module is valid xDSL IR (passes verifier)
 - Ops are in linalg/arith/func/tensor dialects
-- No `compgen.encoding` attributes present yet
+- No `xpu_rt.encoding` attributes present yet
 
 ## Output Contract
 
-- Every tensor-producing op has a `compgen.encoding` attribute
+- Every tensor-producing op has a `xpu_rt.encoding` attribute
 - Encoding values are one of: `row_major`, `column_major`, `tiled_MxN`, or a target-specific string
 
 ## What You Must Generate
@@ -40,7 +40,7 @@ class {TargetName}EncodingPlugin:
         # For each tensor-producing op:
         #   1. Check op type (matmul → MMA layout, elementwise → row_major, etc.)
         #   2. Check tensor shape (small → no tiling, large → tile to hardware dims)
-        #   3. Set compgen.encoding attribute with target-optimal layout
+        #   3. Set xpu_rt.encoding attribute with target-optimal layout
         ...
 
     def get_artifacts(self):
@@ -70,7 +70,7 @@ class {TargetName}EncodingPlugin:
 
 ## Tests Your Code Must Pass
 
-1. Every tensor-producing op must have `compgen.encoding` after your transform
+1. Every tensor-producing op must have `xpu_rt.encoding` after your transform
 2. Module must still pass xDSL verifier
 3. Function signatures must not change
 4. Running the stage twice must produce the same result (idempotent)

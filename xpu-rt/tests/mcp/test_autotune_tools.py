@@ -1,4 +1,4 @@
-"""Tests for ``compgen.mcp.tools.autotune`` (W8.3)."""
+"""Tests for ``xpu_rt.mcp.tools.autotune`` (W8.3)."""
 
 from __future__ import annotations
 
@@ -6,8 +6,8 @@ import json
 from pathlib import Path
 
 import pytest
-from compgen.mcp.session import SessionManager
-from compgen.mcp.tools.autotune import (
+from xpu_rt.mcp.session import SessionManager
+from xpu_rt.mcp.tools.autotune import (
     AUTOTUNE_TOOLS,
     list_pending_autotune_trials,
     lookup_autotune_pick,
@@ -19,14 +19,14 @@ from compgen.mcp.tools.autotune import (
 @pytest.fixture
 def isolated_autotune_dir(tmp_path: Path, monkeypatch):
     """Redirect the on-disk autotune cache so the test doesn't write
-    to the real ``~/.compgen/autotune/``."""
-    monkeypatch.setenv("COMPGEN_AUTOTUNE_CACHE", str(tmp_path / "autotune"))
+    to the real ``~/.xpu_rt/autotune/``."""
+    monkeypatch.setenv("XPU_RT_AUTOTUNE_CACHE", str(tmp_path / "autotune"))
     yield tmp_path / "autotune"
 
 
 @pytest.fixture
 def sm(tmp_path: Path) -> SessionManager:
-    s = SessionManager(scratch_root=tmp_path / "compgen_mcp")
+    s = SessionManager(scratch_root=tmp_path / "xpu_rt_mcp")
     s.open(session_id="sess1")
     return s
 
@@ -42,7 +42,7 @@ def test_autotune_tools_registered_with_expected_names() -> None:
 
 
 def test_autotune_tools_in_all_tools_bundle() -> None:
-    from compgen.mcp.tools import ALL_TOOLS
+    from xpu_rt.mcp.tools import ALL_TOOLS
 
     names = {t["name"] for t in ALL_TOOLS}
     for n in (

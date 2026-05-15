@@ -7,7 +7,7 @@ restrictive:
 - selected recipe kind == ``SetTileParams``
 - target op == ``linalg.matmul``
 - tensor shapes are static, rank-2, ``f32``
-- target op appears exactly once for the selected ``compgen.region_id``
+- target op appears exactly once for the selected ``xpu_rt.region_id``
 - tile (M, N, K) parsed from ``verified_recipe.mlir`` matches the tile
   parsed from ``applied_transform_manifest.json``
 - the tile came from the legal candidate menu (i.e. the action-space
@@ -201,11 +201,11 @@ def _find_matmul_for_region(
     payload_text: str, region_id: str
 ) -> list[dict[str, Any]]:
     """Return all ``linalg.matmul`` op-line records whose attribute block
-    contains ``compgen.region_id = "<region_id>"``. Preserves order."""
+    contains ``xpu_rt.region_id = "<region_id>"``. Preserves order."""
     results: list[dict[str, Any]] = []
     for m in _MATMUL_LINE_RE.finditer(payload_text):
         attrs = m.group("attrs") or ""
-        if _attr_value(attrs, "compgen.region_id") != region_id:
+        if _attr_value(attrs, "xpu_rt.region_id") != region_id:
             continue
         in_types = _split_tensor_list(m.group("in_types"))
         out_type = m.group("ret_type")
@@ -219,7 +219,7 @@ def _find_matmul_for_region(
                 "lhs": lhs,
                 "rhs": rhs,
                 "out": out,
-                "transposed_b": _attr_value(attrs, "compgen.transposed_b") == "true",
+                "transposed_b": _attr_value(attrs, "xpu_rt.transposed_b") == "true",
             }
         )
     return results
@@ -231,7 +231,7 @@ def _matmul_signature(
     """Derive M/N/K + dtype + rank/dynamic from a parsed ``linalg.matmul``.
 
     The ``linalg.matmul`` op semantics are fixed regardless of any upstream
-    ``compgen.transposed_b`` marker (which only records that the importer
+    ``xpu_rt.transposed_b`` marker (which only records that the importer
     absorbed an ``aten.permute`` to feed this matmul):
 
     - LHS tensor is ``MxK``
@@ -488,12 +488,12 @@ def run_real_transform_eligibility(
                 "target_op_linalg_matmul",
                 occurrences >= 1,
                 "" if occurrences >= 1
-                else f"no linalg.matmul with compgen.region_id={region_id!r}"
+                else f"no linalg.matmul with xpu_rt.region_id={region_id!r}"
             )
             if occurrences == 0:
                 rejections.append(
                     f"selected SetTileParams targets region {region_id!r} "
-                    f"but no linalg.matmul carries that compgen.region_id "
+                    f"but no linalg.matmul carries that xpu_rt.region_id "
                     f"in {payload_ref}"
                 )
             _add(

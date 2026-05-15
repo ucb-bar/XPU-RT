@@ -263,17 +263,17 @@ def _derive_canonical_hash(
     """Best-effort canonical-hash derivation for cert emit.
 
     Reads the materialised contract pointed to by the request, runs it
-    through :func:`compgen.promotion.contract_hash.canonical_contract_hash`,
+    through :func:`xpu_rt.promotion.contract_hash.canonical_contract_hash`,
     and returns the 16-char shape-class hash. On any failure (missing
     contract path, parse error, etc.) returns an empty string — the
     cert still emits with the canonical field empty rather than
     failing the emit step.
     """
     try:
-        from compgen.graph_compilation.kernel_codegen_response import (
+        from xpu_rt.graph_compilation.kernel_codegen_response import (
             _reconstruct_contract_from_dict,
         )
-        from compgen.promotion.contract_hash import canonical_contract_hash
+        from xpu_rt.promotion.contract_hash import canonical_contract_hash
 
         contract_rel = request_body.get("contract_paths", {}).get("full", "")
         if not contract_rel:

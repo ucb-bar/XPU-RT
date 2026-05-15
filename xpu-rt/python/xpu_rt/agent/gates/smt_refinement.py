@@ -1,4 +1,4 @@
-"""SMT refinement gate — wraps compgen.ir.semantic.translation_validation.
+"""SMT refinement gate — wraps xpu_rt.ir.semantic.translation_validation.
 
 Context::
 
@@ -43,7 +43,7 @@ def smt_refinement_gate(proposal: dict[str, Any], **ctx: Any) -> dict[str, Any]:
     timeout_ms = int(ctx.get("timeout_ms", 30_000))
 
     try:
-        from compgen.ir.semantic.translation_validation import validate_translation
+        from xpu_rt.ir.semantic.translation_validation import validate_translation
     except ImportError as e:  # pragma: no cover
         return {
             "status": "deferred",

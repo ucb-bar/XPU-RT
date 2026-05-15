@@ -7,7 +7,7 @@ Coverage:
   the reordering it produces is a *permutation* of the input list —
   no candidate invented, none silently dropped (the headline P3.0
   invariant).
-* Under COMPGEN_DISABLE_LLM=1 the order matches the deterministic
+* Under XPU_RT_DISABLE_LLM=1 the order matches the deterministic
   fallback (descending expected_impact + alphabetical tiebreak).
 * An empty candidate list passes through unchanged (no crash).
 
@@ -20,8 +20,8 @@ covered indirectly by the existing tests/agent/suggest tests.
 from __future__ import annotations
 
 import pytest
-from compgen.agent.primitives.rank_candidates import rank_candidates
-from compgen.agent.suggest._candidate import ProposalCandidate
+from xpu_rt.agent.primitives.rank_candidates import rank_candidates
+from xpu_rt.agent.suggest._candidate import ProposalCandidate
 
 
 def _cand(rationale: str, impact: float) -> ProposalCandidate:
@@ -37,7 +37,7 @@ def _disable_llm(monkeypatch):
     """Run under the deterministic-fallback regime so the test never
     depends on a live LLM connection."""
 
-    monkeypatch.setenv("COMPGEN_DISABLE_LLM", "1")
+    monkeypatch.setenv("XPU_RT_DISABLE_LLM", "1")
     yield
 
 
@@ -81,7 +81,7 @@ def test_suggest_module_imports_rank_candidates():
     """Smoke-test: the wire-in does not import-fail. Importing the
     suggest module must succeed even with the primitive registered."""
 
-    from compgen.mcp.tools import suggest  # noqa: F401
+    from xpu_rt.mcp.tools import suggest  # noqa: F401
 
     assert callable(suggest.suggest_proposals)
 

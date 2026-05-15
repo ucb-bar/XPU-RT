@@ -50,7 +50,7 @@ def pack_dir(tmp_path: Path) -> Path:
 
 def test_manifest_lists_all_seven_artifacts(pack_dir: Path):
     body = json.loads((pack_dir / "manifest.json").read_text(encoding="utf-8"))
-    assert body["schema_version"] == "compgen_tool_evidence_pack_v1"
+    assert body["schema_version"] == "xpu_rt_tool_evidence_pack_v1"
     expected = {
         "tool_registry.json",
         "tool_maturity_matrix.csv",
@@ -66,7 +66,7 @@ def test_manifest_lists_all_seven_artifacts(pack_dir: Path):
 
 
 def test_registry_contains_every_shipped_card(pack_dir: Path):
-    from compgen.tools.tool_registry import iter_tool_cards
+    from xpu_rt.tools.tool_registry import iter_tool_cards
 
     registry = json.loads((pack_dir / "tool_registry.json").read_text(encoding="utf-8"))
     shipped = {c.tool_id for c in iter_tool_cards()}
@@ -75,7 +75,7 @@ def test_registry_contains_every_shipped_card(pack_dir: Path):
 
 
 def test_maturity_matrix_rows_match_cards(pack_dir: Path):
-    from compgen.tools.tool_registry import iter_tool_cards
+    from xpu_rt.tools.tool_registry import iter_tool_cards
 
     cards = list(iter_tool_cards())
     with (pack_dir / "tool_maturity_matrix.csv").open("r", encoding="utf-8") as f:
@@ -87,7 +87,7 @@ def test_maturity_matrix_rows_match_cards(pack_dir: Path):
 
 
 def test_surface_matrix_reflects_card_entrypoints(pack_dir: Path):
-    from compgen.tools.tool_registry import iter_tool_cards
+    from xpu_rt.tools.tool_registry import iter_tool_cards
 
     with (pack_dir / "tool_surface_matrix.csv").open("r", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
@@ -151,7 +151,7 @@ def test_figures_directory_either_renders_or_carries_marker(pack_dir: Path):
 def test_promotion_log_has_one_rung_row_per_tool(pack_dir: Path):
     body = json.loads((pack_dir / "promotion_log.json").read_text(encoding="utf-8"))
     assert body["schema_version"] == "promotion_log_v1"
-    from compgen.tools.tool_registry import iter_tool_cards
+    from xpu_rt.tools.tool_registry import iter_tool_cards
 
     for card in iter_tool_cards():
         assert card.tool_id in body["rung_history"]
@@ -176,7 +176,7 @@ def test_promotion_log_append_only_on_unchanged_rebuild(tmp_path: Path):
 
 
 def test_fresh_agent_tasks_index_lists_known_tasks(pack_dir: Path):
-    from compgen.audit.fresh_agent_grading import list_task_ids
+    from xpu_rt.audit.fresh_agent_grading import list_task_ids
 
     body = json.loads((pack_dir / "fresh_agent_tasks.json").read_text(encoding="utf-8"))
     listed = {t["task_id"] for t in body["tasks"]}
@@ -191,9 +191,9 @@ def test_evidence_pack_writes_only_under_out_dir(tmp_path: Path, monkeypatch: py
     """
 
     sentinels = [
-        Path("python/compgen/tools/cards/echo.yaml"),
-        Path("python/compgen/audit/tool_promotion.py"),
-        Path(".claude/skills/compgen-tool-development/SKILL.md"),
+        Path("python/xpu_rt/tools/cards/echo.yaml"),
+        Path("python/xpu_rt/audit/tool_promotion.py"),
+        Path(".claude/skills/xpu-rt-tool-development/SKILL.md"),
     ]
     before = {p: p.stat().st_mtime_ns for p in sentinels if p.is_file()}
     build(tmp_path / "pack")

@@ -4,7 +4,7 @@ display_name: Insert all-reduce at SPMD boundaries
 level: payload
 family: memory
 source: XLA
-impl_path: python/compgen/ir/payload/passes/rewrites/insert_all_reduce.py
+impl_path: python/xpu_rt/ir/payload/passes/rewrites/insert_all_reduce.py
 reads:
   - 01_payload_lowering/payload.mlir
   - 02_graph_analysis/region_graph.json
@@ -26,7 +26,7 @@ cost: cheap
 failure_modes:
   - "missing_partition_spec"
   - "non_associative_reduction"
-mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+mcp_tool: mcp__xpu_rt__xpu_rt_emit_agent_decision_request
 notes: |
   Reconstruction of the insertion half of XLA's SPMD lowering.
   Inserts all_reduce at every reduction that crosses a partition

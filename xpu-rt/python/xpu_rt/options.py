@@ -150,7 +150,7 @@ class CompGenOptions:
 
     #: When True, write ``<output_dir>/ir_dumps/NNN_<pass>_{before,after}.mlir``
     #: for every pass and ``final.mlir`` for the glued module. Also honoured
-    #: when ``COMPGEN_DUMP_IR=1`` is set in the environment.
+    #: when ``XPU_RT_DUMP_IR=1`` is set in the environment.
     dump_ir: bool = False
     #: Optional override for the dump directory. When ``None`` the dumps
     #: live inside the compilation ``output_dir``.

@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from compgen.llm.call_site import llm_call_site, register_fallback
+from xpu_rt.llm.call_site import llm_call_site, register_fallback
 
 NAME_CLUSTER_OUTPUT_SCHEMA: dict[str, Any] = {
     "type": "object",

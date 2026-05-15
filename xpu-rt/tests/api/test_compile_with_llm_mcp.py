@@ -15,8 +15,8 @@ from pathlib import Path
 import pytest
 import torch
 import torch.nn as nn
-from compgen.api_llm import LLMCompileResult, compile_with_llm
-from compgen.kernels.contract_v3 import (
+from xpu_rt.api_llm import LLMCompileResult, compile_with_llm
+from xpu_rt.kernels.contract_v3 import (
     ExecutionEnvelope,
     HardwareEnvelope,
     IOContract,
@@ -26,9 +26,9 @@ from compgen.kernels.contract_v3 import (
     ShapeClass,
     TensorIO,
 )
-from compgen.kernels.store import KernelStore, set_shared_store
-from compgen.mcp.session import SessionManager
-from compgen.memory.kernel_db import KernelDB, set_shared_db
+from xpu_rt.kernels.store import KernelStore, set_shared_store
+from xpu_rt.mcp.session import SessionManager
+from xpu_rt.memory.kernel_db import KernelDB, set_shared_db
 
 EXEMPLAR_TARGET = Path(__file__).resolve().parents[1] / "targetgen" / "exemplars" / "test_gpu_simt.yaml"
 
@@ -50,7 +50,7 @@ def isolated_db(tmp_path: Path):
 
 @pytest.fixture
 def sm(tmp_path: Path) -> SessionManager:
-    s = SessionManager(scratch_root=tmp_path / "compgen_mcp")
+    s = SessionManager(scratch_root=tmp_path / "xpu_rt_mcp")
     s.open(session_id="sess1")
     return s
 

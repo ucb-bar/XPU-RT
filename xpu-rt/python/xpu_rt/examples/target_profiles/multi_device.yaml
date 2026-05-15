@@ -1,4 +1,4 @@
-# CompGen Target Profile: Heterogeneous CPU + GPU
+# XPU-RT Target Profile: Heterogeneous CPU + GPU
 #
 # Multi-device profile demonstrating heterogeneous deployment.
 # CPU handles lightweight ops; GPU handles compute-intensive ops.

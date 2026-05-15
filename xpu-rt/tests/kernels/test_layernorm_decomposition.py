@@ -22,8 +22,8 @@ import io
 
 import torch
 import torch.nn as nn
-from compgen.capture.torch_export import capture_model
-from compgen.ir.payload.import_fx import fx_to_xdsl
+from xpu_rt.capture.torch_export import capture_model
+from xpu_rt.ir.payload.import_fx import fx_to_xdsl
 from xdsl.dialects.func import CallOp
 from xdsl.printer import Printer
 

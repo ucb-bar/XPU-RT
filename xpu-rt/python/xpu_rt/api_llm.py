@@ -1,12 +1,12 @@
 """LLM-driven Python entry point.
 
-:func:`compile_with_llm` is the counterpart to :func:`compgen.api.compile_model`
+:func:`compile_with_llm` is the counterpart to :func:`xpu_rt.api.compile_model`
 that lets a user point any registered LLM provider at an arbitrary model
 and have the agentic loop drive compilation end-to-end.
 
 Example::
 
-    from compgen import compile_with_llm
+    from xpu_rt import compile_with_llm
     compiled = compile_with_llm(
         model=my_torch_model,
         target="examples/target_profiles/cuda_a100.yaml",
@@ -17,12 +17,12 @@ Example::
     result = compiled(torch.randn(1, 64))   # benchmark
 
 The function is a thin wrapper on top of the existing
-:func:`compgen.api.device` + :func:`compgen.api.compile_model` + the
-:class:`~compgen.agent.loop.AgenticCompilationLoop` — it never
+:func:`xpu_rt.api.device` + :func:`xpu_rt.api.compile_model` + the
+:class:`~xpu_rt.agent.loop.AgenticCompilationLoop` — it never
 reimplements the loop; it just plumbs the LLM backend through.
 
 Advanced callers may drive one step at a time via
-:class:`~compgen.agent.llm_driver.LLMDrivenCompiler` — the same backbone
+:class:`~xpu_rt.agent.llm_driver.LLMDrivenCompiler` — the same backbone
 the MCP server uses. :func:`open_llm_session` exposes that handle.
 """
 
@@ -36,12 +36,12 @@ import structlog
 import torch
 import torch.nn as nn
 
-from compgen.agent.llm_driver import LLMDrivenCompiler
-from compgen.agent.loop import CompilationResult
-from compgen.api import CompGenDevice, CompiledModel, compile_model
-from compgen.api import device as _device
-from compgen.llm.base import CompGenLLMProtocol
-from compgen.llm.recorder import LLMRecorder
+from xpu_rt.agent.llm_driver import LLMDrivenCompiler
+from xpu_rt.agent.loop import CompilationResult
+from xpu_rt.api import CompGenDevice, CompiledModel, compile_model
+from xpu_rt.api import device as _device
+from xpu_rt.llm.base import CompGenLLMProtocol
+from xpu_rt.llm.recorder import LLMRecorder
 
 log = structlog.get_logger()
 
@@ -104,10 +104,10 @@ def _resolve_llm(
     """
     if isinstance(llm, str):
         if llm.strip().lower() == "mock":
-            from compgen.llm.mock_client import MockLLMClient
+            from xpu_rt.llm.mock_client import MockLLMClient
 
             return MockLLMClient(strict=False), "mock"
-        from compgen.llm.factory import create_llm_client, resolve_provider_name
+        from xpu_rt.llm.factory import create_llm_client, resolve_provider_name
 
         provider = resolve_provider_name(llm)
         return create_llm_client(provider), provider
@@ -157,7 +157,7 @@ def _load_model_from_python_file(
 ) -> tuple[nn.Module, tuple[Any, ...]]:
     import importlib.util
 
-    spec = importlib.util.spec_from_file_location("compgen_user_model", path)
+    spec = importlib.util.spec_from_file_location("xpu_rt_user_model", path)
     if spec is None or spec.loader is None:
         raise ImportError(f"Cannot build spec for {path}")
     mod = importlib.util.module_from_spec(spec)
@@ -184,7 +184,7 @@ def _load_hf_model(
     except ImportError as exc:
         raise ImportError(
             "transformers is required to load HF models by repo id; "
-            "install with `pip install compgen[demo]` or pass an nn.Module "
+            "install with `pip install xpu_rt[demo]` or pass an nn.Module "
             "directly."
         ) from exc
     model = AutoModel.from_pretrained(hf_id)
@@ -192,7 +192,7 @@ def _load_hf_model(
     if sample_inputs is None:
         try:
             tok = AutoTokenizer.from_pretrained(hf_id)
-            enc = tok("CompGen sample input", return_tensors="pt")
+            enc = tok("XPU-RT sample input", return_tensors="pt")
             sample_inputs = (enc["input_ids"],)
         except Exception:
             # Fallback: generic int tensor. User can always override.
@@ -232,21 +232,21 @@ def compile_with_llm(
         llm: Provider name (``"gemini" | "openai" | "anthropic" |
             "claude-cli" | "codex-cli"``) or an instance satisfying
             :class:`CompGenLLMProtocol`. Resolved through
-            :func:`compgen.llm.factory.create_llm_client`.
+            :func:`xpu_rt.llm.factory.create_llm_client`.
         sample_inputs: Tuple of sample tensors — required when
             ``model`` is a raw ``nn.Module``.
         objective: Optimisation objective, passed straight to
-            :func:`compgen.api.compile_model`.
+            :func:`xpu_rt.api.compile_model`.
         budget: Max LLM-driven iterations during the agentic loop.
         recover_unsupported: When True, unsupported operators detected
             during capture are routed through
-            :func:`compgen.agent.llm_driver_recovery.plan_recovery`; the
+            :func:`xpu_rt.agent.llm_driver_recovery.plan_recovery`; the
             LLM is consulted on low-confidence classifications and the
             decisions land on ``compiled.recovery_plan``.
         with_recipe: Use :meth:`AgenticCompilationLoop.run_with_recipe`
             (default, recommended) vs plain :meth:`run`.
         transcript_dir: Where to write recorder logs. Defaults to
-            ``~/.compgen/transcripts/<session>``.
+            ``~/.xpu_rt/transcripts/<session>``.
         return_driver: When True, keep the :class:`LLMDrivenCompiler`
             session open and return it — letting the caller inspect /
             drive further steps after the autonomous loop converges.
@@ -283,16 +283,16 @@ def compile_with_llm(
     )
 
     # Stage 2: wrap the LLM client with a recorder scoped to this run.
-    # Honour COMPGEN_SESSION_DIR so tests + containerised users can
-    # redirect transcripts away from ~/.compgen.
+    # Honour XPU_RT_SESSION_DIR so tests + containerised users can
+    # redirect transcripts away from ~/.xpu_rt.
     import os
 
     if transcript_dir is not None:
         transcript_root = Path(transcript_dir).expanduser()
-    elif os.environ.get("COMPGEN_SESSION_DIR"):
-        transcript_root = Path(os.environ["COMPGEN_SESSION_DIR"]).expanduser()
+    elif os.environ.get("XPU_RT_SESSION_DIR"):
+        transcript_root = Path(os.environ["XPU_RT_SESSION_DIR"]).expanduser()
     else:
-        transcript_root = Path("~/.compgen/transcripts").expanduser()
+        transcript_root = Path("~/.xpu_rt/transcripts").expanduser()
     transcript_root.mkdir(parents=True, exist_ok=True)
     recorder = LLMRecorder(
         wrapped=client,
@@ -333,7 +333,7 @@ def compile_with_llm(
     # tool family.
     mcp_optimized: Any = None
     if mcp_session is not None and mcp_contracts:
-        from compgen.agent.mcp_optimizer import optimize_via_mcp
+        from xpu_rt.agent.mcp_optimizer import optimize_via_mcp
 
         sm, sid = mcp_session
         log.info("api_llm.mcp_optimize.start", target=dev.profile.name, contracts=len(mcp_contracts))

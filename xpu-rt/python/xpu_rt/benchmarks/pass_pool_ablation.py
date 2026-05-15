@@ -1,6 +1,6 @@
 """Pass-pool ablation harness.
 
-Compares CompGen pipeline behavior across selection modes on the same
+Compares XPU-RT pipeline behavior across selection modes on the same
 set of models. The headline question for Section 20:
 
     Does Claude Code's candidate / pass selection differ from the
@@ -186,7 +186,7 @@ def run_one_cell(
     ``selection_mode``. ``agent_response_path`` is required for
     ``agent-file`` mode.
     """
-    from compgen.graph_compilation.run import run_graph_compilation
+    from xpu_rt.graph_compilation.run import run_graph_compilation
 
     model_yaml = Path(model_yaml).resolve()
     target_yaml = Path(target_yaml).resolve()

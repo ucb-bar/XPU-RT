@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from compgen.ir.accel.ops import BarrierOp, DMAStartOp, DMAWaitOp, MatrixEngineOp, TileLoadOp
+from xpu_rt.ir.accel.ops import BarrierOp, DMAStartOp, DMAWaitOp, MatrixEngineOp, TileLoadOp
 
 
 def test_tile_load() -> None:

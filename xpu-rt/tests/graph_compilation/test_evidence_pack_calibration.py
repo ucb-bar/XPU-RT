@@ -45,12 +45,12 @@ def _read(p: Path) -> dict:
 def _run(model: str, out_dir: Path, *, calibrate: bool) -> None:
     env = os.environ.copy()
     if calibrate:
-        env["COMPGEN_CALIBRATE_PROFILER"] = "1"
+        env["XPU_RT_CALIBRATE_PROFILER"] = "1"
     else:
-        env.pop("COMPGEN_CALIBRATE_PROFILER", None)
+        env.pop("XPU_RT_CALIBRATE_PROFILER", None)
     subprocess.run(
         [
-            sys.executable, "-m", "compgen.graph_compilation", "run",
+            sys.executable, "-m", "xpu_rt.graph_compilation", "run",
             "--model", str(REPO_ROOT / f"configs/models/{model}.yaml"),
             "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
             "--out", str(out_dir),
@@ -79,7 +79,7 @@ def calibrated_pack(tmp_path_factory) -> Path:  # type: ignore[no-untyped-def]
     _run("tiny_mlp", wide / "tiny_mlp", calibrate=False)
 
     pack_out = suite / "evidence_pack"
-    from compgen.graph_compilation.evidence_pack import build_evidence_pack
+    from xpu_rt.graph_compilation.evidence_pack import build_evidence_pack
     build_evidence_pack(
         canonical_suite_root=canonical,
         wide_suite_root=wide,

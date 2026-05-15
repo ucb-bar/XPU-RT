@@ -6,15 +6,15 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from compgen.stages.base import (
+from xpu_rt.stages.base import (
     CompilationStage,
     IRInvariant,
     StageContract,
     StageResult,
     TargetStagePlugin,
 )
-from compgen.targets.capability import CapabilitySpec
-from compgen.targets.schema import TargetProfile
+from xpu_rt.targets.capability import CapabilitySpec
+from xpu_rt.targets.schema import TargetProfile
 from xdsl.dialects import arith, func
 from xdsl.dialects.builtin import IndexType, ModuleOp
 from xdsl.ir import Block, Region
@@ -152,10 +152,10 @@ class TestCompilationStage:
     def test_run_without_plugin(self) -> None:
         stage = _DummyStage()
         module = _make_arith_module()
-        from compgen.targets.schema import load_profile
+        from xpu_rt.targets.schema import load_profile
 
         target = load_profile("examples/target_profiles/cuda_a100.yaml")
-        from compgen.targets.capability import infer_capabilities
+        from xpu_rt.targets.capability import infer_capabilities
 
         caps = infer_capabilities(target)
 
@@ -170,10 +170,10 @@ class TestCompilationStage:
         assert stage.has_plugin
 
         module = _make_arith_module()
-        from compgen.targets.schema import load_profile
+        from xpu_rt.targets.schema import load_profile
 
         target = load_profile("examples/target_profiles/cuda_a100.yaml")
-        from compgen.targets.capability import infer_capabilities
+        from xpu_rt.targets.capability import infer_capabilities
 
         caps = infer_capabilities(target)
 
@@ -276,10 +276,10 @@ class TestCompilationStage:
 
         stage = StrictStage()
         module = _make_arith_module()
-        from compgen.targets.schema import load_profile
+        from xpu_rt.targets.schema import load_profile
 
         target = load_profile("examples/target_profiles/cuda_a100.yaml")
-        from compgen.targets.capability import infer_capabilities
+        from xpu_rt.targets.capability import infer_capabilities
 
         caps = infer_capabilities(target)
 

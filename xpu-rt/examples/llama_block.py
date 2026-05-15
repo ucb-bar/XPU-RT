@@ -1,7 +1,7 @@
 """A small Llama-shaped transformer block for MCP end-to-end testing.
 
 Exposes ``build_model() -> (nn.Module, sample_inputs)`` as expected by
-:func:`compgen.api_llm._load_model_from_python_file`.
+:func:`xpu_rt.api_llm._load_model_from_python_file`.
 
 The block carries the dominant ops we target in TinyLlama:
 

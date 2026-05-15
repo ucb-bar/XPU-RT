@@ -1,12 +1,12 @@
 """``VendorDialectAdapter`` — protocol + base class.
 
-An adapter is what a user-space package registers to teach CompGen how
+An adapter is what a user-space package registers to teach XPU-RT how
 to drive a third-party MLIR toolchain end-to-end. It composes two roles
 from the existing infrastructure:
 
-* :class:`compgen.targets.backend.TargetBackendProtocol` — the target-side
+* :class:`xpu_rt.targets.backend.TargetBackendProtocol` — the target-side
   compile pipeline (Payload IR → vendor IR → binary).
-* :class:`compgen.kernels.provider.KernelProvider` (optional) — when the
+* :class:`xpu_rt.kernels.provider.KernelProvider` (optional) — when the
   vendor has no direct linalg/stablehlo ingress and needs per-op kernel
   authoring (e.g. CUDA Tile IR).
 
@@ -24,9 +24,9 @@ from typing import Any
 
 import structlog
 
-from compgen.extensions.vendor_dialect.descriptor import VendorDialectDescriptor
-from compgen.kernels.provider import KernelProvider
-from compgen.targets.backend import CompiledArtifact, TargetBackendProtocol
+from xpu_rt.extensions.vendor_dialect.descriptor import VendorDialectDescriptor
+from xpu_rt.kernels.provider import KernelProvider
+from xpu_rt.targets.backend import CompiledArtifact, TargetBackendProtocol
 
 log = structlog.get_logger()
 
@@ -74,7 +74,7 @@ class VendorDialectAdapter:
     """Base class for vendor MLIR dialect integrations.
 
     User-space packages subclass this, fill in the four abstract hooks,
-    and optionally attach a :class:`KernelProvider`. CompGen never
+    and optionally attach a :class:`KernelProvider`. XPU-RT never
     instantiates this class directly — it consumes adapters produced by
     the scaffold engine or hand-written by users.
 
@@ -111,7 +111,7 @@ class VendorDialectAdapter:
 
     @property
     def target(self) -> str:
-        """CompGen target this adapter binds to."""
+        """XPU-RT target this adapter binds to."""
         return self.descriptor.target
 
     # ------------------------------------------------------------------ #
@@ -128,7 +128,7 @@ class VendorDialectAdapter:
         """Adapter-specific capability declaration for the agent's
         pre-screen routing.
 
-        Per bridge #130: the agent's ``compgen_describe_vendor_dialect``
+        Per bridge #130: the agent's ``xpu_rt_describe_vendor_dialect``
         tool surfaces this so the agent can ask "given this FX subgraph,
         can the adapter lower it?" before committing to compile. The
         default returns a static snapshot from the descriptor; subclasses
@@ -161,7 +161,7 @@ class VendorDialectAdapter:
         output_dir: str | Path,
         options: dict[str, Any] | None = None,
     ) -> LoweringResult:
-        """Lower CompGen Payload IR (text) to vendor dialect MLIR (text).
+        """Lower XPU-RT Payload IR (text) to vendor dialect MLIR (text).
 
         Subclasses implement the vendor-specific transformation. When
         ``kernel_authoring_required`` is set on the descriptor, the

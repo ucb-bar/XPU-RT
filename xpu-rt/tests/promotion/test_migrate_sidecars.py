@@ -1,11 +1,11 @@
-"""Tests for compgen.promotion.migrate_sidecars."""
+"""Tests for xpu_rt.promotion.migrate_sidecars."""
 
 from __future__ import annotations
 
 import json
 from pathlib import Path
 
-from compgen.promotion.migrate_sidecars import (
+from xpu_rt.promotion.migrate_sidecars import (
     MigrationReport,
     MigrationResult,
     migrate_library,

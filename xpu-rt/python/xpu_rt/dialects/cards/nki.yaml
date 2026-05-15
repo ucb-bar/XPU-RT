@@ -4,7 +4,7 @@ dialect_name: nki
 integration_level: probe
 consumes: [kernel_contract_v3]
 emits: [nki_source, neff]
-entrypoint: compgen.providers.adapters.nki:NkiDialectProvider
+entrypoint: xpu_rt.providers.adapters.nki:NkiDialectProvider
 required_env: [NEURON_HOME]
 description: |
   AWS NKI dialect provider for Trainium / Inferentia. Lowers

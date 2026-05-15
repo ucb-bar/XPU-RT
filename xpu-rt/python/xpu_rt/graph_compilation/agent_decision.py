@@ -106,13 +106,13 @@ def _retrieve_promoted_for_region(
     if not region_id:
         return []
     try:
-        from compgen.graph_compilation.promotion_bridge import (
+        from xpu_rt.graph_compilation.promotion_bridge import (
             derive_region_signature,
         )
-        from compgen.graph_compilation.kernel_contract_materialization import (
+        from xpu_rt.graph_compilation.kernel_contract_materialization import (
             hash_contract_from_run_dir,
         )
-        from compgen.graph_compilation.promotion_retrieval import (
+        from xpu_rt.graph_compilation.promotion_retrieval import (
             retrieve_for_region,
         )
 
@@ -141,12 +141,12 @@ def _retrieve_promoted_for_region(
                 contract_hash_str = ""
 
         # Resolve library_path against the repo root (parents[3] from
-        # this file, mirroring run.py). Bare ``Path('.compgen_cache')``
+        # this file, mirroring run.py). Bare ``Path('.xpu_rt_cache')``
         # is cwd-relative and the pipeline's cwd is not always the
         # repo — caught during real-workload validation.
         from pathlib import Path as _P
         repo_root = _P(__file__).resolve().parents[3]
-        library = repo_root / ".compgen_cache" / "recipes"
+        library = repo_root / ".xpu_rt_cache" / "recipes"
         return retrieve_for_region(
             region_signature=region_sig_hash,
             contract_hash=contract_hash_str,
@@ -412,7 +412,7 @@ def _build_agent_guidance() -> dict[str, Any]:
         ],
         "honest_non_claims": [
             "evidence may be sparse on opaque regions (CreateKernelContract path)",
-            "calibration_delta absent when COMPGEN_RUN_KERNELS != 1",
+            "calibration_delta absent when XPU_RT_RUN_KERNELS != 1",
             "M-22 cache_evidence is not_collected (M-22.1 follow-up adds Nsight/perf)",
         ],
     }
@@ -442,7 +442,7 @@ def build_agent_decision_request(
 
     (Section 19): per-region ``promoted_candidates`` block is
     attached when the on-disk recipe library
-    (``.compgen_cache/recipes/``) holds matches for the region's
+    (``.xpu_rt_cache/recipes/``) holds matches for the region's
     pattern signature or kernel contract. Promoted candidates carry
     their gate level + evidence summary so the agent can rank them
     above fresh candidates, but they do **not** join
@@ -587,7 +587,7 @@ def build_agent_decision_request(
     # The forbidden_actions list remains a constant: these are
     # categorical anti-patterns (editing IR directly, inventing ids)
     # that cannot be expressed as missing pass cards.
-    from compgen.passes.cards import PassCardRegistry, default_registry_root
+    from xpu_rt.passes.cards import PassCardRegistry, default_registry_root
 
     _pass_registry = PassCardRegistry.load(default_registry_root())
     passes_allowed = list(_pass_registry.passes_allowed())
@@ -609,18 +609,18 @@ def build_agent_decision_request(
     # availability. The agent reads this to know which inputs are
     # fresh (enforces invalidation discipline; the
     # block is informative only).
-    from compgen.analysis.checkpoints import AnalysisIndex
+    from xpu_rt.analysis.checkpoints import AnalysisIndex
 
     _analysis_index = AnalysisIndex.from_run_dir(run_dir)
     analysis_summaries_inline = [s.to_dict() for s in _analysis_index]
 
     # surface whether the recipe-memory cache was consulted
-    # this run. The retrieval path honors COMPGEN_DISABLE_RECIPE_MEMORY;
+    # this run. The retrieval path honors XPU_RT_DISABLE_RECIPE_MEMORY;
     # echoing it back tells the audit "no, this run didn't use cached
     # promoted recipes."
     import os as _os_for_env
     disabled_by_env = (
-        _os_for_env.environ.get("COMPGEN_DISABLE_RECIPE_MEMORY") == "1"
+        _os_for_env.environ.get("XPU_RT_DISABLE_RECIPE_MEMORY") == "1"
     )
 
     request = {
@@ -673,7 +673,7 @@ def build_agent_decision_request(
     # legal candidates / sources / promoted matches produce the same
     # decision_id. The response must echo this id.
     try:
-        from compgen.audit.trace_replay import compute_decision_id
+        from xpu_rt.audit.trace_replay import compute_decision_id
 
         # Hash the request body (without decision_id) to seed the id.
         _request_hash_seed = hashlib.sha256(
@@ -790,7 +790,7 @@ def validate_agent_decision_response(
     passes_allowed_in_req = list(request.get("passes_allowed") or [])
     if passes_allowed_in_req:
         try:
-            from compgen.passes.cards import (
+            from xpu_rt.passes.cards import (
                 PassCardRegistry,
                 default_registry_root,
             )
@@ -821,7 +821,7 @@ def validate_agent_decision_response(
     # corrupted cert (artifact_hash mismatch, see
     # control_certificate_artifact_hash_changed) is still caught.
     try:
-        from compgen.passes.verification import (
+        from xpu_rt.passes.verification import (
             _certificate_path_for as _cert_path,
             emit_certificate_from_differential_report,
             emit_certificate_from_post_lowering_report,
@@ -872,11 +872,11 @@ def validate_agent_decision_response(
         cs_path = run_dir / "03_recipe_planning" / "candidate_selection.json"
         rs_path = run_dir / "03_recipe_planning" / "recipe_summary.json"
         if cs_path.exists() and rs_path.exists():
-            from compgen.passes.cards import (
+            from xpu_rt.passes.cards import (
                 PassCardRegistry,
                 default_registry_root,
             )
-            from compgen.passes.refinement import (
+            from xpu_rt.passes.refinement import (
                 inspect_refinement_chain,
             )
 
@@ -928,11 +928,11 @@ def validate_agent_decision_response(
     pass_plan_raw = response.get("pass_plan")
     if pass_plan_raw:
         try:
-            from compgen.passes.cards import (
+            from xpu_rt.passes.cards import (
                 PassCardRegistry,
                 default_registry_root,
             )
-            from compgen.passes.scheduler import inspect_pass_plan
+            from xpu_rt.passes.scheduler import inspect_pass_plan
 
             registry = PassCardRegistry.load(default_registry_root())
             cand_ids = request.get("candidate_ids_allowed") or []
@@ -1039,7 +1039,7 @@ def validate_agent_decision_response(
     resolver_detail = ""
     if cand is not None and legal_ok and visible:
         try:
-            from compgen.graph_compilation.action_space_resolver import (
+            from xpu_rt.graph_compilation.action_space_resolver import (
                 ResolverError,
                 resolve_candidate,
             )
@@ -1148,7 +1148,7 @@ def _emit_redaction_audit(
 
     - The actual API-key value resolved from the same env vars the real
       provider adapters read (``ANTHROPIC_API_KEY``, ``OPENAI_API_KEY``,
-      ``COMPGEN_LLM_API_KEY``).
+      ``XPU_RT_LLM_API_KEY``).
     - ``Authorization: Bearer`` and ``x-api-key:`` header patterns.
 
     None of these strings should appear in any emitted artifact. The
@@ -1160,7 +1160,7 @@ def _emit_redaction_audit(
         v for v in (
             _os.environ.get("ANTHROPIC_API_KEY"),
             _os.environ.get("OPENAI_API_KEY"),
-            _os.environ.get("COMPGEN_LLM_API_KEY"),
+            _os.environ.get("XPU_RT_LLM_API_KEY"),
         ) if v
     ]
     artifact_names = [
@@ -1540,7 +1540,7 @@ def run_agent_decision(
         # Provider-backed mode. The provider call returns a parsed
         # response (or raises ProviderError). Validation still happens
         # downstream — providers cannot bypass the gate.
-        from compgen.graph_compilation.llm_live_provider import (
+        from xpu_rt.graph_compilation.llm_live_provider import (
             ProviderError,
             build_prompt,
             call_provider,

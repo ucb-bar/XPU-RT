@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from compgen.semantic.synthesis.guard_lang import (
+from xpu_rt.semantic.synthesis.guard_lang import (
     Cmp,
     CmpOp,
     Const,

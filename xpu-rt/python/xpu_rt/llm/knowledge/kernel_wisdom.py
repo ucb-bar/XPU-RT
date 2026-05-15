@@ -7,7 +7,7 @@ the insight applies.
 
 from __future__ import annotations
 
-from compgen.llm.knowledge.base import (
+from xpu_rt.llm.knowledge.base import (
     Confidence,
     KernelLibraryWisdom,
 )

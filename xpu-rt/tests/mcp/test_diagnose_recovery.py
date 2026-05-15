@@ -14,17 +14,17 @@ from pathlib import Path
 
 import torch
 import torch.nn as nn
-from compgen.agent.llm_driver import LLMDrivenCompiler
-from compgen.api import compile_model
-from compgen.api import device as _device
-from compgen.llm.mock_client import MockLLMClient
-from compgen.mcp.session import SessionManager
-from compgen.mcp.tools.diagnose import (
+from xpu_rt.agent.llm_driver import LLMDrivenCompiler
+from xpu_rt.api import compile_model
+from xpu_rt.api import device as _device
+from xpu_rt.llm.mock_client import MockLLMClient
+from xpu_rt.mcp.session import SessionManager
+from xpu_rt.mcp.tools.diagnose import (
     DIAGNOSE_TOOLS,
     diagnose_exported_program,
     diagnose_model_compatibility,
 )
-from compgen.mcp.tools.recovery import (
+from xpu_rt.mcp.tools.recovery import (
     RECOVERY_TOOLS,
     recovery_status,
     register_blackbox,
@@ -126,7 +126,7 @@ def test_diagnose_exported_program_standalone_helper(tmp_path: Path) -> None:
     """The no-session standalone helper must produce the same shape."""
     mod = _WithUnsupported().eval()
     ep = torch.export.export(mod, (torch.randn(1, 32),))
-    from compgen.capture.unsupported.introspect import runtime_versions
+    from xpu_rt.capture.unsupported.introspect import runtime_versions
 
     _ = runtime_versions()
     result = diagnose_exported_program(ep)

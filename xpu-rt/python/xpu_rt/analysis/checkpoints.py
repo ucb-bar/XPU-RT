@@ -25,7 +25,7 @@ from typing import Any, Iterator
 
 
 class AnalysisLevel(str, enum.Enum):
-    """The eight IR / analysis lenses CompGen exposes."""
+    """The eight IR / analysis lenses XPU-RT exposes."""
 
     FX = "fx"  # A0 — after capture
     PAYLOAD = "payload"  # A1 — after FX→MLIR + after every accepted transform
@@ -609,7 +609,7 @@ class AnalysisIndex:
                          are unavailable in ``other``.
 
         The full ``InvalidationDiff`` view (ordered tuples per axis) is
-        provided by :func:`compgen.analysis.invalidation.compute_invalidation_diff`;
+        provided by :func:`xpu_rt.analysis.invalidation.compute_invalidation_diff`;
         this method is the lower-level primitive.
         """
         mutated: list[str] = []

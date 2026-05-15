@@ -4,7 +4,7 @@ Fits a lightweight, deterministic regression over historical
 ``(region_fingerprint, candidate, measured_latency_us)`` triples
 produced by the region-compiled differential pass and the
 profiler. The surrogate plugs into
-:func:`compgen.agent.cost_preview.compute_cost_previews` via the
+:func:`xpu_rt.agent.cost_preview.compute_cost_previews` via the
 ``surrogate_deltas`` argument.
 
 The implementation is intentionally simple:
@@ -27,7 +27,7 @@ the sklearn convention).
 Hard rules:
 
 1. The surrogate never *invents* a measurement. Empty training data
-   produces ``confidence=0.0`` so :class:`compgen.agent.cost_preview.CostPreview`
+   produces ``confidence=0.0`` so :class:`xpu_rt.agent.cost_preview.CostPreview`
    reads it as honestly absent.
 2. Updates are *append-only* — the surrogate cannot retroactively
    alter a recorded sample.
@@ -151,7 +151,7 @@ class Surrogate:
     ) -> dict[str, float]:
         """Convenience wrapper that returns the ``surrogate_deltas``
         mapping consumed by
-        :func:`compgen.agent.cost_preview.compute_cost_previews`.
+        :func:`xpu_rt.agent.cost_preview.compute_cost_previews`.
 
         For each candidate id, the value is the predicted latency
         (microseconds). Candidates with no surrogate signal are
@@ -175,7 +175,7 @@ class Surrogate:
     ) -> dict[str, float]:
         """Sibling of :meth:`deltas_for_candidates` that returns the
         ``confidence_by_id`` mapping for
-        :func:`compgen.agent.cost_preview.compute_cost_previews`."""
+        :func:`xpu_rt.agent.cost_preview.compute_cost_previews`."""
 
         out: dict[str, float] = {}
         for cid in candidate_ids:

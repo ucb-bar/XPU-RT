@@ -29,8 +29,8 @@ import os
 import shutil
 from collections.abc import Iterable
 
-from compgen.dialects.dialect_provider_types import DialectProviderCard
-from compgen.providers.provider_types import (
+from xpu_rt.dialects.dialect_provider_types import DialectProviderCard
+from xpu_rt.providers.provider_types import (
     ProviderCard,
     ProviderProbeError,
     ProviderProbeResult,

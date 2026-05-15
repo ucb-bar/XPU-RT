@@ -1,4 +1,4 @@
-"""Tests for compgen.audit.contracts."""
+"""Tests for xpu_rt.audit.contracts."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from compgen.audit.contracts import (
+from xpu_rt.audit.contracts import (
     PAPER_CLAIMABLE_LEVELS,
     REALNESS_LEVELS,
     RealnessContract,
@@ -17,7 +17,7 @@ from compgen.audit.contracts import (
     validate_contract,
     write_contract,
 )
-from compgen.audit.errors import RealnessContractError
+from xpu_rt.audit.errors import RealnessContractError
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SEED_DIR = REPO_ROOT / "docs" / "realness"
@@ -60,7 +60,7 @@ def test_make_contract_round_trip(tmp_path: Path) -> None:
         claim="A non-trivial claim that should pass the length check.",
         realness_level="production_path",
         forbidden=["mocks", "silent skips"],
-        required_evidence=["python/compgen/foo.py", "tests/test_foo.py"],
+        required_evidence=["python/xpu_rt/foo.py", "tests/test_foo.py"],
         commit="deadbeef" * 5,
     )
     assert contract.is_paper_claimable

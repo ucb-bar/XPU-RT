@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-from compgen.graph_compilation.agent_decision import (
+from xpu_rt.graph_compilation.agent_decision import (
     _evidence_field_resolves,
     _scan_forbidden,
     _FORBIDDEN_CORRECTNESS_PATTERNS,
@@ -67,7 +67,7 @@ def test_merlin_mlp_wide_agent_file_e2e(tmp_path: Path) -> None:
 
     out = tmp_path / "agent_file_run"
     cmd = [
-        sys.executable, "-m", "compgen.graph_compilation", "run",
+        sys.executable, "-m", "xpu_rt.graph_compilation", "run",
         "--model", str(REPO_ROOT / "configs/models/merlin_mlp_wide.yaml"),
         "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
         "--out", str(out),
@@ -454,7 +454,7 @@ def test_invalid_response_fails_before_recipe_commit(tmp_path: Path) -> None:
 
     out = tmp_path / "fail_run"
     cmd = [
-        sys.executable, "-m", "compgen.graph_compilation", "run",
+        sys.executable, "-m", "xpu_rt.graph_compilation", "run",
         "--model", str(REPO_ROOT / "configs/models/merlin_mlp_wide.yaml"),
         "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
         "--out", str(out),
@@ -475,16 +475,16 @@ def test_invalid_response_fails_before_recipe_commit(tmp_path: Path) -> None:
 
 def test_no_compiler_core_imports_in_module() -> None:
     src = (
-        REPO_ROOT / "python" / "compgen" / "graph_compilation"
+        REPO_ROOT / "python" / "xpu-rt" / "graph_compilation"
         / "agent_decision.py"
     ).read_text(encoding="utf-8")
     forbidden = (
-        "from compgen.ir",
-        "import compgen.ir",
-        "from compgen.capture",
-        "import compgen.capture",
-        "from compgen.pipeline",
-        "import compgen.pipeline",
+        "from xpu_rt.ir",
+        "import xpu_rt.ir",
+        "from xpu_rt.capture",
+        "import xpu_rt.capture",
+        "from xpu_rt.pipeline",
+        "import xpu_rt.pipeline",
     )
     for pat in forbidden:
         assert pat not in src, f"agent_decision must not import: {pat}"

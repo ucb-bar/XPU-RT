@@ -8,12 +8,12 @@ from pathlib import Path
 import pytest
 import yaml
 
-from compgen.analysis.ir_snapshots import (
+from xpu_rt.analysis.ir_snapshots import (
     IR_LEVELS,
     SNAPSHOT_FILENAMES,
     load_snapshot,
 )
-from compgen.graph_compilation.snapshot_emitter import (
+from xpu_rt.graph_compilation.snapshot_emitter import (
     EmitResult,
     emit_snapshots_for_run,
 )
@@ -190,7 +190,7 @@ def test_emit_is_idempotent(tmp_path: Path):
 
 def test_nonexistent_run_dir_raises():
     with pytest.raises(FileNotFoundError):
-        emit_snapshots_for_run("/tmp/does_not_exist_compgen_run_xyz")
+        emit_snapshots_for_run("/tmp/does_not_exist_xpu_rt_run_xyz")
 
 
 def test_emit_result_carries_path_and_region_count(tmp_path: Path):

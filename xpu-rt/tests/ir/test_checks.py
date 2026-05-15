@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from compgen.ir.checks import CheckKind, CheckLine, IRChecker, check_ir
+from xpu_rt.ir.checks import CheckKind, CheckLine, IRChecker, check_ir
 
 SAMPLE_IR = """\
 builtin.module {

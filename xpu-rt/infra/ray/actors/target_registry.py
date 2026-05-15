@@ -1,6 +1,6 @@
 """TargetRegistry actor — stores target profiles and calibration data.
 
-Wraps ``compgen.api.device()`` and stores the results in a Ray actor
+Wraps ``xpu_rt.api.device()`` and stores the results in a Ray actor
 so they can be shared across distributed jobs and actors.
 
 All state is JSON-serializable (no pickle).
@@ -53,7 +53,7 @@ class TargetRegistryActor:
     ) -> dict[str, Any]:
         """Load a hardware spec and register the target.
 
-        Wraps ``compgen.api.device()`` internally.
+        Wraps ``xpu_rt.api.device()`` internally.
 
         Args:
             spec_path: Path to hardware spec YAML.
@@ -62,7 +62,7 @@ class TargetRegistryActor:
         Returns:
             Serialized TargetRecord dict.
         """
-        from compgen.api import device
+        from xpu_rt.api import device
 
         dev = device(spec_path, output_dir)
 

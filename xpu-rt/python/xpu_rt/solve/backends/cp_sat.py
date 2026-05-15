@@ -16,7 +16,7 @@ from typing import Any
 
 import structlog
 
-from compgen.solve.contracts import SolverProblem
+from xpu_rt.solve.contracts import SolverProblem
 
 log = structlog.get_logger()
 
@@ -45,7 +45,7 @@ class CPSatSolver:
     """CP-SAT solver backend.
 
     Orchestrates placement, scheduling, and memory allocation using the
-    existing CP-SAT-based solvers in ``compgen.solve``.
+    existing CP-SAT-based solvers in ``xpu_rt.solve``.
 
     Attributes:
         timeout_ms: Solver timeout in milliseconds (per sub-problem).
@@ -77,9 +77,9 @@ class CPSatSolver:
         except ImportError as exc:
             raise ImportError("ortools is required for CPSatSolver. Install it with: pip install ortools") from exc
 
-        from compgen.solve.memory import BufferLifetime, solve_memory
-        from compgen.solve.placement import solve_placement
-        from compgen.solve.schedule import solve_schedule
+        from xpu_rt.solve.memory import BufferLifetime, solve_memory
+        from xpu_rt.solve.placement import solve_placement
+        from xpu_rt.solve.schedule import solve_schedule
 
         t0 = time.perf_counter()
 

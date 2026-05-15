@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from compgen.ir.ukernel.ops import UkernelCallOp, UkernelDeclOp
+from xpu_rt.ir.ukernel.ops import UkernelCallOp, UkernelDeclOp
 
 
 def test_ukernel_decl() -> None:

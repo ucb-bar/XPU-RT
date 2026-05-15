@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# CompGen bootstrap script
+# XPU-RT bootstrap script
 #
 # Sets up the development environment from a fresh clone.
 # Usage: ./scripts/bootstrap.sh
@@ -64,7 +64,7 @@ if [[ ! -f "third_party/autocomp/pyproject.toml" ]]; then
     exit 1
 fi
 if [[ -d "third_party/kernelblaster" ]]; then
-    info "kernelblaster submodule present — set COMPGEN_KERNELBLASTER_ROOT=\$PWD/third_party/kernelblaster to enable the provider"
+    info "kernelblaster submodule present — set XPU_RT_KERNELBLASTER_ROOT=\$PWD/third_party/kernelblaster to enable the provider"
 fi
 info "Submodules initialized"
 
@@ -75,7 +75,7 @@ if [[ ! -d ".venv" ]]; then
     uv venv
 fi
 
-info "Installing CompGen and dependencies..."
+info "Installing XPU-RT and dependencies..."
 uv sync
 
 info "Installing autocomp (editable)..."
@@ -84,11 +84,11 @@ uv pip install -e third_party/autocomp
 # --- Smoke tests ---
 info "Running smoke tests..."
 
-# Test compgen import
-if uv run python -c "import compgen; print(f'compgen {compgen.__version__}')"; then
-    info "compgen import OK"
+# Test xpu_rt import
+if uv run python -c "import xpu_rt; print(f'xpu_rt {xpu_rt.__version__}')"; then
+    info "xpu_rt import OK"
 else
-    error "Failed to import compgen"
+    error "Failed to import xpu_rt"
     exit 1
 fi
 
@@ -102,19 +102,19 @@ fi
 # KernelBlaster availability (optional, CUDA + OPENAI_API_KEY required at runtime)
 if [[ -d "third_party/kernelblaster" ]]; then
     if uv run python -c "
-from compgen.kernels.kernelblaster_adapter import KernelBlasterAdapter, KernelBlasterConfig
+from xpu_rt.kernels.kernelblaster_adapter import KernelBlasterAdapter, KernelBlasterConfig
 from pathlib import Path
 cfg = KernelBlasterConfig(mode='local', repo_root=Path('third_party/kernelblaster').resolve(), openai_api_key='SMOKE')
 ok, reason = KernelBlasterAdapter(config=cfg).is_available()
 print('kernelblaster OK' if ok else f'kernelblaster NOT_READY: {reason}')
 "; then
         info "kernelblaster submodule detected"
-        info "  export COMPGEN_KERNELBLASTER_ROOT=\"\$PWD/third_party/kernelblaster\" + OPENAI_API_KEY to enable"
+        info "  export XPU_RT_KERNELBLASTER_ROOT=\"\$PWD/third_party/kernelblaster\" + OPENAI_API_KEY to enable"
     fi
 fi
 
 # Test CLI
-if uv run python -m compgen.cli --help > /dev/null 2>&1; then
+if uv run python -m xpu_rt.cli --help > /dev/null 2>&1; then
     info "CLI help OK"
 else
     warn "CLI help failed -- click may need installation"
@@ -125,7 +125,7 @@ echo ""
 info "Bootstrap complete!"
 echo ""
 echo "  Next steps:"
-echo "    uv run python -m compgen.cli --help                    # See CLI commands"
+echo "    uv run python -m xpu_rt.cli --help                    # See CLI commands"
 echo "    uv run python scripts/e2e_demo.py                      # Run the current demo path"
 echo "    uv run pytest tests/test_version.py                    # Run smoke test"
 echo "    uv run ruff check python/                              # Lint check"

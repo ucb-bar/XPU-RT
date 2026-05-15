@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from compgen.ir.payload.passes.rewrites.fold_transposes_into_dots import (
+from xpu_rt.ir.payload.passes.rewrites.fold_transposes_into_dots import (
     FoldTransposesStats,
     run_fold_transposes_into_dots,
 )
@@ -280,11 +280,11 @@ def test_region_id_and_pattern_hint_preserved_across_fold():
 
     m = _build_transpose_a_module()
     mm_ops = [op for op in m.walk() if op.name == "linalg.matmul"]
-    mm_ops[0].attributes["compgen.region_id"] = StringAttr("mm_xyz")
-    mm_ops[0].attributes["compgen._pattern_hint"] = StringAttr("matmul_hint")
+    mm_ops[0].attributes["xpu_rt.region_id"] = StringAttr("mm_xyz")
+    mm_ops[0].attributes["xpu_rt._pattern_hint"] = StringAttr("matmul_hint")
 
     run_fold_transposes_into_dots(m)
     mm_ops_after = [op for op in m.walk() if op.name == "linalg.matmul"]
     assert len(mm_ops_after) == 1
-    assert mm_ops_after[0].attributes["compgen.region_id"].data == "mm_xyz"
-    assert mm_ops_after[0].attributes["compgen._pattern_hint"].data == "matmul_hint"
+    assert mm_ops_after[0].attributes["xpu_rt.region_id"].data == "mm_xyz"
+    assert mm_ops_after[0].attributes["xpu_rt._pattern_hint"].data == "matmul_hint"

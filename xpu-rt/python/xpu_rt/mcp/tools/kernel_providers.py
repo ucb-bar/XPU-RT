@@ -2,18 +2,18 @@
 
 Three tools surface the registry + indexer to a Claude Code agent:
 
-- ``compgen_list_kernel_providers(target?)`` — enumerate every provider
+- ``xpu_rt_list_kernel_providers(target?)`` — enumerate every provider
   the registry would consider applicable for a target.
-- ``compgen_describe_kernel_provider(provider_id)`` — return manifest
+- ``xpu_rt_describe_kernel_provider(provider_id)`` — return manifest
   + metadata for one provider; for user-path providers, includes the
   indexed signature.
-- ``compgen_discover_user_kernels(path)`` — walk a user-supplied
+- ``xpu_rt_discover_user_kernels(path)`` — walk a user-supplied
   directory, validate every ``kernel_manifest.yaml``, and persist the
-  derived index under ``.compgen/user_kernel_index/``.
+  derived index under ``.xpu_rt/user_kernel_index/``.
 
 The tools are read-only over the registry; ``discover_user_kernels``
 is the only write — and it only writes under
-``.compgen/user_kernel_index/``.
+``.xpu_rt/user_kernel_index/``.
 """
 
 from __future__ import annotations
@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import Any
 
 
-def compgen_list_kernel_providers(
+def xpu_rt_list_kernel_providers(
     *,
     target: str | None = None,
 ) -> dict[str, Any]:
@@ -39,7 +39,7 @@ def compgen_list_kernel_providers(
         applicable_archetypes, summary}]}``.
     """
     try:
-        from compgen.kernels.registry import default_registry
+        from xpu_rt.kernels.registry import default_registry
 
         reg = default_registry()
     except Exception as exc:  # noqa: BLE001
@@ -50,7 +50,7 @@ def compgen_list_kernel_providers(
         applicable_targets = tuple(getattr(p, "applicable_targets", ()) or ())
         applicable_archetypes = tuple(getattr(p, "applicable_archetypes", ()) or ())
         priority = int(getattr(p, "priority", 0))
-        source = str(getattr(p, "_compgen_source", "unknown"))
+        source = str(getattr(p, "_xpu_rt_source", "unknown"))
         # Filter by target when requested.
         if target and applicable_targets and target not in applicable_targets:
             continue
@@ -68,7 +68,7 @@ def compgen_list_kernel_providers(
     return {"ok": True, "providers": rows}
 
 
-def compgen_describe_kernel_provider(*, provider_id: str) -> dict[str, Any]:
+def xpu_rt_describe_kernel_provider(*, provider_id: str) -> dict[str, Any]:
     """Read-only deep view of one provider.
 
     For ``UserKernelProvider`` the response includes the indexed
@@ -76,7 +76,7 @@ def compgen_describe_kernel_provider(*, provider_id: str) -> dict[str, Any]:
     deck.
     """
     try:
-        from compgen.kernels.registry import default_registry
+        from xpu_rt.kernels.registry import default_registry
 
         reg = default_registry()
     except Exception as exc:  # noqa: BLE001
@@ -88,7 +88,7 @@ def compgen_describe_kernel_provider(*, provider_id: str) -> dict[str, Any]:
         body: dict[str, Any] = {
             "ok": True,
             "provider_id": p.name,
-            "source": str(getattr(p, "_compgen_source", "unknown")),
+            "source": str(getattr(p, "_xpu_rt_source", "unknown")),
             "priority": int(getattr(p, "priority", 0)),
             "applicable_targets": list(getattr(p, "applicable_targets", ()) or ()),
             "applicable_archetypes": list(getattr(p, "applicable_archetypes", ()) or ()),
@@ -120,7 +120,7 @@ def compgen_describe_kernel_provider(*, provider_id: str) -> dict[str, Any]:
     }
 
 
-def compgen_discover_user_kernels(*, path: str) -> dict[str, Any]:
+def xpu_rt_discover_user_kernels(*, path: str) -> dict[str, Any]:
     """Walk a user-supplied directory + populate the index.
 
     Args:
@@ -136,7 +136,7 @@ def compgen_discover_user_kernels(*, path: str) -> dict[str, Any]:
         offending manifest and re-discover.
     """
     try:
-        from compgen.kernels.user_kernel_index import (
+        from xpu_rt.kernels.user_kernel_index import (
             default_index_root,
             reindex,
         )
@@ -176,7 +176,7 @@ def _provider_summary(p: Any) -> str:
 
 
 __all__ = [
-    "compgen_describe_kernel_provider",
-    "compgen_discover_user_kernels",
-    "compgen_list_kernel_providers",
+    "xpu_rt_describe_kernel_provider",
+    "xpu_rt_discover_user_kernels",
+    "xpu_rt_list_kernel_providers",
 ]

@@ -21,19 +21,19 @@ from pathlib import Path
 
 import torch
 import torch.nn as nn
-from compgen.capture.torch_export import capture_model
-from compgen.ir.payload.import_fx import fx_to_xdsl
-from compgen.kernels.codegen_fallback import run_provider_fallback
-from compgen.kernels.provider import (
+from xpu_rt.capture.torch_export import capture_model
+from xpu_rt.ir.payload.import_fx import fx_to_xdsl
+from xpu_rt.kernels.codegen_fallback import run_provider_fallback
+from xpu_rt.kernels.provider import (
     ContractFeedback,
     KnowledgeExport,
     ProviderResult,
     SearchBudget,
 )
-from compgen.kernels.provider import (
+from xpu_rt.kernels.provider import (
     KernelContract as ProviderContract,
 )
-from compgen.targets.schema import load_profile
+from xpu_rt.targets.schema import load_profile
 
 _TARGET = "examples/target_profiles/cuda_a100.yaml"
 
@@ -136,7 +136,7 @@ def test_no_feedback_buf_drops_silently() -> None:
 
 def test_memory_kwarg_ingests_provider_knowledge_exports(tmp_path: Path) -> None:
     """When ``memory=`` is provided, knowledge_exports get persisted."""
-    from compgen.memory.store import CompilerMemory
+    from xpu_rt.memory.store import CompilerMemory
 
     db_path = tmp_path / "memory.db"
     blob_root = tmp_path / "blobs"
@@ -167,7 +167,7 @@ def test_memory_kwarg_ingests_provider_knowledge_exports(tmp_path: Path) -> None
 
 
 def test_no_memory_kwarg_does_not_create_memory_artifacts(tmp_path: Path) -> None:
-    """The default (no memory) must not silently create a ``.compgen_cache/``
+    """The default (no memory) must not silently create a ``.xpu_rt_cache/``
     on the user's machine just because they called compile_model."""
     import os
 
@@ -191,7 +191,7 @@ def test_no_memory_kwarg_does_not_create_memory_artifacts(tmp_path: Path) -> Non
         )
         # No CompilerMemory was supplied — no side-effect store should have
         # appeared in the test's cwd.
-        assert not (tmp_path / ".compgen_cache").exists(), "default-no-memory path created a persistent store on disk"
+        assert not (tmp_path / ".xpu_rt_cache").exists(), "default-no-memory path created a persistent store on disk"
     finally:
         os.chdir(cwd)
 
@@ -204,7 +204,7 @@ def test_no_memory_kwarg_does_not_create_memory_artifacts(tmp_path: Path) -> Non
 def test_bundle_emit_writes_provider_feedback_when_present(tmp_path: Path) -> None:
     """``pipeline_artifacts['provider_contract_feedback']`` →
     ``bundle/provider_feedback.json``."""
-    from compgen.runtime.bundle_emit import emit_extended_artefacts
+    from xpu_rt.runtime.bundle_emit import emit_extended_artefacts
 
     bundle_dir = tmp_path / "bundle"
     bundle_dir.mkdir()
@@ -245,7 +245,7 @@ def test_bundle_emit_writes_provider_feedback_when_present(tmp_path: Path) -> No
 
 def test_bundle_emit_skips_provider_feedback_when_absent(tmp_path: Path) -> None:
     """No feedback in pipeline_artifacts → status='skipped', no file."""
-    from compgen.runtime.bundle_emit import emit_extended_artefacts
+    from xpu_rt.runtime.bundle_emit import emit_extended_artefacts
 
     bundle_dir = tmp_path / "bundle"
     bundle_dir.mkdir()

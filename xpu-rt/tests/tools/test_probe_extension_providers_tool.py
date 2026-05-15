@@ -1,4 +1,4 @@
-"""Tests for the `compgen_probe_extension_providers` ToolCard (P1 T6 promotion).
+"""Tests for the `xpu_rt_probe_extension_providers` ToolCard (P1 T6 promotion).
 
 Coverage:
 
@@ -25,9 +25,9 @@ from pathlib import Path
 
 import pytest
 
-from compgen.tools.errors import ToolInputSchemaError
-from compgen.tools.tool_registry import load_tool_card, tool_cards_root
-from compgen.tools.tool_runner import ToolRunner
+from xpu_rt.tools.errors import ToolInputSchemaError
+from xpu_rt.tools.tool_registry import load_tool_card, tool_cards_root
+from xpu_rt.tools.tool_runner import ToolRunner
 
 
 def _card():
@@ -36,11 +36,11 @@ def _card():
 
 def test_card_declares_t6():
     card = _card()
-    assert card.tool_id == "compgen_probe_extension_providers"
+    assert card.tool_id == "xpu_rt_probe_extension_providers"
     assert card.maturity == "T6"
-    assert card.entrypoints.cli == "compgen-tool run compgen_probe_extension_providers"
-    assert card.entrypoints.mcp == "compgen_probe_extension_providers"
-    assert card.skill_path == ".claude/skills/compgen-provider-integration/SKILL.md"
+    assert card.entrypoints.cli == "xpu-rt-tool run xpu_rt_probe_extension_providers"
+    assert card.entrypoints.mcp == "xpu_rt_probe_extension_providers"
+    assert card.skill_path == ".claude/skills/xpu_rt-provider-integration/SKILL.md"
     assert card.fresh_agent_task_id == "probe_providers_v1"
 
 
@@ -100,11 +100,11 @@ def test_audit_verifies_t6():
     ``passed=true`` (committed alongside this card).
     """
 
-    from compgen.audit.tool_promotion import run_tool_promotion_audit
+    from xpu_rt.audit.tool_promotion import run_tool_promotion_audit
 
     report = run_tool_promotion_audit()
     outcome = next(
-        o for o in report.outcomes if o.tool_id == "compgen_probe_extension_providers"
+        o for o in report.outcomes if o.tool_id == "xpu_rt_probe_extension_providers"
     )
     assert outcome.verified_maturity == "T6", [v.to_dict() for v in outcome.violations]
 

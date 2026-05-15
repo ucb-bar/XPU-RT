@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from compgen.agent.plan import (
+from xpu_rt.agent.plan import (
     EXHAUSTED_TACTIC,
     GLOBAL_OBJECTIVES,
     Budget,

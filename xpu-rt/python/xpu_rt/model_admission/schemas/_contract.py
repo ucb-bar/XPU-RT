@@ -2,7 +2,7 @@
 
 All on-disk shapes are owned here. Each report has a ``schema_version``
 constant of the form ``<name>_v1`` matching the corresponding JSON Schema
-under ``compgen/model_admission/schemas/v1/``.
+under ``xpu_rt/model_admission/schemas/v1/``.
 
 Loaders intentionally accept ``dict[str, Any]`` (already YAML/JSON-decoded)
 and validate field-by-field rather than introducing a runtime schema
@@ -118,13 +118,13 @@ class ModelLoaderConfig:
 
     ``kind`` selects the loader implementation in ``loaders.py``:
 
-    - ``compgen_model_spec`` - bridge to the existing Python ``ModelCatalog``;
+    - ``xpu_rt_model_spec`` - bridge to the existing Python ``ModelCatalog``;
       ``model_spec_id`` names the entry.
     - ``hf_transformers_vlm | hf_transformers_llm | hf_transformers_ocr |
       hf_transformers_vla`` - HuggingFace transformers loaders; the probe
       checks the local HF cache and never downloads.
     - ``proxy`` - importable tiny module under
-      ``compgen.model_admission.proxies``.
+      ``xpu_rt.model_admission.proxies``.
     - ``unavailable`` - explicit no-op for declared-but-unsupported entries.
     """
 
@@ -194,7 +194,7 @@ class InputsSpec:
     """Description of the slice's input shape family.
 
     The probe uses ``kind`` to dispatch to a synthetic-input builder; for
-    proxy and ``compgen_model_spec`` entries the loader provides inputs
+    proxy and ``xpu_rt_model_spec`` entries the loader provides inputs
     directly and most of these fields are ignored.
     """
 

@@ -4,18 +4,18 @@ from __future__ import annotations
 
 import json
 
-from compgen.agent.prompts.eqsat_blackbox import BlackboxContext
-from compgen.agent.prompts.eqsat_blackbox import format_prompt as fmt_bb
-from compgen.agent.prompts.eqsat_blackbox import parse_response as parse_bb
-from compgen.agent.prompts.eqsat_extraction_weights import WeightsContext
-from compgen.agent.prompts.eqsat_extraction_weights import format_prompt as fmt_ew
-from compgen.agent.prompts.eqsat_extraction_weights import parse_response as parse_ew
-from compgen.agent.prompts.eqsat_search_state import SearchStateContext
-from compgen.agent.prompts.eqsat_search_state import format_prompt as fmt_ss
-from compgen.agent.prompts.eqsat_search_state import parse_response as parse_ss
-from compgen.agent.prompts.eqsat_segment import SegmentContext
-from compgen.agent.prompts.eqsat_segment import format_prompt as fmt_seg
-from compgen.agent.prompts.eqsat_segment import parse_response as parse_seg
+from xpu_rt.agent.prompts.eqsat_blackbox import BlackboxContext
+from xpu_rt.agent.prompts.eqsat_blackbox import format_prompt as fmt_bb
+from xpu_rt.agent.prompts.eqsat_blackbox import parse_response as parse_bb
+from xpu_rt.agent.prompts.eqsat_extraction_weights import WeightsContext
+from xpu_rt.agent.prompts.eqsat_extraction_weights import format_prompt as fmt_ew
+from xpu_rt.agent.prompts.eqsat_extraction_weights import parse_response as parse_ew
+from xpu_rt.agent.prompts.eqsat_search_state import SearchStateContext
+from xpu_rt.agent.prompts.eqsat_search_state import format_prompt as fmt_ss
+from xpu_rt.agent.prompts.eqsat_search_state import parse_response as parse_ss
+from xpu_rt.agent.prompts.eqsat_segment import SegmentContext
+from xpu_rt.agent.prompts.eqsat_segment import format_prompt as fmt_seg
+from xpu_rt.agent.prompts.eqsat_segment import parse_response as parse_seg
 
 
 class TestSearchState:

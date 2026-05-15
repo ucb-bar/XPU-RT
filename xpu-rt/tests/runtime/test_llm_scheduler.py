@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from compgen.llm.mock_client import MockLLMClient
-from compgen.runtime.llm_scheduler import LLMScheduler, SchedulingDecision
+from xpu_rt.llm.mock_client import MockLLMClient
+from xpu_rt.runtime.llm_scheduler import LLMScheduler, SchedulingDecision
 
 
 def _make_mock_client() -> MockLLMClient:

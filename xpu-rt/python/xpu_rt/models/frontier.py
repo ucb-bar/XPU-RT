@@ -8,7 +8,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from compgen.models.core import ModelSource, ModelSpec
+from xpu_rt.models.core import ModelSource, ModelSpec
 
 
 class RMSNorm(nn.Module):

@@ -1,6 +1,6 @@
 # Custom Quantization: FP8 E4M3 for NPU via torchAO
 
-This guide documents how CompGen integrates a custom FP8 E4M3 quantization scheme into the torchAO framework, targeting an NPU with power-of-two (po2) scaling. The SmolVLA VLA model is used as the reference deployment.
+This guide documents how XPU-RT integrates a custom FP8 E4M3 quantization scheme into the torchAO framework, targeting an NPU with power-of-two (po2) scaling. The SmolVLA VLA model is used as the reference deployment.
 
 ## Why Custom Quantization?
 
@@ -42,7 +42,7 @@ torchAO quantize_() API
 
 ## Step 1: Define the Quantization Primitives
 
-`python/compgen/quantization/fp8_ops.py` — the math layer, independent of any framework:
+`python/xpu_rt/quantization/fp8_ops.py` — the math layer, independent of any framework:
 
 ```python
 FP8_E4M3_MAX = 448.0       # Largest finite float8_e4m3fn value
@@ -74,7 +74,7 @@ Key properties:
 
 ## Step 2: Create the torchAO Tensor Subclass
 
-`python/compgen/quantization/fp8_tensor.py` — wraps quantized data for eager inference:
+`python/xpu_rt/quantization/fp8_tensor.py` — wraps quantized data for eager inference:
 
 ```python
 class FP8E4M3Po2Tensor(TorchAOBaseTensor):
@@ -102,7 +102,7 @@ The tensor subclass means **existing model code works unchanged** — `nn.Linear
 
 ## Step 3: Register with torchAO's `quantize_()` API
 
-`python/compgen/quantization/fp8_config.py` — plugs into torchAO:
+`python/xpu_rt/quantization/fp8_config.py` — plugs into torchAO:
 
 ```python
 @dataclass
@@ -130,7 +130,7 @@ quantize_(model, FP8E4M3Po2Config())
 
 ## Step 4: Handle Attention Separately
 
-`python/compgen/quantization/attention.py` — softmax must stay BF16:
+`python/xpu_rt/quantization/attention.py` — softmax must stay BF16:
 
 ```python
 class ExportableFP8Attention(nn.Module):
@@ -164,7 +164,7 @@ class ExportableFP8Attention(nn.Module):
 
 ## Step 5: Per-Component Recipe (SmolVLA-specific)
 
-`python/compgen/quantization/smolvla_recipe.py` — different components get different treatment:
+`python/xpu_rt/quantization/smolvla_recipe.py` — different components get different treatment:
 
 ```python
 class SmolVLAComponent(Enum):
@@ -188,7 +188,7 @@ def apply_smolvla_quantization(model, recipe):
 
 ## Step 6: Rewrite for Export
 
-`python/compgen/quantization/export_wrappers.py` — before `torch.export`, replace tensor subclasses with explicit modules:
+`python/xpu_rt/quantization/export_wrappers.py` — before `torch.export`, replace tensor subclasses with explicit modules:
 
 ```python
 def rewrite_for_export(model: nn.Module) -> nn.Module:
@@ -211,7 +211,7 @@ After rewrite:
 
 ## Step 7: Verify NPU Alignment
 
-`python/compgen/quantization/verify.py` — check all constraints:
+`python/xpu_rt/quantization/verify.py` — check all constraints:
 
 ```python
 result = npu_alignment_check(model, allow_unquantized={"lm_head"})
@@ -224,10 +224,10 @@ result = npu_alignment_check(model, allow_unquantized={"lm_head"})
 
 ## Step 8: Capture and Analyze
 
-After quantization + rewrite, the model flows into the standard CompGen pipeline:
+After quantization + rewrite, the model flows into the standard XPU-RT pipeline:
 
 ```python
-from compgen.quantization.pipeline import QuantizedModelPipeline
+from xpu_rt.quantization.pipeline import QuantizedModelPipeline
 
 pipeline = QuantizedModelPipeline(model, sample_inputs)
 report = pipeline.run()
@@ -267,7 +267,7 @@ estimated_flops: 58982400
 ## Full Pipeline Entry Point
 
 ```python
-from compgen.quantization.smolvla_e2e import run_smolvla_npu_pipeline
+from xpu_rt.quantization.smolvla_e2e import run_smolvla_npu_pipeline
 
 report = run_smolvla_npu_pipeline(
     output_dir="artifacts/smolvla_fp8_npu",
@@ -278,7 +278,7 @@ report = run_smolvla_npu_pipeline(
 Or through the capture pipeline:
 
 ```python
-from compgen.capture.torchao_pipeline import apply_quantization, QuantizationConfig
+from xpu_rt.capture.torchao_pipeline import apply_quantization, QuantizationConfig
 
 apply_quantization(model, QuantizationConfig(scheme="fp8_e4m3_po2_npu"))
 ```

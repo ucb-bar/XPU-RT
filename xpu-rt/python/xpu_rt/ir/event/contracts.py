@@ -5,8 +5,8 @@ Implements structural invariants that must hold for any module containing
 emission run.  These checks are surfaced through ``check_event_graph``
 and consumed by:
 
-    - ``compgen.ir.payload.passes.megakernel_static_schedule`` (precondition)
-    - ``compgen.agent.gates.megakernel`` (structural gate)
+    - ``xpu_rt.ir.payload.passes.megakernel_static_schedule`` (precondition)
+    - ``xpu_rt.agent.gates.megakernel`` (structural gate)
 """
 
 from __future__ import annotations
@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 
 from xdsl.dialects.builtin import IntegerAttr
 
-from compgen.ir.event.ops import (
+from xpu_rt.ir.event.ops import (
     CallDeviceOp,
     EventTensorOp,
     GraphOp,

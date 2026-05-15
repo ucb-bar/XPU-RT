@@ -1,17 +1,17 @@
 [project]
 name = "{{ package_name }}"
 version = "0.1.0"
-description = "CompGen vendor dialect adapter for {{ vendor_name }}"
+description = "XPU-RT vendor dialect adapter for {{ vendor_name }}"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "compgen",
+    "xpu-rt",
 {% for dep in dependencies %}
     "{{ dep }}",
 {% endfor %}
 ]
 
-[project.entry-points."compgen.vendor_dialects"]
+[project.entry-points."xpu_rt.vendor_dialects"]
 {{ vendor_name }} = "{{ package_name }}:load_adapter"
 
 [build-system]

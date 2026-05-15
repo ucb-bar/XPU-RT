@@ -34,8 +34,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from compgen.graph_compilation.hashing import sha256_file, sha256_tree
-from compgen.graph_compilation.recipe_gate import (  # parser
+from xpu_rt.graph_compilation.hashing import sha256_file, sha256_tree
+from xpu_rt.graph_compilation.recipe_gate import (  # parser
     _parse_recipe_mlir,
     _ParsedRecipeOp,
 )
@@ -78,10 +78,10 @@ def _strip_symbol(value: Any) -> str:
 
 
 _TRANSFORM_HEADER = (
-    "// schema_version: compgen_transform_script_v1\n"
+    "// schema_version: xpu_rt_transform_script_v1\n"
 )
 _CONTRACT_HEADER = (
-    "// schema_version: compgen_kernel_contract_draft_v1\n"
+    "// schema_version: xpu_rt_kernel_contract_draft_v1\n"
 )
 
 
@@ -128,7 +128,7 @@ def _lower_set_tile_params(
     lines.append(f"// declared_refinement: {refinement}")
     lines.append("")
     lines.append(
-        f"transform.compgen.sequence @{op.recipe_op_id} attributes {{"
+        f"transform.xpu_rt.sequence @{op.recipe_op_id} attributes {{"
     )
     lines.append(f'  recipe_op = "{op.recipe_op_id}",')
     lines.append(f'  region = "{region}",')
@@ -177,7 +177,7 @@ def _lower_fuse_producer_consumer(
         lines.append(f"// semantic_obligation: {obl}")
     lines.append(f"// declared_refinement: {refinement}")
     lines.append("")
-    lines.append(f"transform.compgen.sequence @{op.recipe_op_id} attributes {{")
+    lines.append(f"transform.xpu_rt.sequence @{op.recipe_op_id} attributes {{")
     lines.append(f'  recipe_op = "{op.recipe_op_id}",')
     lines.append('  action = "fuse_producer_consumer",')
     lines.append(f'  producer = "{producer}",')
@@ -312,7 +312,7 @@ def _lower_numerics(
         lines.append(f"// semantic_obligation: {obl}")
     lines.append(f"// declared_refinement: {refinement}")
     lines.append("")
-    lines.append(f"transform.compgen.sequence @{op.recipe_op_id} attributes {{")
+    lines.append(f"transform.xpu_rt.sequence @{op.recipe_op_id} attributes {{")
     lines.append(f'  recipe_op = "{op.recipe_op_id}",')
     lines.append(f'  region = "{region}",')
     lines.append(f'  action = "{action}"')
@@ -347,7 +347,7 @@ def _lower_assign_device(
         lines.append(f"// semantic_obligation: {obl}")
     lines.append("// declared_refinement: placement_obligation")
     lines.append("")
-    lines.append(f"transform.compgen.sequence @{op.recipe_op_id} attributes {{")
+    lines.append(f"transform.xpu_rt.sequence @{op.recipe_op_id} attributes {{")
     lines.append(f'  recipe_op = "{op.recipe_op_id}",')
     lines.append(f'  region = "{region}",')
     lines.append('  action = "assign_device",')

@@ -1,9 +1,9 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "compgen://user_perspective/schemas/recipe_ir.schema.yaml"
+$id: "xpu_rt://user_perspective/schemas/recipe_ir.schema.yaml"
 title: RecipeIRYamlView
 description: >
   User-facing YAML mirror of Recipe IR. This is what the LLM sees and
-  edits. The MLIR Recipe IR (produced by compgen.ir.recipe.seed.seed_recipe_ir)
+  edits. The MLIR Recipe IR (produced by xpu_rt.ir.recipe.seed.seed_recipe_ir)
   is the deterministic ground truth; this YAML is its machine-friendly
   textual wrapper with an explicit proposal_mode distinction.
 
@@ -34,7 +34,7 @@ properties:
       with `invented: true` must carry `verification_strength: strong_required`.
   regions:
     type: array
-    description: Region identities (match compgen.region_id attrs).
+    description: Region identities (match xpu_rt.region_id attrs).
     minItems: 1
     items:
       type: object

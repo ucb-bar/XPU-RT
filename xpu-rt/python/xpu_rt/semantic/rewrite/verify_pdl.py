@@ -1,6 +1,6 @@
 """Verify rewrite families via the PDL verification backend.
 
-Entry point for rewrite verification in CompGen's pipeline. Accepts
+Entry point for rewrite verification in XPU-RT's pipeline. Accepts
 either callable pairs or xDSL modules and routes to the appropriate
 backend.
 """
@@ -13,8 +13,8 @@ from typing import Any
 import structlog
 from xdsl.dialects.builtin import ModuleOp
 
-from compgen.semantic.backends.xdsl_smt.pdl_backend import PDLVerificationBackend
-from compgen.semantic.backends.xdsl_smt.results import PDLResult
+from xpu_rt.semantic.backends.xdsl_smt.pdl_backend import PDLVerificationBackend
+from xpu_rt.semantic.backends.xdsl_smt.results import PDLResult
 
 log = structlog.get_logger()
 

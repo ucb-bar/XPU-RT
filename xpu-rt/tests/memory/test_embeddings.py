@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import pytest
-from compgen.memory.embeddings import MockEmbeddingProvider, cosine_similarity, embed_and_store, retrieve_by_similarity
+from xpu_rt.memory.embeddings import MockEmbeddingProvider, cosine_similarity, embed_and_store, retrieve_by_similarity
 
 
 @pytest.fixture
 def memory(tmp_path):
-    from compgen.memory.store import CompilerMemory
+    from xpu_rt.memory.store import CompilerMemory
 
     return CompilerMemory(
         db_path=tmp_path / "test.db",
@@ -63,7 +63,7 @@ class TestCosineSimilarity:
 
 class TestEmbedAndRetrieve:
     def test_store_and_retrieve(self, memory, provider):
-        from compgen.memory.schema import KnowledgeKind, ScopeKind
+        from xpu_rt.memory.schema import KnowledgeKind, ScopeKind
 
         # Store 3 items with embeddings
         items = []

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from compgen.runtime.transport import (
+from xpu_rt.runtime.transport import (
     LocalTransport,
     SharedMemTransport,
     StubNetworkTransport,

@@ -3,15 +3,15 @@
 . Probes Z3 and dispatches proof-flavored ``SolverRequest``s.
 ``solve`` only handles ``BACKEND_PROBE`` self-checks;
 real obligation kinds are wired via
-:mod:`compgen.solve.z3_obligations`.
+:mod:`xpu_rt.solve.z3_obligations`.
 """
 
 from __future__ import annotations
 
 import time
 
-from compgen.solve.backends.base import SolverBackend
-from compgen.solve.solver_types import (
+from xpu_rt.solve.backends.base import SolverBackend
+from xpu_rt.solve.solver_types import (
     BackendAvailabilityStatus,
     BackendProbeResult,
     SolverBackendName,
@@ -124,7 +124,7 @@ class Z3Backend(SolverBackend):
                 solution={"probe_ok": True, "version": probe.version},
             )
         # Real obligation kinds: delegate to z3_obligations.
-        from compgen.solve import z3_obligations
+        from xpu_rt.solve import z3_obligations
 
         t0 = time.perf_counter()
         try:

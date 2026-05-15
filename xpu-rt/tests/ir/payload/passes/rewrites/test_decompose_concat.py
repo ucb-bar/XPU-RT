@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import pytest
-from compgen.ir.payload.passes.rewrites.decompose_concat import (
+from xpu_rt.ir.payload.passes.rewrites.decompose_concat import (
     DecomposeConcatStats,
     run_decompose_concat,
 )
-from compgen.ir.tensor_ext import ConcatOp
+from xpu_rt.ir.tensor_ext import ConcatOp
 from xdsl.dialects.builtin import Float32Type, ModuleOp, TensorType
 from xdsl.dialects.func import FuncOp, ReturnOp
 from xdsl.dialects.tensor import EmptyOp
@@ -27,14 +27,14 @@ def test_outer_dim_two_way_concat_rewrites():
     m = build_concat_module([(2, 4), (3, 4)], dim=0)
     stats = run_decompose_concat(m)
     assert stats.concat_ops_rewritten == 1
-    assert count_ops(m, "compgen.tensor_ext.concat") == 0
+    assert count_ops(m, "xpu_rt.tensor_ext.concat") == 0
     assert_module_verifies(m)
 
 
 def test_outer_dim_three_way_concat_rewrites():
     m = build_concat_module([(2, 4), (3, 4), (5, 4)], dim=0)
     run_decompose_concat(m)
-    assert count_ops(m, "compgen.tensor_ext.concat") == 0
+    assert count_ops(m, "xpu_rt.tensor_ext.concat") == 0
     # 1 tensor.empty for destination + 3 insert_slices (+ empties from module builder).
     assert count_ops(m, "tensor.insert_slice") == 3
     assert_module_verifies(m)
@@ -43,7 +43,7 @@ def test_outer_dim_three_way_concat_rewrites():
 def test_middle_dim_concat_rewrites():
     m = build_concat_module([(2, 3, 5), (2, 4, 5), (2, 1, 5)], dim=1)
     run_decompose_concat(m)
-    assert count_ops(m, "compgen.tensor_ext.concat") == 0
+    assert count_ops(m, "xpu_rt.tensor_ext.concat") == 0
     assert count_ops(m, "tensor.insert_slice") == 3
     assert_module_verifies(m)
 
@@ -52,7 +52,7 @@ def test_last_dim_concat_rewrites():
     m = build_concat_module([(4, 2), (4, 3)], dim=1)
     stats = run_decompose_concat(m)
     assert stats.concat_ops_rewritten == 1
-    assert count_ops(m, "compgen.tensor_ext.concat") == 0
+    assert count_ops(m, "xpu_rt.tensor_ext.concat") == 0
     assert_module_verifies(m)
 
 
@@ -96,7 +96,7 @@ def test_dynamic_shape_input_is_skipped():
     assert stats.concat_ops_seen == 1
     assert stats.concat_ops_rewritten == 0
     assert stats.concat_ops_skipped_dynamic == 1
-    assert count_ops(m, "compgen.tensor_ext.concat") == 1
+    assert count_ops(m, "xpu_rt.tensor_ext.concat") == 1
 
 
 # --- stats tracking -----------------------------------------------------------
@@ -198,7 +198,7 @@ def test_multiple_concats_rewrite_in_one_pass():
 
     stats = run_decompose_concat(m)
     assert stats.concat_ops_rewritten == 3
-    assert count_ops(m, "compgen.tensor_ext.concat") == 0
+    assert count_ops(m, "xpu_rt.tensor_ext.concat") == 0
     assert_module_verifies(m)
 
 

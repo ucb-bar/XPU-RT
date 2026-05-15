@@ -1,6 +1,6 @@
 # Inspect Artifacts
 
-CompGen produces different artifacts depending on which path you use.
+XPU-RT produces different artifacts depending on which path you use.
 
 ## Demo Bundle Artifacts
 
@@ -27,13 +27,13 @@ CompGen produces different artifacts depending on which path you use.
 
 ## Target Generation Artifacts
 
-When you use `compgen.device()` or `generate_target(...)`, CompGen writes target-generation artifacts into the chosen output directory. The currently guaranteed files are:
+When you use `xpu_rt.device()` or `generate_target(...)`, XPU-RT writes target-generation artifacts into the chosen output directory. The currently guaranteed files are:
 
 - `classification.json`
 - `support_plan.json`
 - `verification_manifest.json`
 
-These tell you how CompGen classified the hardware, which stages it thinks are needed, and what verification surface the target can support.
+These tell you how XPU-RT classified the hardware, which stages it thinks are needed, and what verification surface the target can support.
 
 ## Planned CLI Artifacts
 

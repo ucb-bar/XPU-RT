@@ -20,9 +20,9 @@ from __future__ import annotations
 from xdsl.dialects.builtin import ModuleOp
 from xdsl.dialects.func import FuncOp
 
-from compgen.stages.base import CompilationStage, StageResult
-from compgen.targets.capability import CapabilitySpec
-from compgen.targets.schema import TargetProfile
+from xpu_rt.stages.base import CompilationStage, StageResult
+from xpu_rt.targets.capability import CapabilitySpec
+from xpu_rt.targets.schema import TargetProfile
 
 
 class StageContractTestSuite:

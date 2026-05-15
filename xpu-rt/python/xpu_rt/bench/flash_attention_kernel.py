@@ -225,7 +225,7 @@ def flash_attention_fp16(
 
 def _autoload() -> None:
     try:
-        from compgen.bench.autotune_cache import load
+        from xpu_rt.bench.autotune_cache import load
     except ImportError:
         return
     load(_flash_attention_fwd_kernel)

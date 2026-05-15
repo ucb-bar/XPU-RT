@@ -5,11 +5,11 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from compgen.agent.env import BenchmarkAction, CalibrateAction, CompilerEnv, DiscoverOpsAction
-from compgen.agent.memory import AgentMemory, CostCalibration
-from compgen.capture.torch_export import capture_model
-from compgen.ir.payload.import_fx import fx_to_xdsl
-from compgen.targets.schema import load_profile
+from xpu_rt.agent.env import BenchmarkAction, CalibrateAction, CompilerEnv, DiscoverOpsAction
+from xpu_rt.agent.memory import AgentMemory, CostCalibration
+from xpu_rt.capture.torch_export import capture_model
+from xpu_rt.ir.payload.import_fx import fx_to_xdsl
+from xpu_rt.targets.schema import load_profile
 
 EXAMPLES = Path(__file__).parent.parent.parent / "examples"
 

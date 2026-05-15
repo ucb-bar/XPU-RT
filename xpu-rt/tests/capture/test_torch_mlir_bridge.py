@@ -1,11 +1,11 @@
-"""Tests for the torch-mlir / FX bridge (``compgen.capture.torch_mlir_bridge``)."""
+"""Tests for the torch-mlir / FX bridge (``xpu_rt.capture.torch_mlir_bridge``)."""
 
 from __future__ import annotations
 
 import pytest
 import torch
 import torch.nn as nn
-from compgen.capture.torch_mlir_bridge import (
+from xpu_rt.capture.torch_mlir_bridge import (
     BridgeResult,
     bridge_fx_graph,
     bridge_fx_graph_or_raise,

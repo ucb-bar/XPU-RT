@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from compgen.extensions.vendor_dialect.descriptor import (
+from xpu_rt.extensions.vendor_dialect.descriptor import (
     BundlePlan,
     CompileEntry,
     LoweringStrategy,
@@ -15,7 +15,7 @@ from compgen.extensions.vendor_dialect.descriptor import (
 def _make() -> VendorDialectDescriptor:
     return VendorDialectDescriptor(
         name="fake",
-        package_name="compgen_fake",
+        package_name="xpu_rt_fake",
         repo_path="/tmp/fake",
         target="nvidia-h100",
         input_ir=("linalg", "tosa"),

@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from dataclasses import dataclass
 
-from compgen.packs.base import LoadedPack
+from xpu_rt.packs.base import LoadedPack
 
 
 @dataclass(frozen=True)

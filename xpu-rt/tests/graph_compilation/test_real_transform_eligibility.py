@@ -9,7 +9,7 @@ Read-only audit. Tests verify that:
 - Opaque regions are rejected.
 - Non-SetTileParams recipes are cleanly ineligible (audit status==pass).
 - Missing ``payload_ref`` fails eligibility.
-- Multiple matching ``compgen.region_id`` occurrences fail eligibility.
+- Multiple matching ``xpu_rt.region_id`` occurrences fail eligibility.
 - Source payload mutation is detected via the pre/post SHA pair.
 - No ``transformed_payload.real.mlir`` is emitted.
 """
@@ -22,7 +22,7 @@ from pathlib import Path
 
 import pytest
 
-from compgen.graph_compilation.real_transform_eligibility import (
+from xpu_rt.graph_compilation.real_transform_eligibility import (
     _find_matmul_for_region,
     _matmul_signature,
     _parse_tile_from_verified_recipe,
@@ -45,7 +45,7 @@ def _need_suite() -> None:
     if not SUITE.is_dir():
         pytest.skip(
             f"fixture suite missing: {SUITE}; run "
-            f"`compgen.graph_compilation run-suite --stop-after "
+            f"`xpu_rt.graph_compilation run-suite --stop-after "
             f"real-transform-eligibility` first"
         )
 
@@ -170,8 +170,8 @@ def test_parse_tile_from_verified_recipe() -> None:
 
 def test_find_matmul_for_region_extracts_shapes() -> None:
     text = (
-        '%8 = linalg.matmul {compgen.region_id = "matmul_0", '
-        'compgen.transposed_b = "true"} '
+        '%8 = linalg.matmul {xpu_rt.region_id = "matmul_0", '
+        'xpu_rt.transposed_b = "true"} '
         'ins(%4, %6 : tensor<4x64xf32>, tensor<64x128xf32>) '
         'outs(%7 : tensor<4x128xf32>) -> tensor<4x128xf32>'
     )
@@ -185,7 +185,7 @@ def test_find_matmul_for_region_extracts_shapes() -> None:
 
 def test_find_matmul_returns_empty_for_other_region() -> None:
     text = (
-        '%8 = linalg.matmul {compgen.region_id = "matmul_0"} '
+        '%8 = linalg.matmul {xpu_rt.region_id = "matmul_0"} '
         'ins(%4, %6 : tensor<4x64xf32>, tensor<64x128xf32>) '
         'outs(%7 : tensor<4x128xf32>) -> tensor<4x128xf32>'
     )
@@ -235,11 +235,11 @@ def test_missing_payload_ref_fails_eligibility(tiny_mlp_run: Path) -> None:
 
 def test_multiple_matching_region_ids_fails_eligibility(tiny_mlp_run: Path) -> None:
     """Inject a second `linalg.matmul` op carrying the same
-    compgen.region_id into the source payload, then re-run."""
+    xpu_rt.region_id into the source payload, then re-run."""
     pl = tiny_mlp_run / "01_payload_lowering" / "export_program" / "payload.mlir"
     text = pl.read_text(encoding="utf-8")
     duplicate = (
-        '    %999 = linalg.matmul {compgen.region_id = "matmul_0"} '
+        '    %999 = linalg.matmul {xpu_rt.region_id = "matmul_0"} '
         'ins(%4, %6 : tensor<4x64xf32>, tensor<64x128xf32>) '
         'outs(%7 : tensor<4x128xf32>) -> tensor<4x128xf32>\n'
     )
@@ -258,7 +258,7 @@ def test_source_payload_mutation_during_audit_is_detected(
     tiny_mlp_run: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Force the post-audit SHA to differ from the pre-audit SHA."""
-    from compgen.graph_compilation import real_transform_eligibility as mod
+    from xpu_rt.graph_compilation import real_transform_eligibility as mod
 
     # The auditor takes one pre-snapshot pass over payload.mlir files
     # (2 files for tiny_mlp), then a post-snapshot pass at the end. The

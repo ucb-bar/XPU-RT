@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from compgen.capture.inductor_harvest import (
+from xpu_rt.capture.inductor_harvest import (
     MegakernelCandidate,
     estimate_megakernel_candidates,
 )

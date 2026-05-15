@@ -4,14 +4,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from compgen.targets.capability import (
+from xpu_rt.targets.capability import (
     BackendLane,
     OpCapability,
     TargetClass,
     classify_target,
     infer_capabilities,
 )
-from compgen.targets.schema import load_profile
+from xpu_rt.targets.schema import load_profile
 
 PROFILES_DIR = Path(__file__).parent.parent.parent / "examples" / "target_profiles"
 

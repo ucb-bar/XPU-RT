@@ -25,9 +25,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from compgen.extensions.vendor_dialect.adapter import LoweringResult
-from compgen.extensions.vendor_dialect.descriptor import VendorDialectDescriptor
-from compgen.kernels.provider import KernelProvider
+from xpu_rt.extensions.vendor_dialect.adapter import LoweringResult
+from xpu_rt.extensions.vendor_dialect.descriptor import VendorDialectDescriptor
+from xpu_rt.kernels.provider import KernelProvider
 
 
 @dataclass(frozen=True)
@@ -166,7 +166,7 @@ def lower_to_cuda_tile(
     The current reference adapter ignores ``payload_mlir`` content and
     always emits the FFN matmul-relu-matmul template — it's a *reference*
     for the dispatch contract, not a general-purpose lowering. Real
-    lowerings (the bwell-side ``compgen_cuda_tile`` package) inspect
+    lowerings (the bwell-side ``xpu_rt_cuda_tile`` package) inspect
     the payload to pick op-family templates per region.
 
     The lowering is recorded in metadata so consumers can audit which

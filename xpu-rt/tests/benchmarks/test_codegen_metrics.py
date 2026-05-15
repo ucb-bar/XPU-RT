@@ -207,7 +207,7 @@ class TestRunRecordSerialization:
             "status": "pass",
             "kernels": {"total_kernel_specs": 5, "strategy_histogram": {"native": 5}},
         }
-        path = tmp_path / "legacy01_compgen_old_model_cpu.json"
+        path = tmp_path / "legacy01_xpu_rt_old_model_cpu.json"
         path.write_text(json.dumps(legacy))
 
         loaded = RunRecord.load(path)

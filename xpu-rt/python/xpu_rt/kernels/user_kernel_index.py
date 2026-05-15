@@ -1,9 +1,9 @@
 """User-space kernel-provider discovery and indexing.
 
 The dream's Section 7 calls for users to plug their own kernels into
-the auction by pointing CompGen at a directory of kernel sources +
+the auction by pointing XPU-RT at a directory of kernel sources +
 manifests. lands the filesystem indexing + locked-files audit
-pattern, mirroring ``compgen.graph_compilation.extension_verify``.
+pattern, mirroring ``xpu_rt.graph_compilation.extension_verify``.
 
 User-supplied directory layout::
 
@@ -20,7 +20,7 @@ User-supplied directory layout::
     target_name: host_cpu
     language: c                               # c | triton | cuda | cpp
     kernel_source: kernel.c                   # path relative to manifest
-    entry_symbol: compgen_matmul_f32
+    entry_symbol: xpu_rt_matmul_f32
     inputs:
       - {name: lhs, dtype: f32, layout: row_major, dims: [16, 16]}
       - {name: rhs, dtype: f32, layout: row_major, dims: [16, 32]}
@@ -36,7 +36,7 @@ User-supplied directory layout::
 
 Indexing reads each manifest, sha256-hashes every locked file
 (manifest + source), and writes a derived index entry under
-``.compgen/user_kernel_index/<sha8>/manifest.yaml``. The index is the
+``.xpu_rt/user_kernel_index/<sha8>/manifest.yaml``. The index is the
 on-disk surface :class:`UserKernelProvider` consults at bid time.
 
 Tamper detection: every use re-runs the SHA audit; any drift raises
@@ -223,7 +223,7 @@ def _write_yaml_or_json(path: Path, body: dict[str, Any]) -> None:
 
 @dataclass(frozen=True)
 class IndexEntry:
-    """One row in ``.compgen/user_kernel_index/registry.yaml``."""
+    """One row in ``.xpu_rt/user_kernel_index/registry.yaml``."""
 
     index_id: str  # sha8 of source manifest path
     source_dir: str  # absolute path to user's kernel directory
@@ -449,16 +449,16 @@ def resolve_user_kernel_path(
         return Path(cli_path).resolve()
     import os
 
-    val = env_value or os.environ.get("COMPGEN_USER_KERNEL_PATH", "")
+    val = env_value or os.environ.get("XPU_RT_USER_KERNEL_PATH", "")
     if val:
         return Path(val).resolve()
     return None
 
 
 def default_index_root() -> Path:
-    """The canonical index root: ``.compgen/user_kernel_index/`` under
+    """The canonical index root: ``.xpu_rt/user_kernel_index/`` under
     the current working directory."""
-    return (Path.cwd() / ".compgen" / "user_kernel_index").resolve()
+    return (Path.cwd() / ".xpu_rt" / "user_kernel_index").resolve()
 
 
 __all__ = [

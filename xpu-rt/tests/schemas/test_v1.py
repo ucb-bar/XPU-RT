@@ -1,9 +1,9 @@
-"""Basic sanity tests for the compgen.schemas package."""
+"""Basic sanity tests for the xpu_rt.schemas package."""
 
 from __future__ import annotations
 
 import pytest
-from compgen.schemas import available_schemas, load_schema, schema_path
+from xpu_rt.schemas import available_schemas, load_schema, schema_path
 
 
 def test_available_schemas_lists_all_five():

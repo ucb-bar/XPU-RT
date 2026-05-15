@@ -14,6 +14,6 @@ def ray_cluster():
     """Start a local Ray cluster for testing."""
     ray = pytest.importorskip("ray")
     if not ray.is_initialized():
-        ray.init(num_cpus=4, namespace="compgen_test")
+        ray.init(num_cpus=4, namespace="xpu_rt_test")
     yield ray
     ray.shutdown()

@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from compgen.ir.payload.passes.rewrites.normalize_subbyte import (
+from xpu_rt.ir.payload.passes.rewrites.normalize_subbyte import (
     NormalizeSubbyteStats,
     run_normalize_subbyte,
 )
-from compgen.ir.quant import (
+from xpu_rt.ir.quant import (
     AffineQuantizedTensorType,
     PackedIntTensorType,
     WeightInt4PackMMOp,
@@ -95,8 +95,8 @@ def test_int4_pack_mm_gets_canonical_tag():
     m, op = _int4_module()
     stats = run_normalize_subbyte(m)
     assert stats.ops_with_qtype == 1
-    assert "compgen.subbyte_canonical" in op.attributes
-    data = op.attributes["compgen.subbyte_canonical"].data
+    assert "xpu_rt.subbyte_canonical" in op.attributes
+    data = op.attributes["xpu_rt.subbyte_canonical"].data
     assert "bit_width=4" in data
     assert "pack_dim=1" in data
     assert_module_verifies(m)
@@ -105,7 +105,7 @@ def test_int4_pack_mm_gets_canonical_tag():
 def test_int4_pack_mm_gets_boundary_unpack():
     m, op = _int4_module()
     run_normalize_subbyte(m)
-    assert op.attributes["compgen.subbyte_boundary"].data == "unpack"
+    assert op.attributes["xpu_rt.subbyte_boundary"].data == "unpack"
 
 
 def test_int4_qm_gets_canonical_tag():
@@ -131,7 +131,7 @@ def test_int4_qm_gets_canonical_tag():
 
     stats = run_normalize_subbyte(m)
     assert stats.ops_with_qtype >= 1
-    assert "compgen.subbyte_canonical" in op.attributes
+    assert "xpu_rt.subbyte_canonical" in op.attributes
 
 
 def test_int8_with_explicit_packed_qtype_is_annotated():
@@ -139,7 +139,7 @@ def test_int8_with_explicit_packed_qtype_is_annotated():
     stats = run_normalize_subbyte(m)
     # The int8 pack mm carries an explicit packed qtype → picked up.
     assert stats.ops_with_qtype == 1
-    assert "compgen.subbyte_canonical" in op.attributes
+    assert "xpu_rt.subbyte_canonical" in op.attributes
 
 
 # --- non-matching cases ---------------------------------------------------

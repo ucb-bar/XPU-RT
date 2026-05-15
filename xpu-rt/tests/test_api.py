@@ -1,4 +1,4 @@
-"""Tests for the top-level CompGen Python API (device / compile_model)."""
+"""Tests for the top-level XPU-RT Python API (device / compile_model)."""
 
 from __future__ import annotations
 
@@ -7,14 +7,14 @@ from pathlib import Path
 import pytest
 import torch
 import torch.nn as nn
-from compgen.agent.env import CompilerEnv
-from compgen.api import CompGenDevice, CompiledModel, compile_model, device
-from compgen.llm.mock_client import MockLLMClient
-from compgen.runtime.local_executor import BenchmarkResult
-from compgen.stages.registry import PipelineResult, TargetDialectStack
-from compgen.targetgen.generate import GeneratedTarget
-from compgen.targets.capability import CapabilitySpec
-from compgen.targets.schema import TargetProfile
+from xpu_rt.agent.env import CompilerEnv
+from xpu_rt.api import CompGenDevice, CompiledModel, compile_model, device
+from xpu_rt.llm.mock_client import MockLLMClient
+from xpu_rt.runtime.local_executor import BenchmarkResult
+from xpu_rt.stages.registry import PipelineResult, TargetDialectStack
+from xpu_rt.targetgen.generate import GeneratedTarget
+from xpu_rt.targets.capability import CapabilitySpec
+from xpu_rt.targets.schema import TargetProfile
 
 # Use the existing exemplar YAML files that ``test_generate.py`` also exercises.
 EXEMPLAR_DIR = Path(__file__).parent / "targetgen" / "exemplars"
@@ -42,9 +42,9 @@ class _TinyMLP(nn.Module):
 
 
 class TestDevice:
-    """Tests for ``compgen.device()``."""
+    """Tests for ``xpu_rt.device()``."""
 
-    def test_device_returns_compgen_device(self, tmp_path: Path) -> None:
+    def test_device_returns_xpu_rt_device(self, tmp_path: Path) -> None:
         """``device()`` must return a CompGenDevice."""
         spec_path = EXEMPLAR_DIR / "test_gpu_simt.yaml"
         dev = device(spec_path, output_dir=tmp_path / "out")
@@ -98,7 +98,7 @@ class TestDevice:
         shutil.copy2(src, dest)
 
         dev = device(dest)
-        expected_parent = tmp_path / "compgen_output"
+        expected_parent = tmp_path / "xpu-rt-output"
         assert dev.generated_target.output_dir.parent == expected_parent
 
     @pytest.mark.parametrize("yaml_file", sorted(EXEMPLAR_DIR.glob("*.yaml")))
@@ -121,7 +121,7 @@ class TestDevice:
 
 
 class TestCompileModel:
-    """Tests for ``compgen.compile_model()``."""
+    """Tests for ``xpu_rt.compile_model()``."""
 
     def test_compile_returns_compiled_model(self, tmp_path: Path) -> None:
         """``compile_model()`` must return a CompiledModel."""
@@ -261,20 +261,20 @@ class TestCompiledModelCall:
 
 
 class TestPackageExports:
-    """Verify that the top-level ``compgen`` package re-exports the API."""
+    """Verify that the top-level ``xpu_rt`` package re-exports the API."""
 
     def test_import_device_from_package(self) -> None:
-        from compgen import device as dev_fn
+        from xpu_rt import device as dev_fn
 
         assert callable(dev_fn)
 
     def test_import_compile_model_from_package(self) -> None:
-        from compgen import compile_model as cm_fn
+        from xpu_rt import compile_model as cm_fn
 
         assert callable(cm_fn)
 
     def test_import_classes_from_package(self) -> None:
-        from compgen import CompGenDevice, CompiledModel
+        from xpu_rt import CompGenDevice, CompiledModel
 
         assert CompGenDevice is not None
         assert CompiledModel is not None

@@ -16,14 +16,14 @@ Pins paper §3.2 behaviour:
 from __future__ import annotations
 
 import pytest
-from compgen.runtime.event_tensor import EventTensor
-from compgen.runtime.megakernel import DeviceCall, EventEdge, MegakernelGraph
-from compgen.transforms.event_dynamic_schedule import (
+from xpu_rt.runtime.event_tensor import EventTensor
+from xpu_rt.runtime.megakernel import DeviceCall, EventEdge, MegakernelGraph
+from xpu_rt.transforms.event_dynamic_schedule import (
     DynamicSchedulingUnavailable,
     TriggerGenerator,
     compute_dynamic_schedule,
 )
-from compgen.transforms.event_static_schedule import EventTensorAllocSpec, LaunchConfig
+from xpu_rt.transforms.event_static_schedule import EventTensorAllocSpec, LaunchConfig
 
 # ---------------------------------------------------------------------------
 # Helpers

@@ -99,7 +99,7 @@ def _infer_candidate_kind_from_recipe_id(recipe_id: str) -> str:
         return ""
     body = recipe_id[len(_RECIPE_ID_PREFIX):]
     try:
-        from compgen.passes.cards import (
+        from xpu_rt.passes.cards import (
             PassCardRegistry,
             default_registry_root,
         )

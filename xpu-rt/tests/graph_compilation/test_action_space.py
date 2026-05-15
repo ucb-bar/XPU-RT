@@ -15,8 +15,8 @@ import json
 from pathlib import Path
 
 import pytest
-from compgen.graph_compilation.run import run_graph_compilation
-from compgen.graph_compilation.target_discovery import build_target_yaml
+from xpu_rt.graph_compilation.run import run_graph_compilation
+from xpu_rt.graph_compilation.target_discovery import build_target_yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 HOST_CPU_TARGET = REPO_ROOT / "configs" / "targets" / "host_cpu.yaml"
@@ -442,11 +442,11 @@ def test_discovered_target_changes_priorities_or_costs(
 def test_compiler_core_not_modified_by_m04() -> None:
     import subprocess
     forbidden = [
-        "python/compgen/ir/payload/import_fx.py",
-        "python/compgen/capture/torch_export.py",
-        "python/compgen/capture/torch_mlir_bridge.py",
-        "python/compgen/pipeline/driver.py",
-        "python/compgen/runtime/bundle_emit.py",
+        "python/xpu_rt/ir/payload/import_fx.py",
+        "python/xpu_rt/capture/torch_export.py",
+        "python/xpu_rt/capture/torch_mlir_bridge.py",
+        "python/xpu_rt/pipeline/driver.py",
+        "python/xpu_rt/runtime/bundle_emit.py",
     ]
     try:
         diff = subprocess.check_output(

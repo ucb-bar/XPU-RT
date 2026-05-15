@@ -200,7 +200,7 @@ def _reduction_dimension(region: dict[str, Any], tensor_lookup: dict[str, dict[s
 
 _MLIR_TENSOR_RE = re.compile(r"tensor<([0-9x]+)x([a-z0-9]+)>")
 _MLIR_MATMUL_RE = re.compile(
-    r'linalg\.matmul\s+\{[^}]*compgen\.region_id\s*=\s*"([^"]+)"[^}]*\}'
+    r'linalg\.matmul\s+\{[^}]*xpu_rt\.region_id\s*=\s*"([^"]+)"[^}]*\}'
     r"\s+ins\([^:]*:\s*(tensor<[^>]+>)\s*,\s*(tensor<[^>]+>)\s*\)"
 )
 
@@ -767,7 +767,7 @@ def _emit_graph_analysis_mlir(
         "structured_fraction": float(summary["structured_fraction"]),
         "opaque_fraction": float(summary["opaque_fraction"]),
     }
-    lines.append(f"compgen.graph @{_mlir_symbol(model_id)} attributes {{ {_emit_attrs(graph_attrs)} }} {{")
+    lines.append(f"xpu_rt.graph @{_mlir_symbol(model_id)} attributes {{ {_emit_attrs(graph_attrs)} }} {{")
     for r in region_map["regions"]:
         rid_sym = _mlir_symbol(r["region_id"])
         attrs = {
@@ -781,7 +781,7 @@ def _emit_graph_analysis_mlir(
             "bytes": int(r["estimated"]["bytes"]),
             "arithmetic_intensity": float(r["estimated"]["arithmetic_intensity"]),
         }
-        lines.append(f"  compgen.region @{rid_sym} attributes {{ {_emit_attrs(attrs)} }}")
+        lines.append(f"  xpu_rt.region @{rid_sym} attributes {{ {_emit_attrs(attrs)} }}")
     for t in use_def["tensors"]:
         tid_sym = _mlir_symbol(t["tensor_id"])
         attrs = {
@@ -798,7 +798,7 @@ def _emit_graph_analysis_mlir(
             "producer_lifetime_class": t["producer_lifetime_class"],
             "is_reduction_input": bool(t["is_reduction_input"]),
         }
-        lines.append(f"  compgen.tensor @{tid_sym} attributes {{ {_emit_attrs(attrs)} }}")
+        lines.append(f"  xpu_rt.tensor @{tid_sym} attributes {{ {_emit_attrs(attrs)} }}")
     lines.append("}")
     return "\n".join(lines) + "\n"
 

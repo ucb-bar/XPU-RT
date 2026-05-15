@@ -33,9 +33,9 @@ jobs:
       - name: Resolve version
         id: version
         run: |
-          version=$(uv run python -c "import compgen; print(compgen.__version__)")
+          version=$(uv run python -c "import xpu_rt; print(xpu_rt.__version__)")
           echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "compgen version: $version"
+          echo "xpu_rt version: $version"
           if [ "${{ github.event_name }}" = "push" ]; then
             tag="${GITHUB_REF#refs/tags/v}"
             if [ "$tag" != "$version" ]; then
@@ -44,7 +44,7 @@ jobs:
             fi
           fi
       - name: Build native CPU runtime
-        # Always build the CPU-only libcompgen_rt so the wheel ships a
+        # Always build the CPU-only libxpu_rt so the wheel ships a
         # working native fallback. No CUDA toolkit needed.
         run: |
           if command -v cmake >/dev/null 2>&1; then
@@ -103,19 +103,19 @@ jobs:
       - name: Console scripts present
         run: |
           # Both entry points must respond to a non-blocking probe.
-          # ``compgen-mcp`` is a long-running stdio server otherwise;
+          # ``xpu-rt-mcp`` is a long-running stdio server otherwise;
           # ``--version`` is the cheapest gate that proves the script
           # is on PATH + the package's __version__ resolves.
-          out=$(/tmp/cg-smoke/bin/compgen-mcp --version)
+          out=$(/tmp/cg-smoke/bin/xpu-rt-mcp --version)
           echo "$out"
-          echo "$out" | grep -q "compgen-mcp 0\."
-          /tmp/cg-smoke/bin/compgen-run-conformance --help | head -3
+          echo "$out" | grep -q "xpu-rt-mcp 0\."
+          /tmp/cg-smoke/bin/xpu-rt-run-conformance --help | head -3
       - name: probe-device-only on CPU runner
         # CPU-only host; the harness writes a fallback device_probe.json
         # rather than failing. Exit code is the gate.
         run: |
           mkdir -p /tmp/cg-smoke-probe
-          /tmp/cg-smoke/bin/compgen-run-conformance \
+          /tmp/cg-smoke/bin/xpu-rt-run-conformance \
             --probe-device-only \
             --output-dir /tmp/cg-smoke-probe
           test -f /tmp/cg-smoke-probe/device_probe.json
@@ -128,21 +128,21 @@ jobs:
       - name: Importable surface — public API + native HAL fallback
         run: |
           /tmp/cg-smoke/bin/python - <<'PY'
-          import compgen
-          assert hasattr(compgen, "__version__"), "missing __version__"
-          print("compgen", compgen.__version__)
+          import xpu_rt
+          assert hasattr(xpu_rt, "__version__"), "missing __version__"
+          print("xpu-rt", xpu_rt.__version__)
           # has_cuda_runtime() must not crash even without the .so.
-          print("has_cuda_runtime:", compgen.has_cuda_runtime())
+          print("has_cuda_runtime:", xpu_rt.has_cuda_runtime())
           # Conformance harness public types are importable.
-          from compgen.testing.etc_conformance import (
+          from xpu_rt.testing.etc_conformance import (
               ConformanceWorkload, PassGate, run_conformance, gate_for,
           )
           assert "diamond_dag" in {w.value for w in ConformanceWorkload}
           # Workload factories registry.
-          from compgen.testing.workloads import WORKLOAD_FACTORIES
+          from xpu_rt.testing.workloads import WORKLOAD_FACTORIES
           assert {"diamond_dag", "decoder_layer", "gemm_rs"} <= set(WORKLOAD_FACTORIES)
           # MCP tools are listable (the public extension surface).
-          from compgen.mcp.tools import conformance as conf_tools
+          from xpu_rt.mcp.tools import conformance as conf_tools
           assert hasattr(conf_tools, "etc_conformance_run")
           print("public surface OK")
           PY

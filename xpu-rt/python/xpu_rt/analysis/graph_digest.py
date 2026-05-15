@@ -14,11 +14,11 @@ the raw IR:
 
 Heavy reuse:
 
-* :class:`compgen.agent.analyzer.NetworkAnalysis` + :class:`GraphAnalysisDossier`
+* :class:`xpu_rt.agent.analyzer.NetworkAnalysis` + :class:`GraphAnalysisDossier`
   — pattern clusters, region dossiers, critical path, bottlenecks.
-* :func:`compgen.kernels.envelope_bridge.envelope_from_target_profile`
+* :func:`xpu_rt.kernels.envelope_bridge.envelope_from_target_profile`
   — deterministic :class:`HardwareEnvelope`.
-* :mod:`compgen.kernels.tile_oracle`, :mod:`granularity_oracle`,
+* :mod:`xpu_rt.kernels.tile_oracle`, :mod:`granularity_oracle`,
   :mod:`fusion_oracle` — decision-knob enumeration.
 
 The digest is shape-free by default so prompts stay small.
@@ -34,28 +34,28 @@ from typing import Any
 
 from xdsl.dialects.builtin import ModuleOp, TensorType
 
-from compgen.agent.analyzer import GraphAnalysisDossier, NetworkAnalysis
-from compgen.analysis.dim_semantics import (
+from xpu_rt.agent.analyzer import GraphAnalysisDossier, NetworkAnalysis
+from xpu_rt.analysis.dim_semantics import (
     DimRole,
     annotate_dim_roles,
     dim_roles_for_op,
 )
-from compgen.kernels.contract_v3 import (
+from xpu_rt.kernels.contract_v3 import (
     HardwareEnvelope,
     KernelContractV3,
     MemoryTier,
 )
-from compgen.kernels.contract_v3_references import (
+from xpu_rt.kernels.contract_v3_references import (
     reference_matmul_contract,
     reference_pointwise_add_contract,
     reference_silu_contract,
     reference_softmax_contract,
 )
-from compgen.kernels.envelope_bridge import envelope_from_target_profile
-from compgen.kernels.fusion_oracle import should_fuse
-from compgen.kernels.granularity_oracle import recommend_granularity
-from compgen.kernels.tile_oracle import TileRecommendation, recommend_tile
-from compgen.targets.schema import TargetProfile
+from xpu_rt.kernels.envelope_bridge import envelope_from_target_profile
+from xpu_rt.kernels.fusion_oracle import should_fuse
+from xpu_rt.kernels.granularity_oracle import recommend_granularity
+from xpu_rt.kernels.tile_oracle import TileRecommendation, recommend_tile
+from xpu_rt.targets.schema import TargetProfile
 
 # ---------------------------------------------------------------------------
 # Data model
@@ -400,7 +400,7 @@ class GraphDigester:
                 pass
 
         # Dim spectrum — rank + dtype + quant from tensor result types;
-        # dim-role counts from the ``compgen.dim_role`` attribute that
+        # dim-role counts from the ``xpu_rt.dim_role`` attribute that
         # ``dim_semantics`` just stamped on every op.
         rank_hist: Counter[int] = Counter()
         dtype_spectrum: Counter[str] = Counter()
@@ -671,7 +671,7 @@ class ChunkExtractor:
         return tuple(seen)
 
     def _cluster_dim_roles(self, cluster: Any) -> tuple[str, ...]:
-        """Collect the stamped ``compgen.dim_role`` attrs for ops in the cluster."""
+        """Collect the stamped ``xpu_rt.dim_role`` attrs for ops in the cluster."""
         seen: list[str] = []
         for op in self._cluster_ops(cluster):
             for role in dim_roles_for_op(op):
@@ -935,14 +935,14 @@ def _contract_for_pattern(pattern: str, *, envelope: HardwareEnvelope) -> Kernel
     """Synthesize a real :class:`KernelContractV3` for the given pattern.
 
     Reuses the authored reference contracts in
-    :mod:`compgen.kernels.contract_v3_references` and re-homes them onto
+    :mod:`xpu_rt.kernels.contract_v3_references` and re-homes them onto
     the caller's live :class:`HardwareEnvelope` so the downstream
     oracles (``should_fuse`` / ``recommend_granularity``) see the
     target's real caps instead of the reference's default envelope.
     """
     from dataclasses import replace
 
-    from compgen.kernels.contract_v3 import (
+    from xpu_rt.kernels.contract_v3 import (
         ExecutionEnvelope,
     )
 

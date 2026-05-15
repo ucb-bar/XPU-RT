@@ -14,11 +14,11 @@ from __future__ import annotations
 
 import torch
 import torch.nn as nn
-from compgen.capture.torch_export import capture_model
-from compgen.ir.payload.contracts import extract_contracts
-from compgen.ir.payload.import_fx import fx_to_xdsl
-from compgen.kernels.contracts import build_kernel_contracts, spec_to_provider_contract
-from compgen.targets.schema import load_profile
+from xpu_rt.capture.torch_export import capture_model
+from xpu_rt.ir.payload.contracts import extract_contracts
+from xpu_rt.ir.payload.import_fx import fx_to_xdsl
+from xpu_rt.kernels.contracts import build_kernel_contracts, spec_to_provider_contract
+from xpu_rt.targets.schema import load_profile
 
 _TARGET = "examples/target_profiles/cuda_a100.yaml"
 
@@ -71,13 +71,13 @@ def test_bf16_add_surfaces_as_bf16_contract() -> None:
 
 def test_default_dtype_is_canonical_mlir_f32_not_legacy_float32() -> None:
     """Empty supported_dtypes → MLIR-canonical ``("f32",)``, not ``("float32",)``."""
-    from compgen.ir.payload.contracts import (
+    from xpu_rt.ir.payload.contracts import (
         CostEstimate,
     )
-    from compgen.ir.payload.contracts import (
+    from xpu_rt.ir.payload.contracts import (
         KernelContract as IRContract,
     )
-    from compgen.kernels.contracts import KernelSpec, spec_to_provider_contract
+    from xpu_rt.kernels.contracts import KernelSpec, spec_to_provider_contract
 
     ir = IRContract(op_name="aten_add", supported_dtypes=set(), cost=CostEstimate(flops=4))
     spec = KernelSpec(contract=ir)

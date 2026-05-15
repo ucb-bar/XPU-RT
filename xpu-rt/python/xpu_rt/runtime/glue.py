@@ -35,7 +35,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, Protocol, runtime_checkable
 
-from compgen.kernels.contract_v3 import (
+from xpu_rt.kernels.contract_v3 import (
     DispatchModel,
     KernelContractV3,
     MemoryTier,
@@ -190,7 +190,7 @@ class CudaRuntimeAdapter:
         if not torch.cuda.is_available():
             return None
 
-        from compgen.runtime.cuda_graph_wrapper import CudaGraphCaptureWrapper
+        from xpu_rt.runtime.cuda_graph_wrapper import CudaGraphCaptureWrapper
 
         wrapper = CudaGraphCaptureWrapper(
             model_fn=lambda x: model_fn(x),
@@ -275,7 +275,7 @@ class CpuRuntimeAdapter:
         # CPU adapter documents its own scope: no graph capture ⇒ no
         # replay. Typed error so callers don't confuse it with
         # "unimplemented work item".
-        from compgen.runtime.errors import AdapterUnavailableError
+        from xpu_rt.runtime.errors import AdapterUnavailableError
 
         raise AdapterUnavailableError(
             adapter_name=self.name,
@@ -347,7 +347,7 @@ class BaremetalRuntimeAdapter:
         # simply running the graph callable again on the new inputs.
         graph_callable = getattr(graph, "callable", None)
         if graph_callable is None:
-            from compgen.runtime.errors import AdapterUnavailableError
+            from xpu_rt.runtime.errors import AdapterUnavailableError
 
             raise AdapterUnavailableError(
                 adapter_name=self.name,
@@ -378,7 +378,7 @@ def select_adapter(target_name: str) -> RuntimeAdapter:
     Mirrors the knowledge-store target-name → backend mapping so
     adapter selection and lesson lookup share the same target taxonomy.
     """
-    from compgen.runtime.errors import AdapterUnavailableError
+    from xpu_rt.runtime.errors import AdapterUnavailableError
 
     n = (target_name or "").lower()
     if n.startswith("cuda") or "titan-rtx" in n or "test-gpu-simt" in n:

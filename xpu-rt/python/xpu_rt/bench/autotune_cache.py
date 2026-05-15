@@ -11,8 +11,8 @@ microseconds-per-shape. Combined with Triton's already-built-in
 binary cache (``~/.triton/cache``), a deployed model has *zero*
 first-call overhead after the first ever run on the host.
 
-Layout under ``~/.compgen/autotune/`` (overridable via
-``COMPGEN_AUTOTUNE_CACHE``):
+Layout under ``~/.xpu_rt/autotune/`` (overridable via
+``XPU_RT_AUTOTUNE_CACHE``):
 
     <kernel_qualname>.json      # one file per autotuned kernel
         {
@@ -39,10 +39,10 @@ import triton
 
 
 def default_cache_root() -> Path:
-    override = os.environ.get("COMPGEN_AUTOTUNE_CACHE")
+    override = os.environ.get("XPU_RT_AUTOTUNE_CACHE")
     if override:
         return Path(override).expanduser()
-    return Path.home() / ".compgen" / "autotune"
+    return Path.home() / ".xpu_rt" / "autotune"
 
 
 def _kernel_qualname(autotuned_fn: Any) -> str:

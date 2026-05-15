@@ -34,7 +34,7 @@ carry a stream of result words:
 
 ### Guest side (your kernel)
 
-`compgen.runtime.baremetal.chipyard.htif_data_stream_c()` returns C
+`xpu_rt.runtime.baremetal.chipyard.htif_data_stream_c()` returns C
 helpers ready to drop into your guest source:
 
 ```c
@@ -55,12 +55,12 @@ htif_exit(0);                              // terminate
 
 ### Host side (your verifier)
 
-`compgen.runtime.baremetal.chipyard.parse_htif_data_stream(log)`
+`xpu_rt.runtime.baremetal.chipyard.parse_htif_data_stream(log)`
 walks the sim log and concatenates every LSB=0 ``tohost`` payload
 (little-endian) until the first LSB=1 (exit):
 
 ```python
-from compgen.runtime.baremetal.chipyard import (
+from xpu_rt.runtime.baremetal.chipyard import (
     parse_htif_data_stream,
     parse_htif_exit,
 )
@@ -84,18 +84,18 @@ read it with a normal TileLink `Get` after the sim terminates.
 
 ### Guest side — linker fragment
 
-`compgen.runtime.baremetal.chipyard.shared_dram_section(symbol, size)`
+`xpu_rt.runtime.baremetal.chipyard.shared_dram_section(symbol, size)`
 returns a linker-script fragment to drop inside your `SECTIONS { … }`
 block:
 
 ```python
-from compgen.runtime.baremetal.chipyard import shared_dram_section
-print(shared_dram_section(symbol="compgen_results", size_bytes=0x10000))
+from xpu_rt.runtime.baremetal.chipyard import shared_dram_section
+print(shared_dram_section(symbol="xpu_rt_results", size_bytes=0x10000))
 ```
 
 ```ld
-.compgen_shared ALIGN(64) : {
-    PROVIDE(compgen_results = .);
+.xpu_rt_shared ALIGN(64) : {
+    PROVIDE(xpu_rt_results = .);
     . = . + 0x10000;
 } > REGION_DRAM
 ```
@@ -103,10 +103,10 @@ print(shared_dram_section(symbol="compgen_results", size_bytes=0x10000))
 In your guest C, reference the symbol:
 
 ```c
-extern volatile float compgen_results[];
+extern volatile float xpu_rt_results[];
 
 // after compute …
-for (int i = 0; i < N; ++i) compgen_results[i] = result[i];
+for (int i = 0; i < N; ++i) xpu_rt_results[i] = result[i];
 htif_exit(0);   // sim terminates; data persists in DRAM
 ```
 
@@ -128,7 +128,7 @@ make … run-binary CONFIG=… BINARY=… +mm_writeFile=dram.bin
 python -c "
 import numpy as np
 data = np.fromfile('dram.bin', dtype=np.uint8)
-# offset of compgen_results from the linker map:
+# offset of xpu_rt_results from the linker map:
 result = data[OFFSET:OFFSET+SIZE].view(np.float32)
 print(result)
 "
@@ -157,7 +157,7 @@ bottlenecking sim time.
 Saturn OPU's `chipyard.py` shows the pattern end-to-end:
 
 ```python
-from compgen.runtime.baremetal.chipyard import (
+from xpu_rt.runtime.baremetal.chipyard import (
     htif_c_section,           # __tohost / __fromhost section
     htif_data_stream_c,       # emit helpers
     htif_pass_fail_c,         # TEST_PASS / TEST_FAIL macros

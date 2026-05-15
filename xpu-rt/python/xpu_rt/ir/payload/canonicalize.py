@@ -1,4 +1,4 @@
-"""Canonical form enforcement for CompGen IR.
+"""Canonical form enforcement for XPU-RT IR.
 
 Canonicalization ensures the LLM always sees a stable, low-entropy IR.
 This reduces "almost-right" generations and makes verification deterministic.

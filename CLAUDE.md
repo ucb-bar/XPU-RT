@@ -1,16 +1,16 @@
-# CompGen -- Agent Operating Instructions
+# XPU-RT -- Agent Operating Instructions
 
 > `AGENT.md` is now the canonical and more complete repository-local operating
 > manual. Read it first. This file remains for compatibility and legacy context.
 
-> **Driving CompGen as Claude Code (or Codex):** when the user asks to
-> "compile X", "run CompGen on X", "build a recipe for X", or anything
-> equivalent, **invoke the `/compgen-compile` skill** (or its short
-> alias `/compgen`). The skill drives the whole workflow through the
-> typed MCP tools (`mcp__compgen__compgen_emit_agent_decision_request`,
-> `compgen_commit_agent_decision_response`,
-> `compgen_pipeline_status`, `compgen_inspect_pipeline_run`). Do NOT
-> shell out to `python -m compgen.graph_compilation` directly unless an
+> **Driving XPU-RT as Claude Code (or Codex):** when the user asks to
+> "compile X", "run XPU-RT on X", "build a recipe for X", or anything
+> equivalent, **invoke the `/xpu-rt-compile` skill** (or its short
+> alias `/xpu-rt`). The skill drives the whole workflow through the
+> typed MCP tools (`mcp__xpu_rt__xpu_rt_emit_agent_decision_request`,
+> `xpu_rt_commit_agent_decision_response`,
+> `xpu_rt_pipeline_status`, `xpu_rt_inspect_pipeline_run`). Do NOT
+> shell out to `python -m xpu_rt.graph_compilation` directly unless an
 > MCP tool genuinely fails — the MCP tools return typed dicts (no
 > stdout/stderr parsing) and run in-process by default (no subprocess
 > startup cost). The selection mode in this Claude-Code-driven path is
@@ -18,22 +18,22 @@
 > `GEMMINI_API`, `ANTHROPIC_API_KEY`, or any LLM provider env var.
 
 > **Gemini spend visibility:** every Gemini API call is logged to
-> `.compgen/gemini_usage/events.jsonl` with a derived snapshot in
-> `summary.json`. Run `uv run compgen-gemini-usage` for a status table or
-> `uv run compgen-gemini-usage watch` for a live feed. See the
+> `.xpu_rt/gemini_usage/events.jsonl` with a derived snapshot in
+> `summary.json`. Run `uv run xpu-rt-gemini-usage` for a status table or
+> `uv run xpu-rt-gemini-usage watch` for a live feed. See the
 > "Gemini API Spend Tracking" section in `AGENT.md` for details. (The
 > Gemini provider is the secondary `--selection-mode llm-live` path,
 > only used when explicitly opted-in; the default agentic path is
 > Claude-Code-driven `agent-file`, no token spend.)
 
 This file defines the rules, conventions, and constraints for AI agents
-working on the CompGen codebase. Read this before making any changes.
+working on the XPU-RT codebase. Read this before making any changes.
 
-## What CompGen Is
+## What XPU-RT Is
 
-CompGen is a **compiler generator**, not a compiler, and not just a kernel generator.
+XPU-RT is a **compiler generator**, not a compiler, and not just a kernel generator.
 
-Given a PyTorch program and a hardware profile (one or more devices), CompGen generates
+Given a PyTorch program and a hardware profile (one or more devices), XPU-RT generates
 a **deployment recipe** containing graph/lowering transforms, custom kernels, placement
 decisions, and runtime artifacts. Only verified artifacts are promoted into a deterministic
 recipe library.
@@ -100,11 +100,11 @@ The generation pipeline produces these exact artifacts:
 Every slot has a typed status in ``manifest.json::extended_artifacts``
 (``ok`` | ``skipped`` | ``failed``). ``skipped`` carries a reason
 ("no analysis passed", "torch.compile failed on model X", ...);
-``failed`` raises :class:`~compgen.runtime.errors.BundleEmissionError`
+``failed`` raises :class:`~xpu_rt.runtime.errors.BundleEmissionError`
 from ``compile_model`` unless the caller explicitly passes
 ``strict_artifacts=False``. Bundle directories never fall back to
 ``/tmp`` — ``BundleStage`` rejects ``output_dir=None``. See
-`python/compgen/runtime/bundle_emit.py` for the canonical mapping of
+`python/xpu_rt/runtime/bundle_emit.py` for the canonical mapping of
 slot → source data.
 
 ## Code Conventions
@@ -123,8 +123,8 @@ slot → source data.
 - **NEVER duplicate autocomp's `LLMClient`** -- import from `autocomp.common.llm_utils`
 - **NEVER duplicate autocomp's search infrastructure** -- use it via `kernels/autocomp_adapter.py`
 - Autocomp is installed editable from `third_party/autocomp/`
-- CompGen's `llm/` package is for graph-level transform generation, NOT kernel search
-- The adapter pattern translates CompGen types <-> autocomp types
+- XPU-RT's `llm/` package is for graph-level transform generation, NOT kernel search
+- The adapter pattern translates XPU-RT types <-> autocomp types
 
 ## Commit Conventions
 
@@ -142,7 +142,7 @@ Scopes: `agent`, `analysis`, `api`, `benchmarks`, `capture`, `cli`, `docs`, `eqs
 
 ## Test Conventions
 
-- Tests mirror source tree: `python/compgen/ir/checks.py` -> `tests/ir/test_checks.py`
+- Tests mirror source tree: `python/xpu_rt/ir/checks.py` -> `tests/ir/test_checks.py`
 - Use `pytest` with markers: `slow`, `requires_gpu`, `requires_mlir`
 - Mock LLM calls by default (use `MockLLMClient` from `llm/mock_client.py`)
 - Golden tests use saved fixtures, not live API calls
@@ -158,7 +158,7 @@ Scopes: `agent`, `analysis`, `api`, `benchmarks`, `capture`, `cli`, `docs`, `eqs
 
 ## Format Policy (canonical source of truth)
 
-CompGen artifacts have three roles:
+XPU-RT artifacts have three roles:
 
 1. **YAML** -- human-authored configuration and editable workspace
    manifests. Examples: `configs/models/*.yaml`, `configs/targets/*.yaml`,
@@ -200,17 +200,17 @@ views, not authority.
 | **Verification ladder** | Four-level verification: structural -> functional -> performance -> formal |
 | **Gap analysis** | Determining which ops need custom kernels vs native/library |
 | **Kill test** | Go/no-go experiment validating a core thesis subclaim |
-| **Target package** | The 7-component enablement package CompGen generates per target (NOT a full compiler) |
+| **Target package** | The 7-component enablement package XPU-RT generates per target (NOT a full compiler) |
 | **Target class** | Classification: Triton-friendly, accel-native, ukernel-runtime, or hybrid |
 | **CapabilitySpec** | What a target CAN DO (op-to-backend-lane map), distinct from TargetProfile (what it IS) |
 | **Target maturity** | L0 recognized -> L1 correct -> L2 optimized -> L3 promoted |
-| **Promoted recipe** | Verified recipe in `.compgen_cache/recipes/` with two-tier cache key, evidence summary, gate level, and `applies_when` predicates. See `docs/architecture/promotion-and-memory.md` |
+| **Promoted recipe** | Verified recipe in `.xpu_rt_cache/recipes/` with two-tier cache key, evidence summary, gate level, and `applies_when` predicates. See `docs/architecture/promotion-and-memory.md` |
 | **Region signature** | Pattern-level cache key — SHA256[:16] of (op_family, dtype, layout, abstracted shape, target_class). Two regions share a signature iff their shapes match under `int` / `None` / `{"mod": k}` abstraction |
-| **Promotion gate level** | Six-level evidence ladder: `observed` → `verified_fx` → `verified_kernel` → `characterized` → `promoted` → `portable`. See `compgen.promotion.gates` |
-| **Realness contract** | Per-feature YAML claim record at `docs/realness/<feature_id>.yaml` declaring the feature's realness level, forbidden constructs, and required evidence. See `compgen.audit.contracts` |
+| **Promotion gate level** | Six-level evidence ladder: `observed` → `verified_fx` → `verified_kernel` → `characterized` → `promoted` → `portable`. See `xpu_rt.promotion.gates` |
+| **Realness contract** | Per-feature YAML claim record at `docs/realness/<feature_id>.yaml` declaring the feature's realness level, forbidden constructs, and required evidence. See `xpu_rt.audit.contracts` |
 | **Realness level** | Six-level claim strength: `schema_only` → `write_only` → `read_only` → `decision_affecting` → `production_path` → `hardware_backed`. Only the last three are paper-claimable |
-| **Caveat ledger** | Machine-readable list of known limitations at `results/audit/<commit>/caveat_ledger.json`. Free-text caveats are rejected; every entry names the claim affected, blocks-paper-claim flag, and required-to-close action. See `compgen.audit.caveat_ledger` |
+| **Caveat ledger** | Machine-readable list of known limitations at `results/audit/<commit>/caveat_ledger.json`. Free-text caveats are rejected; every entry names the claim affected, blocks-paper-claim flag, and required-to-close action. See `xpu_rt.audit.caveat_ledger` |
 | **Trust report** | Single-page audit aggregator at `results/audit/<commit>/trust_report.{md,json}`. Runs 8 gates: realness scan, negative controls, caveat ledger, realness contracts, import provenance, trace replay self-check, task pack buildable, holdout outcomes honest. Built via `uv run python scripts/dev/build_trust_report.py` |
-| **Negative control** | Fault-injection test that proves a gate is real. The audit table maps (feature, injected break, expected typed error); each row must raise the named typed error or the gate is decorative. `compgen.audit.negative_controls.run_all_negative_controls` |
+| **Negative control** | Fault-injection test that proves a gate is real. The audit table maps (feature, injected break, expected typed error); each row must raise the named typed error or the gate is decorative. `xpu_rt.audit.negative_controls.run_all_negative_controls` |
 | **Holdout model** | Model with `holdout: true` in its YAML, deliberately excluded from canonical-22 to surface hardcoded-shape / hardcoded-id assumptions (`configs/models/holdout_*.yaml`) |
-| **Task pack** | Operator-portable directory containing only public allowlisted files (`CLAUDE.md`, skills, docs, configs, `python/compgen/**`); tested for forbidden-path leakage. Built via `scripts/dev/fresh_agent_task_pack.py` |
+| **Task pack** | Operator-portable directory containing only public allowlisted files (`CLAUDE.md`, skills, docs, configs, `python/xpu_rt/**`); tested for forbidden-path leakage. Built via `scripts/dev/fresh_agent_task_pack.py` |

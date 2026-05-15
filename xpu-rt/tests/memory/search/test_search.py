@@ -5,19 +5,19 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from compgen.memory.schema import (
+from xpu_rt.memory.schema import (
     GeneratorKind,
     KnowledgeKind,
     ObjectKind,
     ScopeKind,
 )
-from compgen.memory.search.frontier import SearchFrontier
-from compgen.memory.search.promote import SearchPromoter
-from compgen.memory.search.replay import ReplayBuffer
-from compgen.memory.search.retrieve import SearchRetriever
-from compgen.memory.search.scorer import score_kernel, score_pass
-from compgen.memory.search.task import SearchTask
-from compgen.memory.store import CompilerMemory
+from xpu_rt.memory.search.frontier import SearchFrontier
+from xpu_rt.memory.search.promote import SearchPromoter
+from xpu_rt.memory.search.replay import ReplayBuffer
+from xpu_rt.memory.search.retrieve import SearchRetriever
+from xpu_rt.memory.search.scorer import score_kernel, score_pass
+from xpu_rt.memory.search.task import SearchTask
+from xpu_rt.memory.store import CompilerMemory
 
 
 @pytest.fixture
@@ -40,7 +40,7 @@ class TestSearchTask:
 
 class TestScorer:
     def test_score_correct_kernel(self) -> None:
-        from compgen.memory.schema import Evaluation
+        from xpu_rt.memory.schema import Evaluation
 
         eval_ = Evaluation(
             eval_id="e1",
@@ -56,7 +56,7 @@ class TestScorer:
         assert breakdown.correctness_gate == 1.0
 
     def test_score_incorrect_kernel(self) -> None:
-        from compgen.memory.schema import Evaluation
+        from xpu_rt.memory.schema import Evaluation
 
         eval_ = Evaluation(
             eval_id="e1",
@@ -70,7 +70,7 @@ class TestScorer:
         assert breakdown.total == 0.0  # gated by correctness
 
     def test_score_pass(self) -> None:
-        from compgen.memory.schema import Evaluation
+        from xpu_rt.memory.schema import Evaluation
 
         eval_ = Evaluation(
             eval_id="e1",

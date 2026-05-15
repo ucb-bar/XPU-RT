@@ -306,7 +306,7 @@ def _emit_v3_mlir(
             summary.get("obligation_status_source_stage") or "",
     }
     lines.append(
-        f"compgen.dossier @{_safe(model_id)} "
+        f"xpu_rt.dossier @{_safe(model_id)} "
         f"attributes {{ {_emit_attrs(head)} }} {{"
     )
     for r in regions:

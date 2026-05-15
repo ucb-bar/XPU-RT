@@ -41,7 +41,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from compgen.kernels.contract_v3 import (
+from xpu_rt.kernels.contract_v3 import (
     KernelContractV3,
 )
 
@@ -81,7 +81,7 @@ class ObligationVerdict:
     # failure is well-characterised (numerical mismatch, contract
     # violation with a known op-level cause). Backward-compatible:
     # legacy verdicts have counterexample=None.
-    counterexample: Any = None  # compgen.agent.counterexample.Counterexample
+    counterexample: Any = None  # xpu_rt.agent.counterexample.Counterexample
 
     def to_dict(self) -> dict[str, Any]:
         body: dict[str, Any] = {
@@ -240,7 +240,7 @@ def generate_obligations(contract: KernelContractV3) -> list[VerifierObligation]
     # ``optional_v3_1_fields["z3_proof_required"] = True``, every
     # supported precondition becomes a Z3 proof obligation. The
     # ``predicate_proof_via_z3`` verifier discharges them through
-    # :mod:`compgen.solve.z3_obligations`.
+    # :mod:`xpu_rt.solve.z3_obligations`.
     if contract.optional_v3_1_fields.get("z3_proof_required"):
         for i, pred in enumerate(contract.preconditions or ()):
             obligations.append(VerifierObligation(
@@ -273,7 +273,7 @@ def _predicate_to_proof_dict(pred: Any) -> dict[str, Any]:
     visible in the report but does not fail the cert.
     """
 
-    from compgen.kernels.predicates import (
+    from xpu_rt.kernels.predicates import (
         ByteSizeLe,
         DtypeIn,
         ModEq,
@@ -605,18 +605,18 @@ def _build_numerical_counterexample(
     declared: float,
     declared_bound: float,
 ) -> Any:
-    """Build a typed :class:`compgen.agent.counterexample.Counterexample`
+    """Build a typed :class:`xpu_rt.agent.counterexample.Counterexample`
     for a numerical-mismatch failure.
 
     The verifier knows the archetype + contract shape + declared
     error but not a specific failing index — those come from the
     real-differential runner. Until that ships, we emit the
     Counterexample with empty indices but populated names + IR slice
-    so the agent's :mod:`compgen.agent.primitives.explain_counterexample`
+    so the agent's :mod:`xpu_rt.agent.primitives.explain_counterexample`
     has typed structure to reason about.
     """
 
-    from compgen.agent.counterexample import (
+    from xpu_rt.agent.counterexample import (
         Counterexample,
         InputSlice,
         IRSlice,
@@ -715,7 +715,7 @@ def _verify_predicate_proof_via_z3(
     wire-up. Reads the per-predicate ``proof_dict`` from
     ``obl.expected['predicate']``; when it carries ``unsupported:
     True``, we honestly report ``deferred``. Otherwise we route the
-    obligation through :mod:`compgen.solve.z3_obligations` and append
+    obligation through :mod:`xpu_rt.solve.z3_obligations` and append
     its typed response into ``z3_obligation_report`` (mutated in
     place by the caller).
 
@@ -739,8 +739,8 @@ def _verify_predicate_proof_via_z3(
             ),
         )
 
-    from compgen.solve.backend_registry import default_registry
-    from compgen.solve.solver_types import (
+    from xpu_rt.solve.backend_registry import default_registry
+    from xpu_rt.solve.solver_types import (
         SolverProblemKind,
         SolverRequest,
         SolverStatus,
@@ -752,7 +752,7 @@ def _verify_predicate_proof_via_z3(
         problem_kind=SolverProblemKind.SHAPE_PREDICATE_VERIFY,
         formulation=pred_proof,
     )
-    from compgen.solve.solver_types import SolverBackendName
+    from xpu_rt.solve.solver_types import SolverBackendName
 
     z3_backend = registry.get_backend(SolverBackendName.Z3)
     if z3_backend is None:

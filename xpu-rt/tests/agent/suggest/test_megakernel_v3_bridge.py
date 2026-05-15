@@ -1,4 +1,4 @@
-"""Tests for ``compgen.agent.suggest.megakernel_v3_bridge``.
+"""Tests for ``xpu_rt.agent.suggest.megakernel_v3_bridge``.
 
 Locks in:
   * Empty / missing ``fused_region_refs`` raises ValueError
@@ -13,11 +13,11 @@ Locks in:
 from __future__ import annotations
 
 import pytest
-from compgen.agent.suggest.megakernel_v3_bridge import (
+from xpu_rt.agent.suggest.megakernel_v3_bridge import (
     MegakernelBridgeResult,
     build_mega_contract_from_proposal,
 )
-from compgen.kernels.contract_v3 import (
+from xpu_rt.kernels.contract_v3 import (
     DispatchModel,
     DispatchSpec,
     Granularity,

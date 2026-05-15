@@ -1,4 +1,4 @@
-"""Quantized MLP model for CompGen pipeline testing.
+"""Quantized MLP model for XPU-RT pipeline testing.
 
 SimpleMLP with int8 weight-only quantization via TorchAO. Tests whether
 torch.export handles quantized models correctly.

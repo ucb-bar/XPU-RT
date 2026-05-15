@@ -31,7 +31,7 @@ from typing import Any
 
 import yaml
 
-from compgen.graph_compilation.hashing import sha256_file
+from xpu_rt.graph_compilation.hashing import sha256_file
 
 _SANITIZE_RE = re.compile(r"[^A-Za-z0-9_]")
 
@@ -198,7 +198,7 @@ def materialize_extension(
     # the kind — that's a *path_stem*, not the canonical id. Every extension_id
     # field in materialized artifacts MUST use the canonical form so downstream
     # consumers (registry, gap_action_queue, verify report, manifest) all agree.
-    from compgen.graph_compilation.gap_naming import extension_id as _canonical_extension_id
+    from xpu_rt.graph_compilation.gap_naming import extension_id as _canonical_extension_id
 
     extension_id = _canonical_extension_id(
         gap_kind=gap["gap_kind"],
@@ -449,7 +449,7 @@ def _resolve_reference_body(fx_target: str) -> tuple[str, str]:
     body = (
         "raise NotImplementedError(\n"
         f"    \"reference for {fx_target!r} has no built-in resolution; \"\n"
-        "    \"add a mapping in compgen.graph_compilation.extension_materialize\"\n"
+        "    \"add a mapping in xpu_rt.graph_compilation.extension_materialize\"\n"
         ")"
     )
     return body, "import torch\n\n"
@@ -667,7 +667,7 @@ the inputs described below.
 ## Verifying your fill
 
 ```bash
-python -m compgen.graph_compilation extension verify --extension {extension_id}
+python -m xpu_rt.graph_compilation extension verify --extension {extension_id}
 ```
 
 This runs:
@@ -685,7 +685,7 @@ you're done.
 ## Registering after verify passes
 
 ```bash
-python -m compgen.graph_compilation extension register \\
+python -m xpu_rt.graph_compilation extension register \\
   --extension {extension_id} \\
   --registry .crg-artifacts/extensions/registry.yaml
 ```
@@ -697,7 +697,7 @@ it from the queue.
 ## Rules
 
 - Only edit `extension.py`.
-- Don't import from `compgen.graph_compilation.*` — keep your impl
+- Don't import from `xpu_rt.graph_compilation.*` — keep your impl
   self-contained and depend only on `torch` / `torch.nn.functional` /
   numpy stdlib.
 - If you cannot decompose the op into supported primitives, leave a
@@ -708,7 +708,7 @@ it from the queue.
 
 See `reference.py` (locked). For `crgtoy.*` targets, the reference is the
 live torch op; your job is to express the same computation in terms of
-ops that `compgen.ir.payload.import_fx.FXImporter` already lowers (linear,
+ops that `xpu_rt.ir.payload.import_fx.FXImporter` already lowers (linear,
 matmul, gelu, relu, conv2d, batch_norm, layer_norm, softmax, etc.).
 """
 
@@ -744,7 +744,7 @@ def _render_correctness_tests(gap: dict[str, Any]) -> str:
     Runs two layers of check, in order:
 
     1. **Locked-files audit** via
-       ``compgen.graph_compilation.extension_verify.run_verify`` — proves
+       ``xpu_rt.graph_compilation.extension_verify.run_verify`` — proves
        only ``extension.py`` (and ``manifest.yaml``) changed since
        materialize.
     2. **Frozen-case differential** — loads every ``inputs/case_NN.pt``
@@ -764,7 +764,7 @@ def _render_correctness_tests(gap: dict[str, Any]) -> str:
         "import sys\n"
         "from pathlib import Path\n\n"
         "import torch\n\n"
-        "from compgen.graph_compilation.extension_verify import run_verify\n\n\n"
+        "from xpu_rt.graph_compilation.extension_verify import run_verify\n\n\n"
         "_WORKSPACE = Path(__file__).resolve().parent.parent\n"
         "_CONTRACT = json.loads((_WORKSPACE / 'extension_contract.json').read_text(encoding='utf-8'))\n\n\n"
         "def _load_extension():\n"

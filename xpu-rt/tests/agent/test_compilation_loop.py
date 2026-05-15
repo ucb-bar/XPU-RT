@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from compgen.agent.analyzer import GraphAnalysisDossier, NetworkAnalysis, RegionDossier
-from compgen.agent.env import CompilerEnv
-from compgen.agent.loop import AgenticCompilationLoop, CompilationResult
-from compgen.llm.base import GenerationRequest, GenerationResponse
-from compgen.llm.mock_client import MockLLMClient
-from compgen.targets.schema import load_profile
+from xpu_rt.agent.analyzer import GraphAnalysisDossier, NetworkAnalysis, RegionDossier
+from xpu_rt.agent.env import CompilerEnv
+from xpu_rt.agent.loop import AgenticCompilationLoop, CompilationResult
+from xpu_rt.llm.base import GenerationRequest, GenerationResponse
+from xpu_rt.llm.mock_client import MockLLMClient
+from xpu_rt.targets.schema import load_profile
 from xdsl.dialects import arith, func
 from xdsl.dialects.builtin import IndexType, ModuleOp
 from xdsl.ir import Block, Region

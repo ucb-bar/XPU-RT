@@ -20,8 +20,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from compgen.llm._prompt import render_request_prompt
-from compgen.llm.base import (
+from xpu_rt.llm._prompt import render_request_prompt
+from xpu_rt.llm.base import (
     CompGenLLMProtocol,
     GenerationRequest,
     GenerationResponse,

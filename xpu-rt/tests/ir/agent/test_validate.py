@@ -2,15 +2,15 @@
 
 from __future__ import annotations
 
-from compgen.ir.agent.attrs import EvaluatorKindAttr
-from compgen.ir.agent.ops_claim import ClaimOp, ExpectedProofOp
-from compgen.ir.agent.ops_evidence import BindFactOp, BindVerificationOp, EvidenceSetOp
-from compgen.ir.agent.ops_frontier import CommitOp, FrontierOp
-from compgen.ir.agent.ops_intent import AgentScopeOp, AgentSessionOp
-from compgen.ir.agent.ops_synthesis import RequestRewriteOp
-from compgen.ir.agent.validate import validate_agent_module
-from compgen.ir.recipe.ops_candidate import TileOp
-from compgen.ir.recipe.ops_scope import RecipeRegionOp
+from xpu_rt.ir.agent.attrs import EvaluatorKindAttr
+from xpu_rt.ir.agent.ops_claim import ClaimOp, ExpectedProofOp
+from xpu_rt.ir.agent.ops_evidence import BindFactOp, BindVerificationOp, EvidenceSetOp
+from xpu_rt.ir.agent.ops_frontier import CommitOp, FrontierOp
+from xpu_rt.ir.agent.ops_intent import AgentScopeOp, AgentSessionOp
+from xpu_rt.ir.agent.ops_synthesis import RequestRewriteOp
+from xpu_rt.ir.agent.validate import validate_agent_module
+from xpu_rt.ir.recipe.ops_candidate import TileOp
+from xpu_rt.ir.recipe.ops_scope import RecipeRegionOp
 from xdsl.dialects import builtin as builtin_dialect
 from xdsl.dialects.builtin import IntegerAttr, IntegerType, ModuleOp, Region, StringAttr, SymbolRefAttr
 from xdsl.ir import Block

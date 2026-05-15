@@ -2,24 +2,24 @@
 
 from __future__ import annotations
 
-from compgen.runtime.dispatch_strategy import (
+from xpu_rt.runtime.dispatch_strategy import (
     PipelineStrategy,
     WavefrontStrategy,
 )
-from compgen.runtime.heterogeneous_executor import (
+from xpu_rt.runtime.heterogeneous_executor import (
     ExecutionResult,
     ExecutionStatus,
     HeterogeneousExecutor,
     OpResult,
 )
-from compgen.runtime.planner import ExecutionPlan, PlacementDecision
-from compgen.runtime.topology import (
+from xpu_rt.runtime.planner import ExecutionPlan, PlacementDecision
+from xpu_rt.runtime.topology import (
     RuntimeDevice,
     RuntimeLink,
     RuntimeNode,
     RuntimeTopology,
 )
-from compgen.targetgen.hardware_spec import DeploymentTopology
+from xpu_rt.targetgen.hardware_spec import DeploymentTopology
 
 
 def _simple_topology() -> RuntimeTopology:

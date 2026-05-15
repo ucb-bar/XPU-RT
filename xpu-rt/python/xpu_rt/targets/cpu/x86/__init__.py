@@ -13,11 +13,11 @@ specialize with intrinsics.
 
 from __future__ import annotations
 
-from compgen.targets.cpu.x86.body_emitter import X86BodyEmitter
-from compgen.targets.cpu.x86.cost import X86CostModel
-from compgen.targets.cpu.x86.probe import X86Probe
-from compgen.targets.cpu.x86.runtime import X86Runtime
-from compgen.targets.registry import register_target
+from xpu_rt.targets.cpu.x86.body_emitter import X86BodyEmitter
+from xpu_rt.targets.cpu.x86.cost import X86CostModel
+from xpu_rt.targets.cpu.x86.probe import X86Probe
+from xpu_rt.targets.cpu.x86.runtime import X86Runtime
+from xpu_rt.targets.registry import register_target
 
 
 def _register_x86() -> None:

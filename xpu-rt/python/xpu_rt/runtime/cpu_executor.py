@@ -1,7 +1,7 @@
 """CPU reference executor for the compiled xDSL module.
 
 Walks the ``@forward`` func in a bridged ``ModuleOp`` and dispatches
-every op to a concrete PyTorch primitive. Lets CompGen's
+every op to a concrete PyTorch primitive. Lets XPU-RT's
 ``compile_and_diff`` do **real compiled-vs-eager differential
 testing** on any CPU host.
 
@@ -9,19 +9,19 @@ The executor is deliberately pure Python + torch:
 
 - No CUDA required.
 - No Triton / ukernel backends (those land in separate emitters).
-- Supports the subset of ops CompGen's bridge + passes emit:
+- Supports the subset of ops XPU-RT's bridge + passes emit:
   ``linalg.matmul`` (with indexing_maps), ``linalg.transpose``,
   ``linalg.generic`` (elementwise + reduction bodies),
   ``tensor.empty`` / ``tensor.insert_slice``,
-  ``compgen.tensor_ext.concat`` / ``pack``,
-  ``compgen.linalg_ext.softmax`` / ``layer_norm`` / ``rms_norm`` /
+  ``xpu_rt.tensor_ext.concat`` / ``pack``,
+  ``xpu_rt.linalg_ext.softmax`` / ``layer_norm`` / ``rms_norm`` /
   ``silu`` / ``gelu``,
   ``arith.*`` scalar ops inside linalg bodies,
   opaque ``func.call`` dispatches keyed off ``aten_*`` callee names.
 
 Usage::
 
-    from compgen.runtime.cpu_executor import execute
+    from xpu_rt.runtime.cpu_executor import execute
     out = execute(module, exported_program, example_inputs)
 
 ``execute`` returns a tuple of tensors (one per ``USER_OUTPUT`` in
@@ -547,24 +547,24 @@ def _exec_insert_slice(op: InsertSliceOp, env: dict[SSAValue, torch.Tensor]) -> 
 
 
 def _exec_linalg_ext(op: Operation, env: dict[SSAValue, torch.Tensor]) -> torch.Tensor:
-    """Dispatch compgen.linalg_ext ops."""
+    """Dispatch xpu_rt.linalg_ext ops."""
     name = op.name
     inp = env[op.operands[0]]
-    if name == "compgen.linalg_ext.softmax":
+    if name == "xpu_rt.linalg_ext.softmax":
         dim = op.dim.value.data
         return F.softmax(inp, dim=dim)
-    if name == "compgen.linalg_ext.silu":
+    if name == "xpu_rt.linalg_ext.silu":
         return F.silu(inp)
-    if name == "compgen.linalg_ext.gelu":
+    if name == "xpu_rt.linalg_ext.gelu":
         approx = op.attributes.get("approximate") or op.properties.get("approximate")
         approximate = "tanh" if isinstance(approx, StringAttr) and approx.data == "tanh" else "none"
         return F.gelu(inp, approximate=approximate)
-    if name == "compgen.linalg_ext.layer_norm":
+    if name == "xpu_rt.linalg_ext.layer_norm":
         eps = op.eps.value.data
         weight = env.get(op.weight) if op.weight is not None else None
         bias = env.get(op.bias) if op.bias is not None else None
         return F.layer_norm(inp, (inp.shape[-1],), weight=weight, bias=bias, eps=eps)
-    if name == "compgen.linalg_ext.rms_norm":
+    if name == "xpu_rt.linalg_ext.rms_norm":
         eps = op.eps.value.data
         weight = env.get(op.weight) if op.weight is not None else None
         rms = torch.sqrt(inp.pow(2).mean(-1, keepdim=True) + eps)
@@ -572,7 +572,7 @@ def _exec_linalg_ext(op: Operation, env: dict[SSAValue, torch.Tensor]) -> torch.
         if weight is not None:
             y = y * weight
         return y
-    if name == "compgen.linalg_ext.swiglu":
+    if name == "xpu_rt.linalg_ext.swiglu":
         up = env[op.operands[1]]
         return F.silu(inp) * up
     # Fallback: identity.
@@ -833,7 +833,7 @@ def _dispatch(
         return torch.tensor(scalar, dtype=torch.float32)
     if isinstance(op, InsertSliceOp):
         return _exec_insert_slice(op, env)
-    if op.name.startswith("compgen.linalg_ext."):
+    if op.name.startswith("xpu_rt.linalg_ext."):
         return _exec_linalg_ext(op, env)
     if isinstance(op, CallOp):
         callee = op.callee.string_value()

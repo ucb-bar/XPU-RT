@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import io
 
-from compgen.ir.tile.attrs import FragmentLayoutAttr, MemoryClassAttr, TileShapeAttr
+from xpu_rt.ir.tile.attrs import FragmentLayoutAttr, MemoryClassAttr, TileShapeAttr
 from xdsl.dialects.builtin import ArrayAttr, IntegerAttr, IntegerType, StringAttr
 from xdsl.printer import Printer
 

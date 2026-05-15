@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING
 import structlog
 
 if TYPE_CHECKING:
-    from compgen.memory.store import CompilerMemory
+    from xpu_rt.memory.store import CompilerMemory
 
 log = structlog.get_logger()
 
@@ -50,7 +50,7 @@ def record_error_pattern(
     Returns:
         Knowledge item ID.
     """
-    from compgen.memory.schema import KnowledgeKind, ScopeKind
+    from xpu_rt.memory.schema import KnowledgeKind, ScopeKind
 
     summary = f"FAIL {action_type} on {target_key}: {failure_reason}"
     artifact = json.dumps(
@@ -95,7 +95,7 @@ def retrieve_error_patterns(
     Returns:
         List of ErrorPattern, most recent first.
     """
-    from compgen.memory.schema import KnowledgeKind, ScopeKind
+    from xpu_rt.memory.schema import KnowledgeKind, ScopeKind
 
     items = memory.retrieve_knowledge(
         kind=KnowledgeKind.FAILURE_MODE,

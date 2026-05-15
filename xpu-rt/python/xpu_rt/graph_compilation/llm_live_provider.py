@@ -27,17 +27,17 @@ No multi-turn retry. (territory.)
 Built-in providers:
 
 - ``gemini`` — Google Gemini API adapter via the google-genai SDK.
-  Requires ``GEMMINI_API`` (CompGen's repo-local .env spelling) or
+  Requires ``GEMMINI_API`` (XPU-RT's repo-local .env spelling) or
   ``GOOGLE_API_KEY`` / ``GEMINI_API_KEY``. Every call is auto-recorded
-  by ``compgen.observability.gemini_usage`` (token + USD cost) via the
+  by ``xpu_rt.observability.gemini_usage`` (token + USD cost) via the
   installed SDK instrumentation.
 - ``anthropic`` — Anthropic Messages API adapter (urllib + stdlib only,
-  no SDK). Requires ``ANTHROPIC_API_KEY`` or ``COMPGEN_LLM_API_KEY``.
+  no SDK). Requires ``ANTHROPIC_API_KEY`` or ``XPU_RT_LLM_API_KEY``.
 - ``openai`` — OpenAI Chat Completions adapter with JSON-mode output.
-  Requires ``OPENAI_API_KEY`` or ``COMPGEN_LLM_API_KEY``.
-- ``env`` — reads ``COMPGEN_LLM_PROVIDER`` and dispatches.
+  Requires ``OPENAI_API_KEY`` or ``XPU_RT_LLM_API_KEY``.
+- ``env`` — reads ``XPU_RT_LLM_PROVIDER`` and dispatches.
 
-Note: there is intentionally no ``mock`` / stub provider. CompGen is
+Note: there is intentionally no ``mock`` / stub provider. XPU-RT is
 Claude-Code-first: for offline / no-key environments, use
 ``--selection-mode agent-file`` with Claude Code (or any external
 agent) writing a real ``agent_decision_response.json``. The
@@ -239,13 +239,13 @@ def _http_post_json(
 
 def _read_api_key(env_name_primary: str) -> str:
     """Resolve API key from environment. Order:
-    ``env_name_primary`` then ``COMPGEN_LLM_API_KEY``."""
+    ``env_name_primary`` then ``XPU_RT_LLM_API_KEY``."""
     key = os.environ.get(env_name_primary, "") or os.environ.get(
-        "COMPGEN_LLM_API_KEY", ""
+        "XPU_RT_LLM_API_KEY", ""
     )
     if not key:
         raise ProviderError(
-            f"missing API key: set {env_name_primary} or COMPGEN_LLM_API_KEY"
+            f"missing API key: set {env_name_primary} or XPU_RT_LLM_API_KEY"
         )
     return key
 
@@ -380,10 +380,10 @@ def _gemini_provider(
     """Google Gemini adapter using the google-genai SDK.
 
     The SDK is patched on first use so every call is recorded by
-    ``compgen.observability.gemini_usage``. Requests JSON-mime-type
+    ``xpu_rt.observability.gemini_usage``. Requests JSON-mime-type
     output (``application/json``) so the validator's parser sees clean
     JSON without code-fence stripping. Reads the API key via
-    ``compgen.llm._env.resolve_api_key`` which checks ``GOOGLE_API_KEY``,
+    ``xpu_rt.llm._env.resolve_api_key`` which checks ``GOOGLE_API_KEY``,
     ``GEMINI_API_KEY``, and the repo's ``GEMMINI_API`` (sic) variable.
     """
     try:
@@ -395,8 +395,8 @@ def _gemini_provider(
             "or use --llm-live-provider {anthropic,openai}."
         ) from exc
 
-    from compgen.llm._env import resolve_api_key
-    from compgen.observability.gemini_usage import (
+    from xpu_rt.llm._env import resolve_api_key
+    from xpu_rt.observability.gemini_usage import (
         install_genai_instrumentation,
         tracking_source,
     )
@@ -487,19 +487,19 @@ def _env_provider(
     model: str,
     timeout_sec: int,
 ) -> ProviderCallResult:
-    """Dispatch based on ``COMPGEN_LLM_PROVIDER``.
+    """Dispatch based on ``XPU_RT_LLM_PROVIDER``.
 
     Built-in real providers (``gemini``, ``anthropic``, ``openai``).
     Unsupported names raise ``ProviderError``. For offline / no-key
     workflows, use ``--selection-mode agent-file`` with Claude Code
     rather than this HTTP path.
     """
-    provider_name = os.environ.get("COMPGEN_LLM_PROVIDER", "")
+    provider_name = os.environ.get("XPU_RT_LLM_PROVIDER", "")
     if not provider_name:
         raise ProviderError(
-            "COMPGEN_LLM_PROVIDER not set; pass "
+            "XPU_RT_LLM_PROVIDER not set; pass "
             "--llm-live-provider {gemini,anthropic,openai} or set "
-            "COMPGEN_LLM_PROVIDER. For offline / Claude-Code-driven "
+            "XPU_RT_LLM_PROVIDER. For offline / Claude-Code-driven "
             "selection use --selection-mode agent-file instead."
         )
     fn = _PROVIDERS.get(provider_name)
@@ -507,7 +507,7 @@ def _env_provider(
         raise ProviderError(
             f"unsupported provider {provider_name!r}; built-ins: "
             f"gemini, anthropic, openai. Register additional providers "
-            f"via compgen.graph_compilation.llm_live_provider.register_provider()."
+            f"via xpu_rt.graph_compilation.llm_live_provider.register_provider()."
         )
     return fn(
         request=request, llm_graph_view=llm_graph_view,
@@ -536,7 +536,7 @@ def call_provider(
 ) -> ProviderCallResult:
     """Top-level provider-call entry point.
 
-    ``provider_name="env"`` reads ``COMPGEN_LLM_PROVIDER``; other
+    ``provider_name="env"`` reads ``XPU_RT_LLM_PROVIDER``; other
     names dispatch directly. Raises ``ProviderError`` on
     unsupported names or hard provider failures.
     """
@@ -557,14 +557,14 @@ def call_provider(
     # default). For anthropic/openai/env, the caller must supply a
     # model explicitly to avoid silently picking a wrong one.
     if model is None:
-        model = os.environ.get("COMPGEN_LLM_MODEL", "")
+        model = os.environ.get("XPU_RT_LLM_MODEL", "")
         if not model:
             if provider_name == "gemini":
                 model = "gemini-2.5-flash"
             else:
                 raise ProviderError(
                     "no model specified: pass --llm-live-model or set "
-                    "COMPGEN_LLM_MODEL"
+                    "XPU_RT_LLM_MODEL"
                 )
 
     result = fn(

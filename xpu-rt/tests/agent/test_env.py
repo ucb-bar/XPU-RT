@@ -5,7 +5,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from compgen.agent.env import (
+from xpu_rt.agent.env import (
     AnalyzeAction,
     ApplyPassAction,
     AssignDeviceAction,
@@ -23,16 +23,16 @@ from compgen.agent.env import (
     SolveAction,
     TileAction,
 )
-from compgen.agent.serialize import (
+from xpu_rt.agent.serialize import (
     observation_to_dict,
     observation_to_prompt,
     parse_action,
     result_to_prompt,
 )
-from compgen.capture.torch_export import capture_frontend_artifact, capture_model
-from compgen.ir.payload.import_fx import fx_to_xdsl
-from compgen.packs import PackContextSummary, default_pack_root, load_pack
-from compgen.targets.schema import load_profile
+from xpu_rt.capture.torch_export import capture_frontend_artifact, capture_model
+from xpu_rt.ir.payload.import_fx import fx_to_xdsl
+from xpu_rt.packs import PackContextSummary, default_pack_root, load_pack
+from xpu_rt.targets.schema import load_profile
 
 EXAMPLES = Path(__file__).parent.parent.parent / "examples"
 
@@ -288,13 +288,13 @@ def test_observation_exposes_pack_context() -> None:
             generation_apertures=("tile_schedule_generation",),
             available_profilers=("iree_tracy",),
             benchmark_targets=("cuda_tile_smoke",),
-            integration_branch="compgen/integration/cuda_tile/test",
+            integration_branch="xpu_rt/integration/cuda_tile/test",
         ),
     )
 
     assert obs.active_packs == ("cuda_tile", "iree_tracy")
     assert "PACKS:" in observation_to_prompt(obs)
-    assert observation_to_dict(obs)["packs"]["integration_branch"] == "compgen/integration/cuda_tile/test"
+    assert observation_to_dict(obs)["packs"]["integration_branch"] == "xpu_rt/integration/cuda_tile/test"
 
 
 def test_pack_governance_blocks_sealed_semantics_generation() -> None:

@@ -1,7 +1,7 @@
 """Tiling stage template — apply data tiling decisions within dispatch groups.
 
 For targets that need explicit tiling (GPU thread blocks, systolic arrays,
-cache tiles).  Assigns ``compgen.tile_sizes`` attributes to compute-heavy ops.
+cache tiles).  Assigns ``xpu_rt.tile_sizes`` attributes to compute-heavy ops.
 
 Reuses: agent/env.py TileAction logic, ir/recipe/ops.py SetTileParams.
 """
@@ -13,10 +13,10 @@ from pathlib import Path
 from xdsl.dialects.builtin import ModuleOp, StringAttr
 from xdsl.dialects.func import FuncOp, ReturnOp
 
-from compgen.stages.base import CompilationStage, StageContract
-from compgen.targets.schema import TargetProfile
+from xpu_rt.stages.base import CompilationStage, StageContract
+from xpu_rt.targets.schema import TargetProfile
 
-TILE_SIZES_ATTR = "compgen.tile_sizes"
+TILE_SIZES_ATTR = "xpu_rt.tile_sizes"
 
 
 class TilingStage(CompilationStage):

@@ -2,9 +2,9 @@
 
 Parallel to :mod:`baremetal_plugin`. Walks the post-recipe payload
 IR, annotates every Triton-eligible op with
-``compgen.library_dispatch="triton"``, then runs the existing
-:func:`compgen.runtime.triton_emitter.emit_triton_kernels` which
-writes ``kernels/compgen_*.py`` plus an ``emission_manifest.json``.
+``xpu_rt.library_dispatch="triton"``, then runs the existing
+:func:`xpu_rt.runtime.triton_emitter.emit_triton_kernels` which
+writes ``kernels/xpu_rt_*.py`` plus an ``emission_manifest.json``.
 
 The annotation step is a no-op when ops already carry the attribute
 (e.g. set by an earlier stage plugin), so re-running is idempotent.
@@ -18,7 +18,7 @@ from pathlib import Path
 import structlog
 from xdsl.dialects.builtin import ModuleOp, StringAttr
 
-from compgen.runtime.triton_emitter import emit_triton_kernels
+from xpu_rt.runtime.triton_emitter import emit_triton_kernels
 
 log = structlog.get_logger()
 
@@ -28,7 +28,7 @@ _TRITON_ELIGIBLE_OP_NAMES: frozenset[str] = frozenset(
         "linalg.matmul",
         "linalg.batch_matmul",
         "linalg.softmax",
-        "compgen.linalg_ext.softmax",
+        "xpu_rt.linalg_ext.softmax",
     }
 )
 
@@ -43,7 +43,7 @@ class TritonBundleResult:
 
 
 def _ensure_dispatch_attr(module: ModuleOp) -> int:
-    """Set ``compgen.library_dispatch="triton"`` on every eligible op.
+    """Set ``xpu_rt.library_dispatch="triton"`` on every eligible op.
 
     Returns the number of ops newly annotated.
     """
@@ -51,9 +51,9 @@ def _ensure_dispatch_attr(module: ModuleOp) -> int:
     for op in module.walk():
         if op.name not in _TRITON_ELIGIBLE_OP_NAMES:
             continue
-        if "compgen.library_dispatch" in op.attributes:
+        if "xpu_rt.library_dispatch" in op.attributes:
             continue
-        op.attributes["compgen.library_dispatch"] = StringAttr("triton")
+        op.attributes["xpu_rt.library_dispatch"] = StringAttr("triton")
         added += 1
     return added
 

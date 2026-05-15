@@ -1,8 +1,8 @@
 """Tests for ir/event/lower.py — GraphOp → MegakernelGraph lowering.
 
 Builds IR modules programmatically (no MLIR text roundtrip required),
-lowers them via :func:`compgen.ir.event.lower.lower_event_module` and
-:func:`compgen.ir.event.lower.lower_graph_op`, and verifies both:
+lowers them via :func:`xpu_rt.ir.event.lower.lower_event_module` and
+:func:`xpu_rt.ir.event.lower.lower_graph_op`, and verifies both:
 
 - **Structural correctness** — EventTensor shapes, DeviceCall edges,
   policy/sm_count all come through.
@@ -20,12 +20,12 @@ import threading
 
 import pytest
 import torch
-from compgen.ir.event.attrs import (
+from xpu_rt.ir.event.attrs import (
     EventCoordAttr,
     EventTensorTypeAttr,
 )
-from compgen.ir.event.lower import lower_event_module, lower_graph_op
-from compgen.ir.event.ops import (
+from xpu_rt.ir.event.lower import lower_event_module, lower_graph_op
+from xpu_rt.ir.event.ops import (
     CallDeviceOp,
     EventTensorOp,
     GraphOp,
@@ -33,7 +33,7 @@ from compgen.ir.event.ops import (
     TriggerOp,
     UpdateOp,
 )
-from compgen.runtime.event_tensor import EventTensor
+from xpu_rt.runtime.event_tensor import EventTensor
 from xdsl.dialects.builtin import (
     ArrayAttr,
     IntegerAttr,

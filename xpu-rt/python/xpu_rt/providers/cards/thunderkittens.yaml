@@ -4,7 +4,7 @@ integration_level: probe
 target_families: [cuda]
 contract_kinds: [matmul, attention, fused_region]
 emits: [cu_source, cubin]
-entrypoint: compgen.providers.adapters.thunderkittens:ThunderKittensProvider
+entrypoint: xpu_rt.providers.adapters.thunderkittens:ThunderKittensProvider
 paper_claimable: false
 required_env: [THUNDERKITTENS_ROOT]
 required_commands: [nvcc]

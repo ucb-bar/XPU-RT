@@ -6,9 +6,9 @@ import sys
 from pathlib import Path
 
 import torch
-from compgen.agent.analyzer import NetworkAnalyzer
-from compgen.agent.patterns import extract_fx_nodes, match_patterns
-from compgen.targets.schema import load_profile
+from xpu_rt.agent.analyzer import NetworkAnalyzer
+from xpu_rt.agent.patterns import extract_fx_nodes, match_patterns
+from xpu_rt.targets.schema import load_profile
 
 EXAMPLES = Path(__file__).parent.parent.parent / "examples"
 

@@ -6,8 +6,8 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
-from compgen.semantic.synthesis.guard_lang import eval_guard
-from compgen.semantic.synthesis.registry import GuardRegistry
+from xpu_rt.semantic.synthesis.guard_lang import eval_guard
+from xpu_rt.semantic.synthesis.registry import GuardRegistry
 
 
 @dataclass(frozen=True)

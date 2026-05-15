@@ -6,7 +6,7 @@ import math
 
 import torch
 import torch.nn as nn
-from compgen.quantization.attention import (
+from xpu_rt.quantization.attention import (
     ExportableFP8Attention,
     FP8AttentionConfig,
     replace_sdpa_with_fp8_attention,
@@ -82,7 +82,7 @@ class TestSoftmaxBF16:
             def forward(self, query, key, value, **kwargs):
                 head_dim = query.size(-1)
                 scale = 1.0 / math.sqrt(head_dim)
-                from compgen.quantization.fp8_ops import dequantize_fp8_e4m3, quantize_fp8_e4m3_po2
+                from xpu_rt.quantization.fp8_ops import dequantize_fp8_e4m3, quantize_fp8_e4m3_po2
 
                 q_fp8, q_s = quantize_fp8_e4m3_po2(query)
                 q = dequantize_fp8_e4m3(q_fp8, q_s, torch.bfloat16)

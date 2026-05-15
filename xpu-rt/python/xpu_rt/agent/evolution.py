@@ -21,7 +21,7 @@ from typing import Any
 
 import structlog
 
-from compgen.agent.env import (
+from xpu_rt.agent.env import (
     Action,
     CheckpointAction,
     CompilerEnv,
@@ -29,8 +29,8 @@ from compgen.agent.env import (
     NoopAction,
     RollbackAction,
 )
-from compgen.llm.base import CompGenLLMProtocol, GenerationRequest, LLMConfig, Objective, PromptContext
-from compgen.targets.schema import TargetProfile
+from xpu_rt.llm.base import CompGenLLMProtocol, GenerationRequest, LLMConfig, Objective, PromptContext
+from xpu_rt.targets.schema import TargetProfile
 
 log = structlog.get_logger()
 
@@ -298,7 +298,7 @@ class EvolutionaryOptimizer:
 
     def _action_type_to_action(self, action_type: str) -> Action:
         """Convert action type string to concrete Action."""
-        from compgen.agent.env import AssignDeviceAction, FuseAction, TileAction
+        from xpu_rt.agent.env import AssignDeviceAction, FuseAction, TileAction
 
         if action_type == "eqsat":
             return EqSatAction(rule_categories=("algebraic", "fusion"))

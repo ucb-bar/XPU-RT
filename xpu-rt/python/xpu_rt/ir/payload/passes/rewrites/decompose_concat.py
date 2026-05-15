@@ -1,13 +1,13 @@
-"""``decompose_concat`` -- lower ``compgen.tensor_ext.concat`` into
+"""``decompose_concat`` -- lower ``xpu_rt.tensor_ext.concat`` into
 ``tensor.empty`` + a chain of ``tensor.insert_slice``.
 
-Reconstruction of IREE's ``DecomposeConcatPass`` as a CompGen
+Reconstruction of IREE's ``DecomposeConcatPass`` as a XPU-RT
 PatternRewriter. Zero references to IREE at runtime; this module
 owns the rewrite.
 
 Semantics:
 
-    %r = compgen.tensor_ext.concat dim(d) %a, %b, %c
+    %r = xpu_rt.tensor_ext.concat dim(d) %a, %b, %c
         : (tensor<L1xMxNxf32>, tensor<L2xMxNxf32>, tensor<L3xMxNxf32>)
         -> tensor<L1+L2+L3 x M x N xf32>
 
@@ -30,7 +30,7 @@ the concat op in place; it's a no-op, not a failure.
 LLM-tool signature (for registration by the agent layer):
 
     tool_name="decompose_concat"
-    wraps_pass="CompGen:DecomposeConcat"
+    wraps_pass="XPU-RT:DecomposeConcat"
     invent_slot="pattern_library/structural_lowering"
     policy="ReplaceEveryStaticConcat"
 """
@@ -50,8 +50,8 @@ from xdsl.pattern_rewriter import (
     op_type_rewrite_pattern,
 )
 
-from compgen.ir.payload.passes._shape_utils import static_shape_or_none
-from compgen.ir.tensor_ext import ConcatOp
+from xpu_rt.ir.payload.passes._shape_utils import static_shape_or_none
+from xpu_rt.ir.tensor_ext import ConcatOp
 
 
 @dataclass
@@ -70,7 +70,7 @@ class DecomposeConcatStats:
 
 
 class DecomposeConcatPattern(RewritePattern):
-    """Match one ``compgen.tensor_ext.concat`` and lower it."""
+    """Match one ``xpu_rt.tensor_ext.concat`` and lower it."""
 
     def __init__(self, stats: DecomposeConcatStats | None = None) -> None:
         self.stats = stats if stats is not None else DecomposeConcatStats()

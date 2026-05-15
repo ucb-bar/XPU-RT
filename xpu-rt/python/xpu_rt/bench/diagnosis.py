@@ -29,8 +29,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 
-from compgen.bench.kernel_bench import BenchResult
-from compgen.kernels.contract_v3 import (
+from xpu_rt.bench.kernel_bench import BenchResult
+from xpu_rt.kernels.contract_v3 import (
     HardwareEnvelope,
     KernelArchetype,
     KernelContractV3,

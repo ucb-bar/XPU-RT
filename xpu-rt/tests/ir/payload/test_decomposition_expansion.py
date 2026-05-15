@@ -10,7 +10,7 @@ the decomposition function directly, and asserts the result carries:
 from __future__ import annotations
 
 import pytest
-from compgen.ir.payload.decompositions import (
+from xpu_rt.ir.payload.decompositions import (
     DECOMPOSITION_TABLE,
     decompose_bmm,
     decompose_cat,

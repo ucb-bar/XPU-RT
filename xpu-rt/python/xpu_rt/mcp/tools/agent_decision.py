@@ -1,28 +1,28 @@
 """MCP tools for the agent-decision protocol (Claude-Code-first).
 
 These tools let Claude Code (or any MCP client — Codex etc.) drive a
-full CompGen compilation end-to-end without reaching out to an
+full XPU-RT compilation end-to-end without reaching out to an
 external LLM provider. The agent reads the bounded view, picks a
 candidate, and the compiler validates + commits the choice through
 the unchanged 11-check validator.
 
 Tools exposed:
 
-- ``compgen_emit_agent_decision_request`` — run the pipeline up to
+- ``xpu_rt_emit_agent_decision_request`` — run the pipeline up to
   ``--stop-after agent-decision-request`` and return the bounded view
   (request + llm_graph_view summary + cost previews for legal
   candidates + greedy's pick).
-- ``compgen_commit_agent_decision_response`` — given a response dict,
+- ``xpu_rt_commit_agent_decision_response`` — given a response dict,
   re-run the pipeline with ``--selection-mode agent-file`` and report
   what landed (validation, recipe.mlir excerpt, downstream stage
   status). On failure, returns typed retry hints
   (``failed_stage``, ``failed_check``, ``failed_candidate_id``,
   ``retry_options``) so the agent can pick a different candidate
   without re-reading files.
-- ``compgen_inspect_pipeline_run`` — read-only summary of a finished
+- ``xpu_rt_inspect_pipeline_run`` — read-only summary of a finished
   run directory: per-stage status, agent decision verdict, redaction
   audit, any failure reasons.
-- ``compgen_pipeline_status`` — mid-run progress reader. Reads
+- ``xpu_rt_pipeline_status`` — mid-run progress reader. Reads
   ``stage_ledger.jsonl`` and returns the latest event per stage so the
   agent can give the user updates while a long compile is in flight.
 
@@ -32,7 +32,7 @@ Implementation notes:
   (``run_graph_compilation`` direct call) when feasible — saves the
   Python startup cost on each invocation. Falls back to a subprocess
   with **streamed stderr** (written to a tail file at
-  ``<repo>/.compgen/last_run.stderr.log``) only when the caller forces
+  ``<repo>/.xpu_rt/last_run.stderr.log``) only when the caller forces
   it via ``force_subprocess=True`` for isolation.
 - Tools take a ``SessionManager`` to satisfy the MCP server contract
   but do NOT use session state — the ``run_dir`` path is the state.
@@ -49,7 +49,7 @@ import threading
 from pathlib import Path
 from typing import Any
 
-from compgen.mcp.session import SessionManager
+from xpu_rt.mcp.session import SessionManager
 
 
 # --------------------------------------------------------------------------- #
@@ -57,8 +57,8 @@ from compgen.mcp.session import SessionManager
 # --------------------------------------------------------------------------- #
 
 
-_STDERR_TAIL_REL = ".compgen/last_run.stderr.log"
-_STDOUT_TAIL_REL = ".compgen/last_run.stdout.log"
+_STDERR_TAIL_REL = ".xpu_rt/last_run.stderr.log"
+_STDOUT_TAIL_REL = ".xpu_rt/last_run.stdout.log"
 _TAIL_BYTES = 4_000
 
 
@@ -91,7 +91,7 @@ def _read_jsonl(path: Path) -> list[dict[str, Any]]:
 
 
 def _resolve_repo_root() -> Path:
-    # python/compgen/mcp/tools/agent_decision.py → 4 parents up = repo root.
+    # python/xpu_rt/mcp/tools/agent_decision.py → 4 parents up = repo root.
     return Path(__file__).resolve().parents[4]
 
 
@@ -121,7 +121,7 @@ def _run_in_process(
     (``RuntimeError`` etc.), 2 on unexpected exception.
     """
     try:
-        from compgen.graph_compilation.run import run_graph_compilation
+        from xpu_rt.graph_compilation.run import run_graph_compilation
 
         kwargs: dict[str, Any] = {
             "model_config_path": Path(model_config),
@@ -158,13 +158,13 @@ def _run_subprocess_with_tail(
 ) -> dict[str, Any]:
     """Invoke the CLI as a subprocess, streaming stderr to a tail file.
 
-    The tail file at ``<cwd>/.compgen/last_run.stderr.log`` is updated
-    line-by-line so ``compgen_pipeline_status`` can read mid-run. Only
+    The tail file at ``<cwd>/.xpu_rt/last_run.stderr.log`` is updated
+    line-by-line so ``xpu_rt_pipeline_status`` can read mid-run. Only
     used as a fallback when ``force_subprocess=True``; the in-process
     path is preferred.
     """
-    cmd = [sys.executable, "-m", "compgen.graph_compilation", *args]
-    tail_dir = cwd / ".compgen"
+    cmd = [sys.executable, "-m", "xpu_rt.graph_compilation", *args]
+    tail_dir = cwd / ".xpu_rt"
     tail_dir.mkdir(parents=True, exist_ok=True)
     stderr_tail = tail_dir / "last_run.stderr.log"
     stdout_tail = tail_dir / "last_run.stdout.log"
@@ -299,7 +299,7 @@ def _detect_failure_with_retry_hint(run_dir: Path) -> dict[str, Any] | None:
 # --------------------------------------------------------------------------- #
 
 
-def compgen_emit_agent_decision_request(
+def xpu_rt_emit_agent_decision_request(
     sm: SessionManager,  # noqa: ARG001 - filesystem-stateful, no session state
     *,
     model_config: str,
@@ -308,7 +308,7 @@ def compgen_emit_agent_decision_request(
     timeout_sec: int = 600,
     force_subprocess: bool = False,
 ) -> dict[str, Any]:
-    """Run the CompGen pipeline up to ``agent-decision-request`` and
+    """Run the XPU-RT pipeline up to ``agent-decision-request`` and
     return the bounded view the agent should reason over.
 
     Args:
@@ -478,7 +478,7 @@ def compgen_emit_agent_decision_request(
 # --------------------------------------------------------------------------- #
 
 
-def compgen_commit_agent_decision_response(
+def xpu_rt_commit_agent_decision_response(
     sm: SessionManager,  # noqa: ARG001
     *,
     model_config: str,
@@ -623,7 +623,7 @@ def compgen_commit_agent_decision_response(
 # --------------------------------------------------------------------------- #
 
 
-def compgen_inspect_pipeline_run(
+def xpu_rt_inspect_pipeline_run(
     sm: SessionManager,  # noqa: ARG001
     *,
     out_dir: str,
@@ -660,7 +660,7 @@ def compgen_inspect_pipeline_run(
     validate_overall: str | None = None
     validate_failures: list[str] = []
     try:
-        from compgen.graph_compilation.validate import validate_run
+        from xpu_rt.graph_compilation.validate import validate_run
 
         rep = validate_run(out_path)
         validate_overall = rep.overall
@@ -720,13 +720,13 @@ def compgen_inspect_pipeline_run(
 # --------------------------------------------------------------------------- #
 
 
-def compgen_pipeline_status(
+def xpu_rt_pipeline_status(
     sm: SessionManager,  # noqa: ARG001
     *,
     out_dir: str,
     tail_lines: int = 20,
 ) -> dict[str, Any]:
-    """Read mid-run progress from a CompGen run directory.
+    """Read mid-run progress from a XPU-RT run directory.
 
     Returns the latest event per stage from ``stage_ledger.jsonl``,
     plus tail lines of the most recent CLI subprocess (if any). Use
@@ -819,20 +819,20 @@ _RESPONSE_SCHEMA: dict[str, Any] = {
 
 AGENT_DECISION_TOOLS: list[dict[str, Any]] = [
     {
-        "name": "compgen_emit_agent_decision_request",
+        "name": "xpu_rt_emit_agent_decision_request",
         "description": (
-            "Run the CompGen pipeline up to --stop-after "
+            "Run the XPU-RT pipeline up to --stop-after "
             "agent-decision-request and return the bounded view: "
             "candidate_ids_allowed, per-region brief, cost previews "
             "for legal SetTileParams candidates, and greedy's pick. "
             "Step 1 of a Claude-Code-driven (or Codex-driven) "
             "compilation: read the bounded view, reason about "
-            "candidates, then call compgen_commit_agent_decision_response. "
+            "candidates, then call xpu_rt_commit_agent_decision_response. "
             "Runs in-process by default (saves Python startup); pass "
             "force_subprocess=true for isolation."
         ),
         "phase": "lifecycle",
-        "handler": compgen_emit_agent_decision_request,
+        "handler": xpu_rt_emit_agent_decision_request,
         "input_schema": {
             "type": "object",
             "properties": {
@@ -866,7 +866,7 @@ AGENT_DECISION_TOOLS: list[dict[str, Any]] = [
         },
     },
     {
-        "name": "compgen_commit_agent_decision_response",
+        "name": "xpu_rt_commit_agent_decision_response",
         "description": (
             "Commit the agent's pick. Re-runs the pipeline with "
             "--selection-mode agent-file using the supplied response. "
@@ -878,7 +878,7 @@ AGENT_DECISION_TOOLS: list[dict[str, Any]] = [
             "pick a different candidate without re-reading files."
         ),
         "phase": "transform",
-        "handler": compgen_commit_agent_decision_response,
+        "handler": xpu_rt_commit_agent_decision_response,
         "input_schema": {
             "type": "object",
             "properties": {
@@ -902,16 +902,16 @@ AGENT_DECISION_TOOLS: list[dict[str, Any]] = [
         },
     },
     {
-        "name": "compgen_inspect_pipeline_run",
+        "name": "xpu_rt_inspect_pipeline_run",
         "description": (
-            "Read-only health summary of a CompGen run directory. "
+            "Read-only health summary of a XPU-RT run directory. "
             "Returns per-stage status, agent-decision validation "
             "verdict, redaction audit status, downstream reports, "
             "validate_run's R001-R012 manifest hash-chain result, "
             "and (on failure) a typed retry_hint."
         ),
         "phase": "inspect",
-        "handler": compgen_inspect_pipeline_run,
+        "handler": xpu_rt_inspect_pipeline_run,
         "input_schema": {
             "type": "object",
             "properties": {
@@ -921,7 +921,7 @@ AGENT_DECISION_TOOLS: list[dict[str, Any]] = [
         },
     },
     {
-        "name": "compgen_pipeline_status",
+        "name": "xpu_rt_pipeline_status",
         "description": (
             "Mid-run progress reader. Reads stage_ledger.jsonl + "
             "run_manifest.json (if written) and the last subprocess's "
@@ -930,7 +930,7 @@ AGENT_DECISION_TOOLS: list[dict[str, Any]] = [
             "M-12...'). Non-blocking; returns whatever's on disk now."
         ),
         "phase": "inspect",
-        "handler": compgen_pipeline_status,
+        "handler": xpu_rt_pipeline_status,
         "input_schema": {
             "type": "object",
             "properties": {

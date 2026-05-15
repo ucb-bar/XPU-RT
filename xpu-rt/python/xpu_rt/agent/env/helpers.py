@@ -15,9 +15,9 @@ from xdsl.dialects.func import CallOp
 from xdsl.dialects.linalg import MatmulOp
 from xdsl.ir import Operation
 
-from compgen.targets.schema import TargetProfile
+from xpu_rt.targets.schema import TargetProfile
 
-from compgen.agent.env.actions import (
+from xpu_rt.agent.env.actions import (
     Action,
     AnalyzeAction,
     ApplyPassAction,
@@ -52,7 +52,7 @@ from compgen.agent.env.actions import (
     SolveAction,
     TileAction,
 )
-from compgen.agent.env.observations import RegionInfo
+from xpu_rt.agent.env.observations import RegionInfo
 
 # ============================================================================
 # The Environment
@@ -62,7 +62,7 @@ from compgen.agent.env.observations import RegionInfo
 def _extract_regions(module: ModuleOp, target: TargetProfile) -> list[RegionInfo]:
     """Extract structured region info from the IR module.
 
-    Picks up ops with compgen.region_id AND significant unlabeled ops
+    Picks up ops with xpu_rt.region_id AND significant unlabeled ops
     (like GenericOp after generalization). Auto-assigns region IDs to
     unlabeled ops so the agent always has a complete view.
     """
@@ -79,7 +79,7 @@ def _extract_regions(module: ModuleOp, target: TargetProfile) -> list[RegionInfo
     counters: dict[str, int] = {}
 
     for op in module.walk():
-        rid_attr = op.attributes.get("compgen.region_id")
+        rid_attr = op.attributes.get("xpu_rt.region_id")
         if rid_attr is not None:
             ops_with_rid.append((rid_attr.data, op))  # type: ignore[attr-defined]
         elif isinstance(op, significant_types):
@@ -88,7 +88,7 @@ def _extract_regions(module: ModuleOp, target: TargetProfile) -> list[RegionInfo
             count = counters.get(op_name, 0)
             rid = f"{op_name}_{count}"
             counters[op_name] = count + 1
-            op.attributes["compgen.region_id"] = StringAttr(rid)
+            op.attributes["xpu_rt.region_id"] = StringAttr(rid)
             ops_with_rid.append((rid, op))
 
     for rid, op in ops_with_rid:

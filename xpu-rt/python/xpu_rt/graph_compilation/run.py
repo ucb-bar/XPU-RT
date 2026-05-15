@@ -26,8 +26,8 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
-from compgen.graph_compilation.artifacts import RunManifest, StageRecord
-from compgen.graph_compilation.capture import ModelConfig, TargetConfig, run_graph_capture
+from xpu_rt.graph_compilation.artifacts import RunManifest, StageRecord
+from xpu_rt.graph_compilation.capture import ModelConfig, TargetConfig, run_graph_capture
 
 # Stop-after points exposed at the CLI. Each value names the *last* stage to
 # execute; descriptive names matching the on-disk directory layout.
@@ -94,7 +94,7 @@ def _emit_closure_proof_reports(run_dir: Path, model_id: str, target_id: str) ->
     - ``closure_report.json`` — top-level pass/fail with the
       ``extensions_used`` list a downstream auditor can pin against.
     """
-    from compgen.graph_compilation.artifacts import stage_dir
+    from xpu_rt.graph_compilation.artifacts import stage_dir
 
     gd_dir = stage_dir(run_dir, "gap_discovery")
     summary_path = gd_dir / "gap_discovery_summary.json"
@@ -216,11 +216,11 @@ def run_graph_analysis_stage(
     memory tiers, numerical budgets). When omitted, the default host_cpu
     profile is used.
     """
-    from compgen.graph_compilation.action_space import build_action_space
-    from compgen.graph_compilation.artifacts import ArtifactRef
-    from compgen.graph_compilation.hashing import sha256_file, sha256_tree
-    from compgen.graph_compilation.region_dossier import build_region_dossiers
-    from compgen.graph_compilation.region_map import build_graph_analysis
+    from xpu_rt.graph_compilation.action_space import build_action_space
+    from xpu_rt.graph_compilation.artifacts import ArtifactRef
+    from xpu_rt.graph_compilation.hashing import sha256_file, sha256_tree
+    from xpu_rt.graph_compilation.region_dossier import build_region_dossiers
+    from xpu_rt.graph_compilation.region_map import build_graph_analysis
 
     if target_yaml_path is None:
         repo_root = Path(__file__).resolve().parents[3]
@@ -348,21 +348,21 @@ def run_graph_compilation(
     _resume_skip_early = resume_from == "kernel-codegen-response"
 
     out_dir = Path(out_dir).resolve()
-    # COMPGEN_FORCE_REBUILD=1 inverts the default. By default
+    # XPU_RT_FORCE_REBUILD=1 inverts the default. By default
     # run_graph_compilation rm-rfs out_dir for convenience; under
-    # COMPGEN_FORCE_REBUILD we refuse to silently destroy data and
+    # XPU_RT_FORCE_REBUILD we refuse to silently destroy data and
     # require the operator to clean up first. This is the audit-mode
     # safety check: an audit run that overwrote a prior run would
     # confuse cold/warm reasoning.
     # resume mode preserves out_dir; the operator-committed
     # response, attempts trail, and certificates survive across the
     # pipeline-restart boundary.
-    _force_rebuild = os.environ.get("COMPGEN_FORCE_REBUILD") == "1"
+    _force_rebuild = os.environ.get("XPU_RT_FORCE_REBUILD") == "1"
     if out_dir.exists():
         if _force_rebuild and any(out_dir.iterdir()):
-            from compgen.audit.errors import AuditError
+            from xpu_rt.audit.errors import AuditError
             raise AuditError(
-                f"COMPGEN_FORCE_REBUILD=1 set, but {out_dir} is non-empty. "
+                f"XPU_RT_FORCE_REBUILD=1 set, but {out_dir} is non-empty. "
                 "Either rm -rf the directory first, or unset the env var."
             )
         if not _force_rebuild and not _resume_skip_early:
@@ -402,7 +402,7 @@ def run_graph_compilation(
     # diff names exactly the modules this run loaded. The snapshot is
     # cheap (one sorted list comprehension) and gives every run an
     # auditable import provenance.
-    from compgen.audit.import_provenance import ImportSnapshot
+    from xpu_rt.audit.import_provenance import ImportSnapshot
     _import_snapshot_before = ImportSnapshot.take("before")
 
     ledger_path = out_dir / "stage_ledger.jsonl"
@@ -445,7 +445,7 @@ def run_graph_compilation(
         "gap-discovery", "gap-closure",
     ) and not _resume_skip_early
     if needs_lowering:
-        from compgen.graph_compilation.lower import run_payload_lowering
+        from xpu_rt.graph_compilation.lower import run_payload_lowering
 
         _append_ledger(ledger_path, stage_id="payload_lowering", event="start")
         lowering_stage, _module_results = run_payload_lowering(
@@ -474,11 +474,11 @@ def run_graph_compilation(
         # Fix: after strict_gate writes, recompute output_hash via the
         # same ``sha256_tree(01_payload_lowering/)`` and replace the
         # stage record so the chain stays monotonic.
-        from compgen.graph_compilation.strict_gate_report import (
+        from xpu_rt.graph_compilation.strict_gate_report import (
             build_strict_gate_report,
         )
         import dataclasses as _dataclasses
-        from compgen.graph_compilation.hashing import sha256_tree as _sha256_tree
+        from xpu_rt.graph_compilation.hashing import sha256_tree as _sha256_tree
 
         try:
             sg_result = build_strict_gate_report(out_dir)
@@ -543,10 +543,10 @@ def run_graph_compilation(
         "gap-discovery", "gap-closure",
     ) and not _resume_skip_early
     if needs_recipe_planning:
-        from compgen.graph_compilation.recipe_planning import (
+        from xpu_rt.graph_compilation.recipe_planning import (
             run_recipe_planning,
         )
-        from compgen.graph_compilation.recipe_planning import (
+        from xpu_rt.graph_compilation.recipe_planning import (
             stage_record as recipe_stage_record,
         )
 
@@ -570,7 +570,7 @@ def run_graph_compilation(
             "real-transform-eligibility", "real-set-tile-transform", "real-transform-differential", "cost-preview-v2", "agent-decision-request", "kernel-specialization-request", "kernel-codegen-request", "kernel-auction", "execution-plan-emit", "glue-emit", "glue-differential",
             "gap-discovery", "gap-closure",
         ):
-            from compgen.graph_compilation.recipe_gate import run_recipe_gate
+            from xpu_rt.graph_compilation.recipe_gate import run_recipe_gate
 
             _append_ledger(
                 ledger_path, stage_id="recipe_planning",
@@ -589,7 +589,7 @@ def run_graph_compilation(
             "real-set-tile-transform", "real-transform-differential", "cost-preview-v2", "agent-decision-request", "kernel-specialization-request", "kernel-codegen-request", "kernel-auction", "execution-plan-emit", "glue-emit", "glue-differential",
             "gap-discovery", "gap-closure",
         ):
-            from compgen.graph_compilation.recipe_lowering import (
+            from xpu_rt.graph_compilation.recipe_lowering import (
                 run_recipe_lowering,
             )
 
@@ -611,7 +611,7 @@ def run_graph_compilation(
             "real-transform-eligibility", "real-set-tile-transform", "real-transform-differential", "cost-preview-v2", "agent-decision-request", "kernel-specialization-request", "kernel-codegen-request", "kernel-auction", "execution-plan-emit", "glue-emit", "glue-differential",
             "gap-discovery", "gap-closure"
         ):
-            from compgen.graph_compilation.post_lowering import (
+            from xpu_rt.graph_compilation.post_lowering import (
                 run_post_lowering_verification,
             )
 
@@ -628,7 +628,7 @@ def run_graph_compilation(
             # post-lowering report so the agent's pass-card
             # ``verification: [structural]`` rung is checkable.
             try:
-                from compgen.passes.verification import (
+                from xpu_rt.passes.verification import (
                     emit_certificate_from_post_lowering_report,
                 )
 
@@ -650,7 +650,7 @@ def run_graph_compilation(
                     note=f"structural cert error {type(exc).__name__}: {exc}",
                 )
         # differential / reference verification runs as a sub-step
-        # when stop_after >= differential-verification. Strips compgen
+        # when stop_after >= differential-verification. Strips xpu_rt
         # metadata and proves the transformation is semantically
         # inert; re-checks Stage-0 goldens; validates contract drafts.
         if stop_after in (
@@ -658,7 +658,7 @@ def run_graph_compilation(
             "real-set-tile-transform", "real-transform-differential", "cost-preview-v2", "agent-decision-request", "kernel-specialization-request", "kernel-codegen-request", "kernel-auction", "execution-plan-emit", "glue-emit", "glue-differential",
             "gap-discovery", "gap-closure"
         ):
-            from compgen.graph_compilation.differential_verification import (
+            from xpu_rt.graph_compilation.differential_verification import (
                 run_differential_verification,
             )
 
@@ -675,7 +675,7 @@ def run_graph_compilation(
             )
             # differential certificate wrapper.
             try:
-                from compgen.passes.verification import (
+                from xpu_rt.passes.verification import (
                     emit_certificate_from_differential_report,
                 )
 
@@ -704,7 +704,7 @@ def run_graph_compilation(
             "real-transform-eligibility", "real-set-tile-transform", "real-transform-differential", "cost-preview-v2", "agent-decision-request", "kernel-specialization-request", "kernel-codegen-request", "kernel-auction", "execution-plan-emit", "glue-emit", "glue-differential",
             "gap-discovery", "gap-closure"
         ):
-            from compgen.graph_compilation.real_transform_eligibility import (
+            from xpu_rt.graph_compilation.real_transform_eligibility import (
                 run_real_transform_eligibility,
             )
 
@@ -724,7 +724,7 @@ def run_graph_compilation(
         if stop_after in (
             "real-set-tile-transform", "real-transform-differential", "cost-preview-v2", "agent-decision-request", "kernel-specialization-request", "kernel-codegen-request", "kernel-auction", "execution-plan-emit", "glue-emit", "glue-differential", "gap-discovery", "gap-closure"
         ):
-            from compgen.graph_compilation.real_lowering import (
+            from xpu_rt.graph_compilation.real_lowering import (
                 run_real_lowering,
             )
 
@@ -744,7 +744,7 @@ def run_graph_compilation(
             # None and is a no-op). Sibling stage to the two
             # candidate kinds are mutually exclusive in the
             # single-candidate MVP.
-            from compgen.graph_compilation.real_fusion import (
+            from xpu_rt.graph_compilation.real_fusion import (
                 run_real_fusion_lowering,
             )
 
@@ -768,7 +768,7 @@ def run_graph_compilation(
         if stop_after in (
             "real-transform-differential", "cost-preview-v2", "agent-decision-request", "kernel-specialization-request", "kernel-codegen-request", "kernel-auction", "execution-plan-emit", "glue-emit", "glue-differential", "gap-discovery", "gap-closure"
         ):
-            from compgen.graph_compilation.real_transform_differential import (
+            from xpu_rt.graph_compilation.real_transform_differential import (
                 run_real_transform_differential,
             )
 
@@ -787,7 +787,7 @@ def run_graph_compilation(
             # real_fusion_manifest.json and emits
             # real_fusion_differential_report.json. No-op when the
             # committed candidate is not FuseProducerConsumer.
-            from compgen.graph_compilation.real_fusion import (
+            from xpu_rt.graph_compilation.real_fusion import (
                 run_real_fusion_differential,
             )
 
@@ -824,7 +824,7 @@ def run_graph_compilation(
         # their own internal source.<input>_sha256 fields and are
         # idempotent on re-emit. Hash-chain integrity remains the
         # manifest's job; v3 integrity is its own concern.
-        from compgen.graph_compilation.graph_dossier_v3 import (
+        from xpu_rt.graph_compilation.graph_dossier_v3 import (
             build_graph_dossier_v3,
         )
 
@@ -847,7 +847,7 @@ def run_graph_compilation(
         if stop_after in (
             "cost-preview-v2", "agent-decision-request", "kernel-specialization-request", "kernel-codegen-request", "kernel-auction", "execution-plan-emit", "glue-emit", "glue-differential", "gap-discovery", "gap-closure"
         ):
-            from compgen.graph_compilation.cost_preview_v2 import (
+            from xpu_rt.graph_compilation.cost_preview_v2 import (
                 run_cost_preview_v2,
             )
 
@@ -867,13 +867,13 @@ def run_graph_compilation(
             # profiler calibration. Best-effort measured profile of
             # the captured exported program; layered on top of 's
             # deterministic-roofline baseline. Gated on
-            # ``COMPGEN_CALIBRATE_PROFILER`` (set or "1" to opt in;
+            # ``XPU_RT_CALIBRATE_PROFILER`` (set or "1" to opt in;
             # "0" / unset to skip). Default OFF so suite runs stay
             # deterministic; enable explicitly for evidence-pack runs.
-            if os.environ.get("COMPGEN_CALIBRATE_PROFILER", "") in (
+            if os.environ.get("XPU_RT_CALIBRATE_PROFILER", "") in (
                 "1", "true", "True", "yes",
             ):
-                from compgen.graph_compilation.profiler_calibration import (
+                from xpu_rt.graph_compilation.profiler_calibration import (
                     run_profiler_calibration,
                 )
 
@@ -900,12 +900,12 @@ def run_graph_compilation(
                     )
             # per-tile-candidate measured cost. Layered on top of
             # (region-level). Opt-in via
-            # ``COMPGEN_CALIBRATE_CANDIDATES=1``. Best-effort: errors
+            # ``XPU_RT_CALIBRATE_CANDIDATES=1``. Best-effort: errors
             # are logged to the ledger but never raise the pipeline.
-            if os.environ.get("COMPGEN_CALIBRATE_CANDIDATES", "") in (
+            if os.environ.get("XPU_RT_CALIBRATE_CANDIDATES", "") in (
                 "1", "true", "True", "yes",
             ):
-                from compgen.graph_compilation.candidate_calibration import (
+                from xpu_rt.graph_compilation.candidate_calibration import (
                     run_candidate_calibration,
                 )
 
@@ -933,12 +933,12 @@ def run_graph_compilation(
             # kernel execution foundation. Layered alongside the
             # FX-level evidence; never
             # mutates any FX-level artifact. Opt-in via
-            # ``COMPGEN_RUN_KERNELS=1``. Best-effort: errors are logged
+            # ``XPU_RT_RUN_KERNELS=1``. Best-effort: errors are logged
             # to the ledger but never raise the pipeline.
-            if os.environ.get("COMPGEN_RUN_KERNELS", "") in (
+            if os.environ.get("XPU_RT_RUN_KERNELS", "") in (
                 "1", "true", "True", "yes",
             ):
-                from compgen.graph_compilation.kernel_execution import (
+                from xpu_rt.graph_compilation.kernel_execution import (
                     run_kernel_execution,
                 )
 
@@ -966,7 +966,7 @@ def run_graph_compilation(
                 # of (whose single-region artifact stays). Fan-out
                 # across every region with a legal SetTileParams
                 # candidate. Same env-var gate as .
-                from compgen.graph_compilation.kernel_region_differential import (
+                from xpu_rt.graph_compilation.kernel_region_differential import (
                     run_region_compiled_differential,
                 )
 
@@ -999,7 +999,7 @@ def run_graph_compilation(
             # action space, llm view) into 6 typed readiness reports +
             # a top-level matrix. Best-effort: errors are logged to the
             # ledger but never raise the pipeline.
-            from compgen.graph_compilation.graph_analysis_readiness import (
+            from xpu_rt.graph_compilation.graph_analysis_readiness import (
                 build_readiness_pack,
             )
 
@@ -1028,7 +1028,7 @@ def run_graph_compilation(
             # byte-deterministic across reruns. When /
             # measurements are present, cross-references them as
             # calibration_delta in each per-candidate entry.
-            from compgen.graph_compilation.analytical_cost import (
+            from xpu_rt.graph_compilation.analytical_cost import (
                 run_analytical_cost,
             )
 
@@ -1061,7 +1061,7 @@ def run_graph_compilation(
             # hardware_resource_report.json and adds a top-level
             # ``kernel_calibration_status`` field (additive — does not
             # mutate 's existing fields).
-            from compgen.graph_compilation.compiled_bottleneck import (
+            from xpu_rt.graph_compilation.compiled_bottleneck import (
                 run_compiled_bottleneck,
             )
 
@@ -1092,8 +1092,8 @@ def run_graph_compilation(
             # Best-effort; emits typed perf_unavailable when
             # kernel.perf_event_paranoid blocks non-root events. Only
             # runs when has measurements (gated implicitly by
-            # COMPGEN_RUN_KERNELS=1 reaching here).
-            from compgen.graph_compilation.profiler_evidence import (
+            # XPU_RT_RUN_KERNELS=1 reaching here).
+            from xpu_rt.graph_compilation.profiler_evidence import (
                 run_profiler_evidence,
             )
 
@@ -1124,7 +1124,7 @@ def run_graph_compilation(
             # fused producer→consumer kernel; bit-equality vs eager
             # unfused chain on 's frozen input cases. No-op when
             # didn't pick a fusion candidate (typed not_run).
-            from compgen.graph_compilation.compiled_fusion import (
+            from xpu_rt.graph_compilation.compiled_fusion import (
                 run_compiled_fusion,
             )
 
@@ -1158,7 +1158,7 @@ def run_graph_compilation(
             # ready_for_m24_1 → ready when register_pressure +
             # register_spills + shared_memory_bytes + theoretical_
             # occupancy are all present.
-            from compgen.graph_compilation.kernel_lifetime_evidence import (
+            from xpu_rt.graph_compilation.kernel_lifetime_evidence import (
                 run_kernel_lifetime_evidence,
             )
 
@@ -1199,7 +1199,7 @@ def run_graph_compilation(
                 / "agent_decision_request.json"
             )
             if not existing_request.exists():
-                from compgen.graph_compilation.agent_decision import (
+                from xpu_rt.graph_compilation.agent_decision import (
                     build_agent_decision_request,
                 )
 
@@ -1215,7 +1215,7 @@ def run_graph_compilation(
         #  so row 5 (compiled_agent_view) can cross-reference
         # candidate_ids_allowed. Always-on (best-effort); emits typed
         # not_run on rows whose evidence isn't on disk.
-        from compgen.graph_compilation.kernel_readiness import (
+        from xpu_rt.graph_compilation.kernel_readiness import (
             run_kernel_section_readiness,
         )
 
@@ -1251,7 +1251,7 @@ def run_graph_compilation(
         # pipeline still raises afterwards (the run is not "ok") but
         # Claude Code can read the retry request and re-invoke with a
         # different candidate.
-        from compgen.graph_compilation.downstream_retry import (
+        from xpu_rt.graph_compilation.downstream_retry import (
             detect_and_emit as _m15b_detect_and_emit,
         )
 
@@ -1273,7 +1273,7 @@ def run_graph_compilation(
             # (e.g. tiny_mlp's K_iters=4 accumulation reorder) lose
             # their manifest and fail every R009 / hash-chain audit.
             git_commit = _git_commit_or_none(repo_root)
-            from compgen.graph_compilation.artifacts import ModelRef, TargetRef
+            from xpu_rt.graph_compilation.artifacts import ModelRef, TargetRef
             partial_manifest = RunManifest(
                 schema_version="run_manifest_v1",
                 run_id=run_id,
@@ -1351,7 +1351,7 @@ def run_graph_compilation(
         )
 
         # contract materialization.
-        from compgen.graph_compilation.kernel_contract_materialization import (
+        from xpu_rt.graph_compilation.kernel_contract_materialization import (
             materialize_contract_for_run,
         )
 
@@ -1381,7 +1381,7 @@ def run_graph_compilation(
         # to find contract_hash + paths; writes
         # 04_kernel_codegen/requests/<task_id>.request.json + creates
         # the sandboxed artifact_dir.
-        from compgen.graph_compilation.kernel_codegen import (
+        from xpu_rt.graph_compilation.kernel_codegen import (
             run_kernel_codegen_request,
         )
 
@@ -1434,7 +1434,7 @@ def run_graph_compilation(
     if needs_auction:
         _append_ledger(ledger_path, stage_id="kernel_auction", event="start")
         try:
-            from compgen.graph_compilation.kernel_auction import run_kernel_auction
+            from xpu_rt.graph_compilation.kernel_auction import run_kernel_auction
 
             _au = run_kernel_auction(
                 run_dir=out_dir,
@@ -1475,7 +1475,7 @@ def run_graph_compilation(
         "execution-plan-emit", "glue-emit", "glue-differential", "gap-discovery", "gap-closure",
     )
     if needs_plan_emit:
-        from compgen.graph_compilation.execution_plan_emit import (
+        from xpu_rt.graph_compilation.execution_plan_emit import (
             emit_execution_plan,
         )
 
@@ -1528,7 +1528,7 @@ def run_graph_compilation(
     if needs_coverage and needs_plan_emit:
         _append_ledger(ledger_path, stage_id="kernel_coverage_first", event="start")
         try:
-            from compgen.graph_compilation.coverage_first import run_coverage_first
+            from xpu_rt.graph_compilation.coverage_first import run_coverage_first
 
             _cf = run_coverage_first(
                 run_dir=out_dir, mode=kernel_coverage_mode,
@@ -1562,7 +1562,7 @@ def run_graph_compilation(
     # ------------------------------------------------------------------ #
     needs_glue_emit = stop_after in ("glue-emit", "glue-differential", "gap-discovery", "gap-closure")
     if needs_glue_emit:
-        from compgen.runtime.glue_emit import (
+        from xpu_rt.runtime.glue_emit import (
             emit_python_async_executor,
             emit_python_cuda_executor,
             emit_python_sync_executor,
@@ -1606,7 +1606,7 @@ def run_graph_compilation(
         "glue-differential", "gap-discovery", "gap-closure",
     )
     if needs_glue_diff:
-        from compgen.graph_compilation.glue_differential import (
+        from xpu_rt.graph_compilation.glue_differential import (
             run_glue_differential,
         )
 
@@ -1641,7 +1641,7 @@ def run_graph_compilation(
     # ------------------------------------------------------------------ #
     needs_gap_discovery = stop_after in ("gap-discovery", "gap-closure")
     if needs_gap_discovery:
-        from compgen.graph_compilation.gaps import run_gap_discovery
+        from xpu_rt.graph_compilation.gaps import run_gap_discovery
 
         _append_ledger(ledger_path, stage_id="gap_discovery", event="start")
         gap_stage = run_gap_discovery(
@@ -1670,7 +1670,7 @@ def run_graph_compilation(
     # Gap Closure (only when stop_after == gap-closure)
     # ------------------------------------------------------------------ #
     if stop_after == "gap-closure":
-        from compgen.graph_compilation.gap_closure import run_gap_closure
+        from xpu_rt.graph_compilation.gap_closure import run_gap_closure
 
         if extensions_root is None:
             extensions_root = repo_root / ".crg-artifacts" / "extensions"
@@ -1702,7 +1702,7 @@ def run_graph_compilation(
     # ------------------------------------------------------------------ #
     git_commit = _git_commit_or_none(repo_root)
 
-    from compgen.graph_compilation.artifacts import ModelRef, TargetRef
+    from xpu_rt.graph_compilation.artifacts import ModelRef, TargetRef
 
     manifest = RunManifest(
         schema_version="run_manifest_v1",
@@ -1731,7 +1731,7 @@ def run_graph_compilation(
     # write import_provenance.json. Anchored to the same seam
     # as the manifest so cross-references are stable (run_id matches).
     try:
-        from compgen.audit.import_provenance import (
+        from xpu_rt.audit.import_provenance import (
             ImportSnapshot,
             compute_provenance,
             write_provenance,
@@ -1770,7 +1770,7 @@ def run_graph_compilation(
     # covered by any earlier stage's output_hash (R009-safe), so this
     # post-manifest emission does not invalidate the hash chain.
     if needs_recipe_planning:
-        from compgen.graph_compilation.promotion_bridge import (
+        from xpu_rt.graph_compilation.promotion_bridge import (
             emit as _promotion_emit,
         )
 
@@ -1800,7 +1800,7 @@ def run_graph_compilation(
     # let a future replay assert the decision was deterministic.
     if needs_recipe_planning:
         try:
-            from compgen.audit.trace_replay import build_trace, write_trace
+            from xpu_rt.audit.trace_replay import build_trace, write_trace
 
             request_path = (
                 out_dir / "03_recipe_planning" / "agent_decision"
@@ -1852,8 +1852,8 @@ def lower_from_existing_capture(
     fresh ``out_dir`` and runs Payload Lowering on it. Used to prove
     Payload Lowering consumes saved artifacts (no hidden re-capture).
     """
-    from compgen.graph_compilation.artifacts import ModelRef, TargetRef
-    from compgen.graph_compilation.lower import copy_capture_run, run_payload_lowering
+    from xpu_rt.graph_compilation.artifacts import ModelRef, TargetRef
+    from xpu_rt.graph_compilation.lower import copy_capture_run, run_payload_lowering
 
     capture_run = Path(capture_run).resolve()
     out_dir = Path(out_dir).resolve()
@@ -1881,14 +1881,14 @@ def lower_from_existing_capture(
     # Synthesize a graph_capture StageRecord that points at the copied
     # 00_graph_capture/. Hashes are recomputed from disk; the source
     # manifest's stage record is *not* trusted.
-    from compgen.graph_compilation.hashing import sha256_tree
+    from xpu_rt.graph_compilation.hashing import sha256_tree
 
     capture_dir = out_dir / "00_graph_capture"
     if not capture_dir.is_dir():
         raise FileNotFoundError(f"00_graph_capture/ missing in copy: {capture_dir}")
 
-    from compgen.graph_compilation.artifacts import ArtifactRef
-    from compgen.graph_compilation.hashing import sha256_file
+    from xpu_rt.graph_compilation.artifacts import ArtifactRef
+    from xpu_rt.graph_compilation.hashing import sha256_file
 
     capture_stage_outputs: list[ArtifactRef] = []
     for p in sorted(capture_dir.rglob("*")):
@@ -1982,9 +1982,9 @@ def discover_gaps_from_existing_lowering(
     Discovery on it. Used to prove Gap Discovery consumes saved
     artifacts (no hidden re-capture, no hidden re-lowering).
     """
-    from compgen.graph_compilation.artifacts import ArtifactRef, ModelRef, TargetRef
-    from compgen.graph_compilation.gaps import run_gap_discovery
-    from compgen.graph_compilation.hashing import sha256_file, sha256_tree
+    from xpu_rt.graph_compilation.artifacts import ArtifactRef, ModelRef, TargetRef
+    from xpu_rt.graph_compilation.gaps import run_gap_discovery
+    from xpu_rt.graph_compilation.hashing import sha256_file, sha256_tree
 
     lowering_run = Path(lowering_run).resolve()
     out_dir = Path(out_dir).resolve()

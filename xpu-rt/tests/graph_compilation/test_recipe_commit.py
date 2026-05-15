@@ -15,8 +15,8 @@ import shutil
 from pathlib import Path
 
 import pytest
-from compgen.graph_compilation.recipe_planning import run_recipe_planning
-from compgen.graph_compilation.run import run_graph_compilation
+from xpu_rt.graph_compilation.recipe_planning import run_recipe_planning
+from xpu_rt.graph_compilation.run import run_graph_compilation
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 HOST_CPU_TARGET = REPO_ROOT / "configs" / "targets" / "host_cpu.yaml"
@@ -186,7 +186,7 @@ def test_selecting_illegal_fp8_via_resolver_fails(
     """The greedy selector cannot pick an illegal candidate, but if a
     caller invokes the resolver directly with an illegal candidate_id
     and allow_illegal=False, it must reject."""
-    from compgen.graph_compilation.action_space_resolver import (
+    from xpu_rt.graph_compilation.action_space_resolver import (
         IllegalCandidateError,
         resolve_candidate,
     )
@@ -213,7 +213,7 @@ def test_modifying_candidate_actions_without_remitting_ir_is_caught(
     that a rerun of recipe_planning either picks a different candidate
     OR fails resolver validation — the key invariant is that the IR's
     recipe_delta wins over the JSON's."""
-    from compgen.graph_compilation.action_space_resolver import (
+    from xpu_rt.graph_compilation.action_space_resolver import (
         RecipeDeltaMismatchError,
         resolve_candidate,
     )
@@ -238,7 +238,7 @@ def test_modifying_candidate_actions_without_remitting_ir_is_caught(
 def test_action_space_ir_sha_drift_is_caught(
     tmp_path: Path, recipe_runs: dict[str, Path],
 ) -> None:
-    from compgen.graph_compilation.action_space_resolver import (
+    from xpu_rt.graph_compilation.action_space_resolver import (
         HashMismatchError,
         resolve_candidate,
     )
@@ -295,7 +295,7 @@ def test_recipe_planning_stage_in_manifest(
 def test_artifact_validator_passes_with_recipe_planning(
     model_id: str, recipe_runs: dict[str, Path]
 ) -> None:
-    from compgen.graph_compilation import validate_run
+    from xpu_rt.graph_compilation import validate_run
     report = validate_run(recipe_runs[model_id])
     assert report.overall == "pass", [r for r in report.rules if r.status == "fail"]
 
@@ -308,11 +308,11 @@ def test_artifact_validator_passes_with_recipe_planning(
 def test_compiler_core_not_modified_by_m05() -> None:
     import subprocess
     forbidden = [
-        "python/compgen/ir/payload/import_fx.py",
-        "python/compgen/capture/torch_export.py",
-        "python/compgen/capture/torch_mlir_bridge.py",
-        "python/compgen/pipeline/driver.py",
-        "python/compgen/runtime/bundle_emit.py",
+        "python/xpu_rt/ir/payload/import_fx.py",
+        "python/xpu_rt/capture/torch_export.py",
+        "python/xpu_rt/capture/torch_mlir_bridge.py",
+        "python/xpu_rt/pipeline/driver.py",
+        "python/xpu_rt/runtime/bundle_emit.py",
     ]
     try:
         diff = subprocess.check_output(

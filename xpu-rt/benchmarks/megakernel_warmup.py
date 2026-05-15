@@ -1,4 +1,4 @@
-"""Warmup-cost benchmark: CompGen AOT megakernel vs PyTorch JIT baselines.
+"""Warmup-cost benchmark: XPU-RT AOT megakernel vs PyTorch JIT baselines.
 
 Mirrors the structure of Table 1 of the Event Tensor Compiler paper
 (``vLLM JIT 123 s`` / ``SGLang JIT 583 s`` / ``ETC AOT 35 s`` for
@@ -199,7 +199,7 @@ def main() -> None:
         * 0.1
     )
 
-    print("\n[1/2] Measuring CompGen megakernel AOT path ...")
+    print("\n[1/2] Measuring XPU-RT megakernel AOT path ...")
     aot = measure_megakernel_aot(sliced, sliced_cfg, x)
     print(f"  cold: {aot.cold_seconds:7.3f} s")
     print(f"  warm: {aot.warm_seconds:7.3f} s")

@@ -25,7 +25,7 @@ locations until the move + re-export shim lands.
 
 from __future__ import annotations
 
-from compgen.targets.registry import register_target
+from xpu_rt.targets.registry import register_target
 
 
 def _register_blackwell() -> None:

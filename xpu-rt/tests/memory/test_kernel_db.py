@@ -1,4 +1,4 @@
-"""Tests for ``compgen.memory.kernel_db``.
+"""Tests for ``xpu_rt.memory.kernel_db``.
 
 Round-trips the two new tables (kernel_perf, fusion_decisions) and
 verifies the calibration-helper (average_observed_speedup) returns
@@ -11,7 +11,7 @@ import time
 from pathlib import Path
 
 import pytest
-from compgen.memory.kernel_db import (
+from xpu_rt.memory.kernel_db import (
     FusionDecisionRecord,
     KernelDB,
     KernelPerfRecord,

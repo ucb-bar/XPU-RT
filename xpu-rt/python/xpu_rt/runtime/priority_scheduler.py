@@ -27,7 +27,7 @@ from typing import Any
 
 import structlog
 
-from compgen.runtime.planner import ExecutionPlan
+from xpu_rt.runtime.planner import ExecutionPlan
 
 log = structlog.get_logger()
 

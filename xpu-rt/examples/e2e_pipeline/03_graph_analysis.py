@@ -4,7 +4,7 @@ For `--workload` and an optional `--target` (one of our TargetResource
 slugs, defaults to openq_5165rb as the primary robotics target), this
 script:
   1. Re-captures the workload and runs
-     `compgen.agent.analyzer.NetworkAnalyzer().analyze(ep, profile, ...)`.
+     `xpu_rt.agent.analyzer.NetworkAnalyzer().analyze(ep, profile, ...)`.
   2. Serializes the full NetworkAnalysis (clusters, data flow, dossier)
      to `gap_analysis.json`.
   3. Builds `region_inventory.json` conforming to
@@ -42,9 +42,9 @@ sys.path.insert(0, str(ROOT))
 
 from user_perspective.models import smolvla_slice, gemma_decode_slice   # noqa: E402
 from user_perspective.scripts._helpers.schema import validate_or_raise  # noqa: E402
-from compgen.capture import capture_frontend_artifact                    # noqa: E402
-from compgen.agent.analyzer import NetworkAnalyzer                       # noqa: E402
-import compgen                                                            # noqa: E402
+from xpu_rt.capture import capture_frontend_artifact                    # noqa: E402
+from xpu_rt.agent.analyzer import NetworkAnalyzer                       # noqa: E402
+import xpu_rt                                                            # noqa: E402
 
 log = logging.getLogger("phase3")
 
@@ -249,7 +249,7 @@ def _serialize(obj: Any) -> Any:
     return repr(obj)
 
 
-def _summarize_devices(dev: compgen.CompGenDevice) -> list[dict[str, Any]]:
+def _summarize_devices(dev: xpu_rt.CompGenDevice) -> list[dict[str, Any]]:
     return [
         {"device_type": d.device_type, "name": d.name, "vendor": d.vendor}
         for d in dev.profile.devices
@@ -267,11 +267,11 @@ def run(workload: str, target_slug: str) -> int:
 
     # --- load target ---
     log.info("loading target=%s", target_slug)
-    dev = compgen.device(HARDWARE_SPEC_PATH[target_slug],
+    dev = xpu_rt.device(HARDWARE_SPEC_PATH[target_slug],
                           output_dir=out_dir / "_targetgen")
     target_device_summary = _summarize_devices(dev)
     # We use the HardwareSpec-derived TargetProfile for NetworkAnalyzer.analyze
-    # so its arithmetic/memory heuristics align with what compgen.device models.
+    # so its arithmetic/memory heuristics align with what xpu_rt.device models.
     profile = dev.profile
 
     # --- load workload ---

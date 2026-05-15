@@ -8,12 +8,12 @@ from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from compgen.packs.base import LoadedPack
-from compgen.packs.loader import load_pack, resolve_entry_point_target
-from compgen.packs.schema import PackContextSummary
+from xpu_rt.packs.base import LoadedPack
+from xpu_rt.packs.loader import load_pack, resolve_entry_point_target
+from xpu_rt.packs.schema import PackContextSummary
 
-ENTRY_POINT_GROUP = "compgen.packs"
-ENV_VAR = "COMPGEN_PACKS_PATH"
+ENTRY_POINT_GROUP = "xpu_rt.packs"
+ENV_VAR = "XPU_RT_PACKS_PATH"
 
 
 def default_pack_root(repo_root: str | Path | None = None) -> Path:
@@ -34,7 +34,7 @@ def discover_pack_paths(repo_root: str | Path | None = None) -> list[Path]:
 
 
 def _entry_point_pack_paths() -> list[Path]:
-    """Resolve each ``compgen.packs`` entry point to a pack-root Path."""
+    """Resolve each ``xpu_rt.packs`` entry point to a pack-root Path."""
 
     out: list[Path] = []
     try:
@@ -50,7 +50,7 @@ def _entry_point_pack_paths() -> list[Path]:
 
 
 def _env_var_pack_paths(env_var: str = ENV_VAR) -> list[Path]:
-    """Expand ``$COMPGEN_PACKS_PATH`` into a list of pack-root Paths."""
+    """Expand ``$XPU_RT_PACKS_PATH`` into a list of pack-root Paths."""
 
     raw = os.environ.get(env_var, "").strip()
     if not raw:
@@ -80,8 +80,8 @@ def discover_packs(
 
     Sources (in priority order, earlier wins on duplicates):
       1. Repo-local ``userpacks/`` directory (if ``include_repo``).
-      2. ``compgen.packs`` entry points (if ``include_entry_points``).
-      3. ``$COMPGEN_PACKS_PATH`` colon-separated list (if ``include_env``).
+      2. ``xpu_rt.packs`` entry points (if ``include_entry_points``).
+      3. ``$XPU_RT_PACKS_PATH`` colon-separated list (if ``include_env``).
     """
 
     candidates: list[Path] = []

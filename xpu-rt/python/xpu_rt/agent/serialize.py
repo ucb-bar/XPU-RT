@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from compgen.agent.env import (
+from xpu_rt.agent.env import (
     Action,
     AssignDeviceAction,
     FuseAction,

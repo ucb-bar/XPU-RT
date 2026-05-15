@@ -25,8 +25,8 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # fixtures
 
-from compgen.mcp.session import SessionManager
-from compgen.mcp.tools.embedded import (
+from xpu_rt.mcp.session import SessionManager
+from xpu_rt.mcp.tools.embedded import (
     compile_embedded,
     simulator_run,
     zephyr_overlay,
@@ -38,10 +38,10 @@ def _host_cc() -> str | None:
 
 
 def _build_archive(bundle_dir: Path) -> None:
-    """Compile the emitted sources into ``libcompgen_model.a`` with host cc."""
+    """Compile the emitted sources into ``libxpu_rt_model.a`` with host cc."""
     objs: list[str] = []
     sources = [
-        bundle_dir / "compgen_model.c",
+        bundle_dir / "xpu_rt_model.c",
         bundle_dir / "model_blob.c",
         *(bundle_dir / "kernels").glob("*.c"),
     ]
@@ -53,7 +53,7 @@ def _build_archive(bundle_dir: Path) -> None:
         )
         objs.append(str(obj))
     subprocess.run(
-        ["ar", "rcs", str(bundle_dir / "libcompgen_model.a"), *objs],
+        ["ar", "rcs", str(bundle_dir / "libxpu_rt_model.a"), *objs],
         check=True,
     )
 
@@ -82,7 +82,7 @@ def _rvv_only_spec(tmp_path: Path) -> str:
 def test_pipeline_produces_complete_overlay(tmp_path: Path, flavour: str) -> None:
     """Verify both capability-driven paths (OPU / RVV-only) emit a complete overlay.
 
-    This is the CompGen-side half of the kill-test — it asserts the
+    This is the XPU-RT-side half of the kill-test — it asserts the
     Python pipeline produces every artifact ``west build`` needs,
     *without* requiring the Zephyr SDK or Spike. Spec selection drives
     which ukernel lane is emitted; no ``use_opu`` toggle.
@@ -111,7 +111,7 @@ def test_pipeline_produces_complete_overlay(tmp_path: Path, flavour: str) -> Non
         sm,
         zephyr_root=str(zephyr_root),
         session_id=compile_result["session_id"],
-        sample_name=f"compgen_convnet_{flavour}",
+        sample_name=f"xpu_rt_convnet_{flavour}",
     )
     assert overlay_result["ok"], overlay_result
     sample_root = Path(overlay_result["overlay_dir"])
@@ -119,9 +119,9 @@ def test_pipeline_produces_complete_overlay(tmp_path: Path, flavour: str) -> Non
         "CMakeLists.txt",
         "prj.conf",
         "custom-sections.ld",
-        "libcompgen_model.a",
+        "libxpu_rt_model.a",
         "model_blob.c",
-        "compgen_model.h",
+        "xpu_rt_model.h",
         "src/main.c",
     ]:
         assert (sample_root / required).exists(), required
@@ -140,13 +140,13 @@ def _zephyr_root() -> Path | None:
     shutil.which("west") is None or shutil.which("spike") is None,
     reason="Zephyr SDK + spike required",
 )
-def test_spike_runs_compgen_convnet() -> None:
+def test_spike_runs_xpu_rt_convnet() -> None:
     """End-to-end ``west build`` + ``spike`` run against a real Spike.
 
     Assumes the Zephyr SDK + Spike are on ``PATH`` and
     ``ZEPHYR_CHIPYARD_SW`` points at a prepared clone. This test does
     not check numerical correctness — it asserts that the build
-    succeeds and the sample's ``compgen: invoke ok`` banner appears in
+    succeeds and the sample's ``xpu_rt: invoke ok`` banner appears in
     Spike's UART log. Numerical correctness is covered by the
     ctypes-based level-2 tests (``test_exo_riscv_opu.py``) which run
     without hardware.
@@ -156,7 +156,7 @@ def test_spike_runs_compgen_convnet() -> None:
         pytest.skip("ZEPHYR_CHIPYARD_SW not set and /scratch2/agustin/zephyr-chipyard-sw absent")
 
     sm = SessionManager()
-    bundle_dir = zephyr / "_compgen_bundle"
+    bundle_dir = zephyr / "_xpu_rt_bundle"
     # Spike's stock build lacks +xopu — use the RVV-only spec so the
     # capability-driven pipeline routes mmt4d to the pure RVV fallback.
     import tempfile
@@ -180,7 +180,7 @@ def test_spike_runs_compgen_convnet() -> None:
         sm,
         zephyr_root=str(zephyr),
         session_id=compile_result["session_id"],
-        sample_name="compgen_convnet_rvv",
+        sample_name="xpu_rt_convnet_rvv",
     )
     assert overlay["ok"], overlay
 
@@ -188,7 +188,7 @@ def test_spike_runs_compgen_convnet() -> None:
         sm,
         spec_path=compile_result.get("spec_path"),
         zephyr_root=str(zephyr),
-        sample_name="compgen_convnet_rvv",
+        sample_name="xpu_rt_convnet_rvv",
         simulator_override="spike --isa=rv64gcv",
         execute=True,
         timeout_s=600,
@@ -197,4 +197,4 @@ def test_spike_runs_compgen_convnet() -> None:
     # slipped through (shouldn't, but the kill criterion is that the
     # banner is present in the log).
     assert run.get("build_returncode") == 0, run.get("build_tail", "")
-    assert "compgen: invoke ok" in run.get("simulator_tail", ""), run.get("simulator_tail", "")
+    assert "xpu_rt: invoke ok" in run.get("simulator_tail", ""), run.get("simulator_tail", "")

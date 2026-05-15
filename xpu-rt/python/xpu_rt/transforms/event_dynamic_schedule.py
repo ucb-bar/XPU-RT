@@ -3,7 +3,7 @@
 Produces a :class:`DynamicSchedule` for workloads whose tile runtimes
 or dependency structures are unpredictable at compile time (MoE,
 irregular reductions, data-dependent fan-outs via
-:class:`~compgen.ir.event.ops.TriggerOp`). Phase 5 turns the schedule
+:class:`~xpu_rt.ir.event.ops.TriggerOp`). Phase 5 turns the schedule
 into a fused persistent-megakernel CUDA source whose main loop pops
 tasks from a global ready queue and pushes dependents when events
 fire.
@@ -37,8 +37,8 @@ from typing import Any
 
 import structlog
 
-from compgen.runtime.megakernel import DeviceCall, MegakernelGraph, _Task
-from compgen.transforms.event_static_schedule import (
+from xpu_rt.runtime.megakernel import DeviceCall, MegakernelGraph, _Task
+from xpu_rt.transforms.event_static_schedule import (
     EventTensorAllocSpec,
     LaunchConfig,
     TaskDescriptor,
@@ -100,7 +100,7 @@ class ReadyQueueSpec:
 
 @dataclass(frozen=True)
 class TriggerGenerator:
-    """Records a :class:`~compgen.ir.event.ops.TriggerOp` site the
+    """Records a :class:`~xpu_rt.ir.event.ops.TriggerOp` site the
     dynamic scheduler must service at runtime.
 
     The paper's MoE case triggers a variable number of GroupGEMM
@@ -178,7 +178,7 @@ def compute_dynamic_schedule(
 
     Args:
         graph: A :class:`MegakernelGraph` (usually from
-            :func:`compgen.ir.event.lower.lower_graph_op`).
+            :func:`xpu_rt.ir.event.lower.lower_graph_op`).
         sm_count: Number of SMs that will run the persistent
             megakernel. Every SM executes the same main-loop body.
         supports_ondevice_scheduler: Gate. When False and the graph

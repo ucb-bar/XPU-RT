@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CompGen truth-path: real e2e execution with numeric verification.
+"""XPU-RT truth-path: real e2e execution with numeric verification.
 
 Runs the FULL truth path:
     PyTorch module + inputs
@@ -101,7 +101,7 @@ class TruthPathReport:
 
 def main() -> None:
     report = TruthPathReport()
-    output_dir = Path(tempfile.mkdtemp(prefix="compgen_truthpath_"))
+    output_dir = Path(tempfile.mkdtemp(prefix="xpu_rt_truthpath_"))
     print(f"Output directory: {output_dir}")
 
     # ===================================================================
@@ -115,10 +115,10 @@ def main() -> None:
     sample_input = (torch.randn(8, 64),)
 
     try:
-        from compgen.capture.torch_export import capture_model
+        from xpu_rt.capture.torch_export import capture_model
         ep = capture_model(model, sample_input)
 
-        from compgen.ir.payload.import_fx import fx_to_xdsl
+        from xpu_rt.ir.payload.import_fx import fx_to_xdsl
         module, diagnostics = fx_to_xdsl(ep)
         op_count = sum(1 for _ in module.walk())
 
@@ -139,10 +139,10 @@ def main() -> None:
     print("=" * 70)
 
     try:
-        from compgen.eqsat.config import EqSatConfig
-        from compgen.eqsat.pipeline import run_eqsat_pass
-        from compgen.runtime.planner import plan_execution
-        from compgen.targets.schema import load_profile
+        from xpu_rt.eqsat.config import EqSatConfig
+        from xpu_rt.eqsat.pipeline import run_eqsat_pass
+        from xpu_rt.runtime.planner import plan_execution
+        from xpu_rt.targets.schema import load_profile
 
         target = load_profile("examples/target_profiles/cuda_a100.yaml")
         eqsat_result = run_eqsat_pass(module, config=EqSatConfig(max_iterations=5))
@@ -171,7 +171,7 @@ def main() -> None:
         "ConvBlock": (SimpleConvBlock().eval(), (torch.randn(2, 3, 32, 32),)),
     }
 
-    from compgen.semantic.verify.harness import verify_callable_against_reference
+    from xpu_rt.semantic.verify.harness import verify_callable_against_reference
 
     all_verify_passed = True
     for name, (m, inp) in models_to_verify.items():
@@ -212,8 +212,8 @@ def main() -> None:
     print("GATE 4: Pack loading + environment validation")
     print("=" * 70)
 
-    from compgen.packs.loader import load_pack
-    from compgen.packs.validate import validate_pack
+    from xpu_rt.packs.loader import load_pack
+    from xpu_rt.packs.validate import validate_pack
 
     pack_loaded = False
     pack_root = Path("userpacks/cuda_tile")
@@ -256,9 +256,9 @@ def main() -> None:
     print("GATE 5: Benchmark execution + result recording")
     print("=" * 70)
 
-    from compgen.benchmarks.results import BenchmarkResult as BenchResult
-    from compgen.benchmarks.results import read_json as read_bench_json
-    from compgen.runtime.local_executor import LocalExecutor
+    from xpu_rt.benchmarks.results import BenchmarkResult as BenchResult
+    from xpu_rt.benchmarks.results import read_json as read_bench_json
+    from xpu_rt.runtime.local_executor import LocalExecutor
 
     executor = LocalExecutor()
     bench_model = SimpleMLP().eval()
@@ -313,9 +313,9 @@ def main() -> None:
     print("GATE 6: Candidate store + lineage + promotion")
     print("=" * 70)
 
-    from compgen.memory.schema import CandidateStatus, GeneratorKind, ObjectKind
-    from compgen.memory.store import CompilerMemory
-    from compgen.promotion.lineage import build_lineage_graph
+    from xpu_rt.memory.schema import CandidateStatus, GeneratorKind, ObjectKind
+    from xpu_rt.memory.store import CompilerMemory
+    from xpu_rt.promotion.lineage import build_lineage_graph
 
     db_path = output_dir / "memory.db"
     blob_root = output_dir / "blobs"
@@ -409,12 +409,12 @@ def main() -> None:
     print("GATE 7: Unsupported-op detection + recovery (fail→fix→succeed)")
     print("=" * 70)
 
-    from compgen.capture.unsupported.detect import detect_unsupported_operators
-    from compgen.capture.unsupported.introspect import build_operator_dossier
-    from compgen.capture.unsupported.classify import classify_operator_issue
-    from compgen.capture.unsupported.synthesize_translation import synthesize_payload_translation
-    from compgen.capture.unsupported.synthesize_decomp import synthesize_export_decomposition
-    from compgen.capture.unsupported.verify import verify_unsupported_resolution
+    from xpu_rt.capture.unsupported.detect import detect_unsupported_operators
+    from xpu_rt.capture.unsupported.introspect import build_operator_dossier
+    from xpu_rt.capture.unsupported.classify import classify_operator_issue
+    from xpu_rt.capture.unsupported.synthesize_translation import synthesize_payload_translation
+    from xpu_rt.capture.unsupported.synthesize_decomp import synthesize_export_decomposition
+    from xpu_rt.capture.unsupported.verify import verify_unsupported_resolution
 
     try:
         ep_for_recovery = capture_model(model, sample_input)
@@ -471,7 +471,7 @@ def main() -> None:
     print("=" * 70)
 
     try:
-        from compgen.runtime.bundle import create_bundle
+        from xpu_rt.runtime.bundle import create_bundle
 
         bundle_dir = output_dir / "bundle"
         verify_report = {
@@ -512,7 +512,7 @@ def main() -> None:
     print("=" * 70)
 
     try:
-        from compgen.promotion.promote import RecipePromoter
+        from xpu_rt.promotion.promote import RecipePromoter
 
         library_path = output_dir / "recipe_library"
         promoter = RecipePromoter(library_path=library_path)
@@ -549,7 +549,7 @@ def main() -> None:
         import subprocess
 
         result = subprocess.run(
-            ["uv", "run", "compgen", "run", str(bundle_dir)],
+            ["uv", "run", "xpu-rt", "run", str(bundle_dir)],
             capture_output=True, text=True, timeout=30,
         )
         cli_output = result.stdout + result.stderr
@@ -587,7 +587,7 @@ def main() -> None:
 
         # Verify .gitignore has the key patterns
         gitignore = Path(".gitignore").read_text()
-        required_patterns = ["generated/staging/", ".compgen/", "artifacts/runs/"]
+        required_patterns = ["generated/staging/", ".xpu_rt/", "artifacts/runs/"]
         found = [p for p in required_patterns if p in gitignore]
         report.record(
             "hygiene_gitignore",
@@ -649,7 +649,7 @@ def main() -> None:
     print("=" * 70)
 
     try:
-        from compgen.targetgen.generate import generate_target
+        from xpu_rt.targetgen.generate import generate_target
 
         # Generate for GPU (SIMT) target
         gpu_result = generate_target(
@@ -690,7 +690,7 @@ def main() -> None:
         )
 
         # Run the generated pipeline on sample IR
-        from compgen.stages.registry import StageRegistry
+        from xpu_rt.stages.registry import StageRegistry
 
         registry = StageRegistry()
         registry.register_target_stack(gpu_result.dialect_stack)
@@ -714,8 +714,8 @@ def main() -> None:
     print("=" * 70)
 
     try:
-        from compgen.extensions.xdsl_generate import generate_xdsl_dialect
-        from compgen.extensions.llvm_patchgen import generate_llvm_patch_bundle
+        from xpu_rt.extensions.xdsl_generate import generate_xdsl_dialect
+        from xpu_rt.extensions.llvm_patchgen import generate_llvm_patch_bundle
 
         # Generate a custom xDSL dialect for a hypothetical NPU
         dialect_files = generate_xdsl_dialect({
@@ -743,7 +743,7 @@ def main() -> None:
                     "summary": "Async DMA transfer",
                 },
             ],
-            "doc": "Test NPU dialect generated by CompGen",
+            "doc": "Test NPU dialect generated by XPU-RT",
         })
 
         dialect_ok = (
@@ -801,7 +801,7 @@ def main() -> None:
     print("=" * 70)
 
     try:
-        from compgen.agent.analyzer import NetworkAnalyzer
+        from xpu_rt.agent.analyzer import NetworkAnalyzer
 
         # Analyze the MLP model against the target
         analysis = NetworkAnalyzer().analyze(ep, target, model_name="SimpleMLP")
@@ -821,9 +821,9 @@ def main() -> None:
         )
 
         # Run the agentic compilation loop with MockLLMClient
-        from compgen.agent.loop import AgenticCompilationLoop
-        from compgen.agent.env import CompilerEnv
-        from compgen.llm.mock_client import MockLLMClient
+        from xpu_rt.agent.loop import AgenticCompilationLoop
+        from xpu_rt.agent.env import CompilerEnv
+        from xpu_rt.llm.mock_client import MockLLMClient
 
         mock_llm = MockLLMClient()
         env = CompilerEnv()

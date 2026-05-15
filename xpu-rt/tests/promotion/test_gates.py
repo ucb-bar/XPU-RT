@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from compgen.promotion.gates import (
+from xpu_rt.promotion.gates import (
     GateEvaluation,
     PromotionLevel,
     evaluate_gate,

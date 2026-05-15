@@ -1,13 +1,13 @@
 """MCP tool: in-session promotion of authored tools.
 
-Wraps :func:`compgen.agent.self_extension.graduate.promote_authored_tools`
+Wraps :func:`xpu_rt.agent.self_extension.graduate.promote_authored_tools`
 with a session-scoped lower threshold so an agent can iterate on a
 freshly-authored tool and graduate it after a couple of in-session
 trials. Cross-session graduation (the higher 5-pass / 2-workloads /
 2-targets bar) still requires the standalone path.
 
 Trials counted: every entry in the session's authored-trials JSONL
-log (under ``$COMPGEN_SESSION_DIR/<sid>/authored_trials.jsonl`` by
+log (under ``$XPU_RT_SESSION_DIR/<sid>/authored_trials.jsonl`` by
 default; falls back to the process-wide log when no session-scoped
 file exists).
 """
@@ -19,10 +19,10 @@ from typing import Any
 
 import structlog
 
-from compgen.agent.self_extension._index import snapshot_authored_index
-from compgen.agent.self_extension.graduate import promote_authored_tools
-from compgen.agent.self_extension.trials import default_trial_log_path
-from compgen.mcp.session import SessionManager
+from xpu_rt.agent.self_extension._index import snapshot_authored_index
+from xpu_rt.agent.self_extension.graduate import promote_authored_tools
+from xpu_rt.agent.self_extension.trials import default_trial_log_path
+from xpu_rt.mcp.session import SessionManager
 
 log = structlog.get_logger()
 

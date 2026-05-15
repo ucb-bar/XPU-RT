@@ -20,10 +20,10 @@ from xdsl.irdl import (
 from xdsl.traits import Pure
 from xdsl.utils.exceptions import VerifyException
 
-from compgen.ir.layout.attrs import LayoutEncodingAttr, PackSpecAttr
+from xpu_rt.ir.layout.attrs import LayoutEncodingAttr, PackSpecAttr
 
 # Reuse ProvenanceAttr from Recipe IR for lineage tracking
-from compgen.ir.recipe.attrs import ProvenanceAttr
+from xpu_rt.ir.recipe.attrs import ProvenanceAttr
 
 
 @irdl_op_definition

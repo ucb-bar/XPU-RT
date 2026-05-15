@@ -1,8 +1,8 @@
-"""End-to-end tests for :func:`compgen.api_llm.compile_with_llm`.
+"""End-to-end tests for :func:`xpu_rt.api_llm.compile_with_llm`.
 
 Goal per the P1 acceptance criterion: calling ``compile_with_llm`` on
 a trivial ``nn.Module`` with :class:`MockLLMClient` returns a
-:class:`~compgen.api_llm.LLMCompileResult` whose output matches
+:class:`~xpu_rt.api_llm.LLMCompileResult` whose output matches
 PyTorch eager within float32 tolerance.
 
 We use MockLLMClient (strict=False) so the agentic loop silently
@@ -17,9 +17,9 @@ from pathlib import Path
 import pytest
 import torch
 import torch.nn as nn
-from compgen import compile_with_llm, open_llm_session
-from compgen.api_llm import LLMCompileResult
-from compgen.llm.mock_client import MockLLMClient
+from xpu_rt import compile_with_llm, open_llm_session
+from xpu_rt.api_llm import LLMCompileResult
+from xpu_rt.llm.mock_client import MockLLMClient
 
 EXEMPLAR = Path(__file__).resolve().parents[1] / "targetgen" / "exemplars" / "test_gpu_simt.yaml"
 

@@ -12,26 +12,26 @@ from typing import Any
 from xdsl.dialects.builtin import ModuleOp, StringAttr, TensorType
 from xdsl.dialects.func import FuncOp, ReturnOp
 
-from compgen.agent.decisions import (
+from xpu_rt.agent.decisions import (
     DecisionCandidate,
     DecisionSite,
     get_active_registry,
 )
-from compgen.stages.bundle import BundleStage
-from compgen.stages.dispatch import DispatchStage
-from compgen.stages.encoding import EncodingStage
-from compgen.stages.encoding.stage import ENCODING_ATTR
-from compgen.stages.registry import TargetDialectStack
-from compgen.stages.templates.codegen import CODEGEN_BACKEND_ATTR, CodegenStage
-from compgen.stages.templates.tiling import TilingStage
-from compgen.targetgen.hardware_spec import HardwareSpec
-from compgen.targets.capability import CapabilitySpec
-from compgen.targets.schema import TargetProfile
+from xpu_rt.stages.bundle import BundleStage
+from xpu_rt.stages.dispatch import DispatchStage
+from xpu_rt.stages.encoding import EncodingStage
+from xpu_rt.stages.encoding.stage import ENCODING_ATTR
+from xpu_rt.stages.registry import TargetDialectStack
+from xpu_rt.stages.templates.codegen import CODEGEN_BACKEND_ATTR, CodegenStage
+from xpu_rt.stages.templates.tiling import TilingStage
+from xpu_rt.targetgen.hardware_spec import HardwareSpec
+from xpu_rt.targets.capability import CapabilitySpec
+from xpu_rt.targets.schema import TargetProfile
 
 
 def _op_site_key(op: Any) -> str:
     attrs = getattr(op, "attributes", {}) or {}
-    rid_attr = attrs.get("compgen.region_id") if attrs else None
+    rid_attr = attrs.get("xpu_rt.region_id") if attrs else None
     if rid_attr is not None and hasattr(rid_attr, "data"):
         return str(rid_attr.data)
     return f"{op.name}@{id(op):x}"

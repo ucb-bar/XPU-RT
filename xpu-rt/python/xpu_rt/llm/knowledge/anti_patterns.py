@@ -7,7 +7,7 @@ that repeat well-known mistakes.
 
 from __future__ import annotations
 
-from compgen.llm.knowledge.base import AntiPattern
+from xpu_rt.llm.knowledge.base import AntiPattern
 
 
 def build_default_anti_patterns() -> list[AntiPattern]:

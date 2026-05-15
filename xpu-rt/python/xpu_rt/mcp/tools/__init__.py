@@ -1,4 +1,4 @@
-"""MCP tool handlers for CompGen.
+"""MCP tool handlers for XPU-RT.
 
 Each submodule defines one or more pure-Python callables that accept
 a ``SessionManager`` + keyword args and return a JSON-serialisable
@@ -20,51 +20,51 @@ from __future__ import annotations
 
 from typing import Any
 
-from compgen.mcp.tools.agent_decision import AGENT_DECISION_TOOLS
-from compgen.mcp.tools.autotune import AUTOTUNE_TOOLS
-from compgen.mcp.tools.batch import BATCH_TOOLS
-from compgen.mcp.tools.bench import BENCH_TOOLS
-from compgen.mcp.tools.compile import COMPILE_TOOLS
-from compgen.mcp.tools.conformance import CONFORMANCE_TOOLS
-from compgen.mcp.tools.decisions import DECISION_TOOLS
-from compgen.mcp.tools.diagnose import DIAGNOSE_TOOLS
-from compgen.mcp.tools.dispatch import DISPATCH_TOOLS
-from compgen.mcp.tools.embedded import EMBEDDED_TOOLS
-from compgen.mcp.tools.explain import EXPLAIN_TOOLS
-from compgen.mcp.tools.graduate import GRADUATE_TOOLS
-from compgen.mcp.tools.graph_digest import GRAPH_DIGEST_TOOLS
-from compgen.mcp.tools.inspect import INSPECT_TOOLS
-from compgen.mcp.tools.kernel import KERNEL_TOOLS
-from compgen.mcp.tools.knowledge import KNOWLEDGE_TOOLS
-from compgen.mcp.tools.lifecycle import LIFECYCLE_TOOLS
-from compgen.mcp.tools.recipe_apply import APPLY_RECIPE_TOOLS
-from compgen.mcp.tools.recovery import RECOVERY_TOOLS
-from compgen.mcp.tools.refinement import REFINEMENT_TOOLS
-from compgen.mcp.tools.suggest import SUGGEST_TOOLS
-from compgen.mcp.tools.targets import TARGET_TOOLS
-from compgen.mcp.tools.transform import TRANSFORM_TOOLS
-from compgen.mcp.tools.vendor_dialect import VENDOR_DIALECT_TOOLS
+from xpu_rt.mcp.tools.agent_decision import AGENT_DECISION_TOOLS
+from xpu_rt.mcp.tools.autotune import AUTOTUNE_TOOLS
+from xpu_rt.mcp.tools.batch import BATCH_TOOLS
+from xpu_rt.mcp.tools.bench import BENCH_TOOLS
+from xpu_rt.mcp.tools.compile import COMPILE_TOOLS
+from xpu_rt.mcp.tools.conformance import CONFORMANCE_TOOLS
+from xpu_rt.mcp.tools.decisions import DECISION_TOOLS
+from xpu_rt.mcp.tools.diagnose import DIAGNOSE_TOOLS
+from xpu_rt.mcp.tools.dispatch import DISPATCH_TOOLS
+from xpu_rt.mcp.tools.embedded import EMBEDDED_TOOLS
+from xpu_rt.mcp.tools.explain import EXPLAIN_TOOLS
+from xpu_rt.mcp.tools.graduate import GRADUATE_TOOLS
+from xpu_rt.mcp.tools.graph_digest import GRAPH_DIGEST_TOOLS
+from xpu_rt.mcp.tools.inspect import INSPECT_TOOLS
+from xpu_rt.mcp.tools.kernel import KERNEL_TOOLS
+from xpu_rt.mcp.tools.knowledge import KNOWLEDGE_TOOLS
+from xpu_rt.mcp.tools.lifecycle import LIFECYCLE_TOOLS
+from xpu_rt.mcp.tools.recipe_apply import APPLY_RECIPE_TOOLS
+from xpu_rt.mcp.tools.recovery import RECOVERY_TOOLS
+from xpu_rt.mcp.tools.refinement import REFINEMENT_TOOLS
+from xpu_rt.mcp.tools.suggest import SUGGEST_TOOLS
+from xpu_rt.mcp.tools.targets import TARGET_TOOLS
+from xpu_rt.mcp.tools.transform import TRANSFORM_TOOLS
+from xpu_rt.mcp.tools.vendor_dialect import VENDOR_DIALECT_TOOLS
 
 
 def _optimize_tools() -> list[dict]:
-    """Imported lazily to avoid an import cycle with compgen.agent."""
-    from compgen.agent.mcp_optimizer import OPTIMIZE_TOOLS
+    """Imported lazily to avoid an import cycle with xpu_rt.agent."""
+    from xpu_rt.agent.mcp_optimizer import OPTIMIZE_TOOLS
 
     return OPTIMIZE_TOOLS
 
 
 def _pack_mcp_tools() -> list[dict]:
-    """Discover + load tools from the ``compgen.mcp.tools`` entry-point group.
+    """Discover + load tools from the ``xpu_rt.mcp.tools`` entry-point group.
 
     Each entry resolves to a single tool dict or an iterable of tool
     dicts. Validation is performed inside the plugins registry — entries
     that fail are logged and skipped (never raise) so a single broken
-    pack doesn't prevent CompGen from starting.
+    pack doesn't prevent XPU-RT from starting.
 
     Returns the flat list to append to ``ALL_TOOLS``.
     """
     try:
-        from compgen.plugins import GROUP_MCP_TOOLS, discover_all, registry
+        from xpu_rt.plugins import GROUP_MCP_TOOLS, discover_all, registry
     except Exception:  # noqa: BLE001
         return []
 
@@ -74,7 +74,7 @@ def _pack_mcp_tools() -> list[dict]:
         obj = plugin.object
         items = obj if isinstance(obj, (list, tuple)) else [obj]
         for item in items:
-            # Annotate provenance so `compgen mcp tools` can render
+            # Annotate provenance so `xpu_rt mcp tools` can render
             # `[pack: <dist>]` next to pack-owned entries.
             t = dict(item)
             t.setdefault("_pack", plugin.distribution or plugin.name)
@@ -91,7 +91,7 @@ def _bridge_tools() -> list[dict]:
     """
 
     try:
-        from compgen.mcp.tool_bridge import bridge_tools
+        from xpu_rt.mcp.tool_bridge import bridge_tools
 
         return bridge_tools()
     except Exception:  # noqa: BLE001
@@ -136,10 +136,10 @@ def get_all_tools() -> list[dict]:
     """Return the merged in-tree + pack-discovered tools list.
 
     Entry-point discovery is deferred until the first call so importing
-    ``compgen.mcp.tools.embedded`` (or any other submodule) doesn't
+    ``xpu_rt.mcp.tools.embedded`` (or any other submodule) doesn't
     trigger pack-side resolution at package-init time. That deferral
     avoids circular-import traps when a pack imports from
-    ``compgen.mcp.tools.embedded`` at its own module-load time.
+    ``xpu_rt.mcp.tools.embedded`` at its own module-load time.
     """
     global _ALL_TOOLS_CACHE
     if _ALL_TOOLS_CACHE is None:

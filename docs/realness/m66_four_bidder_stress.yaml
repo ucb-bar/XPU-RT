@@ -13,7 +13,7 @@ claim: |
   Hard contract:
 
   1. The auction is run in-process via
-     ``compgen.graph_compilation.kernel_auction.run_kernel_auction``
+     ``xpu_rt.graph_compilation.kernel_auction.run_kernel_auction``
      with an explicit ``ProviderRegistry`` carrying all four
      providers. ``mode="multi-bidder"`` and ``bid_cutoff=4`` so all
      four reach ``fulfill()``.

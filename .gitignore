@@ -108,7 +108,7 @@ ENV/
 env.bak/
 venv.bak/
 # ...but not the xpu_rt.agent.env package (virtualenv pattern collision)
-!python/compgen/agent/env/
+!python/xpu_rt/agent/env/
 !xpu-rt/python/xpu_rt/agent/env/
 
 # Spyder / Rope project settings
@@ -163,7 +163,7 @@ tmp
 
 # Generated MLIR artifacts
 *.mlir
-!python/compgen/transforms/templates/*.mlir
+!python/xpu_rt/transforms/templates/*.mlir
 !xpu-rt/python/xpu_rt/transforms/templates/*.mlir
 
 # Generated kernels
@@ -173,7 +173,7 @@ generated_kernels/
 verification_output/
 
 # Recipe cache and library
-.compgen_cache/
+.xpu_rt_cache/
 .xpu-rt_cache/
 recipe_library/
 
@@ -194,19 +194,19 @@ mlir_build/
 sessions/
 tmp/agentic_documentation/
 tmp/agentic_documentation/**
-compgen_output
+xpu-rt-output
 xpu-rt-output
 .claude
 
 # Target generation output
-compgen_output/targetgen/
+xpu-rt-output/targetgen/
 xpu-rt-output/targetgen/
 
 # LLVM build artifacts
 third_party/llvm-project/build/
 
 # Compiler generated artifacts (ephemeral)
-.compgen/
+.xpu_rt/
 .xpu-rt/
 artifacts/runs/
 artifacts/cache/
@@ -228,13 +228,13 @@ benchmarks/tmp/
 
 # Pytest scratch
 pytest-of-*/
-compgen-test-home-*/
+xpu_rt-test-home-*/
 xpu-rt-test-home-*/
 torchinductor_*/
 
 # Native runtime CMake build directories
-runtime/native/libcompgen_rt/build/
-runtime/native/libcompgen_rt/build-*/
+runtime/native/libxpu_rt/build/
+runtime/native/libxpu_rt/build-*/
 runtime/native/libxpu_rt/build/
 runtime/native/libxpu_rt/build-*/
 
@@ -257,12 +257,12 @@ user_perspective/
 *.db
 *.db-journal
 *.db-wal
-userpacks/**/.compgen_external/
+userpacks/**/.xpu_rt_external/
 userpacks/**/.xpu-rt_external/
-python/compgen/generated/promoted/
-python/compgen/transforms/promoted/
-python/compgen/kernels/promoted/
-python/compgen/extensions/promoted/
+python/xpu_rt/generated/promoted/
+python/xpu_rt/transforms/promoted/
+python/xpu_rt/kernels/promoted/
+python/xpu_rt/extensions/promoted/
 xpu-rt/python/xpu_rt/generated/promoted/
 xpu-rt/python/xpu_rt/transforms/promoted/
 xpu-rt/python/xpu_rt/kernels/promoted/

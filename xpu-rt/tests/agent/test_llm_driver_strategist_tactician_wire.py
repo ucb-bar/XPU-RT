@@ -2,7 +2,7 @@
 
 Coverage:
 
-1. With ``COMPGEN_USE_STRATEGIST_TACTICIAN=1``, the first
+1. With ``XPU_RT_USE_STRATEGIST_TACTICIAN=1``, the first
    ``current_view`` call materialises a non-empty :class:`Plan` on
    ``driver._plan`` with a valid fallback ladder for every region.
 2. With the flag *off* (default), ``driver._plan`` stays ``None``
@@ -23,10 +23,10 @@ from pathlib import Path
 import pytest
 import torch
 import torch.nn as nn
-from compgen.agent.llm_driver import LLMDrivenCompiler
-from compgen.api import compile_model
-from compgen.api import device as _device
-from compgen.llm.mock_client import MockLLMClient
+from xpu_rt.agent.llm_driver import LLMDrivenCompiler
+from xpu_rt.api import compile_model
+from xpu_rt.api import device as _device
+from xpu_rt.llm.mock_client import MockLLMClient
 
 EXEMPLAR = (
     Path(__file__).resolve().parents[1]
@@ -68,7 +68,7 @@ def _make_driver() -> LLMDrivenCompiler:
 
 
 def test_plan_materialises_with_flag_on(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("COMPGEN_USE_STRATEGIST_TACTICIAN", "1")
+    monkeypatch.setenv("XPU_RT_USE_STRATEGIST_TACTICIAN", "1")
     drv = _make_driver()
     assert drv._plan is None
     _ = drv.current_view()
@@ -81,7 +81,7 @@ def test_plan_materialises_with_flag_on(monkeypatch: pytest.MonkeyPatch) -> None
 
 
 def test_plan_init_is_idempotent(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("COMPGEN_USE_STRATEGIST_TACTICIAN", "1")
+    monkeypatch.setenv("XPU_RT_USE_STRATEGIST_TACTICIAN", "1")
     drv = _make_driver()
     _ = drv.current_view()
     first_plan = drv._plan
@@ -96,7 +96,7 @@ def test_plan_init_is_idempotent(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_plan_stays_none_with_flag_off(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv("COMPGEN_USE_STRATEGIST_TACTICIAN", raising=False)
+    monkeypatch.delenv("XPU_RT_USE_STRATEGIST_TACTICIAN", raising=False)
     drv = _make_driver()
     _ = drv.current_view()
     assert drv._plan is None
@@ -104,7 +104,7 @@ def test_plan_stays_none_with_flag_off(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_no_tactician_audit_with_flag_off(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv("COMPGEN_USE_STRATEGIST_TACTICIAN", raising=False)
+    monkeypatch.delenv("XPU_RT_USE_STRATEGIST_TACTICIAN", raising=False)
     drv = _make_driver()
     _ = drv.current_view()
     # An arbitrary proposal targeting any region must NOT touch
@@ -121,7 +121,7 @@ def test_no_tactician_audit_with_flag_off(monkeypatch: pytest.MonkeyPatch) -> No
 
 
 def test_step_proposal_logs_tactician_audit(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("COMPGEN_USE_STRATEGIST_TACTICIAN", "1")
+    monkeypatch.setenv("XPU_RT_USE_STRATEGIST_TACTICIAN", "1")
     drv = _make_driver()
     _ = drv.current_view()
     if not drv.env._regions:

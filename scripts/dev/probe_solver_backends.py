@@ -16,8 +16,8 @@ import json
 import sys
 from pathlib import Path
 
-from compgen.solve.backend_registry import default_registry
-from compgen.solve.solver_types import (
+from xpu_rt.solve.backend_registry import default_registry
+from xpu_rt.solve.solver_types import (
     BackendAvailabilityStatus,
     SolverBackendName,
 )

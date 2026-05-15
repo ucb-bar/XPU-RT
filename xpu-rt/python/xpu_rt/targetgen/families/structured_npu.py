@@ -12,16 +12,16 @@ from typing import Any
 from xdsl.dialects.builtin import ModuleOp, StringAttr
 from xdsl.dialects.func import FuncOp, ReturnOp
 
-from compgen.stages.bundle import BundleStage
-from compgen.stages.dispatch import DispatchStage
-from compgen.stages.encoding import EncodingStage
-from compgen.stages.registry import TargetDialectStack
-from compgen.stages.templates.lowering import LoweringStage
-from compgen.stages.templates.memory_plan import MemoryPlanStage
-from compgen.stages.templates.scheduling import SchedulingStage
-from compgen.targetgen.hardware_spec import HardwareSpec
-from compgen.targets.capability import CapabilitySpec
-from compgen.targets.schema import TargetProfile
+from xpu_rt.stages.bundle import BundleStage
+from xpu_rt.stages.dispatch import DispatchStage
+from xpu_rt.stages.encoding import EncodingStage
+from xpu_rt.stages.registry import TargetDialectStack
+from xpu_rt.stages.templates.lowering import LoweringStage
+from xpu_rt.stages.templates.memory_plan import MemoryPlanStage
+from xpu_rt.stages.templates.scheduling import SchedulingStage
+from xpu_rt.targetgen.hardware_spec import HardwareSpec
+from xpu_rt.targets.capability import CapabilitySpec
+from xpu_rt.targets.schema import TargetProfile
 
 
 class NpuKernelPlugin:
@@ -45,8 +45,8 @@ class NpuKernelPlugin:
         for op in module.walk():
             if isinstance(op, (ModuleOp, FuncOp, ReturnOp)):
                 continue
-            if op.results and "compgen.npu_kernel" not in op.attributes:
-                op.attributes["compgen.npu_kernel"] = StringAttr("ukernel_call")
+            if op.results and "xpu_rt.npu_kernel" not in op.attributes:
+                op.attributes["xpu_rt.npu_kernel"] = StringAttr("ukernel_call")
         return module
 
     def get_artifacts(self) -> dict[str, Any]:
@@ -74,8 +74,8 @@ class NpuIsaPlugin:
         for op in module.walk():
             if isinstance(op, (ModuleOp, FuncOp, ReturnOp)):
                 continue
-            if op.results and "compgen.npu_isa" not in op.attributes:
-                op.attributes["compgen.npu_isa"] = StringAttr("text_isa")
+            if op.results and "xpu_rt.npu_isa" not in op.attributes:
+                op.attributes["xpu_rt.npu_isa"] = StringAttr("text_isa")
         return module
 
     def get_artifacts(self) -> dict[str, Any]:

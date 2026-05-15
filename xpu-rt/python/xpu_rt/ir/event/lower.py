@@ -2,22 +2,22 @@
 
 Closes the IR → execution loop for the paper's megakernel abstraction
 (Jin et al., MLSys '26): a ``builtin.module`` containing one or more
-``event.graph`` ops is lowered into :class:`compgen.runtime.megakernel.MegakernelGraph`
-objects ready to :meth:`~compgen.runtime.megakernel.MegakernelGraph.launch`.
+``event.graph`` ops is lowered into :class:`xpu_rt.runtime.megakernel.MegakernelGraph`
+objects ready to :meth:`~xpu_rt.runtime.megakernel.MegakernelGraph.launch`.
 
 Lowering covers the static / DAG-aware parts of the dialect:
 
-- :class:`~compgen.ir.event.ops.EventTensorOp` →
-  :class:`~compgen.runtime.event_tensor.EventTensor` (shape, dtype,
+- :class:`~xpu_rt.ir.event.ops.EventTensorOp` →
+  :class:`~xpu_rt.runtime.event_tensor.EventTensor` (shape, dtype,
   scope, wait_count_default honoured).
-- :class:`~compgen.ir.event.ops.CallDeviceOp` →
-  :class:`~compgen.runtime.megakernel.DeviceCall` (task_shape +
+- :class:`~xpu_rt.ir.event.ops.CallDeviceOp` →
+  :class:`~xpu_rt.runtime.megakernel.DeviceCall` (task_shape +
   in_edges + out_edges).
-- :class:`~compgen.ir.event.ops.GraphOp` →
-  :class:`~compgen.runtime.megakernel.MegakernelGraph` (policy,
+- :class:`~xpu_rt.ir.event.ops.GraphOp` →
+  :class:`~xpu_rt.runtime.megakernel.MegakernelGraph` (policy,
   sm_count, composed device calls).
 
-**Index expressions** in :class:`~compgen.ir.event.attrs.EventCoordAttr`
+**Index expressions** in :class:`~xpu_rt.ir.event.attrs.EventCoordAttr`
 are compiled into real Python callables (``compile`` + ``eval`` with a
 restricted namespace). The namespace binds task-coord positions to
 letters ``i j k l m n o p q r`` — the paper's einsum convention.
@@ -34,7 +34,7 @@ subset is fully covered today.
 
 Usage::
 
-    from compgen.ir.event.lower import lower_event_module
+    from xpu_rt.ir.event.lower import lower_event_module
 
     graphs = lower_event_module(module, device_funcs={
         "gemm_tile": my_gemm_body_fn,
@@ -51,8 +51,8 @@ from typing import Any
 import structlog
 from xdsl.dialects.builtin import IntegerAttr, ModuleOp
 
-from compgen.ir.event.attrs import EventCoordAttr
-from compgen.ir.event.ops import (
+from xpu_rt.ir.event.attrs import EventCoordAttr
+from xpu_rt.ir.event.ops import (
     CallDeviceOp,
     EventTensorOp,
     GraphOp,
@@ -62,8 +62,8 @@ from compgen.ir.event.ops import (
     UpdateOp,
     WaitOp,
 )
-from compgen.runtime.event_tensor import EventTensor
-from compgen.runtime.megakernel import DeviceCall, EventEdge, MegakernelGraph
+from xpu_rt.runtime.event_tensor import EventTensor
+from xpu_rt.runtime.megakernel import DeviceCall, EventEdge, MegakernelGraph
 
 log = structlog.get_logger(__name__)
 
@@ -191,7 +191,7 @@ def _apply_materialize_view(
     template doesn't exist, already materialized, or the concrete
     shape is malformed.
     """
-    from compgen.runtime.event_tensor import materialize_view
+    from xpu_rt.runtime.event_tensor import materialize_view
 
     name = op.event_ref.data
     concrete_shape = tuple(int(d.value.data) for d in op.concrete_shape.data if isinstance(d, IntegerAttr))
@@ -404,7 +404,7 @@ def _lower_event_tensor_op(op: EventTensorOp) -> EventTensor:
     # job of MaterializeViewOp which we don't support yet. Surface a
     # clear error instead of silently passing garbage through.
     if any(d <= 0 for d in shape):
-        from compgen.runtime.errors import SymbolicShapeUnsupportedError
+        from xpu_rt.runtime.errors import SymbolicShapeUnsupportedError
 
         raise SymbolicShapeUnsupportedError(
             f"EventTensorOp {name!r}: symbolic shape entry ({shape}) requires "
@@ -476,7 +476,7 @@ def _lower_call_device_op(
             raise ValueError(f"CallDeviceOp @{func_name}: task_shape entry {ent!r} is not an IntegerAttr")
         dim_val = int(ent.value.data)
         if dim_val == -1:
-            from compgen.runtime.errors import SymbolicShapeUnsupportedError
+            from xpu_rt.runtime.errors import SymbolicShapeUnsupportedError
 
             raise SymbolicShapeUnsupportedError(
                 f"CallDeviceOp @{func_name}: symbolic task_shape dim (-1) requires "

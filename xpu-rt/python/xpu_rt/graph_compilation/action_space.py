@@ -46,7 +46,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from compgen.graph_compilation.region_dossier import (
+from xpu_rt.graph_compilation.region_dossier import (
     TargetProfile,
     load_target_profile,
 )
@@ -1007,7 +1007,7 @@ def _emit_action_space_mlir(
         "site_count": len(sites),
         "candidate_count": len(candidates),
     }
-    lines.append(f"compgen.action_space @{_safe(model_id)} attributes {{ {_emit_attrs(head)} }} {{")
+    lines.append(f"xpu_rt.action_space @{_safe(model_id)} attributes {{ {_emit_attrs(head)} }} {{")
     for s in sites:
         attrs = {
             "kind": s.kind,
@@ -1018,7 +1018,7 @@ def _emit_action_space_mlir(
         }
         for k, v in s.extra.items():
             attrs[k] = v
-        lines.append(f"  compgen.decision_site @{_safe(s.site_id)} attributes {{ {_emit_attrs(attrs)} }}")
+        lines.append(f"  xpu_rt.decision_site @{_safe(s.site_id)} attributes {{ {_emit_attrs(attrs)} }}")
     for c in candidates:
         cattrs = {
             "site": c.site_id,
@@ -1029,7 +1029,7 @@ def _emit_action_space_mlir(
             "legality_reason": c.legality.get("reason", ""),
             "static_relative_cost": float(c.cost_preview.get("static_relative_cost", 1.0)),
         }
-        recipe_block_lines = ["  compgen.candidate @" + _safe(c.candidate_id)
+        recipe_block_lines = ["  xpu_rt.candidate @" + _safe(c.candidate_id)
                               + " attributes { " + _emit_attrs(cattrs) + " } {"]
         for op_dict in c.recipe_delta:
             op_name = op_dict.get("op", "")
@@ -1071,7 +1071,7 @@ def build_action_space(
         region_dossier_ref_by_id[rid] = ref
 
     # Optional gap_action_queue.json (post-discovery enrichment)
-    from compgen.graph_compilation.artifacts import stage_dir
+    from xpu_rt.graph_compilation.artifacts import stage_dir
 
     gd_dir = stage_dir(run_dir, "gap_discovery")
     gap_lookup: dict[str, dict[str, Any]] = {}

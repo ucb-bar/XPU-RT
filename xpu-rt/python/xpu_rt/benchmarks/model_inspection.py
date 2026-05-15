@@ -202,7 +202,7 @@ def inspect_model_run(
     ``out_dir / "inspection_pack.json"`` plus a markdown
     ``out_dir / "INSPECTION.md"`` browsable summary.
     """
-    from compgen.graph_compilation.run import run_graph_compilation
+    from xpu_rt.graph_compilation.run import run_graph_compilation
 
     model_yaml = Path(model_yaml).resolve()
     target_yaml = Path(target_yaml).resolve()
@@ -586,7 +586,7 @@ def aggregate_inspection_packs(
     """Render OVERVIEW.md comparing N model runs."""
     out_path.parent.mkdir(parents=True, exist_ok=True)
     lines: list[str] = []
-    lines.append("# CompGen model inspection — cross-model overview")
+    lines.append("# XPU-RT model inspection — cross-model overview")
     lines.append("")
     lines.append(f"_Generated: `{_utc_now()}`_")
     lines.append("")

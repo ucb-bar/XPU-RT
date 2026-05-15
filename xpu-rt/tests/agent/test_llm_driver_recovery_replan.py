@@ -15,7 +15,7 @@ Coverage:
 * Failed replan_on_reject (e.g. unknown region_id in Plan) is
   recorded as no replan event — the helper degrades gracefully.
 
-These tests stub out :class:`compgen.capture.torch_export.CaptureArtifact`
+These tests stub out :class:`xpu_rt.capture.torch_export.CaptureArtifact`
 because the real one requires a torch model trace. The recovery
 loop only reads ``artifact.unsupported_resolutions`` and per-resolution
 ``classification.confidence`` + ``target``, so a SimpleNamespace
@@ -27,12 +27,12 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 import pytest
-from compgen.agent.llm_driver_recovery import (
+from xpu_rt.agent.llm_driver_recovery import (
     RecoveryPlan,
     RegionReplanEvent,
     plan_recovery,
 )
-from compgen.agent.plan import (
+from xpu_rt.agent.plan import (
     Budget,
     Plan,
     RegionPlan,
@@ -55,7 +55,7 @@ def _force_strategy_failure(monkeypatch):
         return False, "", "stubbed_failure"
 
     monkeypatch.setattr(
-        "compgen.agent.llm_driver_recovery._apply_strategy",
+        "xpu_rt.agent.llm_driver_recovery._apply_strategy",
         _always_fail,
     )
     yield

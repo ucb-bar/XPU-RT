@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from compgen.ir.payload.passes._shape_utils import (
+from xpu_rt.ir.payload.passes._shape_utils import (
     common_element_type,
     infer_result_shape,
     is_static_shape,

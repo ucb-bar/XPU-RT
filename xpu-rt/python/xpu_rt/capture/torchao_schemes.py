@@ -2,7 +2,7 @@
 
 Per the approved wave-6 plan's user directive: coverage for **every**
 TorchAO format — transformation paths, not runtime validation. This
-module is the single source of truth for what schemes CompGen
+module is the single source of truth for what schemes XPU-RT
 recognizes. The capture pipeline (``torchao_pipeline.py``), the
 FX-import decomposition table, the IR-pass frozensets, and the
 coverage probe (``scripts/14_torchao_coverage_probe.py``) all read
@@ -21,7 +21,7 @@ import importlib
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
-Stability = Literal["stable", "prototype", "qat", "compgen_custom"]
+Stability = Literal["stable", "prototype", "qat", "xpu_rt_custom"]
 Granularity = Literal[
     "per_tensor",
     "per_channel",
@@ -44,7 +44,7 @@ class TorchAOScheme:
         weight_dtype: Dtype of the stored weight.
         activation_dtype: Dtype of the runtime activation, or None if weight-only.
         granularity: Quantization granularity.
-        stability: stable | prototype | qat | compgen_custom
+        stability: stable | prototype | qat | xpu_rt_custom
         target_hardware: Informational — where this format is expected to
             run (e.g. "cuda_hopper", "cpu", "any", "npu").
         params: Default parameters (group_size, bit_width, etc.) used
@@ -277,25 +277,25 @@ _QAT: tuple[TorchAOScheme, ...] = (
 
 
 # ---------------------------------------------------------------------------
-# CompGen-custom (not TorchAO but ships in this project)
+# XPU-RT-custom (not TorchAO but ships in this project)
 # ---------------------------------------------------------------------------
 
 _COMPGEN_CUSTOM: tuple[TorchAOScheme, ...] = (
     TorchAOScheme(
         name="fp8_e4m3_po2_npu",
-        config_class_path="compgen.quantization.smolvla_recipe.apply_smolvla_quantization",
+        config_class_path="xpu_rt.quantization.smolvla_recipe.apply_smolvla_quantization",
         weight_dtype="float8_e4m3fn",
         granularity="per_tensor",
-        stability="compgen_custom",
+        stability="xpu_rt_custom",
         target_hardware="npu",
         notes="Power-of-two-scaled FP8 E4M3 for NPU deployment (smolVLA).",
     ),
     TorchAOScheme(
         name="fp8_e4m3_po2",
-        config_class_path="compgen.quantization.fp8_config.FP8E4M3Po2Config",
+        config_class_path="xpu_rt.quantization.fp8_config.FP8E4M3Po2Config",
         weight_dtype="float8_e4m3fn",
         granularity="per_tensor",
-        stability="compgen_custom",
+        stability="xpu_rt_custom",
         target_hardware="cuda_hopper",
     ),
 )

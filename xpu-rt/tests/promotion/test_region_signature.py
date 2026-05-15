@@ -1,8 +1,8 @@
-"""Tests for :mod:`compgen.promotion.region_signature`."""
+"""Tests for :mod:`xpu_rt.promotion.region_signature`."""
 
 from __future__ import annotations
 
-from compgen.promotion.region_signature import (
+from xpu_rt.promotion.region_signature import (
     RegionSignature,
     encode_shape_class,
     hash_region_signature,

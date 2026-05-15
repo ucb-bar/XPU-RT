@@ -1,4 +1,4 @@
-"""Paper-quality codegen plot generation for CompGen's MLSys submission.
+"""Paper-quality codegen plot generation for XPU-RT's MLSys submission.
 
 Eight plot functions targeting code-generation-specific metrics: pipeline
 coverage, strategy mix, roofline gaps, search cost-benefit, multi-device
@@ -42,7 +42,7 @@ def plot_coverage_waterfall(records: list[RunRecord], output_dir: str | Path) ->
     """Stacked horizontal bar chart showing pipeline coverage per model.
 
     Each model gets a row of stacked segments representing how far it
-    progressed through the CompGen pipeline: Captured, Imported, Contracts,
+    progressed through the XPU-RT pipeline: Captured, Imported, Contracts,
     Strategies, Verified, Bundled.
     """
     plt = _require_matplotlib()

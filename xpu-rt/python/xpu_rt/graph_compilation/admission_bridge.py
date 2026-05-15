@@ -1,16 +1,16 @@
-"""Bridge from ``compgen.model_admission`` configs into graph_compilation.
+"""Bridge from ``xpu_rt.model_admission`` configs into graph_compilation.
 
 graph_compilation natively understands the simple ``graphcomp_model_config_v1``
 schema (``model_path`` + ``factory``). The model-admission package owns a
-richer ``model_config_v1`` schema with proxy / HF / compgen_model_spec
+richer ``model_config_v1`` schema with proxy / HF / xpu_rt_model_spec
 loaders that already handle real models — including the proxy modules
-under ``compgen.model_admission.proxies`` for Qwen-VL, LLaVA, OpenVLA,
+under ``xpu_rt.model_admission.proxies`` for Qwen-VL, LLaVA, OpenVLA,
 etc., that look like real models without requiring multi-GB HF weights.
 
 This bridge lets graph_compilation consume a ``model_config_v1`` YAML by
 synthesising a ``(model, sample_inputs)`` factory from the admission
-loader. The compiler core (``compgen.ir``, ``compgen.capture``,
-``compgen.pipeline``) is unaffected — this is a pure user-space adapter.
+loader. The compiler core (``xpu_rt.ir``, ``xpu_rt.capture``,
+``xpu_rt.pipeline``) is unaffected — this is a pure user-space adapter.
 """
 
 from __future__ import annotations
@@ -22,8 +22,8 @@ from typing import Any
 import torch.nn as nn
 import yaml
 
-from compgen.model_admission.loaders import LoadedModel, LoaderUnavailable, load
-from compgen.model_admission.schemas import ModelConfig as AdmissionModelConfig
+from xpu_rt.model_admission.loaders import LoadedModel, LoaderUnavailable, load
+from xpu_rt.model_admission.schemas import ModelConfig as AdmissionModelConfig
 
 # Public constant — used by ``ModelConfig.load`` to recognise admission configs.
 ADMISSION_SCHEMA_VERSION = "model_config_v1"

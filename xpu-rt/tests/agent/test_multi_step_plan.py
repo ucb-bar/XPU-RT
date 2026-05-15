@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 
-from compgen.agent.prompts.plan_multi_step import PlanContext, format_prompt, parse_response
+from xpu_rt.agent.prompts.plan_multi_step import PlanContext, format_prompt, parse_response
 
 
 class TestPlanContext:

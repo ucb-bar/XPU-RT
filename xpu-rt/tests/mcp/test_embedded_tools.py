@@ -19,9 +19,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # fixtures import
 
-from compgen.mcp.session import SessionManager
-from compgen.mcp.tools import ALL_TOOLS
-from compgen.mcp.tools.embedded import (
+from xpu_rt.mcp.session import SessionManager
+from xpu_rt.mcp.tools import ALL_TOOLS
+from xpu_rt.mcp.tools.embedded import (
     EMBEDDED_TOOLS,
     compile_embedded,
     firesim_workload,
@@ -89,7 +89,7 @@ def test_compile_embedded_picks_opu_lane_from_saturn_spec(tmp_path: Path) -> Non
     assert "xopu" in result["target_features"]
     # Header declares the VOPACC ukernel symbol.
     header = Path(result["header"]).read_text()
-    assert "compgen_mmt4d_s8s8s32_16x16x128_xopu" in header
+    assert "xpu_rt_mmt4d_s8s8s32_16x16x128_xopu" in header
     # Input / output sizes match the ConvNet fixture.
     assert result["model_input_bytes"] == 49152
     assert result["model_output_bytes"] == 64
@@ -126,7 +126,7 @@ def test_zephyr_overlay_from_session_metadata(tmp_path: Path) -> None:
     bundle_dir = Path(compile_result["output_dir"])
     objs = []
     for src in [
-        bundle_dir / "compgen_model.c",
+        bundle_dir / "xpu_rt_model.c",
         bundle_dir / "model_blob.c",
         *(bundle_dir / "kernels").glob("*.c"),
     ]:
@@ -137,7 +137,7 @@ def test_zephyr_overlay_from_session_metadata(tmp_path: Path) -> None:
         )
         objs.append(str(obj))
     subprocess.run(
-        ["ar", "rcs", str(bundle_dir / "libcompgen_model.a"), *objs],
+        ["ar", "rcs", str(bundle_dir / "libxpu_rt_model.a"), *objs],
         check=True,
     )
 
@@ -148,14 +148,14 @@ def test_zephyr_overlay_from_session_metadata(tmp_path: Path) -> None:
         session_id=session_id,
     )
     assert overlay["ok"], overlay
-    assert overlay["overlay_dir"].endswith("samples/compgen_app")
+    assert overlay["overlay_dir"].endswith("samples/xpu_rt_app")
     for required in [
         "CMakeLists.txt",
         "prj.conf",
         "custom-sections.ld",
-        "libcompgen_model.a",
+        "libxpu_rt_model.a",
         "model_blob.c",
-        "compgen_model.h",
+        "xpu_rt_model.h",
         "src/main.c",
     ]:
         assert required in overlay["files"], required
@@ -177,7 +177,7 @@ def test_simulator_run_dry_run_uses_spec_command(tmp_path: Path) -> None:
         _sm(),
         spec_path=SATURN_SPEC,
         zephyr_root=str(_fake_zephyr_root(tmp_path)),
-        sample_name="compgen_app",
+        sample_name="xpu_rt_app",
         execute=False,
     )
     assert result["ok"]
@@ -375,12 +375,12 @@ def test_firesim_workload_emits_json(tmp_path: Path) -> None:
         _sm(),
         boot_binary=str(elf),
         workload_dir=str(workload_dir),
-        workload_name="compgen-app",
+        workload_name="xpu_rt-app",
         chipyard_config="OPUV128D64ShuttleConfig",
     )
     assert result["ok"]
     payload = json.loads(Path(result["workload_json"]).read_text())
-    assert payload["benchmark_name"] == "compgen-app"
+    assert payload["benchmark_name"] == "xpu_rt-app"
     assert payload["common_bootbinary"] == str(elf.resolve())
     assert payload["common_rootfs"] is None
     assert payload["common_simulation_outputs"] == ["uartlog"]

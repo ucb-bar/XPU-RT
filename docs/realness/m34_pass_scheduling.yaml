@@ -20,11 +20,11 @@ forbidden:
 - consumer-side stale read that would observe an older generation than a prior read
 realness_level: production_path
 required_evidence:
-- python/compgen/passes/cards.py (PASS_PHASES, default_phase_for_family, phase_index, requires_after, excludes)
-- python/compgen/passes/scheduler.py (PassPlanStep, inspect_pass_plan, assert_pass_plan_valid)
-- python/compgen/analysis/invalidation.py (SummaryRead, append_read_log, assert_no_stale_reads)
-- python/compgen/audit/errors.py (PhaseTransitionViolation, PairContractViolation, PassPlanInvalid)
-- python/compgen/graph_compilation/agent_decision.py (4 new validator rows)
+- python/xpu_rt/passes/cards.py (PASS_PHASES, default_phase_for_family, phase_index, requires_after, excludes)
+- python/xpu_rt/passes/scheduler.py (PassPlanStep, inspect_pass_plan, assert_pass_plan_valid)
+- python/xpu_rt/analysis/invalidation.py (SummaryRead, append_read_log, assert_no_stale_reads)
+- python/xpu_rt/audit/errors.py (PhaseTransitionViolation, PairContractViolation, PassPlanInvalid)
+- python/xpu_rt/graph_compilation/agent_decision.py (4 new validator rows)
 - tests/passes/test_scheduler.py (24 tests covering all 4 invariants on synthetic + real cards)
 - tests/analysis/test_invalidation.py (8 new tests for SummaryRead + assert_no_stale_reads)
 - a real merlin_mlp_wide run that emits agent_decision_request with effective_phase populated on every card

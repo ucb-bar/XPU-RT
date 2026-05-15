@@ -9,13 +9,13 @@ from __future__ import annotations
 
 from typing import Any
 
-from compgen.agent.gates import (
+from xpu_rt.agent.gates import (
     composite_gate,
     differential_gate,
     structural_gate,
 )
-from compgen.agent.invent_slots import seeds
-from compgen.llm.registry import InventSlot, Registry, get_registry
+from xpu_rt.agent.invent_slots import seeds
+from xpu_rt.llm.registry import InventSlot, Registry, get_registry
 
 
 def _default_composite_gate(proposal: dict[str, Any], **ctx: Any) -> dict[str, Any]:
@@ -148,7 +148,7 @@ def register_invent_slots(registry: Registry | None = None) -> list[str]:
     """Register every default invent-slot into the registry (idempotent).
 
     After the canonical slots are registered, the cross-session
-    graduation loop runs once — scanning ``~/.compgen/transcripts``
+    graduation loop runs once — scanning ``~/.xpu_rt/transcripts``
     for previously-accepted patterns that have cleared the
     workload+target thresholds and materialising them as registered
     ``Tool`` entries. Failures there are logged but swallowed; they
@@ -182,8 +182,8 @@ def register_invent_slots(registry: Registry | None = None) -> list[str]:
     try:
         import os
 
-        if not os.environ.get("COMPGEN_DISABLE_CROSS_SESSION_GRADUATION"):
-            from compgen.promotion.cross_session import promote_pending_graduations
+        if not os.environ.get("XPU_RT_DISABLE_CROSS_SESSION_GRADUATION"):
+            from xpu_rt.promotion.cross_session import promote_pending_graduations
 
             promote_pending_graduations(reg)
     except Exception:  # noqa: BLE001
@@ -197,11 +197,11 @@ def register_invent_slots(registry: Registry | None = None) -> list[str]:
     try:
         import os
 
-        if not os.environ.get("COMPGEN_DISABLE_AUTHORED_GRADUATION"):
-            from compgen.agent.self_extension._index import (
+        if not os.environ.get("XPU_RT_DISABLE_AUTHORED_GRADUATION"):
+            from xpu_rt.agent.self_extension._index import (
                 snapshot_authored_index,
             )
-            from compgen.agent.self_extension.graduate import (
+            from xpu_rt.agent.self_extension.graduate import (
                 promote_authored_tools,
             )
 

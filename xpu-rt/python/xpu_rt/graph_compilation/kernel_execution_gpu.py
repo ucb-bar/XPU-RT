@@ -4,7 +4,7 @@ Emits a self-contained Triton kernel parameterised on the
 SetTileParams candidate's tile (BLOCK_M, BLOCK_N, BLOCK_K), compiles
 it (Triton's runtime handles the GPU JIT), launches it on synthesized
 inputs whose shape matches the matmul region, and measures latency
-via ``compgen.kernels.measure.measure_kernel`` (production GPU timing
+via ``xpu_rt.kernels.measure.measure_kernel`` (production GPU timing
 with torch.cuda.Event + synchronize).
 
 Numerical equality vs eager ``torch.matmul`` is required:

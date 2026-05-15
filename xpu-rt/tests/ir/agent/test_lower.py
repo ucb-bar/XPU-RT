@@ -2,16 +2,16 @@
 
 from __future__ import annotations
 
-from compgen.ir.agent.attrs import EvaluatorKindAttr
-from compgen.ir.agent.lower import AgentLoweringOutput, lower_agent
-from compgen.ir.agent.ops_claim import ClaimOp, ExpectedProofOp
-from compgen.ir.agent.ops_critique import CritiqueOp
-from compgen.ir.agent.ops_evidence import BindFactOp, EvidenceSetOp
-from compgen.ir.agent.ops_frontier import AlternativeOp, FrontierOp
-from compgen.ir.agent.ops_intent import AgentScopeOp, AgentSessionOp
-from compgen.ir.agent.ops_memory import MemoryPatternOp
-from compgen.ir.agent.ops_protocol import RoleOp
-from compgen.ir.agent.ops_synthesis import RequestRewriteOp
+from xpu_rt.ir.agent.attrs import EvaluatorKindAttr
+from xpu_rt.ir.agent.lower import AgentLoweringOutput, lower_agent
+from xpu_rt.ir.agent.ops_claim import ClaimOp, ExpectedProofOp
+from xpu_rt.ir.agent.ops_critique import CritiqueOp
+from xpu_rt.ir.agent.ops_evidence import BindFactOp, EvidenceSetOp
+from xpu_rt.ir.agent.ops_frontier import AlternativeOp, FrontierOp
+from xpu_rt.ir.agent.ops_intent import AgentScopeOp, AgentSessionOp
+from xpu_rt.ir.agent.ops_memory import MemoryPatternOp
+from xpu_rt.ir.agent.ops_protocol import RoleOp
+from xpu_rt.ir.agent.ops_synthesis import RequestRewriteOp
 from xdsl.dialects import builtin as builtin_dialect
 from xdsl.dialects.builtin import ModuleOp, Region, StringAttr, SymbolRefAttr
 from xdsl.ir import Block

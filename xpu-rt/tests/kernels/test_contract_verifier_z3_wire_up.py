@@ -4,7 +4,7 @@ These tests prove that when a contract opts in via
 ``optional_v3_1_fields['z3_proof_required'] = True``, each supported
 precondition becomes a real Z3 obligation,
 ``_verify_predicate_proof_via_z3`` invokes
-:mod:`compgen.solve.z3_obligations` through the registered
+:mod:`xpu_rt.solve.z3_obligations` through the registered
 :class:`Z3Backend`, and the typed response lands in a
 ``<task>.z3_obligations.json`` report (suitable for
 ``KernelCertificate.z3_obligation_report_ref``).
@@ -20,13 +20,13 @@ import pytest
 
 z3 = pytest.importorskip("z3")
 
-from compgen.kernels.contract_v3 import KernelContractV3
-from compgen.kernels.contract_verifier import (
+from xpu_rt.kernels.contract_v3 import KernelContractV3
+from xpu_rt.kernels.contract_verifier import (
     generate_obligations,
     verify_kernel,
     write_z3_obligation_report,
 )
-from compgen.kernels.predicates import ModEq, NumericalWithinEps
+from xpu_rt.kernels.predicates import ModEq, NumericalWithinEps
 
 
 def _base_contract() -> KernelContractV3:

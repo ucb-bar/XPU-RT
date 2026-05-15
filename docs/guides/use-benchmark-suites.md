@@ -2,7 +2,7 @@
 
 This guide covers the implemented benchmark harness in `benchmarks/cli.py`.
 
-It is separate from the top-level `compgen` CLI. Use it when you want to run:
+It is separate from the top-level `xpu-rt` CLI. Use it when you want to run:
 
 - recognized benchmark suites: `torchbench`, `huggingface`, `timm`, `mlperf`, `sol_execbench`, `heterobench`
 - pack-backed integrations: `pack_integrations`
@@ -15,7 +15,7 @@ The harness keeps one canonical verbose record format, `RunRecord`, then derives
 The suite runner supports two integration styles:
 
 - PyTorch-backed suites.
-  These run local eager / compiled references plus the CompGen capture-analysis path.
+  These run local eager / compiled references plus the XPU-RT capture-analysis path.
 - External-driver suites.
   These wrap configured upstream commands and parse emitted metrics files.
 
@@ -26,7 +26,7 @@ MLPerf, SOL-ExecBench, HeteroBench, and pack-backed integrations depend on confi
 Use a workspace YAML when your suite roots, datasets, or runner commands live outside the repo.
 
 ```yaml
-repo_root: /path/to/CompGen
+repo_root: /path/to/XPU-RT
 
 external_roots:
   torchbench: /path/to/benchmark
@@ -53,10 +53,10 @@ suite_configs:
       - /path/to/mlperf_runner.py
       - reference
       - "{metrics_path}"
-    compgen_command:
+    xpu_rt_command:
       - /usr/bin/python3
       - /path/to/mlperf_runner.py
-      - compgen
+      - xpu-rt
       - "{metrics_path}"
 
 pack_configs:
@@ -66,10 +66,10 @@ pack_configs:
       - /path/to/pack_runner.py
       - reference
       - "{metrics_path}"
-    compgen_command:
+    xpu_rt_command:
       - /usr/bin/python3
       - /path/to/pack_runner.py
-      - compgen
+      - xpu-rt
       - "{metrics_path}"
 ```
 

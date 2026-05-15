@@ -16,7 +16,7 @@ from typing import Any
 import torch
 import torch.nn.functional as F
 
-from compgen.kernels.patterns.catalog import KernelPattern
+from xpu_rt.kernels.patterns.catalog import KernelPattern
 
 
 @dataclass

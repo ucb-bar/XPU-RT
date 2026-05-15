@@ -28,7 +28,7 @@ IDs. Section 20 builds on this foundation.
 
 from __future__ import annotations
 
-from compgen.passes.cards import (
+from xpu_rt.passes.cards import (
     PASS_FAMILIES,
     PASS_LEVELS,
     PASS_PHASES,
@@ -45,7 +45,7 @@ from compgen.passes.cards import (
     resolve_card_path,
     validate_card,
 )
-from compgen.passes.scheduler import (
+from xpu_rt.passes.scheduler import (
     PassPlanReport,
     PassPlanStep,
     assert_pass_plan_valid,

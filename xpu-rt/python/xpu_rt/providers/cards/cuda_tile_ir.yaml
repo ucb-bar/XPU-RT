@@ -4,7 +4,7 @@ integration_level: probe
 target_families: [cuda]
 contract_kinds: [matmul, attention, fused_region]
 emits: [cuda_tile_mlir, tilebc, cubin]
-entrypoint: compgen.providers.adapters.cuda_tile_ir:CudaTileIRProvider
+entrypoint: xpu_rt.providers.adapters.cuda_tile_ir:CudaTileIRProvider
 paper_claimable: false
 required_env: [CUDA_TILE_ROOT]
 required_commands: [tileiras]

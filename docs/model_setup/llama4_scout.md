@@ -32,7 +32,7 @@ band into the local HuggingFace cache (``$HF_HOME/hub`` or
 ## Minimal smoke command
 
 ```bash
-uv run python -m compgen.model_admission torch-compile \
+uv run python -m xpu_rt.model_admission torch-compile \
     --model configs/models/llama4_scout_text.yaml \
     --slice configs/slices/llama4_scout_decoder_pair.yaml \
     --out results/model_admission/llama4_scout_text/llama4_scout_decoder_pair

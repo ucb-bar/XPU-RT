@@ -13,14 +13,14 @@ from __future__ import annotations
 
 import pytest
 
-from compgen.kernels.kernel_certificate import KernelCertificate
-from compgen.kernels.provider import KernelProvider, ProviderResult
-from compgen.providers.adapters import (
+from xpu_rt.kernels.kernel_certificate import KernelCertificate
+from xpu_rt.kernels.provider import KernelProvider, ProviderResult
+from xpu_rt.providers.adapters import (
     AdapterResolutionError,
     resolve_provider_class,
 )
-from compgen.providers.card_loader import iter_provider_cards
-from compgen.providers.provider_types import ProviderCard
+from xpu_rt.providers.card_loader import iter_provider_cards
+from xpu_rt.providers.provider_types import ProviderCard
 
 
 def _cards_by_id() -> dict[str, ProviderCard]:
@@ -127,7 +127,7 @@ def test_resolution_reports_typed_reason_on_missing_symbol():
             "target_families": [],
             "contract_kinds": [],
             "emits": [],
-            "entrypoint": "compgen.kernels.providers.c_reference:DoesNotExist",
+            "entrypoint": "xpu_rt.kernels.providers.c_reference:DoesNotExist",
         }
     )
     with pytest.raises(AdapterResolutionError) as exc:
@@ -139,7 +139,7 @@ def test_baseline_provider_search_returns_provider_result():
     """End-to-end: the real CReferenceProvider produces a real
     ProviderResult — exercising the substrate without bypassing the
     existing kernel pipeline."""
-    from compgen.kernels.provider import KernelContract, SearchBudget
+    from xpu_rt.kernels.provider import KernelContract, SearchBudget
 
     card = _cards_by_id()["cffi_c"]
     cls = resolve_provider_class(card)

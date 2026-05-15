@@ -14,36 +14,36 @@ _REPO_ROOT = Path(__file__).resolve().parents[3]
 _KIND_SPEC: dict[str, dict[str, str]] = {
     "quantization": {
         "manifest_kind": "KernelPack",
-        "template_src": "python/compgen/quantization/methods/_template.py",
+        "template_src": "python/xpu_rt/quantization/methods/_template.py",
         "scheme_basename": "scheme.py",
         "surface": "quantization_methods",
     },
     "target": {
         "manifest_kind": "TargetPack",
-        "template_src": "python/compgen/targets/backends/_template.py",
+        "template_src": "python/xpu_rt/targets/backends/_template.py",
         "scheme_basename": "backend.py",
         "surface": "target_backend",
     },
     "provider": {
         "manifest_kind": "KernelPack",
-        "template_src": "python/compgen/kernels/providers/_template.py",
+        "template_src": "python/xpu_rt/kernels/providers/_template.py",
         "scheme_basename": "provider.py",
         "surface": "kernel_providers",
     },
     "dialect": {
         "manifest_kind": "DialectPack",
-        "template_src": "python/compgen/extensions/dialects/_template.py",
+        "template_src": "python/xpu_rt/extensions/dialects/_template.py",
         "scheme_basename": "dialect.py",
         "surface": "mlir_dialects",
     },
     "runtime": {
         "manifest_kind": "RuntimePack",
-        "template_src": "python/compgen/runtime/adapters/_template.py",
+        "template_src": "python/xpu_rt/runtime/adapters/_template.py",
         "scheme_basename": "adapter.py",
         "surface": "runtime_adapters",
     },
     # Multi-surface "full target pack" — generates a pyproject with all
-    # four CompGen entry-point groups + Backend/Provider/MCP modules + a
+    # four XPU-RT entry-point groups + Backend/Provider/MCP modules + a
     # HardwareSpec stub + a smoke test. Mirrors the radiance-muon shape.
     "target_pack": {
         "manifest_kind": "TargetPack",
@@ -82,13 +82,13 @@ _PYPROJECT_TEMPLATE = """\
 [project]
 name = "{name}"
 version = "0.1.0"
-description = "CompGen extension pack: {name} ({kind})"
+description = "XPU-RT extension pack: {name} ({kind})"
 requires-python = ">=3.11"
 dependencies = [
-    "compgen",
+    "xpu-rt",
 ]
 
-[project.entry-points."compgen.packs"]
+[project.entry-points."xpu_rt.packs"]
 {name} = "{name}"
 
 [build-system]
@@ -127,10 +127,10 @@ metadata:
 """
 
 _PKG_INIT_TEMPLATE = '''\
-"""CompGen extension pack: {name} ({kind}).
+"""XPU-RT extension pack: {name} ({kind}).
 
-Discovery: CompGen resolves the ``compgen.packs`` entry point to this package
-directory, which contains ``manifest.yaml``. See ``compgen.packs.load_pack``.
+Discovery: XPU-RT resolves the ``xpu_rt.packs`` entry point to this package
+directory, which contains ``manifest.yaml``. See ``xpu_rt.packs.load_pack``.
 """
 
 from __future__ import annotations
@@ -138,7 +138,7 @@ from __future__ import annotations
 from pathlib import Path
 
 PACK_ROOT: Path = Path(__file__).resolve().parent
-"""Directory containing manifest.yaml (used by CompGen to locate the pack)."""
+"""Directory containing manifest.yaml (used by XPU-RT to locate the pack)."""
 
 __all__ = ["PACK_ROOT"]
 '''
@@ -146,7 +146,7 @@ __all__ = ["PACK_ROOT"]
 _README_TEMPLATE = """\
 # {name}
 
-CompGen extension pack scaffolded via `compgen scaffold-pack --kind {kind}`.
+XPU-RT extension pack scaffolded via `xpu_rt scaffold-pack --kind {kind}`.
 
 ## Install
 
@@ -154,30 +154,30 @@ CompGen extension pack scaffolded via `compgen scaffold-pack --kind {kind}`.
 pip install -e .
 ```
 
-After install, CompGen's pack discovery picks this up automatically via the
-`compgen.packs` entry point declared in `pyproject.toml`.
+After install, XPU-RT's pack discovery picks this up automatically via the
+`xpu_rt.packs` entry point declared in `pyproject.toml`.
 
 ## Layout
 
 ```
 {name}/
-├── pyproject.toml          # declares compgen.packs entry point
+├── pyproject.toml          # declares xpu_rt.packs entry point
 └── src/{name}/
     ├── __init__.py         # exposes PACK_ROOT
-    ├── manifest.yaml       # CompGen pack manifest
+    ├── manifest.yaml       # XPU-RT pack manifest
     └── {scheme_basename}  # extension implementation (edit this)
 ```
 
 ## Extend
 
 Edit `src/{name}/{scheme_basename}` to implement your {kind}. It was seeded
-from the CompGen in-tree template for this extension point. See
-`EXTENSION_POINTS.md` in the CompGen repo for the full protocol.
+from the XPU-RT in-tree template for this extension point. See
+`EXTENSION_POINTS.md` in the XPU-RT repo for the full protocol.
 
 ## Verify
 
 ```python
-from compgen.packs import load_pack
+from xpu_rt.packs import load_pack
 loaded = load_pack("{name}")  # resolves entry point
 print(loaded.manifest.name, loaded.manifest.kinds)
 ```
@@ -199,8 +199,8 @@ def scaffold_pack(
         name: Python-identifier name for the pack (becomes both the pip
             distribution name and the importable package).
         out_dir: Directory in which to create the pack root (``out_dir/<name>``).
-        repo_root: CompGen repo root (used to locate ``_template.py``). Falls
-            back to the installed compgen package location.
+        repo_root: XPU-RT repo root (used to locate ``_template.py``). Falls
+            back to the installed xpu_rt package location.
         overwrite: If True, replace an existing pack directory.
 
     Returns:
@@ -296,29 +296,29 @@ _TARGET_PACK_PYPROJECT = """\
 [project]
 name = "{name}"
 version = "0.1.0"
-description = "CompGen target pack: {name}"
+description = "XPU-RT target pack: {name}"
 requires-python = ">=3.11"
 dependencies = [
-    "compgen",
+    "xpu-rt",
 ]
 
 [project.optional-dependencies]
 dev = ["pytest>=7.0"]
 
 # Pack discovery — manifest.yaml lookup.
-[project.entry-points."compgen.packs"]
+[project.entry-points."xpu_rt.packs"]
 {name} = "{name}"
 
 # Stage-pipeline backend.
-[project.entry-points."compgen.targets.backends"]
+[project.entry-points."xpu_rt.targets.backends"]
 {name} = "{name}.backend:{class_name}Backend"
 
 # Kernel provider — codegen-fallback dispatcher hands contracts to this.
-[project.entry-points."compgen.kernels.providers"]
+[project.entry-points."xpu_rt.kernels.providers"]
 {name} = "{name}.kernels:{class_name}Provider"
 
 # Pack-owned MCP tools.
-[project.entry-points."compgen.mcp.tools"]
+[project.entry-points."xpu_rt.mcp.tools"]
 {name} = "{name}.mcp:{upper_name}_TOOLS"
 
 [build-system]
@@ -339,7 +339,7 @@ testpaths = ["tests"]
 _TARGET_PACK_README = """\
 # {name}
 
-CompGen target pack scaffolded via `compgen scaffold-pack --kind target_pack`.
+XPU-RT target pack scaffolded via `xpu_rt scaffold-pack --kind target_pack`.
 
 ## Install
 
@@ -347,12 +347,12 @@ CompGen target pack scaffolded via `compgen scaffold-pack --kind target_pack`.
 pip install -e .
 ```
 
-After install, four entry-point groups expose this pack to CompGen:
+After install, four entry-point groups expose this pack to XPU-RT:
 
-- `compgen.packs` — manifest discovery
-- `compgen.targets.backends` — `{class_name}Backend`
-- `compgen.kernels.providers` — `{class_name}Provider`
-- `compgen.mcp.tools` — `{upper_name}_TOOLS`
+- `xpu_rt.packs` — manifest discovery
+- `xpu_rt.targets.backends` — `{class_name}Backend`
+- `xpu_rt.kernels.providers` — `{class_name}Provider`
+- `xpu_rt.mcp.tools` — `{upper_name}_TOOLS`
 
 ## What to fill in
 
@@ -370,10 +370,10 @@ After install, four entry-point groups expose this pack to CompGen:
 pytest tests/ -v
 ```
 
-Then exercise via CompGen:
+Then exercise via XPU-RT:
 
 ```python
-from compgen.api import device, compile_model
+from xpu_rt.api import device, compile_model
 import torch, torch.nn as nn
 
 class M(nn.Module):
@@ -384,13 +384,13 @@ cm = compile_model(M().eval(), dev, sample_inputs=(torch.randn(4), torch.randn(4
 ```
 
 If your `{class_name}Provider.accepts_contract` returns True for the
-extracted op_family, CompGen writes the emitted source into
+extracted op_family, XPU-RT writes the emitted source into
 `<bundle>/generated_kernels/{name}/`.
 """
 
 
 _TARGET_PACK_INIT = '''\
-"""CompGen target pack: {name}."""
+"""XPU-RT target pack: {name}."""
 
 from __future__ import annotations
 
@@ -480,15 +480,15 @@ __all__ = ["{class_name}Backend"]
 _TARGET_PACK_PROVIDER = '''\
 """Kernel provider for the {name} target.
 
-CompGen's codegen-fallback dispatcher (``compgen.kernels.codegen_fallback``)
+XPU-RT's codegen-fallback dispatcher (``xpu_rt.kernels.codegen_fallback``)
 walks registered providers and asks each whether it accepts a given
-:class:`~compgen.kernels.provider.KernelContract`. The first provider that
+:class:`~xpu_rt.kernels.provider.KernelContract`. The first provider that
 returns True is asked to emit a kernel via :meth:`search`.
 """
 
 from __future__ import annotations
 
-from compgen.kernels.provider import (
+from xpu_rt.kernels.provider import (
     KernelContract,
     KnowledgeExport,
     ProviderResult,
@@ -505,7 +505,7 @@ class {class_name}Provider:
        this target supports. ``contract.op_family`` is the cleaned-up
        op name (``"add"``, ``"mul"``, ``"matmul"``, ``"relu"``, …).
     2. Implement ``search`` to render real source for the contract — the
-       returned ``ProviderResult.kernel_code`` is what CompGen writes to
+       returned ``ProviderResult.kernel_code`` is what XPU-RT writes to
        ``<bundle>/generated_kernels/{name}/<op>.<ext>``.
     """
 
@@ -532,7 +532,7 @@ class {class_name}Provider:
     def export_knowledge(self) -> list[KnowledgeExport]:
         # Optional: return whatever the provider learned during search
         # (successful schedules, hardware quirks, failure modes) so
-        # CompGen's compiler-memory can persist it across sessions.
+        # XPU-RT's compiler-memory can persist it across sessions.
         return []
 
 
@@ -544,9 +544,9 @@ _TARGET_PACK_MCP = '''\
 """Pack-owned MCP tools for {name}.
 
 Each entry in ``{upper_name}_TOOLS`` is a tool dict with the same shape
-as in-tree CompGen tools (see ``compgen.mcp.tools.lifecycle``). The
-``compgen.mcp.tools`` entry-point group surfaces these into
-``compgen.mcp.tools.ALL_TOOLS`` automatically; ``compgen mcp tools``
+as in-tree XPU-RT tools (see ``xpu_rt.mcp.tools.lifecycle``). The
+``xpu_rt.mcp.tools`` entry-point group surfaces these into
+``xpu_rt.mcp.tools.ALL_TOOLS`` automatically; ``xpu_rt mcp tools``
 will list them with a ``[pack: {name}]`` annotation.
 """
 
@@ -579,10 +579,10 @@ __all__ = ["{upper_name}_TOOLS"]
 
 
 _TARGET_PACK_HW_SPEC = """\
-# HardwareSpec for {name}. Fields below are the minimal shape CompGen's
-# ``compgen.targetgen.load.load_hardware_spec`` accepts. Fill in real
+# HardwareSpec for {name}. Fields below are the minimal shape XPU-RT's
+# ``xpu_rt.targetgen.load.load_hardware_spec`` accepts. Fill in real
 # values for your target — see the schema in
-# ``python/compgen/targetgen/hardware_spec.py``.
+# ``python/xpu_rt/targetgen/hardware_spec.py``.
 
 name: {name}
 schema_version: "2.0"
@@ -657,7 +657,7 @@ def test_backend_class_resolves():
 
 
 def test_provider_class_resolves_and_validates():
-    from compgen.kernels.provider import KernelProvider
+    from xpu_rt.kernels.provider import KernelProvider
     from {name}.kernels import {class_name}Provider
     p = {class_name}Provider()
     # Stub provider declines every contract until the user implements it.
@@ -673,13 +673,13 @@ def test_mcp_tools_list_is_valid():
             assert key in tool, f"tool {{tool!r}} missing key {{key!r}}"
 
 
-def test_entry_points_declared_under_compgen_groups():
-    """All four CompGen entry points point at this pack's modules."""
+def test_entry_points_declared_under_xpu_rt_groups():
+    """All four XPU-RT entry points point at this pack's modules."""
     expected = {{
-        "compgen.packs": "{name}",
-        "compgen.targets.backends": "{name}.backend:{class_name}Backend",
-        "compgen.kernels.providers": "{name}.kernels:{class_name}Provider",
-        "compgen.mcp.tools": "{name}.mcp:{upper_name}_TOOLS",
+        "xpu_rt.packs": "{name}",
+        "xpu_rt.targets.backends": "{name}.backend:{class_name}Backend",
+        "xpu_rt.kernels.providers": "{name}.kernels:{class_name}Provider",
+        "xpu_rt.mcp.tools": "{name}.mcp:{upper_name}_TOOLS",
     }}
     for group, value in expected.items():
         eps = im.entry_points(group=group)

@@ -17,8 +17,8 @@ import shutil
 from dataclasses import dataclass
 from pathlib import Path
 
-from compgen.promotion.promote import RecipeKey
-from compgen.runtime.bundle import Bundle
+from xpu_rt.promotion.promote import RecipeKey
+from xpu_rt.runtime.bundle import Bundle
 
 
 @dataclass

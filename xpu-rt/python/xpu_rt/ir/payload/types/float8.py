@@ -3,7 +3,7 @@
 xDSL's builtin dialect does not ship Float8 types. MLIR upstream does
 (``Float8E4M3FNType``, ``Float8E5M2Type``) and TorchAO / PyTorch both
 produce tensors typed as ``torch.float8_e4m3fn`` or ``torch.float8_e5m2``.
-Until xDSL gains these natively, CompGen ships its own implementations
+Until xDSL gains these natively, XPU-RT ships its own implementations
 that mirror MLIR's semantics so that a future MLIR round-trip works and
 so that Phase-2 numerics passes (``set_numerics_policy``,
 ``demote_contraction_inputs``) can see FP8 as a real type rather than
@@ -97,7 +97,7 @@ class Float8E4M3FNType(_Float8Base):
     paths.
     """
 
-    name = "compgen.float8_e4m3fn"
+    name = "xpu_rt.float8_e4m3fn"
 
     EXPONENT_BITS: ClassVar[int] = 4
     MANTISSA_BITS: ClassVar[int] = 3
@@ -117,7 +117,7 @@ class Float8E5M2Type(_Float8Base):
     precision.
     """
 
-    name = "compgen.float8_e5m2"
+    name = "xpu_rt.float8_e5m2"
 
     EXPONENT_BITS: ClassVar[int] = 5
     MANTISSA_BITS: ClassVar[int] = 2

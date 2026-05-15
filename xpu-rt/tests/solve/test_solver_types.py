@@ -6,7 +6,7 @@ import json
 
 import pytest
 
-from compgen.solve.solver_types import (
+from xpu_rt.solve.solver_types import (
     BackendAvailabilityStatus,
     SolverBackendName,
     SolverProblemKind,

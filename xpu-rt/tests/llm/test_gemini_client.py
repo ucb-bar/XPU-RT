@@ -7,8 +7,8 @@ import os
 from types import SimpleNamespace
 
 import pytest
-from compgen.llm.base import GenerationRequest, LLMConfig, Objective, PromptContext
-from compgen.llm.gemini_client import GeminiClient
+from xpu_rt.llm.base import GenerationRequest, LLMConfig, Objective, PromptContext
+from xpu_rt.llm.gemini_client import GeminiClient
 
 
 def _make_request(prompt: str = "Say hello") -> GenerationRequest:
@@ -92,11 +92,11 @@ def test_gemini_client_generate_structured_parses_json(monkeypatch: pytest.Monke
 
 @pytest.mark.slow
 def test_gemini_client_generate_real_smoke() -> None:
-    if os.environ.get("COMPGEN_RUN_REAL_LLM_TESTS") != "1":
-        pytest.skip("Set COMPGEN_RUN_REAL_LLM_TESTS=1 to enable real LLM smoke tests.")
-    if os.environ.get("COMPGEN_REAL_LLM_BACKEND", "").strip().lower() not in {"gemini", "gemmini"}:
+    if os.environ.get("XPU_RT_RUN_REAL_LLM_TESTS") != "1":
+        pytest.skip("Set XPU_RT_RUN_REAL_LLM_TESTS=1 to enable real LLM smoke tests.")
+    if os.environ.get("XPU_RT_REAL_LLM_BACKEND", "").strip().lower() not in {"gemini", "gemmini"}:
         pytest.skip("Real LLM smoke test is configured for another backend.")
 
-    client = GeminiClient(model=os.environ.get("COMPGEN_REAL_LLM_MODEL", "gemini-2.5-flash"))
+    client = GeminiClient(model=os.environ.get("XPU_RT_REAL_LLM_MODEL", "gemini-2.5-flash"))
     response = client.generate(_make_request("Say ready in one word."))
     assert response.raw_text.strip()

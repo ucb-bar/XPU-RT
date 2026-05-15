@@ -22,8 +22,8 @@ from typing import Any
 from xdsl.dialects.builtin import ModuleOp
 from xdsl.printer import Printer
 
-from compgen.stages.base import CompilationStage, IRInvariant, StageContract
-from compgen.targets.schema import TargetProfile
+from xpu_rt.stages.base import CompilationStage, IRInvariant, StageContract
+from xpu_rt.targets.schema import TargetProfile
 
 
 class BundleStage(CompilationStage):

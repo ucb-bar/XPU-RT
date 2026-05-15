@@ -4,7 +4,7 @@ display_name: Pattern-match regions for library dispatch
 level: payload
 family: codegen
 source: XLA
-impl_path: python/compgen/ir/payload/passes/rewrites/match_library_call.py
+impl_path: python/xpu_rt/ir/payload/passes/rewrites/match_library_call.py
 reads:
   - 01_payload_lowering/payload.mlir
   - 02_graph_analysis/candidate_actions.json
@@ -29,7 +29,7 @@ failure_modes:
   - "no_matching_library_pattern"
   - "library_unavailable_on_target"
   - "operand_layout_mismatch"
-mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+mcp_tool: mcp__xpu_rt__xpu_rt_emit_agent_decision_request
 notes: |
   Reconstruction of XLA's GemmRewriter + library matchers. Replaces
   pattern-matched regions with calls to vendor libraries (cuBLAS,

@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import pytest
-from compgen.ir.linalg_ext import LayerNormOp, RMSNormOp, SoftmaxOp
-from compgen.ir.payload.passes.rewrites.plan_reduction import (
+from xpu_rt.ir.linalg_ext import LayerNormOp, RMSNormOp, SoftmaxOp
+from xpu_rt.ir.payload.passes.rewrites.plan_reduction import (
     PlanReductionConfig,
     PlanReductionStats,
     run_plan_reduction,
@@ -54,31 +54,31 @@ def test_small_reduction_chooses_group():
     stats = run_plan_reduction(m)
     assert stats.chosen_group == 1
     assert stats.chosen_split == 0
-    sm = next(op for op in m.walk() if op.name == "compgen.linalg_ext.softmax")
-    assert sm.attributes["compgen.reduction_strategy"].data == "group"
+    sm = next(op for op in m.walk() if op.name == "xpu_rt.linalg_ext.softmax")
+    assert sm.attributes["xpu_rt.reduction_strategy"].data == "group"
 
 
 def test_medium_reduction_chooses_split():
     m = _softmax_module(shape=(4, 1024))
     stats = run_plan_reduction(m)
     assert stats.chosen_split == 1
-    sm = next(op for op in m.walk() if op.name == "compgen.linalg_ext.softmax")
-    assert sm.attributes["compgen.reduction_strategy"].data == "split"
+    sm = next(op for op in m.walk() if op.name == "xpu_rt.linalg_ext.softmax")
+    assert sm.attributes["xpu_rt.reduction_strategy"].data == "split"
 
 
 def test_large_reduction_chooses_tree_reduce():
     m = _softmax_module(shape=(4, 16384))
     stats = run_plan_reduction(m)
     assert stats.chosen_tree_reduce == 1
-    sm = next(op for op in m.walk() if op.name == "compgen.linalg_ext.softmax")
-    assert sm.attributes["compgen.reduction_strategy"].data == "tree_reduce"
+    sm = next(op for op in m.walk() if op.name == "xpu_rt.linalg_ext.softmax")
+    assert sm.attributes["xpu_rt.reduction_strategy"].data == "tree_reduce"
 
 
 def test_reduction_extent_recorded():
     m = _softmax_module(shape=(4, 1024))
     run_plan_reduction(m)
-    sm = next(op for op in m.walk() if op.name == "compgen.linalg_ext.softmax")
-    assert sm.attributes["compgen.reduction_extent"].value.data == 1024
+    sm = next(op for op in m.walk() if op.name == "xpu_rt.linalg_ext.softmax")
+    assert sm.attributes["xpu_rt.reduction_extent"].value.data == 1024
 
 
 # --- explicit policy overrides auto --------------------------------------
@@ -152,7 +152,7 @@ def test_generic_reduction_is_annotated():
     stats = run_plan_reduction(m)
     assert stats.ops_annotated == 1
     g = next(op for op in m.walk() if op.name == "linalg.generic")
-    assert g.attributes["compgen.reduction_strategy"].data == "split"
+    assert g.attributes["xpu_rt.reduction_strategy"].data == "split"
 
 
 def test_non_reduction_generic_is_skipped():
@@ -199,7 +199,7 @@ def test_rms_norm_is_annotated():
     m = ModuleOp([func])
 
     run_plan_reduction(m)
-    assert "compgen.reduction_strategy" in op.attributes
+    assert "xpu_rt.reduction_strategy" in op.attributes
 
 
 def test_layer_norm_is_annotated():
@@ -214,7 +214,7 @@ def test_layer_norm_is_annotated():
     m = ModuleOp([func])
 
     run_plan_reduction(m)
-    assert op.attributes["compgen.reduction_strategy"].data == "split"
+    assert op.attributes["xpu_rt.reduction_strategy"].data == "split"
 
 
 # --- idempotence + stats ---------------------------------------------------
@@ -239,8 +239,8 @@ def test_stats_initial_values():
 
 
 def test_plan_reduction_on_qwen_moe_tiny():
-    from compgen.capture.torch_mlir_bridge import bridge_fx_graph
-    from compgen.ir.payload.passes.rewrites.raise_special_ops import (
+    from xpu_rt.capture.torch_mlir_bridge import bridge_fx_graph
+    from xpu_rt.ir.payload.passes.rewrites.raise_special_ops import (
         run_raise_special_ops,
     )
 
@@ -256,10 +256,10 @@ def test_plan_reduction_on_qwen_moe_tiny():
     # qwen_moe_tiny has a softmax over last dim = 2 (n_experts).
     # That's small -> group strategy.
     assert stats.ops_annotated >= 1
-    annotated = [op for op in result.module.walk() if "compgen.reduction_strategy" in op.attributes]
+    annotated = [op for op in result.module.walk() if "xpu_rt.reduction_strategy" in op.attributes]
     assert len(annotated) >= 1
     for op in annotated:
-        assert op.attributes["compgen.reduction_strategy"].data in {"group", "split", "tree_reduce"}
+        assert op.attributes["xpu_rt.reduction_strategy"].data in {"group", "split", "tree_reduce"}
     assert_module_verifies(result.module)
 
 
@@ -356,8 +356,8 @@ def test_group_no_op_when_reductions_already_trailing():
 
 
 def test_plan_reduction_on_attention_mlp_tiny():
-    from compgen.capture.torch_mlir_bridge import bridge_fx_graph
-    from compgen.ir.payload.passes.rewrites.raise_special_ops import (
+    from xpu_rt.capture.torch_mlir_bridge import bridge_fx_graph
+    from xpu_rt.ir.payload.passes.rewrites.raise_special_ops import (
         run_raise_special_ops,
     )
 

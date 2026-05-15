@@ -8,7 +8,7 @@ Verifies:
 - For ``merlin_dronet`` specifically: the report is ``blocked`` with
   ``root_cause.category == "unsupported_op"`` and the diagnostic points
   at the silent-drop / unsupported-ops artifacts (the FX→Payload
-  importer at ``compgen/ir/payload/import_fx.py`` cannot infer
+  importer at ``xpu_rt/ir/payload/import_fx.py`` cannot infer
   ``tensor_meta`` for conv2d / batch_norm / max_pool2d / relu).
 - For clean models (``tiny_mlp``): ``status == "pass"`` with
   ``root_cause.category == "unknown"`` (no drops).
@@ -22,7 +22,7 @@ Verifies:
 - The evidence pack ingests the new fields
   (``strict_gate_report_status`` + ``strict_gate_root_cause`` columns).
 - No compiler-core files modified (the report module imports nothing
-  from ``compgen.ir`` / ``compgen.capture`` / ``compgen.pipeline``).
+  from ``xpu_rt.ir`` / ``xpu_rt.capture`` / ``xpu_rt.pipeline``).
 still pass (regression).
 """
 
@@ -52,7 +52,7 @@ def _read(p: Path) -> dict:
 
 def _run(model: str, out_dir: Path, stop_after: str = "payload-lowering") -> int:
     cmd = [
-        sys.executable, "-m", "compgen.graph_compilation", "run",
+        sys.executable, "-m", "xpu_rt.graph_compilation", "run",
         "--model", str(REPO_ROOT / f"configs/models/{model}.yaml"),
         "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
         "--out", str(out_dir),
@@ -220,7 +220,7 @@ def test_strict_gate_report_does_not_modify_payload_artifacts(
 
     before = _shas()
 
-    from compgen.graph_compilation.strict_gate_report import (
+    from xpu_rt.graph_compilation.strict_gate_report import (
         build_strict_gate_report,
     )
     build_strict_gate_report(dronet_run)
@@ -255,7 +255,7 @@ def test_evidence_pack_includes_strict_gate_status(
 
     pack_out = suite / "evidence_pack"
 
-    from compgen.graph_compilation.evidence_pack import build_evidence_pack
+    from xpu_rt.graph_compilation.evidence_pack import build_evidence_pack
     build_evidence_pack(
         canonical_suite_root=canonical, wide_suite_root=wide,
         out_dir=pack_out, skip_figures=True,
@@ -286,7 +286,7 @@ def test_evidence_pack_claim_matrix_records_strict_gate(
     shutil.copytree(clean_run, canonical / "tiny_mlp")
     shutil.copytree(dronet_run, canonical / "merlin_dronet")
 
-    from compgen.graph_compilation.evidence_pack import build_evidence_pack
+    from xpu_rt.graph_compilation.evidence_pack import build_evidence_pack
     res = build_evidence_pack(
         canonical_suite_root=canonical, wide_suite_root=None,
         out_dir=suite / "evidence_pack", skip_figures=True,
@@ -309,16 +309,16 @@ def test_evidence_pack_claim_matrix_records_strict_gate(
 
 def test_strict_gate_report_does_not_import_compiler_core() -> None:
     src = (
-        REPO_ROOT / "python" / "compgen" / "graph_compilation"
+        REPO_ROOT / "python" / "xpu-rt" / "graph_compilation"
         / "strict_gate_report.py"
     ).read_text(encoding="utf-8")
     forbidden = (
-        "from compgen.ir",
-        "import compgen.ir",
-        "from compgen.capture",
-        "import compgen.capture",
-        "from compgen.pipeline",
-        "import compgen.pipeline",
+        "from xpu_rt.ir",
+        "import xpu_rt.ir",
+        "from xpu_rt.capture",
+        "import xpu_rt.capture",
+        "from xpu_rt.pipeline",
+        "import xpu_rt.pipeline",
     )
     for pat in forbidden:
         assert pat not in src, f"strict_gate_report imports forbidden module: {pat}"

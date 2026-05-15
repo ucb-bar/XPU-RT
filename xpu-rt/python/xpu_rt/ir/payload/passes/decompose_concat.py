@@ -5,7 +5,7 @@ destructive rewrite. Walks the module, finds every `tensor.concat`
 (or equivalent concat-shaped op), computes a per-concat decomposition
 strategy (``outer_dim_zerocopy`` / ``transpose_then_outer`` /
 ``inner_insert_slice``), and attaches the chosen strategy as a
-``compgen.concat_strategy`` attribute on the op. Does NOT rewrite the
+``xpu_rt.concat_strategy`` attribute on the op. Does NOT rewrite the
 op yet — leaves that for a follow-up wave with correctness testing.
 
 This still produces observable diffs (new attributes appear), is
@@ -23,11 +23,11 @@ from typing import Any, ClassVar
 from xdsl.dialects.builtin import ModuleOp, StringAttr
 from xdsl.ir import Operation
 
-from compgen.ir.payload.passes.base import PayloadPass
-from compgen.llm.registry import AutocompCostImpact, ToolArg
+from xpu_rt.ir.payload.passes.base import PayloadPass
+from xpu_rt.llm.registry import AutocompCostImpact, ToolArg
 
 # Candidate op-name patterns. xDSL doesn't register a universal
-# "tensor.concat" today in CompGen's import path; FX-level `aten.cat`
+# "tensor.concat" today in XPU-RT's import path; FX-level `aten.cat`
 # lowers to various forms. We cover the common ones by name.
 _CONCAT_OP_NAMES = frozenset(
     {
@@ -35,7 +35,7 @@ _CONCAT_OP_NAMES = frozenset(
         "tosa.concat",
         "tensor.concatenate",
         # FX-level residue that sometimes survives the import table:
-        "compgen.concat",
+        "xpu_rt.concat",
     }
 )
 
@@ -69,7 +69,7 @@ class DecomposeConcat(PayloadPass):
     autocomp_cost_impact: ClassVar[AutocompCostImpact] = "medium"
     description: ClassVar[str] = (
         "Identify concat ops and annotate a decomposition strategy. "
-        "MVP: annotates compgen.concat_strategy attribute; full "
+        "MVP: annotates xpu_rt.concat_strategy attribute; full "
         "destructive rewrite in follow-up wave."
     )
     stub: ClassVar[bool] = False  # real analysis pass; real diff
@@ -110,18 +110,18 @@ class DecomposeConcat(PayloadPass):
                 continue
             strategy = _pick_strategy(op, preferred)
             # Annotate (merges with existing attributes; no overwrite guard).
-            op.attributes["compgen.concat_strategy"] = StringAttr(strategy)
+            op.attributes["xpu_rt.concat_strategy"] = StringAttr(strategy)
             annotated_count += 1
 
         # Record the pass's footprint on the module itself.
-        existing = module.attributes.get("compgen.decompose_concat.count")
+        existing = module.attributes.get("xpu_rt.decompose_concat.count")
         if existing is not None and hasattr(existing, "data"):
             prev = int(getattr(existing, "data", 0))
         else:
             prev = 0
         from xdsl.dialects.builtin import IntegerAttr, i64
 
-        module.attributes["compgen.decompose_concat.count"] = IntegerAttr(prev + annotated_count, i64)
+        module.attributes["xpu_rt.decompose_concat.count"] = IntegerAttr(prev + annotated_count, i64)
         return module
 
 

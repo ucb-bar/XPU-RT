@@ -164,7 +164,7 @@ def _extract_op_contract(op: Operation) -> KernelContract | None:
     """Extract a KernelContract from a single xDSL operation.
 
     REQ-026: only return contracts for ops that carry
-    ``compgen.region_id`` — those are the explicit dispatch boundaries
+    ``xpu_rt.region_id`` — those are the explicit dispatch boundaries
     set by decompositions (or by the post-import generalised
     annotation pass). Without this filter, ``module.walk()`` recurses
     into ``linalg.matmul``'s implicit body and surfaces spurious
@@ -176,11 +176,11 @@ def _extract_op_contract(op: Operation) -> KernelContract | None:
     if not op.results:
         return None
 
-    rid_attr = op.attributes.get("compgen.region_id")
+    rid_attr = op.attributes.get("xpu_rt.region_id")
     if not isinstance(rid_attr, StringAttr):
         return None
     region_id = rid_attr.data
-    did_attr = op.attributes.get("compgen.dispatch_id")
+    did_attr = op.attributes.get("xpu_rt.dispatch_id")
     dispatch_id = did_attr.data if isinstance(did_attr, StringAttr) else region_id
 
     # ``func.call`` wraps the actual op (``aten_add``, ``aten_mul`` …)

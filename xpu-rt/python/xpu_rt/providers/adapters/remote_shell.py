@@ -1,9 +1,9 @@
 """Remote-aware adapter shell.
 
-Extends :class:`compgen.providers.adapters.blocked_shell.BlockedShellAdapter`
+Extends :class:`xpu_rt.providers.adapters.blocked_shell.BlockedShellAdapter`
 so that hardware-gated providers (Pallas/TPU, NKI/Neuron,
 Hexagon-MLIR, Gemmini-FireSim, Radiance-FireSim) ship the kernel
-to a remote target via :class:`compgen.runtime.remote_target.RemoteTargetRunner`.
+to a remote target via :class:`xpu_rt.runtime.remote_target.RemoteTargetRunner`.
 
 The adapter:
 
@@ -30,18 +30,18 @@ import time
 from pathlib import Path
 from typing import Any
 
-from compgen.kernels.provider import BidPreview, make_default_bid
-from compgen.providers.adapters.blocked_shell import (
+from xpu_rt.kernels.provider import BidPreview, make_default_bid
+from xpu_rt.providers.adapters.blocked_shell import (
     AdapterShellError,
     _find_card,
 )
-from compgen.providers.kernel_provider import (
+from xpu_rt.providers.kernel_provider import (
     KernelCodegenRequest,
     KernelProvider,
 )
-from compgen.providers.provider_probe import probe_provider
-from compgen.providers.provider_types import ProviderProbeResult
-from compgen.providers.result_v1 import (
+from xpu_rt.providers.provider_probe import probe_provider
+from xpu_rt.providers.provider_types import ProviderProbeResult
+from xpu_rt.providers.result_v1 import (
     SCHEMA_VERSION as RESULT_SCHEMA_VERSION,
     ProviderResultV1,
 )
@@ -81,7 +81,7 @@ class RemoteShellAdapter(KernelProvider):
     # ------------------------------------------------------------------
 
     def probe(self) -> ProviderProbeResult:
-        from compgen.providers.provider_types import ProviderProbeResult
+        from xpu_rt.providers.provider_types import ProviderProbeResult
 
         # First, the LOCAL probe — verifies the user's env has the
         # required env vars (e.g. NEURON_HOME) before bothering with
@@ -107,7 +107,7 @@ class RemoteShellAdapter(KernelProvider):
                 required_env=self.card.required_env,
             )
 
-        from compgen.runtime.remote_target import (
+        from xpu_rt.runtime.remote_target import (
             build_runner,
             load_remote_target_config,
         )
@@ -289,7 +289,7 @@ def execute_on_remote_and_record(
     looks identical on disk.
     """
 
-    from compgen.audit.execution_evidence import (
+    from xpu_rt.audit.execution_evidence import (
         EVIDENCE_SCHEMA_VERSION,
         BlockedProof,
         CertificateRecord,
@@ -297,7 +297,7 @@ def execute_on_remote_and_record(
         record_block,
         record_evidence,
     )
-    from compgen.runtime.remote_target import (
+    from xpu_rt.runtime.remote_target import (
         RemoteRunPayload,
         build_runner,
         load_remote_target_config,

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import torch
 
-from compgen.runtime import cpu_executor
+from xpu_rt.runtime import cpu_executor
 
 
 def test_aten_permute_4d_attention_pattern() -> None:

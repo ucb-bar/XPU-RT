@@ -7,8 +7,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from compgen.dialects.dialect_provider_types import DialectProviderCard
-from compgen.providers.card_loader import iter_dialect_cards
+from xpu_rt.dialects.dialect_provider_types import DialectProviderCard
+from xpu_rt.providers.card_loader import iter_dialect_cards
 
 
 @dataclass

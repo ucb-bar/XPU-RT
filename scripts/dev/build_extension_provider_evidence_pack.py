@@ -29,15 +29,15 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from compgen.audit.extension_architecture import run_audit
-from compgen.extensions.task_flow import list_extension_tasks
-from compgen.pass_tools.pass_tool_registry import build_pass_tool_registry
-from compgen.providers.card_loader import (
+from xpu_rt.audit.extension_architecture import run_audit
+from xpu_rt.extensions.task_flow import list_extension_tasks
+from xpu_rt.pass_tools.pass_tool_registry import build_pass_tool_registry
+from xpu_rt.providers.card_loader import (
     iter_dialect_cards,
     iter_provider_cards,
     iter_target_cards,
 )
-from compgen.providers.provider_reports import write_probe_reports
+from xpu_rt.providers.provider_reports import write_probe_reports
 
 
 def _now() -> str:
@@ -232,7 +232,7 @@ def _render_figures(pack_dir: Path) -> None:
             )
 
     try:
-        from compgen.audit.figures import render_all_figures
+        from xpu_rt.audit.figures import render_all_figures
     except ImportError as exc:
         _markdown_fallback(f"figures module unavailable: {exc}")
         return

@@ -1,11 +1,11 @@
-"""Tests for :mod:`compgen.graph_compilation.promotion_bridge`."""
+"""Tests for :mod:`xpu_rt.graph_compilation.promotion_bridge`."""
 
 from __future__ import annotations
 
 import json
 from pathlib import Path
 
-from compgen.graph_compilation.promotion_bridge import emit
+from xpu_rt.graph_compilation.promotion_bridge import emit
 
 
 def _write(path: Path, body: dict | str) -> None:
@@ -265,7 +265,7 @@ def test_emit_bridges_to_compiler_memory(tmp_path: Path) -> None:
     run_dir = _build_minimal_run_dir(tmp_path)
     library = tmp_path / "library"
 
-    from compgen.memory.store import CompilerMemory
+    from xpu_rt.memory.store import CompilerMemory
 
     memory = CompilerMemory(
         db_path=tmp_path / "memory.db",

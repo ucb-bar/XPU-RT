@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from compgen.runtime.topology import (
+from xpu_rt.runtime.topology import (
     DeviceRole,
     RuntimeDevice,
     RuntimeLink,
@@ -11,13 +11,13 @@ from compgen.runtime.topology import (
     infer_topology,
     topology_from_spec,
 )
-from compgen.targetgen.hardware_spec import (
+from xpu_rt.targetgen.hardware_spec import (
     DeploymentTopology,
     TopologyLink,
     TopologyNode,
     TopologySpec,
 )
-from compgen.targets.schema import DeviceSpec, Interconnect, TargetProfile
+from xpu_rt.targets.schema import DeviceSpec, Interconnect, TargetProfile
 
 # ---- RuntimeDevice ----
 

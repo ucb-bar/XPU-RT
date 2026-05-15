@@ -3,10 +3,10 @@ with the library implementation they should call.
 
 Reconstruction of XLA's ``GemmRewriter`` +
 ``LibraryRewriter`` + ``OneDnnRewriter``. Zero external references;
-CompGen owns the rewrite.
+XPU-RT owns the rewrite.
 
 Walks every ``linalg.matmul``,
-``compgen.quant.weight_int*pack_{mm,qm}``, and opaque
+``xpu_rt.quant.weight_int*pack_{mm,qm}``, and opaque
 ``func.call @aten_convolution`` in the module and -- based on the
 caller-supplied ``library_allowlist`` -- tags each with the first
 library that supports its shape + dtype. The tag is the contract
@@ -34,7 +34,7 @@ match in allowlist wins).
 LLM-tool signature:
 
     tool_name="match_library_call"
-    wraps_pass="CompGen:LibraryRewriter+GemmRewriter+OneDnnRewriter"
+    wraps_pass="XPU-RT:LibraryRewriter+GemmRewriter+OneDnnRewriter"
     invent_slot="dispatch/library_call_matching"
     policy="DispatchByTargetAllowlist"
 """
@@ -62,7 +62,7 @@ from xdsl.pattern_rewriter import (
     op_type_rewrite_pattern,
 )
 
-from compgen.ir.quant import (
+from xpu_rt.ir.quant import (
     WeightInt4PackMMOp,
     WeightInt4PackQMOp,
     WeightInt8PackMMOp,
@@ -178,7 +178,7 @@ def _qnn_accepts(op: Operation) -> bool:
     # QNN handles int8 / fp8 quantized ops. Accept packed-MM variants.
     if isinstance(op, _QUANT_MATMUL_ALL):
         return True
-    if isinstance(op, CallOp) and "compgen.quantized_conv_scheduled" in op.attributes:
+    if isinstance(op, CallOp) and "xpu_rt.quantized_conv_scheduled" in op.attributes:
         return True
     return False
 
@@ -222,7 +222,7 @@ def _first_matching_library(
 def _is_conv_call(op: Operation) -> bool:
     if not isinstance(op, CallOp):
         return False
-    hint = op.attributes.get("compgen._pattern_hint")
+    hint = op.attributes.get("xpu_rt._pattern_hint")
     if hint is None:
         return False
     return isinstance(hint, StringAttr) and hint.data in {"convolution", "quantized_convolution"}
@@ -243,14 +243,14 @@ class _MatmulDispatchPattern(RewritePattern):
     @op_type_rewrite_pattern
     def match_and_rewrite(self, op: MatmulOp, rewriter: PatternRewriter) -> None:
         self.stats.ops_seen += 1
-        if "compgen.library_dispatch" in op.attributes:
+        if "xpu_rt.library_dispatch" in op.attributes:
             self.stats.skipped_already_dispatched += 1
             return
         lib = _first_matching_library(op, self.cfg.library_allowlist)
         if lib is None:
             self.stats.no_match += 1
             return
-        op.attributes["compgen.library_dispatch"] = StringAttr(lib)
+        op.attributes["xpu_rt.library_dispatch"] = StringAttr(lib)
         self.stats.matmul_matches += 1
         self.stats.record(lib)
 
@@ -268,14 +268,14 @@ class _QuantMatmulDispatchPattern(RewritePattern):
         if not isinstance(op, _QUANT_MATMUL_ALL):
             return
         self.stats.ops_seen += 1
-        if "compgen.library_dispatch" in op.attributes:
+        if "xpu_rt.library_dispatch" in op.attributes:
             self.stats.skipped_already_dispatched += 1
             return
         lib = _first_matching_library(op, self.cfg.library_allowlist)
         if lib is None:
             self.stats.no_match += 1
             return
-        op.attributes["compgen.library_dispatch"] = StringAttr(lib)
+        op.attributes["xpu_rt.library_dispatch"] = StringAttr(lib)
         self.stats.quant_matmul_matches += 1
         self.stats.record(lib)
 
@@ -294,14 +294,14 @@ class _ConvDispatchPattern(RewritePattern):
         if not _is_conv_call(op):
             return
         self.stats.ops_seen += 1
-        if "compgen.library_dispatch" in op.attributes:
+        if "xpu_rt.library_dispatch" in op.attributes:
             self.stats.skipped_already_dispatched += 1
             return
         lib = _first_matching_library(op, self.cfg.library_allowlist)
         if lib is None:
             self.stats.no_match += 1
             return
-        op.attributes["compgen.library_dispatch"] = StringAttr(lib)
+        op.attributes["xpu_rt.library_dispatch"] = StringAttr(lib)
         self.stats.conv_matches += 1
         self.stats.record(lib)
 

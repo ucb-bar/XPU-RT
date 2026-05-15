@@ -17,10 +17,10 @@ import shutil
 from pathlib import Path
 
 import pytest
-from compgen.graph_compilation.recipe_gate import (
+from xpu_rt.graph_compilation.recipe_gate import (
     run_recipe_gate,
 )
-from compgen.graph_compilation.run import run_graph_compilation
+from xpu_rt.graph_compilation.run import run_graph_compilation
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 HOST_CPU_TARGET = REPO_ROOT / "configs" / "targets" / "host_cpu.yaml"
@@ -91,7 +91,7 @@ def test_gate_overall_pass(model_id: str, gate_runs: dict[str, Path]) -> None:
 def test_artifact_validator_passes_with_gate(
     model_id: str, gate_runs: dict[str, Path]
 ) -> None:
-    from compgen.graph_compilation import validate_run
+    from xpu_rt.graph_compilation import validate_run
     rep = validate_run(gate_runs[model_id])
     assert rep.overall == "pass", [r for r in rep.rules if r.status == "fail"]
 
@@ -430,11 +430,11 @@ def test_gate_does_not_modify_payload_mlir(
 def test_compiler_core_not_modified_by_m06() -> None:
     import subprocess
     forbidden = [
-        "python/compgen/ir/payload/import_fx.py",
-        "python/compgen/capture/torch_export.py",
-        "python/compgen/capture/torch_mlir_bridge.py",
-        "python/compgen/pipeline/driver.py",
-        "python/compgen/runtime/bundle_emit.py",
+        "python/xpu_rt/ir/payload/import_fx.py",
+        "python/xpu_rt/capture/torch_export.py",
+        "python/xpu_rt/capture/torch_mlir_bridge.py",
+        "python/xpu_rt/pipeline/driver.py",
+        "python/xpu_rt/runtime/bundle_emit.py",
     ]
     try:
         diff = subprocess.check_output(

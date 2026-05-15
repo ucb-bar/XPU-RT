@@ -4,7 +4,7 @@ display_name: E-graph saturation — algebraic rewrite rules
 level: payload
 family: eqsat
 source: homemade
-impl_path: python/compgen/eqsat/rules/algebraic.py
+impl_path: python/xpu_rt/eqsat/rules/algebraic.py
 reads:
   - 01_payload_lowering/payload.mlir
 writes:
@@ -27,7 +27,7 @@ cost: expensive
 failure_modes:
   - "saturation_budget_exhausted"
   - "rule_set_violates_termination"
-mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+mcp_tool: mcp__xpu_rt__xpu_rt_emit_agent_decision_request
 notes: |
   Algebraic e-graph rewrite rules: distributivity, associativity,
   identity elimination. Operates as a saturation phase rather than

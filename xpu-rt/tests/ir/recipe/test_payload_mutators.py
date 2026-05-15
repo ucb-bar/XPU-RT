@@ -1,4 +1,4 @@
-"""Tests for :mod:`compgen.ir.recipe.payload_mutators`.
+"""Tests for :mod:`xpu_rt.ir.recipe.payload_mutators`.
 
 Asserts that the direct-mutation pass actually stamps payload op
 attributes when the recipe contains FuseOp / ProposeFusionOp / TileOp
@@ -7,10 +7,10 @@ attributes when the recipe contains FuseOp / ProposeFusionOp / TileOp
 
 from __future__ import annotations
 
-from compgen.agent.recipe_bridge_invent import proposal_to_recipe_op
-from compgen.ir.recipe.attrs import DeviceRefAttr, ProvenanceAttr
-from compgen.ir.recipe.ops_candidate import FuseOp, PlaceOnDeviceOp, TileOp
-from compgen.ir.recipe.payload_mutators import (
+from xpu_rt.agent.recipe_bridge_invent import proposal_to_recipe_op
+from xpu_rt.ir.recipe.attrs import DeviceRefAttr, ProvenanceAttr
+from xpu_rt.ir.recipe.ops_candidate import FuseOp, PlaceOnDeviceOp, TileOp
+from xpu_rt.ir.recipe.payload_mutators import (
     PayloadMutationReport,
     apply_recipe_to_payload,
 )
@@ -30,7 +30,7 @@ from xdsl.ir import Block, Region
 
 def _payload_with_regions(regions: list[str]) -> ModuleOp:
     """Build a tiny payload module: one func.func with a few func.call ops
-    each tagged with ``compgen.region_id``."""
+    each tagged with ``xpu_rt.region_id``."""
     from xdsl.dialects.func import CallOp, ReturnOp
 
     module = ModuleOp(Region([Block()]))
@@ -53,7 +53,7 @@ def _payload_with_regions(regions: list[str]) -> ModuleOp:
             arguments=[block.args[i]],
             return_types=[outputs[i]],
         )
-        call.attributes["compgen.region_id"] = StringAttr(region)
+        call.attributes["xpu_rt.region_id"] = StringAttr(region)
         block.add_op(call)
         rets.append(call.results[0])
     block.add_op(ReturnOp(*rets))
@@ -100,8 +100,8 @@ def test_propose_fusion_stamps_fused_into_on_matching_ops() -> None:
 
     # Walk payload, check the two matching ops got new region_id +
     # fused_into; the third (r_c) stays unchanged.
-    region_ids = [o.attributes["compgen.region_id"].data for o in payload.walk() if "compgen.region_id" in o.attributes]
-    fused_ids = [o.attributes.get("compgen.fused_into") for o in payload.walk() if "compgen.fused_into" in o.attributes]
+    region_ids = [o.attributes["xpu_rt.region_id"].data for o in payload.walk() if "xpu_rt.region_id" in o.attributes]
+    fused_ids = [o.attributes.get("xpu_rt.fused_into") for o in payload.walk() if "xpu_rt.fused_into" in o.attributes]
     # Two of the three ops were rewritten to a shared fused_<digest>.
     fused_set = {r for r in region_ids if r.startswith("fused_")}
     assert len(fused_set) == 1
@@ -175,9 +175,9 @@ def test_tileop_stamps_tile_sizes() -> None:
     recipe.body.block.add_op(tile)
     report = apply_recipe_to_payload(recipe, payload)
     assert report.tiles_applied == 1
-    touched = [o for o in payload.walk() if "compgen.tile_sizes_str" in o.attributes]
+    touched = [o for o in payload.walk() if "xpu_rt.tile_sizes_str" in o.attributes]
     assert len(touched) == 1
-    assert touched[0].attributes["compgen.tile_sizes_str"].data == "32,64"
+    assert touched[0].attributes["xpu_rt.tile_sizes_str"].data == "32,64"
 
 
 # ---------------------------------------------------------------------------
@@ -202,7 +202,7 @@ def test_placeop_stamps_device_attribute() -> None:
     touched = [
         o
         for o in payload.walk()
-        if o.attributes.get("compgen.device") is not None and "device_2" in o.attributes["compgen.device"].data
+        if o.attributes.get("xpu_rt.device") is not None and "device_2" in o.attributes["xpu_rt.device"].data
     ]
     assert len(touched) == 1
 
@@ -229,9 +229,9 @@ def test_propose_megakernel_stamps_megakernel_name() -> None:
     recipe.body.block.add_op(op)
     report = apply_recipe_to_payload(recipe, payload)
     assert report.megakernels_applied == 1
-    touched = [o for o in payload.walk() if o.attributes.get("compgen.megakernel") is not None]
+    touched = [o for o in payload.walk() if o.attributes.get("xpu_rt.megakernel") is not None]
     assert len(touched) == 2
-    assert all(o.attributes["compgen.megakernel"].data == "gemma_block_mk" for o in touched)
+    assert all(o.attributes["xpu_rt.megakernel"].data == "gemma_block_mk" for o in touched)
 
 
 def test_report_to_dict_is_serialisable() -> None:
@@ -292,7 +292,7 @@ def _payload_with_chain(regions: list[str]) -> ModuleOp:
             arguments=[cur],
             return_types=[out_t],
         )
-        call.attributes["compgen.region_id"] = StringAttr(regions[i])
+        call.attributes["xpu_rt.region_id"] = StringAttr(regions[i])
         block.add_op(call)
         cur = call.results[0]
         last_call = call
@@ -408,14 +408,14 @@ def test_structural_fusion_does_not_break_other_consumers() -> None:
     func = FuncOp(name="forward", function_type=([in_t], [in_t]))
     block = func.body.blocks[0]
     c0 = CallOp(callee="helper_0", arguments=[block.args[0]], return_types=[in_t])
-    c0.attributes["compgen.region_id"] = StringAttr("rA")
+    c0.attributes["xpu_rt.region_id"] = StringAttr("rA")
     block.add_op(c0)
     c1 = CallOp(callee="helper_1", arguments=[c0.results[0]], return_types=[in_t])
-    c1.attributes["compgen.region_id"] = StringAttr("rB")
+    c1.attributes["xpu_rt.region_id"] = StringAttr("rB")
     block.add_op(c1)
     # Second consumer of c0's result — outside the chain — blocks structural fusion.
     c2 = CallOp(callee="helper_2", arguments=[c0.results[0]], return_types=[in_t])
-    c2.attributes["compgen.region_id"] = StringAttr("rC_external")
+    c2.attributes["xpu_rt.region_id"] = StringAttr("rC_external")
     block.add_op(c2)
     block.add_op(ReturnOp(c1.results[0]))
     module.body.block.add_op(func)

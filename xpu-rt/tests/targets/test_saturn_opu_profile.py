@@ -5,11 +5,11 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from compgen.targetgen.classify import TargetFamily, classify_hardware
-from compgen.targetgen.generate import generate_target
-from compgen.targetgen.load import load_hardware_spec
-from compgen.targetgen.validate_spec import validate_hardware_spec
-from compgen.targets.backends.saturn_opu import SaturnOPUBackend, SaturnOPUOptions
+from xpu_rt.targetgen.classify import TargetFamily, classify_hardware
+from xpu_rt.targetgen.generate import generate_target
+from xpu_rt.targetgen.load import load_hardware_spec
+from xpu_rt.targetgen.validate_spec import validate_hardware_spec
+from xpu_rt.targets.backends.saturn_opu import SaturnOPUBackend, SaturnOPUOptions
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SATURN_SPEC = REPO_ROOT / "examples" / "hardware_specs" / "saturn_opu.yaml"

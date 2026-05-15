@@ -7,8 +7,8 @@ verify_(), and lowering to kernel jobs.
 from __future__ import annotations
 
 import pytest
-from compgen.ir.recipe.attrs import ProvenanceAttr
-from compgen.ir.recipe.ops_candidate import RequestExoKernelOp, SelectExoScheduleLibOp
+from xpu_rt.ir.recipe.attrs import ProvenanceAttr
+from xpu_rt.ir.recipe.ops_candidate import RequestExoKernelOp, SelectExoScheduleLibOp
 from xdsl.dialects.builtin import IntegerAttr, IntegerType, StringAttr, SymbolRefAttr
 from xdsl.utils.exceptions import VerifyException
 

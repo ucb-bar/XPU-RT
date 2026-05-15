@@ -1,7 +1,7 @@
-"""Distributed runtime adapter for ``compgen.collective`` ops.
+"""Distributed runtime adapter for ``xpu_rt.collective`` ops.
 
 Wraps PyTorch's ``torch.distributed`` primitives so
-``compgen.collective.{all_reduce, all_gather, reduce_scatter,
+``xpu_rt.collective.{all_reduce, all_gather, reduce_scatter,
 broadcast}`` ops can actually execute on a multi-GPU host.
 
 Graceful degradation on single-process / CPU hosts:
@@ -14,7 +14,7 @@ Graceful degradation on single-process / CPU hosts:
 
 Usage::
 
-    from compgen.runtime.distributed import (
+    from xpu_rt.runtime.distributed import (
         DistributedAdapter, init_if_needed,
     )
     init_if_needed(backend="nccl")  # or "gloo" on CPU
@@ -109,7 +109,7 @@ def init_if_needed(
     if rank is None:
         rank = int(os.environ.get("RANK", "0"))
     if init_method is None:
-        init_method = os.environ.get("COMPGEN_INIT_METHOD", "env://")
+        init_method = os.environ.get("XPU_RT_INIT_METHOD", "env://")
 
     # For world_size=1 we can skip init entirely -- the adapter's
     # ops will fall through to identity.

@@ -4,7 +4,7 @@ display_name: FX graph decompositions (IREE-inspired)
 level: fx
 family: fx_graph
 source: IREE
-impl_path: python/compgen/transforms/graph_passes.py
+impl_path: python/xpu_rt/transforms/graph_passes.py
 reads:
   - 00_graph_capture/export_graph.json
 writes:
@@ -24,7 +24,7 @@ cost: cheap
 failure_modes:
   - "unrecognized_composite_op"
   - "decomposition_breaks_dtype"
-mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+mcp_tool: mcp__xpu_rt__xpu_rt_emit_agent_decision_request
 notes: |
   IREE-inspired FX graph decomposition pipeline running before payload
   lowering. Detects composite-op patterns, raises them where

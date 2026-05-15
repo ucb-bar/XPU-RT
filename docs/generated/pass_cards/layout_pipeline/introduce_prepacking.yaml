@@ -4,7 +4,7 @@ display_name: Layout pipeline (7/10) — introduce prepacking
 level: payload
 family: layout_pipeline
 source: homemade
-impl_path: python/compgen/transforms/layout/introduce_prepacking.py
+impl_path: python/xpu_rt/transforms/layout/introduce_prepacking.py
 reads:
   - 01_payload_lowering/payload.mlir
 writes:
@@ -23,7 +23,7 @@ verification:
 cost: cheap
 failure_modes:
   - "weight_tensor_not_invariant"
-mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+mcp_tool: mcp__xpu_rt__xpu_rt_emit_agent_decision_request
 notes: |
   Layout pipeline step 7: introduces a prepack op on loop-invariant
   weight tensors so the runtime materialises the packed layout once.

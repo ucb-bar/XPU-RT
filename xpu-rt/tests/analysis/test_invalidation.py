@@ -1,4 +1,4 @@
-"""Tests for compgen.analysis.invalidation."""
+"""Tests for xpu_rt.analysis.invalidation."""
 
 from __future__ import annotations
 
@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from compgen.analysis.checkpoints import AnalysisIndex, AnalysisSummary
-from compgen.analysis.invalidation import (
+from xpu_rt.analysis.checkpoints import AnalysisIndex, AnalysisSummary
+from xpu_rt.analysis.invalidation import (
     InvalidationDiff,
     append_invalidation_log,
     assert_invalidations_match_claim,
@@ -16,7 +16,7 @@ from compgen.analysis.invalidation import (
     make_log_entry,
     write_invalidation_log,
 )
-from compgen.audit.errors import (
+from xpu_rt.audit.errors import (
     StaleAnalysisAudit,
     UnannouncedInvalidation,
 )
@@ -281,7 +281,7 @@ def test_analysis_summary_explicit_generation() -> None:
 
 
 def test_summary_read_round_trip() -> None:
-    from compgen.analysis.invalidation import SummaryRead
+    from xpu_rt.analysis.invalidation import SummaryRead
 
     r = SummaryRead(
         summary_id="graph_dossier_v3",
@@ -293,7 +293,7 @@ def test_summary_read_round_trip() -> None:
 
 
 def test_append_read_log_writes(tmp_path: Path) -> None:
-    from compgen.analysis.invalidation import (
+    from xpu_rt.analysis.invalidation import (
         SummaryRead,
         append_read_log,
         load_read_log,
@@ -319,7 +319,7 @@ def test_append_read_log_writes(tmp_path: Path) -> None:
 
 def test_assert_no_stale_reads_clean(tmp_path: Path) -> None:
     """All consumers observing the same generation: clean."""
-    from compgen.analysis.invalidation import (
+    from xpu_rt.analysis.invalidation import (
         SummaryRead,
         append_read_log,
         assert_no_stale_reads,
@@ -336,7 +336,7 @@ def test_assert_no_stale_reads_clean(tmp_path: Path) -> None:
 
 def test_assert_no_stale_reads_strictly_increasing(tmp_path: Path) -> None:
     """Consumers reading later see higher generations: clean."""
-    from compgen.analysis.invalidation import (
+    from xpu_rt.analysis.invalidation import (
         SummaryRead,
         append_read_log,
         assert_no_stale_reads,
@@ -358,12 +358,12 @@ def test_assert_no_stale_reads_raises_on_regression(tmp_path: Path) -> None:
     """A later reader observing an OLDER generation than an earlier one
     is the failure mode: someone bumped the summary, then a later
     consumer used a stale value."""
-    from compgen.analysis.invalidation import (
+    from xpu_rt.analysis.invalidation import (
         SummaryRead,
         append_read_log,
         assert_no_stale_reads,
     )
-    from compgen.audit.errors import StaleAnalysisAudit
+    from xpu_rt.audit.errors import StaleAnalysisAudit
 
     append_read_log(tmp_path, SummaryRead(
         summary_id="graph_dossier_v3", consumer_id="c1", generation_observed=2,
@@ -378,14 +378,14 @@ def test_assert_no_stale_reads_raises_on_regression(tmp_path: Path) -> None:
 
 
 def test_assert_no_stale_reads_no_log_is_clean(tmp_path: Path) -> None:
-    from compgen.analysis.invalidation import assert_no_stale_reads
+    from xpu_rt.analysis.invalidation import assert_no_stale_reads
 
     assert_no_stale_reads(tmp_path)  # no log → no-op
 
 
 def test_assert_no_stale_reads_per_summary_isolated(tmp_path: Path) -> None:
     """Stale read on one summary must not contaminate another summary's check."""
-    from compgen.analysis.invalidation import (
+    from xpu_rt.analysis.invalidation import (
         SummaryRead,
         append_read_log,
         assert_no_stale_reads,

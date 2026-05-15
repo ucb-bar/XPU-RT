@@ -17,7 +17,7 @@ from typing import Any
 import structlog
 import torch
 
-from compgen.capture.unsupported.introspect import ExampleTensorInfo, UnsupportedOpDossier
+from xpu_rt.capture.unsupported.introspect import ExampleTensorInfo, UnsupportedOpDossier
 
 log = structlog.get_logger()
 

@@ -40,13 +40,13 @@ from dataclasses import dataclass
 import torch
 import torch.nn as nn
 
-from compgen.runtime.event_tensor import EventTensor
-from compgen.runtime.megakernel import (
+from xpu_rt.runtime.event_tensor import EventTensor
+from xpu_rt.runtime.megakernel import (
     DeviceCall,
     EventEdge,
     MegakernelGraph,
 )
-from compgen.transforms.emit_cuda_megakernel import DeviceFunctionSource
+from xpu_rt.transforms.emit_cuda_megakernel import DeviceFunctionSource
 
 # Reference shape — chosen so each rank's local GEMM has meaningful
 # arithmetic intensity (16 K-tiles × 32 fmaf per tile per thread)

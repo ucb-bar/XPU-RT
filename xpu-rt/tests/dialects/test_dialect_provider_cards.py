@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from compgen.dialects import DialectProviderCard, DialectProviderCardError
+from xpu_rt.dialects import DialectProviderCard, DialectProviderCardError
 
 
 def _minimal_body(**overrides):
@@ -13,9 +13,9 @@ def _minimal_body(**overrides):
         "dialect_provider_id": "cuda_tile_ir",
         "dialect_name": "cuda_tile",
         "integration_level": "probe",
-        "consumes": ["kernel_contract_v3", "compgen_tile_ir"],
+        "consumes": ["kernel_contract_v3", "xpu_rt_tile_ir"],
         "emits": ["cuda_tile_mlir", "cubin"],
-        "entrypoint": "compgen.providers.adapters.cuda_tile_ir:CudaTileDialectProvider",
+        "entrypoint": "xpu_rt.providers.adapters.cuda_tile_ir:CudaTileDialectProvider",
         "required_env": ["CUDA_TILE_ROOT"],
     }
     body.update(overrides)

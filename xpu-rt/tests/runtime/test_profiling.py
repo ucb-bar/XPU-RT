@@ -2,34 +2,34 @@
 
 from __future__ import annotations
 
-from compgen.runtime.instrumentation import (
+from xpu_rt.runtime.instrumentation import (
     InstrumentationConfig,
     InstrumentationLevel,
 )
-from compgen.runtime.profiling.adapter import (
+from xpu_rt.runtime.profiling.adapter import (
     ProfilerAdapter,
     ProfileSnapshot,
     TileMetrics,
 )
-from compgen.runtime.profiling.adapters.bare_metal_pmu import BareMetalPMUAdapter
-from compgen.runtime.profiling.adapters.cuda_profiler import CudaProfilerAdapter
-from compgen.runtime.profiling.adapters.linux_perf import LinuxPerfAdapter
-from compgen.runtime.profiling.adapters.zephyr_trace import ZephyrTraceAdapter
-from compgen.runtime.profiling.analysis import (
+from xpu_rt.runtime.profiling.adapters.bare_metal_pmu import BareMetalPMUAdapter
+from xpu_rt.runtime.profiling.adapters.cuda_profiler import CudaProfilerAdapter
+from xpu_rt.runtime.profiling.adapters.linux_perf import LinuxPerfAdapter
+from xpu_rt.runtime.profiling.adapters.zephyr_trace import ZephyrTraceAdapter
+from xpu_rt.runtime.profiling.analysis import (
     BottleneckInfo,
     ProfileAnalysis,
     ProfileAnalyzer,
 )
-from compgen.runtime.profiling.hooks_codegen import (
+from xpu_rt.runtime.profiling.hooks_codegen import (
     HookCodeGenerator,
 )
-from compgen.runtime.profiling.registry import (
+from xpu_rt.runtime.profiling.registry import (
     create_adapter,
     create_adapters_for_spec,
     list_adapters,
     register_adapter,
 )
-from compgen.targetgen.hardware_spec import ProfilerBackend, ProfilingSpec
+from xpu_rt.targetgen.hardware_spec import ProfilerBackend, ProfilingSpec
 
 # ---- Adapter Protocol ----
 
@@ -330,7 +330,7 @@ class TestHookCodeGenerator:
         instr = InstrumentationConfig(level=InstrumentationLevel.OP_LEVEL)
         gen = HookCodeGenerator(spec, instr)
         result = gen.generate()
-        assert "compgen/trace.h" in result.header_code
+        assert "xpu_rt/trace.h" in result.header_code
 
     def test_metadata(self) -> None:
         spec = ProfilingSpec(custom_hooks={"x": "y();"})

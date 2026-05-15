@@ -1,4 +1,4 @@
-"""Z3 semantics for CompGen's Tile IR dialect.
+"""Z3 semantics for XPU-RT's Tile IR dialect.
 
 Defines how Tile IR operations lower to Z3 bitvector expressions for
 translation validation. Uses summary/uninterpreted semantics for v1 —

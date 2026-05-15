@@ -1,10 +1,10 @@
 claim: |
   M-41 (Phase C): the M-26 exact-kernel ``contract_hash`` is derived
   via exactly one canonical path —
-  ``compgen.promotion.contract_hash.hash_contract`` applied to the
+  ``xpu_rt.promotion.contract_hash.hash_contract`` applied to the
   ``KernelContractV3`` materialised by ``KernelContractV3.from_recipe``
   (M-40). Every callsite in the production tree routes through
-  ``compgen.graph_compilation.kernel_contract_materialization.hash_contract_from_run_dir``;
+  ``xpu_rt.graph_compilation.kernel_contract_materialization.hash_contract_from_run_dir``;
   the legacy ``derive_contract_hash`` in ``promotion_bridge.py`` is
   retired (raises a typed runtime error if called).
 
@@ -29,12 +29,12 @@ forbidden:
 - mixing the legacy hash and the canonical hash in the same retrieval surface
 realness_level: production_path
 required_evidence:
-- python/compgen/graph_compilation/kernel_contract_materialization.py (materialize_contract_from_run_dir, hash_contract_from_run_dir)
-- python/compgen/graph_compilation/promotion_bridge.py (legacy derive_contract_hash retired)
-- python/compgen/graph_compilation/agent_decision.py (routed through canonical hash)
-- python/compgen/graph_compilation/kernel_specialization.py (M-39 emitter routed through canonical hash)
+- python/xpu_rt/graph_compilation/kernel_contract_materialization.py (materialize_contract_from_run_dir, hash_contract_from_run_dir)
+- python/xpu_rt/graph_compilation/promotion_bridge.py (legacy derive_contract_hash retired)
+- python/xpu_rt/graph_compilation/agent_decision.py (routed through canonical hash)
+- python/xpu_rt/graph_compilation/kernel_specialization.py (M-39 emitter routed through canonical hash)
 - "04_kernel_codegen/contract_materialization_summary.json + 04_kernel_codegen/requests/*.request.json on a real run carry the same contract_hash for the same selected candidate"
-- ".compgen_cache/recipes/<key>/promoted_recipe.json produced post-M-41 carries the canonical hash; cold-then-warm run finds it as match_kind=exact_contract"
+- ".xpu_rt_cache/recipes/<key>/promoted_recipe.json produced post-M-41 carries the canonical hash; cold-then-warm run finds it as match_kind=exact_contract"
 notes: |
   Real-driven stress test (the user's framing — drive a workload, not
   more pytests):
@@ -54,7 +54,7 @@ notes: |
   twice from clean output dirs. Contract bodies and hashes
   byte-identical. (Hash 4838412db0b5c6b8 in both processes.)
 
-  Phase 3 — end-to-end warm-cache loop. Wiped .compgen_cache, ran
+  Phase 3 — end-to-end warm-cache loop. Wiped .xpu_rt_cache, ran
   merlin_mlp_wide cold (populated cache with new hash), then ran
   again warm. Warm run surfaced the just-cached recipe as
   ``match_kind=exact_contract`` with hash 4838412db0b5c6b8 — the

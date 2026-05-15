@@ -17,12 +17,12 @@ Test matrix:
 from __future__ import annotations
 
 import pytest
-from compgen.ir.ukernel.constraints import ConstraintContext
-from compgen.ir.ukernel.lower import lower_ukernel_with_body
-from compgen.ir.ukernel.ops import UkernelBodyOp, UkernelCallOp, UkernelDeclOp, UkernelMatchOp
-from compgen.ir.ukernel.provider_bridge import UkernelProvider
-from compgen.ir.ukernel.registry import UkernelRegistry
-from compgen.kernels.provider import KernelContract
+from xpu_rt.ir.ukernel.constraints import ConstraintContext
+from xpu_rt.ir.ukernel.lower import lower_ukernel_with_body
+from xpu_rt.ir.ukernel.ops import UkernelBodyOp, UkernelCallOp, UkernelDeclOp, UkernelMatchOp
+from xpu_rt.ir.ukernel.provider_bridge import UkernelProvider
+from xpu_rt.ir.ukernel.registry import UkernelRegistry
+from xpu_rt.kernels.provider import KernelContract
 
 
 def _build_multi_target_registry() -> UkernelRegistry:

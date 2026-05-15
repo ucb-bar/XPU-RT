@@ -1,10 +1,10 @@
 claim: |
   M-62 (Phase D, Section 7 step 8): users plug their own kernels into
-  the M-57 auction by pointing CompGen at a directory of
+  the M-57 auction by pointing XPU-RT at a directory of
   ``kernel_manifest.yaml`` + sibling kernel sources. The indexer
   validates each manifest, sha256-hashes every locked file, and
   persists derived index entries under
-  ``.compgen/user_kernel_index/<sha8>/manifest.yaml``. A
+  ``.xpu_rt/user_kernel_index/<sha8>/manifest.yaml``. A
   ``UserKernelProvider`` registered in ``default_registry()`` reads
   the index at bid time, matches incoming ``KernelContractV3`` against
   declared signatures, bids high-confidence on exact-dim match, and
@@ -40,43 +40,43 @@ claim: |
      The provider records ``_last_match`` so the auction's subsequent
      ``search()`` call serves the right kernel.
   5. ``default_registry()`` auto-registers ``UserKernelProvider`` when
-     ``.compgen/user_kernel_index/`` contains at least one entry.
+     ``.xpu_rt/user_kernel_index/`` contains at least one entry.
      Empty index = no provider registered (no overhead). Priority 20
      beats the in-tree ``CReferenceProvider`` (5).
   6. CLI ``--user-kernel-path <dir>`` flag and
-     ``COMPGEN_USER_KERNEL_PATH`` env var trigger reindex before the
+     ``XPU_RT_USER_KERNEL_PATH`` env var trigger reindex before the
      pipeline runs (the auction sees a fresh index).
   7. Three MCP tools:
-     - ``compgen_list_kernel_providers(target?)`` — enumerate every
+     - ``xpu_rt_list_kernel_providers(target?)`` — enumerate every
        registered provider with priority + applicability metadata.
-     - ``compgen_describe_kernel_provider(provider_id)`` — deep view;
+     - ``xpu_rt_describe_kernel_provider(provider_id)`` — deep view;
        for ``user_path``, surfaces every indexed kernel's manifest.
-     - ``compgen_discover_user_kernels(path)`` — drive the indexer.
-  8. Skill ``/compgen-discover-user-kernels`` orchestrates: agent
+     - ``xpu_rt_discover_user_kernels(path)`` — drive the indexer.
+  8. Skill ``/xpu_rt-discover-user-kernels`` orchestrates: agent
      calls the MCP tool, surfaces the indexed signatures, and saves
      the user-kernel-path location to memory.
 commit: 0a62000000000000000000000000000000000000
 created_at_utc: 2026-05-07T00:00:00Z
 forbidden:
-- writing index entries outside .compgen/user_kernel_index/ (the index_root is a closed sandbox; arbitrary writes to user paths are not allowed)
+- writing index entries outside .xpu_rt/user_kernel_index/ (the index_root is a closed sandbox; arbitrary writes to user paths are not allowed)
 - silently using a tampered kernel after the locked-files audit detects drift (UserKernelHashDriftError must propagate)
 - bidding without checking target_name match (a host_cpu kernel must not bid on a cuda_sm75 contract)
 - the indexer following symlinks outside the search_path (declared kernels must live alongside their manifest; cross-tree symlinks fail kernel_source-escapes-manifest-dir)
 - registering UserKernelProvider when the index is empty (no entries → no provider; lazy registration only)
 realness_level: production_path
 required_evidence:
-- python/compgen/kernels/user_kernel_index.py (entire module — schema + indexer + audit + registry write)
-- python/compgen/kernels/providers/user_path.py (UserKernelProvider — bid + search + match prioritisation)
-- python/compgen/kernels/registry.py (default_registry auto-registers user_path when index is non-empty)
-- python/compgen/mcp/tools/kernel_providers.py (three MCP tools)
-- python/compgen/graph_compilation/__main__.py (--user-kernel-path flag + env-var resolution + pre-run reindex)
-- .claude/skills/compgen-discover-user-kernels/SKILL.md
+- python/xpu_rt/kernels/user_kernel_index.py (entire module — schema + indexer + audit + registry write)
+- python/xpu_rt/kernels/providers/user_path.py (UserKernelProvider — bid + search + match prioritisation)
+- python/xpu_rt/kernels/registry.py (default_registry auto-registers user_path when index is non-empty)
+- python/xpu_rt/mcp/tools/kernel_providers.py (three MCP tools)
+- python/xpu_rt/graph_compilation/__main__.py (--user-kernel-path flag + env-var resolution + pre-run reindex)
+- .claude/skills/xpu_rt-discover-user-kernels/SKILL.md
 - tests/kernels/test_user_kernel_index.py
 feature_id: m62_user_kernel_provider
 notes: |
   Phase D step 8 — Section 7's "users can plug in other kernel
   providers in their own user space" claim made real. Mirrors the
-  ``compgen.graph_compilation.extension_*`` pattern (manifest +
+  ``xpu_rt.graph_compilation.extension_*`` pattern (manifest +
   locked-files audit + sandboxed index dir).
 
   Pre-existing scaffolding consumed:
@@ -97,7 +97,7 @@ notes: |
   Real-driven evidence (`/tmp/m62_stress` regenerated):
   - User indexes a kernel at ``/tmp/m62_user_kernels/matmul`` with
     perf_priors confidence=0.99, estimated_us=1.5.
-  - ``reindex`` produces ``.compgen/user_kernel_index/0b2572e4/``
+  - ``reindex`` produces ``.xpu_rt/user_kernel_index/0b2572e4/``
     + ``registry.yaml``; locked_files map carries SHAs for both
     files.
   - Pipeline runs ``--auction-mode multi-bidder``: 2 bids
@@ -119,8 +119,8 @@ notes: |
 
   Honest residuals:
   - Filesystem indexing only today. PyPI entry-point providers are
-    listed by ``compgen_list_kernel_providers`` but don't go
-    through ``compgen_discover_user_kernels`` (they're already
+    listed by ``xpu_rt_list_kernel_providers`` but don't go
+    through ``xpu_rt_discover_user_kernels`` (they're already
     registered by the entry-point system).
   - Multi-file kernels (e.g. Triton ``.py`` + ``.h``) need every
     file declared in ``kernel_source`` today; the manifest schema

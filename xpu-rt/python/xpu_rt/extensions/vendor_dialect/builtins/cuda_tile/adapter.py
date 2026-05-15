@@ -10,19 +10,19 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from compgen.extensions.vendor_dialect.adapter import LoweringResult, VendorDialectAdapter
-from compgen.extensions.vendor_dialect.builtins.cuda_tile._descriptor import build_descriptor
-from compgen.extensions.vendor_dialect.builtins.cuda_tile.bundle import emit_cuda_tile_artifact
-from compgen.extensions.vendor_dialect.builtins.cuda_tile.lowering import lower_to_cuda_tile
-from compgen.targets.backend import CompiledArtifact
+from xpu_rt.extensions.vendor_dialect.adapter import LoweringResult, VendorDialectAdapter
+from xpu_rt.extensions.vendor_dialect.builtins.cuda_tile._descriptor import build_descriptor
+from xpu_rt.extensions.vendor_dialect.builtins.cuda_tile.bundle import emit_cuda_tile_artifact
+from xpu_rt.extensions.vendor_dialect.builtins.cuda_tile.lowering import lower_to_cuda_tile
+from xpu_rt.targets.backend import CompiledArtifact
 
 
 class CudaTileReferenceAdapter(VendorDialectAdapter):
-    """Reference cuda_tile adapter bundled with CompGen.
+    """Reference cuda_tile adapter bundled with XPU-RT.
 
-    See :mod:`compgen.extensions.vendor_dialect.builtins.cuda_tile`
+    See :mod:`xpu_rt.extensions.vendor_dialect.builtins.cuda_tile`
     module docstring for the design rationale (in-tree mirror of the
-    bridge-validated bwell-side ``compgen_cuda_tile`` package).
+    bridge-validated bwell-side ``xpu_rt_cuda_tile`` package).
 
     This adapter has no kernel provider — the FFN matmul-relu-matmul
     template is hand-authored, not LLM-driven. Real op-family lowering
@@ -80,7 +80,7 @@ class CudaTileReferenceAdapter(VendorDialectAdapter):
 def make_adapter() -> CudaTileReferenceAdapter:
     """Construct a fresh reference adapter — convenient factory.
 
-    Used by :mod:`compgen.extensions.vendor_dialect.builtins` for
+    Used by :mod:`xpu_rt.extensions.vendor_dialect.builtins` for
     registration and by tests for isolated instances.
     """
     return CudaTileReferenceAdapter()

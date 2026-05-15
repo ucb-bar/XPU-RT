@@ -28,8 +28,8 @@ from typing import Any
 
 import structlog
 
-from compgen.options import CompGenOptions
-from compgen.pipeline import PipelineCache, PipelineResult, compile_through_pipeline
+from xpu_rt.options import CompGenOptions
+from xpu_rt.pipeline import PipelineCache, PipelineResult, compile_through_pipeline
 
 log = structlog.get_logger()
 
@@ -105,7 +105,7 @@ def measure_pipeline(
     n_iter: int = 5,
     exported_program: Any = None,
 ) -> BenchmarkReport:
-    """Measure one workload through the CompGen pipeline + CPU executor."""
+    """Measure one workload through the XPU-RT pipeline + CPU executor."""
     report = BenchmarkReport(fixture_name=fixture_name)
     if options is None:
         options = CompGenOptions()
@@ -139,7 +139,7 @@ def measure_pipeline(
     import torch
 
     try:
-        from compgen.runtime.cpu_executor import ExecutorStats, execute
+        from xpu_rt.runtime.cpu_executor import ExecutorStats, execute
 
         ep = exported_program
         if ep is None:

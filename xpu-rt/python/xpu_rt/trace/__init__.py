@@ -2,17 +2,17 @@
 
 The trace bus captures every LLM prompt, MCP tool call, pass, analysis,
 and agent decision in a single correlated JSONL stream. See
-:mod:`compgen.trace.bus` for the entry points.
+:mod:`xpu_rt.trace.bus` for the entry points.
 """
 
 from __future__ import annotations
 
-from compgen.trace.adapters import (
+from xpu_rt.trace.adapters import (
     TracingLLMRecorder,
     TracingMcpTranscriptRecorder,
     TracingToolCallRecorder,
 )
-from compgen.trace.bus import (
+from xpu_rt.trace.bus import (
     TraceBus,
     get_active_bus,
     get_current_llm_turn_id,
@@ -20,7 +20,7 @@ from compgen.trace.bus import (
     set_active_bus,
     set_current_llm_turn_id,
 )
-from compgen.trace.events import (
+from xpu_rt.trace.events import (
     DEFAULT_LEVEL_BY_KIND,
     EventKind,
     Level,
@@ -29,14 +29,14 @@ from compgen.trace.events import (
     category_for,
     default_level_for,
 )
-from compgen.trace.ir_dump import (
+from xpu_rt.trace.ir_dump import (
     IRDumpEntry,
     IRDumpWriter,
     dump_enabled_from_env,
     get_ir_dump_writer,
     install_ir_dump_writer,
 )
-from compgen.trace.publishers import (
+from xpu_rt.trace.publishers import (
     AnalysisPublisher,
     DecisionPublisher,
     DecisionSitePublisher,
@@ -48,8 +48,8 @@ from compgen.trace.publishers import (
     StagePublisher,
     ToolPublisher,
 )
-from compgen.trace.render import render_trace
-from compgen.trace.session_id import build_session_id
+from xpu_rt.trace.render import render_trace
+from xpu_rt.trace.session_id import build_session_id
 
 __all__ = [
     "AnalysisPublisher",

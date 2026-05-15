@@ -36,7 +36,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Iterable, Iterator
 
-from compgen.audit.errors import CaveatLedgerError, StaleCaveatError
+from xpu_rt.audit.errors import CaveatLedgerError, StaleCaveatError
 
 CAVEAT_STATUSES: tuple[str, ...] = (
     "open",

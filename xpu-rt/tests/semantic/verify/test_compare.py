@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import torch
-from compgen.semantic.verify.compare import DTYPE_PRESETS, ComparisonConfig, NumericComparison, compare_tensors
+from xpu_rt.semantic.verify.compare import DTYPE_PRESETS, ComparisonConfig, NumericComparison, compare_tensors
 
 # -- identical tensors --------------------------------------------------------
 

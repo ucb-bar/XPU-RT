@@ -1,7 +1,7 @@
 """Minimal job-id queue for tools whose wall-clock exceeds MCP's
 stdio comfort zone.
 
-MCP stdio works best for sub-5-second tool calls. CompGen has a
+MCP stdio works best for sub-5-second tool calls. XPU-RT has a
 few paths (first Triton JIT for a new dim) that routinely exceed 30s.
 Rather than block the pipe, those paths launch a ``Job`` whose
 ``job_id`` we hand back to the LLM; the LLM then polls via
@@ -48,7 +48,7 @@ class JobQueue:
     """Thread-pool-backed job queue.
 
     Thread-safe. The pool is sized by ``max_workers`` (default 2 —
-    a single CompGen session rarely needs more concurrent heavy
+    a single XPU-RT session rarely needs more concurrent heavy
     work than one Triton JIT + one gate run).
     """
 

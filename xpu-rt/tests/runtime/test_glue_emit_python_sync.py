@@ -17,13 +17,13 @@ from pathlib import Path
 
 import pytest
 
-from compgen.runtime.execution_plan import (
+from xpu_rt.runtime.execution_plan import (
     ExecutionPlan,
     RegionKernelBinding,
     RegionPlacement,
     Resource,
 )
-from compgen.runtime.glue_emit import emit_python_sync_executor
+from xpu_rt.runtime.glue_emit import emit_python_sync_executor
 
 
 def _make_run_dir(
@@ -136,10 +136,10 @@ class TestSyntacticValidity:
         )
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)  # type: ignore[union-attr]
-        # Public surface: PLAN_*, KERNEL_BINDINGS, compgen_run, assert_plan, PlanViolation.
+        # Public surface: PLAN_*, KERNEL_BINDINGS, xpu_rt_run, assert_plan, PlanViolation.
         assert module.PLAN_TARGET == "host_cpu"
         assert "r0" in module.KERNEL_BINDINGS
-        assert callable(module.compgen_run)
+        assert callable(module.xpu_rt_run)
         assert callable(module.assert_plan)
         assert issubclass(module.PlanViolation, RuntimeError)
 
@@ -192,7 +192,7 @@ class TestBehaviour:
         )
         module = self._import_module(run_dir)
         with pytest.raises(module.PLAN_VIOLATION_UNBOUND_REGION):
-            module.compgen_run({"x": 1}, {}, runtime=_StubRuntime())
+            module.xpu_rt_run({"x": 1}, {}, runtime=_StubRuntime())
         # The typed subclass is also a PlanViolation.
         assert issubclass(
             module.PLAN_VIOLATION_UNBOUND_REGION, module.PlanViolation,
@@ -211,7 +211,7 @@ class TestBehaviour:
         runtime = _StubRuntime()
         # Caller-supplied kernel callable.
         kernels = {"r0": lambda *args, **kwargs: ("kernel_r0_output",)}
-        out = module.compgen_run({"x": 1}, kernels, runtime=runtime)
+        out = module.xpu_rt_run({"x": 1}, kernels, runtime=runtime)
         assert runtime.dispatch_calls == 1, (
             f"runtime.dispatch should fire once per bound region; "
             f"got {runtime.dispatch_calls}"
@@ -223,7 +223,7 @@ class TestBehaviour:
     def test_multi_region_dispatches_in_topological_order(
         self, tmp_path: Path,
     ) -> None:
-        from compgen.runtime.execution_plan import DependencyEdge
+        from xpu_rt.runtime.execution_plan import DependencyEdge
         # r0 → r1 (r0 must dispatch first).
         run_dir = tmp_path / "run"
         plan_dir = run_dir / "05_execution_plan"

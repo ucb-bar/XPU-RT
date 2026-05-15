@@ -1,14 +1,14 @@
 # MCP tools reference
 
-Every tool the `compgen-mcp` stdio server exposes, grouped by pipeline
-phase. Generated from `compgen.mcp.tools.ALL_TOOLS`; re-generate via
-`compgen mcp tools`.
+Every tool the `xpu-rt-mcp` stdio server exposes, grouped by pipeline
+phase. Generated from `xpu_rt.mcp.tools.ALL_TOOLS`; re-generate via
+`xpu-rt mcp tools`.
 
 The client contract — name, description, input schema, phase — lives in
-`python/compgen/mcp/tools/`. Each tool handler takes a `SessionManager`
+`python/xpu_rt/mcp/tools/`. Each tool handler takes a `SessionManager`
 plus keyword args and returns a JSON-serialisable dict.
 
-Counts in headings are indicative — see `compgen/mcp/tools/*.py` for the
+Counts in headings are indicative — see `xpu_rt/mcp/tools/*.py` for the
 canonical set.
 
 ## lifecycle (5)
@@ -18,7 +18,7 @@ typically call these first.
 
 - **`open_target`** — Load a hardware-spec YAML and open a session.
 - **`load_model`** — Run the deterministic pipeline + open an LLM-driven session.
-- **`register_pack`** — Register a `compgen.packs` extension with the session (path or entry-point identifier). Rebuilds the device if a target is already open.
+- **`register_pack`** — Register a `xpu_rt.packs` extension with the session (path or entry-point identifier). Rebuilds the device if a target is already open.
 - **`compile`** — Run the full LLM-driven agentic loop on the session's model.
 - **`bundle_export`** — Write the session's compiled bundle to disk.
 
@@ -93,4 +93,4 @@ Long-running asynchronous tool calls.
 
 - [MCP Setup](../getting-started/mcp-setup.md) — how to wire the server into Claude Code.
 - [CLI Reference](cli.md) — see the "MCP subcommands" section.
-- Source: `python/compgen/mcp/tools/`.
+- Source: `python/xpu_rt/mcp/tools/`.

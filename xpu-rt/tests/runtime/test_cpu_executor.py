@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import pytest
-from compgen.capture.torch_mlir_bridge import bridge_fx_graph
-from compgen.runtime.cpu_executor import ExecutorStats, execute
+from xpu_rt.capture.torch_mlir_bridge import bridge_fx_graph
+from xpu_rt.runtime.cpu_executor import ExecutorStats, execute
 
 from tests._fixtures.real_workloads import (
     ALL_FIXTURE_FNS,
@@ -75,7 +75,7 @@ def test_executor_fills_zero_on_failed_op():
 
 
 def test_dispatch_includes_core_aten_ops():
-    from compgen.runtime.cpu_executor import _ATEN_DISPATCH
+    from xpu_rt.runtime.cpu_executor import _ATEN_DISPATCH
 
     for op in (
         "aten_matmul",

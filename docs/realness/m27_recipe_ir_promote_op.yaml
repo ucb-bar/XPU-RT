@@ -11,9 +11,9 @@ forbidden:
 - placeholder attributes
 realness_level: decision_affecting
 required_evidence:
-- python/compgen/ir/recipe/ops_provenance.py
-- python/compgen/ir/recipe/serialize.py
-- python/compgen/ir/recipe/lower.py
-- python/compgen/ir/recipe/validate.py
+- python/xpu_rt/ir/recipe/ops_provenance.py
+- python/xpu_rt/ir/recipe/serialize.py
+- python/xpu_rt/ir/recipe/lower.py
+- python/xpu_rt/ir/recipe/validate.py
 - tests/ir/recipe/test_promote_op_extended.py
 notes: 'Section 19 / M-27.'

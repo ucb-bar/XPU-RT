@@ -8,10 +8,10 @@ from pathlib import Path
 
 import pytest
 
-from compgen.kernels.provider import (
+from xpu_rt.kernels.provider import (
     ProviderResult as LegacyProviderResult,
 )
-from compgen.providers.result_v1 import (
+from xpu_rt.providers.result_v1 import (
     SCHEMA_VERSION,
     STATUSES,
     ProviderResultV1,

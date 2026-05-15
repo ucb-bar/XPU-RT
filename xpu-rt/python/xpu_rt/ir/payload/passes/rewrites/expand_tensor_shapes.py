@@ -6,10 +6,10 @@ the dynamic shape. The pass walks the IR and:
 
 1. Records every op producing a tensor with at least one dynamic
    dim.
-2. Tags those ops with ``compgen.dynamic_dim_mask`` -- a string
+2. Tags those ops with ``xpu_rt.dynamic_dim_mask`` -- a string
    of ``'1'``/``'0'`` per dim where ``1`` marks a dynamic extent.
 3. For symmetry with ETC's symbolic-shape support, also
-   emits a ``compgen.symbolic_shape_template`` attribute holding
+   emits a ``xpu_rt.symbolic_shape_template`` attribute holding
    the full shape tuple as a comma-separated string so the tiling
    pass can reason about the template.
 """
@@ -44,9 +44,9 @@ def run_expand_tensor_shapes(
             if any(d < 0 for d in shape):
                 stats.ops_with_dynamic_dims += 1
                 mask = "".join("1" if d < 0 else "0" for d in shape)
-                op.attributes["compgen.dynamic_dim_mask"] = StringAttr(mask)
+                op.attributes["xpu_rt.dynamic_dim_mask"] = StringAttr(mask)
             # Always emit the template for downstream tiling.
-            op.attributes["compgen.symbolic_shape_template"] = StringAttr(",".join(str(d) for d in shape))
+            op.attributes["xpu_rt.symbolic_shape_template"] = StringAttr(",".join(str(d) for d in shape))
             stats.shape_templates_emitted += 1
             break  # only tag the first result
     return stats

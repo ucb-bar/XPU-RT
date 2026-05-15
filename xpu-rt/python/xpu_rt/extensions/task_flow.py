@@ -1,7 +1,7 @@
 """Unsupported-op / extension-task flow.
 
 When graph analysis surfaces an unsupported op or provider gap,
-the pipeline emits an :class:`compgen.extensions.manifest.ExtensionTask`
+the pipeline emits an :class:`xpu_rt.extensions.manifest.ExtensionTask`
 artifact set into ``.rcg-artifacts/tasks/<task_id>/``. A Claude
 Code / Codex session (or a human operator) then writes a
 sandboxed extension into ``.rcg-artifacts/extensions/<task_id>/``.
@@ -12,7 +12,7 @@ The flow has four typed entry points:
   disk. Returns the task directory.
 * :func:`commit_extension_response` — validate that the
   task-directory's declared ``output_dir`` now contains a valid
-  ``compgen_extension.yaml``; build a per-run registry; report
+  ``xpu_rt_extension.yaml``; build a per-run registry; report
   the typed outcome.
 * :func:`resume_after_extension` — given a commit outcome, return
   ``proceeded`` or ``still_blocked`` with the typed reason.
@@ -32,17 +32,17 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Final
 
-from compgen.extensions.errors import (
+from xpu_rt.extensions.errors import (
     ExtensionError,
     ExtensionManifestError,
     ExtensionTaskError,
 )
-from compgen.extensions.manifest import (
+from xpu_rt.extensions.manifest import (
     EXTENSION_TASK_SCHEMA_VERSION,
     ExtensionTask,
     load_extension_task,
 )
-from compgen.extensions.registry import (
+from xpu_rt.extensions.registry import (
     EXTENSION_MANIFEST_FILENAME,
     ExtensionRegistry,
     build_registry,
@@ -223,7 +223,7 @@ def commit_extension_response(
         # honour it; otherwise look under DEFAULT_EXTENSIONS_ROOT.
         out = Path(task.output_dir)
         if not out.is_absolute():
-            from compgen.extensions.registry import DEFAULT_EXTENSIONS_ROOT
+            from xpu_rt.extensions.registry import DEFAULT_EXTENSIONS_ROOT
             # The output_dir field is typically
             # ``.rcg-artifacts/extensions/<task_id>``; we accept either
             # the full path or the trailing component.

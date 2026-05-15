@@ -21,7 +21,7 @@ from typing import Any
 import structlog
 from xdsl.dialects.builtin import ModuleOp
 
-from compgen.ir.recipe.lower import LoweringOutput
+from xpu_rt.ir.recipe.lower import LoweringOutput
 
 log = structlog.get_logger()
 
@@ -180,8 +180,8 @@ class RecipeExecutor:
             counting these as ``applied`` is honest.
           * The remainder is sent to ``TransformApplicator`` as before.
         """
-        from compgen.transforms.apply import TransformApplicator
-        from compgen.transforms.synthesize import TransformScript
+        from xpu_rt.transforms.apply import TransformApplicator
+        from xpu_rt.transforms.synthesize import TransformScript
 
         diagnostics: list[str] = []
 
@@ -226,7 +226,7 @@ class RecipeExecutor:
         jobs: list[dict[str, Any]],
     ) -> tuple[ModuleOp, int, list[str]]:
         """Run eqsat jobs against the module."""
-        from compgen.eqsat.pipeline import run_eqsat_pass
+        from xpu_rt.eqsat.pipeline import run_eqsat_pass
 
         diagnostics: list[str] = []
         runs = 0
@@ -236,7 +236,7 @@ class RecipeExecutor:
                 categories = job.get("rule_categories", ["algebraic"])
                 max_iter = job.get("max_iterations", 10)
 
-                from compgen.eqsat.config import EqSatConfig
+                from xpu_rt.eqsat.config import EqSatConfig
 
                 config = EqSatConfig(
                     max_iterations=max_iter,
@@ -271,7 +271,7 @@ class RecipeExecutor:
             if job_type == "kernel_search" and backend in ("autocomp", "triton"):
                 # Dispatch to autocomp adapter
                 try:
-                    from compgen.kernels.autocomp_adapter import search_kernel
+                    from xpu_rt.kernels.autocomp_adapter import search_kernel
 
                     kr = search_kernel(region_id, job, target)
                     results.append(
@@ -362,7 +362,7 @@ class RecipeExecutor:
     ) -> tuple[list[Any], list[str]]:
         """Execute verification obligations.
 
-        Honours ``COMPGEN_MAX_VERIFICATION_OBLIGATIONS`` (env var, int) — when
+        Honours ``XPU_RT_MAX_VERIFICATION_OBLIGATIONS`` (env var, int) — when
         set, only the first N obligations run. Useful for smoke tests on
         very large models (SmolVLA emits 7741 obligations whose full SMT
         ladder takes ~hours; a 200-obligation smoke covers the same code
@@ -370,9 +370,9 @@ class RecipeExecutor:
         """
         import os
 
-        from compgen.semantic.executor import VerificationExecutor
+        from xpu_rt.semantic.executor import VerificationExecutor
 
-        cap_raw = os.environ.get("COMPGEN_MAX_VERIFICATION_OBLIGATIONS", "").strip()
+        cap_raw = os.environ.get("XPU_RT_MAX_VERIFICATION_OBLIGATIONS", "").strip()
         if cap_raw.isdigit() and int(cap_raw) > 0:
             cap = int(cap_raw)
             if len(obligations) > cap:

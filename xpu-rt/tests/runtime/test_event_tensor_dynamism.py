@@ -11,7 +11,7 @@ semantics at the runtime layer; companion tests in
 from __future__ import annotations
 
 import torch
-from compgen.runtime.event_tensor import EventTensor, materialize_view
+from xpu_rt.runtime.event_tensor import EventTensor, materialize_view
 
 # ---------------------------------------------------------------------------
 # EventTensor.update / EventTensor.trigger
@@ -111,8 +111,8 @@ class TestMoePattern:
     Phase 1 lets the Python reference model this exactly."""
 
     def test_update_then_trigger_matches_paper_fig_5b(self) -> None:
-        from compgen.ir.event.lower import lower_graph_op
-        from compgen.ir.event.ops import (
+        from xpu_rt.ir.event.lower import lower_graph_op
+        from xpu_rt.ir.event.ops import (
             MaterializeViewOp,  # noqa: F401  (imported for type check completeness)
             TriggerOp,
             UpdateOp,

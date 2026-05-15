@@ -19,7 +19,7 @@ from typing import Any
 
 from xdsl.dialects.builtin import ModuleOp
 
-from compgen.transforms.synthesize import TransformScript
+from xpu_rt.transforms.synthesize import TransformScript
 
 
 @dataclass(frozen=True)

@@ -1,4 +1,4 @@
-"""Tests for ``compgen.kernels.envelope_bridge``.
+"""Tests for ``xpu_rt.kernels.envelope_bridge``.
 
 Covers:
 
@@ -19,7 +19,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from compgen.kernels.contract_v3 import (
+from xpu_rt.kernels.contract_v3 import (
     ExecutionEnvelope,
     IOContract,
     KernelArchetype,
@@ -28,11 +28,11 @@ from compgen.kernels.contract_v3 import (
     ShapeClass,
     TensorIO,
 )
-from compgen.kernels.envelope_bridge import (
+from xpu_rt.kernels.envelope_bridge import (
     CODEGEN_HINTS,
     envelope_from_target_profile,
 )
-from compgen.targets.schema import (
+from xpu_rt.targets.schema import (
     ComputeUnit,
     DeviceSpec,
     MemoryLevel,
@@ -222,7 +222,7 @@ def test_bridge_survives_real_yaml_exemplar(yaml_name: str) -> None:
     here — just that the pipeline from YAML → envelope succeeds."""
     import tempfile
 
-    from compgen.targetgen.generate import generate_target
+    from xpu_rt.targetgen.generate import generate_target
 
     path = EXEMPLAR_ROOT / yaml_name
     pytest.importorskip("yaml")

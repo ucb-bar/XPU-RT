@@ -1,4 +1,4 @@
-"""Tests for compgen.passes.refinement."""
+"""Tests for xpu_rt.passes.refinement."""
 
 from __future__ import annotations
 
@@ -6,11 +6,11 @@ from pathlib import Path
 
 import pytest
 
-from compgen.audit.errors import RefinementMonotonicityViolation
-from compgen.passes.cards import (
+from xpu_rt.audit.errors import RefinementMonotonicityViolation
+from xpu_rt.passes.cards import (
     PassCard, default_registry_root, load_card, resolve_card_path,
 )
-from compgen.passes.refinement import (
+from xpu_rt.passes.refinement import (
     RefinementChainReport,
     RefinementLevel,
     assert_refinement_chain_valid,

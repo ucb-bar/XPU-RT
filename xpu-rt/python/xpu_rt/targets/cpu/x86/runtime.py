@@ -67,7 +67,7 @@ class X86Runtime:
         # any STL/C++ runtime; treating them as C avoids needing
         # libstdc++ on minimal Linux hosts (caught in Wave 1.15
         # tests on a clang-without-libstdc++ box).
-        tmpdir = Path(tempfile.mkdtemp(prefix="compgen_cpu_"))
+        tmpdir = Path(tempfile.mkdtemp(prefix="xpu_rt_cpu_"))
         src_path = tmpdir / f"{symbol_name}.c"
         so_path = tmpdir / f"{symbol_name}.so"
         src_path.write_text(source)
@@ -131,7 +131,7 @@ class X86Runtime:
         import shutil
 
         # Allow override for hosts with non-standard toolchains.
-        env = os.environ.get("COMPGEN_CXX")
+        env = os.environ.get("XPU_RT_CXX")
         if env:
             return env
 

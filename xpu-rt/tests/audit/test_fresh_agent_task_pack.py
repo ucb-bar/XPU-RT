@@ -1,4 +1,4 @@
-"""Tests for compgen.audit.fresh_agent task pack builder."""
+"""Tests for xpu_rt.audit.fresh_agent task pack builder."""
 
 from __future__ import annotations
 
@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from compgen.audit.errors import TaskPackContaminated, TaskPackIncomplete
-from compgen.audit.fresh_agent import (
+from xpu_rt.audit.errors import TaskPackContaminated, TaskPackIncomplete
+from xpu_rt.audit.fresh_agent import (
     ALLOWLISTED_PATHS,
     FORBIDDEN_PATHS,
     REQUIRED_PATHS,
@@ -31,7 +31,7 @@ def test_build_task_pack_smoke(tmp_path: Path) -> None:
     assert pack.task_prompt_path.exists()
     # Required paths land in the pack
     for required in REQUIRED_PATHS:
-        if required.startswith("python/compgen"):
+        if required.startswith("python/xpu_rt"):
             continue  # skipped by --skip-python-package in this test
         assert (out / required).exists(), f"{required} missing from pack"
 
@@ -76,7 +76,7 @@ def test_pack_excludes_results_and_caches(tmp_path: Path) -> None:
         out_dir=out, commit="testcommit",
         repo_root=REPO_ROOT, skip_python_package=True,
     )
-    forbidden_dirs = (".compgen_cache", ".crg-artifacts", "results", "tmp")
+    forbidden_dirs = (".xpu_rt_cache", ".crg-artifacts", "results", "tmp")
     for d in forbidden_dirs:
         assert not (out / d).exists(), f"task pack includes forbidden dir {d}"
 

@@ -10,8 +10,8 @@ from __future__ import annotations
 import logging
 from enum import Enum
 
-from compgen.agent.analyzer import NetworkAnalysis, PatternCluster
-from compgen.ir.payload.contracts import KernelContract
+from xpu_rt.agent.analyzer import NetworkAnalysis, PatternCluster
+from xpu_rt.ir.payload.contracts import KernelContract
 
 logger = logging.getLogger(__name__)
 

@@ -1,6 +1,6 @@
 """Verification gates for LLM invent-slots.
 
-Every gate is a function matching :class:`compgen.llm.registry.InventSlot.gate_impl`:
+Every gate is a function matching :class:`xpu_rt.llm.registry.InventSlot.gate_impl`:
 
     (proposal: dict, **ctx) -> dict[str, Any] with "status" in
     {"accepted", "rejected", "deferred"}
@@ -13,13 +13,13 @@ refinement is opt-in via ``ctx["require_smt"] = True``.
 
 from __future__ import annotations
 
-from compgen.agent.gates.composite import composite_gate
-from compgen.agent.gates.cost_model import cost_model_gate
-from compgen.agent.gates.differential import differential_gate
-from compgen.agent.gates.liveness import liveness_gate
-from compgen.agent.gates.megakernel import megakernel_persistent_kernel_gate
-from compgen.agent.gates.smt_refinement import smt_refinement_gate
-from compgen.agent.gates.structural import structural_gate
+from xpu_rt.agent.gates.composite import composite_gate
+from xpu_rt.agent.gates.cost_model import cost_model_gate
+from xpu_rt.agent.gates.differential import differential_gate
+from xpu_rt.agent.gates.liveness import liveness_gate
+from xpu_rt.agent.gates.megakernel import megakernel_persistent_kernel_gate
+from xpu_rt.agent.gates.smt_refinement import smt_refinement_gate
+from xpu_rt.agent.gates.structural import structural_gate
 
 __all__ = [
     "composite_gate",

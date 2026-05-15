@@ -3,7 +3,7 @@
 Monitors the gap between cost-model estimates and actual hardware measurements.
 When the drift exceeds a configurable threshold (default 20 %), the loop
 triggers a re-solve using calibrated costs from
-:class:`~compgen.agent.memory.CostCalibration` (EMA-corrected factors).
+:class:`~xpu_rt.agent.memory.CostCalibration` (EMA-corrected factors).
 
 Invariants:
     - Drift is computed as ``|estimated - measured| / measured``.
@@ -20,9 +20,9 @@ from typing import Any
 import structlog
 from xdsl.dialects.builtin import ModuleOp
 
-from compgen.agent.memory import CostCalibration
-from compgen.runtime.planner import ExecutionPlan, ExecutionPlanner
-from compgen.targets.schema import TargetProfile
+from xpu_rt.agent.memory import CostCalibration
+from xpu_rt.runtime.planner import ExecutionPlan, ExecutionPlanner
+from xpu_rt.targets.schema import TargetProfile
 
 log = structlog.get_logger()
 

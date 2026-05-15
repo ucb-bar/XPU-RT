@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import json
 
-from compgen.ir.event.attrs import EventCoordAttr, EventTensorTypeAttr
-from compgen.ir.event.ops import (
+from xpu_rt.ir.event.attrs import EventCoordAttr, EventTensorTypeAttr
+from xpu_rt.ir.event.ops import (
     CallDeviceOp,
     EventTensorOp,
     GraphOp,
 )
-from compgen.ir.payload.passes.megakernel_static_schedule import (
+from xpu_rt.ir.payload.passes.megakernel_static_schedule import (
     StaticMegakernelSchedule,
     extract_event_edges,
 )
@@ -112,8 +112,8 @@ def test_event_edges_link_producers_to_consumers() -> None:
 def test_pass_annotates_graph_with_schedule_attribute() -> None:
     mod, graph = _gemm_rs_module(sm_count=4)
     StaticMegakernelSchedule().run(mod)
-    assert "compgen.static_schedule" in graph.attributes
-    payload = json.loads(graph.attributes["compgen.static_schedule"].data)
+    assert "xpu_rt.static_schedule" in graph.attributes
+    payload = json.loads(graph.attributes["xpu_rt.static_schedule"].data)
     assert payload["status"] == "ok"
     assert payload["sm_count"] == 4
     assert payload["task_count"] == 8
@@ -122,7 +122,7 @@ def test_pass_annotates_graph_with_schedule_attribute() -> None:
 def test_pass_produces_optimal_two_stage_makespan() -> None:
     mod, graph = _gemm_rs_module(sm_count=4)
     StaticMegakernelSchedule().run(mod)
-    payload = json.loads(graph.attributes["compgen.static_schedule"].data)
+    payload = json.loads(graph.attributes["xpu_rt.static_schedule"].data)
     # 4 producers in parallel (1us) + 4 consumers in parallel (1us).
     assert payload["makespan_us"] == 2.0
 
@@ -130,7 +130,7 @@ def test_pass_produces_optimal_two_stage_makespan() -> None:
 def test_pass_returns_per_sm_queues_and_assignment() -> None:
     mod, graph = _gemm_rs_module(sm_count=4)
     StaticMegakernelSchedule().run(mod)
-    payload = json.loads(graph.attributes["compgen.static_schedule"].data)
+    payload = json.loads(graph.attributes["xpu_rt.static_schedule"].data)
     assert set(payload["per_sm_order"].keys()) <= {"0", "1", "2", "3"}
     # Every task is assigned to some SM.
     assert len(payload["assignment"]) == 8
@@ -140,7 +140,7 @@ def test_pass_returns_per_sm_queues_and_assignment() -> None:
 def test_pass_serializes_event_tensor_decls() -> None:
     mod, graph = _gemm_rs_module()
     StaticMegakernelSchedule().run(mod)
-    payload = json.loads(graph.attributes["compgen.static_schedule"].data)
+    payload = json.loads(graph.attributes["xpu_rt.static_schedule"].data)
     assert payload["event_tensor_decls"] == [
         {
             "name": "E",
@@ -174,7 +174,7 @@ def test_pass_skips_dynamic_policy_graphs() -> None:
     mod_dyn = ModuleOp([])
     mod_dyn.body.block.add_op(dyn_graph)
     StaticMegakernelSchedule().run(mod_dyn)
-    assert "compgen.static_schedule" not in dyn_graph.attributes
+    assert "xpu_rt.static_schedule" not in dyn_graph.attributes
 
 
 def test_pass_records_rejection_when_contracts_fail() -> None:
@@ -216,7 +216,7 @@ def test_pass_records_rejection_when_contracts_fail() -> None:
     mod = ModuleOp([])
     mod.body.block.add_op(graph)
     StaticMegakernelSchedule().run(mod)
-    payload = json.loads(graph.attributes["compgen.static_schedule"].data)
+    payload = json.loads(graph.attributes["xpu_rt.static_schedule"].data)
     assert payload["status"] == "rejected"
     assert any("deadlock" in e for e in payload["errors"])
 
@@ -226,9 +226,9 @@ def test_pass_is_idempotent_in_makespan_and_task_set() -> None:
     require the same makespan, task set, and SM partition cardinality."""
     mod, graph = _gemm_rs_module()
     StaticMegakernelSchedule().run(mod)
-    a = json.loads(graph.attributes["compgen.static_schedule"].data)
+    a = json.loads(graph.attributes["xpu_rt.static_schedule"].data)
     StaticMegakernelSchedule().run(mod)
-    b = json.loads(graph.attributes["compgen.static_schedule"].data)
+    b = json.loads(graph.attributes["xpu_rt.static_schedule"].data)
     assert a["makespan_us"] == b["makespan_us"]
     assert a["task_count"] == b["task_count"]
     assert set(a["assignment"].keys()) == set(b["assignment"].keys())

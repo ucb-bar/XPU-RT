@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://compgen.dev/schemas/v1/model_admission/admission_report.schema.json",
+  "$id": "https://xpu_rt.dev/schemas/v1/model_admission/admission_report.schema.json",
   "title": "admission_report_v1",
   "type": "object",
   "additionalProperties": false,

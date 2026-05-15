@@ -6,7 +6,7 @@
 # end-to-end on every change.
 #
 # Used by:
-#   python -m compgen.graph_compilation run-suite \
+#   python -m xpu_rt.graph_compilation run-suite \
 #       --suite configs/graph_compilation/always_test_models.yaml \
 #       --out results/graph_compilation/<name> \
 #       --stop-after <stage>

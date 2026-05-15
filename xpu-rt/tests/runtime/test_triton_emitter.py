@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from compgen.runtime.triton_emitter import (
+from xpu_rt.runtime.triton_emitter import (
     TritonEmitterReport,
     emit_triton_kernels,
     triton_available,
@@ -36,7 +36,7 @@ def _matmul_module_with_triton_tag() -> tuple[ModuleOp, MatmulOp]:
         outputs=[out.results[0]],
         res=[_ft([4, 16])],
     )
-    mm.attributes["compgen.library_dispatch"] = StringAttr("triton")
+    mm.attributes["xpu_rt.library_dispatch"] = StringAttr("triton")
     block = Block()
     for op in (a, b, out, mm):
         block.add_op(op)

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from compgen.ir.layout.attrs import LayoutEncodingAttr, PackSpecAttr
-from compgen.ir.layout.ops import PackOp, SetLayoutOp, UnpackOp, UnsetLayoutOp
+from xpu_rt.ir.layout.attrs import LayoutEncodingAttr, PackSpecAttr
+from xpu_rt.ir.layout.ops import PackOp, SetLayoutOp, UnpackOp, UnsetLayoutOp
 from xdsl.dialects.builtin import IntegerAttr, IntegerType, StringAttr, SymbolRefAttr
 
 
@@ -20,7 +20,7 @@ class TestSetLayoutOp:
         assert op.source_ref.root_reference.data == "test_tensor"
 
     def test_build_with_provenance(self) -> None:
-        from compgen.ir.recipe.attrs import ProvenanceAttr
+        from xpu_rt.ir.recipe.attrs import ProvenanceAttr
 
         enc = LayoutEncodingAttr("conv", 1, "blocked", [], ["f16"])
         prov = ProvenanceAttr("agent", 0)

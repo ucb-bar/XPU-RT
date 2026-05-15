@@ -1,4 +1,4 @@
-"""Tests for ``compgen.plugins`` — entry-point discovery + manual register.
+"""Tests for ``xpu_rt.plugins`` — entry-point discovery + manual register.
 
 Locks in:
   * group constants are stable
@@ -12,7 +12,7 @@ Locks in:
 from __future__ import annotations
 
 import pytest
-from compgen.plugins import (
+from xpu_rt.plugins import (
     GROUP_DECOMPOSITIONS,
     GROUP_FUSION_RULES,
     GROUP_KERNEL_PROVIDERS,
@@ -120,7 +120,7 @@ def test_register_target_backend_must_have_required_methods() -> None:
 
 def test_register_unknown_group_rejects() -> None:
     with pytest.raises(ValueError, match="unknown extension group"):
-        register("compgen.does.not.exist", "x", lambda: None)
+        register("xpu_rt.does.not.exist", "x", lambda: None)
 
 
 # ---------------------------------------------------------------------------

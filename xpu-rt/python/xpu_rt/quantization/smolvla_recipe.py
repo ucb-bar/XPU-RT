@@ -31,12 +31,12 @@ import structlog
 import torch
 import torch.nn as nn
 
-from compgen.quantization.attention import (
+from xpu_rt.quantization.attention import (
     FP8AttentionConfig,
     replace_sdpa_with_fp8_attention,
 )
-from compgen.quantization.fp8_config import FP8E4M3Po2Config
-from compgen.quantization.fp8_tensor import FP8E4M3Po2Tensor
+from xpu_rt.quantization.fp8_config import FP8E4M3Po2Config
+from xpu_rt.quantization.fp8_tensor import FP8E4M3Po2Tensor
 
 logger = structlog.get_logger()
 

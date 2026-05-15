@@ -1,9 +1,9 @@
 """Extended artefact emission for compile bundles.
 
-The :class:`~compgen.stages.bundle.stage.BundleStage` writes the two
+The :class:`~xpu_rt.stages.bundle.stage.BundleStage` writes the two
 required artefacts — ``payload.mlir`` and ``manifest.json``.  This
 module emits the surrounding artefacts that the CLAUDE.md contract
-promises and that :mod:`compgen.runtime.bundle_runner` expects when
+promises and that :mod:`xpu_rt.runtime.bundle_runner` expects when
 re-hydrating a bundle. Every artifact in the 14-artifact contract has
 one slot here.
 
@@ -28,7 +28,7 @@ Artifacts covered:
 - ``golden_outputs.pt`` — eager reference output (no-grad eval with
   training-state save/restore around it).
 - ``compile_baseline.json`` — real ``torch.compile`` baseline timings
-  via :func:`compgen.capture.dynamo_baseline.compile_baseline`. Opt
+  via :func:`xpu_rt.capture.dynamo_baseline.compile_baseline`. Opt
   out with ``run_compile_baseline=False`` for large models.
 - ``graph_breaks.json`` — dynamo graph-break list + guard failures.
 - ``execution_plan.yaml`` — planner output when a payload module +
@@ -66,7 +66,7 @@ from typing import TYPE_CHECKING, Any
 import structlog
 import torch
 
-from compgen.runtime.errors import (
+from xpu_rt.runtime.errors import (
     ArtifactStatus,
     BundleEmissionReport,
 )
@@ -74,8 +74,8 @@ from compgen.runtime.errors import (
 if TYPE_CHECKING:
     from xdsl.dialects.builtin import ModuleOp
 
-    from compgen.agent.analyzer import NetworkAnalysis
-    from compgen.targets.schema import TargetProfile
+    from xpu_rt.agent.analyzer import NetworkAnalysis
+    from xpu_rt.targets.schema import TargetProfile
 
 log = structlog.get_logger(__name__)
 
@@ -144,7 +144,7 @@ def emit_extended_artefacts(
     Args:
         bundle_dir: Bundle directory (containing ``manifest.json``).
         capture_artifact: ``CaptureArtifact`` from
-            :func:`~compgen.capture.torch_export.capture_frontend_artifact`.
+            :func:`~xpu_rt.capture.torch_export.capture_frontend_artifact`.
         sample_inputs: Inputs that drove capture; serialised to
             ``golden_inputs.pt``.
         model: Original PyTorch model. Used to compute
@@ -152,7 +152,7 @@ def emit_extended_artefacts(
         eager_output: Pre-computed eager output (takes precedence over
             running the model ourselves).
         run_compile_baseline: When True (default), invokes
-            ``compgen.capture.dynamo_baseline.compile_baseline``.
+            ``xpu_rt.capture.dynamo_baseline.compile_baseline``.
         payload_module: Post-pipeline xDSL ``ModuleOp``.
         target_profile: ``TargetProfile`` compiled for.
         analysis: ``NetworkAnalysis`` for the ``gap_analysis.json``
@@ -288,7 +288,7 @@ def emit_extended_artefacts(
         report = None
         baseline_error: str | None = None
         try:
-            from compgen.capture.dynamo_baseline import compile_baseline
+            from xpu_rt.capture.dynamo_baseline import compile_baseline
 
             model.eval()
             report = compile_baseline(model, sample_inputs)
@@ -370,7 +370,7 @@ def emit_extended_artefacts(
     else:
         import yaml  # type: ignore[import-untyped]
 
-        from compgen.runtime.planner import plan_execution
+        from xpu_rt.runtime.planner import plan_execution
 
         plan = None
         planner_error: str | None = None
@@ -513,7 +513,7 @@ def emit_extended_artefacts(
         try:
             import yaml  # type: ignore[import-untyped]
 
-            from compgen.kernels.contracts import build_kernel_contracts
+            from xpu_rt.kernels.contracts import build_kernel_contracts
 
             specs = build_kernel_contracts(payload_module, target_profile, sample_inputs)
             if not specs:
@@ -912,8 +912,8 @@ def _render_data_header(
         " * Provider declares the symbol layout it expects; pack composer",
         " * #includes this header so the kernel sees its symbol contract.",
         " */",
-        "#ifndef COMPGEN_GENERATED_KERNEL_DATA_H",
-        "#define COMPGEN_GENERATED_KERNEL_DATA_H",
+        "#ifndef XPU_RT_GENERATED_KERNEL_DATA_H",
+        "#define XPU_RT_GENERATED_KERNEL_DATA_H",
         "#include <stdint.h>",
         "",
     ]
@@ -946,7 +946,7 @@ def _render_data_header(
 
         body = ", ".join(values)
         lines.append(f"static const {ctype} {symbol}[{decl_size}] = {{ {body} }};")
-    lines.extend(["", "#endif  /* COMPGEN_GENERATED_KERNEL_DATA_H */", ""])
+    lines.extend(["", "#endif  /* XPU_RT_GENERATED_KERNEL_DATA_H */", ""])
     return "\n".join(lines)
 
 
@@ -1021,7 +1021,7 @@ def _update_manifest(bundle_dir: Path, report: BundleEmissionReport) -> None:
 def _publish_trace_events(report: BundleEmissionReport) -> None:
     """Publish per-artifact status to the active trace bus (best effort)."""
     try:
-        from compgen.trace import get_active_bus
+        from xpu_rt.trace import get_active_bus
     except Exception:
         return
 

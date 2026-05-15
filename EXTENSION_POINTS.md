@@ -1,4 +1,4 @@
-# CompGen Extension Points
+# XPU-RT Extension Points
 
 > This file is a pointer. The canonical references are now:
 >

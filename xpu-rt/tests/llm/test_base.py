@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from compgen.llm.base import (
+from xpu_rt.llm.base import (
     GenerationRequest,
     GenerationResponse,
     LLMConfig,
     Objective,
     PromptContext,
 )
-from compgen.llm.mock_client import MockLLMClient
+from xpu_rt.llm.mock_client import MockLLMClient
 
 
 def test_llm_config_defaults() -> None:

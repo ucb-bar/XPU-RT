@@ -1,4 +1,4 @@
-"""``pack_fusion`` -- fuse ``compgen.tensor_ext.pack`` / ``unpack`` into
+"""``pack_fusion`` -- fuse ``xpu_rt.tensor_ext.pack`` / ``unpack`` into
 adjacent producers/consumers.
 
 Mirror of IREE's ``PackFusionPass``. When a pack feeds a
@@ -12,7 +12,7 @@ The pass is a real structural rewrite for two shapes:
    pack input and erase the pack.
 2. **Pack-before-generic tagging**: when a pack feeds a single-use
    linalg.generic, tag the generic with
-   ``compgen.pack_fused_on_input_<idx>`` so a later loop-nest pass
+   ``xpu_rt.pack_fused_on_input_<idx>`` so a later loop-nest pass
    can absorb the pack shape into the generic's indexing maps.
 """
 
@@ -29,7 +29,7 @@ from xdsl.pattern_rewriter import (
     op_type_rewrite_pattern,
 )
 
-from compgen.ir.tensor_ext import PackOp
+from xpu_rt.ir.tensor_ext import PackOp
 
 
 @dataclass
@@ -64,14 +64,14 @@ class _PackFusionPattern(RewritePattern):
             # still equivalent from the caller's perspective).
             # For robust elision we'd need to squeeze the extras;
             # here we tag it as an identity candidate.
-            op.attributes["compgen.pack_identity"] = StringAttr("true")
+            op.attributes["xpu_rt.pack_identity"] = StringAttr("true")
             self.stats.identity_packs_elided += 1
 
         # Tag the downstream generic.
         for use in op.result.uses:
             consumer = use.operation
             if isinstance(consumer, GenericOp):
-                consumer.attributes["compgen.pack_fused_on_input"] = StringAttr(str(use.index))
+                consumer.attributes["xpu_rt.pack_fused_on_input"] = StringAttr(str(use.index))
                 self.stats.generics_tagged += 1
                 break
 

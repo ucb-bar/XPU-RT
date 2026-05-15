@@ -2,9 +2,9 @@
 
 Cards live as YAML files under three roots:
 
-* ``python/compgen/providers/cards/*.yaml``
-* ``python/compgen/targets/cards/*.yaml``
-* ``python/compgen/dialects/cards/*.yaml``
+* ``python/xpu_rt/providers/cards/*.yaml``
+* ``python/xpu_rt/targets/cards/*.yaml``
+* ``python/xpu_rt/dialects/cards/*.yaml``
 
 User extensions contribute cards through the manifest's ``provides``
 section; those flow through ``ExtensionManifest.from_dict``
@@ -18,9 +18,9 @@ from pathlib import Path
 
 import yaml
 
-from compgen.dialects.dialect_provider_types import DialectProviderCard
-from compgen.providers.provider_types import ProviderCard
-from compgen.targets.target_types import TargetCard
+from xpu_rt.dialects.dialect_provider_types import DialectProviderCard
+from xpu_rt.providers.provider_types import ProviderCard
+from xpu_rt.targets.target_types import TargetCard
 
 
 def _provider_cards_root() -> Path:
@@ -28,12 +28,12 @@ def _provider_cards_root() -> Path:
 
 
 def _target_cards_root() -> Path:
-    from compgen.targets import target_types as _tt
+    from xpu_rt.targets import target_types as _tt
     return Path(_tt.__file__).resolve().parent / "cards"
 
 
 def _dialect_cards_root() -> Path:
-    from compgen.dialects import dialect_provider_types as _dt
+    from xpu_rt.dialects import dialect_provider_types as _dt
     return Path(_dt.__file__).resolve().parent / "cards"
 
 

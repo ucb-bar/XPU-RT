@@ -49,20 +49,20 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from compgen.audit.fresh_agent_grading import (
+from xpu_rt.audit.fresh_agent_grading import (
     fresh_agent_tasks_root,
     list_task_ids,
     load_task,
 )
-from compgen.audit.tool_promotion import (
+from xpu_rt.audit.tool_promotion import (
     AuditReport,
     run_tool_promotion_audit,
 )
-from compgen.mcp.tool_bridge import bridge_tools
-from compgen.tools.tool_card import MATURITY_LEVELS, ToolCard
-from compgen.tools.tool_registry import iter_tool_cards
+from xpu_rt.mcp.tool_bridge import bridge_tools
+from xpu_rt.tools.tool_card import MATURITY_LEVELS, ToolCard
+from xpu_rt.tools.tool_registry import iter_tool_cards
 
-SCHEMA_VERSION = "compgen_tool_evidence_pack_v1"
+SCHEMA_VERSION = "xpu_rt_tool_evidence_pack_v1"
 
 
 @dataclass(frozen=True)
@@ -287,7 +287,7 @@ def _claim_matrix(audit: AuditReport, surface_rows: list[dict[str, Any]]) -> dic
 
     extension_count = sum(
         1 for o in audit.outcomes
-        if o.tool_id.startswith("compgen_") and "extension" in o.tool_id and not o.violations
+        if o.tool_id.startswith("xpu_rt_") and "extension" in o.tool_id and not o.violations
     )
     claims.append(
         {
@@ -485,7 +485,7 @@ def main(argv: list[str] | None = None) -> int:
         "--repo-root",
         type=Path,
         default=None,
-        help="Override the repo root (defaults to the CompGen checkout).",
+        help="Override the repo root (defaults to the XPU-RT checkout).",
     )
     args = parser.parse_args(argv if argv is not None else sys.argv[1:])
     if args.out is None:

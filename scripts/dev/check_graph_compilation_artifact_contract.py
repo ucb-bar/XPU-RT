@@ -3,7 +3,7 @@
 
 Constructs a valid graph compilation run directory using ONLY the Python standard
 library (json, hashlib, pathlib, shutil) — no imports from
-``compgen.graph_compilation`` and no imports from
+``xpu_rt.graph_compilation`` and no imports from
 ``tests/graph_compilation/_synth.py``. This is deliberate: the validator
 must not be tested only with the same helpers that produce its
 fixtures, otherwise a coordinated bug in the writer + validator would
@@ -53,7 +53,7 @@ VENV_PY = REPO_ROOT / ".venv" / "bin" / "python"
 
 
 # --------------------------------------------------------------------------- #
-# Independent run-directory builder (NO imports from compgen.graph_compilation)
+# Independent run-directory builder (NO imports from xpu_rt.graph_compilation)
 # --------------------------------------------------------------------------- #
 
 
@@ -364,7 +364,7 @@ CASES: list[Case] = [
 
 
 def _run_validator(run_dir: Path, *, env: dict[str, str] | None = None) -> tuple[int, dict | None]:
-    cmd = [str(VENV_PY), "-m", "compgen.graph_compilation", "validate", "--run", str(run_dir)]
+    cmd = [str(VENV_PY), "-m", "xpu_rt.graph_compilation", "validate", "--run", str(run_dir)]
     proc = subprocess.run(cmd, capture_output=True, text=True, env=env, cwd=str(REPO_ROOT))
     report_path = run_dir / "validation" / "artifact_validation.json"
     report: dict | None = None

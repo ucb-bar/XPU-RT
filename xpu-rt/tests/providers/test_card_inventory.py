@@ -1,24 +1,24 @@
 """every shipped card under
-``python/compgen/{providers,targets,dialects}/cards/`` loads
+``python/xpu_rt/{providers,targets,dialects}/cards/`` loads
 cleanly and obeys the hard-rule discipline."""
 
 from __future__ import annotations
 
 from collections import Counter
 
-from compgen.dialects.dialect_provider_types import DialectProviderCard
-from compgen.providers.card_loader import (
+from xpu_rt.dialects.dialect_provider_types import DialectProviderCard
+from xpu_rt.providers.card_loader import (
     iter_dialect_cards,
     iter_provider_cards,
     iter_target_cards,
     load_all_cards,
 )
-from compgen.providers.provider_types import (
+from xpu_rt.providers.provider_types import (
     INTEGRATION_LEVELS,
     PAPER_CLAIMABLE_LEVELS,
     ProviderCard,
 )
-from compgen.targets.target_types import TargetCard
+from xpu_rt.targets.target_types import TargetCard
 
 
 EXPECTED_PROVIDER_IDS = frozenset(

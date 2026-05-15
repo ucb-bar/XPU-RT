@@ -6,15 +6,15 @@ from pathlib import Path
 
 import pytest
 
-from compgen.model_admission.loaders import LoaderUnavailable, load
-from compgen.model_admission.registry import (
+from xpu_rt.model_admission.loaders import LoaderUnavailable, load
+from xpu_rt.model_admission.registry import (
     DEFAULT_MODELS_DIR,
     DEFAULT_REGISTRY_PATH,
     DEFAULT_SLICES_DIR,
     DEFAULT_SUITES_DIR,
     load_registry,
 )
-from compgen.model_admission.schemas import AdmissionStatus
+from xpu_rt.model_admission.schemas import AdmissionStatus
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -62,8 +62,8 @@ def test_unavailable_loader_emits_typed_status(registry):
     )
 
 
-def test_compgen_model_spec_loader_dispatches(registry):
-    """smolvla_step bridges to compgen.models. Without local SmolVLA setup the
+def test_xpu_rt_model_spec_loader_dispatches(registry):
+    """smolvla_step bridges to xpu_rt.models. Without local SmolVLA setup the
     catalog call typically fails with FileNotFoundError -> unavailable_missing_weights.
     Either that, or unavailable_missing_dependency, is acceptable -- both are
     typed and not silent.

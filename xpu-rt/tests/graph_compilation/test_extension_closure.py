@@ -19,15 +19,15 @@ import shutil
 from pathlib import Path
 
 import pytest
-from compgen.graph_compilation import validate_run
-from compgen.graph_compilation.agent_decomp_fill import deterministic_fill
-from compgen.graph_compilation.extension_materialize import materialize_extension
-from compgen.graph_compilation.extension_registry import load_registry, register_extension
-from compgen.graph_compilation.extension_verify import run_verify
-from compgen.graph_compilation.gap_closure_validate import validate_gap_closure
-from compgen.graph_compilation.gap_validate import validate_gap_discovery
-from compgen.graph_compilation.lowering_validate import validate_payload_lowering
-from compgen.graph_compilation.run import (
+from xpu_rt.graph_compilation import validate_run
+from xpu_rt.graph_compilation.agent_decomp_fill import deterministic_fill
+from xpu_rt.graph_compilation.extension_materialize import materialize_extension
+from xpu_rt.graph_compilation.extension_registry import load_registry, register_extension
+from xpu_rt.graph_compilation.extension_verify import run_verify
+from xpu_rt.graph_compilation.gap_closure_validate import validate_gap_closure
+from xpu_rt.graph_compilation.gap_validate import validate_gap_discovery
+from xpu_rt.graph_compilation.lowering_validate import validate_payload_lowering
+from xpu_rt.graph_compilation.run import (
     discover_gaps_from_existing_lowering,
     run_graph_compilation,
 )
@@ -191,7 +191,7 @@ def test_extension_workspace_layout(closure_run: dict[str, Path]) -> None:
 
 def test_extension_contract_locked_files_match_disk(closure_run: dict[str, Path]) -> None:
     """After fill, locked files MUST hash to their materialize-time value."""
-    from compgen.graph_compilation.hashing import sha256_file
+    from xpu_rt.graph_compilation.hashing import sha256_file
 
     ext_dir = next((closure_run["ext_root"] / "unsupported_op").iterdir())
     contract = json.loads((ext_dir / "extension_contract.json").read_text())
@@ -245,7 +245,7 @@ def test_tamper_extension_breaks_differential(closure_run: dict[str, Path], tmp_
 
 def test_tamper_unknown_target_raises(tmp_path: Path) -> None:
     """Deterministic agent must refuse to fill targets it doesn't know."""
-    from compgen.graph_compilation.agent_decomp_fill import UnknownTargetError
+    from xpu_rt.graph_compilation.agent_decomp_fill import UnknownTargetError
 
     workspace = tmp_path / "fake_ws"
     workspace.mkdir()
@@ -427,7 +427,7 @@ def test_list_pending_finds_unfilled_workspaces(tmp_path: Path) -> None:
         [
             sys.executable,
             "-m",
-            "compgen.graph_compilation",
+            "xpu_rt.graph_compilation",
             "extension",
             "list-pending",
             "--extensions-root",
@@ -462,7 +462,7 @@ def test_04_pre_fill_pytest_fails_with_not_implemented_error(tmp_path: Path) -> 
     import subprocess
     import sys
 
-    from compgen.graph_compilation.extension_materialize import materialize_extension
+    from xpu_rt.graph_compilation.extension_materialize import materialize_extension
 
     gap = {
         "gap_id": "gap_0000",
@@ -508,7 +508,7 @@ def test_04_post_fill_pytest_passes(tmp_path: Path) -> None:
     import subprocess
     import sys
 
-    from compgen.graph_compilation.extension_materialize import materialize_extension
+    from xpu_rt.graph_compilation.extension_materialize import materialize_extension
 
     gap = {
         "gap_id": "gap_0000",
@@ -548,7 +548,7 @@ def test_04_post_fill_pytest_passes(tmp_path: Path) -> None:
 def test_04_manifest_starts_as_draft(tmp_path: Path) -> None:
     """manifest.yaml must start with status: draft (not 'verified')."""
     import yaml as _yaml
-    from compgen.graph_compilation.extension_materialize import materialize_extension
+    from xpu_rt.graph_compilation.extension_materialize import materialize_extension
 
     gap = {
         "gap_id": "gap_0000", "gap_kind": "unsupported_op",
@@ -568,8 +568,8 @@ def test_04_manifest_starts_as_draft(tmp_path: Path) -> None:
 
 def test_04_manifest_is_editable_post_materialize(tmp_path: Path) -> None:
     """manifest.yaml is editable per spec — verify must NOT flag a manifest edit."""
-    from compgen.graph_compilation.extension_materialize import materialize_extension
-    from compgen.graph_compilation.extension_verify import run_verify
+    from xpu_rt.graph_compilation.extension_materialize import materialize_extension
+    from xpu_rt.graph_compilation.extension_verify import run_verify
     gap = {
         "gap_id": "gap_0000", "gap_kind": "unsupported_op",
         "fx_target": "crgtoy.affine_gelu", "semantic_name": "crgtoy.affine_gelu",
@@ -597,8 +597,8 @@ def test_04_manifest_is_editable_post_materialize(tmp_path: Path) -> None:
 def test_04_inputs_expected_locked(tmp_path: Path) -> None:
     """Editing an input or expected case file must fail the locked-files audit."""
     import torch as _torch
-    from compgen.graph_compilation.extension_materialize import materialize_extension
-    from compgen.graph_compilation.extension_verify import run_verify
+    from xpu_rt.graph_compilation.extension_materialize import materialize_extension
+    from xpu_rt.graph_compilation.extension_verify import run_verify
     gap = {
         "gap_id": "gap_0000", "gap_kind": "unsupported_op",
         "fx_target": "crgtoy.affine_gelu", "semantic_name": "crgtoy.affine_gelu",
@@ -626,7 +626,7 @@ def test_04_inputs_expected_locked(tmp_path: Path) -> None:
 def test_04_closure_validation_says_not_applicable_for_no_closure(tmp_path: Path) -> None:
     """Per the user's flag: closure_validation must NOT report 'pass' before
     extension closure has happened. ``not_applicable`` is the honest state."""
-    from compgen.graph_compilation.gap_closure_validate import validate_gap_closure
+    from xpu_rt.graph_compilation.gap_closure_validate import validate_gap_closure
     run_dir = tmp_path / "run_no_closure"
     run_dir.mkdir()
     rep = validate_gap_closure(run_dir)

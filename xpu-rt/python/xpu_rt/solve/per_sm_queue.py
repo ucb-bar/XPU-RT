@@ -11,9 +11,9 @@ while honouring all event-tensor dependencies (producer must finish before
 consumer starts) and minimising the persistent megakernel's wall-clock
 makespan.
 
-We reuse OR-Tools CP-SAT (already a dependency of ``compgen.solve``) and
+We reuse OR-Tools CP-SAT (already a dependency of ``xpu_rt.solve``) and
 follow the interval-variable pattern already established in
-``compgen.solve.schedule.solve_schedule``.
+``xpu_rt.solve.schedule.solve_schedule``.
 
 The solver is *compile-time*; the resulting per-SM queues are baked into
 the persistent kernel as a pre-computed dispatch table.

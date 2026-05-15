@@ -19,7 +19,7 @@ from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 
-from compgen.passes import (
+from xpu_rt.passes import (
     PassCardRegistry,
     default_registry_root,
 )
@@ -43,7 +43,7 @@ def render_index(*, root: Path | None = None) -> str:
         by_level[card.level].append(card.pass_id)
 
     lines: list[str] = []
-    lines.append("# CompGen pass card index")
+    lines.append("# XPU-RT pass card index")
     lines.append("")
     lines.append(f"_Generated: `{_utc_now()}`_")
     lines.append("")

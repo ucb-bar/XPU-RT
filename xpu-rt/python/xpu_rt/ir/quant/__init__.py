@@ -1,6 +1,6 @@
-"""CompGen quantization dialect.
+"""XPU-RT quantization dialect.
 
-``compgen.quant`` mirrors TorchAO's quantized-tensor model directly so
+``xpu_rt.quant`` mirrors TorchAO's quantized-tensor model directly so
 that Payload IR can represent quantized computations without opaque
 calls. The dialect owns:
 
@@ -17,13 +17,13 @@ calls. The dialect owns:
 
 Register the dialect on a ``Context`` via::
 
-    ctx.register_dialect("compgen.quant", lambda: Quant)
+    ctx.register_dialect("xpu_rt.quant", lambda: Quant)
 """
 
 from __future__ import annotations
 
-from compgen.ir.quant.dialect import ALL_ATTRS, ALL_OPS, Quant
-from compgen.ir.quant.ops import (
+from xpu_rt.ir.quant.dialect import ALL_ATTRS, ALL_OPS, Quant
+from xpu_rt.ir.quant.ops import (
     ChooseQParamsPerChannelOp,
     ChooseQParamsPerTensorOp,
     DequantizePerChannelOp,
@@ -37,7 +37,7 @@ from compgen.ir.quant.ops import (
     WeightInt4PackQMOp,
     WeightInt8PackMMOp,
 )
-from compgen.ir.quant.types import (
+from xpu_rt.ir.quant.types import (
     AffineQuantizedTensorType,
     MXQuantizedTensorType,
     NVFP4TensorType,

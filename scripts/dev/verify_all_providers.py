@@ -2,13 +2,13 @@
 """closure verifier for the full Phase F provider matrix.
 
 Walks every card under
-``python/compgen/{providers,dialects}/cards/`` and asserts:
+``python/xpu_rt/{providers,dialects}/cards/`` and asserts:
 
 1. Card loads with ``integration_level`` declared.
 2. ``card.entrypoint`` resolves to a real Python class.
 3. The resolved class implements the :class:`KernelProvider`
    ABC (directly OR after wrapping via
-   :class:`compgen.providers.legacy_shim.LegacyProviderAdapter`).
+   :class:`xpu_rt.providers.legacy_shim.LegacyProviderAdapter`).
 4. ``probe()`` returns a typed ``ProviderProbeResult`` with
    ``status`` in :data:`PROBE_STATUSES`.
 5. If the per-provider evidence dir exists under
@@ -35,18 +35,18 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from compgen.audit.execution_evidence import audit_provider_dir
-from compgen.providers.adapters.base import (
+from xpu_rt.audit.execution_evidence import audit_provider_dir
+from xpu_rt.providers.adapters.base import (
     AdapterResolutionError,
     resolve_provider_class,
 )
-from compgen.providers.card_loader import (
+from xpu_rt.providers.card_loader import (
     iter_dialect_cards,
     iter_provider_cards,
 )
-from compgen.providers.kernel_provider import KernelProvider
-from compgen.providers.legacy_shim import wrap_legacy
-from compgen.providers.provider_types import PROBE_STATUSES, ProviderCard
+from xpu_rt.providers.kernel_provider import KernelProvider
+from xpu_rt.providers.legacy_shim import wrap_legacy
+from xpu_rt.providers.provider_types import PROBE_STATUSES, ProviderCard
 
 
 # Providers whose constructors require kwargs that we cannot supply

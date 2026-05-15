@@ -1,7 +1,7 @@
 """``insert_host_offload`` -- wrap regions that must run on the host.
 
 Reconstruction of XLA's ``HostOffloader``. Zero external references;
-CompGen owns the rewrite.
+XPU-RT owns the rewrite.
 
 Operates on :class:`ExecutionPlan`. Walks ``region_placement`` for
 regions whose ``device`` starts with ``"cpu"`` / ``"host"`` and:
@@ -25,7 +25,7 @@ Config:
 LLM-tool signature:
 
     tool_name="insert_host_offload"
-    wraps_pass="CompGen:XLAHostOffloader"
+    wraps_pass="XPU-RT:XLAHostOffloader"
     invent_slot="runtime/host_offload"
     policy="WrapHostRegions"
 """
@@ -34,7 +34,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from compgen.runtime.execution_plan import (
+from xpu_rt.runtime.execution_plan import (
     BufferDescriptor,
     CopyEdge,
     ExecutionPlan,

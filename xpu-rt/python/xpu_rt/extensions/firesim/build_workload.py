@@ -1,4 +1,4 @@
-"""Stage a CompGen embedded bundle as a FireSim bare-metal workload.
+"""Stage a XPU-RT embedded bundle as a FireSim bare-metal workload.
 
 Produces, for a given lowered model:
 
@@ -12,7 +12,7 @@ Produces, for a given lowered model:
    at the new JSON.
 
 The actual ``firesim kill / infrasetup / runworkload / kill`` sequence
-lives in the shell wrapper ``scripts/compgen_firesim_run.sh`` — this
+lives in the shell wrapper ``scripts/xpu_rt_firesim_run.sh`` — this
 Python module's job is to produce every file the wrapper consumes.
 
 Cross-compile is done with :func:`subprocess.run` against
@@ -30,7 +30,7 @@ from pathlib import Path
 
 import torch
 
-from compgen.runtime.embedded import (
+from xpu_rt.runtime.embedded import (
     EmbeddedOptions,
     LoweredModel,
     emit_embedded,
@@ -55,8 +55,8 @@ def _render_main_c(lowered: LoweredModel, out_path: Path) -> None:
     tmpl = (_TEMPLATE_DIR / "main.c.tmpl").read_text()
     rendered = (
         tmpl.replace("@ARENA_BYTES@", str(max(lowered.arena_bytes, 1 << 20)))
-        .replace("@INPUT_BYTES@", "COMPGEN_MODEL_INPUT_BYTES")
-        .replace("@OUTPUT_BYTES@", "COMPGEN_MODEL_OUTPUT_BYTES")
+        .replace("@INPUT_BYTES@", "XPU_RT_MODEL_INPUT_BYTES")
+        .replace("@OUTPUT_BYTES@", "XPU_RT_MODEL_OUTPUT_BYTES")
     )
     out_path.write_text(rendered)
 
@@ -71,7 +71,7 @@ def _emit_input_blob(out_path: Path, raw: bytes) -> None:
         "#include <stdint.h>\n"
         f"/* {len(raw)} bytes = float32[...] little-endian */\n"
         "__attribute__((aligned(16)))\n"
-        f"const uint8_t compgen_input_bytes[] = {{\n{body}\n}};\n"
+        f"const uint8_t xpu_rt_input_bytes[] = {{\n{body}\n}};\n"
     )
 
 
@@ -79,7 +79,7 @@ def build_firesim_workload(
     *,
     model_fixture_module: str,
     chipyard_root: Path,
-    workload_name: str = "compgen-convnet",
+    workload_name: str = "xpu_rt-convnet",
     golden_input_path: Path | None = None,
     bundle_dir: Path | None = None,
     riscv_gcc: str = "riscv64-unknown-elf-gcc",
@@ -88,12 +88,12 @@ def build_firesim_workload(
     abi: str = "lp64d",
     update_config_runtime: bool = True,
 ) -> FiresimWorkload:
-    """Produce a FireSim-ready workload for a compiled CompGen model.
+    """Produce a FireSim-ready workload for a compiled XPU-RT model.
 
     Args:
         model_fixture_module: Importable Python module exposing
             ``build_model()`` and ``default_inputs()``. Lowered through
-            :func:`compgen.runtime.embedded.lower_cnn_to_c`.
+            :func:`xpu_rt.runtime.embedded.lower_cnn_to_c`.
         chipyard_root: Path to the Chipyard checkout whose
             ``sims/firesim/deploy/workloads/`` will receive the staged
             boot binary + JSON.
@@ -103,7 +103,7 @@ def build_firesim_workload(
             present, those bytes are baked into the ELF. Otherwise the
             fixture's ``default_inputs()`` is used.
         bundle_dir: Where to write the embedded bundle sources. Defaults
-            to ``/tmp/compgen_firesim_<name>``.
+            to ``/tmp/xpu_rt_firesim_<name>``.
         riscv_gcc: Cross compiler (bare-metal RISC-V). Must be in
             PATH (typically after ``source chipyard/env.sh``).
         riscv_ar: Cross archiver, same conda env as ``riscv_gcc``.
@@ -140,7 +140,7 @@ def build_firesim_workload(
         sample_input_shape=sample_input_shape,
         model_name=workload_name,
     )
-    bundle_dir = bundle_dir or Path(f"/tmp/compgen_firesim_{workload_name}")
+    bundle_dir = bundle_dir or Path(f"/tmp/xpu_rt_firesim_{workload_name}")
     if bundle_dir.exists():
         shutil.rmtree(bundle_dir)
     bundle_dir.mkdir(parents=True)
@@ -180,8 +180,8 @@ def build_firesim_workload(
     c_sources = [
         bundle_dir / "arena.c",
         bundle_dir / "ops.c",
-        bundle_dir / "compgen_model_forward.c",
-        bundle_dir / "compgen_model.c",
+        bundle_dir / "xpu_rt_model_forward.c",
+        bundle_dir / "xpu_rt_model.c",
         bundle_dir / "model_blob.c",
         bundle_dir / "firesim_main.c",
         bundle_dir / "input_blob.c",

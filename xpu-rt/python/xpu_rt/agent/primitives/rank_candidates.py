@@ -1,6 +1,6 @@
 """P3.3 — rank_candidates primitive.
 
-Reorders a precomputed list of :class:`compgen.agent.suggest._candidate.ProposalCandidate`
+Reorders a precomputed list of :class:`xpu_rt.agent.suggest._candidate.ProposalCandidate`
 by likely benefit. The contract:
 
 * The output is always a *permutation* of the input — the LLM cannot
@@ -18,8 +18,8 @@ by likely benefit. The contract:
   The stub is honest: it does not pretend to be an LLM-ranked output.
 
 The primitive is exposed to MCP / fresh-agent harness through the
-P3.0 registry (``compgen.llm.call_site.list_call_sites``) and via the
-shipped ToolCard ``compgen_rank_candidates`` (lands when the
+P3.0 registry (``xpu_rt.llm.call_site.list_call_sites``) and via the
+shipped ToolCard ``xpu_rt_rank_candidates`` (lands when the
 bridge picks up call-site cards in a follow-up — for now the
 primitive is callable directly through its Python API).
 """
@@ -28,8 +28,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from compgen.agent.suggest._candidate import ProposalCandidate
-from compgen.llm.call_site import llm_call_site, register_fallback
+from xpu_rt.agent.suggest._candidate import ProposalCandidate
+from xpu_rt.llm.call_site import llm_call_site, register_fallback
 
 # JSON-schema for the wrapper's output. Each rank entry carries
 # ``index`` (offset into the input list, 0-based) and ``score``

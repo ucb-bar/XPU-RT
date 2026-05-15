@@ -24,19 +24,19 @@ slow = pytest.mark.slow
 
 
 @slow
-def test_compgen_blocks_on_full_tinyllama() -> None:
-    from compgen.benchmarks.live_adapters import LiveCompGenAdapter
+def test_xpu_rt_blocks_on_full_tinyllama() -> None:
+    from xpu_rt.benchmarks.live_adapters import LiveCompGenAdapter
 
     m = LiveCompGenAdapter().measure(
         "tinyllama_1_1b", iters=1, warmup=0, seed=0
     )
     assert m.blocked is True
-    assert m.blocked_reason == "compgen_full_model_not_built"
+    assert m.blocked_reason == "xpu_rt_full_model_not_built"
 
 
 @slow
 def test_eager_runs_on_tinyllama_mlp_slice() -> None:
-    from compgen.benchmarks.live_adapters import LiveTorchEagerAdapter
+    from xpu_rt.benchmarks.live_adapters import LiveTorchEagerAdapter
 
     m = LiveTorchEagerAdapter().measure(
         "tinyllama_1_1b__slice", iters=3, warmup=1, seed=42
@@ -47,11 +47,11 @@ def test_eager_runs_on_tinyllama_mlp_slice() -> None:
 
 
 @slow
-def test_compgen_runs_on_tinyllama_mlp_slice_with_compile_match() -> None:
-    """CompGen output hash matches torch.compile output hash — proves
+def test_xpu_rt_runs_on_tinyllama_mlp_slice_with_compile_match() -> None:
+    """XPU-RT output hash matches torch.compile output hash — proves
     the xDSL pipeline preserves correctness vs the inductor reference."""
 
-    from compgen.benchmarks.live_adapters import (
+    from xpu_rt.benchmarks.live_adapters import (
         LiveCompGenAdapter,
         LiveTorchCompileAdapter,
     )
@@ -65,14 +65,14 @@ def test_compgen_runs_on_tinyllama_mlp_slice_with_compile_match() -> None:
     assert compile_m.blocked is False
     assert cg_m.blocked is False
     assert compile_m.output_hash == cg_m.output_hash, (
-        f"CompGen output hash {cg_m.output_hash!r} differs from "
+        f"XPU-RT output hash {cg_m.output_hash!r} differs from "
         f"torch.compile {compile_m.output_hash!r}"
     )
 
 
 @slow
-def test_compgen_runs_on_whisper_encoder_slice() -> None:
-    """After the aten-handler additions, CompGen runs the Whisper
+def test_xpu_rt_runs_on_whisper_encoder_slice() -> None:
+    """After the aten-handler additions, XPU-RT runs the Whisper
     encoder block end-to-end without unsupported-callee warnings.
 
     We assert the run completes and emits real measurements; we do
@@ -81,7 +81,7 @@ def test_compgen_runs_on_whisper_encoder_slice() -> None:
     and the executor uses a documented fallback (zeros).
     """
 
-    from compgen.benchmarks.live_adapters import LiveCompGenAdapter
+    from xpu_rt.benchmarks.live_adapters import LiveCompGenAdapter
 
     m = LiveCompGenAdapter().measure(
         "whisper_tiny__slice", iters=3, warmup=1, seed=42

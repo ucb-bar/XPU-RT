@@ -35,31 +35,31 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 class TestDispatchModeOverride:
     def test_override_none_defaults_to_sync(self) -> None:
-        from compgen.kernels.contract_v3 import (
+        from xpu_rt.kernels.contract_v3 import (
             DispatchModel, _resolve_dispatch_mode_override,
         )
         assert _resolve_dispatch_mode_override(None) is DispatchModel.SYNC
         assert _resolve_dispatch_mode_override("") is DispatchModel.SYNC
 
     def test_override_sync_async_accepted(self) -> None:
-        from compgen.kernels.contract_v3 import (
+        from xpu_rt.kernels.contract_v3 import (
             DispatchModel, _resolve_dispatch_mode_override,
         )
         assert _resolve_dispatch_mode_override("sync") is DispatchModel.SYNC
         assert _resolve_dispatch_mode_override("ASYNC") is DispatchModel.ASYNC
 
     def test_override_persistent_rejected_on_normal(self) -> None:
-        from compgen.kernels.contract_v3 import _resolve_dispatch_mode_override
+        from xpu_rt.kernels.contract_v3 import _resolve_dispatch_mode_override
         with pytest.raises(ValueError, match="PERSISTENT"):
             _resolve_dispatch_mode_override("persistent")
 
     def test_override_inline_rejected_on_normal(self) -> None:
-        from compgen.kernels.contract_v3 import _resolve_dispatch_mode_override
+        from xpu_rt.kernels.contract_v3 import _resolve_dispatch_mode_override
         with pytest.raises(ValueError, match="INLINE"):
             _resolve_dispatch_mode_override("inline")
 
     def test_override_unknown_rejected(self) -> None:
-        from compgen.kernels.contract_v3 import _resolve_dispatch_mode_override
+        from xpu_rt.kernels.contract_v3 import _resolve_dispatch_mode_override
         with pytest.raises(ValueError):
             _resolve_dispatch_mode_override("warp_persistent")
 
@@ -87,7 +87,7 @@ class TestFromRecipeWithOverride:
         }
 
     def test_default_dispatch_is_sync(self) -> None:
-        from compgen.kernels.contract_v3 import DispatchModel, KernelContractV3
+        from xpu_rt.kernels.contract_v3 import DispatchModel, KernelContractV3
         c = KernelContractV3.from_recipe(
             candidate_selection=self._selection(),
             region_dossier=self._dossier(),
@@ -97,7 +97,7 @@ class TestFromRecipeWithOverride:
         assert c.orchestration.dispatch.model is DispatchModel.SYNC
 
     def test_async_override(self) -> None:
-        from compgen.kernels.contract_v3 import DispatchModel, KernelContractV3
+        from xpu_rt.kernels.contract_v3 import DispatchModel, KernelContractV3
         c = KernelContractV3.from_recipe(
             candidate_selection=self._selection(),
             region_dossier=self._dossier(),
@@ -108,7 +108,7 @@ class TestFromRecipeWithOverride:
         assert c.orchestration.dispatch.model is DispatchModel.ASYNC
 
     def test_persistent_override_rejected(self) -> None:
-        from compgen.kernels.contract_v3 import KernelContractV3
+        from xpu_rt.kernels.contract_v3 import KernelContractV3
         with pytest.raises(ValueError, match="PERSISTENT"):
             KernelContractV3.from_recipe(
                 candidate_selection=self._selection(),
@@ -128,7 +128,7 @@ class TestFromRecipeWithOverride:
 def merlin_action_space(tmp_path_factory) -> Path:  # type: ignore[no-untyped-def]
     out = tmp_path_factory.mktemp("m50_merlin") / "run"
     res = subprocess.run([
-        sys.executable, "-m", "compgen.graph_compilation", "run",
+        sys.executable, "-m", "xpu_rt.graph_compilation", "run",
         "--model", str(REPO_ROOT / "configs/models/merlin_mlp_wide.yaml"),
         "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
         "--out", str(out),
@@ -201,7 +201,7 @@ def test_e2e_rerun_produces_byte_stable_dispatch_candidates(
     out_b = tmp_path / "b"
     for out in (out_a, out_b):
         res = subprocess.run([
-            sys.executable, "-m", "compgen.graph_compilation", "run",
+            sys.executable, "-m", "xpu_rt.graph_compilation", "run",
             "--model", str(REPO_ROOT / "configs/models/merlin_mlp_wide.yaml"),
             "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
             "--out", str(out),
@@ -227,10 +227,10 @@ def test_materialiser_picks_up_set_dispatch_mode_op(
     """Append a SetDispatchMode op to candidate_selection.recipe_delta;
     materialise; verify dispatch.model flipped."""
     import shutil
-    from compgen.graph_compilation.kernel_contract_materialization import (
+    from xpu_rt.graph_compilation.kernel_contract_materialization import (
         materialize_contract_from_run_dir,
     )
-    from compgen.kernels.contract_v3 import DispatchModel
+    from xpu_rt.kernels.contract_v3 import DispatchModel
     work = tmp_path / "work"
     shutil.copytree(merlin_action_space, work)
     sel_path = work / "03_recipe_planning" / "candidate_selection.json"
@@ -254,7 +254,7 @@ def test_materialiser_rejects_persistent_override(
     materialiser returns None. Catches a smuggled persistent past
     the action_space gate."""
     import shutil
-    from compgen.graph_compilation.kernel_contract_materialization import (
+    from xpu_rt.graph_compilation.kernel_contract_materialization import (
         materialize_contract_from_run_dir,
     )
     work = tmp_path / "work"

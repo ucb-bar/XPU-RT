@@ -14,12 +14,12 @@ from datetime import datetime, timezone
 import pytest
 from rich.console import Console
 
-from compgen.observability.cli import (
+from xpu_rt.observability.cli import (
     _adaptive_bar_width,
     _budget_bar,
     _render_status,
 )
-from compgen.observability.gemini_usage import (
+from xpu_rt.observability.gemini_usage import (
     Budget,
     MonthBucket,
     UsageSummary,

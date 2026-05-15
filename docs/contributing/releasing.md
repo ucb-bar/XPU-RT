@@ -1,4 +1,4 @@
-# Releasing CompGen to PyPI
+# Releasing XPU-RT to PyPI
 
 Releases are driven by `.github/workflows/release.yml`. Tag a commit, push
 the tag, and the workflow builds + publishes to PyPI via Trusted
@@ -19,7 +19,7 @@ Publishing (no stored token).
 
 1. Bump the version in:
    - `pyproject.toml` (`version = "X.Y.Z"`)
-   - `python/compgen/__init__.py` (`__version__`)
+   - `python/xpu_rt/__init__.py` (`__version__`)
 2. Refresh the lockfile: `uv lock`
 3. Run `make ci` locally — lint + typecheck + tests + lockfile check.
 4. Commit: `chore(release): bump version to X.Y.Z`.
@@ -37,12 +37,12 @@ Before your first real publish, rehearse against TestPyPI:
 gh workflow run release.yml -f dry_run=true
 ```
 
-The workflow publishes to `https://test.pypi.org/project/compgen/` —
+The workflow publishes to `https://test.pypi.org/project/xpu_rt/` —
 verify install in a throwaway venv:
 
 ```bash
 python -m venv .venv && source .venv/bin/activate
-pip install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ compgen==X.Y.Z
+pip install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ xpu-rt==X.Y.Z
 ```
 
 ## Rollback
@@ -59,7 +59,7 @@ If a broken release lands on PyPI:
 - **Trusted Publishing auth fails**: confirm the repo, workflow filename,
   and environment name exactly match the Publisher config.
 - **Tag / version mismatch**: the `build` job fails the check if the
-  tag does not equal `compgen.__version__`. Bump both, re-tag.
+  tag does not equal `xpu_rt.__version__`. Bump both, re-tag.
 - **TestPyPI missing dependencies**: TestPyPI doesn't mirror runtime
   deps; use `--extra-index-url https://pypi.org/simple/` when
   installing the dry-run artifact.

@@ -16,7 +16,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
-from compgen.agent.gates._remediation import add_remediation
+from xpu_rt.agent.gates._remediation import add_remediation
 
 GateFn = Callable[..., dict[str, Any]]
 

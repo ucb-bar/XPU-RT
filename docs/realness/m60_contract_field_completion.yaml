@@ -52,10 +52,10 @@ forbidden:
 - target YAMLs declaring a non-CPU mma_shapes value as an empty list (mma_shapes is a dict; empty dict is the CPU default; any list-typed value is malformed and should fall back to {})
 realness_level: production_path
 required_evidence:
-- python/compgen/kernels/contract_v3.py (HardwareEnvelope wiring + _derive_memory_spec + _lifetime_class_to_tier + _live_after_for_consumer_count)
+- python/xpu_rt/kernels/contract_v3.py (HardwareEnvelope wiring + _derive_memory_spec + _lifetime_class_to_tier + _live_after_for_consumer_count)
 - configs/targets/host_cpu.yaml (M-60 hardware envelope block)
-- python/compgen/graph_compilation/kernel_contract_materialization.py (contract_to_dict M-60 hardware section)
-- python/compgen/graph_compilation/kernel_codegen_response.py (_reconstruct_contract_from_dict M-60 hardware section)
+- python/xpu_rt/graph_compilation/kernel_contract_materialization.py (contract_to_dict M-60 hardware section)
+- python/xpu_rt/graph_compilation/kernel_codegen_response.py (_reconstruct_contract_from_dict M-60 hardware section)
 - tests/graph_compilation/test_contract_field_completion.py
 feature_id: m60_contract_field_completion
 notes: |

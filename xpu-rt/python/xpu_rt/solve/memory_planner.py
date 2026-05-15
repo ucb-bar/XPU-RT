@@ -6,13 +6,13 @@ objective.
 
 The planner is invoked via the solver registry:
 
-    from compgen.solve.memory_planner import plan_memory
+    from xpu_rt.solve.memory_planner import plan_memory
     response, plan = plan_memory(buffers, tier_capacities, ...)
     # response.status in {OPTIMAL, FEASIBLE, INFEASIBLE, BLOCKED, TIMEOUT}
     # plan: MemoryPlanSolved | None
 
 For deterministic reruns, the post-pass in
-:mod:`compgen.solve._canonical_pack` snaps the solver's solution to
+:mod:`xpu_rt.solve._canonical_pack` snaps the solver's solution to
 a canonical packing so byte-identical reruns are guaranteed when
 the formulation hash is unchanged.
 
@@ -36,8 +36,8 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Iterable
 
-from compgen.solve.backends.mosek_backend import ensure_mosek_license_env
-from compgen.solve.solver_types import (
+from xpu_rt.solve.backends.mosek_backend import ensure_mosek_license_env
+from xpu_rt.solve.solver_types import (
     BackendAvailabilityStatus,
     BackendProbeResult,
     SolverBackendName,
@@ -1101,8 +1101,8 @@ def plan_memory(
     heuristic.
     """
 
-    from compgen.solve.backend_registry import default_registry
-    from compgen.solve.routing import choose_backend
+    from xpu_rt.solve.backend_registry import default_registry
+    from xpu_rt.solve.routing import choose_backend
 
     reg = registry if registry is not None else default_registry()
     backend = choose_backend(SolverProblemKind.MEMORY_ALLOCATION, reg)
@@ -1255,7 +1255,7 @@ def _try_stage_decomposition(
             time_budget_ms=plan_input.time_budget_ms,
         )
         # Re-derive sub-hints filtered to this stage.
-        from compgen.solve.solver_hints import MemoryHints, TierHint, SymmetryClass
+        from xpu_rt.solve.solver_hints import MemoryHints, TierHint, SymmetryClass
 
         stage_buf_ids = {b.buffer_id for b in bs}
         sub_hints = MemoryHints(

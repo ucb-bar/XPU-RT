@@ -7,15 +7,15 @@ from typing import Any
 
 from xdsl.dialects.builtin import ArrayAttr, ModuleOp, StringAttr, SymbolRefAttr
 
-from compgen.ir.recipe.ops_scope import RecipeGuardOp
-from compgen.semantic.synthesis.dataset import build_examples_for_family
-from compgen.semantic.synthesis.facts import RecipeFactIndex, build_fact_index
-from compgen.semantic.synthesis.guard_lang import Const
-from compgen.semantic.synthesis.promote import promote_guard
-from compgen.semantic.synthesis.registry import GuardRegistry
-from compgen.semantic.synthesis.search import GuardSearchConfig, search_guard_fragments
-from compgen.semantic.synthesis.specs import PROMOTED_FAMILIES, get_soundness_spec
-from compgen.semantic.synthesis.verify import prove_guard_soundness
+from xpu_rt.ir.recipe.ops_scope import RecipeGuardOp
+from xpu_rt.semantic.synthesis.dataset import build_examples_for_family
+from xpu_rt.semantic.synthesis.facts import RecipeFactIndex, build_fact_index
+from xpu_rt.semantic.synthesis.guard_lang import Const
+from xpu_rt.semantic.synthesis.promote import promote_guard
+from xpu_rt.semantic.synthesis.registry import GuardRegistry
+from xpu_rt.semantic.synthesis.search import GuardSearchConfig, search_guard_fragments
+from xpu_rt.semantic.synthesis.specs import PROMOTED_FAMILIES, get_soundness_spec
+from xpu_rt.semantic.synthesis.verify import prove_guard_soundness
 
 
 def synthesize_and_attach_guards(

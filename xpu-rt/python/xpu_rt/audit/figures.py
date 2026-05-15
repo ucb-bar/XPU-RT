@@ -236,7 +236,7 @@ def render_extension_lifecycle(pack_dir: Path, out: Path) -> FigureResult:
     ax.set_ylim(0, 1)
     ax.set_xticks([])
     ax.set_yticks([])
-    ax.set_title("Extension lifecycle — agent proposes; CompGen verifies + certifies")
+    ax.set_title("Extension lifecycle — agent proposes; XPU-RT verifies + certifies")
     fig.tight_layout()
     out.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out)

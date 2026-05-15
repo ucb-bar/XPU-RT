@@ -24,10 +24,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from compgen.quantization.fp8_ops import (
+from xpu_rt.quantization.fp8_ops import (
     quantize_fp8_e4m3_po2,
 )
-from compgen.quantization.fp8_tensor import FP8E4M3Po2Tensor
+from xpu_rt.quantization.fp8_tensor import FP8E4M3Po2Tensor
 
 logger = structlog.get_logger()
 

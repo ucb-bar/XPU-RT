@@ -3,13 +3,13 @@
 Reconstruction of hexagon-mlir
 ``qcom_hexagon_backend/lib/Transforms/MemoryOffsetsPass.cpp`` as a
 Python pass on :class:`ExecutionPlan`. Zero external references;
-CompGen owns the rewrite.
+XPU-RT owns the rewrite.
 
 Algorithm:
 
 1. For each memory space, collect its buffers.
 2. Build an interference graph via
-   :func:`compgen.runtime.liveness.compute_interference_graph`
+   :func:`xpu_rt.runtime.liveness.compute_interference_graph`
    (lifetime overlap).
 3. Greedy-color by degree-desc.
 4. For each color class, compute an offset + alignment-padded size.
@@ -30,7 +30,7 @@ Config:
 LLM-tool signature:
 
     tool_name="plan_buffers"
-    wraps_pass="CompGen:MemoryOffsetsPass+BufferAssigner"
+    wraps_pass="XPU-RT:MemoryOffsetsPass+BufferAssigner"
     invent_slot="runtime/buffer_pooling"
     policy="GreedyColorOffsetPool"
 """
@@ -40,8 +40,8 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass, field
 
-from compgen.runtime.execution_plan import ExecutionPlan
-from compgen.runtime.liveness import (
+from xpu_rt.runtime.execution_plan import ExecutionPlan
+from xpu_rt.runtime.liveness import (
     compute_interference_graph,
     compute_liveness,
     greedy_color,

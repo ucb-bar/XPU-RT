@@ -17,7 +17,7 @@ from __future__ import annotations
 from dataclasses import asdict
 from typing import Any
 
-from compgen.mcp.session import SessionManager
+from xpu_rt.mcp.session import SessionManager
 
 
 def batch_propose(

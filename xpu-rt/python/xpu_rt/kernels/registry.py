@@ -1,7 +1,7 @@
 """Kernel provider registry — dispatch contracts to providers.
 
 The registry manages multiple kernel providers and mediates the
-bidirectional communication between CompGen and providers:
+bidirectional communication between XPU-RT and providers:
 
 1. Dispatch: route contracts to accepting providers
 2. Knowledge ingestion: collect exports from all providers into memory
@@ -27,7 +27,7 @@ from typing import TYPE_CHECKING, Any
 
 import structlog
 
-from compgen.kernels.provider import (
+from xpu_rt.kernels.provider import (
     BidPreview,
     ContractFeedback,
     KernelContract,
@@ -40,7 +40,7 @@ from compgen.kernels.provider import (
 )
 
 if TYPE_CHECKING:
-    from compgen.kernels.contract_v3 import KernelContractV3
+    from xpu_rt.kernels.contract_v3 import KernelContractV3
 
 log = structlog.get_logger()
 
@@ -299,7 +299,7 @@ class ProviderRegistry:
             applicable_targets = tuple(getattr(p, "applicable_targets", ()) or ())
             applicable_archetypes = tuple(getattr(p, "applicable_archetypes", ()) or ())
             priority = int(getattr(p, "priority", 0))
-            source = str(getattr(p, "_compgen_source", "in_tree"))
+            source = str(getattr(p, "_xpu_rt_source", "in_tree"))
 
             matches_target = (
                 len(applicable_targets) == 0  # wildcard
@@ -413,7 +413,7 @@ def compute_bid(
         contract_v3: The materialized V3 contract.
         expected_hash: Pre-computed canonical contract hash. If
             ``None``, computed via
-            :func:`compgen.promotion.contract_hash.hash_contract`.
+            :func:`xpu_rt.promotion.contract_hash.hash_contract`.
             Pass it in when calling for many providers in a row to
             avoid re-hashing.
 
@@ -432,7 +432,7 @@ def compute_bid(
     """
     if expected_hash is None:
         try:
-            from compgen.promotion.contract_hash import hash_contract
+            from xpu_rt.promotion.contract_hash import hash_contract
 
             expected_hash = hash_contract(contract_v3)
         except Exception:  # noqa: BLE001
@@ -492,7 +492,7 @@ def collect_bids(
     is responsible for ranking them.
     """
     try:
-        from compgen.promotion.contract_hash import hash_contract
+        from xpu_rt.promotion.contract_hash import hash_contract
 
         expected_hash = hash_contract(contract_v3)
     except Exception:  # noqa: BLE001
@@ -504,13 +504,13 @@ def collect_bids(
 def discover_default_providers() -> list[KernelProvider]:
     """Collect kernel providers from the entry-point plugin registry.
 
-    Mirrors :func:`compgen.kernels.codegen_fallback._discover_providers`
+    Mirrors :func:`xpu_rt.kernels.codegen_fallback._discover_providers`
     but exposed publicly. The returned providers carry a synthesised
-    ``_compgen_source`` attribute (``"entry_point"``) so
+    ``_xpu_rt_source`` attribute (``"entry_point"``) so
     :meth:`ProviderRegistry.applicable` can attribute them.
     """
     try:
-        from compgen.plugins import GROUP_KERNEL_PROVIDERS, discover_all, registry
+        from xpu_rt.plugins import GROUP_KERNEL_PROVIDERS, discover_all, registry
     except Exception:  # noqa: BLE001
         return []
 
@@ -535,7 +535,7 @@ def discover_default_providers() -> list[KernelProvider]:
             )
             continue
         try:
-            object.__setattr__(instance, "_compgen_source", "entry_point")
+            object.__setattr__(instance, "_xpu_rt_source", "entry_point")
         except Exception:  # noqa: BLE001
             pass
         out.append(instance)
@@ -561,11 +561,11 @@ def default_registry() -> ProviderRegistry:
 
     # In-tree baseline.
     try:
-        from compgen.kernels.providers.c_reference import CReferenceProvider
+        from xpu_rt.kernels.providers.c_reference import CReferenceProvider
 
         baseline = CReferenceProvider()
         try:
-            object.__setattr__(baseline, "_compgen_source", "in_tree")
+            object.__setattr__(baseline, "_xpu_rt_source", "in_tree")
         except Exception:  # noqa: BLE001
             pass
         reg.register(baseline)
@@ -576,17 +576,17 @@ def default_registry() -> ProviderRegistry:
         )
 
     # user-space provider — only loaded when an index already
-    # exists on disk under .compgen/user_kernel_index/ (the
+    # exists on disk under .xpu_rt/user_kernel_index/ (the
     # discover skill / --user-kernel-path flag populates this).
     try:
-        from compgen.kernels.providers.user_path import UserKernelProvider
-        from compgen.kernels.user_kernel_index import default_index_root
+        from xpu_rt.kernels.providers.user_path import UserKernelProvider
+        from xpu_rt.kernels.user_kernel_index import default_index_root
 
         idx_root = default_index_root()
         if idx_root.exists() and any(idx_root.glob("*/manifest.yaml")):
             user_provider = UserKernelProvider(index_root=idx_root)
             try:
-                object.__setattr__(user_provider, "_compgen_source", "user_path")
+                object.__setattr__(user_provider, "_xpu_rt_source", "user_path")
             except Exception:  # noqa: BLE001
                 pass
             reg.register(user_provider)

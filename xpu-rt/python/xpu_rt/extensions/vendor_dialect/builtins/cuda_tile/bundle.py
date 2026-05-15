@@ -17,7 +17,7 @@ When the binary is absent:
     downstream gates know not to require bytecode-only verification.
 
 This is the canonical degrade-rather-than-fail pattern: a fresh
-``pip install compgen`` on a CUDA-less laptop still produces a usable
+``pip install xpu_rt`` on a CUDA-less laptop still produces a usable
 artifact for documentation / pre-flight inspection.
 """
 
@@ -31,9 +31,9 @@ from typing import Any
 
 import structlog
 
-from compgen.extensions.vendor_dialect.adapter import LoweringResult
-from compgen.extensions.vendor_dialect.descriptor import VendorDialectDescriptor
-from compgen.targets.backend import CompiledArtifact
+from xpu_rt.extensions.vendor_dialect.adapter import LoweringResult
+from xpu_rt.extensions.vendor_dialect.descriptor import VendorDialectDescriptor
+from xpu_rt.targets.backend import CompiledArtifact
 
 log = structlog.get_logger()
 

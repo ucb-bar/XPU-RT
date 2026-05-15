@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import Any, ClassVar
 
-from compgen.ir.payload.passes.base import PayloadPass
-from compgen.llm.registry import Registry
+from xpu_rt.ir.payload.passes.base import PayloadPass
+from xpu_rt.llm.registry import Registry
 from xdsl.dialects.builtin import ModuleOp
 
 

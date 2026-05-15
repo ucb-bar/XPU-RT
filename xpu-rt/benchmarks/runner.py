@@ -53,7 +53,7 @@ def _populate_skip_record(
 
 
 def _augment_red_team(record: RunRecord, registry: BenchmarkRegistry) -> RunRecord:
-    """Attach the fixed verification red-team outcomes to a CompGen record."""
+    """Attach the fixed verification red-team outcomes to a XPU-RT record."""
 
     caught_by: dict[str, int] = {}
     results: list[dict[str, Any]] = []
@@ -106,7 +106,7 @@ def run_case(
     for baseline_id in selected_baselines:
         baseline = registry.get_baseline(baseline_id)
         adapter = get_adapter(baseline)
-        ablations = [""] if baseline_id != "compgen" else ["full", *case.ablations]
+        ablations = [""] if baseline_id != "xpu-rt" else ["full", *case.ablations]
         for ablation in ablations:
             ctx = AdapterContext(
                 workspace=workspace,
@@ -130,9 +130,9 @@ def run_case(
                 )
             else:
                 record = adapter.run(ctx)
-                if baseline_id == "compgen" and case.study_id == "verification_red_team" and ablation == "full":
+                if baseline_id == "xpu-rt" and case.study_id == "verification_red_team" and ablation == "full":
                     record = _augment_red_team(record, registry)
-            if ablation == "full" and baseline_id == "compgen":
+            if ablation == "full" and baseline_id == "xpu-rt":
                 record.config["ablation"] = "full"
             path = record.save(case_output_dir)
             log.info(
@@ -177,7 +177,7 @@ def run_defect_campaign(
         registry=registry,
         workspace=workspace,
         output_dir=output_dir,
-        baseline_ids=["compgen"],
+        baseline_ids=["xpu-rt"],
     )
     if not records:
         raise ValueError(f"No records produced for defect campaign case: {case_id}")
@@ -220,7 +220,7 @@ def run_benchmark(
         study_id="adhoc",
         workload_id=model_name,
         target_id=target_id,
-        baseline_ids=["compgen"],
+        baseline_ids=["xpu-rt"],
         objective=objective,
         ablations=[config.get("ablation", "")] if config and config.get("ablation") else [],
     )
@@ -261,11 +261,11 @@ def run_ablation(
         study_id="adhoc_ablation",
         workload_id=model_name,
         target_id=target_id,
-        baseline_ids=["compgen"],
+        baseline_ids=["xpu-rt"],
         ablations=[abl for abl in ablations if abl != "full"],
     )
     registry.register_case(case)
-    return run_case(case.case_id, registry=registry, output_dir=output_dir, baseline_ids=["compgen"])
+    return run_case(case.case_id, registry=registry, output_dir=output_dir, baseline_ids=["xpu-rt"])
 
 
 __all__ = [

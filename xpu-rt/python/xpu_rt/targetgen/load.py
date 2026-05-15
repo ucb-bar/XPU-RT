@@ -7,7 +7,7 @@ from typing import Any
 
 import yaml
 
-from compgen.targetgen.hardware_spec import (
+from xpu_rt.targetgen.hardware_spec import (
     AddressSpace,
     DtypeSupport,
     EngineGeometrySpec,
@@ -28,7 +28,7 @@ from compgen.targetgen.hardware_spec import (
     TileGeometry,
     VerificationSurfaceSpec,
 )
-from compgen.targets.schema import (
+from xpu_rt.targets.schema import (
     ComputeUnit,
     DeviceSpec,
     MemoryLevel,

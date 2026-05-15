@@ -2,7 +2,7 @@
 
 Flow:
 
-1. Spawn ``compgen-mcp`` via stdio.
+1. Spawn ``xpu-rt-mcp`` via stdio.
 2. ``open_target`` — loads the SIMT-GPU target.
 3. Dry-run a compile to learn which decision sites will appear. We do
    this by calling ``load_model`` once; on the server side, every
@@ -53,16 +53,16 @@ async def _call(session, name, args):
 
 def _env_for_subprocess() -> dict:
     env = dict(os.environ)
-    env["COMPGEN_DUMP_IR"] = "1"
-    env.setdefault("COMPGEN_SESSION_DIR", str(REPO / "sessions" / "mcp_override_audit"))
-    Path(env["COMPGEN_SESSION_DIR"]).mkdir(parents=True, exist_ok=True)
+    env["XPU_RT_DUMP_IR"] = "1"
+    env.setdefault("XPU_RT_SESSION_DIR", str(REPO / "sessions" / "mcp_override_audit"))
+    Path(env["XPU_RT_SESSION_DIR"]).mkdir(parents=True, exist_ok=True)
     return env
 
 
 async def _run_baseline() -> tuple[Path, list[dict]]:
     """Compile with no overrides. Return compile output dir + site list."""
     env = _env_for_subprocess()
-    params = StdioServerParameters(command="compgen-mcp", args=[], env=env)
+    params = StdioServerParameters(command="xpu-rt-mcp", args=[], env=env)
     async with stdio_client(params) as (read, write):
         async with ClientSession(read, write) as session:
             await session.initialize()
@@ -84,7 +84,7 @@ async def _run_baseline() -> tuple[Path, list[dict]]:
 
 async def _run_with_override(site_id: str, chosen_id: str, rationale: str) -> Path:
     env = _env_for_subprocess()
-    params = StdioServerParameters(command="compgen-mcp", args=[], env=env)
+    params = StdioServerParameters(command="xpu-rt-mcp", args=[], env=env)
     async with stdio_client(params) as (read, write):
         async with ClientSession(read, write) as session:
             await session.initialize()
@@ -112,18 +112,18 @@ def _encoding_of_site_in_final_mlir(out_dir: Path, region_id: str) -> str:
     """Scrape the encoding attribute applied to the op whose region_id matches."""
     final = out_dir / "ir_dumps" / "final.mlir"
     text = final.read_text()
-    # Find the line where ``compgen.region_id = "rmsnorm_0"`` appears and
-    # extract its ``compgen.encoding`` attribute value.
+    # Find the line where ``xpu_rt.region_id = "rmsnorm_0"`` appears and
+    # extract its ``xpu_rt.encoding`` attribute value.
     import re
 
     pattern = re.compile(
-        rf'compgen\.region_id\s*=\s*"{re.escape(region_id)}".*?compgen\.encoding\s*=\s*"([^"]+)"'
+        rf'xpu_rt\.region_id\s*=\s*"{re.escape(region_id)}".*?xpu_rt\.encoding\s*=\s*"([^"]+)"'
     )
     m = pattern.search(text)
     if not m:
         # The attribute order can flip; try the reverse.
         rev = re.compile(
-            rf'compgen\.encoding\s*=\s*"([^"]+)".*?compgen\.region_id\s*=\s*"{re.escape(region_id)}"'
+            rf'xpu_rt\.encoding\s*=\s*"([^"]+)".*?xpu_rt\.region_id\s*=\s*"{re.escape(region_id)}"'
         )
         m = rev.search(text)
     if not m:

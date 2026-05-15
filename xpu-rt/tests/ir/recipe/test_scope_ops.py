@@ -7,8 +7,8 @@ from __future__ import annotations
 
 import io
 
-from compgen.ir.recipe.attrs import EffectClassAttr, ShapeSummaryAttr
-from compgen.ir.recipe.ops_scope import (
+from xpu_rt.ir.recipe.attrs import EffectClassAttr, ShapeSummaryAttr
+from xpu_rt.ir.recipe.ops_scope import (
     AnchorOp,
     BindPayloadOp,
     RecipeGuardOp,

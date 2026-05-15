@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
-from compgen.runtime.execution_plan import (
+from xpu_rt.runtime.execution_plan import (
     BufferDescriptor,
     CopyEdge,
     DependencyEdge,

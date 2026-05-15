@@ -16,7 +16,7 @@ Checks (closed enum):
   ``KernelCertificate.from_provider_result``.
 * ``pass_tool_no_direct_ir_mutation`` — pass-tool cards never
   declare ``writes: [payload_ir]``; pass-tool entrypoints never
-  import ``compgen.ir.payload.write``-style modules.
+  import ``xpu_rt.ir.payload.write``-style modules.
 * ``optional_provider_imports_quarantined`` — disallowed
   third-party imports (``cuda_tile``, ``tilelang``, ``cutlass``,
   ``thunderkittens``, ``hexagon_mlir``, etc.) outside
@@ -35,12 +35,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterable
 
-from compgen.providers.card_loader import (
+from xpu_rt.providers.card_loader import (
     iter_dialect_cards as _iter_dialect_cards,
     iter_provider_cards as _iter_provider_cards,
     iter_target_cards as _iter_target_cards,
 )
-from compgen.providers.provider_types import PAPER_CLAIMABLE_LEVELS
+from xpu_rt.providers.provider_types import PAPER_CLAIMABLE_LEVELS
 
 
 # Optional provider modules that must NEVER be imported at top-level
@@ -62,12 +62,12 @@ FORBIDDEN_OPTIONAL_IMPORTS = (
 )
 
 ALLOWED_IMPORT_PATHS = (
-    "python/compgen/providers/adapters/",
-    "python/compgen/kernels/providers/",
-    "python/compgen/kernels/autocomp_adapter.py",
-    "python/compgen/kernels/kernelblaster_adapter.py",
-    "python/compgen/extensions/firesim/",
-    "python/compgen/extensions/zephyr/",
+    "python/xpu_rt/providers/adapters/",
+    "python/xpu_rt/kernels/providers/",
+    "python/xpu_rt/kernels/autocomp_adapter.py",
+    "python/xpu_rt/kernels/kernelblaster_adapter.py",
+    "python/xpu_rt/extensions/firesim/",
+    "python/xpu_rt/extensions/zephyr/",
 )
 
 VIOLATION_REASONS = (
@@ -219,7 +219,7 @@ def check_optional_provider_imports_quarantined(
 
     report.checks_run.append("optional_provider_imports_quarantined")
     root = repo_root or Path(__file__).resolve().parent.parent.parent.parent
-    src_root = root / "python" / "compgen"
+    src_root = root / "python" / "xpu-rt"
     if not src_root.is_dir():
         return
 
@@ -262,7 +262,7 @@ def check_provider_result_is_not_certificate(
 
     report.checks_run.append("provider_result_is_not_certificate")
     root = repo_root or Path(__file__).resolve().parent.parent.parent.parent
-    src_root = root / "python" / "compgen"
+    src_root = root / "python" / "xpu-rt"
     if not src_root.is_dir():
         return
 
@@ -314,7 +314,7 @@ def check_execution_evidence(
     if evidence_pack is None:
         # Default to the canonical evidence pack location.
         evidence_pack = Path("results/extension_provider_evidence_pack")
-    from compgen.audit.execution_evidence import (
+    from xpu_rt.audit.execution_evidence import (
         audit_provider_dir,
         discover_per_provider_dirs,
     )

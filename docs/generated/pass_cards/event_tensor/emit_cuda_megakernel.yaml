@@ -4,7 +4,7 @@ display_name: Emit CUDA C++ megakernel
 level: kernel
 family: event_tensor
 source: Event Tensor Compiler
-impl_path: python/compgen/transforms/emit_cuda_megakernel.py
+impl_path: python/xpu_rt/transforms/emit_cuda_megakernel.py
 reads:
   - 03_recipe_planning/event_schedule/static_schedule.json
   - 01_payload_lowering/payload.mlir
@@ -26,7 +26,7 @@ failure_modes:
   - "missing_kernel_template"
   - "schedule_not_realized"
   - "cuda_compiler_unavailable"
-mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+mcp_tool: mcp__xpu_rt__xpu_rt_emit_agent_decision_request
 notes: |
   Emits a self-contained CUDA C++ source string that contains every
   task in the event schedule as a single megakernel. Imports the

@@ -1,12 +1,12 @@
-"""Packaged demo models and hardware specs for CompGen.
+"""Packaged demo models and hardware specs for XPU-RT.
 
-These are installable artefacts that ship with the ``compgen`` wheel so
+These are installable artefacts that ship with the ``xpu_rt`` wheel so
 downstream users — who have no access to the source tree — can exercise
 the end-to-end compilation flow by name.
 
-Demos live in sub-packages (e.g. ``compgen.examples.saturn_opu_convnet``)
+Demos live in sub-packages (e.g. ``xpu_rt.examples.saturn_opu_convnet``)
 exposing :func:`build_model` and :func:`default_inputs`. Hardware specs
-live under ``compgen.examples.hardware_specs`` as YAML resources.
+live under ``xpu_rt.examples.hardware_specs`` as YAML resources.
 
 Use :func:`resolve_demo_module` to obtain the dotted module name for a
 demo (pass to tools that load by dotted path), and :func:`resolve_spec_path`
@@ -20,13 +20,13 @@ from importlib import resources
 from importlib.util import find_spec
 from pathlib import Path
 
-_DEMO_PACKAGE = "compgen.examples"
-_SPEC_PACKAGE = "compgen.examples.hardware_specs"
-_TARGET_PROFILE_PACKAGE = "compgen.examples.target_profiles"
+_DEMO_PACKAGE = "xpu_rt.examples"
+_SPEC_PACKAGE = "xpu_rt.examples.hardware_specs"
+_TARGET_PROFILE_PACKAGE = "xpu_rt.examples.target_profiles"
 
 
 def list_demos() -> list[str]:
-    """Return names of shipped demo models (sub-packages under ``compgen.examples``)."""
+    """Return names of shipped demo models (sub-packages under ``xpu_rt.examples``)."""
     pkg = resources.files(_DEMO_PACKAGE)
     out: list[str] = []
     for entry in pkg.iterdir():

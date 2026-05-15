@@ -3,10 +3,10 @@
 The Tactician operates *inside* one region under a fixed Plan rung.
 It reads:
 
-* the region's :class:`compgen.agent.plan.RegionPlan` (current
+* the region's :class:`xpu_rt.agent.plan.RegionPlan` (current
   tactic + ladder);
 * the precomputed candidate set;
-* the per-candidate :class:`compgen.agent.cost_preview.CostPreview`.
+* the per-candidate :class:`xpu_rt.agent.cost_preview.CostPreview`.
 
 It returns the candidate id of the next edit to apply, plus a typed
 ``next_action`` (``apply | escalate | exhausted``) the orchestrator
@@ -19,7 +19,7 @@ Hard rules:
    invariant).
 2. The Tactician never reasons about correctness — it picks among
    *non-dominated, legal* candidates only; rejected candidates flow
-   back through :func:`compgen.agent.plan.replan_on_reject`.
+   back through :func:`xpu_rt.agent.plan.replan_on_reject`.
 3. The Tactician's primary path delegates to a deterministic picker
    (lowest static cost among survivors); a live-LLM-driven path
    plugs in through P3.3's ``rank_candidates`` once the LLM provider
@@ -31,8 +31,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Final
 
-from compgen.agent.cost_preview import CostPreview, survivors
-from compgen.agent.plan import RegionPlan
+from xpu_rt.agent.cost_preview import CostPreview, survivors
+from xpu_rt.agent.plan import RegionPlan
 
 TACTICIAN_ACTIONS: Final[tuple[str, ...]] = ("apply", "escalate", "exhausted")
 
@@ -72,12 +72,12 @@ def pick_edit(
 
     Decision flow:
 
-    1. If the region's rung is :data:`compgen.agent.plan.EXHAUSTED_TACTIC`,
+    1. If the region's rung is :data:`xpu_rt.agent.plan.EXHAUSTED_TACTIC`,
        the Tactician returns ``next_action=exhausted`` — the
        orchestrator must escalate (Strategist re-plans or human
        takes over).
     2. Otherwise, filter to legal + non-dominated candidates
-       (:func:`compgen.agent.cost_preview.survivors`).
+       (:func:`xpu_rt.agent.cost_preview.survivors`).
     3. If there are no survivors, ``next_action=escalate`` — every
        candidate is dominated or blocked; the Strategist must
        widen the candidate set.

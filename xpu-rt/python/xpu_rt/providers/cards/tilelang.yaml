@@ -4,7 +4,7 @@ integration_level: probe
 target_families: [cuda, rocm, host_cpu]
 contract_kinds: [matmul, pointwise, fused_region]
 emits: [tilelang_source, ptx]
-entrypoint: compgen.providers.adapters.tilelang:TileLangProvider
+entrypoint: xpu_rt.providers.adapters.tilelang:TileLangProvider
 paper_claimable: false
 required_env: [TILELANG_ROOT]
 required_commands: []

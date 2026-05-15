@@ -1,10 +1,10 @@
 """Template: Custom MLIR Dialect
 
-Define hardware-specific operations as an xDSL dialect. CompGen's
+Define hardware-specific operations as an xDSL dialect. XPU-RT's
 ``xdsl_generate.py`` can auto-generate the Python dialect code from
 a ``DialectSpec``.
 
-See ``compgen.extensions.xdsl_generate`` for the generation framework.
+See ``xpu_rt.extensions.xdsl_generate`` for the generation framework.
 See Hexagon's HexKL dialect as a reference for hardware-specific microops.
 See ``docs/architecture/target-backend-model.md`` Section 4.
 
@@ -13,7 +13,7 @@ Steps:
     2. Copy this file: ``cp _template.py dialects/my_dialect/__init__.py``
     3. Define your ``DialectSpec`` with operations and attributes
     4. Generate the xDSL code: ``generate_xdsl_dialect(my_spec, output_dir)``
-    5. Register with CompGen's IR infrastructure
+    5. Register with XPU-RT's IR infrastructure
 
 Example: Hexagon's HexKL defines:
     - hexkl.matmul (tiled matrix multiply)
@@ -24,7 +24,7 @@ Example: Hexagon's HexKL defines:
 
 from __future__ import annotations
 
-from compgen.extensions.xdsl_generate import DialectOpSpec, DialectSpec
+from xpu_rt.extensions.xdsl_generate import DialectOpSpec, DialectSpec
 
 # Define your dialect specification
 template_dialect = DialectSpec(
@@ -62,5 +62,5 @@ template_dialect = DialectSpec(
 )
 
 # To generate the xDSL Python dialect:
-#   from compgen.extensions.xdsl_generate import generate_xdsl_dialect
-#   generate_xdsl_dialect(template_dialect, output_dir="python/compgen/ir/my_accel/")
+#   from xpu_rt.extensions.xdsl_generate import generate_xdsl_dialect
+#   generate_xdsl_dialect(template_dialect, output_dir="python/xpu_rt/ir/my_accel/")

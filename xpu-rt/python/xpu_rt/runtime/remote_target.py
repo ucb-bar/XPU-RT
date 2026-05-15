@@ -6,7 +6,7 @@ Gemmini-FireSim, Radiance-FireSim) can ship a kernel to the user's
 remote hardware, run it, and return real execution evidence.
 
 This module is **transport-agnostic**. Concrete backends live in
-:mod:`compgen.runtime.remote_runners.*`:
+:mod:`xpu_rt.runtime.remote_runners.*`:
 
 * ``ssh_runner.py``   — generic SSH-over-public-key transport.
 * (future) ``modal_runner.py`` — Modal Labs remote execution.
@@ -77,7 +77,7 @@ class RemoteTargetConfig:
     transport: str  # "ssh" | "modal" | "k8s" | ...
     host: str = ""
     user: str = ""
-    workdir: str = "/tmp/compgen_remote"
+    workdir: str = "/tmp/xpu_rt_remote"
     toolchain_probe_cmd: str = ""
     build_cmd_template: str = ""
     run_cmd_template: str = ""
@@ -179,7 +179,7 @@ class RemoteRunResult:
 
 class RemoteTargetRunner(ABC):
     """Backend ABC. Concrete runners live in
-    :mod:`compgen.runtime.remote_runners.*`."""
+    :mod:`xpu_rt.runtime.remote_runners.*`."""
 
     transport: str = ""
 
@@ -214,7 +214,7 @@ def load_remote_target_config(path: str | Path) -> RemoteTargetConfig:
         transport=str(body["transport"]),
         host=str(body.get("host", "")),
         user=str(body.get("user", "")),
-        workdir=str(body.get("workdir", "/tmp/compgen_remote")),
+        workdir=str(body.get("workdir", "/tmp/xpu_rt_remote")),
         toolchain_probe_cmd=str(body.get("toolchain_probe_cmd", "")),
         build_cmd_template=str(body.get("build_cmd_template", "")),
         run_cmd_template=str(body.get("run_cmd_template", "")),
@@ -227,7 +227,7 @@ def build_runner(config: RemoteTargetConfig) -> RemoteTargetRunner:
     """Factory: returns the right backend for ``config.transport``."""
 
     if config.transport == "ssh":
-        from compgen.runtime.remote_runners.ssh_runner import SshRunner
+        from xpu_rt.runtime.remote_runners.ssh_runner import SshRunner
         return SshRunner(config)
     raise RemoteExecutionError(
         f"unsupported remote transport: {config.transport!r}"

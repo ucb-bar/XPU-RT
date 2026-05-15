@@ -1,8 +1,8 @@
 """``lower_event_tensor_to_atomic`` -- ETC §3.3 minimal-runtime lowering.
 
 Reconstruction of the Event Tensor Compiler's "Lowering to Minimal
-Runtime" step (Jin et al., MLSys 2026, §3.3) as a CompGen pass. Zero
-external references; CompGen owns the rewrite.
+Runtime" step (Jin et al., MLSys 2026, §3.3) as a XPU-RT pass. Zero
+external references; XPU-RT owns the rewrite.
 
 From the paper:
 
@@ -18,10 +18,10 @@ Lowering contract:
 - Every ``event.event_tensor %E : !event_tensor<shape>`` becomes an
   external declaration for a backing ``tensor<shape x i32>`` plus an
   init call that fills every entry with the wait count.
-- Every ``event.notify %E[i]`` becomes a ``func.call @compgen_event_atomic_decrement``
+- Every ``event.notify %E[i]`` becomes a ``func.call @xpu_rt_event_atomic_decrement``
   taking the event SSA handle + the coordinate indices + the
   decrement value.
-- Every ``event.wait %E[i]`` becomes a ``func.call @compgen_event_spin_wait``
+- Every ``event.wait %E[i]`` becomes a ``func.call @xpu_rt_event_spin_wait``
   on the same handle + indices.
 - The ``event.graph`` wrapper stays intact structurally but its
   body's ops now reference the integer-tensor backing.
@@ -42,7 +42,7 @@ Config:
 LLM-tool signature:
 
     tool_name="lower_event_tensor_to_atomic"
-    wraps_pass="CompGen:LowerEventTensorToAtomic"
+    wraps_pass="XPU-RT:LowerEventTensorToAtomic"
     invent_slot="event_tensor/runtime_lowering"
     policy="AtomicDecrementPlusSpinWait"
 """
@@ -61,7 +61,7 @@ from xdsl.dialects.builtin import (
 from xdsl.dialects.func import CallOp, FuncOp
 from xdsl.ir import Attribute
 
-from compgen.ir.event.ops import (
+from xpu_rt.ir.event.ops import (
     EventTensorOp,
     GraphOp,
     NotifyOp,
@@ -72,9 +72,9 @@ from compgen.ir.event.ops import (
 @dataclass(frozen=True)
 class LowerEventTensorToAtomicConfig:
     counter_dtype: str = "i32"
-    spin_wait_fn: str = "compgen_event_spin_wait"
-    atomic_decrement_fn: str = "compgen_event_atomic_decrement"
-    init_fn: str = "compgen_event_init"
+    spin_wait_fn: str = "xpu_rt_event_spin_wait"
+    atomic_decrement_fn: str = "xpu_rt_event_atomic_decrement"
+    init_fn: str = "xpu_rt_event_init"
 
 
 @dataclass
@@ -158,7 +158,7 @@ def run_lower_event_tensor_to_atomic(
 
     # Register the runtime externs (once). These have NO SSA operands
     # or results -- the event_ref / indices / decrement are all
-    # encoded on the call's ``compgen.event_*`` attributes, so the
+    # encoded on the call's ``xpu_rt.event_*`` attributes, so the
     # signature is simply ``() -> ()``. The downstream codegen
     # (Triton / ukernel) translates the attributes into the actual
     # atomic primitive at emission time.
@@ -166,20 +166,20 @@ def run_lower_event_tensor_to_atomic(
     _ensure_external_decl(module, cfg.atomic_decrement_fn, [], [], stats)
     _ensure_external_decl(module, cfg.spin_wait_fn, [], [], stats)
 
-    # Lower each Event Tensor to a ``func.call @compgen_event_init``
+    # Lower each Event Tensor to a ``func.call @xpu_rt_event_init``
     # whose ``event_ref`` + shape attributes describe the backing
     # integer tensor. The EventTensorOp is left intact with a
-    # ``compgen.lowered_to_atomic`` tag so the downstream backend can
+    # ``xpu_rt.lowered_to_atomic`` tag so the downstream backend can
     # still find the backing tensor metadata.
     for et in event_tensors:
-        if "compgen.lowered_to_atomic" in et.attributes:
+        if "xpu_rt.lowered_to_atomic" in et.attributes:
             continue
         # Shape + wait_count are already in the op; we simply tag it
         # as lowered and emit an init call.
-        et.attributes["compgen.lowered_to_atomic"] = StringAttr("true")
-        et.attributes["compgen.lowered_counter_dtype"] = StringAttr(cfg.counter_dtype)
-        et.attributes["compgen.lowered_shape"] = et.event_type.shape
-        et.attributes["compgen.lowered_scope"] = et.event_type.scope
+        et.attributes["xpu_rt.lowered_to_atomic"] = StringAttr("true")
+        et.attributes["xpu_rt.lowered_counter_dtype"] = StringAttr(cfg.counter_dtype)
+        et.attributes["xpu_rt.lowered_shape"] = et.event_type.shape
+        et.attributes["xpu_rt.lowered_scope"] = et.event_type.scope
         stats.event_tensors_lowered += 1
 
     # Lower each notify / wait to an external call carrying the
@@ -193,11 +193,11 @@ def run_lower_event_tensor_to_atomic(
         if parent_block is None:
             continue
         call = CallOp(cfg.atomic_decrement_fn, [], [])
-        call.attributes["compgen.event_ref"] = n.coord.event_ref
-        call.attributes["compgen.event_indices"] = n.coord.indices
-        call.attributes["compgen.event_decrement"] = n.coord.decrement
-        if "compgen.region_id" in n.attributes:
-            call.attributes["compgen.region_id"] = n.attributes["compgen.region_id"]
+        call.attributes["xpu_rt.event_ref"] = n.coord.event_ref
+        call.attributes["xpu_rt.event_indices"] = n.coord.indices
+        call.attributes["xpu_rt.event_decrement"] = n.coord.decrement
+        if "xpu_rt.region_id" in n.attributes:
+            call.attributes["xpu_rt.region_id"] = n.attributes["xpu_rt.region_id"]
         parent_block.insert_op_before(call, n)
         n.detach()
         n.erase()
@@ -208,10 +208,10 @@ def run_lower_event_tensor_to_atomic(
         if parent_block is None:
             continue
         call = CallOp(cfg.spin_wait_fn, [], [])
-        call.attributes["compgen.event_ref"] = w.coord.event_ref
-        call.attributes["compgen.event_indices"] = w.coord.indices
-        if "compgen.region_id" in w.attributes:
-            call.attributes["compgen.region_id"] = w.attributes["compgen.region_id"]
+        call.attributes["xpu_rt.event_ref"] = w.coord.event_ref
+        call.attributes["xpu_rt.event_indices"] = w.coord.indices
+        if "xpu_rt.region_id" in w.attributes:
+            call.attributes["xpu_rt.region_id"] = w.attributes["xpu_rt.region_id"]
         parent_block.insert_op_before(call, w)
         w.detach()
         w.erase()
@@ -220,7 +220,7 @@ def run_lower_event_tensor_to_atomic(
     # Tag any parent graph so downstream passes see the lowering bit.
     for op in module.walk():
         if isinstance(op, GraphOp):
-            op.attributes["compgen.event_lowered_to_atomic"] = StringAttr("true")
+            op.attributes["xpu_rt.event_lowered_to_atomic"] = StringAttr("true")
 
     return stats
 

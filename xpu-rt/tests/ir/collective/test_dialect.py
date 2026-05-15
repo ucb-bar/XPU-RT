@@ -1,9 +1,9 @@
-"""Tests for the ``compgen.collective`` dialect."""
+"""Tests for the ``xpu_rt.collective`` dialect."""
 
 from __future__ import annotations
 
 import pytest
-from compgen.ir.collective import (
+from xpu_rt.ir.collective import (
     ALL_ATTRS,
     ALL_OPS,
     AllGatherOp,
@@ -39,7 +39,7 @@ def _groups(n=4):
 
 def test_collective_dialect():
     assert isinstance(Collective, Dialect)
-    assert Collective.name == "compgen.collective"
+    assert Collective.name == "xpu_rt.collective"
 
 
 def test_dialect_has_four_ops():

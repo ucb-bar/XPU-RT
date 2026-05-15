@@ -31,7 +31,7 @@ failure_modes:
   - "intermediate_tensor_has_external_consumer"
   - "unsupported_softmax_axis"
   - "ukernel_target_unavailable"
-mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+mcp_tool: mcp__xpu_rt__xpu_rt_emit_agent_decision_request
 example_invocation:
   schema_version: agent_decision_response_v1
   selected_candidate_id: fuse_softmax_attention_block_0
@@ -41,10 +41,10 @@ example_invocation:
       - "candidate.cost_preview.static_relative_cost"
       - "region.tensor_use_def_graph.consumer_count"
 source: XLA
-impl_path: python/compgen/ir/payload/passes/rewrites/fuse_softmax_to_triton.py
+impl_path: python/xpu_rt/ir/payload/passes/rewrites/fuse_softmax_to_triton.py
 notes: |
-  Reconstruction of XLA's softmax fusion as a CompGen PatternRewriter
-  (python/compgen/ir/payload/passes/rewrites/fuse_softmax_to_triton.py).
+  Reconstruction of XLA's softmax fusion as a XPU-RT PatternRewriter
+  (python/xpu_rt/ir/payload/passes/rewrites/fuse_softmax_to_triton.py).
   Detects the canonical softmax decomposition (max -> sub -> exp -> sum
   -> div) and replaces the entire region with a single ukernel.softmax
   call backed by a Triton implementation in the kernel store.
@@ -57,5 +57,5 @@ notes: |
   separate card (deferred).
 
   Source: XLA SoftmaxFusion. LLM-tool signature declared in the
-  source: wraps_pass=CompGen:FuseSoftmaxToTriton,
+  source: wraps_pass=XPU-RT:FuseSoftmaxToTriton,
   invent_slot=pattern_library/fused_softmax.

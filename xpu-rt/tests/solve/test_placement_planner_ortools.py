@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import pytest
 
-from compgen.solve.placement_planner import (
+from xpu_rt.solve.placement_planner import (
     Device,
     Edge,
     PlacementPlanInput,
     Region,
     plan_placement,
 )
-from compgen.solve.solver_types import (
+from xpu_rt.solve.solver_types import (
     SolverBackendName,
     SolverStatus,
 )

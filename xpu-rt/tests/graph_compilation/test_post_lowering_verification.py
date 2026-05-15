@@ -20,10 +20,10 @@ import shutil
 from pathlib import Path
 
 import pytest
-from compgen.graph_compilation.post_lowering import (
+from xpu_rt.graph_compilation.post_lowering import (
     run_post_lowering_verification,
 )
-from compgen.graph_compilation.run import run_graph_compilation
+from xpu_rt.graph_compilation.run import run_graph_compilation
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 HOST_CPU_TARGET = REPO_ROOT / "configs" / "targets" / "host_cpu.yaml"
@@ -108,7 +108,7 @@ def test_post_lowering_overall_pass(
 def test_artifact_validator_passes(
     model_id: str, post_lowering_runs: dict[str, Path]
 ) -> None:
-    from compgen.graph_compilation import validate_run
+    from xpu_rt.graph_compilation import validate_run
     rep = validate_run(post_lowering_runs[model_id])
     assert rep.overall == "pass", [r for r in rep.rules if r.status == "fail"]
 
@@ -131,9 +131,9 @@ def test_set_tile_params_emits_transformed_payload(
         tp = run / "03_recipe_planning" / "post_lowering" / "transformed_payload.mlir"
         assert tp.exists(), run
         text = tp.read_text()
-        assert "compgen.tile = [" in text
-        assert "compgen.recipe_op = " in text
-        assert "compgen.semantic_obligation = " in text
+        assert "xpu_rt.tile = [" in text
+        assert "xpu_rt.recipe_op = " in text
+        assert "xpu_rt.semantic_obligation = " in text
         # Anchored to a linalg.matmul op
         assert "linalg.matmul" in text
         seen = True
@@ -153,9 +153,9 @@ def test_fuse_producer_consumer_emits_metadata_on_consumer(
         tp = run / "03_recipe_planning" / "post_lowering" / "transformed_payload.mlir"
         assert tp.exists(), run
         text = tp.read_text()
-        assert "compgen.fuse_producer = " in text
-        assert "compgen.fuse_consumer = " in text
-        assert "compgen.fuse_via_tensor = " in text
+        assert "xpu_rt.fuse_producer = " in text
+        assert "xpu_rt.fuse_consumer = " in text
+        assert "xpu_rt.fuse_via_tensor = " in text
         seen = True
     assert seen
 
@@ -391,7 +391,7 @@ def test_source_payload_mutation_detected(
     """Patch ``sha256_tree`` so the post-snapshot of 01_payload_lowering
     differs from the pre-snapshot. The verification report must surface
     a ``source_payload_unchanged`` failure."""
-    import compgen.graph_compilation.post_lowering as pl_mod
+    import xpu_rt.graph_compilation.post_lowering as pl_mod
 
     src = post_lowering_runs["tiny_mlp"]
     work = tmp_path / "payload_mut"
@@ -479,11 +479,11 @@ def test_post_lowering_does_not_claim_full_semantic_discharge(
 def test_compiler_core_not_modified_by_m08() -> None:
     import subprocess
     forbidden = [
-        "python/compgen/ir/payload/import_fx.py",
-        "python/compgen/capture/torch_export.py",
-        "python/compgen/capture/torch_mlir_bridge.py",
-        "python/compgen/pipeline/driver.py",
-        "python/compgen/runtime/bundle_emit.py",
+        "python/xpu_rt/ir/payload/import_fx.py",
+        "python/xpu_rt/capture/torch_export.py",
+        "python/xpu_rt/capture/torch_mlir_bridge.py",
+        "python/xpu_rt/pipeline/driver.py",
+        "python/xpu_rt/runtime/bundle_emit.py",
     ]
     try:
         diff = subprocess.check_output(

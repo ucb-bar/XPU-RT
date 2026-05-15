@@ -16,19 +16,19 @@ Covers:
 
 from __future__ import annotations
 
-from compgen.kernels.contract_v3 import Granularity, KernelArchetype
-from compgen.kernels.contract_v3_references import reference_matmul_contract
-from compgen.kernels.provider import (
+from xpu_rt.kernels.contract_v3 import Granularity, KernelArchetype
+from xpu_rt.kernels.contract_v3_references import reference_matmul_contract
+from xpu_rt.kernels.provider import (
     KnowledgeExport,
     ProviderResult,
     SearchBudget,
 )
-from compgen.kernels.providers.claude_code_default import (
+from xpu_rt.kernels.providers.claude_code_default import (
     ClaudeCodeKernelProvider,
     StubCodegen,
 )
-from compgen.kernels.providers.contract_bridge import v3_to_v1_contract
-from compgen.kernels.providers.escalating_router import (
+from xpu_rt.kernels.providers.contract_bridge import v3_to_v1_contract
+from xpu_rt.kernels.providers.escalating_router import (
     EscalatingProviderRouter,
     EscalationReason,
 )

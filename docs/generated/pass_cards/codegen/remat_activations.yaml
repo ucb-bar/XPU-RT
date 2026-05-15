@@ -4,7 +4,7 @@ display_name: Mark activations for rematerialization
 level: payload
 family: codegen
 source: XLA
-impl_path: python/compgen/ir/payload/passes/rewrites/remat_activations.py
+impl_path: python/xpu_rt/ir/payload/passes/rewrites/remat_activations.py
 reads:
   - 01_payload_lowering/payload.mlir
   - 02_graph_analysis/tensor_use_def_graph.json
@@ -27,7 +27,7 @@ cost: medium
 failure_modes:
   - "non_recomputable_activation"
   - "remat_chain_too_long"
-mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+mcp_tool: mcp__xpu_rt__xpu_rt_emit_agent_decision_request
 notes: |
   Reconstruction of XLA's HloRematerialization. When peak live memory
   exceeds the target's budget, mark activations as rematerializable

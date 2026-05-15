@@ -4,7 +4,7 @@ display_name: Shard tensors per SPMD partition spec
 level: payload
 family: scheduling
 source: XLA
-impl_path: python/compgen/ir/payload/passes/rewrites/shard_tensors_spmd.py
+impl_path: python/xpu_rt/ir/payload/passes/rewrites/shard_tensors_spmd.py
 reads:
   - 01_payload_lowering/payload.mlir
   - 02_graph_analysis/region_graph.json
@@ -28,7 +28,7 @@ failure_modes:
   - "missing_partition_spec"
   - "incompatible_shard_dims"
   - "non_associative_collective_combine"
-mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+mcp_tool: mcp__xpu_rt__xpu_rt_emit_agent_decision_request
 notes: |
   Reconstruction of XLA's SpmdPartitioner + IREE's tensor sharding
   pass. Partitions tensors per the declared SPMD spec, inserts

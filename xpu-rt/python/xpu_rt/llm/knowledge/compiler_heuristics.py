@@ -6,7 +6,7 @@ or another compiler, together with the conditions under which it applies.
 
 from __future__ import annotations
 
-from compgen.llm.knowledge.base import (
+from xpu_rt.llm.knowledge.base import (
     CompilerHeuristic,
     Confidence,
 )

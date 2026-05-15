@@ -15,8 +15,8 @@ from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 import structlog
 
 if TYPE_CHECKING:
-    from compgen.memory.schema import KnowledgeItem
-    from compgen.memory.store import CompilerMemory
+    from xpu_rt.memory.schema import KnowledgeItem
+    from xpu_rt.memory.store import CompilerMemory
 
 log = structlog.get_logger()
 

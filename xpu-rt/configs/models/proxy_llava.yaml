@@ -12,7 +12,7 @@ source:
   source_verified: false
 loader:
   kind: proxy
-  proxy_module: compgen.model_admission.proxies.proxy_llava
+  proxy_module: xpu_rt.model_admission.proxies.proxy_llava
   device_policy: auto
 inputs:
   kind: single_image_qa
@@ -32,4 +32,4 @@ expected:
   can_dynamo_capture: true
   can_slice_compile: true
 notes:
-  - 'Proxy module under compgen.model_admission.proxies; real (tiny) torch.nn.Module.'
+  - 'Proxy module under xpu_rt.model_admission.proxies; real (tiny) torch.nn.Module.'

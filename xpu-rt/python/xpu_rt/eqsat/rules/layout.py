@@ -13,7 +13,7 @@ from xdsl.dialects.builtin import ModuleOp
 from xdsl.ir import OpResult
 from xdsl.rewriter import InsertPoint, Rewriter
 
-from compgen.eqsat.rules.python_rules import (
+from xpu_rt.eqsat.rules.python_rules import (
     EqSatRewriteRule,
     add_alternative_to_eclass,
     get_eclass_for_result,

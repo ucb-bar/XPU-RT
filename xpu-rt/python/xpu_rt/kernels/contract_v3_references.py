@@ -19,7 +19,7 @@ Two axes of coverage:
 
 from __future__ import annotations
 
-from compgen.kernels.contract_v3 import (
+from xpu_rt.kernels.contract_v3 import (
     AliasPair,
     BufferLifetime,
     ConcurrencyUnit,

@@ -233,7 +233,7 @@ class SharedMemTransport:
         return self._open_flag
 
     def open(self, **kwargs: Any) -> None:
-        self._shm_name = kwargs.get("shm_name", "compgen_shm")
+        self._shm_name = kwargs.get("shm_name", "xpu_rt_shm")
         self._buffer_size = kwargs.get("buffer_size", 1024 * 1024)
         self._open_flag = True
         log.debug(
@@ -308,7 +308,7 @@ class ZephyrIPCConfig:
     msg_size: int = 64
     queue_depth: int = 16
     pipe_size: int = 4096
-    endpoint_name: str = "compgen_ep"
+    endpoint_name: str = "xpu_rt_ep"
     thread_priority: int = 5
     stack_size: int = 4096
 
@@ -552,7 +552,7 @@ def register_transport(name: str, cls: type) -> None:
 # ---------------------------------------------------------------------------
 
 try:
-    from compgen.runtime._ray_transport import RayTransport
+    from xpu_rt.runtime._ray_transport import RayTransport
 
     _TRANSPORT_REGISTRY["ray"] = RayTransport
 except ImportError:

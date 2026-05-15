@@ -28,7 +28,7 @@ from pathlib import Path
 
 import pytest
 
-from compgen.graph_compilation.real_lowering import (
+from xpu_rt.graph_compilation.real_lowering import (
     _classify_real_transform_kind,
     _find_matmul_for_region,
     run_real_lowering,
@@ -55,7 +55,7 @@ _ELIGIBLE_NONEXEC = ("tiny_mlp", "tiny_attention", "tiny_conv_block")
 def _need_canonical() -> None:
     if not SUITE.is_dir():
         pytest.skip(
-            f"fixture suite missing: {SUITE}; run `compgen.graph_compilation "
+            f"fixture suite missing: {SUITE}; run `xpu_rt.graph_compilation "
             f"run-suite --stop-after real-set-tile-transform` first"
         )
 
@@ -280,8 +280,8 @@ def test_classify_real_transform_kind() -> None:
 
 def test_find_matmul_for_region_unique() -> None:
     text = (
-        '    %10 = linalg.matmul {compgen.region_id = "matmul_0", '
-        'compgen.transposed_b = "true"} '
+        '    %10 = linalg.matmul {xpu_rt.region_id = "matmul_0", '
+        'xpu_rt.transposed_b = "true"} '
         'ins(%6, %8 : tensor<16x16xf32>, tensor<16x32xf32>) '
         'outs(%9 : tensor<16x32xf32>) -> tensor<16x32xf32>'
     )
@@ -386,7 +386,7 @@ def test_multiple_matching_regions_fails(merlin_mlp_wide_run: Path) -> None:
     pl_path = merlin_mlp_wide_run / payload_ref
     text = pl_path.read_text(encoding="utf-8")
     duplicate = (
-        '    %998 = linalg.matmul {compgen.region_id = "matmul_0"} '
+        '    %998 = linalg.matmul {xpu_rt.region_id = "matmul_0"} '
         'ins(%6, %8 : tensor<16x16xf32>, tensor<16x32xf32>) '
         'outs(%9 : tensor<16x32xf32>) -> tensor<16x32xf32>\n'
     )
@@ -400,7 +400,7 @@ def test_multiple_matching_regions_fails(merlin_mlp_wide_run: Path) -> None:
 def test_source_payload_mutation_fails(
     tiny_mlp_run: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from compgen.graph_compilation import real_lowering as mod
+    from xpu_rt.graph_compilation import real_lowering as mod
 
     pre_count = sum(
         1 for _ in (tiny_mlp_run / "01_payload_lowering").rglob("payload.mlir")
@@ -497,7 +497,7 @@ def test_metadata_only_overwrite_is_detected(tiny_mlp_run: Path) -> None:
     # (the lowerer compares pre/post). To trigger this, we mutate the
     # file _during_ the call by monkeypatching the writer to also append
     # to md after writing the real_lowering output.
-    from compgen.graph_compilation import real_lowering as mod
+    from xpu_rt.graph_compilation import real_lowering as mod
     real_write = Path.write_text
 
     def hooked_write(self, data, encoding="utf-8"):  # type: ignore[no-untyped-def]

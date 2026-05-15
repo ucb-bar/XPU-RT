@@ -16,9 +16,9 @@ import time
 from dataclasses import dataclass, field
 from typing import Any
 
-from compgen.solve.backend_registry import default_registry
-from compgen.solve.routing import choose_backend
-from compgen.solve.solver_types import (
+from xpu_rt.solve.backend_registry import default_registry
+from xpu_rt.solve.routing import choose_backend
+from xpu_rt.solve.solver_types import (
     BackendAvailabilityStatus,
     SolverBackendName,
     SolverProblemKind,

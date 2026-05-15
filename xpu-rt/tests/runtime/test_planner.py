@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from compgen.runtime.planner import (
+from xpu_rt.runtime.planner import (
     CopyOp,
     ExecutionPlan,
     ExecutionPlanner,
@@ -10,7 +10,7 @@ from compgen.runtime.planner import (
     PlacementDecision,
     plan_execution,
 )
-from compgen.targets.schema import DeviceSpec, TargetProfile
+from xpu_rt.targets.schema import DeviceSpec, TargetProfile
 from xdsl.builder import Builder
 from xdsl.dialects.builtin import ModuleOp, TensorType, f32
 from xdsl.dialects.func import FuncOp, ReturnOp

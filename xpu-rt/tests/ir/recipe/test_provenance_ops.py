@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import io
 
-from compgen.ir.recipe.attrs import CostAttr
-from compgen.ir.recipe.ops_provenance import (
+from xpu_rt.ir.recipe.attrs import CostAttr
+from xpu_rt.ir.recipe.ops_provenance import (
     FeedbackOp,
     FromAgentOp,
     FromEqsatOp,

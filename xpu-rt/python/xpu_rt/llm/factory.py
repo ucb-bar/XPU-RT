@@ -1,4 +1,4 @@
-"""Factory helpers for selecting a CompGen LLM backend."""
+"""Factory helpers for selecting a XPU-RT LLM backend."""
 
 from __future__ import annotations
 
@@ -6,12 +6,12 @@ import os
 import shutil
 from pathlib import Path
 
-from compgen.llm._env import resolve_api_key
-from compgen.llm.anthropic_client import AnthropicClient
-from compgen.llm.base import CompGenLLMProtocol
-from compgen.llm.cli_client import ClaudeCLIClient, CodexCLIClient
-from compgen.llm.gemini_client import GeminiClient
-from compgen.llm.openai_client import OpenAIClient
+from xpu_rt.llm._env import resolve_api_key
+from xpu_rt.llm.anthropic_client import AnthropicClient
+from xpu_rt.llm.base import CompGenLLMProtocol
+from xpu_rt.llm.cli_client import ClaudeCLIClient, CodexCLIClient
+from xpu_rt.llm.gemini_client import GeminiClient
+from xpu_rt.llm.openai_client import OpenAIClient
 
 SUPPORTED_PROVIDERS: tuple[str, ...] = (
     "gemini",
@@ -62,7 +62,7 @@ def create_llm_client(
 
 def resolve_provider_name(provider: str | None = None) -> str:
     """Resolve an explicit or implicit provider name to a canonical backend id."""
-    raw = (provider or os.environ.get("COMPGEN_LLM_BACKEND") or _detect_default_provider()).strip().lower()
+    raw = (provider or os.environ.get("XPU_RT_LLM_BACKEND") or _detect_default_provider()).strip().lower()
     normalized = _ALIASES.get(raw, raw)
     if normalized not in SUPPORTED_PROVIDERS:
         raise ValueError(f"Unknown LLM provider '{raw}'.")

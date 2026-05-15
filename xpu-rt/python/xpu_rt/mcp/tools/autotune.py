@@ -2,13 +2,13 @@
 
 Per-shape autotune today is a Python-only loop: ``@triton.autotune``
 sweeps the configs at first call, records the winner, persists via
-``compgen.bench.autotune_cache``. With these tools the agent can:
+``xpu_rt.bench.autotune_cache``. With these tools the agent can:
 
   * gate per-shape trials (skip when a winner is already cached)
   * propose a *narrowed* config grid for the next trial based on
     its knowledge brief / lessons
   * record the picked config so the on-disk
-    ``~/.compgen/autotune/`` cache surfaces it for every future
+    ``~/.xpu_rt/autotune/`` cache surfaces it for every future
     process / session
 
 Cache key = ``(kernel_qualname, key_tuple_repr)`` mirroring Triton's
@@ -23,7 +23,7 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
-from compgen.mcp.session import McpSession, SessionManager
+from xpu_rt.mcp.session import McpSession, SessionManager
 
 # ---------------------------------------------------------------------------
 # Data types
@@ -73,13 +73,13 @@ def _autotune_key(kernel_qualname: str, key_repr: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# On-disk persistence (delegates to compgen.bench.autotune_cache layout)
+# On-disk persistence (delegates to xpu_rt.bench.autotune_cache layout)
 # ---------------------------------------------------------------------------
 
 
 def _disk_path(kernel_qualname: str):
-    """Path to the JSON file ``compgen.bench.autotune_cache`` writes."""
-    from compgen.bench.autotune_cache import default_cache_root
+    """Path to the JSON file ``xpu_rt.bench.autotune_cache`` writes."""
+    from xpu_rt.bench.autotune_cache import default_cache_root
 
     safe = "".join(c if c.isalnum() or c in "._-" else "_" for c in kernel_qualname)
     return default_cache_root() / f"{safe}.json"
@@ -183,7 +183,7 @@ def request_autotune_trial(
     """Request an autotune pick from the agent.
 
     On cache hit (in-session OR rehydrated from
-    ``~/.compgen/autotune/``), returns the recorded pick directly.
+    ``~/.xpu_rt/autotune/``), returns the recorded pick directly.
     """
     session = sm.get(session_id)
     cache = _autotune_cache(session)
@@ -366,7 +366,7 @@ AUTOTUNE_TOOLS: list[dict[str, Any]] = [
         "description": (
             "Request an agent-driven autotune pick for a (kernel, key) "
             "pair. Returns a cached pick on hit (in-session OR "
-            "rehydrated from ~/.compgen/autotune/)."
+            "rehydrated from ~/.xpu_rt/autotune/)."
         ),
         "phase": "transform",
         "handler": request_autotune_trial,
@@ -386,7 +386,7 @@ AUTOTUNE_TOOLS: list[dict[str, Any]] = [
     {
         "name": "register_autotune_pick",
         "description": (
-            "Fulfill a pending autotune trial with the agent's pick. Persists to ~/.compgen/autotune/<kernel>.json."
+            "Fulfill a pending autotune trial with the agent's pick. Persists to ~/.xpu_rt/autotune/<kernel>.json."
         ),
         "phase": "transform",
         "handler": register_autotune_pick,

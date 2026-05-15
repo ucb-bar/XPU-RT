@@ -8,11 +8,11 @@ from pathlib import Path
 import pytest
 import yaml
 
-from compgen.extensions.errors import (
+from xpu_rt.extensions.errors import (
     ExtensionManifestError,
     ExtensionTaskError,
 )
-from compgen.extensions.manifest import (
+from xpu_rt.extensions.manifest import (
     ALLOWED_EXTENSION_TASK_TYPES,
     EXTENSION_TASK_REASONS,
     EXTENSION_TASK_SCHEMA_VERSION,
@@ -84,7 +84,7 @@ def _minimal_manifest_body(**overrides):
 
 def test_manifest_round_trips_through_yaml(tmp_path: Path):
     body = _minimal_manifest_body()
-    p = tmp_path / "compgen_extension.yaml"
+    p = tmp_path / "xpu_rt_extension.yaml"
     p.write_text(yaml.safe_dump(body))
     manifest = load_manifest(p)
     assert manifest.extension_id == "myaccel"

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from compgen.targets.target_types import (
+from xpu_rt.targets.target_types import (
     DISPATCH_MODES,
     MEMORY_TIER_KINDS,
     TargetCard,

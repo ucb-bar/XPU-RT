@@ -26,8 +26,8 @@ from typing import Any, Protocol, runtime_checkable
 import structlog
 from xdsl.dialects.builtin import ModuleOp
 
-from compgen.targets.capability import CapabilitySpec
-from compgen.targets.schema import TargetProfile
+from xpu_rt.targets.capability import CapabilitySpec
+from xpu_rt.targets.schema import TargetProfile
 
 log = structlog.get_logger()
 
@@ -156,7 +156,7 @@ class CompilationStage(abc.ABC):
       4. Verification (contract enforcement)
       5. A REQUIREMENTS.md path for LLM generation
       6. An optional ``llm_phase`` tag (1..7) declaring which pipeline
-         phase from ``proposed_compgen_architecture.md`` the stage
+         phase from ``proposed_xpu_rt_architecture.md`` the stage
          belongs to. Enforces L-XLA-6: Phase 2 stages never read
          runtime state, Phase 5 stages never rewrite Recipe-IR graph
          structure, etc. Opt-in — stages that haven't been classified
@@ -246,7 +246,7 @@ class CompilationStage(abc.ABC):
         # being loaded, which transitively pulls this module.
         import time as _stage_time
 
-        from compgen.trace import StagePublisher, get_ir_dump_writer
+        from xpu_rt.trace import StagePublisher, get_ir_dump_writer
 
         diagnostics: list[str] = []
         violations: list[str] = []

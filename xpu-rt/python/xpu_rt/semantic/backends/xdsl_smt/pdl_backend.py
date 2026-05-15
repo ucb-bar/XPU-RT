@@ -23,8 +23,8 @@ from typing import Any
 import structlog
 from xdsl.dialects.builtin import ModuleOp
 
-from compgen.semantic.backends.xdsl_smt.results import PDLResult
-from compgen.semantic.backends.xdsl_smt.tv_backend import _check_z3_available
+from xpu_rt.semantic.backends.xdsl_smt.results import PDLResult
+from xpu_rt.semantic.backends.xdsl_smt.tv_backend import _check_z3_available
 
 log = structlog.get_logger()
 
@@ -167,7 +167,7 @@ def _extract_pdl_pattern_replacement(module: ModuleOp) -> tuple[Any, Any]:
     """
     # PDL patterns are complex IR structures. For the initial integration,
     # we support the verify_arith_rewrite() callable path and will extend
-    # this to real PDL parsing as CompGen's rewrite export matures.
+    # this to real PDL parsing as XPU-RT's rewrite export matures.
     return None, None
 
 

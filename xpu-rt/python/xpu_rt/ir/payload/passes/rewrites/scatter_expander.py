@@ -1,10 +1,10 @@
 """``scatter_expander`` -- lower ``aten.scatter`` / ``aten.scatter_add``
-calls into ``compgen.tensor_ext.pack`` + indexed-write form.
+calls into ``xpu_rt.tensor_ext.pack`` + indexed-write form.
 
 XLA's ``ScatterExpander``. Operates on opaque
-``func.call`` ops tagged with ``compgen._pattern_hint = "scatter"``.
+``func.call`` ops tagged with ``xpu_rt._pattern_hint = "scatter"``.
 For the simplest 1-D case, tags the call with
-``compgen.scatter_expanded = true`` and carries the scatter dim.
+``xpu_rt.scatter_expanded = true`` and carries the scatter dim.
 
 More elaborate structural expansion (``tensor_ext.pack`` + masked
 write) is gated on a ``require_static_shapes`` check.
@@ -54,11 +54,11 @@ class _ScatterExpanderPattern(RewritePattern):
 
     @op_type_rewrite_pattern
     def match_and_rewrite(self, op: CallOp, rewriter: PatternRewriter) -> None:
-        hint = op.attributes.get("compgen._pattern_hint")
+        hint = op.attributes.get("xpu_rt._pattern_hint")
         if not isinstance(hint, StringAttr) or hint.data not in self.cfg.hint_set:
             return
         self.stats.scatters_seen += 1
-        if "compgen.scatter_expanded" in op.attributes:
+        if "xpu_rt.scatter_expanded" in op.attributes:
             return
         rt = op.results[0].type if op.results else None
         if not isinstance(rt, TensorType):
@@ -66,8 +66,8 @@ class _ScatterExpanderPattern(RewritePattern):
         if self.cfg.require_static_shapes and any(d < 0 for d in rt.get_shape()):
             self.stats.scatters_skipped_dynamic += 1
             return
-        op.attributes["compgen.scatter_expanded"] = StringAttr("true")
-        op.attributes["compgen.scatter_rank"] = IntegerAttr(len(list(rt.get_shape())), IntegerType(64))
+        op.attributes["xpu_rt.scatter_expanded"] = StringAttr("true")
+        op.attributes["xpu_rt.scatter_rank"] = IntegerAttr(len(list(rt.get_shape())), IntegerType(64))
         self.stats.scatters_tagged += 1
 
 

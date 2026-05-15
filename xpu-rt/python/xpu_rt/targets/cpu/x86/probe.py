@@ -5,7 +5,7 @@ Reads ``/proc/cpuinfo`` flags on Linux, falls back to a pure-Python
 host has SOME x86 capability (or isn't x86, in which case
 ``is_available`` returns False).
 
-This satisfies a subset of :class:`compgen.targets.gpu.contracts.GpuProbe`
+This satisfies a subset of :class:`xpu_rt.targets.gpu.contracts.GpuProbe`
 adapted for CPU semantics — no clusters, no library paths in the
 GPU sense (the C++ compiler is the runtime dependency).
 """

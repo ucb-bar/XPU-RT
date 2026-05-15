@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from compgen.audit.execution_evidence import (
+from xpu_rt.audit.execution_evidence import (
     BLOCKED_PROOF_REASONS,
     EVIDENCE_SCHEMA_VERSION,
     BlockedProof,
@@ -19,7 +19,7 @@ from compgen.audit.execution_evidence import (
     record_block,
     record_evidence,
 )
-from compgen.audit.extension_architecture import (
+from xpu_rt.audit.extension_architecture import (
     check_execution_evidence,
     AuditReport,
     run_audit,

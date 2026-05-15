@@ -694,7 +694,7 @@ def rmsnorm_fp16(x: torch.Tensor, weight: torch.Tensor, eps: float = 1e-5) -> to
 # ---------------------------------------------------------------------------
 # Auto-load persisted autotune picks at import time.
 # Triton's binary cache is automatic (~/.triton/cache); ours sits beside
-# it at ~/.compgen/autotune/. With both populated, deployment cold start
+# it at ~/.xpu_rt/autotune/. With both populated, deployment cold start
 # drops from ~10 s to ~hundreds of ms (only the kernel binary loads
 # from disk; no autotune sweep, no JIT compile).
 # ---------------------------------------------------------------------------
@@ -703,7 +703,7 @@ def rmsnorm_fp16(x: torch.Tensor, weight: torch.Tensor, eps: float = 1e-5) -> to
 def _autoload_autotune_caches() -> None:
     """Best-effort load — silent on missing files (first ever run)."""
     try:
-        from compgen.bench.autotune_cache import load_all
+        from xpu_rt.bench.autotune_cache import load_all
     except ImportError:
         return
     load_all(

@@ -28,12 +28,12 @@ from __future__ import annotations
 
 import random
 
-from compgen.agent.primitives.rank_candidates import (
+from xpu_rt.agent.primitives.rank_candidates import (
     _rank_candidates_fallback,
     rank_candidates,
 )
-from compgen.agent.suggest._candidate import ProposalCandidate
-from compgen.llm.call_site import get_call_site
+from xpu_rt.agent.suggest._candidate import ProposalCandidate
+from xpu_rt.llm.call_site import get_call_site
 
 
 def _candidate(impact: float, rationale: str) -> ProposalCandidate:
@@ -45,7 +45,7 @@ def _candidate(impact: float, rationale: str) -> ProposalCandidate:
 
 
 def test_output_is_a_permutation_of_input(monkeypatch):
-    monkeypatch.setenv("COMPGEN_DISABLE_LLM", "1")
+    monkeypatch.setenv("XPU_RT_DISABLE_LLM", "1")
     cands = [
         _candidate(0.1, "small"),
         _candidate(0.9, "huge"),
@@ -59,7 +59,7 @@ def test_output_is_a_permutation_of_input(monkeypatch):
 
 
 def test_ranking_descending_by_expected_impact(monkeypatch):
-    monkeypatch.setenv("COMPGEN_DISABLE_LLM", "1")
+    monkeypatch.setenv("XPU_RT_DISABLE_LLM", "1")
     cands = [
         _candidate(0.1, "small"),
         _candidate(0.9, "huge"),
@@ -73,7 +73,7 @@ def test_ranking_descending_by_expected_impact(monkeypatch):
 
 
 def test_tiebreak_alphabetical_on_rationale(monkeypatch):
-    monkeypatch.setenv("COMPGEN_DISABLE_LLM", "1")
+    monkeypatch.setenv("XPU_RT_DISABLE_LLM", "1")
     cands = [
         _candidate(0.5, "zebra"),
         _candidate(0.5, "apple"),
@@ -86,7 +86,7 @@ def test_tiebreak_alphabetical_on_rationale(monkeypatch):
 
 
 def test_byte_deterministic_across_reruns(monkeypatch):
-    monkeypatch.setenv("COMPGEN_DISABLE_LLM", "1")
+    monkeypatch.setenv("XPU_RT_DISABLE_LLM", "1")
     cands = [
         _candidate(0.5, "a"),
         _candidate(0.6, "b"),
@@ -98,7 +98,7 @@ def test_byte_deterministic_across_reruns(monkeypatch):
 
 
 def test_empty_input(monkeypatch):
-    monkeypatch.setenv("COMPGEN_DISABLE_LLM", "1")
+    monkeypatch.setenv("XPU_RT_DISABLE_LLM", "1")
     result = rank_candidates([])
     assert result["ranking"] == []
     assert result["n_candidates"] == 0
@@ -117,7 +117,7 @@ def test_fallback_used_flag_is_true(monkeypatch):
     A future regression where the primary silently lies would flip
     this to False."""
 
-    monkeypatch.setenv("COMPGEN_DISABLE_LLM", "1")
+    monkeypatch.setenv("XPU_RT_DISABLE_LLM", "1")
     result = rank_candidates([_candidate(0.5, "x")])
     assert result["fallback_used"] is True
 
@@ -125,7 +125,7 @@ def test_fallback_used_flag_is_true(monkeypatch):
 def test_random_shuffled_input_still_permutation(monkeypatch):
     """Pseudo-stress test: 50 random inputs each get a valid permutation."""
 
-    monkeypatch.setenv("COMPGEN_DISABLE_LLM", "1")
+    monkeypatch.setenv("XPU_RT_DISABLE_LLM", "1")
     rng = random.Random(0xC0FFEE)
     for _ in range(50):
         n = rng.randint(0, 12)

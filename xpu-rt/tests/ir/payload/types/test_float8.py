@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from compgen.ir.payload.types import Float8E4M3FNType, Float8E5M2Type
+from xpu_rt.ir.payload.types import Float8E4M3FNType, Float8E5M2Type
 from xdsl.dialects.builtin import Float16Type, TensorType
 
 # --- bitwidth + size ----------------------------------------------------------
@@ -84,7 +84,7 @@ def test_import_fx_maps_float8_e4m3fn_to_new_type():
     if not hasattr(torch, "float8_e4m3fn"):
         pytest.skip("torch build lacks float8_e4m3fn")
 
-    from compgen.ir.payload.import_fx import _torch_dtype_to_xdsl
+    from xpu_rt.ir.payload.import_fx import _torch_dtype_to_xdsl
 
     out = _torch_dtype_to_xdsl(torch.float8_e4m3fn)
     assert isinstance(out, Float8E4M3FNType)
@@ -96,7 +96,7 @@ def test_import_fx_maps_float8_e5m2_to_new_type():
     if not hasattr(torch, "float8_e5m2"):
         pytest.skip("torch build lacks float8_e5m2")
 
-    from compgen.ir.payload.import_fx import _torch_dtype_to_xdsl
+    from xpu_rt.ir.payload.import_fx import _torch_dtype_to_xdsl
 
     out = _torch_dtype_to_xdsl(torch.float8_e5m2)
     assert isinstance(out, Float8E5M2Type)

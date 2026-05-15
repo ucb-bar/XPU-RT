@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from compgen.packs.base import ExtensionPack, LoadedPack
-from compgen.packs.compose import ManifestExtensionPack
-from compgen.packs.envcheck import EnvCheckResult, check_pack_environment
-from compgen.packs.loader import load_manifest, load_pack, resolve_entry_point_target
-from compgen.packs.registry import (
+from xpu_rt.packs.base import ExtensionPack, LoadedPack
+from xpu_rt.packs.compose import ManifestExtensionPack
+from xpu_rt.packs.envcheck import EnvCheckResult, check_pack_environment
+from xpu_rt.packs.loader import load_manifest, load_pack, resolve_entry_point_target
+from xpu_rt.packs.registry import (
     ENTRY_POINT_GROUP,
     ENV_VAR,
     PackRegistry,
@@ -16,15 +16,15 @@ from compgen.packs.registry import (
     load_builtin_packs,
     load_discovered_packs,
 )
-from compgen.packs.schema import (
+from xpu_rt.packs.schema import (
     BranchPlan,
     ExtensionPackManifest,
     PackContextSummary,
     PackContribution,
     PackProbeResult,
 )
-from compgen.packs.validate import PackValidationResult, validate_pack
-from compgen.packs.verify import OwnershipViolation, check_surface_allowed
+from xpu_rt.packs.validate import PackValidationResult, validate_pack
+from xpu_rt.packs.verify import OwnershipViolation, check_surface_allowed
 
 __all__ = [
     "BranchPlan",

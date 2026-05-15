@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from compgen.runtime.memory_layout import BufferRef, MemoryLayout, MemoryPlanner, MemoryRegion
+from xpu_rt.runtime.memory_layout import BufferRef, MemoryLayout, MemoryPlanner, MemoryRegion
 
 
 @dataclass

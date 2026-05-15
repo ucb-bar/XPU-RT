@@ -1,12 +1,12 @@
-"""Tests for ``compgen.mcp.tools.refinement`` (W8.2)."""
+"""Tests for ``xpu_rt.mcp.tools.refinement`` (W8.2)."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
 import pytest
-from compgen.mcp.session import SessionManager
-from compgen.mcp.tools.refinement import (
+from xpu_rt.mcp.session import SessionManager
+from xpu_rt.mcp.tools.refinement import (
     REFINEMENT_TOOLS,
     list_pending_refinements,
     lookup_refinement_history,
@@ -17,7 +17,7 @@ from compgen.mcp.tools.refinement import (
 
 @pytest.fixture
 def sm(tmp_path: Path) -> SessionManager:
-    s = SessionManager(scratch_root=tmp_path / "compgen_mcp")
+    s = SessionManager(scratch_root=tmp_path / "xpu_rt_mcp")
     s.open(session_id="sess1")
     return s
 
@@ -33,7 +33,7 @@ def test_refinement_tools_registered_with_expected_names() -> None:
 
 
 def test_refinement_tools_in_all_tools_bundle() -> None:
-    from compgen.mcp.tools import ALL_TOOLS
+    from xpu_rt.mcp.tools import ALL_TOOLS
 
     names = {t["name"] for t in ALL_TOOLS}
     for n in (

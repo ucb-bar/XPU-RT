@@ -25,7 +25,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-from compgen.mcp.tools.vendor_dialect import (
+from xpu_rt.mcp.tools.vendor_dialect import (
     scaffold_vendor_package,
     scan_vendor_repo,
     verify_vendor_package,
@@ -43,7 +43,7 @@ class _NullSessionManager:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Drive the fake vendor dialect flow.")
     parser.add_argument("--repo", default=str(FIXTURE), help="Vendor repo path.")
-    parser.add_argument("--target", default="toy-target", help="CompGen target name.")
+    parser.add_argument("--target", default="toy-target", help="XPU-RT target name.")
     parser.add_argument(
         "--out",
         type=Path,

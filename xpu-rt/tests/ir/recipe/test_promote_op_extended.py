@@ -22,11 +22,11 @@ from xdsl.dialects.builtin import (
 )
 from xdsl.printer import Printer
 
-from compgen.ir.recipe.lower import lower_recipe
-from compgen.ir.recipe.ops_provenance import PromoteOp
-from compgen.ir.recipe.ops_scope import RecipeRegionOp
-from compgen.ir.recipe.serialize import recipe_module_to_json
-from compgen.ir.recipe.validate import validate_recipe_module
+from xpu_rt.ir.recipe.lower import lower_recipe
+from xpu_rt.ir.recipe.ops_provenance import PromoteOp
+from xpu_rt.ir.recipe.ops_scope import RecipeRegionOp
+from xpu_rt.ir.recipe.serialize import recipe_module_to_json
+from xpu_rt.ir.recipe.validate import validate_recipe_module
 
 
 def _i64(val: int) -> IntegerAttr:
@@ -102,7 +102,7 @@ def test_promote_printable_with_m27_attrs() -> None:
 
 def test_promote_mlir_round_trip() -> None:
     """A PromoteOp with all attrs survives MLIR text round-trip."""
-    from compgen.ir.recipe.serialize import mlir_to_recipe, recipe_to_mlir
+    from xpu_rt.ir.recipe.serialize import mlir_to_recipe, recipe_to_mlir
 
     module = ModuleOp(Region(Block([_build_promote_full()])))
     text_a = recipe_to_mlir(module)

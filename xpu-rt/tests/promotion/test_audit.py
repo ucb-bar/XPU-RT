@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from compgen.promotion.audit import AuditEvent, AuditLog, create_event
+from xpu_rt.promotion.audit import AuditEvent, AuditLog, create_event
 
 
 def test_audit_event_construction() -> None:

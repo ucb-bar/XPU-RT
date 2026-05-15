@@ -42,7 +42,7 @@ def audit_artifacts(
 ) -> dict:
     """Run the canonical 6-model suite + render audit figures into a
     temp dir. Module-scoped so the heavy run is shared across tests."""
-    from compgen.graph_compilation.run import run_graph_compilation
+    from xpu_rt.graph_compilation.run import run_graph_compilation
     base = tmp_path_factory.mktemp("audit")
     suite_root = base / "suite"
     for model_id in (
@@ -278,11 +278,11 @@ def test_summary_lists_each_model_in_diversity(
 def test_audit_does_not_modify_compiler_core() -> None:
     import subprocess
     forbidden = [
-        "python/compgen/ir/payload/import_fx.py",
-        "python/compgen/capture/torch_export.py",
-        "python/compgen/capture/torch_mlir_bridge.py",
-        "python/compgen/pipeline/driver.py",
-        "python/compgen/runtime/bundle_emit.py",
+        "python/xpu_rt/ir/payload/import_fx.py",
+        "python/xpu_rt/capture/torch_export.py",
+        "python/xpu_rt/capture/torch_mlir_bridge.py",
+        "python/xpu_rt/pipeline/driver.py",
+        "python/xpu_rt/runtime/bundle_emit.py",
     ]
     try:
         diff = subprocess.check_output(

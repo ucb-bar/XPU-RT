@@ -1,11 +1,11 @@
-"""Shared pytest fixtures for CompGen tests.
+"""Shared pytest fixtures for XPU-RT tests.
 
 All fixtures return lightweight objects suitable for unit testing.
 No GPU or network access required unless marked with appropriate pytest markers.
 
 **Home-directory isolation.** The LLM driver and MCP server default
-their transcript/extensions directories to ``~/.compgen/...``. Test
-runs must never write there. The ``_compgen_home_isolation``
+their transcript/extensions directories to ``~/.xpu_rt/...``. Test
+runs must never write there. The ``_xpu_rt_home_isolation``
 autouse fixture redirects both defaults to a per-session tmp path and
 disables cross-session graduation + local extension loading so the
 process-wide registry stays pristine.
@@ -83,23 +83,23 @@ def pytest_collection_modifyitems(config, items):  # noqa: ANN001
 
 
 @pytest.fixture(autouse=True, scope="session")
-def _compgen_home_isolation():
-    """Stop tests from polluting ``~/.compgen``.
+def _xpu_rt_home_isolation():
+    """Stop tests from polluting ``~/.xpu_rt``.
 
     Sets env vars the LLM driver + MCP transcript recorder consult,
     and disables local extension loading + cross-session graduation.
     """
-    tmp_home = Path(tempfile.mkdtemp(prefix="compgen-test-home-"))
+    tmp_home = Path(tempfile.mkdtemp(prefix="xpu_rt-test-home-"))
     (tmp_home / "transcripts").mkdir(parents=True, exist_ok=True)
     (tmp_home / "extensions").mkdir(parents=True, exist_ok=True)
 
     saved = {}
     for key, value in (
-        ("COMPGEN_SESSION_DIR", str(tmp_home / "transcripts")),
-        ("COMPGEN_EXTENSIONS_DIR", str(tmp_home / "extensions")),
-        ("COMPGEN_DISABLE_LOCAL_EXTENSIONS", "1"),
-        ("COMPGEN_DISABLE_CROSS_SESSION_GRADUATION", "1"),
-        ("COMPGEN_DISABLE_AUTHORED_GRADUATION", "1"),
+        ("XPU_RT_SESSION_DIR", str(tmp_home / "transcripts")),
+        ("XPU_RT_EXTENSIONS_DIR", str(tmp_home / "extensions")),
+        ("XPU_RT_DISABLE_LOCAL_EXTENSIONS", "1"),
+        ("XPU_RT_DISABLE_CROSS_SESSION_GRADUATION", "1"),
+        ("XPU_RT_DISABLE_AUTHORED_GRADUATION", "1"),
     ):
         saved[key] = os.environ.get(key)
         os.environ[key] = value
@@ -140,7 +140,7 @@ def sample_multi_device_profile_path(examples_dir: Path) -> Path:
 @pytest.fixture
 def tmp_output_dir(tmp_path: Path) -> Path:
     """Temporary output directory for test artifacts."""
-    output = tmp_path / "compgen_output"
+    output = tmp_path / "xpu-rt-output"
     output.mkdir()
     return output
 

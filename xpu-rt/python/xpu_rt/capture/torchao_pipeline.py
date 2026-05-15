@@ -1,6 +1,6 @@
 """TorchAO quantization pipeline integration.
 
-Integrates TorchAO's quantization and sparsity workflows into the CompGen
+Integrates TorchAO's quantization and sparsity workflows into the XPU-RT
 capture pipeline. Quantization decisions affect kernel contracts, layout
 requirements, and verification (quantized paths need separate golden outputs).
 
@@ -67,7 +67,7 @@ def apply_quantization(model: Any, config: QuantizationConfig) -> Any:
     """
     # NPU FP8 E4M3 po2 quantization (custom scheme for NPU hardware)
     if config.scheme == "fp8_e4m3_po2_npu":
-        from compgen.quantization.smolvla_recipe import apply_smolvla_quantization, default_npu_recipe
+        from xpu_rt.quantization.smolvla_recipe import apply_smolvla_quantization, default_npu_recipe
 
         recipe = default_npu_recipe()
         return apply_smolvla_quantization(model, recipe)
@@ -75,7 +75,7 @@ def apply_quantization(model: Any, config: QuantizationConfig) -> Any:
     if config.scheme == "fp8_e4m3_po2":
         from torchao.quantization import quantize_
 
-        from compgen.quantization.fp8_config import FP8E4M3Po2Config
+        from xpu_rt.quantization.fp8_config import FP8E4M3Po2Config
 
         quantize_(model, FP8E4M3Po2Config())
         return model

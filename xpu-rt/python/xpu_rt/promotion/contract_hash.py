@@ -11,7 +11,7 @@ Two hashes — one keyed on concrete shapes, one keyed on shape *class*:
   commit path's hash invariant.
 :func:`canonical_contract_hash` Phase D /. Same projection,
   but IO ``dims`` are passed through
-  :func:`compgen.promotion.region_signature.encode_shape_class` first
+  :func:`xpu_rt.promotion.region_signature.encode_shape_class` first
   so dynamic dims (``None``) become ``{"dynamic": true}`` and
   divisibility-class dims become ``{"mod": k}``. Two contracts with
   concrete dim values that match under shape-class abstraction hash
@@ -35,8 +35,8 @@ import json
 from enum import Enum
 from typing import Any
 
-from compgen.kernels.contract_v3 import KernelContractV3
-from compgen.promotion.region_signature import _abstract_dim
+from xpu_rt.kernels.contract_v3 import KernelContractV3
+from xpu_rt.promotion.region_signature import _abstract_dim
 
 _TRUNC = 16
 
@@ -166,7 +166,7 @@ def canonical_contract_hash(contract: KernelContractV3) -> str:
 
     Same projection as :func:`instance_contract_hash`, but every IO
     ``shape.dims`` entry is run through
-    :func:`compgen.promotion.region_signature.encode_shape_class`
+    :func:`xpu_rt.promotion.region_signature.encode_shape_class`
     abstraction before hashing AND tile-choice StaticAttrs
     (``tile_M``/``tile_N``/``tile_K``) are stripped from
     ``io.attributes`` (: tile choice is a candidate-selection

@@ -1,7 +1,7 @@
 """Profiler integration framework.
 
 Provides a spec-driven, target-agnostic profiling system.  The
-:class:`~compgen.targetgen.hardware_spec.ProfilingSpec` declares what
+:class:`~xpu_rt.targetgen.hardware_spec.ProfilingSpec` declares what
 the hardware CAN expose.  The scaffold provides the adapter protocol.
 The agentic LLM generates target-specific hooks and selects which
 counters to enable.

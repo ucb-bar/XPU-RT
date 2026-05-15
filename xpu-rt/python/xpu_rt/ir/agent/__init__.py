@@ -8,6 +8,6 @@ generation requests, claims, frontier state, critique, memory, and roles.
 
 from __future__ import annotations
 
-from compgen.ir.agent.dialect import Agent
+from xpu_rt.ir.agent.dialect import Agent
 
 __all__ = ["Agent"]

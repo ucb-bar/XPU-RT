@@ -4,7 +4,7 @@ integration_level: probe
 target_families: [cuda]
 contract_kinds: [matmul, fused_region, attention]
 emits: [cu_source, megakernel]
-entrypoint: compgen.providers.adapters.mirage:MirageProvider
+entrypoint: xpu_rt.providers.adapters.mirage:MirageProvider
 paper_claimable: false
 required_env: [MIRAGE_ROOT]
 required_commands: []

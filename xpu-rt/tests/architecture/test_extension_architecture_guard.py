@@ -1,7 +1,7 @@
 """spec'd path for the architecture audit tests.
 
 Mirrors :mod:`tests.audit.test_extension_architecture_audit` but
-imports through the user-spec ``compgen.extensions.architecture_guard``
+imports through the user-spec ``xpu_rt.extensions.architecture_guard``
 re-export shim. Asserts both surfaces resolve to the same audit.
 """
 
@@ -12,9 +12,9 @@ from pathlib import Path
 import pytest
 
 # Spec'd path
-from compgen.extensions import architecture_guard as guard
+from xpu_rt.extensions import architecture_guard as guard
 # Underlying module
-from compgen.audit import extension_architecture as audit_impl
+from xpu_rt.audit import extension_architecture as audit_impl
 
 
 def test_spec_path_imports():

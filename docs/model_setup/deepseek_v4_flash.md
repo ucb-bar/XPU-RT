@@ -32,7 +32,7 @@ band into the local HuggingFace cache (``$HF_HOME/hub`` or
 ## Minimal smoke command
 
 ```bash
-uv run python -m compgen.model_admission torch-compile \
+uv run python -m xpu_rt.model_admission torch-compile \
     --model configs/models/deepseek_v4_flash_text.yaml \
     --slice configs/slices/deepseek_v4_flash_hybrid_attention.yaml \
     --out results/model_admission/deepseek_v4_flash_text/deepseek_v4_flash_hybrid_attention

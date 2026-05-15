@@ -3,7 +3,7 @@
 Three test classes, mirroring the layout:
 
 - ``TestApplicableMethod`` — unit tests for
-  :meth:`compgen.kernels.registry.ProviderRegistry.applicable` over a
+  :meth:`xpu_rt.kernels.registry.ProviderRegistry.applicable` over a
   KernelContractV3 fixture. Wildcards, target match, archetype match,
   ordering by priority.
 ``TestRegistryResolutionEmit`` — the pipeline stage now also
@@ -40,7 +40,7 @@ def _build_v3_contract():
     """Build a KernelContractV3 fixture mirroring merlin_mlp_wide
     matmul_0 (host_cpu, COMPUTE_TILED, NORMAL granularity, SYNC).
     """
-    from compgen.kernels.contract_v3 import (
+    from xpu_rt.kernels.contract_v3 import (
         AliasPair,
         ConcurrencyUnit,
         DispatchModel,
@@ -145,7 +145,7 @@ class _StubProvider:
         self.applicable_targets = applicable_targets
         self.applicable_archetypes = applicable_archetypes
         self.priority = priority
-        self._compgen_source = source
+        self._xpu_rt_source = source
 
     @property
     def name(self) -> str:
@@ -155,7 +155,7 @@ class _StubProvider:
         return True
 
     def search(self, contract, budget):  # noqa: ANN001
-        from compgen.kernels.provider import ProviderResult
+        from xpu_rt.kernels.provider import ProviderResult
 
         return ProviderResult(found=False)
 
@@ -170,7 +170,7 @@ class _StubProvider:
 
 class TestApplicableMethod:
     def test_wildcard_provider_matches(self) -> None:
-        from compgen.kernels.registry import ProviderRegistry
+        from xpu_rt.kernels.registry import ProviderRegistry
 
         reg = ProviderRegistry()
         reg.register(_StubProvider(name="wild"))
@@ -180,7 +180,7 @@ class TestApplicableMethod:
         assert rows[0].match_reason == "wildcard"
 
     def test_target_filter_matches_exactly(self) -> None:
-        from compgen.kernels.registry import ProviderRegistry
+        from xpu_rt.kernels.registry import ProviderRegistry
 
         reg = ProviderRegistry()
         reg.register(
@@ -202,7 +202,7 @@ class TestApplicableMethod:
         assert "target='host_cpu' not in" in by_name["gpu_only"].match_reason
 
     def test_archetype_filter(self) -> None:
-        from compgen.kernels.registry import ProviderRegistry
+        from xpu_rt.kernels.registry import ProviderRegistry
 
         reg = ProviderRegistry()
         reg.register(
@@ -216,7 +216,7 @@ class TestApplicableMethod:
         assert "archetype='compute_tiled'" in rows[0].match_reason
 
     def test_sort_priority_then_name(self) -> None:
-        from compgen.kernels.registry import ProviderRegistry
+        from xpu_rt.kernels.registry import ProviderRegistry
 
         reg = ProviderRegistry()
         reg.register(_StubProvider(name="b_low", priority=1))
@@ -234,7 +234,7 @@ class TestApplicableMethod:
 def _invoke_pipeline(*, model: str, out_dir: Path) -> subprocess.CompletedProcess:
     return subprocess.run(
         [
-            sys.executable, "-m", "compgen.graph_compilation", "run",
+            sys.executable, "-m", "xpu_rt.graph_compilation", "run",
             "--model", str(REPO_ROOT / f"configs/models/{model}.yaml"),
             "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
             "--out", str(out_dir),

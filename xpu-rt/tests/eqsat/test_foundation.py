@@ -6,8 +6,8 @@ Tests the end-to-end flow: create IR → eqsat pass → verify result.
 from __future__ import annotations
 
 import pytest
-from compgen.eqsat.config import EqSatConfig
-from compgen.eqsat.pipeline import (
+from xpu_rt.eqsat.config import EqSatConfig
+from xpu_rt.eqsat.pipeline import (
     EqSatResult,
     _count_eclasses,
     _count_enodes,
@@ -16,11 +16,11 @@ from compgen.eqsat.pipeline import (
     create_egraph,
     run_eqsat_pass,
 )
-from compgen.eqsat.rules.algebraic import (
+from xpu_rt.eqsat.rules.algebraic import (
     CommutativityAddiRule,
     ReassociationAddiRule,
 )
-from compgen.eqsat.rules.python_rules import (
+from xpu_rt.eqsat.rules.python_rules import (
     add_alternative_to_eclass,
 )
 from xdsl.dialects import arith, equivalence, func

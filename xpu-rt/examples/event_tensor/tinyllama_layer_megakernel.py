@@ -4,7 +4,7 @@ Loads the actual ``model.layers.0`` weights from a cached TinyLlama-1.1B
 checkpoint (real Llama architecture: 32 attention heads, 4 KV heads
 with GQA, hidden_dim 2048, intermediate_dim 5632) and runs the
 fused-attention+MLP transformer-block megakernel emitted by
-:mod:`compgen.ir.tile.lower_megakernel_dynamic` on those exact weight
+:mod:`xpu_rt.ir.tile.lower_megakernel_dynamic` on those exact weight
 values.
 
 What's compared:
@@ -12,7 +12,7 @@ What's compared:
     * Reference (PyTorch eager): the same transformer-block sequence
       (X_resid + flatten(SDPA(Q,K,V))) + SwiGLU MLP, computed with
       ``torch.matmul`` + ``F.scaled_dot_product_attention`` + ``F.silu``.
-    * Got (CompGen-emitted megakernel): the same composition, but every
+    * Got (XPU-RT-emitted megakernel): the same composition, but every
       GPU instruction comes from the persistent megakernel produced by
       our compiler pipeline.
 

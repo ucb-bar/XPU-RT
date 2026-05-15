@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import pytest
-from compgen.solve.learned_weights import retrieve_best_weights, store_cost_weights
-from compgen.solve.objectives import CompositeCost
+from xpu_rt.solve.learned_weights import retrieve_best_weights, store_cost_weights
+from xpu_rt.solve.objectives import CompositeCost
 
 
 @pytest.fixture
 def memory(tmp_path):
-    from compgen.memory.store import CompilerMemory
+    from xpu_rt.memory.store import CompilerMemory
 
     return CompilerMemory(
         db_path=tmp_path / "test.db",

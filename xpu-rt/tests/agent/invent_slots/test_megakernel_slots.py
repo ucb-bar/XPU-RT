@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from compgen.agent.invent_slots.registrar import _SLOT_SPECS, register_invent_slots
-from compgen.agent.invent_slots.seeds import (
+from xpu_rt.agent.invent_slots.registrar import _SLOT_SPECS, register_invent_slots
+from xpu_rt.agent.invent_slots.seeds import (
     propose_megakernel_synthesis_seed,
     propose_scheduling_policy_seed,
 )
-from compgen.llm.registry import Registry
+from xpu_rt.llm.registry import Registry
 
 # ---------------------------------------------------------------------------
 # Spec presence / shape

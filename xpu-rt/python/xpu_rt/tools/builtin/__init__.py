@@ -1,8 +1,8 @@
-"""Built-in tool implementations shipped with CompGen.
+"""Built-in tool implementations shipped with XPU-RT.
 
 Each module in this package implements one tool's Python entrypoint
 (``run(request, *, out_dir) -> dict``) referenced from the matching
-YAML card under ``python/compgen/tools/cards/``.
+YAML card under ``python/xpu_rt/tools/cards/``.
 
 The first inhabitant — ``echo`` — exists to keep the runner exercised
 in tests without coupling to any heavy compiler subsystem. Real

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import io
 
-from compgen.ir.semantic.ops import (
+from xpu_rt.ir.semantic.ops import (
     RefinementOp,
     Semantic,
     SemanticInvariantOp,

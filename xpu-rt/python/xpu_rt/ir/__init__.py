@@ -1,6 +1,6 @@
-"""IR subsystem -- three-layer IR stack for CompGen.
+"""IR subsystem -- three-layer IR stack for XPU-RT.
 
-CompGen uses a three-layer IR architecture:
+XPU-RT uses a three-layer IR architecture:
 
 Layer 1: **Payload IR** (``ir.payload``)
     The canonical computational IR from FX→xDSL. Represents model structure,

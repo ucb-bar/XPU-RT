@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from compgen.benchmarks.base import SuiteAdapter, SuiteRunConfig
-from compgen.benchmarks.common import (
+from xpu_rt.benchmarks.base import SuiteAdapter, SuiteRunConfig
+from xpu_rt.benchmarks.common import (
     NormalizedSuiteResult,
     OfficialMetric,
     SuiteArtifactIndex,
@@ -13,7 +13,7 @@ from compgen.benchmarks.common import (
     resolve_suite_root,
     write_normalized_suite_results,
 )
-from compgen.benchmarks.results import BenchmarkResult, compare_results, read_json
+from xpu_rt.benchmarks.results import BenchmarkResult, compare_results, read_json
 
 __all__ = [
     "BenchmarkResult",

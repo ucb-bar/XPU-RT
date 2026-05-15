@@ -1,6 +1,6 @@
 # Triton Integration Specification
 
-This document specifies how CompGen targets can become Triton backends, enabling developers to write `@triton.jit` kernels that compile to any CompGen-supported hardware.
+This document specifies how XPU-RT targets can become Triton backends, enabling developers to write `@triton.jit` kernels that compile to any XPU-RT-supported hardware.
 
 ## Background
 
@@ -102,7 +102,7 @@ Each target provides its own mapping from these semantics to hardware:
 }
 ```
 
-## What CompGen Provides Today
+## What XPU-RT Provides Today
 
 | Component | Status | Notes |
 |-----------|--------|-------|
@@ -135,7 +135,7 @@ Each target provides its own mapping from these semantics to hardware:
 
 ### Integration Path (No C++ Required)
 
-CompGen can provide a **Python-based backend** that generates target code without the full C++ MLIR pipeline:
+XPU-RT can provide a **Python-based backend** that generates target code without the full C++ MLIR pipeline:
 
 ```python
 class CompGenPythonBackend(BaseBackend):
@@ -148,16 +148,16 @@ class CompGenPythonBackend(BaseBackend):
     
     def _python_lower(self, linalg_ir, options, metadata):
         # Parse linalg IR
-        # Apply CompGen's xDSL passes (tiling, microop decomposition)
+        # Apply XPU-RT's xDSL passes (tiling, microop decomposition)
         # Emit target code (assembly, C, Python)
         return compiled_bytes
 ```
 
 This trades compilation speed for implementation simplicity — suitable for development and kernel authoring, with a C++ backend added later for production.
 
-## Comparison: Hexagon vs CompGen
+## Comparison: Hexagon vs XPU-RT
 
-| Aspect | Hexagon-MLIR | CompGen |
+| Aspect | Hexagon-MLIR | XPU-RT |
 |--------|-------------|---------|
 | Frontend (Triton) | `HexagonBackend(BaseBackend)` | `CompGenBackend(BaseBackend)` (to build) |
 | Frontend (PyTorch) | torch-MLIR `fx.export_and_import()` | TorchDynamo `capture_dynamo_partitions()` (done) |

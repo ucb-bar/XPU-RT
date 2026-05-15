@@ -406,7 +406,7 @@ def run_compiled_bottleneck(
         summary_md_path.write_text(
             "# Compiled Bottleneck (M-22) — no_measurements\n\n"
             "No M-19 / M-20 compiled-kernel measurements found. "
-            "Set `COMPGEN_RUN_KERNELS=1` to enable.\n",
+            "Set `XPU_RT_RUN_KERNELS=1` to enable.\n",
             encoding="utf-8",
         )
         return CompiledBottleneckResult(

@@ -1,4 +1,4 @@
-"""Tests for :mod:`compgen.agent.llm_driver_recovery`.
+"""Tests for :mod:`xpu_rt.agent.llm_driver_recovery`.
 
 Covers the three core paths:
   1. No LLM — deterministic classifier picks every strategy.
@@ -13,15 +13,15 @@ from pathlib import Path
 
 import torch
 import torch.nn as nn
-from compgen.agent.llm_driver_recovery import (
+from xpu_rt.agent.llm_driver_recovery import (
     RecoveryPlan,
     plan_recovery,
 )
-from compgen.api import compile_model
-from compgen.api import device as _device
-from compgen.capture.unsupported.classify import UnsupportedClassification
-from compgen.llm.base import GenerationResponse
-from compgen.llm.mock_client import MockLLMClient
+from xpu_rt.api import compile_model
+from xpu_rt.api import device as _device
+from xpu_rt.capture.unsupported.classify import UnsupportedClassification
+from xpu_rt.llm.base import GenerationResponse
+from xpu_rt.llm.mock_client import MockLLMClient
 
 EXEMPLAR = Path(__file__).resolve().parents[1] / "targetgen" / "exemplars" / "test_gpu_simt.yaml"
 

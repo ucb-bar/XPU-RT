@@ -10,7 +10,7 @@ adapter module.
 
 from __future__ import annotations
 
-from compgen.dialects.dialect_provider_types import (
+from xpu_rt.dialects.dialect_provider_types import (
     DialectProviderCard,
     DialectProviderCardError,
 )

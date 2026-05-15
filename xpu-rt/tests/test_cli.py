@@ -8,8 +8,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from click.testing import CliRunner
-from compgen.cli import main
-from compgen.llm.base import GenerationResponse
+from xpu_rt.cli import main
+from xpu_rt.llm.base import GenerationResponse
 
 
 def test_cli_help() -> None:
@@ -58,7 +58,7 @@ def test_cli_llm_smoke_uses_runtime_builder(monkeypatch) -> None:
                 model_id=self.model,
             )
 
-    monkeypatch.setattr("compgen.cli.build_llm_runtime", lambda selection, working_dir=None: _FakeRuntime())
+    monkeypatch.setattr("xpu_rt.cli.build_llm_runtime", lambda selection, working_dir=None: _FakeRuntime())
     runner = CliRunner()
     result = runner.invoke(main, ["--llm-backend", "claude-cli", "llm", "smoke", "--prompt", "Say ready"])
 
@@ -90,7 +90,7 @@ def test_cli_scaffold_target_generates_package(tmp_path: Path) -> None:
 
 def test_cli_module_entrypoint_runs() -> None:
     result = subprocess.run(
-        [sys.executable, "-m", "compgen.cli", "--version"],
+        [sys.executable, "-m", "xpu_rt.cli", "--version"],
         capture_output=True,
         text=True,
         check=False,

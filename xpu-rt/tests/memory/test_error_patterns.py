@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from compgen.memory.error_patterns import (
+from xpu_rt.memory.error_patterns import (
     ErrorPattern,
     error_patterns_to_prompt,
     record_error_pattern,
@@ -13,7 +13,7 @@ from compgen.memory.error_patterns import (
 
 @pytest.fixture
 def memory(tmp_path):
-    from compgen.memory.store import CompilerMemory
+    from xpu_rt.memory.store import CompilerMemory
 
     return CompilerMemory(
         db_path=tmp_path / "test.db",

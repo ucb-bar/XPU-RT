@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from compgen.models import build_default_model_catalog
+from xpu_rt.models import build_default_model_catalog
 
 
 def test_default_model_catalog_contains_frontier_entries() -> None:

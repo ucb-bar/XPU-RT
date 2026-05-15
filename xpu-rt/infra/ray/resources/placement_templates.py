@@ -1,4 +1,4 @@
-"""Placement group templates for common CompGen workloads.
+"""Placement group templates for common XPU-RT workloads.
 
 These templates define resource bundles for Ray placement groups,
 enabling co-location and hardware-aware scheduling.

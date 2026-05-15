@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from compgen.providers.provider_types import (
+from xpu_rt.providers.provider_types import (
     INTEGRATION_LEVELS,
     PAPER_CLAIMABLE_LEVELS,
 )

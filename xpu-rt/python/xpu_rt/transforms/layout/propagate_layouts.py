@@ -18,7 +18,7 @@ from xdsl.dialects.builtin import ModuleOp, StringAttr
 
 log = structlog.get_logger()
 
-PROPAGATED_ENCODING_ATTR = "compgen.propagated_encoding"
+PROPAGATED_ENCODING_ATTR = "xpu_rt.propagated_encoding"
 
 # Ops that are layout-transparent (output layout = input layout)
 _TRANSPARENT_PREFIXES = (
@@ -38,7 +38,7 @@ _TRANSPARENT_OPS = frozenset(
 
 def _is_ukernel_transparent(op) -> bool:  # type: ignore[no-untyped-def]
     """Check if an op is a transparent ukernel (compiler can see through it)."""
-    attr = op.attributes.get("compgen.ukernel_transparency")
+    attr = op.attributes.get("xpu_rt.ukernel_transparency")
     return bool(attr and hasattr(attr, "data") and attr.data == "transparent")
 
 
@@ -54,7 +54,7 @@ def _is_transparent(op) -> bool:  # type: ignore[no-untyped-def]
 
 def _get_encoding(op) -> str | None:  # type: ignore[no-untyped-def]
     """Get the layout encoding from an op (propagated or direct)."""
-    for attr_key in (PROPAGATED_ENCODING_ATTR, "compgen.layout_hint", "compgen.encoding"):
+    for attr_key in (PROPAGATED_ENCODING_ATTR, "xpu_rt.layout_hint", "xpu_rt.encoding"):
         attr = op.attributes.get(attr_key)
         if attr and hasattr(attr, "data"):
             return attr.data

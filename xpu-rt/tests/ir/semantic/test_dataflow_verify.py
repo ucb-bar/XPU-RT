@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from compgen.ir.semantic.dataflow_verify import AnalysisVerificationResult
+from xpu_rt.ir.semantic.dataflow_verify import AnalysisVerificationResult
 
 
 def test_analysis_verification_result_sound() -> None:
@@ -25,7 +25,7 @@ def test_analysis_verification_result_unsound() -> None:
 def test_verify_analysis_soundness() -> None:
     """verify_analysis should check that analysis is a sound over-approximation."""
     z3 = pytest.importorskip("z3")
-    from compgen.ir.semantic.dialect import PredicateOp, SemanticType
+    from xpu_rt.ir.semantic.dialect import PredicateOp, SemanticType
 
     bv_type = SemanticType(kind="bitvector", width=8)
     # Test 'eq' predicate
@@ -45,7 +45,7 @@ def test_verify_analysis_soundness() -> None:
 def test_verify_analysis_timeout() -> None:
     """verify_analysis with 'true' predicate should always be satisfiable."""
     z3 = pytest.importorskip("z3")
-    from compgen.ir.semantic.dialect import PredicateOp
+    from xpu_rt.ir.semantic.dialect import PredicateOp
 
     pred = PredicateOp(name="true")
     expr = pred.to_z3({})

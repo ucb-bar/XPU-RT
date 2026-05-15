@@ -37,12 +37,12 @@ from xdsl.irdl import (
 from xdsl.traits import NoTerminator, Pure
 from xdsl.utils.exceptions import VerifyException
 
-from compgen.ir.event.attrs import (
+from xpu_rt.ir.event.attrs import (
     EventCoordAttr,
     EventTensorTypeAttr,
     SchedulingPolicyAttr,
 )
-from compgen.ir.recipe.attrs import ProvenanceAttr
+from xpu_rt.ir.recipe.attrs import ProvenanceAttr
 
 
 @irdl_op_definition

@@ -33,7 +33,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from compgen.runtime.execution_plan import (
+from xpu_rt.runtime.execution_plan import (
     ExecutionPlan,
     RegionKernelBinding,
     RegionPlacement,
@@ -131,16 +131,16 @@ def _try_canonical_fallback(
     if body is None:
         return None
     try:
-        from compgen.graph_compilation.kernel_codegen_response import (
+        from xpu_rt.graph_compilation.kernel_codegen_response import (
             _reconstruct_contract_from_dict,
         )
-        from compgen.kernels.contract_migration import (
+        from xpu_rt.kernels.contract_migration import (
             migrate_contract_body_v3_to_v3_1,
         )
-        from compgen.kernels.kernel_certificate import (
+        from xpu_rt.kernels.kernel_certificate import (
             find_certificate_by_canonical_hash,
         )
-        from compgen.promotion.contract_hash import canonical_contract_hash
+        from xpu_rt.promotion.contract_hash import canonical_contract_hash
 
         migrated = migrate_contract_body_v3_to_v3_1(body)
         contract = _reconstruct_contract_from_dict(migrated)

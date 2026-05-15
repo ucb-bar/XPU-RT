@@ -67,7 +67,7 @@ def plot_convergence(records: list[RunRecord], output_dir: str | Path) -> Path:
 
 
 def plot_baseline_comparison(records: list[RunRecord], output_dir: str | Path) -> Path:
-    """Bar chart comparing CompGen vs baselines (eager CPU, eager GPU, compiled GPU)."""
+    """Bar chart comparing XPU-RT vs baselines (eager CPU, eager GPU, compiled GPU)."""
     plt = _require_matplotlib()
     import numpy as np
 
@@ -79,16 +79,16 @@ def plot_baseline_comparison(records: list[RunRecord], output_dir: str | Path) -
     eager_cpu = [r.baselines.eager_cpu_latency_us for r in records]
     eager_gpu = [r.baselines.eager_gpu_latency_us for r in records]
     compiled = [r.baselines.compiled_gpu_latency_us for r in records]
-    compgen = [r.baselines.compgen_latency_us for r in records]
+    xpu_rt = [r.baselines.xpu_rt_latency_us for r in records]
 
     ax.bar(x - 1.5 * width, eager_cpu, width, label="Eager CPU", color="#e74c3c", alpha=0.8)
     ax.bar(x - 0.5 * width, eager_gpu, width, label="Eager GPU", color="#3498db", alpha=0.8)
     ax.bar(x + 0.5 * width, compiled, width, label="torch.compile", color="#2ecc71", alpha=0.8)
-    ax.bar(x + 1.5 * width, compgen, width, label="CompGen", color="#9b59b6", alpha=0.8)
+    ax.bar(x + 1.5 * width, xpu_rt, width, label="XPU-RT", color="#9b59b6", alpha=0.8)
 
     ax.set_xlabel("Model / Target")
     ax.set_ylabel("Latency (μs)")
-    ax.set_title("End-to-End Latency: CompGen vs Baselines")
+    ax.set_title("End-to-End Latency: XPU-RT vs Baselines")
     ax.set_xticks(x)
     ax.set_xticklabels(labels, fontsize=8)
     ax.legend()
@@ -561,15 +561,15 @@ def plot_verification_catch_matrix(records: list[RunRecord], output_dir: str | P
 
 
 def plot_proposal_funnel(records: list[RunRecord], output_dir: str | Path) -> Path:
-    """Proposal-to-promotion funnel for the CompGen runs."""
+    """Proposal-to-promotion funnel for the XPU-RT runs."""
     plt = _require_matplotlib()
     import numpy as np
 
-    compgen_records = [r for r in records if r.system_name == "compgen"]
-    explored = sum(r.generation.candidate_recipes_explored for r in compgen_records)
-    transforms = sum(r.generation.candidate_transforms for r in compgen_records)
-    rejected = sum(r.generation.rejected_by_verification for r in compgen_records)
-    promoted = sum(r.generation.promoted_candidates for r in compgen_records)
+    xpu_rt_records = [r for r in records if r.system_name == "xpu-rt"]
+    explored = sum(r.generation.candidate_recipes_explored for r in xpu_rt_records)
+    transforms = sum(r.generation.candidate_transforms for r in xpu_rt_records)
+    rejected = sum(r.generation.rejected_by_verification for r in xpu_rt_records)
+    promoted = sum(r.generation.promoted_candidates for r in xpu_rt_records)
 
     values = [explored, transforms, max(explored - rejected, 0), promoted]
     labels = ["Explored", "Transforms", "Accepted", "Promoted"]

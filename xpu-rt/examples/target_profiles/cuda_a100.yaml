@@ -1,4 +1,4 @@
-# CompGen Target Profile: NVIDIA A100-SXM4-80GB
+# XPU-RT Target Profile: NVIDIA A100-SXM4-80GB
 #
 # Single-device GPU profile for NVIDIA A100.
 # Values from NVIDIA A100 datasheet and CUDA documentation.
@@ -52,7 +52,7 @@ devices:
       - nvlink
       - cuda_graphs
       # ETC megakernel capability flags (Event Tensor Compiler integration).
-      # Used by compgen.agent.gates.megakernel as a B200 stand-in until a
+      # Used by xpu_rt.agent.gates.megakernel as a B200 stand-in until a
       # dedicated cuda_b200.yaml lands.
       - persistent_kernels
       - semaphore_atomics

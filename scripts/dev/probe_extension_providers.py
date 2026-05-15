@@ -24,7 +24,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from compgen.providers.provider_reports import write_probe_reports
+from xpu_rt.providers.provider_reports import write_probe_reports
 
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:

@@ -12,7 +12,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from compgen.stages.bundle import BundleStage
+from xpu_rt.stages.bundle import BundleStage
 
 
 class TestBundleStageOutputDirContract:
@@ -44,7 +44,7 @@ class TestBundleStageOutputDirContract:
         """Guard against a regression re-introducing the fallback:
         ``tempfile`` must not even be imported by ``stages.bundle.stage``.
         """
-        import compgen.stages.bundle.stage as bundle_stage
+        import xpu_rt.stages.bundle.stage as bundle_stage
 
         assert not hasattr(bundle_stage, "tempfile"), (
             "stages.bundle.stage must not import tempfile — a tempdir fallback defeats the artifact contract"
@@ -55,13 +55,13 @@ class TestFactoryOutputDirContract:
     """Each stack factory must reject None output_dir."""
 
     def test_cuda_factory(self) -> None:
-        from compgen.stages.targets.cuda_gpu import create_cuda_gpu_stack
+        from xpu_rt.stages.targets.cuda_gpu import create_cuda_gpu_stack
 
         with pytest.raises(ValueError, match="output_dir"):
             create_cuda_gpu_stack(output_dir=None)  # type: ignore[arg-type]
 
     def test_rocm_factory(self) -> None:
-        from compgen.stages.targets.rocm_gpu import create_rocm_gpu_stack
+        from xpu_rt.stages.targets.rocm_gpu import create_rocm_gpu_stack
 
         with pytest.raises(ValueError, match="output_dir"):
             create_rocm_gpu_stack(output_dir=None)  # type: ignore[arg-type]

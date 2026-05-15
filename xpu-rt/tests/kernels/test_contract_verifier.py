@@ -16,8 +16,8 @@ from pathlib import Path
 
 import pytest
 
-from compgen.kernels.contract_v3 import KernelContractV3
-from compgen.kernels.contract_verifier import (
+from xpu_rt.kernels.contract_v3 import KernelContractV3
+from xpu_rt.kernels.contract_verifier import (
     generate_obligations,
     verify_kernel,
     write_validation_report,

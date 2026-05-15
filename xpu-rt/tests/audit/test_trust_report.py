@@ -1,4 +1,4 @@
-"""Tests for compgen.audit.trust_report."""
+"""Tests for xpu_rt.audit.trust_report."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from compgen.audit.trust_report import (
+from xpu_rt.audit.trust_report import (
     TrustReport,
     build_trust_report,
     emit_trust_report,
@@ -72,7 +72,7 @@ def test_emit_trust_report_writes_json_and_md(tmp_path: Path) -> None:
 
 
 def test_trust_report_to_markdown_lists_each_gate() -> None:
-    from compgen.audit.errors import GateResult
+    from xpu_rt.audit.errors import GateResult
     report = TrustReport(commit="abc", generated_at_utc="2026-05-05T00:00:00Z")
     report.gates.append(GateResult(name="realness_scan", status="pass", detail="0 hits"))
     report.gates.append(GateResult(name="caveat_ledger", status="skipped", detail="no seed"))
@@ -105,7 +105,7 @@ def test_trust_report_with_real_run_dir(tmp_path: Path) -> None:
 
     Exercises the import_provenance gate end-to-end.
     """
-    from compgen.graph_compilation.run import run_graph_compilation
+    from xpu_rt.graph_compilation.run import run_graph_compilation
 
     REPO_ROOT = Path(__file__).resolve().parents[2]
     run_dir = tmp_path / "real_run"

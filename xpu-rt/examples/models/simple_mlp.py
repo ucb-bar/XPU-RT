@@ -1,4 +1,4 @@
-"""Simple MLP model for CompGen pipeline testing.
+"""Simple MLP model for XPU-RT pipeline testing.
 
 A minimal 3-layer MLP (Linear -> GELU -> Linear) that exercises
 the basic capture and IR construction pipeline:

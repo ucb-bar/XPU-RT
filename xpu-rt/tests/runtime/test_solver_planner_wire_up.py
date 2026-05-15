@@ -22,8 +22,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from compgen.runtime.planner import ExecutionPlanner, plan_execution
-from compgen.targets.schema import (
+from xpu_rt.runtime.planner import ExecutionPlanner, plan_execution
+from xpu_rt.targets.schema import (
     DeviceSpec,
     Interconnect,
     MemoryLevel,
@@ -119,7 +119,7 @@ def test_solver_artifact_dir_passes_m69_gates(tmp_path: Path):
     planner = ExecutionPlanner(target=_two_device_target(), solver_artifact_dir=artifact_dir)
     planner.plan(_multi_op_module())
 
-    from compgen.audit.solver_gates import all_solver_gates
+    from xpu_rt.audit.solver_gates import all_solver_gates
 
     gates = all_solver_gates(run_dir=run_dir)
     failed = [(g.name, g.detail) for g in gates if g.status == "fail"]

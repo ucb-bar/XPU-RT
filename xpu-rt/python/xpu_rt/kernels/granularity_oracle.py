@@ -30,14 +30,14 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-from compgen.kernels.contract_v3 import (
+from xpu_rt.kernels.contract_v3 import (
     Granularity,
     HardwareEnvelope,
     KernelArchetype,
     KernelContractV3,
 )
-from compgen.kernels.fusion_oracle import FusionDecision, should_fuse
-from compgen.memory.knowledge import shared_store
+from xpu_rt.kernels.fusion_oracle import FusionDecision, should_fuse
+from xpu_rt.memory.knowledge import shared_store
 
 
 @dataclass(frozen=True)
@@ -241,7 +241,7 @@ __all__ = ["GranularityVerdict", "recommend_granularity"]
 def _emit_advisory(verdict: GranularityVerdict, *, target_name: str, region_size: int) -> None:
     """Best-effort ``oracle_advisory`` emission for granularity verdicts."""
     try:
-        from compgen.trace import OraclePublisher
+        from xpu_rt.trace import OraclePublisher
 
         OraclePublisher.emit(
             oracle="granularity",

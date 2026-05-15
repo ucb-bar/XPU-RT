@@ -11,7 +11,7 @@ import pytest
 
 z3 = pytest.importorskip("z3")
 
-from compgen.solve.solver_types import (
+from xpu_rt.solve.solver_types import (
     BackendAvailabilityStatus,
     BackendProbeResult,
     SolverBackendName,
@@ -19,7 +19,7 @@ from compgen.solve.solver_types import (
     SolverRequest,
     SolverStatus,
 )
-from compgen.solve.z3_obligations import (
+from xpu_rt.solve.z3_obligations import (
     OBLIGATION_KIND_COPY_IDENTITY,
     OBLIGATION_KIND_SHAPE_PREDICATE_IMPLICATION,
     OBLIGATION_KIND_TILE_INDEX_BOUNDS,
@@ -212,7 +212,7 @@ def test_solve_request_unavailable_returns_blocked():
 def test_via_z3_backend_solve():
     """End-to-end: registry -> Z3Backend.solve -> z3_obligations."""
 
-    from compgen.solve.backend_registry import default_registry
+    from xpu_rt.solve.backend_registry import default_registry
 
     reg = default_registry()
     backend = reg.get_backend(SolverBackendName.Z3)
@@ -230,7 +230,7 @@ def test_via_z3_backend_solve():
 
 
 def test_kernel_certificate_round_trips_z3_ref():
-    from compgen.kernels.kernel_certificate import KernelCertificate
+    from xpu_rt.kernels.kernel_certificate import KernelCertificate
 
     cert = KernelCertificate(
         schema_version="kernel_certificate_v1",

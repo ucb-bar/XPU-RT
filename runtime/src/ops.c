@@ -1,10 +1,10 @@
-// Copyright 2026 CompGen Authors. All rights reserved.
+// Copyright 2026 XPU-RT Authors. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 //
-// Portable float32 op primitives for CompGen's ahead-of-time runtime.
-// See compgen/ops.h for contract / scope notes.
+// Portable float32 op primitives for XPU-RT's ahead-of-time runtime.
+// See xpu_rt/ops.h for contract / scope notes.
 
-#include "compgen/ops.h"
+#include "xpu_rt/ops.h"
 
 void cg_conv2d_f32(
     const float *in, float *out,

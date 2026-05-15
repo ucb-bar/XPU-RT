@@ -1,6 +1,6 @@
-site_name: CompGen
-site_description: User-facing documentation for CompGen, an LLM-driven compiler generator.
-repo_url: https://github.com/compgen-project/compgen
+site_name: XPU-RT
+site_description: User-facing documentation for XPU-RT, an LLM-driven compiler generator.
+repo_url: https://github.com/xpu_rt-project/xpu_rt
 theme:
   name: material
   features:
@@ -24,7 +24,7 @@ nav:
       - Extension Authoring: getting-started/extension-authoring.md
       - What Works Today: getting-started/what-works-today.md
   - Concepts:
-      - What CompGen Is: concepts/what-is-compgen.md
+      - What XPU-RT Is: concepts/what-is-xpu_rt.md
       - Architecture Overview: concepts/architecture.md
       - Verification Model: concepts/verification.md
       - Semantic IR Verification: concepts/semantic_ir_verification.md

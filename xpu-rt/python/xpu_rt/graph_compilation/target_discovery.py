@@ -548,7 +548,7 @@ def build_target_yaml(
         )
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(
-        "# Auto-discovered by `python -m compgen.graph_compilation discover-target`.\n"
+        "# Auto-discovered by `python -m xpu_rt.graph_compilation discover-target`.\n"
         "# Review and adjust before relying on this for production cost models.\n"
         + yaml.safe_dump(obj, sort_keys=False, default_flow_style=False),
         encoding="utf-8",

@@ -4,7 +4,7 @@
 
 ## Goal
 
-Catalog every place in `python/compgen/` where target-specific
+Catalog every place in `python/xpu_rt/` where target-specific
 assumptions leak into otherwise-universal code, classify each by
 its true scope (any-target / class / vendor / arch), and map it
 to its destination under the unified `targets/{class}/{vendor}/{arch}/`
@@ -16,7 +16,7 @@ mechanical move in Wave 1.14 traces back to a row here.
 ## The unified hierarchy (recap)
 
 ```
-python/compgen/
+python/xpu_rt/
   ── universal modules below stay vendor-blind ──
   api.py                     compile_to_megakernel — calls into adapters
   runtime/autotune/          BackendChoice dispatch — class/vendor/arch lookup
@@ -89,7 +89,7 @@ Format per row: **what's there** → **scope** → **destination**.
 | Symbol | Scope | Destination |
 |---|---|---|
 | `Device.create("cuda:0")` | gpu (any-GPU concept; NVIDIA impl) | `targets/gpu/contracts.py::Device` Protocol + `targets/gpu/nvidia/common/device.py` impl |
-| `load_library` (picks libcompgen_rt-cuda.so vs cpu.so) | any-target dispatch | becomes `targets.dispatch.load_native_library(target_class)` |
+| `load_library` (picks libxpu_rt-cuda.so vs cpu.so) | any-target dispatch | becomes `targets.dispatch.load_native_library(target_class)` |
 | `_NativeHalUnavailable` | universal | `runtime/native/errors.py` (stays — applies to any HAL backend) |
 
 ### `transforms/emit_cuda_megakernel.py` (mixed — splits across migration)
@@ -148,10 +148,10 @@ Format per row: **what's there** → **scope** → **destination**.
 
 | Symbol | Scope | Destination |
 |---|---|---|
-| `compgen_compile_torch_model` | universal | stays |
-| `compgen_run_compiled_bundle` | universal | stays; calls vendor runtime via adapter |
-| `compgen_cublasdx_header_smoke` | gpu.nvidia | `targets/gpu/nvidia/common/mcp_tools.py` |
-| `compgen_run_cuda_source` | gpu.nvidia | `targets/gpu/nvidia/common/mcp_tools.py` |
+| `xpu_rt_compile_torch_model` | universal | stays |
+| `xpu_rt_run_compiled_bundle` | universal | stays; calls vendor runtime via adapter |
+| `xpu_rt_cublasdx_header_smoke` | gpu.nvidia | `targets/gpu/nvidia/common/mcp_tools.py` |
+| `xpu_rt_run_cuda_source` | gpu.nvidia | `targets/gpu/nvidia/common/mcp_tools.py` |
 | `target_arch="sm_100"` default | gpu.nvidia.blackwell hardcode → comes from probe | already auto-detected; remove the default |
 
 ### `runtime/probe.py`

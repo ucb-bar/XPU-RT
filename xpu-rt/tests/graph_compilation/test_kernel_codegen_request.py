@@ -29,7 +29,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 def _invoke(*, model: str, out_dir: Path, stop_after: str = "kernel-codegen-request") -> subprocess.CompletedProcess:
     return subprocess.run(
         [
-            sys.executable, "-m", "compgen.graph_compilation", "run",
+            sys.executable, "-m", "xpu_rt.graph_compilation", "run",
             "--model", str(REPO_ROOT / f"configs/models/{model}.yaml"),
             "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
             "--out", str(out_dir),
@@ -47,7 +47,7 @@ def _invoke(*, model: str, out_dir: Path, stop_after: str = "kernel-codegen-requ
 
 class TestSchema:
     def test_to_dict_round_trips(self) -> None:
-        from compgen.graph_compilation.kernel_codegen import (
+        from xpu_rt.graph_compilation.kernel_codegen import (
             KernelCodegenRequest, _ContractPaths,
         )
         req = KernelCodegenRequest(
@@ -208,7 +208,7 @@ def test_e2e_byte_stable_across_reruns(tmp_path: Path) -> None:
 def test_e2e_task_id_deterministic_from_inputs(merlin_run: Path) -> None:
     """task_id derives from (region_id, candidate_id) — no random
     suffix, no timestamp."""
-    from compgen.graph_compilation.kernel_codegen import _task_id
+    from xpu_rt.graph_compilation.kernel_codegen import _task_id
     body = _read_request(merlin_run)
     expected = _task_id(
         candidate_id=body["candidate_id"],

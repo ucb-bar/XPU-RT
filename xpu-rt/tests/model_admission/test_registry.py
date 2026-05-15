@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from compgen.model_admission.registry import (
+from xpu_rt.model_admission.registry import (
     DEFAULT_MODELS_DIR,
     DEFAULT_REGISTRY_PATH,
     DEFAULT_SLICES_DIR,
@@ -62,7 +62,7 @@ def test_required_proxies_have_proxy_loader(registry):
     for entry in suite.required_proxy:
         cfg = registry.models[entry.model_id]
         assert cfg.loader.kind == "proxy", f"{entry.model_id}: loader.kind={cfg.loader.kind} (expected 'proxy')"
-        assert cfg.loader.proxy_module.startswith("compgen.model_admission.proxies."), cfg.loader.proxy_module
+        assert cfg.loader.proxy_module.startswith("xpu_rt.model_admission.proxies."), cfg.loader.proxy_module
 
 
 def test_huge_models_are_slice_only(registry):

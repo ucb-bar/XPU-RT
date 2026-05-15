@@ -6,7 +6,7 @@ import time
 from dataclasses import dataclass
 from typing import Any, Protocol
 
-from compgen.semantic.synthesis.guard_lang import (
+from xpu_rt.semantic.synthesis.guard_lang import (
     Add,
     BoolN,
     BoolOp,
@@ -22,7 +22,7 @@ from compgen.semantic.synthesis.guard_lang import (
     Var,
     and_,
 )
-from compgen.solve.backends.smt import SMTSolver
+from xpu_rt.solve.backends.smt import SMTSolver
 
 
 class SoundnessFormulaSpec(Protocol):

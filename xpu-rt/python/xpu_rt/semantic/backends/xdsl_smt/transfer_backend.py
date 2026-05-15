@@ -21,11 +21,11 @@ from typing import Any
 import structlog
 from xdsl.dialects.builtin import ModuleOp
 
-from compgen.semantic.backends.xdsl_smt.results import (
+from xpu_rt.semantic.backends.xdsl_smt.results import (
     StructuredCounterexample,
     TransferResult,
 )
-from compgen.semantic.backends.xdsl_smt.tv_backend import _check_z3_available
+from xpu_rt.semantic.backends.xdsl_smt.tv_backend import _check_z3_available
 
 log = structlog.get_logger()
 

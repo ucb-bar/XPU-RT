@@ -1,48 +1,48 @@
-# CompGen
+# XPU-RT
 
-CompGen is an LLM-driven compiler generator for heterogeneous hardware targets.
+XPU-RT is an LLM-driven compiler generator for heterogeneous hardware targets.
 It does not replace your compiler — it generates the target-specific *recipe*
 around one: the transforms, kernel decisions, placement/scheduling plans,
 runtime packaging, and verification outputs that turn a PyTorch program into a
 verified deployment bundle for a given hardware profile.
 
-The primary way to drive CompGen is through Claude Code via its MCP server.
+The primary way to drive XPU-RT is through Claude Code via its MCP server.
 Every pipeline stage is exposed as an MCP tool, so the LLM can inspect, propose,
 and verify compilation decisions interactively.
 
 ## Install
 
 ```bash
-pip install compgen
+pip install xpu-rt
 ```
 
-Installs the compiler generator + the MCP server (`compgen-mcp`). For the
+Installs the compiler generator + the MCP server (`xpu-rt-mcp`). For the
 optional extras, see [docs/getting-started/installation.md](docs/getting-started/installation.md).
 
 ## Wire up Claude Code
 
 ```bash
-compgen mcp install          # merges into ~/.claude.json (backup on edit)
-compgen mcp doctor           # verifies tools load and discovery works
+xpu-rt mcp install          # merges into ~/.claude.json (backup on edit)
+xpu-rt mcp doctor           # verifies tools load and discovery works
 ```
 
-Then restart Claude Code and the `compgen` server appears in the tool picker.
-Prefer to paste the config yourself? `compgen mcp print-config` emits the
-snippet to stdout. Project-scoped `.mcp.json` works too: `compgen mcp install --project`.
+Then restart Claude Code and the `xpu-rt` server appears in the tool picker.
+Prefer to paste the config yourself? `xpu-rt mcp print-config` emits the
+snippet to stdout. Project-scoped `.mcp.json` works too: `xpu-rt mcp install --project`.
 
 ## Extend it in user space
 
-When you need something CompGen doesn't ship — a new kernel provider, a new
+When you need something XPU-RT doesn't ship — a new kernel provider, a new
 target backend, a custom vendor MLIR dialect adapter — scaffold it locally and
 the running MCP server picks it up on next restart:
 
 ```bash
-compgen ext new provider my_chip       # scaffolds a pip-installable pack
+xpu-rt ext new provider my_chip       # scaffolds a pip-installable pack
 cd my_chip && pip install -e .
-compgen ext list                       # verify discovery
+xpu-rt ext list                       # verify discovery
 ```
 
-Drop-in Python tools at `~/.compgen/extensions/*.py` are discovered without any
+Drop-in Python tools at `~/.xpu_rt/extensions/*.py` are discovered without any
 `pip install` step — useful for one-off experimentation. See
 [docs/getting-started/extension-authoring.md](docs/getting-started/extension-authoring.md).
 
@@ -50,8 +50,8 @@ Drop-in Python tools at `~/.compgen/extensions/*.py` are discovered without any
 
 ```python
 import torch, torch.nn as nn
-from compgen.options import cuda_a100_defaults
-from compgen.pipeline import compile_and_diff
+from xpu_rt.options import cuda_a100_defaults
+from xpu_rt.pipeline import compile_and_diff
 
 class Block(nn.Module):
     def __init__(self):
@@ -75,15 +75,15 @@ print("passed:", report.passed, "opaque rate:", report.opaque_rate)
 
 - Staged xDSL pipeline covering structural, quantization, layout, distributed,
   control-flow, and runtime-side passes.
-- Custom dialects `compgen.quant`, `compgen.tensor_ext`, `compgen.linalg_ext`,
-  `compgen.event`, `compgen.collective`, plus FP8 + HMX tile primitives on
-  `compgen.accel`.
+- Custom dialects `xpu_rt.quant`, `xpu_rt.tensor_ext`, `xpu_rt.linalg_ext`,
+  `xpu_rt.event`, `xpu_rt.collective`, plus FP8 + HMX tile primitives on
+  `xpu_rt.accel`.
 - `CompGenOptions` presets (`cuda_a100`, `cuda_h100`, `npu_fp8`), an LRU
   pipeline cache, differential test harness, Triton kernel emitter, autotuner,
   benchmark harness.
 - Real-workload fixtures under `tests/_fixtures/` (SmolVLA, Gemma, TinyLlama,
   Qwen-MoE, VLA-decoder) used by the pipeline probes.
-- MCP server (`compgen-mcp`) exposing every stage as a first-class tool that
+- MCP server (`xpu-rt-mcp`) exposing every stage as a first-class tool that
   Claude Code (or any MCP client) can drive.
 
 ## Documentation
@@ -100,8 +100,8 @@ print("passed:", report.passed, "opaque rate:", report.opaque_rate)
 ## From source (contributors)
 
 ```bash
-git clone --recurse-submodules https://github.com/compgen-project/compgen.git
-cd compgen && ./scripts/bootstrap.sh
+git clone --recurse-submodules https://github.com/xpu-rt-project/xpu_rt.git
+cd xpu-rt && ./scripts/bootstrap.sh
 ```
 
 See [AGENT.md](AGENT.md) for the repository-local operating manual.

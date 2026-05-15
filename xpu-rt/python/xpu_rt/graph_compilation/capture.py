@@ -1,12 +1,12 @@
 """graph_capture stage: real Stage 0 capture wrapper.
 
-This module is a *thin orchestrator* around existing CompGen capture
+This module is a *thin orchestrator* around existing XPU-RT capture
 infrastructure. It does not reimplement capture or diagnostics — it
 calls:
 
-- :func:`compgen.capture.torch_export.capture_dynamo_partitions` (primary)
-- :func:`compgen.capture.torch_export.capture_frontend_artifact` (optional canonical)
-- :func:`compgen.capture.dynamo_baseline.compile_baseline` (non-gating timing)
+- :func:`xpu_rt.capture.torch_export.capture_dynamo_partitions` (primary)
+- :func:`xpu_rt.capture.torch_export.capture_frontend_artifact` (optional canonical)
+- :func:`xpu_rt.capture.dynamo_baseline.compile_baseline` (non-gating timing)
 
 …and then materialises every result on disk under ``00_graph_capture/``.
 
@@ -41,14 +41,14 @@ import torch
 import torch.fx
 import yaml
 
-from compgen.capture.dynamo_baseline import compile_baseline
-from compgen.capture.torch_export import (
+from xpu_rt.capture.dynamo_baseline import compile_baseline
+from xpu_rt.capture.torch_export import (
     CaptureArtifact,
     capture_dynamo_partitions,
     capture_frontend_artifact,
 )
-from compgen.graph_compilation.artifacts import ArtifactRef, StageRecord
-from compgen.graph_compilation.hashing import sha256_file, sha256_tree
+from xpu_rt.graph_compilation.artifacts import ArtifactRef, StageRecord
+from xpu_rt.graph_compilation.hashing import sha256_file, sha256_tree
 
 # --------------------------------------------------------------------------- #
 # Config loading
@@ -70,7 +70,7 @@ class ModelConfig:
     raw_sha256: str
     # Set when loading a ``model_config_v1`` (admission) YAML — the
     # graph_compilation capture stage will route through
-    # :mod:`compgen.graph_compilation.admission_bridge` instead of
+    # :mod:`xpu_rt.graph_compilation.admission_bridge` instead of
     # importing a Python module from ``model_path``.
     admission_yaml: Path | None = None
     admission_slice_id: str | None = None
@@ -142,7 +142,7 @@ class TargetConfig:
 
 
 # --------------------------------------------------------------------------- #
-# Model loader (deliberately separate from compgen.capture's loader so we own
+# Model loader (deliberately separate from xpu_rt.capture's loader so we own
 # the seed / factory contract for graph compilation)
 # --------------------------------------------------------------------------- #
 
@@ -437,7 +437,7 @@ def run_graph_capture(
     torch.manual_seed(model_cfg.seed)
 
     if model_cfg.admission_yaml is not None:
-        from compgen.graph_compilation.admission_bridge import (
+        from xpu_rt.graph_compilation.admission_bridge import (
             make_factory_from_admission_config,
         )
 
@@ -667,8 +667,8 @@ def run_graph_capture(
         "stage_id": "graph_capture",
         "status": overall_status,
         "capture_api": [
-            "compgen.capture.torch_export.capture_dynamo_partitions",
-            "compgen.capture.torch_export.capture_frontend_artifact",
+            "xpu_rt.capture.torch_export.capture_dynamo_partitions",
+            "xpu_rt.capture.torch_export.capture_frontend_artifact",
         ],
         "model_id": model_cfg.model_id,
         "target_id": target_cfg.target_id,

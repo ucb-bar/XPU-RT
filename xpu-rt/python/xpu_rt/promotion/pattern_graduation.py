@@ -15,7 +15,7 @@ Read the lifecycle:
     4. When ``min_workloads`` AND ``min_targets`` thresholds are met,
        a ``PatternPromotionRequest`` is emitted for review.
     5. Promotion reviewers implement a concrete pass and register it
-       as a new TOOL in ``compgen.llm.registry``.
+       as a new TOOL in ``xpu_rt.llm.registry``.
 
 This module reads-only from transcript files; it never mutates them.
 """

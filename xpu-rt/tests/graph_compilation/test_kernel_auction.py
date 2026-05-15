@@ -40,7 +40,7 @@ def _invoke_pipeline(
 ) -> subprocess.CompletedProcess:
     return subprocess.run(
         [
-            sys.executable, "-m", "compgen.graph_compilation", "run",
+            sys.executable, "-m", "xpu_rt.graph_compilation", "run",
             "--model", str(REPO_ROOT / f"configs/models/{model}.yaml"),
             "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
             "--out", str(out_dir),
@@ -59,8 +59,8 @@ def _invoke_pipeline(
 
 class TestAuctionDisabled:
     def test_mode_disabled_short_circuits(self) -> None:
-        from compgen.graph_compilation.kernel_auction import run_kernel_auction
-        from compgen.kernels.registry import ProviderRegistry
+        from xpu_rt.graph_compilation.kernel_auction import run_kernel_auction
+        from xpu_rt.kernels.registry import ProviderRegistry
 
         # Use disabled mode — should skip even with applicable providers.
         result = run_kernel_auction(
@@ -167,7 +167,7 @@ class _StubBidProvider:
     applicable_targets: tuple[str, ...] = ()
     applicable_archetypes: tuple[str, ...] = ()
     priority: int = 0
-    _compgen_source: str = "in_tree"
+    _xpu_rt_source: str = "in_tree"
     bid_rationale: str = "stub"
 
     @property
@@ -178,7 +178,7 @@ class _StubBidProvider:
         return True
 
     def search(self, contract, budget):  # noqa: ANN001
-        from compgen.kernels.provider import ProviderResult
+        from xpu_rt.kernels.provider import ProviderResult
 
         if not self.will_search_succeed:
             return ProviderResult(found=False)
@@ -192,7 +192,7 @@ class _StubBidProvider:
         return []
 
     def bid(self, contract_v3):  # noqa: ANN001
-        from compgen.kernels.provider import BidPreview
+        from xpu_rt.kernels.provider import BidPreview
 
         return BidPreview(
             provider_name=self.name_str,
@@ -210,7 +210,7 @@ class TestStubProviders:
         run_dir = tmp_path / "run"
         result = subprocess.run(
             [
-                sys.executable, "-m", "compgen.graph_compilation", "run",
+                sys.executable, "-m", "xpu_rt.graph_compilation", "run",
                 "--model", str(REPO_ROOT / "configs/models/merlin_mlp_wide.yaml"),
                 "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
                 "--out", str(run_dir),
@@ -224,8 +224,8 @@ class TestStubProviders:
         return run_dir
 
     def test_two_providers_one_succeeds(self, tmp_path: Path) -> None:
-        from compgen.graph_compilation.kernel_auction import run_kernel_auction
-        from compgen.kernels.registry import ProviderRegistry
+        from xpu_rt.graph_compilation.kernel_auction import run_kernel_auction
+        from xpu_rt.kernels.registry import ProviderRegistry
 
         run_dir = self._bootstrap_run_dir(tmp_path)
         reg = ProviderRegistry()
@@ -251,8 +251,8 @@ class TestStubProviders:
         assert len([f for f in result.fulfilled if f.found]) == 1
 
     def test_no_winner_when_all_searches_fail(self, tmp_path: Path) -> None:
-        from compgen.graph_compilation.kernel_auction import run_kernel_auction
-        from compgen.kernels.registry import ProviderRegistry
+        from xpu_rt.graph_compilation.kernel_auction import run_kernel_auction
+        from xpu_rt.kernels.registry import ProviderRegistry
 
         run_dir = self._bootstrap_run_dir(tmp_path)
         reg = ProviderRegistry()

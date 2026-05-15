@@ -5,7 +5,7 @@ MOSEK, HiGHS), caches probe results, and exposes typed lookup.
 
 The registry is the single point that knows which backends are
 installed and licensed on this host. Routing
-(:mod:`compgen.solve.routing`) consults it before dispatching a
+(:mod:`xpu_rt.solve.routing`) consults it before dispatching a
 problem.
 
 Probe results are cached per-registry-instance. Tests can construct
@@ -18,8 +18,8 @@ from __future__ import annotations
 import threading
 from typing import Iterable
 
-from compgen.solve.backends.base import SolverBackend
-from compgen.solve.solver_types import (
+from xpu_rt.solve.backends.base import SolverBackend
+from xpu_rt.solve.solver_types import (
     BackendAvailabilityStatus,
     BackendProbeResult,
     SolverBackendName,
@@ -127,10 +127,10 @@ def default_registry() -> SolverBackendRegistry:
 
         registry = SolverBackendRegistry()
         # Lazy imports — each backend handles its own optional dep.
-        from compgen.solve.backends.highs_backend import HighsBackend
-        from compgen.solve.backends.mosek_backend import MosekBackend
-        from compgen.solve.backends.ortools_cp_sat_backend import OrToolsCpSatBackend
-        from compgen.solve.backends.z3_backend import Z3Backend
+        from xpu_rt.solve.backends.highs_backend import HighsBackend
+        from xpu_rt.solve.backends.mosek_backend import MosekBackend
+        from xpu_rt.solve.backends.ortools_cp_sat_backend import OrToolsCpSatBackend
+        from xpu_rt.solve.backends.z3_backend import Z3Backend
 
         registry.register(Z3Backend())
         registry.register(OrToolsCpSatBackend())

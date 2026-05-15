@@ -20,7 +20,7 @@ import json
 import sys
 from pathlib import Path
 
-from compgen.audit.extension_architecture import run_audit
+from xpu_rt.audit.extension_architecture import run_audit
 
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:

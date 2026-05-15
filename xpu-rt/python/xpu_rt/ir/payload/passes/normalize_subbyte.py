@@ -2,7 +2,7 @@
 
 Walks the module, finds tensor operands whose element type is a
 sub-byte integer (i4 / i2 / u4 / u2 / i1), and attaches a canonical
-``compgen.subbyte_packing`` attribute declaring the packing strategy
+``xpu_rt.subbyte_packing`` attribute declaring the packing strategy
 (``bit_pack`` / ``byte_pack`` / ``target_native``). Counts annotated
 tensors into a module-level attribute.
 
@@ -25,8 +25,8 @@ from xdsl.dialects.builtin import (
 )
 from xdsl.ir import Operation
 
-from compgen.ir.payload.passes.base import PayloadPass
-from compgen.llm.registry import AutocompCostImpact, ToolArg
+from xpu_rt.ir.payload.passes.base import PayloadPass
+from xpu_rt.llm.registry import AutocompCostImpact, ToolArg
 
 _SUBBYTE_BITS = frozenset({1, 2, 4})
 
@@ -94,10 +94,10 @@ class NormalizeSubByte(PayloadPass):
         for op in module.walk():
             if not _op_has_subbyte_tensor(op):
                 continue
-            op.attributes["compgen.subbyte_packing"] = StringAttr(packing)
+            op.attributes["xpu_rt.subbyte_packing"] = StringAttr(packing)
             annotated += 1
 
-        module.attributes["compgen.normalize_subbyte.count"] = IntegerAttr(annotated, i64)
+        module.attributes["xpu_rt.normalize_subbyte.count"] = IntegerAttr(annotated, i64)
         return module
 
 

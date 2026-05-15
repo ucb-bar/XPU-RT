@@ -11,7 +11,7 @@ from typing import Protocol, runtime_checkable
 
 import structlog
 
-from compgen.kernels.exo_seedgen import ExoSeedProc
+from xpu_rt.kernels.exo_seedgen import ExoSeedProc
 
 log = structlog.get_logger()
 
@@ -223,7 +223,7 @@ class ExoScheduleAgent:
         candidate_idx: int,
     ) -> str:
         """Build LLM prompt for schedule generation."""
-        from compgen.agent.prompts.exo_schedule import ExoScheduleContext, format_prompt
+        from xpu_rt.agent.prompts.exo_schedule import ExoScheduleContext, format_prompt
 
         ctx = ExoScheduleContext(
             proc_source=seed.proc_source,

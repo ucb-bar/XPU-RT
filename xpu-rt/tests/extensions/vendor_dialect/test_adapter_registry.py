@@ -3,22 +3,22 @@
 from __future__ import annotations
 
 import pytest
-from compgen.extensions.vendor_dialect.adapter import LoweringResult, VendorDialectAdapter
-from compgen.extensions.vendor_dialect.descriptor import (
+from xpu_rt.extensions.vendor_dialect.adapter import LoweringResult, VendorDialectAdapter
+from xpu_rt.extensions.vendor_dialect.descriptor import (
     BundlePlan,
     CompileEntry,
     LoweringStrategy,
     VendorDialectDescriptor,
     VerificationPlan,
 )
-from compgen.extensions.vendor_dialect.registry import (
+from xpu_rt.extensions.vendor_dialect.registry import (
     adapters_for_target,
     available_adapters,
     get_adapter,
     register_adapter,
     reset_registry,
 )
-from compgen.targets.backend import CompiledArtifact
+from xpu_rt.targets.backend import CompiledArtifact
 
 
 class DummyAdapter(VendorDialectAdapter):
@@ -36,7 +36,7 @@ class DummyAdapter(VendorDialectAdapter):
 def _descriptor(name: str, target: str) -> VendorDialectDescriptor:
     return VendorDialectDescriptor(
         name=name,
-        package_name=f"compgen_{name}",
+        package_name=f"xpu_rt_{name}",
         repo_path=f"/tmp/{name}",
         target=target,
         compile_entry=CompileEntry(),

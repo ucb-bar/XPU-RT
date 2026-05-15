@@ -1,4 +1,4 @@
-"""Operations for the ``compgen.quant`` dialect.
+"""Operations for the ``xpu_rt.quant`` dialect.
 
 Each op mirrors a TorchAO / PyTorch ``quantized_decomposed`` op exactly
 so that the FX→xDSL importer can emit them directly instead of opaque
@@ -15,7 +15,7 @@ Key design choices:
   ``group_size``, ``quant_min``, ``quant_max``, ``output_dtype``).
   Passes that need a richer type description attach an
   ``AffineQuantizedTensorType`` via the optional
-  ``qtype`` property (defined in :mod:`compgen.ir.quant.types`).
+  ``qtype`` property (defined in :mod:`xpu_rt.ir.quant.types`).
 - Scale + zero_point + scales_and_zeros operands stay as ordinary
   tensor SSA values. This matches how TorchAO's ``AffineQuantizedTensor``
   stores them (subclass-level attributes of the tensor instance, which
@@ -44,7 +44,7 @@ from xdsl.irdl import (
 from xdsl.traits import Pure
 from xdsl.utils.exceptions import VerifyException
 
-from compgen.ir.quant.types import AffineQuantizedTensorType
+from xpu_rt.ir.quant.types import AffineQuantizedTensorType
 
 # -- small shared validators ----------------------------------------------------
 
@@ -87,7 +87,7 @@ class QuantizePerTensorOp(IRDLOperation):
     Result: a tensor with integer (or sub-byte) element type.
     """
 
-    name = "compgen.quant.quantize_per_tensor"
+    name = "xpu_rt.quant.quantize_per_tensor"
 
     input = operand_def(Attribute)
     scale = operand_def(Attribute)
@@ -114,7 +114,7 @@ class DequantizePerTensorOp(IRDLOperation):
         out = (input - zero_point) * scale
     """
 
-    name = "compgen.quant.dequantize_per_tensor"
+    name = "xpu_rt.quant.dequantize_per_tensor"
 
     input = operand_def(Attribute)
     scale = operand_def(Attribute)
@@ -143,7 +143,7 @@ class QuantizePerChannelOp(IRDLOperation):
     Scales and zero_points are vectors along ``axis``.
     """
 
-    name = "compgen.quant.quantize_per_channel"
+    name = "xpu_rt.quant.quantize_per_channel"
 
     input = operand_def(Attribute)
     scales = operand_def(Attribute)
@@ -166,7 +166,7 @@ class QuantizePerChannelOp(IRDLOperation):
 class DequantizePerChannelOp(IRDLOperation):
     """Per-channel affine dequantize."""
 
-    name = "compgen.quant.dequantize_per_channel"
+    name = "xpu_rt.quant.dequantize_per_channel"
 
     input = operand_def(Attribute)
     scales = operand_def(Attribute)
@@ -197,7 +197,7 @@ class QuantizePerGroupOp(IRDLOperation):
     are shaped ``[..., K / group_size]``.
     """
 
-    name = "compgen.quant.quantize_per_group"
+    name = "xpu_rt.quant.quantize_per_group"
 
     input = operand_def(Attribute)
     scales = operand_def(Attribute)
@@ -223,7 +223,7 @@ class QuantizePerGroupOp(IRDLOperation):
 class DequantizePerGroupOp(IRDLOperation):
     """Per-group affine dequantize."""
 
-    name = "compgen.quant.dequantize_per_group"
+    name = "xpu_rt.quant.dequantize_per_group"
 
     input = operand_def(Attribute)
     scales = operand_def(Attribute)
@@ -257,7 +257,7 @@ class WeightInt8PackMMOp(IRDLOperation):
     The weight is stored as int8, with per-output-channel scales.
     """
 
-    name = "compgen.quant.weight_int8pack_mm"
+    name = "xpu_rt.quant.weight_int8pack_mm"
 
     input = operand_def(Attribute)
     weight = operand_def(Attribute)
@@ -288,7 +288,7 @@ class WeightInt4PackMMOp(IRDLOperation):
         group_size: the last-dim group size (e.g. 32, 64, 128).
     """
 
-    name = "compgen.quant.weight_int4pack_mm"
+    name = "xpu_rt.quant.weight_int4pack_mm"
 
     input = operand_def(Attribute)
     weight = operand_def(Attribute)
@@ -317,7 +317,7 @@ class WeightInt4PackQMOp(IRDLOperation):
     attention paths.
     """
 
-    name = "compgen.quant.weight_int4pack_qm"
+    name = "xpu_rt.quant.weight_int4pack_qm"
 
     input = operand_def(Attribute)
     weight = operand_def(Attribute)
@@ -341,7 +341,7 @@ class ChooseQParamsPerTensorOp(IRDLOperation):
     scalar tensors.
     """
 
-    name = "compgen.quant.choose_qparams_per_tensor"
+    name = "xpu_rt.quant.choose_qparams_per_tensor"
 
     input = operand_def(Attribute)
     scale = result_def(Attribute)
@@ -361,7 +361,7 @@ class ChooseQParamsPerChannelOp(IRDLOperation):
     Mirrors ``aten._choose_qparams_per_channel.default``.
     """
 
-    name = "compgen.quant.choose_qparams_per_channel"
+    name = "xpu_rt.quant.choose_qparams_per_channel"
 
     input = operand_def(Attribute)
     scales = result_def(Attribute)
@@ -387,7 +387,7 @@ class FakeQuantOp(IRDLOperation):
     ``torchao.quantization.qat.affine_fake_quantize``.
     """
 
-    name = "compgen.quant.fake_quantize"
+    name = "xpu_rt.quant.fake_quantize"
 
     input = operand_def(Attribute)
     scale = operand_def(Attribute)

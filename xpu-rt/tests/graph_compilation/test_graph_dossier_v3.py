@@ -22,7 +22,7 @@ from pathlib import Path
 
 import pytest
 
-from compgen.graph_compilation.graph_dossier_v3 import (
+from xpu_rt.graph_compilation.graph_dossier_v3 import (
     _validate_v3,
     build_graph_dossier_v3,
 )
@@ -53,7 +53,7 @@ def _need_suites() -> None:
         if not s.is_dir():
             pytest.skip(
                 f"fixture suite missing: {s}; "
-                f"run `compgen.graph_compilation run-suite` first"
+                f"run `xpu_rt.graph_compilation run-suite` first"
             )
 
 
@@ -314,16 +314,16 @@ def test_no_compiler_core_imports_in_v3_module() -> None:
     from compiler-core packages that are explicitly out of scope per
     the hard non-goals."""
     src = (
-        REPO_ROOT / "python" / "compgen" / "graph_compilation"
+        REPO_ROOT / "python" / "xpu-rt" / "graph_compilation"
         / "graph_dossier_v3.py"
     ).read_text(encoding="utf-8")
     forbidden = (
-        "from compgen.ir",
-        "import compgen.ir",
-        "from compgen.capture",
-        "import compgen.capture",
-        "from compgen.pipeline",
-        "import compgen.pipeline",
+        "from xpu_rt.ir",
+        "import xpu_rt.ir",
+        "from xpu_rt.capture",
+        "import xpu_rt.capture",
+        "from xpu_rt.pipeline",
+        "import xpu_rt.pipeline",
         "from runtime.bundle_emit",
     )
     for pat in forbidden:

@@ -14,17 +14,17 @@ from pathlib import Path
 
 import pytest
 
-from compgen.solve.backend_registry import SolverBackendRegistry
-from compgen.solve.backends.highs_backend import HighsBackend
-from compgen.solve.backends.mosek_backend import MosekBackend
-from compgen.solve.memory_planner import (
+from xpu_rt.solve.backend_registry import SolverBackendRegistry
+from xpu_rt.solve.backends.highs_backend import HighsBackend
+from xpu_rt.solve.backends.mosek_backend import MosekBackend
+from xpu_rt.solve.memory_planner import (
     AliasCandidate,
     BufferSpec,
     MemoryPlanInput,
     TierCapacity,
     plan_memory,
 )
-from compgen.solve.solver_types import (
+from xpu_rt.solve.solver_types import (
     BackendAvailabilityStatus,
     BackendProbeResult,
     SolverBackendName,
@@ -157,9 +157,9 @@ def test_mosek_native_path_actually_runs():
     """
 
     pytest.importorskip("mosek")
-    from compgen.solve.backend_registry import default_registry
-    from compgen.solve.memory_planner import _build_formulation, _solve_milp_mosek
-    from compgen.solve.solver_types import (
+    from xpu_rt.solve.backend_registry import default_registry
+    from xpu_rt.solve.memory_planner import _build_formulation, _solve_milp_mosek
+    from xpu_rt.solve.solver_types import (
         SolverProblemKind,
         SolverRequest,
     )
@@ -201,9 +201,9 @@ def test_highs_path_does_not_invoke_mosek():
     that path. Mirrors the MOSEK-native pin from the opposite side.
     """
 
-    from compgen.solve.backend_registry import default_registry
-    from compgen.solve.memory_planner import _build_formulation, _solve_milp_highs
-    from compgen.solve.solver_types import (
+    from xpu_rt.solve.backend_registry import default_registry
+    from xpu_rt.solve.memory_planner import _build_formulation, _solve_milp_highs
+    from xpu_rt.solve.solver_types import (
         SolverProblemKind,
         SolverRequest,
     )
@@ -226,7 +226,7 @@ def test_highs_path_does_not_invoke_mosek():
 
 
 def test_corrupt_solved_plan_fails_when_consumed_by_execution_plan_validate():
-    from compgen.runtime.execution_plan import (
+    from xpu_rt.runtime.execution_plan import (
         BufferDescriptor,
         ExecutionPlan,
         Lifetime,

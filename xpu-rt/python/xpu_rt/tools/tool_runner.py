@@ -45,19 +45,19 @@ from typing import Any
 
 import jsonschema
 
-from compgen.tools.errors import (
+from xpu_rt.tools.errors import (
     ToolEntrypointError,
     ToolInputSchemaError,
     ToolOutputSchemaError,
     ToolRunError,
 )
-from compgen.tools.tool_card import TOOL_STATUSES, ToolCard
+from xpu_rt.tools.tool_card import TOOL_STATUSES, ToolCard
 
 
 def resolve_python_entrypoint(spec: str) -> Callable[..., Any]:
     """Resolve a ``module.path:attribute`` string to a callable.
 
-    Raises :class:`compgen.tools.errors.ToolEntrypointError` if the
+    Raises :class:`xpu_rt.tools.errors.ToolEntrypointError` if the
     module cannot be imported, the attribute does not exist, or the
     attribute is not callable. The original error is chained via
     ``__cause__`` so callers can see the underlying ImportError.
@@ -150,7 +150,7 @@ class ToolResult:
 
     * ``tool_id`` — copy of the card's ``tool_id``.
     * ``status`` — closed enum subset of
-      :data:`compgen.tools.tool_card.TOOL_STATUSES`. The runner
+      :data:`xpu_rt.tools.tool_card.TOOL_STATUSES`. The runner
       copies this from the tool's output dict and re-validates against
       the card's output_schema.
     * ``result`` — the raw output dict (already validated against
@@ -207,8 +207,8 @@ class ToolRunner:
 
     Example::
 
-        from compgen.tools import ToolRunner, load_tool_card
-        card = load_tool_card(Path("python/compgen/tools/cards/echo.yaml"))
+        from xpu_rt.tools import ToolRunner, load_tool_card
+        card = load_tool_card(Path("python/xpu_rt/tools/cards/echo.yaml"))
         result = ToolRunner().run(card, request={"text": "hi"}, out_dir=Path("/tmp/echo"))
         assert result.status == "ok"
     """

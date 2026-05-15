@@ -2,7 +2,7 @@
 #
 # Source: NVIDIA Blackwell architecture brief + B200 product page.
 # Numbers are the published spec sheet — Phase-6's runtime probe
-# (compgen.runtime.probe.probe_cuda_device) overrides any field
+# (xpu_rt.runtime.probe.probe_cuda_device) overrides any field
 # observed live on the actual silicon.
 #
 # This profile is the *target* the original ETC paper (Jin et al.,
@@ -82,7 +82,7 @@ interconnects:
     devices: [0, 1]
 
 cost_model:
-  # Defaults consumed by compgen.kernels.cost.roofline.predict when
+  # Defaults consumed by xpu_rt.kernels.cost.roofline.predict when
   # device_traits.metadata isn't populated yet. The probe overrides
   # these with measured values.
   fp8_tflops: 2500.0

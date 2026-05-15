@@ -1,4 +1,4 @@
-"""Policies for :class:`compgen.agent.loop.PhasedDriveLoop`.
+"""Policies for :class:`xpu_rt.agent.loop.PhasedDriveLoop`.
 
 A *policy* is a callable matching the signature
 
@@ -16,6 +16,6 @@ deterministic defaults are swappable via
 
 from __future__ import annotations
 
-from compgen.agent.policies.default import DeterministicDefaultPolicy
+from xpu_rt.agent.policies.default import DeterministicDefaultPolicy
 
 __all__ = ["DeterministicDefaultPolicy"]

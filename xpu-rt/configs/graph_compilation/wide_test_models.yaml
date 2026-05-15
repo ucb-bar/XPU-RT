@@ -3,7 +3,7 @@
 # a much broader set of model types:
 #
 #   - 6 canonical smoke models (synthetic + custom unsupported op)
-#   - 2 additional CompGen graph-shape edge cases (graph_break_mlp,
+#   - 2 additional XPU-RT graph-shape edge cases (graph_break_mlp,
 #     residual_branch)
 #   - 5 admission proxies built to mimic real foundation-model
 #     architectures (proxy_qwen_vl, proxy_llava, proxy_openvla,
@@ -24,7 +24,7 @@ schema_version: graph_compilation_suite_v1
 suite_id: wide_test_models
 description: |
   Wide-coverage verification suite covering 16 model types: synthetic
-  CompGen toys, edge-case graph shapes, real-architecture admission
+  XPU-RT toys, edge-case graph shapes, real-architecture admission
   proxies, and external (merlin) production model definitions.
 
 target: configs/targets/host_cpu.yaml
@@ -50,7 +50,7 @@ models:
     config: configs/models/custom_unsupported_op.yaml
     role: explicit unsupported op surface
 
-  # CompGen graph-shape edge cases
+  # XPU-RT graph-shape edge cases
   - id: graph_break_mlp
     config: configs/models/graph_break_mlp.yaml
     role: dynamo graph-break recovery (multiple captured partitions)

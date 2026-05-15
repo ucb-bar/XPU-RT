@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 import structlog
 
 if TYPE_CHECKING:
-    from compgen.memory.store import CompilerMemory
+    from xpu_rt.memory.store import CompilerMemory
 
 log = structlog.get_logger()
 
@@ -36,7 +36,7 @@ def record_calibration(
     Returns:
         Knowledge item ID.
     """
-    from compgen.memory.schema import KnowledgeKind, ScopeKind
+    from xpu_rt.memory.schema import KnowledgeKind, ScopeKind
 
     ratio = measured_us / max(estimated_us, 1e-9)
     summary = (
@@ -87,7 +87,7 @@ def get_calibration_factor(
     Returns:
         Average calibration factor, or 1.0 if no data.
     """
-    from compgen.memory.schema import KnowledgeKind, ScopeKind
+    from xpu_rt.memory.schema import KnowledgeKind, ScopeKind
 
     items = memory.retrieve_knowledge(
         kind=KnowledgeKind.HARDWARE_RULE,

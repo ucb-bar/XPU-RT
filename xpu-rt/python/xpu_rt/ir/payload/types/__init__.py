@@ -7,7 +7,7 @@ that upstream MLIR ships but xDSL does not.
 
 from __future__ import annotations
 
-from compgen.ir.payload.types.float8 import (
+from xpu_rt.ir.payload.types.float8 import (
     Float8E4M3FNType,
     Float8E5M2Type,
 )

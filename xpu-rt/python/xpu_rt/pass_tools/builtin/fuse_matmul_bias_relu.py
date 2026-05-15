@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from compgen.pass_tools.pass_tool_result import (
+from xpu_rt.pass_tools.pass_tool_result import (
     PassToolResult,
     make_no_op,
     make_proposal,

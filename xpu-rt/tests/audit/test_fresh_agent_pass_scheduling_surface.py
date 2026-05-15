@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from compgen.audit.fresh_agent import build_task_pack
+from xpu_rt.audit.fresh_agent import build_task_pack
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -104,10 +104,10 @@ def test_pack_carries_all_realness_contracts(task_pack: Path) -> None:
 # --------------------------------------------------------------------------- #
 
 
-def test_pack_includes_compgen_skills(task_pack: Path) -> None:
-    """The compgen, compgen-compile, compgen-candidate-selection
+def test_pack_includes_xpu_rt_skills(task_pack: Path) -> None:
+    """The xpu_rt, xpu_rt-compile, xpu_rt-candidate-selection
     skills are how the agent drives the compile."""
-    for skill in ("compgen", "compgen-compile", "compgen-candidate-selection"):
+    for skill in ("xpu-rt", "xpu_rt-compile", "xpu_rt-candidate-selection"):
         skill_md = task_pack / ".claude" / "skills" / skill / "SKILL.md"
         assert skill_md.exists(), f"skill {skill} missing"
 
@@ -135,5 +135,5 @@ def test_task_prompt_mentions_pass_cards(task_pack: Path) -> None:
 
 def test_task_prompt_lists_typed_outcomes_only(task_pack: Path) -> None:
     text = (task_pack / "TASK.md").read_text()
-    assert "typed-blocked" in text or "typed_blocked" in text or "compgen.runtime.errors" in text
+    assert "typed-blocked" in text or "typed_blocked" in text or "xpu_rt.runtime.errors" in text
     assert "silent partial pass is failure" in text or "silent partial" in text.lower()

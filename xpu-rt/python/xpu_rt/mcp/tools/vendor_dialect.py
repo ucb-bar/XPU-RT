@@ -5,14 +5,14 @@ adapters.
 The first four tools (``scan_vendor_repo``, ``propose_vendor_spec``,
 ``scaffold_vendor_package``, ``verify_vendor_package``) are the
 MCP-visible surface of the vendor integration agent. They are thin
-wrappers over :mod:`compgen.extensions.vendor_dialect` and
-:mod:`compgen.agent.vendor_integration`.
+wrappers over :mod:`xpu_rt.extensions.vendor_dialect` and
+:mod:`xpu_rt.agent.vendor_integration`.
 
-The two newer tools (``compgen_list_vendor_dialects``,
-``compgen_compile_torch_model_with_vendor``) let a remote agent
+The two newer tools (``xpu_rt_list_vendor_dialects``,
+``xpu_rt_compile_torch_model_with_vendor``) let a remote agent
 discover and drive vendor adapters that were registered through the
-``compgen.vendor_dialects`` entry-point group — i.e. user-space
-packages installed via pip, with no CompGen fork required.
+``xpu_rt.vendor_dialects`` entry-point group — i.e. user-space
+packages installed via pip, with no XPU-RT fork required.
 
 Each tool follows the repo-wide MCP convention:
 
@@ -21,7 +21,7 @@ Each tool follows the repo-wide MCP convention:
   specific payload
 * never prints — errors come back in the dict
 
-The tools intentionally do NOT require a CompGen session to be open.
+The tools intentionally do NOT require a XPU-RT session to be open.
 Vendor integration happens *before* a workload is loaded: the user
 points the MCP at a repo, reviews the proposed spec, approves, and
 scaffolds a package that can later be used in a real session.
@@ -38,17 +38,17 @@ from typing import Any
 
 import structlog
 
-from compgen.agent.vendor_integration.explore import explore_vendor_repo
-from compgen.agent.vendor_integration.propose_adapter import propose_adapter_layout
-from compgen.extensions.vendor_dialect.adapter import VendorDialectAdapter
-from compgen.extensions.vendor_dialect.descriptor import VendorDialectDescriptor
-from compgen.extensions.vendor_dialect.registry import (
+from xpu_rt.agent.vendor_integration.explore import explore_vendor_repo
+from xpu_rt.agent.vendor_integration.propose_adapter import propose_adapter_layout
+from xpu_rt.extensions.vendor_dialect.adapter import VendorDialectAdapter
+from xpu_rt.extensions.vendor_dialect.descriptor import VendorDialectDescriptor
+from xpu_rt.extensions.vendor_dialect.registry import (
     available_adapters,
     get_adapter,
 )
-from compgen.extensions.vendor_dialect.scaffold import scaffold_package
-from compgen.extensions.vendor_dialect.verify import verify_package
-from compgen.mcp.session import SessionManager
+from xpu_rt.extensions.vendor_dialect.scaffold import scaffold_package
+from xpu_rt.extensions.vendor_dialect.verify import verify_package
+from xpu_rt.mcp.session import SessionManager
 
 log = structlog.get_logger()
 
@@ -152,7 +152,7 @@ def scaffold_vendor_package(
         "files_written": [str(p) for p in result.files_written],
         "next_step": (
             f"pip install -e {result.package_dir} and call "
-            f"compgen.api.compile_with_vendor(model, adapter=get_adapter('{descriptor.name}'), ...)"
+            f"xpu_rt.api.compile_with_vendor(model, adapter=get_adapter('{descriptor.name}'), ...)"
         ),
     }
 
@@ -172,13 +172,13 @@ def verify_vendor_package(
     }
 
 
-_ENTRY_POINT_GROUP = "compgen.vendor_dialects"
+_ENTRY_POINT_GROUP = "xpu_rt.vendor_dialects"
 
 
-def compgen_list_vendor_dialects(sm: SessionManager) -> dict[str, Any]:
+def xpu_rt_list_vendor_dialects(sm: SessionManager) -> dict[str, Any]:
     """List every vendor dialect adapter discoverable in this process.
 
-    Walks the ``compgen.vendor_dialects`` entry-point group and returns
+    Walks the ``xpu_rt.vendor_dialects`` entry-point group and returns
     one record per advertised adapter. For each entry point we attempt
     to ``ep.load()`` and (if it's a callable factory) instantiate it,
     then surface the adapter's ``name``, ``target``, optional
@@ -308,7 +308,7 @@ def compgen_list_vendor_dialects(sm: SessionManager) -> dict[str, Any]:
     return {"vendor_dialects": out}
 
 
-def compgen_describe_vendor_dialect(
+def xpu_rt_describe_vendor_dialect(
     sm: SessionManager,
     *,
     vendor_name: str,
@@ -317,11 +317,11 @@ def compgen_describe_vendor_dialect(
 
     Per bridge #129: pre-screening tool — the agent asks "given the
     workload I'm about to compile, can ``vendor_name`` lower it?"
-    before committing to ``compgen_compile_torch_model_with_vendor``.
+    before committing to ``xpu_rt_compile_torch_model_with_vendor``.
 
     Resolves ``vendor_name`` against the same
-    ``compgen.vendor_dialects`` entry-point group as
-    :func:`compgen_list_vendor_dialects` and returns the adapter's
+    ``xpu_rt.vendor_dialects`` entry-point group as
+    :func:`xpu_rt_list_vendor_dialects` and returns the adapter's
     descriptor (target + extras) plus the result of its
     ``capabilities()`` method when implemented. Adapters predating
     the capabilities Protocol fall back to the descriptor's static
@@ -471,7 +471,7 @@ def compgen_describe_vendor_dialect(
     }
 
 
-def compgen_compile_torch_model_with_vendor(
+def xpu_rt_compile_torch_model_with_vendor(
     sm: SessionManager,
     *,
     model_pickle_b64: str,
@@ -484,7 +484,7 @@ def compgen_compile_torch_model_with_vendor(
 
     Resolves ``vendor_name`` against the process-wide
     :class:`VendorAdapterRegistry` (which auto-loads entry points), then
-    drives :func:`compgen.api.compile_with_vendor`. ``vendor_options``
+    drives :func:`xpu_rt.api.compile_with_vendor`. ``vendor_options``
     is forwarded as the adapter's ``options`` dict (the registry stores
     pre-instantiated adapters; per-call configuration goes through the
     ``compile`` boundary).
@@ -559,7 +559,7 @@ def compgen_compile_torch_model_with_vendor(
 
     # 3. Drive the vendor compile pipeline.
     try:
-        from compgen.api import compile_with_vendor
+        from xpu_rt.api import compile_with_vendor
 
         out_path = Path(output_dir).expanduser().resolve()
         out_path.mkdir(parents=True, exist_ok=True)
@@ -704,16 +704,16 @@ VENDOR_DIALECT_TOOLS: list[dict[str, Any]] = [
         },
     },
     {
-        "name": "compgen_list_vendor_dialects",
+        "name": "xpu_rt_list_vendor_dialects",
         "description": (
             "List every vendor dialect adapter advertised on the "
-            "'compgen.vendor_dialects' entry-point group. Returns one "
+            "'xpu_rt.vendor_dialects' entry-point group. Returns one "
             "record per adapter with name / target / version / "
             "capabilities() / module path. Adapters that fail to load "
             "are reported with an error field rather than being skipped."
         ),
         "phase": "inspect",
-        "handler": compgen_list_vendor_dialects,
+        "handler": xpu_rt_list_vendor_dialects,
         "input_schema": {
             "type": "object",
             "properties": {},
@@ -721,24 +721,24 @@ VENDOR_DIALECT_TOOLS: list[dict[str, Any]] = [
         },
     },
     {
-        "name": "compgen_describe_vendor_dialect",
+        "name": "xpu_rt_describe_vendor_dialect",
         "description": (
             "Return one vendor adapter's full descriptor + capabilities. "
             "Pre-screening tool the agent calls before committing to "
-            "compgen_compile_torch_model_with_vendor — given a workload's "
+            "xpu_rt_compile_torch_model_with_vendor — given a workload's "
             "shape/dtype, the agent asks 'can vendor X lower this?'. "
             "Status='vendor_not_found' (with the available registry "
             "names), 'load_failed', or 'ok'."
         ),
         "phase": "inspect",
-        "handler": compgen_describe_vendor_dialect,
+        "handler": xpu_rt_describe_vendor_dialect,
         "input_schema": {
             "type": "object",
             "properties": {
                 "vendor_name": {
                     "type": "string",
                     "description": (
-                        "Registry key for the vendor adapter. Use compgen_list_vendor_dialects to discover names."
+                        "Registry key for the vendor adapter. Use xpu_rt_list_vendor_dialects to discover names."
                     ),
                 },
             },
@@ -746,18 +746,18 @@ VENDOR_DIALECT_TOOLS: list[dict[str, Any]] = [
         },
     },
     {
-        "name": "compgen_compile_torch_model_with_vendor",
+        "name": "xpu_rt_compile_torch_model_with_vendor",
         "description": (
             "Compile a base64-pickled torch nn.Module through a "
             "registered vendor dialect adapter. Resolves the adapter "
-            "via the 'compgen.vendor_dialects' entry-point registry, "
-            "then drives compgen.api.compile_with_vendor. Returns "
+            "via the 'xpu_rt.vendor_dialects' entry-point registry, "
+            "then drives xpu_rt.api.compile_with_vendor. Returns "
             "status='vendor_not_found' (with the available registry "
             "names), 'load_failed', 'lowering_failed', or 'ok'. Never "
             "raises — failures land in status/error."
         ),
         "phase": "compile",
-        "handler": compgen_compile_torch_model_with_vendor,
+        "handler": xpu_rt_compile_torch_model_with_vendor,
         "input_schema": {
             "type": "object",
             "properties": {
@@ -777,7 +777,7 @@ VENDOR_DIALECT_TOOLS: list[dict[str, Any]] = [
                     "type": "string",
                     "description": (
                         "Registry key for the vendor adapter (e.g. "
-                        "'cuda_tile'). Use compgen_list_vendor_dialects "
+                        "'cuda_tile'). Use xpu_rt_list_vendor_dialects "
                         "to discover available names."
                     ),
                 },
@@ -801,9 +801,9 @@ VENDOR_DIALECT_TOOLS: list[dict[str, Any]] = [
 
 __all__ = [
     "VENDOR_DIALECT_TOOLS",
-    "compgen_compile_torch_model_with_vendor",
-    "compgen_describe_vendor_dialect",
-    "compgen_list_vendor_dialects",
+    "xpu_rt_compile_torch_model_with_vendor",
+    "xpu_rt_describe_vendor_dialect",
+    "xpu_rt_list_vendor_dialects",
     "propose_vendor_spec",
     "scaffold_vendor_package",
     "scan_vendor_repo",

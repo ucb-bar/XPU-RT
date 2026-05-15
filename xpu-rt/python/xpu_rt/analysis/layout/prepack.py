@@ -12,7 +12,7 @@ import logging
 from collections import Counter
 from dataclasses import dataclass
 
-from compgen.agent.analyzer import NetworkAnalysis
+from xpu_rt.agent.analyzer import NetworkAnalysis
 
 logger = logging.getLogger(__name__)
 

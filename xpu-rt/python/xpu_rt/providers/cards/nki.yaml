@@ -4,7 +4,7 @@ integration_level: probe
 target_families: [aws_neuron]
 contract_kinds: [matmul, pointwise, attention, fused_region]
 emits: [nki_source, neff]
-entrypoint: compgen.providers.adapters.nki:NkiProvider
+entrypoint: xpu_rt.providers.adapters.nki:NkiProvider
 paper_claimable: false
 required_env: [NEURON_HOME]
 required_commands: [neuronx-cc]

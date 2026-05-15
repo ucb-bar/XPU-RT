@@ -6,7 +6,7 @@ import shutil
 from pathlib import Path
 
 TO_DELETE = [
-    ".compgen",
+    ".xpu_rt",
     "artifacts/runs",
     "artifacts/cache",
     "artifacts/traces",

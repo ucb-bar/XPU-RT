@@ -2,10 +2,10 @@
 
 Every ported pass subclasses :class:`PayloadPass` and provides a
 ``run(module, **args) -> ModuleOp`` that applies the rewrite. The base
-class knows how to turn the pass into a :class:`compgen.llm.registry.Tool`
+class knows how to turn the pass into a :class:`xpu_rt.llm.registry.Tool`
 so the LLM registry automatically picks it up.
 
-Per `analysis/proposed_compgen_architecture.md` and
+Per `analysis/proposed_xpu_rt_architecture.md` and
 `user_perspective/reports/stage_b_second_wave_status.md`, the port is:
 
 - Single registration call: pass declares `name`, `phase`,
@@ -14,7 +14,7 @@ Per `analysis/proposed_compgen_architecture.md` and
 - ``covers_families`` is informational metadata (per
   `feedback_lean_heavily_on_inductor.md` updated guidance, it is NOT a
   registration filter — it informs the cost model via
-  :mod:`compgen.llm.registry.target_coverage`).
+  :mod:`xpu_rt.llm.registry.target_coverage`).
 - Stubs set ``stub=True`` and implement ``run()`` as a no-op until
   ported.
 """
@@ -26,7 +26,7 @@ from typing import Any, ClassVar
 
 from xdsl.dialects.builtin import ModuleOp
 
-from compgen.llm.registry import (
+from xpu_rt.llm.registry import (
     AutocompCostImpact,
     Registry,
     Tool,

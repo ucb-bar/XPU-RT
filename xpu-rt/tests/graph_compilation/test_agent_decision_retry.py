@@ -149,7 +149,7 @@ def fresh_run(tmp_path: Path) -> Path:
     _need_wide()
     out = tmp_path / "m15a_run"
     cmd = [
-        sys.executable, "-m", "compgen.graph_compilation", "run",
+        sys.executable, "-m", "xpu_rt.graph_compilation", "run",
         "--model", str(REPO_ROOT / "configs/models/merlin_mlp_wide.yaml"),
         "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
         "--out", str(out),
@@ -168,7 +168,7 @@ def _invoke_with_responses(
     repeatable --agent-decision-response. Re-creates run_dir from
     scratch (the wipe is part of run.py)."""
     cmd = [
-        sys.executable, "-m", "compgen.graph_compilation", "run",
+        sys.executable, "-m", "xpu_rt.graph_compilation", "run",
         "--model", str(REPO_ROOT / "configs/models/merlin_mlp_wide.yaml"),
         "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
         "--out", str(run_dir),
@@ -429,14 +429,14 @@ def test_mcp_commit_tool_returns_retry_required_on_validation_fail(
 ) -> None:
     """The MCP commit tool's response should distinguish retry_required
     from committed for downstream programmatic consumers."""
-    from compgen.mcp.tools.agent_decision import (
-        compgen_commit_agent_decision_response,
+    from xpu_rt.mcp.tools.agent_decision import (
+        xpu_rt_commit_agent_decision_response,
     )
 
     class _S: pass
 
     bad = _bad_response_nonexistent()
-    r = compgen_commit_agent_decision_response(
+    r = xpu_rt_commit_agent_decision_response(
         _S(),
         model_config="configs/models/merlin_mlp_wide.yaml",
         target_config="configs/targets/host_cpu.yaml",
@@ -458,13 +458,13 @@ def test_mcp_commit_tool_returns_retry_required_on_validation_fail(
 def test_mcp_commit_tool_returns_committed_on_pass(
     fresh_run: Path, tmp_path: Path,
 ) -> None:
-    from compgen.mcp.tools.agent_decision import (
-        compgen_commit_agent_decision_response,
+    from xpu_rt.mcp.tools.agent_decision import (
+        xpu_rt_commit_agent_decision_response,
     )
 
     class _S: pass
 
-    r = compgen_commit_agent_decision_response(
+    r = xpu_rt_commit_agent_decision_response(
         _S(),
         model_config="configs/models/merlin_mlp_wide.yaml",
         target_config="configs/targets/host_cpu.yaml",
@@ -489,7 +489,7 @@ def test_mcp_commit_tool_returns_committed_on_pass(
 def test_greedy_mode_unaffected_by_m15a(tmp_path: Path) -> None:
     out = tmp_path / "greedy_run"
     cmd = [
-        sys.executable, "-m", "compgen.graph_compilation", "run",
+        sys.executable, "-m", "xpu_rt.graph_compilation", "run",
         "--model", str(REPO_ROOT / "configs/models/merlin_mlp_wide.yaml"),
         "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
         "--out", str(out),

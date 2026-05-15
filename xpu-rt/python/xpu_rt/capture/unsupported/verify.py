@@ -7,9 +7,9 @@ from typing import Any
 
 import torch
 
-from compgen.capture.unsupported.detect import UnsupportedOperatorIssue
-from compgen.capture.unsupported.introspect import ExampleTensorInfo, UnsupportedOpDossier
-from compgen.capture.unsupported.synthesize_translation import SynthesizedPayloadTranslation
+from xpu_rt.capture.unsupported.detect import UnsupportedOperatorIssue
+from xpu_rt.capture.unsupported.introspect import ExampleTensorInfo, UnsupportedOpDossier
+from xpu_rt.capture.unsupported.synthesize_translation import SynthesizedPayloadTranslation
 
 
 @dataclass(frozen=True)

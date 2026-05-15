@@ -39,7 +39,7 @@ def _static_shape(shape_like: Any) -> list[int]:
     attribute builtin.int``.
 
     This helper mirrors the more-narrow
-    :func:`compgen.ir.payload.import_fx._coerce_static_dim`. Symbolic
+    :func:`xpu_rt.ir.payload.import_fx._coerce_static_dim`. Symbolic
     dims become xDSL's dynamic-dim sentinel (``-1``) so import
     completes; downstream passes that need static shapes handle the
     dynamic case through their own paths.
@@ -64,7 +64,7 @@ class DecompResult:
         pattern_hint: Optional canonical pattern name (e.g. "layer_norm",
             "softmax", "rms_norm", "dequantize_per_channel"). The
             ``FXImporter`` propagates this onto every emitted op as the
-            ``compgen._pattern_hint`` attribute so Phase 2 passes
+            ``xpu_rt._pattern_hint`` attribute so Phase 2 passes
             (``raise_special_ops``, ``fuse_dequant_matmul``, etc.) can
             recognize the op's origin without re-detecting.
     """
@@ -111,8 +111,8 @@ def _make_empty(result_type: TensorType) -> EmptyOp:
 
 
 def _attach_region_id(op: Operation, region_id: str) -> None:
-    """Attach a compgen.region_id attribute to an operation."""
-    op.attributes["compgen.region_id"] = StringAttr(region_id)
+    """Attach a xpu_rt.region_id attribute to an operation."""
+    op.attributes["xpu_rt.region_id"] = StringAttr(region_id)
 
 
 # ============================================================================
@@ -160,10 +160,10 @@ def decompose_linear(
     # so the dispatch graph can resolve the matmul's B operand to a
     # producer node. Providers that don't want to materialize the
     # transpose can ignore this region and use the matmul's
-    # ``compgen.transposed_b`` flag instead.
+    # ``xpu_rt.transposed_b`` flag instead.
     transpose_rid = _next_region_id("transpose")
     _attach_region_id(transpose, transpose_rid)
-    transpose.attributes["compgen.dispatch_id"] = StringAttr(transpose_rid)
+    transpose.attributes["xpu_rt.dispatch_id"] = StringAttr(transpose_rid)
     region_ids.append(transpose_rid)
     ops.append(transpose)
 
@@ -178,13 +178,13 @@ def decompose_linear(
     )
     rid = _next_region_id("matmul")
     _attach_region_id(matmul, rid)
-    matmul.attributes["compgen.dispatch_id"] = StringAttr(rid)
+    matmul.attributes["xpu_rt.dispatch_id"] = StringAttr(rid)
     # REQ-023: declare that this matmul's B operand is logically a
     # transposed weight. Providers that prefer to short-circuit the
     # transpose op (e.g. emit a B^T kernel kernel directly against
     # the original weight) can read this flag and skip the
     # transpose region.
-    matmul.attributes["compgen.transposed_b"] = StringAttr("true")
+    matmul.attributes["xpu_rt.transposed_b"] = StringAttr("true")
     region_ids.append(rid)
     ops.append(matmul)
 
@@ -256,18 +256,18 @@ def _scalar_to_tensor(scalar: Any, like_type: TensorType) -> tuple[list[Operatio
         pass
 
     # Pack fallback: build the constant in f32 and cast to the target.
-    # Emits an opaque ``func.call @_compgen_cast`` rather than an xDSL
+    # Emits an opaque ``func.call @_xpu_rt_cast`` rather than an xDSL
     # arith cast, because the linalg-on-tensor cast path would require
     # shape-aware loop nests that we don't have here. The cast call
-    # carries a ``compgen.cast_to`` attribute so downstream passes can
+    # carries a ``xpu_rt.cast_to`` attribute so downstream passes can
     # lower it alongside the rest of the opaque fallbacks.
     from xdsl.dialects.func import CallOp
 
     f32_like = TensorType(Float32Type(), like_type.get_shape())
     f32_attr = DenseIntOrFPElementsAttr.from_list(f32_like, [float(scalar)])
     f32_const = ConstantOp(f32_attr, f32_like)
-    cast = CallOp("_compgen_cast_scalar", [f32_const.result], [like_type])
-    cast.attributes["compgen.cast_to"] = StringAttr(str(elem))
+    cast = CallOp("_xpu_rt_cast_scalar", [f32_const.result], [like_type])
+    cast.attributes["xpu_rt.cast_to"] = StringAttr(str(elem))
     return [f32_const, cast], cast.res[0]
 
 
@@ -471,7 +471,7 @@ def _opaque_decomp(
     pattern_hint: str | None = None,
 ) -> DecompResult:
     """Shared helper for MVP decompositions that lower to a typed
-    ``func.call @op_name`` carrying a ``compgen.region_id`` and
+    ``func.call @op_name`` carrying a ``xpu_rt.region_id`` and
     optional pattern hint. Used for every op below whose full linalg
     body is deferred to the destructive-rewrite wave.
     """
@@ -595,7 +595,7 @@ def decompose_convolution(operands, meta, node_name):
     ``region_id``s — providers can claim them or skip them (the pack
     composer falls back to its own im2col helper when no provider
     matches). The middle matmul is a real ``linalg.matmul`` with
-    ``compgen.region_id`` so any matmul provider claims it.
+    ``xpu_rt.region_id`` so any matmul provider claims it.
 
     For unusual conv shapes (no static dimensions / non-MVP groups /
     transposed conv), this falls back to the prior opaque-conv path.
@@ -692,7 +692,7 @@ def decompose_convolution(operands, meta, node_name):
     im2col_call = CallOp("aten_im2col", [in_v], [im2col_type])
     im2col_rid = _next_region_id("im2col")
     _attach_region_id(im2col_call, im2col_rid)
-    im2col_call.attributes["compgen.dispatch_id"] = StringAttr(im2col_rid)
+    im2col_call.attributes["xpu_rt.dispatch_id"] = StringAttr(im2col_rid)
     region_ids.append(im2col_rid)
     ops.append(im2col_call)
 
@@ -701,7 +701,7 @@ def decompose_convolution(operands, meta, node_name):
     w_flat_call = CallOp("aten_flatten_weight", [w_v], [w_flat_type])
     w_flat_rid = _next_region_id("flatten")
     _attach_region_id(w_flat_call, w_flat_rid)
-    w_flat_call.attributes["compgen.dispatch_id"] = StringAttr(w_flat_rid)
+    w_flat_call.attributes["xpu_rt.dispatch_id"] = StringAttr(w_flat_rid)
     region_ids.append(w_flat_rid)
     ops.append(w_flat_call)
 
@@ -716,7 +716,7 @@ def decompose_convolution(operands, meta, node_name):
     )
     mm_rid = _next_region_id("matmul")
     _attach_region_id(matmul, mm_rid)
-    matmul.attributes["compgen.dispatch_id"] = StringAttr(mm_rid)
+    matmul.attributes["xpu_rt.dispatch_id"] = StringAttr(mm_rid)
     region_ids.append(mm_rid)
     ops.append(matmul)
 
@@ -725,7 +725,7 @@ def decompose_convolution(operands, meta, node_name):
     reshape_call = CallOp("aten_reshape", [matmul.res[0]], [out_type])
     reshape_rid = _next_region_id("reshape")
     _attach_region_id(reshape_call, reshape_rid)
-    reshape_call.attributes["compgen.dispatch_id"] = StringAttr(reshape_rid)
+    reshape_call.attributes["xpu_rt.dispatch_id"] = StringAttr(reshape_rid)
     region_ids.append(reshape_rid)
     ops.append(reshape_call)
 
@@ -1061,7 +1061,7 @@ def decompose_slice_tensor(operands, meta, node_name):
 
 # ============================================================================
 #  C.2 — TorchAO quantized_decomposed + _weight_int*pack_mm
-# W0.1: lowered to real compgen.quant ops (no more opaque func.call).
+# W0.1: lowered to real xpu_rt.quant ops (no more opaque func.call).
 # ============================================================================
 
 
@@ -1104,11 +1104,11 @@ def _element_type_from_meta(meta: dict[str, Any]) -> Any:
     if d == torch.int64:
         return IntegerType(64)
     if hasattr(torch, "float8_e4m3fn") and d == torch.float8_e4m3fn:
-        from compgen.ir.payload.types import Float8E4M3FNType
+        from xpu_rt.ir.payload.types import Float8E4M3FNType
 
         return Float8E4M3FNType()
     if hasattr(torch, "float8_e5m2") and d == torch.float8_e5m2:
-        from compgen.ir.payload.types import Float8E5M2Type
+        from xpu_rt.ir.payload.types import Float8E5M2Type
 
         return Float8E5M2Type()
     return Float32Type()
@@ -1161,7 +1161,7 @@ def decompose_quantize_per_tensor(operands, meta, node_name):
     quant_min, quant_max, dtype)`` -- scale/zero_point are scalar
     tensor operands in the traced graph.
     """
-    from compgen.ir.quant.ops import QuantizePerTensorOp
+    from xpu_rt.ir.quant.ops import QuantizePerTensorOp
 
     val: Any = meta["val"]
     elem = _element_type_from_meta(meta)
@@ -1203,7 +1203,7 @@ def decompose_quantize_per_tensor(operands, meta, node_name):
 
 def decompose_dequantize_per_tensor(operands, meta, node_name):
     """torch.ops.quantized_decomposed.dequantize_per_tensor.default."""
-    from compgen.ir.quant.ops import DequantizePerTensorOp
+    from xpu_rt.ir.quant.ops import DequantizePerTensorOp
 
     val: Any = meta["val"]
     elem = _element_type_from_meta(meta)
@@ -1242,7 +1242,7 @@ def decompose_quantize_per_channel(operands, meta, node_name):
     quant_max, dtype)``. ``scales`` + ``zero_points`` are 1-D tensors
     along ``axis``.
     """
-    from compgen.ir.quant.ops import QuantizePerChannelOp
+    from xpu_rt.ir.quant.ops import QuantizePerChannelOp
 
     val: Any = meta["val"]
     elem = _element_type_from_meta(meta)
@@ -1282,7 +1282,7 @@ def decompose_quantize_per_channel(operands, meta, node_name):
 
 def decompose_dequantize_per_channel(operands, meta, node_name):
     """torch.ops.quantized_decomposed.dequantize_per_channel.default."""
-    from compgen.ir.quant.ops import DequantizePerChannelOp
+    from xpu_rt.ir.quant.ops import DequantizePerChannelOp
 
     val: Any = meta["val"]
     elem = _element_type_from_meta(meta)
@@ -1323,7 +1323,7 @@ def decompose_quantize_per_group(operands, meta, node_name):
     FX signature: ``(input, scales, zero_points, group_size, quant_min,
     quant_max, dtype)``.
     """
-    from compgen.ir.quant.ops import QuantizePerGroupOp
+    from xpu_rt.ir.quant.ops import QuantizePerGroupOp
 
     val: Any = meta["val"]
     elem = _element_type_from_meta(meta)
@@ -1362,7 +1362,7 @@ def decompose_quantize_per_group(operands, meta, node_name):
 
 def decompose_dequantize_per_group(operands, meta, node_name):
     """torch.ops.quantized_decomposed.dequantize_per_group_along_last_dim.default."""
-    from compgen.ir.quant.ops import DequantizePerGroupOp
+    from xpu_rt.ir.quant.ops import DequantizePerGroupOp
 
     val: Any = meta["val"]
     elem = _element_type_from_meta(meta)
@@ -1399,7 +1399,7 @@ def decompose_dequantize_per_group(operands, meta, node_name):
 
 def decompose_weight_int8pack_mm(operands, meta, node_name):
     """aten._weight_int8pack_mm.default(input, weight_int8, scales)."""
-    from compgen.ir.quant.ops import WeightInt8PackMMOp
+    from xpu_rt.ir.quant.ops import WeightInt8PackMMOp
 
     val: Any = meta["val"]
     elem = _element_type_from_meta(meta)
@@ -1431,7 +1431,7 @@ def decompose_weight_int4pack_mm(operands, meta, node_name):
     weight, scales_and_zeros]``. Tests may supply a 4-operand list
     with a placeholder in slot 2 which is skipped.
     """
-    from compgen.ir.quant.ops import WeightInt4PackMMOp
+    from xpu_rt.ir.quant.ops import WeightInt4PackMMOp
 
     val: Any = meta["val"]
     elem = _element_type_from_meta(meta)
@@ -1470,7 +1470,7 @@ def decompose_weight_int4pack_mm(operands, meta, node_name):
 
 def decompose_weight_int4pack_qm(operands, meta, node_name):
     """aten._weight_int4pack_qm.default — batched int4 packed GEMM."""
-    from compgen.ir.quant.ops import WeightInt4PackQMOp
+    from xpu_rt.ir.quant.ops import WeightInt4PackQMOp
 
     val: Any = meta["val"]
     elem = _element_type_from_meta(meta)
@@ -1501,7 +1501,7 @@ def decompose_weight_int4pack_qm(operands, meta, node_name):
 
 def decompose_choose_qparams_per_tensor(operands, meta, node_name):
     """aten._choose_qparams_per_tensor.default."""
-    from compgen.ir.quant.ops import ChooseQParamsPerTensorOp
+    from xpu_rt.ir.quant.ops import ChooseQParamsPerTensorOp
 
     # Produces (scale: f32, zero_point: i64) scalar tensors.
     scale_type = TensorType(Float32Type(), [])
@@ -1544,7 +1544,7 @@ def decompose_choose_qparams_per_channel(operands, meta, node_name):
     """aten._choose_qparams_per_channel.default."""
     from xdsl.dialects.builtin import IntegerType
 
-    from compgen.ir.quant.ops import ChooseQParamsPerChannelOp
+    from xpu_rt.ir.quant.ops import ChooseQParamsPerChannelOp
 
     val: Any = meta.get("val")
     # For channel qparams we produce two 1-D vectors of size C along

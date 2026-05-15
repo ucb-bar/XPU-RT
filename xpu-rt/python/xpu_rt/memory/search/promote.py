@@ -10,14 +10,14 @@ from __future__ import annotations
 
 import structlog
 
-from compgen.memory.schema import (
+from xpu_rt.memory.schema import (
     CandidateStatus,
     KnowledgeItem,
     KnowledgeKind,
     Promotion,
     ScopeKind,
 )
-from compgen.memory.store import CompilerMemory
+from xpu_rt.memory.store import CompilerMemory
 
 log = structlog.get_logger()
 

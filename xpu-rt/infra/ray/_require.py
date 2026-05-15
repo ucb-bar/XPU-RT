@@ -10,8 +10,8 @@ from __future__ import annotations
 from typing import Any
 
 _INSTALL_MSG = (
-    "Ray is required for the CompGen infrastructure layer. "
-    "Install with: pip install 'compgen[ray]'"
+    "Ray is required for the XPU-RT infrastructure layer. "
+    "Install with: pip install 'xpu_rt[ray]'"
 )
 
 
@@ -58,4 +58,4 @@ def ensure_ray_initialized(address: str = "auto") -> None:
     """
     ray = require_ray()
     if not ray.is_initialized():
-        ray.init(address=address, namespace="compgen")
+        ray.init(address=address, namespace="xpu-rt")

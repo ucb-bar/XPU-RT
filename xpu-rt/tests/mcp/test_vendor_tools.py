@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 import yaml
-from compgen.mcp.tools.vendor_dialect import (
+from xpu_rt.mcp.tools.vendor_dialect import (
     VENDOR_DIALECT_TOOLS,
     scaffold_vendor_package,
     scan_vendor_repo,

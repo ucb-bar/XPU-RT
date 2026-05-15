@@ -7,8 +7,8 @@ from typing import Any
 
 from xdsl.ir import Operation
 
-from compgen.semantic.synthesis.facts import RecipeFactIndex, build_candidate_env
-from compgen.semantic.synthesis.specs import GuardFamilySpec, get_family_spec
+from xpu_rt.semantic.synthesis.facts import RecipeFactIndex, build_candidate_env
+from xpu_rt.semantic.synthesis.specs import GuardFamilySpec, get_family_spec
 
 
 @dataclass(frozen=True)

@@ -40,8 +40,8 @@ forbidden:
 - silently swallowing provider-discovery exceptions; resolution errors must surface in resolution_error
 realness_level: production_path
 required_evidence:
-- python/compgen/kernels/registry.py (ProviderApplicability, applicable() method, default_registry, discover_default_providers)
-- python/compgen/graph_compilation/kernel_codegen.py (_emit_registry_resolution + run_kernel_codegen_request integration)
+- python/xpu_rt/kernels/registry.py (ProviderApplicability, applicable() method, default_registry, discover_default_providers)
+- python/xpu_rt/graph_compilation/kernel_codegen.py (_emit_registry_resolution + run_kernel_codegen_request integration)
 - tests/graph_compilation/test_registry_wired.py
 feature_id: m55_registry_wired
 notes: |

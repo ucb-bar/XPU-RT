@@ -16,7 +16,7 @@ from xdsl.irdl import (
 )
 from xdsl.traits import Pure
 
-from compgen.ir.recipe.attrs import CostAttr
+from xpu_rt.ir.recipe.attrs import CostAttr
 
 
 @irdl_op_definition
@@ -99,8 +99,8 @@ class PromoteOp(IRDLOperation):
     - ``recipe_signature``: JSON projection of the region pattern this
       recipe was promoted *for* (op_family / dtype / layout /
       shape_class / target_class). Pairs with the
-      :class:`compgen.promotion.region_signature.RegionSignature` hash
-      stored in :class:`compgen.promotion.promote.RecipeKey`.
+      :class:`xpu_rt.promotion.region_signature.RegionSignature` hash
+      stored in :class:`xpu_rt.promotion.promote.RecipeKey`.
     - ``applies_when``: ``ArrayAttr`` of ``SymbolRefAttr`` references to
       ``recipe.fact_*`` ops that must hold for the recipe to apply
       (e.g. ``@fact_tile_divisible_16`` or ``@fact_contiguous_layout``).

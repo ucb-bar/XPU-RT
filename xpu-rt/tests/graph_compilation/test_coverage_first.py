@@ -39,7 +39,7 @@ def _invoke_pipeline(
 ) -> subprocess.CompletedProcess:
     return subprocess.run(
         [
-            sys.executable, "-m", "compgen.graph_compilation", "run",
+            sys.executable, "-m", "xpu_rt.graph_compilation", "run",
             "--model", str(REPO_ROOT / f"configs/models/{model}.yaml"),
             "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
             "--out", str(out_dir),
@@ -74,7 +74,7 @@ class TestCoverageSignature:
             (run_dir / "02_graph_analysis" / "region_dossiers").glob("matmul_0*.json")
         )[0]
 
-        from compgen.graph_compilation.coverage_first import (
+        from xpu_rt.graph_compilation.coverage_first import (
             _coverage_signature,
             _load_certificates,
             _resolve_target_name,
@@ -101,7 +101,7 @@ class TestCoverageSignature:
 
 class TestCoverageReportEmptyDossiers:
     def test_no_dossiers_overall(self, tmp_path: Path) -> None:
-        from compgen.graph_compilation.coverage_first import run_coverage_first
+        from xpu_rt.graph_compilation.coverage_first import run_coverage_first
 
         # Empty run_dir.
         run_dir = tmp_path / "empty_run"
@@ -113,7 +113,7 @@ class TestCoverageReportEmptyDossiers:
 
 class TestModeFlags:
     def test_disabled_is_noop(self, tmp_path: Path) -> None:
-        from compgen.graph_compilation.coverage_first import run_coverage_first
+        from xpu_rt.graph_compilation.coverage_first import run_coverage_first
 
         run_dir = tmp_path / "run"
         run_dir.mkdir()
@@ -198,7 +198,7 @@ class TestSpecializationReport:
 
 class TestFirstPassCoverageOnly:
     def test_first_pass_emits_only_coverage(self, tmp_path: Path) -> None:
-        from compgen.graph_compilation.coverage_first import run_coverage_first
+        from xpu_rt.graph_compilation.coverage_first import run_coverage_first
 
         run_dir = tmp_path / "run"
         # We don't run a full pipeline here; just check the flag
@@ -216,7 +216,7 @@ class TestSpecializeOnly:
     def test_specialize_emits_only_specialization(
         self, tmp_path: Path,
     ) -> None:
-        from compgen.graph_compilation.coverage_first import run_coverage_first
+        from xpu_rt.graph_compilation.coverage_first import run_coverage_first
 
         # Bootstrap a real run via the pipeline.
         result = _invoke_pipeline(

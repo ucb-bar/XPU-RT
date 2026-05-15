@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from compgen.solve.memory import BufferLifetime, MemoryAllocation, solve_memory
+from xpu_rt.solve.memory import BufferLifetime, MemoryAllocation, solve_memory
 
 
 def test_buffer_lifetime_construction() -> None:

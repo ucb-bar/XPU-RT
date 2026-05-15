@@ -5,10 +5,10 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from compgen.bench import BenchmarkReport, measure_pipeline, measure_pipeline_suite
-from compgen.options import cuda_a100_defaults
-from compgen.pipeline import PipelineCache, compile_and_diff
-from compgen.search import Autotuner, OptionsAxis
+from xpu_rt.bench import BenchmarkReport, measure_pipeline, measure_pipeline_suite
+from xpu_rt.options import cuda_a100_defaults
+from xpu_rt.pipeline import PipelineCache, compile_and_diff
+from xpu_rt.search import Autotuner, OptionsAxis
 
 from tests._fixtures.real_workloads import (
     attention_mlp_tiny,
@@ -243,7 +243,7 @@ class TestExecutorFidelity:
         """The executor now recovers arith.constant values embedded in
         linalg.generic bodies, so `mul by 2.0` produces the right
         output instead of identity."""
-        from compgen.runtime.cpu_executor import _find_constant_in_body
+        from xpu_rt.runtime.cpu_executor import _find_constant_in_body
         from xdsl.dialects.arith import ConstantOp, MulfOp
         from xdsl.dialects.builtin import Float32Type, FloatAttr
         from xdsl.dialects.linalg import YieldOp

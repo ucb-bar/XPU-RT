@@ -11,15 +11,15 @@ from pathlib import Path
 
 import pytest
 
-from compgen.model_admission.registry import (
+from xpu_rt.model_admission.registry import (
     DEFAULT_MODELS_DIR,
     DEFAULT_REGISTRY_PATH,
     DEFAULT_SLICES_DIR,
     DEFAULT_SUITES_DIR,
     load_registry,
 )
-from compgen.model_admission.schemas import AdmissionStatus, StageStatus
-from compgen.model_admission.torch_compile_probe import run_admission
+from xpu_rt.model_admission.schemas import AdmissionStatus, StageStatus
+from xpu_rt.model_admission.torch_compile_probe import run_admission
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 PROXY_IDS = (

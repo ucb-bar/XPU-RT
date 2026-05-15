@@ -30,7 +30,7 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
-from compgen.mcp.session import McpSession, SessionManager
+from xpu_rt.mcp.session import McpSession, SessionManager
 
 # ---------------------------------------------------------------------------
 # Data types

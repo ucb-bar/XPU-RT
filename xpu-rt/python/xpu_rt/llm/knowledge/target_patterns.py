@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import structlog
 
-from compgen.llm.knowledge.base import Confidence, TargetPattern
+from xpu_rt.llm.knowledge.base import Confidence, TargetPattern
 
 log = structlog.get_logger()
 
@@ -708,7 +708,7 @@ def build_default_target_patterns() -> dict[str, list[TargetPattern]]:
                 "Dynamic shapes: compute on CPU, compile/dispatch static tiles to accelerator.",
                 "Runtime decision logic (scheduling, memory allocation) always on CPU.",
             ],
-            source="CompGen runtime",
+            source="XPU-RT runtime",
             confidence=Confidence.HIGH,
         ),
         # -- parallelism ------------------------------------------------
@@ -728,7 +728,7 @@ def build_default_target_patterns() -> dict[str, list[TargetPattern]]:
                 "Ops with bulk sequential I/O -> DMA.",
                 "Use the solver (CP-SAT) to optimise the assignment globally.",
             ],
-            source="CompGen runtime",
+            source="XPU-RT runtime",
             confidence=Confidence.HIGH,
         ),
         TargetPattern(
@@ -745,7 +745,7 @@ def build_default_target_patterns() -> dict[str, list[TargetPattern]]:
                 "Pipeline depth trades latency for throughput.",
                 "Monitor pipeline bubbles: if one stage is much slower, it bottlenecks the pipeline.",
             ],
-            source="CompGen runtime",
+            source="XPU-RT runtime",
             confidence=Confidence.MEDIUM,
         ),
     ]

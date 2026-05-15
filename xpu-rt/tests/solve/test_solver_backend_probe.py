@@ -13,12 +13,12 @@ from pathlib import Path
 
 import pytest
 
-from compgen.solve.backend_registry import SolverBackendRegistry, default_registry
-from compgen.solve.backends.highs_backend import HighsBackend
-from compgen.solve.backends.mosek_backend import MosekBackend, ensure_mosek_license_env
-from compgen.solve.backends.ortools_cp_sat_backend import OrToolsCpSatBackend
-from compgen.solve.backends.z3_backend import Z3Backend
-from compgen.solve.solver_types import (
+from xpu_rt.solve.backend_registry import SolverBackendRegistry, default_registry
+from xpu_rt.solve.backends.highs_backend import HighsBackend
+from xpu_rt.solve.backends.mosek_backend import MosekBackend, ensure_mosek_license_env
+from xpu_rt.solve.backends.ortools_cp_sat_backend import OrToolsCpSatBackend
+from xpu_rt.solve.backends.z3_backend import Z3Backend
+from xpu_rt.solve.solver_types import (
     BackendAvailabilityStatus,
     SolverBackendName,
     SolverProblemKind,
@@ -81,14 +81,14 @@ def test_baseline_available_on_this_host():
 def test_mosek_license_env_auto_set_from_repo_local(tmp_path, monkeypatch):
     monkeypatch.delenv("MOSEKLM_LICENSE_FILE", raising=False)
     # Build a fake mosek.lic at a synthetic repo root.
-    fake_root = tmp_path / "compgen"
-    (fake_root / "python" / "compgen" / "solve" / "backends").mkdir(parents=True)
+    fake_root = tmp_path / "xpu-rt"
+    (fake_root / "python" / "xpu-rt" / "solve" / "backends").mkdir(parents=True)
     fake_lic = fake_root / "mosek.lic"
     fake_lic.write_text("FAKE LICENSE — not actually used; never read.")
     # Monkey-patch the function's _repo_root computation by adjusting
     # MOSEKLM_LICENSE_FILE detection: we pass the real repo's lic if
     # present, otherwise simulate.
-    from compgen.solve.backends import mosek_backend
+    from xpu_rt.solve.backends import mosek_backend
 
     monkeypatch.setattr(mosek_backend, "_repo_root", lambda: fake_root)
     chosen = ensure_mosek_license_env()

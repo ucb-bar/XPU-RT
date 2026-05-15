@@ -12,7 +12,7 @@ Artifacts:
   artifacts/tool_surface_coverage.md          — human-readable summary
 
 This simulates the recorder contract from
-analysis/llm_control_boundaries.md before the real compgen.llm.recorder
+analysis/llm_control_boundaries.md before the real xpu_rt.llm.recorder
 extension (repo patch P13) lands.
 """
 

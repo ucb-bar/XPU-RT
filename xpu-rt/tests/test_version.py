@@ -3,16 +3,16 @@
 from __future__ import annotations
 
 
-def test_import_compgen() -> None:
-    """compgen package should be importable."""
-    import compgen
+def test_import_xpu_rt() -> None:
+    """xpu_rt package should be importable."""
+    import xpu_rt
 
-    assert hasattr(compgen, "__version__")
+    assert hasattr(xpu_rt, "__version__")
 
 
 def test_version_string() -> None:
     """Version should be a valid semver-like string."""
-    from compgen import __version__
+    from xpu_rt import __version__
 
     parts = __version__.split(".")
     assert len(parts) == 3
@@ -21,6 +21,6 @@ def test_version_string() -> None:
 
 def test_version_value() -> None:
     """Version pinned to the value in ``pyproject.toml``."""
-    from compgen import __version__
+    from xpu_rt import __version__
 
     assert __version__ == "0.2.0"

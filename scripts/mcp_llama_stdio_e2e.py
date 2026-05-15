@@ -1,9 +1,9 @@
-"""Real MCP end-to-end: spawn ``compgen-mcp`` over stdio + drive it as a client.
+"""Real MCP end-to-end: spawn ``xpu-rt-mcp`` over stdio + drive it as a client.
 
 This is the proper end-to-end test: it uses the ``mcp`` SDK's
 :class:`StdioServerParameters` + :class:`ClientSession` to spawn
-``compgen-mcp`` as a subprocess, negotiates the protocol (``initialize``
-+ ``tools/list``), and dispatches every CompGen MCP tool through real
+``xpu-rt-mcp`` as a subprocess, negotiates the protocol (``initialize``
++ ``tools/list``), and dispatches every XPU-RT MCP tool through real
 JSON-RPC over stdio. Nothing short-circuits the protocol layer.
 
 After the compile finishes we read the trace JSONL + IR dumps that the
@@ -106,12 +106,12 @@ async def run() -> None:
     assert MODEL_PATH.exists(), f"missing model: {MODEL_PATH}"
 
     env = dict(os.environ)
-    env["COMPGEN_DUMP_IR"] = "1"  # ensure IR dumps on inside the subprocess
-    env.setdefault("COMPGEN_SESSION_DIR", str(REPO / "sessions" / "mcp_stdio_llama"))
-    Path(env["COMPGEN_SESSION_DIR"]).mkdir(parents=True, exist_ok=True)
+    env["XPU_RT_DUMP_IR"] = "1"  # ensure IR dumps on inside the subprocess
+    env.setdefault("XPU_RT_SESSION_DIR", str(REPO / "sessions" / "mcp_stdio_llama"))
+    Path(env["XPU_RT_SESSION_DIR"]).mkdir(parents=True, exist_ok=True)
 
-    # Spawn ``compgen-mcp`` as a real subprocess over stdio.
-    params = StdioServerParameters(command="compgen-mcp", args=[], env=env)
+    # Spawn ``xpu-rt-mcp`` as a real subprocess over stdio.
+    params = StdioServerParameters(command="xpu-rt-mcp", args=[], env=env)
 
     async with stdio_client(params) as (read, write):
         async with ClientSession(read, write) as session:
@@ -189,7 +189,7 @@ async def run() -> None:
             assert chunk["dof_description"]["archetypes"]
 
             # bundle_export — write the final bundle.
-            bundle_out = Path(env["COMPGEN_SESSION_DIR"]) / session_id / "bundle"
+            bundle_out = Path(env["XPU_RT_SESSION_DIR"]) / session_id / "bundle"
             body = await _call(
                 session,
                 "bundle_export",

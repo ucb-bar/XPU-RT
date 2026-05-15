@@ -3,11 +3,11 @@
 
 Reconstruction of XLA's ``SubByteNormalization`` (the post-layout
 pass, complementary to 's ``normalize_subbyte``). Zero
-external references; CompGen owns the rewrite.
+external references; XPU-RT owns the rewrite.
 
 Operates on :class:`ExecutionPlan`. Reads the sub-byte canonical
-decisions made in  via ``compgen.subbyte_canonical`` /
-``compgen.subbyte_boundary`` attributes on ops (stored in
+decisions made in  via ``xpu_rt.subbyte_canonical`` /
+``xpu_rt.subbyte_boundary`` attributes on ops (stored in
 ``plan.summary["subbyte_ops"]`` after the agent layer copies them
 over), and:
 
@@ -33,7 +33,7 @@ Config:
 LLM-tool signature:
 
     tool_name="normalize_subbyte_post_layout"
-    wraps_pass="CompGen:SubByteNormalizationPostLayout"
+    wraps_pass="XPU-RT:SubByteNormalizationPostLayout"
     invent_slot="runtime/subbyte_realignment"
     policy="AlignPackedStridesToDMALine"
 """
@@ -42,7 +42,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from compgen.runtime.execution_plan import ExecutionPlan
+from xpu_rt.runtime.execution_plan import ExecutionPlan
 
 
 @dataclass(frozen=True)

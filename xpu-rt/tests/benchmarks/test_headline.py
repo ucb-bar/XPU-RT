@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import json
 
-from compgen.benchmarks.headline import (
+from xpu_rt.benchmarks.headline import (
     ADAPTERS,
     AdapterMeasurement,
     TimedSyntheticAdapter,
@@ -24,7 +24,7 @@ def _adapters():
     return {
         "torch_eager": TimedSyntheticAdapter(adapter_name="torch_eager", base_latency_us=100.0),
         "torch_compile": TimedSyntheticAdapter(adapter_name="torch_compile", base_latency_us=50.0),
-        "compgen": TimedSyntheticAdapter(adapter_name="compgen", base_latency_us=45.0),
+        "xpu-rt": TimedSyntheticAdapter(adapter_name="xpu-rt", base_latency_us=45.0),
     }
 
 
@@ -123,8 +123,8 @@ def test_byte_deterministic_across_reruns():
     a2 = run_benchmark(
         workloads=["wl"], adapters=_adapters(), iters=10, warmup=1, seed=42
     )
-    assert a1[0].measurements["compgen"].latencies_us == a2[0].measurements["compgen"].latencies_us
+    assert a1[0].measurements["xpu-rt"].latencies_us == a2[0].measurements["xpu-rt"].latencies_us
 
 
 def test_adapters_constant():
-    assert ADAPTERS == ("torch_eager", "torch_compile", "compgen")
+    assert ADAPTERS == ("torch_eager", "torch_compile", "xpu-rt")

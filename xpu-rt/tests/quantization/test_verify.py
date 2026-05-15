@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 import torch
 import torch.nn as nn
-from compgen.quantization.verify import (
+from xpu_rt.quantization.verify import (
     compare_quantized_accuracy,
     npu_alignment_check,
 )
@@ -15,7 +15,7 @@ torchao = pytest.importorskip("torchao")
 
 def _quantized_mlp() -> nn.Module:
     """Create and quantize a simple MLP."""
-    from compgen.quantization.fp8_config import FP8E4M3Po2Config
+    from xpu_rt.quantization.fp8_config import FP8E4M3Po2Config
     from torchao.quantization import quantize_
 
     model = nn.Sequential(
@@ -54,7 +54,7 @@ class TestNpuAlignmentCheck:
             def forward(self, x):
                 return self.lm_head(self.proj(x))
 
-        from compgen.quantization.fp8_config import FP8E4M3Po2Config
+        from xpu_rt.quantization.fp8_config import FP8E4M3Po2Config
         from torchao.quantization import quantize_
 
         model = M()
@@ -66,7 +66,7 @@ class TestNpuAlignmentCheck:
         assert not any("lm_head" in name for name in result.unquantized_linears)
 
     def test_rewritten_model_passes(self) -> None:
-        from compgen.quantization.export_wrappers import rewrite_for_export
+        from xpu_rt.quantization.export_wrappers import rewrite_for_export
 
         model = _quantized_mlp()
         rewrite_for_export(model)
@@ -93,7 +93,7 @@ class TestCompareAccuracy:
         )
         quantized = copy.deepcopy(original)
 
-        from compgen.quantization.fp8_config import FP8E4M3Po2Config
+        from xpu_rt.quantization.fp8_config import FP8E4M3Po2Config
         from torchao.quantization import quantize_
 
         quantize_(quantized, FP8E4M3Po2Config())

@@ -1,8 +1,8 @@
-"""CLI entry point for the CompGen MLIR C++ compiler generator.
+"""CLI entry point for the XPU-RT MLIR C++ compiler generator.
 
 Usage::
 
-    python -m compgen.extensions.mlir_cppgen \\
+    python -m xpu_rt.extensions.mlir_cppgen \\
         --dialects layout,tile,accel \\
         --output artifacts/compiler/ \\
         --docker
@@ -17,7 +17,7 @@ from pathlib import Path
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        prog="compgen-mlir-cppgen",
+        prog="xpu_rt-mlir-cppgen",
         description="Generate standalone MLIR C++ compiler from xDSL prototypes.",
     )
     parser.add_argument(
@@ -54,7 +54,7 @@ def main() -> None:
     dialect_names = [d.strip() for d in args.dialects.split(",") if d.strip()]
     pass_groups = [p.strip() for p in args.passes.split(",") if p.strip()] if args.passes else None
 
-    from compgen.extensions.mlir_cppgen import generate_compiler
+    from xpu_rt.extensions.mlir_cppgen import generate_compiler
 
     output = generate_compiler(
         dialects=dialect_names,

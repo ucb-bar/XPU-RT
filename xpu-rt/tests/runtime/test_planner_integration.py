@@ -5,18 +5,18 @@ Verifies: partition -> place -> schedule -> memory -> ExecutionPlan.
 
 from __future__ import annotations
 
-from compgen.agent.memory import CostCalibration
-from compgen.runtime.planner import (
+from xpu_rt.agent.memory import CostCalibration
+from xpu_rt.runtime.planner import (
     CopyOp,
     ExecutionPlan,
     MemoryPlan,
     plan_execution,
 )
-from compgen.solve.contracts import (
+from xpu_rt.solve.contracts import (
     SolverProblem,
     extract_solver_problem,
 )
-from compgen.targets.schema import (
+from xpu_rt.targets.schema import (
     DeviceSpec,
     Interconnect,
     MemoryLevel,
@@ -189,7 +189,7 @@ class TestMultiDevicePipeline:
         # Should be the schedule makespan (feasible case)
         if plan.metadata.get("schedule_status") in {"optimal", "feasible"}:
             # Makespan should be less than or equal to serial sum
-            from compgen.solve.partition import partition_graph
+            from xpu_rt.solve.partition import partition_graph
 
             partitions = partition_graph(module)
             serial_sum = sum(p.estimated_cost_us for p in partitions)

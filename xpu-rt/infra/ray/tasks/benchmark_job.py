@@ -59,7 +59,7 @@ def benchmark_job(
     get_inputs = getattr(mod, "get_sample_inputs", None)
     sample_inputs = get_inputs() if get_inputs else None
 
-    from compgen.runtime.local_executor import LocalExecutor
+    from xpu_rt.runtime.local_executor import LocalExecutor
 
     executor = LocalExecutor()
     result = executor.benchmark(

@@ -16,7 +16,7 @@ import json
 import sys
 from pathlib import Path
 
-from compgen.solve.memory_planner import (
+from xpu_rt.solve.memory_planner import (
     AliasCandidate,
     BufferSpec,
     MemoryPlanInput,
@@ -24,7 +24,7 @@ from compgen.solve.memory_planner import (
     _build_formulation as _build_memory_formulation,
     plan_memory,
 )
-from compgen.solve.overlap_planner import (
+from xpu_rt.solve.overlap_planner import (
     Dependency,
     Operation,
     OverlapPlanInput,
@@ -32,7 +32,7 @@ from compgen.solve.overlap_planner import (
     _build_formulation as _build_overlap_formulation,
     plan_overlap,
 )
-from compgen.solve.placement_planner import (
+from xpu_rt.solve.placement_planner import (
     Device,
     Edge,
     PlacementPlanInput,
@@ -40,23 +40,23 @@ from compgen.solve.placement_planner import (
     _build_formulation as _build_placement_formulation,
     plan_placement,
 )
-from compgen.solve.reports import (
+from xpu_rt.solve.reports import (
     write_solver_request,
     write_solver_response,
 )
-from compgen.solve.solver_types import (
+from xpu_rt.solve.solver_types import (
     SolverProblemKind,
     SolverRequest,
 )
-from compgen.solve.z3_obligations import (
+from xpu_rt.solve.z3_obligations import (
     OBLIGATION_KIND_SHAPE_PREDICATE_IMPLICATION,
     OBLIGATION_KIND_TILE_INDEX_BOUNDS,
 )
 
 
 def _run_z3_obligations(out_dir: Path) -> None:
-    from compgen.solve.backend_registry import default_registry
-    from compgen.solve.solver_types import SolverBackendName
+    from xpu_rt.solve.backend_registry import default_registry
+    from xpu_rt.solve.solver_types import SolverBackendName
 
     reg = default_registry()
     backend = reg.get_backend(SolverBackendName.Z3)

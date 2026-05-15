@@ -4,16 +4,16 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from compgen.packs import default_pack_root
-from compgen.targets.capability import TargetClass
-from compgen.targets.maturity import TargetMaturity
-from compgen.targets.package import (
+from xpu_rt.packs import default_pack_root
+from xpu_rt.targets.capability import TargetClass
+from xpu_rt.targets.maturity import TargetMaturity
+from xpu_rt.targets.package import (
     TargetPackageManifest,
     generate_target_package,
     load_target_package,
     validate_target_package,
 )
-from compgen.targets.schema import load_profile
+from xpu_rt.targets.schema import load_profile
 
 PROFILES_DIR = Path(__file__).parent.parent.parent / "examples" / "target_profiles"
 

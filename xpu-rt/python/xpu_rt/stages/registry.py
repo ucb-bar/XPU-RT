@@ -14,9 +14,9 @@ from typing import Any
 import structlog
 from xdsl.dialects.builtin import ModuleOp
 
-from compgen.stages.base import CompilationStage, StageResult, TargetStagePlugin
-from compgen.targets.capability import CapabilitySpec
-from compgen.targets.schema import TargetProfile
+from xpu_rt.stages.base import CompilationStage, StageResult, TargetStagePlugin
+from xpu_rt.targets.capability import CapabilitySpec
+from xpu_rt.targets.schema import TargetProfile
 
 log = structlog.get_logger()
 

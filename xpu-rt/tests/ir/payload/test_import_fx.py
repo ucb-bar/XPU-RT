@@ -6,8 +6,8 @@ import sys
 from pathlib import Path
 
 import torch
-from compgen.capture.torch_export import capture_frontend_artifact, capture_model
-from compgen.ir.payload.import_fx import FXImporter, ImportDiagnostic, fx_to_xdsl
+from xpu_rt.capture.torch_export import capture_frontend_artifact, capture_model
+from xpu_rt.ir.payload.import_fx import FXImporter, ImportDiagnostic, fx_to_xdsl
 
 EXAMPLES_DIR = Path(__file__).parent.parent.parent.parent / "examples" / "models"
 
@@ -69,7 +69,7 @@ def test_ir_text_contains_ops() -> None:
     assert "linalg.transpose" in ir_text
     assert "func.func @forward" in ir_text
     # Region IDs should be present
-    assert "compgen.region_id" in ir_text
+    assert "xpu_rt.region_id" in ir_text
 
 
 def test_ir_text_has_tensor_types() -> None:
@@ -99,7 +99,7 @@ def test_strict_import_uses_synthesized_translation_from_capture_artifact() -> N
     errors = [diag for diag in diags if diag.level == "error"]
     assert errors == []
     ir_text = FXImporter().get_ir_text(module)
-    # Either the wave-7 typed decomp (``@aten_sin`` + ``compgen._pattern_hint``)
+    # Either the wave-7 typed decomp (``@aten_sin`` + ``xpu_rt._pattern_hint``)
     # or the legacy opaque-fallback shape (``@aten_sin_default``) satisfies
     # the contract: a synthesized translation lands for sin.
     assert "func.call @aten_sin" in ir_text
@@ -137,7 +137,7 @@ def test_import_reconciles_func_signature_with_body_return_type() -> None:
 
 
 def test_coerce_static_dim_keeps_concrete_dims() -> None:
-    from compgen.ir.payload.import_fx import _coerce_static_dim
+    from xpu_rt.ir.payload.import_fx import _coerce_static_dim
 
     assert _coerce_static_dim(7) == 7
     assert _coerce_static_dim(0) == 0
@@ -147,7 +147,7 @@ def test_coerce_static_dim_falls_back_to_negative_one_for_symbolic_dim() -> None
     """Models with dynamic shapes (e.g. SmolVLA's image tile counts) carry
     SymInt dims that ``int(...)`` cannot specialize. We emit -1 so xDSL's
     TensorType verifier accepts them as dynamic, and capture continues."""
-    from compgen.ir.payload.import_fx import _coerce_static_dim
+    from xpu_rt.ir.payload.import_fx import _coerce_static_dim
 
     class _Symish:
         def __int__(self) -> int:

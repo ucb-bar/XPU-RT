@@ -1,4 +1,4 @@
-"""Tests for ``compgen.mcp.tools.bench``.
+"""Tests for ``xpu_rt.mcp.tools.bench``.
 
 Locks in:
   * round-trip: request → list → register → lookup
@@ -14,7 +14,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from compgen.kernels.contract_v3 import (
+from xpu_rt.kernels.contract_v3 import (
     ExecutionEnvelope,
     HardwareEnvelope,
     IOContract,
@@ -24,8 +24,8 @@ from compgen.kernels.contract_v3 import (
     ShapeClass,
     TensorIO,
 )
-from compgen.mcp.session import SessionManager
-from compgen.mcp.tools.bench import (
+from xpu_rt.mcp.session import SessionManager
+from xpu_rt.mcp.tools.bench import (
     BENCH_TOOLS,
     McpBenchFn,
     bench_fingerprint,
@@ -34,7 +34,7 @@ from compgen.mcp.tools.bench import (
     register_bench_result,
     request_kernel_bench,
 )
-from compgen.memory.kernel_db import (
+from xpu_rt.memory.kernel_db import (
     KernelDB,
     KernelPerfRecord,
     set_shared_db,
@@ -51,7 +51,7 @@ def isolated_db(tmp_path: Path):
 
 @pytest.fixture
 def sm(tmp_path: Path) -> SessionManager:
-    s = SessionManager(scratch_root=tmp_path / "compgen_mcp")
+    s = SessionManager(scratch_root=tmp_path / "xpu_rt_mcp")
     s.open(session_id="sess1")
     return s
 
@@ -72,7 +72,7 @@ def test_bench_tools_registered_with_expected_names() -> None:
 
 
 def test_bench_tools_in_all_tools_bundle() -> None:
-    from compgen.mcp.tools import ALL_TOOLS
+    from xpu_rt.mcp.tools import ALL_TOOLS
 
     names = {t["name"] for t in ALL_TOOLS}
     for n in ("request_kernel_bench", "register_bench_result", "lookup_bench_result", "list_pending_bench_requests"):

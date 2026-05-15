@@ -12,7 +12,7 @@ Levels (closed set):
 * ``fx_graph``                — torch FX graph (Stage 0)
 * ``payload_ir``              — canonical xDSL/MLIR (Stage 1)
 * ``recipe_ir``               — Recipe-IR decisions (Stage 2)
-* ``tile_ir``                 — compgen.tile dialect (Stage 3)
+* ``tile_ir``                 — xpu_rt.tile dialect (Stage 3)
 * ``dialect_ir``              — vendor / accelerator dialect (Stage 3+)
 * ``kernel_artifact``         — compiled kernel sources (Stage 4)
 * ``execution_plan``          — runtime plan (Stage 5)

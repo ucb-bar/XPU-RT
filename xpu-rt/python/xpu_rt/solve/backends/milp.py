@@ -17,7 +17,7 @@ from typing import Any
 
 import structlog
 
-from compgen.solve.contracts import SolverProblem
+from xpu_rt.solve.contracts import SolverProblem
 
 log = structlog.get_logger()
 

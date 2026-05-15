@@ -221,7 +221,7 @@ def rule_based_memory_hints(plan_input: Any) -> MemoryHints:
     bundles are honestly empty (no fake hints).
     """
 
-    from compgen.solve.memory_planner import (  # noqa: PLC0415
+    from xpu_rt.solve.memory_planner import (  # noqa: PLC0415
         BufferSpec,
         MemoryPlanInput,
         TierCapacity,

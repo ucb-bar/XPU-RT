@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 3.16)
-project(compgen_runtime C)
+project(xpu_rt_runtime C)
 
 # =============================================================================
-# Merged XPU-RT + CompGen native runtime
+# Merged XPU-RT + XPU-RT native runtime
 #
 # This directory contains:
 #
-#   1. The CompGen native runtime library (src/, include/, native/, templates/)
-#      built as compgen_runtime / compgen_runtime_debug static libs. Always
+#   1. The XPU-RT native runtime library (src/, include/, native/, templates/)
+#      built as xpu_rt_runtime / xpu_rt_runtime_debug static libs. Always
 #      built; no Merlin/IREE dependency. Tracing + perf instrumentation are
 #      opt-in via CG_TRACE_ENABLED / CG_PERF_BACKEND.
 #
@@ -18,9 +18,9 @@ project(compgen_runtime C)
 #
 # Common workflows:
 #
-#   # Just the CompGen native lib (host build):
+#   # Just the XPU-RT native lib (host build):
 #   cmake -B build -S runtime
-#   cmake --build build --target compgen_runtime
+#   cmake --build build --target xpu_rt_runtime
 #
 #   # XPU-RT dispatch runners on top of Merlin/IREE:
 #   cmake -B build -S runtime \
@@ -37,7 +37,7 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 find_package(Threads)
 
 # ---------------------------------------------------------------------------
-# CompGen native runtime — options
+# XPU-RT native runtime — options
 # ---------------------------------------------------------------------------
 
 option(CG_TRACE_ENABLED "Enable trace instrumentation" OFF)
@@ -60,16 +60,16 @@ set(RUNTIME_CORE_SOURCES
   src/ops.c
 )
 
-add_library(compgen_runtime STATIC ${RUNTIME_CORE_SOURCES})
+add_library(xpu_rt_runtime STATIC ${RUNTIME_CORE_SOURCES})
 
-target_include_directories(compgen_runtime PUBLIC
+target_include_directories(xpu_rt_runtime PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
-target_compile_options(compgen_runtime PRIVATE -Wall -Wextra -Wpedantic)
+target_compile_options(xpu_rt_runtime PRIVATE -Wall -Wextra -Wpedantic)
 
 if(Threads_FOUND)
-  target_link_libraries(compgen_runtime PRIVATE Threads::Threads)
+  target_link_libraries(xpu_rt_runtime PRIVATE Threads::Threads)
 endif()
 
 # ---------------------------------------------------------------------------
@@ -82,35 +82,35 @@ set(RUNTIME_DEBUG_SOURCES
   src/perf_counters.c
 )
 
-add_library(compgen_runtime_debug STATIC ${RUNTIME_DEBUG_SOURCES})
+add_library(xpu_rt_runtime_debug STATIC ${RUNTIME_DEBUG_SOURCES})
 
-target_include_directories(compgen_runtime_debug PUBLIC
+target_include_directories(xpu_rt_runtime_debug PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
-target_compile_options(compgen_runtime_debug PRIVATE -Wall -Wextra -Wpedantic)
+target_compile_options(xpu_rt_runtime_debug PRIVATE -Wall -Wextra -Wpedantic)
 
-target_compile_definitions(compgen_runtime_debug PRIVATE
+target_compile_definitions(xpu_rt_runtime_debug PRIVATE
   CG_TRACE_ENABLED
   CG_INSTRUMENTATION_LEVEL=${CG_INSTRUMENTATION_LEVEL}
 )
 
 if(CG_PERF_BACKEND STREQUAL "linux_perf")
-  target_compile_definitions(compgen_runtime_debug PRIVATE CG_PERF_BACKEND_LINUX_PERF)
+  target_compile_definitions(xpu_rt_runtime_debug PRIVATE CG_PERF_BACKEND_LINUX_PERF)
 elseif(CG_PERF_BACKEND STREQUAL "zephyr_timing")
-  target_compile_definitions(compgen_runtime_debug PRIVATE CG_PERF_BACKEND_ZEPHYR_TIMING)
+  target_compile_definitions(xpu_rt_runtime_debug PRIVATE CG_PERF_BACKEND_ZEPHYR_TIMING)
 elseif(CG_PERF_BACKEND STREQUAL "bare_metal_csr")
-  target_compile_definitions(compgen_runtime_debug PRIVATE CG_PERF_BACKEND_BARE_METAL_CSR)
+  target_compile_definitions(xpu_rt_runtime_debug PRIVATE CG_PERF_BACKEND_BARE_METAL_CSR)
 elseif(CG_PERF_BACKEND STREQUAL "cuda_cupti")
-  target_compile_definitions(compgen_runtime_debug PRIVATE CG_PERF_BACKEND_CUDA_CUPTI)
+  target_compile_definitions(xpu_rt_runtime_debug PRIVATE CG_PERF_BACKEND_CUDA_CUPTI)
 endif()
 
 if(CG_TRACE_ZEPHYR)
-  target_compile_definitions(compgen_runtime_debug PRIVATE CG_TRACE_ZEPHYR)
+  target_compile_definitions(xpu_rt_runtime_debug PRIVATE CG_TRACE_ZEPHYR)
 endif()
 
 if(Threads_FOUND)
-  target_link_libraries(compgen_runtime_debug PRIVATE Threads::Threads)
+  target_link_libraries(xpu_rt_runtime_debug PRIVATE Threads::Threads)
 endif()
 
 # ---------------------------------------------------------------------------
@@ -118,21 +118,21 @@ endif()
 # ---------------------------------------------------------------------------
 
 if(CG_TRACE_ENABLED)
-  target_sources(compgen_runtime PRIVATE
+  target_sources(xpu_rt_runtime PRIVATE
     src/trace.c
     src/perf_counters.c
   )
-  target_compile_definitions(compgen_runtime PRIVATE
+  target_compile_definitions(xpu_rt_runtime PRIVATE
     CG_TRACE_ENABLED
     CG_INSTRUMENTATION_LEVEL=${CG_INSTRUMENTATION_LEVEL}
   )
   if(CG_PERF_BACKEND STREQUAL "linux_perf")
-    target_compile_definitions(compgen_runtime PRIVATE CG_PERF_BACKEND_LINUX_PERF)
+    target_compile_definitions(xpu_rt_runtime PRIVATE CG_PERF_BACKEND_LINUX_PERF)
   elseif(CG_PERF_BACKEND STREQUAL "bare_metal_csr")
-    target_compile_definitions(compgen_runtime PRIVATE CG_PERF_BACKEND_BARE_METAL_CSR)
+    target_compile_definitions(xpu_rt_runtime PRIVATE CG_PERF_BACKEND_BARE_METAL_CSR)
   endif()
   if(CG_TRACE_ZEPHYR)
-    target_compile_definitions(compgen_runtime PRIVATE CG_TRACE_ZEPHYR)
+    target_compile_definitions(xpu_rt_runtime PRIVATE CG_TRACE_ZEPHYR)
   endif()
 endif()
 
@@ -203,7 +203,7 @@ if(XPURT_STANDALONE_LIB_PATH)
   )
 else()
   message(STATUS "XPURT_STANDALONE_LIB_PATH not set; skipping XPU-RT dispatch runners.")
-  message(STATUS "Building only the CompGen native runtime libraries. Set "
+  message(STATUS "Building only the XPU-RT native runtime libraries. Set "
                  "-DXPURT_STANDALONE_LIB_PATH=<path/to/libxpurt_standalone.a> to build "
                  "json_dispatch_runner and xpurt_scheduler_runner.")
 endif()

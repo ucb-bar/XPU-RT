@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from compgen.agent.counterexample import (
+from xpu_rt.agent.counterexample import (
     REJECTION_CLASSES,
     REMEDIATION_KINDS,
     Counterexample,

@@ -1,6 +1,6 @@
 # Target Profile Schema
 
-Target profiles describe deployment targets for profile-centric flows in CompGen.
+Target profiles describe deployment targets for profile-centric flows in XPU-RT.
 
 Bundled examples live under `examples/target_profiles/`.
 
@@ -40,6 +40,6 @@ Each device entry can describe:
 This is the current distinction to keep in mind:
 
 - Target profiles are the simpler schema used by lower-level modules and the demo.
-- Hardware specs are the richer targetgen input used by `compgen.device()` and target generation.
+- Hardware specs are the richer targetgen input used by `xpu_rt.device()` and target generation.
 
 If you are following the top-level Python API, use the hardware-spec example documented in [Python API](python-api.md).

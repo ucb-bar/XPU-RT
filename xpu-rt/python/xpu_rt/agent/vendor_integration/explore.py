@@ -2,7 +2,7 @@
 
 Pipeline:
 
-1. :func:`compgen.extensions.vendor_dialect.scanner.scan_repo` collects
+1. :func:`xpu_rt.extensions.vendor_dialect.scanner.scan_repo` collects
    deterministic facts.
 2. The prompt template at ``prompts/explore_vendor.md`` is rendered with
    those facts.
@@ -25,7 +25,7 @@ from typing import Any
 
 import structlog
 
-from compgen.extensions.vendor_dialect.descriptor import (
+from xpu_rt.extensions.vendor_dialect.descriptor import (
     BundlePlan,
     CompileEntry,
     LoweringStrategy,
@@ -33,7 +33,7 @@ from compgen.extensions.vendor_dialect.descriptor import (
     VendorDialectDescriptor,
     VerificationPlan,
 )
-from compgen.extensions.vendor_dialect.scanner import ScanResult, scan_repo
+from xpu_rt.extensions.vendor_dialect.scanner import ScanResult, scan_repo
 
 log = structlog.get_logger()
 
@@ -65,10 +65,10 @@ def explore_vendor_repo(
 
     Args:
         repo_path: Path to the vendor repository (cloned locally).
-        target: CompGen target name the adapter will bind to.
+        target: XPU-RT target name the adapter will bind to.
         workloads: Names of workloads the adapter must ultimately run.
         package_name: Override for the user-space package name. Defaults
-            to ``compgen_<vendor_name>``.
+            to ``xpu_rt_<vendor_name>``.
         vendor_name: Override for the canonical dialect name. Defaults
             to the first dialect the scanner detected, or the repo dir
             name as a last resort.
@@ -78,7 +78,7 @@ def explore_vendor_repo(
     """
     scan = scan_repo(repo_path)
     inferred_name = vendor_name or _infer_vendor_name(scan)
-    pkg = package_name or f"compgen_{_sanitize(inferred_name)}"
+    pkg = package_name or f"xpu_rt_{_sanitize(inferred_name)}"
 
     classification, llm_used = _classify_with_llm(scan, llm_client)
     descriptor = _assemble_descriptor(

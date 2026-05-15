@@ -31,13 +31,13 @@ from dataclasses import dataclass
 import torch
 import torch.nn as nn
 
-from compgen.runtime.event_tensor import EventTensor
-from compgen.runtime.megakernel import (
+from xpu_rt.runtime.event_tensor import EventTensor
+from xpu_rt.runtime.megakernel import (
     DeviceCall,
     EventEdge,
     MegakernelGraph,
 )
-from compgen.transforms.emit_cuda_megakernel import DeviceFunctionSource
+from xpu_rt.transforms.emit_cuda_megakernel import DeviceFunctionSource
 
 # Model dimensions.
 # Each linear is (B, IN) × (IN, OUT) → (B, OUT). The output is

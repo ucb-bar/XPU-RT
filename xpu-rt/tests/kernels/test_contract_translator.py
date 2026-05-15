@@ -1,4 +1,4 @@
-"""Tests for ``compgen.kernels.contract_translator``.
+"""Tests for ``xpu_rt.kernels.contract_translator``.
 
 Locks in:
   * select_translator picks the right translator per target taxonomy
@@ -13,7 +13,7 @@ Locks in:
 from __future__ import annotations
 
 import pytest
-from compgen.kernels.contract_translator import (
+from xpu_rt.kernels.contract_translator import (
     AutocompContractTranslator,
     AutocompProblem,
     HexagonContractTranslator,
@@ -23,7 +23,7 @@ from compgen.kernels.contract_translator import (
     TritonTranslation,
     select_translator,
 )
-from compgen.kernels.contract_v3 import (
+from xpu_rt.kernels.contract_v3 import (
     DispatchModel,
     DispatchSpec,
     ExecutionEnvelope,

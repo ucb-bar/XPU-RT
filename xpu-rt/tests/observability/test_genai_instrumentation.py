@@ -61,8 +61,8 @@ def _build_fake_genai() -> tuple[type, type]:
 
 @pytest.fixture
 def isolated_storage(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    monkeypatch.setenv("COMPGEN_GEMINI_USAGE_DIR", str(tmp_path))
-    monkeypatch.setenv("COMPGEN_REPO_ROOT", str(tmp_path))
+    monkeypatch.setenv("XPU_RT_GEMINI_USAGE_DIR", str(tmp_path))
+    monkeypatch.setenv("XPU_RT_REPO_ROOT", str(tmp_path))
     return tmp_path
 
 
@@ -89,7 +89,7 @@ def test_install_returns_false_without_sdk(monkeypatch: pytest.MonkeyPatch,
         "builtins.__import__",
         _import_blocker(("google.genai", "google.genai.models")),
     )
-    from compgen.observability import gemini_usage as gu
+    from xpu_rt.observability import gemini_usage as gu
     assert gu.install_genai_instrumentation() is False
     assert gu.is_genai_instrumented() is False
 
@@ -107,7 +107,7 @@ def _import_blocker(blocked: tuple[str, ...]):
 
 def test_patch_records_sync_call(fake_genai: tuple[type, type],
                                   isolated_storage: Path) -> None:
-    from compgen.observability import gemini_usage as gu
+    from xpu_rt.observability import gemini_usage as gu
     Models, _ = fake_genai
     assert gu.install_genai_instrumentation() is True
     assert gu.is_genai_instrumented() is True
@@ -124,7 +124,7 @@ def test_patch_records_sync_call(fake_genai: tuple[type, type],
 
 def test_tracking_source_attributes_call(fake_genai: tuple[type, type],
                                           isolated_storage: Path) -> None:
-    from compgen.observability import gemini_usage as gu
+    from xpu_rt.observability import gemini_usage as gu
     Models, _ = fake_genai
     gu.install_genai_instrumentation()
 
@@ -139,7 +139,7 @@ def test_tracking_source_attributes_call(fake_genai: tuple[type, type],
 
 def test_tracking_source_restores_on_exit(fake_genai: tuple[type, type],
                                            isolated_storage: Path) -> None:
-    from compgen.observability import gemini_usage as gu
+    from xpu_rt.observability import gemini_usage as gu
     Models, _ = fake_genai
     gu.install_genai_instrumentation()
 
@@ -156,7 +156,7 @@ def test_tracking_source_restores_on_exit(fake_genai: tuple[type, type],
 
 def test_patch_records_async_call(fake_genai: tuple[type, type],
                                    isolated_storage: Path) -> None:
-    from compgen.observability import gemini_usage as gu
+    from xpu_rt.observability import gemini_usage as gu
     _, AsyncModels = fake_genai
     gu.install_genai_instrumentation()
 
@@ -176,7 +176,7 @@ def test_patch_records_async_call(fake_genai: tuple[type, type],
 
 def test_install_is_idempotent(fake_genai: tuple[type, type],
                                 isolated_storage: Path) -> None:
-    from compgen.observability import gemini_usage as gu
+    from xpu_rt.observability import gemini_usage as gu
     Models, _ = fake_genai
     gu.install_genai_instrumentation()
     first_method = Models.generate_content
@@ -192,7 +192,7 @@ def test_install_is_idempotent(fake_genai: tuple[type, type],
 
 def test_patch_with_positional_model_arg(fake_genai: tuple[type, type],
                                           isolated_storage: Path) -> None:
-    from compgen.observability import gemini_usage as gu
+    from xpu_rt.observability import gemini_usage as gu
     Models, _ = fake_genai
     gu.install_genai_instrumentation()
     # Pass model positionally (autocomp does this in some paths).

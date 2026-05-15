@@ -16,13 +16,13 @@ from pathlib import Path
 
 import pytest
 
-from compgen.runtime.execution_plan import (
+from xpu_rt.runtime.execution_plan import (
     DependencyEdge,
     ExecutionPlan,
     RegionKernelBinding,
     RegionPlacement,
 )
-from compgen.runtime.glue_emit.python_async import (
+from xpu_rt.runtime.glue_emit.python_async import (
     _apply_overlap_schedule,
     _load_overlap_schedule,
     emit_python_async_executor,

@@ -13,8 +13,8 @@ import os
 import time
 from pathlib import Path
 
-from compgen.solve.backends.base import SolverBackend
-from compgen.solve.solver_types import (
+from xpu_rt.solve.backends.base import SolverBackend
+from xpu_rt.solve.solver_types import (
     BackendAvailabilityStatus,
     BackendProbeResult,
     SolverBackendName,
@@ -39,7 +39,7 @@ _SUPPORTED_KINDS: frozenset[SolverProblemKind] = frozenset(
 
 
 def _repo_root() -> Path:
-    """Best-effort repo root: this file is at <repo>/python/compgen/solve/backends/."""
+    """Best-effort repo root: this file is at <repo>/python/xpu_rt/solve/backends/."""
 
     return Path(__file__).resolve().parents[4]
 
@@ -182,7 +182,7 @@ class MosekBackend(SolverBackend):
         t0 = time.perf_counter()
         # memory_planner / cost_model_fit submit MILP / LP
         # formulations directly via this backend.
-        from compgen.solve import _mosek_solve_impl
+        from xpu_rt.solve import _mosek_solve_impl
 
         try:
             return _mosek_solve_impl.solve(request, probe=probe)

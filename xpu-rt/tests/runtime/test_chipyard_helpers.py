@@ -11,7 +11,7 @@ Covers:
 
 from __future__ import annotations
 
-from compgen.runtime.baremetal.chipyard import (
+from xpu_rt.runtime.baremetal.chipyard import (
     htif_data_stream_c,
     parse_htif_data_stream,
     parse_htif_exit,
@@ -168,5 +168,5 @@ def test_shared_dram_section_emits_named_region() -> None:
 
 def test_shared_dram_section_default_size_is_64k() -> None:
     frag = shared_dram_section()
-    assert "compgen_shared" in frag
+    assert "xpu_rt_shared" in frag
     assert "0x10000" in frag  # 64 KiB default

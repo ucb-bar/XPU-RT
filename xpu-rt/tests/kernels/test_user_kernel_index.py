@@ -108,7 +108,7 @@ def _write_user_kernel(
 
 class TestManifestSchema:
     def test_round_trip(self, tmp_path: Path) -> None:
-        from compgen.kernels.user_kernel_index import (
+        from xpu_rt.kernels.user_kernel_index import (
             UserKernelManifest,
         )
 
@@ -132,7 +132,7 @@ class TestManifestSchema:
         assert round_tripped == m
 
     def test_missing_required_raises(self) -> None:
-        from compgen.kernels.user_kernel_index import (
+        from xpu_rt.kernels.user_kernel_index import (
             UserKernelManifest,
             UserKernelManifestError,
         )
@@ -143,7 +143,7 @@ class TestManifestSchema:
             )
 
     def test_unknown_schema_raises(self) -> None:
-        from compgen.kernels.user_kernel_index import (
+        from xpu_rt.kernels.user_kernel_index import (
             UserKernelManifest,
             UserKernelManifestError,
         )
@@ -159,7 +159,7 @@ class TestManifestSchema:
 
 class TestIndexer:
     def test_indexes_one_manifest(self, tmp_path: Path) -> None:
-        from compgen.kernels.user_kernel_index import index_one_manifest
+        from xpu_rt.kernels.user_kernel_index import index_one_manifest
 
         kernel_dir = tmp_path / "src" / "matmul_f32"
         manifest_path = _write_user_kernel(root=kernel_dir)
@@ -178,7 +178,7 @@ class TestIndexer:
         assert idx_file.exists()
 
     def test_reindex_writes_registry(self, tmp_path: Path) -> None:
-        from compgen.kernels.user_kernel_index import reindex
+        from xpu_rt.kernels.user_kernel_index import reindex
 
         # Two kernels in the search path.
         _write_user_kernel(root=tmp_path / "k1")
@@ -202,7 +202,7 @@ class TestIndexer:
 
 class TestLockedFilesAudit:
     def test_clean_audit_returns(self, tmp_path: Path) -> None:
-        from compgen.kernels.user_kernel_index import (
+        from xpu_rt.kernels.user_kernel_index import (
             audit_locked_files,
             index_one_manifest,
         )
@@ -215,7 +215,7 @@ class TestLockedFilesAudit:
         audit_locked_files(entry)
 
     def test_tampered_source_raises_typed(self, tmp_path: Path) -> None:
-        from compgen.kernels.user_kernel_index import (
+        from xpu_rt.kernels.user_kernel_index import (
             UserKernelHashDriftError,
             audit_locked_files,
             index_one_manifest,
@@ -234,7 +234,7 @@ class TestLockedFilesAudit:
             audit_locked_files(entry)
 
     def test_missing_file_raises(self, tmp_path: Path) -> None:
-        from compgen.kernels.user_kernel_index import (
+        from xpu_rt.kernels.user_kernel_index import (
             UserKernelHashDriftError,
             audit_locked_files,
             index_one_manifest,
@@ -255,7 +255,7 @@ class TestLockedFilesAudit:
 
 
 def _build_v3_matmul(*, M=16, K=16, N=32):
-    from compgen.kernels.contract_v3 import (
+    from xpu_rt.kernels.contract_v3 import (
         ConcurrencyUnit, DispatchModel, DispatchSpec, EventDecl,
         ExecutionEnvelope, FusionPolicy, Granularity, HardwareEnvelope,
         IOContract, KernelArchetype, KernelContractV3, LayoutKind, MemorySpec,
@@ -305,7 +305,7 @@ def _build_v3_matmul(*, M=16, K=16, N=32):
 
 class TestProviderBid:
     def test_no_index_returns_zero_confidence(self, tmp_path: Path) -> None:
-        from compgen.kernels.providers.user_path import UserKernelProvider
+        from xpu_rt.kernels.providers.user_path import UserKernelProvider
 
         # Empty index dir.
         p = UserKernelProvider(index_root=tmp_path / "empty_index")
@@ -314,8 +314,8 @@ class TestProviderBid:
         assert bid.rationale == "no_indexed_kernels"
 
     def test_exact_dim_match_high_confidence(self, tmp_path: Path) -> None:
-        from compgen.kernels.providers.user_path import UserKernelProvider
-        from compgen.kernels.user_kernel_index import reindex
+        from xpu_rt.kernels.providers.user_path import UserKernelProvider
+        from xpu_rt.kernels.user_kernel_index import reindex
 
         _write_user_kernel(root=tmp_path / "k", dims_lhs=[16, 16],
                            dims_rhs=[16, 32], dims_out=[16, 32])
@@ -328,8 +328,8 @@ class TestProviderBid:
         assert bid.cache_hit is True
 
     def test_compat_match_mid_confidence(self, tmp_path: Path) -> None:
-        from compgen.kernels.providers.user_path import UserKernelProvider
-        from compgen.kernels.user_kernel_index import reindex
+        from xpu_rt.kernels.providers.user_path import UserKernelProvider
+        from xpu_rt.kernels.user_kernel_index import reindex
 
         # Manifest declares (32,32)/(32,64) but contract is (16,16)/(16,32).
         _write_user_kernel(
@@ -345,8 +345,8 @@ class TestProviderBid:
         assert 0.0 < bid.confidence < 0.9
 
     def test_target_mismatch_zero_confidence(self, tmp_path: Path) -> None:
-        from compgen.kernels.providers.user_path import UserKernelProvider
-        from compgen.kernels.user_kernel_index import reindex
+        from xpu_rt.kernels.providers.user_path import UserKernelProvider
+        from xpu_rt.kernels.user_kernel_index import reindex
 
         # Manifest is for cuda_sm75; contract is host_cpu.
         _write_user_kernel(root=tmp_path / "k", target="cuda_sm75")
@@ -359,9 +359,9 @@ class TestProviderBid:
 
 class TestProviderSearch:
     def test_search_after_bid_returns_kernel(self, tmp_path: Path) -> None:
-        from compgen.kernels.provider import KernelContract, SearchBudget
-        from compgen.kernels.providers.user_path import UserKernelProvider
-        from compgen.kernels.user_kernel_index import reindex
+        from xpu_rt.kernels.provider import KernelContract, SearchBudget
+        from xpu_rt.kernels.providers.user_path import UserKernelProvider
+        from xpu_rt.kernels.user_kernel_index import reindex
 
         _write_user_kernel(root=tmp_path / "k")
         reindex(search_path=tmp_path, index_root=tmp_path / "index")
@@ -379,8 +379,8 @@ class TestProviderSearch:
         assert result.metadata["entry_symbol"] == "user_matmul_f32"
 
     def test_search_without_bid_returns_not_found(self, tmp_path: Path) -> None:
-        from compgen.kernels.provider import KernelContract, SearchBudget
-        from compgen.kernels.providers.user_path import UserKernelProvider
+        from xpu_rt.kernels.provider import KernelContract, SearchBudget
+        from xpu_rt.kernels.providers.user_path import UserKernelProvider
 
         p = UserKernelProvider(index_root=tmp_path / "empty")
         result = p.search(
@@ -390,9 +390,9 @@ class TestProviderSearch:
         assert "no bid match" in result.metadata.get("reason", "")
 
     def test_tampered_source_refuses(self, tmp_path: Path) -> None:
-        from compgen.kernels.provider import KernelContract, SearchBudget
-        from compgen.kernels.providers.user_path import UserKernelProvider
-        from compgen.kernels.user_kernel_index import (
+        from xpu_rt.kernels.provider import KernelContract, SearchBudget
+        from xpu_rt.kernels.providers.user_path import UserKernelProvider
+        from xpu_rt.kernels.user_kernel_index import (
             UserKernelHashDriftError,
             reindex,
         )
@@ -418,23 +418,23 @@ class TestProviderSearch:
 
 class TestMcpTools:
     def test_discover_walks_path(self, tmp_path: Path, monkeypatch) -> None:
-        from compgen.mcp.tools.kernel_providers import (
-            compgen_discover_user_kernels,
+        from xpu_rt.mcp.tools.kernel_providers import (
+            xpu_rt_discover_user_kernels,
         )
 
         monkeypatch.chdir(tmp_path)
         _write_user_kernel(root=tmp_path / "src" / "k1")
-        result = compgen_discover_user_kernels(path=str(tmp_path / "src"))
+        result = xpu_rt_discover_user_kernels(path=str(tmp_path / "src"))
         assert result["ok"] is True
         assert result["indexed_count"] == 1
-        assert (tmp_path / ".compgen" / "user_kernel_index").exists()
+        assert (tmp_path / ".xpu_rt" / "user_kernel_index").exists()
 
     def test_discover_missing_path(self, tmp_path: Path) -> None:
-        from compgen.mcp.tools.kernel_providers import (
-            compgen_discover_user_kernels,
+        from xpu_rt.mcp.tools.kernel_providers import (
+            xpu_rt_discover_user_kernels,
         )
 
-        result = compgen_discover_user_kernels(
+        result = xpu_rt_discover_user_kernels(
             path=str(tmp_path / "nonexistent"),
         )
         assert result["ok"] is False
@@ -443,16 +443,16 @@ class TestMcpTools:
     def test_list_includes_user_path_after_discovery(
         self, tmp_path: Path, monkeypatch,
     ) -> None:
-        from compgen.mcp.tools.kernel_providers import (
-            compgen_discover_user_kernels,
-            compgen_list_kernel_providers,
+        from xpu_rt.mcp.tools.kernel_providers import (
+            xpu_rt_discover_user_kernels,
+            xpu_rt_list_kernel_providers,
         )
 
         monkeypatch.chdir(tmp_path)
         _write_user_kernel(root=tmp_path / "src" / "k1")
-        compgen_discover_user_kernels(path=str(tmp_path / "src"))
+        xpu_rt_discover_user_kernels(path=str(tmp_path / "src"))
 
-        result = compgen_list_kernel_providers()
+        result = xpu_rt_list_kernel_providers()
         assert result["ok"] is True
         ids = {r["provider_id"] for r in result["providers"]}
         # CReferenceProvider is always present; UserKernelProvider when
@@ -463,16 +463,16 @@ class TestMcpTools:
     def test_describe_user_path_surfaces_indexed_kernels(
         self, tmp_path: Path, monkeypatch,
     ) -> None:
-        from compgen.mcp.tools.kernel_providers import (
-            compgen_describe_kernel_provider,
-            compgen_discover_user_kernels,
+        from xpu_rt.mcp.tools.kernel_providers import (
+            xpu_rt_describe_kernel_provider,
+            xpu_rt_discover_user_kernels,
         )
 
         monkeypatch.chdir(tmp_path)
         _write_user_kernel(root=tmp_path / "src" / "k1")
-        compgen_discover_user_kernels(path=str(tmp_path / "src"))
+        xpu_rt_discover_user_kernels(path=str(tmp_path / "src"))
 
-        result = compgen_describe_kernel_provider(provider_id="user_path")
+        result = xpu_rt_describe_kernel_provider(provider_id="user_path")
         assert result["ok"] is True
         assert "indexed_kernels" in result
         assert len(result["indexed_kernels"]) == 1
@@ -498,7 +498,7 @@ class TestEndToEndAuction:
         # the model-config's relative module path resolves.
         bootstrap = subprocess.run(
             [
-                sys.executable, "-m", "compgen.graph_compilation", "run",
+                sys.executable, "-m", "xpu_rt.graph_compilation", "run",
                 "--model", str(REPO_ROOT / "configs/models/merlin_mlp_wide.yaml"),
                 "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
                 "--out", str(tmp_path / "run"),
@@ -522,7 +522,7 @@ class TestEndToEndAuction:
         # finds the local index.
         monkeypatch.chdir(tmp_path)
 
-        from compgen.kernels.user_kernel_index import (
+        from xpu_rt.kernels.user_kernel_index import (
             default_index_root,
             reindex,
         )
@@ -533,8 +533,8 @@ class TestEndToEndAuction:
         )
 
         # Run the auction in-process (consumes the index from CWD's
-        # .compgen/user_kernel_index/).
-        from compgen.graph_compilation.kernel_auction import run_kernel_auction
+        # .xpu_rt/user_kernel_index/).
+        from xpu_rt.graph_compilation.kernel_auction import run_kernel_auction
 
         result = run_kernel_auction(
             run_dir=tmp_path / "run", mode="multi-bidder", bid_cutoff=3,

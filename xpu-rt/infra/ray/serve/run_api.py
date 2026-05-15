@@ -40,7 +40,7 @@ class RunAPI:
 
     async def __call__(self, request: Any) -> dict[str, Any]:
         """Handle HTTP requests (simplified — real impl uses FastAPI)."""
-        return {"status": "ok", "service": "compgen-run-api"}
+        return {"status": "ok", "service": "xpu_rt-run-api"}
 
     async def submit_compile(
         self,

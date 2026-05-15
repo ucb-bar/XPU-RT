@@ -1,7 +1,7 @@
 """``insert_copies`` -- emit cross-memory-space ``CopyEdge``s.
 
 Reconstruction of XLA's ``CopyInsertion`` + hexagon-mlir's
-``copy-canonicalization``. Zero external references; CompGen owns
+``copy-canonicalization``. Zero external references; XPU-RT owns
 the rewrite.
 
 Operates on :class:`ExecutionPlan`. Walks ``dependency_edges``:
@@ -26,7 +26,7 @@ Config:
 LLM-tool signature:
 
     tool_name="insert_copies"
-    wraps_pass="CompGen:XLACopyInsertion+HexagonCopyCanonicalization"
+    wraps_pass="XPU-RT:XLACopyInsertion+HexagonCopyCanonicalization"
     invent_slot="runtime/copy_insertion"
     policy="InsertOnMemorySpaceBoundary"
 """
@@ -35,7 +35,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from compgen.runtime.execution_plan import (
+from xpu_rt.runtime.execution_plan import (
     BufferDescriptor,
     CopyEdge,
     ExecutionPlan,

@@ -8,5 +8,5 @@ See ``_template.py`` for the starting point.
 
 __extension_point__ = True
 __extension_type__ = "runtime_adapter"
-__extension_protocol__ = "compgen.runtime.adapters._template.TemplateRuntimeAdapter"
-__extension_template__ = "compgen.runtime.adapters._template"
+__extension_protocol__ = "xpu_rt.runtime.adapters._template.TemplateRuntimeAdapter"
+__extension_template__ = "xpu_rt.runtime.adapters._template"

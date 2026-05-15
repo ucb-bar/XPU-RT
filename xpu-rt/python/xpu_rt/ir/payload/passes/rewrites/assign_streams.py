@@ -2,7 +2,7 @@
 
 Reconstruction of XLA's ``StreamAttributeAnnotator`` +
 ``AsyncWrapper`` + hexagon-mlir's ``form-async-threads``. Zero
-external references; CompGen owns the rewrite.
+external references; XPU-RT owns the rewrite.
 
 Operates on :class:`ExecutionPlan`. Fills in each
 ``RegionPlacement.stream_id`` and stashes an async-wrap decision
@@ -24,7 +24,7 @@ and assigned incrementing ids.
 LLM-tool signature:
 
     tool_name="assign_streams"
-    wraps_pass="CompGen:XLAStreamAttributeAnnotator+AsyncWrapper"
+    wraps_pass="XPU-RT:XLAStreamAttributeAnnotator+AsyncWrapper"
     invent_slot="runtime/stream_assignment"
     policy="SyncWithinQueueAsyncAcrossQueues"
 """
@@ -33,7 +33,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from compgen.runtime.execution_plan import (
+from xpu_rt.runtime.execution_plan import (
     ExecutionPlan,
     StreamAnnotation,
 )

@@ -54,10 +54,10 @@ forbidden:
 - skipping the canonical-hash stamp on the returned BidPreview (downstream auction relies on every bid carrying the contract_hash it's bidding on)
 realness_level: production_path
 required_evidence:
-- python/compgen/kernels/provider.py (BidPreview, ProviderProtocolViolation, make_default_bid)
-- python/compgen/kernels/registry.py (compute_bid, collect_bids, _validate_bid)
-- python/compgen/kernels/providers/claude_code_default.py (bid + _kernel_facing_to_fp_dict cache-aware probe)
-- python/compgen/kernels/providers/triton_templates.py (bid + _archetype_to_family roofline)
+- python/xpu_rt/kernels/provider.py (BidPreview, ProviderProtocolViolation, make_default_bid)
+- python/xpu_rt/kernels/registry.py (compute_bid, collect_bids, _validate_bid)
+- python/xpu_rt/kernels/providers/claude_code_default.py (bid + _kernel_facing_to_fp_dict cache-aware probe)
+- python/xpu_rt/kernels/providers/triton_templates.py (bid + _archetype_to_family roofline)
 - tests/kernels/test_provider_bid.py
 feature_id: m56_provider_bid_protocol
 notes: |

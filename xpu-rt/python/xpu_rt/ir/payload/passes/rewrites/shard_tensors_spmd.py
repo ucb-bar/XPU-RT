@@ -1,10 +1,10 @@
 """``shard_tensors_spmd`` -- annotate tensors with a sharding spec.
 
 Reconstruction of XLA's ``SpmdPartitioner`` + IREE's
-``StreamPartitioning`` frontend. CompGen owns the rewrite.
+``StreamPartitioning`` frontend. XPU-RT owns the rewrite.
 
 Given a caller-supplied mesh shape + shard policy, walks every
-op in the module and attaches a ``compgen.collective.sharding_spec``
+op in the module and attaches a ``xpu_rt.collective.sharding_spec``
 attribute describing how that tensor is partitioned across devices.
 
 Default policy = **Megatron tensor-parallel**:
@@ -33,7 +33,7 @@ from xdsl.pattern_rewriter import (
     op_type_rewrite_pattern,
 )
 
-from compgen.ir.collective import ShardingSpecAttr
+from xpu_rt.ir.collective import ShardingSpecAttr
 
 
 @dataclass(frozen=True)
@@ -71,7 +71,7 @@ class _ShardMatmulPattern(RewritePattern):
     @op_type_rewrite_pattern
     def match_and_rewrite(self, op: MatmulOp, rewriter: PatternRewriter) -> None:
         self.stats.ops_seen += 1
-        if "compgen.sharding" in op.attributes:
+        if "xpu_rt.sharding" in op.attributes:
             return
 
         lhs_type = op.inputs[0].type
@@ -90,18 +90,18 @@ class _ShardMatmulPattern(RewritePattern):
         # Megatron-TP: shard rhs along last dim (N), lhs replicated,
         # out sharded along last dim + partial=sum (requires AllReduce).
         if self.cfg.policy == "megatron_tp":
-            op.attributes["compgen.sharding"] = ShardingSpecAttr(
+            op.attributes["xpu_rt.sharding"] = ShardingSpecAttr(
                 devices=devices,
                 dim_map=["replicated"] * out_rank,
                 partial="sum",
             )
-            op.attributes["compgen.sharding_lhs"] = _mk_sharding(
+            op.attributes["xpu_rt.sharding_lhs"] = _mk_sharding(
                 lhs_rank,
                 devices,
                 None,
                 axis,
             )
-            op.attributes["compgen.sharding_rhs"] = _mk_sharding(
+            op.attributes["xpu_rt.sharding_rhs"] = _mk_sharding(
                 rhs_rank,
                 devices,
                 rhs_rank - 1,
@@ -124,10 +124,10 @@ def run_shard_tensors_spmd(
     # Tag every other op as replicated so downstream collective
     # passes can confirm.
     for op in module.walk():
-        if "compgen.sharding" not in op.attributes:
+        if "xpu_rt.sharding" not in op.attributes:
             # only float tensor-producing ops get a default tag
             if any(isinstance(v.type, TensorType) for v in op.results):
-                op.attributes["compgen.sharding"] = ShardingSpecAttr(
+                op.attributes["xpu_rt.sharding"] = ShardingSpecAttr(
                     devices=list(cfg.mesh_shape),
                     dim_map=["replicated"] * max(1, len(list(op.results[0].type.get_shape())))
                     if isinstance(op.results[0].type, TensorType)

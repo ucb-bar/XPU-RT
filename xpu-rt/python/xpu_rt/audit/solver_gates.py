@@ -20,9 +20,9 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from compgen.audit.errors import GateResult
-from compgen.solve.backend_registry import default_registry
-from compgen.solve.solver_types import (
+from xpu_rt.audit.errors import GateResult
+from xpu_rt.solve.backend_registry import default_registry
+from xpu_rt.solve.solver_types import (
     BackendAvailabilityStatus,
     SolverBackendName,
     SolverStatus,

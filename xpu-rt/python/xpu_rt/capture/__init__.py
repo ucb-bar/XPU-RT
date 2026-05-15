@@ -12,18 +12,18 @@ correctness testing) and the exported program that feeds into IR construction.
 
 from __future__ import annotations
 
-from compgen.capture.dynamo_baseline import (
+from xpu_rt.capture.dynamo_baseline import (
     BaselineReport,
     DynamoReport,
     GuardObservation,
     collect_diagnostics,
     compile_baseline,
 )
-from compgen.capture.inductor_harvest import (
+from xpu_rt.capture.inductor_harvest import (
     InductorHarvestReport,
     harvest_inductor_graph,
 )
-from compgen.capture.torch_export import (
+from xpu_rt.capture.torch_export import (
     CaptureArtifact,
     ExportValidation,
     RangeConstraint,
@@ -33,7 +33,7 @@ from compgen.capture.torch_export import (
     capture_model,
     validate_export,
 )
-from compgen.capture.torchao_pipeline import (
+from xpu_rt.capture.torchao_pipeline import (
     AccuracyReport,
     QuantizationConfig,
     apply_quantization,

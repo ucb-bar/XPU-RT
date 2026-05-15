@@ -26,7 +26,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
 
-from compgen.kernels.provider import (
+from xpu_rt.kernels.provider import (
     KernelContract,
     KernelProvider,
     ProviderResult,

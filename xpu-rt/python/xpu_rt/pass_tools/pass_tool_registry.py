@@ -1,7 +1,7 @@
 """Pass-tool registry + invocation.
 
 Discovers ``PassToolCard`` YAML files under
-``python/compgen/pass_tools/cards/`` (plus any registered from
+``python/xpu_rt/pass_tools/cards/`` (plus any registered from
 user extensions), resolves their ``entrypoint`` strings, and
 exposes ``apply_pass_tool`` for typed invocation.
 
@@ -26,11 +26,11 @@ from typing import Any, Callable
 
 import yaml
 
-from compgen.pass_tools.pass_tool_result import (
+from xpu_rt.pass_tools.pass_tool_result import (
     PassToolResult,
     PassToolResultError,
 )
-from compgen.pass_tools.pass_tool_types import (
+from xpu_rt.pass_tools.pass_tool_types import (
     PassToolCard,
     PassToolCardError,
 )

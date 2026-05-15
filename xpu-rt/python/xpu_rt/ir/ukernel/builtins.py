@@ -1,7 +1,7 @@
 """Built-in ukernel library.
 
 Provides a default set of ukernel declarations, match constraints, and
-bodies that CompGen ships out of the box. Extension packs can add more
+bodies that XPU-RT ships out of the box. Extension packs can add more
 via the registry.
 
 The built-in library is target-agnostic: the same declarations work for
@@ -11,8 +11,8 @@ bodies, not from the declarations themselves.
 
 from __future__ import annotations
 
-from compgen.ir.ukernel.ops import UkernelBodyOp, UkernelDeclOp, UkernelMatchOp
-from compgen.ir.ukernel.registry import UkernelRegistry
+from xpu_rt.ir.ukernel.ops import UkernelBodyOp, UkernelDeclOp, UkernelMatchOp
+from xpu_rt.ir.ukernel.registry import UkernelRegistry
 
 
 def _register_matmul_family(reg: UkernelRegistry) -> None:
@@ -20,7 +20,7 @@ def _register_matmul_family(reg: UkernelRegistry) -> None:
     # Transparent generic matmul (works on any target with f32)
     reg.register_ukernel(
         decl=UkernelDeclOp(
-            kernel_name="compgen_matmul_f32",
+            kernel_name="xpu_rt_matmul_f32",
             input_types=["tensor<?x?xf32>", "tensor<?x?xf32>"],
             output_types=["tensor<?x?xf32>"],
             side_effects="none",
@@ -36,7 +36,7 @@ def _register_matmul_family(reg: UkernelRegistry) -> None:
         ),
         matches=[
             UkernelMatchOp(
-                kernel_name="compgen_matmul_f32",
+                kernel_name="xpu_rt_matmul_f32",
                 op_family="matmul",
                 dtype_constraints=("dtype_in(float32,float64,f32,f64)",),
                 shape_constraints=("M>=1", "N>=1", "K>=1"),
@@ -46,7 +46,7 @@ def _register_matmul_family(reg: UkernelRegistry) -> None:
         ],
         bodies=[
             UkernelBodyOp(
-                kernel_name="compgen_matmul_f32",
+                kernel_name="xpu_rt_matmul_f32",
                 body_kind="mlir",
                 transparency="transparent",
                 inline_body="linalg.matmul",
@@ -148,7 +148,7 @@ def _register_elementwise_family(reg: UkernelRegistry) -> None:
     ]:
         reg.register_ukernel(
             decl=UkernelDeclOp(
-                kernel_name=f"compgen_{op_name}_f32",
+                kernel_name=f"xpu_rt_{op_name}_f32",
                 input_types=["tensor<?xf32>"],
                 output_types=["tensor<?xf32>"],
                 side_effects="none",
@@ -160,7 +160,7 @@ def _register_elementwise_family(reg: UkernelRegistry) -> None:
             ),
             matches=[
                 UkernelMatchOp(
-                    kernel_name=f"compgen_{op_name}_f32",
+                    kernel_name=f"xpu_rt_{op_name}_f32",
                     op_family=op_name,
                     dtype_constraints=("dtype_in(float32,float16,bfloat16,f32,f16,bf16)",),
                     priority=1,
@@ -168,7 +168,7 @@ def _register_elementwise_family(reg: UkernelRegistry) -> None:
             ],
             bodies=[
                 UkernelBodyOp(
-                    kernel_name=f"compgen_{op_name}_f32",
+                    kernel_name=f"xpu_rt_{op_name}_f32",
                     body_kind="mlir",
                     transparency="transparent",
                     inline_body=inline,
@@ -181,7 +181,7 @@ def _register_elementwise_family(reg: UkernelRegistry) -> None:
 def build_default_registry() -> UkernelRegistry:
     """Build the default built-in ukernel registry.
 
-    Returns a registry pre-populated with CompGen's built-in ukernel
+    Returns a registry pre-populated with XPU-RT's built-in ukernel
     families. Extension packs can add more via register_ukernel().
     """
     reg = UkernelRegistry()

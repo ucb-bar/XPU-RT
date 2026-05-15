@@ -22,7 +22,7 @@ from typing import Any
 
 import torch
 
-from compgen.graph_compilation.capture import ModelConfig, _load_model_factory
+from xpu_rt.graph_compilation.capture import ModelConfig, _load_model_factory
 
 
 @dataclass(frozen=True)

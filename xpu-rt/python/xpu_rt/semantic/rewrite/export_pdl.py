@@ -61,7 +61,7 @@ def pass_pattern_to_pdl(pattern_source: str) -> tuple[Callable[..., Any], Callab
 
 
 # ---- Known exportable rules ----
-# These are hand-written exports for CompGen's built-in eqsat rules.
+# These are hand-written exports for XPU-RT's built-in eqsat rules.
 # LLM-generated rules go through the callable verification path directly.
 
 

@@ -10,29 +10,29 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 import torch
-from compgen.capture.unsupported import recover_unsupported_operators
-from compgen.capture.unsupported.classify import UnsupportedClassification, classify_operator_issue
-from compgen.capture.unsupported.detect import UnsupportedOperatorIssue, detect_unsupported_operators
-from compgen.capture.unsupported.introspect import (
+from xpu_rt.capture.unsupported import recover_unsupported_operators
+from xpu_rt.capture.unsupported.classify import UnsupportedClassification, classify_operator_issue
+from xpu_rt.capture.unsupported.detect import UnsupportedOperatorIssue, detect_unsupported_operators
+from xpu_rt.capture.unsupported.introspect import (
     ExampleTensorInfo,
     UnsupportedOpDossier,
     build_operator_dossier,
     parse_target,
 )
-from compgen.capture.unsupported.promote import PromotionRecord, build_promotion_record
-from compgen.capture.unsupported.synthesize_decomp import (
+from xpu_rt.capture.unsupported.promote import PromotionRecord, build_promotion_record
+from xpu_rt.capture.unsupported.synthesize_decomp import (
     SynthesizedDecomposition,
     synthesize_export_decomposition,
 )
-from compgen.capture.unsupported.synthesize_fake import (
+from xpu_rt.capture.unsupported.synthesize_fake import (
     SynthesizedFakeKernel,
     synthesize_fake_kernel,
 )
-from compgen.capture.unsupported.synthesize_translation import (
+from xpu_rt.capture.unsupported.synthesize_translation import (
     SynthesizedPayloadTranslation,
     synthesize_payload_translation,
 )
-from compgen.capture.unsupported.verify import UnsupportedVerification, verify_unsupported_resolution
+from xpu_rt.capture.unsupported.verify import UnsupportedVerification, verify_unsupported_resolution
 
 # ---------------------------------------------------------------------------
 # Helpers -- mock FX graph structures
@@ -829,7 +829,7 @@ class TestImportSmoke:
 
     def test_import_synthesize_decomp(self) -> None:
         """synthesize_decomp module should be importable."""
-        from compgen.capture.unsupported.synthesize_decomp import (
+        from xpu_rt.capture.unsupported.synthesize_decomp import (
             SynthesizedDecomposition,
             synthesize_export_decomposition,
         )
@@ -839,7 +839,7 @@ class TestImportSmoke:
 
     def test_import_synthesize_fake(self) -> None:
         """synthesize_fake module should be importable."""
-        from compgen.capture.unsupported.synthesize_fake import (
+        from xpu_rt.capture.unsupported.synthesize_fake import (
             SynthesizedFakeKernel,
             synthesize_fake_kernel,
         )
@@ -849,6 +849,6 @@ class TestImportSmoke:
 
     def test_top_level_recover_import(self) -> None:
         """Top-level recover_unsupported_operators should be importable."""
-        from compgen.capture.unsupported import recover_unsupported_operators
+        from xpu_rt.capture.unsupported import recover_unsupported_operators
 
         assert callable(recover_unsupported_operators)

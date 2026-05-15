@@ -56,7 +56,7 @@ def _shapes_key(shapes: dict[str, tuple[int, ...]] | None) -> str:
 class KernelDB:
     """Persistent kernel database backed by a JSON file."""
 
-    def __init__(self, db_path: str | Path = ".compgen_cache/kernel_db.json") -> None:
+    def __init__(self, db_path: str | Path = ".xpu_rt_cache/kernel_db.json") -> None:
         self._path = Path(db_path)
         self._entries: list[KernelEntry] = []
         self._load()
@@ -142,14 +142,14 @@ class KernelDB:
             A KernelDB that bridges to the unified memory.
         """
         db = cls.__new__(cls)
-        db._path = Path(".compgen_cache/kernel_db.json")
+        db._path = Path(".xpu_rt_cache/kernel_db.json")
         db._entries = []
         db._memory = memory
         db._load()
 
         # Also load promoted kernels from CompilerMemory
         try:
-            from compgen.memory.schema import KnowledgeKind
+            from xpu_rt.memory.schema import KnowledgeKind
 
             for item in memory.retrieve_knowledge(kind=KnowledgeKind.SCHEDULE_TEMPLATE, top_k=100):
                 code = memory.blobs.load(item.artifact_hash) if item.artifact_hash else ""
@@ -187,7 +187,7 @@ class KernelDB:
         self.store(entry)
 
         try:
-            from compgen.memory.schema import GeneratorKind, KnowledgeKind, ObjectKind, ScopeKind
+            from xpu_rt.memory.schema import GeneratorKind, KnowledgeKind, ObjectKind, ScopeKind
 
             # Record as a task + candidate in the unified memory
             task = memory.create_task(

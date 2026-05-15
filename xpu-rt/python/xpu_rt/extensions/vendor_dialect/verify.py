@@ -29,8 +29,8 @@ from typing import Any
 
 import structlog
 
-from compgen.extensions.vendor_dialect.adapter import VendorDialectAdapter
-from compgen.extensions.vendor_dialect.descriptor import VendorDialectDescriptor
+from xpu_rt.extensions.vendor_dialect.adapter import VendorDialectAdapter
+from xpu_rt.extensions.vendor_dialect.descriptor import VendorDialectDescriptor
 
 log = structlog.get_logger()
 
@@ -140,7 +140,7 @@ def verify_package(
 
 def _gate_structural(adapter: VendorDialectAdapter) -> GateResult:
     """Lower + emit a minimal module; assert no crash + artifact returned."""
-    out_dir = Path("/tmp") / f"compgen_verify_{adapter.name}"
+    out_dir = Path("/tmp") / f"xpu_rt_verify_{adapter.name}"
     out_dir.mkdir(parents=True, exist_ok=True)
     trivial = "module { func.func @empty() { return } }"
     lowering = adapter.lower_payload(trivial, output_dir=out_dir)
@@ -170,7 +170,7 @@ def _gate_matmul_diff(
     adapter is expected to accept the textual module below. Real matmul
     validation is Phase-D work; this gate smoke-tests the *call shape*.
     """
-    out_dir = Path("/tmp") / f"compgen_verify_{adapter.name}_matmul"
+    out_dir = Path("/tmp") / f"xpu_rt_verify_{adapter.name}_matmul"
     out_dir.mkdir(parents=True, exist_ok=True)
     matmul_payload = (
         "module {\n"
@@ -213,7 +213,7 @@ def _gate_workload_diff(
     via the ``payload_mlir`` entry of ``golden_inputs`` — real workload
     verification is deferred to Phase-D's concrete wrappers.
     """
-    out_dir = Path("/tmp") / f"compgen_verify_{adapter.name}_workload"
+    out_dir = Path("/tmp") / f"xpu_rt_verify_{adapter.name}_workload"
     out_dir.mkdir(parents=True, exist_ok=True)
     payload_mlir = str(golden_inputs.get("payload_mlir", "module {}"))
     lowering = adapter.lower_payload(payload_mlir, output_dir=out_dir)

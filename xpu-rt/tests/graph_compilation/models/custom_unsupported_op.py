@@ -5,7 +5,7 @@ inventories in Payload Lowering. We register a real custom op
 (``crgtoy::affine_gelu``) so:
 
 - ``torch.export`` traces it as ``torch.ops.crgtoy.affine_gelu.default``
-  (no entry in ``compgen.ir.payload.decompositions``), forcing
+  (no entry in ``xpu_rt.ir.payload.decompositions``), forcing
   ``FXImporter`` into its opaque ``func.call`` fallback.
 - The opaque/unsupported records carry a precise, human-readable
   target name a downstream gap-discovery pass can match on.

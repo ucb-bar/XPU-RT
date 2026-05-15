@@ -93,7 +93,7 @@ class TestThinWrapperMatch:
     """The fallback should descend one level for thin wrappers."""
 
     def test_thin_ffn_wrapper_matches(self) -> None:
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         model = _ThinWrapper()
         x = torch.randn(64, 64)
@@ -108,7 +108,7 @@ class TestThinWrapperMatch:
         assert "thin-wrapper" in result.decision.pattern_rationale
 
     def test_thin_diamond_wrapper_matches(self) -> None:
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         result = lower_torch_to_megakernel(
             _ThinDiamondWrapper(),
@@ -120,7 +120,7 @@ class TestThinWrapperMatch:
     def test_nested_wrapper_walks_through(self) -> None:
         """Two-level wrapper: outer.ffn must still resolve. Submodule
         walk visits at every depth."""
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         result = lower_torch_to_megakernel(
             _NestedWrapper(),
@@ -135,7 +135,7 @@ class TestUnsupportedComposition:
     That requires real composition (Wave 2.1+)."""
 
     def test_stacked_ffn_rejects(self) -> None:
-        from compgen.runtime.lowering import (
+        from xpu_rt.runtime.lowering import (
             UnsupportedShape,
             lower_torch_to_megakernel,
         )
@@ -162,7 +162,7 @@ class TestUnsupportedComposition:
         """If the top-level model itself matches diamond/FFN, the
         submodule fallback is never reached. Pin the matcher
         precedence."""
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         # _DiamondInner matches diamond directly; pattern_name has
         # no "@" suffix because the top-level matcher accepted.
@@ -187,7 +187,7 @@ class TestSubmodulePathPlumbing:
     """
 
     def test_submodule_path_recorded_on_decision(self) -> None:
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         result = lower_torch_to_megakernel(
             _ThinWrapper(),
@@ -200,7 +200,7 @@ class TestSubmodulePathPlumbing:
     def test_top_level_match_has_empty_submodule_path(self) -> None:
         """When the top-level model itself matches, submodule_path
         is empty so dispatch uses the model as-is."""
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         result = lower_torch_to_megakernel(
             _DiamondInner(),
@@ -217,9 +217,9 @@ class TestSubmodulePathPlumbing:
         import json
         import pickle
 
-        import compgen
+        import xpu_rt
 
-        bundle = compgen.compile_to_megakernel(
+        bundle = xpu_rt.compile_to_megakernel(
             _ThinWrapper(),
             (torch.randn(64, 64),),
             output_dir=str(tmp_path),
@@ -245,7 +245,7 @@ class TestForwardEquivalenceCheck:
     output (e.g., the wrapper applies a post-op) must be rejected."""
 
     def test_wrapper_with_post_op_rejects(self) -> None:
-        from compgen.runtime.lowering import (
+        from xpu_rt.runtime.lowering import (
             UnsupportedShape,
             lower_torch_to_megakernel,
         )

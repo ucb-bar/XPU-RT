@@ -23,7 +23,7 @@ claim: |
     the same task is byte-stable across reruns.
 
   The legacy emitter
-  ``compgen.graph_compilation.kernel_specialization`` is converted
+  ``xpu_rt.graph_compilation.kernel_specialization`` is converted
   to a deprecated shim — its ``run_kernel_specialization_request``
   and ``build_kernel_specialization_request`` raise
   ``DeprecationError`` so any rogue caller fails loud.
@@ -40,10 +40,10 @@ forbidden:
 - silently widening the forbidden / required_outputs / allowed_backends list
 realness_level: decision_affecting
 required_evidence:
-- python/compgen/graph_compilation/kernel_codegen.py
-- python/compgen/graph_compilation/run.py (M-42 wired into kernel-specialization-request boundary)
-- python/compgen/graph_compilation/kernel_specialization.py (deprecated shim)
-- python/compgen/graph_compilation/__main__.py (--stop-after kernel-codegen-request flag)
+- python/xpu_rt/graph_compilation/kernel_codegen.py
+- python/xpu_rt/graph_compilation/run.py (M-42 wired into kernel-specialization-request boundary)
+- python/xpu_rt/graph_compilation/kernel_specialization.py (deprecated shim)
+- python/xpu_rt/graph_compilation/__main__.py (--stop-after kernel-codegen-request flag)
 - tests/graph_compilation/test_kernel_codegen_request.py
 - "04_kernel_codegen/requests/<task_id>.request.json on a real run"
 - "04_kernel_codegen/artifacts/<task_id>/ on a real run (sandboxed, empty post-M-42)"

@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any
 import torch
 import torch.nn as nn
 
-from compgen.models.core import CaptureMode, ModelSource, ModelSpec, ReadinessLevel
+from xpu_rt.models.core import CaptureMode, ModelSource, ModelSpec, ReadinessLevel
 
 if TYPE_CHECKING:
     from benchmarks.spec import WorkspaceConfig
@@ -166,8 +166,8 @@ def load_smolvla_quantized_bundle(
     """
     wrapper, flat_inputs, num_cams = load_smolvla_bundle(workspace, device=device)
 
-    from compgen.quantization.export_wrappers import rewrite_for_export
-    from compgen.quantization.smolvla_recipe import apply_smolvla_quantization, default_npu_recipe
+    from xpu_rt.quantization.export_wrappers import rewrite_for_export
+    from xpu_rt.quantization.smolvla_recipe import apply_smolvla_quantization, default_npu_recipe
 
     recipe = default_npu_recipe()
     apply_smolvla_quantization(wrapper, recipe)

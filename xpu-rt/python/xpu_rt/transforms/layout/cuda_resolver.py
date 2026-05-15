@@ -13,7 +13,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from compgen.ir.layout.attrs import PackSpecAttr
+from xpu_rt.ir.layout.attrs import PackSpecAttr
 
 # MMA tile shapes for common GPU generations
 _MMA_TILE_SHAPES: dict[str, dict[str, list[int]]] = {

@@ -1,11 +1,11 @@
 # Quickstart
 
-The shortest truthful path through CompGen today.
+The shortest truthful path through XPU-RT today.
 
 ## 1. Install
 
 ```bash
-pip install compgen
+pip install xpu-rt
 ```
 
 See [Installation](installation.md) for extras and the from-source path.
@@ -13,11 +13,11 @@ See [Installation](installation.md) for extras and the from-source path.
 ## 2. Wire the MCP server into Claude Code (optional but recommended)
 
 ```bash
-compgen mcp install            # merges into ~/.claude.json (with backup)
-compgen mcp doctor             # verifies tools import and discovery works
+xpu-rt mcp install            # merges into ~/.claude.json (with backup)
+xpu-rt mcp doctor             # verifies tools import and discovery works
 ```
 
-Restart Claude Code — the `compgen` MCP server now appears in the tool
+Restart Claude Code — the `xpu-rt` MCP server now appears in the tool
 picker. See [MCP Setup](mcp-setup.md) for project-scoped configs and
 troubleshooting.
 
@@ -25,8 +25,8 @@ troubleshooting.
 
 ```python
 import torch, torch.nn as nn
-from compgen.options import cuda_a100_defaults
-from compgen.pipeline import compile_and_diff
+from xpu_rt.options import cuda_a100_defaults
+from xpu_rt.pipeline import compile_and_diff
 
 class Block(nn.Module):
     def __init__(self):
@@ -51,8 +51,8 @@ print("passed:", report.passed, "opaque rate:", report.opaque_rate)
 Clone the repo (or the demo script) to get the most complete vertical slice:
 
 ```bash
-git clone --recurse-submodules https://github.com/compgen-project/compgen.git
-cd compgen && ./scripts/bootstrap.sh
+git clone --recurse-submodules https://github.com/xpu-rt-project/xpu_rt.git
+cd xpu-rt && ./scripts/bootstrap.sh
 uv run python scripts/e2e_demo.py
 ```
 
@@ -73,8 +73,8 @@ See [Inspect Artifacts](../guides/inspect-artifacts.md) for the details.
 ## 5. Scaffold an extension
 
 ```bash
-compgen ext new provider my_chip      # pip-installable starter
-compgen ext list                      # verify discovery
+xpu-rt ext new provider my_chip      # pip-installable starter
+xpu-rt ext list                      # verify discovery
 ```
 
 See [Extension Authoring](extension-authoring.md).

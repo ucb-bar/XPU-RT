@@ -1,4 +1,4 @@
-"""Tests for ``compgen.bench.diagnosis`` + ``refinement`` + ``iterate``.
+"""Tests for ``xpu_rt.bench.diagnosis`` + ``refinement`` + ``iterate``.
 
 Uses mocked codegen / bench callables so these run fast and CPU-only.
 The real GPU refinement is a separate smoke (``test_turing_refinement_demo``).
@@ -6,17 +6,17 @@ The real GPU refinement is a separate smoke (``test_turing_refinement_demo``).
 
 from __future__ import annotations
 
-from compgen.bench.diagnosis import (
+from xpu_rt.bench.diagnosis import (
     Bottleneck,
     diagnose,
     format_diagnosis,
 )
-from compgen.bench.iterate import (
+from xpu_rt.bench.iterate import (
     iterate_kernel,
 )
-from compgen.bench.kernel_bench import BenchResult
-from compgen.bench.refinement import build_refinement_prompt
-from compgen.kernels.contract_v3 import (
+from xpu_rt.bench.kernel_bench import BenchResult
+from xpu_rt.bench.refinement import build_refinement_prompt
+from xpu_rt.kernels.contract_v3 import (
     ExecutionEnvelope,
     HardwareEnvelope,
     IOContract,

@@ -2,7 +2,7 @@
 
 Like ``test_static_schedule.py``, every test in this file
 executes the **actually-emitted** persistent megakernel produced by
-:func:`compgen.ir.tile.lower_megakernel_dynamic.lower_megakernel_dynamic`
+:func:`xpu_rt.ir.tile.lower_megakernel_dynamic.lower_megakernel_dynamic`
 on a real GPU and compares to a trustworthy PyTorch reference.  No
 hand-written Triton, no protocol stubs.
 """

@@ -1,7 +1,7 @@
 """API-surface tests for the conformance harness.
 
 CPU-only. Locks the public shape of
-:mod:`compgen.testing.etc_conformance` so the remote agent can rely
+:mod:`xpu_rt.testing.etc_conformance` so the remote agent can rely
 on it stably across releases.
 """
 
@@ -16,7 +16,7 @@ import pytest
 class TestPublicAPI:
     def test_top_level_imports(self) -> None:
         """Every name we promised the remote agent must import."""
-        from compgen.testing.etc_conformance import (
+        from xpu_rt.testing.etc_conformance import (
             ConformanceReport,
             ConformanceWorkload,
             PassGate,
@@ -31,7 +31,7 @@ class TestPublicAPI:
         assert PassGate is not None
 
     def test_workload_enum_has_six_paper_workloads(self) -> None:
-        from compgen.testing.etc_conformance import ConformanceWorkload
+        from xpu_rt.testing.etc_conformance import ConformanceWorkload
 
         names = {w.value for w in ConformanceWorkload}
         # Paper anchor workloads.
@@ -47,12 +47,12 @@ class TestPublicAPI:
     def test_workload_enum_is_string_subclass(self) -> None:
         """Subclassing str makes JSON serialisation + literal compare
         ergonomic for the MCP tools."""
-        from compgen.testing.etc_conformance import ConformanceWorkload
+        from xpu_rt.testing.etc_conformance import ConformanceWorkload
 
         assert ConformanceWorkload("diamond_dag") == "diamond_dag"
 
     def test_default_pass_gate_matches_plan(self) -> None:
-        from compgen.testing.etc_conformance import PassGate
+        from xpu_rt.testing.etc_conformance import PassGate
 
         gate = PassGate()
         assert gate.correctness_atol == 1e-3
@@ -64,7 +64,7 @@ class TestPublicAPI:
 
     def test_pass_gate_overridable(self) -> None:
         """Bring-up workflow: relax the speedup floor."""
-        from compgen.testing.etc_conformance import PassGate
+        from xpu_rt.testing.etc_conformance import PassGate
 
         gate = PassGate(min_speedup_vs_eager=0.5)
         assert gate.min_speedup_vs_eager == 0.5
@@ -74,7 +74,7 @@ class TestPublicAPI:
 
 class TestConformanceReport:
     def test_to_dict_round_trips_through_json(self) -> None:
-        from compgen.testing.etc_conformance import (
+        from xpu_rt.testing.etc_conformance import (
             ConformanceReport,
             ConformanceWorkload,
             PassGate,
@@ -102,7 +102,7 @@ class TestConformanceReport:
         assert round_trip["gate"]["correctness_atol"] == 1e-3
 
     def test_write_json_lands_under_workload_filename(self, tmp_path: Path) -> None:
-        from compgen.testing.etc_conformance import (
+        from xpu_rt.testing.etc_conformance import (
             ConformanceReport,
             ConformanceWorkload,
             PassGate,
@@ -135,7 +135,7 @@ class TestRunConformanceCpuFallback:
 
     def test_cpu_host_reports_clean_failure(self, tmp_path: Path) -> None:
         import torch
-        from compgen.testing.etc_conformance import (
+        from xpu_rt.testing.etc_conformance import (
             ConformanceWorkload,
             run_conformance,
         )
@@ -159,7 +159,7 @@ class TestRunConformanceCpuFallback:
         ), f"unexpected error shape: {rep.errors}"
 
     def test_report_lands_on_disk_even_when_failing(self, tmp_path: Path) -> None:
-        from compgen.testing.etc_conformance import (
+        from xpu_rt.testing.etc_conformance import (
             ConformanceWorkload,
             run_conformance,
         )
@@ -178,13 +178,13 @@ class TestRunConformanceCpuFallback:
 
 class TestSummarizeReports:
     def test_empty_dir_is_handled(self, tmp_path: Path) -> None:
-        from compgen.testing.etc_conformance import summarize_reports
+        from xpu_rt.testing.etc_conformance import summarize_reports
 
         out = summarize_reports(tmp_path)
         assert "No conformance reports found" in out
 
     def test_table_lists_each_workload(self, tmp_path: Path) -> None:
-        from compgen.testing.etc_conformance import (
+        from xpu_rt.testing.etc_conformance import (
             run_conformance,
             summarize_reports,
         )
@@ -206,7 +206,7 @@ class TestSummarizeReports:
 class TestCli:
     def test_summary_only_flag_runs_without_a_gpu(self, tmp_path: Path) -> None:
         # Pre-create one report so summary has something to read.
-        from compgen.testing.etc_conformance import (
+        from xpu_rt.testing.etc_conformance import (
             _cli,
             run_conformance,
         )
@@ -218,7 +218,7 @@ class TestCli:
         old_argv = sys.argv
         try:
             sys.argv = [
-                "compgen-run-conformance",
+                "xpu-rt-run-conformance",
                 "--summary-only",
                 "--output-dir",
                 str(tmp_path),

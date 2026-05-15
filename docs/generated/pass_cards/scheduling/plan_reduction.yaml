@@ -27,7 +27,7 @@ failure_modes:
   - "dynamic_reduction_shape"
   - "unsupported_strategy_for_target"
   - "cross_workgroup_reduction_not_lowered"
-mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+mcp_tool: mcp__xpu_rt__xpu_rt_emit_agent_decision_request
 example_invocation:
   schema_version: agent_decision_response_v1
   selected_candidate_id: plan_reduction_split_K_512
@@ -37,10 +37,10 @@ example_invocation:
       - "candidate.m21_analytical_cost.predicted_us"
       - "candidate.cost_preview.static_relative_cost"
 source: XLA
-impl_path: python/compgen/ir/payload/passes/rewrites/plan_reduction.py
+impl_path: python/xpu_rt/ir/payload/passes/rewrites/plan_reduction.py
 notes: |
-  Reconstruction of XLA's reduction-strategy planner as a CompGen
-  PatternRewriter (python/compgen/ir/payload/passes/rewrites/
+  Reconstruction of XLA's reduction-strategy planner as a XPU-RT
+  PatternRewriter (python/xpu_rt/ir/payload/passes/rewrites/
   plan_reduction.py). Tags reduction-bearing linalg.generic ops with
   one of:
 
@@ -57,5 +57,5 @@ notes: |
   enforces deterministic accumulation could ship with bit_equality.
 
   Source: XLA reduction strategy planner. LLM-tool signature declared
-  in the source: wraps_pass=CompGen:PlanReduction,
+  in the source: wraps_pass=XPU-RT:PlanReduction,
   invent_slot=pattern_library/reduction_strategy.

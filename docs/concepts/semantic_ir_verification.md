@@ -1,6 +1,6 @@
 # Semantic IR Verification
 
-CompGen's **Semantic IR** (Layer 3) provides formal verification for compiler
+XPU-RT's **Semantic IR** (Layer 3) provides formal verification for compiler
 transforms. It is powered by the xDSL SMT dialect and Z3.
 
 ## Architecture
@@ -30,7 +30,7 @@ the same outputs.
 
 **Supported ops:** arith.addi, subi, muli, divui, divsi, remui, remsi, cmpi, select, constant
 
-**Entry point:** `compgen.ir.semantic.translation_validation.validate_translation()`
+**Entry point:** `xpu_rt.ir.semantic.translation_validation.validate_translation()`
 
 ### PDL Rewrite Verification
 
@@ -43,7 +43,7 @@ Verifies that DAG-to-DAG rewrite rules are sound across all bitwidths.
    - If UNSAT → sound at this width
 3. If sound at all widths → rewrite family is promotable
 
-**Entry point:** `compgen.semantic.rewrite.verify_pdl.verify_rewrite_family()`
+**Entry point:** `xpu_rt.semantic.rewrite.verify_pdl.verify_rewrite_family()`
 
 ### Transfer Function Verification
 
@@ -57,7 +57,7 @@ sound over-approximations of the concrete semantics.
 3. If always consistent → transfer function is sound
 4. Sound facts materialize as Recipe IR fact ops
 
-**Entry point:** `compgen.ir.semantic.dataflow_verify.verify_analysis()`
+**Entry point:** `xpu_rt.ir.semantic.dataflow_verify.verify_analysis()`
 
 ## Agent Integration
 

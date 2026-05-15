@@ -5,7 +5,7 @@ semantics (Jin et al., MLSys '26): **one persistent launch composes
 multiple device functions into a single scheduling domain**, with
 fine-grained task dependencies expressed as event-tensor edges.
 
-This module sits **above** :mod:`compgen.runtime.event_tensor`.
+This module sits **above** :mod:`xpu_rt.runtime.event_tensor`.
 
 - :class:`EventEdge` — one directed edge: ``(event_name, task_coord ↦
   event_coord, decrement)``. Matches ``event.coord`` (``EventCoordAttr``).
@@ -63,7 +63,7 @@ from typing import Literal
 
 import structlog
 
-from compgen.runtime.event_tensor import EventTensor
+from xpu_rt.runtime.event_tensor import EventTensor
 
 log = structlog.get_logger(__name__)
 
@@ -77,7 +77,7 @@ log = structlog.get_logger(__name__)
 class EventEdge:
     """One directed edge between a device-call task and an event cell.
 
-    Matches :class:`compgen.ir.event.attrs.EventCoordAttr`: binds an
+    Matches :class:`xpu_rt.ir.event.attrs.EventCoordAttr`: binds an
     event tensor name to a function that maps a task's coordinate to
     a cell in that event tensor.
 
@@ -125,7 +125,7 @@ class EventEdge:
 class DeviceCall:
     """One device function + task grid + event-tensor edges.
 
-    Matches :class:`compgen.ir.event.ops.CallDeviceOp`.
+    Matches :class:`xpu_rt.ir.event.ops.CallDeviceOp`.
 
     Attributes:
         name: Unique within the parent graph (matches a
@@ -175,7 +175,7 @@ class _Task:
 class MegakernelGraph:
     """A composition of DeviceCalls sharing a pool of event tensors.
 
-    Matches :class:`compgen.ir.event.ops.GraphOp`. One
+    Matches :class:`xpu_rt.ir.event.ops.GraphOp`. One
     :meth:`launch` call runs every task across every device call in
     one persistent launch — workers see a unified task pool, not
     per-call launches.

@@ -22,7 +22,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from compgen.graph_compilation.hashing import sha256_file
+from xpu_rt.graph_compilation.hashing import sha256_file
 
 
 @dataclass(frozen=True)

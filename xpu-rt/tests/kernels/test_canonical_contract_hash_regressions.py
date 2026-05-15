@@ -32,7 +32,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 def _build_v3_matmul_with_tile(*, tile_n: int):
     """Same shape, different tile_N attribute — test fixture."""
-    from compgen.kernels.contract_v3 import KernelContractV3
+    from xpu_rt.kernels.contract_v3 import KernelContractV3
 
     cs = {
         "candidate_kind": "set_tile_params",
@@ -70,8 +70,8 @@ class TestGap1CanonicalStripsTileAttrs:
         two contracts collide."""
         from dataclasses import replace
 
-        from compgen.kernels.contract_v3 import StaticAttr
-        from compgen.promotion.contract_hash import (
+        from xpu_rt.kernels.contract_v3 import StaticAttr
+        from xpu_rt.promotion.contract_hash import (
             canonical_contract_hash,
             instance_contract_hash,
         )
@@ -100,7 +100,7 @@ class TestGap1CanonicalStripsTileAttrs:
 
 class TestGap2CrossModelWalksAuctionTree:
     def test_lookup_finds_runner_up_cert(self, tmp_path: Path) -> None:
-        from compgen.kernels.kernel_certificate import (
+        from xpu_rt.kernels.kernel_certificate import (
             find_certificate_by_canonical_hash,
         )
 
@@ -152,7 +152,7 @@ class TestGap4FeedbackProposalsFamily7:
     def test_family7_emits_candidate_when_proposal_present(
         self, tmp_path: Path,
     ) -> None:
-        from compgen.graph_compilation.action_space import (
+        from xpu_rt.graph_compilation.action_space import (
             _gen_feedback_proposals,
         )
 
@@ -216,7 +216,7 @@ class TestGap4FeedbackProposalsFamily7:
         assert cand.recipe_delta[0]["args"]["new_layout"] == "row_major"
 
     def test_family7_noop_when_no_proposals(self, tmp_path: Path) -> None:
-        from compgen.graph_compilation.action_space import (
+        from xpu_rt.graph_compilation.action_space import (
             _gen_feedback_proposals,
         )
 
@@ -236,7 +236,7 @@ class TestGap4FeedbackProposalsFamily7:
 
 class TestGap15TrustGateAutodiscovery:
     def test_autodiscover_finds_recent_run(self, tmp_path: Path, monkeypatch) -> None:
-        from compgen.audit.trust_report import _autodiscover_latest_run_dir
+        from xpu_rt.audit.trust_report import _autodiscover_latest_run_dir
 
         # Build a synthetic run dir under /tmp with a cert.
         run_dir = Path("/tmp") / "test_gap15_autodiscover"

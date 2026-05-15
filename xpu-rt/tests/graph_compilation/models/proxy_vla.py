@@ -5,7 +5,7 @@ policies: a vision encoder output, a low-dim proprioceptive/state
 vector, and a continuous action head with bounded outputs (``tanh``).
 
 The real models are 100M+ params; this proxy is ~1k params so it
-captures cheaply but exercises the same op patterns CompGen will see
+captures cheaply but exercises the same op patterns XPU-RT will see
 when lowering production VLAs:
 
 - two parallel linear projections + ReLU

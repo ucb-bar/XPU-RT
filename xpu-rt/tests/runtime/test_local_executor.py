@@ -5,7 +5,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from compgen.runtime.local_executor import BenchmarkResult, LocalExecutor
+from xpu_rt.runtime.local_executor import BenchmarkResult, LocalExecutor
 
 EXAMPLES = Path(__file__).parent.parent.parent / "examples" / "models"
 

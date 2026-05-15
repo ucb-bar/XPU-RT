@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from compgen.llm.call_site import llm_call_site, register_fallback
+from xpu_rt.llm.call_site import llm_call_site, register_fallback
 
 # Deterministic shrink ladder: each entry halves the inner-most tile
 # dim. The fallback walks the ladder one rung per revision.

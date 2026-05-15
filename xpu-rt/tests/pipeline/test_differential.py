@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import pytest
-from compgen.options import CompGenOptions, cuda_a100_defaults, npu_fp8_defaults
-from compgen.pipeline import (
+from xpu_rt.options import CompGenOptions, cuda_a100_defaults, npu_fp8_defaults
+from xpu_rt.pipeline import (
     DiffReport,
     PipelineCache,
     compile_and_diff,
@@ -207,7 +207,7 @@ def test_invalid_cache_size_raises():
 def test_external_executor_callable_satisfies_protocol():
     """Any matching callable is a ``CompiledExecutorProtocol``
     instance (the Protocol is ``runtime_checkable``)."""
-    from compgen.pipeline import CompiledExecutorProtocol
+    from xpu_rt.pipeline import CompiledExecutorProtocol
 
     def fake_exec(inputs):
         return inputs[0]

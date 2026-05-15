@@ -17,12 +17,12 @@ claim: |
      ``compiler_only()`` so both ``canonical_contract_hash`` and
      ``instance_contract_hash`` projections naturally exclude it.
   2. Recognised v3.1 field names live in
-     ``compgen.kernels.contract_v3._OPTIONAL_V3_1_FIELD_NAMES``;
+     ``xpu_rt.kernels.contract_v3._OPTIONAL_V3_1_FIELD_NAMES``;
      defaults in ``_OPTIONAL_V3_1_FIELD_DEFAULTS``. Initial set:
      ``prefetch_distance: 0`` and ``pin_inputs_to_cpu: False``.
      Adding new names to this set must NOT change cached cert hashes
      — proven by the audit gate.
-  3. ``compgen.kernels.contract_migration.migrate_contract_body_v3_to_v3_1(body)``
+  3. ``xpu_rt.kernels.contract_migration.migrate_contract_body_v3_to_v3_1(body)``
      is a defensive-copy migration: if the body lacks
      ``optional_v3_1_fields`` (pre-M-64 cert), populates it with the
      recognised defaults; if a value is supplied, preserves it; if
@@ -38,7 +38,7 @@ claim: |
      ``migrate_contract_body_v3_to_v3_1`` so a pre-M-64 cert body
      loads with defaults populated.
   6. New audit gate ``contract_version_consistency`` (added to
-     ``compgen.audit.trust_report``): walks
+     ``xpu_rt.audit.trust_report``): walks
      ``04_kernel_codegen/certificates/*.json``; for each cert,
      reads the source contract body, migrates, re-derives
      ``canonical_contract_hash``, and compares to the recorded
@@ -54,11 +54,11 @@ forbidden:
 - adding a recognised v3.1 field without updating both _OPTIONAL_V3_1_FIELD_NAMES and _OPTIONAL_V3_1_FIELD_DEFAULTS (the migrator reads from defaults; missing default is a typed bug)
 realness_level: production_path
 required_evidence:
-- python/compgen/kernels/contract_v3.py (optional_v3_1_fields field on KernelContractV3 + _OPTIONAL_V3_1_FIELD_NAMES/_DEFAULTS + CONTRACT_REFINEMENT_VERSION)
-- python/compgen/kernels/contract_migration.py (entire module — migrate_contract_body_v3_to_v3_1 + get_optional_v3_1_field + ContractRefinementError + is_compatible_with)
-- python/compgen/graph_compilation/kernel_contract_materialization.py (contract_to_dict M-64 round-trip line)
-- python/compgen/graph_compilation/kernel_codegen_response.py (_reconstruct_contract_from_dict M-64 migrate + slot populate)
-- python/compgen/audit/trust_report.py (_gate_contract_version_consistency added + wired into build_trust_report)
+- python/xpu_rt/kernels/contract_v3.py (optional_v3_1_fields field on KernelContractV3 + _OPTIONAL_V3_1_FIELD_NAMES/_DEFAULTS + CONTRACT_REFINEMENT_VERSION)
+- python/xpu_rt/kernels/contract_migration.py (entire module — migrate_contract_body_v3_to_v3_1 + get_optional_v3_1_field + ContractRefinementError + is_compatible_with)
+- python/xpu_rt/graph_compilation/kernel_contract_materialization.py (contract_to_dict M-64 round-trip line)
+- python/xpu_rt/graph_compilation/kernel_codegen_response.py (_reconstruct_contract_from_dict M-64 migrate + slot populate)
+- python/xpu_rt/audit/trust_report.py (_gate_contract_version_consistency added + wired into build_trust_report)
 - tests/kernels/test_contract_versioning.py
 feature_id: m64_contract_versioning
 notes: |

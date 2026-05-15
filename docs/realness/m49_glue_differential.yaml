@@ -17,7 +17,7 @@ claim: |
 
   Once green, the paper claim is real:
 
-   "CompGen emits per-workload glue from a validated execution plan.
+   "XPU-RT emits per-workload glue from a validated execution plan.
    The generated executor calls verified shape-specialized kernels,
    checks plan invariants at launch, and passes end-to-end
    differential testing against the original model."
@@ -32,9 +32,9 @@ forbidden:
 - emitting the report at any path other than 06_glue_emit/glue_differential_report.json
 realness_level: production_path
 required_evidence:
-- python/compgen/graph_compilation/glue_differential.py
-- python/compgen/graph_compilation/downstream_retry.py (glue_differential row)
-- python/compgen/graph_compilation/run.py (--stop-after glue-differential boundary)
+- python/xpu_rt/graph_compilation/glue_differential.py
+- python/xpu_rt/graph_compilation/downstream_retry.py (glue_differential row)
+- python/xpu_rt/graph_compilation/run.py (--stop-after glue-differential boundary)
 - tests/graph_compilation/test_glue_differential.py
 - "06_glue_emit/glue_differential_report.json on a real run"
 feature_id: m49_glue_differential
@@ -78,5 +78,5 @@ notes: |
     model so this isn't exercised.
   - The differential generates fresh inputs per call (deterministic
     seeds 0..N-1). M-49.x will wire golden_inputs.pt /
-    golden_outputs.pt from compgen.kernels.golden when they're
+    golden_outputs.pt from xpu_rt.kernels.golden when they're
     available for the model.

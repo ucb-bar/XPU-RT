@@ -27,7 +27,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 class TestGap10CoverageBreadth:
     def test_pointwise_dossier_produces_signature(self) -> None:
-        from compgen.graph_compilation.coverage_first import _coverage_signature
+        from xpu_rt.graph_compilation.coverage_first import _coverage_signature
 
         dossier = {
             "kind": "elementwise_relu",
@@ -42,7 +42,7 @@ class TestGap10CoverageBreadth:
         assert "pointwise" in sig
 
     def test_reduce_dossier_produces_signature(self) -> None:
-        from compgen.graph_compilation.coverage_first import _coverage_signature
+        from xpu_rt.graph_compilation.coverage_first import _coverage_signature
 
         dossier = {
             "kind": "reduce_sum",
@@ -57,7 +57,7 @@ class TestGap10CoverageBreadth:
         assert "reduce" in sig
 
     def test_unknown_kind_returns_empty_signature(self) -> None:
-        from compgen.graph_compilation.coverage_first import _coverage_signature
+        from xpu_rt.graph_compilation.coverage_first import _coverage_signature
 
         dossier = {
             "kind": "invent_new_archetype",
@@ -78,7 +78,7 @@ class TestGap10CoverageBreadth:
 
 class TestGap11NumericalWithinEpsRuntime:
     def test_render_no_postconditions_returns_noop(self) -> None:
-        from compgen.runtime.glue_emit.plan_assertions import (
+        from xpu_rt.runtime.glue_emit.plan_assertions import (
             _RegionAssertions,
             render_assert_postconditions_body,
         )
@@ -88,7 +88,7 @@ class TestGap11NumericalWithinEpsRuntime:
         assert "no-op" in body or "return" in body
 
     def test_render_emits_numerical_within_eps_check(self) -> None:
-        from compgen.runtime.glue_emit.plan_assertions import (
+        from xpu_rt.runtime.glue_emit.plan_assertions import (
             _RegionAssertions,
             render_assert_postconditions_body,
         )
@@ -117,7 +117,7 @@ class TestGap11NumericalWithinEpsRuntime:
 
 class TestGap12DtypeInEmit:
     def test_dtype_in_emit_with_alias_normalisation(self) -> None:
-        from compgen.runtime.glue_emit.plan_assertions import (
+        from xpu_rt.runtime.glue_emit.plan_assertions import (
             _RegionAssertions,
             render_assert_plan_body,
         )
@@ -152,7 +152,7 @@ class TestGap12DtypeInEmit:
 
 class TestGap13MultiFileUserKernels:
     def test_kernel_source_accepts_list(self, tmp_path: Path) -> None:
-        from compgen.kernels.user_kernel_index import (
+        from xpu_rt.kernels.user_kernel_index import (
             UserKernelManifest,
             index_one_manifest,
         )
@@ -199,7 +199,7 @@ class TestGap13MultiFileUserKernels:
         assert entry.manifest.primary_kernel_source == "main.c"
 
     def test_kernel_source_string_still_works_back_compat(self, tmp_path: Path) -> None:
-        from compgen.kernels.user_kernel_index import (
+        from xpu_rt.kernels.user_kernel_index import (
             UserKernelManifest,
             index_one_manifest,
         )
@@ -238,7 +238,7 @@ class TestGap13MultiFileUserKernels:
         assert entry.manifest.to_dict()["kernel_source"] == "main.c"
 
     def test_kernel_source_unsupported_type_raises(self) -> None:
-        from compgen.kernels.user_kernel_index import (
+        from xpu_rt.kernels.user_kernel_index import (
             UserKernelManifest,
             UserKernelManifestError,
         )

@@ -11,14 +11,14 @@ from benchmarks.spec import WorkspaceConfig
 
 
 def test_workspace_default_external_resolution() -> None:
-    ws = WorkspaceConfig.default("/tmp/compgen")
+    ws = WorkspaceConfig.default("/tmp/xpu_rt")
     resolved = ws.resolve_external("iree")
     assert resolved == Path("/tmp/iree")
 
 
 def test_workspace_explicit_external_resolution(tmp_path: Path) -> None:
     ws = WorkspaceConfig(
-        repo_root=tmp_path / "CompGen",
+        repo_root=tmp_path / "XPU-RT",
         external_roots={"xla": tmp_path / "custom-xla"},
         suite_configs={"mlperf": {"dataset_root": str(tmp_path / "datasets")}},
     )
@@ -28,7 +28,7 @@ def test_workspace_explicit_external_resolution(tmp_path: Path) -> None:
 
 def test_workspace_pack_and_llvm_resolution(tmp_path: Path) -> None:
     ws = WorkspaceConfig(
-        repo_root=tmp_path / "CompGen",
+        repo_root=tmp_path / "XPU-RT",
         pack_roots={"snax_mlir": tmp_path / "snax"},
         llvm_forks={"gemmini": tmp_path / "llvm-gemmini"},
     )

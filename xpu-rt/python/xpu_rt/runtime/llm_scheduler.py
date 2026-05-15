@@ -12,12 +12,12 @@ from typing import Any
 
 import structlog
 
-from compgen.agent.prompts.runtime_adapt import (
+from xpu_rt.agent.prompts.runtime_adapt import (
     RuntimeContext,
     format_prompt,
     parse_response,
 )
-from compgen.llm.base import CompGenLLMProtocol, GenerationRequest, LLMConfig, Objective, PromptContext
+from xpu_rt.llm.base import CompGenLLMProtocol, GenerationRequest, LLMConfig, Objective, PromptContext
 
 log = structlog.get_logger()
 

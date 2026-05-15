@@ -4,19 +4,19 @@ Enforces:
 
 1. Optional-solver imports (``mosek``, ``highspy``, ``z3``,
    ``ortools``) appear ONLY in:
-     - ``python/compgen/solve/backends/``  (the backend implementations)
-     - ``python/compgen/solve/`` for the few inner-loop planner modules
+     - ``python/xpu_rt/solve/backends/``  (the backend implementations)
+     - ``python/xpu_rt/solve/`` for the few inner-loop planner modules
        that need them inline (memory_planner, z3_obligations)
      - ``tests/`` (test code)
      - ``scripts/dev/`` (operator-driven tools)
-     - ``python/compgen/semantic/`` (the SMT/Z3 verification stack
+     - ``python/xpu_rt/semantic/`` (the SMT/Z3 verification stack
        that pre-dates the envelope)
 
 2. Verification-flavored ``SolverProblemKind`` values never appear in
    compiler-core call sites alongside ``backend_preference=MOSEK`` /
    ``HIGHS`` / ``ORTOOLS_CP_SAT``.
 
-3. No production module under ``python/compgen/`` (excluding the
+3. No production module under ``python/xpu_rt/`` (excluding the
    allowlist above) imports an optional solver package.
 
 The script exits non-zero on violation so it can run in CI.
@@ -30,7 +30,7 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-PY_ROOT = REPO_ROOT / "python" / "compgen"
+PY_ROOT = REPO_ROOT / "python" / "xpu-rt"
 
 
 # Optional solver package names; importing any of these outside the
@@ -49,26 +49,26 @@ _OPTIONAL_SOLVERS = (
 # allowed. Anything below these prefixes may import the solver
 # packages.
 _ALLOWED_PREFIXES = (
-    "python/compgen/solve/backends/",
-    "python/compgen/solve/memory_planner.py",
-    "python/compgen/solve/z3_obligations.py",
-    "python/compgen/solve/placement_planner.py",
-    "python/compgen/solve/overlap_planner.py",
-    "python/compgen/solve/bandwidth_planner.py",
-    "python/compgen/solve/_mosek_solve_impl.py",
-    "python/compgen/solve/_highs_solve_impl.py",
-    "python/compgen/semantic/",  # pre-SMT verification stack
-    "python/compgen/ir/semantic/",  # semantic IR dialect (Z3 lowerings)
-    "python/compgen/agent/prompts/",  # LLM-prompt scaffolding for semantic stack
-    "python/compgen/solve/backends.py",
-    "python/compgen/solve/objectives.py",
+    "python/xpu_rt/solve/backends/",
+    "python/xpu_rt/solve/memory_planner.py",
+    "python/xpu_rt/solve/z3_obligations.py",
+    "python/xpu_rt/solve/placement_planner.py",
+    "python/xpu_rt/solve/overlap_planner.py",
+    "python/xpu_rt/solve/bandwidth_planner.py",
+    "python/xpu_rt/solve/_mosek_solve_impl.py",
+    "python/xpu_rt/solve/_highs_solve_impl.py",
+    "python/xpu_rt/semantic/",  # pre-SMT verification stack
+    "python/xpu_rt/ir/semantic/",  # semantic IR dialect (Z3 lowerings)
+    "python/xpu_rt/agent/prompts/",  # LLM-prompt scaffolding for semantic stack
+    "python/xpu_rt/solve/backends.py",
+    "python/xpu_rt/solve/objectives.py",
     # Legacy modules that shim to the new envelope-aware planners;
     # they import the solver libs but should be deprecated once all
     # callers migrate.
-    "python/compgen/solve/memory.py",
-    "python/compgen/solve/placement.py",
-    "python/compgen/solve/schedule.py",
-    "python/compgen/solve/per_sm_queue.py",
+    "python/xpu_rt/solve/memory.py",
+    "python/xpu_rt/solve/placement.py",
+    "python/xpu_rt/solve/schedule.py",
+    "python/xpu_rt/solve/per_sm_queue.py",
 )
 
 # Test and scripts are always allowed.
@@ -124,9 +124,9 @@ def audit(*, repo_root: Path = REPO_ROOT) -> int:
     """Run the audit; return exit code (0 ok, 2 on violation)."""
 
     violations: list[str] = []
-    py_root = repo_root / "python" / "compgen"
+    py_root = repo_root / "python" / "xpu-rt"
     if not py_root.is_dir():
-        print(f"audit: skipped (no python/compgen at {py_root})", file=sys.stderr)
+        print(f"audit: skipped (no python/xpu_rt at {py_root})", file=sys.stderr)
         return 0
     for path in sorted(py_root.rglob("*.py")):
         rel = str(path.relative_to(repo_root))

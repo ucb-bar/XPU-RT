@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Paper metrics collection for CompGen MLSys submission.
+"""Paper metrics collection for XPU-RT MLSys submission.
 
 Runs 7 experiments across 11+ models and 5 target families, collecting
 structured JSON, markdown tables, and CSV for plots.
@@ -71,7 +71,7 @@ ABLATION_CONFIGS = [
 
 
 def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="CompGen paper metrics")
+    p = argparse.ArgumentParser(description="XPU-RT paper metrics")
     p.add_argument("--experiments", default="1,2,3,4,5,6,7,8",
                    help="Comma-separated experiment numbers")
     p.add_argument("--models", default="",
@@ -103,7 +103,7 @@ def _set_verification_status(rec_verification: Any, vr: Any) -> None:
     instead of reporting a misleading "fail".
     """
     if hasattr(vr, "levels_run"):
-        from compgen.transforms.verify import VerificationLevel
+        from xpu_rt.transforms.verify import VerificationLevel
         structural_ran = VerificationLevel.STRUCTURAL in vr.levels_run
         structural_passed = VerificationLevel.STRUCTURAL in vr.levels_passed
         if vr.passed and structural_ran and not structural_passed:
@@ -173,15 +173,15 @@ def make_record(model_name: str, target_name: str = "cuda-a100", **kwargs: Any) 
 def run_exp1(models: list[str], target_path: str, out: Path, errors: dict[str, list[str]]) -> list[Any]:
     """Full pipeline coverage on each model."""
     from benchmarks.collector import collect_capture_metrics, collect_eqsat_metrics, collect_ir_metrics
-    from compgen.capture.torch_export import capture_model
-    from compgen.eqsat.config import EqSatConfig
-    from compgen.eqsat.pipeline import run_eqsat_pass
-    from compgen.ir.payload.import_fx import fx_to_xdsl
-    from compgen.kernels.contracts import build_kernel_contracts
-    from compgen.kernels.selector import select_strategies
-    from compgen.runtime.planner import plan_execution
-    from compgen.targets.schema import load_profile
-    from compgen.transforms.verify import verify_transform
+    from xpu_rt.capture.torch_export import capture_model
+    from xpu_rt.eqsat.config import EqSatConfig
+    from xpu_rt.eqsat.pipeline import run_eqsat_pass
+    from xpu_rt.ir.payload.import_fx import fx_to_xdsl
+    from xpu_rt.kernels.contracts import build_kernel_contracts
+    from xpu_rt.kernels.selector import select_strategies
+    from xpu_rt.runtime.planner import plan_execution
+    from xpu_rt.targets.schema import load_profile
+    from xpu_rt.transforms.verify import verify_transform
 
     target = load_profile(target_path)
     records = []
@@ -252,8 +252,8 @@ def run_exp1(models: list[str], target_path: str, out: Path, errors: dict[str, l
 
 def run_exp2(models: list[str], num_iter: int, out: Path, errors: dict[str, list[str]]) -> list[Any]:
     """CPU/GPU benchmarks + numeric verification."""
-    from compgen.runtime.local_executor import LocalExecutor
-    from compgen.semantic.verify.harness import verify_callable_against_reference
+    from xpu_rt.runtime.local_executor import LocalExecutor
+    from xpu_rt.semantic.verify.harness import verify_callable_against_reference
 
     executor = LocalExecutor()
     has_gpu = torch.cuda.is_available()
@@ -338,7 +338,7 @@ class TargetGenRecord:
 
 def run_exp3(out: Path, errors: dict[str, list[str]]) -> list[TargetGenRecord]:
     """Target generation for 5 families."""
-    from compgen.targetgen.generate import generate_target
+    from xpu_rt.targetgen.generate import generate_target
 
     records = []
     for family_name, spec_path in TARGETGEN_SPECS.items():
@@ -358,9 +358,9 @@ def run_exp3(out: Path, errors: dict[str, list[str]]) -> list[TargetGenRecord]:
             rec.needs_accel_dialect = result.plan.needs_accel_dialect
 
             # Run pipeline on test IR
-            from compgen.capture.torch_export import capture_model
-            from compgen.ir.payload.import_fx import fx_to_xdsl
-            from compgen.stages.registry import StageRegistry
+            from xpu_rt.capture.torch_export import capture_model
+            from xpu_rt.ir.payload.import_fx import fx_to_xdsl
+            from xpu_rt.stages.registry import StageRegistry
 
             class TinyModel(nn.Module):
                 def __init__(self) -> None:
@@ -394,12 +394,12 @@ def run_exp3(out: Path, errors: dict[str, list[str]]) -> list[TargetGenRecord]:
 def run_exp4(models: list[str], target_path: str, out: Path, errors: dict[str, list[str]]) -> list[Any]:
     """Recipe IR seed → validate → lower → guard synthesis."""
     from benchmarks.collector import collect_recipe_metrics
-    from compgen.capture.torch_export import capture_model
-    from compgen.ir.payload.import_fx import fx_to_xdsl
-    from compgen.ir.recipe.lower import lower_recipe
-    from compgen.ir.recipe.seed import generate_seed_recipe
-    from compgen.ir.recipe.validate import validate_recipe_module
-    from compgen.targets.schema import load_profile
+    from xpu_rt.capture.torch_export import capture_model
+    from xpu_rt.ir.payload.import_fx import fx_to_xdsl
+    from xpu_rt.ir.recipe.lower import lower_recipe
+    from xpu_rt.ir.recipe.seed import generate_seed_recipe
+    from xpu_rt.ir.recipe.validate import validate_recipe_module
+    from xpu_rt.targets.schema import load_profile
 
     target = load_profile(target_path)
     records = []
@@ -458,10 +458,10 @@ def run_exp4(models: list[str], target_path: str, out: Path, errors: dict[str, l
 def run_exp5(models: list[str], target_path: str, multi_path: str,
              out: Path, errors: dict[str, list[str]]) -> list[Any]:
     """Compare single-device vs multi-device planning."""
-    from compgen.capture.torch_export import capture_model
-    from compgen.ir.payload.import_fx import fx_to_xdsl
-    from compgen.runtime.planner import plan_execution
-    from compgen.targets.schema import load_profile
+    from xpu_rt.capture.torch_export import capture_model
+    from xpu_rt.ir.payload.import_fx import fx_to_xdsl
+    from xpu_rt.runtime.planner import plan_execution
+    from xpu_rt.targets.schema import load_profile
 
     single_target = load_profile(target_path)
     multi_target = load_profile(multi_path)
@@ -506,29 +506,29 @@ def run_exp5(models: list[str], target_path: str, multi_path: str,
 def run_exp6(models: list[str], target_path: str, budget: int,
              out: Path, errors: dict[str, list[str]]) -> list[Any]:
     """Agentic compilation loop on select models."""
-    from compgen.agent.loop import AgenticCompilationLoop
-    from compgen.agent.env import CompilerEnv
-    from compgen.capture.torch_export import capture_model
-    from compgen.ir.payload.import_fx import fx_to_xdsl
-    from compgen.targets.schema import load_profile
+    from xpu_rt.agent.loop import AgenticCompilationLoop
+    from xpu_rt.agent.env import CompilerEnv
+    from xpu_rt.capture.torch_export import capture_model
+    from xpu_rt.ir.payload.import_fx import fx_to_xdsl
+    from xpu_rt.targets.schema import load_profile
 
     target = load_profile(target_path)
     records = []
 
     # Try real LLM, fall back to mock
     try:
-        from compgen.llm._env import resolve_api_key
+        from xpu_rt.llm._env import resolve_api_key
         api_key = resolve_api_key("GOOGLE_API_KEY", "GEMINI_API_KEY", "GEMMINI_API")
         if api_key:
-            from compgen.llm.gemini_client import GeminiClient
+            from xpu_rt.llm.gemini_client import GeminiClient
             llm = GeminiClient(model="gemini-2.5-pro", api_key=api_key)
             llm_label = "gemini-2.5-pro"
         else:
-            from compgen.llm.mock_client import MockLLMClient
+            from xpu_rt.llm.mock_client import MockLLMClient
             llm = MockLLMClient(strict=False)
             llm_label = "mock"
     except Exception:
-        from compgen.llm.mock_client import MockLLMClient
+        from xpu_rt.llm.mock_client import MockLLMClient
         llm = MockLLMClient(strict=False)
         llm_label = "mock"
 
@@ -574,13 +574,13 @@ def run_exp6(models: list[str], target_path: str, budget: int,
 
 def run_exp7(models: list[str], target_path: str, out: Path, errors: dict[str, list[str]]) -> list[Any]:
     """Ablation: full vs no-eqsat vs no-verify vs no-solver."""
-    from compgen.capture.torch_export import capture_model
-    from compgen.eqsat.config import EqSatConfig
-    from compgen.eqsat.pipeline import run_eqsat_pass
-    from compgen.ir.payload.import_fx import fx_to_xdsl
-    from compgen.runtime.planner import plan_execution
-    from compgen.targets.schema import load_profile
-    from compgen.transforms.verify import verify_transform
+    from xpu_rt.capture.torch_export import capture_model
+    from xpu_rt.eqsat.config import EqSatConfig
+    from xpu_rt.eqsat.pipeline import run_eqsat_pass
+    from xpu_rt.ir.payload.import_fx import fx_to_xdsl
+    from xpu_rt.runtime.planner import plan_execution
+    from xpu_rt.targets.schema import load_profile
+    from xpu_rt.transforms.verify import verify_transform
 
     target = load_profile(target_path)
     records = []
@@ -617,8 +617,8 @@ def run_exp7(models: list[str], target_path: str, out: Path, errors: dict[str, l
 
                 # Kernel strategies (force fallback if no_codegen)
                 if label == "no_codegen":
-                    from compgen.kernels.contracts import build_kernel_contracts
-                    from compgen.kernels.selector import select_strategies
+                    from xpu_rt.kernels.contracts import build_kernel_contracts
+                    from xpu_rt.kernels.selector import select_strategies
                     specs = build_kernel_contracts(module, target)
                     decisions = select_strategies(specs, target)
                     hist: dict[str, int] = {}
@@ -667,24 +667,24 @@ def run_exp8(models: list[str], target_path: str, out: Path, errors: dict[str, l
         collect_layout_friction,
         collect_realized_backends,
     )
-    from compgen.capture.torch_export import capture_model
-    from compgen.ir.payload.import_fx import fx_to_xdsl
-    from compgen.kernels.contracts import build_kernel_contracts, spec_to_provider_contract
-    from compgen.kernels.provider import SearchBudget
-    from compgen.kernels.registry import ProviderRegistry
-    from compgen.kernels.selector import select_strategies
-    from compgen.targets.schema import load_profile
+    from xpu_rt.capture.torch_export import capture_model
+    from xpu_rt.ir.payload.import_fx import fx_to_xdsl
+    from xpu_rt.kernels.contracts import build_kernel_contracts, spec_to_provider_contract
+    from xpu_rt.kernels.provider import SearchBudget
+    from xpu_rt.kernels.registry import ProviderRegistry
+    from xpu_rt.kernels.selector import select_strategies
+    from xpu_rt.targets.schema import load_profile
 
     # Register kernel providers once
     provider_registry = ProviderRegistry()
     try:
-        from compgen.kernels.providers.triton_templates import TritonTemplateProvider
+        from xpu_rt.kernels.providers.triton_templates import TritonTemplateProvider
         provider_registry.register(TritonTemplateProvider())
     except Exception:
         pass
     try:
-        from compgen.ir.ukernel.builtins import build_default_registry
-        from compgen.ir.ukernel.provider_bridge import UkernelProvider
+        from xpu_rt.ir.ukernel.builtins import build_default_registry
+        from xpu_rt.ir.ukernel.provider_bridge import UkernelProvider
         provider_registry.register(UkernelProvider(build_default_registry()))
     except Exception:
         pass
@@ -722,7 +722,7 @@ def run_exp8(models: list[str], target_path: str, out: Path, errors: dict[str, l
             # Layout planning (if available)
             layout_plans: dict[str, Any] = {}
             try:
-                from compgen.analysis.layout.planner import LayoutPlanner
+                from xpu_rt.analysis.layout.planner import LayoutPlanner
                 planner = LayoutPlanner(target)
             except Exception:
                 pass
@@ -795,7 +795,7 @@ def run_exp8(models: list[str], target_path: str, out: Path, errors: dict[str, l
 
             # End-to-end model benchmark (Improvement 3)
             try:
-                from compgen.runtime.local_executor import LocalExecutor
+                from xpu_rt.runtime.local_executor import LocalExecutor
                 import copy as _copy
                 _executor = LocalExecutor()
                 if torch.cuda.is_available():
@@ -988,7 +988,7 @@ def main() -> None:
     all_results: dict[str, Any] = {}
 
     print("=" * 70)
-    print(f"CompGen Paper Metrics — {datetime.now(UTC).isoformat()}")
+    print(f"XPU-RT Paper Metrics — {datetime.now(UTC).isoformat()}")
     print(f"Models: {len(models)} | Experiments: {sorted(experiments)}")
     print(f"GPU: {torch.cuda.get_device_name() if torch.cuda.is_available() else 'none'}")
     print(f"Output: {out}")
@@ -1125,7 +1125,7 @@ def main() -> None:
     (out / "summary.json").write_text(json.dumps(summary, indent=2, default=str))
 
     # Combined markdown
-    md_parts = [f"# CompGen Paper Metrics\n\nGenerated: {summary['timestamp']}\n"]
+    md_parts = [f"# XPU-RT Paper Metrics\n\nGenerated: {summary['timestamp']}\n"]
     md_parts.append(f"**Models:** {len(models)} | **Runs:** {total_runs} | **Pass:** {total_pass} | **Fail:** {total_fail}\n")
     for i in sorted(experiments):
         table_names = ["coverage", "performance", "targetgen", "recipe", "multidevice", "agentic", "ablation", "codegen_yield"]

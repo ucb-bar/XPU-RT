@@ -25,7 +25,7 @@ The pipeline never applies a decision directly. It calls
    ``decision`` event at resolution time, with the ``source`` field
    distinguishing agent picks from oracle fallbacks.
 
-MCP tools (:mod:`compgen.mcp.tools.decisions`) expose the registry to
+MCP tools (:mod:`xpu_rt.mcp.tools.decisions`) expose the registry to
 the agent: ``list_decisions``, ``apply_decision``, ``override_decision``.
 """
 
@@ -55,7 +55,7 @@ class DecisionCandidate:
         cost_breakdown: Optional per-component cost estimate
             (``{dram_savings_us: ..., launch_savings_us: ...}``).
         knowledge_brief: Markdown excerpt of relevant lessons pulled
-            from :mod:`compgen.memory.knowledge`.
+            from :mod:`xpu_rt.memory.knowledge`.
         evidence: Free-form auxiliary data (bench history, prior
             autotune winners, etc).
     """
@@ -175,7 +175,7 @@ class DecisionRegistry:
             self._sites[site.site_id] = site
         # Trace event is emitted outside the lock to avoid deadlocks if
         # a publisher ever acquires more locks.
-        from compgen.trace import DecisionSitePublisher
+        from xpu_rt.trace import DecisionSitePublisher
 
         event_id = DecisionSitePublisher.emit(
             site_id=site.site_id,
@@ -353,7 +353,7 @@ class DecisionRegistry:
         return outcome
 
     def _emit_decision_event(self, site: DecisionSite, outcome: DecisionOutcome) -> None:
-        from compgen.trace import DecisionPublisher
+        from xpu_rt.trace import DecisionPublisher
 
         event_id = DecisionPublisher.emit(
             decision_type=site.kind,
@@ -376,7 +376,7 @@ class DecisionRegistry:
 import contextvars as _contextvars
 
 _active_registry: _contextvars.ContextVar[DecisionRegistry | None] = _contextvars.ContextVar(
-    "compgen_decision_registry", default=None
+    "xpu_rt_decision_registry", default=None
 )
 _process_registry: DecisionRegistry | None = None
 
@@ -384,7 +384,7 @@ _process_registry: DecisionRegistry | None = None
 def install_registry(registry: DecisionRegistry | None) -> None:
     """Install ``registry`` as the active one for this context AND the process.
 
-    Mirrors :func:`compgen.trace.install_bus` — ContextVar for task isolation,
+    Mirrors :func:`xpu_rt.trace.install_bus` — ContextVar for task isolation,
     process-level fallback so async boundaries don't lose the registry.
     """
     global _process_registry

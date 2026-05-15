@@ -7,7 +7,7 @@ against the extension's ``allowed_write_root`` and raises
 
 - the path escapes ``allowed_write_root`` via ``..`` traversal;
 - the path lands under a forbidden compiler-owned root
-  (``python/compgen/``, ``configs/``, manifests, run ledgers);
+  (``python/xpu_rt/``, ``configs/``, manifests, run ledgers);
 - the path targets a contract file or canonical IR artifact
   (``payload.mlir`` etc.).
 
@@ -20,18 +20,18 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Final
 
-from compgen.extensions.errors import ExtensionSandboxViolation
+from xpu_rt.extensions.errors import ExtensionSandboxViolation
 
 # Forbidden path *segments*. A write whose resolved path contains any of
 # these as a segment (after normalization) is rejected — covers the case
 # where the extension's ``allowed_write_root`` itself sits next to a
 # forbidden tree.
 _FORBIDDEN_PATH_SEGMENTS: Final[tuple[str, ...]] = (
-    "python/compgen",
+    "python/xpu_rt",
     "configs/targets",
     "configs/models",
     "results/audit",
-    ".compgen",
+    ".xpu_rt",
 )
 
 # Forbidden filename suffixes / exact names. Treated as fatal regardless
@@ -42,7 +42,7 @@ _FORBIDDEN_NAMES: Final[frozenset[str]] = frozenset(
         "payload.mlir",
         "execution_plan.yaml",
         "memory_plan.yaml",
-        "compgen_extension.yaml",
+        "xpu_rt_extension.yaml",
         "kernel_contract.yaml",
         "run_manifest.json",
         "manifest.json",

@@ -1,8 +1,8 @@
 """``plan_reduction`` -- choose the best reduction strategy per op.
 
 Reconstruction of XLA's ``ReductionDimensionGrouper`` +
-``TreeReductionRewriter`` as a CompGen PatternRewriter. Zero external
-references; CompGen owns the rewrite.
+``TreeReductionRewriter`` as a XPU-RT PatternRewriter. Zero external
+references; XPU-RT owns the rewrite.
 
 Three sub-strategies:
 
@@ -23,7 +23,7 @@ Three sub-strategies:
   halving adds. Annotational today.
 
 Beyond choosing a strategy, this pass tags every matching reduction
-op with ``compgen.reduction_strategy`` + ``compgen.reduction_extent``
+op with ``xpu_rt.reduction_strategy`` + ``xpu_rt.reduction_extent``
 so downstream tiling / codegen can pick the right implementation.
 The ``group`` path goes further: it physically reorders the
 iteration domain.
@@ -35,7 +35,7 @@ contract is however *mandatory*
 strategy, which makes  end-to-end tests fail on large-reduce
 workloads like Qwen-MoE's expert combine.
 
-The rewrite also walks ``compgen.linalg_ext.softmax`` /
+The rewrite also walks ``xpu_rt.linalg_ext.softmax`` /
 ``rms_norm`` / ``layer_norm`` ops (all of which carry an implicit
 reduction) and tags them the same way. This is the fast path for
 the real-workload tests.
@@ -54,7 +54,7 @@ Configuration:
 LLM-tool signature:
 
     tool_name="plan_reduction"
-    wraps_pass="CompGen:TreeReductionRewriter"
+    wraps_pass="XPU-RT:TreeReductionRewriter"
     invent_slot="layout/reduction_planning"
     policy="AutoByExtent"
 """
@@ -85,7 +85,7 @@ from xdsl.pattern_rewriter import (
     RewritePattern,
 )
 
-from compgen.ir.linalg_ext import LayerNormOp, RMSNormOp, SoftmaxOp
+from xpu_rt.ir.linalg_ext import LayerNormOp, RMSNormOp, SoftmaxOp
 
 _VALID_POLICIES = frozenset({"auto", "group", "split", "tree_reduce"})
 _VALID_STRATEGIES = frozenset({"group", "split", "tree_reduce"})
@@ -158,12 +158,12 @@ def _choose_auto(
 
 
 def _already_annotated(op: Operation) -> bool:
-    return "compgen.reduction_strategy" in op.attributes
+    return "xpu_rt.reduction_strategy" in op.attributes
 
 
 def _annotate(op: Operation, strategy: str, extent: int) -> None:
-    op.attributes["compgen.reduction_strategy"] = StringAttr(strategy)
-    op.attributes["compgen.reduction_extent"] = IntegerAttr(extent, IntegerType(64))
+    op.attributes["xpu_rt.reduction_strategy"] = StringAttr(strategy)
+    op.attributes["xpu_rt.reduction_extent"] = IntegerAttr(extent, IntegerType(64))
 
 
 def _permute_affine_map(m: AffineMap, perm_inv: list[int]) -> AffineMap:
@@ -302,7 +302,7 @@ class _GenericReductionAnnotator(RewritePattern):
 
 
 class _LinalgExtReductionAnnotator(RewritePattern):
-    """Tag ``compgen.linalg_ext.{softmax,rms_norm,layer_norm}``.
+    """Tag ``xpu_rt.linalg_ext.{softmax,rms_norm,layer_norm}``.
 
     Each of those ops carries an implicit last-axis reduction; the
     extent is the last dim of the input.

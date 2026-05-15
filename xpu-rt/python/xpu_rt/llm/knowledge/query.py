@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from compgen.llm.knowledge.base import (
+from xpu_rt.llm.knowledge.base import (
     AntiPattern,
     CompilerHeuristic,
     KernelLibraryWisdom,

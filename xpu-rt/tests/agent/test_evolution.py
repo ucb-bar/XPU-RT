@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from compgen.agent.env import CompilerEnv
-from compgen.agent.evolution import EvolutionaryOptimizer, EvolutionResult, Strategy
-from compgen.llm.mock_client import MockLLMClient
-from compgen.targets.schema import load_profile
+from xpu_rt.agent.env import CompilerEnv
+from xpu_rt.agent.evolution import EvolutionaryOptimizer, EvolutionResult, Strategy
+from xpu_rt.llm.mock_client import MockLLMClient
+from xpu_rt.targets.schema import load_profile
 from xdsl.dialects import arith, func
 from xdsl.dialects.builtin import IndexType, ModuleOp
 from xdsl.ir import Block, Region

@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-import compgen.agent.invent_slots  # noqa: F401
-from compgen.agent.invent_slots.registrar import register_invent_slots
-from compgen.agent.invent_slots.seeds import (
+import xpu_rt.agent.invent_slots  # noqa: F401
+from xpu_rt.agent.invent_slots.registrar import register_invent_slots
+from xpu_rt.agent.invent_slots.seeds import (
     propose_buffer_lifetime_plan_seed,
     propose_rematerialization_plan_seed,
 )
-from compgen.llm.registry import Registry
+from xpu_rt.llm.registry import Registry
 
 
 def test_buffer_lifetime_seed_shape() -> None:

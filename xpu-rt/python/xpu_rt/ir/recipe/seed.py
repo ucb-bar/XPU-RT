@@ -24,23 +24,23 @@ from xdsl.dialects.builtin import (
 )
 from xdsl.ir import Block, Region
 
-from compgen.ir.recipe.attrs import (
+from xpu_rt.ir.recipe.attrs import (
     DeviceRefAttr,
     EffectClassAttr,
     ProvenanceAttr,
     ShapeSummaryAttr,
 )
-from compgen.ir.recipe.ops_candidate import FuseOp, PlaceOnDeviceOp, TileOp
-from compgen.ir.recipe.ops_fact import (
+from xpu_rt.ir.recipe.ops_candidate import FuseOp, PlaceOnDeviceOp, TileOp
+from xpu_rt.ir.recipe.ops_fact import (
     BackendAvailableOp,
     CalibrationOp,
     FusibleWithOp,
     KernelContractOp,
     LocalMemFitOp,
 )
-from compgen.ir.recipe.ops_provenance import FromTemplateOp
-from compgen.ir.recipe.ops_scope import RecipeRegionOp
-from compgen.ir.recipe.ops_verify import RequireDiffTestOp
+from xpu_rt.ir.recipe.ops_provenance import FromTemplateOp
+from xpu_rt.ir.recipe.ops_scope import RecipeRegionOp
+from xpu_rt.ir.recipe.ops_verify import RequireDiffTestOp
 
 log = structlog.get_logger()
 
@@ -90,10 +90,10 @@ def generate_seed_recipe(
     llm_personalization: dict[str, Any] = {}
     if llm_client is not None:
         try:
-            from compgen.agent.prompts.recipe_seed import RECIPE_SEED_SCHEMA, RecipeSeedContext
-            from compgen.agent.prompts.recipe_seed import format_prompt as fmt_seed
-            from compgen.agent.prompts.recipe_seed import parse_response as parse_seed
-            from compgen.llm.base import GenerationRequest, LLMConfig
+            from xpu_rt.agent.prompts.recipe_seed import RECIPE_SEED_SCHEMA, RecipeSeedContext
+            from xpu_rt.agent.prompts.recipe_seed import format_prompt as fmt_seed
+            from xpu_rt.agent.prompts.recipe_seed import parse_response as parse_seed
+            from xpu_rt.llm.base import GenerationRequest, LLMConfig
 
             # Build op histogram
             op_hist: dict[str, int] = {}
@@ -281,7 +281,7 @@ def _extract_significant_ops(
         # the model layer ("the q-projection matmul") instead of the
         # IR layer ("r_3"). When the hint is absent, fall back to a
         # coarse op-family derived from the xDSL op name.
-        hint_attr = op.attributes.get("compgen._pattern_hint") if hasattr(op, "attributes") else None
+        hint_attr = op.attributes.get("xpu_rt._pattern_hint") if hasattr(op, "attributes") else None
         if hint_attr is not None and hasattr(hint_attr, "data"):
             info["role"] = hint_attr.data
         else:

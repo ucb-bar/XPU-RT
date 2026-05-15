@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from compgen.llm.base import Objective
-from compgen.llm.mock_client import MockLLMClient
-from compgen.targets.schema import TargetProfile
-from compgen.transforms.synthesize import TransformScript, TransformSynthesizer
+from xpu_rt.llm.base import Objective
+from xpu_rt.llm.mock_client import MockLLMClient
+from xpu_rt.targets.schema import TargetProfile
+from xpu_rt.transforms.synthesize import TransformScript, TransformSynthesizer
 from xdsl.dialects.builtin import Float32Type, FunctionType, ModuleOp, TensorType
 from xdsl.dialects.func import FuncOp, ReturnOp
 from xdsl.ir import Block, Region

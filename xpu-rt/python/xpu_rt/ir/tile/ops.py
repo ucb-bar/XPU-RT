@@ -26,8 +26,8 @@ from xdsl.traits import Pure
 from xdsl.utils.exceptions import VerifyException
 
 # Reuse ProvenanceAttr from Recipe IR for lineage tracking
-from compgen.ir.recipe.attrs import ProvenanceAttr
-from compgen.ir.tile.attrs import FragmentLayoutAttr, MemoryClassAttr, TileShapeAttr
+from xpu_rt.ir.recipe.attrs import ProvenanceAttr
+from xpu_rt.ir.tile.attrs import FragmentLayoutAttr, MemoryClassAttr, TileShapeAttr
 
 
 @irdl_op_definition

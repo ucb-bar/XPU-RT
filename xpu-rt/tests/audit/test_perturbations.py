@@ -1,4 +1,4 @@
-"""Tests for compgen.audit.perturbations."""
+"""Tests for xpu_rt.audit.perturbations."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from compgen.audit.perturbations import (
+from xpu_rt.audit.perturbations import (
     change_output_dir,
     corrupt_promotion_library,
     empty_promotion_library,

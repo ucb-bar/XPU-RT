@@ -1,4 +1,4 @@
-"""Event schema for the CompGen compilation trace.
+"""Event schema for the XPU-RT compilation trace.
 
 A trace is a JSONL stream of ``TraceEvent`` records, one per line. Every
 event carries ``event_id``, ``parent_event_id`` (for correlation across

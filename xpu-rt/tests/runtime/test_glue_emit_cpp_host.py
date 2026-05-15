@@ -21,18 +21,18 @@ from pathlib import Path
 
 import pytest
 
-from compgen.runtime.execution_plan import (
+from xpu_rt.runtime.execution_plan import (
     DependencyEdge,
     ExecutionPlan,
     RegionKernelBinding,
     RegionPlacement,
     Resource,
 )
-from compgen.runtime.glue_emit import (
+from xpu_rt.runtime.glue_emit import (
     emit_c11_baremetal_executor,
     emit_cpp_host_executor,
 )
-from compgen.runtime.glue_emit.c11_baremetal import _PLAN_VIOLATION_CODES
+from xpu_rt.runtime.glue_emit.c11_baremetal import _PLAN_VIOLATION_CODES
 
 
 # --------------------------------------------------------------------------- #
@@ -179,7 +179,7 @@ class TestCppSyntax:
         cxx = _find_cxx()
         assert cxx is not None
         repo_root = Path(__file__).resolve().parents[2]
-        rt_include = repo_root / "runtime" / "native" / "libcompgen_rt" / "include"
+        rt_include = repo_root / "runtime" / "native" / "libxpu_rt" / "include"
         emit_dir = result.executor_path.parent
         proc = subprocess.run(
             [
@@ -220,12 +220,12 @@ class TestAbiLint:
         called = {m.group(1) for m in call_re.finditer(src_clean)}
         allowed = (
             "sizeof", "if", "for", "while", "return", "switch", "case",
-            "compgen_run", "static_cast", "reinterpret_cast", "const_cast",
+            "xpu_rt_run", "static_cast", "reinterpret_cast", "const_cast",
         )
         for name in called:
             if name.startswith("cg_rt_"):
                 continue
-            if name.startswith("compgen_kernel_"):
+            if name.startswith("xpu_rt_kernel_"):
                 continue
             if name in allowed:
                 continue
@@ -322,7 +322,7 @@ class TestUnboundRegion:
         )
         result = emit_cpp_host_executor(run_dir)
         src = result.executor_path.read_text()
-        assert "COMPGEN_PLAN_VIOLATION_UNBOUND_REGION" in src
+        assert "XPU_RT_PLAN_VIOLATION_UNBOUND_REGION" in src
         assert result.overall == "skipped"
 
 

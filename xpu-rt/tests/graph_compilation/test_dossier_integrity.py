@@ -62,12 +62,12 @@ def _run_full_optins(model: str, out_dir: Path) -> int:
     """Run the pipeline with EVERY analysis opt-in enabled so every
     track produces data."""
     env = os.environ.copy()
-    env["COMPGEN_CALIBRATE_PROFILER"] = "1"
-    env["COMPGEN_CALIBRATE_CANDIDATES"] = "1"
-    env["COMPGEN_RUN_KERNELS"] = "1"
+    env["XPU_RT_CALIBRATE_PROFILER"] = "1"
+    env["XPU_RT_CALIBRATE_CANDIDATES"] = "1"
+    env["XPU_RT_RUN_KERNELS"] = "1"
     res = subprocess.run(
         [
-            sys.executable, "-m", "compgen.graph_compilation", "run",
+            sys.executable, "-m", "xpu_rt.graph_compilation", "run",
             "--model", str(REPO_ROOT / f"configs/models/{model}.yaml"),
             "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
             "--out", str(out_dir),
@@ -802,7 +802,7 @@ def test_validate_run_overall_pass(
 ) -> None:
     """All opt-ins enabled must not break the manifest hash chain."""
     run_dir: Path = request.getfixturevalue(fixture_name)
-    from compgen.graph_compilation.validate import validate_run
+    from xpu_rt.graph_compilation.validate import validate_run
 
     rep = validate_run(run_dir)
     assert rep.overall == "pass", (
@@ -987,7 +987,7 @@ def test_evidence_pack_aggregate_matches_per_model_artifacts(
     shutil.copytree(run_merlin_mlp_wide, canonical / "merlin_mlp_wide")
     shutil.copytree(run_proxy_vla, canonical / "proxy_vla")
 
-    from compgen.graph_compilation.evidence_pack import build_evidence_pack
+    from xpu_rt.graph_compilation.evidence_pack import build_evidence_pack
     res = build_evidence_pack(
         canonical_suite_root=canonical, wide_suite_root=None,
         out_dir=suite / "evidence_pack", skip_figures=True,
@@ -1259,7 +1259,7 @@ def test_every_modeled_m21_candidate_has_overlay(
 def test_ledger_records_full_kernel_pipeline_milestones(
     fixture_name: str, request: pytest.FixtureRequest,
 ) -> None:
-    """A run with COMPGEN_RUN_KERNELS=1 must record ,
+    """A run with XPU_RT_RUN_KERNELS=1 must record ,
      ledger events. is recorded too (with not_run
     note when no fusion candidate)."""
     run_dir: Path = request.getfixturevalue(fixture_name)

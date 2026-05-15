@@ -19,8 +19,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from compgen.mcp.server import dispatch_tool
-from compgen.mcp.tool_delta import (
+from xpu_rt.mcp.server import dispatch_tool
+from xpu_rt.mcp.tool_delta import (
     ArtifactWritten,
     BenchID,
     Cost,
@@ -82,7 +82,7 @@ def test_tool_delta_envelope_to_dict() -> None:
         cost=Cost(wall_ms=1.0),
     )
     blob = env.to_dict()
-    assert blob["schema_version"] == "compgen_tool_delta_v1"
+    assert blob["schema_version"] == "xpu_rt_tool_delta_v1"
     assert blob["status"] == "ok"
     assert blob["cost"]["wall_ms"] == 1.0
 

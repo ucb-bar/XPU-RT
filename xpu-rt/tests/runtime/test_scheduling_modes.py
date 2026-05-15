@@ -3,24 +3,24 @@
 from __future__ import annotations
 
 import pytest
-from compgen.agent.memory import CostCalibration
-from compgen.runtime.adaptive import (
+from xpu_rt.agent.memory import CostCalibration
+from xpu_rt.runtime.adaptive import (
     AdaptiveBatchScheduler,
     TieredPlan,
 )
-from compgen.runtime.calibration_loop import (
+from xpu_rt.runtime.calibration_loop import (
     DEFAULT_DRIFT_THRESHOLD,
     CalibrationLoop,
     CalibrationResult,
     DriftResult,
 )
-from compgen.runtime.planner import ExecutionPlan, PlacementDecision
-from compgen.runtime.priority_scheduler import (
+from xpu_rt.runtime.planner import ExecutionPlan, PlacementDecision
+from xpu_rt.runtime.priority_scheduler import (
     Priority,
     PriorityScheduler,
     Workload,
 )
-from compgen.targets.schema import DeviceSpec, TargetProfile
+from xpu_rt.targets.schema import DeviceSpec, TargetProfile
 
 # ---------------------------------------------------------------------------
 # Helpers

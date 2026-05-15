@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from compgen.ir.payload.passes.runtime_stubs import (
+from xpu_rt.ir.payload.passes.runtime_stubs import (
     AliasIoBuffers,
     AssignMemorySpace,
     AssignQueue,
@@ -46,8 +46,8 @@ def test_runtime_stub_metadata(cls) -> None:
 
 
 def test_all_runtime_stubs_register_phase5() -> None:
-    import compgen.ir.payload.passes  # noqa: F401  (auto-registration)
-    from compgen.llm import get_registry
+    import xpu_rt.ir.payload.passes  # noqa: F401  (auto-registration)
+    from xpu_rt.llm import get_registry
 
     register_runtime_passes()
     r = get_registry()

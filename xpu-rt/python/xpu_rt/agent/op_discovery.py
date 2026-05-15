@@ -10,8 +10,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from compgen.agent.patterns import PATTERN_LIBRARY
-from compgen.ir.payload.decompositions import DECOMPOSITION_TABLE
+from xpu_rt.agent.patterns import PATTERN_LIBRARY
+from xpu_rt.ir.payload.decompositions import DECOMPOSITION_TABLE
 
 
 @dataclass(frozen=True)

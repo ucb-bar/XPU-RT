@@ -6,13 +6,13 @@ claim: |
 
   Implementation:
 
-  * ``python/compgen/pass_tools/pass_tool_result.py`` — typed
+  * ``python/xpu_rt/pass_tools/pass_tool_result.py`` — typed
     ``PassToolResult`` (``proposal`` / ``no_op`` / ``blocked``).
     Status discipline enforced at construction time:
     ``status=proposal`` requires non-empty ``recipe_delta``;
     other statuses must NOT carry one. Every delta entry must
     have an ``op`` field.
-  * ``python/compgen/pass_tools/pass_tool_registry.py`` —
+  * ``python/xpu_rt/pass_tools/pass_tool_registry.py`` —
     ``PassToolRegistry`` + ``apply_pass_tool``. Resolves
     entrypoints lazily; typed failures (``bad_entrypoint_syntax``,
     ``module_not_importable``, ``symbol_not_in_module``,
@@ -22,9 +22,9 @@ claim: |
     - ``result.tool_id`` matches the registry entry;
     - every recipe-delta op is in the card's
       ``allowed_recipe_ops`` set.
-  * ``python/compgen/pass_tools/cards/fuse_matmul_bias_relu.yaml``
+  * ``python/xpu_rt/pass_tools/cards/fuse_matmul_bias_relu.yaml``
     — first shipped pass-tool card.
-  * ``python/compgen/pass_tools/builtin/fuse_matmul_bias_relu.py``
+  * ``python/xpu_rt/pass_tools/builtin/fuse_matmul_bias_relu.py``
     — first shipped pass-tool entrypoint (pattern: matmul →
     bias_add → relu with single matmul consumer; emits
     ``FuseElementwise`` + ``SetAccumulator`` delta).
@@ -73,19 +73,19 @@ forbidden:
   - skipping the verifier between pass-tool result and recipe-IR application
   - returning a recipe-delta op outside card.allowed_recipe_ops
 required_evidence:
-  - python/compgen/pass_tools/pass_tool_types.py
-  - python/compgen/pass_tools/pass_tool_result.py
-  - python/compgen/pass_tools/pass_tool_registry.py
-  - python/compgen/pass_tools/cards/fuse_matmul_bias_relu.yaml
-  - python/compgen/pass_tools/builtin/__init__.py
-  - python/compgen/pass_tools/builtin/fuse_matmul_bias_relu.py
+  - python/xpu_rt/pass_tools/pass_tool_types.py
+  - python/xpu_rt/pass_tools/pass_tool_result.py
+  - python/xpu_rt/pass_tools/pass_tool_registry.py
+  - python/xpu_rt/pass_tools/cards/fuse_matmul_bias_relu.yaml
+  - python/xpu_rt/pass_tools/builtin/__init__.py
+  - python/xpu_rt/pass_tools/builtin/fuse_matmul_bias_relu.py
   - tests/pass_tools/test_pass_tool_invocation.py
   - tests/pass_tools/test_pass_tool_registry.py
 commit: 35ee97f497bc69c0716c25b935f575c3cd7d63f4
 created_at_utc: 2026-05-12T00:00:00Z
 notes: |
   Phase F-7. One built-in pass tool ships today. M-87 will source-
-  scan the rest of ``python/compgen/ir/payload/passes/`` for
+  scan the rest of ``python/xpu_rt/ir/payload/passes/`` for
   candidates to lift into pass-tool cards in a follow-up.
   Critical: this milestone proves the contract — emitting a
   recipe-delta op outside ``allowed_recipe_ops`` is rejected by

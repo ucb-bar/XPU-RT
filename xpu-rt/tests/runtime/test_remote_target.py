@@ -14,7 +14,7 @@ from typing import Any
 
 import pytest
 
-from compgen.runtime.remote_target import (
+from xpu_rt.runtime.remote_target import (
     REMOTE_PROBE_STATUSES,
     REMOTE_RUN_STATUSES,
     REMOTE_SCHEMA_VERSION,
@@ -25,7 +25,7 @@ from compgen.runtime.remote_target import (
     build_runner,
     load_remote_target_config,
 )
-from compgen.runtime.remote_runners.ssh_runner import SshRunner
+from xpu_rt.runtime.remote_runners.ssh_runner import SshRunner
 
 
 def _config(**overrides) -> RemoteTargetConfig:
@@ -33,8 +33,8 @@ def _config(**overrides) -> RemoteTargetConfig:
         "target_id": "test_target",
         "transport": "ssh",
         "host": "test.host.example",
-        "user": "compgen",
-        "workdir": "/tmp/compgen_remote",
+        "user": "xpu-rt",
+        "workdir": "/tmp/xpu_rt_remote",
         "toolchain_probe_cmd": "echo TOOLCHAIN_1.0",
         "build_cmd_template": "",
         "run_cmd_template": "python {source}",
@@ -121,7 +121,7 @@ def test_probe_available_when_remote_responds(monkeypatch):
     _patch_subprocess(
         monkeypatch,
         responses=[
-            _FakeCompleted(0, "compgen_remote_probe\n"),  # reachability
+            _FakeCompleted(0, "xpu_rt_remote_probe\n"),  # reachability
             _FakeCompleted(0, "TOOLCHAIN_1.0\n"),         # toolchain probe
         ],
     )
@@ -157,7 +157,7 @@ def test_probe_toolchain_missing(monkeypatch):
     _patch_subprocess(
         monkeypatch,
         responses=[
-            _FakeCompleted(0, "compgen_remote_probe\n"),
+            _FakeCompleted(0, "xpu_rt_remote_probe\n"),
             _FakeCompleted(127, "", "neuronx-cc: command not found\n"),
         ],
     )
@@ -350,7 +350,7 @@ def test_build_runner_ssh(tmp_path: Path):
 
 
 def test_build_runner_unsupported_transport():
-    from compgen.runtime.remote_target import RemoteExecutionError
+    from xpu_rt.runtime.remote_target import RemoteExecutionError
 
     cfg = _config(transport="modal")
     with pytest.raises(RemoteExecutionError, match="modal"):

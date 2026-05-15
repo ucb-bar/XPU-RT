@@ -7,57 +7,57 @@ integration tests spanning the full distributed chain.
 from __future__ import annotations
 
 import pytest
-from compgen.capture.torch_mlir_bridge import bridge_fx_graph
-from compgen.ir.collective import AllReduceOp
-from compgen.ir.payload.passes.rewrites.bubble_expand_shapes import (
+from xpu_rt.capture.torch_mlir_bridge import bridge_fx_graph
+from xpu_rt.ir.collective import AllReduceOp
+from xpu_rt.ir.payload.passes.rewrites.bubble_expand_shapes import (
     BubbleExpandShapesStats,
     run_bubble_expand_shapes,
 )
-from compgen.ir.payload.passes.rewrites.collective_quantizer import (
+from xpu_rt.ir.payload.passes.rewrites.collective_quantizer import (
     CollectiveQuantizerStats,
     run_collective_quantizer,
 )
-from compgen.ir.payload.passes.rewrites.expand_tensor_shapes import (
+from xpu_rt.ir.payload.passes.rewrites.expand_tensor_shapes import (
     run_expand_tensor_shapes,
 )
-from compgen.ir.payload.passes.rewrites.fuse_gemm_and_reduce_scatter import (
+from xpu_rt.ir.payload.passes.rewrites.fuse_gemm_and_reduce_scatter import (
     run_fuse_gemm_and_reduce_scatter,
 )
-from compgen.ir.payload.passes.rewrites.gather_expander import (
+from xpu_rt.ir.payload.passes.rewrites.gather_expander import (
     run_gather_expander,
 )
-from compgen.ir.payload.passes.rewrites.hoist_encoding_ops import (
+from xpu_rt.ir.payload.passes.rewrites.hoist_encoding_ops import (
     run_hoist_encoding_ops,
 )
-from compgen.ir.payload.passes.rewrites.insert_all_gather import (
+from xpu_rt.ir.payload.passes.rewrites.insert_all_gather import (
     run_insert_all_gather,
 )
-from compgen.ir.payload.passes.rewrites.insert_all_reduce import (
+from xpu_rt.ir.payload.passes.rewrites.insert_all_reduce import (
     run_insert_all_reduce,
 )
-from compgen.ir.payload.passes.rewrites.insert_reduce_scatter import (
+from xpu_rt.ir.payload.passes.rewrites.insert_reduce_scatter import (
     run_insert_reduce_scatter,
 )
-from compgen.ir.payload.passes.rewrites.pack_fusion import (
+from xpu_rt.ir.payload.passes.rewrites.pack_fusion import (
     PackFusionStats,
     run_pack_fusion,
 )
-from compgen.ir.payload.passes.rewrites.pipeline_parallel_schedule import (
+from xpu_rt.ir.payload.passes.rewrites.pipeline_parallel_schedule import (
     PipelineParallelConfig,
     run_pipeline_parallel_schedule,
 )
-from compgen.ir.payload.passes.rewrites.remat_activations import (
+from xpu_rt.ir.payload.passes.rewrites.remat_activations import (
     run_remat_activations,
 )
-from compgen.ir.payload.passes.rewrites.scatter_expander import (
+from xpu_rt.ir.payload.passes.rewrites.scatter_expander import (
     run_scatter_expander,
 )
-from compgen.ir.payload.passes.rewrites.shard_tensors_spmd import (
+from xpu_rt.ir.payload.passes.rewrites.shard_tensors_spmd import (
     ShardTensorsSPMDConfig,
     ShardTensorsSPMDStats,
     run_shard_tensors_spmd,
 )
-from compgen.ir.payload.passes.rewrites.simplify_while_loop import (
+from xpu_rt.ir.payload.passes.rewrites.simplify_while_loop import (
     run_simplify_while_loop,
 )
 from xdsl.dialects.builtin import (
@@ -112,12 +112,12 @@ class TestShardTensorsSPMD:
         m, mm = _simple_matmul_module()
         stats = run_shard_tensors_spmd(m)
         assert stats.matmuls_sharded == 1
-        assert "compgen.sharding" in mm.attributes
+        assert "xpu_rt.sharding" in mm.attributes
 
     def test_rhs_sharded_along_last_dim(self):
         m, mm = _simple_matmul_module()
         run_shard_tensors_spmd(m)
-        rhs_sharding = mm.attributes["compgen.sharding_rhs"]
+        rhs_sharding = mm.attributes["xpu_rt.sharding_rhs"]
         # rhs rank = 2; last dim is axis-sharded.
         dim_map = [a.data for a in rhs_sharding.dim_map.data]
         assert dim_map[-1] == "tp"
@@ -125,7 +125,7 @@ class TestShardTensorsSPMD:
     def test_matmul_partial_is_sum(self):
         m, mm = _simple_matmul_module()
         run_shard_tensors_spmd(m)
-        assert mm.attributes["compgen.sharding"].partial.data == "sum"
+        assert mm.attributes["xpu_rt.sharding"].partial.data == "sum"
 
     def test_stats_initial_values(self):
         s = ShardTensorsSPMDStats()
@@ -175,7 +175,7 @@ class TestInsertAllGather:
     def test_all_gather_fires_when_tagged(self):
         m, mm = _simple_matmul_module()
         run_shard_tensors_spmd(m)
-        mm.attributes["compgen.gather_axis"] = IntegerAttr(1, IntegerType(64))
+        mm.attributes["xpu_rt.gather_axis"] = IntegerAttr(1, IntegerType(64))
         stats = run_insert_all_gather(m)
         assert stats.all_gathers_inserted == 1
 
@@ -195,7 +195,7 @@ class TestInsertReduceScatter:
     def test_rs_fires_with_sharding_and_tag(self):
         m, mm = _simple_matmul_module()
         run_shard_tensors_spmd(m)
-        mm.attributes["compgen.scatter_axis"] = IntegerAttr(0, IntegerType(64))
+        mm.attributes["xpu_rt.scatter_axis"] = IntegerAttr(0, IntegerType(64))
         stats = run_insert_reduce_scatter(m)
         assert stats.reduce_scatters_inserted == 1
 
@@ -215,11 +215,11 @@ class TestFuseGEMMReduceScatter:
     def test_fires_when_matmul_feeds_rs(self):
         m, mm = _simple_matmul_module()
         run_shard_tensors_spmd(m)
-        mm.attributes["compgen.scatter_axis"] = IntegerAttr(0, IntegerType(64))
+        mm.attributes["xpu_rt.scatter_axis"] = IntegerAttr(0, IntegerType(64))
         run_insert_reduce_scatter(m)
         stats = run_fuse_gemm_and_reduce_scatter(m)
         assert stats.fusions_applied == 1
-        assert "compgen.gemm_rs_fused" in mm.attributes
+        assert "xpu_rt.gemm_rs_fused" in mm.attributes
 
     def test_no_fusion_when_no_rs(self):
         m, _ = _simple_matmul_module()
@@ -238,7 +238,7 @@ class TestPipelineParallelSchedule:
         cfg = PipelineParallelConfig(num_stages=2, num_microbatches=4)
         stats = run_pipeline_parallel_schedule(m, config=cfg)
         assert stats.schedule_entries > 0
-        assert "compgen.pp_schedule" in m.attributes
+        assert "xpu_rt.pp_schedule" in m.attributes
 
     def test_invalid_config_raises(self):
         m, _ = _simple_matmul_module()
@@ -250,7 +250,7 @@ class TestPipelineParallelSchedule:
         m, _ = _simple_matmul_module()
         cfg = PipelineParallelConfig(num_stages=2, num_microbatches=4)
         run_pipeline_parallel_schedule(m, config=cfg)
-        sched = m.attributes["compgen.pp_schedule"].data
+        sched = m.attributes["xpu_rt.pp_schedule"].data
         assert "warmup" in sched or "cooldown" in sched
 
 
@@ -286,19 +286,19 @@ class TestSimplifyWhileLoop:
         block = Block()
         block.add_op(ReturnOp())
         func = FuncOp("loop", FunctionType.from_lists([], []), Region([block]))
-        func.attributes["compgen.while_loop"] = StringAttr("true")
-        func.attributes["compgen.trip_count"] = IntegerAttr(10, IntegerType(64))
+        func.attributes["xpu_rt.while_loop"] = StringAttr("true")
+        func.attributes["xpu_rt.trip_count"] = IntegerAttr(10, IntegerType(64))
         m = ModuleOp([func])
         stats = run_simplify_while_loop(m)
         assert stats.loops_tagged == 1
-        assert "compgen.while_fully_unrollable" in func.attributes
+        assert "xpu_rt.while_fully_unrollable" in func.attributes
 
     def test_above_threshold_is_not_unrollable(self):
         block = Block()
         block.add_op(ReturnOp())
         func = FuncOp("loop", FunctionType.from_lists([], []), Region([block]))
-        func.attributes["compgen.while_loop"] = StringAttr("true")
-        func.attributes["compgen.trip_count"] = IntegerAttr(100, IntegerType(64))
+        func.attributes["xpu_rt.while_loop"] = StringAttr("true")
+        func.attributes["xpu_rt.trip_count"] = IntegerAttr(100, IntegerType(64))
         m = ModuleOp([func])
         stats = run_simplify_while_loop(m)
         assert stats.loops_fully_unrollable == 0

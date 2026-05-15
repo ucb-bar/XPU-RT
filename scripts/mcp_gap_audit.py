@@ -1,6 +1,6 @@
 """Audit script: does the live MCP server actually close every gap?
 
-Spawns ``compgen-mcp`` via stdio (real JSON-RPC), drives a full compile
+Spawns ``xpu-rt-mcp`` via stdio (real JSON-RPC), drives a full compile
 of the llama block, then asserts all 10 gap-fix acceptance criteria
 against the trace + IR dumps + digest the server wrote.
 
@@ -45,11 +45,11 @@ async def _call(session, name, args):
 
 async def main() -> None:
     env = dict(os.environ)
-    env["COMPGEN_DUMP_IR"] = "1"
-    env.setdefault("COMPGEN_SESSION_DIR", str(REPO / "sessions" / "mcp_audit"))
-    Path(env["COMPGEN_SESSION_DIR"]).mkdir(parents=True, exist_ok=True)
+    env["XPU_RT_DUMP_IR"] = "1"
+    env.setdefault("XPU_RT_SESSION_DIR", str(REPO / "sessions" / "mcp_audit"))
+    Path(env["XPU_RT_SESSION_DIR"]).mkdir(parents=True, exist_ok=True)
 
-    params = StdioServerParameters(command="compgen-mcp", args=[], env=env)
+    params = StdioServerParameters(command="xpu-rt-mcp", args=[], env=env)
     async with stdio_client(params) as (read, write):
         async with ClientSession(read, write) as session:
             await session.initialize()
@@ -81,7 +81,7 @@ async def main() -> None:
             await _call(
                 session,
                 "bundle_export",
-                {"session_id": sid, "output_dir": str(Path(env["COMPGEN_SESSION_DIR"]) / sid / "bundle")},
+                {"session_id": sid, "output_dir": str(Path(env["XPU_RT_SESSION_DIR"]) / sid / "bundle")},
             )
 
     # Load trace + index.

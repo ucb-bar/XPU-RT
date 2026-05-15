@@ -1,7 +1,7 @@
 """:class:`UserKernelProvider`: bid + fulfill from indexed user kernels.
 
 Reads the on-disk index produced by
-:func:`compgen.kernels.user_kernel_index.reindex`, matches incoming
+:func:`xpu_rt.kernels.user_kernel_index.reindex`, matches incoming
 ``KernelContractV3`` instances against indexed manifests, and bids
 high-confidence when an indexed kernel covers the contract.
 
@@ -37,14 +37,14 @@ from typing import Any
 
 import structlog
 
-from compgen.kernels.provider import (
+from xpu_rt.kernels.provider import (
     BidPreview,
     KernelContract,
     KnowledgeExport,
     ProviderResult,
     SearchBudget,
 )
-from compgen.kernels.user_kernel_index import (
+from xpu_rt.kernels.user_kernel_index import (
     IndexEntry,
     UserKernelHashDriftError,
     audit_locked_files,
@@ -58,10 +58,10 @@ log = structlog.get_logger()
 @dataclass
 class UserKernelProvider:
     """Auction provider serving user-supplied kernels from the local
-    ``.compgen/user_kernel_index/`` directory.
+    ``.xpu_rt/user_kernel_index/`` directory.
 
     Constructed once per process; the index is loaded eagerly from
-    disk. Re-call :func:`compgen.kernels.user_kernel_index.reindex`
+    disk. Re-call :func:`xpu_rt.kernels.user_kernel_index.reindex`
     and reconstruct the provider to pick up newly indexed kernels.
     """
 
@@ -127,7 +127,7 @@ class UserKernelProvider:
 
         # Compute the contract's canonical hash for exact match.
         try:
-            from compgen.promotion.contract_hash import canonical_contract_hash
+            from xpu_rt.promotion.contract_hash import canonical_contract_hash
 
             contract_canonical = canonical_contract_hash(contract_v3)
         except Exception:  # noqa: BLE001

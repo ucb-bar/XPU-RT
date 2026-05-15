@@ -14,8 +14,8 @@ auction code intersects this with the probe results.
 
 from __future__ import annotations
 
-from compgen.providers.card_loader import iter_provider_cards
-from compgen.providers.provider_types import ProviderCard
+from xpu_rt.providers.card_loader import iter_provider_cards
+from xpu_rt.providers.provider_types import ProviderCard
 
 
 # Per-contract-kind priority — providers within a kind are sorted

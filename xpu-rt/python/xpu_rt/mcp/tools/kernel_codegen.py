@@ -2,26 +2,26 @@
 
 Four tools, parallel to 's agent-decision pair:
 
-- ``compgen_emit_kernel_codegen_request`` — runs the pipeline to
+- ``xpu_rt_emit_kernel_codegen_request`` — runs the pipeline to
   ``--stop-after kernel-codegen-request`` and returns the task surface
   Claude Code or another provider needs to fulfil.
-- ``compgen_run_kernel_codegen_task`` — convenience helper. Spawns a
+- ``xpu_rt_run_kernel_codegen_task`` — convenience helper. Spawns a
   Claude Code subagent (or any callable provider) on the task and
   collects its response. Optional; the operator-driven flow (write
   the response file by hand) still works without it.
-- ``compgen_commit_kernel_codegen_response`` — validates the provider
+- ``xpu_rt_commit_kernel_codegen_response`` — validates the provider
   response against the task contract, writes the attempt trail,
   and returns the typed next_action. On accept, routes to
   (verifier — pending until lands). On recoverable fail, emits a
   retry_request. On fatal / exhausted, emits a downstream_retry_request.
-- ``compgen_inspect_kernel_codegen_task`` — read-only view of the
+- ``xpu_rt_inspect_kernel_codegen_task`` — read-only view of the
   task surface (request, attempts, validation reports, certificates,
   failure reports).
 
 The compiler trusts artifacts and certificates only. The MCP tools
 are convenience wrappers over the file-based protocol implemented in
-``compgen.graph_compilation.kernel_codegen`` and
-``compgen.graph_compilation.kernel_codegen_response``.
+``xpu_rt.graph_compilation.kernel_codegen`` and
+``xpu_rt.graph_compilation.kernel_codegen_response``.
 """
 
 from __future__ import annotations
@@ -30,7 +30,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from compgen.graph_compilation.kernel_codegen_response import (
+from xpu_rt.graph_compilation.kernel_codegen_response import (
     DEFAULT_MAX_ATTEMPTS,
     commit_response,
 )
@@ -63,7 +63,7 @@ def _read_json_or_none(path: Path) -> dict[str, Any] | None:
 # --------------------------------------------------------------------------- #
 
 
-def compgen_emit_kernel_codegen_request(
+def xpu_rt_emit_kernel_codegen_request(
     *,
     model_config: str,
     target_config: str,
@@ -82,7 +82,7 @@ def compgen_emit_kernel_codegen_request(
     disk under ``04_kernel_codegen/requests/<task_id>.request.json``.
     """
     # Reuse the agent_decision helpers — same pattern.
-    from compgen.mcp.tools.agent_decision import (
+    from xpu_rt.mcp.tools.agent_decision import (
         _resolve_repo_root,
         _run_in_process,
         _run_subprocess_with_tail,
@@ -153,7 +153,7 @@ def compgen_emit_kernel_codegen_request(
 # --------------------------------------------------------------------------- #
 
 
-def compgen_run_kernel_codegen_task(
+def xpu_rt_run_kernel_codegen_task(
     *,
     run_dir: str,
     task_id: str,
@@ -180,7 +180,7 @@ def compgen_run_kernel_codegen_task(
             "ok": False,
             "error": (
                 f"task not found at {request_path.relative_to(run_dir_path)}; "
-                f"call compgen_emit_kernel_codegen_request first"
+                f"call xpu_rt_emit_kernel_codegen_request first"
             ),
         }
     response_path = (
@@ -194,7 +194,7 @@ def compgen_run_kernel_codegen_task(
             "provider": provider,
             "response_path": str(response_path.relative_to(run_dir_path)),
             "operator_action_required": False,
-            "note": "response already exists; pass to compgen_commit_kernel_codegen_response",
+            "note": "response already exists; pass to xpu_rt_commit_kernel_codegen_response",
         }
     # ships the operator-driven flow only. The harness-driven
     # subagent spawn lands when the parent MCP server wires this to
@@ -210,7 +210,7 @@ def compgen_run_kernel_codegen_task(
             "M-43 ships the file-based protocol; the harness-driven "
             "subagent spawn lands in M-43.1. Operator: read the request, "
             "write the response per kernel_codegen_response_v1, then call "
-            "compgen_commit_kernel_codegen_response."
+            "xpu_rt_commit_kernel_codegen_response."
         ),
     }
 
@@ -220,7 +220,7 @@ def compgen_run_kernel_codegen_task(
 # --------------------------------------------------------------------------- #
 
 
-def compgen_commit_kernel_codegen_response(
+def xpu_rt_commit_kernel_codegen_response(
     *,
     run_dir: str,
     task_id: str,
@@ -244,7 +244,7 @@ def compgen_commit_kernel_codegen_response(
 # --------------------------------------------------------------------------- #
 
 
-def compgen_inspect_kernel_codegen_task(
+def xpu_rt_inspect_kernel_codegen_task(
     *,
     run_dir: str,
     task_id: str,
@@ -301,11 +301,11 @@ def compgen_inspect_kernel_codegen_task(
 
 
 # --------------------------------------------------------------------------- #
-# compgen_compare_kernel_bids — read-only auction summary
+# xpu_rt_compare_kernel_bids — read-only auction summary
 # --------------------------------------------------------------------------- #
 
 
-def compgen_compare_kernel_bids(
+def xpu_rt_compare_kernel_bids(
     *,
     run_dir: str,
     task_id: str,
@@ -396,7 +396,7 @@ def _resolve_certificate(run_dir: Path, request: dict[str, Any]) -> dict[str, An
     # (catches post-cert mutation per the negative-control
     # pattern).
     try:
-        from compgen.kernels.kernel_certificate import (
+        from xpu_rt.kernels.kernel_certificate import (
             KernelCertificate,
             validate_certificate,
         )

@@ -4,7 +4,7 @@ display_name: Layout pipeline (9/10) — materialize layout boundaries
 level: payload
 family: layout_pipeline
 source: homemade
-impl_path: python/compgen/transforms/layout/materialize_layout_boundaries.py
+impl_path: python/xpu_rt/transforms/layout/materialize_layout_boundaries.py
 reads:
   - 01_payload_lowering/payload.mlir
 writes:
@@ -23,7 +23,7 @@ verification:
 cost: cheap
 failure_modes:
   - "no_layout_conversion_path"
-mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+mcp_tool: mcp__xpu_rt__xpu_rt_emit_agent_decision_request
 notes: |
   Layout pipeline step 9: inserts explicit layout-conversion ops at
   boundaries between layout-incompatible regions.

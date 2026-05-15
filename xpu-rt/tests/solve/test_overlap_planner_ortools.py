@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import pytest
 
-from compgen.solve.overlap_planner import (
+from xpu_rt.solve.overlap_planner import (
     Dependency,
     Operation,
     OverlapPlanInput,
     Resource,
     plan_overlap,
 )
-from compgen.solve.solver_types import SolverBackendName, SolverStatus
+from xpu_rt.solve.solver_types import SolverBackendName, SolverStatus
 
 
 def test_dependency_orders_consumer_after_producer():

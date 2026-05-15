@@ -24,7 +24,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 def _run_cli(args: list[str], cwd: Path = REPO_ROOT) -> subprocess.CompletedProcess:
     return subprocess.run(
-        [sys.executable, "-m", "compgen.graph_compilation", *args],
+        [sys.executable, "-m", "xpu_rt.graph_compilation", *args],
         cwd=cwd, capture_output=True, text=True,
     )
 
@@ -54,7 +54,7 @@ def _commit_real_cffi_response(run_dir: Path) -> dict:
     Returns dict with task_id, contract_hash, M, K, N."""
     sys.path.insert(0, str(REPO_ROOT / "python"))
     from cffi import FFI
-    from compgen.graph_compilation.kernel_codegen_response import (
+    from xpu_rt.graph_compilation.kernel_codegen_response import (
         commit_response,
     )
 
@@ -291,7 +291,7 @@ class TestResumeEndToEnd:
         import numpy as np
         import torch
         from cffi import FFI
-        from compgen.runtime.glue import CpuRuntimeAdapter
+        from xpu_rt.runtime.glue import CpuRuntimeAdapter
 
         run = tmp_path / "run"
         shutil.copytree(merlin_kernel_codegen_run, run)
@@ -342,7 +342,7 @@ class TestResumeEndToEnd:
         kernels = {r: _kernel_real for r in bound}
         torch.manual_seed(0)
         io = {"A": torch.randn(M, K), "B": torch.randn(K, N)}
-        out = emod.compgen_run(io, kernels, runtime=CpuRuntimeAdapter())
+        out = emod.xpu_rt_run(io, kernels, runtime=CpuRuntimeAdapter())
         eager = io["A"] @ io["B"]
         max_abs = float((out - eager).abs().max())
 

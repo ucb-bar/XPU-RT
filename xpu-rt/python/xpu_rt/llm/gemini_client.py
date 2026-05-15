@@ -1,4 +1,4 @@
-"""Gemini API adapter — the primary LLM provider for CompGen.
+"""Gemini API adapter — the primary LLM provider for XPU-RT.
 
 Uses the google-genai SDK to call Gemini models. Handles API key loading
 from .env (GEMMINI_API → GOOGLE_API_KEY), structured output via JSON mode,
@@ -12,18 +12,18 @@ import time
 from dataclasses import dataclass
 from typing import Any
 
-from compgen.llm._env import resolve_api_key
-from compgen.observability.gemini_usage import (
+from xpu_rt.llm._env import resolve_api_key
+from xpu_rt.observability.gemini_usage import (
     install_genai_instrumentation,
     tracking_source,
 )
-from compgen.llm._prompt import (
+from xpu_rt.llm._prompt import (
     extract_markdown_artifacts,
     parse_json_payload,
     render_request_prompt,
     stringify_json_payload,
 )
-from compgen.llm.base import (
+from xpu_rt.llm.base import (
     CompGenLLMProtocol,
     GenerationRequest,
     GenerationResponse,

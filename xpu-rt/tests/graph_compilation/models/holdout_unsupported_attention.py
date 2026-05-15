@@ -1,4 +1,4 @@
-"""Holdout: scaled-dot-product attention CompGen does not lower.
+"""Holdout: scaled-dot-product attention XPU-RT does not lower.
 
 Expected outcome: typed-blocked with an ``unsupported_op`` reason.
 A silent partial pass — claiming it lowered but actually skipping
@@ -30,7 +30,7 @@ class _HoldoutUnsupportedAttention(nn.Module):
         q = q.view(b, s, 4, 16).transpose(1, 2)
         k = k.view(b, s, 4, 16).transpose(1, 2)
         v = v.view(b, s, 4, 16).transpose(1, 2)
-        # SDPA — CompGen does not lower this end-to-end yet.
+        # SDPA — XPU-RT does not lower this end-to-end yet.
         out = F.scaled_dot_product_attention(q, k, v)
         return out.transpose(1, 2).reshape(b, s, 64)
 

@@ -37,7 +37,7 @@ class UnmeasurableKernelError(KernelCostError):
     Typical reasons: the kernel source is not a runnable callable, the
     required hardware isn't present, the contract has no golden inputs.
     Callers should either (a) supply the missing piece, (b) fall back
-    to the analytical :func:`compgen.kernels.cost.roofline.predict`,
+    to the analytical :func:`xpu_rt.kernels.cost.roofline.predict`,
     or (c) reject the kernel — they must NOT pretend ``latency_us=0``.
     """
 
@@ -45,7 +45,7 @@ class UnmeasurableKernelError(KernelCostError):
 class RooflineUnavailableError(KernelCostError):
     """Both measurement and analytical modelling are unavailable.
 
-    Raised when :func:`compgen.kernels.cost.roofline.predict` can't
+    Raised when :func:`xpu_rt.kernels.cost.roofline.predict` can't
     compute a number because the ``DeviceTraits`` / ``TargetProfile``
     lacks required fields (peak FLOPS, peak bandwidth). Tells the
     caller the cost number they requested has no grounded source and

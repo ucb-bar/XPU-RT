@@ -9,7 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from compgen.agent.env.observations import Observation
+from xpu_rt.agent.env.observations import Observation
 
 # ============================================================================
 # Actions: what the agent can do (validated before execution)

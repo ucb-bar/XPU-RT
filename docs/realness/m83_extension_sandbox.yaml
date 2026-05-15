@@ -5,10 +5,10 @@ claim: |
 
   Implementation (additions to the M-79 schema work):
 
-  * ``python/compgen/extensions/registry.py`` — discovery and
+  * ``python/xpu_rt/extensions/registry.py`` — discovery and
     per-run registry building.
     - ``discover_manifests(root)`` walks
-      ``.rcg-artifacts/extensions/<id>/compgen_extension.yaml``
+      ``.rcg-artifacts/extensions/<id>/xpu_rt_extension.yaml``
       paths.
     - ``build_registry(root | manifests=...)`` validates every
       manifest, enforces sandbox semantics, rejects duplicate
@@ -37,7 +37,7 @@ claim: |
      ``extension_sandbox_violation``.
   4. **Path traversal still rejected.** Even within an accepted
      extension's sandbox, writes via ``..`` or to forbidden
-     filenames (``payload.mlir``, ``compgen_extension.yaml``,
+     filenames (``payload.mlir``, ``xpu_rt_extension.yaml``,
      etc.) raise :class:`ExtensionSandboxViolation`.
 
   Tests (M-79 + M-83 = 36/36 green for the extension surface):
@@ -47,7 +47,7 @@ claim: |
   * ``tests/extensions/test_target_card.py`` (6 — M-79)
   * ``tests/extensions/test_extension_registry.py`` (14 — M-83)
 
-  No write to ``python/compgen/``, ``configs/``, or core IR
+  No write to ``python/xpu_rt/``, ``configs/``, or core IR
   artifacts is allowed from an extension. The sandbox check is
   structural (filesystem-free path resolution) and the rejection
   carries the typed ``reason`` for the architecture audit.
@@ -55,15 +55,15 @@ realness_level: production_path
 forbidden:
   - writes outside allowed_write_root
   - path traversal via ".."
-  - mutations to python/compgen/ from extension code
+  - mutations to python/xpu_rt/ from extension code
   - mutations to payload.mlir or recipe IR by extensions
   - silent acceptance of sandbox violation
   - duplicate extension_id silently overriding the first
 required_evidence:
-  - python/compgen/extensions/manifest.py
-  - python/compgen/extensions/sandbox.py
-  - python/compgen/extensions/registry.py
-  - python/compgen/extensions/errors.py
+  - python/xpu_rt/extensions/manifest.py
+  - python/xpu_rt/extensions/sandbox.py
+  - python/xpu_rt/extensions/registry.py
+  - python/xpu_rt/extensions/errors.py
   - tests/extensions/test_extension_manifest.py
   - tests/extensions/test_extension_sandbox.py
   - tests/extensions/test_extension_registry.py

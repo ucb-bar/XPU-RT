@@ -4,9 +4,9 @@ dialect_name: stablehlo
 integration_level: card_only
 consumes: [torch_fx, jax_jaxpr]
 emits: [stablehlo, mhlo]
-entrypoint: compgen.providers.adapters.stablehlo:StableHloDialectProvider
+entrypoint: xpu_rt.providers.adapters.stablehlo:StableHloDialectProvider
 required_env: []
 description: |
   StableHLO / MHLO interchange dialect. Card-only frontend bridge
-  for XLA / JAX-style model interchange; CompGen ingestion still
+  for XLA / JAX-style model interchange; XPU-RT ingestion still
   goes through torch.fx primarily.

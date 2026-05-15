@@ -14,7 +14,7 @@ The resolver:
    the recomputed digest.
 3. Looks up the candidate in ``candidate_actions.json``.
 4. Looks up the candidate in the IR text and parses its
-   ``compgen.candidate @<id> attributes { ... } { ... }`` block.
+   ``xpu_rt.candidate @<id> attributes { ... } { ... }`` block.
 5. Cross-verifies that the IR's recipe ops + attributes match the
    JSON-projected ``recipe_delta``.
 6. Applies the legality gate (``--allow-illegal`` opens it).
@@ -79,7 +79,7 @@ class ResolvedCandidate:
     cost_preview: dict[str, Any]
     evidence: dict[str, Any]
     source: dict[str, str]  # action_space_ir, action_space_ir_sha256
-    ir_block_text: str       # the verbatim ``compgen.candidate ... { ... }`` block
+    ir_block_text: str       # the verbatim ``xpu_rt.candidate ... { ... }`` block
 
 
 @dataclass(frozen=True)
@@ -95,7 +95,7 @@ class ResolverReport:
 
 
 _CANDIDATE_HEADER_RE = re.compile(
-    r"^\s*compgen\.candidate\s+@(?P<id>[A-Za-z0-9_]+)\s+attributes\s*\{(?P<attrs>[^}]*)\}\s*\{\s*$"
+    r"^\s*xpu_rt\.candidate\s+@(?P<id>[A-Za-z0-9_]+)\s+attributes\s*\{(?P<attrs>[^}]*)\}\s*\{\s*$"
 )
 _RECIPE_OP_RE = re.compile(
     r"^\s*recipe\.(?P<op>[A-Za-z_][A-Za-z0-9_]*)\s+attributes\s*\{\s*(?P<body>.*?)\s*\}\s*$"

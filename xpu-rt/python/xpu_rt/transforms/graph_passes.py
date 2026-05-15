@@ -57,7 +57,7 @@ def detect_and_annotate_patterns(graph: torch.fx.GraphModule) -> int:
     - ``pow → mean → add → rsqrt → mul`` → annotated as ``rms_norm``
     - ``sin/cos → mul → add`` sequences → annotated as ``rope``
 
-    Annotations are stored in ``node.meta["_compgen_pattern"]``.
+    Annotations are stored in ``node.meta["_xpu_rt_pattern"]``.
 
     Args:
         graph: A captured FX GraphModule.
@@ -79,8 +79,8 @@ def detect_and_annotate_patterns(graph: torch.fx.GraphModule) -> int:
             if len(users) == 1 and users[0].op == "call_function":
                 act_name = _target_name(users[0])
                 if act_name in _ACTIVATION_TARGETS:
-                    node.meta["_compgen_pattern"] = f"fused_linear_{act_name}"
-                    users[0].meta["_compgen_pattern"] = f"fused_linear_{act_name}_tail"
+                    node.meta["_xpu_rt_pattern"] = f"fused_linear_{act_name}"
+                    users[0].meta["_xpu_rt_pattern"] = f"fused_linear_{act_name}_tail"
                     count += 1
                     continue
 
@@ -89,7 +89,7 @@ def detect_and_annotate_patterns(graph: torch.fx.GraphModule) -> int:
             chain = _trace_rms_norm(node)
             if chain:
                 for n in chain:
-                    n.meta["_compgen_pattern"] = "rms_norm"
+                    n.meta["_xpu_rt_pattern"] = "rms_norm"
                 count += 1
                 continue
 
@@ -170,7 +170,7 @@ def fold_transpose_into_matmul(graph: torch.fx.GraphModule) -> int:
             users = _get_users(node)
             for user in users:
                 if user.op == "call_function" and _target_name(user) in _MATMUL_TARGETS:
-                    user.meta["_compgen_transpose_absorbed"] = True
+                    user.meta["_xpu_rt_transpose_absorbed"] = True
                     count += 1
     return count
 
@@ -199,7 +199,7 @@ def raise_composite_ops(graph: torch.fx.GraphModule) -> int:
         tname = _target_name(node)
         # Explicit softmax ops are already atomic
         if tname in ("softmax", "_softmax", "aten._softmax.default"):
-            node.meta["_compgen_pattern"] = "softmax"
+            node.meta["_xpu_rt_pattern"] = "softmax"
             count += 1
     return count
 

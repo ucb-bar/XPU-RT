@@ -1,4 +1,4 @@
-"""Tests for compgen.passes.scheduler."""
+"""Tests for xpu_rt.passes.scheduler."""
 
 from __future__ import annotations
 
@@ -6,12 +6,12 @@ from pathlib import Path
 
 import pytest
 
-from compgen.audit.errors import (
+from xpu_rt.audit.errors import (
     PairContractViolation,
     PassPlanInvalid,
     PhaseTransitionViolation,
 )
-from compgen.passes import (
+from xpu_rt.passes import (
     PASS_PHASES,
     PassCard,
     PassCardRegistry,

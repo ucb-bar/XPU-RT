@@ -4,7 +4,7 @@ display_name: Raise hint annotations to dialect ops
 level: payload
 family: codegen
 source: IREE
-impl_path: python/compgen/ir/payload/passes/rewrites/raise_special_ops.py
+impl_path: python/xpu_rt/ir/payload/passes/rewrites/raise_special_ops.py
 reads:
   - 01_payload_lowering/payload.mlir
 writes:
@@ -24,7 +24,7 @@ cost: cheap
 failure_modes:
   - "no_matching_dialect_op"
   - "ambiguous_hint_annotation"
-mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+mcp_tool: mcp__xpu_rt__xpu_rt_emit_agent_decision_request
 notes: |
   Reconstruction of IREE's RaiseSpecialOpsPass. Lifts hint annotations
   (softmax, layer-norm, attention) into dedicated dialect ops so

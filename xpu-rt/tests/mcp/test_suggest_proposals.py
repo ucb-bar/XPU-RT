@@ -7,16 +7,16 @@ from pathlib import Path
 import pytest
 import torch
 import torch.nn as nn
-from compgen.agent.invent_slots.registrar import register_invent_slots
-from compgen.agent.llm_driver import LLMDrivenCompiler
-from compgen.api import compile_model
-from compgen.api import device as _device
-from compgen.llm.mock_client import MockLLMClient
-from compgen.llm.registry import Registry
-from compgen.mcp.session import SessionManager
-from compgen.mcp.tools.batch import batch_propose
-from compgen.mcp.tools.suggest import SUGGEST_TOOLS, suggest_proposals
-from compgen.mcp.tools.transform import propose_invent_slot
+from xpu_rt.agent.invent_slots.registrar import register_invent_slots
+from xpu_rt.agent.llm_driver import LLMDrivenCompiler
+from xpu_rt.api import compile_model
+from xpu_rt.api import device as _device
+from xpu_rt.llm.mock_client import MockLLMClient
+from xpu_rt.llm.registry import Registry
+from xpu_rt.mcp.session import SessionManager
+from xpu_rt.mcp.tools.batch import batch_propose
+from xpu_rt.mcp.tools.suggest import SUGGEST_TOOLS, suggest_proposals
+from xpu_rt.mcp.tools.transform import propose_invent_slot
 
 EXEMPLAR = Path(__file__).resolve().parents[1] / "targetgen" / "exemplars" / "test_gpu_simt.yaml"
 

@@ -17,9 +17,9 @@ Pins the paper Algorithm 1 behaviour:
 from __future__ import annotations
 
 import pytest
-from compgen.runtime.event_tensor import EventTensor
-from compgen.runtime.megakernel import DeviceCall, EventEdge, MegakernelGraph
-from compgen.transforms.event_static_schedule import (
+from xpu_rt.runtime.event_tensor import EventTensor
+from xpu_rt.runtime.megakernel import DeviceCall, EventEdge, MegakernelGraph
+from xpu_rt.transforms.event_static_schedule import (
     EventTensorAllocSpec,
     LaunchConfig,
     compute_static_schedule,
@@ -440,8 +440,8 @@ class TestPoolInvariant:
         """
         import torch
         import torch.nn as nn
-        from compgen.kernels.cost.etc_predict import predict_etc_dispatch
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.kernels.cost.etc_predict import predict_etc_dispatch
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         class _Diamond(nn.Module):
             def __init__(self) -> None:

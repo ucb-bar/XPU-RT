@@ -18,7 +18,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from compgen.benchmarks.model_inspection import (
+from xpu_rt.benchmarks.model_inspection import (
     InspectionPack,
     aggregate_inspection_packs,
     inspect_model_run,

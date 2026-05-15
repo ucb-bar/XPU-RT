@@ -1,5 +1,5 @@
 /*
- * CompGen Performance Counters — backend dispatcher.
+ * XPU-RT Performance Counters — backend dispatcher.
  *
  * The backend is selected at compile time via CG_PERF_BACKEND.
  * Default is "none" (all operations are no-ops).
@@ -12,7 +12,7 @@
  *   - cuda_cupti    : Stub (requires CUDA toolkit to build).
  */
 
-#include "compgen/perf_counters.h"
+#include "xpu_rt/perf_counters.h"
 
 #include <stdlib.h>
 #include <string.h>

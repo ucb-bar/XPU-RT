@@ -4,7 +4,7 @@ numerical-mismatch failure.
 Coverage:
 
 * A failing differential-higham obligation produces a verdict whose
-  `counterexample` is a typed :class:`compgen.agent.counterexample.Counterexample`.
+  `counterexample` is a typed :class:`xpu_rt.agent.counterexample.Counterexample`.
 * The verdict's `to_dict()` serializes the counterexample so downstream
   evidence packs can consume the typed payload.
 * A passing obligation leaves `counterexample=None` (backward-compat).
@@ -26,12 +26,12 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from compgen.agent.counterexample import (
+from xpu_rt.agent.counterexample import (
     Counterexample,
     IRSlice,
     RemediationHint,
 )
-from compgen.kernels.contract_verifier import (
+from xpu_rt.kernels.contract_verifier import (
     ObligationVerdict,
     VerifierObligation,
     _build_numerical_counterexample,

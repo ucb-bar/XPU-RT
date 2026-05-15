@@ -1,10 +1,10 @@
 """Reference cuda_tile adapter — in-tree mirror of bridge-validated #144 shape.
 
-Bwell's external ``compgen_cuda_tile`` package validates this lowering
+Bwell's external ``xpu_rt_cuda_tile`` package validates this lowering
 against the real ``cuda-tile-translate`` toolchain. This in-tree
 reference reproduces the same MLIR text emission so:
 
-- CompGen's PyPI wheel ships a working ``cuda_tile`` adapter without
+- XPU-RT's PyPI wheel ships a working ``cuda_tile`` adapter without
   requiring users to clone the bwell-side package.
 - Unit tests can regression-check the FFN single-tile MLIR pattern
   without any NVIDIA toolchain on PATH.
@@ -20,7 +20,7 @@ coord-op syntax against the real toolchain.
 
 from __future__ import annotations
 
-from compgen.extensions.vendor_dialect.builtins.cuda_tile.adapter import (
+from xpu_rt.extensions.vendor_dialect.builtins.cuda_tile.adapter import (
     CudaTileReferenceAdapter,
     make_adapter,
 )

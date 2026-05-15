@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from compgen.solve.solver_types import (
+from xpu_rt.solve.solver_types import (
     SolverRequest,
     SolverResponse,
     SolverStatus,

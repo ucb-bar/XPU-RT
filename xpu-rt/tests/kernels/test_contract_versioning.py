@@ -31,7 +31,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 def _build_v3_matmul():
-    from compgen.kernels.contract_v3 import (
+    from xpu_rt.kernels.contract_v3 import (
         ConcurrencyUnit, DispatchModel, DispatchSpec, EventDecl,
         ExecutionEnvelope, FusionPolicy, Granularity, HardwareEnvelope,
         IOContract, KernelArchetype, KernelContractV3, LayoutKind, MemorySpec,
@@ -94,7 +94,7 @@ class TestOptionalV3_1Field:
     def test_setting_field_does_not_change_hashes(self) -> None:
         from dataclasses import replace
 
-        from compgen.promotion.contract_hash import (
+        from xpu_rt.promotion.contract_hash import (
             canonical_contract_hash,
             instance_contract_hash,
         )
@@ -110,8 +110,8 @@ class TestOptionalV3_1Field:
         """Sanity: hash invariance is -specific, not a regression."""
         from dataclasses import replace
 
-        from compgen.kernels.contract_v3 import LayoutKind
-        from compgen.promotion.contract_hash import canonical_contract_hash
+        from xpu_rt.kernels.contract_v3 import LayoutKind
+        from xpu_rt.promotion.contract_hash import canonical_contract_hash
 
         c1 = _build_v3_matmul()
         c2 = replace(
@@ -135,7 +135,7 @@ class TestOptionalV3_1Field:
 
 class TestMigration:
     def test_migrate_fills_defaults(self) -> None:
-        from compgen.kernels.contract_migration import (
+        from xpu_rt.kernels.contract_migration import (
             migrate_contract_body_v3_to_v3_1,
         )
 
@@ -147,7 +147,7 @@ class TestMigration:
         assert migrated["optional_v3_1_fields"]["pin_inputs_to_cpu"] is False
 
     def test_migration_is_idempotent(self) -> None:
-        from compgen.kernels.contract_migration import (
+        from xpu_rt.kernels.contract_migration import (
             migrate_contract_body_v3_to_v3_1,
         )
 
@@ -165,7 +165,7 @@ class TestMigration:
         assert again == migrated
 
     def test_migration_does_not_mutate_input(self) -> None:
-        from compgen.kernels.contract_migration import (
+        from xpu_rt.kernels.contract_migration import (
             migrate_contract_body_v3_to_v3_1,
         )
 
@@ -182,7 +182,7 @@ class TestMigration:
 
 class TestUnknownFieldRejected:
     def test_unknown_name_raises(self) -> None:
-        from compgen.kernels.contract_migration import (
+        from xpu_rt.kernels.contract_migration import (
             ContractRefinementError,
             get_optional_v3_1_field,
         )
@@ -192,7 +192,7 @@ class TestUnknownFieldRejected:
             get_optional_v3_1_field(c, "invent_new_field")
 
     def test_recognized_field_without_value_returns_default(self) -> None:
-        from compgen.kernels.contract_migration import get_optional_v3_1_field
+        from xpu_rt.kernels.contract_migration import get_optional_v3_1_field
 
         c = _build_v3_matmul()
         assert get_optional_v3_1_field(c, "prefetch_distance") == 0
@@ -201,7 +201,7 @@ class TestUnknownFieldRejected:
     def test_recognized_field_with_value_returns_value(self) -> None:
         from dataclasses import replace
 
-        from compgen.kernels.contract_migration import get_optional_v3_1_field
+        from xpu_rt.kernels.contract_migration import get_optional_v3_1_field
 
         c = _build_v3_matmul()
         c = replace(c, optional_v3_1_fields={"prefetch_distance": 32})
@@ -216,7 +216,7 @@ class TestUnknownFieldRejected:
 def _invoke_pipeline(*, model: str, out_dir: Path) -> subprocess.CompletedProcess:
     return subprocess.run(
         [
-            sys.executable, "-m", "compgen.graph_compilation", "run",
+            sys.executable, "-m", "xpu_rt.graph_compilation", "run",
             "--model", str(REPO_ROOT / f"configs/models/{model}.yaml"),
             "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
             "--out", str(out_dir),
@@ -249,10 +249,10 @@ class TestPreM64BodyLoadsCleanly:
         body_without = dict(body_with)
         body_without.pop("optional_v3_1_fields", None)
 
-        from compgen.graph_compilation.kernel_codegen_response import (
+        from xpu_rt.graph_compilation.kernel_codegen_response import (
             _reconstruct_contract_from_dict,
         )
-        from compgen.promotion.contract_hash import (
+        from xpu_rt.promotion.contract_hash import (
             canonical_contract_hash,
             instance_contract_hash,
         )
@@ -281,7 +281,7 @@ class TestAuditGate:
         # End-to-end pipeline → at least one cert.
         result = subprocess.run(
             [
-                sys.executable, "-m", "compgen.graph_compilation", "run",
+                sys.executable, "-m", "xpu_rt.graph_compilation", "run",
                 "--model", str(REPO_ROOT / "configs/models/merlin_mlp_wide.yaml"),
                 "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
                 "--out", str(tmp_path / "run"),
@@ -293,13 +293,13 @@ class TestAuditGate:
         )
         assert result.returncode == 0, result.stderr
 
-        from compgen.kernels.contract_migration import (
+        from xpu_rt.kernels.contract_migration import (
             migrate_contract_body_v3_to_v3_1,
         )
-        from compgen.graph_compilation.kernel_codegen_response import (
+        from xpu_rt.graph_compilation.kernel_codegen_response import (
             _reconstruct_contract_from_dict,
         )
-        from compgen.promotion.contract_hash import canonical_contract_hash
+        from xpu_rt.promotion.contract_hash import canonical_contract_hash
 
         run_dir = tmp_path / "run"
         cert_dir = run_dir / "04_kernel_codegen" / "certificates"

@@ -21,7 +21,7 @@ export HF_TOKEN=...
 $EDITOR configs/model_admission/source_candidates.yaml
 
 # 3. run the verifier (one HTTP GET per candidate; never downloads weights)
-uv run python -m compgen.model_admission verify-sources \
+uv run python -m xpu_rt.model_admission verify-sources \
     --candidates configs/model_admission/source_candidates.yaml
 
 # 4. inspect the diff and commit
@@ -63,7 +63,7 @@ non-empty ``revision`` are skipped — no API call is made. To force a
 re-check (for example, to bump to the latest revision):
 
 ```bash
-uv run python -m compgen.model_admission verify-sources --refresh
+uv run python -m xpu_rt.model_admission verify-sources --refresh
 ```
 
 Use ``--only model_id1 model_id2`` to scope to a subset.
@@ -77,7 +77,7 @@ vs ``DeepSeek-V3``), edit the candidate YAML and re-run scoped:
 
 ```bash
 $EDITOR configs/model_admission/source_candidates.yaml
-uv run python -m compgen.model_admission verify-sources \
+uv run python -m xpu_rt.model_admission verify-sources \
     --refresh --only deepseek_v4_flash_text
 ```
 

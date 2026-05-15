@@ -4,7 +4,7 @@ display_name: Layout pipeline (1/10) — canonicalize transposes
 level: payload
 family: layout_pipeline
 source: homemade
-impl_path: python/compgen/transforms/layout/canonicalize_transposes.py
+impl_path: python/xpu_rt/transforms/layout/canonicalize_transposes.py
 reads:
   - 01_payload_lowering/payload.mlir
 writes:
@@ -23,7 +23,7 @@ verification:
 cost: cheap
 failure_modes:
   - "non_static_permutation"
-mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+mcp_tool: mcp__xpu_rt__xpu_rt_emit_agent_decision_request
 notes: |
   Layout pipeline step 1: folds double transposes, normalizes
   commutative transpose orderings. First step before

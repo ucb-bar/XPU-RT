@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 
 import structlog
 
-from compgen.eqsat.rules.python_rules import EqSatRewriteRule
+from xpu_rt.eqsat.rules.python_rules import EqSatRewriteRule
 
 log = structlog.get_logger()
 
@@ -75,9 +75,9 @@ class RuleRegistry:
 
 def create_default_registry() -> RuleRegistry:
     """Create a registry with all built-in rules."""
-    from compgen.eqsat.rules.algebraic import get_default_algebraic_rules
-    from compgen.eqsat.rules.fusion import get_default_fusion_rules
-    from compgen.eqsat.rules.layout import get_default_layout_rules
+    from xpu_rt.eqsat.rules.algebraic import get_default_algebraic_rules
+    from xpu_rt.eqsat.rules.fusion import get_default_fusion_rules
+    from xpu_rt.eqsat.rules.layout import get_default_layout_rules
 
     registry = RuleRegistry()
 

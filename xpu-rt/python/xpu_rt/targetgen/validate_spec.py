@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from compgen.targetgen.hardware_spec import ExecutionModel, HardwareSpec
-from compgen.targets.validate import ValidationError, ValidationResult
+from xpu_rt.targetgen.hardware_spec import ExecutionModel, HardwareSpec
+from xpu_rt.targets.validate import ValidationError, ValidationResult
 
 
 def validate_hardware_spec(spec: HardwareSpec) -> ValidationResult:

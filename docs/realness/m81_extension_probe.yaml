@@ -5,7 +5,7 @@ claim: |
 
   Implementation:
 
-  * ``python/compgen/providers/provider_probe.py`` — turns a
+  * ``python/xpu_rt/providers/provider_probe.py`` — turns a
     ``ProviderCard`` / ``DialectProviderCard`` into a typed
     ``ProviderProbeResult``. Hard rule 5 enforced: every
     ``required_env`` / ``required_commands`` /
@@ -15,7 +15,7 @@ claim: |
     ``python_package_missing``). Probe-time exceptions degrade to
     ``probe_error`` + ``blocked_reason=probe_exception`` — never
     raise.
-  * ``python/compgen/providers/provider_reports.py`` — writes
+  * ``python/xpu_rt/providers/provider_reports.py`` — writes
     typed JSON statuses, CSV matrices, and a markdown summary.
   * ``scripts/dev/probe_extension_providers.py`` — CLI that
     materializes the report set into
@@ -62,8 +62,8 @@ forbidden:
   - paper_claimable on a blocked provider
   - probe raising on a structurally valid card
 required_evidence:
-  - python/compgen/providers/provider_probe.py
-  - python/compgen/providers/provider_reports.py
+  - python/xpu_rt/providers/provider_probe.py
+  - python/xpu_rt/providers/provider_reports.py
   - scripts/dev/probe_extension_providers.py
   - tests/providers/test_provider_probe.py
   - results/extension_provider_probe/provider_status.json

@@ -1,6 +1,6 @@
 """Reference ToolCard implementation — ``echo``.
 
-A minimal, real entrypoint that keeps :class:`compgen.tools.tool_runner.ToolRunner`
+A minimal, real entrypoint that keeps :class:`xpu_rt.tools.tool_runner.ToolRunner`
 exercised end-to-end:
 
 * takes a ``text`` field (and optional ``count`` repetitions);
@@ -58,7 +58,7 @@ def returns_bad_status(request: dict[str, Any], *, out_dir: Path) -> dict[str, A
     """Negative-control entrypoint: violates ``output_schema.status``.
 
     Used by ``tests/tools/test_tool_runner.py`` to assert
-    :class:`compgen.tools.errors.ToolOutputSchemaError` fires.
+    :class:`xpu_rt.tools.errors.ToolOutputSchemaError` fires.
     """
 
     return {"status": "definitely_not_a_real_status", "lines_written": 0, "artifacts": []}

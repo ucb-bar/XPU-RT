@@ -1,4 +1,4 @@
-"""Ops for the ``compgen.collective`` dialect.
+"""Ops for the ``xpu_rt.collective`` dialect.
 
 Four collective primitives modelled after XLA's HLO collectives +
 NCCL / RCCL device collectives:
@@ -29,14 +29,14 @@ from xdsl.irdl import (
 from xdsl.traits import Pure
 from xdsl.utils.exceptions import VerifyException
 
-from compgen.ir.collective.attrs import ReduceKindAttr, ShardingSpecAttr
+from xpu_rt.ir.collective.attrs import ReduceKindAttr, ShardingSpecAttr
 
 
 @irdl_op_definition
 class AllReduceOp(IRDLOperation):
     """Reduce across replicas, every device ends up with the full result."""
 
-    name = "compgen.collective.all_reduce"
+    name = "xpu_rt.collective.all_reduce"
 
     input = operand_def(Attribute)
     result = result_def(Attribute)
@@ -58,7 +58,7 @@ class AllReduceOp(IRDLOperation):
 class AllGatherOp(IRDLOperation):
     """Gather shards from every device along one axis."""
 
-    name = "compgen.collective.all_gather"
+    name = "xpu_rt.collective.all_gather"
 
     input = operand_def(Attribute)
     result = result_def(Attribute)
@@ -80,7 +80,7 @@ class AllGatherOp(IRDLOperation):
 class ReduceScatterOp(IRDLOperation):
     """Reduce across replicas + scatter along one axis."""
 
-    name = "compgen.collective.reduce_scatter"
+    name = "xpu_rt.collective.reduce_scatter"
 
     input = operand_def(Attribute)
     result = result_def(Attribute)
@@ -103,7 +103,7 @@ class ReduceScatterOp(IRDLOperation):
 class BroadcastOp(IRDLOperation):
     """Replicate one device's tensor across every other device."""
 
-    name = "compgen.collective.broadcast"
+    name = "xpu_rt.collective.broadcast"
 
     input = operand_def(Attribute)
     result = result_def(Attribute)

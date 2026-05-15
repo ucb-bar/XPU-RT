@@ -17,10 +17,10 @@ from pathlib import Path
 
 import torch
 import torch.nn as nn
-from compgen.agent.llm_driver import LLMDrivenCompiler
-from compgen.api import compile_model
-from compgen.api import device as _device
-from compgen.llm.mock_client import MockLLMClient
+from xpu_rt.agent.llm_driver import LLMDrivenCompiler
+from xpu_rt.api import compile_model
+from xpu_rt.api import device as _device
+from xpu_rt.llm.mock_client import MockLLMClient
 
 EXEMPLAR = Path(__file__).resolve().parents[1] / "targetgen" / "exemplars" / "test_gpu_simt.yaml"
 
@@ -35,8 +35,8 @@ class _TinyMLP(nn.Module):
 
 
 def _driver(tmp_path: Path) -> LLMDrivenCompiler:
-    from compgen.agent.invent_slots.registrar import register_invent_slots
-    from compgen.llm.registry import Registry
+    from xpu_rt.agent.invent_slots.registrar import register_invent_slots
+    from xpu_rt.llm.registry import Registry
 
     dev = _device(EXEMPLAR)
     compiled = compile_model(

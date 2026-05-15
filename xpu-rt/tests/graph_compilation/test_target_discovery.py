@@ -12,8 +12,8 @@ from pathlib import Path
 
 import pytest
 import yaml
-from compgen.graph_compilation.region_dossier import load_target_profile
-from compgen.graph_compilation.target_discovery import (
+from xpu_rt.graph_compilation.region_dossier import load_target_profile
+from xpu_rt.graph_compilation.target_discovery import (
     CPUInfo,
     build_target_yaml,
     cpu_supported_dtypes,
@@ -108,7 +108,7 @@ def test_build_target_yaml_writes_loadable_profile(tmp_path: Path) -> None:
 def test_discover_target_yaml_round_trip_drives_run_suite(tmp_path: Path) -> None:
     """End-to-end: an auto-discovered profile drives a real graph-analysis
     run without crashing and yields a healthy dossier."""
-    from compgen.graph_compilation.run import run_graph_compilation
+    from xpu_rt.graph_compilation.run import run_graph_compilation
 
     out_yaml = tmp_path / "host.yaml"
     build_target_yaml(out_path=out_yaml, target_id="auto_host_test")

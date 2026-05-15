@@ -1,9 +1,9 @@
 """Claude-backed kernel provider for vendor-dialect kernel authoring.
 
 When a third-party MLIR vendor has no direct linalg/stablehlo ingress
-(e.g. NVIDIA CUDA Tile IR), CompGen has to *author* kernels directly in
+(e.g. NVIDIA CUDA Tile IR), XPU-RT has to *author* kernels directly in
 the vendor's dialect. The obvious tool for that is the same LLM that
-drives the rest of CompGen.
+drives the rest of XPU-RT.
 
 This provider is a ``KernelProvider`` that:
 
@@ -35,7 +35,7 @@ from dataclasses import dataclass, field
 
 import structlog
 
-from compgen.kernels.provider import (
+from xpu_rt.kernels.provider import (
     ContractFeedback,
     KernelContract,
     KnowledgeExport,

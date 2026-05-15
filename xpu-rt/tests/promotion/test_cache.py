@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from compgen.promotion.cache import RecipeCache
-from compgen.promotion.promote import RecipeKey
-from compgen.runtime.bundle import Bundle
+from xpu_rt.promotion.cache import RecipeCache
+from xpu_rt.promotion.promote import RecipeKey
+from xpu_rt.runtime.bundle import Bundle
 
 
 def test_recipe_cache_construction(tmp_path: Path) -> None:

@@ -10,7 +10,7 @@ Invariants:
     - Validation never modifies the IR.
 
 Backend:
-    Uses ``compgen.semantic.backends.xdsl_smt.tv_backend`` which lowers
+    Uses ``xpu_rt.semantic.backends.xdsl_smt.tv_backend`` which lowers
     arith operations to Z3 bitvector expressions and checks refinement.
 """
 
@@ -80,7 +80,7 @@ def validate_translation(
             pass
 
     # Real verification via SMT backend
-    from compgen.semantic.backends.xdsl_smt.tv_backend import TranslationValidationBackend
+    from xpu_rt.semantic.backends.xdsl_smt.tv_backend import TranslationValidationBackend
 
     backend = TranslationValidationBackend(timeout_ms=timeout_ms)
     tv_result = backend.check_refinement(source_module, target_module)

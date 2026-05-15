@@ -2,7 +2,7 @@
 
 A ``TargetCard`` is the static, declarative shape of a deployment
 target — family, vendor, dispatch modes, memory tiers — separate from
-the richer :class:`compgen.targets.schema.TargetSchema` /
+the richer :class:`xpu_rt.targets.schema.TargetSchema` /
 ``CapabilitySpec`` records used by the capture+lower pipeline.
 Cards drive the provider/target matrix and the probe.
 """

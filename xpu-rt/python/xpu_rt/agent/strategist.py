@@ -1,11 +1,11 @@
-"""Strategist — emits the session-level :class:`compgen.agent.plan.Plan` (P2.5).
+"""Strategist — emits the session-level :class:`xpu_rt.agent.plan.Plan` (P2.5).
 
 The Strategist is *cheap*: it reads the graph dossier, the target
 profile, the recipe-library index, and the perf budget; it emits a
 :class:`Plan` with a per-region tactic + fallback ladder. The
 Strategist never edits Recipe IR — it only picks tactics.
 
-On rejection, :func:`compgen.agent.plan.replan_on_reject` decides
+On rejection, :func:`xpu_rt.agent.plan.replan_on_reject` decides
 how to walk the ladder; the Strategist can be re-invoked when the
 ladder is exhausted to widen the search (escalation).
 
@@ -26,7 +26,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Final
 
-from compgen.agent.plan import (
+from xpu_rt.agent.plan import (
     GLOBAL_OBJECTIVES,
     Budget,
     Plan,
@@ -108,7 +108,7 @@ def plan_session(inputs: StrategistInput) -> Plan:
     * regions with no rung options at all get ``("naive_sync",)``.
 
     The Strategist guarantees every region has a non-empty fallback
-    ladder; :func:`compgen.agent.plan.replan_on_reject` walks it.
+    ladder; :func:`xpu_rt.agent.plan.replan_on_reject` walks it.
     """
 
     region_plans: list[RegionPlan] = []

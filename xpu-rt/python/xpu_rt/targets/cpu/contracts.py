@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from typing import Any, Protocol, runtime_checkable
 
-from compgen.transforms.emit_cuda_megakernel import DeviceFunctionSource
+from xpu_rt.transforms.emit_cuda_megakernel import DeviceFunctionSource
 
 
 @runtime_checkable

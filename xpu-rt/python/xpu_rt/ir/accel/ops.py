@@ -135,7 +135,7 @@ class BarrierOp:
 class AccelTileLoadIROp(IRDLOperation):
     """Load a tile from global memory to local/scratchpad memory (xDSL op)."""
 
-    name = "compgen.accel.tile_load"
+    name = "xpu_rt.accel.tile_load"
 
     src_memref = prop_def(StringAttr)
     dst_memref = prop_def(StringAttr)
@@ -149,7 +149,7 @@ class AccelTileLoadIROp(IRDLOperation):
 class AccelTileStoreIROp(IRDLOperation):
     """Store a tile from local memory to global memory (xDSL op)."""
 
-    name = "compgen.accel.tile_store"
+    name = "xpu_rt.accel.tile_store"
 
     src_memref = prop_def(StringAttr)
     dst_memref = prop_def(StringAttr)
@@ -163,7 +163,7 @@ class AccelTileStoreIROp(IRDLOperation):
 class AccelDMAStartIROp(IRDLOperation):
     """Start an asynchronous DMA transfer (xDSL op)."""
 
-    name = "compgen.accel.dma_start"
+    name = "xpu_rt.accel.dma_start"
 
     src = prop_def(StringAttr)
     dst = prop_def(StringAttr)
@@ -175,7 +175,7 @@ class AccelDMAStartIROp(IRDLOperation):
 class AccelDMAWaitIROp(IRDLOperation):
     """Wait for a DMA transfer to complete (xDSL op)."""
 
-    name = "compgen.accel.dma_wait"
+    name = "xpu_rt.accel.dma_wait"
 
     event = prop_def(StringAttr)
 
@@ -184,7 +184,7 @@ class AccelDMAWaitIROp(IRDLOperation):
 class AccelMatrixEngineIROp(IRDLOperation):
     """Launch a matrix/tensor engine computation (xDSL op)."""
 
-    name = "compgen.accel.matrix_engine"
+    name = "xpu_rt.accel.matrix_engine"
 
     op_kind = prop_def(StringAttr)
     a_ref = prop_def(StringAttr)
@@ -211,7 +211,7 @@ class AccelMatrixEngineIROp(IRDLOperation):
 class AccelBarrierIROp(IRDLOperation):
     """Synchronization barrier (xDSL op)."""
 
-    name = "compgen.accel.barrier"
+    name = "xpu_rt.accel.barrier"
 
     scope = opt_prop_def(StringAttr)
 
@@ -238,7 +238,7 @@ class HMXTileLoadIROp(IRDLOperation):
     transform in a single op.
     """
 
-    name = "compgen.accel.hmx_tile_load"
+    name = "xpu_rt.accel.hmx_tile_load"
 
     src_memref = prop_def(StringAttr)
     dst_memref = prop_def(StringAttr)
@@ -268,7 +268,7 @@ class HMXTileLoadIROp(IRDLOperation):
 class HMXMatrixEngineIROp(IRDLOperation):
     """Invoke the HMX matrix engine: ``C = op_kind(A, B, C_init)`` on tiles."""
 
-    name = "compgen.accel.hmx_matrix_engine"
+    name = "xpu_rt.accel.hmx_matrix_engine"
 
     a_tile = prop_def(StringAttr)
     b_tile = prop_def(StringAttr)
@@ -302,7 +302,7 @@ class HMXMatrixEngineIROp(IRDLOperation):
 class HMXAccumulatorClearIROp(IRDLOperation):
     """Clear an HMX accumulator tile to zero."""
 
-    name = "compgen.accel.hmx_accumulator_clear"
+    name = "xpu_rt.accel.hmx_accumulator_clear"
 
     c_tile = prop_def(StringAttr)
     dtype = prop_def(StringAttr)
@@ -313,7 +313,7 @@ class HMXAccumulatorClearIROp(IRDLOperation):
 class HMXDMAOverlapIROp(IRDLOperation):
     """Pipeline marker for the hexagon-mlir double-buffer (S1/S2) lowering."""
 
-    name = "compgen.accel.hmx_dma_overlap"
+    name = "xpu_rt.accel.hmx_dma_overlap"
 
     producer_tile = prop_def(StringAttr)
     consumer_tile = prop_def(StringAttr)

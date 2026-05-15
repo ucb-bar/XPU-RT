@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from compgen.ir.linalg_ext import SoftmaxOp
-from compgen.ir.payload.passes.rewrites.fuse_softmax_to_triton import (
+from xpu_rt.ir.linalg_ext import SoftmaxOp
+from xpu_rt.ir.payload.passes.rewrites.fuse_softmax_to_triton import (
     FuseSoftmaxToTritonConfig,
     FuseSoftmaxToTritonStats,
     run_fuse_softmax_to_triton,
@@ -71,17 +71,17 @@ def test_triton_in_allowlist_annotates_softmax():
     m = _softmax_module()
     stats = run_fuse_softmax_to_triton(m, config=_triton_config())
     assert stats.softmaxes_annotated == 1
-    assert count_ops(m, "compgen.linalg_ext.softmax") == 1
+    assert count_ops(m, "xpu_rt.linalg_ext.softmax") == 1
     assert_module_verifies(m)
 
 
 def test_annotations_include_kernel_name_and_source():
     m = _softmax_module(shape=(4, 16))
     run_fuse_softmax_to_triton(m, config=_triton_config())
-    sm = next(op for op in m.walk() if op.name == "compgen.linalg_ext.softmax")
-    kname = sm.attributes["compgen.triton_kernel_call"].data
+    sm = next(op for op in m.walk() if op.name == "xpu_rt.linalg_ext.softmax")
+    kname = sm.attributes["xpu_rt.triton_kernel_call"].data
     assert "4x16" in kname
-    source = sm.attributes["compgen.triton_source"].data
+    source = sm.attributes["xpu_rt.triton_source"].data
     assert "@triton.jit" in source
     assert kname in source
 
@@ -90,8 +90,8 @@ def test_triton_status_is_source_only_without_triton_shared_opt():
     m = _softmax_module()
     cfg = _triton_config()
     run_fuse_softmax_to_triton(m, config=cfg)
-    sm = next(op for op in m.walk() if op.name == "compgen.linalg_ext.softmax")
-    assert sm.attributes["compgen.triton_status"].data == "source_only"
+    sm = next(op for op in m.walk() if op.name == "xpu_rt.linalg_ext.softmax")
+    assert sm.attributes["xpu_rt.triton_status"].data == "source_only"
 
 
 # --- shape gates ------------------------------------------------------------
@@ -106,8 +106,8 @@ def test_higher_rank_softmax_on_last_axis_is_annotated():
     stats = run_fuse_softmax_to_triton(m, config=_triton_config())
     assert stats.softmaxes_annotated == 1
     # kernel name should reflect the flattened row count (2*4=8) x N (8).
-    sm = next(op for op in m.walk() if op.name == "compgen.linalg_ext.softmax")
-    assert "8x8" in sm.attributes["compgen.triton_kernel_call"].data
+    sm = next(op for op in m.walk() if op.name == "xpu_rt.linalg_ext.softmax")
+    assert "8x8" in sm.attributes["xpu_rt.triton_kernel_call"].data
 
 
 def test_softmax_not_on_last_axis_is_skipped():
@@ -148,11 +148,11 @@ def test_stats_initial_values():
 
 def test_region_id_preserved_through_rewrite():
     m = _softmax_module()
-    sm = next(op for op in m.walk() if op.name == "compgen.linalg_ext.softmax")
-    sm.attributes["compgen.region_id"] = StringAttr("softmax_abc")
+    sm = next(op for op in m.walk() if op.name == "xpu_rt.linalg_ext.softmax")
+    sm.attributes["xpu_rt.region_id"] = StringAttr("softmax_abc")
     run_fuse_softmax_to_triton(m, config=_triton_config())
-    sm2 = next(op for op in m.walk() if op.name == "compgen.linalg_ext.softmax")
-    assert sm2.attributes["compgen.region_id"].data == "softmax_abc"
+    sm2 = next(op for op in m.walk() if op.name == "xpu_rt.linalg_ext.softmax")
+    assert sm2.attributes["xpu_rt.region_id"].data == "softmax_abc"
 
 
 # --- real-workload integration ---------------------------------------------
@@ -163,10 +163,10 @@ def test_real_workload_qwen_moe_softmax_gets_triton_annotation():
 
     Pipeline: bridge FX -> raise_special_ops -> fuse_softmax_to_triton.
     The resulting module must still verify and the softmax op(s) must
-    carry ``compgen.triton_kernel_call`` attributes.
+    carry ``xpu_rt.triton_kernel_call`` attributes.
     """
-    from compgen.capture.torch_mlir_bridge import bridge_fx_graph
-    from compgen.ir.payload.passes.rewrites.raise_special_ops import (
+    from xpu_rt.capture.torch_mlir_bridge import bridge_fx_graph
+    from xpu_rt.ir.payload.passes.rewrites.raise_special_ops import (
         run_raise_special_ops,
     )
 
@@ -183,15 +183,15 @@ def test_real_workload_qwen_moe_softmax_gets_triton_annotation():
     annotated = [
         op
         for op in bridge.module.walk()
-        if op.name == "compgen.linalg_ext.softmax" and "compgen.triton_kernel_call" in op.attributes
+        if op.name == "xpu_rt.linalg_ext.softmax" and "xpu_rt.triton_kernel_call" in op.attributes
     ]
     assert len(annotated) >= 1
     assert_module_verifies(bridge.module)
 
 
 def test_real_workload_attention_mlp_softmax_gets_annotation():
-    from compgen.capture.torch_mlir_bridge import bridge_fx_graph
-    from compgen.ir.payload.passes.rewrites.raise_special_ops import (
+    from xpu_rt.capture.torch_mlir_bridge import bridge_fx_graph
+    from xpu_rt.ir.payload.passes.rewrites.raise_special_ops import (
         run_raise_special_ops,
     )
 

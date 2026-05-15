@@ -39,17 +39,17 @@ from typing import Any
 from xdsl.dialects.builtin import ModuleOp, StringAttr, TensorType
 from xdsl.dialects.func import FuncOp, ReturnOp
 
-from compgen.stages.bundle import BundleStage
-from compgen.stages.dispatch import DispatchStage
-from compgen.stages.dispatch.stage import DISPATCH_ID_ATTR
-from compgen.stages.encoding import EncodingStage
-from compgen.stages.encoding.stage import ENCODING_ATTR
-from compgen.stages.layout.stage import LayoutStage
-from compgen.stages.registry import TargetDialectStack
-from compgen.stages.templates.codegen import CODEGEN_BACKEND_ATTR, CodegenStage
-from compgen.stages.templates.tiling import TILE_SIZES_ATTR, TilingStage
-from compgen.targets.capability import CapabilitySpec
-from compgen.targets.schema import TargetProfile
+from xpu_rt.stages.bundle import BundleStage
+from xpu_rt.stages.dispatch import DispatchStage
+from xpu_rt.stages.dispatch.stage import DISPATCH_ID_ATTR
+from xpu_rt.stages.encoding import EncodingStage
+from xpu_rt.stages.encoding.stage import ENCODING_ATTR
+from xpu_rt.stages.layout.stage import LayoutStage
+from xpu_rt.stages.registry import TargetDialectStack
+from xpu_rt.stages.templates.codegen import CODEGEN_BACKEND_ATTR, CodegenStage
+from xpu_rt.stages.templates.tiling import TILE_SIZES_ATTR, TilingStage
+from xpu_rt.targets.capability import CapabilitySpec
+from xpu_rt.targets.schema import TargetProfile
 
 # ---------------------------------------------------------------------------
 # ROCm-specific plugins

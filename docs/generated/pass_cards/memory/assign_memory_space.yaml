@@ -4,7 +4,7 @@ display_name: Assign memory space (HBM/SRAM/DRAM)
 level: payload
 family: memory
 source: IREE
-impl_path: python/compgen/ir/payload/passes/rewrites/assign_memory_space.py
+impl_path: python/xpu_rt/ir/payload/passes/rewrites/assign_memory_space.py
 reads:
   - 01_payload_lowering/payload.mlir
   - 02_graph_analysis/tensor_use_def_graph.json
@@ -26,7 +26,7 @@ cost: cheap
 failure_modes:
   - "missing_memory_hierarchy_spec"
   - "tensor_too_large_for_smallest_space"
-mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+mcp_tool: mcp__xpu_rt__xpu_rt_emit_agent_decision_request
 notes: |
   Reconstruction of IREE's HAL memory-space assignment + hexagon-
   mlir's tile-buffer placement. Annotates each tensor with the

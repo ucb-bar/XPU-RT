@@ -17,8 +17,8 @@ from typing import Any
 
 import structlog
 
-from compgen.memory.blobs import BlobStore
-from compgen.memory.schema import (
+from xpu_rt.memory.blobs import BlobStore
+from xpu_rt.memory.schema import (
     Candidate,
     CandidateStatus,
     EpisodeStep,
@@ -32,7 +32,7 @@ from compgen.memory.schema import (
     StateSignature,
     Task,
 )
-from compgen.memory.sqlite_backend import SQLiteBackend
+from xpu_rt.memory.sqlite_backend import SQLiteBackend
 
 log = structlog.get_logger()
 
@@ -59,8 +59,8 @@ class CompilerMemory:
 
     def __init__(
         self,
-        db_path: Path = Path(".compgen_cache/memory.db"),
-        blob_root: Path = Path(".compgen_cache/blobs"),
+        db_path: Path = Path(".xpu_rt_cache/memory.db"),
+        blob_root: Path = Path(".xpu_rt_cache/blobs"),
         embedding_provider: Any = None,
     ) -> None:
         self.db = SQLiteBackend(db_path)
@@ -396,7 +396,7 @@ class CompilerMemory:
         # Try embedding-based retrieval first (Unit 13)
         if self.embedding_provider is not None:
             try:
-                from compgen.memory.embeddings import retrieve_by_similarity
+                from xpu_rt.memory.embeddings import retrieve_by_similarity
 
                 query = f"{op_family} {hardware_signature} {bottleneck_signature}".strip()
                 if query:

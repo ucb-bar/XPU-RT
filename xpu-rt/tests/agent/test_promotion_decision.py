@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 
-from compgen.agent.prompts.promotion_decision import PromotionContext, format_prompt, parse_response
+from xpu_rt.agent.prompts.promotion_decision import PromotionContext, format_prompt, parse_response
 
 
 class TestPromotionDecision:

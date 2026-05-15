@@ -16,7 +16,7 @@ from pathlib import Path
 
 import pytest
 
-from compgen.graph_compilation.kernel_codegen_response import (
+from xpu_rt.graph_compilation.kernel_codegen_response import (
     DEFAULT_MAX_ATTEMPTS,
     RECOVERABILITY,
     commit_response,
@@ -37,7 +37,7 @@ def merlin_task(tmp_path_factory) -> dict:  # type: ignore[no-untyped-def]
     out = tmp_path_factory.mktemp("m43_merlin") / "run"
     res = subprocess.run(
         [
-            sys.executable, "-m", "compgen.graph_compilation", "run",
+            sys.executable, "-m", "xpu_rt.graph_compilation", "run",
             "--model", str(REPO_ROOT / "configs/models/merlin_mlp_wide.yaml"),
             "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
             "--out", str(out),
@@ -429,10 +429,10 @@ class TestMcpTools:
     def test_inspect_returns_request_after_emit(
         self, merlin_task: dict,
     ) -> None:
-        from compgen.mcp.tools.kernel_codegen import (
-            compgen_inspect_kernel_codegen_task,
+        from xpu_rt.mcp.tools.kernel_codegen import (
+            xpu_rt_inspect_kernel_codegen_task,
         )
-        body = compgen_inspect_kernel_codegen_task(
+        body = xpu_rt_inspect_kernel_codegen_task(
             run_dir=str(merlin_task["run_dir"]),
             task_id=merlin_task["task_id"],
         )
@@ -445,10 +445,10 @@ class TestMcpTools:
         self, merlin_task: dict,
     ) -> None:
         """ships the file-based protocol; spawn helper is +."""
-        from compgen.mcp.tools.kernel_codegen import (
-            compgen_run_kernel_codegen_task,
+        from xpu_rt.mcp.tools.kernel_codegen import (
+            xpu_rt_run_kernel_codegen_task,
         )
-        body = compgen_run_kernel_codegen_task(
+        body = xpu_rt_run_kernel_codegen_task(
             run_dir=str(merlin_task["run_dir"]),
             task_id=merlin_task["task_id"],
         )

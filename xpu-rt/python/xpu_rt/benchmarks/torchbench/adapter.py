@@ -11,10 +11,10 @@ from typing import TYPE_CHECKING, Any
 
 import structlog
 
-from compgen.benchmarks.base import SuiteRunConfig
-from compgen.benchmarks.common.env import SuiteEnvironmentStatus, resolve_suite_root
-from compgen.benchmarks.common.manifest import SuiteManifestEntry, filter_manifest_entries
-from compgen.benchmarks.common.results import NormalizedSuiteResult, write_normalized_suite_results
+from xpu_rt.benchmarks.base import SuiteRunConfig
+from xpu_rt.benchmarks.common.env import SuiteEnvironmentStatus, resolve_suite_root
+from xpu_rt.benchmarks.common.manifest import SuiteManifestEntry, filter_manifest_entries
+from xpu_rt.benchmarks.common.results import NormalizedSuiteResult, write_normalized_suite_results
 
 if TYPE_CHECKING:
     from benchmarks.record import RunRecord
@@ -371,7 +371,7 @@ class TorchBenchAdapter:
             record.verification.overall_status = "fail"
         return [record]
 
-    def run_compgen(
+    def run_xpu_rt(
         self,
         entry: SuiteManifestEntry,
         *,
@@ -379,7 +379,7 @@ class TorchBenchAdapter:
         output_dir: str | Path | None = None,
         config: SuiteRunConfig | None = None,
     ) -> list[RunRecord]:
-        """Run the workload through the CompGen pipeline.
+        """Run the workload through the XPU-RT pipeline.
 
         Args:
             entry: Manifest entry identifying the workload.
@@ -396,7 +396,7 @@ class TorchBenchAdapter:
         out = Path(output_dir or Path.cwd())
         out.mkdir(parents=True, exist_ok=True)
         suite_root = _resolve_torchbench_root(workspace)
-        record = _make_suite_record(entry, system_name="torchbench_compgen", config=config, suite_root=suite_root)
+        record = _make_suite_record(entry, system_name="torchbench_xpu_rt", config=config, suite_root=suite_root)
         loaded = self.prepare_inputs(entry, workspace=workspace, config=config)
         if loaded is None:
             record.status = "fail"
@@ -413,7 +413,7 @@ class TorchBenchAdapter:
         """Project RunRecords into the normalized suite result schema.
 
         Args:
-            records: List of ``RunRecord`` instances from run_reference / run_compgen.
+            records: List of ``RunRecord`` instances from run_reference / run_xpu_rt.
 
         Returns:
             List of ``NormalizedSuiteResult`` instances.

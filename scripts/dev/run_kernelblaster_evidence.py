@@ -68,7 +68,7 @@ def main() -> int:
     )
     ap.add_argument(
         "--experiment-name",
-        default="compgen_evidence",
+        default="xpu_rt_evidence",
         help="KB experiment name (output dir suffix)",
     )
     args = ap.parse_args()
@@ -93,7 +93,7 @@ def main() -> int:
         return 4
 
     # 3. Bring up the GPU sidecar.
-    from compgen.kernels.kernelblaster_sidecar import KernelBlasterSidecar  # noqa: E402
+    from xpu_rt.kernels.kernelblaster_sidecar import KernelBlasterSidecar  # noqa: E402
 
     out_dir = ROOT / "results/extension_provider_evidence_pack/per_provider/kernelblaster"
     out_dir.mkdir(parents=True, exist_ok=True)

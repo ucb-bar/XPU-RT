@@ -10,7 +10,7 @@ Roadmap-tracked; most active development is on Blackwell.
 
 from __future__ import annotations
 
-from compgen.targets.registry import register_target
+from xpu_rt.targets.registry import register_target
 
 
 def _register_ampere() -> None:

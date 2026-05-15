@@ -1,7 +1,7 @@
 """Schemas: dataclasses + on-disk JSON Schemas for model_admission contracts.
 
 The dataclasses (``ModelConfig``, ``SliceConfig``, ``AdmissionReport``, ...)
-live in :mod:`compgen.model_admission.schemas._contract` and are re-exported
+live in :mod:`xpu_rt.model_admission.schemas._contract` and are re-exported
 here. JSON Schemas are under ``v1/*.schema.json`` and are loaded by
 downstream tooling that wants raw schema files (e.g. cross-language
 contract checkers).
@@ -9,7 +9,7 @@ contract checkers).
 
 from __future__ import annotations
 
-from compgen.model_admission.schemas._contract import (
+from xpu_rt.model_admission.schemas._contract import (
     ADMISSION_REPORT_SCHEMA,
     AdmissionReport,
     AdmissionStatus,

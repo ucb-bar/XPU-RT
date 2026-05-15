@@ -14,7 +14,7 @@ import pytest
 
 @pytest.fixture(autouse=True)
 def _clean_registry():
-    from compgen.targets.registry import reset
+    from xpu_rt.targets.registry import reset
 
     reset()
     yield
@@ -23,7 +23,7 @@ def _clean_registry():
 
 class TestRegistrationPaths:
     def test_register_in_tree(self) -> None:
-        from compgen.targets.registry import register_target, registry
+        from xpu_rt.targets.registry import register_target, registry
 
         pkg = register_target(
             target_class="gpu",
@@ -37,7 +37,7 @@ class TestRegistrationPaths:
 
     def test_register_vendor_common(self) -> None:
         """Empty arch → vendor-common entry."""
-        from compgen.targets.registry import register_target, registry
+        from xpu_rt.targets.registry import register_target, registry
 
         pkg = register_target(
             target_class="gpu",
@@ -51,7 +51,7 @@ class TestRegistrationPaths:
         """Looking up an arch we haven't registered should fall back
         to the vendor-common entry. That's how the dispatch path
         finds shared NVIDIA code when only one arch is registered."""
-        from compgen.targets.registry import register_target, registry
+        from xpu_rt.targets.registry import register_target, registry
 
         register_target(
             target_class="gpu",
@@ -68,7 +68,7 @@ class TestRegistrationPaths:
         """Agent override: re-registering same target_id replaces.
         Lets the MCP-driven path override an in-tree default at
         session scope."""
-        from compgen.targets.registry import register_target, registry
+        from xpu_rt.targets.registry import register_target, registry
 
         register_target(
             target_class="gpu",
@@ -92,7 +92,7 @@ class TestNavigation:
     knowing the layout in advance."""
 
     def _register_a_few(self) -> None:
-        from compgen.targets.registry import register_target
+        from xpu_rt.targets.registry import register_target
 
         register_target(target_class="gpu", vendor="nvidia", arch="blackwell")
         register_target(target_class="gpu", vendor="nvidia", arch="hopper")
@@ -100,20 +100,20 @@ class TestNavigation:
         register_target(target_class="cpu", vendor="x86", arch="avx512")
 
     def test_classes(self) -> None:
-        from compgen.targets.registry import registry
+        from xpu_rt.targets.registry import registry
 
         self._register_a_few()
         assert registry().classes() == ("cpu", "gpu")
 
     def test_vendors_under_class(self) -> None:
-        from compgen.targets.registry import registry
+        from xpu_rt.targets.registry import registry
 
         self._register_a_few()
         assert registry().vendors("gpu") == ("amd", "nvidia")
         assert registry().vendors("cpu") == ("x86",)
 
     def test_arches_under_vendor(self) -> None:
-        from compgen.targets.registry import registry
+        from xpu_rt.targets.registry import registry
 
         self._register_a_few()
         assert registry().arches("gpu", "nvidia") == ("blackwell", "hopper")
@@ -121,7 +121,7 @@ class TestNavigation:
     def test_tree_nested_view(self) -> None:
         """Nested-dict view for the agent's "show me everything"
         query."""
-        from compgen.targets.registry import registry
+        from xpu_rt.targets.registry import registry
 
         self._register_a_few()
         tree = registry().tree()
@@ -133,7 +133,7 @@ class TestNavigation:
 
 class TestFiltering:
     def test_find_by_predicate(self) -> None:
-        from compgen.targets.registry import register_target, registry
+        from xpu_rt.targets.registry import register_target, registry
 
         register_target(
             target_class="gpu",
@@ -162,7 +162,7 @@ class TestFiltering:
     def test_describe_returns_audit_payload(self) -> None:
         """Agent's "tell me about target X" query — same shape as
         BackendChoice.to_dict() for composability."""
-        from compgen.targets.registry import register_target, registry
+        from xpu_rt.targets.registry import register_target, registry
 
         register_target(
             target_class="gpu",
@@ -191,30 +191,30 @@ class TestFiltering:
     def test_describe_unknown_returns_empty(self) -> None:
         """Unknown targets return an empty dict — never raises so
         the agent can ask freely without try/except."""
-        from compgen.targets.registry import registry
+        from xpu_rt.targets.registry import registry
 
         assert registry().describe("gpu.tenstorrent.gridx") == {}
 
 
 class TestInTreeAutoRegistration:
-    """Wave 1.11/1.12 — importing ``compgen.targets`` auto-registers
+    """Wave 1.11/1.12 — importing ``xpu_rt.targets`` auto-registers
     every in-tree target package. The agent doesn't have to know
     what to import; it just lists the registry."""
 
     def test_importing_targets_populates_registry(self) -> None:
-        # Reset, then re-import compgen.targets which triggers
+        # Reset, then re-import xpu_rt.targets which triggers
         # registration of all in-tree leaves.
-        from compgen.targets.registry import reset
+        from xpu_rt.targets.registry import reset
 
         reset()
 
-        import compgen.targets as targets_mod
+        import xpu_rt.targets as targets_mod
 
         # Trigger the side-effect by re-executing __init__'s
         # registration helper.
         targets_mod._register_in_tree()
 
-        from compgen.targets.registry import registry
+        from xpu_rt.targets.registry import registry
 
         reg = registry()
         # Both target classes registered.
@@ -231,14 +231,14 @@ class TestInTreeAutoRegistration:
     def test_blackwell_metadata_pinned(self) -> None:
         """Bridge #095/108-validated values surface in the audit
         query — agents trust these for routing decisions."""
-        from compgen.targets.registry import reset
+        from xpu_rt.targets.registry import reset
 
         reset()
-        import compgen.targets as targets_mod
+        import xpu_rt.targets as targets_mod
 
         targets_mod._register_in_tree()
 
-        from compgen.targets.registry import registry
+        from xpu_rt.targets.registry import registry
 
         bw = registry().get("gpu.nvidia.blackwell")
         assert bw is not None
@@ -257,11 +257,11 @@ class TestEntryPointDiscovery:
     points or load failures don't break the registry."""
 
     def test_no_entry_points_returns_zero(self) -> None:
-        from compgen.targets.registry import discover_entry_points
+        from xpu_rt.targets.registry import discover_entry_points
 
-        # No third-party packages declare 'compgen.targets' in this
+        # No third-party packages declare 'xpu_rt.targets' in this
         # CI env → returns 0, doesn't raise.
-        n = discover_entry_points(group="compgen.targets")
+        n = discover_entry_points(group="xpu_rt.targets")
         assert n == 0
 
 
@@ -271,7 +271,7 @@ class TestProtocolsImportable:
     here, never from vendor-specific modules."""
 
     def test_gpu_contracts(self) -> None:
-        from compgen.targets.gpu.contracts import (
+        from xpu_rt.targets.gpu.contracts import (
             DEFAULT_SCHEDULING_OVERHEAD_US,
             Device,
             EventTimer,
@@ -295,13 +295,13 @@ class TestProtocolsImportable:
         )
 
     def test_cpu_contracts(self) -> None:
-        from compgen.targets.cpu.contracts import CpuBodyEmitter, CpuRuntime
+        from xpu_rt.targets.cpu.contracts import CpuBodyEmitter, CpuRuntime
 
         assert CpuBodyEmitter is not None
         assert CpuRuntime is not None
 
     def test_tpu_contracts(self) -> None:
-        from compgen.targets.tpu.contracts import (
+        from xpu_rt.targets.tpu.contracts import (
             TpuBodyEmitter,
             TpuRuntime,
             TpuTopology,
@@ -315,7 +315,7 @@ class TestProtocolStructuralCheck:
     methods satisfies the Protocol via ``isinstance``."""
 
     def test_gpu_probe_runtime_check(self) -> None:
-        from compgen.targets.gpu.contracts import GpuProbe
+        from xpu_rt.targets.gpu.contracts import GpuProbe
 
         class _MyProbe:
             def is_available(self) -> bool:
@@ -339,7 +339,7 @@ class TestProtocolStructuralCheck:
         assert isinstance(_MyProbe(), GpuProbe)
 
     def test_cpu_runtime_runtime_check(self) -> None:
-        from compgen.targets.cpu.contracts import CpuRuntime
+        from xpu_rt.targets.cpu.contracts import CpuRuntime
 
         class _MyCpuRt:
             def compile_source(self, **kwargs: Any) -> Any:

@@ -13,14 +13,14 @@ from xdsl.ir import Operation
 from xdsl.parser import Parser
 from xdsl.printer import Printer
 
-from compgen.ir.agent.attrs import (
+from xpu_rt.ir.agent.attrs import (
     ConfidenceAttr,
     CreativityPolicyAttr,
     EvaluatorKindAttr,
     FreshnessAttr,
     SearchBudgetAttr,
 )
-from compgen.ir.agent.dialect import Agent
+from xpu_rt.ir.agent.dialect import Agent
 
 
 def agent_to_mlir(module: ModuleOp) -> str:

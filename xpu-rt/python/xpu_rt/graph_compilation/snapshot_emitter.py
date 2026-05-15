@@ -7,7 +7,7 @@ Reads a real ``compile_model()`` output directory and produces the
 Approach is **post-hoc**: rather than instrumenting every pipeline
 stage (which would be invasive and high-risk), this module scans
 the artifacts each stage already writes to disk and synthesizes
-:class:`compgen.analysis.ir_snapshots.IRAnalysisSnapshot` records.
+:class:`xpu_rt.analysis.ir_snapshots.IRAnalysisSnapshot` records.
 Levels with no producer on disk emit a typed ``not_available``
 with the specific reason (``stage_not_run`` /
 ``artifact_missing``).
@@ -36,7 +36,7 @@ from typing import Any
 
 import yaml
 
-from compgen.analysis.ir_snapshots import (
+from xpu_rt.analysis.ir_snapshots import (
     IRAnalysisSnapshot,
     RegionSummary,
     UnsupportedProvider,

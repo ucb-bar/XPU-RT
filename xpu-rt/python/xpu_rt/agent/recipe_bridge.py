@@ -17,17 +17,17 @@ from xdsl.dialects.builtin import (
 )
 from xdsl.ir import Operation
 
-from compgen.ir.recipe.attrs import DeviceRefAttr, ProvenanceAttr
-from compgen.ir.recipe.ops_candidate import (
+from xpu_rt.ir.recipe.attrs import DeviceRefAttr, ProvenanceAttr
+from xpu_rt.ir.recipe.ops_candidate import (
     FuseOp,
     InsertCopyBoundaryOp,
     PlaceOnDeviceOp,
     TileOp,
 )
-from compgen.ir.recipe.ops_choice import RequireEqsatOp
+from xpu_rt.ir.recipe.ops_choice import RequireEqsatOp
 
 if TYPE_CHECKING:
-    from compgen.agent.env import (
+    from xpu_rt.agent.env import (
         Action,
     )
 
@@ -57,7 +57,7 @@ def action_to_recipe_op(action: Action, iteration: int = 0) -> Operation | None:
     Returns:
         Recipe IR operation, or None.
     """
-    from compgen.agent.env import (
+    from xpu_rt.agent.env import (
         AssignDeviceAction,
         EqSatAction,
         FuseAction,
@@ -120,8 +120,8 @@ def action_to_recipe_op(action: Action, iteration: int = 0) -> Operation | None:
         return RequireEqsatOp.build(properties=props)
 
     # Verification actions → Recipe IR verification ops
-    from compgen.agent.env import RequestVerificationAction
-    from compgen.ir.recipe.ops_verify import (
+    from xpu_rt.agent.env import RequestVerificationAction
+    from xpu_rt.ir.recipe.ops_verify import (
         RequireDiffTestOp,
         RequireTranslationValidationOp,
     )
@@ -149,7 +149,7 @@ def recipe_op_to_action(op: Operation) -> Action | None:
     Returns None for ops that don't map to agent actions
     (facts, provenance, verification obligations, etc.).
     """
-    from compgen.agent.env import (
+    from xpu_rt.agent.env import (
         AssignDeviceAction,
         FuseAction,
         InsertCopyAction,

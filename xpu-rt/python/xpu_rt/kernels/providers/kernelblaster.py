@@ -1,10 +1,10 @@
 """KernelBlaster kernel provider.
 
 Exposes NVlabs' KernelBlaster (https://github.com/NVlabs/KernelBlaster) to
-CompGen's :class:`~compgen.kernels.registry.ProviderRegistry` through the
-:class:`~compgen.kernels.provider.KernelProvider` protocol. The heavy
+XPU-RT's :class:`~xpu_rt.kernels.registry.ProviderRegistry` through the
+:class:`~xpu_rt.kernels.provider.KernelProvider` protocol. The heavy
 lifting — input staging, docker/shell invocation, output parsing — lives
-in :mod:`compgen.kernels.kernelblaster_adapter`; this module is the
+in :mod:`xpu_rt.kernels.kernelblaster_adapter`; this module is the
 protocol-level glue.
 
 Acceptance gate — KernelBlaster is CUDA-only and requires a CUDA kernel
@@ -16,12 +16,12 @@ from __future__ import annotations
 
 import structlog
 
-from compgen.kernels.kernelblaster_adapter import (
+from xpu_rt.kernels.kernelblaster_adapter import (
     KernelBlasterAdapter,
     KernelBlasterConfig,
     KernelBlasterUnavailable,
 )
-from compgen.kernels.provider import (
+from xpu_rt.kernels.provider import (
     KernelContract,
     KnowledgeExport,
     ProviderResult,
@@ -46,7 +46,7 @@ class KernelBlasterProvider:
     provider has performed this process — flushed on
     :meth:`export_knowledge` so the caller (usually
     :meth:`ProviderRegistry.ingest_knowledge`) can persist it into
-    :class:`~compgen.memory.store.CompilerMemory`.
+    :class:`~xpu_rt.memory.store.CompilerMemory`.
     """
 
     # Provider preference (follow-up, 2026-05-15): KB is the

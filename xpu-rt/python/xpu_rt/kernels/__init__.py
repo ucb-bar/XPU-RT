@@ -7,7 +7,7 @@ Handles:
   to produce missing kernels.
 
 The critical integration point with autocomp is at ``autocomp_adapter.py``,
-which translates CompGen's kernel contracts into autocomp's problem format
+which translates XPU-RT's kernel contracts into autocomp's problem format
 and runs the beam search.
 """
 

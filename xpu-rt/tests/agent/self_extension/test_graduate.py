@@ -1,20 +1,20 @@
-"""Tests for :mod:`compgen.agent.self_extension.graduate`."""
+"""Tests for :mod:`xpu_rt.agent.self_extension.graduate`."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
-from compgen.agent.self_extension.authored_tool import (
+from xpu_rt.agent.self_extension.authored_tool import (
     AuthoredTool,
     AuthoredToolSource,
     authored_tool_key,
 )
-from compgen.agent.self_extension.graduate import (
+from xpu_rt.agent.self_extension.graduate import (
     AuthoredGraduationReport,
     promote_authored_tools,
 )
-from compgen.agent.self_extension.trials import TrialScenario, run_trial
-from compgen.llm.registry import Registry
+from xpu_rt.agent.self_extension.trials import TrialScenario, run_trial
+from xpu_rt.llm.registry import Registry
 
 _TOOL_SRC = """
 def run(x):

@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from compgen.ir.payload.passes.rewrites.lower_quantized_conv import (
+from xpu_rt.ir.payload.passes.rewrites.lower_quantized_conv import (
     LowerQuantizedConvStats,
     run_lower_quantized_conv,
 )
-from compgen.ir.quant import (
+from xpu_rt.ir.quant import (
     DequantizePerChannelOp,
     DequantizePerTensorOp,
 )
@@ -66,7 +66,7 @@ def _quantized_conv_module(
 
     conv_ext = FuncOp.external("aten_convolution", [input_t, wf_t], [out_t])
     conv = CallOp("aten_convolution", [x.results[0], dq.result], [out_t])
-    conv.attributes["compgen._pattern_hint"] = StringAttr("convolution")
+    conv.attributes["xpu_rt._pattern_hint"] = StringAttr("convolution")
 
     block = Block()
     for op in (x, wi, *dq_ops, conv):
@@ -87,7 +87,7 @@ def _plain_conv_module() -> tuple[ModuleOp, CallOp]:
     w = EmptyOp([], wf_t)
     conv_ext = FuncOp.external("aten_convolution", [input_t, wf_t], [out_t])
     conv = CallOp("aten_convolution", [x.results[0], w.results[0]], [out_t])
-    conv.attributes["compgen._pattern_hint"] = StringAttr("convolution")
+    conv.attributes["xpu_rt._pattern_hint"] = StringAttr("convolution")
     block = Block()
     for op in (x, w, conv):
         block.add_op(op)
@@ -103,15 +103,15 @@ def test_per_channel_dequant_conv_is_tagged():
     m, conv = _quantized_conv_module(per_channel=True)
     stats = run_lower_quantized_conv(m)
     assert stats.quantized_convs_tagged == 1
-    assert conv.attributes["compgen.quantized_conv_scheduled"].data == "true"
-    assert conv.attributes["compgen.quantized_conv_kind"].data == "per_channel"
+    assert conv.attributes["xpu_rt.quantized_conv_scheduled"].data == "true"
+    assert conv.attributes["xpu_rt.quantized_conv_kind"].data == "per_channel"
     assert_module_verifies(m)
 
 
 def test_per_tensor_dequant_conv_is_tagged():
     m, conv = _quantized_conv_module(per_channel=False)
     run_lower_quantized_conv(m)
-    assert conv.attributes["compgen.quantized_conv_kind"].data == "per_tensor"
+    assert conv.attributes["xpu_rt.quantized_conv_kind"].data == "per_tensor"
 
 
 # --- non-matching cases ----------------------------------------------------
@@ -122,7 +122,7 @@ def test_plain_conv_is_skipped():
     stats = run_lower_quantized_conv(m)
     assert stats.quantized_convs_tagged == 0
     assert stats.non_quantized_convs_skipped == 1
-    assert "compgen.quantized_conv_scheduled" not in conv.attributes
+    assert "xpu_rt.quantized_conv_scheduled" not in conv.attributes
 
 
 def test_non_conv_call_is_skipped():
@@ -130,7 +130,7 @@ def test_non_conv_call_is_skipped():
     ext = FuncOp.external("aten_gelu", [t], [t])
     x = EmptyOp([], t)
     call = CallOp("aten_gelu", [x.results[0]], [t])
-    call.attributes["compgen._pattern_hint"] = StringAttr("gelu")
+    call.attributes["xpu_rt._pattern_hint"] = StringAttr("gelu")
     block = Block()
     for op in (x, call):
         block.add_op(op)
@@ -195,5 +195,5 @@ def test_multiple_quantized_convs_all_tagged():
     s2 = run_lower_quantized_conv(m2)
     assert s1.quantized_convs_tagged == 1
     assert s2.quantized_convs_tagged == 1
-    assert c1.attributes["compgen.quantized_conv_kind"].data == "per_channel"
-    assert c2.attributes["compgen.quantized_conv_kind"].data == "per_tensor"
+    assert c1.attributes["xpu_rt.quantized_conv_kind"].data == "per_channel"
+    assert c2.attributes["xpu_rt.quantized_conv_kind"].data == "per_tensor"

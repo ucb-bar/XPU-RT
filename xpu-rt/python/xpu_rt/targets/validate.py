@@ -14,7 +14,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from compgen.targets.schema import TargetProfile, load_profile
+from xpu_rt.targets.schema import TargetProfile, load_profile
 
 
 @dataclass(frozen=True)

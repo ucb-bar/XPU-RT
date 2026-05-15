@@ -39,7 +39,7 @@ The workflow targets `runs-on: [self-hosted, gpu]`. To attach a machine:
 - Multi-GPU: needs a host with ≥2 devices. Not wired in the workflow.
 - Non-NVIDIA accelerators (AMD, NPU, etc.): out of scope.
 - Long-running benchmarks: kept in the nightly + local benchmark
-  harness (`python/compgen/bench/`), not here.
+  harness (`python/xpu_rt/bench/`), not here.
 
 If no self-hosted runner is available the job queues indefinitely; it
 will never fail CI by itself because the workflow never auto-triggers.

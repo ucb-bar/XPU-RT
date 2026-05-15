@@ -17,19 +17,19 @@ from xdsl.dialects.builtin import (
 )
 from xdsl.ir import Block
 
-from compgen.ir.layout.attrs import PackSpecAttr
-from compgen.ir.layout.ops import PackOp, SetLayoutOp, UnsetLayoutOp
+from xpu_rt.ir.layout.attrs import PackSpecAttr
+from xpu_rt.ir.layout.ops import PackOp, SetLayoutOp, UnsetLayoutOp
 
 log = structlog.get_logger()
 
-MATERIALIZED_ATTR = "compgen.layout_materialized"
+MATERIALIZED_ATTR = "xpu_rt.layout_materialized"
 
 
 def materialize_layout_boundaries(module: ModuleOp) -> ModuleOp:
     """Replace virtual layout ops with concrete pack/unpack operations.
 
     Walks the module and for each SetLayoutOp/UnsetLayoutOp pair:
-    - If the boundary was not fused (no compgen.fused_layout), insert
+    - If the boundary was not fused (no xpu_rt.fused_layout), insert
       a concrete PackOp at the SetLayout position and UnpackOp at the
       UnsetLayout position.
     - Remove the virtual SetLayoutOp/UnsetLayoutOp.
@@ -61,7 +61,7 @@ def materialize_layout_boundaries(module: ModuleOp) -> ModuleOp:
         for subsequent in list(parent.ops)[idx + 1 :]:
             if isinstance(subsequent, (SetLayoutOp, UnsetLayoutOp)):
                 continue
-            if "compgen.fused_layout" in subsequent.attributes:
+            if "xpu_rt.fused_layout" in subsequent.attributes:
                 fused = True
             break
 

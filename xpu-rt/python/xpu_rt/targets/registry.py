@@ -3,7 +3,7 @@
 The hierarchy `targets/{class}/{vendor}/{arch}/` is a filesystem
 layout. The registry is the in-process API that mirrors it:
 
-    >>> from compgen.targets.registry import registry
+    >>> from xpu_rt.targets.registry import registry
     >>> reg = registry()
     >>> reg.classes()
     ('cpu', 'gpu', 'tpu')
@@ -21,10 +21,10 @@ Three registration paths land in the same registry:
    :func:`register_target` at import time. The package is loaded
    when the module is first touched (lazy).
 2. **Entry-point**: third-party packages declare a
-   ``compgen.runtime.lowerings`` or ``compgen.targets`` entry-point
+   ``xpu_rt.runtime.lowerings`` or ``xpu_rt.targets`` entry-point
    in their ``pyproject.toml``; :func:`discover_entry_points`
    loads them at probe-device time.
-3. **MCP-driven**: the ``compgen_register_target`` MCP tool calls
+3. **MCP-driven**: the ``xpu_rt_register_target`` MCP tool calls
    :func:`register_target` directly with adapter callables — the
    user's agent can extend the registry at session scope without
    editing source.
@@ -286,7 +286,7 @@ def register_target(
     2. **Entry-point**: :func:`discover_entry_points` calls this
        with adapters loaded from a third-party wheel.
        ``registration_path="entry_point"``.
-    3. **MCP tool**: ``compgen_register_target`` calls this with
+    3. **MCP tool**: ``xpu_rt_register_target`` calls this with
        adapters built from user-supplied callables.
        ``registration_path="mcp"``.
 
@@ -308,7 +308,7 @@ def register_target(
     return pkg
 
 
-def discover_entry_points(*, group: str = "compgen.targets") -> int:
+def discover_entry_points(*, group: str = "xpu_rt.targets") -> int:
     """Load third-party target packages declared as entry points.
 
     Each entry-point's loaded value must be a zero-arg callable

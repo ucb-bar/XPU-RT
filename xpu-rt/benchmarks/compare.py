@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from compgen.benchmarks.common.results import write_normalized_suite_results
+from xpu_rt.benchmarks.common.results import write_normalized_suite_results
 
 from benchmarks.record import RunRecord
 

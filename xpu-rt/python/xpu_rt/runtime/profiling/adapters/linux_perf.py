@@ -11,7 +11,7 @@ from typing import Any
 
 import structlog
 
-from compgen.runtime.profiling.adapter import ProfileSnapshot, TileMetrics
+from xpu_rt.runtime.profiling.adapter import ProfileSnapshot, TileMetrics
 
 log = structlog.get_logger()
 

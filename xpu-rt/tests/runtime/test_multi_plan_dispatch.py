@@ -28,7 +28,7 @@ from pathlib import Path
 
 import pytest
 
-from compgen.runtime.glue_emit.dispatch_table import (
+from xpu_rt.runtime.glue_emit.dispatch_table import (
     PlanDispatchEntry,
     PlanDispatchSpec,
     emit_dispatch_table,
@@ -219,9 +219,9 @@ class TestNativeEmit:
         src = result.c11_path.read_text()
         for entry in spec.entries:
             assert entry.plan_ref in src
-        assert "compgen_select_plan_ref" in src
-        assert "compgen_dispatch_entry_t" in src
-        assert "COMPGEN_DISPATCH_N_FEATURES" in src
+        assert "xpu_rt_select_plan_ref" in src
+        assert "xpu_rt_dispatch_entry_t" in src
+        assert "XPU_RT_DISPATCH_N_FEATURES" in src
 
     @pytest.mark.skipif(_find_cc() is None, reason="no C compiler in PATH")
     def test_c11_emit_parses_with_cc(self, tmp_path: Path) -> None:
@@ -325,8 +325,8 @@ class TestRecipeIrBridge:
             StringAttr,
         )
 
-        from compgen.ir.recipe.ops_dispatch import PlanDispatchTableOp
-        from compgen.runtime.glue_emit import (
+        from xpu_rt.ir.recipe.ops_dispatch import PlanDispatchTableOp
+        from xpu_rt.runtime.glue_emit import (
             plan_dispatch_spec_from_recipe_op,
         )
 
@@ -368,7 +368,7 @@ class TestRecipeIrBridge:
         from xdsl.dialects.builtin import ArrayAttr, StringAttr
         from xdsl.utils.exceptions import VerifyException
 
-        from compgen.ir.recipe.ops_dispatch import PlanDispatchTableOp
+        from xpu_rt.ir.recipe.ops_dispatch import PlanDispatchTableOp
 
         op = PlanDispatchTableOp.create(
             properties={
@@ -390,7 +390,7 @@ class TestRecipeIrBridge:
         )
         from xdsl.utils.exceptions import VerifyException
 
-        from compgen.ir.recipe.ops_dispatch import PlanDispatchTableOp
+        from xpu_rt.ir.recipe.ops_dispatch import PlanDispatchTableOp
 
         i64 = IntegerType(64)
         bad = DictionaryAttr({
@@ -428,10 +428,10 @@ class TestAbiLint:
         call_re = re.compile(r"(?<![.>:])\b([a-zA-Z_][a-zA-Z0-9_]*)\s*\(")
         called = {m.group(1) for m in call_re.finditer(src_clean)}
         # The C dispatcher only needs control-flow + its own selector
-        # name.  No vendor or libcompgen_rt calls — the dispatcher is
+        # name.  No vendor or libxpu_rt calls — the dispatcher is
         # purely a typed lookup.
         allowed = {
-            "compgen_select_plan_ref",
+            "xpu_rt_select_plan_ref",
             "if", "for", "while", "return", "sizeof",
         }
         for name in called:

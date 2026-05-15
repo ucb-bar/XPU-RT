@@ -6,7 +6,7 @@ from xdsl.dialects.builtin import ArrayAttr, StringAttr, SymbolRefAttr
 from xdsl.irdl import IRDLOperation, irdl_op_definition, opt_prop_def, prop_def, traits_def
 from xdsl.traits import Pure, SymbolOpInterface
 
-from compgen.ir.agent.attrs import FreshnessAttr
+from xpu_rt.ir.agent.attrs import FreshnessAttr
 
 
 @irdl_op_definition

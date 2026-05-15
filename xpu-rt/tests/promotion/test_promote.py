@@ -6,9 +6,9 @@ import json
 from pathlib import Path
 
 import pytest
-from compgen.promotion.errors import PromotionBlockedError
-from compgen.promotion.promote import RecipeKey, RecipePromoter, promote_recipe
-from compgen.runtime.bundle import Bundle
+from xpu_rt.promotion.errors import PromotionBlockedError
+from xpu_rt.promotion.promote import RecipeKey, RecipePromoter, promote_recipe
+from xpu_rt.runtime.bundle import Bundle
 
 
 def _make_verified_bundle(tmp_path: Path, **overrides) -> Bundle:

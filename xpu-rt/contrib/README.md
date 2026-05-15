@@ -1,6 +1,6 @@
-# CompGen Community Contributions
+# XPU-RT Community Contributions
 
-This directory holds community-contributed extensions to CompGen. Each subdirectory corresponds to an extension point in the main codebase.
+This directory holds community-contributed extensions to XPU-RT. Each subdirectory corresponds to an extension point in the main codebase.
 
 ## Extension Points
 

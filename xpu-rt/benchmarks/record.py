@@ -200,7 +200,7 @@ class BaselineMetrics:
     eager_cpu_latency_us: float = 0.0
     eager_gpu_latency_us: float = 0.0
     compiled_gpu_latency_us: float = 0.0
-    compgen_latency_us: float = 0.0
+    xpu_rt_latency_us: float = 0.0
     speedup_vs_eager_cpu: float = 0.0
     speedup_vs_eager_gpu: float = 0.0
     speedup_vs_compiled: float = 0.0
@@ -430,7 +430,7 @@ class RunRecord:
     model_name: str = ""
     target_name: str = ""
     objective: str = "latency"
-    system_name: str = "compgen"
+    system_name: str = "xpu-rt"
     workload_id: str = ""
     target_id: str = ""
     source_model_id: str = ""

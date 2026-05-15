@@ -24,8 +24,8 @@ Every measurement carries:
 
 Typical usage::
 
-    from compgen.kernels.measure import measure_kernel
-    from compgen.kernels.errors import UnmeasurableKernelError
+    from xpu_rt.kernels.measure import measure_kernel
+    from xpu_rt.kernels.errors import UnmeasurableKernelError
 
     try:
         m = measure_kernel(
@@ -53,10 +53,10 @@ from typing import TYPE_CHECKING, Any
 
 import torch
 
-from compgen.kernels.errors import UnmeasurableKernelError
+from xpu_rt.kernels.errors import UnmeasurableKernelError
 
 if TYPE_CHECKING:
-    from compgen.kernels.contracts import KernelContract
+    from xpu_rt.kernels.contracts import KernelContract
 
 
 @dataclass(frozen=True)

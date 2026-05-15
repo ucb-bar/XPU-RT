@@ -49,14 +49,14 @@ def _sha(p: Path) -> str:
 def _run(model: str, out_dir: Path, *, run_kernels: bool) -> None:
     env = os.environ.copy()
     if run_kernels:
-        env["COMPGEN_RUN_KERNELS"] = "1"
+        env["XPU_RT_RUN_KERNELS"] = "1"
     else:
-        env.pop("COMPGEN_RUN_KERNELS", None)
-    env.pop("COMPGEN_CALIBRATE_PROFILER", None)
-    env.pop("COMPGEN_CALIBRATE_CANDIDATES", None)
+        env.pop("XPU_RT_RUN_KERNELS", None)
+    env.pop("XPU_RT_CALIBRATE_PROFILER", None)
+    env.pop("XPU_RT_CALIBRATE_CANDIDATES", None)
     subprocess.run(
         [
-            sys.executable, "-m", "compgen.graph_compilation", "run",
+            sys.executable, "-m", "xpu_rt.graph_compilation", "run",
             "--model", str(REPO_ROOT / f"configs/models/{model}.yaml"),
             "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
             "--out", str(out_dir),
@@ -274,7 +274,7 @@ def test_row6_compiled_bottleneck(kernels_run: Path) -> None:
 def test_byte_identical_matrix_across_reruns(kernels_run: Path) -> None:
     """Re-running the builder produces a byte-identical matrix
     (modulo generated_at_utc)."""
-    from compgen.graph_compilation.kernel_readiness import (
+    from xpu_rt.graph_compilation.kernel_readiness import (
         run_kernel_section_readiness,
     )
 
@@ -296,7 +296,7 @@ def test_byte_identical_matrix_across_reruns(kernels_run: Path) -> None:
 def test_m24_does_not_mutate_source_artifacts(kernels_run: Path) -> None:
     """is read-only: ////source reports
     are byte-identical after re-running ."""
-    from compgen.graph_compilation.kernel_readiness import (
+    from xpu_rt.graph_compilation.kernel_readiness import (
         run_kernel_section_readiness,
     )
 
@@ -413,14 +413,14 @@ def test_ledger_records_m24_event(kernels_run: Path) -> None:
 
 def test_no_compiler_core_imports() -> None:
     src = (
-        REPO_ROOT / "python" / "compgen" / "graph_compilation"
+        REPO_ROOT / "python" / "xpu-rt" / "graph_compilation"
         / "kernel_readiness.py"
     ).read_text(encoding="utf-8")
     forbidden = (
-        "from compgen.ir",
-        "from compgen.capture",
-        "from compgen.pipeline",
-        "from compgen.runtime.bundle_emit",
+        "from xpu_rt.ir",
+        "from xpu_rt.capture",
+        "from xpu_rt.pipeline",
+        "from xpu_rt.runtime.bundle_emit",
     )
     for f in forbidden:
         assert f not in src, (

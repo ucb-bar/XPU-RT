@@ -22,7 +22,7 @@ from typing import Any
 
 from xdsl.dialects.builtin import ModuleOp
 
-from compgen.ir.recipe.serialize import _op_to_dict
+from xpu_rt.ir.recipe.serialize import _op_to_dict
 
 # Rough mapping from op-name prefix to a coarse "family" used for the
 # per-phase counts. Intentionally small; anything uncategorised lands

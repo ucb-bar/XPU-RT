@@ -2,9 +2,9 @@
 
 Two complementary discovery paths:
 
-1. **Entry point discovery** via ``compgen.vendor_dialects`` in the
+1. **Entry point discovery** via ``xpu_rt.vendor_dialects`` in the
    consumer package's ``pyproject.toml``. This is how user-space packages
-   (e.g. ``compgen_cuda_tile``) advertise themselves once ``pip install``-ed.
+   (e.g. ``xpu_rt_cuda_tile``) advertise themselves once ``pip install``-ed.
 2. **Runtime registration** via :func:`register_adapter` — used by tests,
    demos, and in-process composition.
 
@@ -20,12 +20,12 @@ from typing import Any
 
 import structlog
 
-from compgen.extensions.vendor_dialect.adapter import VendorDialectAdapter
+from xpu_rt.extensions.vendor_dialect.adapter import VendorDialectAdapter
 
 log = structlog.get_logger()
 
 
-_ENTRY_POINT_GROUP = "compgen.vendor_dialects"
+_ENTRY_POINT_GROUP = "xpu_rt.vendor_dialects"
 
 
 class VendorAdapterRegistry:
@@ -81,11 +81,11 @@ class VendorAdapterRegistry:
     def describe(self, name: str) -> Any:
         """Return the descriptor for a registered adapter (audit query).
 
-        Per bridge #130: the agent's ``compgen_describe_vendor_dialect``
+        Per bridge #130: the agent's ``xpu_rt_describe_vendor_dialect``
         MCP tool needs descriptor data per-name. The existing ``get(name)``
         returns the adapter; ``describe(name)`` is the descriptor-only
         convenience. Returns a
-        :class:`compgen.extensions.vendor_dialect.descriptor.VendorDialectDescriptor`.
+        :class:`xpu_rt.extensions.vendor_dialect.descriptor.VendorDialectDescriptor`.
 
         Raises:
             KeyError: ``name`` is not a registered adapter.

@@ -30,7 +30,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from compgen.kernels.contract_v3 import (
+from xpu_rt.kernels.contract_v3 import (
     DispatchModel,
     DispatchSpec,
     EventDecl,

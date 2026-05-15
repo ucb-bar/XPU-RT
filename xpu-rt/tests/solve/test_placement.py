@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from compgen.solve.partition import Partition
-from compgen.solve.placement import PlacementConstraint, PlacementSolution, solve_placement
+from xpu_rt.solve.partition import Partition
+from xpu_rt.solve.placement import PlacementConstraint, PlacementSolution, solve_placement
 
 
 def test_placement_solution_defaults() -> None:

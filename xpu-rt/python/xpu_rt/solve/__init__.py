@@ -1,4 +1,4 @@
-"""Solver subsystem for CompGen.
+"""Solver subsystem for XPU-RT.
 
 Sits between Recipe IR and Plan IR. Uses mathematical solvers to make
 globally consistent placement, scheduling, and memory allocation decisions.
@@ -20,7 +20,7 @@ NOT the full raw graph.
 
 from __future__ import annotations
 
-from compgen.solve.solver_types import (
+from xpu_rt.solve.solver_types import (
     BackendAvailabilityStatus,
     BackendProbeResult,
     SolverBackendName,
@@ -30,9 +30,9 @@ from compgen.solve.solver_types import (
     SolverStatus,
     compute_formulation_hash,
 )
-from compgen.solve.backend_registry import SolverBackendRegistry, default_registry
-from compgen.solve.routing import ROUTING_TABLE, choose_backend
-from compgen.solve.reports import (
+from xpu_rt.solve.backend_registry import SolverBackendRegistry, default_registry
+from xpu_rt.solve.routing import ROUTING_TABLE, choose_backend
+from xpu_rt.solve.reports import (
     summarize_response_md,
     write_solver_request,
     write_solver_response,

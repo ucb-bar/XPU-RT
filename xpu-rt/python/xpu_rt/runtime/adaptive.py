@@ -1,6 +1,6 @@
 """Adaptive batch scheduler -- pick pre-computed plans by batch size tier.
 
-Pre-computes :class:`~compgen.runtime.planner.ExecutionPlan` objects for a set
+Pre-computes :class:`~xpu_rt.runtime.planner.ExecutionPlan` objects for a set
 of batch-size tiers (e.g. 1, 8, 32, 128).  At request time the scheduler
 selects the closest tier without exceeding device memory, giving near-optimal
 plans for any incoming batch size with zero compile-time overhead.
@@ -9,7 +9,7 @@ Invariants:
     - Tiers are sorted ascending and contain at least one entry.
     - ``select_plan`` always returns the plan for the closest tier whose
       batch size is >= the request (or the largest tier if none qualifies).
-    - Plan generation delegates to :func:`~compgen.runtime.planner.plan_execution`.
+    - Plan generation delegates to :func:`~xpu_rt.runtime.planner.plan_execution`.
 """
 
 from __future__ import annotations
@@ -21,8 +21,8 @@ from typing import Any
 import structlog
 from xdsl.dialects.builtin import ModuleOp
 
-from compgen.runtime.planner import ExecutionPlan, ExecutionPlanner
-from compgen.targets.schema import TargetProfile
+from xpu_rt.runtime.planner import ExecutionPlan, ExecutionPlanner
+from xpu_rt.targets.schema import TargetProfile
 
 log = structlog.get_logger()
 

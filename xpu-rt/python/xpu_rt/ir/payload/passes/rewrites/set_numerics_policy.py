@@ -1,7 +1,7 @@
 """``set_numerics_policy`` -- insert float casts around ops the target
 kernel family cannot consume natively.
 
-Reconstruction of XLA's ``FloatNormalizationPass`` as a CompGen
+Reconstruction of XLA's ``FloatNormalizationPass`` as a XPU-RT
 PatternRewriter. Zero external references; this module owns the rewrite.
 
 XLA's pass walks HLO ops and, for each op whose operand or result type
@@ -10,7 +10,7 @@ isn't in the target's supported-float set, inserts a pair of
 around the result. The op itself runs at the promoted precision
 while the surrounding graph keeps its storage type.
 
-CompGen's version operates on xDSL linalg + math + arith ops. The
+XPU-RT's version operates on xDSL linalg + math + arith ops. The
 input is a **target numerics policy** describing:
 
 - ``storage_types`` -- float types legally flowing through untouched
@@ -42,7 +42,7 @@ structural awareness to handle mixed-precision GEMM bodies correctly.
 LLM-tool signature:
 
     tool_name="set_numerics_policy"
-    wraps_pass="CompGen:FloatNormalization"
+    wraps_pass="XPU-RT:FloatNormalization"
     invent_slot="numerics/precision_policy"
     policy="PromoteElementwiseToF32OnUnsupportedKernels"
 """
@@ -235,7 +235,7 @@ class _NumericsElementwisePattern(RewritePattern):
         self.stats.results_truncf_inserted += 1
 
         # Preserve pattern-hint/region-id.
-        for key in ("compgen.region_id", "compgen._pattern_hint"):
+        for key in ("xpu_rt.region_id", "xpu_rt._pattern_hint"):
             if key in op.attributes and key not in new_op.attributes:
                 new_op.attributes[key] = op.attributes[key]
 

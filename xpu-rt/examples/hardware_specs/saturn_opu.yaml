@@ -1,10 +1,10 @@
-# CompGen HardwareSpec: Saturn OPU (RVV + outer-product-unit accelerator)
+# XPU-RT HardwareSpec: Saturn OPU (RVV + outer-product-unit accelerator)
 #
 # Chipyard generator: chipyard/generators/saturn  (OPUV128D64ShuttleConfig).
-# Driven by CompGen's RVV_CPU_EXTENSION lowering family: Saturn OPU is an
+# Driven by XPU-RT's RVV_CPU_EXTENSION lowering family: Saturn OPU is an
 # in-vector-unit extension (`+xopu`), not a RoCC coprocessor.
 #
-# This spec is the v2.0 input to `compgen.api.device(...)`; the legacy v1.0
+# This spec is the v2.0 input to `xpu_rt.api.device(...)`; the legacy v1.0
 # TargetProfile view lives at ``examples/target_profiles/saturn_opu.yaml``
 # for backward compatibility with tooling that reads the flat profile.
 

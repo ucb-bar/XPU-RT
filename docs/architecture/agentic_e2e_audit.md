@@ -1,6 +1,6 @@
 # Agentic E2E Audit (post-W7)
 
-How much of the CompGen compile loop is *actually* driven by the
+How much of the XPU-RT compile loop is *actually* driven by the
 agent (Claude Code) over MCP, vs still living in Python-only paths.
 
 The litmus test for "agentic": can a Claude Code session, talking
@@ -58,12 +58,12 @@ agent has to drop into Python (or a pre-existing tool) for them.
 | FX import / payload IR construction | Python (`capture/`, `ir/payload/import_fx.py`); agent triggers it via `load_model` | The IR build is deterministic; no LLM judgment needed |
 | Recipe → MLIR transform-script lowering | Python (`ir/recipe/lower_megakernel*.py`); deterministic | No LLM-loop value-add |
 | Pattern graduation orchestration | Python (`agent/self_extension/graduate.py`); agent surfaces results via `graduate_*` | Existing surface is sufficient for the use case today |
-| Plugin discovery via entry points | Python (`compgen/plugins/`) — discovery is install-time, not runtime | Not a per-compile decision |
+| Plugin discovery via entry points | Python (`xpu_rt/plugins/`) — discovery is install-time, not runtime | Not a per-compile decision |
 | Automatic contract extraction from `CompiledModel` | `compile_with_llm(mcp_session=…, mcp_contracts=…)` requires the caller to supply contracts | Real model→region→contract conversion is W9+ work; the W8 opt-in path runs the optimiser when contracts are supplied externally |
 
 ## How the agentic loop runs in practice (W7)
 
-A Claude Code session driving CompGen through MCP looks like:
+A Claude Code session driving XPU-RT through MCP looks like:
 
 ```
 1. open_target(profile=…)                          # lifecycle
@@ -107,7 +107,7 @@ After W8 every load-bearing compile decision is an MCP round-trip:
 * **W8.2** — refinement loop is MCP-driven; agent decides when to
   set `done=True` for a kernel.
 * **W8.3** — autotune trials route through `request_autotune_trial`
-  with disk persistence to `~/.compgen/autotune/`.
+  with disk persistence to `~/.xpu_rt/autotune/`.
 
 The remaining Python-only work is purely deterministic infrastructure
 (IR construction, MLIR lowering, plugin discovery) where there's no

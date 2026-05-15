@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from compgen.runtime.dispatch_strategy import (
+from xpu_rt.runtime.dispatch_strategy import (
     BulkSyncStrategy,
     DispatchOp,
     DispatchWave,

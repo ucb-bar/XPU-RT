@@ -13,7 +13,7 @@ import pytest
 
 class TestToolRegistration:
     def test_three_tools_registered(self) -> None:
-        from compgen.mcp.tools import ALL_TOOLS, CONFORMANCE_TOOLS
+        from xpu_rt.mcp.tools import ALL_TOOLS, CONFORMANCE_TOOLS
 
         names = {t["name"] for t in CONFORMANCE_TOOLS}
         assert names == {
@@ -26,7 +26,7 @@ class TestToolRegistration:
         assert names <= all_names
 
     def test_each_tool_has_required_descriptor_fields(self) -> None:
-        from compgen.mcp.tools import CONFORMANCE_TOOLS
+        from xpu_rt.mcp.tools import CONFORMANCE_TOOLS
 
         for tool in CONFORMANCE_TOOLS:
             assert "name" in tool
@@ -41,7 +41,7 @@ class TestToolRegistration:
 
 class TestEtcConformanceRunHandler:
     def test_unknown_workload_lands_in_failed_list(self, tmp_path: Path) -> None:
-        from compgen.mcp.tools.conformance import etc_conformance_run
+        from xpu_rt.mcp.tools.conformance import etc_conformance_run
 
         result = etc_conformance_run(
             workload="not_a_workload",
@@ -56,7 +56,7 @@ class TestEtcConformanceRunHandler:
         """On a CPU host the harness reports the workload as failed
         with a clean reason — and the report file lands on disk."""
         import torch
-        from compgen.mcp.tools.conformance import etc_conformance_run
+        from xpu_rt.mcp.tools.conformance import etc_conformance_run
 
         if torch.cuda.is_available():
             pytest.skip("This test exercises the CPU-fallback path")
@@ -77,7 +77,7 @@ class TestEtcConformanceRunHandler:
         must reflect the override."""
         import json
 
-        from compgen.mcp.tools.conformance import etc_conformance_run
+        from xpu_rt.mcp.tools.conformance import etc_conformance_run
 
         etc_conformance_run(
             workload="diamond_dag",
@@ -90,14 +90,14 @@ class TestEtcConformanceRunHandler:
 
 class TestEtcConformanceSummarizeHandler:
     def test_missing_dir_is_reported_cleanly(self, tmp_path: Path) -> None:
-        from compgen.mcp.tools.conformance import etc_conformance_summarize
+        from xpu_rt.mcp.tools.conformance import etc_conformance_summarize
 
         result = etc_conformance_summarize(str(tmp_path / "does_not_exist"))
         assert "error" in result
         assert "does not exist" in result["error"].lower()
 
     def test_summary_after_one_run(self, tmp_path: Path) -> None:
-        from compgen.mcp.tools.conformance import (
+        from xpu_rt.mcp.tools.conformance import (
             etc_conformance_run,
             etc_conformance_summarize,
         )
@@ -111,7 +111,7 @@ class TestEtcConformanceSummarizeHandler:
 
 class TestEtcMegakernelInspectHandler:
     def test_missing_bundle_dir_returns_error_field(self, tmp_path: Path) -> None:
-        from compgen.mcp.tools.conformance import etc_megakernel_inspect
+        from xpu_rt.mcp.tools.conformance import etc_megakernel_inspect
 
         result = etc_megakernel_inspect(str(tmp_path / "no_such_bundle"))
         assert result["manifest_present"] is False
@@ -121,7 +121,7 @@ class TestEtcMegakernelInspectHandler:
         bundle = tmp_path / "bundle"
         bundle.mkdir()
         (bundle / "manifest.json").write_text("{}")
-        from compgen.mcp.tools.conformance import etc_megakernel_inspect
+        from xpu_rt.mcp.tools.conformance import etc_megakernel_inspect
 
         result = etc_megakernel_inspect(str(bundle))
         assert result["manifest_present"] is False
@@ -139,7 +139,7 @@ class TestEtcMegakernelInspectHandler:
         device_funcs.mkdir()
         (device_funcs / "matmul.ptx").write_text("// PTX placeholder\n")
 
-        from compgen.mcp.tools.conformance import etc_megakernel_inspect
+        from xpu_rt.mcp.tools.conformance import etc_megakernel_inspect
 
         result = etc_megakernel_inspect(str(bundle))
         assert result["manifest_present"] is True

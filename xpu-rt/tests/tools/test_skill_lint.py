@@ -1,12 +1,12 @@
-"""Tests for :mod:`compgen.tools.skill_lint`.
+"""Tests for :mod:`xpu_rt.tools.skill_lint`.
 
 Coverage:
 
 * the canonical template under ``.claude/skills/_template/SKILL.md``
   lints clean;
-* every skill shipped (``compgen-tool-development``,
-  ``compgen-provider-integration``, ``compgen-extension-authoring``,
-  ``compgen-solver-planning``) lints clean and exposes the expected
+* every skill shipped (``xpu-rt-tool-development``,
+  ``xpu_rt-provider-integration``, ``xpu_rt-extension-authoring``,
+  ``xpu_rt-solver-planning``) lints clean and exposes the expected
   ``name``/``description`` frontmatter;
 * the optional ``require_cli_command`` binding enforces a verbatim
   CLI-string check;
@@ -14,8 +14,8 @@ Coverage:
   by at least one negative-control input — the linter cannot lose a
   failure mode silently.
 
-The original pre-skills (``compgen``, ``compgen-compile``,
-``compgen-candidate-selection``, ``compgen-discover-user-kernels``)
+The original pre-skills (``xpu_rt``, ``xpu_rt-compile``,
+``xpu_rt-candidate-selection``, ``xpu_rt-discover-user-kernels``)
 have been retrofitted as part of G7 — every shipped SKILL.md
 satisfies the structural contract now.
 """
@@ -25,7 +25,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from compgen.tools.skill_lint import (
+from xpu_rt.tools.skill_lint import (
     REQUIRED_FRONTMATTER_KEYS,
     REQUIRED_SECTIONS,
     SKILL_VIOLATION_KINDS,
@@ -37,20 +37,20 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 SKILLS_ROOT = REPO_ROOT / ".claude" / "skills"
 
 M93_SKILLS: tuple[tuple[str, str], ...] = (
-    ("compgen-tool-development", "compgen-tool-development"),
-    ("compgen-provider-integration", "compgen-provider-integration"),
-    ("compgen-extension-authoring", "compgen-extension-authoring"),
-    ("compgen-solver-planning", "compgen-solver-planning"),
+    ("xpu-rt-tool-development", "xpu-rt-tool-development"),
+    ("xpu_rt-provider-integration", "xpu_rt-provider-integration"),
+    ("xpu_rt-extension-authoring", "xpu_rt-extension-authoring"),
+    ("xpu_rt-solver-planning", "xpu_rt-solver-planning"),
 )
 
 # G7 — retrofitted pre-skills. They had their own variant
 # headings (Inputs / Playbook / Hard rules) but now carry the
 # canonical six in addition. Lint applies to all of them.
 RETROFITTED_PRE_M93_SKILLS: tuple[tuple[str, str], ...] = (
-    ("compgen", "compgen"),
-    ("compgen-compile", "compgen-compile"),
-    ("compgen-candidate-selection", "compgen-candidate-selection"),
-    ("compgen-discover-user-kernels", "compgen-discover-user-kernels"),
+    ("xpu-rt", "xpu-rt"),
+    ("xpu_rt-compile", "xpu_rt-compile"),
+    ("xpu_rt-candidate-selection", "xpu_rt-candidate-selection"),
+    ("xpu_rt-discover-user-kernels", "xpu_rt-discover-user-kernels"),
 )
 
 ALL_SHIPPED_SKILLS: tuple[tuple[str, str], ...] = (
@@ -110,10 +110,10 @@ def test_template_lints_when_cli_command_matches(tmp_path):
     skill.write_text(
         "---\nname: probe-providers\ndescription: probe.\n---\n\n"
         + "\n".join(REQUIRED_SECTIONS)
-        + "\n\nRun ``compgen-tool run compgen_probe_providers``.\n",
+        + "\n\nRun ``xpu-rt-tool run xpu_rt_probe_providers``.\n",
         encoding="utf-8",
     )
-    report = lint_skill(skill, require_cli_command="compgen-tool run compgen_probe_providers")
+    report = lint_skill(skill, require_cli_command="xpu-rt-tool run xpu_rt_probe_providers")
     assert report.is_clean
 
 
@@ -182,7 +182,7 @@ def test_cli_command_not_quoted(tmp_path):
         "---\nname: probe\ndescription: x.\n---\n\n" + "\n".join(REQUIRED_SECTIONS) + "\n",
         encoding="utf-8",
     )
-    report = lint_skill(skill, require_cli_command="compgen-tool run definitely-not-in-the-body")
+    report = lint_skill(skill, require_cli_command="xpu-rt-tool run definitely-not-in-the-body")
     kinds = {v.kind for v in report.violations}
     assert "cli_command_not_quoted" in kinds
 

@@ -1,7 +1,7 @@
 """Direct Recipe-IR → Payload-IR mutation pass.
 
 xDSL doesn't ship a Transform Dialect interpreter that can apply the
-``transform.structured.*`` scripts :func:`compgen.ir.recipe.lower.lower_recipe`
+``transform.structured.*`` scripts :func:`xpu_rt.ir.recipe.lower.lower_recipe`
 emits, so the scripts sit there as text. This module bypasses that
 gap by walking the recipe ModuleOp and applying each candidate /
 propose op DIRECTLY to the payload module via xDSL attribute mutation.
@@ -9,24 +9,24 @@ propose op DIRECTLY to the payload module via xDSL attribute mutation.
 Concrete mutations applied today:
 
 * :class:`FuseOp` and :class:`ProposeFusionOp` →
-  every payload op whose ``compgen.region_id`` matches one of the
-  fused regions gets a new ``compgen.fused_into`` attribute (a stable
-  digest of the fused region set) and its ``compgen.region_id`` is
+  every payload op whose ``xpu_rt.region_id`` matches one of the
+  fused regions gets a new ``xpu_rt.fused_into`` attribute (a stable
+  digest of the fused region set) and its ``xpu_rt.region_id`` is
   rewritten to that digest. Downstream codegen reads ``region_id`` +
   ``fused_into`` and surfaces both, so a different fusion decision
   produces different ``kernels/*.c`` bytes.
 
 * :class:`TileOp` →
-  every payload op in the tiled region gets ``compgen.tile_sizes`` set
+  every payload op in the tiled region gets ``xpu_rt.tile_sizes`` set
   to the tuple chosen by the agent.
 
 * :class:`PlaceOnDeviceOp` →
-  every payload op in the placed region gets its ``compgen.device``
+  every payload op in the placed region gets its ``xpu_rt.device``
   attribute updated to ``device_<index>``.
 
 * :class:`ProposeMegakernelSynthesisOp` →
   every payload op in the fused set gets
-  ``compgen.megakernel = "<chosen.megakernel_name>"``.
+  ``xpu_rt.megakernel = "<chosen.megakernel_name>"``.
 
 The pass is deliberately additive — it never removes ops or changes
 operand SSA chains, so the resulting payload remains structurally
@@ -53,12 +53,12 @@ from xdsl.dialects.builtin import (
 from xdsl.dialects.func import CallOp, FuncOp
 from xdsl.ir import Operation, SSAValue
 
-from compgen.ir.recipe.ops_candidate import (
+from xpu_rt.ir.recipe.ops_candidate import (
     FuseOp,
     PlaceOnDeviceOp,
     TileOp,
 )
-from compgen.ir.recipe.ops_propose import (
+from xpu_rt.ir.recipe.ops_propose import (
     ProposeFusionOp,
     ProposeMegakernelSynthesisOp,
     ProposePayload,
@@ -136,14 +136,14 @@ def _single_region(op: Operation, attr_name: str) -> str | None:
 def _walk_payload_ops(payload: ModuleOp):
     """Yield every op in the payload module body (deep)."""
     for op in payload.walk():
-        # Skip ModuleOp itself (it has no compgen.region_id).
+        # Skip ModuleOp itself (it has no xpu_rt.region_id).
         if op is payload:
             continue
         yield op
 
 
 def _build_payload_seed_index(payload: ModuleOp) -> dict[str, Operation]:
-    """Mirror :func:`compgen.ir.recipe.seed._extract_significant_ops`'s walk
+    """Mirror :func:`xpu_rt.ir.recipe.seed._extract_significant_ops`'s walk
     so we can look up the op that ``payload_region_id`` refers to.
 
     The seed names ops ``<TypeName>_<N>`` by enumerating the payload
@@ -165,7 +165,7 @@ def _build_payload_seed_index(payload: ModuleOp) -> dict[str, Operation]:
 
 
 def _matches_region(op: Operation, region_set: set[str]) -> bool:
-    rid = op.attributes.get("compgen.region_id")
+    rid = op.attributes.get("xpu_rt.region_id")
     if not isinstance(rid, StringAttr):
         return False
     return rid.data in region_set
@@ -178,7 +178,7 @@ def _build_recipe_to_payload_map(recipe: ModuleOp) -> dict[str, str]:
     stores the original payload-op identifier in
     ``payload_region_id``. The mutator needs to translate the recipe-
     level reference (which is what propose ops carry) back to the
-    payload-level ``compgen.region_id`` string the codegen uses.
+    payload-level ``xpu_rt.region_id`` string the codegen uses.
     """
     out: dict[str, str] = {}
     for op in recipe.body.block.ops:
@@ -208,17 +208,17 @@ def _translate(regions: list[str], recipe_to_payload: dict[str, str]) -> list[st
 def _resolve_targets(
     region_refs: list[str],
     *,
-    by_compgen_id: dict[str, list[Operation]],
+    by_xpu_rt_id: dict[str, list[Operation]],
     by_seed_index: dict[str, Operation],
 ) -> list[Operation]:
     """Translate a list of recipe-level region refs to concrete payload ops.
 
     Two lookup strategies, tried in order:
-      1. Match against ``compgen.region_id`` strings on payload ops
+      1. Match against ``xpu_rt.region_id`` strings on payload ops
          (e.g. ``matmul_0``, ``add_3``) — the form import_fx stamps.
       2. Match against the seed-generated synthetic ID
          (``CallOp_0``, ``EmptyOp_3``, ...) — the form
-         :func:`compgen.ir.recipe.seed._extract_significant_ops` uses
+         :func:`xpu_rt.ir.recipe.seed._extract_significant_ops` uses
          when constructing ``RecipeRegionOp.payload_region_id``.
 
     Either form may appear in propose-op payloads, so we accept both.
@@ -227,7 +227,7 @@ def _resolve_targets(
     for ref in region_refs:
         if not ref:
             continue
-        hits = by_compgen_id.get(ref)
+        hits = by_xpu_rt_id.get(ref)
         if hits:
             out.extend(hits)
             continue
@@ -264,9 +264,9 @@ def _apply_fusion(
     fk_attr = StringAttr(fusion_kind)
     fid_attr = StringAttr(fused_id)
     for op in targets:
-        op.attributes["compgen.fused_into"] = fid_attr
-        op.attributes["compgen.region_id"] = fid_attr
-        op.attributes["compgen.fusion_kind"] = fk_attr
+        op.attributes["xpu_rt.fused_into"] = fid_attr
+        op.attributes["xpu_rt.region_id"] = fid_attr
+        op.attributes["xpu_rt.fusion_kind"] = fk_attr
     return len(targets), fused_id
 
 
@@ -280,8 +280,8 @@ def _apply_tile(
     sizes_str = ",".join(str(s) for s in sizes)
     str_attr = StringAttr(sizes_str)
     for op in targets:
-        op.attributes["compgen.tile_sizes"] = sizes_attr
-        op.attributes["compgen.tile_sizes_str"] = str_attr
+        op.attributes["xpu_rt.tile_sizes"] = sizes_attr
+        op.attributes["xpu_rt.tile_sizes_str"] = str_attr
     return len(targets)
 
 
@@ -294,8 +294,8 @@ def _apply_place(
     dev_attr = StringAttr(f"device_{device_index}")
     placed_attr = StringAttr("recipe")
     for op in targets:
-        op.attributes["compgen.device"] = dev_attr
-        op.attributes["compgen.placed_by"] = placed_attr
+        op.attributes["xpu_rt.device"] = dev_attr
+        op.attributes["xpu_rt.placed_by"] = placed_attr
     return len(targets)
 
 
@@ -444,15 +444,15 @@ def _try_structural_fuse(
         arguments=new_operands,
         return_types=[new_result_type],
     )
-    new_call.attributes["compgen.region_id"] = StringAttr(fused_id)
-    new_call.attributes["compgen.fused_into"] = StringAttr(fused_id)
-    new_call.attributes["compgen.fusion_kind"] = StringAttr(fusion_kind)
-    new_call.attributes["compgen.fused_callees"] = StringAttr(",".join(callees))
+    new_call.attributes["xpu_rt.region_id"] = StringAttr(fused_id)
+    new_call.attributes["xpu_rt.fused_into"] = StringAttr(fused_id)
+    new_call.attributes["xpu_rt.fusion_kind"] = StringAttr(fusion_kind)
+    new_call.attributes["xpu_rt.fused_callees"] = StringAttr(",".join(callees))
     # Carry forward the device assignment from the first targeted op so
     # placement decisions aren't lost.
-    dev = ordered[0].attributes.get("compgen.device")
+    dev = ordered[0].attributes.get("xpu_rt.device")
     if dev is not None:
-        new_call.attributes["compgen.device"] = dev
+        new_call.attributes["xpu_rt.device"] = dev
 
     # Insert before the FIRST targeted op so subsequent uses see it.
     first_target = ordered[0]
@@ -479,8 +479,8 @@ def _apply_megakernel(
     name_attr = StringAttr(megakernel_name)
     member_attr = StringAttr("yes")
     for op in targets:
-        op.attributes["compgen.megakernel"] = name_attr
-        op.attributes["compgen.megakernel_member"] = member_attr
+        op.attributes["xpu_rt.megakernel"] = name_attr
+        op.attributes["xpu_rt.megakernel_member"] = member_attr
     return len(targets)
 
 
@@ -505,11 +505,11 @@ def apply_recipe_to_payload(
 
     # Build TWO indices over the payload module so we can resolve
     # whichever name form the recipe carries:
-    #   * by_compgen_id: ``compgen.region_id`` string → list of payload ops
+    #   * by_xpu_rt_id: ``xpu_rt.region_id`` string → list of payload ops
     #     (e.g. "matmul_0", "add_3" — set by import_fx)
     #   * by_seed_index: ``<TypeName>_<N>`` → payload op
     #     (e.g. "CallOp_0" — set by seed._extract_significant_ops)
-    by_compgen_id: dict[str, list[Operation]] = {}
+    by_xpu_rt_id: dict[str, list[Operation]] = {}
     by_seed_index: dict[str, Operation] = {}
     seed_counter = 0
     for op in payload.walk():
@@ -517,9 +517,9 @@ def apply_recipe_to_payload(
         if cls_name not in {"ModuleOp", "FuncOp", "ReturnOp"}:
             by_seed_index[f"{cls_name}_{seed_counter}"] = op
             seed_counter += 1
-        rid = op.attributes.get("compgen.region_id")
+        rid = op.attributes.get("xpu_rt.region_id")
         if isinstance(rid, StringAttr):
-            by_compgen_id.setdefault(rid.data, []).append(op)
+            by_xpu_rt_id.setdefault(rid.data, []).append(op)
 
     # The recipe ALSO carries an explicit recipe→payload region map via
     # RecipeRegionOp.payload_region_id. We thread it so any propose op
@@ -531,7 +531,7 @@ def apply_recipe_to_payload(
         translated = _translate(refs, recipe_to_payload)
         return _resolve_targets(
             translated,
-            by_compgen_id=by_compgen_id,
+            by_xpu_rt_id=by_xpu_rt_id,
             by_seed_index=by_seed_index,
         )
 
@@ -560,15 +560,15 @@ def apply_recipe_to_payload(
             report.payload_ops_touched += len(targets)
             report.diagnostics.append(f"structural_fuse {label}: {len(targets)} CallOps -> {callee}")
             # Refresh indices (we erased the old ops + added a new one).
-            by_compgen_id.setdefault(fused_id, []).append(
+            by_xpu_rt_id.setdefault(fused_id, []).append(
                 # The newly-inserted CallOp is at the same position the
                 # first target used to occupy; re-walk to be safe.
                 next(
                     (
                         o
                         for o in payload.walk()
-                        if o.attributes.get("compgen.region_id") is not None
-                        and o.attributes["compgen.region_id"].data == fused_id
+                        if o.attributes.get("xpu_rt.region_id") is not None
+                        and o.attributes["xpu_rt.region_id"].data == fused_id
                     ),
                     None,
                 )  # type: ignore[arg-type]

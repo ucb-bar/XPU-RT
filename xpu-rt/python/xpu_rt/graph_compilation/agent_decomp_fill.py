@@ -40,7 +40,7 @@ import torch.nn.functional as F
 def extension(x: torch.Tensor, w: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
     """``x @ wᵀ + b → gelu``. Decomposed to F.linear + F.gelu.
 
-    Both primitives have entries in compgen.ir.payload.decompositions,
+    Both primitives have entries in xpu_rt.ir.payload.decompositions,
     so re-running Payload Lowering after this extension is registered
     leaves zero crgtoy.affine_gelu opaque calls.
     """

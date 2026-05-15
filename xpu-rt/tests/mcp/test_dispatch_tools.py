@@ -1,4 +1,4 @@
-"""Tests for ``compgen.mcp.tools.dispatch``.
+"""Tests for ``xpu_rt.mcp.tools.dispatch``.
 
 Locks in:
   * round-trip: request → list → register → lookup
@@ -16,8 +16,8 @@ import json
 from pathlib import Path
 
 import pytest
-from compgen.mcp.session import SessionManager
-from compgen.mcp.tools.dispatch import (
+from xpu_rt.mcp.session import SessionManager
+from xpu_rt.mcp.tools.dispatch import (
     DISPATCH_TOOLS,
     McpDispatchLLM,
     dispatch_fingerprint,
@@ -30,7 +30,7 @@ from compgen.mcp.tools.dispatch import (
 
 @pytest.fixture
 def session_manager(tmp_path: Path) -> SessionManager:
-    sm = SessionManager(scratch_root=tmp_path / "compgen_mcp")
+    sm = SessionManager(scratch_root=tmp_path / "xpu_rt_mcp")
     sm.open(session_id="sess1")
     return sm
 
@@ -51,7 +51,7 @@ def test_dispatch_tools_registered_with_expected_names() -> None:
 
 
 def test_dispatch_tools_appear_in_all_tools_bundle() -> None:
-    from compgen.mcp.tools import ALL_TOOLS
+    from xpu_rt.mcp.tools import ALL_TOOLS
 
     names = {t["name"] for t in ALL_TOOLS}
     for dt in (
@@ -280,8 +280,8 @@ def test_lookup_miss_returns_found_false(session_manager) -> None:
 def test_mcp_dispatch_llm_returns_cached_decision(session_manager) -> None:
     """When a decision is already cached, the LLM adapter returns the
     raw JSON which decide_dispatch's parser will pick up."""
-    from compgen.agent.hw_aware_dispatch import decide_dispatch
-    from compgen.kernels.contract_v3 import (
+    from xpu_rt.agent.hw_aware_dispatch import decide_dispatch
+    from xpu_rt.kernels.contract_v3 import (
         ExecutionEnvelope,
         HardwareEnvelope,
         IOContract,
@@ -341,8 +341,8 @@ def test_mcp_dispatch_llm_returns_cached_decision(session_manager) -> None:
 def test_mcp_dispatch_llm_queues_request_on_cache_miss(session_manager) -> None:
     """When no cached decision exists, McpDispatchLLM queues a request
     via request_dispatch_decision so the agent can fulfill it next pass."""
-    from compgen.agent.hw_aware_dispatch import decide_dispatch
-    from compgen.kernels.contract_v3 import (
+    from xpu_rt.agent.hw_aware_dispatch import decide_dispatch
+    from xpu_rt.kernels.contract_v3 import (
         ExecutionEnvelope,
         HardwareEnvelope,
         IOContract,

@@ -6,7 +6,7 @@ results to the LLM in a compact, decision-ready shape so the LLM can
 decide which recovery strategy to apply.
 
 No new recovery logic lives here — this is a thin view over
-:mod:`compgen.capture.unsupported`.
+:mod:`xpu_rt.capture.unsupported`.
 """
 
 from __future__ import annotations
@@ -14,13 +14,13 @@ from __future__ import annotations
 from dataclasses import asdict
 from typing import Any
 
-from compgen.capture.unsupported import (
+from xpu_rt.capture.unsupported import (
     UnsupportedOpResolution,
     recover_unsupported_operators,
 )
-from compgen.capture.unsupported.introspect import runtime_versions
-from compgen.ir.payload.decompositions import DECOMPOSITION_TABLE
-from compgen.mcp.session import SessionManager
+from xpu_rt.capture.unsupported.introspect import runtime_versions
+from xpu_rt.ir.payload.decompositions import DECOMPOSITION_TABLE
+from xpu_rt.mcp.session import SessionManager
 
 # Strategy -> one-line LLM hint. These mirror the bucket/strategy
 # pairs produced by classify.py so the LLM can pick a concrete tool.

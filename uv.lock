@@ -557,7 +557,7 @@ wheels = [
 ]
 
 [[package]]
-name = "compgen"
+name = "xpu-rt"
 version = "0.2.0"
 source = { editable = "." }
 dependencies = [
@@ -684,9 +684,9 @@ requires-dist = [
     { name = "accelerate", marker = "extra == 'demo'", specifier = ">=0.33" },
     { name = "anthropic", marker = "extra == 'llm'", specifier = ">=0.30" },
     { name = "click", specifier = ">=8.1" },
-    { name = "compgen", extras = ["cuda"], marker = "extra == 'blackwell'" },
-    { name = "compgen", extras = ["cuda"], marker = "extra == 'cuda-triton'" },
-    { name = "compgen", extras = ["kernelblaster-sidecar"], marker = "extra == 'kernelblaster-rl'" },
+    { name = "xpu-rt", extras = ["cuda"], marker = "extra == 'blackwell'" },
+    { name = "xpu-rt", extras = ["cuda"], marker = "extra == 'cuda-triton'" },
+    { name = "xpu-rt", extras = ["kernelblaster-sidecar"], marker = "extra == 'kernelblaster-rl'" },
     { name = "cuda-python", marker = "extra == 'cuda'", specifier = ">=12.6" },
     { name = "fastapi", marker = "extra == 'kernelblaster-sidecar'", specifier = ">=0.110" },
     { name = "fastapi", marker = "extra == 'ray'", specifier = ">=0.110" },

@@ -24,7 +24,7 @@ format-check:
 	uv run ruff format --check python/ benchmarks/ tests/
 
 typecheck:
-	uv run mypy python/compgen/
+	uv run mypy python/xpu_rt/
 
 lockfile-check:
 	uv lock --check
@@ -38,11 +38,11 @@ docs-strict:
 
 # Smoke: exercise the scaffold-pack + load_pack flow (mirrors pr.yml smoke-cli).
 smoke:
-	uv run compgen --version
-	rm -rf /tmp/compgen-smoke
-	uv run compgen scaffold-pack --kind quantization --name smoke_pack --out /tmp/compgen-smoke
-	PYTHONPATH=/tmp/compgen-smoke/smoke_pack/src uv run python -c \
-	  "from compgen.packs import load_pack; l=load_pack('smoke_pack'); print(l.manifest.name, l.manifest.kinds)"
+	uv run xpu_rt --version
+	rm -rf /tmp/xpu_rt-smoke
+	uv run xpu_rt scaffold-pack --kind quantization --name smoke_pack --out /tmp/xpu_rt-smoke
+	PYTHONPATH=/tmp/xpu_rt-smoke/smoke_pack/src uv run python -c \
+	  "from xpu_rt.packs import load_pack; l=load_pack('smoke_pack'); print(l.manifest.name, l.manifest.kinds)"
 
 # Mirrors the pr.yml CI gate. Run before pushing.
 ci: lint-check format-check typecheck lockfile-check test
@@ -54,14 +54,14 @@ all: lint format typecheck test
 clean: clean-generated
 
 clean-cache:
-	rm -rf .compgen_cache/ recipe_library/ __pycache__/
+	rm -rf .xpu_rt_cache/ recipe_library/ __pycache__/
 
 clean-generated:
 	uv run python scripts/clean_generated.py
 
 # --- Native runtime build targets -------------------------------------------
-# build-cpu-rt:  Builds the CPU-only libcompgen_rt and stages the .so into
-#                python/compgen/runtime/native/prebuilt/ so the wheel
+# build-cpu-rt:  Builds the CPU-only libxpu_rt and stages the .so into
+#                python/xpu_rt/runtime/native/prebuilt/ so the wheel
 #                ships it via package_data.
 # build-cuda-rt: Same but with -DCG_RT_WITH_CUDA=ON. Needs CUDA toolkit
 #                (>= 12.6) on PATH. Compiles for SM_90 (Hopper) +
@@ -69,27 +69,27 @@ clean-generated:
 #                SM_120 (workstation Blackwell, GB202).
 # clean-rt:      Wipes the prebuilt dir.
 
-PREBUILT_DIR := python/compgen/runtime/native/prebuilt
+PREBUILT_DIR := python/xpu_rt/runtime/native/prebuilt
 
 build-cpu-rt:
-	cmake -S runtime/native/libcompgen_rt -B build/rt-cpu \
+	cmake -S runtime/native/libxpu_rt -B build/rt-cpu \
 	      -DCG_RT_WITH_CUDA=OFF -DCMAKE_BUILD_TYPE=Release
 	cmake --build build/rt-cpu --parallel
 	mkdir -p $(PREBUILT_DIR)
-	cp build/rt-cpu/libcompgen_rt.so $(PREBUILT_DIR)/libcompgen_rt-cpu.so
+	cp build/rt-cpu/libxpu_rt.so $(PREBUILT_DIR)/libxpu_rt-cpu.so
 
 build-cuda-rt:
-	cmake -S runtime/native/libcompgen_rt -B build/rt-cuda \
+	cmake -S runtime/native/libxpu_rt -B build/rt-cuda \
 	      -DCG_RT_WITH_CUDA=ON \
 	      -DCMAKE_CUDA_ARCHITECTURES="90;100;120" \
 	      -DCMAKE_BUILD_TYPE=Release
 	cmake --build build/rt-cuda --parallel
 	mkdir -p $(PREBUILT_DIR)
-	cp build/rt-cuda/libcompgen_rt.so $(PREBUILT_DIR)/libcompgen_rt-cuda.so
+	cp build/rt-cuda/libxpu_rt.so $(PREBUILT_DIR)/libxpu_rt-cuda.so
 
 clean-rt:
 	rm -rf build/rt-cpu build/rt-cuda
-	rm -f $(PREBUILT_DIR)/libcompgen_rt-*.so
+	rm -f $(PREBUILT_DIR)/libxpu_rt-*.so
 
 # Build the wheel. Run `make build-cpu-rt build-cuda-rt` first to bundle
 # native libraries; otherwise the wheel ships pure-Python (still works
@@ -110,9 +110,9 @@ bridge-push:
 		exit 1; \
 	}; \
 	export SSH_AUTH_SOCK="$$SOCK"; \
-	rsync -av --update -e "ssh -A -o BatchMode=yes" tmp/blackwell_bridge/ bwell:~/compgen/bridge/; \
+	rsync -av --update -e "ssh -A -o BatchMode=yes" tmp/blackwell_bridge/ bwell:~/xpu_rt/bridge/; \
 	if [ -d dist ] && [ -n "$$(ls -A dist 2>/dev/null)" ]; then \
-		rsync -av --update -e "ssh -A -o BatchMode=yes" dist/ bwell:~/compgen/wheels/; \
+		rsync -av --update -e "ssh -A -o BatchMode=yes" dist/ bwell:~/xpu_rt/wheels/; \
 	fi
 
 bridge-pull:
@@ -122,7 +122,7 @@ bridge-pull:
 		exit 1; \
 	}; \
 	export SSH_AUTH_SOCK="$$SOCK"; \
-	rsync -av --update -e "ssh -A -o BatchMode=yes" bwell:~/compgen/bridge/ tmp/blackwell_bridge/
+	rsync -av --update -e "ssh -A -o BatchMode=yes" bwell:~/xpu_rt/bridge/ tmp/blackwell_bridge/
 
 bridge-check:
 	uv run python tmp/blackwell_bridge/bin/append.py check

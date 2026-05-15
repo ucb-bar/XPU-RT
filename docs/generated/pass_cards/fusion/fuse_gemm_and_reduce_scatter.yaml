@@ -4,7 +4,7 @@ display_name: Fuse GEMM + reduce-scatter (collective)
 level: payload
 family: fusion
 source: XLA
-impl_path: python/compgen/ir/payload/passes/rewrites/fuse_gemm_and_reduce_scatter.py
+impl_path: python/xpu_rt/ir/payload/passes/rewrites/fuse_gemm_and_reduce_scatter.py
 reads:
   - 01_payload_lowering/payload.mlir
   - 02_graph_analysis/candidate_actions.json
@@ -29,7 +29,7 @@ failure_modes:
   - "matmul_has_multiple_consumers"
   - "incompatible_shard_layout"
   - "non_associative_combine_in_collective"
-mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+mcp_tool: mcp__xpu_rt__xpu_rt_emit_agent_decision_request
 notes: |
   Mirrors XLA's AsyncCollectiveCreator + hexagon-mlir's static
   collective scheduling. Fuses a matmul with its downstream

@@ -1,4 +1,4 @@
-"""High-level Python wrappers for libcompgen_rt primitives.
+"""High-level Python wrappers for libxpu_rt primitives.
 
 Each wrapper owns a C handle and frees it in ``__del__`` / ``close``.
 Ownership is single — a wrapper is the sole owner of its C handle
@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from enum import IntEnum
 from typing import Any
 
-from compgen.runtime.native.library import (
+from xpu_rt.runtime.native.library import (
     CG_RT_TIMEOUT_INFINITE,
     CG_RT_TIMEOUT_POLL,
     CgRtError,
@@ -99,7 +99,7 @@ class DeviceTraits:
 
 
 class Instance:
-    """A libcompgen_rt driver instance. Use as a context manager or
+    """A libxpu_rt driver instance. Use as a context manager or
     call :meth:`close` explicitly."""
 
     def __init__(self, driver_name: str = "cpu_sync") -> None:
@@ -153,7 +153,7 @@ class Device:
         Device so it stays alive for the device's lifetime; tear it
         down by calling :meth:`Device.close` (or letting the Device
         go out of scope) — the Instance is dropped after the Device
-        is closed, in the correct order for libcompgen_rt's C teardown.
+        is closed, in the correct order for libxpu_rt's C teardown.
         """
         if ":" in target:
             driver, idx_part = target.rsplit(":", 1)
@@ -406,7 +406,7 @@ class CudaExecutable:
         self._lib = load_library()
         if not hasattr(self._lib, "cg_rt_executable_create_cuda_ptx"):
             raise RuntimeError(
-                "libcompgen_rt was built without CUDA support. Rebuild with "
+                "libxpu_rt was built without CUDA support. Rebuild with "
                 "CUDA_TOOLKIT installed (CMake will enable the driver automatically)."
             )
         self._device = device
@@ -437,7 +437,7 @@ class CudaExecutable:
 
 
 def cuda_available() -> bool:
-    """True when libcompgen_rt was built with CUDA **and** at least
+    """True when libxpu_rt was built with CUDA **and** at least
     one CUDA device opens cleanly. Safe to call from tests to decide
     whether to skip."""
     try:

@@ -1,12 +1,12 @@
-"""``fuse_softmax_to_triton`` -- lower ``compgen.linalg_ext.softmax`` to a
+"""``fuse_softmax_to_triton`` -- lower ``xpu_rt.linalg_ext.softmax`` to a
 Triton kernel invocation.
 
-Reconstruction of XLA's ``SoftmaxRewriterTriton`` as a CompGen
+Reconstruction of XLA's ``SoftmaxRewriterTriton`` as a XPU-RT
 PatternRewriter. Zero external references; this module owns the
 rewrite.
 
 Approach follows hexagon-mlir's Triton integration
-(`/scratch2/agustin/CompGen/tmp/hexagon-mlir/qcom_hexagon_backend/backend/compiler.py:40-58`):
+(`/scratch2/agustin/XPU-RT/tmp/hexagon-mlir/qcom_hexagon_backend/backend/compiler.py:40-58`):
 
 1. Match a softmax op.
 2. Emit a Python Triton kernel source string (canonical block-wise
@@ -18,13 +18,13 @@ Approach follows hexagon-mlir's Triton integration
    (the softmax op is replaced by the lowered linalg body).
 5. When ``triton-shared-opt`` is unavailable (the common case today
    in CI), annotate the softmax op with two attributes:
-   - ``compgen.triton_source`` -- the Triton Python source string.
-   - ``compgen.triton_kernel_call`` -- the kernel name, used by the
+   - ``xpu_rt.triton_source`` -- the Triton Python source string.
+   - ``xpu_rt.triton_kernel_call`` -- the kernel name, used by the
      later runtime to JIT-compile the kernel at load time.
    The op stays structurally intact so downstream passes still see
    a typed softmax. Zero new dialect ops.
 
-No ``compgen.triton.*`` dialect introduced. The bridge is the
+No ``xpu_rt.triton.*`` dialect introduced. The bridge is the
 linalg MLIR text, matching hexagon-mlir's contract.
 
 Gates:
@@ -39,7 +39,7 @@ Gates:
 LLM-tool signature:
 
     tool_name="fuse_softmax_to_triton"
-    wraps_pass="CompGen:SoftmaxRewriterTriton"
+    wraps_pass="XPU-RT:SoftmaxRewriterTriton"
     invent_slot="kernel_dispatch/triton_bridge"
     policy="EmitTritonSoftmaxWhenAllowed"
 """
@@ -61,7 +61,7 @@ from xdsl.pattern_rewriter import (
     op_type_rewrite_pattern,
 )
 
-from compgen.ir.linalg_ext import SoftmaxOp
+from xpu_rt.ir.linalg_ext import SoftmaxOp
 
 # --- configuration -----------------------------------------------------------
 
@@ -195,7 +195,7 @@ def _invoke_triton_shared(
 
 
 def _copy_preserved(dst: Operation, src: Operation) -> None:
-    for key in ("compgen.region_id", "compgen._pattern_hint"):
+    for key in ("xpu_rt.region_id", "xpu_rt._pattern_hint"):
         if key in src.attributes and key not in dst.attributes:
             dst.attributes[key] = src.attributes[key]
 
@@ -222,7 +222,7 @@ class FuseSoftmaxToTritonPattern(RewritePattern):
             return
 
         # Already annotated? idempotent no-op.
-        if "compgen.triton_kernel_call" in op.attributes:
+        if "xpu_rt.triton_kernel_call" in op.attributes:
             return
 
         # Shape gate: any rank >= 2, static last axis (softmax dim).
@@ -252,7 +252,7 @@ class FuseSoftmaxToTritonPattern(RewritePattern):
         for d in shape[:-1]:
             n_rows *= d
         n_cols = shape[-1]
-        kernel_name = f"compgen_softmax_row_{n_rows}x{n_cols}"
+        kernel_name = f"xpu_rt_softmax_row_{n_rows}x{n_cols}"
         source = _emit_triton_source(kernel_name)
 
         annotated = SoftmaxOp(
@@ -261,21 +261,21 @@ class FuseSoftmaxToTritonPattern(RewritePattern):
             result_type=op.results[0].type,
         )
         _copy_preserved(annotated, op)
-        annotated.attributes["compgen.triton_kernel_call"] = StringAttr(kernel_name)
-        annotated.attributes["compgen.triton_source"] = StringAttr(source)
-        annotated.attributes["compgen.triton_block_size"] = StringAttr(str(self.cfg.block_size))
+        annotated.attributes["xpu_rt.triton_kernel_call"] = StringAttr(kernel_name)
+        annotated.attributes["xpu_rt.triton_source"] = StringAttr(source)
+        annotated.attributes["xpu_rt.triton_block_size"] = StringAttr(str(self.cfg.block_size))
 
         # Optionally invoke triton-shared-opt.
         if self.cfg.invoke_triton_shared:
             result = _invoke_triton_shared(source, tool_path=self.cfg.triton_shared_opt_path)
             if result.ok:
                 self.stats.triton_shared_lowered += 1
-                annotated.attributes["compgen.triton_linalg_mlir"] = StringAttr(result.linalg_mlir)
+                annotated.attributes["xpu_rt.triton_linalg_mlir"] = StringAttr(result.linalg_mlir)
             else:
                 self.stats.triton_shared_unavailable += 1
-                annotated.attributes["compgen.triton_status"] = StringAttr("source_only")
+                annotated.attributes["xpu_rt.triton_status"] = StringAttr("source_only")
         else:
-            annotated.attributes["compgen.triton_status"] = StringAttr("source_only")
+            annotated.attributes["xpu_rt.triton_status"] = StringAttr("source_only")
 
         rewriter.replace_matched_op(annotated)
         self.stats.softmaxes_annotated += 1

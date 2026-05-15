@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from compgen.packs.base import LoadedPack
-from compgen.packs.compose import ManifestExtensionPack
-from compgen.packs.schema import ExtensionPackManifest
-from compgen.packs.validate import validate_pack
-from compgen.packs.verify import check_surface_allowed
+from xpu_rt.packs.base import LoadedPack
+from xpu_rt.packs.compose import ManifestExtensionPack
+from xpu_rt.packs.schema import ExtensionPackManifest
+from xpu_rt.packs.validate import validate_pack
+from xpu_rt.packs.verify import check_surface_allowed
 
 
 def _make_pack(

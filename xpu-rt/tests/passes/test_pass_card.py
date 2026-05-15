@@ -1,4 +1,4 @@
-"""Tests for compgen.passes.cards."""
+"""Tests for xpu_rt.passes.cards."""
 
 from __future__ import annotations
 
@@ -7,8 +7,8 @@ from pathlib import Path
 import pytest
 import yaml
 
-from compgen.audit.errors import MissingPassCard
-from compgen.passes.cards import (
+from xpu_rt.audit.errors import MissingPassCard
+from xpu_rt.passes.cards import (
     COST_KINDS,
     PASS_FAMILIES,
     PASS_LEVELS,

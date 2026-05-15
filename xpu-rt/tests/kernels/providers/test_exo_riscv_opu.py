@@ -8,8 +8,8 @@ import subprocess
 from pathlib import Path
 
 import pytest
-from compgen.kernels.provider import KernelContract, SearchBudget
-from compgen.kernels.providers.exo_riscv_opu import (
+from xpu_rt.kernels.provider import KernelContract, SearchBudget
+from xpu_rt.kernels.providers.exo_riscv_opu import (
     ExoRiscvOpuProvider,
     emit_kernels,
     kernel_contract_yaml,
@@ -144,8 +144,8 @@ def test_host_reference_mmt4d_matches_numpy(tmp_path: Path) -> None:
         check=True,
     )
     lib = ctypes.CDLL(str(so_path))
-    lib.compgen_mmt4d_s8s8s32_16x16x128_xopu.restype = None
-    lib.compgen_mmt4d_s8s8s32_16x16x128_xopu.argtypes = [
+    lib.xpu_rt_mmt4d_s8s8s32_16x16x128_xopu.restype = None
+    lib.xpu_rt_mmt4d_s8s8s32_16x16x128_xopu.argtypes = [
         ctypes.POINTER(ctypes.c_int32),
         ctypes.POINTER(ctypes.c_int8),
         ctypes.POINTER(ctypes.c_int8),
@@ -159,7 +159,7 @@ def test_host_reference_mmt4d_matches_numpy(tmp_path: Path) -> None:
     lhs_c = lhs_km.ravel().ctypes.data_as(ctypes.POINTER(ctypes.c_int8))
     rhs_c = rhs_kn.ravel().ctypes.data_as(ctypes.POINTER(ctypes.c_int8))
     out_c = out.ctypes.data_as(ctypes.POINTER(ctypes.c_int32))
-    lib.compgen_mmt4d_s8s8s32_16x16x128_xopu(out_c, lhs_c, rhs_c)
+    lib.xpu_rt_mmt4d_s8s8s32_16x16x128_xopu(out_c, lhs_c, rhs_c)
 
     # Reference: the kernel uses encoding-swap LHS = [K, M] contiguous,
     # RHS = [K, N] contiguous → output[m, n] = sum_k LHS[k, m] * RHS[k, n].
@@ -199,7 +199,7 @@ def test_rvv_fallback_numerically_matches_opu(tmp_path: Path) -> None:
             check=True,
         )
         lib = ctypes.CDLL(str(so))
-        sym = "compgen_mmt4d_s8s8s32_16x16x128_xopu" if use_opu else "compgen_mmt4d_s8s8s32_16x16x128_rvv"
+        sym = "xpu_rt_mmt4d_s8s8s32_16x16x128_xopu" if use_opu else "xpu_rt_mmt4d_s8s8s32_16x16x128_rvv"
         fn = getattr(lib, sym)
         fn.restype = None
         fn.argtypes = [
@@ -216,12 +216,12 @@ def test_rvv_fallback_numerically_matches_opu(tmp_path: Path) -> None:
     out_opu = np.zeros((16 * 16,), dtype=np.int32)
     out_rvv = np.zeros((16 * 16,), dtype=np.int32)
 
-    libs["opu"].compgen_mmt4d_s8s8s32_16x16x128_xopu(
+    libs["opu"].xpu_rt_mmt4d_s8s8s32_16x16x128_xopu(
         out_opu.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)),
         lhs.ravel().ctypes.data_as(ctypes.POINTER(ctypes.c_int8)),
         rhs.ravel().ctypes.data_as(ctypes.POINTER(ctypes.c_int8)),
     )
-    libs["rvv"].compgen_mmt4d_s8s8s32_16x16x128_rvv(
+    libs["rvv"].xpu_rt_mmt4d_s8s8s32_16x16x128_rvv(
         out_rvv.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)),
         lhs.ravel().ctypes.data_as(ctypes.POINTER(ctypes.c_int8)),
         rhs.ravel().ctypes.data_as(ctypes.POINTER(ctypes.c_int8)),
@@ -245,8 +245,8 @@ def test_host_reference_im2col_matches_torch(tmp_path: Path) -> None:
         check=True,
     )
     lib = ctypes.CDLL(str(so_path))
-    lib.compgen_im2col_s8_rvv.restype = None
-    lib.compgen_im2col_s8_rvv.argtypes = [
+    lib.xpu_rt_im2col_s8_rvv.restype = None
+    lib.xpu_rt_im2col_s8_rvv.argtypes = [
         ctypes.POINTER(ctypes.c_int8),
         ctypes.POINTER(ctypes.c_int8),
         ctypes.c_int,
@@ -260,7 +260,7 @@ def test_host_reference_im2col_matches_torch(tmp_path: Path) -> None:
     rng = np.random.default_rng(0xFEED)
     inp = rng.integers(-8, 8, size=(H, W, C), dtype=np.int8)
     out = np.zeros((H * W * KH * KW * C,), dtype=np.int8)
-    lib.compgen_im2col_s8_rvv(
+    lib.xpu_rt_im2col_s8_rvv(
         out.ctypes.data_as(ctypes.POINTER(ctypes.c_int8)),
         inp.ravel().ctypes.data_as(ctypes.POINTER(ctypes.c_int8)),
         H,

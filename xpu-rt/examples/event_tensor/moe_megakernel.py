@@ -47,9 +47,9 @@ from xdsl.dialects.builtin import (
 )
 from xdsl.ir import Block, Region
 
-from compgen.ir.event.attrs import EventCoordAttr, EventTensorTypeAttr
-from compgen.ir.event.ops import CallDeviceOp, EventTensorOp, GraphOp
-from compgen.ir.tile.lower_megakernel_dynamic import (
+from xpu_rt.ir.event.attrs import EventCoordAttr, EventTensorTypeAttr
+from xpu_rt.ir.event.ops import CallDeviceOp, EventTensorOp, GraphOp
+from xpu_rt.ir.tile.lower_megakernel_dynamic import (
     DynamicDeviceFunctionSpec,
     DynamicMegakernelLoweringResult,
     DynamicMegakernelLoweringSpec,

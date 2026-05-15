@@ -12,8 +12,8 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from compgen.memory import seed_lessons
-from compgen.memory.knowledge import (
+from xpu_rt.memory import seed_lessons
+from xpu_rt.memory.knowledge import (
     KnowledgeStore,
     Lesson,
     scope_chain_for_target,

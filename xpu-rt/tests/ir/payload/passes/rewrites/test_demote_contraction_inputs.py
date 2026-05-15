@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from compgen.ir.payload.passes.rewrites.demote_contraction_inputs import (
+from xpu_rt.ir.payload.passes.rewrites.demote_contraction_inputs import (
     DemoteContractionInputsConfig,
     DemoteContractionStats,
     run_demote_contraction_inputs,
@@ -156,7 +156,7 @@ def test_restrict_to_region_ids_filters_matches():
     # Tag the matmul with a region_id that ISN'T in the allowlist.
     for op in m.walk():
         if op.name == "linalg.matmul":
-            op.attributes["compgen.region_id"] = StringAttr("mm_other")
+            op.attributes["xpu_rt.region_id"] = StringAttr("mm_other")
             break
 
     cfg = DemoteContractionInputsConfig(
@@ -171,7 +171,7 @@ def test_restrict_to_region_ids_includes_match():
     m = _f32_matmul_module()
     for op in m.walk():
         if op.name == "linalg.matmul":
-            op.attributes["compgen.region_id"] = StringAttr("mm_0")
+            op.attributes["xpu_rt.region_id"] = StringAttr("mm_0")
             break
 
     cfg = DemoteContractionInputsConfig(
@@ -205,8 +205,8 @@ def test_region_id_preserved_across_demote():
     m = _f32_matmul_module()
     for op in m.walk():
         if op.name == "linalg.matmul":
-            op.attributes["compgen.region_id"] = StringAttr("matmul_0")
-            op.attributes["compgen._pattern_hint"] = StringAttr("gemm")
+            op.attributes["xpu_rt.region_id"] = StringAttr("matmul_0")
+            op.attributes["xpu_rt._pattern_hint"] = StringAttr("gemm")
             break
 
     run_demote_contraction_inputs(m)
@@ -214,8 +214,8 @@ def test_region_id_preserved_across_demote():
     generics = [op for op in m.walk() if op.name == "linalg.generic"]
     # The mixed-precision matmul is the 3-operand generic.
     mm_generic = next(op for op in generics if len(op.operands) == 3)
-    assert mm_generic.attributes["compgen.region_id"].data == "matmul_0"
-    assert mm_generic.attributes["compgen._pattern_hint"].data == "gemm"
+    assert mm_generic.attributes["xpu_rt.region_id"].data == "matmul_0"
+    assert mm_generic.attributes["xpu_rt._pattern_hint"].data == "gemm"
 
 
 # --- multiple contractions --------------------------------------------------

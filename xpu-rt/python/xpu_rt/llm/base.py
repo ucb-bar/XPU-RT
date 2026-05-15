@@ -1,10 +1,10 @@
 """Provider-agnostic LLM protocol and shared types.
 
-This module defines the interface that all CompGen LLM clients must satisfy.
+This module defines the interface that all XPU-RT LLM clients must satisfy.
 It does NOT reimplement autocomp's ``LLMClient`` -- that is used directly for
-kernel search via ``compgen.kernels.autocomp_adapter``.
+kernel search via ``xpu_rt.kernels.autocomp_adapter``.
 
-CompGen's protocol adds structured output, prompt context management, and
+XPU-RT's protocol adds structured output, prompt context management, and
 recording support that are needed for graph-level transform generation.
 
 Invariants:
@@ -142,7 +142,7 @@ class GenerationResponse:
 
 @runtime_checkable
 class CompGenLLMProtocol(Protocol):
-    """Protocol that all CompGen LLM clients must satisfy.
+    """Protocol that all XPU-RT LLM clients must satisfy.
 
     This is intentionally minimal. Adapters (Gemini, OpenAI, mock) implement
     this protocol. The ``LLMRecorder`` wraps any implementor.

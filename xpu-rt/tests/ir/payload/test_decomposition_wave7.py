@@ -1,7 +1,7 @@
 """Tests for the wave-7 DECOMPOSITION_TABLE expansion.
 
 Closes TinyLlama's opaque tail by promoting these previously-untyped
-``func.call`` shapes to typed kernels with ``compgen._pattern_hint``:
+``func.call`` shapes to typed kernels with ``xpu_rt._pattern_hint``:
 
   * ``aten._to_copy.default``   → ``dtype_cast``
   * ``aten.where.self``          → ``where``
@@ -23,7 +23,7 @@ caused 50 silent decomp failures on TinyLlama
 from __future__ import annotations
 
 import pytest
-from compgen.ir.payload.decompositions import (
+from xpu_rt.ir.payload.decompositions import (
     DECOMPOSITION_TABLE,
     decompose_add_tensor,
     decompose_mul_tensor,

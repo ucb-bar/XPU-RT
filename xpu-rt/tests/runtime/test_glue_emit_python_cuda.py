@@ -32,14 +32,14 @@ from pathlib import Path
 
 import pytest
 
-from compgen.runtime.execution_plan import (
+from xpu_rt.runtime.execution_plan import (
     DependencyEdge,
     ExecutionPlan,
     RegionKernelBinding,
     RegionPlacement,
     Resource,
 )
-from compgen.runtime.glue_emit import emit_python_cuda_executor
+from xpu_rt.runtime.glue_emit import emit_python_cuda_executor
 
 
 # --------------------------------------------------------------------------- #
@@ -233,7 +233,7 @@ class TestSyntacticValidity:
         module, _ = _import_cuda_module(run_dir)
         assert module is not None
         assert module.PLAN_TARGET == "cuda_sm75"
-        assert callable(module.compgen_run_cuda)
+        assert callable(module.xpu_rt_run_cuda)
         assert callable(module.assert_plan)
         assert "r0" in module.KERNEL_BINDINGS
 
@@ -267,9 +267,9 @@ class TestBehaviour:
         module, _ = _import_cuda_module(run_dir)
         rt = _StubCudaRuntime()
         kernels = {"r0": lambda *a, **k: "v0", "r1": lambda *a, **k: "v1"}
-        out = module.compgen_run_cuda({"x": 1}, kernels, runtime=rt, mode="sync")
+        out = module.xpu_rt_run_cuda({"x": 1}, kernels, runtime=rt, mode="sync")
         assert rt.dispatch_calls == 2
-        # synchronize: once after each region (2) + once at end of compgen_run_cuda = 3.
+        # synchronize: once after each region (2) + once at end of xpu_rt_run_cuda = 3.
         assert rt.synchronize_calls >= 2
         assert out == "v1"
 
@@ -307,7 +307,7 @@ class TestBehaviour:
             return "v1"
 
         rt = _StubCudaRuntime()
-        out = module.compgen_run_cuda(
+        out = module.xpu_rt_run_cuda(
             {"x": 1}, {"r0": _r0, "r1": _r1},
             runtime=rt, mode="async",
         )
@@ -327,7 +327,7 @@ class TestBehaviour:
         ], target="cuda_sm75")
         module, _ = _import_cuda_module(run_dir)
         with pytest.raises(ValueError, match="mode must be 'sync' or 'async'"):
-            module.compgen_run_cuda(
+            module.xpu_rt_run_cuda(
                 {"x": 1}, {"r0": lambda *a, **k: "x"},
                 runtime=_StubCudaRuntime(), mode="bogus",
             )
@@ -344,7 +344,7 @@ class TestBehaviour:
         ], target="cuda_sm75")
         module, _ = _import_cuda_module(run_dir)
         rt = _StubCudaRuntime(capture_returns_none=True)
-        out = module.compgen_run_cuda(
+        out = module.xpu_rt_run_cuda(
             {"x": 1}, {"r0": lambda *a, **k: "v0"},
             runtime=rt, capture=True,
         )
@@ -364,7 +364,7 @@ class TestBehaviour:
         ], target="cuda_sm75")
         module, _ = _import_cuda_module(run_dir)
         rt = _StubCudaRuntime(capture_returns_none=False)
-        out = module.compgen_run_cuda(
+        out = module.xpu_rt_run_cuda(
             {"x": 1}, {"r0": lambda *a, **k: "captured_v0"},
             runtime=rt, capture=True,
         )
@@ -394,7 +394,7 @@ class TestBehaviour:
         )
         module, _ = _import_cuda_module(run_dir)
         with pytest.raises(ValueError, match="exactly one bound region"):
-            module.compgen_run_cuda(
+            module.xpu_rt_run_cuda(
                 {"x": 1}, {"r0": lambda *a, **k: "x", "r1": lambda *a, **k: "y"},
                 runtime=_StubCudaRuntime(), capture=True,
             )
@@ -421,7 +421,7 @@ class TestBehaviour:
         _write_plan(run_dir, plan)
         module, _ = _import_cuda_module(run_dir)
         with pytest.raises(module.PLAN_VIOLATION_UNBOUND_REGION):
-            module.compgen_run_cuda(
+            module.xpu_rt_run_cuda(
                 {"x": 1}, {"r0": lambda *a, **k: "x"},
                 runtime=_StubCudaRuntime(), mode="sync",
             )
@@ -438,7 +438,7 @@ def test_default_adapter_is_cuda(tmp_path: Path) -> None:
     (real class); we verify only the type, not GPU dispatch — the
     real adapter's dispatch needs a real KernelContractV3 (+
     wiring), which is honestly not yet in the emitted code path."""
-    from compgen.runtime.glue import CudaRuntimeAdapter, select_adapter
+    from xpu_rt.runtime.glue import CudaRuntimeAdapter, select_adapter
     run_dir = _make_cuda_run_dir(tmp_path, [
         RegionKernelBinding(
             region_id="r0", contract_hash="h0",

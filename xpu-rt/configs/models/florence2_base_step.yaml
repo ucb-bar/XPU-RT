@@ -15,7 +15,7 @@ loader:
   trust_remote_code: true
   dtype: bfloat16
   device_policy: auto
-  adapter: compgen.model_admission.adapters.florence2
+  adapter: xpu_rt.model_admission.adapters.florence2
 inputs:
   kind: single_image_qa
   processor_required: true

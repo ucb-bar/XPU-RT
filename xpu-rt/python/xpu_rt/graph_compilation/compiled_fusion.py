@@ -202,7 +202,7 @@ def _emit_c_source(
     safe_name: str,
     deterministic: bool = False,
 ) -> str:
-    """Emit fused C kernel: ``void compgen_m23_fused_<safe_name>(
+    """Emit fused C kernel: ``void xpu_rt_m23_fused_<safe_name>(
     const float* A, const float* b, float* C)``."""
     p_meta = _PRODUCER_TEMPLATES.get(producer_kind)
     c_meta = _CONSUMER_TEMPLATES.get(consumer_kind)
@@ -221,7 +221,7 @@ def _emit_c_source(
             f"            float t = {p_c_tpl.format(a='A[r*N_COLS + c]', b='b[c]')};"
         )
         sig = (
-            f"void compgen_m23_fused_{safe_name}(const float* A, "
+            f"void xpu_rt_m23_fused_{safe_name}(const float* A, "
             f"const float* b, float* C)"
         )
     else:
@@ -229,7 +229,7 @@ def _emit_c_source(
             f"            float t = {p_c_tpl.format(x='A[r*N_COLS + c]')};"
         )
         sig = (
-            f"void compgen_m23_fused_{safe_name}(const float* A, float* C)"
+            f"void xpu_rt_m23_fused_{safe_name}(const float* A, float* C)"
         )
 
     consumer_line = (
@@ -537,7 +537,7 @@ def _run_cpu_track(
     artifact_path = out_dir / "compiled_fusion_run_cpu.json"
     base: dict[str, Any] = {
         "schema_version": "compiled_fusion_run_v1",
-        "track": "cpu_compgen_rt",
+        "track": "cpu_xpu_rt",
         "candidate_id": common["candidate_id"],
         "region_pair": common["region_pair"],
         "matmul_shape": {"rows": matmul_shape[0], "cols": matmul_shape[1]},
@@ -593,12 +593,12 @@ def _run_cpu_track(
 
     if p_arity == "binary":
         cdef_sig = (
-            f"void compgen_m23_fused_{safe_name}("
+            f"void xpu_rt_m23_fused_{safe_name}("
             f"const float* A, const float* b, float* C);"
         )
     else:
         cdef_sig = (
-            f"void compgen_m23_fused_{safe_name}("
+            f"void xpu_rt_m23_fused_{safe_name}("
             f"const float* A, float* C);"
         )
 
@@ -647,7 +647,7 @@ def _run_cpu_track(
         spec.loader.exec_module(cmod)
         cffi_lib = cmod.lib  # type: ignore[attr-defined]
         cffi_ffi = cmod.ffi  # type: ignore[attr-defined]
-        fn = getattr(cffi_lib, f"compgen_m23_fused_{safe_name}")
+        fn = getattr(cffi_lib, f"xpu_rt_m23_fused_{safe_name}")
     except Exception as exc:  # noqa: BLE001
         base["run_status"] = "run_failed"
         base["note"] = f"{type(exc).__name__}: {exc}"

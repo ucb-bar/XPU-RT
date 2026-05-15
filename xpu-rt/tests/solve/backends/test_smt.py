@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from compgen.solve.backends.smt import SMTSolver
+from xpu_rt.solve.backends.smt import SMTSolver
 
 
 def test_smt_solver_defaults() -> None:

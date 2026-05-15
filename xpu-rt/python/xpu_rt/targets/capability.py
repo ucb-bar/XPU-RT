@@ -11,7 +11,7 @@ Target classes:
     HYBRID           -- mixed system; different lanes for different regions
 
 The classification step happens early (before compilation) and determines
-which compiler paths CompGen scaffolds for this target.
+which compiler paths XPU-RT scaffolds for this target.
 
 Invariants:
     - Every op in the workload gets a capability entry.
@@ -24,7 +24,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 
-from compgen.targets.schema import TargetProfile
+from xpu_rt.targets.schema import TargetProfile
 
 
 class TargetClass(Enum):

@@ -6,7 +6,7 @@ ExoKernelResult dataclass, and search_kernel for supported ops.
 
 from __future__ import annotations
 
-from compgen.kernels.exo_adapter import ExoAdapter, ExoKernelResult
+from xpu_rt.kernels.exo_adapter import ExoAdapter, ExoKernelResult
 
 
 def test_exo_adapter_instantiation_default() -> None:

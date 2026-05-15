@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from compgen.graph_compilation.real_transform_differential import (
+from xpu_rt.graph_compilation.real_transform_differential import (
     _generate_cases,
     _tiled_matmul_eval,
     run_real_transform_differential,
@@ -28,7 +28,7 @@ def _need_wide() -> None:
     if not WIDE.is_dir():
         pytest.skip(
             f"fixture suite missing: {WIDE}; run "
-            f"`compgen.graph_compilation run-suite --stop-after "
+            f"`xpu_rt.graph_compilation run-suite --stop-after "
             f"real-transform-differential` first"
         )
 
@@ -172,7 +172,7 @@ def test_tiled_evaluator_rejects_non_positive_tile_dim() -> None:
 def test_summarise_boundary_geometry_counts_full_vs_boundary() -> None:
     """The boundary-handling block reports must accurately
     count full-tile vs boundary-tile iterations."""
-    from compgen.graph_compilation.real_transform_differential import (
+    from xpu_rt.graph_compilation.real_transform_differential import (
         _summarise_boundary_geometry,
     )
 
@@ -311,7 +311,7 @@ def test_corrupted_evaluator_produces_counterexample(
     """Inject an evaluator that adds a constant +1.0 — reference and
     transformed outputs disagree, emits counterexamples for every
     case and fails."""
-    from compgen.graph_compilation import real_transform_differential as mod
+    from xpu_rt.graph_compilation import real_transform_differential as mod
 
     def bad_eval(A, B, *, tile_M, tile_N, tile_K):
         # Deliberately wrong: produce A@B + 1.0 (off by a constant).
@@ -388,7 +388,7 @@ def test_report_claiming_discharge_without_cases_is_overwritten(
 def test_source_payload_mutation_fails(
     merlin_mlp_wide_run: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from compgen.graph_compilation import real_transform_differential as mod
+    from xpu_rt.graph_compilation import real_transform_differential as mod
 
     pre_count = sum(
         1 for _ in (merlin_mlp_wide_run / "01_payload_lowering").rglob("payload.mlir")
@@ -413,7 +413,7 @@ def test_counterexample_files_emitted_on_mismatch(
 ) -> None:
     """Sanity: with a broken evaluator, counterexamples/ MUST contain
     real .pt files (not just report metadata)."""
-    from compgen.graph_compilation import real_transform_differential as mod
+    from xpu_rt.graph_compilation import real_transform_differential as mod
 
     def bad_eval(A, B, *, tile_M, tile_N, tile_K):
         import torch

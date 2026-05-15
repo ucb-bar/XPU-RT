@@ -29,16 +29,16 @@ import structlog
 from xdsl.dialects.builtin import ModuleOp, TensorType
 from xdsl.dialects.func import FuncOp
 
-from compgen.runtime.baremetal.c_codegen import (
+from xpu_rt.runtime.baremetal.c_codegen import (
     GeneratedCFunction,
     emit_module,
     emit_npu_driver_extension_c,
     emit_npu_driver_extension_h,
 )
-from compgen.runtime.baremetal.emitter import BaremetalEmitter
-from compgen.runtime.memory_layout import BufferRef
-from compgen.runtime.program_builder import DeviceKernel, ModelProgram
-from compgen.targets.schema import TargetProfile
+from xpu_rt.runtime.baremetal.emitter import BaremetalEmitter
+from xpu_rt.runtime.memory_layout import BufferRef
+from xpu_rt.runtime.program_builder import DeviceKernel, ModelProgram
+from xpu_rt.targets.schema import TargetProfile
 
 log = structlog.get_logger()
 
@@ -102,7 +102,7 @@ def write_baremetal_bundle(
 
     Args:
         module: Post-recipe Payload IR (typically ``env.payload_module``
-            after :func:`compgen.mcp.tools.recipe_apply.apply_recipe` has
+            after :func:`xpu_rt.mcp.tools.recipe_apply.apply_recipe` has
             run).
         target: The active TargetProfile (used for the program name +
             future device-specific tuning).
@@ -118,7 +118,7 @@ def write_baremetal_bundle(
     # 1. Walk the module → emit one C function per func.func.
     funcs = emit_module(
         module,
-        file_header=(f'/* CompGen-emitted kernel for target {target.name}. */\n#include "../npu_driver_ext.h"\n'),
+        file_header=(f'/* XPU-RT-emitted kernel for target {target.name}. */\n#include "../npu_driver_ext.h"\n'),
     )
 
     # 2. Build a ModelProgram so BaremetalEmitter has something to chew on.

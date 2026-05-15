@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from compgen.solve.per_sm_queue import (
+from xpu_rt.solve.per_sm_queue import (
     EventEdge,
     PerSMSchedule,
     TileTask,

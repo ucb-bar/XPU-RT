@@ -50,7 +50,7 @@ class ArtifactIndexActor:
     Stores metadata only — artifacts are on shared storage.
     """
 
-    def __init__(self, storage_root: str = "/tmp/compgen_artifacts") -> None:
+    def __init__(self, storage_root: str = "/tmp/xpu_rt_artifacts") -> None:
         self._index: dict[str, ArtifactEntry] = {}
         self._storage_root = storage_root
 

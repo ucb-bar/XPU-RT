@@ -4,7 +4,7 @@ display_name: E-graph saturation — Python-defined custom rules
 level: payload
 family: eqsat
 source: homemade
-impl_path: python/compgen/eqsat/rules/python_rules.py
+impl_path: python/xpu_rt/eqsat/rules/python_rules.py
 reads:
   - 01_payload_lowering/payload.mlir
 writes:
@@ -28,7 +28,7 @@ failure_modes:
   - "saturation_budget_exhausted"
   - "user_rule_violates_termination"
   - "user_rule_breaks_type_safety"
-mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+mcp_tool: mcp__xpu_rt__xpu_rt_emit_agent_decision_request
 notes: |
   Python-defined custom e-graph rules registered by users. Refinement
   is "unknown" by default because the rules are user-supplied — the

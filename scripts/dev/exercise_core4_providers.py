@@ -25,7 +25,7 @@ For each provider:
    on disk, run the kernel through a real Torch differential
    harness — capture max-abs-diff + latency.
 5. Write ``kernel_source.<ext> + run_report.json +
-   certificate.json`` via :mod:`compgen.audit.execution_evidence`.
+   certificate.json`` via :mod:`xpu_rt.audit.execution_evidence`.
 
 If a provider is honestly blocked (no GOOGLE_API_KEY, no
 KERNELBLASTER_ROOT, etc.), this script falls through to a typed
@@ -48,7 +48,7 @@ from typing import Any
 import numpy as np
 import torch
 
-from compgen.audit.execution_evidence import (
+from xpu_rt.audit.execution_evidence import (
     EVIDENCE_SCHEMA_VERSION,
     BlockedProof,
     CertificateRecord,
@@ -56,14 +56,14 @@ from compgen.audit.execution_evidence import (
     record_block,
     record_evidence,
 )
-from compgen.kernels.provider import KernelContract, SearchBudget
-from compgen.providers.kernel_provider import (
+from xpu_rt.kernels.provider import KernelContract, SearchBudget
+from xpu_rt.providers.kernel_provider import (
     KernelCodegenRequest,
     KernelProvider,
 )
-from compgen.providers.legacy_shim import wrap_legacy
-from compgen.providers.provider_registry import build_provider_registry
-from compgen.providers.result_v1 import ProviderResultV1
+from xpu_rt.providers.legacy_shim import wrap_legacy
+from xpu_rt.providers.provider_registry import build_provider_registry
+from xpu_rt.providers.result_v1 import ProviderResultV1
 
 
 def _now() -> str:
@@ -169,7 +169,7 @@ def _measure_cpu_matmul_kernel(
     import ctypes
 
     a, b, ref = _torch_matmul_reference()
-    tmp_dir = Path(tempfile.mkdtemp(prefix="compgen_m91a_cffi_"))
+    tmp_dir = Path(tempfile.mkdtemp(prefix="xpu_rt_m91a_cffi_"))
     src_path = tmp_dir / "kernel.c"
     src_path.write_text(kernel_source_path.read_text())
     so_path = tmp_dir / "kernel.so"
@@ -197,7 +197,7 @@ def _measure_cpu_matmul_kernel(
             },
         }
     lib = ctypes.CDLL(str(so_path))
-    lib.compgen_matmul_f32.argtypes = (
+    lib.xpu_rt_matmul_f32.argtypes = (
         ctypes.POINTER(ctypes.c_float),
         ctypes.POINTER(ctypes.c_float),
         ctypes.POINTER(ctypes.c_float),
@@ -205,7 +205,7 @@ def _measure_cpu_matmul_kernel(
         ctypes.c_int,
         ctypes.c_int,
     )
-    lib.compgen_matmul_f32.restype = None
+    lib.xpu_rt_matmul_f32.restype = None
 
     a_np = np.ascontiguousarray(a.numpy(), dtype=np.float32)
     b_np = np.ascontiguousarray(b.numpy(), dtype=np.float32)
@@ -216,7 +216,7 @@ def _measure_cpu_matmul_kernel(
     c_ptr = c_np.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
 
     # Correctness
-    lib.compgen_matmul_f32(a_ptr, b_ptr, c_ptr, M, N, K)
+    lib.xpu_rt_matmul_f32(a_ptr, b_ptr, c_ptr, M, N, K)
     diff = (torch.from_numpy(c_np) - ref).abs()
     max_abs = diff.max().item()
     max_rel = (diff / (ref.abs() + 1e-6)).max().item()
@@ -226,7 +226,7 @@ def _measure_cpu_matmul_kernel(
     t0 = time.perf_counter()
     for _ in range(iters):
         c_np[:] = 0
-        lib.compgen_matmul_f32(a_ptr, b_ptr, c_ptr, M, N, K)
+        lib.xpu_rt_matmul_f32(a_ptr, b_ptr, c_ptr, M, N, K)
     elapsed_ms = (time.perf_counter() - t0) * 1000.0 / iters
 
     return {

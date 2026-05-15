@@ -21,7 +21,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # fixtures
 
 import numpy as np
 import torch
-from compgen.runtime.embedded.cnn_lowering import lower_cnn_to_c
+from xpu_rt.runtime.embedded.cnn_lowering import lower_cnn_to_c
 
 from tests.fixtures.saturn_opu_convnet.model import build_model, default_inputs
 
@@ -44,12 +44,12 @@ def test_lowered_convnet_matches_torch(tmp_path: Path) -> None:
     import shutil as _shutil
 
     runtime_root = Path(__file__).resolve().parents[3] / "runtime"
-    (tmp_path / "compgen").mkdir()
+    (tmp_path / "xpu-rt").mkdir()
     for name in ("types.h", "arena.h", "ops.h"):
-        _shutil.copy2(runtime_root / "include" / "compgen" / name, tmp_path / "compgen" / name)
+        _shutil.copy2(runtime_root / "include" / "xpu-rt" / name, tmp_path / "xpu-rt" / name)
     for name in ("arena.c", "ops.c"):
         _shutil.copy2(runtime_root / "src" / name, tmp_path / name)
-    (tmp_path / "compgen_model_forward.c").write_text(lowered.forward_c_source)
+    (tmp_path / "xpu_rt_model_forward.c").write_text(lowered.forward_c_source)
 
     # Inline the blob as raw bytes in a C object.
     blob_c = tmp_path / "model_blob.c"
@@ -61,19 +61,19 @@ def test_lowered_convnet_matches_torch(tmp_path: Path) -> None:
     blob_c.write_text(
         "#include <stddef.h>\n#include <stdint.h>\n"
         "__attribute__((aligned(16)))\n"
-        "const uint8_t compgen_model_blob[] = {\n" + body + "\n};\n"
-        "const size_t compgen_model_blob_size = sizeof(compgen_model_blob);\n"
+        "const uint8_t xpu_rt_model_blob[] = {\n" + body + "\n};\n"
+        "const size_t xpu_rt_model_blob_size = sizeof(xpu_rt_model_blob);\n"
     )
 
     # Shared-library wrapper that exposes the forward for ctypes.
     (tmp_path / "shim.c").write_text(
         """
         #include <stdlib.h>
-        #include "compgen/types.h"
-        cg_status_t compgen_model_forward(const float *, float *, void *, size_t);
-        void compgen_run(const float *in, float *out) {
+        #include "xpu_rt/types.h"
+        cg_status_t xpu_rt_model_forward(const float *, float *, void *, size_t);
+        void xpu_rt_run(const float *in, float *out) {
             static unsigned char arena[4*1024*1024];  /* 4 MiB host arena */
-            (void)compgen_model_forward(in, out, arena, sizeof(arena));
+            (void)xpu_rt_model_forward(in, out, arena, sizeof(arena));
         }
         """
     )
@@ -90,7 +90,7 @@ def test_lowered_convnet_matches_torch(tmp_path: Path) -> None:
             "-shared",
             str(tmp_path / "arena.c"),
             str(tmp_path / "ops.c"),
-            str(tmp_path / "compgen_model_forward.c"),
+            str(tmp_path / "xpu_rt_model_forward.c"),
             str(tmp_path / "model_blob.c"),
             str(tmp_path / "shim.c"),
             "-o",
@@ -103,12 +103,12 @@ def test_lowered_convnet_matches_torch(tmp_path: Path) -> None:
     )
 
     lib = ctypes.CDLL(str(so_path))
-    lib.compgen_run.restype = None
-    lib.compgen_run.argtypes = [ctypes.POINTER(ctypes.c_float), ctypes.POINTER(ctypes.c_float)]
+    lib.xpu_rt_run.restype = None
+    lib.xpu_rt_run.argtypes = [ctypes.POINTER(ctypes.c_float), ctypes.POINTER(ctypes.c_float)]
 
     x = inputs[0].detach().cpu().numpy().astype(np.float32).ravel()
     y = np.zeros(16, dtype=np.float32)
-    lib.compgen_run(
+    lib.xpu_rt_run(
         x.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
         y.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
     )

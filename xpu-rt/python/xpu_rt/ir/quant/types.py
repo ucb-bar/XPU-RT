@@ -1,4 +1,4 @@
-"""Type attributes for the ``compgen.quant`` dialect.
+"""Type attributes for the ``xpu_rt.quant`` dialect.
 
 These are ParametrizedAttribute types that mirror TorchAO's quantized
 tensor taxonomy one-for-one:
@@ -99,7 +99,7 @@ class AffineQuantizedTensorType(ParametrizedAttribute):
         layout: one of the TorchAO layouts in ``_VALID_AFFINE_LAYOUTS``.
     """
 
-    name = "compgen.quant.affine_tensor"
+    name = "xpu_rt.quant.affine_tensor"
 
     storage_type: Attribute = param_def(Attribute)
     scale_dtype: Attribute = param_def(Attribute)
@@ -154,7 +154,7 @@ class PackedIntTensorType(ParametrizedAttribute):
             ``IntegerType(8)`` when packing 4-bit values two-per-byte).
     """
 
-    name = "compgen.quant.packed_int_tensor"
+    name = "xpu_rt.quant.packed_int_tensor"
 
     bit_width: IntegerAttr = param_def(IntegerAttr)
     pack_dim: IntegerAttr = param_def(IntegerAttr)
@@ -193,7 +193,7 @@ class MXQuantizedTensorType(ParametrizedAttribute):
             ``"fp32"`` for debug/reference builds.
     """
 
-    name = "compgen.quant.mx_tensor"
+    name = "xpu_rt.quant.mx_tensor"
 
     element_bit_width: IntegerAttr = param_def(IntegerAttr)
     block_size: IntegerAttr = param_def(IntegerAttr)
@@ -246,7 +246,7 @@ class NVFP4TensorType(ParametrizedAttribute):
             ``Float32Type`` or ``BFloat16Type``).
     """
 
-    name = "compgen.quant.nvfp4_tensor"
+    name = "xpu_rt.quant.nvfp4_tensor"
 
     block_size: IntegerAttr = param_def(IntegerAttr)
     scale_dtype: Attribute = param_def(Attribute)

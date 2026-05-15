@@ -15,8 +15,8 @@ raises :class:`RooflineUnavailableError`. No placeholder ``0.0``.
 
 Usage::
 
-    from compgen.kernels.cost import predict
-    from compgen.runtime.traits import DeviceTraits
+    from xpu_rt.kernels.cost import predict
+    from xpu_rt.runtime.traits import DeviceTraits
 
     prediction = predict(contract, DeviceTraits.from_target_profile(profile))
     latency_us = prediction.latency_us
@@ -24,7 +24,7 @@ Usage::
 
 For fusion decisions::
 
-    from compgen.kernels.cost import predict_fusion_speedup
+    from xpu_rt.kernels.cost import predict_fusion_speedup
 
     # Predicted speedup of a fused kernel over separate kernels, using
     # shared-memory reuse factor. Derived, not placeholder.
@@ -40,13 +40,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from compgen.kernels.errors import RooflineUnavailableError
-from compgen.kernels.measure import KernelMeasurement
+from xpu_rt.kernels.errors import RooflineUnavailableError
+from xpu_rt.kernels.measure import KernelMeasurement
 
 if TYPE_CHECKING:
-    from compgen.kernels.contracts import KernelContract
-    from compgen.runtime.traits import DeviceTraits
-    from compgen.targets.schema import TargetProfile
+    from xpu_rt.kernels.contracts import KernelContract
+    from xpu_rt.runtime.traits import DeviceTraits
+    from xpu_rt.targets.schema import TargetProfile
 
 
 @dataclass(frozen=True)

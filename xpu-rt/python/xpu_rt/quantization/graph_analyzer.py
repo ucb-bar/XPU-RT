@@ -6,7 +6,7 @@ any model and any target op map (NPU, GPU, CPU, etc.).
 
 Usage::
 
-    from compgen.quantization.graph_analyzer import analyze_for_npu
+    from xpu_rt.quantization.graph_analyzer import analyze_for_npu
 
     graphs = [gm1, gm2]  # from capture_dynamo_partitions
     analysis = analyze_for_npu(graphs)
@@ -22,7 +22,7 @@ from typing import Any
 
 import torch
 
-from compgen.quantization.npu_op_map import (
+from xpu_rt.quantization.npu_op_map import (
     _OP_TABLE,
     NpuOpCategory,
     NpuQuantDecision,

@@ -16,6 +16,6 @@ inherit from these via the registry's vendor-common fallback.
 
 from __future__ import annotations
 
-from compgen.targets.gpu.nvidia.common.sm_tag import arch_to_cublasdx_sm
+from xpu_rt.targets.gpu.nvidia.common.sm_tag import arch_to_cublasdx_sm
 
 __all__ = ["arch_to_cublasdx_sm"]

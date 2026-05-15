@@ -20,7 +20,7 @@ Things NOT class-level:
 
 from __future__ import annotations
 
-from compgen.targets.tpu.contracts import (
+from xpu_rt.targets.tpu.contracts import (
     TpuBodyEmitter,
     TpuRuntime,
     TpuTopology,

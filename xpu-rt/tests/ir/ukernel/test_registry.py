@@ -6,9 +6,9 @@ target-family body selection, and introspection APIs.
 
 from __future__ import annotations
 
-from compgen.ir.ukernel.constraints import ConstraintContext
-from compgen.ir.ukernel.ops import UkernelBodyOp, UkernelDeclOp, UkernelMatchOp
-from compgen.ir.ukernel.registry import UkernelRegistry
+from xpu_rt.ir.ukernel.constraints import ConstraintContext
+from xpu_rt.ir.ukernel.ops import UkernelBodyOp, UkernelDeclOp, UkernelMatchOp
+from xpu_rt.ir.ukernel.registry import UkernelRegistry
 
 
 def _make_decl(name: str, **kwargs) -> UkernelDeclOp:

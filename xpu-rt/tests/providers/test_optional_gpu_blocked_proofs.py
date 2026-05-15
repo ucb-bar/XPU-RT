@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from compgen.audit.execution_evidence import BLOCKED_PROOF_REASONS
+from xpu_rt.audit.execution_evidence import BLOCKED_PROOF_REASONS
 
 OPTIONAL_GPU_PROVIDERS = (
     "tilelang",

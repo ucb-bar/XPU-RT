@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from compgen.extensions.errors import ExtensionSandboxViolation
-from compgen.extensions.sandbox import (
+from xpu_rt.extensions.errors import ExtensionSandboxViolation
+from xpu_rt.extensions.sandbox import (
     is_under_sandbox,
     validate_sandboxed_path,
 )
@@ -43,7 +43,7 @@ def test_absolute_path_outside_root_rejected(tmp_path: Path):
         "payload.mlir",
         "execution_plan.yaml",
         "memory_plan.yaml",
-        "compgen_extension.yaml",
+        "xpu_rt_extension.yaml",
         "kernel_contract.yaml",
         "run_manifest.json",
         "manifest.json",

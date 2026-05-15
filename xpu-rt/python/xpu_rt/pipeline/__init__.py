@@ -1,6 +1,6 @@
-"""CompGen end-to-end pipeline driver.
+"""XPU-RT end-to-end pipeline driver.
 
-Entry point: :func:`compgen.pipeline.driver.compile_through_pipeline`.
+Entry point: :func:`xpu_rt.pipeline.driver.compile_through_pipeline`.
 Runs the full xDSL rewrite + runtime-planning pipeline in order,
 returning an xDSL ``ModuleOp``, an ``ExecutionPlan``, and a per-pass
 summary.
@@ -8,13 +8,13 @@ summary.
 
 from __future__ import annotations
 
-from compgen.pipeline.cache import PipelineCache, PipelineCacheStats
-from compgen.pipeline.differential import (
+from xpu_rt.pipeline.cache import PipelineCache, PipelineCacheStats
+from xpu_rt.pipeline.differential import (
     CompiledExecutorProtocol,
     DiffReport,
     compile_and_diff,
 )
-from compgen.pipeline.driver import (
+from xpu_rt.pipeline.driver import (
     PipelineResult,
     PipelineStageReport,
     compile_through_pipeline,

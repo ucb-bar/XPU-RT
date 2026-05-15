@@ -4,7 +4,7 @@ Wraps the existing :mod:`scripts/dev/probe_extension_providers.py`
 inside the ToolCard ``(request, *, out_dir) -> dict`` contract. The
 underlying probe is fully deterministic and read-only with respect to
 compilation state — it walks the YAML cards under
-``python/compgen/{providers,dialects,targets}/cards/`` and produces
+``python/xpu_rt/{providers,dialects,targets}/cards/`` and produces
 seven typed artifacts under ``out_dir``.
 
 The wrapper translates probe failures (missing repo root, exec error,
@@ -37,7 +37,7 @@ EXPECTED_ARTIFACTS = (
 
 
 def _repo_root() -> Path:
-    # python/compgen/tools/builtin/probe_providers.py → parents[4]
+    # python/xpu_rt/tools/builtin/probe_providers.py → parents[4]
     return Path(__file__).resolve().parents[4]
 
 

@@ -6,7 +6,7 @@ import sys
 
 import pytest
 import torch
-from compgen.quantization.fp8_ops import (
+from xpu_rt.quantization.fp8_ops import (
     FP8_E4M3_DTYPE,
     FP8_E4M3_MAX,
     FP8_E4M3_MAX_PO2,
@@ -23,7 +23,7 @@ from compgen.quantization.fp8_ops import (
 # Try importing pi0-quant for cross-validation
 _HAS_PI0_QUANT = False
 try:
-    sys.path.insert(0, "/scratch2/agustin/CompGen/third_party/pi0-quant")
+    sys.path.insert(0, "/scratch2/agustin/XPU-RT/third_party/pi0-quant")
     from pi0_inout.quant_types import QuantFormat, set_fp8_mode
     from pi0_inout.quant_types import quant as pi0_quant
 

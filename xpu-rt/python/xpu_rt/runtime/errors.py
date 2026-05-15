@@ -176,7 +176,7 @@ class ResourceBudgetError(RuntimeError):
 class SymbolicShapeUnsupportedError(NotImplementedError):
     """Runtime path hit symbolic / data-dependent shapes it can't handle yet.
 
-    Raised by ``compgen.ir.event.lower`` when an Event Tensor / task
+    Raised by ``xpu_rt.ir.event.lower`` when an Event Tensor / task
     grid has ``-1`` dims or the graph contains ``UpdateOp`` /
     ``TriggerOp`` / ``MaterializeViewOp`` — paper Fig. 4 / Fig. 5
     extensions from Jin et al., MLSys '26. Marked as a ROADMAP

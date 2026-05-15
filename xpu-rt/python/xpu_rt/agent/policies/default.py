@@ -27,7 +27,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from compgen.llm.registry import Registry
+from xpu_rt.llm.registry import Registry
 
 
 @dataclass

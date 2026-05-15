@@ -14,9 +14,9 @@ from typing import Any
 
 from xdsl.dialects.builtin import ModuleOp
 
-from compgen.agent.suggest._candidate import ProposalCandidate
-from compgen.agent.suggest._dispatch import register_suggester
-from compgen.agent.suggest._recipe_index import (
+from xpu_rt.agent.suggest._candidate import ProposalCandidate
+from xpu_rt.agent.suggest._dispatch import register_suggester
+from xpu_rt.agent.suggest._recipe_index import (
     build_recipe_index,
     critical_path_recipe_syms,
 )

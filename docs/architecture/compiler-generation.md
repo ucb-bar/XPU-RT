@@ -1,45 +1,45 @@
 # Compiler Generation: xDSL to C++ MLIR
 
-This document describes how CompGen generates a standalone MLIR C++ compiler from its xDSL Python prototypes.
+This document describes how XPU-RT generates a standalone MLIR C++ compiler from its xDSL Python prototypes.
 
 ## Overview
 
-CompGen's development workflow is:
+XPU-RT's development workflow is:
 
 1. **Prototype in xDSL** (Python) — define dialects, passes, transformations
 2. **Iterate and validate** — run transforms, verify with Z3, benchmark
 3. **Generate C++ compiler** — emit TableGen, C++, CMake that links against `third_party/llvm-project/`
-4. **Build and deploy** — `cmake + ninja` produces `compgen-opt` binary
+4. **Build and deploy** — `cmake + ninja` produces `xpu-rt-opt` binary
 
-The generated compiler is an **artifact**, not checked into the repo. It's the "compiler" that CompGen (the compiler generator) produces.
+The generated compiler is an **artifact**, not checked into the repo. It's the "compiler" that XPU-RT (the compiler generator) produces.
 
 ## Architecture
 
 ```
-CompGen Python (xDSL dialects + passes)
+XPU-RT Python (xDSL dialects + passes)
     ↓  mlir_cppgen introspects live xDSL objects
 ┌──────────────────────────────────────────┐
-│  python/compgen/extensions/mlir_cppgen/  │
+│  python/xpu_rt/extensions/mlir_cppgen/  │
 │  ├── introspect.py   (read xDSL Dialect) │
 │  ├── tablegen_emitter.py  (.td files)    │
 │  ├── cpp_emitter.py  (.h/.cpp files)     │
 │  ├── pass_emitter.py (pass .td + .cpp)   │
 │  ├── cmake_emitter.py (CMakeLists.txt)   │
-│  ├── driver_emitter.py (compgen-opt.cpp) │
+│  ├── driver_emitter.py (xpu-rt-opt.cpp) │
 │  └── templates/*.j2  (Jinja2 templates)  │
 └──────────────┬───────────────────────────┘
                ↓  generates
 ┌──────────────────────────────────────────┐
 │  artifacts/compiler/  (generated C++)    │
 │  ├── CMakeLists.txt                      │
-│  ├── include/CompGen/{Layout,Tile,Accel} │
+│  ├── include/XPU-RT/{Layout,Tile,Accel} │
 │  ├── lib/{Layout,Tile,Accel}             │
-│  ├── compgen-opt/compgen-opt.cpp         │
+│  ├── xpu-rt-opt/xpu-rt-opt.cpp         │
 │  └── Dockerfile                          │
 └──────────────┬───────────────────────────┘
                ↓  cmake + ninja
 ┌──────────────────────────────────────────┐
-│  compgen-opt binary                      │
+│  xpu-rt-opt binary                      │
 │  Parses MLIR, runs passes, emits MLIR    │
 └──────────────────────────────────────────┘
 ```
@@ -50,12 +50,12 @@ CompGen Python (xDSL dialects + passes)
 
 ```bash
 # Generate all dialects
-python -m compgen.extensions.mlir_cppgen \
+python -m xpu_rt.extensions.mlir_cppgen \
     --dialects layout,tile,accel \
     --output artifacts/compiler/
 
 # Generate with Dockerfile
-python -m compgen.extensions.mlir_cppgen \
+python -m xpu_rt.extensions.mlir_cppgen \
     --dialects layout,tile,accel \
     --output artifacts/compiler/ \
     --docker
@@ -64,7 +64,7 @@ python -m compgen.extensions.mlir_cppgen \
 ### Python API
 
 ```python
-from compgen.extensions.mlir_cppgen import generate_compiler
+from xpu_rt.extensions.mlir_cppgen import generate_compiler
 
 generate_compiler(
     dialects=["layout", "tile", "accel"],
@@ -82,10 +82,10 @@ cmake -G Ninja -S artifacts/compiler -B build \
 ninja -C build
 ```
 
-### Run compgen-opt
+### Run xpu-rt-opt
 
 ```bash
-build/bin/compgen-opt input.mlir --layout-propagate-layouts -o output.mlir
+build/bin/xpu-rt-opt input.mlir --layout-propagate-layouts -o output.mlir
 ```
 
 ## What Gets Generated
@@ -175,12 +175,12 @@ The generator translates Python layout transforms to C++ MLIR passes. All 10 lay
 
 ## Integration with Existing Pipeline
 
-The generated `compgen-opt` connects to the existing Python pipeline via MLIR text serialization:
+The generated `xpu-rt-opt` connects to the existing Python pipeline via MLIR text serialization:
 
 ```
 Python (xDSL)  →  recipe_to_mlir()  →  MLIR text
                                            ↓
-                                      compgen-opt (C++ passes)
+                                      xpu-rt-opt (C++ passes)
                                            ↓
                                        MLIR text  →  mlir_to_recipe()  →  Python (xDSL)
 ```
@@ -189,13 +189,13 @@ This roundtrip is already implemented in `ir/recipe/serialize.py`.
 
 ### Runner Integration
 
-`python/compgen/extensions/mlir_cppgen/runner.py` provides:
+`python/xpu_rt/extensions/mlir_cppgen/runner.py` provides:
 
 ```python
-from compgen.extensions.mlir_cppgen.runner import run_compgen_opt, run_layout_pipeline
+from xpu_rt.extensions.mlir_cppgen.runner import run_xpu_rt_opt, run_layout_pipeline
 
 # Single pass
-output = run_compgen_opt(mlir_text, ["--layout-propagate-layouts"])
+output = run_xpu_rt_opt(mlir_text, ["--layout-propagate-layouts"])
 
 # Full 10-pass pipeline
 output = run_layout_pipeline(mlir_text)

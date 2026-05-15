@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """Run the pass-pool ablation on a model set.
 
-Compares CompGen pipeline behavior across selection modes on the same
+Compares XPU-RT pipeline behavior across selection modes on the same
 models. Today the harness exercises ``greedy`` mode and any
 operator-supplied ``agent-file`` responses; ``llm-live`` is opt-in via
 the operator (api keys / network) and not driven from this CLI.
@@ -24,7 +24,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from compgen.benchmarks.pass_pool_ablation import (
+from xpu_rt.benchmarks.pass_pool_ablation import (
     AblationCellSpec,
     AblationPack,
     emit_pack,

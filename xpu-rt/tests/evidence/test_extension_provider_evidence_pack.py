@@ -23,7 +23,7 @@ def _run_builder(probe_dir: Path, out_dir: Path, snapshots_dir: Path | None = No
 
 def _build_probe_dir(probe_dir: Path) -> None:
     """Bootstrap a probe report set in ``probe_dir``."""
-    from compgen.providers.provider_reports import write_probe_reports
+    from xpu_rt.providers.provider_reports import write_probe_reports
     write_probe_reports(probe_dir)
 
 
@@ -81,7 +81,7 @@ def test_snapshot_dir_flips_corresponding_claim_to_implemented(tmp_path: Path):
     """When --snapshots-dir is supplied, the
     multi_level_analysis_snapshots_present row should flip to
     `implemented`."""
-    from compgen.analysis.ir_snapshots import (
+    from xpu_rt.analysis.ir_snapshots import (
         RegionSummary, make_available, write_snapshots,
     )
     probe = tmp_path / "probe"

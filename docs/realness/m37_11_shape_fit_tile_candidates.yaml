@@ -19,8 +19,8 @@ forbidden:
 - silent fallback to the legacy fixed-tile pool
 realness_level: decision_affecting
 required_evidence:
-- python/compgen/graph_compilation/region_dossier.py
-- python/compgen/graph_compilation/recipe_planning.py (boundary-aware sort)
+- python/xpu_rt/graph_compilation/region_dossier.py
+- python/xpu_rt/graph_compilation/recipe_planning.py (boundary-aware sort)
 - tests/graph_compilation/test_real_transform_coverage.py
 - tests/graph_compilation/test_recipe_verification_gate.py
 - candidate_selection.json on a real run carries cost_preview.region_dims

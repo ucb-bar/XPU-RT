@@ -8,9 +8,9 @@ from typing import Any
 
 import yaml
 
-from compgen.packs.base import ExtensionPack, LoadedPack
-from compgen.packs.compose import ManifestExtensionPack
-from compgen.packs.schema import ExtensionPackManifest
+from xpu_rt.packs.base import ExtensionPack, LoadedPack
+from xpu_rt.packs.compose import ManifestExtensionPack
+from xpu_rt.packs.schema import ExtensionPackManifest
 
 
 def _tuple_strings(value: Any) -> tuple[str, ...]:

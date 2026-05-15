@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 
 import torch
-from compgen.capture.torch_export import (
+from xpu_rt.capture.torch_export import (
     CaptureArtifact,
     ExportValidation,
     capture_dynamo_partitions,

@@ -49,11 +49,11 @@ from typing import Any
 import structlog
 import torch
 
-from compgen.testing.workloads import WORKLOAD_FACTORIES
-from compgen.transforms.emit_cuda_megakernel import (
+from xpu_rt.testing.workloads import WORKLOAD_FACTORIES
+from xpu_rt.transforms.emit_cuda_megakernel import (
     emit_cuda_megakernel,
 )
-from compgen.transforms.event_static_schedule import (
+from xpu_rt.transforms.event_static_schedule import (
     StaticSchedule,
     compute_static_schedule,
 )
@@ -100,7 +100,7 @@ def compile_and_run_etc_workload(
     if workload_name not in WORKLOAD_FACTORIES:
         raise EtcDispatchError(
             f"workload {workload_name!r} not registered in "
-            "compgen.testing.workloads.WORKLOAD_FACTORIES. "
+            "xpu_rt.testing.workloads.WORKLOAD_FACTORIES. "
             f"Available: {sorted(WORKLOAD_FACTORIES)}"
         )
 
@@ -148,11 +148,11 @@ def compile_and_run_etc_workload(
     emit.write_to_bundle(bundle_dir / "megakernel")
 
     # ---- 3. NVRTC + cooperative launch infrastructure ---------------
-    from compgen.runtime.native.cuda import (
+    from xpu_rt.runtime.native.cuda import (
         CudaMegakernelLauncher,
         CudaModule,
     )
-    from compgen.runtime.native.device import Device
+    from xpu_rt.runtime.native.device import Device
 
     cumod = CudaModule(
         cuda_source=emit.cuda_source,
@@ -224,7 +224,7 @@ def _resolve_sm_count(device_index: int) -> int:
     misjudged SM count just means the schedule is suboptimal, not
     incorrect."""
     try:
-        from compgen.runtime.probe import probe_cuda_device
+        from xpu_rt.runtime.probe import probe_cuda_device
 
         probe = probe_cuda_device(device_index)
         sm = probe.get("sm_count") or probe.get("multi_processor_count") or 132
@@ -256,7 +256,7 @@ def _run_correctness(
     harness gate stops false-positiving on tiny outputs near zero
     where fp32 ULP noise blows up the naive relative error.
     """
-    from compgen.testing.etc_conformance import gate_for
+    from xpu_rt.testing.etc_conformance import gate_for
 
     gate = gate_for(workload_name)
     atol = gate.correctness_atol
@@ -443,7 +443,7 @@ def _allocate_etc_state(
 
     from cuda.bindings import driver as cu_driver  # type: ignore
 
-    from compgen.runtime.native.cuda import (
+    from xpu_rt.runtime.native.cuda import (
         CudaEventTensor,
         _cu_check,
         _ensure_cuda_driver_context,
@@ -521,7 +521,7 @@ def _release_state(state: _DispatchState) -> None:
     via :class:`CudaEventTensor`'s ``__del__``."""
     from cuda.bindings import driver as cu_driver  # type: ignore
 
-    from compgen.runtime.native.cuda import _cu_check
+    from xpu_rt.runtime.native.cuda import _cu_check
 
     if state.et_ptrs_dev:
         _cu_check(cu_driver.cuMemFree(state.et_ptrs_dev))
@@ -547,7 +547,7 @@ def _launch_and_readback(
     """
     from cuda.bindings import driver as cu_driver  # type: ignore
 
-    from compgen.runtime.native.cuda import _cu_check
+    from xpu_rt.runtime.native.cuda import _cu_check
 
     # Flatten ND inputs to match the (batch_flat, in_dim) buffer the
     # matcher emits for the tile graph. Per bridge #118: with ND
@@ -715,7 +715,7 @@ def _workload_buffers(
 
     raise EtcDispatchError(
         f"no buffer-allocation rule for workload layout {layout!r}; "
-        "add a branch in compgen.testing.etc_dispatch._workload_buffers"
+        "add a branch in xpu_rt.testing.etc_dispatch._workload_buffers"
     )
 
 
@@ -748,12 +748,12 @@ def _compile_and_run_multi_gpu(
     with cross-rank Event Tensor edges so the entire forward is one
     cooperative launch across both ranks.
     """
-    from compgen.runtime.native.cuda import (
+    from xpu_rt.runtime.native.cuda import (
         CudaCommGroup,
         CudaMegakernelLauncher,
         CudaModule,
     )
-    from compgen.runtime.native.device import Device
+    from xpu_rt.runtime.native.device import Device
 
     workload = WORKLOAD_FACTORIES[workload_name](dtype=dtype, num_gpus=2)
     num_ranks = workload.num_ranks
@@ -790,7 +790,7 @@ def _compile_and_run_multi_gpu(
     # rank 1's setup → ``cg_rt_device_open(inst, 1)`` may fail
     # depending on the driver's enumeration state, and CudaModule
     # would load rank 1's PTX into rank 0's context.
-    from compgen.runtime.native.cuda import _ensure_cuda_driver_context
+    from xpu_rt.runtime.native.cuda import _ensure_cuda_driver_context
 
     per_rank: list[dict[str, Any]] = []
     for rank in range(num_ranks):
@@ -873,7 +873,7 @@ def _run_correctness_multi(
     ``comm.allreduce_fp32_sum`` sums the (B, N) partials across
     ranks; each rank's row band is its slice of the result.
     """
-    from compgen.testing.etc_conformance import gate_for
+    from xpu_rt.testing.etc_conformance import gate_for
 
     gate = gate_for(workload_name)
     atol = gate.correctness_atol
@@ -1029,7 +1029,7 @@ def _launch_one_rank(
     the rank's megakernel."""
     from cuda.bindings import driver as cu_driver  # type: ignore
 
-    from compgen.runtime.native.cuda import _cu_check, _ensure_cuda_driver_context
+    from xpu_rt.runtime.native.cuda import _cu_check, _ensure_cuda_driver_context
 
     rank = rank_state["rank"]
     state = rank_state["state"]

@@ -1,4 +1,4 @@
-# CompGen pass card index
+# XPU-RT pass card index
 
 _Generated: `2026-05-06T04:20:03Z`_
 

@@ -3,7 +3,7 @@ claim: |
   ``--resume-from kernel-codegen-response`` so an operator-driven
   agentic kernel-codegen flow runs end-to-end through the CLI alone.
 
-  Without this mode, every ``compgen.graph_compilation run`` invocation
+  Without this mode, every ``xpu_rt.graph_compilation run`` invocation
   rm-rfs ``out_dir`` at the top of the run (``run.py:343``), destroying
   the committed response, the M-43 attempts trail, the M-45
   certificate, and the provider's compiled artefacts. With this mode,
@@ -46,10 +46,10 @@ forbidden:
 - M-46 emitting an empty bindings.json after resume when valid certificates exist on disk (the resume must thread cert visibility through to M-46)
 realness_level: production_path
 required_evidence:
-- python/compgen/graph_compilation/run.py (resume_from kwarg + skip-early gating + sandbox-preserve guard)
-- python/compgen/graph_compilation/__main__.py (--resume-from CLI flag + thread to _run_pipeline)
+- python/xpu_rt/graph_compilation/run.py (resume_from kwarg + skip-early gating + sandbox-preserve guard)
+- python/xpu_rt/graph_compilation/__main__.py (--resume-from CLI flag + thread to _run_pipeline)
 - tests/graph_compilation/test_resume_from_kernel_codegen_response.py
-- "real-driven CLI smoke (/tmp/m53_smoke.py): kernel-codegen-request → real cffi commit → --resume-from → emitted compgen_run produced (16,32) tensor matching torch.matmul within Higham bound 1.07e-4"
+- "real-driven CLI smoke (/tmp/m53_smoke.py): kernel-codegen-request → real cffi commit → --resume-from → emitted xpu_rt_run produced (16,32) tensor matching torch.matmul within Higham bound 1.07e-4"
 feature_id: m53_resume_kernel_codegen_response
 notes: |
   Phase C M-53 — closes the agentic-CLI-flow gap surfaced by the
@@ -61,7 +61,7 @@ notes: |
 
   Real-driven CLI smoke (/tmp/m53_smoke.py — preserved as evidence):
 
-  Step 1: ``compgen.graph_compilation run --stop-after kernel-codegen-request``
+  Step 1: ``xpu_rt.graph_compilation run --stop-after kernel-codegen-request``
   produces ``04_kernel_codegen/{requests,contracts,views}``.
 
   Step 2: operator writes a real cffi-C matmul (16x16 @ 16x32 = 16x32),
@@ -69,7 +69,7 @@ notes: |
   ``kernel_codegen_response.commit_response()``. M-44 verifier
   accepts; M-45 emits ``certificates/4838412db0b5c6b8.json``.
 
-  Step 3: ``compgen.graph_compilation run --stop-after glue-emit
+  Step 3: ``xpu_rt.graph_compilation run --stop-after glue-emit
   --resume-from kernel-codegen-response`` runs in 1.5s (vs ~12s
   full pipeline). cert + .so + attempts trail all SURVIVED. M-46
   emitted ``region_kernel_bindings.json`` with ``bound_count=1``.
@@ -77,7 +77,7 @@ notes: |
   ``KERNEL_BINDINGS=['matmul_0']``.
 
   Step 4: imported the executor, plugged in the real cffi kernel,
-  ran ``compgen_run({A, B}, kernels, runtime=CpuRuntimeAdapter())``.
+  ran ``xpu_rt_run({A, B}, kernels, runtime=CpuRuntimeAdapter())``.
   Output shape ``(16, 32)``, ``max_abs vs torch.matmul = 1.91e-6``,
   Higham bound ``1.07e-4`` — within bound.
 

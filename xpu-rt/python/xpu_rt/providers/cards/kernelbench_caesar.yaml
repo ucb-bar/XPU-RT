@@ -4,7 +4,7 @@ integration_level: probe
 target_families: [cuda]
 contract_kinds: [matmul, pointwise, fused_region]
 emits: [triton_source, cu_source]
-entrypoint: compgen.providers.adapters.kernelbench_caesar:KernelBenchCaesarProvider
+entrypoint: xpu_rt.providers.adapters.kernelbench_caesar:KernelBenchCaesarProvider
 paper_claimable: false
 required_env: [KERNELBENCH_ROOT, CAESAR_ROOT]
 required_commands: []

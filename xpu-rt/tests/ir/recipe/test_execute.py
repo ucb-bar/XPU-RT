@@ -1,4 +1,4 @@
-"""Tests for ``compgen.ir.recipe.execute.RecipeExecutor``.
+"""Tests for ``xpu_rt.ir.recipe.execute.RecipeExecutor``.
 
 Locks in the dispatch added so the autonomous compile loop and the MCP
 ``apply_recipe`` path no longer count MLIR-shaped lowered transform
@@ -7,8 +7,8 @@ scripts as ``transforms_failed``.
 
 from __future__ import annotations
 
-from compgen.ir.recipe.execute import RecipeExecutor, _looks_like_mlir_transform
-from compgen.ir.recipe.lower import LoweringOutput
+from xpu_rt.ir.recipe.execute import RecipeExecutor, _looks_like_mlir_transform
+from xpu_rt.ir.recipe.lower import LoweringOutput
 from xdsl.dialects.builtin import ModuleOp
 
 

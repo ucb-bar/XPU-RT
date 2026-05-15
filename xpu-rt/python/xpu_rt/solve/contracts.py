@@ -18,12 +18,12 @@ from typing import Protocol, runtime_checkable
 import structlog
 from xdsl.dialects.builtin import ModuleOp
 
-from compgen.solve.objectives import CompositeCost
-from compgen.solve.partition import Partition, partition_graph
-from compgen.solve.placement import PlacementConstraint
-from compgen.solve.schedule import ScheduleConstraint
-from compgen.targets.schema import TargetProfile
-from compgen.targets.utils import extract_device_memory, extract_transfer_cost_matrix
+from xpu_rt.solve.objectives import CompositeCost
+from xpu_rt.solve.partition import Partition, partition_graph
+from xpu_rt.solve.placement import PlacementConstraint
+from xpu_rt.solve.schedule import ScheduleConstraint
+from xpu_rt.targets.schema import TargetProfile
+from xpu_rt.targets.utils import extract_device_memory, extract_transfer_cost_matrix
 
 log = structlog.get_logger()
 

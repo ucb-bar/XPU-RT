@@ -35,7 +35,7 @@ from typing import Any, Callable
 
 import pytest
 
-from compgen.audit.errors import (
+from xpu_rt.audit.errors import (
     AppliesWhenViolation,
     AuditError,
     CertificateInvalidated,
@@ -47,7 +47,7 @@ from compgen.audit.errors import (
     StaleAnalysisAudit,
     TaskPackIncomplete,
 )
-from compgen.audit.fresh_agent import REQUIRED_PATHS, verify_task_pack
+from xpu_rt.audit.fresh_agent import REQUIRED_PATHS, verify_task_pack
 
 
 @dataclass(frozen=True)
@@ -218,7 +218,7 @@ def control_certificate_artifact_hash_changed(tmp_path: Path) -> NegativeControl
 def control_task_pack_missing_required_file(tmp_path: Path) -> NegativeControlOutcome:
     """Build a task pack, delete a required file, verify the audit
     fails."""
-    from compgen.audit.fresh_agent import build_task_pack
+    from xpu_rt.audit.fresh_agent import build_task_pack
 
     pack = tmp_path / "pack"
     build_task_pack(
@@ -241,7 +241,7 @@ def control_task_pack_missing_required_file(tmp_path: Path) -> NegativeControlOu
 
 def control_replay_input_hash_mismatch(tmp_path: Path) -> NegativeControlOutcome:
     """Replay must raise on input-hash mismatch."""
-    from compgen.audit.trace_replay import build_trace, replay, write_trace
+    from xpu_rt.audit.trace_replay import build_trace, replay, write_trace
 
     run_dir = tmp_path / "run"
     rp = run_dir / "03_recipe_planning"
@@ -287,7 +287,7 @@ def control_pass_card_missing(tmp_path: Path) -> NegativeControlOutcome:
     was never authored).
     """
     import shutil
-    from compgen.passes.cards import PassCardRegistry
+    from xpu_rt.passes.cards import PassCardRegistry
 
     real_root = Path(__file__).resolve().parents[3] / "docs" / "generated" / "pass_cards"
     fake_root = tmp_path / "pass_cards"
@@ -315,11 +315,11 @@ def control_pass_precondition_violation(tmp_path: Path) -> NegativeControlOutcom
     :class:`VerificationGateMissing`. This is the producer-side
     pre-condition: a downstream consumer of the pass output cannot
     safely proceed without the certificate."""
-    from compgen.passes.cards import PassCard
-    from compgen.passes.verification import (
+    from xpu_rt.passes.cards import PassCard
+    from xpu_rt.passes.verification import (
         assert_required_rungs_discharged,
     )
-    from compgen.audit.errors import VerificationGateMissing
+    from xpu_rt.audit.errors import VerificationGateMissing
 
     # Author a card declaring the differential rung but emit no
     # certificate. assert_required_rungs_discharged must raise.
@@ -363,7 +363,7 @@ def control_stale_analysis_consumed(tmp_path: Path) -> NegativeControlOutcome:
     :class:`StaleAnalysisAudit` (an alias for
     :class:`UnannouncedInvalidation`).
     """
-    from compgen.analysis.invalidation import (
+    from xpu_rt.analysis.invalidation import (
         InvalidationDiff,
         assert_invalidations_match_claim,
     )

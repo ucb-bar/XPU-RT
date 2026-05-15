@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from compgen.graph_compilation.cost_preview_v2 import (
+from xpu_rt.graph_compilation.cost_preview_v2 import (
     _DEFAULT_TARGET,
     _TargetProfile,
     _build_candidate_cost_preview,
@@ -37,7 +37,7 @@ def _need_canonical() -> None:
     if not SUITE.is_dir():
         pytest.skip(
             f"fixture suite missing: {SUITE}; run "
-            f"`compgen.graph_compilation run-suite --stop-after "
+            f"`xpu_rt.graph_compilation run-suite --stop-after "
             f"cost-preview-v2` first"
         )
 
@@ -205,7 +205,7 @@ def test_changing_target_bandwidth_changes_memory_bound_latency() -> None:
         l3_bytes=base.l3_bytes,
     )
     # An elementwise-like operation: high bytes, low flops.
-    from compgen.graph_compilation.cost_preview_v2 import _roofline_latency_us
+    from xpu_rt.graph_compilation.cost_preview_v2 import _roofline_latency_us
     base_us, _ = _roofline_latency_us(
         flops=1024.0, bytes_moved=10_000_000,
         working_set_bytes=10_000_000, target=base,
@@ -280,7 +280,7 @@ def test_constant_cost_across_tile_candidates_fails(
     """Force baseline AND tiled to return identical constants — every
     relative_cost becomes 1.0 — non-degeneracy on tile candidates must
     fail."""
-    from compgen.graph_compilation import cost_preview_v2 as mod
+    from xpu_rt.graph_compilation import cost_preview_v2 as mod
 
     def constant_cost(*args, **kwargs):
         return 1.0, {"tier": "scratchpad", "bw_multiplier": 4.0,
@@ -339,7 +339,7 @@ def test_fake_real_transform_verified_without_m12_report_fails() -> None:
         "known_limitations": [],
         "evidence": {},
     }
-    from compgen.graph_compilation.cost_preview_v2 import _validate
+    from xpu_rt.graph_compilation.cost_preview_v2 import _validate
 
     fake_cas = {
         "candidates": [
@@ -382,16 +382,16 @@ def test_no_legal_candidate_left_without_cost_preview_v2() -> None:
 
 def test_no_compiler_core_imports_in_module() -> None:
     src = (
-        REPO_ROOT / "python" / "compgen" / "graph_compilation"
+        REPO_ROOT / "python" / "xpu-rt" / "graph_compilation"
         / "cost_preview_v2.py"
     ).read_text(encoding="utf-8")
     forbidden = (
-        "from compgen.ir",
-        "import compgen.ir",
-        "from compgen.capture",
-        "import compgen.capture",
-        "from compgen.pipeline",
-        "import compgen.pipeline",
+        "from xpu_rt.ir",
+        "import xpu_rt.ir",
+        "from xpu_rt.capture",
+        "import xpu_rt.capture",
+        "from xpu_rt.pipeline",
+        "import xpu_rt.pipeline",
         "from runtime.bundle_emit",
     )
     for pat in forbidden:

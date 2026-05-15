@@ -48,7 +48,7 @@ def _invoke(
     stop_after: str = "real-transform-differential",
 ) -> subprocess.CompletedProcess:
     cmd = [
-        sys.executable, "-m", "compgen.graph_compilation", "run",
+        sys.executable, "-m", "xpu_rt.graph_compilation", "run",
         "--model", str(REPO_ROOT / f"configs/models/{model}.yaml"),
         "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
         "--out", str(out_dir),
@@ -144,7 +144,7 @@ def test_transformed_payload_real_mlir_emitted(
     )
     assert mf["fusion"]["producer"] in text
     assert mf["fusion"]["consumer"] in text
-    assert "compgen.fused_with" in text
+    assert "xpu_rt.fused_with" in text
 
 
 def test_source_payload_unchanged_after_fusion_lowering(
@@ -275,7 +275,7 @@ def test_matmul_producer_blocks_with_precise_reason(
 
 def test_nonexistent_producer_validation_fails() -> None:
     """Direct unit test on the validator: producer not in region_map → fail."""
-    from compgen.graph_compilation.real_fusion import _validate_fusion
+    from xpu_rt.graph_compilation.real_fusion import _validate_fusion
     # Use a fixture that doesn't have a producer "ghost_region".
     # Build a fake run dir with the minimum graph artifacts? Easier:
     # the validator returns blocked with reason. We test through the
@@ -284,7 +284,7 @@ def test_nonexistent_producer_validation_fails() -> None:
     # mentioning "not in region_map" when given a bogus producer.
     # We exercise this through the matmul test above + the unit
     # contract here:
-    from compgen.graph_compilation.real_fusion import _is_pointwise
+    from xpu_rt.graph_compilation.real_fusion import _is_pointwise
     assert _is_pointwise("aten_relu_default_0") is True
     assert _is_pointwise("matmul_0") is False
     assert _is_pointwise("aten_softmax_default") is False
@@ -292,7 +292,7 @@ def test_nonexistent_producer_validation_fails() -> None:
 
 def test_validator_rejects_multi_consumer(tmp_path: Path) -> None:
     """If a tensor has consumer_count > 1, the MVP refuses the fusion."""
-    from compgen.graph_compilation.real_fusion import _validate_fusion
+    from xpu_rt.graph_compilation.real_fusion import _validate_fusion
     # Build a synthetic run dir with the fields the validator reads.
     run_dir = tmp_path / "synth_run"
     ga = run_dir / "02_graph_analysis"
@@ -326,7 +326,7 @@ def test_validator_rejects_multi_consumer(tmp_path: Path) -> None:
 
 
 def test_validator_rejects_dtype_non_f32(tmp_path: Path) -> None:
-    from compgen.graph_compilation.real_fusion import _validate_fusion
+    from xpu_rt.graph_compilation.real_fusion import _validate_fusion
     run_dir = tmp_path / "synth_run"
     ga = run_dir / "02_graph_analysis"
     ga.mkdir(parents=True)
@@ -356,7 +356,7 @@ def test_validator_rejects_dtype_non_f32(tmp_path: Path) -> None:
 
 
 def test_validator_rejects_reduction_input(tmp_path: Path) -> None:
-    from compgen.graph_compilation.real_fusion import _validate_fusion
+    from xpu_rt.graph_compilation.real_fusion import _validate_fusion
     run_dir = tmp_path / "synth_run"
     ga = run_dir / "02_graph_analysis"
     ga.mkdir(parents=True)
@@ -387,7 +387,7 @@ def test_validator_rejects_reduction_input(tmp_path: Path) -> None:
 
 
 def test_validator_rejects_via_tensor_not_in_use_def(tmp_path: Path) -> None:
-    from compgen.graph_compilation.real_fusion import _validate_fusion
+    from xpu_rt.graph_compilation.real_fusion import _validate_fusion
     run_dir = tmp_path / "synth_run"
     ga = run_dir / "02_graph_analysis"
     ga.mkdir(parents=True)
@@ -407,7 +407,7 @@ def test_validator_rejects_via_tensor_not_in_use_def(tmp_path: Path) -> None:
 
 
 def test_validator_rejects_producer_mismatch(tmp_path: Path) -> None:
-    from compgen.graph_compilation.real_fusion import _validate_fusion
+    from xpu_rt.graph_compilation.real_fusion import _validate_fusion
     run_dir = tmp_path / "synth_run"
     ga = run_dir / "02_graph_analysis"
     ga.mkdir(parents=True)
@@ -446,7 +446,7 @@ def test_m15b_detector_picks_up_fusion_report() -> None:
     """The detector must include the real_fusion_differential
     report in its scan list. This is a contract check on the detector
     table — when fusion reports fail, emits a retry request."""
-    from compgen.graph_compilation.downstream_retry import _DOWNSTREAM_REPORTS
+    from xpu_rt.graph_compilation.downstream_retry import _DOWNSTREAM_REPORTS
     stages = {entry[0] for entry in _DOWNSTREAM_REPORTS}
     assert "real_fusion_differential" in stages
 
@@ -511,15 +511,15 @@ def test_set_tile_params_m16_unchanged_after_m162(tmp_path: Path) -> None:
 
 def test_real_fusion_does_not_import_compiler_core() -> None:
     src = (
-        REPO_ROOT / "python" / "compgen" / "graph_compilation"
+        REPO_ROOT / "python" / "xpu-rt" / "graph_compilation"
         / "real_fusion.py"
     ).read_text(encoding="utf-8")
     forbidden = (
-        "from compgen.ir",
-        "import compgen.ir",
-        "from compgen.capture",
-        "import compgen.capture",
-        "from compgen.pipeline",
+        "from xpu_rt.ir",
+        "import xpu_rt.ir",
+        "from xpu_rt.capture",
+        "import xpu_rt.capture",
+        "from xpu_rt.pipeline",
     )
     for pat in forbidden:
         assert pat not in src, f"real_fusion must not import: {pat}"

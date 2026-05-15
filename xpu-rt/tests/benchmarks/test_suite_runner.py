@@ -29,7 +29,7 @@ mode = sys.argv[1]
 metrics_path = Path(sys.argv[2])
 payload = {
     "status": "pass",
-    "compile_time_ms": 275.0 if mode == "compgen" else 10.0,
+    "compile_time_ms": 275.0 if mode == "xpu-rt" else 10.0,
     "latency_ms_p50": 4.0 if mode == "reference" else 5.5,
     "latency_ms_p90": 4.4 if mode == "reference" else 6.0,
     "throughput": 200.0 if mode == "reference" else 150.0,
@@ -199,7 +199,7 @@ def _patch_fake_pack_integration(monkeypatch, pack_root: Path, worktrees_root: P
         missing_paths: list[str] = []
 
     class FakeBranch:
-        branch_name = "compgen-cuda-tile"
+        branch_name = "xpu_rt-cuda-tile"
         worktree_path = worktrees_root / "cuda_tile"
 
     class FakeManifest:
@@ -228,7 +228,7 @@ def _write_workspace_yaml(path: Path, data: dict[str, object]) -> None:
 
 
 def _suite_workspace(tmp_path: Path, monkeypatch):
-    repo_root = tmp_path / "CompGen"
+    repo_root = tmp_path / "XPU-RT"
     repo_root.mkdir()
     results_dir = tmp_path / "results"
     runner = tmp_path / "fake_runner.py"
@@ -274,14 +274,14 @@ def _suite_workspace(tmp_path: Path, monkeypatch):
             | {
                 suite_id: {
                     "reference_command": [sys.executable, str(runner), "reference", "{metrics_path}"],
-                    "compgen_command": [sys.executable, str(runner), "compgen", "{metrics_path}"],
+                    "xpu_rt_command": [sys.executable, str(runner), "xpu-rt", "{metrics_path}"],
                 }
                 for suite_id in ("mlperf", "sol_execbench", "heterobench")
             },
             "pack_configs": {
                 "cuda_tile": {
                     "reference_command": [sys.executable, str(runner), "reference", "{metrics_path}"],
-                    "compgen_command": [sys.executable, str(runner), "compgen", "{metrics_path}"],
+                    "xpu_rt_command": [sys.executable, str(runner), "xpu-rt", "{metrics_path}"],
                 }
             },
         },

@@ -1,4 +1,4 @@
-"""Attributes for the ``compgen.collective`` dialect."""
+"""Attributes for the ``xpu_rt.collective`` dialect."""
 
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ class ShardingSpecAttr(ParametrizedAttribute):
             ``"none"`` / ``"sum"`` / ``"mean"``.
     """
 
-    name = "compgen.collective.sharding_spec"
+    name = "xpu_rt.collective.sharding_spec"
 
     devices: ArrayAttr = param_def(ArrayAttr)
     dim_map: ArrayAttr = param_def(ArrayAttr)
@@ -55,7 +55,7 @@ class ShardingSpecAttr(ParametrizedAttribute):
 class ReduceKindAttr(ParametrizedAttribute):
     """Reduction-kind enum for collective reductions."""
 
-    name = "compgen.collective.reduce_kind"
+    name = "xpu_rt.collective.reduce_kind"
 
     kind: StringAttr = param_def(StringAttr)
 

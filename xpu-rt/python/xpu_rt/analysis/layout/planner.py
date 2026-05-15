@@ -11,8 +11,8 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 
-from compgen.agent.analyzer import NetworkAnalysis, PatternCluster, RegionDossier
-from compgen.targets.schema import TargetProfile
+from xpu_rt.agent.analyzer import NetworkAnalysis, PatternCluster, RegionDossier
+from xpu_rt.targets.schema import TargetProfile
 
 logger = logging.getLogger(__name__)
 

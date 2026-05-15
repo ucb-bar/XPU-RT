@@ -8,7 +8,7 @@ recipe proven on one model can be reused on another with the same
 region signature without re-running the full search.
 
 This is the *read side* of Section 19. The bridge writes
-promoted recipes to ``.compgen_cache/recipes/<key>/`` with a
+promoted recipes to ``.xpu_rt_cache/recipes/<key>/`` with a
 ``promoted_recipe.json`` sidecar carrying the two-tier cache key
 (``contract_hash``, ``region_signature``). scans those sidecars
 plus the SQLite ``memory.promotions`` table.
@@ -43,7 +43,7 @@ log = structlog.get_logger(__name__)
 
 
 # Default library path mirrors the bridge default.
-_DEFAULT_LIBRARY_PATH = Path(".compgen_cache") / "recipes"
+_DEFAULT_LIBRARY_PATH = Path(".xpu_rt_cache") / "recipes"
 
 
 @dataclass(frozen=True)
@@ -56,7 +56,7 @@ class PromotedCandidate:
 
     Attributes:
         recipe_id: Stable human-readable id from
-            :class:`compgen.promotion.promote.PromotedRecipe`.
+            :class:`xpu_rt.promotion.promote.PromotedRecipe`.
         recipe_key: Full directory name in the recipe library
             (``target_hash_model_hash_objective_hash_vN``).
         region_signature: Two-tier cache key, region tier.
@@ -204,7 +204,7 @@ def retrieve_for_region(
 
     Args:
         region_signature: 16-char hex hash from
-            :func:`compgen.promotion.region_signature.hash_region_signature`.
+            :func:`xpu_rt.promotion.region_signature.hash_region_signature`.
             Required: an empty string yields no matches (nothing to
             match against — the agent_decision write side calls
             this per region with the region's freshly-derived signature).
@@ -215,8 +215,8 @@ def retrieve_for_region(
             matches are filtered to this target_class so a recipe
             proven on host_cpu doesn't surface for cuda_sm75.
         library_path: Recipe library root. Defaults to
-            ``.compgen_cache/recipes/`` rooted at CWD.
-        memory: Optional :class:`compgen.memory.store.CompilerMemory`
+            ``.xpu_rt_cache/recipes/`` rooted at CWD.
+        memory: Optional :class:`xpu_rt.memory.store.CompilerMemory`
             for SQLite-indexed lookups (faster on large libraries; the
             on-disk scan above is the fallback when memory is None).
 
@@ -225,11 +225,11 @@ def retrieve_for_region(
         (exact_contract first, then region_pattern). Empty list when
         nothing matches or the library does not exist.
     """
-    # COMPGEN_DISABLE_RECIPE_MEMORY=1 forces a cold run by
+    # XPU_RT_DISABLE_RECIPE_MEMORY=1 forces a cold run by
     # short-circuiting the retrieval. The agent_decision_request writer
     # records this in the request's `disabled_by_env` field so the audit
     # trail explains why no promoted candidates surfaced.
-    if os.environ.get("COMPGEN_DISABLE_RECIPE_MEMORY") == "1":
+    if os.environ.get("XPU_RT_DISABLE_RECIPE_MEMORY") == "1":
         return []
     if not region_signature and not contract_hash:
         return []

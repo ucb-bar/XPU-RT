@@ -7,7 +7,7 @@ claim: |
 
   Hard contract:
 
-  1. ``compgen.graph_compilation.phase_d_slice_evidence`` ships two
+  1. ``xpu_rt.graph_compilation.phase_d_slice_evidence`` ships two
      emitters: ``emit_slice_evidence`` (walks an existing run_dir
      and summarises) and ``emit_deferred_slice_evidence`` (records a
      slice that couldn't run with a typed deferral reason).
@@ -37,7 +37,7 @@ forbidden:
 - marking a slice deferred without a typed deferred_reason (the reason is the audit trail; an empty deferral is decorative)
 realness_level: production_path
 required_evidence:
-- python/compgen/graph_compilation/phase_d_slice_evidence.py (entire module)
+- python/xpu_rt/graph_compilation/phase_d_slice_evidence.py (entire module)
 - tests/graph_compilation/test_vertical_slice_evidence.py
 feature_id: m65_phase_d_slices
 notes: |

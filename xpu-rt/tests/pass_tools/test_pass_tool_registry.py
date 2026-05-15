@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from compgen.pass_tools.pass_tool_types import (
+from xpu_rt.pass_tools.pass_tool_types import (
     PASS_PHASES,
     REFINEMENT_KINDS,
     PassToolCard,
@@ -24,7 +24,7 @@ def _minimal_body(**overrides):
             "kind": "tolerance_eps",
             "verifier": "differential_then_z3_if_promoted",
         },
-        "entrypoint": "compgen.pass_tools.builtin.fuse_matmul_bias_relu:run",
+        "entrypoint": "xpu_rt.pass_tools.builtin.fuse_matmul_bias_relu:run",
     }
     body.update(overrides)
     return body

@@ -36,8 +36,8 @@ import time
 
 import pytest
 import torch
-from compgen.runtime.event_tensor import EventTensor
-from compgen.runtime.megakernel import DeviceCall, EventEdge, MegakernelGraph
+from xpu_rt.runtime.event_tensor import EventTensor
+from xpu_rt.runtime.megakernel import DeviceCall, EventEdge, MegakernelGraph
 
 # ---------------------------------------------------------------------------
 # Validation

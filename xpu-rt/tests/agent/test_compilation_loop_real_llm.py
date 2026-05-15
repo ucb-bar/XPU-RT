@@ -7,12 +7,12 @@ from pathlib import Path
 
 import pytest
 import torch
-from compgen.agent.env import CompilerEnv
-from compgen.agent.loop import AgenticCompilationLoop
-from compgen.capture.torch_export import capture_frontend_artifact
-from compgen.ir.payload.import_fx import fx_to_xdsl
-from compgen.llm import LLMRecorder, create_llm_client
-from compgen.targets.schema import load_profile
+from xpu_rt.agent.env import CompilerEnv
+from xpu_rt.agent.loop import AgenticCompilationLoop
+from xpu_rt.capture.torch_export import capture_frontend_artifact
+from xpu_rt.ir.payload.import_fx import fx_to_xdsl
+from xpu_rt.llm import LLMRecorder, create_llm_client
+from xpu_rt.targets.schema import load_profile
 
 
 class _TinyMLP(torch.nn.Module):
@@ -25,12 +25,12 @@ class _TinyMLP(torch.nn.Module):
 
 
 def _enabled_backend() -> tuple[str, str | None]:
-    if os.environ.get("COMPGEN_RUN_REAL_LLM_TESTS") != "1":
-        pytest.skip("Set COMPGEN_RUN_REAL_LLM_TESTS=1 to enable real LLM smoke tests.")
-    backend = os.environ.get("COMPGEN_REAL_LLM_BACKEND", "").strip()
+    if os.environ.get("XPU_RT_RUN_REAL_LLM_TESTS") != "1":
+        pytest.skip("Set XPU_RT_RUN_REAL_LLM_TESTS=1 to enable real LLM smoke tests.")
+    backend = os.environ.get("XPU_RT_REAL_LLM_BACKEND", "").strip()
     if not backend:
-        pytest.skip("Set COMPGEN_REAL_LLM_BACKEND to select a real backend.")
-    return backend, os.environ.get("COMPGEN_REAL_LLM_MODEL")
+        pytest.skip("Set XPU_RT_REAL_LLM_BACKEND to select a real backend.")
+    return backend, os.environ.get("XPU_RT_REAL_LLM_MODEL")
 
 
 @pytest.mark.slow

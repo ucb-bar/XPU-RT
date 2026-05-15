@@ -16,7 +16,7 @@ import pytest
 
 class TestProbeApi:
     def test_probe_module_imports(self) -> None:
-        from compgen.runtime.probe import (
+        from xpu_rt.runtime.probe import (
             probe_cuda_device,
             probe_via_native_hal,
             probe_via_torch,
@@ -28,17 +28,17 @@ class TestProbeApi:
 
     def test_native_hal_raises_when_cuda_lib_absent(self) -> None:
         """Phase 4 wired ``probe_via_native_hal`` to the C primitive,
-        but on a CPU-only host (no ``libcompgen_rt-cuda.so`` from
+        but on a CPU-only host (no ``libxpu_rt-cuda.so`` from
         ``make build-cuda-rt``) it must still raise
         :class:`_NativeHalUnavailable` so :func:`probe_cuda_device`
         falls through to the torch path."""
-        from compgen.runtime.probe import _NativeHalUnavailable, probe_via_native_hal
+        from xpu_rt.runtime.probe import _NativeHalUnavailable, probe_via_native_hal
 
         with pytest.raises(_NativeHalUnavailable):
             probe_via_native_hal(0)
 
     def test_probe_returns_dict_with_provenance(self) -> None:
-        from compgen.runtime.probe import probe_cuda_device
+        from xpu_rt.runtime.probe import probe_cuda_device
 
         out = probe_cuda_device(0)
         assert isinstance(out, dict)
@@ -49,7 +49,7 @@ class TestProbeApi:
         """When torch.cuda.is_available() is False the probe must
         return a clear fallback record, not raise."""
         import torch
-        from compgen.runtime.probe import probe_via_torch
+        from xpu_rt.runtime.probe import probe_via_torch
 
         if torch.cuda.is_available():
             pytest.skip("This test exercises the CPU-fallback branch")
@@ -63,8 +63,8 @@ class TestDeviceTraitsWithProbe:
     profile-derived ones, supports_event_tensors is re-derived after."""
 
     def test_with_probe_merges_metadata(self) -> None:
-        from compgen.runtime.traits import DeviceTraits
-        from compgen.targets.schema import (
+        from xpu_rt.runtime.traits import DeviceTraits
+        from xpu_rt.targets.schema import (
             ComputeUnit,
             DeviceSpec,
             MemoryLevel,
@@ -119,8 +119,8 @@ class TestDeviceTraitsWithProbe:
         """If the probe declares atomics or persistent kernels are
         unavailable, supports_event_tensors must flip False even
         though the profile said it was True."""
-        from compgen.runtime.traits import DeviceTraits
-        from compgen.targets.schema import DeviceSpec, TargetProfile
+        from xpu_rt.runtime.traits import DeviceTraits
+        from xpu_rt.targets.schema import DeviceSpec, TargetProfile
 
         profile = TargetProfile(
             name="hypothetical",
@@ -135,8 +135,8 @@ class TestDeviceTraitsWithProbe:
         assert merged.supports_event_tensors is False
 
     def test_to_dict_carries_metadata(self) -> None:
-        from compgen.runtime.traits import DeviceTraits
-        from compgen.targets.schema import DeviceSpec, TargetProfile
+        from xpu_rt.runtime.traits import DeviceTraits
+        from xpu_rt.targets.schema import DeviceSpec, TargetProfile
 
         profile = TargetProfile(
             name="t",
@@ -151,8 +151,8 @@ class TestDeviceTraitsWithProbe:
     def test_metadata_keys_are_whitelisted(self) -> None:
         """Random profile-metadata keys don't leak into traits.metadata —
         only the _FORWARDED_METADATA_KEYS set."""
-        from compgen.runtime.traits import DeviceTraits
-        from compgen.targets.schema import DeviceSpec, TargetProfile
+        from xpu_rt.runtime.traits import DeviceTraits
+        from xpu_rt.targets.schema import DeviceSpec, TargetProfile
 
         profile = TargetProfile(
             name="t",
@@ -176,9 +176,9 @@ class TestProfileYamls:
 
     @pytest.fixture
     def profiles_dir(self) -> Path:
-        from compgen import __file__ as compgen_init
+        from xpu_rt import __file__ as xpu_rt_init
 
-        return Path(compgen_init).parent / "targets" / "profiles"
+        return Path(xpu_rt_init).parent / "targets" / "profiles"
 
     def test_b200_profile_loads(self, profiles_dir: Path) -> None:
 
@@ -222,8 +222,8 @@ class TestProfileYamls:
         """End-to-end: YAML → TargetProfile → DeviceTraits → metadata
         carries every key the cost model + emitter need."""
         import yaml
-        from compgen.runtime.traits import DeviceTraits
-        from compgen.targets.schema import (
+        from xpu_rt.runtime.traits import DeviceTraits
+        from xpu_rt.targets.schema import (
             ComputeUnit,
             DeviceSpec,
             Interconnect,
@@ -291,17 +291,17 @@ class TestProfileYamls:
 
 class TestProbeDeviceOnlyCli:
     def test_cli_writes_device_probe_json(self, tmp_path: Path) -> None:
-        """``compgen-run-conformance --probe-device-only`` writes
+        """``xpu-rt-run-conformance --probe-device-only`` writes
         device_probe.json + prints headline values. Exits 0 even on
         a CPU host (the probe falls back cleanly)."""
         import sys
 
-        from compgen.testing.etc_conformance import _cli
+        from xpu_rt.testing.etc_conformance import _cli
 
         old_argv = sys.argv
         try:
             sys.argv = [
-                "compgen-run-conformance",
+                "xpu-rt-run-conformance",
                 "--probe-device-only",
                 "--output-dir",
                 str(tmp_path),

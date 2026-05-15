@@ -6,9 +6,9 @@ who bids first when a contract is applicable to both.
 
 from __future__ import annotations
 
-from compgen.kernels.providers.autocomp import AutocompProvider
-from compgen.kernels.providers.kernelblaster import KernelBlasterProvider
-from compgen.kernels.registry import ProviderRegistry
+from xpu_rt.kernels.providers.autocomp import AutocompProvider
+from xpu_rt.kernels.providers.kernelblaster import KernelBlasterProvider
+from xpu_rt.kernels.registry import ProviderRegistry
 
 
 def test_kernelblaster_priority_exceeds_autocomp():
@@ -42,7 +42,7 @@ def test_applicable_ranks_kernelblaster_first_when_both_match():
     autocomp regardless of registration order.
     """
     try:
-        from compgen.kernels.contract_v3 import KernelContractV3  # noqa: F401
+        from xpu_rt.kernels.contract_v3 import KernelContractV3  # noqa: F401
     except Exception:
         import pytest
 

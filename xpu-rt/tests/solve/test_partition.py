@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from compgen.solve.partition import Partition, partition_graph
+from xpu_rt.solve.partition import Partition, partition_graph
 from xdsl.dialects import arith, func
 from xdsl.dialects.builtin import IndexType, ModuleOp
 from xdsl.ir import Block, Region

@@ -1,7 +1,7 @@
-// Copyright 2026 CompGen Authors. All rights reserved.
+// Copyright 2026 XPU-RT Authors. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-#include "compgen/arena.h"
+#include "xpu_rt/arena.h"
 
 void *cg_arena_alloc(cg_arena_t *a, size_t n, size_t align) {
   if (a == 0 || a->base == 0) return (void *)0;

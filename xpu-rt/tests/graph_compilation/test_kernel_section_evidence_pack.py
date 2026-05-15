@@ -41,10 +41,10 @@ def _sha(p: Path) -> str:
 def _run(model: str, out_dir: Path, *, run_kernels: bool) -> None:
     env = os.environ.copy()
     if run_kernels:
-        env["COMPGEN_RUN_KERNELS"] = "1"
+        env["XPU_RT_RUN_KERNELS"] = "1"
     subprocess.run(
         [
-            sys.executable, "-m", "compgen.graph_compilation", "run",
+            sys.executable, "-m", "xpu_rt.graph_compilation", "run",
             "--model", str(REPO_ROOT / f"configs/models/{model}.yaml"),
             "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
             "--out", str(out_dir),
@@ -71,7 +71,7 @@ def tiny_suite(tmp_path_factory) -> Path:  # type: ignore[no-untyped-def]
 
 @pytest.fixture(scope="module")
 def evidence_pack(tiny_suite, tmp_path_factory) -> Path:  # type: ignore[no-untyped-def]
-    from compgen.graph_compilation.kernel_evidence_pack import (
+    from xpu_rt.graph_compilation.kernel_evidence_pack import (
         build_kernel_evidence_pack,
     )
     out = tmp_path_factory.mktemp("m25_pack")
@@ -254,7 +254,7 @@ def test_pack_is_read_only(tiny_suite: Path) -> None:
                 suite_files.append(p)
     before = {p: _sha(p) for p in suite_files}
 
-    from compgen.graph_compilation.kernel_evidence_pack import (
+    from xpu_rt.graph_compilation.kernel_evidence_pack import (
         build_kernel_evidence_pack,
     )
     out = tiny_suite.parent / "m25_pack_readonly_test"
@@ -302,13 +302,13 @@ def test_no_compiler_core_imports() -> None:
         "kernel_evidence_pack_figures.py",
     ):
         src = (
-            REPO_ROOT / "python" / "compgen" / "graph_compilation" / fname
+            REPO_ROOT / "python" / "xpu-rt" / "graph_compilation" / fname
         ).read_text(encoding="utf-8")
         for f in (
-            "from compgen.ir",
-            "from compgen.capture",
-            "from compgen.pipeline",
-            "from compgen.runtime.bundle_emit",
+            "from xpu_rt.ir",
+            "from xpu_rt.capture",
+            "from xpu_rt.pipeline",
+            "from xpu_rt.runtime.bundle_emit",
         ):
             assert f not in src, (
                 f"{fname} imports forbidden module: {f}"

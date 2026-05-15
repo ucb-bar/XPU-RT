@@ -18,7 +18,7 @@ from typing import Any
 
 import yaml
 
-from compgen.kernels.patterns.detection import DetectedPattern
+from xpu_rt.kernels.patterns.detection import DetectedPattern
 
 
 @dataclass

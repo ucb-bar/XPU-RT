@@ -22,10 +22,10 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
 import torch
-from compgen.capture.torch_export import capture_model, validate_export
-from compgen.ir.checks import check_ir
-from compgen.ir.payload.canonicalize import canonicalize
-from compgen.ir.payload.import_fx import FXImporter, fx_to_xdsl
+from xpu_rt.capture.torch_export import capture_model, validate_export
+from xpu_rt.ir.checks import check_ir
+from xpu_rt.ir.payload.canonicalize import canonicalize
+from xpu_rt.ir.payload.import_fx import FXImporter, fx_to_xdsl
 
 EXAMPLES_DIR = Path(__file__).parent.parent.parent / "examples" / "models"
 
@@ -97,7 +97,7 @@ def _run_pipeline(model_name: str, model: torch.nn.Module, inputs: tuple) -> Mod
         [
             "// CHECK: func.func @forward",
             "// CHECK: func.return",
-            "// CHECK-NOT: COMPGEN_UNSUPPORTED",
+            "// CHECK-NOT: XPU_RT_UNSUPPORTED",
         ],
     )
     result.ir_checks_passed = check_result.passed
@@ -206,7 +206,7 @@ def test_frontend_go_no_go() -> None:
     assert len(high_coverage) >= 1, f"No model has >= 80% coverage: {cov_summary}"
 
     # Write metrics JSON
-    metrics_dir = Path("compgen_output")
+    metrics_dir = Path("xpu-rt-output")
     metrics_dir.mkdir(exist_ok=True)
     metrics = {
         "kill_test": "frontend_reality",

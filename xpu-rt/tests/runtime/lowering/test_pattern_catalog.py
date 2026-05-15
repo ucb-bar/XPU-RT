@@ -87,7 +87,7 @@ class _ResidualDiamond(nn.Module):
 
 class TestResidualNormMatcher:
     def test_matches_residual_over_ffn(self) -> None:
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         torch.manual_seed(0xDA1)
         model = _ResidualFFN(d=64, hidden=128)
@@ -111,7 +111,7 @@ class TestResidualNormMatcher:
         assert result.decision.schedule_hints["sublayer_pattern"] == "ffn"
 
     def test_matches_residual_over_diamond(self) -> None:
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         torch.manual_seed(0xDA2)
         model = _ResidualDiamond(d=64)
@@ -125,7 +125,7 @@ class TestResidualNormMatcher:
         """Wave 2.1 requires LayerNorm with affine=True (γ + β). A
         plain affine=False is a typed rejection so the agent's audit
         sees why it didn't lower."""
-        from compgen.runtime.lowering import (
+        from xpu_rt.runtime.lowering import (
             UnsupportedShape,
             lower_torch_to_megakernel,
         )
@@ -149,7 +149,7 @@ class TestResidualNormMatcher:
     def test_rejects_residual_with_concat_instead_of_add(self) -> None:
         """LayerNorm(cat([x, sub(x)])) doesn't match — the matcher's
         forward equality check rejects."""
-        from compgen.runtime.lowering import (
+        from xpu_rt.runtime.lowering import (
             UnsupportedShape,
             lower_torch_to_megakernel,
         )
@@ -174,7 +174,7 @@ class TestResidualNormMatcher:
 
     def test_residual_total_tasks_reasonable(self) -> None:
         """Sublayer tasks + 4 tail tasks per row tile."""
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         result = lower_torch_to_megakernel(_ResidualFFN(d=64, hidden=128), (torch.randn(64, 64),))
         total = _total_tasks(result.megakernel_graph)
@@ -184,7 +184,7 @@ class TestResidualNormMatcher:
 
     def test_residual_accepts_nd_inputs(self) -> None:
         """Bridge #108 contract — ND inputs flatten leading dims."""
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         for shape in [(64, 64), (1, 64, 64), (2, 32, 64)]:
             result = lower_torch_to_megakernel(
@@ -226,7 +226,7 @@ class _HandRolledMHA(nn.Module):
 
 class TestMhaMatcher:
     def test_matches_nn_multihead_attention(self) -> None:
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         torch.manual_seed(0xA77E)
         m = nn.MultiheadAttention(
@@ -259,7 +259,7 @@ class TestMhaMatcher:
         assert hints["mha_causal"] is False
 
     def test_matches_hand_rolled_mha(self) -> None:
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         torch.manual_seed(0xA77F)
         m = _HandRolledMHA(d=64, num_heads=4)
@@ -269,7 +269,7 @@ class TestMhaMatcher:
 
     def test_rejects_mha_with_mismatched_head_dim(self) -> None:
         """embed_dim must be divisible by num_heads."""
-        from compgen.runtime.lowering import (
+        from xpu_rt.runtime.lowering import (
             UnsupportedShape,
             lower_torch_to_megakernel,
         )
@@ -299,7 +299,7 @@ class TestMhaMatcher:
     def test_rejects_mha_with_bias(self) -> None:
         """Wave-2.1 simplification: bias=False on QKVO. nn.MHA with
         bias=True falls through."""
-        from compgen.runtime.lowering import (
+        from xpu_rt.runtime.lowering import (
             UnsupportedShape,
             lower_torch_to_megakernel,
         )
@@ -319,7 +319,7 @@ class TestMhaMatcher:
 
     def test_rejects_mha_with_2d_input(self) -> None:
         """MHA wants 3-D ``(B, S, D)``. 2-D is rejected."""
-        from compgen.runtime.lowering import (
+        from xpu_rt.runtime.lowering import (
             UnsupportedShape,
             lower_torch_to_megakernel,
         )
@@ -338,7 +338,7 @@ class TestMhaMatcher:
             )
 
     def test_mha_total_tasks_reasonable(self) -> None:
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         # B=2, S=32, D=64, H=4 → s_tiles=1, d_tiles=2.
         # qkv tiles per linear = B*s*d = 4. score tiles = B*H*s*s = 8.
@@ -358,7 +358,7 @@ class TestMhaMatcher:
         """Hand-rolled module exposing ``is_causal=True`` lands in the
         schedule_hints so the kernel emitter (Wave 2.2) picks the
         masked-softmax variant."""
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         m = _HandRolledMHA(d=64, num_heads=4)
         m.is_causal = True
@@ -393,7 +393,7 @@ class _MoE(nn.Module):
 
 class TestMoeMatcher:
     def test_matches_moe_shape(self) -> None:
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         torch.manual_seed(0xE0E)
         m = _MoE(d=64, n_experts=4, top_k=2)
@@ -406,8 +406,8 @@ class TestMoeMatcher:
         assert result.decision.schedule_hints["requires_ondevice_scheduler"] is True
 
     def test_moe_emits_one_trigger_per_expert(self) -> None:
-        from compgen.runtime.lowering import lower_torch_to_megakernel
-        from compgen.runtime.lowering.pattern_catalog import (
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering.pattern_catalog import (
             build_moe_trigger_generators,
         )
 
@@ -427,11 +427,11 @@ class TestMoeMatcher:
         """The (8 token, 4 expert, top_k=2) shape pinned by Wave 2.1
         must produce a schedule without raising. Validates the matcher
         + dynamic-schedule pass compose end-to-end."""
-        from compgen.runtime.lowering import lower_torch_to_megakernel
-        from compgen.runtime.lowering.pattern_catalog import (
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering.pattern_catalog import (
             build_moe_trigger_generators,
         )
-        from compgen.transforms.event_dynamic_schedule import (
+        from xpu_rt.transforms.event_dynamic_schedule import (
             compute_dynamic_schedule,
         )
 
@@ -453,7 +453,7 @@ class TestMoeMatcher:
         assert len(sched.ready_queue.initial_task_ids) >= 1
 
     def test_rejects_moe_without_topk(self) -> None:
-        from compgen.runtime.lowering import (
+        from xpu_rt.runtime.lowering import (
             UnsupportedShape,
             lower_torch_to_megakernel,
         )
@@ -476,7 +476,7 @@ class TestMoeMatcher:
             )
 
     def test_rejects_moe_with_router_bias(self) -> None:
-        from compgen.runtime.lowering import (
+        from xpu_rt.runtime.lowering import (
             UnsupportedShape,
             lower_torch_to_megakernel,
         )
@@ -499,7 +499,7 @@ class TestMoeMatcher:
             )
 
     def test_rejects_moe_with_topk_exceeding_n_experts(self) -> None:
-        from compgen.runtime.lowering import (
+        from xpu_rt.runtime.lowering import (
             UnsupportedShape,
             lower_torch_to_megakernel,
         )
@@ -519,7 +519,7 @@ class TestMoeMatcher:
         Tasks: router_proj(1) + router_topk(1) + 4×expert(1) +
         combine(1) = 7.
         """
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         m = _MoE(d=64, n_experts=4, top_k=2)
         result = lower_torch_to_megakernel(m, (torch.randn(8, 64),))
@@ -538,13 +538,13 @@ class TestPatternCascadeOrder:
     or anything else)."""
 
     def test_plain_ffn_still_matches_as_ffn(self) -> None:
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         result = lower_torch_to_megakernel(_FFN(64, 128), (torch.randn(64, 64),))
         assert result.decision.pattern_name == "ffn"
 
     def test_plain_diamond_still_matches_as_diamond(self) -> None:
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         result = lower_torch_to_megakernel(_Diamond(64), (torch.randn(64, 64),))
         assert result.decision.pattern_name == "diamond"

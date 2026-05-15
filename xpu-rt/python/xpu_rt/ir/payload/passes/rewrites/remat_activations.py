@@ -9,7 +9,7 @@ of storing them.
 Selection policy:
 - Only large float tensors (> ``min_size_bytes``).
 - Produced by a single op with pure float semantics
-  (``compgen._pattern_hint`` must be in the allowlist).
+  (``xpu_rt._pattern_hint`` must be in the allowlist).
 - Not already marked as ``persistent`` / ``shared_readonly``.
 
 No structural rewrite; the tag is the contract.
@@ -69,13 +69,13 @@ def run_remat_activations(
     cfg = config if config is not None else RematActivationsConfig()
     stats = RematActivationsStats()
     for op in module.walk():
-        hint_attr = op.attributes.get("compgen._pattern_hint")
+        hint_attr = op.attributes.get("xpu_rt._pattern_hint")
         if not isinstance(hint_attr, StringAttr):
             continue
         if hint_attr.data not in cfg.hint_allowlist:
             continue
         stats.ops_seen += 1
-        if "compgen.rematerialize" in op.attributes:
+        if "xpu_rt.rematerialize" in op.attributes:
             continue
         if not op.results:
             continue
@@ -85,8 +85,8 @@ def run_remat_activations(
         size = _tensor_size_bytes(rt, cfg.assume_elem_bytes)
         if size < cfg.min_size_bytes:
             continue
-        op.attributes["compgen.rematerialize"] = StringAttr("true")
-        op.attributes["compgen.remat_size_bytes"] = StringAttr(str(size))
+        op.attributes["xpu_rt.rematerialize"] = StringAttr("true")
+        op.attributes["xpu_rt.remat_size_bytes"] = StringAttr(str(size))
         stats.ops_tagged += 1
         stats.total_recomputable_bytes += size
     return stats

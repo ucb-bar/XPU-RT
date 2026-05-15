@@ -2,13 +2,13 @@
 in language an agent can act on.
 
 Pulls from the per-obligation list and per-script transform diagnostics
-that :func:`compgen.mcp.tools.recipe_apply.apply_recipe` writes through
+that :func:`xpu_rt.mcp.tools.recipe_apply.apply_recipe` writes through
 to the driver. Each failure gets a typed ``remediation_hint`` keyed on
 the obligation kind / transform level, plus a ``next_step`` action the
 agent can take to recover (e.g., split a fused region, raise atol).
 
 This is the symmetric counterpart to
-:func:`compgen.agent.gates._remediation.add_remediation` for proposal-
+:func:`xpu_rt.agent.gates._remediation.add_remediation` for proposal-
 time gate failures: that one fires when the structural / differential
 gate rejects a proposal; this one fires when the post-apply
 verification + transform stack reports failures.
@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from compgen.mcp.session import SessionManager
+from xpu_rt.mcp.session import SessionManager
 
 # Per-obligation hint dispatch. Keys match the ``obligation_type``
 # strings produced by ``lower_recipe._lower_require_*`` handlers.

@@ -15,8 +15,8 @@ from __future__ import annotations
 
 import textwrap
 
-from compgen.bench.diagnosis import KernelDiagnosis
-from compgen.kernels.contract_v3 import KernelContractV3
+from xpu_rt.bench.diagnosis import KernelDiagnosis
+from xpu_rt.kernels.contract_v3 import KernelContractV3
 
 _MAX_PRIOR_SOURCE_CHARS = 4096  # trim oversized kernels before injecting
 

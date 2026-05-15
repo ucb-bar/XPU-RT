@@ -1,7 +1,7 @@
 """``assign_memory_space`` -- place each buffer in a memory domain.
 
 Reconstruction of IREE's HAL memory-space assignment + hexagon-mlir's
-``convert-to-hexagonmem``. Zero external references; CompGen owns
+``convert-to-hexagonmem``. Zero external references; XPU-RT owns
 the rewrite.
 
 Operates on an :class:`ExecutionPlan` (not xDSL IR): fills in each
@@ -36,7 +36,7 @@ This pass is idempotent: buffers that already have a non-empty
 LLM-tool signature:
 
     tool_name="assign_memory_space"
-    wraps_pass="CompGen:ConvertToHexagonMem"
+    wraps_pass="XPU-RT:ConvertToHexagonMem"
     invent_slot="runtime/memory_space_assignment"
     policy="SizeAndLivenessDriven"
 """
@@ -45,7 +45,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from compgen.runtime.execution_plan import BufferDescriptor, ExecutionPlan
+from xpu_rt.runtime.execution_plan import BufferDescriptor, ExecutionPlan
 
 
 @dataclass(frozen=True)

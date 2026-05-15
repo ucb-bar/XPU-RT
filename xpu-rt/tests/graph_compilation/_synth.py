@@ -12,7 +12,7 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
-from compgen.graph_compilation.hashing import sha256_file, sha256_tree
+from xpu_rt.graph_compilation.hashing import sha256_file, sha256_tree
 
 
 @dataclass

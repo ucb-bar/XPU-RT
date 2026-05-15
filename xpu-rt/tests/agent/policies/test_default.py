@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from compgen.agent.policies import DeterministicDefaultPolicy
-from compgen.llm.registry import (
+from xpu_rt.agent.policies import DeterministicDefaultPolicy
+from xpu_rt.llm.registry import (
     InventSlot,
     Registry,
     Tool,
@@ -108,9 +108,9 @@ def test_default_args_merge_with_tool_defaults() -> None:
 
 def test_policy_against_real_registry() -> None:
     """Sanity-check against the live registry populated on import."""
-    import compgen.agent.invent_slots  # noqa: F401
-    import compgen.llm.tools  # noqa: F401
-    from compgen.llm import get_registry
+    import xpu_rt.agent.invent_slots  # noqa: F401
+    import xpu_rt.llm.tools  # noqa: F401
+    from xpu_rt.llm import get_registry
 
     r = get_registry()
     p = DeterministicDefaultPolicy()

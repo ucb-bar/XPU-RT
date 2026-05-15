@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from compgen.packs.schema import BranchPlan, ExtensionPackManifest, PackContribution, PackProbeResult
+from xpu_rt.packs.schema import BranchPlan, ExtensionPackManifest, PackContribution, PackProbeResult
 
 if TYPE_CHECKING:
     from benchmarks.spec import WorkspaceConfig
@@ -99,7 +99,7 @@ class ManifestExtensionPack:
             worktrees_root = getattr(workspace, "integration_worktrees_root", None)
             if worktrees_root is None:
                 repo_root = Path(workspace.repo_root)
-                worktrees_root = repo_root / ".compgen_external" / "worktrees"
+                worktrees_root = repo_root / ".xpu_rt_external" / "worktrees"
             else:
                 worktrees_root = Path(worktrees_root)
             llvm_fork_path = None
@@ -107,10 +107,10 @@ class ManifestExtensionPack:
             if self.manifest.llvm_fork_key and self.manifest.llvm_fork_key in llvm_forks:
                 llvm_fork_path = Path(llvm_forks[self.manifest.llvm_fork_key]).resolve()
         else:
-            worktrees_root = self.root / ".compgen_external" / "worktrees"
+            worktrees_root = self.root / ".xpu_rt_external" / "worktrees"
             llvm_fork_path = None
 
-        branch_name = f"compgen/integration/{self.manifest.name}/{run_id}"
+        branch_name = f"xpu_rt/integration/{self.manifest.name}/{run_id}"
         worktree_path = worktrees_root / self.manifest.name / run_id
         return BranchPlan(
             pack_name=self.manifest.name,

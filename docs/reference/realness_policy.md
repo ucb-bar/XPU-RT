@@ -11,8 +11,8 @@ A feature is *done* iff:
 1. **Clean checkout rebuild.** Its artifacts produce from source on a
    fresh clone, not from checked-in outputs.
 2. **No stubs / mocks / placeholders on production paths.**
-   `compgen.audit.realness_scan` finds zero unallowlisted matches in
-   `python/compgen`, `scripts/`, `docs/`, and `.claude/`.
+   `xpu_rt.audit.realness_scan` finds zero unallowlisted matches in
+   `python/xpu-rt`, `scripts/`, `docs/`, and `.claude/`.
 3. **Production-import provenance clean.** A real run on the milestone's
    declared workload writes
    `<run_dir>/import_provenance.json` with
@@ -37,7 +37,7 @@ A feature is *done* iff:
 
 ## How the audit checks each rule
 
-- Rule 1 — `COMPGEN_FORCE_REBUILD=1` refuses to overwrite a non-empty
+- Rule 1 — `XPU_RT_FORCE_REBUILD=1` refuses to overwrite a non-empty
   `out_dir`. Audit-mode runs are operator-launched into clean dirs.
 - Rule 2 — `uv run python scripts/dev/audit_realness.py` exits 0 only
   when every match is in `realness_allowlist.yaml` with a reason.
@@ -46,19 +46,19 @@ A feature is *done* iff:
   module.
 - Rule 4 — `tests/audit/test_negative_controls.py` parametrizes over
   every gate; each row injects a specific fault and asserts the typed
-  error fires. Aggregated by `compgen.audit.negative_controls.run_all_negative_controls`.
+  error fires. Aggregated by `xpu_rt.audit.negative_controls.run_all_negative_controls`.
 - Rule 5 — `tests/audit/test_greedy_baseline_reproducibility.py`
   builds a task pack and runs the greedy resolver against it. Operator
   records the fresh-Claude outcome via
-  `compgen.audit.fresh_agent_modes.record_manual_session_result`.
-- Rule 6 — `compgen.audit.caveat_ledger.CaveatLedger.validate(...)`
+  `xpu_rt.audit.fresh_agent_modes.record_manual_session_result`.
+- Rule 6 — `xpu_rt.audit.caveat_ledger.CaveatLedger.validate(...)`
   rejects malformed rows; `tests/audit/test_caveat_ledger.py`
   enforces schema + staleness.
-- Rule 7 — `compgen.audit.trace_replay.replay(...)` re-derives every
+- Rule 7 — `xpu_rt.audit.trace_replay.replay(...)` re-derives every
   hash; `scripts/dev/replay_agent_decision.py` is the operator CLI.
 - Rule 8 — `tests/audit/test_holdout_models.py` runs every
   `holdout: true` YAML through capture+lowering and asserts honest
-  outcome; `compgen.audit.perturbations` provides the perturbation
+  outcome; `xpu_rt.audit.perturbations` provides the perturbation
   utilities.
 
 ## The trust report

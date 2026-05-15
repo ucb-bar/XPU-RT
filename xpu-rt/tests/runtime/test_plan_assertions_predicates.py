@@ -31,7 +31,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 def _invoke_pipeline(*, model: str, out_dir: Path) -> subprocess.CompletedProcess:
     return subprocess.run(
         [
-            sys.executable, "-m", "compgen.graph_compilation", "run",
+            sys.executable, "-m", "xpu_rt.graph_compilation", "run",
             "--model", str(REPO_ROOT / f"configs/models/{model}.yaml"),
             "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
             "--out", str(out_dir),
@@ -88,10 +88,10 @@ class TestContractCarriesPredicates:
 
 class TestRoundTrip:
     def test_predicates_round_trip(self, tmp_path: Path) -> None:
-        from compgen.graph_compilation.kernel_codegen_response import (
+        from xpu_rt.graph_compilation.kernel_codegen_response import (
             _reconstruct_contract_from_dict,
         )
-        from compgen.kernels.predicates import (
+        from xpu_rt.kernels.predicates import (
             ModEq,
             NumericalWithinEps,
             predicate_to_dict,
@@ -129,7 +129,7 @@ class TestRoundTrip:
 
 class TestPlanViolationClasses:
     def test_m61_subclasses_emitted(self) -> None:
-        from compgen.runtime.glue_emit.plan_assertions import (
+        from xpu_rt.runtime.glue_emit.plan_assertions import (
             render_plan_violation_classes,
         )
 

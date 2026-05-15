@@ -11,19 +11,19 @@ from __future__ import annotations
 
 import torch
 import torch.nn as nn
-from compgen.capture.torch_export import capture_model
-from compgen.ir.payload.import_fx import fx_to_xdsl
-from compgen.kernels.codegen_fallback import run_provider_fallback
-from compgen.kernels.contracts import build_kernel_contracts, spec_to_provider_contract
-from compgen.kernels.provider import (
+from xpu_rt.capture.torch_export import capture_model
+from xpu_rt.ir.payload.import_fx import fx_to_xdsl
+from xpu_rt.kernels.codegen_fallback import run_provider_fallback
+from xpu_rt.kernels.contracts import build_kernel_contracts, spec_to_provider_contract
+from xpu_rt.kernels.provider import (
     KernelContract as ProviderContract,
 )
-from compgen.kernels.provider import (
+from xpu_rt.kernels.provider import (
     KnowledgeExport,
     ProviderResult,
     SearchBudget,
 )
-from compgen.targets.schema import load_profile
+from xpu_rt.targets.schema import load_profile
 from xdsl.dialects.builtin import ModuleOp
 
 _TARGET = "examples/target_profiles/cuda_a100.yaml"
@@ -189,13 +189,13 @@ def test_three_op_chain_produces_three_kernels() -> None:
 
 def test_multi_provider_per_region_provenance() -> None:
     """Two providers split a multi-op graph: each region gets its own
-    ``compgen.codegen_backend`` annotation reflecting the actual winner.
+    ``xpu_rt.codegen_backend`` annotation reflecting the actual winner.
 
     Regression for the single-provider-name limitation in the original
     REQ-008 implementation, where every "fallback"-tagged op was rewritten
     to a single ``winning_provider_name``.
     """
-    from compgen.stages.templates.codegen import CODEGEN_BACKEND_ATTR
+    from xpu_rt.stages.templates.codegen import CODEGEN_BACKEND_ATTR
     from xdsl.dialects.builtin import StringAttr
 
     class AddOnlyProvider:

@@ -28,7 +28,7 @@ from __future__ import annotations
 import json
 
 import pytest
-from compgen.agent.cost_preview import (
+from xpu_rt.agent.cost_preview import (
     LEGALITY_VALUES,
     CandidateInput,
     CostPreviewError,

@@ -9,4 +9,4 @@ See ``_template.py`` for the starting point.
 __extension_point__ = True
 __extension_type__ = "quantization_method"
 __extension_protocol__ = "torchao.core.config.AOBaseConfig"
-__extension_template__ = "compgen.quantization.methods._template"
+__extension_template__ = "xpu_rt.quantization.methods._template"

@@ -17,8 +17,8 @@ from typing import Any, ClassVar
 
 from xdsl.dialects.builtin import ModuleOp
 
-from compgen.ir.payload.passes.base import PayloadPass
-from compgen.llm.registry import AutocompCostImpact, ToolArg
+from xpu_rt.ir.payload.passes.base import PayloadPass
+from xpu_rt.llm.registry import AutocompCostImpact, ToolArg
 
 
 class _RuntimeStub(PayloadPass):

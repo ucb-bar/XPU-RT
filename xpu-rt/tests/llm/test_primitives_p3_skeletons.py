@@ -5,7 +5,7 @@ Each primitive is tested for:
 * Its card is registered in the global call-site registry.
 * The primary path runs end-to-end and produces output that satisfies
   the declared output_schema.
-* The fallback path runs end-to-end (``COMPGEN_DISABLE_LLM=1``) and
+* The fallback path runs end-to-end (``XPU_RT_DISABLE_LLM=1``) and
   surfaces ``fallback_used=true``.
 * Every primitive's declared forbidden actions are members of
   ``FORBIDDEN_LLM_ACTIONS``.
@@ -14,7 +14,7 @@ The P3.3 ``rank_candidates`` primitive has its own deeper test file
 (test_primitive_rank_candidates.py) because its permutation invariant
 is the headline guarantee.
 
-Importing :mod:`compgen.agent.primitives` registers all 7 sites; the
+Importing :mod:`xpu_rt.agent.primitives` registers all 7 sites; the
 module-level fixture in this file imports it once.
 """
 
@@ -22,9 +22,9 @@ from __future__ import annotations
 
 from typing import Any
 
-import compgen.agent.primitives  # noqa: F401  (registers every primitive)
+import xpu_rt.agent.primitives  # noqa: F401  (registers every primitive)
 import pytest
-from compgen.llm.call_site import (
+from xpu_rt.llm.call_site import (
     FORBIDDEN_LLM_ACTIONS,
     get_call_site,
     list_call_site_ids,
@@ -72,12 +72,12 @@ def _ensure_llm_disabled(monkeypatch):
     """Run each test under the deterministic-fallback regime so we
     never depend on a live LLM connection."""
 
-    monkeypatch.setenv("COMPGEN_DISABLE_LLM", "1")
+    monkeypatch.setenv("XPU_RT_DISABLE_LLM", "1")
     yield
 
 
 def test_all_seven_primitives_registered():
-    """The :mod:`compgen.agent.primitives` import registers every
+    """The :mod:`xpu_rt.agent.primitives` import registers every
     site so they appear in the global registry."""
 
     site_ids = set(list_call_site_ids())
@@ -96,11 +96,11 @@ def test_all_seven_primitives_registered():
 @pytest.mark.parametrize("site_id,kwargs", list(_PRIMITIVE_INPUTS.items()))
 def test_primitive_runs_under_fallback(site_id: str, kwargs: dict[str, Any]):
     """Each primitive must produce a schema-valid output under
-    ``COMPGEN_DISABLE_LLM=1`` (no LLM, fallback path only)."""
+    ``XPU_RT_DISABLE_LLM=1`` (no LLM, fallback path only)."""
 
     import importlib
 
-    mod = importlib.import_module(f"compgen.agent.primitives.{site_id}")
+    mod = importlib.import_module(f"xpu_rt.agent.primitives.{site_id}")
     fn = getattr(mod, site_id)
     out = fn(**kwargs)
     assert isinstance(out, dict)
@@ -127,7 +127,7 @@ def test_every_card_forbidden_in_closed_enum():
 def test_pick_dispatch_dispatch_mode_in_closed_enum():
     """The dispatch_mode the fallback picks must be in the enum."""
 
-    from compgen.agent.primitives.pick_dispatch import DISPATCH_MODES, pick_dispatch
+    from xpu_rt.agent.primitives.pick_dispatch import DISPATCH_MODES, pick_dispatch
 
     for workload in ("streaming", "batched_inference", "one_shot", "persistent", "novel"):
         out = pick_dispatch(workload, {"latency_budget_ms": 25.0}, {"region_id": "r"})
@@ -135,7 +135,7 @@ def test_pick_dispatch_dispatch_mode_in_closed_enum():
 
 
 def test_compare_recipes_relation_in_closed_enum():
-    from compgen.agent.primitives.compare_recipes import (
+    from xpu_rt.agent.primitives.compare_recipes import (
         RECIPE_RELATIONS,
         compare_recipes,
     )
@@ -148,7 +148,7 @@ def test_revise_kernel_shrinks_tile_size_monotonically():
     """The fallback's tile shrink ladder is monotonic: the new tile
     is strictly smaller than or equal to the previous one."""
 
-    from compgen.agent.primitives.revise_kernel import revise_kernel
+    from xpu_rt.agent.primitives.revise_kernel import revise_kernel
 
     out = revise_kernel(
         {"op": "matmul"},
@@ -161,7 +161,7 @@ def test_revise_kernel_shrinks_tile_size_monotonically():
 
 
 def test_explain_counterexample_suggested_edit_kind_typed():
-    from compgen.agent.primitives.explain_counterexample import explain_counterexample
+    from xpu_rt.agent.primitives.explain_counterexample import explain_counterexample
 
     out = explain_counterexample({"likely_cause": "x"}, {}, {})
     assert out["suggested_edit"]["kind"] in {
@@ -172,7 +172,7 @@ def test_explain_counterexample_suggested_edit_kind_typed():
 
 
 def test_p3_full_registry_size_after_imports():
-    """Sanity floor: after importing ``compgen.agent.primitives`` the
+    """Sanity floor: after importing ``xpu_rt.agent.primitives`` the
     registry contains at least 7 sites."""
 
     assert len(list_call_site_ids()) >= 7

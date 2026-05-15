@@ -17,10 +17,10 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from compgen.agent.suggest import suggest
-from compgen.api import compile_model
-from compgen.api import device as _device
-from compgen.ir.recipe.seed import generate_seed_recipe
+from xpu_rt.agent.suggest import suggest
+from xpu_rt.api import compile_model
+from xpu_rt.api import device as _device
+from xpu_rt.ir.recipe.seed import generate_seed_recipe
 
 EXEMPLAR = Path(__file__).resolve().parents[2] / "targetgen" / "exemplars" / "test_gpu_simt.yaml"
 
@@ -70,7 +70,7 @@ def test_megakernel_attention_window_is_filtered_to_semantic_roles() -> None:
     structural_noise = {"yield", "empty", "view", "transpose", "permute", "cat", "clone", "unsqueeze", "expand"}
     # Walk every candidate's fused_region_refs; cross-check that the
     # role of each region is NOT structural noise.
-    from compgen.agent.suggest._recipe_index import build_recipe_index
+    from xpu_rt.agent.suggest._recipe_index import build_recipe_index
 
     idx = build_recipe_index(recipe)
     for c in out:
@@ -171,12 +171,12 @@ def test_dispatch_stamps_slot_name_on_every_candidate() -> None:
 def test_already_proposed_pair_drops_out_of_next_suggest_call(tmp_path: Path) -> None:
     """After propose_invent_slot lands a fusion, re-calling suggest
     must not return the SAME (prod_sym, cons_sym) pair."""
-    from compgen.agent.invent_slots.registrar import register_invent_slots
-    from compgen.agent.llm_driver import LLMDrivenCompiler
-    from compgen.llm.mock_client import MockLLMClient
-    from compgen.llm.registry import Registry
-    from compgen.mcp.session import SessionManager
-    from compgen.mcp.tools.transform import propose_invent_slot
+    from xpu_rt.agent.invent_slots.registrar import register_invent_slots
+    from xpu_rt.agent.llm_driver import LLMDrivenCompiler
+    from xpu_rt.llm.mock_client import MockLLMClient
+    from xpu_rt.llm.registry import Registry
+    from xpu_rt.mcp.session import SessionManager
+    from xpu_rt.mcp.tools.transform import propose_invent_slot
 
     sm = SessionManager(scratch_root=tmp_path / "scratch")
     session = sm.open()

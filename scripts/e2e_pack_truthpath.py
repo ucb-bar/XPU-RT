@@ -82,7 +82,7 @@ def main() -> list[GateReport]:
     _gate(1, "Pack Loading")
     r1 = GateReport(gate=1, name="Pack Loading")
     try:
-        from compgen.packs.loader import load_pack
+        from xpu_rt.packs.loader import load_pack
 
         loaded = load_pack(repo_root / "userpacks" / "cuda_tile")
         assert loaded.manifest.name == "cuda_tile", f"Expected name 'cuda_tile', got '{loaded.manifest.name}'"
@@ -145,7 +145,7 @@ def main() -> list[GateReport]:
     _gate(3, "Sealed Surface Enforcement")
     r3 = GateReport(gate=3, name="Sealed Surface Enforcement")
     try:
-        from compgen.packs.verify import OwnershipViolation, check_surface_allowed
+        from xpu_rt.packs.verify import OwnershipViolation, check_surface_allowed
 
         # Sealed surface should be blocked
         violation = check_surface_allowed([loaded], requested_surface="tile_dialect_semantics")
@@ -179,12 +179,12 @@ def main() -> list[GateReport]:
     pipeline_module = None
     try:
         import torch
-        from compgen.capture.torch_export import capture_model
-        from compgen.ir.payload.import_fx import fx_to_xdsl
-        from compgen.stages.registry import StageRegistry
-        from compgen.stages.targets.cuda_gpu import create_cuda_gpu_stack
-        from compgen.targets.capability import infer_capabilities
-        from compgen.targets.schema import DeviceSpec, TargetProfile
+        from xpu_rt.capture.torch_export import capture_model
+        from xpu_rt.ir.payload.import_fx import fx_to_xdsl
+        from xpu_rt.stages.registry import StageRegistry
+        from xpu_rt.stages.targets.cuda_gpu import create_cuda_gpu_stack
+        from xpu_rt.targets.capability import infer_capabilities
+        from xpu_rt.targets.schema import DeviceSpec, TargetProfile
 
         # Define SimpleMLP
         class SimpleMLP(torch.nn.Module):
@@ -254,9 +254,9 @@ def main() -> list[GateReport]:
     r5 = GateReport(gate=5, name="Tile IR Lowering to Triton")
     triton_code = ""
     try:
-        from compgen.ir.tile.attrs import MemoryClassAttr, TileShapeAttr
-        from compgen.ir.tile.lower_triton import lower_tile_to_triton
-        from compgen.ir.tile.ops import TileElementwiseOp, TileLoadOp, TileMMAOp, TileStoreOp
+        from xpu_rt.ir.tile.attrs import MemoryClassAttr, TileShapeAttr
+        from xpu_rt.ir.tile.lower_triton import lower_tile_to_triton
+        from xpu_rt.ir.tile.ops import TileElementwiseOp, TileLoadOp, TileMMAOp, TileStoreOp
         from xdsl.dialects.builtin import StringAttr, SymbolRefAttr
 
         # Build a representative tile IR sequence: Load A, Load B, MMA, ReLU, Store C
@@ -360,8 +360,8 @@ def main() -> list[GateReport]:
     _gate(7, "Promotion")
     r7 = GateReport(gate=7, name="Promotion")
     try:
-        from compgen.promotion.promote import RecipePromoter
-        from compgen.runtime.bundle import Bundle, BundleBuilder
+        from xpu_rt.promotion.promote import RecipePromoter
+        from xpu_rt.runtime.bundle import Bundle, BundleBuilder
 
         # Build a bundle from pipeline output
         bundle_dir = Path(tempfile.mkdtemp(prefix="cuda_tile_bundle_"))

@@ -24,7 +24,7 @@ Hard rules:
 
 Used by ``backend_registry`` (registers backends), ``routing``
 (deterministic kind -> backend table), and every planner under
-``compgen.solve`` (memory, placement, overlap, Z3 obligations).
+``xpu_rt.solve`` (memory, placement, overlap, Z3 obligations).
 """
 
 from __future__ import annotations

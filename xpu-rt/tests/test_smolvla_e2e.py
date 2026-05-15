@@ -1,4 +1,4 @@
-"""SmolVLA end-to-end test through the full CompGen pipeline.
+"""SmolVLA end-to-end test through the full XPU-RT pipeline.
 
 SmolVLA is a 450M-param vision-language-action model (Understanding-PI0).
 These tests verify the complete path: load → capture → IR → analyze →
@@ -77,8 +77,8 @@ class TestSmolVLACapture:
 class TestSmolVLAConversion:
     def test_smolvla_fx_to_xdsl(self, smolvla_fx_graphs) -> None:
         """At least one SmolVLA partition converts to xDSL."""
-        from compgen.capture.torch_export import capture_model
-        from compgen.ir.payload.import_fx import fx_to_xdsl
+        from xpu_rt.capture.torch_export import capture_model
+        from xpu_rt.ir.payload.import_fx import fx_to_xdsl
 
         # Use a simpler approach: capture a small sub-model
         class TinyLinear(torch.nn.Module):
@@ -97,11 +97,11 @@ class TestSmolVLAConversion:
 class TestSmolVLAPipeline:
     def test_smolvla_kernel_contracts(self) -> None:
         """Kernel contracts can be built for SmolVLA-like IR."""
-        from compgen.capture.torch_export import capture_model
-        from compgen.ir.payload.import_fx import fx_to_xdsl
-        from compgen.kernels.contracts import build_kernel_contracts
-        from compgen.kernels.selector import select_strategies
-        from compgen.targets.schema import load_profile
+        from xpu_rt.capture.torch_export import capture_model
+        from xpu_rt.ir.payload.import_fx import fx_to_xdsl
+        from xpu_rt.kernels.contracts import build_kernel_contracts
+        from xpu_rt.kernels.selector import select_strategies
+        from xpu_rt.targets.schema import load_profile
 
         # Use SimpleMLP as proxy (same op types as SmolVLA subgraph)
         class MLP(torch.nn.Module):
@@ -123,10 +123,10 @@ class TestSmolVLAPipeline:
 
     def test_smolvla_eqsat(self) -> None:
         """EqSat runs on SmolVLA-like IR."""
-        from compgen.capture.torch_export import capture_model
-        from compgen.eqsat.config import EqSatConfig
-        from compgen.eqsat.pipeline import run_eqsat_pass
-        from compgen.ir.payload.import_fx import fx_to_xdsl
+        from xpu_rt.capture.torch_export import capture_model
+        from xpu_rt.eqsat.config import EqSatConfig
+        from xpu_rt.eqsat.pipeline import run_eqsat_pass
+        from xpu_rt.ir.payload.import_fx import fx_to_xdsl
 
         class Linear(torch.nn.Module):
             def __init__(self):
@@ -143,12 +143,12 @@ class TestSmolVLAPipeline:
 
     def test_smolvla_stages_pipeline(self, tmp_path) -> None:
         """Full stages pipeline runs on SmolVLA-like IR."""
-        from compgen.capture.torch_export import capture_model
-        from compgen.ir.payload.import_fx import fx_to_xdsl
-        from compgen.stages.registry import StageRegistry
-        from compgen.stages.targets.cuda_gpu import create_cuda_gpu_stack
-        from compgen.targets.capability import infer_capabilities
-        from compgen.targets.schema import load_profile
+        from xpu_rt.capture.torch_export import capture_model
+        from xpu_rt.ir.payload.import_fx import fx_to_xdsl
+        from xpu_rt.stages.registry import StageRegistry
+        from xpu_rt.stages.targets.cuda_gpu import create_cuda_gpu_stack
+        from xpu_rt.targets.capability import infer_capabilities
+        from xpu_rt.targets.schema import load_profile
 
         class MLP(torch.nn.Module):
             def __init__(self):
@@ -177,12 +177,12 @@ class TestSmolVLAPipeline:
 class TestSmolVLAAgenticLoop:
     def test_agentic_loop_on_mlp(self) -> None:
         """Agentic compilation loop runs on MLP (SmolVLA proxy)."""
-        from compgen.agent.env import CompilerEnv
-        from compgen.agent.loop import AgenticCompilationLoop
-        from compgen.capture.torch_export import capture_model
-        from compgen.ir.payload.import_fx import fx_to_xdsl
-        from compgen.llm.mock_client import MockLLMClient
-        from compgen.targets.schema import load_profile
+        from xpu_rt.agent.env import CompilerEnv
+        from xpu_rt.agent.loop import AgenticCompilationLoop
+        from xpu_rt.capture.torch_export import capture_model
+        from xpu_rt.ir.payload.import_fx import fx_to_xdsl
+        from xpu_rt.llm.mock_client import MockLLMClient
+        from xpu_rt.targets.schema import load_profile
 
         class MLP(torch.nn.Module):
             def __init__(self):

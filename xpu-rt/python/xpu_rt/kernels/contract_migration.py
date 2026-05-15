@@ -7,13 +7,13 @@ NOT invalidate cached v3 kernels. The mechanism:
 1. New optional fields land in
    :attr:`KernelContractV3.optional_v3_1_fields` keyed by name. Field
    names are declared in
-   :data:`compgen.kernels.contract_v3._OPTIONAL_V3_1_FIELD_NAMES`.
+   :data:`xpu_rt.kernels.contract_v3._OPTIONAL_V3_1_FIELD_NAMES`.
 2. Both the canonical and the instance hash projections (kernel_facing
    + compiler_only) exclude this slot, so adding a new field name +
    default never changes a cached cert's hash.
 3. v3 cert bodies (no ``optional_v3_1_fields`` key) load via
    :func:`migrate_contract_v3_to_v3_1` which fills in defaults from
-   :data:`compgen.kernels.contract_v3._OPTIONAL_V3_1_FIELD_DEFAULTS`.
+   :data:`xpu_rt.kernels.contract_v3._OPTIONAL_V3_1_FIELD_DEFAULTS`.
 4. v3.1 reader code can read any optional field via
    :func:`get_optional_v3_1_field` without breaking when the field is
    absent (returns the recognized default).
@@ -31,7 +31,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from compgen.kernels.contract_v3 import (
+from xpu_rt.kernels.contract_v3 import (
     _OPTIONAL_V3_1_FIELD_DEFAULTS,
     _OPTIONAL_V3_1_FIELD_NAMES,
     CONTRACT_REFINEMENT_VERSION,

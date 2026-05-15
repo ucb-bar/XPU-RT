@@ -15,7 +15,7 @@ Two compounding bugs caused multi-layer models to surface fewer
 
 After REQ-026:
 
-- Contract extraction filters to ops carrying ``compgen.region_id``
+- Contract extraction filters to ops carrying ``xpu_rt.region_id``
   (decompositions tag their dispatch boundaries explicitly; opaque
   ``func.call`` ops get synthesised ids in the post-import pass).
 - ``run_provider_fallback`` reads region_id / dispatch_id straight off
@@ -29,19 +29,19 @@ from pathlib import Path
 
 import torch
 import torch.nn as nn
-from compgen.capture.torch_export import capture_model
-from compgen.ir.payload.import_fx import fx_to_xdsl
-from compgen.kernels.codegen_fallback import run_provider_fallback
-from compgen.kernels.contracts import build_kernel_contracts
-from compgen.kernels.provider import (
+from xpu_rt.capture.torch_export import capture_model
+from xpu_rt.ir.payload.import_fx import fx_to_xdsl
+from xpu_rt.kernels.codegen_fallback import run_provider_fallback
+from xpu_rt.kernels.contracts import build_kernel_contracts
+from xpu_rt.kernels.provider import (
     KernelContract as ProviderContract,
 )
-from compgen.kernels.provider import (
+from xpu_rt.kernels.provider import (
     KnowledgeExport,
     ProviderResult,
     SearchBudget,
 )
-from compgen.targets.schema import load_profile
+from xpu_rt.targets.schema import load_profile
 
 _TARGET = "examples/target_profiles/cuda_a100.yaml"
 
@@ -105,7 +105,7 @@ def test_no_spurious_arith_or_tensor_empty_contracts() -> None:
     ``tensor.empty`` / ``arith.mulf`` / ``arith.addf`` ops as
     pseudo-kernels because ``module.walk()`` recurses into the
     matmul's implicit body. After REQ-026, only ops tagged with
-    ``compgen.region_id`` become contracts — those don't."""
+    ``xpu_rt.region_id`` become contracts — those don't."""
 
     class MLP(nn.Module):
         def __init__(self) -> None:
@@ -129,7 +129,7 @@ def test_no_spurious_arith_or_tensor_empty_contracts() -> None:
 def test_index_region_ids_align_with_payload_mlir(tmp_path: Path) -> None:
     """End-to-end through ``compile_model``: ``index.json`` region_ids
     are the same set that appear in ``payload.mlir``."""
-    from compgen.api import compile_model, device
+    from xpu_rt.api import compile_model, device
 
     spec = tmp_path / "spec.yaml"
     spec.write_text(
@@ -155,7 +155,7 @@ def test_index_region_ids_align_with_payload_mlir(tmp_path: Path) -> None:
     # Register the catch-all provider via extra_providers wouldn't reach
     # compile_model; use a tmp-path side-channel — register through the
     # plugin registry instead.
-    from compgen.plugins import GROUP_KERNEL_PROVIDERS, register, reset_registry
+    from xpu_rt.plugins import GROUP_KERNEL_PROVIDERS, register, reset_registry
 
     reset_registry()
     try:

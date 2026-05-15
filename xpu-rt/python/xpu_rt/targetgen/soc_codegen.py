@@ -23,7 +23,7 @@ from typing import Any
 import structlog
 from jinja2 import Environment, FileSystemLoader
 
-from compgen.targetgen.hardware_spec import AddressSpace, HardwareSpec, MemoryModelSpec
+from xpu_rt.targetgen.hardware_spec import AddressSpace, HardwareSpec, MemoryModelSpec
 
 log = structlog.get_logger()
 
@@ -159,7 +159,7 @@ def _infer_threads(
         dispatch_body = (
             f"{trace_begin}"
             f"/* Wait for work via IPC service endpoint */\n"
-            f"        struct {ipc.get('endpoint_name', 'compgen_ep')}_msg msg;\n"
+            f"        struct {ipc.get('endpoint_name', 'xpu_rt_ep')}_msg msg;\n"
             f"        int rc = ipc_service_recv(&ep, &msg, sizeof(msg), K_FOREVER);\n"
             f"        if (rc == 0) {{\n"
             f"            kernel_fn_t fn = kernel_lookup(msg.kernel_name);\n"

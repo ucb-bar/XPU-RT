@@ -3,7 +3,7 @@
 ``DeviceTraits`` is the capability struct the runtime + kernel
 providers + dispatch strategies query **instead** of branching on
 ``vendor == "cuda"``.  It's pure Python, pure data, derived from the
-:class:`~compgen.targets.schema.TargetProfile` at device-open time.
+:class:`~xpu_rt.targets.schema.TargetProfile` at device-open time.
 
 Design rationale: per the runtime-HAL plan
 (``~/.claude/plans/graceful-marinating-crab.md``), IREE's experience
@@ -39,7 +39,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from compgen.targets.schema import TargetProfile
+    from xpu_rt.targets.schema import TargetProfile
 
 
 # Keys forwarded from ``TargetProfile.metadata`` into
@@ -150,8 +150,8 @@ class DeviceTraits:
     #: Open-ended metadata dict populated from
     #: ``TargetProfile.metadata`` (filtered to ``_FORWARDED_METADATA_KEYS``)
     #: and from the live device probe in
-    #: :meth:`compgen.runtime.native.device.Device.probe_traits`.
-    #: Used by :mod:`compgen.kernels.cost.roofline` (peak rates) and
+    #: :meth:`xpu_rt.runtime.native.device.Device.probe_traits`.
+    #: Used by :mod:`xpu_rt.kernels.cost.roofline` (peak rates) and
     #: by Phase-5's CUDA emitter (Blackwell-specific lowering choices —
     #: TMA / clusters / FP8). Keys with first-class booleans elsewhere
     #: are repeated here for ergonomics, e.g. ``supports_clusters``.
@@ -329,7 +329,7 @@ class DeviceTraits:
         Probe-supplied values WIN over profile-derived ones — when
         the YAML says ``sm_count: 132`` (B200) but the live card
         reports 188, we trust the card. The probe dict is the output
-        of :meth:`compgen.runtime.native.device.Device.probe_traits`
+        of :meth:`xpu_rt.runtime.native.device.Device.probe_traits`
         and is JSON-serialisable.
 
         Top-level boolean fields whose canonical home is on the

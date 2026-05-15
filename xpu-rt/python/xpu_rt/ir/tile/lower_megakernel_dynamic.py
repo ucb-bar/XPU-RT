@@ -1,6 +1,6 @@
 """Dynamic-scheduler megakernel emitter (Algorithm 2 of the ETC paper).
 
-Sibling of :mod:`compgen.ir.tile.lower_megakernel` (static scheduler).
+Sibling of :mod:`xpu_rt.ir.tile.lower_megakernel` (static scheduler).
 Consumes an annotated ``event.graph`` whose policy is ``dynamic`` and
 emits a persistent Triton kernel that
 
@@ -42,14 +42,14 @@ from typing import Any
 
 from xdsl.dialects.builtin import IntegerAttr
 
-from compgen.ir.event.attrs import EventTensorTypeAttr
-from compgen.ir.event.ops import (
+from xpu_rt.ir.event.attrs import EventTensorTypeAttr
+from xpu_rt.ir.event.ops import (
     CallDeviceOp,
     EventTensorOp,
     GraphOp,
 )
 
-_SCHEDULE_ATTR = "compgen.static_schedule"
+_SCHEDULE_ATTR = "xpu_rt.static_schedule"
 
 
 @dataclass(frozen=True)
@@ -375,7 +375,7 @@ def lower_megakernel_dynamic(
     """Lower an ``event.graph`` with policy=dynamic into persistent Triton.
 
     Requires the graph to have ``policy='dynamic'`` and (optionally) a
-    ``compgen.static_schedule`` annotation -- the dynamic emitter reads
+    ``xpu_rt.static_schedule`` annotation -- the dynamic emitter reads
     only the graph structure + the user-supplied :class:`spec`.
     """
     if graph.policy.policy.data != "dynamic":

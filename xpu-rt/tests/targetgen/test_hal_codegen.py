@@ -11,13 +11,13 @@ import re
 from pathlib import Path
 
 import pytest
-from compgen.targetgen.hal_codegen import (
+from xpu_rt.targetgen.hal_codegen import (
     _infer_alloc_strategy,
     _infer_launch_mechanism,
     _infer_sync_mechanism,
     generate_hal_driver,
 )
-from compgen.targetgen.load import load_hardware_spec
+from xpu_rt.targetgen.load import load_hardware_spec
 
 EXEMPLAR_DIR = Path(__file__).parent / "exemplars"
 

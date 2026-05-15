@@ -6,8 +6,8 @@ from collections.abc import Iterable
 from dataclasses import dataclass, field
 from typing import Any
 
-from compgen.semantic.synthesis.dataset import SynthesisExample
-from compgen.semantic.synthesis.guard_lang import (
+from xpu_rt.semantic.synthesis.dataset import SynthesisExample
+from xpu_rt.semantic.synthesis.guard_lang import (
     BoolN,
     BoolOp,
     Cmp,
@@ -67,10 +67,10 @@ def _llm_seed_fragments(
 ) -> list[Expr]:
     """Ask LLM to propose guard expression fragments (Unit 10)."""
     try:
-        from compgen.agent.prompts.guard_propose import GUARD_PROPOSE_SCHEMA, GuardProposeContext
-        from compgen.agent.prompts.guard_propose import format_prompt as fmt_gp
-        from compgen.agent.prompts.guard_propose import parse_response as parse_gp
-        from compgen.llm.base import GenerationRequest, LLMConfig
+        from xpu_rt.agent.prompts.guard_propose import GUARD_PROPOSE_SCHEMA, GuardProposeContext
+        from xpu_rt.agent.prompts.guard_propose import format_prompt as fmt_gp
+        from xpu_rt.agent.prompts.guard_propose import parse_response as parse_gp
+        from xpu_rt.llm.base import GenerationRequest, LLMConfig
 
         # Collect variable names/types from examples
         var_names: list[str] = []

@@ -22,10 +22,10 @@ verify the surrogate is updated correctly.
 
 from __future__ import annotations
 
-from compgen.bench.iterate import _contract_fingerprint, iterate_kernel
-from compgen.bench.kernel_bench import BenchResult
-from compgen.bench.surrogate import Surrogate
-from compgen.kernels.contract_v3 import (
+from xpu_rt.bench.iterate import _contract_fingerprint, iterate_kernel
+from xpu_rt.bench.kernel_bench import BenchResult
+from xpu_rt.bench.surrogate import Surrogate
+from xpu_rt.kernels.contract_v3 import (
     IOContract,
     KernelArchetype,
     KernelContractV3,

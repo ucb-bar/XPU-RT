@@ -4,7 +4,7 @@ integration_level: probe
 target_families: [gemmini, custom_accelerator]
 contract_kinds: [matmul, pointwise, fused_region]
 emits: [c_source, elf]
-entrypoint: compgen.providers.adapters.gemmini_c:GemminiCProvider
+entrypoint: xpu_rt.providers.adapters.gemmini_c:GemminiCProvider
 paper_claimable: false
 required_env: [CHIPYARD_ROOT, GEMMINI_ROOT]
 required_commands: [riscv64-unknown-elf-gcc]

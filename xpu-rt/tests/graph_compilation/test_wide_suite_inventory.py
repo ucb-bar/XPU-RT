@@ -229,10 +229,10 @@ def test_no_compiler_core_files_modified() -> None:
     # Sanity: gate must not import compiler-core mutable modules.
     text = gate.read_text(encoding="utf-8")
     forbidden_imports = (
-        "from compgen.ir.payload",
-        "from compgen.graph_compilation.recipe_lowering import",
-        "from compgen.graph_compilation.post_lowering import",
-        "from compgen.graph_compilation.run import",
+        "from xpu_rt.ir.payload",
+        "from xpu_rt.graph_compilation.recipe_lowering import",
+        "from xpu_rt.graph_compilation.post_lowering import",
+        "from xpu_rt.graph_compilation.run import",
     )
     for pat in forbidden_imports:
         assert pat not in text, f"gate must not import compiler core: {pat}"

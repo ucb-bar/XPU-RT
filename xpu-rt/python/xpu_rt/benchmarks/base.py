@@ -6,9 +6,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol
 
-from compgen.benchmarks.common.env import SuiteEnvironmentStatus
-from compgen.benchmarks.common.manifest import SuiteManifestEntry
-from compgen.benchmarks.common.results import NormalizedSuiteResult
+from xpu_rt.benchmarks.common.env import SuiteEnvironmentStatus
+from xpu_rt.benchmarks.common.manifest import SuiteManifestEntry
+from xpu_rt.benchmarks.common.results import NormalizedSuiteResult
 
 if TYPE_CHECKING:
     from benchmarks.record import RunRecord
@@ -67,7 +67,7 @@ class SuiteAdapter(Protocol):
         config: SuiteRunConfig | None = None,
     ) -> list[RunRecord]: ...
 
-    def run_compgen(
+    def run_xpu_rt(
         self,
         entry: SuiteManifestEntry,
         *,

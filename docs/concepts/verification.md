@@ -1,6 +1,6 @@
 # Verification model
 
-CompGen is designed around one rule: trust nothing from the generator
+XPU-RT is designed around one rule: trust nothing from the generator
 until it is verified.
 
 ## Four-level verification ladder
@@ -23,7 +23,7 @@ deterministic recipe library.
 - The demo runs a transform verification step and emits bundle artifacts.
 - Target generation emits a `verification_manifest.json` describing the
   expected verification surface for a target.
-- `compgen verify` runs best-effort structural / functional / performance
+- `xpu-rt verify` runs best-effort structural / functional / performance
   / formal checks against a bundle; see
   [CLI Reference](../reference/cli.md).
 
@@ -38,6 +38,6 @@ deterministic recipe library.
 
 ## Why users should care
 
-The point of CompGen is not just to generate compiler artifacts; it is to
+The point of XPU-RT is not just to generate compiler artifacts; it is to
 generate them in a way that can be checked, reproduced, and promoted only
 after passing validation.

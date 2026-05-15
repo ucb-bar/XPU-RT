@@ -37,7 +37,7 @@ from typing import Any, Final, Protocol
 ADAPTERS: Final[tuple[str, ...]] = (
     "torch_eager",
     "torch_compile",
-    "compgen",
+    "xpu-rt",
 )
 
 

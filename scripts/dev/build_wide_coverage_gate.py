@@ -86,9 +86,9 @@ def inventory_merlin(merlin_root: Path, repo_root: Path) -> list[dict[str, Any]]
 
     Categories used:
 
-    - ``admitted_pytorch`` — has ``nn.Module`` and a wired CompGen YAML
+    - ``admitted_pytorch`` — has ``nn.Module`` and a wired XPU-RT YAML
       under ``configs/models/merlin_<name>.yaml``.
-    - ``needs_custom_loader`` — has ``nn.Module`` but no CompGen YAML
+    - ``needs_custom_loader`` — has ``nn.Module`` but no XPU-RT YAML
       yet (either user hasn't authored a wrapper or the model needs a
       bespoke factory).
     - ``external_dependency_missing`` — has a sibling submodule
@@ -116,7 +116,7 @@ def inventory_merlin(merlin_root: Path, repo_root: Path) -> list[dict[str, Any]]
 
         if has_nn and cfg is not None:
             admission = "admitted_pytorch"
-            reason = "has importable torch.nn.Module factory wired via CompGen YAML"
+            reason = "has importable torch.nn.Module factory wired via XPU-RT YAML"
             framework = "pytorch"
         elif has_nn and has_subm and subm_state == "unfetched":
             admission = "external_dependency_missing"
@@ -136,7 +136,7 @@ def inventory_merlin(merlin_root: Path, repo_root: Path) -> list[dict[str, Any]]
         elif has_nn and not cfg:
             admission = "needs_custom_loader"
             reason = (
-                "has importable torch.nn.Module but no CompGen YAML wrapper "
+                "has importable torch.nn.Module but no XPU-RT YAML wrapper "
                 "yet (admit by adding configs/models/merlin_<dir>.yaml)"
             )
             framework = "pytorch"
@@ -192,17 +192,17 @@ _SMOKE_MODELS = frozenset({
 })
 
 
-def _classify_compgen_model(model_id: str) -> str:
+def _classify_xpu_rt_model(model_id: str) -> str:
     if model_id.startswith("merlin_"):
         return "merlin"
     if model_id in _SMOKE_MODELS:
         return "smoke"
     if model_id.startswith("proxy_"):
         return "proxy"
-    return "compgen_synthetic"
+    return "xpu_rt_synthetic"
 
 
-def inventory_compgen(suite_yaml: Path) -> list[dict[str, Any]]:
+def inventory_xpu_rt(suite_yaml: Path) -> list[dict[str, Any]]:
     raw = yaml.safe_load(Path(suite_yaml).read_text(encoding="utf-8"))
     out: list[dict[str, Any]] = []
     for entry in raw.get("models", []):
@@ -210,7 +210,7 @@ def inventory_compgen(suite_yaml: Path) -> list[dict[str, Any]]:
         out.append(
             {
                 "model_id": mid,
-                "source": _classify_compgen_model(mid),
+                "source": _classify_xpu_rt_model(mid),
                 "config": entry["config"],
                 "role": entry.get("role", ""),
             }
@@ -585,7 +585,7 @@ def write_summary_md(
         if r["source"] == "merlin" and r["overall_strict"] == "pass"
     )
     lines.append(
-        "**Proves**: CompGen's current front-end loop captures, lowers, "
+        "**Proves**: XPU-RT's current front-end loop captures, lowers, "
         "attributes, analyzes, constructs an action space, selects a candidate, "
         "verifies the recipe pre-lowering, emits lowering artifacts, and applies "
         "metadata-only structural transforms on a copy of Payload IR — across a "
@@ -647,7 +647,7 @@ def build_wide_coverage_gate(
         raise FileNotFoundError(f"--suite-results does not exist: {suite_results}")
 
     merlin_inv = inventory_merlin(Path(merlin_root), repo_root)
-    suite_inv = inventory_compgen(Path(suite_yaml))
+    suite_inv = inventory_xpu_rt(Path(suite_yaml))
 
     rows: list[dict[str, Any]] = []
     for entry in suite_inv:
@@ -755,7 +755,7 @@ def build_wide_coverage_gate(
                         "real_merlin_pytorch_passed": _pass_count(
                             "merlin", "overall_pipeline_completed"
                         ),
-                        "compgen_synthetic_passed": other_pipe,
+                        "xpu_rt_synthetic_passed": other_pipe,
                     },
                     "strict_gate": {
                         "passed": sum(1 for r in rows if r["overall_strict"] == "pass"),
@@ -765,7 +765,7 @@ def build_wide_coverage_gate(
                         "real_merlin_pytorch_passed": _pass_count(
                             "merlin", "overall_strict"
                         ),
-                        "compgen_synthetic_passed": other_strict,
+                        "xpu_rt_synthetic_passed": other_strict,
                     },
                 },
                 "results": rows,

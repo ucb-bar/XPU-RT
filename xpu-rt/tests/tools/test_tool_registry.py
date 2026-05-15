@@ -1,4 +1,4 @@
-"""Tests for :mod:`compgen.tools.tool_registry`.
+"""Tests for :mod:`xpu_rt.tools.tool_registry`.
 
 Coverage:
 
@@ -14,8 +14,8 @@ from __future__ import annotations
 
 import pytest
 import yaml
-from compgen.tools.errors import ToolCardError
-from compgen.tools.tool_registry import (
+from xpu_rt.tools.errors import ToolCardError
+from xpu_rt.tools.tool_registry import (
     iter_tool_cards,
     load_tool_card,
     tool_cards_root,
@@ -24,7 +24,7 @@ from compgen.tools.tool_registry import (
 
 def test_shipped_cards_load(tmp_path):
     cards = list(iter_tool_cards())
-    assert any(card.tool_id == "compgen_echo" for card in cards), (
+    assert any(card.tool_id == "xpu_rt_echo" for card in cards), (
         "echo card must be discoverable from the shipped cards directory"
     )
 
@@ -39,11 +39,11 @@ def test_malformed_card_raises(tmp_path):
     bad.write_text(
         yaml.safe_dump(
             {
-                "schema_version": "compgen_tool_card_v1",
+                "schema_version": "xpu_rt_tool_card_v1",
                 "tool_id": "broken",
                 "maturity": "T0",
                 "phase": "made_up_phase",  # closed-enum violation
-                "entrypoints": {"python": "compgen.tools.builtin.echo:run"},
+                "entrypoints": {"python": "xpu_rt.tools.builtin.echo:run"},
                 "input_schema": {"type": "object"},
                 "output_schema": {
                     "type": "object",
@@ -63,11 +63,11 @@ def test_iteration_order_is_deterministic(tmp_path):
         (tmp_path / name).write_text(
             yaml.safe_dump(
                 {
-                    "schema_version": "compgen_tool_card_v1",
+                    "schema_version": "xpu_rt_tool_card_v1",
                     "tool_id": f"tool_{name.split('.')[0]}",
                     "maturity": "T0",
                     "phase": "evidence",
-                    "entrypoints": {"python": "compgen.tools.builtin.echo:run"},
+                    "entrypoints": {"python": "xpu_rt.tools.builtin.echo:run"},
                     "input_schema": {"type": "object"},
                     "output_schema": {
                         "type": "object",
@@ -90,7 +90,7 @@ def test_non_mapping_yaml_rejected(tmp_path):
         load_tool_card(bad)
 
 
-def test_tool_cards_root_resolves_under_compgen():
+def test_tool_cards_root_resolves_under_xpu_rt():
     root = tool_cards_root()
     assert root.name == "cards"
     assert root.parent.name == "tools"

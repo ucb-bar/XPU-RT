@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from compgen.ir.semantic.dialect import PredicateOp, RefinementRelation, SemanticType
+from xpu_rt.ir.semantic.dialect import PredicateOp, RefinementRelation, SemanticType
 
 
 def test_semantic_type() -> None:

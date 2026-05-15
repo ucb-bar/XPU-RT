@@ -1,20 +1,20 @@
-schema_version: compgen_tool_card_v1
-tool_id: compgen_emit_extension_task
+schema_version: xpu_rt_tool_card_v1
+tool_id: xpu_rt_emit_extension_task
 maturity: T6
 phase: extension_authoring
 description: |
   Emit a typed extension-task package under ``${out_dir}/<task_id>/``
-  when CompGen encounters an unsupported op or provider gap. The
+  when XPU-RT encounters an unsupported op or provider gap. The
   package contains ``extension_task.json`` + ``allowed_outputs.json``
   plus the optional companion documents (kernel-facing contract,
   region dossier, payload-IR summary). A fresh Claude / Codex session
   then authors the extension code under the task's ``output_dir``;
-  the validator at compgen_validate_extension_manifest checks it.
+  the validator at xpu_rt_validate_extension_manifest checks it.
 
 entrypoints:
-  python: compgen.tools.builtin.extension_authoring:emit_extension_task
-  cli: compgen-tool run compgen_emit_extension_task
-  mcp: compgen_emit_extension_task
+  python: xpu_rt.tools.builtin.extension_authoring:emit_extension_task
+  cli: xpu-rt-tool run xpu_rt_emit_extension_task
+  mcp: xpu_rt_emit_extension_task
 
 input_schema:
   type: object
@@ -93,6 +93,6 @@ tests:
     - tests.tools.test_extension_authoring_tools::test_emit_extension_task_unknown_reason
     - tests.tools.test_extension_authoring_tools::test_emit_extension_task_missing_task_id
 
-skill_path: .claude/skills/compgen-extension-authoring/SKILL.md
+skill_path: .claude/skills/xpu_rt-extension-authoring/SKILL.md
 fresh_agent_task_id: emit_extension_task_v1
 owner: core

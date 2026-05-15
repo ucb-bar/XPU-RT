@@ -1,20 +1,20 @@
-"""``compgen tool`` subcommand group.
+"""``xpu_rt tool`` subcommand group.
 
 Generic CLI dispatcher over the ToolCard registry. Every registered
 tool is callable through:
 
 ::
 
-    compgen tool list
-    compgen tool describe <tool_id>
-    compgen tool run <tool_id> --input <input.json> --out <out_dir>
-    compgen tool audit-promotion
+    xpu_rt tool list
+    xpu_rt tool describe <tool_id>
+    xpu_rt tool run <tool_id> --input <input.json> --out <out_dir>
+    xpu_rt tool audit-promotion
 
-The CLI is the only authoritative T1 surface — :mod:`compgen.tools`
+The CLI is the only authoritative T1 surface — :mod:`xpu_rt.tools`
 itself enforces input/output schemas, but a tool only counts as T1 in
 the maturity audit once it is callable from a shell. The
-``compgen-tool`` console script (see ``pyproject.toml``) is a thin
-alias for ``compgen tool``.
+``xpu-rt-tool`` console script (see ``pyproject.toml``) is a thin
+alias for ``xpu_rt tool``.
 
 Hard rules (enforced):
 
@@ -25,7 +25,7 @@ Hard rules (enforced):
 * The CLI never accepts a request inline as flags. Requests come
   from a JSON file (``--input``) or stdin (``--stdin``). This keeps
   inputs hashable and replayable, which is what grades against.
-* Maturity is *informational* in the CLI — ``compgen tool run`` will
+* Maturity is *informational* in the CLI — ``xpu_rt tool run`` will
   happily execute a T0 tool. The audit is what blocks promotion
   past a tool's evidence ceiling.
 """
@@ -40,16 +40,16 @@ from typing import Any
 
 import click
 
-from compgen.tools.errors import (
+from xpu_rt.tools.errors import (
     ToolCardError,
     ToolEntrypointError,
     ToolInputSchemaError,
     ToolOutputSchemaError,
     ToolRunError,
 )
-from compgen.tools.tool_card import ToolCard
-from compgen.tools.tool_registry import iter_tool_cards
-from compgen.tools.tool_runner import ToolRunner
+from xpu_rt.tools.tool_card import ToolCard
+from xpu_rt.tools.tool_registry import iter_tool_cards
+from xpu_rt.tools.tool_runner import ToolRunner
 
 
 def _emit_json(payload: dict[str, Any]) -> None:
@@ -93,12 +93,12 @@ def _load_cards(root: Path | None) -> dict[str, ToolCard]:
     type=click.Path(exists=True, file_okay=False, path_type=Path),
     default=None,
     help="Override the cards directory (defaults to "
-    "python/compgen/tools/cards/). Useful for testing or driving "
+    "python/xpu_rt/tools/cards/). Useful for testing or driving "
     "user-extension cards.",
 )
 @click.pass_context
 def tool(ctx: click.Context, cards_root: Path | None) -> None:
-    """Run, list, and inspect ToolCard-declared CompGen tools."""
+    """Run, list, and inspect ToolCard-declared XPU-RT tools."""
 
     ctx.ensure_object(dict)
     ctx.obj["cards_root"] = cards_root
@@ -129,7 +129,7 @@ def tool_list(obj: dict[str, Any], phase: str | None, maturity: str | None) -> N
     rows: list[dict[str, Any]] = []
     min_idx = 0
     if maturity is not None:
-        from compgen.tools.tool_card import MATURITY_LEVELS
+        from xpu_rt.tools.tool_card import MATURITY_LEVELS
 
         if maturity not in MATURITY_LEVELS:
             raise _emit_error(
@@ -302,19 +302,19 @@ def tool_audit_promotion(obj: dict[str, Any]) -> None:
     """Run the T0→T7 promotion audit over every registered tool.
 
     This subcommand is a thin pass-through to
-    ``compgen.audit.tool_promotion``. Until lands, it
+    ``xpu_rt.audit.tool_promotion``. Until lands, it
     emits ``status=not_implemented`` so the CLI surface is stable but
     honestly says nothing is checked yet.
     """
 
     try:
-        from compgen.audit.tool_promotion import run_tool_promotion_audit
+        from xpu_rt.audit.tool_promotion import run_tool_promotion_audit
     except ImportError:
         _emit_json(
             {
                 "status": "not_implemented",
                 "message": (
-                    "compgen.audit.tool_promotion (M-92) is not yet "
+                    "xpu_rt.audit.tool_promotion (M-92) is not yet "
                     "implemented; this command is a stable surface that "
                     "will dispatch to it when it lands."
                 ),

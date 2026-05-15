@@ -1,16 +1,16 @@
-# CompGen CLI Shape — Design Note
+# XPU-RT CLI Shape — Design Note
 
 > Status: design contract for the MCP→CLI migration. Lock the shape here before
 > code lands so every migrated subcommand looks the same.
 >
-> Audience: contributors migrating tools out of `python/compgen/mcp/tools/`
-> into `python/compgen/cli.py`. Read alongside
-> [`feedback_agentic_cli_first`](../../python/compgen/) (memory) and the
+> Audience: contributors migrating tools out of `python/xpu_rt/mcp/tools/`
+> into `python/xpu_rt/cli.py`. Read alongside
+> [`feedback_agentic_cli_first`](../../python/xpu_rt/) (memory) and the
 > migration audit in the project tracker.
 
 ## 1. Why this exists
 
-CompGen's interface stack has three layers — CLI, MCP, skills — and each layer
+XPU-RT's interface stack has three layers — CLI, MCP, skills — and each layer
 must be **agentic-first** (agent-drivable as a primary user) AND
 **fast-iterating** (`pip install -e .` is the only step between an edit and the
 next agent invocation). MCP is the slowest layer to iterate because every
@@ -29,16 +29,16 @@ drive it as competently as a typed MCP tool.
 Six rules. No exceptions without an explicit waiver in the command's
 docstring.
 
-### R1 — Logic lives in `compgen.api`, not in the click handler
+### R1 — Logic lives in `xpu_rt.api`, not in the click handler
 
-Every subcommand is a thin wrapper around a function in `compgen.api` (or a
-sibling `compgen.api.*` submodule). The same function is called by:
+Every subcommand is a thin wrapper around a function in `xpu_rt.api` (or a
+sibling `xpu_rt.api.*` submodule). The same function is called by:
 
 - The CLI handler (this note's subject).
 - The MCP tool wrapper, if one exists.
 - Any in-process Python user.
 
-The click handler does only: argument parsing, `compgen.api` invocation, output
+The click handler does only: argument parsing, `xpu_rt.api` invocation, output
 formatting, exit-code mapping. **No business logic in `cli.py`.** This rule is
 what makes the CLI/MCP distinction a transport choice rather than a code
 duplication tax.
@@ -54,7 +54,7 @@ This is what makes the CLI safely pipeable and parseable by an agent.
 
 ### R3 — Errors are typed, structured, and stable
 
-CLI handlers catch `compgen.runtime.errors.CompGenError` (and its subclasses)
+CLI handlers catch `xpu_rt.runtime.errors.CompGenError` (and its subclasses)
 and emit a structured error envelope (§3.2). Unexpected exceptions are caught
 at the top level, logged with full traceback to stderr, and reported as
 `{"type": "InternalError", ...}`. **Never** `print(traceback)` to stdout.
@@ -68,21 +68,21 @@ surface and are encountering the other:
 
 | MCP tool name                       | CLI invocation                          |
 |-------------------------------------|-----------------------------------------|
-| `compgen_list_targets`              | `compgen targets list`                  |
-| `compgen_describe_target`           | `compgen targets describe <name>`       |
-| `compgen_register_target`           | `compgen targets register <profile>`    |
-| `scan_vendor_repo`                  | `compgen vendor scan <repo>`            |
-| `scaffold_vendor_package`           | `compgen vendor scaffold <descriptor>`  |
-| `verify_vendor_package`             | `compgen vendor verify <package>`       |
-| `etc_conformance_run`               | `compgen conformance run`               |
-| `etc_conformance_summarize`         | `compgen conformance summarize <dir>`   |
-| `etc_megakernel_inspect`            | `compgen conformance inspect <bundle>`  |
-| `compgen_compile_torch_model`       | `compgen compile-torch <model>`         |
-| `compgen_run_compiled_bundle`       | `compgen run <bundle>` (already exists) |
-| `compgen_cublasdx_header_smoke`     | `compgen smoke cublasdx`                |
-| `compgen_run_cuda_source`           | `compgen smoke cuda <source>`           |
+| `xpu_rt_list_targets`              | `xpu-rt targets list`                  |
+| `xpu_rt_describe_target`           | `xpu-rt targets describe <name>`       |
+| `xpu_rt_register_target`           | `xpu-rt targets register <profile>`    |
+| `scan_vendor_repo`                  | `xpu-rt vendor scan <repo>`            |
+| `scaffold_vendor_package`           | `xpu-rt vendor scaffold <descriptor>`  |
+| `verify_vendor_package`             | `xpu-rt vendor verify <package>`       |
+| `etc_conformance_run`               | `xpu-rt conformance run`               |
+| `etc_conformance_summarize`         | `xpu-rt conformance summarize <dir>`   |
+| `etc_megakernel_inspect`            | `xpu-rt conformance inspect <bundle>`  |
+| `xpu_rt_compile_torch_model`       | `xpu-rt compile-torch <model>`         |
+| `xpu_rt_run_compiled_bundle`       | `xpu-rt run <bundle>` (already exists) |
+| `xpu_rt_cublasdx_header_smoke`     | `xpu-rt smoke cublasdx`                |
+| `xpu_rt_run_cuda_source`           | `xpu-rt smoke cuda <source>`           |
 
-The `compgen_` prefix is dropped (redundant under the `compgen` binary) and
+The `xpu_rt_` prefix is dropped (redundant under the `xpu-rt` binary) and
 verb-from-noun is split into `<noun-group> <verb>` for nounish commands.
 **Existing pipeline stages stay flat** (`analyze`, `verify`, `run`, `promote`):
 they are stage-aligned, not noun-scoped, and the convention is already
@@ -91,7 +91,7 @@ established.
 ### R5 — Shared option groups, declared once
 
 The following options are common enough to share via click decorators in
-`compgen.cli._options`:
+`xpu_rt.cli._options`:
 
 - LLM selection — already at the root group; do not duplicate per-command.
 - `--target / --target-profile <path>` — for any command that consumes a
@@ -115,7 +115,7 @@ rich enough to substitute. Every command's docstring **must** describe:
 3. The error types it can emit.
 4. A worked example invocation.
 
-If you wouldn't be comfortable handing an agent only `compgen <cmd> --help`
+If you wouldn't be comfortable handing an agent only `xpu-rt <cmd> --help`
 and expecting it to drive the command correctly, the docstring is not done.
 
 ## 3. JSON envelope
@@ -126,7 +126,7 @@ and expecting it to drive the command correctly, the docstring is not done.
 {
   "ok": true,
   "data": { ... command-specific payload ... },
-  "schema": "compgen.targets.list/v1"
+  "schema": "xpu_rt.targets.list/v1"
 }
 ```
 
@@ -146,7 +146,7 @@ and expecting it to drive the command correctly, the docstring is not done.
     "message": "No target named 'saturn-opu' is registered.",
     "details": { "target": "saturn-opu" }
   },
-  "schema": "compgen.error/v1"
+  "schema": "xpu_rt.error/v1"
 }
 ```
 
@@ -198,8 +198,8 @@ without updating this table.
 
 A CLI command must not depend on hidden environment state beyond:
 
-- `COMPGEN_LLM_*` env vars (resolved by the root group).
-- `COMPGEN_HOME` if defined (for shared registries / knowledge stores).
+- `XPU_RT_LLM_*` env vars (resolved by the root group).
+- `XPU_RT_HOME` if defined (for shared registries / knowledge stores).
 
 Anything else — target profile, output directory, model path — is an explicit
 argument or option. Two invocations with the same arguments in a clean
@@ -216,7 +216,7 @@ contract in `CLAUDE.md` and matches `BundleStage`'s rejection of
 
 The three `knowledge` MCP tools (`record_lesson`, `query_knowledge`,
 `get_context_brief`) write to a process-wide `KnowledgeStore`. They get **CLI
-aliases** (`compgen knowledge record|query|brief`) since they are not
+aliases** (`xpu-rt knowledge record|query|brief`) since they are not
 session-bound. The MCP tools remain so they can be driven from within a
 compile session.
 
@@ -225,7 +225,7 @@ compile session.
 For each tool migrated from MCP to CLI:
 
 1. **Extract the core function.** If logic currently lives inside the MCP tool
-   handler, lift it to `compgen.api.<area>.<verb>` (or an existing module if
+   handler, lift it to `xpu_rt.api.<area>.<verb>` (or an existing module if
    it already has a natural home). The function takes typed arguments and
    returns a typed result; it raises typed errors. **It must not import
    `click` and must not touch stdout/stderr directly.**
@@ -242,7 +242,7 @@ For each tool migrated from MCP to CLI:
 6. **Decommission or keep.** Stateless tools whose only consumer was the
    agent can be removed from MCP entirely. Stateless tools that compose with
    in-session work (e.g., `verify_vendor_package` invoked mid-recipe) keep
-   the MCP wrapper as a thin call to the same `compgen.api` function.
+   the MCP wrapper as a thin call to the same `xpu_rt.api` function.
 7. **Update docs.** Remove the tool from any MCP-tool documentation; add it
    to a CLI command index in `docs/cli/` (created on first use).
 
@@ -264,7 +264,7 @@ Half-migrations leak duplicate logic.
 
 ## 9. Open questions
 
-- Whether to add a `compgen list-commands --json` introspection command that
+- Whether to add a `xpu-rt list-commands --json` introspection command that
   emits a manifest of every subcommand with its docstring, options, and
   schema. Useful for skills that want to validate command availability before
   invoking. Decide once we have ≥10 migrated commands.

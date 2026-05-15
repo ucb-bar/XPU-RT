@@ -16,16 +16,16 @@ from __future__ import annotations
 
 import pytest
 
-from compgen.solve.backend_registry import SolverBackendRegistry
-from compgen.solve.backends.highs_backend import HighsBackend
-from compgen.solve.backends.mosek_backend import MosekBackend
-from compgen.solve.bandwidth_planner import (
+from xpu_rt.solve.backend_registry import SolverBackendRegistry
+from xpu_rt.solve.backends.highs_backend import HighsBackend
+from xpu_rt.solve.backends.mosek_backend import MosekBackend
+from xpu_rt.solve.bandwidth_planner import (
     BandwidthPlanInput,
     LinkCapacity,
     TransferDemand,
     plan_bandwidth,
 )
-from compgen.solve.solver_types import (
+from xpu_rt.solve.solver_types import (
     BackendAvailabilityStatus,
     BackendProbeResult,
     SolverBackendName,
@@ -131,8 +131,8 @@ def test_mosek_native_path_runs_when_selected(monkeypatch):
     mirroring the memory_planner pin."""
 
     pytest.importorskip("mosek")
-    from compgen.solve.backend_registry import default_registry
-    from compgen.solve.solver_types import BackendAvailabilityStatus
+    from xpu_rt.solve.backend_registry import default_registry
+    from xpu_rt.solve.solver_types import BackendAvailabilityStatus
 
     reg = default_registry()
     if reg.probe(SolverBackendName.MOSEK).availability is not BackendAvailabilityStatus.AVAILABLE:

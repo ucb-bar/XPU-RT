@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from compgen.ir.accel.ops import (
+from xpu_rt.ir.accel.ops import (
     BarrierOp,
     DMAStartOp,
     DMAWaitOp,
@@ -10,7 +10,7 @@ from compgen.ir.accel.ops import (
     TileLoadOp,
     TileStoreOp,
 )
-from compgen.ir.accel.verify import AccelVerificationResult, verify_accel_ops
+from xpu_rt.ir.accel.verify import AccelVerificationResult, verify_accel_ops
 
 # -- Valid ops pass ----------------------------------------------------------
 

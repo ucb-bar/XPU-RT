@@ -1,14 +1,14 @@
-"""Python-C bridge for the CompGen native runtime.
+"""Python-C bridge for the XPU-RT native runtime.
 
-Wraps ``libcompgen_runtime.so`` (the C execution engine and HAL layer) via
+Wraps ``libxpu_rt_runtime.so`` (the C execution engine and HAL layer) via
 :mod:`ctypes`.  When the shared library is not available the bridge objects
 still instantiate but every operation raises :class:`RuntimeError`, so higher
 layers can gracefully fall back to pure-Python paths.
 
 Three main classes:
 
-* :class:`NativeBuffer` -- wraps ``compgen_buffer_*`` C functions.
-* :class:`NativeDevice` -- wraps ``compgen_device_*`` HAL functions.
+* :class:`NativeBuffer` -- wraps ``xpu_rt_buffer_*`` C functions.
+* :class:`NativeDevice` -- wraps ``xpu_rt_device_*`` HAL functions.
 * :class:`NativeEngine` -- wraps ``cg_engine_*`` functions for task
   submission and lifecycle management.
 """
@@ -29,10 +29,10 @@ log = structlog.get_logger()
 # Library loading helpers
 # ---------------------------------------------------------------------------
 
-_LIB_NAME = "compgen_runtime"
+_LIB_NAME = "xpu_rt_runtime"
 _LIB_FILENAME = f"lib{_LIB_NAME}.so"
 
-_NOT_COMPILED_MSG = "C runtime not compiled -- libcompgen_runtime.so not found"
+_NOT_COMPILED_MSG = "C runtime not compiled -- libxpu_rt_runtime.so not found"
 
 # Module-level cache so multiple classes share a single load attempt.
 _cached_lib: ctypes.CDLL | None = None
@@ -108,7 +108,7 @@ def _reset_library_cache() -> None:
 
 
 class NativeBuffer:
-    """Python wrapper around a C HAL buffer (``compgen_buffer_*``).
+    """Python wrapper around a C HAL buffer (``xpu_rt_buffer_*``).
 
     Attributes:
         size: Allocation size in bytes.
@@ -140,12 +140,12 @@ class NativeBuffer:
             msg = f"data length ({len(data)}) exceeds buffer size ({self.size})"
             raise ValueError(msg)
         assert self._lib is not None  # guaranteed by _require_live
-        fn = self._lib.compgen_buffer_write
+        fn = self._lib.xpu_rt_buffer_write
         fn.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_size_t]
         fn.restype = ctypes.c_int
         rc = fn(self.handle, data, len(data))
         if rc != 0:
-            msg = f"compgen_buffer_write failed with code {rc}"
+            msg = f"xpu_rt_buffer_write failed with code {rc}"
             raise RuntimeError(msg)
 
     def read(self, nbytes: int | None = None) -> bytes:
@@ -165,12 +165,12 @@ class NativeBuffer:
         n = nbytes if nbytes is not None else self.size
         assert self._lib is not None
         out = ctypes.create_string_buffer(n)
-        fn = self._lib.compgen_buffer_read
+        fn = self._lib.xpu_rt_buffer_read
         fn.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_size_t]
         fn.restype = ctypes.c_int
         rc = fn(self.handle, out, n)
         if rc != 0:
-            msg = f"compgen_buffer_read failed with code {rc}"
+            msg = f"xpu_rt_buffer_read failed with code {rc}"
             raise RuntimeError(msg)
         return out.raw
 
@@ -179,7 +179,7 @@ class NativeBuffer:
         if self._freed:
             return
         if self._lib is not None and self.handle is not None:
-            fn = self._lib.compgen_buffer_free
+            fn = self._lib.xpu_rt_buffer_free
             fn.argtypes = [ctypes.c_void_p]
             fn.restype = None
             fn(self.handle)
@@ -209,7 +209,7 @@ class NativeBuffer:
 
 
 class NativeDevice:
-    """Python wrapper for a C HAL device (``compgen_device_*``).
+    """Python wrapper for a C HAL device (``xpu_rt_device_*``).
 
     Args:
         device_type: Device kind -- ``"cpu"``, ``"cuda"``, etc.
@@ -246,12 +246,12 @@ class NativeDevice:
         """
         self._require_available()
         assert self._lib is not None
-        fn = self._lib.compgen_buffer_alloc
+        fn = self._lib.xpu_rt_buffer_alloc
         fn.argtypes = [ctypes.c_void_p, ctypes.c_size_t]
         fn.restype = ctypes.c_void_p
         buf_handle = fn(self._handle, size)
         if buf_handle is None:
-            msg = f"compgen_buffer_alloc returned NULL for size={size}"
+            msg = f"xpu_rt_buffer_alloc returned NULL for size={size}"
             raise RuntimeError(msg)
         return NativeBuffer(size=size, handle=buf_handle, lib=self._lib)
 
@@ -273,13 +273,13 @@ class NativeDevice:
             buf_handles = [b.handle for b in args if b.handle is not None]
         arr_type = ctypes.c_void_p * len(buf_handles)
         arr = arr_type(*buf_handles)
-        fn = self._lib.compgen_device_dispatch
+        fn = self._lib.xpu_rt_device_dispatch
         fn.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.POINTER(ctypes.c_void_p), ctypes.c_int]
         fn.restype = ctypes.c_int
         exe_ptr = executable if isinstance(executable, ctypes.c_void_p) else ctypes.c_void_p(executable)
         rc = fn(self._handle, exe_ptr, arr, len(buf_handles))
         if rc != 0:
-            msg = f"compgen_device_dispatch failed with code {rc}"
+            msg = f"xpu_rt_device_dispatch failed with code {rc}"
             raise RuntimeError(msg)
 
     def sync(self) -> None:
@@ -290,18 +290,18 @@ class NativeDevice:
         """
         self._require_available()
         assert self._lib is not None
-        fn = self._lib.compgen_device_sync
+        fn = self._lib.xpu_rt_device_sync
         fn.argtypes = [ctypes.c_void_p]
         fn.restype = ctypes.c_int
         rc = fn(self._handle)
         if rc != 0:
-            msg = f"compgen_device_sync failed with code {rc}"
+            msg = f"xpu_rt_device_sync failed with code {rc}"
             raise RuntimeError(msg)
 
     def close(self) -> None:
         """Close the device handle."""
         if self._lib is not None and self._handle is not None:
-            fn = self._lib.compgen_device_close
+            fn = self._lib.xpu_rt_device_close
             fn.argtypes = [ctypes.c_void_p]
             fn.restype = None
             fn(self._handle)
@@ -315,7 +315,7 @@ class NativeDevice:
     def _open(self) -> None:
         """Open the C HAL device."""
         assert self._lib is not None
-        fn = self._lib.compgen_device_open
+        fn = self._lib.xpu_rt_device_open
         fn.argtypes = [ctypes.c_char_p, ctypes.c_int]
         fn.restype = ctypes.c_void_p
         self._handle = fn(self.device_type.encode(), self.device_index)

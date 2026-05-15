@@ -1,15 +1,15 @@
-"""Tests for :mod:`compgen.agent.self_extension.trials`."""
+"""Tests for :mod:`xpu_rt.agent.self_extension.trials`."""
 
 from __future__ import annotations
 
 import json
 from pathlib import Path
 
-from compgen.agent.self_extension.authored_tool import (
+from xpu_rt.agent.self_extension.authored_tool import (
     AuthoredTool,
     AuthoredToolSource,
 )
-from compgen.agent.self_extension.trials import TrialScenario, run_trial
+from xpu_rt.agent.self_extension.trials import TrialScenario, run_trial
 
 
 def _pass_scorer(_):

@@ -5,10 +5,10 @@ Covers representative ops lowered through both backends.
 
 from __future__ import annotations
 
-from compgen.ir.tile.attrs import MemoryClassAttr, TileShapeAttr
-from compgen.ir.tile.lower_exo import ExoLoweringResult, lower_tile_to_exo
-from compgen.ir.tile.lower_triton import TritonLoweringResult, lower_tile_to_triton
-from compgen.ir.tile.ops import (
+from xpu_rt.ir.tile.attrs import MemoryClassAttr, TileShapeAttr
+from xpu_rt.ir.tile.lower_exo import ExoLoweringResult, lower_tile_to_exo
+from xpu_rt.ir.tile.lower_triton import TritonLoweringResult, lower_tile_to_triton
+from xpu_rt.ir.tile.ops import (
     TileBarrierOp,
     TileElementwiseOp,
     TileLoadOp,

@@ -7,14 +7,14 @@ plus stage-specific tests.
 from __future__ import annotations
 
 import pytest
-from compgen.stages.bundle import BundleStage
-from compgen.stages.dispatch import DispatchStage
-from compgen.stages.dispatch.stage import DISPATCH_ID_ATTR
-from compgen.stages.encoding import EncodingStage
-from compgen.stages.encoding.stage import ENCODING_ATTR
-from compgen.stages.testing import StageContractTestSuite
-from compgen.targets.capability import infer_capabilities
-from compgen.targets.schema import load_profile
+from xpu_rt.stages.bundle import BundleStage
+from xpu_rt.stages.dispatch import DispatchStage
+from xpu_rt.stages.dispatch.stage import DISPATCH_ID_ATTR
+from xpu_rt.stages.encoding import EncodingStage
+from xpu_rt.stages.encoding.stage import ENCODING_ATTR
+from xpu_rt.stages.testing import StageContractTestSuite
+from xpu_rt.targets.capability import infer_capabilities
+from xpu_rt.targets.schema import load_profile
 from xdsl.dialects import arith, func
 from xdsl.dialects.builtin import IndexType, ModuleOp
 from xdsl.ir import Block, Region
@@ -138,7 +138,7 @@ class TestBundleContracts(StageContractTestSuite):
         without a target plugin (graceful degradation). Override the
         generic suite test because ``BundleStage()`` (no args) is
         intentionally rejected."""
-        from compgen.stages.base import StageResult
+        from xpu_rt.stages.base import StageResult
 
         stage_copy = BundleStage(output_dir=self._tmp_path / "bundle_copy")
         result = stage_copy.run(self.sample_module.clone(), self.target, self.capabilities)
@@ -154,7 +154,7 @@ class TestBundleSpecific:
         assert (tmp_path / "bundle" / "manifest.json").exists()
 
     def test_module_unchanged(self, target, capabilities, sample_module, tmp_path) -> None:
-        from compgen.eqsat.pipeline import _print_ir
+        from xpu_rt.eqsat.pipeline import _print_ir
 
         stage = BundleStage(output_dir=tmp_path / "bundle")
         result = stage.run(sample_module, target, capabilities)
@@ -199,7 +199,7 @@ class TestStageChaining:
 
     def test_full_shared_pipeline(self, target, capabilities, sample_module, tmp_path) -> None:
         """All 3 shared stages in sequence."""
-        from compgen.stages.registry import StageRegistry, TargetDialectStack
+        from xpu_rt.stages.registry import StageRegistry, TargetDialectStack
 
         registry = StageRegistry()
         stack = TargetDialectStack(

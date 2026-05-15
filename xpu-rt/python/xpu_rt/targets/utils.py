@@ -7,7 +7,7 @@ execution planner and the solver contracts module.
 
 from __future__ import annotations
 
-from compgen.targets.schema import TargetProfile
+from xpu_rt.targets.schema import TargetProfile
 
 _DEFAULT_MEMORY_BYTES = 8 * 1024**3  # 8 GB
 _DEFAULT_TRANSFER_COST = 0.001  # us per byte

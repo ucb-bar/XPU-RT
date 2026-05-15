@@ -9,10 +9,10 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import IntEnum
 
-from compgen.targetgen.classify import Classification
-from compgen.targetgen.hardware_spec import HardwareSpec
-from compgen.targetgen.plan import SupportPlan
-from compgen.targets.maturity import TargetMaturity
+from xpu_rt.targetgen.classify import Classification
+from xpu_rt.targetgen.hardware_spec import HardwareSpec
+from xpu_rt.targetgen.plan import SupportPlan
+from xpu_rt.targets.maturity import TargetMaturity
 
 
 class VerificationLevel(IntEnum):

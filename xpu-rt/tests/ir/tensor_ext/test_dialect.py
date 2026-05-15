@@ -1,9 +1,9 @@
-"""Tests for the ``compgen.tensor_ext`` dialect."""
+"""Tests for the ``xpu_rt.tensor_ext`` dialect."""
 
 from __future__ import annotations
 
 import pytest
-from compgen.ir.tensor_ext import (
+from xpu_rt.ir.tensor_ext import (
     ALL_OPS,
     ConcatOp,
     PackOp,
@@ -29,7 +29,7 @@ def _value(shape):
 
 def test_dialect_is_registered():
     assert isinstance(TensorExt, Dialect)
-    assert TensorExt.name == "compgen.tensor_ext"
+    assert TensorExt.name == "xpu_rt.tensor_ext"
 
 
 def test_dialect_has_three_ops():
@@ -39,9 +39,9 @@ def test_dialect_has_three_ops():
 def test_op_names_registered():
     names = {op.name for op in TensorExt._operations}
     assert names == {
-        "compgen.tensor_ext.concat",
-        "compgen.tensor_ext.pack",
-        "compgen.tensor_ext.unpack",
+        "xpu_rt.tensor_ext.concat",
+        "xpu_rt.tensor_ext.pack",
+        "xpu_rt.tensor_ext.unpack",
     }
 
 

@@ -1,6 +1,6 @@
 """Remediation-hint library for gate rejections.
 
-Gate rejections from :mod:`compgen.agent.gates.{structural,differential}`
+Gate rejections from :mod:`xpu_rt.agent.gates.{structural,differential}`
 carry a ``details.reason`` field. For an LLM-driven loop we want more
 than a blunt ``reason``: we want a short, actionable hint the LLM can
 use to fix the proposal on the next turn.

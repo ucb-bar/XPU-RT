@@ -7,16 +7,16 @@ from __future__ import annotations
 
 from typing import Any
 
-from compgen.dialects.dialect_provider_types import DialectProviderCard
-from compgen.kernels.provider import BidPreview, make_default_bid
-from compgen.providers.card_loader import iter_dialect_cards
-from compgen.providers.kernel_provider import (
+from xpu_rt.dialects.dialect_provider_types import DialectProviderCard
+from xpu_rt.kernels.provider import BidPreview, make_default_bid
+from xpu_rt.providers.card_loader import iter_dialect_cards
+from xpu_rt.providers.kernel_provider import (
     KernelCodegenRequest,
     KernelProvider,
 )
-from compgen.providers.provider_types import ProviderProbeResult
-from compgen.providers.provider_probe import probe_dialect_provider
-from compgen.providers.result_v1 import SCHEMA_VERSION, ProviderResultV1
+from xpu_rt.providers.provider_types import ProviderProbeResult
+from xpu_rt.providers.provider_probe import probe_dialect_provider
+from xpu_rt.providers.result_v1 import SCHEMA_VERSION, ProviderResultV1
 
 
 def _find_dialect_card(dialect_provider_id: str) -> DialectProviderCard:

@@ -2,7 +2,7 @@
 ranked candidate proposals an agent can submit verbatim via
 ``propose_invent_slot`` (or in bulk via ``batch_propose``).
 
-Per-slot suggesters live in :mod:`compgen.agent.suggest`. This tool
+Per-slot suggesters live in :mod:`xpu_rt.agent.suggest`. This tool
 is the thin MCP-layer adapter.
 """
 
@@ -10,14 +10,14 @@ from __future__ import annotations
 
 from typing import Any
 
-from compgen.agent.suggest import (
+from xpu_rt.agent.suggest import (
     SUGGESTERS,
     supported_slot_names,
 )
-from compgen.agent.suggest import (
+from xpu_rt.agent.suggest import (
     suggest as _suggest,
 )
-from compgen.mcp.session import SessionManager
+from xpu_rt.mcp.session import SessionManager
 
 
 def suggest_proposals(
@@ -71,7 +71,7 @@ def suggest_proposals(
     )
 
     # G6 wire-in: reorder candidates through the P3.3 rank_candidates
-    # primitive. Under COMPGEN_DISABLE_LLM=1 (CI default) this falls
+    # primitive. Under XPU_RT_DISABLE_LLM=1 (CI default) this falls
     # back to descending expected_impact + alphabetical rationale —
     # the same order the legacy _suggest already returns. With a live
     # LLM, the primary path can re-rank against richer features.
@@ -79,7 +79,7 @@ def suggest_proposals(
     # firing at module-load.
     if candidates:
         try:
-            from compgen.agent.primitives.rank_candidates import rank_candidates
+            from xpu_rt.agent.primitives.rank_candidates import rank_candidates
 
             ranking = rank_candidates(list(candidates))
             # ranking["ranking"] is a list of {index, score, rationale};

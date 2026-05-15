@@ -5,7 +5,7 @@ typed registry + runner so that a *fresh* Claude session can discover,
 call, validate, and trust every promoted tool.
 
 The eight-level maturity ladder (T0 → T7) is enforced by
-:mod:`compgen.audit.tool_promotion`; the runner here is the
+:mod:`xpu_rt.audit.tool_promotion`; the runner here is the
 substrate every maturity level builds on.
 
 Public surface:
@@ -16,19 +16,19 @@ Public surface:
   requirements, tests, skill path, and fresh-agent task id.
 * :class:`ToolResult` — typed return from :class:`ToolRunner`.
 * :func:`iter_tool_cards` — discover ToolCard YAML files under
-  ``python/compgen/tools/cards/``.
+  ``python/xpu_rt/tools/cards/``.
 * :class:`ToolRunner` — validates input, dispatches to the Python
   entrypoint, validates output, writes ``result.json`` and
   ``trace.jsonl``.
 
 Mirrors the existing ``ProviderCard`` pattern at
-:mod:`compgen.providers.provider_types` so future
+:mod:`xpu_rt.providers.provider_types` so future
 extensions can lift identical YAML loading conventions.
 """
 
 from __future__ import annotations
 
-from compgen.tools.errors import (
+from xpu_rt.tools.errors import (
     ToolCardError,
     ToolEntrypointError,
     ToolInputSchemaError,
@@ -36,7 +36,7 @@ from compgen.tools.errors import (
     ToolOutputSchemaError,
     ToolRunError,
 )
-from compgen.tools.tool_card import (
+from xpu_rt.tools.tool_card import (
     FORBIDDEN_ACTIONS,
     MATURITY_LEVELS,
     PROMOTION_REQUIREMENT_KEYS,
@@ -47,17 +47,17 @@ from compgen.tools.tool_card import (
     ToolTests,
     ToolWrites,
 )
-from compgen.tools.tool_registry import (
+from xpu_rt.tools.tool_registry import (
     iter_tool_cards,
     load_tool_card,
     tool_cards_root,
 )
-from compgen.tools.tool_runner import (
+from xpu_rt.tools.tool_runner import (
     ToolResult,
     ToolRunner,
     resolve_python_entrypoint,
 )
-from compgen.tools.skill_lint import (
+from xpu_rt.tools.skill_lint import (
     REQUIRED_SECTIONS,
     SkillLintReport,
     SkillViolation,

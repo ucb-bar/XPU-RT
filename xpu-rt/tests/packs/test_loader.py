@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from compgen.packs import default_pack_root, discover_pack_paths, load_builtin_packs, load_pack
+from xpu_rt.packs import default_pack_root, discover_pack_paths, load_builtin_packs, load_pack
 
 from benchmarks.spec import WorkspaceConfig
 
@@ -28,7 +28,7 @@ def test_probe_uses_workspace_pack_root(tmp_path: Path) -> None:
     source.mkdir()
     (source / "README.md").write_text("cuda tile")
     workspace = WorkspaceConfig(
-        repo_root=tmp_path / "CompGen",
+        repo_root=tmp_path / "XPU-RT",
         pack_roots={"cuda_tile": source},
         integration_worktrees_root=tmp_path / "worktrees",
     )
@@ -39,7 +39,7 @@ def test_probe_uses_workspace_pack_root(tmp_path: Path) -> None:
 
     assert probe.available
     assert probe.source_root == source.resolve()
-    assert branch.branch_name == "compgen/integration/cuda_tile/smoke"
+    assert branch.branch_name == "xpu_rt/integration/cuda_tile/smoke"
     assert branch.worktree_path == (tmp_path / "worktrees" / "cuda_tile" / "smoke")
 
 
@@ -50,7 +50,7 @@ def test_branch_plan_uses_llvm_fork_when_declared(tmp_path: Path) -> None:
     llvm_fork = tmp_path / "llvm-gemmini"
     llvm_fork.mkdir()
     workspace = WorkspaceConfig(
-        repo_root=tmp_path / "CompGen",
+        repo_root=tmp_path / "XPU-RT",
         pack_roots={"gemmini_mx": source},
         llvm_forks={"gemmini": llvm_fork},
         integration_worktrees_root=tmp_path / "worktrees",

@@ -1,15 +1,15 @@
 """``lower_quantized_matmul`` -- lower
-``compgen.quant.weight_int{8,4}pack_mm`` to a dequantize + matmul.
+``xpu_rt.quant.weight_int{8,4}pack_mm`` to a dequantize + matmul.
 
 Reconstruction of IREE's ``QuantizedMatmulToMatmul`` with structural
 inspiration from hexagon-mlir's ``DecomposeHexKLMatmulPass``:
 triple-nested tile loop in spirit, but we emit two ops here (a
 dequant ``linalg.generic`` + a ``linalg.matmul``) and defer the
 tile-loop lowering to  / . Zero external references;
-CompGen owns the rewrite.
+XPU-RT owns the rewrite.
 
 For an int8 packed-weight GEMM
-``compgen.quant.weight_int8pack_mm(x, w_i8, scales)``:
+``xpu_rt.quant.weight_int8pack_mm(x, w_i8, scales)``:
 
     %w_f = linalg.generic                     // elementwise dequant
              (w_i8 -> f32 via sitofp + scale broadcast along out-channel)
@@ -28,14 +28,14 @@ bundles per-group scale + zp. Fully structural lowering requires
 sub-byte unpacking + per-group broadcast that we defer to .4
 ``normalize_subbyte`` + a tile-level unpack path in . Here we
 do a **partial** rewrite: the op is replaced with
-``compgen.tensor_ext.unpack`` + a dequant generic (scalar unpack)
+``xpu_rt.tensor_ext.unpack`` + a dequant generic (scalar unpack)
 + ``linalg.matmul``. The tensor_ext.unpack is our stable seam for
 the sub-byte details.
 
 LLM-tool signature:
 
     tool_name="lower_quantized_matmul"
-    wraps_pass="CompGen:QuantizedMatmulToMatmul"
+    wraps_pass="XPU-RT:QuantizedMatmulToMatmul"
     invent_slot="quantization/matmul_lowering"
     policy="AlwaysLowerQuantizedMatmul"
 """
@@ -70,7 +70,7 @@ from xdsl.pattern_rewriter import (
     op_type_rewrite_pattern,
 )
 
-from compgen.ir.quant import (
+from xpu_rt.ir.quant import (
     WeightInt4PackMMOp,
     WeightInt4PackQMOp,
     WeightInt8PackMMOp,
@@ -117,7 +117,7 @@ def _f32_shape(shape: tuple[int, ...]) -> TensorType:
 
 
 def _copy_attrs(dst: Operation, src: Operation) -> None:
-    for k in ("compgen.region_id", "compgen._pattern_hint"):
+    for k in ("xpu_rt.region_id", "xpu_rt._pattern_hint"):
         if k in src.attributes and k not in dst.attributes:
             dst.attributes[k] = src.attributes[k]
 
@@ -198,10 +198,10 @@ def _lower_int8_pack_mm(
         ],
         result_types=[dequant_out_type],
     )
-    dq_generic.attributes["compgen._dequant_from"] = (
-        op.attributes.get("compgen.region_id")
-        or op.properties.get("compgen.region_id")
-        or op.attributes.get("compgen._pattern_hint")
+    dq_generic.attributes["xpu_rt._dequant_from"] = (
+        op.attributes.get("xpu_rt.region_id")
+        or op.properties.get("xpu_rt.region_id")
+        or op.attributes.get("xpu_rt._pattern_hint")
         or _region_id_fallback()
     )
 
@@ -281,7 +281,7 @@ class _Int8PackMMPattern(RewritePattern):
 
 class _Int4PackMMPattern(RewritePattern):
     """Partial lowering: replace int4pack_mm with an
-    ``compgen.tensor_ext.unpack`` + dequant + matmul chain.
+    ``xpu_rt.tensor_ext.unpack`` + dequant + matmul chain.
 
     The unpack op is our stable seam for sub-byte handling; 's
     ``normalize_subbyte_post_layout`` will pick it up.
@@ -306,7 +306,7 @@ class _Int4PackMMPattern(RewritePattern):
         # Leave the op structurally but tag it so  can find it.
         from xdsl.dialects.builtin import StringAttr
 
-        op.attributes["compgen.int4_lowering_scheduled"] = StringAttr("true")
+        op.attributes["xpu_rt.int4_lowering_scheduled"] = StringAttr("true")
         self.stats.int4_rewritten += 1
 
 
@@ -326,7 +326,7 @@ class _Int4PackQMPattern(RewritePattern):
             return
         from xdsl.dialects.builtin import StringAttr
 
-        op.attributes["compgen.int4_qm_lowering_scheduled"] = StringAttr("true")
+        op.attributes["xpu_rt.int4_qm_lowering_scheduled"] = StringAttr("true")
         self.stats.int4_qm_rewritten += 1
 
 

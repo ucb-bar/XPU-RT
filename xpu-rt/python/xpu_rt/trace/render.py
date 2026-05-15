@@ -20,7 +20,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from compgen.trace.events import category_for
+from xpu_rt.trace.events import category_for
 
 _MAX_DETAIL_CHARS = 120
 _SNIPPET_WIDTH = 140

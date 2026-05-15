@@ -9,7 +9,7 @@ Invariants:
     - Failed verification produces a concrete counterexample.
 
 Backend:
-    Uses ``compgen.semantic.backends.xdsl_smt.pdl_backend`` for
+    Uses ``xpu_rt.semantic.backends.xdsl_smt.pdl_backend`` for
     callable-based rewrite verification across bitwidths.
 """
 
@@ -69,7 +69,7 @@ def verify_rewrite(
     if pattern is replacement:
         return RewriteVerificationResult(valid=True, status="valid")
 
-    from compgen.semantic.backends.xdsl_smt.pdl_backend import PDLVerificationBackend
+    from xpu_rt.semantic.backends.xdsl_smt.pdl_backend import PDLVerificationBackend
 
     backend = PDLVerificationBackend()
 

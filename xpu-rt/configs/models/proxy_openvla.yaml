@@ -12,7 +12,7 @@ source:
   source_verified: false
 loader:
   kind: proxy
-  proxy_module: compgen.model_admission.proxies.proxy_openvla
+  proxy_module: xpu_rt.model_admission.proxies.proxy_openvla
   device_policy: auto
 inputs:
   kind: one_step_policy
@@ -32,4 +32,4 @@ expected:
   can_dynamo_capture: true
   can_slice_compile: true
 notes:
-  - 'Proxy module under compgen.model_admission.proxies; real (tiny) torch.nn.Module.'
+  - 'Proxy module under xpu_rt.model_admission.proxies; real (tiny) torch.nn.Module.'

@@ -11,12 +11,12 @@ from __future__ import annotations
 
 from xdsl.ir import Dialect
 
-from compgen.ir.event.attrs import (
+from xpu_rt.ir.event.attrs import (
     EventCoordAttr,
     EventTensorTypeAttr,
     SchedulingPolicyAttr,
 )
-from compgen.ir.event.ops import (
+from xpu_rt.ir.event.ops import (
     CallDeviceOp,
     EventTensorOp,
     GraphOp,

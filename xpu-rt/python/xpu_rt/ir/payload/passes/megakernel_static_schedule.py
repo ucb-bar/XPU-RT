@@ -5,15 +5,15 @@ MLSys '26): given a module containing an ``event.graph`` op with policy
 ``static``, the pass
 
     1. Walks the graph body to extract the per-task event-edge DAG.
-    2. Calls :func:`compgen.solve.per_sm_queue.solve_per_sm_queue` to
+    2. Calls :func:`xpu_rt.solve.per_sm_queue.solve_per_sm_queue` to
        decide per-SM task assignment + ordering.
-    3. Annotates the graph op with a ``compgen.static_schedule``
+    3. Annotates the graph op with a ``xpu_rt.static_schedule``
        attribute holding the solved schedule (JSON), which the persistent
        Triton emitter consumes.
 
 The pass is *non-destructive*: it does not delete or rewrite any
 Event-Tensor IR ops.  Lowering to Triton happens in
-``compgen.ir.tile.lower_megakernel`` once the schedule annotation is
+``xpu_rt.ir.tile.lower_megakernel`` once the schedule annotation is
 present.
 """
 
@@ -24,20 +24,20 @@ from typing import Any, ClassVar
 
 from xdsl.dialects.builtin import IntegerAttr, ModuleOp, StringAttr
 
-from compgen.ir.event.contracts import check_event_graph
-from compgen.ir.event.ops import (
+from xpu_rt.ir.event.contracts import check_event_graph
+from xpu_rt.ir.event.ops import (
     CallDeviceOp,
     EventTensorOp,
     GraphOp,
     NotifyOp,
     WaitOp,
 )
-from compgen.ir.payload.passes.base import PayloadPass
-from compgen.llm.registry import AutocompCostImpact, ToolArg, ToolResult
-from compgen.solve.per_sm_queue import EventEdge, TileTask, solve_per_sm_queue
+from xpu_rt.ir.payload.passes.base import PayloadPass
+from xpu_rt.llm.registry import AutocompCostImpact, ToolArg, ToolResult
+from xpu_rt.solve.per_sm_queue import EventEdge, TileTask, solve_per_sm_queue
 
 _DEFAULT_DURATION_US = 1.0
-_SCHEDULE_ATTR = "compgen.static_schedule"
+_SCHEDULE_ATTR = "xpu_rt.static_schedule"
 
 
 def _coord_indices_to_str(coord_indices_attr: Any) -> str:
@@ -179,7 +179,7 @@ class StaticMegakernelSchedule(PayloadPass):
 
     Walks every ``event.graph`` with policy ``static`` in the module,
     runs the per-SM CP-SAT solver, and stamps the solved schedule onto
-    the graph op as a ``compgen.static_schedule`` JSON attribute.  Idempotent:
+    the graph op as a ``xpu_rt.static_schedule`` JSON attribute.  Idempotent:
     running twice produces identical output.
     """
 
@@ -216,7 +216,7 @@ class StaticMegakernelSchedule(PayloadPass):
     def tool_result(self) -> ToolResult:
         return ToolResult(
             dtype="ModuleOp",
-            description="module with compgen.static_schedule annotated on each event.graph",
+            description="module with xpu_rt.static_schedule annotated on each event.graph",
         )
 
     def run(self, module: ModuleOp, **kwargs: Any) -> ModuleOp:

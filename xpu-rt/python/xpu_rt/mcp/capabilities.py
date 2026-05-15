@@ -6,7 +6,7 @@ when opening the session. High-risk tools declare a
 refuses calls that don't match.
 
 Like H2 phase gating, H3 capability gating is opt-in via
-``COMPGEN_STRICT_CAPABILITIES=1`` (default off). When opt-in is
+``XPU_RT_STRICT_CAPABILITIES=1`` (default off). When opt-in is
 active, the dispatch envelope returns
 ``ToolDelta(status="blocked", blocked_reason="capability_missing")``
 on refusal.

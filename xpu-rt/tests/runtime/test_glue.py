@@ -1,4 +1,4 @@
-"""Tests for ``compgen.runtime.glue``.
+"""Tests for ``xpu_rt.runtime.glue``.
 
 Locks in:
   * select_adapter walks the same target taxonomy as the knowledge store
@@ -11,7 +11,7 @@ Locks in:
 from __future__ import annotations
 
 import pytest
-from compgen.kernels.contract_v3 import (
+from xpu_rt.kernels.contract_v3 import (
     DispatchModel,
     DispatchSpec,
     Granularity,
@@ -24,7 +24,7 @@ from compgen.kernels.contract_v3 import (
     ShapeClass,
     TensorIO,
 )
-from compgen.runtime.glue import (
+from xpu_rt.runtime.glue import (
     BaremetalRuntimeAdapter,
     BufferSpec,
     CpuRuntimeAdapter,
@@ -165,8 +165,8 @@ def test_rocm_target_raises_adapter_unavailable() -> None:
     a rocm target now raises :class:`AdapterUnavailableError` with a
     structured reason so the caller sees the scope boundary."""
     import pytest
-    from compgen.runtime.errors import AdapterUnavailableError
-    from compgen.runtime.glue import select_adapter
+    from xpu_rt.runtime.errors import AdapterUnavailableError
+    from xpu_rt.runtime.glue import select_adapter
 
     with pytest.raises(AdapterUnavailableError) as exc_info:
         select_adapter("rocm-mi250")

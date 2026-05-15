@@ -1,6 +1,6 @@
-"""Boot compgen-mcp over stdio and drive the JSON-RPC handshake.
+"""Boot xpu-rt-mcp over stdio and drive the JSON-RPC handshake.
 
-Catches regressions the in-process :func:`compgen.mcp.server.dispatch_tool`
+Catches regressions the in-process :func:`xpu_rt.mcp.server.dispatch_tool`
 tests can't see: SDK load failures, initialize-hang bugs, tool-list
 drift. Run via the ``mcp`` workflow; also handy locally as
 ``uv run python scripts/ci/mcp_stdio_smoke.py``.
@@ -46,7 +46,7 @@ def main() -> int:
         return 2
 
     proc = subprocess.Popen(
-        ["compgen-mcp"],
+        ["xpu-rt-mcp"],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,

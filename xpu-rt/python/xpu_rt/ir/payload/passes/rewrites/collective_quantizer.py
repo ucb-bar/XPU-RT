@@ -17,8 +17,8 @@ from xdsl.pattern_rewriter import (
     RewritePattern,
 )
 
-from compgen.ir.collective import AllGatherOp, AllReduceOp, ReduceScatterOp
-from compgen.ir.quant import (
+from xpu_rt.ir.collective import AllGatherOp, AllReduceOp, ReduceScatterOp
+from xpu_rt.ir.quant import (
     DequantizePerChannelOp,
     DequantizePerTensorOp,
     QuantizePerChannelOp,
@@ -45,19 +45,19 @@ class _FuseCollectiveQuant(RewritePattern):
         if not isinstance(op, _COLLECTIVES):
             return
         self.stats.collectives_seen += 1
-        if "compgen.quant_fused" in op.attributes:
+        if "xpu_rt.quant_fused" in op.attributes:
             return
         # Look for a quantize consumer.
         for use in op.results[0].uses:
             consumer = use.operation
             if isinstance(consumer, _QUANTIZES):
-                op.attributes["compgen.quant_fused"] = StringAttr("quantize_after")
-                op.attributes["compgen.quant_fused_kind"] = StringAttr(type(consumer).__name__)
+                op.attributes["xpu_rt.quant_fused"] = StringAttr("quantize_after")
+                op.attributes["xpu_rt.quant_fused_kind"] = StringAttr(type(consumer).__name__)
                 self.stats.fused_with_quantize += 1
                 return
             if isinstance(consumer, _DEQUANTIZES):
-                op.attributes["compgen.quant_fused"] = StringAttr("dequantize_after")
-                op.attributes["compgen.quant_fused_kind"] = StringAttr(type(consumer).__name__)
+                op.attributes["xpu_rt.quant_fused"] = StringAttr("dequantize_after")
+                op.attributes["xpu_rt.quant_fused_kind"] = StringAttr(type(consumer).__name__)
                 self.stats.fused_with_dequantize += 1
                 return
 

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from compgen.ir.recipe.serialize import recipe_to_yaml, yaml_to_recipe
+from xpu_rt.ir.recipe.serialize import recipe_to_yaml, yaml_to_recipe
 
 
 def test_recipe_to_yaml_exists() -> None:
@@ -15,7 +15,7 @@ def test_yaml_to_recipe_exists() -> None:
 
 def test_recipe_round_trip() -> None:
     """recipe_to_yaml -> yaml_to_recipe should be lossless."""
-    from compgen.ir.recipe.ops import (
+    from xpu_rt.ir.recipe.ops import (
         AssignDevice,
         MatchRegion,
     )
@@ -43,7 +43,7 @@ def test_recipe_round_trip() -> None:
 
 def test_recipe_to_yaml_deterministic() -> None:
     """Serialization should produce identical YAML for identical inputs."""
-    from compgen.ir.recipe.ops import (
+    from xpu_rt.ir.recipe.ops import (
         AssignDevice,
         MatchRegion,
         SetTileParams,

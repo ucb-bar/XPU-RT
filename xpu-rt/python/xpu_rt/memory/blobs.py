@@ -34,7 +34,7 @@ class BlobStore:
         root: Root directory for the blob store.
     """
 
-    def __init__(self, root: Path = Path(".compgen_cache/blobs")) -> None:
+    def __init__(self, root: Path = Path(".xpu_rt_cache/blobs")) -> None:
         self.root = root
         self.root.mkdir(parents=True, exist_ok=True)
 

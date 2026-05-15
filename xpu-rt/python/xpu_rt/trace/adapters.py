@@ -3,12 +3,12 @@
 These are **composition** wrappers — none of the original recorder
 classes change their public API. Each adapter's ``wrap`` classmethod is
 idempotent: if the recorder has already been wrapped (sentinel attr
-``_compgen_trace_bus`` set), it is returned unchanged.
+``_xpu_rt_trace_bus`` set), it is returned unchanged.
 
 Why composition: the three recorders
-(:class:`compgen.llm.recorder.LLMRecorder`,
-:class:`compgen.llm.recorder.ToolCallRecorder`,
-:class:`compgen.mcp.transcript.McpTranscriptRecorder`) are well-tested
+(:class:`xpu_rt.llm.recorder.LLMRecorder`,
+:class:`xpu_rt.llm.recorder.ToolCallRecorder`,
+:class:`xpu_rt.mcp.transcript.McpTranscriptRecorder`) are well-tested
 and already the canonical storage for their respective payloads. The
 trace bus doesn't duplicate their contents — it emits short events that
 point back to the per-layer log files via hashes and IDs.
@@ -19,14 +19,14 @@ from __future__ import annotations
 import hashlib
 from typing import TYPE_CHECKING, Any
 
-from compgen.trace.bus import TraceBus, get_active_bus, set_current_llm_turn_id
-from compgen.trace.events import EventKind, Phase
+from xpu_rt.trace.bus import TraceBus, get_active_bus, set_current_llm_turn_id
+from xpu_rt.trace.events import EventKind, Phase
 
 if TYPE_CHECKING:  # pragma: no cover - imports used only for type checking
-    from compgen.llm.recorder import LLMRecorder, ToolCallRecorder
-    from compgen.mcp.transcript import McpTranscriptRecorder
+    from xpu_rt.llm.recorder import LLMRecorder, ToolCallRecorder
+    from xpu_rt.mcp.transcript import McpTranscriptRecorder
 
-_SENTINEL = "_compgen_trace_bus"
+_SENTINEL = "_xpu_rt_trace_bus"
 
 
 def _is_bound(recorder: Any) -> bool:
@@ -148,7 +148,7 @@ class TracingLLMRecorder:
 
 def _safe_prompt_text(request: Any) -> str:
     try:
-        from compgen.llm._prompt import render_request_prompt
+        from xpu_rt.llm._prompt import render_request_prompt
 
         return render_request_prompt(request)
     except Exception:  # noqa: BLE001

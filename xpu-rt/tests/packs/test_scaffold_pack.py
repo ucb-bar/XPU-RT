@@ -1,4 +1,4 @@
-"""Tests for ``compgen scaffold-pack`` and :func:`scaffold_pack`."""
+"""Tests for ``xpu_rt scaffold-pack`` and :func:`scaffold_pack`."""
 
 from __future__ import annotations
 
@@ -8,9 +8,9 @@ from pathlib import Path
 import pytest
 import yaml
 from click.testing import CliRunner
-from compgen.cli import main
-from compgen.packs import load_pack
-from compgen.packs.scaffolding import SUPPORTED_KINDS, scaffold_pack
+from xpu_rt.cli import main
+from xpu_rt.packs import load_pack
+from xpu_rt.packs.scaffolding import SUPPORTED_KINDS, scaffold_pack
 
 
 @pytest.mark.parametrize("kind", SUPPORTED_KINDS)
@@ -37,7 +37,7 @@ def test_scaffolded_manifest_is_valid_yaml(tmp_path: Path) -> None:
 def test_scaffolded_pyproject_declares_entry_point(tmp_path: Path) -> None:
     result = scaffold_pack(kind="provider", name="my_provider", out_dir=tmp_path)
     content = result.pyproject_path.read_text()
-    assert '[project.entry-points."compgen.packs"]' in content
+    assert '[project.entry-points."xpu_rt.packs"]' in content
     assert 'my_provider = "my_provider"' in content
 
 
@@ -138,10 +138,10 @@ def test_target_pack_emits_full_radiance_shaped_layout(tmp_path: Path) -> None:
 def test_target_pack_pyproject_declares_all_four_entry_points(tmp_path: Path) -> None:
     result = scaffold_pack(kind="target_pack", name="acme_npu", out_dir=tmp_path)
     content = result.pyproject_path.read_text()
-    assert '[project.entry-points."compgen.packs"]' in content
-    assert '[project.entry-points."compgen.targets.backends"]' in content
-    assert '[project.entry-points."compgen.kernels.providers"]' in content
-    assert '[project.entry-points."compgen.mcp.tools"]' in content
+    assert '[project.entry-points."xpu_rt.packs"]' in content
+    assert '[project.entry-points."xpu_rt.targets.backends"]' in content
+    assert '[project.entry-points."xpu_rt.kernels.providers"]' in content
+    assert '[project.entry-points."xpu_rt.mcp.tools"]' in content
     # Class-name derivation: snake_case → CamelCase.
     assert "AcmeNpuBackend" in content
     assert "AcmeNpuProvider" in content
@@ -155,7 +155,7 @@ def test_target_pack_provider_declines_by_default(tmp_path: Path, monkeypatch: p
     monkeypatch.syspath_prepend(str(tmp_path / "acme_npu" / "src"))
 
     try:
-        from compgen.kernels.provider import KernelContract, SearchBudget
+        from xpu_rt.kernels.provider import KernelContract, SearchBudget
 
         provider_module = __import__("acme_npu.kernels", fromlist=["AcmeNpuProvider"])
         provider = provider_module.AcmeNpuProvider()
@@ -181,8 +181,8 @@ def test_target_pack_provider_declines_by_default(tmp_path: Path, monkeypatch: p
 
 
 def test_target_pack_hardware_spec_loads(tmp_path: Path) -> None:
-    """The scaffolded HardwareSpec stub must load through CompGen's loader."""
-    from compgen.targetgen.load import load_hardware_spec
+    """The scaffolded HardwareSpec stub must load through XPU-RT's loader."""
+    from xpu_rt.targetgen.load import load_hardware_spec
 
     result = scaffold_pack(kind="target_pack", name="acme_npu", out_dir=tmp_path)
     spec_path = result.package_root / "specs" / "acme_npu.yaml"
@@ -191,15 +191,15 @@ def test_target_pack_hardware_spec_loads(tmp_path: Path) -> None:
 
 
 def test_target_pack_mcp_tools_list_validates(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    """Empty MCP tools list passes the ``compgen.mcp.tools`` validator."""
+    """Empty MCP tools list passes the ``xpu_rt.mcp.tools`` validator."""
     scaffold_pack(kind="target_pack", name="acme_npu", out_dir=tmp_path)
     monkeypatch.syspath_prepend(str(tmp_path / "acme_npu" / "src"))
 
     try:
-        from compgen.plugins import _VALIDATORS
+        from xpu_rt.plugins import _VALIDATORS
 
         mcp_module = __import__("acme_npu.mcp", fromlist=["ACME_NPU_TOOLS"])
-        validator = _VALIDATORS["compgen.mcp.tools"]
+        validator = _VALIDATORS["xpu_rt.mcp.tools"]
         ok, _msg = validator(mcp_module.ACME_NPU_TOOLS)
         assert ok, f"validator rejected the scaffolded MCP tools list: {_msg}"
     finally:

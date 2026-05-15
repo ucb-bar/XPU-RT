@@ -8,7 +8,7 @@ Why it matters:
   * The kernel codegen prompt names dims by role rather than position,
     which makes Claude Code's emitted kernel correct-by-construction.
 
-Stored as ``compgen.dim_role`` IR attribute — an ArrayAttr of role
+Stored as ``xpu_rt.dim_role`` IR attribute — an ArrayAttr of role
 strings, one per output-tensor dim. The agent reads this via
 ``dim_roles_for_op(op)`` without re-traversing the dataflow.
 """
@@ -131,10 +131,10 @@ _ANALYZERS = {
 
 
 def _hint_or_name(op: Operation) -> str:
-    """Prefer the compgen._pattern_hint when present (tracks the op family
+    """Prefer the xpu_rt._pattern_hint when present (tracks the op family
     even when the op is wrapped in a func.call)."""
     attrs = getattr(op, "attributes", {})
-    hint = attrs.get("compgen._pattern_hint") if attrs else None
+    hint = attrs.get("xpu_rt._pattern_hint") if attrs else None
     if hint is not None and hasattr(hint, "data"):
         return hint.data
     return op.name
@@ -162,7 +162,7 @@ def analyze_op(op: Operation) -> OpDimAnnotation | None:
 
 
 def annotate_dim_roles(module: ModuleOp) -> int:
-    """Walk ``module`` and stamp ``compgen.dim_role`` on every op's
+    """Walk ``module`` and stamp ``xpu_rt.dim_role`` on every op's
     attributes. Returns number of ops annotated.
     """
     annotated = 0
@@ -170,7 +170,7 @@ def annotate_dim_roles(module: ModuleOp) -> int:
         ann = analyze_op(op)
         if ann is None:
             continue
-        op.attributes["compgen.dim_role"] = ArrayAttr([StringAttr(r.value) for r in ann.output_roles])
+        op.attributes["xpu_rt.dim_role"] = ArrayAttr([StringAttr(r.value) for r in ann.output_roles])
         annotated += 1
     return annotated
 
@@ -181,7 +181,7 @@ def dim_roles_for_op(op: Operation) -> tuple[DimRole, ...]:
     Returns empty tuple when no annotation has been written.
     """
     attrs = getattr(op, "attributes", {})
-    arr = attrs.get("compgen.dim_role") if attrs else None
+    arr = attrs.get("xpu_rt.dim_role") if attrs else None
     if arr is None or not hasattr(arr, "data"):
         return ()
     out: list[DimRole] = []

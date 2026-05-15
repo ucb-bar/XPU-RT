@@ -11,11 +11,11 @@ import structlog
 from xdsl.dialects.builtin import ModuleOp, StringAttr
 from xdsl.ir import Block
 
-from compgen.ir.layout.ops import PackOp, SetLayoutOp, UnpackOp, UnsetLayoutOp
+from xpu_rt.ir.layout.ops import PackOp, SetLayoutOp, UnpackOp, UnsetLayoutOp
 
 log = structlog.get_logger()
 
-LAYOUT_CLEAN_ATTR = "compgen.layout_clean"
+LAYOUT_CLEAN_ATTR = "xpu_rt.layout_clean"
 
 
 def cleanup_layout_artifacts(module: ModuleOp) -> ModuleOp:

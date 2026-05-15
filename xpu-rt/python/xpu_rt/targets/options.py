@@ -1,4 +1,4 @@
-"""Base compilation options for all CompGen targets.
+"""Base compilation options for all XPU-RT targets.
 
 Inspired by Hexagon-MLIR's ``HexagonOptions`` frozen dataclass pattern.
 Every target extends ``TargetOptions`` with hardware-specific fields.
@@ -22,7 +22,7 @@ from typing import Any
 
 @dataclass(frozen=True)
 class TargetOptions:
-    """Base compilation options for any CompGen target.
+    """Base compilation options for any XPU-RT target.
 
     Subclass this for target-specific options. The base class covers
     options that apply universally across all hardware targets.

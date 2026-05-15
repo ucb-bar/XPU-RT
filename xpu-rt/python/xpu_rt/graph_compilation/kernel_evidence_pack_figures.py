@@ -154,7 +154,7 @@ def render_joint_claim_matrix(
         1: "precision", 2: "working_set", 3: "lifetime",
         4: "candidate_evidence", 5: "agent_view", 6: "bottleneck",
     }
-    from compgen.graph_compilation.kernel_evidence_pack import (
+    from xpu_rt.graph_compilation.kernel_evidence_pack import (
         _M17_ROW_CLAIM, _M24_ROW_CLAIM,
     )
     fx_pass = []

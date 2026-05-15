@@ -22,8 +22,8 @@ from pathlib import Path
 import torch
 import torch.nn as nn
 
-from compgen import compile_with_llm
-from compgen.llm.mock_client import MockLLMClient
+from xpu_rt import compile_with_llm
+from xpu_rt.llm.mock_client import MockLLMClient
 
 
 HF_REPO_ID = "google/gemma-2b"

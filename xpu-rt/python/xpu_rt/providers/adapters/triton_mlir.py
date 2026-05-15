@@ -4,15 +4,15 @@ from __future__ import annotations
 
 from typing import Any
 
-from compgen.kernels.provider import BidPreview, make_default_bid
-from compgen.providers.adapters.iree import _find_dialect_card
-from compgen.providers.kernel_provider import (
+from xpu_rt.kernels.provider import BidPreview, make_default_bid
+from xpu_rt.providers.adapters.iree import _find_dialect_card
+from xpu_rt.providers.kernel_provider import (
     KernelCodegenRequest,
     KernelProvider,
 )
-from compgen.providers.provider_types import ProviderProbeResult
-from compgen.providers.provider_probe import probe_dialect_provider
-from compgen.providers.result_v1 import SCHEMA_VERSION, ProviderResultV1
+from xpu_rt.providers.provider_types import ProviderProbeResult
+from xpu_rt.providers.provider_probe import probe_dialect_provider
+from xpu_rt.providers.result_v1 import SCHEMA_VERSION, ProviderResultV1
 
 
 class TritonMLIRDialectProvider(KernelProvider):

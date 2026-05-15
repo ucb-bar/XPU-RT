@@ -38,13 +38,13 @@ class TestRequire:
 
 class TestRayTransport:
     def test_name(self) -> None:
-        from compgen.runtime._ray_transport import RayTransport
+        from xpu_rt.runtime._ray_transport import RayTransport
 
         t = RayTransport()
         assert t.name == "ray"
 
     def test_lifecycle(self, ray_cluster) -> None:
-        from compgen.runtime._ray_transport import RayTransport
+        from xpu_rt.runtime._ray_transport import RayTransport
 
         t = RayTransport()
         assert t.is_open is False
@@ -54,8 +54,8 @@ class TestRayTransport:
         assert t.is_open is False
 
     def test_send_recv(self, ray_cluster) -> None:
-        from compgen.runtime._ray_transport import RayTransport
-        from compgen.runtime.transport import TransportMessage
+        from xpu_rt.runtime._ray_transport import RayTransport
+        from xpu_rt.runtime.transport import TransportMessage
 
         t = RayTransport()
         t.open()
@@ -68,14 +68,14 @@ class TestRayTransport:
         t.close()
 
     def test_send_when_closed(self) -> None:
-        from compgen.runtime._ray_transport import RayTransport
-        from compgen.runtime.transport import TransportMessage
+        from xpu_rt.runtime._ray_transport import RayTransport
+        from xpu_rt.runtime.transport import TransportMessage
 
         t = RayTransport()
         assert t.send(TransportMessage()) is False
 
     def test_registered_in_transport_factory(self, ray_cluster) -> None:
-        from compgen.runtime.transport import create_transport
+        from xpu_rt.runtime.transport import create_transport
 
         t = create_transport("ray")
         assert t.name == "ray"

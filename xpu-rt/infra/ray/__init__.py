@@ -1,7 +1,7 @@
-"""Ray-based distributed control plane for CompGen.
+"""Ray-based distributed control plane for XPU-RT.
 
 Ray is OPTIONAL.  This package is only usable when ``ray`` is installed
-(``pip install 'compgen[ray]'``).  The core ``compgen`` package never
+(``pip install 'xpu_rt[ray]'``).  The core ``xpu_rt`` package never
 imports from this module at the top level.
 
 Subsystems:

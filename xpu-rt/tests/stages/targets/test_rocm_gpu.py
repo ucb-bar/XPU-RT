@@ -10,9 +10,9 @@ Locks in:
 from __future__ import annotations
 
 import pytest
-from compgen.stages.dispatch.stage import DISPATCH_ID_ATTR
-from compgen.stages.encoding.stage import ENCODING_ATTR
-from compgen.stages.targets.rocm_gpu import (
+from xpu_rt.stages.dispatch.stage import DISPATCH_ID_ATTR
+from xpu_rt.stages.encoding.stage import ENCODING_ATTR
+from xpu_rt.stages.targets.rocm_gpu import (
     RocmCodegenPlugin,
     RocmDispatchPlugin,
     RocmEncodingPlugin,
@@ -20,8 +20,8 @@ from compgen.stages.targets.rocm_gpu import (
     RocmTilingPlugin,
     create_rocm_gpu_stack,
 )
-from compgen.stages.templates.codegen import CODEGEN_BACKEND_ATTR
-from compgen.stages.templates.tiling import TILE_SIZES_ATTR
+from xpu_rt.stages.templates.codegen import CODEGEN_BACKEND_ATTR
+from xpu_rt.stages.templates.tiling import TILE_SIZES_ATTR
 from xdsl.dialects.builtin import ModuleOp, StringAttr, TensorType, f16
 from xdsl.dialects.func import FuncOp, ReturnOp
 from xdsl.dialects.tensor import EmptyOp
@@ -43,7 +43,7 @@ from xdsl.ir import Block, Region
     ],
 )
 def test_plugin_satisfies_protocol(plugin_cls, stage_name) -> None:
-    from compgen.stages.base import TargetStagePlugin
+    from xpu_rt.stages.base import TargetStagePlugin
 
     p = plugin_cls()
     assert isinstance(p, TargetStagePlugin)
@@ -168,8 +168,8 @@ def test_rocm_layout_plugin_is_passthrough() -> None:
 
 def test_plugins_accept_configure_call() -> None:
     """All plugins must be configurable with TargetProfile + CapabilitySpec."""
-    from compgen.targets.capability import infer_capabilities
-    from compgen.targets.schema import load_profile
+    from xpu_rt.targets.capability import infer_capabilities
+    from xpu_rt.targets.schema import load_profile
 
     target = load_profile("examples/target_profiles/cuda_a100.yaml")
     caps = infer_capabilities(target)

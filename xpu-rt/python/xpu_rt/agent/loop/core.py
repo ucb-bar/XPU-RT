@@ -20,7 +20,7 @@ from typing import Any
 
 import structlog
 
-from compgen.agent.env import (
+from xpu_rt.agent.env import (
     Action,
     CompilerEnv,
     ConfigureDispatchAction,
@@ -34,17 +34,17 @@ from compgen.agent.env import (
     RequestVerificationAction,
     SetExtractionObjectiveAction,
 )
-from compgen.agent.loop import prompts
-from compgen.agent.loop.records import CompilationResult, IterationRecord
-from compgen.agent.prompts.analyze import ANALYSIS_SCHEMA, AnalysisContext, ProposedOptimization
-from compgen.agent.prompts.analyze import format_prompt as fmt_analyze
-from compgen.agent.prompts.analyze import parse_response as parse_analyze
-from compgen.agent.prompts.refine import REFINEMENT_SCHEMA, RefinementAction, RefinementContext
-from compgen.agent.prompts.refine import format_prompt as fmt_refine
-from compgen.agent.prompts.refine import parse_response as parse_refine
-from compgen.agent.serialize import observation_to_prompt
-from compgen.llm.base import CompGenLLMProtocol, GenerationRequest, LLMConfig, PromptContext
-from compgen.targets.schema import TargetProfile
+from xpu_rt.agent.loop import prompts
+from xpu_rt.agent.loop.records import CompilationResult, IterationRecord
+from xpu_rt.agent.prompts.analyze import ANALYSIS_SCHEMA, AnalysisContext, ProposedOptimization
+from xpu_rt.agent.prompts.analyze import format_prompt as fmt_analyze
+from xpu_rt.agent.prompts.analyze import parse_response as parse_analyze
+from xpu_rt.agent.prompts.refine import REFINEMENT_SCHEMA, RefinementAction, RefinementContext
+from xpu_rt.agent.prompts.refine import format_prompt as fmt_refine
+from xpu_rt.agent.prompts.refine import parse_response as parse_refine
+from xpu_rt.agent.serialize import observation_to_prompt
+from xpu_rt.llm.base import CompGenLLMProtocol, GenerationRequest, LLMConfig, PromptContext
+from xpu_rt.targets.schema import TargetProfile
 
 log = structlog.get_logger()
 
@@ -77,9 +77,9 @@ class AgenticCompilationLoop:
         try:
             from pathlib import Path
 
-            from compgen.agent.memory import AgentMemory
+            from xpu_rt.agent.memory import AgentMemory
 
-            memory_path = Path(".compgen_cache/agent_memory.json")
+            memory_path = Path(".xpu_rt_cache/agent_memory.json")
             self._memory = AgentMemory.load(memory_path) if memory_path.exists() else AgentMemory()
         except Exception:
             self._memory = None
@@ -87,7 +87,7 @@ class AgenticCompilationLoop:
         # Initialize unified CompilerMemory if not provided
         if self.compiler_memory is None:
             try:
-                from compgen.memory.store import CompilerMemory
+                from xpu_rt.memory.store import CompilerMemory
 
                 self.compiler_memory = CompilerMemory()
             except Exception:
@@ -109,9 +109,9 @@ class AgenticCompilationLoop:
         self._retrieval_priors: list[Any] = []
         if self.compiler_memory is not None:
             try:
-                from compgen.memory.schema import ObjectKind
-                from compgen.memory.search.retrieve import SearchRetriever
-                from compgen.memory.search.task import SearchTask
+                from xpu_rt.memory.schema import ObjectKind
+                from xpu_rt.memory.search.retrieve import SearchRetriever
+                from xpu_rt.memory.search.task import SearchTask
 
                 task = self.compiler_memory.create_task(
                     kind=ObjectKind.BACKEND_PLAN,
@@ -136,7 +136,7 @@ class AgenticCompilationLoop:
 
             # Retrieve learned cost weights for this target (Unit 12)
             try:
-                from compgen.solve.learned_weights import retrieve_best_weights
+                from xpu_rt.solve.learned_weights import retrieve_best_weights
 
                 learned_weights = retrieve_best_weights(self.compiler_memory, target_key=target.name)
                 if learned_weights:
@@ -253,7 +253,7 @@ class AgenticCompilationLoop:
                 # Record error patterns for failed actions (Unit 14)
                 if not result.info.action_applied or not verification_passed:
                     try:
-                        from compgen.memory.error_patterns import record_error_pattern
+                        from xpu_rt.memory.error_patterns import record_error_pattern
 
                         reason = "verification_failed" if not verification_passed else "not_applied"
                         record_error_pattern(
@@ -269,7 +269,7 @@ class AgenticCompilationLoop:
                 # Record calibration data (Unit 15)
                 if result.info.action_applied and improvement != 0:
                     try:
-                        from compgen.memory.calibration import record_calibration
+                        from xpu_rt.memory.calibration import record_calibration
 
                         record_calibration(
                             self.compiler_memory,
@@ -326,14 +326,14 @@ class AgenticCompilationLoop:
                     actual_improvement=total_improvement,
                     success=total_improvement > 0,
                 )
-                self._memory.save(Path(".compgen_cache/agent_memory.json"))
+                self._memory.save(Path(".xpu_rt_cache/agent_memory.json"))
             except Exception:
                 pass
 
         # Store learned cost weights (Unit 12)
         if self.compiler_memory is not None and total_improvement > 0:
             try:
-                from compgen.solve.learned_weights import store_cost_weights
+                from xpu_rt.solve.learned_weights import store_cost_weights
 
                 eqsat_weights = getattr(self.env, "_eqsat_weights", {})
                 if eqsat_weights:
@@ -349,7 +349,7 @@ class AgenticCompilationLoop:
         # Extract reusable knowledge from this search trajectory
         if self.compiler_memory is not None and total_improvement > 0:
             try:
-                from compgen.memory.search.promote import SearchPromoter
+                from xpu_rt.memory.search.promote import SearchPromoter
 
                 promoter = SearchPromoter(self.compiler_memory)
                 promoter.extract_knowledge(
@@ -403,9 +403,9 @@ class AgenticCompilationLoop:
         # Validate, lower, and EXECUTE recipe
         recipe_module = self.env.recipe
         if recipe_module is not None:
-            from compgen.ir.recipe.execute import RecipeExecutor
-            from compgen.ir.recipe.lower import lower_recipe
-            from compgen.ir.recipe.validate import validate_recipe_module
+            from xpu_rt.ir.recipe.execute import RecipeExecutor
+            from xpu_rt.ir.recipe.lower import lower_recipe
+            from xpu_rt.ir.recipe.validate import validate_recipe_module
 
             validation = validate_recipe_module(recipe_module)
             lowered = lower_recipe(recipe_module)
@@ -433,7 +433,7 @@ class AgenticCompilationLoop:
                 # rewrite patterns) and fails uniformly with
                 # "Syntax error: invalid syntax", showing up as
                 # transforms_failed=N for every recipe op.
-                from compgen.ir.recipe.payload_mutators import (
+                from xpu_rt.ir.recipe.payload_mutators import (
                     apply_recipe_to_payload,
                 )
 
@@ -476,8 +476,8 @@ class AgenticCompilationLoop:
 
             # Attempt promotion if all verifications passed (with LLM guidance - Unit 16)
             try:
-                from compgen.promotion.promote import promote_recipe
-                from compgen.runtime.bundle import Bundle
+                from xpu_rt.promotion.promote import promote_recipe
+                from xpu_rt.runtime.bundle import Bundle
 
                 ver_summary = result.runtime_artifacts.get("verification_summary", {})
                 all_passed = ver_summary.get("failed", 0) == 0
@@ -485,9 +485,9 @@ class AgenticCompilationLoop:
                 # Ask LLM for promotion decision
                 llm_promotes = True
                 try:
-                    from compgen.agent.prompts.promotion_decision import PROMOTION_SCHEMA, PromotionContext
-                    from compgen.agent.prompts.promotion_decision import format_prompt as fmt_promo
-                    from compgen.agent.prompts.promotion_decision import parse_response as parse_promo
+                    from xpu_rt.agent.prompts.promotion_decision import PROMOTION_SCHEMA, PromotionContext
+                    from xpu_rt.agent.prompts.promotion_decision import format_prompt as fmt_promo
+                    from xpu_rt.agent.prompts.promotion_decision import parse_response as parse_promo
 
                     promo_ctx = PromotionContext(
                         improvement_pct=result.total_improvement_pct,
@@ -536,7 +536,7 @@ class AgenticCompilationLoop:
                     )
                     promo = promote_recipe(
                         bundle,
-                        ".compgen_cache/recipes",
+                        ".xpu_rt_cache/recipes",
                         memory=self.compiler_memory,
                     )
                     result.runtime_artifacts["promotion"] = {
@@ -550,8 +550,8 @@ class AgenticCompilationLoop:
 
         agent_module = self.env.agent_ir if hasattr(self.env, "agent_ir") else None
         if agent_module is not None:
-            from compgen.ir.agent.lower import lower_agent
-            from compgen.ir.agent.validate import validate_agent_module
+            from xpu_rt.ir.agent.lower import lower_agent
+            from xpu_rt.ir.agent.validate import validate_agent_module
 
             validation = validate_agent_module(agent_module, recipe_module=recipe_module)
             lowered = lower_agent(agent_module)
@@ -625,7 +625,7 @@ class AgenticCompilationLoop:
         error_pattern_dicts: list[dict] = []
         if self.compiler_memory is not None:
             try:
-                from compgen.memory.error_patterns import error_patterns_to_prompt, retrieve_error_patterns
+                from xpu_rt.memory.error_patterns import error_patterns_to_prompt, retrieve_error_patterns
 
                 patterns = retrieve_error_patterns(self.compiler_memory, target_key=target.name, top_k=3)
                 error_pattern_dicts = error_patterns_to_prompt(patterns)
@@ -684,9 +684,9 @@ class AgenticCompilationLoop:
     ) -> list[Action]:
         """Ask LLM for a multi-step optimization plan (3-5 steps)."""
         try:
-            from compgen.agent.prompts.plan_multi_step import PLAN_SCHEMA, PlanContext
-            from compgen.agent.prompts.plan_multi_step import format_prompt as fmt_plan
-            from compgen.agent.prompts.plan_multi_step import parse_response as parse_plan
+            from xpu_rt.agent.prompts.plan_multi_step import PLAN_SCHEMA, PlanContext
+            from xpu_rt.agent.prompts.plan_multi_step import format_prompt as fmt_plan
+            from xpu_rt.agent.prompts.plan_multi_step import parse_response as parse_plan
         except ImportError:
             return []
 
@@ -712,7 +712,7 @@ class AgenticCompilationLoop:
 
             actions: list[Action] = []
             for step in steps:
-                from compgen.agent.prompts.analyze import ProposedOptimization
+                from xpu_rt.agent.prompts.analyze import ProposedOptimization
 
                 proposal = ProposedOptimization(
                     action_type=step.get("action_type", "noop"),
@@ -741,8 +741,8 @@ class AgenticCompilationLoop:
     ) -> ProposeRuleAction | None:
         """Ask LLM to generate a new EqSat rewrite rule."""
         try:
-            from compgen.eqsat.explain import summarize_module
-            from compgen.eqsat.llm_interface import format_rule_proposal_prompt
+            from xpu_rt.eqsat.explain import summarize_module
+            from xpu_rt.eqsat.llm_interface import format_rule_proposal_prompt
         except ImportError:
             return None
 
@@ -793,12 +793,12 @@ class AgenticCompilationLoop:
     ) -> Action | None:
         """Consult LLM about eqsat search direction and weight tuning."""
         try:
-            from compgen.agent.prompts.eqsat_extraction_weights import EXTRACTION_WEIGHTS_SCHEMA, WeightsContext
-            from compgen.agent.prompts.eqsat_extraction_weights import format_prompt as fmt_weights
-            from compgen.agent.prompts.eqsat_extraction_weights import parse_response as parse_weights
-            from compgen.agent.prompts.eqsat_search_state import SEARCH_STATE_SCHEMA, SearchStateContext
-            from compgen.agent.prompts.eqsat_search_state import format_prompt as fmt_ss
-            from compgen.agent.prompts.eqsat_search_state import parse_response as parse_ss
+            from xpu_rt.agent.prompts.eqsat_extraction_weights import EXTRACTION_WEIGHTS_SCHEMA, WeightsContext
+            from xpu_rt.agent.prompts.eqsat_extraction_weights import format_prompt as fmt_weights
+            from xpu_rt.agent.prompts.eqsat_extraction_weights import parse_response as parse_weights
+            from xpu_rt.agent.prompts.eqsat_search_state import SEARCH_STATE_SCHEMA, SearchStateContext
+            from xpu_rt.agent.prompts.eqsat_search_state import format_prompt as fmt_ss
+            from xpu_rt.agent.prompts.eqsat_search_state import parse_response as parse_ss
         except ImportError:
             return None
 
@@ -859,7 +859,7 @@ class AgenticCompilationLoop:
 
     def run_with_evolution(self, target: TargetProfile) -> CompilationResult:
         """Run optimization using the evolutionary strategy optimizer."""
-        from compgen.agent.evolution import EvolutionaryOptimizer
+        from xpu_rt.agent.evolution import EvolutionaryOptimizer
 
         optimizer = EvolutionaryOptimizer(
             llm_client=self.llm_client,
@@ -873,7 +873,7 @@ class AgenticCompilationLoop:
         # Record in compiler memory if available
         if self.compiler_memory is not None:
             try:
-                from compgen.memory.schema import ObjectKind
+                from xpu_rt.memory.schema import ObjectKind
 
                 task = self.compiler_memory.create_task(
                     kind=ObjectKind.BACKEND_PLAN,
@@ -913,9 +913,9 @@ class AgenticCompilationLoop:
     ) -> list[CompilationResult]:
         """Coordinate optimization across multiple modules."""
         try:
-            from compgen.agent.prompts.global_strategy import GLOBAL_STRATEGY_SCHEMA, GlobalStrategyContext
-            from compgen.agent.prompts.global_strategy import format_prompt as fmt_gs
-            from compgen.agent.prompts.global_strategy import parse_response as parse_gs
+            from xpu_rt.agent.prompts.global_strategy import GLOBAL_STRATEGY_SCHEMA, GlobalStrategyContext
+            from xpu_rt.agent.prompts.global_strategy import format_prompt as fmt_gs
+            from xpu_rt.agent.prompts.global_strategy import parse_response as parse_gs
         except ImportError:
             # Fall back to sequential optimization
             results = []
@@ -977,7 +977,7 @@ class AgenticCompilationLoop:
 
     def _proposal_to_action(self, proposal: ProposedOptimization) -> Action:
         """Convert an LLM proposal into a concrete env action."""
-        from compgen.agent.env import (
+        from xpu_rt.agent.env import (
             AssignDeviceAction,
             DiscoverOpsAction,
             FuseAction,
@@ -1009,7 +1009,7 @@ class AgenticCompilationLoop:
 
     def _refinement_to_action(self, refinement: RefinementAction) -> Action:
         """Convert a refinement suggestion into a concrete env action."""
-        from compgen.agent.env import (
+        from xpu_rt.agent.env import (
             AssignDeviceAction,
             DiscoverOpsAction,
             FuseAction,
@@ -1158,9 +1158,9 @@ class AgenticCompilationLoop:
         target: TargetProfile,
     ) -> ConfigureProfilingAction | None:
         """Ask LLM to configure profiling."""
-        from compgen.agent.prompts.runtime_profile import ProfileHookContext
-        from compgen.agent.prompts.runtime_profile import format_prompt as fmt_profile
-        from compgen.agent.prompts.runtime_profile import parse_response as parse_profile
+        from xpu_rt.agent.prompts.runtime_profile import ProfileHookContext
+        from xpu_rt.agent.prompts.runtime_profile import format_prompt as fmt_profile
+        from xpu_rt.agent.prompts.runtime_profile import parse_response as parse_profile
 
         bottlenecks = [
             {
@@ -1206,9 +1206,9 @@ class AgenticCompilationLoop:
         target: TargetProfile,
     ) -> ConfigureDispatchAction | None:
         """Ask LLM to select dispatch strategy."""
-        from compgen.agent.prompts.runtime_dispatch import DispatchContext
-        from compgen.agent.prompts.runtime_dispatch import format_prompt as fmt_dispatch
-        from compgen.agent.prompts.runtime_dispatch import parse_response as parse_dispatch
+        from xpu_rt.agent.prompts.runtime_dispatch import DispatchContext
+        from xpu_rt.agent.prompts.runtime_dispatch import format_prompt as fmt_dispatch
+        from xpu_rt.agent.prompts.runtime_dispatch import parse_response as parse_dispatch
 
         ctx = DispatchContext(
             target_name=target.name,
@@ -1288,9 +1288,9 @@ class AgenticCompilationLoop:
         Uses the LLM to decide the verification level, then executes.
         Falls back to differential if LLM call fails.
         """
-        from compgen.agent.prompts.verify_strategy import VerifyStrategyContext
-        from compgen.agent.prompts.verify_strategy import format_prompt as fmt_vs
-        from compgen.agent.prompts.verify_strategy import parse_response as parse_vs
+        from xpu_rt.agent.prompts.verify_strategy import VerifyStrategyContext
+        from xpu_rt.agent.prompts.verify_strategy import format_prompt as fmt_vs
+        from xpu_rt.agent.prompts.verify_strategy import parse_response as parse_vs
 
         # Ask LLM for verification strategy
         ctx = VerifyStrategyContext(
@@ -1323,7 +1323,7 @@ class AgenticCompilationLoop:
             pass  # fall back to differential
 
         # Execute verification
-        from compgen.semantic.executor import VerificationExecutor
+        from xpu_rt.semantic.executor import VerificationExecutor
 
         executor = VerificationExecutor()
         obligation = {"type": level, "region_id": action.region_id}
@@ -1365,9 +1365,9 @@ class AgenticCompilationLoop:
         target: TargetProfile,
     ) -> Action | None:
         """Ask LLM to repair a transform after TV failure."""
-        from compgen.agent.prompts.counterexample_repair import CounterexampleRepairContext
-        from compgen.agent.prompts.counterexample_repair import format_prompt as fmt_cex
-        from compgen.agent.prompts.counterexample_repair import parse_response as parse_cex
+        from xpu_rt.agent.prompts.counterexample_repair import CounterexampleRepairContext
+        from xpu_rt.agent.prompts.counterexample_repair import format_prompt as fmt_cex
+        from xpu_rt.agent.prompts.counterexample_repair import parse_response as parse_cex
 
         ctx = CounterexampleRepairContext(
             region_id=vr.get("region_id", ""),

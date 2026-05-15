@@ -35,7 +35,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from compgen.kernels.provider import (
+from xpu_rt.kernels.provider import (
     BidPreview,
     KernelContract,
     KnowledgeExport,
@@ -51,7 +51,7 @@ _MATMUL_C_SOURCE = """\
  */
 #include <string.h>
 
-void compgen_matmul_f32(
+void xpu_rt_matmul_f32(
     const float* __restrict__ A,
     const float* __restrict__ B,
     float* __restrict__ Y,
@@ -81,7 +81,7 @@ _POINTWISE_FUSED_C_SOURCE = """\
  */
 #include <stddef.h>
 
-void compgen_fused_pointwise_f32(
+void xpu_rt_fused_pointwise_f32(
     const float* __restrict__ X,
     float* __restrict__ Y,
     int N)
@@ -125,11 +125,11 @@ class CReferenceProvider:
         op_family = (contract.op_family or "").lower()
         if "matmul" in op_family:
             kernel_code = _MATMUL_C_SOURCE
-            symbol = "compgen_matmul_f32"
+            symbol = "xpu_rt_matmul_f32"
             kind = "reference_matmul"
         else:
             kernel_code = _POINTWISE_FUSED_C_SOURCE
-            symbol = "compgen_fused_pointwise_f32"
+            symbol = "xpu_rt_fused_pointwise_f32"
             kind = "reference_pointwise"
         return ProviderResult(
             found=True,

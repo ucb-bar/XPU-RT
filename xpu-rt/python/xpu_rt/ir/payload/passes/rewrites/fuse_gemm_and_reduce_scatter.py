@@ -3,7 +3,7 @@ immediately-following ``reduce_scatter``.
 
 Mirrors XLA's ``AsyncCollectiveCreator`` / hexagon-mlir's static
 GEMM+RS overlap. When a matmul produces a partial-sum tensor and
-the next op is ``compgen.collective.reduce_scatter``, merge them
+the next op is ``xpu_rt.collective.reduce_scatter``, merge them
 into one tagged op so the Triton/codegen emitter can emit the
 overlapped ring-reduce kernel.
 """
@@ -21,7 +21,7 @@ from xdsl.pattern_rewriter import (
     op_type_rewrite_pattern,
 )
 
-from compgen.ir.collective import ReduceScatterOp
+from xpu_rt.ir.collective import ReduceScatterOp
 
 
 @dataclass
@@ -37,7 +37,7 @@ class _FuseGEMMRS(RewritePattern):
     @op_type_rewrite_pattern
     def match_and_rewrite(self, op: MatmulOp, rewriter: PatternRewriter) -> None:
         self.stats.matmuls_seen += 1
-        if "compgen.gemm_rs_fused" in op.attributes:
+        if "xpu_rt.gemm_rs_fused" in op.attributes:
             return
         if not op.res.types:
             return
@@ -46,9 +46,9 @@ class _FuseGEMMRS(RewritePattern):
         for use in result.uses:
             consumer = use.operation
             if isinstance(consumer, ReduceScatterOp):
-                op.attributes["compgen.gemm_rs_fused"] = StringAttr("true")
-                op.attributes["compgen.gemm_rs_scatter_dim"] = consumer.scatter_dim
-                op.attributes["compgen.gemm_rs_reduce_kind"] = consumer.reduce_kind.kind
+                op.attributes["xpu_rt.gemm_rs_fused"] = StringAttr("true")
+                op.attributes["xpu_rt.gemm_rs_scatter_dim"] = consumer.scatter_dim
+                op.attributes["xpu_rt.gemm_rs_reduce_kind"] = consumer.reduce_kind.kind
                 self.stats.fusions_applied += 1
                 return
 

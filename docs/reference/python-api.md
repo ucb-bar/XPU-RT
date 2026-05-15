@@ -6,17 +6,17 @@ The current public Python API is the most useful scriptable surface in the repo.
 
 Top-level package exports:
 
-- `compgen.device`
-- `compgen.compile_model`
-- `compgen.CompGenDevice`
-- `compgen.CompiledModel`
+- `xpu_rt.device`
+- `xpu_rt.compile_model`
+- `xpu_rt.CompGenDevice`
+- `xpu_rt.CompiledModel`
 
-## `compgen.device(...)`
+## `xpu_rt.device(...)`
 
 ```python
-import compgen
+import xpu-rt
 
-device = compgen.device("examples/hardware_specs/gpu_simt_demo.yaml")
+device = xpu_rt.device("examples/hardware_specs/gpu_simt_demo.yaml")
 print(device.profile.name)
 print(device.capabilities.target_class.value)
 print(len(device.dialect_stack.stages))
@@ -30,10 +30,10 @@ What it does:
 - builds a target-specific dialect stack
 - returns a `CompGenDevice`
 
-## `compgen.compile_model(...)`
+## `xpu_rt.compile_model(...)`
 
 ```python
-import compgen
+import xpu-rt
 import torch
 import torch.nn as nn
 
@@ -47,8 +47,8 @@ class TinyMLP(nn.Module):
         return self.fc(x)
 
 
-device = compgen.device("examples/hardware_specs/gpu_simt_demo.yaml")
-compiled = compgen.compile_model(TinyMLP(), device)
+device = xpu_rt.device("examples/hardware_specs/gpu_simt_demo.yaml")
+compiled = xpu_rt.compile_model(TinyMLP(), device)
 result = compiled(torch.randn(1, 64), num_iterations=5, warmup=1)
 print(result.latency_median_us)
 ```
@@ -63,4 +63,4 @@ What it does today:
 
 ## Important Current Limitation
 
-`compgen.device()` currently expects a targetgen hardware spec, not the simpler profile YAMLs under `examples/target_profiles/`. The repo now ships `examples/hardware_specs/gpu_simt_demo.yaml` so the documented API path points at a real public example instead of a test-only fixture.
+`xpu_rt.device()` currently expects a targetgen hardware spec, not the simpler profile YAMLs under `examples/target_profiles/`. The repo now ships `examples/hardware_specs/gpu_simt_demo.yaml` so the documented API path points at a real public example instead of a test-only fixture.

@@ -39,13 +39,13 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from compgen.graph_compilation.action_space_resolver import (
+from xpu_rt.graph_compilation.action_space_resolver import (
     ResolvedCandidate,
     ResolverError,
     resolve_candidate,
 )
-from compgen.graph_compilation.artifacts import ArtifactRef, StageRecord
-from compgen.graph_compilation.hashing import sha256_file, sha256_tree
+from xpu_rt.graph_compilation.artifacts import ArtifactRef, StageRecord
+from xpu_rt.graph_compilation.hashing import sha256_file, sha256_tree
 
 SUPPORTED_SELECTION_MODES: tuple[str, ...] = (
     "greedy", "agent-file", "llm-live",
@@ -387,7 +387,7 @@ def run_recipe_planning(
     # ------------------------------------------------------------------ #
     agent_selected_id: str | None = None
     if selection_mode in ("agent-file", "llm-live"):
-        from compgen.graph_compilation.agent_decision import (
+        from xpu_rt.graph_compilation.agent_decision import (
             run_agent_decision,
             run_agent_decision_iterative,
         )
@@ -496,7 +496,7 @@ def run_recipe_planning(
         promoted_ids: set[str] = set()
         if selection_mode == "greedy":
             try:
-                library_path = Path(".compgen_cache") / "recipes"
+                library_path = Path(".xpu_rt_cache") / "recipes"
                 if library_path.is_dir():
                     for sidecar_path in library_path.rglob("promoted_recipe.json"):
                         try:
@@ -675,7 +675,7 @@ def run_recipe_planning(
         selection_mode in ("agent-file", "llm-live")
         and resolved is not None
     ):
-        from compgen.graph_compilation.agent_decision import (
+        from xpu_rt.graph_compilation.agent_decision import (
             update_trace_with_recipe_op,
         )
 

@@ -7,12 +7,12 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-from compgen.llm.anthropic_client import AnthropicClient
-from compgen.llm.base import GenerationRequest, LLMConfig, Objective, PromptContext
-from compgen.llm.cli_client import ClaudeCLIClient, CodexCLIClient
-from compgen.llm.factory import create_llm_client
-from compgen.llm.gemini_client import GeminiClient
-from compgen.llm.openai_client import OpenAIClient
+from xpu_rt.llm.anthropic_client import AnthropicClient
+from xpu_rt.llm.base import GenerationRequest, LLMConfig, Objective, PromptContext
+from xpu_rt.llm.cli_client import ClaudeCLIClient, CodexCLIClient
+from xpu_rt.llm.factory import create_llm_client
+from xpu_rt.llm.gemini_client import GeminiClient
+from xpu_rt.llm.openai_client import OpenAIClient
 
 
 def _make_request(prompt: str = "Say hello") -> GenerationRequest:

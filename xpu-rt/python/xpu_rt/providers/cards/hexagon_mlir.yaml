@@ -4,7 +4,7 @@ integration_level: probe
 target_families: [hexagon_npu]
 contract_kinds: [matmul, pointwise, fused_region, attention]
 emits: [hexagon_mlir, elf]
-entrypoint: compgen.providers.adapters.hexagon_mlir:HexagonMLIRProvider
+entrypoint: xpu_rt.providers.adapters.hexagon_mlir:HexagonMLIRProvider
 paper_claimable: false
 required_env: [HEXAGON_MLIR_ROOT]
 required_commands: []

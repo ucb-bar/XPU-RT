@@ -33,7 +33,7 @@ def solver_job(
     problem_type = problem.get("type", "placement")
 
     if problem_type == "placement":
-        from compgen.solve.placement import solve_placement
+        from xpu_rt.solve.placement import solve_placement
 
         result = solve_placement(
             partitions=problem.get("partitions", []),
@@ -50,7 +50,7 @@ def solver_job(
         }
 
     if problem_type == "schedule":
-        from compgen.solve.schedule import solve_schedule
+        from xpu_rt.solve.schedule import solve_schedule
 
         result = solve_schedule(
             partition_ids=problem.get("partition_ids", []),

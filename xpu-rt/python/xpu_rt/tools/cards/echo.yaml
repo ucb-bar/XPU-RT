@@ -1,5 +1,5 @@
-schema_version: compgen_tool_card_v1
-tool_id: compgen_echo
+schema_version: xpu_rt_tool_card_v1
+tool_id: xpu_rt_echo
 maturity: T2
 phase: evidence
 description: |
@@ -12,9 +12,9 @@ description: |
   test has a real subject.
 
 entrypoints:
-  python: compgen.tools.builtin.echo:run
-  cli: compgen-tool run compgen_echo
-  mcp: compgen_echo
+  python: xpu_rt.tools.builtin.echo:run
+  cli: xpu-rt-tool run xpu_rt_echo
+  mcp: xpu_rt_echo
 
 input_schema:
   type: object
@@ -58,7 +58,7 @@ forbidden:
 promotion_requirements:
   unit_tests: true            # tests/tools/test_tool_runner.py covers this
   negative_controls: true     # 6 negative-control branches in the same file
-  cli_wrapper: true           # M-91: ``compgen tool run compgen_echo``
+  cli_wrapper: true           # M-91: ``xpu_rt tool run xpu_rt_echo``
   artifact_outputs: false     # writes echo.txt but not a structured report
   skill_doc: false
   mcp_wrapper: false

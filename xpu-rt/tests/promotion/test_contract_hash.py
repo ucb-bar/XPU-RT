@@ -1,8 +1,8 @@
-"""Tests for :mod:`compgen.promotion.contract_hash`."""
+"""Tests for :mod:`xpu_rt.promotion.contract_hash`."""
 
 from __future__ import annotations
 
-from compgen.kernels.contract_v3 import (
+from xpu_rt.kernels.contract_v3 import (
     ConcurrencyUnit,
     DispatchModel,
     DispatchSpec,
@@ -26,7 +26,7 @@ from compgen.kernels.contract_v3 import (
     SyncSpec,
     TensorIO,
 )
-from compgen.promotion.contract_hash import hash_contract
+from xpu_rt.promotion.contract_hash import hash_contract
 
 
 def _make_io(name: str, dim_a: int, dim_b: int) -> TensorIO:

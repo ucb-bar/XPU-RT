@@ -13,12 +13,12 @@ from pathlib import Path
 
 import torch
 import torch.nn as nn
-from compgen.capture.torch_export import capture_model
-from compgen.ir.payload.import_fx import fx_to_xdsl
-from compgen.kernels.contracts import build_kernel_contracts, spec_to_provider_contract
-from compgen.kernels.provider import RuntimeCapabilities
-from compgen.targetgen.hardware_spec import RuntimeMathSpec
-from compgen.targetgen.load import extract_target_profile, load_hardware_spec
+from xpu_rt.capture.torch_export import capture_model
+from xpu_rt.ir.payload.import_fx import fx_to_xdsl
+from xpu_rt.kernels.contracts import build_kernel_contracts, spec_to_provider_contract
+from xpu_rt.kernels.provider import RuntimeCapabilities
+from xpu_rt.targetgen.hardware_spec import RuntimeMathSpec
+from xpu_rt.targetgen.load import extract_target_profile, load_hardware_spec
 
 
 def _write_spec(tmp_path: Path, runtime_block: str) -> Path:
@@ -106,11 +106,11 @@ def test_provider_contract_surfaces_runtime_math(tmp_path: Path) -> None:
 def test_provider_can_branch_on_runtime_capabilities(tmp_path: Path) -> None:
     """Concrete worked example: a softmax provider that needs ``expf``
     rejects a target without libm but accepts one with it."""
-    from compgen.kernels.codegen_fallback import run_provider_fallback
-    from compgen.kernels.provider import (
+    from xpu_rt.kernels.codegen_fallback import run_provider_fallback
+    from xpu_rt.kernels.provider import (
         KernelContract as ProviderContract,
     )
-    from compgen.kernels.provider import (
+    from xpu_rt.kernels.provider import (
         KnowledgeExport,
         ProviderResult,
         SearchBudget,

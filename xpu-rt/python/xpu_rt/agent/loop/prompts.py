@@ -12,11 +12,11 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from compgen.agent.env import Observation
-from compgen.agent.loop.records import IterationRecord
-from compgen.agent.serialize import legal_actions_to_dict, observation_to_dict, observation_to_prompt
-from compgen.llm.base import Objective, PromptContext
-from compgen.targets.schema import TargetProfile
+from xpu_rt.agent.env import Observation
+from xpu_rt.agent.loop.records import IterationRecord
+from xpu_rt.agent.serialize import legal_actions_to_dict, observation_to_dict, observation_to_prompt
+from xpu_rt.llm.base import Objective, PromptContext
+from xpu_rt.targets.schema import TargetProfile
 
 
 def target_summary(target: TargetProfile) -> str:

@@ -68,7 +68,7 @@ def generate_seed_proc(
 
 
 def _exo_dtype(dtype: str) -> str:
-    """Map CompGen dtype string to Exo type."""
+    """Map XPU-RT dtype string to Exo type."""
     mapping = {"f32": "f32", "f16": "f16", "f64": "f64", "i32": "i32", "i8": "i8"}
     return mapping.get(dtype, "f32")
 

@@ -1,4 +1,4 @@
-"""CompGen analysis infrastructure.
+"""XPU-RT analysis infrastructure.
 
 Wave 2 modules:
   * ``dim_semantics``         — per-dim role tagging (parallel/reduce/broadcast)
@@ -11,7 +11,7 @@ Section 20 / :
 
 from __future__ import annotations
 
-from compgen.analysis.checkpoints import (
+from xpu_rt.analysis.checkpoints import (
     ANALYSIS_LEVELS,
     KNOWN_SUMMARIES,
     AnalysisIndex,
@@ -21,13 +21,13 @@ from compgen.analysis.checkpoints import (
     KnownSummary,
     summary_id_for_path,
 )
-from compgen.analysis.dim_semantics import (
+from xpu_rt.analysis.dim_semantics import (
     DimRole,
     OpDimAnnotation,
     annotate_dim_roles,
     dim_roles_for_op,
 )
-from compgen.analysis.transpose_propagation import (
+from xpu_rt.analysis.transpose_propagation import (
     TransposeChain,
     detect_transpose_chains,
     propose_transpose_cancellations,

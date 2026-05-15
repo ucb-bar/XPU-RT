@@ -1,4 +1,4 @@
-"""Tests for compgen.passes.verification."""
+"""Tests for xpu_rt.passes.verification."""
 
 from __future__ import annotations
 
@@ -7,14 +7,14 @@ from pathlib import Path
 
 import pytest
 
-from compgen.audit.errors import (
+from xpu_rt.audit.errors import (
     VerificationGateFailed,
     VerificationGateMissing,
 )
-from compgen.passes.cards import (
+from xpu_rt.passes.cards import (
     PassCard, default_registry_root, load_card, resolve_card_path,
 )
-from compgen.passes.verification import (
+from xpu_rt.passes.verification import (
     ALLOWED_RUNGS,
     CERT_SCHEMA_VERSION,
     SKIPPABLE_RUNGS,

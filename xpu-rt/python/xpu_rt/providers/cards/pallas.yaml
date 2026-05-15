@@ -4,7 +4,7 @@ integration_level: probe
 target_families: [tpu]
 contract_kinds: [matmul, pointwise, attention, fused_region]
 emits: [pallas_source, mlir]
-entrypoint: compgen.providers.adapters.pallas:PallasProvider
+entrypoint: xpu_rt.providers.adapters.pallas:PallasProvider
 paper_claimable: false
 required_env: []
 required_commands: []

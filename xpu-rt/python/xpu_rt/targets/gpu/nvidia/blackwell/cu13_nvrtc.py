@@ -37,7 +37,7 @@ from typing import Any
 # us, so we can't import its CudaUnavailableError without going
 # through the old module path. Define our own local alias instead;
 # downstream callers receive the same exception type.
-from compgen.runtime.native.cuda import CudaUnavailableError
+from xpu_rt.runtime.native.cuda import CudaUnavailableError
 
 _CU13_NVRTC_LIB: Any | None = None
 
@@ -49,7 +49,7 @@ def _resolve_cu13_nvrtc_lib_path() -> str | None:
     ``nvidia.cu13/`` layout, not the older split
     ``nvidia.cuda_nvrtc/``):
 
-    1. ``$COMPGEN_CU13_NVRTC_LIB_PATH`` env override (if it points
+    1. ``$XPU_RT_CU13_NVRTC_LIB_PATH`` env override (if it points
        at an existing file).
     2. ``nvidia.cu13/lib/libnvrtc.so.13*`` — the unified torch≥2.6
        meta-wheel layout.
@@ -58,7 +58,7 @@ def _resolve_cu13_nvrtc_lib_path() -> str | None:
 
     Returns the full path to the .so or ``None`` if none reachable.
     """
-    env_path = os.environ.get("COMPGEN_CU13_NVRTC_LIB_PATH")
+    env_path = os.environ.get("XPU_RT_CU13_NVRTC_LIB_PATH")
     if env_path and Path(env_path).is_file():
         return env_path
 
@@ -108,7 +108,7 @@ def _load_cu13_nvrtc() -> Any:
             "use_cu13_nvrtc=True. Install with `pip install "
             "nvidia-cu13` (or `nvidia-cuda-nvrtc-cu13`; both are "
             "torch>=2.6 deps on Blackwell hosts) or set "
-            "$COMPGEN_CU13_NVRTC_LIB_PATH to a libnvrtc.so.13. "
+            "$XPU_RT_CU13_NVRTC_LIB_PATH to a libnvrtc.so.13. "
             "Set use_cu13_nvrtc=False to fall back to the cu12 "
             "NVRTC bundled with cuda-python."
         )

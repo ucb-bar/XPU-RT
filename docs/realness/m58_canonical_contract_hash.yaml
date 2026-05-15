@@ -14,7 +14,7 @@ claim: |
        keyed on concrete kernel-facing fields (including dim ints).
      - ``canonical_contract_hash(contract)`` — same projection, but
        every IO ``shape.dims`` entry passes through
-       :func:`compgen.promotion.region_signature._abstract_dim`
+       :func:`xpu_rt.promotion.region_signature._abstract_dim`
        before hashing. Concrete int dims are preserved verbatim;
        ``None`` becomes ``{"dynamic": true}``; pre-abstracted
        ``{"mod": k}`` entries are normalised. Two contracts with
@@ -52,10 +52,10 @@ forbidden:
 - region_kernel_bindings.json dropping the canonical_contract_hash key (every bound row carries it; round-trip through to_dict/from_dict preserves it)
 realness_level: production_path
 required_evidence:
-- python/compgen/promotion/contract_hash.py (canonical_contract_hash + instance_contract_hash + _abstract_shape_dims_in_payload)
-- python/compgen/kernels/kernel_certificate.py (canonical_contract_hash field on KernelCertificate, emit_certificate stamps it via _derive_canonical_hash, find_certificate_by_canonical_hash)
-- python/compgen/runtime/execution_plan.py (canonical_contract_hash on RegionKernelBinding + serialisation)
-- python/compgen/graph_compilation/execution_plan_emit.py (canonical_contract_hash on BindingRow + binding row plumbing)
+- python/xpu_rt/promotion/contract_hash.py (canonical_contract_hash + instance_contract_hash + _abstract_shape_dims_in_payload)
+- python/xpu_rt/kernels/kernel_certificate.py (canonical_contract_hash field on KernelCertificate, emit_certificate stamps it via _derive_canonical_hash, find_certificate_by_canonical_hash)
+- python/xpu_rt/runtime/execution_plan.py (canonical_contract_hash on RegionKernelBinding + serialisation)
+- python/xpu_rt/graph_compilation/execution_plan_emit.py (canonical_contract_hash on BindingRow + binding row plumbing)
 - tests/kernels/test_canonical_contract_hash.py
 feature_id: m58_canonical_contract_hash
 notes: |

@@ -29,14 +29,14 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from compgen.kernels.kernelblaster_adapter import (
+from xpu_rt.kernels.kernelblaster_adapter import (
     DEFAULT_DATASET,
     KernelBlasterAdapter,
     KernelBlasterConfig,
     KernelBlasterUnavailable,
 )
-from compgen.kernels.provider import KernelContract, SearchBudget
-from compgen.kernels.providers.kernelblaster import KernelBlasterProvider
+from xpu_rt.kernels.provider import KernelContract, SearchBudget
+from xpu_rt.kernels.providers.kernelblaster import KernelBlasterProvider
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -66,7 +66,7 @@ def _make_runner(
     kernel_body: str = "__global__ void optimized(...) {}",
     dataset: str = DEFAULT_DATASET,
     precision: str = "fp16",
-    experiment: str = "compgen_run",
+    experiment: str = "xpu_rt_run",
 ):
     """Build a fake subprocess runner that drops KB's ``out/`` tree.
 
@@ -207,9 +207,9 @@ def test_is_available_reports_missing_api_key(tmp_path: Path):
 
 def test_is_available_reports_unconfigured(tmp_path: Path, monkeypatch):
     for env_var in (
-        "COMPGEN_KERNELBLASTER_ROOT",
-        "COMPGEN_KERNELBLASTER_IMAGE",
-        "COMPGEN_KERNELBLASTER_MODE",
+        "XPU_RT_KERNELBLASTER_ROOT",
+        "XPU_RT_KERNELBLASTER_IMAGE",
+        "XPU_RT_KERNELBLASTER_MODE",
         "OPENAI_API_KEY",
     ):
         monkeypatch.delenv(env_var, raising=False)
@@ -275,7 +275,7 @@ def test_search_stages_inputs_and_parses_output(tmp_path: Path):
     assert result.contract_feedback[0].suggested_value == "column_major"
 
     # Input staging: init.cu + driver.cpp landed under data/<dataset>/level1/<NNN_name>/
-    staged_rel = f"data/{DEFAULT_DATASET}/level1/001_compgen_custom"
+    staged_rel = f"data/{DEFAULT_DATASET}/level1/001_xpu_rt_custom"
     assert captured.staged[f"{staged_rel}/init.cu"].startswith("__global__")
     assert captured.staged[f"{staged_rel}/driver.cpp"] == "int main() { return 0; }"
 

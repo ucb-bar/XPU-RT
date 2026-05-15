@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from compgen.capture.torchao_pipeline import AccuracyReport, QuantizationConfig
+from xpu_rt.capture.torchao_pipeline import AccuracyReport, QuantizationConfig
 
 
 def test_quantization_config_construction() -> None:
@@ -36,7 +36,7 @@ def test_apply_quantization_with_int8() -> None:
     torch = pytest.importorskip("torch")
     pytest.importorskip("torchao")
 
-    from compgen.capture.torchao_pipeline import apply_quantization
+    from xpu_rt.capture.torchao_pipeline import apply_quantization
 
     class SimpleLinear(torch.nn.Module):
         def __init__(self) -> None:
@@ -63,7 +63,7 @@ def test_verify_quant_accuracy_reports_errors() -> None:
     """verify_quant_accuracy should report L2 and cosine similarity metrics."""
     torch = pytest.importorskip("torch")
 
-    from compgen.capture.torchao_pipeline import verify_quant_accuracy
+    from xpu_rt.capture.torchao_pipeline import verify_quant_accuracy
 
     class IdentityModel(torch.nn.Module):
         def forward(self, x: torch.Tensor) -> torch.Tensor:

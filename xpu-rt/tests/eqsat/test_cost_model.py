@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from compgen.eqsat.cost_model import CostModel, CostWeights, create_cost_model
-from compgen.eqsat.extract import extract_with_cost_model
-from compgen.eqsat.pipeline import _print_ir, create_egraph
-from compgen.eqsat.rules.python_rules import add_alternative_to_eclass
+from xpu_rt.eqsat.cost_model import CostModel, CostWeights, create_cost_model
+from xpu_rt.eqsat.extract import extract_with_cost_model
+from xpu_rt.eqsat.pipeline import _print_ir, create_egraph
+from xpu_rt.eqsat.rules.python_rules import add_alternative_to_eclass
 from xdsl.dialects import arith, equivalence, func
 from xdsl.dialects.builtin import IndexType, ModuleOp
 from xdsl.ir import Block, Region

@@ -7,7 +7,7 @@ layout predicates -- all without eval() or code execution.
 
 from __future__ import annotations
 
-from compgen.ir.ukernel.constraints import (
+from xpu_rt.ir.ukernel.constraints import (
     ConstraintContext,
     evaluate_all_constraints,
     evaluate_constraint,

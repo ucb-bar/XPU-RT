@@ -1,8 +1,8 @@
 """Extension-authoring tool entrypoints.
 
 Each function in this module is the Python entrypoint for one
-:class:`compgen.tools.ToolCard` that wraps an existing
-:mod:`compgen.extensions` flow step:
+:class:`xpu_rt.tools.ToolCard` that wraps an existing
+:mod:`xpu_rt.extensions` flow step:
 
 * :func:`emit_extension_task` — kick off the unsupported-op /
   extension-task flow by writing a typed task package under
@@ -13,14 +13,14 @@ Each function in this module is the Python entrypoint for one
 Both functions honour the ToolCard contract: request is a JSON-loaded
 ``dict``, output is a JSON-serialisable ``dict`` with a closed-enum
 ``status`` field. Errors that come from the underlying
-:mod:`compgen.extensions` layer are translated into structured
+:mod:`xpu_rt.extensions` layer are translated into structured
 ``status=error`` payloads — the runner never sees an unmanaged
 exception.
 
 The forbidden-action constraints declared on the ToolCard YAMLs
 (``mutate_payload_ir``, ``mutate_recipe_ir``, ``bypass_verifier``,
 ``write_outside_artifact_dir``) are enforced at the architecture
-layer by :mod:`compgen.audit.extension_architecture` — the wrappers
+layer by :mod:`xpu_rt.audit.extension_architecture` — the wrappers
 here simply expose the flow.
 """
 
@@ -30,18 +30,18 @@ import json
 from pathlib import Path
 from typing import Any
 
-from compgen.extensions.errors import (
+from xpu_rt.extensions.errors import (
     ExtensionError,
     ExtensionManifestError,
     ExtensionSandboxViolation,
     ExtensionTaskError,
 )
-from compgen.extensions.manifest import (
+from xpu_rt.extensions.manifest import (
     EXTENSION_TASK_SCHEMA_VERSION,
     ExtensionTask,
     load_manifest,
 )
-from compgen.extensions.registry import build_registry
+from xpu_rt.extensions.registry import build_registry
 
 
 def emit_extension_task(
@@ -72,7 +72,7 @@ def emit_extension_task(
 
     The task package is written to ``out_dir/<task_id>/`` (so multiple
     tasks can land in one run directory). The wrapper does *not* call
-    :func:`compgen.extensions.task_flow.emit_extension_task` because
+    :func:`xpu_rt.extensions.task_flow.emit_extension_task` because
     that targets the global ``.rcg-artifacts/tasks/`` root; the
     ToolCard contract demands writes stay under ``out_dir``.
     """
@@ -161,14 +161,14 @@ def emit_extension_task(
 def validate_extension_manifest(
     request: dict[str, Any], *, out_dir: Path
 ) -> dict[str, Any]:
-    """Validate a single ``compgen_extension.yaml`` against the schema.
+    """Validate a single ``xpu_rt_extension.yaml`` against the schema.
 
     Request shape:
 
     ::
 
         {
-          "manifest_path": "/abs/path/to/compgen_extension.yaml"
+          "manifest_path": "/abs/path/to/xpu_rt_extension.yaml"
         }
 
     Output (status enum):

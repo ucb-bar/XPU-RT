@@ -21,16 +21,16 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from compgen.promotion.errors import (
+from xpu_rt.promotion.errors import (
     PromotionBlockedError,
     PromotionBlockReason,
     VerificationGateResult,
 )
-from compgen.runtime.bundle import Bundle
+from xpu_rt.runtime.bundle import Bundle
 
 # Verification levels that must be present + passing before a bundle
 # can be promoted. Levels not in this set are tolerated as SKIPPED.
-# Keep this set aligned with ``compgen.transforms.verify.VerificationLevel``.
+# Keep this set aligned with ``xpu_rt.transforms.verify.VerificationLevel``.
 _REQUIRED_VERIFY_LEVELS: frozenset[str] = frozenset({"structural", "differential"})
 
 
@@ -165,7 +165,7 @@ def _inspect_verification(bundle: Bundle) -> VerificationGateResult:
     1. The bundle must record ``verification_report`` in its manifest
        artifacts AND the referenced file must exist.
     2. The file must parse as JSON with the schema written by
-       :func:`compgen.api._run_inline_verification`:
+       :func:`xpu_rt.api._run_inline_verification`:
        ``{passed: bool, levels_run: [str], levels_passed: [str],
          max_abs_error: float|null, details: {...}}``.
     3. ``passed`` must be ``True``.
@@ -370,7 +370,7 @@ class RecipePromoter:
         # caller (typically the bridge) recorded one in
         # bundle.metadata; absent for legacy callers.
         try:
-            from compgen.promotion.audit import AuditLog, create_event
+            from xpu_rt.promotion.audit import AuditLog, create_event
 
             audit = AuditLog(self.library_path / "audit.jsonl")
             audit_data: dict[str, Any] = {
@@ -409,7 +409,7 @@ def promote_recipe(
     # Bridge to CompilerMemory
     if memory is not None and result.promoted and result.key is not None:
         try:
-            from compgen.memory.schema import GeneratorKind, KnowledgeKind, ObjectKind, ScopeKind
+            from xpu_rt.memory.schema import GeneratorKind, KnowledgeKind, ObjectKind, ScopeKind
 
             task = memory.create_task(
                 kind=ObjectKind.BACKEND_PLAN,

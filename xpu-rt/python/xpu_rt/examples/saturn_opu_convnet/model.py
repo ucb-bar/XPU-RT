@@ -11,7 +11,7 @@ Exposes:
 
 Historically lived under ``tests/fixtures/saturn_opu_convnet/``; moved
 into the installed package so downstream users who only have the pip
-wheel can reference it by name through :mod:`compgen.examples`.
+wheel can reference it by name through :mod:`xpu_rt.examples`.
 """
 
 from __future__ import annotations

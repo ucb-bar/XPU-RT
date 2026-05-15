@@ -9,11 +9,11 @@ import structlog
 from xdsl.dialects.builtin import ArrayAttr, ModuleOp, StringAttr, SymbolRefAttr
 from xdsl.ir import Block, Operation, Region
 
-from compgen.ir.agent.attrs import FreshnessAttr
-from compgen.ir.agent.ops_evidence import BindFactOp, EvidenceSetOp
-from compgen.ir.agent.ops_frontier import AlternativeOp, FrontierOp
-from compgen.ir.agent.ops_intent import AgentAssumptionOp, AgentScopeOp, AgentSessionOp, AgentUncertaintyOp
-from compgen.ir.recipe.ops_scope import AnchorOp, RecipeRegionOp, SegmentOp
+from xpu_rt.ir.agent.attrs import FreshnessAttr
+from xpu_rt.ir.agent.ops_evidence import BindFactOp, EvidenceSetOp
+from xpu_rt.ir.agent.ops_frontier import AlternativeOp, FrontierOp
+from xpu_rt.ir.agent.ops_intent import AgentAssumptionOp, AgentScopeOp, AgentSessionOp, AgentUncertaintyOp
+from xpu_rt.ir.recipe.ops_scope import AnchorOp, RecipeRegionOp, SegmentOp
 
 log = structlog.get_logger()
 

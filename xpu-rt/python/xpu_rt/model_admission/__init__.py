@@ -6,15 +6,15 @@ probe, and a deterministic suite runner that emits typed
 ``unavailable / failed / pass`` reports for every (model, slice) pair.
 
 The probe is a thin wrapper around the existing
-:func:`compgen.capture.dynamo_baseline.compile_baseline` and
-:func:`compgen.capture.dynamo_baseline.collect_diagnostics`. It does not
+:func:`xpu_rt.capture.dynamo_baseline.compile_baseline` and
+:func:`xpu_rt.capture.dynamo_baseline.collect_diagnostics`. It does not
 duplicate torch.compile / TorchDynamo plumbing.
 
 Entry points:
 
-- ``python -m compgen.model_admission validate-registry``
-- ``python -m compgen.model_admission run-suite --suite ... --out ...``
-- ``python -m compgen.model_admission torch-compile --model ... --slice ... --out ...``
+- ``python -m xpu_rt.model_admission validate-registry``
+- ``python -m xpu_rt.model_admission run-suite --suite ... --out ...``
+- ``python -m xpu_rt.model_admission torch-compile --model ... --slice ... --out ...``
 
 Public API:
 
@@ -28,12 +28,12 @@ Public API:
 
 from __future__ import annotations
 
-from compgen.model_admission.registry import (
+from xpu_rt.model_admission.registry import (
     Registry,
     RegistryError,
     load_registry,
 )
-from compgen.model_admission.schemas import (
+from xpu_rt.model_admission.schemas import (
     AdmissionReport,
     AdmissionStatus,
     DynamoCaptureReport,
@@ -48,7 +48,7 @@ from compgen.model_admission.schemas import (
     SuiteSummaryRow,
     TorchCompileReport,
 )
-from compgen.model_admission.torch_compile_probe import run_admission
+from xpu_rt.model_admission.torch_compile_probe import run_admission
 
 __all__ = [
     "AdmissionReport",

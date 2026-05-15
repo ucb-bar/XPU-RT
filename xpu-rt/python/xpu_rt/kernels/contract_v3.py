@@ -56,11 +56,11 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-from compgen.ir.payload.contracts import (
+from xpu_rt.ir.payload.contracts import (
     AutocompCostBudget,
     CostEstimate,
 )
-from compgen.ir.payload.contracts import (
+from xpu_rt.ir.payload.contracts import (
     KernelContract as KernelContractV2,
 )
 
@@ -624,7 +624,7 @@ class KernelContractV3:
     metadata: dict[str, Any] = field(default_factory=dict)
     contract_version: int = CONTRACT_VERSION
     # typed pre/post-condition predicates. Each entry is one of
-    # the dataclasses in :mod:`compgen.kernels.predicates`. The contract
+    # the dataclasses in :mod:`xpu_rt.kernels.predicates`. The contract
     # carries them as tuple[Any, ...] to avoid a forward import; the
     # plan-assertion emitter and the verifier dispatch on
     # ``predicate_kind(p)``.
@@ -759,7 +759,7 @@ class KernelContractV3:
 
         Inputs are dicts (already-parsed JSON / YAML) so this function
         is a pure data transformation — no I/O. The pipeline-stage
-        wrapper at ``compgen.graph_compilation.kernel_contract_materialization``
+        wrapper at ``xpu_rt.graph_compilation.kernel_contract_materialization``
         reads the on-disk artifacts and calls into here.
 
         Args:
@@ -1074,13 +1074,13 @@ class KernelContractV3:
         # Preconditions: K must be a multiple of tile_K (the matmul
         # kernel's inner-loop unroll requirement), and inputs must
         # carry a recognised dtype.
-        from compgen.kernels.predicates import (
+        from xpu_rt.kernels.predicates import (
             DtypeIn as _DtypeIn,
         )
-        from compgen.kernels.predicates import (
+        from xpu_rt.kernels.predicates import (
             ModEq as _ModEq,
         )
-        from compgen.kernels.predicates import (
+        from xpu_rt.kernels.predicates import (
             NumericalWithinEps as _NumericalWithinEps,
         )
 

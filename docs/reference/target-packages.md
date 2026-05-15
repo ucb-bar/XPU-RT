@@ -1,10 +1,10 @@
 # Target Packages
 
-CompGen's target story is about generating a target enablement package, not just compiling one model once.
+XPU-RT's target story is about generating a target enablement package, not just compiling one model once.
 
 ## What a Target Package Represents
 
-A target package is the collection of information and artifacts CompGen needs in order to support a hardware target:
+A target package is the collection of information and artifacts XPU-RT needs in order to support a hardware target:
 
 - hardware description
 - capabilities and constraints
@@ -14,7 +14,7 @@ A target package is the collection of information and artifacts CompGen needs in
 
 ## Current Status
 
-The concept is important and the codebase already has target-generation machinery, but the public `compgen scaffold-target` CLI command is still a stub. Treat target packages as the direction of the system and use the Python API or targetgen modules for current experimentation.
+The concept is important and the codebase already has target-generation machinery, but the public `xpu-rt scaffold-target` CLI command is still a stub. Treat target packages as the direction of the system and use the Python API or targetgen modules for current experimentation.
 
 ## Related Pages
 

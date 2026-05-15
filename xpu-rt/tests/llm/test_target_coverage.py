@@ -1,8 +1,8 @@
-"""Tests for compgen.llm.target_coverage."""
+"""Tests for xpu_rt.llm.target_coverage."""
 
 from __future__ import annotations
 
-from compgen.llm.target_coverage import (
+from xpu_rt.llm.target_coverage import (
     INDUCTOR_COVERAGE,
     cost_weight_for,
     coverage_notes_for_llm,
@@ -26,7 +26,7 @@ def test_cost_weight_prefer_on_cuda_for_raise_special_ops() -> None:
 
 def test_missing_row_defaults_to_prefer_on_non_inductor_target() -> None:
     # A pass that has no entry for rvv_cpu should default to 'prefer'
-    # (CompGen expected to help where inductor is absent).
+    # (XPU-RT expected to help where inductor is absent).
     weight = cost_weight_for("some_unseeded_pass", "rvv_cpu")
     assert weight < 1.0
 
@@ -48,7 +48,7 @@ def test_update_measurement_overwrites_seed() -> None:
         "cuda",
         coverage="partial",
         cost_weight_bias="neutral",
-        measured_shapes_where_compgen_wins=("B=1,N=7",),
+        measured_shapes_where_xpu_rt_wins=("B=1,N=7",),
         notes="measurement override in test",
     )
     row = get_coverage("decompose_concat", "cuda")
@@ -56,7 +56,7 @@ def test_update_measurement_overwrites_seed() -> None:
     assert row.coverage == "partial"
     assert row.cost_weight_bias == "neutral"
     assert row.basis == "measured"
-    assert "B=1,N=7" in row.measured_shapes_where_compgen_wins
+    assert "B=1,N=7" in row.measured_shapes_where_xpu_rt_wins
 
 
 def test_update_measurement_creates_new_row() -> None:

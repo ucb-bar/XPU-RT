@@ -11,7 +11,7 @@ module itself kept its name. The tests here now assert the real
 from __future__ import annotations
 
 import pytest
-from compgen.ir.payload.passes.stubs import (
+from xpu_rt.ir.payload.passes.stubs import (
     FoldTransposesIntoDots,
     FuseDequantMatmul,
     FuseSoftmaxToTriton,
@@ -60,8 +60,8 @@ def test_metadata_populated(cls) -> None:
 
 
 def test_all_passes_register_non_stub() -> None:
-    import compgen.ir.payload.passes  # noqa: F401
-    from compgen.llm import get_registry
+    import xpu_rt.ir.payload.passes  # noqa: F401
+    from xpu_rt.llm import get_registry
 
     r = get_registry()
     for cls in _ALL_PASSES:

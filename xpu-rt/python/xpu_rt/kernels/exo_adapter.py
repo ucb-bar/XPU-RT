@@ -1,6 +1,6 @@
 """Exo kernel backend adapter.
 
-Translates CompGen KernelSpec into Exo procs, runs schedule search,
+Translates XPU-RT KernelSpec into Exo procs, runs schedule search,
 compiles to C, and validates. Exo is optional -- all imports are lazy.
 """
 
@@ -21,7 +21,7 @@ def _require_exo() -> Any:
 
         return exo
     except ImportError as e:
-        raise ImportError("Exo is required for ExoAdapter. Install with: pip install 'compgen[exo]'") from e
+        raise ImportError("Exo is required for ExoAdapter. Install with: pip install 'xpu_rt[exo]'") from e
 
 
 @dataclass(frozen=True)
@@ -87,7 +87,7 @@ class ExoAdapter:
         Returns:
             ExoKernelResult or None if search failed.
         """
-        from compgen.kernels.exo_seedgen import generate_seed_proc
+        from xpu_rt.kernels.exo_seedgen import generate_seed_proc
 
         seed = generate_seed_proc(op_name, input_shapes, output_shapes, dtype)
         if seed is None:

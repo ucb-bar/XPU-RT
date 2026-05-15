@@ -2,16 +2,16 @@
 
 After the agent calls :func:`propose_invent_slot` one or more times,
 the recipe ModuleOp carries propose-ops appended by
-:func:`compgen.agent.recipe_bridge_invent.proposal_to_recipe_op`. They
+:func:`xpu_rt.agent.recipe_bridge_invent.proposal_to_recipe_op`. They
 sit there as untaken decisions until the agent commits them by calling
 ``apply_recipe``.
 
 The tool runs the deterministic two-step lowering pipeline that
 existed (but wasn't exposed) before:
 
-1. :func:`compgen.ir.recipe.lower.lower_recipe` — turn the recipe ops
+1. :func:`xpu_rt.ir.recipe.lower.lower_recipe` — turn the recipe ops
    into transform scripts + kernel jobs + verification obligations.
-2. :func:`compgen.ir.recipe.execute.RecipeExecutor.execute` — apply the
+2. :func:`xpu_rt.ir.recipe.execute.RecipeExecutor.execute` — apply the
    transform scripts to the payload module (real Transform Dialect
    rewrites), dispatch kernel jobs, run verification.
 
@@ -31,10 +31,10 @@ from typing import Any
 
 import structlog
 
-from compgen.ir.recipe.execute import RecipeExecutor
-from compgen.ir.recipe.lower import lower_recipe
-from compgen.ir.recipe.payload_mutators import apply_recipe_to_payload
-from compgen.mcp.session import SessionManager
+from xpu_rt.ir.recipe.execute import RecipeExecutor
+from xpu_rt.ir.recipe.lower import lower_recipe
+from xpu_rt.ir.recipe.payload_mutators import apply_recipe_to_payload
+from xpu_rt.mcp.session import SessionManager
 
 log = structlog.get_logger()
 

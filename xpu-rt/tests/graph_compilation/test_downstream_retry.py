@@ -46,7 +46,7 @@ def _invoke(
     stop_after: str = "cost-preview-v2",
 ) -> subprocess.CompletedProcess:
     cmd = [
-        sys.executable, "-m", "compgen.graph_compilation", "run",
+        sys.executable, "-m", "xpu_rt.graph_compilation", "run",
         "--model", str(REPO_ROOT / f"configs/models/{model}.yaml"),
         "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
         "--out", str(out_dir),
@@ -213,7 +213,7 @@ def test_pipeline_exits_non_zero_on_downstream_failure(tmp_path: Path) -> None:
     This restores the load-bearing invariant the original test
     asserted: a real status=fail produces non-zero exit AND
     emits the typed retry surface."""
-    from compgen.graph_compilation.downstream_retry import (
+    from xpu_rt.graph_compilation.downstream_retry import (
         detect_downstream_failure, emit_downstream_retry_request,
     )
     out = tmp_path / "exit_synthetic_fail"
@@ -422,15 +422,15 @@ def test_detector_skipped_path_does_not_trigger_retry(tmp_path: Path) -> None:
 
 def test_no_compiler_core_imports_in_module() -> None:
     src = (
-        REPO_ROOT / "python" / "compgen" / "graph_compilation"
+        REPO_ROOT / "python" / "xpu-rt" / "graph_compilation"
         / "downstream_retry.py"
     ).read_text(encoding="utf-8")
     forbidden = (
-        "from compgen.ir",
-        "import compgen.ir",
-        "from compgen.capture",
-        "import compgen.capture",
-        "from compgen.pipeline",
+        "from xpu_rt.ir",
+        "import xpu_rt.ir",
+        "from xpu_rt.capture",
+        "import xpu_rt.capture",
+        "from xpu_rt.pipeline",
     )
     for pat in forbidden:
         assert pat not in src, f"M-15B module must not import: {pat}"

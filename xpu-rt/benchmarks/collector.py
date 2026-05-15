@@ -1,4 +1,4 @@
-"""Metric collectors — extract RunRecord fields from CompGen pipeline results."""
+"""Metric collectors — extract RunRecord fields from XPU-RT pipeline results."""
 
 from __future__ import annotations
 
@@ -122,7 +122,7 @@ def collect_solver_metrics(
 
 def collect_recipe_metrics(module: Any) -> RecipeMetrics:
     """Collect Recipe IR metrics from a recipe ModuleOp."""
-    from compgen.ir.recipe.ops_candidate import (
+    from xpu_rt.ir.recipe.ops_candidate import (
         BlackboxOp,
         FuseOp,
         InsertCopyBoundaryOp,
@@ -138,7 +138,7 @@ def collect_recipe_metrics(module: Any) -> RecipeMetrics:
         TileOp,
         VectorizeOp,
     )
-    from compgen.ir.recipe.ops_choice import (
+    from xpu_rt.ir.recipe.ops_choice import (
         AlternativesOp,
         DeferChoiceOp,
         PromoteCandidateOp,
@@ -147,7 +147,7 @@ def collect_recipe_metrics(module: Any) -> RecipeMetrics:
         RequireSolverOp,
         SearchBudgetOp,
     )
-    from compgen.ir.recipe.ops_fact import (
+    from xpu_rt.ir.recipe.ops_fact import (
         BackendAvailableOp,
         CalibrationOp,
         ExportIssueOp,
@@ -157,7 +157,7 @@ def collect_recipe_metrics(module: Any) -> RecipeMetrics:
         LocalMemFitOp,
         TransferCostOp,
     )
-    from compgen.ir.recipe.ops_provenance import (
+    from xpu_rt.ir.recipe.ops_provenance import (
         FeedbackOp,
         FromAgentOp,
         FromEqsatOp,
@@ -166,14 +166,14 @@ def collect_recipe_metrics(module: Any) -> RecipeMetrics:
         PromoteOp,
         RejectOp,
     )
-    from compgen.ir.recipe.ops_scope import (
+    from xpu_rt.ir.recipe.ops_scope import (
         AnchorOp,
         BindPayloadOp,
         RecipeGuardOp,
         RecipeRegionOp,
         SegmentOp,
     )
-    from compgen.ir.recipe.ops_verify import (
+    from xpu_rt.ir.recipe.ops_verify import (
         RequireCheckFileOp,
         RequireDiffTestOp,
         RequireLayoutInvariantOp,

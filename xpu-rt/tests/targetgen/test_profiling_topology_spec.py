@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from compgen.targetgen.hardware_spec import (
+from xpu_rt.targetgen.hardware_spec import (
     DeploymentTopology,
     HardwareSpec,
     PlatformSpec,

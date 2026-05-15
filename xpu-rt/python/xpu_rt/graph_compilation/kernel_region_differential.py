@@ -32,7 +32,7 @@ Output layout::
         region_compiled_differential_report.json
         region_compiled_differential_summary.md
 
-Opt-in via the same ``COMPGEN_RUN_KERNELS=1`` env var as. Default
+Opt-in via the same ``XPU_RT_RUN_KERNELS=1`` env var as. Default
 OFF so suite runs stay deterministic.
 """
 
@@ -302,8 +302,8 @@ def run_region_compiled_differential(
     model_id = (cap or {}).get("model_id", "")
 
     # Reuse 's GPU + CPU primitives.
-    from compgen.graph_compilation.kernel_execution_gpu import run_gpu_track
-    from compgen.graph_compilation.kernel_execution_cpu import run_cpu_track
+    from xpu_rt.graph_compilation.kernel_execution_gpu import run_gpu_track
+    from xpu_rt.graph_compilation.kernel_execution_cpu import run_cpu_track
 
     region_results: list[dict[str, Any]] = []
     for pick in picks:

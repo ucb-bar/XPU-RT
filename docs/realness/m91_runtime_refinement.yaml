@@ -4,29 +4,29 @@ claim: |
   mechanical post-emit gates run on every emit and reject any
   Layer-1 that drifts from the plan it was generated from:
 
-  1. ``compgen.runtime.verification.plan_refinement.check_plan_refinement``
+  1. ``xpu_rt.runtime.verification.plan_refinement.check_plan_refinement``
      — parses the emitted ``.c`` / ``.cpp`` and confirms every plan
      op corresponds to one ``cg_rt_command_buffer_dispatch`` of the
-     matching ``compgen_kernel_<region_id>`` extern, in the
+     matching ``xpu_rt_kernel_<region_id>`` extern, in the
      declared topological order. Failure kinds:
      ``count_mismatch``, ``missing_dispatch``, ``unknown_dispatch``,
      ``order_mismatch``.  Raises ``RuntimeRefinementError`` naming
      the kind.
-  2. ``compgen.runtime.verification.abi_conformance.check_abi_conformance``
+  2. ``xpu_rt.runtime.verification.abi_conformance.check_abi_conformance``
      — scans the emit for every function-call symbol (after
      stripping comments + string literals) and rejects any that
-     isn't ``cg_rt_*`` / ``compgen_kernel_*`` / a small allowlist
+     isn't ``cg_rt_*`` / ``xpu_rt_kernel_*`` / a small allowlist
      of control-flow keywords. Vendor primitives (``cudaMalloc``,
      ``cuLaunchKernel``, ``hipMalloc``, ``vkCmdDispatch``, ...) are
      named explicitly in the typed ``AbiConformanceError``.
-  3. ``compgen.runtime.verification.resource_budget.check_resource_budget``
+  3. ``xpu_rt.runtime.verification.resource_budget.check_resource_budget``
      — checks the emit's static allocations (push-constants bytes,
      binding slots, kernel-extern count) against the plan-declared
-     budget and the libcompgen_rt static caps (256 bytes push
+     budget and the libxpu_rt static caps (256 bytes push
      constants, 32 binding slots). Raises ``ResourceBudgetError``
      naming the resource that overcommits.
 
-  ``compgen.runtime.verification.run_runtime_verification`` is the
+  ``xpu_rt.runtime.verification.run_runtime_verification`` is the
   aggregator: it runs all three with ``raise_on_fail=False`` so the
   report is complete, persists
   ``06_glue_emit/runtime_verification_report.json``, and only then
@@ -34,7 +34,7 @@ claim: |
   schema is ``runtime_verification_report_v1``.
 
   All three typed errors are real, named subclasses of
-  ``RuntimeError`` in ``compgen.runtime.errors`` —
+  ``RuntimeError`` in ``xpu_rt.runtime.errors`` —
   ``RuntimeRefinementError``, ``AbiConformanceError``,
   ``ResourceBudgetError``. Each carries the structured payload an
   operator needs to triage (kind / symbols / resource & numeric
@@ -58,12 +58,12 @@ forbidden:
 - resource-budget gate using "soft" warnings instead of typed errors
 realness_level: production_path
 required_evidence:
-- python/compgen/runtime/verification/__init__.py
-- python/compgen/runtime/verification/plan_refinement.py
-- python/compgen/runtime/verification/abi_conformance.py
-- python/compgen/runtime/verification/resource_budget.py
-- python/compgen/runtime/verification/runner.py
-- python/compgen/runtime/errors.py (RuntimeRefinementError / AbiConformanceError / ResourceBudgetError)
+- python/xpu_rt/runtime/verification/__init__.py
+- python/xpu_rt/runtime/verification/plan_refinement.py
+- python/xpu_rt/runtime/verification/abi_conformance.py
+- python/xpu_rt/runtime/verification/resource_budget.py
+- python/xpu_rt/runtime/verification/runner.py
+- python/xpu_rt/runtime/errors.py (RuntimeRefinementError / AbiConformanceError / ResourceBudgetError)
 - tests/runtime/test_runtime_verification.py
 - "06_glue_emit/runtime_verification_report.json on a real run"
 feature_id: m91_runtime_refinement

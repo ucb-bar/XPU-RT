@@ -2,20 +2,20 @@
 # Reproduce the Saturn OPU → Zephyr → Spike end-to-end run with REAL
 # ConvNet compute.
 #
-# The Python side (compgen.runtime.embedded.e2e_spike) produces every
-# source file deterministically: the CompGen lowered forward, the
+# The Python side (xpu_rt.runtime.embedded.e2e_spike) produces every
+# source file deterministically: the XPU-RT lowered forward, the
 # foundational runtime copy, the model_blob, and the Zephyr main.c
 # with the golden input baked in. This shell only handles toolchain
 # env vars (Zephyr SDK, west, spike) and the numerical diff against
 # golden_outputs.pt at the end.
 set -euo pipefail
 
-COMPGEN_ROOT="${COMPGEN_ROOT:-/scratch2/agustin/CompGen}"
+XPU_RT_ROOT="${XPU_RT_ROOT:-/scratch2/agustin/XPU-RT}"
 ZEPHYR_CHIPYARD_SW="${ZEPHYR_CHIPYARD_SW:-/scratch2/agustin/zephyr-chipyard-sw}"
 DIMA_TREE="${DIMA_TREE:-/scratch2/dima/testing/zephyr-chipyard-sw-torch-dryrun-2}"
 MERLIN_CONDA="${MERLIN_CONDA:-/scratch2/agustin/miniforge3}"
-BUNDLE_DIR="${BUNDLE_DIR:-/tmp/compgen_bundle}"
-BUILD_DIR="${BUILD_DIR:-/tmp/compgen_zephyr_build}"
+BUNDLE_DIR="${BUNDLE_DIR:-/tmp/xpu_rt_bundle}"
+BUILD_DIR="${BUILD_DIR:-/tmp/xpu_rt_zephyr_build}"
 
 SDK="$DIMA_TREE/tools-manual/zephyr-sdk-1.0.0-beta1"
 ZEPHYR_GCC="$SDK/gnu/riscv64-zephyr-elf/bin/riscv64-zephyr-elf-gcc"
@@ -25,38 +25,38 @@ SPIKE="$ZEPHYR_CONDA/spike"
 WEST="$ZEPHYR_CONDA/west"
 
 echo "==> [1/5] lower ConvNet + emit bundle + Zephyr overlay (Python)"
-cd "$COMPGEN_ROOT"
+cd "$XPU_RT_ROOT"
 PYTHONPATH=python uv run python -c "
 from pathlib import Path
-from compgen.runtime.embedded.e2e_spike import build_e2e_artifacts
+from xpu_rt.runtime.embedded.e2e_spike import build_e2e_artifacts
 a = build_e2e_artifacts(
     model_fixture_module='tests.fixtures.saturn_opu_convnet.model',
     bundle_dir=Path('$BUNDLE_DIR'),
     zephyr_root=Path('$ZEPHYR_CHIPYARD_SW'),
-    sample_name='compgen_convnet',
+    sample_name='xpu_rt_convnet',
     golden_input_path=Path('tests/fixtures/saturn_opu_convnet/golden_inputs.pt'),
 )
 print(f'  params={a.lowered.num_params} arena={a.lowered.arena_bytes} ops={a.lowered.op_counts}')
 print(f'  bundle={a.bundle_dir}  overlay={a.zephyr_sample_dir}')
 "
 
-echo "==> [2/5] cross-compile libcompgen_model.a (rv64gc, lp64d)"
+echo "==> [2/5] cross-compile libxpu_rt_model.a (rv64gc, lp64d)"
 CFLAGS_CROSS="-O2 -ffreestanding -fno-builtin -mabi=lp64d -march=rv64imafdc_zicsr_zifencei -mcmodel=medany -I$BUNDLE_DIR"
-rm -f "$BUNDLE_DIR"/*.o "$BUNDLE_DIR/libcompgen_model.a"
+rm -f "$BUNDLE_DIR"/*.o "$BUNDLE_DIR/libxpu_rt_model.a"
 OBJS=()
 for src in \
     "$BUNDLE_DIR/arena.c" \
     "$BUNDLE_DIR/ops.c" \
-    "$BUNDLE_DIR/compgen_model_forward.c" \
-    "$BUNDLE_DIR/compgen_model.c" \
+    "$BUNDLE_DIR/xpu_rt_model_forward.c" \
+    "$BUNDLE_DIR/xpu_rt_model.c" \
     "$BUNDLE_DIR/model_blob.c"; do
     obj="${src%.c}.o"
     "$ZEPHYR_GCC" $CFLAGS_CROSS -c "$src" -o "$obj"
     OBJS+=("$obj")
 done
-"$ZEPHYR_AR" rcs "$BUNDLE_DIR/libcompgen_model.a" "${OBJS[@]}"
-cp "$BUNDLE_DIR/libcompgen_model.a" "$ZEPHYR_CHIPYARD_SW/samples/compgen_convnet/libcompgen_model.a"
-ls -la "$BUNDLE_DIR/libcompgen_model.a"
+"$ZEPHYR_AR" rcs "$BUNDLE_DIR/libxpu_rt_model.a" "${OBJS[@]}"
+cp "$BUNDLE_DIR/libxpu_rt_model.a" "$ZEPHYR_CHIPYARD_SW/samples/xpu_rt_convnet/libxpu_rt_model.a"
+ls -la "$BUNDLE_DIR/libxpu_rt_model.a"
 
 echo "==> [3/5] west build -b spike_riscv64"
 source "$MERLIN_CONDA/etc/profile.d/conda.sh" && conda activate merlin-dev
@@ -80,7 +80,7 @@ EXTRA_LD="-mabi=lp64d -march=rv64imafdc_zicsr_zifencei -mcmodel=medany \
 -Wl,--sort-common=descending -Wl,--sort-section=alignment \
 -Wl,-X -Wl,-N"
 "$WEST" build -p -b spike_riscv64 -d "$BUILD_DIR" \
-    "$ZEPHYR_CHIPYARD_SW/samples/compgen_convnet" \
+    "$ZEPHYR_CHIPYARD_SW/samples/xpu_rt_convnet" \
     -- -DEXTRA_LDFLAGS="$EXTRA_LD" 2>&1 | tail -5
 ls -la "$BUILD_DIR/zephyr/zephyr.elf"
 
@@ -90,14 +90,14 @@ timeout 1800 "$SPIKE" --isa=rv64gc "$BUILD_DIR/zephyr/zephyr.elf" > "$SPIKE_LOG"
 tail -20 "$SPIKE_LOG"
 
 echo "==> [5/5] numerical diff vs golden_outputs.pt"
-cd "$COMPGEN_ROOT"
+cd "$XPU_RT_ROOT"
 PYTHONPATH=python uv run python -c "
 import re, sys
 import numpy as np
 import torch
 
 log = open('$SPIKE_LOG').read()
-m = re.search(r'compgen: out_hex=([0-9a-f]+)', log)
+m = re.search(r'xpu_rt: out_hex=([0-9a-f]+)', log)
 if not m:
     print('  FAIL: no out_hex in log')
     sys.exit(1)

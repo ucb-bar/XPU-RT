@@ -1,11 +1,11 @@
 /*
- * CompGen Local Transport — in-process message queue.
+ * XPU-RT Local Transport — in-process message queue.
  *
  * A simple FIFO queue for same-process communication between
  * runtime components.  Thread-safe via mutex.
  */
 
-#include "compgen/transport.h"
+#include "xpu_rt/transport.h"
 
 #include <stdlib.h>
 #include <string.h>

@@ -8,10 +8,10 @@ take priority.
 
 Two registration paths:
 
-1. ``compgen.plugins.register(GROUP_LOWERINGS, name, fn)`` —
+1. ``xpu_rt.plugins.register(GROUP_LOWERINGS, name, fn)`` —
    in-process; the agent calls this once at session start.
 2. Entry-point declared in the user's ``pyproject.toml`` under
-   ``compgen.runtime.lowerings`` — auto-discovered.
+   ``xpu_rt.runtime.lowerings`` — auto-discovered.
 
 These tests cover path 1 (path 2 is plumbed through the same
 registry, so the validator coverage applies to both).
@@ -27,7 +27,7 @@ import torch.nn as nn
 def _setup_method(self):  # noqa: D401 — pytest setup
     """Reset the plugin registry before each test so user lowerings
     don't leak across cases."""
-    from compgen.plugins import reset_registry
+    from xpu_rt.plugins import reset_registry
 
     reset_registry()
 
@@ -46,16 +46,16 @@ class TestPluginGroupRegistration:
     setup_method = _setup_method
 
     def test_lowerings_group_registered(self) -> None:
-        from compgen.plugins import GROUP_LOWERINGS, KNOWN_GROUPS
+        from xpu_rt.plugins import GROUP_LOWERINGS, KNOWN_GROUPS
 
-        assert GROUP_LOWERINGS == "compgen.runtime.lowerings"
+        assert GROUP_LOWERINGS == "xpu_rt.runtime.lowerings"
         assert GROUP_LOWERINGS in KNOWN_GROUPS
 
     def test_register_validates_callable(self) -> None:
         """The validator must reject non-callable entries — the
         registry should never load a user lowering that can't be
         invoked."""
-        from compgen.plugins import GROUP_LOWERINGS, register
+        from xpu_rt.plugins import GROUP_LOWERINGS, register
 
         with pytest.raises(ValueError, match="callable"):
             register(GROUP_LOWERINGS, "bad", "not-a-callable")  # type: ignore[arg-type]
@@ -63,7 +63,7 @@ class TestPluginGroupRegistration:
     def test_register_validates_signature(self) -> None:
         """The validator must reject lowerings that don't accept
         (model, sample_inputs)."""
-        from compgen.plugins import GROUP_LOWERINGS, register
+        from xpu_rt.plugins import GROUP_LOWERINGS, register
 
         def too_few_args(x):
             return x
@@ -82,8 +82,8 @@ class TestMatcherCascade:
         """When a user lowering matches the model, it wins over
         the built-in diamond matcher even though both would accept
         the same shape."""
-        from compgen.plugins import GROUP_LOWERINGS, register
-        from compgen.runtime.lowering import (
+        from xpu_rt.plugins import GROUP_LOWERINGS, register
+        from xpu_rt.runtime.lowering import (
             LoweringDecision,
             LoweringResult,
             lower_torch_to_megakernel,
@@ -96,7 +96,7 @@ class TestMatcherCascade:
             # Must return a real LoweringResult — delegate to the
             # built-in diamond matcher and mutate the decision so
             # we can verify in the test that this path ran.
-            from compgen.runtime.lowering.fx_to_megakernel import (
+            from xpu_rt.runtime.lowering.fx_to_megakernel import (
                 _match_diamond,
             )
 
@@ -136,8 +136,8 @@ class TestMatcherCascade:
         cascade continues to the built-in matchers. This is the
         expected behavior — user lowerings are tried first but
         don't block built-ins."""
-        from compgen.plugins import GROUP_LOWERINGS, register
-        from compgen.runtime.lowering import (
+        from xpu_rt.plugins import GROUP_LOWERINGS, register
+        from xpu_rt.runtime.lowering import (
             UnsupportedShape,
             lower_torch_to_megakernel,
         )
@@ -159,8 +159,8 @@ class TestMatcherCascade:
         """If a user lowering raises an unexpected exception (not
         UnsupportedShape), the error is recorded but the cascade
         continues. Stops one bad plugin from blocking everything."""
-        from compgen.plugins import GROUP_LOWERINGS, register
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.plugins import GROUP_LOWERINGS, register
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         def user_buggy(model, sample_inputs, *, backend_choice=None):
             raise ValueError("intentional bug for test")
@@ -177,7 +177,7 @@ class TestMatcherCascade:
     def test_no_user_lowerings_uses_builtins(self) -> None:
         """The default path: no user lowerings registered. Built-in
         matchers run as before."""
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         result = lower_torch_to_megakernel(
             _Diamond(),
@@ -189,8 +189,8 @@ class TestMatcherCascade:
         """For backwards compat with simpler user lowerings that
         don't accept ``backend_choice``, the matcher retries
         without that kwarg before giving up."""
-        from compgen.plugins import GROUP_LOWERINGS, register
-        from compgen.runtime.lowering import (
+        from xpu_rt.plugins import GROUP_LOWERINGS, register
+        from xpu_rt.runtime.lowering import (
             UnsupportedShape,
             lower_torch_to_megakernel,
         )

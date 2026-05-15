@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import pytest
-from compgen.ir.event.attrs import EventCoordAttr, EventTensorTypeAttr
-from compgen.ir.event.ops import CallDeviceOp, EventTensorOp, GraphOp
-from compgen.ir.payload.passes.megakernel_static_schedule import (
+from xpu_rt.ir.event.attrs import EventCoordAttr, EventTensorTypeAttr
+from xpu_rt.ir.event.ops import CallDeviceOp, EventTensorOp, GraphOp
+from xpu_rt.ir.payload.passes.megakernel_static_schedule import (
     StaticMegakernelSchedule,
 )
-from compgen.ir.tile.lower_megakernel import (
+from xpu_rt.ir.tile.lower_megakernel import (
     MegakernelLoweringResult,
     lower_megakernel,
 )
@@ -71,7 +71,7 @@ def test_lowering_requires_static_schedule_annotation() -> None:
 
 def test_lowering_returns_diagnostic_when_schedule_was_rejected() -> None:
     _, graph = _build_gemm_rs()
-    graph.attributes["compgen.static_schedule"] = StringAttr('{"status": "rejected", "errors": ["bogus"]}')
+    graph.attributes["xpu_rt.static_schedule"] = StringAttr('{"status": "rejected", "errors": ["bogus"]}')
     result = lower_megakernel(graph)
     assert result.kernel_source == ""
     assert any("rejected" in d for d in result.diagnostics)

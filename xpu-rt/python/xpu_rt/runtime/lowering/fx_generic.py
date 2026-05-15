@@ -38,13 +38,13 @@ from typing import Any
 import torch
 import torch.nn as nn
 
-from compgen.runtime.event_tensor import EventTensor
-from compgen.runtime.megakernel import (
+from xpu_rt.runtime.event_tensor import EventTensor
+from xpu_rt.runtime.megakernel import (
     DeviceCall,
     EventEdge,
     MegakernelGraph,
 )
-from compgen.transforms.emit_cuda_megakernel import DeviceFunctionSource
+from xpu_rt.transforms.emit_cuda_megakernel import DeviceFunctionSource
 
 # ---------------------------------------------------------------------------
 # FX op classification
@@ -77,7 +77,7 @@ def _classify_fx_chain(
     supported family — the agent can read the message to know which
     op is unhandled.
     """
-    from compgen.runtime.lowering.fx_to_megakernel import UnsupportedShape
+    from xpu_rt.runtime.lowering.fx_to_megakernel import UnsupportedShape
 
     try:
         gm = torch.fx.symbolic_trace(model)
@@ -225,7 +225,7 @@ def lower_generic_fx(
         UnsupportedShape: When the FX trace contains an op outside
             the supported family (linear, relu, add).
     """
-    from compgen.runtime.lowering.fx_to_megakernel import (
+    from xpu_rt.runtime.lowering.fx_to_megakernel import (
         LoweringDecision,
         LoweringResult,
         _BodyDecision,

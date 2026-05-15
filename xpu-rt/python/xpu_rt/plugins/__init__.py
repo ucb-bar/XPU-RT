@@ -1,23 +1,23 @@
 """Plugin discovery via Python entry points.
 
-User packages can extend CompGen without forking the repo by exposing
-entry points in their ``pyproject.toml``. CompGen discovers them at
+User packages can extend XPU-RT without forking the repo by exposing
+entry points in their ``pyproject.toml``. XPU-RT discovers them at
 import time and registers them into the appropriate runtime registry.
 
 Supported entry-point groups:
 
-  * ``compgen.kernels.providers``      — user ``KernelProvider`` impls
-  * ``compgen.transforms.decompositions`` — user FX-decomp functions
-  * ``compgen.kernels.fusion_rules``   — user fusion-rule predicates
-  * ``compgen.targets.backends``       — user ``TargetBackendProtocol`` impls
-  * ``compgen.kernels.contracts``      — user ``KernelContractV3`` factories
+  * ``xpu_rt.kernels.providers``      — user ``KernelProvider`` impls
+  * ``xpu_rt.transforms.decompositions`` — user FX-decomp functions
+  * ``xpu_rt.kernels.fusion_rules``   — user fusion-rule predicates
+  * ``xpu_rt.targets.backends``       — user ``TargetBackendProtocol`` impls
+  * ``xpu_rt.kernels.contracts``      — user ``KernelContractV3`` factories
 
 Example user-side ``pyproject.toml``::
 
-    [project.entry-points."compgen.kernels.providers"]
+    [project.entry-points."xpu_rt.kernels.providers"]
     my_custom_kernel = "mypkg.providers:MyKernelProvider"
 
-CompGen calls ``compgen.plugins.discover_all()`` once at startup
+XPU-RT calls ``xpu_rt.plugins.discover_all()`` once at startup
 (via the agent loop's bootstrap) — the result is a populated registry
 the rest of the system reads.
 
@@ -38,19 +38,19 @@ log = logging.getLogger(__name__)
 
 
 # Entry-point group names — keep in sync with the docstring above.
-GROUP_KERNEL_PROVIDERS = "compgen.kernels.providers"
-GROUP_DECOMPOSITIONS = "compgen.transforms.decompositions"
-GROUP_FUSION_RULES = "compgen.kernels.fusion_rules"
-GROUP_TARGET_BACKENDS = "compgen.targets.backends"
-GROUP_KERNEL_CONTRACTS = "compgen.kernels.contracts"
-GROUP_MCP_TOOLS = "compgen.mcp.tools"
+GROUP_KERNEL_PROVIDERS = "xpu_rt.kernels.providers"
+GROUP_DECOMPOSITIONS = "xpu_rt.transforms.decompositions"
+GROUP_FUSION_RULES = "xpu_rt.kernels.fusion_rules"
+GROUP_TARGET_BACKENDS = "xpu_rt.targets.backends"
+GROUP_KERNEL_CONTRACTS = "xpu_rt.kernels.contracts"
+GROUP_MCP_TOOLS = "xpu_rt.mcp.tools"
 # User-supplied pattern matchers + custom MLIR-dialect lowerings.
 # The agentic-compilation surface for "I have a custom dialect"
 # (cuda-tile, etc.). Registered functions are tried by
-# :func:`compgen.runtime.lowering.lower_torch_to_megakernel` before
+# :func:`xpu_rt.runtime.lowering.lower_torch_to_megakernel` before
 # the built-in diamond/FFN matchers, so a user can plug in a
 # domain-specific pattern without forking the matcher list.
-GROUP_LOWERINGS = "compgen.runtime.lowerings"
+GROUP_LOWERINGS = "xpu_rt.runtime.lowerings"
 
 
 KNOWN_GROUPS = (
@@ -111,7 +111,7 @@ def _validate_lowering(obj: Any) -> tuple[bool, str]:
 
     Contract: ``obj(model, sample_inputs, *, backend_choice=None) ->
     LoweringResult``. The function may raise
-    :class:`compgen.runtime.lowering.UnsupportedShape` to indicate
+    :class:`xpu_rt.runtime.lowering.UnsupportedShape` to indicate
     "this pattern doesn't match", letting the matcher cascade
     continue to the next registered lowering or the built-ins.
     """
@@ -142,7 +142,7 @@ def _validate_mcp_tool(obj: Any) -> tuple[bool, str]:
 
     A tool-dict has keys ``name``, ``description``, ``input_schema``,
     ``handler`` (callable), and ``phase``. Shape mirrors what the
-    in-tree ``compgen.mcp.tools`` modules already export.
+    in-tree ``xpu_rt.mcp.tools`` modules already export.
     """
     items = obj if isinstance(obj, (list, tuple)) else [obj]
     required = ("name", "description", "input_schema", "handler", "phase")
@@ -266,7 +266,7 @@ def _try_load(ep: EntryPoint, group: str) -> LoadedPlugin | None:
 
 
 def discover_all() -> ExtensionRegistry:
-    """Scan installed packages for CompGen entry points + populate the registry.
+    """Scan installed packages for XPU-RT entry points + populate the registry.
 
     Idempotent: re-running picks up newly-installed packages but doesn't
     duplicate already-registered plugins (matched by ``(group, name)``).
@@ -352,14 +352,14 @@ class DiscoveryReport:
 
 
 def discover_everything() -> DiscoveryReport:
-    """Trigger every discovery path CompGen knows about and summarise it.
+    """Trigger every discovery path XPU-RT knows about and summarise it.
 
     Combines:
 
     1. Entry-point plugins across :data:`KNOWN_GROUPS` (this module).
-    2. Vendor dialect adapters (``compgen.vendor_dialects`` entry points).
-    3. User-space ``~/.compgen/extensions/*.py`` tools + invent-slots
-       (via :mod:`compgen.agent.extensions.local_loader`; idempotent —
+    2. Vendor dialect adapters (``xpu_rt.vendor_dialects`` entry points).
+    3. User-space ``~/.xpu_rt/extensions/*.py`` tools + invent-slots
+       (via :mod:`xpu_rt.agent.extensions.local_loader`; idempotent —
        the LLM registry re-uses whatever it already loaded).
 
     Returns a :class:`DiscoveryReport`. Safe to call repeatedly; each
@@ -372,15 +372,15 @@ def discover_everything() -> DiscoveryReport:
     )
 
     try:
-        from compgen.extensions.vendor_dialect.registry import available_adapters
+        from xpu_rt.extensions.vendor_dialect.registry import available_adapters
 
         report.vendor_dialects = list(available_adapters())
     except Exception as exc:  # noqa: BLE001
         log.warning("plugins.vendor_dialect.error", extra={"error": str(exc)})
 
     try:
-        from compgen.agent.extensions.local_loader import load_local_extensions
-        from compgen.llm.registry import get_registry
+        from xpu_rt.agent.extensions.local_loader import load_local_extensions
+        from xpu_rt.llm.registry import get_registry
 
         registry_ = get_registry()
         result = load_local_extensions(registry_)

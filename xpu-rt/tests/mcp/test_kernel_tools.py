@@ -1,4 +1,4 @@
-"""Tests for ``compgen.mcp.tools.kernel``.
+"""Tests for ``xpu_rt.mcp.tools.kernel``.
 
 Covers the in-session kernel-codegen flow end-to-end:
 
@@ -19,17 +19,17 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from compgen.kernels.contract_v3 import KernelContractV3
-from compgen.kernels.contract_v3_references import reference_matmul_contract
-from compgen.kernels.provider import SearchBudget
-from compgen.kernels.providers.claude_code_default import (
+from xpu_rt.kernels.contract_v3 import KernelContractV3
+from xpu_rt.kernels.contract_v3_references import reference_matmul_contract
+from xpu_rt.kernels.provider import SearchBudget
+from xpu_rt.kernels.providers.claude_code_default import (
     ClaudeCodeKernelProvider,
     InSessionCodegen,
 )
-from compgen.kernels.providers.contract_bridge import v3_to_v1_contract
-from compgen.kernels.store import KernelStore, set_shared_store
-from compgen.mcp.session import SessionManager
-from compgen.mcp.tools.kernel import (
+from xpu_rt.kernels.providers.contract_bridge import v3_to_v1_contract
+from xpu_rt.kernels.store import KernelStore, set_shared_store
+from xpu_rt.mcp.session import SessionManager
+from xpu_rt.mcp.tools.kernel import (
     KERNEL_TOOLS,
     contract_fingerprint,
     list_pending_kernel_requests,
@@ -91,7 +91,7 @@ def _serialise_v3(c: KernelContractV3) -> dict:
 @pytest.fixture(autouse=True)
 def isolated_kernel_store(tmp_path: Path):
     """Each test gets a fresh on-disk store under tmp_path so writes don't
-    leak across tests (or into the user's real ~/.compgen/kernels)."""
+    leak across tests (or into the user's real ~/.xpu_rt/kernels)."""
     set_shared_store(KernelStore(root=tmp_path / "kernel_store"))
     yield
     set_shared_store(None)
@@ -99,7 +99,7 @@ def isolated_kernel_store(tmp_path: Path):
 
 @pytest.fixture
 def session_manager(tmp_path: Path) -> SessionManager:
-    sm = SessionManager(scratch_root=tmp_path / "compgen_mcp")
+    sm = SessionManager(scratch_root=tmp_path / "xpu_rt_mcp")
     sm.open(session_id="sess1")
     return sm
 
@@ -122,7 +122,7 @@ def test_kernel_tools_registered_with_expected_names() -> None:
 def test_kernel_tools_appear_in_all_tools_bundle() -> None:
     """The MCP server iterates ALL_TOOLS to surface tool decorators —
     the kernel tools must be in there."""
-    from compgen.mcp.tools import ALL_TOOLS
+    from xpu_rt.mcp.tools import ALL_TOOLS
 
     names = {t["name"] for t in ALL_TOOLS}
     for kt in (
@@ -330,7 +330,7 @@ def test_kernel_persists_across_session_restart(tmp_path: Path) -> None:
     expected_kernel = "@triton.jit\ndef matmul_persistent(...): ...\n"
 
     # ----- Session A: request + register, then drop the session manager -----
-    sm_a = SessionManager(scratch_root=tmp_path / "compgen_mcp_a")
+    sm_a = SessionManager(scratch_root=tmp_path / "xpu_rt_mcp_a")
     sm_a.open(session_id="sess_a")
     req = request_kernel_codegen(sm_a, session_id="sess_a", contract_v3=contract_dict)
     register_kernel_result(
@@ -346,7 +346,7 @@ def test_kernel_persists_across_session_restart(tmp_path: Path) -> None:
     sm_a.close("sess_a")
 
     # ----- Session B: fresh manager, fresh session — should rehydrate -----
-    sm_b = SessionManager(scratch_root=tmp_path / "compgen_mcp_b")
+    sm_b = SessionManager(scratch_root=tmp_path / "xpu_rt_mcp_b")
     sm_b.open(session_id="sess_b")
 
     hit = lookup_cached_kernel(sm_b, session_id="sess_b", contract_v3=contract_dict)
@@ -364,12 +364,12 @@ def test_kernel_persists_across_session_restart(tmp_path: Path) -> None:
 def test_disk_store_writes_files_to_user_folder_layout(tmp_path: Path) -> None:
     """After register_kernel_result, the on-disk store has the kernel file
     at ``<store>/<target>/<fingerprint>.<lang>`` and a manifest entry."""
-    sm = SessionManager(scratch_root=tmp_path / "compgen_mcp")
+    sm = SessionManager(scratch_root=tmp_path / "xpu_rt_mcp")
     sm.open(session_id="s1")
 
     # Use the MICRO ukernel reference because it carries a real
     # ExecutionEnvelope (and therefore a target_name we can assert on).
-    from compgen.kernels.contract_v3_references import reference_micro_matmul_tile_contract
+    from xpu_rt.kernels.contract_v3_references import reference_micro_matmul_tile_contract
 
     contract = reference_micro_matmul_tile_contract()
     contract_dict = _serialise_v3(contract)

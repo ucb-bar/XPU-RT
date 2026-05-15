@@ -4,7 +4,7 @@ cuBLASDx, libcudacxx, and CUTLASS are all header-only libraries
 shipped under PyPI packages (``nvidia-mathdx``,
 ``nvidia-cuda-cccl``, etc.). NVRTC needs ``-I`` paths pointing at
 the headers; the agentic-compilation flow picks them up via
-:func:`compgen.runtime.autotune.probe_device`.
+:func:`xpu_rt.runtime.autotune.probe_device`.
 
 Wave 1.14 moves these helpers here from ``runtime/native/cuda.py``.
 The original file re-exports for backward compatibility — existing

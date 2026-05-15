@@ -41,14 +41,14 @@ def _sha(p: Path) -> str:
 def _run(model: str, out_dir: Path, *, run_kernels: bool) -> None:
     env = os.environ.copy()
     if run_kernels:
-        env["COMPGEN_RUN_KERNELS"] = "1"
+        env["XPU_RT_RUN_KERNELS"] = "1"
     else:
-        env.pop("COMPGEN_RUN_KERNELS", None)
-    env.pop("COMPGEN_CALIBRATE_PROFILER", None)
-    env.pop("COMPGEN_CALIBRATE_CANDIDATES", None)
+        env.pop("XPU_RT_RUN_KERNELS", None)
+    env.pop("XPU_RT_CALIBRATE_PROFILER", None)
+    env.pop("XPU_RT_CALIBRATE_CANDIDATES", None)
     subprocess.run(
         [
-            sys.executable, "-m", "compgen.graph_compilation", "run",
+            sys.executable, "-m", "xpu_rt.graph_compilation", "run",
             "--model", str(REPO_ROOT / f"configs/models/{model}.yaml"),
             "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
             "--out", str(out_dir),
@@ -277,7 +277,7 @@ def test_byte_identical_introspection_across_reruns(
     """Re-running produces a byte-identical static-fields
     snapshot (introspection IS deterministic). Modulo timestamp +
     ncu output (which carries some volatile fields)."""
-    from compgen.graph_compilation.kernel_lifetime_evidence import (
+    from xpu_rt.graph_compilation.kernel_lifetime_evidence import (
         run_kernel_lifetime_evidence,
     )
 
@@ -301,7 +301,7 @@ def test_byte_identical_introspection_across_reruns(
 
 
 def test_m241_does_not_mutate_source_artifacts(kernels_run: Path) -> None:
-    from compgen.graph_compilation.kernel_lifetime_evidence import (
+    from xpu_rt.graph_compilation.kernel_lifetime_evidence import (
         run_kernel_lifetime_evidence,
     )
     paths = [
@@ -329,7 +329,7 @@ def test_m241_does_not_mutate_source_artifacts(kernels_run: Path) -> None:
 
 
 def test_theoretical_occupancy_pure_function() -> None:
-    from compgen.graph_compilation.kernel_lifetime_evidence import (
+    from xpu_rt.graph_compilation.kernel_lifetime_evidence import (
         _theoretical_occupancy,
     )
     a = _theoretical_occupancy(
@@ -343,7 +343,7 @@ def test_theoretical_occupancy_pure_function() -> None:
 
 
 def test_theoretical_occupancy_unknown_arch_fallback() -> None:
-    from compgen.graph_compilation.kernel_lifetime_evidence import (
+    from xpu_rt.graph_compilation.kernel_lifetime_evidence import (
         _theoretical_occupancy,
     )
     # arch=99 is not in _SM_LIMITS; should return None gracefully.
@@ -357,7 +357,7 @@ def test_theoretical_occupancy_unknown_arch_fallback() -> None:
 def test_doubling_registers_lowers_occupancy() -> None:
     """Higher register pressure should generally not INCREASE
     occupancy. Rough sanity invariant."""
-    from compgen.graph_compilation.kernel_lifetime_evidence import (
+    from xpu_rt.graph_compilation.kernel_lifetime_evidence import (
         _theoretical_occupancy,
     )
     low = _theoretical_occupancy(
@@ -378,14 +378,14 @@ def test_doubling_registers_lowers_occupancy() -> None:
 
 def test_no_compiler_core_imports() -> None:
     src = (
-        REPO_ROOT / "python" / "compgen" / "graph_compilation"
+        REPO_ROOT / "python" / "xpu-rt" / "graph_compilation"
         / "kernel_lifetime_evidence.py"
     ).read_text(encoding="utf-8")
     forbidden = (
-        "from compgen.ir",
-        "from compgen.capture",
-        "from compgen.pipeline",
-        "from compgen.runtime.bundle_emit",
+        "from xpu_rt.ir",
+        "from xpu_rt.capture",
+        "from xpu_rt.pipeline",
+        "from xpu_rt.runtime.bundle_emit",
     )
     for f in forbidden:
         assert f not in src, (

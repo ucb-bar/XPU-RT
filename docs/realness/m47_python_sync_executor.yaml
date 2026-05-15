@@ -2,10 +2,10 @@ claim: |
   M-47 (Phase C): the host-side glue is **emitted**, not hand-written.
   Reading ``05_execution_plan/execution_plan.yaml`` (with M-46
   region_kernel_bindings), the emitter at
-  ``compgen.runtime.glue_emit.python_sync.emit_python_sync_executor``
+  ``xpu_rt.runtime.glue_emit.python_sync.emit_python_sync_executor``
   produces a per-workload Python module at
   ``06_glue_emit/generated_plan_executor.py`` exposing
-  ``compgen_run(io, kernels, runtime)``. CPU/SYNC only at this layer
+  ``xpu_rt_run(io, kernels, runtime)``. CPU/SYNC only at this layer
   (M-51 widens to ASYNC + EventTensor; M-52 adds CUDA + graph capture).
 
   Generated executor invariants:
@@ -16,7 +16,7 @@ claim: |
   - ``assert_plan(io)`` raises typed ``PlanViolation`` (
     ``PLAN_VIOLATION_UNBOUND_REGION`` today) when a region declared
     in the plan has no matching M-45 certificate / M-46 binding.
-  - Imports only ``compgen.runtime.glue.{CpuRuntimeAdapter,
+  - Imports only ``xpu_rt.runtime.glue.{CpuRuntimeAdapter,
     RuntimeAdapter, select_adapter}``. No mocks / stubs / dummy
     modules — the realness scan + the test
     ``test_emitted_module_imports_no_test_only_modules`` enforce
@@ -33,13 +33,13 @@ forbidden:
 - emitting imports of mock_client / fake_provider / dummy_kernel / synthetic_profile / placeholder_pass
 - silently dispatching unbound regions (must raise PlanViolation)
 - generating files at any path other than 06_glue_emit/
-- skipping runtime.synchronize at the end of compgen_run
+- skipping runtime.synchronize at the end of xpu_rt_run
 - emitting non-deterministic generated code (executors must be byte-stable across reruns of the same plan)
 realness_level: production_path
 required_evidence:
-- python/compgen/runtime/glue_emit/__init__.py
-- python/compgen/runtime/glue_emit/python_sync.py
-- python/compgen/graph_compilation/run.py (--stop-after glue-emit boundary)
+- python/xpu_rt/runtime/glue_emit/__init__.py
+- python/xpu_rt/runtime/glue_emit/python_sync.py
+- python/xpu_rt/graph_compilation/run.py (--stop-after glue-emit boundary)
 - tests/runtime/test_glue_emit_python_sync.py
 - "06_glue_emit/generated_plan_executor.py on a real run"
 - "06_glue_emit/plan_executor_manifest.json on a real run"
@@ -59,14 +59,14 @@ notes: |
   model.
 
   Phase 3 — **imported the emitted module and ran
-  ``compgen_run(io, kernels, runtime)`` end-to-end**. With io =
+  ``xpu_rt_run(io, kernels, runtime)`` end-to-end**. With io =
   random tensors, kernels = a single eager-fallback callable that
   invokes ``torch.matmul``, and a stub RuntimeAdapter, the executor
   dispatched 1 region and returned a Tensor of shape (16, 32) —
   matching the contract's output. The emitted code is real,
   runnable host glue.
 
-  Phase 4 — passed an empty kernels dict to compgen_run with a
+  Phase 4 — passed an empty kernels dict to xpu_rt_run with a
   bound region. The runtime check correctly surfaces a typed error
   (KeyError on the kernels dict lookup, since assert_plan passes
   when the plan declares the region as bound but the operator did

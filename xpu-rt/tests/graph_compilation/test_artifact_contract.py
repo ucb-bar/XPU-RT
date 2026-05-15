@@ -12,8 +12,8 @@ import json
 from pathlib import Path
 
 import jsonschema
-from compgen.graph_compilation import validate_run
-from compgen.graph_compilation.schemas import load_schema
+from xpu_rt.graph_compilation import validate_run
+from xpu_rt.graph_compilation.schemas import load_schema
 
 from tests.graph_compilation import _synth as synth
 
@@ -341,7 +341,7 @@ def test_T18_schemas_round_trip_against_synth(tmp_path: Path) -> None:
 
 def test_cli_exits_zero_on_pass(tmp_path: Path) -> None:
     """CLI exits 0 on a pass and writes the in-tree validation report."""
-    from compgen.graph_compilation.__main__ import main
+    from xpu_rt.graph_compilation.__main__ import main
 
     synth.build_well_formed_run(tmp_path)
     rc = main(["validate", "--run", str(tmp_path)])
@@ -351,7 +351,7 @@ def test_cli_exits_zero_on_pass(tmp_path: Path) -> None:
 
 def test_cli_exits_one_on_fail(tmp_path: Path) -> None:
     """CLI exits 1 when the validator reports overall=fail."""
-    from compgen.graph_compilation.__main__ import main
+    from xpu_rt.graph_compilation.__main__ import main
 
     synth.build_well_formed_run(tmp_path)
     (tmp_path / "00_graph_capture" / "exported_program.pt2").unlink()
@@ -361,7 +361,7 @@ def test_cli_exits_one_on_fail(tmp_path: Path) -> None:
 
 def test_cli_exits_two_on_missing_run_dir(tmp_path: Path) -> None:
     """CLI exits 2 when --run does not exist (internal/external error)."""
-    from compgen.graph_compilation.__main__ import main
+    from xpu_rt.graph_compilation.__main__ import main
 
     rc = main(["validate", "--run", str(tmp_path / "does-not-exist")])
     assert rc == 2
@@ -374,7 +374,7 @@ def test_cli_exits_two_on_missing_run_dir(tmp_path: Path) -> None:
 
 def test_canonical_stage_order_matches_schema_enum() -> None:
     """The dataclass-side stage list and the schema enum agree on the canonical 3."""
-    from compgen.graph_compilation.artifacts import CANONICAL_STAGE_ORDER
+    from xpu_rt.graph_compilation.artifacts import CANONICAL_STAGE_ORDER
 
     schema = load_schema("run_manifest")
     enum = schema["$defs"]["StageRecord"]["properties"]["stage_id"]["enum"]
@@ -398,7 +398,7 @@ def test_independent_tree_hash_cross_check(tmp_path: Path) -> None:
     """
     import hashlib
 
-    from compgen.graph_compilation.hashing import sha256_file, sha256_tree
+    from xpu_rt.graph_compilation.hashing import sha256_file, sha256_tree
 
     # Build a small tree by hand.
     root = tmp_path / "indep_tree"

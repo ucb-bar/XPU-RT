@@ -41,16 +41,16 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Sequence
 
-from compgen.audit.errors import (
+from xpu_rt.audit.errors import (
     PairContractViolation,
     PassPlanInvalid,
     PhaseTransitionViolation,
 )
-from compgen.passes.cards import (
+from xpu_rt.passes.cards import (
     PassCardRegistry,
     default_registry_root,
 )
-from compgen.passes.scheduler import (
+from xpu_rt.passes.scheduler import (
     PassPlanStep,
     inspect_pass_plan,
 )

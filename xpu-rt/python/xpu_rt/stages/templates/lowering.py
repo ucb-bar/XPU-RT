@@ -13,8 +13,8 @@ from pathlib import Path
 
 from xdsl.dialects.builtin import ModuleOp
 
-from compgen.stages.base import CompilationStage, StageContract
-from compgen.targets.schema import TargetProfile
+from xpu_rt.stages.base import CompilationStage, StageContract
+from xpu_rt.targets.schema import TargetProfile
 
 
 class LoweringStage(CompilationStage):

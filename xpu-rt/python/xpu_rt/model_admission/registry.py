@@ -20,7 +20,7 @@ from pathlib import Path
 import structlog
 import yaml
 
-from compgen.model_admission.schemas import (
+from xpu_rt.model_admission.schemas import (
     REGISTRY_SCHEMA,
     ModelConfig,
     SliceConfig,
@@ -159,8 +159,8 @@ def load_registry(
         if cfg.model_id in models:
             raise RegistryError(f"{path}: duplicate model_id={cfg.model_id!r}")
         models[cfg.model_id] = cfg
-        if cfg.loader.kind == "compgen_model_spec" and not cfg.loader.model_spec_id:
-            raise RegistryError(f"{path}: loader.kind=compgen_model_spec requires model_spec_id")
+        if cfg.loader.kind == "xpu_rt_model_spec" and not cfg.loader.model_spec_id:
+            raise RegistryError(f"{path}: loader.kind=xpu_rt_model_spec requires model_spec_id")
         if cfg.loader.kind == "proxy" and not cfg.loader.proxy_module:
             raise RegistryError(f"{path}: loader.kind=proxy requires proxy_module")
 

@@ -1,6 +1,6 @@
 """ExtensionManifest + ExtensionTask schemas.
 
-A ``compgen_extension.yaml`` manifest declares a bundle of cards
+A ``xpu_rt_extension.yaml`` manifest declares a bundle of cards
 provided by a user / agent-authored extension. Loading is purely
 structural — no filesystem side effects beyond reading the YAML.
 Each card in ``provides`` round-trips through its schema and
@@ -20,13 +20,13 @@ from typing import Any, Final
 
 import yaml
 
-from compgen.dialects.dialect_provider_types import DialectProviderCard
-from compgen.extensions.errors import ExtensionManifestError, ExtensionTaskError
-from compgen.pass_tools.pass_tool_types import PassToolCard
-from compgen.providers.provider_types import ProviderCard
-from compgen.targets.target_types import TargetCard
+from xpu_rt.dialects.dialect_provider_types import DialectProviderCard
+from xpu_rt.extensions.errors import ExtensionManifestError, ExtensionTaskError
+from xpu_rt.pass_tools.pass_tool_types import PassToolCard
+from xpu_rt.providers.provider_types import ProviderCard
+from xpu_rt.targets.target_types import TargetCard
 
-MANIFEST_SCHEMA_VERSION: Final[str] = "compgen_extension_v1"
+MANIFEST_SCHEMA_VERSION: Final[str] = "xpu_rt_extension_v1"
 EXTENSION_TASK_SCHEMA_VERSION: Final[str] = "extension_task_v1"
 
 ALLOWED_EXTENSION_TASK_TYPES: Final[frozenset[str]] = frozenset(

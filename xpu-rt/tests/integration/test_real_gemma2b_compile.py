@@ -17,12 +17,12 @@ from examples.real_models.gemma2b_compile import (
 )
 
 _HAS_TRANSFORMERS = importlib.util.find_spec("transformers") is not None
-_RUN_REAL_MODEL_TESTS = os.environ.get("COMPGEN_RUN_REAL_MODEL_TESTS") == "1"
+_RUN_REAL_MODEL_TESTS = os.environ.get("XPU_RT_RUN_REAL_MODEL_TESTS") == "1"
 
 pytestmark = [
     pytest.mark.skipif(
         not _RUN_REAL_MODEL_TESTS,
-        reason="Set COMPGEN_RUN_REAL_MODEL_TESTS=1 to enable real-model acceptance tests.",
+        reason="Set XPU_RT_RUN_REAL_MODEL_TESTS=1 to enable real-model acceptance tests.",
     ),
     pytest.mark.skipif(not _HAS_TRANSFORMERS, reason="transformers not installed"),
     pytest.mark.skipif(

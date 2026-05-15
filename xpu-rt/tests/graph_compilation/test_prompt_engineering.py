@@ -1,4 +1,4 @@
-"""Acceptance tests for the prompt-engineering surface CompGen ships.
+"""Acceptance tests for the prompt-engineering surface XPU-RT ships.
 
 Verifies:
 
@@ -38,12 +38,12 @@ def _read(p: Path) -> dict:
 
 def _run(model: str, out_dir: Path) -> None:
     env = os.environ.copy()
-    env.pop("COMPGEN_RUN_KERNELS", None)
-    env.pop("COMPGEN_CALIBRATE_PROFILER", None)
-    env.pop("COMPGEN_CALIBRATE_CANDIDATES", None)
+    env.pop("XPU_RT_RUN_KERNELS", None)
+    env.pop("XPU_RT_CALIBRATE_PROFILER", None)
+    env.pop("XPU_RT_CALIBRATE_CANDIDATES", None)
     subprocess.run(
         [
-            sys.executable, "-m", "compgen.graph_compilation", "run",
+            sys.executable, "-m", "xpu_rt.graph_compilation", "run",
             "--model", str(REPO_ROOT / f"configs/models/{model}.yaml"),
             "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
             "--out", str(out_dir),
@@ -200,7 +200,7 @@ def test_agent_guidance_is_byte_stable_across_reruns(
     """Building a fresh agent_decision_request from the existing
     on-disk artifacts must produce a byte-identical agent_guidance
     block (it's a deterministic constant function)."""
-    from compgen.graph_compilation.agent_decision import (
+    from xpu_rt.graph_compilation.agent_decision import (
         _build_agent_guidance,
     )
     g1 = _build_agent_guidance()
@@ -242,7 +242,7 @@ def test_sources_block_lists_optional_evidence_artifacts(
 
 
 def test_llm_live_build_prompt_includes_cost_matrix_rules() -> None:
-    from compgen.graph_compilation.llm_live_provider import build_prompt
+    from xpu_rt.graph_compilation.llm_live_provider import build_prompt
 
     fake_request = {
         "schema_version": "agent_decision_request_v1",
@@ -281,7 +281,7 @@ def test_llm_live_build_prompt_includes_cost_matrix_rules() -> None:
 
 
 _SKILL_PATH = (
-    REPO_ROOT / ".claude" / "skills" / "compgen-candidate-selection"
+    REPO_ROOT / ".claude" / "skills" / "xpu_rt-candidate-selection"
     / "SKILL.md"
 )
 

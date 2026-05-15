@@ -11,7 +11,7 @@
       "id": "portable_gate_single_target",
       "is_bug": false,
       "last_verified_at_utc": "2026-05-05T00:00:00Z",
-      "notes": "Migrated from M-30 honest-residual list. Closed by running canonical-22 with COMPGEN_RUN_KERNELS=1 on a host with cuda hardware AND host_cpu, so the same region_signature observes >=2 distinct target_class values.",
+      "notes": "Migrated from M-30 honest-residual list. Closed by running canonical-22 with XPU_RT_RUN_KERNELS=1 on a host with cuda hardware AND host_cpu, so the same region_signature observes >=2 distinct target_class values.",
       "required_to_close": "run same region_signature on >=2 target_class values (need cuda hardware on the audit host)",
       "status": "blocked_by_hardware"
     },
@@ -21,13 +21,13 @@
       "created_at_utc": "2026-05-05T00:00:00Z",
       "evidence_paths": [
         "docs/reference/realness_policy.md",
-        "python/compgen/audit/fresh_agent_modes.py"
+        "python/xpu_rt/audit/fresh_agent_modes.py"
       ],
       "id": "fresh_claude_session_operator_driven",
       "is_bug": false,
       "last_verified_at_utc": "2026-05-05T00:00:00Z",
       "notes": "CI cannot spawn a Claude Code session against the task pack; doing so would defeat the no-private-context goal of the audit. The greedy baseline is the contractual reproducibility floor; the fresh-Claude run is recorded as an operator evidence row with a quarterly cadence.",
-      "required_to_close": "operator runs a fresh Claude Code session against the task pack and records the outcome via compgen.audit.fresh_agent_modes.record_manual_session_result every quarter",
+      "required_to_close": "operator runs a fresh Claude Code session against the task pack and records the outcome via xpu_rt.audit.fresh_agent_modes.record_manual_session_result every quarter",
       "status": "blocked_by_external"
     },
     {
@@ -39,7 +39,7 @@
         "tests/graph_compilation/test_real_transform_coverage.py",
         "tests/graph_compilation/test_downstream_retry.py",
         "docs/realness/m37_12_clean_divide_admission.yaml",
-        "python/compgen/graph_compilation/real_transform_differential.py"
+        "python/xpu_rt/graph_compilation/real_transform_differential.py"
       ],
       "id": "m15b_natural_failure_unreachable",
       "is_bug": false,
@@ -96,11 +96,11 @@
       "claim_affected": "negative_control_pass_card_machinery",
       "created_at_utc": "2026-05-05T00:00:00Z",
       "evidence_paths": [
-        "python/compgen/audit/negative_controls.py",
-        "python/compgen/audit/errors.py",
-        "python/compgen/passes/cards.py",
-        "python/compgen/passes/verification.py",
-        "python/compgen/analysis/invalidation.py",
+        "python/xpu_rt/audit/negative_controls.py",
+        "python/xpu_rt/audit/errors.py",
+        "python/xpu_rt/passes/cards.py",
+        "python/xpu_rt/passes/verification.py",
+        "python/xpu_rt/analysis/invalidation.py",
         "docs/generated/pass_cards/set_tile_params.yaml",
         "docs/generated/pass_cards/fuse_producer_consumer.yaml",
         "docs/generated/pass_cards/fold_transposes_into_dots.yaml",

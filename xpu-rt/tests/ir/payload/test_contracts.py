@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from compgen.ir.payload.contracts import CostEstimate, KernelContract, LayoutKind, LayoutRequirement
+from xpu_rt.ir.payload.contracts import CostEstimate, KernelContract, LayoutKind, LayoutRequirement
 
 
 def test_layout_kind_values() -> None:
@@ -47,13 +47,13 @@ def test_kernel_contract_construction() -> None:
 def test_extract_contracts() -> None:
     """extract_contracts should walk an xDSL module and emit KernelContracts.
 
-    REQ-026: only ops carrying ``compgen.region_id`` surface as
+    REQ-026: only ops carrying ``xpu_rt.region_id`` surface as
     contracts — the importer (and downstream annotation passes) stamp
     this on every dispatch-boundary op. Hand-built test modules must
     do the same, otherwise ``module.walk()`` would incorrectly recurse
     into ``linalg.matmul``'s implicit body.
     """
-    from compgen.ir.payload.contracts import extract_contracts
+    from xpu_rt.ir.payload.contracts import extract_contracts
     from xdsl.dialects.builtin import Float32Type, ModuleOp, StringAttr, TensorType
     from xdsl.dialects.func import FuncOp, ReturnOp
     from xdsl.dialects.linalg import MatmulOp
@@ -67,13 +67,13 @@ def test_extract_contracts() -> None:
 
     block = Block(arg_types=[lhs_type, rhs_type])
     empty = EmptyOp([], out_type)
-    empty.attributes["compgen.region_id"] = StringAttr("r0")
+    empty.attributes["xpu_rt.region_id"] = StringAttr("r0")
     matmul = MatmulOp(
         inputs=[block.args[0], block.args[1]],
         outputs=[empty.results[0]],
         res=[out_type],
     )
-    matmul.attributes["compgen.region_id"] = StringAttr("r1")
+    matmul.attributes["xpu_rt.region_id"] = StringAttr("r1")
     ret = ReturnOp(matmul)
     block.add_ops([empty, matmul, ret])
     func_op = FuncOp("main", ([lhs_type, rhs_type], [out_type]), Region(block))

@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from compgen.ir.payload.contracts import CostEstimate, KernelContract
-from compgen.kernels.contracts import KernelSpec
-from compgen.kernels.selector import (
+from xpu_rt.ir.payload.contracts import CostEstimate, KernelContract
+from xpu_rt.kernels.contracts import KernelSpec
+from xpu_rt.kernels.selector import (
     KernelSelector,
     KernelStrategy,
     select_strategies,
 )
-from compgen.targets.schema import load_profile
+from xpu_rt.targets.schema import load_profile
 
 
 def test_kernel_strategy_values() -> None:

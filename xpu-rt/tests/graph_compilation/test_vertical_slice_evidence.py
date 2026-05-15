@@ -31,7 +31,7 @@ def _invoke_pipeline(
 ) -> subprocess.CompletedProcess:
     return subprocess.run(
         [
-            sys.executable, "-m", "compgen.graph_compilation", "run",
+            sys.executable, "-m", "xpu_rt.graph_compilation", "run",
             "--model", str(REPO_ROOT / f"configs/models/{model}.yaml"),
             "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
             "--out", str(out_dir),
@@ -61,7 +61,7 @@ class TestSlice2:
         )
         assert result.returncode == 0, result.stderr
 
-        from compgen.graph_compilation.phase_d_slice_evidence import (
+        from xpu_rt.graph_compilation.phase_d_slice_evidence import (
             emit_slice_evidence,
         )
 
@@ -102,13 +102,13 @@ class TestSlice3CudaSm75Contracts:
         cuda_yaml = REPO_ROOT / "configs" / "targets" / "cuda_sm75.yaml"
         assert cuda_yaml.exists()
 
-        from compgen.graph_compilation.phase_d_slice_evidence import (
+        from xpu_rt.graph_compilation.phase_d_slice_evidence import (
             emit_slice_evidence,
         )
 
         result = subprocess.run(
             [
-                sys.executable, "-m", "compgen.graph_compilation", "run",
+                sys.executable, "-m", "xpu_rt.graph_compilation", "run",
                 "--model", str(REPO_ROOT / "configs/models/merlin_mlp_wide.yaml"),
                 "--target", str(cuda_yaml),
                 "--out", str(tmp_path / "run"),
@@ -147,7 +147,7 @@ class TestSlice3CudaSm75Contracts:
 
 class TestEvidenceSchema:
     def test_evidence_carries_five_summary_blocks(self, tmp_path: Path) -> None:
-        from compgen.graph_compilation.phase_d_slice_evidence import (
+        from xpu_rt.graph_compilation.phase_d_slice_evidence import (
             emit_deferred_slice_evidence,
         )
 

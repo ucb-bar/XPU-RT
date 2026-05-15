@@ -11,7 +11,7 @@ session — it sees:
 If the canonical view would exceed the byte budget, it raises
 :class:`CanonicalViewBudgetError` rather than silently truncating —
 the caller is responsible for narrowing the regions or invoking
-:func:`compgen.agent.views.focus_chunk.focus_chunk` per region
+:func:`xpu_rt.agent.views.focus_chunk.focus_chunk` per region
 instead.
 """
 
@@ -83,7 +83,7 @@ def canonical_view(
     """Build the canonical view from a driver-checkpoint-shaped dict.
 
     Expected ``session_state`` shape (a strict subset of the
-    :class:`compgen.agent.llm_driver.DriverCheckpoint` to_dict shape):
+    :class:`xpu_rt.agent.llm_driver.DriverCheckpoint` to_dict shape):
 
     ::
 

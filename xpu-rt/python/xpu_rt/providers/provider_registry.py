@@ -5,12 +5,12 @@ ABC, and the adapter resolution into one importable
 "registry" surface. The actual provider registry behavior is
 spread across:
 
-* :mod:`compgen.providers.card_loader` — discovers
+* :mod:`xpu_rt.providers.card_loader` — discovers
   ``providers/cards/*.yaml``;
-* :mod:`compgen.providers.adapters.base` — resolves
+* :mod:`xpu_rt.providers.adapters.base` — resolves
   ``card.entrypoint`` to a real class;
-* :mod:`compgen.providers.legacy_shim` — wraps legacy classes;
-* :mod:`compgen.providers.provider_probe` — probes toolchain
+* :mod:`xpu_rt.providers.legacy_shim` — wraps legacy classes;
+* :mod:`xpu_rt.providers.provider_probe` — probes toolchain
   readiness.
 
 This module gives callers a single entry point.
@@ -21,20 +21,20 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from compgen.providers.adapters.base import (
+from xpu_rt.providers.adapters.base import (
     AdapterResolutionError,
     resolve_provider_class,
 )
-from compgen.providers.card_loader import (
+from xpu_rt.providers.card_loader import (
     iter_dialect_cards,
     iter_provider_cards,
     iter_target_cards,
     load_all_cards,
 )
-from compgen.providers.kernel_provider import KernelProvider
-from compgen.providers.legacy_shim import LegacyProviderAdapter, wrap_legacy
-from compgen.providers.provider_probe import probe_provider
-from compgen.providers.provider_types import ProviderCard, ProviderProbeResult
+from xpu_rt.providers.kernel_provider import KernelProvider
+from xpu_rt.providers.legacy_shim import LegacyProviderAdapter, wrap_legacy
+from xpu_rt.providers.provider_probe import probe_provider
+from xpu_rt.providers.provider_types import ProviderCard, ProviderProbeResult
 
 
 @dataclass

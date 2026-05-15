@@ -1,4 +1,4 @@
-"""Anthropic Messages API adapter for CompGen."""
+"""Anthropic Messages API adapter for XPU-RT."""
 
 from __future__ import annotations
 
@@ -7,14 +7,14 @@ import time
 from dataclasses import dataclass
 from typing import Any
 
-from compgen.llm._env import resolve_api_key
-from compgen.llm._prompt import (
+from xpu_rt.llm._env import resolve_api_key
+from xpu_rt.llm._prompt import (
     extract_markdown_artifacts,
     parse_json_payload,
     render_request_prompt,
     stringify_json_payload,
 )
-from compgen.llm.base import (
+from xpu_rt.llm.base import (
     GenerationRequest,
     GenerationResponse,
 )

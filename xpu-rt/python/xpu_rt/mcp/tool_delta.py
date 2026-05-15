@@ -224,7 +224,7 @@ class ToolDelta:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "schema_version": "compgen_tool_delta_v1",
+            "schema_version": "xpu_rt_tool_delta_v1",
             "tool": self.tool,
             "args_hash": self.args_hash,
             "timestamp": self.timestamp,

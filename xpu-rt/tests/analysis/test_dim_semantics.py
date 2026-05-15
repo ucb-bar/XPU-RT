@@ -1,4 +1,4 @@
-"""Tests for ``compgen.analysis.dim_semantics``.
+"""Tests for ``xpu_rt.analysis.dim_semantics``.
 
 Locks in:
   * matmul output dims tagged (PARALLEL, PARALLEL); reduce axis recorded
@@ -10,7 +10,7 @@ Locks in:
 
 from __future__ import annotations
 
-from compgen.analysis.dim_semantics import (
+from xpu_rt.analysis.dim_semantics import (
     DimRole,
     analyze_op,
     annotate_dim_roles,
@@ -43,7 +43,7 @@ class _FakeOp:
                 def __init__(self, d):
                     self.data = d
 
-            self.attributes["compgen._pattern_hint"] = _H(hint)
+            self.attributes["xpu_rt._pattern_hint"] = _H(hint)
 
 
 def test_matmul_output_dims_are_parallel_with_reduce_axes() -> None:
@@ -88,7 +88,7 @@ def test_pointwise_ops_are_all_parallel() -> None:
 
 
 def test_annotate_dim_roles_round_trips_through_ir_attrs() -> None:
-    """Writing + reading-back via the compgen.dim_role attr."""
+    """Writing + reading-back via the xpu_rt.dim_role attr."""
     from xdsl.dialects.builtin import Float32Type, ModuleOp, TensorType
     from xdsl.dialects.func import FuncOp, ReturnOp
     from xdsl.dialects.linalg import MatmulOp

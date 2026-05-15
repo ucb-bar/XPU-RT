@@ -2,8 +2,8 @@
 
 Discharge obligations on the metadata-only post-lowering MVP. Given
 that the current ``transformed_payload.mlir`` differs from the source
-only by injected ``compgen.*`` attributes, this stage proves
-*semantic-inert-by-metadata*: stripping every ``compgen.*`` attribute
+only by injected ``xpu_rt.*`` attributes, this stage proves
+*semantic-inert-by-metadata*: stripping every ``xpu_rt.*`` attribute
 from both files yields byte-identical text. It also re-checks Stage-0
 golden references (when available) and validates contract drafts for
 contract-only recipes.
@@ -39,7 +39,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from compgen.graph_compilation.hashing import sha256_tree
+from xpu_rt.graph_compilation.hashing import sha256_tree
 
 
 # --------------------------------------------------------------------------- #
@@ -67,7 +67,7 @@ def _read_json(path: Path) -> dict[str, Any]:
 
 
 # --------------------------------------------------------------------------- #
-# compgen metadata stripper
+# xpu_rt metadata stripper
 # --------------------------------------------------------------------------- #
 
 
@@ -118,7 +118,7 @@ def _split_attr_entries(body: str) -> list[str]:
 
 
 def _entry_key(entry: str) -> str:
-    """Pull the attribute key out of an entry like ``compgen.tile = [...]``."""
+    """Pull the attribute key out of an entry like ``xpu_rt.tile = [...]``."""
     m = re.match(r"\s*([A-Za-z_][A-Za-z0-9_.]*)\s*(?:=|$)", entry)
     return m.group(1) if m else ""
 
@@ -199,8 +199,8 @@ def _find_inline_attr_blocks(text: str) -> list[tuple[int, int]]:
     return ranges
 
 
-def strip_compgen_metadata(text: str) -> str:
-    """Return ``text`` with every ``compgen.*`` attribute removed from
+def strip_xpu_rt_metadata(text: str) -> str:
+    """Return ``text`` with every ``xpu_rt.*`` attribute removed from
     inline attribute dicts.
 
     Empty attribute blocks ``{}`` produced by the strip are collapsed
@@ -222,7 +222,7 @@ def strip_compgen_metadata(text: str) -> str:
             if not entry.strip():
                 continue
             key = _entry_key(entry)
-            if key.startswith("compgen."):
+            if key.startswith("xpu_rt."):
                 continue
             kept.append(entry)
         if kept:
@@ -461,7 +461,7 @@ def run_differential_verification(run_dir: Path) -> DifferentialVerificationResu
     manifest:
 
     - **metadata_noop_mvp** when at least one transform-like artifact
-      ran. Strips ``compgen.*`` from the source and transformed payloads
+      ran. Strips ``xpu_rt.*`` from the source and transformed payloads
       and proves textual equality. The presence of
       ``transformed_payload.mlir`` is required.
     - **contract_only_mvp** when every artifact is a kernel-contract
@@ -573,8 +573,8 @@ def run_differential_verification(run_dir: Path) -> DifferentialVerificationResu
             elif transformed_payload_present:
                 source_text = chosen_path.read_text(encoding="utf-8")
                 transformed_text = transformed_path.read_text(encoding="utf-8")
-                normalized_source = strip_compgen_metadata(source_text)
-                normalized_transformed = strip_compgen_metadata(transformed_text)
+                normalized_source = strip_xpu_rt_metadata(source_text)
+                normalized_transformed = strip_xpu_rt_metadata(transformed_text)
                 (out_dir / "normalized_source_payload.mlir").write_text(
                     normalized_source, encoding="utf-8",
                 )
@@ -636,7 +636,7 @@ def run_differential_verification(run_dir: Path) -> DifferentialVerificationResu
                     },
                     "checks": [
                         {
-                            "name": "compgen_metadata_only_diff",
+                            "name": "xpu_rt_metadata_only_diff",
                             "status": "pass" if not diff_lines else "fail",
                             "detail": (
                                 "" if not diff_lines
@@ -661,7 +661,7 @@ def run_differential_verification(run_dir: Path) -> DifferentialVerificationResu
                         f"normalized_payload_diff.txt"
                     )
                 _add(
-                    "normalized_payloads_equal_after_stripping_compgen_metadata",
+                    "normalized_payloads_equal_after_stripping_xpu_rt_metadata",
                     not diff_lines,
                 )
 

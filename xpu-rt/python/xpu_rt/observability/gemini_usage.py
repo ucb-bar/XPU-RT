@@ -1,7 +1,7 @@
 """Gemini API usage + cost tracker.
 
 Persists every Gemini API call to an append-only JSONL log under
-``<repo>/.compgen/gemini_usage/`` and maintains a derived summary
+``<repo>/.xpu_rt/gemini_usage/`` and maintains a derived summary
 (cumulative + per-month buckets keyed by ``YYYY-MM``).
 
 Design notes:
@@ -153,26 +153,26 @@ _WARNED_FALLBACK_MODELS: set[str] = set()
 
 
 def _repo_root() -> Path:
-    """Locate the CompGen repo root by walking up to find ``pyproject.toml``."""
-    env_root = os.environ.get("COMPGEN_REPO_ROOT")
+    """Locate the XPU-RT repo root by walking up to find ``pyproject.toml``."""
+    env_root = os.environ.get("XPU_RT_REPO_ROOT")
     if env_root:
         return Path(env_root).resolve()
     here = Path(__file__).resolve()
     for parent in [here, *here.parents]:
-        if (parent / "pyproject.toml").exists() and (parent / "python" / "compgen").exists():
+        if (parent / "pyproject.toml").exists() and (parent / "python" / "xpu-rt").exists():
             return parent
     # Fallback: assume four levels up from this file
-    # (python/compgen/observability/gemini_usage.py -> repo root)
+    # (python/xpu_rt/observability/gemini_usage.py -> repo root)
     return here.parents[3]
 
 
 def get_storage_dir() -> Path:
     """Return the directory holding usage events, summary, and budget."""
-    override = os.environ.get("COMPGEN_GEMINI_USAGE_DIR")
+    override = os.environ.get("XPU_RT_GEMINI_USAGE_DIR")
     if override:
         path = Path(override)
     else:
-        path = _repo_root() / ".compgen" / "gemini_usage"
+        path = _repo_root() / ".xpu_rt" / "gemini_usage"
     path.mkdir(parents=True, exist_ok=True)
     return path
 
@@ -362,7 +362,7 @@ def resolve_rates(model: str) -> tuple[dict[str, float], str]:
         logger.warning(
             "gemini pricing fallback for unknown model %r — using "
             "mid-tier flash rates (in=%.2f, out=%.2f, cached=%.2f). "
-            "Update PRICING in compgen/observability/gemini_usage.py "
+            "Update PRICING in xpu_rt/observability/gemini_usage.py "
             "or drop a configs/gemini_pricing.yaml override to silence.",
             model,
             _FALLBACK_RATES["input"],
@@ -660,13 +660,13 @@ def record_from_response(
 # patched function's signature.
 
 _current_source: contextvars.ContextVar[str] = contextvars.ContextVar(
-    "compgen_gemini_usage_source", default="genai_sdk"
+    "xpu_rt_gemini_usage_source", default="genai_sdk"
 )
 _current_metadata: contextvars.ContextVar[dict[str, Any]] = contextvars.ContextVar(
-    "compgen_gemini_usage_metadata", default={}
+    "xpu_rt_gemini_usage_metadata", default={}
 )
 
-_INSTRUMENTED_FLAG = "_compgen_usage_instrumented"
+_INSTRUMENTED_FLAG = "_xpu_rt_usage_instrumented"
 
 
 @contextlib.contextmanager
@@ -759,7 +759,7 @@ def install_genai_instrumentation() -> bool:
         patched = True
 
     if patched:
-        logger.debug("compgen.observability: instrumented google.genai")
+        logger.debug("xpu_rt.observability: instrumented google.genai")
     return True
 
 
@@ -913,7 +913,7 @@ def install_openai_instrumentation() -> bool:
         patched = True
 
     if patched:
-        logger.debug("compgen.observability: instrumented openai SDK")
+        logger.debug("xpu_rt.observability: instrumented openai SDK")
     return True
 
 

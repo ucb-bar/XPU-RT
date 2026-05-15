@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from compgen.ir.ukernel.lower import lower_ukernel_to_call
+from xpu_rt.ir.ukernel.lower import lower_ukernel_to_call
 
 
 def test_lower_ukernel_to_call_exists() -> None:
@@ -11,7 +11,7 @@ def test_lower_ukernel_to_call_exists() -> None:
 
 def test_lower_ukernel_to_call_c_backend() -> None:
     """lower_ukernel_to_call with backend='c' should produce C function calls."""
-    from compgen.ir.ukernel.ops import UkernelCallOp
+    from xpu_rt.ir.ukernel.ops import UkernelCallOp
 
     calls = [
         UkernelCallOp(kernel_name="matmul_f32", operands=["a", "b"], results=["c"], workspace_bytes=256),
@@ -29,7 +29,7 @@ def test_lower_ukernel_to_call_c_backend() -> None:
 
 def test_lower_ukernel_to_call_triton_backend() -> None:
     """lower_ukernel_to_call with backend='triton' should produce Triton kernel launches."""
-    from compgen.ir.ukernel.ops import UkernelCallOp
+    from xpu_rt.ir.ukernel.ops import UkernelCallOp
 
     calls = [
         UkernelCallOp(kernel_name="fused_attention", operands=["q", "k", "v"], results=["out"]),

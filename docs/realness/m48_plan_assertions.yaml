@@ -34,8 +34,8 @@ forbidden:
   have a negative-control test)
 realness_level: production_path
 required_evidence:
-- python/compgen/runtime/glue_emit/plan_assertions.py
-- python/compgen/runtime/glue_emit/python_sync.py (M-48 wiring)
+- python/xpu_rt/runtime/glue_emit/plan_assertions.py
+- python/xpu_rt/runtime/glue_emit/python_sync.py (M-48 wiring)
 - tests/runtime/test_plan_assertions.py
 - "06_glue_emit/generated_plan_executor.py on a real run carries the typed PlanViolation classes + generated assert_plan body"
 feature_id: m48_plan_assertions

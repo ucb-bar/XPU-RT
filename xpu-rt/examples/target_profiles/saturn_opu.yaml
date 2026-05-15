@@ -1,8 +1,8 @@
-# CompGen Target Profile: Saturn OPU (RISC-V + custom vector+outer-product unit)
+# XPU-RT Target Profile: Saturn OPU (RISC-V + custom vector+outer-product unit)
 #
 # Chipyard generator: `chipyard/generators/saturn` (OPUV128D64ShuttleConfig).
 # Matches Merlin's `models/saturn_opu.yaml` so the toolchain flags agree,
-# but classifies the target for CompGen's own lowering pipeline — not IREE.
+# but classifies the target for XPU-RT's own lowering pipeline — not IREE.
 #
 # Vector width: 128-bit VLEN (16 i8 lanes).
 # Outer-product accumulator: 8×8 MACC array, 4×(16×16) matrix regs, VOPACC

@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING
 import structlog
 
 if TYPE_CHECKING:
-    from compgen.memory.store import CompilerMemory
+    from xpu_rt.memory.store import CompilerMemory
 
 log = structlog.get_logger()
 
@@ -36,7 +36,7 @@ def store_cost_weights(
     Returns:
         Knowledge item ID.
     """
-    from compgen.memory.schema import KnowledgeKind, ScopeKind
+    from xpu_rt.memory.schema import KnowledgeKind, ScopeKind
 
     summary = (
         f"cost_weights target={target_key} "
@@ -78,7 +78,7 @@ def retrieve_best_weights(
     Returns:
         Dict with weight keys, or None if no prior data.
     """
-    from compgen.memory.schema import KnowledgeKind, ScopeKind
+    from xpu_rt.memory.schema import KnowledgeKind, ScopeKind
 
     items = memory.retrieve_knowledge(
         kind=KnowledgeKind.HARDWARE_RULE,

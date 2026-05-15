@@ -4,7 +4,7 @@ display_name: Layout pipeline (6/10) — fuse layout into producers
 level: payload
 family: layout_pipeline
 source: homemade
-impl_path: python/compgen/transforms/layout/fuse_layout_into_producers.py
+impl_path: python/xpu_rt/transforms/layout/fuse_layout_into_producers.py
 reads:
   - 01_payload_lowering/payload.mlir
 writes:
@@ -24,7 +24,7 @@ cost: cheap
 failure_modes:
   - "producer_has_multiple_consumers"
   - "non_fusable_producer"
-mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+mcp_tool: mcp__xpu_rt__xpu_rt_emit_agent_decision_request
 notes: |
   Layout pipeline step 6: when a layout op (set_layout, pack) has a
   single producer that's fusable, fold the layout into the producer

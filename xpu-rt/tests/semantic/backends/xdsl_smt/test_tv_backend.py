@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from compgen.semantic.backends.xdsl_smt.tv_backend import (
+from xpu_rt.semantic.backends.xdsl_smt.tv_backend import (
     ArithZ3Lowerer,
     TranslationValidationBackend,
 )

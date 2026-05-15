@@ -4,7 +4,7 @@ dialect_name: pallas
 integration_level: probe
 consumes: [kernel_contract_v3, jax_jaxpr]
 emits: [pallas_source, tpu_mlir]
-entrypoint: compgen.providers.adapters.pallas:PallasDialectProvider
+entrypoint: xpu_rt.providers.adapters.pallas:PallasDialectProvider
 required_env: []
 description: |
   Pallas kernel-language adapter for TPU. Operates as a dialect

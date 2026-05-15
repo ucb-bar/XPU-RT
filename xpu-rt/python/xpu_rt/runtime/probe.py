@@ -2,7 +2,7 @@
 
 Probes a CUDA device's capability bits + peak rates and returns a
 JSON-serialisable dict suitable for
-:meth:`compgen.runtime.traits.DeviceTraits.with_probe`. The probe is
+:meth:`xpu_rt.runtime.traits.DeviceTraits.with_probe`. The probe is
 the bridge between the static :class:`TargetProfile` YAML (compile
 time) and the actual silicon under the runtime (compile-and-run time).
 
@@ -176,10 +176,10 @@ class _NativeHalUnavailable(RuntimeError):
 def probe_via_native_hal(device_index: int = 0) -> dict[str, Any]:
     """Probe via the Phase-4 ``cg_rt_cuda_probe_device`` C primitive.
 
-    Wraps :class:`compgen.runtime.native.cuda.CudaDeviceProbe`. Raises
+    Wraps :class:`xpu_rt.runtime.native.cuda.CudaDeviceProbe`. Raises
     :class:`_NativeHalUnavailable` when:
 
-    - the CUDA-built ``libcompgen_rt`` isn't on this install (wheel
+    - the CUDA-built ``libxpu_rt`` isn't on this install (wheel
       built without ``make build-cuda-rt``), or
     - the C API returns an error (CUDA driver missing, no devices, etc).
 
@@ -189,12 +189,12 @@ def probe_via_native_hal(device_index: int = 0) -> dict[str, Any]:
     ``concurrent_kernels``, ``concurrent_managed_access``).
     """
     try:
-        from compgen.runtime.native.cuda import (
+        from xpu_rt.runtime.native.cuda import (
             CudaDeviceProbe,
             CudaUnavailableError,
         )
     except Exception as exc:
-        raise _NativeHalUnavailable(f"compgen.runtime.native.cuda not importable: {exc!r}") from exc
+        raise _NativeHalUnavailable(f"xpu_rt.runtime.native.cuda not importable: {exc!r}") from exc
     try:
         return CudaDeviceProbe().probe(device_index)
     except CudaUnavailableError as exc:

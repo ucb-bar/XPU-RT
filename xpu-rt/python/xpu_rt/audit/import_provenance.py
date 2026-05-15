@@ -2,7 +2,7 @@
 
 Snapshots ``sys.modules`` at well-defined points around a production run
 and records which modules were imported. Production runs that import a
-forbidden module (e.g. ``compgen.llm.mock_client``) fail the audit — that
+forbidden module (e.g. ``xpu_rt.llm.mock_client``) fail the audit — that
 is what tells a reader the run is real.
 
 The provenance file (``<run_dir>/import_provenance.json``) is written at
@@ -15,8 +15,8 @@ Cache mode is one of:
                  cache, kernel cache, or memory store was consulted
                  (assumed; not directly observable here)
 - ``warm``     — the recipe cache may have been consulted; the default
-- ``disabled`` — at least one of ``COMPGEN_DISABLE_RECIPE_MEMORY`` /
-                 ``COMPGEN_DISABLE_KERNEL_CACHE`` is set
+- ``disabled`` — at least one of ``XPU_RT_DISABLE_RECIPE_MEMORY`` /
+                 ``XPU_RT_DISABLE_KERNEL_CACHE`` is set
 """
 
 from __future__ import annotations
@@ -28,25 +28,25 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from compgen.audit.errors import ForbiddenImportError
+from xpu_rt.audit.errors import ForbiddenImportError
 
 # Modules that are forbidden on production paths. If any of these appears
 # in the post-run snapshot of a production-classified run, the audit
 # fails.
 DEFAULT_FORBIDDEN_MODULES: tuple[str, ...] = (
-    "compgen.llm.mock_client",
-    "compgen.runtime.transport",  # StubNetworkTransport lives here
-    "compgen.ir.payload.passes.runtime_stubs",
+    "xpu_rt.llm.mock_client",
+    "xpu_rt.runtime.transport",  # StubNetworkTransport lives here
+    "xpu_rt.ir.payload.passes.runtime_stubs",
 )
 
 # Modules that are categorically "mock" (regardless of where they live).
 # Importing one is not a hard fail by itself — many tests do — but it
 # bumps the ``evidence_mode`` to ``mocked`` or ``mixed``.
 DEFAULT_MOCK_MODULES: tuple[str, ...] = (
-    "compgen.llm.mock_client",
-    "compgen.memory.embeddings",  # MockEmbeddingProvider may be re-exported
-    "compgen.kernels.providers.claude_code_default",  # StubCodegen
-    "compgen.capture.unsupported.synthesize_fake",
+    "xpu_rt.llm.mock_client",
+    "xpu_rt.memory.embeddings",  # MockEmbeddingProvider may be re-exported
+    "xpu_rt.kernels.providers.claude_code_default",  # StubCodegen
+    "xpu_rt.capture.unsupported.synthesize_fake",
 )
 
 
@@ -58,7 +58,7 @@ class ImportSnapshot:
     modules: tuple[str, ...]
 
     @classmethod
-    def take(cls, label: str, *, prefixes: tuple[str, ...] = ("compgen", "torch")) -> ImportSnapshot:
+    def take(cls, label: str, *, prefixes: tuple[str, ...] = ("xpu-rt", "torch")) -> ImportSnapshot:
         keys = sorted(
             name
             for name in sys.modules
@@ -68,8 +68,8 @@ class ImportSnapshot:
 
 
 def _classify_cache_mode() -> str:
-    disabled_recipe = os.environ.get("COMPGEN_DISABLE_RECIPE_MEMORY") == "1"
-    disabled_kernel = os.environ.get("COMPGEN_DISABLE_KERNEL_CACHE") == "1"
+    disabled_recipe = os.environ.get("XPU_RT_DISABLE_RECIPE_MEMORY") == "1"
+    disabled_kernel = os.environ.get("XPU_RT_DISABLE_KERNEL_CACHE") == "1"
     if disabled_recipe or disabled_kernel:
         return "disabled"
     return "warm"
@@ -159,13 +159,13 @@ def compute_provenance(
     ]
     env_overrides = {
         k: v for k, v in os.environ.items()
-        if k.startswith("COMPGEN_") and k in {
-            "COMPGEN_DISABLE_RECIPE_MEMORY",
-            "COMPGEN_DISABLE_KERNEL_CACHE",
-            "COMPGEN_FORCE_REBUILD",
-            "COMPGEN_RUN_KERNELS",
-            "COMPGEN_CALIBRATE_PROFILER",
-            "COMPGEN_CALIBRATE_CANDIDATES",
+        if k.startswith("XPU_RT_") and k in {
+            "XPU_RT_DISABLE_RECIPE_MEMORY",
+            "XPU_RT_DISABLE_KERNEL_CACHE",
+            "XPU_RT_FORCE_REBUILD",
+            "XPU_RT_RUN_KERNELS",
+            "XPU_RT_CALIBRATE_PROFILER",
+            "XPU_RT_CALIBRATE_CANDIDATES",
         }
     }
     return ImportProvenance(

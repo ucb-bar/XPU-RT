@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from compgen.runtime.execution_plan import (
+from xpu_rt.runtime.execution_plan import (
     BufferDescriptor,
     CopyEdge,
     DependencyEdge,
@@ -16,7 +16,7 @@ from compgen.runtime.execution_plan import (
     StreamAnnotation,
     ticks_spanned,
 )
-from compgen.runtime.plan_builder import ExecutionPlanBuilder
+from xpu_rt.runtime.plan_builder import ExecutionPlanBuilder
 
 # --- Lifetime -----------------------------------------------------------------
 

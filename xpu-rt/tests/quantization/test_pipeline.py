@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 import torch
 import torch.nn as nn
-from compgen.quantization.pipeline import PipelineReport, QuantizedModelPipeline
+from xpu_rt.quantization.pipeline import PipelineReport, QuantizedModelPipeline
 
 torchao = pytest.importorskip("torchao")
 yaml = pytest.importorskip("yaml")
@@ -74,7 +74,7 @@ class TestPipelineWithQuant:
     """Test pipeline with FP8 quantization."""
 
     def test_quantization_applied(self) -> None:
-        from compgen.capture.torchao_pipeline import QuantizationConfig
+        from xpu_rt.capture.torchao_pipeline import QuantizationConfig
 
         model = _simple_mlp().to(torch.bfloat16)
         x = (torch.randn(4, 32, dtype=torch.bfloat16),)
@@ -88,7 +88,7 @@ class TestPipelineWithQuant:
         assert report.quantization_applied is True
 
     def test_alignment_checked(self) -> None:
-        from compgen.capture.torchao_pipeline import QuantizationConfig
+        from xpu_rt.capture.torchao_pipeline import QuantizationConfig
 
         model = _simple_mlp().to(torch.bfloat16)
         x = (torch.randn(4, 32, dtype=torch.bfloat16),)
@@ -153,7 +153,7 @@ class TestPipelineArtifacts:
             assert len(manifest["artifacts"]) > 0
 
     def test_quantized_artifacts(self) -> None:
-        from compgen.capture.torchao_pipeline import QuantizationConfig
+        from xpu_rt.capture.torchao_pipeline import QuantizationConfig
 
         with tempfile.TemporaryDirectory() as tmpdir:
             model = _simple_mlp().to(torch.bfloat16)

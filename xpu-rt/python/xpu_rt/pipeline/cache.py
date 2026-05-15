@@ -18,8 +18,8 @@ from collections import OrderedDict
 from dataclasses import dataclass
 from typing import Any
 
-from compgen.options import CompGenOptions
-from compgen.pipeline.driver import PipelineResult, compile_through_pipeline
+from xpu_rt.options import CompGenOptions
+from xpu_rt.pipeline.driver import PipelineResult, compile_through_pipeline
 
 
 @dataclass

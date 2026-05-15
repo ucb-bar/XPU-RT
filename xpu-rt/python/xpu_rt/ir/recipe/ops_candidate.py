@@ -18,7 +18,7 @@ from xdsl.irdl import (
 from xdsl.traits import Pure
 from xdsl.utils.exceptions import VerifyException
 
-from compgen.ir.recipe.attrs import DeviceRefAttr, ProvenanceAttr
+from xpu_rt.ir.recipe.attrs import DeviceRefAttr, ProvenanceAttr
 
 
 @irdl_op_definition

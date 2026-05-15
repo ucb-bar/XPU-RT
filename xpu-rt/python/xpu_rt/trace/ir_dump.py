@@ -1,7 +1,7 @@
 """Per-stage / per-pass IR dumping, IREE-style.
 
-Opt-in via :class:`compgen.options.CompGenOptions` ``dump_ir`` or the
-``COMPGEN_DUMP_IR=1`` environment variable. When enabled, every pass
+Opt-in via :class:`xpu_rt.options.CompGenOptions` ``dump_ir`` or the
+``XPU_RT_DUMP_IR=1`` environment variable. When enabled, every pass
 invocation (through ``pipeline/driver.py::_run_with_report``) and every
 stage invocation (through ``stages/base.py::CompilationStage.run``)
 writes ``<output_dir>/ir_dumps/NNN_<name>_<before|after>.mlir`` plus a
@@ -30,12 +30,12 @@ import structlog
 from xdsl.dialects.builtin import ModuleOp
 from xdsl.printer import Printer
 
-from compgen.trace.bus import get_active_bus
-from compgen.trace.events import EventKind, Phase
+from xpu_rt.trace.bus import get_active_bus
+from xpu_rt.trace.events import EventKind, Phase
 
 log = structlog.get_logger()
 
-ENV_DUMP = "COMPGEN_DUMP_IR"
+ENV_DUMP = "XPU_RT_DUMP_IR"
 
 
 def dump_enabled_from_env() -> bool:

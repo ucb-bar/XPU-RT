@@ -23,9 +23,9 @@ from pathlib import Path
 import pytest
 import torch
 import torch.nn as nn
-from compgen.api import compile_model, device
-from compgen.runtime.bundle_emit import emit_extended_artefacts
-from compgen.runtime.errors import ArtifactStatus, BundleEmissionError, BundleEmissionReport
+from xpu_rt.api import compile_model, device
+from xpu_rt.runtime.bundle_emit import emit_extended_artefacts
+from xpu_rt.runtime.errors import ArtifactStatus, BundleEmissionError, BundleEmissionReport
 
 EXEMPLAR_DIR = Path(__file__).parent.parent / "targetgen" / "exemplars"
 

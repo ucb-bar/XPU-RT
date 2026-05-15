@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from compgen.transforms.verify import (
+from xpu_rt.transforms.verify import (
     TransformVerifier,
     VerificationLevel,
     verify_guarded_transform,
@@ -95,7 +95,7 @@ def test_guard_rejected_transform_skips_verification() -> None:
 def test_differential_skips_without_exported_program() -> None:
     """With no ExportedProgram we can't dispatch — SKIPPED, never a
     lying PASS. Caller routes this into manifest+gate decisions."""
-    from compgen.transforms.verify import _verify_differential
+    from xpu_rt.transforms.verify import _verify_differential
 
     module = _make_module()
     passed, max_err, msg = _verify_differential(
@@ -114,7 +114,7 @@ def test_differential_skips_without_exported_program() -> None:
 def test_differential_skips_when_no_executable_inputs() -> None:
     """IR with no tensor-typed entry args + no sample_inputs + no
     ExportedProgram gets a SKIPPED — not a fake PASS, not a FAIL."""
-    from compgen.transforms.verify import _verify_differential
+    from xpu_rt.transforms.verify import _verify_differential
 
     module = _make_module()  # IndexType args
     passed, max_err, msg = _verify_differential(
@@ -136,7 +136,7 @@ def test_differential_runs_real_execution_on_compiled_model() -> None:
 
     import torch
     import torch.nn as nn
-    from compgen.api import compile_model, device
+    from xpu_rt.api import compile_model, device
 
     EXEMPLAR_DIR = __import__("pathlib").Path(__file__).parent.parent / "targetgen" / "exemplars"
 

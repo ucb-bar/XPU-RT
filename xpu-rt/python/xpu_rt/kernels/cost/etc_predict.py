@@ -87,11 +87,11 @@ def _lookup_arch_tflops(arch_key: str, *, tensor_core: bool) -> float:
     # Map arch_key → leaf module path. Leaves only exist for the
     # arches we've explicitly added; others fall back.
     arch_to_leaf = {
-        "100": "compgen.targets.gpu.nvidia.blackwell.cost",
-        "120": "compgen.targets.gpu.nvidia.blackwell.cost",
-        "90": "compgen.targets.gpu.nvidia.hopper.cost",
-        "80": "compgen.targets.gpu.nvidia.ampere.cost",
-        "86": "compgen.targets.gpu.nvidia.ampere.cost",
+        "100": "xpu_rt.targets.gpu.nvidia.blackwell.cost",
+        "120": "xpu_rt.targets.gpu.nvidia.blackwell.cost",
+        "90": "xpu_rt.targets.gpu.nvidia.hopper.cost",
+        "80": "xpu_rt.targets.gpu.nvidia.ampere.cost",
+        "86": "xpu_rt.targets.gpu.nvidia.ampere.cost",
     }
     leaf_path = arch_to_leaf.get(arch_key)
     if leaf_path is not None:
@@ -166,11 +166,11 @@ def _lookup_eager_tflops(arch_key: str, *, dtype: str) -> float:
     Returns: TFLOPS/s/SM at the requested dtype.
     """
     arch_to_leaf = {
-        "100": "compgen.targets.gpu.nvidia.blackwell.cost",
-        "120": "compgen.targets.gpu.nvidia.blackwell.cost",
-        "90": "compgen.targets.gpu.nvidia.hopper.cost",
-        "80": "compgen.targets.gpu.nvidia.ampere.cost",
-        "86": "compgen.targets.gpu.nvidia.ampere.cost",
+        "100": "xpu_rt.targets.gpu.nvidia.blackwell.cost",
+        "120": "xpu_rt.targets.gpu.nvidia.blackwell.cost",
+        "90": "xpu_rt.targets.gpu.nvidia.hopper.cost",
+        "80": "xpu_rt.targets.gpu.nvidia.ampere.cost",
+        "86": "xpu_rt.targets.gpu.nvidia.ampere.cost",
     }
     leaf_path = arch_to_leaf.get(arch_key)
     attr_by_dtype = {
@@ -268,11 +268,11 @@ def _lookup_cooperative_sync_us(arch_key: str) -> float:
     this term, not per-task scheduling.
     """
     arch_to_leaf = {
-        "100": "compgen.targets.gpu.nvidia.blackwell.cost",
-        "120": "compgen.targets.gpu.nvidia.blackwell.cost",
-        "90": "compgen.targets.gpu.nvidia.hopper.cost",
-        "80": "compgen.targets.gpu.nvidia.ampere.cost",
-        "86": "compgen.targets.gpu.nvidia.ampere.cost",
+        "100": "xpu_rt.targets.gpu.nvidia.blackwell.cost",
+        "120": "xpu_rt.targets.gpu.nvidia.blackwell.cost",
+        "90": "xpu_rt.targets.gpu.nvidia.hopper.cost",
+        "80": "xpu_rt.targets.gpu.nvidia.ampere.cost",
+        "86": "xpu_rt.targets.gpu.nvidia.ampere.cost",
     }
     leaf_path = arch_to_leaf.get(arch_key)
     if leaf_path is not None:
@@ -460,11 +460,11 @@ def predict_etc_dispatch(
     # tensor-core peak for fp32 workloads was wrong by ~2700×).
     sm_count = {"100": 132, "120": 188, "90": 132, "89": 128, "86": 84, "80": 108}.get(arch_key, 80)
     # Pick the dtype eager actually runs at. Per bridge #121:
-    # the prior code keyed off ``cublasdx_precision`` (compgen's
+    # the prior code keyed off ``cublasdx_precision`` (xpu_rt's
     # internal compute path), which on Blackwell defaults to
     # ``bf16_fp32`` even when the user's model is fp32. eager runs
     # the user's model directly — its rate depends on the model's
-    # parameter dtype, not compgen's compute path. When the caller
+    # parameter dtype, not xpu_rt's compute path. When the caller
     # passes ``model_dtype``, use it; otherwise fall back to
     # mapping ``cublasdx_precision`` for backward compat.
     if model_dtype is not None:

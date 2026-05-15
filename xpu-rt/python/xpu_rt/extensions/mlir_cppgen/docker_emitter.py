@@ -2,8 +2,8 @@
 
 Generates a multi-stage Dockerfile:
   Stage 1: Build LLVM/MLIR
-  Stage 2: Build CompGen compiler
-  Stage 3: Runtime image with compgen-opt
+  Stage 2: Build XPU-RT compiler
+  Stage 3: Runtime image with xpu_rt-opt
 """
 
 from __future__ import annotations

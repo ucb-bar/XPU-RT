@@ -1,6 +1,6 @@
 """Compilation job task — distributed model compilation.
 
-Wraps ``compgen.api.compile_model()`` and ``AgenticCompilationLoop.run()``
+Wraps ``xpu_rt.api.compile_model()`` and ``AgenticCompilationLoop.run()``
 as Ray remote tasks.
 """
 
@@ -40,7 +40,7 @@ def compile_model_job(
     """
     import importlib
 
-    from compgen.api import compile_model, device
+    from xpu_rt.api import compile_model, device
 
     # Load model
     mod = importlib.import_module(model_module)

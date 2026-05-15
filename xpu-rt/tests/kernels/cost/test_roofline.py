@@ -1,6 +1,6 @@
 """Roofline analytical cost-model tests.
 
-Pin down the production-grade contract of :mod:`compgen.kernels.cost.roofline`:
+Pin down the production-grade contract of :mod:`xpu_rt.kernels.cost.roofline`:
 
 - Compute-bound and memory-bound regimes classify correctly.
 - Missing peaks raise :class:`RooflineUnavailableError` rather than
@@ -17,14 +17,14 @@ import math
 from types import SimpleNamespace
 
 import pytest
-from compgen.kernels.cost.roofline import (
+from xpu_rt.kernels.cost.roofline import (
     RooflinePrediction,
     predict,
     predict_fusion_speedup,
     roofline_latency_us,
 )
-from compgen.kernels.errors import RooflineUnavailableError
-from compgen.targets.schema import ComputeUnit, DeviceSpec, MemoryLevel, TargetProfile
+from xpu_rt.kernels.errors import RooflineUnavailableError
+from xpu_rt.targets.schema import ComputeUnit, DeviceSpec, MemoryLevel, TargetProfile
 
 
 def _a100_profile() -> TargetProfile:
@@ -189,7 +189,7 @@ class TestAsMeasurement:
     def test_prediction_adapts_to_measurement(self) -> None:
         """RooflinePrediction.as_measurement returns a KernelMeasurement
         with source=\"roofline\" — downstream uniform code works on both."""
-        from compgen.kernels.measure import KernelMeasurement
+        from xpu_rt.kernels.measure import KernelMeasurement
 
         profile = _a100_profile()
         contract = _contract(flops=312_000_000_000, bytes_read=500_000, bytes_written=500_000)

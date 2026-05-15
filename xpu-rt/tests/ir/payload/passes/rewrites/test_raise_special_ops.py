@@ -8,7 +8,7 @@ real-workload tests that bridge ``attention_mlp_tiny`` /
 from __future__ import annotations
 
 import pytest
-from compgen.ir.payload.passes.rewrites.raise_special_ops import (
+from xpu_rt.ir.payload.passes.rewrites.raise_special_ops import (
     RaiseSpecialOpsStats,
     run_raise_special_ops,
 )
@@ -46,8 +46,8 @@ def _wrap_single_hinted_call(
     t = _ft(shape)
     empties = [EmptyOp([], t) for _ in range(n_operands)]
     call = CallOp(callee, [e.results[0] for e in empties], [t])
-    call.attributes["compgen._pattern_hint"] = StringAttr(hint)
-    call.attributes["compgen.region_id"] = StringAttr(f"{hint}_0")
+    call.attributes["xpu_rt._pattern_hint"] = StringAttr(hint)
+    call.attributes["xpu_rt.region_id"] = StringAttr(f"{hint}_0")
 
     block = Block()
     for op in (*empties, call):
@@ -66,14 +66,14 @@ def test_softmax_hint_raises_to_linalg_ext_softmax():
     m, _ = _wrap_single_hinted_call("sm", "softmax", shape=(4, 8))
     stats = run_raise_special_ops(m)
     assert stats.raised_by_hint["softmax"] == 1
-    assert count_ops(m, "compgen.linalg_ext.softmax") == 1
+    assert count_ops(m, "xpu_rt.linalg_ext.softmax") == 1
 
 
 def test_softmax_dim_defaults_to_last_axis():
     m, _ = _wrap_single_hinted_call("sm", "softmax", shape=(4, 8, 16))
     run_raise_special_ops(m)
     for op in m.walk():
-        if op.name == "compgen.linalg_ext.softmax":
+        if op.name == "xpu_rt.linalg_ext.softmax":
             assert op.dim.value.data == 2
             break
 
@@ -84,13 +84,13 @@ def test_softmax_dim_defaults_to_last_axis():
 def test_layer_norm_hint_raises_single_operand():
     m, _ = _wrap_single_hinted_call("ln", "layer_norm", n_operands=1)
     run_raise_special_ops(m)
-    assert count_ops(m, "compgen.linalg_ext.layer_norm") == 1
+    assert count_ops(m, "xpu_rt.linalg_ext.layer_norm") == 1
 
 
 def test_layer_norm_hint_raises_with_weight_and_bias():
     m, _ = _wrap_single_hinted_call("ln", "layer_norm", n_operands=3)
     run_raise_special_ops(m)
-    ops = [op for op in m.walk() if op.name == "compgen.linalg_ext.layer_norm"]
+    ops = [op for op in m.walk() if op.name == "xpu_rt.linalg_ext.layer_norm"]
     assert len(ops) == 1
     assert ops[0].weight is not None
     assert ops[0].bias is not None
@@ -100,7 +100,7 @@ def test_native_layer_norm_alias_also_raises():
     # Some decomp paths emit ``native_layer_norm`` directly.
     m, _ = _wrap_single_hinted_call("nln", "native_layer_norm", n_operands=1)
     run_raise_special_ops(m)
-    assert count_ops(m, "compgen.linalg_ext.layer_norm") == 1
+    assert count_ops(m, "xpu_rt.linalg_ext.layer_norm") == 1
 
 
 # --- rms_norm ---------------------------------------------------------------
@@ -109,7 +109,7 @@ def test_native_layer_norm_alias_also_raises():
 def test_rms_norm_hint_raises_with_weight():
     m, _ = _wrap_single_hinted_call("rms", "rms_norm", n_operands=2)
     run_raise_special_ops(m)
-    assert count_ops(m, "compgen.linalg_ext.rms_norm") == 1
+    assert count_ops(m, "xpu_rt.linalg_ext.rms_norm") == 1
 
 
 # --- silu / gelu / swiglu --------------------------------------------------
@@ -118,19 +118,19 @@ def test_rms_norm_hint_raises_with_weight():
 def test_silu_hint_raises():
     m, _ = _wrap_single_hinted_call("silu", "silu", n_operands=1)
     run_raise_special_ops(m)
-    assert count_ops(m, "compgen.linalg_ext.silu") == 1
+    assert count_ops(m, "xpu_rt.linalg_ext.silu") == 1
 
 
 def test_gelu_hint_raises():
     m, _ = _wrap_single_hinted_call("gelu", "gelu", n_operands=1)
     run_raise_special_ops(m)
-    assert count_ops(m, "compgen.linalg_ext.gelu") == 1
+    assert count_ops(m, "xpu_rt.linalg_ext.gelu") == 1
 
 
 def test_swiglu_hint_raises_with_two_operands():
     m, _ = _wrap_single_hinted_call("swiglu", "swiglu", n_operands=2)
     run_raise_special_ops(m)
-    assert count_ops(m, "compgen.linalg_ext.swiglu") == 1
+    assert count_ops(m, "xpu_rt.linalg_ext.swiglu") == 1
 
 
 # --- gates + preservation ---------------------------------------------------
@@ -158,8 +158,8 @@ def test_region_id_preserved_through_raise():
     m, _ = _wrap_single_hinted_call("sm", "softmax")
     run_raise_special_ops(m)
     for op in m.walk():
-        if op.name == "compgen.linalg_ext.softmax":
-            assert op.attributes["compgen.region_id"].data == "softmax_0"
+        if op.name == "xpu_rt.linalg_ext.softmax":
+            assert op.attributes["xpu_rt.region_id"].data == "softmax_0"
             break
     else:
         pytest.fail("softmax not raised")
@@ -192,7 +192,7 @@ def test_raise_special_ops_on_attention_mlp_tiny():
     verifies softmax + layer_norm + silu are all raised, and the
     module still verifies.
     """
-    from compgen.capture.torch_mlir_bridge import bridge_fx_graph
+    from xpu_rt.capture.torch_mlir_bridge import bridge_fx_graph
 
     from tests._fixtures.real_workloads import attention_mlp_tiny
 
@@ -210,7 +210,7 @@ def test_raise_special_ops_on_attention_mlp_tiny():
 
 def test_raise_special_ops_on_qwen_moe_tiny():
     """Real-workload test: qwen_moe_tiny has a softmax in the router."""
-    from compgen.capture.torch_mlir_bridge import bridge_fx_graph
+    from xpu_rt.capture.torch_mlir_bridge import bridge_fx_graph
 
     from tests._fixtures.real_workloads import qwen_moe_tiny
 
@@ -226,7 +226,7 @@ def test_raise_special_ops_on_qwen_moe_tiny():
 
 
 def test_raise_special_ops_is_attribute_preserving_on_real_workload():
-    from compgen.capture.torch_mlir_bridge import bridge_fx_graph
+    from xpu_rt.capture.torch_mlir_bridge import bridge_fx_graph
 
     from tests._fixtures.real_workloads import attention_mlp_tiny
 
@@ -235,8 +235,8 @@ def test_raise_special_ops_is_attribute_preserving_on_real_workload():
     # Collect region_ids before the raise.
     hinted_region_ids = set()
     for op in result.module.walk():
-        if "compgen._pattern_hint" in op.attributes:
-            attr = op.attributes.get("compgen.region_id")
+        if "xpu_rt._pattern_hint" in op.attributes:
+            attr = op.attributes.get("xpu_rt.region_id")
             if attr is not None:
                 hinted_region_ids.add(attr.data)
 
@@ -245,7 +245,7 @@ def test_raise_special_ops_is_attribute_preserving_on_real_workload():
     # Every region_id should still be present on *some* op after the rewrite.
     ids_after = set()
     for op in result.module.walk():
-        attr = op.attributes.get("compgen.region_id")
+        attr = op.attributes.get("xpu_rt.region_id")
         if attr is not None:
             ids_after.add(attr.data)
     missing = hinted_region_ids - ids_after

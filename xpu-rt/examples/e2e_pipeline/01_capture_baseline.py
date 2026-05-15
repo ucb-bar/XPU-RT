@@ -5,7 +5,7 @@ For `--workload {smolvla_slice, gemma_decode_slice}` this script:
   2. Runs an eager baseline: times per-iteration wall-clock, peak memory.
   3. Tries `torch.compile` (inductor) and records the same metrics, plus
      the number of graph breaks and compiled-op fraction (via
-     `compgen.capture.compile_baseline` + `collect_diagnostics`).
+     `xpu_rt.capture.compile_baseline` + `collect_diagnostics`).
   4. Saves golden inputs/outputs and a manifest.
 
 Artifacts written under
@@ -16,7 +16,7 @@ Artifacts written under
         graph_breaks.json
         manifest.json
 
-This stage is entirely PyTorch-owned. No CompGen IR is produced here.
+This stage is entirely PyTorch-owned. No XPU-RT IR is produced here.
 """
 
 from __future__ import annotations
@@ -40,7 +40,7 @@ sys.path.insert(0, str(ROOT.parent))          # import user_perspective.*
 sys.path.insert(0, str(ROOT))                 # import models.*
 
 from user_perspective.models import smolvla_slice, gemma_decode_slice  # noqa: E402
-from compgen.capture import collect_diagnostics, compile_baseline       # noqa: E402
+from xpu_rt.capture import collect_diagnostics, compile_baseline       # noqa: E402
 
 log = logging.getLogger("phase1")
 

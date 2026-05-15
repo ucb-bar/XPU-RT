@@ -1,4 +1,4 @@
-"""Top-level equality saturation pass for CompGen.
+"""Top-level equality saturation pass for XPU-RT.
 
 Orchestrates: create eclasses → create egraphs → apply rewrite rules →
 assign costs → extract best subprogram → clean up.
@@ -23,10 +23,10 @@ from xdsl.transforms.eqsat_add_costs import EqsatAddCostsPass
 from xdsl.transforms.eqsat_create_eclasses import EqsatCreateEclassesPass
 from xdsl.transforms.eqsat_extract import EqsatExtractPass
 
-from compgen.eqsat.config import EqSatConfig
+from xpu_rt.eqsat.config import EqSatConfig
 
 if TYPE_CHECKING:
-    from compgen.eqsat.rules.python_rules import EqSatRewriteRule
+    from xpu_rt.eqsat.rules.python_rules import EqSatRewriteRule
 
 log = structlog.get_logger()
 
@@ -245,7 +245,7 @@ def run_eqsat_pass(
         config = EqSatConfig()
 
     if rules is None:
-        from compgen.eqsat.rules.algebraic import get_default_algebraic_rules
+        from xpu_rt.eqsat.rules.algebraic import get_default_algebraic_rules
 
         rules = get_default_algebraic_rules()
 
@@ -257,7 +257,7 @@ def run_eqsat_pass(
     # Step 0a: Classify ops (blackbox vs profitable)
     # Apply LLM-guided blackbox overrides if provided (Unit 5)
     try:
-        from compgen.eqsat.blackbox import classify_module, count_blackbox, count_profitable
+        from xpu_rt.eqsat.blackbox import classify_module, count_blackbox, count_profitable
 
         classifications = classify_module(module, overrides=blackbox_overrides)
         n_profitable = count_profitable(classifications)
@@ -277,7 +277,7 @@ def run_eqsat_pass(
     segments = None
     if n_profitable > config.segment_threshold:
         try:
-            from compgen.eqsat.segment import segment_module
+            from xpu_rt.eqsat.segment import segment_module
 
             segments = segment_module(module, threshold=config.segment_threshold)
             log.info(
@@ -308,7 +308,7 @@ def run_eqsat_pass(
     # Step 2b: Consult LLM callback for mid-search guidance (Unit 4)
     if llm_callback is not None:
         try:
-            from compgen.eqsat.explain import EGraphSummary
+            from xpu_rt.eqsat.explain import EGraphSummary
 
             callback_result = llm_callback(
                 EGraphSummary(
@@ -329,7 +329,7 @@ def run_eqsat_pass(
     # Step 2c: Summarize e-graph (before extraction removes eclasses)
     egraph_summary = None
     try:
-        from compgen.eqsat.explain import summarize_egraph
+        from xpu_rt.eqsat.explain import summarize_egraph
 
         egraph_summary = summarize_egraph(module)
         log.info(

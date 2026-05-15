@@ -18,9 +18,9 @@ from typing import Any
 import structlog
 from xdsl.dialects.builtin import ModuleOp
 
-from compgen.solve.partition import Partition, partition_graph
-from compgen.targets.schema import TargetProfile
-from compgen.targets.utils import extract_device_memory, extract_transfer_cost_matrix
+from xpu_rt.solve.partition import Partition, partition_graph
+from xpu_rt.targets.schema import TargetProfile
+from xpu_rt.targets.utils import extract_device_memory, extract_transfer_cost_matrix
 
 log = structlog.get_logger()
 
@@ -266,14 +266,14 @@ class ExecutionPlanner:
         transfer_cost_matrix = extract_transfer_cost_matrix(self.target)
 
         # ---- Placement placement_planner -------------------
-        from compgen.solve.placement_planner import (
+        from xpu_rt.solve.placement_planner import (
             Device as _Device,
             Edge as _Edge,
             PlacementPlanInput,
             Region as _Region,
             plan_placement,
         )
-        from compgen.solve.solver_types import SolverStatus as _Status
+        from xpu_rt.solve.solver_types import SolverStatus as _Status
 
         log.info("solver.placement.start", num_partitions=len(partitions), num_devices=num_devices)
         device_ids = [f"d{i}" for i in range(num_devices)]
@@ -391,7 +391,7 @@ class ExecutionPlanner:
         # Real MOSEK MILP (preferred) or HiGHS fallback. The MILP picks
         # tier + byte offsets per buffer; alias candidates collapse
         # disjoint-lifetime buffers to the same offset.
-        from compgen.solve.memory_planner import (
+        from xpu_rt.solve.memory_planner import (
             AliasCandidate as _Alias,
             BufferSpec,
             MemoryPlanInput,
@@ -562,14 +562,14 @@ class ExecutionPlanner:
         model small but lossless for tiny problems.
         """
 
-        from compgen.solve.overlap_planner import (
+        from xpu_rt.solve.overlap_planner import (
             Dependency,
             Operation,
             OverlapPlanInput,
             Resource,
             plan_overlap,
         )
-        from compgen.solve.solver_types import SolverStatus as _Status
+        from xpu_rt.solve.solver_types import SolverStatus as _Status
 
         all_task_ids = [p.partition_id for p in partitions]
         durations_us: dict[str, float] = {p.partition_id: p.estimated_cost_us for p in partitions}
@@ -711,11 +711,11 @@ class ExecutionPlanner:
             return
         from pathlib import Path as _Path
 
-        from compgen.solve.memory_planner import _build_formulation as _build_mem
-        from compgen.solve.overlap_planner import _build_formulation as _build_overlap
-        from compgen.solve.placement_planner import _build_formulation as _build_placement
-        from compgen.solve.reports import write_solver_request, write_solver_response
-        from compgen.solve.solver_types import (
+        from xpu_rt.solve.memory_planner import _build_formulation as _build_mem
+        from xpu_rt.solve.overlap_planner import _build_formulation as _build_overlap
+        from xpu_rt.solve.placement_planner import _build_formulation as _build_placement
+        from xpu_rt.solve.reports import write_solver_request, write_solver_response
+        from xpu_rt.solve.solver_types import (
             SolverProblemKind,
             SolverRequest,
         )
@@ -762,7 +762,7 @@ class ExecutionPlanner:
         part_by_id: dict[str, Partition],
     ) -> list[Any]:
         """Derive buffer lifetimes from the schedule for memory allocation."""
-        from compgen.solve.memory import BufferLifetime
+        from xpu_rt.solve.memory import BufferLifetime
 
         lifetimes: list[BufferLifetime] = []
 

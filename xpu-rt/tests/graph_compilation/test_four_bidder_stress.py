@@ -116,7 +116,7 @@ class _ClaudeCodeStubProvider:
     priority: int = 8
     applicable_targets: tuple[str, ...] = ("host_cpu",)
     applicable_archetypes: tuple[str, ...] = ("compute_tiled",)
-    _compgen_source: str = "in_tree"
+    _xpu_rt_source: str = "in_tree"
 
     @property
     def name(self) -> str:
@@ -126,7 +126,7 @@ class _ClaudeCodeStubProvider:
         return contract.target_name == "host_cpu"
 
     def search(self, contract, budget):  # noqa: ANN001
-        from compgen.kernels.provider import ProviderResult
+        from xpu_rt.kernels.provider import ProviderResult
 
         return ProviderResult(
             found=True,
@@ -145,7 +145,7 @@ class _ClaudeCodeStubProvider:
         return []
 
     def bid(self, contract_v3):  # noqa: ANN001
-        from compgen.kernels.provider import BidPreview
+        from xpu_rt.kernels.provider import BidPreview
 
         return BidPreview(
             provider_name=self.name,
@@ -169,7 +169,7 @@ class _TritonTemplateCpuFallbackProvider:
     priority: int = 3
     applicable_targets: tuple[str, ...] = ("host_cpu",)
     applicable_archetypes: tuple[str, ...] = ("compute_tiled",)
-    _compgen_source: str = "in_tree"
+    _xpu_rt_source: str = "in_tree"
 
     @property
     def name(self) -> str:
@@ -179,7 +179,7 @@ class _TritonTemplateCpuFallbackProvider:
         return contract.target_name == "host_cpu"
 
     def search(self, contract, budget):  # noqa: ANN001
-        from compgen.kernels.provider import ProviderResult
+        from xpu_rt.kernels.provider import ProviderResult
 
         # Triton-on-CPU isn't a real path — return a stub so the
         # auction's fulfill produces an artifact for the report.
@@ -200,7 +200,7 @@ class _TritonTemplateCpuFallbackProvider:
         return []
 
     def bid(self, contract_v3):  # noqa: ANN001
-        from compgen.kernels.provider import BidPreview
+        from xpu_rt.kernels.provider import BidPreview
 
         return BidPreview(
             provider_name=self.name,
@@ -225,7 +225,7 @@ class TestFourBidderStress:
         run_dir = tmp_path / "run"
         boot = subprocess.run(
             [
-                sys.executable, "-m", "compgen.graph_compilation", "run",
+                sys.executable, "-m", "xpu_rt.graph_compilation", "run",
                 "--model", str(REPO_ROOT / "configs/models/merlin_mlp_wide.yaml"),
                 "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
                 "--out", str(run_dir),
@@ -245,7 +245,7 @@ class TestFourBidderStress:
         )
         monkeypatch.chdir(tmp_path)
 
-        from compgen.kernels.user_kernel_index import (
+        from xpu_rt.kernels.user_kernel_index import (
             default_index_root,
             reindex,
         )
@@ -256,9 +256,9 @@ class TestFourBidderStress:
         )
 
         # Build a registry with all four providers.
-        from compgen.kernels.providers.c_reference import CReferenceProvider
-        from compgen.kernels.providers.user_path import UserKernelProvider
-        from compgen.kernels.registry import ProviderRegistry
+        from xpu_rt.kernels.providers.c_reference import CReferenceProvider
+        from xpu_rt.kernels.providers.user_path import UserKernelProvider
+        from xpu_rt.kernels.registry import ProviderRegistry
 
         reg = ProviderRegistry()
         reg.register(CReferenceProvider())
@@ -267,7 +267,7 @@ class TestFourBidderStress:
         reg.register(UserKernelProvider(index_root=default_index_root()))
 
         # Run the auction.
-        from compgen.graph_compilation.kernel_auction import run_kernel_auction
+        from xpu_rt.graph_compilation.kernel_auction import run_kernel_auction
 
         result = run_kernel_auction(
             run_dir=run_dir, mode="multi-bidder", bid_cutoff=4,
@@ -327,7 +327,7 @@ class TestFourBidderStress:
         run_dir = tmp_path / "run"
         boot = subprocess.run(
             [
-                sys.executable, "-m", "compgen.graph_compilation", "run",
+                sys.executable, "-m", "xpu_rt.graph_compilation", "run",
                 "--model", str(REPO_ROOT / "configs/models/merlin_mlp_wide.yaml"),
                 "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
                 "--out", str(run_dir),
@@ -344,16 +344,16 @@ class TestFourBidderStress:
             perf_priors={"estimated_us": 1.4, "confidence": 0.92},
         )
         monkeypatch.chdir(tmp_path)
-        from compgen.kernels.user_kernel_index import default_index_root, reindex
+        from xpu_rt.kernels.user_kernel_index import default_index_root, reindex
 
         reindex(
             search_path=tmp_path / "user_kernels",
             index_root=default_index_root(),
         )
 
-        from compgen.kernels.providers.c_reference import CReferenceProvider
-        from compgen.kernels.providers.user_path import UserKernelProvider
-        from compgen.kernels.registry import ProviderRegistry
+        from xpu_rt.kernels.providers.c_reference import CReferenceProvider
+        from xpu_rt.kernels.providers.user_path import UserKernelProvider
+        from xpu_rt.kernels.registry import ProviderRegistry
 
         reg = ProviderRegistry()
         reg.register(CReferenceProvider())
@@ -361,7 +361,7 @@ class TestFourBidderStress:
         reg.register(_TritonTemplateCpuFallbackProvider())
         reg.register(UserKernelProvider(index_root=default_index_root()))
 
-        from compgen.graph_compilation.kernel_auction import run_kernel_auction
+        from xpu_rt.graph_compilation.kernel_auction import run_kernel_auction
 
         run_kernel_auction(
             run_dir=run_dir, mode="multi-bidder", bid_cutoff=4,

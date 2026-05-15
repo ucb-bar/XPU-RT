@@ -1,6 +1,6 @@
 feature_id: phase_e_validation_framework
 claim: |
-  CompGen's solver layer is validated at five levels per the
+  XPU-RT's solver layer is validated at five levels per the
   user's solver-validation spec:
 
   1. **Backend availability + routing** —
@@ -27,7 +27,7 @@ claim: |
      placement kinds to Z3 (hard-typed UNSUPPORTED at the backend
      boundary, not just at routing).
 
-  4. **Integration into CompGen artifacts** —
+  4. **Integration into XPU-RT artifacts** —
      ``tests/solve/test_solver_artifact_integration.py`` (10)
      drives all four planners, persists JSON request/response
      pairs + ``*.solved.json``, verifies the 5 M-69 trust gates
@@ -104,7 +104,7 @@ required_evidence:
   - scripts/dev/audit_solver_architecture.py
   - scripts/dev/build_solver_evidence_pack.py
   - scripts/dev/eval_tinyllama_solvers.py
-  - python/compgen/solve/bandwidth_planner.py
+  - python/xpu_rt/solve/bandwidth_planner.py
 commit: 0ea0000000000000000000000000000000000000
 created_at_utc: 2026-05-12T00:00:00Z
 notes: |
@@ -119,8 +119,8 @@ notes: |
 
   The architecture audit lives in
   ``scripts/dev/audit_solver_architecture.py``; it walks the
-  ``python/compgen/`` tree and rejects any optional-solver
+  ``python/xpu_rt/`` tree and rejects any optional-solver
   import outside the allowlist. A planted-leak test
   (``test_audit_detects_a_leak_when_planted``) confirms the
   audit detects a forbidden ``import mosek`` inside a synthetic
-  repo under ``python/compgen/leaky/bad.py``.
+  repo under ``python/xpu_rt/leaky/bad.py``.

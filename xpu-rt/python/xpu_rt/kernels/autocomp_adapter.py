@@ -1,6 +1,6 @@
 """Adapter wrapping autocomp for kernel generation.
 
-Translates CompGen's PatternCluster into autocomp's search format and runs
+Translates XPU-RT's PatternCluster into autocomp's search format and runs
 the beam search. Uses autocomp's LLMClient, SearchStrategy, and EvalBackend.
 
 The adapter:
@@ -23,12 +23,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from compgen.agent.analyzer import PatternCluster
-from compgen.observability.gemini_usage import (
+from xpu_rt.agent.analyzer import PatternCluster
+from xpu_rt.observability.gemini_usage import (
     install_genai_instrumentation,
     tracking_source,
 )
-from compgen.targets.schema import TargetProfile
+from xpu_rt.targets.schema import TargetProfile
 
 
 @dataclass(frozen=True)
@@ -101,7 +101,7 @@ def _generate_reference_code(cluster: PatternCluster) -> str:
     :class:`CompGenTorchEvalBackend` consumes.
     """
     if cluster.pattern_type in ("flash_attention", "attention", "scaled_dot_product_attention"):
-        from compgen.kernels.eval_backends.fa1_reference import FA1_REF_SOURCE
+        from xpu_rt.kernels.eval_backends.fa1_reference import FA1_REF_SOURCE
         return FA1_REF_SOURCE
 
     if cluster.pattern_type == "linear_chain":
@@ -173,7 +173,7 @@ def check_correctness(test_fn, ref_fn, inputs):
 
 @dataclass
 class AutocompAdapter:
-    """Adapter between CompGen and autocomp kernel search."""
+    """Adapter between XPU-RT and autocomp kernel search."""
 
     default_model: str = "gemini-2.5-flash-lite"
     beam_size: int = 4
@@ -207,11 +207,11 @@ class AutocompAdapter:
         from autocomp.hw_config import CudaHardwareConfig
         from autocomp.search.search import BeamSearchStrategy, Prob
 
-        # CompGen-native eval backend — replaces KBEvalBackend so we
-        # don't need a KernelBench checkout for CompGen contracts. The
+        # XPU-RT-native eval backend — replaces KBEvalBackend so we
+        # don't need a KernelBench checkout for XPU-RT contracts. The
         # reference is in-process Python (the cluster's
         # ``_generate_reference_code`` output).
-        from compgen.kernels.eval_backends.compgen_torch_eval import (
+        from xpu_rt.kernels.eval_backends.xpu_rt_torch_eval import (
             CompGenTorchEvalBackend,
         )
 
@@ -219,7 +219,7 @@ class AutocompAdapter:
 
         # Create output directory
         if output_dir is None:
-            output_dir = Path(tempfile.mkdtemp(prefix="compgen_kernel_"))
+            output_dir = Path(tempfile.mkdtemp(prefix="xpu_rt_kernel_"))
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -243,7 +243,7 @@ class AutocompAdapter:
 
         # Create autocomp problem
         prob = Prob(
-            prob_type="compgen",
+            prob_type="xpu-rt",
             prob_id=0,
             sol_file=sol_file,
             test_file=test_file,
@@ -267,7 +267,7 @@ class AutocompAdapter:
         )
 
         # Create eval backend first (CudaLLMAgent constructor needs it).
-        # Use CompGen-native eval that runs the candidate against the
+        # Use XPU-RT-native eval that runs the candidate against the
         # in-process ref module — no KernelBench checkout required.
         eval_backend = CompGenTorchEvalBackend(ref_source=ref_code)
 
@@ -477,8 +477,8 @@ def search_kernel(region_id: str, job: dict[str, Any], target: Any) -> dict[str,
     """Bridge between recipe executor and kernel providers.
 
     Extracts ``op_family`` and shape information from *job*, builds a
-    :class:`~compgen.kernels.provider.KernelContract`, and tries the
-    :class:`~compgen.kernels.providers.triton_templates.TritonTemplateProvider`
+    :class:`~xpu_rt.kernels.provider.KernelContract`, and tries the
+    :class:`~xpu_rt.kernels.providers.triton_templates.TritonTemplateProvider`
     first.  Falls back to an empty result if nothing matches.
 
     Args:
@@ -491,8 +491,8 @@ def search_kernel(region_id: str, job: dict[str, Any], target: Any) -> dict[str,
         Dict with keys ``region_id``, ``found``, ``kernel_code``,
         ``latency_us``, and ``error``.
     """
-    from compgen.kernels.provider import KernelContract, SearchBudget
-    from compgen.kernels.providers.triton_templates import TritonTemplateProvider
+    from xpu_rt.kernels.provider import KernelContract, SearchBudget
+    from xpu_rt.kernels.providers.triton_templates import TritonTemplateProvider
 
     op_family: str = job.get("op_family", "")
     raw_input_shapes = job.get("input_shapes", ())

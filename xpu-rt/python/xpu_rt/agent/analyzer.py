@@ -13,8 +13,8 @@ from collections import Counter, defaultdict, deque
 from dataclasses import dataclass, field
 from typing import Any
 
-from compgen.agent.patterns import FXNodeInfo, extract_fx_nodes, match_patterns
-from compgen.targets.schema import TargetProfile
+from xpu_rt.agent.patterns import FXNodeInfo, extract_fx_nodes, match_patterns
+from xpu_rt.targets.schema import TargetProfile
 
 
 def _to_concrete_int(value: Any) -> int:
@@ -401,7 +401,7 @@ class NetworkAnalyzer:
         )
 
         unsupported_targets: set[str] = set()
-        from compgen.ir.payload.decompositions import DECOMPOSITION_TABLE
+        from xpu_rt.ir.payload.decompositions import DECOMPOSITION_TABLE
 
         for node in fx_nodes:
             if node.target not in DECOMPOSITION_TABLE:

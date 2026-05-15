@@ -1,15 +1,15 @@
-"""Frontend capture paths for CompGen.
+"""Frontend capture paths for XPU-RT.
 
 Captures a PyTorch nn.Module into either a ``torch.export`` ExportedProgram or
 TorchDynamo FX graph partitions and builds the canonical capture artifact for
-the CompGen frontend boundary.
+the XPU-RT frontend boundary.
 
 Invariants:
     - ``capture_model()`` preserves the legacy behaviour and returns the raw
       ``ExportedProgram`` for existing call sites.
     - ``capture_frontend_artifact()`` is the canonical frontend boundary:
       export, optional export decompositions, diagnostics, and unsupported-op
-      preparation are all recorded before CompGen takes ownership of the IR.
+      preparation are all recorded before XPU-RT takes ownership of the IR.
     - Dynamic shapes, guards, and decomposition provenance are serialized into
       stable dataclasses.
 """
@@ -24,12 +24,12 @@ from typing import Any
 import torch
 import torch.nn as nn
 
-from compgen.capture.dynamo_baseline import DynamoReport, collect_diagnostics
-from compgen.capture.torchao_pipeline import QuantizationConfig, apply_quantization
-from compgen.capture.unsupported import UnsupportedOpResolution, recover_unsupported_operators
-from compgen.capture.unsupported.introspect import runtime_versions
-from compgen.ir.payload.decompositions import DECOMPOSITION_TABLE
-from compgen.models import CaptureMode
+from xpu_rt.capture.dynamo_baseline import DynamoReport, collect_diagnostics
+from xpu_rt.capture.torchao_pipeline import QuantizationConfig, apply_quantization
+from xpu_rt.capture.unsupported import UnsupportedOpResolution, recover_unsupported_operators
+from xpu_rt.capture.unsupported.introspect import runtime_versions
+from xpu_rt.ir.payload.decompositions import DECOMPOSITION_TABLE
+from xpu_rt.models import CaptureMode
 
 
 @dataclass(frozen=True)
@@ -62,7 +62,7 @@ class RangeConstraint:
 
 @dataclass
 class CaptureArtifact:
-    """Canonical frontend boundary for CompGen.
+    """Canonical frontend boundary for XPU-RT.
 
     Attributes:
         original_exported_program: Raw ``torch.export.export`` output, if available.
@@ -261,7 +261,7 @@ def capture_frontend_artifact(
     run_default_decompositions: bool = True,
     export_decomposition_table: dict[Any, Any] | None = None,
 ) -> CaptureArtifact:
-    """Build the canonical export-boundary artifact for CompGen.
+    """Build the canonical export-boundary artifact for XPU-RT.
 
     ``capture_model()`` returns the raw exported program for backward
     compatibility. This function is the strict frontend path used by

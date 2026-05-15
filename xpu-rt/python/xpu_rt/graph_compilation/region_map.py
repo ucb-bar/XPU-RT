@@ -10,7 +10,7 @@ and produces three derived JSON views under ``02_graph_analysis/``:
 
 The IR (``payload.mlir``) is the canonical source of truth; these JSON
 views are *projections* of that IR for agent/LLM consumption. The audit
-gate is that every ``compgen.region_id`` attribute observed in the IR
+gate is that every ``xpu_rt.region_id`` attribute observed in the IR
 must appear as a region in ``region_map.json``.
 
 This module does **not** modify ``FXImporter``, decompositions, capture,
@@ -43,8 +43,8 @@ _OP_LINE_RE = re.compile(
     re.VERBOSE,
 )
 _OPERAND_RE = re.compile(r"%([A-Za-z0-9_]+)")
-_REGION_ID_ATTR_RE = re.compile(r'compgen\.region_id\s*=\s*"(?P<rid>[^"]+)"')
-_DISPATCH_ID_ATTR_RE = re.compile(r'compgen\.dispatch_id\s*=\s*"(?P<did>[^"]+)"')
+_REGION_ID_ATTR_RE = re.compile(r'xpu_rt\.region_id\s*=\s*"(?P<rid>[^"]+)"')
+_DISPATCH_ID_ATTR_RE = re.compile(r'xpu_rt\.dispatch_id\s*=\s*"(?P<did>[^"]+)"')
 # Last ``: (...) -> tensor<...>`` annotation on the line — this is the result
 # type we attribute to the SSA result(s). ``linalg.matmul`` and friends use
 # structured ``ins/outs`` syntax with no leading ``:`` before the result; the

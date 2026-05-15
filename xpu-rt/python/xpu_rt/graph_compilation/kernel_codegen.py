@@ -370,14 +370,14 @@ def _emit_registry_resolution(
 
     if request.request_kind == "kernel_codegen" and request.contract_hash:
         try:
-            from compgen.kernels.contract_v3 import KernelContractV3
-            from compgen.kernels.registry import default_registry
+            from xpu_rt.kernels.contract_v3 import KernelContractV3
+            from xpu_rt.kernels.registry import default_registry
 
             # Reconstruct the V3 contract from the materialized JSON the
             # request points at — same projection /use.
             full_path = run_dir / request.contract_paths.full
             if full_path.exists():
-                from compgen.graph_compilation.kernel_codegen_response import (
+                from xpu_rt.graph_compilation.kernel_codegen_response import (
                     _reconstruct_contract_from_dict,
                 )
 

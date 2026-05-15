@@ -1,6 +1,6 @@
 # FakeVendorMLIR
 
-A minimal third-party MLIR dialect used to exercise CompGen's
+A minimal third-party MLIR dialect used to exercise XPU-RT's
 vendor-dialect integration agent in tests. Not a real vendor.
 
 ## Build

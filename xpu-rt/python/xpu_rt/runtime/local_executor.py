@@ -7,9 +7,9 @@ rather than cost model estimates.
 Three modes:
     - ``eager``:      run the original PyTorch model (baseline)
     - ``compiled``:   run via ``torch.compile`` (comparison target)
-    - ``compgen_ir``: run the compiled xDSL payload IR through
-      :func:`compgen.runtime.cpu_executor.execute`. This is the path that
-      actually exercises CompGen's compile output.
+    - ``xpu_rt_ir``: run the compiled xDSL payload IR through
+      :func:`xpu_rt.runtime.cpu_executor.execute`. This is the path that
+      actually exercises XPU-RT's compile output.
 """
 
 from __future__ import annotations
@@ -35,12 +35,12 @@ class BenchmarkResult:
     throughput_samples_per_sec: float
     peak_memory_bytes: int
     device: str
-    mode: str  # "eager" | "compiled" | "compgen_ir"
+    mode: str  # "eager" | "compiled" | "xpu_rt_ir"
     num_iterations: int
     warmup_iterations: int
     per_run_us: list[float] = field(default_factory=list)
     #: Output tensor from one post-warmup run. Populated for every mode so
-    #: callers can diff ``mode="eager"`` vs ``mode="compgen_ir"`` outputs
+    #: callers can diff ``mode="eager"`` vs ``mode="xpu_rt_ir"`` outputs
     #: without re-running. ``None`` if the run raised before completion.
     sample_output: torch.Tensor | None = None
 
@@ -77,15 +77,15 @@ class LocalExecutor:
             model: PyTorch model.
             sample_inputs: Sample input tensors.
             device: ``"cpu"`` or ``"cuda"``.
-            mode: ``"eager"``, ``"compiled"``, or ``"compgen_ir"``.
+            mode: ``"eager"``, ``"compiled"``, or ``"xpu_rt_ir"``.
             num_iterations: Number of timed iterations.
             warmup: Warmup iterations before timing.
-            payload_module: CompGen xDSL ``ModuleOp``. Required when
-                ``mode="compgen_ir"``. Executed through
-                :func:`compgen.runtime.cpu_executor.execute`.
+            payload_module: XPU-RT xDSL ``ModuleOp``. Required when
+                ``mode="xpu_rt_ir"``. Executed through
+                :func:`xpu_rt.runtime.cpu_executor.execute`.
             exported_program: ``torch.export.ExportedProgram`` that
                 produced ``payload_module``. Required when
-                ``mode="compgen_ir"`` — the executor needs the
+                ``mode="xpu_rt_ir"`` — the executor needs the
                 graph-signature + state-dict.
 
         Returns:
@@ -94,10 +94,10 @@ class LocalExecutor:
         """
         model = model.eval()
 
-        # mode="compgen_ir" is CPU-only today (cpu_executor is pure torch).
-        if mode == "compgen_ir":
+        # mode="xpu_rt_ir" is CPU-only today (cpu_executor is pure torch).
+        if mode == "xpu_rt_ir":
             if payload_module is None or exported_program is None:
-                raise ValueError("mode='compgen_ir' requires payload_module and exported_program")
+                raise ValueError("mode='xpu_rt_ir' requires payload_module and exported_program")
             if device == "cuda":
                 # cpu_executor runs on CPU regardless; keep inputs on CPU
                 # to match. GPU dispatch will land with the CUDA driver.
@@ -113,10 +113,10 @@ class LocalExecutor:
 
         # Build the per-call function for the selected mode.
         run_fn: Any
-        if mode == "compgen_ir":
+        if mode == "xpu_rt_ir":
             # Import lazily — keeps the module importable even when xDSL
             # cpu_executor isn't available (e.g. in minimal installs).
-            from compgen.runtime.cpu_executor import execute as _compgen_execute
+            from xpu_rt.runtime.cpu_executor import execute as _xpu_rt_execute
 
             # Narrow the optional kwargs for the closure. The None-check
             # above already guarantees these are populated.
@@ -125,10 +125,10 @@ class LocalExecutor:
             _pm: ModuleOp = payload_module
             _ep: Any = exported_program
 
-            def _run_compgen_ir(*call_inputs: Any) -> torch.Tensor:
-                return _compgen_execute(_pm, _ep, call_inputs)
+            def _run_xpu_rt_ir(*call_inputs: Any) -> torch.Tensor:
+                return _xpu_rt_execute(_pm, _ep, call_inputs)
 
-            run_fn = _run_compgen_ir
+            run_fn = _run_xpu_rt_ir
         elif mode == "compiled":
             run_fn = torch.compile(model)
         else:

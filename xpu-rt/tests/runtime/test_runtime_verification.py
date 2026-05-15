@@ -25,23 +25,23 @@ from pathlib import Path
 
 import pytest
 
-from compgen.runtime.errors import (
+from xpu_rt.runtime.errors import (
     AbiConformanceError,
     ResourceBudgetError,
     RuntimeRefinementError,
 )
-from compgen.runtime.execution_plan import (
+from xpu_rt.runtime.execution_plan import (
     DependencyEdge,
     ExecutionPlan,
     RegionKernelBinding,
     RegionPlacement,
     Resource,
 )
-from compgen.runtime.glue_emit import (
+from xpu_rt.runtime.glue_emit import (
     emit_c11_baremetal_executor,
     emit_cpp_host_executor,
 )
-from compgen.runtime.verification import (
+from xpu_rt.runtime.verification import (
     check_abi_conformance,
     check_plan_refinement,
     check_resource_budget,
@@ -176,7 +176,7 @@ class TestPlanRefinementNegativeControls:
         # Drop the second dispatch by replacing it with a no-op.
         corrupted = re.sub(
             r"rt_status = cg_rt_command_buffer_dispatch\(\s*"
-            r"command_buffer,\s*compgen_kernel_r1[^;]*;",
+            r"command_buffer,\s*xpu_rt_kernel_r1[^;]*;",
             "rt_status = 0; /* dropped r1 */",
             src,
             count=1,
@@ -194,7 +194,7 @@ class TestPlanRefinementNegativeControls:
         injected = src.replace(
             "cleanup:",
             "    cg_rt_command_buffer_dispatch(command_buffer, "
-            "compgen_kernel_phantom, push_constants, "
+            "xpu_rt_kernel_phantom, push_constants, "
             "sizeof(push_constants), bindings, n_bindings);\n"
             "cleanup:",
             1,
@@ -212,11 +212,11 @@ class TestPlanRefinementNegativeControls:
         src = result.executor_path.read_text()
         # Swap the two dispatch identifiers so r1 dispatches before r0.
         corrupted = src.replace(
-            "compgen_kernel_r0", "_TMP_KER_r0_TMP_",
+            "xpu_rt_kernel_r0", "_TMP_KER_r0_TMP_",
         ).replace(
-            "compgen_kernel_r1", "compgen_kernel_r0",
+            "xpu_rt_kernel_r1", "xpu_rt_kernel_r0",
         ).replace(
-            "_TMP_KER_r0_TMP_", "compgen_kernel_r1",
+            "_TMP_KER_r0_TMP_", "xpu_rt_kernel_r1",
         )
         assert corrupted != src
         result.executor_path.write_text(corrupted)
@@ -322,7 +322,7 @@ class TestAggregator:
         # Drop r1.
         corrupted = re.sub(
             r"rt_status = cg_rt_command_buffer_dispatch\(\s*"
-            r"command_buffer,\s*compgen_kernel_r1[^;]*;",
+            r"command_buffer,\s*xpu_rt_kernel_r1[^;]*;",
             "rt_status = 0;",
             src, count=1,
         )

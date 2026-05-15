@@ -1,74 +1,74 @@
 # Target Pack — User-Space Expansion Model
 
 This page consolidates how a third party adds a new hardware target to
-CompGen without forking the repo. It pulls together the four
+XPU-RT without forking the repo. It pulls together the four
 entry-point groups, the contract surfaces each one carries, and the
 end-to-end flow from `pip install` to `bundle/generated_kernels/`.
 
 > **TL;DR.** A target pack is a pip-installable Python package that
-> declares four entry points. CompGen discovers and consumes them at
+> declares four entry points. XPU-RT discovers and consumes them at
 > import time. The shape is identical regardless of the target's
 > archetype (Triton-friendly GPU, accel-native, ukernel-runtime CPU,
 > hybrid). To get a working skeleton:
 > ```bash
-> compgen scaffold-pack --kind target_pack --name my_target --out ./packs
+> xpu-rt scaffold-pack --kind target_pack --name my_target --out ./packs
 > ```
 
 ## What a target pack is
 
 A target pack is a Python distribution that satisfies the
 *compiler-generator-for-this-target* contract by plugging into four
-extension points. Nothing about a pack is target-specific to CompGen
-— packs live outside the CompGen tree, under independent version
+extension points. Nothing about a pack is target-specific to XPU-RT
+— packs live outside the XPU-RT tree, under independent version
 control, and ship to PyPI on their own schedule.
 
-The reference pack today is `radiance-compgen-pack` (chipyard / Muon
+The reference pack today is `radiance-xpu-rt-pack` (chipyard / Muon
 GPU). It demonstrates that the architecture is generic; a second
 reference pack against a different archetype (CPU scalar-C, NPU,
-RVV, …) follows the same shape with no CompGen-side changes.
+RVV, …) follows the same shape with no XPU-RT-side changes.
 
 ## The four entry-point groups
 
 Each group is declared in the pack's `pyproject.toml`:
 
 ```toml
-[project.entry-points."compgen.packs"]
+[project.entry-points."xpu_rt.packs"]
 my_target = "my_target"
 
-[project.entry-points."compgen.targets.backends"]
+[project.entry-points."xpu_rt.targets.backends"]
 my_target = "my_target.backend:MyTargetBackend"
 
-[project.entry-points."compgen.kernels.providers"]
+[project.entry-points."xpu_rt.kernels.providers"]
 my_target = "my_target.kernels:MyTargetProvider"
 
-[project.entry-points."compgen.mcp.tools"]
+[project.entry-points."xpu_rt.mcp.tools"]
 my_target = "my_target.mcp:MY_TARGET_TOOLS"
 ```
 
-Each row maps to a CompGen surface:
+Each row maps to a XPU-RT surface:
 
-| Entry-point group | What it provides | Protocol / shape | Where CompGen consumes it |
+| Entry-point group | What it provides | Protocol / shape | Where XPU-RT consumes it |
 |---|---|---|---|
-| `compgen.packs` | Manifest discovery — `manifest.yaml` describes the pack's owned/sealed surfaces. | YAML manifest + Python module exposing `PACK_ROOT`. | `compgen.packs.load_pack` walks installed entry points. |
-| `compgen.targets.backends` | Stage-pipeline lowering specific to this target. | `TargetBackendProtocol` (`supports_target`, `get_options`, `get_compilation_stages`, `compile_stage`, `validate`). | `StageRegistry` registers the backend and routes IR through its `compile_stage` per stage in the pipeline. |
-| `compgen.kernels.providers` | Codegen — turns a `KernelContract` into kernel source. | `KernelProvider` Protocol (`accepts_contract`, `search`, `export_knowledge`, `name`). | `compgen.kernels.codegen_fallback.run_provider_fallback` walks providers, asks each whether it accepts the contract, calls `search` on the first that does, writes the result to `bundle/generated_kernels/<provider>/<op>.<ext>`. |
-| `compgen.mcp.tools` | Pack-owned MCP verbs (e.g. `my_target_compile_and_run`). | List of tool dicts (`name`, `description`, `input_schema`, `handler`, `phase`). | `compgen.mcp.tools.get_all_tools()` discovers and merges into `ALL_TOOLS`; `compgen mcp tools` lists them. |
+| `xpu_rt.packs` | Manifest discovery — `manifest.yaml` describes the pack's owned/sealed surfaces. | YAML manifest + Python module exposing `PACK_ROOT`. | `xpu_rt.packs.load_pack` walks installed entry points. |
+| `xpu_rt.targets.backends` | Stage-pipeline lowering specific to this target. | `TargetBackendProtocol` (`supports_target`, `get_options`, `get_compilation_stages`, `compile_stage`, `validate`). | `StageRegistry` registers the backend and routes IR through its `compile_stage` per stage in the pipeline. |
+| `xpu_rt.kernels.providers` | Codegen — turns a `KernelContract` into kernel source. | `KernelProvider` Protocol (`accepts_contract`, `search`, `export_knowledge`, `name`). | `xpu_rt.kernels.codegen_fallback.run_provider_fallback` walks providers, asks each whether it accepts the contract, calls `search` on the first that does, writes the result to `bundle/generated_kernels/<provider>/<op>.<ext>`. |
+| `xpu_rt.mcp.tools` | Pack-owned MCP verbs (e.g. `my_target_compile_and_run`). | List of tool dicts (`name`, `description`, `input_schema`, `handler`, `phase`). | `xpu_rt.mcp.tools.get_all_tools()` discovers and merges into `ALL_TOOLS`; `xpu-rt mcp tools` lists them. |
 
 A pack does not need to populate every group. Minimum viable target
-pack: `compgen.packs` + `compgen.kernels.providers` (with a
-HardwareSpec YAML so `compgen.api.device(spec_path)` works). The
-`compgen.targets.backends` and `compgen.mcp.tools` groups are
+pack: `xpu_rt.packs` + `xpu_rt.kernels.providers` (with a
+HardwareSpec YAML so `xpu_rt.api.device(spec_path)` works). The
+`xpu_rt.targets.backends` and `xpu_rt.mcp.tools` groups are
 optional refinements.
 
 ## Contract surfaces
 
-The four groups talk to CompGen through three documented contracts.
-A pack author should treat these as stable; CompGen treats them as
+The four groups talk to XPU-RT through three documented contracts.
+A pack author should treat these as stable; XPU-RT treats them as
 the bidirectional surface that providers + backends co-evolve with.
 
 ### `KernelContract` (input to a Provider's `search`)
 
-Defined in `compgen.kernels.provider`. Carries everything CompGen
+Defined in `xpu_rt.kernels.provider`. Carries everything XPU-RT
 extracted from the IR for one kernel-eligible region:
 
 ```python
@@ -87,7 +87,7 @@ KernelContract(
 ```
 
 A Provider's `accepts_contract(contract) -> bool` should be cheap and
-side-effect-free. CompGen calls it for every contract in walk order
+side-effect-free. XPU-RT calls it for every contract in walk order
 and dispatches to the first provider that returns True. If no
 provider accepts, the kernel slot ends up `skipped` in the bundle
 manifest.
@@ -109,16 +109,16 @@ ProviderResult(
 ```
 
 Per-region provenance: when a Provider's `search` returns
-`found=True` with non-empty `kernel_code`, CompGen rewrites that
-op's `compgen.codegen_backend` annotation from `"fallback"` to the
+`found=True` with non-empty `kernel_code`, XPU-RT rewrites that
+op's `xpu_rt.codegen_backend` annotation from `"fallback"` to the
 provider's `name`. Multiple providers can win different regions of
 the same module; each region's annotation reflects its actual
 emitter.
 
 ### `HardwareSpec` (declarative target description)
 
-YAML loaded by `compgen.targetgen.load_hardware_spec`. Schema in
-`compgen.targetgen.hardware_spec`. Sections used downstream:
+YAML loaded by `xpu_rt.targetgen.load_hardware_spec`. Schema in
+`xpu_rt.targetgen.hardware_spec`. Sections used downstream:
 
 - `platform` — vendor, family, chip name, host arch, deployment model
 - `execution_model` — `simt_gpu` / `simd_vector` / `decoupled_matrix` / …
@@ -130,13 +130,13 @@ YAML loaded by `compgen.targetgen.load_hardware_spec`. Schema in
   `{elf}`/`{config}`/`{chipyard_root}`/`{sim_backend}`/`{extra_make_args}`
   substitution), optional `build_command`, golden model, max ULP error
 
-The HardwareSpec is what `compgen.api.device(spec_path)` consumes to
+The HardwareSpec is what `xpu_rt.api.device(spec_path)` consumes to
 build the `CompGenDevice` handle that `compile_model` needs.
 
 ## End-to-end flow
 
 ```
-[pack-side]                          [compgen]
+[pack-side]                          [xpu-rt]
 ─────────────────────────────────────────────────────────────────
 my_target/specs/my_target.yaml ─────► device(spec_path)
                                         │
@@ -175,7 +175,7 @@ MyTargetProvider.search(contract) ── (calls into pack)
 ```
 
 Pack-side build / sim runs separately, typically through pack-owned
-MCP tools that wrap `compgen.mcp.tools.embedded.simulator_run`.
+MCP tools that wrap `xpu_rt.mcp.tools.embedded.simulator_run`.
 Since REQ-013, `simulator_run(execute=True)` supports build-less
 flows where the spec's `simulator_command` does its own build (e.g.
 `make -C sims/vcs run-binary BINARY={elf}`).
@@ -188,9 +188,9 @@ kernel.
 
 | Archetype | What `search` emits | Reference |
 |---|---|---|
-| Triton-friendly GPU | Triton `@triton.jit` Python source | `compgen.kernels.providers.triton_templates` (in tree as a reference, not a pack) |
-| Accel-native | Vendor C/C++ targeting custom intrinsics + a runtime ABI like `libcompgen_rt` | `radiance-compgen-pack` (chipyard / Muon) |
-| Ukernel-runtime CPU | Scalar/SIMD C linked against `libcompgen_rt_static.a` | (no in-tree reference yet — write it as a pack) |
+| Triton-friendly GPU | Triton `@triton.jit` Python source | `xpu_rt.kernels.providers.triton_templates` (in tree as a reference, not a pack) |
+| Accel-native | Vendor C/C++ targeting custom intrinsics + a runtime ABI like `libxpu_rt` | `radiance-xpu-rt-pack` (chipyard / Muon) |
+| Ukernel-runtime CPU | Scalar/SIMD C linked against `libxpu_rt_static.a` | (no in-tree reference yet — write it as a pack) |
 | Hybrid | Mix of the above per `op_family` | combine archetypes via multiple providers in one pack, or via multiple packs |
 
 The codegen-fallback dispatcher's per-region provenance means a
@@ -200,28 +200,28 @@ Provider B handles `softmax`, in the same pack or across packs.
 ## Runtime ABI
 
 Native code emitted by a Provider links against
-`libcompgen_rt_static.a`, the C11 HAL that ships in
-`runtime/native/libcompgen_rt/`. Headers in
-`runtime/native/libcompgen_rt/include/compgen_rt/` are the stable C
+`libxpu_rt_static.a`, the C11 HAL that ships in
+`runtime/native/libxpu_rt/`. Headers in
+`runtime/native/libxpu_rt/include/xpu_rt/` are the stable C
 ABI: semaphores, command buffers, event tensors, and a `cpu_sync`
 driver.
 
-The runtime is built per (target ABI, toolchain) pair. Today CompGen
-ships a host build (`build/libcompgen_rt_static.a`) and a
+The runtime is built per (target ABI, toolchain) pair. Today XPU-RT
+ships a host build (`build/libxpu_rt_static.a`) and a
 `riscv64-zephyr-elf` build (`build-riscv/`). For an arbitrary target,
 drop a CMake toolchain file next to the existing one and rebuild:
 
 ```bash
-cd runtime/native/libcompgen_rt
+cd runtime/native/libxpu_rt
 cmake -B build-<triple> -DCMAKE_TOOLCHAIN_FILE=toolchains/<triple>.cmake
 cmake --build build-<triple>
-# → build-<triple>/libcompgen_rt_static.a
+# → build-<triple>/libxpu_rt_static.a
 ```
 
 ## How to scaffold
 
 ```bash
-compgen scaffold-pack --kind target_pack --name my_target --out ./packs
+xpu-rt scaffold-pack --kind target_pack --name my_target --out ./packs
 cd ./packs/my_target
 pip install -e .
 pytest tests/ -v   # 5 smoke tests should pass immediately
@@ -251,7 +251,7 @@ discoverable from day zero, then the user incrementally populates it.
 ## What you fill in, in what order
 
 1. **`specs/my_target.yaml`** — describe the target. Without this,
-   `compgen.api.device(spec_path)` has nothing to load.
+   `xpu_rt.api.device(spec_path)` has nothing to load.
 2. **`MyTargetProvider.accepts_contract`** — narrow the predicate to
    the op_family / shape / dtype combos you support.
 3. **`MyTargetProvider.search`** — render real source for the
@@ -261,9 +261,9 @@ discoverable from day zero, then the user incrementally populates it.
    needs stage-pipeline transforms beyond what the auto-generated
    stages do. Most packs leave this as a pass-through.
 5. **`MY_TARGET_TOOLS`** — pack-owned MCP verbs for compile +
-   build + sim + verify. Reuse `compgen.mcp.tools.embedded.simulator_run`
+   build + sim + verify. Reuse `xpu_rt.mcp.tools.embedded.simulator_run`
    for the sim leg.
-6. **CMake toolchain** for `libcompgen_rt_static.a` if your runtime
+6. **CMake toolchain** for `libxpu_rt_static.a` if your runtime
    needs the native HAL.
 
 ## Verification
@@ -272,7 +272,7 @@ Once the pack is installed and the Provider accepts at least one
 contract:
 
 ```python
-from compgen.api import device, compile_model
+from xpu_rt.api import device, compile_model
 import torch, torch.nn as nn
 
 dev = device("./packs/my_target/src/my_target/specs/my_target.yaml")
@@ -288,7 +288,7 @@ cm = compile_model(
 
 The bundle's `manifest.json::extended_artifacts.generated_kernels`
 status flips from `skipped` to `ok`, and per-op
-`compgen.codegen_backend` annotations in `payload.mlir` show the
+`xpu_rt.codegen_backend` annotations in `payload.mlir` show the
 provider name in place of `"fallback"`.
 
 ## See also
@@ -299,5 +299,5 @@ provider name in place of `"fallback"`.
 - [`target-backend-model.md`](target-backend-model.md) — how
   `TargetBackendProtocol` integrates with the stage pipeline.
 - [`runtime-model.md`](runtime-model.md) — what
-  `libcompgen_rt_static.a` exposes and what the Provider's emitted
+  `libxpu_rt_static.a` exposes and what the Provider's emitted
   code links against.

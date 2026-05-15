@@ -1,13 +1,13 @@
 /*
- * CompGen CPU Reference Driver — Internal Header
+ * XPU-RT CPU Reference Driver — Internal Header
  *
  * Defines the concrete struct layouts behind the opaque HAL handles for
  * the CPU (host) reference implementation.  This header is private to the
- * HAL implementation; consumers should include <compgen/hal.h> instead.
+ * HAL implementation; consumers should include <xpu_rt/hal.h> instead.
  */
 
-#ifndef COMPGEN_CPU_DRIVER_H
-#define COMPGEN_CPU_DRIVER_H
+#ifndef XPU_RT_CPU_DRIVER_H
+#define XPU_RT_CPU_DRIVER_H
 
 #include "hal_internal.h"
 
@@ -21,7 +21,7 @@ extern "C" {
 /**
  * A CPU buffer is a thin wrapper around a heap allocation.
  */
-struct compgen_buffer_s {
+struct xpu_rt_buffer_s {
     void*  data;
     size_t size;
 };
@@ -33,15 +33,15 @@ struct compgen_buffer_s {
  * For the CPU reference driver the executable format is a shared object
  * (.so) loaded via dlopen.  The entry point is resolved via dlsym.
  */
-typedef void (*compgen_cpu_kernel_fn)(const void* args, size_t args_size);
+typedef void (*xpu_rt_cpu_kernel_fn)(const void* args, size_t args_size);
 
-struct compgen_executable_s {
+struct xpu_rt_executable_s {
     void*                  dl_handle;   /* dlopen handle  */
-    compgen_cpu_kernel_fn  entry;       /* resolved entry */
+    xpu_rt_cpu_kernel_fn  entry;       /* resolved entry */
 };
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* COMPGEN_CPU_DRIVER_H */
+#endif /* XPU_RT_CPU_DRIVER_H */

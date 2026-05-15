@@ -13,7 +13,7 @@ The pass looks for:
 
 When the elementwise op has exactly one input and that input is a
 reshape, tag the elementwise with
-``compgen.bubble_reshape_through=true`` + the original input tensor
+``xpu_rt.bubble_reshape_through=true`` + the original input tensor
 type so a later pass can compose.
 """
 
@@ -49,7 +49,7 @@ _ELEMENTWISE_HINTS = frozenset(
 
 
 def _hint(op: Operation) -> str | None:
-    attr = op.attributes.get("compgen._pattern_hint")
+    attr = op.attributes.get("xpu_rt._pattern_hint")
     return attr.data if isinstance(attr, StringAttr) else None
 
 
@@ -77,9 +77,9 @@ class _BubbleExpandPattern(RewritePattern):
         prod_hint = _hint(producer)
         if prod_hint not in _RESHAPE_HINTS:
             return
-        if "compgen.bubble_reshape_through" in op.attributes:
+        if "xpu_rt.bubble_reshape_through" in op.attributes:
             return
-        op.attributes["compgen.bubble_reshape_through"] = StringAttr(prod_hint)
+        op.attributes["xpu_rt.bubble_reshape_through"] = StringAttr(prod_hint)
         self.stats.reshape_pairs_tagged += 1
 
 

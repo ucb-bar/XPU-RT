@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from compgen.ir.event import (
+from xpu_rt.ir.event import (
     EventCoordAttr,
     EventTensorOp,
     EventTensorTypeAttr,
@@ -10,7 +10,7 @@ from compgen.ir.event import (
     NotifyOp,
     WaitOp,
 )
-from compgen.ir.payload.passes.rewrites.lower_event_tensor_to_atomic import (
+from xpu_rt.ir.payload.passes.rewrites.lower_event_tensor_to_atomic import (
     LowerEventTensorToAtomicConfig,
     LowerEventTensorToAtomicStats,
     run_lower_event_tensor_to_atomic,
@@ -65,7 +65,7 @@ def test_notify_becomes_func_call():
     stats = run_lower_event_tensor_to_atomic(m)
     assert stats.notifies_lowered == 1
     calls = [
-        op for op in m.walk() if isinstance(op, CallOp) and op.callee.string_value() == "compgen_event_atomic_decrement"
+        op for op in m.walk() if isinstance(op, CallOp) and op.callee.string_value() == "xpu_rt_event_atomic_decrement"
     ]
     assert len(calls) == 1
     assert_module_verifies(m)
@@ -75,7 +75,7 @@ def test_wait_becomes_func_call():
     m, *_ = _graph_with_et_notify_wait()
     stats = run_lower_event_tensor_to_atomic(m)
     assert stats.waits_lowered == 1
-    calls = [op for op in m.walk() if isinstance(op, CallOp) and op.callee.string_value() == "compgen_event_spin_wait"]
+    calls = [op for op in m.walk() if isinstance(op, CallOp) and op.callee.string_value() == "xpu_rt_event_spin_wait"]
     assert len(calls) == 1
 
 
@@ -83,17 +83,17 @@ def test_event_tensor_gets_lowered_tag():
     m, et, *_ = _graph_with_et_notify_wait()
     stats = run_lower_event_tensor_to_atomic(m)
     assert stats.event_tensors_lowered == 1
-    assert et.attributes["compgen.lowered_to_atomic"].data == "true"
-    assert et.attributes["compgen.lowered_counter_dtype"].data == "i32"
+    assert et.attributes["xpu_rt.lowered_to_atomic"].data == "true"
+    assert et.attributes["xpu_rt.lowered_counter_dtype"].data == "i32"
 
 
 def test_external_decls_are_emitted():
     m, *_ = _graph_with_et_notify_wait()
     run_lower_event_tensor_to_atomic(m)
     names = {op.sym_name.data for op in m.ops if isinstance(op, FuncOp)}
-    assert "compgen_event_atomic_decrement" in names
-    assert "compgen_event_spin_wait" in names
-    assert "compgen_event_init" in names
+    assert "xpu_rt_event_atomic_decrement" in names
+    assert "xpu_rt_event_spin_wait" in names
+    assert "xpu_rt_event_init" in names
 
 
 # --- attribute carrying ----------------------------------------------------
@@ -103,22 +103,22 @@ def test_notify_call_carries_event_ref_and_indices():
     m, et, notify, _ = _graph_with_et_notify_wait()
     run_lower_event_tensor_to_atomic(m)
     call = next(
-        op for op in m.walk() if isinstance(op, CallOp) and op.callee.string_value() == "compgen_event_atomic_decrement"
+        op for op in m.walk() if isinstance(op, CallOp) and op.callee.string_value() == "xpu_rt_event_atomic_decrement"
     )
-    assert call.attributes["compgen.event_ref"].data == "E"
-    indices = call.attributes["compgen.event_indices"]
+    assert call.attributes["xpu_rt.event_ref"].data == "E"
+    indices = call.attributes["xpu_rt.event_indices"]
     # indices is an ArrayAttr of StringAttr.
     assert indices.data[0].data == "0"
-    assert call.attributes["compgen.event_decrement"].value.data == 1
+    assert call.attributes["xpu_rt.event_decrement"].value.data == 1
 
 
 def test_wait_call_carries_event_ref_and_indices():
     m, *_ = _graph_with_et_notify_wait()
     run_lower_event_tensor_to_atomic(m)
     call = next(
-        op for op in m.walk() if isinstance(op, CallOp) and op.callee.string_value() == "compgen_event_spin_wait"
+        op for op in m.walk() if isinstance(op, CallOp) and op.callee.string_value() == "xpu_rt_event_spin_wait"
     )
-    assert call.attributes["compgen.event_ref"].data == "E"
+    assert call.attributes["xpu_rt.event_ref"].data == "E"
 
 
 # --- graph tagging --------------------------------------------------------
@@ -128,7 +128,7 @@ def test_graph_tagged_after_lowering():
     m, *_ = _graph_with_et_notify_wait()
     run_lower_event_tensor_to_atomic(m)
     graph = next(op for op in m.walk() if isinstance(op, GraphOp))
-    assert graph.attributes["compgen.event_lowered_to_atomic"].data == "true"
+    assert graph.attributes["xpu_rt.event_lowered_to_atomic"].data == "true"
 
 
 # --- custom config ---------------------------------------------------------
@@ -150,7 +150,7 @@ def test_custom_counter_dtype_recorded_on_event_tensor():
     m, et, *_ = _graph_with_et_notify_wait()
     cfg = LowerEventTensorToAtomicConfig(counter_dtype="i64")
     run_lower_event_tensor_to_atomic(m, config=cfg)
-    assert et.attributes["compgen.lowered_counter_dtype"].data == "i64"
+    assert et.attributes["xpu_rt.lowered_counter_dtype"].data == "i64"
 
 
 # --- noop + idempotence --------------------------------------------------

@@ -4,7 +4,7 @@ display_name: Insert host-offload boundaries
 level: payload
 family: memory
 source: XLA
-impl_path: python/compgen/ir/payload/passes/rewrites/insert_host_offload.py
+impl_path: python/xpu_rt/ir/payload/passes/rewrites/insert_host_offload.py
 reads:
   - 01_payload_lowering/payload.mlir
 writes:
@@ -24,7 +24,7 @@ cost: cheap
 failure_modes:
   - "no_host_runtime_adapter"
   - "host_offload_introduces_cycle"
-mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+mcp_tool: mcp__xpu_rt__xpu_rt_emit_agent_decision_request
 notes: |
   Reconstruction of XLA's HostOffloader. Wraps regions marked for
   host execution with offload boundaries so the runtime ferries

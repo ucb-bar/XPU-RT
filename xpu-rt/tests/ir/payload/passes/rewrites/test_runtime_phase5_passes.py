@@ -1,6 +1,6 @@
 """Tests for the Phase-5 runtime passes.
 
-All nine passes operate on :class:`compgen.runtime.execution_plan.ExecutionPlan`
+All nine passes operate on :class:`xpu_rt.runtime.execution_plan.ExecutionPlan`
 rather than xDSL IR, so the tests live in one module and share a
 small set of builder helpers.
 """
@@ -8,47 +8,47 @@ small set of builder helpers.
 from __future__ import annotations
 
 import pytest
-from compgen.ir.payload.passes.rewrites.alias_io_buffers import (
+from xpu_rt.ir.payload.passes.rewrites.alias_io_buffers import (
     AliasIOBuffersConfig,
     run_alias_io_buffers,
 )
-from compgen.ir.payload.passes.rewrites.assign_memory_space import (
+from xpu_rt.ir.payload.passes.rewrites.assign_memory_space import (
     AssignMemorySpaceConfig,
     AssignMemorySpaceStats,
     run_assign_memory_space,
 )
-from compgen.ir.payload.passes.rewrites.assign_queue import (
+from xpu_rt.ir.payload.passes.rewrites.assign_queue import (
     AssignQueueConfig,
     run_assign_queue,
 )
-from compgen.ir.payload.passes.rewrites.assign_streams import (
+from xpu_rt.ir.payload.passes.rewrites.assign_streams import (
     AssignStreamsConfig,
     run_assign_streams,
 )
-from compgen.ir.payload.passes.rewrites.dma_overlap import (
+from xpu_rt.ir.payload.passes.rewrites.dma_overlap import (
     DMAOverlapConfig,
     run_dma_overlap,
 )
-from compgen.ir.payload.passes.rewrites.insert_copies import (
+from xpu_rt.ir.payload.passes.rewrites.insert_copies import (
     run_insert_copies,
 )
-from compgen.ir.payload.passes.rewrites.insert_host_offload import (
+from xpu_rt.ir.payload.passes.rewrites.insert_host_offload import (
     InsertHostOffloadConfig,
     run_insert_host_offload,
 )
-from compgen.ir.payload.passes.rewrites.normalize_subbyte_post_layout import (
+from xpu_rt.ir.payload.passes.rewrites.normalize_subbyte_post_layout import (
     NormalizeSubbytePostLayoutConfig,
     NormalizeSubbytePostLayoutStats,
     run_normalize_subbyte_post_layout,
 )
-from compgen.ir.payload.passes.rewrites.plan_buffers import (
+from xpu_rt.ir.payload.passes.rewrites.plan_buffers import (
     PlanBuffersConfig,
     run_plan_buffers,
 )
-from compgen.runtime.execution_plan import (
+from xpu_rt.runtime.execution_plan import (
     ExecutionPlan,
 )
-from compgen.runtime.plan_builder import ExecutionPlanBuilder
+from xpu_rt.runtime.plan_builder import ExecutionPlanBuilder
 
 # --- shared builders ---------------------------------------------------------
 

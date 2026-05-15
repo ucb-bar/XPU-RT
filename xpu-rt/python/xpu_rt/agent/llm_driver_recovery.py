@@ -1,6 +1,6 @@
 """LLM-driven unsupported-operator recovery orchestrator.
 
-Used by :func:`compgen.api_llm.compile_with_llm` when
+Used by :func:`xpu_rt.api_llm.compile_with_llm` when
 ``recover_unsupported=True``. Given a :class:`CaptureArtifact` whose
 ``unsupported_resolutions`` list is non-empty, picks a strategy for
 each op — optionally asking the LLM when the dossier's own
@@ -20,15 +20,15 @@ from typing import Any
 
 import structlog
 
-from compgen.capture.torch_export import CaptureArtifact
-from compgen.capture.unsupported import UnsupportedOpResolution
-from compgen.capture.unsupported.synthesize_decomp import (
+from xpu_rt.capture.torch_export import CaptureArtifact
+from xpu_rt.capture.unsupported import UnsupportedOpResolution
+from xpu_rt.capture.unsupported.synthesize_decomp import (
     synthesize_export_decomposition,
 )
-from compgen.capture.unsupported.synthesize_translation import (
+from xpu_rt.capture.unsupported.synthesize_translation import (
     synthesize_payload_translation,
 )
-from compgen.llm.base import CompGenLLMProtocol
+from xpu_rt.llm.base import CompGenLLMProtocol
 
 log = structlog.get_logger()
 
@@ -55,7 +55,7 @@ class RegionReplanEvent:
     """One typed replan event recorded by the G3 wire-in.
 
     Captures what happened when a per-op recovery failure was routed
-    through :func:`compgen.agent.plan.replan_on_reject`. The event
+    through :func:`xpu_rt.agent.plan.replan_on_reject`. The event
     carries the rejection_class, the rung that was walked, and the new
     plan version — enough for an evidence-pack consumer to reconstruct
     the ladder traversal without re-running the recovery loop.
@@ -142,7 +142,7 @@ def _llm_pick_strategy(
     ``("fallback", str(err))`` — callers then route to the
     deterministic default.
     """
-    from compgen.llm.base import GenerationRequest, LLMConfig, PromptContext
+    from xpu_rt.llm.base import GenerationRequest, LLMConfig, PromptContext
 
     target = resolution.target
     dossier = resolution.dossier
@@ -234,7 +234,7 @@ def _apply_strategy(
         return True, decomp.description, ""
 
     if strategy == "translation":
-        from compgen.capture.unsupported.classify import UnsupportedClassification
+        from xpu_rt.capture.unsupported.classify import UnsupportedClassification
 
         # Try both the existing classification and a forced eligibility.
         forced = UnsupportedClassification(
@@ -276,10 +276,10 @@ def plan_recovery(
         consult_llm_on: Confidence levels that trigger an LLM consult.
             Defaults to ``("low",)`` — the classifier only calls the LLM
             on ambiguous cases.
-        region_plan: Optional :class:`compgen.agent.plan.Plan` whose
+        region_plan: Optional :class:`xpu_rt.agent.plan.Plan` whose
             fallback ladders describe per-region recovery rungs. When
             supplied, per-op failures trigger
-            :func:`compgen.agent.plan.replan_on_reject` and the walk
+            :func:`xpu_rt.agent.plan.replan_on_reject` and the walk
             is logged in :attr:`RecoveryPlan.region_replan_events`.
             Backward-compatible: omit to get the legacy flat recovery.
         region_id_for_target: Optional map from ``resolution.target``
@@ -367,7 +367,7 @@ def _record_region_replan(
     rejection_class: str,
     detail: str,
 ) -> Any:
-    """Apply :func:`compgen.agent.plan.replan_on_reject` and record
+    """Apply :func:`xpu_rt.agent.plan.replan_on_reject` and record
     the event on the RecoveryPlan. Returns the new plan version so
     subsequent rejections walk further down the ladder.
 
@@ -377,7 +377,7 @@ def _record_region_replan(
     """
 
     try:
-        from compgen.agent.plan import PlanError, replan_on_reject
+        from xpu_rt.agent.plan import PlanError, replan_on_reject
     except ImportError:
         return region_plan
 

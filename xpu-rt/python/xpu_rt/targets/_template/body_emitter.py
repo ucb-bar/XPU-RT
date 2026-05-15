@@ -7,7 +7,7 @@ identically.
 
 from __future__ import annotations
 
-from compgen.transforms.emit_cuda_megakernel import DeviceFunctionSource
+from xpu_rt.transforms.emit_cuda_megakernel import DeviceFunctionSource
 
 
 class TemplateBodyEmitter:

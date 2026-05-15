@@ -11,7 +11,7 @@ Designed for models like ``merlin_dronet`` where Dynamo capture
 succeeds (0 graph breaks) but the FX→Payload importer lacks
 ``tensor_meta`` for canonical CNN ops (conv2d, batch_norm, max_pool2d,
 relu) and silently drops them as ``dropped_auxiliary_output``. Pointing
-at the responsible importer file (``python/compgen/ir/payload/import_fx.py``)
+at the responsible importer file (``python/xpu_rt/ir/payload/import_fx.py``)
 turns the warning into actionable evidence.
 
 Hard non-goals:
@@ -128,7 +128,7 @@ def _classify_root_cause(
                     f"{len(dropped)} FX call_function node(s) dropped by "
                     "the FX→Payload importer because no tensor_meta is "
                     "available. Responsible code: "
-                    "python/compgen/ir/payload/import_fx.py:283. "
+                    "python/xpu_rt/ir/payload/import_fx.py:283. "
                     "Unblock requires propagating tensor_meta for these "
                     "ops at FX-import time (compiler-core change, out "
                     "of scope for M-16.1)."
@@ -330,13 +330,13 @@ def build_strict_gate_report(run_dir: Path) -> StrictGateReportResult:
         "fix_applied": {
             "kind": "diagnostic_fix" if status == "blocked" else "none",
             "files_changed": [
-                "python/compgen/graph_compilation/strict_gate_report.py",
+                "python/xpu_rt/graph_compilation/strict_gate_report.py",
             ],
             "note": (
                 "M-16.1 emits this typed report alongside the existing "
                 "lowering artifacts. No source artifact under "
                 "01_payload_lowering/ is mutated. The underlying "
-                "import-side dropped-node behavior (compgen.ir.payload."
+                "import-side dropped-node behavior (xpu_rt.ir.payload."
                 "import_fx) is not modified — that is compiler-core "
                 "and out of scope for M-16.1."
             ),

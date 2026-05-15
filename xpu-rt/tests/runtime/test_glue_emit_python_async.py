@@ -6,7 +6,7 @@ Coverage:
   overall=skipped when all bindings are SYNC.
 - Syntactic validity: emitted module parses + imports cleanly.
 - Behaviour:
-  * Single async region: compgen_run_async dispatches + synchronizes;
+  * Single async region: xpu_rt_run_async dispatches + synchronizes;
     output matches SYNC executor's last_out.
   * Two async regions with a dependency: producer-consumer EventTensor
     handshake works (consumer sees producer's output).
@@ -28,14 +28,14 @@ from pathlib import Path
 
 import pytest
 
-from compgen.runtime.execution_plan import (
+from xpu_rt.runtime.execution_plan import (
     DependencyEdge,
     ExecutionPlan,
     RegionKernelBinding,
     RegionPlacement,
     Resource,
 )
-from compgen.runtime.glue_emit import (
+from xpu_rt.runtime.glue_emit import (
     emit_python_async_executor,
     emit_python_sync_executor,
 )
@@ -210,7 +210,7 @@ class TestSyntacticValidity:
         module, _ = _import_async_module(run_dir)
         assert module is not None
         assert module.PLAN_TARGET == "host_cpu"
-        assert callable(module.compgen_run_async)
+        assert callable(module.xpu_rt_run_async)
         assert callable(module.assert_plan)
         assert "r0" in module.KERNEL_BINDINGS
         # Event spec for r0_done present with wait_count_default >= 1.
@@ -235,7 +235,7 @@ class TestBehaviour:
         module, _ = _import_async_module(run_dir)
         rt = _StubRuntime()
         kernels = {"r0": lambda *args, **kwargs: "out_r0"}
-        out = module.compgen_run_async({"x": 1}, kernels, runtime=rt)
+        out = module.xpu_rt_run_async({"x": 1}, kernels, runtime=rt)
         assert rt.dispatch_calls == 1
         assert rt.synchronize_called is True
         assert out == "out_r0"
@@ -278,7 +278,7 @@ class TestBehaviour:
             return "r1_out"
 
         rt = _StubRuntime()
-        out = module.compgen_run_async(
+        out = module.xpu_rt_run_async(
             {"x": 1}, {"r0": _r0, "r1": _r1}, runtime=rt,
         )
         assert rt.dispatch_calls == 2
@@ -321,7 +321,7 @@ class TestBehaviour:
 
         rt = _StubRuntime()
         with pytest.raises(TimeoutError):
-            module.compgen_run_async(
+            module.xpu_rt_run_async(
                 {"x": 1}, {"r0": _r0_hangs, "r1": _r1},
                 runtime=rt, timeout_s=0.5,
             )
@@ -342,7 +342,7 @@ class TestBehaviour:
 
         rt = _StubRuntime()
         with pytest.raises(RuntimeError, match="kernel boom"):
-            module.compgen_run_async({"x": 1}, {"r0": _r0_boom}, runtime=rt)
+            module.xpu_rt_run_async({"x": 1}, {"r0": _r0_boom}, runtime=rt)
 
     def test_unbound_region_raises_plan_violation(self, tmp_path: Path) -> None:
         # Plan declares a region but binds nothing; emit returns
@@ -370,7 +370,7 @@ class TestBehaviour:
         module, _ = _import_async_module(run_dir)
         assert module is not None
         with pytest.raises(module.PLAN_VIOLATION_UNBOUND_REGION):
-            module.compgen_run_async({"x": 1}, {"r0": lambda *a, **k: "x"}, runtime=_StubRuntime())
+            module.xpu_rt_run_async({"x": 1}, {"r0": lambda *a, **k: "x"}, runtime=_StubRuntime())
 
 
 # --------------------------------------------------------------------------- #
@@ -417,8 +417,8 @@ class TestSyncAsyncParity:
         async_mod = _load(async_path, f"async_{run_dir.name}")
 
         kernels = {"r0": lambda *a, **k: "v0", "r1": lambda *a, **k: "v1"}
-        out_sync = sync_mod.compgen_run({"x": 1}, kernels, runtime=_StubRuntime())
-        out_async = async_mod.compgen_run_async(
+        out_sync = sync_mod.xpu_rt_run({"x": 1}, kernels, runtime=_StubRuntime())
+        out_async = async_mod.xpu_rt_run_async(
             {"x": 1}, kernels, runtime=_StubRuntime(),
         )
         assert out_sync == out_async == "v1"

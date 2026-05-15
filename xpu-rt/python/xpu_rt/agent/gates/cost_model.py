@@ -1,7 +1,7 @@
 """Cost-model gate — CPSatSolver feasibility + objective check.
 
-Wraps :func:`compgen.solve.contracts.extract_solver_problem` +
-:class:`compgen.solve.backends.cp_sat.CPSatSolver`. The gate context
+Wraps :func:`xpu_rt.solve.contracts.extract_solver_problem` +
+:class:`xpu_rt.solve.backends.cp_sat.CPSatSolver`. The gate context
 requires either a prebuilt ``SolverProblem`` (``ctx["problem"]``) or
 both an xDSL module (``ctx["module"]``) and a ``TargetProfile``
 (``ctx["target"]``).
@@ -24,8 +24,8 @@ def cost_model_gate(proposal: dict[str, Any], **ctx: Any) -> dict[str, Any]:
     tolerance_ratio = float(ctx.get("tolerance_ratio", 1.0))
 
     try:
-        from compgen.solve.backends.cp_sat import CPSatSolver
-        from compgen.solve.contracts import extract_solver_problem
+        from xpu_rt.solve.backends.cp_sat import CPSatSolver
+        from xpu_rt.solve.contracts import extract_solver_problem
     except ImportError as e:  # pragma: no cover
         return {
             "status": "deferred",

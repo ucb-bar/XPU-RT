@@ -15,8 +15,8 @@ from pathlib import Path
 
 import pytest
 
-from compgen.audit.fresh_agent import build_task_pack
-from compgen.audit.fresh_agent_modes import (
+from xpu_rt.audit.fresh_agent import build_task_pack
+from xpu_rt.audit.fresh_agent_modes import (
     GreedyBaselineResult,
     record_manual_session_result,
     run_greedy_baseline,
@@ -89,7 +89,7 @@ def test_record_manual_session_result_appends_to_ledger(tmp_path: Path) -> None:
 
 
 def test_record_rejects_invalid_mode(tmp_path: Path) -> None:
-    from compgen.audit.errors import AuditError
+    from xpu_rt.audit.errors import AuditError
 
     with pytest.raises(AuditError, match="mode"):
         record_manual_session_result(
@@ -101,7 +101,7 @@ def test_record_rejects_invalid_mode(tmp_path: Path) -> None:
 
 
 def test_record_rejects_greedy_baseline_mode(tmp_path: Path) -> None:
-    from compgen.audit.errors import AuditError
+    from xpu_rt.audit.errors import AuditError
 
     with pytest.raises(AuditError, match="greedy_baseline"):
         record_manual_session_result(
@@ -113,7 +113,7 @@ def test_record_rejects_greedy_baseline_mode(tmp_path: Path) -> None:
 
 
 def test_record_rejects_empty_evidence(tmp_path: Path) -> None:
-    from compgen.audit.errors import AuditError
+    from xpu_rt.audit.errors import AuditError
 
     with pytest.raises(AuditError, match="evidence_paths"):
         record_manual_session_result(

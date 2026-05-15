@@ -1,10 +1,10 @@
 """Thin LLM-driven compilation orchestrator.
 
 ``LLMDrivenCompiler`` is the shared backbone that sits behind both the
-Python ``compile_with_llm`` entry (see :mod:`compgen.api_llm`) and the
-MCP server tools (see :mod:`compgen.mcp`). It delegates real work to
-:class:`~compgen.agent.loop.AgenticCompilationLoop` (``_proposal_to_action``,
-``_run_per_step_verification``) and :class:`~compgen.agent.env.CompilerEnv`;
+Python ``compile_with_llm`` entry (see :mod:`xpu_rt.api_llm`) and the
+MCP server tools (see :mod:`xpu_rt.mcp`). It delegates real work to
+:class:`~xpu_rt.agent.loop.AgenticCompilationLoop` (``_proposal_to_action``,
+``_run_per_step_verification``) and :class:`~xpu_rt.agent.env.CompilerEnv`;
 it does NOT reimplement the loop.
 
 Responsibilities:
@@ -13,7 +13,7 @@ Responsibilities:
 * Wire an :class:`LLMRecorder` + :class:`ToolCallRecorder` so every
   invocation is auditable / replayable.
 * Dispatch LLM tool / invent-slot calls by looking them up in the
-  registry (:func:`compgen.llm.registry.get_registry`) and, when they
+  registry (:func:`xpu_rt.llm.registry.get_registry`) and, when they
   map to an env action, translating via
   :meth:`AgenticCompilationLoop._proposal_to_action`.
 * Expose a token-efficient ``current_view()`` (Recipe-IR) and
@@ -31,19 +31,19 @@ from typing import Any
 
 import structlog
 
-from compgen.agent.env import (
+from xpu_rt.agent.env import (
     Action,
     CompilerEnv,
     NoopAction,
 )
-from compgen.agent.gates import composite_gate, differential_gate, structural_gate
-from compgen.agent.loop import AgenticCompilationLoop
-from compgen.agent.prompts.analyze import ProposedOptimization
-from compgen.ir.recipe.llm_view import diff_views, recipe_to_llm_view
-from compgen.llm.base import CompGenLLMProtocol
-from compgen.llm.recorder import LLMRecorder, ToolCallRecorder
-from compgen.llm.registry import InventSlot, Registry, Tool, get_registry
-from compgen.targets.schema import TargetProfile
+from xpu_rt.agent.gates import composite_gate, differential_gate, structural_gate
+from xpu_rt.agent.loop import AgenticCompilationLoop
+from xpu_rt.agent.prompts.analyze import ProposedOptimization
+from xpu_rt.ir.recipe.llm_view import diff_views, recipe_to_llm_view
+from xpu_rt.llm.base import CompGenLLMProtocol
+from xpu_rt.llm.recorder import LLMRecorder, ToolCallRecorder
+from xpu_rt.llm.registry import InventSlot, Registry, Tool, get_registry
+from xpu_rt.targets.schema import TargetProfile
 
 log = structlog.get_logger()
 
@@ -96,7 +96,7 @@ class LLMDrivenCompiler:
 
     The caller is responsible for preparing a :class:`CompilerEnv` that
     has already been reset with a module + target (usually via
-    :meth:`compgen.api.CompiledModel.create_agent_env`). After
+    :meth:`xpu_rt.api.CompiledModel.create_agent_env`). After
     construction callers drive the session with :meth:`step_tool`,
     :meth:`step_invent`, :meth:`step_proposal`, and
     :meth:`run_per_step_verification`.
@@ -107,7 +107,7 @@ class LLMDrivenCompiler:
         llm_client: The backend LLM — usually already wrapped in
             :class:`LLMRecorder`. The driver will wrap it if not.
         transcript_dir: Where to write the ToolCallRecorder JSONL.
-            Defaults to ``~/.compgen/transcripts``.
+            Defaults to ``~/.xpu_rt/transcripts``.
         budget: Soft cap on accepted LLM-driven steps.
         registry: The :class:`Registry` to dispatch tools + slots
             against. Defaults to the process-wide registry.
@@ -132,7 +132,7 @@ class LLMDrivenCompiler:
     _accepted_steps: int = field(default=0, init=False)
     _last_view: dict[str, Any] | None = field(default=None, init=False)
     # G4: Strategist + Tactician wire-in. Populated lazily on the first
-    # ``current_view`` call when ``COMPGEN_USE_STRATEGIST_TACTICIAN=1``.
+    # ``current_view`` call when ``XPU_RT_USE_STRATEGIST_TACTICIAN=1``.
     # When the flag is off, ``_plan`` stays ``None`` and the driver
     # behaves exactly as before. The Tactician audit log records the
     # Tactician's pick alongside the agent's proposal — non-binding.
@@ -146,7 +146,7 @@ class LLMDrivenCompiler:
         _env = getattr(self, "env", None)
         _model = getattr(_env, "_pytorch_model", None) if _env is not None else None
         _target = getattr(_env, "_target", None) if _env is not None else None
-        from compgen.trace.session_id import build_session_id as _build_sid
+        from xpu_rt.trace.session_id import build_session_id as _build_sid
 
         self._session_id = _build_sid(
             model=_model,
@@ -162,7 +162,7 @@ class LLMDrivenCompiler:
         # agent that calls propose_invent_slot fresh actually finds them.
         # Idempotent — second + later calls return early on each slot.
         try:
-            from compgen.agent.invent_slots.registrar import register_invent_slots
+            from xpu_rt.agent.invent_slots.registrar import register_invent_slots
 
             register_invent_slots(self.registry)
         except Exception:  # noqa: BLE001
@@ -171,26 +171,26 @@ class LLMDrivenCompiler:
             # and can read the remediation hint we surface below.
             pass
 
-        # Resolve transcript dir. Honour COMPGEN_SESSION_DIR env var so
-        # tests can redirect writes away from ~/.compgen.
+        # Resolve transcript dir. Honour XPU_RT_SESSION_DIR env var so
+        # tests can redirect writes away from ~/.xpu_rt.
         if self.transcript_dir is None:
             import os
 
-            env = os.environ.get("COMPGEN_SESSION_DIR")
+            env = os.environ.get("XPU_RT_SESSION_DIR")
             if env:
                 self.transcript_dir = Path(env).expanduser()
             else:
-                self.transcript_dir = Path("~/.compgen/transcripts").expanduser()
+                self.transcript_dir = Path("~/.xpu_rt/transcripts").expanduser()
         self.transcript_dir.mkdir(parents=True, exist_ok=True)
 
         # Install a trace bus for this session so every LLM call, tool call,
         # pass, analysis and decision lands in a single correlated JSONL.
         # If a bus has already been installed (e.g. by ``api.compile_model``)
         # we reuse it; otherwise the trace lives under the session dir.
-        # Local imports to avoid a circular dep: ``compgen.trace.adapters``
+        # Local imports to avoid a circular dep: ``xpu_rt.trace.adapters``
         # imports :class:`McpTranscriptRecorder`, whose package transitively
         # imports this module.
-        from compgen.trace import (
+        from xpu_rt.trace import (
             TracingLLMRecorder,
             TracingToolCallRecorder,
             get_active_bus,
@@ -281,13 +281,13 @@ class LLMDrivenCompiler:
     def _strategist_tactician_enabled(self) -> bool:
         """Return True iff the G4 wire-in is opted-in via env flag.
 
-        ``COMPGEN_USE_STRATEGIST_TACTICIAN=1`` opts the session in.
+        ``XPU_RT_USE_STRATEGIST_TACTICIAN=1`` opts the session in.
         With the flag off (default) ``_plan`` stays ``None`` and the
         driver behaves byte-identically to the pre-G4 codepath.
         """
         import os
 
-        return os.environ.get("COMPGEN_USE_STRATEGIST_TACTICIAN") == "1"
+        return os.environ.get("XPU_RT_USE_STRATEGIST_TACTICIAN") == "1"
 
     def _maybe_init_plan(self) -> None:
         """Lazily emit a :class:`Plan` for the session.
@@ -306,8 +306,8 @@ class LLMDrivenCompiler:
         if not regions:
             return
         try:
-            from compgen.agent.plan import Budget
-            from compgen.agent.strategist import (
+            from xpu_rt.agent.plan import Budget
+            from xpu_rt.agent.strategist import (
                 DossierRegion,
                 StrategistInput,
                 plan_session,
@@ -357,8 +357,8 @@ class LLMDrivenCompiler:
         if region_plan is None:
             return None
         try:
-            from compgen.agent.cost_preview import CostPreview
-            from compgen.agent.tactician import pick_edit
+            from xpu_rt.agent.cost_preview import CostPreview
+            from xpu_rt.agent.tactician import pick_edit
 
             # Build a minimal CostPreview for the agent's proposed action.
             preview = CostPreview(
@@ -639,7 +639,7 @@ class LLMDrivenCompiler:
             # know how to encode; unknown slots fall back to side-log only.
             if self.env.recipe is not None:
                 try:
-                    from compgen.agent.recipe_bridge_invent import (
+                    from xpu_rt.agent.recipe_bridge_invent import (
                         proposal_to_recipe_op,
                     )
 
@@ -677,7 +677,7 @@ class LLMDrivenCompiler:
             # Remember an abbreviated invocation for later graduation /
             # contribution drafting.
             try:
-                from compgen.agent.extensions.local_loader import record_accepted_invocation
+                from xpu_rt.agent.extensions.local_loader import record_accepted_invocation
 
                 record_accepted_invocation(
                     None,

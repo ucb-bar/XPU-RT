@@ -17,7 +17,7 @@ from typing import Any, Protocol, runtime_checkable
 
 import structlog
 
-from compgen.targets.schema import TargetProfile
+from xpu_rt.targets.schema import TargetProfile
 
 log = structlog.get_logger()
 

@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from compgen.runtime.execution_plan import (
+from xpu_rt.runtime.execution_plan import (
     ExecutionPlan,
     RegionKernelBinding,
     RegionPlacement,

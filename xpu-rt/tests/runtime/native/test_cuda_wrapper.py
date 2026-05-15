@@ -1,6 +1,6 @@
 """Phase-4 ctypes-wrapper API tests (CPU-only).
 
-Validates the Python surface of ``compgen.runtime.native.cuda`` —
+Validates the Python surface of ``xpu_rt.runtime.native.cuda`` —
 imports, struct layouts, and the typed-error path on hosts without
 the CUDA-built library.
 
@@ -16,7 +16,7 @@ import pytest
 
 class TestModuleSurface:
     def test_top_level_imports(self) -> None:
-        from compgen.runtime.native.cuda import (
+        from xpu_rt.runtime.native.cuda import (
             CudaCommGroup,
             CudaDeviceProbe,
             CudaDynamicQueue,
@@ -42,7 +42,7 @@ class TestModuleSurface:
         default so a refactor can't silently drop it."""
         import inspect
 
-        from compgen.runtime.native.cuda import CudaModule
+        from xpu_rt.runtime.native.cuda import CudaModule
 
         sig = inspect.signature(CudaModule.__init__)
         assert "extra_include_paths" in sig.parameters
@@ -55,7 +55,7 @@ class TestModuleSurface:
         a path or None; ``cublasdx_available`` is a thin bool wrapper.
         On a CPU host without nvidia-mathdx these return ``None`` and
         ``False`` respectively — never raise."""
-        from compgen.runtime.native.cuda import (
+        from xpu_rt.runtime.native.cuda import (
             cublasdx_available,
             discover_cublasdx_include,
         )
@@ -71,7 +71,7 @@ class TestModuleSurface:
         under ``external/cutlass/include``. Discovery must surface
         its location (or None) so the smoke + body emitter pass it
         as a separate ``-I`` to NVRTC."""
-        from compgen.runtime.native.cuda import (
+        from xpu_rt.runtime.native.cuda import (
             cutlass_available,
             discover_cutlass_include,
         )
@@ -90,7 +90,7 @@ class TestModuleSurface:
         ``cu13_nvrtc_available`` is a thin bool wrapper. On a CPU host
         without cu13 NVRTC these return ``None`` / ``False``,
         never raise."""
-        from compgen.runtime.native.cuda import (
+        from xpu_rt.runtime.native.cuda import (
             _resolve_cu13_nvrtc_lib_path,
             cu13_nvrtc_available,
         )
@@ -101,22 +101,22 @@ class TestModuleSurface:
         assert cu13_nvrtc_available() == (path is not None)
 
     def test_cu13_nvrtc_discovery_honors_env_var(self, tmp_path, monkeypatch) -> None:
-        """Bridge #091 path #1 — `$COMPGEN_CU13_NVRTC_LIB_PATH` env
+        """Bridge #091 path #1 — `$XPU_RT_CU13_NVRTC_LIB_PATH` env
         override takes priority over package discovery so callers
         (and bwell's role-isolated agent) can point the wrapper at
         an arbitrary libnvrtc.so.13 without touching site-packages."""
-        from compgen.runtime.native.cuda import _resolve_cu13_nvrtc_lib_path
+        from xpu_rt.runtime.native.cuda import _resolve_cu13_nvrtc_lib_path
 
         # Empty file is enough to pass the .is_file() check; we don't
         # actually load it here.
         fake_lib = tmp_path / "fake_libnvrtc.so.13"
         fake_lib.write_bytes(b"")
-        monkeypatch.setenv("COMPGEN_CU13_NVRTC_LIB_PATH", str(fake_lib))
+        monkeypatch.setenv("XPU_RT_CU13_NVRTC_LIB_PATH", str(fake_lib))
         assert _resolve_cu13_nvrtc_lib_path() == str(fake_lib)
 
         # Non-existent file → env override is ignored, falls through
         # to package discovery (which on CPU hosts returns None).
-        monkeypatch.setenv("COMPGEN_CU13_NVRTC_LIB_PATH", str(tmp_path / "nope"))
+        monkeypatch.setenv("XPU_RT_CU13_NVRTC_LIB_PATH", str(tmp_path / "nope"))
         path = _resolve_cu13_nvrtc_lib_path()
         assert path is None or isinstance(path, str)
 
@@ -127,7 +127,7 @@ class TestModuleSurface:
         present should resolve."""
         import importlib.util
 
-        from compgen.runtime.native.cuda import _resolve_cu13_nvrtc_lib_path
+        from xpu_rt.runtime.native.cuda import _resolve_cu13_nvrtc_lib_path
 
         # If neither package is on this CPU host, the helper returns
         # None — which is the contract.
@@ -150,7 +150,7 @@ class TestModuleSurface:
         tensor-core path."""
         import inspect
 
-        from compgen.runtime.native.cuda import CudaModule
+        from xpu_rt.runtime.native.cuda import CudaModule
 
         sig = inspect.signature(CudaModule.__init__)
         assert "use_cu13_nvrtc" in sig.parameters
@@ -164,7 +164,7 @@ class TestModuleSurface:
         helpers must surface its location (or None) so the smoke
         tool + body emitter can pass it as a separate ``-I`` to
         NVRTC."""
-        from compgen.runtime.native.cuda import (
+        from xpu_rt.runtime.native.cuda import (
             discover_libcudacxx_include,
             libcudacxx_available,
         )
@@ -186,7 +186,7 @@ class TestModuleSurface:
         + signature shape here so a future refactor doesn't silently
         drop it again — the GPU test wouldn't catch this on a CPU
         host, but this CPU test will."""
-        from compgen.runtime.native.device import Device
+        from xpu_rt.runtime.native.device import Device
 
         assert hasattr(Device, "create")
         # Signature: ``Device.create(target: str) -> Device``.
@@ -201,16 +201,16 @@ class TestModuleSurface:
 class TestProbeStructLayout:
     def test_probe_struct_field_count_matches_header(self) -> None:
         """The C struct cg_rt_cuda_probe_t has 26 fields ordered as
-        declared in compgen_rt.h. Drift between the header and the
+        declared in xpu_rt.h. Drift between the header and the
         Python mirror would silently shred probe values across CUDA
         SDK upgrades, so we pin the count."""
-        from compgen.runtime.native.cuda import _CudaProbeStruct
+        from xpu_rt.runtime.native.cuda import _CudaProbeStruct
 
         # 1 char[128] + 25 int/longlong fields.
         assert len(_CudaProbeStruct._fields_) == 26
 
     def test_probe_struct_critical_fields_present(self) -> None:
-        from compgen.runtime.native.cuda import _CudaProbeStruct
+        from xpu_rt.runtime.native.cuda import _CudaProbeStruct
 
         names = {name for name, _ in _CudaProbeStruct._fields_}
         for required in (
@@ -234,13 +234,13 @@ class TestProbeStructLayout:
 
 class TestLaunchConfigStruct:
     def test_launch_config_field_count(self) -> None:
-        from compgen.runtime.native.cuda import _LaunchConfigStruct
+        from xpu_rt.runtime.native.cuda import _LaunchConfigStruct
 
         # kernel_handle + 3-axis grid/block/cluster + shared mem = 11.
         assert len(_LaunchConfigStruct._fields_) == 11
 
     def test_launch_config_critical_fields_present(self) -> None:
-        from compgen.runtime.native.cuda import _LaunchConfigStruct
+        from xpu_rt.runtime.native.cuda import _LaunchConfigStruct
 
         names = {name for name, _ in _LaunchConfigStruct._fields_}
         assert {
@@ -260,10 +260,10 @@ class TestLaunchConfigStruct:
 
 def _has_cuda_runtime() -> bool:
     try:
-        import compgen
+        import xpu_rt
     except Exception:
         return False
-    return bool(compgen.has_cuda_runtime())
+    return bool(xpu_rt.has_cuda_runtime())
 
 
 @pytest.mark.skipif(
@@ -279,8 +279,8 @@ class TestCudaUnavailableOnCpuHost:
         # Force a fresh load attempt by clearing the cache; ensures
         # the error path runs even after probe_via_torch warmed
         # up another lib loader path elsewhere in the test session.
-        import compgen.runtime.native.cuda as cuda_mod
-        from compgen.runtime.native.cuda import (
+        import xpu_rt.runtime.native.cuda as cuda_mod
+        from xpu_rt.runtime.native.cuda import (
             CudaDeviceProbe,
             CudaUnavailableError,
         )
@@ -290,11 +290,11 @@ class TestCudaUnavailableOnCpuHost:
         # The library isn't present in the dev tree (`make build-cuda-rt`
         # never ran on Garden). Constructor must raise the typed
         # error with install instructions.
-        with pytest.raises(CudaUnavailableError, match="libcompgen_rt"):
+        with pytest.raises(CudaUnavailableError, match="libxpu_rt"):
             CudaDeviceProbe()
 
     def test_event_tensor_raises(self) -> None:
-        from compgen.runtime.native.cuda import (
+        from xpu_rt.runtime.native.cuda import (
             CudaEventTensor,
             CudaUnavailableError,
         )
@@ -303,7 +303,7 @@ class TestCudaUnavailableOnCpuHost:
             CudaEventTensor(num_cells=4)
 
     def test_dynamic_queue_raises(self) -> None:
-        from compgen.runtime.native.cuda import (
+        from xpu_rt.runtime.native.cuda import (
             CudaDynamicQueue,
             CudaUnavailableError,
         )
@@ -312,15 +312,15 @@ class TestCudaUnavailableOnCpuHost:
             CudaDynamicQueue(capacity=16)
 
     def test_comm_group_raises_when_no_nccl(self) -> None:
-        """When libcompgen_rt isn't loadable (CPU host) OR is built
+        """When libxpu_rt isn't loadable (CPU host) OR is built
         without NCCL, CudaCommGroup must raise the typed error with
         a clear rebuild hint — never bare ImportError."""
-        from compgen.runtime.native.cuda import (
+        from xpu_rt.runtime.native.cuda import (
             CudaCommGroup,
             CudaUnavailableError,
         )
 
-        with pytest.raises(CudaUnavailableError, match="NCCL|libcompgen_rt"):
+        with pytest.raises(CudaUnavailableError, match="NCCL|libxpu_rt"):
             CudaCommGroup(device_indices=[0, 1])
 
 
@@ -334,8 +334,8 @@ class TestNativeHalProbeFallback:
     ``probe_cuda_device`` falls through to torch."""
 
     def test_native_hal_raises_native_hal_unavailable(self) -> None:
-        import compgen.runtime.native.cuda as cuda_mod
-        from compgen.runtime.probe import (
+        import xpu_rt.runtime.native.cuda as cuda_mod
+        from xpu_rt.runtime.probe import (
             _NativeHalUnavailable,
             probe_via_native_hal,
         )
@@ -349,7 +349,7 @@ class TestNativeHalProbeFallback:
         """When native HAL is unavailable the umbrella probe lands in
         the torch path with ``probe_source="torch"`` (or "fallback"
         on a CPU-only host)."""
-        from compgen.runtime.probe import probe_cuda_device
+        from xpu_rt.runtime.probe import probe_cuda_device
 
         result = probe_cuda_device(0)
         assert result["probe_source"] in ("torch", "fallback")

@@ -1,14 +1,14 @@
 """ToolCard discovery + loading.
 
-Cards live under ``python/compgen/tools/cards/*.yaml``. Loading
-mirrors :func:`compgen.providers.card_loader.iter_provider_cards`
+Cards live under ``python/xpu_rt/tools/cards/*.yaml``. Loading
+mirrors :func:`xpu_rt.providers.card_loader.iter_provider_cards`
 so the audit and CLI runner can iterate over all known tools without
 caring about how cards were authored.
 
 User extensions contribute cards through the extension manifest
 ; those cards flow through
-:mod:`compgen.extensions.registry` rather than this loader, but the
-:class:`compgen.tools.ToolCard` schema is shared.
+:mod:`xpu_rt.extensions.registry` rather than this loader, but the
+:class:`xpu_rt.tools.ToolCard` schema is shared.
 """
 
 from __future__ import annotations
@@ -19,8 +19,8 @@ from typing import Any
 
 import yaml
 
-from compgen.tools.errors import ToolCardError
-from compgen.tools.tool_card import ToolCard
+from xpu_rt.tools.errors import ToolCardError
+from xpu_rt.tools.tool_card import ToolCard
 
 
 def tool_cards_root() -> Path:
@@ -47,7 +47,7 @@ def _load_yaml(path: Path) -> dict[str, Any]:
 def load_tool_card(path: Path) -> ToolCard:
     """Load a single ToolCard YAML file.
 
-    Raises :class:`compgen.tools.errors.ToolCardError` on schema
+    Raises :class:`xpu_rt.tools.errors.ToolCardError` on schema
     violation. The file's parent is recorded as the card's source for
     error messages.
     """

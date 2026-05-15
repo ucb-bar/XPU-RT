@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from compgen.pass_tools.pass_tool_registry import (
+from xpu_rt.pass_tools.pass_tool_registry import (
     PassToolRegistry,
     PassToolRegistryError,
     apply_pass_tool,
@@ -12,7 +12,7 @@ from compgen.pass_tools.pass_tool_registry import (
     iter_pass_tool_cards,
     resolve_entrypoint,
 )
-from compgen.pass_tools.pass_tool_result import (
+from xpu_rt.pass_tools.pass_tool_result import (
     PassToolResult,
     PassToolResultError,
     RESULT_STATUSES,
@@ -20,7 +20,7 @@ from compgen.pass_tools.pass_tool_result import (
     make_no_op,
     make_proposal,
 )
-from compgen.pass_tools.pass_tool_types import PassToolCard
+from xpu_rt.pass_tools.pass_tool_types import PassToolCard
 
 
 # ---------------------------------------------------------------------------
@@ -183,7 +183,7 @@ def test_resolve_entrypoint_missing_symbol():
         allowed_recipe_ops=(),
         refinement_kind="none",
         verifier="",
-        entrypoint="compgen.pass_tools.builtin.fuse_matmul_bias_relu:does_not_exist",
+        entrypoint="xpu_rt.pass_tools.builtin.fuse_matmul_bias_relu:does_not_exist",
     )
     with pytest.raises(PassToolRegistryError) as exc:
         resolve_entrypoint(bad_card)
@@ -342,7 +342,7 @@ def test_apply_pass_tool_rejects_non_result_return():
 
 
 def test_card_inventory_covers_all_shipped_pass_tools():
-    """Every YAML under python/compgen/pass_tools/cards/ must load
+    """Every YAML under python/xpu_rt/pass_tools/cards/ must load
     via iter_pass_tool_cards()."""
     cards = tuple(iter_pass_tool_cards())
     assert cards

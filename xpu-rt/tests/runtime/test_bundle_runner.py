@@ -16,8 +16,8 @@ from pathlib import Path
 
 import pytest
 import torch
-from compgen.capture.torch_mlir_bridge import bridge_fx_graph
-from compgen.runtime.bundle_runner import LoadedBundle, load_bundle, run_bundle
+from xpu_rt.capture.torch_mlir_bridge import bridge_fx_graph
+from xpu_rt.runtime.bundle_runner import LoadedBundle, load_bundle, run_bundle
 from xdsl.printer import Printer
 
 from tests._fixtures.real_workloads import attention_mlp_tiny

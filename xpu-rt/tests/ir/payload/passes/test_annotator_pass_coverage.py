@@ -9,7 +9,7 @@ full walk+annotate path without requiring a synthesized input IR.
 from __future__ import annotations
 
 import pytest
-from compgen.ir.payload.passes.stubs import (
+from xpu_rt.ir.payload.passes.stubs import (
     FoldTransposesIntoDots,
     FuseDequantMatmul,
     FuseSoftmaxToTriton,
@@ -25,17 +25,17 @@ from compgen.ir.payload.passes.stubs import (
 from xdsl.dialects.builtin import ModuleOp
 
 _PASS_COUNT_ATTR: list[tuple[type, str]] = [
-    (LowerQuantizedMatmul, "compgen.lower_quantized_matmul.count"),
-    (LowerQuantizedConv, "compgen.lower_quantized_conv.count"),
-    (PropagateTransposes, "compgen.propagate_transposes.count"),
-    (LowerConvToImg2Col, "compgen.lower_conv_to_img2col.count"),
-    (RaiseSpecialOps, "compgen.raise_special_ops.count"),
-    (MatchLibraryCall, "compgen.match_library_call.count"),
-    (SetNumericsPolicy, "compgen.set_numerics_policy.count"),
-    (FoldTransposesIntoDots, "compgen.fold_transposes_into_dots.count"),
-    (PlanReduction, "compgen.plan_reduction.count"),
-    (FuseSoftmaxToTriton, "compgen.fuse_softmax_to_triton.count"),
-    (FuseDequantMatmul, "compgen.fuse_dequant_matmul.count"),
+    (LowerQuantizedMatmul, "xpu_rt.lower_quantized_matmul.count"),
+    (LowerQuantizedConv, "xpu_rt.lower_quantized_conv.count"),
+    (PropagateTransposes, "xpu_rt.propagate_transposes.count"),
+    (LowerConvToImg2Col, "xpu_rt.lower_conv_to_img2col.count"),
+    (RaiseSpecialOps, "xpu_rt.raise_special_ops.count"),
+    (MatchLibraryCall, "xpu_rt.match_library_call.count"),
+    (SetNumericsPolicy, "xpu_rt.set_numerics_policy.count"),
+    (FoldTransposesIntoDots, "xpu_rt.fold_transposes_into_dots.count"),
+    (PlanReduction, "xpu_rt.plan_reduction.count"),
+    (FuseSoftmaxToTriton, "xpu_rt.fuse_softmax_to_triton.count"),
+    (FuseDequantMatmul, "xpu_rt.fuse_dequant_matmul.count"),
 ]
 
 
@@ -60,8 +60,8 @@ def test_pass_runs_on_empty_module(cls, count_attr) -> None:
 
 @pytest.mark.parametrize("cls,_count_attr", _PASS_COUNT_ATTR, ids=[c.name for c, _ in _PASS_COUNT_ATTR])
 def test_pass_registers_non_stub_tool(cls, _count_attr) -> None:
-    import compgen.ir.payload.passes  # noqa: F401  auto-registration
-    from compgen.llm import get_registry
+    import xpu_rt.ir.payload.passes  # noqa: F401  auto-registration
+    from xpu_rt.llm import get_registry
 
     r = get_registry()
     tool = r.lookup_tool(cls.name, phase=cls.phase)
@@ -75,11 +75,11 @@ def test_match_library_call_accepts_family_list() -> None:
     p = MatchLibraryCall()
     # Should not raise; no matmul/conv present so count stays 0.
     p.run(mod, target_capabilities=["gemm", "gemm_int8", "conv2d_nhwc"])
-    assert int(mod.attributes["compgen.match_library_call.count"].value.data) == 0
+    assert int(mod.attributes["xpu_rt.match_library_call.count"].value.data) == 0
 
 
 def test_lower_quantized_matmul_skip_policy() -> None:
     mod = ModuleOp([])
     LowerQuantizedMatmul().run(mod, policy="skip")
     # policy=skip is valid; still 0 matches on empty module.
-    assert int(mod.attributes["compgen.lower_quantized_matmul.count"].value.data) == 0
+    assert int(mod.attributes["xpu_rt.lower_quantized_matmul.count"].value.data) == 0

@@ -15,7 +15,7 @@ from __future__ import annotations
 import importlib
 from typing import Any
 
-from compgen.providers.provider_types import ProviderCard
+from xpu_rt.providers.provider_types import ProviderCard
 
 
 class AdapterResolutionError(RuntimeError):

@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from compgen.eqsat.blackbox import (
+from xpu_rt.eqsat.blackbox import (
     OpClass,
     classify_module,
     classify_op,
     count_blackbox,
     count_profitable,
 )
-from compgen.eqsat.segment import segment_function, segment_module
+from xpu_rt.eqsat.segment import segment_function, segment_module
 from xdsl.dialects import arith, func
 from xdsl.dialects.builtin import IndexType, ModuleOp
 from xdsl.ir import Block, Region

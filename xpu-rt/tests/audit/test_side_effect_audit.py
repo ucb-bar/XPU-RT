@@ -10,14 +10,14 @@ Coverage:
 4. The closed-enum forbidden attrs are exactly the documented six.
 5. ``ALLOWED_PREFIXES`` does NOT contain ``tests/`` (test code is not
    allowed to mutate session state via this audit; the audit scopes
-   to ``python/compgen/``).
+   to ``python/xpu_rt/``).
 """
 
 from __future__ import annotations
 
 from pathlib import Path
 
-from compgen.audit.side_effect_audit import (
+from xpu_rt.audit.side_effect_audit import (
     ALLOWED_PREFIXES,
     FORBIDDEN_ATTRS,
     scan_file,
@@ -28,14 +28,14 @@ from compgen.audit.side_effect_audit import (
 def _make_repo(root: Path) -> Path:
     """Create a synthetic repo skeleton under ``root``."""
 
-    (root / "python" / "compgen" / "naughty").mkdir(parents=True)
-    (root / "python" / "compgen" / "mcp" / "tools").mkdir(parents=True)
+    (root / "python" / "xpu-rt" / "naughty").mkdir(parents=True)
+    (root / "python" / "xpu-rt" / "mcp" / "tools").mkdir(parents=True)
     return root
 
 
 def test_synthetic_violation_detected_outside_allowlist(tmp_path: Path) -> None:
     repo = _make_repo(tmp_path)
-    bad = repo / "python" / "compgen" / "naughty" / "mutator.py"
+    bad = repo / "python" / "xpu-rt" / "naughty" / "mutator.py"
     bad.write_text(
         "def bad(sm):\n"
         "    sm.recipe_module = None\n"
@@ -49,7 +49,7 @@ def test_synthetic_violation_detected_outside_allowlist(tmp_path: Path) -> None:
 
 def test_mutation_inside_mcp_tools_is_allowed(tmp_path: Path) -> None:
     repo = _make_repo(tmp_path)
-    ok = repo / "python" / "compgen" / "mcp" / "tools" / "fine.py"
+    ok = repo / "python" / "xpu-rt" / "mcp" / "tools" / "fine.py"
     ok.write_text(
         "def f(sm):\n"
         "    sm.decision_registry.set('k', 'v')\n"
@@ -78,8 +78,8 @@ def test_forbidden_attrs_closed_enum() -> None:
     assert set(FORBIDDEN_ATTRS) == expected
 
 
-def test_allowed_prefixes_scope_to_compgen() -> None:
+def test_allowed_prefixes_scope_to_xpu_rt() -> None:
     """Allowlist is for production code; tests/ is not in scope."""
 
     for p in ALLOWED_PREFIXES:
-        assert p.startswith("python/compgen/"), p
+        assert p.startswith("python/xpu_rt/"), p

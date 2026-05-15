@@ -17,8 +17,8 @@ import re
 from pathlib import Path
 
 import pytest
-from compgen.graph_compilation import validate_run
-from compgen.graph_compilation.run import run_graph_compilation
+from xpu_rt.graph_compilation import validate_run
+from xpu_rt.graph_compilation.run import run_graph_compilation
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 HOST_CPU_TARGET = REPO_ROOT / "configs" / "targets" / "host_cpu.yaml"
@@ -112,7 +112,7 @@ def test_schema_versions(
 def test_every_region_id_in_payload_mlir_appears_in_region_map(
     model_id: str, graph_analysis_runs: dict[str, Path]
 ) -> None:
-    """Audit: every ``compgen.region_id = "X"`` attribute observed in any
+    """Audit: every ``xpu_rt.region_id = "X"`` attribute observed in any
     payload.mlir must appear as a region in region_map.json."""
     run = graph_analysis_runs[model_id]
     rm = json.loads((run / "02_graph_analysis" / "region_map.json").read_text())
@@ -120,7 +120,7 @@ def test_every_region_id_in_payload_mlir_appears_in_region_map(
     region_ids_in_mlir: set[str] = set()
     for path in (run / "01_payload_lowering").rglob("payload.mlir"):
         text = path.read_text(encoding="utf-8")
-        for m in re.finditer(r'compgen\.region_id\s*=\s*"([^"]+)"', text):
+        for m in re.finditer(r'xpu_rt\.region_id\s*=\s*"([^"]+)"', text):
             region_ids_in_mlir.add(m.group(1))
     missing = region_ids_in_mlir - region_ids_in_map
     assert not missing, f"{model_id}: region_ids in MLIR but missing from map: {missing}"
@@ -247,7 +247,7 @@ def test_analyze_graph_cli_idempotent(
 ) -> None:
     """Re-running ``build_graph_analysis`` twice produces byte-identical
     region_map / tensor_use_def_graph / region_graph JSONs."""
-    from compgen.graph_compilation.region_map import build_graph_analysis
+    from xpu_rt.graph_compilation.region_map import build_graph_analysis
 
     run = graph_analysis_runs["tiny_mlp"]
     a = (run / "02_graph_analysis" / "region_map.json").read_bytes()

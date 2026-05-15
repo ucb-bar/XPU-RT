@@ -4,7 +4,7 @@ Provides ``FP8E4M3Po2Config``, an ``AOBaseConfig`` subclass that can be used
 with ``torchao.quantization.quantize_()``:
 
     >>> from torchao.quantization import quantize_
-    >>> from compgen.quantization import FP8E4M3Po2Config
+    >>> from xpu_rt.quantization import FP8E4M3Po2Config
     >>> quantize_(model, FP8E4M3Po2Config())
 
 The handler replaces ``nn.Linear`` weights with ``FP8E4M3Po2Tensor``, which
@@ -24,7 +24,7 @@ import torch.nn as nn
 from torchao.core.config import AOBaseConfig
 from torchao.quantization.quant_api import register_quantize_module_handler
 
-from compgen.quantization.fp8_tensor import FP8E4M3Po2Tensor
+from xpu_rt.quantization.fp8_tensor import FP8E4M3Po2Tensor
 
 
 @dataclass

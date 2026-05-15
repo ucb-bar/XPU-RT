@@ -6,7 +6,7 @@ import ctypes
 from unittest.mock import MagicMock, patch
 
 import pytest
-from compgen.runtime.native_bridge import (
+from xpu_rt.runtime.native_bridge import (
     _NOT_COMPILED_MSG,
     NativeBuffer,
     NativeDevice,
@@ -38,20 +38,20 @@ class TestLibraryLoading:
         # In CI/test environments the C library will not be compiled.
         assert lib is None
 
-    @patch("compgen.runtime.native_bridge.ctypes.CDLL")
-    @patch("compgen.runtime.native_bridge.ctypes.util.find_library")
+    @patch("xpu_rt.runtime.native_bridge.ctypes.CDLL")
+    @patch("xpu_rt.runtime.native_bridge.ctypes.util.find_library")
     def test_try_load_library_uses_find_library(
         self,
         mock_find: MagicMock,
         mock_cdll: MagicMock,
     ) -> None:
         """When ctypes.util.find_library succeeds, the lib is loaded."""
-        mock_find.return_value = "/usr/lib/libcompgen_runtime.so"
+        mock_find.return_value = "/usr/lib/libxpu_rt_runtime.so"
         sentinel = MagicMock()
         mock_cdll.return_value = sentinel
         lib = _try_load_library()
         assert lib is sentinel
-        mock_cdll.assert_called_with("/usr/lib/libcompgen_runtime.so")
+        mock_cdll.assert_called_with("/usr/lib/libxpu_rt_runtime.so")
 
 
 # ---------------------------------------------------------------------------
@@ -240,7 +240,7 @@ class TestNativeBufferValidation:
         buf = NativeBuffer(size=8, handle=ctypes.c_void_p(0x1), lib=mock_lib)
         with pytest.raises(ValueError, match="exceeds buffer size"):
             buf.write(b"\x00" * 16)
-        # Prevent __del__ from calling into mock (no compgen_buffer_free)
+        # Prevent __del__ from calling into mock (no xpu_rt_buffer_free)
         buf._lib = None
         buf._freed = True
 

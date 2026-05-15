@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from compgen.targetgen.classify import Classification, TargetFamily
-from compgen.targetgen.hardware_spec import HardwareSpec
+from xpu_rt.targetgen.classify import Classification, TargetFamily
+from xpu_rt.targetgen.hardware_spec import HardwareSpec
 
 
 @dataclass(frozen=True)
@@ -29,7 +29,7 @@ class StageRequirement:
 
 @dataclass(frozen=True)
 class SupportPlan:
-    """What CompGen needs to generate for this target.
+    """What XPU-RT needs to generate for this target.
 
     Attributes:
         target_name: Target identifier.

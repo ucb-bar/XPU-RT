@@ -10,14 +10,14 @@ Future arch-leaves under ``targets/cpu/x86/avx512/``,
 ``targets/cpu/x86/avx2/`` etc. would specialize with intrinsics.
 
 Each body returned satisfies the same
-:class:`compgen.transforms.emit_cuda_megakernel.DeviceFunctionSource`
+:class:`xpu_rt.transforms.emit_cuda_megakernel.DeviceFunctionSource`
 contract the GPU emitters use — the universal lowering matcher
 treats CPU and GPU bodies identically.
 """
 
 from __future__ import annotations
 
-from compgen.transforms.emit_cuda_megakernel import DeviceFunctionSource
+from xpu_rt.transforms.emit_cuda_megakernel import DeviceFunctionSource
 
 
 class X86BodyEmitter:

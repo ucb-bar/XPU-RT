@@ -1,6 +1,6 @@
 """+ reconstructed xDSL PatternRewriter passes.
 
-Every pass here is CompGen-owned: zero external references to IREE
+Every pass here is XPU-RT-owned: zero external references to IREE
 or XLA as runtime implementations. Each file ports the corresponding
 upstream semantic (named in the module docstring) onto xDSL's
 ``PatternRewriter`` infrastructure directly.

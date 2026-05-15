@@ -1,9 +1,9 @@
-"""MCP (Model Context Protocol) server surface for CompGen.
+"""MCP (Model Context Protocol) server surface for XPU-RT.
 
-Exposes CompGen's LLM-driven compilation backbone as a stdio MCP
-server named ``compgen-mcp`` that Claude Code (or any MCP client)
+Exposes XPU-RT's LLM-driven compilation backbone as a stdio MCP
+server named ``xpu-rt-mcp`` that Claude Code (or any MCP client)
 can plug into. The server is a thin adaptor over
-:mod:`compgen.agent.llm_driver` — no logic lives here that doesn't
+:mod:`xpu_rt.agent.llm_driver` — no logic lives here that doesn't
 already exist in the Python surface.
 
 Package layout:
@@ -17,16 +17,16 @@ Package layout:
   get_dossier, session_summary.
 - ``tools.transform`` — invoke_tool, propose_invent_slot,
   verify_proposal, step_proposal.
-- ``server`` — MCP stdio entry (``compgen-mcp`` script).
+- ``server`` — MCP stdio entry (``xpu-rt-mcp`` script).
 
 Tool handlers in ``tools/`` are pure functions so the test suite can
 drive them directly without spawning a subprocess. The MCP SDK
 dependency is optional: if ``mcp`` is not installed, the Python
-surface still works; only the ``compgen-mcp`` CLI requires it.
+surface still works; only the ``xpu-rt-mcp`` CLI requires it.
 """
 
 from __future__ import annotations
 
-from compgen.mcp.session import McpSession, SessionManager
+from xpu_rt.mcp.session import McpSession, SessionManager
 
 __all__ = ["McpSession", "SessionManager"]

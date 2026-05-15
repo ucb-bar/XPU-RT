@@ -4,9 +4,9 @@ Covers gaps #5, #8, #16, #17, #18:
 
 - #5: real-driven 4-bidder test where the providers are REAL
   instances (not test-local stubs) of the shipped Phase D providers.
-- #8: MCP-layer integration test for ``compgen_compare_kernel_bids``.
+- #8: MCP-layer integration test for ``xpu_rt_compare_kernel_bids``.
 - #16: test-pollution hygiene — confirm tests don't write to
-  ``<REPO>/.compgen/user_kernel_index/``.
+  ``<REPO>/.xpu_rt/user_kernel_index/``.
 - #17: kernel symbol metadata carries the provider's actual entry
   symbol (CReferenceProvider's matmul vs pointwise symbols).
 - #18: Triton translator wiring — auction's kernel_metadata.json
@@ -32,18 +32,18 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 class TestGap16TestPollutionHygiene:
-    def test_repo_compgen_user_kernel_index_is_absent(self) -> None:
-        """The test suite must not write to ``<REPO>/.compgen/user_kernel_index/``.
+    def test_repo_xpu_rt_user_kernel_index_is_absent(self) -> None:
+        """The test suite must not write to ``<REPO>/.xpu_rt/user_kernel_index/``.
         Tests use ``monkeypatch.chdir(tmp_path)`` so the index lands
         under the test's tmp dir, not the repo."""
-        repo_index = REPO_ROOT / ".compgen" / "user_kernel_index"
+        repo_index = REPO_ROOT / ".xpu_rt" / "user_kernel_index"
         # Absence is fine; presence (post-test) would be the pollution.
         if repo_index.exists():
             # If it exists, it should not have manifest files left
             # by tests — only manual stress runs would leave them.
             stale = list(repo_index.rglob("manifest.yaml"))
             assert not stale, (
-                f"repo .compgen/user_kernel_index/ contains stale "
+                f"repo .xpu_rt/user_kernel_index/ contains stale "
                 f"test artifacts: {stale}"
             )
 
@@ -55,8 +55,8 @@ class TestGap16TestPollutionHygiene:
 
 class TestGap17SymbolMetadata:
     def test_c_reference_matmul_symbol(self) -> None:
-        from compgen.kernels.provider import KernelContract, SearchBudget
-        from compgen.kernels.providers.c_reference import CReferenceProvider
+        from xpu_rt.kernels.provider import KernelContract, SearchBudget
+        from xpu_rt.kernels.providers.c_reference import CReferenceProvider
 
         p = CReferenceProvider()
         result = p.search(
@@ -65,11 +65,11 @@ class TestGap17SymbolMetadata:
             ),
             SearchBudget(),
         )
-        assert result.metadata["symbol"] == "compgen_matmul_f32"
+        assert result.metadata["symbol"] == "xpu_rt_matmul_f32"
 
     def test_c_reference_pointwise_symbol(self) -> None:
-        from compgen.kernels.provider import KernelContract, SearchBudget
-        from compgen.kernels.providers.c_reference import CReferenceProvider
+        from xpu_rt.kernels.provider import KernelContract, SearchBudget
+        from xpu_rt.kernels.providers.c_reference import CReferenceProvider
 
         p = CReferenceProvider()
         result = p.search(
@@ -79,7 +79,7 @@ class TestGap17SymbolMetadata:
             SearchBudget(),
         )
         # Pointwise dispatches to the fused-pointwise template.
-        assert result.metadata["symbol"] == "compgen_fused_pointwise_f32"
+        assert result.metadata["symbol"] == "xpu_rt_fused_pointwise_f32"
         assert result.metadata["kind"] == "reference_pointwise"
 
 
@@ -90,8 +90,8 @@ class TestGap17SymbolMetadata:
 
 class TestGap18TritonTranslatorWiring:
     def test_translator_supports_cuda_targets(self) -> None:
-        from compgen.kernels.contract_translator import TritonContractTranslator
-        from compgen.kernels.contract_v3 import KernelContractV3
+        from xpu_rt.kernels.contract_translator import TritonContractTranslator
+        from xpu_rt.kernels.contract_v3 import KernelContractV3
 
         cs = {
             "candidate_kind": "set_tile_params",
@@ -125,7 +125,7 @@ class TestGap18TritonTranslatorWiring:
         run_dir = tmp_path / "run"
         result = subprocess.run(
             [
-                sys.executable, "-m", "compgen.graph_compilation", "run",
+                sys.executable, "-m", "xpu_rt.graph_compilation", "run",
                 "--model", str(REPO_ROOT / "configs/models/merlin_mlp_wide.yaml"),
                 "--target", str(REPO_ROOT / "configs/targets/cuda_sm75.yaml"),
                 "--out", str(run_dir),
@@ -164,17 +164,17 @@ class TestGap18TritonTranslatorWiring:
 
 
 # --------------------------------------------------------------------------- #
-# MCP-layer test for compgen_compare_kernel_bids
+# MCP-layer test for xpu_rt_compare_kernel_bids
 # --------------------------------------------------------------------------- #
 
 
 class TestGap8McpCompareKernelBids:
     def test_no_auction_report_returns_typed_failure(self) -> None:
-        from compgen.mcp.tools.kernel_codegen import (
-            compgen_compare_kernel_bids,
+        from xpu_rt.mcp.tools.kernel_codegen import (
+            xpu_rt_compare_kernel_bids,
         )
 
-        result = compgen_compare_kernel_bids(
+        result = xpu_rt_compare_kernel_bids(
             run_dir="/tmp/nonexistent_run", task_id="kcodegen_nope",
         )
         assert result["ok"] is False
@@ -188,7 +188,7 @@ class TestGap8McpCompareKernelBids:
         the MCP tool. Surface ranked bid table."""
         result = subprocess.run(
             [
-                sys.executable, "-m", "compgen.graph_compilation", "run",
+                sys.executable, "-m", "xpu_rt.graph_compilation", "run",
                 "--model", str(REPO_ROOT / "configs/models/merlin_mlp_wide.yaml"),
                 "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
                 "--out", str(tmp_path / "run"),
@@ -206,11 +206,11 @@ class TestGap8McpCompareKernelBids:
         assert auction_dirs
         task_id = auction_dirs[0].name
 
-        from compgen.mcp.tools.kernel_codegen import (
-            compgen_compare_kernel_bids,
+        from xpu_rt.mcp.tools.kernel_codegen import (
+            xpu_rt_compare_kernel_bids,
         )
 
-        summary = compgen_compare_kernel_bids(
+        summary = xpu_rt_compare_kernel_bids(
             run_dir=str(run_dir), task_id=task_id,
         )
         assert summary["ok"] is True
@@ -251,7 +251,7 @@ class TestGap5RealProvidersInAuction:
         run_dir = tmp_path / "run"
         boot = subprocess.run(
             [
-                sys.executable, "-m", "compgen.graph_compilation", "run",
+                sys.executable, "-m", "xpu_rt.graph_compilation", "run",
                 "--model", str(REPO_ROOT / "configs/models/merlin_mlp_wide.yaml"),
                 "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
                 "--out", str(run_dir),
@@ -311,7 +311,7 @@ void user_real_matmul(const float* A, const float* B, float* Y,
             )
 
         monkeypatch.chdir(tmp_path)
-        from compgen.kernels.user_kernel_index import (
+        from xpu_rt.kernels.user_kernel_index import (
             default_index_root, reindex,
         )
 
@@ -321,15 +321,15 @@ void user_real_matmul(const float* A, const float* B, float* Y,
         )
 
         # Build a registry with ONLY the real shipped providers.
-        from compgen.kernels.providers.c_reference import CReferenceProvider
-        from compgen.kernels.providers.user_path import UserKernelProvider
-        from compgen.kernels.registry import ProviderRegistry
+        from xpu_rt.kernels.providers.c_reference import CReferenceProvider
+        from xpu_rt.kernels.providers.user_path import UserKernelProvider
+        from xpu_rt.kernels.registry import ProviderRegistry
 
         reg = ProviderRegistry()
         reg.register(CReferenceProvider())
         reg.register(UserKernelProvider(index_root=default_index_root()))
 
-        from compgen.graph_compilation.kernel_auction import run_kernel_auction
+        from xpu_rt.graph_compilation.kernel_auction import run_kernel_auction
 
         result = run_kernel_auction(
             run_dir=run_dir, mode="multi-bidder", bid_cutoff=4,

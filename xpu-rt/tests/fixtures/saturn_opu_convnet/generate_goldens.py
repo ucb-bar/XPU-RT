@@ -4,7 +4,7 @@ Run once from a developer workstation::
 
     uv run python tests/fixtures/saturn_opu_convnet/generate_goldens.py
 
-The goldens feed both the CompGen compile-path differential test and the
+The goldens feed both the XPU-RT compile-path differential test and the
 Zephyr/Spike/FireSim end-to-end tests, so they must be stable and
 reproducible. Seed is pinned in :mod:`model`.
 """

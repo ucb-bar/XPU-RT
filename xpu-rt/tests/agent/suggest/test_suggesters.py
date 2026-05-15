@@ -12,18 +12,18 @@ from pathlib import Path
 import pytest
 import torch
 import torch.nn as nn
-from compgen.agent.suggest import (
+from xpu_rt.agent.suggest import (
     suggest,
     supported_slot_names,
 )
-from compgen.agent.suggest._candidate import ProposalCandidate
-from compgen.agent.suggest._recipe_index import (
+from xpu_rt.agent.suggest._candidate import ProposalCandidate
+from xpu_rt.agent.suggest._recipe_index import (
     build_recipe_index,
     critical_path_recipe_syms,
 )
-from compgen.api import compile_model
-from compgen.api import device as _device
-from compgen.ir.recipe.seed import generate_seed_recipe
+from xpu_rt.api import compile_model
+from xpu_rt.api import device as _device
+from xpu_rt.ir.recipe.seed import generate_seed_recipe
 
 EXEMPLAR = Path(__file__).resolve().parents[2] / "targetgen" / "exemplars" / "test_gpu_simt.yaml"
 
@@ -134,12 +134,12 @@ def test_suggest_fusion_returns_candidates_on_mlp() -> None:
 
 def test_suggest_fusion_to_proposal_is_accepted_by_propose_invent_slot(tmp_path: Path) -> None:
     """Submitting candidate 0 to propose_invent_slot must accept end-to-end."""
-    from compgen.agent.invent_slots.registrar import register_invent_slots
-    from compgen.agent.llm_driver import LLMDrivenCompiler
-    from compgen.llm.mock_client import MockLLMClient
-    from compgen.llm.registry import Registry
-    from compgen.mcp.session import SessionManager
-    from compgen.mcp.tools.transform import propose_invent_slot
+    from xpu_rt.agent.invent_slots.registrar import register_invent_slots
+    from xpu_rt.agent.llm_driver import LLMDrivenCompiler
+    from xpu_rt.llm.mock_client import MockLLMClient
+    from xpu_rt.llm.registry import Registry
+    from xpu_rt.mcp.session import SessionManager
+    from xpu_rt.mcp.tools.transform import propose_invent_slot
 
     sm = SessionManager(scratch_root=tmp_path / "scratch")
     session = sm.open()

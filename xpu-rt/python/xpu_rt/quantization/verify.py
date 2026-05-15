@@ -20,10 +20,10 @@ import structlog
 import torch
 import torch.nn as nn
 
-from compgen.quantization.attention import ExportableFP8Attention
-from compgen.quantization.export_wrappers import ExportableFP8Conv2d, ExportableFP8Linear
-from compgen.quantization.fp8_ops import is_power_of_two
-from compgen.quantization.fp8_tensor import FP8E4M3Po2Tensor
+from xpu_rt.quantization.attention import ExportableFP8Attention
+from xpu_rt.quantization.export_wrappers import ExportableFP8Conv2d, ExportableFP8Linear
+from xpu_rt.quantization.fp8_ops import is_power_of_two
+from xpu_rt.quantization.fp8_tensor import FP8E4M3Po2Tensor
 
 logger = structlog.get_logger()
 

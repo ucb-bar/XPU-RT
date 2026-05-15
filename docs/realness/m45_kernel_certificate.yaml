@@ -33,9 +33,9 @@ forbidden:
 - mutating an emitted certificate post-write (immutable artefact)
 realness_level: production_path
 required_evidence:
-- python/compgen/kernels/kernel_certificate.py
-- python/compgen/graph_compilation/kernel_codegen_response.py (M-45 hook in commit_response)
-- python/compgen/mcp/tools/kernel_codegen.py (inspect surfaces cert + validation)
+- python/xpu_rt/kernels/kernel_certificate.py
+- python/xpu_rt/graph_compilation/kernel_codegen_response.py (M-45 hook in commit_response)
+- python/xpu_rt/mcp/tools/kernel_codegen.py (inspect surfaces cert + validation)
 - tests/kernels/test_kernel_certificate.py
 - "04_kernel_codegen/certificates/<contract_hash>.json on a real run"
 feature_id: m45_kernel_certificate

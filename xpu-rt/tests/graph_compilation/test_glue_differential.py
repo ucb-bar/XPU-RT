@@ -23,7 +23,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 def _drive_pipeline_with_provider_response(model: str, out: Path) -> None:
     res = subprocess.run([
-        sys.executable, "-m", "compgen.graph_compilation", "run",
+        sys.executable, "-m", "xpu_rt.graph_compilation", "run",
         "--model", str(REPO_ROOT / f"configs/models/{model}.yaml"),
         "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
         "--out", str(out),
@@ -81,10 +81,10 @@ def _drive_pipeline_with_provider_response(model: str, out: Path) -> None:
         "artifacts": artifacts, "claims": claims,
         "provider": {"kind": "test_synthetic"},
     }
-    from compgen.graph_compilation.kernel_codegen_response import commit_response
+    from xpu_rt.graph_compilation.kernel_codegen_response import commit_response
     commit_response(run_dir=out, task_id=req["task_id"], response=response)
-    from compgen.graph_compilation.execution_plan_emit import emit_execution_plan
-    from compgen.runtime.glue_emit import emit_python_sync_executor
+    from xpu_rt.graph_compilation.execution_plan_emit import emit_execution_plan
+    from xpu_rt.runtime.glue_emit import emit_python_sync_executor
     emit_execution_plan(out)
     emit_python_sync_executor(out)
 
@@ -96,7 +96,7 @@ def _drive_pipeline_with_provider_response(model: str, out: Path) -> None:
 
 def test_merlin_mlp_wide_discharges_bit_equality(tmp_path: Path) -> None:
     """K_iters=1 (K=16, tile_K=16) → tiled output exactly equals eager."""
-    from compgen.graph_compilation.glue_differential import run_glue_differential
+    from xpu_rt.graph_compilation.glue_differential import run_glue_differential
     out = tmp_path / "run"
     _drive_pipeline_with_provider_response("merlin_mlp_wide", out)
     result = run_glue_differential(out, num_cases=8)
@@ -111,7 +111,7 @@ def test_merlin_mlp_wide_discharges_bit_equality(tmp_path: Path) -> None:
 def test_tiny_mlp_discharges_tolerance_eps(tmp_path: Path) -> None:
     """tiny_mlp picks tile_M4_N16_K16 on K=64 → K_iters=4 → tolerance_eps.
     Every case must be within the Higham bound."""
-    from compgen.graph_compilation.glue_differential import run_glue_differential
+    from xpu_rt.graph_compilation.glue_differential import run_glue_differential
     out = tmp_path / "run"
     _drive_pipeline_with_provider_response("tiny_mlp", out)
     result = run_glue_differential(out, num_cases=8)
@@ -135,7 +135,7 @@ def test_tampered_kernel_triggers_failure(tmp_path: Path) -> None:
     """A buggy kernel that returns torch.zeros instead of A@B fails the
     differential with status=fail. The detector picks this up via
     the downstream-retry table."""
-    from compgen.graph_compilation.glue_differential import run_glue_differential
+    from xpu_rt.graph_compilation.glue_differential import run_glue_differential
     out = tmp_path / "run"
     _drive_pipeline_with_provider_response("merlin_mlp_wide", out)
 
@@ -160,7 +160,7 @@ def test_tampered_kernel_triggers_failure(tmp_path: Path) -> None:
 def test_glue_differential_picks_up_in_m15b_table() -> None:
     """The downstream-retry detector must include
     'glue_differential' so a fail status surfaces as a typed retry."""
-    from compgen.graph_compilation.downstream_retry import _DOWNSTREAM_REPORTS
+    from xpu_rt.graph_compilation.downstream_retry import _DOWNSTREAM_REPORTS
     stage_ids = [row[0] for row in _DOWNSTREAM_REPORTS]
     assert "glue_differential" in stage_ids
 
@@ -168,8 +168,8 @@ def test_glue_differential_picks_up_in_m15b_table() -> None:
 def test_m15b_detects_glue_differential_failure(tmp_path: Path) -> None:
     """End-to-end: a tampered glue differential is detected as a
     downstream failure by the retry table."""
-    from compgen.graph_compilation.glue_differential import run_glue_differential
-    from compgen.graph_compilation.downstream_retry import (
+    from xpu_rt.graph_compilation.glue_differential import run_glue_differential
+    from xpu_rt.graph_compilation.downstream_retry import (
         detect_downstream_failure,
     )
     out = tmp_path / "run"
@@ -196,7 +196,7 @@ def test_m15b_detects_glue_differential_failure(tmp_path: Path) -> None:
 
 def test_skips_when_no_plan(tmp_path: Path) -> None:
     """No plan → status=skipped, not crash."""
-    from compgen.graph_compilation.glue_differential import run_glue_differential
+    from xpu_rt.graph_compilation.glue_differential import run_glue_differential
     out = tmp_path / "empty"
     out.mkdir()
     result = run_glue_differential(out)

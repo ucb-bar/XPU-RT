@@ -1,6 +1,6 @@
 """Accelerator dialect registration.
 
-Registers the ``compgen.accel`` dialect with xDSL. The dialect provides
+Registers the ``xpu_rt.accel`` dialect with xDSL. The dialect provides
 ops for custom accelerator primitives.
 
 Two exports:
@@ -14,10 +14,10 @@ from dataclasses import dataclass
 
 from xdsl.ir import Dialect
 
-from compgen.ir.accel.ops import ACCEL_IR_OPS
+from xpu_rt.ir.accel.ops import ACCEL_IR_OPS
 
-AccelDialect = Dialect("compgen.accel", ACCEL_IR_OPS, [])
-"""The Accel IR dialect -- register with ``ctx.register_dialect("compgen.accel", lambda: AccelDialect)``."""
+AccelDialect = Dialect("xpu_rt.accel", ACCEL_IR_OPS, [])
+"""The Accel IR dialect -- register with ``ctx.register_dialect("xpu_rt.accel", lambda: AccelDialect)``."""
 
 
 @dataclass
@@ -27,15 +27,15 @@ class AccelDialectConfig:
     Kept for backward compatibility. Prefer using :data:`AccelDialect` directly.
 
     Attributes:
-        name: Dialect name (default: "compgen.accel").
+        name: Dialect name (default: "xpu_rt.accel").
         vendor: Optional vendor prefix for vendor-specific extensions.
     """
 
-    name: str = "compgen.accel"
+    name: str = "xpu_rt.accel"
     vendor: str = ""
 
     def register(self) -> Dialect:
-        """Return the xDSL Dialect object for ``compgen.accel``.
+        """Return the xDSL Dialect object for ``xpu_rt.accel``.
 
         Returns:
             The :data:`AccelDialect` xDSL ``Dialect`` instance.

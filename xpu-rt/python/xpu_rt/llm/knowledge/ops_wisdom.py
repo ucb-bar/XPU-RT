@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import structlog
 
-from compgen.llm.knowledge.base import (
+from xpu_rt.llm.knowledge.base import (
     BackendGuidance,
     Confidence,
     FusionOpportunity,
@@ -294,7 +294,7 @@ def build_default_op_wisdom() -> dict[str, OpWisdom]:
                 recommended_backend="accel dialect",
                 conditions="Accelerator with conv/matmul engine",
                 rationale="Map to hardware convolution instructions via accel dialect.",
-                source="CompGen",
+                source="XPU-RT",
             ),
         ],
         pitfalls=[

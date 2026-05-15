@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from compgen.semantic.synthesis.guard_lang import Cmp, CmpOp, Const, Var
-from compgen.semantic.synthesis.promote import GuardArtifact
-from compgen.semantic.synthesis.registry import GuardRegistry
-from compgen.semantic.synthesis.runtime import GuardRuntime
+from xpu_rt.semantic.synthesis.guard_lang import Cmp, CmpOp, Const, Var
+from xpu_rt.semantic.synthesis.promote import GuardArtifact
+from xpu_rt.semantic.synthesis.registry import GuardRegistry
+from xpu_rt.semantic.synthesis.runtime import GuardRuntime
 
 
 def test_guard_runtime_accepts_matching_env() -> None:

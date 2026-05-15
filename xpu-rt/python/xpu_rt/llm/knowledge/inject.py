@@ -6,7 +6,7 @@ LLM prompts at various decision points.
 
 from __future__ import annotations
 
-from compgen.llm.knowledge.base import (
+from xpu_rt.llm.knowledge.base import (
     AntiPattern,
     KernelLibraryWisdom,
     KnowledgeBase,
@@ -14,7 +14,7 @@ from compgen.llm.knowledge.base import (
     TargetPattern,
     TransformRecipe,
 )
-from compgen.llm.knowledge.query import QueryContext, query
+from xpu_rt.llm.knowledge.query import QueryContext, query
 
 
 def inject_knowledge(

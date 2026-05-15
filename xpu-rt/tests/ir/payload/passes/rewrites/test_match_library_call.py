@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import pytest
-from compgen.ir.payload.passes.rewrites.match_library_call import (
+from xpu_rt.ir.payload.passes.rewrites.match_library_call import (
     MatchLibraryCallConfig,
     MatchLibraryCallStats,
     run_match_library_call,
 )
-from compgen.ir.quant import WeightInt4PackMMOp, WeightInt8PackMMOp
+from xpu_rt.ir.quant import WeightInt4PackMMOp, WeightInt8PackMMOp
 from xdsl.dialects.builtin import (
     Float32Type,
     FunctionType,
@@ -84,7 +84,7 @@ def _conv_module():
     w = EmptyOp([], ft)
     ext = FuncOp.external("aten_convolution", [it, ft], [ot])
     call = CallOp("aten_convolution", [x.results[0], w.results[0]], [ot])
-    call.attributes["compgen._pattern_hint"] = StringAttr("convolution")
+    call.attributes["xpu_rt._pattern_hint"] = StringAttr("convolution")
     return _wrap([x, w, call], call.res[0], ot, external_funcs=[ext]), call
 
 
@@ -96,7 +96,7 @@ def test_matmul_matches_cublas():
     cfg = MatchLibraryCallConfig(library_allowlist=("cublas",))
     stats = run_match_library_call(m, config=cfg)
     assert stats.matmul_matches == 1
-    assert mm.attributes["compgen.library_dispatch"].data == "cublas"
+    assert mm.attributes["xpu_rt.library_dispatch"].data == "cublas"
     assert stats.dispatch_counts["cublas"] == 1
     assert_module_verifies(m)
 
@@ -105,7 +105,7 @@ def test_matmul_falls_through_to_triton_when_cublas_missing():
     m, mm = _matmul_module()
     cfg = MatchLibraryCallConfig(library_allowlist=("triton",))
     run_match_library_call(m, config=cfg)
-    assert mm.attributes["compgen.library_dispatch"].data == "triton"
+    assert mm.attributes["xpu_rt.library_dispatch"].data == "triton"
 
 
 def test_int8_pack_mm_prefers_cublaslt():
@@ -113,7 +113,7 @@ def test_int8_pack_mm_prefers_cublaslt():
     cfg = MatchLibraryCallConfig(library_allowlist=("cublaslt", "triton"))
     stats = run_match_library_call(m, config=cfg)
     assert stats.quant_matmul_matches == 1
-    assert q.attributes["compgen.library_dispatch"].data == "cublaslt"
+    assert q.attributes["xpu_rt.library_dispatch"].data == "cublaslt"
 
 
 def test_int4_pack_mm_goes_to_triton():
@@ -121,7 +121,7 @@ def test_int4_pack_mm_goes_to_triton():
     cfg = MatchLibraryCallConfig(library_allowlist=("cublaslt", "triton"))
     run_match_library_call(m, config=cfg)
     # int4 only matches Triton (or qnn).
-    assert q.attributes["compgen.library_dispatch"].data == "triton"
+    assert q.attributes["xpu_rt.library_dispatch"].data == "triton"
 
 
 def test_conv_matches_cudnn():
@@ -129,7 +129,7 @@ def test_conv_matches_cudnn():
     cfg = MatchLibraryCallConfig(library_allowlist=("cudnn",))
     stats = run_match_library_call(m, config=cfg)
     assert stats.conv_matches == 1
-    assert call.attributes["compgen.library_dispatch"].data == "cudnn"
+    assert call.attributes["xpu_rt.library_dispatch"].data == "cudnn"
 
 
 def test_allowlist_order_preserved():
@@ -137,7 +137,7 @@ def test_allowlist_order_preserved():
     m, mm = _matmul_module()
     cfg = MatchLibraryCallConfig(library_allowlist=("triton", "cublas"))
     run_match_library_call(m, config=cfg)
-    assert mm.attributes["compgen.library_dispatch"].data == "triton"
+    assert mm.attributes["xpu_rt.library_dispatch"].data == "triton"
 
 
 # --- no-match cases -------------------------------------------------------
@@ -148,7 +148,7 @@ def test_no_library_in_allowlist_matches_nothing():
     cfg = MatchLibraryCallConfig(library_allowlist=())
     stats = run_match_library_call(m, config=cfg)
     assert stats.no_match >= 1
-    assert "compgen.library_dispatch" not in mm.attributes
+    assert "xpu_rt.library_dispatch" not in mm.attributes
 
 
 def test_quant_mm_no_matching_library():
@@ -156,7 +156,7 @@ def test_quant_mm_no_matching_library():
     # Only allow cublas (float) / cudnn (conv) -> int4 won't match either.
     cfg = MatchLibraryCallConfig(library_allowlist=("cublas", "cudnn"))
     run_match_library_call(m, config=cfg)
-    assert "compgen.library_dispatch" not in q.attributes
+    assert "xpu_rt.library_dispatch" not in q.attributes
 
 
 # --- validation -----------------------------------------------------------
@@ -195,8 +195,8 @@ def test_match_library_call_on_attention_mlp_tiny():
     The two matmuls (attention + output projection) should pick up
     a Triton dispatch tag.
     """
-    from compgen.capture.torch_mlir_bridge import bridge_fx_graph
-    from compgen.options import cuda_a100_defaults
+    from xpu_rt.capture.torch_mlir_bridge import bridge_fx_graph
+    from xpu_rt.options import cuda_a100_defaults
 
     from tests._fixtures.real_workloads import attention_mlp_tiny
 
@@ -213,8 +213,8 @@ def test_match_library_call_on_attention_mlp_tiny():
 
 
 def test_match_library_call_on_qwen_moe_tiny():
-    from compgen.capture.torch_mlir_bridge import bridge_fx_graph
-    from compgen.options import cuda_a100_defaults
+    from xpu_rt.capture.torch_mlir_bridge import bridge_fx_graph
+    from xpu_rt.options import cuda_a100_defaults
 
     from tests._fixtures.real_workloads import qwen_moe_tiny
 

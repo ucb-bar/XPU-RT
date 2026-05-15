@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from compgen.quantization.npu_op_map import (
+from xpu_rt.quantization.npu_op_map import (
     PI0_QUANT_OPS,
     NpuOpCategory,
     classify_op,

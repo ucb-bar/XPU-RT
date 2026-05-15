@@ -697,7 +697,7 @@ def _inline_cost_preview_into_v3(
 def _annotate_dominance(cost_previews: list[dict[str, Any]]) -> None:
     """Annotate each cost_preview with ``dominated_by`` + ``is_survivor``.
 
-    Delegates to :func:`compgen.agent.cost_preview.compute_cost_previews`
+    Delegates to :func:`xpu_rt.agent.cost_preview.compute_cost_previews`
     so the dominance rule lives in exactly one place. Existing fields
     on the dicts are preserved — this is additive.
 
@@ -709,7 +709,7 @@ def _annotate_dominance(cost_previews: list[dict[str, Any]]) -> None:
     needs to see their typed blocked state intact.
     """
 
-    from compgen.agent.cost_preview import (
+    from xpu_rt.agent.cost_preview import (
         CandidateInput,
         compute_cost_previews,
     )
@@ -881,7 +881,7 @@ def run_cost_preview_v2(
     # --- P2.2 dominance prune (wire-in G1) ---
     # Annotate each cost_preview row with `dominated_by` + `is_survivor`
     # so the agent_decision_request builder can filter to survivors.
-    # Implementation lives in compgen.agent.cost_preview — pure-function
+    # Implementation lives in xpu_rt.agent.cost_preview — pure-function
     # over CandidateInput / CostPreview dataclasses. Existing fields on
     # the dicts are preserved; this is additive.
     _annotate_dominance(cost_previews)

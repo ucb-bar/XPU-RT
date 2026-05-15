@@ -4,13 +4,13 @@ integration_level: promote
 target_families: [host_cpu]
 contract_kinds: [matmul, pointwise, fused_region, reduction]
 emits: [c_source, cffi_module]
-entrypoint: compgen.kernels.providers.c_reference:CReferenceProvider
+entrypoint: xpu_rt.kernels.providers.c_reference:CReferenceProvider
 paper_claimable: true
 required_env: []
 required_commands: []
 required_python_imports: [cffi]
 description: |
-  CPU C / cffi kernel provider. The correctness anchor for CompGen:
+  CPU C / cffi kernel provider. The correctness anchor for XPU-RT:
   every kernel emitted through this provider runs through the
   contract verifier + glue differential against an eager-PyTorch
   reference. No GPU, no vendor SDK, no license required.

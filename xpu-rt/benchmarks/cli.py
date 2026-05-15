@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from compgen.benchmarks import SuiteRunConfig
+from xpu_rt.benchmarks import SuiteRunConfig
 
 from benchmarks.adapters import check_baseline_availability
 from benchmarks.compare import (
@@ -37,7 +37,7 @@ def _workspace_from_args(args: argparse.Namespace) -> WorkspaceConfig:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="benchmarks", description="CompGen benchmark study harness")
+    parser = argparse.ArgumentParser(prog="benchmarks", description="XPU-RT benchmark study harness")
     parser.add_argument("--workspace-config", default="", help="Optional YAML workspace config")
 
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -139,7 +139,7 @@ def main(argv: list[str] | None = None) -> int:
         records = run_study(args.study_id, registry=registry, workspace=workspace, output_dir=args.output_dir)
         print(summary_table(records))
         print()
-        print(ablation_table([record for record in records if record.system_name == "compgen"]))
+        print(ablation_table([record for record in records if record.system_name == "xpu-rt"]))
         return 0
 
     if args.command == "aggregate":

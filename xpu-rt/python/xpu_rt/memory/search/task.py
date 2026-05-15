@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from compgen.memory.schema import KnowledgeItem, ObjectKind, StateSignature
+from xpu_rt.memory.schema import KnowledgeItem, ObjectKind, StateSignature
 
 
 @dataclass(frozen=True)

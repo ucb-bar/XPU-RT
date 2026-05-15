@@ -194,7 +194,7 @@ def _v3_to_legacy_contract(contract_v3: Any) -> Any:
     — providers that need the full V3 should consume it directly via
     's ``bid``.
     """
-    from compgen.kernels.provider import KernelContract
+    from xpu_rt.kernels.provider import KernelContract
 
     target = ""
     try:
@@ -310,7 +310,7 @@ def _translate_provider_result_to_artifacts(
 
     metadata_body = {
         "schema_version": "kernel_metadata_v1",
-        "symbol": "compgen_matmul_f32",  # auction default; provider may override
+        "symbol": "xpu_rt_matmul_f32",  # auction default; provider may override
         "inputs": inputs_meta,
         "outputs": outputs_meta,
         "accumulator_dtype": accumulator,
@@ -326,7 +326,7 @@ def _translate_provider_result_to_artifacts(
     # kernel_metadata so a downstream consumer can see the V3 path
     # was used. Best-effort — failure leaves metadata untouched.
     try:
-        from compgen.kernels.contract_translator import (
+        from xpu_rt.kernels.contract_translator import (
             TritonContractTranslator,
         )
 
@@ -511,7 +511,7 @@ def run_kernel_auction(
             error="contract_path_missing",
         )
 
-    from compgen.graph_compilation.kernel_codegen_response import (
+    from xpu_rt.graph_compilation.kernel_codegen_response import (
         _reconstruct_contract_from_dict,
     )
 
@@ -519,7 +519,7 @@ def run_kernel_auction(
 
     # Build registry + applicable list.
     if registry is None:
-        from compgen.kernels.registry import default_registry
+        from xpu_rt.kernels.registry import default_registry
 
         registry = default_registry()
 
@@ -540,7 +540,7 @@ def run_kernel_auction(
         )
 
     # Collect bids.
-    from compgen.kernels.registry import collect_bids
+    from xpu_rt.kernels.registry import collect_bids
 
     bid_previews = collect_bids(applicable_providers, contract_v3)
     bid_records: list[_BidRecord] = []
@@ -585,7 +585,7 @@ def run_kernel_auction(
     per_provider_feedback: list[tuple[str, list[Any]]] = []
 
     legacy_contract = _v3_to_legacy_contract(contract_v3)
-    from compgen.kernels.provider import SearchBudget
+    from xpu_rt.kernels.provider import SearchBudget
 
     budget = SearchBudget()
 
@@ -666,7 +666,7 @@ def run_kernel_auction(
             artifacts=rel_artifacts,
             provider_name=provider.name,
         )
-        from compgen.graph_compilation.kernel_codegen_response import _run_m44_verifier
+        from xpu_rt.graph_compilation.kernel_codegen_response import _run_m44_verifier
 
         # wants the response to live on disk under a per-provider
         # validation directory so the verifier's report path doesn't
@@ -690,7 +690,7 @@ def run_kernel_auction(
 
         if overall == "pass":
             try:
-                from compgen.kernels.kernel_certificate import emit_certificate
+                from xpu_rt.kernels.kernel_certificate import emit_certificate
 
                 cert_path = emit_certificate(
                     run_dir=run_dir,
@@ -786,7 +786,7 @@ def run_kernel_auction(
     # downstream agent_decision_request emit can rely on the file's
     # existence to decide whether to surface advisory rows.
     try:
-        from compgen.graph_compilation.contract_feedback_apply import (
+        from xpu_rt.graph_compilation.contract_feedback_apply import (
             write_auction_feedback_artifacts,
         )
 
@@ -916,8 +916,8 @@ def _promote_winner(
 
     # Re-run against the promoted location to produce the canonical
     # validation report under the original task_id, then emit the cert.
-    from compgen.graph_compilation.kernel_codegen_response import _run_m44_verifier
-    from compgen.kernels.kernel_certificate import emit_certificate
+    from xpu_rt.graph_compilation.kernel_codegen_response import _run_m44_verifier
+    from xpu_rt.kernels.kernel_certificate import emit_certificate
 
     m44 = _run_m44_verifier(
         run_dir=run_dir,

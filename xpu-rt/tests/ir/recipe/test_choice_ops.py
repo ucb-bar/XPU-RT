@@ -9,8 +9,8 @@ from __future__ import annotations
 import io
 
 import pytest
-from compgen.ir.recipe.ops_candidate import TileOp
-from compgen.ir.recipe.ops_choice import (
+from xpu_rt.ir.recipe.ops_candidate import TileOp
+from xpu_rt.ir.recipe.ops_choice import (
     AlternativesOp,
     DeferChoiceOp,
     PromoteCandidateOp,

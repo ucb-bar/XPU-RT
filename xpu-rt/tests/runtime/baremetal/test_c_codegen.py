@@ -17,7 +17,7 @@ never been exercised by the suite. Phase-11 locks it in.
 
 from __future__ import annotations
 
-from compgen.runtime.baremetal.c_codegen import (
+from xpu_rt.runtime.baremetal.c_codegen import (
     GeneratedCFunction,
     emit_function_declaration,
     emit_function_definition,

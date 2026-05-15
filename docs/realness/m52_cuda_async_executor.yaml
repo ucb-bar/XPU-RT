@@ -1,11 +1,11 @@
 claim: |
   M-52 (Phase C): when the M-46 plan's target is CUDA-class
-  (matches :func:`compgen.runtime.glue.select_adapter`'s CUDA family
+  (matches :func:`xpu_rt.runtime.glue.select_adapter`'s CUDA family
   predicate — names starting with ``cuda``, or matching ``titan-rtx``
   / ``test-gpu-simt``), emit
   ``06_glue_emit/generated_plan_executor_cuda.py`` alongside the M-47
   SYNC and M-51 ASYNC executors. The CUDA executor exposes
-  ``compgen_run_cuda(io, kernels, runtime, *, mode, capture=False,
+  ``xpu_rt_run_cuda(io, kernels, runtime, *, mode, capture=False,
   timeout_s=30.0)``.
 
   Modes and behavioural guarantees:
@@ -49,9 +49,9 @@ forbidden:
 - duplicating M-48's PLAN_VIOLATION classes or M-51's EventTensor handshake template (must be reused)
 realness_level: production_path
 required_evidence:
-- python/compgen/runtime/glue_emit/python_cuda.py
-- python/compgen/runtime/glue_emit/__init__.py (re-export)
-- python/compgen/graph_compilation/run.py (M-52 wired after M-51 in glue-emit stage)
+- python/xpu_rt/runtime/glue_emit/python_cuda.py
+- python/xpu_rt/runtime/glue_emit/__init__.py (re-export)
+- python/xpu_rt/graph_compilation/run.py (M-52 wired after M-51 in glue-emit stage)
 - tests/runtime/test_glue_emit_python_cuda.py
 - "real-driven stress: /tmp/m52_stress.py 5 phases (sync, async, capture-multi-rejected, capture-available, capture-unavailable-honest)"
 feature_id: m52_cuda_async_executor

@@ -50,7 +50,7 @@ def _read_json(path: Path) -> dict[str, Any]:
 
 
 def validate_gap_closure(run_dir: Path) -> ClosureValidationReport:
-    from compgen.graph_compilation.artifacts import stage_dir
+    from xpu_rt.graph_compilation.artifacts import stage_dir
 
     run_dir = Path(run_dir).resolve()
     out_dir = stage_dir(run_dir, "gap_closure")

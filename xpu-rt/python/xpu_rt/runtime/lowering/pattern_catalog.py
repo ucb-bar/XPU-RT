@@ -18,7 +18,7 @@ FFN with three transformer-shaped patterns:
 * ``moe``: a router that produces a top-k expert routing map plus an
   ``nn.ModuleList`` of expert FFNs. Data-dependent, so the matcher
   routes through the dynamic-schedule path (``policy="dynamic"``) and
-  emits a :class:`~compgen.transforms.event_dynamic_schedule.TriggerGenerator`
+  emits a :class:`~xpu_rt.transforms.event_dynamic_schedule.TriggerGenerator`
   per expert + an ``"requires_ondevice_scheduler"`` schedule hint so
   Phase 6 picks the on-device-scheduler-capable target. Per the
   paper's §3.2 dispatch model — each token's routing index is a
@@ -29,12 +29,12 @@ The Wave 1 matchers (diamond / FFN) stay primary in the cascade;
 this module's matchers run after them so a plain FFN-shaped block
 still lowers to ``"ffn"`` (not ``"residual_norm@ffn"``) even if the
 caller wraps it in a residual+norm later. The cascade order is set
-in :mod:`compgen.runtime.lowering.fx_to_megakernel`.
+in :mod:`xpu_rt.runtime.lowering.fx_to_megakernel`.
 
 These matchers emit *placeholder* tile-task bodies that are
 correct at the graph-topology level; the CUDA codegen for the new
 kinds (softmax, layernorm, masked-matmul) follows in Wave 2.2+ and
-plugs in via :class:`~compgen.transforms.emit_cuda_megakernel.DeviceFunctionSource`.
+plugs in via :class:`~xpu_rt.transforms.emit_cuda_megakernel.DeviceFunctionSource`.
 This module's contract is the matcher's structural recognition +
 graph-shape contract — those are the things downstream tests pin.
 """
@@ -46,16 +46,16 @@ from typing import TYPE_CHECKING, Any
 import torch
 import torch.nn as nn
 
-from compgen.runtime.event_tensor import EventTensor
-from compgen.runtime.megakernel import (
+from xpu_rt.runtime.event_tensor import EventTensor
+from xpu_rt.runtime.megakernel import (
     DeviceCall,
     EventEdge,
     MegakernelGraph,
 )
-from compgen.transforms.emit_cuda_megakernel import DeviceFunctionSource
+from xpu_rt.transforms.emit_cuda_megakernel import DeviceFunctionSource
 
 if TYPE_CHECKING:
-    from compgen.runtime.lowering.fx_to_megakernel import LoweringResult
+    from xpu_rt.runtime.lowering.fx_to_megakernel import LoweringResult
 
 
 # ---------------------------------------------------------------------------
@@ -138,7 +138,7 @@ def _match_residual_norm(
     cascade (diamond / FFN) so the composition produces e.g.
     ``"residual_norm@ffn"``.
     """
-    from compgen.runtime.lowering.fx_to_megakernel import (
+    from xpu_rt.runtime.lowering.fx_to_megakernel import (
         UnsupportedShape,
         _match_diamond,
         _match_ffn,
@@ -243,7 +243,7 @@ def _emit_residual_norm(
     """
     from dataclasses import replace as _replace
 
-    from compgen.runtime.lowering.fx_to_megakernel import (
+    from xpu_rt.runtime.lowering.fx_to_megakernel import (
         LoweringDecision,
         LoweringResult,
         UnsupportedShape,
@@ -468,14 +468,14 @@ def _emit_residual_norm_with_bare_linear(
     diamond/ffn matcher (a single ``nn.Linear`` doesn't match either)
     and synthesizes a one-task linear sub-graph manually.
     """
-    from compgen.runtime.lowering.fx_to_megakernel import (
+    from xpu_rt.runtime.lowering.fx_to_megakernel import (
         LoweringDecision,
         LoweringResult,
         _BodyDecision,
     )
 
     if sublayer.in_features != sublayer.out_features:
-        raise __import__("compgen.runtime.lowering.fx_to_megakernel", fromlist=["UnsupportedShape"]).UnsupportedShape(
+        raise __import__("xpu_rt.runtime.lowering.fx_to_megakernel", fromlist=["UnsupportedShape"]).UnsupportedShape(
             f"residual_norm with bare nn.Linear sublayer requires square "
             f"in==out; got {sublayer.in_features}->{sublayer.out_features}"
         )
@@ -483,7 +483,7 @@ def _emit_residual_norm_with_bare_linear(
     in_features = int(model_x.shape[-1])
     batch_flat = _flatten_batch(model_x, in_features)
     if batch_flat % _TILE_M != 0:
-        raise __import__("compgen.runtime.lowering.fx_to_megakernel", fromlist=["UnsupportedShape"]).UnsupportedShape(
+        raise __import__("xpu_rt.runtime.lowering.fx_to_megakernel", fromlist=["UnsupportedShape"]).UnsupportedShape(
             f"residual_norm needs batch_flat ({batch_flat}) divisible by tile_m={_TILE_M}"
         )
     n_row_tiles = batch_flat // _TILE_M
@@ -642,7 +642,7 @@ def _match_mha(
     ``schedule_hints["mha_causal"]`` so the kernel emitter (Wave 2.2)
     can pick the masked-softmax variant.
     """
-    from compgen.runtime.lowering.fx_to_megakernel import UnsupportedShape
+    from xpu_rt.runtime.lowering.fx_to_megakernel import UnsupportedShape
 
     embed_dim, num_heads, head_dim, is_causal = _classify_mha(model)
     if embed_dim is None:
@@ -746,18 +746,18 @@ def _emit_mha(
       av_matmul : (B, H, S, S) @ V (B, H, S, d) → out (B, H, S, d)
       o_proj  : (B*S, D) GEMM → (B*S, D)
     """
-    from compgen.runtime.lowering.fx_to_megakernel import (
+    from xpu_rt.runtime.lowering.fx_to_megakernel import (
         LoweringDecision,
         LoweringResult,
         _BodyDecision,
     )
 
     if seq % _TILE_M != 0:
-        from compgen.runtime.lowering.fx_to_megakernel import UnsupportedShape
+        from xpu_rt.runtime.lowering.fx_to_megakernel import UnsupportedShape
 
         raise UnsupportedShape(f"mha needs seq ({seq}) divisible by tile_m={_TILE_M}")
     if embed_dim % _TILE_N != 0:
-        from compgen.runtime.lowering.fx_to_megakernel import UnsupportedShape
+        from xpu_rt.runtime.lowering.fx_to_megakernel import UnsupportedShape
 
         raise UnsupportedShape(f"mha needs embed_dim ({embed_dim}) divisible by tile_n={_TILE_N}")
 
@@ -1020,7 +1020,7 @@ def _match_moe(
         (each shape-preserving, e.g. an FFN)
       * ``top_k`` — int (1 ≤ top_k ≤ n_experts)
     """
-    from compgen.runtime.lowering.fx_to_megakernel import UnsupportedShape
+    from xpu_rt.runtime.lowering.fx_to_megakernel import UnsupportedShape
 
     router = getattr(model, "router", None)
     experts = getattr(model, "experts", None)
@@ -1099,12 +1099,12 @@ def _emit_moe(
     that this graph needs a target with
     ``DeviceTraits.supports_ondevice_scheduler=True``.
     """
-    from compgen.runtime.lowering.fx_to_megakernel import (
+    from xpu_rt.runtime.lowering.fx_to_megakernel import (
         LoweringDecision,
         LoweringResult,
         _BodyDecision,
     )
-    from compgen.transforms.event_dynamic_schedule import TriggerGenerator
+    from xpu_rt.transforms.event_dynamic_schedule import TriggerGenerator
 
     # MoE per-token granularity: when n_tokens < tile_m we still
     # produce one tile (the runtime kernel masks the unused rows).
@@ -1114,7 +1114,7 @@ def _emit_moe(
     if n_tokens < _TILE_M:
         n_token_tiles = 1
     elif n_tokens % _TILE_M != 0:
-        from compgen.runtime.lowering.fx_to_megakernel import UnsupportedShape
+        from xpu_rt.runtime.lowering.fx_to_megakernel import UnsupportedShape
 
         raise UnsupportedShape(f"moe needs n_tokens ({n_tokens}) divisible by tile_m={_TILE_M}")
     else:
@@ -1310,10 +1310,10 @@ def build_moe_trigger_generators(decision: Any) -> tuple[Any, ...]:
     ``LoweringDecision.schedule_hints["trigger_generators"]``.
 
     Helper for callers that want to invoke
-    :func:`compgen.transforms.event_dynamic_schedule.compute_dynamic_schedule`
+    :func:`xpu_rt.transforms.event_dynamic_schedule.compute_dynamic_schedule`
     on a MoE-lowered graph without re-running the matcher.
     """
-    from compgen.transforms.event_dynamic_schedule import TriggerGenerator
+    from xpu_rt.transforms.event_dynamic_schedule import TriggerGenerator
 
     raw = decision.schedule_hints.get("trigger_generators", ())
     return tuple(

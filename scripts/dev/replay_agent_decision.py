@@ -6,7 +6,7 @@ Usage::
     uv run python scripts/dev/replay_agent_decision.py \\
         --trace results/.../agent_decision_trace_0000.json \\
         --run-dir results/.../<run> \\
-        [--promotion-library .compgen_cache/recipes/]
+        [--promotion-library .xpu_rt_cache/recipes/]
 
 Exit 0 iff every hash in the trace re-derives from the run dir.
 """
@@ -18,8 +18,8 @@ import json
 import sys
 from pathlib import Path
 
-from compgen.audit.errors import ReplayHashMismatch
-from compgen.audit.trace_replay import replay
+from xpu_rt.audit.errors import ReplayHashMismatch
+from xpu_rt.audit.trace_replay import replay
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -29,7 +29,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--run-dir", type=Path, default=None,
                    help="Run dir to verify against (default: trace's parent)")
     p.add_argument("--promotion-library", type=Path, default=None,
-                   help="Recipe library root (default: .compgen_cache/recipes)")
+                   help="Recipe library root (default: .xpu_rt_cache/recipes)")
     p.add_argument("--out", type=Path, default=None,
                    help="Optional path to write the replay report as JSON")
     p.add_argument("--lenient", action="store_true",

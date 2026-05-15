@@ -1,10 +1,10 @@
-schema_version: compgen_tool_card_v1
-tool_id: compgen_probe_extension_providers
+schema_version: xpu_rt_tool_card_v1
+tool_id: xpu_rt_probe_extension_providers
 maturity: T6
 phase: env_probe
 description: |
   M-81 extension-provider probe wrapped as a ToolCard. Walks the
-  YAML cards under python/compgen/{providers,dialects,targets}/cards/
+  YAML cards under python/xpu_rt/{providers,dialects,targets}/cards/
   and emits seven typed artifacts: provider_status.json,
   target_status.json, dialect_status.json, pass_tool_status.json,
   provider_target_matrix.csv, provider_contract_matrix.csv, and
@@ -15,9 +15,9 @@ description: |
   passing grading result on this machine.
 
 entrypoints:
-  python: compgen.tools.builtin.probe_providers:run
-  cli: compgen-tool run compgen_probe_extension_providers
-  mcp: compgen_probe_extension_providers
+  python: xpu_rt.tools.builtin.probe_providers:run
+  cli: xpu-rt-tool run xpu_rt_probe_extension_providers
+  mcp: xpu_rt_probe_extension_providers
 
 input_schema:
   type: object
@@ -73,6 +73,6 @@ tests:
     - tests.tools.test_probe_extension_providers_tool::test_probe_blocks_on_timeout
     - tests.tools.test_probe_extension_providers_tool::test_probe_rejects_unknown_input_field
 
-skill_path: .claude/skills/compgen-provider-integration/SKILL.md
+skill_path: .claude/skills/xpu_rt-provider-integration/SKILL.md
 fresh_agent_task_id: probe_providers_v1
 owner: core

@@ -2,16 +2,16 @@
 
 from __future__ import annotations
 
-from compgen.agent.prompts.counterexample_repair import (
+from xpu_rt.agent.prompts.counterexample_repair import (
     CounterexampleRepairContext,
 )
-from compgen.agent.prompts.counterexample_repair import (
+from xpu_rt.agent.prompts.counterexample_repair import (
     format_prompt as fmt_repair,
 )
-from compgen.agent.prompts.counterexample_repair import (
+from xpu_rt.agent.prompts.counterexample_repair import (
     parse_response as parse_repair,
 )
-from compgen.agent.prompts.verify_strategy import (
+from xpu_rt.agent.prompts.verify_strategy import (
     VerifyStrategyContext,
     format_prompt,
     parse_response,

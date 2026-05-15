@@ -33,7 +33,7 @@ import pytest
 
 
 def _build_v3_matmul_contract():
-    from compgen.kernels.contract_v3 import (
+    from xpu_rt.kernels.contract_v3 import (
         ConcurrencyUnit,
         DispatchModel,
         DispatchSpec,
@@ -135,7 +135,7 @@ class _LegacyProvider:
         return True
 
     def search(self, contract, budget):  # noqa: ANN001
-        from compgen.kernels.provider import ProviderResult
+        from xpu_rt.kernels.provider import ProviderResult
 
         return ProviderResult(found=False)
 
@@ -155,7 +155,7 @@ class _MalformedBidProvider:
         return True
 
     def search(self, contract, budget):  # noqa: ANN001
-        from compgen.kernels.provider import ProviderResult
+        from xpu_rt.kernels.provider import ProviderResult
 
         return ProviderResult(found=False)
 
@@ -163,7 +163,7 @@ class _MalformedBidProvider:
         return []
 
     def bid(self, contract_v3):  # noqa: ANN001
-        from compgen.kernels.provider import BidPreview
+        from xpu_rt.kernels.provider import BidPreview
 
         return BidPreview(
             provider_name=self.name,
@@ -184,7 +184,7 @@ class _RaisesBidProvider:
         return True
 
     def search(self, contract, budget):  # noqa: ANN001
-        from compgen.kernels.provider import ProviderResult
+        from xpu_rt.kernels.provider import ProviderResult
 
         return ProviderResult(found=False)
 
@@ -202,7 +202,7 @@ class _RaisesBidProvider:
 
 class TestBidPreviewSchema:
     def test_round_trip(self) -> None:
-        from compgen.kernels.provider import BidPreview
+        from xpu_rt.kernels.provider import BidPreview
 
         bid = BidPreview(
             provider_name="x",
@@ -221,7 +221,7 @@ class TestBidPreviewSchema:
         assert round_tripped == bid
 
     def test_inf_serialization(self) -> None:
-        from compgen.kernels.provider import BidPreview
+        from xpu_rt.kernels.provider import BidPreview
 
         bid = BidPreview(provider_name="x", perf_estimate_us=float("inf"))
         body = json.loads(json.dumps(bid.to_dict()))
@@ -237,7 +237,7 @@ class TestBidPreviewSchema:
 
 class TestComputeBidFallback:
     def test_no_bid_method_returns_placeholder(self) -> None:
-        from compgen.kernels.registry import compute_bid
+        from xpu_rt.kernels.registry import compute_bid
 
         bid = compute_bid(_LegacyProvider(), _build_v3_matmul_contract())
         assert bid.confidence == 0.0
@@ -246,7 +246,7 @@ class TestComputeBidFallback:
         assert bid.contract_hash != ""  # canonical hash stamped
 
     def test_provider_returning_none_is_treated_as_no_bid(self) -> None:
-        from compgen.kernels.registry import compute_bid
+        from xpu_rt.kernels.registry import compute_bid
 
         @dataclass
         class _NoneBid(_LegacyProvider):
@@ -267,25 +267,25 @@ class TestComputeBidFallback:
 
 class TestComputeBidValidation:
     def test_out_of_range_confidence_raises_typed(self) -> None:
-        from compgen.kernels.provider import ProviderProtocolViolation
-        from compgen.kernels.registry import compute_bid
+        from xpu_rt.kernels.provider import ProviderProtocolViolation
+        from xpu_rt.kernels.registry import compute_bid
 
         with pytest.raises(ProviderProtocolViolation, match="confidence"):
             compute_bid(_MalformedBidProvider(), _build_v3_matmul_contract())
 
     def test_internal_exception_degrades_to_placeholder(self) -> None:
-        from compgen.kernels.registry import compute_bid
+        from xpu_rt.kernels.registry import compute_bid
 
         bid = compute_bid(_RaisesBidProvider(), _build_v3_matmul_contract())
         assert bid.confidence == 0.0
         assert bid.rationale.startswith("bid_raised:RuntimeError")
 
     def test_negative_perf_estimate_rejected(self) -> None:
-        from compgen.kernels.provider import (
+        from xpu_rt.kernels.provider import (
             BidPreview,
             ProviderProtocolViolation,
         )
-        from compgen.kernels.registry import compute_bid
+        from xpu_rt.kernels.registry import compute_bid
 
         @dataclass
         class _Neg(_LegacyProvider):
@@ -298,11 +298,11 @@ class TestComputeBidValidation:
             compute_bid(_Neg(), _build_v3_matmul_contract())
 
     def test_contract_hash_mismatch_rejected(self) -> None:
-        from compgen.kernels.provider import (
+        from xpu_rt.kernels.provider import (
             BidPreview,
             ProviderProtocolViolation,
         )
-        from compgen.kernels.registry import compute_bid
+        from xpu_rt.kernels.registry import compute_bid
 
         @dataclass
         class _Lying(_LegacyProvider):
@@ -327,7 +327,7 @@ class TestComputeBidValidation:
 
 class TestClaudeCodeProviderBid:
     def test_stub_codegen_emits_high_confidence_cache_hit_proxy(self) -> None:
-        from compgen.kernels.providers.claude_code_default import (
+        from xpu_rt.kernels.providers.claude_code_default import (
             ClaudeCodeKernelProvider,
             StubCodegen,
         )
@@ -339,7 +339,7 @@ class TestClaudeCodeProviderBid:
         assert bid.time_to_generate_s_estimate == pytest.approx(1.0)
 
     def test_unknown_codegen_emits_low_confidence_miss(self) -> None:
-        from compgen.kernels.providers.claude_code_default import (
+        from xpu_rt.kernels.providers.claude_code_default import (
             ClaudeCodeKernelProvider,
             CodegenCallable,
         )
@@ -362,7 +362,7 @@ class TestClaudeCodeProviderBid:
 
 class TestTritonTemplateProviderBid:
     def test_matmul_archetype_high_confidence(self) -> None:
-        from compgen.kernels.providers.triton_templates import TritonTemplateProvider
+        from xpu_rt.kernels.providers.triton_templates import TritonTemplateProvider
 
         p = TritonTemplateProvider()
         bid = p.bid(_build_v3_matmul_contract())
@@ -372,7 +372,7 @@ class TestTritonTemplateProviderBid:
         assert bid.time_to_generate_s_estimate < 1.0
 
     def test_unknown_archetype_zero_confidence(self) -> None:
-        from compgen.kernels.contract_v3 import (
+        from xpu_rt.kernels.contract_v3 import (
             ConcurrencyUnit,
             DispatchModel,
             DispatchSpec,
@@ -395,7 +395,7 @@ class TestTritonTemplateProviderBid:
             SyncSpec,
             TensorIO,
         )
-        from compgen.kernels.providers.triton_templates import TritonTemplateProvider
+        from xpu_rt.kernels.providers.triton_templates import TritonTemplateProvider
 
         # POINTWISE archetype with op_name=copy — POINTWISE itself is
         # a valid archetype but no template family matches "copy".
@@ -466,12 +466,12 @@ class TestTritonTemplateProviderBid:
 
 class TestCollectBids:
     def test_runs_over_applicable_list(self) -> None:
-        from compgen.kernels.providers.claude_code_default import (
+        from xpu_rt.kernels.providers.claude_code_default import (
             ClaudeCodeKernelProvider,
             StubCodegen,
         )
-        from compgen.kernels.providers.triton_templates import TritonTemplateProvider
-        from compgen.kernels.registry import collect_bids
+        from xpu_rt.kernels.providers.triton_templates import TritonTemplateProvider
+        from xpu_rt.kernels.registry import collect_bids
 
         contract = _build_v3_matmul_contract()
         bids = collect_bids(

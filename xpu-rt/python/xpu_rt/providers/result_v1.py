@@ -1,7 +1,7 @@
 """``provider_result_v1`` typed schema.
 
 The v1 schema replaces the loose
-:class:`compgen.kernels.provider.ProviderResult` for new adapters
+:class:`xpu_rt.kernels.provider.ProviderResult` for new adapters
 and audits. Concretely::
 
     {
@@ -35,7 +35,7 @@ and audits. Concretely::
 
 Critically, ``status="generated"`` is **not** a certification. The
 verifier downstream emits the
-:class:`compgen.kernels.kernel_certificate.KernelCertificate`.
+:class:`xpu_rt.kernels.kernel_certificate.KernelCertificate`.
 """
 
 from __future__ import annotations
@@ -45,7 +45,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Final
 
-from compgen.kernels.provider import ProviderResult as LegacyProviderResult
+from xpu_rt.kernels.provider import ProviderResult as LegacyProviderResult
 
 SCHEMA_VERSION: Final[str] = "provider_result_v1"
 

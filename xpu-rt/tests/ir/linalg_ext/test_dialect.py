@@ -1,9 +1,9 @@
-"""Tests for the ``compgen.linalg_ext`` dialect."""
+"""Tests for the ``xpu_rt.linalg_ext`` dialect."""
 
 from __future__ import annotations
 
 import pytest
-from compgen.ir.linalg_ext import (
+from xpu_rt.ir.linalg_ext import (
     ALL_OPS,
     GeluOp,
     LayerNormOp,
@@ -30,7 +30,7 @@ def _value(shape):
 
 def test_dialect_registered():
     assert isinstance(LinalgExt, Dialect)
-    assert LinalgExt.name == "compgen.linalg_ext"
+    assert LinalgExt.name == "xpu_rt.linalg_ext"
 
 
 def test_dialect_has_seven_ops():
@@ -40,13 +40,13 @@ def test_dialect_has_seven_ops():
 def test_op_names():
     names = {op.name for op in LinalgExt._operations}
     assert names == {
-        "compgen.linalg_ext.softmax",
-        "compgen.linalg_ext.layer_norm",
-        "compgen.linalg_ext.rms_norm",
-        "compgen.linalg_ext.rope",
-        "compgen.linalg_ext.swiglu",
-        "compgen.linalg_ext.gelu",
-        "compgen.linalg_ext.silu",
+        "xpu_rt.linalg_ext.softmax",
+        "xpu_rt.linalg_ext.layer_norm",
+        "xpu_rt.linalg_ext.rms_norm",
+        "xpu_rt.linalg_ext.rope",
+        "xpu_rt.linalg_ext.swiglu",
+        "xpu_rt.linalg_ext.gelu",
+        "xpu_rt.linalg_ext.silu",
     }
 
 

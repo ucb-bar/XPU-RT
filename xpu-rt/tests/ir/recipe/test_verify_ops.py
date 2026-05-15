@@ -9,8 +9,8 @@ from __future__ import annotations
 
 import io
 
-from compgen.ir.recipe.attrs import DeviceRefAttr
-from compgen.ir.recipe.ops_verify import (
+from xpu_rt.ir.recipe.attrs import DeviceRefAttr
+from xpu_rt.ir.recipe.ops_verify import (
     RequireCheckFileOp,
     RequireDiffTestOp,
     RequireLayoutInvariantOp,

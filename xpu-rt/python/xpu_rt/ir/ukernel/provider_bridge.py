@@ -10,11 +10,11 @@ from __future__ import annotations
 
 import structlog
 
-from compgen.ir.ukernel.constraints import ConstraintContext
-from compgen.ir.ukernel.registry import UkernelRegistry
+from xpu_rt.ir.ukernel.constraints import ConstraintContext
+from xpu_rt.ir.ukernel.registry import UkernelRegistry
 
 # Use the provider-level KernelContract (not IR-level)
-from compgen.kernels.provider import (
+from xpu_rt.kernels.provider import (
     KernelContract,
     KnowledgeExport,
     ProviderResult,

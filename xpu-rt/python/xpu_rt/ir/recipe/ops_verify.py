@@ -16,7 +16,7 @@ from xdsl.irdl import (
 )
 from xdsl.traits import Pure
 
-from compgen.ir.recipe.attrs import DeviceRefAttr
+from xpu_rt.ir.recipe.attrs import DeviceRefAttr
 
 
 @irdl_op_definition

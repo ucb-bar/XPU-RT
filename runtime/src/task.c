@@ -1,7 +1,7 @@
-// Copyright 2026 CompGen Authors. All rights reserved.
+// Copyright 2026 XPU-RT Authors. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-#include "compgen/task.h"
+#include "xpu_rt/task.h"
 
 #include <string.h>
 

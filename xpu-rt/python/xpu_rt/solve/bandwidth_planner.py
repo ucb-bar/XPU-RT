@@ -23,8 +23,8 @@ import time
 from dataclasses import dataclass, field
 from typing import Any
 
-from compgen.solve.backends.mosek_backend import ensure_mosek_license_env
-from compgen.solve.solver_types import (
+from xpu_rt.solve.backends.mosek_backend import ensure_mosek_license_env
+from xpu_rt.solve.solver_types import (
     BackendAvailabilityStatus,
     BackendProbeResult,
     SolverBackendName,
@@ -359,8 +359,8 @@ def plan_bandwidth(
     """High-level entry point. Routes through the registry; MOSEK
     preferred, HiGHS fallback, BLOCKED when neither is available."""
 
-    from compgen.solve.backend_registry import default_registry
-    from compgen.solve.routing import choose_backend
+    from xpu_rt.solve.backend_registry import default_registry
+    from xpu_rt.solve.routing import choose_backend
 
     reg = registry if registry is not None else default_registry()
     request = SolverRequest(

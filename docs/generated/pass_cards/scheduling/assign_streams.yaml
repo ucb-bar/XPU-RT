@@ -4,7 +4,7 @@ display_name: Annotate ops with stream attributes
 level: payload
 family: scheduling
 source: XLA
-impl_path: python/compgen/ir/payload/passes/rewrites/assign_streams.py
+impl_path: python/xpu_rt/ir/payload/passes/rewrites/assign_streams.py
 reads:
   - 01_payload_lowering/payload.mlir
   - 02_graph_analysis/region_graph.json
@@ -25,7 +25,7 @@ cost: cheap
 failure_modes:
   - "unassigned_queues"
   - "circular_stream_dependency"
-mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+mcp_tool: mcp__xpu_rt__xpu_rt_emit_agent_decision_request
 notes: |
   Reconstruction of XLA's StreamAttributeAnnotator. Builds on
   assign_queue: tags each op with a stream attribute so the runtime

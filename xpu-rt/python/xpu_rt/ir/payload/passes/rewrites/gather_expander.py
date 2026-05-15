@@ -48,11 +48,11 @@ class _GatherExpanderPattern(RewritePattern):
 
     @op_type_rewrite_pattern
     def match_and_rewrite(self, op: CallOp, rewriter: PatternRewriter) -> None:
-        hint = op.attributes.get("compgen._pattern_hint")
+        hint = op.attributes.get("xpu_rt._pattern_hint")
         if not isinstance(hint, StringAttr) or hint.data not in self.cfg.hint_set:
             return
         self.stats.gathers_seen += 1
-        if "compgen.gather_expanded" in op.attributes:
+        if "xpu_rt.gather_expanded" in op.attributes:
             return
         rt = op.results[0].type if op.results else None
         if not isinstance(rt, TensorType):
@@ -60,8 +60,8 @@ class _GatherExpanderPattern(RewritePattern):
         if self.cfg.require_static_shapes and any(d < 0 for d in rt.get_shape()):
             self.stats.gathers_skipped_dynamic += 1
             return
-        op.attributes["compgen.gather_expanded"] = StringAttr("true")
-        op.attributes["compgen.gather_rank"] = IntegerAttr(len(list(rt.get_shape())), IntegerType(64))
+        op.attributes["xpu_rt.gather_expanded"] = StringAttr("true")
+        op.attributes["xpu_rt.gather_rank"] = IntegerAttr(len(list(rt.get_shape())), IntegerType(64))
         self.stats.gathers_tagged += 1
 
 

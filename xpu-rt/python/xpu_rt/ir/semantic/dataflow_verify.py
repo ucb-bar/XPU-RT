@@ -8,7 +8,7 @@ Invariants:
     - Unsound analyses are flagged with counterexamples.
 
 Backend:
-    Uses ``compgen.semantic.backends.xdsl_smt.transfer_backend`` for
+    Uses ``xpu_rt.semantic.backends.xdsl_smt.transfer_backend`` for
     forward-transfer soundness checking via Z3.
 """
 
@@ -87,7 +87,7 @@ def verify_analysis(
 
     # Callable path: verify via Z3 backend
     if all(fn is not None for fn in [concrete_fn, transfer_fn, abstract_constraint, instance_constraint]):
-        from compgen.semantic.backends.xdsl_smt.transfer_backend import TransferVerificationBackend
+        from xpu_rt.semantic.backends.xdsl_smt.transfer_backend import TransferVerificationBackend
 
         backend = TransferVerificationBackend()
         result = backend.verify_forward_transfer(

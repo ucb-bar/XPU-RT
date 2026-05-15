@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from compgen.semantic.verify.compare import (
+from xpu_rt.semantic.verify.compare import (
     DTYPE_PRESETS,
     FORMAT_PRESETS,
     ComparisonConfig,

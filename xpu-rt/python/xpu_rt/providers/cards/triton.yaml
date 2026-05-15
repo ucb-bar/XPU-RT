@@ -4,13 +4,13 @@ integration_level: promote
 target_families: [cuda, rocm]
 contract_kinds: [matmul, pointwise, fused_region, attention, softmax, reduction]
 emits: [triton_source, ptx, cubin]
-entrypoint: compgen.kernels.providers.triton_templates:TritonTemplateProvider
+entrypoint: xpu_rt.kernels.providers.triton_templates:TritonTemplateProvider
 paper_claimable: true
 required_env: []
 required_commands: []
 required_python_imports: [triton]
 description: |
-  Triton GPU kernel provider. CompGen's existing real GPU path:
+  Triton GPU kernel provider. XPU-RT's existing real GPU path:
   emits Triton source, JIT-compiles to PTX/cubin, and runs through
   the kernel verifier + glue differential against eager PyTorch.
   Hard-required for any GPU performance claim.

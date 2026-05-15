@@ -34,13 +34,13 @@ class _PickleableDiamond(nn.Module):
 
 class TestBackendChoiceContract:
     def test_top_level_imports(self) -> None:
-        from compgen.runtime.autotune import BackendChoice, probe_device
+        from xpu_rt.runtime.autotune import BackendChoice, probe_device
 
         assert BackendChoice is not None
         assert callable(probe_device)
 
     def test_probe_returns_backend_choice(self) -> None:
-        from compgen.runtime.autotune import (
+        from xpu_rt.runtime.autotune import (
             BackendChoice,
             _clear_probe_cache_for_tests,
             probe_device,
@@ -65,7 +65,7 @@ class TestBackendChoiceContract:
     def test_explicit_target_skips_probe(self) -> None:
         """Passing target='sm_90' should never run CudaDeviceProbe;
         origin should be 'explicit'."""
-        from compgen.runtime.autotune import (
+        from xpu_rt.runtime.autotune import (
             _clear_probe_cache_for_tests,
             probe_device,
         )
@@ -78,7 +78,7 @@ class TestBackendChoiceContract:
     def test_auto_falls_back_to_sm_100_on_cpu_host(self) -> None:
         """Garden has no CUDA; auto should fall back to sm_100
         (paper-faithful default), not raise."""
-        from compgen.runtime.autotune import (
+        from xpu_rt.runtime.autotune import (
             _clear_probe_cache_for_tests,
             probe_device,
         )
@@ -86,8 +86,8 @@ class TestBackendChoiceContract:
         _clear_probe_cache_for_tests()
         choice = probe_device(target="auto")
         # Three valid outcomes per bridge #102 fix:
-        # - "fallback" on CPU host without libcompgen_rt + no torch CUDA
-        # - "probed" via libcompgen_rt's CudaDeviceProbe
+        # - "fallback" on CPU host without libxpu_rt + no torch CUDA
+        # - "probed" via libxpu_rt's CudaDeviceProbe
         # - "probed_torch" via torch.cuda.get_device_capability fallback
         assert choice.target_origin in {"fallback", "probed", "probed_torch"}
         if choice.target_origin == "fallback":
@@ -96,7 +96,7 @@ class TestBackendChoiceContract:
             assert choice.target_arch.startswith("sm_")
 
     def test_serializes_for_decision_log(self) -> None:
-        from compgen.runtime.autotune import probe_device
+        from xpu_rt.runtime.autotune import probe_device
 
         d = probe_device(target="sm_100").to_dict()
         # Pin the keys the bundle compile_context.json depends on.
@@ -127,7 +127,7 @@ class TestDecisionTree:
 
     def _force_libs(self, monkeypatch, *, cublasdx: bool, cu13: bool) -> None:
         """Monkeypatch the library probes inside autotune."""
-        from compgen.runtime import autotune as autotune_mod
+        from xpu_rt.runtime import autotune as autotune_mod
 
         def fake_probe() -> tuple[bool, bool, dict[str, str | None]]:
             return (
@@ -147,7 +147,7 @@ class TestDecisionTree:
     def test_blackwell_with_all_libs_picks_cublasdx_bf16(self, monkeypatch) -> None:
         """The win path: Blackwell + all libs → tensor-core engaged
         (bf16+fp32-acc, 64×64×16 tile, cu13 NVRTC, SM<1000>)."""
-        from compgen.runtime.autotune import probe_device
+        from xpu_rt.runtime.autotune import probe_device
 
         self._force_libs(monkeypatch, cublasdx=True, cu13=True)
         choice = probe_device(target="sm_100")
@@ -161,7 +161,7 @@ class TestDecisionTree:
         """Bridge #089: cu12 NVRTC's max sm_90 silently SIMTs cuBLASDx
         on Blackwell. Without cu13 NVRTC we MUST fall back — silently
         emitting cuBLASDx with cu12 NVRTC is the bug we're avoiding."""
-        from compgen.runtime.autotune import probe_device
+        from xpu_rt.runtime.autotune import probe_device
 
         self._force_libs(monkeypatch, cublasdx=True, cu13=False)
         choice = probe_device(target="sm_100")
@@ -171,7 +171,7 @@ class TestDecisionTree:
         assert "cu13 NVRTC not reachable" in choice.rationale
 
     def test_blackwell_without_cublasdx_falls_back(self, monkeypatch) -> None:
-        from compgen.runtime.autotune import probe_device
+        from xpu_rt.runtime.autotune import probe_device
 
         self._force_libs(monkeypatch, cublasdx=False, cu13=True)
         choice = probe_device(target="sm_100")
@@ -188,7 +188,7 @@ class TestDecisionTree:
         get cuBLASDx with the older mma.sync atom but at fp32 SIMT-
         equivalent throughput. Tile stays 32 since 64-tile only
         matters for engaging the larger MMA atoms."""
-        from compgen.runtime.autotune import probe_device
+        from xpu_rt.runtime.autotune import probe_device
 
         self._force_libs(monkeypatch, cublasdx=True, cu13=True)
         choice = probe_device(target="sm_90")
@@ -204,7 +204,7 @@ class TestDecisionTree:
     def test_no_libs_no_cuda(self, monkeypatch) -> None:
         """The CPU-host case: nothing reachable. Choice is fmaf at
         32-tile, sm_100 origin=fallback. Should never raise."""
-        from compgen.runtime.autotune import probe_device
+        from xpu_rt.runtime.autotune import probe_device
 
         self._force_libs(monkeypatch, cublasdx=False, cu13=False)
         choice = probe_device(target="auto")
@@ -215,7 +215,7 @@ class TestDecisionTree:
 
 class TestCaching:
     def test_repeat_calls_return_same_choice(self, monkeypatch) -> None:
-        from compgen.runtime.autotune import (
+        from xpu_rt.runtime.autotune import (
             _clear_probe_cache_for_tests,
             probe_device,
         )
@@ -226,7 +226,7 @@ class TestCaching:
         assert a is b  # cached, identical object
 
     def test_force_refresh_bypasses_cache(self) -> None:
-        from compgen.runtime.autotune import (
+        from xpu_rt.runtime.autotune import (
             _clear_probe_cache_for_tests,
             probe_device,
         )
@@ -247,8 +247,8 @@ class TestMatcherIntegration:
         """The matcher's `backend_choice` kwarg overrides every
         individual flag. Existing callers (passing flags
         explicitly) keep working."""
-        from compgen.runtime.autotune import probe_device
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.autotune import probe_device
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         # No flags — auto-probe path.
         choice = probe_device(target="sm_90")  # Hopper → fmaf path
@@ -271,10 +271,10 @@ class TestMatcherIntegration:
         import json
         import pickle
 
-        from compgen.mcp.tools.compile import compgen_compile_torch_model
+        from xpu_rt.mcp.tools.compile import xpu_rt_compile_torch_model
 
         x = torch.randn(64, 64)
-        result = compgen_compile_torch_model(
+        result = xpu_rt_compile_torch_model(
             model_pickle_b64=base64.b64encode(pickle.dumps(_PickleableDiamond())).decode(),
             sample_input_pickle_b64=base64.b64encode(pickle.dumps((x,))).decode(),
             output_dir=str(tmp_path),
@@ -304,7 +304,7 @@ class TestClusterLaunchWiring:
     the wiring that lets it get through to compute_static_schedule."""
 
     def _force_libs(self, monkeypatch, *, cublasdx: bool, cu13: bool) -> None:
-        from compgen.runtime import autotune as autotune_mod
+        from xpu_rt.runtime import autotune as autotune_mod
 
         def fake_probe() -> tuple[bool, bool, dict[str, str | None]]:
             return (
@@ -325,7 +325,7 @@ class TestClusterLaunchWiring:
         """sm_100 / sm_120 → supports_clusters=True with default
         cluster_dim=(2,1,1). The conservative starting point per
         Wave 1.6's wiring; 4 / 8 are tunable later."""
-        from compgen.runtime.autotune import probe_device
+        from xpu_rt.runtime.autotune import probe_device
 
         self._force_libs(monkeypatch, cublasdx=True, cu13=True)
         choice = probe_device(target="sm_100")
@@ -338,7 +338,7 @@ class TestClusterLaunchWiring:
         """Wave 1.6 starts with Blackwell only — Hopper supports
         clusters too but bridge #108's data validates Blackwell.
         Hopper enablement is a follow-up tuning."""
-        from compgen.runtime.autotune import probe_device
+        from xpu_rt.runtime.autotune import probe_device
 
         self._force_libs(monkeypatch, cublasdx=True, cu13=True)
         choice = probe_device(target="sm_90")
@@ -346,7 +346,7 @@ class TestClusterLaunchWiring:
         assert choice.cluster_dim_x is None
 
     def test_cpu_no_cluster(self, monkeypatch) -> None:
-        from compgen.runtime.autotune import probe_device
+        from xpu_rt.runtime.autotune import probe_device
 
         self._force_libs(monkeypatch, cublasdx=False, cu13=False)
         # Use an explicit CPU-shaped arch so the probe doesn't
@@ -356,7 +356,7 @@ class TestClusterLaunchWiring:
         assert choice.cluster_dim_x is None
 
     def test_to_dict_serializes_cluster_fields(self, monkeypatch) -> None:
-        from compgen.runtime.autotune import probe_device
+        from xpu_rt.runtime.autotune import probe_device
 
         self._force_libs(monkeypatch, cublasdx=True, cu13=True)
         d = probe_device(target="sm_100").to_dict()
@@ -370,7 +370,7 @@ class TestAgentAuditFields:
     so the agent can answer "why X for op Y?" without re-probing."""
 
     def test_rationale_explains_decision(self) -> None:
-        from compgen.runtime.autotune import probe_device
+        from xpu_rt.runtime.autotune import probe_device
 
         choice = probe_device(target="sm_100")
         # Rationale must mention each top-level decision so the
@@ -388,8 +388,8 @@ class TestAgentAuditFields:
         """When a library probes successfully, the path string lands
         in library_paths so the agent can audit the include/dlopen
         chain without re-running discovery."""
-        from compgen.runtime import autotune as autotune_mod
-        from compgen.runtime.autotune import (
+        from xpu_rt.runtime import autotune as autotune_mod
+        from xpu_rt.runtime.autotune import (
             _clear_probe_cache_for_tests,
             probe_device,
         )

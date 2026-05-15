@@ -4,7 +4,7 @@ When the auto-generated codegen stage's native emitter declines all
 candidates (Triton non-friendly target, vendor stub returns nothing),
 ``run_provider_fallback`` must walk registered ``KernelProvider``
 implementations and surface the first ``found=True`` result in the
-shape ``compgen.runtime.bundle_emit`` consumes.
+shape ``xpu_rt.runtime.bundle_emit`` consumes.
 
 The contract-driven path is exercised against the in-tree
 ``TritonTemplateProvider`` so we observe a real Provider rendering
@@ -18,18 +18,18 @@ import json
 from pathlib import Path
 
 import torch
-from compgen.kernels.codegen_fallback import run_provider_fallback
-from compgen.kernels.provider import (
+from xpu_rt.kernels.codegen_fallback import run_provider_fallback
+from xpu_rt.kernels.provider import (
     KernelContract as ProviderContract,
 )
-from compgen.kernels.provider import (
+from xpu_rt.kernels.provider import (
     KnowledgeExport,
     ProviderResult,
     SearchBudget,
 )
-from compgen.kernels.providers.triton_templates import TritonTemplateProvider
-from compgen.stages.templates.codegen import CODEGEN_BACKEND_ATTR
-from compgen.targets.schema import load_profile
+from xpu_rt.kernels.providers.triton_templates import TritonTemplateProvider
+from xpu_rt.stages.templates.codegen import CODEGEN_BACKEND_ATTR
+from xpu_rt.targets.schema import load_profile
 from xdsl.dialects.builtin import StringAttr
 
 
@@ -79,8 +79,8 @@ class _RejectingStubProvider:
 
 def _build_module() -> object:
     """Return an xDSL ModuleOp with at least one extractable kernel contract."""
-    from compgen.capture.torch_export import capture_model
-    from compgen.ir.payload.import_fx import fx_to_xdsl
+    from xpu_rt.capture.torch_export import capture_model
+    from xpu_rt.ir.payload.import_fx import fx_to_xdsl
 
     class TinyMLP(torch.nn.Module):
         def __init__(self) -> None:
@@ -119,7 +119,7 @@ def test_run_provider_fallback_emits_kernel_when_provider_accepts() -> None:
     # REQ-026: the region_id is whatever the IR op was tagged with —
     # ``matmul_0`` for a matmul, ``transpose_0`` for a transpose, etc.
     # The bare ``region_<i>`` synthesised id only surfaces when the IR
-    # op had no ``compgen.region_id`` tag, which doesn't happen
+    # op had no ``xpu_rt.region_id`` tag, which doesn't happen
     # post-fx-import anymore. Just assert it's non-empty.
     assert first["region_id"], first
 
@@ -174,19 +174,19 @@ def test_run_provider_fallback_skips_rejecting_providers() -> None:
 
 
 def test_run_provider_fallback_rewrites_codegen_backend_annotation() -> None:
-    """IR ops tagged ``compgen.codegen_backend = "fallback"`` flip to
+    """IR ops tagged ``xpu_rt.codegen_backend = "fallback"`` flip to
     the winning provider's name after fallback succeeds."""
     module = _build_module()
     target = load_profile("examples/target_profiles/cuda_a100.yaml")
 
-    # Tag every op carrying ``compgen.region_id`` with the "fallback"
+    # Tag every op carrying ``xpu_rt.region_id`` with the "fallback"
     # sentinel (REQ-026: the rewrite is region-id keyed, not
     # walk-position keyed — tagging an arbitrary op without a region
     # id is now a no-op since codegen-fallback only rewrites
     # ops that have contracts).
     tagged_count = 0
     for op in module.walk():
-        if "compgen.region_id" in op.attributes and op.results:
+        if "xpu_rt.region_id" in op.attributes and op.results:
             op.attributes[CODEGEN_BACKEND_ATTR] = StringAttr("fallback")
             tagged_count += 1
     assert tagged_count >= 1, "expected at least one region-tagged op in the fixture module"
@@ -270,7 +270,7 @@ def test_run_provider_fallback_with_real_provider_renders_from_contract() -> Non
 
 def test_bundle_emit_writes_provider_kernels_to_disk(tmp_path: Path) -> None:
     """End-to-end: kernel entries → bundle/generated_kernels/<provider>/<op>.<ext>."""
-    from compgen.runtime.bundle_emit import emit_extended_artefacts
+    from xpu_rt.runtime.bundle_emit import emit_extended_artefacts
 
     bundle_dir = tmp_path / "bundle"
     bundle_dir.mkdir()

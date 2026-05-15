@@ -28,7 +28,7 @@ def _is_transpose_op(op: Operation) -> bool:
     if "transpose" in name or "permute" in name:
         return True
     attrs = getattr(op, "attributes", {})
-    hint = attrs.get("compgen._pattern_hint") if attrs else None
+    hint = attrs.get("xpu_rt._pattern_hint") if attrs else None
     if hint is not None and hasattr(hint, "data"):
         if hint.data in ("transpose", "permute"):
             return True

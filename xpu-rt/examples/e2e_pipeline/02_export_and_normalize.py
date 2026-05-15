@@ -1,24 +1,24 @@
-"""Phase 2: export + normalize. The PyTorch → CompGen boundary.
+"""Phase 2: export + normalize. The PyTorch → XPU-RT boundary.
 
 For `--workload` this script:
   1. Loads the workload (same loader as Phase 1).
-  2. Calls `compgen.capture.capture_frontend_artifact(model, sample_inputs)`
+  2. Calls `xpu_rt.capture.capture_frontend_artifact(model, sample_inputs)`
      to produce the canonical CaptureArtifact.
   3. Saves the ExportedProgram to `exported_program.pt2` (the repo does not
      auto-save it).
-  4. Calls `compgen.ir.payload.import_fx.fx_to_xdsl(ep, **strict_import_options)`
+  4. Calls `xpu_rt.ir.payload.import_fx.fx_to_xdsl(ep, **strict_import_options)`
      to produce Payload IR; writes `payload.mlir` (via the importer's text
      printer) and `import_diagnostics.json`.
   5. Emits the summary artifacts: `exported_program_summary.json`,
      `shape_constraints.json`, `normalized_ops.json`.
   6. Emits `boundary_manifest.json` listing what crossed from PyTorch into
-     CompGen and what was dropped.
+     XPU-RT and what was dropped.
 
 Artifacts under
     user_perspective/artifacts/<workload>/stage_2_boundary/
 
 This stage is where we **exit PyTorch**. After it, everything is
-CompGen-owned xDSL IR.
+XPU-RT-owned xDSL IR.
 """
 
 from __future__ import annotations
@@ -40,8 +40,8 @@ sys.path.insert(0, str(ROOT.parent))
 sys.path.insert(0, str(ROOT))
 
 from user_perspective.models import smolvla_slice, gemma_decode_slice   # noqa: E402
-from compgen.capture import capture_frontend_artifact                    # noqa: E402
-from compgen.ir.payload.import_fx import FXImporter, fx_to_xdsl          # noqa: E402
+from xpu_rt.capture import capture_frontend_artifact                    # noqa: E402
+from xpu_rt.ir.payload.import_fx import FXImporter, fx_to_xdsl          # noqa: E402
 
 log = logging.getLogger("phase2")
 
@@ -225,7 +225,7 @@ def run(workload: str) -> int:
             "tensor.insert": ir_text.count("tensor.insert"),
             "tensor.extract": ir_text.count("tensor.extract"),
             "func.call": ir_text.count("func.call"),
-            "compgen.region_id": ir_text.count("compgen.region_id"),
+            "xpu_rt.region_id": ir_text.count("xpu_rt.region_id"),
         },
     }
 
@@ -242,12 +242,12 @@ def run(workload: str) -> int:
         "exported_program_saved": ep_saved,
         "exported_program_save_error": ep_save_error,
         "exported_program_path": "exported_program.pt2" if ep_saved else None,
-        "crossed_into_compgen": {
+        "crossed_into_xpu_rt": {
             "graph_topology": True,
             "input_output_shapes": True,
             "dtypes": True,
             "decomposition_provenance": True,
-            "region_id_attributes": ir_stats["occurrences"]["compgen.region_id"] > 0,
+            "region_id_attributes": ir_stats["occurrences"]["xpu_rt.region_id"] > 0,
             "range_constraints": bool(artifact.range_constraints),
             "explicit_blackboxes": bool(artifact.explicit_blackboxes),
         },
@@ -277,7 +277,7 @@ def run(workload: str) -> int:
           f"(unique: {ep_summary['num_unique_ops']})")
     print(f"  diagnostics on import   : {boundary_manifest['import_diagnostic_levels']}")
     print(f"  payload.mlir size       : {ir_stats['payload_mlir_bytes']:,} bytes")
-    print(f"  region_id attrs         : {ir_stats['occurrences']['compgen.region_id']}")
+    print(f"  region_id attrs         : {ir_stats['occurrences']['xpu_rt.region_id']}")
     print(f"  func.call (opaque) count: {ir_stats['occurrences']['func.call']}")
     print(f"  artifacts under {out_dir.relative_to(ROOT)}/")
     return 0

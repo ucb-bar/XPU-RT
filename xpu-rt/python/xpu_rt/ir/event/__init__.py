@@ -7,8 +7,8 @@ queue) or dynamic (on-GPU push/pop) scheduling, it eliminates kernel-launch
 overhead and the implicit kernel-boundary synchronization that bottlenecks
 modern LLM serving.
 
-This dialect is the IR layer of CompGen's ETC integration. It is a sibling
-of ``compgen.tile``, ``compgen.accel``, and ``compgen.ukernel``.
+This dialect is the IR layer of XPU-RT's ETC integration. It is a sibling
+of ``xpu_rt.tile``, ``xpu_rt.accel``, and ``xpu_rt.ukernel``.
 
 Register the dialect on a ``Context`` via::
 
@@ -17,13 +17,13 @@ Register the dialect on a ``Context`` via::
 
 from __future__ import annotations
 
-from compgen.ir.event.attrs import (
+from xpu_rt.ir.event.attrs import (
     EventCoordAttr,
     EventTensorTypeAttr,
     SchedulingPolicyAttr,
 )
-from compgen.ir.event.dialect import ALL_ATTRS, ALL_OPS, Event
-from compgen.ir.event.ops import (
+from xpu_rt.ir.event.dialect import ALL_ATTRS, ALL_OPS, Event
+from xpu_rt.ir.event.ops import (
     CallDeviceOp,
     EventTensorOp,
     GraphOp,

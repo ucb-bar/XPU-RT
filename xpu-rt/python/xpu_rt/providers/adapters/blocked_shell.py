@@ -21,15 +21,15 @@ from __future__ import annotations
 
 from typing import Any
 
-from compgen.kernels.provider import BidPreview, make_default_bid
-from compgen.providers.card_loader import iter_provider_cards
-from compgen.providers.kernel_provider import (
+from xpu_rt.kernels.provider import BidPreview, make_default_bid
+from xpu_rt.providers.card_loader import iter_provider_cards
+from xpu_rt.providers.kernel_provider import (
     KernelCodegenRequest,
     KernelProvider,
 )
-from compgen.providers.provider_probe import probe_provider
-from compgen.providers.provider_types import ProviderCard, ProviderProbeResult
-from compgen.providers.result_v1 import (
+from xpu_rt.providers.provider_probe import probe_provider
+from xpu_rt.providers.provider_types import ProviderCard, ProviderProbeResult
+from xpu_rt.providers.result_v1 import (
     SCHEMA_VERSION,
     ProviderResultV1,
 )

@@ -32,12 +32,12 @@ from pathlib import Path
 
 import pytest
 
-from compgen.graph_compilation.downstream_retry import (
+from xpu_rt.graph_compilation.downstream_retry import (
     DownstreamFailure,
     detect_downstream_failure,
     emit_downstream_retry_request,
 )
-from compgen.graph_compilation.real_transform_differential import (
+from xpu_rt.graph_compilation.real_transform_differential import (
     _tiled_matmul_eval,
     matmul_higham_bound,
 )
@@ -143,7 +143,7 @@ def _invoke_pipeline(
 ) -> subprocess.CompletedProcess:
     return subprocess.run(
         [
-            sys.executable, "-m", "compgen.graph_compilation", "run",
+            sys.executable, "-m", "xpu_rt.graph_compilation", "run",
             "--model", str(REPO_ROOT / f"configs/models/{model}.yaml"),
             "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
             "--out", str(out_dir),

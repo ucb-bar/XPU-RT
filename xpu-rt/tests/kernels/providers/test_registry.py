@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from compgen.kernels.provider import (
+from xpu_rt.kernels.provider import (
     ContractFeedback,
     KernelContract,
     KnowledgeExport,
     ProviderResult,
     SearchBudget,
 )
-from compgen.kernels.registry import ProviderRegistry
+from xpu_rt.kernels.registry import ProviderRegistry
 
 
 class MockProvider:

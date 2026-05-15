@@ -6,9 +6,9 @@ import json
 from pathlib import Path
 
 import pytest
-from compgen.mcp.server import dispatch_tool
-from compgen.mcp.session import SessionManager
-from compgen.mcp.transcript import (
+from xpu_rt.mcp.server import dispatch_tool
+from xpu_rt.mcp.session import SessionManager
+from xpu_rt.mcp.transcript import (
     ENV_VAR,
     TRANSCRIPT_FILENAME,
     McpTranscriptRecorder,

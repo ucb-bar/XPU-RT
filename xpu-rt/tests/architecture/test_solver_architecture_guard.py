@@ -17,12 +17,12 @@ from pathlib import Path
 
 import pytest
 
-from compgen.solve.backend_registry import default_registry
-from compgen.solve.backends.highs_backend import HighsBackend
-from compgen.solve.backends.mosek_backend import MosekBackend
-from compgen.solve.backends.ortools_cp_sat_backend import OrToolsCpSatBackend
-from compgen.solve.backends.z3_backend import Z3Backend
-from compgen.solve.solver_types import (
+from xpu_rt.solve.backend_registry import default_registry
+from xpu_rt.solve.backends.highs_backend import HighsBackend
+from xpu_rt.solve.backends.mosek_backend import MosekBackend
+from xpu_rt.solve.backends.ortools_cp_sat_backend import OrToolsCpSatBackend
+from xpu_rt.solve.backends.z3_backend import Z3Backend
+from xpu_rt.solve.solver_types import (
     BackendAvailabilityStatus,
     SolverBackendName,
     SolverProblemKind,
@@ -121,7 +121,7 @@ def test_z3_rejects_non_proof_kinds(kind: SolverProblemKind):
 
 
 def test_routing_preference_cannot_send_proof_to_mosek():
-    from compgen.solve.routing import choose_backend
+    from xpu_rt.solve.routing import choose_backend
 
     reg = default_registry()
     chosen = choose_backend(
@@ -134,7 +134,7 @@ def test_routing_preference_cannot_send_proof_to_mosek():
 
 
 def test_routing_preference_cannot_send_placement_to_z3():
-    from compgen.solve.routing import choose_backend
+    from xpu_rt.solve.routing import choose_backend
 
     reg = default_registry()
     chosen = choose_backend(
@@ -146,7 +146,7 @@ def test_routing_preference_cannot_send_placement_to_z3():
 
 
 def test_routing_preference_cannot_send_memory_to_z3():
-    from compgen.solve.routing import choose_backend
+    from xpu_rt.solve.routing import choose_backend
 
     reg = default_registry()
     chosen = choose_backend(
@@ -187,7 +187,7 @@ def test_every_backend_emits_envelope_fields():
 
 
 def test_formulation_hash_is_deterministic_and_16_hex():
-    from compgen.solve.solver_types import compute_formulation_hash
+    from xpu_rt.solve.solver_types import compute_formulation_hash
     import re
 
     h1 = compute_formulation_hash({"a": 1, "b": [1, 2, 3]})
@@ -220,11 +220,11 @@ def test_audit_solver_architecture_passes_on_repo():
 
 def test_audit_detects_a_leak_when_planted(tmp_path: Path):
     """Synthesize a fake repo with a forbidden import inside
-    ``python/compgen/`` and verify the audit script rejects it."""
+    ``python/xpu_rt/`` and verify the audit script rejects it."""
 
     fake_root = tmp_path / "fake_repo"
-    (fake_root / "python" / "compgen" / "leaky").mkdir(parents=True)
-    (fake_root / "python" / "compgen" / "leaky" / "bad.py").write_text(
+    (fake_root / "python" / "xpu-rt" / "leaky").mkdir(parents=True)
+    (fake_root / "python" / "xpu-rt" / "leaky" / "bad.py").write_text(
         "import mosek\n"
     )
     # Copy the audit script to the fake repo's scripts/dev/ so its

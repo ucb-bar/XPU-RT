@@ -7,8 +7,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from compgen.model_admission.proxies.proxy_ocr import build_proxy
-from compgen.model_admission.schemas import (
+from xpu_rt.model_admission.proxies.proxy_ocr import build_proxy
+from xpu_rt.model_admission.schemas import (
     AdmissionStatus,
     CompileConfig,
     ExpectedOutcomes,
@@ -19,7 +19,7 @@ from compgen.model_admission.schemas import (
     StageStatus,
     SupportPolicy,
 )
-from compgen.model_admission.torch_compile_probe import run_admission
+from xpu_rt.model_admission.torch_compile_probe import run_admission
 
 
 def _proxy_model_config() -> ModelConfig:
@@ -28,7 +28,7 @@ def _proxy_model_config() -> ModelConfig:
         model_id="proxy_ocr",
         family="proxy",
         source=ModelSource(),
-        loader=ModelLoaderConfig(kind="proxy", proxy_module="compgen.model_admission.proxies.proxy_ocr"),
+        loader=ModelLoaderConfig(kind="proxy", proxy_module="xpu_rt.model_admission.proxies.proxy_ocr"),
         inputs=InputsSpec(kind="page_crop"),
         compile=CompileConfig(),
         support=SupportPolicy(mode="full_or_slice_smoke"),

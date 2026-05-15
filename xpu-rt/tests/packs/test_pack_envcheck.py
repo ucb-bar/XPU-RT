@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from compgen.packs.envcheck import EnvCheckResult, check_pack_environment
+from xpu_rt.packs.envcheck import EnvCheckResult, check_pack_environment
 
 
 def test_all_tools_present() -> None:

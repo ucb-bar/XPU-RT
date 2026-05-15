@@ -22,7 +22,7 @@ from pathlib import Path
 
 import structlog
 
-from compgen.model_admission.registry import (
+from xpu_rt.model_admission.registry import (
     DEFAULT_MODELS_DIR,
     DEFAULT_REGISTRY_PATH,
     DEFAULT_SLICES_DIR,
@@ -30,22 +30,22 @@ from compgen.model_admission.registry import (
     RegistryError,
     load_registry,
 )
-from compgen.model_admission.report import aggregate_summary, write_suite_summary
-from compgen.model_admission.schemas import (
+from xpu_rt.model_admission.report import aggregate_summary, write_suite_summary
+from xpu_rt.model_admission.schemas import (
     AdmissionStatus,
     ModelConfig,
     SliceConfig,
     SuiteConfig,
     SuiteSummaryRow,
 )
-from compgen.model_admission.torch_compile_probe import run_admission
+from xpu_rt.model_admission.torch_compile_probe import run_admission
 
 log = structlog.get_logger(__name__)
 
 
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        prog="python -m compgen.model_admission",
+        prog="python -m xpu_rt.model_admission",
         description="Model admission registry + torch.compile suite.",
     )
     sub = p.add_subparsers(dest="command", required=True)
@@ -196,18 +196,18 @@ def _cmd_torch_compile(args: argparse.Namespace) -> int:
     # patch.
     pin = getattr(model_cfg.compile, "transformers_pin", "") or ""
     extra_pins = tuple(getattr(model_cfg.compile, "extra_pins", ()) or ())
-    if pin and os.environ.get("COMPGEN_ADMISSION_PINNED") != pin:
+    if pin and os.environ.get("XPU_RT_ADMISSION_PINNED") != pin:
         cmd = ["uv", "run", "--no-sync",
                "--with", f"transformers=={pin}",
                "--with", "tokenizers",
                "--with", "accelerate"]
         for spec in extra_pins:
             cmd.extend(["--with", spec])
-        cmd.extend(["python", "-m", "compgen.model_admission", "torch-compile",
+        cmd.extend(["python", "-m", "xpu_rt.model_admission", "torch-compile",
                     "--model", str(args.model), "--out", str(args.out)])
         if args.slice_path is not None:
             cmd.extend(["--slice", str(args.slice_path)])
-        env = dict(os.environ, COMPGEN_ADMISSION_PINNED=pin)
+        env = dict(os.environ, XPU_RT_ADMISSION_PINNED=pin)
         os.execvpe(cmd[0], cmd, env)
     slice_cfg: SliceConfig | None = None
     if args.slice_path is not None:
@@ -264,7 +264,7 @@ def _build_probe_cmd(
 
     import sys
 
-    base = ["-m", "compgen.model_admission", "torch-compile",
+    base = ["-m", "xpu_rt.model_admission", "torch-compile",
             "--model", str(model_cfg.raw_path), "--out", str(out_dir)]
     if slice_cfg is not None:
         base.extend(["--slice", str(slice_cfg.raw_path)])
@@ -443,7 +443,7 @@ def _cmd_run_suite(args: argparse.Namespace) -> int:
 
 
 def _cmd_verify_sources(args: argparse.Namespace) -> int:
-    from compgen.model_admission.verify import VerifyStatus, verify_sources
+    from xpu_rt.model_admission.verify import VerifyStatus, verify_sources
 
     if not args.candidates.exists():
         print(f"candidates file missing: {args.candidates}", file=sys.stderr)
@@ -538,7 +538,7 @@ def _cmd_forecast(args: argparse.Namespace) -> int:
     if not summary_csv.exists():
         print(
             f"baseline summary missing: {summary_csv}\n"
-            f"Run `compgen.model_admission run-suite` first.",
+            f"Run `xpu_rt.model_admission run-suite` first.",
             file=sys.stderr,
         )
         return 2

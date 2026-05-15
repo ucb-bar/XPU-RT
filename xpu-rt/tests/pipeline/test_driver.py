@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from compgen.options import (
+from xpu_rt.options import (
     cuda_a100_defaults,
     npu_fp8_defaults,
 )
-from compgen.pipeline.driver import (
+from xpu_rt.pipeline.driver import (
     PipelineResult,
     compile_through_pipeline,
 )

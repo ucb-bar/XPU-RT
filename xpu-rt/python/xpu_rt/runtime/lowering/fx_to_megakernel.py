@@ -2,7 +2,7 @@
 
 Replaces the conformance-harness's hand-built workload factories
 with an automatic lowering: a torch ``nn.Module`` + sample inputs
-goes in, a :class:`compgen.runtime.megakernel.MegakernelGraph`
+goes in, a :class:`xpu_rt.runtime.megakernel.MegakernelGraph`
 plus the matching device-function bodies come out, ready for the
 Phase-2/3/5 pipeline.
 
@@ -24,7 +24,7 @@ path or surface the error to the user.
 Decision logging — every matcher records its match decision
 (pattern name, op-by-op routing, tile shape, why this backend
 won) on the returned :class:`LoweringDecision`. The MCP-driven
-flow exposes these via the ``compgen_compile_decisions`` tool so
+flow exposes these via the ``xpu_rt_compile_decisions`` tool so
 remote agents can audit the compiler's choices.
 """
 
@@ -36,13 +36,13 @@ from typing import Any
 import torch
 import torch.nn as nn
 
-from compgen.runtime.event_tensor import EventTensor
-from compgen.runtime.megakernel import (
+from xpu_rt.runtime.event_tensor import EventTensor
+from xpu_rt.runtime.megakernel import (
     DeviceCall,
     EventEdge,
     MegakernelGraph,
 )
-from compgen.transforms.emit_cuda_megakernel import DeviceFunctionSource
+from xpu_rt.transforms.emit_cuda_megakernel import DeviceFunctionSource
 
 
 class UnsupportedShape(RuntimeError):
@@ -178,19 +178,19 @@ class LoweringResult:
 def _registered_user_lowerings() -> list[Any]:
     """Return user-registered lowerings, ordered by registration.
 
-    Late-binds the ``compgen.plugins`` import so the matcher stays
+    Late-binds the ``xpu_rt.plugins`` import so the matcher stays
     importable on minimal installs. Returns an empty list when the
     plugins module isn't available or no user lowerings are
     registered.
 
     The user registers a lowering via either:
 
-    1. ``compgen.plugins.register(GROUP_LOWERINGS, name, fn)`` —
+    1. ``xpu_rt.plugins.register(GROUP_LOWERINGS, name, fn)`` —
        programmatic, in-process. Useful when the agent loads a
        dialect at session start.
-    2. A ``compgen.runtime.lowerings`` entry-point in the user's
+    2. A ``xpu_rt.runtime.lowerings`` entry-point in the user's
        package's ``pyproject.toml`` — picked up automatically by
-       :func:`compgen.plugins.discover_all`.
+       :func:`xpu_rt.plugins.discover_all`.
 
     Each registered ``fn`` must match the same contract as the
     built-in matchers: ``fn(model, sample_inputs, *,
@@ -198,7 +198,7 @@ def _registered_user_lowerings() -> list[Any]:
     :class:`UnsupportedShape`.
     """
     try:
-        from compgen.plugins import GROUP_LOWERINGS, registry
+        from xpu_rt.plugins import GROUP_LOWERINGS, registry
     except ImportError:
         return []
     return registry().get(GROUP_LOWERINGS)
@@ -216,7 +216,7 @@ _VALID_CUBLASDX_PRECISIONS = ("fp32", "bf16_fp32")
 # Re-exported here under the original private name for one round
 # of backward compatibility; callers should import from the new
 # location going forward.
-from compgen.targets.gpu.nvidia.common.sm_tag import (  # noqa: E402
+from xpu_rt.targets.gpu.nvidia.common.sm_tag import (  # noqa: E402
     arch_to_cublasdx_sm as _arch_to_cublasdx_sm,
 )
 
@@ -240,12 +240,12 @@ def lower_torch_to_megakernel(
             otherwise :class:`UnsupportedShape` is raised.
         sample_inputs: Concrete inputs. Used to infer tensor shapes
             for the pattern matcher and the body bodies.
-        backend_choice: Optional :class:`compgen.runtime.autotune.BackendChoice`
-            from :func:`compgen.runtime.autotune.probe_device`. When
+        backend_choice: Optional :class:`xpu_rt.runtime.autotune.BackendChoice`
+            from :func:`xpu_rt.runtime.autotune.probe_device`. When
             provided, every individual flag is **overridden** by the
             choice's fields — the agentic-compilation flow uses this
             so a PyPI user only passes ``compile_model(model)`` and
-            CompGen probes everything internally. When ``None``, the
+            XPU-RT probes everything internally. When ``None``, the
             individual flags below are honored (backwards-compatible
             path for tests + advanced callers who want fine control).
         prefer_cublasdx_for_linears: When True AND cuBLASDx +
@@ -303,8 +303,8 @@ def lower_torch_to_megakernel(
 
     # User-registered lowerings get tried FIRST (Wave 2.3 — the
     # cuda-tile / custom-MLIR-dialect entrypoint). Each is a callable
-    # registered via ``compgen.plugins.register(GROUP_LOWERINGS, name,
-    # fn)`` or via a ``compgen.runtime.lowerings`` entry-point in
+    # registered via ``xpu_rt.plugins.register(GROUP_LOWERINGS, name,
+    # fn)`` or via a ``xpu_rt.runtime.lowerings`` entry-point in
     # the user's pyproject. The contract matches the built-in
     # matchers — ``(model, sample_inputs, *, backend_choice=...)``
     # → ``LoweringResult`` or ``UnsupportedShape``.
@@ -335,7 +335,7 @@ def lower_torch_to_megakernel(
     # diamond/FFN sublayers, and we want the inner matchers to
     # have first crack at a plain block before residual_norm
     # composes them.
-    from compgen.runtime.lowering.pattern_catalog import (
+    from xpu_rt.runtime.lowering.pattern_catalog import (
         _match_mha,
         _match_moe,
         _match_residual_norm,
@@ -397,7 +397,7 @@ def lower_torch_to_megakernel(
     # the agent can read to know why even the fallback failed.
     if allow_generic_fallback:
         try:
-            from compgen.runtime.lowering.fx_generic import lower_generic_fx
+            from xpu_rt.runtime.lowering.fx_generic import lower_generic_fx
 
             return lower_generic_fx(
                 model,
@@ -489,7 +489,7 @@ def _try_submodule_match(
             continue
 
         # Sub-block reproduces the wrapper's forward — try matching it.
-        from compgen.runtime.lowering.pattern_catalog import (
+        from xpu_rt.runtime.lowering.pattern_catalog import (
             _match_mha,
             _match_moe,
             _match_residual_norm,
@@ -667,7 +667,7 @@ def _probe_backends() -> _BackendAvailability:
     hand-rolled bodies cleanly.
     """
     try:
-        from compgen.runtime.native.cuda import (
+        from xpu_rt.runtime.native.cuda import (
             discover_cublasdx_include,
             discover_cutlass_include,
             discover_libcudacxx_include,
@@ -741,7 +741,7 @@ def _emit_diamond(
 ) -> LoweringResult:
     """Emit the diamond MegakernelGraph + bodies.
 
-    Mirrors the hand-built ``compgen.testing.workloads.diamond_dag``
+    Mirrors the hand-built ``xpu_rt.testing.workloads.diamond_dag``
     factory bit-for-bit, just driven by the matched torch module
     instead of being typed in by hand.
     """
@@ -862,7 +862,7 @@ def _emit_diamond(
             f"shared-memory tiled fp32 fmaf body{prefer_note}. cuBLASDx "
             f"discovery: {backends.cublasdx_status}. Pass "
             "``prefer_cublasdx_for_linears=True`` to lower_torch_to_megakernel "
-            "(or set the kwarg via compgen_compile_torch_model) to swap "
+            "(or set the kwarg via xpu_rt_compile_torch_model) to swap "
             "linear bodies to the cuBLASDx path."
         )
     # Plumb both cuBLASDx + libcudacxx include dirs into the

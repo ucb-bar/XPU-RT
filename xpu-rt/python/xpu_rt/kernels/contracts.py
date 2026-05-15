@@ -22,8 +22,8 @@ from typing import Any
 
 from xdsl.dialects.builtin import ModuleOp
 
-from compgen.ir.payload.contracts import KernelContract, extract_contracts
-from compgen.targets.schema import TargetProfile
+from xpu_rt.ir.payload.contracts import KernelContract, extract_contracts
+from xpu_rt.targets.schema import TargetProfile
 
 
 @dataclass(frozen=True)
@@ -144,7 +144,7 @@ def spec_to_provider_contract(
     Converts the IR kernel spec into the provider protocol's contract type
     so that ``ProviderRegistry.search()`` can be called.
     """
-    from compgen.kernels.provider import KernelContract as ProviderContract
+    from xpu_rt.kernels.provider import KernelContract as ProviderContract
 
     ir_contract = spec.contract
     op_name = ir_contract.op_name
@@ -196,8 +196,8 @@ def spec_to_provider_contract(
     # provider. The HardwareSpec's ``runtime_contract.math`` block
     # carries libm/libc availability + named intrinsics, routed through
     # the TargetProfile ``metadata['runtime_math']`` slot by
-    # :func:`compgen.targetgen.load.extract_target_profile`.
-    from compgen.kernels.provider import RuntimeCapabilities
+    # :func:`xpu_rt.targetgen.load.extract_target_profile`.
+    from xpu_rt.kernels.provider import RuntimeCapabilities
 
     raw_math = (getattr(target, "metadata", {}) or {}).get("runtime_math", {}) or {}
     runtime = RuntimeCapabilities(

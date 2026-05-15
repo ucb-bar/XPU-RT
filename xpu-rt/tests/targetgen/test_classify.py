@@ -4,14 +4,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from compgen.targetgen.classify import (
+from xpu_rt.targetgen.classify import (
     IntegrationStyle,
     LoweringSurface,
     TargetFamily,
     classify_hardware,
 )
-from compgen.targetgen.load import load_hardware_spec
-from compgen.targetgen.plan import generate_support_plan
+from xpu_rt.targetgen.load import load_hardware_spec
+from xpu_rt.targetgen.plan import generate_support_plan
 
 EXEMPLAR_DIR = Path(__file__).parent / "exemplars"
 

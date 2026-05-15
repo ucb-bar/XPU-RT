@@ -6,12 +6,12 @@ import json
 from pathlib import Path
 from typing import Any
 
-from compgen.agent.llm_driver import LLMDrivenCompiler
-from compgen.api import compile_model
-from compgen.api import device as _device
-from compgen.api_llm import _resolve_llm, _resolve_model
-from compgen.mcp.async_jobs import JobQueue
-from compgen.mcp.session import McpSession, SessionManager
+from xpu_rt.agent.llm_driver import LLMDrivenCompiler
+from xpu_rt.api import compile_model
+from xpu_rt.api import device as _device
+from xpu_rt.api_llm import _resolve_llm, _resolve_model
+from xpu_rt.mcp.async_jobs import JobQueue
+from xpu_rt.mcp.session import McpSession, SessionManager
 
 # The JobQueue is module-level so every handler shares the same pool.
 _JOBS = JobQueue(max_workers=2, inline_threshold_s=5.0)
@@ -37,7 +37,7 @@ def open_target(
     """Load a hardware-spec YAML and attach it to the session.
 
     If ``packs`` is provided, it replaces the session's pack list (paths
-    or ``compgen.packs`` entry-point identifiers) before the target
+    or ``xpu_rt.packs`` entry-point identifiers) before the target
     device is constructed. Packs previously registered via
     :func:`register_pack` are otherwise preserved.
 
@@ -88,7 +88,7 @@ def register_pack(
         - If a target is already open, re-opens the device so the
           pack takes effect immediately.
     """
-    from compgen.packs import load_pack
+    from xpu_rt.packs import load_pack
 
     session = sm.get(session_id)
     try:
@@ -281,7 +281,7 @@ def bundle_export(
     out = Path(output_dir).expanduser() if output_dir else (session.scratch_dir / "bundle")
     out.mkdir(parents=True, exist_ok=True)
 
-    from compgen.ir.recipe.serialize import recipe_to_mlir
+    from xpu_rt.ir.recipe.serialize import recipe_to_mlir
 
     # Prefer the live payload the driver has been mutating (apply_recipe
     # writes to it). Fall back to the compile-time snapshot if we're in
@@ -306,7 +306,7 @@ def bundle_export(
     triton_info: dict[str, Any] | None = None
     if target_class == "ukernel_runtime":
         try:
-            from compgen.stages.bundle.baremetal_plugin import (
+            from xpu_rt.stages.bundle.baremetal_plugin import (
                 write_baremetal_bundle,
             )
 
@@ -331,7 +331,7 @@ def bundle_export(
             }
     if target_class == "triton_friendly":
         try:
-            from compgen.stages.bundle.triton_plugin import write_triton_bundle
+            from xpu_rt.stages.bundle.triton_plugin import write_triton_bundle
 
             triton_dir = out / "triton"
             tres = write_triton_bundle(payload_module, triton_dir)
@@ -404,12 +404,12 @@ def enter_phase(
 
     * ``target_phase`` is not a known phase;
     * the transition is not legal under
-      :func:`compgen.mcp.phase_taxonomy.is_legal_transition` and
+      :func:`xpu_rt.mcp.phase_taxonomy.is_legal_transition` and
       ``unsafe`` is not set;
     * the session does not exist.
     """
 
-    from compgen.mcp.phase_taxonomy import (
+    from xpu_rt.mcp.phase_taxonomy import (
         PHASES,
         is_known_phase,
         is_legal_transition,
@@ -491,7 +491,7 @@ LIFECYCLE_TOOLS: list[dict[str, Any]] = [
                     "type": "array",
                     "items": {"type": "string"},
                     "description": (
-                        "Extension packs to attach (paths or compgen.packs "
+                        "Extension packs to attach (paths or xpu_rt.packs "
                         "entry-point identifiers). Replaces any previously "
                         "registered packs."
                     ),
@@ -503,7 +503,7 @@ LIFECYCLE_TOOLS: list[dict[str, Any]] = [
     {
         "name": "register_pack",
         "description": (
-            "Register a compgen.packs extension with the session "
+            "Register a xpu_rt.packs extension with the session "
             "(path or entry-point identifier). Rebuilds the device if a "
             "target is already open."
         ),

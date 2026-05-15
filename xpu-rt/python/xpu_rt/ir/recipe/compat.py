@@ -24,8 +24,8 @@ from xdsl.dialects.builtin import (
 )
 from xdsl.ir import Operation
 
-from compgen.ir.recipe.attrs import DeviceRefAttr
-from compgen.ir.recipe.ops import (
+from xpu_rt.ir.recipe.attrs import DeviceRefAttr
+from xpu_rt.ir.recipe.ops import (
     AssignDevice,
     ChooseTransformFamily,
     InsertCopyBoundary,
@@ -37,7 +37,7 @@ from compgen.ir.recipe.ops import (
     SetObjective,
     SetTileParams,
 )
-from compgen.ir.recipe.ops_candidate import (
+from xpu_rt.ir.recipe.ops_candidate import (
     FuseOp,
     InsertCopyBoundaryOp,
     PlaceOnDeviceOp,
@@ -45,9 +45,9 @@ from compgen.ir.recipe.ops_candidate import (
     TileOp,
     VectorizeOp,
 )
-from compgen.ir.recipe.ops_provenance import PromoteOp
-from compgen.ir.recipe.ops_scope import RecipeRegionOp
-from compgen.ir.recipe.ops_verify import (
+from xpu_rt.ir.recipe.ops_provenance import PromoteOp
+from xpu_rt.ir.recipe.ops_scope import RecipeRegionOp
+from xpu_rt.ir.recipe.ops_verify import (
     RequireDiffTestOp,
     RequireTranslationValidationOp,
 )

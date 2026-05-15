@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from compgen.transforms.apply import TransformApplicator, TransformDiagnostic, TransformedIR, apply_transforms
-from compgen.transforms.synthesize import TransformScript
+from xpu_rt.transforms.apply import TransformApplicator, TransformDiagnostic, TransformedIR, apply_transforms
+from xpu_rt.transforms.synthesize import TransformScript
 from xdsl.dialects.builtin import Float32Type, FunctionType, ModuleOp, TensorType
 from xdsl.dialects.func import FuncOp, ReturnOp
 from xdsl.ir import Block, Region

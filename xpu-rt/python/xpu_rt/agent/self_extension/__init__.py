@@ -2,11 +2,11 @@
 
 P4 of the LLM-driven compilation surface plan. The LLM proposes a
 Python source blob for a new Tool. The source runs inside
-:mod:`~compgen.agent.self_extension.sandbox` (restricted imports +
+:mod:`~xpu_rt.agent.self_extension.sandbox` (restricted imports +
 wall-clock cap), its output is scored against a differential scenario,
 and the trial is appended to a JSONL log. After N passing trials
 across >=2 distinct (workload, target) pairs, the tool graduates into
-the live :class:`~compgen.llm.registry.Registry`.
+the live :class:`~xpu_rt.llm.registry.Registry`.
 
 Public API (stable):
 
@@ -23,26 +23,26 @@ does not decide what "good" means.
 
 from __future__ import annotations
 
-from compgen.agent.self_extension._index import (
+from xpu_rt.agent.self_extension._index import (
     clear_authored_index,
     register_authored_tool,
     snapshot_authored_index,
 )
-from compgen.agent.self_extension.authored_tool import (
+from xpu_rt.agent.self_extension.authored_tool import (
     AuthoredTool,
     AuthoredToolSource,
     AuthoredToolTrial,
 )
-from compgen.agent.self_extension.graduate import (
+from xpu_rt.agent.self_extension.graduate import (
     AuthoredGraduationReport,
     promote_authored_tools,
 )
-from compgen.agent.self_extension.sandbox import (
+from xpu_rt.agent.self_extension.sandbox import (
     SandboxResult,
     SandboxViolation,
     sandbox_invoke,
 )
-from compgen.agent.self_extension.trials import (
+from xpu_rt.agent.self_extension.trials import (
     TrialScenario,
     record_trial,
     run_trial,

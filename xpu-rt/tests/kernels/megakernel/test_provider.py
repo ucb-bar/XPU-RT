@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from compgen.ir.event.attrs import EventCoordAttr, EventTensorTypeAttr
-from compgen.ir.event.ops import CallDeviceOp, EventTensorOp, GraphOp
-from compgen.ir.payload.passes.megakernel_static_schedule import (
+from xpu_rt.ir.event.attrs import EventCoordAttr, EventTensorTypeAttr
+from xpu_rt.ir.event.ops import CallDeviceOp, EventTensorOp, GraphOp
+from xpu_rt.ir.payload.passes.megakernel_static_schedule import (
     StaticMegakernelSchedule,
 )
-from compgen.kernels.provider import KernelContract, KernelProvider, SearchBudget
-from compgen.kernels.providers.megakernel import MegakernelProvider
-from compgen.kernels.selector import KernelStrategy
+from xpu_rt.kernels.provider import KernelContract, KernelProvider, SearchBudget
+from xpu_rt.kernels.providers.megakernel import MegakernelProvider
+from xpu_rt.kernels.selector import KernelStrategy
 from xdsl.dialects.builtin import (
     ArrayAttr,
     IntegerAttr,

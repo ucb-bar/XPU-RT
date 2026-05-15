@@ -15,7 +15,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from compgen.llm.base import Objective
+from xpu_rt.llm.base import Objective
 
 
 @dataclass(frozen=True)

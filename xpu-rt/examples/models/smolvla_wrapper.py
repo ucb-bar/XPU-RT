@@ -2,7 +2,7 @@
 
 This module intentionally re-exports the old example-level helpers so existing
 tests and scripts continue to work while the real implementation lives under
-``compgen.models``.
+``xpu_rt.models``.
 """
 
 from __future__ import annotations
@@ -11,8 +11,8 @@ from typing import Any
 
 import torch
 
-from compgen.capture import capture_dynamo_partitions
-from compgen.models import get_graph_op_summary, load_smolvla_bundle
+from xpu_rt.capture import capture_dynamo_partitions
+from xpu_rt.models import get_graph_op_summary, load_smolvla_bundle
 
 
 def load_smolvla(device: str = "cpu") -> tuple[Any, tuple[torch.Tensor, ...], int]:

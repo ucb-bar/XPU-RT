@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 import pytest
-from compgen.ir.event.attrs import (
+from xpu_rt.ir.event.attrs import (
     EventCoordAttr,
     EventTensorTypeAttr,
     SchedulingPolicyAttr,
 )
-from compgen.ir.event.contracts import check_event_graph
-from compgen.ir.event.dialect import ALL_ATTRS, ALL_OPS, Event
-from compgen.ir.event.ops import (
+from xpu_rt.ir.event.contracts import check_event_graph
+from xpu_rt.ir.event.dialect import ALL_ATTRS, ALL_OPS, Event
+from xpu_rt.ir.event.ops import (
     CallDeviceOp,
     EventTensorOp,
     GraphOp,

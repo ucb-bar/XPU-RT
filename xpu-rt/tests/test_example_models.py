@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 import torch
-from compgen.capture.torch_export import capture_model
-from compgen.ir.payload.import_fx import fx_to_xdsl
+from xpu_rt.capture.torch_export import capture_model
+from xpu_rt.ir.payload.import_fx import fx_to_xdsl
 
 
 def test_simple_mlp_capture() -> None:

@@ -6,8 +6,8 @@ from __future__ import annotations
 from dataclasses import asdict
 from typing import Any
 
-from compgen.llm.registry import get_registry
-from compgen.mcp.session import SessionManager
+from xpu_rt.llm.registry import get_registry
+from xpu_rt.mcp.session import SessionManager
 
 
 def view_recipe(

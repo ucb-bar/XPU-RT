@@ -1,26 +1,26 @@
-"""MCP stdio server entry point for CompGen.
+"""MCP stdio server entry point for XPU-RT.
 
-Adapts :data:`compgen.mcp.tools.ALL_TOOLS` into MCP SDK tool handlers.
-The server is only instantiated when ``compgen-mcp`` is invoked from
-the shell; importing :mod:`compgen.mcp` does not require the MCP SDK.
+Adapts :data:`xpu_rt.mcp.tools.ALL_TOOLS` into MCP SDK tool handlers.
+The server is only instantiated when ``xpu-rt-mcp`` is invoked from
+the shell; importing :mod:`xpu_rt.mcp` does not require the MCP SDK.
 
 Usage::
 
-    pip install compgen
-    compgen-mcp                 # or: compgen mcp serve
+    pip install xpu_rt
+    xpu-rt-mcp                 # or: xpu_rt mcp serve
 
 Claude Code configuration (``.mcp.json``)::
 
     {
       "mcpServers": {
-        "compgen": {
-          "command": "compgen-mcp"
+        "xpu-rt": {
+          "command": "xpu-rt-mcp"
         }
       }
     }
 
-The canonical config snippet lives in :mod:`compgen.mcp.config`;
-``compgen mcp print-config`` and ``compgen mcp install`` both read it
+The canonical config snippet lives in :mod:`xpu_rt.mcp.config`;
+``xpu_rt mcp print-config`` and ``xpu_rt mcp install`` both read it
 from there so docstring + CLI can't drift.
 """
 
@@ -34,9 +34,9 @@ from typing import Any
 
 import structlog
 
-from compgen.mcp.session import SessionManager
-from compgen.mcp.tools import ALL_TOOLS
-from compgen.mcp.transcript import McpTranscriptRecorder
+from xpu_rt.mcp.session import SessionManager
+from xpu_rt.mcp.tools import ALL_TOOLS
+from xpu_rt.mcp.transcript import McpTranscriptRecorder
 
 
 def _route_logs_to_stderr() -> None:
@@ -92,9 +92,9 @@ def dispatch_tool(
 
     if (
         tool is not None
-        and _os.environ.get("COMPGEN_STRICT_PHASE_GATING") == "1"
+        and _os.environ.get("XPU_RT_STRICT_PHASE_GATING") == "1"
     ):
-        from compgen.mcp.phase_taxonomy import is_tool_allowed_in_phase
+        from xpu_rt.mcp.phase_taxonomy import is_tool_allowed_in_phase
 
         session_id_for_phase = arguments.get("session_id") or ""
         try:
@@ -126,9 +126,9 @@ def dispatch_tool(
     # their required tokens / role.
     if (
         tool is not None
-        and _os.environ.get("COMPGEN_STRICT_CAPABILITIES") == "1"
+        and _os.environ.get("XPU_RT_STRICT_CAPABILITIES") == "1"
     ):
-        from compgen.mcp.capabilities import missing_capabilities
+        from xpu_rt.mcp.capabilities import missing_capabilities
 
         session_id_for_caps = arguments.get("session_id") or ""
         try:
@@ -179,7 +179,7 @@ def dispatch_tool(
         return result
 
     # H1 — Snapshot session state BEFORE the call so we can diff after.
-    from compgen.mcp.tool_delta import (
+    from xpu_rt.mcp.tool_delta import (
         Cost,
         SideEffects,
         ToolDelta,
@@ -264,8 +264,8 @@ def _require_mcp() -> Any:
         return mcp
     except ImportError as exc:
         sys.stderr.write(
-            "compgen-mcp requires the 'mcp' package.\n"
-            "Reinstall with: pip install --upgrade compgen\n"
+            "xpu-rt-mcp requires the 'mcp' package.\n"
+            "Reinstall with: pip install --upgrade xpu_rt\n"
             f"Import error: {exc}\n"
         )
         sys.exit(2)
@@ -289,11 +289,11 @@ def _run_async_server() -> None:
     from mcp.types import TextContent, Tool  # type: ignore[import-not-found]
 
     # Surface every discoverable extension (entry-point plugins, vendor
-    # dialects, user-space ~/.compgen/extensions/*.py) to the registries
+    # dialects, user-space ~/.xpu_rt/extensions/*.py) to the registries
     # before tools are enumerated, so an installed kernel-provider or
     # dropped-in extension is visible on the first list_tools call.
     try:
-        from compgen.plugins import discover_everything
+        from xpu_rt.plugins import discover_everything
 
         discovery = discover_everything()
         log.info(
@@ -309,10 +309,10 @@ def _run_async_server() -> None:
     sm = SessionManager()
     # Wrap the transcript recorder so every MCP tool invocation also
     # lands on the active trace bus (no-op when no bus is installed).
-    from compgen.trace import TracingMcpTranscriptRecorder
+    from xpu_rt.trace import TracingMcpTranscriptRecorder
 
     recorder = TracingMcpTranscriptRecorder.wrap(McpTranscriptRecorder.from_env())
-    server: Any = Server("compgen")
+    server: Any = Server("xpu-rt")
 
     tool_by_name = {t["name"]: t for t in ALL_TOOLS}
 
@@ -350,7 +350,7 @@ def _run_async_server() -> None:
 
 
 def main() -> None:
-    """Entry-point for the ``compgen-mcp`` script.
+    """Entry-point for the ``xpu-rt-mcp`` script.
 
     Honours ``--version`` and ``--help`` ahead of starting the
     blocking server. Without arguments the script behaves as
@@ -361,25 +361,25 @@ def main() -> None:
 
     args = sys.argv[1:]
     if args and args[0] in ("-V", "--version"):
-        from compgen import __version__
+        from xpu_rt import __version__
 
-        print(f"compgen-mcp {__version__}")
+        print(f"xpu-rt-mcp {__version__}")
         sys.exit(0)
     if args and args[0] in ("-h", "--help"):
-        from compgen import __version__
+        from xpu_rt import __version__
 
         print(
-            f"compgen-mcp {__version__} — Compgen Model Context Protocol server\n"
+            f"xpu-rt-mcp {__version__} — Compgen Model Context Protocol server\n"
             "\n"
             "Usage:\n"
-            "  compgen-mcp                 # blocking stdio server (typical use)\n"
-            "  compgen-mcp --version       # print version + exit\n"
-            "  compgen-mcp --help          # this message\n"
+            "  xpu-rt-mcp                 # blocking stdio server (typical use)\n"
+            "  xpu-rt-mcp --version       # print version + exit\n"
+            "  xpu-rt-mcp --help          # this message\n"
             "\n"
             "Wire into Claude Code by adding the following to your\n"
             "~/.config/claude-code/mcp.json:\n"
             "\n"
-            '  {"mcpServers": {"compgen": {"command": "compgen-mcp"}}}\n'
+            '  {"mcpServers": {"xpu-rt": {"command": "xpu-rt-mcp"}}}\n'
         )
         sys.exit(0)
     _run_async_server()

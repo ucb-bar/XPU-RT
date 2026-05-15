@@ -6,9 +6,9 @@ import sys
 from pathlib import Path
 
 import pytest
-from compgen.mcp.session import SessionManager
-from compgen.mcp.tools.lifecycle import open_target, register_pack
-from compgen.packs.scaffolding import scaffold_pack
+from xpu_rt.mcp.session import SessionManager
+from xpu_rt.mcp.tools.lifecycle import open_target, register_pack
+from xpu_rt.packs.scaffolding import scaffold_pack
 
 EXEMPLAR = Path(__file__).resolve().parents[1] / "targetgen" / "exemplars" / "test_gpu_simt.yaml"
 
@@ -91,7 +91,7 @@ def test_register_pack_after_open_target_rebuilds_device(sm: SessionManager, sca
 
 
 def test_register_pack_tool_in_LIFECYCLE_TOOLS_catalogue() -> None:
-    from compgen.mcp.tools.lifecycle import LIFECYCLE_TOOLS
+    from xpu_rt.mcp.tools.lifecycle import LIFECYCLE_TOOLS
 
     names = [t["name"] for t in LIFECYCLE_TOOLS]
     assert "register_pack" in names
@@ -101,14 +101,14 @@ def test_register_pack_tool_in_LIFECYCLE_TOOLS_catalogue() -> None:
 
 
 def test_open_target_schema_exposes_packs_field() -> None:
-    from compgen.mcp.tools.lifecycle import LIFECYCLE_TOOLS
+    from xpu_rt.mcp.tools.lifecycle import LIFECYCLE_TOOLS
 
     tool = next(t for t in LIFECYCLE_TOOLS if t["name"] == "open_target")
     assert "packs" in tool["input_schema"]["properties"]
 
 
 def test_load_model_schema_exposes_packs_field() -> None:
-    from compgen.mcp.tools.lifecycle import LIFECYCLE_TOOLS
+    from xpu_rt.mcp.tools.lifecycle import LIFECYCLE_TOOLS
 
     tool = next(t for t in LIFECYCLE_TOOLS if t["name"] == "load_model")
     assert "packs" in tool["input_schema"]["properties"]

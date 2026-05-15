@@ -19,9 +19,9 @@ import shutil
 from pathlib import Path
 
 import pytest
-from compgen.graph_compilation import validate_run
-from compgen.graph_compilation.lowering_validate import validate_payload_lowering
-from compgen.graph_compilation.run import lower_from_existing_capture, run_graph_compilation
+from xpu_rt.graph_compilation import validate_run
+from xpu_rt.graph_compilation.lowering_validate import validate_payload_lowering
+from xpu_rt.graph_compilation.run import lower_from_existing_capture, run_graph_compilation
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 TINY_MLP_CONFIG = REPO_ROOT / "configs" / "models" / "tiny_mlp.yaml"
@@ -118,7 +118,7 @@ def test_tiny_mlp_export_payload_mlir_has_linalg_ops(tiny_mlp_run: Path) -> None
     # tiny_mlp has linear→gelu→linear; after default decompositions the export
     # path produces real linalg ops.
     assert "linalg.matmul" in mlir
-    assert "compgen.region_id" in mlir
+    assert "xpu_rt.region_id" in mlir
     # No fake/placeholder text.
     assert "TODO" not in mlir
     assert "fake" not in mlir.lower()
@@ -129,7 +129,7 @@ def test_tiny_mlp_per_module_lowering_report_uses_fx_importer(tiny_mlp_run: Path
         r = json.loads(path.read_text())
         if r.get("status") == "skipped":
             continue
-        assert r["lowering_api"] == "compgen.ir.payload.import_fx.FXImporter"
+        assert r["lowering_api"] == "xpu_rt.ir.payload.import_fx.FXImporter"
         assert r["llm_calls"] == 0
         assert r["input"]["num_fx_nodes"] > 0
 
@@ -281,11 +281,11 @@ def test_existing_compiler_core_not_modified() -> None:
     import subprocess
 
     forbidden = [
-        "python/compgen/ir/payload/import_fx.py",
-        "python/compgen/capture/torch_export.py",
-        "python/compgen/capture/torch_mlir_bridge.py",
-        "python/compgen/pipeline/driver.py",
-        "python/compgen/runtime/bundle_emit.py",
+        "python/xpu_rt/ir/payload/import_fx.py",
+        "python/xpu_rt/capture/torch_export.py",
+        "python/xpu_rt/capture/torch_mlir_bridge.py",
+        "python/xpu_rt/pipeline/driver.py",
+        "python/xpu_rt/runtime/bundle_emit.py",
     ]
     try:
         diff = subprocess.check_output(
@@ -316,7 +316,7 @@ def test_no_development_wave_names_in_public_surfaces() -> None:
             "--exclude-dir=__pycache__",
             "--exclude=test_payload_lowering.py",
             forbidden_pattern,
-            "python/compgen/graph_compilation/",
+            "python/xpu_rt/graph_compilation/",
             "tests/graph_compilation/",
             "configs/models/",
             "configs/targets/",

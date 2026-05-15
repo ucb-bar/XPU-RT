@@ -16,7 +16,7 @@ from typing import Any
 
 import structlog
 
-from compgen.ir.ukernel.ops import UkernelCallOp
+from xpu_rt.ir.ukernel.ops import UkernelCallOp
 
 log = structlog.get_logger()
 

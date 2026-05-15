@@ -1,6 +1,6 @@
 """focus_chunk — lazy per-region expansion (P2.1).
 
-When :func:`compgen.agent.views.canonical_view.canonical_view` shows a
+When :func:`xpu_rt.agent.views.canonical_view.canonical_view` shows a
 region the LLM wants to drill into, the Tactician calls
 ``focus_chunk`` with the region id to get its full dossier (op list,
 candidate set, contract envelope, recent decisions).
@@ -20,7 +20,7 @@ from typing import Any
 class FocusChunk:
     """All the per-region detail the Tactician needs.
 
-    The shape mirrors :class:`compgen.graph_compilation.graph_dossier`
+    The shape mirrors :class:`xpu_rt.graph_compilation.graph_dossier`
     just enough to make the chunk consumable without coupling to the
     full dossier class.
     """

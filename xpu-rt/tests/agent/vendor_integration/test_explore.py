@@ -5,8 +5,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from compgen.agent.vendor_integration.explore import explore_vendor_repo
-from compgen.agent.vendor_integration.propose_adapter import propose_adapter_layout
+from xpu_rt.agent.vendor_integration.explore import explore_vendor_repo
+from xpu_rt.agent.vendor_integration.propose_adapter import propose_adapter_layout
 
 FIXTURE = Path(__file__).resolve().parents[2] / "fixtures" / "fake_vendor"
 
@@ -26,7 +26,7 @@ def test_explore_without_llm_returns_conservative_descriptor() -> None:
     d = result.descriptor
     assert not result.llm_used
     assert d.name in ("fake", "fake_vendor")
-    assert d.package_name.startswith("compgen_")
+    assert d.package_name.startswith("xpu_rt_")
     assert d.target == "toy-target"
     assert d.verification.workload_diff_test  # workloads was set
     # Scanner authoritative fields

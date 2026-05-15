@@ -15,7 +15,7 @@ import pytest
 
 class TestPredicateRoundTrip:
     def test_mod_eq(self) -> None:
-        from compgen.kernels.predicates import (
+        from xpu_rt.kernels.predicates import (
             ModEq,
             predicate_from_dict,
             predicate_to_dict,
@@ -27,7 +27,7 @@ class TestPredicateRoundTrip:
         assert predicate_from_dict(body) == p
 
     def test_byte_size_le(self) -> None:
-        from compgen.kernels.predicates import (
+        from xpu_rt.kernels.predicates import (
             ByteSizeLe,
             predicate_from_dict,
             predicate_to_dict,
@@ -37,7 +37,7 @@ class TestPredicateRoundTrip:
         assert predicate_from_dict(predicate_to_dict(p)) == p
 
     def test_no_alias(self) -> None:
-        from compgen.kernels.predicates import (
+        from xpu_rt.kernels.predicates import (
             NoAlias,
             predicate_from_dict,
             predicate_to_dict,
@@ -47,7 +47,7 @@ class TestPredicateRoundTrip:
         assert predicate_from_dict(predicate_to_dict(p)) == p
 
     def test_dtype_in(self) -> None:
-        from compgen.kernels.predicates import (
+        from xpu_rt.kernels.predicates import (
             DtypeIn,
             predicate_from_dict,
             predicate_to_dict,
@@ -57,7 +57,7 @@ class TestPredicateRoundTrip:
         assert predicate_from_dict(predicate_to_dict(p)) == p
 
     def test_numerical_within_eps(self) -> None:
-        from compgen.kernels.predicates import (
+        from xpu_rt.kernels.predicates import (
             NumericalWithinEps,
             predicate_from_dict,
             predicate_to_dict,
@@ -69,7 +69,7 @@ class TestPredicateRoundTrip:
 
 class TestKindSuffix:
     def test_kind_strings(self) -> None:
-        from compgen.kernels.predicates import (
+        from xpu_rt.kernels.predicates import (
             ByteSizeLe,
             DtypeIn,
             ModEq,
@@ -85,7 +85,7 @@ class TestKindSuffix:
         assert predicate_kind(NumericalWithinEps("Y", "ref", 0.0)) == "numerical_within_eps"
 
     def test_plan_violation_suffix(self) -> None:
-        from compgen.kernels.predicates import (
+        from xpu_rt.kernels.predicates import (
             ModEq,
             NumericalWithinEps,
             predicate_plan_violation_suffix,
@@ -100,7 +100,7 @@ class TestKindSuffix:
 
 class TestRejectUnknown:
     def test_unknown_kind_raises(self) -> None:
-        from compgen.kernels.predicates import predicate_from_dict
+        from xpu_rt.kernels.predicates import predicate_from_dict
 
         with pytest.raises(ValueError, match="unknown predicate kind"):
             predicate_from_dict({"kind": "invent_new_pattern"})
@@ -108,7 +108,7 @@ class TestRejectUnknown:
 
 class TestListHelpers:
     def test_round_trip_list(self) -> None:
-        from compgen.kernels.predicates import (
+        from xpu_rt.kernels.predicates import (
             ByteSizeLe,
             ModEq,
             predicates_from_list,
@@ -120,7 +120,7 @@ class TestListHelpers:
         assert predicates_from_list(body) == ps
 
     def test_empty_list(self) -> None:
-        from compgen.kernels.predicates import (
+        from xpu_rt.kernels.predicates import (
             predicates_from_list,
             predicates_to_list,
         )

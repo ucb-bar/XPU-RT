@@ -1,4 +1,4 @@
-# CompGen Hardware Resource Catalog
+# XPU-RT Hardware Resource Catalog
 #
 # Defines scarce hardware resources managed by the HardwareBroker.
 # Each entry maps to a Ray custom resource for scheduling.

@@ -1,4 +1,4 @@
-"""Tests for ``compgen.kernels.contract_v3`` (sharp boundary + granularity).
+"""Tests for ``xpu_rt.kernels.contract_v3`` (sharp boundary + granularity).
 
 Locks in:
 
@@ -18,7 +18,7 @@ Locks in:
 from __future__ import annotations
 
 import pytest
-from compgen.kernels.contract_v3 import (
+from xpu_rt.kernels.contract_v3 import (
     CONTRACT_VERSION,
     CompilerOnlyView,
     DispatchModel,
@@ -40,7 +40,7 @@ from compgen.kernels.contract_v3 import (
     SyncSpec,
     TensorIO,
 )
-from compgen.kernels.contract_v3_references import (
+from xpu_rt.kernels.contract_v3_references import (
     reference_dtype_cast_contract,
     reference_matmul_contract,
     reference_mega_attention_block_contract,

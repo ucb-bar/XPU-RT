@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from compgen.llm.registry import get_registry
-from compgen.llm.target_coverage import cost_weight_for, get_coverage
-from compgen.llm.tools.megakernel import (
+from xpu_rt.llm.registry import get_registry
+from xpu_rt.llm.target_coverage import cost_weight_for, get_coverage
+from xpu_rt.llm.tools.megakernel import (
     pick_scheduler_strategy,
     propose_megakernel_layout,
     register,

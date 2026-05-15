@@ -4,17 +4,17 @@ Mirror of XLA's ``WhileLoopSimplifier``. Critical for autoregressive
 decode (KV-cache loop). Because xDSL's ``scf.while`` may not be
 registered in every deployment, the pass operates on
 ``scf.while`` when available AND on func-level "while" markers
-(``compgen.while_loop`` attribute on ``func.func``).
+(``xpu_rt.while_loop`` attribute on ``func.func``).
 
 Rewrites:
 
 - **Dead-loop-variable elimination**: when a loop iterand is
   passed through unchanged across iterations, tag the operand as
-  ``compgen.while_invariant=true`` so downstream tiling can hoist it
+  ``xpu_rt.while_invariant=true`` so downstream tiling can hoist it
   out of the loop.
 - **Iter-count folding**: when a loop's trip count is statically
-  known via ``compgen.trip_count`` attribute, tag the loop with
-  ``compgen.while_fully_unrollable=true`` so codegen can emit an
+  known via ``xpu_rt.trip_count`` attribute, tag the loop with
+  ``xpu_rt.while_fully_unrollable=true`` so codegen can emit an
   unrolled version.
 
 Purely annotational today — real rewrites land when the ``scf``
@@ -54,31 +54,31 @@ def run_simplify_while_loop(
     for op in module.walk():
         if not isinstance(op, FuncOp):
             continue
-        if "compgen.while_loop" not in op.attributes:
+        if "xpu_rt.while_loop" not in op.attributes:
             continue
         stats.funcs_seen += 1
 
         # Trip-count folding.
-        tc_attr = op.attributes.get("compgen.trip_count")
+        tc_attr = op.attributes.get("xpu_rt.trip_count")
         if isinstance(tc_attr, IntegerAttr):
             tc = int(tc_attr.value.data)
             if 0 < tc <= cfg.unroll_threshold:
-                op.attributes["compgen.while_fully_unrollable"] = StringAttr("true")
+                op.attributes["xpu_rt.while_fully_unrollable"] = StringAttr("true")
                 stats.loops_fully_unrollable += 1
-        op.attributes["compgen.while_simplified"] = StringAttr("true")
+        op.attributes["xpu_rt.while_simplified"] = StringAttr("true")
         stats.loops_tagged += 1
 
         # Invariant tagging on iter args: if the func's arg attrs
-        # declare ``compgen.loop_carried=false`` on an arg, we mark it
+        # declare ``xpu_rt.loop_carried=false`` on an arg, we mark it
         # as invariant. This contract lets trace-level tooling record
         # which args don't change across iterations.
         if cfg.mark_invariants:
-            arg_attrs = op.attributes.get("compgen.loop_carried_flags")
+            arg_attrs = op.attributes.get("xpu_rt.loop_carried_flags")
             if isinstance(arg_attrs, StringAttr):
                 flags = arg_attrs.data.split(",")
                 for i, f in enumerate(flags):
                     if f.strip() == "false":
-                        op.attributes[f"compgen.arg_{i}_invariant"] = StringAttr("true")
+                        op.attributes[f"xpu_rt.arg_{i}_invariant"] = StringAttr("true")
                         stats.loop_invariants_tagged += 1
 
     return stats

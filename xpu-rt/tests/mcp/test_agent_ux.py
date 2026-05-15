@@ -22,21 +22,21 @@ from pathlib import Path
 
 import torch
 import torch.nn as nn
-from compgen.agent.llm_driver import LLMDrivenCompiler
-from compgen.api import compile_model
-from compgen.api import device as _device
-from compgen.llm.mock_client import MockLLMClient
-from compgen.mcp.session import SessionManager
-from compgen.mcp.tools import ALL_TOOLS
-from compgen.mcp.tools.inspect import (
+from xpu_rt.agent.llm_driver import LLMDrivenCompiler
+from xpu_rt.api import compile_model
+from xpu_rt.api import device as _device
+from xpu_rt.llm.mock_client import MockLLMClient
+from xpu_rt.mcp.session import SessionManager
+from xpu_rt.mcp.tools import ALL_TOOLS
+from xpu_rt.mcp.tools.inspect import (
     diff_recipe,
     get_dossier,
     list_phase_tools,
     view_recipe,
 )
-from compgen.mcp.tools.lifecycle import bundle_export
-from compgen.mcp.tools.recipe_apply import apply_recipe
-from compgen.mcp.tools.transform import (
+from xpu_rt.mcp.tools.lifecycle import bundle_export
+from xpu_rt.mcp.tools.recipe_apply import apply_recipe
+from xpu_rt.mcp.tools.transform import (
     invoke_tool,
     propose_invent_slot,
     step_proposal,
@@ -180,7 +180,7 @@ def test_get_dossier_exposes_recipe_to_payload_translation(tmp_path: Path) -> No
         assert info.get("payload_id"), f"empty payload_id for {sym}"
     # P7.1: at least one region must carry a non-empty role.
     roles_present = [info.get("role") for info in rmap.values() if info.get("role")]
-    assert roles_present, "no role tags propagated from compgen._pattern_hint — P7.1 regression"
+    assert roles_present, "no role tags propagated from xpu_rt._pattern_hint — P7.1 regression"
     # Reverse-index must agree with forward.
     assert "regions_by_role" in r
     for role, syms in r["regions_by_role"].items():

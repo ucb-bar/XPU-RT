@@ -1,10 +1,10 @@
-"""Tests for compgen.llm.tools.verification."""
+"""Tests for xpu_rt.llm.tools.verification."""
 
 from __future__ import annotations
 
 import torch
-from compgen.llm import get_registry
-from compgen.llm.tools import verification
+from xpu_rt.llm import get_registry
+from xpu_rt.llm.tools import verification
 
 
 def test_verification_tools_auto_registered() -> None:

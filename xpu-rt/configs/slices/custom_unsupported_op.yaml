@@ -3,7 +3,7 @@ slice_id: custom_unsupported_op
 parent_model_id: custom_unsupported_op
 description: |
   Single forward pass through ``crgtoy::affine_gelu`` — a real custom op
-  with no entry in ``compgen.ir.payload.decompositions``. Drives the
+  with no entry in ``xpu_rt.ir.payload.decompositions``. Drives the
   Payload Lowering opaque/unsupported inventories.
 inputs:
   kind: one_step_policy

@@ -260,7 +260,7 @@ class ProfilerBackend:
         counters: Available PMU counter names (e.g.,
             ``["cycles", "instructions", "cache_misses"]``).
         tile_level: Whether this profiler can instrument at tile granularity.
-        integration: How CompGen should integrate with this profiler.
+        integration: How XPU-RT should integrate with this profiler.
             ``"external"`` — launch wrapper (e.g., ``nsys profile``).
             ``"embedded"`` — codegen emits instrumentation hooks.
             ``"sdk"`` — call profiler SDK API at runtime.
@@ -407,7 +407,7 @@ class VerificationSurfaceSpec:
     Attributes:
         has_simulator: Whether a simulator is available for this target.
         simulator_command: Shell command (or templated command — see
-            :func:`compgen.mcp.tools.embedded._simulator_command`) that
+            :func:`xpu_rt.mcp.tools.embedded._simulator_command`) that
             launches the simulator on a compiled ELF.
         build_command: Optional shell command run before the simulator
             when ``simulator_run(execute=True)``. When empty (the default),
@@ -418,7 +418,7 @@ class VerificationSurfaceSpec:
             simulator_command itself doesn't perform the build.
         sim_backend: Simulator backend name. One of ``"vcs"``,
             ``"verilator"``, ``"firesim"``. Plugged into
-            :func:`compgen.mcp.tools.embedded._simulator_command`'s
+            :func:`xpu_rt.mcp.tools.embedded._simulator_command`'s
             substitution as ``{sim_backend}`` so a single
             ``simulator_command`` template can resolve to any of
             ``sims/vcs/``, ``sims/verilator/``, ``sims/firesim/``.
@@ -459,7 +459,7 @@ class PatchRequirement:
 
 @dataclass(frozen=True)
 class PatchSpec:
-    """Patch requirements for CompGen to support this target."""
+    """Patch requirements for XPU-RT to support this target."""
 
     requirements: list[PatchRequirement] = field(default_factory=list)
     new_dialects_needed: list[str] = field(default_factory=list)

@@ -1,4 +1,4 @@
-"""Named high-level structured ops for the ``compgen.linalg_ext`` dialect.
+"""Named high-level structured ops for the ``xpu_rt.linalg_ext`` dialect.
 
 Each op is ``Pure`` and carries explicit typed operands so the dialect
 is usable as both a destination for ``raise_special_ops`` and a source
@@ -62,7 +62,7 @@ class SoftmaxOp(IRDLOperation):
     sum(exp(x - max(x, axis=dim)), axis=dim)``.
     """
 
-    name = "compgen.linalg_ext.softmax"
+    name = "xpu_rt.linalg_ext.softmax"
 
     input = operand_def(Attribute)
     result = result_def(Attribute)
@@ -111,7 +111,7 @@ class LayerNormOp(IRDLOperation):
             ``len(normalized_shape) + axis`` dims are normalized).
     """
 
-    name = "compgen.linalg_ext.layer_norm"
+    name = "xpu_rt.linalg_ext.layer_norm"
 
     input = operand_def(Attribute)
     weight = opt_operand_def(Attribute)
@@ -168,7 +168,7 @@ class RMSNormOp(IRDLOperation):
     ``out = x * weight / sqrt(mean(x**2, axis=-1, keepdim=True) + eps)``.
     """
 
-    name = "compgen.linalg_ext.rms_norm"
+    name = "xpu_rt.linalg_ext.rms_norm"
 
     input = operand_def(Attribute)
     weight = opt_operand_def(Attribute)
@@ -210,7 +210,7 @@ class RoPEOp(IRDLOperation):
     Produces a pair (q_rot, k_rot) with the same shape as q, k.
     """
 
-    name = "compgen.linalg_ext.rope"
+    name = "xpu_rt.linalg_ext.rope"
 
     q = operand_def(Attribute)
     k = operand_def(Attribute)
@@ -276,7 +276,7 @@ class RoPEOp(IRDLOperation):
 class SwiGLUOp(IRDLOperation):
     """``swiglu(gate, up) = silu(gate) * up`` (LLaMA-style MLP gate)."""
 
-    name = "compgen.linalg_ext.swiglu"
+    name = "xpu_rt.linalg_ext.swiglu"
 
     gate = operand_def(Attribute)
     up = operand_def(Attribute)
@@ -307,7 +307,7 @@ class GeluOp(IRDLOperation):
     ``torch.nn.functional.gelu(approximate=...)``.
     """
 
-    name = "compgen.linalg_ext.gelu"
+    name = "xpu_rt.linalg_ext.gelu"
 
     input = operand_def(Attribute)
     result = result_def(Attribute)
@@ -347,7 +347,7 @@ class GeluOp(IRDLOperation):
 class SiluOp(IRDLOperation):
     """``silu(x) = x * sigmoid(x)`` (aka Swish-1)."""
 
-    name = "compgen.linalg_ext.silu"
+    name = "xpu_rt.linalg_ext.silu"
 
     input = operand_def(Attribute)
     result = result_def(Attribute)

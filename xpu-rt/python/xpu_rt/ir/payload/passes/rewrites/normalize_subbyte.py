@@ -2,18 +2,18 @@
 ``(bit_width, pack_dim)`` metadata across op boundaries.
 
 Reconstruction of XLA's ``SubByteNormalizationPass``. Zero external
-references; CompGen owns the rewrite.
+references; XPU-RT owns the rewrite.
 
 Scope in  (annotational):
 
 1. Walk every op in the module and collect its sub-byte operands +
    results -- defined as SSA values whose defining op carries a
-   ``compgen.quant.PackedIntTensorType`` property (a ``qtype``).
+   ``xpu_rt.quant.PackedIntTensorType`` property (a ``qtype``).
 2. For each producer-consumer edge, compare ``(bit_width, pack_dim)``
    on the two ends. When they disagree, tag the consuming op with
-   ``compgen.subbyte_boundary = "pack" | "unpack" | "repack"`` so
+   ``xpu_rt.subbyte_boundary = "pack" | "unpack" | "repack"`` so
    a later structural pass can materialize the right
-   ``compgen.tensor_ext.{pack,unpack}`` op.
+   ``xpu_rt.tensor_ext.{pack,unpack}`` op.
 3. When the consuming op is the packed-int-mm itself
    (``weight_int4pack_mm`` / ``weight_int8pack_mm``), record the
    chosen canonical ``(bit_width, pack_dim)`` on the module so
@@ -26,7 +26,7 @@ The annotation contract is the stable seam.
 LLM-tool signature:
 
     tool_name="normalize_subbyte"
-    wraps_pass="CompGen:SubByteNormalization"
+    wraps_pass="XPU-RT:SubByteNormalization"
     invent_slot="quantization/subbyte_layout"
     policy="AnnotatePackedIntBoundaries"
 """
@@ -43,7 +43,7 @@ from xdsl.pattern_rewriter import (
     RewritePattern,
 )
 
-from compgen.ir.quant import (
+from xpu_rt.ir.quant import (
     PackedIntTensorType,
     WeightInt4PackMMOp,
     WeightInt4PackQMOp,
@@ -124,14 +124,14 @@ class _AnnotateSubbyteBoundariesPattern(RewritePattern):
             packed = _implicit_packed_from_weight_int4(op)
         if packed is None:
             return
-        if "compgen.subbyte_canonical" in op.attributes:
+        if "xpu_rt.subbyte_canonical" in op.attributes:
             # idempotent
             return
 
         self.stats.ops_with_qtype += 1
         bw = packed.bit_width.value.data
         pd = packed.pack_dim.value.data
-        op.attributes["compgen.subbyte_canonical"] = StringAttr(f"bit_width={bw},pack_dim={pd}")
+        op.attributes["xpu_rt.subbyte_canonical"] = StringAttr(f"bit_width={bw},pack_dim={pd}")
         self.stats.record_canonical(bw)
 
         # Also annotate the "boundary" role so  passes know
@@ -139,7 +139,7 @@ class _AnnotateSubbyteBoundariesPattern(RewritePattern):
         # role is always 'unpack' (we feed the compute unit with
         # a packed tensor and it internally unpacks).
         if isinstance(op, _PACKED_MM_OPS):
-            op.attributes["compgen.subbyte_boundary"] = StringAttr("unpack")
+            op.attributes["xpu_rt.subbyte_boundary"] = StringAttr("unpack")
             self.stats.boundaries_annotated += 1
 
 

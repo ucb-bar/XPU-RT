@@ -7,21 +7,21 @@ from pathlib import Path
 
 import pytest
 
-from compgen.providers.adapters.base import (
+from xpu_rt.providers.adapters.base import (
     AdapterResolutionError,
     resolve_provider_class,
 )
-from compgen.providers.card_loader import (
+from xpu_rt.providers.card_loader import (
     iter_dialect_cards,
     iter_provider_cards,
 )
-from compgen.providers.kernel_provider import (
+from xpu_rt.providers.kernel_provider import (
     KernelCodegenRequest,
     KernelProvider,
 )
-from compgen.providers.legacy_shim import wrap_legacy
-from compgen.providers.provider_types import PROBE_STATUSES
-from compgen.providers.result_v1 import ProviderResultV1
+from xpu_rt.providers.legacy_shim import wrap_legacy
+from xpu_rt.providers.provider_types import PROBE_STATUSES
+from xpu_rt.providers.result_v1 import ProviderResultV1
 
 
 # ---------------------------------------------------------------------------
@@ -138,7 +138,7 @@ def test_shell_propose_returns_v1_result(tmp_path: Path):
     """Pick a representative shell (cuda_tile_ir) and verify propose
     returns a typed v1 result with status=blocked."""
 
-    from compgen.providers.adapters.cuda_tile_ir import CudaTileIRProvider
+    from xpu_rt.providers.adapters.cuda_tile_ir import CudaTileIRProvider
 
     provider = CudaTileIRProvider()
     req = KernelCodegenRequest(
@@ -156,12 +156,12 @@ def test_shell_propose_returns_v1_result(tmp_path: Path):
 def test_shell_propose_never_raises():
     """Every shell's propose() returns a typed result rather than raising."""
 
-    from compgen.providers.adapters.bitblas import BitBlasProvider
-    from compgen.providers.adapters.cutlass_cute import CutlassCuteProvider
-    from compgen.providers.adapters.kernelbench_caesar import (
+    from xpu_rt.providers.adapters.bitblas import BitBlasProvider
+    from xpu_rt.providers.adapters.cutlass_cute import CutlassCuteProvider
+    from xpu_rt.providers.adapters.kernelbench_caesar import (
         KernelBenchCaesarProvider,
     )
-    from compgen.providers.adapters.thunderkittens import ThunderKittensProvider
+    from xpu_rt.providers.adapters.thunderkittens import ThunderKittensProvider
 
     for cls in (
         BitBlasProvider,

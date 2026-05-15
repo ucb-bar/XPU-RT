@@ -12,9 +12,9 @@ These tools let the LLM do four things:
   time. Emits a ``decision(source="agent")`` trace event.
 * ``override_decision`` — replace an already-resolved outcome.
 
-The four tools operate on :class:`compgen.agent.decisions.DecisionRegistry`
+The four tools operate on :class:`xpu_rt.agent.decisions.DecisionRegistry`
 stored on the MCP session. Stage plugins call the registry from the
-server side (:func:`compgen.agent.decisions.get_active_registry`); these
+server side (:func:`xpu_rt.agent.decisions.get_active_registry`); these
 tools are how an LLM reaches into the same registry over JSON-RPC.
 """
 
@@ -22,8 +22,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from compgen.agent.decisions import DecisionRegistry
-from compgen.mcp.session import McpSession, SessionManager
+from xpu_rt.agent.decisions import DecisionRegistry
+from xpu_rt.mcp.session import McpSession, SessionManager
 
 
 def _registry(session: McpSession) -> DecisionRegistry:
@@ -90,7 +90,7 @@ def propose_decision(
             "session_id": session_id,
             "error": (f"candidate {chosen_id!r} not in site; valid ids: {[c.id for c in site.candidates]}"),
         }
-    from compgen.trace import DecisionPublisher, get_current_llm_turn_id
+    from xpu_rt.trace import DecisionPublisher, get_current_llm_turn_id
 
     DecisionPublisher.emit(
         decision_type=f"{site.kind}_proposal",
@@ -133,7 +133,7 @@ def apply_decision(
     """
     session = sm.get(session_id)
     registry = _registry(session)
-    from compgen.trace import get_current_llm_turn_id
+    from xpu_rt.trace import get_current_llm_turn_id
 
     try:
         outcome = registry.apply(
@@ -171,7 +171,7 @@ def override_decision(
     """Replace an already-resolved outcome for ``site_id``."""
     session = sm.get(session_id)
     registry = _registry(session)
-    from compgen.trace import get_current_llm_turn_id
+    from xpu_rt.trace import get_current_llm_turn_id
 
     try:
         outcome = registry.override(

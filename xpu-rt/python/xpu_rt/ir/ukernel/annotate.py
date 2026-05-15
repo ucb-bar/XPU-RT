@@ -1,8 +1,8 @@
 """Annotate IR ops with ukernel information for layout integration.
 
 After kernel selection identifies ops that match registered ukernels,
-this module annotates those ops with ``compgen.ukernel_ref``,
-``compgen.ukernel_transparency``, and ``compgen.ukernel_tile_family``
+this module annotates those ops with ``xpu_rt.ukernel_ref``,
+``xpu_rt.ukernel_transparency``, and ``xpu_rt.ukernel_tile_family``
 attributes. The layout bridge then uses these attributes to decide
 whether to propagate layouts through the kernel or materialize at
 boundaries.
@@ -14,8 +14,8 @@ import structlog
 from xdsl.dialects.builtin import ModuleOp, StringAttr, TensorType
 from xdsl.ir import Operation
 
-from compgen.ir.ukernel.constraints import ConstraintContext
-from compgen.ir.ukernel.registry import UkernelRegistry
+from xpu_rt.ir.ukernel.constraints import ConstraintContext
+from xpu_rt.ir.ukernel.registry import UkernelRegistry
 
 log = structlog.get_logger()
 
@@ -70,9 +70,9 @@ def annotate_ukernel_ops(
 
     Walks the module and for each op that matches a registered ukernel,
     sets:
-    - ``compgen.ukernel_ref``: kernel name
-    - ``compgen.ukernel_transparency``: "transparent" or "opaque"
-    - ``compgen.ukernel_tile_family``: tile family hint (if any)
+    - ``xpu_rt.ukernel_ref``: kernel name
+    - ``xpu_rt.ukernel_transparency``: "transparent" or "opaque"
+    - ``xpu_rt.ukernel_tile_family``: tile family hint (if any)
 
     Args:
         module: The xDSL module to annotate.
@@ -93,7 +93,7 @@ def annotate_ukernel_ops(
         if not op.results:
             continue
         # Skip ops already annotated
-        if "compgen.ukernel_ref" in op.attributes:
+        if "xpu_rt.ukernel_ref" in op.attributes:
             continue
 
         op_family = _op_to_family(op)
@@ -111,10 +111,10 @@ def annotate_ukernel_ops(
         if decl is None:
             continue
 
-        op.attributes["compgen.ukernel_ref"] = StringAttr(decl.kernel_name)
-        op.attributes["compgen.ukernel_transparency"] = StringAttr(decl.transparency)
+        op.attributes["xpu_rt.ukernel_ref"] = StringAttr(decl.kernel_name)
+        op.attributes["xpu_rt.ukernel_transparency"] = StringAttr(decl.transparency)
         if decl.tile_family:
-            op.attributes["compgen.ukernel_tile_family"] = StringAttr(decl.tile_family)
+            op.attributes["xpu_rt.ukernel_tile_family"] = StringAttr(decl.tile_family)
 
         annotated += 1
         log.debug(

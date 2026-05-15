@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CompGen end-to-end demo: SimpleMLP through the full pipeline.
+"""XPU-RT end-to-end demo: SimpleMLP through the full pipeline.
 
 Pipeline:
     1. Capture SimpleMLP via torch.export
@@ -28,9 +28,9 @@ log = structlog.get_logger()
 
 
 def main() -> None:
-    """Run the full CompGen pipeline on SimpleMLP."""
+    """Run the full XPU-RT pipeline on SimpleMLP."""
     print("=" * 70)
-    print("CompGen E2E Demo: SimpleMLP → Analyze → Optimize → Plan → Bundle")
+    print("XPU-RT E2E Demo: SimpleMLP → Analyze → Optimize → Plan → Bundle")
     print("=" * 70)
 
     # ----------------------------------------------------------------
@@ -50,7 +50,7 @@ def main() -> None:
     model = SimpleMLP()
     sample_input = (torch.randn(8, 64),)
 
-    from compgen.capture.torch_export import capture_model
+    from xpu_rt.capture.torch_export import capture_model
 
     ep = capture_model(model, sample_input)
     print(f"  Captured: {len(ep.graph.nodes)} FX nodes")
@@ -60,7 +60,7 @@ def main() -> None:
     # ----------------------------------------------------------------
     print("\n[2/10] Converting to xDSL Payload IR...")
 
-    from compgen.ir.payload.import_fx import fx_to_xdsl
+    from xpu_rt.ir.payload.import_fx import fx_to_xdsl
 
     module, diagnostics = fx_to_xdsl(ep)
     op_count = sum(1 for _ in module.walk())
@@ -71,7 +71,7 @@ def main() -> None:
     # ----------------------------------------------------------------
     print("\n[3/10] Loading target profile...")
 
-    from compgen.targets.schema import load_profile
+    from xpu_rt.targets.schema import load_profile
 
     target = load_profile("examples/target_profiles/cuda_a100.yaml")
     print(f"  Target: {target.name} ({len(target.devices)} devices)")
@@ -81,8 +81,8 @@ def main() -> None:
     # ----------------------------------------------------------------
     print("\n[4/10] Building kernel contracts + strategy selection...")
 
-    from compgen.kernels.contracts import build_kernel_contracts
-    from compgen.kernels.selector import select_strategies
+    from xpu_rt.kernels.contracts import build_kernel_contracts
+    from xpu_rt.kernels.selector import select_strategies
 
     specs = build_kernel_contracts(module, target)
     decisions = select_strategies(specs, target)
@@ -97,8 +97,8 @@ def main() -> None:
     # ----------------------------------------------------------------
     print("\n[5/10] Running equality saturation...")
 
-    from compgen.eqsat.config import EqSatConfig
-    from compgen.eqsat.pipeline import run_eqsat_pass
+    from xpu_rt.eqsat.config import EqSatConfig
+    from xpu_rt.eqsat.pipeline import run_eqsat_pass
 
     t0 = time.monotonic()
     eqsat_result = run_eqsat_pass(
@@ -120,7 +120,7 @@ def main() -> None:
     # ----------------------------------------------------------------
     print("\n[6/10] Planning execution (solver)...")
 
-    from compgen.runtime.planner import plan_execution
+    from xpu_rt.runtime.planner import plan_execution
 
     plan = plan_execution(module, target)
     print(
@@ -134,7 +134,7 @@ def main() -> None:
     # ----------------------------------------------------------------
     print("\n[7/10] Verifying transform...")
 
-    from compgen.transforms.verify import verify_transform
+    from xpu_rt.transforms.verify import verify_transform
 
     verify_result = verify_transform(module, module.clone())
     print(f"  Verification: {'PASS' if verify_result.passed else 'FAIL'}")
@@ -146,8 +146,8 @@ def main() -> None:
     # ----------------------------------------------------------------
     print("\n[8/10] Creating artifact bundle...")
 
-    output_dir = Path(tempfile.mkdtemp(prefix="compgen_bundle_"))
-    from compgen.runtime.bundle import create_bundle
+    output_dir = Path(tempfile.mkdtemp(prefix="xpu_rt_bundle_"))
+    from xpu_rt.runtime.bundle import create_bundle
 
     manifest = create_bundle(
         output_dir=output_dir,
@@ -165,7 +165,7 @@ def main() -> None:
     # ----------------------------------------------------------------
     print("\n[9/10] Benchmarking...")
 
-    from compgen.runtime.local_executor import LocalExecutor
+    from xpu_rt.runtime.local_executor import LocalExecutor
 
     executor = LocalExecutor()
 

@@ -1,6 +1,6 @@
 feature_id: m66a_solver_registry
 claim: |
-  M-66A (Phase E): every solver invocation in CompGen passes through
+  M-66A (Phase E): every solver invocation in XPU-RT passes through
   a typed SolverRequest / SolverResponse envelope with a canonical
   ``formulation_hash``. A deterministic ``ROUTING_TABLE`` maps each
   ``SolverProblemKind`` to a small ordered preference list of
@@ -22,11 +22,11 @@ forbidden:
   - mutating SolverRequest / SolverResponse fields after construction
     (both are frozen dataclasses)
 required_evidence:
-  - python/compgen/solve/solver_types.py
-  - python/compgen/solve/backend_registry.py
-  - python/compgen/solve/backends/base.py
-  - python/compgen/solve/routing.py
-  - python/compgen/solve/reports.py
+  - python/xpu_rt/solve/solver_types.py
+  - python/xpu_rt/solve/backend_registry.py
+  - python/xpu_rt/solve/backends/base.py
+  - python/xpu_rt/solve/routing.py
+  - python/xpu_rt/solve/reports.py
   - tests/solve/test_solver_types.py
   - tests/solve/test_solver_registry.py
   - tests/solve/test_solver_routing.py

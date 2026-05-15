@@ -2,10 +2,10 @@
 five-level integration ladder.
 
 The legacy kernel-only types ``BidPreview`` / ``ProviderResult`` /
-``KernelProvider`` live in :mod:`compgen.kernels.provider` and stay
+``KernelProvider`` live in :mod:`xpu_rt.kernels.provider` and stay
 there — this module is the *generalized* card-driven layer that wraps
-them. Re-exports happen through :mod:`compgen.providers`; importing
-the legacy types directly from ``compgen.kernels.provider`` remains the
+them. Re-exports happen through :mod:`xpu_rt.providers`; importing
+the legacy types directly from ``xpu_rt.kernels.provider`` remains the
 canonical path for kernel-codegen code.
 """
 
@@ -67,7 +67,7 @@ class ProviderProbeError(ValueError):
 class ProviderCard:
     """Static declaration of a kernel / dialect provider.
 
-    Cards live under ``python/compgen/providers/cards/*.yaml`` (or in
+    Cards live under ``python/xpu_rt/providers/cards/*.yaml`` (or in
     a user extension manifest) and are loaded once at registry build
     time. A card is **not** evidence of support — only certified
     artifacts are.

@@ -10,7 +10,7 @@ from typing import Any
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from compgen.models import ModelSpec, build_default_model_catalog
+from xpu_rt.models import ModelSpec, build_default_model_catalog
 
 LoaderFn = Callable[[], tuple[nn.Module, tuple[Any, ...]]]
 

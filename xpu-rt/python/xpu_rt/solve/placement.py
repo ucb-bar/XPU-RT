@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from compgen.solve.partition import Partition
+from xpu_rt.solve.partition import Partition
 
 
 @dataclass(frozen=True)

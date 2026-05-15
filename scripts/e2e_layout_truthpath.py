@@ -78,7 +78,7 @@ def _fail(report: GateReport, msg: str) -> GateReport:
 
 def _build_mock_target() -> Any:
     """Build a mock CUDA A100 TargetProfile used across multiple gates."""
-    from compgen.targets.schema import (
+    from xpu_rt.targets.schema import (
         ComputeUnit,
         DeviceSpec,
         MemoryLevel,
@@ -117,7 +117,7 @@ def _build_mock_target() -> Any:
 
 def _build_mock_analysis() -> Any:
     """Build a minimal mock NetworkAnalysis with a matmul cluster."""
-    from compgen.agent.analyzer import (
+    from xpu_rt.agent.analyzer import (
         DataFlowEdge,
         NetworkAnalysis,
         PatternCluster,
@@ -171,8 +171,8 @@ def main() -> list[GateReport]:
     try:
         import torch
 
-        from compgen.capture.torch_export import capture_model
-        from compgen.ir.payload.import_fx import fx_to_xdsl
+        from xpu_rt.capture.torch_export import capture_model
+        from xpu_rt.ir.payload.import_fx import fx_to_xdsl
 
         class SimpleMLP(torch.nn.Module):
             def __init__(self) -> None:
@@ -217,7 +217,7 @@ def main() -> list[GateReport]:
     _gate(2, "Layout Analysis (LayoutPlanner)")
     r2 = GateReport(gate=2, name="Layout Analysis (LayoutPlanner)")
     try:
-        from compgen.analysis.layout.planner import LayoutPlanner
+        from xpu_rt.analysis.layout.planner import LayoutPlanner
 
         target = _build_mock_target()
         analysis = _build_mock_analysis()
@@ -247,7 +247,7 @@ def main() -> list[GateReport]:
     _gate(3, "Prepack Analysis (PrepackPlanner)")
     r3 = GateReport(gate=3, name="Prepack Analysis (PrepackPlanner)")
     try:
-        from compgen.analysis.layout.prepack import PrepackPlanner
+        from xpu_rt.analysis.layout.prepack import PrepackPlanner
 
         analysis = _build_mock_analysis()
         candidates = PrepackPlanner().identify_prepack_opportunities(analysis)
@@ -274,7 +274,7 @@ def main() -> list[GateReport]:
     _gate(4, "Transpose Analysis")
     r4 = GateReport(gate=4, name="Transpose Analysis")
     try:
-        from compgen.analysis.layout.transpose import TransposeProfitabilityAnalyzer
+        from xpu_rt.analysis.layout.transpose import TransposeProfitabilityAnalyzer
 
         analysis = _build_mock_analysis()
         contracts: list = []  # empty list -- no kernel contracts
@@ -308,8 +308,8 @@ def main() -> list[GateReport]:
     try:
         from xdsl.dialects.builtin import IntegerAttr, IntegerType, StringAttr, SymbolRefAttr
 
-        from compgen.ir.layout.attrs import LayoutEncodingAttr, PackSpecAttr
-        from compgen.ir.layout.ops import PackOp, SetLayoutOp, UnpackOp, UnsetLayoutOp
+        from xpu_rt.ir.layout.attrs import LayoutEncodingAttr, PackSpecAttr
+        from xpu_rt.ir.layout.ops import PackOp, SetLayoutOp, UnpackOp, UnsetLayoutOp
 
         # Build attributes
         encoding_attr = LayoutEncodingAttr(
@@ -372,7 +372,7 @@ def main() -> list[GateReport]:
     _gate(6, "Transform Pipeline")
     r6 = GateReport(gate=6, name="Transform Pipeline")
     try:
-        from compgen.transforms.layout import run_layout_pipeline
+        from xpu_rt.transforms.layout import run_layout_pipeline
 
         assert xdsl_module is not None, "No xDSL module from Gate 1"
 
@@ -393,10 +393,10 @@ def main() -> list[GateReport]:
         result_module = run_layout_pipeline(xdsl_module)
 
         assert result_module is not None, "run_layout_pipeline returned None"
-        has_clean = "compgen.layout_clean" in result_module.attributes
+        has_clean = "xpu_rt.layout_clean" in result_module.attributes
         print(f"  layout_clean attr present: {has_clean}")
 
-        assert has_clean, "Module missing compgen.layout_clean attribute after pipeline"
+        assert has_clean, "Module missing xpu_rt.layout_clean attribute after pipeline"
 
         r6.details = {
             "layout_clean": has_clean,
@@ -415,11 +415,11 @@ def main() -> list[GateReport]:
     try:
         import torch
 
-        from compgen.capture.torch_export import capture_model
-        from compgen.ir.payload.import_fx import fx_to_xdsl
-        from compgen.stages.encoding.stage import EncodingStage
-        from compgen.stages.layout.stage import LayoutStage
-        from compgen.targets.capability import infer_capabilities
+        from xpu_rt.capture.torch_export import capture_model
+        from xpu_rt.ir.payload.import_fx import fx_to_xdsl
+        from xpu_rt.stages.encoding.stage import EncodingStage
+        from xpu_rt.stages.layout.stage import LayoutStage
+        from xpu_rt.targets.capability import infer_capabilities
 
         # Fresh module for this gate
         class SimpleMLP2(torch.nn.Module):
@@ -450,10 +450,10 @@ def main() -> list[GateReport]:
         module7 = layout_stage.shared_passes(module7, target7)
         print("  LayoutStage shared_passes: done")
 
-        has_clean7 = "compgen.layout_clean" in module7.attributes
+        has_clean7 = "xpu_rt.layout_clean" in module7.attributes
         print(f"  layout_clean attr present: {has_clean7}")
 
-        assert has_clean7, "Module missing compgen.layout_clean after stage integration"
+        assert has_clean7, "Module missing xpu_rt.layout_clean after stage integration"
 
         r7.details = {
             "encoding_done": True,
@@ -472,9 +472,9 @@ def main() -> list[GateReport]:
     _gate(8, "Resolver Protocol (any target)")
     r8 = GateReport(gate=8, name="Resolver Protocol (any target)")
     try:
-        from compgen.ir.layout.attrs import PackSpecAttr
-        from compgen.transforms.layout.cuda_resolver import CudaLayoutResolver
-        from compgen.transforms.layout.resolver import DefaultLayoutResolver, LayoutResolver
+        from xpu_rt.ir.layout.attrs import PackSpecAttr
+        from xpu_rt.transforms.layout.cuda_resolver import CudaLayoutResolver
+        from xpu_rt.transforms.layout.resolver import DefaultLayoutResolver, LayoutResolver
 
         # 1. DefaultLayoutResolver — works for ANY target, no assumptions
         default = DefaultLayoutResolver()

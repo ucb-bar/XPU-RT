@@ -1,5 +1,5 @@
 claim: |
-  CompGen ships an ablation harness that runs the same model under
+  XPU-RT ships an ablation harness that runs the same model under
   multiple selection modes (greedy, agent-file, optionally llm-live)
   and emits a typed AblationPack with per-cell results
   (selected_candidate_id, pass_id, validation_overall, decision_seconds,
@@ -20,7 +20,7 @@ forbidden:
 - divergence detection that misses two-mode disagreement
 realness_level: production_path
 required_evidence:
-- python/compgen/benchmarks/pass_pool_ablation.py
+- python/xpu_rt/benchmarks/pass_pool_ablation.py
 - scripts/dev/run_pass_pool_ablation.py
 - tests/benchmarks/test_pass_pool_ablation.py (7 tests including 2 real-workload runs)
 - a real ablation_pack.json on merlin_mlp_wide + proxy_vla + holdout_mlp_odd_shapes

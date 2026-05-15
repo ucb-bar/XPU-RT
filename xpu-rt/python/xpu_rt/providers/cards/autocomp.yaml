@@ -4,7 +4,7 @@ integration_level: generate
 target_families: [cuda, custom_accelerator]
 contract_kinds: [matmul, pointwise, fused_region, attention]
 emits: [triton_source, c_source]
-entrypoint: compgen.kernels.providers.autocomp:AutocompProvider
+entrypoint: xpu_rt.kernels.providers.autocomp:AutocompProvider
 paper_claimable: false
 required_env: [AUTOCOMP_ROOT]
 required_commands: []
@@ -12,6 +12,6 @@ required_python_imports: [autocomp]
 description: |
   Autocomp LLM-guided kernel search provider. Integrated through
   ``third_party/autocomp`` (editable install) and the
-  ``compgen.kernels.autocomp_adapter`` shim. paper_claimable=false
+  ``xpu_rt.kernels.autocomp_adapter`` shim. paper_claimable=false
   because the search loop's "best" kernel still passes through the
   same verifier path as any other provider.

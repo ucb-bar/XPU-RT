@@ -18,7 +18,7 @@ Design goals:
   invariants (alias ownership, lifetime ordering, resource refs).
 
 The plan is the input to buffer liveness + interference graph
-analysis (see ``compgen.runtime.liveness``) and the substrate that
+analysis (see ``xpu_rt.runtime.liveness``) and the substrate that
 every W6 runtime pass rewrites.
 """
 
@@ -387,7 +387,7 @@ class ExecutionPlan:
         """
         # Local import to avoid a circular import at module load —
         # kernel_certificate imports nothing from runtime.
-        from compgen.kernels.kernel_certificate import KernelCertificate
+        from xpu_rt.kernels.kernel_certificate import KernelCertificate
         import json as _json
 
         self.validate()

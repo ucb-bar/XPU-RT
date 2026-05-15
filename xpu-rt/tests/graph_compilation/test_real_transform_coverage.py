@@ -48,7 +48,7 @@ def _invoke(
     if env_overrides:
         env.update(env_overrides)
     cmd = [
-        sys.executable, "-m", "compgen.graph_compilation", "run",
+        sys.executable, "-m", "xpu_rt.graph_compilation", "run",
         "--model", str(REPO_ROOT / f"configs/models/{model}.yaml"),
         "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
         "--out", str(out_dir),
@@ -350,7 +350,7 @@ def test_m15b_downstream_retry_fires_on_real_m12_failure_under_m16(
     See tests/graph_compilation/test_negative_controls.py for
     the restored end-to-end coverage. This test now delegates to it.
     """
-    from compgen.graph_compilation.downstream_retry import (
+    from xpu_rt.graph_compilation.downstream_retry import (
         detect_downstream_failure,
     )
     out = tmp_path / "m12_real_fail_under_m16"

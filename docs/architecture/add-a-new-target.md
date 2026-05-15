@@ -1,7 +1,7 @@
 # Add a new target — the 50-LoC cookbook
 
 You want to plug a new accelerator (or new arch / new vendor /
-new class) into CompGen. This is the recipe.
+new class) into XPU-RT. This is the recipe.
 
 The target hierarchy + Protocols + registry are documented in
 [`target-hierarchy.md`](./target-hierarchy.md). Read that for the
@@ -32,8 +32,8 @@ Best when you're prototyping, an experimental dialect, or a
 deployment-specific tuning.
 
 ```python
-# Inside an agent's session — no edits to CompGen source:
-compgen_register_target(
+# Inside an agent's session — no edits to XPU-RT source:
+xpu_rt_register_target(
     target_class="gpu",
     vendor="tenstorrent",
     arch="gridx",
@@ -50,7 +50,7 @@ compgen_register_target(
 ```
 
 Your `my_pkg.adapters.*` classes implement the four Protocols.
-That's it — `compgen.compile_to_megakernel(model, target="gpu.tenstorrent.gridx")`
+That's it — `xpu_rt.compile_to_megakernel(model, target="gpu.tenstorrent.gridx")`
 now routes through your code.
 
 The dotted-module-path approach makes this MCP-stdio safe (no live
@@ -59,12 +59,12 @@ constructor.
 
 ### Path B — In-tree, ship a PR upstream
 
-Best when your target is going to be a long-lived part of CompGen.
+Best when your target is going to be a long-lived part of XPU-RT.
 
 #### Step 1: Copy the template
 
 ```bash
-cp -r python/compgen/targets/_template python/compgen/targets/gpu/nvidia/sm_130
+cp -r python/xpu_rt/targets/_template python/xpu_rt/targets/gpu/nvidia/sm_130
 ```
 
 The template ships:
@@ -89,11 +89,11 @@ In each file:
 Edit `__init__.py` to call `register_target`:
 
 ```python
-from compgen.targets.gpu.nvidia.sm_130.body_emitter import Sm130BodyEmitter
-from compgen.targets.gpu.nvidia.sm_130.cost import Sm130CostModel
-from compgen.targets.gpu.nvidia.sm_130.probe import Sm130Probe
-from compgen.targets.gpu.nvidia.sm_130.runtime import Sm130Runtime
-from compgen.targets.registry import register_target
+from xpu_rt.targets.gpu.nvidia.sm_130.body_emitter import Sm130BodyEmitter
+from xpu_rt.targets.gpu.nvidia.sm_130.cost import Sm130CostModel
+from xpu_rt.targets.gpu.nvidia.sm_130.probe import Sm130Probe
+from xpu_rt.targets.gpu.nvidia.sm_130.runtime import Sm130Runtime
+from xpu_rt.targets.registry import register_target
 
 
 def _register_sm130() -> None:
@@ -112,16 +112,16 @@ def _register_sm130() -> None:
 _register_sm130()
 ```
 
-#### Step 4: Wire into `compgen.targets.__init__`
+#### Step 4: Wire into `xpu_rt.targets.__init__`
 
 Add your package path to `_register_in_tree()` so it auto-registers
 on import:
 
 ```python
 in_tree_modules = (
-    "compgen.targets.gpu.nvidia",
+    "xpu_rt.targets.gpu.nvidia",
     ...
-    "compgen.targets.gpu.nvidia.sm_130",  # ← your new arch
+    "xpu_rt.targets.gpu.nvidia.sm_130",  # ← your new arch
 )
 ```
 
@@ -150,12 +150,12 @@ than upstreaming.
 Declare an entry point in your package's `pyproject.toml`:
 
 ```toml
-[project.entry-points."compgen.targets"]
-my_target = "my_pkg.compgen_integration:register"
+[project.entry-points."xpu_rt.targets"]
+my_target = "my_pkg.xpu_rt_integration:register"
 ```
 
 Where `register` is a zero-arg function that calls
-`compgen.targets.registry.register_target(...)`.
+`xpu_rt.targets.registry.register_target(...)`.
 
 A user who installs your wheel + calls `discover_entry_points()`
 gets your target registered automatically. Use the same Protocol
@@ -186,7 +186,7 @@ The same checklist the in-tree leaves go through:
 2. **JIT round-trip** — emit a body, compile it through your
    target's toolchain, dispatch on real input, validate output
    against a reference (numpy / torch / nvidia eager / etc).
-3. **Audit query** — `compgen_describe_target(target_id="...")`
+3. **Audit query** — `xpu_rt_describe_target(target_id="...")`
    returns useful metadata.
 4. **Registry navigation** — your target shows up in
    `registry().tree()` as a peer of existing in-tree targets.

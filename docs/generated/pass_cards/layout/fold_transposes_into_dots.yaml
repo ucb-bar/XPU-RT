@@ -27,7 +27,7 @@ failure_modes:
   - "non_2d_transpose"
   - "non_identity_permutation"
   - "transpose_has_multiple_consumers"
-mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+mcp_tool: mcp__xpu_rt__xpu_rt_emit_agent_decision_request
 example_invocation:
   schema_version: agent_decision_response_v1
   selected_candidate_id: fold_transpose_b_into_matmul_0
@@ -36,10 +36,10 @@ example_invocation:
     references:
       - "candidate.cost_preview.static_relative_cost"
 source: XLA
-impl_path: python/compgen/ir/payload/passes/rewrites/fold_transposes_into_dots.py
+impl_path: python/xpu_rt/ir/payload/passes/rewrites/fold_transposes_into_dots.py
 notes: |
-  Reconstruction of XLA's TransposeFolding pass as a CompGen
-  PatternRewriter (python/compgen/ir/payload/passes/rewrites/
+  Reconstruction of XLA's TransposeFolding pass as a XPU-RT
+  PatternRewriter (python/xpu_rt/ir/payload/passes/rewrites/
   fold_transposes_into_dots.py). Two patterns run in the same greedy
   applier:
 
@@ -53,6 +53,6 @@ notes: |
 
   Source: XLA TransposeFolding (TensorFlow Inc.). LLM-tool signature
   declared in the source: tool_name=fold_transposes_into_dots,
-  wraps_pass=CompGen:TransposeFolding,
+  wraps_pass=XPU-RT:TransposeFolding,
   invent_slot=pattern_library/algebraic_fold,
   policy=AbsorbEvery2DTransposeIntoDot.

@@ -13,14 +13,14 @@ Recipes are keyed by: hash(target_profile) + hash(model_ir) + hash(objective)
 
 from __future__ import annotations
 
-from compgen.promotion.lineage import (
+from xpu_rt.promotion.lineage import (
     LineageGraph,
     LineageNode,
     build_lineage_graph,
     find_lineage_siblings,
     get_promotion_history,
 )
-from compgen.promotion.pattern_graduation import (
+from xpu_rt.promotion.pattern_graduation import (
     PatternAppearance,
     PatternIdentity,
     PatternPromotionRequest,

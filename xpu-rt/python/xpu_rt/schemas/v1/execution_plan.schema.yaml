@@ -1,9 +1,9 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "compgen://user_perspective/schemas/execution_plan.schema.yaml"
+$id: "xpu_rt://user_perspective/schemas/execution_plan.schema.yaml"
 title: ExecutionPlan
 description: >
   User-side execution plan. Mirrors
-  compgen.runtime.planner.ExecutionPlan.to_dict() with added
+  xpu_rt.runtime.planner.ExecutionPlan.to_dict() with added
   `synchronization[]` edges and a sync_kind abstraction so we are not
   locked into fence/event/timeline/frontier prematurely.
   Producers of this artifact: scripts/06_plan_execution.py (Phase 8).

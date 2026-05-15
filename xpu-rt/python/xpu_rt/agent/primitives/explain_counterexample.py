@@ -2,7 +2,7 @@
 
 Turns a verifier counterexample + IR slice into prose + a structured
 ``suggested_edit`` that the Tactician can route back through
-:func:`compgen.agent.primitives.rank_candidates.rank_candidates`.
+:func:`xpu_rt.agent.primitives.rank_candidates.rank_candidates`.
 
 Hard rule (the most important contract in this layer): the LLM is
 NEVER the verifier. The ``suggested_edit`` must reference a
@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from compgen.llm.call_site import llm_call_site, register_fallback
+from xpu_rt.llm.call_site import llm_call_site, register_fallback
 
 EXPLAIN_OUTPUT_SCHEMA: dict[str, Any] = {
     "type": "object",

@@ -7,7 +7,7 @@ from typing import Any
 
 from xdsl.ir import Operation
 
-from compgen.ir.recipe.ops_candidate import FuseOp, PlaceOnDeviceOp, TileOp, VectorizeOp
+from xpu_rt.ir.recipe.ops_candidate import FuseOp, PlaceOnDeviceOp, TileOp, VectorizeOp
 
 FUSION_FAMILY = "fusion"
 LOCAL_MEM_FAMILY = "local_mem"

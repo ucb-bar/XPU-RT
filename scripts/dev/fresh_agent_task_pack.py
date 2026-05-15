@@ -4,7 +4,7 @@
 Usage::
 
     uv run python scripts/dev/fresh_agent_task_pack.py \\
-        --out /tmp/compgen_task_pack \\
+        --out /tmp/xpu_rt_task_pack \\
         [--task-model holdout_mlp_odd_shapes] \\
         [--task-target host_cpu]
 
@@ -20,8 +20,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-from compgen.audit.errors import TaskPackContaminated, TaskPackIncomplete
-from compgen.audit.fresh_agent import build_task_pack
+from xpu_rt.audit.errors import TaskPackContaminated, TaskPackIncomplete
+from xpu_rt.audit.fresh_agent import build_task_pack
 
 
 def _git_short_commit(repo_root: Path) -> str:
@@ -44,7 +44,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--task-model", default="holdout_mlp_odd_shapes")
     p.add_argument("--task-target", default="host_cpu")
     p.add_argument("--skip-python-package", action="store_true",
-                   help="Don't copy python/compgen/** (faster; pack won't run end-to-end)")
+                   help="Don't copy python/xpu_rt/** (faster; pack won't run end-to-end)")
     p.add_argument("--repo-root", type=Path, default=None)
     args = p.parse_args(argv)
 

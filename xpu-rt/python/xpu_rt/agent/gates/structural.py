@@ -4,7 +4,7 @@ Accepts either:
   * a ModuleOp / xDSL Operation via ``ctx["module"]`` (runs ``verify()``).
   * a plain dict proposal (checks ``schema_version`` / ``chosen`` keys).
 
-Mirrors the :func:`compgen.llm.tools.verification._run_structural_check_impl`
+Mirrors the :func:`xpu_rt.llm.tools.verification._run_structural_check_impl`
 but adapts to the invent-slot gate signature.
 """
 

@@ -1,6 +1,6 @@
 """LLM interaction recorder middleware.
 
-Every LLM call in CompGen passes through the recorder. It wraps any
+Every LLM call in XPU-RT passes through the recorder. It wraps any
 CompGenLLMProtocol implementor and logs all interactions to disk as
 JSON for reproducibility, debugging, and cost tracking.
 
@@ -20,8 +20,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from compgen.llm._prompt import render_request_prompt
-from compgen.llm.base import (
+from xpu_rt.llm._prompt import render_request_prompt
+from xpu_rt.llm.base import (
     CompGenLLMProtocol,
     GenerationRequest,
     GenerationResponse,

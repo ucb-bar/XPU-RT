@@ -4,13 +4,13 @@ integration_level: probe
 target_families: [host_cpu, riscv_opu, custom_accelerator]
 contract_kinds: [matmul, pointwise]
 emits: [c_source, elf]
-entrypoint: compgen.kernels.providers.exo_riscv_opu:ExoRiscvOpuProvider
+entrypoint: xpu_rt.kernels.providers.exo_riscv_opu:ExoRiscvOpuProvider
 paper_claimable: false
 required_env: []
 required_commands: [exo]
 required_python_imports: [exo]
 description: |
-  Exo scheduling-DSL provider. Existing CompGen adapter targets the
+  Exo scheduling-DSL provider. Existing XPU-RT adapter targets the
   RISC-V OPU and ports of Gemmini-style accelerators. Probe
   succeeds when the ``exo`` Python package is importable; blocks
   honestly with ``python_package_missing`` otherwise.

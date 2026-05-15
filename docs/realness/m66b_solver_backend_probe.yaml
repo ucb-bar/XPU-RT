@@ -22,10 +22,10 @@ forbidden:
   - reporting MOSEK as ``available`` when the optimize call did not
     return ``solsta.optimal`` on the probe LP
 required_evidence:
-  - python/compgen/solve/backends/z3_backend.py
-  - python/compgen/solve/backends/ortools_cp_sat_backend.py
-  - python/compgen/solve/backends/mosek_backend.py
-  - python/compgen/solve/backends/highs_backend.py
+  - python/xpu_rt/solve/backends/z3_backend.py
+  - python/xpu_rt/solve/backends/ortools_cp_sat_backend.py
+  - python/xpu_rt/solve/backends/mosek_backend.py
+  - python/xpu_rt/solve/backends/highs_backend.py
   - scripts/dev/probe_solver_backends.py
   - tests/solve/test_solver_backend_probe.py
   - results/solver_probe/solver_backend_status.json on a real run

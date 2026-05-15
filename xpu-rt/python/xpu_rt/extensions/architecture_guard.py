@@ -1,12 +1,12 @@
 """spec'd path for the architecture audit.
 
-Re-exports :mod:`compgen.audit.extension_architecture` so user
-spec imports of ``compgen.extensions.architecture_guard`` resolve.
+Re-exports :mod:`xpu_rt.audit.extension_architecture` so user
+spec imports of ``xpu_rt.extensions.architecture_guard`` resolve.
 """
 
 from __future__ import annotations
 
-from compgen.audit.extension_architecture import (
+from xpu_rt.audit.extension_architecture import (
     ALLOWED_IMPORT_PATHS,
     FORBIDDEN_OPTIONAL_IMPORTS,
     VIOLATION_REASONS,

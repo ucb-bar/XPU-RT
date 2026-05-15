@@ -17,7 +17,7 @@ loader:
   device_policy: auto
   # DeepSeek-OCR's forward expects ``images=[(crop, ori)]``. The adapter
   # wraps that into a standard forward(input_ids, images_crop, images_ori).
-  adapter: compgen.model_admission.adapters.deepseek_ocr
+  adapter: xpu_rt.model_admission.adapters.deepseek_ocr
 inputs:
   kind: page_crop
   processor_required: true

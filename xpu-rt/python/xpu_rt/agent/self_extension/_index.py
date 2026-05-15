@@ -15,9 +15,9 @@ import threading
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
-    from compgen.agent.self_extension.authored_tool import AuthoredTool
+    from xpu_rt.agent.self_extension.authored_tool import AuthoredTool
 
-from compgen.agent.self_extension.authored_tool import authored_tool_key
+from xpu_rt.agent.self_extension.authored_tool import authored_tool_key
 
 _lock = threading.Lock()
 _index: dict[str, AuthoredTool] = {}

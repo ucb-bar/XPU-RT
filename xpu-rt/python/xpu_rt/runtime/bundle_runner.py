@@ -2,7 +2,7 @@
 
 Closes the "we emit bundles but nothing reads them" gap identified in
 the runtime-HAL plan.  Once a bundle has been written by
-:class:`~compgen.stages.bundle.stage.BundleStage`, this module can:
+:class:`~xpu_rt.stages.bundle.stage.BundleStage`, this module can:
 
 1. :func:`load_bundle` — parse ``manifest.json`` + ``payload.mlir``
    back into an in-memory bundle. Optionally rehydrates
@@ -10,7 +10,7 @@ the runtime-HAL plan.  Once a bundle has been written by
    if they are present (the bundle stage does not currently emit those;
    see Phase A item 6 of the runtime plan).
 2. :func:`run_bundle` — execute the rehydrated payload IR through
-   :func:`compgen.runtime.cpu_executor.execute`. This is the path that
+   :func:`xpu_rt.runtime.cpu_executor.execute`. This is the path that
    makes a **promoted recipe** re-runnable from a later session
    without going through the LLM or the agent loop.
 
@@ -43,9 +43,9 @@ def _build_payload_context() -> Context:
     """Build an ``xdsl.Context`` configured for payload-IR parsing.
 
     Mirrors the pattern in
-    :func:`compgen.capture.torch_mlir_bridge.bridge_fx_graph` — loads
-    the standard xDSL dialects plus CompGen's own dialects when
-    available. ``allow_unregistered=True`` so ``compgen.*`` attributes
+    :func:`xpu_rt.capture.torch_mlir_bridge.bridge_fx_graph` — loads
+    the standard xDSL dialects plus XPU-RT's own dialects when
+    available. ``allow_unregistered=True`` so ``xpu_rt.*`` attributes
     stamped by stage plugins don't block parsing.
     """
     ctx = Context(allow_unregistered=True)
@@ -56,16 +56,16 @@ def _build_payload_context() -> Context:
     ctx.load_dialect(Math)
     ctx.load_dialect(Tensor)
 
-    # CompGen-owned dialects: optional to keep the runner usable in
+    # XPU-RT-owned dialects: optional to keep the runner usable in
     # minimal installs. Failures are silent because the payload may
     # not use these dialects at all.
     # Each import/load is independent so a missing dialect doesn't
     # hide the others.
     for mod_name, attr_name in (
-        ("compgen.ir.linalg_ext", "LinalgExt"),
-        ("compgen.ir.quant", "Quant"),
-        ("compgen.ir.tensor_ext", "TensorExt"),
-        ("compgen.ir.collective", "Collective"),
+        ("xpu_rt.ir.linalg_ext", "LinalgExt"),
+        ("xpu_rt.ir.quant", "Quant"),
+        ("xpu_rt.ir.tensor_ext", "TensorExt"),
+        ("xpu_rt.ir.collective", "Collective"),
     ):
         try:
             mod = __import__(mod_name, fromlist=[attr_name])
@@ -144,7 +144,7 @@ def load_bundle(bundle_dir: Path | str) -> LoadedBundle:
 
     Args:
         bundle_dir: Directory written by
-            :class:`~compgen.stages.bundle.stage.BundleStage`.
+            :class:`~xpu_rt.stages.bundle.stage.BundleStage`.
 
     Returns:
         A :class:`LoadedBundle` ready for :func:`run_bundle`.
@@ -168,7 +168,7 @@ def load_bundle(bundle_dir: Path | str) -> LoadedBundle:
     payload_text = payload_path.read_text()
 
     # Parse payload.mlir back into a ModuleOp using the canonical
-    # payload-IR context (standard xDSL dialects + CompGen extensions).
+    # payload-IR context (standard xDSL dialects + XPU-RT extensions).
     ctx = _build_payload_context()
     payload_module = Parser(ctx, payload_text).parse_module()
 
@@ -304,7 +304,7 @@ def run_bundle(
 
     Returns:
         The output tensor produced by
-        :func:`compgen.runtime.cpu_executor.execute`.
+        :func:`xpu_rt.runtime.cpu_executor.execute`.
 
     Raises:
         ValueError: If the bundle has no ``exported_program`` (required
@@ -324,7 +324,7 @@ def run_bundle(
         raise ValueError("run_bundle: no inputs provided and bundle has no golden_inputs.pt")
 
     # Import lazily for the same reason as local_executor.
-    from compgen.runtime.cpu_executor import execute as _compgen_execute
+    from xpu_rt.runtime.cpu_executor import execute as _xpu_rt_execute
 
     log.info(
         "bundle_runner.run",
@@ -333,7 +333,7 @@ def run_bundle(
         model_hash=bundle.model_hash,
         num_inputs=len(effective_inputs),
     )
-    return _compgen_execute(bundle.payload_module, bundle.exported_program, effective_inputs)
+    return _xpu_rt_execute(bundle.payload_module, bundle.exported_program, effective_inputs)
 
 
 __all__ = ["LoadedBundle", "load_bundle", "run_bundle"]

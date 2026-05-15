@@ -5,9 +5,9 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from compgen.llm.base import GenerationRequest, LLMConfig, Objective, PromptContext
-from compgen.llm.mock_client import MockLLMClient
-from compgen.llm.recorder import LLMRecorder
+from xpu_rt.llm.base import GenerationRequest, LLMConfig, Objective, PromptContext
+from xpu_rt.llm.mock_client import MockLLMClient
+from xpu_rt.llm.recorder import LLMRecorder
 
 
 def _make_request(prompt: str = "Say hello") -> GenerationRequest:

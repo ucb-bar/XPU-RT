@@ -1,10 +1,10 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "compgen://user_perspective/schemas/kernel_contract.schema.yaml"
+$id: "xpu_rt://user_perspective/schemas/kernel_contract.schema.yaml"
 title: KernelContract
 description: >
   User-side kernel contract. Union of
-  compgen.kernels.provider.KernelContract and
-  compgen.ir.payload.contracts.KernelContract. This is the interface
+  xpu_rt.kernels.provider.KernelContract and
+  xpu_rt.ir.payload.contracts.KernelContract. This is the interface
   between graph-level reasoning (global) and kernel generation (leaf).
   Producers of this artifact: scripts/04_emit_kernel_contracts.py (Phase 6).
 
@@ -27,7 +27,7 @@ properties:
     description: Stable ID suitable as a filename stem.
   region_id:
     type: string
-    description: Refers to a compgen.region_id attached during fx_to_xdsl.
+    description: Refers to a xpu_rt.region_id attached during fx_to_xdsl.
   op_family:
     type: string
     enum: [gemm, attention, conv, reduction, normalization, elementwise,

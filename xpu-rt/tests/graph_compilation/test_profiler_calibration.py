@@ -3,7 +3,7 @@
 Verifies:
 
 - Calibration runs end-to-end on a captured exported program when
-  ``COMPGEN_CALIBRATE_PROFILER=1`` is set.
+  ``XPU_RT_CALIBRATE_PROFILER=1`` is set.
 - ``profile_run.json`` records iterations, warmup, op_to_us, and
   wall_us_per_iter from a real torch.profiler run.
 - ``profiler_calibration_report.json`` has typed
@@ -47,11 +47,11 @@ def _read(p: Path) -> dict:
 def _run(model: str, out_dir: Path, *, calibrate: bool = False) -> int:
     env = os.environ.copy()
     if calibrate:
-        env["COMPGEN_CALIBRATE_PROFILER"] = "1"
+        env["XPU_RT_CALIBRATE_PROFILER"] = "1"
     else:
-        env.pop("COMPGEN_CALIBRATE_PROFILER", None)
+        env.pop("XPU_RT_CALIBRATE_PROFILER", None)
     cmd = [
-        sys.executable, "-m", "compgen.graph_compilation", "run",
+        sys.executable, "-m", "xpu_rt.graph_compilation", "run",
         "--model", str(REPO_ROOT / f"configs/models/{model}.yaml"),
         "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
         "--out", str(out_dir),
@@ -285,7 +285,7 @@ def test_calibration_module_handles_missing_capture(tmp_path: Path) -> None:
         json.dumps({"regions": []}), encoding="utf-8",
     )
 
-    from compgen.graph_compilation.profiler_calibration import (
+    from xpu_rt.graph_compilation.profiler_calibration import (
         run_profiler_calibration,
     )
 
@@ -302,16 +302,16 @@ def test_calibration_module_handles_missing_capture(tmp_path: Path) -> None:
 
 def test_profiler_calibration_does_not_import_compiler_core() -> None:
     src = (
-        REPO_ROOT / "python" / "compgen" / "graph_compilation"
+        REPO_ROOT / "python" / "xpu-rt" / "graph_compilation"
         / "profiler_calibration.py"
     ).read_text(encoding="utf-8")
     forbidden = (
-        "from compgen.ir",
-        "import compgen.ir",
-        "from compgen.capture",
-        "import compgen.capture",
-        "from compgen.pipeline",
-        "import compgen.pipeline",
+        "from xpu_rt.ir",
+        "import xpu_rt.ir",
+        "from xpu_rt.capture",
+        "import xpu_rt.capture",
+        "from xpu_rt.pipeline",
+        "import xpu_rt.pipeline",
     )
     for pat in forbidden:
         assert pat not in src, f"profiler_calibration imports forbidden module: {pat}"

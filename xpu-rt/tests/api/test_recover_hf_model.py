@@ -1,7 +1,7 @@
 """End-to-end P2 acceptance test: ``compile_with_llm(..., recover_unsupported=True)``.
 
 We deliberately use a small PyTorch module whose forward emits
-``aten.tanh.default`` — a real operator that is off CompGen's Payload
+``aten.tanh.default`` — a real operator that is off XPU-RT's Payload
 decomposition allow-list. With ``recover_unsupported=True``:
 
 * capture.unsupported detects + classifies the op
@@ -23,8 +23,8 @@ from pathlib import Path
 
 import torch
 import torch.nn as nn
-from compgen import compile_with_llm
-from compgen.llm.mock_client import MockLLMClient
+from xpu_rt import compile_with_llm
+from xpu_rt.llm.mock_client import MockLLMClient
 
 EXEMPLAR = Path(__file__).resolve().parents[1] / "targetgen" / "exemplars" / "test_gpu_simt.yaml"
 
@@ -109,8 +109,8 @@ def test_compile_with_llm_recover_false_leaves_plan_none() -> None:
 def test_compile_with_llm_recover_consults_llm_on_low_confidence() -> None:
     """Monkey-patch the classifier to return low-confidence and verify
     the LLM is called to disambiguate the strategy."""
-    import compgen.agent.llm_driver_recovery as recovery
-    from compgen.capture.unsupported.classify import UnsupportedClassification
+    import xpu_rt.agent.llm_driver_recovery as recovery
+    from xpu_rt.capture.unsupported.classify import UnsupportedClassification
 
     original_default = recovery._deterministic_default
 
@@ -127,7 +127,7 @@ def test_compile_with_llm_recover_consults_llm_on_low_confidence() -> None:
 
         def generate(self, request):
             type(self).calls += 1
-            from compgen.llm.base import GenerationResponse
+            from xpu_rt.llm.base import GenerationResponse
 
             return GenerationResponse(
                 raw_text="translation",

@@ -20,31 +20,31 @@ from typing import Any
 from xdsl.dialects.builtin import ModuleOp, StringAttr, TensorType
 from xdsl.dialects.func import FuncOp, ReturnOp
 
-from compgen.agent.decisions import (
+from xpu_rt.agent.decisions import (
     DecisionCandidate,
     DecisionSite,
     get_active_registry,
 )
-from compgen.stages.bundle import BundleStage
-from compgen.stages.dispatch import DispatchStage
-from compgen.stages.dispatch.stage import DISPATCH_ID_ATTR
-from compgen.stages.encoding import EncodingStage
-from compgen.stages.encoding.stage import ENCODING_ATTR
-from compgen.stages.layout.stage import LayoutStage
-from compgen.stages.registry import TargetDialectStack
-from compgen.stages.templates.codegen import CODEGEN_BACKEND_ATTR, CodegenStage
-from compgen.stages.templates.tiling import TILE_SIZES_ATTR, TilingStage
-from compgen.targets.capability import CapabilitySpec
-from compgen.targets.schema import TargetProfile
+from xpu_rt.stages.bundle import BundleStage
+from xpu_rt.stages.dispatch import DispatchStage
+from xpu_rt.stages.dispatch.stage import DISPATCH_ID_ATTR
+from xpu_rt.stages.encoding import EncodingStage
+from xpu_rt.stages.encoding.stage import ENCODING_ATTR
+from xpu_rt.stages.layout.stage import LayoutStage
+from xpu_rt.stages.registry import TargetDialectStack
+from xpu_rt.stages.templates.codegen import CODEGEN_BACKEND_ATTR, CodegenStage
+from xpu_rt.stages.templates.tiling import TILE_SIZES_ATTR, TilingStage
+from xpu_rt.targets.capability import CapabilitySpec
+from xpu_rt.targets.schema import TargetProfile
 
 
 def _op_site_key(op: Any) -> str:
-    """Build a stable site id from an op. Prefers ``compgen.region_id`` —
+    """Build a stable site id from an op. Prefers ``xpu_rt.region_id`` —
     already stamped by the importer and FX-stable across stages —
     falling back to a name+position key when no region id exists.
     """
     attrs = getattr(op, "attributes", {}) or {}
-    rid_attr = attrs.get("compgen.region_id") if attrs else None
+    rid_attr = attrs.get("xpu_rt.region_id") if attrs else None
     if rid_attr is not None and hasattr(rid_attr, "data"):
         return str(rid_attr.data)
     return f"{op.name}@{id(op):x}"
@@ -300,9 +300,9 @@ class CudaLayoutPlugin:
         self._caps = capabilities
 
     def transform(self, module: ModuleOp) -> ModuleOp:
-        from compgen.transforms.layout.cuda_resolver import CudaLayoutResolver
-        from compgen.transforms.layout.fuse_layout_into_producers import fuse_layout_into_producers
-        from compgen.transforms.layout.specialize_layouts import specialize_layouts
+        from xpu_rt.transforms.layout.cuda_resolver import CudaLayoutResolver
+        from xpu_rt.transforms.layout.fuse_layout_into_producers import fuse_layout_into_producers
+        from xpu_rt.transforms.layout.specialize_layouts import specialize_layouts
 
         module = fuse_layout_into_producers(module)
         resolver = CudaLayoutResolver()

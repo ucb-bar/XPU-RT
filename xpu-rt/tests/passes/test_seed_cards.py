@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from compgen.passes.cards import (
+from xpu_rt.passes.cards import (
     PassCardRegistry,
     default_registry_root,
     iter_cards,
@@ -92,7 +92,7 @@ def test_agent_decision_uses_registry_not_hardcoded_constant() -> None:
     the on-disk registry rather than a hardcoded list. We assert the
     registry call is present AND no hardcoded ['set_tile_params',
     'fuse_producer_consumer'] literal list survives."""
-    src = (REPO_ROOT / "python" / "compgen" / "graph_compilation"
+    src = (REPO_ROOT / "python" / "xpu-rt" / "graph_compilation"
            / "agent_decision.py").read_text()
     # Registry-driven derivation must be in place
     assert "PassCardRegistry.load" in src

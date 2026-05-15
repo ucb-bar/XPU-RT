@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from compgen.observability.gemini_usage import (
+from xpu_rt.observability.gemini_usage import (
     Budget,
     UsageEvent,
     UsageSummary,

@@ -12,8 +12,8 @@ forbidden:
 - mock verification reports
 realness_level: production_path
 required_evidence:
-- python/compgen/promotion/gates.py
-- python/compgen/promotion/promote.py (_inspect_verification hook)
+- python/xpu_rt/promotion/gates.py
+- python/xpu_rt/promotion/promote.py (_inspect_verification hook)
 - tests/promotion/test_gates.py
 - audit.jsonl entries showing non-trivial gate_level values across canonical-22
 notes: 'Section 19 / M-29. Portable level requires >=2 distinct target_class

@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from compgen.agent.env import AssignDeviceAction, CompilerEnv
-from compgen.ir.agent.lower import lower_agent
-from compgen.ir.agent.validate import validate_agent_module
-from compgen.targets.schema import load_profile
+from xpu_rt.agent.env import AssignDeviceAction, CompilerEnv
+from xpu_rt.ir.agent.lower import lower_agent
+from xpu_rt.ir.agent.validate import validate_agent_module
+from xpu_rt.targets.schema import load_profile
 from xdsl.dialects import func, linalg, tensor
 from xdsl.dialects.builtin import Float32Type, ModuleOp, TensorType
 from xdsl.ir import Block, Region

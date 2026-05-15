@@ -24,7 +24,7 @@ from __future__ import annotations
 import json
 
 import pytest
-from compgen.agent.views import (
+from xpu_rt.agent.views import (
     CANONICAL_VIEW_BYTE_BUDGET,
     CanonicalViewBudgetError,
     DiffEntry,
@@ -32,7 +32,7 @@ from compgen.agent.views import (
     diff_since,
     focus_chunk,
 )
-from compgen.agent.views.focus_chunk import FocusChunkNotFoundError
+from xpu_rt.agent.views.focus_chunk import FocusChunkNotFoundError
 
 
 def _state(**overrides):

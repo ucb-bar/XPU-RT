@@ -1,6 +1,6 @@
-"""CompGen -- an LLM-driven compiler generator for heterogeneous hardware targets.
+"""XPU-RT -- an LLM-driven compiler generator for heterogeneous hardware targets.
 
-CompGen is a *compiler generator*, not a compiler. Given a PyTorch program and a
+XPU-RT is a *compiler generator*, not a compiler. Given a PyTorch program and a
 hardware profile (one or more devices), it generates a deployment recipe containing:
 
 - Graph/lowering transforms (MLIR Transform Dialect scripts)
@@ -24,23 +24,23 @@ __version__ = "0.2.0"
 def _install_gemini_instrumentation_at_import() -> None:
     """Install the google.genai monkey-patch ASAP so any caller in this
     process — agent_decision, MCP tools, efficiency_report, etc. —
-    has its Gemini API calls captured by ``compgen-gemini-usage``.
+    has its Gemini API calls captured by ``xpu-rt-gemini-usage``.
 
-    Opt-out via ``COMPGEN_DISABLE_GEMINI_INSTRUMENTATION=1`` for users
+    Opt-out via ``XPU_RT_DISABLE_GEMINI_INSTRUMENTATION=1`` for users
     who run their own observability stack. Best-effort: never raises.
     Subprocess paths (KernelBlaster) still bypass this — for those use
     ``scripts/dev/recover_kernelblaster_usage.py`` (post-hoc recovery).
     """
     import os
 
-    if os.environ.get("COMPGEN_DISABLE_GEMINI_INSTRUMENTATION", "").lower() in (
+    if os.environ.get("XPU_RT_DISABLE_GEMINI_INSTRUMENTATION", "").lower() in (
         "1",
         "true",
         "yes",
     ):
         return
     try:
-        from compgen.observability.gemini_usage import (
+        from xpu_rt.observability.gemini_usage import (
             install_genai_instrumentation,
             install_openai_instrumentation,
         )
@@ -71,10 +71,10 @@ __all__ = [
 
 
 def has_cuda_runtime() -> bool:
-    """Return True if a CUDA-enabled libcompgen_rt is available.
+    """Return True if a CUDA-enabled libxpu_rt is available.
 
     Used by the remote-Blackwell sanity check
-    (``python -c 'import compgen; assert compgen.has_cuda_runtime()'``).
+    (``python -c 'import xpu_rt; assert xpu_rt.has_cuda_runtime()'``).
     Returns ``False`` on dev installs without the prebuilt CUDA library
     or hosts where ``torch.cuda.is_available()`` returns False.
     """
@@ -90,7 +90,7 @@ def has_cuda_runtime() -> bool:
     from pathlib import Path
 
     prebuilt_dir = Path(__file__).parent / "runtime" / "native" / "prebuilt"
-    cuda_lib = list(prebuilt_dir.glob("libcompgen_rt-cuda*.so"))
+    cuda_lib = list(prebuilt_dir.glob("libxpu_rt-cuda*.so"))
     return len(cuda_lib) > 0
 
 
@@ -105,7 +105,7 @@ def __getattr__(name: str):
         "compile_to_megakernel",
         "device",
     }:
-        from compgen.api import (
+        from xpu_rt.api import (
             CompGenDevice,
             CompiledModel,
             MegakernelBundle,
@@ -124,7 +124,7 @@ def __getattr__(name: str):
         }
         return exports[name]
     if name in {"compile_with_llm", "open_llm_session", "LLMCompileResult"}:
-        from compgen.api_llm import LLMCompileResult, compile_with_llm, open_llm_session
+        from xpu_rt.api_llm import LLMCompileResult, compile_with_llm, open_llm_session
 
         exports = {
             "compile_with_llm": compile_with_llm,

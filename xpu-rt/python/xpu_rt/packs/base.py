@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
-from compgen.packs.schema import BranchPlan, ExtensionPackManifest, PackContribution, PackProbeResult
+from xpu_rt.packs.schema import BranchPlan, ExtensionPackManifest, PackContribution, PackProbeResult
 
 if TYPE_CHECKING:
     from benchmarks.spec import WorkspaceConfig

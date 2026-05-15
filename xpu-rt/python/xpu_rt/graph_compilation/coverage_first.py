@@ -248,7 +248,7 @@ def _load_certificates(run_dir: Path) -> list[Any]:
         return []
     out: list[Any] = []
     try:
-        from compgen.kernels.kernel_certificate import KernelCertificate
+        from xpu_rt.kernels.kernel_certificate import KernelCertificate
     except Exception:  # noqa: BLE001
         return []
     for path in sorted(cert_dir.glob("*.json")):

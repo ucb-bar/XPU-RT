@@ -16,8 +16,8 @@ from pathlib import Path
 
 import pytest
 
-from compgen.graph_compilation.evidence_pack import is_holdout_model
-from compgen.graph_compilation.run import run_graph_compilation
+from xpu_rt.graph_compilation.evidence_pack import is_holdout_model
+from xpu_rt.graph_compilation.run import run_graph_compilation
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 CONFIGS_DIR = REPO_ROOT / "configs" / "models"

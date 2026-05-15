@@ -1,6 +1,6 @@
 # Use the Demo
 
-The demo is the current best walkthrough of the CompGen stack without asking you to wire subsystems together yourself.
+The demo is the current best walkthrough of the XPU-RT stack without asking you to wire subsystems together yourself.
 
 ## Run It
 

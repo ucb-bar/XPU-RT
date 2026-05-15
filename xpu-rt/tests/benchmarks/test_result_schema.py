@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 
 import pytest
-from compgen.benchmarks.results import BenchmarkResult, compare_results, read_json
+from xpu_rt.benchmarks.results import BenchmarkResult, compare_results, read_json
 
 
 def _make_result(**overrides: object) -> BenchmarkResult:

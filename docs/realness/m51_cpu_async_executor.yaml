@@ -13,16 +13,16 @@ claim: |
   stress phase):
 
   1. Equivalence: on a linear dependency chain (or any DAG with
-     deterministic kernels), ``compgen_run_async`` returns the same
-     terminal output as the M-47 ``compgen_run``. The wait/notify
+     deterministic kernels), ``xpu_rt_run_async`` returns the same
+     terminal output as the M-47 ``xpu_rt_run``. The wait/notify
      pairs serialise the producer→consumer edges so nothing reorders
      past a value dependency.
   2. Deterministic timeout: when a kernel never returns,
-     ``compgen_run_async(timeout_s=...)`` raises ``TimeoutError`` at
+     ``xpu_rt_run_async(timeout_s=...)`` raises ``TimeoutError`` at
      the deadline; sibling waiters wake via the
      ``EventTensor._cancel`` propagation rather than hanging.
   3. Exception propagation: a kernel raising inside any worker
-     re-raises the original exception out of ``compgen_run_async``
+     re-raises the original exception out of ``xpu_rt_run_async``
      to the main thread (first failure wins; siblings cancel via the
      event tensors).
   4. Plan invariants: M-48's typed ``PLAN_VIOLATION_<KIND>`` classes
@@ -46,13 +46,13 @@ forbidden:
 - emitting the async executor when no binding has dispatch_model="async" (must be skipped instead)
 - replacing EventTensor with a hand-rolled threading.Event/threading.Condition (the EventTensor primitive is the contract surface)
 - silently swallowing kernel exceptions in worker threads instead of re-raising to the main caller
-- skipping the assert_plan call in compgen_run_async (every executor must run plan invariants before any dispatch)
+- skipping the assert_plan call in xpu_rt_run_async (every executor must run plan invariants before any dispatch)
 - replacing torch-tensor EventTensor counters with Python int counters (the int64 backing is part of the dialect contract)
 realness_level: production_path
 required_evidence:
-- python/compgen/runtime/glue_emit/python_async.py
-- python/compgen/runtime/glue_emit/__init__.py (re-export)
-- python/compgen/graph_compilation/run.py (M-51 emit wired after M-47)
+- python/xpu_rt/runtime/glue_emit/python_async.py
+- python/xpu_rt/runtime/glue_emit/__init__.py (re-export)
+- python/xpu_rt/graph_compilation/run.py (M-51 emit wired after M-47)
 - tests/runtime/test_glue_emit_python_async.py
 - "real-driven stress: /tmp/m51_real_stress.py 3 phases (handshake, timeout, exception)"
 - "M-50→M-51 chain: SetDispatchMode(async) materialises ASYNC contract"
@@ -70,7 +70,7 @@ notes: |
 
   Phase B — missing notify: matmul kernel hangs for 10s; called
   with timeout_s=0.5. TimeoutError fired with worker name in message
-  ("worker compgen-async-matmul_0 still running"). All threads
+  ("worker xpu_rt-async-matmul_0 still running"). All threads
   cleaned up via the EventTensor cancellation primitive; the test
   process did not deadlock.
 

@@ -5,10 +5,10 @@ from __future__ import annotations
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 
-from compgen.packs.base import LoadedPack
-from compgen.packs.envcheck import EnvCheckResult, check_pack_environment
-from compgen.packs.schema import PackProbeResult
-from compgen.packs.verify import OwnershipViolation, check_surface_allowed
+from xpu_rt.packs.base import LoadedPack
+from xpu_rt.packs.envcheck import EnvCheckResult, check_pack_environment
+from xpu_rt.packs.schema import PackProbeResult
+from xpu_rt.packs.verify import OwnershipViolation, check_surface_allowed
 
 
 @dataclass(frozen=True)

@@ -8,22 +8,22 @@ from unittest.mock import patch
 
 import pytest
 
-from compgen.providers.adapters.blocked_shell import BlockedShellAdapter
-from compgen.providers.adapters.gemmini_c import GemminiCProvider
-from compgen.providers.adapters.hexagon_mlir import HexagonMLIRProvider
-from compgen.providers.adapters.nki import NkiProvider
-from compgen.providers.adapters.pallas import PallasProvider
-from compgen.providers.adapters.radiance_muon import RadianceMuonProvider
-from compgen.providers.adapters.remote_shell import (
+from xpu_rt.providers.adapters.blocked_shell import BlockedShellAdapter
+from xpu_rt.providers.adapters.gemmini_c import GemminiCProvider
+from xpu_rt.providers.adapters.hexagon_mlir import HexagonMLIRProvider
+from xpu_rt.providers.adapters.nki import NkiProvider
+from xpu_rt.providers.adapters.pallas import PallasProvider
+from xpu_rt.providers.adapters.radiance_muon import RadianceMuonProvider
+from xpu_rt.providers.adapters.remote_shell import (
     DEFAULT_REMOTE_CONFIG_ROOT,
     RemoteShellAdapter,
 )
-from compgen.providers.kernel_provider import (
+from xpu_rt.providers.kernel_provider import (
     KernelCodegenRequest,
     KernelProvider,
 )
-from compgen.providers.provider_types import PROBE_STATUSES
-from compgen.providers.result_v1 import ProviderResultV1
+from xpu_rt.providers.provider_types import PROBE_STATUSES
+from xpu_rt.providers.result_v1 import ProviderResultV1
 
 
 HW_GATED = {
@@ -91,10 +91,10 @@ def test_pallas_remote_unreachable_when_host_empty():
     inst = PallasProvider()
     # Pallas has python_package_missing locally (no jax). Patch the
     # local probe to "available" so we test the REMOTE path.
-    from compgen.providers.provider_types import ProviderProbeResult
+    from xpu_rt.providers.provider_types import ProviderProbeResult
 
     with patch(
-        "compgen.providers.adapters.remote_shell.probe_provider"
+        "xpu_rt.providers.adapters.remote_shell.probe_provider"
     ) as mock_local:
         mock_local.return_value = ProviderProbeResult(
             schema_version="provider_status_v1",
@@ -135,8 +135,8 @@ def test_propose_returns_blocked_when_remote_available_but_no_backend():
     """When the remote IS available but the provider-specific
     codegen hasn't been written, the shell honestly says so."""
 
-    from compgen.providers.adapters import remote_shell
-    from compgen.providers.provider_types import ProviderProbeResult
+    from xpu_rt.providers.adapters import remote_shell
+    from xpu_rt.providers.provider_types import ProviderProbeResult
 
     inst = PallasProvider()
     with patch.object(
@@ -194,10 +194,10 @@ timeout_s: 30
         remote_config_filename = "fake.yaml"
         remote_config_path = cfg_path
 
-    from compgen.providers.adapters.remote_shell import (
+    from xpu_rt.providers.adapters.remote_shell import (
         execute_on_remote_and_record,
     )
-    from compgen.runtime.remote_target import (
+    from xpu_rt.runtime.remote_target import (
         REMOTE_SCHEMA_VERSION,
         RemoteRunResult,
     )
@@ -218,7 +218,7 @@ timeout_s: 30
 
     pack = tmp_path / "evidence_pack"
     with patch(
-        "compgen.runtime.remote_target.build_runner"
+        "xpu_rt.runtime.remote_target.build_runner"
     ) as mock_build:
         fake_runner = type(
             "FakeRunner",
@@ -270,7 +270,7 @@ workdir: /tmp/x
         remote_config_filename = "empty.yaml"
         remote_config_path = cfg_path
 
-    from compgen.providers.adapters.remote_shell import (
+    from xpu_rt.providers.adapters.remote_shell import (
         execute_on_remote_and_record,
     )
 

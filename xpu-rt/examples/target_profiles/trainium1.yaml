@@ -1,4 +1,4 @@
-# CompGen Target Profile: AWS Trainium 1 (trn1.2xlarge)
+# XPU-RT Target Profile: AWS Trainium 1 (trn1.2xlarge)
 #
 # Single-device accelerator profile for AWS Trainium.
 # Values from AWS documentation and NeuronSDK references.

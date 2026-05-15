@@ -1,11 +1,11 @@
-# CompGen
+# XPU-RT
 
-CompGen is an LLM-driven compiler generator for heterogeneous hardware
+XPU-RT is an LLM-driven compiler generator for heterogeneous hardware
 targets. It captures PyTorch programs, runs a staged xDSL/MLIR pipeline,
 proposes transforms via LLM-backed invent-slots, verifies every proposal,
 and packages the result into a deterministic deployment recipe.
 
-The primary way to drive CompGen is through Claude Code via its MCP server —
+The primary way to drive XPU-RT is through Claude Code via its MCP server —
 every pipeline stage is exposed as a typed tool that the LLM can call.
 
 ## Start here →

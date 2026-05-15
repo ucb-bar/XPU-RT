@@ -1,6 +1,6 @@
 # NPU Kernel Generation Guide
 
-This guide covers the end-to-end workflow for generating NPU kernels for the SmolVLA model using CompGen's FP8 quantization pipeline and autocomp kernel search. The pipeline produces **deduplicated kernel contracts** — the minimum set of unique kernel specifications that cover all compute operations in the model — ready for autocomp to generate NPU-native implementations.
+This guide covers the end-to-end workflow for generating NPU kernels for the SmolVLA model using XPU-RT's FP8 quantization pipeline and autocomp kernel search. The pipeline produces **deduplicated kernel contracts** — the minimum set of unique kernel specifications that cover all compute operations in the model — ready for autocomp to generate NPU-native implementations.
 
 ## Overview
 
@@ -8,21 +8,21 @@ The workflow has three stages:
 
 1. **Graph Analysis** — Load SmolVLA, apply FP8 E4M3 quantization, capture the computation graph, and analyze every operator for NPU hardware mapping.
 2. **Contract Generation** — Extract concrete shapes/dtypes from the graph, deduplicate identical signatures, and produce kernel contracts in YAML and autocomp-ready format.
-3. **Kernel Generation** — Feed contracts into autocomp to generate NPU kernels, validate correctness, and plug results back into CompGen.
+3. **Kernel Generation** — Feed contracts into autocomp to generate NPU kernels, validate correctness, and plug results back into XPU-RT.
 
 ## Prerequisites
 
 ### Clone and set up
 
 ```bash
-git clone <compgen-repo-url>
-cd CompGen
+git clone <xpu-rt-repo-url>
+cd XPU-RT
 
 # Create virtual environment
 uv venv .venv
 source .venv/bin/activate
 
-# Install CompGen + quantization dependencies
+# Install XPU-RT + quantization dependencies
 uv pip install -e ".[quantization]"
 
 # Install model dependencies (lerobot, transformers, etc.)
@@ -32,7 +32,7 @@ uv pip install lerobot transformers diffusers torchvision datasets \
 
 ### External dependencies
 
-- **Understanding-PI0** — SmolVLA model wrapper. Expected at `/scratch2/agustin/merlin/third_party/Understanding-PI0`. If located elsewhere, set path in `python/compgen/models/robotics.py:_resolve_existing_root()`.
+- **Understanding-PI0** — SmolVLA model wrapper. Expected at `/scratch2/agustin/merlin/third_party/Understanding-PI0`. If located elsewhere, set path in `python/xpu_rt/models/robotics.py:_resolve_existing_root()`.
 - **autocomp** — Kernel search engine. Located at `third_party/autocomp/`. Install with `uv pip install -e third_party/autocomp`.
 
 ## Step 1: Run the SmolVLA FP8 Pipeline
@@ -40,7 +40,7 @@ uv pip install lerobot transformers diffusers torchvision datasets \
 The pipeline loads the real SmolVLA model (450M parameters), applies per-tensor FP8 E4M3 quantization with power-of-two scaling (matching the NPU's E8M0 scale registers), captures the computation graph via TorchDynamo, and generates kernel contracts.
 
 ```bash
-python -m compgen.quantization.smolvla_e2e --output-dir artifacts/smolvla_fp8_npu
+python -m xpu_rt.quantization.smolvla_e2e --output-dir artifacts/smolvla_fp8_npu
 ```
 
 This produces:
@@ -179,7 +179,7 @@ from autocomp.hw_config.cuda_config import CudaHardwareConfig
 contract_dir = Path("artifacts/smolvla_fp8_npu/autocomp_problems/matmul_fp8_1x48x960x960")
 
 prob = Prob(
-    prob_type="compgen_npu",
+    prob_type="xpu_rt_npu",
     prob_id=0,
     test_file=contract_dir / "test.py",
     sol_file=contract_dir / "reference.py",
@@ -235,11 +235,11 @@ done
 After generating kernels, validate each against its contract's reference:
 
 ```python
-from compgen.quantization.autocomp_bridge import (
+from xpu_rt.quantization.autocomp_bridge import (
     load_autocomp_result,
     validate_kernel_against_contract,
 )
-from compgen.kernels.providers.npu_contracts import NpuKernelContract
+from xpu_rt.kernels.providers.npu_contracts import NpuKernelContract
 import yaml
 
 # Load the contract
@@ -253,13 +253,13 @@ if result and result.kernel_code:
     print(f"Correct: {validation['correct']}, Max error: {validation['max_error']:.6f}")
 ```
 
-## Step 5: Plug Kernels Back into CompGen
+## Step 5: Plug Kernels Back into XPU-RT
 
-Generated and validated kernels are registered via CompGen's provider registry:
+Generated and validated kernels are registered via XPU-RT's provider registry:
 
 ```python
-from compgen.kernels.provider import KernelProvider, ProviderResult
-from compgen.kernels.registry import ProviderRegistry
+from xpu_rt.kernels.provider import KernelProvider, ProviderResult
+from xpu_rt.kernels.registry import ProviderRegistry
 
 class NpuKernelProvider(KernelProvider):
     """Serves pre-generated NPU kernels from autocomp results."""
@@ -327,9 +327,9 @@ registry.register(NpuKernelProvider("search_results/"))
 All pipeline steps are available programmatically:
 
 ```python
-from compgen.quantization.pipeline import QuantizedModelPipeline
-from compgen.capture.torchao_pipeline import QuantizationConfig
-from compgen.kernels.providers.npu_contracts import (
+from xpu_rt.quantization.pipeline import QuantizedModelPipeline
+from xpu_rt.capture.torchao_pipeline import QuantizationConfig
+from xpu_rt.kernels.providers.npu_contracts import (
     generate_npu_kernel_contracts,
     export_contracts_yaml,
     export_contracts_autocomp,

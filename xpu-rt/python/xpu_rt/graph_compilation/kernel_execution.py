@@ -2,7 +2,7 @@
 
 Read-only consumer of 's `transformed_payload.real.mlir` artifact.
 Compiles + executes the SetTileParams matmul region on real hardware
-(GPU via Triton, CPU via libcompgen_rt + cffi C codegen) and verifies
+(GPU via Triton, CPU via libxpu_rt + cffi C codegen) and verifies
 numerical equality vs the eager baseline.
 
 Layered alongside the FX-level evidence ( /
@@ -13,7 +13,7 @@ Hard non-goals:
 - No mutation of payload.mlir, candidate_actions.json, region_map.json,
   cost_preview_v2.json, llm_graph_view.json, or any readiness report.
 - No new candidate generation, no new transforms.
-- No compiler-core imports (compgen.ir / compgen.capture / compgen.pipeline).
+- No compiler-core imports (xpu_rt.ir / xpu_rt.capture / xpu_rt.pipeline).
 - No raise into the pipeline. Best-effort with typed status fallbacks
   on every error path.
 
@@ -26,7 +26,7 @@ Output layout::
         triton_kernel_<region>.py      # generated Triton source (when GPU runs)
         cpu_kernel_<region>.c          # generated CPU C source (when CPU runs)
 
-Opt-in via ``COMPGEN_RUN_KERNELS=1``. Default OFF.
+Opt-in via ``XPU_RT_RUN_KERNELS=1``. Default OFF.
 """
 
 from __future__ import annotations
@@ -149,7 +149,7 @@ def run_kernel_execution(run_dir: Path) -> KernelExecutionResult:
     gpu_artifact: Path | None = None
     gpu_status = "not_run"
     try:
-        from compgen.graph_compilation.kernel_execution_gpu import (
+        from xpu_rt.graph_compilation.kernel_execution_gpu import (
             run_gpu_track,
         )
         gpu_artifact = run_gpu_track(out_dir=out_dir, common=common)
@@ -176,7 +176,7 @@ def run_kernel_execution(run_dir: Path) -> KernelExecutionResult:
     cpu_artifact: Path | None = None
     cpu_status = "not_run"
     try:
-        from compgen.graph_compilation.kernel_execution_cpu import (
+        from xpu_rt.graph_compilation.kernel_execution_cpu import (
             run_cpu_track,
         )
         cpu_artifact = run_cpu_track(out_dir=out_dir, common=common)
@@ -188,7 +188,7 @@ def run_kernel_execution(run_dir: Path) -> KernelExecutionResult:
     except Exception as exc:  # noqa: BLE001
         cpu_status = "internal_error"
         body = {
-            **common, "track": "cpu_compgen_rt",
+            **common, "track": "cpu_xpu_rt",
             "compile_status": "internal_error",
             "run_status": "not_run",
             "note": f"{type(exc).__name__}: {exc}",

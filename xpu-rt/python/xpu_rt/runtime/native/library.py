@@ -1,4 +1,4 @@
-"""Library loader + ctypes signature bindings for ``libcompgen_rt``.
+"""Library loader + ctypes signature bindings for ``libxpu_rt``.
 
 All public primitives (``Device``, ``Semaphore``, ``CommandBuffer``,
 ``Queue``, ``Buffer``, ``Executable``, ``EventTensor``) import their
@@ -8,10 +8,10 @@ every C entry point is bound exactly once.
 
 Library discovery search order:
     1. ``LD_LIBRARY_PATH`` / default linker paths
-       (``ctypes.util.find_library("compgen_rt")``).
-    2. ``$COMPGEN_RT_LIBRARY`` environment variable (explicit path).
+       (``ctypes.util.find_library("xpu_rt")``).
+    2. ``$XPU_RT_RT_LIBRARY`` environment variable (explicit path).
     3. The project build directory
-       ``<repo>/runtime/native/libcompgen_rt/build/libcompgen_rt.so``
+       ``<repo>/runtime/native/libxpu_rt/build/libxpu_rt.so``
        (matches ``cmake -B build`` invocation from the repo root).
 """
 
@@ -28,7 +28,7 @@ import structlog
 log = structlog.get_logger(__name__)
 
 
-# Mirror of cg_rt_status_t from compgen_rt.h. Kept in lockstep with
+# Mirror of cg_rt_status_t from xpu_rt.h. Kept in lockstep with
 # the C side. Used so error messages carry the macro name rather
 # than just the integer code — significantly cheaper to triage at
 # the bridge level.
@@ -46,7 +46,7 @@ _CG_RT_STATUS_NAMES: dict[int, str] = {
 
 
 class CgRtError(RuntimeError):
-    """Raised when a ``libcompgen_rt`` C call returns a non-zero status.
+    """Raised when a ``libxpu_rt`` C call returns a non-zero status.
 
     Attributes:
         status: The ``cg_rt_status_t`` integer returned by the C call.
@@ -61,7 +61,7 @@ class CgRtError(RuntimeError):
         super().__init__(f"{what}: {self.status_name} (cg_rt_status={status})")
 
 
-_LIB_BASENAME = "compgen_rt"
+_LIB_BASENAME = "xpu_rt"
 _LIB_FILENAMES = (f"lib{_LIB_BASENAME}.so", f"lib{_LIB_BASENAME}.dylib")
 
 _lib: ctypes.CDLL | None = None
@@ -72,41 +72,41 @@ def _candidate_paths() -> list[Path]:
     """Return the filesystem paths to probe in order.
 
     Order:
-        1. ``$COMPGEN_RT_LIBRARY`` (explicit user override).
-        2. The wheel's ``runtime/native/prebuilt/libcompgen_rt-cuda.so``
-           (CUDA-built variant) and ``libcompgen_rt-cpu.so``
+        1. ``$XPU_RT_RT_LIBRARY`` (explicit user override).
+        2. The wheel's ``runtime/native/prebuilt/libxpu_rt-cuda.so``
+           (CUDA-built variant) and ``libxpu_rt-cpu.so``
            (CPU-only). The CUDA variant is preferred when present —
-           ``compgen.has_cuda_runtime()`` resolves to True precisely
+           ``xpu_rt.has_cuda_runtime()`` resolves to True precisely
            when this slot is populated.
         3. The source-tree build directory
-           (``<repo>/runtime/native/libcompgen_rt/build/libcompgen_rt.so``)
+           (``<repo>/runtime/native/libxpu_rt/build/libxpu_rt.so``)
            for in-repo development without an installed wheel.
     """
     paths: list[Path] = []
 
-    env = os.environ.get("COMPGEN_RT_LIBRARY")
+    env = os.environ.get("XPU_RT_RT_LIBRARY")
     if env:
         paths.append(Path(env))
 
     here = Path(__file__).resolve()
 
-    # Wheel's prebuilt slot — what `pip install compgen[cuda]` ships.
+    # Wheel's prebuilt slot — what `pip install xpu_rt[cuda]` ships.
     # This must take precedence over the source-tree build dir so an
     # installed wheel doesn't accidentally pick up a stale dev build
     # that happens to live at the repo path.
     prebuilt = here.parent / "prebuilt"
     for name in (
-        "libcompgen_rt-cuda.so",
-        "libcompgen_rt-cpu.so",
-        "libcompgen_rt-cuda.dylib",
-        "libcompgen_rt-cpu.dylib",
+        "libxpu_rt-cuda.so",
+        "libxpu_rt-cpu.so",
+        "libxpu_rt-cuda.dylib",
+        "libxpu_rt-cpu.dylib",
     ):
         paths.append(prebuilt / name)
 
     # Repo source-tree build directory — the canonical dev location.
     repo_root = here.parents[4]
     for name in _LIB_FILENAMES:
-        paths.append(repo_root / "runtime" / "native" / "libcompgen_rt" / "build" / name)
+        paths.append(repo_root / "runtime" / "native" / "libxpu_rt" / "build" / name)
 
     return paths
 
@@ -118,7 +118,7 @@ def _probe() -> ctypes.CDLL | None:
         try:
             return ctypes.CDLL(system_path)
         except OSError as exc:
-            log.debug("libcompgen_rt.system_load_failed", path=system_path, error=str(exc))
+            log.debug("libxpu_rt.system_load_failed", path=system_path, error=str(exc))
 
     # 2. Explicit env + 3. Build-dir fallback.
     for candidate in _candidate_paths():
@@ -126,13 +126,13 @@ def _probe() -> ctypes.CDLL | None:
             try:
                 return ctypes.CDLL(str(candidate))
             except OSError as exc:
-                log.debug("libcompgen_rt.load_failed", path=str(candidate), error=str(exc))
+                log.debug("libxpu_rt.load_failed", path=str(candidate), error=str(exc))
 
     return None
 
 
 def load_library() -> ctypes.CDLL:
-    """Load ``libcompgen_rt`` once and cache the handle.
+    """Load ``libxpu_rt`` once and cache the handle.
 
     Raises:
         RuntimeError: If the shared library cannot be located or loaded.
@@ -146,10 +146,10 @@ def load_library() -> ctypes.CDLL:
         lib = _probe()
         if lib is None:
             raise RuntimeError(
-                "libcompgen_rt not found. Build it with:\n"
-                "    cmake -B runtime/native/libcompgen_rt/build -S runtime/native/libcompgen_rt\n"
-                "    cmake --build runtime/native/libcompgen_rt/build\n"
-                "or set COMPGEN_RT_LIBRARY to an explicit .so path."
+                "libxpu_rt not found. Build it with:\n"
+                "    cmake -B runtime/native/libxpu_rt/build -S runtime/native/libxpu_rt\n"
+                "    cmake --build runtime/native/libxpu_rt/build\n"
+                "or set XPU_RT_RT_LIBRARY to an explicit .so path."
             )
         _configure_signatures(lib)
         _lib = lib
@@ -157,7 +157,7 @@ def load_library() -> ctypes.CDLL:
 
 
 def available() -> bool:
-    """Return True when ``libcompgen_rt`` is importable (best-effort).
+    """Return True when ``libxpu_rt`` is importable (best-effort).
 
     Does not raise; callers use this for graceful feature-flag logic.
     """
@@ -172,7 +172,7 @@ def available() -> bool:
 # ctypes signature configuration
 # ---------------------------------------------------------------------------
 
-# Status code sentinel (matches compgen_rt.h).
+# Status code sentinel (matches xpu_rt.h).
 CG_RT_OK: int = 0
 CG_RT_TIMEOUT_POLL: int = 0
 CG_RT_TIMEOUT_INFINITE: int = 0xFFFFFFFFFFFFFFFF

@@ -4,7 +4,7 @@ display_name: Hoist encoding ops to dominating positions
 level: payload
 family: layout
 source: IREE
-impl_path: python/compgen/ir/payload/passes/rewrites/hoist_encoding_ops.py
+impl_path: python/xpu_rt/ir/payload/passes/rewrites/hoist_encoding_ops.py
 reads:
   - 01_payload_lowering/payload.mlir
   - 02_graph_analysis/candidate_actions.json
@@ -26,7 +26,7 @@ cost: cheap
 failure_modes:
   - "loop_variant_operand"
   - "encoding_chain_breaks_under_hoist"
-mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+mcp_tool: mcp__xpu_rt__xpu_rt_emit_agent_decision_request
 notes: |
   Mirror of IREE's HoistEncodingOps + MaterializeEncodings. Lifts
   loop-invariant encoding operations out of inner loops so they run

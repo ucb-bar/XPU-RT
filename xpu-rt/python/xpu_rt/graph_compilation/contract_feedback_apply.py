@@ -45,7 +45,7 @@ from typing import Any
 
 import structlog
 
-from compgen.kernels.provider import ContractFeedback
+from xpu_rt.kernels.provider import ContractFeedback
 
 log = structlog.get_logger()
 

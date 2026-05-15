@@ -9,7 +9,7 @@ surface so the outer agent reconsiders the candidate.
 
 This is the paper-facing milestone. Once green:
 
-  CompGen emits per-workload glue from a validated execution plan.
+  XPU-RT emits per-workload glue from a validated execution plan.
   The generated executor calls verified shape-specialized kernels,
   checks plan invariants at launch, and passes end-to-end
   differential testing against the original model.
@@ -129,7 +129,7 @@ def _tiled_kernel_for_region(
     if tile_M <= 0 or tile_N <= 0 or tile_K <= 0:
         return _eager_fallback_kernel_for_region(contract=contract)
 
-    from compgen.graph_compilation.real_transform_differential import (
+    from xpu_rt.graph_compilation.real_transform_differential import (
         _tiled_matmul_eval,
     )
 
@@ -350,10 +350,10 @@ def run_glue_differential(
 
     # For each case, drive the executor and compare against eager.
     import torch
-    from compgen.graph_compilation.real_transform_differential import (
+    from xpu_rt.graph_compilation.real_transform_differential import (
         matmul_higham_bound,
     )
-    from compgen.runtime.glue import CpuRuntimeAdapter
+    from xpu_rt.runtime.glue import CpuRuntimeAdapter
 
     case_records: list[CaseRecord] = []
     cases_passed = 0
@@ -387,7 +387,7 @@ def run_glue_differential(
         try:
             # Run via the emitted executor.
             adapter = CpuRuntimeAdapter()
-            tiled_out = module.compgen_run(io, kernels, runtime=adapter)
+            tiled_out = module.xpu_rt_run(io, kernels, runtime=adapter)
         except Exception as exc:  # noqa: BLE001 — surface as fail
             case_records.append(CaseRecord(
                 case_id=case_id, region_id=primary_region,

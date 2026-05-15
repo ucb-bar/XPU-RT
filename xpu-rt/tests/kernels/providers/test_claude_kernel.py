@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from compgen.kernels.provider import KernelContract, SearchBudget
-from compgen.kernels.providers.claude_kernel import ClaudeKernelProvider, PromptPack
+from xpu_rt.kernels.provider import KernelContract, SearchBudget
+from xpu_rt.kernels.providers.claude_kernel import ClaudeKernelProvider, PromptPack
 
 
 class _FakeLLM:

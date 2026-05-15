@@ -1,5 +1,5 @@
 claim: |
-  Baremetal C codegen (``compgen.runtime.baremetal.c_codegen``)
+  Baremetal C codegen (``xpu_rt.runtime.baremetal.c_codegen``)
   lowers a Payload-IR ``ModuleOp`` to ANSI C that targets the
   ``npu_*`` ukernel-library boundary. The walker emits one
   ``GeneratedCFunction`` per ``func.func``, preserving body order;
@@ -31,7 +31,7 @@ forbidden:
 - changing the npu_call_<callee> boundary signature without bumping the npu_driver.h stub
 realness_level: decision_affecting
 required_evidence:
-- python/compgen/runtime/baremetal/c_codegen.py
+- python/xpu_rt/runtime/baremetal/c_codegen.py
 - tests/runtime/baremetal/test_c_codegen.py
 - tests/runtime/baremetal/test_c_codegen_compilation.py
 feature_id: m94_baremetal_codegen

@@ -6,7 +6,7 @@ and unsupported operations.
 
 from __future__ import annotations
 
-from compgen.kernels.exo_seedgen import ExoSeedProc, generate_seed_proc
+from xpu_rt.kernels.exo_seedgen import ExoSeedProc, generate_seed_proc
 
 
 def test_generate_matmul_default() -> None:

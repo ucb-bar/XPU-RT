@@ -1,6 +1,6 @@
 """GPU differential harness: compile + launch + compare vs eager.
 
-Wraps :func:`compgen.pipeline.compile_and_diff` with a GPU execution
+Wraps :func:`xpu_rt.pipeline.compile_and_diff` with a GPU execution
 path that uses the Triton emitter's artifacts + the GPU executor.
 
 Runs clean on any host:
@@ -23,14 +23,14 @@ from typing import Any
 
 import structlog
 
-from compgen.options import CompGenOptions, cuda_h100_defaults
-from compgen.pipeline import compile_and_diff
-from compgen.runtime.gpu_executor import (
+from xpu_rt.options import CompGenOptions, cuda_h100_defaults
+from xpu_rt.pipeline import compile_and_diff
+from xpu_rt.runtime.gpu_executor import (
     GPUNotAvailable,
     gpu_available,
     load_emission_manifest,
 )
-from compgen.runtime.triton_emitter import emit_triton_kernels
+from xpu_rt.runtime.triton_emitter import emit_triton_kernels
 
 log = structlog.get_logger()
 
@@ -64,7 +64,7 @@ def compile_and_diff_gpu(
 ) -> GPUDiffReport:
     """End-to-end differential check with the GPU path.
 
-    Runs the full CompGen pipeline, emits Triton kernels for every
+    Runs the full XPU-RT pipeline, emits Triton kernels for every
     matmul / softmax tagged ``library_dispatch="triton"``, and (if
     CUDA + Triton are installed) launches them on the GPU to
     compare against the eager reference.
@@ -97,7 +97,7 @@ def compile_and_diff_gpu(
         return report
 
     # --- Emit Triton kernels -----------------------------------------
-    with TemporaryDirectory(prefix="compgen_triton_") as tmp:
+    with TemporaryDirectory(prefix="xpu_rt_triton_") as tmp:
         out_dir = Path(tmp)
         emit_report = emit_triton_kernels(pr.module, out_dir=out_dir)
         report.triton_kernels_emitted = emit_report.kernels_emitted
@@ -146,7 +146,7 @@ def compile_and_diff_gpu(
                 report.gpu_diff_max_abs = diff
 
             # Count the Triton kernel files as "launches" for this
-            # iteration -- full dispatch through the CompGen module
+            # iteration -- full dispatch through the XPU-RT module
             # is hardware-gated follow-up.
             report.gpu_launches = emit_report.kernels_emitted
 

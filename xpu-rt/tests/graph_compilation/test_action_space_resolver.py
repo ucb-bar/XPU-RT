@@ -18,14 +18,14 @@ import shutil
 from pathlib import Path
 
 import pytest
-from compgen.graph_compilation.action_space_resolver import (
+from xpu_rt.graph_compilation.action_space_resolver import (
     CandidateNotFoundError,
     HashMismatchError,
     IllegalCandidateError,
     RecipeDeltaMismatchError,
     resolve_candidate,
 )
-from compgen.graph_compilation.run import run_graph_compilation
+from xpu_rt.graph_compilation.run import run_graph_compilation
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 HOST_CPU_TARGET = REPO_ROOT / "configs" / "targets" / "host_cpu.yaml"

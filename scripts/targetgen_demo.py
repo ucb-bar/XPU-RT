@@ -24,7 +24,7 @@ EXEMPLAR_DIR = Path(__file__).parent.parent / "tests" / "targetgen" / "exemplars
 def main() -> None:
     """Run the targetgen demo."""
     print("=" * 70)
-    print("CompGen TargetGen Demo: HW Spec → Generated Compiler Pipeline")
+    print("XPU-RT TargetGen Demo: HW Spec → Generated Compiler Pipeline")
     print("=" * 70)
 
     # Pick an exemplar
@@ -39,8 +39,8 @@ def main() -> None:
         print(f"{'─' * 60}")
 
         # 1. Load + validate
-        from compgen.targetgen.load import load_hardware_spec
-        from compgen.targetgen.validate_spec import validate_hardware_spec
+        from xpu_rt.targetgen.load import load_hardware_spec
+        from xpu_rt.targetgen.validate_spec import validate_hardware_spec
 
         spec = load_hardware_spec(spec_path)
         validation = validate_hardware_spec(spec)
@@ -48,7 +48,7 @@ def main() -> None:
         print(f"  Valid: {validation.valid} ({len(validation.warnings)} warnings)")
 
         # 2. Classify
-        from compgen.targetgen.classify import classify_hardware
+        from xpu_rt.targetgen.classify import classify_hardware
 
         classification = classify_hardware(spec)
         print(f"  Family: {classification.family.value}")
@@ -57,7 +57,7 @@ def main() -> None:
         print(f"  Confidence: {classification.confidence:.0%}")
 
         # 3. Plan
-        from compgen.targetgen.plan import generate_support_plan
+        from xpu_rt.targetgen.plan import generate_support_plan
 
         plan = generate_support_plan(spec, classification)
         stage_names = [s.stage_name for s in plan.required_stages]
@@ -71,9 +71,9 @@ def main() -> None:
         # 4. Generate
         import tempfile
 
-        from compgen.targetgen.generate import generate_target
+        from xpu_rt.targetgen.generate import generate_target
 
-        output_dir = Path(tempfile.mkdtemp(prefix=f"compgen_{spec.name}_"))
+        output_dir = Path(tempfile.mkdtemp(prefix=f"xpu_rt_{spec.name}_"))
         gen = generate_target(spec_path, output_dir)
         print(f"  Output: {output_dir}")
         print(f"  Stack depth: {len(gen.dialect_stack.stages)} stages")
@@ -85,7 +85,7 @@ def main() -> None:
         from xdsl.dialects.builtin import IndexType, ModuleOp
         from xdsl.ir import Block, Region
 
-        from compgen.stages.registry import StageRegistry
+        from xpu_rt.stages.registry import StageRegistry
 
         idx = IndexType()
         block = Block(arg_types=[idx, idx])

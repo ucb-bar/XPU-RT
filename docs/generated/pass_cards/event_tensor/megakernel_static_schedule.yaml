@@ -4,7 +4,7 @@ display_name: Static megakernel scheduler (legacy)
 level: plan
 family: event_tensor
 source: Event Tensor Compiler
-impl_path: python/compgen/ir/payload/passes/megakernel_static_schedule.py
+impl_path: python/xpu_rt/ir/payload/passes/megakernel_static_schedule.py
 reads:
   - 01_payload_lowering/payload.mlir
   - 02_graph_analysis/region_graph.json
@@ -23,7 +23,7 @@ cost: medium
 failure_modes:
   - "kernel_grouping_unresolved"
   - "schedule_size_exceeds_register_budget"
-mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+mcp_tool: mcp__xpu_rt__xpu_rt_emit_agent_decision_request
 notes: |
   Earlier static-scheduling transformation for Event Tensor
   megakernels. Distinct from event_static_schedule (the newer

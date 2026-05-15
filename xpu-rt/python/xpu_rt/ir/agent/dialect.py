@@ -4,14 +4,14 @@ from __future__ import annotations
 
 from xdsl.ir import Dialect
 
-from compgen.ir.agent.attrs import (
+from xpu_rt.ir.agent.attrs import (
     ConfidenceAttr,
     CreativityPolicyAttr,
     EvaluatorKindAttr,
     FreshnessAttr,
     SearchBudgetAttr,
 )
-from compgen.ir.agent.ops_claim import (
+from xpu_rt.ir.agent.ops_claim import (
     AcceptedByOp,
     ClaimOp,
     DependsOnOp,
@@ -19,8 +19,8 @@ from compgen.ir.agent.ops_claim import (
     RefutedByOp,
     SupportsOp,
 )
-from compgen.ir.agent.ops_critique import CompareCandidatesOp, CritiqueOp, ReviseOp
-from compgen.ir.agent.ops_evidence import (
+from xpu_rt.ir.agent.ops_critique import CompareCandidatesOp, CritiqueOp, ReviseOp
+from xpu_rt.ir.agent.ops_evidence import (
     BindAnalysisOp,
     BindArtifactOp,
     BindFactOp,
@@ -28,22 +28,22 @@ from compgen.ir.agent.ops_evidence import (
     BindVerificationOp,
     EvidenceSetOp,
 )
-from compgen.ir.agent.ops_frontier import AlternativeOp, CommitOp, DeferOp, FrontierOp, PruneOp
-from compgen.ir.agent.ops_intent import (
+from xpu_rt.ir.agent.ops_frontier import AlternativeOp, CommitOp, DeferOp, FrontierOp, PruneOp
+from xpu_rt.ir.agent.ops_intent import (
     AgentAssumptionOp,
     AgentScopeOp,
     AgentSessionOp,
     AgentUncertaintyOp,
 )
-from compgen.ir.agent.ops_memory import (
+from xpu_rt.ir.agent.ops_memory import (
     MemoryFailureOp,
     MemoryGeneralizationOp,
     MemoryPatternOp,
     MemoryPromptOp,
     PromoteMemoryOp,
 )
-from compgen.ir.agent.ops_protocol import AdjudicateOp, DelegateOp, RespondOp, RoleOp
-from compgen.ir.agent.ops_synthesis import (
+from xpu_rt.ir.agent.ops_protocol import AdjudicateOp, DelegateOp, RespondOp, RoleOp
+from xpu_rt.ir.agent.ops_synthesis import (
     RequestAnalysisOp,
     RequestBackendPlanOp,
     RequestEqsatSeedOp,

@@ -32,7 +32,7 @@ band into the local HuggingFace cache (``$HF_HOME/hub`` or
 ## Minimal smoke command
 
 ```bash
-uv run python -m compgen.model_admission torch-compile \
+uv run python -m xpu_rt.model_admission torch-compile \
     --model configs/models/lingbot_world_step.yaml \
     --slice configs/slices/lingbot_world_single_step.yaml \
     --out results/model_admission/lingbot_world_step/lingbot_world_single_step

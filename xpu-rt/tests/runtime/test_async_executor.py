@@ -9,14 +9,14 @@ from typing import Any
 
 import pytest
 import torch
-from compgen.runtime.async_executor import (
+from xpu_rt.runtime.async_executor import (
     AsyncExecutionResult,
     AsyncExecutor,
     TaskResult,
     run_async,
 )
-from compgen.runtime.planner import CopyOp, ExecutionPlan, MemoryPlan, PlacementDecision
-from compgen.runtime.semaphore import TimelineSemaphore
+from xpu_rt.runtime.planner import CopyOp, ExecutionPlan, MemoryPlan, PlacementDecision
+from xpu_rt.runtime.semaphore import TimelineSemaphore
 
 EXAMPLES = Path(__file__).parent.parent.parent / "examples" / "models"
 

@@ -3,7 +3,7 @@
 Three modes:
 
 * ``rule_based`` (default) — the deterministic
-  :func:`compgen.solve.solver_hints.rule_based_memory_hints`
+  :func:`xpu_rt.solve.solver_hints.rule_based_memory_hints`
   always runs. No LLM call.
 
 * ``llm_file`` — the operator (or an upstream agent-decision
@@ -18,7 +18,7 @@ Three modes:
   miss.
 
 The LLM call itself is **not in scope of this module** — the
-existing CompGen agent-decision flow handles that. A skill /
+existing XPU-RT agent-decision flow handles that. A skill /
 operator invokes Claude Code (or another LLM) with the
 ``LLMHintRequest`` payload, the LLM emits a JSON document at the
 declared path, and this module reads it.
@@ -58,7 +58,7 @@ import os
 from pathlib import Path
 from typing import Any
 
-from compgen.solve.solver_hints import (
+from xpu_rt.solve.solver_hints import (
     MemoryHints,
     merge_hints,
     rule_based_memory_hints,
@@ -117,7 +117,7 @@ def get_memory_hints(
 
     if mode in ("llm_file", "merged"):
         if llm_hint_path is None:
-            llm_hint_path = os.environ.get("COMPGEN_LLM_HINT_PATH")
+            llm_hint_path = os.environ.get("XPU_RT_LLM_HINT_PATH")
         if llm_hint_path is None:
             # No file configured → degrade to rule-based honestly.
             return rule_based_memory_hints(plan_input)
@@ -146,7 +146,7 @@ def write_llm_hint_request(plan_input: Any, *, out_path: str | Path) -> Path:
     typed request so the operator/agent can fulfill it.
     """
 
-    from compgen.solve.memory_planner import MemoryPlanInput
+    from xpu_rt.solve.memory_planner import MemoryPlanInput
 
     if not isinstance(plan_input, MemoryPlanInput):
         raise TypeError(

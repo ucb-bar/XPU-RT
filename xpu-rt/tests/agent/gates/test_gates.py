@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import torch
-from compgen.agent.gates import (
+from xpu_rt.agent.gates import (
     composite_gate,
     differential_gate,
     structural_gate,

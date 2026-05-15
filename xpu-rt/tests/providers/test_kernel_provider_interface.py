@@ -6,22 +6,22 @@ from pathlib import Path
 
 import pytest
 
-from compgen.kernels.provider import BidPreview, KernelContract, SearchBudget
-from compgen.providers.card_loader import iter_provider_cards
-from compgen.providers.adapters import resolve_provider_class
-from compgen.providers.kernel_provider import (
+from xpu_rt.kernels.provider import BidPreview, KernelContract, SearchBudget
+from xpu_rt.providers.card_loader import iter_provider_cards
+from xpu_rt.providers.adapters import resolve_provider_class
+from xpu_rt.providers.kernel_provider import (
     KernelCodegenRequest,
     KernelProvider,
 )
-from compgen.providers.legacy_shim import (
+from xpu_rt.providers.legacy_shim import (
     LegacyProviderAdapter,
     wrap_legacy,
 )
-from compgen.providers.provider_types import (
+from xpu_rt.providers.provider_types import (
     PROBE_STATUSES,
     ProviderProbeResult,
 )
-from compgen.providers.result_v1 import ProviderResultV1
+from xpu_rt.providers.result_v1 import ProviderResultV1
 
 
 def _cards():
@@ -193,7 +193,7 @@ def test_generated_status_is_a_claim_not_a_certificate():
     it does NOT certify correctness. The verifier emits the
     KernelCertificate downstream."""
 
-    from compgen.kernels.kernel_certificate import KernelCertificate
+    from xpu_rt.kernels.kernel_certificate import KernelCertificate
 
     r = ProviderResultV1(
         schema_version="provider_result_v1",

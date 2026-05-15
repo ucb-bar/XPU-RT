@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 import torch
 import torch.nn as nn
-from compgen.capture import InductorHarvestReport, harvest_inductor_graph
+from xpu_rt.capture import InductorHarvestReport, harvest_inductor_graph
 
 
 class _TinyMLP(nn.Module):

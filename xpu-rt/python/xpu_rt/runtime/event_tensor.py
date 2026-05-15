@@ -1,7 +1,7 @@
 """Event Tensor runtime primitives — Phase-D3 Python-level groundwork.
 
 Implements the paper's Event Tensor abstraction (Jin et al., MLSys '26)
-at the CPU level, matching the semantics of the ``compgen.ir.event``
+at the CPU level, matching the semantics of the ``xpu_rt.ir.event``
 dialect without the C / CUDA runtime that Phase D3 will eventually
 build.
 
@@ -484,7 +484,7 @@ def persistent_launch(
             threading.Thread(
                 target=_worker_static,
                 args=(wid, per_worker[wid]),
-                name=f"compgen-rt-worker-{wid}",
+                name=f"xpu_rt-rt-worker-{wid}",
                 daemon=True,
             )
             for wid in range(num_workers)
@@ -522,7 +522,7 @@ def persistent_launch(
             threading.Thread(
                 target=_worker_dynamic,
                 args=(wid,),
-                name=f"compgen-rt-worker-{wid}",
+                name=f"xpu_rt-rt-worker-{wid}",
                 daemon=True,
             )
             for wid in range(num_workers)

@@ -2,14 +2,14 @@
 
 Covers:
 
-- ``strip_compgen_metadata`` correctness (positive + adversarial inputs).
+- ``strip_xpu_rt_metadata`` correctness (positive + adversarial inputs).
 - Top-level ``run_differential_verification`` against a real prepared
   run dir copied per-test from the canonical
   ``differential_verification_suite/`` results.
 Negative tests required :
    * deleting transformed_payload for transform-like models fails.
    * creating transformed_payload for contract-only models fails.
-   * mutating non-compgen payload semantics in transformed_payload
+   * mutating non-xpu_rt payload semantics in transformed_payload
      causes the normalized diff to be non-empty and the stage to fail.
    * a hand-rolled report claiming
      ``real_transform_differential_check`` discharged is rejected by
@@ -28,9 +28,9 @@ from pathlib import Path
 
 import pytest
 
-from compgen.graph_compilation.differential_verification import (
+from xpu_rt.graph_compilation.differential_verification import (
     run_differential_verification,
-    strip_compgen_metadata,
+    strip_xpu_rt_metadata,
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -42,27 +42,27 @@ SUITE = REPO_ROOT / "results" / "graph_compilation" / "differential_verification
 # --------------------------------------------------------------------------- #
 
 
-def test_strip_removes_compgen_attrs_only() -> None:
+def test_strip_removes_xpu_rt_attrs_only() -> None:
     src = (
-        '%8 = linalg.matmul {compgen.region_id = "matmul_0", '
-        'compgen.transposed_b = "true", compgen.tile = [16 : i64, 16 : i64, 16 : i64]} '
+        '%8 = linalg.matmul {xpu_rt.region_id = "matmul_0", '
+        'xpu_rt.transposed_b = "true", xpu_rt.tile = [16 : i64, 16 : i64, 16 : i64]} '
         'ins(%4, %6 : tensor<4x64xf32>, tensor<64x128xf32>) -> tensor<4x128xf32>'
     )
-    out = strip_compgen_metadata(src)
-    assert "compgen." not in out
+    out = strip_xpu_rt_metadata(src)
+    assert "xpu_rt." not in out
     assert "linalg.matmul" in out
     assert "ins(%4, %6" in out
 
 
-def test_strip_preserves_non_compgen_attrs() -> None:
+def test_strip_preserves_non_xpu_rt_attrs() -> None:
     src = '%x = some.op {alignment = 16 : i64, name = "foo"} : tensor<4xf32>'
-    out = strip_compgen_metadata(src)
-    assert out == src, "non-compgen attrs must round-trip identically"
+    out = strip_xpu_rt_metadata(src)
+    assert out == src, "non-xpu_rt attrs must round-trip identically"
 
 
 def test_strip_collapses_empty_block() -> None:
-    src = '%x = some.op {compgen.tile = [16 : i64, 16 : i64, 16 : i64]} ins(%y) : tensor<4xf32>'
-    out = strip_compgen_metadata(src)
+    src = '%x = some.op {xpu_rt.tile = [16 : i64, 16 : i64, 16 : i64]} ins(%y) : tensor<4xf32>'
+    out = strip_xpu_rt_metadata(src)
     # Empty {} must be dropped along with the preceding space.
     assert "{}" not in out
     assert "some.op  " not in out, "double space left after collapse"
@@ -70,9 +70,9 @@ def test_strip_collapses_empty_block() -> None:
 
 
 def test_strip_keeps_other_entries_when_some_removed() -> None:
-    src = '%x = some.op {alignment = 16 : i64, compgen.tile = [16 : i64], name = "foo"} : tensor<4xf32>'
-    out = strip_compgen_metadata(src)
-    assert "compgen.tile" not in out
+    src = '%x = some.op {alignment = 16 : i64, xpu_rt.tile = [16 : i64], name = "foo"} : tensor<4xf32>'
+    out = strip_xpu_rt_metadata(src)
+    assert "xpu_rt.tile" not in out
     assert "alignment = 16 : i64" in out
     assert 'name = "foo"' in out
 
@@ -80,15 +80,15 @@ def test_strip_keeps_other_entries_when_some_removed() -> None:
 def test_strip_does_not_touch_region_bodies() -> None:
     src = """builtin.module {
   func.func @forward(%a: tensor<4xf32>) -> tensor<4xf32> {
-    %0 = some.op {compgen.tile = [16 : i64]} ins(%a) : tensor<4xf32>
+    %0 = some.op {xpu_rt.tile = [16 : i64]} ins(%a) : tensor<4xf32>
     func.return %0 : tensor<4xf32>
   }
 }
 """
-    out = strip_compgen_metadata(src)
+    out = strip_xpu_rt_metadata(src)
     assert "func.func @forward" in out
     assert "func.return" in out
-    assert "compgen." not in out
+    assert "xpu_rt." not in out
     # The multi-line braces around the module/func must survive.
     assert "builtin.module {" in out
     assert "}\n}\n" in out
@@ -96,7 +96,7 @@ def test_strip_does_not_touch_region_bodies() -> None:
 
 def test_strip_handles_string_with_brace() -> None:
     src = '%x = some.op {alignment = 16 : i64, message = "}{,"} : tensor<4xf32>'
-    out = strip_compgen_metadata(src)
+    out = strip_xpu_rt_metadata(src)
     assert out == src, "quoted braces / commas must not confuse the stripper"
 
 
@@ -136,7 +136,7 @@ def test_transform_like_model_passes_metadata_noop(tiny_mlp_run: Path) -> None:
     assert result.mode == "metadata_noop_mvp"
     rep = json.loads(result.report_path.read_text(encoding="utf-8"))
     names = {c["name"] for c in rep["checks"]}
-    assert "normalized_payloads_equal_after_stripping_compgen_metadata" in names
+    assert "normalized_payloads_equal_after_stripping_xpu_rt_metadata" in names
     assert "no_real_transform_claimed" in names
     # Diff must be empty.
     diff = (
@@ -200,9 +200,9 @@ def test_creating_transformed_payload_for_contract_only_fails(
     assert any("contract-only" in f for f in result.failures)
 
 
-def test_mutating_non_compgen_payload_semantics_fails(tiny_mlp_run: Path) -> None:
+def test_mutating_non_xpu_rt_payload_semantics_fails(tiny_mlp_run: Path) -> None:
     """Strongest negative test: change `linalg.matmul` -> `func.call` in the
-    transformed payload. After stripping compgen metadata, the normalized
+    transformed payload. After stripping xpu_rt metadata, the normalized
     payloads differ and must fail."""
     tp = (
         tiny_mlp_run / "03_recipe_planning" / "post_lowering"
@@ -210,9 +210,9 @@ def test_mutating_non_compgen_payload_semantics_fails(tiny_mlp_run: Path) -> Non
     )
     text = tp.read_text(encoding="utf-8")
     # Inject one real semantic change (replace the op kind on the
-    # tile-target line). It still has compgen attrs around it, so this
+    # tile-target line). It still has xpu_rt attrs around it, so this
     # tests that the stripper doesn't accidentally smooth it over.
-    new_text = text.replace("linalg.matmul {compgen.region_id", "func.call {compgen.region_id", 1)
+    new_text = text.replace("linalg.matmul {xpu_rt.region_id", "func.call {xpu_rt.region_id", 1)
     assert new_text != text
     tp.write_text(new_text, encoding="utf-8")
 
@@ -268,7 +268,7 @@ def test_false_real_transform_discharge_claim_is_overwritten(
 def test_source_payload_mutation_fails(tiny_mlp_run: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Mutate a payload.mlir file under 01_payload_lowering between the
     pre and post hash. The pre/post hash invariant must catch it."""
-    from compgen.graph_compilation import differential_verification as dv_mod
+    from xpu_rt.graph_compilation import differential_verification as dv_mod
 
     real_sha = dv_mod.sha256_tree
     state = {"call": 0}

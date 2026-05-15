@@ -18,7 +18,7 @@ from pathlib import Path
 
 import pytest
 
-from compgen.solve.bandwidth_planner import (
+from xpu_rt.solve.bandwidth_planner import (
     BandwidthAllocation,
     BandwidthPlanInput,
     BandwidthPlanSolved,
@@ -27,7 +27,7 @@ from compgen.solve.bandwidth_planner import (
     _build_formulation as _build_bandwidth_formulation,
     plan_bandwidth,
 )
-from compgen.solve.memory_planner import (
+from xpu_rt.solve.memory_planner import (
     BufferAllocation,
     BufferSpec,
     MemoryPlanInput,
@@ -36,7 +36,7 @@ from compgen.solve.memory_planner import (
     _build_formulation as _build_memory_formulation,
     plan_memory,
 )
-from compgen.solve.overlap_planner import (
+from xpu_rt.solve.overlap_planner import (
     Dependency,
     Operation,
     OverlapPlanInput,
@@ -46,7 +46,7 @@ from compgen.solve.overlap_planner import (
     _build_formulation as _build_overlap_formulation,
     plan_overlap,
 )
-from compgen.solve.placement_planner import (
+from xpu_rt.solve.placement_planner import (
     Device,
     Edge,
     PlacementPlanInput,
@@ -56,8 +56,8 @@ from compgen.solve.placement_planner import (
     _build_formulation as _build_placement_formulation,
     plan_placement,
 )
-from compgen.solve.reports import write_solver_request, write_solver_response
-from compgen.solve.solver_types import (
+from xpu_rt.solve.reports import write_solver_request, write_solver_response
+from xpu_rt.solve.solver_types import (
     SolverProblemKind,
     SolverRequest,
     SolverStatus,
@@ -219,7 +219,7 @@ def test_m69_solver_gates_pass_on_artifact_tree(tmp_path: Path):
     without failures."""
 
     _emit_all_solvers(tmp_path)
-    from compgen.audit.solver_gates import all_solver_gates
+    from xpu_rt.audit.solver_gates import all_solver_gates
 
     gates = all_solver_gates(run_dir=tmp_path)
     failed = [(g.name, g.detail) for g in gates if g.status == "fail"]
@@ -331,7 +331,7 @@ def test_execution_plan_rejects_solver_memory_overlap(tmp_path: Path):
     (overlapping byte ranges) must fail validation. This is the
     contract between memory_planner and runtime/execution_plan."""
 
-    from compgen.runtime.execution_plan import (
+    from xpu_rt.runtime.execution_plan import (
         BufferDescriptor,
         ExecutionPlan,
         Lifetime,
@@ -356,7 +356,7 @@ def test_corrupt_response_schema_rejected_by_loader(tmp_path: Path):
     """A response JSON missing required envelope fields cannot be
     loaded via SolverResponse.from_dict."""
 
-    from compgen.solve.solver_types import SolverResponse
+    from xpu_rt.solve.solver_types import SolverResponse
 
     body = {
         "schema_version": "solver_response_v1",

@@ -8,6 +8,6 @@ Supports two deployment models:
 - ``zephyr``: Zephyr RTOS application with threads and semaphores
 """
 
-from compgen.runtime.baremetal.emitter import BaremetalEmitter
+from xpu_rt.runtime.baremetal.emitter import BaremetalEmitter
 
 __all__ = ["BaremetalEmitter"]

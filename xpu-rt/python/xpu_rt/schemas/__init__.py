@@ -1,4 +1,4 @@
-"""CompGen artifact JSON schemas.
+"""XPU-RT artifact JSON schemas.
 
 v1 schemas are embedded resources under ``schemas/v1/``. Access via
 :func:`load_schema` or :func:`schema_path`.

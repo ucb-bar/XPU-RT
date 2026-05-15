@@ -19,7 +19,7 @@ class BenchmarkResult:
     This is a *higher-level* summary intended for cross-suite comparison and
     CI dashboards.  For the full verbose schema used inside the study harness
     see ``benchmarks.record.RunRecord``; for the normalised per-suite
-    projection see ``compgen.benchmarks.common.results.NormalizedSuiteResult``.
+    projection see ``xpu_rt.benchmarks.common.results.NormalizedSuiteResult``.
 
     Attributes:
         suite: Benchmark suite identifier (e.g. ``"torchbench"``).

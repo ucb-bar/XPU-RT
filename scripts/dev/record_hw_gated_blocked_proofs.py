@@ -4,7 +4,7 @@ under ``results/extension_provider_evidence_pack/per_provider/<id>/``.
 
 Calls each remote shell's ``probe()``, captures the typed status +
 blocked_reason + detail, and writes a
-:class:`compgen.audit.execution_evidence.BlockedProof` to disk.
+:class:`xpu_rt.audit.execution_evidence.BlockedProof` to disk.
 
 When the user later populates ``configs/remote_targets/<file>.yaml``
 with a real SSH host, the same provider's probe flips to
@@ -22,7 +22,7 @@ import sys
 import time
 from pathlib import Path
 
-from compgen.audit.execution_evidence import (
+from xpu_rt.audit.execution_evidence import (
     BLOCKED_PROOF_REASONS,
     EVIDENCE_SCHEMA_VERSION,
     BlockedProof,
@@ -31,11 +31,11 @@ from compgen.audit.execution_evidence import (
 
 
 HW_GATED_PROVIDERS = {
-    "pallas": "compgen.providers.adapters.pallas:PallasProvider",
-    "nki": "compgen.providers.adapters.nki:NkiProvider",
-    "hexagon_mlir": "compgen.providers.adapters.hexagon_mlir:HexagonMLIRProvider",
-    "gemmini_c": "compgen.providers.adapters.gemmini_c:GemminiCProvider",
-    "radiance_muon": "compgen.providers.adapters.radiance_muon:RadianceMuonProvider",
+    "pallas": "xpu_rt.providers.adapters.pallas:PallasProvider",
+    "nki": "xpu_rt.providers.adapters.nki:NkiProvider",
+    "hexagon_mlir": "xpu_rt.providers.adapters.hexagon_mlir:HexagonMLIRProvider",
+    "gemmini_c": "xpu_rt.providers.adapters.gemmini_c:GemminiCProvider",
+    "radiance_muon": "xpu_rt.providers.adapters.radiance_muon:RadianceMuonProvider",
 }
 
 

@@ -13,7 +13,7 @@ captured as `call_function` (the pass only inspects call_function nodes).
 from __future__ import annotations
 
 import torch
-from compgen.transforms.graph_passes import (
+from xpu_rt.transforms.graph_passes import (
     detect_and_annotate_patterns,
     fold_transpose_into_matmul,
     raise_composite_ops,
@@ -42,7 +42,7 @@ def test_linear_silu_gets_annotated() -> None:
     graph = torch.fx.symbolic_trace(LinearSilu())
     detected = detect_and_annotate_patterns(graph)
     assert detected >= 1
-    labels = [n.meta.get("_compgen_pattern") for n in graph.graph.nodes]
+    labels = [n.meta.get("_xpu_rt_pattern") for n in graph.graph.nodes]
     assert any(label and "fused_linear" in label for label in labels)
 
 

@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import pytest
-from compgen.agent.cost_preview import CandidateInput, compute_cost_previews
-from compgen.bench.surrogate import Sample, Surrogate
+from xpu_rt.agent.cost_preview import CandidateInput, compute_cost_previews
+from xpu_rt.bench.surrogate import Sample, Surrogate
 
 
 def _sample(fingerprint: str, cid: str, lat: float) -> Sample:

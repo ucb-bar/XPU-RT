@@ -1,7 +1,7 @@
 """Deterministic baseline seeds for every invent-slot.
 
 Each seed returns a ``ProposePayload``-shaped dict (per
-``compgen.ir.recipe.ops_propose.ProposePayload``) with at minimum a
+``xpu_rt.ir.recipe.ops_propose.ProposePayload``) with at minimum a
 ``chosen`` field so the default structural gate accepts it.
 
 These are MVP seeds — more elaborate seeds (CP-SAT solved layouts,

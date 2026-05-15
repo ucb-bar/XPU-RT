@@ -89,7 +89,7 @@ def main() -> int:
     # ------------------------------------------------------------------
     print("\n[2/8] Capturing via torch.export...")
     try:
-        from compgen.capture.torch_export import capture_model
+        from xpu_rt.capture.torch_export import capture_model
 
         ep = capture_model(model, sample_inputs)
         n_nodes = len(ep.graph.nodes)
@@ -107,9 +107,9 @@ def main() -> int:
     specs: list = []
     if ep is not None:
         try:
-            from compgen.ir.payload.import_fx import fx_to_xdsl
-            from compgen.kernels.contracts import build_kernel_contracts
-            from compgen.targets.schema import load_profile
+            from xpu_rt.ir.payload.import_fx import fx_to_xdsl
+            from xpu_rt.kernels.contracts import build_kernel_contracts
+            from xpu_rt.targets.schema import load_profile
 
             module, _ = fx_to_xdsl(ep)
             target = load_profile("examples/target_profiles/cuda_a100.yaml")
@@ -147,8 +147,8 @@ def main() -> int:
     # 5. Run TritonTemplateProvider
     # ------------------------------------------------------------------
     print("\n[5/8] Running TritonTemplateProvider.search()...")
-    from compgen.kernels.provider import KernelContract, SearchBudget
-    from compgen.kernels.providers.triton_templates import TritonTemplateProvider, triton_available
+    from xpu_rt.kernels.provider import KernelContract, SearchBudget
+    from xpu_rt.kernels.providers.triton_templates import TritonTemplateProvider, triton_available
 
     M, K, N = model.m, model.k, model.weight.shape[1]
     contract = KernelContract(
@@ -182,7 +182,7 @@ def main() -> int:
 
     if result.found and triton_available() and torch.cuda.is_available():
         try:
-            from compgen.kernels.providers.triton_templates import _import_kernel_from_source
+            from xpu_rt.kernels.providers.triton_templates import _import_kernel_from_source
 
             kernel_fn = _import_kernel_from_source(result.kernel_code)
 
@@ -256,7 +256,7 @@ def main() -> int:
     # ------------------------------------------------------------------
     print("\n[8/8] Testing search_kernel() bridge...")
     try:
-        from compgen.kernels.autocomp_adapter import search_kernel
+        from xpu_rt.kernels.autocomp_adapter import search_kernel
 
         bridge_result = search_kernel(
             region_id="bridge_test_0",

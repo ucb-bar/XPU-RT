@@ -1,12 +1,12 @@
 # Runtime Model: Host-Device Execution
 
-This document describes CompGen's runtime model for executing compiled models on heterogeneous systems (CPU host + accelerator device).
+This document describes XPU-RT's runtime model for executing compiled models on heterogeneous systems (CPU host + accelerator device).
 
 ## Architecture
 
 ```
 PyTorch Model
-    ↓  CompGen Pipeline
+    ↓  XPU-RT Pipeline
 ┌─────────────────────────┐
 │  ModelProgram            │
 │  ├── host_kernels (CPU)  │

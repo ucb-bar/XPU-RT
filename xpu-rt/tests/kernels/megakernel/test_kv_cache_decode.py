@@ -17,7 +17,7 @@ import pytest
 torch = pytest.importorskip("torch")
 pytest.importorskip("triton")
 # transformers is in the optional `demo` extra (heavy HF dep). When the
-# CompGen install doesn't include it, skip rather than fail at import-time
+# XPU-RT install doesn't include it, skip rather than fail at import-time
 # of the example module — matches the torch/triton importorskip pattern.
 pytest.importorskip(
     "transformers",

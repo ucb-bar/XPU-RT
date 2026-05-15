@@ -7,14 +7,14 @@ import sys
 from pathlib import Path
 
 import pytest
-from compgen.agent.env import CompilerEnv, GeneratePassAction
-from compgen.agent.pass_gen import PassGenerator
-from compgen.capture.torch_export import capture_model
-from compgen.ir.payload.import_fx import fx_to_xdsl
-from compgen.llm import create_llm_client
-from compgen.llm.gemini_client import GeminiClient
-from compgen.llm.mock_client import MockLLMClient
-from compgen.targets.schema import load_profile
+from xpu_rt.agent.env import CompilerEnv, GeneratePassAction
+from xpu_rt.agent.pass_gen import PassGenerator
+from xpu_rt.capture.torch_export import capture_model
+from xpu_rt.ir.payload.import_fx import fx_to_xdsl
+from xpu_rt.llm import create_llm_client
+from xpu_rt.llm.gemini_client import GeminiClient
+from xpu_rt.llm.mock_client import MockLLMClient
+from xpu_rt.targets.schema import load_profile
 
 EXAMPLES = Path(__file__).parent.parent.parent / "examples"
 
@@ -52,7 +52,7 @@ class TagMatmulPattern(RewritePattern):
     def match_and_rewrite(self, op: Operation, rewriter: PatternRewriter):
         if not isinstance(op, MatmulOp):
             return
-        op.attributes["compgen.tagged"] = StringAttr("by_test")
+        op.attributes["xpu_rt.tagged"] = StringAttr("by_test")
 """
     result = gen._validate("tag_matmul", code, module)
     assert result.verified, f"Should be verified: {result.verification_error}"
@@ -104,18 +104,18 @@ class GuardedNoopPattern(RewritePattern):
 
 def test_generate_pass_via_llm() -> None:
     """Opt-in real LLM call to generate a pass."""
-    if os.environ.get("COMPGEN_RUN_REAL_LLM_TESTS") != "1":
-        pytest.skip("Set COMPGEN_RUN_REAL_LLM_TESTS=1 to enable real LLM smoke tests.")
+    if os.environ.get("XPU_RT_RUN_REAL_LLM_TESTS") != "1":
+        pytest.skip("Set XPU_RT_RUN_REAL_LLM_TESTS=1 to enable real LLM smoke tests.")
     module, _ = _get_module_and_ep()
-    backend = os.environ.get("COMPGEN_REAL_LLM_BACKEND", "gemini")
-    model = os.environ.get("COMPGEN_REAL_LLM_MODEL")
+    backend = os.environ.get("XPU_RT_REAL_LLM_BACKEND", "gemini")
+    model = os.environ.get("XPU_RT_REAL_LLM_MODEL")
     client = create_llm_client(backend, model=model, working_dir=Path.cwd())
     gen = PassGenerator(llm_client=client)
 
     result = gen.generate(
-        description="Add a 'compgen.optimized' annotation to all MatmulOp operations",
+        description="Add a 'xpu_rt.optimized' annotation to all MatmulOp operations",
         target_pattern="linalg.MatmulOp",
-        expected_effect="Each MatmulOp gets a StringAttr 'compgen.optimized' = 'true'",
+        expected_effect="Each MatmulOp gets a StringAttr 'xpu_rt.optimized' = 'true'",
         module=module,
     )
 
@@ -152,9 +152,9 @@ class NoopPattern(RewritePattern):
 
     result = env.step(
         GeneratePassAction(
-            description="Tag all MatmulOp with a 'compgen.llm_generated' StringAttr annotation",
+            description="Tag all MatmulOp with a 'xpu_rt.llm_generated' StringAttr annotation",
             target_pattern="MatmulOp",
-            expected_effect="MatmulOps get compgen.llm_generated attribute",
+            expected_effect="MatmulOps get xpu_rt.llm_generated attribute",
         )
     )
 

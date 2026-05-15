@@ -14,12 +14,12 @@ import structlog
 from xdsl.dialects.builtin import ModuleOp, StringAttr, SymbolRefAttr
 from xdsl.ir import Block
 
-from compgen.ir.layout.attrs import LayoutEncodingAttr
-from compgen.ir.layout.ops import SetLayoutOp, UnsetLayoutOp
+from xpu_rt.ir.layout.attrs import LayoutEncodingAttr
+from xpu_rt.ir.layout.ops import SetLayoutOp, UnsetLayoutOp
 
 log = structlog.get_logger()
 
-SET_LAYOUT_MARKER = "compgen.has_virtual_encoding"
+SET_LAYOUT_MARKER = "xpu_rt.has_virtual_encoding"
 
 # Ops that are kernel boundaries (layout decisions matter here)
 _KERNEL_BOUNDARY_OPS = frozenset(
@@ -35,12 +35,12 @@ _KERNEL_BOUNDARY_OPS = frozenset(
 
 def _is_ukernel_boundary(op) -> bool:  # type: ignore[no-untyped-def]
     """Check if op is a ukernel call that needs layout handling."""
-    return "compgen.ukernel_ref" in op.attributes
+    return "xpu_rt.ukernel_ref" in op.attributes
 
 
 def _is_opaque_ukernel(op) -> bool:  # type: ignore[no-untyped-def]
     """Check if a ukernel is opaque (needs materialization boundary)."""
-    attr = op.attributes.get("compgen.ukernel_transparency")
+    attr = op.attributes.get("xpu_rt.ukernel_transparency")
     if attr and hasattr(attr, "data"):
         return attr.data == "opaque"
     return True  # Default: opaque
@@ -48,10 +48,10 @@ def _is_opaque_ukernel(op) -> bool:  # type: ignore[no-untyped-def]
 
 def _layout_from_hint(op) -> str:  # type: ignore[no-untyped-def]
     """Get the layout hint or fall back to encoding attribute."""
-    hint_attr = op.attributes.get("compgen.layout_hint")
+    hint_attr = op.attributes.get("xpu_rt.layout_hint")
     if hint_attr and hasattr(hint_attr, "data"):
         return hint_attr.data
-    enc_attr = op.attributes.get("compgen.encoding")
+    enc_attr = op.attributes.get("xpu_rt.encoding")
     if enc_attr and hasattr(enc_attr, "data"):
         return enc_attr.data
     return "rowmajor"
@@ -75,7 +75,7 @@ def set_virtual_encodings(module: ModuleOp) -> ModuleOp:
     For each kernel boundary op:
     - Insert SetLayoutOp for each operand (encoding = op_type + index + layout).
     - Insert UnsetLayoutOp after results (materialization boundary marker).
-    - Mark the op with ``compgen.has_virtual_encoding = 1``.
+    - Mark the op with ``xpu_rt.has_virtual_encoding = 1``.
 
     Args:
         module: The xDSL ModuleOp to transform.

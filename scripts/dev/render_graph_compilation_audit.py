@@ -510,7 +510,7 @@ def _emit_markdown(
 
     lines.append("## 1. Suite command\n")
     lines.append("```bash")
-    lines.append("python -m compgen.graph_compilation run-suite \\")
+    lines.append("python -m xpu_rt.graph_compilation run-suite \\")
     lines.append("  --suite configs/graph_compilation/always_test_models.yaml \\")
     lines.append("  --target configs/targets/host_cpu.yaml \\")
     lines.append(f"  --out {suite_display} \\")

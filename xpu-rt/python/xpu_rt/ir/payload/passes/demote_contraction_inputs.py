@@ -1,7 +1,7 @@
 """IREE DemoteContractionInputsToBF16 — MVP port.
 
 Walks the module, identifies contraction-shaped ops (matmul, conv,
-dot-product generics), and annotates a declared ``compgen.demote_to``
+dot-product generics), and annotates a declared ``xpu_rt.demote_to``
 attribute recording the target element type the cast layer will apply
 in a follow-up wave. Always keeps accumulator f32 — the annotation
 represents the intent, the actual ``arith.truncf`` insertion lands in
@@ -25,8 +25,8 @@ from xdsl.dialects.builtin import (
 )
 from xdsl.ir import Operation
 
-from compgen.ir.payload.passes.base import PayloadPass
-from compgen.llm.registry import AutocompCostImpact, ToolArg
+from xpu_rt.ir.payload.passes.base import PayloadPass
+from xpu_rt.llm.registry import AutocompCostImpact, ToolArg
 
 _CONTRACTION_OPS = frozenset(
     {
@@ -120,10 +120,10 @@ class DemoteContractionInputs(PayloadPass):
                 continue
             if not _operand_is_f32_tensor(op):
                 continue
-            op.attributes["compgen.demote_to"] = StringAttr(dtype)
+            op.attributes["xpu_rt.demote_to"] = StringAttr(dtype)
             annotated += 1
 
-        module.attributes["compgen.demote_contraction_inputs.count"] = IntegerAttr(annotated, i64)
+        module.attributes["xpu_rt.demote_contraction_inputs.count"] = IntegerAttr(annotated, i64)
         return module
 
 

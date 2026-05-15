@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from compgen.ir.semantic.peephole_verify import RewriteVerificationResult
+from xpu_rt.ir.semantic.peephole_verify import RewriteVerificationResult
 
 
 def test_rewrite_verification_result_valid() -> None:
@@ -26,7 +26,7 @@ def test_rewrite_verification_result_invalid() -> None:
 def test_verify_rewrite_equivalence() -> None:
     """verify_rewrite should prove equivalence via refinement relation."""
     z3 = pytest.importorskip("z3")
-    from compgen.ir.semantic.dialect import RefinementRelation
+    from xpu_rt.ir.semantic.dialect import RefinementRelation
 
     # x + 0 == x (should be valid: UNSAT when we check for mismatch)
     x = z3.BitVec("x", 32)
@@ -44,7 +44,7 @@ def test_verify_rewrite_equivalence() -> None:
 def test_verify_rewrite_caching() -> None:
     """SemanticType.to_z3_sort should produce correct Z3 sorts for caching."""
     z3 = pytest.importorskip("z3")
-    from compgen.ir.semantic.dialect import SemanticType
+    from xpu_rt.ir.semantic.dialect import SemanticType
 
     bv = SemanticType(kind="bitvector", width=16)
     sort = bv.to_z3_sort()

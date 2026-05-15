@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from compgen.ir.recipe.ops import (
+from xpu_rt.ir.recipe.ops import (
     AssignDevice,
     MatchRegion,
     RequestKernelSearch,
@@ -11,7 +11,7 @@ from compgen.ir.recipe.ops import (
     SetObjective,
     SetTileParams,
 )
-from compgen.llm.base import Objective
+from xpu_rt.llm.base import Objective
 
 
 def test_match_region() -> None:

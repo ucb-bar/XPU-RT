@@ -1,7 +1,7 @@
-"""Generalized target backend protocol for CompGen.
+"""Generalized target backend protocol for XPU-RT.
 
 Defines the interface that any hardware target backend implements to plug
-into CompGen's compilation pipeline.  Inspired by Hexagon-MLIR's
+into XPU-RT's compilation pipeline.  Inspired by Hexagon-MLIR's
 ``BaseBackend`` pattern but generalized for Python-native backends.
 
 A target backend provides:
@@ -20,7 +20,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Protocol, runtime_checkable
 
-from compgen.targets.options import TargetOptions
+from xpu_rt.targets.options import TargetOptions
 
 
 @dataclass
@@ -80,7 +80,7 @@ class TargetBackendProtocol(Protocol):
     """Protocol that any hardware target backend implements.
 
     Modeled after Hexagon-MLIR's ``BaseBackend`` but adapted for
-    CompGen's Python-native pipeline.
+    XPU-RT's Python-native pipeline.
 
     A backend provides:
     - ``supports_target()``: Whether it handles a given target name

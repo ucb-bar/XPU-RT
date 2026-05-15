@@ -2,16 +2,16 @@
 
 Exposes two tools:
 
-- ``compgen_compile_torch_model``: takes a base64-pickled torch
+- ``xpu_rt_compile_torch_model``: takes a base64-pickled torch
   ``nn.Module`` + sample inputs, runs the FX→MegakernelGraph
   lowering, emits the megakernel + manifest into the bundle dir,
   and returns a bundle handle + the lowering decision log.
-- ``compgen_run_compiled_bundle``: takes a bundle handle + a
+- ``xpu_rt_run_compiled_bundle``: takes a bundle handle + a
   base64-pickled input tensor, runs the bundle on the GPU, and
   returns the output (or just timing stats for benchmarking).
 
 The remote agent on a Blackwell box uses these instead of
-``compgen-run-conformance``: pip install + MCP register → ask
+``xpu-rt-run-conformance``: pip install + MCP register → ask
 Claude "compile this and run it" → Claude calls these tools →
 the architecture takes over without the agent ever seeing the
 source.
@@ -64,11 +64,11 @@ def _override_backend_choice(
 
 
 # ---------------------------------------------------------------------------
-# compgen_compile_torch_model
+# xpu_rt_compile_torch_model
 # ---------------------------------------------------------------------------
 
 
-def compgen_compile_torch_model(
+def xpu_rt_compile_torch_model(
     *,
     model_pickle_b64: str,
     sample_input_pickle_b64: str,
@@ -83,9 +83,9 @@ def compgen_compile_torch_model(
     """Compile a torch nn.Module via the ETC dispatch path.
 
     The agentic-compilation entry point. With default arguments —
-    ``compgen_compile_torch_model(model_pickle_b64=..., sample_input_pickle_b64=..., output_dir=...)``
+    ``xpu_rt_compile_torch_model(model_pickle_b64=..., sample_input_pickle_b64=..., output_dir=...)``
     — the matcher probes the local device + reachable libraries via
-    :func:`compgen.runtime.autotune.probe_device` and picks every
+    :func:`xpu_rt.runtime.autotune.probe_device` and picks every
     backend knob (NVRTC version, cuBLASDx precision, SM tag, tile
     shape) automatically. The agent doesn't need to know about
     cuBLASDx / cu13 / sm_100 / bf16+fp32-acc — those are
@@ -129,12 +129,12 @@ def compgen_compile_torch_model(
     """
     import pickle
 
-    from compgen.runtime.lowering import (
+    from xpu_rt.runtime.lowering import (
         UnsupportedShape,
         lower_torch_to_megakernel,
     )
-    from compgen.transforms.emit_cuda_megakernel import emit_cuda_megakernel
-    from compgen.transforms.event_static_schedule import compute_static_schedule
+    from xpu_rt.transforms.emit_cuda_megakernel import emit_cuda_megakernel
+    from xpu_rt.transforms.event_static_schedule import compute_static_schedule
 
     t0 = time.perf_counter()
     output_path = Path(output_dir)
@@ -158,7 +158,7 @@ def compgen_compile_torch_model(
     # 3. backend!="auto" → bypass probe, use explicit flags (legacy).
     backend_choice = None
     if backend == "auto":
-        from compgen.runtime.autotune import probe_device
+        from xpu_rt.runtime.autotune import probe_device
 
         probed = probe_device(target=target_arch or "auto")
         # Per-flag override: explicit user values win over the probe.
@@ -319,7 +319,7 @@ def compgen_compile_torch_model(
 
     elapsed_ms = (time.perf_counter() - t0) * 1000
     log.info(
-        "compgen_compile_torch_model.ok",
+        "xpu_rt_compile_torch_model.ok",
         pattern=result.decision.pattern_name,
         kernel_name=emit.kernel_name,
         bundle_dir=str(bundle_dir),
@@ -342,11 +342,11 @@ def compgen_compile_torch_model(
 
 
 # ---------------------------------------------------------------------------
-# compgen_run_compiled_bundle
+# xpu_rt_run_compiled_bundle
 # ---------------------------------------------------------------------------
 
 
-def compgen_run_compiled_bundle(
+def xpu_rt_run_compiled_bundle(
     *,
     bundle_dir: str,
     input_pickle_b64: str,
@@ -356,7 +356,7 @@ def compgen_run_compiled_bundle(
     """Run a previously-compiled bundle on a real input.
 
     Args:
-        bundle_dir: path produced by ``compgen_compile_torch_model``.
+        bundle_dir: path produced by ``xpu_rt_compile_torch_model``.
         input_pickle_b64: base64-encoded ``pickle.dumps((x,))`` — a
             tuple matching the original sample_inputs shape.
         num_iters: timed iterations after a 3-iteration warmup.
@@ -382,13 +382,13 @@ def compgen_run_compiled_bundle(
     import json
     import pickle
 
-    from compgen.runtime.native.cuda import (
+    from xpu_rt.runtime.native.cuda import (
         CudaMegakernelLauncher,
         CudaModule,
         CudaUnavailableError,
     )
-    from compgen.runtime.native.device import Device
-    from compgen.testing.etc_dispatch import (
+    from xpu_rt.runtime.native.device import Device
+    from xpu_rt.testing.etc_dispatch import (
         _allocate_etc_state,
         _launch_and_readback,
     )
@@ -435,8 +435,8 @@ def compgen_run_compiled_bundle(
 
     # Reconstruct the schedule for state alloc — same model + inputs
     # → same graph + schedule.
-    from compgen.runtime.lowering import lower_torch_to_megakernel
-    from compgen.transforms.event_static_schedule import compute_static_schedule
+    from xpu_rt.runtime.lowering import lower_torch_to_megakernel
+    from xpu_rt.transforms.event_static_schedule import compute_static_schedule
 
     sample_inputs = (x,)
     result = lower_torch_to_megakernel(
@@ -611,7 +611,7 @@ def compgen_run_compiled_bundle(
 def _resolve_sm_count() -> int:
     """Probe SM count; fall back to 132 (B200) if probe fails."""
     try:
-        from compgen.runtime.probe import probe_cuda_device
+        from xpu_rt.runtime.probe import probe_cuda_device
 
         probe = probe_cuda_device(0)
         sm = probe.get("sm_count") or probe.get("multi_processor_count") or 132
@@ -627,9 +627,9 @@ def _resolve_sm_count() -> int:
 
 COMPILE_TOOLS: list[dict[str, Any]] = [
     {
-        "name": "compgen_compile_torch_model",
+        "name": "xpu_rt_compile_torch_model",
         "description": (
-            "Compile a torch nn.Module via CompGen's Event Tensor Compiler "
+            "Compile a torch nn.Module via XPU-RT's Event Tensor Compiler "
             "dispatch path. Lowers the FX-graph shape to a MegakernelGraph, "
             "schedules across SMs, emits the persistent megakernel CUDA "
             "source, and writes the bundle to output_dir. Returns a bundle "
@@ -639,7 +639,7 @@ COMPILE_TOOLS: list[dict[str, Any]] = [
             "status='unsupported_shape' with a typed reason."
         ),
         "phase": "compile",
-        "handler": compgen_compile_torch_model,
+        "handler": xpu_rt_compile_torch_model,
         "input_schema": {
             "type": "object",
             "properties": {
@@ -662,7 +662,7 @@ COMPILE_TOOLS: list[dict[str, Any]] = [
                     "default": "auto",
                     "description": (
                         "Backend selection mode. 'auto' (default) → "
-                        "compgen.runtime.autotune.probe_device picks "
+                        "xpu_rt.runtime.autotune.probe_device picks "
                         "every backend knob (NVRTC version, cuBLASDx "
                         "precision, SM tag, tile shape) automatically. "
                         "Any other value disables the probe and uses "
@@ -734,7 +734,7 @@ COMPILE_TOOLS: list[dict[str, Any]] = [
         },
     },
     {
-        "name": "compgen_run_compiled_bundle",
+        "name": "xpu_rt_run_compiled_bundle",
         "description": (
             "Run a previously-compiled bundle on real input. Returns timing "
             "(etc_us, eager_us, speedup_vs_eager) + correctness "
@@ -744,13 +744,13 @@ COMPILE_TOOLS: list[dict[str, Any]] = [
             "and inspect the decision log."
         ),
         "phase": "verify",
-        "handler": compgen_run_compiled_bundle,
+        "handler": xpu_rt_run_compiled_bundle,
         "input_schema": {
             "type": "object",
             "properties": {
                 "bundle_dir": {
                     "type": "string",
-                    "description": "Path produced by compgen_compile_torch_model.",
+                    "description": "Path produced by xpu_rt_compile_torch_model.",
                 },
                 "input_pickle_b64": {
                     "type": "string",
@@ -778,11 +778,11 @@ COMPILE_TOOLS: list[dict[str, Any]] = [
 
 
 # ---------------------------------------------------------------------------
-# compgen_cublasdx_header_smoke — round 2b
+# xpu_rt_cublasdx_header_smoke — round 2b
 # ---------------------------------------------------------------------------
 
 
-def compgen_cublasdx_header_smoke(*, target_arch: str = "sm_90") -> dict[str, Any]:
+def xpu_rt_cublasdx_header_smoke(*, target_arch: str = "sm_90") -> dict[str, Any]:
     """NVRTC-compile a minimal kernel that ``#include <cublasdx.hpp>``.
 
     Round-2b risk-de-confliction tool. Before writing a cuBLASDx-
@@ -810,7 +810,7 @@ def compgen_cublasdx_header_smoke(*, target_arch: str = "sm_90") -> dict[str, An
     diagnostic so we can fix the include graph or pin a header
     version.
     """
-    from compgen.runtime.native.cuda import (
+    from xpu_rt.runtime.native.cuda import (
         CudaUnavailableError,
         discover_cublasdx_include,
         discover_cutlass_include,
@@ -854,13 +854,13 @@ def compgen_cublasdx_header_smoke(*, target_arch: str = "sm_90") -> dict[str, An
     smoke_source = """
 #include <cublasdx.hpp>
 
-extern "C" __global__ void compgen_cublasdx_header_smoke_kernel() {
+extern "C" __global__ void xpu_rt_cublasdx_header_smoke_kernel() {
     // Empty — exists so NVRTC links a translation unit. The header
     // include is what we want to compile-test.
 }
 """
     try:
-        from compgen.runtime.native.cuda import CudaModule
+        from xpu_rt.runtime.native.cuda import CudaModule
 
         # cuBLASDx headers contain ``static constexpr`` member
         # functions without explicit ``__host__``/``__device__``
@@ -871,7 +871,7 @@ extern "C" __global__ void compgen_cublasdx_header_smoke_kernel() {
         # probe #074 surfaced this as the second blocker.
         module = CudaModule(
             cuda_source=smoke_source,
-            kernel_name="compgen_cublasdx_header_smoke_kernel",
+            kernel_name="xpu_rt_cublasdx_header_smoke_kernel",
             arch=target_arch,
             extra_include_paths=tuple(nvrtc_include_paths),
             extra_options=("-default-device",),
@@ -921,11 +921,11 @@ extern "C" __global__ void compgen_cublasdx_header_smoke_kernel() {
 
 
 # ---------------------------------------------------------------------------
-# compgen_run_cuda_source — round 2c agent-driven kernel iteration
+# xpu_rt_run_cuda_source — round 2c agent-driven kernel iteration
 # ---------------------------------------------------------------------------
 
 
-def compgen_run_cuda_source(
+def xpu_rt_run_cuda_source(
     *,
     cuda_source: str,
     kernel_name: str,
@@ -984,14 +984,14 @@ def compgen_run_cuda_source(
         }``
 
     Failures stay in ``status``/``log``. Use the same iteration
-    pattern as ``compgen_cublasdx_header_smoke``: each failure log
+    pattern as ``xpu_rt_cublasdx_header_smoke``: each failure log
     points at the next thing to fix in the kernel source.
     """
     import pickle
 
     import torch
 
-    from compgen.runtime.native.cuda import (
+    from xpu_rt.runtime.native.cuda import (
         CudaUnavailableError,
         _ensure_cuda_driver_context,
         discover_cublasdx_include,
@@ -1029,7 +1029,7 @@ def compgen_run_cuda_source(
 
     # NVRTC compile.
     try:
-        from compgen.runtime.native.cuda import CudaModule
+        from xpu_rt.runtime.native.cuda import CudaModule
 
         compile_t0 = time.perf_counter()
         module = CudaModule(
@@ -1116,7 +1116,7 @@ def compgen_run_cuda_source(
     try:
         from cuda.bindings import driver as cu_driver  # type: ignore
 
-        from compgen.runtime.native.cuda import _cu_check
+        from xpu_rt.runtime.native.cuda import _cu_check
 
         _dtype_bytes = {
             "float32": 4,
@@ -1271,7 +1271,7 @@ def compgen_run_cuda_source(
 # in the list stable is purely cosmetic.)
 COMPILE_TOOLS.append(
     {
-        "name": "compgen_run_cuda_source",
+        "name": "xpu_rt_run_cuda_source",
         "description": (
             "NVRTC-compile + run an arbitrary CUDA source string. "
             "Round-2c agent-driven harness for iterating on cuBLASDx-"
@@ -1282,7 +1282,7 @@ COMPILE_TOOLS.append(
             "in status/log without raising."
         ),
         "phase": "compile",
-        "handler": compgen_run_cuda_source,
+        "handler": xpu_rt_run_cuda_source,
         "input_schema": {
             "type": "object",
             "properties": {
@@ -1307,7 +1307,7 @@ COMPILE_TOOLS.append(
 
 COMPILE_TOOLS.append(
     {
-        "name": "compgen_cublasdx_header_smoke",
+        "name": "xpu_rt_cublasdx_header_smoke",
         "description": (
             "NVRTC-compile a minimal kernel that #includes <cublasdx.hpp> "
             "to verify the cuBLASDx header + its transitive deps "
@@ -1320,7 +1320,7 @@ COMPILE_TOOLS.append(
             "the include graph first."
         ),
         "phase": "diagnose",
-        "handler": compgen_cublasdx_header_smoke,
+        "handler": xpu_rt_cublasdx_header_smoke,
         "input_schema": {
             "type": "object",
             "properties": {
@@ -1342,8 +1342,8 @@ COMPILE_TOOLS.append(
 
 __all__ = [
     "COMPILE_TOOLS",
-    "compgen_compile_torch_model",
-    "compgen_cublasdx_header_smoke",
-    "compgen_run_compiled_bundle",
-    "compgen_run_cuda_source",
+    "xpu_rt_compile_torch_model",
+    "xpu_rt_cublasdx_header_smoke",
+    "xpu_rt_run_compiled_bundle",
+    "xpu_rt_run_cuda_source",
 ]

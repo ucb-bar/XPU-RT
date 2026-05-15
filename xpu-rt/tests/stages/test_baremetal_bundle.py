@@ -21,9 +21,9 @@ from pathlib import Path
 import pytest
 import torch
 import torch.nn as nn
-from compgen.api import compile_model
-from compgen.api import device as _device
-from compgen.stages.bundle.baremetal_plugin import write_baremetal_bundle
+from xpu_rt.api import compile_model
+from xpu_rt.api import device as _device
+from xpu_rt.stages.bundle.baremetal_plugin import write_baremetal_bundle
 
 EXEMPLAR = Path(__file__).resolve().parents[1] / "targetgen" / "exemplars" / "test_gpu_simt.yaml"
 GCC = shutil.which("gcc")

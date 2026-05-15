@@ -23,7 +23,7 @@ import json
 import sys
 from pathlib import Path
 
-from compgen.audit.tool_promotion import run_tool_promotion_audit
+from xpu_rt.audit.tool_promotion import run_tool_promotion_audit
 
 
 def _parse_args(argv: list[str]) -> argparse.Namespace:
@@ -38,7 +38,7 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
         "--repo-root",
         type=Path,
         default=None,
-        help="Override the repo root (defaults to the CompGen checkout).",
+        help="Override the repo root (defaults to the XPU-RT checkout).",
     )
     parser.add_argument(
         "--json",

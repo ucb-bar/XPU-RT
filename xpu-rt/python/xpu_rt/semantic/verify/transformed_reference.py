@@ -1,8 +1,8 @@
-"""Helpers for running CompGen-transformed callables.
+"""Helpers for running XPU-RT-transformed callables.
 
 Provides utilities to wrap a transformation function (e.g. a compiled or
 optimised forward pass) so it can be fed into the verification harness
-alongside an :class:`~compgen.semantic.verify.eager_reference.EagerReference`.
+alongside an :class:`~xpu_rt.semantic.verify.eager_reference.EagerReference`.
 """
 
 from __future__ import annotations
@@ -50,7 +50,7 @@ def wrap_transformed(
 
     Returns:
         A :class:`TransformedCallable` ready for
-        :func:`~compgen.semantic.verify.harness.verify_callable_against_reference`.
+        :func:`~xpu_rt.semantic.verify.harness.verify_callable_against_reference`.
     """
     inputs = tuple(t.detach() if isinstance(t, torch.Tensor) else t for t in example_inputs)
 

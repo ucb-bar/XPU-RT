@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import torch
-from compgen.ir.payload.contracts import KernelContract, extract_contracts
-from compgen.kernels.contracts import KernelSearchPlan, KernelSpec, build_kernel_contracts
-from compgen.targets.schema import load_profile
+from xpu_rt.ir.payload.contracts import KernelContract, extract_contracts
+from xpu_rt.kernels.contracts import KernelSearchPlan, KernelSpec, build_kernel_contracts
+from xpu_rt.targets.schema import load_profile
 
 
 def test_kernel_spec_defaults() -> None:
@@ -31,8 +31,8 @@ def test_kernel_search_plan_defaults() -> None:
 
 def test_extract_contracts_from_matmul() -> None:
     """extract_contracts should produce contracts from a real FX-imported module."""
-    from compgen.capture.torch_export import capture_model
-    from compgen.ir.payload.import_fx import fx_to_xdsl
+    from xpu_rt.capture.torch_export import capture_model
+    from xpu_rt.ir.payload.import_fx import fx_to_xdsl
 
     class SimpleMLP(torch.nn.Module):
         def __init__(self) -> None:
@@ -53,8 +53,8 @@ def test_extract_contracts_from_matmul() -> None:
 
 def test_build_kernel_contracts_from_matmul() -> None:
     """build_kernel_contracts should produce sorted KernelSpecs."""
-    from compgen.capture.torch_export import capture_model
-    from compgen.ir.payload.import_fx import fx_to_xdsl
+    from xpu_rt.capture.torch_export import capture_model
+    from xpu_rt.ir.payload.import_fx import fx_to_xdsl
 
     class SimpleMLP(torch.nn.Module):
         def __init__(self) -> None:
@@ -76,7 +76,7 @@ def test_build_kernel_contracts_from_matmul() -> None:
 
 
 def test_build_kernel_contracts_from_arith() -> None:
-    """REQ-026: only ops carrying ``compgen.region_id`` surface as
+    """REQ-026: only ops carrying ``xpu_rt.region_id`` surface as
     contracts. Ops without that annotation (default for raw arith /
     tensor.empty / structured-op body) are deliberately filtered to
     avoid drowning the dispatch list in non-kernel pseudo-ops.
@@ -100,11 +100,11 @@ def test_build_kernel_contracts_from_arith() -> None:
     target = load_profile("examples/target_profiles/cuda_a100.yaml")
     assert build_kernel_contracts(untagged, target) == []
 
-    # Tagged with ``compgen.region_id`` → surfaces.
+    # Tagged with ``xpu_rt.region_id`` → surfaces.
     block_b = Block(arg_types=[idx, idx])
     a2, b2 = block_b.args
     add_b = arith.AddiOp(a2, b2)
-    add_b.attributes["compgen.region_id"] = StringAttr("addi_0")
+    add_b.attributes["xpu_rt.region_id"] = StringAttr("addi_0")
     block_b.add_op(add_b)
     block_b.add_op(func.ReturnOp(add_b.result))
     tagged = ModuleOp([func.FuncOp("test2", ([idx, idx], [idx]), Region([block_b]))])

@@ -12,16 +12,16 @@ claim: |
      ``entries`` (each a ``{features → plan_ref}`` dict), and a
      ``default_plan_ref``. The op's ``verify_`` rejects empty
      entries, unknown feature keys, and missing defaults.
-  2. ``compgen.runtime.glue_emit.dispatch_table.emit_dispatch_table``
+  2. ``xpu_rt.runtime.glue_emit.dispatch_table.emit_dispatch_table``
      consumes a normalised :class:`PlanDispatchSpec` and emits the
      dispatcher in **all three Layer-1 targets**:
 
      - ``generated_plan_dispatcher.py`` — ``select_plan_ref`` +
-       ``compgen_dispatch_run(runtime_features, io, kernels, runtime,
+       ``xpu_rt_dispatch_run(runtime_features, io, kernels, runtime,
        plan_loader)``.
-     - ``generated_plan_dispatcher.c`` — ``compgen_select_plan_ref``
-       over a typed ``compgen_features_t`` struct + a static
-       ``COMPGEN_DISPATCH_ENTRIES`` table.
+     - ``generated_plan_dispatcher.c`` — ``xpu_rt_select_plan_ref``
+       over a typed ``xpu_rt_features_t`` struct + a static
+       ``XPU_RT_DISPATCH_ENTRIES`` table.
      - ``generated_plan_dispatcher.cpp`` — same as the C11 emit
        under ``extern "C"`` linkage.
 
@@ -55,9 +55,9 @@ forbidden:
 - accepting entries with feature keys outside the declared feature_keys set
 realness_level: production_path
 required_evidence:
-- python/compgen/ir/recipe/ops_dispatch.py
-- python/compgen/runtime/glue_emit/dispatch_table.py
-- python/compgen/runtime/glue_emit/__init__.py
+- python/xpu_rt/ir/recipe/ops_dispatch.py
+- python/xpu_rt/runtime/glue_emit/dispatch_table.py
+- python/xpu_rt/runtime/glue_emit/__init__.py
 - tests/runtime/test_multi_plan_dispatch.py
 - "06_glue_emit/generated_plan_dispatcher.py on a real run"
 - "06_glue_emit/generated_plan_dispatcher.c on a real run"

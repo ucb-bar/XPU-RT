@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from compgen.graph_compilation.efficiency_report import (
+from xpu_rt.graph_compilation.efficiency_report import (
     EfficiencyAggregate,
     build_efficiency_pack,
     compare_runs,

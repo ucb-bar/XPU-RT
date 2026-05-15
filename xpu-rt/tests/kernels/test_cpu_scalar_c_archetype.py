@@ -8,7 +8,7 @@ provider.
 Falsifier: a real CPU scalar-C provider that emits standard C for
 elementwise f32 ops, gets dispatched through the same surfaces, and
 produces source that actually compiles. If this works without any
-CompGen-side changes, the architecture is generic across at least
+XPU-RT-side changes, the architecture is generic across at least
 three archetypes (Triton-friendly GPU, accel-native, ukernel-runtime
 CPU).
 
@@ -27,19 +27,19 @@ from pathlib import Path
 import pytest
 import torch
 import torch.nn as nn
-from compgen.capture.torch_export import capture_model
-from compgen.ir.payload.import_fx import fx_to_xdsl
-from compgen.kernels.codegen_fallback import run_provider_fallback
-from compgen.kernels.provider import (
+from xpu_rt.capture.torch_export import capture_model
+from xpu_rt.ir.payload.import_fx import fx_to_xdsl
+from xpu_rt.kernels.codegen_fallback import run_provider_fallback
+from xpu_rt.kernels.provider import (
     KernelContract as ProviderContract,
 )
-from compgen.kernels.provider import (
+from xpu_rt.kernels.provider import (
     KernelProvider,
     KnowledgeExport,
     ProviderResult,
     SearchBudget,
 )
-from compgen.targets.schema import load_profile
+from xpu_rt.targets.schema import load_profile
 
 # ---------------------------------------------------------------------------
 # A from-scratch CPU scalar-C Provider — represents the ukernel-runtime
@@ -63,9 +63,9 @@ _UNARY_OPS: frozenset[str] = frozenset({"relu"})
 def _render_kernel(op_family: str, n: int) -> str:
     body = _CPU_SCALAR_C_TEMPLATES[op_family]
     if op_family in _BINARY_OPS:
-        sig = "void compgen_kernel(const float *a, const float *b, float *out)"
+        sig = "void xpu_rt_kernel(const float *a, const float *b, float *out)"
     else:
-        sig = "void compgen_kernel(const float *a, float *out)"
+        sig = "void xpu_rt_kernel(const float *a, float *out)"
     return f"""\
 /* Auto-rendered scalar C kernel for op_family={op_family}, N={n}. */
 #include <stddef.h>
@@ -213,7 +213,7 @@ def test_relu_of_add_dispatched_through_cpu_scalar_c_provider() -> None:
         assert k["provider"] == "cpu_scalar_c"
         assert k["language"] == "c"
         assert k["extension"] == "c"
-        assert "void compgen_kernel" in k["source"]
+        assert "void xpu_rt_kernel" in k["source"]
         assert "#define N 8" in k["source"]
     # Op-specific body — proves the contract drove rendering.
     assert "a[i] + b[i]" in by_op["add"]["source"]
@@ -287,7 +287,7 @@ int main(void) {{
     float a[N] = {{1.0f, 2.0f, 3.0f, 4.0f, -1.0f, 0.0f, 0.5f, -0.5f}};
     float b[N] = {{0.5f, -1.5f, 2.0f, 0.0f, 1.0f, 1.0f, -0.25f, 0.25f}};
     float out[N];
-    compgen_kernel(a, b, out);
+    xpu_rt_kernel(a, b, out);
     for (size_t i = 0; i < N; ++i) {{
         printf("%a\\n", out[i]);
     }}
@@ -314,22 +314,22 @@ int main(void) {{
         assert g == pytest.approx(e, abs=0.0), (got, expected)
 
 
-def test_provider_archetype_independence_no_compgen_changes_required() -> None:
+def test_provider_archetype_independence_no_xpu_rt_changes_required() -> None:
     """Meta-assertion: nothing in this test file imports anything
     pack-specific. The Provider above is constructed entirely from
-    public CompGen surfaces (``KernelContract``, ``ProviderResult``,
+    public XPU-RT surfaces (``KernelContract``, ``ProviderResult``,
     ``run_provider_fallback``) — no monkey-patches, no internal
-    helpers, no per-archetype branches in compgen-side code.
+    helpers, no per-archetype branches in xpu_rt-side code.
 
     If this test passes, the architecture supports the ukernel-runtime
     CPU archetype with the same surface that supports the accel-native
-    archetype demonstrated by ``radiance-compgen-pack``.
+    archetype demonstrated by ``radiance-xpu_rt-pack``.
     """
-    # Sanity: the imports we rely on are all from compgen public modules.
-    import compgen.kernels.codegen_fallback as cf
-    import compgen.kernels.provider as cp
+    # Sanity: the imports we rely on are all from xpu_rt public modules.
+    import xpu_rt.kernels.codegen_fallback as cf
+    import xpu_rt.kernels.provider as cp
 
     for sym in ("run_provider_fallback",):
-        assert hasattr(cf, sym), f"compgen.kernels.codegen_fallback lost {sym}"
+        assert hasattr(cf, sym), f"xpu_rt.kernels.codegen_fallback lost {sym}"
     for sym in ("KernelContract", "KernelProvider", "ProviderResult", "SearchBudget"):
-        assert hasattr(cp, sym), f"compgen.kernels.provider lost {sym}"
+        assert hasattr(cp, sym), f"xpu_rt.kernels.provider lost {sym}"

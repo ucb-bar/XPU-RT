@@ -1,4 +1,4 @@
-"""``compgen-gemini-usage`` command — inspect and monitor Gemini API spend.
+"""``xpu-rt-gemini-usage`` command — inspect and monitor Gemini API spend.
 
 Subcommands:
     status   Print a one-shot snapshot (default).
@@ -24,7 +24,7 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
-from compgen.observability.gemini_usage import (
+from xpu_rt.observability.gemini_usage import (
     PRICING,
     PRICING_SOURCE_URL,
     PRICING_VERIFIED_AT,
@@ -237,7 +237,7 @@ def _watch_footer(refresh_s: float, event_count: int) -> Text:
 @click.option("--json-out", "json_out", is_flag=True, help="Emit raw summary JSON.")
 @click.pass_context
 def main(ctx: click.Context, json_out: bool) -> None:
-    """Inspect and monitor Gemini API spend for this CompGen project."""
+    """Inspect and monitor Gemini API spend for this XPU-RT project."""
     if ctx.invoked_subcommand is not None:
         return
     if json_out:
@@ -399,7 +399,7 @@ def paths_cmd() -> None:
     table.add_row("summary.json", str(summary_path()))
     table.add_row("budget.json", str(budget_path()))
     table.add_row("override env",
-                  os.environ.get("COMPGEN_GEMINI_USAGE_DIR", "(COMPGEN_GEMINI_USAGE_DIR unset)"))
+                  os.environ.get("XPU_RT_GEMINI_USAGE_DIR", "(XPU_RT_GEMINI_USAGE_DIR unset)"))
     console.print(Panel(table, title="[bold]Tracker paths[/bold]", border_style="cyan"))
 
 

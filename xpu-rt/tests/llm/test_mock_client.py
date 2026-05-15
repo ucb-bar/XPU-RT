@@ -7,8 +7,8 @@ import tempfile
 from pathlib import Path
 
 import pytest
-from compgen.llm.base import GenerationRequest, LLMConfig, Objective, PromptContext
-from compgen.llm.mock_client import MockLLMClient
+from xpu_rt.llm.base import GenerationRequest, LLMConfig, Objective, PromptContext
+from xpu_rt.llm.mock_client import MockLLMClient
 
 
 def _make_request(prompt: str) -> GenerationRequest:

@@ -3,16 +3,16 @@
 This is the **spec'd** provider interface that every Phase F adapter
 must satisfy:
 
-* ``probe()`` → :class:`compgen.providers.provider_types.ProviderProbeResult`
+* ``probe()`` → :class:`xpu_rt.providers.provider_types.ProviderProbeResult`
 * ``can_bid(contract, target)`` →
-  :class:`compgen.kernels.provider.BidPreview`
+  :class:`xpu_rt.kernels.provider.BidPreview`
 * ``propose(request)`` → :class:`KernelCodegenRequest` →
-  :class:`compgen.providers.result_v1.ProviderResult`
+  :class:`xpu_rt.providers.result_v1.ProviderResult`
 
-The legacy Protocol at :mod:`compgen.kernels.provider.KernelProvider`
+The legacy Protocol at :mod:`xpu_rt.kernels.provider.KernelProvider`
 stays in place for backward compatibility. New adapters subclass
 :class:`KernelProvider` here; legacy adapters are wrapped via
-:class:`compgen.providers.legacy_shim.LegacyProviderAdapter`.
+:class:`xpu_rt.providers.legacy_shim.LegacyProviderAdapter`.
 
 Hard contract:
 
@@ -33,8 +33,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any
 
-from compgen.kernels.provider import BidPreview
-from compgen.providers.provider_types import ProviderProbeResult
+from xpu_rt.kernels.provider import BidPreview
+from xpu_rt.providers.provider_types import ProviderProbeResult
 
 
 @dataclass(frozen=True)
@@ -57,9 +57,9 @@ class KernelProvider(ABC):
     """Spec'd 3-method provider interface.
 
     Concrete subclasses live under
-    :mod:`compgen.providers.adapters.*`. Legacy providers in
-    :mod:`compgen.kernels.providers.*` are accessed through
-    :class:`compgen.providers.legacy_shim.LegacyProviderAdapter`.
+    :mod:`xpu_rt.providers.adapters.*`. Legacy providers in
+    :mod:`xpu_rt.kernels.providers.*` are accessed through
+    :class:`xpu_rt.providers.legacy_shim.LegacyProviderAdapter`.
     """
 
     provider_id: str = ""
@@ -86,7 +86,7 @@ class KernelProvider(ABC):
     def propose(self, request: KernelCodegenRequest) -> Any:
         """Produce a kernel artifact.
 
-        Returns a v1 :class:`compgen.providers.result_v1.ProviderResult`
+        Returns a v1 :class:`xpu_rt.providers.result_v1.ProviderResult`
         . Adapters that can't fulfill ``request`` must return
         a result with ``status="blocked"`` carrying the typed
         ``blocked_reason`` — they must not raise.

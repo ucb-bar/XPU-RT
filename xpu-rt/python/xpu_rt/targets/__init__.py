@@ -10,12 +10,12 @@ Modules:
     maturity     -- Target maturity levels (L0-L3)
     package      -- TargetPackage generation, loading, validation
 
-The key abstraction is the **target package**: CompGen generates a target
+The key abstraction is the **target package**: XPU-RT generates a target
 enablement package (NOT a full compiler). The package includes profile,
 capability map, recipe library, IR dialect skeleton, kernel paths, runtime
 integration, and verification suite.
 
-For targets with existing backends (Merlin, IREE, XLA), CompGen generates
+For targets with existing backends (Merlin, IREE, XLA), XPU-RT generates
 an integration layer, not a duplicate backend.
 
 Wave 1.10/1.11/1.12 — unified target hierarchy:
@@ -36,10 +36,10 @@ Wave 1.10/1.11/1.12 — unified target hierarchy:
     custom/     MCP-registered user targets (session scope)
 
 Importing this package triggers registration of all in-tree
-leaves into ``compgen.targets.registry``:
+leaves into ``xpu_rt.targets.registry``:
 
-  >>> import compgen.targets
-  >>> from compgen.targets.registry import registry
+  >>> import xpu_rt.targets
+  >>> from xpu_rt.targets.registry import registry
   >>> sorted(registry().classes())
   ['cpu', 'gpu']
 """
@@ -59,11 +59,11 @@ def _register_in_tree() -> None:
     import sys
 
     in_tree_modules = (
-        "compgen.targets.gpu.nvidia",
-        "compgen.targets.gpu.nvidia.blackwell",
-        "compgen.targets.gpu.nvidia.hopper",
-        "compgen.targets.gpu.nvidia.ampere",
-        "compgen.targets.cpu.x86",
+        "xpu_rt.targets.gpu.nvidia",
+        "xpu_rt.targets.gpu.nvidia.blackwell",
+        "xpu_rt.targets.gpu.nvidia.hopper",
+        "xpu_rt.targets.gpu.nvidia.ampere",
+        "xpu_rt.targets.cpu.x86",
     )
     for mod_path in in_tree_modules:
         try:

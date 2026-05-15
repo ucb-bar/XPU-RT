@@ -9,7 +9,7 @@ def test_fx_to_xdsl_simple_mlp() -> None:
     """fx_to_xdsl should convert SimpleMLP FX graph to xDSL module."""
     torch = pytest.importorskip("torch")
 
-    from compgen.ir.payload.import_fx import FXImporter, fx_to_xdsl
+    from xpu_rt.ir.payload.import_fx import FXImporter, fx_to_xdsl
 
     # Define a simple 2-layer MLP
     class SimpleMLP(torch.nn.Module):
@@ -47,7 +47,7 @@ def test_fx_importer_diagnostics() -> None:
     """FXImporter should produce diagnostics for unsupported ops."""
     torch = pytest.importorskip("torch")
 
-    from compgen.ir.payload.import_fx import FXImporter
+    from xpu_rt.ir.payload.import_fx import FXImporter
 
     # A model with an op unlikely to be in the decomposition table
     class CustomModel(torch.nn.Module):

@@ -4,7 +4,7 @@ Usage::
 
     python examples/workload.py --workload tinyllama
 
-This example wires the scaffolded adapter into CompGen's
+This example wires the scaffolded adapter into XPU-RT's
 ``compile_with_vendor`` entry point. Fill in the real workload loader
 during Phase-D integration.
 """
@@ -27,7 +27,7 @@ def main() -> None:
     args.output.mkdir(parents=True, exist_ok=True)
     print(f"Loaded adapter: {adapter.name} (target={adapter.target})")
     print(f"Output: {args.output}")
-    print("TODO(Phase-D): call compgen.api.compile_with_vendor(model, adapter, ...)")
+    print("TODO(Phase-D): call xpu_rt.api.compile_with_vendor(model, adapter, ...)")
 
 
 if __name__ == "__main__":

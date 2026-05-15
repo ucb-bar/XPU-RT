@@ -376,7 +376,7 @@ def build_pack(run_dirs: list[Path], out_dir: Path) -> dict:
     backend_status = _load_backend_status(run_dirs)
     if backend_status is None:
         # Fall back to live probe so the pack is still informative.
-        from compgen.solve.backend_registry import default_registry
+        from xpu_rt.solve.backend_registry import default_registry
 
         reg = default_registry()
         results = reg.probe_all()

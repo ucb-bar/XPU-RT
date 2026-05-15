@@ -1,4 +1,4 @@
-"""Hierarchical knowledge store under ``~/.compgen/knowledge/``.
+"""Hierarchical knowledge store under ``~/.xpu_rt/knowledge/``.
 
 Realisations from previous compile / bench / profile runs cluster into
 the right scope so that any future agent run can query "what do I know
@@ -34,7 +34,7 @@ agent is targeting Turing. Querying by target walks the chain top-down
 so the agent gets general lessons + arch-specific lessons together.
 
 Pre-population: existing kernel store + autotune cache live as flat
-``~/.compgen/kernels/`` and ``~/.compgen/autotune/`` directories. The
+``~/.xpu_rt/kernels/`` and ``~/.xpu_rt/autotune/`` directories. The
 migration path is a one-time copy into ``backends/<backend>/.../<scope>``
 based on the kernel's target_name. New writes go through the
 hierarchical layout; lookups fall through to the legacy flat layout
@@ -56,11 +56,11 @@ from typing import Any
 
 
 def default_knowledge_root() -> Path:
-    """``~/.compgen/knowledge`` overridable via ``COMPGEN_KNOWLEDGE_ROOT``."""
-    override = os.environ.get("COMPGEN_KNOWLEDGE_ROOT")
+    """``~/.xpu_rt/knowledge`` overridable via ``XPU_RT_KNOWLEDGE_ROOT``."""
+    override = os.environ.get("XPU_RT_KNOWLEDGE_ROOT")
     if override:
         return Path(override).expanduser()
-    return Path.home() / ".compgen" / "knowledge"
+    return Path.home() / ".xpu_rt" / "knowledge"
 
 
 # Canonical scope strings — the hierarchy.

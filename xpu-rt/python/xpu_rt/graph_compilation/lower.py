@@ -3,7 +3,7 @@
 Consumes ``00_graph_capture/`` artifacts from a previous Graph Capture
 run and lowers each Dynamo partition (and the optional
 ``exported_program.pt2``) into Payload/xDSL/MLIR via the existing
-:class:`compgen.ir.payload.import_fx.FXImporter`.
+:class:`xpu_rt.ir.payload.import_fx.FXImporter`.
 
 This module **does not** rewrite the importer or invent new lowering
 rules. When an op has no decomposition entry, ``FXImporter`` emits an
@@ -27,11 +27,11 @@ from typing import Any
 
 import torch
 
-from compgen.graph_compilation.artifacts import ArtifactRef, StageRecord
-from compgen.graph_compilation.hashing import sha256_file, sha256_tree
-from compgen.ir.payload.import_fx import FXImporter, ImportDiagnostic
+from xpu_rt.graph_compilation.artifacts import ArtifactRef, StageRecord
+from xpu_rt.graph_compilation.hashing import sha256_file, sha256_tree
+from xpu_rt.ir.payload.import_fx import FXImporter, ImportDiagnostic
 
-_LOWERING_API = "compgen.ir.payload.import_fx.FXImporter"
+_LOWERING_API = "xpu_rt.ir.payload.import_fx.FXImporter"
 
 
 # --------------------------------------------------------------------------- #
@@ -465,7 +465,7 @@ def _lower_one(
     # without opaque ``func.call`` for any closed target.
     substitution_diagnostics: list[dict[str, Any]] = []
     if extension_registry is not None and getattr(extension_registry, "entries", []):
-        from compgen.graph_compilation.payload_substitution import apply_extensions
+        from xpu_rt.graph_compilation.payload_substitution import apply_extensions
 
         sub_result = apply_extensions(fx_graph, extension_registry)
         for s in sub_result.substitutions:
@@ -597,7 +597,7 @@ def run_payload_lowering(
     # call gets the same ExtensionRegistry instance.
     registry_obj = None
     if extension_registry is not None:
-        from compgen.graph_compilation.extension_registry import load_registry
+        from xpu_rt.graph_compilation.extension_registry import load_registry
 
         registry_obj = load_registry(Path(extension_registry))
 
@@ -734,7 +734,7 @@ def run_payload_lowering(
     # ------------------------------------------------------------------ #
     # 3. Aggregate top-level reports (delegated to reports.py)
     # ------------------------------------------------------------------ #
-    from compgen.graph_compilation.reports import emit_top_level_reports
+    from xpu_rt.graph_compilation.reports import emit_top_level_reports
 
     aggregate_refs = emit_top_level_reports(
         run_dir=run_dir,
@@ -749,7 +749,7 @@ def run_payload_lowering(
     # payload-op mapping, derived deterministically from the lowering
     # diagnostics + payload.mlir order. Runs BEFORE the coverage audit
     # so the latter can consume payload_attribution.json.
-    from compgen.graph_compilation.payload_attribution import (
+    from xpu_rt.graph_compilation.payload_attribution import (
         build_payload_attribution,
     )
 
@@ -766,7 +766,7 @@ def run_payload_lowering(
     # Payload Coverage Audit — every FX node accounted for, dialect
     # coverage tallied, silent drops surfaced. This runs unconditionally
     # after lowering so the audit JSONs are part of the contract.
-    from compgen.graph_compilation.payload_coverage import audit_payload_coverage
+    from xpu_rt.graph_compilation.payload_coverage import audit_payload_coverage
 
     pca = audit_payload_coverage(run_dir)
     for path in (

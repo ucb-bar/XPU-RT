@@ -5,7 +5,7 @@ from __future__ import annotations
 
 class TemplateCostModel:
     """Replace with ``YourArchCostModel``. Used by the universal
-    ETC-vs-eager predictor (``compgen.kernels.cost.predict_etc_dispatch``).
+    ETC-vs-eager predictor (``xpu_rt.kernels.cost.predict_etc_dispatch``).
     Wrong numbers don't break correctness — they just produce
     wrong gate predictions."""
 

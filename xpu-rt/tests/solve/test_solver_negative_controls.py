@@ -14,33 +14,33 @@ import pytest
 
 z3 = pytest.importorskip("z3")
 
-from compgen.solve.backend_registry import SolverBackendRegistry, default_registry
-from compgen.solve.backends.highs_backend import HighsBackend
-from compgen.solve.backends.mosek_backend import MosekBackend
-from compgen.solve.backends.ortools_cp_sat_backend import OrToolsCpSatBackend
-from compgen.solve.backends.z3_backend import Z3Backend
-from compgen.solve.memory_planner import (
+from xpu_rt.solve.backend_registry import SolverBackendRegistry, default_registry
+from xpu_rt.solve.backends.highs_backend import HighsBackend
+from xpu_rt.solve.backends.mosek_backend import MosekBackend
+from xpu_rt.solve.backends.ortools_cp_sat_backend import OrToolsCpSatBackend
+from xpu_rt.solve.backends.z3_backend import Z3Backend
+from xpu_rt.solve.memory_planner import (
     AliasCandidate,
     BufferSpec,
     MemoryPlanInput,
     TierCapacity,
     plan_memory,
 )
-from compgen.solve.overlap_planner import (
+from xpu_rt.solve.overlap_planner import (
     Dependency,
     Operation,
     OverlapPlanInput,
     Resource,
     plan_overlap,
 )
-from compgen.solve.placement_planner import (
+from xpu_rt.solve.placement_planner import (
     Device,
     Edge,
     PlacementPlanInput,
     Region,
     plan_placement,
 )
-from compgen.solve.solver_types import (
+from xpu_rt.solve.solver_types import (
     BackendAvailabilityStatus,
     BackendProbeResult,
     SolverBackendName,
@@ -49,7 +49,7 @@ from compgen.solve.solver_types import (
     SolverResponse,
     SolverStatus,
 )
-from compgen.solve.z3_obligations import (
+from xpu_rt.solve.z3_obligations import (
     OBLIGATION_KIND_COPY_IDENTITY,
     OBLIGATION_KIND_SHAPE_PREDICATE_IMPLICATION,
     OBLIGATION_KIND_TILE_INDEX_BOUNDS,
@@ -320,7 +320,7 @@ def test_preference_mosek_on_verification_kind_is_not_honoured():
     verification kind must NOT route to MOSEK. Routing falls back
     to the canonical backend (Z3) or returns ``blocked``."""
 
-    from compgen.solve.routing import choose_backend
+    from xpu_rt.solve.routing import choose_backend
 
     reg = default_registry()
     chosen = choose_backend(
@@ -379,7 +379,7 @@ def test_execution_plan_rejects_overlapping_offsets():
     """ExecutionPlan.validate must reject a memory_plan.solved.json
     that would put two buffers in overlapping byte ranges."""
 
-    from compgen.runtime.execution_plan import (
+    from xpu_rt.runtime.execution_plan import (
         BufferDescriptor,
         ExecutionPlan,
         Lifetime,
@@ -416,7 +416,7 @@ def test_execution_plan_rejects_overlapping_offsets():
 
 
 def test_unsupported_kind_via_routing_returns_none():
-    from compgen.solve.routing import choose_backend
+    from xpu_rt.solve.routing import choose_backend
 
     reg = default_registry()
     # No problem kind is permanently unsupported in the default

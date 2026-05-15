@@ -39,7 +39,7 @@ def _make_sample_records() -> list[RunRecord]:
     r1.baselines.eager_cpu_latency_us = 500.0
     r1.baselines.eager_gpu_latency_us = 200.0
     r1.baselines.compiled_gpu_latency_us = 100.0
-    r1.baselines.compgen_latency_us = 90.0
+    r1.baselines.xpu_rt_latency_us = 90.0
     r1.verification.structural_pass = True
     r1.verification.check_assertions_pass = True
     r1.verification.differential_pass = True

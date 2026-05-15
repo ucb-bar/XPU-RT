@@ -22,12 +22,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from compgen.audit.caveat_ledger import (
+from xpu_rt.audit.caveat_ledger import (
     Caveat,
     CaveatLedger,
     make_caveat,
 )
-from compgen.audit.errors import AuditError
+from xpu_rt.audit.errors import AuditError
 
 VALID_MODES = ("greedy_baseline", "fresh_claude", "current_claude")
 
@@ -69,7 +69,7 @@ def run_greedy_baseline(
     Claude session has at least the same doc surface plus its
     reasoning, so it should be able to do at least as well.
     """
-    from compgen.graph_compilation.run import run_graph_compilation
+    from xpu_rt.graph_compilation.run import run_graph_compilation
 
     model_yaml = Path(model_yaml).resolve()
     target_yaml = Path(target_yaml).resolve()
@@ -86,7 +86,7 @@ def run_greedy_baseline(
     except Exception as exc:  # noqa: BLE001 - we classify, then re-record
         # Typed-blocked outcomes raise a typed error; a generic
         # exception is a hard failure.
-        from compgen.runtime.errors import (
+        from xpu_rt.runtime.errors import (
             BundleEmissionError,
             UnsupportedTopologyError,
         )

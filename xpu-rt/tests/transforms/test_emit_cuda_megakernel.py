@@ -24,15 +24,15 @@ from __future__ import annotations
 
 import pytest
 import yaml
-from compgen.runtime.event_tensor import EventTensor
-from compgen.runtime.megakernel import DeviceCall, EventEdge, MegakernelGraph
-from compgen.transforms.emit_cuda_megakernel import (
+from xpu_rt.runtime.event_tensor import EventTensor
+from xpu_rt.runtime.megakernel import DeviceCall, EventEdge, MegakernelGraph
+from xpu_rt.transforms.emit_cuda_megakernel import (
     DeviceFunctionSource,
     DeviceFunctionUnavailable,
     MegakernelEmitError,
     emit_cuda_megakernel,
 )
-from compgen.transforms.event_static_schedule import compute_static_schedule
+from xpu_rt.transforms.event_static_schedule import compute_static_schedule
 
 
 def _saxpy_diamond_graph() -> MegakernelGraph:
@@ -133,7 +133,7 @@ class TestEmitContract:
         ``__device__ __forceinline__`` bodies — not externs — because
         cuModuleLoadData doesn't resolve cross-module device-function
         symbols. Bodies must include the atomic + threadfence
-        instructions that mirror libcompgen_rt event_tensor.cu."""
+        instructions that mirror libxpu_rt event_tensor.cu."""
         graph = _saxpy_diamond_graph()
         schedule = compute_static_schedule(graph, sm_count=2)
         result = emit_cuda_megakernel(
@@ -381,8 +381,8 @@ class TestPeerRankEdges:
         to add the ``peer_event_tensors`` parameter + the peer/local
         dispatch in the wrapper. The CgCell struct gains a peer_rank
         field; the local primitives are still emitted unchanged."""
-        from compgen.runtime.event_tensor import EventTensor
-        from compgen.runtime.megakernel import (
+        from xpu_rt.runtime.event_tensor import EventTensor
+        from xpu_rt.runtime.megakernel import (
             DeviceCall,
             EventEdge,
             MegakernelGraph,
@@ -624,7 +624,7 @@ class TestWave16bClusterSync:
         full CUDA 13 toolchain). On a CPU-only host this just confirms
         the emitter doesn't generate something obviously malformed."""
         try:
-            from compgen.targets.gpu.nvidia.blackwell.cu13_nvrtc import (
+            from xpu_rt.targets.gpu.nvidia.blackwell.cu13_nvrtc import (
                 nvrtc_compile,
             )
         except Exception:

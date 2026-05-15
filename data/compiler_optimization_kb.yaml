@@ -181,7 +181,7 @@ op_wisdom:
       recommended_backend: accel dialect
       conditions: Accelerator with conv/matmul engine
       rationale: Map to hardware convolution instructions via accel dialect.
-      source: CompGen
+      source: XPU-RT
     pitfalls:
     - Winograd convolution is only worthwhile for 3x3 and 5x5 kernels with stride 1; for other sizes the transform overhead
       exceeds the FLOPs saving.
@@ -1109,7 +1109,7 @@ target_patterns:
     - 'Scalar reductions: reduce on accelerator, transfer single scalar to CPU.'
     - 'Dynamic shapes: compute on CPU, compile/dispatch static tiles to accelerator.'
     - Runtime decision logic (scheduling, memory allocation) always on CPU.
-    source: CompGen runtime
+    source: XPU-RT runtime
     confidence: high
   - target_class: soc
     category: parallelism
@@ -1122,7 +1122,7 @@ target_patterns:
     - Ops with high branch divergence -> CPU.
     - Ops with bulk sequential I/O -> DMA.
     - Use the solver (CP-SAT) to optimise the assignment globally.
-    source: CompGen runtime
+    source: XPU-RT runtime
     confidence: high
   - target_class: soc
     category: parallelism
@@ -1134,7 +1134,7 @@ target_patterns:
     - Use event/semaphore signalling between domains for synchronisation.
     - Pipeline depth trades latency for throughput.
     - 'Monitor pipeline bubbles: if one stage is much slower, it bottlenecks the pipeline.'
-    source: CompGen runtime
+    source: XPU-RT runtime
     confidence: medium
 transform_recipes:
 - name: matmul_gpu_tensor_core

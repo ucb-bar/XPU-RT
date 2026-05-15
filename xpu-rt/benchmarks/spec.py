@@ -14,7 +14,7 @@ ModelLoader = Callable[[], tuple[Any, tuple[Any, ...]]]
 
 @dataclass(frozen=True)
 class WorkspaceConfig:
-    """Workspace layout for CompGen and sibling baseline repos."""
+    """Workspace layout for XPU-RT and sibling baseline repos."""
 
     repo_root: Path
     external_roots: dict[str, Path] = field(default_factory=dict)
@@ -31,7 +31,7 @@ class WorkspaceConfig:
         resolved = Path(repo_root).resolve()
         return cls(
             repo_root=resolved,
-            integration_worktrees_root=resolved / ".compgen_external" / "worktrees",
+            integration_worktrees_root=resolved / ".xpu_rt_external" / "worktrees",
         )
 
     @classmethod
@@ -78,7 +78,7 @@ class WorkspaceConfig:
                 candidate = (path.parent / candidate).resolve()
             integration_worktrees_root = candidate.resolve()
         else:
-            integration_worktrees_root = repo_root / ".compgen_external" / "worktrees"
+            integration_worktrees_root = repo_root / ".xpu_rt_external" / "worktrees"
         suite_configs = {
             name: _resolve_nested(config or {}, base_dir=path.parent)
             for name, config in (data.get("suite_configs") or {}).items()

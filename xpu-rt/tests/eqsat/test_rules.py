@@ -2,19 +2,19 @@
 
 from __future__ import annotations
 
-from compgen.eqsat.config import EqSatConfig
-from compgen.eqsat.pipeline import _print_ir, assign_costs_and_extract, create_egraph
-from compgen.eqsat.rules.algebraic import (
+from xpu_rt.eqsat.config import EqSatConfig
+from xpu_rt.eqsat.pipeline import _print_ir, assign_costs_and_extract, create_egraph
+from xpu_rt.eqsat.rules.algebraic import (
     CommutativityAddiRule,
     get_default_algebraic_rules,
 )
-from compgen.eqsat.rules.fusion import (
+from xpu_rt.eqsat.rules.fusion import (
     DistributeMuliOverAddiRule,
     FactorAddiIntoMuliRule,
     get_default_fusion_rules,
 )
-from compgen.eqsat.rules.layout import get_default_layout_rules
-from compgen.eqsat.rules.registry import RuleRegistry, create_default_registry
+from xpu_rt.eqsat.rules.layout import get_default_layout_rules
+from xpu_rt.eqsat.rules.registry import RuleRegistry, create_default_registry
 from xdsl.dialects import arith, func
 from xdsl.dialects.builtin import IndexType, ModuleOp
 from xdsl.ir import Block, Region

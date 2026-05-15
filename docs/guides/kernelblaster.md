@@ -1,16 +1,16 @@
 # KernelBlaster kernel provider
 
 [KernelBlaster](https://github.com/NVlabs/KernelBlaster) is NVlabs'
-memory-augmented RL loop for CUDA kernel optimisation. CompGen ships a
+memory-augmented RL loop for CUDA kernel optimisation. XPU-RT ships a
 first-class `KernelBlasterProvider` that implements the same
 `KernelProvider` protocol as the Autocomp provider, so KernelBlaster
 participates in `ProviderRegistry.search()` exactly like any other
 backend.
 
 Unlike Autocomp, KernelBlaster is not a Python library — it ships as a
-Docker image + shell script and assumes an NVIDIA GPU. CompGen's
+Docker image + shell script and assumes an NVIDIA GPU. XPU-RT's
 adapter orchestrates the subprocess call, stages KB's expected input
-tree, and parses its output database back into CompGen types.
+tree, and parses its output database back into XPU-RT types.
 
 ## Installation modes
 
@@ -26,7 +26,7 @@ KernelBlaster ships as a git submodule at `third_party/kernelblaster`.
 git submodule update --init third_party/kernelblaster
 
 # Point the adapter at it for the current shell:
-export COMPGEN_KERNELBLASTER_ROOT=$PWD/third_party/kernelblaster
+export XPU_RT_KERNELBLASTER_ROOT=$PWD/third_party/kernelblaster
 ```
 
 The adapter builds an overlay workdir that symlinks KB's `scripts/`,
@@ -37,7 +37,7 @@ entry, so the user's KB checkout is never mutated. It then runs
 
 Suitable for development machines with KB's Python/CUDA dependencies
 already installed.  KB itself needs `pip install -e third_party/kernelblaster`
-or its equivalent to make its Python package importable — CompGen does
+or its equivalent to make its Python package importable — XPU-RT does
 not do this automatically; run the step KB's own README prescribes.
 
 ### Docker mode — pre-built image
@@ -45,7 +45,7 @@ not do this automatically; run the step KB's own README prescribes.
 ```bash
 cd third_party/kernelblaster
 docker build . -t kernelblaster:latest
-export COMPGEN_KERNELBLASTER_IMAGE=kernelblaster:latest
+export XPU_RT_KERNELBLASTER_IMAGE=kernelblaster:latest
 ```
 
 The adapter runs `docker run --rm --gpus all -v <workdir>:/workspace
@@ -53,7 +53,7 @@ The adapter runs `docker run --rm --gpus all -v <workdir>:/workspace
 
 ### Force a mode
 
-Override the auto-detect via `COMPGEN_KERNELBLASTER_MODE=local` or `=docker`.
+Override the auto-detect via `XPU_RT_KERNELBLASTER_MODE=local` or `=docker`.
 
 ## Required environment
 
@@ -67,11 +67,11 @@ Tunables (sensible defaults baked into the adapter):
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
-| `COMPGEN_KERNELBLASTER_MODEL` / `MODEL` | `gpt-5-mini-2025-08-07` | OpenAI model used by KB |
-| `COMPGEN_KERNELBLASTER_GPU_TYPE` / `GPU_TYPE` | `H100` | GPU target tag |
-| `COMPGEN_KERNELBLASTER_DATASET` / `DATASET` | `kernelbench-cuda` | KB's dataset label |
-| `COMPGEN_KERNELBLASTER_PRECISION` / `PRECISION` | `fp16` | KB's precision label |
-| `COMPGEN_KERNELBLASTER_EXPERIMENT` / `EXPERIMENT_NAME` | `compgen_run` | Output subdirectory |
+| `XPU_RT_KERNELBLASTER_MODEL` / `MODEL` | `gpt-5-mini-2025-08-07` | OpenAI model used by KB |
+| `XPU_RT_KERNELBLASTER_GPU_TYPE` / `GPU_TYPE` | `H100` | GPU target tag |
+| `XPU_RT_KERNELBLASTER_DATASET` / `DATASET` | `kernelbench-cuda` | KB's dataset label |
+| `XPU_RT_KERNELBLASTER_PRECISION` / `PRECISION` | `fp16` | KB's precision label |
+| `XPU_RT_KERNELBLASTER_EXPERIMENT` / `EXPERIMENT_NAME` | `xpu_rt_run` | Output subdirectory |
 
 The adapter forwards `HF_TOKEN`, `HUGGINGFACE_TOKEN`, and
 `WANDB_API_KEY` when set.
@@ -82,8 +82,8 @@ KernelBlaster needs the CUDA kernel to optimise plus a C++ validation
 harness. Pass both through `contract.constraints.kernelblaster`:
 
 ```python
-from compgen.kernels.provider import KernelContract, SearchBudget
-from compgen.kernels.providers.kernelblaster import KernelBlasterProvider
+from xpu_rt.kernels.provider import KernelContract, SearchBudget
+from xpu_rt.kernels.providers.kernelblaster import KernelBlasterProvider
 
 contract = KernelContract(
     region_id="matmul_0",
@@ -137,7 +137,7 @@ the user's checkout. Output lands at:
 ## How it participates in the registry
 
 The agent loop registers KernelBlaster alongside Autocomp and Exo in
-`compgen/agent/env/core.py`:
+`xpu_rt/agent/env/core.py`:
 
 ```python
 self._provider_registry.register(AutocompProvider())
@@ -159,7 +159,7 @@ reason in `metadata["reason"]` — it never crashes the pipeline. Check
 pre-flight with:
 
 ```python
-from compgen.kernels.kernelblaster_adapter import KernelBlasterAdapter
+from xpu_rt.kernels.kernelblaster_adapter import KernelBlasterAdapter
 
 ok, reason = KernelBlasterAdapter().is_available()
 print("KernelBlaster available:", ok, reason or "")
@@ -192,10 +192,10 @@ real KB:
 
 ```bash
 export OPENAI_API_KEY=sk-...
-export COMPGEN_KERNELBLASTER_ROOT=$PWD/third_party/kernelblaster
+export XPU_RT_KERNELBLASTER_ROOT=$PWD/third_party/kernelblaster
 uv run --no-sync python -c "
-from compgen.kernels.providers.kernelblaster import KernelBlasterProvider
-from compgen.kernels.provider import KernelContract, SearchBudget
+from xpu_rt.kernels.providers.kernelblaster import KernelBlasterProvider
+from xpu_rt.kernels.provider import KernelContract, SearchBudget
 contract = KernelContract(
     region_id='smoke',
     op_family='matmul',
@@ -212,9 +212,9 @@ print(KernelBlasterProvider().search(contract, SearchBudget(max_iterations=5)))
 ## Related
 
 - [Extension Points](../reference/extension-points.md) — how providers
-  participate in CompGen.
+  participate in XPU-RT.
 - [Architecture → Extension Points](../architecture/extension-points.md) —
   full `KernelProvider` protocol + alternative backends.
-- Source: `python/compgen/kernels/kernelblaster_adapter.py` +
-  `python/compgen/kernels/providers/kernelblaster.py`.
+- Source: `python/xpu_rt/kernels/kernelblaster_adapter.py` +
+  `python/xpu_rt/kernels/providers/kernelblaster.py`.
 - Tests: `tests/kernels/providers/test_kernelblaster_provider.py`.

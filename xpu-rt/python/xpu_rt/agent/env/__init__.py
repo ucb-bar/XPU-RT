@@ -1,13 +1,13 @@
 """Public facade for the agent-first compiler environment.
 
 The package was split from a single 2571-line env.py module.  All original
-public names are preserved via re-export so existing `from compgen.agent.env
+public names are preserved via re-export so existing `from xpu_rt.agent.env
 import X` callers keep working.
 """
 
 from __future__ import annotations
 
-from compgen.agent.env.actions import (
+from xpu_rt.agent.env.actions import (
     Action,
     AnalyzeAction,
     ApplyPassAction,
@@ -44,8 +44,8 @@ from compgen.agent.env.actions import (
     StepResult,
     TileAction,
 )
-from compgen.agent.env.core import CompilerEnv
-from compgen.agent.env.observations import (
+from xpu_rt.agent.env.core import CompilerEnv
+from xpu_rt.agent.env.observations import (
     Observation,
     RegionInfo,
     StepRecord,

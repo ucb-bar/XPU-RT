@@ -1,18 +1,18 @@
 """I1 — Live adapters bridge into the headline benchmark runner.
 
 Implements three thin ``_Adapter`` Protocol wrappers consumed by
-:func:`compgen.benchmarks.headline.run_benchmark`:
+:func:`xpu_rt.benchmarks.headline.run_benchmark`:
 
 * :class:`LiveTorchEagerAdapter` — vanilla forward pass with the
   loaded model.
 * :class:`LiveTorchCompileAdapter` — ``torch.compile(..., mode="max-autotune")``
   applied once before timing.
 * :class:`LiveCompGenAdapter` — *honest residual*: this path requires
-  the full CompGen bundle pipeline (///work) wired
+  the full XPU-RT bundle pipeline (///work) wired
   through to ``CompiledModel.run`` on each workload, which is not
   complete for these specific 3 workloads. The adapter therefore
   returns a typed ``blocked`` measurement with
-  ``blocked_reason="compgen_bundle_not_built_for_workload"``. This is
+  ``blocked_reason="xpu_rt_bundle_not_built_for_workload"``. This is
   the published kill outcome for ``C_HEADLINE_MATCH_TORCH_COMPILE``
   under the Phase I plan — honest, not hidden.
 
@@ -31,7 +31,7 @@ from typing import Any
 import torch
 import yaml
 
-from compgen.benchmarks.headline import AdapterMeasurement
+from xpu_rt.benchmarks.headline import AdapterMeasurement
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
@@ -59,7 +59,7 @@ SLICE_SUFFIX = "__slice"
 def _slice_workload(parent_id: str, parent: WorkloadHandle) -> WorkloadHandle:
     """Build a slice-variant of a parent workload (one decoder layer / block).
 
-    The slice is what CompGen actually compiles end-to-end today; eager
+    The slice is what XPU-RT actually compiles end-to-end today; eager
     and torch.compile time the *same* slice for an apples-to-apples
     head-to-head. The synthetic input is fixed-seed so output hashes
     are comparable across adapters.
@@ -115,7 +115,7 @@ def _load_workload(workload_id: str) -> WorkloadHandle:
     Supported families: ``llm`` (TinyLlama), ``vla`` (smolVLA),
     ``speech`` (Whisper-tiny). If ``workload_id`` ends in
     :data:`SLICE_SUFFIX`, the parent is loaded then sliced to a single
-    decoder layer / encoder block for apples-to-apples CompGen vs
+    decoder layer / encoder block for apples-to-apples XPU-RT vs
     baselines comparison.
     """
 
@@ -360,7 +360,7 @@ class LiveTorchCompileAdapter:
 
 @dataclass
 class LiveCompGenAdapter:
-    """CompGen end-to-end adapter via ``mode='compgen_ir'``.
+    """XPU-RT end-to-end adapter via ``mode='xpu_rt_ir'``.
 
     Honest scope-down: rather than compile a whole multi-billion-op
     model, we compile and measure a single decoder-layer slice (one
@@ -374,7 +374,7 @@ class LiveCompGenAdapter:
     class as ``blocked_reason``.
     """
 
-    adapter_name: str = "compgen"
+    adapter_name: str = "xpu-rt"
 
     def measure(
         self,
@@ -384,11 +384,11 @@ class LiveCompGenAdapter:
         warmup: int,
         seed: int,
     ) -> AdapterMeasurement:
-        from compgen.api import compile_model, device as _device
+        from xpu_rt.api import compile_model, device as _device
 
-        # The CompGen path today compiles a *slice* (one decoder layer
+        # The XPU-RT path today compiles a *slice* (one decoder layer
         # or encoder block) via the real ``compile_model`` pipeline and
-        # times it through ``mode='compgen_ir'``. Full-model workloads
+        # times it through ``mode='xpu_rt_ir'``. Full-model workloads
         # (without the ``__slice`` suffix) are not yet wired end-to-end
         # and honestly block.
         if not workload_id.endswith(SLICE_SUFFIX):
@@ -398,7 +398,7 @@ class LiveCompGenAdapter:
                 latencies_us=(),
                 output_hash="",
                 blocked=True,
-                blocked_reason="compgen_full_model_not_built",
+                blocked_reason="xpu_rt_full_model_not_built",
             )
 
         torch.manual_seed(seed)
@@ -437,7 +437,7 @@ class LiveCompGenAdapter:
                 output_hash="",
                 blocked=True,
                 blocked_reason=(
-                    f"compgen_compile_failed:{type(exc).__name__}:{exc}"
+                    f"xpu_rt_compile_failed:{type(exc).__name__}:{exc}"
                 ),
             )
 
@@ -446,7 +446,7 @@ class LiveCompGenAdapter:
                 *handle.inputs,
                 num_iterations=iters,
                 warmup=warmup,
-                mode="compgen_ir",
+                mode="xpu_rt_ir",
                 device="cpu",
             )
         except Exception as exc:  # noqa: BLE001
@@ -457,7 +457,7 @@ class LiveCompGenAdapter:
                 output_hash="",
                 blocked=True,
                 blocked_reason=(
-                    f"compgen_runtime_failed:{type(exc).__name__}:{exc}"
+                    f"xpu_rt_runtime_failed:{type(exc).__name__}:{exc}"
                 ),
             )
 

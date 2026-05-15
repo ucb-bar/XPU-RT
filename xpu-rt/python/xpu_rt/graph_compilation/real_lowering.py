@@ -8,7 +8,7 @@ replaces the selected ``linalg.matmul`` op with a triple-nested
 payload nor the metadata-only ``transformed_payload.mlir``.
 
 The transform is intentionally narrow: ``linalg.matmul`` only, static
-rank-2 ``f32`` tensors, single occurrence per ``compgen.region_id``,
+rank-2 ``f32`` tensors, single occurrence per ``xpu_rt.region_id``,
 tile parsed verbatim from ``verified_recipe.mlir``. The MVP emits one
 of two artifact kinds:
 
@@ -150,7 +150,7 @@ def _find_matmul_for_region(
 ) -> list[re.Match[str]]:
     out: list[re.Match[str]] = []
     for m in _MATMUL_LINE_RE.finditer(payload_text):
-        if _attr_str(m.group("attrs") or "", "compgen.region_id") == region_id:
+        if _attr_str(m.group("attrs") or "", "xpu_rt.region_id") == region_id:
             out.append(m)
     return out
 
@@ -193,7 +193,7 @@ def _emit_executable_loop_nest(
     in4 = indent + "      "
     lines: list[str] = []
     lines.append(
-        f"{in1}// compgen.real_transform = \"set_tile_params\""
+        f"{in1}// xpu_rt.real_transform = \"set_tile_params\""
     )
     lines.append(
         f"{in1}// real_transform_kind = \"executable_structured_ir\""
@@ -287,7 +287,7 @@ def _emit_structural_loop_nest(
     in4 = indent + "      "
     lines: list[str] = []
     lines.append(
-        f"{in1}// compgen.real_transform = \"set_tile_params\""
+        f"{in1}// xpu_rt.real_transform = \"set_tile_params\""
     )
     lines.append(
         f"{in1}// real_transform_kind = \"executable_with_boundary_handling\""

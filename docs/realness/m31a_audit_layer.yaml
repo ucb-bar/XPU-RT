@@ -16,15 +16,15 @@ forbidden:
 - hidden chat-context dependencies
 realness_level: production_path
 required_evidence:
-- python/compgen/audit/contracts.py
-- python/compgen/audit/caveat_ledger.py
-- python/compgen/audit/realness_scan.py
-- python/compgen/audit/import_provenance.py
-- python/compgen/audit/trace_replay.py
-- python/compgen/audit/fresh_agent.py
-- python/compgen/audit/perturbations.py
-- python/compgen/audit/negative_controls.py
-- python/compgen/audit/trust_report.py
+- python/xpu_rt/audit/contracts.py
+- python/xpu_rt/audit/caveat_ledger.py
+- python/xpu_rt/audit/realness_scan.py
+- python/xpu_rt/audit/import_provenance.py
+- python/xpu_rt/audit/trace_replay.py
+- python/xpu_rt/audit/fresh_agent.py
+- python/xpu_rt/audit/perturbations.py
+- python/xpu_rt/audit/negative_controls.py
+- python/xpu_rt/audit/trust_report.py
 - scripts/dev/audit_realness.py
 - scripts/dev/audit_production_imports.py
 - scripts/dev/replay_agent_decision.py

@@ -1,9 +1,9 @@
-"""Tests for compgen.llm.registry."""
+"""Tests for xpu_rt.llm.registry."""
 
 from __future__ import annotations
 
 import pytest
-from compgen.llm import (
+from xpu_rt.llm import (
     InventSlot,
     Registry,
     Tool,

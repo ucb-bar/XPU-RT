@@ -5,9 +5,9 @@ from __future__ import annotations
 from xdsl.dialects.builtin import ArrayAttr, StringAttr, SymbolRefAttr
 from xdsl.ir import Operation
 
-from compgen.ir.agent.attrs import CreativityPolicyAttr, EvaluatorKindAttr, SearchBudgetAttr
-from compgen.ir.agent.ops_claim import ClaimOp
-from compgen.ir.agent.ops_synthesis import (
+from xpu_rt.ir.agent.attrs import CreativityPolicyAttr, EvaluatorKindAttr, SearchBudgetAttr
+from xpu_rt.ir.agent.ops_claim import ClaimOp
+from xpu_rt.ir.agent.ops_synthesis import (
     RequestAnalysisOp,
     RequestBackendPlanOp,
     RequestEqsatSeedOp,
@@ -47,7 +47,7 @@ def action_to_agent_ops(
     known_evidence_sets: set[str] | None = None,
 ) -> list[Operation]:
     """Convert an env action into Agent IR request/claim metadata."""
-    from compgen.agent.env import (
+    from xpu_rt.agent.env import (
         AnalyzeAction,
         AssignDeviceAction,
         ConfigureDispatchAction,

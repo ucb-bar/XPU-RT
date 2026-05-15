@@ -1,13 +1,13 @@
 """Autocomp kernel provider — wraps autocomp_adapter.py as a KernelProvider.
 
 Implements the two-phase plan→code loop from the Autocomp paper,
-with knowledge export and contract feedback for CompGen's memory.
+with knowledge export and contract feedback for XPU-RT's memory.
 
 Honest scope (Phase 4 production-grade): the autocomp search requires
 three environmental preconditions — a working ``autocomp`` install, a
 Google API key (for the CUDA LLM agent), and a compatible GPU runner.
 When any of these is missing, this provider raises
-:class:`~compgen.kernels.errors.UnmeasurableKernelError` with a
+:class:`~xpu_rt.kernels.errors.UnmeasurableKernelError` with a
 specific reason rather than silently returning ``found=False``. The
 previous placeholder ``return ProviderResult(found=False)`` at
 the end of ``_search_with_adapter`` is a known bug: it let selectors
@@ -23,8 +23,8 @@ from typing import Any
 
 import structlog
 
-from compgen.kernels.errors import UnmeasurableKernelError
-from compgen.kernels.provider import (
+from xpu_rt.kernels.errors import UnmeasurableKernelError
+from xpu_rt.kernels.provider import (
     KernelContract,
     KnowledgeExport,
     ProviderResult,
@@ -37,7 +37,7 @@ log = structlog.get_logger()
 class AutocompProvider:
     """Wraps the Autocomp adapter as a KernelProvider.
 
-    Delegates to ``compgen.kernels.autocomp_adapter`` for the actual
+    Delegates to ``xpu_rt.kernels.autocomp_adapter`` for the actual
     search, then extracts knowledge and contract feedback from
     results. Unavailable-environment paths raise
     :class:`UnmeasurableKernelError` — the escalating router's
@@ -93,7 +93,7 @@ class AutocompProvider:
         env_problem = self._environment_ready()
         if env_problem is not None:
             raise UnmeasurableKernelError(f"autocomp unavailable: {env_problem}")
-        from compgen.kernels.autocomp_adapter import AutocompAdapter
+        from xpu_rt.kernels.autocomp_adapter import AutocompAdapter
 
         adapter = AutocompAdapter(max_iterations=budget.max_iterations)
         return self._search_with_adapter(adapter, contract, budget)
@@ -135,8 +135,8 @@ class AutocompProvider:
         When we can't build one, raise — don't pretend the search
         found nothing.
         """
-        from compgen.agent.analyzer import PatternCluster
-        from compgen.targets.schema import TargetProfile
+        from xpu_rt.agent.analyzer import PatternCluster
+        from xpu_rt.targets.schema import TargetProfile
 
         # Derive total_flops + total_bytes honestly from the contract
         # shapes; the adapter uses these for cost-context strings.
@@ -224,7 +224,7 @@ class ExoProvider:
     """Wraps the Exo schedule agent as a KernelProvider.
 
     Accepts accelerator-class contracts and dispatches via
-    :class:`~compgen.kernels.exo_adapter.ExoAdapter`. Like autocomp,
+    :class:`~xpu_rt.kernels.exo_adapter.ExoAdapter`. Like autocomp,
     raises :class:`UnmeasurableKernelError` when Exo isn't available
     rather than silently returning ``found=False``.
     """
@@ -254,7 +254,7 @@ class ExoProvider:
         except ImportError as exc:
             raise UnmeasurableKernelError(f"Exo library not installed: {exc!r}") from exc
 
-        from compgen.kernels.exo_adapter import ExoAdapter
+        from xpu_rt.kernels.exo_adapter import ExoAdapter
 
         adapter = ExoAdapter(target_name=contract.target_name or "generic")
         # Only the 2D-input `matmul` / `conv2d` style contracts currently

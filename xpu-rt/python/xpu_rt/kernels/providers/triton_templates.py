@@ -17,7 +17,7 @@ from typing import Any
 
 import structlog
 
-from compgen.kernels.provider import (
+from xpu_rt.kernels.provider import (
     BidPreview,
     KernelContract,
     KnowledgeExport,
@@ -513,7 +513,7 @@ def _pick_tile_sizes(
 class TritonTemplateProvider:
     """Generates Triton kernels from parameterised templates.
 
-    Implements :class:`~compgen.kernels.provider.KernelProvider`.
+    Implements :class:`~xpu_rt.kernels.provider.KernelProvider`.
 
     Attributes:
         default_block_size: Default element-wise block size.
@@ -920,8 +920,8 @@ def _validate_on_gpu(
     # comparison treats NaN the same as "unmeasured".
     import math
 
-    from compgen.kernels.errors import UnmeasurableKernelError
-    from compgen.kernels.measure import measure_kernel
+    from xpu_rt.kernels.errors import UnmeasurableKernelError
+    from xpu_rt.kernels.measure import measure_kernel
 
     latency_us = math.nan
     if correct:

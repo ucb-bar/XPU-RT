@@ -1,7 +1,7 @@
 claim: |
   A cold-vs-warm run on the canonical-22 suite shows
   fresh_emit_count_warm < fresh_emit_count_cold while every correctness gate
-  in verification_report.json still passes. CompGen gets cheaper to run on a
+  in verification_report.json still passes. XPU-RT gets cheaper to run on a
   model whose region patterns it has seen before, without weakening any
   verification gate.
 commit: 5244e94e3730bdf6f2bff89c72b174ac0ee03fa6
@@ -13,7 +13,7 @@ forbidden:
 - silent skip on cold-run failure
 realness_level: hardware_backed
 required_evidence:
-- python/compgen/graph_compilation/efficiency_report.py
+- python/xpu_rt/graph_compilation/efficiency_report.py
 - scripts/dev/measure_promotion_efficiency.py
 - docs/architecture/promotion-and-memory.md
 - tests/graph_compilation/test_efficiency_report.py

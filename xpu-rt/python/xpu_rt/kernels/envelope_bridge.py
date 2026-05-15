@@ -1,6 +1,6 @@
-"""Bridge ``compgen.targets.TargetProfile`` → ``HardwareEnvelope``.
+"""Bridge ``xpu_rt.targets.TargetProfile`` → ``HardwareEnvelope``.
 
-The YAML-loaded :class:`TargetProfile` is CompGen's source-of-truth for
+The YAML-loaded :class:`TargetProfile` is XPU-RT's source-of-truth for
 hardware specs. The :class:`HardwareEnvelope` is the kernel-facing
 read-through that lives inside a :class:`KernelContractV3`. Today
 envelopes are hand-constructed in ``contract_v3_references.py`` for
@@ -21,8 +21,8 @@ equivalent, but structured and owned by us:
 
 from __future__ import annotations
 
-from compgen.kernels.contract_v3 import HardwareEnvelope
-from compgen.targets.schema import ComputeUnit, DeviceSpec, MemoryLevel, TargetProfile
+from xpu_rt.kernels.contract_v3 import HardwareEnvelope
+from xpu_rt.targets.schema import ComputeUnit, DeviceSpec, MemoryLevel, TargetProfile
 
 # ---------------------------------------------------------------------------
 # Per-target codegen hints — authored; short list per target

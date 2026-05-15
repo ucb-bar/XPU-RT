@@ -4,7 +4,7 @@ claim: |
 
   Implementation:
 
-  * ``python/compgen/extensions/task_flow.py`` — typed flow for
+  * ``python/xpu_rt/extensions/task_flow.py`` — typed flow for
     the four entry points:
     - ``emit_extension_task(task, tasks_root=...,
       kernel_facing_contract=..., region_dossier=...,
@@ -17,7 +17,7 @@ claim: |
     - ``commit_extension_response(task_dir,
       extensions_root=...)`` validates that the task's
       ``output_dir`` contains a sandboxed
-      ``compgen_extension.yaml``, builds a per-run
+      ``xpu_rt_extension.yaml``, builds a per-run
       :class:`ExtensionRegistry`, and returns a typed
       :class:`CommitOutcome`.
     - ``resume_after_extension(outcome)`` returns a typed
@@ -58,7 +58,7 @@ claim: |
   * Pipeline emits ``ext_e2e`` task with kernel-facing contract +
     region dossier + payload IR summary.
   * Agent writes a sandboxed ``.rcg-artifacts/extensions/ext_e2e/``
-    with a valid ``compgen_extension.yaml``.
+    with a valid ``xpu_rt_extension.yaml``.
   * ``commit_extension_response`` validates → ``accepted``.
   * ``resume_after_extension`` → ``proceeded``.
   * The registry contains the new extension's provider id.
@@ -81,16 +81,16 @@ forbidden:
   - emitting an extension task without a kernel_facing_contract
   - sandbox escape via task.output_dir
 required_evidence:
-  - python/compgen/extensions/task_flow.py
-  - python/compgen/extensions/manifest.py
-  - python/compgen/extensions/registry.py
+  - python/xpu_rt/extensions/task_flow.py
+  - python/xpu_rt/extensions/manifest.py
+  - python/xpu_rt/extensions/registry.py
   - tests/extensions/test_unsupported_op_task.py
   - docs/architecture/EXTENSION_PROVIDER_ARCHITECTURE.md
 commit: 35ee97f497bc69c0716c25b935f575c3cd7d63f4
 created_at_utc: 2026-05-12T00:00:00Z
 notes: |
-  Phase F-6. MCP wiring (``compgen_emit_extension_task``,
-  ``compgen_commit_extension_response``, ``compgen_list_extension_tasks``,
-  ``compgen_resume_after_extension``) is orchestration above the
+  Phase F-6. MCP wiring (``xpu_rt_emit_extension_task``,
+  ``xpu_rt_commit_extension_response``, ``xpu_rt_list_extension_tasks``,
+  ``xpu_rt_resume_after_extension``) is orchestration above the
   substrate; those tools wrap the four functions in this module.
   The substrate-level contract is what M-84 pins.

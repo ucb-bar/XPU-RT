@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from compgen.providers.adapters.blocked_shell import BlockedShellAdapter
+from xpu_rt.providers.adapters.blocked_shell import BlockedShellAdapter
 
 
 class KernelBenchCaesarProvider(BlockedShellAdapter):

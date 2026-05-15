@@ -16,7 +16,7 @@ from xdsl.dialects.builtin import ModuleOp, StringAttr
 
 log = structlog.get_logger()
 
-HOISTED_ENCODING_ATTR = "compgen.hoisted_encoding"
+HOISTED_ENCODING_ATTR = "xpu_rt.hoisted_encoding"
 
 
 def hoist_layout_ops(module: ModuleOp) -> ModuleOp:
@@ -25,7 +25,7 @@ def hoist_layout_ops(module: ModuleOp) -> ModuleOp:
     For each function in the module:
     - Collect all unique encoding values across ops.
     - If a single encoding dominates (>= 80% of encoded ops), mark the
-      function with ``compgen.hoisted_encoding`` for that layout.
+      function with ``xpu_rt.hoisted_encoding`` for that layout.
     - Individual ops retain their encodings for fine-grained passes.
 
     Args:
@@ -49,7 +49,7 @@ def hoist_layout_ops(module: ModuleOp) -> ModuleOp:
         for inner_op in op.walk():
             if isinstance(inner_op, (ModuleOp, FuncOp, ReturnOp)):
                 continue
-            for attr_key in ("compgen.propagated_encoding", "compgen.layout_hint", "compgen.encoding"):
+            for attr_key in ("xpu_rt.propagated_encoding", "xpu_rt.layout_hint", "xpu_rt.encoding"):
                 attr = inner_op.attributes.get(attr_key)
                 if attr and hasattr(attr, "data"):
                     enc: str = attr.data

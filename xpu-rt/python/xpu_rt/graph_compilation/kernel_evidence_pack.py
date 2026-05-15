@@ -961,7 +961,7 @@ def build_kernel_evidence_pack(
 
     figures_dir = out_dir / "figures"
     if not skip_figures:
-        from compgen.graph_compilation.kernel_evidence_pack_figures import (
+        from xpu_rt.graph_compilation.kernel_evidence_pack_figures import (
             render_all_figures,
         )
         try:

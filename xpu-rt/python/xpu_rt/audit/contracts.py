@@ -27,7 +27,7 @@ from typing import Any, Iterator
 
 import yaml
 
-from compgen.audit.errors import RealnessContractError
+from xpu_rt.audit.errors import RealnessContractError
 
 REALNESS_LEVELS: tuple[str, ...] = (
     "schema_only",

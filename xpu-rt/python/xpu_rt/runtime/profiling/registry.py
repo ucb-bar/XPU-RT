@@ -11,8 +11,8 @@ from typing import Any
 
 import structlog
 
-from compgen.runtime.profiling.adapter import ProfilerAdapter
-from compgen.targetgen.hardware_spec import ProfilerBackend, ProfilingSpec
+from xpu_rt.runtime.profiling.adapter import ProfilerAdapter
+from xpu_rt.targetgen.hardware_spec import ProfilerBackend, ProfilingSpec
 
 log = structlog.get_logger()
 
@@ -87,10 +87,10 @@ def create_adapters_for_spec(spec: ProfilingSpec) -> list[ProfilerAdapter]:
 
 def _register_builtins() -> None:
     """Register the built-in profiler adapters."""
-    from compgen.runtime.profiling.adapters.bare_metal_pmu import BareMetalPMUAdapter
-    from compgen.runtime.profiling.adapters.cuda_profiler import CudaProfilerAdapter
-    from compgen.runtime.profiling.adapters.linux_perf import LinuxPerfAdapter
-    from compgen.runtime.profiling.adapters.zephyr_trace import ZephyrTraceAdapter
+    from xpu_rt.runtime.profiling.adapters.bare_metal_pmu import BareMetalPMUAdapter
+    from xpu_rt.runtime.profiling.adapters.cuda_profiler import CudaProfilerAdapter
+    from xpu_rt.runtime.profiling.adapters.linux_perf import LinuxPerfAdapter
+    from xpu_rt.runtime.profiling.adapters.zephyr_trace import ZephyrTraceAdapter
 
     register_adapter("perf", LinuxPerfAdapter)
     register_adapter("linux_perf", LinuxPerfAdapter)

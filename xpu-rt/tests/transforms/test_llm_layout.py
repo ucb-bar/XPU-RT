@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 
-from compgen.agent.prompts.layout_plan import LayoutPlanContext, format_prompt, parse_response
+from xpu_rt.agent.prompts.layout_plan import LayoutPlanContext, format_prompt, parse_response
 
 
 class TestLayoutPlan:
@@ -49,9 +49,9 @@ class TestSolverConfig:
     """Also test solver_config prompt (Unit 8)."""
 
     def test_format_and_parse(self):
-        from compgen.agent.prompts.solver_config import SolverConfigContext
-        from compgen.agent.prompts.solver_config import format_prompt as fmt_sc
-        from compgen.agent.prompts.solver_config import parse_response as parse_sc
+        from xpu_rt.agent.prompts.solver_config import SolverConfigContext
+        from xpu_rt.agent.prompts.solver_config import format_prompt as fmt_sc
+        from xpu_rt.agent.prompts.solver_config import parse_response as parse_sc
 
         ctx = SolverConfigContext(
             num_regions=50,
@@ -81,9 +81,9 @@ class TestRecipeSeed:
     """Also test recipe_seed prompt (Unit 9)."""
 
     def test_format_and_parse(self):
-        from compgen.agent.prompts.recipe_seed import RecipeSeedContext
-        from compgen.agent.prompts.recipe_seed import format_prompt as fmt_rs
-        from compgen.agent.prompts.recipe_seed import parse_response as parse_rs
+        from xpu_rt.agent.prompts.recipe_seed import RecipeSeedContext
+        from xpu_rt.agent.prompts.recipe_seed import format_prompt as fmt_rs
+        from xpu_rt.agent.prompts.recipe_seed import parse_response as parse_rs
 
         ctx = RecipeSeedContext(
             op_histogram={"matmul": 5, "relu": 10, "add": 20},
@@ -115,9 +115,9 @@ class TestGuardPropose:
     """Also test guard_propose prompt (Unit 10)."""
 
     def test_format_and_parse(self):
-        from compgen.agent.prompts.guard_propose import GuardProposeContext
-        from compgen.agent.prompts.guard_propose import format_prompt as fmt_gp
-        from compgen.agent.prompts.guard_propose import parse_response as parse_gp
+        from xpu_rt.agent.prompts.guard_propose import GuardProposeContext
+        from xpu_rt.agent.prompts.guard_propose import format_prompt as fmt_gp
+        from xpu_rt.agent.prompts.guard_propose import parse_response as parse_gp
 
         ctx = GuardProposeContext(
             variable_names=["M", "N", "K"],

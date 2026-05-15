@@ -1,4 +1,4 @@
-"""Tests for ``compgen.mcp.tools.knowledge``.
+"""Tests for ``xpu_rt.mcp.tools.knowledge``.
 
 Locks in:
   * record_lesson with explicit scope or target derives the right path
@@ -14,14 +14,14 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from compgen.mcp.session import SessionManager
-from compgen.mcp.tools.knowledge import (
+from xpu_rt.mcp.session import SessionManager
+from xpu_rt.mcp.tools.knowledge import (
     KNOWLEDGE_TOOLS,
     get_context_brief,
     query_knowledge,
     record_lesson,
 )
-from compgen.memory.knowledge import (
+from xpu_rt.memory.knowledge import (
     KnowledgeStore,
     set_shared_store,
 )
@@ -37,7 +37,7 @@ def isolated_store(tmp_path: Path):
 
 @pytest.fixture
 def sm(tmp_path: Path) -> SessionManager:
-    s = SessionManager(scratch_root=tmp_path / "compgen_mcp")
+    s = SessionManager(scratch_root=tmp_path / "xpu_rt_mcp")
     s.open(session_id="sess1")
     return s
 

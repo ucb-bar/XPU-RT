@@ -100,7 +100,7 @@ class CompGenBackend:
             throughput_samples_per_sec=throughput,
             peak_memory_bytes=peak_mem,
             device=device,
-            mode="compgen_compiled",
+            mode="xpu_rt_compiled",
             num_iterations=num_iterations,
         )
 

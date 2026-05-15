@@ -1,6 +1,6 @@
-"""Tests for the ``compgen rt build`` / ``rt list-triples`` verbs.
+"""Tests for the ``xpu_rt rt build`` / ``rt list-triples`` verbs.
 
-These verbs wrap CMake to materialise ``libcompgen_rt_static.a`` for an
+These verbs wrap CMake to materialise ``libxpu_rt_static.a`` for an
 arbitrary (target triple, toolchain) pair. The tests below cover the
 plumbing — argument resolution, error paths, in-tree triple discovery —
 without running an actual CMake build (which is covered by an opt-in
@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
-from compgen.cli import main
+from xpu_rt.cli import main
 
 
 def test_rt_list_triples_includes_shipped() -> None:
@@ -62,10 +62,10 @@ def test_rt_build_accepts_explicit_toolchain_file_for_arbitrary_triple(
         if len(captured) >= 2:
             build_dir = Path(captured[0][captured[0].index("-B") + 1])
             build_dir.mkdir(parents=True, exist_ok=True)
-            (build_dir / "libcompgen_rt_static.a").write_bytes(b"")
+            (build_dir / "libxpu_rt_static.a").write_bytes(b"")
         return 0
 
-    monkeypatch.setattr("compgen.cli.subprocess.call", fake_call)
+    monkeypatch.setattr("xpu_rt.cli.subprocess.call", fake_call)
 
     runner = CliRunner()
     result = runner.invoke(
@@ -104,10 +104,10 @@ def test_rt_build_host_defaults_to_posix_with_cuda(tmp_path: Path, monkeypatch: 
         if len(captured) >= 2:
             build_dir = Path(captured[0][captured[0].index("-B") + 1])
             build_dir.mkdir(parents=True, exist_ok=True)
-            (build_dir / "libcompgen_rt_static.a").write_bytes(b"")
+            (build_dir / "libxpu_rt_static.a").write_bytes(b"")
         return 0
 
-    monkeypatch.setattr("compgen.cli.subprocess.call", fake_call)
+    monkeypatch.setattr("xpu_rt.cli.subprocess.call", fake_call)
 
     runner = CliRunner()
     result = runner.invoke(
@@ -139,10 +139,10 @@ def test_rt_build_cross_triple_defaults_to_bare_without_cuda(tmp_path: Path, mon
         if len(captured) >= 2:
             build_dir = Path(captured[0][captured[0].index("-B") + 1])
             build_dir.mkdir(parents=True, exist_ok=True)
-            (build_dir / "libcompgen_rt_static.a").write_bytes(b"")
+            (build_dir / "libxpu_rt_static.a").write_bytes(b"")
         return 0
 
-    monkeypatch.setattr("compgen.cli.subprocess.call", fake_call)
+    monkeypatch.setattr("xpu_rt.cli.subprocess.call", fake_call)
 
     runner = CliRunner()
     result = runner.invoke(
@@ -179,10 +179,10 @@ def test_rt_build_clean_wipes_existing_dir(tmp_path: Path, monkeypatch: pytest.M
         # finishes cleanly; sentinel must NOT come back.
         bd = Path(cmd[cmd.index("-B") + 1] if "-B" in cmd else build_dir)
         bd.mkdir(parents=True, exist_ok=True)
-        (bd / "libcompgen_rt_static.a").write_bytes(b"")
+        (bd / "libxpu_rt_static.a").write_bytes(b"")
         return 0
 
-    monkeypatch.setattr("compgen.cli.subprocess.call", fake_call)
+    monkeypatch.setattr("xpu_rt.cli.subprocess.call", fake_call)
 
     runner = CliRunner()
     result = runner.invoke(
@@ -205,8 +205,8 @@ def test_rt_build_clean_wipes_existing_dir(tmp_path: Path, monkeypatch: pytest.M
 
 def test_rt_build_missing_cmake_raises(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """No cmake on PATH and no --cmake → typed error, not crash."""
-    monkeypatch.setattr("compgen.cli.shutil.which", lambda _name: None)
-    monkeypatch.setattr("compgen.cli.Path.is_file", lambda self: False)
+    monkeypatch.setattr("xpu_rt.cli.shutil.which", lambda _name: None)
+    monkeypatch.setattr("xpu_rt.cli.Path.is_file", lambda self: False)
 
     runner = CliRunner()
     result = runner.invoke(
@@ -239,6 +239,6 @@ def test_rt_build_host_actually_builds_and_produces_archive(tmp_path: Path) -> N
         ],
     )
     assert result.exit_code == 0, result.output
-    artifact = tmp_path / "build" / "libcompgen_rt_static.a"
+    artifact = tmp_path / "build" / "libxpu_rt_static.a"
     assert artifact.is_file()
     assert artifact.stat().st_size > 1024  # not an empty placeholder

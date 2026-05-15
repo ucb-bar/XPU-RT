@@ -13,8 +13,8 @@ import contextlib
 from collections.abc import Iterator
 from typing import Any
 
-from compgen.trace.bus import get_active_bus, get_current_llm_turn_id
-from compgen.trace.events import EventKind, Phase
+from xpu_rt.trace.bus import get_active_bus, get_current_llm_turn_id
+from xpu_rt.trace.events import EventKind, Phase
 
 
 class _BasePublisher:

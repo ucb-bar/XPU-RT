@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 
-from compgen.agent.prompts.global_strategy import GlobalStrategyContext, format_prompt, parse_response
+from xpu_rt.agent.prompts.global_strategy import GlobalStrategyContext, format_prompt, parse_response
 
 
 class TestGlobalStrategy:

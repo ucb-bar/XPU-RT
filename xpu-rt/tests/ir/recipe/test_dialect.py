@@ -6,7 +6,7 @@ names are present.
 
 from __future__ import annotations
 
-from compgen.ir.recipe.dialect import ALL_ATTRS, ALL_OPS, Recipe
+from xpu_rt.ir.recipe.dialect import ALL_ATTRS, ALL_OPS, Recipe
 
 
 def test_dialect_name() -> None:

@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import torch
 import torch.nn as nn
-from compgen.quantization.fp8_tensor import FP8E4M3Po2Tensor
-from compgen.quantization.smolvla_recipe import (
+from xpu_rt.quantization.fp8_tensor import FP8E4M3Po2Tensor
+from xpu_rt.quantization.smolvla_recipe import (
     ComponentQuantConfig,
     SmolVLAComponent,
     SmolVLAQuantRecipe,

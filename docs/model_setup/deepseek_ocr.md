@@ -32,7 +32,7 @@ band into the local HuggingFace cache (``$HF_HOME/hub`` or
 ## Minimal smoke command
 
 ```bash
-uv run python -m compgen.model_admission torch-compile \
+uv run python -m xpu_rt.model_admission torch-compile \
     --model configs/models/deepseek_ocr_3b.yaml \
     --slice configs/slices/deepseek_ocr_page_crop.yaml \
     --out results/model_admission/deepseek_ocr_3b/deepseek_ocr_page_crop

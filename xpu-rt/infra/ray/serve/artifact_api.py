@@ -28,7 +28,7 @@ class ArtifactAPI:
 
     async def __call__(self, request: Any) -> dict[str, Any]:
         """Handle HTTP requests."""
-        return {"status": "ok", "service": "compgen-artifact-api"}
+        return {"status": "ok", "service": "xpu_rt-artifact-api"}
 
     async def list_artifacts(
         self,

@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 import pytest
-from compgen.ir.payload.passes import DemoteContractionInputs
+from xpu_rt.ir.payload.passes import DemoteContractionInputs
 from xdsl.dialects.builtin import ModuleOp
 
 
 def test_empty_module_produces_zero_count() -> None:
     mod = ModuleOp([])
     DemoteContractionInputs().run(mod)
-    count = mod.attributes["compgen.demote_contraction_inputs.count"]
+    count = mod.attributes["xpu_rt.demote_contraction_inputs.count"]
     assert int(count.value.data) == 0
 
 
@@ -32,8 +32,8 @@ def test_targets_filter_accepted() -> None:
 
 
 def test_registered_as_real_tool() -> None:
-    import compgen.ir.payload.passes  # noqa: F401
-    from compgen.llm import get_registry
+    import xpu_rt.ir.payload.passes  # noqa: F401
+    from xpu_rt.llm import get_registry
 
     r = get_registry()
     tool = r.lookup_tool("demote_contraction_inputs", phase=2)

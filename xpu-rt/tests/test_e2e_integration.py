@@ -1,6 +1,6 @@
 """End-to-end integration tests.
 
-Tests the complete CompGen pipeline: model capture → IR → eqsat → kernel
+Tests the complete XPU-RT pipeline: model capture → IR → eqsat → kernel
 contracts → stages pipeline → bundle.  These are the tests that prove
 the system works as a compiler generator, not just individual components.
 """
@@ -11,17 +11,17 @@ from pathlib import Path
 
 import pytest
 import torch
-from compgen.capture.torch_export import capture_model
-from compgen.eqsat.config import EqSatConfig
-from compgen.eqsat.pipeline import run_eqsat_pass
-from compgen.ir.payload.import_fx import fx_to_xdsl
-from compgen.kernels.contracts import build_kernel_contracts
-from compgen.kernels.selector import select_strategies
-from compgen.stages.registry import StageRegistry
-from compgen.stages.targets.cuda_gpu import create_cuda_gpu_stack
-from compgen.targetgen.generate import generate_target
-from compgen.targets.capability import infer_capabilities
-from compgen.targets.schema import load_profile
+from xpu_rt.capture.torch_export import capture_model
+from xpu_rt.eqsat.config import EqSatConfig
+from xpu_rt.eqsat.pipeline import run_eqsat_pass
+from xpu_rt.ir.payload.import_fx import fx_to_xdsl
+from xpu_rt.kernels.contracts import build_kernel_contracts
+from xpu_rt.kernels.selector import select_strategies
+from xpu_rt.stages.registry import StageRegistry
+from xpu_rt.stages.targets.cuda_gpu import create_cuda_gpu_stack
+from xpu_rt.targetgen.generate import generate_target
+from xpu_rt.targets.capability import infer_capabilities
+from xpu_rt.targets.schema import load_profile
 
 EXEMPLAR_DIR = Path(__file__).parent / "targetgen" / "exemplars"
 

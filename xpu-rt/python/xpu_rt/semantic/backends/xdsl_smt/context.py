@@ -1,7 +1,7 @@
 """SMT context management and dialect registration.
 
 Creates and configures ``MLContext`` instances with the SMT dialect
-from upstream xDSL, plus any CompGen-specific semantic extensions.
+from upstream xDSL, plus any XPU-RT-specific semantic extensions.
 """
 
 from __future__ import annotations
@@ -35,14 +35,14 @@ class SMTContextFactory:
         return ctx
 
     @staticmethod
-    def create_with_compgen_dialects() -> MLContext:
-        """Create a context that also includes CompGen's custom dialects.
+    def create_with_xpu_rt_dialects() -> MLContext:
+        """Create a context that also includes XPU-RT's custom dialects.
 
         Adds Tile and Accel dialect registrations on top of the base context.
         """
         ctx = SMTContextFactory.create()
         try:
-            from compgen.ir.tile.dialect import TileDialect
+            from xpu_rt.ir.tile.dialect import TileDialect
 
             ctx.load_dialect(TileDialect)
         except (ImportError, NotImplementedError):

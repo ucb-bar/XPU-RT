@@ -8,7 +8,7 @@ class ExtensionError(RuntimeError):
 
 
 class ExtensionManifestError(ExtensionError):
-    """A ``compgen_extension.yaml`` manifest violated the schema."""
+    """A ``xpu_rt_extension.yaml`` manifest violated the schema."""
 
 
 class ExtensionSandboxViolation(ExtensionError):

@@ -1,11 +1,11 @@
 """Observability tools — read-only helpers the LLM can call in any phase.
 
-These wrap existing CompGen analyzers behind a typed interface the
+These wrap existing XPU-RT analyzers behind a typed interface the
 registry can advertise. Each wrapper is thin: it doesn't re-implement
 analysis, it just packages the output into a structured dict the LLM
 can reason about.
 
-Registered into ``compgen.llm.registry`` at import time so callers can
+Registered into ``xpu_rt.llm.registry`` at import time so callers can
 enumerate them via ``get_registry().list_tools(phase=...)``.
 """
 
@@ -14,7 +14,7 @@ from __future__ import annotations
 from dataclasses import asdict, is_dataclass
 from typing import Any
 
-from compgen.llm.registry import (
+from xpu_rt.llm.registry import (
     Tool,
     ToolArg,
     ToolResult,
@@ -43,7 +43,7 @@ def _serialize(obj: Any) -> Any:
 def _read_target_features_impl(*, device: Any, slice_keys: tuple[str, ...] = ()) -> dict[str, Any]:
     """Return a JSON-safe subset of a CompGenDevice's target profile.
 
-    The LLM passes a concrete ``compgen.device(...)`` handle (or its
+    The LLM passes a concrete ``xpu_rt.device(...)`` handle (or its
     ``profile`` attribute). When ``slice_keys`` is empty, the full
     profile is serialized; otherwise only those top-level fields.
     """
@@ -60,10 +60,10 @@ read_target_features = Tool(
     name="read_target_features",
     phase=2,
     kind="observability",
-    wraps_pass="compgen.targets TargetProfile",
+    wraps_pass="xpu_rt.targets TargetProfile",
     autocomp_cost_impact="zero",
     args=(
-        ToolArg("device", "compgen_device", "CompGenDevice or TargetProfile"),
+        ToolArg("device", "xpu_rt_device", "CompGenDevice or TargetProfile"),
         ToolArg(
             "slice_keys",
             "tuple[str]",
@@ -87,7 +87,7 @@ read_target_features = Tool(
 def _read_analyzer_dossier_impl(*, analysis: Any) -> dict[str, Any]:
     """Return a JSON-safe summary of a NetworkAnalysis dossier.
 
-    Expects a ``compgen.agent.analyzer.NetworkAnalysis`` object (result
+    Expects a ``xpu_rt.agent.analyzer.NetworkAnalysis`` object (result
     of ``NetworkAnalyzer().analyze(...)``). Produces the same fields the
     user-perspective ``03_graph_analysis.py`` script emits into
     ``gap_analysis.json`` but in-process and typed.
@@ -113,7 +113,7 @@ read_analyzer_dossier = Tool(
     name="read_analyzer_dossier",
     phase=2,
     kind="observability",
-    wraps_pass="compgen.agent.analyzer.NetworkAnalyzer",
+    wraps_pass="xpu_rt.agent.analyzer.NetworkAnalyzer",
     autocomp_cost_impact="zero",
     args=(ToolArg("analysis", "NetworkAnalysis", "Result of NetworkAnalyzer().analyze(...)"),),
     result=ToolResult(
@@ -157,7 +157,7 @@ read_region_shapes = Tool(
     name="read_region_shapes",
     phase=2,
     kind="observability",
-    wraps_pass="compgen.agent.analyzer (region lookup)",
+    wraps_pass="xpu_rt.agent.analyzer (region lookup)",
     autocomp_cost_impact="zero",
     args=(
         ToolArg("analysis", "NetworkAnalysis", "Result of NetworkAnalyzer().analyze(...)"),

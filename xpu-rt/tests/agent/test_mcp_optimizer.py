@@ -19,14 +19,14 @@ import json
 from pathlib import Path
 
 import pytest
-from compgen.agent.mcp_optimizer import (
+from xpu_rt.agent.mcp_optimizer import (
     OPTIMIZE_TOOLS,
     McpCodegenFn,
     optimize_via_mcp,
     register_optimization_progress,
     request_model_optimization,
 )
-from compgen.kernels.contract_v3 import (
+from xpu_rt.kernels.contract_v3 import (
     ExecutionEnvelope,
     HardwareEnvelope,
     IOContract,
@@ -36,21 +36,21 @@ from compgen.kernels.contract_v3 import (
     ShapeClass,
     TensorIO,
 )
-from compgen.kernels.store import KernelStore, set_shared_store
-from compgen.mcp.session import SessionManager
-from compgen.mcp.tools.bench import (
+from xpu_rt.kernels.store import KernelStore, set_shared_store
+from xpu_rt.mcp.session import SessionManager
+from xpu_rt.mcp.tools.bench import (
     list_pending_bench_requests,
     register_bench_result,
 )
-from compgen.mcp.tools.dispatch import (
+from xpu_rt.mcp.tools.dispatch import (
     list_pending_dispatch_decisions,
     register_dispatch_decision,
 )
-from compgen.mcp.tools.kernel import (
+from xpu_rt.mcp.tools.kernel import (
     list_pending_kernel_requests,
     register_kernel_result,
 )
-from compgen.memory.kernel_db import KernelDB, set_shared_db
+from xpu_rt.memory.kernel_db import KernelDB, set_shared_db
 
 
 @pytest.fixture
@@ -70,7 +70,7 @@ def isolated_kernel_store(tmp_path: Path):
 
 @pytest.fixture
 def sm(tmp_path: Path) -> SessionManager:
-    s = SessionManager(scratch_root=tmp_path / "compgen_mcp")
+    s = SessionManager(scratch_root=tmp_path / "xpu_rt_mcp")
     s.open(session_id="sess1")
     return s
 
@@ -106,9 +106,9 @@ def _matmul(target: str = "cuda-a100") -> KernelContractV3:
 def test_mcp_codegen_fn_queues_request_on_cache_miss(sm, isolated_db) -> None:
     cg = McpCodegenFn(sm=sm, session_id="sess1")
     # Build a TargetDispatchDecision-shaped placeholder.
-    from compgen.agent.hw_aware_dispatch import TargetDispatchDecision
-    from compgen.kernels.contract_v3 import Granularity
-    from compgen.kernels.granularity_oracle import GranularityVerdict
+    from xpu_rt.agent.hw_aware_dispatch import TargetDispatchDecision
+    from xpu_rt.kernels.contract_v3 import Granularity
+    from xpu_rt.kernels.granularity_oracle import GranularityVerdict
 
     decision = TargetDispatchDecision(
         target="cuda-a100",
@@ -131,9 +131,9 @@ def test_mcp_codegen_fn_queues_request_on_cache_miss(sm, isolated_db) -> None:
 def test_mcp_codegen_fn_returns_agent_source_on_cache_hit(sm, isolated_db) -> None:
     cg = McpCodegenFn(sm=sm, session_id="sess1")
     contract = _matmul()
-    from compgen.agent.hw_aware_dispatch import TargetDispatchDecision
-    from compgen.kernels.contract_v3 import Granularity
-    from compgen.kernels.granularity_oracle import GranularityVerdict
+    from xpu_rt.agent.hw_aware_dispatch import TargetDispatchDecision
+    from xpu_rt.kernels.contract_v3 import Granularity
+    from xpu_rt.kernels.granularity_oracle import GranularityVerdict
 
     decision = TargetDispatchDecision(
         target="cuda-a100",
@@ -309,7 +309,7 @@ def test_register_optimization_progress_tracks_passes(sm) -> None:
 
 
 def test_optimize_tools_in_all_tools_bundle() -> None:
-    from compgen.mcp.tools import ALL_TOOLS
+    from xpu_rt.mcp.tools import ALL_TOOLS
 
     names = {t["name"] for t in ALL_TOOLS}
     for n in ("request_model_optimization", "register_optimization_progress"):

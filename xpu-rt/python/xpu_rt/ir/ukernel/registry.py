@@ -18,8 +18,8 @@ from dataclasses import dataclass, field
 
 import structlog
 
-from compgen.ir.ukernel.constraints import ConstraintContext, evaluate_all_constraints
-from compgen.ir.ukernel.ops import UkernelBodyOp, UkernelDeclOp, UkernelMatchOp
+from xpu_rt.ir.ukernel.constraints import ConstraintContext, evaluate_all_constraints
+from xpu_rt.ir.ukernel.ops import UkernelBodyOp, UkernelDeclOp, UkernelMatchOp
 
 log = structlog.get_logger()
 

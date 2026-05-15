@@ -1,4 +1,4 @@
-"""Tests for compgen.audit.caveat_ledger."""
+"""Tests for xpu_rt.audit.caveat_ledger."""
 
 from __future__ import annotations
 
@@ -8,14 +8,14 @@ from pathlib import Path
 
 import pytest
 
-from compgen.audit.caveat_ledger import (
+from xpu_rt.audit.caveat_ledger import (
     CAVEAT_STATUSES,
     DEFAULT_STALE_DAYS,
     Caveat,
     CaveatLedger,
     make_caveat,
 )
-from compgen.audit.errors import CaveatLedgerError, StaleCaveatError
+from xpu_rt.audit.errors import CaveatLedgerError, StaleCaveatError
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SEED_LEDGER = REPO_ROOT / "results" / "audit" / "_seed" / "caveat_ledger.json"

@@ -25,9 +25,9 @@ from pathlib import Path
 
 from xdsl.dialects.builtin import ModuleOp, TensorType
 
-from compgen.stages.base import CompilationStage, IRInvariant, StageContract
-from compgen.stages.encoding.stage import ENCODING_ATTR
-from compgen.targets.schema import TargetProfile
+from xpu_rt.stages.base import CompilationStage, IRInvariant, StageContract
+from xpu_rt.stages.encoding.stage import ENCODING_ATTR
+from xpu_rt.targets.schema import TargetProfile
 
 
 def _all_tensors_encoded(module: ModuleOp) -> bool:
@@ -45,7 +45,7 @@ def _all_tensors_encoded(module: ModuleOp) -> bool:
 
 def _no_virtual_layout_ops(module: ModuleOp) -> bool:
     """Verify no SetLayoutOp or UnsetLayoutOp remain after the layout stage."""
-    from compgen.ir.layout.ops import SetLayoutOp, UnsetLayoutOp
+    from xpu_rt.ir.layout.ops import SetLayoutOp, UnsetLayoutOp
 
     for op in module.walk():
         if isinstance(op, (SetLayoutOp, UnsetLayoutOp)):
@@ -55,7 +55,7 @@ def _no_virtual_layout_ops(module: ModuleOp) -> bool:
 
 def _layout_clean(module: ModuleOp) -> bool:
     """Check the module is marked as layout-clean."""
-    return "compgen.layout_clean" in module.attributes
+    return "xpu_rt.layout_clean" in module.attributes
 
 
 class LayoutStage(CompilationStage):
@@ -105,14 +105,14 @@ class LayoutStage(CompilationStage):
 
     def shared_passes(self, module: ModuleOp, target: TargetProfile) -> ModuleOp:
         """Run target-agnostic layout passes."""
-        from compgen.transforms.layout.attach_layout_hints import attach_layout_hints
-        from compgen.transforms.layout.canonicalize_transposes import canonicalize_transposes
-        from compgen.transforms.layout.cleanup_layout_artifacts import cleanup_layout_artifacts
-        from compgen.transforms.layout.hoist_layout_ops import hoist_layout_ops
-        from compgen.transforms.layout.introduce_prepacking import introduce_prepacking
-        from compgen.transforms.layout.materialize_layout_boundaries import materialize_layout_boundaries
-        from compgen.transforms.layout.propagate_layouts import propagate_layouts
-        from compgen.transforms.layout.set_virtual_encodings import set_virtual_encodings
+        from xpu_rt.transforms.layout.attach_layout_hints import attach_layout_hints
+        from xpu_rt.transforms.layout.canonicalize_transposes import canonicalize_transposes
+        from xpu_rt.transforms.layout.cleanup_layout_artifacts import cleanup_layout_artifacts
+        from xpu_rt.transforms.layout.hoist_layout_ops import hoist_layout_ops
+        from xpu_rt.transforms.layout.introduce_prepacking import introduce_prepacking
+        from xpu_rt.transforms.layout.materialize_layout_boundaries import materialize_layout_boundaries
+        from xpu_rt.transforms.layout.propagate_layouts import propagate_layouts
+        from xpu_rt.transforms.layout.set_virtual_encodings import set_virtual_encodings
 
         # Passes 1-5 (target-agnostic)
         module = canonicalize_transposes(module)

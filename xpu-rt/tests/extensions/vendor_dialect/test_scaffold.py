@@ -8,20 +8,20 @@ import sys
 from pathlib import Path
 
 import pytest
-from compgen.extensions.vendor_dialect.descriptor import (
+from xpu_rt.extensions.vendor_dialect.descriptor import (
     BundlePlan,
     CompileEntry,
     LoweringStrategy,
     VendorDialectDescriptor,
     VerificationPlan,
 )
-from compgen.extensions.vendor_dialect.scaffold import scaffold_package
+from xpu_rt.extensions.vendor_dialect.scaffold import scaffold_package
 
 
 def _descriptor(kernel_authoring: bool = False) -> VendorDialectDescriptor:
     return VendorDialectDescriptor(
         name="toy",
-        package_name="compgen_toy",
+        package_name="xpu_rt_toy",
         repo_path="/tmp/toy",
         target="toy-target",
         input_ir=("linalg",),
@@ -40,16 +40,16 @@ def _descriptor(kernel_authoring: bool = False) -> VendorDialectDescriptor:
 
 def test_scaffold_emits_expected_files(tmp_path: Path) -> None:
     result = scaffold_package(_descriptor(), tmp_path)
-    assert result.package_dir == tmp_path / "compgen_toy"
+    assert result.package_dir == tmp_path / "xpu_rt_toy"
     must_exist = [
         "pyproject.toml",
         "README.md",
-        "compgen_toy/__init__.py",
-        "compgen_toy/adapter.py",
-        "compgen_toy/lowering.py",
-        "compgen_toy/bundle.py",
-        "compgen_toy/descriptor.yaml",
-        "compgen_toy/tests/test_smoke.py",
+        "xpu_rt_toy/__init__.py",
+        "xpu_rt_toy/adapter.py",
+        "xpu_rt_toy/lowering.py",
+        "xpu_rt_toy/bundle.py",
+        "xpu_rt_toy/descriptor.yaml",
+        "xpu_rt_toy/tests/test_smoke.py",
         "examples/workload.py",
     ]
     for rel in must_exist:
@@ -79,10 +79,10 @@ def test_scaffolded_package_imports(tmp_path: Path, monkeypatch) -> None:
     result = scaffold_package(_descriptor(), tmp_path)
     # Put the package dir on sys.path and import fresh.
     monkeypatch.syspath_prepend(str(result.package_dir))
-    sys.modules.pop("compgen_toy", None)
-    pkg = importlib.import_module("compgen_toy")
+    sys.modules.pop("xpu_rt_toy", None)
+    pkg = importlib.import_module("xpu_rt_toy")
     adapter = pkg.load_adapter()
-    from compgen.extensions.vendor_dialect.adapter import VendorDialectAdapter
+    from xpu_rt.extensions.vendor_dialect.adapter import VendorDialectAdapter
 
     assert isinstance(adapter, VendorDialectAdapter)
     assert adapter.name == "toy"
@@ -99,6 +99,6 @@ def test_scaffolded_package_with_kernel_authoring_defers_provider(tmp_path: Path
     valid Python.
     """
     result = scaffold_package(_descriptor(kernel_authoring=True), tmp_path)
-    src = (result.package_dir / "compgen_toy" / "kernels.py").read_text()
+    src = (result.package_dir / "xpu_rt_toy" / "kernels.py").read_text()
     ast.parse(src)
     assert "build_toy_kernel_provider" in src

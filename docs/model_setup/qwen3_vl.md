@@ -33,7 +33,7 @@ band into the local HuggingFace cache (``$HF_HOME/hub`` or
 ## Minimal smoke command
 
 ```bash
-uv run python -m compgen.model_admission torch-compile \
+uv run python -m xpu_rt.model_admission torch-compile \
     --model configs/models/qwen3_vl_8b.yaml \
     --slice configs/slices/qwen3_vl_8b_single_image_qa.yaml \
     --out results/model_admission/qwen3_vl_8b/qwen3_vl_8b_single_image_qa

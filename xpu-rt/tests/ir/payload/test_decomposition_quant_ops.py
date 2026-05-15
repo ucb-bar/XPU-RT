@@ -1,4 +1,4 @@
-""".1 — quantization decompositions emit real ``compgen.quant`` ops.
+""".1 — quantization decompositions emit real ``xpu_rt.quant`` ops.
 
 These tests replace the prior opaque-``func.call`` expectations: after
 W0.1, every entry in the TorchAO / quantized_decomposed family lowers
@@ -9,7 +9,7 @@ as unused kwargs.
 from __future__ import annotations
 
 import pytest
-from compgen.ir.payload.decompositions import (
+from xpu_rt.ir.payload.decompositions import (
     decompose_choose_qparams_per_channel,
     decompose_choose_qparams_per_tensor,
     decompose_dequantize_per_channel,
@@ -23,7 +23,7 @@ from compgen.ir.payload.decompositions import (
     decompose_weight_int8pack_mm,
     reset_region_counters,
 )
-from compgen.ir.quant import (
+from xpu_rt.ir.quant import (
     ChooseQParamsPerChannelOp,
     ChooseQParamsPerTensorOp,
     DequantizePerChannelOp,
@@ -66,7 +66,7 @@ def test_quantize_per_tensor_emits_real_op():
     assert len(r.ops) == 1
     assert isinstance(r.ops[0], QuantizePerTensorOp)
     assert r.pattern_hint == "quantize_per_tensor"
-    assert r.ops[0].attributes["compgen.region_id"].data.startswith("quantize_")
+    assert r.ops[0].attributes["xpu_rt.region_id"].data.startswith("quantize_")
 
 
 def test_dequantize_per_tensor_emits_real_op():
@@ -163,7 +163,7 @@ def test_weight_int8pack_mm_emits_real_op():
     assert isinstance(r.ops[0], WeightInt8PackMMOp)
     # region_id prefix stays ``quantized_matmul`` so downstream
     # Recipe IR passes continue to scope on it.
-    assert r.ops[0].attributes["compgen.region_id"].data.startswith("quantized_matmul_")
+    assert r.ops[0].attributes["xpu_rt.region_id"].data.startswith("quantized_matmul_")
 
 
 def test_weight_int4pack_mm_snaps_group_size_to_valid_set():

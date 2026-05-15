@@ -13,8 +13,8 @@ from typing import Any
 
 import structlog
 
-from compgen.memory.schema import Candidate, Promotion
-from compgen.memory.store import CompilerMemory
+from xpu_rt.memory.schema import Candidate, Promotion
+from xpu_rt.memory.store import CompilerMemory
 
 log = structlog.get_logger()
 

@@ -16,7 +16,7 @@ from typing import Any
 import structlog
 import torch
 
-from compgen.semantic.verify.compare import NumericComparison, compare_tensors
+from xpu_rt.semantic.verify.compare import NumericComparison, compare_tensors
 
 logger = structlog.get_logger(__name__)
 

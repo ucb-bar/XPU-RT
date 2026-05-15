@@ -12,7 +12,7 @@ Search strategies:
   regression reference).
 
 Metric: the autotuner accepts a ``metric_fn(result) -> float`` that
-takes a :class:`compgen.pipeline.PipelineResult` and returns a
+takes a :class:`xpu_rt.pipeline.PipelineResult` and returns a
 scalar (lower is better). Defaults to opaque rate.
 """
 
@@ -26,8 +26,8 @@ from typing import Any
 
 import structlog
 
-from compgen.options import CompGenOptions
-from compgen.pipeline import PipelineCache, PipelineResult
+from xpu_rt.options import CompGenOptions
+from xpu_rt.pipeline import PipelineCache, PipelineResult
 
 log = structlog.get_logger()
 

@@ -1,9 +1,9 @@
 """Lower an Event Tensor megakernel graph to a single persistent Triton kernel.
 
-Sibling of :mod:`compgen.ir.tile.lower_triton` and
-:mod:`compgen.ir.tile.lower_exo`.  Consumes an ``event.graph`` op that has
+Sibling of :mod:`xpu_rt.ir.tile.lower_triton` and
+:mod:`xpu_rt.ir.tile.lower_exo`.  Consumes an ``event.graph`` op that has
 already been annotated by
-:mod:`compgen.ir.payload.passes.megakernel_static_schedule` (Algorithm 1 of
+:mod:`xpu_rt.ir.payload.passes.megakernel_static_schedule` (Algorithm 1 of
 the Event Tensor Compiler paper) and produces a single ``@triton.jit``
 function whose grid equals the target's SM count.
 
@@ -41,10 +41,10 @@ from typing import Any
 
 from xdsl.dialects.builtin import IntegerAttr, StringAttr
 
-from compgen.ir.event.attrs import EventTensorTypeAttr
-from compgen.ir.event.ops import EventTensorOp, GraphOp
+from xpu_rt.ir.event.attrs import EventTensorTypeAttr
+from xpu_rt.ir.event.ops import EventTensorOp, GraphOp
 
-_SCHEDULE_ATTR = "compgen.static_schedule"
+_SCHEDULE_ATTR = "xpu_rt.static_schedule"
 
 
 @dataclass(frozen=True)
@@ -243,7 +243,7 @@ def lower_megakernel(
     """Lower an annotated ``event.graph`` to persistent-Triton source.
 
     Raises ``ValueError`` if the graph has not been annotated with
-    ``compgen.static_schedule``; callers must run
+    ``xpu_rt.static_schedule``; callers must run
     :class:`StaticMegakernelSchedule` first.
     """
     if _SCHEDULE_ATTR not in graph.attributes:

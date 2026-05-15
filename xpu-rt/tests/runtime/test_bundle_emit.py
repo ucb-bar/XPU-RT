@@ -1,8 +1,8 @@
 """End-to-end test for Phase A item 6 — extended artefact emission.
 
-Compiles a tiny model through :func:`compgen.compile_model`, then
+Compiles a tiny model through :func:`xpu_rt.compile_model`, then
 re-loads and re-executes the resulting bundle through
-:mod:`compgen.runtime.bundle_runner`. This is the flagship
+:mod:`xpu_rt.runtime.bundle_runner`. This is the flagship
 "recipe-library re-execution" test that proves the artefact-emission
 wiring actually closes the ``compile_model`` → ``bundle_runner`` loop.
 """
@@ -15,8 +15,8 @@ from pathlib import Path
 import pytest
 import torch
 import torch.nn as nn
-from compgen.api import compile_model, device
-from compgen.runtime.bundle_runner import load_bundle, run_bundle
+from xpu_rt.api import compile_model, device
+from xpu_rt.runtime.bundle_runner import load_bundle, run_bundle
 
 EXEMPLAR_DIR = Path(__file__).parent.parent / "targetgen" / "exemplars"
 
@@ -26,7 +26,7 @@ class _TinyMLP(nn.Module):
 
     Exercises matmul, ``aten_bias_add`` (from linear's bias), and
     ``aten_relu`` on the CPU executor — all three are covered by
-    :data:`compgen.runtime.cpu_executor._ATEN_DISPATCH`. If a future
+    :data:`xpu_rt.runtime.cpu_executor._ATEN_DISPATCH`. If a future
     refactor drops any of them the round-trip test will fail here
     loudly instead of silently reducing coverage."""
 
@@ -292,8 +292,8 @@ def test_bundle_runner_exposes_kernel_contracts(compiled_bundle_dir) -> None:
 def test_emission_report_returned_not_thrown(tmp_path: Path) -> None:
     """A call with unsupported inputs returns a report — no broad
     ``except Exception`` swallow, no silent empty bundle."""
-    from compgen.runtime.bundle_emit import emit_extended_artefacts
-    from compgen.runtime.errors import BundleEmissionReport
+    from xpu_rt.runtime.bundle_emit import emit_extended_artefacts
+    from xpu_rt.runtime.errors import BundleEmissionReport
 
     bundle_dir = tmp_path / "bundle"
     bundle_dir.mkdir()
@@ -334,7 +334,7 @@ def test_emission_report_returned_not_thrown(tmp_path: Path) -> None:
 
 def test_emission_report_written_to_manifest(tmp_path: Path) -> None:
     """Per-artifact statuses land in ``manifest.json::extended_artifacts``."""
-    from compgen.runtime.bundle_emit import emit_extended_artefacts
+    from xpu_rt.runtime.bundle_emit import emit_extended_artefacts
 
     bundle_dir = tmp_path / "bundle"
     bundle_dir.mkdir()
@@ -359,7 +359,7 @@ def test_emission_report_written_to_manifest(tmp_path: Path) -> None:
 def test_failure_surfaces_as_failed_status(tmp_path: Path) -> None:
     """Disk-write failure (sample_inputs with unserializable object)
     shows up as ``failed`` in the report — not swallowed."""
-    from compgen.runtime.bundle_emit import emit_extended_artefacts
+    from xpu_rt.runtime.bundle_emit import emit_extended_artefacts
 
     bundle_dir = tmp_path / "bundle"
     bundle_dir.mkdir()

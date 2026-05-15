@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from compgen.agent.analyzer import DataFlowEdge, NetworkAnalysis, PatternCluster
-from compgen.analysis.layout.transpose import (
+from xpu_rt.agent.analyzer import DataFlowEdge, NetworkAnalysis, PatternCluster
+from xpu_rt.analysis.layout.transpose import (
     TransposeClassification,
     TransposeProfitabilityAnalyzer,
 )
-from compgen.ir.payload.contracts import KernelContract
+from xpu_rt.ir.payload.contracts import KernelContract
 
 
 def _mock_transpose_analysis(

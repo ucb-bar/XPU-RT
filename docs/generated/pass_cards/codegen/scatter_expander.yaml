@@ -4,7 +4,7 @@ display_name: Expand scatter to lower-level ops
 level: payload
 family: codegen
 source: XLA
-impl_path: python/compgen/ir/payload/passes/rewrites/scatter_expander.py
+impl_path: python/xpu_rt/ir/payload/passes/rewrites/scatter_expander.py
 reads:
   - 01_payload_lowering/payload.mlir
 writes:
@@ -26,7 +26,7 @@ cost: medium
 failure_modes:
   - "non_associative_update"
   - "duplicate_indices_unsupported"
-mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+mcp_tool: mcp__xpu_rt__xpu_rt_emit_agent_decision_request
 notes: |
   Reconstruction of XLA's ScatterExpander. Lowers high-level scatter
   via dynamic-update-slice. preserves_refinement: tolerance_eps when

@@ -27,7 +27,7 @@ from pathlib import Path
 
 import structlog
 
-from compgen.targetgen.hardware_spec import ExecutionModel, HardwareSpec
+from xpu_rt.targetgen.hardware_spec import ExecutionModel, HardwareSpec
 
 log = structlog.get_logger()
 

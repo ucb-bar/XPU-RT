@@ -1,8 +1,8 @@
 """JSONL transcript recorder for MCP tool calls.
 
-Every call dispatched through :mod:`compgen.mcp.server` is appended to a
+Every call dispatched through :mod:`xpu_rt.mcp.server` is appended to a
 per-session ``transcript.jsonl`` so an external observer can audit what
-an agent did. Independent from :class:`compgen.llm.recorder.ToolCallRecorder`
+an agent did. Independent from :class:`xpu_rt.llm.recorder.ToolCallRecorder`
 — the two record different layers (raw MCP JSON-RPC vs. Recipe-IR
 invent-slot semantics) and intentionally use disjoint schemas.
 """
@@ -17,7 +17,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-ENV_VAR = "COMPGEN_SESSION_DIR"
+ENV_VAR = "XPU_RT_SESSION_DIR"
 DEFAULT_ROOT_DIR = "sessions"
 TRANSCRIPT_FILENAME = "transcript.jsonl"
 
@@ -30,7 +30,7 @@ def default_session_root(cwd: str | Path | None = None) -> Path:
     """Return the root directory under which session transcripts are written.
 
     Resolution:
-      1. ``$COMPGEN_SESSION_DIR`` if set.
+      1. ``$XPU_RT_SESSION_DIR`` if set.
       2. ``<cwd>/sessions`` otherwise (cwd defaults to the current process cwd).
     """
 

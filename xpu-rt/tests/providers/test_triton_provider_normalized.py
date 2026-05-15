@@ -15,9 +15,9 @@ from __future__ import annotations
 
 import pytest
 
-from compgen.providers.kernel_provider import KernelProvider
-from compgen.providers.provider_registry import build_provider_registry
-from compgen.providers.provider_types import (
+from xpu_rt.providers.kernel_provider import KernelProvider
+from xpu_rt.providers.provider_registry import build_provider_registry
+from xpu_rt.providers.provider_types import (
     PROBE_STATUSES,
     ProviderProbeResult,
 )
@@ -49,9 +49,9 @@ def test_triton_probe_returns_typed_status():
 def test_triton_class_resolves_to_real_module():
     """Sanity: triton card entrypoint points at the live class."""
 
-    from compgen.providers.adapters.base import resolve_provider_class
+    from xpu_rt.providers.adapters.base import resolve_provider_class
 
     card = build_provider_registry().card_for("triton")
     cls = resolve_provider_class(card)
-    assert cls.__module__ == "compgen.kernels.providers.triton_templates"
+    assert cls.__module__ == "xpu_rt.kernels.providers.triton_templates"
     assert cls.__name__ == "TritonTemplateProvider"

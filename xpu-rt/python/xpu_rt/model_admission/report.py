@@ -10,7 +10,7 @@ from typing import Any
 
 import torch
 
-from compgen.model_admission.schemas import (
+from xpu_rt.model_admission.schemas import (
     AdmissionReport,
     AdmissionStatus,
     DynamoCaptureReport,

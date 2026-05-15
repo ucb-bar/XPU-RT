@@ -1,4 +1,4 @@
-"""Tests for compgen.audit.negative_controls.
+"""Tests for xpu_rt.audit.negative_controls.
 
 Each control must raise its declared typed error. These tests prove
 the gates are real — that the audit doesn't silently swallow injected
@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from compgen.audit.negative_controls import (
+from xpu_rt.audit.negative_controls import (
     NegativeControlOutcome,
     control_applies_when_predicate_violated,
     control_certificate_artifact_hash_changed,

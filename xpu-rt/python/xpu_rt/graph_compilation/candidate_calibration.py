@@ -32,7 +32,7 @@ Hard non-goals:
   identical numerical output) are out of scope here — measuring them
   per-candidate would only show launch-overhead noise.
 
-Opt-in via ``COMPGEN_CALIBRATE_CANDIDATES=1``. Default OFF so suite
+Opt-in via ``XPU_RT_CALIBRATE_CANDIDATES=1``. Default OFF so suite
 runs stay deterministic.
 """
 
@@ -122,7 +122,7 @@ def _measure_one_candidate(
     """Time both the un-tiled baseline (torch.matmul) and the
     tiled evaluator. Returns (baseline_us_per_iter, tiled_us_per_iter)."""
     import torch
-    from compgen.graph_compilation.real_transform_differential import (
+    from xpu_rt.graph_compilation.real_transform_differential import (
         _tiled_matmul_eval,
     )
 

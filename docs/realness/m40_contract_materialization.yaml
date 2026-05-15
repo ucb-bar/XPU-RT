@@ -3,13 +3,13 @@ claim: |
   dossier facts and the target profile materialize into a fully-
   populated ``KernelContractV3``. The contract is the calling
   convention every Phase C consumer trusts:
-  ``compgen.promotion.contract_hash.hash_contract`` keys the cache
+  ``xpu_rt.promotion.contract_hash.hash_contract`` keys the cache
   (M-41); the ``kernel_facing()`` projection bounds what a kernel-
   codegen provider may read (M-42 + M-43); the ``compiler_only()``
   projection is strictly invisible to the kernel.
 
   Pipeline-stage wrapper at
-  ``compgen.graph_compilation.kernel_contract_materialization`` reads
+  ``xpu_rt.graph_compilation.kernel_contract_materialization`` reads
   ``03_recipe_planning/candidate_selection.json``, the recipe-gate
   verdict, the region dossier, and the target YAML; emits two artifacts
   per selected ``set_tile_params`` candidate:
@@ -38,9 +38,9 @@ forbidden:
 - emitting a contract without an associated kernel_facing view file
 realness_level: decision_affecting
 required_evidence:
-- python/compgen/kernels/contract_v3.py (KernelContractV3.from_recipe)
-- python/compgen/graph_compilation/kernel_contract_materialization.py
-- python/compgen/graph_compilation/run.py (M-40 wired into kernel-specialization-request boundary)
+- python/xpu_rt/kernels/contract_v3.py (KernelContractV3.from_recipe)
+- python/xpu_rt/graph_compilation/kernel_contract_materialization.py
+- python/xpu_rt/graph_compilation/run.py (M-40 wired into kernel-specialization-request boundary)
 - tests/graph_compilation/test_kernel_contract_materialization.py
 - 04_kernel_codegen/contracts/<region>.<hash>.json on a real merlin_mlp_wide run
 - 04_kernel_codegen/views/<region>.kernel_facing.json on a real run

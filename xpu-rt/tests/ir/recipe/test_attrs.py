@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import io
 
-from compgen.ir.recipe.attrs import (
+from xpu_rt.ir.recipe.attrs import (
     CostAttr,
     DeviceRefAttr,
     EffectClassAttr,

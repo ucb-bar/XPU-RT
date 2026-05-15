@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from compgen.semantic.backends.xdsl_smt.pdl_backend import PDLVerificationBackend
+from xpu_rt.semantic.backends.xdsl_smt.pdl_backend import PDLVerificationBackend
 
 z3 = pytest.importorskip("z3")
 

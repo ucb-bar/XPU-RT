@@ -12,21 +12,21 @@ import json
 import pytest
 import torch
 import torch.nn as nn
-from compgen.agent.analyzer import NetworkAnalyzer
-from compgen.analysis.graph_digest import (
+from xpu_rt.agent.analyzer import NetworkAnalyzer
+from xpu_rt.analysis.graph_digest import (
     build_chunk_view,
     build_digest,
 )
-from compgen.capture.torch_export import capture_frontend_artifact
-from compgen.ir.payload.import_fx import fx_to_xdsl
-from compgen.llm.recorder import LLMRecorder
-from compgen.targets.schema import (
+from xpu_rt.capture.torch_export import capture_frontend_artifact
+from xpu_rt.ir.payload.import_fx import fx_to_xdsl
+from xpu_rt.llm.recorder import LLMRecorder
+from xpu_rt.targets.schema import (
     ComputeUnit,
     DeviceSpec,
     MemoryLevel,
     TargetProfile,
 )
-from compgen.trace import (
+from xpu_rt.trace import (
     IRDumpWriter,
     PassPublisher,
     StagePublisher,
@@ -190,7 +190,7 @@ def test_tracing_llm_recorder_is_idempotent(tmp_path, _reset_bus):
     # ``wrap`` returns the underlying recorder on the second call so we
     # do not stack trace events.
     assert second is raw or second is first
-    assert getattr(raw, "_compgen_trace_bus", None) is bus
+    assert getattr(raw, "_xpu_rt_trace_bus", None) is bus
 
 
 # ---------------------------------------------------------------------------

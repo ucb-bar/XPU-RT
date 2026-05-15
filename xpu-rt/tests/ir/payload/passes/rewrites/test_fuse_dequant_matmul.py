@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from compgen.ir.payload.passes.rewrites.fuse_dequant_matmul import (
+from xpu_rt.ir.payload.passes.rewrites.fuse_dequant_matmul import (
     FuseDequantMatmulConfig,
     FuseDequantMatmulStats,
     run_fuse_dequant_matmul,
 )
-from compgen.ir.quant import (
+from xpu_rt.ir.quant import (
     DequantizePerChannelOp,
     DequantizePerGroupOp,
     DequantizePerTensorOp,
@@ -111,8 +111,8 @@ def test_per_channel_dequant_matmul_fuses():
     m, mm = _make_module(dequant_kind="per_channel")
     stats = run_fuse_dequant_matmul(m)
     assert stats.fusions_applied == 1
-    assert mm.attributes["compgen.fused_dequant_kind"].data == "per_channel"
-    assert mm.attributes["compgen.fused_dequant_side"].data == "rhs"
+    assert mm.attributes["xpu_rt.fused_dequant_kind"].data == "per_channel"
+    assert mm.attributes["xpu_rt.fused_dequant_side"].data == "rhs"
     assert_module_verifies(m)
 
 
@@ -120,7 +120,7 @@ def test_per_tensor_dequant_matmul_fuses():
     m, mm = _make_module(dequant_kind="per_tensor")
     stats = run_fuse_dequant_matmul(m)
     assert stats.fusions_applied == 1
-    assert mm.attributes["compgen.fused_dequant_kind"].data == "per_tensor"
+    assert mm.attributes["xpu_rt.fused_dequant_kind"].data == "per_tensor"
 
 
 def test_per_group_with_allow_per_group_fuses():
@@ -128,7 +128,7 @@ def test_per_group_with_allow_per_group_fuses():
     cfg = FuseDequantMatmulConfig(reassoc_safe_only=True, allow_per_group=True)
     stats = run_fuse_dequant_matmul(m, config=cfg)
     assert stats.fusions_applied == 1
-    assert mm.attributes["compgen.fused_dequant_kind"].data == "per_group"
+    assert mm.attributes["xpu_rt.fused_dequant_kind"].data == "per_group"
 
 
 def test_per_group_without_allow_per_group_is_skipped():
@@ -137,7 +137,7 @@ def test_per_group_without_allow_per_group_is_skipped():
     stats = run_fuse_dequant_matmul(m, config=cfg)
     assert stats.fusions_applied == 0
     assert stats.skipped_reassoc_unsafe == 1
-    assert "compgen.fused_dequant_kind" not in mm.attributes
+    assert "xpu_rt.fused_dequant_kind" not in mm.attributes
 
 
 # --- non-matching cases ---------------------------------------------------
@@ -203,11 +203,11 @@ def test_stats_initial_values():
 
 def test_matmul_attributes_preserved():
     m, mm = _make_module(dequant_kind="per_channel")
-    mm.attributes["compgen.region_id"] = StringAttr("mm_test")
-    mm.attributes["compgen._pattern_hint"] = StringAttr("gemm")
+    mm.attributes["xpu_rt.region_id"] = StringAttr("mm_test")
+    mm.attributes["xpu_rt._pattern_hint"] = StringAttr("gemm")
     run_fuse_dequant_matmul(m)
-    assert mm.attributes["compgen.region_id"].data == "mm_test"
-    assert mm.attributes["compgen._pattern_hint"].data == "gemm"
+    assert mm.attributes["xpu_rt.region_id"].data == "mm_test"
+    assert mm.attributes["xpu_rt._pattern_hint"].data == "gemm"
 
 
 # --- allow_numerics_relaxation ---------------------------------------
@@ -269,7 +269,7 @@ def test_per_group_keeps_tag_only_path():
     assert stats.fusions_body_inlined == 0
     # Matmul still present with the tag.
     assert count_ops(m, "linalg.matmul") == 1
-    assert "compgen.fused_dequant_kind" in mm.attributes
+    assert "xpu_rt.fused_dequant_kind" in mm.attributes
 
 
 def test_body_fusion_preserves_accumulator_f32():

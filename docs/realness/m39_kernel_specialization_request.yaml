@@ -24,8 +24,8 @@ forbidden:
 - emit dynamic-guarded kernels at this layer (deferred until after M-44 lands)
 realness_level: decision_affecting
 required_evidence:
-- python/compgen/graph_compilation/kernel_specialization.py
-- python/compgen/graph_compilation/run.py (kernel-specialization-request boundary)
+- python/xpu_rt/graph_compilation/kernel_specialization.py
+- python/xpu_rt/graph_compilation/run.py (kernel-specialization-request boundary)
 - tests/graph_compilation/test_kernel_specialization_request.py
 - 04_kernel_specialization/requests/<request_id>.json on a real run
   (verified on merlin_mlp_wide and tiny_mlp)

@@ -24,8 +24,8 @@ import structlog
 import torch
 import torch.nn as nn
 
-from compgen.runtime.planner import CopyOp, ExecutionPlan
-from compgen.runtime.semaphore import TimelineSemaphore
+from xpu_rt.runtime.planner import CopyOp, ExecutionPlan
+from xpu_rt.runtime.semaphore import TimelineSemaphore
 
 log = structlog.get_logger()
 

@@ -29,7 +29,7 @@ Pass tests use these fixtures like::
 
     from tests._fixtures.real_workloads import gemma_decode_tiny
     fx = gemma_decode_tiny()
-    from compgen.capture.torch_mlir_bridge import bridge_fx_graph
+    from xpu_rt.capture.torch_mlir_bridge import bridge_fx_graph
     result = bridge_fx_graph(fx.model, fx.example_inputs)
     apply_pass(result.module)
     ...
@@ -275,9 +275,9 @@ class _AttentionMLPNoTranspose(nn.Module):
     without any view / transpose / slice ops.
 
     The full attention blocks rely on view+transpose to re-shape into
-    [B, H, T, D] which CompGen's fallback FXImporter does not yet
+    [B, H, T, D] which XPU-RT's fallback FXImporter does not yet
     lower correctly. This simplified block still exercises all four
-    ``compgen.linalg_ext`` destinations (softmax, layer_norm, silu,
+    ``xpu_rt.linalg_ext`` destinations (softmax, layer_norm, silu,
     gelu) and bridges cleanly.
     """
 
@@ -381,7 +381,7 @@ def tinyllama_block_tiny() -> RealWorkloadFixture:
 
     Architecturally identical to the real TinyLlama blocks at
     reduced scale. Exercises RMSNorm, rotary embeddings, attention
-    softmax, and the SwiGLU MLP pathway CompGen's quant / fusion
+    softmax, and the SwiGLU MLP pathway XPU-RT's quant / fusion
     passes are tuned for.
     """
     _deterministic_seed()
@@ -673,7 +673,7 @@ ALL_FIXTURE_FNS = (
     smolvla_stack_2,
 )
 
-# Subset of fixtures known to bridge cleanly through CompGen's FXImporter
+# Subset of fixtures known to bridge cleanly through XPU-RT's FXImporter
 # fallback today. Used by + pass tests when ``torch_mlir`` is not
 # installed. When the torch-mlir bridge path is available, all fixtures
 # should bridge -- so tests should prefer ``ALL_FIXTURE_FNS`` with a

@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from compgen.solve.backends.milp import MILPResult, MILPSolver
-from compgen.solve.contracts import SolverProblem
-from compgen.solve.partition import Partition
+from xpu_rt.solve.backends.milp import MILPResult, MILPSolver
+from xpu_rt.solve.contracts import SolverProblem
+from xpu_rt.solve.partition import Partition
 
 
 def test_milp_solver_defaults() -> None:

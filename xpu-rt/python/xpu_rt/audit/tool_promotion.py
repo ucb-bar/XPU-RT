@@ -1,6 +1,6 @@
 """Tool-promotion audit — enforces the T0→T7 maturity ladder.
 
-The audit takes the set of registered :class:`compgen.tools.ToolCard`
+The audit takes the set of registered :class:`xpu_rt.tools.ToolCard`
 instances and verifies, for each, that the *evidence* required at the
 card's declared maturity rung actually exists in the repository. It is
 the gate that prevents a card from claiming a maturity it cannot
@@ -10,7 +10,7 @@ Per-rung gates (closed enum, indexed by maturity rung name):
 
 * ``T0`` (Python only) — entrypoints.python resolves to a callable.
 * ``T1`` (CLI) — entrypoints.cli is non-empty, the named command
-  resolves on PATH, and ``compgen-tool list`` returns the tool.
+  resolves on PATH, and ``xpu-rt-tool list`` returns the tool.
 * ``T2`` (tested) — ``tests.positive`` and ``tests.negative_controls``
   are non-empty, every pointer (``module.path::test_name``) resolves
   to a real pytest item, and at least one negative-control item exists
@@ -30,7 +30,7 @@ Per-rung gates (closed enum, indexed by maturity rung name):
   contains ``grading_script.py`` and the most recent
   ``grading_result.json`` has ``passed=true``.
 * ``T7`` (default workflow tool) — tool appears in
-  ``mcp__compgen__list_phase_tools`` for its phase, and an entry exists
+  ``mcp__xpu_rt__list_phase_tools`` for its phase, and an entry exists
   in ``results/tool_evidence_pack/promotion_log.json``.
 
 Each gate emits zero or more :class:`ToolPromotionViolation` objects
@@ -38,7 +38,7 @@ on failure; an audit run aggregates them into an :class:`AuditReport`
 that is JSON- and Markdown-serialisable.
 
 The audit *itself* is read-only: it never modifies repo state. The
-typed errors in :mod:`compgen.tools.errors` describe failures the
+typed errors in :mod:`xpu_rt.tools.errors` describe failures the
 runner raises at execution time; this module captures the structural
 state of evidence at audit time.
 """
@@ -55,14 +55,14 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Final
 
-from compgen.tools.errors import ToolEntrypointError
-from compgen.tools.skill_lint import lint_skill
-from compgen.tools.tool_card import (
+from xpu_rt.tools.errors import ToolEntrypointError
+from xpu_rt.tools.skill_lint import lint_skill
+from xpu_rt.tools.tool_card import (
     MATURITY_LEVELS,
     ToolCard,
 )
-from compgen.tools.tool_registry import iter_tool_cards
-from compgen.tools.tool_runner import resolve_python_entrypoint
+from xpu_rt.tools.tool_registry import iter_tool_cards
+from xpu_rt.tools.tool_runner import resolve_python_entrypoint
 
 # Closed enum of violation kinds. Adding a new kind requires updating
 # this list AND tests/tools/test_tool_promotion_audit.py.
@@ -137,7 +137,7 @@ class ToolAuditOutcome:
 class AuditReport:
     """Audit-level rollup over all registered tools."""
 
-    schema_version: str = "compgen_tool_promotion_audit_v1"
+    schema_version: str = "xpu_rt_tool_promotion_audit_v1"
     outcomes: tuple[ToolAuditOutcome, ...] = ()
     # Aggregate convenience views — derivable, materialised for ease
     # of JSON consumption by downstream evidence packs.
@@ -287,7 +287,7 @@ def _check_t3(card: ToolCard) -> Iterable[ToolPromotionViolation]:
 def _check_t4(card: ToolCard, repo_root: Path) -> Iterable[ToolPromotionViolation]:
     """T4 gate — skill_path resolves; required sections present; CLI command quoted.
 
-    Delegates the structural check to :func:`compgen.tools.skill_lint.lint_skill`
+    Delegates the structural check to :func:`xpu_rt.tools.skill_lint.lint_skill`
     so the rule lives in exactly one place (owns the structure).
     """
 
@@ -332,7 +332,7 @@ def _check_t5(card: ToolCard) -> Iterable[ToolPromotionViolation]:
     """T5 gate — MCP wrapper exists and delegates to ToolRunner.
 
     The MCP wrapper module is discovered by convention at
-    ``python/compgen/mcp/tools/<phase>.py``; the audit checks that the
+    ``python/xpu_rt/mcp/tools/<phase>.py``; the audit checks that the
     module exists and that its source mentions ``ToolRunner`` (the
     bridge guarantees the wrapper *is* a delegate). A stricter
     AST check lands 's own test.
@@ -351,14 +351,14 @@ def _check_t5(card: ToolCard) -> Iterable[ToolPromotionViolation]:
     # tools tree imports ToolRunner somewhere". A stricter per-card
     # mapping lands when wires up.
     try:
-        mod = importlib.import_module("compgen.mcp.tool_bridge")
+        mod = importlib.import_module("xpu_rt.mcp.tool_bridge")
     except ImportError:
         yield ToolPromotionViolation(
             tool_id=card.tool_id,
             rung="T5",
             kind="mcp_wrapper_module_missing",
             detail=(
-                "compgen.mcp.tool_bridge (M-94) is not importable; "
+                "xpu_rt.mcp.tool_bridge (M-94) is not importable; "
                 "T5 requires the bridge module to exist"
             ),
         )
@@ -372,7 +372,7 @@ def _check_t5(card: ToolCard) -> Iterable[ToolPromotionViolation]:
             tool_id=card.tool_id,
             rung="T5",
             kind="mcp_wrapper_does_not_delegate",
-            detail="compgen.mcp.tool_bridge does not reference ToolRunner",
+            detail="xpu_rt.mcp.tool_bridge does not reference ToolRunner",
         )
 
 
@@ -564,13 +564,13 @@ def run_tool_promotion_audit(
     ----------
     cards
         Override the discovery — useful in tests. If omitted, every
-        card discoverable through :func:`compgen.tools.iter_tool_cards`
+        card discoverable through :func:`xpu_rt.tools.iter_tool_cards`
         (relative to ``cards_root``) is audited.
     cards_root
         Override the cards directory (defaults to the shipped one).
     repo_root
         Override the repo root used for skill/harness/promotion-log
-        path resolution. Defaults to the top of the CompGen checkout.
+        path resolution. Defaults to the top of the XPU-RT checkout.
 
     The audit ensures ``repo_root`` is on ``sys.path`` for the duration
     of the run so dotted test pointers (``tests.tools.test_x::test_y``)
@@ -579,7 +579,7 @@ def run_tool_promotion_audit(
     """
 
     if repo_root is None:
-        # python/compgen/audit/tool_promotion.py -> repo root is parents[3]
+        # python/xpu_rt/audit/tool_promotion.py -> repo root is parents[3]
         repo_root = Path(__file__).resolve().parents[3]
     if cards is None:
         cards = list(iter_tool_cards(cards_root))

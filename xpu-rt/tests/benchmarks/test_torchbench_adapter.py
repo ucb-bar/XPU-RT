@@ -5,8 +5,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from compgen.benchmarks.common.manifest import SuiteManifestEntry
-from compgen.benchmarks.torchbench.adapter import TorchBenchAdapter
+from xpu_rt.benchmarks.common.manifest import SuiteManifestEntry
+from xpu_rt.benchmarks.torchbench.adapter import TorchBenchAdapter
 
 from benchmarks.record import RunRecord
 
@@ -48,10 +48,10 @@ def test_enumerate_workloads_discovers_models_from_filesystem(tmp_path: Path) ->
     from benchmarks.spec import WorkspaceConfig
 
     workspace = WorkspaceConfig(
-        repo_root=tmp_path / "CompGen",
+        repo_root=tmp_path / "XPU-RT",
         external_roots={"torchbench": tb_root},
     )
-    (tmp_path / "CompGen").mkdir(exist_ok=True)
+    (tmp_path / "XPU-RT").mkdir(exist_ok=True)
 
     adapter = TorchBenchAdapter()
     entries = adapter.enumerate_workloads(workspace=workspace)
@@ -79,10 +79,10 @@ def test_enumerate_workloads_blessed_only(tmp_path: Path) -> None:
     from benchmarks.spec import WorkspaceConfig
 
     workspace = WorkspaceConfig(
-        repo_root=tmp_path / "CompGen",
+        repo_root=tmp_path / "XPU-RT",
         external_roots={"torchbench": tb_root},
     )
-    (tmp_path / "CompGen").mkdir(exist_ok=True)
+    (tmp_path / "XPU-RT").mkdir(exist_ok=True)
 
     adapter = TorchBenchAdapter()
     blessed = adapter.enumerate_workloads(workspace=workspace, blessed_only=True)
@@ -111,10 +111,10 @@ def test_prepare_environment_available_with_root(tmp_path: Path) -> None:
     from benchmarks.spec import WorkspaceConfig
 
     workspace = WorkspaceConfig(
-        repo_root=tmp_path / "CompGen",
+        repo_root=tmp_path / "XPU-RT",
         external_roots={"torchbench": tb_root},
     )
-    (tmp_path / "CompGen").mkdir(exist_ok=True)
+    (tmp_path / "XPU-RT").mkdir(exist_ok=True)
 
     adapter = TorchBenchAdapter()
     status = adapter.prepare_environment(workspace=workspace)
@@ -227,8 +227,8 @@ def test_run_reference_fails_without_model(tmp_path: Path) -> None:
     assert "model_load_failed" in records[0].errors
 
 
-def test_run_compgen_fails_without_model(tmp_path: Path) -> None:
-    """run_compgen should return a failing record when model can't load."""
+def test_run_xpu_rt_fails_without_model(tmp_path: Path) -> None:
+    """run_xpu_rt should return a failing record when model can't load."""
     entry = SuiteManifestEntry(
         suite_id="torchbench",
         workload_id="resnet50",
@@ -236,7 +236,7 @@ def test_run_compgen_fails_without_model(tmp_path: Path) -> None:
         upstream_workload_id="resnet50",
     )
     adapter = TorchBenchAdapter()
-    records = adapter.run_compgen(entry, output_dir=tmp_path)
+    records = adapter.run_xpu_rt(entry, output_dir=tmp_path)
 
     assert len(records) == 1
     assert records[0].status == "fail"

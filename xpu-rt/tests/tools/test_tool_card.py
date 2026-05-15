@@ -1,4 +1,4 @@
-"""Unit tests for :mod:`compgen.tools.tool_card`.
+"""Unit tests for :mod:`xpu_rt.tools.tool_card`.
 
 Coverage:
 
@@ -12,8 +12,8 @@ Coverage:
 from __future__ import annotations
 
 import pytest
-from compgen.tools.errors import ToolCardError
-from compgen.tools.tool_card import (
+from xpu_rt.tools.errors import ToolCardError
+from xpu_rt.tools.tool_card import (
     FORBIDDEN_ACTIONS,
     MATURITY_LEVELS,
     PROMOTION_REQUIREMENT_KEYS,
@@ -26,12 +26,12 @@ from compgen.tools.tool_card import (
 def _minimal_card_body(**overrides):
     body = {
         "schema_version": SCHEMA_VERSION,
-        "tool_id": "compgen_unit_test_tool",
+        "tool_id": "xpu_rt_unit_test_tool",
         "maturity": "T0",
         "phase": "evidence",
         "description": "unit test fixture",
         "entrypoints": {
-            "python": "compgen.tools.builtin.echo:run",
+            "python": "xpu_rt.tools.builtin.echo:run",
         },
         "input_schema": {
             "type": "object",
@@ -55,11 +55,11 @@ def _minimal_card_body(**overrides):
 
 def test_minimal_card_constructs():
     card = ToolCard.from_dict(_minimal_card_body())
-    assert card.tool_id == "compgen_unit_test_tool"
+    assert card.tool_id == "xpu_rt_unit_test_tool"
     assert card.maturity == "T0"
     assert card.maturity_index == 0
     assert card.phase == "evidence"
-    assert card.entrypoints.python == "compgen.tools.builtin.echo:run"
+    assert card.entrypoints.python == "xpu_rt.tools.builtin.echo:run"
 
 
 def test_roundtrip_to_dict_from_dict():
@@ -101,7 +101,7 @@ def test_missing_required_field_rejected():
 
 def test_missing_python_entrypoint_rejected():
     body = _minimal_card_body()
-    body["entrypoints"] = {"cli": "compgen-tool run foo"}
+    body["entrypoints"] = {"cli": "xpu-rt-tool run foo"}
     with pytest.raises(ToolCardError, match="entrypoints.python"):
         ToolCard.from_dict(body)
 
@@ -198,23 +198,23 @@ def test_real_echo_card_loads_from_disk():
 
     from pathlib import Path
 
-    from compgen.tools.tool_registry import load_tool_card
+    from xpu_rt.tools.tool_registry import load_tool_card
 
     path = (
         Path(__file__).resolve().parents[2]
         / "python"
-        / "compgen"
+        / "xpu-rt"
         / "tools"
         / "cards"
         / "echo.yaml"
     )
     card = load_tool_card(path)
-    assert card.tool_id == "compgen_echo"
+    assert card.tool_id == "xpu_rt_echo"
     # together lift echo to T2: Python entrypoint, the
-    # ``compgen tool run`` CLI, and the positive + negative-control
+    # ``xpu_rt tool run`` CLI, and the positive + negative-control
     # tests in this directory.
     assert card.maturity == "T2"
-    assert card.entrypoints.cli == "compgen-tool run compgen_echo"
+    assert card.entrypoints.cli == "xpu-rt-tool run xpu_rt_echo"
     assert card.promotion_requirements.get("unit_tests") is True
     assert card.promotion_requirements.get("negative_controls") is True
     assert card.promotion_requirements.get("cli_wrapper") is True

@@ -15,7 +15,7 @@ the source, allocates real event tensors via
 
 This is the smallest validating test that exercises every Phase-4 +
 Phase-5 component on real silicon. Deferred until a CUDA-built
-``libcompgen_rt.so`` is loadable; on a CPU host the test skips
+``libxpu_rt.so`` is loadable; on a CPU host the test skips
 cleanly.
 """
 
@@ -30,28 +30,28 @@ requires_gpu = pytest.mark.requires_gpu
 
 def _have_native_cuda_runtime() -> bool:
     try:
-        import compgen
+        import xpu_rt
     except Exception:
         return False
-    return bool(compgen.has_cuda_runtime())
+    return bool(xpu_rt.has_cuda_runtime())
 
 
 @requires_gpu
 @pytest.mark.skipif(
     not _have_native_cuda_runtime(),
-    reason="libcompgen_rt-cuda.so not loadable on this host",
+    reason="libxpu_rt-cuda.so not loadable on this host",
 )
 class TestPhase5DiamondMegakernel:
     """Walk a 4-task diamond DAG end-to-end through the Phase-5 pipeline."""
 
     def _build_schedule(self):
-        from compgen.runtime.event_tensor import EventTensor
-        from compgen.runtime.megakernel import (
+        from xpu_rt.runtime.event_tensor import EventTensor
+        from xpu_rt.runtime.megakernel import (
             DeviceCall,
             EventEdge,
             MegakernelGraph,
         )
-        from compgen.transforms.event_static_schedule import compute_static_schedule
+        from xpu_rt.transforms.event_static_schedule import compute_static_schedule
 
         ab = EventTensor((1,), wait_count_default=1)
         ac = EventTensor((1,), wait_count_default=1)
@@ -101,7 +101,7 @@ class TestPhase5DiamondMegakernel:
         return compute_static_schedule(graph, sm_count=2)
 
     def _device_function_bodies(self):
-        from compgen.transforms.emit_cuda_megakernel import DeviceFunctionSource
+        from xpu_rt.transforms.emit_cuda_megakernel import DeviceFunctionSource
 
         # Each body atomically increments its own counter slot. The
         # caller's `buffers[0]` is an int32 array of length 4; the
@@ -123,13 +123,13 @@ class TestPhase5DiamondMegakernel:
         }
 
     def test_diamond_runs_under_one_cooperative_launch(self) -> None:
-        from compgen.runtime.native.cuda import (
+        from xpu_rt.runtime.native.cuda import (
             CudaEventTensor,
             CudaMegakernelLauncher,
             CudaModule,
         )
-        from compgen.runtime.native.device import Device
-        from compgen.transforms.emit_cuda_megakernel import emit_cuda_megakernel
+        from xpu_rt.runtime.native.device import Device
+        from xpu_rt.transforms.emit_cuda_megakernel import emit_cuda_megakernel
 
         schedule = self._build_schedule()
         bodies = self._device_function_bodies()
@@ -160,7 +160,7 @@ class TestPhase5DiamondMegakernel:
         event_ptrs = event_ptr_array_t(*(ctypes.c_void_p(e.device_ptr) for e in events))
         # We stage event_ptrs on device because the persistent kernel
         # treats it as a `long long **`. Use cuMemAlloc + cuMemcpy.
-        from compgen.runtime.native.cuda import _cu_check
+        from xpu_rt.runtime.native.cuda import _cu_check
         from cuda.bindings import driver as cu_driver  # type: ignore
 
         size_bytes = ctypes.sizeof(event_ptrs)

@@ -1,8 +1,8 @@
 """Bridge KernelContract v3 → KernelProvider protocol's v1 KernelContract.
 
 Existing providers (autocomp, exo, megakernel, …) consume the v1
-``compgen.kernels.provider.KernelContract`` dataclass. v3 lives in
-``compgen.kernels.contract_v3.KernelContractV3`` and carries the
+``xpu_rt.kernels.provider.KernelContract`` dataclass. v3 lives in
+``xpu_rt.kernels.contract_v3.KernelContractV3`` and carries the
 sharp-boundary IO + orchestration + execution envelope.
 
 This bridge produces a v1 contract that:
@@ -21,11 +21,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from compgen.kernels.contract_v3 import (
+from xpu_rt.kernels.contract_v3 import (
     KernelContractV3,
     LayoutKind,
 )
-from compgen.kernels.provider import KernelContract as KernelContractV1
+from xpu_rt.kernels.provider import KernelContract as KernelContractV1
 
 
 def _v3_layout_to_v1(layout: LayoutKind) -> str:

@@ -2,7 +2,7 @@
 
 Historically this file contained scaffolded stubs; as of the fifth
 wave, every class here is a real MVP annotation pass (``stub=False``).
-Each walks the module, matches a predicate, attaches a ``compgen.*``
+Each walks the module, matches a predicate, attaches a ``xpu_rt.*``
 attribute recording the decomposition / fusion / lowering strategy
 the follow-up wave will realize, and counts annotations on the module
 itself so callers and tests can observe the diff.
@@ -21,13 +21,13 @@ from typing import Any, ClassVar
 from xdsl.dialects.builtin import ModuleOp
 from xdsl.ir import Operation
 
-from compgen.ir.payload.passes._annot_helpers import (
+from xpu_rt.ir.payload.passes._annot_helpers import (
     annotate_matching_ops,
     op_matches_any_prefix,
     operand_defining_op,
 )
-from compgen.ir.payload.passes.base import PayloadPass
-from compgen.llm.registry import AutocompCostImpact, ToolArg
+from xpu_rt.ir.payload.passes.base import PayloadPass
+from xpu_rt.llm.registry import AutocompCostImpact, ToolArg
 
 # ---------------------------------------------------------------------------
 # Pattern catalogs — shared by multiple passes
@@ -47,7 +47,7 @@ _QUANTIZED_MATMUL_OPS = frozenset(
         "aten._weight_int4pack_mm.default",
         "aten._weight_int4pack_qm.default",
         # opaque-call shapes emitted by the wave-6 decompositions
-        "func.call",  # matched in conjunction with compgen._pattern_hint below
+        "func.call",  # matched in conjunction with xpu_rt._pattern_hint below
     }
 )
 
@@ -106,8 +106,8 @@ _ELEMENTWISE_PREFIXES = ("arith.", "math.", "linalg.elemwise_")
 
 
 def _has_pattern_hint(op, hints: frozenset[str]) -> bool:
-    """Check whether an xDSL op carries a matching ``compgen._pattern_hint``."""
-    attr = op.attributes.get("compgen._pattern_hint")
+    """Check whether an xDSL op carries a matching ``xpu_rt._pattern_hint``."""
+    attr = op.attributes.get("xpu_rt._pattern_hint")
     if attr is None:
         return False
     data = getattr(attr, "data", None)
@@ -175,8 +175,8 @@ class LowerQuantizedMatmul(PayloadPass):
         annotate_matching_ops(
             module,
             match=_match,
-            attr_name="compgen.quant_lower_mode",
-            count_attr="compgen.lower_quantized_matmul.count",
+            attr_name="xpu_rt.quant_lower_mode",
+            count_attr="xpu_rt.lower_quantized_matmul.count",
         )
         return module
 
@@ -221,8 +221,8 @@ class LowerQuantizedConv(PayloadPass):
         annotate_matching_ops(
             module,
             match=_match,
-            attr_name="compgen.quant_lower_mode",
-            count_attr="compgen.lower_quantized_conv.count",
+            attr_name="xpu_rt.quant_lower_mode",
+            count_attr="xpu_rt.lower_quantized_conv.count",
         )
         return module
 
@@ -282,8 +282,8 @@ class PropagateTransposes(PayloadPass):
         annotate_matching_ops(
             module,
             match=_match,
-            attr_name="compgen.transpose_propagation_target",
-            count_attr="compgen.propagate_transposes.count",
+            attr_name="xpu_rt.transpose_propagation_target",
+            count_attr="xpu_rt.propagate_transposes.count",
         )
         return module
 
@@ -324,8 +324,8 @@ class LowerConvToImg2Col(PayloadPass):
         annotate_matching_ops(
             module,
             match=_match,
-            attr_name="compgen.img2col_candidate",
-            count_attr="compgen.lower_conv_to_img2col.count",
+            attr_name="xpu_rt.img2col_candidate",
+            count_attr="xpu_rt.lower_conv_to_img2col.count",
         )
         return module
 
@@ -343,7 +343,7 @@ class RaiseSpecialOps(PayloadPass):
     description: ClassVar[str] = (
         "Walk linalg.generic ops; annotate a recognised special-op pattern "
         "name (softmax / rmsnorm / layernorm / gelu / silu / rope) for the "
-        "destructive-wave raise step. MVP: reads _compgen_pattern metadata "
+        "destructive-wave raise step. MVP: reads _xpu_rt_pattern metadata "
         "already attached by the FX-level detect_and_annotate_patterns."
     )
     covers_families: ClassVar[frozenset[str]] = frozenset()
@@ -364,7 +364,7 @@ class RaiseSpecialOps(PayloadPass):
     def _detect_pattern(self, op: Operation) -> str | None:
         if op.name != "linalg.generic":
             return None
-        tag = op.attributes.get("_compgen_pattern")
+        tag = op.attributes.get("_xpu_rt_pattern")
         if tag is not None:
             text = str(getattr(tag, "data", ""))
             return text or None
@@ -374,8 +374,8 @@ class RaiseSpecialOps(PayloadPass):
         annotate_matching_ops(
             module,
             match=self._detect_pattern,
-            attr_name="compgen.raised_pattern",
-            count_attr="compgen.raise_special_ops.count",
+            attr_name="xpu_rt.raised_pattern",
+            count_attr="xpu_rt.raise_special_ops.count",
         )
         return module
 
@@ -392,7 +392,7 @@ class MatchLibraryCall(PayloadPass):
     autocomp_cost_impact: ClassVar[AutocompCostImpact] = "very_high"
     description: ClassVar[str] = (
         "Match matmul/conv ops against the target's supported_kernel_families. "
-        "Annotate compgen.library_match with the matched family name, or "
+        "Annotate xpu_rt.library_match with the matched family name, or "
         "'no_match' when none fits."
     )
     covers_families: ClassVar[frozenset[str]] = frozenset()
@@ -442,8 +442,8 @@ class MatchLibraryCall(PayloadPass):
         annotate_matching_ops(
             module,
             match=_match,
-            attr_name="compgen.library_match",
-            count_attr="compgen.match_library_call.count",
+            attr_name="xpu_rt.library_match",
+            count_attr="xpu_rt.match_library_call.count",
         )
         return module
 
@@ -459,7 +459,7 @@ class SetNumericsPolicy(PayloadPass):
     wraps_pass: ClassVar[str] = "XLA:FloatNormalization"
     autocomp_cost_impact: ClassVar[AutocompCostImpact] = "high"
     description: ClassVar[str] = (
-        "Walk contraction ops; annotate compgen.numerics_policy with the declared dtype + accumulator combination."
+        "Walk contraction ops; annotate xpu_rt.numerics_policy with the declared dtype + accumulator combination."
     )
     covers_families: ClassVar[frozenset[str]] = frozenset()
     stub: ClassVar[bool] = False
@@ -498,8 +498,8 @@ class SetNumericsPolicy(PayloadPass):
         annotate_matching_ops(
             module,
             match=_match,
-            attr_name="compgen.numerics_policy",
-            count_attr="compgen.set_numerics_policy.count",
+            attr_name="xpu_rt.numerics_policy",
+            count_attr="xpu_rt.set_numerics_policy.count",
         )
         return module
 
@@ -516,7 +516,7 @@ class FoldTransposesIntoDots(PayloadPass):
     autocomp_cost_impact: ClassVar[AutocompCostImpact] = "medium"
     description: ClassVar[str] = (
         "For each linalg.matmul, identify whether lhs/rhs has a transpose "
-        "producer; annotate compgen.fold_candidate with lhs/rhs/both/none."
+        "producer; annotate xpu_rt.fold_candidate with lhs/rhs/both/none."
     )
     covers_families: ClassVar[frozenset[str]] = frozenset({"rvv_cpu", "qualcomm_npu", "qualcomm_dsp", "generic_npu"})
     stub: ClassVar[bool] = False
@@ -540,8 +540,8 @@ class FoldTransposesIntoDots(PayloadPass):
         annotate_matching_ops(
             module,
             match=_match,
-            attr_name="compgen.fold_candidate",
-            count_attr="compgen.fold_transposes_into_dots.count",
+            attr_name="xpu_rt.fold_candidate",
+            count_attr="xpu_rt.fold_transposes_into_dots.count",
         )
         return module
 
@@ -556,7 +556,7 @@ class PlanReduction(PayloadPass):
     phase: ClassVar[int] = 2
     wraps_pass: ClassVar[str] = "XLA:ReductionDimensionGrouper+Splitter+TreeReductionRewriter"
     autocomp_cost_impact: ClassVar[AutocompCostImpact] = "medium"
-    description: ClassVar[str] = "For each reduction op, annotate compgen.reduction_strategy per the declared strategy."
+    description: ClassVar[str] = "For each reduction op, annotate xpu_rt.reduction_strategy per the declared strategy."
     covers_families: ClassVar[frozenset[str]] = frozenset()
     stub: ClassVar[bool] = False
 
@@ -599,8 +599,8 @@ class PlanReduction(PayloadPass):
         annotate_matching_ops(
             module,
             match=_match,
-            attr_name="compgen.reduction_strategy",
-            count_attr="compgen.plan_reduction.count",
+            attr_name="xpu_rt.reduction_strategy",
+            count_attr="xpu_rt.plan_reduction.count",
         )
         return module
 
@@ -616,7 +616,7 @@ class FuseSoftmaxToTriton(PayloadPass):
     wraps_pass: ClassVar[str] = "XLA:SoftmaxRewriterTriton"
     autocomp_cost_impact: ClassVar[AutocompCostImpact] = "very_high"
     description: ClassVar[str] = (
-        "Identify softmax-shaped ops; annotate compgen.triton_softmax_candidate "
+        "Identify softmax-shaped ops; annotate xpu_rt.triton_softmax_candidate "
         "so the destructive wave can fuse to a Triton kernel."
     )
     covers_families: ClassVar[frozenset[str]] = frozenset()
@@ -626,7 +626,7 @@ class FuseSoftmaxToTriton(PayloadPass):
         def _match(op: Operation) -> str | None:
             if op.name != "linalg.generic":
                 return None
-            tag = op.attributes.get("_compgen_pattern")
+            tag = op.attributes.get("_xpu_rt_pattern")
             if tag is None:
                 return None
             text = str(getattr(tag, "data", ""))
@@ -637,8 +637,8 @@ class FuseSoftmaxToTriton(PayloadPass):
         annotate_matching_ops(
             module,
             match=_match,
-            attr_name="compgen.triton_softmax_candidate",
-            count_attr="compgen.fuse_softmax_to_triton.count",
+            attr_name="xpu_rt.triton_softmax_candidate",
+            count_attr="xpu_rt.fuse_softmax_to_triton.count",
         )
         return module
 
@@ -655,7 +655,7 @@ class FuseDequantMatmul(PayloadPass):
     autocomp_cost_impact: ClassVar[AutocompCostImpact] = "very_high"
     description: ClassVar[str] = (
         "For each matmul, check if any operand has a dequant-shaped producer. "
-        "Annotate compgen.dequant_fuse_candidate accordingly."
+        "Annotate xpu_rt.dequant_fuse_candidate accordingly."
     )
     covers_families: ClassVar[frozenset[str]] = frozenset()
     stub: ClassVar[bool] = False
@@ -676,7 +676,7 @@ class FuseDequantMatmul(PayloadPass):
     def _is_dequant_shaped(self, op: Operation | None) -> bool:
         if op is None or op.name != "linalg.generic":
             return False
-        tag = op.attributes.get("_compgen_pattern")
+        tag = op.attributes.get("_xpu_rt_pattern")
         if tag is None:
             return False
         text = str(getattr(tag, "data", "")).lower()
@@ -699,8 +699,8 @@ class FuseDequantMatmul(PayloadPass):
         annotate_matching_ops(
             module,
             match=_match,
-            attr_name="compgen.dequant_fuse_candidate",
-            count_attr="compgen.fuse_dequant_matmul.count",
+            attr_name="xpu_rt.dequant_fuse_candidate",
+            count_attr="xpu_rt.fuse_dequant_matmul.count",
         )
         return module
 

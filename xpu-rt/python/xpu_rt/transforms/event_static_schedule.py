@@ -18,7 +18,7 @@ Design:
   :meth:`MegakernelGraph.plan_static` helper — no logic duplication.
 - Task costs: caller supplies ``cost_hint_us`` per device-function
   name (typically from
-  :func:`compgen.kernels.cost.roofline.predict`); absent hints
+  :func:`xpu_rt.kernels.cost.roofline.predict`); absent hints
   default to 1.0 µs so every task weighs equally. Round-robin
   partitioning respects cumulative cost so SM loads stay balanced.
 
@@ -53,8 +53,8 @@ from typing import Any
 
 import structlog
 
-from compgen.runtime.event_tensor import EventTensor
-from compgen.runtime.megakernel import DeviceCall, EventEdge, MegakernelGraph, _Task
+from xpu_rt.runtime.event_tensor import EventTensor
+from xpu_rt.runtime.megakernel import DeviceCall, EventEdge, MegakernelGraph, _Task
 
 log = structlog.get_logger(__name__)
 
@@ -218,7 +218,7 @@ def compute_static_schedule(
 
     Args:
         graph: A :class:`MegakernelGraph` (usually from
-            :func:`compgen.ir.event.lower.lower_graph_op`).
+            :func:`xpu_rt.ir.event.lower.lower_graph_op`).
         sm_count: Number of SMs on the target device. Every task
             lands on exactly one SM; partitioning is cost-weighted
             round-robin over the topo order.
@@ -249,8 +249,8 @@ def compute_static_schedule(
     if sm_count is None:
         raise ValueError(
             "compute_static_schedule(sm_count=...) is required; pass an "
-            "int (typically from compgen.runtime.autotune.probe_device "
-            "or compgen.api._resolve_sm_count_for_target). Per bridge "
+            "int (typically from xpu_rt.runtime.autotune.probe_device "
+            "or xpu_rt.api._resolve_sm_count_for_target). Per bridge "
             "#131: a fresh-lowered MegakernelGraph doesn't carry an "
             "sm_count — that's resolved at schedule time, not at lower."
         )

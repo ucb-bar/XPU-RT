@@ -8,12 +8,12 @@ Uses the multi_device.yaml profile (CPU + GPU).
 
 from __future__ import annotations
 
-from compgen.runtime.planner import ExecutionPlan, plan_execution
-from compgen.solve.memory import BufferLifetime, solve_memory
-from compgen.solve.partition import partition_graph
-from compgen.solve.placement import solve_placement
-from compgen.solve.schedule import solve_schedule
-from compgen.targets.schema import load_profile
+from xpu_rt.runtime.planner import ExecutionPlan, plan_execution
+from xpu_rt.solve.memory import BufferLifetime, solve_memory
+from xpu_rt.solve.partition import partition_graph
+from xpu_rt.solve.placement import solve_placement
+from xpu_rt.solve.schedule import solve_schedule
+from xpu_rt.targets.schema import load_profile
 from xdsl.dialects import arith, func
 from xdsl.dialects.builtin import IndexType, ModuleOp
 from xdsl.ir import Block, Region

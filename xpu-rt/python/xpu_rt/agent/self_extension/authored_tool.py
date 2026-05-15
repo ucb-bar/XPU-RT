@@ -1,8 +1,8 @@
 """LLM-authored tool descriptor + trial record schema.
 
 An :class:`AuthoredTool` carries the information needed to drive
-a trial through :mod:`~compgen.agent.self_extension.sandbox` and to
-materialise a live :class:`~compgen.llm.registry.Tool` once the
+a trial through :mod:`~xpu_rt.agent.self_extension.sandbox` and to
+materialise a live :class:`~xpu_rt.llm.registry.Tool` once the
 graduation thresholds are met. Every record in the trial JSONL log
 serialises an :class:`AuthoredToolTrial`.
 
@@ -11,7 +11,7 @@ The author (LLM or human) provides:
 * ``source`` — the Python source blob.
 * ``entry_name`` — the function to invoke (usually equals the tool
   name for clarity).
-* ``args`` / ``result`` — typed schema matching :class:`~compgen.llm.registry.Tool`.
+* ``args`` / ``result`` — typed schema matching :class:`~xpu_rt.llm.registry.Tool`.
 
 Everything else (scoring, gate integration, promotion) lives in sibling
 modules.
@@ -46,7 +46,7 @@ class AuthoredToolSource:
 class AuthoredTool:
     """Typed descriptor for an LLM-authored tool candidate.
 
-    Mirrors :class:`compgen.llm.registry.Tool` on the fields that
+    Mirrors :class:`xpu_rt.llm.registry.Tool` on the fields that
     matter for graduation. The ``source`` carries the authored code;
     promotion turns it into a registered ``Tool`` whose ``impl`` calls
     back into the sandboxed entry point.
@@ -81,7 +81,7 @@ class AuthoredTool:
 class AuthoredToolTrial:
     """One pass/fail record written to the trial JSONL log.
 
-    Mirrors the shape of :class:`~compgen.llm.recorder.ToolCallRecord`
+    Mirrors the shape of :class:`~xpu_rt.llm.recorder.ToolCallRecord`
     so the same observability primitives apply, but the schema is
     distinct — graduation for authored tools has its own criteria.
     """

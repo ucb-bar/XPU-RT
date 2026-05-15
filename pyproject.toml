@@ -1,12 +1,12 @@
 [project]
-name = "compgen"
+name = "xpu-rt"
 version = "0.2.0"
 description = "An LLM-driven compiler generator for heterogeneous hardware targets"
 readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.11"
 authors = [
-    { name = "CompGen Contributors" },
+    { name = "XPU-RT Contributors" },
 ]
 keywords = ["compiler", "mlir", "llm", "heterogeneous", "code-generation"]
 classifiers = [
@@ -21,7 +21,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 
-# MCP is a first-class entry point; users reach CompGen through Claude Code by
+# MCP is a first-class entry point; users reach XPU-RT through Claude Code by
 # default, so the MCP SDK ships in base. torch/xdsl stay in base for now
 # because almost every MCP tool transitively exercises the compile path; the
 # `[compile]` extra exists as a forward-compatible alias for a future lean
@@ -63,7 +63,7 @@ solve = [
     "numpy>=1.26",
 ]
 # Optional licensed MILP backend. The repo-local mosek.lic is auto-
-# picked up by compgen.solve.backends.mosek_backend. Without this
+# picked up by xpu_rt.solve.backends.mosek_backend. Without this
 # extra, memory-planner falls back to HiGHS for LP/MILP cases.
 solve-mosek = [
     "mosek>=10.1",
@@ -73,17 +73,17 @@ quantization = [
 ]
 # CUDA dispatch path for the Event Tensor Compiler runtime.
 # Pulls cuda-python (which ships the Tile IR Python builder used by
-# `compgen.transforms.emit_cuda_megakernel`) plus NVIDIA's runtime libs
+# `xpu_rt.transforms.emit_cuda_megakernel`) plus NVIDIA's runtime libs
 # so callers don't need a system CUDA toolkit. NVRTC is statically
-# linked into libcompgen_rt — no separate nvcc dependency at install
-# time. Wheel ships a prebuilt `libcompgen_rt-cuda.so` for this extra.
+# linked into libxpu_rt — no separate nvcc dependency at install
+# time. Wheel ships a prebuilt `libxpu_rt-cuda.so` for this extra.
 #
 # cu13 NVRTC: required for Blackwell tensor-core paths since
 # `__CUDA_ARCH__ == 1000` is needed for cuBLASDx's tcgen05.mma /
 # mma.sync dispatchers (per bridge #089/#095). cu12 NVRTC silently
 # falls back to SIMT on sm_100/sm_120, killing the perf gate.
 # Pinned defensively here so `pip install --force-reinstall
-# 'compgen[cuda]'` doesn't tear down torch's cu13 deps and break
+# 'xpu_rt[cuda]'` doesn't tear down torch's cu13 deps and break
 # the cu13 NVRTC discovery (per bridge #099).
 cuda = [
     "cuda-python>=12.6",
@@ -94,7 +94,7 @@ cuda = [
     # package nvidia-cuda-nvrtc-cu13 is a placeholder (0.0.1) so
     # we can't pin a real version; pulling torch>=2.6 is the
     # actual mechanism. Listed here without version pin so a
-    # ``--force-reinstall`` of compgen still names the dep.
+    # ``--force-reinstall`` of xpu_rt still names the dep.
     "nvidia-cuda-nvrtc-cu13; sys_platform == 'linux'",
     "numpy>=1.26",
 ]
@@ -102,14 +102,14 @@ cuda = [
 # Tile-IR template. NOT a fallback for missing Tile IR — Tile IR is
 # the primary lowering and `[cuda]` already pulls it.
 cuda-triton = [
-    "compgen[cuda]",
+    "xpu_rt[cuda]",
     "triton>=3.0.0",
 ]
 # Blackwell-class hardware: enables the multi-GPU NCCL-inside-megakernel
 # path (Phase 4b). Requires NCCL 2.22+ for user-buffer registration on
 # Blackwell. cuDNN ships for the kernel templates that opt into it.
 blackwell = [
-    "compgen[cuda]",
+    "xpu_rt[cuda]",
     "nvidia-nccl-cu12>=2.22",
     "nvidia-cudnn-cu12>=9.3",
 ]
@@ -133,7 +133,7 @@ compile = [
     "torch>=2.4",
     "xdsl>=0.24",
 ]
-# Kernel-search backends. `compgen-autocomp` is published separately; until
+# Kernel-search backends. `xpu_rt-autocomp` is published separately; until
 # then users pick it up via the dev bootstrap (`scripts/dev-bootstrap.sh`).
 kernels = [
 ]
@@ -158,7 +158,7 @@ kernelblaster-sidecar = [
 # only when actually exercising the RL flow (`scripts/dev/
 # run_kernelblaster_evidence.py`).
 kernelblaster-rl = [
-    "compgen[kernelblaster-sidecar]",
+    "xpu_rt[kernelblaster-sidecar]",
     "langchain>=0.3,<0.4",
     "langchain-community>=0.3,<0.4",
     "langgraph>=0.2,<0.3",
@@ -173,60 +173,60 @@ demo = [
 ]
 
 [project.scripts]
-compgen = "compgen.cli:main"
-compgen-mcp = "compgen.mcp.server:main"
-compgen-run-conformance = "compgen.testing.etc_conformance:_cli"
-compgen-gemini-usage = "compgen.observability.cli:main"
-# Generic ToolCard runner. Alias for ``compgen tool …`` so every
+xpu_rt = "xpu_rt.cli:main"
+xpu-rt-mcp = "xpu_rt.mcp.server:main"
+xpu-rt-run-conformance = "xpu_rt.testing.etc_conformance:_cli"
+xpu-rt-gemini-usage = "xpu_rt.observability.cli:main"
+# Generic ToolCard runner. Alias for ``xpu_rt tool …`` so every
 # registered tool gets a stable, audit-checkable CLI entry.
-compgen-tool = "compgen.cli:tool_main"
+xpu-rt-tool = "xpu_rt.cli:tool_main"
 
-# Entry-point groups CompGen discovers at startup. Each group is declared
+# Entry-point groups XPU-RT discovers at startup. Each group is declared
 # here (even when empty in-repo) so user packages can rely on a stable name
 # and `pip show` surfaces the hook points. See docs/reference/extension-points.md.
 #
 # User-space vendor MLIR dialect adapters.
-[project.entry-points."compgen.vendor_dialects"]
+[project.entry-points."xpu_rt.vendor_dialects"]
 
-# User KernelProvider implementations (see compgen.plugins.GROUP_KERNEL_PROVIDERS).
-[project.entry-points."compgen.kernels.providers"]
+# User KernelProvider implementations (see xpu_rt.plugins.GROUP_KERNEL_PROVIDERS).
+[project.entry-points."xpu_rt.kernels.providers"]
 
-# User FX-decomposition functions (see compgen.plugins.GROUP_DECOMPOSITIONS).
-[project.entry-points."compgen.transforms.decompositions"]
+# User FX-decomposition functions (see xpu_rt.plugins.GROUP_DECOMPOSITIONS).
+[project.entry-points."xpu_rt.transforms.decompositions"]
 
-# User fusion-rule predicates (see compgen.plugins.GROUP_FUSION_RULES).
-[project.entry-points."compgen.kernels.fusion_rules"]
+# User fusion-rule predicates (see xpu_rt.plugins.GROUP_FUSION_RULES).
+[project.entry-points."xpu_rt.kernels.fusion_rules"]
 
-# User TargetBackendProtocol implementations (see compgen.plugins.GROUP_TARGET_BACKENDS).
-[project.entry-points."compgen.targets.backends"]
+# User TargetBackendProtocol implementations (see xpu_rt.plugins.GROUP_TARGET_BACKENDS).
+[project.entry-points."xpu_rt.targets.backends"]
 
-# User KernelContractV3 factories (see compgen.plugins.GROUP_KERNEL_CONTRACTS).
-[project.entry-points."compgen.kernels.contracts"]
+# User KernelContractV3 factories (see xpu_rt.plugins.GROUP_KERNEL_CONTRACTS).
+[project.entry-points."xpu_rt.kernels.contracts"]
 
 [project.urls]
-Homepage = "https://github.com/compgen-project/compgen"
-Documentation = "https://github.com/compgen-project/compgen/tree/main/docs"
-Repository = "https://github.com/compgen-project/compgen"
-Issues = "https://github.com/compgen-project/compgen/issues"
+Homepage = "https://github.com/xpu_rt-project/xpu_rt"
+Documentation = "https://github.com/xpu_rt-project/xpu_rt/tree/main/docs"
+Repository = "https://github.com/xpu_rt-project/xpu_rt"
+Issues = "https://github.com/xpu_rt-project/xpu_rt/issues"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["python/compgen"]
+packages = ["python/xpu_rt"]
 # Include compiled artifacts (`.so`, `.dylib`, `.dll`) from the prebuilt
 # native runtime directory. Without this list, hatch's default file-include
 # pattern strips compiled binaries as build artifacts. The CMake build is
 # run as a pre-step (see Makefile target `build-cuda-rt` and
-# .github/workflows/release.yml) which stages libcompgen_rt-{cuda,cpu}.{so,dylib,dll}
-# under python/compgen/runtime/native/prebuilt/. When the dir holds only
+# .github/workflows/release.yml) which stages libxpu_rt-{cuda,cpu}.{so,dylib,dll}
+# under python/xpu_rt/runtime/native/prebuilt/. When the dir holds only
 # the placeholder README, the wheel ships pure-Python — the [cuda] extra
 # raises a typed error at import time in that case.
 artifacts = [
-    "python/compgen/runtime/native/prebuilt/*.so",
-    "python/compgen/runtime/native/prebuilt/*.dylib",
-    "python/compgen/runtime/native/prebuilt/*.dll",
+    "python/xpu_rt/runtime/native/prebuilt/*.so",
+    "python/xpu_rt/runtime/native/prebuilt/*.dylib",
+    "python/xpu_rt/runtime/native/prebuilt/*.dll",
 ]
 
 [tool.ruff]
@@ -253,7 +253,7 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 # npu_contracts emits a Python-3.12-only f-string escape; ignored until rewritten.
-"python/compgen/kernels/providers/npu_contracts.py" = ["F821"]
+"python/xpu_rt/kernels/providers/npu_contracts.py" = ["F821"]
 
 [tool.mypy]
 python_version = "3.11"

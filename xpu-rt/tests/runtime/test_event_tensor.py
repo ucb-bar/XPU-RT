@@ -24,7 +24,7 @@ import time
 
 import pytest
 import torch
-from compgen.runtime.event_tensor import EventTensor, persistent_launch
+from xpu_rt.runtime.event_tensor import EventTensor, persistent_launch
 
 # ---------------------------------------------------------------------------
 # EventTensor — primitive correctness

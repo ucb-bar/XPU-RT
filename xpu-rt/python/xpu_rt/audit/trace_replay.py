@@ -46,7 +46,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from compgen.audit.errors import (
+from xpu_rt.audit.errors import (
     DecisionIdMismatch,
     ReplayHashMismatch,
 )
@@ -170,7 +170,7 @@ def compute_input_hashes(
         for name, path in _input_paths(run_dir).items()
     }
     if promotion_library is None:
-        promotion_library = Path(".compgen_cache") / "recipes"
+        promotion_library = Path(".xpu_rt_cache") / "recipes"
     hashes["promotion_library_state"] = _sha256_dir_contents(promotion_library)
     return hashes
 
@@ -305,7 +305,7 @@ def replay(
             For a same-run replay this is the run that emitted the trace;
             for cross-run replay it is a regenerated run dir.
         promotion_library: Path to the recipe library whose state should
-            match. Defaults to ``.compgen_cache/recipes/``.
+            match. Defaults to ``.xpu_rt_cache/recipes/``.
         strict: When True, raises :class:`ReplayHashMismatch` on any
             mismatch. When False, returns the report and lets the caller
             inspect deltas.

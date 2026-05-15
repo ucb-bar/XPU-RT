@@ -10,7 +10,7 @@ These match the hardware spec in ``third_party/npu_model/``.
 
 from __future__ import annotations
 
-from compgen.runtime.memory_layout import MemoryRegion
+from xpu_rt.runtime.memory_layout import MemoryRegion
 
 # NPU address spaces (from npu_model/configs/hardware/default.py)
 NPU_DRAM_BASE = 0x80000000

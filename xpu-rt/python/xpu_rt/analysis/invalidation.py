@@ -7,14 +7,14 @@ one after — and asks this module:
 1. Which summaries actually mutated, appeared, or were removed?
 2. Are those mutations covered by the pass's declared ``invalidates``
    list (and the transitive closure in
-   :data:`compgen.analysis.checkpoints.KNOWN_SUMMARIES`)?
+   :data:`xpu_rt.analysis.checkpoints.KNOWN_SUMMARIES`)?
 3. Is there a mutation the pass *did not declare*? That is the
    "lying pass" failure mode — the pass mutated a summary the
    invalidation tracker would not flag stale on the consumer side.
 
 If a mutation is not covered, :func:`assert_invalidations_match_claim`
-raises :class:`compgen.audit.errors.UnannouncedInvalidation` (which
-:class:`compgen.audit.errors.StaleAnalysisAudit` aliases for backward
+raises :class:`xpu_rt.audit.errors.UnannouncedInvalidation` (which
+:class:`xpu_rt.audit.errors.StaleAnalysisAudit` aliases for backward
 compatibility with negative controls).
 """
 
@@ -26,13 +26,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
 
-from compgen.analysis.checkpoints import (
+from xpu_rt.analysis.checkpoints import (
     KNOWN_SUMMARIES,
     AnalysisIndex,
     AnalysisSummaryError,
     assert_resolvable,
 )
-from compgen.audit.errors import UnannouncedInvalidation
+from xpu_rt.audit.errors import UnannouncedInvalidation
 
 
 @dataclass(frozen=True)
@@ -242,7 +242,7 @@ class SummaryRead:
     """One summary read as observed by a consumer.
 
     Records the generation the consumer observed when it read the
-    summary. raises :class:`compgen.audit.errors.StaleAnalysisAudit`
+    summary. raises :class:`xpu_rt.audit.errors.StaleAnalysisAudit`
     when a later read at a lower generation is detected — i.e. the
     invalidation log has bumped the generation past what the consumer
     saw.
@@ -333,7 +333,7 @@ def assert_no_stale_reads(
     avoids false positives: if a consumer reads gen=0 and the run
     just hasn't bumped the summary, there's no stale read.
     """
-    from compgen.audit.errors import StaleAnalysisAudit
+    from xpu_rt.audit.errors import StaleAnalysisAudit
 
     reads = load_read_log(run_dir)
     if not reads:

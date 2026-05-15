@@ -2,7 +2,7 @@
 
 Port of hexagon-mlir's two-stage pair
 ``DoubleBufferGenericS1.cpp`` + ``DoubleBufferGenericS2.cpp``. Zero
-external references; CompGen owns the rewrite.
+external references; XPU-RT owns the rewrite.
 
 Stage 1 (``_introduce_double_buffers``):
 
@@ -29,7 +29,7 @@ Re-labels every ping/pong copy edge with a
 group. This is what hexagon-mlir's S2 does via
 ``memref.dma_start`` + ``memref.dma_wait``.
 
-The pass is idempotent via the ``compgen.dma_overlap_applied``
+The pass is idempotent via the ``xpu_rt.dma_overlap_applied``
 tag on each processed copy edge (stored in
 ``plan.summary["dma_overlap_applied"]``).
 
@@ -42,7 +42,7 @@ Config:
 LLM-tool signature:
 
     tool_name="dma_overlap"
-    wraps_pass="CompGen:HexagonDoubleBufferGenericS1+S2"
+    wraps_pass="XPU-RT:HexagonDoubleBufferGenericS1+S2"
     invent_slot="runtime/dma_overlap"
     policy="DoubleBufferAboveThreshold"
 """
@@ -51,7 +51,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from compgen.runtime.execution_plan import (
+from xpu_rt.runtime.execution_plan import (
     BufferDescriptor,
     CopyEdge,
     ExecutionPlan,

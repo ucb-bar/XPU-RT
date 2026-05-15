@@ -369,7 +369,7 @@ def introspect_dialect(
     """
     name = dialect.name
     prefix = _dialect_prefix(name)
-    cpp_ns = "compgen::" + name.replace(".", "_")
+    cpp_ns = "xpu_rt::" + name.replace(".", "_")
 
     info = DialectInfo(
         name=name,
@@ -395,7 +395,7 @@ def introspect_dialect(
 
 
 # ---------------------------------------------------------------------------
-# Convenience: introspect well-known CompGen dialects
+# Convenience: introspect well-known XPU-RT dialects
 # ---------------------------------------------------------------------------
 
 
@@ -409,9 +409,9 @@ def introspect_layout_dialect() -> DialectInfo:
     """Introspect the Layout IR dialect."""
     _ensure_recipe_base_registered()
 
-    from compgen.ir.layout.attrs import LayoutEncodingAttr, PackSpecAttr
-    from compgen.ir.layout.dialect import Layout
-    from compgen.ir.layout.ops import PackOp, SetLayoutOp, UnpackOp, UnsetLayoutOp
+    from xpu_rt.ir.layout.attrs import LayoutEncodingAttr, PackSpecAttr
+    from xpu_rt.ir.layout.dialect import Layout
+    from xpu_rt.ir.layout.ops import PackOp, SetLayoutOp, UnpackOp, UnsetLayoutOp
 
     return introspect_dialect(
         Layout,
@@ -424,9 +424,9 @@ def introspect_tile_dialect() -> DialectInfo:
     """Introspect the Tile IR dialect."""
     _ensure_recipe_base_registered()
 
-    from compgen.ir.tile.attrs import FragmentLayoutAttr, MemoryClassAttr, TileShapeAttr
-    from compgen.ir.tile.dialect import Tile
-    from compgen.ir.tile.ops import (
+    from xpu_rt.ir.tile.attrs import FragmentLayoutAttr, MemoryClassAttr, TileShapeAttr
+    from xpu_rt.ir.tile.dialect import Tile
+    from xpu_rt.ir.tile.ops import (
         TileAsyncCopyOp,
         TileBarrierOp,
         TileElementwiseOp,
@@ -453,8 +453,8 @@ def introspect_tile_dialect() -> DialectInfo:
 
 def introspect_accel_dialect() -> DialectInfo:
     """Introspect the Accel IR dialect."""
-    from compgen.ir.accel.dialect import AccelDialect
-    from compgen.ir.accel.ops import (
+    from xpu_rt.ir.accel.dialect import AccelDialect
+    from xpu_rt.ir.accel.ops import (
         AccelBarrierIROp,
         AccelDMAStartIROp,
         AccelDMAWaitIROp,
@@ -479,11 +479,11 @@ def introspect_accel_dialect() -> DialectInfo:
 
 def introspect_recipe_base() -> DialectInfo:
     """Introspect shared Recipe IR attributes (ProvenanceAttr, DeviceRefAttr)."""
-    from compgen.ir.recipe.attrs import DeviceRefAttr, ProvenanceAttr
+    from xpu_rt.ir.recipe.attrs import DeviceRefAttr, ProvenanceAttr
 
     info = DialectInfo(
         name="recipe_base",
-        cpp_namespace="compgen::recipe_base",
+        cpp_namespace="xpu_rt::recipe_base",
         prefix="RecipeBase",
     )
     info.attrs.append(introspect_attr(ProvenanceAttr, "RecipeBase"))

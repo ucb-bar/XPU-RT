@@ -12,7 +12,7 @@ from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader
 
-from compgen.extensions.mlir_cppgen.introspect import DialectInfo
+from xpu_rt.extensions.mlir_cppgen.introspect import DialectInfo
 
 _TEMPLATE_DIR = Path(__file__).parent / "templates"
 

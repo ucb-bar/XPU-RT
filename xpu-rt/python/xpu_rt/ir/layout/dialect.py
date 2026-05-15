@@ -7,8 +7,8 @@ from __future__ import annotations
 
 from xdsl.ir import Dialect
 
-from compgen.ir.layout.attrs import LayoutEncodingAttr, PackSpecAttr
-from compgen.ir.layout.ops import (
+from xpu_rt.ir.layout.attrs import LayoutEncodingAttr, PackSpecAttr
+from xpu_rt.ir.layout.ops import (
     PackOp,
     SetLayoutOp,
     UnpackOp,

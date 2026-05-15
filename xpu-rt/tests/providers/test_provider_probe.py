@@ -7,17 +7,17 @@ from pathlib import Path
 
 import pytest
 
-from compgen.dialects.dialect_provider_types import DialectProviderCard
-from compgen.providers.card_loader import (
+from xpu_rt.dialects.dialect_provider_types import DialectProviderCard
+from xpu_rt.providers.card_loader import (
     iter_dialect_cards,
     iter_provider_cards,
 )
-from compgen.providers.provider_probe import (
+from xpu_rt.providers.provider_probe import (
     probe_dialect_provider,
     probe_provider,
 )
-from compgen.providers.provider_reports import write_probe_reports
-from compgen.providers.provider_types import (
+from xpu_rt.providers.provider_reports import write_probe_reports
+from xpu_rt.providers.provider_types import (
     BLOCKED_REASONS,
     PROBE_STATUSES,
     ProviderCard,

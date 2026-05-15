@@ -1,7 +1,7 @@
 claim: |
   Every analysis summary the pipeline emits — at every IR level (FX,
   Payload, Graph, Recipe, Semantic, Tile, Kernel, Plan, Runtime) — is
-  registered in compgen.analysis.checkpoints.KNOWN_SUMMARIES with a
+  registered in xpu_rt.analysis.checkpoints.KNOWN_SUMMARIES with a
   stable id, declared dependencies, and the canonical artifact path.
   AnalysisIndex.from_run_dir walks a finished run, computes a
   content_hash for each summary, marks availability, and surfaces the
@@ -18,9 +18,9 @@ forbidden:
 - one-level-only analysis (FX-only)
 realness_level: production_path
 required_evidence:
-- python/compgen/analysis/checkpoints.py
-- python/compgen/passes/cards.py (invalidates cross-link)
-- python/compgen/graph_compilation/agent_decision.py (analysis_summaries block)
+- python/xpu_rt/analysis/checkpoints.py
+- python/xpu_rt/passes/cards.py (invalidates cross-link)
+- python/xpu_rt/graph_compilation/agent_decision.py (analysis_summaries block)
 - tests/analysis/test_checkpoints.py
 - tests/passes/test_pass_card.py (invalidates-cross-link tests)
 - agent_decision_request.json on a real run carries analysis_summaries (verified on merlin_mlp_wide; 37 summaries known, 32 available, 7 levels)

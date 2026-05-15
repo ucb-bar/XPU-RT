@@ -4,7 +4,7 @@ display_name: Layout pipeline (4/10) — propagate layout encodings
 level: payload
 family: layout_pipeline
 source: homemade
-impl_path: python/compgen/transforms/layout/propagate_layouts.py
+impl_path: python/xpu_rt/transforms/layout/propagate_layouts.py
 reads:
   - 01_payload_lowering/payload.mlir
 writes:
@@ -24,7 +24,7 @@ cost: medium
 failure_modes:
   - "incompatible_consumer_layout"
   - "encoding_propagation_diverges"
-mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+mcp_tool: mcp__xpu_rt__xpu_rt_emit_agent_decision_request
 notes: |
   Layout pipeline step 4: pushes virtual encodings through transparent
   ops (broadcasts, elementwise) so the encoding flows from producer

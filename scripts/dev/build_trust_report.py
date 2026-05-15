@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Build the CompGen trust report.
+"""Build the XPU-RT trust report.
 
 Usage::
 
@@ -13,7 +13,7 @@ report records them honestly).
 
 from __future__ import annotations
 
-from compgen.audit.trust_report import _cli_main
+from xpu_rt.audit.trust_report import _cli_main
 
 if __name__ == "__main__":
     raise SystemExit(_cli_main())

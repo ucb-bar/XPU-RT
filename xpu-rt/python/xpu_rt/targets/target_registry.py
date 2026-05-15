@@ -1,7 +1,7 @@
 """spec'd target-registry path.
 
 Re-exports the /card-driven target catalog. The legacy
-``compgen.targets.registry`` module is preserved for backward
+``xpu_rt.targets.registry`` module is preserved for backward
 compatibility with capture+lower; this module is the Phase F
 extension surface.
 """
@@ -10,8 +10,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from compgen.providers.card_loader import iter_target_cards
-from compgen.targets.target_types import TargetCard
+from xpu_rt.providers.card_loader import iter_target_cards
+from xpu_rt.targets.target_types import TargetCard
 
 
 @dataclass

@@ -1,11 +1,11 @@
-"""Semantics loader for CompGen's custom dialects.
+"""Semantics loader for XPU-RT's custom dialects.
 
-Registers Z3-lowering functions for CompGen's Tile IR, Accel dialect,
+Registers Z3-lowering functions for XPU-RT's Tile IR, Accel dialect,
 and other custom ops so they can participate in translation validation.
 
-This is the CompGen-side equivalent of the artifact's
+This is the XPU-RT-side equivalent of the artifact's
 ``load_vanilla_semantics()`` — it extends the ArithZ3Lowerer with
-handlers for CompGen-specific operations.
+handlers for XPU-RT-specific operations.
 """
 
 from __future__ import annotations
@@ -21,8 +21,8 @@ log = structlog.get_logger()
 _COMPGEN_OP_HANDLERS: dict[type, Any] = {}
 
 
-def register_compgen_semantics() -> None:
-    """Register CompGen dialect semantics with the ArithZ3Lowerer.
+def register_xpu_rt_semantics() -> None:
+    """Register XPU-RT dialect semantics with the ArithZ3Lowerer.
 
     Call this once at startup to make Tile/Accel ops verifiable.
     Currently a stub — filled in Phase 6.
@@ -46,4 +46,4 @@ def get_op_handler(op_type: type) -> Any | None:
     return _COMPGEN_OP_HANDLERS.get(op_type)
 
 
-__all__ = ["get_op_handler", "register_compgen_semantics", "register_op_handler"]
+__all__ = ["get_op_handler", "register_xpu_rt_semantics", "register_op_handler"]

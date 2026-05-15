@@ -3,7 +3,7 @@
 Verifies:
 
 - Default OFF (no env var): no region-level artifact emitted.
-- With ``COMPGEN_RUN_KERNELS=1`` on a multi-matmul model
+- With ``XPU_RT_RUN_KERNELS=1`` on a multi-matmul model
   (merlin_mlp_wide has 3 matmul regions): the report covers ALL of
   them, each with a per-region GPU + CPU track.
 - Each region's tile is the lowest-cost legal SetTileParams
@@ -42,14 +42,14 @@ def _read(p: Path) -> dict:
 def _run(model: str, out_dir: Path, *, run_kernels: bool) -> None:
     env = os.environ.copy()
     if run_kernels:
-        env["COMPGEN_RUN_KERNELS"] = "1"
+        env["XPU_RT_RUN_KERNELS"] = "1"
     else:
-        env.pop("COMPGEN_RUN_KERNELS", None)
-    env.pop("COMPGEN_CALIBRATE_PROFILER", None)
-    env.pop("COMPGEN_CALIBRATE_CANDIDATES", None)
+        env.pop("XPU_RT_RUN_KERNELS", None)
+    env.pop("XPU_RT_CALIBRATE_PROFILER", None)
+    env.pop("XPU_RT_CALIBRATE_CANDIDATES", None)
     subprocess.run(
         [
-            sys.executable, "-m", "compgen.graph_compilation", "run",
+            sys.executable, "-m", "xpu_rt.graph_compilation", "run",
             "--model", str(REPO_ROOT / f"configs/models/{model}.yaml"),
             "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
             "--out", str(out_dir),
@@ -239,7 +239,7 @@ def test_summary_classification_counts_consistent(kernels_run: Path) -> None:
 def test_m15b_detector_includes_compiled_kernel_check() -> None:
     """The downstream-retry detector must include the report so
     kernel-level fails would trigger retry."""
-    from compgen.graph_compilation.downstream_retry import _DOWNSTREAM_REPORTS
+    from xpu_rt.graph_compilation.downstream_retry import _DOWNSTREAM_REPORTS
 
     stages = {entry[0] for entry in _DOWNSTREAM_REPORTS}
     assert "region_compiled_differential" in stages
@@ -294,7 +294,7 @@ def test_fx_artifacts_unchanged_when_m20_reruns(no_kernels_run: Path) -> None:
     }
     assert before
 
-    from compgen.graph_compilation.kernel_region_differential import (
+    from xpu_rt.graph_compilation.kernel_region_differential import (
         run_region_compiled_differential,
     )
     run_region_compiled_differential(no_kernels_run)
@@ -340,7 +340,7 @@ def test_handles_missing_inputs(tmp_path: Path) -> None:
     (fake / "02_graph_analysis").mkdir(parents=True)
     (fake / "00_graph_capture").mkdir(parents=True)
 
-    from compgen.graph_compilation.kernel_region_differential import (
+    from xpu_rt.graph_compilation.kernel_region_differential import (
         run_region_compiled_differential,
     )
     res = run_region_compiled_differential(fake)
@@ -366,7 +366,7 @@ def test_handles_no_set_tile_candidates(tmp_path: Path) -> None:
         json.dumps({"cost_previews": []}), encoding="utf-8",
     )
 
-    from compgen.graph_compilation.kernel_region_differential import (
+    from xpu_rt.graph_compilation.kernel_region_differential import (
         run_region_compiled_differential,
     )
     res = run_region_compiled_differential(fake)
@@ -380,16 +380,16 @@ def test_handles_no_set_tile_candidates(tmp_path: Path) -> None:
 
 def test_no_compiler_core_imports() -> None:
     src = (
-        REPO_ROOT / "python" / "compgen" / "graph_compilation"
+        REPO_ROOT / "python" / "xpu-rt" / "graph_compilation"
         / "kernel_region_differential.py"
     ).read_text(encoding="utf-8")
     forbidden = (
-        "from compgen.ir.payload",
-        "import compgen.ir.payload",
-        "from compgen.capture",
-        "import compgen.capture",
-        "from compgen.pipeline",
-        "import compgen.pipeline",
+        "from xpu_rt.ir.payload",
+        "import xpu_rt.ir.payload",
+        "from xpu_rt.capture",
+        "import xpu_rt.capture",
+        "from xpu_rt.pipeline",
+        "import xpu_rt.pipeline",
     )
     for pat in forbidden:
         assert pat not in src, f"M-20 imports forbidden: {pat}"

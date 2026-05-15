@@ -1,7 +1,7 @@
 """Tests for the Triton bundle plugin.
 
 Asserts:
-* ``linalg.matmul`` ops get annotated with ``compgen.library_dispatch="triton"``
+* ``linalg.matmul`` ops get annotated with ``xpu_rt.library_dispatch="triton"``
 * ``kernels/*.py`` files land on disk and parse via ``ast.parse``
 * ``emission_manifest.json`` is well-formed and lists every emitted kernel
 """
@@ -14,9 +14,9 @@ from pathlib import Path
 
 import torch
 import torch.nn as nn
-from compgen.api import compile_model
-from compgen.api import device as _device
-from compgen.stages.bundle.triton_plugin import (
+from xpu_rt.api import compile_model
+from xpu_rt.api import device as _device
+from xpu_rt.stages.bundle.triton_plugin import (
     _ensure_dispatch_attr,
     write_triton_bundle,
 )

@@ -2,24 +2,24 @@
 weights + dequantize + conv) to a float ``linalg.conv_2d_nhwc_hwcf``.
 
 Reconstruction of IREE's ``QuantizedConvToConv``. Zero external
-references; CompGen owns the rewrite.
+references; XPU-RT owns the rewrite.
 
 Scope: the  decomposition table emits
 ``aten.convolution.default`` as an opaque ``func.call @aten_convolution``
-carrying ``compgen._pattern_hint = "convolution"``. When the
+carrying ``xpu_rt._pattern_hint = "convolution"``. When the
 convolution's weight operand is the result of
-``compgen.quant.dequantize_per_channel`` / ``dequantize_per_tensor``,
+``xpu_rt.quant.dequantize_per_channel`` / ``dequantize_per_tensor``,
 the pair represents an int-weight (typically int8) quantized conv.
 
 This pass:
 
 1. Walks every ``func.call`` with hint ``"convolution"`` whose
    second operand (the weight) is the result of a
-   ``compgen.quant.dequantize_*`` op.
+   ``xpu_rt.quant.dequantize_*`` op.
 2. Replaces the opaque call with a dequant ``linalg.generic`` (if
    not already materialized) + a real ``linalg.conv_2d_nhwc_hwcf``
    when the input layout is NHWC. For other layouts we tag the op
-   with ``compgen.quantized_conv_scheduled`` so
+   with ``xpu_rt.quantized_conv_scheduled`` so
    ``lower_conv_to_img2col`` can pick it up.
 
 Since most real FX captures of ``aten.convolution`` have layout
@@ -39,7 +39,7 @@ does; at the time of writing the xDSL constructor accepts only
 LLM-tool signature:
 
     tool_name="lower_quantized_conv"
-    wraps_pass="CompGen:QuantizedConvToConv"
+    wraps_pass="XPU-RT:QuantizedConvToConv"
     invent_slot="quantization/conv_lowering"
     policy="TagQuantizedConvsForLowering"
 """
@@ -73,7 +73,7 @@ from xdsl.pattern_rewriter import (
     op_type_rewrite_pattern,
 )
 
-from compgen.ir.quant import (
+from xpu_rt.ir.quant import (
     DequantizePerChannelOp,
     DequantizePerGroupOp,
     DequantizePerTensorOp,
@@ -103,7 +103,7 @@ class LowerQuantizedConvStats:
 def _is_convolution_call(op: Operation) -> bool:
     if not isinstance(op, CallOp):
         return False
-    hint = op.attributes.get("compgen._pattern_hint")
+    hint = op.attributes.get("xpu_rt._pattern_hint")
     if hint is None:
         return False
     if not isinstance(hint, StringAttr):
@@ -227,7 +227,7 @@ def _build_dequant_generic(dequant: Operation) -> GenericOp | None:
         iterator_types=iterator_types,
         result_types=[out_type],
     )
-    dq_generic.attributes["compgen._conv_dequant_emit"] = StringAttr("true")
+    dq_generic.attributes["xpu_rt._conv_dequant_emit"] = StringAttr("true")
     # Return the init + generic so callers can insert them together.
     dq_generic._conv_dequant_init = init  # type: ignore[attr-defined]
     return dq_generic
@@ -257,7 +257,7 @@ class _TagQuantizedConvPattern(RewritePattern):
             return
 
         # Already tagged -> idempotent.
-        if "compgen.quantized_conv_scheduled" in op.attributes:
+        if "xpu_rt.quantized_conv_scheduled" in op.attributes:
             return
 
         # Tag the op with the kind of dequantization it was fed by.
@@ -266,8 +266,8 @@ class _TagQuantizedConvPattern(RewritePattern):
             DequantizePerChannelOp: "per_channel",
             DequantizePerGroupOp: "per_group",
         }[type(dequant)]
-        op.attributes["compgen.quantized_conv_scheduled"] = StringAttr("true")
-        op.attributes["compgen.quantized_conv_kind"] = StringAttr(kind)
+        op.attributes["xpu_rt.quantized_conv_scheduled"] = StringAttr("true")
+        op.attributes["xpu_rt.quantized_conv_kind"] = StringAttr(kind)
         self.stats.quantized_convs_tagged += 1
 
         # Materialize the dequant as a real linalg.generic for the

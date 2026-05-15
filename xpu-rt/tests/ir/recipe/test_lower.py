@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from compgen.ir.recipe.lower import LoweringOutput
+from xpu_rt.ir.recipe.lower import LoweringOutput
 
 
 def test_lowering_output_defaults() -> None:
@@ -28,9 +28,9 @@ def test_lowering_output_with_data() -> None:
 
 def test_lower_recipe_dispatches_ops() -> None:
     """lower_recipe should dispatch each RecipeOp to its handler."""
-    from compgen.ir.recipe.compat import recipe_list_to_module
-    from compgen.ir.recipe.lower import lower_recipe
-    from compgen.ir.recipe.ops import (
+    from xpu_rt.ir.recipe.compat import recipe_list_to_module
+    from xpu_rt.ir.recipe.lower import lower_recipe
+    from xpu_rt.ir.recipe.ops import (
         AssignDevice,
         MatchRegion,
         RequestKernelSearch,
@@ -67,7 +67,7 @@ def test_lower_recipe_dispatches_ops() -> None:
 
 def test_lower_recipe_collects_diagnostics() -> None:
     """lower_recipe should surface per-op diagnostics in the output."""
-    from compgen.ir.recipe.lower import lower_recipe
+    from xpu_rt.ir.recipe.lower import lower_recipe
     from xdsl.dialects.builtin import ModuleOp
     from xdsl.ir import Block, Region
 
@@ -95,8 +95,8 @@ def _module_with(op):
 
 def test_propose_fusion_lowers_to_fuse_transform_script() -> None:
     """ProposeFusionOp → transform.structured.fuse_into_containing_op."""
-    from compgen.agent.recipe_bridge_invent import proposal_to_recipe_op
-    from compgen.ir.recipe.lower import lower_recipe
+    from xpu_rt.agent.recipe_bridge_invent import proposal_to_recipe_op
+    from xpu_rt.ir.recipe.lower import lower_recipe
 
     op = proposal_to_recipe_op(
         "propose_fusion",
@@ -122,8 +122,8 @@ def test_propose_fusion_lowers_to_fuse_transform_script() -> None:
 
 
 def test_propose_megakernel_lowers_to_kernel_job() -> None:
-    from compgen.agent.recipe_bridge_invent import proposal_to_recipe_op
-    from compgen.ir.recipe.lower import lower_recipe
+    from xpu_rt.agent.recipe_bridge_invent import proposal_to_recipe_op
+    from xpu_rt.ir.recipe.lower import lower_recipe
 
     op = proposal_to_recipe_op(
         "propose_megakernel_synthesis",
@@ -149,8 +149,8 @@ def test_propose_megakernel_lowers_to_kernel_job() -> None:
 
 
 def test_propose_layout_plan_lowers_to_pack_script() -> None:
-    from compgen.agent.recipe_bridge_invent import proposal_to_recipe_op
-    from compgen.ir.recipe.lower import lower_recipe
+    from xpu_rt.agent.recipe_bridge_invent import proposal_to_recipe_op
+    from xpu_rt.ir.recipe.lower import lower_recipe
 
     op = proposal_to_recipe_op(
         "propose_layout_plan",
@@ -168,8 +168,8 @@ def test_propose_layout_plan_lowers_to_pack_script() -> None:
 
 
 def test_propose_dequant_lowers_to_match_script() -> None:
-    from compgen.agent.recipe_bridge_invent import proposal_to_recipe_op
-    from compgen.ir.recipe.lower import lower_recipe
+    from xpu_rt.agent.recipe_bridge_invent import proposal_to_recipe_op
+    from xpu_rt.ir.recipe.lower import lower_recipe
 
     op = proposal_to_recipe_op(
         "propose_dequant_fusion",
@@ -187,7 +187,7 @@ def test_propose_dequant_lowers_to_match_script() -> None:
 
 def test_propose_fusion_empty_regions_no_op_lowers_nothing() -> None:
     """Defensively: a mal-constructed op (no regions) lowers cleanly (no crash)."""
-    from compgen.ir.recipe.ops_propose import ProposePayload
+    from xpu_rt.ir.recipe.ops_propose import ProposePayload
     from xdsl.dialects.builtin import StringAttr
 
     # Build an op with valid JSON but zero regions; bypass the bridge's
@@ -202,7 +202,7 @@ def test_propose_fusion_empty_regions_no_op_lowers_nothing() -> None:
     # verify() raises. So instead assert that via the bridge the empty case
     # is caught as a ValueError (separately tested) and the lowering never
     # sees it. This test asserts the path is safe.
-    from compgen.agent.recipe_bridge_invent import proposal_to_recipe_op
+    from xpu_rt.agent.recipe_bridge_invent import proposal_to_recipe_op
 
     with pytest.raises(ValueError):
         proposal_to_recipe_op(

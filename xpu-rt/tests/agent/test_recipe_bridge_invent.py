@@ -1,4 +1,4 @@
-"""Tests for :mod:`compgen.agent.recipe_bridge_invent`.
+"""Tests for :mod:`xpu_rt.agent.recipe_bridge_invent`.
 
 Asserts that every slot-name → propose-op conversion:
   * constructs a Recipe-IR op that passes ``verify()``
@@ -13,18 +13,18 @@ from __future__ import annotations
 import json
 
 import pytest
-from compgen.agent.recipe_bridge_invent import (
+from xpu_rt.agent.recipe_bridge_invent import (
     proposal_to_recipe_op,
     supported_slot_names,
 )
-from compgen.ir.recipe.ops_propose import (
+from xpu_rt.ir.recipe.ops_propose import (
     ProposeDequantFusionOp,
     ProposeFusionOp,
     ProposeLayoutPlanOp,
     ProposeMegakernelSynthesisOp,
     ProposePayload,
 )
-from compgen.ir.recipe.serialize import mlir_to_recipe, recipe_to_mlir
+from xpu_rt.ir.recipe.serialize import mlir_to_recipe, recipe_to_mlir
 from xdsl.dialects.builtin import ModuleOp
 from xdsl.ir import Block, Region
 

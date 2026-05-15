@@ -2,6 +2,6 @@
 
 from __future__ import annotations
 
-from compgen.stages.bundle.stage import BundleStage
+from xpu_rt.stages.bundle.stage import BundleStage
 
 __all__ = ["BundleStage"]

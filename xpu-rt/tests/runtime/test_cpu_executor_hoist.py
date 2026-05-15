@@ -20,7 +20,7 @@ from typing import Any
 
 import torch
 
-from compgen.runtime import cpu_executor
+from xpu_rt.runtime import cpu_executor
 
 
 def test_exec_transpose_skips_contiguous_call(monkeypatch) -> None:
@@ -115,12 +115,12 @@ def test_hoist_cache_replays_param_derived_ops() -> None:
     # this. We import it lazily because it pulls in transformers.
     from pathlib import Path
 
-    from compgen.api import compile_model, device as _device
-    from compgen.benchmarks.live_adapters import _load_workload
+    from xpu_rt.api import compile_model, device as _device
+    from xpu_rt.benchmarks.live_adapters import _load_workload
 
     handle = _load_workload("tinyllama_1_1b__slice")
     target_yaml = (
-        Path("/scratch2/agustin/CompGen")
+        Path("/scratch2/agustin/XPU-RT")
         / "tests"
         / "targetgen"
         / "exemplars"

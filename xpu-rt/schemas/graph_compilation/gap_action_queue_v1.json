@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://compgen.dev/schemas/graph_compilation/gap_action_queue_v1.json",
+  "$id": "https://xpu_rt.dev/schemas/graph_compilation/gap_action_queue_v1.json",
   "title": "gap_action_queue_v1",
   "description": "Typed, actionable queue produced by Gap Discovery (stage 02). Consumed by Extension Closure.",
   "type": "object",

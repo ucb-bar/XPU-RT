@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from compgen.targetgen.hardware_spec import (
+from xpu_rt.targetgen.hardware_spec import (
     AddressSpace,
     ExecutionModel,
     ExecutionModelSpec,
@@ -14,8 +14,8 @@ from compgen.targetgen.hardware_spec import (
     PlatformSpec,
     RuntimeContractSpec,
 )
-from compgen.targetgen.load import load_hardware_spec
-from compgen.targetgen.soc_codegen import (
+from xpu_rt.targetgen.load import load_hardware_spec
+from xpu_rt.targetgen.soc_codegen import (
     SocCodegenResult,
     generate_arena_allocator,
     generate_bare_metal_runtime,

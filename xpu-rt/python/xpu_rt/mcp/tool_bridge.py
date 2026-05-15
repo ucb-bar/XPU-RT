@@ -1,11 +1,11 @@
 """MCP bridge for ToolCard-declared tools.
 
-Every :class:`compgen.tools.ToolCard` whose ``entrypoints.mcp`` is
+Every :class:`xpu_rt.tools.ToolCard` whose ``entrypoints.mcp`` is
 non-empty is registered as an MCP tool through this bridge. The
 bridge is intentionally *thin*: it takes the card, builds the
-:class:`compgen.tools.ToolRunner`-backed handler, and produces the
+:class:`xpu_rt.tools.ToolRunner`-backed handler, and produces the
 exact ``{name, description, phase, handler, input_schema}`` dict
-shape the existing :mod:`compgen.mcp.tools` package consumes.
+shape the existing :mod:`xpu_rt.mcp.tools` package consumes.
 
 Hard rules (enforced by the bridge + checked by the T5 gate):
 
@@ -20,7 +20,7 @@ Hard rules (enforced by the bridge + checked by the T5 gate):
 
 3. **out_dir is bridge-managed.** MCP callers do not see ``out_dir``
    in the input_schema. The bridge creates a unique
-   ``.compgen/mcp_tool_runs/<tool_id>/<timestamp>/`` directory per
+   ``.xpu_rt/mcp_tool_runs/<tool_id>/<timestamp>/`` directory per
    invocation so result + trace are durable and replayable but the
    caller never has to think about paths.
 
@@ -38,20 +38,20 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from compgen.tools.errors import (
+from xpu_rt.tools.errors import (
     ToolEntrypointError,
     ToolInputSchemaError,
     ToolOutputSchemaError,
     ToolRunError,
 )
-from compgen.tools.tool_card import ToolCard
-from compgen.tools.tool_registry import iter_tool_cards
-from compgen.tools.tool_runner import ToolRunner
+from xpu_rt.tools.tool_card import ToolCard
+from xpu_rt.tools.tool_registry import iter_tool_cards
+from xpu_rt.tools.tool_runner import ToolRunner
 
 # Root for per-invocation out_dirs created by the bridge. Lives under
-# .compgen/ so it is gitignored (the repo's .gitignore already covers
-# .compgen/) and shared across the user's session.
-MCP_TOOL_RUNS_ROOT = Path(".compgen") / "mcp_tool_runs"
+# .xpu_rt/ so it is gitignored (the repo's .gitignore already covers
+# .xpu_rt/) and shared across the user's session.
+MCP_TOOL_RUNS_ROOT = Path(".xpu_rt") / "mcp_tool_runs"
 
 
 def _bridge_out_dir(tool_id: str) -> Path:
@@ -71,7 +71,7 @@ def _make_handler(card: ToolCard) -> Callable[..., dict[str, Any]]:
     The handler closes over the card so the bridge does not need a
     runtime dispatch table — Python's regular import-time binding does
     the job. The ``sm`` argument is accepted for signature
-    compatibility with the rest of :mod:`compgen.mcp.tools` but the
+    compatibility with the rest of :mod:`xpu_rt.mcp.tools` but the
     bridge does not consume it; ToolCard tools are stateless w.r.t.
     the MCP session.
     """
@@ -122,7 +122,7 @@ def _make_handler(card: ToolCard) -> Callable[..., dict[str, Any]]:
             }
         return result.to_dict()
 
-    handler.__name__ = f"compgen_tool_bridge__{card.tool_id}"
+    handler.__name__ = f"xpu_rt_tool_bridge__{card.tool_id}"
     handler.__doc__ = card.description.strip().splitlines()[0] if card.description else card.tool_id
     return handler
 
@@ -153,7 +153,7 @@ def make_mcp_tool_dict(card: ToolCard) -> dict[str, Any]:
 
     The returned dict is shaped to match the existing
     ``_IN_TREE_TOOLS`` aggregation in
-    :mod:`compgen.mcp.tools.__init__`.
+    :mod:`xpu_rt.mcp.tools.__init__`.
 
     Raises
     ------
@@ -185,7 +185,7 @@ def make_mcp_tool_dict(card: ToolCard) -> dict[str, Any]:
 
 def bridge_tools(cards_root: Path | None = None) -> list[dict[str, Any]]:
     """Discover every ToolCard with an MCP entrypoint and return its
-    MCP tool dict. Imported by :mod:`compgen.mcp.tools.__init__` at
+    MCP tool dict. Imported by :mod:`xpu_rt.mcp.tools.__init__` at
     aggregation time."""
 
     out: list[dict[str, Any]] = []

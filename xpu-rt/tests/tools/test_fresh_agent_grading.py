@@ -1,4 +1,4 @@
-"""Tests for :mod:`compgen.audit.fresh_agent_grading`.
+"""Tests for :mod:`xpu_rt.audit.fresh_agent_grading`.
 
 Coverage:
 
@@ -24,7 +24,7 @@ Negative controls (one per GRADING_VIOLATION_KIND we can synthesise):
 * ``task_directory_missing`` — load_task on nonexistent dir.
 * ``task_directory_incomplete`` — load_task on dir missing a required file.
 
-Hard real-hardware check (skipped under ``COMPGEN_SKIP_BASELINE=1`` so
+Hard real-hardware check (skipped under ``XPU_RT_SKIP_BASELINE=1`` so
 CI without the probe environment still passes):
 * The shipped probe-providers baseline runs the actual probe and
   the grader confirms 7 real artifacts produced under the run_dir.
@@ -38,7 +38,7 @@ import textwrap
 from pathlib import Path
 
 import pytest
-from compgen.audit.fresh_agent_grading import (
+from xpu_rt.audit.fresh_agent_grading import (
     GRADING_VIOLATION_KINDS,
     FreshAgentTaskError,
     grade,
@@ -103,7 +103,7 @@ def test_load_synthesised_task(tmp_path, monkeypatch):
     fake_root.mkdir(parents=True)
     _write_task(fake_root, "test_basic_v1", expected_artifacts=[{"path": "out.txt"}])
     monkeypatch.setattr(
-        "compgen.audit.fresh_agent_grading.fresh_agent_tasks_root",
+        "xpu_rt.audit.fresh_agent_grading.fresh_agent_tasks_root",
         lambda repo_root=None: fake_root,
     )
     task = load_task("test_basic_v1")
@@ -120,7 +120,7 @@ def test_grade_clean_run(tmp_path, monkeypatch):
         expected_artifacts=[{"path": "hello.txt", "min_bytes": 1, "contains": ["hi"]}],
     )
     monkeypatch.setattr(
-        "compgen.audit.fresh_agent_grading.fresh_agent_tasks_root",
+        "xpu_rt.audit.fresh_agent_grading.fresh_agent_tasks_root",
         lambda repo_root=None: fake_root,
     )
     task = load_task("clean_v1")
@@ -148,7 +148,7 @@ def test_missing_artifact(tmp_path, monkeypatch):
         fake_root, "missing_v1", expected_artifacts=[{"path": "nope.txt"}]
     )
     monkeypatch.setattr(
-        "compgen.audit.fresh_agent_grading.fresh_agent_tasks_root",
+        "xpu_rt.audit.fresh_agent_grading.fresh_agent_tasks_root",
         lambda repo_root=None: fake_root,
     )
     task = load_task("missing_v1")
@@ -169,7 +169,7 @@ def test_artifact_too_small(tmp_path, monkeypatch):
         expected_artifacts=[{"path": "tiny.txt", "min_bytes": 1000}],
     )
     monkeypatch.setattr(
-        "compgen.audit.fresh_agent_grading.fresh_agent_tasks_root",
+        "xpu_rt.audit.fresh_agent_grading.fresh_agent_tasks_root",
         lambda repo_root=None: fake_root,
     )
     task = load_task("small_v1")
@@ -192,7 +192,7 @@ def test_artifact_missing_required_key(tmp_path, monkeypatch):
         ],
     )
     monkeypatch.setattr(
-        "compgen.audit.fresh_agent_grading.fresh_agent_tasks_root",
+        "xpu_rt.audit.fresh_agent_grading.fresh_agent_tasks_root",
         lambda repo_root=None: fake_root,
     )
     task = load_task("miss_key_v1")
@@ -213,7 +213,7 @@ def test_artifact_missing_substring(tmp_path, monkeypatch):
         expected_artifacts=[{"path": "report.md", "contains": ["required_phrase"]}],
     )
     monkeypatch.setattr(
-        "compgen.audit.fresh_agent_grading.fresh_agent_tasks_root",
+        "xpu_rt.audit.fresh_agent_grading.fresh_agent_tasks_root",
         lambda repo_root=None: fake_root,
     )
     task = load_task("miss_sub_v1")
@@ -235,7 +235,7 @@ def test_grading_script_did_not_complete(tmp_path, monkeypatch):
         grading_script_body="import sys; sys.exit(7)\n",
     )
     monkeypatch.setattr(
-        "compgen.audit.fresh_agent_grading.fresh_agent_tasks_root",
+        "xpu_rt.audit.fresh_agent_grading.fresh_agent_tasks_root",
         lambda repo_root=None: fake_root,
     )
     task = load_task("crash_v1")
@@ -263,7 +263,7 @@ def test_grading_script_emitted_invalid_result(tmp_path, monkeypatch):
         ),
     )
     monkeypatch.setattr(
-        "compgen.audit.fresh_agent_grading.fresh_agent_tasks_root",
+        "xpu_rt.audit.fresh_agent_grading.fresh_agent_tasks_root",
         lambda repo_root=None: fake_root,
     )
     task = load_task("bad_emit_v1")
@@ -278,7 +278,7 @@ def test_task_directory_missing(tmp_path, monkeypatch):
     fake_root = tmp_path / "empty"
     fake_root.mkdir()
     monkeypatch.setattr(
-        "compgen.audit.fresh_agent_grading.fresh_agent_tasks_root",
+        "xpu_rt.audit.fresh_agent_grading.fresh_agent_tasks_root",
         lambda repo_root=None: fake_root,
     )
     with pytest.raises(FreshAgentTaskError, match="does not exist"):
@@ -293,7 +293,7 @@ def test_task_directory_incomplete(tmp_path, monkeypatch):
     (bad_dir / "task.md").write_text("hello", encoding="utf-8")
     # deliberately missing allowed_tools.json + expected_artifacts.json + grading_script.py
     monkeypatch.setattr(
-        "compgen.audit.fresh_agent_grading.fresh_agent_tasks_root",
+        "xpu_rt.audit.fresh_agent_grading.fresh_agent_tasks_root",
         lambda repo_root=None: fake_root,
     )
     with pytest.raises(FreshAgentTaskError, match="missing required file"):
@@ -307,19 +307,19 @@ def test_allowed_tool_unknown(tmp_path, monkeypatch):
         fake_root, "unknown_tool_v1", allowed_tools=["does_not_exist_tool_xyz"]
     )
     monkeypatch.setattr(
-        "compgen.audit.fresh_agent_grading.fresh_agent_tasks_root",
+        "xpu_rt.audit.fresh_agent_grading.fresh_agent_tasks_root",
         lambda repo_root=None: fake_root,
     )
     with pytest.raises(FreshAgentTaskError, match="unknown tools"):
-        load_task("unknown_tool_v1", known_tool_ids=("compgen_echo",))
+        load_task("unknown_tool_v1", known_tool_ids=("xpu_rt_echo",))
 
 
 # ---------- Real-hardware path --------------------------------------
 
 
 @pytest.mark.skipif(
-    os.environ.get("COMPGEN_SKIP_BASELINE") == "1",
-    reason="COMPGEN_SKIP_BASELINE=1 set; skipping the real-hardware baseline run",
+    os.environ.get("XPU_RT_SKIP_BASELINE") == "1",
+    reason="XPU_RT_SKIP_BASELINE=1 set; skipping the real-hardware baseline run",
 )
 def test_probe_providers_baseline_runs_and_grades_clean(tmp_path):
     """Run the shipped probe-providers baseline on real hardware.

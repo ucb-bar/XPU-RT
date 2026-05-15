@@ -38,19 +38,19 @@ def test_build_linalg_matmul_module_tags_region_id():
 def test_build_concat_module_verifies_and_has_concat():
     m = build_concat_module([(2, 4), (3, 4), (5, 4)], dim=0)
     assert_module_verifies(m)
-    assert count_ops(m, "compgen.tensor_ext.concat") == 1
+    assert count_ops(m, "xpu_rt.tensor_ext.concat") == 1
 
 
 def test_build_quantized_matmul_module_int8():
     m = build_quantized_matmul_module(bits=8)
     assert_module_verifies(m)
-    assert count_ops(m, "compgen.quant.weight_int8pack_mm") == 1
+    assert count_ops(m, "xpu_rt.quant.weight_int8pack_mm") == 1
 
 
 def test_build_quantized_matmul_module_int4():
     m = build_quantized_matmul_module(bits=4, group_size=128)
     assert_module_verifies(m)
-    assert count_ops(m, "compgen.quant.weight_int4pack_mm") == 1
+    assert count_ops(m, "xpu_rt.quant.weight_int4pack_mm") == 1
 
 
 def test_build_quantized_matmul_rejects_bad_bits():

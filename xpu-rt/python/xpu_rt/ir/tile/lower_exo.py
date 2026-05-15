@@ -8,7 +8,7 @@ from typing import Any
 from xdsl.dialects.builtin import IntegerAttr, SymbolRefAttr
 from xdsl.ir import Operation
 
-from compgen.ir.tile.ops import (
+from xpu_rt.ir.tile.ops import (
     TileAsyncCopyOp,
     TileBarrierOp,
     TileElementwiseOp,

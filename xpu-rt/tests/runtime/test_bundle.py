@@ -9,8 +9,8 @@ import pytest
 xdsl_builtin = pytest.importorskip("xdsl.dialects.builtin")
 ModuleOp = xdsl_builtin.ModuleOp
 
-from compgen.runtime.bundle import BundleBuilder, BundleManifest, create_bundle
-from compgen.runtime.planner import ExecutionPlan, MemoryPlan
+from xpu_rt.runtime.bundle import BundleBuilder, BundleManifest, create_bundle
+from xpu_rt.runtime.planner import ExecutionPlan, MemoryPlan
 
 
 def test_bundle_manifest_defaults() -> None:
@@ -72,7 +72,7 @@ def test_bundle_carries_lowered_recipe_metadata_for_promotion() -> None:
     ``BundleManifest`` itself. Pre-fix this raised
     ``TypeError: BundleManifest.__init__() got an unexpected keyword
     argument 'transform_scripts'`` which the surrounding try/except in
-    ``compgen.agent.loop.core`` silently swallowed, so the promotion
+    ``xpu_rt.agent.loop.core`` silently swallowed, so the promotion
     path was effectively dead.
     """
     import json

@@ -15,7 +15,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from compgen.runtime.memory_layout import MemoryRegion
+from xpu_rt.runtime.memory_layout import MemoryRegion
 
 # Chipyard standard addresses
 CHIPYARD_DRAM_BASE = 0x80000000
@@ -113,7 +113,7 @@ static inline void htif_emit_bytes(const void *src, unsigned n_bytes) {
 """
 
 
-def shared_dram_section(symbol: str = "compgen_shared", size_bytes: int = 0x10000) -> str:
+def shared_dram_section(symbol: str = "xpu_rt_shared", size_bytes: int = 0x10000) -> str:
     """Generate a linker fragment for a shared host↔guest DRAM region.
 
     Places ``<symbol>`` at the top of system DRAM (``0x80000000+``,
@@ -134,7 +134,7 @@ def shared_dram_section(symbol: str = "compgen_shared", size_bytes: int = 0x1000
     /* Shared host/guest region in system DRAM (0x80000000+).
        The host can issue TileLink Get against this region; the upper
        DRAM (0x110000000+) is TSI-only and refuses Get. */
-    .compgen_shared ALIGN(64) : {{
+    .xpu_rt_shared ALIGN(64) : {{
         PROVIDE({symbol} = .);
         . = . + {hex(size_bytes)};
     }} > REGION_DRAM

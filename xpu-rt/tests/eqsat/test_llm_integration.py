@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from compgen.eqsat.explain import EClassSummary, EGraphSummary, summarize_egraph, summary_to_prompt
-from compgen.eqsat.llm_interface import (
+from xpu_rt.eqsat.explain import EClassSummary, EGraphSummary, summarize_egraph, summary_to_prompt
+from xpu_rt.eqsat.llm_interface import (
     format_extraction_objective_prompt,
     format_rule_proposal_prompt,
     format_search_state_prompt,
     validate_rule_code,
 )
-from compgen.eqsat.pipeline import _print_ir, create_egraph, run_eqsat_pass
+from xpu_rt.eqsat.pipeline import _print_ir, create_egraph, run_eqsat_pass
 from xdsl.dialects import arith, func
 from xdsl.dialects.builtin import IndexType, ModuleOp
 from xdsl.ir import Block, Region
@@ -45,7 +45,7 @@ class TestExplain:
         create_egraph(module)
 
         # Add a commuted alternative
-        from compgen.eqsat.rules.algebraic import CommutativityAddiRule
+        from xpu_rt.eqsat.rules.algebraic import CommutativityAddiRule
 
         CommutativityAddiRule().apply(module)
 

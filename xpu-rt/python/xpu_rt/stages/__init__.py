@@ -1,4 +1,4 @@
-"""Compilation stages framework for CompGen.
+"""Compilation stages framework for XPU-RT.
 
 Provides the infrastructure for defining, sequencing, and executing
 compilation stages with target-specific plugin support.  Each target
@@ -8,14 +8,14 @@ enforces contracts between adjacent stages.
 
 from __future__ import annotations
 
-from compgen.stages.base import (
+from xpu_rt.stages.base import (
     CompilationStage,
     IRInvariant,
     StageContract,
     StageResult,
     TargetStagePlugin,
 )
-from compgen.stages.registry import PipelineResult, StageRegistry, TargetDialectStack
+from xpu_rt.stages.registry import PipelineResult, StageRegistry, TargetDialectStack
 
 __all__ = [
     "CompilationStage",

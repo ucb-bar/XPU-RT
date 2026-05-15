@@ -1,4 +1,4 @@
-"""Tests for compgen.analysis.checkpoints."""
+"""Tests for xpu_rt.analysis.checkpoints."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from compgen.analysis.checkpoints import (
+from xpu_rt.analysis.checkpoints import (
     ANALYSIS_LEVELS,
     KNOWN_SUMMARIES,
     AnalysisIndex,

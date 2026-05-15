@@ -25,8 +25,8 @@ from xdsl.ir import Block, Operation, Region
 from xdsl.parser import Parser
 from xdsl.printer import Printer
 
-from compgen.ir.recipe.attrs import CostAttr, DeviceRefAttr, EffectClassAttr, ProvenanceAttr, ShapeSummaryAttr
-from compgen.ir.recipe.dialect import Recipe
+from xpu_rt.ir.recipe.attrs import CostAttr, DeviceRefAttr, EffectClassAttr, ProvenanceAttr, ShapeSummaryAttr
+from xpu_rt.ir.recipe.dialect import Recipe
 
 
 def recipe_to_mlir(module: ModuleOp) -> str:
@@ -164,7 +164,7 @@ def json_to_recipe_module(json_text: str) -> ModuleOp:
 
 from dataclasses import asdict  # noqa: E402
 
-from compgen.ir.recipe.ops import RecipeOp  # noqa: E402
+from xpu_rt.ir.recipe.ops import RecipeOp  # noqa: E402
 
 
 def recipe_to_yaml(ops: list[RecipeOp]) -> str:

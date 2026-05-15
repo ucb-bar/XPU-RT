@@ -1,4 +1,4 @@
-"""Tests for ``compgen.agent.kernel_optimizer``.
+"""Tests for ``xpu_rt.agent.kernel_optimizer``.
 
 Locks in:
   * fingerprint_for is stable across instances + matches the MCP scheme
@@ -17,8 +17,8 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from compgen.agent.hw_aware_dispatch import TargetDispatchDecision
-from compgen.agent.kernel_optimizer import (
+from xpu_rt.agent.hw_aware_dispatch import TargetDispatchDecision
+from xpu_rt.agent.kernel_optimizer import (
     BenchResult,
     CodegenResult,
     KernelDecision,
@@ -27,7 +27,7 @@ from compgen.agent.kernel_optimizer import (
     optimize_model,
     optimize_model_multi_target,
 )
-from compgen.kernels.contract_v3 import (
+from xpu_rt.kernels.contract_v3 import (
     ExecutionEnvelope,
     HardwareEnvelope,
     IOContract,
@@ -37,7 +37,7 @@ from compgen.kernels.contract_v3 import (
     ShapeClass,
     TensorIO,
 )
-from compgen.memory.kernel_db import KernelDB
+from xpu_rt.memory.kernel_db import KernelDB
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -116,11 +116,11 @@ def test_fingerprint_changes_with_op_name() -> None:
 
 
 def test_fingerprint_matches_mcp_scheme() -> None:
-    """The MCP cache uses ``compgen.mcp.tools.kernel.contract_fingerprint``;
+    """The MCP cache uses ``xpu_rt.mcp.tools.kernel.contract_fingerprint``;
     so does the optimizer. They must match for the disk cache to hit
     across MCP-generated and headless-generated kernels."""
-    from compgen.agent.kernel_optimizer import _v3_to_fingerprint_dict
-    from compgen.mcp.tools.kernel import contract_fingerprint
+    from xpu_rt.agent.kernel_optimizer import _v3_to_fingerprint_dict
+    from xpu_rt.mcp.tools.kernel import contract_fingerprint
 
     c = _matmul()
     assert fingerprint_for(c) == contract_fingerprint(_v3_to_fingerprint_dict(c))

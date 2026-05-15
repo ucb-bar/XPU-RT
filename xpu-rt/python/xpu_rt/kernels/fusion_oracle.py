@@ -32,11 +32,11 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 
-from compgen.kernels.contract_v3 import (
+from xpu_rt.kernels.contract_v3 import (
     KernelContractV3,
     MemoryTier,
 )
-from compgen.memory.knowledge import shared_store
+from xpu_rt.memory.knowledge import shared_store
 
 
 class FusionDecision(Enum):
@@ -330,7 +330,7 @@ def should_fuse(
 def _emit_advisory(payload: dict) -> None:
     """Best-effort ``oracle_advisory`` emission for fusion verdicts."""
     try:
-        from compgen.trace import OraclePublisher
+        from xpu_rt.trace import OraclePublisher
 
         OraclePublisher.emit(oracle="fusion", **payload)
     except Exception:  # noqa: BLE001

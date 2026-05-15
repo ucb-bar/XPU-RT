@@ -24,7 +24,7 @@ import json
 import sys
 from pathlib import Path
 
-from compgen.audit.fresh_agent_grading import (
+from xpu_rt.audit.fresh_agent_grading import (
     FreshAgentTaskError,
     grade,
     list_task_ids,

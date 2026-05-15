@@ -1,10 +1,10 @@
-"""Tests for ``compgen.plugins.discover_everything`` — the unified facade.
+"""Tests for ``xpu_rt.plugins.discover_everything`` — the unified facade.
 
 Locks in:
   * returns a :class:`DiscoveryReport` aggregating entry-point plugins,
-    vendor dialects, and user-space ``~/.compgen/extensions/`` state
+    vendor dialects, and user-space ``~/.xpu_rt/extensions/`` state
   * is safe to call when no extensions are installed (no crash, empty lists)
-  * honours ``COMPGEN_EXTENSIONS_DIR`` so tests can point at a sandbox
+  * honours ``XPU_RT_EXTENSIONS_DIR`` so tests can point at a sandbox
 """
 
 from __future__ import annotations
@@ -13,7 +13,7 @@ import textwrap
 from pathlib import Path
 
 import pytest
-from compgen.plugins import KNOWN_GROUPS, DiscoveryReport, discover_everything, reset_registry
+from xpu_rt.plugins import KNOWN_GROUPS, DiscoveryReport, discover_everything, reset_registry
 
 
 @pytest.fixture(autouse=True)
@@ -50,11 +50,11 @@ def test_discover_everything_picks_up_user_space_extension(tmp_path: Path, monke
             """
         )
     )
-    monkeypatch.setenv("COMPGEN_EXTENSIONS_DIR", str(ext_dir))
+    monkeypatch.setenv("XPU_RT_EXTENSIONS_DIR", str(ext_dir))
 
     # Clear any per-process LLM-registry state so the user-space loader
     # actually imports our fresh file.
-    from compgen.llm import registry as llm_registry
+    from xpu_rt.llm import registry as llm_registry
 
     llm_registry.get_registry().clear()
 

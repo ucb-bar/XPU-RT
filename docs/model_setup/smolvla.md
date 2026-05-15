@@ -2,7 +2,7 @@
 
 ## Overview
 
-Small VLA policy used for one-step admission. Loaded via the existing compgen.models catalog entry ``smolvla_one_step``.
+Small VLA policy used for one-step admission. Loaded via the existing xpu_rt.models catalog entry ``smolvla_one_step``.
 
 ## Source verification
 
@@ -23,7 +23,7 @@ Small VLA policy used for one-step admission. Loaded via the existing compgen.mo
 
 ```bash
 uv add transformers
-# Workspace config / external repo path resolution per compgen.models.
+# Workspace config / external repo path resolution per xpu_rt.models.
 ```
 
 The admission probe **never downloads weights**; supply them out of
@@ -33,7 +33,7 @@ band into the local HuggingFace cache (``$HF_HOME/hub`` or
 ## Minimal smoke command
 
 ```bash
-uv run python -m compgen.model_admission torch-compile \
+uv run python -m xpu_rt.model_admission torch-compile \
     --model configs/models/smolvla_step.yaml \
     --slice configs/slices/smolvla_single_step.yaml \
     --out results/model_admission/smolvla_step/smolvla_single_step
@@ -57,4 +57,4 @@ uv run python -m compgen.model_admission torch-compile \
 
 ## Support status
 
-Blocking. Bridge loader (`compgen_model_spec` -> `smolvla_one_step`).
+Blocking. Bridge loader (`xpu_rt_model_spec` -> `smolvla_one_step`).

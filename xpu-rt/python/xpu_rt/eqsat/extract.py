@@ -1,6 +1,6 @@
 """Custom extraction with non-additive cost model.
 
-Extends xDSL's EqsatAddCostsPass + EqsatExtractPass with CompGen's
+Extends xDSL's EqsatAddCostsPass + EqsatExtractPass with XPU-RT's
 non-additive cost model that accounts for fusion, copies, and
 backend matching.
 
@@ -16,7 +16,7 @@ from xdsl.dialects.builtin import ModuleOp
 from xdsl.transforms.eqsat_add_costs import add_eqsat_costs
 from xdsl.transforms.eqsat_extract import eqsat_extract
 
-from compgen.eqsat.cost_model import CostModel
+from xpu_rt.eqsat.cost_model import CostModel
 
 
 def extract_with_cost_model(
@@ -25,12 +25,12 @@ def extract_with_cost_model(
 ) -> None:
     """Assign non-additive costs and extract the cheapest subprogram.
 
-    This is the preferred extraction path when using CompGen's cost model
+    This is the preferred extraction path when using XPU-RT's cost model
     instead of the simple integer cost file.
 
     Args:
         module: Module with equivalence.class ops.
-        cost_model: CompGen's non-additive cost model.
+        cost_model: XPU-RT's non-additive cost model.
     """
     # Step 1: Assign per-op costs using our non-additive model
     cost_model.assign_costs(module)

@@ -7,8 +7,8 @@ Qualcomm Hexagon dev board via
 
 from __future__ import annotations
 
-from compgen.providers.adapters.blocked_shell import BlockedShellAdapter
-from compgen.providers.adapters.remote_shell import RemoteShellAdapter
+from xpu_rt.providers.adapters.blocked_shell import BlockedShellAdapter
+from xpu_rt.providers.adapters.remote_shell import RemoteShellAdapter
 
 
 class HexagonMLIRProvider(RemoteShellAdapter):

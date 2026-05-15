@@ -1,9 +1,9 @@
 """Adapter for /scratch2/agustin/merlin/models/mlp/mlp.py — exposes
 the merlin ``SimpleMLP`` through the standard ``get_model_and_inputs``
-factory used by all CompGen graph_compilation suites.
+factory used by all XPU-RT graph_compilation suites.
 
 Verifies the pipeline against a real upstream production model
-definition (rather than a CompGen-internal synthetic).
+definition (rather than a XPU-RT-internal synthetic).
 """
 
 from __future__ import annotations

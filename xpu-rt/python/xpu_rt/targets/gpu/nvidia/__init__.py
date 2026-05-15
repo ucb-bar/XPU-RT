@@ -26,7 +26,7 @@ Files under this package:
 
 from __future__ import annotations
 
-from compgen.targets.registry import register_target
+from xpu_rt.targets.registry import register_target
 
 
 def _register_vendor_common() -> None:

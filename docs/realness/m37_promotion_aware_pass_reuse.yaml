@@ -19,8 +19,8 @@ forbidden:
 - ablation summary that omits warm-cache effectiveness
 realness_level: production_path
 required_evidence:
-- python/compgen/graph_compilation/promotion_retrieval.py (PromotedCandidate.pass_id, candidate_id)
-- python/compgen/benchmarks/pass_pool_ablation.py (promoted_candidates_count, promoted_hit, promoted_hit_rate)
+- python/xpu_rt/graph_compilation/promotion_retrieval.py (PromotedCandidate.pass_id, candidate_id)
+- python/xpu_rt/benchmarks/pass_pool_ablation.py (promoted_candidates_count, promoted_hit, promoted_hit_rate)
 - scripts/dev/run_pass_pool_ablation.py (warm-cache effectiveness section in markdown)
 - tests/graph_compilation/test_promotion_retrieval.py (test_pass_id_extracted_from_evidence_summary, test_pass_id_resolves_against_card_registry)
 - tests/benchmarks/test_pass_pool_ablation.py
@@ -54,7 +54,7 @@ notes: |
 
   M-37.4..6 close every residual the original M-37 contract declared:
 
-    M-37.4  Pre-M-37 sidecar migration: compgen.promotion.migrate_sidecars
+    M-37.4  Pre-M-37 sidecar migration: xpu_rt.promotion.migrate_sidecars
             backfills missing candidate_kind / selected_candidate_id
             on legacy sidecars by inferring from recipe_id (longest-
             known pass_id prefix from the live registry) and
@@ -68,7 +68,7 @@ notes: |
             Real ablation re-run shows promoted_hit_rate=100% (2/2)
             on the populated cache, up from 0% before.
     M-37.6  Multi-step pass-plan executor MVP:
-            compgen.passes.executor.execute_pass_plan validates a
+            xpu_rt.passes.executor.execute_pass_plan validates a
             plan against M-34 invariants, writes
             03_recipe_planning/pass_plan_execution_log.json, applies
             step 0 (writes agent_decision_response.json carrying the

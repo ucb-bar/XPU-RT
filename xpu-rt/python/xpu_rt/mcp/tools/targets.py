@@ -2,11 +2,11 @@
 
 The agentic-compilation extensibility surface. Three tools:
 
-- :func:`compgen_list_targets` — agent introspects what's available.
+- :func:`xpu_rt_list_targets` — agent introspects what's available.
   Returns the registry's nested tree + per-target audit data.
-- :func:`compgen_describe_target` — drill into one target's
+- :func:`xpu_rt_describe_target` — drill into one target's
   rationale, adapters, metadata.
-- :func:`compgen_register_target` — register a custom target at
+- :func:`xpu_rt_register_target` — register a custom target at
   session scope, without forking the source. The user's agent
   uses this to plug in cuda-tile, an experimental arch, or a
   full new vendor.
@@ -26,10 +26,10 @@ import importlib
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from compgen.mcp.session import SessionManager
+    from xpu_rt.mcp.session import SessionManager
 
 
-def compgen_list_targets(sm: SessionManager | None = None, **_: Any) -> dict[str, Any]:
+def xpu_rt_list_targets(sm: SessionManager | None = None, **_: Any) -> dict[str, Any]:
     """Return the registry's full discovery surface.
 
     The agent's "what's available?" query. Returns:
@@ -45,7 +45,7 @@ def compgen_list_targets(sm: SessionManager | None = None, **_: Any) -> dict[str
     }``
 
     Idempotent. Doesn't trigger entry-point discovery — the agent
-    can pair with ``compgen_register_target`` to add new ones at
+    can pair with ``xpu_rt_register_target`` to add new ones at
     session scope.
 
     The ``sm`` arg is part of the MCP-handler dispatch convention —
@@ -54,7 +54,7 @@ def compgen_list_targets(sm: SessionManager | None = None, **_: Any) -> dict[str
     unused.
     """
     del sm  # session-independent; dispatch convention requires the arg
-    from compgen.targets.registry import registry
+    from xpu_rt.targets.registry import registry
 
     reg = registry()
     return {
@@ -64,7 +64,7 @@ def compgen_list_targets(sm: SessionManager | None = None, **_: Any) -> dict[str
     }
 
 
-def compgen_describe_target(
+def xpu_rt_describe_target(
     sm: SessionManager | None = None,
     *,
     target_id: str,
@@ -73,16 +73,16 @@ def compgen_describe_target(
 
     Args:
         sm: MCP session manager (unused — accepted for dispatch
-            convention; see :func:`compgen_list_targets`).
+            convention; see :func:`xpu_rt_list_targets`).
         target_id: ``"gpu.nvidia.blackwell"`` etc.
 
     Returns the same shape as
-    :meth:`compgen.targets.registry.TargetPackage.to_dict` plus a
+    :meth:`xpu_rt.targets.registry.TargetPackage.to_dict` plus a
     ``status`` field. Unknown target IDs return
     ``{"status": "unknown", "target_id": ...}``; never raises.
     """
     del sm
-    from compgen.targets.registry import registry
+    from xpu_rt.targets.registry import registry
 
     d = registry().describe(target_id)
     if not d:
@@ -90,7 +90,7 @@ def compgen_describe_target(
     return {"status": "ok", **d}
 
 
-def compgen_register_target(
+def xpu_rt_register_target(
     sm: SessionManager | None = None,
     *,
     target_class: str,
@@ -146,7 +146,7 @@ def compgen_register_target(
         ``status``.
     """
     del sm
-    from compgen.targets.registry import register_target
+    from xpu_rt.targets.registry import register_target
 
     errors: list[str] = []
 
@@ -196,10 +196,10 @@ def compgen_register_target(
 
 
 # Tool descriptors for the MCP server's registry. Same shape as
-# the entries in `compgen.mcp.tools.compile.COMPILE_TOOLS`.
+# the entries in `xpu_rt.mcp.tools.compile.COMPILE_TOOLS`.
 TARGET_TOOLS = [
     {
-        "name": "compgen_list_targets",
+        "name": "xpu_rt_list_targets",
         "description": (
             "List every registered target package as a nested tree "
             "and a flat audit table. The agent uses this to "
@@ -207,7 +207,7 @@ TARGET_TOOLS = [
             "knowing the layout in advance."
         ),
         "phase": "inspect",
-        "handler": compgen_list_targets,
+        "handler": xpu_rt_list_targets,
         "input_schema": {
             "type": "object",
             "properties": {},
@@ -215,7 +215,7 @@ TARGET_TOOLS = [
         },
     },
     {
-        "name": "compgen_describe_target",
+        "name": "xpu_rt_describe_target",
         "description": (
             "Return the full audit-query payload for one registered "
             "target — rationale, adapters, metadata, registration "
@@ -223,7 +223,7 @@ TARGET_TOOLS = [
             "does X do?' queries."
         ),
         "phase": "inspect",
-        "handler": compgen_describe_target,
+        "handler": xpu_rt_describe_target,
         "input_schema": {
             "type": "object",
             "properties": {
@@ -236,7 +236,7 @@ TARGET_TOOLS = [
         },
     },
     {
-        "name": "compgen_register_target",
+        "name": "xpu_rt_register_target",
         "description": (
             "Register a custom target at session scope without "
             "editing source. The agent supplies the four adapters "
@@ -248,7 +248,7 @@ TARGET_TOOLS = [
             "to in-tree ones."
         ),
         "phase": "lifecycle",
-        "handler": compgen_register_target,
+        "handler": xpu_rt_register_target,
         "input_schema": {
             "type": "object",
             "properties": {

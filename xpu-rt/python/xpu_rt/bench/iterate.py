@@ -33,13 +33,13 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
-from compgen.bench.diagnosis import (
+from xpu_rt.bench.diagnosis import (
     KernelDiagnosis,
     diagnose,
 )
-from compgen.bench.kernel_bench import BenchResult
-from compgen.bench.refinement import build_refinement_prompt
-from compgen.kernels.contract_v3 import KernelContractV3
+from xpu_rt.bench.kernel_bench import BenchResult
+from xpu_rt.bench.refinement import build_refinement_prompt
+from xpu_rt.kernels.contract_v3 import KernelContractV3
 
 # ---------------------------------------------------------------------------
 # Callable contracts
@@ -154,11 +154,11 @@ def iterate_kernel(
     loop runs to ``max_attempts`` and returns the best (lowest latency
     that passed correctness).
 
-    ``surrogate`` — optional :class:`compgen.bench.surrogate.Surrogate`
+    ``surrogate`` — optional :class:`xpu_rt.bench.surrogate.Surrogate`
     that accumulates ``(region_fingerprint, candidate_id,
     measured_latency_us)`` samples from each *passing* bench. The
     surrogate's predictions then feed
-    :func:`compgen.agent.cost_preview.compute_cost_previews` as
+    :func:`xpu_rt.agent.cost_preview.compute_cost_previews` as
     ``surrogate_deltas`` so the agent's pre-commit preview learns
     online. Backward-compatible: when ``None`` the loop behaves
     exactly as before.
@@ -207,7 +207,7 @@ def iterate_kernel(
         # samples together.
         if surrogate is not None and bench.passed:
             try:
-                from compgen.bench.surrogate import Sample
+                from xpu_rt.bench.surrogate import Sample
 
                 surrogate.update(
                     Sample(

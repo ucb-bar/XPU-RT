@@ -1,7 +1,7 @@
 """ABI-conformance check (D6, Phase G).
 
 Mechanical post-emit gate: the emitted Layer-1 plan executor calls
-only ``cg_rt_*`` (libcompgen_rt) and ``compgen_kernel_*`` (
+only ``cg_rt_*`` (libxpu_rt) and ``xpu_rt_kernel_*`` (
 kernel pack) externs.  Anything else — ``cudaMalloc``,
 ``cuLaunchKernel``, ``hipMalloc``, ``vkCmdDispatch``, etc. — is a
 direct vendor primitive bypassing the HAL; the gate rejects it.
@@ -20,7 +20,7 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from compgen.runtime.errors import AbiConformanceError
+from xpu_rt.runtime.errors import AbiConformanceError
 
 
 _BLOCK_COMMENT_RE = re.compile(r"/\*.*?\*/", flags=re.DOTALL)
@@ -28,12 +28,12 @@ _LINE_COMMENT_RE = re.compile(r"//[^\n]*")
 _STRING_RE = re.compile(r'"([^"\\]|\\.)*"')
 _CALL_RE = re.compile(r"(?<![.>:])\b([a-zA-Z_][a-zA-Z0-9_]*)\s*\(")
 
-# Symbols the emit may invoke that aren't ``cg_rt_*`` / ``compgen_kernel_*``.
+# Symbols the emit may invoke that aren't ``cg_rt_*`` / ``xpu_rt_kernel_*``.
 # Anything else is a violation. Keep this list short and audited.
 _BUILTIN_ALLOW: frozenset[str] = frozenset({
     "sizeof", "if", "for", "while", "return", "switch", "case",
-    "compgen_run", "compgen_select_plan_ref",
-    "compgen_dispatch_run",
+    "xpu_rt_run", "xpu_rt_select_plan_ref",
+    "xpu_rt_dispatch_run",
     # C++ casts the emit needs.
     "static_cast", "reinterpret_cast", "const_cast",
 })
@@ -93,7 +93,7 @@ def check_abi_conformance(
     for name in called:
         if name.startswith("cg_rt_"):
             continue
-        if name.startswith("compgen_kernel_"):
+        if name.startswith("xpu_rt_kernel_"):
             continue
         if name in _BUILTIN_ALLOW:
             continue

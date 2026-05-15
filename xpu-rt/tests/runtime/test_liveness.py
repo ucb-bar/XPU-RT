@@ -2,17 +2,17 @@
 
 from __future__ import annotations
 
-from compgen.runtime.execution_plan import (
+from xpu_rt.runtime.execution_plan import (
     BufferDescriptor,
     ExecutionPlan,
     Lifetime,
 )
-from compgen.runtime.liveness import (
+from xpu_rt.runtime.liveness import (
     compute_interference_graph,
     compute_liveness,
     greedy_color,
 )
-from compgen.runtime.plan_builder import ExecutionPlanBuilder
+from xpu_rt.runtime.plan_builder import ExecutionPlanBuilder
 
 
 def _mk(buffer_id, first, last, size=1024, space="hbm", persistent=False):

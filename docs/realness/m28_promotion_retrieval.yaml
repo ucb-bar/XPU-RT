@@ -11,9 +11,9 @@ forbidden:
 - precomputed promoted_candidates shipped in repo
 realness_level: decision_affecting
 required_evidence:
-- python/compgen/graph_compilation/promotion_retrieval.py
-- python/compgen/graph_compilation/agent_decision.py (retrieval hook)
-- python/compgen/graph_compilation/llm_graph_view.py (rendering)
+- python/xpu_rt/graph_compilation/promotion_retrieval.py
+- python/xpu_rt/graph_compilation/agent_decision.py (retrieval hook)
+- python/xpu_rt/graph_compilation/llm_graph_view.py (rendering)
 - tests/graph_compilation/test_promotion_retrieval.py
 - warm/cold ablation showing fresh_emit_count_warm < fresh_emit_count_cold
 notes: 'Section 19 / M-28.'

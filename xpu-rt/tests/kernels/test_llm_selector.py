@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from unittest.mock import MagicMock
 
-from compgen.kernels.selector import KernelSelector, KernelStrategy
+from xpu_rt.kernels.selector import KernelSelector, KernelStrategy
 
 
 def _make_mock_llm(strategy: str = "autocomp", reason: str = "test"):
@@ -22,7 +22,7 @@ def _make_spec(op_name: str = "linalg.matmul", flops: int = 500):
     """Create a minimal KernelSpec for testing."""
     from unittest.mock import MagicMock
 
-    from compgen.kernels.contracts import KernelSpec
+    from xpu_rt.kernels.contracts import KernelSpec
 
     contract = MagicMock()
     contract.op_name = op_name

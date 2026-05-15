@@ -1,14 +1,14 @@
 """Phase-5 CUDA megakernel emitter.
 
 Takes a :class:`StaticSchedule` (from
-:mod:`compgen.transforms.event_static_schedule`) plus a set of
+:mod:`xpu_rt.transforms.event_static_schedule`) plus a set of
 ``__device__`` function bodies for every distinct ``device_func``
 referenced by the schedule, and emits:
 
 1. A self-contained CUDA C++ source string. Imports the
    ``cg_rt_cuda_etensor_*`` primitives by extern declaration so the
    PTX it eventually compiles into can link against the
-   ``libcompgen_rt-cuda.so`` symbols at module-load time. The kernel
+   ``libxpu_rt-cuda.so`` symbols at module-load time. The kernel
    body is one persistent megakernel: each block consumes its SM
    queue, waits on in-edges, dispatches, notifies out-edges, and
    loops.
@@ -20,7 +20,7 @@ referenced by the schedule, and emits:
 What this emitter does **not** do:
 
 - NVRTC-compile. Compilation happens at bundle-emit / bundle-load
-  time via :class:`compgen.runtime.native.device.CudaExecutable` or
+  time via :class:`xpu_rt.runtime.native.device.CudaExecutable` or
   the C launcher. Keeping emit + compile separate means CPU-only
   hosts can produce + audit the source, and the GPU host caches PTX
   per its own toolchain version.
@@ -49,7 +49,7 @@ from typing import Any
 
 import structlog
 
-from compgen.transforms.event_static_schedule import StaticSchedule
+from xpu_rt.transforms.event_static_schedule import StaticSchedule
 
 log = structlog.get_logger(__name__)
 
@@ -502,10 +502,10 @@ def _emit_inline_primitives() -> str:
 
     ``cuModuleLoadData`` does not resolve ``.extern .func`` PTX
     references against host-loaded ``.so`` symbols, so the device
-    primitives can't live in ``libcompgen_rt-cuda.so`` and be
+    primitives can't live in ``libxpu_rt-cuda.so`` and be
     extern-linked from the megakernel — they have to be inlined into
     the same NVRTC compilation unit. The bodies here mirror those in
-    ``runtime/native/libcompgen_rt/src/drivers/cuda/event_tensor.cu``
+    ``runtime/native/libxpu_rt/src/drivers/cuda/event_tensor.cu``
     (kept in lockstep so behaviour is identical to the host-callable
     ``_kernel`` shims used by Phase-4 unit tests).
 
@@ -514,7 +514,7 @@ def _emit_inline_primitives() -> str:
     ``__threadfence_system`` / ``__nanosleep`` choices.
     """
     return r"""// ===== Event Tensor device primitives (inlined) =====
-// Mirrors libcompgen_rt event_tensor.cu — Phase 5 inlines instead of
+// Mirrors libxpu_rt event_tensor.cu — Phase 5 inlines instead of
 // extern-linking because cuModuleLoadData doesn't resolve cross-module
 // device-function symbols against host-loaded .so files.
 __device__ __forceinline__

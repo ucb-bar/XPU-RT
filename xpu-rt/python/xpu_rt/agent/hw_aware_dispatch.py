@@ -29,24 +29,24 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any
 
-from compgen.kernels.contract_v3 import (
+from xpu_rt.kernels.contract_v3 import (
     DispatchModel,
     Granularity,
     HardwareEnvelope,
     KernelContractV3,
 )
-from compgen.kernels.granularity_oracle import (
+from xpu_rt.kernels.granularity_oracle import (
     GranularityVerdict,
     recommend_granularity,
 )
-from compgen.llm.base import (
+from xpu_rt.llm.base import (
     CompGenLLMProtocol,
     GenerationRequest,
     LLMConfig,
     Objective,
     PromptContext,
 )
-from compgen.runtime.glue import RuntimeAdapter, select_adapter
+from xpu_rt.runtime.glue import RuntimeAdapter, select_adapter
 
 # ---------------------------------------------------------------------------
 # Decision records
@@ -129,7 +129,7 @@ _GRANULARITY_TO_DISPATCH: dict[Granularity, DispatchModel] = {
 def _adapter_supports(adapter: RuntimeAdapter, granularity: Granularity) -> tuple[bool, str]:
     """Synthesise a stub contract with the canonical dispatch model for
     this granularity and ask the adapter whether it can host it."""
-    from compgen.kernels.contract_v3 import (
+    from xpu_rt.kernels.contract_v3 import (
         DispatchSpec,
         IOContract,
         KernelArchetype,

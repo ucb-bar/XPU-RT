@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from compgen.mcp.versioning import (
+from xpu_rt.mcp.versioning import (
     ToolSchemaLog,
     ToolSchemaPin,
     annotate_tool_with_schema_version,

@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from compgen.solve.solver_types import (
+from xpu_rt.solve.solver_types import (
     BackendProbeResult,
     SolverBackendName,
     SolverProblemKind,
@@ -33,7 +33,7 @@ __all__ = ["SolverBackend"]
 class SolverBackend(ABC):
     """Abstract solver backend.
 
-    Subclasses live in ``compgen.solve.backends.*_backend``.
+    Subclasses live in ``xpu_rt.solve.backends.*_backend``.
     """
 
     @property

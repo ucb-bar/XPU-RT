@@ -6,12 +6,12 @@ from __future__ import annotations
 from dataclasses import asdict
 from typing import Any
 
-from compgen.agent.gates import (
+from xpu_rt.agent.gates import (
     composite_gate,
     differential_gate,
     structural_gate,
 )
-from compgen.mcp.session import SessionManager
+from xpu_rt.mcp.session import SessionManager
 
 
 def invoke_tool(

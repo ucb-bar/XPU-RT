@@ -5,7 +5,7 @@ during the compile pipeline, partitioned by phase per
 ``user_perspective/analysis/llm_control_boundaries.md``.
 
 **Design stance** (see ``feedback_lean_heavily_on_inductor.md``):
-the tools CompGen registers are strictly those inductor does NOT
+the tools XPU-RT registers are strictly those inductor does NOT
 already do for us: target-feature-driven fusion beyond inductor's
 single-device heuristics, heterogeneous placement, target-aligned
 layout for non-CUDA accelerators, library matching for NPU/DSP/RVV
@@ -16,11 +16,11 @@ LLM invent-slots.
 
 - ``Tool``: LLM selects and calls (``raise_special_ops``,
   ``match_library_call``, ...). Implementation lives in
-  ``compgen.ir.payload.passes`` (when ported) or
-  ``compgen.llm.tools.*`` (wrappers around existing analyzers).
+  ``xpu_rt.ir.payload.passes`` (when ported) or
+  ``xpu_rt.llm.tools.*`` (wrappers around existing analyzers).
 - ``InventSlot``: LLM proposes a novel plan; a verification gate
   accepts or rejects. Output is a typed Recipe-IR op from
-  ``compgen.ir.recipe.ops_propose``.
+  ``xpu_rt.ir.recipe.ops_propose``.
 - ``ObservabilityTool`` / ``VerificationTool``: read-only helpers
   exposed in every phase.
 
@@ -164,7 +164,7 @@ class PhaseRegistry:
         self.invent_slots[slot.name] = slot
 
 
-# Canonical phases per proposed_compgen_architecture.md.
+# Canonical phases per proposed_xpu_rt_architecture.md.
 # Phase 0 (capture), 1 (DET normalization), 6 (verify), 7 (package) have no
 # LLM surface. Phases 2-5 are the LLM-facing phases.
 _LLM_PHASES: tuple[int, ...] = (2, 3, 4, 5)
@@ -234,11 +234,11 @@ _LOCAL_EXTENSIONS_LOADED: bool = False
 def get_registry() -> Registry:
     """Return the process-wide registry (lazy-initialized).
 
-    On first access, user-authored extensions in ``~/.compgen/extensions/``
-    (see :mod:`compgen.agent.extensions`) are given a chance to register
+    On first access, user-authored extensions in ``~/.xpu_rt/extensions/``
+    (see :mod:`xpu_rt.agent.extensions`) are given a chance to register
     their tools / invent slots. Extension loading never raises — a broken
     file is logged and skipped. Disabled when env var
-    ``COMPGEN_DISABLE_LOCAL_EXTENSIONS=1`` is set.
+    ``XPU_RT_DISABLE_LOCAL_EXTENSIONS=1`` is set.
     """
     global _GLOBAL_REGISTRY, _LOCAL_EXTENSIONS_LOADED
     if _GLOBAL_REGISTRY is None:
@@ -247,9 +247,9 @@ def get_registry() -> Registry:
         _LOCAL_EXTENSIONS_LOADED = True  # set first so failure can't loop
         import os
 
-        if not os.environ.get("COMPGEN_DISABLE_LOCAL_EXTENSIONS"):
+        if not os.environ.get("XPU_RT_DISABLE_LOCAL_EXTENSIONS"):
             try:
-                from compgen.agent.extensions.local_loader import load_local_extensions
+                from xpu_rt.agent.extensions.local_loader import load_local_extensions
 
                 load_local_extensions(_GLOBAL_REGISTRY)
             except Exception:  # noqa: BLE001
@@ -265,7 +265,7 @@ def reset_registry_for_testing() -> None:
 
     Only intended for unit tests that need a clean slate. Clears the
     idempotence flag so the next ``get_registry()`` call rescans
-    ``~/.compgen/extensions``.
+    ``~/.xpu_rt/extensions``.
     """
     global _GLOBAL_REGISTRY, _LOCAL_EXTENSIONS_LOADED
     _GLOBAL_REGISTRY = None

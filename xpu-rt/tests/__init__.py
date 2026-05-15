@@ -1,1 +1,1 @@
-"""CompGen test suite."""
+"""XPU-RT test suite."""

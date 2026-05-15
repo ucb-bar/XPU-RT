@@ -2,8 +2,8 @@
 
 YAML files in this directory describe remote hardware the user has
 access to. Each descriptor is loaded by
-:func:`compgen.runtime.remote_target.load_remote_target_config` and
-fed to :func:`compgen.runtime.remote_target.build_runner` to pick a
+:func:`xpu_rt.runtime.remote_target.load_remote_target_config` and
+fed to :func:`xpu_rt.runtime.remote_target.build_runner` to pick a
 transport (SSH today; Modal / k8s in the future).
 
 Schema:
@@ -12,8 +12,8 @@ Schema:
 target_id: tpu_v5e_pod_1            # required — must match a TargetCard target_id
 transport: ssh                       # "ssh" | "modal" | "k8s"
 host: tpu-host.example.com           # required for ssh
-user: compgen                        # optional
-workdir: /tmp/compgen_remote         # optional, default /tmp/compgen_remote
+user: xpu-rt                        # optional
+workdir: /tmp/xpu_rt_remote         # optional, default /tmp/xpu_rt_remote
 toolchain_probe_cmd: "python -c 'import jax; print(jax.__version__)'"
 build_cmd_template: "python {source} --build"
 run_cmd_template: "python {source} --run"

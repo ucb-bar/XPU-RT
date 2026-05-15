@@ -1,7 +1,7 @@
 """MCP Gateway — Ray Serve deployment exposing MCP tools.
 
 Exposes 11 tools to Claude Code / Codex via the Model Context Protocol.
-Each tool maps to an existing CompGen API entry point.
+Each tool maps to an existing XPU-RT API entry point.
 
 Tools:
     spec_validate, target_profile_normalize, compile_plan_generate,
@@ -147,7 +147,7 @@ MCP_TOOLS: list[MCPToolDefinition] = [
 class MCPGateway:
     """MCP server exposed via Ray Serve.
 
-    Handles MCP JSON-RPC requests and dispatches to CompGen backends.
+    Handles MCP JSON-RPC requests and dispatches to XPU-RT backends.
     """
 
     def __init__(
@@ -175,7 +175,7 @@ class MCPGateway:
 
     async def __call__(self, request: Any) -> dict[str, Any]:
         """Handle raw HTTP request."""
-        return {"status": "ok", "service": "compgen-mcp-gateway"}
+        return {"status": "ok", "service": "xpu-rt-mcp-gateway"}
 
     async def list_tools(self) -> list[dict[str, Any]]:
         """Return MCP-compliant tool definitions."""
@@ -214,13 +214,13 @@ class MCPGateway:
     # -- Tool handlers ---------------------------------------------------
 
     async def _spec_validate(self, spec_path: str) -> dict[str, Any]:
-        from compgen.targetgen.validate_spec import validate_hardware_spec
+        from xpu_rt.targetgen.validate_spec import validate_hardware_spec
 
         errors = validate_hardware_spec(spec_path)
         return {"valid": len(errors) == 0, "errors": errors}
 
     async def _target_profile_normalize(self, spec_path: str) -> dict[str, Any]:
-        from compgen.targetgen.load import load_hardware_spec
+        from xpu_rt.targetgen.load import load_hardware_spec
 
         spec = load_hardware_spec(spec_path)
         return {"name": spec.name, "platform": spec.platform.vendor}

@@ -11,7 +11,7 @@ source:
   verified_by: agustin@garden
   source_verified: true
 loader:
-  kind: compgen_model_spec
+  kind: xpu_rt_model_spec
   model_spec_id: smolvla_one_step
   device_policy: auto
 inputs:

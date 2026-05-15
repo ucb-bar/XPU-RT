@@ -5,8 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from compgen.benchmarks import SuiteEnvironmentStatus, SuiteManifestEntry, SuiteRunConfig
-from compgen.benchmarks.common.results import write_normalized_suite_results
+from xpu_rt.benchmarks import SuiteEnvironmentStatus, SuiteManifestEntry, SuiteRunConfig
+from xpu_rt.benchmarks.common.results import write_normalized_suite_results
 
 from benchmarks.compare import load_all_results
 from benchmarks.record import RunRecord
@@ -95,7 +95,7 @@ def run_suite_workload(
     output_dir: str | Path | None = None,
     config: SuiteRunConfig | None = None,
     include_reference: bool = True,
-    include_compgen: bool = True,
+    include_xpu_rt: bool = True,
 ) -> list[RunRecord]:
     """Run one workload from a suite."""
 
@@ -126,8 +126,8 @@ def run_suite_workload(
     records: list[RunRecord] = []
     if include_reference:
         records.extend(adapter.run_reference(entry, workspace=workspace, output_dir=run_dir, config=run_config))
-    if include_compgen:
-        records.extend(adapter.run_compgen(entry, workspace=workspace, output_dir=run_dir, config=run_config))
+    if include_xpu_rt:
+        records.extend(adapter.run_xpu_rt(entry, workspace=workspace, output_dir=run_dir, config=run_config))
     return _persist_suite_records(records, adapter=adapter, output_dir=run_dir)
 
 

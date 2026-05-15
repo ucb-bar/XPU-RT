@@ -29,18 +29,18 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from compgen.graph_compilation.agent_decomp_fill import (
+from xpu_rt.graph_compilation.agent_decomp_fill import (
     KNOWN_FILLS,
     UnknownTargetError,
     deterministic_fill,
 )
-from compgen.graph_compilation.artifacts import ArtifactRef, StageRecord
-from compgen.graph_compilation.extension_materialize import materialize_extension
-from compgen.graph_compilation.extension_registry import (
+from xpu_rt.graph_compilation.artifacts import ArtifactRef, StageRecord
+from xpu_rt.graph_compilation.extension_materialize import materialize_extension
+from xpu_rt.graph_compilation.extension_registry import (
     register_extension,
 )
-from compgen.graph_compilation.extension_verify import VerifyResult, run_verify
-from compgen.graph_compilation.hashing import sha256_file, sha256_tree
+from xpu_rt.graph_compilation.extension_verify import VerifyResult, run_verify
+from xpu_rt.graph_compilation.hashing import sha256_file, sha256_tree
 
 
 @dataclass
@@ -95,7 +95,7 @@ def run_gap_closure(
     - May update ``registry_path`` (.yaml).
     - Always writes ``run_dir/05_gap_closure/*.json``.
     """
-    from compgen.graph_compilation.artifacts import stage_dir
+    from xpu_rt.graph_compilation.artifacts import stage_dir
 
     started_at = _utcnow()
     run_dir = Path(run_dir).resolve()

@@ -10,10 +10,10 @@ from xdsl.dialects.builtin import Float16Type, Float32Type, Float64Type, StringA
 from xdsl.dialects.func import CallOp
 from xdsl.ir import SSAValue
 
-from compgen.capture.unsupported.classify import UnsupportedClassification
-from compgen.capture.unsupported.detect import UnsupportedOperatorIssue
-from compgen.capture.unsupported.introspect import UnsupportedOpDossier, parse_target
-from compgen.ir.payload.decompositions import DecompFn, DecompResult
+from xpu_rt.capture.unsupported.classify import UnsupportedClassification
+from xpu_rt.capture.unsupported.detect import UnsupportedOperatorIssue
+from xpu_rt.capture.unsupported.introspect import UnsupportedOpDossier, parse_target
+from xpu_rt.ir.payload.decompositions import DecompFn, DecompResult
 
 
 @dataclass(frozen=True)
@@ -55,7 +55,7 @@ def _make_external_call_translation(target: str) -> SynthesizedPayloadTranslatio
     ) -> DecompResult:
         result_type = _result_type_from_meta(meta)
         call = CallOp(sanitized, operands, [result_type])
-        call.attributes["compgen.region_id"] = StringAttr(f"{region_prefix}_{node_name}")
+        call.attributes["xpu_rt.region_id"] = StringAttr(f"{region_prefix}_{node_name}")
         return DecompResult(ops=[call], result=call.res[0], region_ids=[f"{region_prefix}_{node_name}"])
 
     return SynthesizedPayloadTranslation(

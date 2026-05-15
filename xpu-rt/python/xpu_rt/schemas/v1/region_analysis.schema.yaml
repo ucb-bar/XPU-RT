@@ -1,5 +1,5 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "compgen://user_perspective/schemas/region_analysis.schema.yaml"
+$id: "xpu_rt://user_perspective/schemas/region_analysis.schema.yaml"
 title: RegionAnalysis
 description: >
   Per-region annotations produced by scripts/03_graph_analysis.py.
@@ -55,7 +55,7 @@ $defs:
     properties:
       region_id:
         type: string
-        description: Matches the `compgen.region_id` attached by fx_to_xdsl.
+        description: Matches the `xpu_rt.region_id` attached by fx_to_xdsl.
       ops:
         type: array
         items: { type: string }

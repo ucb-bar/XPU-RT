@@ -1,16 +1,16 @@
-"""Local (``~/.compgen/extensions/``) extension loader.
+"""Local (``~/.xpu_rt/extensions/``) extension loader.
 
-Discovers every ``*.py`` file in ``~/.compgen/extensions/`` (overridable
-via ``COMPGEN_EXTENSIONS_DIR``) and gives it a chance to register
+Discovers every ``*.py`` file in ``~/.xpu_rt/extensions/`` (overridable
+via ``XPU_RT_EXTENSIONS_DIR``) and gives it a chance to register
 tools or invent-slots against the global registry.
 
 Loading contract — each file may:
 
 1. Define ``def register(registry):`` which will be called with the
-   live :class:`~compgen.llm.registry.Registry`.
+   live :class:`~xpu_rt.llm.registry.Registry`.
 2. *Or* define module-level constants ``TOOL`` / ``TOOLS`` (iterable
-   of :class:`~compgen.llm.registry.Tool`) and / or ``SLOT`` /
-   ``SLOTS`` (iterable of :class:`~compgen.llm.registry.InventSlot`),
+   of :class:`~xpu_rt.llm.registry.Tool`) and / or ``SLOT`` /
+   ``SLOTS`` (iterable of :class:`~xpu_rt.llm.registry.InventSlot`),
    which will be auto-registered.
 
 Failures never raise — one broken file must not prevent the registry
@@ -19,9 +19,9 @@ from coming up. Instead, the failure is captured in the returned
 the MCP server) can surface it to the user.
 
 Loading is idempotent: a state file
-``~/.compgen/extensions/_state.json`` records which (module, registry-
+``~/.xpu_rt/extensions/_state.json`` records which (module, registry-
 epoch) pairs have already been loaded, and repeat calls are no-ops
-until the registry is :meth:`~compgen.llm.registry.Registry.clear`-ed.
+until the registry is :meth:`~xpu_rt.llm.registry.Registry.clear`-ed.
 """
 
 from __future__ import annotations
@@ -39,14 +39,14 @@ from typing import TYPE_CHECKING, Any
 import structlog
 
 if TYPE_CHECKING:  # pragma: no cover
-    from compgen.llm.registry import Registry
+    from xpu_rt.llm.registry import Registry
 
 log = structlog.get_logger()
 
 
-DEFAULT_ROOT = Path("~/.compgen/extensions").expanduser()
+DEFAULT_ROOT = Path("~/.xpu_rt/extensions").expanduser()
 STATE_FILENAME = "_state.json"
-ENV_VAR = "COMPGEN_EXTENSIONS_DIR"
+ENV_VAR = "XPU_RT_EXTENSIONS_DIR"
 
 
 @dataclass(frozen=True)
@@ -132,8 +132,8 @@ def _discover(root: Path) -> list[Path]:
 
 
 def _import_file(path: Path) -> Any:
-    """Import ``path`` as a throwaway module under ``compgen_ext.<stem>``."""
-    mod_name = f"compgen_ext.{path.stem}"
+    """Import ``path`` as a throwaway module under ``xpu_rt_ext.<stem>``."""
+    mod_name = f"xpu_rt_ext.{path.stem}"
     spec = importlib.util.spec_from_file_location(mod_name, path)
     if spec is None or spec.loader is None:
         raise ImportError(f"could not build spec for {path}")
@@ -166,7 +166,7 @@ def _register_from_module(
     registry: Registry,
 ) -> tuple[list[str], list[str]]:
     """Return (tool_names, slot_names) registered from ``module``."""
-    from compgen.llm.registry import InventSlot, Tool
+    from xpu_rt.llm.registry import InventSlot, Tool
 
     tool_names: list[str] = []
     slot_names: list[str] = []
@@ -201,12 +201,12 @@ def load_local_extensions(
     *,
     force: bool = False,
 ) -> LocalExtensionLoadResult:
-    """Load every ``~/.compgen/extensions/*.py`` into ``registry``.
+    """Load every ``~/.xpu_rt/extensions/*.py`` into ``registry``.
 
     Args:
         registry: Live registry to mutate.
-        root: Directory to scan; defaults to ``$COMPGEN_EXTENSIONS_DIR``
-            or ``~/.compgen/extensions``.
+        root: Directory to scan; defaults to ``$XPU_RT_EXTENSIONS_DIR``
+            or ``~/.xpu_rt/extensions``.
         force: When True, reload even if already loaded this process.
 
     Returns:
@@ -225,7 +225,7 @@ def load_local_extensions(
 
     new_loaded: list[str] = []
     for path in paths:
-        mod_name = f"compgen_ext.{path.stem}"
+        mod_name = f"xpu_rt_ext.{path.stem}"
         if mod_name in loaded_already and not force:
             # Already processed in a prior call; skip so we don't
             # double-register and hit the ValueError in the registry.
@@ -274,7 +274,7 @@ def record_accepted_invocation(
 ) -> None:
     """Append an accepted invocation to the per-root state file.
 
-    Used by the driver to build up the history the P3 ``compgen
+    Used by the driver to build up the history the P3 ``xpu_rt
     contrib draft`` command turns into a regression test. Intentionally
     loose schema — callers write whatever JSON-serialisable payload
     reproduces the invocation.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CompGen advanced truth-path: exercises ALL untested capabilities.
+"""XPU-RT advanced truth-path: exercises ALL untested capabilities.
 
 Extends the base truth path (27 gates) with 12 advanced gates covering:
   - Recipe IR seed generation, validation, and lowering
@@ -65,13 +65,13 @@ class SimpleMLP(nn.Module):
 
 def main() -> None:
     report = GateReport()
-    out = Path(tempfile.mkdtemp(prefix="compgen_advanced_"))
+    out = Path(tempfile.mkdtemp(prefix="xpu_rt_advanced_"))
     print(f"Output: {out}")
 
     # Shared: capture + IR for subsequent gates
-    from compgen.capture.torch_export import capture_model
-    from compgen.ir.payload.import_fx import fx_to_xdsl
-    from compgen.targets.schema import load_profile
+    from xpu_rt.capture.torch_export import capture_model
+    from xpu_rt.ir.payload.import_fx import fx_to_xdsl
+    from xpu_rt.targets.schema import load_profile
 
     model = SimpleMLP()
     inp = (torch.randn(8, 64),)
@@ -87,9 +87,9 @@ def main() -> None:
     print("=" * 70)
 
     try:
-        from compgen.ir.recipe.seed import generate_seed_recipe
-        from compgen.ir.recipe.validate import validate_recipe_module
-        from compgen.ir.recipe.lower import lower_recipe
+        from xpu_rt.ir.recipe.seed import generate_seed_recipe
+        from xpu_rt.ir.recipe.validate import validate_recipe_module
+        from xpu_rt.ir.recipe.lower import lower_recipe
 
         recipe = generate_seed_recipe(module, target_profile=target, objective="latency")
         validation = validate_recipe_module(recipe)
@@ -114,12 +114,12 @@ def main() -> None:
     print("=" * 70)
 
     try:
-        from compgen.semantic.synthesis import (
+        from xpu_rt.semantic.synthesis import (
             Var, Const, Cmp, CmpOp, and_, eval_guard,
             GuardSearchConfig, search_guard_fragments,
             SynthesisExample, expr_to_json, expr_from_json,
         )
-        from compgen.semantic.synthesis import promote_guard, GuardRegistry, GuardRuntime
+        from xpu_rt.semantic.synthesis import promote_guard, GuardRegistry, GuardRuntime
 
         # Build synthetic examples for a fusion guard
         examples = [
@@ -180,9 +180,9 @@ def main() -> None:
     print("=" * 70)
 
     try:
-        from compgen.transforms.synthesize import TransformSynthesizer
-        from compgen.llm.mock_client import MockLLMClient
-        from compgen.llm.base import Objective
+        from xpu_rt.transforms.synthesize import TransformSynthesizer
+        from xpu_rt.llm.mock_client import MockLLMClient
+        from xpu_rt.llm.base import Objective
 
         mock = MockLLMClient(strict=False)
         synth = TransformSynthesizer(llm_client=mock, max_candidates=2)
@@ -211,7 +211,7 @@ def main() -> None:
     print("=" * 70)
 
     try:
-        from compgen.runtime.planner import plan_execution
+        from xpu_rt.runtime.planner import plan_execution
 
         multi_target = load_profile("examples/target_profiles/multi_device.yaml")
         multi_plan = plan_execution(module, multi_target)
@@ -236,7 +236,7 @@ def main() -> None:
     print("GATE 32: GPU numeric verification")
     print("=" * 70)
 
-    from compgen.semantic.verify.harness import verify_callable_against_reference
+    from xpu_rt.semantic.verify.harness import verify_callable_against_reference
 
     if torch.cuda.is_available():
         try:
@@ -285,7 +285,7 @@ def main() -> None:
     print("=" * 70)
 
     try:
-        from compgen.transforms.verify import verify_transform
+        from xpu_rt.transforms.verify import verify_transform
 
         # Verify module against itself (should pass trivially)
         tv_result = verify_transform(module, module.clone())
@@ -326,7 +326,7 @@ def main() -> None:
 
         result = subprocess.run(
             [
-                "uv", "run", "compgen", "analyze",
+                "uv", "run", "xpu-rt", "analyze",
                 str(model_path),
                 "--inputs", str(inputs_yaml),
                 "--target", "examples/target_profiles/cuda_a100.yaml",
@@ -356,8 +356,8 @@ def main() -> None:
     print("=" * 70)
 
     try:
-        from compgen.kernels.contracts import build_kernel_contracts
-        from compgen.kernels.selector import select_strategies
+        from xpu_rt.kernels.contracts import build_kernel_contracts
+        from xpu_rt.kernels.selector import select_strategies
 
         specs = build_kernel_contracts(module, target)
         decisions = select_strategies(specs, target)
@@ -383,8 +383,8 @@ def main() -> None:
     print("=" * 70)
 
     try:
-        from compgen.packs.loader import load_pack
-        from compgen.packs.verify import check_surface_allowed
+        from xpu_rt.packs.loader import load_pack
+        from xpu_rt.packs.verify import check_surface_allowed
 
         cuda_tile = load_pack("userpacks/cuda_tile")
 
@@ -417,11 +417,11 @@ def main() -> None:
     print("=" * 70)
 
     try:
-        from compgen.memory.schema import (
+        from xpu_rt.memory.schema import (
             CandidateStatus, GeneratorKind, KnowledgeKind,
             ObjectKind, ScopeKind,
         )
-        from compgen.memory.store import CompilerMemory
+        from xpu_rt.memory.store import CompilerMemory
 
         mem = CompilerMemory(db_path=out / "knowledge.db", blob_root=out / "kb_blobs")
 
@@ -475,8 +475,8 @@ def main() -> None:
     print("=" * 70)
 
     try:
-        from compgen.capture.unsupported import recover_unsupported_operators
-        from compgen.capture.unsupported.detect import detect_unsupported_operators
+        from xpu_rt.capture.unsupported import recover_unsupported_operators
+        from xpu_rt.capture.unsupported.detect import detect_unsupported_operators
 
         # Model uses ops that we declare unsupported
         class ModelWithSilu(nn.Module):
@@ -521,14 +521,14 @@ def main() -> None:
     print("=" * 70)
 
     try:
-        from compgen.llm._env import resolve_api_key
+        from xpu_rt.llm._env import resolve_api_key
 
         api_key = resolve_api_key("GOOGLE_API_KEY", "GEMINI_API_KEY", "GEMMINI_API")
 
         if api_key:
-            from compgen.agent.loop import AgenticCompilationLoop
-            from compgen.agent.env import CompilerEnv
-            from compgen.llm.gemini_client import GeminiClient
+            from xpu_rt.agent.loop import AgenticCompilationLoop
+            from xpu_rt.agent.env import CompilerEnv
+            from xpu_rt.llm.gemini_client import GeminiClient
 
             real_llm = GeminiClient(model="gemini-2.0-flash", api_key=api_key)
             env = CompilerEnv()

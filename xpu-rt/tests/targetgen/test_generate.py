@@ -5,9 +5,9 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from compgen.stages.registry import StageRegistry
-from compgen.targetgen.generate import GeneratedTarget, generate_target
-from compgen.targetgen.verification_ladder import VerificationLevel
+from xpu_rt.stages.registry import StageRegistry
+from xpu_rt.targetgen.generate import GeneratedTarget, generate_target
+from xpu_rt.targetgen.verification_ladder import VerificationLevel
 from xdsl.dialects import arith, func
 from xdsl.dialects.builtin import IndexType, ModuleOp
 from xdsl.ir import Block, Region
@@ -103,7 +103,7 @@ class TestVerificationManifest:
 
     def test_maturity_mapping(self, tmp_path: Path) -> None:
         result = generate_target(EXEMPLAR_DIR / "test_rocc_accel.yaml", tmp_path / "rocc")
-        from compgen.targets.maturity import TargetMaturity
+        from xpu_rt.targets.maturity import TargetMaturity
 
         # RoCC has simulator → can reach L9
         assert result.verification_manifest.maturity == TargetMaturity.L3_PROMOTED

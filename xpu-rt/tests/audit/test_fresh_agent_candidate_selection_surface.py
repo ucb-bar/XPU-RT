@@ -20,8 +20,8 @@ from pathlib import Path
 
 import pytest
 
-from compgen.audit.fresh_agent import build_task_pack
-from compgen.audit.fresh_agent_modes import (
+from xpu_rt.audit.fresh_agent import build_task_pack
+from xpu_rt.audit.fresh_agent_modes import (
     GreedyBaselineResult,
     run_greedy_baseline,
 )
@@ -123,7 +123,7 @@ def test_inspection_harness_attribution_runs_on_task_pack_run(
     classifies post-runs correctly — without it, the OVERVIEW
     table would always show 'unclassified' and the user could not
     answer 'which gate carried the load?' from the artifact alone."""
-    from compgen.benchmarks.model_inspection import (
+    from xpu_rt.benchmarks.model_inspection import (
         _attribute_load_bearing_gate,
     )
     # Synthetic-but-realistic cost_preview from a tiny_mlp-like region.

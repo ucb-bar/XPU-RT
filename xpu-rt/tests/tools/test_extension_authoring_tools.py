@@ -3,9 +3,9 @@
 Coverage:
 
 Positive:
-* ``compgen_emit_extension_task`` writes a typed task package
+* ``xpu_rt_emit_extension_task`` writes a typed task package
   under ``out_dir`` and returns ``status=ok``.
-* ``compgen_validate_extension_manifest`` accepts a clean,
+* ``xpu_rt_validate_extension_manifest`` accepts a clean,
   schema-valid manifest and returns ``status=ok`` with the right
   ``extension_id`` + ``provides`` summary.
 
@@ -31,9 +31,9 @@ import json
 
 import pytest
 import yaml
-from compgen.tools.errors import ToolInputSchemaError
-from compgen.tools.tool_registry import load_tool_card, tool_cards_root
-from compgen.tools.tool_runner import ToolRunner
+from xpu_rt.tools.errors import ToolInputSchemaError
+from xpu_rt.tools.tool_registry import load_tool_card, tool_cards_root
+from xpu_rt.tools.tool_runner import ToolRunner
 
 
 def _emit_card():
@@ -47,7 +47,7 @@ def _validate_card():
 # Minimal-but-valid manifest body (mirrors tests/extensions test fixture).
 def _minimal_manifest_body(**overrides):
     body = {
-        "schema_version": "compgen_extension_v1",
+        "schema_version": "xpu_rt_extension_v1",
         "extension": {
             "id": "myaccel",
             "version": "0.1.0",
@@ -163,7 +163,7 @@ def test_validate_extension_manifest_clean(tmp_path):
 
     extension_root = tmp_path / "extensions" / "myaccel"
     extension_root.mkdir(parents=True)
-    manifest_path = extension_root / "compgen_extension.yaml"
+    manifest_path = extension_root / "xpu_rt_extension.yaml"
     body = _minimal_manifest_body()
     # Point sandbox at the actual on-disk location so the registry
     # is satisfied by the layout.
@@ -197,11 +197,11 @@ def test_validate_extension_manifest_missing_path(tmp_path):
 
 
 def test_validate_extension_manifest_schema_violation(tmp_path):
-    bad = tmp_path / "compgen_extension.yaml"
+    bad = tmp_path / "xpu_rt_extension.yaml"
     bad.write_text(
         yaml.safe_dump(
             {
-                "schema_version": "compgen_extension_v1",
+                "schema_version": "xpu_rt_extension_v1",
                 # missing "extension" block — schema violation
                 "provides": {
                     "kernel_providers": [],
@@ -248,10 +248,10 @@ def test_both_cards_audit_clean_for_their_declared_maturity():
     """The audit must verify both cards at the maturity
     their cards declare (T6 after the P1 exit-gate promotion)."""
 
-    from compgen.audit.tool_promotion import run_tool_promotion_audit
+    from xpu_rt.audit.tool_promotion import run_tool_promotion_audit
 
     report = run_tool_promotion_audit()
-    for tool_id in ("compgen_emit_extension_task", "compgen_validate_extension_manifest"):
+    for tool_id in ("xpu_rt_emit_extension_task", "xpu_rt_validate_extension_manifest"):
         outcome = next(o for o in report.outcomes if o.tool_id == tool_id)
         assert outcome.verified_maturity == outcome.declared_maturity, outcome.violations
         assert outcome.declared_maturity in {"T2", "T6"}

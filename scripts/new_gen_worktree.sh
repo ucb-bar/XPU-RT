@@ -2,7 +2,7 @@
 set -euo pipefail
 
 RUN_ID="${1:-gen-$(date +%Y%m%d-%H%M%S)}"
-BASE_DIR="../compgen-worktrees"
+BASE_DIR="../xpu_rt-worktrees"
 mkdir -p "${BASE_DIR}"
 
 git worktree add "${BASE_DIR}/${RUN_ID}" -b "${RUN_ID}"

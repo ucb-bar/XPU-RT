@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from compgen.targets.calibrate import CalibratedProfile, CalibrationResult, Calibrator, calibrate
-from compgen.targets.schema import TargetProfile
+from xpu_rt.targets.calibrate import CalibratedProfile, CalibrationResult, Calibrator, calibrate
+from xpu_rt.targets.schema import TargetProfile
 
 
 class MockDeviceHandle:

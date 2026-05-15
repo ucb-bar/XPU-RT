@@ -21,7 +21,7 @@ just maps this over a list of targets.
 
 Usage::
 
-    from compgen.agent.kernel_optimizer import optimize_model
+    from xpu_rt.agent.kernel_optimizer import optimize_model
 
     optim = optimize_model(model, "cuda-a100", perf_budget_us=20_000.0)
     out = optim.forward(*inputs)
@@ -35,23 +35,23 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
-from compgen.agent.hw_aware_dispatch import (
+from xpu_rt.agent.hw_aware_dispatch import (
     MultiTargetDispatchDecision,
     TargetDispatchDecision,
     decide_dispatch,
 )
-from compgen.kernels.contract_v3 import (
+from xpu_rt.kernels.contract_v3 import (
     Granularity,
     HardwareEnvelope,
     KernelContractV3,
 )
-from compgen.llm.base import CompGenLLMProtocol, Objective
-from compgen.memory.kernel_db import (
+from xpu_rt.llm.base import CompGenLLMProtocol, Objective
+from xpu_rt.memory.kernel_db import (
     KernelDB,
     KernelPerfRecord,
     shared_db,
 )
-from compgen.runtime.glue import CapturedGraph, RuntimeAdapter, select_adapter
+from xpu_rt.runtime.glue import CapturedGraph, RuntimeAdapter, select_adapter
 
 # ---------------------------------------------------------------------------
 # Records
@@ -111,7 +111,7 @@ class OptimizedModel:
 
 def _v3_to_fingerprint_dict(c: KernelContractV3) -> dict[str, Any]:
     """Pull just the fingerprint-relevant fields, in the exact shape
-    ``compgen.mcp.tools.kernel.contract_fingerprint`` expects. Keeps
+    ``xpu_rt.mcp.tools.kernel.contract_fingerprint`` expects. Keeps
     the MCP-cache and the optimizer's disk-cache lookups in sync."""
     return {
         "op_name": c.op_name,
@@ -152,7 +152,7 @@ def _v3_to_fingerprint_dict(c: KernelContractV3) -> dict[str, Any]:
 
 def fingerprint_for(contract: KernelContractV3) -> str:
     """Stable fingerprint that matches the MCP cache scheme."""
-    from compgen.mcp.tools.kernel import contract_fingerprint
+    from xpu_rt.mcp.tools.kernel import contract_fingerprint
 
     return contract_fingerprint(_v3_to_fingerprint_dict(contract))
 

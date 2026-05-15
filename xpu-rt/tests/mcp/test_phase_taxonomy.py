@@ -11,7 +11,7 @@ Coverage:
    ``session.current_phase``.
 5. Illegal transitions return ``blocked_reason="illegal_transition"``.
 6. Unknown phases return ``blocked_reason="unknown_phase"``.
-7. With ``COMPGEN_STRICT_PHASE_GATING=1`` set + a phase active,
+7. With ``XPU_RT_STRICT_PHASE_GATING=1`` set + a phase active,
    ``dispatch_tool`` refuses tools not in the phase allowlist with
    ``blocked_reason="phase_violation"``.
 8. Without the env flag, dispatch is unchanged even when the session
@@ -24,7 +24,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from compgen.mcp.phase_taxonomy import (
+from xpu_rt.mcp.phase_taxonomy import (
     LEGAL_TRANSITIONS,
     PHASES,
     PHASE_BUNDLE_EMIT,
@@ -35,9 +35,9 @@ from compgen.mcp.phase_taxonomy import (
     is_legal_transition,
     is_tool_allowed_in_phase,
 )
-from compgen.mcp.server import dispatch_tool
-from compgen.mcp.session import SessionManager
-from compgen.mcp.tools.lifecycle import enter_phase
+from xpu_rt.mcp.server import dispatch_tool
+from xpu_rt.mcp.session import SessionManager
+from xpu_rt.mcp.tools.lifecycle import enter_phase
 
 
 # ----------------------------------------------------------------------
@@ -174,7 +174,7 @@ def test_enter_phase_unsafe_allows_backward(tmp_path: Path) -> None:
 def test_dispatch_phase_gating_blocks_when_flag_set(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setenv("COMPGEN_STRICT_PHASE_GATING", "1")
+    monkeypatch.setenv("XPU_RT_STRICT_PHASE_GATING", "1")
     sm = SessionManager(scratch_root=tmp_path / "scratch")
     s = sm.open()
     enter_phase(sm, target_phase=PHASE_SESSION_INIT, session_id=s.session_id)
@@ -203,7 +203,7 @@ def test_dispatch_phase_gating_blocks_when_flag_set(
 def test_dispatch_phase_gating_off_by_default(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.delenv("COMPGEN_STRICT_PHASE_GATING", raising=False)
+    monkeypatch.delenv("XPU_RT_STRICT_PHASE_GATING", raising=False)
     sm = SessionManager(scratch_root=tmp_path / "scratch")
     s = sm.open()
     enter_phase(sm, target_phase=PHASE_SESSION_INIT, session_id=s.session_id)

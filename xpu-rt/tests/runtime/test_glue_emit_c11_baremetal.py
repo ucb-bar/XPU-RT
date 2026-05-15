@@ -13,8 +13,8 @@ Coverage:
 - Topology   : multi-region emits respect the dependency-edge order
                 that already enforces.
 - Unbound    : a plan with no bindings emits the unbound check that
-                returns ``COMPGEN_PLAN_VIOLATION_UNBOUND_REGION``.
-- Codes      : ``COMPGEN_PLAN_VIOLATION_<KIND>`` codes are present in
+                returns ``XPU_RT_PLAN_VIOLATION_UNBOUND_REGION``.
+- Codes      : ``XPU_RT_PLAN_VIOLATION_<KIND>`` codes are present in
                 the header and the manifest, with stable integer
                 values.
 - Assertions : contract dtype/shape/bytes/layout all generate matching
@@ -22,10 +22,10 @@ Coverage:
                 dtype_in) emit named checks with correct codes.
 
 The C compilation acceptance — actually building the emitted ``.c``
-against ``libcompgen_rt`` and matching the Python SYNC executor
+against ``libxpu_rt`` and matching the Python SYNC executor
 bit-for-bit on ``proxy_vla`` — runs as an integration test in
 ``tests/native/test_c11_baremetal_integration.py`` (gated behind a
-local C toolchain + libcompgen_rt headers being on the include path).
+local C toolchain + libxpu_rt headers being on the include path).
 """
 
 from __future__ import annotations
@@ -38,15 +38,15 @@ from pathlib import Path
 
 import pytest
 
-from compgen.runtime.execution_plan import (
+from xpu_rt.runtime.execution_plan import (
     DependencyEdge,
     ExecutionPlan,
     RegionKernelBinding,
     RegionPlacement,
     Resource,
 )
-from compgen.runtime.glue_emit import emit_c11_baremetal_executor
-from compgen.runtime.glue_emit.c11_baremetal import _PLAN_VIOLATION_CODES
+from xpu_rt.runtime.glue_emit import emit_c11_baremetal_executor
+from xpu_rt.runtime.glue_emit.c11_baremetal import _PLAN_VIOLATION_CODES
 
 
 # --------------------------------------------------------------------------- #
@@ -166,7 +166,7 @@ class TestEmitProducesArtifacts:
         assert manifest["region_order"] == ["r0"]
         assert manifest["abi"]["driver_name"] == "cpu_sync"
         assert manifest["abi"]["uses_only_cg_rt"] is True
-        assert manifest["abi"]["kernel_extern_prefix"] == "compgen_kernel_"
+        assert manifest["abi"]["kernel_extern_prefix"] == "xpu_rt_kernel_"
         # All PLAN_VIOLATION codes are present and have integer values.
         codes = manifest["plan_violation_codes"]
         for name, val in _PLAN_VIOLATION_CODES:
@@ -234,11 +234,11 @@ class TestCSyntax:
         result = emit_c11_baremetal_executor(run_dir)
         cc = _find_cc()
         assert cc is not None
-        # Point at the real libcompgen_rt header; if it's not there the
+        # Point at the real libxpu_rt header; if it's not there the
         # test still passes provided the .c is syntactically valid
         # against a stub. Try the real include path first.
         repo_root = Path(__file__).resolve().parents[2]
-        rt_include = repo_root / "runtime" / "native" / "libcompgen_rt" / "include"
+        rt_include = repo_root / "runtime" / "native" / "libxpu_rt" / "include"
         emit_dir = result.executor_path.parent
         proc = subprocess.run(
             [
@@ -263,7 +263,7 @@ class TestCSyntax:
 class TestAbiLint:
     def test_only_cg_rt_externs_called(self, tmp_path: Path) -> None:
         """Static lint: every function-call symbol in the emit is
-        either ``cg_rt_*`` (libcompgen_rt) or a local/builtin name.
+        either ``cg_rt_*`` (libxpu_rt) or a local/builtin name.
         The D6 ABI-conformance gate enforces this end-to-end."""
         run_dir = _make_run_dir(tmp_path, [
             RegionKernelBinding(
@@ -284,18 +284,18 @@ class TestAbiLint:
         # for the gate.
         call_re = re.compile(r"(?<![.>])\b([a-zA-Z_][a-zA-Z0-9_]*)\s*\(")
         called = {m.group(1) for m in call_re.finditer(src_clean)}
-        # Allowlist: cg_rt_*, compgen_run, kernel externs, libc, control
+        # Allowlist: cg_rt_*, xpu_rt_run, kernel externs, libc, control
         # flow, sizeof, etc. The ABI gate's intent is "no vendor primitive
-        # bypasses libcompgen_rt"; cudaMalloc, hipMalloc, vkCreate*, etc.
+        # bypasses libxpu_rt"; cudaMalloc, hipMalloc, vkCreate*, etc.
         # would appear in this set if present.
         allowed = (
             "sizeof", "if", "for", "while", "return", "switch", "case",
-            "compgen_run",  # the entry point itself
+            "xpu_rt_run",  # the entry point itself
         )
         for name in called:
             if name.startswith("cg_rt_"):
                 continue
-            if name.startswith("compgen_kernel_"):
+            if name.startswith("xpu_rt_kernel_"):
                 continue  # kernel pack externs
             if name in allowed:
                 continue
@@ -336,8 +336,8 @@ class TestTopology:
         result = emit_c11_baremetal_executor(run_dir)
         src = result.executor_path.read_text()
         # r0 must dispatch before r1.
-        idx0 = src.find("compgen_kernel_r0")
-        idx1 = src.find("compgen_kernel_r1")
+        idx0 = src.find("xpu_rt_kernel_r0")
+        idx1 = src.find("xpu_rt_kernel_r1")
         assert idx0 != -1 and idx1 != -1, src
         assert idx0 < idx1, "r0 must be dispatched before r1"
 
@@ -362,7 +362,7 @@ class TestUnboundRegion:
         )
         result = emit_c11_baremetal_executor(run_dir)
         src = result.executor_path.read_text()
-        assert "COMPGEN_PLAN_VIOLATION_UNBOUND_REGION" in src
+        assert "XPU_RT_PLAN_VIOLATION_UNBOUND_REGION" in src
         assert result.overall == "skipped"
         assert result.unbound_regions == ("r0",)
 
@@ -384,7 +384,7 @@ class TestPlanViolationCodes:
         header = result.header_path.read_text()
         manifest = json.loads(result.manifest_path.read_text())
         for name, val in _PLAN_VIOLATION_CODES:
-            assert f"#define COMPGEN_PLAN_VIOLATION_{name} ({val})" in header
+            assert f"#define XPU_RT_PLAN_VIOLATION_{name} ({val})" in header
             assert manifest["plan_violation_codes"][name] == val
 
     def test_io_null_path_present(self, tmp_path: Path) -> None:
@@ -396,7 +396,7 @@ class TestPlanViolationCodes:
         ])
         result = emit_c11_baremetal_executor(run_dir)
         src = result.executor_path.read_text()
-        assert "COMPGEN_PLAN_VIOLATION_IO_NULL" in src
+        assert "XPU_RT_PLAN_VIOLATION_IO_NULL" in src
 
 
 # --------------------------------------------------------------------------- #
@@ -425,10 +425,10 @@ class TestContractAssertions:
         )
         result = emit_c11_baremetal_executor(run_dir)
         src = result.executor_path.read_text()
-        assert "COMPGEN_PLAN_VIOLATION_INPUT_DTYPE" in src
-        assert "COMPGEN_PLAN_VIOLATION_INPUT_SHAPE" in src
-        assert "COMPGEN_PLAN_VIOLATION_INPUT_BYTES" in src
-        assert "COMPGEN_PLAN_VIOLATION_LAYOUT" in src
+        assert "XPU_RT_PLAN_VIOLATION_INPUT_DTYPE" in src
+        assert "XPU_RT_PLAN_VIOLATION_INPUT_SHAPE" in src
+        assert "XPU_RT_PLAN_VIOLATION_INPUT_BYTES" in src
+        assert "XPU_RT_PLAN_VIOLATION_LAYOUT" in src
         # 4*8*4 = 128 bytes for f32.
         assert "(size_t)128" in src
         # rank = 2.
@@ -453,7 +453,7 @@ class TestContractAssertions:
         )
         result = emit_c11_baremetal_executor(run_dir)
         src = result.executor_path.read_text()
-        assert "COMPGEN_PLAN_VIOLATION_PRECONDITION_MOD_EQ" in src
+        assert "XPU_RT_PLAN_VIOLATION_PRECONDITION_MOD_EQ" in src
         assert "% 16 != 0" in src
 
     def test_byte_size_le_precondition_emitted(self, tmp_path: Path) -> None:
@@ -477,7 +477,7 @@ class TestContractAssertions:
         )
         result = emit_c11_baremetal_executor(run_dir)
         src = result.executor_path.read_text()
-        assert "COMPGEN_PLAN_VIOLATION_PRECONDITION_BYTE_SIZE_LE" in src
+        assert "XPU_RT_PLAN_VIOLATION_PRECONDITION_BYTE_SIZE_LE" in src
         assert "> (size_t)1024" in src
 
     def test_dtype_in_precondition_emitted(self, tmp_path: Path) -> None:
@@ -502,10 +502,10 @@ class TestContractAssertions:
         )
         result = emit_c11_baremetal_executor(run_dir)
         src = result.executor_path.read_text()
-        assert "COMPGEN_PLAN_VIOLATION_PRECONDITION_DTYPE_IN" in src
+        assert "XPU_RT_PLAN_VIOLATION_PRECONDITION_DTYPE_IN" in src
         # Should reference both f32 and bf16 dtype enums.
-        assert "COMPGEN_DTYPE_F32" in src
-        assert "COMPGEN_DTYPE_BF16" in src
+        assert "XPU_RT_DTYPE_F32" in src
+        assert "XPU_RT_DTYPE_BF16" in src
 
 
 # --------------------------------------------------------------------------- #
@@ -541,7 +541,7 @@ class TestNegativeControls:
         # Simulate corruption: drop one dispatch call.
         corrupted = src.replace(
             "cg_rt_command_buffer_dispatch(command_buffer, "
-            "compgen_kernel_r1,", "/* dropped */ (void)(", 1,
+            "xpu_rt_kernel_r1,", "/* dropped */ (void)(", 1,
         )
         assert corrupted.count("cg_rt_command_buffer_dispatch(") == 1, (
             "fault injection should reduce the dispatch-call count by one"

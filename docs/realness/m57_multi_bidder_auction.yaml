@@ -38,7 +38,7 @@ claim: |
      M-45 certificate carries ``paper_claimable=True`` (no fallback);
      loser certificates land in the auction tree under
      ``verified/<provider_name>/`` for tactician analysis.
-  6. ``compgen_compare_kernel_bids(run_dir, task_id) -> dict`` MCP
+  6. ``xpu_rt_compare_kernel_bids(run_dir, task_id) -> dict`` MCP
      tool surfaces a ranked summary of every bid + fulfill +
      verifier verdict + certificate path so the agent can re-rank
      without reading the full per-bid JSON.
@@ -55,12 +55,12 @@ forbidden:
 - writing artifacts outside auction/<task_id>/ (winner promotion is the only path that writes outside; it goes through the canonical M-43 sandbox)
 realness_level: production_path
 required_evidence:
-- python/compgen/graph_compilation/kernel_auction.py (orchestrator + AuctionResult + _build_response_body + _promote_winner + _v3_to_legacy_contract + _translate_provider_result_to_artifacts)
-- python/compgen/kernels/providers/c_reference.py (in-tree baseline provider)
-- python/compgen/kernels/registry.py (default_registry now registers CReferenceProvider)
-- python/compgen/graph_compilation/run.py (--auction-mode + --bid-cutoff threading + auction stage between M-42 and M-46)
-- python/compgen/graph_compilation/__main__.py (--auction-mode + --bid-cutoff CLI flags + dispatch)
-- python/compgen/mcp/tools/kernel_codegen.py (compgen_compare_kernel_bids MCP tool)
+- python/xpu_rt/graph_compilation/kernel_auction.py (orchestrator + AuctionResult + _build_response_body + _promote_winner + _v3_to_legacy_contract + _translate_provider_result_to_artifacts)
+- python/xpu_rt/kernels/providers/c_reference.py (in-tree baseline provider)
+- python/xpu_rt/kernels/registry.py (default_registry now registers CReferenceProvider)
+- python/xpu_rt/graph_compilation/run.py (--auction-mode + --bid-cutoff threading + auction stage between M-42 and M-46)
+- python/xpu_rt/graph_compilation/__main__.py (--auction-mode + --bid-cutoff CLI flags + dispatch)
+- python/xpu_rt/mcp/tools/kernel_codegen.py (xpu_rt_compare_kernel_bids MCP tool)
 - tests/graph_compilation/test_kernel_auction.py
 feature_id: m57_multi_bidder_auction
 notes: |

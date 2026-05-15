@@ -15,9 +15,9 @@ from pathlib import Path
 
 import pytest
 import torch
-from compgen.graph_compilation import validate_run
-from compgen.graph_compilation.replay import replay_goldens
-from compgen.graph_compilation.run import run_graph_compilation
+from xpu_rt.graph_compilation import validate_run
+from xpu_rt.graph_compilation.replay import replay_goldens
+from xpu_rt.graph_compilation.run import run_graph_compilation
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 TINY_MLP_CONFIG = REPO_ROOT / "configs" / "models" / "tiny_mlp.yaml"
@@ -176,14 +176,14 @@ def test_corrupted_goldens_fail_replay(graph_compilation_run: Path, tmp_path: Pa
 
 
 def test_existing_capture_files_not_modified() -> None:
-    """graph_capture stage must not modify files under compgen.capture / pipeline / runtime."""
+    """graph_capture stage must not modify files under xpu_rt.capture / pipeline / runtime."""
     forbidden = [
-        "python/compgen/capture/torch_export.py",
-        "python/compgen/capture/torch_mlir_bridge.py",
-        "python/compgen/capture/dynamo_baseline.py",
-        "python/compgen/ir/payload/import_fx.py",
-        "python/compgen/pipeline/driver.py",
-        "python/compgen/runtime/bundle_emit.py",
+        "python/xpu_rt/capture/torch_export.py",
+        "python/xpu_rt/capture/torch_mlir_bridge.py",
+        "python/xpu_rt/capture/dynamo_baseline.py",
+        "python/xpu_rt/ir/payload/import_fx.py",
+        "python/xpu_rt/pipeline/driver.py",
+        "python/xpu_rt/runtime/bundle_emit.py",
     ]
     # Use git to check mtime/working-copy delta against HEAD.
     try:
@@ -253,7 +253,7 @@ def test_compare_command_reports_pass(tmp_path: Path) -> None:
             stop_after="graph-capture",
             run_id=out.name,
         )
-    from compgen.graph_compilation.compare import compare_runs
+    from xpu_rt.graph_compilation.compare import compare_runs
 
     rep = compare_runs(run_a, run_b)
     assert rep.overall == "pass", rep.mismatches
@@ -270,7 +270,7 @@ def test_cli_run_then_validate_then_replay(tmp_path: Path) -> None:
         [
             sys.executable,
             "-m",
-            "compgen.graph_compilation",
+            "xpu_rt.graph_compilation",
             "run",
             "--model",
             str(TINY_MLP_CONFIG),
@@ -288,7 +288,7 @@ def test_cli_run_then_validate_then_replay(tmp_path: Path) -> None:
     assert rc1.returncode == 0, rc1.stderr
 
     rc2 = subprocess.run(
-        [sys.executable, "-m", "compgen.graph_compilation", "validate", "--run", str(out)],
+        [sys.executable, "-m", "xpu_rt.graph_compilation", "validate", "--run", str(out)],
         cwd=str(REPO_ROOT),
         capture_output=True,
         text=True,
@@ -296,7 +296,7 @@ def test_cli_run_then_validate_then_replay(tmp_path: Path) -> None:
     assert rc2.returncode == 0, rc2.stderr
 
     rc3 = subprocess.run(
-        [sys.executable, "-m", "compgen.graph_compilation", "replay-goldens", "--run", str(out)],
+        [sys.executable, "-m", "xpu_rt.graph_compilation", "replay-goldens", "--run", str(out)],
         cwd=str(REPO_ROOT),
         capture_output=True,
         text=True,

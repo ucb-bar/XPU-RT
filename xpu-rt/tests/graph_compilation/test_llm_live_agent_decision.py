@@ -13,7 +13,7 @@ Exercises:
 - API keys never leak into emitted artifacts.
 - Fallback semantics (none).
 
-Note: there is no built-in ``mock`` provider in CompGen — for
+Note: there is no built-in ``mock`` provider in XPU-RT — for
 no-API-key workflows use ``--selection-mode agent-file`` with Claude
 Code instead. Tests that need a deterministic provider register one.
 """
@@ -28,11 +28,11 @@ from pathlib import Path
 
 import pytest
 
-from compgen.graph_compilation.agent_decision import (
+from xpu_rt.graph_compilation.agent_decision import (
     LiveProviderConfig,
     run_agent_decision,
 )
-from compgen.graph_compilation.llm_live_provider import (
+from xpu_rt.graph_compilation.llm_live_provider import (
     ProviderCallResult,
     ProviderError,
     build_prompt,
@@ -97,7 +97,7 @@ def _build_good_test_provider(merlin_mlp_wide_run: Path):  # type: ignore[no-unt
     real provider implementation registered for the test, not a mock —
     the response shape and validation path are identical to a live LLM
     response."""
-    from compgen.graph_compilation.agent_decision import (
+    from xpu_rt.graph_compilation.agent_decision import (
         build_agent_decision_request,
     )
     build_agent_decision_request(merlin_mlp_wide_run)
@@ -288,7 +288,7 @@ def test_provider_returning_correctness_claim_fails(
         merlin_mlp_wide_run / "03_recipe_planning" / "agent_decision"
         / "agent_decision_request.json"
     )
-    from compgen.graph_compilation.agent_decision import (
+    from xpu_rt.graph_compilation.agent_decision import (
         build_agent_decision_request,
     )
     build_agent_decision_request(merlin_mlp_wide_run)
@@ -319,7 +319,7 @@ def test_provider_returning_correctness_claim_fails(
 
 
 def test_provider_returning_perf_claim_fails(merlin_mlp_wide_run: Path) -> None:
-    from compgen.graph_compilation.agent_decision import (
+    from xpu_rt.graph_compilation.agent_decision import (
         build_agent_decision_request,
     )
     build_agent_decision_request(merlin_mlp_wide_run)
@@ -412,7 +412,7 @@ def test_provider_exception_emits_provider_error(
 def test_provider_hidden_candidate_fails(merlin_mlp_wide_run: Path) -> None:
     """Direct validator test for "hidden but selected" — the visibility
     check rejects any selection not in candidate_ids_allowed."""
-    from compgen.graph_compilation.agent_decision import (
+    from xpu_rt.graph_compilation.agent_decision import (
         build_agent_decision_request,
         validate_agent_decision_response,
     )
@@ -466,8 +466,8 @@ def test_no_api_key_in_emitted_artifacts(merlin_mlp_wide_run: Path) -> None:
     _register_for_test(
         "test_secret", _build_good_test_provider(merlin_mlp_wide_run),
     )
-    old = os.environ.get("COMPGEN_LLM_API_KEY")
-    os.environ["COMPGEN_LLM_API_KEY"] = secret
+    old = os.environ.get("XPU_RT_LLM_API_KEY")
+    os.environ["XPU_RT_LLM_API_KEY"] = secret
     try:
         cfg = LiveProviderConfig(provider="test_secret", model="x")
         run_agent_decision(
@@ -475,9 +475,9 @@ def test_no_api_key_in_emitted_artifacts(merlin_mlp_wide_run: Path) -> None:
         )
     finally:
         if old is None:
-            os.environ.pop("COMPGEN_LLM_API_KEY", None)
+            os.environ.pop("XPU_RT_LLM_API_KEY", None)
         else:
-            os.environ["COMPGEN_LLM_API_KEY"] = old
+            os.environ["XPU_RT_LLM_API_KEY"] = old
 
     ad = merlin_mlp_wide_run / "03_recipe_planning" / "agent_decision"
     for path in ad.iterdir():

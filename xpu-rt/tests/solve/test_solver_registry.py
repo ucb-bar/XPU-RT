@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from compgen.solve.backend_registry import SolverBackendRegistry, default_registry
-from compgen.solve.backends.base import SolverBackend
-from compgen.solve.solver_types import (
+from xpu_rt.solve.backend_registry import SolverBackendRegistry, default_registry
+from xpu_rt.solve.backends.base import SolverBackend
+from xpu_rt.solve.solver_types import (
     BackendAvailabilityStatus,
     BackendProbeResult,
     SolverBackendName,

@@ -27,12 +27,12 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Iterable, Sequence
 
-from compgen.audit.errors import (
+from xpu_rt.audit.errors import (
     PairContractViolation,
     PassPlanInvalid,
     PhaseTransitionViolation,
 )
-from compgen.passes.cards import (
+from xpu_rt.passes.cards import (
     PASS_PHASES,
     PassCard,
     PassCardRegistry,

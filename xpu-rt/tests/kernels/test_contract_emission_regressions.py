@@ -8,7 +8,7 @@ Covers gaps #7, #9, #14:
   tile dims; canonical hash uses ``divisibility`` to abstract dims
   into ``{"mod": k}`` form. Two regions with different concrete
   dims both divisible by the same k share canonical hash.
-- #14: ``COMPGEN_SHAPE_POLICY=class`` (or ``shape_policy="class"``
+- #14: ``XPU_RT_SHAPE_POLICY=class`` (or ``shape_policy="class"``
   kwarg) substitutes concrete dims with ``None``; canonical hash
   collapses to a single dynamic-shape canonical kernel covering any
   concrete instantiation under the declared divisibility.
@@ -41,7 +41,7 @@ class TestGap7CudaSm75TargetShipsContract:
     def test_pipeline_emits_cuda_sm75_contract(self, tmp_path: Path) -> None:
         result = subprocess.run(
             [
-                sys.executable, "-m", "compgen.graph_compilation", "run",
+                sys.executable, "-m", "xpu_rt.graph_compilation", "run",
                 "--model", str(REPO_ROOT / "configs/models/merlin_mlp_wide.yaml"),
                 "--target", str(REPO_ROOT / "configs/targets/cuda_sm75.yaml"),
                 "--out", str(tmp_path / "run"),
@@ -77,7 +77,7 @@ class TestGap7CudaSm75TargetShipsContract:
 
 class TestGap9ShapeClassDivisibility:
     def test_divisibility_populated_by_from_recipe(self) -> None:
-        from compgen.kernels.contract_v3 import KernelContractV3
+        from xpu_rt.kernels.contract_v3 import KernelContractV3
 
         cs = {
             "candidate_kind": "set_tile_params",
@@ -99,8 +99,8 @@ class TestGap9ShapeClassDivisibility:
         assert c.io.outputs[0].shape.divisibility == (16, 32)
 
     def test_two_regions_share_canonical_hash_under_divisibility(self) -> None:
-        from compgen.kernels.contract_v3 import KernelContractV3
-        from compgen.promotion.contract_hash import (
+        from xpu_rt.kernels.contract_v3 import KernelContractV3
+        from xpu_rt.promotion.contract_hash import (
             canonical_contract_hash,
             instance_contract_hash,
         )
@@ -142,7 +142,7 @@ class TestGap9ShapeClassDivisibility:
 
 class TestGap14DynamicShapeMode:
     def test_class_mode_substitutes_dims_with_none(self) -> None:
-        from compgen.kernels.contract_v3 import KernelContractV3
+        from xpu_rt.kernels.contract_v3 import KernelContractV3
 
         c = KernelContractV3.from_recipe(
             candidate_selection={
@@ -167,8 +167,8 @@ class TestGap14DynamicShapeMode:
         """Two contracts from totally different concrete shapes
         produce the SAME canonical hash under class mode (since both
         are dynamic + same archetype + dtype + layout + target)."""
-        from compgen.kernels.contract_v3 import KernelContractV3
-        from compgen.promotion.contract_hash import canonical_contract_hash
+        from xpu_rt.kernels.contract_v3 import KernelContractV3
+        from xpu_rt.promotion.contract_hash import canonical_contract_hash
 
         c_a = KernelContractV3.from_recipe(
             candidate_selection={
@@ -197,7 +197,7 @@ class TestGap14DynamicShapeMode:
         assert canonical_contract_hash(c_a) == canonical_contract_hash(c_b)
 
     def test_unknown_shape_policy_raises(self) -> None:
-        from compgen.kernels.contract_v3 import KernelContractV3
+        from xpu_rt.kernels.contract_v3 import KernelContractV3
 
         with pytest.raises(ValueError, match="unknown shape_policy"):
             KernelContractV3.from_recipe(
@@ -214,12 +214,12 @@ class TestGap14DynamicShapeMode:
             )
 
     def test_env_var_drives_shape_policy(self, tmp_path: Path, monkeypatch) -> None:
-        """COMPGEN_SHAPE_POLICY=class makes the materializer
+        """XPU_RT_SHAPE_POLICY=class makes the materializer
         substitute dims with None."""
-        monkeypatch.setenv("COMPGEN_SHAPE_POLICY", "class")
+        monkeypatch.setenv("XPU_RT_SHAPE_POLICY", "class")
         result = subprocess.run(
             [
-                sys.executable, "-m", "compgen.graph_compilation", "run",
+                sys.executable, "-m", "xpu_rt.graph_compilation", "run",
                 "--model", str(REPO_ROOT / "configs/models/merlin_mlp_wide.yaml"),
                 "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
                 "--out", str(tmp_path / "run"),
@@ -228,7 +228,7 @@ class TestGap14DynamicShapeMode:
                 "--auction-mode", "disabled",
             ],
             cwd=REPO_ROOT, capture_output=True, text=True,
-            env={**os.environ, "COMPGEN_SHAPE_POLICY": "class"},
+            env={**os.environ, "XPU_RT_SHAPE_POLICY": "class"},
         )
         assert result.returncode == 0, result.stderr
 

@@ -5,9 +5,9 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from compgen.targetgen.hardware_spec import ExecutionModel
-from compgen.targetgen.load import extract_target_profile, load_hardware_spec, load_spec_with_profile
-from compgen.targetgen.validate_spec import validate_hardware_spec
+from xpu_rt.targetgen.hardware_spec import ExecutionModel
+from xpu_rt.targetgen.load import extract_target_profile, load_hardware_spec, load_spec_with_profile
+from xpu_rt.targetgen.validate_spec import validate_hardware_spec
 
 EXEMPLAR_DIR = Path(__file__).parent / "exemplars"
 

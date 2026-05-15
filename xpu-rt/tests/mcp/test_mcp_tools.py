@@ -1,7 +1,7 @@
 """Integration tests for the MCP tool handlers.
 
 These tests exercise the handlers as plain Python callables, without
-spawning the ``compgen-mcp`` subprocess, so the ``mcp`` Python SDK is
+spawning the ``xpu-rt-mcp`` subprocess, so the ``mcp`` Python SDK is
 NOT a test dependency. A separate test can be added later for the
 subprocess path once the optional ``mcp[]`` extras are installed in
 CI.
@@ -16,21 +16,21 @@ from pathlib import Path
 
 import torch
 import torch.nn as nn
-from compgen.llm.mock_client import MockLLMClient
-from compgen.mcp.session import SessionManager
-from compgen.mcp.tools import ALL_TOOLS
-from compgen.mcp.tools.inspect import (
+from xpu_rt.llm.mock_client import MockLLMClient
+from xpu_rt.mcp.session import SessionManager
+from xpu_rt.mcp.tools import ALL_TOOLS
+from xpu_rt.mcp.tools.inspect import (
     checkpoint,
     diff_recipe,
     list_phase_tools,
     session_summary,
     view_recipe,
 )
-from compgen.mcp.tools.lifecycle import (
+from xpu_rt.mcp.tools.lifecycle import (
     bundle_export,
     open_target,
 )
-from compgen.mcp.tools.transform import (
+from xpu_rt.mcp.tools.transform import (
     invoke_tool,
     propose_invent_slot,
     step_proposal,
@@ -128,9 +128,9 @@ def test_load_model_from_python_file(tmp_path: Path) -> None:
 
     # Run load_model with llm='gemini' would hit the API; to avoid
     # that we monkey-patch _resolve_llm via a direct driver path.
-    from compgen.agent.llm_driver import LLMDrivenCompiler
-    from compgen.api import compile_model
-    from compgen.api import device as _device
+    from xpu_rt.agent.llm_driver import LLMDrivenCompiler
+    from xpu_rt.api import compile_model
+    from xpu_rt.api import device as _device
 
     mf = _model_file(tmp_path)
     # Use the handler's _resolve_model helper through load_model but
@@ -138,7 +138,7 @@ def test_load_model_from_python_file(tmp_path: Path) -> None:
     # to drive the pieces directly:
     dev = _device(EXEMPLAR)
     session.device = dev
-    from compgen.api_llm import _resolve_model
+    from xpu_rt.api_llm import _resolve_model
 
     module, inputs = _resolve_model(mf, None)
     compiled = compile_model(
@@ -177,10 +177,10 @@ def _prepared_session(tmp_path: Path) -> tuple[SessionManager, str]:
     sid = opened["session_id"]
     session = sm.get(sid)
 
-    from compgen.agent.llm_driver import LLMDrivenCompiler
-    from compgen.api import compile_model
-    from compgen.api import device as _device
-    from compgen.api_llm import _resolve_model
+    from xpu_rt.agent.llm_driver import LLMDrivenCompiler
+    from xpu_rt.api import compile_model
+    from xpu_rt.api import device as _device
+    from xpu_rt.api_llm import _resolve_model
 
     dev = _device(EXEMPLAR)
     session.device = dev

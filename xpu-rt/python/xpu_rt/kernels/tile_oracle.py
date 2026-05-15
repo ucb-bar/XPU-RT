@@ -17,8 +17,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from compgen.kernels.contract_v3 import HardwareEnvelope
-from compgen.memory.knowledge import shared_store
+from xpu_rt.kernels.contract_v3 import HardwareEnvelope
+from xpu_rt.memory.knowledge import shared_store
 
 # ---------------------------------------------------------------------------
 # Recommendation dataclass
@@ -111,7 +111,7 @@ def _emit_advisory(payload: dict) -> None:
     context. ``OraclePublisher.emit`` no-ops when no trace bus is installed.
     """
     try:
-        from compgen.trace import OraclePublisher
+        from xpu_rt.trace import OraclePublisher
 
         OraclePublisher.emit(oracle="tile", **payload)
     except Exception:  # noqa: BLE001

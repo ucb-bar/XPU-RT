@@ -1,6 +1,6 @@
 """``fold_transposes_into_dots`` -- absorb transposes feeding matmul.
 
-Reconstruction of XLA's ``TransposeFolding`` pass as a CompGen
+Reconstruction of XLA's ``TransposeFolding`` pass as a XPU-RT
 PatternRewriter. Zero external references; this module owns the rewrite.
 
 Two folds are implemented:
@@ -26,7 +26,7 @@ When such cases appear in practice they will be handled by the
 LLM-tool signature:
 
     tool_name="fold_transposes_into_dots"
-    wraps_pass="CompGen:TransposeFolding"
+    wraps_pass="XPU-RT:TransposeFolding"
     invent_slot="pattern_library/algebraic_fold"
     policy="AbsorbEvery2DTransposeIntoDot"
 """
@@ -217,7 +217,7 @@ class FoldMatmulTransposePattern(RewritePattern):
         new_matmul.properties["indexing_maps"] = ArrayAttr(new_maps)
 
         # Preserve region-id / pattern-hint attributes if present.
-        for key in ("compgen.region_id", "compgen._pattern_hint"):
+        for key in ("xpu_rt.region_id", "xpu_rt._pattern_hint"):
             if key in op.attributes and key not in new_matmul.attributes:
                 new_matmul.attributes[key] = op.attributes[key]
 

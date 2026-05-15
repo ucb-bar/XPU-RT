@@ -9,14 +9,14 @@ from __future__ import annotations
 
 from xdsl.ir import Dialect
 
-from compgen.ir.recipe.attrs import (
+from xpu_rt.ir.recipe.attrs import (
     CostAttr,
     DeviceRefAttr,
     EffectClassAttr,
     ProvenanceAttr,
     ShapeSummaryAttr,
 )
-from compgen.ir.recipe.ops_candidate import (
+from xpu_rt.ir.recipe.ops_candidate import (
     BlackboxOp,
     FuseOp,
     InsertCopyBoundaryOp,
@@ -32,7 +32,7 @@ from compgen.ir.recipe.ops_candidate import (
     TileOp,
     VectorizeOp,
 )
-from compgen.ir.recipe.ops_choice import (
+from xpu_rt.ir.recipe.ops_choice import (
     AlternativesOp,
     DeferChoiceOp,
     PromoteCandidateOp,
@@ -41,11 +41,11 @@ from compgen.ir.recipe.ops_choice import (
     RequireSolverOp,
     SearchBudgetOp,
 )
-from compgen.ir.recipe.ops_dispatch import (
+from xpu_rt.ir.recipe.ops_dispatch import (
     _DISPATCH_OPS,
     PlanDispatchTableOp,
 )
-from compgen.ir.recipe.ops_fact import (
+from xpu_rt.ir.recipe.ops_fact import (
     BackendAvailableOp,
     BackendEligibleOp,
     CalibrationOp,
@@ -61,10 +61,10 @@ from compgen.ir.recipe.ops_fact import (
     TransferCostOp,
     UnsupportedOperatorOp,
 )
-from compgen.ir.recipe.ops_propose import (
+from xpu_rt.ir.recipe.ops_propose import (
     _PROPOSE_OPS,
 )
-from compgen.ir.recipe.ops_provenance import (
+from xpu_rt.ir.recipe.ops_provenance import (
     FeedbackOp,
     FromAgentOp,
     FromEqsatOp,
@@ -73,14 +73,14 @@ from compgen.ir.recipe.ops_provenance import (
     PromoteOp,
     RejectOp,
 )
-from compgen.ir.recipe.ops_scope import (
+from xpu_rt.ir.recipe.ops_scope import (
     AnchorOp,
     BindPayloadOp,
     RecipeGuardOp,
     RecipeRegionOp,
     SegmentOp,
 )
-from compgen.ir.recipe.ops_verify import (
+from xpu_rt.ir.recipe.ops_verify import (
     RequireCheckFileOp,
     RequireDiffTestOp,
     RequireLayoutInvariantOp,

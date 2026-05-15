@@ -4,7 +4,7 @@ input / output boundary) where it can be dropped or absorbed by
 layout.
 
 Reconstruction of IREE's ``PropagateLinalgTransposePass`` as a
-CompGen PatternRewriter. Zero external references; CompGen owns
+XPU-RT PatternRewriter. Zero external references; XPU-RT owns
 the rewrite.
 
 Two fold rules land in  (the MVP subset that matters for LLM
@@ -23,7 +23,7 @@ workloads):
    :class:`PushTransposeIntoElementwisePattern`.
 
 Transpose → matmul absorption already lives in
-:mod:`compgen.ir.payload.passes.rewrites.fold_transposes_into_dots`
+:mod:`xpu_rt.ir.payload.passes.rewrites.fold_transposes_into_dots`
 (W1.2); this pass defers to that one for contraction absorption.
 
 Transpose → convolution (HWCF ↔ HWFC) and transpose → pad are
@@ -43,7 +43,7 @@ may unlock another.
 LLM-tool signature:
 
     tool_name="propagate_transposes"
-    wraps_pass="CompGen:PropagateLinalgTranspose"
+    wraps_pass="XPU-RT:PropagateLinalgTranspose"
     invent_slot="layout/transpose_propagation"
     policy="BubbleTransposesThroughElementwise"
 """
@@ -167,7 +167,7 @@ class ComposeAdjacentTransposesPattern(RewritePattern):
             result=op.results[0].type,
         )
         # Preserve attributes if any.
-        for k in ("compgen.region_id", "compgen._pattern_hint"):
+        for k in ("xpu_rt.region_id", "xpu_rt._pattern_hint"):
             if k in op.attributes and k not in new_t.attributes:
                 new_t.attributes[k] = op.attributes[k]
         rewriter.replace_matched_op(new_t)
@@ -315,7 +315,7 @@ class PushTransposeIntoElementwisePattern(RewritePattern):
         )
 
         # Preserve op-level metadata.
-        for k in ("compgen.region_id", "compgen._pattern_hint"):
+        for k in ("xpu_rt.region_id", "xpu_rt._pattern_hint"):
             if k in op.attributes and k not in new_generic.attributes:
                 new_generic.attributes[k] = op.attributes[k]
 

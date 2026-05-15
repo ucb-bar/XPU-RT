@@ -7,7 +7,7 @@
 ## Core rule
 
 > **Agents may propose tools, passes, dialect lowerings, and kernel providers.
-> CompGen only executes certified artifacts.**
+> XPU-RT only executes certified artifacts.**
 
 Cards are not evidence of support. Provider results are not certificates.
 Pass-tool outputs are Recipe-IR deltas, not direct IR mutations. Every
@@ -20,7 +20,7 @@ disappearance, no silent fallback, and no fake success.
 ┌──────────────────────────────────────────────────────────────┐
 │ Agent plane                                                  │
 │  - Claude Code / Codex via MCP                               │
-│  - PyPI compgen package                                      │
+│  - PyPI xpu-rt package                                      │
 │  - .rcg-artifacts/extensions/<id>/  (user-writable, sandboxed)│
 └──────────────────────────────────────────────────────────────┘
             │ tool calls / extension files
@@ -54,7 +54,7 @@ Violation of any rule fails CI.
    treats a `ProviderResult.status == "generated"` as proof of correctness
    is a hard error.
 2. **Providers may only write under their assigned `artifact_dir`.** No
-   writes to `python/compgen/`, `configs/`, `payload.mlir`, contract
+   writes to `python/xpu_rt/`, `configs/`, `payload.mlir`, contract
    files, recipe IR, run manifests, or any parent via `..`.
 3. **User extensions may not mutate Payload IR, Recipe IR, contracts,
    manifests, or run ledgers directly.** They emit proposals; the core
@@ -86,8 +86,8 @@ Every `ProviderCard`, `TargetCard`, `DialectProviderCard`, and
 
 | Level         | Meaning                                                     | `paper_claimable` |
 |---------------|-------------------------------------------------------------|-------------------|
-| `card_only`   | CompGen knows this provider exists.                         | false             |
-| `probe`       | CompGen can detect installed-or-blocked + emit typed status.| false             |
+| `card_only`   | XPU-RT knows this provider exists.                         | false             |
+| `probe`       | XPU-RT can detect installed-or-blocked + emit typed status.| false             |
 | `generate`    | Provider emits source / IR artifacts.                       | false             |
 | `verify`      | Provider compiles, runs, differentials against a reference. | true (with caveats) |
 | `promote`     | Provider produces reusable certified artifacts.             | true              |
@@ -132,7 +132,7 @@ validator.
 2. unsupported_ops.json records op, shape, dtype, source location,
    closest supported patterns.
 3. Agent sees unsupported-op gap in llm_graph_view.
-4. Agent calls compgen_emit_extension_task (MCP).
+4. Agent calls xpu_rt_emit_extension_task (MCP).
 5. Task asks for one of:
      - new kernel provider
      - new pass tool
@@ -141,10 +141,10 @@ validator.
      - new contract rule
 6. Claude Code / user writes files under
    .rcg-artifacts/extensions/<task_id>/.
-7. CompGen probes the extension.
-8. CompGen validates manifest + sandbox paths.
-9. CompGen runs unit smoke tests.
-10. CompGen runs contract-derived verification.
+7. XPU-RT probes the extension.
+8. XPU-RT validates manifest + sandbox paths.
+9. XPU-RT runs unit smoke tests.
+10. XPU-RT runs contract-derived verification.
 11. If accepted, extension is registered for this run.
 12. Pipeline resumes.
 ```
@@ -153,7 +153,7 @@ The task artifact (`extension_task_v1`) carries the
 `kernel_facing_contract`, the `region_dossier`, the
 `payload_ir_summary`, the `allowed_outputs`, the `forbidden` actions,
 and the `verification_required` list. The extension response is
-committed via `compgen_commit_extension_response` and only registered
+committed via `xpu_rt_commit_extension_response` and only registered
 after probe + sandbox + verifier all return green.
 
 ## Object types

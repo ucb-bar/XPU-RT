@@ -8,39 +8,39 @@ from __future__ import annotations
 
 import io
 
-from compgen.ir.recipe.attrs import CostAttr, DeviceRefAttr, ProvenanceAttr
-from compgen.ir.recipe.dialect import Recipe
-from compgen.ir.recipe.ops_candidate import (
+from xpu_rt.ir.recipe.attrs import CostAttr, DeviceRefAttr, ProvenanceAttr
+from xpu_rt.ir.recipe.dialect import Recipe
+from xpu_rt.ir.recipe.ops_candidate import (
     BlackboxOp,
     FuseOp,
     PlaceOnDeviceOp,
     TileOp,
     VectorizeOp,
 )
-from compgen.ir.recipe.ops_choice import (
+from xpu_rt.ir.recipe.ops_choice import (
     AlternativesOp,
     RankOp,
     SearchBudgetOp,
 )
-from compgen.ir.recipe.ops_fact import (
+from xpu_rt.ir.recipe.ops_fact import (
     BackendAvailableOp,
     GraphBreakOp,
     TransferCostOp,
 )
-from compgen.ir.recipe.ops_provenance import (
+from xpu_rt.ir.recipe.ops_provenance import (
     FeedbackOp,
     FromAgentOp,
     LineageOp,
     PromoteOp,
 )
-from compgen.ir.recipe.ops_scope import (
+from xpu_rt.ir.recipe.ops_scope import (
     AnchorOp,
     BindPayloadOp,
     RecipeGuardOp,
     RecipeRegionOp,
     SegmentOp,
 )
-from compgen.ir.recipe.ops_verify import (
+from xpu_rt.ir.recipe.ops_verify import (
     RequireCheckFileOp,
     RequireDiffTestOp,
     RequireMemoryBoundOp,

@@ -31,7 +31,7 @@ Schema (``pass_card_v1`` YAML)::
       - "non_divisible_tile"
       - "boundary_handling_required"
       - "unsupported_op_in_region"
-    mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+    mcp_tool: mcp__xpu_rt__xpu_rt_emit_agent_decision_request
     example_invocation:
       kind: set_tile_params
       candidate_id: "tile_M16_N16_K16"
@@ -437,7 +437,7 @@ class PassCardRegistry:
         ``invalidates`` field would be silently invisible to the
         invalidation tracker.
         """
-        from compgen.analysis.checkpoints import (
+        from xpu_rt.analysis.checkpoints import (
             AnalysisSummaryError,
             assert_resolvable,
         )
@@ -467,7 +467,7 @@ class PassCardRegistry:
     def require(self, pass_id: str) -> PassCard:
         card = self.cards.get(pass_id)
         if card is None:
-            from compgen.audit.errors import MissingPassCard
+            from xpu_rt.audit.errors import MissingPassCard
             raise MissingPassCard(
                 f"pass_id {pass_id!r} has no pass card under {self.root}"
             )
@@ -480,7 +480,7 @@ class PassCardRegistry:
         """Raise :class:`MissingPassCard` if any id is unknown."""
         missing = [p for p in pass_ids if p not in self.cards]
         if missing:
-            from compgen.audit.errors import MissingPassCard
+            from xpu_rt.audit.errors import MissingPassCard
             raise MissingPassCard(
                 f"the following pass_ids are referenced but have no card: "
                 f"{missing} (registry root: {self.root})"

@@ -8,7 +8,7 @@ claim: |
 
   Hard contract:
 
-  1. ``compgen/kernels/predicates.py`` ships five frozen-dataclass
+  1. ``xpu_rt/kernels/predicates.py`` ships five frozen-dataclass
      predicate kinds with stable wire-format ``kind`` strings:
      - ``mod_eq`` (ModEq) — ``arg_dim`` divisible by ``k``
      - ``byte_size_le`` (ByteSizeLe) — ``arg`` numel*element_size ≤ max
@@ -64,11 +64,11 @@ forbidden:
 - preconditions /postconditions appearing in compiler_only() (they belong in kernel_facing(); the kernel codegen + M-44 verifier both need them)
 realness_level: production_path
 required_evidence:
-- python/compgen/kernels/predicates.py (entire module)
-- python/compgen/kernels/contract_v3.py (preconditions + postconditions fields + from_recipe population)
-- python/compgen/graph_compilation/kernel_contract_materialization.py (contract_to_dict M-61 lines)
-- python/compgen/graph_compilation/kernel_codegen_response.py (_reconstruct_contract_from_dict M-61 lines)
-- python/compgen/runtime/glue_emit/plan_assertions.py (5 new PLAN_VIOLATION subclasses + predicate-driven assertion emit)
+- python/xpu_rt/kernels/predicates.py (entire module)
+- python/xpu_rt/kernels/contract_v3.py (preconditions + postconditions fields + from_recipe population)
+- python/xpu_rt/graph_compilation/kernel_contract_materialization.py (contract_to_dict M-61 lines)
+- python/xpu_rt/graph_compilation/kernel_codegen_response.py (_reconstruct_contract_from_dict M-61 lines)
+- python/xpu_rt/runtime/glue_emit/plan_assertions.py (5 new PLAN_VIOLATION subclasses + predicate-driven assertion emit)
 - tests/kernels/test_predicates.py
 - tests/runtime/test_plan_assertions_predicates.py
 feature_id: m61_predicate_dsl

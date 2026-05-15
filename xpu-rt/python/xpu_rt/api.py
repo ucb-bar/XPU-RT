@@ -1,4 +1,4 @@
-"""Top-level Python control plane API for CompGen.
+"""Top-level Python control plane API for XPU-RT.
 
 Provides two entry points:
 
@@ -13,10 +13,10 @@ Provides two entry points:
 
 Example::
 
-    import compgen
+    import xpu_rt
 
-    dev = compgen.device("hardware_specs/my_chip.yaml")
-    compiled = compgen.compile_model(model, dev, objective="latency")
+    dev = xpu_rt.device("hardware_specs/my_chip.yaml")
+    compiled = xpu_rt.compile_model(model, dev, objective="latency")
     result = compiled(sample_input)
 """
 
@@ -31,30 +31,30 @@ import torch
 import torch.nn as nn
 from xdsl.dialects.builtin import ModuleOp
 
-from compgen.agent.analyzer import GraphAnalysisDossier, NetworkAnalyzer
-from compgen.agent.env import CompilerEnv
-from compgen.agent.loop import AgenticCompilationLoop, CompilationResult
-from compgen.capture.torch_export import CaptureArtifact, capture_frontend_artifact
-from compgen.eqsat.pipeline import EqSatResult, run_eqsat_pass
-from compgen.ir.payload.import_fx import ImportDiagnostic, fx_to_xdsl
-from compgen.llm.base import CompGenLLMProtocol
-from compgen.runtime.local_executor import BenchmarkResult, LocalExecutor
-from compgen.stages.registry import PipelineResult, StageRegistry, TargetDialectStack
-from compgen.targetgen.generate import GeneratedTarget, generate_target
-from compgen.targetgen.hardware_spec import HardwareSpec
-from compgen.targets.capability import CapabilitySpec
-from compgen.targets.package import TargetPackage, generate_target_package
-from compgen.targets.schema import TargetProfile
+from xpu_rt.agent.analyzer import GraphAnalysisDossier, NetworkAnalyzer
+from xpu_rt.agent.env import CompilerEnv
+from xpu_rt.agent.loop import AgenticCompilationLoop, CompilationResult
+from xpu_rt.capture.torch_export import CaptureArtifact, capture_frontend_artifact
+from xpu_rt.eqsat.pipeline import EqSatResult, run_eqsat_pass
+from xpu_rt.ir.payload.import_fx import ImportDiagnostic, fx_to_xdsl
+from xpu_rt.llm.base import CompGenLLMProtocol
+from xpu_rt.runtime.local_executor import BenchmarkResult, LocalExecutor
+from xpu_rt.stages.registry import PipelineResult, StageRegistry, TargetDialectStack
+from xpu_rt.targetgen.generate import GeneratedTarget, generate_target
+from xpu_rt.targetgen.hardware_spec import HardwareSpec
+from xpu_rt.targets.capability import CapabilitySpec
+from xpu_rt.targets.package import TargetPackage, generate_target_package
+from xpu_rt.targets.schema import TargetProfile
 
 log = structlog.get_logger()
 
 
 # Phase-7 sentinel — read by
-# :func:`compgen.testing.etc_conformance._check_etc_routing_ready`.
+# :func:`xpu_rt.testing.etc_conformance._check_etc_routing_ready`.
 # True when the conformance harness's ETC dispatch path is wired
 # (workload factory + ``_compile_and_evaluate`` populated). The set
 # of currently-wired workloads is enumerated by
-# :data:`compgen.testing.workloads.WORKLOAD_FACTORIES`; workloads
+# :data:`xpu_rt.testing.workloads.WORKLOAD_FACTORIES`; workloads
 # absent there fail loud rather than silently route through a stub.
 _ETC_DISPATCH_READY: bool = True
 
@@ -65,9 +65,9 @@ class CompGenDevice:
 
     Created by :func:`device`.  Holds everything the compilation pipeline
     needs to know about the hardware target: the full hardware spec, the
-    extracted :class:`~compgen.targets.schema.TargetProfile`, inferred
-    :class:`~compgen.targets.capability.CapabilitySpec`, and the generated
-    :class:`~compgen.stages.registry.TargetDialectStack`.
+    extracted :class:`~xpu_rt.targets.schema.TargetProfile`, inferred
+    :class:`~xpu_rt.targets.capability.CapabilitySpec`, and the generated
+    :class:`~xpu_rt.stages.registry.TargetDialectStack`.
 
     Attributes:
         spec: The loaded HardwareSpec.
@@ -91,8 +91,8 @@ class CompiledModel:
     """A compiled model ready for local benchmarking.
 
     Created by :func:`compile_model`.  Calling an instance runs the
-    original PyTorch model through :class:`~compgen.runtime.local_executor.LocalExecutor`
-    and returns a :class:`~compgen.runtime.local_executor.BenchmarkResult`.
+    original PyTorch model through :class:`~xpu_rt.runtime.local_executor.LocalExecutor`
+    and returns a :class:`~xpu_rt.runtime.local_executor.BenchmarkResult`.
 
     Attributes:
         model: The original PyTorch model.
@@ -139,15 +139,15 @@ class CompiledModel:
             warmup: Warmup iterations before timing.
             mode: Execution mode.  ``"eager"`` (default — original
                 PyTorch model), ``"compiled"`` (via ``torch.compile``),
-                or ``"compgen_ir"`` (runs the compiled xDSL payload
-                through :func:`compgen.runtime.cpu_executor.execute`).
-            device: ``"cpu"`` or ``"cuda"``.  ``mode="compgen_ir"`` is
+                or ``"xpu_rt_ir"`` (runs the compiled xDSL payload
+                through :func:`xpu_rt.runtime.cpu_executor.execute`).
+            device: ``"cpu"`` or ``"cuda"``.  ``mode="xpu_rt_ir"`` is
                 CPU-only today; it is silently routed to CPU if ``"cuda"``
                 is requested.
 
         Returns:
             BenchmarkResult with real hardware measurements. When
-            ``mode="compgen_ir"``, the result's ``sample_output`` can be
+            ``mode="xpu_rt_ir"``, the result's ``sample_output`` can be
             diffed against an ``mode="eager"`` run for correctness.
         """
         executor = LocalExecutor()
@@ -158,8 +158,8 @@ class CompiledModel:
             mode=mode,
             num_iterations=num_iterations,
             warmup=warmup,
-            payload_module=self.payload_module if mode == "compgen_ir" else None,
-            exported_program=(self.capture_artifact.exported_program if mode == "compgen_ir" else None),
+            payload_module=self.payload_module if mode == "xpu_rt_ir" else None,
+            exported_program=(self.capture_artifact.exported_program if mode == "xpu_rt_ir" else None),
         )
 
     def create_agent_env(self, *, budget: int = 50) -> CompilerEnv:
@@ -210,17 +210,17 @@ class MegakernelBundle:
     calls ``compile_to_megakernel(model, sample_inputs)`` with no
     flags and gets a callable bundle back. The agent doesn't need
     to know about cuBLASDx, cu13 NVRTC, or SM tags — those are
-    resolved by :func:`compgen.runtime.autotune.probe_device` and
+    resolved by :func:`xpu_rt.runtime.autotune.probe_device` and
     surfaced in :attr:`backend_choice` for audit.
 
     Attributes:
         bundle_dir: Path to the on-disk bundle. Layout matches the
             artifact contract — ``megakernel/source.cu``,
             ``megakernel/manifest.yaml``, ``compile_context.json``.
-        decision: :class:`compgen.runtime.lowering.LoweringDecision`
+        decision: :class:`xpu_rt.runtime.lowering.LoweringDecision`
             output (pattern, per-op backend, schedule hints).
         backend_choice: Resolved
-            :class:`compgen.runtime.autotune.BackendChoice` snapshot
+            :class:`xpu_rt.runtime.autotune.BackendChoice` snapshot
             for the audit-via-MCP story. ``None`` when the user
             passed explicit flags rather than ``backend="auto"``.
         kernel_name: NVRTC entry-point symbol.
@@ -237,7 +237,7 @@ class MegakernelBundle:
     elapsed_ms: float
     #: Roofline cost prediction (etc_us / eager_us / passes_gate /
     #: per-component breakdown) emitted at compile time by
-    #: :func:`compgen.kernels.cost.predict_etc_dispatch`. The agent
+    #: :func:`xpu_rt.kernels.cost.predict_etc_dispatch`. The agent
     #: queries ``cost_prediction["passes_gate"]`` to decide whether
     #: to dispatch through ETC or fall through to eager. ``None``
     #: when the prediction couldn't be computed.
@@ -246,11 +246,11 @@ class MegakernelBundle:
     def dispatch(self, *args: torch.Tensor) -> Any:
         """Run the compiled bundle on real input tensors.
 
-        Wraps :func:`compgen.mcp.tools.compile.compgen_run_compiled_bundle`
+        Wraps :func:`xpu_rt.mcp.tools.compile.xpu_rt_run_compiled_bundle`
         so Python callers don't need to go through the MCP tool's
         base64/pickle JSON interface. GPU-only — raises
-        :class:`compgen.runtime.native.cuda.CudaUnavailableError`
-        on hosts without ``libcompgen_rt-cuda.so`` reachable.
+        :class:`xpu_rt.runtime.native.cuda.CudaUnavailableError`
+        on hosts without ``libxpu_rt-cuda.so`` reachable.
 
         Args:
             *args: Input tensors. Must match the shape the bundle
@@ -258,7 +258,7 @@ class MegakernelBundle:
                 pins ``sample_input_shape``).
 
         Returns:
-            Whatever ``compgen_run_compiled_bundle`` returns —
+            Whatever ``xpu_rt_run_compiled_bundle`` returns —
             ``{"status": "ok", "outputs_pickle_b64": ..., "etc_us":
             ..., "eager_us": ..., "speedup_vs_eager": ..., ...}``.
             Errors land in ``status`` rather than raising.
@@ -266,9 +266,9 @@ class MegakernelBundle:
         import base64
         import pickle
 
-        from compgen.mcp.tools.compile import compgen_run_compiled_bundle
+        from xpu_rt.mcp.tools.compile import xpu_rt_run_compiled_bundle
 
-        return compgen_run_compiled_bundle(
+        return xpu_rt_run_compiled_bundle(
             bundle_dir=str(self.bundle_dir),
             input_pickle_b64=base64.b64encode(pickle.dumps(args)).decode(),
         )
@@ -291,9 +291,9 @@ def compile_to_megakernel(
 
     - **Backend selection** (NVRTC version, cuBLASDx availability,
       precision, SM tag, tile shape) via
-      :func:`compgen.runtime.autotune.probe_device`.
+      :func:`xpu_rt.runtime.autotune.probe_device`.
     - **Pattern matching** (diamond, FFN, etc.) via
-      :func:`compgen.runtime.lowering.lower_torch_to_megakernel`.
+      :func:`xpu_rt.runtime.lowering.lower_torch_to_megakernel`.
     - **Bundle layout** under ``output_dir`` per the artifact contract.
 
     The agent doesn't need to know about cuBLASDx, cu13 NVRTC, or
@@ -310,7 +310,7 @@ def compile_to_megakernel(
             Any other string is passed through as the NVRTC arch
             (``"sm_100"``, ``"sm_90"``, etc.) for cross-compilation.
         output_dir: Where to write the bundle. ``None`` (default)
-            → ``./compgen_output/megakernel_<short-uuid>``.
+            → ``./xpu-rt-output/megakernel_<short-uuid>``.
         backend_overrides: Optional dict of per-flag overrides on
             top of the probe (e.g. ``{"cublasdx_precision": "fp32"}``
             to force fp32 even on Blackwell). Each non-None key
@@ -319,7 +319,7 @@ def compile_to_megakernel(
             to pin one knob without giving up the rest of
             auto-detection.
         fail_when_wont_win: When True, raise
-            :class:`compgen.kernels.cost.WontWinError` if the
+            :class:`xpu_rt.kernels.cost.WontWinError` if the
             roofline cost model predicts ETC won't beat eager by
             ``perf_threshold``. Default False — the bundle is still
             emitted with the prediction stamped in
@@ -343,17 +343,17 @@ def compile_to_megakernel(
     import uuid
     from pathlib import Path as _Path
 
-    from compgen.runtime.autotune import probe_device
-    from compgen.runtime.lowering import (
+    from xpu_rt.runtime.autotune import probe_device
+    from xpu_rt.runtime.lowering import (
         lower_torch_to_megakernel,
     )
-    from compgen.transforms.emit_cuda_megakernel import emit_cuda_megakernel
-    from compgen.transforms.event_static_schedule import compute_static_schedule
+    from xpu_rt.transforms.emit_cuda_megakernel import emit_cuda_megakernel
+    from xpu_rt.transforms.event_static_schedule import compute_static_schedule
 
     t0 = time.perf_counter()
 
     if output_dir is None:
-        out = _Path("compgen_output") / f"megakernel_{uuid.uuid4().hex[:8]}"
+        out = _Path("xpu-rt-output") / f"megakernel_{uuid.uuid4().hex[:8]}"
     else:
         out = _Path(output_dir).expanduser()
     out.mkdir(parents=True, exist_ok=True)
@@ -461,13 +461,13 @@ def compile_to_megakernel(
     # eager. Stamp the prediction into the bundle so the agent's
     # dispatch decision is auditable. When fail_when_wont_win=True,
     # raise so the caller can fall through to eager.
-    from compgen.kernels.cost import (
+    from xpu_rt.kernels.cost import (
         WontWinError,
         predict_etc_dispatch,
     )
 
     # Model dtype drives the eager-rate lookup (per bridge #121):
-    # ``cublasdx_precision`` is the compgen path's compute precision
+    # ``cublasdx_precision`` is the xpu_rt path's compute precision
     # (bf16+fp32-acc on Blackwell), but eager runs the user's model
     # in its parameter dtype. Sniff the dominant linear-weight dtype
     # so eager_us reflects what cuBLAS actually delivers for THIS
@@ -517,14 +517,14 @@ def compile_to_megakernel(
             "reason": prediction.reason,
         }
         # Stamp the prediction into the bundle's verification report
-        # so compgen_run_compiled_bundle + the agent's audit query
+        # so xpu_rt_run_compiled_bundle + the agent's audit query
         # see it without re-running the predictor.
         (bundle_dir / "verification_report.json").write_text(
             json.dumps({"cost_prediction": cost_prediction_dict}, indent=2)
         )
         # Per bridge #129: also surface the prediction inside
         # ``compile_context.json`` so the dispatch path
-        # (``compgen_run_compiled_bundle``) and any audit-via-MCP query
+        # (``xpu_rt_run_compiled_bundle``) and any audit-via-MCP query
         # can read components like ``intra_cluster_edge_fraction``,
         # ``num_linear_waves``, ``num_pointwise_waves`` without having
         # to re-run the predictor or load a second JSON file. Read +
@@ -537,7 +537,7 @@ def compile_to_megakernel(
             ctx_path.write_text(json.dumps(ctx, indent=2))
         except (OSError, ValueError) as ctx_exc:  # noqa: BLE001
             log.warning(
-                "compgen.compile_to_megakernel.cost_predict_ctx_update_failed",
+                "xpu_rt.compile_to_megakernel.cost_predict_ctx_update_failed",
                 error=repr(ctx_exc),
             )
         if fail_when_wont_win and not prediction.passes_gate:
@@ -549,13 +549,13 @@ def compile_to_megakernel(
         # because the predictor couldn't compute (e.g. shape decoder
         # has gaps). Log and continue.
         log.warning(
-            "compgen.compile_to_megakernel.cost_predict_failed",
+            "xpu_rt.compile_to_megakernel.cost_predict_failed",
             error=repr(exc),
         )
 
     elapsed_ms = (time.perf_counter() - t0) * 1000
     log.info(
-        "compgen.compile_to_megakernel.ok",
+        "xpu_rt.compile_to_megakernel.ok",
         pattern=result.decision.pattern_name,
         target_arch=choice.target_arch,
         use_cublasdx=choice.use_cublasdx_for_linears,
@@ -606,7 +606,7 @@ def device(
     Args:
         spec_path: Path to a HardwareSpec YAML file.
         output_dir: Directory for generated artifacts.  Defaults to
-            ``compgen_output/<spec_name>`` relative to ``spec_path``'s parent.
+            ``xpu-rt-output/<spec_name>`` relative to ``spec_path``'s parent.
 
     Returns:
         A :class:`CompGenDevice` ready for use with :func:`compile_model`.
@@ -620,7 +620,7 @@ def device(
         raise FileNotFoundError(f"Hardware spec not found: {spec_path}")
 
     if output_dir is None:
-        output_dir = spec_path.parent / "compgen_output" / spec_path.stem
+        output_dir = spec_path.parent / "xpu-rt-output" / spec_path.stem
 
     log.info("api.device.loading", spec_path=str(spec_path))
 
@@ -673,7 +673,7 @@ def _run_inline_verification(
     whether a failed verify is fatal. But every level that ran is
     reported; nothing is silently "PASSED".
     """
-    from compgen.transforms.verify import (
+    from xpu_rt.transforms.verify import (
         TransformVerifier,
         VerificationLevel,
     )
@@ -728,7 +728,7 @@ def compile_model(
         2. Convert FX graph to xDSL Payload IR
         2.5. (Optional) Run the LLM-driven :class:`PhasedDriveLoop` —
              tools + invent-slots registered into
-             :func:`compgen.llm.registry.get_registry`.
+             :func:`xpu_rt.llm.registry.get_registry`.
         3. Run equality-saturation optimisation
         4. Run the target's stage pipeline
 
@@ -741,7 +741,7 @@ def compile_model(
         drive_loop: **P2 completion** (see
             ``user_perspective/reports/stage_b_fourth_wave_status.md``).
             When not ``None`` (typically a
-            :class:`compgen.agent.loop.PhasedDriveLoop`), the drive loop
+            :class:`xpu_rt.agent.loop.PhasedDriveLoop`), the drive loop
             runs between the FX→xDSL import and equality saturation.
             Backward-compatible: ``None`` preserves legacy behaviour.
         drive_loop_phases: Which phases the drive loop iterates over
@@ -757,9 +757,9 @@ def compile_model(
     # Resolve output_dir + session_id and install the trace bus + IR-dump
     # writer before doing anything else, so capture / import / pipeline all
     # emit into the same linked trace. Local imports avoid a module-load
-    # cycle with :mod:`compgen.trace.adapters`.
-    from compgen.mcp.transcript import default_session_root
-    from compgen.trace import (
+    # cycle with :mod:`xpu_rt.trace.adapters`.
+    from xpu_rt.mcp.transcript import default_session_root
+    from xpu_rt.trace import (
         IRDumpWriter,
         build_session_id,
         dump_enabled_from_env,
@@ -774,7 +774,7 @@ def compile_model(
         session_id = build_session_id(model=model, target_device=target_device)
     resolved_out_dir: Path
     if output_dir is None:
-        resolved_out_dir = Path("compgen_output") / session_id
+        resolved_out_dir = Path("xpu-rt-output") / session_id
     else:
         resolved_out_dir = Path(output_dir).expanduser()
     resolved_out_dir.mkdir(parents=True, exist_ok=True)
@@ -800,7 +800,7 @@ def compile_model(
     # enqueue their choices and the agent can read/override them via MCP
     # tools. Re-use any registry already installed for this context
     # (e.g. from an MCP session that pre-loaded the model).
-    from compgen.agent.decisions import (
+    from xpu_rt.agent.decisions import (
         DecisionRegistry,
         get_active_registry,
         install_registry,
@@ -823,7 +823,7 @@ def compile_model(
     # trace carries true per-pass granularity. Each span also
     # measures its own duration and records before/after IR dumps for
     # operations that mutate the module.
-    from compgen.trace import (
+    from xpu_rt.trace import (
         AnalysisPublisher,
         DecisionPublisher,
         PassPublisher,
@@ -869,7 +869,7 @@ def compile_model(
                 )
             # Emit a terminal point event so consumers can grep for
             # "pass_run" + "phase: point" without reconstructing start/end pairs.
-            from compgen.trace import EventKind, Phase, get_active_bus
+            from xpu_rt.trace import EventKind, Phase, get_active_bus
 
             bus = get_active_bus()
             if bus is not None:
@@ -899,7 +899,7 @@ def compile_model(
     # Stage 0.5: Optional LLM-driven unsupported-op recovery.
     recovery_plan_obj: Any = None
     if recover_unsupported and capture_artifact.unsupported_resolutions:
-        from compgen.agent.llm_driver_recovery import plan_recovery
+        from xpu_rt.agent.llm_driver_recovery import plan_recovery
 
         log.info(
             "api.compile.recover_unsupported",
@@ -958,8 +958,8 @@ def compile_model(
 
     # Stage 1.75: Annotate ops with ukernel matches
     log.info("api.compile.ukernel_annotate")
-    from compgen.ir.ukernel.annotate import annotate_ukernel_ops
-    from compgen.ir.ukernel.builtins import build_default_registry
+    from xpu_rt.ir.ukernel.annotate import annotate_ukernel_ops
+    from xpu_rt.ir.ukernel.builtins import build_default_registry
 
     ukernel_registry = build_default_registry()
     # Extract target features for ukernel matching
@@ -1040,8 +1040,8 @@ def compile_model(
     bundle_dir_str = pipeline_result.all_artifacts.get("bundle_dir") if pipeline_result else None
     emission_report = None
     if bundle_dir_str:
-        from compgen.runtime.bundle_emit import emit_extended_artefacts
-        from compgen.runtime.errors import BundleEmissionError
+        from xpu_rt.runtime.bundle_emit import emit_extended_artefacts
+        from xpu_rt.runtime.errors import BundleEmissionError
 
         # Gather optional inputs for the three slots that need upstream
         # data threaded through: transforms, generated_kernels, verify.
@@ -1057,7 +1057,7 @@ def compile_model(
         # so callers without memory can still consume it.
         if pipeline_artifacts is not None and not pipeline_artifacts.get("generated_kernels"):
             try:
-                from compgen.kernels.codegen_fallback import run_provider_fallback
+                from xpu_rt.kernels.codegen_fallback import run_provider_fallback
 
                 feedback_buf: list[Any] = []
                 fallback_kernels = run_provider_fallback(
@@ -1128,7 +1128,7 @@ def compile_model(
     # nothing else in the pipeline reads it, so rendering once at the
     # end is enough and keeps the hot path free of string formatting.
     try:
-        from compgen.trace import get_active_bus, render_trace
+        from xpu_rt.trace import get_active_bus, render_trace
 
         bus_ref = get_active_bus()
         if bus_ref is not None:
@@ -1148,7 +1148,7 @@ def compile_model(
     # post-hoc projection from on-disk artifacts and must never
     # break the compile. Errors are logged + swallowed.
     try:
-        from compgen.graph_compilation.snapshot_emitter import (
+        from xpu_rt.graph_compilation.snapshot_emitter import (
             emit_snapshots_for_run,
         )
 
@@ -1195,9 +1195,9 @@ def compile_with_vendor(
     """Drive end-to-end compilation of a PyTorch model onto a vendor dialect.
 
     ``vendor_adapter`` is an instance of
-    :class:`compgen.extensions.vendor_dialect.VendorDialectAdapter` —
+    :class:`xpu_rt.extensions.vendor_dialect.VendorDialectAdapter` —
     typically obtained via
-    :func:`compgen.extensions.vendor_dialect.get_adapter` after the
+    :func:`xpu_rt.extensions.vendor_dialect.get_adapter` after the
     user-space package has been ``pip install``-ed. The helper performs:
 
     1. Stage 0 capture (``torch.export``) and Stage 1 import (FX → Payload IR)
@@ -1211,14 +1211,14 @@ def compile_with_vendor(
         vendor_adapter: The registered vendor adapter.
         sample_inputs: Inputs for ``torch.export`` (default: random 1x64).
         output_dir: Where vendor artifacts are written. Defaults to a
-            ``/tmp/compgen_<vendor>_<n>`` directory.
+            ``/tmp/xpu_rt_<vendor>_<n>`` directory.
         options: Adapter-specific options forwarded to ``compile()``.
 
     Returns:
-        A :class:`compgen.targets.backend.CompiledArtifact` with the
+        A :class:`xpu_rt.targets.backend.CompiledArtifact` with the
         vendor output and metadata.
     """
-    from compgen.extensions.vendor_dialect.adapter import VendorDialectAdapter
+    from xpu_rt.extensions.vendor_dialect.adapter import VendorDialectAdapter
 
     if not isinstance(vendor_adapter, VendorDialectAdapter):
         raise TypeError(f"vendor_adapter must be a VendorDialectAdapter, got {type(vendor_adapter).__name__}")
@@ -1242,7 +1242,7 @@ def compile_with_vendor(
     out_dir = (
         Path(output_dir).expanduser().resolve()
         if output_dir is not None
-        else Path(f"/tmp/compgen_{vendor_adapter.name}_{id(model)}")
+        else Path(f"/tmp/xpu_rt_{vendor_adapter.name}_{id(model)}")
     )
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "payload.mlir").write_text(payload_mlir)

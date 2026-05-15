@@ -1,6 +1,6 @@
 """Command-line entry point for the graph compilation toolchain.
 
-Invoked as ``python -m compgen.graph_compilation <subcommand>``.
+Invoked as ``python -m xpu_rt.graph_compilation <subcommand>``.
 
 Subcommands:
 
@@ -11,7 +11,7 @@ Subcommands:
   and goldens and asserts numerical equality.
 - ``compare`` (graph_capture stage) — diffs stable fields between two reruns.
 
-Note on placement: the repo's existing CLI lives in ``compgen.cli`` as a
+Note on placement: the repo's existing CLI lives in ``xpu_rt.cli`` as a
 single module. We do not extend it here because converting it into a
 package is out of scope. Instead, this package owns its own ``__main__``
 so the CLI surface is co-located with the contracts it owns.
@@ -31,12 +31,12 @@ import json
 import sys
 from pathlib import Path
 
-from compgen.graph_compilation.validate import validate_run
+from xpu_rt.graph_compilation.validate import validate_run
 
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="python -m compgen.graph_compilation",
+        prog="python -m xpu_rt.graph_compilation",
         description="Capture/lower toolchain: run, validate, replay, compare.",
     )
     sub = parser.add_subparsers(dest="command", required=True)
@@ -147,9 +147,9 @@ def _build_parser() -> argparse.ArgumentParser:
             "default agentic path). gemini (default for llm-live): "
             "Google Gemini-2.5-flash via google-genai SDK (reads "
             "GEMMINI_API from .env or GOOGLE_API_KEY); auto-recorded "
-            "by compgen.observability.gemini_usage. anthropic|openai: "
+            "by xpu_rt.observability.gemini_usage. anthropic|openai: "
             "real provider via stdlib HTTP. env: dispatch via "
-            "COMPGEN_LLM_PROVIDER. (For Claude-Code-driven runs use "
+            "XPU_RT_LLM_PROVIDER. (For Claude-Code-driven runs use "
             "--selection-mode=agent-file instead — that's the "
             "recommended primary path.)"
         ),
@@ -157,7 +157,7 @@ def _build_parser() -> argparse.ArgumentParser:
     run.add_argument(
         "--llm-live-model",
         default=None,
-        help="Model name passed to the provider (env: COMPGEN_LLM_MODEL).",
+        help="Model name passed to the provider (env: XPU_RT_LLM_MODEL).",
     )
     run.add_argument(
         "--llm-live-timeout-sec",
@@ -228,9 +228,9 @@ def _build_parser() -> argparse.ArgumentParser:
             "M-62: directory containing user-supplied kernel manifests "
             "(``kernel_manifest.yaml`` + sibling kernel source files). "
             "When set, re-indexes the directory under "
-            ".compgen/user_kernel_index/ before the auction runs so "
+            ".xpu_rt/user_kernel_index/ before the auction runs so "
             "UserKernelProvider can bid. Falls back to the "
-            "COMPGEN_USER_KERNEL_PATH env var when the flag is omitted."
+            "XPU_RT_USER_KERNEL_PATH env var when the flag is omitted."
         ),
     )
     run.add_argument(
@@ -682,15 +682,15 @@ def _run_validate(run_dir: Path, extra_report: Path | None) -> int:
         )
 
     # Also run payload-lowering / gap-discovery / gap-closure validators.
-    from compgen.graph_compilation.gap_closure_validate import (
+    from xpu_rt.graph_compilation.gap_closure_validate import (
         validate_gap_closure,
         write_closure_validation_report,
     )
-    from compgen.graph_compilation.gap_validate import (
+    from xpu_rt.graph_compilation.gap_validate import (
         validate_gap_discovery,
         write_gap_validation_report,
     )
-    from compgen.graph_compilation.lowering_validate import (
+    from xpu_rt.graph_compilation.lowering_validate import (
         validate_payload_lowering,
         write_lowering_validation_report,
     )
@@ -753,7 +753,7 @@ def _run_pipeline(
     bid_cutoff: int = 3,
     kernel_coverage_mode: str = "both",
 ) -> int:
-    from compgen.graph_compilation.run import run_graph_compilation
+    from xpu_rt.graph_compilation.run import run_graph_compilation
 
     if not model.exists():
         print(f"error: model config not found: {model}", file=sys.stderr)
@@ -805,7 +805,7 @@ def _run_pipeline(
 
 
 def _run_lower(capture_run: Path, target: Path, out: Path, run_id: str | None) -> int:
-    from compgen.graph_compilation.run import lower_from_existing_capture
+    from xpu_rt.graph_compilation.run import lower_from_existing_capture
 
     if not capture_run.is_dir():
         print(f"error: --capture-run does not exist: {capture_run}", file=sys.stderr)
@@ -863,7 +863,7 @@ def _run_suite(args: argparse.Namespace) -> int:
         print(f"error: target config missing or not found: {target_path}", file=sys.stderr)
         return 2
 
-    from compgen.graph_compilation.run import run_graph_compilation
+    from xpu_rt.graph_compilation.run import run_graph_compilation
 
     suite_id = raw.get("suite_id", suite_path.stem)
     started = datetime.now(tz=UTC)
@@ -900,7 +900,7 @@ def _run_suite(args: argparse.Namespace) -> int:
                 agent_response_path = candidate
         live_cfg: object | None = None
         if getattr(args, "selection_mode", "greedy") == "llm-live":
-            from compgen.graph_compilation.agent_decision import (
+            from xpu_rt.graph_compilation.agent_decision import (
                 LiveProviderConfig,
             )
             live_cfg = LiveProviderConfig(
@@ -968,7 +968,7 @@ def _run_suite(args: argparse.Namespace) -> int:
 
 def _run_resolve_candidate(args: argparse.Namespace) -> int:
     """Resolve a candidate_id against action_space.mlir."""
-    from compgen.graph_compilation.action_space_resolver import (
+    from xpu_rt.graph_compilation.action_space_resolver import (
         ResolverError,
         resolve_candidate,
     )
@@ -1012,7 +1012,7 @@ def _run_discover_target(args: argparse.Namespace) -> int:
     a benchmark, accelerator peak FLOPS) are emitted with sensible
     defaults or ``null`` placeholders the operator can fill in.
     """
-    from compgen.graph_compilation.target_discovery import build_target_yaml
+    from xpu_rt.graph_compilation.target_discovery import build_target_yaml
 
     out: Path = args.out
     obj = build_target_yaml(out_path=out, target_id=args.target_id)
@@ -1053,8 +1053,8 @@ def _run_analyze_graph(lowering_run: Path, out: Path, target: Path | None) -> in
     """
     import shutil
 
-    from compgen.graph_compilation.region_dossier import build_region_dossiers
-    from compgen.graph_compilation.region_map import build_graph_analysis
+    from xpu_rt.graph_compilation.region_dossier import build_region_dossiers
+    from xpu_rt.graph_compilation.region_map import build_graph_analysis
 
     if not lowering_run.is_dir():
         print(f"error: --lowering-run does not exist: {lowering_run}", file=sys.stderr)
@@ -1093,7 +1093,7 @@ def _run_discover_gaps(
     run_id: str | None,
     extension_registry: Path | None = None,
 ) -> int:
-    from compgen.graph_compilation.run import discover_gaps_from_existing_lowering
+    from xpu_rt.graph_compilation.run import discover_gaps_from_existing_lowering
 
     if not lowering_run.is_dir():
         print(f"error: --lowering-run does not exist: {lowering_run}", file=sys.stderr)
@@ -1122,10 +1122,10 @@ def _run_discover_gaps(
 def _run_extension(args: argparse.Namespace) -> int:
     import json as _json
 
-    from compgen.graph_compilation.agent_decomp_fill import deterministic_fill
-    from compgen.graph_compilation.extension_materialize import materialize_extension
-    from compgen.graph_compilation.extension_registry import register_extension
-    from compgen.graph_compilation.extension_verify import run_verify
+    from xpu_rt.graph_compilation.agent_decomp_fill import deterministic_fill
+    from xpu_rt.graph_compilation.extension_materialize import materialize_extension
+    from xpu_rt.graph_compilation.extension_registry import register_extension
+    from xpu_rt.graph_compilation.extension_verify import run_verify
 
     cmd = getattr(args, "ext_command", None)
     if cmd == "materialize":
@@ -1159,7 +1159,7 @@ def _run_extension(args: argparse.Namespace) -> int:
         # Optional --out: emit the four spec-required reports under a results dir.
         out_dir = getattr(args, "out", None)
         if out_dir is not None:
-            from compgen.graph_compilation.extension_verify import emit_extension_reports
+            from xpu_rt.graph_compilation.extension_verify import emit_extension_reports
 
             emit_extension_reports(workspace=args.extension, out_dir=out_dir, verify_result=result)
         return 0 if result.status == "pass" else 1
@@ -1187,7 +1187,7 @@ def _run_extension(args: argparse.Namespace) -> int:
                 print(f"(no extensions root at {ext_root})")
             return 0
 
-        from compgen.graph_compilation.extension_registry import load_registry
+        from xpu_rt.graph_compilation.extension_registry import load_registry
 
         registry_path = ext_root / "registry.yaml"
         registry = load_registry(registry_path)
@@ -1259,7 +1259,7 @@ def _run_materialize_all(args: argparse.Namespace) -> int:
     import json as _json
     from datetime import UTC, datetime
 
-    from compgen.graph_compilation.extension_materialize import materialize_extension
+    from xpu_rt.graph_compilation.extension_materialize import materialize_extension
 
     queue_path: Path = args.queue
     if not queue_path.exists():
@@ -1396,7 +1396,7 @@ def _run_plan_extensions(args: argparse.Namespace) -> int:
     for child in sorted(suite.iterdir()):
         if not child.is_dir():
             continue
-        from compgen.graph_compilation.artifacts import stage_dir as _stage_dir
+        from xpu_rt.graph_compilation.artifacts import stage_dir as _stage_dir
         gd_dir = _stage_dir(child, "gap_discovery")
         assert isinstance(gd_dir, Path)
         plan_path = gd_dir / "gap_priority_plan.json"
@@ -1517,7 +1517,7 @@ def _run_plan_extensions(args: argparse.Namespace) -> int:
 
 
 def _run_replay(run_dir: Path, model_config: Path | None) -> int:
-    from compgen.graph_compilation.replay import replay_goldens, write_replay_report
+    from xpu_rt.graph_compilation.replay import replay_goldens, write_replay_report
 
     if not run_dir.is_dir():
         print(f"error: run directory does not exist: {run_dir}", file=sys.stderr)
@@ -1534,7 +1534,7 @@ def _run_replay(run_dir: Path, model_config: Path | None) -> int:
 
 
 def _run_compare(a: Path, b: Path, extra_report: Path | None) -> int:
-    from compgen.graph_compilation.compare import compare_runs
+    from xpu_rt.graph_compilation.compare import compare_runs
 
     if not a.is_dir():
         print(f"error: --a does not exist: {a}", file=sys.stderr)
@@ -1573,7 +1573,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "validate":
             return _run_validate(args.run, args.report)
         if args.command == "run":
-            from compgen.graph_compilation.agent_decision import LiveProviderConfig
+            from xpu_rt.graph_compilation.agent_decision import LiveProviderConfig
             live_cfg: object | None = None
             if getattr(args, "selection_mode", "greedy") == "llm-live":
                 live_cfg = LiveProviderConfig(
@@ -1587,7 +1587,7 @@ def main(argv: list[str] | None = None) -> int:
             # (auction picks them up via default_registry()).
             user_kernel_path = getattr(args, "user_kernel_path", None)
             try:
-                from compgen.kernels.user_kernel_index import (
+                from xpu_rt.kernels.user_kernel_index import (
                     default_index_root,
                     reindex,
                     resolve_user_kernel_path,

@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import pytest
-from compgen.agent.invent_slots import seeds as seed_mod
-from compgen.agent.invent_slots.registrar import register_invent_slots
-from compgen.llm.registry import Registry
+from xpu_rt.agent.invent_slots import seeds as seed_mod
+from xpu_rt.agent.invent_slots.registrar import register_invent_slots
+from xpu_rt.llm.registry import Registry
 
 SLOT_NAMES = (
     "propose_layout_plan",
@@ -93,8 +93,8 @@ def test_slot_verify_accepts_its_own_seed() -> None:
 
 
 def test_global_registry_picks_up_slots_on_import() -> None:
-    import compgen.agent.invent_slots  # noqa: F401
-    from compgen.llm import get_registry
+    import xpu_rt.agent.invent_slots  # noqa: F401
+    from xpu_rt.llm import get_registry
 
     r = get_registry()
     for name in SLOT_NAMES:

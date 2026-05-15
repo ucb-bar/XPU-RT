@@ -18,7 +18,7 @@ from pathlib import Path
 
 import pytest
 
-from compgen.kernels.kernel_certificate import (
+from xpu_rt.kernels.kernel_certificate import (
     KernelCertificate,
     certificate_path_for,
     emit_certificate,

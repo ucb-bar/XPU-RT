@@ -20,11 +20,11 @@ from typing import Any
 
 import structlog
 
-from compgen.agent.self_extension.authored_tool import (
+from xpu_rt.agent.self_extension.authored_tool import (
     AuthoredTool,
     AuthoredToolTrial,
 )
-from compgen.agent.self_extension.sandbox import SandboxResult, sandbox_invoke
+from xpu_rt.agent.self_extension.sandbox import SandboxResult, sandbox_invoke
 
 log = structlog.get_logger()
 
@@ -70,13 +70,13 @@ def default_trial_log_path() -> Path:
     """Resolve the trial log path.
 
     Follows the same convention as the other session-scoped state:
-    honour ``COMPGEN_SESSION_DIR`` first, then fall back to
-    ``~/.compgen/transcripts/authored_trials.jsonl``.
+    honour ``XPU_RT_SESSION_DIR`` first, then fall back to
+    ``~/.xpu_rt/transcripts/authored_trials.jsonl``.
     """
-    env = os.environ.get("COMPGEN_SESSION_DIR")
+    env = os.environ.get("XPU_RT_SESSION_DIR")
     if env:
         return Path(env).expanduser() / DEFAULT_TRIAL_LOG_SUBDIR
-    return Path("~/.compgen/transcripts").expanduser() / DEFAULT_TRIAL_LOG_SUBDIR
+    return Path("~/.xpu_rt/transcripts").expanduser() / DEFAULT_TRIAL_LOG_SUBDIR
 
 
 # ---------------------------------------------------------------------------

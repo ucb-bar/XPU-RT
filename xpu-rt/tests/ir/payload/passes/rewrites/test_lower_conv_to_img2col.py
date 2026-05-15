@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from compgen.ir.payload.passes.rewrites.lower_conv_to_img2col import (
+from xpu_rt.ir.payload.passes.rewrites.lower_conv_to_img2col import (
     LowerConvToImg2ColConfig,
     LowerConvToImg2ColStats,
     run_lower_conv_to_img2col,
@@ -37,7 +37,7 @@ def _conv_module(
     w = EmptyOp([], ft)
     ext = FuncOp.external("aten_convolution", [it, ft], [ot])
     call = CallOp("aten_convolution", [x.results[0], w.results[0]], [ot])
-    call.attributes["compgen._pattern_hint"] = StringAttr("convolution")
+    call.attributes["xpu_rt._pattern_hint"] = StringAttr("convolution")
     block = Block()
     for op in (x, w, call):
         block.add_op(op)
@@ -53,7 +53,7 @@ def test_static_conv_gets_scheduled():
     m, call = _conv_module()
     stats = run_lower_conv_to_img2col(m)
     assert stats.convs_scheduled == 1
-    assert call.attributes["compgen.img2col_scheduled"].data == "true"
+    assert call.attributes["xpu_rt.img2col_scheduled"].data == "true"
     assert_module_verifies(m)
 
 
@@ -64,9 +64,9 @@ def test_shape_metadata_is_recorded():
         output_shape=(2, 32, 12, 12),
     )
     run_lower_conv_to_img2col(m)
-    assert call.attributes["compgen.img2col_input_shape"].data == "2,3,16,16"
-    assert call.attributes["compgen.img2col_filter_shape"].data == "32,3,5,5"
-    assert call.attributes["compgen.img2col_output_shape"].data == "2,32,12,12"
+    assert call.attributes["xpu_rt.img2col_input_shape"].data == "2,3,16,16"
+    assert call.attributes["xpu_rt.img2col_filter_shape"].data == "32,3,5,5"
+    assert call.attributes["xpu_rt.img2col_output_shape"].data == "2,32,12,12"
 
 
 # --- gates ----------------------------------------------------------------
@@ -95,7 +95,7 @@ def test_wrong_rank_is_skipped():
     w = EmptyOp([], t_w)
     ext = FuncOp.external("aten_convolution", [t_in, t_w], [t_out])
     call = CallOp("aten_convolution", [x.results[0], w.results[0]], [t_out])
-    call.attributes["compgen._pattern_hint"] = StringAttr("convolution")
+    call.attributes["xpu_rt._pattern_hint"] = StringAttr("convolution")
     block = Block()
     for op in (x, w, call):
         block.add_op(op)
@@ -126,7 +126,7 @@ def test_non_convolution_call_is_ignored():
     ext = FuncOp.external("aten_gelu", [t], [t])
     x = EmptyOp([], t)
     call = CallOp("aten_gelu", [x.results[0]], [t])
-    call.attributes["compgen._pattern_hint"] = StringAttr("gelu")
+    call.attributes["xpu_rt._pattern_hint"] = StringAttr("gelu")
     block = Block()
     for op in (x, call):
         block.add_op(op)
@@ -160,7 +160,7 @@ def test_stats_initial_values():
 
 
 def test_emits_real_pack_op_when_tiles_divide_evenly():
-    """Real structural emission: compgen.tensor_ext.pack is emitted
+    """Real structural emission: xpu_rt.tensor_ext.pack is emitted
     when H/KH and W/KW divide evenly."""
     # Input 1,3,8,8 with kernel 2,2 → H=W=8 divisible by KH=KW=2.
     m, _ = _conv_module(
@@ -170,7 +170,7 @@ def test_emits_real_pack_op_when_tiles_divide_evenly():
     )
     stats = run_lower_conv_to_img2col(m)
     assert stats.pack_ops_emitted == 1
-    packs = [op for op in m.walk() if op.name == "compgen.tensor_ext.pack"]
+    packs = [op for op in m.walk() if op.name == "xpu_rt.tensor_ext.pack"]
     assert len(packs) == 1
     result_shape = list(packs[0].result.type.get_shape())
     # Original [1, 3, 8, 8] → [1, 3, 4, 4, 2, 2] (spatial dims tiled).
@@ -187,7 +187,7 @@ def test_does_not_emit_pack_when_tiles_dont_divide():
     stats = run_lower_conv_to_img2col(m)
     assert stats.convs_scheduled == 1
     assert stats.pack_ops_emitted == 0
-    assert "compgen.img2col_scheduled" in conv.attributes
+    assert "xpu_rt.img2col_scheduled" in conv.attributes
 
 
 def test_pack_tile_sizes_recorded_on_conv():
@@ -197,13 +197,13 @@ def test_pack_tile_sizes_recorded_on_conv():
         output_shape=(1, 16, 4, 4),
     )
     run_lower_conv_to_img2col(m)
-    assert conv.attributes["compgen.img2col_pack_tile_kh"].value.data == 2
-    assert conv.attributes["compgen.img2col_pack_tile_kw"].value.data == 2
+    assert conv.attributes["xpu_rt.img2col_pack_tile_kh"].value.data == 2
+    assert conv.attributes["xpu_rt.img2col_pack_tile_kw"].value.data == 2
 
 
 def test_noop_on_attention_mlp_tiny():
     """attention_mlp_tiny has no conv ops -> pass is a no-op."""
-    from compgen.capture.torch_mlir_bridge import bridge_fx_graph
+    from xpu_rt.capture.torch_mlir_bridge import bridge_fx_graph
 
     from tests._fixtures.real_workloads import attention_mlp_tiny
 

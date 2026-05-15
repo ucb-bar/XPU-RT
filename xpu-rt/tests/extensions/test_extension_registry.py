@@ -7,12 +7,12 @@ from pathlib import Path
 import pytest
 import yaml
 
-from compgen.extensions.errors import ExtensionSandboxViolation
-from compgen.extensions.manifest import (
+from xpu_rt.extensions.errors import ExtensionSandboxViolation
+from xpu_rt.extensions.manifest import (
     ExtensionManifest,
     MANIFEST_SCHEMA_VERSION,
 )
-from compgen.extensions.registry import (
+from xpu_rt.extensions.registry import (
     EXTENSION_MANIFEST_FILENAME,
     ExtensionRegistry,
     assert_artifact_write_allowed,
@@ -72,7 +72,7 @@ def _manifest_body(extension_id: str = "myaccel", **overrides) -> dict:
 
 
 def _drop(tmp_path: Path, ext_id: str, body: dict | None = None) -> Path:
-    """Write a manifest at ``tmp_path / ext_id / compgen_extension.yaml``."""
+    """Write a manifest at ``tmp_path / ext_id / xpu_rt_extension.yaml``."""
 
     body = body or _manifest_body(ext_id)
     ext_dir = tmp_path / ext_id

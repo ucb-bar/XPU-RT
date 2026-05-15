@@ -1,11 +1,11 @@
-schema_version: compgen_tool_card_v1
-tool_id: compgen_validate_extension_manifest
+schema_version: xpu_rt_tool_card_v1
+tool_id: xpu_rt_validate_extension_manifest
 maturity: T6
 phase: extension_authoring
 description: |
-  Validate a user-authored ``compgen_extension.yaml`` against the
+  Validate a user-authored ``xpu_rt_extension.yaml`` against the
   M-79 manifest schema + the sandbox rules enforced by
-  :mod:`compgen.extensions.registry`. Returns a typed report.
+  :mod:`xpu_rt.extensions.registry`. Returns a typed report.
 
   ``status=ok`` means the manifest parsed cleanly and the per-manifest
   registry accepted it. ``status=blocked`` carries the typed sandbox /
@@ -13,9 +13,9 @@ description: |
   unrecoverable file / load failures.
 
 entrypoints:
-  python: compgen.tools.builtin.extension_authoring:validate_extension_manifest
-  cli: compgen-tool run compgen_validate_extension_manifest
-  mcp: compgen_validate_extension_manifest
+  python: xpu_rt.tools.builtin.extension_authoring:validate_extension_manifest
+  cli: xpu-rt-tool run xpu_rt_validate_extension_manifest
+  mcp: xpu_rt_validate_extension_manifest
 
 input_schema:
   type: object
@@ -71,6 +71,6 @@ tests:
     - tests.tools.test_extension_authoring_tools::test_validate_extension_manifest_missing_path
     - tests.tools.test_extension_authoring_tools::test_validate_extension_manifest_schema_violation
 
-skill_path: .claude/skills/compgen-extension-authoring/SKILL.md
+skill_path: .claude/skills/xpu_rt-extension-authoring/SKILL.md
 fresh_agent_task_id: validate_extension_manifest_v1
 owner: core

@@ -17,7 +17,7 @@ status) must produce ``blocked_proof.json`` carrying the typed
 missing prerequisite.
 
 The audit gate in
-``compgen.audit.extension_architecture.check_execution_evidence``
+``xpu_rt.audit.extension_architecture.check_execution_evidence``
 walks the evidence-pack ``per_provider/`` directory and refuses to
 pass if any provider's status / artifact set is inconsistent.
 """
@@ -34,7 +34,7 @@ from typing import Any, Final
 EVIDENCE_SCHEMA_VERSION: Final[str] = "execution_evidence_v1"
 
 # Reasons a provider can be in a "blocked" state in the evidence pack.
-# These mirror compgen.providers.provider_types.BLOCKED_REASONS so the
+# These mirror xpu_rt.providers.provider_types.BLOCKED_REASONS so the
 # audit can verify the proof is real.
 BLOCKED_PROOF_REASONS: Final[tuple[str, ...]] = (
     "env_missing",
@@ -138,7 +138,7 @@ class RunReport:
 class CertificateRecord:
     """Minimal certificate persisted in the evidence pack.
 
-    The richer :class:`compgen.kernels.kernel_certificate.KernelCertificate`
+    The richer :class:`xpu_rt.kernels.kernel_certificate.KernelCertificate`
     is what the verifier emits; this is the **audit-facing** view that
     couples a contract to a verified kernel source.
     """

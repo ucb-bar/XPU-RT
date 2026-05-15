@@ -1,17 +1,17 @@
 """Megakernel kernel provider.
 
 Adapts the persistent-Triton emitter
-(:mod:`compgen.ir.tile.lower_megakernel`) to the
-:class:`compgen.kernels.provider.KernelProvider` protocol.
+(:mod:`xpu_rt.ir.tile.lower_megakernel`) to the
+:class:`xpu_rt.kernels.provider.KernelProvider` protocol.
 
 Unlike autocomp / Exo / Triton-template providers, the megakernel provider
 does not search a kernel space at the per-op level.  Instead it expects an
 ``event.graph`` already annotated with a static schedule (via
-:class:`compgen.ir.payload.passes.megakernel_static_schedule.StaticMegakernelSchedule`)
+:class:`xpu_rt.ir.payload.passes.megakernel_static_schedule.StaticMegakernelSchedule`)
 and emits the resulting fused persistent kernel as its single search
 result.
 
-This keeps ETC integration consistent with CompGen's pluggable-provider
+This keeps ETC integration consistent with XPU-RT's pluggable-provider
 contract while staying faithful to the paper's compiler-driven (not
 search-driven) megakernel synthesis model.
 """
@@ -21,12 +21,12 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from compgen.ir.event.ops import GraphOp
-from compgen.ir.tile.lower_megakernel import (
+from xpu_rt.ir.event.ops import GraphOp
+from xpu_rt.ir.tile.lower_megakernel import (
     MegakernelLoweringResult,
     lower_megakernel,
 )
-from compgen.kernels.provider import (
+from xpu_rt.kernels.provider import (
     ContractFeedback,
     KernelContract,
     KnowledgeExport,

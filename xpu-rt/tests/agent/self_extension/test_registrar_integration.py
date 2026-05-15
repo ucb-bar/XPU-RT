@@ -6,7 +6,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from compgen.agent.self_extension import (
+from xpu_rt.agent.self_extension import (
     AuthoredTool,
     AuthoredToolSource,
     TrialScenario,
@@ -15,8 +15,8 @@ from compgen.agent.self_extension import (
     register_authored_tool,
     run_trial,
 )
-from compgen.agent.self_extension._index import snapshot_authored_index
-from compgen.llm.registry import Registry
+from xpu_rt.agent.self_extension._index import snapshot_authored_index
+from xpu_rt.llm.registry import Registry
 
 _TOOL = AuthoredTool(
     name="reg_int_tool",
@@ -71,8 +71,8 @@ def test_session_start_graduation_disabled_by_env(monkeypatch, tmp_path: Path) -
     The conftest already sets it for the whole session, so this is a
     smoke test that the registrar honours it.
     """
-    monkeypatch.setenv("COMPGEN_DISABLE_AUTHORED_GRADUATION", "1")
-    from compgen.agent.invent_slots.registrar import register_invent_slots
+    monkeypatch.setenv("XPU_RT_DISABLE_AUTHORED_GRADUATION", "1")
+    from xpu_rt.agent.invent_slots.registrar import register_invent_slots
 
     reg = Registry()
     register_invent_slots(reg)

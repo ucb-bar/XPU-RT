@@ -4,7 +4,7 @@ Skip-gated on CUDA. Tests:
   * Correctness vs ``torch.nn.functional.scaled_dot_product_attention``
     (the Flash-Attention-2 reference path).
   * Perf vs the existing 3-kernel composition we already had
-    (``compgen.bench.turing_kernels.attention_block_fp16``-style: bmm +
+    (``xpu_rt.bench.turing_kernels.attention_block_fp16``-style: bmm +
     softmax + bmm).
 """
 
@@ -16,9 +16,9 @@ torch = pytest.importorskip("torch")
 pytestmark = pytest.mark.skipif(not torch.cuda.is_available(), reason="GPU required")
 triton = pytest.importorskip("triton")
 
-from compgen.bench.flash_attention_kernel import flash_attention_fp16
-from compgen.bench.kernel_bench import format_bench_result, run_microbench
-from compgen.bench.turing_kernels import bmm_fp16, softmax_fp32_last_dim
+from xpu_rt.bench.flash_attention_kernel import flash_attention_fp16
+from xpu_rt.bench.kernel_bench import format_bench_result, run_microbench
+from xpu_rt.bench.turing_kernels import bmm_fp16, softmax_fp32_last_dim
 
 # ---------------------------------------------------------------------------
 # Correctness

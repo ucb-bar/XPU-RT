@@ -56,8 +56,8 @@ def _trial_evaluate(config: dict[str, Any]) -> None:
         strategy_actions: list[str]
         target_profile_path: str
     """
-    from compgen.agent.env import CompilerEnv, EqSatAction, NoopAction
-    from compgen.targets.schema import load_profile
+    from xpu_rt.agent.env import CompilerEnv, EqSatAction, NoopAction
+    from xpu_rt.targets.schema import load_profile
     from xdsl.dialects.builtin import ModuleOp
 
     strategy_name = config["strategy_name"]
@@ -205,7 +205,7 @@ class TuneEvolutionarySearch:
 
     def _initialize_strategies(self) -> list[Any]:
         """Generate initial population via LLM."""
-        from compgen.agent.evolution import Strategy
+        from xpu_rt.agent.evolution import Strategy
 
         # Use LLM to generate strategies (same as EvolutionaryOptimizer)
         strategies = []
@@ -220,7 +220,7 @@ class TuneEvolutionarySearch:
 
     def _mutate_strategies(self, winner_names: list[str]) -> list[Any]:
         """Mutate winning strategies via LLM."""
-        from compgen.agent.evolution import Strategy
+        from xpu_rt.agent.evolution import Strategy
 
         strategies = []
         for i, name in enumerate(winner_names):

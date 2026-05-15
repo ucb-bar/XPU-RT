@@ -7,11 +7,11 @@ and a plugin slot for target-specific behavior.
 
 from __future__ import annotations
 
-from compgen.stages.templates.codegen import CodegenStage
-from compgen.stages.templates.lowering import LoweringStage
-from compgen.stages.templates.memory_plan import MemoryPlanStage
-from compgen.stages.templates.scheduling import SchedulingStage
-from compgen.stages.templates.tiling import TilingStage
+from xpu_rt.stages.templates.codegen import CodegenStage
+from xpu_rt.stages.templates.lowering import LoweringStage
+from xpu_rt.stages.templates.memory_plan import MemoryPlanStage
+from xpu_rt.stages.templates.scheduling import SchedulingStage
+from xpu_rt.stages.templates.tiling import TilingStage
 
 __all__ = [
     "CodegenStage",

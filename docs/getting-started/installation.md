@@ -1,19 +1,19 @@
 # Installation
 
-CompGen is distributed on PyPI and targets Python 3.11+.
+XPU-RT is distributed on PyPI and targets Python 3.11+.
 
 ## From PyPI (recommended)
 
 ```bash
-pip install compgen
+pip install xpu-rt
 ```
 
-That includes everything needed to run the MCP server (`compgen-mcp`) and
+That includes everything needed to run the MCP server (`xpu-rt-mcp`) and
 exercise the in-process compile path. Verify the install:
 
 ```bash
-compgen --version
-compgen mcp doctor
+xpu-rt --version
+xpu-rt mcp doctor
 ```
 
 ## Extras
@@ -37,7 +37,7 @@ Extras layer on optional functionality. Combine multiple extras with commas.
 Example:
 
 ```bash
-pip install "compgen[llm,solve,ray]"
+pip install "xpu-rt[llm,solve,ray]"
 ```
 
 ## Next steps
@@ -48,13 +48,13 @@ pip install "compgen[llm,solve,ray]"
 
 ## From source (contributors)
 
-Cloning is only needed if you intend to develop against CompGen itself, or if
-you want the `compgen-autocomp` kernel-search dependency before it lands on
+Cloning is only needed if you intend to develop against XPU-RT itself, or if
+you want the `xpu-rt-autocomp` kernel-search dependency before it lands on
 PyPI.
 
 ```bash
-git clone --recurse-submodules https://github.com/compgen-project/compgen.git
-cd compgen
+git clone --recurse-submodules https://github.com/xpu-rt-project/xpu_rt.git
+cd xpu-rt
 ./scripts/bootstrap.sh
 ```
 

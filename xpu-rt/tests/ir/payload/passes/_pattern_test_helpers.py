@@ -7,7 +7,7 @@ Every pass test needs:
 2. A one-line applicator that runs a pattern against the module.
 3. A handful of structural asserts over the resulting IR.
 4. A thin wrapper around
-   :func:`compgen.ir.semantic.translation_validation.validate_translation`
+   :func:`xpu_rt.ir.semantic.translation_validation.validate_translation`
    that treats "timeout" as "acceptable" (since the Z3 SMT backend
    can time out on non-trivial bodies) but treats "invalid" as an
    actual test failure.
@@ -21,7 +21,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
-from compgen.ir.payload.decompositions import _attach_region_id
+from xpu_rt.ir.payload.decompositions import _attach_region_id
 from xdsl.dialects.builtin import (
     Float32Type,
     FunctionType,
@@ -98,8 +98,8 @@ def build_concat_module(
     dim: int = 0,
     region_id: str = "concat_0",
 ) -> ModuleOp:
-    """Build a module with a ``compgen.tensor_ext.concat``."""
-    from compgen.ir.tensor_ext import ConcatOp
+    """Build a module with a ``xpu_rt.tensor_ext.concat``."""
+    from xpu_rt.ir.tensor_ext import ConcatOp
 
     if not shapes:
         raise ValueError("build_concat_module needs at least one shape")
@@ -128,7 +128,7 @@ def build_quantized_matmul_module(
     group_size: int = 128,
     region_id: str = "quantized_matmul_0",
 ) -> ModuleOp:
-    """Build a module with one ``compgen.quant.weight_int{N}pack_mm``.
+    """Build a module with one ``xpu_rt.quant.weight_int{N}pack_mm``.
 
     ``bits`` ∈ {4, 8}.
     """
@@ -142,7 +142,7 @@ def build_quantized_matmul_module(
 
     ops: list = [x, w]
     if bits == 8:
-        from compgen.ir.quant import WeightInt8PackMMOp
+        from xpu_rt.ir.quant import WeightInt8PackMMOp
 
         scales = EmptyOp([], _ft([N]))
         ops.append(scales)
@@ -151,7 +151,7 @@ def build_quantized_matmul_module(
             result_types=[_ft([M, N])],
         )
     else:
-        from compgen.ir.quant import WeightInt4PackMMOp
+        from xpu_rt.ir.quant import WeightInt4PackMMOp
 
         sz = EmptyOp([], _ft([N, 2]))
         ops.append(sz)
@@ -230,9 +230,9 @@ def all_ops(module: ModuleOp) -> list[str]:
 
 
 def find_op_by_region_id(module: ModuleOp, region_id: str):
-    """Return the first op whose ``compgen.region_id`` matches, or ``None``."""
+    """Return the first op whose ``xpu_rt.region_id`` matches, or ``None``."""
     for op in module.walk():
-        attr = op.attributes.get("compgen.region_id")
+        attr = op.attributes.get("xpu_rt.region_id")
         if attr is not None and attr.data == region_id:
             return op
     return None
@@ -262,7 +262,7 @@ def assert_smt_equivalent(
     ``invalid`` must always fail -- that's what this helper exists
     for.
     """
-    from compgen.ir.semantic.translation_validation import validate_translation
+    from xpu_rt.ir.semantic.translation_validation import validate_translation
 
     result = validate_translation(before, after, timeout_ms=timeout_ms)
     if result.valid:

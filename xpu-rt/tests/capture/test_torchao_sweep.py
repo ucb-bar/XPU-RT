@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from compgen.capture.torchao_schemes import (
+from xpu_rt.capture.torchao_schemes import (
     TORCHAO_SCHEMES,
     TorchAOScheme,
     list_schemes,
@@ -13,9 +13,9 @@ from compgen.capture.torchao_schemes import (
 
 
 def test_catalog_has_expected_stability_groups():
-    # At least 9 stable, 6 prototype, 2 QAT, 1 compgen_custom per the plan.
+    # At least 9 stable, 6 prototype, 2 QAT, 1 xpu_rt_custom per the plan.
     stabilities = {s.stability for s in TORCHAO_SCHEMES.values()}
-    assert {"stable", "prototype", "qat", "compgen_custom"}.issubset(stabilities)
+    assert {"stable", "prototype", "qat", "xpu_rt_custom"}.issubset(stabilities)
 
 
 def test_catalog_minimum_scheme_count():
@@ -38,7 +38,7 @@ def test_every_scheme_declares_required_fields(name):
     assert s.config_class_path
     assert s.weight_dtype
     assert s.granularity
-    assert s.stability in ("stable", "prototype", "qat", "compgen_custom")
+    assert s.stability in ("stable", "prototype", "qat", "xpu_rt_custom")
     assert s.target_hardware
 
 

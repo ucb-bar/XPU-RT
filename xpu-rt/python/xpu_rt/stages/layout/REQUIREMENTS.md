@@ -8,13 +8,13 @@ stage and the Dispatch stage in the compilation pipeline.
 
 ## Input Contract
 
-- All tensor-producing ops have `compgen.encoding` attribute (from Encoding stage).
+- All tensor-producing ops have `xpu_rt.encoding` attribute (from Encoding stage).
 
 ## Output Contract
 
 - No `layout.set_layout` or `layout.unset_layout` ops remain.
 - All `layout.pack` ops have concrete `PackSpecAttr`.
-- Module is marked with `compgen.layout_clean = "1"`.
+- Module is marked with `xpu_rt.layout_clean = "1"`.
 
 ## What the Target Plugin Should Do
 
@@ -49,9 +49,9 @@ class MyTargetLayoutPlugin:
         self._caps = capabilities
 
     def transform(self, module):
-        from compgen.transforms.layout.fuse_layout_into_producers import fuse_layout_into_producers
-        from compgen.transforms.layout.specialize_layouts import specialize_layouts
-        from compgen.transforms.layout.cuda_resolver import CudaLayoutResolver
+        from xpu_rt.transforms.layout.fuse_layout_into_producers import fuse_layout_into_producers
+        from xpu_rt.transforms.layout.specialize_layouts import specialize_layouts
+        from xpu_rt.transforms.layout.cuda_resolver import CudaLayoutResolver
 
         module = fuse_layout_into_producers(module)
         resolver = CudaLayoutResolver()

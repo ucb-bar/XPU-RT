@@ -1,12 +1,12 @@
 """Generate standalone MLIR C++ compiler from xDSL prototypes.
 
-This is the "compiler generator" — it introspects CompGen's xDSL dialect
+This is the "compiler generator" — it introspects XPU-RT's xDSL dialect
 definitions and emits a complete C++ MLIR project (TableGen, headers,
 sources, CMake, driver) that can be built against ``third_party/llvm-project/``.
 
 Usage (Python API)::
 
-    from compgen.extensions.mlir_cppgen import generate_compiler
+    from xpu_rt.extensions.mlir_cppgen import generate_compiler
     generate_compiler(
         dialects=["layout", "tile", "accel"],
         output_dir=Path("artifacts/compiler"),
@@ -14,7 +14,7 @@ Usage (Python API)::
 
 Usage (CLI)::
 
-    python -m compgen.extensions.mlir_cppgen \\
+    python -m xpu_rt.extensions.mlir_cppgen \\
         --dialects layout,tile,accel \\
         --output artifacts/compiler/ \\
         --docker
@@ -26,20 +26,20 @@ from pathlib import Path
 
 import structlog
 
-from compgen.extensions.mlir_cppgen.cmake_emitter import write_cmake_files
-from compgen.extensions.mlir_cppgen.cpp_emitter import write_header_files, write_source_files
-from compgen.extensions.mlir_cppgen.docker_emitter import write_dockerfile
-from compgen.extensions.mlir_cppgen.driver_emitter import write_opt_driver
-from compgen.extensions.mlir_cppgen.introspect import (
+from xpu_rt.extensions.mlir_cppgen.cmake_emitter import write_cmake_files
+from xpu_rt.extensions.mlir_cppgen.cpp_emitter import write_header_files, write_source_files
+from xpu_rt.extensions.mlir_cppgen.docker_emitter import write_dockerfile
+from xpu_rt.extensions.mlir_cppgen.driver_emitter import write_opt_driver
+from xpu_rt.extensions.mlir_cppgen.introspect import (
     DialectInfo,
     introspect_accel_dialect,
     introspect_layout_dialect,
     introspect_recipe_base,
     introspect_tile_dialect,
 )
-from compgen.extensions.mlir_cppgen.pass_emitter import get_layout_passes, write_pass_files
-from compgen.extensions.mlir_cppgen.tablegen_emitter import write_tablegen_files
-from compgen.extensions.mlir_cppgen.test_emitter import write_test_files
+from xpu_rt.extensions.mlir_cppgen.pass_emitter import get_layout_passes, write_pass_files
+from xpu_rt.extensions.mlir_cppgen.tablegen_emitter import write_tablegen_files
+from xpu_rt.extensions.mlir_cppgen.test_emitter import write_test_files
 
 logger = structlog.get_logger()
 
@@ -177,7 +177,7 @@ def generate_compiler(
     logger.debug("mlir_cppgen.cmake", files=len(cmake_written))
 
     # Driver
-    opt_dir = output_dir / "compgen-opt"
+    opt_dir = output_dir / "xpu_rt-opt"
     driver_path = write_opt_driver(all_infos, opt_dir, dialects_with_passes=dialects_with_passes)
     all_written.append(driver_path)
     logger.debug("mlir_cppgen.driver", path=str(driver_path))

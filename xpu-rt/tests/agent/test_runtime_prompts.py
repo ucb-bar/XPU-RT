@@ -4,22 +4,22 @@ from __future__ import annotations
 
 import json
 
-from compgen.agent.prompts.runtime_dispatch import (
+from xpu_rt.agent.prompts.runtime_dispatch import (
     DispatchContext,
 )
-from compgen.agent.prompts.runtime_dispatch import (
+from xpu_rt.agent.prompts.runtime_dispatch import (
     format_prompt as dispatch_prompt,
 )
-from compgen.agent.prompts.runtime_dispatch import (
+from xpu_rt.agent.prompts.runtime_dispatch import (
     parse_response as parse_dispatch,
 )
-from compgen.agent.prompts.runtime_profile import (
+from xpu_rt.agent.prompts.runtime_profile import (
     ProfileHookContext,
 )
-from compgen.agent.prompts.runtime_profile import (
+from xpu_rt.agent.prompts.runtime_profile import (
     format_prompt as profile_prompt,
 )
-from compgen.agent.prompts.runtime_profile import (
+from xpu_rt.agent.prompts.runtime_profile import (
     parse_response as parse_profile,
 )
 

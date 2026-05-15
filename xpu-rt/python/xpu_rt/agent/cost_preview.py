@@ -11,7 +11,7 @@ The preview is *deterministic* — same inputs → same outputs. The
 LLM never reads cost as a single scalar; it reads the typed payload
 and chooses among non-dominated survivors.
 
-Wire-in to :mod:`compgen.graph_compilation.agent_decision`
+Wire-in to :mod:`xpu_rt.graph_compilation.agent_decision`
 (``propose_recipe_edit``) is a follow-up; this module is testable in
 isolation against a candidate-list shape.
 
@@ -47,7 +47,7 @@ class CandidateInput:
     """Minimal candidate shape the preview consumes.
 
     The full candidate dataclass
-    :class:`compgen.agent.suggest._candidate.ProposalCandidate` carries
+    :class:`xpu_rt.agent.suggest._candidate.ProposalCandidate` carries
     more (rationale, members, …); the preview only needs id + cost
     facts + legality.
     """

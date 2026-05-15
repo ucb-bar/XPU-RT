@@ -7,7 +7,7 @@ point with caller-supplied keyword args. A wall-clock timeout bounds
 how long the authored code can run.
 
 This is deliberately *not* a security boundary — authored tools are
-trusted enough to land in ``~/.compgen/``; the goals are:
+trusted enough to land in ``~/.xpu_rt/``; the goals are:
 
 1. **Isolation** — one authored tool's globals cannot leak into the
    host process's modules.
@@ -41,13 +41,13 @@ DEFAULT_IMPORT_ALLOWLIST: frozenset[str] = frozenset(
         "collections",
         "dataclasses",
         "typing",
-        # CompGen's own surface — authored tools compose our primitives.
-        "compgen",
-        "compgen.ir",
-        "compgen.ir.recipe",
-        "compgen.ir.recipe.llm_view",
-        "compgen.ir.payload",
-        "compgen.llm.registry",
+        # XPU-RT's own surface — authored tools compose our primitives.
+        "xpu-rt",
+        "xpu_rt.ir",
+        "xpu_rt.ir.recipe",
+        "xpu_rt.ir.recipe.llm_view",
+        "xpu_rt.ir.payload",
+        "xpu_rt.llm.registry",
         # Numerical libs the LLM is likely to reach for.
         "torch",
         "numpy",
@@ -255,7 +255,7 @@ def sandbox_invoke(
 
     # Compile + exec the source into an isolated namespace.
     namespace: dict[str, Any] = {"__builtins__": _safe_builtins()}
-    module = types.ModuleType(f"compgen_authored_{id(source)}")
+    module = types.ModuleType(f"xpu_rt_authored_{id(source)}")
     stdout = io.StringIO()
 
     t0 = time.perf_counter()

@@ -40,13 +40,13 @@ def _read(p: Path) -> dict:
 def _run(model: str, out_dir: Path, *, calibrate_candidates: bool) -> None:
     env = os.environ.copy()
     if calibrate_candidates:
-        env["COMPGEN_CALIBRATE_CANDIDATES"] = "1"
+        env["XPU_RT_CALIBRATE_CANDIDATES"] = "1"
     else:
-        env.pop("COMPGEN_CALIBRATE_CANDIDATES", None)
-    env.pop("COMPGEN_CALIBRATE_PROFILER", None)  # isolate
+        env.pop("XPU_RT_CALIBRATE_CANDIDATES", None)
+    env.pop("XPU_RT_CALIBRATE_PROFILER", None)  # isolate
     subprocess.run(
         [
-            sys.executable, "-m", "compgen.graph_compilation", "run",
+            sys.executable, "-m", "xpu_rt.graph_compilation", "run",
             "--model", str(REPO_ROOT / f"configs/models/{model}.yaml"),
             "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
             "--out", str(out_dir),
@@ -243,7 +243,7 @@ def test_handles_missing_cost_preview(tmp_path: Path) -> None:
     (fake / "02_graph_analysis" / "candidate_actions.json").write_text(
         json.dumps({"candidates": []}), encoding="utf-8",
     )
-    from compgen.graph_compilation.candidate_calibration import (
+    from xpu_rt.graph_compilation.candidate_calibration import (
         run_candidate_calibration,
     )
     res = run_candidate_calibration(fake, iterations=2, warmup=0)
@@ -252,16 +252,16 @@ def test_handles_missing_cost_preview(tmp_path: Path) -> None:
 
 def test_no_compiler_core_imports() -> None:
     src = (
-        REPO_ROOT / "python" / "compgen" / "graph_compilation"
+        REPO_ROOT / "python" / "xpu-rt" / "graph_compilation"
         / "candidate_calibration.py"
     ).read_text(encoding="utf-8")
     forbidden = (
-        "from compgen.ir",
-        "import compgen.ir",
-        "from compgen.capture",
-        "import compgen.capture",
-        "from compgen.pipeline",
-        "import compgen.pipeline",
+        "from xpu_rt.ir",
+        "import xpu_rt.ir",
+        "from xpu_rt.capture",
+        "import xpu_rt.capture",
+        "from xpu_rt.pipeline",
+        "import xpu_rt.pipeline",
     )
     for pat in forbidden:
         assert pat not in src, f"candidate_calibration imports forbidden: {pat}"

@@ -9,15 +9,15 @@ from xdsl.dialects.builtin import ArrayAttr, ModuleOp, StringAttr, SymbolRefAttr
 from xdsl.ir import Attribute, Operation
 from xdsl.utils.exceptions import VerifyException
 
-from compgen.ir.agent.ops_claim import ClaimOp, ExpectedProofOp
-from compgen.ir.agent.ops_evidence import (
+from xpu_rt.ir.agent.ops_claim import ClaimOp, ExpectedProofOp
+from xpu_rt.ir.agent.ops_evidence import (
     BindAnalysisOp,
     BindProfileOp,
     BindVerificationOp,
     EvidenceSetOp,
 )
-from compgen.ir.agent.ops_frontier import CommitOp
-from compgen.ir.agent.ops_synthesis import (
+from xpu_rt.ir.agent.ops_frontier import CommitOp
+from xpu_rt.ir.agent.ops_synthesis import (
     RequestAnalysisOp,
     RequestBackendPlanOp,
     RequestEqsatSeedOp,

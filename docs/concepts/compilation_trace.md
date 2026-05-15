@@ -1,6 +1,6 @@
 # Compilation Trace & IR Dumps
 
-Every CompGen compile produces a **single correlated JSONL trace** plus
+Every XPU-RT compile produces a **single correlated JSONL trace** plus
 an **IREE-style sequence of IR dumps** so every decision the compiler
 made — and every IR mutation that followed — is reconstructable from
 disk after the fact. Nothing in the trace is written by the LLM; the
@@ -88,7 +88,7 @@ that don't do work themselves.
 Default is off for production speed. Opt in via either:
 
 * `compile_model(..., dump_ir=True)` Python kwarg
-* Environment variable: `COMPGEN_DUMP_IR=1`
+* Environment variable: `XPU_RT_DUMP_IR=1`
 
 The trace bus is **always on** — it's cheap JSONL with one lock. Only
 the IR `.mlir` writes gate on the dump flag.
@@ -98,7 +98,7 @@ the IR `.mlir` writes gate on the dump flag.
 Code that wants to read the trace live should:
 
 ```python
-from compgen.trace import get_active_bus
+from xpu_rt.trace import get_active_bus
 bus = get_active_bus()
 print(bus.trace_path)   # <out>/trace/trace.jsonl
 ```
@@ -118,7 +118,7 @@ jq -c 'select(.kind == "decision" and .payload.source == "agent")' trace.jsonl
 * `oracle_advisory` events fire only when the oracle module paths are
   exercised (currently from `analysis/graph_digest.py` and the
   `stage_*_plugin` decision sites). If a consumer wires an oracle call
-  elsewhere, it must use `compgen.trace.OraclePublisher.emit` to keep
+  elsewhere, it must use `xpu_rt.trace.OraclePublisher.emit` to keep
   the advisory visible.
 * Trace-event order is bus-write order, not wall-clock order (they
   usually match — the bus lock serialises writes — but don't assume

@@ -159,7 +159,7 @@ class SQLiteBackend:
         db_path: Path to the SQLite database file.
     """
 
-    def __init__(self, db_path: Path = Path(".compgen_cache/memory.db")) -> None:
+    def __init__(self, db_path: Path = Path(".xpu_rt_cache/memory.db")) -> None:
         self.db_path = db_path
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._conn: sqlite3.Connection | None = None

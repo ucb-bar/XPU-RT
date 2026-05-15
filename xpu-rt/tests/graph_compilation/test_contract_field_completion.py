@@ -33,7 +33,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 def _invoke_pipeline(*, model: str, out_dir: Path) -> subprocess.CompletedProcess:
     return subprocess.run(
         [
-            sys.executable, "-m", "compgen.graph_compilation", "run",
+            sys.executable, "-m", "xpu_rt.graph_compilation", "run",
             "--model", str(REPO_ROOT / f"configs/models/{model}.yaml"),
             "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
             "--out", str(out_dir),
@@ -116,7 +116,7 @@ class TestMemorySpecFromDossier:
         )
 
     def test_unit_lifetime_class_to_tier(self) -> None:
-        from compgen.kernels.contract_v3 import (
+        from xpu_rt.kernels.contract_v3 import (
             MemoryTier,
             _lifetime_class_to_tier,
         )
@@ -129,14 +129,14 @@ class TestMemorySpecFromDossier:
         assert _lifetime_class_to_tier("") == MemoryTier.HOST
 
     def test_unit_live_after_for_consumer_count(self) -> None:
-        from compgen.kernels.contract_v3 import _live_after_for_consumer_count
+        from xpu_rt.kernels.contract_v3 import _live_after_for_consumer_count
 
         assert _live_after_for_consumer_count(0) == "end_of_region"
         assert _live_after_for_consumer_count(1) == "next_consumer"
         assert _live_after_for_consumer_count(5) == "all_consumers"
 
     def test_derive_memory_spec_with_dossier(self) -> None:
-        from compgen.kernels.contract_v3 import (
+        from xpu_rt.kernels.contract_v3 import (
             MemoryTier,
             _derive_memory_spec,
         )
@@ -159,7 +159,7 @@ class TestMemorySpecFromDossier:
         assert m.in_place_safe is False
 
     def test_derive_memory_spec_falls_back_when_dossier_missing(self) -> None:
-        from compgen.kernels.contract_v3 import (
+        from xpu_rt.kernels.contract_v3 import (
             MemoryTier,
             _derive_memory_spec,
         )
@@ -178,10 +178,10 @@ class TestMemorySpecFromDossier:
 
 class TestRoundTripPreserves:
     def test_contract_round_trip(self, tmp_path: Path) -> None:
-        from compgen.graph_compilation.kernel_codegen_response import (
+        from xpu_rt.graph_compilation.kernel_codegen_response import (
             _reconstruct_contract_from_dict,
         )
-        from compgen.promotion.contract_hash import canonical_contract_hash
+        from xpu_rt.promotion.contract_hash import canonical_contract_hash
 
         result = _invoke_pipeline(
             model="merlin_mlp_wide", out_dir=tmp_path / "run",
@@ -218,7 +218,7 @@ class TestFallback:
     def test_empty_target_profile_falls_back(self) -> None:
         """An empty target_profile dict produces a contract with
         default HardwareEnvelope values for the fields."""
-        from compgen.kernels.contract_v3 import KernelContractV3
+        from xpu_rt.kernels.contract_v3 import KernelContractV3
 
         candidate_selection = {
             "candidate_kind": "set_tile_params",

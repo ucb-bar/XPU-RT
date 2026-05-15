@@ -106,30 +106,30 @@ def _load_target_profile(target: TargetSpec, output_dir: Path) -> tuple[Any, str
     """Load either a target profile or a generated device profile."""
 
     if target.kind == "hardware_spec":
-        from compgen.api import device
+        from xpu_rt.api import device
 
         dev = device(target.path, output_dir=output_dir / f"targetgen_{target.target_id}")
         return dev.profile, dev.profile.name
 
-    from compgen.targets.schema import load_profile
+    from xpu_rt.targets.schema import load_profile
 
     profile = load_profile(str(target.path))
     return profile, profile.name
 
 
-def _compgen_runtime_config(ctx: AdapterContext) -> dict[str, Any]:
-    """Resolve optional pack/LLM config for the CompGen adapter."""
+def _xpu_rt_runtime_config(ctx: AdapterContext) -> dict[str, Any]:
+    """Resolve optional pack/LLM config for the XPU-RT adapter."""
 
-    workspace_cfg = ctx.workspace.get_suite_config("compgen") if ctx.workspace is not None else {}
+    workspace_cfg = ctx.workspace.get_suite_config("xpu-rt") if ctx.workspace is not None else {}
     merged = dict(workspace_cfg)
     merged.update(ctx.extra_config)
     return merged
 
 
-def _resolve_compgen_packs(ctx: AdapterContext) -> tuple[str | Path, ...]:
-    """Resolve pack specs for the current CompGen benchmark run."""
+def _resolve_xpu_rt_packs(ctx: AdapterContext) -> tuple[str | Path, ...]:
+    """Resolve pack specs for the current XPU-RT benchmark run."""
 
-    config = _compgen_runtime_config(ctx)
+    config = _xpu_rt_runtime_config(ctx)
     target_packs = config.get("target_packs", {})
     if isinstance(target_packs, dict):
         scoped = target_packs.get(ctx.target.target_id)
@@ -173,7 +173,7 @@ def _serialize_verification_result(result: Any) -> dict[str, Any]:
 def _capture_artifact_for_workload(ctx: AdapterContext, model: Any, sample_inputs: tuple[Any, ...]) -> Any:
     """Capture according to the workload's configured frontend mode."""
 
-    from compgen.capture import capture_dynamo_partitions, capture_frontend_artifact
+    from xpu_rt.capture import capture_dynamo_partitions, capture_frontend_artifact
 
     if ctx.workload.capture_mode == "torch_dynamo_partioned":
         return capture_dynamo_partitions(model, sample_inputs)
@@ -235,7 +235,7 @@ def _analysis_only_record(
 ) -> RunRecord:
     """Run capture and graph analysis without the full lowering pipeline."""
 
-    from compgen.agent.analyzer import NetworkAnalyzer
+    from xpu_rt.agent.analyzer import NetworkAnalyzer
 
     capture_start = time.perf_counter()
     artifact = _capture_artifact_for_workload(ctx, model, sample_inputs)
@@ -277,17 +277,17 @@ def _skip_non_pipeline_workload(record: RunRecord, ctx: AdapterContext, *, reaso
 
 
 class CompGenAdapter:
-    """Primary CompGen system adapter."""
+    """Primary XPU-RT system adapter."""
 
     def is_available(self, ctx: AdapterContext) -> tuple[bool, str]:
         return True, ""
 
     def run(self, ctx: AdapterContext) -> RunRecord:
-        record = _new_record(ctx, system_name="compgen")
+        record = _new_record(ctx, system_name="xpu-rt")
         _populate_study_identity(record, ctx)
         total_start = time.perf_counter()
-        runtime_config = _compgen_runtime_config(ctx)
-        pack_specs = _resolve_compgen_packs(ctx)
+        runtime_config = _xpu_rt_runtime_config(ctx)
+        pack_specs = _resolve_xpu_rt_packs(ctx)
 
         try:
             model, sample_inputs = ctx.workload.load(ctx.workspace)
@@ -295,7 +295,7 @@ class CompGenAdapter:
             record.target_name = resolved_target_name
             target_package = None
             if pack_specs:
-                from compgen.targets.package import generate_target_package
+                from xpu_rt.targets.package import generate_target_package
 
                 target_package = generate_target_package(
                     target_profile,
@@ -318,22 +318,22 @@ class CompGenAdapter:
                     total_start=total_start,
                 )
 
-            from compgen.capture import capture_frontend_artifact
-            from compgen.eqsat.pipeline import run_eqsat_pass
-            from compgen.ir.payload.import_fx import fx_to_xdsl
-            from compgen.ir.recipe.lower import lower_recipe
-            from compgen.ir.recipe.seed import generate_seed_recipe
-            from compgen.ir.recipe.serialize import recipe_module_to_yaml, recipe_to_mlir
-            from compgen.ir.recipe.validate import validate_recipe_module
-            from compgen.kernels.contracts import build_kernel_contracts
-            from compgen.kernels.selector import select_strategies
-            from compgen.promotion.promote import RecipePromoter
-            from compgen.runtime.bundle import create_bundle
-            from compgen.runtime.local_executor import LocalExecutor
-            from compgen.runtime.planner import plan_execution
-            from compgen.runtime.torch_backend import CompGenBackend
-            from compgen.semantic.synthesis.integration import synthesize_and_attach_guards
-            from compgen.transforms.verify import TransformVerifier, VerificationLevel
+            from xpu_rt.capture import capture_frontend_artifact
+            from xpu_rt.eqsat.pipeline import run_eqsat_pass
+            from xpu_rt.ir.payload.import_fx import fx_to_xdsl
+            from xpu_rt.ir.recipe.lower import lower_recipe
+            from xpu_rt.ir.recipe.seed import generate_seed_recipe
+            from xpu_rt.ir.recipe.serialize import recipe_module_to_yaml, recipe_to_mlir
+            from xpu_rt.ir.recipe.validate import validate_recipe_module
+            from xpu_rt.kernels.contracts import build_kernel_contracts
+            from xpu_rt.kernels.selector import select_strategies
+            from xpu_rt.promotion.promote import RecipePromoter
+            from xpu_rt.runtime.bundle import create_bundle
+            from xpu_rt.runtime.local_executor import LocalExecutor
+            from xpu_rt.runtime.planner import plan_execution
+            from xpu_rt.runtime.torch_backend import CompGenBackend
+            from xpu_rt.semantic.synthesis.integration import synthesize_and_attach_guards
+            from xpu_rt.transforms.verify import TransformVerifier, VerificationLevel
 
             capture_start = time.perf_counter()
             artifact = capture_frontend_artifact(model, sample_inputs)
@@ -375,12 +375,12 @@ class CompGenAdapter:
             if not llm_backend:
                 llm_backend = str(runtime_config.get("llm", "")).strip()
             if not llm_backend:
-                llm_backend = str((__import__("os")).environ.get("COMPGEN_LLM_BACKEND", "")).strip()
+                llm_backend = str((__import__("os")).environ.get("XPU_RT_LLM_BACKEND", "")).strip()
 
             if llm_backend:
-                from compgen.agent.env import CompilerEnv
-                from compgen.agent.loop import AgenticCompilationLoop
-                from compgen.llm.config import build_llm_runtime, resolve_llm_selection
+                from xpu_rt.agent.env import CompilerEnv
+                from xpu_rt.agent.loop import AgenticCompilationLoop
+                from xpu_rt.llm.config import build_llm_runtime, resolve_llm_selection
 
                 llm_model = runtime_config.get("llm_model")
                 llm_record = runtime_config.get("llm_record")
@@ -537,7 +537,7 @@ class CompGenAdapter:
                 record.verification.translation_validation_pass = None if "SKIPPED" in tv_detail else True
                 # Detect structural-expected-mismatch (structural fails but numeric passes)
                 if hasattr(verification_result, "levels_run"):
-                    from compgen.transforms.verify import VerificationLevel
+                    from xpu_rt.transforms.verify import VerificationLevel
 
                     structural_ran = VerificationLevel.STRUCTURAL in verification_result.levels_run
                     structural_passed = VerificationLevel.STRUCTURAL in verification_result.levels_passed
@@ -594,8 +594,8 @@ class CompGenAdapter:
                 comparison.compiled_gpu.latency_median_us if comparison.compiled_gpu else 0.0
             )
 
-            compgen_backend = CompGenBackend(decisions={"ablation": ctx.ablation})
-            backend_result = compgen_backend.compile_and_benchmark(
+            xpu_rt_backend = CompGenBackend(decisions={"ablation": ctx.ablation})
+            backend_result = xpu_rt_backend.compile_and_benchmark(
                 model,
                 sample_inputs,
                 device="cuda",
@@ -609,7 +609,7 @@ class CompGenAdapter:
             record.performance.device = backend_result.device
             record.performance.mode = backend_result.mode
             record.performance.num_iterations = backend_result.num_iterations
-            record.baselines.compgen_latency_us = backend_result.latency_median_us
+            record.baselines.xpu_rt_latency_us = backend_result.latency_median_us
             if record.baselines.eager_cpu_latency_us:
                 record.baselines.speedup_vs_eager_cpu = record.baselines.eager_cpu_latency_us / max(
                     backend_result.latency_median_us, 1e-6
@@ -664,7 +664,7 @@ class TorchEagerAdapter:
                 reason=f"torch_eager baseline skipped for workload readiness={ctx.workload.readiness}",
             )
         model, sample_inputs = ctx.workload.load(ctx.workspace)
-        from compgen.runtime.local_executor import LocalExecutor
+        from xpu_rt.runtime.local_executor import LocalExecutor
 
         result = LocalExecutor().benchmark(
             model, sample_inputs, device="cpu", mode="eager", num_iterations=10, warmup=3
@@ -698,7 +698,7 @@ class TorchCompileAdapter:
                 reason=f"torch_compile baseline skipped for workload readiness={ctx.workload.readiness}",
             )
         model, sample_inputs = ctx.workload.load(ctx.workspace)
-        from compgen.runtime.local_executor import LocalExecutor
+        from xpu_rt.runtime.local_executor import LocalExecutor
 
         result = LocalExecutor().benchmark(
             model,
@@ -830,7 +830,7 @@ class ExternalRepoAdapter:
 
 
 ADAPTERS: dict[str, Adapter] = {
-    "compgen": CompGenAdapter(),
+    "xpu-rt": CompGenAdapter(),
     "torch_eager": TorchEagerAdapter(),
     "torch_compile": TorchCompileAdapter(),
     "expert_fixture": ExpertFixtureAdapter(),

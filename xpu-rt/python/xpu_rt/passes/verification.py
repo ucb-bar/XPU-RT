@@ -2,7 +2,7 @@
 
 Each pass card declares a list of ``verification`` rungs that must be
 discharged before downstream consumers can read the pass's outputs.
-Today CompGen emits two real verification reports:
+Today XPU-RT emits two real verification reports:
 
 - ``03_recipe_planning/post_lowering/post_lowering_verification_report.json``
   (structural / contract verification)
@@ -45,11 +45,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from compgen.audit.errors import (
+from xpu_rt.audit.errors import (
     VerificationGateFailed,
     VerificationGateMissing,
 )
-from compgen.passes.cards import PassCard
+from xpu_rt.passes.cards import PassCard
 
 CERT_SCHEMA_VERSION = "verification_certificate_v1"
 

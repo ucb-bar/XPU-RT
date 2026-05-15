@@ -45,14 +45,14 @@ def _sha(p: Path) -> str:
 def _run(model: str, out_dir: Path, *, run_kernels: bool) -> None:
     env = os.environ.copy()
     if run_kernels:
-        env["COMPGEN_RUN_KERNELS"] = "1"
+        env["XPU_RT_RUN_KERNELS"] = "1"
     else:
-        env.pop("COMPGEN_RUN_KERNELS", None)
-    env.pop("COMPGEN_CALIBRATE_PROFILER", None)
-    env.pop("COMPGEN_CALIBRATE_CANDIDATES", None)
+        env.pop("XPU_RT_RUN_KERNELS", None)
+    env.pop("XPU_RT_CALIBRATE_PROFILER", None)
+    env.pop("XPU_RT_CALIBRATE_CANDIDATES", None)
     subprocess.run(
         [
-            sys.executable, "-m", "compgen.graph_compilation", "run",
+            sys.executable, "-m", "xpu_rt.graph_compilation", "run",
             "--model", str(REPO_ROOT / f"configs/models/{model}.yaml"),
             "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
             "--out", str(out_dir),
@@ -215,7 +215,7 @@ def test_m162_artifacts_unchanged_after_m23(fusion_run: Path) -> None:
     if not rl_path.exists() or not rv_path.exists():
         pytest.skip("M-16.2 artifacts absent on this fixture")
     before = {"manifest": _sha(rl_path), "report": _sha(rv_path)}
-    from compgen.graph_compilation.compiled_fusion import run_compiled_fusion
+    from xpu_rt.graph_compilation.compiled_fusion import run_compiled_fusion
     run_compiled_fusion(fusion_run)
     after = {"manifest": _sha(rl_path), "report": _sha(rv_path)}
     assert before == after, (
@@ -235,7 +235,7 @@ def test_m23_does_not_mutate_canonical_artifacts(fusion_run: Path) -> None:
         "candidate_actions": _sha(ca_path),
         "cost_preview_v2": _sha(cp_path),
     }
-    from compgen.graph_compilation.compiled_fusion import run_compiled_fusion
+    from xpu_rt.graph_compilation.compiled_fusion import run_compiled_fusion
     run_compiled_fusion(fusion_run)
     after = {
         "region_map": _sha(rm_path),
@@ -248,7 +248,7 @@ def test_m23_does_not_mutate_canonical_artifacts(fusion_run: Path) -> None:
 def test_kernel_source_sha256_deterministic(fusion_run: Path) -> None:
     """The reported kernel_source_sha256 (computed over a
     timestamp-stripped variant) must be byte-identical across reruns."""
-    from compgen.graph_compilation.compiled_fusion import run_compiled_fusion
+    from xpu_rt.graph_compilation.compiled_fusion import run_compiled_fusion
 
     p = (
         fusion_run / "02_graph_analysis" / "compiled_fusion"
@@ -277,7 +277,7 @@ def test_kernel_source_sha256_deterministic(fusion_run: Path) -> None:
 def test_m15b_includes_compiled_fusion_check() -> None:
     """The downstream_retry detector must include the report in
     its registry so kernel-level fusion failures trigger retry."""
-    from compgen.graph_compilation.downstream_retry import _DOWNSTREAM_REPORTS
+    from xpu_rt.graph_compilation.downstream_retry import _DOWNSTREAM_REPORTS
 
     check_labels = [r[3] for r in _DOWNSTREAM_REPORTS]
     assert "compiled_fusion_differential_check" in check_labels
@@ -285,7 +285,7 @@ def test_m15b_includes_compiled_fusion_check() -> None:
 
 def test_m15b_does_not_retry_on_pass(fusion_run: Path) -> None:
     """status=pass on must NOT trigger a downstream-retry request."""
-    from compgen.graph_compilation.downstream_retry import detect_downstream_failure
+    from xpu_rt.graph_compilation.downstream_retry import detect_downstream_failure
 
     r = _read(
         fusion_run / "02_graph_analysis" / "compiled_fusion"
@@ -329,14 +329,14 @@ def test_ledger_records_m23_event(fusion_run: Path) -> None:
 
 def test_no_compiler_core_imports() -> None:
     src = (
-        REPO_ROOT / "python" / "compgen" / "graph_compilation"
+        REPO_ROOT / "python" / "xpu-rt" / "graph_compilation"
         / "compiled_fusion.py"
     ).read_text(encoding="utf-8")
     forbidden = (
-        "from compgen.ir",
-        "from compgen.capture",
-        "from compgen.pipeline",
-        "from compgen.runtime.bundle_emit",
+        "from xpu_rt.ir",
+        "from xpu_rt.capture",
+        "from xpu_rt.pipeline",
+        "from xpu_rt.runtime.bundle_emit",
     )
     for f in forbidden:
         assert f not in src, (
@@ -350,7 +350,7 @@ def test_no_compiler_core_imports() -> None:
 
 
 def test_classify_kind_maps_canonical_names() -> None:
-    from compgen.graph_compilation.compiled_fusion import _classify_kind
+    from xpu_rt.graph_compilation.compiled_fusion import _classify_kind
 
     assert _classify_kind("bias_add") == "bias_add"
     assert _classify_kind("aten_add") == "add"

@@ -37,7 +37,7 @@ class _Ffn(nn.Module):
 
 class TestFusedTopology:
     def test_drops_relu_op(self) -> None:
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         torch.manual_seed(0xF1)
         result = lower_torch_to_megakernel(
@@ -49,7 +49,7 @@ class TestFusedTopology:
         assert names == ["linear_up_relu", "linear_down"]
 
     def test_drops_y_up_buffer(self) -> None:
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         torch.manual_seed(0xF2)
         result = lower_torch_to_megakernel(
@@ -66,7 +66,7 @@ class TestFusedTopology:
         )
 
     def test_drops_ev_up_event_tensor(self) -> None:
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         torch.manual_seed(0xF3)
         result = lower_torch_to_megakernel(
@@ -80,7 +80,7 @@ class TestFusedTopology:
     def test_total_tile_tasks_drops_pointwise_pool(self) -> None:
         """3-op topology: n_up + n_up + n_down = 8+8+4 = 20.
         Fused: n_up + n_down = 8 + 4 = 12."""
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         torch.manual_seed(0xF4)
         unfused = lower_torch_to_megakernel(
@@ -100,7 +100,7 @@ class TestFusedTopology:
         assert unfused.decision.total_tile_tasks - fused.decision.total_tile_tasks == n_up
 
     def test_decision_carries_fusion_marker(self) -> None:
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         torch.manual_seed(0xF5)
         result = lower_torch_to_megakernel(
@@ -116,7 +116,7 @@ class TestFusedBodies:
     def test_linear_up_relu_writes_y_relu(self) -> None:
         """Buffer layout dropped y_up; linear_up_relu must store to
         buffer index 3 (y_relu in the 5-buffer layout)."""
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         torch.manual_seed(0xF6)
         result = lower_torch_to_megakernel(
@@ -131,7 +131,7 @@ class TestFusedBodies:
     def test_linear_up_relu_applies_relu_in_epilogue(self) -> None:
         """The store epilogue must clamp negative accumulator values
         to zero. fmaf path uses a ternary; cuBLASDx path uses fmaxf."""
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         torch.manual_seed(0xF7)
         result = lower_torch_to_megakernel(
@@ -148,7 +148,7 @@ class TestFusedBodies:
         """In the fused 5-buffer layout, linear_down's input buffer
         index is 3 (was 4 in the unfused 6-buffer layout because
         y_up sat at slot 3 and y_relu was bumped to 4)."""
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         torch.manual_seed(0xF8)
         result = lower_torch_to_megakernel(
@@ -168,7 +168,7 @@ class TestDefaultUnchanged:
     consumers keep working."""
 
     def test_default_keeps_three_ops(self) -> None:
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         torch.manual_seed(0xF9)
         result = lower_torch_to_megakernel(

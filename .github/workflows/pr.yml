@@ -92,16 +92,16 @@ jobs:
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
       - name: Install dependencies
         run: uv sync --frozen --extra dev
-      - name: compgen --version
-        run: uv run compgen --version
+      - name: xpu_rt --version
+        run: uv run xpu_rt --version
       - name: Scaffold + load a pack end-to-end
         run: |
-          uv run compgen scaffold-pack \
+          uv run xpu_rt scaffold-pack \
             --kind quantization --name ci_demo --out /tmp/scaffold_smoke
           uv run python - <<'PY'
           import sys
           sys.path.insert(0, "/tmp/scaffold_smoke/ci_demo/src")
-          from compgen.packs import load_pack
+          from xpu_rt.packs import load_pack
           loaded = load_pack("ci_demo")
           assert loaded.manifest.name == "ci_demo"
           assert "KernelPack" in loaded.manifest.kinds

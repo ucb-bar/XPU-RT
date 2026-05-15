@@ -45,8 +45,8 @@ forbidden:
 - adding a new verifier without an obligation in generate_obligations
 realness_level: production_path
 required_evidence:
-- python/compgen/kernels/contract_verifier.py
-- python/compgen/graph_compilation/kernel_codegen_response.py (M-44 hook)
+- python/xpu_rt/kernels/contract_verifier.py
+- python/xpu_rt/graph_compilation/kernel_codegen_response.py (M-44 hook)
 - tests/kernels/test_contract_verifier.py
 - "04_kernel_codegen/validation/<task_id>.validation.json on a real run"
 notes: |

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from compgen.extensions.llvm_patchgen import LLVMIntrinsicSpec, LLVMPatchSpec, generate_llvm_patch_bundle
-from compgen.extensions.xdsl_generate import (
+from xpu_rt.extensions.llvm_patchgen import LLVMIntrinsicSpec, LLVMPatchSpec, generate_llvm_patch_bundle
+from xpu_rt.extensions.xdsl_generate import (
     DialectOperandSpec,
     DialectOpSpec,
     DialectResultSpec,

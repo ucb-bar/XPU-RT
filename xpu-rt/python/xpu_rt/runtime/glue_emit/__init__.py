@@ -1,21 +1,21 @@
 """Phase C +: per-workload emitted glue (host-side dispatch code).
 
 Each submodule is a backend-specific emitter that consumes a
-:class:`compgen.runtime.execution_plan.ExecutionPlan` and produces an
+:class:`xpu_rt.runtime.execution_plan.ExecutionPlan` and produces an
 importable Python module under ``06_glue_emit/``. The emitted module
-exposes ``compgen_run(io, kernels, runtime)`` plus an
+exposes ``xpu_rt_run(io, kernels, runtime)`` plus an
 ``assert_plan(io)`` invariant block.
 """
 
-from compgen.runtime.glue_emit.c11_baremetal import (
+from xpu_rt.runtime.glue_emit.c11_baremetal import (
     C11GlueEmitResult,
     emit_c11_baremetal_executor,
 )
-from compgen.runtime.glue_emit.cpp_host import (
+from xpu_rt.runtime.glue_emit.cpp_host import (
     CppHostGlueEmitResult,
     emit_cpp_host_executor,
 )
-from compgen.runtime.glue_emit.dispatch_table import (
+from xpu_rt.runtime.glue_emit.dispatch_table import (
     DispatchEmitResult,
     PlanDispatchEntry,
     PlanDispatchSpec,
@@ -23,15 +23,15 @@ from compgen.runtime.glue_emit.dispatch_table import (
     plan_dispatch_spec_from_recipe_op,
     select_plan,
 )
-from compgen.runtime.glue_emit.python_async import (
+from xpu_rt.runtime.glue_emit.python_async import (
     AsyncGlueEmitResult,
     emit_python_async_executor,
 )
-from compgen.runtime.glue_emit.python_cuda import (
+from xpu_rt.runtime.glue_emit.python_cuda import (
     CudaGlueEmitResult,
     emit_python_cuda_executor,
 )
-from compgen.runtime.glue_emit.python_sync import (
+from xpu_rt.runtime.glue_emit.python_sync import (
     GlueEmitResult,
     emit_python_sync_executor,
 )

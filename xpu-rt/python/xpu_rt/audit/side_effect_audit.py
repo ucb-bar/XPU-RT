@@ -1,6 +1,6 @@
 """H6 — Tools-as-only-side-effect audit (Section 11 Dream 6).
 
-Scan ``python/compgen/`` for direct mutations to session-owned state
+Scan ``python/xpu_rt/`` for direct mutations to session-owned state
 (``recipe_module``, ``payload_module``, ``decision_registry``,
 ``kernel_cache``, ``bench_cache``, ``refinement_cache``) that bypass
 MCP tool dispatch. Returns a typed list of violations; CI rejects any
@@ -25,26 +25,26 @@ from typing import Any
 
 # Files allowed to mutate session-owned state directly.
 ALLOWED_PREFIXES: tuple[str, ...] = (
-    "python/compgen/mcp/tools/",
-    "python/compgen/mcp/server.py",
-    "python/compgen/mcp/session.py",
+    "python/xpu_rt/mcp/tools/",
+    "python/xpu_rt/mcp/server.py",
+    "python/xpu_rt/mcp/session.py",
     # Stage-plugin + internal infrastructure that owns the state.
-    "python/compgen/agent/decisions.py",
-    "python/compgen/agent/env/",
-    "python/compgen/agent/loop/",
-    "python/compgen/agent/llm_driver.py",
-    "python/compgen/agent/llm_driver_recovery.py",
-    "python/compgen/agent/gates/",
-    "python/compgen/agent/views/",
-    "python/compgen/runtime/",
-    "python/compgen/api.py",
-    "python/compgen/api_llm.py",
-    "python/compgen/ir/recipe/",
-    "python/compgen/graph_compilation/",
-    "python/compgen/kernels/",
-    "python/compgen/promotion/",
-    "python/compgen/bench/",
-    "python/compgen/audit/",
+    "python/xpu_rt/agent/decisions.py",
+    "python/xpu_rt/agent/env/",
+    "python/xpu_rt/agent/loop/",
+    "python/xpu_rt/agent/llm_driver.py",
+    "python/xpu_rt/agent/llm_driver_recovery.py",
+    "python/xpu_rt/agent/gates/",
+    "python/xpu_rt/agent/views/",
+    "python/xpu_rt/runtime/",
+    "python/xpu_rt/api.py",
+    "python/xpu_rt/api_llm.py",
+    "python/xpu_rt/ir/recipe/",
+    "python/xpu_rt/graph_compilation/",
+    "python/xpu_rt/kernels/",
+    "python/xpu_rt/promotion/",
+    "python/xpu_rt/bench/",
+    "python/xpu_rt/audit/",
 )
 
 FORBIDDEN_ATTRS: tuple[str, ...] = (
@@ -168,9 +168,9 @@ def scan_file(path: Path, repo_root: Path) -> list[SideEffectViolation]:
 
 
 def scan_tree(repo_root: Path) -> list[SideEffectViolation]:
-    """Walk ``python/compgen/`` and aggregate violations."""
+    """Walk ``python/xpu_rt/`` and aggregate violations."""
 
-    src_root = repo_root / "python" / "compgen"
+    src_root = repo_root / "python" / "xpu-rt"
     out: list[SideEffectViolation] = []
     for p in src_root.rglob("*.py"):
         out.extend(scan_file(p, repo_root))

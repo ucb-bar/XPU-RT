@@ -35,7 +35,7 @@ from xdsl.irdl import (
 from xdsl.traits import Pure
 from xdsl.utils.exceptions import VerifyException
 
-from compgen.ir.recipe.attrs import ProvenanceAttr
+from xpu_rt.ir.recipe.attrs import ProvenanceAttr
 
 # ---------------------------------------------------------------------------
 # Shared payload dataclass (Python-side)

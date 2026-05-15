@@ -141,7 +141,7 @@ _KIND_BY_OPNAME: dict[str, NodeKind] = {
 
 def _classify(op: Operation) -> NodeKind:
     attrs = getattr(op, "attributes", {})
-    hint = attrs.get("compgen._pattern_hint") if attrs else None
+    hint = attrs.get("xpu_rt._pattern_hint") if attrs else None
     if hint is not None and hasattr(hint, "data"):
         if hint.data in _KIND_BY_HINT:
             return _KIND_BY_HINT[hint.data]
@@ -174,7 +174,7 @@ def from_payload_region(region: Operation, *, dag_id: str = "") -> ComputeDAG:
     that are used but not defined inside the region; outputs as values
     that escape the region.
     """
-    from compgen.analysis.dim_semantics import analyze_op
+    from xpu_rt.analysis.dim_semantics import analyze_op
 
     if hasattr(region, "walk"):
         ops = [op for op in region.walk() if op.results]

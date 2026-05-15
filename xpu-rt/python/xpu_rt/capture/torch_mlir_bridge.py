@@ -8,10 +8,10 @@ Mirrors the `hexagon-mlir` production pattern exactly (see
                                     output_type="linalg-on-tensors")
 
 The returned MLIR text is then parsed back into an xDSL ModuleOp so
-the rest of CompGen's passes can operate on it.
+the rest of XPU-RT's passes can operate on it.
 
 When torch-mlir is not installed (no `cp312` wheel on PyPI today; it
-ships as a source build), the bridge falls back to CompGen's own
+ships as a source build), the bridge falls back to XPU-RT's own
 ``FXImporter``. The caller gets a diagnostic string telling them
 which path was taken.
 
@@ -22,7 +22,7 @@ instead of us expanding our own decomposition table.
 
 Usage:
 
-    from compgen.capture.torch_mlir_bridge import bridge_fx_graph
+    from xpu_rt.capture.torch_mlir_bridge import bridge_fx_graph
     result = bridge_fx_graph(model, example_inputs)
     if result.module is not None:
         # run downstream passes on result.module
@@ -52,7 +52,7 @@ class BridgeResult:
     Attributes:
         module: the parsed xDSL ModuleOp, or ``None`` on failure.
         path_taken: ``"torch_mlir"`` when the torch-mlir path succeeded,
-            ``"fx_importer"`` when the CompGen FXImporter fallback ran,
+            ``"fx_importer"`` when the XPU-RT FXImporter fallback ran,
             ``"failed"`` when both paths failed.
         output_type: the ``output_type`` the torch-mlir path used
             (``"linalg-on-tensors"`` by default).
@@ -71,7 +71,7 @@ class BridgeResult:
 def _try_torch_mlir_import() -> Any:
     """Return the torch-mlir ``fx`` module, or ``None`` when unavailable.
 
-    Lazily imports so CompGen packages that never call the bridge pay
+    Lazily imports so XPU-RT packages that never call the bridge pay
     zero import cost.
     """
     try:
@@ -106,11 +106,11 @@ def _parse_mlir_text_to_xdsl(mlir_text: str) -> ModuleOp | None:
     ctx.load_dialect(Math)
     ctx.load_dialect(Tensor)
 
-    # Register CompGen's own dialects so they round-trip if present.
+    # Register XPU-RT's own dialects so they round-trip if present.
     try:
-        from compgen.ir.linalg_ext import LinalgExt
-        from compgen.ir.quant import Quant
-        from compgen.ir.tensor_ext import TensorExt
+        from xpu_rt.ir.linalg_ext import LinalgExt
+        from xpu_rt.ir.quant import Quant
+        from xpu_rt.ir.tensor_ext import TensorExt
 
         ctx.load_dialect(LinalgExt)
         ctx.load_dialect(Quant)
@@ -144,10 +144,10 @@ def bridge_fx_graph(
             compiled artifact will be called with).
         func_name: name of the public func in the emitted MLIR.
         output_type: torch-mlir output dialect. ``"linalg-on-tensors"``
-            is the right choice for CompGen (linalg is our downstream
+            is the right choice for XPU-RT (linalg is our downstream
             substrate). Pass ``"torch"`` for the higher-level Torch
             dialect.
-        allow_fallback: when ``True`` (default), fall back to CompGen's
+        allow_fallback: when ``True`` (default), fall back to XPU-RT's
             ``FXImporter`` if torch-mlir is unavailable or its import
             fails. When ``False``, a torch-mlir failure becomes a hard
             error and the returned ``module`` is ``None``.
@@ -189,16 +189,16 @@ def bridge_fx_graph(
             result.diagnostics.append(f"torch-mlir path raised: {exc}")
             log.warning("torch_mlir_bridge.torch_mlir_failed", error=str(exc))
     else:
-        result.diagnostics.append("torch-mlir not installed; falling back to CompGen FXImporter")
+        result.diagnostics.append("torch-mlir not installed; falling back to XPU-RT FXImporter")
 
     if not allow_fallback:
         result.diagnostics.append("allow_fallback=False; returning no module")
         return result
 
-    # Fallback: use CompGen's FXImporter via torch.export capture.
+    # Fallback: use XPU-RT's FXImporter via torch.export capture.
     try:
-        from compgen.capture.torch_export import capture_model
-        from compgen.ir.payload.import_fx import FXImporter
+        from xpu_rt.capture.torch_export import capture_model
+        from xpu_rt.ir.payload.import_fx import FXImporter
 
         exported = capture_model(model, example_inputs)
         importer = FXImporter()

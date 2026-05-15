@@ -58,7 +58,7 @@ def _read_json(path: Path) -> dict[str, Any]:
 
 
 def validate_gap_discovery(run_dir: Path) -> GapValidationReport:
-    from compgen.graph_compilation.artifacts import stage_dir
+    from xpu_rt.graph_compilation.artifacts import stage_dir
 
     run_dir = Path(run_dir).resolve()
     out_dir = stage_dir(run_dir, "gap_discovery")
@@ -239,7 +239,7 @@ def validate_gap_discovery(run_dir: Path) -> GapValidationReport:
     )
 
     # ----- 6b. extension_id format + agreement with kind/target/slug -----
-    from compgen.graph_compilation.gap_naming import extension_id as _expected_ext_id
+    from xpu_rt.graph_compilation.gap_naming import extension_id as _expected_ext_id
 
     ext_id_violations: list[str] = []
     for g in gaps:

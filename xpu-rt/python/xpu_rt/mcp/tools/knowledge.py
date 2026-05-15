@@ -3,14 +3,14 @@
 Lets Claude Code accumulate cross-session learnings via two tools:
 
   * ``record_lesson``   — append a Lesson at a target's most-specific
-    scope (or at an explicit scope). Persists to ``~/.compgen/knowledge/``
+    scope (or at an explicit scope). Persists to ``~/.xpu_rt/knowledge/``
     so future sessions see it.
   * ``query_knowledge`` — narrowly query (scope-walked) lessons by
     target / stage / op_family / topic.
   * ``get_context_brief`` — convenience tool returning a prompt-friendly
     one-shot brief (calls ``KnowledgeStore.context_brief``).
 
-The store under the hood is the existing ``compgen.memory.knowledge``
+The store under the hood is the existing ``xpu_rt.memory.knowledge``
 hierarchy; these tools are a thin MCP surface so the agent can drive
 the store without going through Python imports.
 """
@@ -19,8 +19,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from compgen.mcp.session import SessionManager
-from compgen.memory.knowledge import (
+from xpu_rt.mcp.session import SessionManager
+from xpu_rt.memory.knowledge import (
     KnowledgeStore,
     Lesson,
     scope_chain_for_target,
@@ -30,7 +30,7 @@ from compgen.memory.knowledge import (
 
 def _store(_sm: SessionManager) -> KnowledgeStore:
     """Use the process-wide shared store. Tests override via
-    ``compgen.memory.knowledge.set_shared_store(KnowledgeStore(root=tmp))``.
+    ``xpu_rt.memory.knowledge.set_shared_store(KnowledgeStore(root=tmp))``.
     """
     return shared_store()
 

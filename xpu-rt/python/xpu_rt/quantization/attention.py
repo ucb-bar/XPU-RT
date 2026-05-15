@@ -28,7 +28,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from compgen.quantization.fp8_ops import (
+from xpu_rt.quantization.fp8_ops import (
     dequantize_fp8_e4m3,
     quantize_fp8_e4m3_po2,
 )

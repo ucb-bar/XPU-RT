@@ -2,14 +2,14 @@
 
 Converts ``NpuKernelContract`` into the format that autocomp's search
 pipeline expects (``Prob`` + test harness + hardware config), and provides
-utilities to load autocomp results back into CompGen.
+utilities to load autocomp results back into XPU-RT.
 
 This module does NOT duplicate autocomp's LLMClient or search infrastructure
 (per CLAUDE.md rules). It only handles format translation.
 
 Usage::
 
-    from compgen.quantization.autocomp_bridge import (
+    from xpu_rt.quantization.autocomp_bridge import (
         contract_to_autocomp_prob,
         load_autocomp_result,
     )
@@ -26,7 +26,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from compgen.kernels.providers.npu_contracts import NpuKernelContract
+from xpu_rt.kernels.providers.npu_contracts import NpuKernelContract
 
 
 @dataclass(frozen=True)
@@ -99,7 +99,7 @@ def contract_to_autocomp_prob(
     )
 
     prob_meta = {
-        "prob_type": "compgen_npu",
+        "prob_type": "xpu_rt_npu",
         "prob_id": hash(contract.contract_id) % 10000,
         "test_file": str(test_file),
         "sol_file": str(sol_file),

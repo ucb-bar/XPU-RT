@@ -1,4 +1,4 @@
-"""Tests for compgen.benchmarks.pass_pool_ablation."""
+"""Tests for xpu_rt.benchmarks.pass_pool_ablation."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from compgen.benchmarks.pass_pool_ablation import (
+from xpu_rt.benchmarks.pass_pool_ablation import (
     AblationCellSpec,
     AblationPack,
     AblationResult,

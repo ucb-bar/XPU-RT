@@ -3,7 +3,7 @@
 CPU-only. Validates the matcher's structural recognition of the
 diamond shape, the fail-loud path on unsupported shapes, and the
 shape-parameterised body emission. GPU end-to-end runs through
-``compgen_compile_torch_model`` + ``compgen_run_compiled_bundle``
+``xpu_rt_compile_torch_model`` + ``xpu_rt_run_compiled_bundle``
 on the bwell box; these tests guard the matcher's contract on
 every CI run.
 """
@@ -70,7 +70,7 @@ class _ThreeLinear(nn.Module):
 
 class TestDiamondMatcher:
     def test_matches_diamond_shape(self) -> None:
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         torch.manual_seed(0xD1A0)
         model = _Diamond(in_dim=64, out_dim=32)
@@ -91,7 +91,7 @@ class TestDiamondMatcher:
         assert names == ["linear_a", "linear_b", "add_op", "relu_op"]
 
     def test_rejects_non_matching_shape(self) -> None:
-        from compgen.runtime.lowering import (
+        from xpu_rt.runtime.lowering import (
             UnsupportedShape,
             lower_torch_to_megakernel,
         )
@@ -111,7 +111,7 @@ class TestDiamondMatcher:
         assert "ffn" in msg
 
     def test_rejects_diamond_with_bias(self) -> None:
-        from compgen.runtime.lowering import (
+        from xpu_rt.runtime.lowering import (
             UnsupportedShape,
             lower_torch_to_megakernel,
         )
@@ -132,7 +132,7 @@ class TestDiamondMatcher:
     def test_rejects_diamond_with_concat_instead_of_add(self) -> None:
         """Catches the case where the module structure looks right
         but the actual forward computation isn't (linear+linear).relu()."""
-        from compgen.runtime.lowering import (
+        from xpu_rt.runtime.lowering import (
             UnsupportedShape,
             lower_torch_to_megakernel,
         )
@@ -158,7 +158,7 @@ class TestDiamondTopology:
     inference instead of being typed by hand."""
 
     def test_tile_count_matches_shape(self) -> None:
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         x = torch.randn(64, 64)
         result = lower_torch_to_megakernel(_Diamond(in_dim=64, out_dim=32), (x,))
@@ -168,7 +168,7 @@ class TestDiamondTopology:
             assert call.task_shape == (2,)
 
     def test_decision_log_has_per_op_backend(self) -> None:
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         x = torch.randn(64, 64)
         result = lower_torch_to_megakernel(_Diamond(64, 32), (x,))
@@ -193,7 +193,7 @@ class TestDiamondTopology:
         downstream compile failures (e.g. NVRTC can't find
         cuda/std/type_traits because nvidia-cuda-cccl isn't
         installed)."""
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         result = lower_torch_to_megakernel(_Diamond(64, 32), (torch.randn(64, 64),))
         decision = result.decision.to_dict()
@@ -218,7 +218,7 @@ class TestDiamondTopology:
         include path NVRTC needs — caller plumbs this through
         ``CudaModule(extra_include_paths=...)``. When it's not
         reachable the path list is empty."""
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         result = lower_torch_to_megakernel(_Diamond(64, 32), (torch.randn(64, 64),))
         decision = result.decision.to_dict()
@@ -234,7 +234,7 @@ class TestDiamondTopology:
             assert decision["nvrtc_include_paths"] == []
 
     def test_bodies_present(self) -> None:
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         result = lower_torch_to_megakernel(_Diamond(64, 32), (torch.randn(64, 64),))
         names = set(result.device_function_sources.keys())
@@ -252,7 +252,7 @@ class TestUnsupportedDimensions:
     def test_rejects_non_multiple_of_tile(self) -> None:
         """Round-1 matcher requires shapes divisible by tile sizes.
         This is a typed rejection, not a silent partial-tile fallback."""
-        from compgen.runtime.lowering import (
+        from xpu_rt.runtime.lowering import (
             UnsupportedShape,
             lower_torch_to_megakernel,
         )
@@ -264,11 +264,11 @@ class TestUnsupportedDimensions:
 
 
 class TestMcpToolSurface:
-    """The two new MCP tools live in compgen.mcp.tools.compile and
+    """The two new MCP tools live in xpu_rt.mcp.tools.compile and
     appear in the registry. Pin their public-surface shape."""
 
     def test_tools_registered(self) -> None:
-        from compgen.mcp.tools import COMPILE_TOOLS, get_all_tools
+        from xpu_rt.mcp.tools import COMPILE_TOOLS, get_all_tools
 
         names = {t["name"] for t in COMPILE_TOOLS}
         # Round 2b adds the cuBLASDx header-smoke tool; the
@@ -276,25 +276,25 @@ class TestMcpToolSurface:
         # for the canonical pair so further additions don't trip
         # this test.
         assert {
-            "compgen_compile_torch_model",
-            "compgen_run_compiled_bundle",
+            "xpu_rt_compile_torch_model",
+            "xpu_rt_run_compiled_bundle",
         } <= names
         # And the cuBLASDx smoke must register exactly once.
-        assert "compgen_cublasdx_header_smoke" in names
+        assert "xpu_rt_cublasdx_header_smoke" in names
         all_names = {t["name"] for t in get_all_tools()}
         assert names <= all_names
 
     def test_tool_handlers_callable(self) -> None:
-        from compgen.mcp.tools.compile import (
-            compgen_compile_torch_model,
-            compgen_run_compiled_bundle,
+        from xpu_rt.mcp.tools.compile import (
+            xpu_rt_compile_torch_model,
+            xpu_rt_run_compiled_bundle,
         )
 
-        assert callable(compgen_compile_torch_model)
-        assert callable(compgen_run_compiled_bundle)
+        assert callable(xpu_rt_compile_torch_model)
+        assert callable(xpu_rt_run_compiled_bundle)
 
     def test_input_schemas_present(self) -> None:
-        from compgen.mcp.tools import COMPILE_TOOLS
+        from xpu_rt.mcp.tools import COMPILE_TOOLS
 
         for tool in COMPILE_TOOLS:
             schema = tool["input_schema"]
@@ -306,17 +306,17 @@ class TestMcpToolSurface:
         """Round 2c — generic NVRTC compile + run tool is registered
         and callable with a structured input schema. The actual
         compile + run path is GPU-only (tested on bwell)."""
-        from compgen.mcp.tools.compile import (
+        from xpu_rt.mcp.tools.compile import (
             COMPILE_TOOLS,
-            compgen_run_cuda_source,
+            xpu_rt_run_cuda_source,
         )
 
-        assert callable(compgen_run_cuda_source)
+        assert callable(xpu_rt_run_cuda_source)
         names = {t["name"] for t in COMPILE_TOOLS}
-        assert "compgen_run_cuda_source" in names
+        assert "xpu_rt_run_cuda_source" in names
         # Pin the input schema's required fields so a refactor can't
         # silently drop them.
-        descriptor = next(t for t in COMPILE_TOOLS if t["name"] == "compgen_run_cuda_source")
+        descriptor = next(t for t in COMPILE_TOOLS if t["name"] == "xpu_rt_run_cuda_source")
         assert descriptor["input_schema"]["required"] == [
             "cuda_source",
             "kernel_name",
@@ -327,9 +327,9 @@ class TestMcpToolSurface:
         ``status="missing"`` on a CPU host (no GPU, no nvidia-mathdx
         installed). Pin the contract so a regression doesn't crash
         the tool when called on a host without cuBLASDx."""
-        from compgen.mcp.tools.compile import compgen_cublasdx_header_smoke
+        from xpu_rt.mcp.tools.compile import xpu_rt_cublasdx_header_smoke
 
-        out = compgen_cublasdx_header_smoke()
+        out = xpu_rt_cublasdx_header_smoke()
         # Either truly missing, or unavailable for a different reason
         # (e.g. a partial install) — never raise.
         assert out["status"] in {"missing", "compile_failed"}
@@ -340,7 +340,7 @@ class TestMcpToolSurface:
         ``nvidia.mathdx.__file__`` is None for PEP 420 namespace
         packages, so the discovery used to raise TypeError. Pin the
         ``__path__`` fallback so the regression can't return."""
-        from compgen.runtime.native.cuda import discover_cublasdx_include
+        from xpu_rt.runtime.native.cuda import discover_cublasdx_include
 
         # Build a fake namespace-package-shaped object and feed it
         # through the discovery's lookup. Easier than mocking
@@ -364,11 +364,11 @@ class TestMcpToolSurface:
         import base64
         import pickle
 
-        from compgen.mcp.tools.compile import compgen_compile_torch_model
+        from xpu_rt.mcp.tools.compile import xpu_rt_compile_torch_model
 
         model = _DataDependent()
         x = torch.randn(64, 64)
-        result = compgen_compile_torch_model(
+        result = xpu_rt_compile_torch_model(
             model_pickle_b64=base64.b64encode(pickle.dumps(model)).decode(),
             sample_input_pickle_b64=base64.b64encode(pickle.dumps((x,))).decode(),
             output_dir=str(tmp_path),
@@ -388,7 +388,7 @@ class TestFfnMatcher:
     """
 
     def test_matches_ffn_shape(self) -> None:
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         torch.manual_seed(0xFF11)
         model = _Sequential(in_dim=64, hidden=128, out_dim=64)
@@ -408,7 +408,7 @@ class TestFfnMatcher:
         assert names == ["linear_up", "relu_up", "linear_down"]
 
     def test_rejects_ffn_with_bias(self) -> None:
-        from compgen.runtime.lowering import (
+        from xpu_rt.runtime.lowering import (
             UnsupportedShape,
             lower_torch_to_megakernel,
         )
@@ -428,7 +428,7 @@ class TestFfnMatcher:
     def test_rejects_ffn_with_disagreeing_hidden(self) -> None:
         """up.out_features must equal down.in_features — no implicit
         reshape, no broadcast. Wrong shape is a typed rejection."""
-        from compgen.runtime.lowering import (
+        from xpu_rt.runtime.lowering import (
             UnsupportedShape,
             lower_torch_to_megakernel,
         )
@@ -457,7 +457,7 @@ class TestFfnMatcher:
         """Same module structure, different forward — catches the
         case where two linears + relu exist but the topology isn't
         ``down(relu(up(x)))``."""
-        from compgen.runtime.lowering import (
+        from xpu_rt.runtime.lowering import (
             UnsupportedShape,
             lower_torch_to_megakernel,
         )
@@ -484,7 +484,7 @@ class TestFfnMatcher:
         forward works on the same input via torch.nn.Linear's ND
         broadcasting. Pin acceptance for the common (1, B, in) and
         (D1, D2, in) shapes."""
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         for shape in [(64, 64), (1, 64, 64), (2, 32, 64)]:
             result = lower_torch_to_megakernel(
@@ -508,7 +508,7 @@ class TestFfnTopology:
     """Pin the K-fan-in event-tensor structure on the FFN matcher."""
 
     def test_tile_counts(self) -> None:
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         # B=64, hidden=128, out=64 → B_TILES=2, H_TILES=4, O_TILES=2.
         result = lower_torch_to_megakernel(
@@ -528,7 +528,7 @@ class TestFfnTopology:
         correctly. If the matcher silently downgraded to wait_count=1
         we'd lose the cross-K dependency and linear_down could read
         partially-written y_relu."""
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         result = lower_torch_to_megakernel(
             _Sequential(in_dim=64, hidden=128, out_dim=64),
@@ -541,7 +541,7 @@ class TestFfnTopology:
         assert ev_relu.shape == (2,)
 
     def test_decision_log_has_three_bodies(self) -> None:
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         result = lower_torch_to_megakernel(_Sequential(64, 128, 64), (torch.randn(64, 64),))
         decision = result.decision.to_dict()
@@ -554,7 +554,7 @@ class TestFfnTopology:
             assert d["backend"] == "hand_rolled_fmaf"
 
     def test_bodies_present_with_correct_dims(self) -> None:
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         result = lower_torch_to_megakernel(_Sequential(64, 128, 64), (torch.randn(64, 64),))
         names = set(result.device_function_sources.keys())
@@ -584,7 +584,7 @@ class TestCublasdxBodyOptIn:
     """
 
     def test_off_by_default_diamond(self) -> None:
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         result = lower_torch_to_megakernel(_Diamond(64, 32), (torch.randn(64, 64),))
         decision = result.decision.to_dict()
@@ -594,7 +594,7 @@ class TestCublasdxBodyOptIn:
         assert decision["nvrtc_extra_options"] == []
 
     def test_off_by_default_ffn(self) -> None:
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         result = lower_torch_to_megakernel(_Sequential(64, 128, 64), (torch.randn(64, 64),))
         decision = result.decision.to_dict()
@@ -607,7 +607,7 @@ class TestCublasdxBodyOptIn:
         reachable (e.g. CI hosts without nvidia-mathdx), the matcher
         must NOT crash — it falls back to fmaf and records the
         request in the body rationale so the agent can audit."""
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         result = lower_torch_to_megakernel(
             _Diamond(64, 32),
@@ -634,7 +634,7 @@ class TestCublasdxBodyOptIn:
     def test_prefer_emits_cublasdx_body_when_available_diamond(self) -> None:
         """When all three header sets resolve, the linear bodies
         carry the cuBLASDx incantation + the include header."""
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         result = lower_torch_to_megakernel(
             _Diamond(64, 32),
@@ -669,7 +669,7 @@ class TestCublasdxBodyOptIn:
         assert "-default-device" in decision["nvrtc_extra_options"]
 
     def test_prefer_emits_cublasdx_body_when_available_ffn(self) -> None:
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         result = lower_torch_to_megakernel(
             _Sequential(64, 128, 64),
@@ -692,7 +692,7 @@ class TestCublasdxBodyOptIn:
         """When prefer_cublasdx_for_linears=True without an explicit
         precision, default is fp32 — Precision<float>, no bf16 cast,
         bit-tight vs torch.matmul."""
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         result = lower_torch_to_megakernel(
             _Diamond(64, 32),
@@ -719,7 +719,7 @@ class TestCublasdxBodyOptIn:
         gmem to bf16 at smem load, keeps fp32 accumulator + output.
         Pin every piece since silently dropping any of them
         regresses the tensor-core path."""
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         result = lower_torch_to_megakernel(
             _Diamond(64, 32),
@@ -761,7 +761,7 @@ class TestCublasdxBodyOptIn:
         """Bridge #095 — cuBLASDx wants 64×64×16 tiles to engage
         mma.sync; fmaf path stays at 32×32×32 for the smaller-shape
         test fixtures. Pin both."""
-        from compgen.runtime.lowering.fx_to_megakernel import (
+        from xpu_rt.runtime.lowering.fx_to_megakernel import (
             _select_tile_shape,
         )
 
@@ -772,7 +772,7 @@ class TestCublasdxBodyOptIn:
         """When prefer_cublasdx_for_linears=True on a 64-divisible
         shape, the emitted body declares Size<64, 64, 16> so cuBLASDx
         engages mma.sync (per #095 PTX dump). Pin every constant."""
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         # 64×64 input, 64-divisible out_dim → cuBLASDx 64-tile path works.
         result = lower_torch_to_megakernel(
@@ -805,7 +805,7 @@ class TestCublasdxBodyOptIn:
         tile, not just the 1024 elements one thread per (ty, tx)
         position can reach. Without the loop, 3072 of 4096 outputs
         stay uninitialized and correctness blows up."""
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         result = lower_torch_to_megakernel(
             _Diamond(in_dim=64, out_dim=64),
@@ -836,7 +836,7 @@ class TestCublasdxBodyOptIn:
         """Default (32-tile fmaf) path keeps the 1-iter-per-thread
         loop so the body is identical-to-original perf at the
         smaller tile."""
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         result = lower_torch_to_megakernel(_Diamond(64, 32), (torch.randn(64, 64),))
         for op in ("add_op", "relu_op"):
@@ -850,7 +850,7 @@ class TestCublasdxBodyOptIn:
         32-divisible, the matcher must raise UnsupportedShape rather
         than silently reverting to 32-tile cuBLASDx (which would put
         us back on the SIMT path)."""
-        from compgen.runtime.lowering import (
+        from xpu_rt.runtime.lowering import (
             UnsupportedShape,
             lower_torch_to_megakernel,
         )
@@ -877,7 +877,7 @@ class TestCublasdxBodyOptIn:
         """Arch-to-cuBLASDx-SM mapping per #087 diagnosis. Pin every
         Blackwell variant since silently mapping sm_120 to SM<900>
         regresses the tensor-core path."""
-        from compgen.runtime.lowering.fx_to_megakernel import (
+        from xpu_rt.runtime.lowering.fx_to_megakernel import (
             _arch_to_cublasdx_sm,
         )
 
@@ -899,7 +899,7 @@ class TestCublasdxBodyOptIn:
         """When target_arch='sm_100', cuBLASDx body's SM tag must be
         SM<1000> (Blackwell tcgen05.mma) — not the SM<900> default
         that produced bwell #087's tensor-core no-op."""
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         result = lower_torch_to_megakernel(
             _Diamond(64, 32),
@@ -922,7 +922,7 @@ class TestCublasdxBodyOptIn:
     def test_cublasdx_body_sm_tag_for_hopper(self) -> None:
         """Hopper still gets SM<900> when explicitly requested. The
         mapping isn't always-Blackwell — only the *default* is."""
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         result = lower_torch_to_megakernel(
             _Diamond(64, 32),
@@ -941,7 +941,7 @@ class TestCublasdxBodyOptIn:
     def test_cublasdx_precision_invalid_raises(self) -> None:
         """Unknown precision fails fast at the public entry — no
         silent fall-through to fp32."""
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         with pytest.raises(ValueError, match="cublasdx_precision"):
             lower_torch_to_megakernel(
@@ -956,7 +956,7 @@ class TestCublasdxBodyOptIn:
         the first iteration, beta=1 thereafter. Without this the
         K loop overwrites instead of summing — silent correctness bug
         against torch.matmul for K_total > 32."""
-        from compgen.runtime.lowering import lower_torch_to_megakernel
+        from xpu_rt.runtime.lowering import lower_torch_to_megakernel
 
         result = lower_torch_to_megakernel(
             _Diamond(in_dim=128, out_dim=32),  # K_total = 128 = 4 tiles

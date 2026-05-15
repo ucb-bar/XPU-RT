@@ -13,14 +13,14 @@ This package provides:
 - ``analyze_for_npu()``: FX graph analysis for NPU op coverage.
 """
 
-from compgen.quantization.attention import ExportableFP8Attention, FP8AttentionConfig
-from compgen.quantization.export_wrappers import (
+from xpu_rt.quantization.attention import ExportableFP8Attention, FP8AttentionConfig
+from xpu_rt.quantization.export_wrappers import (
     ExportableFP8Conv2d,
     ExportableFP8Linear,
     rewrite_for_export,
 )
-from compgen.quantization.fp8_config import FP8E4M3Po2Config
-from compgen.quantization.fp8_ops import (
+from xpu_rt.quantization.fp8_config import FP8E4M3Po2Config
+from xpu_rt.quantization.fp8_ops import (
     FP8_E4M3_DTYPE,
     FP8_E4M3_MAX,
     FP8_E4M3_MAX_PO2,
@@ -28,18 +28,18 @@ from compgen.quantization.fp8_ops import (
     quantize_dequantize_fp8_po2,
     quantize_fp8_e4m3_po2,
 )
-from compgen.quantization.fp8_tensor import FP8E4M3Po2Tensor
-from compgen.quantization.graph_analyzer import QuantizedGraphAnalysis, analyze_for_npu, format_analysis_report
-from compgen.quantization.npu_op_map import NpuOpCategory, NpuQuantDecision, classify_op
-from compgen.quantization.pipeline import PipelineReport, QuantizedModelPipeline
-from compgen.quantization.smolvla_recipe import (
+from xpu_rt.quantization.fp8_tensor import FP8E4M3Po2Tensor
+from xpu_rt.quantization.graph_analyzer import QuantizedGraphAnalysis, analyze_for_npu, format_analysis_report
+from xpu_rt.quantization.npu_op_map import NpuOpCategory, NpuQuantDecision, classify_op
+from xpu_rt.quantization.pipeline import PipelineReport, QuantizedModelPipeline
+from xpu_rt.quantization.smolvla_recipe import (
     SmolVLAComponent,
     SmolVLAQuantRecipe,
     apply_smolvla_quantization,
     default_npu_recipe,
     infer_component,
 )
-from compgen.quantization.verify import NpuAlignmentResult, npu_alignment_check
+from xpu_rt.quantization.verify import NpuAlignmentResult, npu_alignment_check
 
 __all__ = [
     "ExportableFP8Attention",

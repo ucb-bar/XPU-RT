@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from compgen.semantic.executor import VerificationExecutor
+from xpu_rt.semantic.executor import VerificationExecutor
 from xdsl.dialects.builtin import ModuleOp
 
 

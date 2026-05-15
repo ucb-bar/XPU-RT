@@ -7,13 +7,13 @@ import textwrap
 from pathlib import Path
 
 import pytest
-from compgen.packs import (
+from xpu_rt.packs import (
     discover_packs,
     load_discovered_packs,
     load_pack,
     resolve_entry_point_target,
 )
-from compgen.packs.registry import ENTRY_POINT_GROUP, ENV_VAR
+from xpu_rt.packs.registry import ENTRY_POINT_GROUP, ENV_VAR
 
 
 def _write_manifest(root: Path, name: str, *, entry_module: str = "") -> Path:
@@ -58,7 +58,7 @@ def _patch_entry_points(monkeypatch: pytest.MonkeyPatch, entries: list[_FakeEntr
             return entries
         return []
 
-    monkeypatch.setattr("compgen.packs.registry.importlib.metadata.entry_points", fake_entry_points)
+    monkeypatch.setattr("xpu_rt.packs.registry.importlib.metadata.entry_points", fake_entry_points)
 
 
 # --- resolve_entry_point_target ------------------------------------------------

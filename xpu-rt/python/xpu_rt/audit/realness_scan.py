@@ -2,7 +2,7 @@
 
 Greps the repository for stub/mock/placeholder markers and fails on any
 hit not covered by the realness allowlist. The scan is the first line of
-defense; runtime import provenance (see :mod:`compgen.audit.import_provenance`)
+defense; runtime import provenance (see :mod:`xpu_rt.audit.import_provenance`)
 is the second.
 
 Patterns scanned:
@@ -12,7 +12,7 @@ Patterns scanned:
 - NotImplemented, NotImplementedError
 - hardcoded, temporary, ``for now``
 
-The scan honors :file:`python/compgen/audit/realness_allowlist.yaml` for
+The scan honors :file:`python/xpu_rt/audit/realness_allowlist.yaml` for
 paths that are intentionally synthetic (e.g. ``mock_client.py``).
 """
 
@@ -26,7 +26,7 @@ from typing import Any, Iterator
 
 import yaml
 
-from compgen.audit.errors import UnallowlistedStubError
+from xpu_rt.audit.errors import UnallowlistedStubError
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 ALLOWLIST_PATH = Path(__file__).resolve().parent / "realness_allowlist.yaml"
@@ -53,7 +53,7 @@ RAISE_NOT_IMPL_PATTERN = re.compile(r"\braise\s+NotImplementedError\b")
 STUB_DOCSTRING_PATTERN = re.compile(r'"""\s*Stub\s', re.IGNORECASE)
 
 DEFAULT_ROOTS: tuple[str, ...] = (
-    "python/compgen",
+    "python/xpu_rt",
     "scripts",
     "docs",
     ".claude",
@@ -245,19 +245,19 @@ def scan_repo(
                 # itself (this file) and the allowlist YAML, since they
                 # name the patterns they search for.
                 if rel_path in {
-                    "python/compgen/audit/__init__.py",
-                    "python/compgen/audit/realness_scan.py",
-                    "python/compgen/audit/realness_allowlist.yaml",
-                    "python/compgen/audit/errors.py",
-                    "python/compgen/audit/import_provenance.py",
-                    "python/compgen/audit/caveat_ledger.py",
-                    "python/compgen/audit/contracts.py",
-                    "python/compgen/audit/perturbations.py",
-                    "python/compgen/audit/fresh_agent.py",
-                    "python/compgen/audit/fresh_agent_modes.py",
-                    "python/compgen/audit/trace_replay.py",
-                    "python/compgen/audit/negative_controls.py",
-                    "python/compgen/audit/trust_report.py",
+                    "python/xpu_rt/audit/__init__.py",
+                    "python/xpu_rt/audit/realness_scan.py",
+                    "python/xpu_rt/audit/realness_allowlist.yaml",
+                    "python/xpu_rt/audit/errors.py",
+                    "python/xpu_rt/audit/import_provenance.py",
+                    "python/xpu_rt/audit/caveat_ledger.py",
+                    "python/xpu_rt/audit/contracts.py",
+                    "python/xpu_rt/audit/perturbations.py",
+                    "python/xpu_rt/audit/fresh_agent.py",
+                    "python/xpu_rt/audit/fresh_agent_modes.py",
+                    "python/xpu_rt/audit/trace_replay.py",
+                    "python/xpu_rt/audit/negative_controls.py",
+                    "python/xpu_rt/audit/trust_report.py",
                     "scripts/dev/audit_realness.py",
                     "scripts/dev/audit_production_imports.py",
                 }:
@@ -347,5 +347,5 @@ def assert_clean(report: ScanReport) -> None:
     raise UnallowlistedStubError(
         f"realness scan: {len(bad)} unallowlisted hit(s):\n{sample}{extra}\n"
         f"Either fix the code, or add the path to "
-        f"python/compgen/audit/realness_allowlist.yaml with a reason."
+        f"python/xpu_rt/audit/realness_allowlist.yaml with a reason."
     )

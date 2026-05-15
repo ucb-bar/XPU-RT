@@ -1,6 +1,6 @@
 """Verification tools — mid-flight callable gates.
 
-Wrap ``compgen.semantic.verify`` utilities behind a typed tool
+Wrap ``xpu_rt.semantic.verify`` utilities behind a typed tool
 interface the LLM can call between optimization decisions. The LLM
 passes two callables (reference + candidate) for differential testing,
 or an IR artifact for structural checks.
@@ -15,13 +15,13 @@ from collections.abc import Callable
 from dataclasses import asdict
 from typing import Any
 
-from compgen.llm.registry import (
+from xpu_rt.llm.registry import (
     Tool,
     ToolArg,
     ToolResult,
     get_registry,
 )
-from compgen.semantic.verify.compare import (
+from xpu_rt.semantic.verify.compare import (
     DTYPE_PRESETS,
     ComparisonConfig,
     compare_tensors,
@@ -114,7 +114,7 @@ run_differential_test = Tool(
     name="run_differential_test",
     phase=2,
     kind="verification",
-    wraps_pass="compgen.semantic.verify.compare_tensors",
+    wraps_pass="xpu_rt.semantic.verify.compare_tensors",
     autocomp_cost_impact="zero",
     args=(
         ToolArg("ref_fn", "callable", "zero-arg reference callable"),

@@ -8,7 +8,7 @@ the audit + the MCP bridge.
 
 Hard rules (enforced):
 
-1. **Every decorated site has a fallback.** ``COMPGEN_DISABLE_LLM=1``
+1. **Every decorated site has a fallback.** ``XPU_RT_DISABLE_LLM=1``
    in the environment forces the fallback path; the wrapped function
    never sees an LLM call. CI runs this way by default so every
    primitive must be runnable deterministically.
@@ -157,7 +157,7 @@ def llm_call_site(
 
     The decorated function becomes the *primary* path. The named
     ``fallback`` (registered via :func:`register_fallback`) is the
-    deterministic path used when ``COMPGEN_DISABLE_LLM=1`` is set or
+    deterministic path used when ``XPU_RT_DISABLE_LLM=1`` is set or
     when the primary raises. Both paths produce values validated
     against ``output_schema``; a violation raises
     :class:`LLMOutputSchemaError` regardless of which path produced it.
@@ -192,7 +192,7 @@ def llm_call_site(
 
         @functools.wraps(fn)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
-            disable = os.environ.get("COMPGEN_DISABLE_LLM") == "1"
+            disable = os.environ.get("XPU_RT_DISABLE_LLM") == "1"
             if disable:
                 out = fallback_fn(*args, **kwargs)
             else:

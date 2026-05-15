@@ -7,7 +7,7 @@ from typing import Any
 
 from xdsl.dialects.builtin import ArrayAttr, ModuleOp, StringAttr, SymbolRefAttr
 
-from compgen.ir.agent.ops_claim import (
+from xpu_rt.ir.agent.ops_claim import (
     AcceptedByOp,
     ClaimOp,
     DependsOnOp,
@@ -15,17 +15,17 @@ from compgen.ir.agent.ops_claim import (
     RefutedByOp,
     SupportsOp,
 )
-from compgen.ir.agent.ops_critique import CompareCandidatesOp, CritiqueOp, ReviseOp
-from compgen.ir.agent.ops_frontier import AlternativeOp, CommitOp, DeferOp, FrontierOp, PruneOp
-from compgen.ir.agent.ops_memory import (
+from xpu_rt.ir.agent.ops_critique import CompareCandidatesOp, CritiqueOp, ReviseOp
+from xpu_rt.ir.agent.ops_frontier import AlternativeOp, CommitOp, DeferOp, FrontierOp, PruneOp
+from xpu_rt.ir.agent.ops_memory import (
     MemoryFailureOp,
     MemoryGeneralizationOp,
     MemoryPatternOp,
     MemoryPromptOp,
     PromoteMemoryOp,
 )
-from compgen.ir.agent.ops_protocol import AdjudicateOp, DelegateOp, RespondOp, RoleOp
-from compgen.ir.agent.ops_synthesis import (
+from xpu_rt.ir.agent.ops_protocol import AdjudicateOp, DelegateOp, RespondOp, RoleOp
+from xpu_rt.ir.agent.ops_synthesis import (
     RequestAnalysisOp,
     RequestBackendPlanOp,
     RequestEqsatSeedOp,

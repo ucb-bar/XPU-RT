@@ -11,9 +11,9 @@ from dataclasses import dataclass, field
 
 import structlog
 
-from compgen.memory.schema import KnowledgeItem
-from compgen.memory.search.task import SearchTask
-from compgen.memory.store import CompilerMemory
+from xpu_rt.memory.schema import KnowledgeItem
+from xpu_rt.memory.search.task import SearchTask
+from xpu_rt.memory.store import CompilerMemory
 
 log = structlog.get_logger()
 
@@ -71,7 +71,7 @@ class SearchRetriever:
         state = task.state
 
         # Retrieve by category
-        from compgen.memory.schema import KnowledgeKind
+        from xpu_rt.memory.schema import KnowledgeKind
 
         templates = self.memory.retrieve_knowledge(
             kind=KnowledgeKind.SCHEDULE_TEMPLATE,

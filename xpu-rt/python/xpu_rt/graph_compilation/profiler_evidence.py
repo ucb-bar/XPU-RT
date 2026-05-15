@@ -173,7 +173,7 @@ def _profile_triton_kernel(
             profile_memory=True,
             with_stack=False,
         ) as prof:
-            with record_function("compgen_m22_1_matmul"):
+            with record_function("xpu_rt_m22_1_matmul"):
                 for _ in range(int(iterations)):
                     kernel_callable[grid](
                         A, B, C,
@@ -296,8 +296,8 @@ def _perf_collect_cpu(
         "A = rng.standard_normal((M, K), dtype=np.float32)\n"
         "B = rng.standard_normal((K, N), dtype=np.float32)\n"
         "C = np.zeros((M, N), dtype=np.float32)\n"
-        "fns = [n for n in dir(lib) if n.startswith('compgen_m19_matmul')]\n"
-        "if not fns: sys.exit('no compgen_m19_matmul function found')\n"
+        "fns = [n for n in dir(lib) if n.startswith('xpu_rt_m19_matmul')]\n"
+        "if not fns: sys.exit('no xpu_rt_m19_matmul function found')\n"
         "fn = getattr(lib, fns[0])\n"
         "for _ in range(warmup):\n"
         "    fn(ffi.cast('float*', A.ctypes.data),\n"

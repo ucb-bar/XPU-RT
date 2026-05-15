@@ -13,7 +13,7 @@ What's compared:
       sequence (RMSNorm + QKV proj + SDPA + O proj + residual +
       RMSNorm + SwiGLU MLP + residual), computed with `torch.matmul`
       and `F.scaled_dot_product_attention`.
-    * Got (CompGen-emitted megakernel): the same composition, but
+    * Got (XPU-RT-emitted megakernel): the same composition, but
       every GPU instruction comes from the persistent megakernel
       produced by our compiler pipeline.  No hand-written Triton.
 

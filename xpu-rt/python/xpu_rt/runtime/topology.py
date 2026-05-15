@@ -25,11 +25,11 @@ from typing import Any
 
 import structlog
 
-from compgen.targetgen.hardware_spec import (
+from xpu_rt.targetgen.hardware_spec import (
     DeploymentTopology,
     TopologySpec,
 )
-from compgen.targets.schema import TargetProfile
+from xpu_rt.targets.schema import TargetProfile
 
 log = structlog.get_logger()
 

@@ -17,8 +17,8 @@ from typing import Any
 
 import structlog
 
-from compgen.runtime.instrumentation import InstrumentationConfig, InstrumentationLevel
-from compgen.targetgen.hardware_spec import ProfilingSpec
+from xpu_rt.runtime.instrumentation import InstrumentationConfig, InstrumentationLevel
+from xpu_rt.targetgen.hardware_spec import ProfilingSpec
 
 log = structlog.get_logger()
 
@@ -126,32 +126,32 @@ class HookCodeGenerator:
         hooks["pre_dispatch"] = GeneratedHook(
             hook_point="pre_dispatch",
             code='CG_TRACE_BEGIN("dispatch", kernel_name);',
-            includes=["compgen/trace.h"],
+            includes=["xpu_rt/trace.h"],
         )
         hooks["post_dispatch"] = GeneratedHook(
             hook_point="post_dispatch",
             code="CG_TRACE_END();",
-            includes=["compgen/trace.h"],
+            includes=["xpu_rt/trace.h"],
         )
         hooks["pre_dma"] = GeneratedHook(
             hook_point="pre_dma",
             code='CG_TRACE_BEGIN("dma", transfer_name);',
-            includes=["compgen/trace.h"],
+            includes=["xpu_rt/trace.h"],
         )
         hooks["post_dma"] = GeneratedHook(
             hook_point="post_dma",
             code='CG_TRACE_END();\nCG_TRACE_COUNTER("dma_bytes", transfer_size);',
-            includes=["compgen/trace.h"],
+            includes=["xpu_rt/trace.h"],
         )
         hooks["pre_sync"] = GeneratedHook(
             hook_point="pre_sync",
             code='CG_TRACE_BEGIN("sync", "device_sync");',
-            includes=["compgen/trace.h"],
+            includes=["xpu_rt/trace.h"],
         )
         hooks["post_sync"] = GeneratedHook(
             hook_point="post_sync",
             code="CG_TRACE_END();",
-            includes=["compgen/trace.h"],
+            includes=["xpu_rt/trace.h"],
         )
 
         return hooks
@@ -163,7 +163,7 @@ class HookCodeGenerator:
         hooks["pre_tile"] = GeneratedHook(
             hook_point="pre_tile",
             code=('cg_perf_start(perf_ctx);\nCG_TRACE_BEGIN("tile", tile_name);'),
-            includes=["compgen/trace.h", "compgen/perf_counters.h"],
+            includes=["xpu_rt/trace.h", "xpu_rt/perf_counters.h"],
         )
         hooks["post_tile"] = GeneratedHook(
             hook_point="post_tile",
@@ -173,7 +173,7 @@ class HookCodeGenerator:
                 "cg_perf_read(perf_ctx, tile_counters, num_counters);\n"
                 'CG_TRACE_TILE(region_id, tile_idx, "cycles", tile_counters[0]);'
             ),
-            includes=["compgen/trace.h", "compgen/perf_counters.h"],
+            includes=["xpu_rt/trace.h", "xpu_rt/perf_counters.h"],
         )
 
         return hooks
@@ -186,7 +186,7 @@ class HookCodeGenerator:
             hooks[hook_point] = GeneratedHook(
                 hook_point=hook_point,
                 code=code,
-                includes=["compgen/trace.h"],
+                includes=["xpu_rt/trace.h"],
                 guard="CG_TRACE_ENABLED",
             )
 

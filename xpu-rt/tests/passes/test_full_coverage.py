@@ -1,7 +1,7 @@
 """Tests for full pass-card coverage.
 
 Section 20 / contract: every ported compiler pass under
-``python/compgen/`` has a typed pass card with a declared source
+``python/xpu_rt/`` has a typed pass card with a declared source
 (provenance) and impl_path (implementation file). The agent's
 vocabulary is now the registry; cards without provenance leave the
 realness audit honest-but-incomplete.
@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-from compgen.passes import (
+from xpu_rt.passes import (
     PASS_FAMILIES,
     PASS_SOURCES,
     PassCardRegistry,

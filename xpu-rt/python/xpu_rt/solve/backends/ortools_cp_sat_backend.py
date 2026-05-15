@@ -11,8 +11,8 @@ from __future__ import annotations
 
 import time
 
-from compgen.solve.backends.base import SolverBackend
-from compgen.solve.solver_types import (
+from xpu_rt.solve.backends.base import SolverBackend
+from xpu_rt.solve.solver_types import (
     BackendAvailabilityStatus,
     BackendProbeResult,
     SolverBackendName,
@@ -138,6 +138,6 @@ class OrToolsCpSatBackend(SolverBackend):
             time_ms=(time.perf_counter() - t0) * 1000.0,
             infeasibility_reason=(
                 "raw CP-SAT formulation dispatch not implemented; "
-                "use compgen.solve.placement_planner or overlap_planner"
+                "use xpu_rt.solve.placement_planner or overlap_planner"
             ),
         )

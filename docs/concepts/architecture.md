@@ -1,6 +1,6 @@
 # Architecture overview
 
-CompGen is organised around a staged pipeline plus a target-generation
+XPU-RT is organised around a staged pipeline plus a target-generation
 subsystem. This page is a map — for the full treatment see
 [Architecture → Compiler Generation](../architecture/compiler-generation.md).
 
@@ -31,8 +31,8 @@ Creating a `CompGenDevice`:
 
 | Surface | Purpose |
 |---------|---------|
-| MCP server (`compgen-mcp`) | Drive every pipeline stage from Claude Code |
-| CLI (`compgen ...`) | Scriptable command surface; see [CLI Reference](../reference/cli.md) |
+| MCP server (`xpu-rt-mcp`) | Drive every pipeline stage from Claude Code |
+| CLI (`xpu-rt ...`) | Scriptable command surface; see [CLI Reference](../reference/cli.md) |
 | Python API | Script the current working flows; see [Python API](../reference/python-api.md) |
 | Extension packs | User-authored providers / dialects / targets; see [Extension Authoring](../getting-started/extension-authoring.md) |
 | Demo script | Run the most complete vertical slice |

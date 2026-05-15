@@ -5,17 +5,17 @@ process (`src.kernelblaster.servers.gpu`, a FastAPI/uvicorn app
 bound to localhost:2002 by default). The search loop POSTs each
 candidate binary to ``/gpu/binary`` and waits for the run result.
 
-Before this module, CompGen's KB integration relied on
+Before this module, XPU-RT's KB integration relied on
 ``scripts/run_single_kernelblaster.sh`` to start the sidecar inline —
 which fails if KB's deps aren't installed in the active venv, and is
-opaque to the CompGen audit gate. This module makes the sidecar a
-first-class CompGen artifact: typed errors when prerequisites are
+opaque to the XPU-RT audit gate. This module makes the sidecar a
+first-class XPU-RT artifact: typed errors when prerequisites are
 missing, a real ``/health`` probe before declaring success, and a
 ``sidecar_health.json`` receipt that the evidence pack can verify.
 
 Usage::
 
-    from compgen.kernels.kernelblaster_sidecar import (
+    from xpu_rt.kernels.kernelblaster_sidecar import (
         KernelBlasterSidecar,
         SidecarUnavailable,
     )
@@ -151,7 +151,7 @@ def _resolve_repo_root(explicit: Path | None) -> Path | None:
     """Find the KB checkout: explicit arg > env var > conventional path."""
     if explicit is not None:
         return explicit if explicit.exists() else None
-    env_root = os.environ.get("COMPGEN_KERNELBLASTER_ROOT", "").strip()
+    env_root = os.environ.get("XPU_RT_KERNELBLASTER_ROOT", "").strip()
     if env_root:
         cand = Path(env_root).expanduser()
         return cand if cand.exists() else None
@@ -202,7 +202,7 @@ class KernelBlasterSidecar:
         if root is None:
             raise SidecarUnavailable(
                 "repo_not_found",
-                f"no KernelBlaster checkout (set COMPGEN_KERNELBLASTER_ROOT={repo_root!s}/...)",
+                f"no KernelBlaster checkout (set XPU_RT_KERNELBLASTER_ROOT={repo_root!s}/...)",
             )
 
         # 1. Python deps

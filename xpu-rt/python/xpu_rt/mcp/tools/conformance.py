@@ -3,7 +3,7 @@
 Three tools the remote-Blackwell agent calls from Claude Code:
 
 - ``etc_conformance_run`` — kick off
-  :func:`compgen.testing.etc_conformance.run_conformance` for a
+  :func:`xpu_rt.testing.etc_conformance.run_conformance` for a
   workload (or all of them); writes per-workload reports.
 - ``etc_conformance_summarize`` — read every report under an output
   dir and produce a Markdown table.
@@ -32,7 +32,7 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-from compgen.testing.etc_conformance import (
+from xpu_rt.testing.etc_conformance import (
     ConformanceWorkload,
     PassGate,
     run_conformance,
@@ -196,7 +196,7 @@ def etc_megakernel_inspect(bundle_dir: str) -> dict[str, Any]:
     persistent kernel and each device-function body.
 
     Args:
-        bundle_dir: Filesystem path to a compiled CompGen bundle on
+        bundle_dir: Filesystem path to a compiled XPU-RT bundle on
             the **remote** box.
 
     Returns:
@@ -415,7 +415,7 @@ CONFORMANCE_TOOLS: list[dict[str, Any]] = [
     {
         "name": "etc_megakernel_inspect",
         "description": (
-            "Inspect a compiled CompGen bundle's persistent megakernel: read "
+            "Inspect a compiled XPU-RT bundle's persistent megakernel: read "
             "manifest.yaml, list PTX files, dump SASS resource usage when "
             "cuobjdump/nvdisasm are available. Returns structured JSON with "
             "register usage, shared mem, occupancy hint per kernel."

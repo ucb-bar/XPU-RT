@@ -1,16 +1,16 @@
 """``raise_special_ops`` -- rewrite hint-tagged opaque calls to
-``compgen.linalg_ext`` named ops.
+``xpu_rt.linalg_ext`` named ops.
 
 Reconstruction of IREE's ``RaiseSpecialOpsPass``. Zero external
-references; CompGen owns the rewrite.
+references; XPU-RT owns the rewrite.
 
 Strategy (fast path first, body walk second):
 
-1. **Fast path — pattern-hint attribute**: CompGen's decomposition
+1. **Fast path — pattern-hint attribute**: XPU-RT's decomposition
    table tags every lowered opaque call with
-   ``compgen._pattern_hint`` (e.g., ``"softmax"``, ``"layer_norm"``,
+   ``xpu_rt._pattern_hint`` (e.g., ``"softmax"``, ``"layer_norm"``,
    ``"silu"``). This pass reads those hints and rewrites the tagged
-   op into the corresponding ``compgen.linalg_ext.*`` named op in
+   op into the corresponding ``xpu_rt.linalg_ext.*`` named op in
    O(N) over the module.
 2. **Body walk — linalg.generic pattern match (deferred)**: When a
    hint is absent we'd walk ``linalg.generic`` bodies and look for
@@ -23,18 +23,18 @@ Strategy (fast path first, body walk second):
 
 Covered patterns (hint string → target op):
 
-- ``softmax``          → ``compgen.linalg_ext.softmax``
-- ``layer_norm``       → ``compgen.linalg_ext.layer_norm``
-- ``rms_norm``         → ``compgen.linalg_ext.rms_norm``
-- ``silu``             → ``compgen.linalg_ext.silu``
-- ``gelu``             → ``compgen.linalg_ext.gelu``
-- ``swiglu``           → ``compgen.linalg_ext.swiglu``
-- ``rope``             → ``compgen.linalg_ext.rope``
+- ``softmax``          → ``xpu_rt.linalg_ext.softmax``
+- ``layer_norm``       → ``xpu_rt.linalg_ext.layer_norm``
+- ``rms_norm``         → ``xpu_rt.linalg_ext.rms_norm``
+- ``silu``             → ``xpu_rt.linalg_ext.silu``
+- ``gelu``             → ``xpu_rt.linalg_ext.gelu``
+- ``swiglu``           → ``xpu_rt.linalg_ext.swiglu``
+- ``rope``             → ``xpu_rt.linalg_ext.rope``
 
 LLM-tool signature:
 
     tool_name="raise_special_ops"
-    wraps_pass="CompGen:RaiseSpecialOps"
+    wraps_pass="XPU-RT:RaiseSpecialOps"
     invent_slot="pattern_library/named_op_recognition"
     policy="RaiseHintsToLinalgExt"
 """
@@ -51,7 +51,7 @@ from xdsl.pattern_rewriter import (
     RewritePattern,
 )
 
-from compgen.ir.linalg_ext import (
+from xpu_rt.ir.linalg_ext import (
     GeluOp,
     LayerNormOp,
     RMSNormOp,
@@ -92,20 +92,20 @@ class RaiseSpecialOpsStats:
 
 
 def _hint(op: Operation) -> str | None:
-    attr = op.attributes.get("compgen._pattern_hint")
+    attr = op.attributes.get("xpu_rt._pattern_hint")
     if attr is None:
         return None
     return attr.data if isinstance(attr, StringAttr) else None
 
 
 def _region_id(op: Operation) -> str | None:
-    attr = op.attributes.get("compgen.region_id")
+    attr = op.attributes.get("xpu_rt.region_id")
     return attr.data if isinstance(attr, StringAttr) else None
 
 
 def _preserve_attrs(dst: Operation, src: Operation) -> None:
     """Copy region_id / pattern_hint from ``src`` onto ``dst``."""
-    for key in ("compgen.region_id", "compgen._pattern_hint"):
+    for key in ("xpu_rt.region_id", "xpu_rt._pattern_hint"):
         if key in src.attributes and key not in dst.attributes:
             dst.attributes[key] = src.attributes[key]
 
@@ -223,7 +223,7 @@ _DISPATCH = {
 
 
 class RaiseSpecialOpsPattern(RewritePattern):
-    """Match any op carrying a known ``compgen._pattern_hint`` and raise it."""
+    """Match any op carrying a known ``xpu_rt._pattern_hint`` and raise it."""
 
     def __init__(self, stats: RaiseSpecialOpsStats | None = None) -> None:
         self.stats = stats if stats is not None else RaiseSpecialOpsStats()
@@ -236,7 +236,7 @@ class RaiseSpecialOpsPattern(RewritePattern):
         if handler is None:
             return
         # Skip ops that are already in the linalg_ext dialect (idempotent).
-        if op.name.startswith("compgen.linalg_ext."):
+        if op.name.startswith("xpu_rt.linalg_ext."):
             return
         self.stats.hinted_ops_seen += 1
         ok = handler(op, rewriter)
@@ -254,7 +254,7 @@ def run_raise_special_ops(
     *,
     apply_recursively: bool = False,
 ) -> RaiseSpecialOpsStats:
-    """Raise every hinted op to its ``compgen.linalg_ext.*`` counterpart.
+    """Raise every hinted op to its ``xpu_rt.linalg_ext.*`` counterpart.
 
     ``apply_recursively=False`` because each op is rewritten once and
     the replacement op does not itself carry a raw ``_pattern_hint``

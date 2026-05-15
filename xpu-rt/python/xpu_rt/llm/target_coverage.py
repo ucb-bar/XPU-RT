@@ -3,7 +3,7 @@
 Per the approved P7/P8 plan (and the "port everything; decide per-region
 via measurement + cost model" user directive), this module is
 **observational, not a filter**. Every pass in
-:mod:`compgen.ir.payload.passes` registers for every target. The cost
+:mod:`xpu_rt.ir.payload.passes` registers for every target. The cost
 model and the LLM's tool description consume this metadata to decide
 whether firing a pass on a given region is expected to add value over
 what inductor already produced in Phase 0.
@@ -55,8 +55,8 @@ class InductorCoverage:
         autocomp_still_useful: If True, the pass is worth firing even
             when inductor covers the generic case — typically because
             autocomp beats the library on atypical shapes.
-        measured_shapes_where_compgen_wins: Concrete shape signatures
-            (populated by the discovery script) where CompGen beat
+        measured_shapes_where_xpu_rt_wins: Concrete shape signatures
+            (populated by the discovery script) where XPU-RT beat
             inductor. Empty until measured.
         notes: Free-form rationale.
         basis: ``"estimated"`` (plan-seeded) or ``"measured"`` (from
@@ -68,13 +68,13 @@ class InductorCoverage:
     coverage: Coverage
     cost_weight_bias: CostWeightBias
     autocomp_still_useful: bool = True
-    measured_shapes_where_compgen_wins: tuple[str, ...] = ()
+    measured_shapes_where_xpu_rt_wins: tuple[str, ...] = ()
     notes: str = ""
     basis: Literal["estimated", "measured"] = "estimated"
 
 
 # Seed biases from the plan's coverage matrix. Pass names match
-# compgen.ir.payload.passes.<name>.name. Only CUDA + AMD + arm_cpu seeds
+# xpu_rt.ir.payload.passes.<name>.name. Only CUDA + AMD + arm_cpu seeds
 # are populated; other targets inherit the generic "prefer" default
 # (no inductor coverage) via cost_weight_for().
 _SEED: tuple[InductorCoverage, ...] = (
@@ -127,7 +127,7 @@ _SEED: tuple[InductorCoverage, ...] = (
         "full",
         "penalize",
         autocomp_still_useful=False,
-        notes="inductor decomposes concats; CompGen pass is redundant on CUDA",
+        notes="inductor decomposes concats; XPU-RT pass is redundant on CUDA",
     ),
     InductorCoverage("amd", "decompose_concat", "full", "penalize", autocomp_still_useful=False),
     # demote_contraction_inputs
@@ -169,7 +169,7 @@ _SEED: tuple[InductorCoverage, ...] = (
         "full",
         "penalize",
         autocomp_still_useful=False,
-        notes="inductor folds; CompGen redundant",
+        notes="inductor folds; XPU-RT redundant",
     ),
     InductorCoverage("amd", "fold_transposes_into_dots", "full", "penalize", autocomp_still_useful=False),
     # plan_reduction
@@ -195,7 +195,7 @@ _SEED: tuple[InductorCoverage, ...] = (
         "fuse_softmax_to_triton",
         "partial",
         "prefer",
-        notes="ROCm Triton less mature; CompGen's fused version often wins",
+        notes="ROCm Triton less mature; XPU-RT's fused version often wins",
     ),
     # megakernel_static_schedule (Algorithm 1, Event Tensor Compiler).
     # Inductor never produces a single persistent megakernel that fuses
@@ -261,7 +261,7 @@ def update_measurement(
     *,
     coverage: Coverage | None = None,
     cost_weight_bias: CostWeightBias | None = None,
-    measured_shapes_where_compgen_wins: tuple[str, ...] = (),
+    measured_shapes_where_xpu_rt_wins: tuple[str, ...] = (),
     notes: str | None = None,
 ) -> None:
     """Replace a seed row with measured data (discovery script calls this).
@@ -276,7 +276,7 @@ def update_measurement(
             pass_name=pass_name,
             coverage=coverage or "none",
             cost_weight_bias=cost_weight_bias or "prefer",
-            measured_shapes_where_compgen_wins=measured_shapes_where_compgen_wins,
+            measured_shapes_where_xpu_rt_wins=measured_shapes_where_xpu_rt_wins,
             notes=notes or "",
             basis="measured",
         )
@@ -287,8 +287,8 @@ def update_measurement(
         coverage=coverage or existing.coverage,
         cost_weight_bias=cost_weight_bias or existing.cost_weight_bias,
         autocomp_still_useful=existing.autocomp_still_useful,
-        measured_shapes_where_compgen_wins=(
-            measured_shapes_where_compgen_wins or existing.measured_shapes_where_compgen_wins
+        measured_shapes_where_xpu_rt_wins=(
+            measured_shapes_where_xpu_rt_wins or existing.measured_shapes_where_xpu_rt_wins
         ),
         notes=notes if notes is not None else existing.notes,
         basis="measured",

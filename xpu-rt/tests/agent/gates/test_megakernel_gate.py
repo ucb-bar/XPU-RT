@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from compgen.agent.gates.megakernel import megakernel_persistent_kernel_gate
+from xpu_rt.agent.gates.megakernel import megakernel_persistent_kernel_gate
 
 
 def _mk_proposal(**chosen_overrides: object) -> dict[str, object]:
@@ -132,8 +132,8 @@ def test_target_lacking_one_capability_is_rejected() -> None:
 
 
 def test_event_graph_with_no_ukernel_call_is_accepted() -> None:
-    from compgen.ir.event.attrs import EventTensorTypeAttr
-    from compgen.ir.event.ops import EventTensorOp, GraphOp
+    from xpu_rt.ir.event.attrs import EventTensorTypeAttr
+    from xpu_rt.ir.event.ops import EventTensorOp, GraphOp
     from xdsl.dialects.builtin import IntegerAttr, IntegerType, StringAttr
     from xdsl.ir import Block, Region
 

@@ -1,4 +1,4 @@
-"""Tests for compgen.observability.gemini_usage."""
+"""Tests for xpu_rt.observability.gemini_usage."""
 
 from __future__ import annotations
 
@@ -11,14 +11,14 @@ from types import SimpleNamespace
 
 import pytest
 
-from compgen.observability import gemini_usage as gu
+from xpu_rt.observability import gemini_usage as gu
 
 
 @pytest.fixture
 def isolated_storage(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    monkeypatch.setenv("COMPGEN_GEMINI_USAGE_DIR", str(tmp_path))
+    monkeypatch.setenv("XPU_RT_GEMINI_USAGE_DIR", str(tmp_path))
     # Make sure repo-root override doesn't pull in real configs.
-    monkeypatch.setenv("COMPGEN_REPO_ROOT", str(tmp_path))
+    monkeypatch.setenv("XPU_RT_REPO_ROOT", str(tmp_path))
     return tmp_path
 
 
@@ -146,10 +146,10 @@ def test_record_call_never_raises_on_corrupt_input(isolated_storage: Path) -> No
 
 
 def _writer(storage_dir: str, n: int) -> None:
-    os.environ["COMPGEN_GEMINI_USAGE_DIR"] = storage_dir
-    os.environ["COMPGEN_REPO_ROOT"] = storage_dir
+    os.environ["XPU_RT_GEMINI_USAGE_DIR"] = storage_dir
+    os.environ["XPU_RT_REPO_ROOT"] = storage_dir
     # Re-import so child uses fresh env-resolved paths.
-    from compgen.observability import gemini_usage as child_gu
+    from xpu_rt.observability import gemini_usage as child_gu
     for _ in range(n):
         child_gu.record_call("gemini-2.5-flash", 100, 10, source="concurrent")
 

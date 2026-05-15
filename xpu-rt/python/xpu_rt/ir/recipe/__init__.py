@@ -20,6 +20,6 @@ containing all 44 operations and 5 custom attributes.
 
 from __future__ import annotations
 
-from compgen.ir.recipe.dialect import Recipe
+from xpu_rt.ir.recipe.dialect import Recipe
 
 __all__ = ["Recipe"]

@@ -115,7 +115,7 @@ _OP_LINE_RE = re.compile(
     r"(?P<dialect>[a-z][a-z0-9_]*)\.(?P<op>[A-Za-z_][A-Za-z0-9_]*)"
 )
 _FUNC_CALL_CALLEE_RE = re.compile(r'func\.call\s+@(?:"(?P<q>[^"]+)"|(?P<u>[^"\s(]+))')
-_REGION_ID_ATTR_RE = re.compile(r'compgen\.region_id\s*=\s*"(?P<rid>[^"]+)"')
+_REGION_ID_ATTR_RE = re.compile(r'xpu_rt\.region_id\s*=\s*"(?P<rid>[^"]+)"')
 
 
 # --------------------------------------------------------------------------- #
@@ -188,7 +188,7 @@ class _PayloadOp:
     """One parsed line from a payload.mlir file."""
 
     op_name: str  # e.g. "linalg.matmul" or "func.call"
-    region_id: str | None  # value of compgen.region_id attr if present
+    region_id: str | None  # value of xpu_rt.region_id attr if present
     callee: str | None  # only set for func.call
     payload_ref: str  # run-dir-relative path to payload.mlir
     line_index: int  # 0-based line number
@@ -537,7 +537,7 @@ def audit_payload_coverage(run_dir: Path) -> PayloadCoverageResult:
 
     ``run_dir`` must contain a completed ``01_payload_lowering/``.
     """
-    from compgen.graph_compilation.payload_attribution import (
+    from xpu_rt.graph_compilation.payload_attribution import (
         load_attribution_lookup,
     )
 

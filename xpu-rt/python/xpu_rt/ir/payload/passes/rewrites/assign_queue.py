@@ -1,7 +1,7 @@
 """``assign_queue`` -- assign a queue_id to each region.
 
 Reconstruction of XLA's ``queue_id`` annotation (from the Stream
-assignment pipeline). Zero external references; CompGen owns the
+assignment pipeline). Zero external references; XPU-RT owns the
 rewrite.
 
 Operates on :class:`ExecutionPlan`: fills in each
@@ -30,7 +30,7 @@ Config:
 LLM-tool signature:
 
     tool_name="assign_queue"
-    wraps_pass="CompGen:XLAStreamQueueId"
+    wraps_pass="XPU-RT:XLAStreamQueueId"
     invent_slot="runtime/queue_assignment"
     policy="RoundRobinPerDevice"
 """
@@ -40,7 +40,7 @@ from __future__ import annotations
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
 
-from compgen.runtime.execution_plan import ExecutionPlan
+from xpu_rt.runtime.execution_plan import ExecutionPlan
 
 
 @dataclass(frozen=True)

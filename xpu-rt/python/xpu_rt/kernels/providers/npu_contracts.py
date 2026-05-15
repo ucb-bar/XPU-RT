@@ -15,7 +15,7 @@ Each contract specifies exactly what a kernel must implement:
 
 Usage::
 
-    from compgen.kernels.providers.npu_contracts import (
+    from xpu_rt.kernels.providers.npu_contracts import (
         generate_npu_kernel_contracts,
         export_contracts_yaml,
     )
@@ -34,8 +34,8 @@ from typing import Any
 import torch
 import yaml
 
-from compgen.quantization.graph_analyzer import _normalize_fn_target
-from compgen.quantization.npu_op_map import (
+from xpu_rt.quantization.graph_analyzer import _normalize_fn_target
+from xpu_rt.quantization.npu_op_map import (
     _OP_TABLE,
 )
 

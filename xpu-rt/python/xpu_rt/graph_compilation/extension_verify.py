@@ -30,7 +30,7 @@ from typing import Any
 
 import torch
 
-from compgen.graph_compilation.hashing import sha256_file
+from xpu_rt.graph_compilation.hashing import sha256_file
 
 
 @dataclass

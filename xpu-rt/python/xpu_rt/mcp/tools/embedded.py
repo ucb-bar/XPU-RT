@@ -4,14 +4,14 @@ Four verbs that work for *any* target / model pair whose HardwareSpec
 declares ``deployment_model: zephyr_rtos`` (or ``bare_metal``). The
 Saturn OPU → Zephyr → Chipyard/FireSim bring-up uses these without
 any backend-specific code in the tool surface; backend specifics live
-in the kernel providers (``compgen.kernels.providers.*``) and overlay
-generators (``compgen.extensions.*``) that the tools delegate to.
+in the kernel providers (``xpu_rt.kernels.providers.*``) and overlay
+generators (``xpu_rt.extensions.*``) that the tools delegate to.
 
 Verbs:
 
 * ``compile_embedded`` — load a PyTorch module, consult the target's
   HardwareSpec capabilities, emit a portable C ABI bundle
-  (``compgen_model.{h,c}`` + ``model_blob.c`` + ``kernels/*.c`` +
+  (``xpu_rt_model.{h,c}`` + ``model_blob.c`` + ``kernels/*.c`` +
   Makefile). Ukernel lane is chosen by the spec's features, not by
   the caller.
 * ``zephyr_overlay`` — drop a bundle into a Zephyr sample tree for
@@ -42,7 +42,7 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-from compgen.mcp.session import SessionManager
+from xpu_rt.mcp.session import SessionManager
 
 
 def _default_zephyr_root() -> str | None:
@@ -54,7 +54,7 @@ def _load_fixture_from_path(fixture_path: str) -> tuple[Any, tuple[Any, ...]]:
     path = Path(fixture_path).expanduser().resolve()
     if not path.is_file():
         raise FileNotFoundError(f"model_path does not exist: {path}")
-    module_name = f"_compgen_user_model_{path.stem}"
+    module_name = f"_xpu_rt_user_model_{path.stem}"
     spec = importlib.util.spec_from_file_location(module_name, path)
     if spec is None or spec.loader is None:
         raise ImportError(f"could not build import spec for {path}")
@@ -85,7 +85,7 @@ def compile_embedded(
     model_path: str | None = None,
     spec_path: str | None = None,
     spec_demo: str | None = None,
-    model_name: str = "compgen_model",
+    model_name: str = "xpu_rt_model",
     version: str = "0.0.1",
     include_ops: tuple[str, ...] = ("matmul", "im2col"),
     session_id: str | None = None,
@@ -104,8 +104,8 @@ def compile_embedded(
 
     Model source (choose one):
         * ``demo="saturn_opu_convnet"`` — packaged demo shipped inside
-          ``compgen.examples.*``. Works after ``pip install compgen``
-          with no source-tree access; see :func:`compgen.examples.list_demos`.
+          ``xpu_rt.examples.*``. Works after ``pip install xpu_rt``
+          with no source-tree access; see :func:`xpu_rt.examples.list_demos`.
         * ``model_module="pkg.mod"`` — an importable dotted module
           exposing ``build_model()`` and ``default_inputs()``. Caller
           ensures the module resolves on ``sys.path``.
@@ -115,15 +115,15 @@ def compile_embedded(
 
     Spec source (choose one):
         * ``spec_demo="saturn_opu"`` — packaged HardwareSpec YAML shipped
-          under ``compgen.examples.hardware_specs``. See
-          :func:`compgen.examples.list_specs`.
+          under ``xpu_rt.examples.hardware_specs``. See
+          :func:`xpu_rt.examples.list_specs`.
         * ``spec_path="/abs/path/to/target.yaml"`` — a HardwareSpec
           YAML (``v2.0``) on disk.
 
     Args:
         output_dir: Destination for the emitted bundle.
         model_name: Used in the generated C identifiers.
-        version: Version string stamped into ``compgen_model.h``.
+        version: Version string stamped into ``xpu_rt_model.h``.
         include_ops: Op families the caller wants ukernels for. The
             provider may skip ops outside its domain. Default covers
             the mmt4d + im2col kernels the ConvNet bring-up needs.
@@ -134,11 +134,11 @@ def compile_embedded(
         "selected_lanes", "target_name", "target_features", ...}``.
     """
 
-    from compgen import examples
-    from compgen.kernels.provider import KernelContract
-    from compgen.kernels.providers.exo_riscv_opu import emit_kernels
-    from compgen.runtime.embedded import EmbeddedOptions, emit_embedded
-    from compgen.targetgen.load import load_hardware_spec
+    from xpu_rt import examples
+    from xpu_rt.kernels.provider import KernelContract
+    from xpu_rt.kernels.providers.exo_riscv_opu import emit_kernels
+    from xpu_rt.runtime.embedded import EmbeddedOptions, emit_embedded
+    from xpu_rt.targetgen.load import load_hardware_spec
 
     session = sm.open(session_id) if session_id else sm.open()
 
@@ -285,7 +285,7 @@ def zephyr_overlay(
     *,
     bundle_dir: str | None = None,
     zephyr_root: str | None = None,
-    sample_name: str = "compgen_app",
+    sample_name: str = "xpu_rt_app",
     board: str = "spike_riscv64",
     arena_bytes: int = 8 * 1024 * 1024,
     smp: bool = False,
@@ -295,10 +295,10 @@ def zephyr_overlay(
     """Drop an embedded bundle into a Zephyr sample tree.
 
     Works for any bundle emitted by :func:`compile_embedded` — the
-    CompGen C ABI is target-agnostic. If ``bundle_dir`` is omitted,
+    XPU-RT C ABI is target-agnostic. If ``bundle_dir`` is omitted,
     reuses the most recent bundle from the current session.
     """
-    from compgen.extensions.zephyr import ZephyrOverlayOptions, emit_overlay
+    from xpu_rt.extensions.zephyr import ZephyrOverlayOptions, emit_overlay
 
     session = sm.open(session_id) if session_id else sm.open()
 
@@ -473,7 +473,7 @@ def simulator_run(
        sample directory exists; if either is missing, the build is
        skipped and only the simulator runs.
     """
-    from compgen.targetgen.load import load_hardware_spec
+    from xpu_rt.targetgen.load import load_hardware_spec
 
     session = sm.open(session_id) if session_id else sm.open()
 
@@ -500,7 +500,7 @@ def simulator_run(
     zephyr_path = Path(zephyr_root).expanduser() if zephyr_root else Path.cwd()
     if sample_name is None:
         overlay = session.metadata.get("embedded_overlay", "")
-        sample_name = Path(overlay).name if overlay else "compgen_app"
+        sample_name = Path(overlay).name if overlay else "xpu_rt_app"
     sample_path = zephyr_path / "samples" / sample_name
     elf = Path(elf_path) if elf_path else zephyr_path / "build" / "zephyr" / "zephyr.elf"
 
@@ -655,7 +655,7 @@ def firesim_workload(
         "common_outputs": [],
         "metadata": {
             "chipyard_config": chipyard_config,
-            "source": "compgen.mcp.firesim_workload",
+            "source": "xpu_rt.mcp.firesim_workload",
         },
     }
     workload_json.write_text(json.dumps(payload, indent=2) + "\n")
@@ -674,14 +674,14 @@ def firesim_workload(
 
 
 def list_packaged_examples(sm: SessionManager, **_: Any) -> dict[str, Any]:
-    """Enumerate demos and specs shipped inside the installed ``compgen`` wheel.
+    """Enumerate demos and specs shipped inside the installed ``xpu_rt`` wheel.
 
     The returned names are the exact strings accepted by
-    ``compile_embedded(demo=..., spec_demo=...)``. No CompGen source
+    ``compile_embedded(demo=..., spec_demo=...)``. No XPU-RT source
     tree access required — everything resolves via ``importlib.resources``
     on the installed package.
     """
-    from compgen import examples
+    from xpu_rt import examples
 
     return {
         "ok": True,
@@ -757,7 +757,7 @@ EMBEDDED_TOOLS: list[dict[str, Any]] = [
                 "demo": {
                     "type": "string",
                     "description": (
-                        "Packaged demo name under compgen.examples (e.g. 'saturn_opu_convnet'). See list_demos()."
+                        "Packaged demo name under xpu_rt.examples (e.g. 'saturn_opu_convnet'). See list_demos()."
                     ),
                 },
                 "model_module": {
@@ -771,7 +771,7 @@ EMBEDDED_TOOLS: list[dict[str, Any]] = [
                 "spec_demo": {
                     "type": "string",
                     "description": (
-                        "Packaged HardwareSpec name under compgen.examples.hardware_specs (e.g. 'saturn_opu')."
+                        "Packaged HardwareSpec name under xpu_rt.examples.hardware_specs (e.g. 'saturn_opu')."
                     ),
                 },
                 "spec_path": {
@@ -888,7 +888,7 @@ EMBEDDED_TOOLS: list[dict[str, Any]] = [
         "name": "list_packaged_examples",
         "description": (
             "List demos, hardware specs, and target profiles shipped inside "
-            "the installed compgen wheel. Names returned here are directly "
+            "the installed xpu_rt wheel. Names returned here are directly "
             "accepted by compile_embedded(demo=..., spec_demo=...) and by "
             "the declarative target-profile API."
         ),

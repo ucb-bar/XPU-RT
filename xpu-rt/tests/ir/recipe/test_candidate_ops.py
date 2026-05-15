@@ -7,8 +7,8 @@ FuseOp, VectorizeOp, ReassociateOp, RequestTritonKernelOp, PlaceOnDeviceOp.
 from __future__ import annotations
 
 import pytest
-from compgen.ir.recipe.attrs import DeviceRefAttr, ProvenanceAttr
-from compgen.ir.recipe.ops_candidate import (
+from xpu_rt.ir.recipe.attrs import DeviceRefAttr, ProvenanceAttr
+from xpu_rt.ir.recipe.ops_candidate import (
     BlackboxOp,
     FuseOp,
     InsertCopyBoundaryOp,

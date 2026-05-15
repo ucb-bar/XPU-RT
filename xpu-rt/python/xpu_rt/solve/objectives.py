@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from compgen.solve.partition import Partition
+    from xpu_rt.solve.partition import Partition
 
 
 @dataclass(frozen=True)

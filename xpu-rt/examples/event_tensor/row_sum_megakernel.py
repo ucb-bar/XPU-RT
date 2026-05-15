@@ -18,7 +18,7 @@ This module is the *real* end-to-end  validation:
     5. Compare the kernel's output to ``A.sum(dim=-1)`` (PyTorch eager).
 
 There are no hand-written Triton kernels in this example -- every line
-of GPU code that runs comes out of the CompGen emitter.
+of GPU code that runs comes out of the XPU-RT emitter.
 """
 
 from __future__ import annotations
@@ -36,12 +36,12 @@ from xdsl.dialects.builtin import (
 )
 from xdsl.ir import Block, Region
 
-from compgen.ir.event.attrs import EventCoordAttr, EventTensorTypeAttr
-from compgen.ir.event.ops import CallDeviceOp, EventTensorOp, GraphOp
-from compgen.ir.payload.passes.megakernel_static_schedule import (
+from xpu_rt.ir.event.attrs import EventCoordAttr, EventTensorTypeAttr
+from xpu_rt.ir.event.ops import CallDeviceOp, EventTensorOp, GraphOp
+from xpu_rt.ir.payload.passes.megakernel_static_schedule import (
     StaticMegakernelSchedule,
 )
-from compgen.ir.tile.lower_megakernel import (
+from xpu_rt.ir.tile.lower_megakernel import (
     DeviceFunctionSpec,
     MegakernelLoweringResult,
     MegakernelLoweringSpec,

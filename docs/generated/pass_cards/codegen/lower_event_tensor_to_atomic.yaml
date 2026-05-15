@@ -4,7 +4,7 @@ display_name: Lower event tensors to atomic synchronization
 level: payload
 family: codegen
 source: Event Tensor Compiler
-impl_path: python/compgen/ir/payload/passes/rewrites/lower_event_tensor_to_atomic.py
+impl_path: python/xpu_rt/ir/payload/passes/rewrites/lower_event_tensor_to_atomic.py
 reads:
   - 01_payload_lowering/payload.mlir
   - 02_graph_analysis/candidate_actions.json
@@ -25,7 +25,7 @@ cost: cheap
 failure_modes:
   - "target_lacks_atomics"
   - "circular_signal_wait_dependency"
-mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+mcp_tool: mcp__xpu_rt__xpu_rt_emit_agent_decision_request
 notes: |
   Reconstruction of the Event Tensor Compiler's "Lowering to Minimal
   Atomic" pass. Turns abstract signal/wait pairs into atomic memory

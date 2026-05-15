@@ -173,8 +173,8 @@ _OP_LINE_RE = re.compile(
 )
 _FUNC_FORWARD_RE = re.compile(r"^\s*func\.func\s+@forward\s*\(")
 _FUNC_RETURN_RE = re.compile(r"^\s*func\.return\s")
-_REGION_ID_ATTR_RE = re.compile(r'compgen\.region_id\s*=\s*"(?P<rid>[^"]+)"')
-_DISPATCH_ID_ATTR_RE = re.compile(r'compgen\.dispatch_id\s*=\s*"(?P<did>[^"]+)"')
+_REGION_ID_ATTR_RE = re.compile(r'xpu_rt\.region_id\s*=\s*"(?P<rid>[^"]+)"')
+_DISPATCH_ID_ATTR_RE = re.compile(r'xpu_rt\.dispatch_id\s*=\s*"(?P<did>[^"]+)"')
 _FUNC_CALL_CALLEE_RE = re.compile(r'func\.call\s+@(?:"(?P<q>[^"]+)"|(?P<u>[^"\s(]+))')
 _OPERAND_RE = re.compile(r"%([A-Za-z0-9_]+)")
 

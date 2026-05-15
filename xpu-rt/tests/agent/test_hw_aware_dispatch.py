@@ -1,4 +1,4 @@
-"""Tests for ``compgen.agent.hw_aware_dispatch``.
+"""Tests for ``xpu_rt.agent.hw_aware_dispatch``.
 
 Locks in:
   * deterministic fallback (no LLM) returns oracle's prior + a
@@ -15,11 +15,11 @@ Locks in:
 from __future__ import annotations
 
 import pytest
-from compgen.agent.hw_aware_dispatch import (
+from xpu_rt.agent.hw_aware_dispatch import (
     MultiTargetDispatchDecision,
     decide_dispatch,
 )
-from compgen.kernels.contract_v3 import (
+from xpu_rt.kernels.contract_v3 import (
     ExecutionEnvelope,
     Granularity,
     HardwareEnvelope,
@@ -30,7 +30,7 @@ from compgen.kernels.contract_v3 import (
     ShapeClass,
     TensorIO,
 )
-from compgen.llm.base import (
+from xpu_rt.llm.base import (
     GenerationRequest,
     GenerationResponse,
     Objective,

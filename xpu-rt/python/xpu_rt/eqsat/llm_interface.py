@@ -21,8 +21,8 @@ from typing import TYPE_CHECKING
 
 import structlog
 
-from compgen.eqsat.explain import EGraphSummary, summary_to_prompt
-from compgen.eqsat.rules.python_rules import EqSatRewriteRule
+from xpu_rt.eqsat.explain import EGraphSummary, summary_to_prompt
+from xpu_rt.eqsat.rules.python_rules import EqSatRewriteRule
 
 if TYPE_CHECKING:
     pass  # GeminiClient imported here when needed
@@ -64,7 +64,7 @@ RULE_PROPOSAL_PROMPT = textwrap.dedent("""\
     from xdsl.dialects.builtin import ModuleOp
     from xdsl.ir import OpResult
     from xdsl.rewriter import InsertPoint, Rewriter
-    from compgen.eqsat.rules.python_rules import (
+    from xpu_rt.eqsat.rules.python_rules import (
         EqSatRewriteRule, add_alternative_to_eclass, get_eclass_for_result,
     )
     ```
@@ -167,7 +167,7 @@ def validate_rule_code(code: str) -> RuleValidationResult:
             "from xdsl.dialects.builtin import ModuleOp\n"
             "from xdsl.ir import OpResult\n"
             "from xdsl.rewriter import InsertPoint, Rewriter\n"
-            "from compgen.eqsat.rules.python_rules import (\n"
+            "from xpu_rt.eqsat.rules.python_rules import (\n"
             "    EqSatRewriteRule, add_alternative_to_eclass, get_eclass_for_result,\n"
             ")\n",
             namespace,
@@ -216,8 +216,8 @@ def validate_and_verify_rule(code: str, max_bitwidth: int = 8) -> RuleValidation
 
     # Try to export and verify via PDL
     try:
-        from compgen.semantic.rewrite.export_pdl import eqsat_rule_to_pdl
-        from compgen.semantic.rewrite.verify_pdl import verify_rewrite_family
+        from xpu_rt.semantic.rewrite.export_pdl import eqsat_rule_to_pdl
+        from xpu_rt.semantic.rewrite.verify_pdl import verify_rewrite_family
 
         exported = eqsat_rule_to_pdl(result.rule)
         if exported is not None:

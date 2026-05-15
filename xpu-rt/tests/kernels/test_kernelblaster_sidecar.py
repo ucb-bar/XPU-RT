@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-from compgen.kernels.kernelblaster_sidecar import (
+from xpu_rt.kernels.kernelblaster_sidecar import (
     DEFAULT_PORT,
     KernelBlasterSidecar,
     SidecarUnavailable,
@@ -41,7 +41,7 @@ def test_check_imports_first_missing_wins():
 
 
 def test_resolve_repo_root_returns_none_when_missing(tmp_path, monkeypatch):
-    monkeypatch.setenv("COMPGEN_KERNELBLASTER_ROOT", str(tmp_path / "does-not-exist"))
+    monkeypatch.setenv("XPU_RT_KERNELBLASTER_ROOT", str(tmp_path / "does-not-exist"))
     monkeypatch.chdir(tmp_path)
     assert _resolve_repo_root(None) is None
 
@@ -51,7 +51,7 @@ def test_resolve_repo_root_honours_explicit(tmp_path):
 
 
 def test_resolve_repo_root_honours_env(tmp_path, monkeypatch):
-    monkeypatch.setenv("COMPGEN_KERNELBLASTER_ROOT", str(tmp_path))
+    monkeypatch.setenv("XPU_RT_KERNELBLASTER_ROOT", str(tmp_path))
     monkeypatch.chdir(tmp_path)  # so the conventional path doesn't shadow
     assert _resolve_repo_root(None).resolve() == tmp_path.resolve()
 
@@ -62,7 +62,7 @@ def test_resolve_repo_root_honours_env(tmp_path, monkeypatch):
 
 
 def test_start_repo_not_found_is_typed(tmp_path, monkeypatch):
-    monkeypatch.setenv("COMPGEN_KERNELBLASTER_ROOT", str(tmp_path / "nope"))
+    monkeypatch.setenv("XPU_RT_KERNELBLASTER_ROOT", str(tmp_path / "nope"))
     monkeypatch.chdir(tmp_path)
     with pytest.raises(SidecarUnavailable) as excinfo:
         KernelBlasterSidecar.start()
@@ -72,7 +72,7 @@ def test_start_repo_not_found_is_typed(tmp_path, monkeypatch):
 def test_start_port_in_use_is_typed(tmp_path, monkeypatch):
     kb = tmp_path / "kb"
     kb.mkdir()
-    monkeypatch.setenv("COMPGEN_KERNELBLASTER_ROOT", str(kb))
+    monkeypatch.setenv("XPU_RT_KERNELBLASTER_ROOT", str(kb))
     # Take port 0 (let OS pick free) then re-use that port for the
     # start() call so it conflicts.
     import socket

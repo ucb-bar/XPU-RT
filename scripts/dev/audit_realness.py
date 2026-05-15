@@ -17,12 +17,12 @@ import json
 import sys
 from pathlib import Path
 
-from compgen.audit.realness_scan import (
+from xpu_rt.audit.realness_scan import (
     Allowlist,
     assert_clean,
     scan_repo,
 )
-from compgen.audit.errors import UnallowlistedStubError
+from xpu_rt.audit.errors import UnallowlistedStubError
 
 
 def main(argv: list[str] | None = None) -> int:

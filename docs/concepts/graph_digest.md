@@ -6,7 +6,7 @@ views it reads:
 * `analyze_graph` — shape-free overall digest.
 * `focus_chunk` — one region with its full knob + DoF surface.
 
-Both are driven by `python/compgen/analysis/graph_digest.py`. No LLM
+Both are driven by `python/xpu_rt/analysis/graph_digest.py`. No LLM
 call is needed to build them; they're deterministic views over the
 analyzer output and the xDSL module.
 
@@ -19,7 +19,7 @@ analyzer output and the xDSL module.
 | `pattern_histogram` | Count per `DetectedPattern.pattern_type` |
 | `pattern_size_histogram` | Count per cluster size (# of ops) |
 | `dim_spectrum.rank_histogram` | Count per tensor rank |
-| `dim_spectrum.{parallel,reduce,batch,broadcast}_dims` | From `compgen.dim_role` attrs stamped by `analyze/dim_semantics.py` |
+| `dim_spectrum.{parallel,reduce,batch,broadcast}_dims` | From `xpu_rt.dim_role` attrs stamped by `analyze/dim_semantics.py` |
 | `dtype_spectrum` / `quant_spectrum` | Count per short dtype code (`f32`, `bf16`, `fp8_e4m3`, `int8`, …) |
 | `flop_distribution.total` | From `NetworkAnalysis.total_flops`; falls back to an IR-walk estimator when analyzer returns 0. `source` = `"analyzer"` or `"ir_walk_fallback"` |
 | `byte_distribution` | Total bytes + top-5 clusters |
@@ -42,7 +42,7 @@ into an LLM prompt.
 | `ops`, `edges` | Nodes + DAG edges within the chunk |
 | `symbolic_shapes` | Shape-free view; concrete shapes opt-in |
 | `concrete_shapes` | Only when `include_concrete_shapes=True` |
-| `dim_roles` | Read from `compgen.dim_role` attrs (not empty on synthetic clusters) |
+| `dim_roles` | Read from `xpu_rt.dim_role` attrs (not empty on synthetic clusters) |
 | `dtypes` | From xDSL op result types; FX↔xDSL name bridge in `_cluster_ops` |
 | `quant_attrs` | Booleans flagging fp8/int dtypes |
 | `envelope_facts` | Target name, vector lanes, scratchpad bytes, peak bandwidth, MMA shapes |

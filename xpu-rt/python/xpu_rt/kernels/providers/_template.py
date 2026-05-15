@@ -4,7 +4,7 @@ Copy this file into the ``providers/`` directory and implement the
 ``KernelProvider`` protocol.  Your provider will be auto-discovered
 by the ``ProviderRegistry`` when registered.
 
-See ``compgen.kernels.provider`` for the full protocol definition.
+See ``xpu_rt.kernels.provider`` for the full protocol definition.
 See ``autocomp.py`` for a working example (LLM-driven search).
 See ``triton_templates.py`` for another example (parameterized templates).
 
@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from compgen.kernels.provider import KernelContract, ProviderResult
+from xpu_rt.kernels.provider import KernelContract, ProviderResult
 
 
 class TemplateKernelProvider:

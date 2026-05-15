@@ -3,15 +3,15 @@
 Loads the real SmolVLA model from HuggingFace (via Understanding-PI0 +
 LeRobot), applies FP8 E4M3 po2 quantization for NPU deployment, captures
 via TorchDynamo, analyzes every op for NPU coverage, lowers to Payload IR,
-and produces the standard CompGen artifact bundle.
+and produces the standard XPU-RT artifact bundle.
 
 Usage::
 
-    python -m compgen.quantization.smolvla_e2e --output-dir artifacts/smolvla_fp8_npu
+    python -m xpu_rt.quantization.smolvla_e2e --output-dir artifacts/smolvla_fp8_npu
 
 Or from Python::
 
-    from compgen.quantization.smolvla_e2e import run_smolvla_npu_pipeline
+    from xpu_rt.quantization.smolvla_e2e import run_smolvla_npu_pipeline
     report = run_smolvla_npu_pipeline()
 """
 
@@ -22,9 +22,9 @@ from pathlib import Path
 
 import structlog
 
-from compgen.capture.torchao_pipeline import QuantizationConfig
-from compgen.quantization.graph_analyzer import format_analysis_report
-from compgen.quantization.pipeline import QuantizedModelPipeline
+from xpu_rt.capture.torchao_pipeline import QuantizationConfig
+from xpu_rt.quantization.graph_analyzer import format_analysis_report
+from xpu_rt.quantization.pipeline import QuantizedModelPipeline
 
 logger = structlog.get_logger()
 
@@ -52,7 +52,7 @@ def run_smolvla_npu_pipeline(
     Returns:
         ``PipelineReport`` with comprehensive results.
     """
-    from compgen.models.robotics import load_smolvla_bundle
+    from xpu_rt.models.robotics import load_smolvla_bundle
 
     logger.info("smolvla_e2e_start", output_dir=str(output_dir), device=device)
 
@@ -80,7 +80,7 @@ def run_smolvla_npu_pipeline(
     # 2b. Generate deduplicated kernel contracts
     kernel_contracts_list: list[object] = []
     if report.capture_artifact and report.capture_artifact.graphs:
-        from compgen.kernels.providers.npu_contracts import (
+        from xpu_rt.kernels.providers.npu_contracts import (
             export_contracts_autocomp,
             export_contracts_yaml,
             generate_npu_kernel_contracts,
@@ -128,7 +128,7 @@ def run_smolvla_npu_pipeline(
         print(f"\n{format_analysis_report(report.graph_analysis)}")
 
     if kernel_contracts_list:
-        from compgen.kernels.providers.npu_contracts import format_contracts_report as fmt_kc
+        from xpu_rt.kernels.providers.npu_contracts import format_contracts_report as fmt_kc
 
         print(f"\n{fmt_kc(kernel_contracts_list)}")
 

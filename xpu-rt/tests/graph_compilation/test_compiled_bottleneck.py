@@ -48,14 +48,14 @@ def _sha(p: Path) -> str:
 def _run(model: str, out_dir: Path, *, run_kernels: bool) -> None:
     env = os.environ.copy()
     if run_kernels:
-        env["COMPGEN_RUN_KERNELS"] = "1"
+        env["XPU_RT_RUN_KERNELS"] = "1"
     else:
-        env.pop("COMPGEN_RUN_KERNELS", None)
-    env.pop("COMPGEN_CALIBRATE_PROFILER", None)
-    env.pop("COMPGEN_CALIBRATE_CANDIDATES", None)
+        env.pop("XPU_RT_RUN_KERNELS", None)
+    env.pop("XPU_RT_CALIBRATE_PROFILER", None)
+    env.pop("XPU_RT_CALIBRATE_CANDIDATES", None)
     subprocess.run(
         [
-            sys.executable, "-m", "compgen.graph_compilation", "run",
+            sys.executable, "-m", "xpu_rt.graph_compilation", "run",
             "--model", str(REPO_ROOT / f"configs/models/{model}.yaml"),
             "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
             "--out", str(out_dir),
@@ -137,7 +137,7 @@ def test_byte_identical_reruns(kernels_run: Path) -> None:
     produce byte-identical JSON output (modulo generated_at_utc and
     the profiler_evidence overlay, which is layered post-hoc by
     a separate pass)."""
-    from compgen.graph_compilation.compiled_bottleneck import (
+    from xpu_rt.graph_compilation.compiled_bottleneck import (
         run_compiled_bottleneck,
     )
 
@@ -162,7 +162,7 @@ def test_byte_identical_reruns(kernels_run: Path) -> None:
 
 
 def test_pure_function_derive_utilization_is_deterministic() -> None:
-    from compgen.graph_compilation.compiled_bottleneck import (
+    from xpu_rt.graph_compilation.compiled_bottleneck import (
         derive_utilization,
     )
 
@@ -182,7 +182,7 @@ def test_pure_function_derive_utilization_is_deterministic() -> None:
 
 
 def test_achieved_compute_gflops_math() -> None:
-    from compgen.graph_compilation.compiled_bottleneck import (
+    from xpu_rt.graph_compilation.compiled_bottleneck import (
         derive_utilization,
     )
 
@@ -199,7 +199,7 @@ def test_achieved_compute_gflops_math() -> None:
 
 
 def test_achieved_bandwidth_gb_s_math() -> None:
-    from compgen.graph_compilation.compiled_bottleneck import (
+    from xpu_rt.graph_compilation.compiled_bottleneck import (
         derive_utilization,
     )
 
@@ -216,7 +216,7 @@ def test_achieved_bandwidth_gb_s_math() -> None:
 
 
 def test_doubling_measured_time_halves_utilization() -> None:
-    from compgen.graph_compilation.compiled_bottleneck import (
+    from xpu_rt.graph_compilation.compiled_bottleneck import (
         derive_utilization,
     )
 
@@ -239,7 +239,7 @@ def test_doubling_measured_time_halves_utilization() -> None:
 
 
 def test_measured_bottleneck_classification() -> None:
-    from compgen.graph_compilation.compiled_bottleneck import (
+    from xpu_rt.graph_compilation.compiled_bottleneck import (
         derive_utilization,
     )
 
@@ -445,7 +445,7 @@ def test_agreement_count_matches_region_evidence(kernels_run: Path) -> None:
 def test_m21_analytical_cost_unchanged_when_m22_reruns(
     kernels_run: Path,
 ) -> None:
-    from compgen.graph_compilation.compiled_bottleneck import (
+    from xpu_rt.graph_compilation.compiled_bottleneck import (
         run_compiled_bottleneck,
     )
     p = (
@@ -461,7 +461,7 @@ def test_m21_analytical_cost_unchanged_when_m22_reruns(
 def test_m22_does_not_mutate_region_map_or_candidate_actions(
     kernels_run: Path,
 ) -> None:
-    from compgen.graph_compilation.compiled_bottleneck import (
+    from xpu_rt.graph_compilation.compiled_bottleneck import (
         run_compiled_bottleneck,
     )
     rm_path = kernels_run / "02_graph_analysis" / "region_map.json"
@@ -485,7 +485,7 @@ def test_m22_does_not_mutate_region_map_or_candidate_actions(
 
 
 def test_m20_report_unchanged_by_m22(kernels_run: Path) -> None:
-    from compgen.graph_compilation.compiled_bottleneck import (
+    from xpu_rt.graph_compilation.compiled_bottleneck import (
         run_compiled_bottleneck,
     )
     m20_path = (
@@ -505,7 +505,7 @@ def test_hardware_resource_overlay_byte_stable_across_m22_reruns(
 ) -> None:
     """After the FIRST run, re-running produces a byte-
     identical hardware_resource_report (the overlay is deterministic)."""
-    from compgen.graph_compilation.compiled_bottleneck import (
+    from xpu_rt.graph_compilation.compiled_bottleneck import (
         run_compiled_bottleneck,
     )
     hrr_path = (
@@ -527,14 +527,14 @@ def test_hardware_resource_overlay_byte_stable_across_m22_reruns(
 
 def test_no_compiler_core_imports() -> None:
     src = (
-        REPO_ROOT / "python" / "compgen" / "graph_compilation"
+        REPO_ROOT / "python" / "xpu-rt" / "graph_compilation"
         / "compiled_bottleneck.py"
     ).read_text(encoding="utf-8")
     forbidden = (
-        "from compgen.ir",
-        "from compgen.capture",
-        "from compgen.pipeline",
-        "from compgen.runtime.bundle_emit",
+        "from xpu_rt.ir",
+        "from xpu_rt.capture",
+        "from xpu_rt.pipeline",
+        "from xpu_rt.runtime.bundle_emit",
     )
     for f in forbidden:
         assert f not in src, f"compiled_bottleneck imports forbidden module: {f}"

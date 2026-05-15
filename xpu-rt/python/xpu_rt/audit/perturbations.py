@@ -133,7 +133,7 @@ def corrupt_promotion_library(library_path: Path) -> PerturbationResult:
 def empty_promotion_library(library_path: Path) -> PerturbationResult:
     """Wipe the recipe library so the next run is forced cold.
 
-    Equivalent to ``COMPGEN_DISABLE_RECIPE_MEMORY=1`` for the file
+    Equivalent to ``XPU_RT_DISABLE_RECIPE_MEMORY=1`` for the file
     layer (the env var short-circuits at the retrieval layer; this
     function nukes the on-disk state).
     """

@@ -1,12 +1,12 @@
 """The admission probe: eager -> dynamo -> torch.compile.
 
-Wraps :func:`compgen.capture.dynamo_baseline.compile_baseline` and
-:func:`compgen.capture.dynamo_baseline.collect_diagnostics` from the
+Wraps :func:`xpu_rt.capture.dynamo_baseline.compile_baseline` and
+:func:`xpu_rt.capture.dynamo_baseline.collect_diagnostics` from the
 existing capture subsystem; it does not duplicate torch.compile plumbing.
 
 The probe boundary never raises out: every loader / eager / dynamo /
 compile failure is captured into a typed
-:class:`~compgen.model_admission.schemas.AdmissionStatus` and a
+:class:`~xpu_rt.model_admission.schemas.AdmissionStatus` and a
 human-readable reason. The only exit path is one of the eight admission
 statuses.
 """
@@ -24,10 +24,10 @@ import structlog
 import torch
 import torch.nn as nn
 
-from compgen.capture.dynamo_baseline import collect_diagnostics, compile_baseline
-from compgen.model_admission import report
-from compgen.model_admission.loaders import LoadedModel, LoaderUnavailable, load
-from compgen.model_admission.schemas import (
+from xpu_rt.capture.dynamo_baseline import collect_diagnostics, compile_baseline
+from xpu_rt.model_admission import report
+from xpu_rt.model_admission.loaders import LoadedModel, LoaderUnavailable, load
+from xpu_rt.model_admission.schemas import (
     AdmissionReport,
     AdmissionStatus,
     DynamoCaptureReport,

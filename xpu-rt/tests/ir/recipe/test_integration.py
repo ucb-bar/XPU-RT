@@ -6,18 +6,18 @@ and the agent bridge for action ↔ recipe op conversion.
 
 from __future__ import annotations
 
-from compgen.ir.recipe.attrs import DeviceRefAttr, ProvenanceAttr
-from compgen.ir.recipe.lower import LoweringOutput, lower_recipe
-from compgen.ir.recipe.ops_candidate import PlaceOnDeviceOp, TileOp
-from compgen.ir.recipe.ops_choice import RequireEqsatOp, RequireSolverOp
-from compgen.ir.recipe.ops_fact import BackendAvailableOp
-from compgen.ir.recipe.ops_provenance import FromTemplateOp
-from compgen.ir.recipe.ops_scope import RecipeGuardOp, RecipeRegionOp
-from compgen.ir.recipe.ops_verify import RequireDiffTestOp, RequireMemoryBoundOp
-from compgen.ir.recipe.validate import validate_recipe_module
-from compgen.semantic.synthesis.guard_lang import Cmp, CmpOp, Const, Var
-from compgen.semantic.synthesis.promote import GuardArtifact
-from compgen.semantic.synthesis.registry import GuardRegistry
+from xpu_rt.ir.recipe.attrs import DeviceRefAttr, ProvenanceAttr
+from xpu_rt.ir.recipe.lower import LoweringOutput, lower_recipe
+from xpu_rt.ir.recipe.ops_candidate import PlaceOnDeviceOp, TileOp
+from xpu_rt.ir.recipe.ops_choice import RequireEqsatOp, RequireSolverOp
+from xpu_rt.ir.recipe.ops_fact import BackendAvailableOp
+from xpu_rt.ir.recipe.ops_provenance import FromTemplateOp
+from xpu_rt.ir.recipe.ops_scope import RecipeGuardOp, RecipeRegionOp
+from xpu_rt.ir.recipe.ops_verify import RequireDiffTestOp, RequireMemoryBoundOp
+from xpu_rt.ir.recipe.validate import validate_recipe_module
+from xpu_rt.semantic.synthesis.guard_lang import Cmp, CmpOp, Const, Var
+from xpu_rt.semantic.synthesis.promote import GuardArtifact
+from xpu_rt.semantic.synthesis.registry import GuardRegistry
 from xdsl.dialects.builtin import (
     ArrayAttr,
     IntegerAttr,
@@ -406,8 +406,8 @@ def test_lower_guarded_candidate_with_registry() -> None:
 
 
 def test_action_to_recipe_op_tile() -> None:
-    from compgen.agent.env import TileAction
-    from compgen.agent.recipe_bridge import action_to_recipe_op
+    from xpu_rt.agent.env import TileAction
+    from xpu_rt.agent.recipe_bridge import action_to_recipe_op
 
     action = TileAction(region_id="r0", tile_sizes=(128, 64))
     op = action_to_recipe_op(action, iteration=3)
@@ -417,8 +417,8 @@ def test_action_to_recipe_op_tile() -> None:
 
 
 def test_action_to_recipe_op_place() -> None:
-    from compgen.agent.env import AssignDeviceAction
-    from compgen.agent.recipe_bridge import action_to_recipe_op
+    from xpu_rt.agent.env import AssignDeviceAction
+    from xpu_rt.agent.recipe_bridge import action_to_recipe_op
 
     action = AssignDeviceAction(region_id="r0", device_index=1)
     op = action_to_recipe_op(action, iteration=0)
@@ -428,8 +428,8 @@ def test_action_to_recipe_op_place() -> None:
 
 
 def test_action_to_recipe_op_noop_returns_none() -> None:
-    from compgen.agent.env import NoopAction
-    from compgen.agent.recipe_bridge import action_to_recipe_op
+    from xpu_rt.agent.env import NoopAction
+    from xpu_rt.agent.recipe_bridge import action_to_recipe_op
 
     action = NoopAction()
     op = action_to_recipe_op(action)
@@ -437,8 +437,8 @@ def test_action_to_recipe_op_noop_returns_none() -> None:
 
 
 def test_recipe_op_to_action_tile() -> None:
-    from compgen.agent.env import TileAction
-    from compgen.agent.recipe_bridge import recipe_op_to_action
+    from xpu_rt.agent.env import TileAction
+    from xpu_rt.agent.recipe_bridge import recipe_op_to_action
 
     op = TileOp.build(
         properties={
@@ -456,7 +456,7 @@ def test_recipe_op_to_action_tile() -> None:
 
 def test_seed_generation_basic() -> None:
     """Seed generation from an empty payload module."""
-    from compgen.ir.recipe.seed import generate_seed_recipe
+    from xpu_rt.ir.recipe.seed import generate_seed_recipe
 
     payload = ModuleOp(Region(Block()))
     seed = generate_seed_recipe(payload)
@@ -470,8 +470,8 @@ def test_seed_generation_basic() -> None:
 
 
 def test_compat_dataclass_to_xdsl_tile() -> None:
-    from compgen.ir.recipe.compat import dataclass_to_xdsl
-    from compgen.ir.recipe.ops import SetTileParams
+    from xpu_rt.ir.recipe.compat import dataclass_to_xdsl
+    from xpu_rt.ir.recipe.ops import SetTileParams
 
     old_op = SetTileParams(region_id="r0", tile_sizes=(128, 64, 32))
     new_op = dataclass_to_xdsl(old_op)
@@ -480,8 +480,8 @@ def test_compat_dataclass_to_xdsl_tile() -> None:
 
 
 def test_compat_dataclass_to_xdsl_assign_device() -> None:
-    from compgen.ir.recipe.compat import dataclass_to_xdsl
-    from compgen.ir.recipe.ops import AssignDevice
+    from xpu_rt.ir.recipe.compat import dataclass_to_xdsl
+    from xpu_rt.ir.recipe.ops import AssignDevice
 
     old_op = AssignDevice(region_id="r0", device_index=1, reason="gpu")
     new_op = dataclass_to_xdsl(old_op)
@@ -491,11 +491,11 @@ def test_compat_dataclass_to_xdsl_assign_device() -> None:
 
 
 def test_compat_round_trip() -> None:
-    from compgen.ir.recipe.compat import (
+    from xpu_rt.ir.recipe.compat import (
         module_to_recipe_list,
         recipe_list_to_module,
     )
-    from compgen.ir.recipe.ops import MatchRegion, SetTileParams
+    from xpu_rt.ir.recipe.ops import MatchRegion, SetTileParams
 
     old_ops = [
         MatchRegion(region_id="r0"),

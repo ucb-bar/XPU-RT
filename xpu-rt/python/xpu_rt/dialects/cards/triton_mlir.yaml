@@ -4,7 +4,7 @@ dialect_name: triton
 integration_level: probe
 consumes: [kernel_contract_v3, triton_source]
 emits: [ttir, ttgir, ptx, cubin]
-entrypoint: compgen.providers.adapters.triton_mlir:TritonMLIRDialectProvider
+entrypoint: xpu_rt.providers.adapters.triton_mlir:TritonMLIRDialectProvider
 required_env: []
 description: |
   Triton MLIR (TTIR / TTGIR) dialect provider. Exposes the

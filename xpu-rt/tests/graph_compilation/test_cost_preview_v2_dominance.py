@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import json
 
-from compgen.graph_compilation.cost_preview_v2 import (
+from xpu_rt.graph_compilation.cost_preview_v2 import (
     _annotate_dominance,
     _emit_dominance_report,
 )
@@ -169,7 +169,7 @@ def test_run_cost_preview_v2_writes_dominance_report(tmp_path):
     and assert the new dominance_report.json is emitted next to
     cost_preview_v2.json."""
 
-    from compgen.graph_compilation.cost_preview_v2 import run_cost_preview_v2
+    from xpu_rt.graph_compilation.cost_preview_v2 import run_cost_preview_v2
 
     # Build a minimal run_dir with the required inputs.
     run_dir = tmp_path / "run"

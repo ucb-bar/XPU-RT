@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import inspect
 
-from compgen.api import CompiledModel, compile_model
+from xpu_rt.api import CompiledModel, compile_model
 
 
 def test_signature_includes_drive_loop_params() -> None:
@@ -50,7 +50,7 @@ def test_drive_loop_object_with_run_is_called(monkeypatch) -> None:
     first (it happens AFTER fx_to_xdsl; we stub fx_to_xdsl to return a
     bare module + empty diagnostics, then stub downstream to no-op).
     """
-    import compgen.api as api_mod
+    import xpu_rt.api as api_mod
     from xdsl.dialects.builtin import ModuleOp
 
     class _MockDriveLoop:
@@ -97,7 +97,7 @@ def test_drive_loop_object_with_run_is_called(monkeypatch) -> None:
         lambda self, *a, **k: _StubAnalysis(),
     )
     monkeypatch.setattr(
-        "compgen.ir.ukernel.annotate.annotate_ukernel_ops",
+        "xpu_rt.ir.ukernel.annotate.annotate_ukernel_ops",
         lambda *a, **k: 0,
     )
 
@@ -122,7 +122,7 @@ def test_drive_loop_object_with_run_is_called(monkeypatch) -> None:
     from dataclasses import dataclass
     from dataclasses import field as _dc_field
 
-    from compgen.stages.registry import TargetDialectStack
+    from xpu_rt.stages.registry import TargetDialectStack
 
     @dataclass
     class _StubProfile:
@@ -149,7 +149,7 @@ def test_drive_loop_object_with_run_is_called(monkeypatch) -> None:
 
 def test_drive_loop_none_skips_loop(monkeypatch) -> None:
     """When drive_loop=None, drive_loop_result stays None."""
-    import compgen.api as api_mod
+    import xpu_rt.api as api_mod
     from xdsl.dialects.builtin import ModuleOp
 
     class _StubArtifact:
@@ -176,7 +176,7 @@ def test_drive_loop_none_skips_loop(monkeypatch) -> None:
         lambda self, *a, **k: _StubAnalysis(),
     )
     monkeypatch.setattr(
-        "compgen.ir.ukernel.annotate.annotate_ukernel_ops",
+        "xpu_rt.ir.ukernel.annotate.annotate_ukernel_ops",
         lambda *a, **k: 0,
     )
 
@@ -200,7 +200,7 @@ def test_drive_loop_none_skips_loop(monkeypatch) -> None:
     from dataclasses import dataclass
     from dataclasses import field as _dc_field
 
-    from compgen.stages.registry import TargetDialectStack
+    from xpu_rt.stages.registry import TargetDialectStack
 
     @dataclass
     class _StubProfile:

@@ -1,7 +1,7 @@
-# CompGen Agent Operating Manual
+# XPU-RT Agent Operating Manual
 
 This is the canonical repository-local operating manual for agents working in
-CompGen. It supersedes `CLAUDE.md` when the two overlap. `CLAUDE.md` remains in
+XPU-RT. It supersedes `CLAUDE.md` when the two overlap. `CLAUDE.md` remains in
 the repo for compatibility and historical context, but this file is the source
 of truth for repository control, visibility, and maintenance discipline.
 
@@ -18,11 +18,11 @@ time:
 If a change improves code but leaves the repository harder to reason about,
 partially undocumented, or misleading to users, the work is incomplete.
 
-## What CompGen Is
+## What XPU-RT Is
 
-CompGen is a compiler generator for heterogeneous hardware targets.
+XPU-RT is a compiler generator for heterogeneous hardware targets.
 
-Given a PyTorch program plus a hardware description, CompGen is intended to
+Given a PyTorch program plus a hardware description, XPU-RT is intended to
 generate:
 
 - graph and lowering transforms
@@ -76,28 +76,28 @@ state described in older design material.
 ### Public, Runnable Surfaces
 
 - `./scripts/bootstrap.sh`
-- `uv run python -m compgen.cli --help`
-- `uv run python -m compgen.cli --version`
+- `uv run python -m xpu_rt.cli --help`
+- `uv run python -m xpu_rt.cli --version`
 - `uv run python scripts/e2e_demo.py`
-- `compgen.device(...)`
-- `compgen.compile_model(...)`
+- `xpu_rt.device(...)`
+- `xpu_rt.compile_model(...)`
 
 ### Public but Still Contract-Only Surfaces
 
 These CLI commands exist, but their bodies are still mostly contract stubs that
 raise `NotImplementedError`:
 
-- `compgen init-target`
-- `compgen analyze`
-- `compgen generate`
-- `compgen verify`
-- `compgen run`
-- `compgen promote`
-- `compgen scaffold-target`
+- `xpu-rt init-target`
+- `xpu-rt analyze`
+- `xpu-rt generate`
+- `xpu-rt verify`
+- `xpu-rt run`
+- `xpu-rt promote`
+- `xpu-rt scaffold-target`
 
 ### Important Current Asymmetries
 
-- `compgen.device(...)` currently expects a targetgen-style hardware spec, not
+- `xpu_rt.device(...)` currently expects a targetgen-style hardware spec, not
   the simpler profile YAMLs under `examples/target_profiles/`.
 - The public hardware-spec example for the top-level API is
   `examples/hardware_specs/gpu_simt_demo.yaml`.
@@ -131,7 +131,7 @@ This is the minimum map every agent should keep in mind:
 | `docs/` | User-facing documentation only |
 | `examples/` | Public examples for docs, demos, and experimentation |
 | `scripts/` | Bootstrap and demo utilities |
-| `python/compgen/` | Main package code |
+| `python/xpu_rt/` | Main package code |
 | `tests/` | Executable truth for behavior and coverage |
 | `third_party/` | External dependencies and submodules |
 | `tmp/agentic_documentation/` | Internal operational memory and design archive |
@@ -297,7 +297,7 @@ Use validation proportional to the change. At minimum:
 ### Public docs changes
 
 ```bash
-uv run --extra docs mkdocs build --strict --site-dir /tmp/compgen_mkdocs_site
+uv run --extra docs mkdocs build --strict --site-dir /tmp/xpu_rt_mkdocs_site
 ```
 
 ### Public entrypoint or onboarding changes
@@ -332,18 +332,18 @@ Document what you validated in `CHANGELOG.md` if the change was meaningful.
 ## Autocomp Rules
 
 - Do not duplicate autocomp's `LLMClient`
-- Do not reimplement autocomp's search stack in CompGen
-- Keep CompGen's `llm/` package focused on graph-level generation, not kernel search
+- Do not reimplement autocomp's search stack in XPU-RT
+- Keep XPU-RT's `llm/` package focused on graph-level generation, not kernel search
 - Treat `third_party/autocomp/` as the upstream integration point
 
 ## Gemini API Spend Tracking
 
-CompGen records every Gemini API call to a local append-only log so that
+XPU-RT records every Gemini API call to a local append-only log so that
 token use and dollar cost can be verified at any time without hitting
 Google's billing dashboard. Tracking is installed by patching the
 `google.genai` SDK's `Models.generate_content` (sync) and
 `AsyncModels.generate_content` (async) — so calls from
-`compgen.llm.gemini_client` *and* from autocomp's `LLMClient`
+`xpu_rt.llm.gemini_client` *and* from autocomp's `LLMClient`
 (`third_party/autocomp/autocomp/common/llm_utils.py`) are both captured
 through the same hook. Source attribution flows via a `ContextVar`:
 GeminiClient calls are tagged `gemini_client.generate*`, the autocomp
@@ -352,34 +352,34 @@ and any other caller defaults to `genai_sdk`.
 
 **On-disk locations** (all under the repo root, gitignored):
 
-- `.compgen/gemini_usage/events.jsonl` — one JSON line per call (model,
+- `.xpu_rt/gemini_usage/events.jsonl` — one JSON line per call (model,
   tokens, cost_usd, latency, source, timestamp)
-- `.compgen/gemini_usage/summary.json` — derived snapshot: cumulative
+- `.xpu_rt/gemini_usage/summary.json` — derived snapshot: cumulative
   totals, per-month buckets (`YYYY-MM`), per-model breakdown
-- `.compgen/gemini_usage/budget.json` — optional limits
+- `.xpu_rt/gemini_usage/budget.json` — optional limits
 
 **How to inspect** (any session, any user):
 
-- `uv run compgen-gemini-usage` — formatted snapshot (status table)
-- `uv run compgen-gemini-usage watch` — live-updating dashboard (Rich Live)
-- `uv run compgen-gemini-usage json` — machine-readable summary
-- `uv run compgen-gemini-usage budget set --monthly-usd 50` — set limits
-- Direct read: `cat .compgen/gemini_usage/summary.json`
+- `uv run xpu-rt-gemini-usage` — formatted snapshot (status table)
+- `uv run xpu-rt-gemini-usage watch` — live-updating dashboard (Rich Live)
+- `uv run xpu-rt-gemini-usage json` — machine-readable summary
+- `uv run xpu-rt-gemini-usage budget set --monthly-usd 50` — set limits
+- Direct read: `cat .xpu_rt/gemini_usage/summary.json`
 
 **For agents:** before kicking off a long Gemini-driven workflow, read
 `summary.json` (cheap, <10ms) to confirm the current month's spend and
 remaining budget headroom. The tracker module
-(`compgen.observability.gemini_usage`) exposes `record_call`,
+(`xpu_rt.observability.gemini_usage`) exposes `record_call`,
 `load_summary`, `evaluate_budget`, and is best-effort — it never raises.
 
-Pricing table lives in `compgen.observability.gemini_usage.PRICING` and
+Pricing table lives in `xpu_rt.observability.gemini_usage.PRICING` and
 can be overridden by dropping `configs/gemini_pricing.yaml`. Update the
 table when Google AI Studio rates change.
 
 ## Recipe Promotion + Optimization Memory
 
 Every successful Phase B run lands a promoted recipe in
-`.compgen_cache/recipes/` keyed by a two-tier scheme
+`.xpu_rt_cache/recipes/` keyed by a two-tier scheme
 (`target_hash_model_hash_objective_hash_vN` directory + sidecar
 `(contract_hash, region_signature)`). Future runs query the library
 before emitting an `agent_decision_request.json` and surface matching
@@ -388,13 +388,13 @@ recipes as `visible_regions[*].promoted_candidates`.
 Read the full reference at `docs/architecture/promotion-and-memory.md`.
 Quick links:
 
-- Bridge (write side): `compgen.graph_compilation.promotion_bridge.emit`
+- Bridge (write side): `xpu_rt.graph_compilation.promotion_bridge.emit`
 - Retrieval (read side):
-  `compgen.graph_compilation.promotion_retrieval.retrieve_for_region`
-- Gate ladder (six levels): `compgen.promotion.gates.evaluate_gate`
+  `xpu_rt.graph_compilation.promotion_retrieval.retrieve_for_region`
+- Gate ladder (six levels): `xpu_rt.promotion.gates.evaluate_gate`
 - Falsifiability harness:
   `scripts/dev/measure_promotion_efficiency.py`
-- Aggregator: `compgen.graph_compilation.efficiency_report`
+- Aggregator: `xpu_rt.graph_compilation.efficiency_report`
 
 The headline falsifiable claim:
 

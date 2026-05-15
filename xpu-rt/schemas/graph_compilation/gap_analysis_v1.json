@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://compgen.dev/schemas/graph_compilation/gap_analysis_v1.json",
+  "$id": "https://xpu_rt.dev/schemas/graph_compilation/gap_analysis_v1.json",
   "title": "gap_analysis_v1",
   "description": "Descriptive analysis emitted alongside gap_action_queue.json: per-region classification + summary histogram.",
   "type": "object",

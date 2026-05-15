@@ -15,7 +15,7 @@ Coverage:
 
 from __future__ import annotations
 
-from compgen.mcp.tool_families import (
+from xpu_rt.mcp.tool_families import (
     BaseInput,
     BaseOutput,
     BenchInput,

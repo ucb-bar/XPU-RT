@@ -5,10 +5,10 @@
 Every compiler has to make choices: which encoding, which tile, which
 fusion, which memory tier, which kernel backend. IREE, XLA, and
 traditional heuristic compilers hardwire those choices into stage
-plugins. CompGen rejects that premise — heuristics can't keep up with
+plugins. XPU-RT rejects that premise — heuristics can't keep up with
 new hardware, new model shapes, or novel op combinations.
 
-The **decision site** is CompGen's primary architectural inversion:
+The **decision site** is XPU-RT's primary architectural inversion:
 every choice the compiler used to make silently is now a first-class
 object the agent can read, propose against, and override — via MCP —
 before the pipeline writes anything to the IR.
@@ -165,12 +165,12 @@ using the same pattern — call `get_active_registry()`, build a
 * **A stage must not mutate the IR between `enqueue` and `resolve`**
   for a given site. `resolve` is the only commitment point.
 * **Site ids must be stable across compiles of the same model** —
-  use `compgen.region_id` from the importer, not raw `id(op)`.
+  use `xpu_rt.region_id` from the importer, not raw `id(op)`.
 * **Oracle advisories never gate control flow** — they're recorded
   for observability and agent context; they must not change IR by
   themselves.
 * **The registry is per-session**, held on `McpSession.decision_registry`
-  and also installed into `compgen.agent.decisions._active_registry`
+  and also installed into `xpu_rt.agent.decisions._active_registry`
   via `install_registry`. Both channels exist because MCP dispatches
   run on a thread-pool and `ContextVar` values don't cross thread
   boundaries by default; the process-level fallback in

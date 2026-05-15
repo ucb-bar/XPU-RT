@@ -17,8 +17,8 @@ from typing import Any
 
 from xdsl.dialects.builtin import ModuleOp
 
-from compgen.llm.base import CompGenLLMProtocol, Objective
-from compgen.targets.schema import TargetProfile
+from xpu_rt.llm.base import CompGenLLMProtocol, Objective
+from xpu_rt.targets.schema import TargetProfile
 
 
 @dataclass(frozen=True)
@@ -77,7 +77,7 @@ class TransformSynthesizer:
         Returns:
             List of TransformScript candidates.
         """
-        from compgen.agent.pass_gen import PassGenerator
+        from xpu_rt.agent.pass_gen import PassGenerator
 
         generator = PassGenerator(llm_client=self.llm_client)
         description = (

@@ -74,7 +74,7 @@ def test_external_repo_adapter_skips_missing_repo(tmp_path: Path) -> None:
     baseline = BaselineSpec("iree", "external_repo", "dummy", repo_name="iree")
     case = ExperimentCase("case", "study", "simple_mlp", "cuda_a100", ["iree"])
     ctx = AdapterContext(
-        workspace=WorkspaceConfig.default(tmp_path / "CompGen"),
+        workspace=WorkspaceConfig.default(tmp_path / "XPU-RT"),
         registry=registry,
         case=case,
         workload=workload,
@@ -90,7 +90,7 @@ def test_external_repo_adapter_skips_missing_repo(tmp_path: Path) -> None:
 
 def test_check_baseline_availability_reports_states(tmp_path: Path) -> None:
     registry = build_default_registry()
-    workspace = WorkspaceConfig(repo_root=tmp_path / "CompGen", external_roots={"iree": tmp_path / "iree"})
+    workspace = WorkspaceConfig(repo_root=tmp_path / "XPU-RT", external_roots={"iree": tmp_path / "iree"})
     (tmp_path / "iree").mkdir(parents=True)
     result = check_baseline_availability(registry, workspace, ["iree"])
     assert result["iree"] == "available"
@@ -116,7 +116,7 @@ def test_torch_eager_skips_analysis_only_workloads(tmp_path: Path) -> None:
     assert record.status == "skip"
 
 
-def test_compgen_adapter_composes_target_package_for_analysis_only_runs(tmp_path: Path) -> None:
+def test_xpu_rt_adapter_composes_target_package_for_analysis_only_runs(tmp_path: Path) -> None:
     registry = build_default_registry()
     workload = WorkloadSpec(
         "tiny_suite_model",
@@ -132,12 +132,12 @@ def test_compgen_adapter_composes_target_package_for_analysis_only_runs(tmp_path
         "gpu target",
         "TRITON_FRIENDLY",
     )
-    baseline = BaselineSpec("compgen", "compgen", "dummy")
-    case = ExperimentCase("case", "study", "tiny_suite_model", "cuda_a100", ["compgen"])
+    baseline = BaselineSpec("xpu-rt", "xpu-rt", "dummy")
+    case = ExperimentCase("case", "study", "tiny_suite_model", "cuda_a100", ["xpu-rt"])
     ctx = AdapterContext(
         workspace=WorkspaceConfig(
-            repo_root=tmp_path / "CompGen",
-            suite_configs={"compgen": {"packs": ["cuda_tile", "iree_tracy"]}},
+            repo_root=tmp_path / "XPU-RT",
+            suite_configs={"xpu-rt": {"packs": ["cuda_tile", "iree_tracy"]}},
         ),
         registry=registry,
         case=case,

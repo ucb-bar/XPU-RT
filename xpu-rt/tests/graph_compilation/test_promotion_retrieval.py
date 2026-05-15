@@ -1,11 +1,11 @@
-"""Tests for :mod:`compgen.graph_compilation.promotion_retrieval`."""
+"""Tests for :mod:`xpu_rt.graph_compilation.promotion_retrieval`."""
 
 from __future__ import annotations
 
 import json
 from pathlib import Path
 
-from compgen.graph_compilation.promotion_retrieval import (
+from xpu_rt.graph_compilation.promotion_retrieval import (
     PromotedCandidate,
     retrieve_for_region,
 )
@@ -254,7 +254,7 @@ def test_pass_id_resolves_against_card_registry(tmp_path: Path) -> None:
     """The pass_id surfaced by promotion retrieval must resolve against
     the live pass-card registry — otherwise the agent would surface a
     promoted recipe whose pass card doesn't exist."""
-    from compgen.passes.cards import PassCardRegistry, default_registry_root
+    from xpu_rt.passes.cards import PassCardRegistry, default_registry_root
 
     library = tmp_path / "library"
     _write_sidecar(

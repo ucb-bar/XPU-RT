@@ -6,7 +6,7 @@ import json
 
 import pytest
 
-from compgen.providers.provider_types import (
+from xpu_rt.providers.provider_types import (
     BLOCKED_REASONS,
     INTEGRATION_LEVELS,
     PAPER_CLAIMABLE_LEVELS,
@@ -26,7 +26,7 @@ def _minimal_card_body(**overrides):
         "target_families": ["host_cpu"],
         "contract_kinds": ["matmul"],
         "emits": ["c_source"],
-        "entrypoint": "compgen.providers.adapters.cffi_c:CffiCProvider",
+        "entrypoint": "xpu_rt.providers.adapters.cffi_c:CffiCProvider",
         "paper_claimable": True,
     }
     body.update(overrides)

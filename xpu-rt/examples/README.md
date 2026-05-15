@@ -1,4 +1,4 @@
-# CompGen Examples
+# XPU-RT Examples
 
 This directory now separates profile-style examples from hardware-spec examples used by the top-level Python API.
 
@@ -14,7 +14,7 @@ This directory now separates profile-style examples from hardware-spec examples 
 
 | Spec | File | Description |
 |------|------|-------------|
-| GPU SIMT Demo | `hardware_specs/gpu_simt_demo.yaml` | Public targetgen-style hardware spec for `compgen.device(...)` |
+| GPU SIMT Demo | `hardware_specs/gpu_simt_demo.yaml` | Public targetgen-style hardware spec for `xpu_rt.device(...)` |
 
 ## Models
 
@@ -26,7 +26,7 @@ This directory now separates profile-style examples from hardware-spec examples 
 
 ```bash
 # Inspect the CLI surface
-uv run python -m compgen.cli --help
+uv run python -m xpu_rt.cli --help
 
 # Run the current end-to-end demo
 uv run python scripts/e2e_demo.py
@@ -35,9 +35,9 @@ uv run python scripts/e2e_demo.py
 ```bash
 # Exercise the top-level Python API with a public hardware spec
 uv run python - <<'PY'
-import compgen
+import xpu-rt
 
-device = compgen.device("examples/hardware_specs/gpu_simt_demo.yaml")
+device = xpu_rt.device("examples/hardware_specs/gpu_simt_demo.yaml")
 print(device.profile.name)
 print(device.capabilities.target_class.value)
 PY

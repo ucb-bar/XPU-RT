@@ -14,7 +14,7 @@ on Turing*?") and only get the relevant subset.
 
 from __future__ import annotations
 
-from compgen.memory.knowledge import KnowledgeStore, Lesson
+from xpu_rt.memory.knowledge import KnowledgeStore, Lesson
 
 SEED_LESSONS: list[Lesson] = [
     # ----- General compiler design -----
@@ -231,7 +231,7 @@ def install(store: KnowledgeStore | None = None) -> int:
 
     Returns number of new lessons added.
     """
-    from compgen.memory.knowledge import shared_store
+    from xpu_rt.memory.knowledge import shared_store
 
     s = store or shared_store()
 

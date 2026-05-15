@@ -21,7 +21,7 @@ from typing import Any
 
 import torch
 
-from compgen.kernels.contracts import KernelSpec
+from xpu_rt.kernels.contracts import KernelSpec
 
 
 @dataclass(frozen=True)

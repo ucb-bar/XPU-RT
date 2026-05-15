@@ -1,17 +1,17 @@
-"""Tests for the ``~/.compgen/extensions/*.py`` loader."""
+"""Tests for the ``~/.xpu_rt/extensions/*.py`` loader."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
-from compgen.agent.extensions.local_loader import (
+from xpu_rt.agent.extensions.local_loader import (
     LocalExtensionLoadResult,
     load_local_extensions,
 )
-from compgen.llm.registry import Registry
+from xpu_rt.llm.registry import Registry
 
 _TOOL_EXT = """
-from compgen.llm.registry import Tool, ToolArg, ToolResult
+from xpu_rt.llm.registry import Tool, ToolArg, ToolResult
 
 TOOL = Tool(
     name="my_user_tool",
@@ -29,7 +29,7 @@ TOOL = Tool(
 
 
 _SLOT_EXT = """
-from compgen.llm.registry import InventSlot
+from xpu_rt.llm.registry import InventSlot
 
 
 def _gate(proposal, **ctx):

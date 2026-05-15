@@ -20,7 +20,7 @@ from typing import Any
 from xdsl.dialects.builtin import ModuleOp
 from xdsl.pattern_rewriter import PatternRewriteWalker, RewritePattern
 
-from compgen.llm.base import (
+from xpu_rt.llm.base import (
     CompGenLLMProtocol,
     GenerationRequest,
     GenerationResponse,

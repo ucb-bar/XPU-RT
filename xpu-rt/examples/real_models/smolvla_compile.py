@@ -1,6 +1,6 @@
 """ — SmolVLA through ``compile_with_llm``.
 
-Reuses the canonical loader at :func:`compgen.models.load_smolvla_bundle`
+Reuses the canonical loader at :func:`xpu_rt.models.load_smolvla_bundle`
 and drives it through the agentic stack.
 
 Run directly::
@@ -16,8 +16,8 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from compgen import compile_with_llm
-from compgen.llm.mock_client import MockLLMClient
+from xpu_rt import compile_with_llm
+from xpu_rt.llm.mock_client import MockLLMClient
 
 
 SMOLVLA_REPO_ID = "lerobot/smolvla_base"
@@ -42,17 +42,17 @@ def run_smolvla_compile(
 
     SmolVLA emits ~7741 verification obligations whose full SMT ladder
     takes hours; for smoke runs we cap them via the
-    ``COMPGEN_MAX_VERIFICATION_OBLIGATIONS`` env var honoured by
+    ``XPU_RT_MAX_VERIFICATION_OBLIGATIONS`` env var honoured by
     ``RecipeExecutor._execute_verifications``. Pass
     ``max_verification_obligations=0`` (or any non-positive value) to run
     the full ladder.
     """
     import os
 
-    from compgen.models import load_smolvla_bundle
+    from xpu_rt.models import load_smolvla_bundle
 
     if max_verification_obligations and max_verification_obligations > 0:
-        os.environ["COMPGEN_MAX_VERIFICATION_OBLIGATIONS"] = str(
+        os.environ["XPU_RT_MAX_VERIFICATION_OBLIGATIONS"] = str(
             max_verification_obligations
         )
 

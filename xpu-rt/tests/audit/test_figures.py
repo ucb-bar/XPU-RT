@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from compgen.audit.figures import (
+from xpu_rt.audit.figures import (
     FigureResult,
     render_all_figures,
     render_blocked_reason_breakdown,

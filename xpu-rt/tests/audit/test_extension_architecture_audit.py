@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from compgen.audit.extension_architecture import (
+from xpu_rt.audit.extension_architecture import (
     AuditReport,
     FORBIDDEN_OPTIONAL_IMPORTS,
     VIOLATION_REASONS,
@@ -75,7 +75,7 @@ def test_optional_provider_import_violation_detected(tmp_path: Path):
     """A core module that imports an optional package is flagged."""
 
     fake_repo = tmp_path / "fake_repo"
-    src = fake_repo / "python" / "compgen" / "core_thing.py"
+    src = fake_repo / "python" / "xpu-rt" / "core_thing.py"
     src.parent.mkdir(parents=True)
     src.write_text("import cuda_tile\n")
 
@@ -90,7 +90,7 @@ def test_optional_import_inside_adapter_allowed(tmp_path: Path):
     """The same import in the adapter tree is permitted."""
 
     fake_repo = tmp_path / "fake_repo"
-    src = fake_repo / "python" / "compgen" / "providers" / "adapters" / "x.py"
+    src = fake_repo / "python" / "xpu-rt" / "providers" / "adapters" / "x.py"
     src.parent.mkdir(parents=True)
     src.write_text("import cuda_tile\n")
 
@@ -102,7 +102,7 @@ def test_optional_import_inside_adapter_allowed(tmp_path: Path):
 
 def test_provider_result_certificate_alias_violation_detected(tmp_path: Path):
     fake_repo = tmp_path / "fake_repo"
-    src = fake_repo / "python" / "compgen" / "rogue.py"
+    src = fake_repo / "python" / "xpu-rt" / "rogue.py"
     src.parent.mkdir(parents=True)
     src.write_text("ProviderResult = KernelCertificate\n")
 

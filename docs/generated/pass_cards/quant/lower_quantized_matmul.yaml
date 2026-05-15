@@ -30,7 +30,7 @@ failure_modes:
   - "scale_shape_mismatch"
   - "unsupported_zero_point_layout"
   - "asymmetric_quantization_outside_scope"
-mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+mcp_tool: mcp__xpu_rt__xpu_rt_emit_agent_decision_request
 example_invocation:
   schema_version: agent_decision_response_v1
   selected_candidate_id: lower_int4_matmul_region_0
@@ -40,10 +40,10 @@ example_invocation:
       - "candidate.cost_preview.static_relative_cost"
       - "region.numerical_sensitivity_audit.tolerance_budget"
 source: IREE
-impl_path: python/compgen/ir/payload/passes/rewrites/lower_quantized_matmul.py
+impl_path: python/xpu_rt/ir/payload/passes/rewrites/lower_quantized_matmul.py
 notes: |
-  Reconstruction of IREE's quantized-matmul lowering as a CompGen
-  PatternRewriter (python/compgen/ir/payload/passes/rewrites/
+  Reconstruction of IREE's quantized-matmul lowering as a XPU-RT
+  PatternRewriter (python/xpu_rt/ir/payload/passes/rewrites/
   lower_quantized_matmul.py). Lowers an int4/int8 packed-weight GEMM
   into an explicit dequantize + standard fp matmul pair so downstream
   tiling, fusion, and codegen passes can treat it like a normal
@@ -56,5 +56,5 @@ notes: |
   variant.
 
   Source: IREE quantized-matmul lowering. LLM-tool signature declared
-  in the source: wraps_pass=CompGen:LowerQuantizedMatmul,
+  in the source: wraps_pass=XPU-RT:LowerQuantizedMatmul,
   invent_slot=pattern_library/quant_lowering.

@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from compgen.stages.base import CompilationStage, StageContract
-from compgen.stages.registry import StageRegistry, TargetDialectStack
+from xpu_rt.stages.base import CompilationStage, StageContract
+from xpu_rt.stages.registry import StageRegistry, TargetDialectStack
 from xdsl.dialects.builtin import ModuleOp
 
 

@@ -1,9 +1,9 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "compgen://user_perspective/schemas/target_resource.schema.yaml"
+$id: "xpu_rt://user_perspective/schemas/target_resource.schema.yaml"
 title: TargetResource
 description: >
   User-side target-resource model. Extends
-  compgen.targets.schema.TargetProfile with explicit bandwidth/latency,
+  xpu_rt.targets.schema.TargetProfile with explicit bandwidth/latency,
   per-device supported kernel families, host/device sync cost, and an
   assumptions block. Covers both single-device and heterogeneous SoC
   targets. Authored YAML files in configs/targets/*.yaml conform to this.

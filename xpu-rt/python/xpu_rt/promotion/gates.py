@@ -2,7 +2,7 @@
 
 Six-level promotion ladder that replaces the all-or-nothing
 verification gate from
-:func:`compgen.promotion.promote._inspect_verification`. Each level
+:func:`xpu_rt.promotion.promote._inspect_verification`. Each level
 demands strictly more evidence than the one below; promotion at level
 ``promoted`` (the default cutoff) requires the full readiness pack.
 
@@ -336,7 +336,7 @@ def evaluate_gate(
             many *distinct* targets have promotions for the given
             ``region_signature``.
         library_path: Recipe library root. Defaults to
-            ``.compgen_cache/recipes/``.
+            ``.xpu_rt_cache/recipes/``.
     """
     rp = run_dir / "03_recipe_planning"
     reasons: dict[str, str] = {}
@@ -410,7 +410,7 @@ def _check_portable(
 ) -> tuple[bool, str]:
     """≥2 distinct ``target_class`` values for the same region signature."""
     if library_path is None:
-        library_path = Path(".compgen_cache") / "recipes"
+        library_path = Path(".xpu_rt_cache") / "recipes"
     if not library_path.is_dir():
         return False, "recipe library does not exist yet"
 

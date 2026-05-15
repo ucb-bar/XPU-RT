@@ -40,7 +40,7 @@ def _read(p: Path) -> dict:
 
 def _run_one(*, model: str, out_dir: Path) -> None:
     cmd = [
-        sys.executable, "-m", "compgen.graph_compilation", "run",
+        sys.executable, "-m", "xpu_rt.graph_compilation", "run",
         "--model", str(REPO_ROOT / f"configs/models/{model}.yaml"),
         "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
         "--out", str(out_dir),
@@ -78,7 +78,7 @@ def fixture_pack(tmp_path_factory) -> dict:  # type: ignore[no-untyped-def]
 
     out_pack = suite_dir / "evidence_pack"
 
-    from compgen.graph_compilation.evidence_pack import build_evidence_pack
+    from xpu_rt.graph_compilation.evidence_pack import build_evidence_pack
 
     res = build_evidence_pack(
         canonical_suite_root=canonical,
@@ -115,7 +115,7 @@ def test_pack_emits_required_files(fixture_pack: dict) -> None:
 
 
 def test_required_figures_exist_and_are_pngs(fixture_pack: dict) -> None:
-    from compgen.graph_compilation.evidence_pack import is_png
+    from xpu_rt.graph_compilation.evidence_pack import is_png
 
     out: Path = fixture_pack["out"]
     figures = [
@@ -354,16 +354,16 @@ def test_summary_has_headline_numbers(fixture_pack: dict) -> None:
 
 def test_evidence_pack_does_not_import_compiler_core() -> None:
     forbidden = (
-        "from compgen.ir",
-        "import compgen.ir",
-        "from compgen.capture",
-        "import compgen.capture",
-        "from compgen.pipeline",
-        "import compgen.pipeline",
+        "from xpu_rt.ir",
+        "import xpu_rt.ir",
+        "from xpu_rt.capture",
+        "import xpu_rt.capture",
+        "from xpu_rt.pipeline",
+        "import xpu_rt.pipeline",
     )
     for src_path in (
-        REPO_ROOT / "python" / "compgen" / "graph_compilation" / "evidence_pack.py",
-        REPO_ROOT / "python" / "compgen" / "graph_compilation" / "evidence_pack_figures.py",
+        REPO_ROOT / "python" / "xpu-rt" / "graph_compilation" / "evidence_pack.py",
+        REPO_ROOT / "python" / "xpu-rt" / "graph_compilation" / "evidence_pack_figures.py",
     ):
         text = src_path.read_text(encoding="utf-8")
         for pat in forbidden:
@@ -390,7 +390,7 @@ def test_evidence_pack_is_read_only(fixture_pack: dict) -> None:
 
     before = {**_shas(canonical), **_shas(wide)}
 
-    from compgen.graph_compilation.evidence_pack import build_evidence_pack
+    from xpu_rt.graph_compilation.evidence_pack import build_evidence_pack
 
     build_evidence_pack(
         canonical_suite_root=canonical,

@@ -2,18 +2,18 @@
 
 Bridges the existing scan-only pattern_graduation infrastructure to
 *live* registry mutation. Called once at session start (from
-:func:`compgen.llm.registry.get_registry` via the
-:mod:`~compgen.agent.invent_slots.registrar`):
+:func:`xpu_rt.llm.registry.get_registry` via the
+:mod:`~xpu_rt.agent.invent_slots.registrar`):
 
-1. Scan ``~/.compgen/transcripts/**/tools.jsonl`` for accepted invent
+1. Scan ``~/.xpu_rt/transcripts/**/tools.jsonl`` for accepted invent
    proposals.
 2. Aggregate by ``(slot_name, chosen_signature)`` and apply the
-   workload+target thresholds (see :mod:`compgen.promotion.pattern_graduation`).
+   workload+target thresholds (see :mod:`xpu_rt.promotion.pattern_graduation`).
 3. For each granted request, register a new :class:`Tool` whose
    ``impl`` re-emits the chosen exemplar (until a hand-written pass
    replaces it).
 4. Idempotence: state file
-   ``~/.compgen/transcripts/_graduations.json`` records which patterns
+   ``~/.xpu_rt/transcripts/_graduations.json`` records which patterns
    have already graduated; reruns are no-ops.
 
 Failure mode: any exception is logged and swallowed — graduation must
@@ -29,7 +29,7 @@ from typing import TYPE_CHECKING, Any
 
 import structlog
 
-from compgen.promotion.pattern_graduation import (
+from xpu_rt.promotion.pattern_graduation import (
     PatternIdentity,
     PatternPromotionRequest,
     _chosen_signature,
@@ -40,12 +40,12 @@ from compgen.promotion.pattern_graduation import (
 )
 
 if TYPE_CHECKING:  # pragma: no cover
-    from compgen.llm.registry import Registry
+    from xpu_rt.llm.registry import Registry
 
 log = structlog.get_logger()
 
 
-DEFAULT_TRANSCRIPTS_ROOT = Path("~/.compgen/transcripts").expanduser()
+DEFAULT_TRANSCRIPTS_ROOT = Path("~/.xpu_rt/transcripts").expanduser()
 GRADUATION_STATE_FILE = "_graduations.json"
 
 
@@ -121,7 +121,7 @@ def _make_graduated_tool(req: PatternPromotionRequest):
     bypassing the full propose-and-gate cycle. A future hand-written
     pass replaces ``impl`` to do real work.
     """
-    from compgen.llm.registry import Tool, ToolArg, ToolResult
+    from xpu_rt.llm.registry import Tool, ToolArg, ToolResult
 
     chosen = dict(req.chosen_exemplar)
 
@@ -187,7 +187,7 @@ def promote_pending_graduations(
     Args:
         registry: The live registry to mutate.
         transcripts_root: Directory holding ``tools.jsonl`` files. Defaults
-            to ``~/.compgen/transcripts`` (matches LLMDrivenCompiler's
+            to ``~/.xpu_rt/transcripts`` (matches LLMDrivenCompiler's
             recorder layout).
         min_workloads: Cross-workload threshold for graduation (default 2).
         min_targets: Cross-target threshold for graduation (default 2).

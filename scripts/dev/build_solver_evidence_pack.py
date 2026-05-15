@@ -545,7 +545,7 @@ def build_pack(
 
     backend_status = _load_backend_status(run_dirs)
     if backend_status is None:
-        from compgen.solve.backend_registry import default_registry
+        from xpu_rt.solve.backend_registry import default_registry
 
         reg = default_registry()
         results = reg.probe_all()

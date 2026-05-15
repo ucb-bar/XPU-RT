@@ -1,6 +1,6 @@
 """Frozen descriptor for the reference cuda_tile adapter.
 
-Mirrors the descriptor that bwell's ``compgen_cuda_tile`` package
+Mirrors the descriptor that bwell's ``xpu_rt_cuda_tile`` package
 declared after running ``scaffold_vendor_package`` on the cuda-tile
 repo (bridge #138 onward). Kept in code rather than YAML so the
 reference adapter has zero on-disk dependencies — any caller can
@@ -9,7 +9,7 @@ reference adapter has zero on-disk dependencies — any caller can
 
 from __future__ import annotations
 
-from compgen.extensions.vendor_dialect.descriptor import (
+from xpu_rt.extensions.vendor_dialect.descriptor import (
     BundlePlan,
     CompileEntry,
     LoweringStrategy,
@@ -39,7 +39,7 @@ def build_descriptor() -> VendorDialectDescriptor:
     """Return the canonical reference descriptor."""
     return VendorDialectDescriptor(
         name="cuda_tile",
-        package_name="compgen.extensions.vendor_dialect.builtins.cuda_tile",
+        package_name="xpu_rt.extensions.vendor_dialect.builtins.cuda_tile",
         repo_path="<builtin>",
         target="nvidia-blackwell",
         input_ir=("payload-mlir",),

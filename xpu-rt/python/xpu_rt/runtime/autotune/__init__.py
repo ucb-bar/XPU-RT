@@ -2,7 +2,7 @@
 
 The agentic-compilation contract: a PyPI user (or their agent)
 calls ``compile_model(model, target="auto")`` with no flags and
-expects CompGen to figure out everything — which NVRTC to use,
+expects XPU-RT to figure out everything — which NVRTC to use,
 which cuBLASDx precision, which tile shape, which SM tag, etc.
 
 Every flag the matcher accepts is something the user shouldn't
@@ -29,7 +29,7 @@ after pip-installing nvidia-mathdx mid-session).
 
 Public API:
 
-    from compgen.runtime.autotune import probe_device, BackendChoice
+    from xpu_rt.runtime.autotune import probe_device, BackendChoice
 
     choice = probe_device(target="auto")
     # → BackendChoice(target_arch="sm_100", use_cublasdx=True, ...)
@@ -74,7 +74,7 @@ class BackendChoice:
             ``__CUDA_ARCH__`` > 900 (Blackwell sm_100/sm_120).
         cublasdx_sm: Integer ``SM<...>`` template tag for cuBLASDx.
             Mapped from ``target_arch`` per
-            :func:`compgen.runtime.lowering.fx_to_megakernel._arch_to_cublasdx_sm`.
+            :func:`xpu_rt.runtime.lowering.fx_to_megakernel._arch_to_cublasdx_sm`.
         tile_m, tile_n, tile_k: Per-task tile shape.
             64×64×16 for cuBLASDx (mma.sync trigger per #095),
             32×32×32 for the hand_rolled_fmaf path.
@@ -264,7 +264,7 @@ def _resolve_target_arch(target: str) -> tuple[str, str]:
 
     Probe order (per bridge #102 — bwell hit ``fallback`` even on
     real hardware because :class:`CudaDeviceProbe` needs
-    ``libcompgen_rt-cuda.so`` which the wheel doesn't always ship):
+    ``libxpu_rt-cuda.so`` which the wheel doesn't always ship):
 
     1. ``CudaDeviceProbe`` via the native HAL — most reliable when
        the .so is present.
@@ -282,7 +282,7 @@ def _resolve_target_arch(target: str) -> tuple[str, str]:
 
     # 1. Try the native HAL first — most reliable.
     try:
-        from compgen.runtime.native.cuda import (
+        from xpu_rt.runtime.native.cuda import (
             CudaDeviceProbe,
             CudaUnavailableError,
         )
@@ -297,7 +297,7 @@ def _resolve_target_arch(target: str) -> tuple[str, str]:
         pass
 
     # 2. Torch fallback — every Blackwell user has torch via
-    # compgen[cuda] or torch>=2.6, which means torch.cuda is
+    # xpu_rt[cuda] or torch>=2.6, which means torch.cuda is
     # reachable when the GPU exists. Per #102: this fixes the
     # "target_origin=fallback on real hardware" gap.
     try:
@@ -327,7 +327,7 @@ def _probe_libraries() -> tuple[bool, bool, dict[str, str | None]]:
         "cu13_nvrtc_lib": None,
     }
     try:
-        from compgen.runtime.native.cuda import (
+        from xpu_rt.runtime.native.cuda import (
             _resolve_cu13_nvrtc_lib_path,
             discover_cublasdx_include,
             discover_cutlass_include,
@@ -358,7 +358,7 @@ def _arch_to_cublasdx_sm(arch: str) -> int:
     """Re-export of the lowering matcher's mapping. Keeps the SM tag
     selection in one place; the matcher imports back from here when
     consuming the BackendChoice."""
-    from compgen.runtime.lowering.fx_to_megakernel import (
+    from xpu_rt.runtime.lowering.fx_to_megakernel import (
         _arch_to_cublasdx_sm as _impl,
     )
 

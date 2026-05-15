@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from compgen.ir.accel.lowering import LoweringOutput, lower_accel_to_llvm
-from compgen.ir.accel.ops import (
+from xpu_rt.ir.accel.lowering import LoweringOutput, lower_accel_to_llvm
+from xpu_rt.ir.accel.ops import (
     BarrierOp,
     DMAStartOp,
     DMAWaitOp,

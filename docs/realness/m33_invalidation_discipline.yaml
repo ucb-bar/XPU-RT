@@ -20,14 +20,14 @@ forbidden:
 - precomputed verification certificate shipped in repo
 realness_level: production_path
 required_evidence:
-- python/compgen/analysis/invalidation.py
-- python/compgen/analysis/checkpoints.py (AnalysisIndex.diff, AnalysisSummary.generation)
-- python/compgen/passes/verification.py
-- python/compgen/passes/refinement.py
-- python/compgen/audit/errors.py (UnannouncedInvalidation, RefinementMonotonicityViolation, VerificationGateMissing, VerificationGateFailed)
-- python/compgen/audit/negative_controls.py (real fault injection for all three previously-placeholder controls)
-- python/compgen/graph_compilation/agent_decision.py (3 new validator rows)
-- python/compgen/graph_compilation/run.py (cert emit hooks at post_lowering + differential_verification)
+- python/xpu_rt/analysis/invalidation.py
+- python/xpu_rt/analysis/checkpoints.py (AnalysisIndex.diff, AnalysisSummary.generation)
+- python/xpu_rt/passes/verification.py
+- python/xpu_rt/passes/refinement.py
+- python/xpu_rt/audit/errors.py (UnannouncedInvalidation, RefinementMonotonicityViolation, VerificationGateMissing, VerificationGateFailed)
+- python/xpu_rt/audit/negative_controls.py (real fault injection for all three previously-placeholder controls)
+- python/xpu_rt/graph_compilation/agent_decision.py (3 new validator rows)
+- python/xpu_rt/graph_compilation/run.py (cert emit hooks at post_lowering + differential_verification)
 - tests/analysis/test_invalidation.py
 - tests/passes/test_verification_gates.py
 - tests/passes/test_refinement_chain.py

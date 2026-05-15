@@ -44,14 +44,14 @@ def _read(p: Path) -> dict:
 def _run(model: str, out_dir: Path, *, run_kernels: bool) -> None:
     env = os.environ.copy()
     if run_kernels:
-        env["COMPGEN_RUN_KERNELS"] = "1"
+        env["XPU_RT_RUN_KERNELS"] = "1"
     else:
-        env.pop("COMPGEN_RUN_KERNELS", None)
-    env.pop("COMPGEN_CALIBRATE_PROFILER", None)
-    env.pop("COMPGEN_CALIBRATE_CANDIDATES", None)
+        env.pop("XPU_RT_RUN_KERNELS", None)
+    env.pop("XPU_RT_CALIBRATE_PROFILER", None)
+    env.pop("XPU_RT_CALIBRATE_CANDIDATES", None)
     subprocess.run(
         [
-            sys.executable, "-m", "compgen.graph_compilation", "run",
+            sys.executable, "-m", "xpu_rt.graph_compilation", "run",
             "--model", str(REPO_ROOT / f"configs/models/{model}.yaml"),
             "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
             "--out", str(out_dir),
@@ -348,7 +348,7 @@ def test_run_manifest_hash_chain_intact_with_m221(
 
 
 def test_perf_available_pure_function() -> None:
-    from compgen.graph_compilation.profiler_evidence import _perf_available
+    from xpu_rt.graph_compilation.profiler_evidence import _perf_available
 
     avail, reason = _perf_available()
     assert isinstance(avail, bool)
@@ -358,14 +358,14 @@ def test_perf_available_pure_function() -> None:
 
 def test_no_compiler_core_imports() -> None:
     src = (
-        REPO_ROOT / "python" / "compgen" / "graph_compilation"
+        REPO_ROOT / "python" / "xpu-rt" / "graph_compilation"
         / "profiler_evidence.py"
     ).read_text(encoding="utf-8")
     forbidden = (
-        "from compgen.ir",
-        "from compgen.capture",
-        "from compgen.pipeline",
-        "from compgen.runtime.bundle_emit",
+        "from xpu_rt.ir",
+        "from xpu_rt.capture",
+        "from xpu_rt.pipeline",
+        "from xpu_rt.runtime.bundle_emit",
     )
     for f in forbidden:
         assert f not in src, (

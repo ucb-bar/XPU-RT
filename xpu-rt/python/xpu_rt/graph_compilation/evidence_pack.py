@@ -29,8 +29,8 @@ Hard non-goals:
 - This module is read-only. It does NOT run the pipeline, mutate any
   source artifact, or change compiler behavior.
 - No new candidate generation, no new transforms, no new verification.
-- No compiler-core (`compgen.ir`, `compgen.capture`, `compgen.pipeline`,
-  `compgen.runtime`) imports.
+- No compiler-core (`xpu_rt.ir`, `xpu_rt.capture`, `xpu_rt.pipeline`,
+  `xpu_rt.runtime`) imports.
 
 The pack is paper-facing — every aggregate metric is computed from the
 per-model artifacts on disk; nothing is invented. The honest non-claims
@@ -91,7 +91,7 @@ class ModelEvidence:
     strict_gate_root_cause: str = ""
     readiness_overall: str = "n/a"           # "pass" | "fail" | "n/a"
     readiness_rows: dict[str, str] = field(default_factory=dict)  # row→status
-    # calibration overlay (only populated when COMPGEN_CALIBRATE_PROFILER
+    # calibration overlay (only populated when XPU_RT_CALIBRATE_PROFILER
     # was on for the run that produced this directory).
     calibration_status: str = "n/a"          # "calibrated" | "partial_match" | "no_op_match" | "not_run" | "n/a"
     calibration_overall: str = "n/a"         # "calibrated" | "partial" | "not_run" | "n/a"
@@ -910,7 +910,7 @@ _HONEST_NON_CLAIMS = """\
 - General fusion, reduction fusion, matmul→add fusion, softmax fusion,
   and multi-output fusion are not yet supported.
 - Cost Preview V2 is target-sensitive. M-18 adds a measured-profile
-  calibration overlay (opt-in via `COMPGEN_CALIBRATE_PROFILER=1`); the
+  calibration overlay (opt-in via `XPU_RT_CALIBRATE_PROFILER=1`); the
   deterministic baseline is preserved alongside.
 - Kernel codegen, scheduling, runtime emission, and benchmarking are
   not part of this evidence pack.
@@ -1173,7 +1173,7 @@ def build_evidence_pack(
     write_summary_md(rows, agg, claim_matrix, summary_md)
 
     if not skip_figures:
-        from compgen.graph_compilation.evidence_pack_figures import render_all
+        from xpu_rt.graph_compilation.evidence_pack_figures import render_all
         render_all(rows, agg, figures_dir)
 
     return EvidencePackResult(

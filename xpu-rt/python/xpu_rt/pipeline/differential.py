@@ -17,8 +17,8 @@ does not perturb eager behaviour on the same fixture.
 
 Usage::
 
-    from compgen.pipeline.differential import compile_and_diff
-    from compgen.options import cuda_a100_defaults
+    from xpu_rt.pipeline.differential import compile_and_diff
+    from xpu_rt.options import cuda_a100_defaults
 
     report = compile_and_diff(
         model, example_inputs,
@@ -35,8 +35,8 @@ from typing import Any, Protocol, runtime_checkable
 
 import structlog
 
-from compgen.options import CompGenOptions
-from compgen.pipeline.driver import PipelineResult, compile_through_pipeline
+from xpu_rt.options import CompGenOptions
+from xpu_rt.pipeline.driver import PipelineResult, compile_through_pipeline
 
 log = structlog.get_logger()
 
@@ -56,7 +56,7 @@ class CompiledExecutorProtocol(Protocol):
 
     Implementations:
 
-    - In-tree default: ``compgen.runtime.cpu_executor.execute`` wrapped
+    - In-tree default: ``xpu_rt.runtime.cpu_executor.execute`` wrapped
       to match this signature (the bool=True path keeps doing this).
     - Subprocess-backed (RTL sim, FPGA, physical): wrap the post-sim
       result-readback as a callable that takes the example inputs,
@@ -239,7 +239,7 @@ def compile_and_diff(
     # --- 6. Compiled executor ---
     # Two modes (REQ-004):
     #   ``run_compiled_executor=True``   → in-tree CPU interpreter
-    #                                      (compgen.runtime.cpu_executor.execute).
+    #                                      (xpu_rt.runtime.cpu_executor.execute).
     #   ``run_compiled_executor=<callable>`` → an external executor
     #                                          satisfying CompiledExecutorProtocol.
     #                                          Lets RTL sim, FPGA, physical-HW,
@@ -257,7 +257,7 @@ def compile_and_diff(
                 out = external_exec(tuple(example_inputs))
                 report.compiled_executed = True
             else:
-                from compgen.runtime.cpu_executor import ExecutorStats, execute
+                from xpu_rt.runtime.cpu_executor import ExecutorStats, execute
 
                 ep = exported_program
                 if ep is None and hasattr(model, "graph_signature"):

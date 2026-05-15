@@ -1,4 +1,4 @@
-"""``hoist_encoding_ops`` -- move compgen.quant dequantize ops closer
+"""``hoist_encoding_ops`` -- move xpu_rt.quant dequantize ops closer
 to their producer so downstream fusion has a shorter use-def chain.
 
 Mirror of IREE's ``HoistEncodingOps`` + ``MaterializeEncodings``.
@@ -7,7 +7,7 @@ consumer, hoisting it up to the producer creates a clear
 fuse-dequant-into-producer opportunity.
 
 The pass is conservative: it only tags the dequantize with
-``compgen.hoist_candidate`` when:
+``xpu_rt.hoist_candidate`` when:
 - the dequantize has a single use, AND
 - its input (the quantized tensor) has a single use (the dequantize).
 
@@ -27,7 +27,7 @@ from xdsl.pattern_rewriter import (
     RewritePattern,
 )
 
-from compgen.ir.quant import (
+from xpu_rt.ir.quant import (
     DequantizePerChannelOp,
     DequantizePerGroupOp,
     DequantizePerTensorOp,
@@ -59,7 +59,7 @@ class _HoistPattern(RewritePattern):
         if not isinstance(op, _DEQUANT_OPS):
             return
         self.stats.dequants_seen += 1
-        if "compgen.hoist_candidate" in op.attributes:
+        if "xpu_rt.hoist_candidate" in op.attributes:
             return
         # single-use on the dequant result AND on the quant input
         if not _single_use(op.results[0]):
@@ -67,8 +67,8 @@ class _HoistPattern(RewritePattern):
         q_input = op.operands[0]
         if not _single_use(q_input):
             return
-        op.attributes["compgen.hoist_candidate"] = StringAttr("true")
-        op.attributes["compgen.hoist_dequant_kind"] = StringAttr(type(op).__name__)
+        op.attributes["xpu_rt.hoist_candidate"] = StringAttr("true")
+        op.attributes["xpu_rt.hoist_dequant_kind"] = StringAttr(type(op).__name__)
         self.stats.candidates_tagged += 1
 
 

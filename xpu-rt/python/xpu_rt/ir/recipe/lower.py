@@ -22,7 +22,7 @@ import structlog
 from xdsl.dialects.builtin import ArrayAttr, IntegerAttr, ModuleOp, StringAttr, SymbolRefAttr
 from xdsl.ir import Operation
 
-from compgen.ir.recipe.ops_candidate import (
+from xpu_rt.ir.recipe.ops_candidate import (
     FuseOp,
     InsertCopyBoundaryOp,
     LayoutNormalizeOp,
@@ -37,20 +37,20 @@ from compgen.ir.recipe.ops_candidate import (
     TileOp,
     VectorizeOp,
 )
-from compgen.ir.recipe.ops_choice import (
+from xpu_rt.ir.recipe.ops_choice import (
     RequireEqsatOp,
     RequireSolverOp,
 )
-from compgen.ir.recipe.ops_propose import (
+from xpu_rt.ir.recipe.ops_propose import (
     ProposeDequantFusionOp,
     ProposeFusionOp,
     ProposeLayoutPlanOp,
     ProposeMegakernelSynthesisOp,
     ProposePayload,
 )
-from compgen.ir.recipe.ops_provenance import PromoteOp
-from compgen.ir.recipe.ops_scope import RecipeGuardOp
-from compgen.ir.recipe.ops_verify import (
+from xpu_rt.ir.recipe.ops_provenance import PromoteOp
+from xpu_rt.ir.recipe.ops_scope import RecipeGuardOp
+from xpu_rt.ir.recipe.ops_verify import (
     RequireCheckFileOp,
     RequireDiffTestOp,
     RequireLayoutInvariantOp,
@@ -58,9 +58,9 @@ from compgen.ir.recipe.ops_verify import (
     RequireProfileBudgetOp,
     RequireTranslationValidationOp,
 )
-from compgen.semantic.synthesis.facts import RecipeFactIndex, build_candidate_env, build_fact_index
-from compgen.semantic.synthesis.registry import GuardRegistry
-from compgen.semantic.synthesis.runtime import GuardRuntime, GuardVerdict
+from xpu_rt.semantic.synthesis.facts import RecipeFactIndex, build_candidate_env, build_fact_index
+from xpu_rt.semantic.synthesis.registry import GuardRegistry
+from xpu_rt.semantic.synthesis.runtime import GuardRuntime, GuardVerdict
 
 log = structlog.get_logger()
 
@@ -405,7 +405,7 @@ def _lower_fuse(op: FuseOp, out: list[str]) -> None:
 
 # ---- Propose-op lowerings (LLM invent-slot outputs) ------------------------
 # Propose-ops are the LLM's accepted proposals, appended to the recipe
-# module by :func:`compgen.agent.recipe_bridge_invent.proposal_to_recipe_op`.
+# module by :func:`xpu_rt.agent.recipe_bridge_invent.proposal_to_recipe_op`.
 # Here we turn them into the same downstream artifacts candidate ops produce
 # (transform scripts / kernel jobs / verification obligations), plus a
 # verification obligation specific to each proposal family so the semantic
@@ -756,7 +756,7 @@ def _lower_promote(op: PromoteOp, out: list[dict[str, Any]]) -> None:
     """Project a ``recipe.promote`` op into a JSON-stable record.
 
     Mirrors the structure of
-    :class:`compgen.promotion.promote.PromotedRecipe` so retrieval
+    :class:`xpu_rt.promotion.promote.PromotedRecipe` so retrieval
     can consume the lowering output without a separate IR walk.
     """
     record: dict[str, Any] = {
@@ -810,7 +810,7 @@ def _lower_select_exo_schedule(op: SelectExoScheduleLibOp, out: list[dict[str, A
 
 # --- Backward compatibility ---
 
-from compgen.ir.recipe.ops import RecipeOp  # noqa: E402
+from xpu_rt.ir.recipe.ops import RecipeOp  # noqa: E402
 
 
 def lower_recipe_ops(ops: list[RecipeOp]) -> LoweringOutput:
@@ -818,7 +818,7 @@ def lower_recipe_ops(ops: list[RecipeOp]) -> LoweringOutput:
 
     Converts to xDSL module first via compat.py, then lowers.
     """
-    from compgen.ir.recipe.compat import recipe_list_to_module
+    from xpu_rt.ir.recipe.compat import recipe_list_to_module
 
     module = recipe_list_to_module(ops)
     return lower_recipe(module)

@@ -43,8 +43,8 @@ forbidden:
 - emitting a kernel certificate (M-45's job) before M-44 verification runs
 realness_level: production_path
 required_evidence:
-- python/compgen/graph_compilation/kernel_codegen_response.py
-- python/compgen/mcp/tools/kernel_codegen.py
+- python/xpu_rt/graph_compilation/kernel_codegen_response.py
+- python/xpu_rt/mcp/tools/kernel_codegen.py
 - tests/graph_compilation/test_kernel_codegen_response.py
 - "04_kernel_codegen/attempts/<task_id>/attempt_<N>/{response,validation_report}.json on a real run"
 - "04_kernel_codegen/kernel_codegen_attempts.json (append-only) on a real run"
@@ -90,7 +90,7 @@ notes: |
   tool can return on accept. M-45's certificate is not emitted by
   M-43; that's wired when both M-44 and M-45 land.
 
-  M-43.1 follow-up: the ``compgen_run_kernel_codegen_task`` MCP tool
+  M-43.1 follow-up: the ``xpu_rt_run_kernel_codegen_task`` MCP tool
   currently returns ``operator_action_required=True`` for new tasks
   — the harness-driven Claude Code subagent spawn is wired in M-43.1
   (the parent MCP server gains an Agent-tool wrapper). The

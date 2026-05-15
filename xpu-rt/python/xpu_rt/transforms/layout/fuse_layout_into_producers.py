@@ -13,7 +13,7 @@ from xdsl.dialects.builtin import ModuleOp, StringAttr
 
 log = structlog.get_logger()
 
-FUSED_LAYOUT_ATTR = "compgen.fused_layout"
+FUSED_LAYOUT_ATTR = "xpu_rt.fused_layout"
 
 
 def fuse_layout_into_producers(module: ModuleOp) -> ModuleOp:
@@ -34,7 +34,7 @@ def fuse_layout_into_producers(module: ModuleOp) -> ModuleOp:
     for op in module.walk():
         if isinstance(op, (ModuleOp, FuncOp, ReturnOp)):
             continue
-        for attr_key in ("compgen.propagated_encoding", "compgen.layout_hint", "compgen.encoding"):
+        for attr_key in ("xpu_rt.propagated_encoding", "xpu_rt.layout_hint", "xpu_rt.encoding"):
             attr = op.attributes.get(attr_key)
             if attr and hasattr(attr, "data"):
                 op_encoding[id(op)] = attr.data

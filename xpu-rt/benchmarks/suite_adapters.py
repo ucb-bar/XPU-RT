@@ -15,7 +15,7 @@ from typing import Any
 
 import torch
 import torch.nn as nn
-from compgen.benchmarks import (
+from xpu_rt.benchmarks import (
     NormalizedSuiteResult,
     SuiteEnvironmentStatus,
     SuiteManifestEntry,
@@ -24,7 +24,7 @@ from compgen.benchmarks import (
     resolve_suite_root,
     write_normalized_suite_results,
 )
-from compgen.packs import default_pack_root, load_builtin_packs, load_pack
+from xpu_rt.packs import default_pack_root, load_builtin_packs, load_pack
 
 from benchmarks.adapters import AdapterContext, CompGenAdapter
 from benchmarks.collector import collect_performance_metrics
@@ -544,7 +544,7 @@ class PyTorchSuiteAdapter(BaseSuiteAdapter):
         config: SuiteRunConfig,
         mode: str,
     ) -> RunRecord:
-        from compgen.runtime.local_executor import LocalExecutor
+        from xpu_rt.runtime.local_executor import LocalExecutor
 
         model, sample_inputs = self.prepare_inputs(entry, workspace=workspace, config=config)
         suite_root = self._resolve_root(workspace)
@@ -617,7 +617,7 @@ class PyTorchSuiteAdapter(BaseSuiteAdapter):
         )
         return records
 
-    def run_compgen(
+    def run_xpu_rt(
         self,
         entry: SuiteManifestEntry,
         *,
@@ -652,11 +652,11 @@ class PyTorchSuiteAdapter(BaseSuiteAdapter):
             study_id=f"suite_{self.suite_id}",
             workload_id=workload.workload_id,
             target_id=target_id,
-            baseline_ids=["compgen"],
+            baseline_ids=["xpu-rt"],
             tags=[self.suite_id, "suite"],
             metadata={"manifest_id": entry.manifest_id},
         )
-        baseline = BaselineSpec("compgen", "compgen", "CompGen suite adapter run", tags=[self.suite_id, "suite"])
+        baseline = BaselineSpec("xpu-rt", "xpu-rt", "XPU-RT suite adapter run", tags=[self.suite_id, "suite"])
         ctx = AdapterContext(
             workspace=workspace or WorkspaceConfig.default(Path.cwd()),
             registry=registry,
@@ -671,11 +671,11 @@ class PyTorchSuiteAdapter(BaseSuiteAdapter):
         record.workload_id = entry.workload_id
         record.target_name = config.device
         record.target_id = config.device
-        record.system_name = f"{self.suite_id}_compgen"
+        record.system_name = f"{self.suite_id}_xpu_rt"
         record.study.study_id = f"suite_{self.suite_id}"
         record.study.case_id = case.case_id
         record.study.target_id = config.device
-        record.study.baseline_id = "compgen"
+        record.study.baseline_id = "xpu-rt"
         record.study.tags = sorted(set((self.suite_id, "suite", *entry.tags)))
         record.suite.suite_id = self.suite_id
         record.suite.manifest_id = entry.manifest_id
@@ -947,7 +947,7 @@ class ExternalCommandSuiteAdapter(BaseSuiteAdapter):
             )
         ]
 
-    def run_compgen(
+    def run_xpu_rt(
         self,
         entry: SuiteManifestEntry,
         *,
@@ -964,8 +964,8 @@ class ExternalCommandSuiteAdapter(BaseSuiteAdapter):
                 workspace=workspace,
                 output_dir=Path(output_dir or Path.cwd()),
                 config=config,
-                system_name=f"{self.suite_id}_compgen",
-                command_key="compgen_command",
+                system_name=f"{self.suite_id}_xpu_rt",
+                command_key="xpu_rt_command",
             )
         ]
 
@@ -1143,7 +1143,7 @@ class PackIntegrationSuiteAdapter(BaseSuiteAdapter):
             )
         ]
 
-    def run_compgen(
+    def run_xpu_rt(
         self,
         entry: SuiteManifestEntry,
         *,
@@ -1160,8 +1160,8 @@ class PackIntegrationSuiteAdapter(BaseSuiteAdapter):
                 workspace=workspace,
                 output_dir=Path(output_dir or Path.cwd()),
                 config=config,
-                system_name=f"{self.suite_id}_compgen",
-                command_key="compgen_command",
+                system_name=f"{self.suite_id}_xpu_rt",
+                command_key="xpu_rt_command",
             )
         ]
 

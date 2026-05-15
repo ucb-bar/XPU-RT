@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://compgen.dev/schemas/v1/model_admission/model_config.schema.json",
+  "$id": "https://xpu_rt.dev/schemas/v1/model_admission/model_config.schema.json",
   "title": "model_config_v1",
   "type": "object",
   "additionalProperties": false,
@@ -43,7 +43,7 @@
         "kind": {
           "type": "string",
           "enum": [
-            "compgen_model_spec",
+            "xpu_rt_model_spec",
             "hf_transformers_vlm",
             "hf_transformers_llm",
             "hf_transformers_ocr",

@@ -5,29 +5,29 @@ claim: |
 
   Module set delivered:
 
-  * ``python/compgen/providers/provider_types.py`` —
+  * ``python/xpu_rt/providers/provider_types.py`` —
     ``ProviderCard`` (5-level ``integration_level`` ladder),
     ``ProviderProbeResult`` (typed status + typed blocked_reason).
-  * ``python/compgen/targets/target_types.py`` — ``TargetCard``
+  * ``python/xpu_rt/targets/target_types.py`` — ``TargetCard``
     (typed ``dispatch_modes`` + ``memory_tiers`` enums).
-  * ``python/compgen/dialects/dialect_provider_types.py`` —
+  * ``python/xpu_rt/dialects/dialect_provider_types.py`` —
     ``DialectProviderCard``.
-  * ``python/compgen/pass_tools/pass_tool_types.py`` —
+  * ``python/xpu_rt/pass_tools/pass_tool_types.py`` —
     ``PassToolCard`` (rejects ``writes: [payload_ir]`` at schema
     level — hard rule 4).
-  * ``python/compgen/extensions/manifest.py`` —
-    ``ExtensionManifest`` (``compgen_extension_v1``) and
+  * ``python/xpu_rt/extensions/manifest.py`` —
+    ``ExtensionManifest`` (``xpu_rt_extension_v1``) and
     ``ExtensionTask`` (``extension_task_v1``).
-  * ``python/compgen/extensions/sandbox.py`` —
+  * ``python/xpu_rt/extensions/sandbox.py`` —
     ``validate_sandboxed_path`` (rejects ``..`` traversal,
     out-of-root writes, and forbidden filenames like
-    ``payload.mlir`` / ``compgen_extension.yaml``).
-  * ``python/compgen/extensions/errors.py`` — typed errors
+    ``payload.mlir`` / ``xpu_rt_extension.yaml``).
+  * ``python/xpu_rt/extensions/errors.py`` — typed errors
     (``ExtensionManifestError``, ``ExtensionSandboxViolation``,
     ``ExtensionTaskError``).
 
   Legacy kernel-only types (``BidPreview`` / ``ProviderResult`` /
-  ``KernelProvider``) in :mod:`compgen.kernels.provider` are NOT
+  ``KernelProvider``) in :mod:`xpu_rt.kernels.provider` are NOT
   duplicated — they remain the canonical types for kernel-codegen
   code. The Phase F substrate is the card-driven layer wrapping
   them.
@@ -60,7 +60,7 @@ claim: |
   ``tests/{kernels,passes,targets}`` still pass.
 realness_level: production_path
 forbidden:
-  - duplicating types from compgen.kernels.provider
+  - duplicating types from xpu_rt.kernels.provider
   - declaring integration_level outside the five-level ladder
   - importing optional providers at module import time
   - treating ProviderResult as a certificate
@@ -68,16 +68,16 @@ forbidden:
   - "pass tools declaring writes=[payload_ir]"
   - sandbox bypass via ".." path traversal or forbidden filenames
 required_evidence:
-  - python/compgen/providers/__init__.py
-  - python/compgen/providers/provider_types.py
-  - python/compgen/targets/target_types.py
-  - python/compgen/dialects/__init__.py
-  - python/compgen/dialects/dialect_provider_types.py
-  - python/compgen/pass_tools/__init__.py
-  - python/compgen/pass_tools/pass_tool_types.py
-  - python/compgen/extensions/errors.py
-  - python/compgen/extensions/manifest.py
-  - python/compgen/extensions/sandbox.py
+  - python/xpu_rt/providers/__init__.py
+  - python/xpu_rt/providers/provider_types.py
+  - python/xpu_rt/targets/target_types.py
+  - python/xpu_rt/dialects/__init__.py
+  - python/xpu_rt/dialects/dialect_provider_types.py
+  - python/xpu_rt/pass_tools/__init__.py
+  - python/xpu_rt/pass_tools/pass_tool_types.py
+  - python/xpu_rt/extensions/errors.py
+  - python/xpu_rt/extensions/manifest.py
+  - python/xpu_rt/extensions/sandbox.py
   - tests/providers/test_provider_cards.py
   - tests/extensions/test_extension_sandbox.py
   - tests/extensions/test_extension_manifest.py

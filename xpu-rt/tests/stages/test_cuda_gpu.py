@@ -9,18 +9,18 @@ from __future__ import annotations
 
 import pytest
 import torch
-from compgen.stages.dispatch.stage import DISPATCH_ID_ATTR
-from compgen.stages.registry import StageRegistry
-from compgen.stages.targets.cuda_gpu import (
+from xpu_rt.stages.dispatch.stage import DISPATCH_ID_ATTR
+from xpu_rt.stages.registry import StageRegistry
+from xpu_rt.stages.targets.cuda_gpu import (
     CudaCodegenPlugin,
     CudaDispatchPlugin,
     CudaEncodingPlugin,
     CudaTilingPlugin,
     create_cuda_gpu_stack,
 )
-from compgen.stages.templates.codegen import CODEGEN_BACKEND_ATTR
-from compgen.targets.capability import infer_capabilities
-from compgen.targets.schema import load_profile
+from xpu_rt.stages.templates.codegen import CODEGEN_BACKEND_ATTR
+from xpu_rt.targets.capability import infer_capabilities
+from xpu_rt.targets.schema import load_profile
 from xdsl.dialects import arith, func
 from xdsl.dialects.builtin import IndexType, ModuleOp
 from xdsl.ir import Block, Region
@@ -42,8 +42,8 @@ def _make_module() -> ModuleOp:
 
 def _make_matmul_module() -> ModuleOp:
     """Module from FX import with real matmul."""
-    from compgen.capture.torch_export import capture_model
-    from compgen.ir.payload.import_fx import fx_to_xdsl
+    from xpu_rt.capture.torch_export import capture_model
+    from xpu_rt.ir.payload.import_fx import fx_to_xdsl
 
     class Linear(torch.nn.Module):
         def __init__(self):
@@ -75,7 +75,7 @@ def capabilities(target):
 
 class TestCudaPlugins:
     def test_encoding_plugin_protocol(self) -> None:
-        from compgen.stages.base import TargetStagePlugin
+        from xpu_rt.stages.base import TargetStagePlugin
 
         plugin = CudaEncodingPlugin()
         assert isinstance(plugin, TargetStagePlugin)
@@ -83,19 +83,19 @@ class TestCudaPlugins:
         assert plugin.stage_name == "encoding"
 
     def test_dispatch_plugin_protocol(self) -> None:
-        from compgen.stages.base import TargetStagePlugin
+        from xpu_rt.stages.base import TargetStagePlugin
 
         plugin = CudaDispatchPlugin()
         assert isinstance(plugin, TargetStagePlugin)
 
     def test_tiling_plugin_protocol(self) -> None:
-        from compgen.stages.base import TargetStagePlugin
+        from xpu_rt.stages.base import TargetStagePlugin
 
         plugin = CudaTilingPlugin()
         assert isinstance(plugin, TargetStagePlugin)
 
     def test_codegen_plugin_protocol(self) -> None:
-        from compgen.stages.base import TargetStagePlugin
+        from xpu_rt.stages.base import TargetStagePlugin
 
         plugin = CudaCodegenPlugin()
         assert isinstance(plugin, TargetStagePlugin)
@@ -211,10 +211,10 @@ class TestCudaPipeline:
         assert len(cuda_stack.stages) == 6
 
         # A minimal stack with just encoding + dispatch + bundle
-        from compgen.stages.bundle import BundleStage
-        from compgen.stages.dispatch import DispatchStage
-        from compgen.stages.encoding import EncodingStage
-        from compgen.stages.registry import TargetDialectStack
+        from xpu_rt.stages.bundle import BundleStage
+        from xpu_rt.stages.dispatch import DispatchStage
+        from xpu_rt.stages.encoding import EncodingStage
+        from xpu_rt.stages.registry import TargetDialectStack
 
         mini_stack = TargetDialectStack(
             target_name=target.name,

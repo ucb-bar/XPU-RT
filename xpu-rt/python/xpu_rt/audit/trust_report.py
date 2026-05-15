@@ -19,7 +19,7 @@ Gates (in order):
 8. ``holdout_outcomes_honest`` — every holdout config carries
                                  ``holdout: true``.
 
-Each gate produces a :class:`GateResult` (see ``compgen.audit.errors``)
+Each gate produces a :class:`GateResult` (see ``xpu_rt.audit.errors``)
 with ``status`` ∈ ``{pass, fail, skipped}``.
 """
 
@@ -35,31 +35,31 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from compgen.audit.caveat_ledger import CaveatLedger
-from compgen.audit.contracts import iter_contracts
-from compgen.audit.errors import (
+from xpu_rt.audit.caveat_ledger import CaveatLedger
+from xpu_rt.audit.contracts import iter_contracts
+from xpu_rt.audit.errors import (
     AuditError,
     CaveatLedgerError,
     ForbiddenImportError,
     GateResult,
     StaleCaveatError,
 )
-from compgen.audit.fresh_agent import (
+from xpu_rt.audit.fresh_agent import (
     REQUIRED_PATHS,
     build_task_pack,
     verify_task_pack,
 )
-from compgen.audit.import_provenance import (
+from xpu_rt.audit.import_provenance import (
     assert_no_forbidden,
     load_provenance,
 )
-from compgen.audit.negative_controls import run_all_negative_controls
-from compgen.audit.realness_scan import (
+from xpu_rt.audit.negative_controls import run_all_negative_controls
+from xpu_rt.audit.realness_scan import (
     Allowlist,
     assert_clean,
     scan_repo,
 )
-from compgen.audit.trace_replay import (
+from xpu_rt.audit.trace_replay import (
     build_trace,
     replay,
     write_trace,
@@ -115,7 +115,7 @@ class TrustReport:
 
     def to_markdown(self) -> str:
         lines = [
-            f"# CompGen trust report — {self.commit}",
+            f"# XPU-RT trust report — {self.commit}",
             "",
             f"Generated: `{self.generated_at_utc}`",
             f"Overall: **{'PASS' if self.all_pass else 'FAIL'}**",
@@ -323,7 +323,7 @@ def _gate_task_pack_buildable(tmp_path: Path) -> GateResult:
 
 
 def _gate_holdout_outcomes_honest() -> GateResult:
-    from compgen.graph_compilation.evidence_pack import is_holdout_model
+    from xpu_rt.graph_compilation.evidence_pack import is_holdout_model
 
     holdout_yamls = list((REPO_ROOT / "configs" / "models").glob("holdout_*.yaml"))
     if not holdout_yamls:
@@ -425,13 +425,13 @@ def _gate_contract_version_consistency(
         )
 
     try:
-        from compgen.graph_compilation.kernel_codegen_response import (
+        from xpu_rt.graph_compilation.kernel_codegen_response import (
             _reconstruct_contract_from_dict,
         )
-        from compgen.kernels.contract_migration import (
+        from xpu_rt.kernels.contract_migration import (
             migrate_contract_body_v3_to_v3_1,
         )
-        from compgen.promotion.contract_hash import canonical_contract_hash
+        from xpu_rt.promotion.contract_hash import canonical_contract_hash
     except Exception as exc:  # noqa: BLE001
         return GateResult(
             name="contract_version_consistency",
@@ -499,7 +499,7 @@ def _gate_extension_architecture() -> GateResult:
     so the trust-report consumer sees the typed reason.
     """
     try:
-        from compgen.audit.extension_architecture import run_audit
+        from xpu_rt.audit.extension_architecture import run_audit
     except ImportError as exc:
         return GateResult(
             name="extension_architecture",
@@ -569,7 +569,7 @@ def build_trust_report(
     # contract version consistency. Skipped when no run-dir.
     report.gates.append(_gate_contract_version_consistency(run_dir=run_dir))
     # solver substrate gates (5).
-    from compgen.audit.solver_gates import all_solver_gates
+    from xpu_rt.audit.solver_gates import all_solver_gates
 
     report.gates.extend(all_solver_gates(run_dir=run_dir))
     #  Phase F extension/provider architecture audit (6 sub-checks).
@@ -601,7 +601,7 @@ def emit_trust_report(report: TrustReport, *, out_dir: Path) -> tuple[Path, Path
 
 
 def _cli_main(argv: list[str] | None = None) -> int:
-    p = argparse.ArgumentParser(description="Build a CompGen trust report")
+    p = argparse.ArgumentParser(description="Build a XPU-RT trust report")
     p.add_argument("--out", type=Path, default=None,
                    help="Output dir (default: results/audit/<commit>/)")
     p.add_argument("--run-dir", type=Path, default=None,
@@ -616,7 +616,7 @@ def _cli_main(argv: list[str] | None = None) -> int:
     import tempfile
     cleanup_tmp = False
     if args.tmp is None:
-        args.tmp = Path(tempfile.mkdtemp(prefix="compgen_trust_"))
+        args.tmp = Path(tempfile.mkdtemp(prefix="xpu_rt_trust_"))
         cleanup_tmp = True
     else:
         args.tmp.mkdir(parents=True, exist_ok=True)

@@ -120,7 +120,7 @@ def main(argv: list[str] | None = None) -> int:
         [
             str(VENV_PY),
             "-m",
-            "compgen.graph_compilation",
+            "xpu_rt.graph_compilation",
             "run",
             "--model",
             str(args.model),
@@ -138,7 +138,7 @@ def main(argv: list[str] | None = None) -> int:
 
     # 2. Validate primary run.
     _run(
-        [str(VENV_PY), "-m", "compgen.graph_compilation", "validate", "--run", str(primary_run)],
+        [str(VENV_PY), "-m", "xpu_rt.graph_compilation", "validate", "--run", str(primary_run)],
         expected_rc=0,
         step="validate_primary",
         evidence=evidence,
@@ -146,7 +146,7 @@ def main(argv: list[str] | None = None) -> int:
 
     # 3. Replay goldens.
     _run(
-        [str(VENV_PY), "-m", "compgen.graph_compilation", "replay-goldens", "--run", str(primary_run)],
+        [str(VENV_PY), "-m", "xpu_rt.graph_compilation", "replay-goldens", "--run", str(primary_run)],
         expected_rc=0,
         step="replay_primary",
         evidence=evidence,
@@ -156,7 +156,7 @@ def main(argv: list[str] | None = None) -> int:
     shutil.copytree(primary_run, tampered_export)
     (tampered_export / "00_graph_capture" / "exported_program.pt2").unlink()
     _run(
-        [str(VENV_PY), "-m", "compgen.graph_compilation", "validate", "--run", str(tampered_export)],
+        [str(VENV_PY), "-m", "xpu_rt.graph_compilation", "validate", "--run", str(tampered_export)],
         expected_rc=1,
         step="validate_rejects_missing_export",
         evidence=evidence,
@@ -176,7 +176,7 @@ def main(argv: list[str] | None = None) -> int:
         evidence=evidence,
     )
     _run(
-        [str(VENV_PY), "-m", "compgen.graph_compilation", "replay-goldens", "--run", str(tampered_goldens)],
+        [str(VENV_PY), "-m", "xpu_rt.graph_compilation", "replay-goldens", "--run", str(tampered_goldens)],
         expected_rc=1,
         step="replay_rejects_corrupted_goldens",
         evidence=evidence,
@@ -187,7 +187,7 @@ def main(argv: list[str] | None = None) -> int:
         [
             str(VENV_PY),
             "-m",
-            "compgen.graph_compilation",
+            "xpu_rt.graph_compilation",
             "run",
             "--model",
             str(args.model),
@@ -206,7 +206,7 @@ def main(argv: list[str] | None = None) -> int:
         [
             str(VENV_PY),
             "-m",
-            "compgen.graph_compilation",
+            "xpu_rt.graph_compilation",
             "run",
             "--model",
             str(args.model),
@@ -225,7 +225,7 @@ def main(argv: list[str] | None = None) -> int:
         [
             str(VENV_PY),
             "-m",
-            "compgen.graph_compilation",
+            "xpu_rt.graph_compilation",
             "compare",
             "--a",
             str(repro_a),
@@ -302,8 +302,8 @@ def main(argv: list[str] | None = None) -> int:
         "task_id": "graph_capture stage",
         "status": "pass" if all(s.ok for s in evidence.steps) else "fail",
         "capture_api_used": [
-            "compgen.capture.torch_export.capture_dynamo_partitions",
-            "compgen.capture.torch_export.capture_frontend_artifact",
+            "xpu_rt.capture.torch_export.capture_dynamo_partitions",
+            "xpu_rt.capture.torch_export.capture_frontend_artifact",
         ],
         "primary_capture": capture_report.get("primary_capture"),
         "torch_dynamo_status": capture_report.get("torch_dynamo", {}).get("status"),

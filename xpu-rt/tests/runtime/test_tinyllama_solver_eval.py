@@ -70,7 +70,7 @@ def test_eval_runs_end_to_end(tmp_path: Path):
         assert o["selected_backend"] == "z3"
 
     # gates pass on the produced run-dir.
-    from compgen.audit.solver_gates import all_solver_gates
+    from xpu_rt.audit.solver_gates import all_solver_gates
 
     gates = all_solver_gates(run_dir=tmp_path)
     failed = [g for g in gates if g.status == "fail"]

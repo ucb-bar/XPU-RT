@@ -1,9 +1,9 @@
-"""Tests for ``compgen.quant`` operations."""
+"""Tests for ``xpu_rt.quant`` operations."""
 
 from __future__ import annotations
 
 import pytest
-from compgen.ir.quant import (
+from xpu_rt.ir.quant import (
     AffineQuantizedTensorType,
     ChooseQParamsPerChannelOp,
     ChooseQParamsPerTensorOp,

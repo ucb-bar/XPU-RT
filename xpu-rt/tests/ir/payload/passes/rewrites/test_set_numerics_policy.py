@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from compgen.ir.payload.passes.rewrites.set_numerics_policy import (
+from xpu_rt.ir.payload.passes.rewrites.set_numerics_policy import (
     NumericsPolicy,
     SetNumericsPolicyStats,
     run_set_numerics_policy,
@@ -186,8 +186,8 @@ def test_attributes_preserved_across_promotion():
     m = _bf_add_module()
     for op in m.walk():
         if op.name == "arith.addf":
-            op.attributes["compgen.region_id"] = StringAttr("add_0")
-            op.attributes["compgen._pattern_hint"] = StringAttr("bias")
+            op.attributes["xpu_rt.region_id"] = StringAttr("add_0")
+            op.attributes["xpu_rt._pattern_hint"] = StringAttr("bias")
             break
     policy = NumericsPolicy(
         supported_per_kind={"elementwise_add": frozenset({Float32Type})},
@@ -195,8 +195,8 @@ def test_attributes_preserved_across_promotion():
     run_set_numerics_policy(m, policy=policy)
     for op in m.walk():
         if op.name == "arith.addf":
-            assert op.attributes["compgen.region_id"].data == "add_0"
-            assert op.attributes["compgen._pattern_hint"].data == "bias"
+            assert op.attributes["xpu_rt.region_id"].data == "add_0"
+            assert op.attributes["xpu_rt._pattern_hint"].data == "bias"
             break
     else:
         pytest.fail("no promoted addf found after run")

@@ -7,7 +7,7 @@ that prove the Section 19 falsifiable claim:
     Cold-run vs warm-run on the same suite shows
     ``fresh_emit_count_warm < fresh_emit_count_cold`` and
     ``gemini_token_delta < 0`` while every correctness gate in
-    ``verification_report.json`` still passes. CompGen gets cheaper
+    ``verification_report.json`` still passes. XPU-RT gets cheaper
     to run on a model whose region patterns it has seen before,
     without weakening any verification gate.
 
@@ -30,7 +30,7 @@ Aggregates emitted per run:
   PromotionLevel string. Higher levels indicate richer evidence
   available to retrieval.
 - ``gemini_token_delta`` — read from the Gemini usage tracker
-  (``.compgen/gemini_usage/summary.json``); when present, the
+  (``.xpu_rt/gemini_usage/summary.json``); when present, the
   measurement script captures the snapshot delta between cold and
   warm runs.
 
@@ -156,8 +156,8 @@ def _read_gate_distribution(library_audit: Path) -> dict[str, int]:
 
 
 def _read_gemini_summary(repo_root: Path) -> tuple[int, float]:
-    """Read .compgen/gemini_usage/summary.json (best-effort)."""
-    summary = _read_json(repo_root / ".compgen" / "gemini_usage" / "summary.json")
+    """Read .xpu_rt/gemini_usage/summary.json (best-effort)."""
+    summary = _read_json(repo_root / ".xpu_rt" / "gemini_usage" / "summary.json")
     if not summary:
         return 0, 0.0
     totals = summary.get("totals") or {}
@@ -175,10 +175,10 @@ def build_efficiency_pack(
     Args:
         run_dir: A completed graph_compilation run directory.
         library_path: Optional recipe library root; defaults to
-            ``.compgen_cache/recipes/``. Used for the gate-level
+            ``.xpu_rt_cache/recipes/``. Used for the gate-level
             distribution from the library's audit log.
         repo_root: Optional repo root for locating
-            ``.compgen/gemini_usage/summary.json``. Defaults to the
+            ``.xpu_rt/gemini_usage/summary.json``. Defaults to the
             current working directory.
 
     Returns:
@@ -186,7 +186,7 @@ def build_efficiency_pack(
     """
     run_dir = Path(run_dir)
     library = (
-        Path(library_path) if library_path else Path(".compgen_cache") / "recipes"
+        Path(library_path) if library_path else Path(".xpu_rt_cache") / "recipes"
     )
     repo = Path(repo_root) if repo_root else Path.cwd()
 

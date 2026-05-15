@@ -24,13 +24,13 @@ from xdsl.dialects.builtin import Float32Type, ModuleOp, TensorType
 from xdsl.dialects.func import CallOp, FuncOp, ReturnOp
 from xdsl.ir import Block, Region
 
-from compgen.runtime.baremetal.c_codegen import emit_module
+from xpu_rt.runtime.baremetal.c_codegen import emit_module
 
 
 _NPU_STUB_HEADER = """\
 /* Tiny npu_driver.h stub for syntactic compilation checks. The real
  * baremetal build picks up the production npu_driver.h from the
- * libcompgen_rt baremetal platform layer. The emit calls the npu_*
+ * libxpu_rt baremetal platform layer. The emit calls the npu_*
  * boundary using raw float pointers; the stub declares the minimal
  * surface those calls need. */
 #ifndef NPU_DRIVER_H

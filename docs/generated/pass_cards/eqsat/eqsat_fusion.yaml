@@ -4,7 +4,7 @@ display_name: E-graph saturation — fusion-enablement rules
 level: payload
 family: eqsat
 source: homemade
-impl_path: python/compgen/eqsat/rules/fusion.py
+impl_path: python/xpu_rt/eqsat/rules/fusion.py
 reads:
   - 01_payload_lowering/payload.mlir
 writes:
@@ -27,7 +27,7 @@ cost: expensive
 failure_modes:
   - "saturation_budget_exhausted"
   - "fusion_rule_breaks_invariant"
-mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+mcp_tool: mcp__xpu_rt__xpu_rt_emit_agent_decision_request
 notes: |
   Fusion-enablement e-graph rewrite rules: distribute pointwise ops
   through reductions to expose fusion opportunities, restructure op

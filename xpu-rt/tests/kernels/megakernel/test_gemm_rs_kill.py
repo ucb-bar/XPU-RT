@@ -10,7 +10,7 @@ style 4-task workload:
        follows the same task-queue + atomic-event protocol.
     5. Execute against a kernel-by-kernel reference on the local GPU.
     6. Compare outputs via the existing
-       :func:`compgen.semantic.verify.harness.verify_callable_against_reference`
+       :func:`xpu_rt.semantic.verify.harness.verify_callable_against_reference`
        and assert numerical match.
 
 The Triton kernel is hand-written rather than auto-generated from the
@@ -31,13 +31,13 @@ import pytest
 torch = pytest.importorskip("torch")
 triton = pytest.importorskip("triton")
 import triton.language as tl
-from compgen.ir.event.attrs import EventCoordAttr, EventTensorTypeAttr
-from compgen.ir.event.ops import CallDeviceOp, EventTensorOp, GraphOp
-from compgen.ir.payload.passes.megakernel_static_schedule import (
+from xpu_rt.ir.event.attrs import EventCoordAttr, EventTensorTypeAttr
+from xpu_rt.ir.event.ops import CallDeviceOp, EventTensorOp, GraphOp
+from xpu_rt.ir.payload.passes.megakernel_static_schedule import (
     StaticMegakernelSchedule,
 )
-from compgen.ir.tile.lower_megakernel import lower_megakernel
-from compgen.semantic.verify.harness import verify_callable_against_reference
+from xpu_rt.ir.tile.lower_megakernel import lower_megakernel
+from xpu_rt.semantic.verify.harness import verify_callable_against_reference
 from xdsl.dialects.builtin import (
     ArrayAttr,
     IntegerAttr,
@@ -181,7 +181,7 @@ def test_megakernel_pipeline_end_to_end_on_gpu(tmp_path: Path) -> None:
     # 1) Build IR + run static-schedule pass.
     mod, graph = _build_event_graph_module(sm_count=sm_count)
     StaticMegakernelSchedule().run(mod)
-    schedule = json.loads(graph.attributes["compgen.static_schedule"].data)
+    schedule = json.loads(graph.attributes["xpu_rt.static_schedule"].data)
     assert schedule["status"] == "ok", schedule
 
     # 2) Run the persistent-Triton emitter (validates the IR-level layer).

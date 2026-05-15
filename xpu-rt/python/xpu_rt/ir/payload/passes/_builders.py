@@ -1,6 +1,6 @@
 """Construction helpers for the + pattern rewrites.
 
-Each rewrite in :mod:`compgen.ir.payload.passes.rewrites` needs a
+Each rewrite in :mod:`xpu_rt.ir.payload.passes.rewrites` needs a
 small, repetitive set of IR constructions: build a ``linalg.generic``
 with an elementwise body, build an indexing map that transposes two
 dims, or insert an ``arith.truncf``/``extf`` pair. Re-deriving these

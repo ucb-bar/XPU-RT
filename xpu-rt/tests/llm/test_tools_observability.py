@@ -1,13 +1,13 @@
-"""Tests for compgen.llm.tools.observability."""
+"""Tests for xpu_rt.llm.tools.observability."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from compgen.llm import get_registry
+from xpu_rt.llm import get_registry
 
 # Importing triggers auto-registration into the global registry.
-from compgen.llm.tools import observability  # noqa: F401
+from xpu_rt.llm.tools import observability  # noqa: F401
 
 
 def test_observability_tools_auto_registered() -> None:

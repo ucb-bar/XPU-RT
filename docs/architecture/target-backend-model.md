@@ -1,6 +1,6 @@
 # Target Backend Model
 
-This document describes CompGen's target backend architecture, inspired by Qualcomm's [Hexagon-MLIR](https://github.com/quic/hexagon-mlir) project which demonstrates how to make custom hardware a first-class citizen in both **Triton** and **PyTorch**.
+This document describes XPU-RT's target backend architecture, inspired by Qualcomm's [Hexagon-MLIR](https://github.com/quic/hexagon-mlir) project which demonstrates how to make custom hardware a first-class citizen in both **Triton** and **PyTorch**.
 
 ## How It Works: The Hexagon Example
 
@@ -183,12 +183,12 @@ SO (Shared Object)
 Executable on device/simulator
 ```
 
-### CompGen's Equivalent Stages
+### XPU-RT's Equivalent Stages
 
-CompGen already operates at the linalg level (xDSL Payload IR). The stages needed for any target:
+XPU-RT already operates at the linalg level (xDSL Payload IR). The stages needed for any target:
 
 ```
-CompGen Payload IR (xDSL linalg)
+XPU-RT Payload IR (xDSL linalg)
   │
   │ Stage: Tiling
   │   Tile linalg ops to target geometry (e.g., 32x32 for MXU, 64x64 for VTCM)
@@ -230,13 +230,13 @@ outputs = launcher.run_torch_mlir(
 )
 ```
 
-### CompGen's Equivalent
+### XPU-RT's Equivalent
 
-CompGen already captures PyTorch models via TorchDynamo:
+XPU-RT already captures PyTorch models via TorchDynamo:
 
 ```python
-# CompGen's existing path (already works)
-from compgen.capture.torch_export import capture_dynamo_partitions
+# XPU-RT's existing path (already works)
+from xpu_rt.capture.torch_export import capture_dynamo_partitions
 
 artifact = capture_dynamo_partitions(model, sample_inputs)
 # artifact.graphs = list of FX GraphModule partitions
@@ -244,7 +244,7 @@ artifact = capture_dynamo_partitions(model, sample_inputs)
 # → process through target backend stages
 ```
 
-Both Hexagon and CompGen converge to linalg. The Triton path would add an alternative frontend.
+Both Hexagon and XPU-RT converge to linalg. The Triton path would add an alternative frontend.
 
 ## Custom Dialect for Hardware Microops
 
@@ -387,7 +387,7 @@ forward(r, &input_desc_0, &input_desc_1, ...);
 // Extract output tensors from result struct
 ```
 
-## How CompGen Should Adopt This
+## How XPU-RT Should Adopt This
 
 ### Already Done
 - PyTorch capture via TorchDynamo → FX graphs (equivalent to torch-MLIR path)
@@ -423,4 +423,4 @@ forward(r, &input_desc_0, &input_desc_1, ...);
 | DMA lowering | `qcom_hexagon_backend/test/Conversion/DMAToLLVM/dma_copy.mlir` | DMA conversion |
 | Math library | `qcom_hexagon_backend/backend/hexagon_extern/hexagon/libdevice.py` | qhmath_hvx wrappers |
 
-The reference codebase is at `/scratch2/agustin/CompGen/tmp/hexagon-mlir/`.
+The reference codebase is at `/scratch2/agustin/XPU-RT/tmp/hexagon-mlir/`.

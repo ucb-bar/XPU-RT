@@ -1,9 +1,9 @@
-"""Tests for :mod:`compgen.tools.tool_runner`.
+"""Tests for :mod:`xpu_rt.tools.tool_runner`.
 
 Coverage:
 
 Positive:
-* ``compgen_echo`` runs end-to-end, writes ``echo.txt``, returns
+* ``xpu_rt_echo`` runs end-to-end, writes ``echo.txt``, returns
   ``status=ok``, populates input/output hashes, and writes a
   ``result.json`` + ``trace.jsonl`` under ``out_dir``.
 * repeated runs with identical inputs produce identical
@@ -34,15 +34,15 @@ from pathlib import Path
 
 import pytest
 import yaml
-from compgen.tools.errors import (
+from xpu_rt.tools.errors import (
     ToolEntrypointError,
     ToolInputSchemaError,
     ToolOutputSchemaError,
     ToolRunError,
 )
-from compgen.tools.tool_card import ToolCard
-from compgen.tools.tool_registry import load_tool_card, tool_cards_root
-from compgen.tools.tool_runner import ToolRunner, resolve_python_entrypoint
+from xpu_rt.tools.tool_card import ToolCard
+from xpu_rt.tools.tool_registry import load_tool_card, tool_cards_root
+from xpu_rt.tools.tool_runner import ToolRunner, resolve_python_entrypoint
 
 
 @pytest.fixture
@@ -58,7 +58,7 @@ def _make_negative_control_card(entrypoint: str) -> ToolCard:
     """
 
     body = yaml.safe_load((tool_cards_root() / "echo.yaml").read_text(encoding="utf-8"))
-    body["tool_id"] = "compgen_echo_negative_control"
+    body["tool_id"] = "xpu_rt_echo_negative_control"
     body["entrypoints"]["python"] = entrypoint
     return ToolCard.from_dict(body)
 
@@ -70,18 +70,18 @@ def test_run_echo_positive(tmp_path, echo_card):
     out_dir = tmp_path / "echo_run"
     result = ToolRunner().run(
         echo_card,
-        request={"text": "hello compgen", "count": 3},
+        request={"text": "hello xpu_rt", "count": 3},
         out_dir=out_dir,
     )
 
     assert result.status == "ok"
-    assert result.tool_id == "compgen_echo"
+    assert result.tool_id == "xpu_rt_echo"
     assert result.result["lines_written"] == 3
     assert len(result.artifacts) == 1
 
     artifact = Path(result.artifacts[0])
     assert artifact.is_file()
-    assert artifact.read_text(encoding="utf-8") == "hello compgen\nhello compgen\nhello compgen\n"
+    assert artifact.read_text(encoding="utf-8") == "hello xpu_rt\nhello xpu_rt\nhello xpu_rt\n"
 
     # result.json must exist and match the returned ToolResult.
     rj = json.loads((out_dir / "result.json").read_text(encoding="utf-8"))
@@ -173,7 +173,7 @@ def test_run_echo_additional_properties_rejected(tmp_path, echo_card):
 
 def test_run_echo_bad_output_status(tmp_path):
     card = _make_negative_control_card(
-        "compgen.tools.builtin.echo:returns_bad_status"
+        "xpu_rt.tools.builtin.echo:returns_bad_status"
     )
     with pytest.raises(ToolOutputSchemaError, match="status"):
         ToolRunner().run(card, request={"text": "hi"}, out_dir=tmp_path / "out")
@@ -184,14 +184,14 @@ def test_run_echo_bad_output_status(tmp_path):
 
 def test_run_echo_writes_outside_out_dir(tmp_path):
     card = _make_negative_control_card(
-        "compgen.tools.builtin.echo:writes_outside_out_dir"
+        "xpu_rt.tools.builtin.echo:writes_outside_out_dir"
     )
     with pytest.raises(ToolRunError, match="outside allowed_roots"):
         ToolRunner().run(card, request={"text": "hi"}, out_dir=tmp_path / "out")
 
 
 def test_run_echo_entrypoint_crash(tmp_path):
-    card = _make_negative_control_card("compgen.tools.builtin.echo:crashes")
+    card = _make_negative_control_card("xpu_rt.tools.builtin.echo:crashes")
     with pytest.raises(ToolRunError, match="entrypoint raised"):
         ToolRunner().run(card, request={"text": "hi"}, out_dir=tmp_path / "out")
 
@@ -204,12 +204,12 @@ def test_run_echo_entrypoint_crash(tmp_path):
 
 def test_resolve_python_entrypoint_missing_module():
     with pytest.raises(ToolEntrypointError, match="cannot import module"):
-        resolve_python_entrypoint("compgen.does_not_exist_xyz:run")
+        resolve_python_entrypoint("xpu_rt.does_not_exist_xyz:run")
 
 
 def test_resolve_python_entrypoint_missing_attr():
     with pytest.raises(ToolEntrypointError, match="has no attribute"):
-        resolve_python_entrypoint("compgen.tools.builtin.echo:not_real_attr")
+        resolve_python_entrypoint("xpu_rt.tools.builtin.echo:not_real_attr")
 
 
 def test_resolve_python_entrypoint_not_callable():
@@ -225,8 +225,8 @@ def test_resolve_python_entrypoint_bad_format():
 
 def test_unimportable_entrypoint_raises_through_runner(tmp_path):
     body = yaml.safe_load((tool_cards_root() / "echo.yaml").read_text(encoding="utf-8"))
-    body["tool_id"] = "compgen_echo_unimportable"
-    body["entrypoints"]["python"] = "compgen.totally_fake_module:run"
+    body["tool_id"] = "xpu_rt_echo_unimportable"
+    body["entrypoints"]["python"] = "xpu_rt.totally_fake_module:run"
     card = ToolCard.from_dict(body)
     with pytest.raises(ToolEntrypointError):
         ToolRunner().run(card, request={"text": "hi"}, out_dir=tmp_path / "out")
@@ -239,13 +239,13 @@ def test_runner_rejects_non_dict_output(tmp_path):
     import sys
     import types
 
-    mod = types.ModuleType("compgen._inline_test_nondict")
+    mod = types.ModuleType("xpu_rt._inline_test_nondict")
     mod.run = lambda req, *, out_dir: ["not", "a", "dict"]
-    sys.modules["compgen._inline_test_nondict"] = mod
+    sys.modules["xpu_rt._inline_test_nondict"] = mod
 
     body = yaml.safe_load((tool_cards_root() / "echo.yaml").read_text(encoding="utf-8"))
-    body["tool_id"] = "compgen_inline_nondict"
-    body["entrypoints"]["python"] = "compgen._inline_test_nondict:run"
+    body["tool_id"] = "xpu_rt_inline_nondict"
+    body["entrypoints"]["python"] = "xpu_rt._inline_test_nondict:run"
     card = ToolCard.from_dict(body)
     with pytest.raises(ToolOutputSchemaError, match="must return a dict"):
         ToolRunner().run(card, request={"text": "hi"}, out_dir=tmp_path / "out")
@@ -257,17 +257,17 @@ def test_runner_artifacts_field_must_be_a_list(tmp_path):
     import sys
     import types
 
-    mod = types.ModuleType("compgen._inline_test_bad_artifacts")
+    mod = types.ModuleType("xpu_rt._inline_test_bad_artifacts")
 
     def _run(req, *, out_dir):
         return {"status": "ok", "lines_written": 0, "artifacts": "not_a_list"}
 
     mod.run = _run
-    sys.modules["compgen._inline_test_bad_artifacts"] = mod
+    sys.modules["xpu_rt._inline_test_bad_artifacts"] = mod
 
     body = yaml.safe_load((tool_cards_root() / "echo.yaml").read_text(encoding="utf-8"))
-    body["tool_id"] = "compgen_inline_bad_artifacts"
-    body["entrypoints"]["python"] = "compgen._inline_test_bad_artifacts:run"
+    body["tool_id"] = "xpu_rt_inline_bad_artifacts"
+    body["entrypoints"]["python"] = "xpu_rt._inline_test_bad_artifacts:run"
     card = ToolCard.from_dict(body)
     # jsonschema rejects the wrong type first (artifacts: array), so we
     # get a ToolOutputSchemaError, not a ToolRunError — either way it's

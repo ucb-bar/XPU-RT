@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from compgen.ir.payload.passes._builders import (
+from xpu_rt.ir.payload.passes._builders import (
     affine_map_broadcast,
     affine_map_identity,
     affine_map_transpose,

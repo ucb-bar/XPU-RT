@@ -4,16 +4,16 @@ Mechanical post-emit gate: the emit's static allocation totals do
 not exceed the plan's declared budget. Three observable budgets:
 
 - ``push_constants_bytes`` — bytes reserved for the push-constants
-  block; capped at the libcompgen_rt static maximum.
+  block; capped at the libxpu_rt static maximum.
 - ``binding_slots``        — the count of ``cg_rt_buffer_t *``
   pointers in the bindings array; capped at the static maximum.
-- ``kernel_extern_count``  — the number of ``compgen_kernel_<id>``
+- ``kernel_extern_count``  — the number of ``xpu_rt_kernel_<id>``
   externs the emit references; must equal the bound region count
   (any mismatch is also flagged by the plan-refinement gate).
 
 When the plan's resources or kernel-binding fields declare a budget,
 the gate enforces it. When the plan is silent on a resource, the
-gate uses the static libcompgen_rt cap (256 bytes push-constants,
+gate uses the static libxpu_rt cap (256 bytes push-constants,
 32 binding slots — both visible 's emitted source).
 """
 
@@ -24,7 +24,7 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from compgen.runtime.errors import ResourceBudgetError
+from xpu_rt.runtime.errors import ResourceBudgetError
 
 
 # Static caps the emitters reserve. If you change these /
@@ -37,7 +37,7 @@ _PUSH_CONSTANT_RE_CPP = re.compile(
     r"uint32_t\s+push_constants\s*\[\s*(\d+)\s*\]"
 )
 _BINDINGS_RE = re.compile(r"cg_rt_buffer_t\s*\*\s*bindings\s*\[\s*(\d+)\s*\]")
-_KERNEL_EXTERN_RE = re.compile(r"compgen_kernel_([A-Za-z0-9_]+)")
+_KERNEL_EXTERN_RE = re.compile(r"xpu_rt_kernel_([A-Za-z0-9_]+)")
 
 
 @dataclass(frozen=True)

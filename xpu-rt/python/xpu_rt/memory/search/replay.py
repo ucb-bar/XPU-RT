@@ -11,8 +11,8 @@ from dataclasses import dataclass, field
 
 import structlog
 
-from compgen.memory.schema import EpisodeStep
-from compgen.memory.store import CompilerMemory
+from xpu_rt.memory.schema import EpisodeStep
+from xpu_rt.memory.store import CompilerMemory
 
 log = structlog.get_logger()
 

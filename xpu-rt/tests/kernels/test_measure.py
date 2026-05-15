@@ -17,8 +17,8 @@ import math
 
 import pytest
 import torch
-from compgen.kernels.errors import UnmeasurableKernelError
-from compgen.kernels.measure import (
+from xpu_rt.kernels.errors import UnmeasurableKernelError
+from xpu_rt.kernels.measure import (
     KernelMeasurement,
     iqr_filtered,
     measure_kernel,

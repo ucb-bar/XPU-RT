@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from compgen.llm.base import GenerationRequest
+from xpu_rt.llm.base import GenerationRequest
 
 
 def render_request_prompt(request: GenerationRequest) -> str:

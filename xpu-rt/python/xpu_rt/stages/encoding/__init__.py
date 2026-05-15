@@ -2,6 +2,6 @@
 
 from __future__ import annotations
 
-from compgen.stages.encoding.stage import EncodingStage
+from xpu_rt.stages.encoding.stage import EncodingStage
 
 __all__ = ["EncodingStage"]

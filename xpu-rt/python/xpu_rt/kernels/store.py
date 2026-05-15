@@ -2,7 +2,7 @@
 
 Layout::
 
-    ~/.compgen/kernels/
+    ~/.xpu_rt/kernels/
         manifest.json                      # index: fingerprint → entry
         <target>/<fingerprint>.<lang>      # one file per kernel
 
@@ -45,11 +45,11 @@ from typing import Any
 
 
 def default_store_root() -> Path:
-    """``~/.compgen/kernels``, overridable via ``COMPGEN_KERNEL_STORE``."""
-    override = os.environ.get("COMPGEN_KERNEL_STORE")
+    """``~/.xpu_rt/kernels``, overridable via ``XPU_RT_KERNEL_STORE``."""
+    override = os.environ.get("XPU_RT_KERNEL_STORE")
     if override:
         return Path(override).expanduser()
-    return Path.home() / ".compgen" / "kernels"
+    return Path.home() / ".xpu_rt" / "kernels"
 
 
 # ---------------------------------------------------------------------------
@@ -168,11 +168,11 @@ class KernelStore:
     def get(self, fingerprint: str) -> tuple[StoredKernel, str] | None:
         """Return ``(StoredKernel, kernel_source)`` or None.
 
-        ``COMPGEN_DISABLE_KERNEL_CACHE=1`` forces a cold lookup
+        ``XPU_RT_DISABLE_KERNEL_CACHE=1`` forces a cold lookup
         (always returns None) so audit runs can prove a kernel is being
         recomputed, not retrieved.
         """
-        if os.environ.get("COMPGEN_DISABLE_KERNEL_CACHE") == "1":
+        if os.environ.get("XPU_RT_DISABLE_KERNEL_CACHE") == "1":
             return None
         manifest = self._read_manifest()
         raw = manifest.get(fingerprint)

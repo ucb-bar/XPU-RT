@@ -7,7 +7,7 @@ subclass. The harness:
    (after committing a synthetic provider response) so the emitted
    module has all the generated assertions wired.
 2. Imports the module.
-3. Calls ``compgen_run(io, kernels, runtime)`` with a tampered ``io``
+3. Calls ``xpu_rt_run(io, kernels, runtime)`` with a tampered ``io``
    dict that violates exactly one invariant.
 4. Asserts the typed subclass fires.
 
@@ -35,7 +35,7 @@ def _build_run_with_provider_response(out: Path) -> tuple[Path, dict]:
     contract-compliant provider response so the emitted module has
     bound regions + assertions wired. Returns (out, request)."""
     res = subprocess.run([
-        sys.executable, "-m", "compgen.graph_compilation", "run",
+        sys.executable, "-m", "xpu_rt.graph_compilation", "run",
         "--model", str(REPO_ROOT / "configs/models/merlin_mlp_wide.yaml"),
         "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
         "--out", str(out),
@@ -94,12 +94,12 @@ def _build_run_with_provider_response(out: Path) -> tuple[Path, dict]:
         "artifacts": artifacts, "claims": claims,
         "provider": {"kind": "test_synthetic"},
     }
-    from compgen.graph_compilation.kernel_codegen_response import commit_response
+    from xpu_rt.graph_compilation.kernel_codegen_response import commit_response
     commit_response(run_dir=out, task_id=request["task_id"], response=response)
 
     # Re-emit .
-    from compgen.graph_compilation.execution_plan_emit import emit_execution_plan
-    from compgen.runtime.glue_emit import emit_python_sync_executor
+    from xpu_rt.graph_compilation.execution_plan_emit import emit_execution_plan
+    from xpu_rt.runtime.glue_emit import emit_python_sync_executor
     emit_execution_plan(out)
     emit_python_sync_executor(out)
     return out, request
@@ -147,7 +147,7 @@ class TestPlanViolationKinds:
         out, _ = merlin_emit
         module = _import_emitted(out)
         with pytest.raises(module.PLAN_VIOLATION_IO_TYPE):
-            module.compgen_run("not a dict", {"matmul_0": lambda *a: None},
+            module.xpu_rt_run("not a dict", {"matmul_0": lambda *a: None},
                                runtime=_StubRuntime())
 
     def test_input_count_violation(self, merlin_emit) -> None:
@@ -157,7 +157,7 @@ class TestPlanViolationKinds:
         import torch
         io = {"A": torch.randn(16, 16, dtype=torch.float32)}
         with pytest.raises(module.PLAN_VIOLATION_INPUT_COUNT):
-            module.compgen_run(
+            module.xpu_rt_run(
                 io, {"matmul_0": lambda *a: torch.zeros(16, 32)},
                 runtime=_StubRuntime(),
             )
@@ -172,7 +172,7 @@ class TestPlanViolationKinds:
             "B": torch.randn(16, 32, dtype=torch.float32),
         }
         with pytest.raises(module.PLAN_VIOLATION_INPUT_SHAPE):
-            module.compgen_run(
+            module.xpu_rt_run(
                 io, {"matmul_0": lambda *a: torch.zeros(16, 32)},
                 runtime=_StubRuntime(),
             )
@@ -187,7 +187,7 @@ class TestPlanViolationKinds:
             "B": torch.randn(16, 32, dtype=torch.float32),
         }
         with pytest.raises(module.PLAN_VIOLATION_INPUT_DTYPE):
-            module.compgen_run(
+            module.xpu_rt_run(
                 io, {"matmul_0": lambda *a: torch.zeros(16, 32)},
                 runtime=_StubRuntime(),
             )
@@ -233,7 +233,7 @@ class TestPlanViolationKinds:
         # "float32"), then BYTES fires because numel*es=512 vs expected 1024.
         with pytest.raises((module.PLAN_VIOLATION_INPUT_BYTES,
                             module.PLAN_VIOLATION_INPUT_DTYPE)):
-            module.compgen_run(
+            module.xpu_rt_run(
                 io, {"matmul_0": lambda *a: torch.zeros(16, 32)},
                 runtime=_StubRuntime(),
             )
@@ -249,7 +249,7 @@ class TestPlanViolationKinds:
         }
         kernels = {"matmul_0": lambda *args: torch.matmul(args[0], args[1])}
         runtime = _StubRuntime()
-        out_t = module.compgen_run(io, kernels, runtime=runtime)
+        out_t = module.xpu_rt_run(io, kernels, runtime=runtime)
         assert tuple(out_t.shape) == (16, 32)
         assert runtime.dispatch_count == 1
 

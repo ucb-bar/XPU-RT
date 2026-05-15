@@ -1,6 +1,6 @@
 """Unified Compiler Memory System.
 
-Three-layer persistence for all CompGen-generated artifacts:
+Three-layer persistence for all XPU-RT-generated artifacts:
 
 - **Layer A**: Content-addressed blob store (immutable artifacts)
 - **Layer B**: Relational metadata (SQLite, upgradeable to Postgres)

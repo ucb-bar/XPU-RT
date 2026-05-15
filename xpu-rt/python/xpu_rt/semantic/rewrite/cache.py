@@ -14,7 +14,7 @@ from pathlib import Path
 
 import structlog
 
-from compgen.semantic.backends.xdsl_smt.results import PDLResult
+from xpu_rt.semantic.backends.xdsl_smt.results import PDLResult
 
 log = structlog.get_logger()
 

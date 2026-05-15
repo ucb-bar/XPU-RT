@@ -16,12 +16,12 @@ import structlog
 from xdsl.dialects.builtin import ModuleOp, StringAttr
 
 if TYPE_CHECKING:
-    from compgen.targets.capability import CapabilitySpec
+    from xpu_rt.targets.capability import CapabilitySpec
 
 log = structlog.get_logger()
 
-SPECIALIZED_ATTR = "compgen.layout_specialized"
-PACK_SPEC_ATTR = "compgen.pack_spec"
+SPECIALIZED_ATTR = "xpu_rt.layout_specialized"
+PACK_SPEC_ATTR = "xpu_rt.pack_spec"
 
 
 def specialize_layouts(
@@ -51,7 +51,7 @@ def specialize_layouts(
 
         # Find the op's encoding
         encoding_str = None
-        for attr_key in ("compgen.propagated_encoding", "compgen.layout_hint", "compgen.encoding"):
+        for attr_key in ("xpu_rt.propagated_encoding", "xpu_rt.layout_hint", "xpu_rt.encoding"):
             attr = op.attributes.get(attr_key)
             if attr and hasattr(attr, "data"):
                 encoding_str = attr.data
@@ -61,7 +61,7 @@ def specialize_layouts(
             continue
 
         # Consult ukernel tile_family hint if present
-        tile_hint = op.attributes.get("compgen.ukernel_tile_family")
+        tile_hint = op.attributes.get("xpu_rt.ukernel_tile_family")
         if tile_hint and hasattr(tile_hint, "data") and tile_hint.data:
             encoding_str = f"{encoding_str}:{tile_hint.data}"
 
@@ -78,10 +78,10 @@ def specialize_layouts(
         # Fall back to LLM-guided layout planning (Unit 7)
         if pack_spec_str is None and llm_client is not None:
             try:
-                from compgen.agent.prompts.layout_plan import LAYOUT_PLAN_SCHEMA, LayoutPlanContext
-                from compgen.agent.prompts.layout_plan import format_prompt as fmt_lp
-                from compgen.agent.prompts.layout_plan import parse_response as parse_lp
-                from compgen.llm.base import GenerationRequest, LLMConfig
+                from xpu_rt.agent.prompts.layout_plan import LAYOUT_PLAN_SCHEMA, LayoutPlanContext
+                from xpu_rt.agent.prompts.layout_plan import format_prompt as fmt_lp
+                from xpu_rt.agent.prompts.layout_plan import parse_response as parse_lp
+                from xpu_rt.llm.base import GenerationRequest, LLMConfig
 
                 tile_hint_str = ""
                 if tile_hint and hasattr(tile_hint, "data"):

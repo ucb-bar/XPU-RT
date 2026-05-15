@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from compgen.semantic.synthesis.guard_lang import Expr, expr_from_json, expr_to_json
+from xpu_rt.semantic.synthesis.guard_lang import Expr, expr_from_json, expr_to_json
 
 
 @dataclass(frozen=True)

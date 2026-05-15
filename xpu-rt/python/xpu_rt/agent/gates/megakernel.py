@@ -1,6 +1,6 @@
 """Megakernel-specific verification gate.
 
-Composes with :mod:`compgen.agent.gates.composite` to enforce the
+Composes with :mod:`xpu_rt.agent.gates.composite` to enforce the
 ETC-paper invariants on a ``propose_megakernel_synthesis`` /
 ``propose_scheduling_policy`` proposal:
 
@@ -16,7 +16,7 @@ ETC-paper invariants on a ``propose_megakernel_synthesis`` /
        boundary is the stable leaf-call surface and must not be crossed
        by the megakernel body).
 
-Signature matches :class:`compgen.llm.registry.InventSlot.gate_impl`::
+Signature matches :class:`xpu_rt.llm.registry.InventSlot.gate_impl`::
 
     (proposal: dict, **ctx) -> {"status": "accepted"|"rejected"|"deferred",
                                 "details": {...}}
@@ -39,7 +39,7 @@ def _gather_event_decls(chosen: dict[str, Any]) -> list[dict[str, Any]]:
 
 def _has_ukernel_call(graph: Any) -> bool:
     try:
-        from compgen.ir.ukernel.ops import UkernelCallOp
+        from xpu_rt.ir.ukernel.ops import UkernelCallOp
     except Exception:
         return False
     if graph is None or not hasattr(graph, "body"):

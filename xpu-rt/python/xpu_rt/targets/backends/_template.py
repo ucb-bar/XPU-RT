@@ -3,8 +3,8 @@
 Copy this file into the ``backends/`` directory and implement the
 ``TargetBackendProtocol`` for your hardware.
 
-See ``compgen.targets.backend`` for the protocol definition.
-See ``compgen.targets.options`` for the base options class.
+See ``xpu_rt.targets.backend`` for the protocol definition.
+See ``xpu_rt.targets.options`` for the base options class.
 See ``docs/architecture/target-backend-model.md`` for the Hexagon-inspired architecture.
 
 Steps:
@@ -19,8 +19,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from compgen.targets.backend import BaseTargetBackend, CompilationStageResult
-from compgen.targets.options import TargetOptions
+from xpu_rt.targets.backend import BaseTargetBackend, CompilationStageResult
+from xpu_rt.targets.options import TargetOptions
 
 
 @dataclass(frozen=True)

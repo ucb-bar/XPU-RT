@@ -11,7 +11,7 @@ from __future__ import annotations
 import shutil
 
 import pytest
-from compgen.extensions.vendor_dialect import (
+from xpu_rt.extensions.vendor_dialect import (
     LoweringResult,
     VendorDialectAdapter,
     available_adapters,
@@ -20,16 +20,16 @@ from compgen.extensions.vendor_dialect import (
     register_builtin_adapter,
     reset_registry,
 )
-from compgen.extensions.vendor_dialect.builtins.cuda_tile import (
+from xpu_rt.extensions.vendor_dialect.builtins.cuda_tile import (
     CudaTileReferenceAdapter,
     make_adapter,
 )
-from compgen.extensions.vendor_dialect.builtins.cuda_tile.lowering import (
+from xpu_rt.extensions.vendor_dialect.builtins.cuda_tile.lowering import (
     FfnShapes,
     emit_ffn_single_tile_mlir,
     lower_to_cuda_tile,
 )
-from compgen.targets.backend import CompiledArtifact
+from xpu_rt.targets.backend import CompiledArtifact
 
 # --------------------------------------------------------------------------- #
 # Discovery / registry surface
@@ -168,7 +168,7 @@ class TestBundleDegrade:
         self, tmp_path: object, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         # Force PATH lookup to miss regardless of the host install.
-        from compgen.extensions.vendor_dialect.builtins.cuda_tile import bundle as bundle_mod
+        from xpu_rt.extensions.vendor_dialect.builtins.cuda_tile import bundle as bundle_mod
 
         monkeypatch.setattr(bundle_mod, "_toolchain_path", lambda: None)
 
@@ -185,7 +185,7 @@ class TestBundleDegrade:
     def test_degraded_artifact_path_points_to_mlir(self, tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
         from pathlib import Path
 
-        from compgen.extensions.vendor_dialect.builtins.cuda_tile import bundle as bundle_mod
+        from xpu_rt.extensions.vendor_dialect.builtins.cuda_tile import bundle as bundle_mod
 
         monkeypatch.setattr(bundle_mod, "_toolchain_path", lambda: None)
 

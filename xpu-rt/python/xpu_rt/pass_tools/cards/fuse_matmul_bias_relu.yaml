@@ -13,7 +13,7 @@ allowed_recipe_ops:
 refinement:
   kind: tolerance_eps
   verifier: differential_then_z3_if_promoted
-entrypoint: compgen.pass_tools.builtin.fuse_matmul_bias_relu:run
+entrypoint: xpu_rt.pass_tools.builtin.fuse_matmul_bias_relu:run
 description: |
   Pattern: matmul → bias_add → relu with a single matmul
   consumer. Proposes a fused-elementwise Recipe-IR delta. The

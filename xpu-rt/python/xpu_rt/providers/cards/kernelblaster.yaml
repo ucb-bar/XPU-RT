@@ -4,7 +4,7 @@ integration_level: generate
 target_families: [cuda]
 contract_kinds: [matmul, fused_region]
 emits: [triton_source]
-entrypoint: compgen.kernels.providers.kernelblaster:KernelBlasterProvider
+entrypoint: xpu_rt.kernels.providers.kernelblaster:KernelBlasterProvider
 paper_claimable: false
 required_env: [KERNELBLASTER_ROOT]
 required_commands: []

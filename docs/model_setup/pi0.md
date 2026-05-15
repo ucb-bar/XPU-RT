@@ -32,7 +32,7 @@ band into the local HuggingFace cache (``$HF_HOME/hub`` or
 ## Minimal smoke command
 
 ```bash
-uv run python -m compgen.model_admission torch-compile \
+uv run python -m xpu_rt.model_admission torch-compile \
     --model configs/models/pi0_step.yaml \
     --slice configs/slices/pi0_single_step.yaml \
     --out results/model_admission/pi0_step/pi0_single_step

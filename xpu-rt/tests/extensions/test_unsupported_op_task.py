@@ -8,13 +8,13 @@ from pathlib import Path
 import pytest
 import yaml
 
-from compgen.extensions.manifest import (
+from xpu_rt.extensions.manifest import (
     EXTENSION_TASK_SCHEMA_VERSION,
     MANIFEST_SCHEMA_VERSION,
     ExtensionTask,
 )
-from compgen.extensions.registry import EXTENSION_MANIFEST_FILENAME
-from compgen.extensions.task_flow import (
+from xpu_rt.extensions.registry import EXTENSION_MANIFEST_FILENAME
+from xpu_rt.extensions.task_flow import (
     COMMIT_STATUSES,
     RESUME_STATUSES,
     TASK_FILENAME,
@@ -179,7 +179,7 @@ def test_commit_missing_manifest_inside_extension_dir(tmp_path: Path):
     task_dir = emit_extension_task(task, tasks_root=tmp_path / "tasks")
     ext_dir = tmp_path / "extensions" / task.task_id
     ext_dir.mkdir(parents=True)
-    (ext_dir / "README.md").write_text("Hello")  # no compgen_extension.yaml
+    (ext_dir / "README.md").write_text("Hello")  # no xpu_rt_extension.yaml
 
     outcome = commit_extension_response(
         task_dir,

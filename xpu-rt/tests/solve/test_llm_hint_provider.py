@@ -7,17 +7,17 @@ from pathlib import Path
 
 import pytest
 
-from compgen.solve.llm_hint_provider import (
+from xpu_rt.solve.llm_hint_provider import (
     get_memory_hints,
     read_llm_hints_from_file,
     write_llm_hint_request,
 )
-from compgen.solve.memory_planner import (
+from xpu_rt.solve.memory_planner import (
     BufferSpec,
     MemoryPlanInput,
     TierCapacity,
 )
-from compgen.solve.solver_hints import MemoryHints
+from xpu_rt.solve.solver_hints import MemoryHints
 
 
 def _plan_input() -> MemoryPlanInput:

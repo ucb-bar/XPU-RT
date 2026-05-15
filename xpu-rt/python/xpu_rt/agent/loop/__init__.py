@@ -17,14 +17,14 @@ Internal modules:
 
 from __future__ import annotations
 
-from compgen.agent.loop.core import AgenticCompilationLoop
-from compgen.agent.loop.phased import (
+from xpu_rt.agent.loop.core import AgenticCompilationLoop
+from xpu_rt.agent.loop.phased import (
     DriveLoopResult,
     PhasedDriveLoop,
     PhasePolicy,
     PhaseRunSummary,
 )
-from compgen.agent.loop.records import CompilationResult, IterationRecord
+from xpu_rt.agent.loop.records import CompilationResult, IterationRecord
 
 __all__ = [
     "AgenticCompilationLoop",

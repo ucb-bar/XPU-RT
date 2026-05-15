@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from compgen.agent.env import (
+from xpu_rt.agent.env import (
     CompilerEnv,
     ConfigureDispatchAction,
     ConfigureProfilingAction,
     GenerateRuntimeHooksAction,
 )
-from compgen.targets.schema import DeviceSpec, TargetProfile
+from xpu_rt.targets.schema import DeviceSpec, TargetProfile
 from xdsl.dialects.builtin import ModuleOp
 
 

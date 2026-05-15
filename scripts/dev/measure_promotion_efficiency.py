@@ -14,7 +14,7 @@ Usage::
     uv run python scripts/dev/measure_promotion_efficiency.py \
         --models tiny_mlp tiny_attention proxy_vla \
         --target host_cpu \
-        --library .compgen_cache/recipes \
+        --library .xpu_rt_cache/recipes \
         --out results/paper/promotion_efficiency
 
 The script does *not* attempt to be clever about caching — it
@@ -41,7 +41,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from compgen.graph_compilation.efficiency_report import (
+from xpu_rt.graph_compilation.efficiency_report import (
     EfficiencyDelta,
     compare_runs,
 )
@@ -64,11 +64,11 @@ def _run_one(
     stop_after: str,
     repo_root: Path,
 ) -> tuple[Path | None, str]:
-    """Invoke ``python -m compgen.graph_compilation`` for one model."""
+    """Invoke ``python -m xpu_rt.graph_compilation`` for one model."""
     cmd = [
         sys.executable,
         "-m",
-        "compgen.graph_compilation",
+        "xpu_rt.graph_compilation",
         "run",
         "--model",
         str(model_config),
@@ -168,7 +168,7 @@ def main() -> int:
     ap.add_argument("--target", default="host_cpu")
     ap.add_argument(
         "--library",
-        default=".compgen_cache/recipes",
+        default=".xpu_rt_cache/recipes",
         help="Recipe library path (gets nuked between cold runs).",
     )
     ap.add_argument(

@@ -1,7 +1,7 @@
 """End-to-end MCP-driven compile of the llama block.
 
 This script drives compilation the way an MCP client would: every
-compiler action goes through :func:`compgen.mcp.server.dispatch_tool`,
+compiler action goes through :func:`xpu_rt.mcp.server.dispatch_tool`,
 which is the same code path the stdio MCP server uses. Nothing is done
 via direct Python imports of compile internals.
 
@@ -18,7 +18,7 @@ After each stage we verify the observability features:
 
 Run::
 
-    COMPGEN_DUMP_IR=1 uv run python scripts/mcp_llama_e2e.py
+    XPU_RT_DUMP_IR=1 uv run python scripts/mcp_llama_e2e.py
 """
 
 from __future__ import annotations
@@ -31,20 +31,20 @@ from pathlib import Path
 
 # Make sure the compile path writes IR dumps even when the MCP lifecycle
 # tool does not propagate ``dump_ir`` explicitly.
-os.environ.setdefault("COMPGEN_DUMP_IR", "1")
+os.environ.setdefault("XPU_RT_DUMP_IR", "1")
 
 # Redirect the session dir to a deterministic path under the repo so the
 # trace mirror is easy to inspect.
 REPO = Path(__file__).resolve().parent.parent
 OUT_ROOT = REPO / "sessions" / "mcp_e2e_llama"
 OUT_ROOT.mkdir(parents=True, exist_ok=True)
-os.environ["COMPGEN_SESSION_DIR"] = str(OUT_ROOT)
+os.environ["XPU_RT_SESSION_DIR"] = str(OUT_ROOT)
 
-from compgen.mcp.server import dispatch_tool  # noqa: E402
-from compgen.mcp.session import SessionManager  # noqa: E402
-from compgen.mcp.tools import ALL_TOOLS  # noqa: E402
-from compgen.mcp.transcript import McpTranscriptRecorder  # noqa: E402
-from compgen.trace import TracingMcpTranscriptRecorder  # noqa: E402
+from xpu_rt.mcp.server import dispatch_tool  # noqa: E402
+from xpu_rt.mcp.session import SessionManager  # noqa: E402
+from xpu_rt.mcp.tools import ALL_TOOLS  # noqa: E402
+from xpu_rt.mcp.transcript import McpTranscriptRecorder  # noqa: E402
+from xpu_rt.trace import TracingMcpTranscriptRecorder  # noqa: E402
 
 SPEC_PATH = REPO / "tests/targetgen/exemplars/test_gpu_simt.yaml"
 MODEL_PATH = REPO / "examples/llama_block.py"

@@ -37,7 +37,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 def _build_v3_matmul(*, M=16, K=16, N=32, dtype="f32"):
-    from compgen.kernels.contract_v3 import (
+    from xpu_rt.kernels.contract_v3 import (
         ConcurrencyUnit, DispatchModel, DispatchSpec, EventDecl,
         ExecutionEnvelope, FusionPolicy, Granularity, HardwareEnvelope,
         IOContract, KernelArchetype, KernelContractV3, LayoutKind, MemorySpec,
@@ -90,7 +90,7 @@ def _build_v3_matmul(*, M=16, K=16, N=32, dtype="f32"):
 
 def _build_v3_dynamic_matmul():
     """Dynamic-shape variant: every dim is None."""
-    from compgen.kernels.contract_v3 import (
+    from xpu_rt.kernels.contract_v3 import (
         ConcurrencyUnit, DispatchModel, DispatchSpec, EventDecl,
         ExecutionEnvelope, FusionPolicy, Granularity, HardwareEnvelope,
         IOContract, KernelArchetype, KernelContractV3, LayoutKind, MemorySpec,
@@ -148,7 +148,7 @@ def _build_v3_dynamic_matmul():
 
 class TestInstanceVsCanonical:
     def test_concrete_contract_both_hashes_match(self) -> None:
-        from compgen.promotion.contract_hash import (
+        from xpu_rt.promotion.contract_hash import (
             canonical_contract_hash,
             instance_contract_hash,
         )
@@ -159,7 +159,7 @@ class TestInstanceVsCanonical:
         assert canonical_contract_hash(c) == instance_contract_hash(c)
 
     def test_dynamic_concrete_pair_differ_on_instance_match_on_canonical(self) -> None:
-        from compgen.promotion.contract_hash import (
+        from xpu_rt.promotion.contract_hash import (
             canonical_contract_hash,
             instance_contract_hash,
         )
@@ -186,7 +186,7 @@ class TestInstanceVsCanonical:
         assert cdyn == canonical_contract_hash(_build_v3_dynamic_matmul())
 
     def test_hash_contract_alias_matches_instance_hash(self) -> None:
-        from compgen.promotion.contract_hash import (
+        from xpu_rt.promotion.contract_hash import (
             hash_contract,
             instance_contract_hash,
         )
@@ -202,14 +202,14 @@ class TestInstanceVsCanonical:
 
 class TestStability:
     def test_concrete_canonical_byte_stable(self) -> None:
-        from compgen.promotion.contract_hash import canonical_contract_hash
+        from xpu_rt.promotion.contract_hash import canonical_contract_hash
 
         c1 = _build_v3_matmul()
         c2 = _build_v3_matmul()
         assert canonical_contract_hash(c1) == canonical_contract_hash(c2)
 
     def test_dynamic_canonical_byte_stable(self) -> None:
-        from compgen.promotion.contract_hash import canonical_contract_hash
+        from xpu_rt.promotion.contract_hash import canonical_contract_hash
 
         d1 = _build_v3_dynamic_matmul()
         d2 = _build_v3_dynamic_matmul()
@@ -223,7 +223,7 @@ class TestStability:
 
 class TestSensitivity:
     def test_dtype_change_changes_canonical(self) -> None:
-        from compgen.promotion.contract_hash import canonical_contract_hash
+        from xpu_rt.promotion.contract_hash import canonical_contract_hash
 
         f32 = _build_v3_matmul(dtype="f32")
         # f16 needs a different accumulator/numerics block, but for
@@ -231,7 +231,7 @@ class TestSensitivity:
         # Build a hand-tweaked f16 variant:
         from dataclasses import replace
 
-        from compgen.kernels.contract_v3 import LayoutKind, ShapeClass, TensorIO
+        from xpu_rt.kernels.contract_v3 import LayoutKind, ShapeClass, TensorIO
 
         f16 = replace(
             f32,
@@ -252,8 +252,8 @@ class TestSensitivity:
     def test_compiler_only_fusion_change_does_not_change_canonical(self) -> None:
         from dataclasses import replace
 
-        from compgen.kernels.contract_v3 import FusionPolicy
-        from compgen.promotion.contract_hash import canonical_contract_hash
+        from xpu_rt.kernels.contract_v3 import FusionPolicy
+        from xpu_rt.promotion.contract_hash import canonical_contract_hash
 
         c = _build_v3_matmul()
         with_fusion = replace(
@@ -276,7 +276,7 @@ class TestSensitivity:
 def _invoke_pipeline(*, model: str, out_dir: Path) -> subprocess.CompletedProcess:
     return subprocess.run(
         [
-            sys.executable, "-m", "compgen.graph_compilation", "run",
+            sys.executable, "-m", "xpu_rt.graph_compilation", "run",
             "--model", str(REPO_ROOT / f"configs/models/{model}.yaml"),
             "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
             "--out", str(out_dir),
@@ -308,7 +308,7 @@ class TestCertificateCarriesCanonical:
         # from_recipe-materialised matmul does).
 
     def test_find_by_canonical_hash_locates_cert(self, tmp_path: Path) -> None:
-        from compgen.kernels.kernel_certificate import (
+        from xpu_rt.kernels.kernel_certificate import (
             find_certificate_by_canonical_hash,
         )
 
@@ -330,7 +330,7 @@ class TestCertificateCarriesCanonical:
         assert located.contract_hash == body["contract_hash"]
 
     def test_find_by_unknown_canonical_returns_none(self, tmp_path: Path) -> None:
-        from compgen.kernels.kernel_certificate import (
+        from xpu_rt.kernels.kernel_certificate import (
             find_certificate_by_canonical_hash,
         )
 

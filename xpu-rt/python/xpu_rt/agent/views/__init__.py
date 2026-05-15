@@ -11,7 +11,7 @@ surface to the smallest payload that still answers the question:
   checkpoints; what changed since the last plan?
 
 The views accept ``dict``-shaped session state (mirroring
-:class:`compgen.agent.llm_driver.DriverCheckpoint`'s
+:class:`xpu_rt.agent.llm_driver.DriverCheckpoint`'s
 ``to_dict`` output) so they are runnable + testable without
 materialising a full LLMDrivenCompiler. The wire-in to the live
 driver lands in P2.4 + P2.5.
@@ -27,14 +27,14 @@ Hard rules:
 
 from __future__ import annotations
 
-from compgen.agent.views.canonical_view import (
+from xpu_rt.agent.views.canonical_view import (
     CANONICAL_VIEW_BYTE_BUDGET,
     CanonicalView,
     CanonicalViewBudgetError,
     canonical_view,
 )
-from compgen.agent.views.diff_since import DiffEntry, diff_since
-from compgen.agent.views.focus_chunk import FocusChunk, focus_chunk
+from xpu_rt.agent.views.diff_since import DiffEntry, diff_since
+from xpu_rt.agent.views.focus_chunk import FocusChunk, focus_chunk
 
 __all__ = [
     "CANONICAL_VIEW_BYTE_BUDGET",

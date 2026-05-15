@@ -7,7 +7,7 @@ engine can reference these as starting points.
 
 from __future__ import annotations
 
-from compgen.llm.knowledge.base import (
+from xpu_rt.llm.knowledge.base import (
     Confidence,
     TransformRecipe,
     TransformStep,

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from compgen.runtime.traits import DeviceTraits
-from compgen.targets.schema import ComputeUnit, DeviceSpec, MemoryLevel, TargetProfile
+from xpu_rt.runtime.traits import DeviceTraits
+from xpu_rt.targets.schema import ComputeUnit, DeviceSpec, MemoryLevel, TargetProfile
 
 
 def _cuda_a100_profile() -> TargetProfile:

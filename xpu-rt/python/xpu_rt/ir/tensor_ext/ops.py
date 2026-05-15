@@ -1,4 +1,4 @@
-"""Operations for ``compgen.tensor_ext``.
+"""Operations for ``xpu_rt.tensor_ext``.
 
 Each op mirrors the corresponding MLIR upstream op so that future
 round-trips through MLIR parse-back cleanly:
@@ -63,7 +63,7 @@ class ConcatOp(IRDLOperation):
 
     Mirrors ``tensor.concat`` from MLIR upstream::
 
-        %out = compgen.tensor_ext.concat dim(d) %a, %b, %c
+        %out = xpu_rt.tensor_ext.concat dim(d) %a, %b, %c
             : (tensor<2x4xf32>, tensor<3x4xf32>, tensor<5x4xf32>)
             -> tensor<10x4xf32>
 
@@ -72,7 +72,7 @@ class ConcatOp(IRDLOperation):
     sum of each input's extent along ``dim``.
     """
 
-    name = "compgen.tensor_ext.concat"
+    name = "xpu_rt.tensor_ext.concat"
 
     inputs = var_operand_def(Attribute)
     result = result_def(Attribute)
@@ -150,7 +150,7 @@ class PackOp(IRDLOperation):
 
     Mirrors ``tensor.pack`` semantics::
 
-        %packed = compgen.tensor_ext.pack %src
+        %packed = xpu_rt.tensor_ext.pack %src
             inner_dims_pos = [1, 0]
             inner_tiles    = [32, 16]
             outer_dims_perm = [0, 1]
@@ -175,7 +175,7 @@ class PackOp(IRDLOperation):
     inner tiles in the order given by ``inner_dims_pos``.
     """
 
-    name = "compgen.tensor_ext.pack"
+    name = "xpu_rt.tensor_ext.pack"
 
     source = operand_def(Attribute)
     padding_value = opt_operand_def(Attribute)
@@ -272,7 +272,7 @@ class UnpackOp(IRDLOperation):
     ``source rank - len(inner_dims_pos)``.
     """
 
-    name = "compgen.tensor_ext.unpack"
+    name = "xpu_rt.tensor_ext.unpack"
 
     source = operand_def(Attribute)
     result = result_def(Attribute)

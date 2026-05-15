@@ -1,7 +1,7 @@
 """Fresh-agent task pack builder.
 
 Builds a directory containing exactly the files a fresh Claude Code
-session needs to run a CompGen compile task — and nothing more. The
+session needs to run a XPU-RT compile task — and nothing more. The
 contents are an explicit allowlist; everything else (chat transcripts,
 project memory, scratch results, kernel cache) is excluded.
 
@@ -14,7 +14,7 @@ The CI-runnable contract is two-part:
 
 1. ``build_task_pack`` produces a directory whose contents match the
    allowlist exactly (no forbidden files; no missing required files).
-2. The greedy/no-LLM baseline (``compgen.audit.fresh_agent_modes``)
+2. The greedy/no-LLM baseline (``xpu_rt.audit.fresh_agent_modes``)
    succeeds against the task pack on a holdout model. If the
    deterministic path can't reproduce the workflow with the public
    doc surface, neither can a fresh agent.
@@ -30,7 +30,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
 
-from compgen.audit.errors import TaskPackContaminated, TaskPackIncomplete
+from xpu_rt.audit.errors import TaskPackContaminated, TaskPackIncomplete
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
@@ -41,14 +41,14 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 REQUIRED_PATHS: tuple[str, ...] = (
     "CLAUDE.md",
     "AGENT.md",
-    ".claude/skills/compgen/SKILL.md",
-    ".claude/skills/compgen-compile/SKILL.md",
-    ".claude/skills/compgen-candidate-selection/SKILL.md",
+    ".claude/skills/xpu_rt/SKILL.md",
+    ".claude/skills/xpu_rt-compile/SKILL.md",
+    ".claude/skills/xpu_rt-candidate-selection/SKILL.md",
     "docs/reference/cli.md",
     "docs/reference/mcp-tools.md",
     "docs/realness/m31a_audit_layer.yaml",
     "pyproject.toml",
-    "python/compgen/__init__.py",
+    "python/xpu_rt/__init__.py",
 )
 
 # Path globs to copy into the pack (relative to repo root). Order matters
@@ -59,18 +59,18 @@ ALLOWLISTED_PATHS: tuple[str, ...] = (
     "pyproject.toml",
     "uv.lock",
     "scripts/bootstrap.sh",
-    ".claude/skills/compgen/**",
-    ".claude/skills/compgen-compile/**",
-    ".claude/skills/compgen-candidate-selection/**",
+    ".claude/skills/xpu_rt/**",
+    ".claude/skills/xpu_rt-compile/**",
+    ".claude/skills/xpu_rt-candidate-selection/**",
     "docs/reference/**",
     "docs/architecture/**",
     "docs/concepts/**",
     "docs/realness/**",
     "docs/generated/**",
     "configs/**",
-    # The compgen package itself; required because MCP tool schemas
-    # are introspected from compgen.mcp.tools.ALL_TOOLS at runtime.
-    "python/compgen/**",
+    # The xpu_rt package itself; required because MCP tool schemas
+    # are introspected from xpu_rt.mcp.tools.ALL_TOOLS at runtime.
+    "python/xpu_rt/**",
     # Holdout model adapters live under tests/, but they are referenced
     # by the holdout YAMLs and need to be copyable from the task pack.
     "tests/graph_compilation/models/holdout_*.py",
@@ -86,10 +86,10 @@ FORBIDDEN_PATHS: tuple[str, ...] = (
     ".claude/worktrees/**",
     ".claude/settings.local.json",
     "results/**",
-    ".compgen_cache/**",
+    ".xpu_rt_cache/**",
     ".crg-artifacts/**",
     "tmp/**",
-    ".compgen/**",
+    ".xpu_rt/**",
     ".git/**",
     ".venv/**",
     "**/__pycache__/**",
@@ -158,11 +158,11 @@ def _iter_repo_files(repo_root: Path) -> Iterable[Path]:
         ".git",
         ".venv",
         "node_modules",
-        ".compgen_cache",
+        ".xpu_rt_cache",
         ".crg-artifacts",
         "results",
         "tmp",
-        ".compgen",
+        ".xpu_rt",
         "user_extensions",
         "third_party",
     }
@@ -206,7 +206,7 @@ def build_task_pack(
             generated default is used (see :func:`_default_task_prompt`).
         task_model: Holdout model id for the bundled prompt.
         task_target: Target id for the bundled prompt.
-        skip_python_package: When True, omit ``python/compgen/**`` from
+        skip_python_package: When True, omit ``python/xpu_rt/**`` from
             the pack. Used by tests that only need to verify the
             allowlist plumbing — copying the entire package is slow.
 
@@ -226,7 +226,7 @@ def build_task_pack(
 
     allowed = list(ALLOWLISTED_PATHS)
     if skip_python_package:
-        allowed = [p for p in allowed if p != "python/compgen/**"]
+        allowed = [p for p in allowed if p != "python/xpu_rt/**"]
 
     files_copied = 0
     bytes_copied = 0
@@ -246,14 +246,14 @@ def build_task_pack(
         bytes_copied += dst.stat().st_size
 
     # Verify required paths present. When skip_python_package is True
-    # (test mode), the python/compgen/* requirements are skipped — the
+    # (test mode), the python/xpu_rt/* requirements are skipped — the
     # task pack is being verified for its allowlist plumbing, not for
     # full executability.
     required_to_check = list(REQUIRED_PATHS)
     if skip_python_package:
         required_to_check = [
             r for r in required_to_check
-            if not r.startswith("python/compgen")
+            if not r.startswith("python/xpu_rt")
         ]
     missing: list[str] = []
     for required in required_to_check:
@@ -308,12 +308,12 @@ def build_task_pack(
 
 def _default_task_prompt(*, model: str, target: str) -> str:
     return f"""\
-# CompGen fresh-agent task
+# XPU-RT fresh-agent task
 
 Compile **{model}** for **{target}** using only the public repo
 artifacts in this task pack. The acceptance contract:
 
-1. Use the MCP tools (or the `/compgen-compile` skill if you are
+1. Use the MCP tools (or the `/xpu_rt-compile` skill if you are
    running in Claude Code) to drive the compile.
 2. Do not edit source code.
 3. Do not invent candidate IDs, pass IDs, tile sizes, or summary
@@ -330,7 +330,7 @@ artifacts in this task pack. The acceptance contract:
    invariant; you'll see typed errors in
    `agent_decision_validation.json`.
 7. Reach a verified compile OR produce a typed-blocked outcome from
-   `compgen.runtime.errors`. A silent partial pass is failure.
+   `xpu_rt.runtime.errors`. A silent partial pass is failure.
 
 What the pipeline gives you (read these in this order):
 
@@ -349,7 +349,7 @@ What you write back:
     for an ordered multi-step plan (M-34.3).
 
 When done, record the outcome in the caveat ledger via
-`compgen.audit.fresh_agent_modes.record_manual_session_result(...)`
+`xpu_rt.audit.fresh_agent_modes.record_manual_session_result(...)`
 so the audit can pick it up.
 """
 
@@ -359,7 +359,7 @@ def verify_task_pack(out_dir: Path, *, lenient_python_package: bool = True) -> T
 
     Args:
         out_dir: Path to a previously-built task pack.
-        lenient_python_package: When True, missing ``python/compgen/*``
+        lenient_python_package: When True, missing ``python/xpu_rt/*``
             files are tolerated (a caller may have built the pack with
             ``skip_python_package=True`` for testing). Set False for a
             fully-executable production pack.
@@ -377,7 +377,7 @@ def verify_task_pack(out_dir: Path, *, lenient_python_package: bool = True) -> T
     if lenient_python_package:
         required_to_check = [
             r for r in required_to_check
-            if not r.startswith("python/compgen")
+            if not r.startswith("python/xpu_rt")
         ]
     missing = [p for p in required_to_check if not (out_dir / p).exists()]
     if missing:

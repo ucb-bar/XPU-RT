@@ -1,7 +1,7 @@
 """Refinement monotonicity.
 
-CompGen passes preserve refinement at one of four declared levels
-(see :data:`compgen.passes.cards.REFINEMENT_KINDS`):
+XPU-RT passes preserve refinement at one of four declared levels
+(see :data:`xpu_rt.passes.cards.REFINEMENT_KINDS`):
 
 - ``bit_equality``  — output is bit-for-bit identical to eager
 - ``tolerance_eps`` — output matches eager within an epsilon
@@ -28,8 +28,8 @@ import enum
 from dataclasses import dataclass, field
 from typing import Iterable, Sequence
 
-from compgen.audit.errors import RefinementMonotonicityViolation
-from compgen.passes.cards import REFINEMENT_KINDS, PassCard
+from xpu_rt.audit.errors import RefinementMonotonicityViolation
+from xpu_rt.passes.cards import REFINEMENT_KINDS, PassCard
 
 
 class RefinementLevel(int, enum.Enum):

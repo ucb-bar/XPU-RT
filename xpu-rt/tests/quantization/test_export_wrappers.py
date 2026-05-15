@@ -5,13 +5,13 @@ from __future__ import annotations
 import pytest
 import torch
 import torch.nn as nn
-from compgen.quantization.export_wrappers import (
+from xpu_rt.quantization.export_wrappers import (
     ExportableFP8Conv2d,
     ExportableFP8Linear,
     rewrite_for_export,
 )
-from compgen.quantization.fp8_ops import quantize_fp8_e4m3_po2
-from compgen.quantization.fp8_tensor import FP8E4M3Po2Tensor
+from xpu_rt.quantization.fp8_ops import quantize_fp8_e4m3_po2
+from xpu_rt.quantization.fp8_tensor import FP8E4M3Po2Tensor
 
 torchao = pytest.importorskip("torchao")
 
@@ -97,7 +97,7 @@ class TestRewriteForExport:
             nn.Linear(16, 8, dtype=torch.bfloat16),
         )
         # Quantize
-        from compgen.quantization.fp8_config import FP8E4M3Po2Config
+        from xpu_rt.quantization.fp8_config import FP8E4M3Po2Config
         from torchao.quantization import quantize_
 
         quantize_(model, FP8E4M3Po2Config())
@@ -123,7 +123,7 @@ class TestRewriteForExport:
             nn.ReLU(),
             nn.Linear(16, 8, dtype=torch.bfloat16),
         )
-        from compgen.quantization.fp8_config import FP8E4M3Po2Config
+        from xpu_rt.quantization.fp8_config import FP8E4M3Po2Config
         from torchao.quantization import quantize_
 
         quantize_(model, FP8E4M3Po2Config())
@@ -155,7 +155,7 @@ class TestRewriteForExport:
                 return self.decoder(self.encoder(x))
 
         model = Outer()
-        from compgen.quantization.fp8_config import FP8E4M3Po2Config
+        from xpu_rt.quantization.fp8_config import FP8E4M3Po2Config
         from torchao.quantization import quantize_
 
         quantize_(model, FP8E4M3Po2Config())
@@ -175,7 +175,7 @@ class TestRewriteForExport:
             nn.ReLU(),
             nn.Linear(8, 4, dtype=torch.bfloat16),
         )
-        from compgen.quantization.fp8_config import FP8E4M3Po2Config
+        from xpu_rt.quantization.fp8_config import FP8E4M3Po2Config
         from torchao.quantization import quantize_
 
         quantize_(model, FP8E4M3Po2Config())

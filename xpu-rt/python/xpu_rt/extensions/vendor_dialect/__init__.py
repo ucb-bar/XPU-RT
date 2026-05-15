@@ -1,6 +1,6 @@
-"""Third-party MLIR dialect integration for CompGen.
+"""Third-party MLIR dialect integration for XPU-RT.
 
-This subpackage lets a user point CompGen at a vendor MLIR repo
+This subpackage lets a user point XPU-RT at a vendor MLIR repo
 (CUDA Tile IR, Hexagon MLIR, ...) and drive end-to-end compilation
 through a generated user-space adapter.
 
@@ -15,13 +15,13 @@ The public surface is small by design:
 
 from __future__ import annotations
 
-from compgen.extensions.vendor_dialect.adapter import LoweringResult, VendorDialectAdapter
-from compgen.extensions.vendor_dialect.builtins import (
+from xpu_rt.extensions.vendor_dialect.adapter import LoweringResult, VendorDialectAdapter
+from xpu_rt.extensions.vendor_dialect.builtins import (
     list_builtin_adapters,
     make_builtin_adapter,
     register_builtin_adapter,
 )
-from compgen.extensions.vendor_dialect.descriptor import (
+from xpu_rt.extensions.vendor_dialect.descriptor import (
     BundlePlan,
     CompileEntry,
     LoweringStrategy,
@@ -29,7 +29,7 @@ from compgen.extensions.vendor_dialect.descriptor import (
     VendorDialectDescriptor,
     VerificationPlan,
 )
-from compgen.extensions.vendor_dialect.registry import (
+from xpu_rt.extensions.vendor_dialect.registry import (
     VendorAdapterRegistry,
     adapters_for_target,
     available_adapters,
@@ -37,12 +37,12 @@ from compgen.extensions.vendor_dialect.registry import (
     register_adapter,
     reset_registry,
 )
-from compgen.extensions.vendor_dialect.scaffold import (
+from xpu_rt.extensions.vendor_dialect.scaffold import (
     TEMPLATE_PACK_ROOT,
     ScaffoldResult,
     scaffold_package,
 )
-from compgen.extensions.vendor_dialect.scanner import ScanResult, TdOp, scan_repo
+from xpu_rt.extensions.vendor_dialect.scanner import ScanResult, TdOp, scan_repo
 
 __all__ = [
     "BundlePlan",

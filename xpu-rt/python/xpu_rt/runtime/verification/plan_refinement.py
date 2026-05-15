@@ -7,7 +7,7 @@ in the emit, in the declared order. Three failure kinds:
                           calls in the emit does not equal the bound
                           region count.
 - ``missing_dispatch``  — a region in the plan does not appear as a
-                          ``compgen_kernel_<region_id>`` dispatch.
+                          ``xpu_rt_kernel_<region_id>`` dispatch.
 - ``unknown_dispatch``  — the emit dispatches a kernel the plan
                           doesn't declare (extra launch).
 - ``order_mismatch``    — kernel dispatch sites appear in an order
@@ -20,11 +20,11 @@ The check reads:
   the declared region order; and
 - the emitted ``.c`` or ``.cpp`` source for the actual dispatch
   sequence (parsed by greping for
-  ``cg_rt_command_buffer_dispatch(... compgen_kernel_<id>``).
+  ``cg_rt_command_buffer_dispatch(... xpu_rt_kernel_<id>``).
 
 Both inputs are byte-stable, so the gate is deterministic. The check
 returns a typed :class:`PlanRefinementReport`; on failure it raises
-:class:`compgen.runtime.errors.RuntimeRefinementError`.
+:class:`xpu_rt.runtime.errors.RuntimeRefinementError`.
 """
 
 from __future__ import annotations
@@ -34,12 +34,12 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from compgen.runtime.errors import RuntimeRefinementError
+from xpu_rt.runtime.errors import RuntimeRefinementError
 
 
 _DISPATCH_RE = re.compile(
     r"cg_rt_command_buffer_dispatch\s*\(\s*\w+\s*,\s*"
-    r"(compgen_kernel_[A-Za-z0-9_]+)"
+    r"(xpu_rt_kernel_[A-Za-z0-9_]+)"
 )
 
 
@@ -70,7 +70,7 @@ def _parse_dispatch_order(src: str) -> tuple[str, ...]:
     """Return the kernel symbol invoked at each dispatch site, in
     source order."""
     return tuple(
-        m.group(1).removeprefix("compgen_kernel_")
+        m.group(1).removeprefix("xpu_rt_kernel_")
         for m in _DISPATCH_RE.finditer(src)
     )
 
@@ -136,7 +136,7 @@ def check_plan_refinement(
             failures.append((
                 "missing_dispatch",
                 f"plan declares bound region {region!r} but the emit "
-                f"does not call compgen_kernel_{region}",
+                f"does not call xpu_rt_kernel_{region}",
             ))
     for region in observed:
         if region not in bound_regions:

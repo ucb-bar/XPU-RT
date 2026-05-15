@@ -2,20 +2,20 @@
 
 Drives the 6 reference workloads from Jin et al., MLSys '26
 ("Event Tensor: A Unified Abstraction for Compiling Dynamic Megakernel")
-end-to-end through CompGen's compile-and-run pipeline, captures the
+end-to-end through XPU-RT's compile-and-run pipeline, captures the
 correctness + timing + launch-profile data, and emits a structured
 :class:`ConformanceReport` per workload.
 
 Designed for the **remote agent on a Blackwell GPU box** that
-installs ``compgen[cuda]`` from PyPI:
+installs ``xpu_rt[cuda]`` from PyPI:
 
-    pip install 'compgen[cuda]==0.2.0'
-    python -m compgen.testing.etc_conformance --workload all \\
+    pip install 'xpu_rt[cuda]==0.2.0'
+    python -m xpu_rt.testing.etc_conformance --workload all \\
         --output-dir /tmp/conf_run1
 
 or programmatically::
 
-    from compgen.testing.etc_conformance import (
+    from xpu_rt.testing.etc_conformance import (
         ConformanceWorkload, run_conformance,
     )
     report = run_conformance(
@@ -45,13 +45,13 @@ codebase enforces.
 
 Phases this harness depends on:
 
-- Phase 7 — :func:`compgen.api.compile_model` routes through ETC
+- Phase 7 — :func:`xpu_rt.api.compile_model` routes through ETC
   dispatch when the target's ``DeviceTraits.supports_event_tensors``
   is True. Until that lands, this harness produces ``passed=False``
   with reason ``"compile_model not yet routed to ETC dispatch"``.
 - Phase 4 — ``runtime/native/cuda.py`` exposes
   :class:`CudaMegakernelLauncher` and a :class:`CudaDeviceProbe`.
-- Phase 5 — :mod:`compgen.transforms.emit_cuda_megakernel` produces
+- Phase 5 — :mod:`xpu_rt.transforms.emit_cuda_megakernel` produces
   the Tile IR + persistent kernel that
   :class:`CudaMegakernelLauncher` runs.
 
@@ -301,7 +301,7 @@ def run_conformance(
        Blackwell-specific traits aren't there for a TP workload),
        returns ``passed=False`` with a clear reason.
     2. Builds the workload's reference PyTorch model.
-    3. Compiles via :func:`compgen.api.compile_model` with a target
+    3. Compiles via :func:`xpu_rt.api.compile_model` with a target
        profile that matches the probed device. Until Phase 7 routes
        this through ETC dispatch, returns ``passed=False`` with
        ``reason="compile_model not yet routed to ETC dispatch"``.
@@ -511,20 +511,20 @@ def _check_etc_routing_ready(errors: list[str]) -> bool:
     ETC dispatch. Until then, append a reason to ``errors``.
     """
     try:
-        from compgen.api import compile_model  # noqa: F401
+        from xpu_rt.api import compile_model  # noqa: F401
     except Exception as exc:
-        errors.append(f"compgen.api.compile_model not importable: {exc!r}")
+        errors.append(f"xpu_rt.api.compile_model not importable: {exc!r}")
         return False
     # Phase 7 sentinel: presence of ``compile_model_etc`` as a
     # top-level symbol on api.py means the routing has landed. Until
     # then the harness reports cleanly not-routed.
     try:
-        from compgen import api as _api
+        from xpu_rt import api as _api
 
         if not getattr(_api, "_ETC_DISPATCH_READY", False):
             errors.append(
                 "compile_model not yet routed to ETC dispatch — set "
-                "compgen.api._ETC_DISPATCH_READY = True once Phase 7 lands"
+                "xpu_rt.api._ETC_DISPATCH_READY = True once Phase 7 lands"
             )
             return False
     except Exception as exc:
@@ -548,7 +548,7 @@ def _compile_and_evaluate(
     """The build → compile → verify → benchmark inner loop.
 
     Phase-7 dispatcher: looks up the workload in
-    :data:`compgen.testing.workloads.WORKLOAD_FACTORIES` and delegates
+    :data:`xpu_rt.testing.workloads.WORKLOAD_FACTORIES` and delegates
     to :func:`compile_and_run_etc_workload`. Workloads that haven't
     yet been wired (decoder_layer, moe_fwd, etc.) raise a typed
     error reported via ``errors`` rather than silently routing
@@ -556,11 +556,11 @@ def _compile_and_evaluate(
     """
     del model, sample_inputs  # workloads.WORKLOAD_FACTORIES rebuilds them itself
 
-    from compgen.testing.etc_dispatch import (
+    from xpu_rt.testing.etc_dispatch import (
         EtcDispatchError,
         compile_and_run_etc_workload,
     )
-    from compgen.testing.workloads import WORKLOAD_FACTORIES
+    from xpu_rt.testing.workloads import WORKLOAD_FACTORIES
 
     if workload.value not in WORKLOAD_FACTORIES:
         errors.append(
@@ -717,11 +717,11 @@ def _harness_version() -> str:
     """Return the conformance harness version. Tied to the package
     version so reports + bundles are version-stamped."""
     try:
-        from compgen import __version__
+        from xpu_rt import __version__
 
-        return f"compgen-{__version__}"
+        return f"xpu_rt-{__version__}"
     except Exception:
-        return "compgen-unknown"
+        return "xpu_rt-unknown"
 
 
 # ---------------------------------------------------------------------------
@@ -785,13 +785,13 @@ def _build_gemm_reduce_scatter(*, dtype: str, num_gpus: int) -> tuple[Any, tuple
 
     The Workload-level dispatch happens later in
     :func:`_compile_and_evaluate` (which routes gemm_rs to
-    :func:`compgen.testing.etc_dispatch._compile_and_run_multi_gpu`);
+    :func:`xpu_rt.testing.etc_dispatch._compile_and_run_multi_gpu`);
     this function exists for the run_conformance() outer flow that
     pre-builds ``(model, sample_inputs)`` and validates them ahead of
     the inner dispatcher. Returning the factory's ``model`` +
     ``sample_inputs`` lets that outer flow proceed cleanly.
     """
-    from compgen.testing.workloads import WORKLOAD_FACTORIES
+    from xpu_rt.testing.workloads import WORKLOAD_FACTORIES
 
     workload = WORKLOAD_FACTORIES["gemm_rs"](dtype=dtype, num_gpus=num_gpus)
     return workload.model, workload.sample_inputs
@@ -820,19 +820,19 @@ _WORKLOAD_BUILDERS = {
 
 
 def _cli() -> int:
-    """``compgen-run-conformance`` entry point.
+    """``xpu-rt-run-conformance`` entry point.
 
     Usage:
-        compgen-run-conformance --workload all --dtype bf16 \\
+        xpu-rt-run-conformance --workload all --dtype bf16 \\
             --output-dir /tmp/conf_run1
-        compgen-run-conformance --workload diamond_dag --output-dir ./conf_dev
+        xpu-rt-run-conformance --workload diamond_dag --output-dir ./conf_dev
     """
     import argparse
 
     p = argparse.ArgumentParser(
         description=(
             "Event Tensor Compiler conformance harness. Runs the paper's "
-            "reference workloads against an installed compgen[cuda] and "
+            "reference workloads against an installed xpu_rt[cuda] and "
             "produces ConformanceReport JSON + a markdown summary."
         )
     )
@@ -860,7 +860,7 @@ def _cli() -> int:
         action="store_true",
         help=(
             "Skip the workload entirely; probe the CUDA device "
-            "(`compgen.runtime.probe.probe_cuda_device`) and write the "
+            "(`xpu_rt.runtime.probe.probe_cuda_device`) and write the "
             "result to <output_dir>/device_probe.json. Use this to ship "
             "the full sm_120 / sm_100 / sm_90 trait surface back to the "
             "local agent for Phase-6 target-profile YAML hard-coding."
@@ -872,7 +872,7 @@ def _cli() -> int:
     output_path.mkdir(parents=True, exist_ok=True)
 
     if args.probe_device_only:
-        from compgen.runtime.probe import probe_cuda_device
+        from xpu_rt.runtime.probe import probe_cuda_device
 
         probe = probe_cuda_device(args.device_index)
         path = output_path / "device_probe.json"

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from compgen.search.autotuner import (
+from xpu_rt.search.autotuner import (
     Autotuner,
     AutotuneResult,
     AutotuneTrial,

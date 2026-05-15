@@ -1,7 +1,7 @@
-"""``insert_all_gather`` -- materialize ``compgen.collective.all_gather``
+"""``insert_all_gather`` -- materialize ``xpu_rt.collective.all_gather``
 where a consumer reads a sharded tensor that it needs replicated.
 
-Triggered by an op tagged with ``compgen.gather_axis`` (the dim
+Triggered by an op tagged with ``xpu_rt.gather_axis`` (the dim
 along which shards live). The pass is typically paired with
 ``shard_tensors_spmd`` which decides the sharded axis up front.
 """
@@ -18,7 +18,7 @@ from xdsl.pattern_rewriter import (
     RewritePattern,
 )
 
-from compgen.ir.collective import AllGatherOp, ShardingSpecAttr
+from xpu_rt.ir.collective import AllGatherOp, ShardingSpecAttr
 
 
 @dataclass
@@ -39,14 +39,14 @@ class _InsertAllGatherPattern(RewritePattern):
         self.stats = stats
 
     def match_and_rewrite(self, op: Operation, rewriter: PatternRewriter) -> None:
-        sharding = op.attributes.get("compgen.sharding")
-        gather_axis_attr = op.attributes.get("compgen.gather_axis")
+        sharding = op.attributes.get("xpu_rt.sharding")
+        gather_axis_attr = op.attributes.get("xpu_rt.gather_axis")
         if not isinstance(sharding, ShardingSpecAttr):
             return
         if gather_axis_attr is None:
             return
         self.stats.ops_seen += 1
-        if "compgen.all_gather_inserted" in op.attributes:
+        if "xpu_rt.all_gather_inserted" in op.attributes:
             return
         if not op.results:
             return
@@ -72,7 +72,7 @@ class _InsertAllGatherPattern(RewritePattern):
         parent = op.parent_block()
         if parent is not None:
             parent.insert_op_after(ag, op)
-        op.attributes["compgen.all_gather_inserted"] = gather_axis_attr
+        op.attributes["xpu_rt.all_gather_inserted"] = gather_axis_attr
         self.stats.all_gathers_inserted += 1
 
 

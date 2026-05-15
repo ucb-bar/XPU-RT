@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from compgen.runtime.instrumentation import (
+from xpu_rt.runtime.instrumentation import (
     CounterGroup,
     InstrumentationConfig,
     InstrumentationLevel,
@@ -11,7 +11,7 @@ from compgen.runtime.instrumentation import (
     TraceFilter,
     infer_instrumentation,
 )
-from compgen.targetgen.hardware_spec import ProfilerBackend, ProfilingSpec
+from xpu_rt.targetgen.hardware_spec import ProfilerBackend, ProfilingSpec
 
 # ---- InstrumentationLevel ----
 

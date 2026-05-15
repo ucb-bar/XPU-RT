@@ -3,8 +3,8 @@ name: mcp
 on:
   pull_request:
     paths:
-      - "python/compgen/mcp/**"
-      - "python/compgen/packs/**"
+      - "python/xpu_rt/mcp/**"
+      - "python/xpu_rt/packs/**"
       - "tests/mcp/**"
       - "user_perspective/demo_agentic_compile.py"
       - "scripts/ci/mcp_stdio_smoke.py"
@@ -12,8 +12,8 @@ on:
   push:
     branches: [main]
     paths:
-      - "python/compgen/mcp/**"
-      - "python/compgen/packs/**"
+      - "python/xpu_rt/mcp/**"
+      - "python/xpu_rt/packs/**"
       - "tests/mcp/**"
       - "scripts/ci/mcp_stdio_smoke.py"
       - ".github/workflows/mcp.yml"
@@ -43,7 +43,7 @@ jobs:
       - name: Tool-surface lock
         run: |
           uv run python - <<'PY'
-          from compgen.mcp.tools import ALL_TOOLS
+          from xpu_rt.mcp.tools import ALL_TOOLS
           names = sorted(t["name"] for t in ALL_TOOLS)
           print("tools:", names)
           assert len(ALL_TOOLS) >= 16, f"expected ≥16 tools, got {len(ALL_TOOLS)}"
@@ -79,22 +79,22 @@ jobs:
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
       - name: Install dependencies (dev extras; mcp is in base)
         run: uv sync --frozen --extra dev
-      - name: Boot compgen-mcp + drive initialize/tools.list/tools.call
+      - name: Boot xpu-rt-mcp + drive initialize/tools.list/tools.call
         run: uv run python scripts/ci/mcp_stdio_smoke.py
       - name: Run demo_agentic_compile.py
         env:
-          COMPGEN_SESSION_DIR: ${{ github.workspace }}/ci_sessions
+          XPU_RT_SESSION_DIR: ${{ github.workspace }}/ci_sessions
         run: |
           # The demo script lives under the gitignored user_perspective/
           # sandbox; recreate it from the checked-in test fixtures.
           mkdir -p user_perspective/sessions
           # Scaffold the my_fp4 pack the demo expects.
-          uv run compgen scaffold-pack --kind quantization --name my_fp4 --out user_perspective --overwrite
+          uv run xpu_rt scaffold-pack --kind quantization --name my_fp4 --out user_perspective --overwrite
           if [ -f user_perspective/demo_agentic_compile.py ]; then
             uv run python user_perspective/demo_agentic_compile.py
             # Expect at least one transcript with ≥ 6 records.
             found=0
-            for f in "$COMPGEN_SESSION_DIR"/*/transcript.jsonl; do
+            for f in "$XPU_RT_SESSION_DIR"/*/transcript.jsonl; do
               [ -f "$f" ] || continue
               lines=$(wc -l < "$f")
               echo "transcript $f lines=$lines"

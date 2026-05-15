@@ -2,7 +2,7 @@
 
 The Strategist owns a :class:`Plan` whose region-level rungs are the
 fallback ladders the Tactician walks. On rejection, the typed
-:class:`compgen.agent.counterexample.Counterexample.rejection_class`
+:class:`xpu_rt.agent.counterexample.Counterexample.rejection_class`
 decides what happens:
 
 * ``tactic_fatal`` — the Strategist drops the current rung from the
@@ -159,7 +159,7 @@ def replan_on_reject(
 ) -> Plan:
     """Compute the next Plan in response to a rejection on a region.
 
-    Behaviour by :class:`compgen.agent.counterexample.Counterexample.rejection_class`:
+    Behaviour by :class:`xpu_rt.agent.counterexample.Counterexample.rejection_class`:
 
     * ``tactic_fatal`` — drop the current rung, advance to the next.
     * ``tactic_recoverable`` — return the plan unchanged (Tactician
@@ -171,7 +171,7 @@ def replan_on_reject(
     region id.
     """
 
-    from compgen.agent.counterexample import REJECTION_CLASSES
+    from xpu_rt.agent.counterexample import REJECTION_CLASSES
 
     if rejection_class not in REJECTION_CLASSES:
         raise PlanError(

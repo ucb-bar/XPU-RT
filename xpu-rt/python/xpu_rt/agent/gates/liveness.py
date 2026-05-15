@@ -32,11 +32,11 @@ def liveness_gate(proposal: dict[str, Any], **ctx: Any) -> dict[str, Any]:
     timeout_ms = int(ctx.get("timeout_ms", 10_000))
 
     try:
-        from compgen.solve.memory import solve_memory
+        from xpu_rt.solve.memory import solve_memory
     except ImportError as e:  # pragma: no cover
         return {
             "status": "deferred",
-            "details": {"reason": f"compgen.solve.memory unavailable: {e}"},
+            "details": {"reason": f"xpu_rt.solve.memory unavailable: {e}"},
         }
 
     try:

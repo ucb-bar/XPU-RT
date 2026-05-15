@@ -1,8 +1,8 @@
 """Phase B → promotion bridge (, write side).
 
 Reads a completed graph_compilation run directory and writes a promoted
-recipe to ``.compgen_cache/recipes/`` via the existing
-:class:`compgen.promotion.promote.RecipePromoter` plus the
+recipe to ``.xpu_rt_cache/recipes/`` via the existing
+:class:`xpu_rt.promotion.promote.RecipePromoter` plus the
 ``memory.promotions`` SQLite index.
 
 This module is the *seam* described in Section 19: , every
@@ -11,7 +11,7 @@ run on the same model (let alone a *different* model with the same
 region pattern) re-emits every candidate. , the run dir's
 :file:`03_recipe_planning/candidate_selection.json`,
 :file:`recipe.mlir`, and any present differential reports are folded
-into a :class:`compgen.runtime.bundle.Bundle`, the bundle's
+into a :class:`xpu_rt.runtime.bundle.Bundle`, the bundle's
 ``verification_report.json`` is synthesised from Phase B evidence, and
 a two-tier-keyed promoted recipe lands in the deterministic recipe
 library.
@@ -47,32 +47,32 @@ from typing import Any
 
 import structlog
 
-from compgen.promotion.gates import GateEvaluation, evaluate_gate
-from compgen.promotion.promote import (
+from xpu_rt.promotion.gates import GateEvaluation, evaluate_gate
+from xpu_rt.promotion.promote import (
     PromotedRecipe,
     PromotionResult,
     RecipeKey,
     RecipePromoter,
     write_promoted_recipe_sidecar,
 )
-from compgen.promotion.region_signature import (
+from xpu_rt.promotion.region_signature import (
     hash_region_signature,
     make_region_signature,
 )
-from compgen.runtime.bundle import Bundle
+from xpu_rt.runtime.bundle import Bundle
 
 log = structlog.get_logger(__name__)
 
 
 # Default library path mirrors ``RecipePromoter`` usage elsewhere
-# (``.compgen_cache/recipes/`` is the gitignored deterministic
+# (``.xpu_rt_cache/recipes/`` is the gitignored deterministic
 # library). Resolved against the repo root rather than cwd so the
 # bridge writes to the same library regardless of where the pipeline
 # was invoked from. Caught during real-workload validation:
-# ``Path(".compgen_cache")`` was cwd-relative, which silently put
+# ``Path(".xpu_rt_cache")`` was cwd-relative, which silently put
 # different runs into different libraries when cwd drifted.
 _REPO_ROOT = Path(__file__).resolve().parents[3]
-_DEFAULT_LIBRARY_PATH = _REPO_ROOT / ".compgen_cache" / "recipes"
+_DEFAULT_LIBRARY_PATH = _REPO_ROOT / ".xpu_rt_cache" / "recipes"
 
 
 @dataclass(frozen=True)
@@ -222,8 +222,8 @@ def _synthesize_verification_report(
 ) -> tuple[Path | None, str]:
     """Write a ``verification_report.json`` in the format the gate expects.
 
-    The compgen-promotion gate at
-    :func:`compgen.promotion.promote._inspect_verification` requires a
+    The xpu_rt-promotion gate at
+    :func:`xpu_rt.promotion.promote._inspect_verification` requires a
     JSON object with ``passed``, ``levels_run``, ``levels_passed``,
     ``details``. Phase B writes individual differential reports in
     different schemas; we fold them into the canonical shape.
@@ -308,11 +308,11 @@ def derive_contract_hash(
     error so any remaining production caller is fixed loud.
 
     The canonical contract hash is now
-    ``compgen.promotion.contract_hash.hash_contract`` applied to the
+    ``xpu_rt.promotion.contract_hash.hash_contract`` applied to the
     full ``KernelContractV3`` materialised via
     ``KernelContractV3.from_recipe``. Production callers must
     route through
-    ``compgen.graph_compilation.kernel_contract_materialization.hash_contract_from_run_dir``
+    ``xpu_rt.graph_compilation.kernel_contract_materialization.hash_contract_from_run_dir``
     which loads the dossier + target profile + recipe-gate verdict and
     produces the canonical hash.
 
@@ -324,10 +324,10 @@ def derive_contract_hash(
     """
     raise RuntimeError(
         "derive_contract_hash is retired in M-41; use "
-        "compgen.graph_compilation.kernel_contract_materialization."
+        "xpu_rt.graph_compilation.kernel_contract_materialization."
         "hash_contract_from_run_dir(run_dir, candidate_selection, "
         "region_id, target_id) instead. The canonical hash is "
-        "compgen.promotion.contract_hash.hash_contract applied to a "
+        "xpu_rt.promotion.contract_hash.hash_contract applied to a "
         "KernelContractV3 materialised via "
         "KernelContractV3.from_recipe (M-40)."
     )
@@ -538,8 +538,8 @@ def emit(
             ``03_recipe_planning/candidate_selection.json``, and any
             differential reports the gate consults.
         library_path: Recipe library root. Defaults to
-            ``.compgen_cache/recipes/`` rooted at CWD.
-        memory: Optional :class:`compgen.memory.store.CompilerMemory`
+            ``.xpu_rt_cache/recipes/`` rooted at CWD.
+        memory: Optional :class:`xpu_rt.memory.store.CompilerMemory`
             instance — when provided, the promotion is also indexed in
             the SQLite ``promotions`` table with the two-tier dimensions.
 
@@ -648,7 +648,7 @@ def _emit_impl(
     # contract_hash — exact-kernel reuse tier. route through
     # the canonical hash_contract(KernelContractV3) so promotion-write
     # and promotion-read derive byte-identical keys.
-    from compgen.graph_compilation.kernel_contract_materialization import (
+    from xpu_rt.graph_compilation.kernel_contract_materialization import (
         hash_contract_from_run_dir,
     )
     contract_hash_str = hash_contract_from_run_dir(
@@ -780,7 +780,7 @@ def _emit_impl(
     # Index in memory.promotions when a CompilerMemory is supplied.
     if memory is not None:
         try:
-            from compgen.memory.schema import GeneratorKind, ObjectKind
+            from xpu_rt.memory.schema import GeneratorKind, ObjectKind
 
             task = memory.create_task(
                 kind=ObjectKind.BACKEND_PLAN,

@@ -1,4 +1,4 @@
-"""Transformer block model for CompGen pipeline testing.
+"""Transformer block model for XPU-RT pipeline testing.
 
 A minimal transformer block (MultiheadAttention + FFN + LayerNorm)
 that exercises more complex capture patterns than SimpleMLP:

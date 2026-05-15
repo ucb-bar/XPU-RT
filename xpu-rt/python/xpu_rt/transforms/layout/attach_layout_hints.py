@@ -1,7 +1,7 @@
 """Pass 2: Attach layout hints from analysis plans.
 
 Takes LayoutPlan dict from the LayoutPlanner and attaches
-``compgen.layout_hint`` string attributes to ops based on their
+``xpu_rt.layout_hint`` string attributes to ops based on their
 region assignment.  Bridges analysis output to IR annotations.
 """
 
@@ -13,12 +13,12 @@ import structlog
 from xdsl.dialects.builtin import ModuleOp, StringAttr
 
 if TYPE_CHECKING:
-    from compgen.analysis.layout.planner import LayoutPlan
+    from xpu_rt.analysis.layout.planner import LayoutPlan
 
 log = structlog.get_logger()
 
-LAYOUT_HINT_ATTR = "compgen.layout_hint"
-PREPACK_HINT_ATTR = "compgen.prepack_hint"
+LAYOUT_HINT_ATTR = "xpu_rt.layout_hint"
+PREPACK_HINT_ATTR = "xpu_rt.prepack_hint"
 
 
 def attach_layout_hints(
@@ -27,9 +27,9 @@ def attach_layout_hints(
 ) -> ModuleOp:
     """Annotate ops with layout hints from analysis plans.
 
-    For each op, checks if its ``compgen.region_id`` attribute matches a
+    For each op, checks if its ``xpu_rt.region_id`` attribute matches a
     plan key.  If so, attaches the preferred output layout and any prepack
-    hints.  Falls back to existing ``compgen.encoding`` if no plan exists.
+    hints.  Falls back to existing ``xpu_rt.encoding`` if no plan exists.
 
     Args:
         module: The xDSL ModuleOp to annotate.
@@ -55,8 +55,8 @@ def attach_layout_hints(
 
         # Try to match op to a region plan via region_id attribute
         region_id: str | None = None
-        if "compgen.region_id" in op.attributes:
-            region_id_attr = op.attributes["compgen.region_id"]
+        if "xpu_rt.region_id" in op.attributes:
+            region_id_attr = op.attributes["xpu_rt.region_id"]
             if hasattr(region_id_attr, "data"):
                 region_id = region_id_attr.data
 

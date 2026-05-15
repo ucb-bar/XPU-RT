@@ -23,10 +23,10 @@ from xdsl.dialects.builtin import ArrayAttr, ModuleOp, StringAttr, SymbolRefAttr
 from xdsl.ir import Attribute, Operation
 from xdsl.utils.exceptions import VerifyException
 
-from compgen.ir.recipe.ops import RecipeOp
-from compgen.ir.recipe.ops_candidate import PlaceOnDeviceOp
-from compgen.ir.recipe.ops_provenance import PromoteOp
-from compgen.ir.recipe.ops_scope import AnchorOp, RecipeGuardOp, RecipeRegionOp, SegmentOp
+from xpu_rt.ir.recipe.ops import RecipeOp
+from xpu_rt.ir.recipe.ops_candidate import PlaceOnDeviceOp
+from xpu_rt.ir.recipe.ops_provenance import PromoteOp
+from xpu_rt.ir.recipe.ops_scope import AnchorOp, RecipeGuardOp, RecipeRegionOp, SegmentOp
 
 # known target-class strings accepted on ``recipe.promote.target_class``.
 # Validators enforce membership; new classes get added here as new targets
@@ -224,7 +224,7 @@ def validate_recipe_module(module: ModuleOp) -> RecipeValidationResult:
                         message=(
                             f"Unknown target_class {tc!r} on recipe.promote; "
                             f"add it to _KNOWN_TARGET_CLASSES in "
-                            f"compgen.ir.recipe.validate or use a known value."
+                            f"xpu_rt.ir.recipe.validate or use a known value."
                         ),
                     )
                 )
@@ -252,7 +252,7 @@ def validate_recipe(ops: list[RecipeOp]) -> RecipeValidationResult:
         RecipeValidationResult.
     """
     # Import here to avoid circular imports at module level
-    from compgen.ir.recipe.compat import recipe_list_to_module
+    from xpu_rt.ir.recipe.compat import recipe_list_to_module
 
     module = recipe_list_to_module(ops)
     return validate_recipe_module(module)

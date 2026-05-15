@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from compgen.targets.schema import DeviceSpec, Interconnect, TargetProfile, load_profile
-from compgen.targets.validate import validate_profile, validate_profile_file
+from xpu_rt.targets.schema import DeviceSpec, Interconnect, TargetProfile, load_profile
+from xpu_rt.targets.validate import validate_profile, validate_profile_file
 
 PROFILES_DIR = Path(__file__).parent.parent.parent / "examples" / "target_profiles"
 

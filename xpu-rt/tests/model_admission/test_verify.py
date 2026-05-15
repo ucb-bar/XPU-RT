@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from compgen.model_admission.verify import (
+from xpu_rt.model_admission.verify import (
     VerifyStatus,
     apply_to_model_yaml,
     load_candidates,
@@ -125,7 +125,7 @@ def test_verify_one_skipped_no_candidate():
 def test_apply_to_model_yaml_passed(tmp_path: Path):
     p = tmp_path / "qwen3_vl_8b.yaml"
     _write_model_yaml(p, "qwen3_vl_8b")
-    from compgen.model_admission.verify import VerifyResult
+    from xpu_rt.model_admission.verify import VerifyResult
 
     result = VerifyResult(
         model_id="qwen3_vl_8b",
@@ -149,7 +149,7 @@ def test_apply_to_model_yaml_passed(tmp_path: Path):
 def test_apply_to_model_yaml_gated(tmp_path: Path):
     p = tmp_path / "qwen3_vl_8b.yaml"
     _write_model_yaml(p, "qwen3_vl_8b")
-    from compgen.model_admission.verify import VerifyResult
+    from xpu_rt.model_admission.verify import VerifyResult
 
     result = VerifyResult(
         model_id="qwen3_vl_8b",
@@ -166,7 +166,7 @@ def test_apply_to_model_yaml_gated(tmp_path: Path):
 def test_apply_to_model_yaml_not_found(tmp_path: Path):
     p = tmp_path / "x.yaml"
     _write_model_yaml(p, "x")
-    from compgen.model_admission.verify import VerifyResult
+    from xpu_rt.model_admission.verify import VerifyResult
 
     result = VerifyResult(
         model_id="x",

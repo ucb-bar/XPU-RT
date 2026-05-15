@@ -45,11 +45,11 @@ from typing import Any
 import structlog
 from xdsl.dialects.builtin import ModuleOp
 
-from compgen.capture.torch_mlir_bridge import bridge_fx_graph
-from compgen.options import CompGenOptions
-from compgen.runtime.execution_plan import ExecutionPlan
-from compgen.runtime.plan_builder import ExecutionPlanBuilder
-from compgen.trace import PassPublisher, get_ir_dump_writer
+from xpu_rt.capture.torch_mlir_bridge import bridge_fx_graph
+from xpu_rt.options import CompGenOptions
+from xpu_rt.runtime.execution_plan import ExecutionPlan
+from xpu_rt.runtime.plan_builder import ExecutionPlanBuilder
+from xpu_rt.trace import PassPublisher, get_ir_dump_writer
 
 log = structlog.get_logger()
 
@@ -60,82 +60,82 @@ log = structlog.get_logger()
 def _import_passes() -> dict[str, Any]:
     """Lazy-import every pass so stack traces on import errors point
     at the specific missing file instead of a giant top-level import."""
-    from compgen.ir.payload.passes.rewrites.alias_io_buffers import (
+    from xpu_rt.ir.payload.passes.rewrites.alias_io_buffers import (
         run_alias_io_buffers,
     )
-    from compgen.ir.payload.passes.rewrites.assign_memory_space import (
+    from xpu_rt.ir.payload.passes.rewrites.assign_memory_space import (
         AssignMemorySpaceConfig,
         run_assign_memory_space,
     )
-    from compgen.ir.payload.passes.rewrites.assign_queue import (
+    from xpu_rt.ir.payload.passes.rewrites.assign_queue import (
         run_assign_queue,
     )
-    from compgen.ir.payload.passes.rewrites.assign_streams import (
+    from xpu_rt.ir.payload.passes.rewrites.assign_streams import (
         run_assign_streams,
     )
-    from compgen.ir.payload.passes.rewrites.decompose_concat import (
+    from xpu_rt.ir.payload.passes.rewrites.decompose_concat import (
         run_decompose_concat,
     )
-    from compgen.ir.payload.passes.rewrites.demote_contraction_inputs import (
+    from xpu_rt.ir.payload.passes.rewrites.demote_contraction_inputs import (
         DemoteContractionInputsConfig,
         run_demote_contraction_inputs,
     )
-    from compgen.ir.payload.passes.rewrites.dma_overlap import (
+    from xpu_rt.ir.payload.passes.rewrites.dma_overlap import (
         DMAOverlapConfig,
         run_dma_overlap,
     )
-    from compgen.ir.payload.passes.rewrites.fold_transposes_into_dots import (
+    from xpu_rt.ir.payload.passes.rewrites.fold_transposes_into_dots import (
         run_fold_transposes_into_dots,
     )
-    from compgen.ir.payload.passes.rewrites.fuse_dequant_matmul import (
+    from xpu_rt.ir.payload.passes.rewrites.fuse_dequant_matmul import (
         FuseDequantMatmulConfig,
         run_fuse_dequant_matmul,
     )
-    from compgen.ir.payload.passes.rewrites.fuse_softmax_to_triton import (
+    from xpu_rt.ir.payload.passes.rewrites.fuse_softmax_to_triton import (
         FuseSoftmaxToTritonConfig,
         run_fuse_softmax_to_triton,
     )
-    from compgen.ir.payload.passes.rewrites.insert_copies import (
+    from xpu_rt.ir.payload.passes.rewrites.insert_copies import (
         run_insert_copies,
     )
-    from compgen.ir.payload.passes.rewrites.insert_host_offload import (
+    from xpu_rt.ir.payload.passes.rewrites.insert_host_offload import (
         run_insert_host_offload,
     )
-    from compgen.ir.payload.passes.rewrites.lower_conv_to_img2col import (
+    from xpu_rt.ir.payload.passes.rewrites.lower_conv_to_img2col import (
         run_lower_conv_to_img2col,
     )
-    from compgen.ir.payload.passes.rewrites.lower_quantized_conv import (
+    from xpu_rt.ir.payload.passes.rewrites.lower_quantized_conv import (
         run_lower_quantized_conv,
     )
-    from compgen.ir.payload.passes.rewrites.lower_quantized_matmul import (
+    from xpu_rt.ir.payload.passes.rewrites.lower_quantized_matmul import (
         LowerQuantizedMatmulConfig,
         run_lower_quantized_matmul,
     )
-    from compgen.ir.payload.passes.rewrites.match_library_call import (
+    from xpu_rt.ir.payload.passes.rewrites.match_library_call import (
         MatchLibraryCallConfig,
         run_match_library_call,
     )
-    from compgen.ir.payload.passes.rewrites.normalize_subbyte import (
+    from xpu_rt.ir.payload.passes.rewrites.normalize_subbyte import (
         run_normalize_subbyte,
     )
-    from compgen.ir.payload.passes.rewrites.normalize_subbyte_post_layout import (
+    from xpu_rt.ir.payload.passes.rewrites.normalize_subbyte_post_layout import (
         run_normalize_subbyte_post_layout,
     )
-    from compgen.ir.payload.passes.rewrites.plan_buffers import (
+    from xpu_rt.ir.payload.passes.rewrites.plan_buffers import (
         run_plan_buffers,
     )
-    from compgen.ir.payload.passes.rewrites.plan_reduction import (
+    from xpu_rt.ir.payload.passes.rewrites.plan_reduction import (
         PlanReductionConfig,
         run_plan_reduction,
     )
-    from compgen.ir.payload.passes.rewrites.propagate_transposes import (
+    from xpu_rt.ir.payload.passes.rewrites.propagate_transposes import (
         PropagateTransposesConfig,
         run_propagate_transposes,
     )
-    from compgen.ir.payload.passes.rewrites.raise_special_ops import (
+    from xpu_rt.ir.payload.passes.rewrites.raise_special_ops import (
         run_raise_special_ops,
     )
-    from compgen.ir.payload.passes.rewrites.set_numerics_policy import (
+    from xpu_rt.ir.payload.passes.rewrites.set_numerics_policy import (
         NumericsPolicy,
         run_set_numerics_policy,
     )
@@ -323,7 +323,7 @@ def _run_with_report(
             _, hash_after = dumper.dump(name=name, phase="after", module=module_ref, trace_event_id=span_id or "")
         # Emit a point event summarising the pass result so ``trace.jsonl``
         # carries stats + IR-hash deltas without re-reading the dump files.
-        from compgen.trace import EventKind, Phase, get_active_bus
+        from xpu_rt.trace import EventKind, Phase, get_active_bus
 
         bus = get_active_bus()
         if bus is not None:
@@ -370,7 +370,7 @@ def compile_through_pipeline(
     # --- bridge ------------------------------------------------------------
     if hasattr(model_or_exported, "graph") and example_inputs is None:
         # Already an ExportedProgram; its .graph_module is the bridge input.
-        from compgen.ir.payload.import_fx import FXImporter
+        from xpu_rt.ir.payload.import_fx import FXImporter
 
         importer = FXImporter()
         module = importer.import_graph(model_or_exported)

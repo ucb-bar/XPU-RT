@@ -7,7 +7,7 @@ from typing import Any
 
 from xdsl.dialects.builtin import ModuleOp
 
-from compgen.agent.suggest._candidate import ProposalCandidate
+from xpu_rt.agent.suggest._candidate import ProposalCandidate
 
 SuggesterFn = Callable[..., list[ProposalCandidate]]
 

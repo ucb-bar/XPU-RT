@@ -35,7 +35,7 @@ from typing import Any
 import torch
 import torch.fx
 
-from compgen.graph_compilation.extension_registry import ExtensionRegistry, RegistryEntry
+from xpu_rt.graph_compilation.extension_registry import ExtensionRegistry, RegistryEntry
 
 # Same canonicalization as lower.py — keeps the matching consistent.
 _HEX_ADDR_RE = re.compile(r" at 0x[0-9a-fA-F]+")

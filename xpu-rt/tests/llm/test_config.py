@@ -6,8 +6,8 @@ import os
 from pathlib import Path
 
 import pytest
-from compgen.llm.base import CompGenLLMProtocol
-from compgen.llm.config import (
+from xpu_rt.llm.base import CompGenLLMProtocol
+from xpu_rt.llm.config import (
     LLMSelection,
     apply_selection_to_env,
     build_llm_runtime,
@@ -32,39 +32,39 @@ def test_resolve_llm_selection_explicit() -> None:
 
 
 def test_apply_selection_to_env(monkeypatch: pytest.MonkeyPatch) -> None:
-    old_backend = os.environ.get("COMPGEN_LLM_BACKEND")
-    old_model = os.environ.get("COMPGEN_LLM_MODEL")
-    old_no_record = os.environ.get("COMPGEN_LLM_NO_RECORD")
-    monkeypatch.delenv("COMPGEN_LLM_BACKEND", raising=False)
-    monkeypatch.delenv("COMPGEN_LLM_MODEL", raising=False)
-    monkeypatch.delenv("COMPGEN_LLM_NO_RECORD", raising=False)
+    old_backend = os.environ.get("XPU_RT_LLM_BACKEND")
+    old_model = os.environ.get("XPU_RT_LLM_MODEL")
+    old_no_record = os.environ.get("XPU_RT_LLM_NO_RECORD")
+    monkeypatch.delenv("XPU_RT_LLM_BACKEND", raising=False)
+    monkeypatch.delenv("XPU_RT_LLM_MODEL", raising=False)
+    monkeypatch.delenv("XPU_RT_LLM_NO_RECORD", raising=False)
 
     selection = LLMSelection(
         provider="gemini",
         model="gemini-2.5-flash",
         record=False,
-        record_dir=Path(".compgen_cache/test"),
+        record_dir=Path(".xpu_rt_cache/test"),
         source="cli",
         transport="api",
     )
     try:
         apply_selection_to_env(selection)
-        assert os.environ["COMPGEN_LLM_BACKEND"] == "gemini"
-        assert os.environ["COMPGEN_LLM_MODEL"] == "gemini-2.5-flash"
-        assert os.environ["COMPGEN_LLM_NO_RECORD"] == "1"
+        assert os.environ["XPU_RT_LLM_BACKEND"] == "gemini"
+        assert os.environ["XPU_RT_LLM_MODEL"] == "gemini-2.5-flash"
+        assert os.environ["XPU_RT_LLM_NO_RECORD"] == "1"
     finally:
         if old_backend is None:
-            os.environ.pop("COMPGEN_LLM_BACKEND", None)
+            os.environ.pop("XPU_RT_LLM_BACKEND", None)
         else:
-            os.environ["COMPGEN_LLM_BACKEND"] = old_backend
+            os.environ["XPU_RT_LLM_BACKEND"] = old_backend
         if old_model is None:
-            os.environ.pop("COMPGEN_LLM_MODEL", None)
+            os.environ.pop("XPU_RT_LLM_MODEL", None)
         else:
-            os.environ["COMPGEN_LLM_MODEL"] = old_model
+            os.environ["XPU_RT_LLM_MODEL"] = old_model
         if old_no_record is None:
-            os.environ.pop("COMPGEN_LLM_NO_RECORD", None)
+            os.environ.pop("XPU_RT_LLM_NO_RECORD", None)
         else:
-            os.environ["COMPGEN_LLM_NO_RECORD"] = old_no_record
+            os.environ["XPU_RT_LLM_NO_RECORD"] = old_no_record
 
 
 def test_build_llm_runtime_wraps_recorder(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
@@ -77,11 +77,11 @@ def test_build_llm_runtime_wraps_recorder(monkeypatch: pytest.MonkeyPatch, tmp_p
         def generate_structured(self, request, schema):  # pragma: no cover - protocol stub
             raise NotImplementedError
 
-    monkeypatch.setattr("compgen.llm.config.create_llm_client", lambda provider, model, working_dir=None: _FakeClient())
+    monkeypatch.setattr("xpu_rt.llm.config.create_llm_client", lambda provider, model, working_dir=None: _FakeClient())
     selection = resolve_llm_selection("claude-cli", model="sonnet", record=True, record_dir=tmp_path / "logs")
     runtime = build_llm_runtime(selection)
 
-    from compgen.llm.recorder import LLMRecorder
+    from xpu_rt.llm.recorder import LLMRecorder
 
     assert isinstance(runtime, LLMRecorder)
     assert runtime.log_dir == tmp_path / "logs"

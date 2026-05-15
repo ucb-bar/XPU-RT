@@ -33,19 +33,19 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
-from compgen.agent.hw_aware_dispatch import TargetDispatchDecision
-from compgen.agent.kernel_optimizer import (
+from xpu_rt.agent.hw_aware_dispatch import TargetDispatchDecision
+from xpu_rt.agent.kernel_optimizer import (
     CodegenResult,
     OptimizedModel,
     optimize_model,
     optimize_model_multi_target,
 )
-from compgen.kernels.contract_v3 import (
+from xpu_rt.kernels.contract_v3 import (
     HardwareEnvelope,
     KernelContractV3,
 )
-from compgen.llm.base import Objective
-from compgen.mcp.session import SessionManager
+from xpu_rt.llm.base import Objective
+from xpu_rt.mcp.session import SessionManager
 
 # ---------------------------------------------------------------------------
 # CodegenFn that round-trips through the MCP kernel tools
@@ -74,8 +74,8 @@ class McpCodegenFn:
         contract: KernelContractV3,
         decision: TargetDispatchDecision,
     ) -> CodegenResult:
-        from compgen.agent.kernel_optimizer import _v3_to_fingerprint_dict
-        from compgen.mcp.tools.kernel import (
+        from xpu_rt.agent.kernel_optimizer import _v3_to_fingerprint_dict
+        from xpu_rt.mcp.tools.kernel import (
             lookup_cached_kernel,
             request_kernel_codegen,
         )
@@ -156,8 +156,8 @@ def optimize_via_mcp(
     callback slots pre-wired: dispatch decisions, codegen, and bench
     all round-trip through the in-session MCP tools.
     """
-    from compgen.mcp.tools.bench import McpBenchFn
-    from compgen.mcp.tools.dispatch import McpDispatchLLM
+    from xpu_rt.mcp.tools.bench import McpBenchFn
+    from xpu_rt.mcp.tools.dispatch import McpDispatchLLM
 
     llm = McpDispatchLLM(
         sm=sm,
@@ -196,8 +196,8 @@ def optimize_via_mcp_multi_target(
     sample_inputs: tuple = (),
 ) -> dict[str, OptimizedModel]:
     """W7.3 — multi-target version of ``optimize_via_mcp``."""
-    from compgen.mcp.tools.bench import McpBenchFn
-    from compgen.mcp.tools.dispatch import McpDispatchLLM
+    from xpu_rt.mcp.tools.bench import McpBenchFn
+    from xpu_rt.mcp.tools.dispatch import McpDispatchLLM
 
     llm = McpDispatchLLM(
         sm=sm,
@@ -268,10 +268,10 @@ def request_model_optimization(
         if fp not in progress.contracts_seen:
             progress.contracts_seen.append(fp)
     # Surface the queues the agent may want to drain (deferred imports
-    # to avoid import-cycle with compgen.mcp.tools).
-    from compgen.mcp.tools.bench import list_pending_bench_requests
-    from compgen.mcp.tools.dispatch import list_pending_dispatch_decisions
-    from compgen.mcp.tools.kernel import list_pending_kernel_requests
+    # to avoid import-cycle with xpu_rt.mcp.tools).
+    from xpu_rt.mcp.tools.bench import list_pending_bench_requests
+    from xpu_rt.mcp.tools.dispatch import list_pending_dispatch_decisions
+    from xpu_rt.mcp.tools.kernel import list_pending_kernel_requests
 
     pending_codegen = list_pending_kernel_requests(sm, session_id=session_id)
     pending_dispatch = list_pending_dispatch_decisions(sm, session_id=session_id)

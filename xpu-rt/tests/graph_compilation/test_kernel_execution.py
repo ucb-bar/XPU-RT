@@ -3,7 +3,7 @@
 Verifies:
 
 - Default OFF: no env var ⇒ no kernel_execution/ directory.
-- With ``COMPGEN_RUN_KERNELS=1`` on merlin_mlp_wide (committed
+- With ``XPU_RT_RUN_KERNELS=1`` on merlin_mlp_wide (committed
   candidate is SetTileParams, executable_structured_ir):
   - Two artifacts emit: ``compiled_kernel_run_gpu.json`` and
     ``compiled_kernel_run_cpu.json``.
@@ -49,14 +49,14 @@ def _read(p: Path) -> dict:
 def _run(model: str, out_dir: Path, *, run_kernels: bool) -> int:
     env = os.environ.copy()
     if run_kernels:
-        env["COMPGEN_RUN_KERNELS"] = "1"
+        env["XPU_RT_RUN_KERNELS"] = "1"
     else:
-        env.pop("COMPGEN_RUN_KERNELS", None)
-    env.pop("COMPGEN_CALIBRATE_PROFILER", None)
-    env.pop("COMPGEN_CALIBRATE_CANDIDATES", None)
+        env.pop("XPU_RT_RUN_KERNELS", None)
+    env.pop("XPU_RT_CALIBRATE_PROFILER", None)
+    env.pop("XPU_RT_CALIBRATE_CANDIDATES", None)
     res = subprocess.run(
         [
-            sys.executable, "-m", "compgen.graph_compilation", "run",
+            sys.executable, "-m", "xpu_rt.graph_compilation", "run",
             "--model", str(REPO_ROOT / f"configs/models/{model}.yaml"),
             "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
             "--out", str(out_dir),
@@ -98,7 +98,7 @@ def fusion_run(tmp_path_factory) -> Path:  # type: ignore[no-untyped-def]
 
 
 def test_default_off_no_kernel_execution_dir(no_kernels_run: Path) -> None:
-    """Without COMPGEN_RUN_KERNELS, the directory must not exist."""
+    """Without XPU_RT_RUN_KERNELS, the directory must not exist."""
     base = no_kernels_run / "02_graph_analysis" / "kernel_execution"
     assert not base.exists()
 
@@ -191,7 +191,7 @@ def test_kernel_source_files_emitted(kernels_run: Path) -> None:
     # Triton source contains the @triton.jit decorator.
     assert "@triton.jit" in triton_files[0].read_text(encoding="utf-8")
     # CPU C source declares the matmul function.
-    assert "void compgen_m19_matmul" in cpu_files[0].read_text(encoding="utf-8")
+    assert "void xpu_rt_m19_matmul" in cpu_files[0].read_text(encoding="utf-8")
 
 
 # --------------------------------------------------------------------------- #
@@ -219,7 +219,7 @@ def test_kernel_source_sha256_recorded(kernels_run: Path) -> None:
 def test_emit_kernel_source_deterministic_is_byte_identical() -> None:
     """The deterministic-body emitter (used for SHA pinning) must return
     byte-identical output for the same inputs across calls."""
-    from compgen.graph_compilation.kernel_execution_gpu import (
+    from xpu_rt.graph_compilation.kernel_execution_gpu import (
         _emit_kernel_source_deterministic,
     )
 
@@ -281,7 +281,7 @@ def test_fx_level_reports_unchanged_when_m19_reruns(
     }
     assert len(before) >= 1, "no protected files to check"
 
-    from compgen.graph_compilation.kernel_execution import run_kernel_execution
+    from xpu_rt.graph_compilation.kernel_execution import run_kernel_execution
     run_kernel_execution(no_kernels_run)
 
     after = {
@@ -308,7 +308,7 @@ def test_handles_missing_manifest(tmp_path: Path) -> None:
     (fake / "03_recipe_planning" / "real_lowering").mkdir(parents=True)
     # No manifest file written.
 
-    from compgen.graph_compilation.kernel_execution import run_kernel_execution
+    from xpu_rt.graph_compilation.kernel_execution import run_kernel_execution
 
     res = run_kernel_execution(fake)
     assert res.overall == "not_run"
@@ -324,12 +324,12 @@ def test_handles_missing_manifest(tmp_path: Path) -> None:
 
 def test_no_compiler_core_imports() -> None:
     forbidden = (
-        "from compgen.ir.payload",
-        "import compgen.ir.payload",
-        "from compgen.capture",
-        "import compgen.capture",
-        "from compgen.pipeline",
-        "import compgen.pipeline",
+        "from xpu_rt.ir.payload",
+        "import xpu_rt.ir.payload",
+        "from xpu_rt.capture",
+        "import xpu_rt.capture",
+        "from xpu_rt.pipeline",
+        "import xpu_rt.pipeline",
     )
     for src_name in (
         "kernel_execution.py",
@@ -337,7 +337,7 @@ def test_no_compiler_core_imports() -> None:
         "kernel_execution_cpu.py",
     ):
         src = (
-            REPO_ROOT / "python" / "compgen" / "graph_compilation" / src_name
+            REPO_ROOT / "python" / "xpu-rt" / "graph_compilation" / src_name
         ).read_text(encoding="utf-8")
         for pat in forbidden:
             assert pat not in src, f"{src_name} imports forbidden: {pat}"

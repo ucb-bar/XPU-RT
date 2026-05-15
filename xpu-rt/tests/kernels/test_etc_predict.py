@@ -34,7 +34,7 @@ class _PickleableDiamond(nn.Module):
 
 class TestPublicSurface:
     def test_top_level_imports(self) -> None:
-        from compgen.kernels.cost import (
+        from xpu_rt.kernels.cost import (
             EtcCostPrediction,
             WontWinError,
             predict_etc_dispatch,
@@ -89,7 +89,7 @@ class TestPredictionContract:
         }
 
     def test_returns_prediction_with_required_fields(self) -> None:
-        from compgen.kernels.cost import predict_etc_dispatch
+        from xpu_rt.kernels.cost import predict_etc_dispatch
 
         pred = predict_etc_dispatch(
             sample_input_shape=(64, 64),
@@ -119,7 +119,7 @@ class TestPredictionContract:
         """The same prediction with a different threshold flips
         the gate cleanly. Agent can ask "would 1.0× pass?" by
         re-running with threshold=1.0."""
-        from compgen.kernels.cost import predict_etc_dispatch
+        from xpu_rt.kernels.cost import predict_etc_dispatch
 
         decision = self._fake_decision(num_tasks=4, k_per_op=512)
         choice = self._fake_choice()
@@ -165,7 +165,7 @@ class TestEmpiricalRegimes:
         ~1µs, so total ≈ 512µs. Eager does the equivalent in one
         cuBLAS call across 132 SMs at TC throughput → ≈ 1µs.
         Predicted speedup << 1.0× — predictor must say so."""
-        from compgen.kernels.cost import predict_etc_dispatch
+        from xpu_rt.kernels.cost import predict_etc_dispatch
 
         decision = {
             "pattern_name": "ffn",
@@ -200,7 +200,7 @@ class TestEmpiricalRegimes:
         Using K=65536 (paper's MLP-1 scale): 64*64*65536 = 268M FLOPs
         / 50 TFLOPS at TC = ~5.4µs per task. Overhead = 1µs. 5.4× margin.
         """
-        from compgen.kernels.cost import predict_etc_dispatch
+        from xpu_rt.kernels.cost import predict_etc_dispatch
 
         decision = {
             "pattern_name": "diamond",
@@ -228,7 +228,7 @@ class TestEmpiricalRegimes:
         """On the same workload, the bf16+fp32-acc path should
         predict more compute throughput than fp32 SIMT — so ETC's
         per-task GEMM is faster, more competitive."""
-        from compgen.kernels.cost import predict_etc_dispatch
+        from xpu_rt.kernels.cost import predict_etc_dispatch
 
         decision = {
             "pattern_name": "diamond",
@@ -272,9 +272,9 @@ class TestWontWinErrorIntegration:
         """The compile path attaches the prediction to the bundle.
         The agent reads ``bundle.cost_prediction["passes_gate"]`` to
         decide dispatch."""
-        import compgen
+        import xpu_rt
 
-        bundle = compgen.compile_to_megakernel(
+        bundle = xpu_rt.compile_to_megakernel(
             _PickleableDiamond(),
             (torch.randn(64, 64),),
             output_dir=str(tmp_path),
@@ -297,9 +297,9 @@ class TestWontWinErrorIntegration:
         query — same shape as the in-memory ``cost_prediction`` field."""
         import json
 
-        import compgen
+        import xpu_rt
 
-        bundle = compgen.compile_to_megakernel(
+        bundle = xpu_rt.compile_to_megakernel(
             _PickleableDiamond(),
             (torch.randn(64, 64),),
             output_dir=str(tmp_path),
@@ -312,12 +312,12 @@ class TestWontWinErrorIntegration:
         """When the user asks to fail-fast on a losing prediction,
         WontWinError is raised. Carries the full prediction for
         audit."""
-        import compgen
-        from compgen.kernels.cost import WontWinError
+        import xpu_rt
+        from xpu_rt.kernels.cost import WontWinError
 
         # Use threshold=1000× so any prediction loses.
         with pytest.raises(WontWinError) as exc_info:
-            compgen.compile_to_megakernel(
+            xpu_rt.compile_to_megakernel(
                 _PickleableDiamond(),
                 (torch.randn(64, 64),),
                 output_dir=str(tmp_path),

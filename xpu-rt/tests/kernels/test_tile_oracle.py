@@ -1,4 +1,4 @@
-"""Tests for ``compgen.kernels.tile_oracle``.
+"""Tests for ``xpu_rt.kernels.tile_oracle``.
 
 Locks in:
   * recommend_tile returns valid TileRecommendation for known
@@ -13,13 +13,13 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from compgen.kernels.contract_v3 import HardwareEnvelope
-from compgen.kernels.tile_oracle import (
+from xpu_rt.kernels.contract_v3 import HardwareEnvelope
+from xpu_rt.kernels.tile_oracle import (
     recommend_packing,
     recommend_tile,
 )
-from compgen.memory.knowledge import KnowledgeStore, set_shared_store
-from compgen.memory.seed_lessons import install as install_seed
+from xpu_rt.memory.knowledge import KnowledgeStore, set_shared_store
+from xpu_rt.memory.seed_lessons import install as install_seed
 
 
 @pytest.fixture(autouse=True)

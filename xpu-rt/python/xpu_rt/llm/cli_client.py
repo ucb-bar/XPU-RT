@@ -11,14 +11,14 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any
 
-from compgen.llm._env import load_dotenv_map
-from compgen.llm._prompt import (
+from xpu_rt.llm._env import load_dotenv_map
+from xpu_rt.llm._prompt import (
     extract_markdown_artifacts,
     parse_json_payload,
     render_request_prompt,
     stringify_json_payload,
 )
-from compgen.llm.base import (
+from xpu_rt.llm.base import (
     GenerationRequest,
     GenerationResponse,
 )
@@ -215,7 +215,7 @@ class CodexCLIClient:
         prompt = render_request_prompt(request)
         model = request.config.model or self.model
 
-        with TemporaryDirectory(prefix="compgen_codex_") as tmpdir:
+        with TemporaryDirectory(prefix="xpu_rt_codex_") as tmpdir:
             out_path = Path(tmpdir) / "last_message.txt"
             args = [
                 self.command,

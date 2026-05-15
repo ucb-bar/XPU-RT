@@ -1,4 +1,4 @@
-"""Layout analysis package for CompGen.
+"""Layout analysis package for XPU-RT.
 
 Provides layout planning, prepack analysis, and transpose profitability
 classification for the compilation pipeline.
@@ -6,9 +6,9 @@ classification for the compilation pipeline.
 
 from __future__ import annotations
 
-from compgen.analysis.layout.planner import LayoutPlan, LayoutPlanner
-from compgen.analysis.layout.prepack import PrepackCandidate, PrepackPlanner
-from compgen.analysis.layout.transpose import (
+from xpu_rt.analysis.layout.planner import LayoutPlan, LayoutPlanner
+from xpu_rt.analysis.layout.prepack import PrepackCandidate, PrepackPlanner
+from xpu_rt.analysis.layout.transpose import (
     TransposeClassification,
     TransposeProfitabilityAnalyzer,
 )

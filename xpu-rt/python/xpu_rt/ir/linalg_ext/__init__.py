@@ -1,4 +1,4 @@
-"""``compgen.linalg_ext`` -- named structured ops for high-level patterns.
+"""``xpu_rt.linalg_ext`` -- named structured ops for high-level patterns.
 
 xDSL's ``linalg`` dialect lacks named ops for common LLM / vision
 patterns (softmax, layernorm, rmsnorm, rope, swiglu, gelu, silu). The
@@ -10,13 +10,13 @@ arithmetic every time.
 
 Register with::
 
-    ctx.register_dialect("compgen.linalg_ext", lambda: LinalgExt)
+    ctx.register_dialect("xpu_rt.linalg_ext", lambda: LinalgExt)
 """
 
 from __future__ import annotations
 
-from compgen.ir.linalg_ext.dialect import ALL_ATTRS, ALL_OPS, LinalgExt
-from compgen.ir.linalg_ext.ops import (
+from xpu_rt.ir.linalg_ext.dialect import ALL_ATTRS, ALL_OPS, LinalgExt
+from xpu_rt.ir.linalg_ext.ops import (
     GeluOp,
     LayerNormOp,
     RMSNormOp,

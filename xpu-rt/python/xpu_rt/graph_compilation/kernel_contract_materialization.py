@@ -1,7 +1,7 @@
 """Materialize KernelContractV3 from selected Recipe IR decisions.
 
 Section 21 /. Pipeline-stage wrapper around
-:meth:`compgen.kernels.contract_v3.KernelContractV3.from_recipe`. Reads
+:meth:`xpu_rt.kernels.contract_v3.KernelContractV3.from_recipe`. Reads
 on-disk artifacts (``candidate_selection.json``, the region dossier,
 the target YAML, the recipe-gate verdict) and emits two artifacts per
 selected kernel-bearing region:
@@ -22,7 +22,7 @@ of a contract file. widens the supported kinds.
 This module is intentionally thin: it's a reader + an adapter + a
 serialiser. The semantic work (mapping fields) lives in
 ``KernelContractV3.from_recipe``; the canonical hash lives in
-``compgen.promotion.contract_hash.hash_contract``. Phase C will
+``xpu_rt.promotion.contract_hash.hash_contract``. Phase C will
 unify all callers on the latter.
 """
 
@@ -34,13 +34,13 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from compgen.kernels.contract_v3 import (
+from xpu_rt.kernels.contract_v3 import (
     KernelContractV3,
     KernelFacingView,
     LayoutKind,
     MemoryTier,
 )
-from compgen.promotion.contract_hash import hash_contract
+from xpu_rt.promotion.contract_hash import hash_contract
 
 
 # --------------------------------------------------------------------------- #
@@ -584,12 +584,12 @@ def materialize_contract_for_run(
             ) or {}
             declared_refinement = _declared_refinement_for(run_dir, candidate_id)
 
-            # : COMPGEN_SHAPE_POLICY=class makes from_recipe
+            # : XPU_RT_SHAPE_POLICY=class makes from_recipe
             # substitute concrete dims with None so the canonical
             # hash falls all the way to dynamic.
             import os as _os
 
-            shape_policy = _os.environ.get("COMPGEN_SHAPE_POLICY", "concrete")
+            shape_policy = _os.environ.get("XPU_RT_SHAPE_POLICY", "concrete")
             if shape_policy not in ("concrete", "class"):
                 shape_policy = "concrete"
             contract = KernelContractV3.from_recipe(

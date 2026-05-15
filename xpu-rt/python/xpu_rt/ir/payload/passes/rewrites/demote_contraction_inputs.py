@@ -2,7 +2,7 @@
 a lower precision while keeping the accumulator in f32.
 
 Reconstruction of IREE's ``DemoteContractionInputsToBF16Pass`` as a
-CompGen PatternRewriter. Zero external references; this module owns
+XPU-RT PatternRewriter. Zero external references; this module owns
 the rewrite.
 
 Semantics (for ``linalg.matmul`` on f32 inputs + f32 accumulator):
@@ -23,12 +23,12 @@ Configuration:
 - ``target_type`` -- the low-precision float type (default
   ``BFloat16Type``; set ``Float16Type`` for H100 FP16).
 - ``restrict_to_region_ids`` -- optional allowlist of
-  ``compgen.region_id`` values. Lets the LLM policy layer opt in
+  ``xpu_rt.region_id`` values. Lets the LLM policy layer opt in
   per region.
 
 Covered contraction ops: ``linalg.matmul`` only in . The
 quantized-weight variants
-(``compgen.quant.weight_int{4,8}pack_{mm,qm}``) already carry integer
+(``xpu_rt.quant.weight_int{4,8}pack_{mm,qm}``) already carry integer
 weights; the activation input is demoted through the generic
 ``linalg.generic`` elementwise path in  (``lower_quantized_matmul``
 covers the joint rewrite).
@@ -36,7 +36,7 @@ covers the joint rewrite).
 LLM-tool signature:
 
     tool_name="demote_contraction_inputs"
-    wraps_pass="CompGen:DemoteContractionInputsToBF16"
+    wraps_pass="XPU-RT:DemoteContractionInputsToBF16"
     invent_slot="numerics/precision_policy"
     policy="DemoteActivationsOnMatrixEngineTargets"
 """
@@ -65,7 +65,7 @@ from xdsl.pattern_rewriter import (
     op_type_rewrite_pattern,
 )
 
-from compgen.ir.payload.passes._builders import (
+from xpu_rt.ir.payload.passes._builders import (
     linalg_generic_elementwise,
     linalg_generic_matmul_like,
 )
@@ -113,7 +113,7 @@ def _bitwidth(attr: Attribute) -> int | None:
 
 
 def _region_id(op: Operation) -> str | None:
-    attr = op.attributes.get("compgen.region_id")
+    attr = op.attributes.get("xpu_rt.region_id")
     if attr is None:
         return None
     return attr.data
@@ -266,7 +266,7 @@ class _LinalgMatmulDemote(RewritePattern):
         )
 
         # Preserve region-id / pattern-hint on the replacement.
-        for key in ("compgen.region_id", "compgen._pattern_hint"):
+        for key in ("xpu_rt.region_id", "xpu_rt._pattern_hint"):
             if key in op.attributes and key not in mixed.attributes:
                 mixed.attributes[key] = op.attributes[key]
 

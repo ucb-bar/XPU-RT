@@ -21,7 +21,7 @@ Hard non-goals:
 No profiler calibration.
 - No kernel codegen.
 - No weakening of any existing gate.
-- No compiler-core (`compgen.ir`, `compgen.capture`, `compgen.pipeline`,
+- No compiler-core (`xpu_rt.ir`, `xpu_rt.capture`, `xpu_rt.pipeline`,
   `runtime.bundle_emit`) imports.
 
 Every report carries an ``overall`` / ``status`` field and a typed
@@ -1232,7 +1232,7 @@ def build_readiness_pack(
 
     if not skip_figures:
         try:
-            from compgen.graph_compilation.graph_analysis_readiness_figures import (
+            from xpu_rt.graph_compilation.graph_analysis_readiness_figures import (
                 render_all,
             )
             render_all(

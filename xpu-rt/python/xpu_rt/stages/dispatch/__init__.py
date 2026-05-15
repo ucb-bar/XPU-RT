@@ -2,6 +2,6 @@
 
 from __future__ import annotations
 
-from compgen.stages.dispatch.stage import DispatchStage
+from xpu_rt.stages.dispatch.stage import DispatchStage
 
 __all__ = ["DispatchStage"]

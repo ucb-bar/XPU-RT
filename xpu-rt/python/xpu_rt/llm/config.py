@@ -7,16 +7,16 @@ import shutil
 from dataclasses import dataclass
 from pathlib import Path
 
-from compgen.llm._env import load_dotenv_map
-from compgen.llm.base import CompGenLLMProtocol
-from compgen.llm.factory import (
+from xpu_rt.llm._env import load_dotenv_map
+from xpu_rt.llm.base import CompGenLLMProtocol
+from xpu_rt.llm.factory import (
     SUPPORTED_PROVIDERS,
     create_llm_client,
     default_model_for_provider,
     provider_transport,
     resolve_provider_name,
 )
-from compgen.llm.recorder import LLMRecorder
+from xpu_rt.llm.recorder import LLMRecorder
 
 
 @dataclass(frozen=True)
@@ -42,14 +42,14 @@ def resolve_llm_selection(
     source = (
         "cli"
         if provider or model or record is not None or record_dir is not None
-        else ("env" if os.environ.get("COMPGEN_LLM_BACKEND") or os.environ.get("COMPGEN_LLM_MODEL") else "auto")
+        else ("env" if os.environ.get("XPU_RT_LLM_BACKEND") or os.environ.get("XPU_RT_LLM_MODEL") else "auto")
     )
     selected_provider = resolve_provider_name(provider)
-    selected_model = model or os.environ.get("COMPGEN_LLM_MODEL") or default_model_for_provider(selected_provider)
+    selected_model = model or os.environ.get("XPU_RT_LLM_MODEL") or default_model_for_provider(selected_provider)
     selected_record = (
         record
         if record is not None
-        else os.environ.get("COMPGEN_LLM_NO_RECORD", "")
+        else os.environ.get("XPU_RT_LLM_NO_RECORD", "")
         not in {
             "1",
             "true",
@@ -58,7 +58,7 @@ def resolve_llm_selection(
             "YES",
         }
     )
-    selected_record_dir = Path(record_dir or os.environ.get("COMPGEN_LLM_RECORD_DIR") or ".compgen_cache/llm_logs")
+    selected_record_dir = Path(record_dir or os.environ.get("XPU_RT_LLM_RECORD_DIR") or ".xpu_rt_cache/llm_logs")
     return LLMSelection(
         provider=selected_provider,
         model=selected_model,
@@ -83,13 +83,13 @@ def build_llm_runtime(
 
 def apply_selection_to_env(selection: LLMSelection) -> None:
     """Mirror a resolved selection into environment variables for downstream code."""
-    os.environ["COMPGEN_LLM_BACKEND"] = selection.provider
-    os.environ["COMPGEN_LLM_MODEL"] = selection.model
-    os.environ["COMPGEN_LLM_RECORD_DIR"] = str(selection.record_dir)
+    os.environ["XPU_RT_LLM_BACKEND"] = selection.provider
+    os.environ["XPU_RT_LLM_MODEL"] = selection.model
+    os.environ["XPU_RT_LLM_RECORD_DIR"] = str(selection.record_dir)
     if selection.record:
-        os.environ.pop("COMPGEN_LLM_NO_RECORD", None)
+        os.environ.pop("XPU_RT_LLM_NO_RECORD", None)
     else:
-        os.environ["COMPGEN_LLM_NO_RECORD"] = "1"
+        os.environ["XPU_RT_LLM_NO_RECORD"] = "1"
 
 
 def selection_status(selection: LLMSelection) -> dict[str, str]:

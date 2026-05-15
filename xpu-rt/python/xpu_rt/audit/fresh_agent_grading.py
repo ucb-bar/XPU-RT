@@ -1,7 +1,7 @@
 """Fresh-agent task + grading.
 
 A *fresh-agent task* is the operational contract that lets us prove a
-brand-new Claude Code session can drive a CompGen tool to completion
+brand-new Claude Code session can drive a XPU-RT tool to completion
 without any conversational context. Each task lives in its own
 directory under ``.rcg-artifacts/fresh_agent_tasks/<task_id>/`` and
 must contain:
@@ -146,7 +146,7 @@ def load_task(
     Raises :class:`FreshAgentTaskError` if the directory is missing
     required files or if ``allowed_tools.json`` references an unknown
     tool_id (when ``known_tool_ids`` is supplied — typically the
-    output of :func:`compgen.tools.iter_tool_cards`).
+    output of :func:`xpu_rt.tools.iter_tool_cards`).
     """
 
     root = fresh_agent_tasks_root(repo_root)
@@ -405,7 +405,7 @@ def run_baseline(task: FreshAgentTask, *, run_dir: Path) -> subprocess.Completed
 
         {
           "command": ["scripts/dev/probe_extension_providers.py", "--out", "${run_dir}"],
-          "env": {"COMPGEN_FOO": "bar"},
+          "env": {"XPU_RT_FOO": "bar"},
           "timeout_s": 120
         }
 

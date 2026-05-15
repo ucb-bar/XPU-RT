@@ -6,12 +6,12 @@ the expected per-model rates against what Google published on
 revises rates (which happens regularly), the next maintenance pass:
 
 1. Re-fetches ``ai.google.dev/pricing``.
-2. Updates ``PRICING`` in :mod:`compgen.observability.gemini_usage`.
+2. Updates ``PRICING`` in :mod:`xpu_rt.observability.gemini_usage`.
 3. Bumps ``PRICING_VERIFIED_AT`` to today.
 4. Updates ``_EXPECTED_RATES`` below to match.
 
 If any of those steps is skipped, this test fails — guaranteeing
-the live ``compgen-gemini-usage watch`` panel can never silently
+the live ``xpu-rt-gemini-usage watch`` panel can never silently
 report stale numbers.
 """
 
@@ -21,7 +21,7 @@ from datetime import date, datetime, timezone
 
 import pytest
 
-from compgen.observability.gemini_usage import (
+from xpu_rt.observability.gemini_usage import (
     _FALLBACK_RATES,
     PRICING,
     PRICING_SOURCE_URL,
@@ -161,7 +161,7 @@ def test_unknown_model_logs_warning(caplog):
     """An unknown model must trigger a structured warning so the user
     notices the table needs updating — not a silent $0 or silent flash-
     rate fallback."""
-    from compgen.observability import gemini_usage as gu
+    from xpu_rt.observability import gemini_usage as gu
     import logging
 
     # Reset the dedup set so the warning re-fires.
@@ -177,7 +177,7 @@ def test_unknown_model_logs_warning(caplog):
 
 def test_fallback_warning_is_dedup(caplog):
     """A single fallback model only warns once per process."""
-    from compgen.observability import gemini_usage as gu
+    from xpu_rt.observability import gemini_usage as gu
     import logging
 
     gu._WARNED_FALLBACK_MODELS.discard("gemini-fake-dedup")
@@ -246,8 +246,8 @@ def test_cached_token_billing_is_subset_of_prompt():
 
 
 def test_recorded_event_stamps_rates_key(tmp_path, monkeypatch):
-    monkeypatch.setenv("COMPGEN_GEMINI_USAGE_DIR", str(tmp_path))
-    from compgen.observability.gemini_usage import record_call
+    monkeypatch.setenv("XPU_RT_GEMINI_USAGE_DIR", str(tmp_path))
+    from xpu_rt.observability.gemini_usage import record_call
 
     event = record_call(
         model="gemini-2.5-flash",
@@ -261,8 +261,8 @@ def test_recorded_event_stamps_rates_key(tmp_path, monkeypatch):
 
 
 def test_recorded_event_marks_fallback_when_unknown(tmp_path, monkeypatch):
-    monkeypatch.setenv("COMPGEN_GEMINI_USAGE_DIR", str(tmp_path))
-    from compgen.observability import gemini_usage as gu
+    monkeypatch.setenv("XPU_RT_GEMINI_USAGE_DIR", str(tmp_path))
+    from xpu_rt.observability import gemini_usage as gu
 
     gu._WARNED_FALLBACK_MODELS.discard("gemini-never-heard-of-this")
     event = gu.record_call(

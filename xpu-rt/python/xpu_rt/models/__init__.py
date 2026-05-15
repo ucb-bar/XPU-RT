@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from compgen.models.core import CaptureMode, ModelCatalog, ModelSource, ModelSpec, ReadinessLevel
-from compgen.models.frontier import build_frontier_model_specs
-from compgen.models.robotics import (
+from xpu_rt.models.core import CaptureMode, ModelCatalog, ModelSource, ModelSpec, ReadinessLevel
+from xpu_rt.models.frontier import build_frontier_model_specs
+from xpu_rt.models.robotics import (
     build_robotics_model_specs,
     get_graph_op_summary,
     load_smolvla,

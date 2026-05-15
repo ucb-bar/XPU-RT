@@ -25,10 +25,10 @@ forbidden:
     overlapping lifetimes to share a byte range (validate() must
     raise)
 required_evidence:
-  - python/compgen/solve/memory_planner.py
-  - python/compgen/solve/_mosek_solve_impl.py
-  - python/compgen/solve/_highs_solve_impl.py
-  - python/compgen/runtime/execution_plan.py (offset_bytes + overlap check)
+  - python/xpu_rt/solve/memory_planner.py
+  - python/xpu_rt/solve/_mosek_solve_impl.py
+  - python/xpu_rt/solve/_highs_solve_impl.py
+  - python/xpu_rt/runtime/execution_plan.py (offset_bytes + overlap check)
   - tests/solve/test_memory_planner_mosek_highs.py
 commit: 0e80000000000000000000000000000000000000
 created_at_utc: 2026-05-11T00:00:00Z

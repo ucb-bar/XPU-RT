@@ -24,10 +24,10 @@ from xdsl.dialects.func import CallOp
 from xdsl.dialects.linalg import MatmulOp
 from xdsl.ir import Operation
 
-from compgen.packs import LoadedPack, PackContextSummary, check_surface_allowed
-from compgen.targets.schema import TargetProfile
+from xpu_rt.packs import LoadedPack, PackContextSummary, check_surface_allowed
+from xpu_rt.targets.schema import TargetProfile
 
-from compgen.agent.env.actions import (
+from xpu_rt.agent.env.actions import (
     Action,
     AnalyzeAction,
     ApplyPassAction,
@@ -64,14 +64,14 @@ from compgen.agent.env.actions import (
     StepResult,
     TileAction,
 )
-from compgen.agent.env.observations import (
+from xpu_rt.agent.env.observations import (
     Observation,
     RegionInfo,
     StepRecord,
     VerificationSummary,
     VerifiedFactInfo,
 )
-from compgen.agent.env.helpers import (
+from xpu_rt.agent.env.helpers import (
     _PACK_ACTION_APERTURES,
     _PACK_DIRECT_SURFACES,
     _PASS_MENU,
@@ -200,8 +200,8 @@ class CompilerEnv:
         or ``agent_ir`` to retrieve the accumulated tracking state.
         """
         assert self._module is not None and self._target is not None
-        from compgen.ir.agent.seed import generate_seed_agent
-        from compgen.ir.recipe.seed import generate_seed_recipe
+        from xpu_rt.ir.agent.seed import generate_seed_agent
+        from xpu_rt.ir.recipe.seed import generate_seed_recipe
 
         self._recipe_module = generate_seed_recipe(
             self._module, self._target, self._objective,
@@ -225,7 +225,7 @@ class CompilerEnv:
         """Return the live Payload IR module (the working copy ``step()`` mutates).
 
         Set with :meth:`set_payload_module` when an external pass
-        (e.g. :func:`compgen.mcp.tools.recipe_apply.apply_recipe`)
+        (e.g. :func:`xpu_rt.mcp.tools.recipe_apply.apply_recipe`)
         rewrites the IR and needs to rebind the env's view of it.
         """
         return self._module
@@ -233,7 +233,7 @@ class CompilerEnv:
     def set_payload_module(self, module: ModuleOp) -> None:
         """Replace the live Payload IR module + re-extract region facts.
 
-        Used after :class:`~compgen.ir.recipe.execute.RecipeExecutor`
+        Used after :class:`~xpu_rt.ir.recipe.execute.RecipeExecutor`
         applies transform scripts to the payload module — the env
         needs to see the rewritten module so subsequent ``observe()``
         / ``step()`` calls operate on the new state.
@@ -581,12 +581,12 @@ class CompilerEnv:
 
         # Record action in Recipe IR if tracking is enabled
         if self._recipe_module is not None and applied:
-            from compgen.agent.recipe_bridge import action_to_recipe_op
+            from xpu_rt.agent.recipe_bridge import action_to_recipe_op
             recipe_op = action_to_recipe_op(action, self._step_count)
             if recipe_op is not None:
                 self._recipe_module.body.block.add_op(recipe_op)
         if self._agent_module is not None and applied:
-            from compgen.agent.ir_bridge import action_to_agent_ops
+            from xpu_rt.agent.ir_bridge import action_to_agent_ops
 
             known_scope_symbols = {
                 getattr(op, "sym_name").data
@@ -649,7 +649,7 @@ class CompilerEnv:
 
     def _apply_pass(self, action: ApplyPassAction) -> tuple[bool, str, list[str]]:
         """Apply a registered xDSL pass from the pass menu."""
-        from compgen.trace import DecisionPublisher, PassPublisher, get_ir_dump_writer
+        from xpu_rt.trace import DecisionPublisher, PassPublisher, get_ir_dump_writer
 
         assert self._module is not None and self._target is not None
         diagnostics: list[str] = []
@@ -708,8 +708,8 @@ class CompilerEnv:
 
     def _apply_analyze(self) -> tuple[bool, str, list[str]]:
         """Run network analysis on the FX graph."""
-        from compgen.agent.analyzer import NetworkAnalyzer
-        from compgen.trace import AnalysisPublisher
+        from xpu_rt.agent.analyzer import NetworkAnalyzer
+        from xpu_rt.trace import AnalysisPublisher
 
         diagnostics: list[str] = []
 
@@ -757,8 +757,8 @@ class CompilerEnv:
 
     def _apply_search_kernel(self, action: SearchKernelAction) -> tuple[bool, str, list[str]]:
         """Run Autocomp kernel search for a pattern cluster."""
-        from compgen.agent.kernel_db import KernelDB, KernelEntry
-        from compgen.kernels.autocomp_adapter import AutocompAdapter
+        from xpu_rt.agent.kernel_db import KernelDB, KernelEntry
+        from xpu_rt.kernels.autocomp_adapter import AutocompAdapter
 
         diagnostics: list[str] = []
 
@@ -781,11 +781,11 @@ class CompilerEnv:
         # Lazy-init KernelDB on first use (bridge to CompilerMemory if available)
         if self._kernel_db is None:
             try:
-                from compgen.memory.store import CompilerMemory
+                from xpu_rt.memory.store import CompilerMemory
                 mem = CompilerMemory()
                 self._kernel_db = KernelDB.from_memory(mem)
             except Exception:
-                self._kernel_db = KernelDB(db_path=".compgen_cache/kernel_db/kernel_db.json")
+                self._kernel_db = KernelDB(db_path=".xpu_rt_cache/kernel_db/kernel_db.json")
 
         # Check cache before running expensive search
         cached = self._kernel_db.lookup(
@@ -803,12 +803,12 @@ class CompilerEnv:
 
         # Try provider registry first (supports multiple backends)
         try:
-            from compgen.kernels.provider import KernelContract, SearchBudget
-            from compgen.kernels.registry import ProviderRegistry
+            from xpu_rt.kernels.provider import KernelContract, SearchBudget
+            from xpu_rt.kernels.registry import ProviderRegistry
 
             if not hasattr(self, "_provider_registry") or self._provider_registry is None:
-                from compgen.kernels.providers.autocomp import AutocompProvider, ExoProvider
-                from compgen.kernels.providers.kernelblaster import KernelBlasterProvider
+                from xpu_rt.kernels.providers.autocomp import AutocompProvider, ExoProvider
+                from xpu_rt.kernels.providers.kernelblaster import KernelBlasterProvider
 
                 self._provider_registry = ProviderRegistry()
                 self._provider_registry.register(AutocompProvider())
@@ -827,7 +827,7 @@ class CompilerEnv:
             # Ingest knowledge from providers into CompilerMemory
             if hasattr(self, "_verification_results"):
                 try:
-                    from compgen.memory.store import CompilerMemory
+                    from xpu_rt.memory.store import CompilerMemory
 
                     mem = CompilerMemory()
                     self._provider_registry.ingest_knowledge(mem)
@@ -846,7 +846,7 @@ class CompilerEnv:
                     f"latency={provider_result.latency_us:.2f}us"
                 )
                 if provider_result.correct:
-                    from compgen.agent.kernel_db import _shapes_key
+                    from xpu_rt.agent.kernel_db import _shapes_key
 
                     entry = KernelEntry(
                         pattern_type=cluster.pattern_type,
@@ -879,7 +879,7 @@ class CompilerEnv:
 
             # Cache the result for future lookups
             if result.correct:
-                from compgen.agent.kernel_db import _shapes_key
+                from xpu_rt.agent.kernel_db import _shapes_key
 
                 entry = KernelEntry(
                     pattern_type=cluster.pattern_type,
@@ -895,7 +895,7 @@ class CompilerEnv:
                 self._kernel_db.store(entry)
                 # Also write to CompilerMemory for cross-session retrieval
                 try:
-                    from compgen.memory.store import CompilerMemory
+                    from xpu_rt.memory.store import CompilerMemory
                     mem = CompilerMemory()
                     self._kernel_db.store_to_memory(entry, mem)
                 except Exception:
@@ -908,7 +908,7 @@ class CompilerEnv:
 
     def _apply_benchmark(self, action: BenchmarkAction) -> tuple[bool, str, list[str]]:
         """Run real hardware benchmark on the PyTorch model."""
-        from compgen.runtime.local_executor import LocalExecutor
+        from xpu_rt.runtime.local_executor import LocalExecutor
 
         diagnostics: list[str] = []
 
@@ -950,7 +950,7 @@ class CompilerEnv:
 
     def _apply_calibrate(self) -> tuple[bool, str, list[str]]:
         """Calibrate cost model from benchmark measurements."""
-        from compgen.agent.memory import AgentMemory
+        from xpu_rt.agent.memory import AgentMemory
 
         diagnostics: list[str] = []
 
@@ -984,14 +984,14 @@ class CompilerEnv:
             diagnostics.append(f"  {op_type}: correction={factor:.2f}x")
 
         # Save memory
-        self._memory.save(".compgen_cache/agent_memory.json")
-        diagnostics.append("  Memory saved to .compgen_cache/agent_memory.json")
+        self._memory.save(".xpu_rt_cache/agent_memory.json")
+        diagnostics.append("  Memory saved to .xpu_rt_cache/agent_memory.json")
 
         return True, "", diagnostics
 
     def _apply_discover_ops(self, action: DiscoverOpsAction) -> tuple[bool, str, list[str]]:
         """Scan FX graph for unknown ops."""
-        from compgen.agent.op_discovery import OpDiscovery
+        from xpu_rt.agent.op_discovery import OpDiscovery
 
         diagnostics: list[str] = []
 
@@ -1028,7 +1028,7 @@ class CompilerEnv:
 
     def _apply_compile_and_run(self, action: CompileAndRunAction) -> tuple[bool, str, list[str]]:
         """Compile with torch.compile using agent decisions and benchmark."""
-        from compgen.runtime.torch_backend import CompGenBackend
+        from xpu_rt.runtime.torch_backend import CompGenBackend
 
         diagnostics: list[str] = []
 
@@ -1064,9 +1064,9 @@ class CompilerEnv:
         diagnostics: list[str] = []
 
         try:
-            from compgen.eqsat.config import EqSatConfig
-            from compgen.eqsat.pipeline import run_eqsat_pass
-            from compgen.eqsat.rules.registry import create_default_registry
+            from xpu_rt.eqsat.config import EqSatConfig
+            from xpu_rt.eqsat.pipeline import run_eqsat_pass
+            from xpu_rt.eqsat.rules.registry import create_default_registry
 
             registry = create_default_registry()
             rules = registry.get_rules(action.rule_categories)
@@ -1118,7 +1118,7 @@ class CompilerEnv:
         try:
             from xdsl.dialects import equivalence
 
-            from compgen.eqsat.pipeline import _count_eclasses, _count_enodes, create_egraph
+            from xpu_rt.eqsat.pipeline import _count_eclasses, _count_enodes, create_egraph
 
             # Create a temporary copy to inspect
             temp_module = self._module.clone()
@@ -1147,9 +1147,9 @@ class CompilerEnv:
 
     def _apply_solve(self, action: SolveAction) -> tuple[bool, str, list[str]]:
         """Run CP-SAT solver for placement and/or scheduling."""
-        from compgen.solve.partition import Partition
-        from compgen.solve.placement import PlacementConstraint, solve_placement
-        from compgen.solve.schedule import solve_schedule
+        from xpu_rt.solve.partition import Partition
+        from xpu_rt.solve.placement import PlacementConstraint, solve_placement
+        from xpu_rt.solve.schedule import solve_schedule
 
         assert self._target is not None
         diagnostics: list[str] = []
@@ -1271,8 +1271,8 @@ class CompilerEnv:
 
     def _apply_generate_pass(self, action: GeneratePassAction) -> tuple[bool, str, list[str]]:
         """Ask the LLM to generate a new compiler pass, then validate it."""
-        from compgen.agent.pass_gen import PassGenerator
-        from compgen.llm.factory import create_llm_client
+        from xpu_rt.agent.pass_gen import PassGenerator
+        from xpu_rt.llm.factory import create_llm_client
 
         assert self._module is not None
         diagnostics: list[str] = []
@@ -1284,11 +1284,11 @@ class CompilerEnv:
         if self._pass_generator is None:
             client = self._llm_client
             if client is None:
-                backend = os.environ.get("COMPGEN_LLM_BACKEND", "").strip()
+                backend = os.environ.get("XPU_RT_LLM_BACKEND", "").strip()
                 if not backend:
                     return (
                         False,
-                        "No LLM client attached. Call attach_llm_client() or set COMPGEN_LLM_BACKEND.",
+                        "No LLM client attached. Call attach_llm_client() or set XPU_RT_LLM_BACKEND.",
                         diagnostics,
                     )
                 client = create_llm_client(backend, working_dir=Path.cwd())
@@ -1328,7 +1328,7 @@ class CompilerEnv:
         self, action: ConfigureProfilingAction,
     ) -> tuple[bool, str, list[str]]:
         """Configure profiling based on LLM decision."""
-        from compgen.runtime.instrumentation import InstrumentationConfig, InstrumentationLevel
+        from xpu_rt.runtime.instrumentation import InstrumentationConfig, InstrumentationLevel
 
         diagnostics: list[str] = []
 
@@ -1361,7 +1361,7 @@ class CompilerEnv:
         self, action: ConfigureDispatchAction,
     ) -> tuple[bool, str, list[str]]:
         """Configure dispatch strategy based on LLM decision."""
-        from compgen.runtime.dispatch_strategy import create_strategy
+        from xpu_rt.runtime.dispatch_strategy import create_strategy
 
         diagnostics: list[str] = []
 
@@ -1473,7 +1473,7 @@ class CompilerEnv:
     def _apply_generate_xdsl_dialect(
         self, action: GenerateXDSLDialectAction,
     ) -> tuple[bool, str, list[str]]:
-        from compgen.extensions.xdsl_generate import generate_xdsl_dialect
+        from xpu_rt.extensions.xdsl_generate import generate_xdsl_dialect
 
         diagnostics: list[str] = []
         pack = self._find_loaded_pack(action.pack_name)
@@ -1503,7 +1503,7 @@ class CompilerEnv:
     def _apply_generate_llvm_patch(
         self, action: GenerateLLVMPatchAction,
     ) -> tuple[bool, str, list[str]]:
-        from compgen.extensions.llvm_patchgen import generate_llvm_patch_bundle
+        from xpu_rt.extensions.llvm_patchgen import generate_llvm_patch_bundle
 
         diagnostics: list[str] = []
         pack = self._find_loaded_pack(action.pack_name)
@@ -1634,7 +1634,7 @@ class CompilerEnv:
         if not action.rule_code:
             return False, "No rule code provided", diagnostics
 
-        from compgen.eqsat.llm_interface import validate_and_verify_rule
+        from xpu_rt.eqsat.llm_interface import validate_and_verify_rule
 
         result = validate_and_verify_rule(action.rule_code)
         if result.valid:
@@ -1663,7 +1663,7 @@ class CompilerEnv:
         if not action.region_id:
             return False, "No region_id specified", diagnostics
 
-        from compgen.semantic.executor import VerificationExecutor
+        from xpu_rt.semantic.executor import VerificationExecutor
 
         executor = VerificationExecutor()
         obligation = {
@@ -1710,7 +1710,7 @@ class CompilerEnv:
         if not action.region_id:
             return False, "No region_id specified", diagnostics
 
-        from compgen.semantic.backends.xdsl_smt.transfer_analyses import TransferAnalysisBridge
+        from xpu_rt.semantic.backends.xdsl_smt.transfer_analyses import TransferAnalysisBridge
 
         bridge = TransferAnalysisBridge()
 

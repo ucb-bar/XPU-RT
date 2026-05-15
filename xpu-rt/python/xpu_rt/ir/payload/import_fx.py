@@ -1,12 +1,12 @@
 """FX graph to xDSL/MLIR conversion.
 
-Converts PyTorch FX graphs (from torch.export) into CompGen's canonical
+Converts PyTorch FX graphs (from torch.export) into XPU-RT's canonical
 Payload IR using real xDSL linalg/arith/tensor ops where decompositions
 exist, and opaque func.call for ops without known decompositions.
 
 Invariants:
     - Every FX node maps to at least one xDSL op (or a diagnostic).
-    - Decomposed ops get ``compgen.region_id`` attributes for Recipe IR targeting.
+    - Decomposed ops get ``xpu_rt.region_id`` attributes for Recipe IR targeting.
     - Unsupported ops fall back to ``func.call`` (flagged as opaque).
     - The output module passes the xDSL verifier.
 """
@@ -61,21 +61,21 @@ def FlatSymbolRefAttr_ref(name: str) -> FlatSymbolRefAttr:
 from xdsl.ir import Attribute, Block, Operation, Region, SSAValue
 from xdsl.printer import Printer
 
-from compgen.ir.payload.decompositions import (
+from xpu_rt.ir.payload.decompositions import (
     DECOMPOSITION_TABLE,
     DecompFn,
     reset_region_counters,
 )
-from compgen.ir.payload.types import Float8E4M3FNType, Float8E5M2Type
+from xpu_rt.ir.payload.types import Float8E4M3FNType, Float8E5M2Type
 
-# Tags the FX-side graph passes (in ``compgen.transforms.graph_passes``) set
+# Tags the FX-side graph passes (in ``xpu_rt.transforms.graph_passes``) set
 # on ``node.meta``. ``FXImporter`` forwards each onto the emitted xDSL ops
 # so downstream Recipe-IR passes don't have to re-detect patterns the FX
 # stage already recognized.
 _FX_META_FORWARD_KEYS = (
-    "_compgen_pattern",
-    "_compgen_transpose_absorbed",
-    "_compgen_fuse_dequant",
+    "_xpu_rt_pattern",
+    "_xpu_rt_transpose_absorbed",
+    "_xpu_rt_fuse_dequant",
 )
 
 
@@ -86,23 +86,23 @@ def _forward_fx_meta(
 ) -> None:
     """Copy FX node meta + DecompResult.pattern_hint onto ``op.attributes``.
 
-    - ``_compgen_pattern`` (FX-level tag) -> ``compgen._pattern_hint``
-    - ``_compgen_transpose_absorbed`` -> ``compgen.transpose_absorbed`` (bool string)
-    - ``_compgen_fuse_dequant`` -> ``compgen.fuse_dequant`` (bool string)
+    - ``_xpu_rt_pattern`` (FX-level tag) -> ``xpu_rt._pattern_hint``
+    - ``_xpu_rt_transpose_absorbed`` -> ``xpu_rt.transpose_absorbed`` (bool string)
+    - ``_xpu_rt_fuse_dequant`` -> ``xpu_rt.fuse_dequant`` (bool string)
     - ``decomp_hint`` (decomp-side explicit tag) wins when FX didn't set one.
 
     Idempotent: won't overwrite an existing attribute.
     """
-    fx_hint = fx_meta.get("_compgen_pattern") if isinstance(fx_meta, dict) else None
+    fx_hint = fx_meta.get("_xpu_rt_pattern") if isinstance(fx_meta, dict) else None
     effective_hint = fx_hint or decomp_hint
-    if effective_hint and "compgen._pattern_hint" not in op.attributes:
-        op.attributes["compgen._pattern_hint"] = StringAttr(str(effective_hint))
+    if effective_hint and "xpu_rt._pattern_hint" not in op.attributes:
+        op.attributes["xpu_rt._pattern_hint"] = StringAttr(str(effective_hint))
 
     if isinstance(fx_meta, dict):
-        if fx_meta.get("_compgen_transpose_absorbed") and "compgen.transpose_absorbed" not in op.attributes:
-            op.attributes["compgen.transpose_absorbed"] = StringAttr("true")
-        if fx_meta.get("_compgen_fuse_dequant") and "compgen.fuse_dequant" not in op.attributes:
-            op.attributes["compgen.fuse_dequant"] = StringAttr("true")
+        if fx_meta.get("_xpu_rt_transpose_absorbed") and "xpu_rt.transpose_absorbed" not in op.attributes:
+            op.attributes["xpu_rt.transpose_absorbed"] = StringAttr("true")
+        if fx_meta.get("_xpu_rt_fuse_dequant") and "xpu_rt.fuse_dequant" not in op.attributes:
+            op.attributes["xpu_rt.fuse_dequant"] = StringAttr("true")
 
 
 def _torch_dtype_to_xdsl(dtype: torch.dtype) -> Attribute:
@@ -113,8 +113,8 @@ def _torch_dtype_to_xdsl(dtype: torch.dtype) -> Attribute:
         torch.float16: Float16Type,
         torch.bfloat16: BFloat16Type,
     }
-    # FP8 is a first-class CompGen type (`compgen.float8_e4m3fn`,
-    # `compgen.float8_e5m2`) that mirrors MLIR's semantics.  Earlier
+    # FP8 is a first-class XPU-RT type (`xpu_rt.float8_e4m3fn`,
+    # `xpu_rt.float8_e5m2`) that mirrors MLIR's semantics.  Earlier
     # revisions silently demoted to Float16Type; we now preserve the
     # FP8 semantics so Phase-2 numerics passes see the real type.
     if hasattr(torch, "float8_e4m3fn") and dtype == torch.float8_e4m3fn:
@@ -478,11 +478,11 @@ class FXImporter:
         module = ModuleOp(all_ops)
 
         # REQ-023 (generalised): every ``linalg.transpose`` gets a
-        # ``compgen.region_id`` + ``dispatch_id`` so the dispatch
+        # ``xpu_rt.region_id`` + ``dispatch_id`` so the dispatch
         # graph can resolve consumers' operands. When a transpose
         # with permutation ``[1, 0]`` feeds a ``linalg.matmul``'s
         # B operand, the matmul is also tagged with
-        # ``compgen.transposed_b="true"`` so providers can short-
+        # ``xpu_rt.transposed_b="true"`` so providers can short-
         # circuit by emitting a B^T kernel.
         _annotate_transposes_and_matmuls(module)
 
@@ -511,14 +511,14 @@ def _annotate_transposes_and_matmuls(module: ModuleOp) -> None:
 
     Walks the module once and stamps:
 
-    - Every ``linalg.transpose`` with ``compgen.region_id`` +
-      ``compgen.dispatch_id`` (idempotent — respects pre-existing
+    - Every ``linalg.transpose`` with ``xpu_rt.region_id`` +
+      ``xpu_rt.dispatch_id`` (idempotent — respects pre-existing
       tags from in-tree decompositions).
     - Every ``linalg.matmul`` whose B operand is a permutation-
-      ``[1, 0]`` transpose with ``compgen.transposed_b="true"``.
+      ``[1, 0]`` transpose with ``xpu_rt.transposed_b="true"``.
     - Every ``func.call`` op (the opaque-fallback shape
       ``func.call @aten_relu_default`` for unmapped ATen ops) with
-      ``compgen.region_id`` + ``compgen.dispatch_id``. Without this
+      ``xpu_rt.region_id`` + ``xpu_rt.dispatch_id``. Without this
       tag, codegen-fallback's contract extractor can't surface them
       as kernel boundaries (REQ-026's blocker for any opaque-call op).
 
@@ -531,15 +531,15 @@ def _annotate_transposes_and_matmuls(module: ModuleOp) -> None:
     transpose_counter = 0
     for op in module.walk():
         if isinstance(op, TransposeOp):
-            existing_rid = op.attributes.get("compgen.region_id")
+            existing_rid = op.attributes.get("xpu_rt.region_id")
             if existing_rid is None:
                 rid = f"transpose_{transpose_counter}"
                 transpose_counter += 1
-                op.attributes["compgen.region_id"] = StringAttr(rid)
+                op.attributes["xpu_rt.region_id"] = StringAttr(rid)
             else:
                 rid = existing_rid.data if isinstance(existing_rid, StringAttr) else None
-            if rid and "compgen.dispatch_id" not in op.attributes:
-                op.attributes["compgen.dispatch_id"] = StringAttr(rid)
+            if rid and "xpu_rt.dispatch_id" not in op.attributes:
+                op.attributes["xpu_rt.dispatch_id"] = StringAttr(rid)
 
     # Opaque func.call annotation (REQ-026). Per-callee counters so
     # ids stay readable: ``aten_relu_default_0``, ``aten_add_1``, etc.
@@ -553,23 +553,23 @@ def _annotate_transposes_and_matmuls(module: ModuleOp) -> None:
         # but those have no `results`; skip them defensively.
         if not op.results:
             continue
-        existing_rid = op.attributes.get("compgen.region_id")
+        existing_rid = op.attributes.get("xpu_rt.region_id")
         if existing_rid is None:
             callee = op.callee.string_value()
             stem = callee.lstrip("@") if callee else "call"
             count = callee_counters.get(stem, 0)
             callee_counters[stem] = count + 1
             rid = f"{stem}_{count}"
-            op.attributes["compgen.region_id"] = StringAttr(rid)
+            op.attributes["xpu_rt.region_id"] = StringAttr(rid)
         else:
             rid = existing_rid.data if isinstance(existing_rid, StringAttr) else None
-        if rid and "compgen.dispatch_id" not in op.attributes:
-            op.attributes["compgen.dispatch_id"] = StringAttr(rid)
+        if rid and "xpu_rt.dispatch_id" not in op.attributes:
+            op.attributes["xpu_rt.dispatch_id"] = StringAttr(rid)
 
     for op in module.walk():
         if not isinstance(op, MatmulOp):
             continue
-        if "compgen.transposed_b" in op.attributes:
+        if "xpu_rt.transposed_b" in op.attributes:
             continue  # already tagged by a decomposition
         if len(op.operands) < 2:
             continue
@@ -585,7 +585,7 @@ def _annotate_transposes_and_matmuls(module: ModuleOp) -> None:
         except Exception:
             perm = None
         if perm == [1, 0]:
-            op.attributes["compgen.transposed_b"] = StringAttr("true")
+            op.attributes["xpu_rt.transposed_b"] = StringAttr("true")
 
 
 def fx_to_xdsl(

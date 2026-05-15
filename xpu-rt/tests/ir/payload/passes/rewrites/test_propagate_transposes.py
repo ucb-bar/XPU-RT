@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from compgen.ir.payload.passes.rewrites.propagate_transposes import (
+from xpu_rt.ir.payload.passes.rewrites.propagate_transposes import (
     PropagateTransposesConfig,
     PropagateTransposesStats,
     run_propagate_transposes,
@@ -266,7 +266,7 @@ def test_region_id_preserved_through_chained_collapse():
     tr1 = TransposeOp(input=x.results[0], init=i1.results[0], permutation=_perm([1, 0]), result=t2)
     i2 = EmptyOp([], t1)
     tr2 = TransposeOp(input=tr1.results[0], init=i2.results[0], permutation=_perm([1, 0]), result=t1)
-    tr2.attributes["compgen.region_id"] = StringAttr("outer_t")
+    tr2.attributes["xpu_rt.region_id"] = StringAttr("outer_t")
     m = _wrap([x, i1, tr1, i2, tr2], tr2.results[0], t1)
 
     run_propagate_transposes(m)
@@ -282,7 +282,7 @@ def test_region_id_preserved_through_chained_collapse():
 def test_propagate_transposes_on_attention_mlp_tiny_is_safe():
     """Real-workload test: the pass should not introduce verifier
     errors on a bridged attention block."""
-    from compgen.capture.torch_mlir_bridge import bridge_fx_graph
+    from xpu_rt.capture.torch_mlir_bridge import bridge_fx_graph
 
     from tests._fixtures.real_workloads import attention_mlp_tiny
 
@@ -299,7 +299,7 @@ def test_propagate_transposes_on_attention_mlp_tiny_is_safe():
 
 
 def test_propagate_transposes_on_qwen_moe_tiny_is_safe():
-    from compgen.capture.torch_mlir_bridge import bridge_fx_graph
+    from xpu_rt.capture.torch_mlir_bridge import bridge_fx_graph
 
     from tests._fixtures.real_workloads import qwen_moe_tiny
 

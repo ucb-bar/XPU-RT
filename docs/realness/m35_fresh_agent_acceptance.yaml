@@ -1,9 +1,9 @@
 claim: |
   The fresh-agent task pack carries the entire post-M-34 agentic
-  surface a Claude Code session needs to drive a CompGen compile
+  surface a Claude Code session needs to drive a XPU-RT compile
   without prior chat context: 60 typed pass cards organized by
   family, the auto-generated INDEX.md taxonomy, all 10 realness
-  contracts (M-26 through M-34), the 3 compgen skills, the realness
+  contracts (M-26 through M-34), the 3 xpu_rt skills, the realness
   policy doc, and a task prompt that explains the multi-step
   pass_plan path with phase ordering + pair contract rules. A fresh
   agent can read the realness contract for any subsystem and the
@@ -18,10 +18,10 @@ forbidden:
 - agent vocabulary surface that requires source-code reading to use
 realness_level: production_path
 required_evidence:
-- python/compgen/audit/fresh_agent.py (build_task_pack with full allowlist)
+- python/xpu_rt/audit/fresh_agent.py (build_task_pack with full allowlist)
 - docs/generated/pass_cards/INDEX.md (auto-generated taxonomy)
 - tests/audit/test_fresh_agent_pass_scheduling_surface.py
-- a real task pack containing 60 pass cards, 10 realness contracts, and the 3 compgen skills
+- a real task pack containing 60 pass cards, 10 realness contracts, and the 3 xpu_rt skills
 notes: |
   Section 20 / M-35. M-31A.4 shipped the task-pack builder + holdout
   models + greedy baseline; M-35 closes the loop by asserting the
@@ -33,7 +33,7 @@ notes: |
     1. operator builds task pack via scripts/dev/fresh_agent_task_pack.py
     2. opens fresh Claude Code session in the pack
     3. runs the task prompt
-    4. records outcome via compgen.audit.fresh_agent_modes.record_manual_session_result
+    4. records outcome via xpu_rt.audit.fresh_agent_modes.record_manual_session_result
 
   Honest residual: spawning a fresh Claude Code session is operator-
   driven (CI cannot do it without defeating the no-private-context

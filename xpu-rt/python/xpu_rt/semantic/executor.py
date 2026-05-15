@@ -17,7 +17,7 @@ from typing import Any
 import structlog
 from xdsl.dialects.builtin import ModuleOp
 
-from compgen.semantic.backends.xdsl_smt.results import StructuredCounterexample
+from xpu_rt.semantic.backends.xdsl_smt.results import StructuredCounterexample
 
 log = structlog.get_logger()
 
@@ -180,7 +180,7 @@ class VerificationExecutor:
                 details={"reason": "missing before/after modules"},
             )
 
-        from compgen.semantic.backends.xdsl_smt.tv_backend import TranslationValidationBackend
+        from xpu_rt.semantic.backends.xdsl_smt.tv_backend import TranslationValidationBackend
 
         backend = TranslationValidationBackend(timeout_ms=self.tv_timeout_ms)
         tv_result = backend.check_refinement(payload_before, payload_after, optimize=True)
@@ -216,7 +216,7 @@ class VerificationExecutor:
                 details={"reason": "missing before/after modules"},
             )
 
-        from compgen.transforms.verify import _verify_differential
+        from xpu_rt.transforms.verify import _verify_differential
 
         passed, max_error, msg = _verify_differential(payload_before, payload_after, float(tolerance))
         return VerificationResult(

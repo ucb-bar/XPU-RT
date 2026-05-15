@@ -22,9 +22,9 @@ from typing import TYPE_CHECKING, Any
 from xdsl.dialects.builtin import ModuleOp
 
 if TYPE_CHECKING:
-    from compgen.analysis.layout.planner import LayoutPlan
-    from compgen.targets.capability import CapabilitySpec
-    from compgen.targets.schema import TargetProfile
+    from xpu_rt.analysis.layout.planner import LayoutPlan
+    from xpu_rt.targets.capability import CapabilitySpec
+    from xpu_rt.targets.schema import TargetProfile
 
 
 def run_layout_pipeline(
@@ -36,16 +36,16 @@ def run_layout_pipeline(
     prepack_candidates: list[Any] | None = None,
 ) -> ModuleOp:
     """Run all 10 layout passes in order."""
-    from compgen.transforms.layout.attach_layout_hints import attach_layout_hints
-    from compgen.transforms.layout.canonicalize_transposes import canonicalize_transposes
-    from compgen.transforms.layout.cleanup_layout_artifacts import cleanup_layout_artifacts
-    from compgen.transforms.layout.fuse_layout_into_producers import fuse_layout_into_producers
-    from compgen.transforms.layout.hoist_layout_ops import hoist_layout_ops
-    from compgen.transforms.layout.introduce_prepacking import introduce_prepacking
-    from compgen.transforms.layout.materialize_layout_boundaries import materialize_layout_boundaries
-    from compgen.transforms.layout.propagate_layouts import propagate_layouts
-    from compgen.transforms.layout.set_virtual_encodings import set_virtual_encodings
-    from compgen.transforms.layout.specialize_layouts import specialize_layouts
+    from xpu_rt.transforms.layout.attach_layout_hints import attach_layout_hints
+    from xpu_rt.transforms.layout.canonicalize_transposes import canonicalize_transposes
+    from xpu_rt.transforms.layout.cleanup_layout_artifacts import cleanup_layout_artifacts
+    from xpu_rt.transforms.layout.fuse_layout_into_producers import fuse_layout_into_producers
+    from xpu_rt.transforms.layout.hoist_layout_ops import hoist_layout_ops
+    from xpu_rt.transforms.layout.introduce_prepacking import introduce_prepacking
+    from xpu_rt.transforms.layout.materialize_layout_boundaries import materialize_layout_boundaries
+    from xpu_rt.transforms.layout.propagate_layouts import propagate_layouts
+    from xpu_rt.transforms.layout.set_virtual_encodings import set_virtual_encodings
+    from xpu_rt.transforms.layout.specialize_layouts import specialize_layouts
 
     module = canonicalize_transposes(module)
     module = attach_layout_hints(module, plans or {})

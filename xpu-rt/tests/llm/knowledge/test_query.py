@@ -2,23 +2,23 @@
 
 from __future__ import annotations
 
-from compgen.llm.knowledge.base import KnowledgeBase
-from compgen.llm.knowledge.inject import (
+from xpu_rt.llm.knowledge.base import KnowledgeBase
+from xpu_rt.llm.knowledge.inject import (
     inject_for_analysis,
     inject_for_eqsat,
     inject_for_kernel_search,
     inject_knowledge,
 )
-from compgen.llm.knowledge.query import QueryContext, QueryResult, query_for_op, query_for_stage
+from xpu_rt.llm.knowledge.query import QueryContext, QueryResult, query_for_op, query_for_stage
 
 
 def _make_kb() -> KnowledgeBase:
-    from compgen.llm.knowledge.anti_patterns import build_default_anti_patterns
-    from compgen.llm.knowledge.compiler_heuristics import build_default_compiler_heuristics
-    from compgen.llm.knowledge.kernel_wisdom import build_default_kernel_wisdom
-    from compgen.llm.knowledge.ops_wisdom import build_default_op_wisdom
-    from compgen.llm.knowledge.target_patterns import build_default_target_patterns
-    from compgen.llm.knowledge.transform_recipes import build_default_recipes
+    from xpu_rt.llm.knowledge.anti_patterns import build_default_anti_patterns
+    from xpu_rt.llm.knowledge.compiler_heuristics import build_default_compiler_heuristics
+    from xpu_rt.llm.knowledge.kernel_wisdom import build_default_kernel_wisdom
+    from xpu_rt.llm.knowledge.ops_wisdom import build_default_op_wisdom
+    from xpu_rt.llm.knowledge.target_patterns import build_default_target_patterns
+    from xpu_rt.llm.knowledge.transform_recipes import build_default_recipes
 
     return KnowledgeBase(
         op_wisdom=build_default_op_wisdom(),

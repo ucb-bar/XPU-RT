@@ -1,7 +1,7 @@
 """FX-graph → MegakernelGraph lowering — Phase 10a.
 
 The conformance-harness path used to require a hand-built
-:class:`compgen.runtime.megakernel.MegakernelGraph` per workload. This
+:class:`xpu_rt.runtime.megakernel.MegakernelGraph` per workload. This
 subpackage replaces that with a pattern matcher that walks an FX
 graph from ``torch.export``, recognises supported op shapes, and
 emits the corresponding MegakernelGraph + device-function bodies
@@ -22,7 +22,7 @@ decoder_layer and the gemm_rs row-sharded matmul.
 
 from __future__ import annotations
 
-from compgen.runtime.lowering.fx_to_megakernel import (
+from xpu_rt.runtime.lowering.fx_to_megakernel import (
     LoweringDecision,
     LoweringResult,
     UnsupportedShape,

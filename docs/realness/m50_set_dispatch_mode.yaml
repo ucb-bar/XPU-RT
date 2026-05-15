@@ -30,9 +30,9 @@ forbidden:
 - changing the contract_hash for two contracts that differ ONLY in dispatch.model — the hash MUST change because dispatch is in the kernel-facing projection
 realness_level: decision_affecting
 required_evidence:
-- python/compgen/graph_compilation/action_space.py (Family 6 _gen_dispatch_modes)
-- python/compgen/kernels/contract_v3.py (_resolve_dispatch_mode_override + from_recipe dispatch_mode_override kwarg)
-- python/compgen/graph_compilation/kernel_contract_materialization.py (_dispatch_mode_override_for + materializer wiring)
+- python/xpu_rt/graph_compilation/action_space.py (Family 6 _gen_dispatch_modes)
+- python/xpu_rt/kernels/contract_v3.py (_resolve_dispatch_mode_override + from_recipe dispatch_mode_override kwarg)
+- python/xpu_rt/graph_compilation/kernel_contract_materialization.py (_dispatch_mode_override_for + materializer wiring)
 - tests/graph_compilation/test_set_dispatch_mode.py
 - "real merlin_mlp_wide run: 12 set_dispatch_mode candidates emitted, 6 legal in agent_decision_request"
 feature_id: m50_set_dispatch_mode

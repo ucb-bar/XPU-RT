@@ -1,10 +1,10 @@
-"""Tests for the ``compgen.quant`` dialect registration + types."""
+"""Tests for the ``xpu_rt.quant`` dialect registration + types."""
 
 from __future__ import annotations
 
 import pytest
-from compgen.ir.payload.types import Float8E4M3FNType
-from compgen.ir.quant import (
+from xpu_rt.ir.payload.types import Float8E4M3FNType
+from xpu_rt.ir.quant import (
     ALL_ATTRS,
     ALL_OPS,
     AffineQuantizedTensorType,
@@ -25,7 +25,7 @@ from xdsl.ir import Dialect
 
 def test_quant_is_dialect_instance():
     assert isinstance(Quant, Dialect)
-    assert Quant.name == "compgen.quant"
+    assert Quant.name == "xpu_rt.quant"
 
 
 def test_all_ops_registered_with_dialect():

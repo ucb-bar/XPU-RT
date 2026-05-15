@@ -4,7 +4,7 @@ Minimal iterator that drives the LLM through Phases 2 → 5 by calling
 registered tools and exercising registered invent-slots. Every call is
 recorded via ``ToolCallRecorder``.
 
-This is **not** a replacement for ``compgen.agent.loop.core.AgenticCompilationLoop``
+This is **not** a replacement for ``xpu_rt.agent.loop.core.AgenticCompilationLoop``
 (1334 LOC, full iterative optimization with environment reset,
 memory, refinement, and cost tracking). That remains the real
 production loop. This module is the phased scaffold the
@@ -32,8 +32,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from compgen.llm.recorder import ToolCallRecorder
-from compgen.llm.registry import (
+from xpu_rt.llm.recorder import ToolCallRecorder
+from xpu_rt.llm.registry import (
     InventSlot,
     Registry,
     Tool,

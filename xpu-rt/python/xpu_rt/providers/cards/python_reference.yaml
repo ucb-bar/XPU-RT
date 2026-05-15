@@ -4,7 +4,7 @@ integration_level: verify
 target_families: [host_cpu]
 contract_kinds: [matmul, pointwise, fused_region, reduction, attention]
 emits: [python_source]
-entrypoint: compgen.kernels.providers.c_reference:CReferenceProvider
+entrypoint: xpu_rt.kernels.providers.c_reference:CReferenceProvider
 paper_claimable: false
 required_env: []
 required_commands: []

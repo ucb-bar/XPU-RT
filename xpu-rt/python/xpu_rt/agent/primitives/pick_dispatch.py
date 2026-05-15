@@ -2,7 +2,7 @@
 
 Translates the natural-language deployment constraints into a typed
 ``SetDispatchMode`` op. The closed-enum dispatch modes match the
-existing CompGen runtime:
+existing XPU-RT runtime:
 
 * ``sync`` — single-stream, blocking. Best for tight latency budgets.
 * ``static_plan`` — pre-planned static schedule, no runtime decisions.
@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from typing import Any, Final
 
-from compgen.llm.call_site import llm_call_site, register_fallback
+from xpu_rt.llm.call_site import llm_call_site, register_fallback
 
 DISPATCH_MODES: Final[tuple[str, ...]] = (
     "sync",
@@ -46,7 +46,7 @@ def _cost_table_lookup(
     """Closed-form mapping used by the fallback.
 
     The table is intentionally short and deterministic — it embodies
-    the *default* CompGen would pick without LLM input. The LLM's job
+    the *default* XPU-RT would pick without LLM input. The LLM's job
     is only to *override* this when the natural-language context
     clearly demands it.
     """

@@ -1,4 +1,4 @@
-"""Tests for :mod:`compgen.llm.call_site` (P3.0).
+"""Tests for :mod:`xpu_rt.llm.call_site` (P3.0).
 
 Coverage:
 
@@ -6,7 +6,7 @@ Positive:
 * A decorated primary runs end-to-end when the LLM is enabled, the
   output is schema-validated, and the wrapper exposes ``.card`` /
   ``.fallback`` / ``.primary`` attributes for introspection.
-* When ``COMPGEN_DISABLE_LLM=1`` is set, the fallback runs and the
+* When ``XPU_RT_DISABLE_LLM=1`` is set, the fallback runs and the
   primary is never invoked.
 * When the primary raises, the wrapper transparently falls back.
 * ``list_call_sites`` returns alphabetised, every site card.
@@ -28,7 +28,7 @@ from __future__ import annotations
 from typing import Any
 
 import pytest
-from compgen.llm.call_site import (
+from xpu_rt.llm.call_site import (
     FORBIDDEN_LLM_ACTIONS,
     LLMCallSiteError,
     LLMOutputSchemaError,
@@ -46,7 +46,7 @@ def _isolate_registry():
     """Each test gets a clean global registry; restore on teardown so
     other test modules find the production primitives intact."""
 
-    import compgen.llm.call_site as cs
+    import xpu_rt.llm.call_site as cs
 
     saved_sites = dict(cs._CALL_SITES)
     saved_fallbacks = dict(cs._FALLBACKS)
@@ -71,7 +71,7 @@ SIMPLE_SCHEMA: dict[str, Any] = {
 
 
 def test_primary_runs_when_llm_enabled(monkeypatch):
-    monkeypatch.delenv("COMPGEN_DISABLE_LLM", raising=False)
+    monkeypatch.delenv("XPU_RT_DISABLE_LLM", raising=False)
 
     @register_fallback("fb_simple")
     def _fb(x: int) -> dict[str, Any]:
@@ -95,7 +95,7 @@ def test_primary_runs_when_llm_enabled(monkeypatch):
 
 
 def test_fallback_runs_when_disabled(monkeypatch):
-    monkeypatch.setenv("COMPGEN_DISABLE_LLM", "1")
+    monkeypatch.setenv("XPU_RT_DISABLE_LLM", "1")
     primary_calls: list[int] = []
 
     @register_fallback("fb_zero")
@@ -119,7 +119,7 @@ def test_fallback_runs_when_disabled(monkeypatch):
 
 
 def test_primary_exception_triggers_fallback(monkeypatch):
-    monkeypatch.delenv("COMPGEN_DISABLE_LLM", raising=False)
+    monkeypatch.delenv("XPU_RT_DISABLE_LLM", raising=False)
 
     @register_fallback("fb_safe")
     def _fb(x: int) -> dict[str, Any]:
@@ -140,7 +140,7 @@ def test_primary_exception_triggers_fallback(monkeypatch):
 
 
 def test_list_call_sites_alphabetical(monkeypatch):
-    monkeypatch.delenv("COMPGEN_DISABLE_LLM", raising=False)
+    monkeypatch.delenv("XPU_RT_DISABLE_LLM", raising=False)
 
     @register_fallback("fb_a")
     def _a(*a, **k):
@@ -290,7 +290,7 @@ def test_output_schema_must_be_object():
 
 
 def test_primary_violating_schema_raises(monkeypatch):
-    monkeypatch.delenv("COMPGEN_DISABLE_LLM", raising=False)
+    monkeypatch.delenv("XPU_RT_DISABLE_LLM", raising=False)
 
     @register_fallback("fb_violate_p")
     def _fb(*a, **k):
@@ -312,7 +312,7 @@ def test_primary_violating_schema_raises(monkeypatch):
 
 
 def test_fallback_violating_schema_raises(monkeypatch):
-    monkeypatch.setenv("COMPGEN_DISABLE_LLM", "1")
+    monkeypatch.setenv("XPU_RT_DISABLE_LLM", "1")
 
     @register_fallback("fb_violate_f")
     def _fb(*a, **k):

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from compgen.solve.schedule import ScheduleConstraint, ScheduleSolution, solve_schedule
+from xpu_rt.solve.schedule import ScheduleConstraint, ScheduleSolution, solve_schedule
 
 
 def test_schedule_solution_defaults() -> None:

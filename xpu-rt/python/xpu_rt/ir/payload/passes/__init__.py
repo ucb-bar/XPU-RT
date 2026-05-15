@@ -1,7 +1,7 @@
 """Ported xDSL-level payload passes (P7 + P8 from the patch plan).
 
 Importing this package triggers registration of every ported pass as a
-typed :class:`compgen.llm.registry.Tool`. Real ports set ``stub=False``;
+typed :class:`xpu_rt.llm.registry.Tool`. Real ports set ``stub=False``;
 scaffolded stubs set ``stub=True`` and run as identity rewrites until
 fully implemented.
 
@@ -11,17 +11,17 @@ See `user_perspective/analysis/iree_global_optimization_audit.md` and
 
 from __future__ import annotations
 
-from compgen.ir.payload.passes.base import PayloadPass
+from xpu_rt.ir.payload.passes.base import PayloadPass
 
 # IREE ports (real)
-from compgen.ir.payload.passes.decompose_concat import DecomposeConcat
-from compgen.ir.payload.passes.demote_contraction_inputs import DemoteContractionInputs
+from xpu_rt.ir.payload.passes.decompose_concat import DecomposeConcat
+from xpu_rt.ir.payload.passes.demote_contraction_inputs import DemoteContractionInputs
 
 # XLA ports (real)
-from compgen.ir.payload.passes.normalize_subbyte import NormalizeSubByte
+from xpu_rt.ir.payload.passes.normalize_subbyte import NormalizeSubByte
 
 # Phase 5 runtime stubs (P15)
-from compgen.ir.payload.passes.runtime_stubs import (
+from xpu_rt.ir.payload.passes.runtime_stubs import (
     AliasIoBuffers,
     AssignMemorySpace,
     AssignQueue,
@@ -33,7 +33,7 @@ from compgen.ir.payload.passes.runtime_stubs import (
 )
 
 # Scaffolded stubs (real impl pending)
-from compgen.ir.payload.passes.stubs import (
+from xpu_rt.ir.payload.passes.stubs import (
     FoldTransposesIntoDots,
     FuseDequantMatmul,
     FuseSoftmaxToTriton,

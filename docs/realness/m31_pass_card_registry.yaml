@@ -16,11 +16,11 @@ forbidden:
 - silent fallback when card lookup fails
 realness_level: production_path
 required_evidence:
-- python/compgen/passes/cards.py
+- python/xpu_rt/passes/cards.py
 - docs/generated/pass_cards/set_tile_params.yaml
 - docs/generated/pass_cards/fuse_producer_consumer.yaml
-- python/compgen/graph_compilation/agent_decision.py (registry-driven passes_allowed)
-- python/compgen/audit/negative_controls.py (real MissingPassCard control)
+- python/xpu_rt/graph_compilation/agent_decision.py (registry-driven passes_allowed)
+- python/xpu_rt/audit/negative_controls.py (real MissingPassCard control)
 - tests/passes/test_pass_card.py
 - tests/passes/test_seed_cards.py
 - agent_decision_request.json on a real run carries pass_cards block (verified on merlin_mlp_wide)

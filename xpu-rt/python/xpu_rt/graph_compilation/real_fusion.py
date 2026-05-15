@@ -10,7 +10,7 @@ Two routines:
 - ``run_real_fusion_lowering`` — reads the committed Recipe IR, finds
   the FuseProducerConsumer recipe op, validates it against the bounded
   MVP envelope, emits ``transformed_payload.real.mlir`` with a typed
-  ``compgen.fused_with`` annotation and a ``real_fusion_manifest.json``.
+  ``xpu_rt.fused_with`` annotation and a ``real_fusion_manifest.json``.
   Source payload is read-only.
 
 - ``run_real_fusion_differential`` — generates 16+ frozen input cases,
@@ -373,7 +373,7 @@ def _emit_transformed_payload(
     candidate_id: str,
 ) -> None:
     """Copy the source payload and append a typed
-    ``compgen.fused_with`` annotation to the producer + consumer ops.
+    ``xpu_rt.fused_with`` annotation to the producer + consumer ops.
 
     The annotation is a structured comment block followed by an
     in-place attribute injection. The MLIR semantics of the original
@@ -395,9 +395,9 @@ def _emit_transformed_payload(
         "// === end M-16.2 Real Fusion Annotation ===\n"
     )
 
-    # Inject `compgen.fused_with` attribute on producer + consumer ops.
+    # Inject `xpu_rt.fused_with` attribute on producer + consumer ops.
     # Conservative regex-based inject: we look for the existing
-    # `compgen.region_id = "<producer>"` or `... = "<consumer>"` attr
+    # `xpu_rt.region_id = "<producer>"` or `... = "<consumer>"` attr
     # block and append our marker. If not found, we fall through with
     # only the header so the file remains valid MLIR.
     for region, partner, role in (
@@ -405,11 +405,11 @@ def _emit_transformed_payload(
         (consumer, producer, "producer"),
     ):
         marker = (
-            f', compgen.fused_with = "{partner}", '
-            f'compgen.fused_role = "{role}", '
-            f'compgen.fused_via_tensor = "{via_tensor}"'
+            f', xpu_rt.fused_with = "{partner}", '
+            f'xpu_rt.fused_role = "{role}", '
+            f'xpu_rt.fused_via_tensor = "{via_tensor}"'
         )
-        old = f'compgen.region_id = "{region}"'
+        old = f'xpu_rt.region_id = "{region}"'
         if old in text and marker not in text:
             # Inject right after the region_id attr.
             text = text.replace(old, old + marker, 1)

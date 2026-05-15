@@ -1,11 +1,11 @@
 """Tests for REQ-023 — ``linalg.transpose`` becomes a first-class
 dispatch region AND the consuming ``linalg.matmul`` advertises
-``compgen.transposed_b="true"``.
+``xpu_rt.transposed_b="true"``.
 
 Two paths are kept open intentionally so consumers pick what fits:
 
 - Pack composer that wants a transpose-fused matmul kernel → reads
-  ``compgen.transposed_b="true"`` on the matmul + emits a B^T kernel.
+  ``xpu_rt.transposed_b="true"`` on the matmul + emits a B^T kernel.
   The transpose region's source can be ignored.
 - Pack composer that wants to materialize the transpose explicitly
   (e.g. distinct memory hierarchy) → walks the dispatch graph; the
@@ -17,8 +17,8 @@ from __future__ import annotations
 
 import torch
 import torch.nn as nn
-from compgen.capture.torch_export import capture_model
-from compgen.ir.payload.import_fx import fx_to_xdsl
+from xpu_rt.capture.torch_export import capture_model
+from xpu_rt.ir.payload.import_fx import fx_to_xdsl
 from xdsl.dialects.builtin import StringAttr
 from xdsl.dialects.linalg import MatmulOp, TransposeOp
 
@@ -34,8 +34,8 @@ def test_linear_emits_transpose_with_region_id_and_dispatch_id() -> None:
     transposes = [op for op in module.walk() if isinstance(op, TransposeOp)]
     assert len(transposes) == 1, len(transposes)
 
-    rid = transposes[0].attributes.get("compgen.region_id")
-    did = transposes[0].attributes.get("compgen.dispatch_id")
+    rid = transposes[0].attributes.get("xpu_rt.region_id")
+    did = transposes[0].attributes.get("xpu_rt.dispatch_id")
     assert isinstance(rid, StringAttr) and rid.data.startswith("transpose_"), rid
     assert isinstance(did, StringAttr) and did.data == rid.data, (rid, did)
 
@@ -44,7 +44,7 @@ def test_linear_matmul_carries_transposed_b_flag() -> None:
     module = _module_for(nn.Linear(8, 4).eval(), torch.randn(1, 8))
     matmuls = [op for op in module.walk() if isinstance(op, MatmulOp)]
     assert len(matmuls) == 1
-    flag = matmuls[0].attributes.get("compgen.transposed_b")
+    flag = matmuls[0].attributes.get("xpu_rt.transposed_b")
     assert isinstance(flag, StringAttr) and flag.data == "true", flag
 
 
@@ -62,8 +62,8 @@ def test_standalone_transpose_also_gets_region_and_dispatch_ids() -> None:
     module = _module_for(Standalone(), torch.randn(4, 8))
     transposes = [op for op in module.walk() if isinstance(op, TransposeOp)]
     assert len(transposes) == 1
-    rid = transposes[0].attributes.get("compgen.region_id")
-    did = transposes[0].attributes.get("compgen.dispatch_id")
+    rid = transposes[0].attributes.get("xpu_rt.region_id")
+    did = transposes[0].attributes.get("xpu_rt.dispatch_id")
     assert isinstance(rid, StringAttr)
     assert isinstance(did, StringAttr)
     assert rid.data == did.data, (rid, did)
@@ -86,8 +86,8 @@ def test_no_unannotated_transpose_anywhere_in_module() -> None:
     module = _module_for(Composite().eval(), torch.randn(1, 8))
     for op in module.walk():
         if isinstance(op, TransposeOp):
-            assert op.attributes.get("compgen.region_id") is not None, op
-            assert op.attributes.get("compgen.dispatch_id") is not None, op
+            assert op.attributes.get("xpu_rt.region_id") is not None, op
+            assert op.attributes.get("xpu_rt.dispatch_id") is not None, op
 
 
 def test_dispatch_graph_resolves_matmul_b_operand_to_transpose_region() -> None:
@@ -101,4 +101,4 @@ def test_dispatch_graph_resolves_matmul_b_operand_to_transpose_region() -> None:
     b_operand = matmul.operands[1]
     producer = b_operand.owner
     assert isinstance(producer, TransposeOp), producer
-    assert "compgen.region_id" in producer.attributes
+    assert "xpu_rt.region_id" in producer.attributes

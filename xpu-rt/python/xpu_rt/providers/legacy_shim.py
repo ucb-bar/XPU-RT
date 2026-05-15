@@ -1,8 +1,8 @@
 """Legacy provider shim.
 
 Wraps existing legacy providers from
-:mod:`compgen.kernels.providers.*` so they satisfy the new
-:class:`compgen.providers.kernel_provider.KernelProvider` ABC.
+:mod:`xpu_rt.kernels.providers.*` so they satisfy the new
+:class:`xpu_rt.providers.kernel_provider.KernelProvider` ABC.
 
 The legacy providers already implement:
 
@@ -12,7 +12,7 @@ The legacy providers already implement:
 
 The shim translates between the two interfaces without modifying
 the legacy modules. New adapters subclass
-:class:`compgen.providers.kernel_provider.KernelProvider`
+:class:`xpu_rt.providers.kernel_provider.KernelProvider`
 directly.
 """
 
@@ -20,17 +20,17 @@ from __future__ import annotations
 
 from typing import Any
 
-from compgen.kernels.provider import (
+from xpu_rt.kernels.provider import (
     BidPreview,
     KernelContract,
     SearchBudget,
     make_default_bid,
 )
-from compgen.providers.kernel_provider import (
+from xpu_rt.providers.kernel_provider import (
     KernelCodegenRequest,
     KernelProvider,
 )
-from compgen.providers.provider_types import (
+from xpu_rt.providers.provider_types import (
     ProviderCard,
     ProviderProbeResult,
 )
@@ -40,7 +40,7 @@ class LegacyProviderAdapter(KernelProvider):
     """Adapts a legacy ``search()``-style provider to the new ABC.
 
     ``probe()`` is delegated to
-    :func:`compgen.providers.provider_probe.probe_provider` using
+    :func:`xpu_rt.providers.provider_probe.probe_provider` using
     the provider's :class:`ProviderCard`. ``can_bid()`` maps to the
     legacy ``bid()`` if available, else returns a placeholder.
     ``propose()`` calls the legacy ``search()`` and wraps the
@@ -53,7 +53,7 @@ class LegacyProviderAdapter(KernelProvider):
         self._legacy = legacy_instance
 
     def probe(self) -> ProviderProbeResult:
-        from compgen.providers.provider_probe import probe_provider
+        from xpu_rt.providers.provider_probe import probe_provider
         return probe_provider(self.card)
 
     def can_bid(self, contract: Any, target: Any) -> BidPreview:
@@ -81,7 +81,7 @@ class LegacyProviderAdapter(KernelProvider):
         ``result_v1`` lands .
         """
 
-        from compgen.providers.result_v1 import (
+        from xpu_rt.providers.result_v1 import (
             ProviderResultV1,
             legacy_to_v1,
         )

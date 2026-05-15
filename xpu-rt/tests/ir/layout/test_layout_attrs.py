@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from compgen.ir.layout.attrs import LayoutEncodingAttr, PackSpecAttr
+from xpu_rt.ir.layout.attrs import LayoutEncodingAttr, PackSpecAttr
 
 
 class TestLayoutEncodingAttr:

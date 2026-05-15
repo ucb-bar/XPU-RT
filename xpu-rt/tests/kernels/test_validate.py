@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import torch
-from compgen.ir.payload.contracts import KernelContract
-from compgen.kernels.contracts import KernelSpec
-from compgen.kernels.validate import KernelValidationResult, KernelValidator, validate_kernel
+from xpu_rt.ir.payload.contracts import KernelContract
+from xpu_rt.kernels.contracts import KernelSpec
+from xpu_rt.kernels.validate import KernelValidationResult, KernelValidator, validate_kernel
 
 
 def _make_spec(op_name: str = "test_op") -> KernelSpec:

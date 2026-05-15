@@ -30,7 +30,7 @@ from typing import Any
 
 import structlog
 
-from compgen.targetgen.hardware_spec import ProfilingSpec
+from xpu_rt.targetgen.hardware_spec import ProfilingSpec
 
 log = structlog.get_logger()
 

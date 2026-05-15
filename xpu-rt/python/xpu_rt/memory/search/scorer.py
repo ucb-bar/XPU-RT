@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from compgen.memory.schema import Evaluation
+from xpu_rt.memory.schema import Evaluation
 
 
 @dataclass(frozen=True)

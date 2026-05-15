@@ -7,9 +7,9 @@ RVV CPU extension path; the outer-product half dispatches to Exo-generated
 ``mmt4d_s8s8s32_16x16x128`` ukernels.
 
 This module glues the HardwareSpec at
-``examples/hardware_specs/saturn_opu.yaml`` into CompGen's target backend
+``examples/hardware_specs/saturn_opu.yaml`` into XPU-RT's target backend
 protocol. Compile stages are delegated to the RVV CPU extension family
-(``compgen.targetgen.families.rvv_cpu_extension``); the only Saturn-specific
+(``xpu_rt.targetgen.families.rvv_cpu_extension``); the only Saturn-specific
 logic here is recognizing the target name and exposing tuned
 :class:`SaturnOPUOptions` that the Exo provider and the embedded runtime
 emitter inspect.
@@ -19,8 +19,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from compgen.targets.backend import BaseTargetBackend, CompilationStageResult
-from compgen.targets.options import TargetOptions
+from xpu_rt.targets.backend import BaseTargetBackend, CompilationStageResult
+from xpu_rt.targets.options import TargetOptions
 
 
 @dataclass(frozen=True)

@@ -17,8 +17,8 @@ import argparse
 import sys
 from pathlib import Path
 
-from compgen.audit.errors import ForbiddenImportError
-from compgen.audit.import_provenance import (
+from xpu_rt.audit.errors import ForbiddenImportError
+from xpu_rt.audit.import_provenance import (
     assert_no_forbidden,
     load_provenance,
 )

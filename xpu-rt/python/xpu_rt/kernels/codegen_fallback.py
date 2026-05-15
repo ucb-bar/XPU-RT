@@ -6,14 +6,14 @@ that ``accepts_contract`` for the IR-extracted kernel contracts. The
 first provider whose :meth:`KernelProvider.search` returns
 ``ProviderResult.found=True`` with a non-empty ``kernel_code`` wins.
 
-Output is shaped for :func:`compgen.runtime.bundle_emit._extract_generated_kernels`
+Output is shaped for :func:`xpu_rt.runtime.bundle_emit._extract_generated_kernels`
 so that the bundle stage writes the source files into
 ``bundle/generated_kernels/<provider>/<op_name>.<extension>`` without
 any further plumbing.
 
-This honours the documented :class:`~compgen.kernels.provider.KernelProvider`
+This honours the documented :class:`~xpu_rt.kernels.provider.KernelProvider`
 extension point; packs ship a provider via the
-``compgen.kernels.providers`` entry-point group and the codegen stage
+``xpu_rt.kernels.providers`` entry-point group and the codegen stage
 calls them when the in-tree emitter has nothing to ship.
 """
 
@@ -23,16 +23,16 @@ from typing import TYPE_CHECKING, Any
 
 import structlog
 
-from compgen.kernels.contracts import build_kernel_contracts, spec_to_provider_contract
-from compgen.kernels.provider import SearchBudget
-from compgen.kernels.registry import ProviderRegistry
-from compgen.stages.templates.codegen import CODEGEN_BACKEND_ATTR
+from xpu_rt.kernels.contracts import build_kernel_contracts, spec_to_provider_contract
+from xpu_rt.kernels.provider import SearchBudget
+from xpu_rt.kernels.registry import ProviderRegistry
+from xpu_rt.stages.templates.codegen import CODEGEN_BACKEND_ATTR
 
 if TYPE_CHECKING:
     from xdsl.dialects.builtin import ModuleOp
 
-    from compgen.kernels.provider import KernelProvider
-    from compgen.targets.schema import TargetProfile
+    from xpu_rt.kernels.provider import KernelProvider
+    from xpu_rt.targets.schema import TargetProfile
 
 log = structlog.get_logger(__name__)
 
@@ -60,13 +60,13 @@ def _ext_for(language: str) -> str:
 def _discover_providers() -> list[KernelProvider]:
     """Collect kernel providers from the plugin registry.
 
-    Scans the ``compgen.kernels.providers`` entry-point group via
-    :func:`compgen.plugins.discover_all`. Each loaded entry resolves to
+    Scans the ``xpu_rt.kernels.providers`` entry-point group via
+    :func:`xpu_rt.plugins.discover_all`. Each loaded entry resolves to
     either a :class:`KernelProvider` instance, a class (instantiated
     with no args), or a factory callable returning one.
     """
     try:
-        from compgen.plugins import GROUP_KERNEL_PROVIDERS, discover_all, registry
+        from xpu_rt.plugins import GROUP_KERNEL_PROVIDERS, discover_all, registry
     except Exception:  # noqa: BLE001
         return []
 
@@ -117,7 +117,7 @@ def run_provider_fallback(
             programmatically.
         budget: Search budget per provider invocation. Defaults to
             :class:`SearchBudget` defaults.
-        memory: Optional :class:`compgen.memory.store.CompilerMemory`
+        memory: Optional :class:`xpu_rt.memory.store.CompilerMemory`
             (or any object exposing ``ingest_provider_knowledge``).
             When provided, accumulated ``ProviderResult.knowledge_exports``
             from every dispatched provider are persisted via
@@ -138,7 +138,7 @@ def run_provider_fallback(
         The list is empty when no provider accepted any contract or
         when no contract produced a ``found=True`` result. As a side
         effect, the matching IR ops have their
-        ``compgen.codegen_backend`` annotation rewritten from
+        ``xpu_rt.codegen_backend`` annotation rewritten from
         ``"fallback"`` to the winning provider's ``name``.
     """
     providers = list(extra_providers or [])
@@ -168,7 +168,7 @@ def run_provider_fallback(
     # Per-region provenance: ``spec index → winning provider name``.
     # Each spec carries its own ``region_id`` + ``dispatch_id`` in
     # ``contract.metadata`` (REQ-026), set by the contract extractor
-    # when the IR op was tagged with ``compgen.region_id``. No
+    # when the IR op was tagged with ``xpu_rt.region_id``. No
     # parallel walk needed.
     region_winners: dict[int, str] = {}
     for i, spec in enumerate(specs):
@@ -258,9 +258,9 @@ def _annotate_codegen_backend_by_region_id(
     module: ModuleOp,
     rid_winners: dict[str, str],
 ) -> None:
-    """Rewrite ``compgen.codegen_backend`` per ``compgen.region_id``.
+    """Rewrite ``xpu_rt.codegen_backend`` per ``xpu_rt.region_id``.
 
-    Walks every op carrying ``compgen.region_id`` and, if a provider
+    Walks every op carrying ``xpu_rt.region_id`` and, if a provider
     won that region, replaces the codegen-stage's ``"fallback"``
     sentinel with the provider's name. Indexing by region_id (REQ-026)
     is more robust than the prior position-based walk: the codegen
@@ -275,7 +275,7 @@ def _annotate_codegen_backend_by_region_id(
     from xdsl.dialects.builtin import StringAttr
 
     for op in module.walk():
-        rid_attr = op.attributes.get("compgen.region_id")
+        rid_attr = op.attributes.get("xpu_rt.region_id")
         if not isinstance(rid_attr, StringAttr):
             continue
         rid = rid_attr.data

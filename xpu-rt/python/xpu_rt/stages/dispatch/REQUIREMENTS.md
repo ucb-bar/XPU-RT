@@ -8,12 +8,12 @@ hardware dispatch slot.  The key decision is **which ops to fuse together**.
 
 ## Input Contract
 
-- All tensor-producing ops have `compgen.encoding` attributes
+- All tensor-producing ops have `xpu_rt.encoding` attributes
 - Module passes xDSL verifier
 
 ## Output Contract
 
-- Every non-structural op has a `compgen.dispatch_id` attribute
+- Every non-structural op has a `xpu_rt.dispatch_id` attribute
 - Dispatch groups respect data dependencies (no cycles)
 - Each dispatch group is a contiguous region in the data flow graph
 
@@ -40,7 +40,7 @@ class {TargetName}DispatchPlugin:
         # For each op:
         #   1. Decide if it should fuse with its producer or start a new dispatch
         #   2. Apply fusion heuristic based on target
-        #   3. Set compgen.dispatch_id attribute
+        #   3. Set xpu_rt.dispatch_id attribute
         # Key fusion rules:
         #   - Elementwise after matmul → same dispatch (free fusion)
         #   - Two matmuls with shared operand → separate dispatches
@@ -70,7 +70,7 @@ class {TargetName}DispatchPlugin:
 
 ## Tests Your Code Must Pass
 
-1. Every non-structural op must have `compgen.dispatch_id`
+1. Every non-structural op must have `xpu_rt.dispatch_id`
 2. No cyclic dependencies between dispatch groups
 3. Module must still pass xDSL verifier
 4. Function signatures must not change

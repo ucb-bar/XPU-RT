@@ -1,4 +1,4 @@
-"""Tests for compgen.audit.realness_scan.
+"""Tests for xpu_rt.audit.realness_scan.
 
 The contract is: source-level scan finds stub/mock/placeholder markers,
 the allowlist tolerates intentional ones, and unallowlisted hits raise
@@ -17,8 +17,8 @@ from textwrap import dedent
 
 import pytest
 
-from compgen.audit.errors import UnallowlistedStubError
-from compgen.audit.realness_scan import (
+from xpu_rt.audit.errors import UnallowlistedStubError
+from xpu_rt.audit.realness_scan import (
     Allowlist,
     AllowlistEntry,
     Hit,
@@ -68,10 +68,10 @@ def test_live_repo_is_clean() -> None:
 
 
 def test_assert_clean_raises_on_unallowlisted_hit(tmp_path: Path) -> None:
-    bad_file = tmp_path / "python" / "compgen" / "fake_code.py"
+    bad_file = tmp_path / "python" / "xpu-rt" / "fake_code.py"
     bad_file.parent.mkdir(parents=True)
     bad_file.write_text("# TODO: write the actual implementation\n")
-    report = scan_repo(repo_root=tmp_path, roots=("python/compgen",))
+    report = scan_repo(repo_root=tmp_path, roots=("python/xpu_rt",))
     assert report.files_scanned == 1
     assert any(h.marker == "TODO" for h in report.hits)
     with pytest.raises(UnallowlistedStubError, match="TODO"):
@@ -79,13 +79,13 @@ def test_assert_clean_raises_on_unallowlisted_hit(tmp_path: Path) -> None:
 
 
 def test_allowlist_silences_known_path(tmp_path: Path) -> None:
-    bad_file = tmp_path / "python" / "compgen" / "llm" / "mock_client.py"
+    bad_file = tmp_path / "python" / "xpu-rt" / "llm" / "mock_client.py"
     bad_file.parent.mkdir(parents=True)
     bad_file.write_text("class MockClient: pass\n")
     allowlist = Allowlist(
         entries=(
             AllowlistEntry(
-                path="python/compgen/llm/mock_client.py",
+                path="python/xpu_rt/llm/mock_client.py",
                 reason="test-only",
                 forbidden_in=("graph_compilation.run",),
             ),
@@ -95,7 +95,7 @@ def test_allowlist_silences_known_path(tmp_path: Path) -> None:
     )
     report = scan_repo(
         repo_root=tmp_path,
-        roots=("python/compgen",),
+        roots=("python/xpu_rt",),
         allowlist=allowlist,
     )
     assert all(h.allowlisted for h in report.hits), (
@@ -106,7 +106,7 @@ def test_allowlist_silences_known_path(tmp_path: Path) -> None:
 
 
 def test_excluded_path_is_skipped(tmp_path: Path) -> None:
-    excluded_file = tmp_path / "python" / "compgen" / "__pycache__" / "x.pyc"
+    excluded_file = tmp_path / "python" / "xpu-rt" / "__pycache__" / "x.pyc"
     excluded_file.parent.mkdir(parents=True)
     excluded_file.write_text("TODO: this should not be scanned")
     allowlist = Allowlist(
@@ -116,7 +116,7 @@ def test_excluded_path_is_skipped(tmp_path: Path) -> None:
     )
     report = scan_repo(
         repo_root=tmp_path,
-        roots=("python/compgen",),
+        roots=("python/xpu_rt",),
         allowlist=allowlist,
     )
     # __pycache__ should not even be opened
@@ -124,12 +124,12 @@ def test_excluded_path_is_skipped(tmp_path: Path) -> None:
 
 
 def test_tests_dir_skipped_by_default(tmp_path: Path) -> None:
-    test_file = tmp_path / "python" / "compgen" / "tests" / "test_foo.py"
+    test_file = tmp_path / "python" / "xpu-rt" / "tests" / "test_foo.py"
     test_file.parent.mkdir(parents=True)
     test_file.write_text("# TODO: refactor this\n")
     report = scan_repo(
         repo_root=tmp_path,
-        roots=("python/compgen",),
+        roots=("python/xpu_rt",),
         include_tests=False,
     )
     # /tests/ inside the scanned root is skipped
@@ -153,18 +153,18 @@ def test_seed_allowlist_loads() -> None:
     allowlist = Allowlist.load()
     # Sanity: the seed allowlist must include mock_client.py
     paths = {e.path for e in allowlist.entries}
-    assert "python/compgen/llm/mock_client.py" in paths
+    assert "python/xpu_rt/llm/mock_client.py" in paths
 
 
 def test_for_now_and_raise_not_impl_markers_caught(tmp_path: Path) -> None:
-    bad = tmp_path / "python" / "compgen" / "x.py"
+    bad = tmp_path / "python" / "xpu-rt" / "x.py"
     bad.parent.mkdir(parents=True)
     bad.write_text(
         "def foo():\n"
         "    raise NotImplementedError('not done')\n"
         "    # hardcoded: for now we just return 1\n"
     )
-    report = scan_repo(repo_root=tmp_path, roots=("python/compgen",))
+    report = scan_repo(repo_root=tmp_path, roots=("python/xpu_rt",))
     markers = {h.marker for h in report.hits}
     assert "raise NotImplementedError" in markers
     assert "for now" in markers

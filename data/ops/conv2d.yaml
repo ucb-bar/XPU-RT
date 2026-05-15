@@ -59,7 +59,7 @@ backend_guidance:
   recommended_backend: accel dialect
   conditions: Accelerator with conv/matmul engine
   rationale: Map to hardware convolution instructions via accel dialect.
-  source: CompGen
+  source: XPU-RT
 pitfalls:
 - Winograd convolution is only worthwhile for 3x3 and 5x5 kernels with stride 1; for other sizes the transform overhead exceeds
   the FLOPs saving.

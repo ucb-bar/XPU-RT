@@ -1,17 +1,17 @@
 # Extension Points Guide
 
 > **See also**
-> - [Getting Started → Extension Authoring](../getting-started/extension-authoring.md) — walkthrough + scaffolding with `compgen ext new`.
+> - [Getting Started → Extension Authoring](../getting-started/extension-authoring.md) — walkthrough + scaffolding with `xpu-rt ext new`.
 > - [Reference → Extension Points](../reference/extension-points.md) — compact lookup table.
 >
 > This page is the full protocol-level guide; the two links above are the
 > shorter paths in.
 
-This guide explains how to extend CompGen with custom kernel generators, quantization methods, target backends, MLIR dialects, and runtime adapters.
+This guide explains how to extend XPU-RT with custom kernel generators, quantization methods, target backends, MLIR dialects, and runtime adapters.
 
 ## Architecture Principles
 
-CompGen separates **scaffold** (core infrastructure) from **extension points** (user-extensible surfaces):
+XPU-RT separates **scaffold** (core infrastructure) from **extension points** (user-extensible surfaces):
 
 - **Scaffold**: IR stack, compilation stages, agent framework, solvers, verification, storage. These define the pipeline and protocols. Modify with care.
 - **Extension points**: Kernel providers, quantization methods, target backends, dialects, runtime adapters. These are designed for plugging in new implementations without touching scaffold code.
@@ -26,9 +26,9 @@ Every extension point follows the same pattern:
 
 **Purpose**: Generate optimized kernel implementations for compute patterns (matmul, softmax, attention, etc.).
 
-**Where**: `python/compgen/kernels/providers/`
+**Where**: `python/xpu_rt/kernels/providers/`
 
-**Protocol**: `KernelProvider` in `python/compgen/kernels/provider.py`
+**Protocol**: `KernelProvider` in `python/xpu_rt/kernels/provider.py`
 
 ```python
 class KernelProvider(Protocol):
@@ -55,8 +55,8 @@ class KernelProvider(Protocol):
 **How to add a new provider**:
 
 ```python
-# python/compgen/kernels/providers/my_provider.py
-from compgen.kernels.provider import KernelContract, KernelProvider, ProviderResult
+# python/xpu_rt/kernels/providers/my_provider.py
+from xpu_rt.kernels.provider import KernelContract, KernelProvider, ProviderResult
 
 class MyKernelProvider:
     """My custom kernel generator."""
@@ -73,7 +73,7 @@ class MyKernelProvider:
         return []
 
 # Register:
-from compgen.kernels.registry import ProviderRegistry
+from xpu_rt.kernels.registry import ProviderRegistry
 registry = ProviderRegistry()
 registry.register(MyKernelProvider())
 ```
@@ -82,7 +82,7 @@ registry.register(MyKernelProvider())
 
 **Purpose**: Define custom precision reduction schemes (FP8, INT4, mixed-precision, etc.).
 
-**Where**: `python/compgen/quantization/methods/`
+**Where**: `python/xpu_rt/quantization/methods/`
 
 **Protocol**: torchAO's `AOBaseConfig` + `@register_quantize_module_handler`
 
@@ -116,9 +116,9 @@ if config.scheme == "my_quant":
 
 **Purpose**: Compile and execute for a specific hardware target.
 
-**Where**: `python/compgen/targets/backends/`
+**Where**: `python/xpu_rt/targets/backends/`
 
-**Protocol**: `TargetBackendProtocol` in `python/compgen/targets/backend.py`
+**Protocol**: `TargetBackendProtocol` in `python/xpu_rt/targets/backend.py`
 
 ```python
 class TargetBackendProtocol(Protocol):
@@ -130,7 +130,7 @@ class TargetBackendProtocol(Protocol):
     def validate(self, artifact, golden_inputs, golden_output) -> bool: ...
 ```
 
-**Options**: Extend `TargetOptions` in `python/compgen/targets/options.py`:
+**Options**: Extend `TargetOptions` in `python/xpu_rt/targets/options.py`:
 ```python
 @dataclass(frozen=True)
 class MyTargetOptions(TargetOptions):
@@ -145,12 +145,12 @@ class MyTargetOptions(TargetOptions):
 
 **Purpose**: Define hardware-specific operations (like Hexagon's HexKL for matrix acceleration).
 
-**Where**: `python/compgen/extensions/dialects/`
+**Where**: `python/xpu_rt/extensions/dialects/`
 
-**Protocol**: `DialectSpec` in `python/compgen/extensions/xdsl_generate.py`
+**Protocol**: `DialectSpec` in `python/xpu_rt/extensions/xdsl_generate.py`
 
 ```python
-from compgen.extensions.xdsl_generate import DialectSpec, DialectOpSpec
+from xpu_rt.extensions.xdsl_generate import DialectSpec, DialectOpSpec
 
 my_dialect = DialectSpec(
     name="my_accel",
@@ -170,17 +170,17 @@ my_dialect = DialectSpec(
 
 **Purpose**: Execute compiled artifacts on different runtimes (local CPU, native accelerator HAL, device simulator, etc.).
 
-**Where**: `python/compgen/runtime/adapters/`
+**Where**: `python/xpu_rt/runtime/adapters/`
 
 **Existing adapters**:
 - `local_executor.py` — Local CPU/GPU benchmarking
-- `runtime/glue.py::{CpuRuntimeAdapter, CudaRuntimeAdapter, BaremetalRuntimeAdapter}` — native HAL dispatch via `runtime/native/libcompgen_rt/`
+- `runtime/glue.py::{CpuRuntimeAdapter, CudaRuntimeAdapter, BaremetalRuntimeAdapter}` — native HAL dispatch via `runtime/native/libxpu_rt/`
 
 ## Extension Point 6: Transform Templates
 
 **Purpose**: Parameterized MLIR Transform Dialect scripts for common optimization patterns.
 
-**Where**: `python/compgen/transforms/templates/`
+**Where**: `python/xpu_rt/transforms/templates/`
 
 **Existing templates**: Triton-style fused kernels (matmul+bias+gelu, softmax, layer_norm, etc.)
 
@@ -188,7 +188,7 @@ my_dialect = DialectSpec(
 
 **Purpose**: FX-graph-level analysis and transformation passes.
 
-**Where**: `python/compgen/passes/`
+**Where**: `python/xpu_rt/passes/`
 
 **Pattern**: Python functions that take `torch.fx.GraphModule` and return modified graph or annotations.
 
@@ -199,16 +199,16 @@ my_dialect = DialectSpec(
 Extension point packages are marked with `__extension_point__ = True`:
 
 ```python
-import compgen.kernels.providers as kp
+import xpu_rt.kernels.providers as kp
 print(kp.__extension_point__)     # True
 print(kp.__extension_type__)      # "kernel_provider"
-print(kp.__extension_protocol__)  # "compgen.kernels.provider.KernelProvider"
+print(kp.__extension_protocol__)  # "xpu_rt.kernels.provider.KernelProvider"
 ```
 
 List all extension points:
 ```python
 import pkgutil, importlib
-for importer, modname, ispkg in pkgutil.walk_packages(compgen.__path__, compgen.__name__ + "."):
+for importer, modname, ispkg in pkgutil.walk_packages(xpu_rt.__path__, xpu_rt.__name__ + "."):
     if ispkg:
         try:
             mod = importlib.import_module(modname)

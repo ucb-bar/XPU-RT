@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 import pytest
-from compgen.agent.gates import cost_model_gate
+from xpu_rt.agent.gates import cost_model_gate
 
 
 @dataclass
@@ -42,7 +42,7 @@ def test_deferred_with_module_but_no_target() -> None:
 
 
 def test_accepts_when_solver_feasible(monkeypatch: pytest.MonkeyPatch) -> None:
-    from compgen.agent.gates import cost_model as cm
+    from xpu_rt.agent.gates import cost_model as cm
 
     fake = _FakeSolveResult(feasible=True, placement=_FakePlacement(feasible=True, objective_value=42.0))
     # Patch CPSatSolver to our fake
@@ -52,7 +52,7 @@ def test_accepts_when_solver_feasible(monkeypatch: pytest.MonkeyPatch) -> None:
     def _patched_solver_class(*a: Any, **k: Any) -> _FakeSolver:
         return _FakeSolver(fake)
 
-    monkeypatch.setattr("compgen.solve.backends.cp_sat.CPSatSolver", _patched_solver_class)
+    monkeypatch.setattr("xpu_rt.solve.backends.cp_sat.CPSatSolver", _patched_solver_class)
 
     r = cost_model_gate({}, problem=object())
     assert r["status"] == "accepted"
@@ -66,7 +66,7 @@ def test_rejects_infeasible(monkeypatch: pytest.MonkeyPatch) -> None:
     def _patched(*a: Any, **k: Any) -> _FakeSolver:
         return _FakeSolver(fake)
 
-    monkeypatch.setattr("compgen.solve.backends.cp_sat.CPSatSolver", _patched)
+    monkeypatch.setattr("xpu_rt.solve.backends.cp_sat.CPSatSolver", _patched)
     r = cost_model_gate({}, problem=object())
     assert r["status"] == "rejected"
 
@@ -77,7 +77,7 @@ def test_rejects_on_baseline_regression(monkeypatch: pytest.MonkeyPatch) -> None
         placement=_FakePlacement(feasible=True, objective_value=200.0),
     )
     monkeypatch.setattr(
-        "compgen.solve.backends.cp_sat.CPSatSolver",
+        "xpu_rt.solve.backends.cp_sat.CPSatSolver",
         lambda *a, **k: _FakeSolver(fake),
     )
 
@@ -92,7 +92,7 @@ def test_accepts_within_tolerance(monkeypatch: pytest.MonkeyPatch) -> None:
         placement=_FakePlacement(feasible=True, objective_value=110.0),
     )
     monkeypatch.setattr(
-        "compgen.solve.backends.cp_sat.CPSatSolver",
+        "xpu_rt.solve.backends.cp_sat.CPSatSolver",
         lambda *a, **k: _FakeSolver(fake),
     )
 

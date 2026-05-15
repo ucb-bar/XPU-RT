@@ -5,8 +5,8 @@ from __future__ import annotations
 import hashlib
 from dataclasses import dataclass
 
-from compgen.capture.unsupported.classify import UnsupportedClassification
-from compgen.capture.unsupported.introspect import UnsupportedOpDossier
+from xpu_rt.capture.unsupported.classify import UnsupportedClassification
+from xpu_rt.capture.unsupported.introspect import UnsupportedOpDossier
 
 
 @dataclass(frozen=True)

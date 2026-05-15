@@ -1,11 +1,11 @@
-"""Registration for the ``compgen.quant`` dialect."""
+"""Registration for the ``xpu_rt.quant`` dialect."""
 
 from __future__ import annotations
 
 from xdsl.ir import Dialect
 
-from compgen.ir.quant.ops import QUANT_OPS
-from compgen.ir.quant.types import (
+from xpu_rt.ir.quant.ops import QUANT_OPS
+from xpu_rt.ir.quant.types import (
     AffineQuantizedTensorType,
     MXQuantizedTensorType,
     NVFP4TensorType,
@@ -21,12 +21,12 @@ ALL_ATTRS = [
     NVFP4TensorType,
 ]
 
-Quant = Dialect("compgen.quant", ALL_OPS, ALL_ATTRS)
+Quant = Dialect("xpu_rt.quant", ALL_OPS, ALL_ATTRS)
 """The quantization dialect.
 
 Register on a ``Context`` with::
 
-    ctx.register_dialect("compgen.quant", lambda: Quant)
+    ctx.register_dialect("xpu_rt.quant", lambda: Quant)
 """
 
 

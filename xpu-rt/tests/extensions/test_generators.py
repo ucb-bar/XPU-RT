@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from compgen.extensions import generate_llvm_patch_bundle, generate_xdsl_dialect
+from xpu_rt.extensions import generate_llvm_patch_bundle, generate_xdsl_dialect
 
 
 def test_generate_xdsl_dialect_from_dict() -> None:

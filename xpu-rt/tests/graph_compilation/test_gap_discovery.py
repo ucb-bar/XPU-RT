@@ -18,10 +18,10 @@ import shutil
 from pathlib import Path
 
 import pytest
-from compgen.graph_compilation import validate_run
-from compgen.graph_compilation.gap_validate import validate_gap_discovery
-from compgen.graph_compilation.lowering_validate import validate_payload_lowering
-from compgen.graph_compilation.run import discover_gaps_from_existing_lowering, run_graph_compilation
+from xpu_rt.graph_compilation import validate_run
+from xpu_rt.graph_compilation.gap_validate import validate_gap_discovery
+from xpu_rt.graph_compilation.lowering_validate import validate_payload_lowering
+from xpu_rt.graph_compilation.run import discover_gaps_from_existing_lowering, run_graph_compilation
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 TINY_MLP_CONFIG = REPO_ROOT / "configs" / "models" / "tiny_mlp.yaml"
@@ -239,7 +239,7 @@ def test_critical_path_unit_two_output_branch() -> None:
            └─ relu_b ── tanh_b ── out_b
     """
     import torch.fx
-    from compgen.graph_compilation.gaps import _is_critical
+    from xpu_rt.graph_compilation.gaps import _is_critical
 
     g = torch.fx.Graph()
     x = g.placeholder("x")
@@ -262,7 +262,7 @@ def test_critical_path_unit_two_output_branch() -> None:
 def test_critical_path_unit_single_chain() -> None:
     """Single-output chain: every op is critical."""
     import torch.fx
-    from compgen.graph_compilation.gaps import _is_critical
+    from xpu_rt.graph_compilation.gaps import _is_critical
 
     g = torch.fx.Graph()
     x = g.placeholder("x")
@@ -431,7 +431,7 @@ def test_gap_queue_deterministic(tmp_path: Path) -> None:
 
 def test_extension_id_deterministic_across_reruns(tmp_path: Path) -> None:
     """Two materializations of the same gap → byte-identical extension_id."""
-    from compgen.graph_compilation.gap_naming import extension_id
+    from xpu_rt.graph_compilation.gap_naming import extension_id
 
     args = dict(
         gap_kind="unsupported_op",
@@ -453,7 +453,7 @@ def test_extension_id_deterministic_across_reruns(tmp_path: Path) -> None:
 
 def test_extension_id_differs_by_target() -> None:
     """Same op + different target_id → different extension_id."""
-    from compgen.graph_compilation.gap_naming import extension_id
+    from xpu_rt.graph_compilation.gap_naming import extension_id
 
     base = dict(
         gap_kind="unsupported_op",
@@ -468,7 +468,7 @@ def test_extension_id_differs_by_target() -> None:
 
 def test_extension_id_differs_by_shape() -> None:
     """Same op + same target + different shape → different extension_id."""
-    from compgen.graph_compilation.gap_naming import extension_id
+    from xpu_rt.graph_compilation.gap_naming import extension_id
 
     base = dict(
         gap_kind="unsupported_op",
@@ -542,7 +542,7 @@ def test_validator_rejects_unsupported_quant_format_without_quant_format_spec(tm
     )
 
     def add_quant_gap(obj: dict) -> None:
-        from compgen.graph_compilation.gap_naming import (
+        from xpu_rt.graph_compilation.gap_naming import (
             extension_id,
             slug_for_target,
             suggested_extension_path,
@@ -595,7 +595,7 @@ def test_extension_id_in_queue_matches_canonical(tmp_path: Path) -> None:
         stop_after="gap-discovery",
         run_id="cross_check",
     )
-    from compgen.graph_compilation.gap_naming import extension_id as canonical
+    from xpu_rt.graph_compilation.gap_naming import extension_id as canonical
 
     queue = json.loads((src_run / "04_gap_discovery" / "gap_action_queue.json").read_text())
     for g in queue["gaps"]:

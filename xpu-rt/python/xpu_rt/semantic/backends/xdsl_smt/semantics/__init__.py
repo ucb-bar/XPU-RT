@@ -1,6 +1,6 @@
-"""CompGen dialect semantics for SMT-based verification.
+"""XPU-RT dialect semantics for SMT-based verification.
 
-Each submodule defines how CompGen's custom dialects (Tile, Accel, etc.)
+Each submodule defines how XPU-RT's custom dialects (Tile, Accel, etc.)
 lower to Z3 expressions for translation validation.
 """
 

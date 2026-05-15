@@ -29,12 +29,12 @@ from __future__ import annotations
 
 from typing import Any
 
-from compgen.agent.analyzer import NetworkAnalyzer
-from compgen.analysis.graph_digest import (
+from xpu_rt.agent.analyzer import NetworkAnalyzer
+from xpu_rt.analysis.graph_digest import (
     build_chunk_view,
     build_digest,
 )
-from compgen.mcp.session import SessionManager
+from xpu_rt.mcp.session import SessionManager
 
 
 def _load_session_analysis(sm: SessionManager, session_id: str) -> tuple[Any, Any, Any] | None:

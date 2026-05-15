@@ -5,16 +5,16 @@ claim: |
 
   Implementation:
 
-  * ``python/compgen/providers/adapters/base.py`` —
+  * ``python/xpu_rt/providers/adapters/base.py`` —
     ``resolve_provider_class(card)`` lazily imports the module
     declared in ``card.entrypoint`` and returns the named class.
     Failures map to typed ``AdapterResolutionError`` with one of
     ``bad_entrypoint_syntax`` /  ``module_not_importable`` /
     ``symbol_not_in_module``. No raw ``ImportError`` escapes.
   * Existing kernel codegen modules
-    (``compgen.kernels.providers.c_reference.CReferenceProvider``
+    (``xpu_rt.kernels.providers.c_reference.CReferenceProvider``
     and
-    ``compgen.kernels.providers.triton_templates.TritonTemplateProvider``)
+    ``xpu_rt.kernels.providers.triton_templates.TritonTemplateProvider``)
     are referenced by the M-80 cards. No duplication: the
     adapter is just an entrypoint string + a resolver. The
     existing kernel-verifier + certificate + glue-differential
@@ -47,11 +47,11 @@ claim: |
     - End-to-end ``CReferenceProvider.search()`` returns a real
       ``ProviderResult`` whose class is not a Certificate.
 
-  No code duplication: ``python/compgen/kernels/providers/`` stays
+  No code duplication: ``python/xpu_rt/kernels/providers/`` stays
   exactly as it was. The M-80 card for ``triton`` was corrected to
   reference ``TritonTemplateProvider`` (singular) to match the
   actual class name in
-  ``compgen.kernels.providers.triton_templates``.
+  ``xpu_rt.kernels.providers.triton_templates``.
 realness_level: production_path
 forbidden:
   - duplicating kernel codegen logic outside the existing provider modules
@@ -60,16 +60,16 @@ forbidden:
   - raising raw ImportError from resolve_provider_class
   - card entrypoint not in 'module:Symbol' form
 required_evidence:
-  - python/compgen/providers/adapters/__init__.py
-  - python/compgen/providers/adapters/base.py
+  - python/xpu_rt/providers/adapters/__init__.py
+  - python/xpu_rt/providers/adapters/base.py
   - tests/providers/test_provider_normalization.py
-  - python/compgen/kernels/providers/c_reference.py
-  - python/compgen/kernels/providers/triton_templates.py
-  - python/compgen/kernels/provider.py
-  - python/compgen/kernels/kernel_certificate.py
-  - python/compgen/providers/cards/cffi_c.yaml
-  - python/compgen/providers/cards/triton.yaml
-  - python/compgen/providers/cards/python_reference.yaml
+  - python/xpu_rt/kernels/providers/c_reference.py
+  - python/xpu_rt/kernels/providers/triton_templates.py
+  - python/xpu_rt/kernels/provider.py
+  - python/xpu_rt/kernels/kernel_certificate.py
+  - python/xpu_rt/providers/cards/cffi_c.yaml
+  - python/xpu_rt/providers/cards/triton.yaml
+  - python/xpu_rt/providers/cards/python_reference.yaml
 commit: 35ee97f497bc69c0716c25b935f575c3cd7d63f4
 created_at_utc: 2026-05-12T00:00:00Z
 notes: |

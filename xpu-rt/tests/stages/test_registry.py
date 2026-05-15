@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from compgen.stages.base import CompilationStage, IRInvariant, StageContract
-from compgen.stages.registry import StageRegistry, TargetDialectStack
-from compgen.targets.capability import CapabilitySpec, infer_capabilities
-from compgen.targets.schema import TargetProfile, load_profile
+from xpu_rt.stages.base import CompilationStage, IRInvariant, StageContract
+from xpu_rt.stages.registry import StageRegistry, TargetDialectStack
+from xpu_rt.targets.capability import CapabilitySpec, infer_capabilities
+from xpu_rt.targets.schema import TargetProfile, load_profile
 from xdsl.dialects import arith, func
 from xdsl.dialects.builtin import IndexType, ModuleOp
 from xdsl.ir import Block, Region
@@ -235,7 +235,7 @@ class TestStageRegistry:
         assert short_result.stages_run == 2
 
         # Create a fake target for the long stack
-        from compgen.targets.schema import DeviceSpec, TargetProfile
+        from xpu_rt.targets.schema import DeviceSpec, TargetProfile
 
         long_target = TargetProfile(
             name=long_target_name,

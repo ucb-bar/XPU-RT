@@ -54,9 +54,9 @@ forbidden:
 - replacing the structural tile-K reference with a weaker check
 realness_level: production_path
 required_evidence:
-- python/compgen/graph_compilation/real_lowering.py (whitelist scoping)
-- python/compgen/graph_compilation/recipe_gate.py (single_k_iter rule)
-- python/compgen/graph_compilation/real_transform_differential.py
+- python/xpu_rt/graph_compilation/real_lowering.py (whitelist scoping)
+- python/xpu_rt/graph_compilation/recipe_gate.py (single_k_iter rule)
+- python/xpu_rt/graph_compilation/real_transform_differential.py
   (_tile_k_eager_reference + matmul_higham_bound + layered case check)
 - tests/graph_compilation/test_negative_controls.py
   (TestStructuralBitEqualityVsTileKReference +

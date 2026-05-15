@@ -2,11 +2,11 @@
 interleaved pipeline-parallel schedule.
 
 Walks every ``func.func`` in the module that is tagged with
-``compgen.pipeline_stage`` (stage index) and:
+``xpu_rt.pipeline_stage`` (stage index) and:
 
 1. Computes a 1F1B schedule across the given ``num_stages`` +
    ``num_microbatches`` configuration.
-2. Attaches ``compgen.pp_schedule`` as a comma-separated string
+2. Attaches ``xpu_rt.pp_schedule`` as a comma-separated string
    listing ``(stage, microbatch, phase)`` triples on the module's
    ``builtin.module`` op.
 
@@ -64,10 +64,10 @@ def run_pipeline_parallel_schedule(
     if cfg.num_stages < 1 or cfg.num_microbatches < cfg.num_stages:
         raise ValueError("num_microbatches must be >= num_stages >= 1")
     schedule = _generate_1f1b(cfg.num_stages, cfg.num_microbatches)
-    module.attributes["compgen.pp_schedule"] = StringAttr(";".join(f"{s}:{m}:{p}" for s, m, p in schedule))
-    module.attributes["compgen.pp_schedule_kind"] = StringAttr(cfg.schedule_kind)
-    module.attributes["compgen.pp_num_stages"] = StringAttr(str(cfg.num_stages))
-    module.attributes["compgen.pp_num_microbatches"] = StringAttr(str(cfg.num_microbatches))
+    module.attributes["xpu_rt.pp_schedule"] = StringAttr(";".join(f"{s}:{m}:{p}" for s, m, p in schedule))
+    module.attributes["xpu_rt.pp_schedule_kind"] = StringAttr(cfg.schedule_kind)
+    module.attributes["xpu_rt.pp_num_stages"] = StringAttr(str(cfg.num_stages))
+    module.attributes["xpu_rt.pp_num_microbatches"] = StringAttr(str(cfg.num_microbatches))
     return PipelineParallelStats(
         schedule_entries=len(schedule),
         schedule_kind=cfg.schedule_kind,

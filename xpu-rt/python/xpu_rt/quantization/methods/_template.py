@@ -3,7 +3,7 @@
 Copy this file into the ``methods/`` directory and implement your
 quantization scheme as a torchAO-compatible config.
 
-See ``compgen.quantization.fp8_config`` for a working example (FP8 E4M3).
+See ``xpu_rt.quantization.fp8_config`` for a working example (FP8 E4M3).
 See the torchAO docs for the ``AOBaseConfig`` / ``register_quantize_module_handler`` API.
 
 Steps:
@@ -71,8 +71,8 @@ def _template_quant_transform(
     return module
 
 
-# To integrate with CompGen's pipeline, add to capture/torchao_pipeline.py:
+# To integrate with XPU-RT's pipeline, add to capture/torchao_pipeline.py:
 #   if config.scheme == "my_quant":
-#       from compgen.quantization.methods.my_quant import TemplateQuantConfig
+#       from xpu_rt.quantization.methods.my_quant import TemplateQuantConfig
 #       quantize_(model, TemplateQuantConfig(**config.extra_args))
 #       return model

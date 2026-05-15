@@ -5,8 +5,8 @@ from __future__ import annotations
 import pytest
 import torch
 import torch.nn as nn
-from compgen.quantization.fp8_ops import FP8_E4M3_DTYPE, is_power_of_two
-from compgen.quantization.fp8_tensor import FP8E4M3Po2Tensor
+from xpu_rt.quantization.fp8_ops import FP8_E4M3_DTYPE, is_power_of_two
+from xpu_rt.quantization.fp8_tensor import FP8E4M3Po2Tensor
 
 torchao = pytest.importorskip("torchao")
 from torchao.quantization import quantize_  # noqa: E402
@@ -145,7 +145,7 @@ class TestFP8Matmul:
 class TestQuantizeIntegration:
     def test_quantize_replaces_weights(self) -> None:
         """quantize_() should replace nn.Linear weights with FP8E4M3Po2Tensor."""
-        from compgen.quantization.fp8_config import FP8E4M3Po2Config
+        from xpu_rt.quantization.fp8_config import FP8E4M3Po2Config
 
         model = _simple_mlp()
         config = FP8E4M3Po2Config()
@@ -157,7 +157,7 @@ class TestQuantizeIntegration:
 
     def test_quantized_model_forward(self) -> None:
         """Quantized model should produce correct-shaped output."""
-        from compgen.quantization.fp8_config import FP8E4M3Po2Config
+        from xpu_rt.quantization.fp8_config import FP8E4M3Po2Config
 
         model = _simple_mlp()
         quantize_(model, config=FP8E4M3Po2Config())
@@ -169,7 +169,7 @@ class TestQuantizeIntegration:
 
     def test_quantized_scales_are_po2(self) -> None:
         """All scales in quantized model should be powers of two."""
-        from compgen.quantization.fp8_config import FP8E4M3Po2Config
+        from xpu_rt.quantization.fp8_config import FP8E4M3Po2Config
 
         model = _simple_mlp()
         quantize_(model, config=FP8E4M3Po2Config())
@@ -180,7 +180,7 @@ class TestQuantizeIntegration:
 
     def test_quantize_with_filter_fn(self) -> None:
         """quantize_() with filter should only quantize matching layers."""
-        from compgen.quantization.fp8_config import FP8E4M3Po2Config
+        from xpu_rt.quantization.fp8_config import FP8E4M3Po2Config
 
         model = _simple_mlp()
         # Only quantize first linear
@@ -195,7 +195,7 @@ class TestQuantizeIntegration:
 
     def test_idempotent_quantize(self) -> None:
         """Quantizing an already-quantized model should be a no-op."""
-        from compgen.quantization.fp8_config import FP8E4M3Po2Config
+        from xpu_rt.quantization.fp8_config import FP8E4M3Po2Config
 
         model = _simple_mlp()
         config = FP8E4M3Po2Config()
@@ -209,7 +209,7 @@ class TestQuantizeIntegration:
 
     def test_extra_repr_updated(self) -> None:
         """Module repr should show FP8 quantization info."""
-        from compgen.quantization.fp8_config import FP8E4M3Po2Config
+        from xpu_rt.quantization.fp8_config import FP8E4M3Po2Config
 
         model = _simple_mlp()
         quantize_(model, config=FP8E4M3Po2Config())

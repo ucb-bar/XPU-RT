@@ -19,7 +19,7 @@ from xdsl.dialects import func
 from xdsl.dialects.builtin import ModuleOp
 from xdsl.ir import Operation
 
-from compgen.eqsat.blackbox import OpClass, classify_op
+from xpu_rt.eqsat.blackbox import OpClass, classify_op
 
 
 @dataclass

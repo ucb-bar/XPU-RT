@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 import torch
-from compgen.runtime.embedded.e2e_spike import (
+from xpu_rt.runtime.embedded.e2e_spike import (
     E2ESpikeArtifacts,
     build_e2e_artifacts,
 )

@@ -42,7 +42,7 @@ def _read(p: Path) -> dict:
 
 def _run(model: str, out_dir: Path, stop: str = "agent-decision-request") -> int:
     cmd = [
-        sys.executable, "-m", "compgen.graph_compilation", "run",
+        sys.executable, "-m", "xpu_rt.graph_compilation", "run",
         "--model", str(REPO_ROOT / f"configs/models/{model}.yaml"),
         "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
         "--out", str(out_dir),
@@ -408,7 +408,7 @@ def test_evidence_pack_ingests_readiness(
 
     pack_out = suite / "evidence_pack"
 
-    from compgen.graph_compilation.evidence_pack import build_evidence_pack
+    from xpu_rt.graph_compilation.evidence_pack import build_evidence_pack
     res = build_evidence_pack(
         canonical_suite_root=canonical, wide_suite_root=wide,
         out_dir=pack_out, skip_figures=True,
@@ -441,18 +441,18 @@ def test_evidence_pack_ingests_readiness(
 
 def test_readiness_module_does_not_import_compiler_core() -> None:
     forbidden = (
-        "from compgen.ir",
-        "import compgen.ir",
-        "from compgen.capture",
-        "import compgen.capture",
-        "from compgen.pipeline",
-        "import compgen.pipeline",
-        "from compgen.runtime.bundle_emit",
+        "from xpu_rt.ir",
+        "import xpu_rt.ir",
+        "from xpu_rt.capture",
+        "import xpu_rt.capture",
+        "from xpu_rt.pipeline",
+        "import xpu_rt.pipeline",
+        "from xpu_rt.runtime.bundle_emit",
     )
     for src_path in (
-        REPO_ROOT / "python" / "compgen" / "graph_compilation"
+        REPO_ROOT / "python" / "xpu-rt" / "graph_compilation"
         / "graph_analysis_readiness.py",
-        REPO_ROOT / "python" / "compgen" / "graph_compilation"
+        REPO_ROOT / "python" / "xpu-rt" / "graph_compilation"
         / "graph_analysis_readiness_figures.py",
     ):
         text = src_path.read_text(encoding="utf-8")

@@ -1,7 +1,7 @@
 """Triton kernel emitter skeleton.
 
 Walks a compiled xDSL module and, for each op tagged with
-``compgen.library_dispatch = "triton"`` (set by
+``xpu_rt.library_dispatch = "triton"`` (set by
 ``match_library_call`` in ), emits a Triton kernel source
 file + a launch-grid record.
 
@@ -21,8 +21,8 @@ Output artifact layout:
 
 Usage::
 
-    from compgen.runtime.triton_emitter import emit_triton_kernels
-    report = emit_triton_kernels(module, out_dir=Path("/tmp/compgen_triton"))
+    from xpu_rt.runtime.triton_emitter import emit_triton_kernels
+    report = emit_triton_kernels(module, out_dir=Path("/tmp/xpu_rt_triton"))
     assert report.kernels_emitted >= 1
 """
 
@@ -70,7 +70,7 @@ _MATMUL_TEMPLATE = textwrap.dedent(
         BLOCK_N: tl.constexpr = 64,
         BLOCK_K: tl.constexpr = 32,
     ):
-        '''Auto-emitted by CompGen's triton_emitter for ``linalg.matmul``.'''
+        '''Auto-emitted by XPU-RT's triton_emitter for ``linalg.matmul``.'''
         pid_m = tl.program_id(0)
         pid_n = tl.program_id(1)
         offs_m = pid_m * BLOCK_M + tl.arange(0, BLOCK_M)
@@ -133,11 +133,11 @@ _SOFTMAX_TEMPLATE = textwrap.dedent(
 
 
 def _safe_kernel_name(op_kind: str, index: int) -> str:
-    return f"compgen_{op_kind}_{index}"
+    return f"xpu_rt_{op_kind}_{index}"
 
 
 def _library_dispatch(op: Any) -> str | None:
-    attr = op.attributes.get("compgen.library_dispatch")
+    attr = op.attributes.get("xpu_rt.library_dispatch")
     return attr.data if isinstance(attr, StringAttr) else None
 
 
@@ -183,12 +183,12 @@ def emit_triton_kernels(
             report.kernels_emitted += 1
             continue
 
-        # compgen.linalg_ext.softmax already carries a Triton source
-        # on the ``compgen.triton_source`` attr when
+        # xpu_rt.linalg_ext.softmax already carries a Triton source
+        # on the ``xpu_rt.triton_source`` attr when
         # ``fuse_softmax_to_triton`` has run. Emit whatever's there.
-        if op.name == "compgen.linalg_ext.softmax":
-            source_attr = op.attributes.get("compgen.triton_source")
-            kname_attr = op.attributes.get("compgen.triton_kernel_call")
+        if op.name == "xpu_rt.linalg_ext.softmax":
+            source_attr = op.attributes.get("xpu_rt.triton_source")
+            kname_attr = op.attributes.get("xpu_rt.triton_kernel_call")
             if isinstance(source_attr, StringAttr) and isinstance(kname_attr, StringAttr):
                 name = kname_attr.data
                 path = kernels_dir / f"{name}.py"

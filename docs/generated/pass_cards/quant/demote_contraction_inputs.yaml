@@ -4,7 +4,7 @@ display_name: Demote contraction inputs to BF16
 level: payload
 family: quant
 source: IREE
-impl_path: python/compgen/ir/payload/passes/rewrites/demote_contraction_inputs.py
+impl_path: python/xpu_rt/ir/payload/passes/rewrites/demote_contraction_inputs.py
 reads:
   - 01_payload_lowering/payload.mlir
   - 02_graph_analysis/numerical_sensitivity_audit.json
@@ -30,7 +30,7 @@ failure_modes:
   - "tolerance_budget_exceeded"
   - "target_does_not_support_bf16"
   - "input_dtype_already_low_precision"
-mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+mcp_tool: mcp__xpu_rt__xpu_rt_emit_agent_decision_request
 notes: |
   Reconstruction of IREE's DemoteContractionInputsToBF16Pass.
   Truncates f32 contraction operands to bf16 so the matrix engine

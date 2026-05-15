@@ -24,7 +24,7 @@ Things that are NOT class-level:
 
 from __future__ import annotations
 
-from compgen.targets.cpu.contracts import (
+from xpu_rt.targets.cpu.contracts import (
     CpuBodyEmitter,
     CpuRuntime,
 )

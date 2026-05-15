@@ -10,8 +10,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 
-from compgen.targetgen.hardware_spec import ExecutionModel, HardwareSpec
-from compgen.targets.capability import TargetClass
+from xpu_rt.targetgen.hardware_spec import ExecutionModel, HardwareSpec
+from xpu_rt.targets.capability import TargetClass
 
 
 class TargetFamily(Enum):
@@ -25,7 +25,7 @@ class TargetFamily(Enum):
 
 
 class IntegrationStyle(Enum):
-    """How CompGen integrates with this target."""
+    """How XPU-RT integrates with this target."""
 
     LLVM_BACKEND = "llvm_backend"
     CUSTOM_LOWERING = "custom_lowering"
@@ -34,7 +34,7 @@ class IntegrationStyle(Enum):
 
 
 class LoweringSurface(Enum):
-    """Where CompGen's IR lowers to."""
+    """Where XPU-RT's IR lowers to."""
 
     LLVM_IR = "llvm_ir"
     CUSTOM_DIALECT = "custom_dialect"

@@ -1,9 +1,9 @@
-"""Tests for :mod:`compgen.audit.tool_promotion`.
+"""Tests for :mod:`xpu_rt.audit.tool_promotion`.
 
 Coverage strategy:
 
 Positive:
-* The shipped ``compgen_echo`` (T2) audit is clean — its declared
+* The shipped ``xpu_rt_echo`` (T2) audit is clean — its declared
   maturity is verified by its evidence (Python entrypoint + CLI on
   PATH + positive + negative-control tests that resolve).
 * AuditReport round-trips through ``to_dict`` and ``to_markdown``.
@@ -40,12 +40,12 @@ from pathlib import Path
 
 import pytest
 import yaml
-from compgen.audit.tool_promotion import (
+from xpu_rt.audit.tool_promotion import (
     VIOLATION_KINDS,
     AuditReport,
     run_tool_promotion_audit,
 )
-from compgen.tools.tool_registry import tool_cards_root
+from xpu_rt.tools.tool_registry import tool_cards_root
 
 # Helpers -------------------------------------------------------------
 
@@ -72,7 +72,7 @@ def test_shipped_echo_card_audits_clean(tmp_path):
     """The real echo card at T2 has its evidence verified."""
 
     report = run_tool_promotion_audit()
-    echo_outcome = next(o for o in report.outcomes if o.tool_id == "compgen_echo")
+    echo_outcome = next(o for o in report.outcomes if o.tool_id == "xpu_rt_echo")
     assert echo_outcome.declared_maturity == "T2"
     assert echo_outcome.verified_maturity == "T2"
     assert echo_outcome.violations == ()
@@ -82,7 +82,7 @@ def test_audit_report_serialisation_roundtrip(tmp_path):
     report = run_tool_promotion_audit()
     body = report.to_dict()
     md = report.to_markdown()
-    assert body["schema_version"] == "compgen_tool_promotion_audit_v1"
+    assert body["schema_version"] == "xpu_rt_tool_promotion_audit_v1"
     assert "tools audited" in md
     json.dumps(body)  # serialisable
 
@@ -107,7 +107,7 @@ def test_python_entrypoint_unresolved(tmp_path):
     body["tool_id"] = "fake_missing_module"
     body["maturity"] = "T0"
     body["promotion_requirements"] = {}
-    body["entrypoints"]["python"] = "compgen.does_not_exist_xyz:run"
+    body["entrypoints"]["python"] = "xpu_rt.does_not_exist_xyz:run"
     _write_card(tmp_path, body)
     report = run_tool_promotion_audit(cards_root=tmp_path)
     assert "python_entrypoint_unresolved" in _violation_kinds(report, "fake_missing_module")
@@ -268,7 +268,7 @@ def test_skill_cli_command_mismatch(tmp_path):
     body = _base_body()
     body["tool_id"] = "fake_skill_wrong_cli"
     body["maturity"] = "T4"
-    body["entrypoints"]["cli"] = "compgen-tool run fake_skill_wrong_cli"
+    body["entrypoints"]["cli"] = "xpu-rt-tool run fake_skill_wrong_cli"
     body["promotion_requirements"] = {
         "cli_wrapper": True,
         "unit_tests": True,
@@ -321,7 +321,7 @@ def test_fresh_agent_task_missing(tmp_path):
     body = _base_body()
     body["tool_id"] = "fake_no_harness"
     body["maturity"] = "T6"
-    body["entrypoints"]["mcp"] = "compgen_fake_no_harness"
+    body["entrypoints"]["mcp"] = "xpu_rt_fake_no_harness"
     body["promotion_requirements"] = {
         "cli_wrapper": True,
         "unit_tests": True,
@@ -388,7 +388,7 @@ def test_card_below_t0_when_python_entrypoint_unresolved(tmp_path):
     body["tool_id"] = "fake_t0_fail"
     body["maturity"] = "T0"
     body["promotion_requirements"] = {}
-    body["entrypoints"]["python"] = "compgen.also_does_not_exist_zzz:run"
+    body["entrypoints"]["python"] = "xpu_rt.also_does_not_exist_zzz:run"
     _write_card(tmp_path, body)
     report = run_tool_promotion_audit(cards_root=tmp_path)
     outcome = next(o for o in report.outcomes if o.tool_id == "fake_t0_fail")

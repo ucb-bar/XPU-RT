@@ -35,7 +35,7 @@ failure_modes:
   - "unsupported_consumer_op"
   - "shape_mismatch"
   - "numerical_reassociation"
-mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+mcp_tool: mcp__xpu_rt__xpu_rt_emit_agent_decision_request
 example_invocation:
   schema_version: agent_decision_response_v1
   selected_candidate_id: fuse_add_relu_region_0
@@ -45,7 +45,7 @@ example_invocation:
       - "candidate.cost_preview.static_relative_cost"
       - "region.tensor_use_def_graph.consumer_count"
 source: homemade
-impl_path: python/compgen/graph_compilation/real_fusion.py
+impl_path: python/xpu_rt/graph_compilation/real_fusion.py
 notes: |
   fuse_producer_consumer is the pointwise-pair fusion MVP. It collapses
   a two-op pointwise chain (e.g. add → relu) into a single fused

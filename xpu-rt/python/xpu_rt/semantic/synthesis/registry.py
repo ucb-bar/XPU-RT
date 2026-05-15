@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from compgen.semantic.synthesis.promote import GuardArtifact, load_guard_artifact
+from xpu_rt.semantic.synthesis.promote import GuardArtifact, load_guard_artifact
 
 
 class GuardRegistry:

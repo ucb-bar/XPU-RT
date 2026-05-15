@@ -1,4 +1,4 @@
-"""Tests for :mod:`compgen.promotion.cross_session`.
+"""Tests for :mod:`xpu_rt.promotion.cross_session`.
 
 Builds synthetic ``tools.jsonl`` transcripts for two sessions that
 share one accepted invent-proposal across >=2 workloads and >=2
@@ -14,8 +14,8 @@ import time
 from pathlib import Path
 from typing import Any
 
-from compgen.llm.registry import Registry
-from compgen.promotion.cross_session import (
+from xpu_rt.llm.registry import Registry
+from xpu_rt.promotion.cross_session import (
     CrossSessionGraduationReport,
     promote_pending_graduations,
     report_to_dict,

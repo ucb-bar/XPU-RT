@@ -2,7 +2,7 @@
 
 **Status**: scaffold in place (Waves 1.10-1.18) · NVIDIA migration partial (Wave 1.14a/b done, c/d in progress) · CPU stub validated (Wave 1.15)
 
-This document is the contract for adding a new target to CompGen.
+This document is the contract for adding a new target to XPU-RT.
 Every backend-specific assumption — instruction set, JIT toolchain,
 launch primitive, perf table — has exactly one home in the
 hierarchy. The universal modules (matcher, autotune, cost predictor,
@@ -68,9 +68,9 @@ applies to.** A symbol used by every NVIDIA arch lives under
 
 | Concept | Where |
 |---|---|
-| Universal API + IR (event tensors, megakernel graph) | `python/compgen/runtime/` (outside `targets/`) |
-| Pattern matchers (Diamond, FFN, MHA) | `python/compgen/runtime/lowering/` |
-| Roofline math | `python/compgen/kernels/cost/roofline.py` |
+| Universal API + IR (event tensors, megakernel graph) | `python/xpu_rt/runtime/` (outside `targets/`) |
+| Pattern matchers (Diamond, FFN, MHA) | `python/xpu_rt/runtime/lowering/` |
+| Roofline math | `python/xpu_rt/kernels/cost/roofline.py` |
 | Class-level Protocols (every GPU implements) | `targets/{class}/contracts.py` |
 | Cross-arch vendor code (CUDA driver wrappers, NVRTC base) | `targets/{class}/{vendor}/common/` |
 | Arch-specific leaves (cuBLASDx Blackwell tile, sm_100 only) | `targets/{class}/{vendor}/{arch}/` |
@@ -97,11 +97,11 @@ Plus optional files for arch-specific specializations
 
 ## Registry — discovery + extensibility surface
 
-The registry (`compgen.targets.registry`) backs both in-tree targets
+The registry (`xpu_rt.targets.registry`) backs both in-tree targets
 and MCP-registered user targets:
 
 ```python
->>> from compgen.targets.registry import registry
+>>> from xpu_rt.targets.registry import registry
 >>> reg = registry()
 >>> reg.classes()
 ('cpu', 'gpu')
@@ -117,7 +117,7 @@ and MCP-registered user targets:
 <NvidiaBlackwellBodyEmitter ...>
 ```
 
-In-tree packages register themselves on `import compgen.targets`.
+In-tree packages register themselves on `import xpu_rt.targets`.
 The registry's vendor-common fallback means an arch-leaf inherits
 the vendor's adapters when it doesn't override them.
 
@@ -129,7 +129,7 @@ The agent registers a target at session scope via the MCP tool:
 
 ```python
 # Inside the agent's session:
-compgen_register_target(
+xpu_rt_register_target(
     target_class="gpu",
     vendor="tenstorrent",
     arch="gridx",
@@ -148,7 +148,7 @@ The user's package only needs to:
 1. Provide four classes that satisfy the class-level Protocols.
 2. Be installable (so the dotted-module-path imports resolve).
 
-No edits to CompGen source. Useful for experimental targets, custom
+No edits to XPU-RT source. Useful for experimental targets, custom
 MLIR dialects (cuda-tile per #099), or per-deployment tuning.
 
 ### Path B — In-tree (upstream a new target)
@@ -164,14 +164,14 @@ because `_register_in_tree()` imports every leaf at session start.
 A third-party package declares an entry point in its `pyproject.toml`:
 
 ```toml
-[project.entry-points."compgen.targets"]
-my_target = "my_pkg.compgen_integration:register"
+[project.entry-points."xpu_rt.targets"]
+my_target = "my_pkg.xpu_rt_integration:register"
 ```
 
-The `register` callable invokes `compgen_register_target(...)`.
-Calling `compgen.targets.registry.discover_entry_points()` picks
+The `register` callable invokes `xpu_rt_register_target(...)`.
+Calling `xpu_rt.targets.registry.discover_entry_points()` picks
 up every such third-party registration. Useful for vendors who
-ship their own CompGen support.
+ship their own XPU-RT support.
 
 ## Migration notes
 
@@ -213,10 +213,10 @@ the leaves.
 - **Inventory + migration plan**:
   `docs/architecture/target-hierarchy-inventory.md`.
 - **Wave 1.10's Protocols**:
-  `python/compgen/targets/{gpu,cpu,tpu}/contracts.py`.
+  `python/xpu_rt/targets/{gpu,cpu,tpu}/contracts.py`.
 - **Wave 1.13's MCP tools**:
-  `python/compgen/mcp/tools/targets.py`.
+  `python/xpu_rt/mcp/tools/targets.py`.
 - **Wave 1.18's registry**:
-  `python/compgen/targets/registry.py`.
+  `python/xpu_rt/targets/registry.py`.
 - **CPU x86 stub** (the load-bearing test that the abstraction
-  holds): `python/compgen/targets/cpu/x86/`.
+  holds): `python/xpu_rt/targets/cpu/x86/`.

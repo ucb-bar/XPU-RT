@@ -64,7 +64,7 @@ _NOT_READY = "not_ready"
 
 def _kernels_were_on(run_dir: Path) -> bool:
     """Heuristic: the report exists with overall=ok iff
-    COMPGEN_RUN_KERNELS=1 actually reached with measurements."""
+    XPU_RT_RUN_KERNELS=1 actually reached with measurements."""
     cb = _read_json(
         run_dir / "02_graph_analysis" / "compiled_bottleneck"
         / "compiled_bottleneck_report.json"

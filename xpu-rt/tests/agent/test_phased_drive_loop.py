@@ -1,4 +1,4 @@
-"""Tests for compgen.agent.loop.phased (P2 skeleton)."""
+"""Tests for xpu_rt.agent.loop.phased (P2 skeleton)."""
 
 from __future__ import annotations
 
@@ -6,8 +6,8 @@ import json
 from pathlib import Path
 
 import pytest
-from compgen.agent.loop import PhasedDriveLoop
-from compgen.llm import (
+from xpu_rt.agent.loop import PhasedDriveLoop
+from xpu_rt.llm import (
     InventSlot,
     Registry,
     Tool,

@@ -1,4 +1,4 @@
-"""Target package -- the first-class unit CompGen generates per target.
+"""Target package -- the first-class unit XPU-RT generates per target.
 
 A target package is NOT a full compiler. It is a **target enablement package**:
 a verified, target-specific compilation stack configuration plus backend hooks
@@ -16,7 +16,7 @@ Components of a target package:
 The target package progresses through maturity levels:
     L0 -> L1 -> L2 -> L3 (recognized -> correct -> optimized -> promoted)
 
-For targets with existing Merlin/IREE/XLA backends, CompGen generates
+For targets with existing Merlin/IREE/XLA backends, XPU-RT generates
 the recipe/control layer and plugs it into the existing backend, NOT
 a second copy of that backend.
 
@@ -32,10 +32,10 @@ from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from compgen.packs import LoadedPack, PackContextSummary, default_pack_root, load_pack
-from compgen.targets.capability import CapabilitySpec, TargetClass
-from compgen.targets.maturity import TargetMaturity
-from compgen.targets.schema import TargetProfile
+from xpu_rt.packs import LoadedPack, PackContextSummary, default_pack_root, load_pack
+from xpu_rt.targets.capability import CapabilitySpec, TargetClass
+from xpu_rt.targets.maturity import TargetMaturity
+from xpu_rt.targets.schema import TargetProfile
 
 
 @dataclass(frozen=True)
@@ -165,7 +165,7 @@ def generate_target_package(
 
     import yaml
 
-    from compgen.targets.capability import classify_target, infer_capabilities
+    from xpu_rt.targets.capability import classify_target, infer_capabilities
 
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
@@ -298,8 +298,8 @@ def load_target_package(package_dir: str | Path) -> TargetPackage:
     """Load an existing target package from a directory."""
     import json
 
-    from compgen.targets.capability import infer_capabilities
-    from compgen.targets.schema import load_profile as _load_profile
+    from xpu_rt.targets.capability import infer_capabilities
+    from xpu_rt.targets.schema import load_profile as _load_profile
 
     root = Path(package_dir)
     manifest_path = root / "manifest.json"

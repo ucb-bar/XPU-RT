@@ -10,7 +10,7 @@ Verification methods (layered):
        compare outputs within tolerance.
     4. Numeric -- run the original PyTorch model eagerly and via
        ``torch.compile(backend="eager")``, compare outputs with
-       :func:`compgen.semantic.verify.compare.compare_tensors`.  When structural
+       :func:`xpu_rt.semantic.verify.compare.compare_tensors`.  When structural
        verification fails but numeric equivalence holds, the overall
        result is still PASS (semantic truth overrides structural mismatch).
 
@@ -33,7 +33,7 @@ import torch.nn as nn
 from xdsl.dialects.builtin import ModuleOp
 from xdsl.printer import Printer
 
-from compgen.semantic.verify.compare import compare_tensors
+from xpu_rt.semantic.verify.compare import compare_tensors
 
 log = structlog.get_logger(__name__)
 
@@ -87,7 +87,7 @@ def _verify_structural(module: ModuleOp) -> tuple[bool, str]:
 
 def _verify_check_assertions(module: ModuleOp, check_lines: list[str]) -> tuple[bool, str]:
     """Run CHECK-style assertions on the module's IR text."""
-    from compgen.ir.checks import check_ir
+    from xpu_rt.ir.checks import check_ir
 
     buf = io.StringIO()
     Printer(stream=buf).print_op(module)
@@ -123,7 +123,7 @@ def _verify_differential(
     Strategy:
 
     1. If no ``exported_program`` is supplied, execution isn't
-       possible — :mod:`compgen.runtime.cpu_executor` needs a
+       possible — :mod:`xpu_rt.runtime.cpu_executor` needs a
        ``torch.export.ExportedProgram`` for the graph signature +
        state-dict. Report SKIPPED and let the promotion gate decide
        whether that's acceptable.
@@ -132,7 +132,7 @@ def _verify_differential(
        inputs whose shapes match the original's entry block args.
     3. Execute the transformed module on the same inputs.
     4. Compare element-wise via
-       :func:`compgen.semantic.verify.compare.compare_tensors`. Any
+       :func:`xpu_rt.semantic.verify.compare.compare_tensors`. Any
        input that exceeds tolerance fails the whole check and reports
        its index + error.
 
@@ -152,8 +152,8 @@ def _verify_differential(
         ``(passed, max_abs_error, diagnostic)``. ``passed=True`` with
         a ``SKIPPED`` message means the check did not run.
     """
-    from compgen.runtime import cpu_executor
-    from compgen.semantic.verify.compare import compare_tensors
+    from xpu_rt.runtime import cpu_executor
+    from xpu_rt.semantic.verify.compare import compare_tensors
 
     # 1. Quick sanity: both modules must be printable + non-empty.
     try:
@@ -299,7 +299,7 @@ def _verify_numeric(
 
     Runs the model in plain eager mode and through ``torch.compile`` with
     the ``eager`` backend, then compares outputs element-wise using
-    :func:`compgen.semantic.verify.compare.compare_tensors`.
+    :func:`xpu_rt.semantic.verify.compare.compare_tensors`.
 
     Args:
         model: The PyTorch module to verify.
@@ -426,7 +426,7 @@ class TransformVerifier:
 
             elif level == VerificationLevel.TRANSLATION_VALIDATION:
                 try:
-                    from compgen.ir.semantic.translation_validation import validate_translation
+                    from xpu_rt.ir.semantic.translation_validation import validate_translation
 
                     tv = validate_translation(original_module, transformed_module)
                     details["translation_validation"] = f"translation_validation: {tv.status.upper()}"

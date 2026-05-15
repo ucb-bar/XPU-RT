@@ -1,14 +1,14 @@
-"""``fuse_dequant_matmul`` -- fuse ``compgen.quant.dequantize_*`` feeding
+"""``fuse_dequant_matmul`` -- fuse ``xpu_rt.quant.dequantize_*`` feeding
 ``linalg.matmul`` into a single mixed-precision ``linalg.generic``.
 
 Reconstruction of IREE's ``FuseDequantizationMatmulPass``. Zero
-external references; CompGen owns the rewrite.
+external references; XPU-RT owns the rewrite.
 
 The pattern we match:
 
     %scales = ...
     %zps = ...
-    %w_fp = compgen.quant.dequantize_per_{tensor,channel,group}(
+    %w_fp = xpu_rt.quant.dequantize_per_{tensor,channel,group}(
                 %w_int, %scales, %zps
             ) : (tensor<I...>, tensor<F...>, tensor<Z...>) -> tensor<F...>
     %out  = linalg.matmul(%x, %w_fp) outs(%acc) -> tensor<F...>
@@ -41,7 +41,7 @@ Safety modes:
 
 For  we ship the **tag + detach** path: the matmul is rewritten
 to drop the dequant input and instead read from the int weight
-directly via a property ``compgen.fused_dequant_kind`` on the
+directly via a property ``xpu_rt.fused_dequant_kind`` on the
 matmul. The actual mixed-precision body lives in a follow-up wave
 that lowers the tagged matmul into a body-inlined generic. Tagging
 is mandatory so downstream kernel dispatch sees the fusion
@@ -50,7 +50,7 @@ opportunity even before the body lowering lands.
 LLM-tool signature:
 
     tool_name="fuse_dequant_matmul"
-    wraps_pass="CompGen:FuseDequantizationMatmul"
+    wraps_pass="XPU-RT:FuseDequantizationMatmul"
     invent_slot="quantization/dequant_matmul_fusion"
     policy="FuseDequantMatmulReassocSafe"
 """
@@ -83,7 +83,7 @@ from xdsl.pattern_rewriter import (
     op_type_rewrite_pattern,
 )
 
-from compgen.ir.quant import (
+from xpu_rt.ir.quant import (
     DequantizePerChannelOp,
     DequantizePerGroupOp,
     DequantizePerTensorOp,
@@ -313,11 +313,11 @@ def _maybe_build_fused_generic(
         iterator_types=iterator_types,
         result_types=[out_type],
     )
-    for k_attr in ("compgen.region_id", "compgen._pattern_hint"):
+    for k_attr in ("xpu_rt.region_id", "xpu_rt._pattern_hint"):
         if k_attr in matmul.attributes and k_attr not in new_gen.attributes:
             new_gen.attributes[k_attr] = matmul.attributes[k_attr]
-    new_gen.attributes["compgen.fused_dequant_kind"] = matmul.attributes.get(
-        "compgen.fused_dequant_kind",
+    new_gen.attributes["xpu_rt.fused_dequant_kind"] = matmul.attributes.get(
+        "xpu_rt.fused_dequant_kind",
         StringAttr("per_tensor" if isinstance(dequant, DequantizePerTensorOp) else "per_channel"),
     )
     return new_gen
@@ -340,7 +340,7 @@ class _FuseDequantMatmulPattern(RewritePattern):
         self.stats.matmuls_seen += 1
 
         # Already fused -> idempotent.
-        if "compgen.fused_dequant_kind" in op.attributes:
+        if "xpu_rt.fused_dequant_kind" in op.attributes:
             self.stats.skipped_already_fused += 1
             return
 
@@ -369,8 +369,8 @@ class _FuseDequantMatmulPattern(RewritePattern):
                 return
 
         kind = _dequant_kind(dq)
-        op.attributes["compgen.fused_dequant_kind"] = StringAttr(kind)
-        op.attributes["compgen.fused_dequant_side"] = StringAttr(side)
+        op.attributes["xpu_rt.fused_dequant_kind"] = StringAttr(kind)
+        op.attributes["xpu_rt.fused_dequant_side"] = StringAttr(side)
         self.stats.fusions_applied += 1
 
         # Real body fusion when the shape is canonical. When the

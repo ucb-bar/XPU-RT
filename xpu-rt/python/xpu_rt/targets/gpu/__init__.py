@@ -33,7 +33,7 @@ Things that are NOT class-level (and live in vendor or arch):
 
 from __future__ import annotations
 
-from compgen.targets.gpu.contracts import (
+from xpu_rt.targets.gpu.contracts import (
     DEFAULT_SCHEDULING_OVERHEAD_US,
     Device,
     EventTimer,

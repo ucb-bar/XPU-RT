@@ -18,8 +18,8 @@ import shutil
 from pathlib import Path
 
 import pytest
-from compgen.graph_compilation.recipe_lowering import run_recipe_lowering
-from compgen.graph_compilation.run import run_graph_compilation
+from xpu_rt.graph_compilation.recipe_lowering import run_recipe_lowering
+from xpu_rt.graph_compilation.run import run_graph_compilation
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 HOST_CPU_TARGET = REPO_ROOT / "configs" / "targets" / "host_cpu.yaml"
@@ -105,7 +105,7 @@ def test_transform_validation_overall_pass(
 def test_artifact_validator_passes(
     model_id: str, lowering_runs: dict[str, Path]
 ) -> None:
-    from compgen.graph_compilation import validate_run
+    from xpu_rt.graph_compilation import validate_run
     rep = validate_run(lowering_runs[model_id])
     assert rep.overall == "pass", [r for r in rep.rules if r.status == "fail"]
 
@@ -387,7 +387,7 @@ def test_payload_mutation_during_lowering_is_detected(
     if (rp / "lowering_artifacts").exists():
         shutil.rmtree(rp / "lowering_artifacts")
 
-    import compgen.graph_compilation.recipe_lowering as rl_mod
+    import xpu_rt.graph_compilation.recipe_lowering as rl_mod
 
     real = rl_mod.sha256_tree
     call_count = {"n": 0}
@@ -428,11 +428,11 @@ def test_create_kernel_contract_does_not_emit_transform_script(
 def test_compiler_core_not_modified_by_m07() -> None:
     import subprocess
     forbidden = [
-        "python/compgen/ir/payload/import_fx.py",
-        "python/compgen/capture/torch_export.py",
-        "python/compgen/capture/torch_mlir_bridge.py",
-        "python/compgen/pipeline/driver.py",
-        "python/compgen/runtime/bundle_emit.py",
+        "python/xpu_rt/ir/payload/import_fx.py",
+        "python/xpu_rt/capture/torch_export.py",
+        "python/xpu_rt/capture/torch_mlir_bridge.py",
+        "python/xpu_rt/pipeline/driver.py",
+        "python/xpu_rt/runtime/bundle_emit.py",
     ]
     try:
         diff = subprocess.check_output(

@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import pytest
-from compgen.ir.recipe.dialect import ALL_OPS, Recipe
-from compgen.ir.recipe.ops_propose import (
+from xpu_rt.ir.recipe.dialect import ALL_OPS, Recipe
+from xpu_rt.ir.recipe.ops_propose import (
     _PROPOSE_OPS,
     ProposeBufferLifetimePlanOp,
     ProposeCollectivePipelineOp,

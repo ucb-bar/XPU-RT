@@ -1,6 +1,6 @@
 """Kernel performance + fusion-decision history (SQLite-backed).
 
-Companion to ``compgen.memory.store.CompilerMemory`` — that one tracks
+Companion to ``xpu_rt.memory.store.CompilerMemory`` — that one tracks
 tasks/candidates/evaluations/knowledge for the broader agent loop;
 this one tracks two narrow questions:
 
@@ -15,8 +15,8 @@ this one tracks two narrow questions:
      calibrates against this — if the oracle predicted 1.5× and we
      measured 0.9×, the next prediction adjusts.
 
-Lives at ``~/.compgen/kernel_db.sqlite`` (overridable via
-``COMPGEN_KERNEL_DB``). Single-file, single-writer assumed; SQLite's
+Lives at ``~/.xpu_rt/kernel_db.sqlite`` (overridable via
+``XPU_RT_KERNEL_DB``). Single-file, single-writer assumed; SQLite's
 WAL mode makes concurrent read safe.
 """
 
@@ -30,10 +30,10 @@ from pathlib import Path
 
 
 def default_db_path() -> Path:
-    override = os.environ.get("COMPGEN_KERNEL_DB")
+    override = os.environ.get("XPU_RT_KERNEL_DB")
     if override:
         return Path(override).expanduser()
-    return Path.home() / ".compgen" / "kernel_db.sqlite"
+    return Path.home() / ".xpu_rt" / "kernel_db.sqlite"
 
 
 # ---------------------------------------------------------------------------

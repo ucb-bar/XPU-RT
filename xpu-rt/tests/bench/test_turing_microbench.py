@@ -18,8 +18,8 @@ torch = pytest.importorskip("torch")
 pytestmark = pytest.mark.skipif(not torch.cuda.is_available(), reason="GPU microbenches require CUDA")
 triton = pytest.importorskip("triton")
 
-from compgen.bench.kernel_bench import format_bench_result, run_microbench
-from compgen.bench.turing_kernels import (
+from xpu_rt.bench.kernel_bench import format_bench_result, run_microbench
+from xpu_rt.bench.turing_kernels import (
     attention_block_fp16,
     matmul_fp16,
     rmsnorm_fp16,

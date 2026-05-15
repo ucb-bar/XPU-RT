@@ -7,7 +7,7 @@ claim: |
 
   1. ``scripts/dev/audit_extension_architecture.py`` —
      deterministic 5-check audit encoding the ten hard rules.
-     Backed by ``python/compgen/audit/extension_architecture.py``.
+     Backed by ``python/xpu_rt/audit/extension_architecture.py``.
      CLI exits 0 on pass, 1 on any violation.
 
      Checks::
@@ -78,7 +78,7 @@ forbidden:
   - optional provider import outside providers/adapters/*
   - silent pack build failure
 required_evidence:
-  - python/compgen/audit/extension_architecture.py
+  - python/xpu_rt/audit/extension_architecture.py
   - scripts/dev/audit_extension_architecture.py
   - scripts/dev/build_extension_provider_evidence_pack.py
   - results/extension_provider_evidence_pack/claim_matrix.json

@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from compgen.agent.analyzer import PatternCluster
-from compgen.kernels.autocomp_adapter import AutocompAdapter, KernelResult, _generate_reference_code
-from compgen.targets.schema import DeviceSpec, TargetProfile
+from xpu_rt.agent.analyzer import PatternCluster
+from xpu_rt.kernels.autocomp_adapter import AutocompAdapter, KernelResult, _generate_reference_code
+from xpu_rt.targets.schema import DeviceSpec, TargetProfile
 
 
 def test_adapter_instantiation() -> None:

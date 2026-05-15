@@ -29,7 +29,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 def _invoke(*, model: str, out_dir: Path) -> subprocess.CompletedProcess:
     return subprocess.run(
         [
-            sys.executable, "-m", "compgen.graph_compilation", "run",
+            sys.executable, "-m", "xpu_rt.graph_compilation", "run",
             "--model", str(REPO_ROOT / f"configs/models/{model}.yaml"),
             "--target", str(REPO_ROOT / "configs/targets/host_cpu.yaml"),
             "--out", str(out_dir),
@@ -47,7 +47,7 @@ def _invoke(*, model: str, out_dir: Path) -> subprocess.CompletedProcess:
 
 class TestFromRecipe:
     def test_merlin_synthesis_populates_every_field(self) -> None:
-        from compgen.kernels.contract_v3 import (
+        from xpu_rt.kernels.contract_v3 import (
             DispatchModel, Granularity, KernelArchetype, KernelContractV3,
         )
         sel = {
@@ -101,7 +101,7 @@ class TestFromRecipe:
         assert any(e.name == "matmul_done" for e in c.orchestration.sync.event_decls)
 
     def test_tiny_mlp_synthesis_tolerance_eps(self) -> None:
-        from compgen.kernels.contract_v3 import KernelContractV3
+        from xpu_rt.kernels.contract_v3 import KernelContractV3
         sel = {
             "candidate_kind": "set_tile_params",
             "selected_candidate_id": "cand_y",
@@ -130,7 +130,7 @@ class TestFromRecipe:
         assert c.io.numerics.max_relative_error < 1e-2  # not silently widened
 
     def test_rejects_non_set_tile_params(self) -> None:
-        from compgen.kernels.contract_v3 import KernelContractV3
+        from xpu_rt.kernels.contract_v3 import KernelContractV3
         with pytest.raises(ValueError, match="set_tile_params"):
             KernelContractV3.from_recipe(
                 candidate_selection={
@@ -146,8 +146,8 @@ class TestFromRecipe:
 
 class TestCanonicalHash:
     def test_hash_is_byte_stable(self) -> None:
-        from compgen.kernels.contract_v3 import KernelContractV3
-        from compgen.promotion.contract_hash import hash_contract
+        from xpu_rt.kernels.contract_v3 import KernelContractV3
+        from xpu_rt.promotion.contract_hash import hash_contract
         sel = {
             "candidate_kind": "set_tile_params",
             "selected_candidate_id": "cand_x",
@@ -177,8 +177,8 @@ class TestCanonicalHash:
         assert len(hash_contract(c1)) == 16
 
     def test_hash_differs_on_shape_change(self) -> None:
-        from compgen.kernels.contract_v3 import KernelContractV3
-        from compgen.promotion.contract_hash import hash_contract
+        from xpu_rt.kernels.contract_v3 import KernelContractV3
+        from xpu_rt.promotion.contract_hash import hash_contract
         sel = {
             "candidate_kind": "set_tile_params", "label": "tile_M16_N16_K16",
             "cost_preview": {"region_dims": {"M": 16, "N": 32, "K": 16}},
@@ -232,10 +232,10 @@ class TestKernelFacingNoLeak:
     )
 
     def test_no_compiler_only_fields_in_view(self) -> None:
-        from compgen.graph_compilation.kernel_contract_materialization import (
+        from xpu_rt.graph_compilation.kernel_contract_materialization import (
             kernel_facing_to_dict,
         )
-        from compgen.kernels.contract_v3 import KernelContractV3
+        from xpu_rt.kernels.contract_v3 import KernelContractV3
         c = KernelContractV3.from_recipe(
             candidate_selection={
                 "candidate_kind": "set_tile_params",

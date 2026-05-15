@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 
 import torch
-from compgen.semantic.verify.harness import VerificationRun, verify_callable_against_reference
+from xpu_rt.semantic.verify.harness import VerificationRun, verify_callable_against_reference
 
 # -- identity pass ------------------------------------------------------------
 
@@ -164,7 +164,7 @@ def test_nested_out_dir_created(tmp_path: Path) -> None:
 
 def test_verification_run_frozen() -> None:
     """VerificationRun should be immutable."""
-    from compgen.semantic.verify.compare import NumericComparison
+    from xpu_rt.semantic.verify.compare import NumericComparison
 
     cmp = NumericComparison(passed=True, max_abs_error=0.0, max_rel_error=0.0, atol=1e-5, rtol=1e-5, num_mismatched=0)
     run = VerificationRun(name="x", passed=True, latency_ref_ms=1.0, latency_got_ms=1.0, comparisons=(cmp,))

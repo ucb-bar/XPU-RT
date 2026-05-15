@@ -8,12 +8,12 @@ from typing import Any
 from xdsl.dialects.builtin import StringAttr
 from xdsl.ir import Operation
 
-from compgen.ir.recipe.ops_candidate import (
+from xpu_rt.ir.recipe.ops_candidate import (
     FuseOp,
     InsertCopyBoundaryOp,
     PlaceOnDeviceOp,
 )
-from compgen.ir.recipe.ops_fact import (
+from xpu_rt.ir.recipe.ops_fact import (
     BackendAvailableOp,
     CalibrationOp,
     ExportIssueOp,

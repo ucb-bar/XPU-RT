@@ -9,7 +9,7 @@ implements ``MEMORY_ALLOCATION`` via either ``highspy`` or
 
 from __future__ import annotations
 
-from compgen.solve.solver_types import (
+from xpu_rt.solve.solver_types import (
     BackendProbeResult,
     SolverProblemKind,
     SolverRequest,
@@ -21,7 +21,7 @@ __all__ = ["solve"]
 
 def solve(request: SolverRequest, *, probe: BackendProbeResult) -> SolverResponse:
     if request.problem_kind is SolverProblemKind.MEMORY_ALLOCATION:
-        from compgen.solve import memory_planner
+        from xpu_rt.solve import memory_planner
 
         return memory_planner.solve_via_highs(request, probe=probe)
     raise NotImplementedError(request.problem_kind.value)

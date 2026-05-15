@@ -2,13 +2,13 @@
 
 Pin the contract changes #032 introduced:
 
-- ``compgen.api._ETC_DISPATCH_READY`` is True (Phase 7 routed).
-- ``compgen.testing.workloads.WORKLOAD_FACTORIES`` registers
+- ``xpu_rt.api._ETC_DISPATCH_READY`` is True (Phase 7 routed).
+- ``xpu_rt.testing.workloads.WORKLOAD_FACTORIES`` registers
   ``"diamond_dag"``.
 - The diamond_dag workload factory returns a structurally valid
   :class:`Workload`: 4 CallDeviceOp-equivalent tasks, 4 event
   tensors, real CUDA-C++ device function bodies (no stubs).
-- :class:`compgen.testing.etc_dispatch.EtcDispatchError` exists and
+- :class:`xpu_rt.testing.etc_dispatch.EtcDispatchError` exists and
   is a RuntimeError subclass for the harness to catch.
 
 GPU end-to-end (NVRTC compile + cooperative launch + correctness +
@@ -24,26 +24,26 @@ import pytest
 
 class TestEtcDispatchReadiness:
     def test_etc_dispatch_ready_flag_is_true(self) -> None:
-        from compgen import api
+        from xpu_rt import api
 
         assert api._ETC_DISPATCH_READY is True
 
     def test_workload_factory_registry_has_diamond_dag(self) -> None:
-        from compgen.testing.workloads import WORKLOAD_FACTORIES
+        from xpu_rt.testing.workloads import WORKLOAD_FACTORIES
 
         assert "diamond_dag" in WORKLOAD_FACTORIES
         factory = WORKLOAD_FACTORIES["diamond_dag"]
         assert callable(factory)
 
     def test_etc_dispatch_error_is_runtime_subclass(self) -> None:
-        from compgen.testing.etc_dispatch import EtcDispatchError
+        from xpu_rt.testing.etc_dispatch import EtcDispatchError
 
         assert issubclass(EtcDispatchError, RuntimeError)
 
 
 class TestDiamondDagFactory:
     def test_build_returns_structured_workload(self) -> None:
-        from compgen.testing.workloads.diamond_dag import Workload, build
+        from xpu_rt.testing.workloads.diamond_dag import Workload, build
 
         wl = build(dtype="fp32", num_gpus=1)
         assert isinstance(wl, Workload)
@@ -62,7 +62,7 @@ class TestDiamondDagFactory:
         tile-tasks, so the static scheduler enumerates 4 × NUM_TILES
         flat tasks. Four event tensors of shape ``(NUM_TILES,)`` —
         one cell per tile — give each tile its own dedicated edge."""
-        from compgen.testing.workloads.diamond_dag import (
+        from xpu_rt.testing.workloads.diamond_dag import (
             _NUM_TILES,
             build,
         )
@@ -84,7 +84,7 @@ class TestDiamondDagFactory:
     def test_device_function_bodies_have_real_cuda(self) -> None:
         """No placeholder bodies — every device function must contain
         the actual GEMM/elementwise CUDA C++ that will run on silicon."""
-        from compgen.testing.workloads.diamond_dag import build
+        from xpu_rt.testing.workloads.diamond_dag import build
 
         wl = build(dtype="fp32", num_gpus=1)
         bodies = wl.device_function_sources
@@ -105,7 +105,7 @@ class TestDiamondDagFactory:
     def test_user_buffer_layout_matches_bodies(self) -> None:
         """The buffer-layout names in Workload.user_buffer_layout
         must match the buffers[N] indexing in the bodies."""
-        from compgen.testing.workloads.diamond_dag import build
+        from xpu_rt.testing.workloads.diamond_dag import build
 
         wl = build(dtype="fp32", num_gpus=1)
         # Layout order corresponds to buffers[0], buffers[1], ...
@@ -122,7 +122,7 @@ class TestDiamondDagFactory:
         assert "buffers[6]" in body_relu
 
     def test_multi_gpu_rejected(self) -> None:
-        from compgen.testing.workloads.diamond_dag import build
+        from xpu_rt.testing.workloads.diamond_dag import build
 
         with pytest.raises(ValueError, match="single-GPU"):
             build(dtype="fp32", num_gpus=2)
@@ -136,7 +136,7 @@ class TestDecoderLayerFactory:
     """
 
     def test_build_returns_workload(self) -> None:
-        from compgen.testing.workloads.decoder_layer import Workload, build
+        from xpu_rt.testing.workloads.decoder_layer import Workload, build
 
         wl = build(dtype="fp32", num_gpus=1)
         assert isinstance(wl, Workload)
@@ -152,7 +152,7 @@ class TestDecoderLayerFactory:
         )
 
     def test_megakernel_graph_topology(self) -> None:
-        from compgen.testing.workloads.decoder_layer import (
+        from xpu_rt.testing.workloads.decoder_layer import (
             _NUM_DOWN_TILES,
             _NUM_UP_TILES,
             _UP_TILES_PER_ROW,
@@ -175,14 +175,14 @@ class TestDecoderLayerFactory:
         assert all(e.event_name == "ev_relu" for e in down.in_edges)
 
     def test_factory_registered(self) -> None:
-        from compgen.testing.workloads import WORKLOAD_FACTORIES
+        from xpu_rt.testing.workloads import WORKLOAD_FACTORIES
 
         assert "decoder_layer" in WORKLOAD_FACTORIES
 
     def test_device_function_bodies_are_real(self) -> None:
         """All three bodies must have shared-mem tile loops + fmaf
         accumulators — no stubs."""
-        from compgen.testing.workloads.decoder_layer import build
+        from xpu_rt.testing.workloads.decoder_layer import build
 
         wl = build(dtype="fp32", num_gpus=1)
         bodies = wl.device_function_sources
@@ -195,7 +195,7 @@ class TestDecoderLayerFactory:
         assert "v > 0.0f ? v : 0.0f" in bodies["relu_op"].body
 
     def test_multi_gpu_rejected(self) -> None:
-        from compgen.testing.workloads.decoder_layer import build
+        from xpu_rt.testing.workloads.decoder_layer import build
 
         with pytest.raises(ValueError, match="single-GPU"):
             build(dtype="fp32", num_gpus=2)
@@ -207,7 +207,7 @@ class TestGemmReduceScatterFactory:
     bwell with --num-gpus=2; these CPU-only tests guard the ABI."""
 
     def test_build_returns_workload(self) -> None:
-        from compgen.testing.workloads.gemm_reduce_scatter import Workload, build
+        from xpu_rt.testing.workloads.gemm_reduce_scatter import Workload, build
 
         wl = build(dtype="fp32", num_gpus=2)
         assert isinstance(wl, Workload)
@@ -218,7 +218,7 @@ class TestGemmReduceScatterFactory:
         assert wl.multi_rank_collective == "allreduce_sum"
 
     def test_megakernel_graph_is_single_op(self) -> None:
-        from compgen.testing.workloads.gemm_reduce_scatter import (
+        from xpu_rt.testing.workloads.gemm_reduce_scatter import (
             _NUM_TILES_PER_RANK,
             build,
         )
@@ -229,12 +229,12 @@ class TestGemmReduceScatterFactory:
         assert graph.calls[0].task_shape == (_NUM_TILES_PER_RANK,)
 
     def test_factory_registered(self) -> None:
-        from compgen.testing.workloads import WORKLOAD_FACTORIES
+        from xpu_rt.testing.workloads import WORKLOAD_FACTORIES
 
         assert "gemm_rs" in WORKLOAD_FACTORIES
 
     def test_only_two_gpus_allowed_in_v1(self) -> None:
-        from compgen.testing.workloads.gemm_reduce_scatter import build
+        from xpu_rt.testing.workloads.gemm_reduce_scatter import build
 
         with pytest.raises(ValueError, match="num_gpus=2"):
             build(dtype="fp32", num_gpus=1)
@@ -242,7 +242,7 @@ class TestGemmReduceScatterFactory:
             build(dtype="fp32", num_gpus=4)
 
     def test_unsupported_dtype_raises(self) -> None:
-        from compgen.testing.workloads.gemm_reduce_scatter import build
+        from xpu_rt.testing.workloads.gemm_reduce_scatter import build
 
         with pytest.raises(NotImplementedError, match="tensor-core"):
             build(dtype="bf16", num_gpus=2)
@@ -252,7 +252,7 @@ class TestPerWorkloadGateOverride:
     """Pin :data:`WORKLOAD_GATES` + :func:`gate_for` semantics."""
 
     def test_default_gate_keeps_perf_floor(self) -> None:
-        from compgen.testing.etc_conformance import gate_for
+        from xpu_rt.testing.etc_conformance import gate_for
 
         gate = gate_for("decoder_layer")
         assert gate.min_speedup_vs_eager == 1.2
@@ -260,7 +260,7 @@ class TestPerWorkloadGateOverride:
     def test_diamond_dag_gate_is_stress_test_framed(self) -> None:
         """diamond_dag is documented as an internal stress test —
         its gate has perf floor 0.0 with a recorded rationale."""
-        from compgen.testing.etc_conformance import gate_for
+        from xpu_rt.testing.etc_conformance import gate_for
 
         gate = gate_for("diamond_dag")
         assert gate.min_speedup_vs_eager == 0.0
@@ -277,7 +277,7 @@ class TestPerWorkloadGateOverride:
         """gemm_rs v1 = per-rank cooperative launches + host-side
         AllReduce (2 launches total). Override allows that, with a
         documented rationale that v2 collapses to 1 launch."""
-        from compgen.testing.etc_conformance import gate_for
+        from xpu_rt.testing.etc_conformance import gate_for
 
         gate = gate_for("gemm_rs")
         assert gate.max_launches_static == 2
@@ -290,7 +290,7 @@ class TestPerWorkloadGateOverride:
         but zero wait_sites — that's correct topology, not a stub.
         Gate must accept any-direction atomics rather than requiring
         both."""
-        from compgen.testing.etc_conformance import (
+        from xpu_rt.testing.etc_conformance import (
             ConformanceWorkload,
             PassGate,
             _evaluate_gate,
@@ -323,7 +323,7 @@ class TestPerWorkloadGateOverride:
     def test_atomic_gate_fails_when_both_zero(self) -> None:
         """Conversely, zero-atomic + zero-wait IS a real bypass — must
         fail the gate. Pin the boundary."""
-        from compgen.testing.etc_conformance import (
+        from xpu_rt.testing.etc_conformance import (
             ConformanceWorkload,
             PassGate,
             _evaluate_gate,
@@ -359,7 +359,7 @@ class TestPerWorkloadGateOverride:
         ~ULP) even when |a-b| is well below atol. The gate should
         defer to ``num_failing_elements`` (allclose semantics) when
         the harness reports it."""
-        from compgen.testing.etc_conformance import (
+        from xpu_rt.testing.etc_conformance import (
             ConformanceWorkload,
             PassGate,
             _evaluate_gate,
@@ -385,7 +385,7 @@ class TestPerWorkloadGateOverride:
         assert ok is True, errors
 
     def test_allclose_count_fails_when_elements_violate(self) -> None:
-        from compgen.testing.etc_conformance import (
+        from xpu_rt.testing.etc_conformance import (
             ConformanceWorkload,
             PassGate,
             _evaluate_gate,
@@ -411,7 +411,7 @@ class TestConformanceHarnessRouting:
     + the missing-workload short-circuit fires for unwired workloads."""
 
     def test_routing_ready_returns_true(self) -> None:
-        from compgen.testing.etc_conformance import _check_etc_routing_ready
+        from xpu_rt.testing.etc_conformance import _check_etc_routing_ready
 
         errors: list[str] = []
         assert _check_etc_routing_ready(errors) is True
@@ -421,7 +421,7 @@ class TestConformanceHarnessRouting:
         """A workload not in WORKLOAD_FACTORIES (e.g. moe_fwd, which
         depends on Phase 1's TriggerOp wiring) reports cleanly via the
         errors list rather than crashing."""
-        from compgen.testing.etc_conformance import (
+        from xpu_rt.testing.etc_conformance import (
             ConformanceWorkload,
             _compile_and_evaluate,
         )

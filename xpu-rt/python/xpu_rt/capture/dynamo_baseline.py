@@ -4,7 +4,7 @@ Runs the model through TorchDynamo/torch.compile to establish a performance
 baseline and collect diagnostic information (graph breaks, guards, op coverage,
 compilation time, recompilation behavior).
 
-This baseline is what CompGen must beat -- or at least match -- while adding
+This baseline is what XPU-RT must beat -- or at least match -- while adding
 heterogeneous target support.
 """
 

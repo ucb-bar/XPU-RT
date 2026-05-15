@@ -43,8 +43,8 @@ from typing import Any
 
 import torch
 
-from compgen.graph_compilation.artifacts import ArtifactRef, StageRecord
-from compgen.graph_compilation.hashing import sha256_file, sha256_tree
+from xpu_rt.graph_compilation.artifacts import ArtifactRef, StageRecord
+from xpu_rt.graph_compilation.hashing import sha256_file, sha256_tree
 
 # Action enum (deterministically synthesized from gap_kind).
 _ACTIONS_FOR_KIND: dict[str, list[str]] = {
@@ -384,7 +384,7 @@ def run_gap_discovery(
     # 1.5. Load the extension registry, if any. Closed targets are
     #      skipped at gap-construction time and tallied in the report.
     # ------------------------------------------------------------------ #
-    from compgen.graph_compilation.extension_registry import load_registry
+    from xpu_rt.graph_compilation.extension_registry import load_registry
 
     registry_obj = load_registry(extension_registry) if extension_registry else None
     registry_path_str = str(extension_registry.resolve()) if extension_registry else None
@@ -445,10 +445,10 @@ def run_gap_discovery(
         #   Closure will materialize
         # - same op + same target + same shape → same id (stable across reruns)
         # - different shape OR different target → different id
-        from compgen.graph_compilation.gap_naming import (
+        from xpu_rt.graph_compilation.gap_naming import (
             extension_id as _gap_ext_id,
         )
-        from compgen.graph_compilation.gap_naming import (
+        from xpu_rt.graph_compilation.gap_naming import (
             slug_for_target,
             suggested_extension_path,
         )
@@ -469,7 +469,7 @@ def run_gap_discovery(
             dtype_signature=u.get("dtype_signature", {}),
         )
 
-        from compgen.graph_compilation.severity import estimate_raw_cost
+        from xpu_rt.graph_compilation.severity import estimate_raw_cost
 
         raw_cost, family = estimate_raw_cost(fx_target, u.get("shape_signature", {}))
 
@@ -551,10 +551,10 @@ def run_gap_discovery(
             if dt in flagged_floats and dt not in seen_dtype_keys:
                 seen_dtype_keys.add(dt)
                 # Synthesize one summary gap per non-fp32 dtype.
-                from compgen.graph_compilation.gap_naming import (
+                from xpu_rt.graph_compilation.gap_naming import (
                     extension_id as _gap_ext_id,
                 )
-                from compgen.graph_compilation.gap_naming import (
+                from xpu_rt.graph_compilation.gap_naming import (
                     slug_for_target,
                     suggested_extension_path,
                 )
@@ -582,7 +582,7 @@ def run_gap_discovery(
                     shape_signature=u.get("shape_signature", {}),
                     dtype_signature={"dtype": dt},
                 )
-                from compgen.graph_compilation.severity import estimate_raw_cost
+                from xpu_rt.graph_compilation.severity import estimate_raw_cost
 
                 raw_cost, family = estimate_raw_cost(
                     u["fx_target"], u.get("shape_signature", {})
@@ -633,12 +633,12 @@ def run_gap_discovery(
     #      into critical_path / performance_blocker / coverage_gap /
     #      noncritical via the severity classifier.
     # ------------------------------------------------------------------ #
-    from compgen.graph_compilation.severity import (
+    from xpu_rt.graph_compilation.severity import (
         THRESHOLD_HIGH,
         THRESHOLD_LOW,
         THRESHOLD_MED,
     )
-    from compgen.graph_compilation.severity import (
+    from xpu_rt.graph_compilation.severity import (
         classify as _classify_severity,
     )
 

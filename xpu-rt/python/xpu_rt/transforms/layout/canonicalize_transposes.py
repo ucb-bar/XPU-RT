@@ -12,7 +12,7 @@ from xdsl.dialects.builtin import ModuleOp, StringAttr
 
 log = structlog.get_logger()
 
-TRANSPOSE_CHAIN_ATTR = "compgen.transpose_class"
+TRANSPOSE_CHAIN_ATTR = "xpu_rt.transpose_class"
 
 
 def canonicalize_transposes(module: ModuleOp) -> ModuleOp:
@@ -21,7 +21,7 @@ def canonicalize_transposes(module: ModuleOp) -> ModuleOp:
     For each op in the module:
     - If it is a transpose whose input is also a transpose, mark for elimination.
     - Classify remaining transposes as ``identity``, ``simple``, or ``complex``.
-    - Annotate with ``compgen.transpose_class`` attribute.
+    - Annotate with ``xpu_rt.transpose_class`` attribute.
 
     Args:
         module: The xDSL ModuleOp to transform.

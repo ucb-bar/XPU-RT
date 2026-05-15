@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from compgen.analysis.ir_snapshots import (
+from xpu_rt.analysis.ir_snapshots import (
     IR_LEVELS,
     NOT_AVAILABLE_REASONS,
     SCHEMA_VERSION,

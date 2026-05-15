@@ -53,9 +53,9 @@ forbidden:
 - a target_profile mismatch between dossier-side and cert-side signature builders (they must produce byte-identical strings for the same region shape)
 realness_level: production_path
 required_evidence:
-- python/compgen/graph_compilation/coverage_first.py (entire module — orchestrator + signature builders + binding append + report writers)
-- python/compgen/graph_compilation/run.py (kernel_coverage_first stage wired after execution_plan_emit, before glue_emit)
-- python/compgen/graph_compilation/__main__.py (--kernel-coverage-mode CLI flag + threading)
+- python/xpu_rt/graph_compilation/coverage_first.py (entire module — orchestrator + signature builders + binding append + report writers)
+- python/xpu_rt/graph_compilation/run.py (kernel_coverage_first stage wired after execution_plan_emit, before glue_emit)
+- python/xpu_rt/graph_compilation/__main__.py (--kernel-coverage-mode CLI flag + threading)
 - tests/graph_compilation/test_coverage_first.py
 feature_id: m63_coverage_first
 notes: |

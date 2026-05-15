@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import torch
 import torch.nn as nn
-from compgen.quantization.graph_analyzer import (
+from xpu_rt.quantization.graph_analyzer import (
     QuantizedGraphAnalysis,
     analyze_for_npu,
     analyze_fx_graphs,

@@ -1,6 +1,6 @@
 """KernelBlaster subprocess adapter.
 
-Bridges a CompGen :class:`~compgen.kernels.provider.KernelContract` to
+Bridges a XPU-RT :class:`~xpu_rt.kernels.provider.KernelContract` to
 NVlabs' KernelBlaster (https://github.com/NVlabs/KernelBlaster). Unlike
 autocomp, KernelBlaster is not a Python library: it ships as a Docker
 image + shell script (``scripts/run_single_kernelblaster.sh``). This
@@ -13,11 +13,11 @@ callers can force a specific mode via ``mode=`` on
 :class:`KernelBlasterAdapter`:
 
 1. **local** — a cloned KernelBlaster source tree. Set
-   ``COMPGEN_KERNELBLASTER_ROOT`` to the path, or drop it at
+   ``XPU_RT_KERNELBLASTER_ROOT`` to the path, or drop it at
    ``third_party/kernelblaster`` relative to CWD. The adapter runs
    ``bash scripts/run_single_kernelblaster.sh`` from that directory.
 2. **docker** — a pre-built Docker image. Set
-   ``COMPGEN_KERNELBLASTER_IMAGE`` (e.g. ``kernelblaster:latest``). The
+   ``XPU_RT_KERNELBLASTER_IMAGE`` (e.g. ``kernelblaster:latest``). The
    adapter runs ``docker run --rm --gpus=all …`` with the workdir
    mounted.
 
@@ -76,7 +76,7 @@ class _NullCtx:
         return False
 
 
-from compgen.kernels.provider import (
+from xpu_rt.kernels.provider import (
     ContractFeedback,
     KernelContract,
     KnowledgeExport,
@@ -91,8 +91,8 @@ DEFAULT_DATASET = "kernelbench-cuda"
 DEFAULT_PRECISION = "fp16"
 DEFAULT_LEVEL = "level1"
 DEFAULT_PROBLEM_ID = "1"
-DEFAULT_PROBLEM_NAME = "compgen_custom"
-DEFAULT_EXPERIMENT = "compgen_run"
+DEFAULT_PROBLEM_NAME = "xpu_rt_custom"
+DEFAULT_EXPERIMENT = "xpu_rt_run"
 DEFAULT_RL_EXPERIMENT = "kernelblaster"
 DEFAULT_GPU_TYPE = "H100"
 DEFAULT_MODEL = "gpt-5-mini-2025-08-07"
@@ -130,7 +130,7 @@ class KernelBlasterConfig:
         "HF_TOKEN",
         "HUGGINGFACE_TOKEN",
         "WANDB_API_KEY",
-        # CompGen integration: allow KB's GPU server to coexist
+        # XPU-RT integration: allow KB's GPU server to coexist
         # with other CUDA workloads, and provide the Gemini key
         # KB's OpenAI-compat client picks up.
         "KERNELBLASTER_GPU_SERVER_SKIP_PROCESS_CHECK",
@@ -141,7 +141,7 @@ class KernelBlasterConfig:
 
     @classmethod
     def from_env(cls, **overrides: Any) -> KernelBlasterConfig:
-        """Build a config from ``COMPGEN_KERNELBLASTER_*`` + KB env vars."""
+        """Build a config from ``XPU_RT_KERNELBLASTER_*`` + KB env vars."""
 
         def _pick(*names: str, default: str = "") -> str:
             for n in names:
@@ -150,9 +150,9 @@ class KernelBlasterConfig:
                     return value
             return default
 
-        repo_root_s = _pick("COMPGEN_KERNELBLASTER_ROOT")
-        image = _pick("COMPGEN_KERNELBLASTER_IMAGE")
-        mode = _pick("COMPGEN_KERNELBLASTER_MODE")
+        repo_root_s = _pick("XPU_RT_KERNELBLASTER_ROOT")
+        image = _pick("XPU_RT_KERNELBLASTER_IMAGE")
+        mode = _pick("XPU_RT_KERNELBLASTER_MODE")
 
         cfg = cls(
             mode=mode,
@@ -163,13 +163,13 @@ class KernelBlasterConfig:
             # KB ``query.py`` routes gemini-* models to Google's
             # OpenAI-compatible endpoint when GOOGLE_API_KEY is set.
             openai_api_key=_pick("OPENAI_API_KEY", "GOOGLE_API_KEY", "PERFLAB_KEY"),
-            model=_pick("COMPGEN_KERNELBLASTER_MODEL", "MODEL", default=DEFAULT_MODEL),
-            gpu_type=_pick("COMPGEN_KERNELBLASTER_GPU_TYPE", "GPU_TYPE", default=DEFAULT_GPU_TYPE),
-            dataset=_pick("COMPGEN_KERNELBLASTER_DATASET", "DATASET", default=DEFAULT_DATASET),
-            precision=_pick("COMPGEN_KERNELBLASTER_PRECISION", "PRECISION", default=DEFAULT_PRECISION),
-            experiment_name=_pick("COMPGEN_KERNELBLASTER_EXPERIMENT", "EXPERIMENT_NAME", default=DEFAULT_EXPERIMENT),
+            model=_pick("XPU_RT_KERNELBLASTER_MODEL", "MODEL", default=DEFAULT_MODEL),
+            gpu_type=_pick("XPU_RT_KERNELBLASTER_GPU_TYPE", "GPU_TYPE", default=DEFAULT_GPU_TYPE),
+            dataset=_pick("XPU_RT_KERNELBLASTER_DATASET", "DATASET", default=DEFAULT_DATASET),
+            precision=_pick("XPU_RT_KERNELBLASTER_PRECISION", "PRECISION", default=DEFAULT_PRECISION),
+            experiment_name=_pick("XPU_RT_KERNELBLASTER_EXPERIMENT", "EXPERIMENT_NAME", default=DEFAULT_EXPERIMENT),
             rl_experiment_name=_pick(
-                "COMPGEN_KERNELBLASTER_RL_EXPERIMENT", "RL_EXPERIMENT_NAME", default=DEFAULT_RL_EXPERIMENT
+                "XPU_RT_KERNELBLASTER_RL_EXPERIMENT", "RL_EXPERIMENT_NAME", default=DEFAULT_RL_EXPERIMENT
             ),
         )
         for key, val in overrides.items():
@@ -202,7 +202,7 @@ class KernelBlasterAdapter:
 
     One instance = one search; the adapter is stateless across searches
     beyond the config it was constructed with. The provider layer
-    (:class:`compgen.kernels.providers.kernelblaster.KernelBlasterProvider`)
+    (:class:`xpu_rt.kernels.providers.kernelblaster.KernelBlasterProvider`)
     owns accumulated knowledge across multiple searches.
     """
 
@@ -217,7 +217,7 @@ class KernelBlasterAdapter:
         """Cheap health check. Returns ``(ok, reason)``.
 
         No network call, no subprocess. Suitable for
-        :func:`~compgen.kernels.providers.kernelblaster.KernelBlasterProvider.accepts_contract`.
+        :func:`~xpu_rt.kernels.providers.kernelblaster.KernelBlasterProvider.accepts_contract`.
         """
         mode = self.config.resolved_mode()
         if not mode:
@@ -225,7 +225,7 @@ class KernelBlasterAdapter:
         if mode == "local":
             root = self._resolve_local_root()
             if root is None:
-                return (False, f"COMPGEN_KERNELBLASTER_ROOT={self.config.repo_root!s} does not exist")
+                return (False, f"XPU_RT_KERNELBLASTER_ROOT={self.config.repo_root!s} does not exist")
             script = root / "scripts" / "run_single_kernelblaster.sh"
             if not script.exists():
                 return (False, f"{script} missing")
@@ -264,16 +264,16 @@ class KernelBlasterAdapter:
                 "and constraints.kernelblaster.driver_cpp (CUDA kernel + C++ harness)."
             )
 
-        # When COMPGEN_KERNELBLASTER_KEEP_WORKDIR=1, keep the workdir on
+        # When XPU_RT_KERNELBLASTER_KEEP_WORKDIR=1, keep the workdir on
         # disk for debugging instead of cleaning it up.
-        keep_workdir = os.environ.get("COMPGEN_KERNELBLASTER_KEEP_WORKDIR", "").lower() in ("1", "true", "yes")
+        keep_workdir = os.environ.get("XPU_RT_KERNELBLASTER_KEEP_WORKDIR", "").lower() in ("1", "true", "yes")
         if keep_workdir:
-            tmp_s = tempfile.mkdtemp(prefix="compgen_kb_kept_")
+            tmp_s = tempfile.mkdtemp(prefix="xpu_rt_kb_kept_")
             workdir = Path(tmp_s)
             log.info("kernelblaster.workdir.keeping", workdir=str(workdir))
             workdir_ctx = _NullCtx()
         else:
-            workdir_ctx = tempfile.TemporaryDirectory(prefix="compgen_kb_")
+            workdir_ctx = tempfile.TemporaryDirectory(prefix="xpu_rt_kb_")
             workdir = Path(workdir_ctx.name)
 
         with workdir_ctx:
@@ -338,7 +338,7 @@ class KernelBlasterAdapter:
         KB's own dataset uses directory names like
         ``001_Square_matrix_multiplication``; the ``--problem-numbers``
         flag selects one by leading integer. We stage our inputs into a
-        matching ``NNN_compgen_custom`` (or caller-supplied ``problem_name``)
+        matching ``NNN_xpu_rt_custom`` (or caller-supplied ``problem_name``)
         directory.
         """
         dataset = kb_constraints.get("dataset", self.config.dataset)
@@ -372,7 +372,7 @@ class KernelBlasterAdapter:
         * Each dataset subdirectory (e.g.
           ``kernelbench-cuda/level1/001_*``) is symlinked so KB's
           reference problems remain accessible.
-        * The staged CompGen problem (written later by
+        * The staged XPU-RT problem (written later by
           ``_stage_inputs``) lives alongside, in a fresh
           subdirectory under
           ``data/<dataset>/<level>/<problem_dirname>``.
@@ -413,7 +413,7 @@ class KernelBlasterAdapter:
                 # structure: README files symlinked, each level
                 # directory mirrored, and inside the levels each
                 # problem subdir symlinked. This lets the staged
-                # CompGen problem land in a fresh sibling without
+                # XPU-RT problem land in a fresh sibling without
                 # colliding with KB's reference set.
                 target.mkdir(parents=True, exist_ok=True)
                 for sub in entry.iterdir():
@@ -451,7 +451,7 @@ class KernelBlasterAdapter:
         # so its optimization_rl_ncu node finds the staged problem
         # files. Without this, KB's ``Path(__file__).resolve().parents[4]``
         # follows the symlinked src/ back to the real kb checkout and
-        # looks for ``001_compgen_custom/init.cu`` there.
+        # looks for ``001_xpu_rt_custom/init.cu`` there.
         curated_data_dir = workdir / "data" / dataset
         kb_env = {
             "OPENAI_API_KEY": self.config.openai_api_key,
@@ -470,7 +470,7 @@ class KernelBlasterAdapter:
             value = os.environ.get(name)
             if value:
                 kb_env[name] = value
-        # Propagate CompGen's google.genai instrumentation into the KB
+        # Propagate XPU-RT's google.genai instrumentation into the KB
         # subprocess so its Gemini API calls land in our usage tracker.
         # We prepend a tiny ``sitecustomize.py`` dir onto PYTHONPATH;
         # CPython auto-imports ``sitecustomize`` at startup from the
@@ -658,7 +658,7 @@ def _extract_knowledge(
     contract: KernelContract,
     db: dict[str, Any],
 ) -> list[KnowledgeExport]:
-    """Turn KB's optimization_database.json into CompGen knowledge."""
+    """Turn KB's optimization_database.json into XPU-RT knowledge."""
     exports: list[KnowledgeExport] = []
 
     lessons = db.get("lessons") or db.get("strategies") or []

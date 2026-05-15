@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from compgen.solve.backends.cp_sat import CPSatResult, CPSatSolver
-from compgen.solve.contracts import SolverProblem
-from compgen.solve.partition import Partition
+from xpu_rt.solve.backends.cp_sat import CPSatResult, CPSatSolver
+from xpu_rt.solve.contracts import SolverProblem
+from xpu_rt.solve.partition import Partition
 
 
 def test_cp_sat_instantiation() -> None:

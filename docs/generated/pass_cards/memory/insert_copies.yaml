@@ -4,7 +4,7 @@ display_name: Insert copy ops at layout boundaries
 level: payload
 family: memory
 source: XLA
-impl_path: python/compgen/ir/payload/passes/rewrites/insert_copies.py
+impl_path: python/xpu_rt/ir/payload/passes/rewrites/insert_copies.py
 reads:
   - 01_payload_lowering/payload.mlir
 writes:
@@ -24,7 +24,7 @@ cost: cheap
 failure_modes:
   - "no_layout_resolution_path"
   - "circular_layout_dependency"
-mcp_tool: mcp__compgen__compgen_emit_agent_decision_request
+mcp_tool: mcp__xpu_rt__xpu_rt_emit_agent_decision_request
 notes: |
   Reconstruction of XLA's CopyInsertion + hexagon-mlir's tile-buffer
   copy insertion. Adds explicit copy ops between layout-incompatible

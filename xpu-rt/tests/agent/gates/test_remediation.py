@@ -9,12 +9,12 @@ from __future__ import annotations
 
 import pytest
 import torch
-from compgen.agent.gates import (
+from xpu_rt.agent.gates import (
     composite_gate,
     differential_gate,
     structural_gate,
 )
-from compgen.agent.gates._remediation import (
+from xpu_rt.agent.gates._remediation import (
     add_remediation,
     known_reasons,
 )

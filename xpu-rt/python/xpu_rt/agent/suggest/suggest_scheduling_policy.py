@@ -10,8 +10,8 @@ from typing import Any
 
 from xdsl.dialects.builtin import ModuleOp
 
-from compgen.agent.suggest._candidate import ProposalCandidate
-from compgen.agent.suggest._dispatch import register_suggester
+from xpu_rt.agent.suggest._candidate import ProposalCandidate
+from xpu_rt.agent.suggest._dispatch import register_suggester
 
 
 @register_suggester("propose_scheduling_policy")

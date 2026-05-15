@@ -16,8 +16,8 @@ Hard non-goals:
 No MLIR-to-C lowering generality. .CPU only handles the
   matmul-tile-loop subset that emits for SetTileParams.
 No SIMD / OpenMP / parallelism. territory.
-- No libcompgen_rt-specific runtime calls. The cffi-compiled .so is
-  loaded via cffi's own dlopen; libcompgen_rt is referenced in the
+- No libxpu_rt-specific runtime calls. The cffi-compiled .so is
+  loaded via cffi's own dlopen; libxpu_rt is referenced in the
   artifact for documentation only.
 
 Best-effort: cffi missing, gcc missing, compile failure, run failure
@@ -138,7 +138,7 @@ def run_cpu_track(*, out_dir: Path, common: dict[str, Any]) -> Path:
     artifact_path = out_dir / "compiled_kernel_run_cpu.json"
     base = {
         **common,
-        "track": "cpu_compgen_rt",
+        "track": "cpu_xpu_rt",
         "c_source_path": None,
         "c_source_sha256": None,
         "compiler": "",
@@ -210,7 +210,7 @@ def run_cpu_track(*, out_dir: Path, common: dict[str, Any]) -> Path:
     safe_region = "".join(
         c if c.isalnum() or c == "_" else "_" for c in region_id
     ) or "matmul"
-    fn_name = f"compgen_m19_matmul_{safe_region}"
+    fn_name = f"xpu_rt_m19_matmul_{safe_region}"
 
     # 4. Emit C source.
     c_source = _emit_c_source(
@@ -233,7 +233,7 @@ def run_cpu_track(*, out_dir: Path, common: dict[str, Any]) -> Path:
         build_dir = out_dir / f"cffi_build_{safe_region}"
         build_dir.mkdir(parents=True, exist_ok=True)
         ffi.set_source(
-            f"_compgen_m19_cpu_{safe_region}",
+            f"_xpu_rt_m19_cpu_{safe_region}",
             c_source,
             extra_compile_args=["-O2", "-fno-fast-math"],
         )
@@ -255,7 +255,7 @@ def run_cpu_track(*, out_dir: Path, common: dict[str, Any]) -> Path:
     # 6. Load compiled extension dynamically.
     try:
         import importlib.util as _importlib_util
-        ext_name = f"_compgen_m19_cpu_{safe_region}"
+        ext_name = f"_xpu_rt_m19_cpu_{safe_region}"
         spec = _importlib_util.spec_from_file_location(ext_name, compiled_so)
         if spec is None or spec.loader is None:
             raise ImportError("could not spec compiled cpu kernel module")

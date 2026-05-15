@@ -8,8 +8,8 @@ import io
 
 import torch
 import torch.nn as nn
-from compgen.capture.torch_export import capture_model
-from compgen.ir.payload.import_fx import fx_to_xdsl
+from xpu_rt.capture.torch_export import capture_model
+from xpu_rt.ir.payload.import_fx import fx_to_xdsl
 from xdsl.dialects.builtin import StringAttr
 from xdsl.dialects.func import CallOp
 from xdsl.dialects.linalg import MatmulOp
@@ -47,8 +47,8 @@ def test_conv2d_matmul_carries_region_id_for_provider_dispatch() -> None:
     module = _module_for(nn.Conv2d(1, 8, 3).eval(), torch.randn(1, 1, 8, 8))
     matmuls = [op for op in module.walk() if isinstance(op, MatmulOp)]
     assert len(matmuls) == 1
-    rid = matmuls[0].attributes.get("compgen.region_id")
-    did = matmuls[0].attributes.get("compgen.dispatch_id")
+    rid = matmuls[0].attributes.get("xpu_rt.region_id")
+    did = matmuls[0].attributes.get("xpu_rt.dispatch_id")
     assert isinstance(rid, StringAttr) and rid.data.startswith("matmul_")
     assert isinstance(did, StringAttr)
 

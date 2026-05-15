@@ -15,20 +15,20 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 
-from compgen.runtime.errors import (
+from xpu_rt.runtime.errors import (
     AbiConformanceError,
     ResourceBudgetError,
     RuntimeRefinementError,
 )
-from compgen.runtime.verification.abi_conformance import (
+from xpu_rt.runtime.verification.abi_conformance import (
     AbiConformanceReport,
     check_abi_conformance,
 )
-from compgen.runtime.verification.plan_refinement import (
+from xpu_rt.runtime.verification.plan_refinement import (
     PlanRefinementReport,
     check_plan_refinement,
 )
-from compgen.runtime.verification.resource_budget import (
+from xpu_rt.runtime.verification.resource_budget import (
     ResourceBudgetReport,
     check_resource_budget,
 )

@@ -1,12 +1,12 @@
 """spec'd path for extension probing.
 
-Re-exports :mod:`compgen.providers.provider_probe` so user spec
-imports of ``compgen.extensions.probe`` resolve.
+Re-exports :mod:`xpu_rt.providers.provider_probe` so user spec
+imports of ``xpu_rt.extensions.probe`` resolve.
 """
 
 from __future__ import annotations
 
-from compgen.providers.provider_probe import (
+from xpu_rt.providers.provider_probe import (
     PROBE_SCHEMA_VERSION,
     probe_dialect_provider,
     probe_provider,

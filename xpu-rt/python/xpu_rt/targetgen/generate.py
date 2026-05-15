@@ -18,15 +18,15 @@ from pathlib import Path
 
 import structlog
 
-from compgen.stages.registry import TargetDialectStack
-from compgen.targetgen.classify import Classification, TargetFamily, classify_hardware
-from compgen.targetgen.hardware_spec import HardwareSpec
-from compgen.targetgen.load import extract_target_profile, load_hardware_spec
-from compgen.targetgen.plan import SupportPlan, generate_support_plan
-from compgen.targetgen.validate_spec import validate_hardware_spec
-from compgen.targetgen.verification_ladder import VerificationManifest, generate_verification_manifest
-from compgen.targets.capability import CapabilitySpec, infer_capabilities
-from compgen.targets.schema import TargetProfile
+from xpu_rt.stages.registry import TargetDialectStack
+from xpu_rt.targetgen.classify import Classification, TargetFamily, classify_hardware
+from xpu_rt.targetgen.hardware_spec import HardwareSpec
+from xpu_rt.targetgen.load import extract_target_profile, load_hardware_spec
+from xpu_rt.targetgen.plan import SupportPlan, generate_support_plan
+from xpu_rt.targetgen.validate_spec import validate_hardware_spec
+from xpu_rt.targetgen.verification_ladder import VerificationManifest, generate_verification_manifest
+from xpu_rt.targets.capability import CapabilitySpec, infer_capabilities
+from xpu_rt.targets.schema import TargetProfile
 
 log = structlog.get_logger()
 
@@ -49,23 +49,23 @@ class GeneratedTarget:
 def _get_family_constructor(family: TargetFamily):  # noqa: ANN202
     """Import and return the stack constructor for a family."""
     if family == TargetFamily.SIMT_GPU_HAL:
-        from compgen.targetgen.families.simt_gpu_hal import create_gpu_stack
+        from xpu_rt.targetgen.families.simt_gpu_hal import create_gpu_stack
 
         return create_gpu_stack
     if family == TargetFamily.RVV_CPU_EXTENSION:
-        from compgen.targetgen.families.rvv_cpu_extension import create_rvv_cpu_stack
+        from xpu_rt.targetgen.families.rvv_cpu_extension import create_rvv_cpu_stack
 
         return create_rvv_cpu_stack
     if family == TargetFamily.ROCC_ACCELERATOR:
-        from compgen.targetgen.families.rocc_accelerator import create_rocc_stack
+        from xpu_rt.targetgen.families.rocc_accelerator import create_rocc_stack
 
         return create_rocc_stack
     if family == TargetFamily.RISCV_VENDOR_MATRIX:
-        from compgen.targetgen.families.riscv_vendor_matrix import create_vendor_matrix_stack
+        from xpu_rt.targetgen.families.riscv_vendor_matrix import create_vendor_matrix_stack
 
         return create_vendor_matrix_stack
     if family == TargetFamily.STRUCTURED_NPU_TEXT_ISA:
-        from compgen.targetgen.families.structured_npu import create_npu_stack
+        from xpu_rt.targetgen.families.structured_npu import create_npu_stack
 
         return create_npu_stack
     msg = f"No stack constructor for family {family}"
@@ -128,7 +128,7 @@ def generate_target(
 
     # 8. Optionally generate C HAL driver
     if emit_hal_driver:
-        from compgen.targetgen.hal_codegen import generate_hal_driver
+        from xpu_rt.targetgen.hal_codegen import generate_hal_driver
 
         hal_dir = output / "hal"
         hal_files = generate_hal_driver(spec, hal_dir)

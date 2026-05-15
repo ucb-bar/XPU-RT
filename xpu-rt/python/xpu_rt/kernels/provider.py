@@ -2,13 +2,13 @@
 
 Kernel generators are NOT just autocomp. They are pluggable providers
 (autocomp, KernelBlaster, KernelEvolve, future ones) that communicate
-bidirectionally with CompGen's memory system:
+bidirectionally with XPU-RT's memory system:
 
-1. CompGen sends a ``KernelContract`` (op, shapes, dtypes, layout, target)
+1. XPU-RT sends a ``KernelContract`` (op, shapes, dtypes, layout, target)
 2. Provider searches and returns a ``ProviderResult``
 3. Provider exports ``KnowledgeExport``s (learned schedules, hardware rules)
 4. Provider sends ``ContractFeedback`` (suggests contract modifications)
-5. CompGen evolves contracts based on provider feedback
+5. XPU-RT evolves contracts based on provider feedback
 
 The contract and the generator are **codesigned** — the contract evolves
 based on what generators discover.
@@ -41,10 +41,10 @@ class RuntimeCapabilities:
 
 @dataclass(frozen=True)
 class KernelContract:
-    """What CompGen asks a provider to generate.
+    """What XPU-RT asks a provider to generate.
 
     This is bidirectional — providers can suggest modifications via
-    ContractFeedback, and CompGen updates future contracts accordingly.
+    ContractFeedback, and XPU-RT updates future contracts accordingly.
     """
 
     region_id: str = ""
@@ -77,9 +77,9 @@ class SearchBudget:
 
 @dataclass(frozen=True)
 class KnowledgeExport:
-    """What a provider learned that CompGen should know.
+    """What a provider learned that XPU-RT should know.
 
-    Providers export their discoveries so CompGen's unified memory
+    Providers export their discoveries so XPU-RT's unified memory
     can reuse them for future tasks — even tasks routed to different
     providers.
     """
@@ -97,7 +97,7 @@ class ContractFeedback:
     """Provider suggests contract modifications.
 
     Example: a provider discovers that column-major layout is 2x faster
-    for this op family, and feeds that back. CompGen updates the
+    for this op family, and feeds that back. XPU-RT updates the
     KernelContract for future requests.
 
     Phase D / adds two fields:
@@ -216,7 +216,7 @@ class ProviderResult:
 #   * Every provider may implement an optional ``bid(contract_v3)
 #     -> BidPreview`` method.
 #   * Legacy providers without ``bid()`` are bridged via
-#     :func:`compgen.kernels.registry.compute_bid`, which returns a
+#     :func:`xpu_rt.kernels.registry.compute_bid`, which returns a
 #     low-confidence placeholder.
 #   * The auction ranks by ``perf_estimate_us / confidence`` and sends
 #     the top-K to ``fulfill()`` (today's ``search()`` semantics).
@@ -229,7 +229,7 @@ class ProviderResult:
 class ProviderProtocolViolation(ValueError):
     """A provider returned a structurally-malformed BidPreview / ProviderResult.
 
-    raises this from :func:`compgen.kernels.registry.compute_bid`
+    raises this from :func:`xpu_rt.kernels.registry.compute_bid`
     when ``bid()`` returns a ``BidPreview`` with out-of-range fields
     (negative confidence, non-finite perf_estimate, contract_hash that
     disagrees with the canonical hash, etc.). The auction treats this
@@ -400,7 +400,7 @@ class KernelProvider(Protocol):
         """Export accumulated knowledge from this provider.
 
         Called after search to collect what the provider learned
-        that CompGen's memory should store for future reuse.
+        that XPU-RT's memory should store for future reuse.
         """
         ...
 
@@ -409,7 +409,7 @@ class KernelProvider(Protocol):
 #     def bid(self, contract: KernelContractV3) -> BidPreview: ...
 # The Protocol above does NOT declare ``bid`` so legacy providers
 # remain ``isinstance(p, KernelProvider)``-conformant. Use
-# :func:`compgen.kernels.registry.compute_bid` to safely invoke it
+# :func:`xpu_rt.kernels.registry.compute_bid` to safely invoke it
 # with a placeholder fallback.
 
 
