@@ -78,14 +78,27 @@ SUBMODULE="${REPO_ROOT}/zephyr-chipyard-sw"
 case "${BACKEND}" in
     rvv|RVV)
         TARGET=rvv
-        HW=RVV
+        # The firesim-saturn RVV bitstream we run today is VLEN=256, DLEN=128.
+        # Tag the on-disk profile data with that config so future configs
+        # (e.g. V512D128 — wider LMUL on the same DLEN) can land alongside
+        # in gen/profile/<config>_rvv/firesim_rocket_saturn/...  Override
+        # with RVV_CONFIG=<tag> when profiling a different bitstream.
+        HW="${RVV_CONFIG:-V256D128}_rvv"
         ;;
     gemmini)
         TARGET=gemmini
         HW=gemmini
         ;;
+    gemmini_q31)
+        TARGET=gemmini_q31
+        HW=gemmini_q31
+        ;;
+    scalar)
+        TARGET=scalar
+        HW=scalar
+        ;;
     *)
-        echo "ERROR: backend must be 'rvv' or 'gemmini', got '${BACKEND}'" >&2
+        echo "ERROR: backend must be 'scalar' | 'rvv' | 'gemmini' | 'gemmini_q31', got '${BACKEND}'" >&2
         exit 1
         ;;
 esac
@@ -108,12 +121,32 @@ echo "[profile_firesim] FIRESIM_CONF=${FIRESIM_CONF}"
 echo "[profile_firesim] PROFILE_OUT_ROOT=${PROFILE_OUT_ROOT}"
 
 # 1) Run multi_demo's profile capture.
+#
+# BACKEND=llm + GLOBAL_CURATED_DIR are critical for the gemmini / RVV
+# variants: multi_demo/run.sh defaults BACKEND=reference, which emits the
+# scalar 6-loop reference impl for every kernel and never probes curated
+# kernels. That makes the FireSim profile measure scalar code on rocket-
+# saturn instead of the accelerated gemmini / RVV path. Force the LLM
+# selection path so curated kernels (under modelblaster/kernels/<target>/) get
+# promoted into the per-model generated/<target>/kernels.c before build.
 cd "${SUBMODULE}"
+# scalar has no curated kernels and several specs (add_s8, relu_s8,
+# maxpool2d_s8) only register gemmini-affinity algorithms — BACKEND=llm
+# would empty the queue after target_affinity filtering and abort. Use
+# BACKEND=reference for scalar so spec.reference_impl is emitted
+# directly. Accelerated targets stay on BACKEND=llm so curated kernels
+# get probed/promoted.
+_DEFAULT_BACKEND_KIND="llm"
+if [[ "${TARGET}" == "scalar" ]]; then
+    _DEFAULT_BACKEND_KIND="reference"
+fi
 TARGET="${TARGET}" \
 MODELS="${NETWORK}" \
 QUANT="${QUANT}" \
 RUNNER=firesim \
-AGENTS_POOL_THREADS=1 \
+BACKEND="${BACKEND_KIND:-${_DEFAULT_BACKEND_KIND}}" \
+GLOBAL_CURATED_DIR="${GLOBAL_CURATED_DIR:-${SUBMODULE}/modelblaster/kernels}" \
+MODELBLASTER_POOL_THREADS=1 \
 FIRESIM_CONF="${FIRESIM_CONF}" \
 PROFILE_OUT_ROOT="${PROFILE_OUT_ROOT}" \
 PROFILE_SOURCE=firesim \
@@ -122,7 +155,7 @@ PROFILE_CPU="${PROFILE_CPU}" \
 PROFILE_CORES="${TOPO}" \
 FORCE_REGEN="${FORCE_REGEN}" \
 FIRESIM_TIMEOUT="${FIRESIM_TIMEOUT}" \
-    bash agents/examples/multi_demo/run.sh
+    bash modelblaster/examples/multi_demo/run.sh
 
 # 2) Verify CSV landed.
 TOPO_DIR="topo_${TOPO//,/_}"
