@@ -13,15 +13,15 @@ data/toplevel/networks_<name>.json     ← you write this
         ▼
 schedules/scheduled_networks_<name>_<solver>_profiled.json
         │
-        │  agents/examples/xpurt_demo/run.sh
+        │  modelblaster/examples/xpurt_demo/run.sh
         ▼
-zephyr-chipyard-sw/agents/examples/xpurt_demo/<quant>/build/<targets>_firesim/zephyr/zephyr.elf
+zephyr-chipyard-sw/modelblaster/examples/xpurt_demo/<quant>/build/<targets>_firesim/zephyr/zephyr.elf
         │
         │  firesim runworkload (called by run.sh)
         ▼
 /scratch2/dima/chipyard-fsim/.../uartlog  (per-dispatch trace CSV)
         │
-        │  agents/scripts/plot_ros_trace.py / scripts/plot_scheduled_json.py
+        │  modelblaster/scripts/plot_ros_trace.py / scripts/plot_scheduled_json.py
         ▼
 plots/<name>_<solver>_predicted_vs_actual.png
         │
@@ -76,9 +76,9 @@ canonical sources for these:
 
 * From the **Merlin** flow (BananaPi / SpacemiT): see `FreshScheduler/README.md`,
   output under `gen/vmfb/<net>/.../<net>.fp32_dispatch_graph.json`.
-* From the **agents** pipeline (FireSim/Zephyr): output under
+* From the **modelblaster** pipeline (FireSim/Zephyr): output under
   `zephyr-chipyard-sw/gen/qnn_vmfb/<net>/.../<net>_dispatch_graph.json`
-  (after running `agents/examples/<net>/run.sh`).
+  (after running `modelblaster/examples/<net>/run.sh`).
 
 The dispatch graph format is the same in both; pick whichever flow has
 already generated graphs for the networks in your spec.
@@ -99,11 +99,11 @@ source scripts/set_envvars_sdk.sh
 
 TARGET=gemmini_q31 BACKEND=reference QUANT=int8 \
   RUNNER=firesim FIRESIM_TIMEOUT=600 \
-  bash agents/examples/<net>/run.sh
+  bash modelblaster/examples/<net>/run.sh
 
 TARGET=rvv BACKEND=reference QUANT=int8 \
   RUNNER=firesim FIRESIM_TIMEOUT=600 \
-  bash agents/examples/<net>/run.sh
+  bash modelblaster/examples/<net>/run.sh
 ```
 
 Each invocation:
@@ -112,8 +112,8 @@ Each invocation:
 2. Builds the harness ELF, runs on FireSim, captures per-op wall
    cycles into `gen/profile/<backend>/<target>/<net>/.../results.csv`.
 
-See `agents/notes/pipeline_overview.md` for the single-model flow
-breakdown and `agents/README.md` for the env-var reference (TARGET,
+See `modelblaster/notes/pipeline_overview.md` for the single-model flow
+breakdown and `modelblaster/README.md` for the env-var reference (TARGET,
 BACKEND, QUANT, OPTIMIZE, RUNNER).
 
 ## 3. Schedule
@@ -141,10 +141,10 @@ Solver choices:
   recorded an actual trace from step 5 below
 
 The schedule JSON format is documented in
-`zephyr-chipyard-sw/agents/notes/scheduler_investigation.md`.
+`zephyr-chipyard-sw/modelblaster/notes/scheduler_investigation.md`.
 xpurt-walker semantics (how an entry's `hardware_target`,
 `time_dependency`, etc. become C dispatch records) live in
-`agents/notes/xpurt_walker_semantics.md`.
+`modelblaster/notes/xpurt_walker_semantics.md`.
 
 ## 4. Codegen + build the harness binary
 
@@ -159,15 +159,15 @@ SCHEDULE_JSON=/scratch2/dima/misc_sw/FreshScheduler/schedules/scheduled_networks
   MODELS=<net1>,<net2>,...  \
   BACKENDS=gemmini_q31,rvv \
   QUANTS=int8,int8,fp32 \
-  REGISTRY=$(pwd)/agents/cores/chipyard_dual_rocket_gemmini_q31.json \
+  REGISTRY=$(pwd)/modelblaster/cores/chipyard_dual_rocket_gemmini_q31.json \
   CPU_P_KIND=gemmini_q31 CPU_E_KIND=rvv \
   RUNNER=firesim FIRESIM_TIMEOUT=900 \
-  bash agents/examples/xpurt_demo/run.sh
+  bash modelblaster/examples/xpurt_demo/run.sh
 ```
 
-What this does (per `agents/examples/xpurt_demo/run.sh`):
+What this does (per `modelblaster/examples/xpurt_demo/run.sh`):
 
-1. Re-runs each constituent `agents/examples/<net>/run.sh` (unless
+1. Re-runs each constituent `modelblaster/examples/<net>/run.sh` (unless
    `FORCE_REGEN=0`) so per-network IR + per-backend kernel TUs exist.
 2. `ingest_xpurt_schedule.py` reads the schedule.json, validates each
    `(network, dispatch_id)` against that network's IR, resolves
@@ -175,19 +175,19 @@ What this does (per `agents/examples/xpurt_demo/run.sh`):
    `dispatch_table.c`. Critical detail: it builds an
    `ir_dispatch_id → codegen_idx` remap because zero-cost ops
    (`view`, `chunk*`) are filtered from the codegen table —
-   see `agents/notes/xpurt_walker_semantics.md` for the trap.
+   see `modelblaster/notes/xpurt_walker_semantics.md` for the trap.
 3. `generate_xpurt_main.py` emits the `main.c` that initializes
    `agents_pool` and walks the dispatch table.
 4. `west build` links every model × every backend you listed.
 5. Boots on FireSim via `firesim_runner.py` (which now calls
    `firesim infrasetup` before `runworkload` — see
-   `agents/validation/firesim_runner.py`).
-6. Captures `AGENTS_XPURT_TRACE` rows from the uartlog if
+   `modelblaster/validation/firesim_runner.py`).
+6. Captures `MODELBLASTER_XPURT_TRACE` rows from the uartlog if
    `XPURT_TRACE=1`.
 
 ## 5. Inspect the FireSim run
 
-The runner streams uartlog and prints `AGENTS_WALL_CYCLES` per network
+The runner streams uartlog and prints `MODELBLASTER_WALL_CYCLES` per network
 when each finishes. The raw uartlog lands at
 `/scratch2/dima/chipyard-fsim/sims/firesim/firesim_rundir/sim_slot_0/uartlog`.
 
@@ -201,7 +201,7 @@ cp /scratch2/dima/chipyard-fsim/sims/firesim/firesim_rundir/sim_slot_0/uartlog \
 Per-dispatch trace plotting (Gantt):
 
 ```bash
-python3 agents/scripts/plot_ros_trace.py \
+python3 modelblaster/scripts/plot_ros_trace.py \
   --uartlog data/xpurt_<name>_q31_firesim.txt \
   --clock-mhz 1 \
   --out plots/xpurt_<name>_q31_firesim.png \
@@ -209,7 +209,7 @@ python3 agents/scripts/plot_ros_trace.py \
 ```
 
 > mtime ticks are 1 µs at the modeled 1 GHz SoC frequency on FireSim,
-> so `--clock-mhz 1`. See `agents/examples/microros_demo/ROS_FLOW.md`
+> so `--clock-mhz 1`. See `modelblaster/examples/microros_demo/ROS_FLOW.md`
 > §4 for the same convention applied to microros runs.
 
 Predicted-vs-actual schedule overlay (matches predicted bars against
@@ -227,7 +227,7 @@ python scripts/plot_scheduled_json.py \
 Same workload run through the fixed-pinning micro-ROS harness gives
 a reference point that isolates "what does the scheduler buy you over
 naive per-net pinning". The flow for the baseline lives in
-`zephyr-chipyard-sw/agents/examples/microros_demo/ROS_FLOW.md`. Once
+`zephyr-chipyard-sw/modelblaster/examples/microros_demo/ROS_FLOW.md`. Once
 you have a microros uartlog too:
 
 ```bash
@@ -257,11 +257,11 @@ source set_api_keys.sh
 | concern | doc |
 |---|---|
 | Workload spec schema (`networks_*.json`) | This doc §1; example files under `data/toplevel/` |
-| Single-network PyTorch → ELF | `zephyr-chipyard-sw/agents/notes/pipeline_overview.md` |
-| Schedule JSON format + walker | `zephyr-chipyard-sw/agents/notes/xpurt_walker_semantics.md` |
+| Single-network PyTorch → ELF | `zephyr-chipyard-sw/modelblaster/notes/pipeline_overview.md` |
+| Schedule JSON format + walker | `zephyr-chipyard-sw/modelblaster/notes/xpurt_walker_semantics.md` |
 | Scheduler invocation flags | `scripts/run_xpurt_schedule.py --help`; module docs in `xpu-rt/` |
-| FireSim harness env knobs | `agents/examples/xpurt_demo/run.sh` header |
-| Co-execution baseline matrix | `agents/notes/firesim_co_execution_baseline_plan.md` |
-| micro-ROS reference flow | `agents/examples/microros_demo/ROS_FLOW.md` |
-| RVV / Gemmini / Q31 gotchas | `agents/notes/gemmini_extension_plan.md`, `agents/notes/zephyr_rvv_fix_summary.md`, `agents/notes/saturn_strided_memop_bug.md` |
+| FireSim harness env knobs | `modelblaster/examples/xpurt_demo/run.sh` header |
+| Co-execution baseline matrix | `modelblaster/notes/firesim_co_execution_baseline_plan.md` |
+| micro-ROS reference flow | `modelblaster/examples/microros_demo/ROS_FLOW.md` |
+| RVV / Gemmini / Q31 gotchas | `modelblaster/notes/gemmini_extension_plan.md`, `modelblaster/notes/zephyr_rvv_fix_summary.md`, `modelblaster/notes/saturn_strided_memop_bug.md` |
 | Top-level Merlin/SpacemiT path | `FreshScheduler/README.md` |
