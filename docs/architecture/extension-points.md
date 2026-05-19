@@ -1,11 +1,6 @@
 # Extension Points Guide
 
-> **See also**
-> - [Getting Started → Extension Authoring](../getting-started/extension-authoring.md) — walkthrough + scaffolding with `xpu-rt ext new`.
-> - [Reference → Extension Points](../reference/extension-points.md) — compact lookup table.
->
-> This page is the full protocol-level guide; the two links above are the
-> shorter paths in.
+> **See also** [Getting Started → Extension Authoring](../getting-started/extension-authoring.md) — walkthrough + scaffolding with `xpu-rt ext new`.
 
 This guide explains how to extend XPU-RT with custom kernel generators, quantization methods, target backends, MLIR dialects, and runtime adapters.
 

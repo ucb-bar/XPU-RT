@@ -61,7 +61,7 @@ See [MCP Setup](../getting-started/mcp-setup.md) and
 | `xpu-rt ext doctor` | Re-run every discovery validator and report failures |
 
 See [Extension Authoring](../getting-started/extension-authoring.md) and
-[Extension Points](extension-points.md).
+[Extension Points](../architecture/extension-points.md).
 
 ## LLM subcommands — `xpu-rt llm ...`
 

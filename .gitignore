@@ -3,6 +3,15 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+# Local artifacts (developer working tree only — never committed)
+/.compgen/
+/realtime_qnn/
+/results/
+/scheduled_qnn_island_demo.json
+/schemas/
+/audit_seed/
+/xpu-rt-output/
+
 # C extensions
 *.so
 
@@ -108,8 +117,7 @@ ENV/
 env.bak/
 venv.bak/
 # ...but not the xpu_rt.agent.env package (virtualenv pattern collision)
-!python/xpu_rt/agent/env/
-!xpu-rt/python/xpu_rt/agent/env/
+!xpu_rt/agent/env/
 
 # Spyder / Rope project settings
 .spyderproject
@@ -159,7 +167,7 @@ tmp
 
 # === Build / generated outputs (paper, plots, results, ...) ===
 # All paper/plot/result outputs land under build/ and are NEVER tracked.
-# Audit seeds that ARE inputs live at xpu-rt/audit_seed/, not under build/.
+# Audit seeds that ARE inputs live at audit_seed/, not under build/.
 build/
 */plots/
 plots/
@@ -169,8 +177,7 @@ paper/
 
 # Generated MLIR artifacts
 *.mlir
-!python/xpu_rt/transforms/templates/*.mlir
-!xpu-rt/python/xpu_rt/transforms/templates/*.mlir
+!xpu_rt/transforms/templates/*.mlir
 
 # Generated kernels
 generated_kernels/
@@ -265,16 +272,10 @@ user_perspective/
 *.db-wal
 userpacks/**/.xpu_rt_external/
 userpacks/**/.xpu-rt_external/
-xpu-rt/userpacks/**/.xpu_rt_external/
-xpu-rt/userpacks/**/.xpu-rt_external/
-python/xpu_rt/generated/promoted/
-python/xpu_rt/transforms/promoted/
-python/xpu_rt/kernels/promoted/
-python/xpu_rt/extensions/promoted/
-xpu-rt/python/xpu_rt/generated/promoted/
-xpu-rt/python/xpu_rt/transforms/promoted/
-xpu-rt/python/xpu_rt/kernels/promoted/
-xpu-rt/python/xpu_rt/extensions/promoted/
+xpu_rt/generated/promoted/
+xpu_rt/transforms/promoted/
+xpu_rt/kernels/promoted/
+xpu_rt/extensions/promoted/
 .claude/worktrees/
 .env.local
 *.jsonl

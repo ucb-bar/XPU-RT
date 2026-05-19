@@ -1,0 +1,13 @@
+schema_version: target_card_v1
+target_id: spacemit_x60_xsmtvdot
+family: host_cpu
+vendor: spacemit
+dispatch_modes: [sync]
+memory_tiers:
+  - {name: dram, kind: host, capacity_bytes: 4294967296}
+description: |
+  SpaceMiT X60 (RISC-V 64-bit) with the XSmtVDot vendor extension —
+  vector dot-product acceleration for int8/bf16 kernels. Compiled via
+  merlin (tools/compile.py with target=spacemit_x60); runs on real
+  X60 boards or under QEMU. Capability spec at
+  $MERLIN_ROOT/target_specs/examples/spacemit_x60_xsmtvdot/capability.yaml.

@@ -211,10 +211,6 @@ print(KernelBlasterProvider().search(contract, SearchBudget(max_iterations=5)))
 
 ## Related
 
-- [Extension Points](../reference/extension-points.md) — how providers
-  participate in XPU-RT.
-- [Architecture → Extension Points](../architecture/extension-points.md) —
-  full `KernelProvider` protocol + alternative backends.
-- Source: `python/xpu_rt/kernels/kernelblaster_adapter.py` +
-  `python/xpu_rt/kernels/providers/kernelblaster.py`.
+- [Architecture → Extension Points](../architecture/extension-points.md) — full `KernelProvider` protocol + alternative backends.
+- Source: `xpu_rt/kernels/kernelblaster_adapter.py` + `xpu_rt/kernels/providers/kernelblaster.py`.
 - Tests: `tests/kernels/providers/test_kernelblaster_provider.py`.

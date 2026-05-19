@@ -1,0 +1,14 @@
+schema_version: target_card_v1
+target_id: saturn_opu_v128
+family: custom_accelerator
+vendor: UCB-BAR
+dispatch_modes: [sync, static_plan]
+memory_tiers:
+  - {name: dram, kind: host, capacity_bytes: 268435456}
+  - {name: vector_registers, kind: register_file, capacity_bytes: 0}
+  - {name: accumulator, kind: accumulator_state, capacity_bytes: 0}
+description: |
+  Saturn / RISC-V OPU research accelerator (V128, +xopu) — driven by
+  merlin via tools/compile.py with target=saturn_opu. Executes under
+  FireSim simulation; capability spec lives at
+  $MERLIN_ROOT/target_specs/examples/saturn_opu_v128/capability.yaml.

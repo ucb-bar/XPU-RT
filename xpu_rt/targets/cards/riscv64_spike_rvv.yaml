@@ -1,0 +1,12 @@
+schema_version: target_card_v1
+target_id: riscv64_spike_rvv
+family: host_cpu
+vendor: riscv-spike
+dispatch_modes: [sync]
+memory_tiers:
+  - {name: dram, kind: host, capacity_bytes: 268435456}
+description: |
+  RISC-V 64-bit + RVV under Chipyard's Spike+pk. First-class
+  cross-compile target — the compile pipeline runs on x86 host, the
+  emitted bundle is cross-compiled and executed on Spike. Kernels via
+  the XNNPACK provider (NHWC, fp32 only in v1).

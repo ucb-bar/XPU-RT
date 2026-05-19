@@ -1,0 +1,98 @@
+/*
+ * std:: math compat for chipyard newlib + libstdc++ 13.2.0
+ * (riscv64-unknown-elf).
+ *
+ * That libstdc++ ships a <cmath> that just `#include <math.h>` without
+ * pulling C math symbols into namespace std::. XNNPACK's reference C++
+ * kernels (src/reference/{unary,binary}-elementwise.cc, plus a few
+ * pack-* sources) qualify these with std::, so the build fails with
+ * "no member named 'round' in namespace 'std'" etc.
+ *
+ * We `#include_next <cmath>` to pull whatever the toolchain provides,
+ * then explicitly `using ::name;` into std:: for the funcs XNNPACK
+ * relies on. This is selected only when the
+ * runtime/native/libxpu_rt/src/compat/picolibc-freestanding directory
+ * is on the include path — the riscv-spike build adds it there.
+ *
+ * On any other platform (hosted glibc, Zephyr SDK picolibc) this
+ * header is never reached.
+ */
+
+#ifndef XPU_RT_COMPAT_CMATH
+#define XPU_RT_COMPAT_CMATH 1
+
+#include_next <cmath>
+#include <math.h>
+
+namespace std {
+
+using ::round;
+using ::roundf;
+using ::expm1;
+using ::expm1f;
+using ::log1p;
+using ::log1pf;
+using ::erf;
+using ::erff;
+using ::erfc;
+using ::erfcf;
+using ::cbrt;
+using ::cbrtf;
+using ::copysign;
+using ::copysignf;
+using ::nearbyint;
+using ::nearbyintf;
+using ::trunc;
+using ::truncf;
+using ::rint;
+using ::rintf;
+using ::lrint;
+using ::lrintf;
+using ::llrint;
+using ::llrintf;
+using ::lround;
+using ::lroundf;
+using ::llround;
+using ::llroundf;
+using ::fmax;
+using ::fmaxf;
+using ::fmin;
+using ::fminf;
+using ::fdim;
+using ::fdimf;
+using ::hypot;
+using ::hypotf;
+using ::tgamma;
+using ::tgammaf;
+using ::lgamma;
+using ::lgammaf;
+using ::remainder;
+using ::remainderf;
+using ::remquo;
+using ::remquof;
+using ::nan;
+using ::nanf;
+using ::nextafter;
+using ::nextafterf;
+using ::scalbn;
+using ::scalbnf;
+using ::ilogb;
+using ::ilogbf;
+using ::logb;
+using ::logbf;
+using ::exp2;
+using ::exp2f;
+using ::log2;
+using ::log2f;
+using ::acosh;
+using ::acoshf;
+using ::asinh;
+using ::asinhf;
+using ::atanh;
+using ::atanhf;
+using ::fma;
+using ::fmaf;
+
+} // namespace std
+
+#endif // XPU_RT_COMPAT_CMATH

@@ -53,7 +53,7 @@ print(response.status.value, response.objective_value, response.formulation_hash
 
 Both end up in MOSEK (when licensed) via CVXPY. The envelope path adds
 typed status, formulation_hash, time_ms, selected_backend — and slots into
-the same `compgen-solver-planning` MCP skill that probes placement and
+the same `xpu_rt-solver-planning` MCP skill that probes placement and
 memory.
 
 ## Outputs

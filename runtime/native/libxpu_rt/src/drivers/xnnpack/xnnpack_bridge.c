@@ -99,6 +99,8 @@ void xpu_rt_xnn_destroy(xpu_rt_xnn_op* op) {
 /* One global XNNPACK init under a mutex. */
 static pthread_mutex_t g_init_mu = PTHREAD_MUTEX_INITIALIZER;
 static int g_initialized = 0;
+#define BRIDGE_LOCK()   pthread_mutex_lock(&g_init_mu)
+#define BRIDGE_UNLOCK() pthread_mutex_unlock(&g_init_mu)
 
 /* Opaque handle the provider holds. We keep the XNNPACK operator
  * pointer plus enough state to reshape/setup on subsequent calls
@@ -126,29 +128,29 @@ static int translate_xnn_status(enum xnn_status st) {
 
 int xpu_rt_xnn_global_initialize(void) {
     set_error(NULL);
-    pthread_mutex_lock(&g_init_mu);
+    BRIDGE_LOCK();
     if (g_initialized) {
-        pthread_mutex_unlock(&g_init_mu);
+        BRIDGE_UNLOCK();
         return XPU_RT_XNN_OK;
     }
     enum xnn_status st = xnn_initialize(NULL /* allocator */);
     if (st != xnn_status_success) {
-        pthread_mutex_unlock(&g_init_mu);
+        BRIDGE_UNLOCK();
         set_error("xnn_initialize failed");
         return translate_xnn_status(st);
     }
     g_initialized = 1;
-    pthread_mutex_unlock(&g_init_mu);
+    BRIDGE_UNLOCK();
     return XPU_RT_XNN_OK;
 }
 
 void xpu_rt_xnn_global_deinitialize(void) {
-    pthread_mutex_lock(&g_init_mu);
+    BRIDGE_LOCK();
     if (g_initialized) {
         xnn_deinitialize();
         g_initialized = 0;
     }
-    pthread_mutex_unlock(&g_init_mu);
+    BRIDGE_UNLOCK();
 }
 
 const char* xpu_rt_xnn_version(void) {

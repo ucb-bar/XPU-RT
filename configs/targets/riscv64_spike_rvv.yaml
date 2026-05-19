@@ -1,0 +1,69 @@
+schema_version: graphcomp_target_config_v1
+target_id: riscv64_spike_rvv
+device_kind: cpu
+description: |
+  RISC-V 64-bit bare-metal target with the Vector extension (RVV 1.0),
+  designed to run under Chipyard's Spike simulator + proxy kernel (pk).
+  Kernels are produced by the XNNPACK provider, cross-compiled by the
+  riscv64-unknown-elf-gcc toolchain shipped with Chipyard, and executed
+  through libxpu_rt's cpu_sync driver with platform=bare.
+
+  Conservative single-issue RVV-128 numbers — Spike is functional, not
+  cycle-accurate, so these exist to keep the planner's working-set
+  decisions consistent rather than as latency truth. Real latency comes
+  from M-22.1 perf measurement when this target lands on hardware.
+
+peak_compute_gflops: 0.4
+peak_bandwidth_gb_s: 0.5
+memory_tiers:
+  scratchpad_bytes: 32768
+  l2_bytes: 524288
+  l3_bytes: 1048576
+  system_bytes: 268435456       # pk gives ~256 MiB by default
+supported_dtypes:
+  - fp32
+numerical_budgets:
+  fp32: 1.0e-3
+  fast_math: 5.0e-3
+peak_compute_per_dtype:
+  f32: 0.0004
+  fp32: 0.0004
+mma_shapes: {}
+codegen_hints:
+  - "RVV 1.0 via XNNPACK microkernels — VLEN=128 (Chipyard Spike)"
+  - "NHWC layout required for spatial ops; the layout-norm pass inserts NCHW→NHWC"
+  - "single-threaded; pthreadpool stub runs every tile serially"
+register_quota_per_thread: 256
+max_concurrent_blocks: 0
+
+working_set_tiles:
+  matmul:
+    - { M: 16,  N: 16,  K: 16 }
+    - { M: 32,  N: 32,  K: 16 }
+    - { M: 64,  N: 64,  K: 32 }
+  elementwise:
+    - { numel: 128 }
+    - { numel: 512 }
+    - { numel: 2048 }
+
+# Cross-compile block. Read by xpu_rt.runtime.cross_compile.riscv64_bare
+# when the bundle stage runs. The host pipeline still runs on x86 — only
+# the emitted bundle is cross-compiled.
+cross_compile:
+  target_triple: riscv64-unknown-elf
+  toolchain_root: /scratch2/agustin/chipyard/.conda-env/riscv-tools
+  toolchain_prefix: riscv64-unknown-elf-
+  cmake_toolchain_file: runtime/native/libxpu_rt/toolchains/riscv64-spike-rvv.cmake
+  arch: rv64gcv
+  abi: lp64d
+  extra_cflags:
+    - "-mcmodel=medany"
+    - "-O2"
+  link_specs:
+    - "-specs=htif_nano.specs"
+    - "-static"
+  runner:
+    binary: /scratch2/agustin/chipyard/toolchains/riscv-tools/riscv-isa-sim/build/spike
+    pk:     /scratch2/agustin/chipyard/toolchains/riscv-tools/riscv-pk/build/pk
+    isa:    rv64gcv
+    timeout_seconds: 180

@@ -6,7 +6,7 @@ heterogeneous shared-memory SoCs.
 
 It combines two complementary subsystems:
 
-1. **A compiler generator** (formerly *CompGen*) — an LLM-driven
+1. **A compiler generator** (formerly *XPU-RT*) — an LLM-driven
    compiler-recipe generator for heterogeneous hardware targets. Given a
    PyTorch program and a hardware profile, it produces a verified deployment
    recipe: graph/lowering transforms, custom kernels, placement decisions, and
@@ -40,35 +40,27 @@ For the scheduler stack:
 
 ```bash
 uv pip install -e ".[scheduler]"        # cvxpy / pandas / matplotlib / scipy
-uv run python scripts/run_xpurt_schedule.py --help
+uv run python tools/scheduling/run_xpurt_schedule.py --help
 ```
 
 ## Layout
 
 ```
 XPU-RT/
-├── xpu-rt/python/xpu_rt/         # unified Python package
+├── xpu_rt/                       # unified Python package (compiler generator + scheduler)
 │   ├── agent/  capture/  ir/  passes/  stages/  ...   # compiler generator
 │   └── scheduler/                # CVX two-cluster scheduler (XPU-RT origin)
-├── xpu-rt/tests/                 # ~7500 pytest tests mirroring the package
-├── xpu-rt/{configs,schemas,examples,benchmarks,userpacks,contrib,infra}/
+├── tests/                        # pytest tests mirroring the package
+├── configs/  schemas/  examples/  benchmarks/  audit_seed/  data/
 ├── runtime/                      # native runtime (libxpu_rt + dispatch runners)
 │   ├── native/libxpu_rt/         # core C/CUDA runtime + drivers
 │   ├── src/  include/  templates/
-│   └── tools/                    # json_dispatch_runner, xpurt_scheduler_runner
+│   ├── tools/                    # json_dispatch_runner, xpurt_scheduler_runner
 │   └── targets/backends/qnn/     # QRB5165 cost model + island DAG scheduler
-│                                 # (CompGen backend pattern; was qnn_scheduler/)
-├── models/qnn/                   # ONNX → TFLite → QNN DLC conversion tooling
-├── sims/                         # XPU-RT IsaacLab task definitions + training scripts
-├── docs/                         # documentation
-├── third_party/                  # ALL submodules + vendored deps:
-│                                 #   merlin/, zephyr-chipyard-sw/, IsaacLab/,
-│                                 #   autocomp/, kernelblaster/, llvm-project/,
-│                                 #   npu_model/, pi0-quant/, zephyr/, cuda-tile/
-├── scripts/                      # heterogeneous_loop, qnn_island_demo,
-│                                 # run_xpurt_schedule, profiling, MCP helpers
-├── xpu-rt/data/                  # op-definition KB + per-model fixtures
-├── xpu-rt/audit_seed/            # tracked input seeds for the audit framework
+├── docs/                         # user-facing documentation
+├── scripts/                      # user-facing entry points (bootstrap, cross-compile, MCP launcher)
+├── tools/                        # dev internals (dev/, experiments/, ci/, e2e/, demos/, profiling/, scheduling/)
+├── third_party/                  # submodules + vendored deps
 └── build/                        # gitignored: paper/, plots/, results/ generated outputs
 ```
 
@@ -103,16 +95,16 @@ arbitrary heterogeneous units), respecting transfer times, dependency DAGs,
 and infeasible-machine constraints.
 
 ```bash
-uv run python scripts/run_xpurt_schedule.py \
+uv run python tools/scheduling/run_xpurt_schedule.py \
   --workload dispatches.json --proc-times profiles.json --transfers xfer.json
-uv run python scripts/qnn_island_demo.py
-uv run python scripts/heterogeneous_loop.py
+uv run python tools/demos/qnn_island_demo.py
+uv run python tools/scheduling/heterogeneous_loop.py
 ```
 
 The runtime targets are built with CMake:
 
 ```bash
-cmake -B runtime/build -S runtime           # CompGen-style native libxpu_rt
+cmake -B runtime/build -S runtime           # XPU-RT-style native libxpu_rt
 cmake -B runtime/build -S runtime \
       -DXPURT_STANDALONE_LIB_PATH=third_party/merlin/build/.../libxpurt_standalone.a
 cmake --build runtime/build --target xpurt_scheduler_runner json_dispatch_runner

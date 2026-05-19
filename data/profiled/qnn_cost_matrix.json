@@ -1,0 +1,1524 @@
+{
+  "dronet": {
+    "/conv_modules.0/Conv": {
+      "CPU": 4315.0,
+      "DSP": 60.0,
+      "GPU": 89.0
+    },
+    "/maxpool1/MaxPool": {
+      "CPU": 474.0,
+      "DSP": 22.0,
+      "GPU": 20.0
+    },
+    "/bn_modules.0/BatchNormalization": {
+      "CPU": 29.0,
+      "DSP": 0.0,
+      "GPU": 9.0
+    },
+    "/relu_modules.0/Relu": {
+      "CPU": 51.0,
+      "DSP": 15.0,
+      "GPU": 26.0
+    },
+    "/conv_modules.1/Conv": {
+      "CPU": 165.0,
+      "DSP": 0.0,
+      "GPU": 64.0
+    },
+    "/relu_modules.1/Relu": {
+      "CPU": 5.0,
+      "DSP": 53.0
+    },
+    "/conv_modules.2/Conv": {
+      "CPU": 108.0,
+      "DSP": 22.0,
+      "GPU": 46.0
+    },
+    "/conv_modules.3/Conv": {
+      "CPU": 54.0,
+      "DSP": 18.0,
+      "GPU": 24.0
+    },
+    "/Add": {
+      "CPU": 15.0,
+      "DSP": 18.0,
+      "GPU": 16.0
+    },
+    "/bn_modules.2/BatchNormalization": {
+      "CPU": 9.0,
+      "DSP": 0.0,
+      "GPU": 7.0
+    },
+    "/relu_modules.2/Relu": {
+      "CPU": 4.0,
+      "DSP": 6.0,
+      "GPU": 7.0
+    },
+    "/conv_modules.4/Conv": {
+      "CPU": 80.0,
+      "DSP": 0.0,
+      "GPU": 48.0
+    },
+    "/relu_modules.3/Relu": {
+      "CPU": 3.0,
+      "DSP": 19.0
+    },
+    "/conv_modules.5/Conv": {
+      "CPU": 96.0,
+      "DSP": 21.0,
+      "GPU": 73.0
+    },
+    "/conv_modules.6/Conv": {
+      "CPU": 48.0,
+      "DSP": 18.0,
+      "GPU": 30.0
+    },
+    "/Add_1": {
+      "CPU": 6.0,
+      "DSP": 6.0,
+      "GPU": 13.0
+    },
+    "/bn_modules.4/BatchNormalization": {
+      "CPU": 6.0,
+      "DSP": 0.0,
+      "GPU": 6.0
+    },
+    "/relu_modules.4/Relu": {
+      "CPU": 4.0,
+      "DSP": 6.0,
+      "GPU": 7.0
+    },
+    "/conv_modules.7/Conv": {
+      "CPU": 165.0,
+      "DSP": 0.0,
+      "GPU": 68.0
+    },
+    "/relu_modules.5/Relu": {
+      "CPU": 3.0,
+      "DSP": 25.0
+    },
+    "/conv_modules.8/Conv": {
+      "CPU": 284.0,
+      "DSP": 30.0,
+      "GPU": 133.0
+    },
+    "/conv_modules.9/Conv": {
+      "CPU": 55.0,
+      "DSP": 22.0,
+      "GPU": 29.0
+    },
+    "/Add_2": {
+      "CPU": 5.0,
+      "DSP": 6.0,
+      "GPU": 12.0
+    },
+    "/Add_2_output_0.nchw": {
+      "CPU": 15.0,
+      "DSP": 13.0,
+      "GPU": 5.0
+    },
+    "/Flatten": {
+      "CPU": 3.0,
+      "DSP": 4.0,
+      "GPU": 17.0
+    },
+    "/relu_modules.6/Relu": {
+      "CPU": 3.0,
+      "DSP": 11.0,
+      "GPU": 26.0
+    },
+    "/linear1/Gemm": {
+      "CPU": 104.0,
+      "DSP": 40.0,
+      "GPU": 39.0
+    },
+    "/linear2/Gemm": {
+      "CPU": 74.0,
+      "DSP": 29.0,
+      "GPU": 36.0
+    },
+    "/sigmoid1/Sigmoid": {
+      "CPU": 9.0,
+      "DSP": 11.0
+    },
+    "Misc accelerator time": {
+      "DSP": 27.0
+    }
+  },
+  "yolov8n": {
+    "pad_0": {
+      "CPU": 2169.0,
+      "DSP": 637.0,
+      "GPU": 378.0
+    },
+    "convolution_0": {
+      "CPU": 12223.0,
+      "DSP": 1662.0,
+      "GPU": 1147.0
+    },
+    "elementwiseneuron_0": {
+      "CPU": 9477.0,
+      "DSP": 752.0,
+      "GPU": 451.0
+    },
+    "elementwise_product_0": {
+      "CPU": 3035.0,
+      "DSP": 445.0,
+      "GPU": 613.0
+    },
+    "pad_1": {
+      "CPU": 665.0,
+      "DSP": 748.0,
+      "GPU": 875.0
+    },
+    "convolution_1": {
+      "CPU": 7911.0,
+      "DSP": 382.0,
+      "GPU": 1649.0
+    },
+    "elementwiseneuron_1": {
+      "CPU": 4837.0,
+      "DSP": 200.0,
+      "GPU": 229.0
+    },
+    "elementwise_product_1": {
+      "CPU": 394.0,
+      "DSP": 142.0,
+      "GPU": 312.0
+    },
+    "convolution_2": {
+      "CPU": 1088.0,
+      "DSP": 146.0,
+      "GPU": 315.0
+    },
+    "elementwiseneuron_2": {
+      "CPU": 3816.0,
+      "DSP": 206.0,
+      "GPU": 222.0
+    },
+    "elementwise_product_2": {
+      "CPU": 379.0,
+      "DSP": 139.0,
+      "GPU": 313.0
+    },
+    "strided_slice_0": {
+      "CPU": 746.0,
+      "DSP": 4752.0,
+      "GPU": 104.0
+    },
+    "permute_0": {
+      "CPU": 1847.0,
+      "DSP": 1094.0,
+      "GPU": 309.0
+    },
+    "strided_slice_1": {
+      "CPU": 259.0,
+      "DSP": 5926.0,
+      "GPU": 324.0
+    },
+    "permute_1": {
+      "CPU": 1721.0,
+      "DSP": 1034.0,
+      "GPU": 382.0
+    },
+    "convolution_3": {
+      "CPU": 6649.0,
+      "DSP": 352.0,
+      "GPU": 751.0
+    },
+    "elementwiseneuron_3": {
+      "CPU": 2235.0,
+      "DSP": 179.0,
+      "GPU": 109.0
+    },
+    "elementwise_product_3": {
+      "CPU": 193.0,
+      "DSP": 158.0,
+      "GPU": 158.0
+    },
+    "convolution_4": {
+      "CPU": 3589.0,
+      "DSP": 329.0,
+      "GPU": 644.0
+    },
+    "elementwiseneuron_4": {
+      "CPU": 2249.0,
+      "DSP": 177.0,
+      "GPU": 113.0
+    },
+    "elementwise_product_4": {
+      "CPU": 192.0,
+      "DSP": 139.0,
+      "GPU": 153.0
+    },
+    "elementwise_sum_5": {
+      "CPU": 224.0,
+      "DSP": 140.0,
+      "GPU": 271.0
+    },
+    "permute_2": {
+      "CPU": 1573.0,
+      "DSP": 1246.0,
+      "GPU": 304.0
+    },
+    "concat_0": {
+      "CPU": 898.0,
+      "DSP": 155.0,
+      "GPU": 763.0
+    },
+    "permute_3": {
+      "CPU": 6152.0,
+      "DSP": 1143.0,
+      "GPU": 830.0
+    },
+    "convolution_5": {
+      "CPU": 5046.0,
+      "DSP": 197.0,
+      "GPU": 591.0
+    },
+    "elementwiseneuron_5": {
+      "CPU": 4455.0,
+      "DSP": 195.0,
+      "GPU": 445.0
+    },
+    "elementwise_product_5": {
+      "CPU": 384.0,
+      "DSP": 142.0,
+      "GPU": 543.0
+    },
+    "pad_2": {
+      "CPU": 233.0,
+      "DSP": 208.0,
+      "GPU": 435.0
+    },
+    "convolution_6": {
+      "CPU": 3038.0,
+      "DSP": 223.0,
+      "GPU": 1405.0
+    },
+    "elementwiseneuron_6": {
+      "CPU": 2306.0,
+      "DSP": 68.0,
+      "GPU": 113.0
+    },
+    "elementwise_product_6": {
+      "CPU": 212.0,
+      "DSP": 72.0,
+      "GPU": 148.0
+    },
+    "convolution_7": {
+      "CPU": 991.0,
+      "DSP": 147.0,
+      "GPU": 275.0
+    },
+    "elementwiseneuron_7": {
+      "CPU": 2241.0,
+      "DSP": 69.0,
+      "GPU": 112.0
+    },
+    "elementwise_product_7": {
+      "CPU": 203.0,
+      "DSP": 64.0,
+      "GPU": 147.0
+    },
+    "strided_slice_2": {
+      "CPU": 182.0,
+      "DSP": 1101.0,
+      "GPU": 54.0
+    },
+    "permute_4": {
+      "CPU": 641.0,
+      "DSP": 845.0,
+      "GPU": 167.0
+    },
+    "strided_slice_3": {
+      "CPU": 245.0,
+      "DSP": 1093.0,
+      "GPU": 180.0
+    },
+    "permute_5": {
+      "CPU": 769.0,
+      "DSP": 837.0,
+      "GPU": 170.0
+    },
+    "convolution_8": {
+      "CPU": 1917.0,
+      "DSP": 134.0,
+      "GPU": 745.0
+    },
+    "elementwiseneuron_8": {
+      "CPU": 979.0,
+      "DSP": 60.0,
+      "GPU": 64.0
+    },
+    "elementwise_product_8": {
+      "CPU": 84.0,
+      "DSP": 43.0,
+      "GPU": 74.0
+    },
+    "convolution_9": {
+      "CPU": 1564.0,
+      "DSP": 100.0,
+      "GPU": 684.0
+    },
+    "elementwiseneuron_9": {
+      "CPU": 947.0,
+      "DSP": 50.0,
+      "GPU": 61.0
+    },
+    "elementwise_product_9": {
+      "CPU": 82.0,
+      "DSP": 20.0,
+      "GPU": 76.0
+    },
+    "elementwise_sum_11": {
+      "CPU": 111.0,
+      "DSP": 23.0,
+      "GPU": 135.0
+    },
+    "permute_6": {
+      "CPU": 660.0,
+      "DSP": 844.0,
+      "GPU": 165.0
+    },
+    "convolution_10": {
+      "CPU": 1881.0,
+      "DSP": 114.0,
+      "GPU": 684.0
+    },
+    "elementwiseneuron_10": {
+      "CPU": 948.0,
+      "DSP": 57.0,
+      "GPU": 65.0
+    },
+    "elementwise_product_10": {
+      "CPU": 83.0,
+      "DSP": 33.0,
+      "GPU": 76.0
+    },
+    "convolution_11": {
+      "CPU": 1547.0,
+      "DSP": 109.0,
+      "GPU": 684.0
+    },
+    "elementwiseneuron_11": {
+      "CPU": 949.0,
+      "DSP": 50.0,
+      "GPU": 59.0
+    },
+    "elementwise_product_11": {
+      "CPU": 81.0,
+      "DSP": 21.0,
+      "GPU": 77.0
+    },
+    "elementwise_sum_14": {
+      "CPU": 105.0,
+      "DSP": 20.0,
+      "GPU": 80.0
+    },
+    "permute_7": {
+      "CPU": 517.0,
+      "DSP": 842.0,
+      "GPU": 166.0
+    },
+    "concat_1": {
+      "CPU": 227.0,
+      "DSP": 126.0,
+      "GPU": 475.0
+    },
+    "permute_8": {
+      "CPU": 3374.0,
+      "DSP": 502.0,
+      "GPU": 515.0
+    },
+    "convolution_12": {
+      "CPU": 2030.0,
+      "DSP": 159.0,
+      "GPU": 783.0
+    },
+    "elementwiseneuron_12": {
+      "CPU": 2247.0,
+      "DSP": 74.0,
+      "GPU": 112.0
+    },
+    "elementwise_product_12": {
+      "CPU": 212.0,
+      "DSP": 74.0,
+      "GPU": 150.0
+    },
+    "pad_3": {
+      "CPU": 179.0,
+      "DSP": 86.0,
+      "GPU": 218.0
+    },
+    "convolution_13": {
+      "CPU": 3894.0,
+      "DSP": 280.0,
+      "GPU": 1467.0
+    },
+    "elementwiseneuron_13": {
+      "CPU": 1113.0,
+      "DSP": 48.0,
+      "GPU": 62.0
+    },
+    "elementwise_product_13": {
+      "CPU": 85.0,
+      "DSP": 111.0,
+      "GPU": 71.0
+    },
+    "convolution_14": {
+      "CPU": 1735.0,
+      "DSP": 84.0,
+      "GPU": 304.0
+    },
+    "elementwiseneuron_14": {
+      "CPU": 1111.0,
+      "DSP": 40.0,
+      "GPU": 55.0
+    },
+    "elementwise_product_14": {
+      "CPU": 84.0,
+      "DSP": 22.0,
+      "GPU": 71.0
+    },
+    "strided_slice_4": {
+      "CPU": 71.0,
+      "DSP": 270.0,
+      "GPU": 28.0
+    },
+    "permute_9": {
+      "CPU": 349.0,
+      "DSP": 46.0,
+      "GPU": 73.0
+    },
+    "strided_slice_5": {
+      "CPU": 109.0,
+      "DSP": 265.0,
+      "GPU": 102.0
+    },
+    "permute_10": {
+      "CPU": 267.0,
+      "DSP": 31.0,
+      "GPU": 71.0
+    },
+    "convolution_15": {
+      "CPU": 3656.0,
+      "DSP": 100.0,
+      "GPU": 765.0
+    },
+    "elementwiseneuron_15": {
+      "CPU": 560.0,
+      "DSP": 28.0,
+      "GPU": 28.0
+    },
+    "elementwise_product_15": {
+      "CPU": 41.0,
+      "DSP": 21.0,
+      "GPU": 33.0
+    },
+    "convolution_16": {
+      "CPU": 1143.0,
+      "DSP": 83.0,
+      "GPU": 747.0
+    },
+    "elementwiseneuron_16": {
+      "CPU": 560.0,
+      "DSP": 24.0,
+      "GPU": 25.0
+    },
+    "elementwise_product_16": {
+      "CPU": 37.0,
+      "DSP": 15.0,
+      "GPU": 32.0
+    },
+    "elementwise_sum_20": {
+      "CPU": 50.0,
+      "DSP": 20.0,
+      "GPU": 70.0
+    },
+    "permute_11": {
+      "CPU": 278.0,
+      "DSP": 35.0,
+      "GPU": 71.0
+    },
+    "convolution_17": {
+      "CPU": 1109.0,
+      "DSP": 86.0,
+      "GPU": 740.0
+    },
+    "elementwiseneuron_17": {
+      "CPU": 556.0,
+      "DSP": 23.0,
+      "GPU": 26.0
+    },
+    "elementwise_product_17": {
+      "CPU": 42.0,
+      "DSP": 18.0,
+      "GPU": 34.0
+    },
+    "convolution_18": {
+      "CPU": 1145.0,
+      "DSP": 92.0,
+      "GPU": 745.0
+    },
+    "elementwiseneuron_18": {
+      "CPU": 557.0,
+      "DSP": 23.0,
+      "GPU": 27.0
+    },
+    "elementwise_product_18": {
+      "CPU": 39.0,
+      "DSP": 17.0,
+      "GPU": 32.0
+    },
+    "elementwise_sum_23": {
+      "CPU": 48.0,
+      "DSP": 16.0,
+      "GPU": 44.0
+    },
+    "permute_12": {
+      "CPU": 270.0,
+      "DSP": 35.0,
+      "GPU": 71.0
+    },
+    "concat_2": {
+      "CPU": 134.0,
+      "DSP": 71.0,
+      "GPU": 258.0
+    },
+    "permute_13": {
+      "CPU": 1924.0,
+      "DSP": 199.0,
+      "GPU": 262.0
+    },
+    "convolution_19": {
+      "CPU": 1263.0,
+      "DSP": 153.0,
+      "GPU": 732.0
+    },
+    "elementwiseneuron_19": {
+      "CPU": 1113.0,
+      "DSP": 53.0,
+      "GPU": 64.0
+    },
+    "elementwise_product_19": {
+      "CPU": 86.0,
+      "DSP": 40.0,
+      "GPU": 75.0
+    },
+    "pad_4": {
+      "CPU": 55.0,
+      "DSP": 131.0,
+      "GPU": 119.0
+    },
+    "convolution_20": {
+      "CPU": 2071.0,
+      "DSP": 275.0,
+      "GPU": 1954.0
+    },
+    "elementwiseneuron_20": {
+      "CPU": 572.0,
+      "DSP": 29.0,
+      "GPU": 31.0
+    },
+    "elementwise_product_20": {
+      "CPU": 50.0,
+      "DSP": 27.0,
+      "GPU": 35.0
+    },
+    "convolution_21": {
+      "CPU": 614.0,
+      "DSP": 98.0,
+      "GPU": 414.0
+    },
+    "elementwiseneuron_21": {
+      "CPU": 477.0,
+      "DSP": 24.0,
+      "GPU": 26.0
+    },
+    "elementwise_product_21": {
+      "CPU": 37.0,
+      "DSP": 17.0,
+      "GPU": 33.0
+    },
+    "strided_slice_6": {
+      "CPU": 41.0,
+      "DSP": 83.0,
+      "GPU": 15.0
+    },
+    "permute_14": {
+      "CPU": 193.0,
+      "DSP": 28.0,
+      "GPU": 42.0
+    },
+    "strided_slice_7": {
+      "CPU": 34.0,
+      "DSP": 141.0,
+      "GPU": 43.0
+    },
+    "permute_15": {
+      "CPU": 105.0,
+      "DSP": 18.0,
+      "GPU": 38.0
+    },
+    "convolution_22": {
+      "CPU": 1064.0,
+      "DSP": 210.0,
+      "GPU": 1087.0
+    },
+    "elementwiseneuron_22": {
+      "CPU": 239.0,
+      "DSP": 20.0,
+      "GPU": 17.0
+    },
+    "elementwise_product_22": {
+      "CPU": 20.0,
+      "DSP": 14.0,
+      "GPU": 17.0
+    },
+    "convolution_23": {
+      "CPU": 1061.0,
+      "DSP": 97.0,
+      "GPU": 1065.0
+    },
+    "elementwiseneuron_23": {
+      "CPU": 240.0,
+      "DSP": 19.0,
+      "GPU": 16.0
+    },
+    "elementwise_product_23": {
+      "CPU": 19.0,
+      "DSP": 13.0,
+      "GPU": 17.0
+    },
+    "elementwise_sum_29": {
+      "CPU": 28.0,
+      "DSP": 17.0,
+      "GPU": 35.0
+    },
+    "permute_16": {
+      "CPU": 107.0,
+      "DSP": 16.0,
+      "GPU": 40.0
+    },
+    "concat_3": {
+      "CPU": 49.0,
+      "DSP": 21.0,
+      "GPU": 115.0
+    },
+    "permute_17": {
+      "CPU": 349.0,
+      "DSP": 38.0,
+      "GPU": 132.0
+    },
+    "convolution_24": {
+      "CPU": 762.0,
+      "DSP": 100.0,
+      "GPU": 669.0
+    },
+    "elementwiseneuron_24": {
+      "CPU": 475.0,
+      "DSP": 25.0,
+      "GPU": 26.0
+    },
+    "elementwise_product_24": {
+      "CPU": 45.0,
+      "DSP": 19.0,
+      "GPU": 30.0
+    },
+    "convolution_25": {
+      "CPU": 312.0,
+      "DSP": 47.0,
+      "GPU": 241.0
+    },
+    "elementwiseneuron_25": {
+      "CPU": 241.0,
+      "DSP": 18.0,
+      "GPU": 17.0
+    },
+    "elementwise_product_25": {
+      "CPU": 26.0,
+      "DSP": 12.0,
+      "GPU": 19.0
+    },
+    "pool_0": {
+      "CPU": 110.0,
+      "DSP": 49.0,
+      "GPU": 57.0
+    },
+    "pool_1": {
+      "CPU": 114.0,
+      "DSP": 33.0,
+      "GPU": 61.0
+    },
+    "pool_2": {
+      "CPU": 72.0,
+      "DSP": 32.0,
+      "GPU": 62.0
+    },
+    "concat_4": {
+      "CPU": 230.0,
+      "DSP": 17.0,
+      "GPU": 57.0
+    },
+    "convolution_26": {
+      "CPU": 1286.0,
+      "DSP": 108.0,
+      "GPU": 826.0
+    },
+    "elementwiseneuron_26": {
+      "CPU": 474.0,
+      "DSP": 25.0,
+      "GPU": 29.0
+    },
+    "elementwise_product_26": {
+      "CPU": 36.0,
+      "DSP": 16.0,
+      "GPU": 36.0
+    },
+    "resize_0": {
+      "CPU": 239.0,
+      "DSP": 53.0,
+      "GPU": 78.0
+    },
+    "concat_5": {
+      "CPU": 598.0,
+      "DSP": 72.0,
+      "GPU": 164.0
+    },
+    "convolution_27": {
+      "CPU": 1440.0,
+      "DSP": 164.0,
+      "GPU": 889.0
+    },
+    "elementwiseneuron_27": {
+      "CPU": 961.0,
+      "DSP": 49.0,
+      "GPU": 64.0
+    },
+    "elementwise_product_27": {
+      "CPU": 91.0,
+      "DSP": 39.0,
+      "GPU": 73.0
+    },
+    "strided_slice_8": {
+      "CPU": 69.0,
+      "DSP": 270.0,
+      "GPU": 25.0
+    },
+    "strided_slice_9": {
+      "CPU": 126.0,
+      "DSP": 267.0,
+      "GPU": 92.0
+    },
+    "convolution_28": {
+      "CPU": 1189.0,
+      "DSP": 141.0,
+      "GPU": 772.0
+    },
+    "elementwiseneuron_28": {
+      "CPU": 477.0,
+      "DSP": 27.0,
+      "GPU": 28.0
+    },
+    "elementwise_product_28": {
+      "CPU": 43.0,
+      "DSP": 21.0,
+      "GPU": 33.0
+    },
+    "convolution_29": {
+      "CPU": 1182.0,
+      "DSP": 92.0,
+      "GPU": 741.0
+    },
+    "elementwiseneuron_29": {
+      "CPU": 492.0,
+      "DSP": 26.0,
+      "GPU": 26.0
+    },
+    "elementwise_product_29": {
+      "CPU": 42.0,
+      "DSP": 17.0,
+      "GPU": 34.0
+    },
+    "concat_6": {
+      "CPU": 261.0,
+      "DSP": 27.0,
+      "GPU": 148.0
+    },
+    "convolution_30": {
+      "CPU": 824.0,
+      "DSP": 138.0,
+      "GPU": 540.0
+    },
+    "elementwiseneuron_30": {
+      "CPU": 945.0,
+      "DSP": 46.0,
+      "GPU": 64.0
+    },
+    "elementwise_product_30": {
+      "CPU": 79.0,
+      "DSP": 33.0,
+      "GPU": 79.0
+    },
+    "resize_1": {
+      "CPU": 902.0,
+      "DSP": 241.0,
+      "GPU": 162.0
+    },
+    "concat_7": {
+      "CPU": 1234.0,
+      "DSP": 189.0,
+      "GPU": 325.0
+    },
+    "convolution_31": {
+      "CPU": 1969.0,
+      "DSP": 203.0,
+      "GPU": 786.0
+    },
+    "elementwiseneuron_31": {
+      "CPU": 1906.0,
+      "DSP": 82.0,
+      "GPU": 110.0
+    },
+    "elementwise_product_31": {
+      "CPU": 221.0,
+      "DSP": 105.0,
+      "GPU": 148.0
+    },
+    "strided_slice_10": {
+      "CPU": 196.0,
+      "DSP": 1117.0,
+      "GPU": 53.0
+    },
+    "strided_slice_11": {
+      "CPU": 227.0,
+      "DSP": 1085.0,
+      "GPU": 164.0
+    },
+    "convolution_32": {
+      "CPU": 1999.0,
+      "DSP": 153.0,
+      "GPU": 736.0
+    },
+    "elementwiseneuron_32": {
+      "CPU": 963.0,
+      "DSP": 66.0,
+      "GPU": 50.0
+    },
+    "elementwise_product_32": {
+      "CPU": 91.0,
+      "DSP": 44.0,
+      "GPU": 73.0
+    },
+    "convolution_33": {
+      "CPU": 1625.0,
+      "DSP": 98.0,
+      "GPU": 683.0
+    },
+    "elementwiseneuron_33": {
+      "CPU": 948.0,
+      "DSP": 50.0,
+      "GPU": 58.0
+    },
+    "elementwise_product_33": {
+      "CPU": 85.0,
+      "DSP": 98.0,
+      "GPU": 77.0
+    },
+    "concat_8": {
+      "CPU": 182.0,
+      "DSP": 51.0,
+      "GPU": 283.0
+    },
+    "convolution_34": {
+      "CPU": 1225.0,
+      "DSP": 145.0,
+      "GPU": 568.0
+    },
+    "elementwiseneuron_34": {
+      "CPU": 2220.0,
+      "DSP": 73.0,
+      "GPU": 112.0
+    },
+    "elementwise_product_34": {
+      "CPU": 195.0,
+      "DSP": 73.0,
+      "GPU": 148.0
+    },
+    "convolution_35": {
+      "CPU": 5229.0,
+      "DSP": 311.0,
+      "GPU": 2341.0
+    },
+    "elementwiseneuron_35": {
+      "CPU": 2219.0,
+      "DSP": 67.0,
+      "GPU": 119.0
+    },
+    "elementwise_product_35": {
+      "CPU": 208.0,
+      "DSP": 66.0,
+      "GPU": 160.0
+    },
+    "convolution_36": {
+      "CPU": 5175.0,
+      "DSP": 304.0,
+      "GPU": 2340.0
+    },
+    "elementwiseneuron_36": {
+      "CPU": 2233.0,
+      "DSP": 56.0,
+      "GPU": 121.0
+    },
+    "elementwise_product_36": {
+      "CPU": 198.0,
+      "DSP": 61.0,
+      "GPU": 158.0
+    },
+    "convolution_37": {
+      "CPU": 775.0,
+      "DSP": 114.0,
+      "GPU": 279.0
+    },
+    "permute_18": {
+      "CPU": 1763.0,
+      "DSP": 142.0,
+      "GPU": 347.0
+    },
+    "reshape_12": {
+      "CPU": 95.0,
+      "DSP": 16.0,
+      "GPU": 247.0
+    },
+    "pad_5": {
+      "CPU": 184.0,
+      "DSP": 96.0,
+      "GPU": 213.0
+    },
+    "convolution_38": {
+      "CPU": 1601.0,
+      "DSP": 139.0,
+      "GPU": 866.0
+    },
+    "elementwiseneuron_37": {
+      "CPU": 561.0,
+      "DSP": 32.0,
+      "GPU": 27.0
+    },
+    "elementwise_product_37": {
+      "CPU": 48.0,
+      "DSP": 28.0,
+      "GPU": 35.0
+    },
+    "concat_9": {
+      "CPU": 218.0,
+      "DSP": 23.0,
+      "GPU": 81.0
+    },
+    "convolution_39": {
+      "CPU": 1010.0,
+      "DSP": 123.0,
+      "GPU": 451.0
+    },
+    "elementwiseneuron_38": {
+      "CPU": 1109.0,
+      "DSP": 42.0,
+      "GPU": 57.0
+    },
+    "elementwise_product_38": {
+      "CPU": 83.0,
+      "DSP": 29.0,
+      "GPU": 76.0
+    },
+    "strided_slice_12": {
+      "CPU": 77.0,
+      "DSP": 272.0,
+      "GPU": 26.0
+    },
+    "strided_slice_13": {
+      "CPU": 87.0,
+      "DSP": 267.0,
+      "GPU": 92.0
+    },
+    "convolution_40": {
+      "CPU": 1199.0,
+      "DSP": 123.0,
+      "GPU": 771.0
+    },
+    "elementwiseneuron_39": {
+      "CPU": 557.0,
+      "DSP": 30.0,
+      "GPU": 28.0
+    },
+    "elementwise_product_39": {
+      "CPU": 39.0,
+      "DSP": 23.0,
+      "GPU": 31.0
+    },
+    "convolution_41": {
+      "CPU": 1164.0,
+      "DSP": 94.0,
+      "GPU": 744.0
+    },
+    "elementwiseneuron_40": {
+      "CPU": 557.0,
+      "DSP": 28.0,
+      "GPU": 24.0
+    },
+    "elementwise_product_40": {
+      "CPU": 42.0,
+      "DSP": 16.0,
+      "GPU": 32.0
+    },
+    "concat_10": {
+      "CPU": 263.0,
+      "DSP": 24.0,
+      "GPU": 147.0
+    },
+    "convolution_42": {
+      "CPU": 738.0,
+      "DSP": 129.0,
+      "GPU": 540.0
+    },
+    "elementwiseneuron_41": {
+      "CPU": 1111.0,
+      "DSP": 44.0,
+      "GPU": 57.0
+    },
+    "elementwise_product_41": {
+      "CPU": 86.0,
+      "DSP": 38.0,
+      "GPU": 76.0
+    },
+    "convolution_43": {
+      "CPU": 2302.0,
+      "DSP": 165.0,
+      "GPU": 1481.0
+    },
+    "elementwiseneuron_42": {
+      "CPU": 564.0,
+      "DSP": 29.0,
+      "GPU": 29.0
+    },
+    "elementwise_product_42": {
+      "CPU": 49.0,
+      "DSP": 22.0,
+      "GPU": 35.0
+    },
+    "convolution_44": {
+      "CPU": 1227.0,
+      "DSP": 96.0,
+      "GPU": 742.0
+    },
+    "elementwiseneuron_43": {
+      "CPU": 588.0,
+      "DSP": 22.0,
+      "GPU": 24.0
+    },
+    "elementwise_product_43": {
+      "CPU": 52.0,
+      "DSP": 16.0,
+      "GPU": 30.0
+    },
+    "convolution_45": {
+      "CPU": 499.0,
+      "DSP": 44.0,
+      "GPU": 91.0
+    },
+    "permute_19": {
+      "CPU": 337.0,
+      "DSP": 48.0,
+      "GPU": 70.0
+    },
+    "reshape_15": {
+      "CPU": 24.0,
+      "DSP": 12.0,
+      "GPU": 64.0
+    },
+    "pad_6": {
+      "CPU": 69.0,
+      "DSP": 49.0,
+      "GPU": 125.0
+    },
+    "convolution_46": {
+      "CPU": 1077.0,
+      "DSP": 122.0,
+      "GPU": 1139.0
+    },
+    "elementwiseneuron_44": {
+      "CPU": 284.0,
+      "DSP": 22.0,
+      "GPU": 16.0
+    },
+    "elementwise_product_44": {
+      "CPU": 29.0,
+      "DSP": 25.0,
+      "GPU": 19.0
+    },
+    "concat_11": {
+      "CPU": 107.0,
+      "DSP": 24.0,
+      "GPU": 42.0
+    },
+    "convolution_47": {
+      "CPU": 746.0,
+      "DSP": 104.0,
+      "GPU": 615.0
+    },
+    "elementwiseneuron_45": {
+      "CPU": 576.0,
+      "DSP": 25.0,
+      "GPU": 28.0
+    },
+    "elementwise_product_45": {
+      "CPU": 45.0,
+      "DSP": 22.0,
+      "GPU": 34.0
+    },
+    "strided_slice_14": {
+      "CPU": 49.0,
+      "DSP": 83.0,
+      "GPU": 15.0
+    },
+    "strided_slice_15": {
+      "CPU": 56.0,
+      "DSP": 80.0,
+      "GPU": 39.0
+    },
+    "convolution_48": {
+      "CPU": 1058.0,
+      "DSP": 105.0,
+      "GPU": 1084.0
+    },
+    "elementwiseneuron_46": {
+      "CPU": 281.0,
+      "DSP": 21.0,
+      "GPU": 16.0
+    },
+    "elementwise_product_46": {
+      "CPU": 25.0,
+      "DSP": 14.0,
+      "GPU": 17.0
+    },
+    "convolution_49": {
+      "CPU": 1034.0,
+      "DSP": 103.0,
+      "GPU": 1069.0
+    },
+    "elementwiseneuron_47": {
+      "CPU": 281.0,
+      "DSP": 19.0,
+      "GPU": 15.0
+    },
+    "elementwise_product_47": {
+      "CPU": 24.0,
+      "DSP": 14.0,
+      "GPU": 18.0
+    },
+    "concat_12": {
+      "CPU": 151.0,
+      "DSP": 10.0,
+      "GPU": 77.0
+    },
+    "convolution_50": {
+      "CPU": 736.0,
+      "DSP": 110.0,
+      "GPU": 664.0
+    },
+    "elementwiseneuron_48": {
+      "CPU": 579.0,
+      "DSP": 24.0,
+      "GPU": 28.0
+    },
+    "elementwise_product_48": {
+      "CPU": 43.0,
+      "DSP": 17.0,
+      "GPU": 33.0
+    },
+    "convolution_51": {
+      "CPU": 1451.0,
+      "DSP": 87.0,
+      "GPU": 2137.0
+    },
+    "elementwiseneuron_49": {
+      "CPU": 144.0,
+      "DSP": 98.0,
+      "GPU": 11.0
+    },
+    "elementwise_product_49": {
+      "CPU": 16.0,
+      "DSP": 11.0,
+      "GPU": 11.0
+    },
+    "convolution_52": {
+      "CPU": 405.0,
+      "DSP": 42.0,
+      "GPU": 533.0
+    },
+    "elementwiseneuron_50": {
+      "CPU": 142.0,
+      "DSP": 13.0,
+      "GPU": 9.0
+    },
+    "elementwise_product_50": {
+      "CPU": 14.0,
+      "DSP": 10.0,
+      "GPU": 11.0
+    },
+    "convolution_53": {
+      "CPU": 109.0,
+      "DSP": 29.0,
+      "GPU": 66.0
+    },
+    "permute_20": {
+      "CPU": 67.0,
+      "DSP": 24.0,
+      "GPU": 26.0
+    },
+    "reshape_18": {
+      "CPU": 10.0,
+      "DSP": 8.0,
+      "GPU": 23.0
+    },
+    "concat_13": {
+      "CPU": 211.0,
+      "DSP": 98.0,
+      "GPU": 183.0
+    },
+    "reshape_19": {
+      "CPU": 315.0,
+      "DSP": 35.0,
+      "GPU": 166.0
+    },
+    "permute_21": {
+      "CPU": 1493.0,
+      "DSP": 1020.0,
+      "GPU": 474.0
+    },
+    "softmax_0": {
+      "CPU": 3969.0,
+      "DSP": 2644.0,
+      "GPU": 337.0
+    },
+    "convolution_54": {
+      "CPU": 3040.0,
+      "DSP": 1591.0,
+      "GPU": 314.0
+    },
+    "reshape_20": {
+      "CPU": 16.0,
+      "DSP": 14.0,
+      "GPU": 36.0
+    },
+    "strided_slice_16": {
+      "CPU": 16.0,
+      "DSP": 24.0,
+      "GPU": 20.0
+    },
+    "elementwise_sub_0": {
+      "CPU": 27.0,
+      "DSP": 57.0,
+      "GPU": 11.0
+    },
+    "strided_slice_17": {
+      "CPU": 13.0,
+      "DSP": 16.0,
+      "GPU": 9.0
+    },
+    "elementwise_sum_61": {
+      "CPU": 15.0,
+      "DSP": 18.0,
+      "GPU": 20.0
+    },
+    "elementwise_sum_62": {
+      "CPU": 9.0,
+      "DSP": 15.0,
+      "GPU": 11.0
+    },
+    "elementwise_product_51": {
+      "CPU": 11.0,
+      "DSP": 19.0
+    },
+    "elementwise_sub_1": {
+      "CPU": 21.0,
+      "DSP": 15.0,
+      "GPU": 8.0
+    },
+    "concat_14": {
+      "CPU": 13.0,
+      "DSP": 49.0,
+      "GPU": 30.0
+    },
+    "elementwise_product_52": {
+      "CPU": 13.0,
+      "DSP": 22.0,
+      "GPU": 25.0
+    },
+    "convolution_55": {
+      "CPU": 6060.0,
+      "DSP": 457.0,
+      "GPU": 3018.0
+    },
+    "elementwiseneuron_51": {
+      "CPU": 2980.0,
+      "DSP": 112.0,
+      "GPU": 148.0
+    },
+    "elementwise_product_53": {
+      "CPU": 252.0,
+      "DSP": 172.0,
+      "GPU": 199.0
+    },
+    "convolution_56": {
+      "CPU": 10584.0,
+      "DSP": 646.0,
+      "GPU": 3766.0
+    },
+    "elementwiseneuron_52": {
+      "CPU": 2783.0,
+      "DSP": 120.0,
+      "GPU": 150.0
+    },
+    "elementwise_product_54": {
+      "CPU": 252.0,
+      "DSP": 145.0,
+      "GPU": 202.0
+    },
+    "convolution_57": {
+      "CPU": 999.0,
+      "DSP": 195.0,
+      "GPU": 434.0
+    },
+    "permute_22": {
+      "CPU": 2427.0,
+      "DSP": 337.0,
+      "GPU": 354.0
+    },
+    "reshape_23": {
+      "CPU": 111.0,
+      "DSP": 37.0,
+      "GPU": 301.0
+    },
+    "convolution_58": {
+      "CPU": 3231.0,
+      "DSP": 284.0,
+      "GPU": 1643.0
+    },
+    "elementwiseneuron_53": {
+      "CPU": 598.0,
+      "DSP": 55.0,
+      "GPU": 36.0
+    },
+    "elementwise_product_55": {
+      "CPU": 59.0,
+      "DSP": 39.0,
+      "GPU": 43.0
+    },
+    "convolution_59": {
+      "CPU": 1742.0,
+      "DSP": 179.0,
+      "GPU": 1024.0
+    },
+    "elementwiseneuron_54": {
+      "CPU": 596.0,
+      "DSP": 26.0,
+      "GPU": 34.0
+    },
+    "elementwise_product_56": {
+      "CPU": 55.0,
+      "DSP": 19.0,
+      "GPU": 39.0
+    },
+    "convolution_60": {
+      "CPU": 291.0,
+      "DSP": 62.0,
+      "GPU": 122.0
+    },
+    "permute_23": {
+      "CPU": 299.0,
+      "DSP": 52.0,
+      "GPU": 87.0
+    },
+    "reshape_24": {
+      "CPU": 25.0,
+      "DSP": 12.0,
+      "GPU": 74.0
+    },
+    "convolution_61": {
+      "CPU": 1563.0,
+      "DSP": 168.0,
+      "GPU": 1413.0
+    },
+    "elementwiseneuron_55": {
+      "CPU": 154.0,
+      "DSP": 23.0,
+      "GPU": 12.0
+    },
+    "elementwise_product_57": {
+      "CPU": 17.0,
+      "DSP": 14.0,
+      "GPU": 12.0
+    },
+    "convolution_62": {
+      "CPU": 545.0,
+      "DSP": 69.0,
+      "GPU": 434.0
+    },
+    "elementwiseneuron_56": {
+      "CPU": 152.0,
+      "DSP": 16.0,
+      "GPU": 11.0
+    },
+    "elementwise_product_58": {
+      "CPU": 12.0,
+      "DSP": 12.0,
+      "GPU": 12.0
+    },
+    "convolution_63": {
+      "CPU": 173.0,
+      "DSP": 42.0,
+      "GPU": 54.0
+    },
+    "permute_24": {
+      "CPU": 76.0,
+      "DSP": 15.0,
+      "GPU": 28.0
+    },
+    "reshape_25": {
+      "CPU": 10.0,
+      "DSP": 8.0,
+      "GPU": 25.0
+    },
+    "concat_15": {
+      "CPU": 274.0,
+      "DSP": 163.0,
+      "GPU": 207.0
+    },
+    "elementwiseneuron_57": {
+      "CPU": 3093.0,
+      "DSP": 190.0,
+      "GPU": 179.0
+    },
+    "concat_16": {
+      "CPU": 188.0,
+      "DSP": 252.0,
+      "GPU": 201.0
+    },
+    "Misc accelerator time": {
+      "DSP": 5699.0
+    }
+  },
+  "_meta": {
+    "schema_version": "qnn_cost_matrix_v1",
+    "source_files": [
+      "/tmp/perop/perop_dronet_cpu.txt",
+      "/tmp/perop/perop_dronet_dsp.txt",
+      "/tmp/perop/perop_dronet_gpu.txt",
+      "/tmp/perop/perop_yolov8n_cpu.txt",
+      "/tmp/perop/perop_yolov8n_dsp.txt",
+      "/tmp/perop/perop_yolov8n_gpu.txt"
+    ],
+    "raw_dir": "/tmp/perop"
+  }
+}

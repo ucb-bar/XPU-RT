@@ -15,9 +15,7 @@ every pipeline stage is exposed as a typed tool that the LLM can call.
 - **Run it end-to-end** — [Quickstart](getting-started/quickstart.md)
 - **Extend it** — [Extension Authoring](getting-started/extension-authoring.md)
 - **How does it work?** — [Architecture → Compiler Generation](architecture/compiler-generation.md)
-- **How the agent decides** — [Concepts → Decision Sites](concepts/decision_sites.md) · [Graph Digest](concepts/graph_digest.md)
-- **Debug a compile** — [Concepts → Compilation Trace & IR Dumps](concepts/compilation_trace.md)
-- **Looking up an API?** — [Reference → CLI](reference/cli.md) · [Python API](reference/python-api.md) · [Extension Points](reference/extension-points.md) · [MCP Tools](reference/mcp-tools.md)
+- **Looking up an API?** — [Reference → CLI](reference/cli.md) · [Python API](reference/python-api.md) · [Architecture → Extension Points](architecture/extension-points.md) · [MCP Tools](reference/mcp-tools.md)
 
 ## What works today
 

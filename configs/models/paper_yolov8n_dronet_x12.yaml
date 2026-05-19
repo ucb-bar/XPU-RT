@@ -1,0 +1,49 @@
+schema_version: xpu_rt_qnn_workload_v1
+model_id: paper_yolov8n_dronet_x12
+description: >
+  Reproduces the "Different Desired Granularity: High Overhead System"
+  paper figure: 1× YOLOv8n + 12× DroNet scheduled across DSP/CPU/HTA on
+  QRB5165, with iterative compile → on-board profile → granularity
+  refinement.
+
+# Targets the QNN agentic CLI consumes (xpu-rt qnn demo paper-figure
+# reads this file directly; xpu-rt qnn run --model-config does too).
+machines: ["HTA", "GPU", "CPU"]
+targets: ["qnn_hta", "qnn_gpu", "cpu"]
+
+# Diversity weight is passed to the MOSEK scheduler so it spreads
+# islands across backends even when one backend is uniformly faster —
+# the paper figure depends on the coexistence of all three lanes.
+target_diversity_weight: 100.0
+
+# Loop bounds.
+max_rounds: 4
+starting_granularity: coarse  # coarse | medium | fine
+
+workloads:
+  - id: yolov8n
+    onnx: models/qnn/yolov8n.onnx
+    board_dlc_dir: /root/models/yolov8n   # board-side DLC bundle
+    board_dlc_basename: yolov8n
+    copies: 1
+    input_shape: [1, 3, 640, 640]
+    sla_us: 200000     # soft per-inference budget — informs split rubric
+    period_us: null    # aperiodic: runs once per frame
+    deadline_us: null  # no hard deadline; participates as the makespan bound
+  - id: dronet
+    onnx: models/qnn/dronet.onnx
+    board_dlc_dir: /root/models/dronet
+    board_dlc_basename: dronet
+    copies: 12
+    input_shape: [1, 3, 200, 200]
+    sla_us: 40000      # 40 ms per drone — 12 concurrent instances
+    period_us: 40000   # 25 Hz: instance k released at t = k * 40 ms
+    deadline_us: 40000 # HARD: each instance must finish ≤ 40 ms after its release
+
+# Per-workload preferences the agent reads in its rationale.
+preferences:
+  yolov8n:
+    backbone_pref: HTA
+    head_pref: CPU
+  dronet:
+    pref: HTA       # 12 copies share the HTA lane in coarse mode

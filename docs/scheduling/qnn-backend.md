@@ -1,6 +1,6 @@
 # QNN Backend (Qualcomm Hexagon NPU)
 
-The QNN backend slots into CompGen's `xpu_rt.targets.backends/` family
+The QNN backend slots into XPU-RT's `xpu_rt.targets.backends/` family
 alongside `npu/` (Hexagon-MLIR open-source path) and `saturn_opu/`. It
 owns the *empirical* cost model + island-DAG scheduling for the QRB5165
 robotics SoC.
@@ -91,7 +91,4 @@ in unit tests.
 ## See also
 
 - [Two-cluster scheduler](two-cluster-scheduler.md) for the MILP itself.
-- [Telemetry feedback](telemetry-feedback.md) for closing the loop from
-  on-board telemetry back into cost-table updates.
-- `xpu-rt/python/xpu_rt/targets/cards/hexagon_npu.yaml` — declarative
-  target card for the Hexagon NPU.
+- `xpu_rt/targets/cards/hexagon_npu.yaml` — declarative target card for the Hexagon NPU.

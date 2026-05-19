@@ -1,0 +1,74 @@
+{
+  "matrix": {
+    "yolov8n": {
+      "CPU": {
+        "workload_id": "yolov8n",
+        "backend": "CPU",
+        "dlc_path": "/root/models/yolov8n/yolov8n.dlc",
+        "iters": 10,
+        "mean_us": 325386.34880000004,
+        "total_ms": 3253.863488,
+        "raw_stderr_tail": "",
+        "ok": true,
+        "error": ""
+      },
+      "GPU": {
+        "workload_id": "yolov8n",
+        "backend": "GPU",
+        "dlc_path": "/root/models/yolov8n/yolov8n_fp16.dlc",
+        "iters": 10,
+        "mean_us": 369419.1308,
+        "total_ms": 3694.191308,
+        "raw_stderr_tail": "",
+        "ok": true,
+        "error": ""
+      },
+      "DSP": {
+        "workload_id": "yolov8n",
+        "backend": "DSP",
+        "dlc_path": "/root/models/yolov8n/yolov8n_quantized.dlc",
+        "iters": 10,
+        "mean_us": 354880.8066,
+        "total_ms": 3548.808066,
+        "raw_stderr_tail": "",
+        "ok": true,
+        "error": ""
+      }
+    },
+    "dronet": {
+      "CPU": {
+        "workload_id": "dronet",
+        "backend": "CPU",
+        "dlc_path": "/root/models/dronet/dronet.dlc",
+        "iters": 10,
+        "mean_us": 7372.5686,
+        "total_ms": 73.725686,
+        "raw_stderr_tail": "",
+        "ok": true,
+        "error": ""
+      },
+      "GPU": {
+        "workload_id": "dronet",
+        "backend": "GPU",
+        "dlc_path": "/root/models/dronet/dronet_fp16.dlc",
+        "iters": 10,
+        "mean_us": 87451.50409999999,
+        "total_ms": 874.515041,
+        "raw_stderr_tail": "",
+        "ok": true,
+        "error": ""
+      },
+      "DSP": {
+        "workload_id": "dronet",
+        "backend": "DSP",
+        "dlc_path": "/root/models/dronet/dronet_quantized.dlc",
+        "iters": 10,
+        "mean_us": 158061.0689,
+        "total_ms": 1580.610689,
+        "raw_stderr_tail": "",
+        "ok": true,
+        "error": ""
+      }
+    }
+  }
+}

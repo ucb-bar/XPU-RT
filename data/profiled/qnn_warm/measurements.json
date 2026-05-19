@@ -1,0 +1,32 @@
+{
+  "schema_version": "warm_measurements_v1",
+  "source": "realtime_qnn/rt_{yolo,drone}_f.csv (20s sustained run, post-warmup)",
+  "matrix": {
+    "yolov8n": {
+      "DSP": {
+        "workload_id": "yolov8n",
+        "backend": "DSP",
+        "dlc_path": "/root/models/yolov8n/yolov8n_quantized.dlc",
+        "iters": 351,
+        "mean_us": 55450.65242165242,
+        "p50_us": 55461,
+        "p99_us": 56198,
+        "ok": true,
+        "execution_mode": "cached_context_binary"
+      }
+    },
+    "dronet": {
+      "GPU": {
+        "workload_id": "dronet",
+        "backend": "GPU",
+        "dlc_path": "/root/models/dronet/dronet_fp16.dlc",
+        "iters": 5976,
+        "mean_us": 1703.2140227576974,
+        "p50_us": 1668,
+        "p99_us": 1961,
+        "ok": true,
+        "execution_mode": "cached_context_binary"
+      }
+    }
+  }
+}

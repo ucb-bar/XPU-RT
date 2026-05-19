@@ -1,0 +1,174 @@
+Input Log File Location: out/qnn-profiling-data_0.log
+Log File Created: Fri May 15 22:11:33 2026
+Time Scale: 1e-06
+Epoch Timestamp: 1778883093063768 Steady Clock Timestamp: 361825468864
+Generated using: 
+qnn-profile-viewer: v2.45.0.260326154327
+qnn-net-run: v2.45.0.260326154327
+Backend: v2.45.0.260326154327
+
+Qnn Init/Prepare/Finalize/De-Init/Execute/Lib-Load Statistics:
+------------------------------------------------------------
+Init Stats:
+-----------
+    NetRun: 11601 us
+
+Compose Graphs Stats:
+--------------
+    NetRun: 9172 us
+
+Finalize Stats:
+---------------
+Graph 0 (dronet):
+    NetRun: 1655 us
+    Backend (GRAPH_FINALIZE): 1650 us
+        _/conv_modules.0/Conv: 44 us
+        _/maxpool1/MaxPool: 5 us
+        _/bn_modules.0/BatchNormalization: 2 us
+        _/relu_modules.0/Relu: 1 us
+        _/conv_modules.1/Conv: 24 us
+        _/relu_modules.1/Relu: 1 us
+        _/conv_modules.2/Conv: 20 us
+        _/conv_modules.3/Conv: 8 us
+        _/Add: 1 us
+        _/bn_modules.2/BatchNormalization: 2 us
+        _/relu_modules.2/Relu: 1 us
+        _/conv_modules.4/Conv: 37 us
+        _/relu_modules.3/Relu: 1 us
+        _/conv_modules.5/Conv: 77 us
+        _/conv_modules.6/Conv: 6 us
+        _/Add_1: 2 us
+        _/bn_modules.4/BatchNormalization: 1 us
+        _/relu_modules.4/Relu: 1 us
+        _/conv_modules.7/Conv: 140 us
+        _/relu_modules.5/Relu: 1 us
+        _/conv_modules.8/Conv: 273 us
+        _/conv_modules.9/Conv: 18 us
+        _/Add_2: 1 us
+        _/Add_2_output_0.nchw: 2 us
+        _/Flatten: 1 us
+        _/relu_modules.6/Relu: 2 us
+        _/linear1/Gemm: 3 us
+        _/linear2/Gemm: 2 us
+        _/sigmoid1/Sigmoid: 1 us
+
+De-Init Stats:
+--------------
+    NetRun: 2649 us
+    Backend (null): 1 us
+
+Execute Stats (Overall):
+------------------------
+    NetRun IPS (includes IO and misc. time): 154.0120 inf/sec 
+
+Execute Stats (Average):
+------------------------
+Total Inference Time: 
+---------------------
+Graph 0 (dronet):
+    NetRun: 6300 us
+    Backend (GRAPH_EXECUTE): 6222 us
+        _/conv_modules.0/Conv: 4315 us
+        _/maxpool1/MaxPool: 474 us
+        _/bn_modules.0/BatchNormalization: 29 us
+        _/relu_modules.0/Relu: 51 us
+        _/conv_modules.1/Conv: 165 us
+        _/relu_modules.1/Relu: 5 us
+        _/conv_modules.2/Conv: 108 us
+        _/conv_modules.3/Conv: 54 us
+        _/Add: 15 us
+        _/bn_modules.2/BatchNormalization: 9 us
+        _/relu_modules.2/Relu: 4 us
+        _/conv_modules.4/Conv: 80 us
+        _/relu_modules.3/Relu: 3 us
+        _/conv_modules.5/Conv: 96 us
+        _/conv_modules.6/Conv: 48 us
+        _/Add_1: 6 us
+        _/bn_modules.4/BatchNormalization: 6 us
+        _/relu_modules.4/Relu: 4 us
+        _/conv_modules.7/Conv: 165 us
+        _/relu_modules.5/Relu: 3 us
+        _/conv_modules.8/Conv: 284 us
+        _/conv_modules.9/Conv: 55 us
+        _/Add_2: 5 us
+        _/Add_2_output_0.nchw: 15 us
+        _/Flatten: 3 us
+        _/relu_modules.6/Relu: 3 us
+        _/linear1/Gemm: 104 us
+        _/linear2/Gemm: 74 us
+        _/sigmoid1/Sigmoid: 9 us
+
+Execute Stats (Min):
+------------------------
+Total Inference Time: 
+---------------------
+Graph 0 (dronet):
+    NetRun: 6300 us
+    Backend (GRAPH_EXECUTE): 6222 us
+        _/conv_modules.0/Conv: 4315 us
+        _/maxpool1/MaxPool: 474 us
+        _/bn_modules.0/BatchNormalization: 29 us
+        _/relu_modules.0/Relu: 51 us
+        _/conv_modules.1/Conv: 165 us
+        _/relu_modules.1/Relu: 5 us
+        _/conv_modules.2/Conv: 108 us
+        _/conv_modules.3/Conv: 54 us
+        _/Add: 15 us
+        _/bn_modules.2/BatchNormalization: 9 us
+        _/relu_modules.2/Relu: 4 us
+        _/conv_modules.4/Conv: 80 us
+        _/relu_modules.3/Relu: 3 us
+        _/conv_modules.5/Conv: 96 us
+        _/conv_modules.6/Conv: 48 us
+        _/Add_1: 6 us
+        _/bn_modules.4/BatchNormalization: 6 us
+        _/relu_modules.4/Relu: 4 us
+        _/conv_modules.7/Conv: 165 us
+        _/relu_modules.5/Relu: 3 us
+        _/conv_modules.8/Conv: 284 us
+        _/conv_modules.9/Conv: 55 us
+        _/Add_2: 5 us
+        _/Add_2_output_0.nchw: 15 us
+        _/Flatten: 3 us
+        _/relu_modules.6/Relu: 3 us
+        _/linear1/Gemm: 104 us
+        _/linear2/Gemm: 74 us
+        _/sigmoid1/Sigmoid: 9 us
+
+Execute Stats (Max):
+------------------------
+Total Inference Time: 
+---------------------
+Graph 0 (dronet):
+    NetRun: 6300 us
+    Backend (GRAPH_EXECUTE): 6222 us
+        _/conv_modules.0/Conv: 4315 us
+        _/maxpool1/MaxPool: 474 us
+        _/bn_modules.0/BatchNormalization: 29 us
+        _/relu_modules.0/Relu: 51 us
+        _/conv_modules.1/Conv: 165 us
+        _/relu_modules.1/Relu: 5 us
+        _/conv_modules.2/Conv: 108 us
+        _/conv_modules.3/Conv: 54 us
+        _/Add: 15 us
+        _/bn_modules.2/BatchNormalization: 9 us
+        _/relu_modules.2/Relu: 4 us
+        _/conv_modules.4/Conv: 80 us
+        _/relu_modules.3/Relu: 3 us
+        _/conv_modules.5/Conv: 96 us
+        _/conv_modules.6/Conv: 48 us
+        _/Add_1: 6 us
+        _/bn_modules.4/BatchNormalization: 6 us
+        _/relu_modules.4/Relu: 4 us
+        _/conv_modules.7/Conv: 165 us
+        _/relu_modules.5/Relu: 3 us
+        _/conv_modules.8/Conv: 284 us
+        _/conv_modules.9/Conv: 55 us
+        _/Add_2: 5 us
+        _/Add_2_output_0.nchw: 15 us
+        _/Flatten: 3 us
+        _/relu_modules.6/Relu: 3 us
+        _/linear1/Gemm: 104 us
+        _/linear2/Gemm: 74 us
+        _/sigmoid1/Sigmoid: 9 us
+

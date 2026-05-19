@@ -17,7 +17,7 @@ The demo and the top-level Python API exercise this shape today:
 
 ## Target-generation path
 
-Creating a `CompGenDevice`:
+Creating a `XpuRtDevice`:
 
 1. Load a hardware spec YAML.
 2. Validate it against the schema.
@@ -42,7 +42,6 @@ Creating a `CompGenDevice`:
 
 - [Architecture → Runtime Model](../architecture/runtime-model.md)
 - [Architecture → Target Backend Model](../architecture/target-backend-model.md)
-- [Architecture → Triton Integration](../architecture/triton-integration-spec.md)
 - [Architecture → Extension Points](../architecture/extension-points.md)
 
 Deeper design records, ADRs, and roadmap material live in

@@ -264,6 +264,22 @@ endif()
 # the python provider's probe() detects this honestly.
 option(XPURT_WITH_XNNPACK "Build the XNNPACK CPU-operator driver" OFF)
 
+# Detect bare-metal cross-compile (set by the riscv64-spike-rvv.cmake
+# toolchain file). When true: no glibc, no pthreads, no cpuinfo — XNNPACK's
+# RVV path uses inline `vsetvli` for vector-length detection and our
+# single-threaded pthreadpool shim takes the parallelize calls serial.
+if(NOT DEFINED XPURT_RISCV_SPIKE)
+    set(XPURT_RISCV_SPIKE FALSE)
+endif()
+# Auto-detect: any riscv64 cross-compile is a Spike+pk target unless
+# the caller opts out explicitly.
+if(CMAKE_SYSTEM_PROCESSOR STREQUAL "riscv64" AND CMAKE_CROSSCOMPILING)
+    set(XPURT_RISCV_SPIKE TRUE)
+endif()
+if(XPURT_RISCV_SPIKE)
+    message(STATUS "xpu_rt: cross-compiling for riscv64+RVV (Spike+pk)")
+endif()
+
 set(XPURT_HAVE_XNNPACK FALSE)
 if(XPURT_WITH_XNNPACK)
     set(XNNPACK_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../../third_party/XNNPACK"
@@ -282,19 +298,69 @@ if(XPURT_WITH_XNNPACK)
     set(XNNPACK_BUILD_BENCHMARKS OFF CACHE BOOL "" FORCE)
     # Pull microkernel set; XNNPACK chooses per-host automatically.
     set(XNNPACK_BUILD_ALL_MICROKERNELS ON CACHE BOOL "" FORCE)
-    # Force cpuinfo include path on host Linux. The fork's hardcoded =0
-    # leaves hardware-config.c with implicit-decl external refs to
-    # cpuinfo_has_x86_* (since cpuinfo.h is suppressed) — set to 1 so
-    # the header is included and the predicates inline cleanly.
-    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    if(XPURT_RISCV_SPIKE)
+        # RVV ON: the Zephyr SDK 1.0.0-beta1 ships GCC 14.3 which
+        # implements the correct RVV v1.0 intrinsic spellings the
+        # UCB-BAR XNNPACK fork uses. (Chipyard's bundled GCC 13.2 had
+        # intrinsic drift across ~250 microkernel files — see the
+        # toolchain file at toolchains/riscv64-spike-rvv.cmake for the
+        # full toolchain-choice rationale.)
+        set(XNNPACK_ENABLE_RISCV_VECTOR ON  CACHE BOOL "" FORCE)
+        set(XNNPACK_ENABLE_RISCV_FP16_VECTOR OFF CACHE BOOL "" FORCE)
+        # cpuinfo doesn't usefully cross-compile to riscv64 (no /proc,
+        # no auxv on bare-metal pk); inline `vsetvli` detection inside
+        # XNNPACK's hardware-config still works for runtime VLEN
+        # discovery if RVV were enabled.
+        set(XNN_ENABLE_CPUINFO "0" CACHE STRING "" FORCE)
+    elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        # Force cpuinfo include path on host Linux. The fork's hardcoded =0
+        # leaves hardware-config.c with implicit-decl external refs to
+        # cpuinfo_has_x86_* (since cpuinfo.h is suppressed) — set to 1 so
+        # the header is included and the predicates inline cleanly.
         set(XNN_ENABLE_CPUINFO "1" CACHE STRING "" FORCE)
     endif()
     # The UCB-BAR torch-1.0.0-bump branch defaults USE_GNU_SOURCE=OFF
     # (it targets bare-metal / Zephyr where _GNU_SOURCE is wrong).
     # When the host is Linux (the common XPU-RT build), forcing ON is
     # required so memory.c sees MREMAP_MAYMOVE / MAP_FAILED via <sys/mman.h>.
+    # On bare-metal riscv we leave it OFF — newlib has neither.
     if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
         set(USE_GNU_SOURCE ON CACHE BOOL "" FORCE)
+    endif()
+
+    # On bare-metal riscv we ship a single-threaded pthreadpool target
+    # BEFORE XNNPACK pulls its own. XNNPACK guards its FetchContent
+    # block with IF(NOT TARGET pthreadpool), so an in-tree target
+    # short-circuits the download. We use pthreadpool's own shim.c —
+    # the serial single-threaded fallback path it ships for wasm /
+    # platforms without pthread. pthreadpool's source still needs to be
+    # available for the header; we FetchContent it explicitly.
+    if(XPURT_RISCV_SPIKE)
+        if(NOT TARGET pthreadpool)
+            include(FetchContent)
+            FetchContent_Declare(
+                pthreadpool_src
+                GIT_REPOSITORY https://github.com/google/pthreadpool.git
+                GIT_TAG        main
+                GIT_SHALLOW    TRUE
+            )
+            FetchContent_GetProperties(pthreadpool_src)
+            if(NOT pthreadpool_src_POPULATED)
+                FetchContent_Populate(pthreadpool_src)
+            endif()
+            add_library(pthreadpool STATIC
+                ${pthreadpool_src_SOURCE_DIR}/src/shim.c)
+            target_include_directories(pthreadpool PUBLIC
+                ${pthreadpool_src_SOURCE_DIR}/include)
+            target_compile_definitions(pthreadpool PRIVATE
+                PTHREADPOOL_NO_DEPRECATED_API=1)
+            # The shim's PTHREADPOOL_PRIVATE_IMPL machinery expects
+            # the dispatch-table header. shim.c is self-contained;
+            # this include path keeps threadpool-common.h / -utils.h
+            # discoverable.
+            target_include_directories(pthreadpool PRIVATE
+                ${pthreadpool_src_SOURCE_DIR}/src)
+        endif()
     endif()
 
     # cpuinfo dependency. The fork's CMakeLists commented out its own
@@ -303,7 +369,10 @@ if(XPURT_WITH_XNNPACK)
     # unconditionally on x86. We pull cpuinfo here so XNNPACK's
     # hardware-config has the symbols to link against. cpuinfo is small
     # (<1MB), BSD-2 licensed, and a standard XNNPACK dependency upstream.
-    if(NOT TARGET cpuinfo)
+    # On bare-metal riscv we skip cpuinfo entirely — XNN_ENABLE_CPUINFO=0
+    # is the canonical setup for that target and the fork's RVV detection
+    # uses inline `vsetvli` instead of cpuinfo predicates.
+    if(NOT XPURT_RISCV_SPIKE AND NOT TARGET cpuinfo)
         include(FetchContent)
         FetchContent_Declare(
             cpuinfo
@@ -340,31 +409,113 @@ if(XPURT_WITH_XNNPACK)
                 endif()
             endforeach()
         endif()
-        target_compile_definitions(xpu_rt        PRIVATE XPURT_HAS_XNNPACK=1)
+        if(XPURT_RISCV_SPIKE)
+            # pthread_compat.c provides single-threaded no-op pthread_*
+            # implementations the chipyard newlib riscv64-unknown-elf
+            # toolchain does not ship. Linked into xpu_rt_static so
+            # XNNPACK's pthread_once / pthread_mutex_* references
+            # resolve at exe link time.
+            target_sources(xpu_rt_static PRIVATE
+                src/compat/picolibc-freestanding/pthread_compat.c)
+            # Inject our picolibc compat directory on every XNNPACK
+            # target (mostly for the std::math compat <cmath> shim;
+            # pthread.h is supplied by newlib once _POSIX_THREADS is
+            # defined via the toolchain file).
+            set(_xnn_pthread_inc
+                "${CMAKE_CURRENT_SOURCE_DIR}/src/compat/picolibc-freestanding")
+            foreach(_xnn_tgt XNNPACK xnnpack-base xnnpack-hardware-config
+                              xnnpack-microkernels-prod xnnpack-microkernels-all
+                              xnnpack-operator-run xnnpack-operators
+                              xnnpack-subgraph xnnpack-memory xnnpack-logging
+                              xnnpack-cache xnnpack-mutex xnnpack-pack
+                              xnnpack-config xnnpack-allocator xnnpack-datatype
+                              xnnpack-indirection xnnpack-microparams-init
+                              xnnpack-normalization xnnpack-operator-utils
+                              xnnpack-post-operation xnnpack-quantization
+                              xnnpack-reference-ukernels xnnpack-runtime
+                              xnnpack-table xnnpack-sanitizers)
+                if(TARGET ${_xnn_tgt})
+                    get_target_property(_xnn_kind ${_xnn_tgt} TYPE)
+                    if(_xnn_kind STREQUAL "INTERFACE_LIBRARY")
+                        target_include_directories(${_xnn_tgt} BEFORE INTERFACE
+                            ${_xnn_pthread_inc})
+                    else()
+                        target_include_directories(${_xnn_tgt} BEFORE PRIVATE
+                            ${_xnn_pthread_inc})
+                    endif()
+                endif()
+            endforeach()
+            # pthreadpool target also needs the stub (its shim.c
+            # transitively includes <pthread.h> in some configurations).
+            if(TARGET pthreadpool)
+                target_include_directories(pthreadpool BEFORE PUBLIC
+                    ${_xnn_pthread_inc})
+            endif()
+
+            # GCC 14.3 (Zephyr SDK) compiles XNNPACK's RVV microkernels
+            # cleanly — no source filtering needed. fp16-arith RVV
+            # kernels (`rvvfp16arith`) require zvfh, which Spike at
+            # VLEN=128 doesn't expose; drop just those.
+            foreach(_xnn_tgt xnnpack-microkernels-prod xnnpack-microkernels-all)
+                if(NOT TARGET ${_xnn_tgt})
+                    continue()
+                endif()
+                get_target_property(_srcs ${_xnn_tgt} SOURCES)
+                set(_kept "")
+                set(_dropped_count 0)
+                foreach(_s ${_srcs})
+                    if(_s MATCHES "rvvfp16arith")
+                        math(EXPR _dropped_count "${_dropped_count} + 1")
+                    else()
+                        list(APPEND _kept "${_s}")
+                    endif()
+                endforeach()
+                set_target_properties(${_xnn_tgt} PROPERTIES SOURCES "${_kept}")
+                message(STATUS
+                    "xpu_rt: dropped ${_dropped_count} rvvfp16arith "
+                    "microkernels from ${_xnn_tgt} (Spike has no zvfh)")
+            endforeach()
+        endif()
+        if(TARGET xpu_rt)
+            target_compile_definitions(xpu_rt        PRIVATE XPURT_HAS_XNNPACK=1)
+            target_include_directories(xpu_rt        PRIVATE ${XNNPACK_ROOT_DIR}/include)
+        endif()
         target_compile_definitions(xpu_rt_static PRIVATE XPURT_HAS_XNNPACK=1)
-        target_include_directories(xpu_rt        PRIVATE ${XNNPACK_ROOT_DIR}/include)
         target_include_directories(xpu_rt_static PRIVATE ${XNNPACK_ROOT_DIR}/include)
-        # XNNPACK builds a stack of separate static libs (XNNPACK,
-        # xnnpack-microkernels-prod, xnnpack-microkernels-all, ...) and
-        # the microkernels libs reference cpuinfo unconditionally on x86.
-        # When libxpu_rt is a shared lib, the linker is single-pass:
-        # we must put cpuinfo AFTER every XNNPACK-* lib so its symbols
-        # resolve. The cleanest way is to add `-Wl,--start-group ...
-        # --end-group` so the linker iterates until fixed-point.
-        # libstdc++ needed because XNNPACK includes C++ sources.
-        target_link_libraries(xpu_rt        PRIVATE
-            -Wl,--start-group
-            XNNPACK cpuinfo
-            -Wl,--end-group
-            stdc++)
-        target_link_libraries(xpu_rt_static PRIVATE
-            XNNPACK cpuinfo stdc++)
-        # Downstream consumers (test binaries, user apps) of libxpu_rt.so
-        # need cpuinfo in their own link line too, because libxpu_rt.so
-        # may leave some cpuinfo refs unresolved (shared libs allow
-        # undefined refs at .so build time and resolve them at exe link).
-        target_link_libraries(xpu_rt        INTERFACE cpuinfo)
-        target_link_libraries(xpu_rt_static INTERFACE cpuinfo)
+        if(XPURT_RISCV_SPIKE)
+            # riscv64 bare-metal (Zephyr SDK picolibc): no cpuinfo
+            # (XNNPACK fork has it disabled on riscv anyway).
+            # pthreadpool is our single-threaded shim (target
+            # pre-defined before XNNPACK). picolibc supplies libm via
+            # specs files; libstdc++ via the toolchain.
+            target_compile_definitions(xpu_rt_static PRIVATE XPURT_RISCV_SPIKE=1)
+            target_link_libraries(xpu_rt_static PUBLIC
+                XNNPACK pthreadpool stdc++ m)
+        else()
+            # Host (Linux) path. XNNPACK builds a stack of separate
+            # static libs (XNNPACK, xnnpack-microkernels-prod,
+            # xnnpack-microkernels-all, ...) and the microkernels libs
+            # reference cpuinfo unconditionally on x86. When libxpu_rt
+            # is a shared lib, the linker is single-pass: we must put
+            # cpuinfo AFTER every XNNPACK-* lib so its symbols resolve.
+            # The cleanest way is `-Wl,--start-group ... --end-group`
+            # so the linker iterates until fixed-point. libstdc++
+            # needed because XNNPACK includes C++ sources.
+            target_link_libraries(xpu_rt        PRIVATE
+                -Wl,--start-group
+                XNNPACK cpuinfo
+                -Wl,--end-group
+                stdc++)
+            target_link_libraries(xpu_rt_static PRIVATE
+                XNNPACK cpuinfo stdc++)
+            # Downstream consumers (test binaries, user apps) of
+            # libxpu_rt.so need cpuinfo in their own link line too,
+            # because libxpu_rt.so may leave some cpuinfo refs
+            # unresolved (shared libs allow undefined refs at .so
+            # build time and resolve them at exe link).
+            target_link_libraries(xpu_rt        INTERFACE cpuinfo)
+            target_link_libraries(xpu_rt_static INTERFACE cpuinfo)
+        endif()
         set(XPURT_HAVE_XNNPACK TRUE)
         message(STATUS "xpu_rt: XNNPACK driver enabled (UCB-BAR fork @ ${XNNPACK_ROOT_DIR})")
     else()
@@ -385,9 +536,11 @@ endif()
 
 enable_testing()
 
-# Host tests run only on posix — cpu_task tests need threads, the
-# others all share the same test binary shape.
-if(CG_RT_PLATFORM STREQUAL "posix")
+# Host tests run only on posix x86_64 — cpu_task tests need threads,
+# the others all share the same test binary shape. When cross-compiling
+# to riscv64+spike we instead build a dedicated XNNPACK bridge smoke
+# test under spike+pk.
+if(CG_RT_PLATFORM STREQUAL "posix" AND NOT XPURT_RISCV_SPIKE)
     set(CG_RT_TESTS
         tests/test_semaphore.c
         tests/test_event_tensor.c
@@ -410,6 +563,25 @@ if(CG_RT_PLATFORM STREQUAL "posix")
         )
         add_test(NAME ${test_name} COMMAND ${test_name})
     endforeach()
+endif()
+
+# --- riscv64 + Spike + RVV smoke test (drives FC through the bridge) ----
+# Built when cross-compiling to riscv64 with XNNPACK enabled. Newlib's
+# htif_nano.specs (configured in the toolchain file) provides crt0,
+# printf via HTIF, and exit via HTIF tohost — no manual startup.S or
+# syscalls.c needed. The CMAKE_C_LINK_EXECUTABLE override in the
+# toolchain handles the -specs / -T flags.
+if(XPURT_RISCV_SPIKE AND XPURT_HAVE_XNNPACK)
+    add_executable(test_xnnpack_bridge_riscv
+        tests/test_xnnpack_bridge_riscv.c)
+    target_link_libraries(test_xnnpack_bridge_riscv PRIVATE
+        xpu_rt_static)
+    target_include_directories(test_xnnpack_bridge_riscv PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src)
+    set_target_properties(test_xnnpack_bridge_riscv PROPERTIES
+        SUFFIX ".elf")
+    message(STATUS "xpu_rt: built riscv64+RVV XNNPACK bridge smoke test")
 endif()
 
 # --- Bare-metal smoke test (freestanding RISC-V, runs on Spike) ---------

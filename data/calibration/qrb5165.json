@@ -1,0 +1,52 @@
+{
+  "contention_factor": {
+    "dronet": {
+      "CPU": 1.0,
+      "DSP": 1.0,
+      "GPU": 1.0
+    },
+    "yolov8n": {
+      "CPU": 1.0,
+      "DSP": 0.7880110583585447,
+      "GPU": 1.0
+    }
+  },
+  "contention_factor_warm": {},
+  "contention_provenance": {
+    "dronet": {
+      "CPU": "default_no_data",
+      "DSP": "default_no_data",
+      "GPU": "default_no_data"
+    },
+    "yolov8n": {
+      "CPU": "default_no_data",
+      "DSP": "measured",
+      "GPU": "default_no_data"
+    }
+  },
+  "contention_provenance_warm": {},
+  "created_at": "2026-05-16T23:49:17.132849+00:00",
+  "history": [],
+  "overhead_us": {
+    "dronet": {
+      "CPU": 1180.5685999999996,
+      "DSP": 157559.0689,
+      "GPU": 86601.50409999999
+    },
+    "yolov8n": {
+      "CPU": 56250.348800000036,
+      "DSP": 294491.8066,
+      "GPU": 286897.1308
+    }
+  },
+  "overhead_us_warm": {
+    "dronet": {
+      "GPU": 818.0
+    },
+    "yolov8n": {
+      "DSP": 0.0
+    }
+  },
+  "schema_version": "calibration_model_v4",
+  "target_id": "qrb5165"
+}

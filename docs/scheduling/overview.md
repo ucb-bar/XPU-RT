@@ -46,7 +46,3 @@ solver call in the compiler produces.
 2. [QNN backend](qnn-backend.md) — QRB5165 cost model + island-DAG.
 3. [Solver-backend integration](solver-backend.md) — how the CVX scheduler
    plugs into `xpu_rt.solve`.
-4. [Merlin integration](merlin-integration.md) — compile/profile loop with
-   the SpacemiT/QRB5165 toolchain.
-5. [Telemetry feedback](telemetry-feedback.md) — closing the loop from
-   on-board measurements back into recipe calibration.

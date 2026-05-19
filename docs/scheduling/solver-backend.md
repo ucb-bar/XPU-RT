@@ -13,7 +13,7 @@ routing layer.
 | `xpu_rt.scheduler.scheduler.schedule(workload, ...)` — free function, cvxpy + MOSEK directly. | `xpu_rt.scheduler.solve_makespan(workload, ...)` — typed envelope, registry-routed. |
 | No probe — missing cvxpy raises `ImportError` at call time. | Typed `SolverStatus.BLOCKED` when cvxpy / MOSEK unavailable. |
 | No audit trail — caller has to roll its own. | Every call carries `formulation_hash`, `selected_backend`, `time_ms`, `objective_value`. |
-| Not discoverable by `compgen-solver-planning` MCP skill. | Discovered alongside placement / memory backends. |
+| Not discoverable by `xpu_rt-solver-planning` MCP skill. | Discovered alongside placement / memory backends. |
 | MOSEK license discovery only used for memory planning. | Shared `ensure_mosek_license_env()` path; same `mosek.lic` works for both. |
 
 The original `xpu_rt.scheduler.scheduler.schedule()` stays as the direct
@@ -73,7 +73,7 @@ The probe:
    different schedules.
 4. When MOSEK is present, the `supports` tuple opens with the literal
    string `"preferred_solver:MOSEK"` so probe output (and the
-   `compgen-solver-planning` MCP skill) make the choice visually obvious.
+   `xpu_rt-solver-planning` MCP skill) make the choice visually obvious.
 
 To install MOSEK with the repo's license:
 
@@ -134,8 +134,8 @@ print(response.time_ms)                   # wall-clock spent in the solver
 | Use `solve_makespan()` (envelope) when... | Use `schedule()` (direct) when... |
 |---|---|
 | You want typed status, formulation_hash, license-aware fallback. | You're inside the original XPU-RT codepath and don't need the envelope. |
-| You're calling from a CompGen pipeline stage that already speaks `SolverRequest`/`SolverResponse`. | You need the raw fused `Workload` object back (the envelope drops it). |
-| You want the call discoverable by the `compgen-solver-planning` MCP skill. | You're explicitly opting out of the registry — e.g. testing the MILP without probe overhead. |
+| You're calling from a XPU-RT pipeline stage that already speaks `SolverRequest`/`SolverResponse`. | You need the raw fused `Workload` object back (the envelope drops it). |
+| You want the call discoverable by the `xpu_rt-solver-planning` MCP skill. | You're explicitly opting out of the registry — e.g. testing the MILP without probe overhead. |
 
 ## See also
 

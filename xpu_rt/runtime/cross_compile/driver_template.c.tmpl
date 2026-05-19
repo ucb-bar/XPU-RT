@@ -1,0 +1,75 @@
+/*
+ * Auto-generated driver for cross-compiled CompGen bundle.
+ *
+ *   model        : %%MODEL_ID%%
+ *   target       : %%TARGET_ID%%
+ *   regions      : %%N_REGIONS%%
+ *   bundle_hash  : %%BUNDLE_HASH%%
+ *
+ * Runs every region's kernel in execution-plan order, then prints the
+ * final output as hex-bits over HTIF stdout for the host wrapper to
+ * compare against `golden_outputs.pt`.
+ */
+
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+%%REGION_INCLUDES%%
+
+/* Golden inputs embedded as a `.rodata` blob (extracted from
+ * golden_inputs.pt at compile-stage time, flat fp32 row-major). */
+extern const float golden_inputs_data[];
+extern const size_t golden_inputs_count;
+
+/* Per-region static input/output buffers. Sizes are baked at
+ * compile time from each region's kernel contract. */
+%%REGION_BUFFERS%%
+
+static uint64_t fnv1a_u64(const void* data, size_t bytes) {
+    const uint8_t* p = (const uint8_t*)data;
+    uint64_t h = 0xcbf29ce484222325ULL;
+    for (size_t i = 0; i < bytes; ++i) {
+        h ^= p[i];
+        h *= 0x100000001b3ULL;
+    }
+    return h;
+}
+
+static void emit_output_hex(const float* out, size_t n) {
+    printf("output_count: %lu\n", (unsigned long)n);
+    for (size_t i = 0; i < n; ++i) {
+        uint32_t bits;
+        memcpy(&bits, &out[i], sizeof(bits));
+        printf("%s%08lx", (i == 0 ? "output: " : " "), (unsigned long)bits);
+    }
+    printf("\n");
+    uint64_t cs = fnv1a_u64(out, n * sizeof(float));
+    printf("checksum: 0x%08lx%08lx\n",
+           (unsigned long)(cs >> 32),
+           (unsigned long)(cs & 0xffffffffUL));
+}
+
+int main(void) {
+    puts("compgen-bundle %%MODEL_ID%% @ %%TARGET_ID%%: begin");
+
+    /* Stage inputs from .rodata into the first region's input buffer. */
+    if (golden_inputs_count > region0_input_count) {
+        printf("FAIL: golden_inputs_count=%lu > region0 capacity=%lu\n",
+               (unsigned long)golden_inputs_count,
+               (unsigned long)region0_input_count);
+        return 1;
+    }
+    memcpy(region0_input, golden_inputs_data,
+           golden_inputs_count * sizeof(float));
+
+    /* Run each region in execution-plan order. */
+%%REGION_CALLS%%
+
+    /* Emit the final region's output buffer + checksum. */
+    emit_output_hex(%%FINAL_OUTPUT_VAR%%, %%FINAL_OUTPUT_COUNT%%);
+
+    puts("PASS");
+    return 0;
+}

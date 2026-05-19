@@ -78,7 +78,7 @@ state described in older design material.
 - `./scripts/bootstrap.sh`
 - `uv run python -m xpu_rt.cli --help`
 - `uv run python -m xpu_rt.cli --version`
-- `uv run python scripts/e2e_demo.py`
+- `uv run python tools/e2e/e2e_demo.py`
 - `xpu_rt.device(...)`
 - `xpu_rt.compile_model(...)`
 
@@ -136,7 +136,7 @@ This is the minimum map every agent should keep in mind:
 | `xpu-rt/tests/` | Executable truth for behavior and coverage |
 | `xpu-rt/{configs,schemas,benchmarks,userpacks,contrib,infra}/` | Compiler-side resources |
 | `runtime/` | Native C/CUDA runtime (libxpu_rt) + Merlin/IREE dispatch runners |
-| `xpu-rt/python/xpu_rt/targets/backends/qnn/` | QRB5165 cost model + island DAG scheduler (XPU-RT origin, fits CompGen's targets/backends/ pattern alongside npu/, saturn_opu/) |
+| `xpu-rt/python/xpu_rt/targets/backends/qnn/` | QRB5165 cost model + island DAG scheduler (XPU-RT origin, fits XPU-RT's targets/backends/ pattern alongside npu/, saturn_opu/) |
 | `models/qnn/` | ONNX → TFLite → QNN DLC conversion tooling (Docker + shell + per-model export scripts) |
 | `xpu-rt/audit_seed/` | Tracked seed inputs for the audit framework (was results/audit/_seed/) |
 | `build/` | Gitignored — generated paper, plots, results land here |
@@ -405,7 +405,7 @@ Quick links:
   `xpu_rt.graph_compilation.promotion_retrieval.retrieve_for_region`
 - Gate ladder (six levels): `xpu_rt.promotion.gates.evaluate_gate`
 - Falsifiability harness:
-  `scripts/dev/measure_promotion_efficiency.py`
+  `tools/dev/measure_promotion_efficiency.py`
 - Aggregator: `xpu_rt.graph_compilation.efficiency_report`
 
 The headline falsifiable claim:
@@ -433,11 +433,11 @@ paper-eligible. The gate enforces eight rules documented in
 
 Quick links:
 
-- Trust report CLI: `scripts/dev/build_trust_report.py`
-- Realness scan CLI: `scripts/dev/audit_realness.py`
-- Import-provenance CLI: `scripts/dev/audit_production_imports.py`
-- Trace replay CLI: `scripts/dev/replay_agent_decision.py`
-- Task pack builder CLI: `scripts/dev/fresh_agent_task_pack.py`
+- Trust report CLI: `tools/dev/build_trust_report.py`
+- Realness scan CLI: `tools/dev/audit_realness.py`
+- Import-provenance CLI: `tools/dev/audit_production_imports.py`
+- Trace replay CLI: `tools/dev/replay_agent_decision.py`
+- Task pack builder CLI: `tools/dev/fresh_agent_task_pack.py`
 - Realness contracts: `docs/realness/<feature_id>.yaml`
 - Caveat ledger seed: `xpu-rt/audit_seed/caveat_ledger.json`
 - Operator policy: `docs/reference/realness_policy.md`

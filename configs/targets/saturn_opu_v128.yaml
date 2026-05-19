@@ -1,0 +1,56 @@
+schema_version: graphcomp_target_config_v1
+target_id: saturn_opu_v128
+device_kind: custom_accelerator
+# Knowledge card path (per-target ISA + intrinsics + lessons memory).
+# Populated by `xpu-rt-target seed saturn` or the /xpu-rt-target skill.
+knowledge_card: .xpu_rt/knowledge/targets/saturn_opu_v128/target_card.json
+description: |
+  Saturn OPU V128 — RISC-V matrix coprocessor (host_isa=riscv64 +
+  RVV 1.0 + xopu extension). Inline CPU instruction submission;
+  llvm_cpu_vmfb runtime format. Compiled via merlin's tools/compile.py
+  (target=saturn_opu, hw=OPU); measured under FireSim. Numbers below
+  are placeholder budgets — real latency comes from FireSim or RTL.
+
+peak_compute_gflops: 64.0
+peak_bandwidth_gb_s: 12.8
+memory_tiers:
+  scratchpad_bytes: 0
+  l2_bytes: 524288
+  l3_bytes: 0
+  system_bytes: 268435456
+supported_dtypes:
+  - i8
+  - f8e4m3
+  - i32
+  - fp32
+numerical_budgets:
+  i8: 1.0e-2
+  f8e4m3: 5.0e-2
+  fp32: 1.0e-3
+peak_compute_per_dtype:
+  i8: 64.0
+  f8e4m3: 64.0
+  fp32: 4.0
+mma_shapes:
+  - { M: 64, N: 1, K: 64 }
+  - { M: 32, N: 1, K: 32 }
+  - { M: 16, N: 16, K: 16 }
+codegen_hints:
+  - "outer-product matrix unit; even alignment NOT required"
+  - "merlin lowering recovers at llvmcpu_codegen stage"
+  - "requires_pack: mmt4d_lhs / mmt4d_rhs / mmt4d_result layouts"
+
+working_set_tiles:
+  matmul:
+    - { M: 64, N: 1,  K: 64 }
+    - { M: 32, N: 1,  K: 32 }
+    - { M: 16, N: 16, K: 16 }
+  elementwise:
+    - { numel: 128 }
+    - { numel: 512 }
+
+merlin:
+  target: saturn_opu
+  hw: OPU
+  spec_dir: target_specs/examples/saturn_opu_v128
+  simulator: firesim

@@ -1,0 +1,172 @@
+Input Log File Location: out/qnn-profiling-data_0.log
+Log File Created: Fri May 15 22:11:34 2026
+Time Scale: 1e-06
+Epoch Timestamp: 1778883094041929 Steady Clock Timestamp: 361826447025
+Generated using: 
+qnn-profile-viewer: v2.45.0.260326154327
+qnn-net-run: v2.45.0.260326154327
+Backend: v2.45.0.260326154327
+
+Qnn Init/Prepare/Finalize/De-Init/Execute/Lib-Load Statistics:
+------------------------------------------------------------
+Init Stats:
+-----------
+    NetRun: 28114 us
+
+Compose Graphs Stats:
+--------------
+    NetRun: 6996 us
+
+Finalize Stats:
+---------------
+Graph 0 (dronet):
+    NetRun: 21106 us
+    Backend (RPC (finalize) time): 19911 us
+    Backend (QNN accelerator (finalize) time): 19438 us
+    Backend (Accelerator (finalize) time): 4377 us
+    Backend (QNN (finalize) time): 21098 us
+
+De-Init Stats:
+--------------
+    NetRun: 6980 us
+    Backend (RPC (deinit) time): 5403 us
+    Backend (QNN Accelerator (deinit) time): 4987 us
+    Backend (QNN (deinit) time): 6474 us
+    Backend (QNN (deinit) time): 6483 us
+
+Execute Stats (Overall):
+------------------------
+    NetRun IPS (includes IO and misc. time): 350.8772 inf/sec 
+
+Execute Stats (Average):
+------------------------
+Total Inference Time: 
+---------------------
+Graph 0 (dronet):
+    NetRun: 1315 us
+    Backend (RPC (execute) time): 1167 us
+    Backend (QNN accelerator (execute) time): 684 us
+    Backend (Num times yield occured): 0 count
+    Backend (Time for initial VTCM acquire): 0 us
+    Backend (Time for HVX + HMX power on and acquire): 0 us
+    Backend (Accelerator (execute) time): 580 us
+        /conv_modules.0/Conv:OpId_0 (us): 60 us
+        /maxpool1/MaxPool:OpId_1 (us): 22 us
+        /bn_modules.0/BatchNormalization:OpId_2 (us): 0 us
+        /relu_modules.0/Relu:OpId_3 (us): 15 us
+        /conv_modules.1/Conv:OpId_4 (us): 0 us
+        /relu_modules.1/Relu:OpId_5 (us): 53 us
+        /conv_modules.2/Conv:OpId_6 (us): 22 us
+        /conv_modules.3/Conv:OpId_7 (us): 18 us
+        /Add:OpId_8 (us): 18 us
+        /bn_modules.2/BatchNormalization:OpId_9 (us): 0 us
+        /relu_modules.2/Relu:OpId_10 (us): 6 us
+        /conv_modules.4/Conv:OpId_11 (us): 0 us
+        /relu_modules.3/Relu:OpId_12 (us): 19 us
+        /conv_modules.5/Conv:OpId_13 (us): 21 us
+        /conv_modules.6/Conv:OpId_14 (us): 18 us
+        /Add_1:OpId_15 (us): 6 us
+        /bn_modules.4/BatchNormalization:OpId_16 (us): 0 us
+        /relu_modules.4/Relu:OpId_17 (us): 6 us
+        /conv_modules.7/Conv:OpId_18 (us): 0 us
+        /relu_modules.5/Relu:OpId_19 (us): 25 us
+        /conv_modules.8/Conv:OpId_20 (us): 30 us
+        /conv_modules.9/Conv:OpId_21 (us): 22 us
+        /Add_2:OpId_22 (us): 6 us
+        /Add_2_output_0.nchw:OpId_23 (us): 13 us
+        /Flatten:OpId_24 (us): 4 us
+        /relu_modules.6/Relu:OpId_25 (us): 11 us
+        /linear1/Gemm:OpId_26 (us): 40 us
+        /linear2/Gemm:OpId_27 (us): 29 us
+        /sigmoid1/Sigmoid:OpId_28 (us): 11 us
+        Misc accelerator time: 27 us
+    Backend (QNN (execute) time): 1310 us
+
+Execute Stats (Min):
+------------------------
+Total Inference Time: 
+---------------------
+Graph 0 (dronet):
+    NetRun: 1315 us
+    Backend (RPC (execute) time): 1167 us
+    Backend (QNN accelerator (execute) time): 684 us
+    Backend (Num times yield occured): 0 count
+    Backend (Time for initial VTCM acquire): 0 us
+    Backend (Time for HVX + HMX power on and acquire): 0 us
+    Backend (Accelerator (execute) time): 580 us
+        /conv_modules.0/Conv:OpId_0 (us): 60 us
+        /maxpool1/MaxPool:OpId_1 (us): 22 us
+        /bn_modules.0/BatchNormalization:OpId_2 (us): 0 us
+        /relu_modules.0/Relu:OpId_3 (us): 15 us
+        /conv_modules.1/Conv:OpId_4 (us): 0 us
+        /relu_modules.1/Relu:OpId_5 (us): 53 us
+        /conv_modules.2/Conv:OpId_6 (us): 22 us
+        /conv_modules.3/Conv:OpId_7 (us): 18 us
+        /Add:OpId_8 (us): 18 us
+        /bn_modules.2/BatchNormalization:OpId_9 (us): 0 us
+        /relu_modules.2/Relu:OpId_10 (us): 6 us
+        /conv_modules.4/Conv:OpId_11 (us): 0 us
+        /relu_modules.3/Relu:OpId_12 (us): 19 us
+        /conv_modules.5/Conv:OpId_13 (us): 21 us
+        /conv_modules.6/Conv:OpId_14 (us): 18 us
+        /Add_1:OpId_15 (us): 6 us
+        /bn_modules.4/BatchNormalization:OpId_16 (us): 0 us
+        /relu_modules.4/Relu:OpId_17 (us): 6 us
+        /conv_modules.7/Conv:OpId_18 (us): 0 us
+        /relu_modules.5/Relu:OpId_19 (us): 25 us
+        /conv_modules.8/Conv:OpId_20 (us): 30 us
+        /conv_modules.9/Conv:OpId_21 (us): 22 us
+        /Add_2:OpId_22 (us): 6 us
+        /Add_2_output_0.nchw:OpId_23 (us): 13 us
+        /Flatten:OpId_24 (us): 4 us
+        /relu_modules.6/Relu:OpId_25 (us): 11 us
+        /linear1/Gemm:OpId_26 (us): 40 us
+        /linear2/Gemm:OpId_27 (us): 29 us
+        /sigmoid1/Sigmoid:OpId_28 (us): 11 us
+        Misc accelerator time: 27 us
+    Backend (QNN (execute) time): 1310 us
+
+Execute Stats (Max):
+------------------------
+Total Inference Time: 
+---------------------
+Graph 0 (dronet):
+    NetRun: 1315 us
+    Backend (RPC (execute) time): 1167 us
+    Backend (QNN accelerator (execute) time): 684 us
+    Backend (Num times yield occured): 0 count
+    Backend (Time for initial VTCM acquire): 0 us
+    Backend (Time for HVX + HMX power on and acquire): 0 us
+    Backend (Accelerator (execute) time): 580 us
+        /conv_modules.0/Conv:OpId_0 (us): 60 us
+        /maxpool1/MaxPool:OpId_1 (us): 22 us
+        /bn_modules.0/BatchNormalization:OpId_2 (us): 0 us
+        /relu_modules.0/Relu:OpId_3 (us): 15 us
+        /conv_modules.1/Conv:OpId_4 (us): 0 us
+        /relu_modules.1/Relu:OpId_5 (us): 53 us
+        /conv_modules.2/Conv:OpId_6 (us): 22 us
+        /conv_modules.3/Conv:OpId_7 (us): 18 us
+        /Add:OpId_8 (us): 18 us
+        /bn_modules.2/BatchNormalization:OpId_9 (us): 0 us
+        /relu_modules.2/Relu:OpId_10 (us): 6 us
+        /conv_modules.4/Conv:OpId_11 (us): 0 us
+        /relu_modules.3/Relu:OpId_12 (us): 19 us
+        /conv_modules.5/Conv:OpId_13 (us): 21 us
+        /conv_modules.6/Conv:OpId_14 (us): 18 us
+        /Add_1:OpId_15 (us): 6 us
+        /bn_modules.4/BatchNormalization:OpId_16 (us): 0 us
+        /relu_modules.4/Relu:OpId_17 (us): 6 us
+        /conv_modules.7/Conv:OpId_18 (us): 0 us
+        /relu_modules.5/Relu:OpId_19 (us): 25 us
+        /conv_modules.8/Conv:OpId_20 (us): 30 us
+        /conv_modules.9/Conv:OpId_21 (us): 22 us
+        /Add_2:OpId_22 (us): 6 us
+        /Add_2_output_0.nchw:OpId_23 (us): 13 us
+        /Flatten:OpId_24 (us): 4 us
+        /relu_modules.6/Relu:OpId_25 (us): 11 us
+        /linear1/Gemm:OpId_26 (us): 40 us
+        /linear2/Gemm:OpId_27 (us): 29 us
+        /sigmoid1/Sigmoid:OpId_28 (us): 11 us
+        Misc accelerator time: 27 us
+    Backend (QNN (execute) time): 1310 us
+

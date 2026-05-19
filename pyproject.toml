@@ -40,6 +40,9 @@ dependencies = [
     "torchvision>=0.25.0",
     "num2words>=0.5.14",
     "lerobot>=0.4.4",
+    "cvxpy>=1.8.2",
+    "mosek>=11.1.11",
+    "matplotlib>=3.10.8",
 ]
 
 [project.optional-dependencies]
@@ -67,6 +70,12 @@ solve = [
 # extra, memory-planner falls back to HiGHS for LP/MILP cases.
 solve-mosek = [
     "mosek>=10.1",
+]
+ingest = [
+    # Pulls Playwright + browser binaries (~300 MB) for URL crawls; keep
+    # behind this optional extra so headless / offline installs stay lean.
+    "crawl4ai>=0.4",
+    "pypdf>=4",
 ]
 quantization = [
     "torchao>=0.16",
@@ -191,6 +200,10 @@ xpu-rt-gemini-usage = "xpu_rt.observability.cli:main"
 # Generic ToolCard runner. Alias for ``xpu-rt tool …`` so every
 # registered tool gets a stable, audit-checkable CLI entry.
 xpu-rt-tool = "xpu_rt.cli:tool_main"
+# Per-target knowledge card ingestion + inspection.
+xpu-rt-target = "xpu_rt.memory.ingest.cli:main"
+# KernelBlaster v2 contract-driven kernel generation.
+xpu-rt-blast = "xpu_rt.kernels.kernelblaster_v2.cli:main"
 
 # Entry-point groups XPU-RT discovers at startup. Each group is declared
 # here (even when empty in-repo) so user packages can rely on a stable name
@@ -225,19 +238,19 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["xpu-rt/python/xpu_rt"]
+packages = ["xpu_rt"]
 # Include compiled artifacts (`.so`, `.dylib`, `.dll`) from the prebuilt
 # native runtime directory. Without this list, hatch's default file-include
 # pattern strips compiled binaries as build artifacts. The CMake build is
 # run as a pre-step (see Makefile target `build-cuda-rt` and
 # .github/workflows/release.yml) which stages libxpu_rt-{cuda,cpu}.{so,dylib,dll}
-# under xpu-rt/python/xpu_rt/runtime/native/prebuilt/. When the dir holds only
+# under xpu_rt/runtime/native/prebuilt/. When the dir holds only
 # the placeholder README, the wheel ships pure-Python — the [cuda] extra
 # raises a typed error at import time in that case.
 artifacts = [
-    "xpu-rt/python/xpu_rt/runtime/native/prebuilt/*.so",
-    "xpu-rt/python/xpu_rt/runtime/native/prebuilt/*.dylib",
-    "xpu-rt/python/xpu_rt/runtime/native/prebuilt/*.dll",
+    "xpu_rt/runtime/native/prebuilt/*.so",
+    "xpu_rt/runtime/native/prebuilt/*.dylib",
+    "xpu_rt/runtime/native/prebuilt/*.dll",
 ]
 
 [tool.ruff]
@@ -264,7 +277,7 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 # npu_contracts emits a Python-3.12-only f-string escape; ignored until rewritten.
-"xpu-rt/python/xpu_rt/kernels/providers/npu_contracts.py" = ["F821"]
+"xpu_rt/kernels/providers/npu_contracts.py" = ["F821"]
 
 [tool.mypy]
 python_version = "3.11"
@@ -274,26 +287,27 @@ ignore_missing_imports = true
 check_untyped_defs = true
 
 [tool.pytest.ini_options]
-testpaths = ["xpu-rt/tests"]
+testpaths = ["tests"]
 python_files = "test_*.py"
-pythonpath = ["xpu-rt/python", "."]
+pythonpath = ["."]
 # Centralized flake / env-gated exclusions shared by `make test`,
 # local runs, and CI. Override with `pytest --override-ini="addopts="
 # <path>` when you need to exercise one of these deliberately.
 addopts = [
     # Env-gated: external benchmark deps.
-    "--ignore=xpu-rt/tests/benchmarks/test_runner.py",
-    "--ignore=xpu-rt/tests/benchmarks/test_torchbench_adapter.py",
+    "--ignore=tests/benchmarks/test_runner.py",
+    "--ignore=tests/benchmarks/test_torchbench_adapter.py",
     # Env-gated: requires Understanding-PI0 checkout + 450M SmolVLA.
-    "--ignore=xpu-rt/tests/test_smolvla_e2e.py",
+    "--ignore=tests/test_smolvla_e2e.py",
     # Individual known-flaky test ids.
-    "--deselect=xpu-rt/tests/agent/invent_slots/test_registrar.py::test_registrar_registers_all_slots",
-    "--deselect=xpu-rt/tests/agent/policies/test_default.py::test_policy_against_real_registry",
-    "--deselect=xpu-rt/tests/kernels/megakernel/test_llama_decoder_layer.py::test_tinyllama_layernorm_scales_are_loaded_from_real_checkpoint",
+    "--deselect=tests/agent/invent_slots/test_registrar.py::test_registrar_registers_all_slots",
+    "--deselect=tests/agent/policies/test_default.py::test_policy_against_real_registry",
+    "--deselect=tests/kernels/megakernel/test_llama_decoder_layer.py::test_tinyllama_layernorm_scales_are_loaded_from_real_checkpoint",
 ]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "requires_gpu: marks tests that need GPU hardware",
     "requires_mlir: marks tests that need MLIR/xDSL installed",
     "requires_ray: marks tests that need Ray installed",
+    "requires_spike: marks tests that need the RISC-V toolchain + spike binary",
 ]

@@ -4,7 +4,7 @@
 > manual. Read it first. This file remains for compatibility and legacy context.
 
 > **Repo shape note.** XPU-RT is a merged repo combining two subsystems:
-> (1) the LLM-driven compiler generator (formerly *CompGen*, now under
+> (1) the LLM-driven compiler generator (formerly *XPU-RT*, now under
 > `xpu-rt/python/xpu_rt/` with tests at `xpu-rt/tests/`); (2) the original
 > XPU-RT scheduling + runtime stack (CVX scheduler at
 > `xpu-rt/python/xpu_rt/scheduler/`, native C runtime at `runtime/`, QNN
@@ -223,7 +223,7 @@ views, not authority.
 | **Realness contract** | Per-feature YAML claim record at `docs/realness/<feature_id>.yaml` declaring the feature's realness level, forbidden constructs, and required evidence. See `xpu_rt.audit.contracts` |
 | **Realness level** | Six-level claim strength: `schema_only` → `write_only` → `read_only` → `decision_affecting` → `production_path` → `hardware_backed`. Only the last three are paper-claimable |
 | **Caveat ledger** | Machine-readable list of known limitations at `results/audit/<commit>/caveat_ledger.json`. Free-text caveats are rejected; every entry names the claim affected, blocks-paper-claim flag, and required-to-close action. See `xpu_rt.audit.caveat_ledger` |
-| **Trust report** | Single-page audit aggregator at `results/audit/<commit>/trust_report.{md,json}`. Runs 8 gates: realness scan, negative controls, caveat ledger, realness contracts, import provenance, trace replay self-check, task pack buildable, holdout outcomes honest. Built via `uv run python scripts/dev/build_trust_report.py` |
+| **Trust report** | Single-page audit aggregator at `results/audit/<commit>/trust_report.{md,json}`. Runs 8 gates: realness scan, negative controls, caveat ledger, realness contracts, import provenance, trace replay self-check, task pack buildable, holdout outcomes honest. Built via `uv run python tools/dev/build_trust_report.py` |
 | **Negative control** | Fault-injection test that proves a gate is real. The audit table maps (feature, injected break, expected typed error); each row must raise the named typed error or the gate is decorative. `xpu_rt.audit.negative_controls.run_all_negative_controls` |
 | **Holdout model** | Model with `holdout: true` in its YAML, deliberately excluded from canonical-22 to surface hardcoded-shape / hardcoded-id assumptions (`configs/models/holdout_*.yaml`) |
-| **Task pack** | Operator-portable directory containing only public allowlisted files (`CLAUDE.md`, skills, docs, configs, `xpu-rt/python/xpu_rt/**`); tested for forbidden-path leakage. Built via `scripts/dev/fresh_agent_task_pack.py` |
+| **Task pack** | Operator-portable directory containing only public allowlisted files (`CLAUDE.md`, skills, docs, configs, `xpu-rt/python/xpu_rt/**`); tested for forbidden-path leakage. Built via `tools/dev/fresh_agent_task_pack.py` |

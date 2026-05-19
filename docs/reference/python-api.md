@@ -8,7 +8,7 @@ Top-level package exports:
 
 - `xpu_rt.device`
 - `xpu_rt.compile_model`
-- `xpu_rt.CompGenDevice`
+- `xpu_rt.XpuRtDevice`
 - `xpu_rt.CompiledModel`
 
 ## `xpu_rt.device(...)`
@@ -28,7 +28,7 @@ What it does:
 - validates and classifies it
 - extracts a target profile
 - builds a target-specific dialect stack
-- returns a `CompGenDevice`
+- returns a `XpuRtDevice`
 
 ## `xpu_rt.compile_model(...)`
 

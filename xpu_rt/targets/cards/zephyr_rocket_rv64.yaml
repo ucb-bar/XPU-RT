@@ -1,0 +1,12 @@
+schema_version: target_card_v1
+target_id: zephyr_rocket_rv64
+family: host_cpu
+vendor: ucb-bar
+dispatch_modes: [sync]
+memory_tiers:
+  - {name: dram, kind: host, capacity_bytes: 67108864}
+description: |
+  Zephyr RTOS on a Chipyard Rocket RV64 core. Compiled via merlin
+  (tools/compile.py with target=zephyr_rocket); deployed alongside
+  third_party/zephyr-chipyard-sw/ for embedded inference workloads.
+  Capability spec at $MERLIN_ROOT/target_specs/examples/zephyr_rocket_rv64/.

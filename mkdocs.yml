@@ -2,8 +2,8 @@ site_name: XPU-RT
 site_description: >-
   XPU-RT is an end-to-end compilation, scheduling, and runtime flow for
   efficient mapping of robotic and AI workloads onto heterogeneous SoCs —
-  combining an LLM-driven compiler generator (formerly CompGen) with a
-  CVX/MILP-based two-cluster scheduler and a native C/CUDA runtime.
+  combining an LLM-driven compiler generator with a CVX/MILP-based
+  two-cluster scheduler and a native C/CUDA runtime.
 site_url: https://ucb-bar.github.io/XPU-RT/
 repo_url: https://github.com/ucb-bar/XPU-RT
 repo_name: ucb-bar/XPU-RT
@@ -67,20 +67,13 @@ nav:
   - Concepts:
       - What XPU-RT Is: concepts/what-is-xpu-rt.md
       - Architecture Overview: concepts/architecture.md
-      - Verification Model: concepts/verification.md
-      - Semantic IR Verification: concepts/semantic_ir_verification.md
-      - Agent Verification Loop: concepts/agent_verification_loop.md
-      - Decision Sites: concepts/decision_sites.md
-      - Graph Digest: concepts/graph_digest.md
-      - Compilation Trace & IR Dumps: concepts/compilation_trace.md
 
-  - XPU-RT Scheduling Stack:
+  - Scheduling Stack:
       - Overview: scheduling/overview.md
       - Two-Cluster Scheduler: scheduling/two-cluster-scheduler.md
       - QNN Backend: scheduling/qnn-backend.md
       - Solver-Backend Integration: scheduling/solver-backend.md
-      - Merlin Integration: scheduling/merlin-integration.md
-      - On-Board Telemetry → Calibration: scheduling/telemetry-feedback.md
+      - Cross-compile riscv64 (Spike+RVV): scheduling/cross-compile-riscv64.md
 
   - User Guides:
       - Use the Demo: guides/use-the-demo.md
@@ -94,31 +87,16 @@ nav:
 
   - Architecture:
       - Compiler Generation: architecture/compiler-generation.md
-      - Event Tensor Integration: architecture/event_tensor.md
       - Runtime Model: architecture/runtime-model.md
       - Target Backend Model: architecture/target-backend-model.md
-      - Target Hierarchy: architecture/target-hierarchy.md
-      - Target Hierarchy Inventory: architecture/target-hierarchy-inventory.md
-      - Target Pack: architecture/target_pack.md
-      - Add a New Target: architecture/add-a-new-target.md
-      - Triton Integration: architecture/triton-integration-spec.md
-      - XNNPACK Provider: architecture/xnnpack-provider.md
       - Extension Points: architecture/extension-points.md
-      - Extension Provider Architecture: architecture/EXTENSION_PROVIDER_ARCHITECTURE.md
       - Promotion and Memory: architecture/promotion-and-memory.md
-      - CLI Shape: architecture/cli-shape.md
-      - Agentic E2E Audit: architecture/agentic_e2e_audit.md
 
   - Reference:
       - CLI Reference: reference/cli.md
       - Python API: reference/python-api.md
-      - Extension Points: reference/extension-points.md
       - MCP Tools: reference/mcp-tools.md
       - Target Profile Schema: reference/target-profile-schema.md
-      - Target Packages: reference/target-packages.md
-      - Tested Stack: reference/tested-stack.md
-      - Realness Policy: reference/realness_policy.md
-      - Pass Card Index: generated/pass_cards/INDEX.md
       - Troubleshooting: reference/troubleshooting.md
       - Vendor Dialects: vendor_dialects.md
 
@@ -141,7 +119,3 @@ nav:
   - Contributing:
       - GPU CI: contributing/gpu_ci.md
       - Releasing: contributing/releasing.md
-
-  - Integration Notes:
-      - CompGen → XPU-RT Integration: xpu-rt_integration.md
-      - Merlin Integration (legacy notes): merlin_integration.md

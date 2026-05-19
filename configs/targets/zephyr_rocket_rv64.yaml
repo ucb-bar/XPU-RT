@@ -1,0 +1,41 @@
+schema_version: graphcomp_target_config_v1
+target_id: zephyr_rocket_rv64
+device_kind: cpu
+description: |
+  Chipyard Rocket RV64 core running Zephyr RTOS. Bare-metal-ish embedded
+  target — scratchpad sizes match the default Rocket config, not a
+  large SoC. Compiled via merlin's tools/compile.py (target=zephyr_rocket);
+  runs under Spike or on real silicon.
+
+peak_compute_gflops: 0.2
+peak_bandwidth_gb_s: 0.25
+memory_tiers:
+  scratchpad_bytes: 16384
+  l2_bytes: 262144
+  l3_bytes: 0
+  system_bytes: 67108864
+supported_dtypes:
+  - fp32
+  - i32
+numerical_budgets:
+  fp32: 1.0e-3
+peak_compute_per_dtype:
+  fp32: 0.0002
+mma_shapes: {}
+codegen_hints:
+  - "single-issue RV64GC Rocket; no vector unit"
+  - "Zephyr threading; kernels must be cooperative"
+  - "merlin lowers via generic LLVM RISC-V backend"
+
+working_set_tiles:
+  matmul:
+    - { M: 8,  N: 8,  K: 8 }
+    - { M: 16, N: 16, K: 16 }
+  elementwise:
+    - { numel: 64 }
+    - { numel: 256 }
+
+merlin:
+  target: zephyr_rocket
+  spec_dir: target_specs/examples/zephyr_rocket_rv64
+  simulator: spike

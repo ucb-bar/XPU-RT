@@ -1,0 +1,133 @@
+Input Log File Location: out/qnn-profiling-data_0.log
+Log File Created: Fri May 15 22:11:33 2026
+Time Scale: 1e-06
+Epoch Timestamp: 1778883093145915 Steady Clock Timestamp: 361825551012
+Generated using: 
+qnn-profile-viewer: v2.45.0.260326154327
+qnn-net-run: v2.45.0.260326154327
+Backend: v2.45.0.260326154327
+
+Qnn Init/Prepare/Finalize/De-Init/Execute/Lib-Load Statistics:
+------------------------------------------------------------
+Init Stats:
+-----------
+    NetRun: 784004 us
+
+Compose Graphs Stats:
+--------------
+    NetRun: 4235 us
+
+Finalize Stats:
+---------------
+Graph 0 (dronet_fp16):
+    NetRun: 779702 us
+    Backend (QnnGraph_finalize): 779697 us
+
+De-Init Stats:
+--------------
+    NetRun: 9997 us
+    Backend (QnnContext_free): 9993 us
+
+Execute Stats (Overall):
+------------------------
+    NetRun IPS (includes IO and misc. time): 237.5297 inf/sec 
+
+Execute Stats (Average):
+------------------------
+Total Inference Time: 
+---------------------
+Graph 0 (dronet_fp16):
+    NetRun: 3917 us
+    Backend (QnnGraph_execute): 3913 us
+        /conv_modules.0/Conv: 89 us
+        /maxpool1/MaxPool: 20 us
+        /bn_modules.0/BatchNormalization: 9 us
+        /relu_modules.0/Relu: 26 us
+        /conv_modules.1/Conv: 64 us
+        /conv_modules.2/Conv: 46 us
+        /conv_modules.3/Conv: 24 us
+        /Add: 16 us
+        /bn_modules.2/BatchNormalization: 7 us
+        /relu_modules.2/Relu: 7 us
+        /conv_modules.4/Conv: 48 us
+        /conv_modules.5/Conv: 73 us
+        /conv_modules.6/Conv: 30 us
+        /Add_1: 13 us
+        /bn_modules.4/BatchNormalization: 6 us
+        /relu_modules.4/Relu: 7 us
+        /conv_modules.7/Conv: 68 us
+        /conv_modules.8/Conv: 133 us
+        /conv_modules.9/Conv: 29 us
+        /Add_2: 12 us
+        /Add_2_output_0.nchw: 5 us
+        /Flatten: 17 us
+        /relu_modules.6/Relu: 26 us
+        /linear1/Gemm: 39 us
+        /linear2/Gemm: 36 us
+
+Execute Stats (Min):
+------------------------
+Total Inference Time: 
+---------------------
+Graph 0 (dronet_fp16):
+    NetRun: 3917 us
+    Backend (QnnGraph_execute): 3913 us
+        /conv_modules.0/Conv: 89 us
+        /maxpool1/MaxPool: 20 us
+        /bn_modules.0/BatchNormalization: 9 us
+        /relu_modules.0/Relu: 26 us
+        /conv_modules.1/Conv: 64 us
+        /conv_modules.2/Conv: 46 us
+        /conv_modules.3/Conv: 24 us
+        /Add: 16 us
+        /bn_modules.2/BatchNormalization: 7 us
+        /relu_modules.2/Relu: 7 us
+        /conv_modules.4/Conv: 48 us
+        /conv_modules.5/Conv: 73 us
+        /conv_modules.6/Conv: 30 us
+        /Add_1: 13 us
+        /bn_modules.4/BatchNormalization: 6 us
+        /relu_modules.4/Relu: 7 us
+        /conv_modules.7/Conv: 68 us
+        /conv_modules.8/Conv: 133 us
+        /conv_modules.9/Conv: 29 us
+        /Add_2: 12 us
+        /Add_2_output_0.nchw: 5 us
+        /Flatten: 17 us
+        /relu_modules.6/Relu: 26 us
+        /linear1/Gemm: 39 us
+        /linear2/Gemm: 36 us
+
+Execute Stats (Max):
+------------------------
+Total Inference Time: 
+---------------------
+Graph 0 (dronet_fp16):
+    NetRun: 3917 us
+    Backend (QnnGraph_execute): 3913 us
+        /conv_modules.0/Conv: 89 us
+        /maxpool1/MaxPool: 20 us
+        /bn_modules.0/BatchNormalization: 9 us
+        /relu_modules.0/Relu: 26 us
+        /conv_modules.1/Conv: 64 us
+        /conv_modules.2/Conv: 46 us
+        /conv_modules.3/Conv: 24 us
+        /Add: 16 us
+        /bn_modules.2/BatchNormalization: 7 us
+        /relu_modules.2/Relu: 7 us
+        /conv_modules.4/Conv: 48 us
+        /conv_modules.5/Conv: 73 us
+        /conv_modules.6/Conv: 30 us
+        /Add_1: 13 us
+        /bn_modules.4/BatchNormalization: 6 us
+        /relu_modules.4/Relu: 7 us
+        /conv_modules.7/Conv: 68 us
+        /conv_modules.8/Conv: 133 us
+        /conv_modules.9/Conv: 29 us
+        /Add_2: 12 us
+        /Add_2_output_0.nchw: 5 us
+        /Flatten: 17 us
+        /relu_modules.6/Relu: 26 us
+        /linear1/Gemm: 39 us
+        /linear2/Gemm: 36 us
+

@@ -1,0 +1,492 @@
+# XPU-RT canonical hardware spec — Qualcomm QRB5165 (Snapdragon 865-class)
+#
+# Schema: target_resource v1.0  (xpu-rt/python/xpu_rt/schemas/v1/target_resource.schema.yaml)
+# This is the same schema used by xpu-rt/python/xpu_rt/targets/profiles/blackwell_b200.yaml
+# and xpu-rt/examples/target_profiles/cuda_a100.yaml. It supports:
+#   - multi-device SoC layout (CPU + GPU + DSP devices in one profile)
+#   - bandwidth/latency on memory levels
+#   - kernel_families per device
+#   - host_sync_cost_us per device (dispatch overhead)
+#   - cost_model and calibration_data free-form blocks for cross-links
+#   - metadata.assumptions block for measured-vs-inferred-vs-datasheet provenance
+#
+# Authority is the IR + measured cost tables — this file is a
+# *consolidating view*. Everything that varies (per-op latencies,
+# bridge fits, calibration overheads, contention factors) lives in
+# the JSON blobs cross-linked from cost_model / calibration_data.
+# This file pins identity, lane shape, capability, and provenance.
+
+name: qrb5165
+schema_version: "1.0"
+
+devices:
+  # ---------------------------------------------------------------------
+  # Device 0 — Kryo 585 CPU (1×A77 prime + 3×A77 perf + 4×A55 efficiency)
+  # ---------------------------------------------------------------------
+  - device_type: cpu
+    name: "Kryo 585 (1+3+4)"
+    vendor: qualcomm
+    compute_units:
+      - name: kryo_585_prime
+        count: 1
+        # Cortex-A77 derivative, 3.0 GHz on QRB5165 standard binning.
+        # Public spec — peak FLOPS not a load-bearing scheduler input
+        # (the cost table carries measured per-op times); marked unknown.
+        peak_tflops: 0  # unknown; cost table is the source of truth
+        supported_dtypes: [fp32, fp16, int8, uint8, int32]
+      - name: kryo_585_perf
+        count: 3
+        peak_tflops: 0  # unknown; see cost table
+        supported_dtypes: [fp32, fp16, int8, uint8, int32]
+      - name: kryo_585_eff
+        count: 4
+        peak_tflops: 0  # unknown
+        supported_dtypes: [fp32, fp16, int8, uint8, int32]
+    memory_hierarchy:
+      # L1/L2/L3 sizes are public spec; bandwidths unknown without a
+      # microbenchmark on this exact silicon. The scheduler does not
+      # consume these today (it consults the cost table); they are here
+      # for future roofline modeling.
+      - name: l1d_per_core
+        size_bytes: 65536          # 64 KiB L1D per Kryo core (public spec, A77/A55)
+      - name: l2_prime
+        size_bytes: 524288         # 512 KiB L2 on the prime core
+      - name: l3_shared
+        size_bytes: 4194304        # 4 MiB system-level cache (public spec)
+      - name: lpddr5
+        size_bytes: 8589934592     # 8 GiB LPDDR5 on standard QRB5165 dev kits
+        bandwidth_gbps: 0          # unknown; see "coverage gaps" in qrb5165_analysis.md
+    supported_ops:
+      - elementwise
+      - conv
+      - matmul_like
+      - slow_memcpy
+      - rescale
+      - dequant
+      - quant
+    features:
+      - asimd                       # ARMv8 Advanced SIMD (NEON)
+      - dotprod                     # int8 dot-product (UDOT/SDOT) — A77+
+      - fp16
+      - bf16                        # public spec; not exercised by current cost table
+    kernel_backends:
+      - qnn_cpu                     # QNN HTP-CPU fallback path
+      - iree_cpu                    # legacy merlin path; still in board_roundtrip rows
+    preferred_dtypes: [fp32, int8]
+    preferred_layouts: [nhwc]
+    kernel_families:
+      - elementwise
+      - reduction
+      - normalization
+      - conv
+      - gemm
+    # Calibration v3 — fixed dispatch/launch/transfer per (workload, CPU lane).
+    # Source: data/calibration/qrb5165.json (currently v2; v3 schema stamps
+    # the same field as overhead_us[workload][backend]). dronet=1.18ms,
+    # yolov8n=56.25ms; cross-link is authoritative.
+    host_sync_cost_us: 1180.6      # representative — dronet on CPU; see cross-link
+
+  # ---------------------------------------------------------------------
+  # Device 1 — Adreno 650 GPU
+  # ---------------------------------------------------------------------
+  - device_type: gpu
+    name: "Adreno 650"
+    vendor: qualcomm
+    compute_units:
+      - name: adreno_650
+        count: 1                    # logical GPU; warps/wavefronts not modeled here
+        peak_tflops: 0              # unknown for this silicon; cost table is source of truth
+        supported_dtypes: [fp16, fp32, int8, uint8]
+    memory_hierarchy:
+      # Adreno 650 has on-chip GMEM ("tile memory"); exact size is not
+      # publicly documented per Qualcomm. Marked unknown.
+      - name: gmem_tile
+        size_bytes: 0               # unknown
+      - name: lpddr5_shared
+        size_bytes: 8589934592      # shared with CPU on this SoC
+        bandwidth_gbps: 0           # unknown; see coverage gaps
+    supported_ops:
+      - Conv2d
+      - elementwise
+      - matmul_like
+      - reduction
+    features:
+      - fp16
+      - tile_based_rendering
+      - opencl
+      - vulkan
+    kernel_backends:
+      - qnn_gpu                     # QNN GPU backend (Adreno via OpenCL)
+    preferred_dtypes: [fp16]
+    preferred_layouts: [nhwc]
+    kernel_families:
+      - conv
+      - gemm
+      - elementwise
+      - normalization
+    # Calibration v3 overhead (yolov8n on GPU = 286.9ms; dronet = 86.6ms).
+    # Picked dronet here as the smaller representative; full table is in
+    # data/calibration/qrb5165.json::overhead_us.
+    host_sync_cost_us: 86601.5
+
+  # ---------------------------------------------------------------------
+  # Device 2 — Hexagon 698 DSP / HVX (also surfaced as "HTA" in cost rows)
+  # ---------------------------------------------------------------------
+  # Naming note: the QNN cost table labels this lane "HTA" (Hexagon
+  # Tensor Accelerator). The qnn_cost_matrix.json file labels the same
+  # silicon "DSP". Same physical lane — both labels resolve here.
+  - device_type: dsp
+    name: "Hexagon 698 (HVX + HTA)"
+    vendor: qualcomm
+    compute_units:
+      - name: hexagon_698
+        count: 1
+        peak_tflops: 0              # unknown; cost table authoritative
+        supported_dtypes: [int8, uint8, fp16]
+    memory_hierarchy:
+      # VTCM (Vector Tightly Coupled Memory) — Hexagon scratchpad.
+      # 8 MiB on Hexagon 698 per public Qualcomm Hexagon SDK docs.
+      # Same value already used by xpu-rt/python/xpu_rt/targets/cards/hexagon_npu.yaml.
+      - name: vtcm
+        size_bytes: 8388608         # 8 MiB VTCM scratchpad
+      - name: lpddr5_shared
+        size_bytes: 8589934592
+        bandwidth_gbps: 0           # unknown
+    supported_ops:
+      - Conv2d                      # HVX/HMX dot-product accelerated
+      - elementwise
+      - depthwise_conv
+      - reduction
+    features:
+      - hvx                         # 1024-bit Hexagon Vector eXtensions
+      - hmx                         # Hexagon Matrix eXtensions (int8 GEMM)
+      - vtcm                        # explicit-managed scratchpad
+      - int8_quantized_only_for_hmx
+    kernel_backends:
+      - qnn_htp                     # QNN Hexagon Tensor Processor (DSP+HMX)
+      - qnn_dsp                     # legacy QNN DSP runtime label
+    preferred_dtypes: [int8, uint8]
+    preferred_layouts: [nhwc]
+    kernel_families:
+      - conv
+      - gemm
+      - elementwise
+      - reduction
+    # HTA init is *very* expensive (one-shot graph load). Carried as
+    # init.HTA.mean_us in the cost table; representative here.
+    host_sync_cost_us: 157559.1     # dronet-on-DSP overhead (calibration v2)
+
+interconnects:
+  # All three lanes share LPDDR5 via the SoC fabric. There is no
+  # discrete PCIe / NVLink. The "transfer" cost between lanes is
+  # really memcpy + dequant/quant (an int8 DSP graph cannot consume an
+  # fp16 GPU buffer directly). Modeled in cost_model.bridge_table below.
+  - topology: shared_memory
+    bandwidth_gbps: 0               # unknown; see coverage gaps
+    latency_us: 0                   # unknown
+    devices: [0, 1]
+  - topology: shared_memory
+    bandwidth_gbps: 0
+    latency_us: 0
+    devices: [0, 2]
+  - topology: shared_memory
+    bandwidth_gbps: 0
+    latency_us: 0
+    devices: [1, 2]
+
+constraints:
+  # Public envelope; not a scheduler input today, declared for completeness.
+  max_power_w: 15                   # QRB5165 nominal TDP (public spec, dev-kit)
+  max_memory_gb: 8
+
+cost_model:
+  # Cross-link to the canonical per-op cost table. The QNN scheduler
+  # loads this directly via xpu_rt.targets.backends.qnn.cost_table.CostTable.load.
+  per_op_cost_table:
+    path: "xpu-rt/python/xpu_rt/targets/backends/qnn/qrb5165_costs.json"
+    schema_version: 1
+    measured_at: "2026-05-07T03:34:11Z"
+    qairt_sdk: "2.45.0.260326"
+    # Audit headline (see xpu-rt/python/xpu_rt/audit/cost_table_audit.py
+    # and cost_table_audit results): 567 entries total, 273 measured,
+    # 294 explicitly flagged infeasible. Per-lane breakdown (entry counts):
+    counts:
+      total: 567
+      measured: 273
+      infeasible: 294
+      by_lane: {CPU: 251, GPU: 158, HTA: 158}
+    consumers:
+      - "xpu-rt/python/xpu_rt/targets/backends/qnn/cost_table.py"
+      - "xpu-rt/python/xpu_rt/targets/backends/qnn/scheduler.py"
+      - "xpu-rt/python/xpu_rt/targets/backends/qnn/profile_lookup.py"
+      - "xpu-rt/python/xpu_rt/audit/cost_table_audit.py"
+      - "xpu-rt/python/xpu_rt/cli.py"  # _DEFAULT_QNN_COST_TABLE
+      - "xpu-rt/python/xpu_rt/mcp/tools/qnn_flow.py"
+
+  per_op_cost_matrix:
+    # Per-(workload, op_id) profiled latencies for yolov8n + dronet
+    # across CPU/GPU/DSP. Schema: qnn_cost_matrix_v1.
+    path: "xpu-rt/data/profiled/qnn_cost_matrix.json"
+    schema_version: "qnn_cost_matrix_v1"
+    workloads_covered: [yolov8n, dronet]
+    consumers:
+      - "xpu-rt/python/xpu_rt/scheduler/qnn_real_workload.py"
+      - "xpu-rt/python/xpu_rt/runtime/calibration.py"
+      - "xpu-rt/python/xpu_rt/audit/cost_table_audit.py"
+
+  e2e_solo:
+    # Whole-network E2E times per backend, used to fit calibration overhead.
+    path: "xpu-rt/data/profiled/qnn_e2e/measurements.json"
+    workloads:
+      yolov8n: {CPU_us: 325386.3, GPU_us: 369419.1, DSP_us: 354880.8}
+      dronet:  {CPU_us:   7372.6, GPU_us:  87451.5, DSP_us: 158061.1}
+
+  bridge_table:
+    # Cross-lane transfer costs. LPDDR5 is shared, so the meaningful
+    # cost is memcpy + dequant/quant, not raw bandwidth. Source:
+    # qrb5165_costs.json::{memcpy,rescale,dequant_quant}. Linear-fit
+    # form: cost_us = fixed_overhead_us + n_elem * us_per_elem
+    # (or for memcpy: fixed + bytes / bytes_per_us_mean).
+    memcpy:
+      CPU__CPU:
+        bytes_per_us_mean: 14596.08      # ~14.6 GB/s sustained on-board memcpy
+        fixed_overhead_us: 11.24
+        dtype_label: fp32
+        iters: 100
+      # NOTE: cross-lane (CPU__GPU, GPU__DSP, ...) memcpy fits are NOT
+      # in the cost table. Scheduler falls back to:
+      #   50us setup + bytes/8000us  (8 GB/s assumption)
+      # See cost_table.py::CostTable.memcpy_us for the fallback.
+    rescale:
+      uint8: {us_per_elem: 0.001442, fixed_overhead_us: 57.74}
+    dequant_quant:
+      uint8__fp32: {us_per_elem: 0.000268, fixed_overhead_us: 38.31}
+      fp32__uint8: {us_per_elem: 0.001234, fixed_overhead_us: 46.24}
+      uint8__fp16: {us_per_elem: 0.000395, fixed_overhead_us: 38.66}
+      fp16__uint8: {us_per_elem: 0.001563, fixed_overhead_us: 61.92}
+    # Backend init cost (one-shot per graph load, not per inference).
+    init_us:
+      HTA: 20731.0
+      GPU:  6983.0
+      CPU:      0   # not measured separately; CPU lane has no DLC init
+
+  # Solver tuning hints (consumed by xpu_rt.scheduling.policy.SolverPolicy).
+  # Pinned here so a reader of the spec can see the planning envelope
+  # XPU-RT applies to QRB5165 schedules. These are global defaults, not
+  # QRB5165-specific — listed for cross-reference.
+  solver_policy:
+    mosek_max_partitions: 60
+    cpsat_max_partitions: 200
+    milp_canonicalize_max_bytes: 67108864    # 64 MiB
+
+  # Per-(workload, op_family) backend specialty matrix.
+  # Source: cost_table_audit.family_backend_specialty over yolov8n+dronet
+  # measured rows (CPU/GPU/DSP). "fastest" = argmin-frequency winner across
+  # ops in that family; full per-family argmin distribution is in the audit
+  # output. Compact summary embedded here so consumers can read a single file.
+  family_backend_specialty:
+    note: "Re-derive with xpu_rt.audit.cost_table_audit.family_backend_specialty"
+    summary:
+      # Generic specialty pattern observed in qnn_cost_matrix.json:
+      conv:        DSP   # HMX int8 wins overwhelmingly when shapes are quantizable
+      depthwise:   DSP
+      elementwise: GPU   # dronet/yolov8n elementwise rows tilt GPU
+      reduction:   GPU
+      normalization: GPU
+      strided_slice: GPU  # see anomalies.strided_slice_0 — DSP path is broken
+
+calibration_data:
+  # Cross-link to the calibration model file. This module produces the
+  # per-(workload, backend) overhead_us added once per backend lane in
+  # a schedule, plus contention factors fit from closed-loop runs.
+  calibration_model:
+    path: "xpu-rt/data/calibration/qrb5165.json"
+    expected_schema_version: "calibration_model_v3"
+    file_schema_version: "calibration_model_v2"  # CURRENT — needs re-bootstrap to v3
+    overhead_us:
+      yolov8n: {CPU: 56250.3, DSP: 294491.8, GPU: 286897.1}
+      dronet:  {CPU:  1180.6, DSP: 157559.1, GPU:  86601.5}
+    consumers:
+      - "xpu-rt/python/xpu_rt/runtime/calibration.py"
+      - "xpu-rt/python/xpu_rt/scheduling/feedback_loop.py"
+      - "xpu-rt/python/xpu_rt/mcp/tools/feedback_loop_tools.py"
+
+  contention_model:
+    # Per-backend multiplicative residual fit from the closed-loop run
+    # (12× DroNet co-tenant under YOLOv8n's makespan budget). EMA over
+    # 4 rounds; converged at the values below.
+    path: "xpu-rt/data/profiled/qnn_closed_loop/contention_state.json"
+    converged_factors:
+      CPU: 1.228       # CPU is over-promised — measured 22.8% slower than predicted
+      DSP: 0.852       # DSP runs 14.8% faster than solo baseline under contention
+      GPU: 1.0         # default_no_data — no closed-loop GPU rounds yet
+    ema_weight: 0.5
+    max_factor: 2.5
+    rounds: 4
+    final_report: "xpu-rt/data/profiled/qnn_closed_loop/final_report.md"
+
+  closed_loop_traces:
+    path: "xpu-rt/data/profiled/qnn_closed_loop/"
+    files:
+      - "agent_trace.jsonl"
+      - "contention.jsonl"
+      - "qnn_events.jsonl"
+
+# Known data-quality anomalies surfaced by the cost-table audit.
+# Top three from xpu_rt.audit.cost_table_audit (V1's findings, see
+# pathological_ratios + family_backend_specialty over qnn_cost_matrix.json).
+anomalies:
+  - id: strided_slice_0_dsp_46x
+    workload: yolov8n
+    op_id: strided_slice_0
+    finding: |
+      DSP cost is ~46× slower than GPU on this op. Root cause: HMX
+      cannot accelerate the slice pattern; the DSP path falls back to
+      a scalar HVX loop. The scheduler will (correctly) place this op
+      on GPU; flagged because it is the worst single-op pathology in
+      the matrix.
+    cost_us: {CPU: "see qnn_cost_matrix.json", GPU: "fastest", DSP: "~46× GPU"}
+  - id: infeasible_marker_inflation
+    finding: |
+      294 of 567 entries in qrb5165_costs.json are explicitly
+      `infeasible: true` (op×lane×dtype combinations that QNN refuses
+      to compile, e.g. fp32 on HTA). Audit must filter these before
+      computing per-lane statistics. Planners that consume execute_us()
+      get a typed KeyError; planners that scan the table directly must
+      check the `infeasible` flag.
+    counts: {total: 567, measured: 273, infeasible: 294}
+  - id: calibration_overhead_workload_sensitive
+    finding: |
+      The v1 calibration model used a single per-backend overhead
+      constant; v2 (current file) and v3 (current module) index by
+      (workload, backend) because dronet's 7ms CPU chain cannot absorb
+      yolov8n's 56ms launch overhead. The on-disk file is v2; the
+      consuming module wants v3. Re-bootstrap is required before next
+      planner run that needs contention factors.
+    schema_drift: {file: v2, module: v3, action: bootstrap_from_solo_measurements}
+
+metadata:
+  architecture: snapdragon_865
+  deployment_model: multi_domain_soc      # CPU + GPU + DSP in one package
+  host_runtime: linux_aarch64
+  qairt_sdk_version: "2.45.0.260326"
+  board_dev_kit: "Thundercomm TurboX C5165 / Open-Q 5165RB"
+  description: |
+    Qualcomm Robotics RB5 platform (QRB5165) — Snapdragon 865-class SoC.
+    Three execution lanes share LPDDR5: Kryo 585 CPU (1+3+4), Adreno 650
+    GPU, Hexagon 698 DSP (HVX + HMX matrix accelerator). Cross-lane
+    transfers require dequant/quant when crossing dtype boundaries.
+
+  # Ordered list of files/datasets that fed this consolidated spec.
+  # First entry is most-load-bearing.
+  source_provenance:
+    - role: per_op_costs
+      path: "xpu-rt/python/xpu_rt/targets/backends/qnn/qrb5165_costs.json"
+      basis: measured
+    - role: per_op_matrix
+      path: "xpu-rt/data/profiled/qnn_cost_matrix.json"
+      basis: measured
+    - role: e2e_solo
+      path: "xpu-rt/data/profiled/qnn_e2e/measurements.json"
+      basis: measured
+    - role: calibration
+      path: "xpu-rt/data/calibration/qrb5165.json"
+      basis: measured
+    - role: contention
+      path: "xpu-rt/data/profiled/qnn_closed_loop/contention_state.json"
+      basis: measured
+    - role: cost_loader
+      path: "xpu-rt/python/xpu_rt/targets/backends/qnn/cost_table.py"
+      basis: inferred
+    - role: scheduler
+      path: "xpu-rt/python/xpu_rt/targets/backends/qnn/scheduler.py"
+      basis: inferred
+    - role: solver_policy
+      path: "xpu-rt/python/xpu_rt/scheduling/policy.py"
+      basis: inferred
+    - role: hexagon_card
+      path: "xpu-rt/python/xpu_rt/targets/cards/hexagon_npu.yaml"
+      basis: inferred
+    - role: qualcomm_public_spec
+      path: "(public datasheet — Snapdragon 865 / Adreno 650 / Hexagon 698)"
+      basis: datasheet
+
+  # Required by target_resource v1.0 schema. Each entry is a
+  # measured / inferred / datasheet / vendor_claim / estimated tag for one
+  # field. Confidence reflects how directly the source pins the value.
+  assumptions:
+    - field: devices[0].compute_units (Kryo 585 1+3+4 layout)
+      basis: datasheet
+      confidence: high
+      note: "Snapdragon 865 / QRB5165 product brief."
+    - field: devices[0].memory_hierarchy.l1d_per_core
+      basis: datasheet
+      confidence: high
+      note: "ARM Cortex-A77 / A55 architecture reference."
+    - field: devices[0].memory_hierarchy.lpddr5.size_bytes
+      basis: datasheet
+      confidence: high
+      note: "8 GiB on standard QRB5165 dev-kit binning."
+    - field: devices[0].memory_hierarchy.lpddr5.bandwidth_gbps
+      basis: estimated
+      confidence: low
+      note: "Unknown — not measured; not consumed today. See coverage gaps."
+    - field: devices[0].host_sync_cost_us
+      basis: measured
+      confidence: high
+      note: "calibration v2 overhead_us[dronet][CPU]; cross-link authoritative."
+    - field: devices[1].name (Adreno 650)
+      basis: datasheet
+      confidence: high
+    - field: devices[1].compute_units.peak_tflops
+      basis: estimated
+      confidence: low
+      note: "Public spec puts Adreno 650 at ~1.2 TFLOPS fp16; cost table is the load-bearing source so left at 0/unknown."
+    - field: devices[1].host_sync_cost_us
+      basis: measured
+      confidence: high
+      note: "calibration v2 overhead_us[dronet][GPU]."
+    - field: devices[2].compute_units (Hexagon 698)
+      basis: datasheet
+      confidence: high
+    - field: devices[2].memory_hierarchy.vtcm.size_bytes
+      basis: datasheet
+      confidence: high
+      note: "Matches xpu-rt/python/xpu_rt/targets/cards/hexagon_npu.yaml (8 MiB)."
+    - field: devices[2].host_sync_cost_us
+      basis: measured
+      confidence: high
+      note: "calibration v2 overhead_us[dronet][DSP]; HTA init is 20.7ms one-shot."
+    - field: interconnects[*].bandwidth_gbps
+      basis: estimated
+      confidence: low
+      note: "Shared-memory fabric; no cross-lane bandwidth measurement exists."
+    - field: cost_model.per_op_cost_table
+      basis: measured
+      confidence: high
+      note: "273 measured entries × {qnn-net-run, board_roundtrip}; 294 explicit infeasible."
+    - field: cost_model.bridge_table.memcpy.CPU__CPU
+      basis: measured
+      confidence: high
+      note: "profile_transfers_on_board fit n=4."
+    - field: cost_model.bridge_table.memcpy.cross_lane (e.g. CPU__GPU)
+      basis: estimated
+      confidence: low
+      note: "NOT in cost table. Scheduler falls back to 50us+8GB/s assumption."
+    - field: cost_model.solver_policy
+      basis: inferred
+      confidence: high
+      note: "Cross-link to xpu_rt.scheduling.policy.SolverPolicy defaults; not QRB5165-specific."
+    - field: calibration_data.calibration_model
+      basis: measured
+      confidence: medium
+      note: "On-disk schema is v2; consuming module expects v3 — re-bootstrap required."
+    - field: calibration_data.contention_model.GPU
+      basis: estimated
+      confidence: low
+      note: "default_no_data: no closed-loop GPU rounds yet. Set to 1.0 (no-op)."
+
+  # Audit / paper-claim metadata.
+  paper_anchored: false
+  qrb5165_evaluation_models: [yolov8n, dronet]
+  qrb5165_canonical_workload_yaml: "xpu-rt/configs/models/paper_yolov8n_dronet_x12.yaml"
