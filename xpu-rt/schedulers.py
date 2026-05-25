@@ -65,6 +65,11 @@ def _cpsat(workload, **kwargs):
     return cpsat_with_heft_warm_start(workload, **kwargs)
 
 
+def _cpsat_memory(workload, **kwargs):
+    from scheduler_cpsat import cpsat_memory_aware
+    return cpsat_memory_aware(workload, **kwargs)
+
+
 _REGISTRY: Dict[str, SchedulerFn] = {
     "mosek": _mosek,
     "heft": _heft,
@@ -74,6 +79,7 @@ _REGISTRY: Dict[str, SchedulerFn] = {
     "fifo": _fifo,
     "random_list": _random_list,
     "cpsat": _cpsat,
+    "cpsat_memory": _cpsat_memory,
 }
 
 

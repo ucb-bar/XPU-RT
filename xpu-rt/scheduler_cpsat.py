@@ -70,6 +70,9 @@ def cpsat_schedule(
     lateness_weight: int = 100_000,
     transfer_weight: int = 1,
     makespan_weight: int = 1,
+    memory_aware: bool = False,
+    region_capacities: Optional[Dict[str, int]] = None,
+    memory_weight: int = 10,
     **_unused,
 ) -> Tuple[np.ndarray, np.ndarray, None, None]:
     cp_model = _lazy_cp_model()
@@ -226,6 +229,44 @@ def cpsat_schedule(
     if chosen_end:
         model.AddMaxEquality(makespan, chosen_end)
 
+    # Memory-aware cumulative constraint over buffer live intervals.
+    peak_mem_var = None
+    if memory_aware:
+        # Find consumers per producer (graph adjacency we computed via predecessors).
+        consumers_of: Dict[int, List[int]] = {i: [] for i in range(n)}
+        for i, op in enumerate(ops):
+            for pred in op.get_predecessors():
+                pi = op_idx.get(id(pred))
+                if pi is not None:
+                    consumers_of[pi].append(i)
+
+        capacity = int(max((region_capacities or {}).values(), default=10**12))
+        peak_mem_var = model.NewIntVar(0, capacity, "peak_mem")
+
+        buf_intervals = []
+        buf_demands = []
+        for i, op in enumerate(ops):
+            size = int(getattr(op, "output_bytes", 0))
+            if size <= 0:
+                continue
+            cons = consumers_of[i]
+            buf_start = chosen_end[i]
+            if cons:
+                # buf_end = max(chosen_start[c] for c in cons)
+                buf_end = model.NewIntVar(0, horizon, f"bufend_{i}")
+                model.AddMaxEquality(buf_end, [chosen_start[c] for c in cons])
+            else:
+                # sink: kept until makespan
+                buf_end = makespan
+            buf_size = model.NewIntVar(0, horizon, f"bufdur_{i}")
+            model.Add(buf_size == buf_end - buf_start)
+            iv = model.NewIntervalVar(buf_start, buf_size, buf_end, f"bufiv_{i}")
+            buf_intervals.append(iv)
+            buf_demands.append(size)
+
+        if buf_intervals:
+            model.AddCumulative(buf_intervals, buf_demands, capacity)
+
     # Objective.
     obj_terms: List[Any] = []
     if deadline_vars:
@@ -281,3 +322,15 @@ def cpsat_with_heft_warm_start(workload, **kwargs):
     except Exception:
         pass
     return cpsat_schedule(workload, **kwargs)
+
+
+def cpsat_memory_aware(workload, *, scratchpad_bytes: int = 16 * 1024 * 1024, **kwargs):
+    """Memory-aware CP-SAT: cumulative constraint over buffer live intervals
+    enforces ``sum(active output_bytes) <= scratchpad_bytes`` at every instant.
+
+    Defaults the capacity to 16 MB. ``output_bytes`` is read from
+    ``op.output_bytes`` (set by realistic_workloads / pack_periodic_workload).
+    """
+    kwargs.setdefault("memory_aware", True)
+    kwargs.setdefault("region_capacities", {"scratchpad": int(scratchpad_bytes)})
+    return cpsat_with_heft_warm_start(workload, **kwargs)
