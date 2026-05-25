@@ -30,8 +30,44 @@ def _mosek(workload, **kwargs):
     return mosek_schedule(workload, **kwargs)
 
 
+def _heft(workload, **kwargs):
+    from scheduler_heft import heft
+    return heft(workload, **kwargs)
+
+
+def _critical_path(workload, **kwargs):
+    from scheduler_heft import critical_path
+    return critical_path(workload, **kwargs)
+
+
+def _edf(workload, **kwargs):
+    from scheduler_heft import edf
+    return edf(workload, **kwargs)
+
+
+def _fastest_device(workload, **kwargs):
+    from scheduler_heft import fastest_device
+    return fastest_device(workload, **kwargs)
+
+
+def _fifo(workload, **kwargs):
+    from scheduler_heft import fifo
+    return fifo(workload, **kwargs)
+
+
+def _random_list(workload, **kwargs):
+    from scheduler_heft import random_list
+    return random_list(workload, **kwargs)
+
+
 _REGISTRY: Dict[str, SchedulerFn] = {
     "mosek": _mosek,
+    "heft": _heft,
+    "critical_path": _critical_path,
+    "edf": _edf,
+    "fastest_device": _fastest_device,
+    "fifo": _fifo,
+    "random_list": _random_list,
 }
 
 
