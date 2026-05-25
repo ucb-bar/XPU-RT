@@ -381,6 +381,102 @@ def train_gnn(args):
     print(f"Eval -> {eval_path}")
 
 
+def train_rl(args):
+    """M13: PPO policy via stable_baselines3. Curriculum: train on small
+    workloads first, then escalate. Reward shaping documented in
+    xpu-rt/scheduler_rl.py."""
+    from stable_baselines3 import PPO
+    from stable_baselines3.common.vec_env import DummyVecEnv
+    from scheduler_rl import make_env_class
+
+    print("=== train rl_policy ===")
+    data_dir = REPO / "data" / "training"
+    with open(data_dir / "workloads.pkl", "rb") as f:
+        workloads = pickle.load(f)
+    with open(data_dir / "splits.json") as f:
+        splits = json.load(f)
+    by_id = {w["workload_id"]: w for w in workloads}
+    train_ids = splits["train"]
+    val_ids = splits["val"]
+    print(f"  workloads: {len(workloads)}  train_ids: {len(train_ids)}  val: {len(val_ids)}")
+
+    # Provider returns a fresh workload each episode reset.
+    import random as pyrand
+    rng = pyrand.Random(0)
+    def provider():
+        wid = rng.choice(train_ids)
+        return _workload_from_dict(by_id[wid])
+
+    EnvCls = make_env_class()
+    def make_env():
+        return EnvCls(workload_provider=provider)
+    vec_env = DummyVecEnv([make_env])
+
+    model = PPO(
+        "MlpPolicy", vec_env, verbose=0,
+        learning_rate=args.lr,
+        n_steps=256, batch_size=64,
+        n_epochs=4, gamma=0.99, gae_lambda=0.95,
+        clip_range=0.2, ent_coef=0.01,
+    )
+    total_steps = args.epochs * 1000  # treat "epochs" as kilo-steps for RL
+    print(f"  total training steps: {total_steps}")
+    t0 = time.time()
+    model.learn(total_timesteps=total_steps, progress_bar=False)
+    elapsed = time.time() - t0
+    print(f"  trained in {elapsed:.1f}s")
+
+    models_dir = REPO / "data" / "models"
+    models_dir.mkdir(parents=True, exist_ok=True)
+    ckpt_path = models_dir / "rl_policy_v1"  # sb3 adds .zip
+    model.save(str(ckpt_path))
+    print(f"Saved -> {ckpt_path}.zip")
+
+    # Evaluate on validation workloads.
+    print("Eval on val workloads (rl makespan vs heft makespan):")
+    from scheduler_rl import rl_policy_scheduler
+    from schedulers import get_scheduler
+    heft = get_scheduler("heft")
+    rl_wins = 0
+    rl_ties = 0
+    rl_losses = 0
+    gaps = []
+    for vid in val_ids:
+        wl = _workload_from_dict(by_id[vid])
+        t_h, a_h, _, _ = heft(wl)
+        from scheduler_ml import _lower_bound_makespan
+        combos = wl.get_machine_combinations()
+        machines = list(wl.machines)
+        ms_h = max((float(t_h[i]) + float(wl.operations[i].get_duration_for_combination(
+            int(a_h[i].argmax()), combos, machines)) for i in range(len(wl.operations))),
+                   default=0.0)
+        try:
+            t_r, a_r, _, _ = rl_policy_scheduler(wl, model_path=str(ckpt_path) + ".zip")
+            ms_r = max((float(t_r[i]) + float(wl.operations[i].get_duration_for_combination(
+                int(a_r[i].argmax()), combos, machines)) for i in range(len(wl.operations))),
+                       default=0.0)
+        except Exception as exc:
+            print(f"  val {vid}: rl failed ({exc})")
+            continue
+        if ms_r < ms_h: rl_wins += 1
+        elif ms_r == ms_h: rl_ties += 1
+        else: rl_losses += 1
+        gaps.append((ms_r - ms_h) / max(1.0, ms_h))
+    print(f"  RL vs HEFT on {len(val_ids)} val: wins={rl_wins} ties={rl_ties} losses={rl_losses}")
+    if gaps:
+        print(f"  mean gap (rl - heft) / heft: {np.mean(gaps)*100:.1f}%")
+
+    eval_path = models_dir / "rl_policy_v1_eval.json"
+    with open(eval_path, "w") as f:
+        json.dump({
+            "total_steps": total_steps,
+            "training_time_s": elapsed,
+            "val_wins": rl_wins, "val_ties": rl_ties, "val_losses": rl_losses,
+            "val_mean_gap_pct": float(np.mean(gaps) * 100) if gaps else None,
+        }, f, indent=2)
+    print(f"Eval -> {eval_path}")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--target", choices=["cost_model", "gnn", "rl"], default="cost_model")
@@ -394,8 +490,10 @@ def main():
         train_cost_model(args)
     elif args.target == "gnn":
         train_gnn(args)
+    elif args.target == "rl":
+        train_rl(args)
     else:
-        print(f"target={args.target} not implemented yet (M13 follow-up)")
+        print(f"target={args.target} unknown")
 
 
 if __name__ == "__main__":

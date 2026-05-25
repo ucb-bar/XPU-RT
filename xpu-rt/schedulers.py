@@ -105,6 +105,11 @@ def _gnn_placement(workload, **kwargs):
     return gnn_placement_scheduler(workload, **kwargs)
 
 
+def _rl_policy(workload, **kwargs):
+    from scheduler_rl import rl_policy_scheduler
+    return rl_policy_scheduler(workload, **kwargs)
+
+
 _REGISTRY: Dict[str, SchedulerFn] = {
     "mosek": _mosek,
     "heft": _heft,
@@ -122,6 +127,7 @@ _REGISTRY: Dict[str, SchedulerFn] = {
     "simulated_annealing": _sa,
     "cost_model": _cost_model,
     "gnn_placement": _gnn_placement,
+    "rl_policy": _rl_policy,
 }
 
 

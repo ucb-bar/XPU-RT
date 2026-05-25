@@ -1,0 +1,8 @@
+{
+  "total_steps": 300000,
+  "training_time_s": 147.23880529403687,
+  "val_wins": 0,
+  "val_ties": 2,
+  "val_losses": 6,
+  "val_mean_gap_pct": 8.709077995040117
+}
