@@ -15,13 +15,16 @@ import numpy as np
 # Add parent path to sys path to enable imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+import time
+
 from workload import Workload, Operation
 from workload_factory import (
     create_workload_from_network_hierarchy,
     build_machine_combinations,
     machine_type_prefix,
 )
-from scheduler import schedule
+from schedulers import get_scheduler, available_schedulers
+from metrics import compute_metrics
 from profile_loader import load_profiled_processing_times
 from postprocessing import trim_periodic_after_nonperiodic_makespan, output_scheduled_json
 import plot
@@ -92,6 +95,7 @@ def schedule_iree_networks(
     use_profiled: bool | None = None,
     prune_periodic: bool | None = None,
     restrict_makespan_to_nonperiodic: bool | None = None,
+    scheduler: str = "mosek",
 ) -> tuple[Workload, np.ndarray, np.ndarray]:
     """
     Main function to schedule networks from a hierarchical network dependencies JSON file.
@@ -230,15 +234,18 @@ def schedule_iree_networks(
     
     # Schedule the combined workload
     print("\n" + "=" * 60)
-    print("Scheduling combined workload...")
+    print(f"Scheduling combined workload (scheduler={scheduler})...")
     print("=" * 60)
-    result = schedule(
+    scheduler_fn = get_scheduler(scheduler)
+    solver_t0 = time.perf_counter()
+    result = scheduler_fn(
         combined_workload,
         solver_verbosity=effective_solver_verbosity,
         time_limit=effective_time_limit,
         restrict_makespan_to_nonperiodic=effective_restrict_makespan_to_nonperiodic,
         prune_cross_period_constraints=effective_prune_periodic,
     )
+    solver_wall_time_s = time.perf_counter() - solver_t0
     t, alpha, _, _ = result  # Always returns 4 values now
     
     # Post-process schedule: optionally trim periodic/background operations that
@@ -335,7 +342,10 @@ def schedule_iree_networks(
     json_output_path = f"schedules/scheduled_{input_json_name}.json"
     if effective_use_profiled:
         json_output_path = json_output_path.replace(".json", "_profiled.json")
-    
+    # Suffix non-default schedulers so they don't clobber the canonical mosek output.
+    if scheduler != "mosek":
+        json_output_path = json_output_path.replace(".json", f"_{scheduler}.json")
+
     print(f"\nOutputting scheduled JSON...")
     output_scheduled_json(
         combined_workload=combined_workload,
@@ -345,7 +355,29 @@ def schedule_iree_networks(
         profiled_times_p=combined_profiled_p,
         profiled_times_e=combined_profiled_e
     )
-    
+
+    # Emit per-run metrics next to the schedule JSON (additive — does not affect
+    # the regression diff on the schedule JSON itself).
+    try:
+        import json as _json
+        metrics_dict = compute_metrics(
+            combined_workload,
+            t,
+            alpha,
+            scheduler_name=scheduler,
+            solver_wall_time_s=solver_wall_time_s,
+        )
+        metrics_path = json_output_path.replace(".json", "_metrics.json")
+        with open(metrics_path, "w") as f:
+            _json.dump(metrics_dict, f, indent=2)
+        print(f"Metrics written to: {metrics_path}")
+        print(f"  makespan_us={metrics_dict['makespan_us']:.2f}  "
+              f"deadline_miss={metrics_dict['deadline_miss_count']}  "
+              f"cross_dev={metrics_dict['cross_device_transitions']}  "
+              f"solver_s={solver_wall_time_s:.3f}")
+    except Exception as exc:
+        print(f"[warn] metrics emission failed: {exc}")
+
     return combined_workload, t, alpha
 
 if __name__ == "__main__":
@@ -422,10 +454,17 @@ if __name__ == "__main__":
         default=None,
         help="Override P-core speedup factor. If omitted, uses JSON config (hardware/scheduler p_core_speedup) or 1.5.",
     )
+    parser.add_argument(
+        "--scheduler",
+        type=str,
+        default="mosek",
+        choices=available_schedulers(),
+        help="Scheduler to use. Default 'mosek' preserves the existing CVXPY/MOSEK pipeline; additional baselines are added in later milestones.",
+    )
     args = parser.parse_args()
-    
+
     seed = None if args.random_seed is not None and args.random_seed < 0 else args.random_seed
-    
+
     schedule_iree_networks(
         networks_json_path=args.networks_json,
         solver_verbosity=args.solver_verbosity,
@@ -435,4 +474,5 @@ if __name__ == "__main__":
         use_profiled=args.profiled,
         prune_periodic=args.prune_periodic,
         restrict_makespan_to_nonperiodic=args.restrict_makespan_to_nonperiodic,
+        scheduler=args.scheduler,
     )
