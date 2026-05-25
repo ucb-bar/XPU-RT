@@ -205,7 +205,9 @@ def main():
 
     # Side-by-side composite + markdown report.
     composite = str(out_dir / "side_by_side.png")
-    render_side_by_side(results, composite, title="M2 baselines on synthetic heterogeneous workload")
+    render_side_by_side(results, composite,
+                        title="M2 baselines on synthetic heterogeneous workload",
+                        panel_height_in=2.2, fig_width_in=16.0)
     report_md = str(out_dir / "report.md")
     write_markdown_report(results, report_md,
                           title="M2 baselines — synthetic heterogeneous workload",

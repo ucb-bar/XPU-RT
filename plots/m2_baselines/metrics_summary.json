@@ -34,7 +34,7 @@
         "CPU_LITTLE": 0.5208333333333335,
         "NPU": 1.0541666666666671
       },
-      "solver_wall_time_s": 3.182661982951686,
+      "solver_wall_time_s": 3.0403046490391716,
       "valid": true,
       "gantt": "/scratch2/agustin/XPU-RT/plots/m2_baselines/gantt_mosek.png"
     },
@@ -49,7 +49,7 @@
         "CPU_LITTLE": 0.5673534072900158,
         "NPU": 0.722662440570523
       },
-      "solver_wall_time_s": 0.0007990350713953376,
+      "solver_wall_time_s": 0.0007914199959486723,
       "valid": true,
       "gantt": "/scratch2/agustin/XPU-RT/plots/m2_baselines/gantt_heft.png"
     },
@@ -64,7 +64,7 @@
         "CPU_LITTLE": 0.9910141206675225,
         "NPU": 0.31065468549422337
       },
-      "solver_wall_time_s": 0.0005379789508879185,
+      "solver_wall_time_s": 0.0005137829575687647,
       "valid": true,
       "gantt": "/scratch2/agustin/XPU-RT/plots/m2_baselines/gantt_critical_path.png"
     },
@@ -79,7 +79,7 @@
         "CPU_LITTLE": 0.96875,
         "NPU": 0.3151041666666667
       },
-      "solver_wall_time_s": 0.0005699299508705735,
+      "solver_wall_time_s": 0.000503864954225719,
       "valid": true,
       "gantt": "/scratch2/agustin/XPU-RT/plots/m2_baselines/gantt_edf.png"
     },
@@ -94,7 +94,7 @@
         "CPU_LITTLE": 0.23901098901098902,
         "NPU": 0.782967032967033
       },
-      "solver_wall_time_s": 0.0005529170157387853,
+      "solver_wall_time_s": 0.00041134003549814224,
       "valid": true,
       "gantt": "/scratch2/agustin/XPU-RT/plots/m2_baselines/gantt_fastest_device.png"
     },
@@ -109,7 +109,7 @@
         "CPU_LITTLE": 0.9918509895227008,
         "NPU": 0.26542491268917345
       },
-      "solver_wall_time_s": 0.0004030029522255063,
+      "solver_wall_time_s": 0.0004283919697627425,
       "valid": true,
       "gantt": "/scratch2/agustin/XPU-RT/plots/m2_baselines/gantt_fifo.png"
     },
@@ -124,7 +124,7 @@
         "CPU_LITTLE": 0.9972144846796658,
         "NPU": 0.2116991643454039
       },
-      "solver_wall_time_s": 0.00043156789615750313,
+      "solver_wall_time_s": 0.00043779006227850914,
       "valid": true,
       "gantt": "/scratch2/agustin/XPU-RT/plots/m2_baselines/gantt_random_list.png"
     }

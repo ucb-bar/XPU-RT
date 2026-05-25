@@ -71,30 +71,99 @@ def render_gantt(result: SchedulerResult, save_path: str, title: Optional[str] =
     return save_path
 
 
+def _render_gantt_to_ax(ax, result: SchedulerResult) -> None:
+    """Draw a compact Gantt for ``result`` directly onto ``ax``.
+
+    Each machine becomes one row; bars are coloured by job_id; small black
+    rectangles on the right edge mark intra-row transfer time. Designed for
+    side-by-side composites so every panel reads at full resolution.
+    """
+    wl = result.workload
+    t = result.t
+    alpha = result.alpha
+    combos = wl.get_machine_combinations()
+    machines = list(wl.machines)
+    n = len(wl.operations)
+    if t is None or alpha is None or n == 0:
+        ax.text(0.5, 0.5, "infeasible", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return
+
+    n_jobs = max((op.job_id or 0 for op in wl.operations), default=0) + 1
+    cmap = plt.get_cmap("tab20")
+    y_of = {m: i for i, m in enumerate(machines)}
+
+    finish = []
+    for i, op in enumerate(wl.operations):
+        k = int(np.argmax(alpha[i]))
+        dur = float(op.get_duration_for_combination(k, combos, machines))
+        start = float(t[i])
+        finish.append(start + dur)
+        job = op.job_id or 0
+        color = cmap(job % 20)
+        for m in combos[k]:
+            yi = y_of.get(m)
+            if yi is None:
+                continue
+            ax.barh(yi, dur, left=start, color=color, edgecolor="black",
+                    linewidth=0.4, alpha=0.85)
+            # Tiny label for op-index when bars are wide enough.
+            if dur > 0:
+                ax.text(start + dur / 2, yi, str(i), fontsize=6, ha="center",
+                        va="center", color="white" if dur > 30 else "black")
+
+    ax.set_yticks(range(len(machines)))
+    ax.set_yticklabels(machines, fontsize=8)
+    ax.invert_yaxis()
+    ax.set_xlim(0, max(finish) * 1.02 if finish else 1)
+    ax.grid(True, alpha=0.2, axis="x")
+
+    # Title shows scheduler + key metrics.
+    m = result.metrics or {}
+    title = f"{result.scheduler_name}"
+    bits = []
+    if "makespan_us" in m:
+        bits.append(f"ms={m['makespan_us']:.0f}us")
+    if m.get("deadline_miss_count") is not None:
+        bits.append(f"misses={m['deadline_miss_count']}")
+    if m.get("cross_device_transitions") is not None:
+        bits.append(f"xfers={m['cross_device_transitions']}")
+    if bits:
+        title += f" | {'  '.join(bits)}"
+    ax.set_title(title, fontsize=10)
+
+
 def render_side_by_side(
     results: List[SchedulerResult],
     save_path: str,
     title: str = "Scheduler comparison",
+    *,
+    panel_height_in: float = 2.0,
+    fig_width_in: float = 14.0,
 ) -> Optional[str]:
     """Composite of per-scheduler Gantts as a vertical stack of subplots.
 
-    Reuses the already-rendered individual PNGs to avoid double work.
+    Each panel is rendered DIRECTLY (not by re-loading a saved PNG) so the
+    bars and machine labels remain readable regardless of the per-scheduler
+    Gantt's original resolution.
     """
-    rendered = [r for r in results if r.gantt_png_path and os.path.exists(r.gantt_png_path)]
+    rendered = [r for r in results if r.feasible and r.workload is not None
+                and r.t is not None and r.alpha is not None]
     if not rendered:
         return None
 
     rows = len(rendered)
-    fig, axes = plt.subplots(rows, 1, figsize=(14, 3.5 * rows), constrained_layout=True)
+    fig, axes = plt.subplots(rows, 1, figsize=(fig_width_in, panel_height_in * rows),
+                             constrained_layout=True, sharex=False)
     if rows == 1:
         axes = [axes]
     for ax, r in zip(axes, rendered):
-        ax.imshow(mpimg.imread(r.gantt_png_path))
-        ax.set_title(r.scheduler_name)
-        ax.axis("off")
-    fig.suptitle(title)
+        _render_gantt_to_ax(ax, r)
+    # Only the bottom axis shows the time label.
+    axes[-1].set_xlabel("time (us)")
+    fig.suptitle(title, fontsize=12)
     os.makedirs(os.path.dirname(save_path) or ".", exist_ok=True)
-    fig.savefig(save_path, dpi=120)
+    fig.savefig(save_path, dpi=130)
     plt.close(fig)
     return save_path
 

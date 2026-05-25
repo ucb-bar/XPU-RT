@@ -37,7 +37,7 @@ sys.path.insert(0, str(REPO / "xpu-rt"))
 from scenarios import SCENARIOS  # noqa: E402
 from schedulers import get_scheduler  # noqa: E402
 from metrics import compute_metrics  # noqa: E402
-from report import SchedulerResult, render_gantt  # noqa: E402
+from report import SchedulerResult, render_gantt, render_side_by_side  # noqa: E402
 from postprocessing import validate_schedule  # noqa: E402
 
 
@@ -45,7 +45,9 @@ DEFAULT_SCHEDULERS = "heft,critical_path,edf,fastest_device,fifo,mosek,cpsat"
 
 
 def _run_cell(scenario_name: str, scheduler_name: str, wl, gantt_dir: Path,
-              time_limit: float) -> Dict[str, Any]:
+              time_limit: float) -> Tuple[Dict[str, Any], "SchedulerResult"]:
+    """Returns (csv_row, SchedulerResult). The result carries (t, alpha, workload)
+    so the side-by-side composite can render directly from it."""
     out: Dict[str, Any] = {
         "scenario": scenario_name,
         "scheduler": scheduler_name,
@@ -65,11 +67,11 @@ def _run_cell(scenario_name: str, scheduler_name: str, wl, gantt_dir: Path,
         t, alpha, _, _ = sched(wl, **kwargs)
     except Exception as exc:
         out.update(feasible=False, error=str(exc))
-        return out
+        return out, SchedulerResult(scheduler_name=scheduler_name, feasible=False, note=str(exc))
     wall = time.perf_counter() - t0
     if t is None or alpha is None:
         out.update(feasible=False, error="solver_returned_none")
-        return out
+        return out, SchedulerResult(scheduler_name=scheduler_name, feasible=False, note="no_schedule")
 
     try:
         ok, _ = validate_schedule(wl, t, alpha, original_json_data={"dispatches": {}})
@@ -89,43 +91,27 @@ def _run_cell(scenario_name: str, scheduler_name: str, wl, gantt_dir: Path,
     )
     gantt_dir.mkdir(parents=True, exist_ok=True)
     gantt_path = gantt_dir / f"{scenario_name}_{scheduler_name}.png"
+    res = SchedulerResult(scheduler_name=scheduler_name, workload=wl,
+                          t=t, alpha=alpha, metrics=m, feasible=True)
     try:
-        res = SchedulerResult(scheduler_name=scheduler_name, workload=wl,
-                              t=t, alpha=alpha, metrics=m, feasible=True)
         render_gantt(res, str(gantt_path),
                      title=f"{scenario_name} / {scheduler_name} | "
                            f"ms={m['makespan_us']:.0f} miss={m['deadline_miss_count']}")
         out["gantt"] = str(gantt_path)
+        res.gantt_png_path = str(gantt_path)
     except Exception:
         out["gantt"] = None
-    return out
+    return out, res
 
 
-def _composite(scenario_name: str, schedulers, gantt_dir: Path, side_dir: Path):
-    imgs = []
-    for s in schedulers:
-        p = gantt_dir / f"{scenario_name}_{s}.png"
-        if p.exists():
-            imgs.append((s, p))
-    if not imgs:
-        return None
+def _composite(scenario_name: str, rendered_results: List[SchedulerResult],
+               side_dir: Path):
+    """Render the side-by-side composite directly from SchedulerResult objects
+    so each panel is a real Gantt (not a re-loaded thumbnail)."""
     side_dir.mkdir(parents=True, exist_ok=True)
-    rows = (len(imgs) + 1) // 2
-    fig, axes = plt.subplots(rows, 2, figsize=(14, 3.5 * rows), constrained_layout=True)
-    if rows == 1:
-        axes = np.array([axes])
-    for idx, (s, p) in enumerate(imgs):
-        ax = axes[idx // 2][idx % 2]
-        ax.imshow(mpimg.imread(p))
-        ax.set_title(s)
-        ax.axis("off")
-    # Hide empty subplots.
-    for k in range(len(imgs), rows * 2):
-        axes[k // 2][k % 2].axis("off")
-    fig.suptitle(scenario_name, fontsize=14)
     out = side_dir / f"{scenario_name}.png"
-    fig.savefig(out, dpi=100)
-    plt.close(fig)
+    render_side_by_side(rendered_results, str(out),
+                        title=scenario_name, panel_height_in=1.6, fig_width_in=14.0)
     return out
 
 
@@ -195,16 +181,20 @@ def main():
             continue
         print(f"\n=== {name} ===")
         wl, exp_win, exp_fail = SCENARIOS[name]()
+        print(f"  workload: {len(wl.operations)} ops, "
+              f"{len(wl.machine_combinations)} machine combos")
         expectations_by_scenario[name] = (exp_win, exp_fail)
+        scenario_results: List[SchedulerResult] = []
         for s in schedulers:
             print(f"  -- {s}")
-            row = _run_cell(name, s, wl, gantt_dir, args.time_limit)
+            row, res = _run_cell(name, s, wl, gantt_dir, args.time_limit)
             rows.append(row)
+            scenario_results.append(res)
             print(f"     ms={row.get('makespan_us', 'n/a')}  "
                   f"miss={row.get('deadline_miss_count', 'n/a')}  "
                   f"xfers={row.get('cross_device_transitions', 'n/a')}  "
                   f"feasible={row.get('feasible')}")
-        _composite(name, schedulers, gantt_dir, side_dir)
+        _composite(name, scenario_results, side_dir)
 
     # metrics.csv
     csv_path = out_dir / "metrics.csv"
@@ -224,6 +214,36 @@ def main():
     lines: List[str] = ["# M6 — Diagnostic scenarios", ""]
     lines.append(f"- schedulers: {schedulers}")
     lines.append(f"- scenarios: {scen_names}")
+    lines.append("")
+
+    # Per-scheduler wins/losses across all scenarios + metrics.
+    wins: Dict[str, int] = {s: 0 for s in schedulers}
+    losses: Dict[str, int] = {s: 0 for s in schedulers}
+    SCORE_METRICS = ("makespan_us", "deadline_miss_count",
+                     "total_lateness_us", "cross_device_transitions",
+                     "solver_wall_time_s")
+    for name in scen_names:
+        for metric in SCORE_METRICS:
+            vals = {r["scheduler"]: r.get(metric) for r in rows
+                    if r["scenario"] == name and r.get("feasible")
+                    and r.get(metric) is not None}
+            if len(vals) < 2:
+                continue
+            best = min(vals.values())
+            worst = max(vals.values())
+            if best == worst:
+                continue
+            for s, v in vals.items():
+                if v == best:
+                    wins[s] = wins.get(s, 0) + 1
+                if v == worst:
+                    losses[s] = losses.get(s, 0) + 1
+    lines.append("## Scoreboard (across all scenarios x metrics)")
+    lines.append("")
+    lines.append("| scheduler | wins | losses |")
+    lines.append("|---|---:|---:|")
+    for s in schedulers:
+        lines.append(f"| {s} | {wins.get(s, 0)} | {losses.get(s, 0)} |")
     lines.append("")
 
     pass_count = 0
