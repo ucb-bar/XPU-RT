@@ -95,6 +95,11 @@ def _sa(workload, **kwargs):
     return simulated_annealing(workload, **kwargs)
 
 
+def _cost_model(workload, **kwargs):
+    from scheduler_ml import cost_model_scheduler
+    return cost_model_scheduler(workload, **kwargs)
+
+
 _REGISTRY: Dict[str, SchedulerFn] = {
     "mosek": _mosek,
     "heft": _heft,
@@ -110,6 +115,7 @@ _REGISTRY: Dict[str, SchedulerFn] = {
     "min_min": _min_min,
     "max_min": _max_min,
     "simulated_annealing": _sa,
+    "cost_model": _cost_model,
 }
 
 

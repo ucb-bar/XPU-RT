@@ -47,7 +47,7 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parent
 sys.path.insert(0, str(REPO / "xpu-rt"))
 
-from scenarios import SCENARIOS, fusion_win_tiny_chain  # noqa: E402
+from scenarios import SCENARIOS  # noqa: E402
 from realistic_workloads import build_model_graph, build_workload_from_graph  # noqa: E402
 from schedulers import get_scheduler  # noqa: E402
 from metrics import compute_metrics  # noqa: E402
@@ -111,7 +111,14 @@ def closed_loop(
         if ranker == "deterministic":
             # Score by ACTUAL re-schedule deltas (the scorer does this).
             scored = score_candidates(cands, cur, scheduler_fn)
-            # iterate accepted-improvement order
+            ordering = [r["candidate"]["candidate_id"] for r in scored
+                        if r.get("applied") and r.get("measured_delta", 0) < 0]
+        elif ranker == "cost_model":
+            # M11 fast oracle: score via cost_model_score (one model forward
+            # pass per candidate, no re-scheduling).
+            from scheduler_ml import cost_model_score
+            scored = score_candidates(cands, cur, scheduler_fn,
+                                      fast_scorer=cost_model_score)
             ordering = [r["candidate"]["candidate_id"] for r in scored
                         if r.get("applied") and r.get("measured_delta", 0) < 0]
         else:
@@ -180,7 +187,7 @@ def main():
     ap.add_argument("--workload", default="scenario:fusion_win_tiny_chain",
                     help="'scenario:<name>' or 'model:<model>@<soc>'")
     ap.add_argument("--scheduler", default="heft")
-    ap.add_argument("--ranker", choices=["deterministic", "random"], default="deterministic")
+    ap.add_argument("--ranker", choices=["deterministic", "random", "cost_model"], default="deterministic")
     ap.add_argument("--max-candidates", type=int, default=10)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--out", default=None)

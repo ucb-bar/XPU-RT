@@ -55,6 +55,13 @@ def _op(name: str, costs: List[float], *, preds=None, deadline=None,
         release=None, infeasible=None, output_bytes: int = 0,
         job_id: int = 0) -> Operation:
     inf = set(infeasible or ())
+    # Auto-detect: any combo with np.inf or None cost is infeasible by
+    # construction. Mark it in the set so list schedulers AND the ML cost
+    # model both see it as forbidden (model training data only sampled from
+    # feasible placements).
+    for k, c in enumerate(costs):
+        if c is None or (isinstance(c, float) and np.isinf(c)) or (isinstance(c, (int, float)) and c >= 1e8):
+            inf.add(k)
     # Replace inf with a large stand-in cost so processing_times stays numeric.
     costs = [1e9 if (c is None or (isinstance(c, float) and np.isinf(c))) else c
              for c in costs]

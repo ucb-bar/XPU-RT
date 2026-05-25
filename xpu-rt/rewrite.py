@@ -354,9 +354,16 @@ def score_candidates(
     scheduler_fn: Callable,
     *,
     metric: str = "makespan_us",
+    fast_scorer: Optional[Callable] = None,
 ) -> List[Dict[str, Any]]:
     """Apply each candidate, run scheduler_fn, return rows with both predicted
-    and measured ``metric`` delta vs the unmodified baseline."""
+    and measured ``metric`` delta vs the unmodified baseline.
+
+    ``fast_scorer(workload, t, alpha) -> predicted_metric_value`` (optional):
+    when supplied, replaces the per-candidate re-schedule with a single
+    forward-pass prediction. Used by M11's learned cost model to avoid
+    re-scheduling every candidate.
+    """
     # Baseline.
     base_t, base_alpha, _, _ = scheduler_fn(workload)
     if base_t is None:
@@ -367,14 +374,29 @@ def score_candidates(
     for cand in candidates:
         try:
             new_wl = apply_candidate(workload, cand)
-            t, alpha, _, _ = scheduler_fn(new_wl)
-            if t is None:
-                results.append({
-                    "candidate": cand.to_dict(),
-                    "applied": False, "error": "no_schedule",
-                })
-                continue
-            summ = _summarize(new_wl, t, alpha)
+            if fast_scorer is not None:
+                # Use HEFT placement for the rewritten workload (cost model
+                # needs SOME placement to score). HEFT is fast.
+                from scheduler_heft import heft as _heft
+                t, alpha, _, _ = _heft(new_wl)
+                if t is None:
+                    results.append({
+                        "candidate": cand.to_dict(),
+                        "applied": False, "error": "heft_failed_on_rewrite",
+                    })
+                    continue
+                predicted_value = float(fast_scorer(new_wl, t, alpha))
+                summ = {"makespan_us": predicted_value,
+                        "dispatch_count": len(new_wl.operations)}
+            else:
+                t, alpha, _, _ = scheduler_fn(new_wl)
+                if t is None:
+                    results.append({
+                        "candidate": cand.to_dict(),
+                        "applied": False, "error": "no_schedule",
+                    })
+                    continue
+                summ = _summarize(new_wl, t, alpha)
             measured_delta = summ[metric] - base[metric]
             predicted_delta = cand.expected_benefit.get("predicted_makespan_delta", 0.0)
             results.append({
