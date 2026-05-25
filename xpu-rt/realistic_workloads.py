@@ -387,11 +387,28 @@ def build_model_graph(model: str, soc: str, cost_table: Optional[Dict[str, Any]]
     if soc not in ("chipyard", "qrb5165"):
         raise ValueError(f"unknown soc: {soc}")
 
+    # Cached-JSON fallback: if data/realistic/<model>_<soc>.json exists,
+    # use it directly. This makes the loader survive deletion of the
+    # upstream merlin CSVs (which have happened twice already in development).
+    cache_path = REPO_ROOT / "data" / "realistic" / f"{model}_{soc}.json"
+    if cost_table is None and cache_path.exists():
+        try:
+            with open(cache_path) as f:
+                return json.load(f)
+        except (json.JSONDecodeError, OSError):
+            pass  # fall through to live reconstruction
+
     if cost_table is None:
-        cost_table = load_cost_table("chipyard" if soc == "chipyard" else "qrb5165")
-        if soc == "qrb5165":
-            # Need chipyard dispatch ordinals/symbols as the structural source.
-            cost_table = {**cost_table, **load_cost_table("chipyard")}
+        try:
+            cost_table = load_cost_table("chipyard" if soc == "chipyard" else "qrb5165")
+            if soc == "qrb5165":
+                cost_table = {**cost_table, **load_cost_table("chipyard")}
+        except FileNotFoundError as exc:
+            # Live reconstruction failed AND no cache. Re-raise with a clear hint.
+            raise FileNotFoundError(
+                f"build_model_graph needs either {cache_path} or the merlin "
+                f"CSVs at {MERLIN_E2E_CSV}. Got: {exc}"
+            ) from exc
 
     chip = cost_table.get("dispatch", _load_chipyard_dispatch()).get(model, {})
     qnn = cost_table.get("qnn")

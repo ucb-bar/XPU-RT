@@ -728,9 +728,158 @@ def run_literature(args):
 # ---------------------------------------------------------------------------
 
 
+def run_stress(args):
+    from stress_scenarios import STRESS_SCENARIOS, frequency_sweep_breaking_point
+
+    out_dir = REPO / "results" / "stress"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    schedulers = args.schedulers.split(",")
+
+    rows: List[Dict[str, Any]] = []
+    # 1-4. Standard stress scenarios.
+    for sc_name, builder in STRESS_SCENARIOS.items():
+        try:
+            wl = builder()
+        except Exception as exc:
+            print(f"[warn] {sc_name} build failed: {exc}")
+            continue
+        n_ops = len(wl.operations)
+        print(f"\n  {sc_name}: {n_ops} ops")
+        for s in schedulers:
+            # Generous time limits for exact solvers on big workloads.
+            if s in ("cpsat", "cpsat_memory"):
+                tl = max(args.time_limit, 60.0)
+            elif s == "mosek" and n_ops > 100:
+                rows.append({"scenario": sc_name, "scheduler": s, "n_ops": n_ops,
+                             "feasible": False, "error": "skipped_too_large"})
+                continue
+            else:
+                tl = args.time_limit
+            r = _run_one(wl, s, tl)
+            row = {"scenario": sc_name, "scheduler": s, "n_ops": n_ops, **r}
+            rows.append(row)
+            print(f"     {s:<22s} ms={r.get('makespan_us', 'n/a')}  "
+                  f"misses={r.get('deadline_miss_count', 'n/a')}  "
+                  f"solver_s={r.get('solver_wall_time_s', 0):.3f}")
+
+    # 5. Frequency sweep — find each scheduler's breaking point.
+    print(f"\n  frequency_sweep_breaking_point: sweeping mlp_hz...")
+    sweep_rows: List[Dict[str, Any]] = []
+    sweep_schedulers = [s for s in schedulers if s not in ("mosek",)]  # too slow
+    for mlp_hz in (20, 50, 100, 200, 400, 800):
+        wl = frequency_sweep_breaking_point(mlp_hz=mlp_hz)
+        n_ops = len(wl.operations)
+        for s in sweep_schedulers:
+            tl = max(args.time_limit, 60.0) if s in ("cpsat", "cpsat_memory") else args.time_limit
+            r = _run_one(wl, s, tl)
+            sweep_rows.append({
+                "mlp_hz": mlp_hz, "scheduler": s, "n_ops": n_ops, **r
+            })
+        print(f"    mlp_hz={mlp_hz:>4} n_ops={n_ops:>3} "
+              f"misses: " + " ".join(
+                  f"{s}={[r for r in sweep_rows if r['mlp_hz']==mlp_hz and r['scheduler']==s][0].get('deadline_miss_count', 'fail')}"
+                  for s in sweep_schedulers if s in ("heft", "edf", "cpsat", "fastest_device")))
+
+    # Write CSVs
+    fields = ["scenario", "scheduler", "n_ops", "feasible", "valid",
+              "makespan_us", "deadline_miss_count", "total_lateness_us",
+              "cross_device_transitions", "critical_path_us",
+              "solver_wall_time_s", "error"]
+    csv_path = out_dir / "metrics.csv"
+    with open(csv_path, "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
+        w.writeheader()
+        for r in rows:
+            w.writerow(r)
+    print(f"\nMetrics -> {csv_path}")
+
+    sweep_fields = ["mlp_hz", "scheduler", "n_ops", "feasible",
+                    "makespan_us", "deadline_miss_count", "total_lateness_us",
+                    "solver_wall_time_s", "error"]
+    sweep_csv = out_dir / "frequency_sweep.csv"
+    with open(sweep_csv, "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=sweep_fields, extrasaction="ignore")
+        w.writeheader()
+        for r in sweep_rows:
+            w.writerow(r)
+    print(f"Frequency-sweep -> {sweep_csv}")
+
+    _plot_breaking_point(sweep_rows, sweep_schedulers, out_dir)
+    _write_stress_report(rows, sweep_rows, schedulers, out_dir)
+
+
+def _plot_breaking_point(sweep_rows, schedulers, out_dir):
+    import matplotlib.pyplot as plt
+    hzs = sorted({r["mlp_hz"] for r in sweep_rows})
+    fig, ax = plt.subplots(figsize=(10, 6), constrained_layout=True)
+    cmap = plt.get_cmap("tab10")
+    for idx, s in enumerate(schedulers):
+        xs, ys = [], []
+        for hz in hzs:
+            row = next((r for r in sweep_rows
+                        if r["mlp_hz"] == hz and r["scheduler"] == s
+                        and r.get("feasible")), None)
+            if row is None:
+                continue
+            xs.append(hz); ys.append(row.get("deadline_miss_count", 0))
+        if xs:
+            ax.plot(xs, ys, marker="o", label=s, color=cmap(idx % 10))
+    ax.set_xlabel("mlp_wide frequency (Hz)")
+    ax.set_ylabel("deadline miss count")
+    ax.set_xscale("log")
+    ax.set_title("M23 — Breaking-point sweep: deadline misses vs mlp_wide frequency")
+    ax.legend(fontsize=8, loc="best")
+    ax.grid(True, alpha=0.3)
+    fig.savefig(out_dir / "breaking_point.png", dpi=120)
+    plt.close(fig)
+
+
+def _write_stress_report(rows, sweep_rows, schedulers, out_dir):
+    lines = ["# M23 — Stress-test scenarios", ""]
+    by_scenario = {}
+    for r in rows:
+        by_scenario.setdefault(r["scenario"], []).append(r)
+    for sc_name, sc_rows in by_scenario.items():
+        lines.append(f"## {sc_name}")
+        lines.append("")
+        n = sc_rows[0].get("n_ops", "?")
+        lines.append(f"Workload size: {n} ops")
+        lines.append("")
+        lines.append("| scheduler | makespan_us | misses | total_lateness_us | solver_s |")
+        lines.append("|---|---:|---:|---:|---:|")
+        for r in sc_rows:
+            if r.get("error"):
+                lines.append(f"| {r['scheduler']} | error: {r['error']} | - | - | - |")
+                continue
+            lines.append(f"| {r['scheduler']} | {r.get('makespan_us', 0):.0f} | "
+                         f"{r.get('deadline_miss_count', '-')} | "
+                         f"{r.get('total_lateness_us', 0):.0f} | "
+                         f"{r.get('solver_wall_time_s', 0):.3f} |")
+        lines.append("")
+
+    lines.append("## frequency_sweep_breaking_point")
+    lines.append("")
+    lines.append("![breaking point](breaking_point.png)")
+    lines.append("")
+    hzs = sorted({r["mlp_hz"] for r in sweep_rows})
+    lines.append("| scheduler | " + " | ".join(f"mlp={h}Hz" for h in hzs) + " |")
+    lines.append("|---|" + "|".join(["---:"] * len(hzs)) + "|")
+    for s in schedulers:
+        cells = []
+        for hz in hzs:
+            r = next((r for r in sweep_rows
+                      if r["mlp_hz"] == hz and r["scheduler"] == s
+                      and r.get("feasible")), None)
+            cells.append(f"{r.get('deadline_miss_count', '-')}" if r else "skip")
+        lines.append(f"| {s} | " + " | ".join(cells) + " |")
+    with open(out_dir / "report.md", "w") as f:
+        f.write("\n".join(lines))
+    print(f"Report -> {out_dir / 'report.md'}")
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--target", choices=["robustness", "scaling", "realtime", "literature"],
+    ap.add_argument("--target", choices=["robustness", "scaling", "realtime", "literature", "stress"],
                     required=True)
     ap.add_argument("--schedulers",
                     default="heft,critical_path,edf,fastest_device,fifo,peft,"
@@ -755,6 +904,8 @@ def main():
         run_realtime(args)
     elif args.target == "literature":
         run_literature(args)
+    elif args.target == "stress":
+        run_stress(args)
 
 
 if __name__ == "__main__":
