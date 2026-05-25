@@ -84,6 +84,7 @@ def _run_one_cell(
     mosek_max_ops: int,
     gantt_dir: Path,
     time_limit: float,
+    cpsat_max_ops: int = 200,
 ) -> Dict[str, Any]:
     """Build + schedule + measure + plot one cell. Returns metrics dict."""
     wl = pack_periodic_workload(
@@ -111,6 +112,10 @@ def _run_one_cell(
         base_row.update(feasible=False, skipped=True,
                         reason=f"MOSEK skipped: {n_ops} ops > limit {mosek_max_ops}")
         return base_row
+    if scheduler_name == "cpsat" and n_ops > cpsat_max_ops:
+        base_row.update(feasible=False, skipped=True,
+                        reason=f"CP-SAT skipped: {n_ops} ops > limit {cpsat_max_ops}")
+        return base_row
 
     sched = get_scheduler(scheduler_name)
     kwargs: Dict[str, Any] = {}
@@ -120,6 +125,8 @@ def _run_one_cell(
             restrict_makespan_to_nonperiodic=False,
             prune_cross_period_constraints=False,
         )
+    elif scheduler_name == "cpsat":
+        kwargs = dict(time_limit=time_limit)
 
     t0 = time.perf_counter()
     try:
@@ -266,6 +273,8 @@ def main():
                     help="MOSEK time-limit seconds per cell.")
     ap.add_argument("--mosek-max-ops", type=int, default=80,
                     help="Skip MOSEK on cells with more than this many ops.")
+    ap.add_argument("--cpsat-max-ops", type=int, default=200,
+                    help="Skip CP-SAT on cells with more than this many ops.")
     ap.add_argument("--out", default=str(REPO / "results" / "robotic_packing"))
     args = ap.parse_args()
 
@@ -298,7 +307,7 @@ def main():
                         soc=soc, f_dronet=fd, f_mlp=fm, scheduler_name=sched,
                         envelope_us=envelope, time_scale=args.time_scale,
                         mosek_max_ops=args.mosek_max_ops, gantt_dir=gantt_dir,
-                        time_limit=args.time_limit,
+                        time_limit=args.time_limit, cpsat_max_ops=args.cpsat_max_ops,
                     )
                     rows.append(row)
                     summary = (f"feasible={row.get('feasible')} "

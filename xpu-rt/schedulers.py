@@ -60,6 +60,11 @@ def _random_list(workload, **kwargs):
     return random_list(workload, **kwargs)
 
 
+def _cpsat(workload, **kwargs):
+    from scheduler_cpsat import cpsat_with_heft_warm_start
+    return cpsat_with_heft_warm_start(workload, **kwargs)
+
+
 _REGISTRY: Dict[str, SchedulerFn] = {
     "mosek": _mosek,
     "heft": _heft,
@@ -68,6 +73,7 @@ _REGISTRY: Dict[str, SchedulerFn] = {
     "fastest_device": _fastest_device,
     "fifo": _fifo,
     "random_list": _random_list,
+    "cpsat": _cpsat,
 }
 
 
