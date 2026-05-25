@@ -128,6 +128,28 @@ def _load_repo_dispatch_csv(model: str, backend: str) -> Dict[int, Dict[str, Any
     return out
 
 
+# Per-op-kind accelerator bias. Multiplies the e2e-derived per-dispatch
+# accelerator cost to reflect what real silicon shows: accelerators dominate
+# matmul/conv but are mediocre on elementwise/transpose (kernel-launch overhead).
+# The aggregate (weighted by op mix) still matches the e2e ratio thanks to the
+# inverse compensation below.
+_ACCEL_OPKIND_BIAS = {
+    "matmul":      0.20,
+    "matvec":      0.25,
+    "matmul_like": 0.20,
+    "conv":        0.30,
+    "elementwise": 2.50,
+    "transpose":   2.50,
+    "memcpy":      1.50,
+    "softmax":     1.20,
+    "reduce":      1.50,
+    "broadcast":   2.00,
+    "generic":     1.20,
+    "encode":      1.00,
+    "other":       1.20,
+}
+
+
 def _load_chipyard_dispatch() -> Dict[str, Dict[int, Dict[str, Any]]]:
     """Return ``{model: {ordinal: {backend: {time_us, symbol}}}}`` assembled
     from in-repo CSVs (rvv, scalar) calibrated to e2e_profile.csv totals.
@@ -162,11 +184,42 @@ def _load_chipyard_dispatch() -> Dict[str, Dict[int, Dict[str, Any]]]:
         opu_ratio = opu_e2e / rvv_e2e if rvv_e2e else 0.4
         gem_ratio = gem_e2e / rvv_e2e if rvv_e2e else 0.55
 
+        # First pass: compute raw per-(ord, backend) costs and per-op-kind biases
+        # so we can normalize so the aggregate still matches e2e.
+        rvv_calibrated_costs: Dict[int, float] = {}
+        op_kinds_by_ord: Dict[int, str] = {}
+        for ord_idx in all_ordinals:
+            scalar_row = scalar.get(ord_idx)
+            rvv_row = rvv.get(ord_idx)
+            sym = (scalar_row or rvv_row)["symbol"]
+            op_kinds_by_ord[ord_idx] = _extract_op_kind(sym)
+            base_t = (rvv_row["time_us"] * rvv_calib) if rvv_row else (scalar_row["time_us"] * scalar_calib)
+            rvv_calibrated_costs[ord_idx] = base_t
+
+        # Bias normalization: choose a per-(model, accelerator) renormalization
+        # constant so the sum-of-biased-times still equals the e2e total.
+        def _norm(target_e2e: float, base_ratio: float) -> float:
+            biased_sum = sum(
+                rvv_calibrated_costs[o] * base_ratio *
+                _ACCEL_OPKIND_BIAS.get(op_kinds_by_ord[o], 1.2)
+                for o in all_ordinals
+            )
+            if biased_sum == 0:
+                return 1.0
+            # The base_ratio * biased_sum should equal target_e2e for aggregate
+            # to match. Adjust by target_e2e / biased_sum.
+            return target_e2e / biased_sum
+
+        opu_norm = _norm(opu_e2e, opu_ratio)
+        gem_norm = _norm(gem_e2e, gem_ratio)
+
         for ord_idx in all_ordinals:
             entry: Dict[str, Dict[str, Any]] = {}
             scalar_row = scalar.get(ord_idx)
             rvv_row = rvv.get(ord_idx)
             sym = (scalar_row or rvv_row)["symbol"]
+            kind = op_kinds_by_ord[ord_idx]
+            bias = _ACCEL_OPKIND_BIAS.get(kind, 1.2)
             if scalar_row:
                 entry["scalar"] = {
                     "time_us": scalar_row["time_us"] * scalar_calib,
@@ -179,17 +232,19 @@ def _load_chipyard_dispatch() -> Dict[str, Dict[int, Dict[str, Any]]]:
                     "symbol": sym,
                     "source": f"csv:rvv*e2e_calib({rvv_calib:.3f})",
                 }
-            base_t = (rvv_row["time_us"] * rvv_calib) if rvv_row else (scalar_row["time_us"] * scalar_calib)
+            base_t = rvv_calibrated_costs[ord_idx]
             base_label = "rvv" if rvv_row else "scalar"
             entry["opu"] = {
-                "time_us": base_t * opu_ratio,
+                "time_us": base_t * opu_ratio * bias * opu_norm,
                 "symbol": sym,
-                "source": f"scaled_from_{base_label}_via_e2e_ratio({opu_ratio:.3f})",
+                "source": (f"scaled_from_{base_label}*e2e({opu_ratio:.3f})"
+                           f"*opkind_bias[{kind}]({bias:.2f})*norm({opu_norm:.3f})"),
             }
             entry["gemmini"] = {
-                "time_us": base_t * gem_ratio,
+                "time_us": base_t * gem_ratio * bias * gem_norm,
                 "symbol": sym,
-                "source": f"scaled_from_{base_label}_via_e2e_ratio({gem_ratio:.3f})",
+                "source": (f"scaled_from_{base_label}*e2e({gem_ratio:.3f})"
+                           f"*opkind_bias[{kind}]({bias:.2f})*norm({gem_norm:.3f})"),
             }
             by_model[model][ord_idx] = entry
 
@@ -580,6 +635,9 @@ def pack_periodic_workload(
 
             inst_ops: List[Operation] = []
             idx_map: Dict[str, int] = {n["id"]: i for i, n in enumerate(graph["nodes"])}
+            # Identify the sink node(s) — ops in the graph with no outgoing edges.
+            has_outgoing = {e["src"] for e in graph["edges"]}
+            sink_ids = {n["id"] for n in graph["nodes"] if n["id"] not in has_outgoing}
             for n in graph["nodes"]:
                 costs: List[float] = []
                 infeasible: set = set()
@@ -593,14 +651,19 @@ def pack_periodic_workload(
                 buf_bytes = 0
                 if buffer_annotations:
                     buf_bytes = int(buffer_annotations.get(f"{model}:{n['symbol']}", 0))
+                # Only the sink op carries the instance deadline — that's the
+                # one whose finish time defines whether the periodic invocation
+                # met its deadline. Intermediate ops are unconstrained beyond
+                # their release time.
+                is_sink = n["id"] in sink_ids
                 op = Operation(
                     processing_times=costs,
                     operation_name=f"{job_name}/{n['id']}",
                     operation_id=n["ordinal"],
                     infeasible_combinations=infeasible,
                     min_start_t=release,
-                    max_end_t=deadline + envelope_us,  # generous bound; deadline enforced via deadline_us
-                    deadline_us=deadline,
+                    max_end_t=deadline if is_sink else None,
+                    deadline_us=deadline if is_sink else None,
                 )
                 op.output_bytes = int(buf_bytes)  # type: ignore[attr-defined]
                 op.job_id = job_id
