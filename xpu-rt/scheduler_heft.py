@@ -331,3 +331,229 @@ def random_list(workload: Workload, *, random_seed: Optional[int] = 0, **_) -> T
         placement="first_available",
         seed=random_seed,
     )
+
+
+# ---------------------------------------------------------------------------
+# Extra list-scheduling variants and a simple simulated-annealing wrapper
+# ---------------------------------------------------------------------------
+
+
+def _round_robin_assign(workload: Workload) -> Tuple[np.ndarray, np.ndarray, None, None]:
+    """Round-robin: assign ops to machine combinations cyclically in
+    topological order, ignoring feasibility/cost. Trivial baseline."""
+    ops = workload.operations
+    n = len(ops)
+    combos = workload.get_machine_combinations()
+    order = _build_topo_order(ops)
+
+    t = np.zeros(n)
+    alpha = np.zeros((n, len(combos)))
+    machine_busy: Dict[str, float] = {m: 0.0 for m in workload.machines}
+    pred_finish: Dict[int, float] = {}
+    pred_combo: Dict[int, int] = {}
+
+    for rank_i, i in enumerate(order):
+        op = ops[i]
+        feasible = _feasible_combinations(op, len(combos))
+        # Cyclic pick among feasible, biased by rank.
+        k = feasible[rank_i % len(feasible)]
+        est = _earliest_start_on_combo(workload, op, k, pred_finish, pred_combo, machine_busy)
+        dur = float(op.get_duration_for_combination(k, combos, workload.machines))
+        t[i] = est
+        alpha[i, k] = 1.0
+        finish = est + dur
+        pred_finish[i] = finish
+        pred_combo[i] = k
+        for m in combos[k]:
+            machine_busy[m] = finish
+
+    return t, alpha, None, None
+
+
+def round_robin(workload, **_):
+    return _round_robin_assign(workload)
+
+
+def _peft_priority(workload: Workload) -> List[float]:
+    """PEFT optimistic cost table priority. For each (op, machine_combination):
+       OCT[i, k] = max over successor j of (min over k': OCT[j, k'] + dur[j, k'] + transfer(k, k'))
+    Then priority(op) = mean over k of (OCT[i, k] + dur[i, k]).
+
+    Larger -> earlier in schedule.
+    """
+    ops = workload.operations
+    n = len(ops)
+    combos = workload.get_machine_combinations()
+    n_combos = len(combos)
+    machines = list(workload.machines)
+    name_to_idx = {m: i for i, m in enumerate(machines)}
+    transfer = workload.get_transfer_times()
+
+    op_idx = {id(op): i for i, op in enumerate(ops)}
+    succ: List[List[int]] = [[] for _ in range(n)]
+    for i, op in enumerate(ops):
+        for pred in op.get_predecessors():
+            pi = op_idx.get(id(pred))
+            if pi is not None:
+                succ[pi].append(i)
+
+    topo = _build_topo_order(ops)
+
+    # Per-op per-combo duration matrix.
+    dur = [[float(ops[i].get_duration_for_combination(k, combos, machines))
+            if k not in ops[i].infeasible_combinations else float("inf")
+            for k in range(n_combos)] for i in range(n)]
+
+    def _xfer(k_a: int, k_b: int) -> float:
+        if k_a == k_b:
+            return 0.0
+        worst = 0.0
+        for ma in combos[k_a]:
+            for mb in combos[k_b]:
+                ia, ib = name_to_idx.get(ma), name_to_idx.get(mb)
+                if ia is None or ib is None or ia == ib:
+                    continue
+                v = float(transfer[ia][ib])
+                if v > worst:
+                    worst = v
+        return worst
+
+    # OCT[i, k] computed bottom-up.
+    oct_table = [[0.0] * n_combos for _ in range(n)]
+    for i in reversed(topo):
+        for k in range(n_combos):
+            if not succ[i]:
+                oct_table[i][k] = 0.0
+                continue
+            best = 0.0
+            for j in succ[i]:
+                # min over k' of (OCT[j, k'] + dur[j, k'] + transfer)
+                min_term = float("inf")
+                for k_prime in range(n_combos):
+                    if dur[j][k_prime] == float("inf"):
+                        continue
+                    cand = oct_table[j][k_prime] + dur[j][k_prime] + _xfer(k, k_prime)
+                    if cand < min_term:
+                        min_term = cand
+                if min_term == float("inf"):
+                    continue
+                if min_term > best:
+                    best = min_term
+            oct_table[i][k] = best
+
+    # Priority = mean(OCT[i, k] + dur[i, k]) across feasible k.
+    out: List[float] = []
+    for i in range(n):
+        vals = [oct_table[i][k] + dur[i][k]
+                for k in range(n_combos) if dur[i][k] != float("inf")]
+        out.append(float(np.mean(vals)) if vals else 0.0)
+    return out
+
+
+def peft(workload, **_):
+    return _list_schedule(workload, priority=_peft_priority, placement="eft")
+
+
+def _min_min_priority(workload: Workload) -> List[float]:
+    """min-min priority: prefer ops with the shortest min-over-machines duration."""
+    return [-min(op.processing_times) for op in workload.operations]
+
+
+def min_min(workload, **_):
+    return _list_schedule(workload, priority=_min_min_priority, placement="fastest_local")
+
+
+def _max_min_priority(workload: Workload) -> List[float]:
+    """max-min priority: prefer ops with the LONGEST min-over-machines duration."""
+    return [min(op.processing_times) for op in workload.operations]
+
+
+def max_min(workload, **_):
+    return _list_schedule(workload, priority=_max_min_priority, placement="fastest_local")
+
+
+def simulated_annealing(workload, *, n_iters: int = 200,
+                        T0: float = 100.0, alpha: float = 0.97,
+                        random_seed: Optional[int] = 0, **_):
+    """Simulated annealing starting from HEFT. Each iteration perturbs the
+    placement of a randomly-chosen op to a different feasible combo; accepts
+    if measured makespan improves or by Metropolis criterion at temperature T.
+
+    Returns the best-found schedule under the search.
+    """
+    rng = np.random.default_rng(random_seed)
+    # Start from HEFT.
+    t_cur, a_cur, _, _ = heft(workload)
+    combos = workload.get_machine_combinations()
+    machines = list(workload.machines)
+    op_idx = {id(op): i for i, op in enumerate(workload.operations)}
+
+    def _makespan(t: np.ndarray, alpha: np.ndarray) -> float:
+        worst = 0.0
+        for i, op in enumerate(workload.operations):
+            k = int(np.argmax(alpha[i]))
+            d = float(op.get_duration_for_combination(k, combos, machines))
+            f = float(t[i]) + d
+            if f > worst:
+                worst = f
+        return worst
+
+    def _resimulate_with_assignment(alpha: np.ndarray) -> Optional[np.ndarray]:
+        """Given a fixed (op -> combo) assignment, recompute valid start times
+        by topo + per-combo earliest-start. Returns None if infeasible."""
+        ops = workload.operations
+        n = len(ops)
+        try:
+            order = _build_topo_order(ops)
+        except ValueError:
+            return None
+        t_new = np.zeros(n)
+        machine_busy: Dict[str, float] = {m: 0.0 for m in machines}
+        pred_finish: Dict[int, float] = {}
+        pred_combo: Dict[int, int] = {}
+        for i in order:
+            op = ops[i]
+            k = int(np.argmax(alpha[i]))
+            if k in op.infeasible_combinations:
+                return None
+            est = _earliest_start_on_combo(workload, op, k, pred_finish, pred_combo, machine_busy)
+            t_new[i] = est
+            dur = float(op.get_duration_for_combination(k, combos, machines))
+            pred_finish[i] = est + dur
+            pred_combo[i] = k
+            for m in combos[k]:
+                machine_busy[m] = est + dur
+        return t_new
+
+    best_t = t_cur.copy()
+    best_a = a_cur.copy()
+    best_ms = _makespan(best_t, best_a)
+    cur_ms = best_ms
+    T = T0
+
+    for _ in range(n_iters):
+        # Pick a random op and a different feasible combo.
+        i = int(rng.integers(0, len(workload.operations)))
+        op = workload.operations[i]
+        feasible = _feasible_combinations(op, len(combos))
+        if len(feasible) <= 1:
+            continue
+        cur_k = int(np.argmax(a_cur[i]))
+        choices = [k for k in feasible if k != cur_k]
+        new_k = int(rng.choice(choices))
+        a_new = a_cur.copy()
+        a_new[i] = 0
+        a_new[i, new_k] = 1.0
+        t_new = _resimulate_with_assignment(a_new)
+        if t_new is None:
+            continue
+        new_ms = _makespan(t_new, a_new)
+        if new_ms < cur_ms or rng.random() < float(np.exp((cur_ms - new_ms) / max(T, 1e-3))):
+            t_cur, a_cur, cur_ms = t_new, a_new, new_ms
+            if new_ms < best_ms:
+                best_ms = new_ms
+                best_t = t_new.copy()
+                best_a = a_new.copy()
+        T *= alpha
+
+    return best_t, best_a, None, None

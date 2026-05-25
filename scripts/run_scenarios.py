@@ -45,9 +45,17 @@ DEFAULT_SCHEDULERS = "heft,critical_path,edf,fastest_device,fifo,mosek,cpsat"
 
 
 def _run_cell(scenario_name: str, scheduler_name: str, wl, gantt_dir: Path,
-              time_limit: float) -> Tuple[Dict[str, Any], "SchedulerResult"]:
+              time_limit: float,
+              mosek_time_limit: float = None,
+              cpsat_time_limit: float = None) -> Tuple[Dict[str, Any], "SchedulerResult"]:
     """Returns (csv_row, SchedulerResult). The result carries (t, alpha, workload)
-    so the side-by-side composite can render directly from it."""
+    so the side-by-side composite can render directly from it.
+
+    ``mosek_time_limit`` / ``cpsat_time_limit`` allow giving the exact solvers
+    much longer than the heuristic schedulers, so we can fairly compare
+    'best possible schedule no matter the time' against the original
+    XPU-RT MILP. Times taken are recorded in ``solver_wall_time_s``.
+    """
     out: Dict[str, Any] = {
         "scenario": scenario_name,
         "scheduler": scheduler_name,
@@ -56,11 +64,12 @@ def _run_cell(scenario_name: str, scheduler_name: str, wl, gantt_dir: Path,
     sched = get_scheduler(scheduler_name)
     kwargs: Dict[str, Any] = {}
     if scheduler_name == "mosek":
-        kwargs = dict(solver_verbosity=0, time_limit=time_limit,
+        kwargs = dict(solver_verbosity=0,
+                      time_limit=mosek_time_limit or time_limit,
                       restrict_makespan_to_nonperiodic=False,
                       prune_cross_period_constraints=False)
     elif scheduler_name == "cpsat":
-        kwargs = dict(time_limit=time_limit)
+        kwargs = dict(time_limit=cpsat_time_limit or time_limit)
 
     t0 = time.perf_counter()
     try:
@@ -161,7 +170,14 @@ def main():
     ap.add_argument("--scenario", default="all",
                     help=f"Comma-separated subset or 'all' from: {','.join(SCENARIOS)}")
     ap.add_argument("--schedulers", default=DEFAULT_SCHEDULERS)
-    ap.add_argument("--time-limit", type=float, default=30.0)
+    ap.add_argument("--time-limit", type=float, default=30.0,
+                    help="Default time-limit (used for non-mosek/cpsat)")
+    ap.add_argument("--mosek-time-limit", type=float, default=None,
+                    help="MOSEK time limit (s). Defaults to --time-limit. "
+                         "Use a large value (e.g. 600) to give MILP enough "
+                         "time to prove optimality on larger DAGs.")
+    ap.add_argument("--cpsat-time-limit", type=float, default=None,
+                    help="CP-SAT time limit (s). Defaults to --time-limit.")
     ap.add_argument("--out", default=str(REPO / "results" / "scenarios"))
     args = ap.parse_args()
 

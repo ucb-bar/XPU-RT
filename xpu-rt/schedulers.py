@@ -70,6 +70,31 @@ def _cpsat_memory(workload, **kwargs):
     return cpsat_memory_aware(workload, **kwargs)
 
 
+def _round_robin(workload, **kwargs):
+    from scheduler_heft import round_robin
+    return round_robin(workload, **kwargs)
+
+
+def _peft(workload, **kwargs):
+    from scheduler_heft import peft
+    return peft(workload, **kwargs)
+
+
+def _min_min(workload, **kwargs):
+    from scheduler_heft import min_min
+    return min_min(workload, **kwargs)
+
+
+def _max_min(workload, **kwargs):
+    from scheduler_heft import max_min
+    return max_min(workload, **kwargs)
+
+
+def _sa(workload, **kwargs):
+    from scheduler_heft import simulated_annealing
+    return simulated_annealing(workload, **kwargs)
+
+
 _REGISTRY: Dict[str, SchedulerFn] = {
     "mosek": _mosek,
     "heft": _heft,
@@ -80,6 +105,11 @@ _REGISTRY: Dict[str, SchedulerFn] = {
     "random_list": _random_list,
     "cpsat": _cpsat,
     "cpsat_memory": _cpsat_memory,
+    "round_robin": _round_robin,
+    "peft": _peft,
+    "min_min": _min_min,
+    "max_min": _max_min,
+    "simulated_annealing": _sa,
 }
 
 
