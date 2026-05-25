@@ -100,6 +100,11 @@ def _cost_model(workload, **kwargs):
     return cost_model_scheduler(workload, **kwargs)
 
 
+def _gnn_placement(workload, **kwargs):
+    from scheduler_gnn import gnn_placement_scheduler
+    return gnn_placement_scheduler(workload, **kwargs)
+
+
 _REGISTRY: Dict[str, SchedulerFn] = {
     "mosek": _mosek,
     "heft": _heft,
@@ -116,6 +121,7 @@ _REGISTRY: Dict[str, SchedulerFn] = {
     "max_min": _max_min,
     "simulated_annealing": _sa,
     "cost_model": _cost_model,
+    "gnn_placement": _gnn_placement,
 }
 
 

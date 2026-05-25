@@ -223,6 +223,164 @@ def train_cost_model(args):
 # ----------------------------------------------------------------------------
 
 
+def train_gnn(args):
+    """M12: GNN-based placement, supervised on CP-SAT-optimal alphas.
+
+    Phase 1 only (cross-entropy); REINFORCE Phase 2 deferred.
+    """
+    import torch
+    import torch.nn as nn
+    from torch_geometric.data import Data
+    from torch_geometric.loader import DataLoader as PyGLoader
+
+    from scheduler_gnn import (
+        FEAT_PER_NODE, MAX_COMBOS, build_gnn_model,
+        compute_node_features, compute_edge_index, compute_infeasibility_mask,
+    )
+
+    print("=== train gnn_placement ===")
+    data_dir = REPO / "data" / "training"
+    with open(data_dir / "workloads.pkl", "rb") as f:
+        workloads = pickle.load(f)
+    with open(data_dir / "cpsat_labels.pkl", "rb") as f:
+        cpsat_labels = pickle.load(f)
+    with open(data_dir / "splits.json") as f:
+        splits = json.load(f)
+
+    print(f"  workloads={len(workloads)} cpsat_labels={len(cpsat_labels)}")
+    print(f"  splits: train={len(splits['train'])} val={len(splits['val'])} test={len(splits['test'])}")
+
+    by_id = {w["workload_id"]: w for w in workloads}
+    label_by_id = {l["workload_id"]: l for l in cpsat_labels}
+
+    def _make_data_list(ids):
+        out = []
+        for wid in ids:
+            wd = by_id.get(wid)
+            lbl = label_by_id.get(wid)
+            if wd is None or lbl is None:
+                continue
+            wl = _workload_from_dict(wd)
+            if len(wl.operations) == 0:
+                continue
+            feats = compute_node_features(wl)
+            ei = compute_edge_index(wl)
+            mask = compute_infeasibility_mask(wl)
+            y = np.array(lbl["alpha_indices"], dtype=np.int64)
+            data = Data(
+                x=torch.tensor(feats, dtype=torch.float32),
+                edge_index=torch.tensor(ei, dtype=torch.long),
+                y=torch.tensor(y, dtype=torch.long),
+                inf_mask=torch.tensor(mask, dtype=torch.bool),
+                num_nodes=feats.shape[0],
+            )
+            out.append(data)
+        return out
+
+    train_list = _make_data_list(splits["train"])
+    val_list = _make_data_list(splits["val"])
+    test_list = _make_data_list(splits["test"])
+    print(f"  graphs: train={len(train_list)} val={len(val_list)} test={len(test_list)}")
+
+    # Normalize features by train-set per-column statistics.
+    train_X = np.concatenate([d.x.numpy() for d in train_list], axis=0)
+    mean = train_X.mean(axis=0).astype(np.float32)
+    std = (train_X.std(axis=0) + 1e-6).astype(np.float32)
+
+    def _normalize(lst):
+        for d in lst:
+            d.x = (d.x - torch.tensor(mean)) / torch.tensor(std)
+    _normalize(train_list); _normalize(val_list); _normalize(test_list)
+
+    train_loader = PyGLoader(train_list, batch_size=args.batch_size, shuffle=True)
+    val_loader = PyGLoader(val_list, batch_size=args.batch_size, shuffle=False)
+    test_loader = PyGLoader(test_list, batch_size=args.batch_size, shuffle=False)
+
+    model = build_gnn_model(in_dim=FEAT_PER_NODE, hidden=args.hidden,
+                            n_combos=MAX_COMBOS, n_layers=3)
+    optim = torch.optim.Adam(model.parameters(), lr=args.lr)
+
+    def _eval(loader):
+        model.eval()
+        n_correct = 0
+        n_total = 0
+        ws_loss = 0.0
+        n_batches = 0
+        with torch.no_grad():
+            for batch in loader:
+                logits = model(batch.x, batch.edge_index)
+                logits = logits.clone()
+                logits[batch.inf_mask] = -1e9
+                pred = logits.argmax(dim=-1)
+                n_correct += int((pred == batch.y).sum().item())
+                n_total += int(batch.y.numel())
+                ws_loss += float(nn.functional.cross_entropy(logits, batch.y).item())
+                n_batches += 1
+        return n_correct / max(1, n_total), ws_loss / max(1, n_batches)
+
+    best_val_acc = 0.0
+    best_state = None
+    history = []
+    for epoch in range(args.epochs):
+        model.train()
+        total_loss = 0.0
+        n_batches = 0
+        for batch in train_loader:
+            logits = model(batch.x, batch.edge_index)
+            logits = logits.clone()
+            logits[batch.inf_mask] = -1e9
+            loss = nn.functional.cross_entropy(logits, batch.y)
+            optim.zero_grad()
+            loss.backward()
+            optim.step()
+            total_loss += float(loss.item())
+            n_batches += 1
+        avg_loss = total_loss / max(1, n_batches)
+        train_acc, _ = _eval(train_loader)
+        val_acc, val_loss = _eval(val_loader)
+        if val_acc > best_val_acc:
+            best_val_acc = val_acc
+            best_state = {k: v.clone() for k, v in model.state_dict().items()}
+        if (epoch + 1) % 10 == 0 or epoch == 0:
+            print(f"  epoch {epoch+1:>3d}  loss={avg_loss:.4f}  "
+                  f"train_acc={train_acc:.3f}  val_acc={val_acc:.3f}  "
+                  f"best_val={best_val_acc:.3f}")
+        history.append({"epoch": epoch + 1, "loss": float(avg_loss),
+                        "train_acc": float(train_acc), "val_acc": float(val_acc)})
+
+    if best_state is not None:
+        model.load_state_dict(best_state)
+    test_acc, _ = _eval(test_loader)
+    print(f"\nFinal: val_acc={best_val_acc:.3f}  test_acc={test_acc:.3f}")
+
+    # Save
+    models_dir = REPO / "data" / "models"
+    models_dir.mkdir(parents=True, exist_ok=True)
+    ckpt_path = models_dir / "gnn_placement_v1.pt"
+    torch.save({
+        "model_state_dict": model.state_dict(),
+        "in_dim": FEAT_PER_NODE,
+        "hidden": args.hidden,
+        "n_combos": MAX_COMBOS,
+        "n_layers": 3,
+        "feature_mean": mean.tolist(),
+        "feature_std": std.tolist(),
+        "val_acc_best": float(best_val_acc),
+        "test_acc": float(test_acc),
+    }, ckpt_path)
+    print(f"Saved -> {ckpt_path}")
+
+    eval_path = models_dir / "gnn_placement_v1_eval.json"
+    with open(eval_path, "w") as f:
+        json.dump({
+            "n_train": len(train_list), "n_val": len(val_list), "n_test": len(test_list),
+            "val_acc_best": float(best_val_acc), "test_acc": float(test_acc),
+            "epochs": args.epochs, "hidden": args.hidden, "lr": args.lr,
+            "history": history,
+        }, f, indent=2)
+    print(f"Eval -> {eval_path}")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--target", choices=["cost_model", "gnn", "rl"], default="cost_model")
@@ -234,8 +392,10 @@ def main():
 
     if args.target == "cost_model":
         train_cost_model(args)
+    elif args.target == "gnn":
+        train_gnn(args)
     else:
-        print(f"target={args.target} not implemented yet (M12/M13 follow-up)")
+        print(f"target={args.target} not implemented yet (M13 follow-up)")
 
 
 if __name__ == "__main__":
