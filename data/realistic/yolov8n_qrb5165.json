@@ -1,0 +1,874 @@
+{
+  "soc": "qrb5165",
+  "model": "yolov8n",
+  "nodes": [
+    {
+      "id": "yolov8n_d0",
+      "ordinal": 0,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_0_synthetic",
+      "target_costs": {
+        "CPU": 1500.0,
+        "GPU": 1200.0,
+        "HTA": 1000.0,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d1",
+      "ordinal": 1,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_1_synthetic",
+      "target_costs": {
+        "CPU": 1850.0,
+        "GPU": 1479.9999999999998,
+        "HTA": 1233.3333333333333,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d2",
+      "ordinal": 2,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_2_synthetic",
+      "target_costs": {
+        "CPU": 2065.833333333333,
+        "GPU": 1652.6666666666665,
+        "HTA": 1377.2222222222222,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d3",
+      "ordinal": 3,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_3_synthetic",
+      "target_costs": {
+        "CPU": 2281.6666666666665,
+        "GPU": 1825.3333333333333,
+        "HTA": 1521.111111111111,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d4",
+      "ordinal": 4,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_4_synthetic",
+      "target_costs": {
+        "CPU": 2414.7638888888887,
+        "GPU": 1931.8111111111111,
+        "HTA": 1609.8425925925926,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d5",
+      "ordinal": 5,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_5_synthetic",
+      "target_costs": {
+        "CPU": 2547.861111111111,
+        "GPU": 2038.2888888888886,
+        "HTA": 1698.574074074074,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d6",
+      "ordinal": 6,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_6_synthetic",
+      "target_costs": {
+        "CPU": 2680.9583333333335,
+        "GPU": 2144.766666666667,
+        "HTA": 1787.3055555555557,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d7",
+      "ordinal": 7,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_7_synthetic",
+      "target_costs": {
+        "CPU": 2814.0555555555557,
+        "GPU": 2251.2444444444445,
+        "HTA": 1876.0370370370372,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d8",
+      "ordinal": 8,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_8_synthetic",
+      "target_costs": {
+        "CPU": 2896.1321759259263,
+        "GPU": 2316.905740740741,
+        "HTA": 1930.7547839506174,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d9",
+      "ordinal": 9,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_9_synthetic",
+      "target_costs": {
+        "CPU": 2978.208796296296,
+        "GPU": 2382.5670370370367,
+        "HTA": 1985.4725308641973,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d10",
+      "ordinal": 10,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_10_synthetic",
+      "target_costs": {
+        "CPU": 3060.285416666666,
+        "GPU": 2448.228333333333,
+        "HTA": 2040.1902777777775,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d11",
+      "ordinal": 11,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_11_synthetic",
+      "target_costs": {
+        "CPU": 3142.3620370370363,
+        "GPU": 2513.8896296296293,
+        "HTA": 2094.9080246913577,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d12",
+      "ordinal": 12,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_12_synthetic",
+      "target_costs": {
+        "CPU": 3224.438657407407,
+        "GPU": 2579.5509259259256,
+        "HTA": 2149.625771604938,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d13",
+      "ordinal": 13,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_13_synthetic",
+      "target_costs": {
+        "CPU": 3306.5152777777776,
+        "GPU": 2645.212222222222,
+        "HTA": 2204.3435185185185,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d14",
+      "ordinal": 14,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_14_synthetic",
+      "target_costs": {
+        "CPU": 3388.591898148148,
+        "GPU": 2710.8735185185187,
+        "HTA": 2259.061265432099,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d15",
+      "ordinal": 15,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_15_synthetic",
+      "target_costs": {
+        "CPU": 3470.668518518519,
+        "GPU": 2776.534814814815,
+        "HTA": 2313.7790123456793,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d16",
+      "ordinal": 16,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_16_synthetic",
+      "target_costs": {
+        "CPU": 3521.2824344135806,
+        "GPU": 2817.0259475308644,
+        "HTA": 2347.5216229423872,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d17",
+      "ordinal": 17,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_17_synthetic",
+      "target_costs": {
+        "CPU": 3571.8963503086425,
+        "GPU": 2857.5170802469142,
+        "HTA": 2381.264233539095,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d18",
+      "ordinal": 18,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_18_synthetic",
+      "target_costs": {
+        "CPU": 3622.510266203704,
+        "GPU": 2898.008212962963,
+        "HTA": 2415.0068441358026,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d19",
+      "ordinal": 19,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_19_synthetic",
+      "target_costs": {
+        "CPU": 3673.1241820987652,
+        "GPU": 2938.499345679012,
+        "HTA": 2448.74945473251,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d20",
+      "ordinal": 20,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_20_synthetic",
+      "target_costs": {
+        "CPU": 3723.738097993827,
+        "GPU": 2978.9904783950615,
+        "HTA": 2482.492065329218,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d21",
+      "ordinal": 21,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_21_synthetic",
+      "target_costs": {
+        "CPU": 3774.352013888889,
+        "GPU": 3019.481611111111,
+        "HTA": 2516.234675925926,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d22",
+      "ordinal": 22,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_22_synthetic",
+      "target_costs": {
+        "CPU": 3824.96592978395,
+        "GPU": 3059.97274382716,
+        "HTA": 2549.977286522633,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d23",
+      "ordinal": 23,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_23_synthetic",
+      "target_costs": {
+        "CPU": 3875.5798456790117,
+        "GPU": 3100.463876543209,
+        "HTA": 2583.719897119341,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d24",
+      "ordinal": 24,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_24_synthetic",
+      "target_costs": {
+        "CPU": 3926.1937615740735,
+        "GPU": 3140.9550092592585,
+        "HTA": 2617.462507716049,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d25",
+      "ordinal": 25,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_25_synthetic",
+      "target_costs": {
+        "CPU": 3976.8076774691353,
+        "GPU": 3181.4461419753084,
+        "HTA": 2651.205118312757,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d26",
+      "ordinal": 26,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_26_synthetic",
+      "target_costs": {
+        "CPU": 4027.421593364197,
+        "GPU": 3221.9372746913577,
+        "HTA": 2684.947728909465,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d27",
+      "ordinal": 27,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_27_synthetic",
+      "target_costs": {
+        "CPU": 4078.035509259259,
+        "GPU": 3262.428407407407,
+        "HTA": 2718.6903395061727,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d28",
+      "ordinal": 28,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_28_synthetic",
+      "target_costs": {
+        "CPU": 4128.649425154321,
+        "GPU": 3302.9195401234565,
+        "HTA": 2752.4329501028806,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d29",
+      "ordinal": 29,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_29_synthetic",
+      "target_costs": {
+        "CPU": 4179.263341049383,
+        "GPU": 3343.410672839506,
+        "HTA": 2786.1755606995885,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d30",
+      "ordinal": 30,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_30_synthetic",
+      "target_costs": {
+        "CPU": 4229.8772569444445,
+        "GPU": 3383.9018055555557,
+        "HTA": 2819.9181712962964,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d31",
+      "ordinal": 31,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_31_synthetic",
+      "target_costs": {
+        "CPU": 4280.491172839506,
+        "GPU": 3424.392938271605,
+        "HTA": 2853.6607818930042,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d32",
+      "ordinal": 32,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_32_synthetic",
+      "target_costs": {
+        "CPU": 4311.703087641462,
+        "GPU": 3449.3624701131694,
+        "HTA": 2874.468725094308,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d33",
+      "ordinal": 33,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_33_synthetic",
+      "target_costs": {
+        "CPU": 4342.915002443417,
+        "GPU": 3474.332001954733,
+        "HTA": 2895.276668295611,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d34",
+      "ordinal": 34,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_34_synthetic",
+      "target_costs": {
+        "CPU": 4374.126917245372,
+        "GPU": 3499.3015337962975,
+        "HTA": 2916.0846114969145,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d35",
+      "ordinal": 35,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_35_synthetic",
+      "target_costs": {
+        "CPU": 4405.338832047326,
+        "GPU": 3524.271065637861,
+        "HTA": 2936.8925546982173,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d36",
+      "ordinal": 36,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_36_synthetic",
+      "target_costs": {
+        "CPU": 4436.55074684928,
+        "GPU": 3549.240597479424,
+        "HTA": 2957.70049789952,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d37",
+      "ordinal": 37,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_37_synthetic",
+      "target_costs": {
+        "CPU": 4467.762661651235,
+        "GPU": 3574.210129320988,
+        "HTA": 2978.5084411008233,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d38",
+      "ordinal": 38,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_38_synthetic",
+      "target_costs": {
+        "CPU": 4498.974576453189,
+        "GPU": 3599.1796611625514,
+        "HTA": 2999.316384302126,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d39",
+      "ordinal": 39,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_39_synthetic",
+      "target_costs": {
+        "CPU": 4530.186491255144,
+        "GPU": 3624.1491930041147,
+        "HTA": 3020.124327503429,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d40",
+      "ordinal": 40,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_40_synthetic",
+      "target_costs": {
+        "CPU": 4561.398406057098,
+        "GPU": 3649.1187248456786,
+        "HTA": 3040.932270704732,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d41",
+      "ordinal": 41,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_41_synthetic",
+      "target_costs": {
+        "CPU": 4592.610320859053,
+        "GPU": 3674.0882566872424,
+        "HTA": 3061.7402139060355,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d42",
+      "ordinal": 42,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_42_synthetic",
+      "target_costs": {
+        "CPU": 4623.822235661008,
+        "GPU": 3699.057788528806,
+        "HTA": 3082.5481571073387,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d43",
+      "ordinal": 43,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_43_synthetic",
+      "target_costs": {
+        "CPU": 4655.034150462962,
+        "GPU": 3724.0273203703696,
+        "HTA": 3103.3561003086415,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d44",
+      "ordinal": 44,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_44_synthetic",
+      "target_costs": {
+        "CPU": 4686.246065264917,
+        "GPU": 3748.996852211933,
+        "HTA": 3124.1640435099443,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d45",
+      "ordinal": 45,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_45_synthetic",
+      "target_costs": {
+        "CPU": 4717.457980066872,
+        "GPU": 3773.9663840534968,
+        "HTA": 3144.9719867112476,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d46",
+      "ordinal": 46,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_46_synthetic",
+      "target_costs": {
+        "CPU": 4748.669894868826,
+        "GPU": 3798.935915895061,
+        "HTA": 3165.779929912551,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d47",
+      "ordinal": 47,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_47_synthetic",
+      "target_costs": {
+        "CPU": 4779.881809670781,
+        "GPU": 3823.905447736625,
+        "HTA": 3186.587873113854,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    }
+  ],
+  "edges": [
+    {
+      "src": "yolov8n_d0",
+      "dst": "yolov8n_d1",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d1",
+      "dst": "yolov8n_d2",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d2",
+      "dst": "yolov8n_d3",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d3",
+      "dst": "yolov8n_d4",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d4",
+      "dst": "yolov8n_d5",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d5",
+      "dst": "yolov8n_d6",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d6",
+      "dst": "yolov8n_d7",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d7",
+      "dst": "yolov8n_d8",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d8",
+      "dst": "yolov8n_d9",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d9",
+      "dst": "yolov8n_d10",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d10",
+      "dst": "yolov8n_d11",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d11",
+      "dst": "yolov8n_d12",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d12",
+      "dst": "yolov8n_d13",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d13",
+      "dst": "yolov8n_d14",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d14",
+      "dst": "yolov8n_d15",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d15",
+      "dst": "yolov8n_d16",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d16",
+      "dst": "yolov8n_d17",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d17",
+      "dst": "yolov8n_d18",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d18",
+      "dst": "yolov8n_d19",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d19",
+      "dst": "yolov8n_d20",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d20",
+      "dst": "yolov8n_d21",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d21",
+      "dst": "yolov8n_d22",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d22",
+      "dst": "yolov8n_d23",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d23",
+      "dst": "yolov8n_d24",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d24",
+      "dst": "yolov8n_d25",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d25",
+      "dst": "yolov8n_d26",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d26",
+      "dst": "yolov8n_d27",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d27",
+      "dst": "yolov8n_d28",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d28",
+      "dst": "yolov8n_d29",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d29",
+      "dst": "yolov8n_d30",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d30",
+      "dst": "yolov8n_d31",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d31",
+      "dst": "yolov8n_d32",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d32",
+      "dst": "yolov8n_d33",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d33",
+      "dst": "yolov8n_d34",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d34",
+      "dst": "yolov8n_d35",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d35",
+      "dst": "yolov8n_d36",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d36",
+      "dst": "yolov8n_d37",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d37",
+      "dst": "yolov8n_d38",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d38",
+      "dst": "yolov8n_d39",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d39",
+      "dst": "yolov8n_d40",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d40",
+      "dst": "yolov8n_d41",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d41",
+      "dst": "yolov8n_d42",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d42",
+      "dst": "yolov8n_d43",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d43",
+      "dst": "yolov8n_d44",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d44",
+      "dst": "yolov8n_d45",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d45",
+      "dst": "yolov8n_d46",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d46",
+      "dst": "yolov8n_d47",
+      "bytes": 0
+    }
+  ],
+  "meta": {
+    "source": "ordinal-chain (conservative; over-constrains parallelism)",
+    "cost_source": "rvv/scalar: in-repo data/<model>_<backend>/topo_0/results.csv; opu/gemmini: scaled per-dispatch from rvv using e2e_profile.csv ratios (real e2e totals, scaled granularity); yolov8n: synthetic 48-node chain calibrated to e2e totals (used only for envelope sizing, never packed)",
+    "node_count": 48,
+    "edge_count": 47,
+    "unmapped_count": 48
+  }
+}

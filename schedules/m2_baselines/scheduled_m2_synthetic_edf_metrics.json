@@ -1,0 +1,31 @@
+{
+  "scheduler": "edf",
+  "num_operations": 20,
+  "makespan_us": 3840.0,
+  "nonperiodic_makespan_us": 3840.0,
+  "mean_op_duration_us": 346.0,
+  "p95_op_duration_us": 830.0000000000005,
+  "p99_op_duration_us": 1285.9999999999993,
+  "deadline_miss_count": 1,
+  "deadline_miss_ratio": 0.05,
+  "total_lateness_us": 590.0,
+  "max_lateness_us": 590.0,
+  "per_machine_utilization": {
+    "CPU_BIG": 0.9921875,
+    "CPU_LITTLE": 0.96875,
+    "NPU": 0.3151041666666667
+  },
+  "per_machine_idle_us": {
+    "CPU_BIG": 30.0,
+    "CPU_LITTLE": 120.0,
+    "NPU": 2630.0
+  },
+  "cross_device_transitions": 5,
+  "critical_path_us": 3720.0,
+  "solver_wall_time_s": 0.0005699299508705735,
+  "peak_dram_bytes": null,
+  "peak_scratchpad_bytes": null,
+  "buffer_reuse_count": null,
+  "jitter_us": null,
+  "packing_capacity": null
+}

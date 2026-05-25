@@ -1,0 +1,64 @@
+{
+  "soc": "qrb5165",
+  "model": "mlp_wide",
+  "nodes": [
+    {
+      "id": "mlp_wide_d0",
+      "ordinal": 0,
+      "op_kind": "other",
+      "symbol": "main_graph$async_dispatch_0_embedded_elf_riscv_64_main_graph$async_dispatch_0_matvec_like_32x10_f32",
+      "target_costs": {
+        "CPU": 1500.0,
+        "GPU": 1200.0,
+        "HTA": 1000.0,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "mlp_wide_d1",
+      "ordinal": 1,
+      "op_kind": "other",
+      "symbol": "main_graph$async_dispatch_1_embedded_elf_riscv_64_main_graph$async_dispatch_1_matvec_like_32x32_f32",
+      "target_costs": {
+        "CPU": 1850.0,
+        "GPU": 1479.9999999999998,
+        "HTA": 1233.3333333333333,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "mlp_wide_d2",
+      "ordinal": 2,
+      "op_kind": "other",
+      "symbol": "main_graph$async_dispatch_2_embedded_elf_riscv_64_main_graph$async_dispatch_2_matvec_like_2x32_f32",
+      "target_costs": {
+        "CPU": 2065.833333333333,
+        "GPU": 1652.6666666666665,
+        "HTA": 1377.2222222222222,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    }
+  ],
+  "edges": [
+    {
+      "src": "mlp_wide_d0",
+      "dst": "mlp_wide_d1",
+      "bytes": 0
+    },
+    {
+      "src": "mlp_wide_d1",
+      "dst": "mlp_wide_d2",
+      "bytes": 0
+    }
+  ],
+  "meta": {
+    "source": "ordinal-chain (conservative; over-constrains parallelism)",
+    "cost_source": "rvv/scalar: in-repo data/<model>_<backend>/topo_0/results.csv; opu/gemmini: scaled per-dispatch from rvv using e2e_profile.csv ratios (real e2e totals, scaled granularity); yolov8n: synthetic 48-node chain calibrated to e2e totals (used only for envelope sizing, never packed)",
+    "node_count": 3,
+    "edge_count": 2,
+    "unmapped_count": 3
+  }
+}

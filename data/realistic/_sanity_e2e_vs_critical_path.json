@@ -1,0 +1,86 @@
+{
+  "dronet": {
+    "chipyard": {
+      "scalar": {
+        "critical_path_us": 8888759.023,
+        "e2e_us": 8888759.023,
+        "ratio": 1.0,
+        "within_25pct": true
+      },
+      "rvv": {
+        "critical_path_us": 1501168.401,
+        "e2e_us": 1501168.401,
+        "ratio": 1.0,
+        "within_25pct": true
+      },
+      "opu": {
+        "critical_path_us": 2308604.029,
+        "e2e_us": 2308604.029,
+        "ratio": 1.0,
+        "within_25pct": true
+      },
+      "gemmini": {
+        "critical_path_us": 1823864.623,
+        "e2e_us": 1823864.623,
+        "ratio": 1.0,
+        "within_25pct": true
+      }
+    }
+  },
+  "mlp_wide": {
+    "chipyard": {
+      "scalar": {
+        "critical_path_us": 53246.05700000001,
+        "e2e_us": 53246.057,
+        "ratio": 1.0000000000000002,
+        "within_25pct": true
+      },
+      "rvv": {
+        "critical_path_us": 10113.996,
+        "e2e_us": 10113.996,
+        "ratio": 1.0,
+        "within_25pct": true
+      },
+      "opu": {
+        "critical_path_us": 7050.136,
+        "e2e_us": 7050.136,
+        "ratio": 1.0,
+        "within_25pct": true
+      },
+      "gemmini": {
+        "critical_path_us": 22404.015000000003,
+        "e2e_us": 22404.015,
+        "ratio": 1.0000000000000002,
+        "within_25pct": true
+      }
+    }
+  },
+  "yolov8n": {
+    "chipyard": {
+      "scalar": {
+        "critical_path_us": 696254696.3270001,
+        "e2e_us": 696254696.327,
+        "ratio": 1.0000000000000002,
+        "within_25pct": true
+      },
+      "rvv": {
+        "critical_path_us": 98337313.234,
+        "e2e_us": 98337313.234,
+        "ratio": 1.0,
+        "within_25pct": true
+      },
+      "opu": {
+        "critical_path_us": 137875873.867,
+        "e2e_us": 137875873.867,
+        "ratio": 1.0,
+        "within_25pct": true
+      },
+      "gemmini": {
+        "critical_path_us": 159467231.55600002,
+        "e2e_us": 159467231.556,
+        "ratio": 1.0000000000000002,
+        "within_25pct": true
+      }
+    }
+  }
+}

@@ -1,0 +1,133 @@
+{
+  "workload": {
+    "num_ops": 20,
+    "machines": [
+      "CPU_BIG",
+      "CPU_LITTLE",
+      "NPU"
+    ],
+    "machine_combinations": [
+      [
+        "CPU_BIG"
+      ],
+      [
+        "CPU_LITTLE"
+      ],
+      [
+        "NPU"
+      ],
+      [
+        "CPU_BIG",
+        "CPU_LITTLE"
+      ]
+    ]
+  },
+  "per_scheduler": {
+    "mosek": {
+      "makespan_us": 2399.999999999999,
+      "deadline_miss_count": 0,
+      "total_lateness_us": 0.0,
+      "cross_device_transitions": 10,
+      "critical_path_us": 1880.0,
+      "per_machine_utilization": {
+        "CPU_BIG": 0.6541666666666669,
+        "CPU_LITTLE": 0.5208333333333335,
+        "NPU": 1.0541666666666671
+      },
+      "solver_wall_time_s": 3.182661982951686,
+      "valid": true,
+      "gantt": "/scratch2/agustin/XPU-RT/plots/m2_baselines/gantt_mosek.png"
+    },
+    "heft": {
+      "makespan_us": 3155.0,
+      "deadline_miss_count": 1,
+      "total_lateness_us": 1655.0,
+      "cross_device_transitions": 10,
+      "critical_path_us": 1880.0,
+      "per_machine_utilization": {
+        "CPU_BIG": 0.6434231378763867,
+        "CPU_LITTLE": 0.5673534072900158,
+        "NPU": 0.722662440570523
+      },
+      "solver_wall_time_s": 0.0007990350713953376,
+      "valid": true,
+      "gantt": "/scratch2/agustin/XPU-RT/plots/m2_baselines/gantt_heft.png"
+    },
+    "critical_path": {
+      "makespan_us": 3895.0,
+      "deadline_miss_count": 1,
+      "total_lateness_us": 2395.0,
+      "cross_device_transitions": 6,
+      "critical_path_us": 3720.0,
+      "per_machine_utilization": {
+        "CPU_BIG": 0.9576379974326059,
+        "CPU_LITTLE": 0.9910141206675225,
+        "NPU": 0.31065468549422337
+      },
+      "solver_wall_time_s": 0.0005379789508879185,
+      "valid": true,
+      "gantt": "/scratch2/agustin/XPU-RT/plots/m2_baselines/gantt_critical_path.png"
+    },
+    "edf": {
+      "makespan_us": 3840.0,
+      "deadline_miss_count": 1,
+      "total_lateness_us": 590.0,
+      "cross_device_transitions": 5,
+      "critical_path_us": 3720.0,
+      "per_machine_utilization": {
+        "CPU_BIG": 0.9921875,
+        "CPU_LITTLE": 0.96875,
+        "NPU": 0.3151041666666667
+      },
+      "solver_wall_time_s": 0.0005699299508705735,
+      "valid": true,
+      "gantt": "/scratch2/agustin/XPU-RT/plots/m2_baselines/gantt_edf.png"
+    },
+    "fastest_device": {
+      "makespan_us": 3640.0,
+      "deadline_miss_count": 0,
+      "total_lateness_us": 0.0,
+      "cross_device_transitions": 12,
+      "critical_path_us": 1880.0,
+      "per_machine_utilization": {
+        "CPU_BIG": 0.30494505494505497,
+        "CPU_LITTLE": 0.23901098901098902,
+        "NPU": 0.782967032967033
+      },
+      "solver_wall_time_s": 0.0005529170157387853,
+      "valid": true,
+      "gantt": "/scratch2/agustin/XPU-RT/plots/m2_baselines/gantt_fastest_device.png"
+    },
+    "fifo": {
+      "makespan_us": 4295.0,
+      "deadline_miss_count": 0,
+      "total_lateness_us": 0.0,
+      "cross_device_transitions": 7,
+      "critical_path_us": 4150.0,
+      "per_machine_utilization": {
+        "CPU_BIG": 0.6915017462165308,
+        "CPU_LITTLE": 0.9918509895227008,
+        "NPU": 0.26542491268917345
+      },
+      "solver_wall_time_s": 0.0004030029522255063,
+      "valid": true,
+      "gantt": "/scratch2/agustin/XPU-RT/plots/m2_baselines/gantt_fifo.png"
+    },
+    "random_list": {
+      "makespan_us": 5385.0,
+      "deadline_miss_count": 1,
+      "total_lateness_us": 120.0,
+      "cross_device_transitions": 7,
+      "critical_path_us": 4950.0,
+      "per_machine_utilization": {
+        "CPU_BIG": 0.4753946146703807,
+        "CPU_LITTLE": 0.9972144846796658,
+        "NPU": 0.2116991643454039
+      },
+      "solver_wall_time_s": 0.00043156789615750313,
+      "valid": true,
+      "gantt": "/scratch2/agustin/XPU-RT/plots/m2_baselines/gantt_random_list.png"
+    }
+  },
+  "heft_makespan_le_fifo_makespan": true
+}

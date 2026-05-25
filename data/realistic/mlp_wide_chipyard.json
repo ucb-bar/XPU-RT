@@ -1,0 +1,64 @@
+{
+  "soc": "chipyard",
+  "model": "mlp_wide",
+  "nodes": [
+    {
+      "id": "mlp_wide_d0",
+      "ordinal": 0,
+      "op_kind": "other",
+      "symbol": "main_graph$async_dispatch_0_embedded_elf_riscv_64_main_graph$async_dispatch_0_matvec_like_32x10_f32",
+      "target_costs": {
+        "scalar": 18126.317276595746,
+        "rvv": 3267.5987076923075,
+        "opu": 2277.736246153846,
+        "gemmini": 7238.220230769231
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "mlp_wide_d1",
+      "ordinal": 1,
+      "op_kind": "other",
+      "symbol": "main_graph$async_dispatch_1_embedded_elf_riscv_64_main_graph$async_dispatch_1_matvec_like_32x32_f32",
+      "target_costs": {
+        "scalar": 19542.43581382979,
+        "rvv": 3475.065292307692,
+        "opu": 2422.3544205128205,
+        "gemmini": 7697.78976923077
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "mlp_wide_d2",
+      "ordinal": 2,
+      "op_kind": "other",
+      "symbol": "main_graph$async_dispatch_2_embedded_elf_riscv_64_main_graph$async_dispatch_2_matvec_like_2x32_f32",
+      "target_costs": {
+        "scalar": 15577.30390957447,
+        "rvv": 3371.3319999999994,
+        "opu": 2350.045333333333,
+        "gemmini": 7468.005
+      },
+      "buffer_bytes": 0
+    }
+  ],
+  "edges": [
+    {
+      "src": "mlp_wide_d0",
+      "dst": "mlp_wide_d1",
+      "bytes": 0
+    },
+    {
+      "src": "mlp_wide_d1",
+      "dst": "mlp_wide_d2",
+      "bytes": 0
+    }
+  ],
+  "meta": {
+    "source": "ordinal-chain (conservative; over-constrains parallelism)",
+    "cost_source": "rvv/scalar: in-repo data/<model>_<backend>/topo_0/results.csv; opu/gemmini: scaled per-dispatch from rvv using e2e_profile.csv ratios (real e2e totals, scaled granularity); yolov8n: synthetic 48-node chain calibrated to e2e totals (used only for envelope sizing, never packed)",
+    "node_count": 3,
+    "edge_count": 2,
+    "unmapped_count": 0
+  }
+}

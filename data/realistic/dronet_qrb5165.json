@@ -1,0 +1,267 @@
+{
+  "soc": "qrb5165",
+  "model": "dronet",
+  "nodes": [
+    {
+      "id": "dronet_d0",
+      "ordinal": 0,
+      "op_kind": "memcpy",
+      "symbol": "main_graph$async_dispatch_0_embedded_elf_riscv_64_main_graph$async_dispatch_0_slow_memcpy",
+      "target_costs": {
+        "CPU": 93.2,
+        "GPU": 139.8,
+        "HTA": 139.8
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "dronet_d1",
+      "ordinal": 1,
+      "op_kind": "conv",
+      "symbol": "main_graph$async_dispatch_1_embedded_elf_riscv_64_main_graph$async_dispatch_1_conv_32x112x112x5x5_f32",
+      "target_costs": {
+        "HTA": 5910.0,
+        "GPU": 12515.0,
+        "CPU": 5283.0
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "dronet_d2",
+      "ordinal": 2,
+      "op_kind": "conv",
+      "symbol": "main_graph$async_dispatch_2_embedded_elf_riscv_64_main_graph$async_dispatch_2_conv_32x55x55x3x3_f32",
+      "target_costs": {
+        "HTA": 5910.0,
+        "GPU": 12515.0,
+        "CPU": 5283.0
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "dronet_d3",
+      "ordinal": 3,
+      "op_kind": "conv",
+      "symbol": "main_graph$async_dispatch_3_embedded_elf_riscv_64_main_graph$async_dispatch_3_conv_32x28x28x32x3x3_f32",
+      "target_costs": {
+        "HTA": 5910.0,
+        "GPU": 12515.0,
+        "CPU": 5283.0
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "dronet_d4",
+      "ordinal": 4,
+      "op_kind": "matmul",
+      "symbol": "main_graph$async_dispatch_4_embedded_elf_riscv_64_main_graph$async_dispatch_4_matmul_like_32x28x28x32_f32",
+      "target_costs": {
+        "CPU": 1543.0,
+        "GPU": 2314.5,
+        "HTA": 2314.5
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "dronet_d5",
+      "ordinal": 5,
+      "op_kind": "conv",
+      "symbol": "main_graph$async_dispatch_5_embedded_elf_riscv_64_main_graph$async_dispatch_5_conv_32x28x28x32x3x3_f32",
+      "target_costs": {
+        "HTA": 5910.0,
+        "GPU": 12515.0,
+        "CPU": 5283.0
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "dronet_d6",
+      "ordinal": 6,
+      "op_kind": "conv",
+      "symbol": "main_graph$async_dispatch_6_embedded_elf_riscv_64_main_graph$async_dispatch_6_conv_64x14x14x32x3x3_f32",
+      "target_costs": {
+        "HTA": 5910.0,
+        "GPU": 12515.0,
+        "CPU": 5283.0
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "dronet_d7",
+      "ordinal": 7,
+      "op_kind": "matmul",
+      "symbol": "main_graph$async_dispatch_7_embedded_elf_riscv_64_main_graph$async_dispatch_7_matmul_like_64x14x14x32_f32",
+      "target_costs": {
+        "CPU": 1543.0,
+        "GPU": 2314.5,
+        "HTA": 2314.5
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "dronet_d8",
+      "ordinal": 8,
+      "op_kind": "conv",
+      "symbol": "main_graph$async_dispatch_8_embedded_elf_riscv_64_main_graph$async_dispatch_8_conv_64x14x14x64x3x3_f32",
+      "target_costs": {
+        "HTA": 5910.0,
+        "GPU": 12515.0,
+        "CPU": 5283.0
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "dronet_d9",
+      "ordinal": 9,
+      "op_kind": "conv",
+      "symbol": "main_graph$async_dispatch_9_embedded_elf_riscv_64_main_graph$async_dispatch_9_conv_128x7x7x64x3x3_f32",
+      "target_costs": {
+        "HTA": 5910.0,
+        "GPU": 12515.0,
+        "CPU": 5283.0
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "dronet_d10",
+      "ordinal": 10,
+      "op_kind": "matmul",
+      "symbol": "main_graph$async_dispatch_10_embedded_elf_riscv_64_main_graph$async_dispatch_10_matmul_like_128x7x7x64_f32",
+      "target_costs": {
+        "CPU": 1543.0,
+        "GPU": 2314.5,
+        "HTA": 2314.5
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "dronet_d11",
+      "ordinal": 11,
+      "op_kind": "conv",
+      "symbol": "main_graph$async_dispatch_11_embedded_elf_riscv_64_main_graph$async_dispatch_11_conv_128x7x7x128x3x3_f32",
+      "target_costs": {
+        "HTA": 5910.0,
+        "GPU": 12515.0,
+        "CPU": 5283.0
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "dronet_d12",
+      "ordinal": 12,
+      "op_kind": "other",
+      "symbol": "main_graph$async_dispatch_12_embedded_elf_riscv_64_main_graph$async_dispatch_12_matvec_like_6272_f32",
+      "target_costs": {
+        "CPU": 11854.0,
+        "GPU": 9483.2,
+        "HTA": 7902.666666666667,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "dronet_d13",
+      "ordinal": 13,
+      "op_kind": "memcpy",
+      "symbol": "main_graph$async_dispatch_13_embedded_elf_riscv_64_main_graph$async_dispatch_13_slow_memcpy",
+      "target_costs": {
+        "CPU": 93.2,
+        "GPU": 139.8,
+        "HTA": 139.8
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "dronet_d14",
+      "ordinal": 14,
+      "op_kind": "other",
+      "symbol": "main_graph$async_dispatch_14_embedded_elf_riscv_64_main_graph$async_dispatch_14_matvec_like_6272_f32",
+      "target_costs": {
+        "CPU": 11854.0,
+        "GPU": 9483.2,
+        "HTA": 7902.666666666667,
+        "source": "synthesized_fallback_no_qrb5165_match"
+      },
+      "buffer_bytes": 0
+    }
+  ],
+  "edges": [
+    {
+      "src": "dronet_d0",
+      "dst": "dronet_d1",
+      "bytes": 0
+    },
+    {
+      "src": "dronet_d1",
+      "dst": "dronet_d2",
+      "bytes": 0
+    },
+    {
+      "src": "dronet_d2",
+      "dst": "dronet_d3",
+      "bytes": 0
+    },
+    {
+      "src": "dronet_d3",
+      "dst": "dronet_d4",
+      "bytes": 0
+    },
+    {
+      "src": "dronet_d4",
+      "dst": "dronet_d5",
+      "bytes": 0
+    },
+    {
+      "src": "dronet_d5",
+      "dst": "dronet_d6",
+      "bytes": 0
+    },
+    {
+      "src": "dronet_d6",
+      "dst": "dronet_d7",
+      "bytes": 0
+    },
+    {
+      "src": "dronet_d7",
+      "dst": "dronet_d8",
+      "bytes": 0
+    },
+    {
+      "src": "dronet_d8",
+      "dst": "dronet_d9",
+      "bytes": 0
+    },
+    {
+      "src": "dronet_d9",
+      "dst": "dronet_d10",
+      "bytes": 0
+    },
+    {
+      "src": "dronet_d10",
+      "dst": "dronet_d11",
+      "bytes": 0
+    },
+    {
+      "src": "dronet_d11",
+      "dst": "dronet_d12",
+      "bytes": 0
+    },
+    {
+      "src": "dronet_d12",
+      "dst": "dronet_d13",
+      "bytes": 0
+    },
+    {
+      "src": "dronet_d13",
+      "dst": "dronet_d14",
+      "bytes": 0
+    }
+  ],
+  "meta": {
+    "source": "ordinal-chain (conservative; over-constrains parallelism)",
+    "cost_source": "rvv/scalar: in-repo data/<model>_<backend>/topo_0/results.csv; opu/gemmini: scaled per-dispatch from rvv using e2e_profile.csv ratios (real e2e totals, scaled granularity); yolov8n: synthetic 48-node chain calibrated to e2e totals (used only for envelope sizing, never packed)",
+    "node_count": 15,
+    "edge_count": 14,
+    "unmapped_count": 2
+  }
+}

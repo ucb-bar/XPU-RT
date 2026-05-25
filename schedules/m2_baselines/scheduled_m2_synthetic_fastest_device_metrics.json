@@ -1,0 +1,31 @@
+{
+  "scheduler": "fastest_device",
+  "num_operations": 20,
+  "makespan_us": 3640.0,
+  "nonperiodic_makespan_us": 3640.0,
+  "mean_op_duration_us": 198.0,
+  "p95_op_duration_us": 320.0,
+  "p99_op_duration_us": 320.0,
+  "deadline_miss_count": 0,
+  "deadline_miss_ratio": 0.0,
+  "total_lateness_us": 0.0,
+  "max_lateness_us": 0.0,
+  "per_machine_utilization": {
+    "CPU_BIG": 0.30494505494505497,
+    "CPU_LITTLE": 0.23901098901098902,
+    "NPU": 0.782967032967033
+  },
+  "per_machine_idle_us": {
+    "CPU_BIG": 2530.0,
+    "CPU_LITTLE": 2770.0,
+    "NPU": 790.0
+  },
+  "cross_device_transitions": 12,
+  "critical_path_us": 1880.0,
+  "solver_wall_time_s": 0.0005529170157387853,
+  "peak_dram_bytes": null,
+  "peak_scratchpad_bytes": null,
+  "buffer_reuse_count": null,
+  "jitter_us": null,
+  "packing_capacity": null
+}

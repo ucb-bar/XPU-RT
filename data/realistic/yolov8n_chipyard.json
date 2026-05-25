@@ -1,0 +1,874 @@
+{
+  "soc": "chipyard",
+  "model": "yolov8n",
+  "nodes": [
+    {
+      "id": "yolov8n_d0",
+      "ordinal": 0,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_0_synthetic",
+      "target_costs": {
+        "scalar": 5835997.149753284,
+        "rvv": 824261.987424335,
+        "opu": 1155673.6509675907,
+        "gemmini": 1336652.1098520213
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d1",
+      "ordinal": 1,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_1_synthetic",
+      "target_costs": {
+        "scalar": 5837574.34128333,
+        "rvv": 824484.7461049419,
+        "opu": 1155985.9744055625,
+        "gemmini": 1337013.343130959
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d2",
+      "ordinal": 2,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_2_synthetic",
+      "target_costs": {
+        "scalar": 5840303.956503717,
+        "rvv": 824870.2702936496,
+        "opu": 1156526.506607093,
+        "gemmini": 1337638.5226589455
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d3",
+      "ordinal": 3,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_3_synthetic",
+      "target_costs": {
+        "scalar": 5844932.682302849,
+        "rvv": 825524.020223359,
+        "opu": 1157443.1102836106,
+        "gemmini": 1338698.6664435598
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d4",
+      "ordinal": 4,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_4_synthetic",
+      "target_costs": {
+        "scalar": 5852622.739526903,
+        "rvv": 826610.145128539,
+        "opu": 1158965.9342809883,
+        "gemmini": 1340459.964632996
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d5",
+      "ordinal": 5,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_5_synthetic",
+      "target_costs": {
+        "scalar": 5865138.780937903,
+        "rvv": 828377.8802564684,
+        "opu": 1161444.4240577908,
+        "gemmini": 1343326.5858340901
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d6",
+      "ordinal": 6,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_6_synthetic",
+      "target_costs": {
+        "scalar": 5885092.804331085,
+        "rvv": 831196.137797919,
+        "opu": 1165395.8206185766,
+        "gemmini": 1347896.770977114
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d7",
+      "ordinal": 7,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_7_synthetic",
+      "target_costs": {
+        "scalar": 5916250.952598076,
+        "rvv": 835596.8385789497,
+        "opu": 1171565.9146129894,
+        "gemmini": 1355033.1015049515
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d8",
+      "ordinal": 8,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_8_synthetic",
+      "target_costs": {
+        "scalar": 5963898.010195541,
+        "rvv": 842326.392652133,
+        "opu": 1181001.2257686595,
+        "gemmini": 1365945.9821030141
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d9",
+      "ordinal": 9,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_9_synthetic",
+      "target_costs": {
+        "scalar": 6035242.820040877,
+        "rvv": 852402.9593889782,
+        "opu": 1195129.285593883,
+        "gemmini": 1382286.4956707412
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d10",
+      "ordinal": 10,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_10_synthetic",
+      "target_costs": {
+        "scalar": 6139830.563613287,
+        "rvv": 867174.6769147256,
+        "opu": 1215840.2791669178,
+        "gemmini": 1406240.8302126343
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d11",
+      "ordinal": 11,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_11_synthetic",
+      "target_costs": {
+        "scalar": 6289906.718020116,
+        "rvv": 888371.0665157045,
+        "opu": 1245559.117753713,
+        "gemmini": 1440613.6380257506
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d12",
+      "ordinal": 12,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_12_synthetic",
+      "target_costs": {
+        "scalar": 6500654.798273781,
+        "rvv": 918136.6107780236,
+        "opu": 1287292.5177351472,
+        "gemmini": 1488882.4871855269
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d13",
+      "ordinal": 13,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_13_synthetic",
+      "target_costs": {
+        "scalar": 6790209.644225244,
+        "rvv": 959032.6302016092,
+        "opu": 1344631.6317527462,
+        "gemmini": 1555200.9047288361
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d14",
+      "ordinal": 14,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_14_synthetic",
+      "target_costs": {
+        "scalar": 7179335.521813972,
+        "rvv": 1013991.8190067447,
+        "opu": 1421688.3046913105,
+        "gemmini": 1644324.6503254184
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d15",
+      "ordinal": 15,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_15_synthetic",
+      "target_costs": {
+        "scalar": 7690660.170165314,
+        "rvv": 1086210.0638163646,
+        "opu": 1522943.3958139813,
+        "gemmini": 1761436.2856638725
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d16",
+      "ordinal": 16,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_16_synthetic",
+      "target_costs": {
+        "scalar": 8347378.477516669,
+        "rvv": 1178963.3540091566,
+        "opu": 1652990.0741174622,
+        "gemmini": 1911848.2698672484
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d17",
+      "ordinal": 17,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_17_synthetic",
+      "target_costs": {
+        "scalar": 9171387.241207445,
+        "rvv": 1295344.339774981,
+        "opu": 1816164.4540782317,
+        "gemmini": 2100575.7528082556
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d18",
+      "ordinal": 18,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_18_synthetic",
+      "target_costs": {
+        "scalar": 10180886.273404883,
+        "rvv": 1437923.5181450697,
+        "opu": 2016070.554484258,
+        "gemmini": 2331787.142508356
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d19",
+      "ordinal": 19,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_19_synthetic",
+      "target_costs": {
+        "scalar": 11387576.320283893,
+        "rvv": 1608353.4739389487,
+        "opu": 2255025.416229157,
+        "gemmini": 2608162.328395218
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d20",
+      "ordinal": 20,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_20_synthetic",
+      "target_costs": {
+        "scalar": 12793689.806820126,
+        "rvv": 1806949.5094091706,
+        "opu": 2533471.1153893755,
+        "gemmini": 2930212.615645529
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d21",
+      "ordinal": 21,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_21_synthetic",
+      "target_costs": {
+        "scalar": 14389189.153427705,
+        "rvv": 2032293.9413242182,
+        "opu": 2849419.959724972,
+        "gemmini": 3295639.0394745218
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d22",
+      "ordinal": 22,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_22_synthetic",
+      "target_costs": {
+        "scalar": 16149538.13145697,
+        "rvv": 2280921.332660785,
+        "opu": 3198013.161231616,
+        "gemmini": 3698821.9258229393
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d23",
+      "ordinal": 23,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_23_synthetic",
+      "target_costs": {
+        "scalar": 18034472.900347847,
+        "rvv": 2547144.916892129,
+        "opu": 3571277.47070647,
+        "gemmini": 4130539.414903265
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d24",
+      "ordinal": 24,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_24_synthetic",
+      "target_costs": {
+        "scalar": 19988154.05083481,
+        "rvv": 2823078.0721990876,
+        "opu": 3958155.2861120645,
+        "gemmini": 4578002.284532479
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d25",
+      "ordinal": 25,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_25_synthetic",
+      "target_costs": {
+        "scalar": 21940961.89244265,
+        "rvv": 3098887.8834923566,
+        "opu": 4344860.164479678,
+        "gemmini": 5025265.13518878
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d26",
+      "ordinal": 26,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_26_synthetic",
+      "target_costs": {
+        "scalar": 23813010.717366494,
+        "rvv": 3363291.4884619634,
+        "opu": 4715572.734204079,
+        "gemmini": 5454031.282150698
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d27",
+      "ordinal": 27,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_27_synthetic",
+      "target_costs": {
+        "scalar": 25519225.288161356,
+        "rvv": 3604273.0683030677,
+        "opu": 5053445.9667926105,
+        "gemmini": 5844815.452771759
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d28",
+      "ordinal": 28,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_28_synthetic",
+      "target_costs": {
+        "scalar": 26975578.95185089,
+        "rvv": 3809964.903720807,
+        "opu": 5341840.479748681,
+        "gemmini": 6178372.537758277
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d29",
+      "ordinal": 29,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_29_synthetic",
+      "target_costs": {
+        "scalar": 28105879.927070312,
+        "rvv": 3969605.853555988,
+        "opu": 5565668.391449987,
+        "gemmini": 6437251.893680976
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d30",
+      "ordinal": 30,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_30_synthetic",
+      "target_costs": {
+        "scalar": 28848352.371304236,
+        "rvv": 4074470.848652487,
+        "opu": 5712696.537343946,
+        "gemmini": 6607304.6427873075
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d31",
+      "ordinal": 31,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_31_synthetic",
+      "target_costs": {
+        "scalar": 29161224.1645848,
+        "rvv": 4118660.096782835,
+        "opu": 5774652.99111648,
+        "gemmini": 6678963.475351907
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d32",
+      "ordinal": 32,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_32_synthetic",
+      "target_costs": {
+        "scalar": 29026618.774314005,
+        "rvv": 4099648.760132795,
+        "opu": 5747997.75143379,
+        "gemmini": 6648134.025938876
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d33",
+      "ordinal": 33,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_33_synthetic",
+      "target_costs": {
+        "scalar": 28452246.791477367,
+        "rvv": 4018525.863745877,
+        "opu": 5634257.708492478,
+        "gemmini": 6516582.295703549
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d34",
+      "ordinal": 34,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_34_synthetic",
+      "target_costs": {
+        "scalar": 27470674.474056486,
+        "rvv": 3879890.9863809613,
+        "opu": 5439881.797289289,
+        "gemmini": 6291767.12266865
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d35",
+      "ordinal": 35,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_35_synthetic",
+      "target_costs": {
+        "scalar": 26136265.826033164,
+        "rvv": 3691422.3672174956,
+        "opu": 5175635.452650648,
+        "gemmini": 5986139.808429719
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d36",
+      "ordinal": 36,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_36_synthetic",
+      "target_costs": {
+        "scalar": 24520197.658215217,
+        "rvv": 3463172.845218477,
+        "opu": 4855613.466383291,
+        "gemmini": 5616002.388765306
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d37",
+      "ordinal": 37,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_37_synthetic",
+      "target_costs": {
+        "scalar": 22704183.331003875,
+        "rvv": 3206683.4158839253,
+        "opu": 4495997.131096612,
+        "gemmini": 5200070.146219376
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d38",
+      "ordinal": 38,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_38_synthetic",
+      "target_costs": {
+        "scalar": 20773673.59261714,
+        "rvv": 2934022.9342433624,
+        "opu": 4113707.835824388,
+        "gemmini": 4757914.358838022
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d39",
+      "ordinal": 39,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_39_synthetic",
+      "target_costs": {
+        "scalar": 18811315.698586587,
+        "rvv": 2656864.2968646865,
+        "opu": 3725111.8078096667,
+        "gemmini": 4308464.204556916
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d40",
+      "ordinal": 40,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_40_synthetic",
+      "target_costs": {
+        "scalar": 16891351.114221655,
+        "rvv": 2385693.187029604,
+        "opu": 3344910.7172324895,
+        "gemmini": 3868723.634662868
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d41",
+      "ordinal": 41,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_41_synthetic",
+      "target_costs": {
+        "scalar": 15075443.714369431,
+        "rvv": 2129218.8598541655,
+        "opu": 2985315.556241878,
+        "gemmini": 3452815.882307132
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d42",
+      "ordinal": 42,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_42_synthetic",
+      "target_costs": {
+        "scalar": 13410193.684257211,
+        "rvv": 1894023.011714185,
+        "opu": 2655554.3290358232,
+        "gemmini": 3071414.0568667715
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d43",
+      "ordinal": 43,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_43_synthetic",
+      "target_costs": {
+        "scalar": 11926350.552204214,
+        "rvv": 1684448.630907015,
+        "opu": 2361716.2126214984,
+        "gemmini": 2731560.900284624
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d44",
+      "ordinal": 44,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_44_synthetic",
+      "target_costs": {
+        "scalar": 10639530.494209029,
+        "rvv": 1502701.3080000035,
+        "opu": 2106893.601094951,
+        "gemmini": 2436833.075478905
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d45",
+      "ordinal": 45,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_45_synthetic",
+      "target_costs": {
+        "scalar": 9552095.388653422,
+        "rvv": 1349114.6289286902,
+        "opu": 1891554.2055503686,
+        "gemmini": 2187771.5370870456
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d46",
+      "ordinal": 46,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_46_synthetic",
+      "target_costs": {
+        "scalar": 8655776.451360695,
+        "rvv": 1222520.7308062068,
+        "opu": 1714060.5995543022,
+        "gemmini": 1982482.437745506
+      },
+      "buffer_bytes": 0
+    },
+    {
+      "id": "yolov8n_d47",
+      "ordinal": 47,
+      "op_kind": "other",
+      "symbol": "yolov8n_envelope_node_47_synthetic",
+      "target_costs": {
+        "scalar": 7934621.459754131,
+        "rvv": 1120666.5606670498,
+        "opu": 1571253.84336891,
+        "gemmini": 1817312.1478487775
+      },
+      "buffer_bytes": 0
+    }
+  ],
+  "edges": [
+    {
+      "src": "yolov8n_d0",
+      "dst": "yolov8n_d1",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d1",
+      "dst": "yolov8n_d2",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d2",
+      "dst": "yolov8n_d3",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d3",
+      "dst": "yolov8n_d4",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d4",
+      "dst": "yolov8n_d5",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d5",
+      "dst": "yolov8n_d6",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d6",
+      "dst": "yolov8n_d7",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d7",
+      "dst": "yolov8n_d8",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d8",
+      "dst": "yolov8n_d9",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d9",
+      "dst": "yolov8n_d10",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d10",
+      "dst": "yolov8n_d11",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d11",
+      "dst": "yolov8n_d12",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d12",
+      "dst": "yolov8n_d13",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d13",
+      "dst": "yolov8n_d14",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d14",
+      "dst": "yolov8n_d15",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d15",
+      "dst": "yolov8n_d16",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d16",
+      "dst": "yolov8n_d17",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d17",
+      "dst": "yolov8n_d18",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d18",
+      "dst": "yolov8n_d19",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d19",
+      "dst": "yolov8n_d20",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d20",
+      "dst": "yolov8n_d21",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d21",
+      "dst": "yolov8n_d22",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d22",
+      "dst": "yolov8n_d23",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d23",
+      "dst": "yolov8n_d24",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d24",
+      "dst": "yolov8n_d25",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d25",
+      "dst": "yolov8n_d26",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d26",
+      "dst": "yolov8n_d27",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d27",
+      "dst": "yolov8n_d28",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d28",
+      "dst": "yolov8n_d29",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d29",
+      "dst": "yolov8n_d30",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d30",
+      "dst": "yolov8n_d31",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d31",
+      "dst": "yolov8n_d32",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d32",
+      "dst": "yolov8n_d33",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d33",
+      "dst": "yolov8n_d34",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d34",
+      "dst": "yolov8n_d35",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d35",
+      "dst": "yolov8n_d36",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d36",
+      "dst": "yolov8n_d37",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d37",
+      "dst": "yolov8n_d38",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d38",
+      "dst": "yolov8n_d39",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d39",
+      "dst": "yolov8n_d40",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d40",
+      "dst": "yolov8n_d41",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d41",
+      "dst": "yolov8n_d42",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d42",
+      "dst": "yolov8n_d43",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d43",
+      "dst": "yolov8n_d44",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d44",
+      "dst": "yolov8n_d45",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d45",
+      "dst": "yolov8n_d46",
+      "bytes": 0
+    },
+    {
+      "src": "yolov8n_d46",
+      "dst": "yolov8n_d47",
+      "bytes": 0
+    }
+  ],
+  "meta": {
+    "source": "ordinal-chain (conservative; over-constrains parallelism)",
+    "cost_source": "rvv/scalar: in-repo data/<model>_<backend>/topo_0/results.csv; opu/gemmini: scaled per-dispatch from rvv using e2e_profile.csv ratios (real e2e totals, scaled granularity); yolov8n: synthetic 48-node chain calibrated to e2e totals (used only for envelope sizing, never packed)",
+    "node_count": 48,
+    "edge_count": 47,
+    "unmapped_count": 0
+  }
+}
