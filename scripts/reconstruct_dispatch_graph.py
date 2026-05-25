@@ -78,7 +78,7 @@ def _sanity_check(graph, e2e_us):
 
 def _render_single_model_gantts(model: str, soc: str, graph, out_plots: Path):
     """Render a single-model Gantt for each of {mosek, heft} on the reconstructed
-    graph. Used as the M3 visual verification artifact."""
+    graph. Used as the visual verification artifact."""
     wl = build_workload_from_graph(graph)
     print(f"  built Workload: {len(wl.operations)} ops, "
           f"{len(wl.machine_combinations)} backends ({wl.machines})")

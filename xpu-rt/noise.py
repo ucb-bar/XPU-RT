@@ -1,5 +1,5 @@
 """
-M16 helper — multiplicative Gaussian noise on processing_times for the
+helper — multiplicative Gaussian noise on processing_times for the
 robustness benchmark. Also reusable by future runs that want to test
 schedulers under uncertain cost models.
 

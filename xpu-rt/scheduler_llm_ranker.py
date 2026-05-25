@@ -1,7 +1,7 @@
 """
-M14 — LLM-as-ranker for rewrite candidates.
+LLM-as-ranker for rewrite candidates.
 
-Ranks candidates produced by ``rewrite.generate_candidates`` (M9). Two
+Ranks candidates produced by ``rewrite.generate_candidates`` . Two
 backends:
 
   - ``anthropic`` (default): real LLM call via the Anthropic API
@@ -15,7 +15,7 @@ backends:
     plus a small perturbation for tie-breaking. Useful for prototyping the
     integration without API spend.
 
-The ranker plugs into ``run_closed_loop.py --ranker llm`` (see M10's
+The ranker plugs into ``run_closed_loop.py --ranker llm`` (see the relevant section's
 deterministic/random/cost_model ranker choices).
 
 Public API:

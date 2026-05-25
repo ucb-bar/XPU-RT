@@ -1,5 +1,5 @@
 """
-M20 — Pegasus literature DAG loader.
+Pegasus literature DAG loader.
 
 We don't need the actual Pegasus DAX XML format. The published Pegasus
 workflow shapes (Montage / CyberShake / Epigenomics) are well-known

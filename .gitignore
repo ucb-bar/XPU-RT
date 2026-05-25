@@ -1,5 +1,5 @@
 __pycache__/
-*/plots/
+*.pyc
 
 # Runtime build output and local test data
 runtime/build/
@@ -9,3 +9,28 @@ runtime/dispatch_from_schedule_async/
 .ve
 tmp
 paper
+
+# Benchmark + scheduler outputs — regenerable via scripts/run_*.py
+results/
+schedules/
+plots/
+!plots/scheduled_networks_deps_4cores_profiled.png
+
+# Training pipeline outputs — regenerable via scripts/gen_training_data.py and scripts/train_ml.py
+data/training/
+data/models/
+data/llm_cache/
+
+# Validator report dropped by xpu-rt/schedule_validation.py
+validation_report.txt
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+
+# Local config not intended for upstream
+.mcp.json
+build/
+compgen_output/
+sessions/

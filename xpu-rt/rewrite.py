@@ -24,7 +24,7 @@ rewrite applied. Implemented rewrites:
                             sequentially (caller picks N).
 
 The scorer's correlation with measured improvement is what closes the loop
-in M10.
+in the relevant section.
 """
 
 from __future__ import annotations
@@ -361,7 +361,7 @@ def score_candidates(
 
     ``fast_scorer(workload, t, alpha) -> predicted_metric_value`` (optional):
     when supplied, replaces the per-candidate re-schedule with a single
-    forward-pass prediction. Used by M11's learned cost model to avoid
+    forward-pass prediction. Used by 's learned cost model to avoid
     re-scheduling every candidate.
     """
     # Baseline.

@@ -26,8 +26,20 @@ SchedulerFn = Callable[..., tuple]
 
 def _mosek(workload, **kwargs):
     """Forward to the existing CVXPY/MOSEK MILP scheduler verbatim."""
-    from scheduler import schedule as mosek_schedule
-    return mosek_schedule(workload, **kwargs)
+    from scheduler import schedule as milp_schedule
+    return milp_schedule(workload, **kwargs)
+
+
+def _milp_with(solver: str):
+    """Build a registry entry that calls the existing MILP formulation with a
+    different CVXPY-supported solver backend. Same MILP, different vendor —
+    useful for solver-comparison studies."""
+    def _fn(workload, **kwargs):
+        from scheduler import schedule as milp_schedule
+        kwargs["cvxpy_solver"] = solver
+        return milp_schedule(workload, **kwargs)
+    _fn.__name__ = f"_milp_{solver.lower()}"
+    return _fn
 
 
 def _heft(workload, **kwargs):
@@ -137,6 +149,13 @@ _REGISTRY: Dict[str, SchedulerFn] = {
     "gnn_placement": _gnn_placement,
     "rl_policy": _rl_policy,
     "llm_ranker": _llm_ranker,
+    # Same MILP formulation as ``mosek``, different CVXPY backend. Used to
+    # disambiguate "is this win driven by the formulation or by MOSEK?".
+    # If the backend isn't installed CVXPY raises a clear error at solve time.
+    "milp_gurobi": _milp_with("GUROBI"),
+    "milp_highs":  _milp_with("HIGHS"),
+    "milp_scip":   _milp_with("SCIP"),
+    "milp_cbc":    _milp_with("CBC"),
 }
 
 

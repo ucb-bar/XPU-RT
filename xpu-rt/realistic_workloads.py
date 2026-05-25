@@ -475,7 +475,7 @@ def build_model_graph(model: str, soc: str, cost_table: Optional[Dict[str, Any]]
             "op_kind": op_kind,
             "symbol": symbol,
             "target_costs": target_costs,
-            # Buffer bytes are filled in by buffer_annotations.json in M7. Default 0.
+            # Buffer bytes are filled in by buffer_annotations.json in the relevant section. Default 0.
             "buffer_bytes": 0,
         })
         if prev_id is not None:
@@ -550,7 +550,7 @@ def build_workload_from_graph(graph: Dict[str, Any]) -> Workload:
             operation_id=n["ordinal"],
             infeasible_combinations=infeasible,
         )
-        # output_bytes is added to Operation in M7; until then we store it as
+        # output_bytes is added to Operation in the relevant section; until then we store it as
         # an attribute the memory_planner can read once it lands.
         op.output_bytes = int(n.get("buffer_bytes", 0))  # type: ignore[attr-defined]
         ops.append(op)

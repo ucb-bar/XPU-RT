@@ -1,5 +1,5 @@
 """
-M13 — RL policy scheduler (PPO via stable_baselines3).
+RL policy scheduler (PPO via stable_baselines3).
 
 Simplified MDP that fits training in a CPU-only session:
   * Op order is fixed by HEFT upward-rank priority (the policy does NOT learn

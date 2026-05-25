@@ -1,11 +1,11 @@
 """
-M15/M16/M17+M18/M20 unified benchmark driver.
+unified benchmark driver.
 
 Subcommands:
-  --target robustness  M16 — noise sweep across scenarios + real workloads
-  --target scaling     M15 — workload sizes 20...1000 × 5 seeds
-  --target realtime    M17 + M18 — real-frequency QRB5165 packing of 5 models
-  --target literature  M20 — Pegasus DAGs (Montage, CyberShake, Epigenomics)
+  --target robustness — noise sweep across scenarios + real workloads
+  --target scaling — workload sizes 20...1000 × 5 seeds
+  --target realtime — real-frequency QRB5165 packing of 5 models
+  --target literature — Pegasus DAGs (Montage, CyberShake, Epigenomics)
 
 All four share a common sweep core: build a list of (workload, label) tuples,
 sweep schedulers, record metrics + Gantt + summary report. CSVs land under
@@ -83,7 +83,7 @@ def _run_one(workload, scheduler_name: str, time_limit: float) -> Dict[str, Any]
 
 
 # ---------------------------------------------------------------------------
-# M16 — Robustness sweep
+# — Robustness sweep
 # ---------------------------------------------------------------------------
 
 
@@ -101,7 +101,7 @@ def run_robustness(args):
     sigmas = [float(s) for s in args.sigmas.split(",")]
     n_seeds = args.seeds
 
-    # Build workload list. Mix M6 scenarios + 3 real graphs on chipyard.
+    # Build workload list. Mix scenarios + 3 real graphs on chipyard.
     workloads: List[Tuple[str, Any]] = []
     for name, fn in SCENARIOS.items():
         wl, _, _ = fn()
@@ -188,13 +188,13 @@ def _plot_robustness(rows, out_dir: Path, schedulers: List[str], sigmas: List[fl
         ax.set_ylabel("makespan / baseline (σ=0)")
         ax.tick_params(axis="x", rotation=45)
         ax.grid(True, alpha=0.3)
-    fig.suptitle("M16 — robustness to per-op cost noise (boxplot per scheduler)", fontsize=12)
+    fig.suptitle(" — robustness to per-op cost noise (boxplot per scheduler)", fontsize=12)
     fig.savefig(out_dir / "robustness_boxplots.png", dpi=120)
     plt.close(fig)
 
 
 def _write_robustness_report(rows, out_dir: Path, schedulers, sigmas, workloads):
-    lines: List[str] = ["# M16 — Noise robustness sweep", ""]
+    lines: List[str] = ["# — Noise robustness sweep", ""]
     lines.append(f"- workloads: {len(workloads)}")
     lines.append(f"- sigmas (% one-sigma multiplicative jitter): {sigmas}")
     lines.append(f"- schedulers: {schedulers}")
@@ -242,7 +242,7 @@ def _write_robustness_report(rows, out_dir: Path, schedulers, sigmas, workloads)
 
 
 # ---------------------------------------------------------------------------
-# M15 — Scaling sweep (stub for now; expanded in next step)
+# — Scaling sweep (stub for now; expanded in next step)
 # ---------------------------------------------------------------------------
 
 
@@ -395,13 +395,13 @@ def _plot_scaling(rows, out_dir: Path, schedulers, sizes):
     ax2.set_xlabel("N ops"); ax2.set_ylabel("solver wall time (s)")
     ax2.set_title("Solver wall time vs N (log-log)")
     ax2.legend(fontsize=8, loc="best"); ax2.grid(True, alpha=0.3)
-    fig.suptitle("M15 — Scaling behavior (dronet-chained workloads with per-replica jitter)")
+    fig.suptitle(" — Scaling behavior (dronet-chained workloads with per-replica jitter)")
     fig.savefig(out_dir / "scaling_curves.png", dpi=120)
     plt.close(fig)
 
 
 def _write_scaling_report(rows, out_dir, schedulers, sizes):
-    lines = ["# M15 — Scaling sweep", ""]
+    lines = ["# — Scaling sweep", ""]
     lines.append(f"- sizes: {sizes}")
     lines.append(f"- schedulers: {schedulers}")
     lines.append("")
@@ -634,7 +634,7 @@ def run_realtime(args):
 
 
 def _write_realtime_report(rows, out_dir, schedulers, mix_specs, envelope_us):
-    lines = ["# M17+M18 — Real-frequency QRB5165 packing", ""]
+    lines = ["# — Real-frequency QRB5165 packing", ""]
     lines.append(f"- SoC: QRB5165 (real silicon, NO time scaling)")
     lines.append(f"- envelope: {envelope_us} us")
     lines.append(f"- mixes:")
@@ -703,7 +703,7 @@ def run_literature(args):
     print(f"\nMetrics -> {csv_path}")
 
     # Report.
-    lines = ["# M20 — Pegasus literature DAGs", "",
+    lines = ["# — Pegasus literature DAGs", "",
              "Programmatically constructed Pegasus-shaped workflows ",
              "(no DAX XML required). Compares HEFT-on-Pegasus to the ",
              "published 1.3-1.8x makespan-vs-LB range; lower is better.",
@@ -827,7 +827,7 @@ def _plot_breaking_point(sweep_rows, schedulers, out_dir):
     ax.set_xlabel("mlp_wide frequency (Hz)")
     ax.set_ylabel("deadline miss count")
     ax.set_xscale("log")
-    ax.set_title("M23 — Breaking-point sweep: deadline misses vs mlp_wide frequency")
+    ax.set_title(" — Breaking-point sweep: deadline misses vs mlp_wide frequency")
     ax.legend(fontsize=8, loc="best")
     ax.grid(True, alpha=0.3)
     fig.savefig(out_dir / "breaking_point.png", dpi=120)
@@ -835,7 +835,7 @@ def _plot_breaking_point(sweep_rows, schedulers, out_dir):
 
 
 def _write_stress_report(rows, sweep_rows, schedulers, out_dir):
-    lines = ["# M23 — Stress-test scenarios", ""]
+    lines = ["# — Stress-test scenarios", ""]
     by_scenario = {}
     for r in rows:
         by_scenario.setdefault(r["scenario"], []).append(r)
@@ -877,23 +877,123 @@ def _write_stress_report(rows, sweep_rows, schedulers, out_dir):
     print(f"Report -> {out_dir / 'report.md'}")
 
 
+def run_milp_compare(args):
+    """Run the existing CVXPY MILP formulation against multiple solver
+    backends (MOSEK, Gurobi, HiGHS, SCIP, CBC) on a representative workload
+    set. Lets us answer 'is the result driven by the formulation or by the
+    solver?' independently."""
+    import cvxpy as cp
+    installed = set(cp.installed_solvers())
+    candidates = ["MOSEK", "GUROBI", "HIGHS", "SCIP", "CBC"]
+    backends = [s for s in candidates if s in installed]
+    print(f"MILP-comparison candidates available: {backends}")
+    if "MOSEK" not in backends:
+        print("  warning: MOSEK not installed; the original formulation needs it.")
+
+    out_dir = REPO / "results" / "milp_comparison"
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    # Workload set: 3 Pegasus DAGs + dronet & mlp_wide on Chipyard + 3 small scenarios.
+    from pegasus_loader import PEGASUS_DAGS
+    from realistic_workloads import build_model_graph, build_workload_from_graph
+    from scenarios import SCENARIOS
+
+    workloads: List[Tuple[str, Any]] = []
+    for dag_name, builder in PEGASUS_DAGS.items():
+        workloads.append((dag_name, builder()))
+    for model in ("dronet", "mlp_wide"):
+        try:
+            g = build_model_graph(model, "chipyard")
+            workloads.append((f"{model}_chipyard", build_workload_from_graph(g)))
+        except Exception as exc:
+            print(f"  [warn] {model}: {exc}")
+    for sc in ("vision_pipeline", "sensor_fusion_diamond", "tiny_op_quantized_chain"):
+        if sc in SCENARIOS:
+            workloads.append((sc, SCENARIOS[sc]()[0]))
+
+    rows: List[Dict[str, Any]] = []
+    for wname, wl in workloads:
+        n_ops = len(wl.operations)
+        print(f"\n  {wname}: {n_ops} ops")
+        for backend in backends:
+            sched_name = "mosek" if backend == "MOSEK" else f"milp_{backend.lower()}"
+            if n_ops > args.milp_max_ops:
+                rows.append({"workload": wname, "solver": backend, "n_ops": n_ops,
+                             "feasible": False, "error": "skipped_too_large"})
+                print(f"    {backend:<8s} SKIP (>{args.milp_max_ops} ops)")
+                continue
+            try:
+                r = _run_one(wl, sched_name, args.time_limit)
+            except Exception as exc:
+                rows.append({"workload": wname, "solver": backend, "n_ops": n_ops,
+                             "feasible": False, "error": str(exc)})
+                print(f"    {backend:<8s} ERROR: {exc}")
+                continue
+            row = {"workload": wname, "solver": backend, "n_ops": n_ops, **r}
+            rows.append(row)
+            print(f"    {backend:<8s} ms={r.get('makespan_us', 'n/a')}  "
+                  f"solver_s={r.get('solver_wall_time_s', 0):.3f}  "
+                  f"feasible={r.get('feasible')}")
+
+    csv_path = out_dir / "metrics.csv"
+    fields = ["workload", "solver", "n_ops", "feasible", "valid",
+              "makespan_us", "deadline_miss_count", "solver_wall_time_s", "error"]
+    with open(csv_path, "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
+        w.writeheader()
+        for r in rows:
+            w.writerow(r)
+    print(f"\nMetrics -> {csv_path}")
+
+    # Markdown report.
+    lines = ["# MILP solver comparison", "",
+             "Same MILP formulation (xpu-rt/scheduler.py), different CVXPY backends.",
+             "Used to disambiguate 'is the win formulation-driven or solver-driven?'",
+             "",
+             f"Backends compared: {backends}",
+             ""]
+    lines.append("| workload | n_ops | " + " | ".join(f"{b} ms / s" for b in backends) + " |")
+    lines.append("|---|---:|" + "|".join(["---:"] * len(backends)) + "|")
+    by_workload: Dict[str, Dict[str, Any]] = {}
+    for r in rows:
+        by_workload.setdefault(r["workload"], {})[r["solver"]] = r
+    for wname, byb in by_workload.items():
+        n = next(iter(byb.values())).get("n_ops", "?")
+        cells = []
+        for b in backends:
+            r = byb.get(b)
+            if not r or not r.get("feasible"):
+                cells.append("skip")
+                continue
+            ms = r.get("makespan_us", float("nan"))
+            secs = r.get("solver_wall_time_s", 0)
+            cells.append(f"{ms:.0f} / {secs:.2f}")
+        lines.append(f"| {wname} | {n} | " + " | ".join(cells) + " |")
+    (out_dir / "report.md").write_text("\n".join(lines))
+    print(f"Report -> {out_dir / 'report.md'}")
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--target", choices=["robustness", "scaling", "realtime", "literature", "stress"],
+    ap.add_argument("--target", choices=["robustness", "scaling", "realtime",
+                                          "literature", "stress", "milp_compare"],
                     required=True)
     ap.add_argument("--schedulers",
                     default="heft,critical_path,edf,fastest_device,fifo,peft,"
                             "simulated_annealing,cpsat,gnn_placement,rl_policy")
     ap.add_argument("--sigmas", default="0,10,25,50",
-                    help="Comma-separated noise percentages (M16)")
+                    help="Comma-separated noise percentages ")
     ap.add_argument("--sizes", default="20,50,100,200,500",
-                    help="Comma-separated workload sizes (M15)")
-    ap.add_argument("--seeds", type=int, default=10, help="Seeds per cell (M15/M16)")
+                    help="Comma-separated workload sizes ")
+    ap.add_argument("--seeds", type=int, default=10, help="Seeds per cell ")
     ap.add_argument("--envelope-us", type=float, default=100_000.0,
-                    help="Period envelope (M17/M18) — default 100ms")
+                    help="Period envelope — default 100ms")
     ap.add_argument("--time-limit", type=float, default=20.0,
                     help="Solver time limit for cpsat/mosek")
     ap.add_argument("--seed", type=int, default=0, help="Master RNG seed")
+    ap.add_argument("--milp-max-ops", type=int, default=40,
+                    help="Skip MILP backends on workloads larger than this "
+                         "(MOSEK/HiGHS/SCIP/CBC explode quickly past ~50 ops)")
     args = ap.parse_args()
 
     if args.target == "robustness":
@@ -906,6 +1006,8 @@ def main():
         run_literature(args)
     elif args.target == "stress":
         run_stress(args)
+    elif args.target == "milp_compare":
+        run_milp_compare(args)
 
 
 if __name__ == "__main__":

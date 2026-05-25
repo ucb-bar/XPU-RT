@@ -357,6 +357,7 @@ def schedule(
     debug_constraints: bool = False,
     prune_overlap_constraints_for_dependency_chain: bool = True,
     target_diversity_weight: float = 0.0,
+    cvxpy_solver: str = "MOSEK",
 ) -> Tuple[np.ndarray, np.ndarray, Optional[Workload], Optional[dict]]:
     """
     Schedule a workload, optionally with operation fusion.
@@ -733,23 +734,39 @@ def schedule(
         print("Starting optimization...")
         start_time = time.time()
     
-    # Configure MOSEK solver parameters
-    # CVXPY's verbose parameter controls MOSEK output
-    # For additional MOSEK-specific parameters, we can pass them through mosek_params
-    # Note: CVXPY's verbose=True already enables MOSEK logging
-    mosek_verbose = verbose or (solver_verbosity > 0)
-    mosek_params = {}
-    
-    # Set time limit if specified (in seconds)
-    if time_limit is not None and time_limit > 0:
-        mosek_params['MSK_DPAR_OPTIMIZER_MAX_TIME'] = time_limit
-        if verbose:
-            print(f"Time limit set to {time_limit:.1f} seconds ({time_limit/60:.1f} minutes)")
-    
-    if mosek_params:
-        problem.solve(solver=cp.MOSEK, verbose=mosek_verbose, mosek_params=mosek_params)
-    else:
-        problem.solve(solver=cp.MOSEK, verbose=mosek_verbose)
+    # Configure solver backend. Default is MOSEK (original behaviour); any CVXPY
+    # MILP-capable backend can be selected via cvxpy_solver.
+    solver_verbose = verbose or (solver_verbosity > 0)
+    solver_attr = getattr(cp, cvxpy_solver, None)
+    if solver_attr is None:
+        raise ValueError(
+            f"Unknown CVXPY solver '{cvxpy_solver}'. "
+            f"Available: {cp.installed_solvers()}"
+        )
+    solver_kwargs: dict = {}
+
+    if cvxpy_solver == "MOSEK":
+        mosek_params: dict = {}
+        if time_limit is not None and time_limit > 0:
+            mosek_params['MSK_DPAR_OPTIMIZER_MAX_TIME'] = time_limit
+            if verbose:
+                print(f"Time limit set to {time_limit:.1f} seconds ({time_limit/60:.1f} minutes)")
+        if mosek_params:
+            solver_kwargs["mosek_params"] = mosek_params
+    elif cvxpy_solver == "GUROBI":
+        if time_limit is not None and time_limit > 0:
+            solver_kwargs["TimeLimit"] = time_limit
+    elif cvxpy_solver == "HIGHS":
+        if time_limit is not None and time_limit > 0:
+            solver_kwargs["time_limit"] = time_limit
+    elif cvxpy_solver == "SCIP":
+        if time_limit is not None and time_limit > 0:
+            solver_kwargs["scip_params"] = {"limits/time": time_limit}
+    elif cvxpy_solver == "CBC":
+        if time_limit is not None and time_limit > 0:
+            solver_kwargs["maximumSeconds"] = time_limit
+
+    problem.solve(solver=solver_attr, verbose=solver_verbose, **solver_kwargs)
     
     if verbose:
         elapsed_time = time.time() - start_time

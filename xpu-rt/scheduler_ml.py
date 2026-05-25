@@ -1,9 +1,9 @@
 """
-M11 — Learned cost model + cost_model scheduler.
+Learned cost model + cost_model scheduler.
 
 Implements an MLP regressor over hand-crafted (workload, placement) features
 that predicts log(makespan / lower_bound). Used as a fast oracle inside
-``rewrite.score_candidates`` (M9) and as a search-based scheduler that
+``rewrite.score_candidates`` and as a search-based scheduler that
 evaluates HEFT + perturbations and picks the lowest predicted makespan.
 
 Layout:
@@ -15,7 +15,7 @@ Layout:
 
 PyTorch imports are lazy so the registry stays usable without torch.
 
-Future direction (M12/M13): if the MLP saturates below the ρ ≥ 0.7 target,
+Future direction : if the MLP saturates below the ρ ≥ 0.7 target,
 swap in a GNN encoder. The feature pipeline keeps both options open.
 """
 

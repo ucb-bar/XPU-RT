@@ -1,5 +1,5 @@
 """
-M23 — Stress-test scenarios that push the schedulers HARD.
+Stress-test scenarios that push the schedulers HARD.
 
 Five scenario families:
 
@@ -151,7 +151,7 @@ def fine_ops(model: str, soc: str = "qrb5165") -> List[Operation]:
 
 
 # ============================================================================
-# Periodic packing helper (shared with M17/M18)
+# Periodic packing helper (shared with )
 # ============================================================================
 
 

@@ -1,11 +1,11 @@
 """
-M22 — DAG analysis to identify fusion / split opportunities in a Workload.
+DAG analysis to identify fusion / split opportunities in a Workload.
 
-Used to construct M22's ``realworld_fusion_opportunity`` and
+Used to construct 's ``realworld_fusion_opportunity`` and
 ``realworld_split_opportunity`` scenarios from analysing the real
 dronet / mlp_wide / yolov8n graphs (rather than inventing the scenarios
 by hand). Also exposed for the closed-loop optimizer to seed its candidate
-generator (M9 ``rewrite.generate_candidates`` uses simpler heuristics; this
+generator ( ``rewrite.generate_candidates`` uses simpler heuristics; this
 module is the more thorough analyser).
 
 Two analyses:

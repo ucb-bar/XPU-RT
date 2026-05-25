@@ -1,5 +1,5 @@
 """
-M12 — GNN-based placement scheduler.
+GNN-based placement scheduler.
 
 Architecture: small GraphSAGE (3 layers, hidden=64) over the op-graph with
 per-node features. Per-op classification head produces logits over machine

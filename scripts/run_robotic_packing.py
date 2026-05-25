@@ -1,5 +1,5 @@
 """
-M4 hero benchmark — robotic packing stress test.
+hero benchmark — robotic packing stress test.
 
 For each (soc, f_dronet_hz, f_mlp_hz, scheduler) cell:
   1. Pack dronet @ f_dronet_hz + mlp_wide @ f_mlp_hz inside an envelope.
@@ -347,7 +347,7 @@ def main():
 
 def write_report(rows, schedulers, socs, envelopes, args, path, out_dir):
     lines: List[str] = []
-    lines.append("# M4 — robotic packing stress test")
+    lines.append("# — robotic packing stress test")
     lines.append("")
     lines.append(f"- envelope_us per soc: {envelopes}")
     lines.append(f"- time_scale: {args.time_scale} (firesim/silicon compression)")

@@ -1,5 +1,5 @@
 """
-M10 — closed-loop optimizer.
+closed-loop optimizer.
 
 Iterative loop:
   1. Build baseline schedule with --scheduler.
@@ -115,7 +115,7 @@ def closed_loop(
             ordering = [r["candidate"]["candidate_id"] for r in scored
                         if r.get("applied") and r.get("measured_delta", 0) < 0]
         elif ranker == "cost_model":
-            # M11 fast oracle: score via cost_model_score (one model forward
+            # fast oracle: score via cost_model_score (one model forward
             # pass per candidate, no re-scheduling).
             from scheduler_ml import cost_model_score
             scored = score_candidates(cands, cur, scheduler_fn,
@@ -123,7 +123,7 @@ def closed_loop(
             ordering = [r["candidate"]["candidate_id"] for r in scored
                         if r.get("applied") and r.get("measured_delta", 0) < 0]
         elif ranker == "llm":
-            # M14 LLM ranker (anthropic or mock).
+            # LLM ranker (anthropic or mock).
             from scheduler_llm_ranker import rank_candidates_via_llm
             top_ids = rank_candidates_via_llm(cur, cands, top_k=max_candidates,
                                               backend=llm_backend)

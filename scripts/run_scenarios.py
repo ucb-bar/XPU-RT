@@ -1,5 +1,5 @@
 """
-M6 driver — run every scheduler on every diagnostic scenario, validate the
+driver — run every scheduler on every diagnostic scenario, validate the
 expected_winners table from xpu-rt/scenarios.py, and emit per-(scenario,
 scheduler) Gantts + a side-by-side composite per scenario + a master report.
 
@@ -227,7 +227,7 @@ def main():
 
     # report.md
     report_path = out_dir / "report.md"
-    lines: List[str] = ["# M6 — Diagnostic scenarios", ""]
+    lines: List[str] = ["# — Diagnostic scenarios", ""]
     lines.append(f"- schedulers: {schedulers}")
     lines.append(f"- scenarios: {scen_names}")
     lines.append("")

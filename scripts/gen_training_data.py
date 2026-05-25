@@ -1,6 +1,6 @@
 """
-M11 prerequisite: generate training data for the learned cost model (and
-M12/M13 schedulers).
+prerequisite: generate training data for the learned cost model (and
+schedulers).
 
 Two subcommands:
 

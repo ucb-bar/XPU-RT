@@ -1,10 +1,10 @@
 """
-M11/M12/M13 unified trainer entry point.
+unified trainer entry point.
 
 Subcommands:
   --target cost_model   train MLP regressor on (workload, placement) -> log(makespan/lower_bound)
-  --target gnn          (placeholder; populated by M12)
-  --target rl           (placeholder; populated by M13)
+  --target gnn (placeholder; populated by )
+  --target rl (placeholder; populated by )
 
 Cost-model training reads:
   data/training/workloads.pkl
@@ -224,7 +224,7 @@ def train_cost_model(args):
 
 
 def train_gnn(args):
-    """M12: GNN-based placement, supervised on CP-SAT-optimal alphas.
+    """: GNN-based placement, supervised on CP-SAT-optimal alphas.
 
     Phase 1 only (cross-entropy); REINFORCE Phase 2 deferred.
     """
@@ -382,7 +382,7 @@ def train_gnn(args):
 
 
 def train_rl(args):
-    """M13: PPO policy via stable_baselines3. Curriculum: train on small
+    """: PPO policy via stable_baselines3. Curriculum: train on small
     workloads first, then escalate. Reward shaping documented in
     xpu-rt/scheduler_rl.py."""
     from stable_baselines3 import PPO

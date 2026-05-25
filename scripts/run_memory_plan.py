@@ -1,5 +1,5 @@
 """
-M7 driver — apply the post-schedule memory planner to a realistic Workload,
+driver — apply the post-schedule memory planner to a realistic Workload,
 compare the three reuse policies (no_reuse, greedy_first_fit, size_aware_best_fit),
 and emit a memory-timeline PNG.
 

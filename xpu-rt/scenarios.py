@@ -193,7 +193,7 @@ def sensor_fusion_diamond() -> Tuple[Workload, Dict, Dict]:
     ctrl_calc = _op("ctrl_calc", [40, 80, np.inf], preds=[ctrl_in],
                     infeasible={2}, output_bytes=4_000, job_id=3)
     # Tightened from 1200us -> 800us so EDF visibly outperforms HEFT/fifo
-    # (M22 expectation fix — previously everyone hit 0 misses and the
+    # (expectation fix — previously everyone hit 0 misses and the
     # deadline_miss_count metric was uninformative).
     ctrl_out = _op("ctrl_out", [30, 60, np.inf], preds=[ctrl_calc],
                    infeasible={2}, output_bytes=2_000, job_id=3,
@@ -288,7 +288,7 @@ def multirate_periodic() -> Tuple[Workload, Dict, Dict]:
 
 def memory_pressured_residual() -> Tuple[Workload, Dict, Dict]:
     """20-op ResNet-block-like topology with REAL DRONET BUFFER SIZES
-    (M19). Each residual block has a stem, two branches, and an add-
+    . Each residual block has a stem, two branches, and an add-
     junction; the stem's output activation stays live across the branches.
 
     Buffer sizes are pulled from data/realistic/buffer_annotations.json
@@ -347,7 +347,7 @@ def memory_pressured_residual() -> Tuple[Workload, Dict, Dict]:
         ops.extend([stem, a, b, add, relu])
         prev_skip = relu
 
-    # Head — tighter deadline (M22 expectation fix) so fastest_device's
+    # Head — tighter deadline so fastest_device's
     # parallel placement is more likely to overflow memory AND miss the
     # deadline.
     head = _op("classifier_head", [80, 60, 25], preds=[prev_skip],
@@ -358,7 +358,7 @@ def memory_pressured_residual() -> Tuple[Workload, Dict, Dict]:
     wl = Workload(ops, MACHINES, TRANSFER,
                   job_names=[f"block_{i}" for i in range(4)] + ["head"],
                   machine_combinations=COMBOS)
-    # M22 expectation honesty: with real dronet buffer sizes, fastest_device
+    # expectation honesty: with real dronet buffer sizes, fastest_device
     # actually finds the best makespan here because NPU is locally-fastest
     # for almost every op AND the workload has no NPU contention. This is a
     # legitimate scheduler outcome, NOT a misclassification. The 'cpsat
@@ -496,7 +496,7 @@ def heterogeneous_parallel() -> Tuple[Workload, Dict, Dict]:
 
 
 # ----------------------------------------------------------------------------
-# M22: real-data-inferred fusion / split scenarios
+# : real-data-inferred fusion / split scenarios
 #
 # Built from analysing the real dronet / mlp_wide / yolov8n graphs via
 # xpu-rt/dag_analysis.py. The dag_analysis module identifies:
@@ -624,7 +624,7 @@ def realworld_skip_pressure() -> Tuple[Workload, Dict, Dict]:
             op.output_bytes = int(ann[key])
 
     # Remap base's 4 machines (scalar, rvv, opu, gemmini) to our 3-machine
-    # SoC (CPU, GPU, NPU) so all M6 scenarios share the same machine model.
+    # SoC (CPU, GPU, NPU) so all scenarios share the same machine model.
     # scalar/rvv -> CPU (min), opu -> GPU, gemmini -> NPU.
     machines, combos, transfer = MACHINES, COMBOS, TRANSFER
     name_map = {m: i for i, m in enumerate(base.machines)}
