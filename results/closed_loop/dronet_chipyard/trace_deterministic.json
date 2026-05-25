@@ -1,0 +1,25 @@
+{
+  "workload": "model:dronet@chipyard",
+  "scheduler": "round_robin",
+  "ranker": "deterministic",
+  "max_candidates": 10,
+  "baseline_makespan_us": 2939491.403123011,
+  "final_makespan_us": 1637368.6951601258,
+  "improvement_us": 1302122.707962885,
+  "improvement_pct": 44.2975511538992,
+  "baseline_dispatches": 15,
+  "final_dispatches": 10,
+  "trace": [
+    {
+      "iter": 0,
+      "candidate_id": "fuse_chain_dronet_d6_dronet_d11",
+      "candidate_type": "fuse_linear_chain",
+      "predicted_delta": -234.16666666666669,
+      "measured_objective_before": 2939491.403123011,
+      "measured_objective_after": 1637368.6951601258,
+      "delta": -1302122.707962885,
+      "accepted": true,
+      "reason": "improved"
+    }
+  ]
+}

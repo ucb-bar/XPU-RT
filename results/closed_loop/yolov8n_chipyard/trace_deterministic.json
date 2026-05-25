@@ -1,0 +1,58 @@
+{
+  "workload": "model:yolov8n@chipyard",
+  "scheduler": "round_robin",
+  "ranker": "deterministic",
+  "max_candidates": 10,
+  "baseline_makespan_us": 252159723.89347246,
+  "final_makespan_us": 159365568.0561472,
+  "improvement_us": 92794155.83732527,
+  "improvement_pct": 36.79975311066217,
+  "baseline_dispatches": 48,
+  "final_dispatches": 31,
+  "trace": [
+    {
+      "iter": 0,
+      "candidate_id": "fuse_chain_yolov8n_d30_yolov8n_d35",
+      "candidate_type": "fuse_linear_chain",
+      "predicted_delta": -234.16666666666669,
+      "measured_objective_before": 252159723.89347246,
+      "measured_objective_after": 213040519.34601825,
+      "delta": -39119204.54745421,
+      "accepted": true,
+      "reason": "improved"
+    },
+    {
+      "iter": 1,
+      "candidate_id": "fuse_chain_yolov8n_d30+yolov8n_d31+yolov8n_d32+yolov8n_d33+yolov8n_d34+yolov8n_d35_yolov8n_d40",
+      "candidate_type": "fuse_linear_chain",
+      "predicted_delta": -234.16666666666669,
+      "measured_objective_before": 213040519.34601825,
+      "measured_objective_after": 184435434.72661045,
+      "delta": -28605084.619407803,
+      "accepted": true,
+      "reason": "improved"
+    },
+    {
+      "iter": 2,
+      "candidate_id": "fuse_chain_yolov8n_d30+yolov8n_d31+yolov8n_d32+yolov8n_d33+yolov8n_d34+yolov8n_d35+yolov8n_d36+yolov8n_d37+yolov8n_d38+yolov8n_d39+yolov8n_d40_yolov8n_d45",
+      "candidate_type": "fuse_linear_chain",
+      "predicted_delta": -234.16666666666669,
+      "measured_objective_before": 184435434.72661045,
+      "measured_objective_after": 167926215.55006284,
+      "delta": -16509219.176547617,
+      "accepted": true,
+      "reason": "improved"
+    },
+    {
+      "iter": 3,
+      "candidate_id": "fuse_chain_yolov8n_d30+yolov8n_d31+yolov8n_d32+yolov8n_d33+yolov8n_d34+yolov8n_d35+yolov8n_d36+yolov8n_d37+yolov8n_d38+yolov8n_d39+yolov8n_d40+yolov8n_d41+yolov8n_d42+yolov8n_d43+yolov8n_d44+yolov8n_d45_yolov8n_d47",
+      "candidate_type": "fuse_linear_chain",
+      "predicted_delta": -93.66666666666667,
+      "measured_objective_before": 167926215.55006284,
+      "measured_objective_after": 159365568.0561472,
+      "delta": -8560647.493915647,
+      "accepted": true,
+      "reason": "improved"
+    }
+  ]
+}
