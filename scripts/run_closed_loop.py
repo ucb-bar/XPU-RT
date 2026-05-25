@@ -94,6 +94,7 @@ def closed_loop(
     max_candidates: int = 10,
     ranker: str = "deterministic",
     seed: int = 0,
+    llm_backend: str = "auto",
 ):
     """Run the loop. Returns (final_workload, trace_list, final_eval, baseline_eval)."""
     cur = workload
@@ -121,6 +122,12 @@ def closed_loop(
                                       fast_scorer=cost_model_score)
             ordering = [r["candidate"]["candidate_id"] for r in scored
                         if r.get("applied") and r.get("measured_delta", 0) < 0]
+        elif ranker == "llm":
+            # M14 LLM ranker (anthropic or mock).
+            from scheduler_llm_ranker import rank_candidates_via_llm
+            top_ids = rank_candidates_via_llm(cur, cands, top_k=max_candidates,
+                                              backend=llm_backend)
+            ordering = top_ids
         else:
             ids = [c.candidate_id for c in cands]
             rng.shuffle(ids)
@@ -187,7 +194,10 @@ def main():
     ap.add_argument("--workload", default="scenario:fusion_win_tiny_chain",
                     help="'scenario:<name>' or 'model:<model>@<soc>'")
     ap.add_argument("--scheduler", default="heft")
-    ap.add_argument("--ranker", choices=["deterministic", "random", "cost_model"], default="deterministic")
+    ap.add_argument("--ranker", choices=["deterministic", "random", "cost_model", "llm"], default="deterministic")
+    ap.add_argument("--llm-backend", choices=["anthropic", "mock", "auto"], default="auto",
+                    help="LLM backend when --ranker llm. auto uses anthropic if "
+                         "ANTHROPIC_API_KEY is set, else falls back to mock.")
     ap.add_argument("--max-candidates", type=int, default=10)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--out", default=None)
@@ -213,6 +223,7 @@ def main():
         wl, _wrap_kwargs_sched,
         max_candidates=args.max_candidates,
         ranker=args.ranker, seed=args.seed,
+        llm_backend=args.llm_backend,
     )
 
     # Trace JSON.

@@ -110,6 +110,14 @@ def _rl_policy(workload, **kwargs):
     return rl_policy_scheduler(workload, **kwargs)
 
 
+def _llm_ranker(workload, **kwargs):
+    """LLM ranker is a meta-scheduler — it ranks candidates produced by
+    the rewrite loop, not a scheduler per se. As a scheduler entry it
+    just runs HEFT (so it can be slotted into existing eval pipelines)."""
+    from scheduler_heft import heft
+    return heft(workload, **kwargs)
+
+
 _REGISTRY: Dict[str, SchedulerFn] = {
     "mosek": _mosek,
     "heft": _heft,
@@ -128,6 +136,7 @@ _REGISTRY: Dict[str, SchedulerFn] = {
     "cost_model": _cost_model,
     "gnn_placement": _gnn_placement,
     "rl_policy": _rl_policy,
+    "llm_ranker": _llm_ranker,
 }
 
 

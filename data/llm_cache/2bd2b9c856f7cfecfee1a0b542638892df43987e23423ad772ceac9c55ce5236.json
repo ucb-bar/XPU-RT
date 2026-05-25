@@ -1,0 +1,11 @@
+{
+  "model": "mock",
+  "ranking": [
+    "fuse_chain_L0_quant+L0_conv+L0_bias+L0_relu+L0_dequant+L1_quant_L4_dequant",
+    "fuse_L3_relu+L3_dequant+L4_quant+L4_conv+L4_bias+L4_relu__L4_dequant",
+    "fuse_L2_bias+L2_relu+L2_dequant+L3_quant+L3_conv+L3_bias__L3_relu+L3_dequant+L4_quant+L4_conv+L4_bias+L4_relu",
+    "fuse_L1_conv+L1_bias+L1_relu+L1_dequant+L2_quant+L2_conv__L2_bias+L2_relu+L2_dequant+L3_quant+L3_conv+L3_bias",
+    "fuse_L0_quant+L0_conv+L0_bias+L0_relu+L0_dequant+L1_quant__L1_conv+L1_bias+L1_relu+L1_dequant+L2_quant+L2_conv"
+  ],
+  "prompt_sha": "2bd2b9c856f7cfecfee1a0b542638892df43987e23423ad772ceac9c55ce5236"
+}
