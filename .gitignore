@@ -34,3 +34,7 @@ validation_report.txt
 build/
 compgen_output/
 sessions/
+
+# Solver licenses — personal / per-user, never commit
+mosek.lic
+*.lic
