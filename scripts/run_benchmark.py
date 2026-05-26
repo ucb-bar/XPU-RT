@@ -1,13 +1,15 @@
 """
-unified benchmark driver.
+Unified benchmark driver.
 
 Subcommands:
-  --target robustness — noise sweep across scenarios + real workloads
-  --target scaling — workload sizes 20...1000 × 5 seeds
-  --target realtime — real-frequency QRB5165 packing of 5 models
-  --target literature — Pegasus DAGs (Montage, CyberShake, Epigenomics)
+  --target robustness    noise sweep across scenarios + real workloads
+  --target scaling       workload sizes 20...1000 × 5 seeds
+  --target realtime      real-frequency QRB5165 packing of 5 models
+  --target literature    Pegasus DAGs (Montage, CyberShake, Epigenomics)
+  --target stress        adversarial workloads (dominator, granularity, ...)
+  --target milp_compare  same MILP formulation across CVXPY backends
 
-All four share a common sweep core: build a list of (workload, label) tuples,
+All share a common sweep core: build a list of (workload, label) tuples,
 sweep schedulers, record metrics + Gantt + summary report. CSVs land under
 results/<target>/.
 """

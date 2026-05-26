@@ -1,7 +1,7 @@
 """
 DAG analysis to identify fusion / split opportunities in a Workload.
 
-Used to construct 's ``realworld_fusion_opportunity`` and
+Used to construct the ``realworld_fusion_opportunity`` and
 ``realworld_split_opportunity`` scenarios from analysing the real
 dronet / mlp_wide / yolov8n graphs (rather than inventing the scenarios
 by hand). Also exposed for the closed-loop optimizer to seed its candidate

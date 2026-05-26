@@ -1,7 +1,7 @@
 """
-helper — multiplicative Gaussian noise on processing_times for the
-robustness benchmark. Also reusable by future runs that want to test
-schedulers under uncertain cost models.
+Multiplicative Gaussian noise on processing_times for the robustness
+benchmark. Reusable by any sweep that wants to test schedulers under
+uncertain cost models.
 
 Single public entry point:
 

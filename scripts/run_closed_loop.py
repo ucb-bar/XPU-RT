@@ -1,5 +1,5 @@
 """
-closed-loop optimizer.
+Closed-loop optimizer.
 
 Iterative loop:
   1. Build baseline schedule with --scheduler.

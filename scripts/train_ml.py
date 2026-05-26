@@ -1,10 +1,10 @@
 """
-unified trainer entry point.
+Unified trainer entry point for the ML scheduler family.
 
 Subcommands:
   --target cost_model   train MLP regressor on (workload, placement) -> log(makespan/lower_bound)
-  --target gnn (placeholder; populated by )
-  --target rl (placeholder; populated by )
+  --target gnn          train the GNN placement head
+  --target rl           train the PPO policy
 
 Cost-model training reads:
   data/training/workloads.pkl

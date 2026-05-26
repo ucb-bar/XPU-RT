@@ -1,5 +1,5 @@
 """
-driver — run every scheduler on every diagnostic scenario, validate the
+Run every scheduler on every diagnostic scenario, validate the
 expected_winners table from xpu-rt/scenarios.py, and emit per-(scenario,
 scheduler) Gantts + a side-by-side composite per scenario + a master report.
 

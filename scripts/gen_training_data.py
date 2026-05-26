@@ -1,6 +1,5 @@
 """
-prerequisite: generate training data for the learned cost model (and
-schedulers).
+Generate training data for the learned cost model and other ML schedulers.
 
 Two subcommands:
 

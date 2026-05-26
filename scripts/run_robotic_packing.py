@@ -1,5 +1,7 @@
 """
-hero benchmark — robotic packing stress test.
+Robotic packing hero benchmark — pack multiple periodic models into the
+end-to-end envelope of a dominant model on a real heterogeneous SoC, and
+sweep the (model, frequency) frontier each scheduler can sustain.
 
 For each (soc, f_dronet_hz, f_mlp_hz, scheduler) cell:
   1. Pack dronet @ f_dronet_hz + mlp_wide @ f_mlp_hz inside an envelope.
