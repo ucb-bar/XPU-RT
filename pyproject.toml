@@ -1,0 +1,63 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "xpurt"
+version = "0.1.0"
+description = "XPU-RT: full-stack scheduling flow for heterogeneous AI accelerator SoCs."
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "numpy",
+    "scipy",
+    "cvxpy>=1.4",
+    "matplotlib",
+    "pandas",
+    "networkx",
+]
+
+[project.optional-dependencies]
+mosek = ["Mosek"]
+gurobi = ["gurobipy"]
+test = ["pytest>=8.0"]
+
+[tool.setuptools]
+package-dir = {"" = "xpu-rt"}
+py-modules = [
+    "scheduler",
+    "schedulers",
+    "scheduler_heft",
+    "scheduler_cpsat",
+    "scheduler_gnn",
+    "scheduler_ml",
+    "scheduler_rl",
+    "scheduler_llm_ranker",
+    "schedule_validation",
+    "profiling",
+    "workload",
+    "workload_factory",
+    "metrics",
+    "comparison",
+    "dag_analysis",
+    "feedback",
+    "fusion",
+    "memory_planner",
+    "noise",
+    "packing",
+    "pegasus_loader",
+    "plot",
+    "postprocessing",
+    "profile_loader",
+    "profile_metrics",
+    "realistic_workloads",
+    "report",
+    "rewrite",
+    "scenarios",
+    "streaming_feedback",
+    "stress_scenarios",
+]
+
+[tool.setuptools.packages.find]
+where = ["xpu-rt"]
+include = ["xpurt*", "pytorch_workload*", "tests*"]

@@ -358,6 +358,7 @@ def schedule(
     prune_overlap_constraints_for_dependency_chain: bool = True,
     target_diversity_weight: float = 0.0,
     cvxpy_solver: str = "MOSEK",
+    emit_report_to: Optional[str] = None,
 ) -> Tuple[np.ndarray, np.ndarray, Optional[Workload], Optional[dict]]:
     """
     Schedule a workload, optionally with operation fusion.
@@ -732,7 +733,8 @@ def schedule(
         print(f"Number of constraints: {len(constraints)}")
         print(f"{'='*60}\n")
         print("Starting optimization...")
-        start_time = time.time()
+    # Always time the solve regardless of verbosity — SchedulerReport needs it.
+    start_time = time.time()
     
     # Configure solver backend. Default is MOSEK (original behaviour); any CVXPY
     # MILP-capable backend can be selected via cvxpy_solver.
@@ -767,9 +769,9 @@ def schedule(
             solver_kwargs["maximumSeconds"] = time_limit
 
     problem.solve(solver=solver_attr, verbose=solver_verbose, **solver_kwargs)
-    
+    elapsed_time = time.time() - start_time
+
     if verbose:
-        elapsed_time = time.time() - start_time
         print(f"\nOptimization completed in {elapsed_time:.2f} seconds")
         print(f"{'='*60}")
 
@@ -800,7 +802,28 @@ def schedule(
         "num_operations": num_operations,
         "num_combinations": num_combinations,
         "fusion_applied": fusion_threshold is not None and fusion_threshold > 0,
+        "solve_wall_s": float(elapsed_time),
+        "solver_name": cvxpy_solver,
     }
+
+    # Build SchedulerReport and stash + optionally write to disk. Non-breaking:
+    # the schedule() return tuple stays 4-element; callers access the report
+    # via workload.solver_state["report"] or read the JSON file.
+    if t_result is not None and alpha_result is not None:
+        try:
+            from profiling import SchedulerReport
+            report = SchedulerReport.from_solver_state(
+                original_workload, t_result, alpha_result,
+                solver_name=cvxpy_solver,
+                solve_wall_s=float(elapsed_time),
+                solver_status=str(problem.status),
+                fusion_map=fusion_map,
+            )
+            original_workload.solver_state["report"] = report
+            if emit_report_to:
+                report.write_json(emit_report_to)
+        except Exception as exc:
+            print(f"warning: SchedulerReport build failed: {exc}")
     
     # Check if optimization was successful
     if t_result is None or alpha_result is None:
