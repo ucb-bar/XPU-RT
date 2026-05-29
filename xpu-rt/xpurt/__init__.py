@@ -25,6 +25,7 @@ from workload_factory import (
 )
 from metrics import compute_metrics
 from profiling import SchedulerReport
+from plot_gantt import render_gantt
 
 __all__ = [
     "SchedulerReport",

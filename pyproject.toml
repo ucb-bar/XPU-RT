@@ -35,6 +35,8 @@ py-modules = [
     "scheduler_llm_ranker",
     "schedule_validation",
     "profiling",
+    "postmortem",
+    "plot_gantt",
     "workload",
     "workload_factory",
     "metrics",
