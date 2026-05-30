@@ -124,16 +124,31 @@ def compare_trace(
     p99_idx = max(0, int(len(sorted_devs) * 0.99) - 1)
 
     # Makespan = max actual_end_cycles, max(predicted_start + predicted_duration).
-    makespan_actual = 0.0
+    makespan_actual_raw = 0.0
     makespan_predicted = 0.0
     with open(trace_csv) as f:
         for r in csv.DictReader(f):
             try:
-                makespan_actual = max(makespan_actual, float(r["actual_end_cycles"]))
+                makespan_actual_raw = max(makespan_actual_raw, float(r["actual_end_cycles"]))
                 end_pred = float(r["predicted_start_ms"]) + float(r["predicted_duration_ms"])
                 makespan_predicted = max(makespan_predicted, end_pred)
             except (KeyError, ValueError):
                 continue
+
+    # Normalize actual makespan into predicted's unit (ms). The trace's
+    # actual_*_cycles columns store integer µs (legacy column name),
+    # so the conversion factor is exactly 1000. Sanity-check against
+    # median_ratio (should round to ~1000) so we'd notice if a future
+    # bitstream changes the unit.
+    actual_to_ms = 1000.0
+    if median_ratio and abs(median_ratio - actual_to_ms) / actual_to_ms > 0.10:
+        # > 10% off the expected 1000 — fall back to median_ratio.
+        actual_to_ms = median_ratio
+    makespan_actual = makespan_actual_raw / actual_to_ms
+    makespan_delta_pct = (
+        100.0 * (makespan_actual - makespan_predicted) / makespan_predicted
+        if makespan_predicted else 0.0
+    )
 
     report_makespan: Optional[float] = None
     if report_json and os.path.exists(report_json):
@@ -144,11 +159,20 @@ def compare_trace(
         except (json.JSONDecodeError, OSError):
             report_makespan = None
 
-    top = sorted(
-        (r for r in rows if r.get("deviation_pct") is not None),
-        key=lambda x: x["deviation_pct"],
-        reverse=True,
-    )[:n_outliers]
+    # Filter top_outliers: rows with predicted_duration below the
+    # trace's integer-µs floor are dominated by quantization noise
+    # (actual gets rounded to 0 or 1 µs, producing a 100% deviation
+    # signal that's not a real prediction error). We use 5×
+    # (1/median_ratio) as the threshold — i.e. ops whose actual span
+    # would land in ≥5 integer ticks. For a ~1000 ratio (µs vs ms)
+    # that's 0.005 ms = 5 µs.
+    resolution_floor_ms = (5.0 / median_ratio) if median_ratio else 0.0
+    candidates = [
+        r for r in rows
+        if r.get("deviation_pct") is not None
+        and r["predicted_duration"] >= resolution_floor_ms
+    ]
+    top = sorted(candidates, key=lambda x: x["deviation_pct"], reverse=True)[:n_outliers]
     top_outliers = [
         {
             "entry_id": r["entry_id"],
@@ -164,14 +188,39 @@ def compare_trace(
         for r in top
     ]
 
+    # Recompute rms/p99 on the resolution-filtered population so the
+    # headline numbers aren't dominated by floor-truncation noise.
+    filtered_devs = [
+        r["deviation_pct"] for r in rows
+        if r.get("deviation_pct") is not None
+        and r["predicted_duration"] >= resolution_floor_ms
+    ]
+    if filtered_devs:
+        filtered_sorted = sorted(filtered_devs)
+        f_rms = (sum(d * d for d in filtered_devs) / len(filtered_devs)) ** 0.5
+        f_p99 = filtered_sorted[max(0, int(len(filtered_sorted) * 0.99) - 1)]
+        f_max = max(filtered_devs)
+    else:
+        f_rms = f_p99 = f_max = 0.0
+
     result = {
         "n_rows": len(rows),
         "median_ratio": median_ratio,
-        "rms_error_pct": rms,
-        "p99_error_pct": sorted_devs[p99_idx] if sorted_devs else 0.0,
-        "max_error_pct": max(deviations) if deviations else 0.0,
-        "makespan_predicted": makespan_predicted,
-        "makespan_actual": makespan_actual,
+        "resolution_floor_ms": resolution_floor_ms,
+        "n_above_floor": len(filtered_devs),
+        # rms/p99/max on rows above the trace's integer-µs floor.
+        "rms_error_pct": f_rms,
+        "p99_error_pct": f_p99,
+        "max_error_pct": f_max,
+        # rms/p99/max on ALL rows including sub-resolution noise.
+        "raw_rms_error_pct": rms,
+        "raw_p99_error_pct": sorted_devs[p99_idx] if sorted_devs else 0.0,
+        "raw_max_error_pct": max(deviations) if deviations else 0.0,
+        # Both makespans in ms now — directly comparable.
+        "makespan_predicted_ms": makespan_predicted,
+        "makespan_actual_ms": makespan_actual,
+        "makespan_actual_raw": makespan_actual_raw,  # preserve for debug
+        "makespan_delta_pct": makespan_delta_pct,
         "report_makespan": report_makespan,
         "top_outliers": top_outliers,
     }

@@ -59,12 +59,37 @@ def _read_trace(path: str) -> list[dict]:
 
 
 def _palette() -> dict:
+    """Core-kind palette (legacy; render_fixture_gantt overrides with
+    network colors)."""
     return {
         "gemmini":  "#3b82f6",
         "rvv_opu":  "#ef4444",
         "rvv":      "#10b981",
         "scalar":   "#94a3b8",
     }
+
+
+def _network_palette() -> dict:
+    """Color map for the per-network bar colors used on both predicted
+    and actual Gantts. The bars on the same time axis can then be read
+    by network at a glance — the lane (y-axis position) still encodes
+    the (core_kind, hart) target."""
+    return {
+        "yolov8_nano":     "#3b82f6",  # blue
+        "yolov8_nano_64":  "#1e40af",  # darker blue — small yolov8 variant
+        "dronet":          "#ef4444",  # red
+        "mlp_control":     "#10b981",  # green
+    }
+
+
+def _network_root(name: str) -> str:
+    """Strip any trailing instance index from a network name.
+    'yolov8_nano_64' stays as-is (longest-prefix wins for known names).
+    """
+    for prefix in ("yolov8_nano_64", "yolov8_nano", "yolov8", "dronet", "mlp_control"):
+        if name.startswith(prefix):
+            return prefix
+    return name
 
 
 def render_gantt(trace_csv: str, out_path: str,
@@ -84,27 +109,27 @@ def render_gantt(trace_csv: str, out_path: str,
     if not rows:
         raise RuntimeError(f"no usable rows in {trace_csv}")
 
-    # Normalize per-dispatch durations to a unit-neutral scale.
-    # ratio = actual_duration / predicted_duration — median is the bitstream
-    # clock-domain constant. We use it to scale actual cycles onto the same
-    # ms axis as predicted (predicted/1e6 gives ms at 1 GHz; actual must be
-    # divided by predicted_per_ms_rate to match).
-    ratios = []
-    for r in rows:
-        pd_ = r["predicted_duration"]
-        ad_ = r["actual_end"] - r["actual_start"]
-        if pd_ > 0:
-            ratios.append(ad_ / pd_)
-    scale = statistics.median(ratios) if ratios else 1.0  # actual = predicted * scale
-    # predicted → ms: assume 1 GHz rdcycle → predicted / 1e6 = ms
-    # actual    → ms: actual / scale / 1e6 = ms in the same time domain
-    PRED_PER_MS = 1_000_000.0
+    # Convert each stream to absolute milliseconds using its native unit:
+    #
+    #   predicted_*_ms column (fixture-emitter dependent):
+    #     - MOSEK bridge writes rdcycles at 1 GHz   → divide by 1e6
+    #     - gen_3way_schedule writes ms directly    → divide by 1
+    #   actual_*_cycles column: always Zephyr k_cycle_get_64() = mtime, which
+    #     is CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC=1000000 on FireSim → divide by 1e3
+    #
+    # We deliberately do NOT force the makespans to coincide — if the actual
+    # is 30× the predicted, the chart should show it. That's the whole point.
+    raw_max_pred = max(r["predicted_start"] + r["predicted_duration"] for r in rows)
+    PRED_PER_MS = 1_000_000.0 if raw_max_pred > 10_000 else 1.0
+    ACTUAL_PER_MS = 1_000.0  # mtime @ 1 MHz on this bitstream
+    # Keep `scale` as the dispatch-shape ratio for the printed summary.
+    scale = (max(r["actual_end"] for r in rows) / raw_max_pred) if raw_max_pred > 0 else 1.0
 
     if max_rows:
         rows = rows[:max_rows]
 
-    pred_makespan = max(r["predicted_start"] + r["predicted_duration"] for r in rows) / PRED_PER_MS
-    actual_makespan = max(r["actual_end"] for r in rows) / scale / PRED_PER_MS
+    pred_makespan = raw_max_pred / PRED_PER_MS
+    actual_makespan = max(r["actual_end"] for r in rows) / ACTUAL_PER_MS
 
     # Group by (network, instance, core_kind/hart) → vertical lane.
     lane_keys: list[tuple] = []
@@ -119,7 +144,9 @@ def render_gantt(trace_csv: str, out_path: str,
             lane_keys.append(k)
         lane_for_row.append(seen[k])
 
-    palette = _palette()
+    # Color bars by network (yolov8 / dronet / mlp_control), not by
+    # core_kind — the lane on the y-axis already encodes the target tile.
+    palette = _network_palette()
 
     fig, (ax_p, ax_a) = plt.subplots(2, 1, figsize=(14, max(4, 0.6 * len(lane_keys) + 4)),
                                      sharex=True)
@@ -127,11 +154,12 @@ def render_gantt(trace_csv: str, out_path: str,
 
     for r, lane in zip(rows, lane_for_row):
         y = lane
-        color = palette.get(r["core_kind"], "#444")
+        net = _network_root(r["network"])
+        color = palette.get(net, "#94a3b8")
         pstart = r["predicted_start"] / PRED_PER_MS
         pdur = r["predicted_duration"] / PRED_PER_MS
-        astart = r["actual_start"] / scale / PRED_PER_MS
-        aend = r["actual_end"] / scale / PRED_PER_MS
+        astart = r["actual_start"] / ACTUAL_PER_MS
+        aend = r["actual_end"] / ACTUAL_PER_MS
         adur = aend - astart
         ax_p.broken_barh([(pstart, pdur)], (y - BAR_H/2, BAR_H),
                          facecolors=color, edgecolors="black", linewidth=0.2)
@@ -151,9 +179,9 @@ def render_gantt(trace_csv: str, out_path: str,
 
     ax_a.set_xlabel("Time (ms)")
 
-    # Legend: one entry per unique core_kind seen.
-    seen_kinds = sorted({r["core_kind"] for r in rows})
-    handles = [mpatches.Patch(color=palette.get(k, "#444"), label=k) for k in seen_kinds]
+    # Legend: one entry per unique network seen.
+    seen_nets = sorted({_network_root(r["network"]) for r in rows})
+    handles = [mpatches.Patch(color=palette.get(n, "#94a3b8"), label=n) for n in seen_nets]
     ax_p.legend(handles=handles, loc="upper right", fontsize=8, framealpha=0.9)
 
     if title:
@@ -206,17 +234,12 @@ def render_fixture_gantt(fixture_json: str, out_path: str,
     lanes = sorted({d["hardware_target"] for d in items})
     lane_idx = {lane: i for i, lane in enumerate(lanes)}
 
-    # Color by job_name root (yolov8_nano, dronet, mlp_control{N}->mlp_control).
+    # Color by network root — share the palette with the trace-based
+    # render_gantt above so the same color means the same network across
+    # both predicted-only and predicted-vs-actual figures.
     def _job_root(j: str) -> str:
-        for prefix in ("yolov8", "dronet", "mlp_control"):
-            if j.startswith(prefix):
-                return prefix
-        return j
-    job_colors = {
-        "yolov8":      "#3b82f6",
-        "dronet":      "#ef4444",
-        "mlp_control": "#10b981",
-    }
+        return _network_root(j)
+    job_colors = _network_palette()
 
     # Convert start_time / duration to ms.
     # Fixtures generated by gen_3way_schedule.py store these in ms directly
@@ -234,7 +257,7 @@ def render_fixture_gantt(fixture_json: str, out_path: str,
         lane = lane_idx[d["hardware_target"]]
         s = d["start_time"] / SCALE
         w = d["duration"] / SCALE
-        c = job_colors[_job_root(d["job_name"])]
+        c = job_colors.get(_job_root(d["job_name"]), "#94a3b8")
         ax.broken_barh([(s, w)], (lane - BAR_H/2, BAR_H),
                        facecolors=c, edgecolors="black", linewidth=0.1)
 
@@ -250,7 +273,7 @@ def render_fixture_gantt(fixture_json: str, out_path: str,
     ax.invert_yaxis()
 
     seen = sorted({_job_root(d["job_name"]) for d in items})
-    handles = [mpatches.Patch(color=job_colors[k], label=k) for k in seen]
+    handles = [mpatches.Patch(color=job_colors.get(k, "#94a3b8"), label=k) for k in seen]
     ax.legend(handles=handles, loc="upper right", fontsize=9, framealpha=0.9)
 
     fig.tight_layout()
