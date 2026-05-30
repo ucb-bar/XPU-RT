@@ -26,6 +26,7 @@ from workload_factory import (
 from metrics import compute_metrics
 from profiling import SchedulerReport
 from plot_gantt import render_gantt
+import fusion_advisor
 
 __all__ = [
     "SchedulerReport",

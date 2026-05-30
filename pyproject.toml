@@ -37,6 +37,7 @@ py-modules = [
     "profiling",
     "postmortem",
     "plot_gantt",
+    "fusion_advisor",
     "workload",
     "workload_factory",
     "metrics",
