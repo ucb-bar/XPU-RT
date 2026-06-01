@@ -7,3 +7,6 @@
 [submodule "sims/IsaacLab"]
 	path = sims/IsaacLab
 	url = https://github.com/isaac-sim/IsaacLab.git
+[submodule "hw/chipyard"]
+	path = hw/chipyard
+	url = git@github.com:ucb-bar/chipyard.git

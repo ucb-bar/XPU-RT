@@ -12,8 +12,14 @@ import json
 import argparse
 import numpy as np
 
-# Add parent path to sys path to enable imports
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Add the in-tree xpu-rt directory to sys.path BEFORE site-packages so
+# our local edits take priority over any shadowed install in the
+# active conda env (xpurt has greedy_scheduler.py installed as a flat
+# site-packages module — without insert(0, ...), the install shadows
+# our updates).
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, _REPO_ROOT)
+sys.path.insert(0, os.path.join(_REPO_ROOT, "xpu-rt"))
 
 import time
 
@@ -25,6 +31,13 @@ from workload_factory import (
 )
 from schedulers import get_scheduler, available_schedulers
 from metrics import compute_metrics
+# The greedy family lives in greedy_scheduler (no cvxpy dependency); the MILP
+# path is reached lazily through the registry via get_scheduler("mosek").
+from greedy_scheduler import (
+    greedy_schedule,
+    greedy_periodic_schedule,
+    decomposed_schedule,
+)
 from profile_loader import load_profiled_processing_times
 from postprocessing import trim_periodic_after_nonperiodic_makespan, output_scheduled_json
 import plot
@@ -66,11 +79,37 @@ def load_networks_config(json_path: str) -> tuple[dict, dict]:
     else:
         machine_core_counts = {CPU_P: 1, CPU_E: 1}
 
+    # Generalised profile_hw map: every key in `hardware.machines` may have
+    # a corresponding entry in `hardware.profile_hw` mapping it to a
+    # bitstream/backend tag (e.g. "HTP", "GPU_fp16", "RVV"). The legacy
+    # cpu_p/cpu_e fields below are kept for back-compat with two-machine
+    # configs and for profile_loader's "p"/"e" output bucketing — when more
+    # than two kinds are present, the first key is the "p" bucket and the
+    # rest fall into "e".
+    profile_hw_map = {k.strip().lower(): v
+                      for k, v in profile_hw.items()
+                      if isinstance(v, str)}
     cfg = {
+        "profile_hw_map":   profile_hw_map,
         "cpu_p_profile_hw": profile_hw.get("cpu_p", "RVV"),
         "cpu_e_profile_hw": profile_hw.get("cpu_e", "scalar"),
         "profile_target": profile_cfg.get("target", "spacemit_x60"),
         "profile_topo_tag": profile_cfg.get("topo_tag", "topo_0_1_2_3"),
+        # When True, the profile_topo_tag above forces every machine
+        # combination to look up profile data under that single topo,
+        # regardless of combination size. Use this when the registry
+        # models a multi-hart cluster as a single machine: the scheduler
+        # sees 1 unit per kind, but the dispatched ops use the multi-core
+        # measurements that match the cluster's actual width.
+        "profile_topo_tag_override": bool(profile_cfg.get("topo_tag_override", False)),
+        # Optional per-hw topo override, e.g.
+        #   "topo_tag_per_hw": { "RVV": "topo_0", "scalar": "topo_0_1_2_3" }
+        # Use this when one cluster maps to a single-hart machine
+        # (singleton) and another cluster maps to a multi-hart unit —
+        # each kind's machine model is one "slot" but profile lookups
+        # need to read different topos to reflect the actual cluster
+        # widths. Takes precedence over the scalar topo_tag_override.
+        "profile_topo_tag_per_hw": profile_cfg.get("topo_tag_per_hw") or None,
         "gen_root": profile_cfg.get("gen_root", None),
         "p_core_speedup": float(hw.get("p_core_speedup", 1.5)),
         "random_seed": seed,
@@ -88,6 +127,7 @@ def load_networks_config(json_path: str) -> tuple[dict, dict]:
 
 def schedule_iree_networks(
     networks_json_path: str = None,
+    solver: str = "milp",
     solver_verbosity: int | None = None,
     time_limit: float | None = None,
     random_seed: int | None = None,
@@ -96,11 +136,42 @@ def schedule_iree_networks(
     prune_periodic: bool | None = None,
     restrict_makespan_to_nonperiodic: bool | None = None,
     scheduler: str = "mosek",
+    max_periodic_iters: int = 4,
 ) -> tuple[Workload, np.ndarray, np.ndarray]:
     """
     Main function to schedule networks from a hierarchical network dependencies JSON file.
     CLI arguments override JSON config values when not None.
+
+    `solver` selects the scheduling algorithm:
+      - "milp"            (default) — global optimization via cvxpy/mosek
+                              (`scheduler.schedule`).  One pass; no
+                              periodic-instance refinement.
+      - "greedy"            — list-scheduling heuristic via
+                              `greedy_scheduler.greedy_schedule`. Runs
+                              an iterative periodic-instance refinement
+                              loop (start with num_instances=1 per
+                              periodic network if
+                              restrict_makespan_to_nonperiodic is set,
+                              then grow only as actual contention pushes
+                              the non-periodic makespan out — caps at
+                              `max_periodic_iters`).
+      - "greedy_periodic"   — same loop as `greedy`, but the per-iter
+                              picker prioritizes non-periodic ops over
+                              periodic ones. Periodic ops only get
+                              scheduled when no non-periodic is ready,
+                              with an emergency-promote when delaying
+                              would miss the periodic max_end_t
+                              window. Use when the heterogeneous
+                              workload has a non-periodic critical
+                              path (e.g. yolov8) that vanilla greedy
+                              fragments by interleaving periodic
+                              instances (e.g. dronet 50ms).
     """
+    if solver not in ("milp", "greedy", "greedy_periodic", "decomposed"):
+        raise ValueError(
+            f"solver must be 'milp' | 'greedy' | 'greedy_periodic' | 'decomposed', "
+            f"got {solver!r}"
+        )
     script_dir = os.path.dirname(os.path.abspath(__file__))
     repo_base_path = os.path.abspath(os.path.join(script_dir, '..'))
 
@@ -132,6 +203,8 @@ def schedule_iree_networks(
     cpu_e_profile_hw = cfg["cpu_e_profile_hw"]
     profile_target = cfg["profile_target"]
     profile_topo_tag = cfg["profile_topo_tag"]
+    profile_topo_tag_override = cfg["profile_topo_tag_override"]
+    profile_topo_tag_per_hw = cfg["profile_topo_tag_per_hw"]
     effective_p_core_speedup = cfg["p_core_speedup"]
     effective_random_seed = cfg["random_seed"]
     effective_solver_verbosity = cfg["solver_verbosity"]
@@ -172,23 +245,36 @@ def schedule_iree_networks(
     n_cores = len(machines)
     transfer_times = np.zeros((n_cores, n_cores))
 
-    # Map each combination to its profile hw and topo tag
-    # e.g. [CPU_P#0, CPU_P#1] → hw="RVV", topo="topo_0_1"
+    # Map each combination to its profile hw and topo tag.
+    # The general path uses the full profile_hw_map (machine-kind → hw
+    # backend), so configs with three or more machine kinds (e.g.
+    # CPU/GPU/HTP) work the same way as the legacy CPU_P/CPU_E split.
+    profile_hw_map = cfg["profile_hw_map"]
     combo_hw = []
     for combo in machine_combinations:
         core_type = machine_type_prefix(combo[0])
-        if core_type == CPU_P:
-            combo_hw.append(cpu_p_profile_hw)
-        else:
-            combo_hw.append(cpu_e_profile_hw)
+        hw = profile_hw_map.get(core_type.lower())
+        if hw is None:
+            # Fall back to the legacy two-machine convention.
+            hw = cpu_p_profile_hw if core_type == CPU_P else cpu_e_profile_hw
+        combo_hw.append(hw)
 
     # Optional: build profiled processing times if requested
     processing_times: dict[str, list[float]] | None = None
     combined_profiled_p: dict[int, dict] | None = None
     combined_profiled_e: dict[int, dict] | None = None
+    profiled_by_network: dict[str, dict[str, dict[int, dict]]] | None = None
     if effective_use_profiled:
         print("\nUsing profiled runtimes where available...")
-        processing_times, combined_profiled_p, combined_profiled_e = load_profiled_processing_times(
+        # Resolve which override flavor to pass: per-hw dict wins over
+        # single-string override.
+        if profile_topo_tag_per_hw:
+            tt_override = dict(profile_topo_tag_per_hw)
+        elif profile_topo_tag_override:
+            tt_override = profile_topo_tag
+        else:
+            tt_override = None
+        processing_times, combined_profiled_p, combined_profiled_e, profiled_by_network = load_profiled_processing_times(
             networks=networks,
             repo_base_path=repo_base_path,
             machine_combinations=machine_combinations,
@@ -198,61 +284,194 @@ def schedule_iree_networks(
             cpu_e_profile_hw=cpu_e_profile_hw,
             rng=rng,
             p_core_speedup=effective_p_core_speedup,
+            topo_tag_override=tt_override,
         )
 
-    # Create workload from network hierarchy
-    print(f"\nCreating workload from network hierarchy...")
-    combined_workload = create_workload_from_network_hierarchy(
-        networks_data=networks_data,
-        repo_base_path=repo_base_path,
-        machines=machines,
-        transfer_times=transfer_times,
-        p_core_speedup=effective_p_core_speedup,
-        random_seed=effective_random_seed,
-        processing_times=processing_times,
-        machine_combinations=machine_combinations,
-    )
-    
-    print(f"\nWorkload created successfully!")
-    print(f"  Total operations: {len(combined_workload.operations)}")
-    print(f"  Scheduler machines ({len(combined_workload.machines)} cores): {combined_workload.machines}")
-    print(
-        f"  Machine combination options: {len(combined_workload.get_machine_combinations())} "
-        f"(mode={machine_combination_mode})"
-    )
-    print(f"  Job names: {combined_workload.job_names}")
-    
-    # Print some statistics
-    operations_with_multiple_predecessors = [
-        op for op in combined_workload.operations if len(op.predecessors) > 1
-    ]
-    print(f"  Operations with multiple predecessors: {len(operations_with_multiple_predecessors)}")
-    
-    # Count independent jobs (operations with no predecessors)
-    independent_jobs = sum(1 for op in combined_workload.operations if not op.predecessors)
-    print(f"  Independent jobs (can run in parallel): {independent_jobs}")
-    
-    # Schedule the combined workload
-    print("\n" + "=" * 60)
-    print(f"Scheduling combined workload (scheduler={scheduler})...")
-    print("=" * 60)
-    scheduler_fn = get_scheduler(scheduler)
-    solver_t0 = time.perf_counter()
-    result = scheduler_fn(
-        combined_workload,
-        solver_verbosity=effective_solver_verbosity,
-        time_limit=effective_time_limit,
-        restrict_makespan_to_nonperiodic=effective_restrict_makespan_to_nonperiodic,
-        prune_cross_period_constraints=effective_prune_periodic,
-    )
-    solver_wall_time_s = time.perf_counter() - solver_t0
-    t, alpha, _, _ = result  # Always returns 4 values now
-    
-    # Post-process schedule: optionally trim periodic/background operations that
-    # occur entirely after the non-periodic makespan.
-    if effective_prune_periodic:
-        combined_workload, t, alpha = trim_periodic_after_nonperiodic_makespan(combined_workload, t, alpha)
-    
+    def _build_workload():
+        return create_workload_from_network_hierarchy(
+            networks_data=networks_data,
+            repo_base_path=repo_base_path,
+            machines=machines,
+            transfer_times=transfer_times,
+            p_core_speedup=effective_p_core_speedup,
+            random_seed=effective_random_seed,
+            processing_times=processing_times,
+            machine_combinations=machine_combinations,
+        )
+
+    if solver == "milp":
+        # Single global solve. Build workload once, run the selected registry
+        # scheduler (default "mosek" == the CVXPY/MOSEK MILP), post-process trim.
+        print(f"\nCreating workload from network hierarchy...")
+        combined_workload = _build_workload()
+
+        print(f"\nWorkload created successfully!")
+        print(f"  Total operations: {len(combined_workload.operations)}")
+        print(f"  Scheduler machines ({len(combined_workload.machines)} cores): {combined_workload.machines}")
+        print(
+            f"  Machine combination options: {len(combined_workload.get_machine_combinations())} "
+            f"(mode={machine_combination_mode})"
+        )
+        print(f"  Job names: {combined_workload.job_names}")
+
+        operations_with_multiple_predecessors = [
+            op for op in combined_workload.operations if len(op.predecessors) > 1
+        ]
+        print(f"  Operations with multiple predecessors: {len(operations_with_multiple_predecessors)}")
+        independent_jobs = sum(1 for op in combined_workload.operations if not op.predecessors)
+        print(f"  Independent jobs (can run in parallel): {independent_jobs}")
+
+        print("\n" + "=" * 60)
+        print(f"Scheduling combined workload (scheduler={scheduler})...")
+        print("=" * 60)
+        # Route the single-pass solve through the schedulers registry so
+        # `--scheduler` can profile any registered algorithm
+        # (heft/peft/edf/cpsat/milp_*/...). get_scheduler("mosek") is the
+        # CVXPY/MOSEK MILP, so the default behaviour is unchanged.
+        scheduler_fn = get_scheduler(scheduler)
+        solver_t0 = time.perf_counter()
+        result = scheduler_fn(
+            combined_workload,
+            solver_verbosity=effective_solver_verbosity,
+            time_limit=effective_time_limit,
+            restrict_makespan_to_nonperiodic=effective_restrict_makespan_to_nonperiodic,
+            prune_cross_period_constraints=effective_prune_periodic,
+        )
+        solver_wall_time_s = time.perf_counter() - solver_t0
+        t, alpha, _, _ = result
+
+        if effective_prune_periodic:
+            combined_workload, t, alpha = trim_periodic_after_nonperiodic_makespan(
+                combined_workload, t, alpha
+            )
+    else:
+        # solver == "greedy" or "greedy_periodic": iterative periodic-
+        # instance refinement. See greedy_scheduler for the per-pass
+        # algorithm; only the picker discipline differs between the two.
+        # Loop strategy:
+        #   - low-seed: force num_instances=1 per periodic network when
+        #     restrict_makespan_to_nonperiodic is set (otherwise the
+        #     workload_factory horizon S_np/(1-F_p) inflates the seed
+        #     and the joint schedule converges to a bad equilibrium —
+        #     non-periodic finishes late *because of* over-allocated
+        #     periodic, justifying the over-allocation).
+        #   - per pass: build workload, run greedy, measure makespan
+        #     over non-periodic ops only (when the flag is set), grow
+        #     periodic counts to ceil(makespan/period) for any short
+        #     network; iterate until counts are stable or
+        #     `max_periodic_iters` is hit.
+        solver_t0 = time.perf_counter()
+        if effective_restrict_makespan_to_nonperiodic:
+            for net_id, net_info in networks.items():
+                if net_info.get("period") is not None:
+                    networks_data["networks"][net_id]["num_instances"] = 1
+
+        # Pick the per-pass picker function.
+        if solver == "greedy_periodic":
+            _greedy_fn = greedy_periodic_schedule
+        elif solver == "decomposed":
+            _greedy_fn = decomposed_schedule
+        else:
+            _greedy_fn = greedy_schedule
+
+        combined_workload = None
+        t = None
+        alpha = None
+        prev_counts: dict[str, int] = {}
+        for it in range(max_periodic_iters):
+            print(f"\n--- {solver} iteration {it + 1} ---")
+            combined_workload = _build_workload()
+            print(f"  Total operations: {len(combined_workload.operations)}")
+            print(f"  Job names: {combined_workload.job_names}")
+
+            t, alpha = _greedy_fn(combined_workload)
+
+            # Measure makespan, optionally restricted to non-periodic ops
+            # (matches the MILP solver's objective when
+            # restrict_makespan_to_nonperiodic is on).
+            machine_combinations_iter = combined_workload.get_machine_combinations()
+            periodic_net_ids = {
+                nid for nid, info in networks.items()
+                if info.get("period") is not None
+            }
+            def _is_periodic_op(op_idx: int) -> bool:
+                jn = (combined_workload.job_names[op_idx]
+                      if op_idx < len(combined_workload.job_names) else "")
+                if not isinstance(jn, str):
+                    return False
+                for nid in periodic_net_ids:
+                    if jn.startswith(nid) and jn[len(nid):].isdigit() and jn != nid:
+                        return True
+                return False
+            iter_makespan = 0.0
+            iter_makespan_all = 0.0
+            for i, op in enumerate(combined_workload.operations):
+                combo_idx = int(np.argmax(alpha[i]))
+                dur = op.get_duration_for_combination(
+                    combo_idx, machine_combinations_iter, combined_workload.machines
+                )
+                finish = float(t[i]) + float(dur)
+                if finish > iter_makespan_all:
+                    iter_makespan_all = finish
+                if effective_restrict_makespan_to_nonperiodic and _is_periodic_op(i):
+                    continue
+                if finish > iter_makespan:
+                    iter_makespan = finish
+            if effective_restrict_makespan_to_nonperiodic:
+                print(f"  Makespan: {iter_makespan:.2f} ms (non-periodic only; "
+                      f"all-ops max-end = {iter_makespan_all:.2f} ms)")
+            else:
+                print(f"  Makespan: {iter_makespan:.2f} ms")
+
+            # Refine periodic counts: each periodic net needs
+            # ceil(makespan/period) instances. Don't shrink — periodic
+            # workloads only need to grow to cover larger makespans.
+            needed_counts: dict[str, int] = {}
+            for net_id, net_info in networks.items():
+                period = net_info.get("period")
+                window_duration = net_info.get("window_duration")
+                if period is None or window_duration is None:
+                    continue
+                try:
+                    T = float(period)
+                except (TypeError, ValueError):
+                    continue
+                if T <= 0:
+                    continue
+                needed = max(1, int(np.ceil(iter_makespan / T)))
+                current = int(net_info.get("num_instances") or prev_counts.get(net_id, 0))
+                if current == 0:
+                    current = sum(
+                        1 for n in combined_workload.job_names
+                        if isinstance(n, str) and n.startswith(net_id) and n[len(net_id):].isdigit()
+                    )
+                print(f"  Periodic '{net_id}': period={T:.0f}ms current={current} needed={needed}")
+                needed_counts[net_id] = needed
+                prev_counts[net_id] = current
+
+            if all(prev_counts.get(k, 0) >= v for k, v in needed_counts.items()):
+                print("  All periodic counts cover makespan — converged.")
+                break
+            bumped = []
+            for net_id, needed in needed_counts.items():
+                cur = prev_counts.get(net_id, 0)
+                if cur < needed:
+                    networks_data["networks"][net_id]["num_instances"] = needed
+                    bumped.append((net_id, cur, needed))
+            if not bumped:
+                break
+            print("  Bumping num_instances:", ", ".join(f"{n}: {a}->{b}" for n, a, b in bumped))
+        print(f"\nFinal greedy makespan: {iter_makespan:.2f} ms (after {it + 1} iteration{'s' if it else ''})")
+        solver_wall_time_s = time.perf_counter() - solver_t0
+
+        if effective_prune_periodic:
+            combined_workload, t, alpha = trim_periodic_after_nonperiodic_makespan(
+                combined_workload, t, alpha
+            )
+
+    # Name of the algorithm actually run (for metrics / report labeling): the
+    # registry scheduler on the MILP path, else the greedy-family solver.
+    algo_name = scheduler if solver == "milp" else solver
     # Calculate makespan (non-periodic operations only, matching the solver objective)
     machine_combinations = combined_workload.get_machine_combinations()
     completion_times = []
@@ -319,6 +538,41 @@ def schedule_iree_networks(
                      for i in sorted(set(op.job_id for op in combined_workload.operations))]
     title_networks = " + ".join([name.capitalize() for name in network_names])
     
+    # Output naming: solver tag + optional `_profiled` suffix.  MILP
+    # historically wrote to `plots/iree_combined_schedule_period.png`
+    # (a single hardcoded path that got overwritten across runs); the
+    # merged path standardizes to `plots/<base>{_greedy}{_profiled}.png`
+    # and `schedules/scheduled_<base>{_greedy}{_profiled}.json`.  MILP
+    # outputs intentionally have no `_milp` infix so existing consumers
+    # (e.g. xpurt_demo's default SCHEDULE_JSON path) keep working.
+    input_json_basename = os.path.basename(networks_json_path)
+    input_json_name = os.path.splitext(input_json_basename)[0]
+    if solver == "greedy":
+        solver_tag = "_greedy"
+        title_solver = "Greedy "
+    elif solver == "greedy_periodic":
+        solver_tag = "_greedy_periodic"
+        title_solver = "Greedy-periodic "
+    elif solver == "decomposed":
+        solver_tag = "_decomposed"
+        title_solver = "Decomposed-EDF "
+    else:
+        # MILP/registry path: default "mosek" keeps no infix for back-compat;
+        # other registry schedulers are tagged so a sweep (heft/peft/edf/...)
+        # doesn't clobber the canonical mosek outputs.
+        solver_tag = "" if scheduler == "mosek" else f"_{scheduler}"
+        title_solver = "" if scheduler == "mosek" else f"{scheduler} "
+    profiled_tag = "_profiled" if effective_use_profiled else ""
+    plot_path = f"plots/{input_json_name}{solver_tag}{profiled_tag}.png"
+    json_output_path = f"schedules/scheduled_{input_json_name}{solver_tag}{profiled_tag}.json"
+    # Hardware-name labels on the y-axis: instead of "CPU_P#0" / "CPU_E#0",
+    # show "gemmini_q31 (CPU_P#0)" / "RVV (CPU_E#0)". Resolves to the
+    # bitstream-level identity from the schedule input's profile_hw map.
+    # Builds the per-machine-kind label from the generalised profile_hw_map
+    # so 3-way (and higher) configs render correctly.
+    plot_profile_hw = {k.upper(): v for k, v in profile_hw_map.items()}
+    plot_profile_hw.setdefault(CPU_P, cpu_p_profile_hw)
+    plot_profile_hw.setdefault(CPU_E, cpu_e_profile_hw)
     plot.plot_optimization_schedule(
         combined_workload.get_durations(),
         t,
@@ -327,25 +581,15 @@ def schedule_iree_networks(
         len(combined_workload.machines),
         combined_workload.machines,
         combined_workload.get_transfer_times(),
-        save_path="plots/iree_combined_schedule_period.png",
-        plot_title=f"{title_networks} Schedule ({n_cores} cores) (Periodic)",
-        workload=combined_workload
+        save_path=plot_path,
+        plot_title=f"{title_networks} {title_solver}Schedule ({n_cores} cores) (Periodic)",
+        workload=combined_workload,
+        profile_hw=plot_profile_hw,
     )
-    
-    print(f"\nPlot saved to plots/iree_combined_schedule_period.png")
-    
-    # Output combined JSON file with scheduling information
-    os.makedirs("schedules", exist_ok=True)
-    # Extract base filename from input JSON path
-    input_json_basename = os.path.basename(networks_json_path)
-    input_json_name = os.path.splitext(input_json_basename)[0]  # Remove .json extension
-    json_output_path = f"schedules/scheduled_{input_json_name}.json"
-    if effective_use_profiled:
-        json_output_path = json_output_path.replace(".json", "_profiled.json")
-    # Suffix non-default schedulers so they don't clobber the canonical mosek output.
-    if scheduler != "mosek":
-        json_output_path = json_output_path.replace(".json", f"_{scheduler}.json")
 
+    print(f"\nPlot saved to {plot_path}")
+
+    os.makedirs("schedules", exist_ok=True)
     print(f"\nOutputting scheduled JSON...")
     output_scheduled_json(
         combined_workload=combined_workload,
@@ -353,7 +597,9 @@ def schedule_iree_networks(
         alpha=alpha,
         output_path=json_output_path,
         profiled_times_p=combined_profiled_p,
-        profiled_times_e=combined_profiled_e
+        profiled_times_e=combined_profiled_e,
+        profile_hw=plot_profile_hw,
+        profiled_times_by_network=profiled_by_network,
     )
 
     # Emit per-run metrics next to the schedule JSON (additive — does not affect
@@ -364,7 +610,7 @@ def schedule_iree_networks(
             combined_workload,
             t,
             alpha,
-            scheduler_name=scheduler,
+            scheduler_name=algo_name,
             solver_wall_time_s=solver_wall_time_s,
         )
         metrics_path = json_output_path.replace(".json", "_metrics.json")
@@ -391,17 +637,39 @@ if __name__ == "__main__":
         help="Path to the top-level networks dependencies JSON file (default: data/toplevel/networks_periodic_profile.json)"
     )
     parser.add_argument(
+        "--solver",
+        type=str,
+        default="milp",
+        choices=["milp", "greedy", "greedy_periodic", "decomposed"],
+        help="Scheduling algorithm. 'milp' (default) is the global cvxpy/mosek "
+             "solver. 'greedy' is a list-scheduling heuristic with iterative "
+             "periodic-instance refinement — fast, no external solver needed, "
+             "and suitable for large workloads where the MILP times out. "
+             "'greedy_periodic' is the same loop but the per-iter picker "
+             "prioritizes non-periodic ops over periodic ones (use for "
+             "heterogeneous workloads where the non-periodic critical path "
+             "shouldn't be fragmented by periodic instances).",
+    )
+    parser.add_argument(
+        "--max-periodic-iters",
+        type=int,
+        default=4,
+        help="(greedy only) cap on iterations of the periodic-instance "
+             "refinement loop (default: 4).",
+    )
+    parser.add_argument(
         "--solver-verbosity",
         type=int,
         default=0,
         choices=[0, 1, 2, 3, 4],
-        help="MOSEK solver verbosity level override: 0=silent, 1=errors, 2=warnings, 3=info, 4=detailed progress. If omitted, use JSON/default.",
+        help="(milp only) MOSEK solver verbosity level: 0=silent, 1=errors, "
+             "2=warnings, 3=info, 4=detailed progress.",
     )
     parser.add_argument(
         "--time-limit",
         type=float,
         default=20,
-        help="Maximum optimization time in seconds (override). If omitted, use JSON/default.",
+        help="(milp only) Maximum optimization time in seconds (override).",
     )
     parser.add_argument(
         "--profiled",
@@ -409,6 +677,13 @@ if __name__ == "__main__":
         action="store_true",
         default=True,
         help="Enable profiled runtimes (default: enabled).",
+    )
+    # Compatibility alias for the previous run_greedy_schedule.py CLI.
+    parser.add_argument(
+        "--use-profiled",
+        dest="profiled",
+        action="store_true",
+        help="Compat alias for --profiled.",
     )
     parser.add_argument(
         "--no-profiled",
@@ -467,6 +742,7 @@ if __name__ == "__main__":
 
     schedule_iree_networks(
         networks_json_path=args.networks_json,
+        solver=args.solver,
         solver_verbosity=args.solver_verbosity,
         time_limit=args.time_limit,
         random_seed=seed,
@@ -475,4 +751,5 @@ if __name__ == "__main__":
         prune_periodic=args.prune_periodic,
         restrict_makespan_to_nonperiodic=args.restrict_makespan_to_nonperiodic,
         scheduler=args.scheduler,
+        max_periodic_iters=args.max_periodic_iters,
     )

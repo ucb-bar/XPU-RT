@@ -1,0 +1,93 @@
+[v3_dsp_segs/Dsp] 25 DLCs to bundle (chunk size 10)
+  chunk0: FAIL rc=10
+    
+        62.5ms [ ERROR ] Could not initialize backend
+    Backend Initialization failure
+  chunk1: FAIL rc=10
+    
+        51.3ms [ ERROR ] Could not initialize backend
+    Backend Initialization failure
+  chunk2: FAIL rc=10
+    
+        55.2ms [ ERROR ] Could not initialize backend
+    Backend Initialization failure
+[v3_dsp_segs/Cpu] 25 DLCs to bundle (chunk size 10)
+  chunk0: 34622896 B
+  chunk1: 35610256 B
+  chunk2: 28419336 B
+[v3_cpu_segs/Cpu] 24 DLCs to bundle (chunk size 10)
+  chunk0: 17592 B
+  chunk1: 17736 B
+  chunk2: 7552 B
+[v3_hta_convs/Hta] 50 DLCs to bundle (chunk size 10)
+  chunk0: 22363664 B
+  chunk1: 17251880 B
+  chunk2: 18431528 B
+  chunk3: 17251888 B
+  chunk4: 28450352 B
+[v3_tramps/Dsp] 74 DLCs to bundle (chunk size 10)
+  chunk0: FAIL rc=10
+    
+        51.4ms [ ERROR ] Could not initialize backend
+    Backend Initialization failure
+  chunk1: FAIL rc=10
+    
+        51.3ms [ ERROR ] Could not initialize backend
+    Backend Initialization failure
+  chunk2: FAIL rc=10
+    
+        52.5ms [ ERROR ] Could not initialize backend
+    Backend Initialization failure
+  chunk3: FAIL rc=10
+    
+        45.6ms [ ERROR ] Could not initialize backend
+    Backend Initialization failure
+  chunk4: FAIL rc=10
+    
+        58.2ms [ ERROR ] Could not initialize backend
+    Backend Initialization failure
+  chunk5: FAIL rc=10
+    
+        53.2ms [ ERROR ] Could not initialize backend
+    Backend Initialization failure
+  chunk6: FAIL rc=10
+    
+        49.5ms [ ERROR ] Could not initialize backend
+    Backend Initialization failure
+  chunk7: FAIL rc=10
+    
+        51.2ms [ ERROR ] Could not initialize backend
+    Backend Initialization failure
+
+[v3_tramps/Cpu] swap src dir to fp32 trampolines
+[v3_tramps/Cpu] 74 DLCs to bundle (chunk size 10)
+  chunk0: 3216160 B
+  chunk1: 65520 B
+  chunk2: 59080 B
+  chunk3: 70752 B
+  chunk4: 65800 B
+  chunk5: 59312 B
+  chunk6: 70912 B
+  chunk7: 22992 B
+
+=== Summary ===
+Multi-graph ctx binaries built: 19
+  17592 /root/multi_ctx/ctx_v3_cpu_segs_chunk0__Cpu.bin
+  17736 /root/multi_ctx/ctx_v3_cpu_segs_chunk1__Cpu.bin
+  7552 /root/multi_ctx/ctx_v3_cpu_segs_chunk2__Cpu.bin
+  34622896 /root/multi_ctx/ctx_v3_dsp_segs_chunk0__Cpu.bin
+  35610256 /root/multi_ctx/ctx_v3_dsp_segs_chunk1__Cpu.bin
+  28419336 /root/multi_ctx/ctx_v3_dsp_segs_chunk2__Cpu.bin
+  22363664 /root/multi_ctx/ctx_v3_hta_convs_chunk0__Hta.bin
+  17251880 /root/multi_ctx/ctx_v3_hta_convs_chunk1__Hta.bin
+  18431528 /root/multi_ctx/ctx_v3_hta_convs_chunk2__Hta.bin
+  17251888 /root/multi_ctx/ctx_v3_hta_convs_chunk3__Hta.bin
+  28450352 /root/multi_ctx/ctx_v3_hta_convs_chunk4__Hta.bin
+  3216160 /root/multi_ctx/ctx_v3_tramps_chunk0__Cpu.bin
+  65520 /root/multi_ctx/ctx_v3_tramps_chunk1__Cpu.bin
+  59080 /root/multi_ctx/ctx_v3_tramps_chunk2__Cpu.bin
+  70752 /root/multi_ctx/ctx_v3_tramps_chunk3__Cpu.bin
+  65800 /root/multi_ctx/ctx_v3_tramps_chunk4__Cpu.bin
+  59312 /root/multi_ctx/ctx_v3_tramps_chunk5__Cpu.bin
+  70912 /root/multi_ctx/ctx_v3_tramps_chunk6__Cpu.bin
+  22992 /root/multi_ctx/ctx_v3_tramps_chunk7__Cpu.bin

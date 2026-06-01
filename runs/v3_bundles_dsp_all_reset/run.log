@@ -1,0 +1,710 @@
+==> built 223408 bytes
+[main] XPURT_DSP_CTX_BUDGET=24 (lazy DSP load + LRU eviction)
+[main] XPURT_HTA_CTX_BUDGET=24 (lazy HTA load + LRU eviction)
+[main] XPURT_DSP_RESET_THRESHOLD=28 (free+recreate DSP backend when cumulative creates exceed N)
+[main] XPURT_PREFETCH_LOOKAHEAD=8 (background prefetcher thread; loads K dispatches ahead)
+[bringup] smolvlm_vision_v3_bundles/CPU graph=dsp_seg_00 in=1(786432 B) out=3
+[bringup] smolvlm_vision_v3_bundles/CPU warmup x2 in 157.14 ms
+[bringup] smolvlm_vision_v3_bundles/CPU graph=cpu_seg_00 in=2(50331648 B) out=1
+[bringup] smolvlm_vision_v3_bundles/CPU warmup x2 in 125.79 ms
+[bringup] smolvlm_vision_v3_bundles/CPU graph=cpu_seg_01 in=1(12582912 B) out=1
+[bringup] smolvlm_vision_v3_bundles/CPU warmup x2 in 22.21 ms
+[bringup] smolvlm_vision_v3_bundles/CPU graph=cpu_seg_02 in=2(50331648 B) out=1
+[bringup] smolvlm_vision_v3_bundles/CPU warmup x2 in 100.77 ms
+[bringup] smolvlm_vision_v3_bundles/CPU graph=cpu_seg_03 in=1(12582912 B) out=1
+[bringup] smolvlm_vision_v3_bundles/CPU warmup x2 in 22.36 ms
+[bringup] smolvlm_vision_v3_bundles/CPU graph=cpu_seg_04 in=2(50331648 B) out=1
+[bringup] smolvlm_vision_v3_bundles/CPU warmup x2 in 138.01 ms
+[bringup] smolvlm_vision_v3_bundles/CPU graph=cpu_seg_05 in=1(12582912 B) out=1
+[bringup] smolvlm_vision_v3_bundles/CPU warmup x2 in 21.93 ms
+[bringup] smolvlm_vision_v3_bundles/CPU graph=cpu_seg_06 in=2(50331648 B) out=1
+[bringup] smolvlm_vision_v3_bundles/CPU warmup x2 in 126.52 ms
+[bringup] smolvlm_vision_v3_bundles/CPU graph=cpu_seg_07 in=1(12582912 B) out=1
+[bringup] smolvlm_vision_v3_bundles/CPU warmup x2 in 22.21 ms
+[bringup] smolvlm_vision_v3_bundles/CPU graph=cpu_seg_08 in=2(50331648 B) out=1
+[bringup] smolvlm_vision_v3_bundles/CPU warmup x2 in 132.74 ms
+[bringup] smolvlm_vision_v3_bundles/CPU graph=cpu_seg_09 in=1(12582912 B) out=1
+[bringup] smolvlm_vision_v3_bundles/CPU warmup x2 in 22.27 ms
+[bringup] smolvlm_vision_v3_bundles/CPU graph=cpu_seg_10 in=2(50331648 B) out=1
+[bringup] smolvlm_vision_v3_bundles/CPU warmup x2 in 124.69 ms
+[bringup] smolvlm_vision_v3_bundles/CPU graph=cpu_seg_11 in=1(12582912 B) out=1
+[bringup] smolvlm_vision_v3_bundles/CPU warmup x2 in 21.98 ms
+[bringup] smolvlm_vision_v3_bundles/CPU graph=cpu_seg_12 in=2(50331648 B) out=1
+[bringup] smolvlm_vision_v3_bundles/CPU warmup x2 in 140.01 ms
+[bringup] smolvlm_vision_v3_bundles/CPU graph=cpu_seg_13 in=1(12582912 B) out=1
+[bringup] smolvlm_vision_v3_bundles/CPU warmup x2 in 22.37 ms
+[bringup] smolvlm_vision_v3_bundles/CPU graph=cpu_seg_14 in=2(50331648 B) out=1
+[bringup] smolvlm_vision_v3_bundles/CPU warmup x2 in 125.94 ms
+[bringup] smolvlm_vision_v3_bundles/CPU graph=cpu_seg_15 in=1(12582912 B) out=1
+[bringup] smolvlm_vision_v3_bundles/CPU warmup x2 in 22.28 ms
+[bringup] smolvlm_vision_v3_bundles/CPU graph=cpu_seg_16 in=2(50331648 B) out=1
+[bringup] smolvlm_vision_v3_bundles/CPU warmup x2 in 132.26 ms
+[bringup] smolvlm_vision_v3_bundles/CPU graph=cpu_seg_17 in=1(12582912 B) out=1
+[bringup] smolvlm_vision_v3_bundles/CPU warmup x2 in 22.21 ms
+[bringup] smolvlm_vision_v3_bundles/CPU graph=cpu_seg_18 in=2(50331648 B) out=1
+[bringup] smolvlm_vision_v3_bundles/CPU warmup x2 in 119.18 ms
+[bringup] smolvlm_vision_v3_bundles/CPU graph=cpu_seg_19 in=1(12582912 B) out=1
+[bringup] smolvlm_vision_v3_bundles/CPU warmup x2 in 23.78 ms
+[bringup] smolvlm_vision_v3_bundles/CPU graph=cpu_seg_20 in=2(50331648 B) out=1
+[bringup] smolvlm_vision_v3_bundles/CPU warmup x2 in 127.32 ms
+[bringup] smolvlm_vision_v3_bundles/CPU graph=cpu_seg_21 in=1(12582912 B) out=1
+[bringup] smolvlm_vision_v3_bundles/CPU warmup x2 in 22.99 ms
+[bringup] smolvlm_vision_v3_bundles/CPU graph=cpu_seg_22 in=2(50331648 B) out=1
+[bringup] smolvlm_vision_v3_bundles/CPU warmup x2 in 123.31 ms
+[bringup] smolvlm_vision_v3_bundles/CPU graph=cpu_seg_23 in=1(12582912 B) out=1
+[bringup] smolvlm_vision_v3_bundles/CPU warmup x2 in 22.61 ms
+[bringup] smolvlm_vision_v3_bundles/CPU graph=dsp_seg_24 in=3(3145728 B) out=1
+[bringup] smolvlm_vision_v3_bundles/CPU warmup x2 in 178.71 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_01_tramp_p0 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 3.67 ms
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_01_node_MatMul_549_conv1x1 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 7.03 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_01_tramp_p1 in=2(786432 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 10.79 ms
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_01_node_MatMul_554_conv1x1 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 16.82 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_01_tramp_p2 in=1(3145728 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 37.99 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_02_tramp_p0 in=2(3145728 B) out=1
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 31.79 ms
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_02_node_MatMul_570_conv1x1 in=1(3145728 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 37.22 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_02_tramp_p1 in=2(786432 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 12.93 ms
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_02_sng_MatMul_2_conv1x1 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 13.15 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_02_tramp_p2 in=1(2359296 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 95.92 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_03_tramp_p0 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 4.78 ms
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_03_node_MatMul_669_conv1x1 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 5.07 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_03_tramp_p1 in=2(786432 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 12.92 ms
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_03_node_MatMul_674_conv1x1 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 19.21 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_03_tramp_p2 in=1(3145728 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 42.77 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_04_tramp_p0 in=2(3145728 B) out=1
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 34.79 ms
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_04_node_MatMul_690_conv1x1 in=1(3145728 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 39.08 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_04_tramp_p1 in=2(786432 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 11.81 ms
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_04_sng_MatMul_4_conv1x1 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 12.91 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_04_tramp_p2 in=1(2359296 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 95.96 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_05_tramp_p0 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 3.88 ms
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_05_node_MatMul_789_conv1x1 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 7.33 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_05_tramp_p1 in=2(786432 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 11.61 ms
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_05_node_MatMul_794_conv1x1 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 18.81 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_05_tramp_p2 in=1(3145728 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 44.37 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_06_tramp_p0 in=2(3145728 B) out=1
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 34.46 ms
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_06_node_MatMul_810_conv1x1 in=1(3145728 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 36.87 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_06_tramp_p1 in=2(786432 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 12.46 ms
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_06_sng_MatMul_6_conv1x1 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 12.84 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_06_tramp_p2 in=1(2359296 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 93.16 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_07_tramp_p0 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 3.92 ms
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_07_node_MatMul_909_conv1x1 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 6.60 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_07_tramp_p1 in=2(786432 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 11.02 ms
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_07_node_MatMul_914_conv1x1 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 18.42 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_07_tramp_p2 in=1(3145728 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 45.23 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_08_tramp_p0 in=2(3145728 B) out=1
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 32.09 ms
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_08_node_MatMul_930_conv1x1 in=1(3145728 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 36.00 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_08_tramp_p1 in=2(786432 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 11.59 ms
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_08_sng_MatMul_8_conv1x1 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 15.33 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_08_tramp_p2 in=1(2359296 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 94.83 ms
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_09_node_MatMul_1029_conv1x1 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 5.08 ms
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_09_node_MatMul_1034_conv1x1 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 19.46 ms
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_10_node_MatMul_1050_conv1x1 in=1(3145728 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 34.50 ms
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_10_sng_MatMul_10_conv1x1 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 13.07 ms
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_11_node_MatMul_1149_conv1x1 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 5.15 ms
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_11_node_MatMul_1154_conv1x1 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 19.49 ms
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_12_node_MatMul_1170_conv1x1 in=1(3145728 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 34.76 ms
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_12_sng_MatMul_12_conv1x1 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 13.34 ms
+[main] prefetched DSP=24 (budget=24) HTA=24 (budget=24)
+[main] 74 unique contexts loaded eagerly for 141 schedule entries (missing/skipped: 0, deferred DSP: 67)
+[main] entries=141 worker-lanes=3 unique-ctx=74 split_by_network=0
+  worker lane: kind=CPU_X  backend=CPU  network=*
+  worker lane: kind=CPU_E  backend=DSP  network=*
+  worker lane: kind=CPU_P  backend=HTA  network=*
+/prj/qct/webtech_scratch20/mlg_user_admin/qaisw_source_repo/rel/qairt-2.45.0/release/SNPE_SRC/avante-tools/prebuilt/dsp/hexagon-sdk-4.1.0/ipc/fastrpc/rpcmem/src/rpcmem_android.c:38:dummy call to rpcmem_init, rpcmem APIs will be used from libxdsprpc
+[run] seg=0    net=smolvlm_vision_v3_bundles#0 kind=CPU_X n_ops=1  predicted=68.492 ms actual=80.433 ms (start_off=0.343, late=+0.343 ms)
+[run] seg=1    net=smolvlm_vision_v3_bundles#0 kind=CPU_X n_ops=1  predicted=36.071 ms actual=37.383 ms (start_off=80.797, late=+12.305 ms)
+[run] seg=2    net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=1.679 ms actual=2.468 ms (start_off=118.595, late=+14.032 ms)
+[run] seg=3    net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=3.101 ms actual=3.345 ms (start_off=121.348, late=+15.105 ms)
+[run] seg=4    net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=6.485 ms actual=6.759 ms (start_off=124.721, late=+15.378 ms)
+[run] seg=5    net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=9.298 ms actual=9.370 ms (start_off=131.697, late=+15.870 ms)
+[run] seg=6    net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=20.403 ms actual=18.400 ms (start_off=141.101, late=+15.975 ms)
+[run] seg=7    net=smolvlm_vision_v3_bundles#0 kind=CPU_X n_ops=1  predicted=9.169 ms actual=9.181 ms (start_off=159.774, late=+14.244 ms)
+[run] seg=8    net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=18.659 ms actual=16.103 ms (start_off=169.329, late=+14.631 ms)
+[run] seg=9    net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=15.922 ms actual=17.578 ms (start_off=185.468, late=+12.111 ms)
+[run] seg=10   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=7.028 ms actual=6.037 ms (start_off=203.087, late=+13.808 ms)
+[run] seg=11   net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=6.232 ms actual=6.908 ms (start_off=209.162, late=+12.854 ms)
+[run] seg=12   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=49.715 ms actual=45.132 ms (start_off=216.100, late=+13.561 ms)
+[run] seg=13   net=smolvlm_vision_v3_bundles#0 kind=CPU_X n_ops=1  predicted=36.099 ms actual=36.653 ms (start_off=261.299, late=+9.045 ms)
+[run] seg=14   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=1.678 ms actual=2.575 ms (start_off=298.365, late=+10.012 ms)
+[run] seg=15   net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=3.270 ms actual=2.998 ms (start_off=300.982, late=+10.950 ms)
+[run] seg=16   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=7.064 ms actual=5.801 ms (start_off=303.995, late=+10.693 ms)
+[run] seg=17   net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=9.457 ms actual=9.437 ms (start_off=309.818, late=+9.453 ms)
+[run] seg=18   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=21.154 ms actual=18.500 ms (start_off=319.288, late=+9.466 ms)
+[run] seg=19   net=smolvlm_vision_v3_bundles#0 kind=CPU_X n_ops=1  predicted=9.166 ms actual=10.673 ms (start_off=337.838, late=+6.862 ms)
+[run] seg=20   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=19.361 ms actual=15.771 ms (start_off=348.540, late=+8.398 ms)
+[run] seg=21   net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=16.191 ms actual=17.362 ms (start_off=364.342, late=+4.839 ms)
+[run] seg=22   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=7.277 ms actual=6.120 ms (start_off=381.733, late=+6.040 ms)
+[run] seg=23   net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=6.207 ms actual=6.926 ms (start_off=387.884, late=+4.913 ms)
+[run] seg=24   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=49.920 ms actual=45.027 ms (start_off=394.838, late=+5.660 ms)
+[run] seg=25   net=smolvlm_vision_v3_bundles#0 kind=CPU_X n_ops=1  predicted=36.044 ms actual=41.188 ms (start_off=439.922, late=+0.825 ms)
+[run] seg=26   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=1.662 ms actual=2.638 ms (start_off=481.396, late=+6.255 ms)
+[run] seg=27   net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=3.299 m[lazy-ctx] evicted DSP ctx 'smolvlm_vision_v3_bundles_dsp_seg_07_tramp_p2_seg0__Dsp' (lru=23)
+QnnDsp <E> Context handle already exists!
+
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_09_tramp_p0 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 2.92 ms
+[lazy-ctx] evicted DSP ctx 'smolvlm_vision_v3_bundles_dsp_seg_08_tramp_p0_seg0__Dsp' (lru=23)
+QnnDsp <E> Context handle already exists!
+
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_09_tramp_p1 in=2(786432 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 15.12 ms
+[lazy-ctx] evicted DSP ctx 'smolvlm_vision_v3_bundles_dsp_seg_08_tramp_p1_seg0__Dsp' (lru=23)
+QnnDsp <E> Context handle already exists!
+
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_09_tramp_p2 in=1(3145728 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 44.10 ms
+[lazy-ctx] evicted DSP ctx 'smolvlm_vision_v3_bundles_dsp_seg_08_tramp_p2_seg0__Dsp' (lru=23)
+QnnDsp <E> Context handle already exists!
+
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_10_tramp_p0 in=2(3145728 B) out=1
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 32.50 ms
+[lazy-ctx] reset DSP backend (cumulative=28, freed 24 contexts)
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_10_tramp_p1 in=2(786432 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 12.24 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_09_tramp_p1 in=2(786432 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 11.77 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_09_tramp_p2 in=1(3145728 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 37.90 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_10_tramp_p0 in=2(3145728 B) out=1
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 32.25 ms
+s actual=3.111 ms (start_off=484.072, late=+7.270 ms)
+[run] seg=28   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=6.927 ms actual=5.118 ms (start_off=487.664, late=+7.564 ms)
+[run] seg=29   net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=9.341 ms actual=8.975 ms (start_off=492.807, late=+5.779 ms)
+[run] seg=30   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=20.797 ms actual=18.648 ms (start_off=501.816, late=+5.448 ms)
+[run] seg=31   net=smolvlm_vision_v3_bundles#0 kind=CPU_X n_ops=1  predicted=9.144 ms actual=9.146 ms (start_off=520.760, late=+3.595 ms)
+[run] seg=32   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=19.212 ms actual=15.232 ms (start_off=530.251, late=+3.941 ms)
+[run] seg=33   net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=15.340 ms actual=17.310 ms (start_off=545.753, late=+0.232 ms)
+[run] seg=34   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=6.871 ms actual=6.979 ms (start_off=563.256, late=+2.395 ms)
+[run] seg=35   net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=6.183 ms actual=6.821 ms (start_off=570.428, late=+2.696 ms)
+[run] seg=36   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=49.410 ms actual=44.646 ms (start_off=577.485, late=+3.570 ms)
+[run] seg=37   net=smolvlm_vision_v3_bundles#0 kind=CPU_X n_ops=1  predicted=36.445 ms actual=36.144 ms (start_off=623.335, late=+0.009 ms)
+[run] seg=38   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=1.680 ms actual=2.516 ms (start_off=659.846, late=+0.076 ms)
+[run] seg=39   net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=3.072 ms actual=3.040 ms (start_off=662.634, late=+1.183 ms)
+[run] seg=40   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=6.620 ms actual=6.723 ms (start_off=665.703, late=+1.180 ms)
+[run] seg=41   net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=9.310 ms actual=9.335 ms (start_off=672.668, late=+1.524 ms)
+[run] seg=42   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=21.951 ms actual=18.528 ms (start_off=682.039, late=+1.585 ms)
+[run] seg=43   net=smolvlm_vision_v3_bundles#0 kind=CPU_X n_ops=1  predicted=9.165 ms actual=10.631 ms (start_off=702.409, late=+0.004 ms)
+[run] seg=44   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=18.546 ms actual=15.045 ms (start_off=723.372, late=+11.803 ms)
+[run] seg=45   net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=15.533 ms actual=21.804 ms (start_off=738.448, late=+8.333 ms)
+[run] seg=46   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=6.936 ms actual=5.156 ms (start_off=763.265, late=+17.616 ms)
+[run] seg=47   net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=6.202 ms actual=6.798 ms (start_off=768.457, late=+15.872 ms)
+[run] seg=48   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=50.059 ms actual=44.585 ms (start_off=828.304, late=+69.517 ms)
+[run] seg=49   net=smolvlm_vision_v3_bundles#0 kind=CPU_X n_ops=1  predicted=36.045 ms actual=43.802 ms (start_off=971.040, late=+162.194 ms)
+[run] seg=50   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=1.660 ms actual=1.625 ms (start_off=1015.127, late=+170.237 ms)
+[run] seg=51   net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=3.175 ms actual=4.540 ms (start_off=1016.953, late=+170.402 ms)
+/prj/qct/webtech_scratch20/mlg_user_admin/qaisw_source_repo/rel/qairt-2.45.0/release/SNPE_SRC/avante-tools/prebuilt/dsp/hexagon-sdk-4.1.0/ipc/fastrpc/rpcmem/src/rpcmem_android.c:42:dummy call to rpcmem_deinit, rpcmem APIs will be used from libxdsprpc
+/prj/qct/webtech_scratch20/mlg_user_admin/qaisw_source_repo/rel/qairt-2.45.0/release/SNPE_SRC/avante-tools/prebuilt/dsp/hexagon-sdk-4.1.0/ipc/fastrpc/rpcmem/src/rpcmem_android.c:38:dummy call to rpcmem_init, rpcmem APIs will be used from libxdsprpc
+[run] seg=52   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=6.643 ms actual=5.136 ms (start_off=6421.799, late=+5572.074 ms)
+[run] seg=53   net=smolvlm_vision_v3_bundles#0 kind=CPU[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_10_tramp_p2 in=1(2359296 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 89.85 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_11_tramp_p0 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 4.87 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_11_tramp_p1 in=2(786432 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 11.98 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_11_tramp_p2 in=1(3145728 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 38.27 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_12_tramp_p0 in=2(3145728 B) out=1
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 31.86 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_12_tramp_p1 in=2(786432 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 12.58 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_12_tramp_p2 in=1(2359296 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 91.85 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_13_tramp_p0 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 3.08 ms
+[lazy-ctx] evicted HTA ctx 'smolvlm_vision_v3_bundles_dsp_seg_11_conv2_seg0__Hta' (lru=23)
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_13_node_MatMul_1269_conv1x1 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 5.37 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_13_tramp_p1 in=2(786432 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 12.25 ms
+[lazy-ctx] evicted HTA ctx 'smolvlm_vision_v3_bundles_dsp_seg_12_conv1_seg0__Hta' (lru=23)
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_13_node_MatMul_1274_conv1x1 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 17.94 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_13_tramp_p2 in=1(3145728 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 38.09 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_14_tramp_p0 in=2(3145728 B) out=1
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 32.16 ms
+[lazy-ctx] evicted HTA ctx 'smolvlm_vision_v3_bundles_dsp_seg_12_conv2_seg0__Hta' (lru=23)
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_14_node_MatMul_1290_conv1x1 in=1(3145728 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 35.62 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_14_tramp_p1 in=2(786432 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 12.77 ms
+[lazy-ctx] evicted HTA ctx 'smolvlm_vision_v3_bundles_dsp_seg_13_conv1_seg0__Hta' (lru=23)
+Context handle already exists!
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_14_sng_MatMul_14_conv1x1 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 13.86 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_14_tramp_p2 in=1(2359296 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 95.29 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_15_tramp_p0 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 3.09 ms
+[lazy-ctx] evicted HTA ctx 'smolvlm_vision_v3_bundles_dsp_seg_13_conv2_seg0__Hta' (lru=23)
+Context handle already exists!
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_15_node_MatMul_1389_conv1x1 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 5.23 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_15_tramp_p1 in=2(786432 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 11.25 ms
+_P n_ops=1  predicted=9.386 ms actual=8.611 ms (start_off=6570.929, late=+5714.561 ms)
+[run] seg=54   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=21.036 ms actual=19.728 ms (start_off=6701.353, late=+5835.599 ms)
+[run] seg=55   net=smolvlm_vision_v3_bundles#0 kind=CPU_X n_ops=1  predicted=9.187 ms actual=10.615 ms (start_off=6721.129, late=+5834.339 ms)
+[run] seg=56   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=18.825 ms actual=16.222 ms (start_off=6731.775, late=+5835.798 ms)
+[run] seg=57   net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=15.768 ms actual=18.017 ms (start_off=6754.403, late=+5839.601 ms)
+[run] seg=58   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=6.509 ms actual=5.076 ms (start_off=6784.141, late=+5853.571 ms)
+[run] seg=59   net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=6.247 ms actual=7.237 ms (start_off=6789.255, late=+5852.177 ms)
+[run] seg=60   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=50.172 ms actual=44.578 ms (start_off=6870.366, late=+5927.040 ms)
+[run] seg=61   net=smolvlm_vision_v3_bundles#0 kind=CPU_X n_ops=1  predicted=36.167 ms actual=38.231 ms (start_off=6914.987, late=+5921.490 ms)
+[run] seg=62   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=1.672 ms actual=2.398 ms (start_off=7016.171, late=+5986.506 ms)
+[run] seg=63   net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=3.161 ms actual=2.924 ms (start_off=7018.759, late=+5987.422 ms)
+[run] seg=64   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=7.158 ms actual=5.588 ms (start_off=7043.565, late=+6009.067 ms)
+[run] seg=65   net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=9.255 ms actual=8.406 ms (start_off=7049.352, late=+6007.696 ms)
+[run] seg=66   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=21.585 ms actual=19.050 ms (start_off=7183.738, late=+6132.827 ms)
+[run] seg=67   net=smolvlm_vision_v3_bundles#0 kind=CPU_X n_ops=1  predicted=9.162 ms actual=10.573 ms (start_off=7203.014, late=+6130.518 ms)
+[run] seg=68   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=18.650 ms actual=15.847 ms (start_off=7217.654, late=+6135.996 ms)
+[run] seg=69   net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=16.027 ms actual=18.205 ms (start_off=7234.406, late=+6134.098 ms)
+[run] seg=70   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=6.791 ms actual=5.460 ms (start_off=7265.525, late=+6149.190 ms)
+[run] seg=71   net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=6.252 ms actual=6.285 ms (start_off=7297.848, late=+6174.722 ms)
+[run] seg=72   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=50.134 ms actual=44.666 ms (start_off=7381.058, late=+6251.680 ms)
+[run] seg=73   net=smolvlm_vision_v3_bundles#0 kind=CPU_X n_ops=1  predicted=36.086 ms actual=56.194 ms (start_off=7425.784, late=+6246.272 ms)
+[run] seg=74   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=1.664 ms actual=2.433 ms (start_off=7509.889, late=+6294.291 ms)
+[run] seg=75   net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=3.145 ms actual=2.961 ms (start_off=7512.366, late=+6295.104 ms)
+[run] seg=76   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=6.848 ms actual=5.306 ms (start_off=7578.749, late=+6358.342 ms)
+[run] seg=77   net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=9.312 ms actual=12.358 ms (start_off=7603.718, late=+6376.463 ms)
+[run] seg=78   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=21.143 ms actual=18.624 ms (start_off=7739.251, late=+6502.684 ms)
+[run] seg=79   net=smolvlm_vision_v3_bundles#0 kind=CPU_X n_ops=1  predicted=9.161 ms actual=9.272 ms (start_off=7758.220, late=+6500.509 ms)
+[run] seg=80   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=18.956 ms actual=16.072 ms (start_off=7774.512, late=+6507.641 ms)
+[run] seg=81   net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=15.942 ms actual=18.721 ms (start_off=7790.620, late=+6504.793 ms)
+[run[lazy-ctx] evicted HTA ctx 'smolvlm_vision_v3_bundles_dsp_seg_14_conv1_seg0__Hta' (lru=23)
+Context handle already exists!
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_15_node_MatMul_1394_conv1x1 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 17.39 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_15_tramp_p2 in=1(3145728 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 40.87 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_16_tramp_p0 in=2(3145728 B) out=1
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 32.46 ms
+[lazy-ctx] evicted HTA ctx 'smolvlm_vision_v3_bundles_dsp_seg_14_conv2_seg0__Hta' (lru=23)
+Context handle already exists!
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_16_node_MatMul_1410_conv1x1 in=1(3145728 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 31.07 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_16_tramp_p1 in=2(786432 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 10.73 ms
+[lazy-ctx] evicted HTA ctx 'smolvlm_vision_v3_bundles_dsp_seg_15_conv1_seg0__Hta' (lru=23)
+Context handle already exists!
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_16_sng_MatMul_16_conv1x1 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 11.71 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_16_tramp_p2 in=1(2359296 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 90.74 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_17_tramp_p0 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 3.16 ms
+[lazy-ctx] evicted HTA ctx 'smolvlm_vision_v3_bundles_dsp_seg_15_conv2_seg0__Hta' (lru=23)
+Context handle already exists!
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_17_node_MatMul_1509_conv1x1 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 6.19 ms
+[lazy-ctx] evicted DSP ctx 'smolvlm_vision_v3_bundles_dsp_seg_16_tramp_p0_seg0__Dsp' (lru=23)
+QnnDsp <E> Context handle already exists!
+
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_17_tramp_p1 in=2(786432 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 13.61 ms
+[lazy-ctx] evicted HTA ctx 'smolvlm_vision_v3_bundles_dsp_seg_16_conv1_seg0__Hta' (lru=23)
+Context handle already exists!
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_17_node_MatMul_1514_conv1x1 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 17.64 ms
+[lazy-ctx] evicted DSP ctx 'smolvlm_vision_v3_bundles_dsp_seg_16_tramp_p1_seg0__Dsp' (lru=23)
+QnnDsp <E> Context handle already exists!
+
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_17_tramp_p2 in=1(3145728 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 38.39 ms
+[lazy-ctx] evicted DSP ctx 'smolvlm_vision_v3_bundles_dsp_seg_16_tramp_p2_seg0__Dsp' (lru=23)
+QnnDsp <E> Context handle already exists!
+
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_18_tramp_p0 in=2(3145728 B) out=1
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 33.52 ms
+[lazy-ctx] evicted HTA ctx 'smolvlm_vision_v3_bundles_dsp_seg_16_conv2_seg0__Hta' (lru=23)
+Context handle already exists!
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_18_node_MatMul_1530_conv1x1 in=1(3145728 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 34.41 ms
+[lazy-ctx] evicted DSP ctx 'smolvlm_vision_v3_bundles_dsp_seg_17_tramp_p0_seg0__Dsp' (lru=23)
+QnnDsp <E> Context handle already exists!
+
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_18_tramp_p1 in=2(786432 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 11.44 ms
+[lazy-ctx] evicted HTA ctx 'smolvlm_vision_v3_bundles_dsp_seg_17_conv1_seg0__Hta' (lru=23)
+Context handle already exists!
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_18_sng_MatMul_18_conv1x1 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 12.91 ms
+[lazy-ctx] reset DSP backend (cumulative=28, freed 24 contexts)
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_18_tramp_p2 in=1(2359296 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 92.08 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_17_tramp_p2 in=1(3145728 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 38.14 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_18_tramp_p0 in=2(3145728 B) out=1
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 33.55 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_18_tramp_p1 in=2(786432 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 11.84 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_19_tramp_p0 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 3.05 ms
+[lazy-ctx] evicted HTA ctx 'smolvlm_vision_v3_bundles_dsp_seg_17_conv2_seg0__Hta' (lru=23)
+Context handle already exists!
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_19_node_MatMul_1629_conv1x1 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 5.28 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_19_tramp_p1 in=2(786432 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 12.59 ms
+[lazy-ctx] evicted HTA ctx 'smolvlm_vision_v3_bundles_dsp_seg_18_conv1_seg0__Hta' (lru=23)
+Context handle already exists!
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_19_node_MatMul_1634_conv1x1 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 17.34 ms
+] seg=82   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=6.860 ms actual=5.387 ms (start_off=7819.988, late=+6518.219 ms)
+[run] seg=83   net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=6.230 ms actual=6.298 ms (start_off=7848.630, late=+6540.001 ms)
+[run] seg=84   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=50.179 ms actual=44.772 ms (start_off=7933.969, late=+6619.110 ms)
+[run] seg=85   net=smolvlm_vision_v3_bundles#0 kind=CPU_X n_ops=1  predicted=36.838 ms actual=51.664 ms (start_off=7978.823, late=+6613.786 ms)
+[run] seg=86   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=2.739 ms actual=2.482 ms (start_off=8058.475, late=+6656.599 ms)
+[run] seg=87   net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=3.122 ms actual=3.158 ms (start_off=8061.220, late=+6656.605 ms)
+[run] seg=88   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=6.621 ms actual=5.518 ms (start_off=8134.852, late=+6727.116 ms)
+[run] seg=89   net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=9.321 ms actual=8.468 ms (start_off=8160.216, late=+6745.859 ms)
+[run] seg=90   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=21.234 ms actual=19.005 ms (start_off=8292.795, late=+6869.117 ms)
+[run] seg=91   net=smolvlm_vision_v3_bundles#0 kind=CPU_X n_ops=1  predicted=9.166 ms actual=10.715 ms (start_off=8311.853, late=+6866.941 ms)
+[run] seg=92   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=18.879 ms actual=16.802 ms (start_off=8326.127, late=+6872.050 ms)
+[run] seg=93   net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=15.816 ms actual=20.757 ms (start_off=8342.970, late=+6870.013 ms)
+[run] seg=94   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=6.768 ms actual=5.383 ms (start_off=8368.431, late=+6879.659 ms)
+[run] seg=95   net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=6.192 ms actual=7.315 ms (start_off=8396.325, late=+6900.785 ms)
+[run] seg=96   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=49.723 ms actual=44.788 ms (start_off=8531.952, late=+7030.220 ms)
+[run] seg=97   net=smolvlm_vision_v3_bundles#0 kind=CPU_X n_ops=1  predicted=36.226 ms actual=68.650 ms (start_off=8576.990, late=+7025.535 ms)
+[run] seg=98   net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=2.610 ms actual=2.396 ms (start_off=8735.518, late=+7147.837 ms)
+[run] seg=99   net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=3.217 ms actual=3.573 ms (start_off=8737.971, late=+7147.681 ms)
+[run] seg=100  net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=6.391 ms actual=5.383 ms (start_off=8807.084, late=+7213.577 ms)
+[run] seg=101  net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=9.277 ms actual=10.390 ms (start_off=8836.139, late=+7236.241 ms)
+/prj/qct/webtech_scratch20/mlg_user_admin/qaisw_source_repo/rel/qairt-2.45.0/release/SNPE_SRC/avante-tools/prebuilt/dsp/hexagon-sdk-4.1.0/ipc/fastrpc/rpcmem/src/rpcmem_android.c:42:dummy call to rpcmem_deinit, rpcmem APIs will be used from libxdsprpc
+/prj/qct/webtech_scratch20/mlg_user_admin/qaisw_source_repo/rel/qairt-2.45.0/release/SNPE_SRC/avante-tools/prebuilt/dsp/hexagon-sdk-4.1.0/ipc/fastrpc/rpcmem/src/rpcmem_android.c:38:dummy call to rpcmem_init, rpcmem APIs will be used from libxdsprpc
+[run] seg=102  net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=21.065 ms actual=20.883 ms (start_off=14006.031, late=+12396.855 ms)
+[run] seg=103  net=smolvlm_vision_v3_bundles#0 kind=CPU_X n_ops=1  predicted=9.169 ms actual=10.584 ms (start_off=14111.782, late=+12481.542 ms)
+[run] seg=104  net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=18.523 ms actual=15.540 ms (start_off=14128.237, late=+12488.827 ms)
+[run] seg=105  net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=15.535 ms actual=18.022 ms (start_off=14145.086, late=+12487.153 ms)
+[run] seg=106  net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=6.278 ms actual=5.064 ms (start_off=14174.012, late=+12500.544 ms)
+[run] seg=107  ne[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_19_tramp_p2 in=1(3145728 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 41.76 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_20_tramp_p0 in=2(3145728 B) out=1
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 34.08 ms
+[lazy-ctx] evicted HTA ctx 'smolvlm_vision_v3_bundles_dsp_seg_18_conv2_seg0__Hta' (lru=23)
+Context handle already exists!
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_20_node_MatMul_1650_conv1x1 in=1(3145728 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 33.93 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_20_tramp_p1 in=2(786432 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 11.22 ms
+[lazy-ctx] evicted HTA ctx 'smolvlm_vision_v3_bundles_dsp_seg_19_conv1_seg0__Hta' (lru=23)
+Context handle already exists!
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_20_sng_MatMul_20_conv1x1 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 12.78 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_20_tramp_p2 in=1(2359296 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 92.81 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_21_tramp_p0 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 4.87 ms
+[lazy-ctx] evicted HTA ctx 'smolvlm_vision_v3_bundles_dsp_seg_19_conv2_seg0__Hta' (lru=23)
+Context handle already exists!
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_21_node_MatMul_1749_conv1x1 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 9.94 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_21_tramp_p1 in=2(786432 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 11.60 ms
+[lazy-ctx] evicted HTA ctx 'smolvlm_vision_v3_bundles_dsp_seg_20_conv1_seg0__Hta' (lru=23)
+Context handle already exists!
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_21_node_MatMul_1754_conv1x1 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 17.86 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_21_tramp_p2 in=1(3145728 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 37.99 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_22_tramp_p0 in=2(3145728 B) out=1
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 31.83 ms
+[lazy-ctx] evicted HTA ctx 'smolvlm_vision_v3_bundles_dsp_seg_21_conv1_seg0__Hta' (lru=23)
+Context handle already exists!
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_22_node_MatMul_1770_conv1x1 in=1(3145728 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 34.61 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_22_tramp_p1 in=2(786432 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 11.83 ms
+[lazy-ctx] evicted HTA ctx 'smolvlm_vision_v3_bundles_dsp_seg_20_conv2_seg0__Hta' (lru=23)
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_22_sng_MatMul_22_conv1x1 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 13.10 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_22_tramp_p2 in=1(2359296 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 95.06 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_23_tramp_p0 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 3.17 ms
+[lazy-ctx] evicted HTA ctx 'smolvlm_vision_v3_bundles_dsp_seg_21_conv2_seg0__Hta' (lru=23)
+Context handle already exists!
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_23_node_MatMul_1869_conv1x1 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 5.31 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_23_tramp_p1 in=2(786432 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 12.40 ms
+[lazy-ctx] evicted HTA ctx 'smolvlm_vision_v3_bundles_dsp_seg_22_conv1_seg0__Hta' (lru=23)
+Context handle already exists!
+Context handle already exists!
+[bringup] smolvlm_vision_v3_bundles/HTA graph=dsp_seg_23_node_MatMul_1874_conv1x1 in=1(786432 B) out=1
+[bringup] smolvlm_vision_v3_bundles/HTA warmup x2 in 18.16 ms
+[bringup] smolvlm_vision_v3_bundles/DSP graph=dsp_seg_23_tramp_p2 in=1(3145728 B) out=2
+[bringup] smolvlm_vision_v3_bundles/DSP warmup x2 in 39.51 ms
+t=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=6.219 ms actual=6.508 ms (start_off=14227.819, late=+12548.073 ms)
+[run] seg=108  net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=49.823 ms actual=45.075 ms (start_off=14313.459, late=+12627.494 ms)
+[run] seg=109  net=smolvlm_vision_v3_bundles#0 kind=CPU_X n_ops=1  predicted=36.328 ms actual=44.014 ms (start_off=14431.043, late=+12695.255 ms)
+[run] seg=110  net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=1.689 ms actual=2.486 ms (start_off=14475.435, late=+12703.319 ms)
+[run] seg=111  net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=3.200 ms actual=3.571 ms (start_off=14477.966, late=+12704.161 ms)
+[run] seg=112  net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=6.692 ms actual=5.558 ms (start_off=14547.140, late=+12770.135 ms)
+[run] seg=113  net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=9.383 ms actual=8.569 ms (start_off=14576.435, late=+12792.737 ms)
+[run] seg=114  net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=21.578 ms actual=19.791 ms (start_off=14707.296, late=+12914.215 ms)
+[run] seg=115  net=smolvlm_vision_v3_bundles#0 kind=CPU_X n_ops=1  predicted=9.173 ms actual=10.569 ms (start_off=14727.133, late=+12912.474 ms)
+[run] seg=116  net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=18.524 ms actual=16.619 ms (start_off=14737.753, late=+12913.921 ms)
+[run] seg=117  net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=15.898 ms actual=20.158 ms (start_off=14760.099, late=+12917.744 ms)
+[run] seg=118  net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=6.450 ms actual=5.513 ms (start_off=14780.292, late=+12922.039 ms)
+[run] seg=119  net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=6.185 ms actual=7.130 ms (start_off=14801.391, late=+12936.687 ms)
+[run] seg=120  net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=49.856 ms actual=45.743 ms (start_off=14837.479, late=+12966.590 ms)
+[run] seg=121  net=smolvlm_vision_v3_bundles#0 kind=CPU_X n_ops=1  predicted=36.510 ms actual=36.870 ms (start_off=14948.376, late=+13027.630 ms)
+[run] seg=122  net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=1.665 ms actual=1.551 ms (start_off=15042.879, late=+13085.624 ms)
+[run] seg=123  net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=3.196 ms actual=3.116 ms (start_off=15044.465, late=+13085.545 ms)
+[run] seg=124  net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=6.357 ms actual=5.421 ms (start_off=15047.599, late=+13085.483 ms)
+[run] seg=125  net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=9.321 ms actual=10.113 ms (start_off=15119.404, late=+13150.930 ms)
+[run] seg=126  net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=21.231 ms actual=18.994 ms (start_off=15283.381, late=+13305.587 ms)
+[run] seg=127  net=smolvlm_vision_v3_bundles#0 kind=CPU_X n_ops=1  predicted=9.165 ms actual=10.533 ms (start_off=15302.407, late=+13303.382 ms)
+[run] seg=128  net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=18.883 ms actual=16.201 ms (start_off=15316.533, late=+13308.343 ms)
+[run] seg=129  net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=16.054 ms actual=18.442 ms (start_off=15332.775, late=+13305.702 ms)
+[run] seg=130  net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=6.849 ms actual=5.149 ms (start_off=15362.532, late=+13319.405 ms)
+[run] seg=131  net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=6.218 ms actual=6.159 ms (start_off=15401.529, late=+13351.553 ms)
+[run] seg=132  net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=50.255 ms actual=44.322 ms (start_off=15484.460, late=+13428.266 ms)
+[run] seg=133  net=smolvlm_vision_v3_bundles#0 kind=CPU_X n_ops=1  predicted=35.888 ms actual=43.996 ms (start_off=15529.041, late=+13422.593 ms)
+[run] seg=134  net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=1.675 ms actual=2.472 ms (start_off=15573.331, late=+13430.995 ms)
+[run] seg=135  net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=3.290 ms actual=4.599 ms (start_off=15576.043, late=+13432.032 ms)
+[run] seg=136  net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=6.994 ms actual=6.671 ms (start_off=15580.934, late=+13433.634 ms)
+[run] seg=137  net=smolvlm_vision_v3_bundles#0 kind=CPU_P n_ops=1  predicted=9.268 ms actual=8.914 ms (start_off=15587.829, late=+13433.534 ms)
+[run] seg=138  net=smolvlm_vision_v3_bundles#0 kind=CPU_E n_ops=1  predicted=21.760 ms actual=18.728 ms (start_off=15596.779, late=+13433.216 ms)
+[run] seg=139  net=smolvlm_vision_v3_bundles#0 kind=CPU_X n_ops=1  predicted=9.163 ms actual=10.574 ms (start_off=15615.588, late=+13430.264 ms)
+[run] seg=140  net=smolvlm_vision_v3_bundles#0 kind=CPU_X n_ops=1  predicted=77.804 ms actual=84.961 ms (start_off=15626.180, late=+13431.694 ms)
+
+[summary] schedule walked: 141 / 141 segments dispatched, wall=15717.169 ms (predicted makespan = 2272.291 ms)
+
+=== AGENTS_QNN_TRACE_BEGIN ===
+seg_id,ctx_seg_id,network,instance,kind,backend_label,actual_backend,n_ops,predicted_start_ms,predicted_duration_ms,kind_idx,dep_wait_done_ms,gate_done_ms,actual_start_ms,actual_end_ms
+0,0,smolvlm_vision_v3_bundles,0,CPU_X,dsp_seg_00,CPU,1,0.000000,68.492100,0,0.339949,0.340053,0.342866,80.776088
+1,0,smolvlm_vision_v3_bundles,0,CPU_X,cpu_seg_00,CPU,1,68.492100,36.071300,0,80.793692,80.793796,80.797182,118.180032
+2,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_01_tramp_p0,DSP,1,104.563400,1.679000,1,118.510189,118.510293,118.595242,121.063220
+3,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_01_conv1,HTA,1,106.242400,3.100520,2,121.301450,121.301658,121.347804,124.693077
+4,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_01_tramp_p1,DSP,1,109.342920,6.484590,1,124.718025,124.718234,124.721254,131.480186
+5,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_01_conv2,HTA,1,115.827510,9.298430,2,131.693000,131.693156,131.697479,141.067566
+6,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_01_tramp_p2,DSP,1,125.125940,20.403400,1,141.096577,141.096785,141.100900,159.500449
+7,0,smolvlm_vision_v3_bundles,0,CPU_X,cpu_seg_01,CPU,1,145.529340,9.168930,0,159.769096,159.769252,159.773523,168.955016
+8,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_02_tramp_p0,DSP,1,154.698270,18.658670,1,169.323611,169.323715,169.329236,185.432631
+9,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_02_conv1,HTA,1,173.356940,15.922310,2,185.465183,185.465391,185.467891,203.046135
+10,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_02_tramp_p1,DSP,1,189.279250,7.027900,1,203.084260,203.084520,203.087437,209.124335
+11,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_02_conv2,HTA,1,196.307150,6.232250,2,209.157252,209.157512,209.161575,216.069986
+12,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_02_tramp_p2,DSP,1,202.539400,49.714970,1,216.095768,216.095976,216.100299,261.231824
+13,0,smolvlm_vision_v3_bundles,0,CPU_X,cpu_seg_02,CPU,1,252.254370,36.099180,0,261.294689,261.294950,261.299481,297.952953
+14,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_03_tramp_p0,DSP,1,288.353550,1.677770,1,298.353684,298.353840,298.365247,300.940621
+15,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_03_conv1,HTA,1,290.031320,3.270290,2,300.978434,300.978694,300.981611,303.979278
+16,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_03_tramp_p1,DSP,1,293.301610,7.063530,1,303.993445,303.993653,303.994695,309.795394
+17,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_03_conv2,HTA,1,300.365140,9.457150,2,309.816384,309.816488,309.818155,319.255065
+18,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_03_tramp_p2,DSP,1,309.822290,21.154210,1,319.284232,319.284597,319.287982,337.788469
+19,0,smolvlm_vision_v3_bundles,0,CPU_X,cpu_seg_03,CPU,1,330.976500,9.165520,0,337.835500,337.835709,337.838053,348.510749
+20,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_04_tramp_p0,DSP,1,340.142020,19.360780,1,348.536062,348.536322,348.540020,364.310705
+21,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_04_conv1,HTA,1,359.502800,16.190840,2,364.338778,364.339039,364.341747,381.703271
+22,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_04_tramp_p1,DSP,1,375.693640,7.276810,1,381.730875,381.731084,381.733427,387.853242
+23,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_04_conv2,HTA,1,382.970450,6.206880,2,387.879857,387.879961,387.883607,394.809310
+24,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_04_tramp_p2,DSP,1,389.177330,49.919510,1,394.833113,394.833373,394.837540,439.864742
+25,0,smolvlm_vision_v3_bundles,0,CPU_X,cpu_seg_04,CPU,1,439.096840,36.043570,0,439.917607,439.917867,439.921825,481.109429
+26,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_05_tramp_p0,DSP,1,475.140410,1.661520,1,481.387764,481.387920,481.395837,484.033659
+27,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_05_conv1,HTA,1,476.801930,3.298690,2,484.068295,484.068503,484.072253,487.182838
+28,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_05_tramp_p1,DSP,1,480.100620,6.927100,1,487.659298,487.659402,487.664246,492.782234
+29,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_05_conv2,HTA,1,487.027720,9.340530,2,492.803588,492.803693,492.806870,501.781591
+30,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_05_tramp_p2,DSP,1,496.368250,20.796870,1,501.810498,501.810810,501.816018,520.464214
+31,0,smolvlm_vision_v3_bundles,0,CPU_X,cpu_seg_05,CPU,1,517.165120,9.144220,0,520.754267,520.754424,520.759997,529.905500
+32,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_06_tramp_p0,DSP,1,526.309340,19.211730,1,530.237220,530.237324,530.250553,545.482434
+33,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_06_conv1,HTA,1,545.521070,15.339570,2,545.744727,545.744831,545.752956,563.062761
+34,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_06_tramp_p1,DSP,1,560.860640,6.871380,1,563.249116,563.249220,563.256095,570.234768
+35,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_06_conv2,HTA,1,567.732020,6.182870,2,570.421748,570.421852,570.427529,577.248857
+36,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_06_tramp_p2,DSP,1,573.914890,49.410290,1,577.477920,577.478076,577.484847,622.131162
+37,0,smolvlm_vision_v3_bundles,0,CPU_X,cpu_seg_06,CPU,1,623.325180,36.445420,0,622.438091,623.325698,623.334552,659.478856
+38,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_07_tramp_p0,DSP,1,659.770600,1.680390,1,659.832503,659.832608,659.846253,662.362096
+39,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_07_conv1,HTA,1,661.450990,3.072400,2,662.625483,662.625847,662.634233,665.674244
+40,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_07_tramp_p1,DSP,1,664.523390,6.620420,1,665.698880,665.698984,665.703307,672.426666
+41,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_07_conv2,HTA,1,671.143810,9.310200,2,672.661042,672.661198,672.667656,682.002692
+42,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_07_tramp_p2,DSP,1,680.454010,21.950570,1,682.034150,682.034411,682.039254,700.566877
+43,0,smolvlm_vision_v3_bundles,0,CPU_X,cpu_seg_07,CPU,1,702.404580,9.164650,0,700.763440,702.404748,702.409019,713.040466
+44,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_08_tramp_p0,DSP,1,711.569230,18.546350,1,723.366859,723.367119,723.371911,738.416864
+45,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_08_conv1,HTA,1,730.115580,15.533070,2,738.443270,738.443375,738.448427,760.252416
+46,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_08_tramp_p1,DSP,1,745.648650,6.936310,1,763.253312,763.253729,763.264927,768.421092
+47,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_08_conv2,HTA,1,752.584960,6.202170,2,768.452082,768.452238,768.457030,775.254712
+48,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_08_tramp_p2,DSP,1,758.787130,50.058500,1,828.291893,828.292361,828.304132,872.888731
+49,0,smolvlm_vision_v3_bundles,0,CPU_X,cpu_seg_08,CPU,1,808.845630,36.044950,0,873.135294,873.135399,971.039891,1014.841414
+50,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_09_tramp_p0,DSP,1,844.890580,1.659620,1,1015.117770,1015.117926,1015.127405,1016.752359
+51,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_09_conv1,HTA,1,846.550200,3.174890,2,1016.946266,1016.946422,1016.952568,1021.492586
+52,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_09_tramp_p1,DSP,1,849.725090,6.642820,1,6398.998228,6398.998332,6421.798845,6426.934472
+53,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_09_conv2,HTA,1,856.367910,9.386420,2,6499.359596,6499.359701,6570.928592,6579.539823
+54,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_09_tramp_p2,DSP,1,865.754330,21.035880,1,6701.349669,6701.349982,6701.352843,6721.081208
+55,0,smolvlm_vision_v3_bundles,0,CPU_X,cpu_seg_09,CPU,1,886.790210,9.186870,0,6721.125430,6721.125794,6721.129332,6731.743902
+56,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_10_tramp_p0,DSP,1,895.977080,18.824870,1,6731.770226,6731.770435,6731.774701,6747.997184
+57,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_10_conv1,HTA,1,914.801950,15.768070,2,6754.397287,6754.397495,6754.403426,6772.420158
+58,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_10_tramp_p1,DSP,1,930.570020,6.508590,1,6784.138185,6784.138341,6784.141359,6789.217781
+59,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_10_conv2,HTA,1,937.078610,6.246970,2,6789.249621,6789.249725,6789.255135,6796.491857
+60,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_10_tramp_p2,DSP,1,943.325580,50.171580,1,6870.356995,6870.357255,6870.365631,6914.943915
+61,0,smolvlm_vision_v3_bundles,0,CPU_X,cpu_seg_10,CPU,1,993.497160,36.167320,0,6914.983404,6914.983613,6914.986682,6953.217429
+62,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_11_tramp_p0,DSP,1,1029.664480,1.672150,1,7016.161068,7016.161224,7016.170537,7018.568377
+63,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_11_conv1,HTA,1,1031.336630,3.161230,2,7018.749853,7018.750061,7018.758594,7021.682235
+64,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_11_tramp_p1,DSP,1,1034.497860,7.158160,1,7043.557489,7043.557593,7043.564721,7049.152641
+65,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_11_conv2,HTA,1,1041.656020,9.254600,2,7049.344263,7049.344367,7049.351651,7057.757906
+66,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_11_tramp_p2,DSP,1,1050.910620,21.585370,1,7183.727597,7183.727701,7183.737535,7202.787846
+67,0,smolvlm_vision_v3_bundles,0,CPU_X,cpu_seg_11,CPU,1,1072.495990,9.161890,0,7203.010008,7203.010112,7203.014378,7213.587311
+68,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_12_tramp_p0,DSP,1,1081.657880,18.649510,1,7217.649702,7217.649910,7217.654176,7233.500829
+69,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_12_conv1,HTA,1,1100.307390,16.027060,2,7234.398634,7234.398842,7234.405658,7252.610869
+70,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_12_tramp_p1,DSP,1,1116.334450,6.791360,1,7265.514682,7265.514942,7265.524932,7270.985225
+71,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_12_conv2,HTA,1,1123.125810,6.251630,2,7297.840186,7297.840602,7297.848198,7304.132833
+72,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_12_tramp_p2,DSP,1,1129.377440,50.134390,1,7381.047026,7381.047286,7381.057588,7425.723488
+73,0,smolvlm_vision_v3_bundles,0,CPU_X,cpu_seg_12,CPU,1,1179.511830,36.085750,0,7425.779522,7425.779783,7425.783841,7481.977554
+74,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_13_tramp_p0,DSP,1,1215.597580,1.664470,1,7509.877820,7509.877976,7509.888850,7512.322174
+75,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_13_conv1,HTA,1,1217.262050,3.145230,2,7512.358490,7512.358594,7512.366086,7515.327136
+76,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_13_tramp_p1,DSP,1,1220.407280,6.847920,1,7578.739552,7578.739917,7578.748970,7584.055363
+77,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_13_conv2,HTA,1,1227.255200,9.312020,2,7603.710350,7603.710611,7603.717843,7616.075512
+78,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_13_tramp_p2,DSP,1,1236.567220,21.142910,1,7739.241903,7739.242164,7739.250852,7757.874634
+79,0,smolvlm_vision_v3_bundles,0,CPU_X,cpu_seg_13,CPU,1,1257.710130,9.160780,0,7758.213444,7758.213548,7758.219531,7767.491334
+80,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_14_tramp_p0,DSP,1,1266.870910,18.956000,1,7774.507750,7774.507958,7774.511860,7790.583952
+81,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_14_conv1,HTA,1,1285.826910,15.941870,2,7790.611892,7790.612464,7790.619696,7809.340615
+82,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_14_tramp_p1,DSP,1,1301.768780,6.859970,1,7819.978740,7819.978844,7819.987897,7825.375038
+83,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_14_conv2,HTA,1,1308.628750,6.230380,2,7848.618417,7848.618729,7848.629968,7854.928238
+84,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_14_tramp_p2,DSP,1,1314.859130,50.178530,1,7933.958217,7933.958478,7933.968780,7978.741095
+85,0,smolvlm_vision_v3_bundles,0,CPU_X,cpu_seg_14,CPU,1,1365.037660,36.838110,0,7978.815969,7978.816073,7978.823201,8030.486739
+86,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_15_tramp_p0,DSP,1,1401.875770,2.739090,1,8058.463199,8058.463355,8058.475010,8060.957230
+87,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_15_conv1,HTA,1,1404.614860,3.121520,2,8061.210155,8061.210415,8061.219521,8064.377788
+88,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_15_tramp_p1,DSP,1,1407.736380,6.620520,1,8134.846590,8134.846746,8134.851949,8140.370317
+89,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_15_conv2,HTA,1,1414.356900,9.320990,2,8160.208565,8160.208773,8160.215798,8168.683838
+90,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_15_tramp_p2,DSP,1,1423.677890,21.234080,1,8292.785106,8292.785262,8292.795252,8311.800370
+91,0,smolvlm_vision_v3_bundles,0,CPU_X,cpu_seg_15,CPU,1,1444.911970,9.165560,0,8311.850060,8311.850268,8311.853390,8322.567895
+92,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_16_tramp_p0,DSP,1,1454.077530,18.879270,1,8326.120717,8326.120873,8326.127117,8342.929581
+93,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_16_conv1,HTA,1,1472.956800,15.815560,2,8342.962205,8342.962465,8342.969957,8363.727291
+94,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_16_tramp_p1,DSP,1,1488.772360,6.767770,1,8368.422572,8368.422728,8368.431105,8373.813827
+95,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_16_conv2,HTA,1,1495.540130,6.191510,2,8396.312763,8396.313127,8396.325303,8403.640687
+96,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_16_tramp_p2,DSP,1,1501.731640,49.723170,1,8531.942519,8531.942623,8531.951780,8576.739289
+97,0,smolvlm_vision_v3_bundles,0,CPU_X,cpu_seg_16,CPU,1,1551.454810,36.225830,0,8576.983317,8576.983525,8576.989717,8645.639234
+98,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_17_tramp_p0,DSP,1,1587.680640,2.609690,1,8735.507241,8735.507501,8735.518063,8737.913651
+99,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_17_conv1,HTA,1,1590.290330,3.217110,2,8737.963861,8737.964017,8737.971406,8741.544781
+100,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_17_tramp_p1,DSP,1,1593.507440,6.390630,1,8807.079061,8807.079165,8807.084108,8812.466986
+101,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_17_conv2,HTA,1,1599.898070,9.277210,2,8836.134134,8836.134290,8836.139285,8846.529266
+102,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_17_tramp_p2,DSP,1,1609.175280,21.064870,1,13923.689038,13923.689194,14006.030707,14026.913855
+103,0,smolvlm_vision_v3_bundles,0,CPU_X,cpu_seg_17,CPU,1,1630.240150,9.169410,0,14111.775968,14111.776072,14111.781797,14122.366030
+104,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_18_tramp_p0,DSP,1,1639.409560,18.523440,1,14128.232061,14128.232165,14128.236849,14143.776563
+105,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_18_conv1,HTA,1,1657.933000,15.534550,2,14145.079489,14145.079697,14145.086099,14163.108368
+106,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_18_tramp_p1,DSP,1,1673.467550,6.278160,1,14174.004878,14174.004982,14174.011592,14179.075538
+107,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_18_conv2,HTA,1,1679.745710,6.219480,2,14227.809579,14227.809839,14227.818739,14234.326292
+108,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_18_tramp_p2,DSP,1,1685.965190,49.822900,1,14313.455353,14313.455770,14313.458945,14358.533978
+109,0,smolvlm_vision_v3_bundles,0,CPU_X,cpu_seg_18,CPU,1,1735.788090,36.328440,0,14358.740029,14358.740185,14431.042598,14475.056876
+110,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_19_tramp_p0,DSP,1,1772.116530,1.688880,1,14475.424010,14475.424166,14475.435356,14477.921710
+111,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_19_conv1,HTA,1,1773.805410,3.200220,2,14477.959808,14477.960069,14477.966106,14481.537260
+112,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_19_tramp_p1,DSP,1,1777.005630,6.691970,1,14547.136739,14547.136895,14547.140226,14552.698455
+113,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_19_conv2,HTA,1,1783.697600,9.383160,2,14576.429054,14576.429314,14576.434831,14585.003416
+114,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_19_tramp_p2,DSP,1,1793.080760,21.578160,1,14707.291947,14707.292260,14707.295643,14727.086808
+115,0,smolvlm_vision_v3_bundles,0,CPU_X,cpu_seg_19,CPU,1,1814.658920,9.172720,0,14727.129798,14727.130006,14727.133129,14737.702372
+116,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_20_tramp_p0,DSP,1,1823.831640,18.523800,1,14737.746768,14737.746872,14737.752909,14754.372219
+117,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_20_conv1,HTA,1,1842.355440,15.897770,2,14760.093665,14760.094081,14760.099494,14780.257742
+118,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_20_tramp_p1,DSP,1,1858.253210,6.450190,1,14780.288033,14780.288293,14780.292456,14785.805041
+119,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_20_conv2,HTA,1,1864.703400,6.185450,2,14801.384830,14801.385039,14801.390764,14808.520269
+120,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_20_tramp_p2,DSP,1,1870.888850,49.856450,1,14837.474820,14837.475236,14837.478775,14883.222068
+121,0,smolvlm_vision_v3_bundles,0,CPU_X,cpu_seg_20,CPU,1,1920.745300,36.510080,0,14948.369919,14948.370075,14948.375540,14985.245810
+122,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_21_tramp_p0,DSP,1,1957.255380,1.664770,1,15042.870822,15042.870979,15042.879462,15044.430551
+123,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_21_conv1,HTA,1,1958.920150,3.195520,2,15044.459698,15044.459958,15044.465007,15047.580664
+124,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_21_tramp_p1,DSP,1,1962.115670,6.357460,1,15047.596487,15047.596591,15047.598673,15053.019389
+125,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_21_conv2,HTA,1,1968.473130,9.321380,2,15119.391622,15119.391778,15119.403541,15129.516091
+126,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_21_tramp_p2,DSP,1,1977.794510,21.230790,1,15283.370580,15283.370736,15283.381458,15302.375617
+127,0,smolvlm_vision_v3_bundles,0,CPU_X,cpu_seg_21,CPU,1,1999.025300,9.164550,0,15302.404139,15302.404347,15302.407106,15312.939788
+128,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_22_tramp_p0,DSP,1,2008.189850,18.883080,1,15316.527991,15316.528252,15316.532936,15332.733824
+129,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_22_conv1,HTA,1,2027.072930,16.053990,2,15332.767343,15332.767551,15332.775098,15351.216662
+130,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_22_tramp_p1,DSP,1,2043.126920,6.848530,1,15362.521531,15362.521739,15362.531629,15367.680289
+131,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_22_conv2,HTA,1,2049.975450,6.217930,2,15401.518439,15401.518543,15401.528901,15407.687609
+132,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_22_tramp_p2,DSP,1,2056.193380,50.254730,1,15484.447466,15484.447622,15484.459593,15528.781241
+133,0,smolvlm_vision_v3_bundles,0,CPU_X,cpu_seg_22,CPU,1,2106.448110,35.888020,0,15529.034403,15529.034559,15529.041326,15573.037516
+134,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_23_tramp_p0,DSP,1,2142.336130,1.674510,1,15573.317535,15573.317639,15573.330651,15575.802368
+135,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_23_conv1,HTA,1,2144.010640,3.289740,2,15576.033150,15576.033306,15576.042883,15580.642122
+136,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_23_tramp_p1,DSP,1,2147.300380,6.994330,1,15580.928075,15580.928179,15580.934269,15587.604923
+137,0,smolvlm_vision_v3_bundles,0,CPU_P,dsp_seg_23_conv2,HTA,1,2154.294710,9.268290,2,15587.820246,15587.820402,15587.829042,15596.743078
+138,0,smolvlm_vision_v3_bundles,0,CPU_E,dsp_seg_23_tramp_p2,DSP,1,2163.563000,21.760380,1,15596.773058,15596.773214,15596.779460,15615.507704
+139,0,smolvlm_vision_v3_bundles,0,CPU_X,cpu_seg_23,CPU,1,2185.323380,9.163090,0,15615.584215,15615.584476,15615.587807,15626.161711
+140,0,smolvlm_vision_v3_bundles,0,CPU_X,dsp_seg_24,CPU,1,2194.486470,77.804310,0,15626.176962,15626.177066,15626.180032,15711.141073
+=== AGENTS_QNN_TRACE_END ===
