@@ -413,16 +413,121 @@ def render_fixture_gantt(fixture_json: str, out_path: str,
     return {"n_dispatches": len(items), "n_lanes": len(lanes), "makespan_ms": makespan}
 
 
+def render_terminal_gantt(report, *, deadline_us=None, width: int = 80,
+                          max_lanes=None) -> str:
+    """ASCII Gantt from a SchedulerReport's per-dispatch list (schema >= 2).
+
+    One lane per machine; dispatches that finish after the deadline are shaded;
+    a ``|`` column marks the deadline. CLI-native so a schedule can be reasoned
+    about in-terminal (over SSH / inside an agent) without opening a PNG.
+    Returns the rendered string (also handy for tests). Degrades to a one-line
+    notice if the report predates schema v2 (no ``dispatches``).
+    """
+    import json as _json
+
+    if isinstance(report, str):
+        with open(report) as f:
+            report = _json.load(f)
+    elif hasattr(report, "to_dict"):
+        report = report.to_dict()
+
+    dispatches = report.get("dispatches")
+    if not dispatches:
+        return ("[terminal gantt needs a schema>=2 SchedulerReport with a "
+                "'dispatches' list; this report has none]")
+
+    if deadline_us is None:
+        deadline_us = report.get("deadline_us")
+
+    # lanes = all known machines (from utilization) plus any seen in dispatch
+    # targets. Including utilization keys means idle backends show as empty
+    # lanes — which is exactly what makes a rebalance opportunity visible.
+    lanes: list[str] = []
+    for m in (report.get("utilization") or {}):
+        if m and m not in lanes:
+            lanes.append(m)
+    for d in dispatches:
+        for m in str(d.get("target", "")).split("+"):
+            if m and m not in lanes:
+                lanes.append(m)
+    lanes.sort()
+    if max_lanes:
+        lanes = lanes[:max_lanes]
+
+    makespan = max((float(d.get("finish_us", 0.0)) for d in dispatches), default=0.0) or 1.0
+    scale = width / makespan
+    dl_col = int(round(deadline_us * scale)) if (deadline_us and deadline_us <= makespan) else None
+    n_late = 0
+
+    out = []
+    solver = report.get("solver_name", "?")
+    out.append(f"Gantt — solver={solver}  makespan={makespan:,.1f} us"
+               + (f"  deadline={deadline_us:,.1f} us" if deadline_us else ""))
+    out.append("-" * (width + 14))
+    lane_w = max((len(m) for m in lanes), default=4)
+    for m in lanes:
+        row = [" "] * width
+        for d in dispatches:
+            if m not in str(d.get("target", "")).split("+"):
+                continue
+            s = int(float(d.get("start_us", 0.0)) * scale)
+            e = max(s + 1, int(float(d.get("finish_us", 0.0)) * scale))
+            late = deadline_us is not None and float(d.get("finish_us", 0.0)) > deadline_us
+            ch = "x" if late else "="
+            for i in range(s, min(e, width)):
+                if row[i] == " " or (ch == "x" and row[i] == "="):
+                    row[i] = ch
+        if dl_col is not None and dl_col < width and row[dl_col] == " ":
+            row[dl_col] = "|"
+        out.append(f"{m.rjust(lane_w)} |{''.join(row)}|")
+    if dl_col is not None:
+        ruler = [" "] * width
+        if dl_col < width:
+            ruler[dl_col] = "|"
+        out.append(f"{' ' * lane_w} |{''.join(ruler)}|  | = deadline {deadline_us:,.1f} us")
+
+    if deadline_us is not None:
+        late_ops = [d for d in dispatches if float(d.get("finish_us", 0.0)) > deadline_us]
+        n_late = len(late_ops)
+        out.append("")
+        out.append(f"  = on-time   x finishes after deadline")
+        if n_late:
+            over = makespan - deadline_us
+            out.append(f"  DEADLINE MISSED by {over:,.1f} us; {n_late} dispatch(es) finish late.")
+            worst = sorted(late_ops, key=lambda d: -float(d.get("finish_us", 0.0)))[:5]
+            for d in worst:
+                out.append(f"    - {d.get('name', d.get('id'))} on {d.get('target')} "
+                           f"finishes {float(d.get('finish_us', 0.0)):,.1f} us")
+        else:
+            out.append(f"  Deadline met with {deadline_us - makespan:,.1f} us of slack.")
+    return "\n".join(out)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     src = ap.add_mutually_exclusive_group(required=True)
     src.add_argument("--trace", help="path to xpurt_trace.csv (predicted+actual)")
     src.add_argument("--fixture", help="path to schedule fixture JSON (predicted only)")
-    ap.add_argument("--out", required=True, help="output PNG path")
+    src.add_argument("--report", help="path to SchedulerReport JSON (terminal ASCII Gantt)")
+    ap.add_argument("--out", default=None, help="output PNG path (required for --trace/--fixture)")
+    ap.add_argument("--terminal", action="store_true",
+                    help="force terminal ASCII mode (implied by --report)")
+    ap.add_argument("--deadline-us", type=float, default=None,
+                    help="(terminal) deadline marker in us; overrides report.deadline_us")
+    ap.add_argument("--width", type=int, default=80, help="(terminal) chart width in columns")
     ap.add_argument("--max-rows", type=int, default=None,
                     help="cap dispatches for very large schedules (default all)")
     ap.add_argument("--title", default=None)
     args = ap.parse_args()
+
+    if args.report or args.terminal:
+        if not args.report:
+            ap.error("--terminal requires --report")
+        print(render_terminal_gantt(args.report, deadline_us=args.deadline_us, width=args.width))
+        return 0
+
+    if not args.out:
+        ap.error("--out is required for --trace/--fixture")
 
     if args.trace:
         info = render_gantt(args.trace, args.out, max_rows=args.max_rows, title=args.title)

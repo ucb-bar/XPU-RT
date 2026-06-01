@@ -25,8 +25,10 @@ from workload_factory import (
 )
 from metrics import compute_metrics
 from profiling import SchedulerReport
-from plot_gantt import render_gantt
+from plot_gantt import render_gantt, render_terminal_gantt
 import fusion_advisor
+import advisor
+from advisor import advise_schedule
 
 __all__ = [
     "SchedulerReport",
@@ -43,6 +45,11 @@ __all__ = [
     "create_sequential_job",
     "generate_syn_workload",
     "compute_metrics",
+    "render_gantt",
+    "render_terminal_gantt",
+    "fusion_advisor",
+    "advisor",
+    "advise_schedule",
 ]
 
 __version__ = "0.1.0"
