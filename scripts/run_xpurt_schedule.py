@@ -12,8 +12,14 @@ import json
 import argparse
 import numpy as np
 
-# Add parent path to sys path to enable imports
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Add the in-tree xpu-rt directory to sys.path BEFORE site-packages so
+# our local edits take priority over any shadowed install in the
+# active conda env (xpurt has greedy_scheduler.py installed as a flat
+# site-packages module — without insert(0, ...), the install shadows
+# our updates).
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, _REPO_ROOT)
+sys.path.insert(0, os.path.join(_REPO_ROOT, "xpu-rt"))
 
 from workload import Workload, Operation
 from workload_factory import (
@@ -21,8 +27,15 @@ from workload_factory import (
     build_machine_combinations,
     machine_type_prefix,
 )
-from scheduler import schedule as milp_schedule
-from greedy_scheduler import greedy_schedule
+# `scheduler` pulls in cvxpy/mosek; defer that import so `--solver greedy`
+# can run in environments where the MILP solver isn't installable (e.g. an
+# xpurt env where numpy is pinned <2 for compatibility with another
+# downstream consumer, but cvxpy expects numpy>=2).
+from greedy_scheduler import (
+    greedy_schedule,
+    greedy_periodic_schedule,
+    decomposed_schedule,
+)
 from profile_loader import load_profiled_processing_times
 from postprocessing import trim_periodic_after_nonperiodic_makespan, output_scheduled_json
 import plot
@@ -64,7 +77,18 @@ def load_networks_config(json_path: str) -> tuple[dict, dict]:
     else:
         machine_core_counts = {CPU_P: 1, CPU_E: 1}
 
+    # Generalised profile_hw map: every key in `hardware.machines` may have
+    # a corresponding entry in `hardware.profile_hw` mapping it to a
+    # bitstream/backend tag (e.g. "HTP", "GPU_fp16", "RVV"). The legacy
+    # cpu_p/cpu_e fields below are kept for back-compat with two-machine
+    # configs and for profile_loader's "p"/"e" output bucketing — when more
+    # than two kinds are present, the first key is the "p" bucket and the
+    # rest fall into "e".
+    profile_hw_map = {k.strip().lower(): v
+                      for k, v in profile_hw.items()
+                      if isinstance(v, str)}
     cfg = {
+        "profile_hw_map":   profile_hw_map,
         "cpu_p_profile_hw": profile_hw.get("cpu_p", "RVV"),
         "cpu_e_profile_hw": profile_hw.get("cpu_e", "scalar"),
         "profile_target": profile_cfg.get("target", "spacemit_x60"),
@@ -116,7 +140,7 @@ def schedule_iree_networks(
     CLI arguments override JSON config values when not None.
 
     `solver` selects the scheduling algorithm:
-      - "milp"   (default) — global optimization via cvxpy/mosek
+      - "milp"            (default) — global optimization via cvxpy/mosek
                               (`scheduler.schedule`).  One pass; no
                               periodic-instance refinement.
       - "greedy"            — list-scheduling heuristic via
@@ -128,9 +152,23 @@ def schedule_iree_networks(
                               then grow only as actual contention pushes
                               the non-periodic makespan out — caps at
                               `max_periodic_iters`).
+      - "greedy_periodic"   — same loop as `greedy`, but the per-iter
+                              picker prioritizes non-periodic ops over
+                              periodic ones. Periodic ops only get
+                              scheduled when no non-periodic is ready,
+                              with an emergency-promote when delaying
+                              would miss the periodic max_end_t
+                              window. Use when the heterogeneous
+                              workload has a non-periodic critical
+                              path (e.g. yolov8) that vanilla greedy
+                              fragments by interleaving periodic
+                              instances (e.g. dronet 50ms).
     """
-    if solver not in ("milp", "greedy"):
-        raise ValueError(f"solver must be 'milp' or 'greedy', got {solver!r}")
+    if solver not in ("milp", "greedy", "greedy_periodic", "decomposed"):
+        raise ValueError(
+            f"solver must be 'milp' | 'greedy' | 'greedy_periodic' | 'decomposed', "
+            f"got {solver!r}"
+        )
     script_dir = os.path.dirname(os.path.abspath(__file__))
     repo_base_path = os.path.abspath(os.path.join(script_dir, '..'))
 
@@ -204,20 +242,25 @@ def schedule_iree_networks(
     n_cores = len(machines)
     transfer_times = np.zeros((n_cores, n_cores))
 
-    # Map each combination to its profile hw and topo tag
-    # e.g. [CPU_P#0, CPU_P#1] → hw="RVV", topo="topo_0_1"
+    # Map each combination to its profile hw and topo tag.
+    # The general path uses the full profile_hw_map (machine-kind → hw
+    # backend), so configs with three or more machine kinds (e.g.
+    # CPU/GPU/HTP) work the same way as the legacy CPU_P/CPU_E split.
+    profile_hw_map = cfg["profile_hw_map"]
     combo_hw = []
     for combo in machine_combinations:
         core_type = machine_type_prefix(combo[0])
-        if core_type == CPU_P:
-            combo_hw.append(cpu_p_profile_hw)
-        else:
-            combo_hw.append(cpu_e_profile_hw)
+        hw = profile_hw_map.get(core_type.lower())
+        if hw is None:
+            # Fall back to the legacy two-machine convention.
+            hw = cpu_p_profile_hw if core_type == CPU_P else cpu_e_profile_hw
+        combo_hw.append(hw)
 
     # Optional: build profiled processing times if requested
     processing_times: dict[str, list[float]] | None = None
     combined_profiled_p: dict[int, dict] | None = None
     combined_profiled_e: dict[int, dict] | None = None
+    profiled_by_network: dict[str, dict[str, dict[int, dict]]] | None = None
     if effective_use_profiled:
         print("\nUsing profiled runtimes where available...")
         # Resolve which override flavor to pass: per-hw dict wins over
@@ -228,7 +271,7 @@ def schedule_iree_networks(
             tt_override = profile_topo_tag
         else:
             tt_override = None
-        processing_times, combined_profiled_p, combined_profiled_e = load_profiled_processing_times(
+        processing_times, combined_profiled_p, combined_profiled_e, profiled_by_network = load_profiled_processing_times(
             networks=networks,
             repo_base_path=repo_base_path,
             machine_combinations=machine_combinations,
@@ -278,6 +321,7 @@ def schedule_iree_networks(
         print("\n" + "=" * 60)
         print("Scheduling combined workload (MILP)...")
         print("=" * 60)
+        from scheduler import schedule as milp_schedule
         result = milp_schedule(
             combined_workload,
             solver_verbosity=effective_solver_verbosity,
@@ -292,8 +336,9 @@ def schedule_iree_networks(
                 combined_workload, t, alpha
             )
     else:
-        # solver == "greedy": iterative periodic-instance refinement.
-        # See greedy_scheduler.greedy_schedule for the per-pass algorithm.
+        # solver == "greedy" or "greedy_periodic": iterative periodic-
+        # instance refinement. See greedy_scheduler for the per-pass
+        # algorithm; only the picker discipline differs between the two.
         # Loop strategy:
         #   - low-seed: force num_instances=1 per periodic network when
         #     restrict_makespan_to_nonperiodic is set (otherwise the
@@ -311,17 +356,25 @@ def schedule_iree_networks(
                 if net_info.get("period") is not None:
                     networks_data["networks"][net_id]["num_instances"] = 1
 
+        # Pick the per-pass picker function.
+        if solver == "greedy_periodic":
+            _greedy_fn = greedy_periodic_schedule
+        elif solver == "decomposed":
+            _greedy_fn = decomposed_schedule
+        else:
+            _greedy_fn = greedy_schedule
+
         combined_workload = None
         t = None
         alpha = None
         prev_counts: dict[str, int] = {}
         for it in range(max_periodic_iters):
-            print(f"\n--- Greedy iteration {it + 1} ---")
+            print(f"\n--- {solver} iteration {it + 1} ---")
             combined_workload = _build_workload()
             print(f"  Total operations: {len(combined_workload.operations)}")
             print(f"  Job names: {combined_workload.job_names}")
 
-            t, alpha = greedy_schedule(combined_workload)
+            t, alpha = _greedy_fn(combined_workload)
 
             # Measure makespan, optionally restricted to non-periodic ops
             # (matches the MILP solver's objective when
@@ -399,7 +452,12 @@ def schedule_iree_networks(
                 break
             print("  Bumping num_instances:", ", ".join(f"{n}: {a}->{b}" for n, a, b in bumped))
         print(f"\nFinal greedy makespan: {iter_makespan:.2f} ms (after {it + 1} iteration{'s' if it else ''})")
-    
+
+        if effective_prune_periodic:
+            combined_workload, t, alpha = trim_periodic_after_nonperiodic_makespan(
+                combined_workload, t, alpha
+            )
+
     # Calculate makespan (non-periodic operations only, matching the solver objective)
     machine_combinations = combined_workload.get_machine_combinations()
     completion_times = []
@@ -475,12 +533,29 @@ def schedule_iree_networks(
     # (e.g. xpurt_demo's default SCHEDULE_JSON path) keep working.
     input_json_basename = os.path.basename(networks_json_path)
     input_json_name = os.path.splitext(input_json_basename)[0]
-    solver_tag = "_greedy" if solver == "greedy" else ""
+    if solver == "greedy":
+        solver_tag = "_greedy"
+        title_solver = "Greedy "
+    elif solver == "greedy_periodic":
+        solver_tag = "_greedy_periodic"
+        title_solver = "Greedy-periodic "
+    elif solver == "decomposed":
+        solver_tag = "_decomposed"
+        title_solver = "Decomposed-EDF "
+    else:
+        solver_tag = ""           # MILP keeps no infix for back-compat
+        title_solver = ""
     profiled_tag = "_profiled" if effective_use_profiled else ""
     plot_path = f"plots/{input_json_name}{solver_tag}{profiled_tag}.png"
     json_output_path = f"schedules/scheduled_{input_json_name}{solver_tag}{profiled_tag}.json"
-
-    title_solver = "Greedy " if solver == "greedy" else ""
+    # Hardware-name labels on the y-axis: instead of "CPU_P#0" / "CPU_E#0",
+    # show "gemmini_q31 (CPU_P#0)" / "RVV (CPU_E#0)". Resolves to the
+    # bitstream-level identity from the schedule input's profile_hw map.
+    # Builds the per-machine-kind label from the generalised profile_hw_map
+    # so 3-way (and higher) configs render correctly.
+    plot_profile_hw = {k.upper(): v for k, v in profile_hw_map.items()}
+    plot_profile_hw.setdefault(CPU_P, cpu_p_profile_hw)
+    plot_profile_hw.setdefault(CPU_E, cpu_e_profile_hw)
     plot.plot_optimization_schedule(
         combined_workload.get_durations(),
         t,
@@ -491,7 +566,8 @@ def schedule_iree_networks(
         combined_workload.get_transfer_times(),
         save_path=plot_path,
         plot_title=f"{title_networks} {title_solver}Schedule ({n_cores} cores) (Periodic)",
-        workload=combined_workload
+        workload=combined_workload,
+        profile_hw=plot_profile_hw,
     )
 
     print(f"\nPlot saved to {plot_path}")
@@ -504,7 +580,9 @@ def schedule_iree_networks(
         alpha=alpha,
         output_path=json_output_path,
         profiled_times_p=combined_profiled_p,
-        profiled_times_e=combined_profiled_e
+        profiled_times_e=combined_profiled_e,
+        profile_hw=plot_profile_hw,
+        profiled_times_by_network=profiled_by_network,
     )
     
     return combined_workload, t, alpha
@@ -523,11 +601,15 @@ if __name__ == "__main__":
         "--solver",
         type=str,
         default="milp",
-        choices=["milp", "greedy"],
+        choices=["milp", "greedy", "greedy_periodic", "decomposed"],
         help="Scheduling algorithm. 'milp' (default) is the global cvxpy/mosek "
              "solver. 'greedy' is a list-scheduling heuristic with iterative "
              "periodic-instance refinement — fast, no external solver needed, "
-             "and suitable for large workloads where the MILP times out.",
+             "and suitable for large workloads where the MILP times out. "
+             "'greedy_periodic' is the same loop but the per-iter picker "
+             "prioritizes non-periodic ops over periodic ones (use for "
+             "heterogeneous workloads where the non-periodic critical path "
+             "shouldn't be fragmented by periodic instances).",
     )
     parser.add_argument(
         "--max-periodic-iters",

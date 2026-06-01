@@ -25,7 +25,9 @@ def output_scheduled_json(
     alpha: np.ndarray,
     output_path: str,
     profiled_times_p: dict | None = None,
-    profiled_times_e: dict | None = None
+    profiled_times_e: dict | None = None,
+    profile_hw: dict | None = None,
+    profiled_times_by_network: dict[str, dict[str, dict[int, dict]]] | None = None,
 ):
     """
     Output a combined JSON file with all dispatches, their hardware targets, and start times.
@@ -39,6 +41,38 @@ def output_scheduled_json(
         profiled_times_e: Optional dict mapping dispatch_id -> {"time_ms": float, "module_name": str} for E-core
     """
     machine_combinations = combined_workload.get_machine_combinations()
+
+    # Network-keyed lookup helpers. The combined_profiled_p/e dicts are
+    # keyed by dispatch_id alone, so when two networks share dispatch_ids
+    # (dronet has 0..29, yolov8_nano has 0..N — they all overlap on
+    # 0..29) the second network's `update()` overwrites the first's
+    # entries. That made every dronet dispatch's `module_name` come out
+    # as a yolov8_nano string in the schedule JSON.
+    #
+    # Fix: when `profiled_times_by_network` is supplied, route the
+    # module_name lookup through the per-network bucket. Match each op's
+    # operation_name against the longest base-network prefix from the
+    # bucket — periodic instances like `dronet0_dispatch_22` resolve to
+    # the base `dronet` (whose profile data covers all instances).
+    base_network_prefixes = (
+        sorted(profiled_times_by_network.keys(), key=len, reverse=True)
+        if profiled_times_by_network else []
+    )
+
+    def _network_for_op(op_name: str) -> str | None:
+        for base in base_network_prefixes:
+            # Non-periodic: <base>_<dispatch_name>
+            if op_name.startswith(base + "_"):
+                return base
+            # Periodic instance: <base><digits>_<dispatch_name>
+            if op_name.startswith(base):
+                rest = op_name[len(base):]
+                i = 0
+                while i < len(rest) and rest[i].isdigit():
+                    i += 1
+                if i > 0 and i < len(rest) and rest[i] == "_":
+                    return base
+        return None
 
     # First pass: collect all dispatch info with completion times
     dispatch_info_list = []
@@ -68,12 +102,31 @@ def output_scheduled_json(
         job_id = op.job_id if hasattr(op, 'job_id') and op.job_id is not None else 0
         job_name = combined_workload.job_names[job_id] if job_id < len(combined_workload.job_names) else f"Job {job_id}"
 
-        # Get module name from profiled data if available
+        # Get module name from profiled data if available. Prefer the
+        # per-network bucket (no dispatch_id collisions across networks).
+        # If we resolved a network but the bucket has no entry for this
+        # dispatch_id (e.g. zero-cost IR ops like view/reshape that the
+        # profile CSV skips), leave module_name as None — falling through
+        # to the combined dicts here would pick up a *different*
+        # network's entry by accident, which is the bug this routing was
+        # introduced to fix.
         module_name = None
-        if profiled_times_p and isinstance(dispatch_id, int) and dispatch_id in profiled_times_p:
-            module_name = profiled_times_p[dispatch_id].get("module_name")
-        elif profiled_times_e and isinstance(dispatch_id, int) and dispatch_id in profiled_times_e:
-            module_name = profiled_times_e[dispatch_id].get("module_name")
+        net_id = _network_for_op(dispatch_name) if profiled_times_by_network else None
+        if net_id and isinstance(dispatch_id, int):
+            net_p = profiled_times_by_network[net_id].get("p", {})
+            net_e = profiled_times_by_network[net_id].get("e", {})
+            if dispatch_id in net_p:
+                module_name = net_p[dispatch_id].get("module_name")
+            elif dispatch_id in net_e:
+                module_name = net_e[dispatch_id].get("module_name")
+        elif not profiled_times_by_network:
+            # No per-network data available — best-effort fallback to the
+            # combined dicts (still collision-prone for multi-network
+            # workloads, but better than nothing for single-network).
+            if profiled_times_p and isinstance(dispatch_id, int) and dispatch_id in profiled_times_p:
+                module_name = profiled_times_p[dispatch_id].get("module_name")
+            elif profiled_times_e and isinstance(dispatch_id, int) and dispatch_id in profiled_times_e:
+                module_name = profiled_times_e[dispatch_id].get("module_name")
 
         completion_time = start_time + float(duration)
 
@@ -175,7 +228,14 @@ def output_scheduled_json(
             )),
             "num_operations": len(combined_workload.operations),
             "machines": combined_workload.machines,
-            "machine_combinations": [combo if isinstance(combo, list) else [combo] for combo in machine_combinations]
+            "machine_combinations": [combo if isinstance(combo, list) else [combo] for combo in machine_combinations],
+            # profile_hw persists the bitstream-level identity of each
+            # CPU role (e.g. CPU_P → "gemmini_q31", CPU_E → "RVV") so that
+            # downstream re-plotting (scripts/plot_scheduled_json.py) can
+            # show real hardware names on the y-axis instead of just the
+            # abstract CPU_P / CPU_E roles. Optional — older schedules
+            # without this field still load fine.
+            **({"profile_hw": profile_hw} if profile_hw else {}),
         }
     }
 
