@@ -1,4 +1,6 @@
 import os
+import re
+from collections import defaultdict
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -9,7 +11,88 @@ import numpy as np
 REPO_PLOTS_DIR = Path(__file__).resolve().parent.parent / "plots"
 
 
-def plot_optimization_schedule(durations, t, alpha, num_jobs, num_machines, machines, transfer_times, save_path="plots/schedule.png", plot_title="Schedule", workload=None):
+# Per-model-kind colormap assignments. Periodic instances of the same
+# model (e.g. dronet0, dronet1, ..., dronet26) get distinct shades from
+# the same matplotlib colormap so the schedule plot reads as "all blues
+# are dronet, all oranges are yolov8" rather than 30 unrelated colors.
+# Add new entries here when introducing a new model family.
+KIND_TO_CMAP = {
+    "dronet": "Blues",
+    "yolov8_nano": "Oranges",
+    "yolov8": "Oranges",
+    "mlp": "Greens",
+    "mobilenet": "Purples",
+    "resnet50": "Reds",
+    "tinyyolo": "YlOrBr",
+}
+# Fallback cmaps for unknown model kinds, in priority order. We avoid
+# Greys here because the transfer-time bars are already gray/black.
+_FALLBACK_CMAPS = ["Greens", "Purples", "Reds", "YlOrBr", "PuRd",
+                   "BuGn", "OrRd", "GnBu"]
+
+
+def _kind_from_job_name(name):
+    """Return the model 'kind' for a job name. e.g. 'dronet0' -> 'dronet',
+    'dronet10' -> 'dronet', 'yolov8_nano' -> 'yolov8_nano'. Strips the
+    trailing periodic-instance suffix (digits at end of name)."""
+    if not name:
+        return "unknown"
+    # Strip trailing digits (periodic instance index)
+    return re.sub(r"\d+$", "", name)
+
+
+def _build_family_colors(job_id_to_color_index, job_names_list, num_colors):
+    """Build a base_colors list where color_index -> RGB triple, with
+    instances of the same model kind drawn from the same colormap.
+
+    Returns a list of length `num_colors`. Slots not covered by any
+    job_id default to a neutral gray (so any caller-side fallback path
+    that hits an unmapped index still gets a sensible color).
+    """
+    # Group color_index slots by model kind.
+    kind_to_color_indices = defaultdict(list)
+    for job_id, color_idx in job_id_to_color_index.items():
+        name = job_names_list[job_id] if job_id < len(job_names_list) else None
+        kind = _kind_from_job_name(name)
+        kind_to_color_indices[kind].append(color_idx)
+
+    # Assign a colormap to each kind. Known kinds use their declared
+    # cmap; unknown kinds draw from _FALLBACK_CMAPS in deterministic
+    # order (sorted by kind name) so reruns produce stable colors.
+    used_cmaps = set(KIND_TO_CMAP.get(k) for k in kind_to_color_indices
+                     if k in KIND_TO_CMAP)
+    fallback_iter = iter(c for c in _FALLBACK_CMAPS if c not in used_cmaps)
+    kind_to_cmap = {}
+    for kind in sorted(kind_to_color_indices.keys()):
+        if kind in KIND_TO_CMAP:
+            kind_to_cmap[kind] = KIND_TO_CMAP[kind]
+        else:
+            kind_to_cmap[kind] = next(fallback_iter, "Greys")
+
+    # Default unused slots to gray; loop fills in known slots.
+    base_colors = [(0.5, 0.5, 0.5)] * num_colors
+
+    # For each kind, pick distinct shades from its colormap. We avoid
+    # the very-light end (<0.35) where the bar would blend into the
+    # white grid background, and the very-dark end (>0.95) where the
+    # text overlay would be unreadable. Single-instance kinds get a
+    # mid-tone (0.7) so they don't look washed out.
+    for kind, indices in kind_to_color_indices.items():
+        cmap = plt.get_cmap(kind_to_cmap[kind])
+        indices_sorted = sorted(indices)
+        n = len(indices_sorted)
+        if n == 1:
+            shades = [0.7]
+        else:
+            shades = np.linspace(0.4, 0.95, n)
+        for shade, color_idx in zip(shades, indices_sorted):
+            if 0 <= color_idx < num_colors:
+                base_colors[color_idx] = tuple(cmap(shade)[:3])
+
+    return base_colors
+
+
+def plot_optimization_schedule(durations, t, alpha, num_jobs, num_machines, machines, transfer_times, save_path="plots/schedule.png", plot_title="Schedule", workload=None, profile_hw=None):
     """
     Parses CVXPY optimization outputs to plot a schedule of jobs on machines over time.
 
@@ -176,6 +259,16 @@ def plot_optimization_schedule(durations, t, alpha, num_jobs, num_machines, mach
                     job_id_counts[op.job_id] = job_id_counts.get(op.job_id, 0) + 1
             print(f"Job ID distribution: {job_id_counts}")
     
+    # Family-aware color override: if we have job names, group instances of
+    # the same model kind under the same colormap (Blues for dronet*,
+    # Oranges for yolov8*, etc.). This makes schedules with many periodic
+    # instances readable — without it, dronet0..dronet26 each get a
+    # different unrelated tab20 color.
+    if workload is not None and job_names_list and job_id_to_color_index:
+        family_n = max(num_unique_job_ids, len(base_colors))
+        base_colors = _build_family_colors(
+            job_id_to_color_index, job_names_list, family_n)
+
     # CRITICAL FIX: Ensure base_colors has enough colors for all unique job_ids
     # If we have more unique job_ids than num_jobs, we need to extend base_colors
     if num_unique_job_ids > len(base_colors):
@@ -430,9 +523,24 @@ def plot_optimization_schedule(durations, t, alpha, num_jobs, num_machines, mach
 
     # Labels and title
     ax.set_yticks(range(num_machines))
-    ax.set_yticklabels(machines)
+    # If profile_hw is provided, prefix each machine label with its hardware
+    # name (e.g. "gemmini_q31 (CPU_P#0)" instead of just "CPU_P#0"). Keeps
+    # the abstract role visible while making the bitstream-level identity
+    # immediately readable from the plot. profile_hw is keyed by CPU_P/CPU_E
+    # — match by prefix so multi-hart machines (CPU_P#0, CPU_P#1) all pick
+    # up the same hw name.
+    if profile_hw:
+        relabeled = []
+        for m in machines:
+            role = m.split("#")[0] if "#" in m else m
+            hw = profile_hw.get(role)
+            relabeled.append(f"{hw} ({m})" if hw else m)
+        ax.set_yticklabels(relabeled)
+        ax.set_ylabel("Cores (hardware)")
+    else:
+        ax.set_yticklabels(machines)
+        ax.set_ylabel("Machines")
     ax.set_xlabel("Time")
-    ax.set_ylabel("Machines")
     ax.set_title(plot_title)
 
     # Add legend with job labels

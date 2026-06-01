@@ -207,7 +207,7 @@ def load_profiled_processing_times(
     p_core_speedup: float,
     topo_tag_override=None,
     strict: bool = True,
-) -> tuple[dict[str, list[float]], dict[int, dict], dict[int, dict]]:
+) -> tuple[dict[str, list[float]], dict[int, dict], dict[int, dict], dict[str, dict[str, dict[int, dict]]]]:
     """
     Load profiled processing times for all networks and dispatches.
 
@@ -224,14 +224,25 @@ def load_profiled_processing_times(
     `strict=False` for cases where partial coverage is intentional.
 
     Returns:
-      (processing_times, combined_profiled_p, combined_profiled_e) where:
+      (processing_times, combined_profiled_p, combined_profiled_e,
+       profiled_by_network) where:
       - processing_times: {prefixed_dispatch_name: [time_per_combination]}
       - combined_profiled_p: {dispatch_id: {"time_ms", "module_name"}} for P-cores
-      - combined_profiled_e: {dispatch_id: {"time_ms", "module_name"}} for E-cores
+        — keyed by dispatch_id alone, so multi-network workloads collide:
+        the second network's update() overwrites the first's entries for
+        any shared dispatch_id. Use `profiled_by_network` for any
+        consumer that needs to identify which network a dispatch came
+        from (e.g. emitting `module_name` into the schedule JSON).
+      - combined_profiled_e: same shape as combined_profiled_p, for E-cores.
+      - profiled_by_network: {net_id: {"p": {...}, "e": {...}}} —
+        network-keyed view of the same data, no collisions. `net_id` is
+        the base network identifier from `networks` (e.g. "dronet",
+        "yolov8_nano"), not a periodic instance like "dronet0".
     """
     processing_times: dict[str, list[float]] = {}
     combined_profiled_p: dict[int, dict] = {}
     combined_profiled_e: dict[int, dict] = {}
+    profiled_by_network: dict[str, dict[str, dict[int, dict]]] = {}
     # Aggregate missing-data findings before raising so the user sees
     # *every* gap at once, not just the first one — saves an iter cycle.
     missing: list[str] = []
@@ -343,11 +354,14 @@ def load_profiled_processing_times(
 
             processing_times[prefixed_name] = combo_times
 
+        net_bucket = profiled_by_network.setdefault(net_id, {"p": {}, "e": {}})
         for (hw, topo), prof in all_profiles.items():
             if hw == cpu_p_profile_hw:
                 combined_profiled_p.update(prof)
+                net_bucket["p"].update(prof)
             else:
                 combined_profiled_e.update(prof)
+                net_bucket["e"].update(prof)
 
     if strict and missing:
         raise FileNotFoundError(
@@ -364,4 +378,4 @@ def load_profiled_processing_times(
             f"Missing entries ({len(missing)}):\n" + "\n".join(missing)
         )
 
-    return processing_times, combined_profiled_p, combined_profiled_e
+    return processing_times, combined_profiled_p, combined_profiled_e, profiled_by_network
