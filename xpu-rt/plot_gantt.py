@@ -296,6 +296,26 @@ def render_fixture_gantt(fixture_json: str, out_path: str,
     fig, ax = plt.subplots(figsize=(14, max(3, 0.5 * len(lanes) + 2)))
     BAR_H = 0.7
 
+    # Derive each instance's periodic slot (when this fixture was
+    # generated with enforce_periodic / partition mode) so we can flag
+    # dispatches that bleed past their parent network's makespan window.
+    # provenance.instances has one row per (network, instance); the slot
+    # length is horizon_ms / n_instances_of_that_network.
+    inst_slots: dict[tuple[str, int], tuple[float, float]] = {}
+    prov = fx.get("_provenance", {})
+    horizon = float(prov.get("horizon_target_ms", 0) or 0)
+    if horizon > 0:
+        n_inst_by_net: dict[str, int] = {}
+        for ins in prov.get("instances", []):
+            n_inst_by_net[ins["network"]] = n_inst_by_net.get(ins["network"], 0) + 1
+        for ins in prov.get("instances", []):
+            net = ins["network"]
+            inst = ins["instance"]
+            n = n_inst_by_net.get(net, 1)
+            slot_len = horizon / max(n, 1)
+            inst_slots[(net, inst)] = (inst * slot_len, (inst + 1) * slot_len)
+
+    n_out_of_slot = 0
     for d in items:
         lane = lane_idx[d["hardware_target"]]
         s = d["start_time"] / SCALE
@@ -304,15 +324,50 @@ def render_fixture_gantt(fixture_json: str, out_path: str,
         inst = _inst_idx(d["job_name"], root)
         base = job_colors.get(root, "#94a3b8")
         c = _instance_shade(base, inst, inst_max.get(root, 1))
-        ax.broken_barh([(s, w)], (lane - BAR_H/2, BAR_H),
-                       facecolors=c, edgecolors="black", linewidth=0.1)
+        # If we know the periodic slot and this dispatch falls outside
+        # its parent instance's slot, draw a red border + hatch so the
+        # deadline violation is obvious at a glance.
+        edge_color = "black"
+        edge_width = 0.1
+        hatch_pattern: str | None = None
+        slot = inst_slots.get((root, inst))
+        if slot is not None and (s + 1e-6 < slot[0] or s + w > slot[1] + 1e-6):
+            edge_color = "#dc2626"  # red-600
+            edge_width = 1.0
+            hatch_pattern = "////"
+            n_out_of_slot += 1
+        if hatch_pattern is not None:
+            ax.broken_barh([(s, w)], (lane - BAR_H/2, BAR_H),
+                           facecolors=c, edgecolors=edge_color,
+                           linewidth=edge_width, hatch=hatch_pattern)
+        else:
+            ax.broken_barh([(s, w)], (lane - BAR_H/2, BAR_H),
+                           facecolors=c, edgecolors=edge_color, linewidth=edge_width)
+
+    # Draw per-instance slot brackets at the bottom of each lane so the
+    # intended periodic windows are visible alongside the actual placement.
+    if inst_slots:
+        slot_bracket_y = len(lanes) + 0.3
+        for (net, inst), (s0, s1) in sorted(inst_slots.items()):
+            base = job_colors.get(net, "#94a3b8")
+            shade = _instance_shade(base, inst, inst_max.get(net, 1))
+            ax.broken_barh([(s0, s1 - s0)], (slot_bracket_y, 0.15),
+                           facecolors=shade, edgecolors="black", linewidth=0.3, alpha=0.5)
+            ax.text((s0 + s1) / 2, slot_bracket_y + 0.075, f"{net}{inst}",
+                    ha="center", va="center", fontsize=5, color="black")
 
     ax.set_yticks(range(len(lanes)))
     ax.set_yticklabels(lanes)
     ax.set_xlabel("Time (ms)")
+    slot_summary = ""
+    if inst_slots:
+        if n_out_of_slot:
+            slot_summary = f", {n_out_of_slot}/{len(items)} OUT-OF-SLOT (red+hatched)"
+        else:
+            slot_summary = f", all {len(items)} dispatches in their periodic slots"
     ax.set_title(
         (title or fixture_json) +
-        f"  —  {len(items)} dispatches, makespan {makespan:.1f} ms"
+        f"  —  {len(items)} dispatches, makespan {makespan:.1f} ms{slot_summary}"
     )
     ax.grid(axis="x", linestyle=":", alpha=0.4)
     ax.axvline(makespan, color="black", linestyle="--", linewidth=0.6, alpha=0.6)
