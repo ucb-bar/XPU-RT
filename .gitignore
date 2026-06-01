@@ -31,6 +31,9 @@ validation_report.txt
 
 # Local config not intended for upstream
 .mcp.json
+# Claude Code workflow: commit skills/hooks/settings, ignore local logs + per-task policy
+.claude/logs/
+.claude/edit_policy.json
 build/
 compgen_output/
 sessions/

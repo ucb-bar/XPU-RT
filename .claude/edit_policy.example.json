@@ -1,0 +1,9 @@
+{
+  "_comment": "Copy to edit_policy.json to scope edits for a task; the deny_forbidden_edits hook reads edit_policy.json (this .example file is inert). 'allow' is a whitelist; 'deny' always wins. Without edit_policy.json the hook allows everything.",
+  "_examples": {
+    "scheduler-only": {"allow": ["xpu-rt/scheduler*.py", "xpu-rt/schedulers.py"], "deny": ["zephyr-chipyard-sw/**"]},
+    "cost-model-only": {"allow": ["xpu-rt/*cost*.py", "xpu-rt/profile_loader.py"], "deny": ["xpu-rt/scheduler.py"]}
+  },
+  "allow": ["xpu-rt/scheduler*.py"],
+  "deny": ["zephyr-chipyard-sw/**", "hw/**", "sims/**"]
+}
