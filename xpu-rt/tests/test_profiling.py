@@ -51,13 +51,30 @@ class SchedulerReportTests(unittest.TestCase):
             "makespan_cycles", "utilization", "granularity",
             "dispatch_durations", "critical_path",
             "fusion_applied", "git_sha", "captured_at",
+            "deadline_us", "dispatches",
         ):
             self.assertIn(key, d, f"missing key: {key}")
-        self.assertEqual(d["schema_version"], 1)
+        self.assertEqual(d["schema_version"], 2)
         self.assertEqual(d["solver_name"], "MOSEK")
         self.assertEqual(d["solver_status"], "optimal")
         self.assertAlmostEqual(d["solve_wall_s"], 0.42)
         self.assertEqual(d["n_operations"], 2)
+
+    def test_dispatches_v2(self):
+        r = SchedulerReport.from_solver_state(
+            self.wl, self.t, self.alpha,
+            solver_name="MOSEK", solve_wall_s=0.0,
+        )
+        # One dispatch per op, each carrying placement + feasibility.
+        self.assertEqual(len(r.dispatches), 2)
+        for i, disp in enumerate(r.dispatches):
+            self.assertEqual(disp["id"], i)
+            for key in ("name", "target", "start_us", "finish_us",
+                        "duration_us", "deps", "feasible_targets"):
+                self.assertIn(key, disp)
+            self.assertAlmostEqual(
+                disp["finish_us"], disp["start_us"] + disp["duration_us"], places=5
+            )
 
     def test_utilization_shape(self):
         r = SchedulerReport.from_solver_state(

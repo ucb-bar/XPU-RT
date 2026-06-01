@@ -624,6 +624,25 @@ def schedule_iree_networks(
     except Exception as exc:
         print(f"[warn] metrics emission failed: {exc}")
 
+    # Emit a structured SchedulerReport (schema v2, with the per-dispatch list)
+    # next to the schedule JSON, so the scheduler advisor and terminal Gantt can
+    # consume real runs. Additive and best-effort.
+    try:
+        from profiling import SchedulerReport
+        report = SchedulerReport.from_solver_state(
+            combined_workload,
+            t,
+            alpha,
+            solver_name=algo_name,
+            solve_wall_s=solver_wall_time_s,
+            solver_status="feasible",
+        )
+        report_path = json_output_path.replace(".json", "_report.json")
+        report.write_json(report_path)
+        print(f"Scheduler report written to: {report_path}")
+    except Exception as exc:
+        print(f"[warn] scheduler report emission failed: {exc}")
+
     return combined_workload, t, alpha
 
 if __name__ == "__main__":

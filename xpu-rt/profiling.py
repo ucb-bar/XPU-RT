@@ -57,6 +57,27 @@ def _bucket_durations(durations: List[float]) -> Dict[str, int]:
     return counts
 
 
+def _feasible_targets(op: Any, machine_combinations: List[List[str]]) -> List[str]:
+    """Machine names an op may legally run on.
+
+    Derived from the complement of ``op.infeasible_combinations`` over all
+    machine combinations, also skipping sentinel-cost (>=1e8) cells. Returns a
+    sorted, de-duplicated list of machine names. Used by the advisor so it only
+    ever proposes moving a dispatch to a backend it can actually run on.
+    """
+    names: set = set()
+    pts = getattr(op, "processing_times", None)
+    infeasible = getattr(op, "infeasible_combinations", set()) or set()
+    for k, combo in enumerate(machine_combinations):
+        if k in infeasible:
+            continue
+        if pts is not None and k < len(pts) and pts[k] >= 1e8:
+            continue
+        for m in combo:
+            names.add(m)
+    return sorted(names)
+
+
 def _git_sha(repo_root: Optional[str] = None) -> str:
     cwd = repo_root or os.path.dirname(os.path.abspath(__file__))
     try:
@@ -91,6 +112,10 @@ class SchedulerReport:
     fusion_map: Optional[Dict[str, Any]]
     git_sha: str
     captured_at: str
+    # schema v2 (additive, optional so v1 readers/round-trips stay valid):
+    # the frame deadline and the per-dispatch placement list the advisor needs.
+    deadline_us: Optional[float] = None
+    dispatches: Optional[List[Dict[str, Any]]] = None
 
     @classmethod
     def from_solver_state(
@@ -157,12 +182,42 @@ class SchedulerReport:
             "buckets": _bucket_durations(durations),
         }
 
+        # Per-dispatch placement list (schema v2). Reuses combo_idx/duration
+        # already derived above; adds start/finish, dependency indices, and the
+        # feasible-target set so the advisor can reason about and rebalance the
+        # schedule without needing the live Workload.
+        op_to_idx = {id(op): i for i, op in enumerate(workload.operations)}
+        dispatches: List[Dict[str, Any]] = []
+        op_deadlines: List[float] = []
+        for i, op in enumerate(workload.operations):
+            combo_idx = int(np.argmax(alpha[i]))
+            combo = machine_combinations[combo_idx] if combo_idx < len(machine_combinations) else []
+            start = float(t[i])
+            d = float(durations[i])
+            dl = getattr(op, "deadline_us", None)
+            if dl is not None:
+                op_deadlines.append(float(dl))
+            dispatches.append({
+                "id": i,
+                "name": getattr(op, "operation_name", None) or f"op_{i}",
+                "op": getattr(op, "operation_id", None),
+                "target": "+".join(combo),
+                "combo_idx": combo_idx,
+                "start_us": start,
+                "duration_us": d,
+                "finish_us": start + d,
+                "deps": [op_to_idx[id(p)] for p in op.get_predecessors() if id(p) in op_to_idx],
+                "feasible_targets": _feasible_targets(op, machine_combinations),
+                "deadline_us": (float(dl) if dl is not None else None),
+            })
+        report_deadline_us = min(op_deadlines) if op_deadlines else None
+
         n_combinations = len(machine_combinations) if machine_combinations else 0
         solver_state = getattr(workload, "solver_state", {}) or {}
         fusion_applied = bool(solver_state.get("fusion_applied", False))
 
         return cls(
-            schema_version=1,
+            schema_version=2,
             solver_name=solver_name,
             solver_status=solver_status,
             solve_wall_s=float(solve_wall_s),
@@ -180,6 +235,8 @@ class SchedulerReport:
             fusion_map=fusion_map,
             git_sha=_git_sha(),
             captured_at=_dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
+            deadline_us=report_deadline_us,
+            dispatches=dispatches,
         )
 
     def to_dict(self) -> Dict[str, Any]:
