@@ -36,8 +36,10 @@ DEFAULT_SCHEDULERS: List[Dict[str, Optional[str]]] = [
     {"solver": "milp", "scheduler": "peft"},
     {"solver": "milp", "scheduler": "edf"},
     # Greedy variants — sanity baselines that don't use the ILP
-    # registry at all.
+    # registry at all. greedy_periodic explicitly partitions periodic
+    # ops by release time so it always appears in the comparison row.
     {"solver": "greedy", "scheduler": None},
+    {"solver": "greedy_periodic", "scheduler": None},
     {"solver": "decomposed", "scheduler": None},
 ]
 
