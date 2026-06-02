@@ -42,7 +42,21 @@ python3 scripts/compare_backends.py \
 
 # diagnose any one schedule
 python3 xpu-rt/advisor.py --report schedules/scheduled_<...>_report.json --deadline-us 70 --gantt
+
+# axis C — EVALUATED merge-vs-split decision (reuses xpu-rt/rewrite.py fuse/split +
+# re-schedules each candidate). Emits the chosen transform as a Contract-2 hint.
+python3 scripts/granularity_loop.py --networks-json <spec> --baseline-solver decomposed \
+  --emit-hint artifacts/iterate/granularity_hint.json
 ```
+
+**Axis C is evaluated, not hint-only.** `granularity_loop.py` builds the Workload, runs
+`rewrite.generate_candidates` (your M9 fuse/split generator) and `rewrite.score_candidates`
+(re-schedules each), then decides MERGE vs SPLIT vs none. Note: the predicted cost model has
+**no per-dispatch launch overhead**, so *fusing* tiny dispatches mostly shows up as removed
+dispatches + removed cross-device transitions (its full payoff is measured on FireSim);
+*splitting* changes makespan directly (parallelism). The chosen transform is emitted as the
+ModelBlaster hint (`modelblaster.fusion_hints/v1` for merge, `modelblaster.split_hints/v1`
+for split) for you to realize + confirm on FireSim.
 
 `iterate_firesim.py` emits to `artifacts/iterate/`:
 - `report.md` — baseline vs winner table, advisor narrative, axis-B comparison, before/after Gantt.

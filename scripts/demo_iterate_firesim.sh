@@ -23,11 +23,20 @@ python3 scripts/iterate_firesim.py \
   --out-dir "$OUT"
 
 echo
+echo "### Axis C: merge-vs-split granularity decision (re-schedules fuse/split candidates) ###"
+python3 scripts/granularity_loop.py \
+  --networks-json "$SPEC" \
+  --baseline-solver decomposed \
+  --max-per-type 10 \
+  --emit-hint "$OUT/granularity_hint.json"
+
+echo
 echo "### Artifacts ###"
 echo "  report:        $OUT/report.md"
 echo "  result json:   $OUT/iteration_result.json"
 echo "  firesim batch: $OUT/firesim_batch.json   (hand to the ModelBlaster session)"
 echo "  before/after:  $OUT/before_after_gantt.png"
+echo "  granularity:   $OUT/granularity_result.json + granularity_hint.json (merge-vs-split)"
 echo
 echo "Optional axis-B deep dive:"
 echo "  python3 scripts/compare_backends.py --networks-json $SPEC --solver greedy --deadline-us 70"
