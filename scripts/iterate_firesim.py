@@ -12,8 +12,8 @@ composite Gantt.
         --baseline-solver decomposed --deadline-us auto --gantt
 
 This is the inner, fast loop (predicted). The ModelBlaster session realizes axis
-C (fusion) on spike + runs firesim_batch.json on FireSim for authoritative timing
-(see docs/iterative_firesim_loop.md).
+C (fusion) on spike + runs firesim_batch.json on FireSim for authoritative timing.
+Contracts: see the xpu-rt/bundle.py module docstring.
 """
 from __future__ import annotations
 
@@ -248,7 +248,7 @@ def _render_report(runs, base_row, winner, deadline_us, deadline_src, bundle, ga
         L.append(f"\n## Before/after Gantt\n\n![before/after]({os.path.basename(gantt_rel)})  \n`{gantt_rel}`")
     L.append("\n## Next: FireSim batch\n")
     L.append(f"`firesim_batch.json` lists {len(bundle['candidates'])} candidates for the ModelBlaster "
-             "session to build + run in one batched FireSim session (see docs/iterative_firesim_loop.md).")
+             "session to build + run in one batched FireSim session.")
     return "\n".join(L) + "\n"
 
 

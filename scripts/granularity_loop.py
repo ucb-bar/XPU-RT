@@ -3,7 +3,8 @@
 Builds the firesim Workload in-process, then uses xpu-rt/rewrite.py to generate
 fuse/split candidates and re-schedules each (rewrite.score_candidates) to measure
 the predicted effect. It reports a merge-vs-split decision and emits the chosen
-transform(s) as a ModelBlaster hint (Contract 2 in docs/iterative_firesim_loop.md).
+transform(s) as a ModelBlaster fusion/split hint (contract described below + in
+xpu-rt/bundle.py).
 
 Key modelling point (confirmed empirically): the predicted cost model has NO
 per-dispatch launch/transition overhead, so *fusing* tiny dispatches leaves the

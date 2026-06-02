@@ -33,8 +33,8 @@ python3 scripts/iterate_firesim.py --networks-json <...> --baseline-solver decom
 python3 scripts/compare_backends.py --networks-json <...> --solver decomposed --deadline-us <N>
 ```
 
-The iterative loop, its bundle + fusion-hint contracts, and the ModelBlaster
-handoff are documented in **`docs/iterative_firesim_loop.md`**.
+The bundle + fusion/split-hint contracts are documented in the module docstrings
+of `xpu-rt/bundle.py` and `scripts/granularity_loop.py`.
 
 Slash-command equivalents live in `.claude/skills/`: `/diagnose-schedule`,
 `/sweep-schedulers`, `/compare-runs`.

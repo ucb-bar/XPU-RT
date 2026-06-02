@@ -3,7 +3,7 @@
 # the FireSim 1-yolo + 4-mlp + 2-dronet workload. No FireSim/spike needed: it
 # schedules with existing profiles, lets the advisor diagnose, tries a bundle of
 # candidates (scheduler + backend axes), picks a winner, and writes a report +
-# before/after composite Gantt. See docs/iterative_firesim_loop.md.
+# before/after composite Gantt. Contracts: see bundle.py / granularity_loop.py docstrings.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
