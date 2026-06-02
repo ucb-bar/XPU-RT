@@ -23,11 +23,22 @@ from typing import Any, Dict, List, Optional
 # {milp,greedy,greedy_periodic,decomposed}; scheduler is the registry algorithm
 # used only when solver=="milp".
 DEFAULT_SCHEDULERS: List[Dict[str, Optional[str]]] = [
-    {"solver": "greedy", "scheduler": None},
-    {"solver": "decomposed", "scheduler": None},
+    # Exact ILP solvers first — these are the preferred schedulers when
+    # the time budget allows. MOSEK is the commercial cvxpy backend;
+    # CPSAT is Google OR-Tools' constraint-programming solver. Both
+    # give provably-optimal schedules on the demo workload's size.
+    {"solver": "milp", "scheduler": "mosek"},
+    {"solver": "milp", "scheduler": "cpsat"},
+    # Polynomial-time heuristics — fast fallback when ILP is over
+    # budget; they're typically within a few % of optimal on real
+    # workloads.
     {"solver": "milp", "scheduler": "heft"},
     {"solver": "milp", "scheduler": "peft"},
     {"solver": "milp", "scheduler": "edf"},
+    # Greedy variants — sanity baselines that don't use the ILP
+    # registry at all.
+    {"solver": "greedy", "scheduler": None},
+    {"solver": "decomposed", "scheduler": None},
 ]
 
 
