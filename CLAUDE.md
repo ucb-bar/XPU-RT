@@ -24,7 +24,17 @@ python3 xpu-rt/plot_gantt.py --report <report.json> --deadline-us <N>
 # 4. profile multiple schedulers on one benchmark and compare
 python3 scripts/profile_schedulers.py --networks-json <...> \
   --schedulers decomposed,heft,peft,edf,fifo,round_robin --deadline-us <N>
+
+# 5. iterative improvement loop (baseline -> advise -> bundle of candidates ->
+#    winner -> before/after Gantt + report). Predicted-only; the ModelBlaster
+#    session realizes axis-C fusion + runs the FireSim batch. See the runbook.
+bash scripts/demo_iterate_firesim.sh
+python3 scripts/iterate_firesim.py --networks-json <...> --baseline-solver decomposed --deadline-us auto --gantt
+python3 scripts/compare_backends.py --networks-json <...> --solver decomposed --deadline-us <N>
 ```
+
+The iterative loop, its bundle + fusion-hint contracts, and the ModelBlaster
+handoff are documented in **`docs/iterative_firesim_loop.md`**.
 
 Slash-command equivalents live in `.claude/skills/`: `/diagnose-schedule`,
 `/sweep-schedulers`, `/compare-runs`.

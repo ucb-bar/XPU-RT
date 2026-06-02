@@ -413,6 +413,38 @@ def render_fixture_gantt(fixture_json: str, out_path: str,
     return {"n_dispatches": len(items), "n_lanes": len(lanes), "makespan_ms": makespan}
 
 
+def render_composite_gantt(before_json: str, after_json: str, out_path: str,
+                           titles: tuple = ("Before", "After")) -> dict:
+    """Stacked before/after predicted Gantt for a PR.
+
+    Renders each schedule fixture via render_fixture_gantt (so coloring/instance
+    shading/periodic-slot overlays match the single-schedule figures), then
+    stacks the two panels into one PNG. Reuses the existing renderer rather than
+    duplicating its drawing logic.
+    """
+    import tempfile
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.image as mpimg
+    import matplotlib.pyplot as plt
+
+    tmp = tempfile.mkdtemp(prefix="composite_gantt_")
+    before_png = os.path.join(tmp, "before.png")
+    after_png = os.path.join(tmp, "after.png")
+    info_b = render_fixture_gantt(before_json, before_png, title=titles[0])
+    info_a = render_fixture_gantt(after_json, after_png, title=titles[1])
+
+    fig, axes = plt.subplots(2, 1, figsize=(14, 16))
+    for ax, png in zip(axes, (before_png, after_png)):
+        ax.imshow(mpimg.imread(png))
+        ax.axis("off")
+    fig.tight_layout()
+    os.makedirs(os.path.dirname(os.path.abspath(out_path)), exist_ok=True)
+    fig.savefig(out_path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    return {"before": info_b, "after": info_a, "out": out_path}
+
+
 def render_terminal_gantt(report, *, deadline_us=None, width: int = 80,
                           max_lanes=None) -> str:
     """ASCII Gantt from a SchedulerReport's per-dispatch list (schema >= 2).

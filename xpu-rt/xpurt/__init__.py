@@ -25,7 +25,7 @@ from workload_factory import (
 )
 from metrics import compute_metrics
 from profiling import SchedulerReport
-from plot_gantt import render_gantt, render_terminal_gantt
+from plot_gantt import render_gantt, render_terminal_gantt, render_composite_gantt
 import fusion_advisor
 import advisor
 from advisor import advise_schedule
