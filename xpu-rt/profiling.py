@@ -116,6 +116,15 @@ class SchedulerReport:
     # the frame deadline and the per-dispatch placement list the advisor needs.
     deadline_us: Optional[float] = None
     dispatches: Optional[List[Dict[str, Any]]] = None
+    # schema v3 (additive): analytic lower-bound on makespan ("oracle floor")
+    # so callers can read the solver's gap directly. The four fields are
+    # critical-path / load / release components plus the unified
+    # max-of-three. All in µs; None on workloads we couldn't analyze.
+    oracle_floor_us: Optional[float] = None
+    oracle_critical_path_us: Optional[float] = None
+    oracle_load_us: Optional[float] = None
+    oracle_release_us: Optional[float] = None
+    oracle_gap_pct: Optional[float] = None
 
     @classmethod
     def from_solver_state(
@@ -216,6 +225,17 @@ class SchedulerReport:
         solver_state = getattr(workload, "solver_state", {}) or {}
         fusion_applied = bool(solver_state.get("fusion_applied", False))
 
+        # Oracle floor (max of critical-path, load, release bounds). Pure
+        # function of the workload, no solver in the loop. Guarded so a
+        # bug in the floor analysis can't break SchedulerReport creation.
+        try:
+            from oracle import compute_floor, oracle_gap_pct as _gap_pct
+            floor = compute_floor(workload)
+            gap_pct_val = _gap_pct(makespan, floor["oracle_floor_us"])
+        except Exception:
+            floor = {}
+            gap_pct_val = None
+
         return cls(
             schema_version=2,
             solver_name=solver_name,
@@ -237,6 +257,11 @@ class SchedulerReport:
             captured_at=_dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
             deadline_us=report_deadline_us,
             dispatches=dispatches,
+            oracle_floor_us=floor.get("oracle_floor_us") if floor else None,
+            oracle_critical_path_us=floor.get("critical_path_us") if floor else None,
+            oracle_load_us=floor.get("load_us") if floor else None,
+            oracle_release_us=floor.get("release_us") if floor else None,
+            oracle_gap_pct=gap_pct_val,
         )
 
     def to_dict(self) -> Dict[str, Any]:

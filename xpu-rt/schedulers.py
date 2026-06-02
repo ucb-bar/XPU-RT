@@ -164,11 +164,48 @@ def register(name: str, fn: SchedulerFn) -> None:
     _REGISTRY[name] = fn
 
 
+def _wrap_with_compaction(fn: SchedulerFn) -> SchedulerFn:
+    """Wrap a scheduler so its (t, alpha) return value passes through the
+    left-shift compaction post-pass. Idempotent on tight solvers
+    (MOSEK/CPSAT) — slack-eliminating on list schedulers (HEFT/PEFT/EDF/...).
+
+    Disabled by setting env XPURT_NO_COMPACT=1 (useful when comparing a
+    solver's raw vs compacted makespan)."""
+    def _compacted(workload, **kwargs):
+        result = fn(workload, **kwargs)
+        if os.environ.get("XPURT_NO_COMPACT", "0") in ("1", "true", "True"):
+            return result
+        if result is None:
+            return result
+        # Schedulers should return (t, alpha, fused_workload, fusion_map),
+        # but the registry also accepts opaque return values for testing —
+        # pass anything that doesn't fit the contract through unchanged.
+        if not isinstance(result, tuple) or len(result) < 2:
+            return result
+        t, alpha = result[0], result[1]
+        fused = result[2] if len(result) >= 3 else None
+        fmap = result[3] if len(result) >= 4 else None
+        if t is None or alpha is None:
+            return result
+        try:
+            from compaction import left_shift_compact
+            wl_for_compact = fused if fused is not None else workload
+            t2, alpha2 = left_shift_compact(t, alpha, wl_for_compact)
+            return (t2, alpha2, fused, fmap) if len(result) >= 4 else result
+        except Exception as exc:
+            # Compaction must never break a working schedule. If anything
+            # goes wrong we fall back to the un-compacted output and warn.
+            print(f"warning: compaction post-pass skipped ({exc})")
+            return result
+    _compacted.__name__ = f"{fn.__name__}_compacted"
+    return _compacted
+
+
 def get_scheduler(name: str) -> SchedulerFn:
     if name not in _REGISTRY:
         available = ", ".join(sorted(_REGISTRY.keys()))
         raise ValueError(f"Unknown scheduler '{name}'. Available: {available}")
-    return _REGISTRY[name]
+    return _wrap_with_compaction(_REGISTRY[name])
 
 
 def available_schedulers() -> List[str]:

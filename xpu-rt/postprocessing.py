@@ -239,6 +239,25 @@ def output_scheduled_json(
         }
     }
 
+    # Apply same-network adjacent auto-merge (schedule-time fusion of
+    # back-to-back dispatches on the same core that have no external
+    # readers). Disabled by env XPURT_NO_AUTOMERGE=1.
+    if os.environ.get("XPURT_NO_AUTOMERGE", "0") not in ("1", "true", "True"):
+        try:
+            from automerge import automerge_adjacent, automerge_savings
+            before = output_data
+            output_data = automerge_adjacent(output_data, max_gap_us=50.0,
+                                             saved_handshake_us=5.0)
+            savings = automerge_savings(before, output_data)
+            if savings["pairs_merged"] > 0:
+                print(f"automerge: collapsed {savings['pairs_merged']} "
+                      f"adjacent same-network pair(s) → "
+                      f"{savings['dispatches_after']} dispatches, "
+                      f"makespan {savings['makespan_before']:.1f}µs "
+                      f"→ {savings['makespan_after']:.1f}µs")
+        except Exception as exc:
+            print(f"warning: automerge pass skipped ({exc})")
+
     # Save to file
     os.makedirs(os.path.dirname(output_path) if os.path.dirname(output_path) else '.', exist_ok=True)
     with open(output_path, 'w') as f:
