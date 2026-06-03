@@ -487,6 +487,68 @@ def schedule(
         print(f"  (2c) F2b: pre-fixed {n_singletons} singleton-feasible ops "
               f"({100.0*n_singletons/num_operations:.1f}% of {num_operations} total)")
 
+    # (2d) Phase F2c — symmetry-breaking constraints for periodic instances.
+    # When the workload contains multiple periodic INSTANCES of the same
+    # base network (e.g. mlp_control0, mlp_control1, mlp_control2,
+    # mlp_control3), their dispatch sets are structurally identical. MOSEK
+    # without symmetry-breaking explores N! permutations of which instance
+    # goes where. We add ordering constraints that force instance k's
+    # first op to start no later than instance (k+1)'s first op. Since
+    # the periodic min_start_t already enforces this in the data, the
+    # explicit constraint just helps MOSEK's branch-and-bound prune
+    # symmetric subtrees up front.
+    n_symmetry = 0
+    end = log("(2d) F2c symmetry-breaking for periodic instances")
+    # Group ops by (job_name_base, dispatch_id) to find instances.
+    # job_name = e.g. "mlp_control0", "mlp_control1"; the base is the
+    # leading non-digit prefix.
+    import re as _re_sym
+    instances_by_base: dict[str, dict[int, list[int]]] = {}
+    for i in range(num_operations):
+        op = ops[i]
+        job_name = getattr(op, "operation_name", "") or ""
+        # dispatch_name format: "<job_name>_dispatch_<id>"; the parent
+        # network's instance index is parseable from job_name.
+        m = _re_sym.match(r"^(.+?)(\d+)_dispatch_", job_name)
+        if not m:
+            continue
+        base = m.group(1).rstrip("_")
+        try:
+            inst_k = int(m.group(2))
+        except ValueError:
+            continue
+        # Parse dispatch index for matching identical ops across instances.
+        m2 = _re_sym.search(r"_dispatch_(\d+)", job_name)
+        if not m2:
+            continue
+        try:
+            disp_id = int(m2.group(1))
+        except ValueError:
+            continue
+        instances_by_base.setdefault(base, {}).setdefault(disp_id, []).append(
+            (inst_k, i)
+        )
+    # For each (base, disp_id), if we have ≥ 2 instances, add a chain
+    # t[inst_0] ≤ t[inst_1] ≤ ... — they're already imposed by
+    # min_start_t for periodic data but the explicit chain breaks
+    # symmetric exploration in the optimizer.
+    for base, by_disp in instances_by_base.items():
+        for disp_id, instance_list in by_disp.items():
+            if len(instance_list) < 2:
+                continue
+            instance_list.sort()  # by inst_k ascending
+            for a, b in zip(instance_list, instance_list[1:]):
+                _, ia = a
+                _, ib = b
+                # Allow ties — same-instant scheduling of symmetric ops
+                # is harmless and may even be the periodic solution.
+                constraints.append(t[ia] <= t[ib])
+                n_symmetry += 1
+    end()
+    if constraints_debug_enabled and n_symmetry:
+        print(f"  (2d) F2c: added {n_symmetry} symmetry-breaking constraints "
+              f"across {len(instances_by_base)} periodic networks")
+
     def _periods_overlap(op_a, op_b) -> bool:
         """Return True if the time windows of two operations can overlap."""
         a_start = getattr(op_a, "min_start_t", None)
