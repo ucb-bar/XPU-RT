@@ -326,6 +326,14 @@ def load_profiled_processing_times(
                 # which makes the scheduler think the work has vanished
                 # (bookkeeping fiction).
                 #
+                # For ASYMMETRIC splits (tile_oc_fraction in split_from),
+                # the tile cost = parent cost * fraction. This lets the
+                # scheduler model proportional splits where one tile takes
+                # most of the work (going to the fast accelerator) and the
+                # other takes a small fraction (going to the slow one) so
+                # both finish at the same wall-clock — the genuine
+                # parallelism win.
+                #
                 # The fallback: look at split_from metadata on the dispatch
                 # to find the parent op_id and n_splits, then use parent
                 # cycles / n_splits as the tile's per-combo time. This is
@@ -339,8 +347,14 @@ def load_profiled_processing_times(
                     split_from = dispatch_info.get("split_from") or {}
                     parent_id = split_from.get("op_id") or split_from.get("orig")
                     n_splits = split_from.get("n_splits", 1)
+                    # Asymmetric split: each tile carries its own fraction
+                    # (sum across all tiles == 1.0). Symmetric splits don't
+                    # set this and fall back to 1/n_splits.
+                    tile_fraction = split_from.get("tile_oc_fraction") or \
+                                    split_from.get("tile_fraction") or \
+                                    (1.0 / float(n_splits) if n_splits >= 1 else 1.0)
                     if isinstance(parent_id, int) and parent_id in prof and n_splits >= 1:
-                        t_ms = float(prof[parent_id]["time_ms"]) / float(n_splits)
+                        t_ms = float(prof[parent_id]["time_ms"]) * float(tile_fraction)
                     elif isinstance(parent_id, str):
                         # parent_id encoded as the original dispatch name
                         # ("dispatch_177"). The split rewrite REMOVED the
@@ -364,7 +378,7 @@ def load_profiled_processing_times(
                                         cand_id = maybe_id
                                     break
                         if isinstance(cand_id, int) and cand_id in prof:
-                            t_ms = float(prof[cand_id]["time_ms"]) / float(n_splits)
+                            t_ms = float(prof[cand_id]["time_ms"]) * float(tile_fraction)
 
                 if t_ms is not None:
                     base_t = float(t_ms)
