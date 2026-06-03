@@ -318,6 +318,39 @@ def load_profiled_processing_times(
                 if prof and isinstance(dispatch_id, int) and dispatch_id in prof:
                     t_ms = prof[dispatch_id]["time_ms"]
 
+                # ── Tile-dispatch fallback ────────────────────────────────
+                # When apply_split_hint rewrites the IR to split an op into
+                # N tiles, the new dispatches are named `<orig>.tile_<i>` and
+                # have fresh dispatch_ids that the profile DB doesn't know
+                # about. Without this fallback they default to 0 cycles,
+                # which makes the scheduler think the work has vanished
+                # (bookkeeping fiction).
+                #
+                # The fallback: look at split_from metadata on the dispatch
+                # to find the parent op_id and n_splits, then use parent
+                # cycles / n_splits as the tile's per-combo time. This is
+                # the "linear scaling along split axis" assumption — exact
+                # for matrix-mul-like work and a good first approximation
+                # for conv2d. The decision-loop's measure_candidate.sh path
+                # can later override this with the actual measured per-tile
+                # cycles (round 5 of artifacts/decision_loop/ confirmed
+                # measured tile_0 ≈ tile_1 ≈ orig/2 for linear_s8 N-splits).
+                if t_ms is None and prof and ".tile_" in dispatch_name:
+                    split_from = dispatch_info.get("split_from") or {}
+                    parent_id = split_from.get("op_id") or split_from.get("orig")
+                    n_splits = split_from.get("n_splits", 1)
+                    if isinstance(parent_id, int) and parent_id in prof and n_splits >= 1:
+                        t_ms = float(prof[parent_id]["time_ms"]) / float(n_splits)
+                    elif isinstance(parent_id, str):
+                        # parent_id encoded as the original dispatch name
+                        # ("dispatch_2") rather than the int id — parse it.
+                        for cand_name, cand_info in dispatches.items():
+                            if cand_name == parent_id:
+                                cand_id = cand_info.get("id")
+                                if isinstance(cand_id, int) and cand_id in prof:
+                                    t_ms = float(prof[cand_id]["time_ms"]) / float(n_splits)
+                                break
+
                 if t_ms is not None:
                     base_t = float(t_ms)
                 else:
