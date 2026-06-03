@@ -343,13 +343,28 @@ def load_profiled_processing_times(
                         t_ms = float(prof[parent_id]["time_ms"]) / float(n_splits)
                     elif isinstance(parent_id, str):
                         # parent_id encoded as the original dispatch name
-                        # ("dispatch_2") rather than the int id — parse it.
-                        for cand_name, cand_info in dispatches.items():
-                            if cand_name == parent_id:
-                                cand_id = cand_info.get("id")
-                                if isinstance(cand_id, int) and cand_id in prof:
-                                    t_ms = float(prof[cand_id]["time_ms"]) / float(n_splits)
-                                break
+                        # ("dispatch_177"). The split rewrite REMOVED the
+                        # parent from the graph, so we can't look it up
+                        # via dispatches[parent_id]. Parse the integer
+                        # suffix directly — the dispatch_graph.json convention
+                        # is `dispatch_<int>` for all unsplit ops.
+                        cand_id: int | None = None
+                        if parent_id.startswith("dispatch_"):
+                            tail = parent_id[len("dispatch_"):]
+                            if tail.isdigit():
+                                cand_id = int(tail)
+                        if cand_id is None:
+                            # Last-chance fallback: scan the graph for any
+                            # dispatch whose name matches (handles
+                            # non-standard naming schemes).
+                            for cand_name, cand_info in dispatches.items():
+                                if cand_name == parent_id:
+                                    maybe_id = cand_info.get("id")
+                                    if isinstance(maybe_id, int):
+                                        cand_id = maybe_id
+                                    break
+                        if isinstance(cand_id, int) and cand_id in prof:
+                            t_ms = float(prof[cand_id]["time_ms"]) / float(n_splits)
 
                 if t_ms is not None:
                     base_t = float(t_ms)
