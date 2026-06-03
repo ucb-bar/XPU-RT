@@ -45,7 +45,11 @@ from diagnostics import check_band_invariant  # noqa: E402
 # that produce a *bad* fixture should NOT be skipped — that's the whole
 # point of the audit.
 DEFAULT_SKIP = {
-    "mosek",          # known to diverge at >300 ops; Phase F1-F4 work
+    # F4 (post-F1 diagnosis): MOSEK is INCLUDED in the registry but
+    # the audit treats a timeout as a documented "diverged" status, not
+    # a fixture-missing error. Phase F1 confirmed MOSEK doesn't
+    # converge at any practical scale on this workload's structure;
+    # the audit row records that explicitly.
     "gnn_placement",  # ML placement scheduler — needs pre-trained model
     "rl_policy",      # RL scheduler — needs pre-trained policy
     "cost_model",     # ML cost model — needs training data
@@ -85,12 +89,20 @@ def _run_solver(solver_name, networks_json_path, schedules_dir):
         "--use-profiled",
         "--time-limit", "60",
     ]
+    # F4: MOSEK is special-cased with a stricter wall-clock cap so the
+    # audit doesn't hang for 10 + minutes on a known-diverging solver.
+    # The audit row reports `mosek_diverged` cleanly.
+    wall_cap = 120 if solver_name == "mosek" else 180
+
     t0 = time.perf_counter()
     try:
         result = run(cmd, cwd=str(REPO_ROOT), capture_output=True,
-                     text=True, timeout=180)
+                     text=True, timeout=wall_cap)
     except TimeoutExpired:
-        return None, time.perf_counter() - t0, "timeout"
+        wall = time.perf_counter() - t0
+        if solver_name == "mosek":
+            return None, wall, "mosek_diverged"
+        return None, wall, "timeout"
     except Exception as exc:  # noqa: BLE001
         return None, time.perf_counter() - t0, f"error: {exc}"
     wall = time.perf_counter() - t0
