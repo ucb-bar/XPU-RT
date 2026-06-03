@@ -461,6 +461,32 @@ def schedule(
               f"{sum(1 for o in ops if getattr(o, 'infeasible_combinations', None))}"
               f" ops")
 
+    # (2c) Phase F2b — singleton-feasible pre-fix (MOSEK convergence aid).
+    # When an op has exactly one feasible combination (either because
+    # `infeasible_combinations` rules out all others or because all
+    # other combos report >= 1e8 in processing_times, indicating "no
+    # feasible measurement"), force alpha[i, single_k] = 1 directly.
+    # Combined with the row-sum-equals-1 constraint, this lets MOSEK
+    # presolve eliminate the binary variable entirely. Phase F1's
+    # diagnosis pointed at canonicalization wall — singleton pre-fix
+    # reduces that wall in proportion to how many ops are pinned.
+    INFEASIBLE_COST = 1e8  # processing_times sentinel for "no profile data"
+    n_singletons = 0
+    end = log("(2c) F2b singleton-feasible pre-fix")
+    for i in range(num_operations):
+        infe = set(getattr(ops[i], "infeasible_combinations", set()) or set())
+        proc_times = list(getattr(ops[i], "processing_times", []) or [])
+        feasible_ks = [k for k in range(num_combinations)
+                       if k not in infe and
+                       (k >= len(proc_times) or proc_times[k] < INFEASIBLE_COST)]
+        if len(feasible_ks) == 1:
+            constraints.append(alpha[i, feasible_ks[0]] == 1)
+            n_singletons += 1
+    end()
+    if constraints_debug_enabled and n_singletons:
+        print(f"  (2c) F2b: pre-fixed {n_singletons} singleton-feasible ops "
+              f"({100.0*n_singletons/num_operations:.1f}% of {num_operations} total)")
+
     def _periods_overlap(op_a, op_b) -> bool:
         """Return True if the time windows of two operations can overlap."""
         a_start = getattr(op_a, "min_start_t", None)
