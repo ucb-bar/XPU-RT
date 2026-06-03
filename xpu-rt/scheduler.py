@@ -399,7 +399,6 @@ def schedule(
         workload, fusion_map = fuse_operations(workload, fusion_threshold)
         print(f"Fusion applied: {len(original_workload.operations)} operations -> {len(workload.operations)} fused operations")
         # Print detailed fusion report for debugging (to file)
-        import os
         os.makedirs("fusion_reports", exist_ok=True)
         report_file = f"fusion_reports/fusion_report_{len(original_workload.operations)}to{len(workload.operations)}.txt"
         print_fusion_report(original_workload, workload, fusion_map, output_file=report_file)
@@ -841,6 +840,27 @@ def schedule(
             mosek_params['MSK_DPAR_OPTIMIZER_MAX_TIME'] = time_limit
             if verbose:
                 print(f"Time limit set to {time_limit:.1f} seconds ({time_limit/60:.1f} minutes)")
+        # F2d/F2e: env-injected MOSEK params for convergence-aid sweeps.
+        # XPURT_MOSEK_MIO_GAP=0.05 sets MSK_DPAR_MIO_TOL_REL_GAP=0.05.
+        # XPURT_MOSEK_PARAMS=key=val;key=val sets arbitrary MOSEK keys.
+        _mio_gap = os.environ.get("XPURT_MOSEK_MIO_GAP", "")
+        if _mio_gap:
+            try:
+                mosek_params['MSK_DPAR_MIO_TOL_REL_GAP'] = float(_mio_gap)
+            except ValueError:
+                pass
+        _extra = os.environ.get("XPURT_MOSEK_PARAMS", "")
+        if _extra:
+            for kv in _extra.split(";"):
+                if "=" not in kv:
+                    continue
+                k, v = kv.split("=", 1)
+                k = k.strip(); v = v.strip()
+                # Try float first, then string.
+                try:
+                    mosek_params[k] = float(v)
+                except ValueError:
+                    mosek_params[k] = v
         if mosek_params:
             solver_kwargs["mosek_params"] = mosek_params
     elif cvxpy_solver == "GUROBI":

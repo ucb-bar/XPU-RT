@@ -31,12 +31,14 @@ from .yolo_anchor import yolo_anchor
 from .periodic_anchor import periodic_anchor
 from .critical_path_first import critical_path_first
 from .cpsat_unconstrained import cpsat_unconstrained
+from .mosek_decomposed import mosek_decomposed
 
 POLICIES = {
     "yolo_anchor": yolo_anchor,
     "periodic_anchor": periodic_anchor,
     "critical_path_first": critical_path_first,
     "cpsat_unconstrained": cpsat_unconstrained,
+    "mosek_decomposed": mosek_decomposed,  # Phase F2g
 }
 
 __all__ = [
@@ -45,4 +47,5 @@ __all__ = [
     "periodic_anchor",
     "critical_path_first",
     "cpsat_unconstrained",
+    "mosek_decomposed",
 ]
