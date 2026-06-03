@@ -292,7 +292,15 @@ def cpsat_schedule(
     solver = cp_model.CpSolver()
     if time_limit is not None:
         solver.parameters.max_time_in_seconds = float(time_limit)
-    solver.parameters.num_search_workers = 4
+    # Phase Q-rerun: cold-rerun gate requires reproducibility. CPSAT's
+    # parallel search and worker-stealing produce non-deterministic
+    # solutions when the optimizer is time-limited. We pin both:
+    #   num_search_workers = 1     → no parallel race
+    #   random_seed         = 42   → deterministic branching
+    # The cost: ~1.5-2× wall-clock vs 4-worker parallel. The benefit:
+    # the cold rerun matches the warm run bit-exactly.
+    solver.parameters.num_search_workers = 1
+    solver.parameters.random_seed = 42
     if solver_verbosity >= 2:
         solver.parameters.log_search_progress = True
 
