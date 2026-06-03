@@ -213,6 +213,16 @@ def output_scheduled_json(
         if time_dependency:
             dispatch_entry["time_dependency"] = time_dependency
 
+        # Propagate honest deadline-miss flag set by heuristic schedulers
+        # (Phase A2). When present, downstream readers (Gantt overlay,
+        # band-compliance audit) can mark the overrun directly without
+        # re-deriving from workload metadata.
+        if getattr(op, "deadline_miss", False):
+            dispatch_entry["deadline_miss"] = True
+            overrun = getattr(op, "deadline_overrun_us", None)
+            if overrun is not None:
+                dispatch_entry["deadline_overrun_us"] = float(overrun)
+
         combined_dispatches[dispatch_name] = dispatch_entry
 
     # Create output JSON structure

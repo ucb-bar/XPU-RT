@@ -257,6 +257,26 @@ def _list_schedule(
         for m in combos[best_combo]:
             machine_busy_until[m] = finish
 
+        # Honest deadline marking (Phase A2). Heuristic list schedulers
+        # don't backtrack, so the cleanest contract is: place where
+        # best_eft says, but if the placement overruns op.max_end_t, set
+        # op.deadline_miss=True so downstream readers (audit, fixture
+        # writers, Gantt overlay) can surface the violation rather than
+        # let it silently pass. The op is still placed — we don't drop
+        # it, since dropping would break dependents. Strict-reject
+        # semantics live on the exact-solver path (cpsat/mosek).
+        try:
+            if op.max_end_t is not None and finish > float(op.max_end_t) + 1e-6:
+                op.deadline_miss = True
+                op.deadline_overrun_us = finish - float(op.max_end_t)
+            else:
+                # Make absent==False explicit so audits don't read stale state.
+                if not getattr(op, "deadline_miss", False):
+                    op.deadline_miss = False
+                    op.deadline_overrun_us = 0.0
+        except Exception:
+            pass
+
         ready.remove(pick)
         for v in succ[pick]:
             indeg[v] -= 1
@@ -366,6 +386,18 @@ def _round_robin_assign(workload: Workload) -> Tuple[np.ndarray, np.ndarray, Non
         pred_combo[i] = k
         for m in combos[k]:
             machine_busy[m] = finish
+        # Honest deadline marking (Phase A2) — same contract as
+        # _list_schedule.
+        try:
+            if op.max_end_t is not None and finish > float(op.max_end_t) + 1e-6:
+                op.deadline_miss = True
+                op.deadline_overrun_us = finish - float(op.max_end_t)
+            else:
+                if not getattr(op, "deadline_miss", False):
+                    op.deadline_miss = False
+                    op.deadline_overrun_us = 0.0
+        except Exception:
+            pass
 
     return t, alpha, None, None
 

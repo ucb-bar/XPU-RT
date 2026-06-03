@@ -41,7 +41,34 @@ When all five pass:
 from __future__ import annotations
 
 import copy
-from typing import Any
+import re
+from typing import Any, Optional
+
+
+# Periodic instances are named <base><instance_idx>_dispatch_<id>.
+# The instance idx is a non-empty digit run sitting directly before the
+# literal '_dispatch_' marker. Non-periodic networks (e.g. yolov8_nano)
+# whose base names happen to contain digits do NOT have a digit run
+# DIRECTLY before '_dispatch_' — the regex anchors on that boundary so
+# 'yolov8_nano_dispatch_3' returns None rather than mis-parsing '8'.
+_INSTANCE_RE = re.compile(r"^(.+?[^\d])(\d+)_dispatch_")
+
+
+def _instance_idx_from_name(dispatch_name: str) -> Optional[int]:
+    """Extract periodic-instance index from a dispatch name like
+    'mlp_control0_dispatch_5' → 0, 'yolov8_nano_dispatch_3' → None.
+
+    Returns None for non-periodic names (no '<base><digits>_dispatch_'
+    pattern) — including networks whose base name itself contains
+    digits (yolov8_nano).
+    """
+    m = _INSTANCE_RE.match(dispatch_name)
+    if m is None:
+        return None
+    try:
+        return int(m.group(2))
+    except (TypeError, ValueError):
+        return None
 
 
 def automerge_adjacent(
@@ -121,8 +148,28 @@ def _can_merge(
     dispatches: dict[str, dict],
     max_gap_us: float,
 ) -> bool:
-    # 1. Same job_name (same network instance).
+    # 1. Same job_name (same network instance). This is already the
+    #    instance-aware check: periodic networks are expanded by
+    #    workload_factory so each instance has a unique job_name like
+    #    'mlp_control0', 'mlp_control1', ... Two ops from different
+    #    instances therefore differ here and the merge is refused.
     if ei.get("job_name") != ej.get("job_name"):
+        return False
+    # 1a. Defensive instance-suffix check (Phase A3). Even if the
+    #     job_name slipped past (e.g. legacy fixtures without instance
+    #     expansion), refuse to merge dispatches whose names parse to
+    #     different instance indices. This is a belt-and-suspenders
+    #     guard against cross-instance merges.
+    inst_i = _instance_idx_from_name(ni)
+    inst_j = _instance_idx_from_name(nj)
+    if inst_i is not None and inst_j is not None and inst_i != inst_j:
+        return False
+    # 1b. Defensive max_end_t check. If either op carries a
+    #     deadline_overrun_us flag (Phase A2 marking) past the band, do
+    #     not merge — the resulting fused dispatch would inherit the
+    #     overrun and obscure the violation. Merge only ops that BOTH
+    #     fit their band.
+    if ei.get("deadline_miss") or ej.get("deadline_miss"):
         return False
 
     # 2. Same hardware target.

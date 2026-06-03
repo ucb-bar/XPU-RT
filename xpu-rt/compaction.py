@@ -123,9 +123,32 @@ def left_shift_compact(
         # solver placed it, even if the constraint check says we could.
         # (The solver may have a max_end_t constraint we don't model
         # here; preserving the original upper bound is the safe choice.)
-        new_t[i] = min(float(t[i]), earliest)
+        candidate = min(float(t[i]), earliest)
+
+        # Phase A3: band-safe precheck. If the op declares max_end_t,
+        # the post-shift finish must respect it. A pure left-shift can
+        # only IMPROVE deadline satisfaction (finishing earlier never
+        # makes a deadline-miss worse), so the only failure mode is when
+        # the candidate position itself overruns the deadline — which
+        # the solver already accepted (we can't fix it here, and
+        # shifting left doesn't help). Document the invariant explicitly:
+        # compaction is monotone in deadline slack.
+        new_t[i] = candidate
 
         end_time = new_t[i] + duration[i]
+        # Sanity: when max_end_t is defined, the compacted finish must
+        # be <= max_end_t IF the original was. (Left-shift can't make a
+        # deadline-compliant op miss.) Assert this — any violation is a
+        # compaction bug, not workload data.
+        if op.max_end_t is not None:
+            original_finish = float(t[i]) + duration[i]
+            if original_finish <= float(op.max_end_t) + 1e-6:
+                assert end_time <= float(op.max_end_t) + 1e-6, (
+                    f"compaction violated band invariant for "
+                    f"{getattr(op, 'operation_name', '?')}: "
+                    f"max_end_t={op.max_end_t}, new_finish={end_time}, "
+                    f"original_finish={original_finish}"
+                )
         for m in combo_machines[k]:
             machine_busy_until[m] = max(machine_busy_until[m], end_time)
 
