@@ -38,7 +38,11 @@ from greedy_scheduler import (
     greedy_periodic_schedule,
     decomposed_schedule,
 )
-from profile_loader import load_profiled_processing_times
+from profile_loader import (
+    load_profiled_processing_times,
+    compute_pdb_hash,
+    _LAST_LOAD_CSV_PATHS,
+)
 from postprocessing import trim_periodic_after_nonperiodic_makespan, output_scheduled_json
 import plot
 
@@ -591,6 +595,14 @@ def schedule_iree_networks(
 
     os.makedirs("schedules", exist_ok=True)
     print(f"\nOutputting scheduled JSON...")
+    # Snapshot the CSVs the loader read this run and hash them.
+    # Embed both in the fixture metadata so the runtime loader can
+    # detect when the PDB-on-disk has drifted from the PDB the solve
+    # was performed against — the trap that produced v8's 9x
+    # predicted/measured gap.
+    _pdb_hash, _pdb_files = compute_pdb_hash(list(_LAST_LOAD_CSV_PATHS))
+    print(f"  pdb_hash = sha256:{_pdb_hash[:16]}... over "
+          f"{len(_pdb_files)} CSV(s)")
     output_scheduled_json(
         combined_workload=combined_workload,
         t=t,
@@ -600,6 +612,8 @@ def schedule_iree_networks(
         profiled_times_e=combined_profiled_e,
         profile_hw=plot_profile_hw,
         profiled_times_by_network=profiled_by_network,
+        pdb_hash=_pdb_hash,
+        pdb_files=_pdb_files,
     )
 
     # Emit per-run metrics next to the schedule JSON (additive — does not affect

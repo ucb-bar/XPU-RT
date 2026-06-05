@@ -28,6 +28,8 @@ def output_scheduled_json(
     profiled_times_e: dict | None = None,
     profile_hw: dict | None = None,
     profiled_times_by_network: dict[str, dict[str, dict[int, dict]]] | None = None,
+    pdb_hash: str | None = None,
+    pdb_files: list[str] | None = None,
 ):
     """
     Output a combined JSON file with all dispatches, their hardware targets, and start times.
@@ -246,6 +248,16 @@ def output_scheduled_json(
             # abstract CPU_P / CPU_E roles. Optional — older schedules
             # without this field still load fine.
             **({"profile_hw": profile_hw} if profile_hw else {}),
+            # pdb_hash / pdb_files persist the content fingerprint of
+            # the profile CSVs that the solver consumed. The runtime
+            # loader (pipeline/ingest_xpurt_schedule.py) recomputes the
+            # hash over the SAME paths and refuses (or warns, depending
+            # on MB_INGEST_STRICT_PDB_CHECK) when it differs — defends
+            # against the "predicted 70 ms / measured 638 ms" trap that
+            # killed v8 (the fixture was solved against a pre-bit-exact
+            # PDB; the runtime ran bit-exact kernels against it).
+            **({"pdb_hash": pdb_hash} if pdb_hash else {}),
+            **({"pdb_files": pdb_files} if pdb_files else {}),
         }
     }
 

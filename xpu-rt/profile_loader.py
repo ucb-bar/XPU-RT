@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import csv
 import glob
+import hashlib
 import json
 import os
 
@@ -19,6 +20,51 @@ from workload_factory import (
     topo_tag_for_combination,
     machine_type_prefix,
 )
+
+
+# Module-level record of which CSVs the most recent
+# `load_profiled_processing_times` call actually read. Populated inside
+# `_load_all_topo_profiles` and consumed by the fixture emitter (via
+# `compute_pdb_hash`) to embed a content hash in the fixture metadata.
+# This is what prevents the stale-fixture trap: a solver run picks up
+# the hash of the CSVs it saw; a later runtime load recomputes the
+# hash for the SAME CSV paths and refuses (or warns) if they differ.
+_LAST_LOAD_CSV_PATHS: list[str] = []
+
+
+def compute_pdb_hash(csv_paths: list[str]) -> tuple[str, list[str]]:
+    """Stable SHA256 over the content of the given profile CSVs.
+
+    Returns (hex_digest, paths_actually_hashed). Paths are sorted
+    before hashing so the digest is independent of discovery order.
+    Missing files are skipped silently; the returned path list
+    reflects what was successfully read.
+    """
+    h = hashlib.sha256()
+    used: list[str] = []
+    for p in sorted(set(csv_paths)):
+        if not p:
+            continue
+        try:
+            with open(p, "rb") as f:
+                data = f.read()
+        except OSError:
+            continue
+        # Include the path so two CSVs with identical content at
+        # different paths still hash differently.
+        h.update(p.encode("utf-8"))
+        h.update(b"\0")
+        h.update(len(data).to_bytes(8, "little"))
+        h.update(data)
+        used.append(p)
+    return h.hexdigest(), used
+
+
+def hash_for_paths(csv_paths: list[str]) -> str:
+    """Convenience: just the digest, for callers that already know
+    which CSVs to hash and only want a yes/no comparison."""
+    digest, _ = compute_pdb_hash(csv_paths)
+    return digest
 
 
 def load_profiled_times(csv_path: str) -> dict[int, dict]:
@@ -189,6 +235,7 @@ def _load_all_topo_profiles(
                 prof = load_profiled_times(csv_path)
                 if prof:
                     profiles[(hw, topo)] = prof
+                    _LAST_LOAD_CSV_PATHS.append(csv_path)
                     if model_candidate != net_id:
                         print(f"  (info) profile fallback: {net_id}/{hw}/{topo} -> model={model_candidate}")
                 break
@@ -239,6 +286,11 @@ def load_profiled_processing_times(
         the base network identifier from `networks` (e.g. "dronet",
         "yolov8_nano"), not a periodic instance like "dronet0".
     """
+    # Reset the per-call csv-path record so callers can compute a
+    # content hash over exactly the CSVs that contributed to this
+    # solve (see compute_pdb_hash). Anti stale-fixture-trap guard.
+    _LAST_LOAD_CSV_PATHS.clear()
+
     processing_times: dict[str, list[float]] = {}
     combined_profiled_p: dict[int, dict] = {}
     combined_profiled_e: dict[int, dict] = {}
