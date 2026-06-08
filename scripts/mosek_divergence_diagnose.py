@@ -76,7 +76,7 @@ def run_solver(workload_path, scheduler, time_limit=60.0):
                                  timeout=time_limit + 120.0)
     except subprocess.TimeoutExpired:
         return {"status": "timeout", "wall_s": time_limit + 120.0,
-                "objective": None, "stderr_tail": ""}
+                "objective_us": None, "stderr_tail": ""}
     wall = time.perf_counter() - t0
     stderr_tail = (result.stderr or "")[-500:].replace("\n", " ")
     stdout_tail = (result.stdout or "")[-500:].replace("\n", " ")
