@@ -227,14 +227,39 @@ Resolved across this session: the DroNet fine-tuning flow, the `xpurt` env
 build flow (including the IsaacLab install step), and the Poly Haven asset
 license/provenance/fetch-script status.
 
-## Suggested next step
+## Dry run: done
 
-The code-completeness half of the dry run is now unblocked. Order:
-(1) submodule init in a scratch clone, (2) build the `xpurt` env per
-`docs/xpurt_env_setup.md` (untested from scratch — this is the main open
-risk), (3) either copy over the existing DroNet/RL checkpoints or retrain
-per §4–§5, (4) run `download_trees.py` or accept the procedural tree
-fallback, (5) run the reference command with the tracked substitute
-schedule (§6) and a small `--num_periods`, confirm a non-empty video chunk
-— matching the smoke test already done earlier in this session, now from a
-clean clone instead of the working tree.
+Executed 2026-07-08 end to end: fresh `git clone` into `/tmp`, a brand-new
+`xpurt_dryrun` conda env built entirely from `docs/xpurt_env_setup.md`
+(nothing reused from the original `xpurt` env), submodule init, checkpoints
+copied over (per §4–§5, not retrained — that flow is separately documented
+and wasn't the open risk here), `download_trees.py` run for real, and the
+reference command run with the tracked substitute schedule (§6) and a small
+`--num_periods`. Result: succeeded, producing valid `ffprobe`-verified video
+chunks, with a clean (non-hanging) shutdown.
+
+Getting there surfaced three previously-invisible env-build bugs, now fixed
+and folded into `docs/xpurt_env_setup.md`:
+1. **`OMNI_KIT_ACCEPT_EULA` requirement** — every fresh process that imports
+   `isaacsim` prompts interactively for an EULA and hangs/EOFs without a
+   TTY; the env-var bypass must be set on *every* invocation (it doesn't
+   persist across processes the way accepting it interactively would).
+2. **Unpinned `ultralytics` numpy regression** — resolves to a newer release
+   whose `opencv-python` dependency forces `numpy>=2`, breaking
+   `isaaclab`/`isaaclab-rl`/`isaaclab-tasks`/`isaacsim-kernel` (the last pins
+   `numpy==1.26.0` exactly, an ABI dependency). Fixed by pinning
+   `ultralytics==8.4.39` + `opencv-python==4.11.0.86` + `numpy==1.26.0`.
+3. **Orphaned `nvidia-cudnn-cu13` package** — `isaaclab.sh --install`'s RL-
+   framework dependency resolution pulls this in as an unneeded transitive
+   candidate; since both `nvidia-cudnn-cu12` and `-cu13` install to the same
+   `nvidia/cudnn/lib/libcudnn.so.9` path, whichever installs last silently
+   wins on disk. cu13 (built for a newer CUDA than this host's driver
+   supports) broke every cuDNN op with `CUDNN_STATUS_NOT_INITIALIZED` —
+   100% reproducible, not transient, and easy to misdiagnose as an
+   Isaac-Sim problem since it only surfaces on the first real cuDNN call
+   (DroNet's first inference, in this case).
+
+None of these three were visible from auditing the *already-built* original
+`xpurt` env — they only exist as install-time races/gaps, which is exactly
+why the from-scratch dry run was worth doing over just reading package
+lists.
