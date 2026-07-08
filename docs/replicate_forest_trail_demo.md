@@ -80,59 +80,24 @@ git submodule update --init sims/IsaacLab
 sound. (`hw/chipyard`, `merlin`, `zephyr-chipyard-sw` are unrelated to this
 demo.)
 
-### 2. The `xpurt` conda environment — ⚠ **not documented**
+### 2. The `xpurt` conda environment — ✅ now documented
 
-No `environment.yml`, `requirements.txt`, or setup script exists anywhere in
-the repo for this environment (only `env.yml` exists, and that's a *different*,
-unrelated Python-3.9 env for the `xpu-rt` MILP scheduler — `mosek`/`cvxpy`,
-nothing to do with Isaac Sim). `sims/scripts/utils/setup_env.sh` only exports
-`PYTHONPATH`, and does so against a **stale path** (`/scratch2/dima/IsaacLab/...`
-instead of the vendored `sims/IsaacLab/...` the current scripts actually use).
+Previously a hard gap (no `environment.yml`, no install script, and
+`sims/scripts/utils/setup_env.sh` only exports `PYTHONPATH` against a stale
+pre-vendoring path). Now written up end-to-end, including the "is there
+already a recipe?" question (no — `conda-meta/history` shows only
+`conda create -n xpurt python=3.11`, everything else was ad-hoc `pip`), in
+**`docs/xpurt_env_setup.md`**, with a frozen fallback manifest at
+`docs/xpurt_pip_freeze_2026-07-08.txt`. That doc also covers the IsaacLab
+install step itself (`isaaclab`/`isaaclab_rl`/`isaaclab_assets`/
+`isaaclab_contrib`/`isaaclab_mimic`/`isaaclab_tasks` are editable pip
+installs from `sims/IsaacLab/source/*`, wired up by `./isaaclab.sh --install`
+— not just a `sys.path` trick).
 
-Current working manifest (observed via `pip show` / `pip list` in the live
-`xpurt` env — captured here for reference, **not a recipe**; the original
-install commands/index URLs used to build this env were not recorded
-anywhere, so this would need to be reverse-engineered from NVIDIA's Isaac Sim
-5.1 install docs + a matching PyTorch cu128 wheel):
-
-| Package | Version |
-|---|---|
-| Python | 3.11.15 |
-| `isaacsim` (+ all `isaacsim-*` subpackages) | 5.1.0.0 |
-| `isaaclab_tasks` (upstream, pip-installed — distinct from this repo's `sims/isaaclab_tasks`) | 0.11.14 |
-| `torch` | 2.7.0+cu128 |
-| `rsl-rl-lib` (import name `rsl_rl`) | 5.0.1 |
-| `ultralytics` | 8.4.39 |
-| `gymnasium` | 1.2.1 |
-| `imageio` / `imageio-ffmpeg` | 2.37.0 / 0.6.0 |
-| `matplotlib` | 3.10.3 |
-
-**Action item:** run `conda list -n xpurt --explicit` (or `pip freeze`) and
-commit it — right now nobody could rebuild this environment from the repo
-alone.
-
-**Also undocumented: the IsaacLab install step itself.** `isaaclab`,
-`isaaclab_rl`, `isaaclab_assets`, and `isaaclab_contrib` are not just on
-`sys.path` — `pip show` confirms they're **editable installs**
-(`Editable project location: .../sims/IsaacLab/source/<pkg>`) into the
-`xpurt` env. That only happens after running IsaacLab's own installer
-against this submodule checkout, almost certainly:
-
-```bash
-cd sims/IsaacLab
-./isaaclab.sh --install   # or -i; installs system deps (sudo apt-get:
-                           # cmake etc.), pins setuptools<82, ensures a
-                           # CUDA-matched torch, then `pip install -e`
-                           # every extension under source/*
-```
-
-This presupposes the `isaacsim` pip package (5.1.0.0 here) is already
-installed in the env — `isaaclab.sh` does not install Isaac Sim itself, and
-there's no `_isaac_sim` symlink in this checkout, so it's using the newer
-pip-based Isaac Sim install rather than a separate binary install. Nothing
-in this repo documents either half of this (installing `isaacsim` via pip,
-or running `isaaclab.sh --install` against it) — it's a real gap, distinct
-from and in addition to the "no environment.yml" gap above.
+Not yet done: actually running that flow on a clean machine. It was
+reverse-engineered from the live env's installed packages and from
+`isaaclab.sh`'s own version pins (which match to the patch version), not
+executed from scratch — that's exactly what the dry run below is for.
 
 ### 3. Uncommitted code — ⚠ **the critical blocker**
 
@@ -260,17 +225,17 @@ Once 1–7 are satisfied, the reference command should run as-is.
 - `logs/`, `datasets/` (expected/appropriate to exclude — just noting they're not even named in `.gitignore`)
 
 Committed in this pass: `sims/training/` (base + fine-tune DroNet tooling,
-now including the fine-tune docs).
+now including the fine-tune docs), `docs/xpurt_env_setup.md`, and
+`docs/xpurt_pip_freeze_2026-07-08.txt`.
 
 ## Summary: not documented
 
-- How to build the `xpurt` conda env from nothing (no manifest, no install script, stale `setup_env.sh` path)
-- The IsaacLab install step itself (`isaaclab.sh --install` against the submodule, plus the prerequisite `isaacsim` pip install) — see §2
 - How to regenerate this specific schedule JSON (topology file untracked, hardware profile provenance untraced) — left out of scope for now
 - `sims/README.md` is stale — describes DroNet integration and the forest trail as future "Next Steps" when both already exist and are the primary demo per `sims/scripts/README.md`
 
-Resolved in this pass: the DroNet fine-tuning flow (`collect_sim_data.py` →
-`finetune_dronet.py`) is now documented in `sims/training/README.md` §3b.
+Resolved in this pass:
+- The DroNet fine-tuning flow (`collect_sim_data.py` → `finetune_dronet.py`), documented in `sims/training/README.md` §3b.
+- The `xpurt` env build flow, including the IsaacLab install step, documented in `docs/xpurt_env_setup.md`. Reverse-engineered from the live env, not yet executed on a clean machine — see the dry run below.
 
 ## Suggested next step (not run yet)
 
