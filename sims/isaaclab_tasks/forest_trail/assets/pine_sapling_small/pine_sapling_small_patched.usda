@@ -1,0 +1,66 @@
+#usda 1.0
+(
+    defaultPrim = "pine_sapling_small"
+    subLayers = [
+        @./pine_sapling_small_1k.usdc@
+    ]
+)
+
+# Override the two Poly Haven materials to inject OmniPBR MDL shaders.
+# Isaac Sim RTX resolves outputs:mdl:surface first; having it present here
+# causes the renderer to bypass the broken UsdPreviewSurface+UsdTransform2d
+# and MaterialX (ND_standard_surface) networks that are in the raw USDC.
+#
+# The subLayers entry above pulls in all USDC geometry unchanged.
+# The 'over' prims in this (stronger) layer add the MDL connections without
+# touching the USDC geometry or its broken material ops.
+
+over "pine_sapling_small"
+{
+    over "_materials"
+    {
+        over "pine_sapling_small_bark"
+        {
+            token outputs:mdl:surface.connect = </pine_sapling_small/_materials/pine_sapling_small_bark/bark_pbr.outputs:out>
+            token outputs:mdl:displacement.connect = </pine_sapling_small/_materials/pine_sapling_small_bark/bark_pbr.outputs:out>
+            token outputs:mdl:volume.connect = </pine_sapling_small/_materials/pine_sapling_small_bark/bark_pbr.outputs:out>
+
+            def Shader "bark_pbr"
+            {
+                uniform token info:implementationSource = "sourceAsset"
+                uniform asset info:mdl:sourceAsset = @OmniPBR.mdl@
+                uniform token info:mdl:sourceAsset:subIdentifier = "OmniPBR"
+
+                asset inputs:diffuse_texture = @./textures/pine_sapling_small_bark_diff_1k.png@
+                asset inputs:reflectionroughness_texture = @./textures/pine_sapling_small_bark_rough_1k.png@
+                asset inputs:normalmap_texture = @./textures/pine_sapling_small_bark_nor_gl_1k.png@
+
+                token outputs:out
+            }
+        }
+
+        over "pine_sapling_small_twig"
+        {
+            token outputs:mdl:surface.connect = </pine_sapling_small/_materials/pine_sapling_small_twig/twig_pbr.outputs:out>
+            token outputs:mdl:displacement.connect = </pine_sapling_small/_materials/pine_sapling_small_twig/twig_pbr.outputs:out>
+            token outputs:mdl:volume.connect = </pine_sapling_small/_materials/pine_sapling_small_twig/twig_pbr.outputs:out>
+
+            def Shader "twig_pbr"
+            {
+                uniform token info:implementationSource = "sourceAsset"
+                uniform asset info:mdl:sourceAsset = @OmniPBR.mdl@
+                uniform token info:mdl:sourceAsset:subIdentifier = "OmniPBR"
+
+                asset inputs:diffuse_texture = @./textures/pine_sapling_small_twig_diff_1k.png@
+                asset inputs:reflectionroughness_texture = @./textures/pine_sapling_small_twig_rough_1k.png@
+                asset inputs:normalmap_texture = @./textures/pine_sapling_small_twig_nor_gl_1k.png@
+                asset inputs:opacity_texture = @./textures/pine_sapling_small_twig_alpha_1k.png@
+                bool inputs:enable_opacity = 1
+                bool inputs:enable_opacity_texture = 1
+                float inputs:opacity_threshold = 0.5
+
+                token outputs:out
+            }
+        }
+    }
+}
