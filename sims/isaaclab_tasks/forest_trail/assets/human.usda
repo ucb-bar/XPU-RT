@@ -1,0 +1,194 @@
+#usda 1.0
+(
+    defaultPrim = "Human"
+    upAxis = "Z"
+    metersPerUnit = 1.0
+)
+
+# Procedural humanoid silhouette: head + neck + torso + 2 arms + 2 legs.
+# Base of feet at z=0; total height ≈ 1.78 m.
+#
+# Geometry uses USD built-in Cylinder/Sphere primitives with solid-color
+# UsdPreviewSurface materials.  No textures, no MDL, no external references —
+# loads entirely offline.  UsdPreviewSurface constant-diffuse renders correctly
+# in Isaac Sim RTX (same code path as the ground plane and trail strip).
+#
+# Cylinder primitives default to Z-axis orientation because the stage upAxis
+# is "Z".  Arm cylinders override this with `axis = "Y"` to lie sideways.
+#
+# If photorealistic characters from NVIDIA Nucleus are available, replace the
+# _HUMAN_USD path in forest_scene.py with e.g.:
+#   omni://localhost/NVIDIA/Assets/Characters/Reallusion/<character>.usd
+# and keep this file as a fallback for offline environments.
+
+def Xform "Human" (
+    kind = "component"
+)
+{
+    # ── Head ─────────────────────────────────────────────────────────────
+    # Sphere centre at z=1.67, radius 0.11 → crown at z=1.78, chin ≈ z=1.56.
+    def Xform "Head"
+    {
+        double3 xformOp:translate = (0.0, 0.0, 1.67)
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+
+        def Sphere "HeadGeo"
+        {
+            double radius = 0.11
+            rel material:binding = </Human/Materials/Skin>
+        }
+    }
+
+    # ── Neck ─────────────────────────────────────────────────────────────
+    # Thin vertical cylinder, centre z=1.52.
+    def Xform "Neck"
+    {
+        double3 xformOp:translate = (0.0, 0.0, 1.52)
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+
+        def Cylinder "NeckGeo"
+        {
+            double height = 0.10
+            double radius = 0.05
+            rel material:binding = </Human/Materials/Skin>
+        }
+    }
+
+    # ── Torso ─────────────────────────────────────────────────────────────
+    # Cylinder centre z=1.24 → top z≈1.47, bottom z≈1.01.
+    def Xform "Torso"
+    {
+        double3 xformOp:translate = (0.0, 0.0, 1.24)
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+
+        def Cylinder "TorsoGeo"
+        {
+            double height = 0.46
+            double radius = 0.19
+            rel material:binding = </Human/Materials/Shirt>
+        }
+    }
+
+    # ── Left arm ──────────────────────────────────────────────────────────
+    # Horizontal cylinder (axis = "Y") extending from y≈+0.20 to y≈+0.65.
+    # Centre at y=+0.425, z=1.26.
+    def Xform "LeftArm"
+    {
+        double3 xformOp:translate = (0.0, 0.425, 1.26)
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+
+        def Cylinder "LeftArmGeo"
+        {
+            token axis = "Y"
+            double height = 0.45
+            double radius = 0.055
+            rel material:binding = </Human/Materials/Shirt>
+        }
+    }
+
+    # ── Right arm ─────────────────────────────────────────────────────────
+    # Mirror of left arm; centre at y=-0.425.
+    def Xform "RightArm"
+    {
+        double3 xformOp:translate = (0.0, -0.425, 1.26)
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+
+        def Cylinder "RightArmGeo"
+        {
+            token axis = "Y"
+            double height = 0.45
+            double radius = 0.055
+            rel material:binding = </Human/Materials/Shirt>
+        }
+    }
+
+    # ── Hips ──────────────────────────────────────────────────────────────
+    # Wide short cylinder bridging torso to legs, centre z=0.88.
+    def Xform "Hips"
+    {
+        double3 xformOp:translate = (0.0, 0.0, 0.88)
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+
+        def Cylinder "HipsGeo"
+        {
+            double height = 0.24
+            double radius = 0.17
+            rel material:binding = </Human/Materials/Pants>
+        }
+    }
+
+    # ── Left leg ──────────────────────────────────────────────────────────
+    # Centre z=0.38 → top z=0.76, bottom z=0.0.
+    def Xform "LeftLeg"
+    {
+        double3 xformOp:translate = (-0.09, 0.0, 0.38)
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+
+        def Cylinder "LeftLegGeo"
+        {
+            double height = 0.76
+            double radius = 0.08
+            rel material:binding = </Human/Materials/Pants>
+        }
+    }
+
+    # ── Right leg ─────────────────────────────────────────────────────────
+    def Xform "RightLeg"
+    {
+        double3 xformOp:translate = (0.09, 0.0, 0.38)
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+
+        def Cylinder "RightLegGeo"
+        {
+            double height = 0.76
+            double radius = 0.08
+            rel material:binding = </Human/Materials/Pants>
+        }
+    }
+
+    # ── Materials ─────────────────────────────────────────────────────────
+    def Scope "Materials"
+    {
+        def Material "Skin"
+        {
+            token outputs:surface.connect = </Human/Materials/Skin/Shader.outputs:surface>
+
+            def Shader "Shader"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.80, 0.63, 0.48)
+                float inputs:roughness = 0.75
+                float inputs:metallic = 0.0
+                token outputs:surface
+            }
+        }
+
+        def Material "Shirt"
+        {
+            token outputs:surface.connect = </Human/Materials/Shirt/Shader.outputs:surface>
+
+            def Shader "Shader"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.20, 0.35, 0.65)
+                float inputs:roughness = 0.85
+                float inputs:metallic = 0.0
+                token outputs:surface
+            }
+        }
+
+        def Material "Pants"
+        {
+            token outputs:surface.connect = </Human/Materials/Pants/Shader.outputs:surface>
+
+            def Shader "Shader"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.22, 0.20, 0.15)
+                float inputs:roughness = 0.85
+                float inputs:metallic = 0.0
+                token outputs:surface
+            }
+        }
+    }
+}

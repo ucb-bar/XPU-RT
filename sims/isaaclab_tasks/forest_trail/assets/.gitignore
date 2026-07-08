@@ -1,0 +1,6 @@
+# pine_sapling_small_1k.usdc + textures/ are CC0 (Poly Haven) but large
+# (~46 MB) and trivially re-fetched -- see download_trees.py. The hand-
+# authored override layer (pine_sapling_small_patched.usda) is NOT part of
+# the download and stays tracked.
+pine_sapling_small/*.usdc
+pine_sapling_small/textures/
