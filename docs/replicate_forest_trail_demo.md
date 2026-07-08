@@ -23,35 +23,36 @@ conda run -n xpurt python sims/scripts/pilot/pilot_forest_with_dronet_scheduled.
 git clone + submodule init
         │
         ▼
-xpurt conda env (Isaac Sim 5.1, IsaacLab, PyTorch, rsl_rl, ultralytics)  ⚠ not documented
+xpurt conda env (Isaac Sim 5.1, IsaacLab, PyTorch, rsl_rl, ultralytics)  ✅ documented (docs/xpurt_env_setup.md), not yet run from scratch
         │
         ▼
-sims/scripts/pilot/, sims/isaaclab_tasks/forest_trail/, sims/training/,   ⚠ NOT COMMITTED
-sims/scripts/utils/, sims/scripts/train/  (this entire reorg + the forest
-task + the fine-tuning tools only exist in this working tree)
+sims/scripts/pilot/, sims/isaaclab_tasks/forest_trail/,                  ✅ COMMITTED
+sims/scripts/utils/schedule_dispatch.py, sims/training/
         │
         ├──► DroNet weights ───────────────────────────────────┐
         │    IDSIA download (manual) → extract_idsia.py         │
-        │    → train_dronet.py → best.pt (base)                 │  ⚠ base flow documented,
-        │    → collect_sim_data.py (needs Isaac Sim running)    │    finetune flow is NOT
+        │    → train_dronet.py → best.pt (base)                 │  ✅ documented
+        │    → collect_sim_data.py (needs Isaac Sim running)    │    (sims/training/README.md §3, §3b)
         │    → finetune_dronet.py → best.pt (finetune, the one  │
         │      actually used by the reference command)          │
         │                                                       │
         ├──► RL inner-loop checkpoint ──────────────────────────┤  ✅ documented
-        │    sims/scripts/train/train_full.sh                   │
+        │    sims/scripts/train/train_full.sh (still uncommitted,│
+        │    but only needed to *retrain*, not to *run*, the demo)
         │    → logs/rsl_rl/crazyflie_steering_tracking/*/model_*.pt
         │                                                       │
-        ├──► schedule JSON ─────────────────────────────────────┤  ⚠ tool documented,
-        │    data/toplevel/networks_mlp10_dronet20_yolov8_       │    this specific
-        │    firesim_static.json  (NOT COMMITTED)                │    input/output pair
-        │    → scripts/run_xpurt_schedule.py                     │    is not committed
-        │    → schedules/scheduled_networks_..._profiled.json    │    or named as an example
-        │      (NOT COMMITTED)                                   │
+        ├──► schedule JSON ─────────────────────────────────────┤  ⚠ this specific file
+        │    data/toplevel/networks_mlp10_dronet20_yolov8_       │    left out of scope
+        │    firesim_static.json  (NOT COMMITTED, by choice)     │    (orthogonal); a tracked
+        │    → scripts/run_xpurt_schedule.py                     │    substitute exists —
+        │    → schedules/scheduled_networks_..._profiled.json    │    see §6
+        │      (NOT COMMITTED, by choice)                        │
         │                                                       │
         └──► runtime downloads (automatic, need internet) ──────┘  ✅ works with zero setup
              - yolov8n.pt (ultralytics, auto-downloaded)
-             - human character USD (S3, direct HTTPS, no Nucleus needed —
-               falls back to a bundled local USD if unreachable)
+             - human character USD (S3, direct HTTPS, no Nucleus needed)
+             - pine_sapling_small tree asset (Poly Haven, CC0) — regenerated
+               via download_trees.py, not committed (see §7)
         │
         ▼
 pilot_forest_with_dronet_scheduled.py runs
@@ -80,16 +81,13 @@ git submodule update --init sims/IsaacLab
 sound. (`hw/chipyard`, `merlin`, `zephyr-chipyard-sw` are unrelated to this
 demo.)
 
-### 2. The `xpurt` conda environment — ✅ now documented
+### 2. The `xpurt` conda environment — ✅ documented
 
-Previously a hard gap (no `environment.yml`, no install script, and
-`sims/scripts/utils/setup_env.sh` only exports `PYTHONPATH` against a stale
-pre-vendoring path). Now written up end-to-end, including the "is there
-already a recipe?" question (no — `conda-meta/history` shows only
-`conda create -n xpurt python=3.11`, everything else was ad-hoc `pip`), in
-**`docs/xpurt_env_setup.md`**, with a frozen fallback manifest at
-`docs/xpurt_pip_freeze_2026-07-08.txt`. That doc also covers the IsaacLab
-install step itself (`isaaclab`/`isaaclab_rl`/`isaaclab_assets`/
+Written up end-to-end in **`docs/xpurt_env_setup.md`**, including the "is
+there already a recipe?" question (no — `conda-meta/history` shows only
+`conda create -n xpurt python=3.11`, everything else was ad-hoc `pip`), with
+a frozen fallback manifest at `docs/xpurt_pip_freeze_2026-07-08.txt`. Covers
+the IsaacLab install step too (`isaaclab`/`isaaclab_rl`/`isaaclab_assets`/
 `isaaclab_contrib`/`isaaclab_mimic`/`isaaclab_tasks` are editable pip
 installs from `sims/IsaacLab/source/*`, wired up by `./isaaclab.sh --install`
 — not just a `sys.path` trick).
@@ -99,54 +97,35 @@ reverse-engineered from the live env's installed packages and from
 `isaaclab.sh`'s own version pins (which match to the patch version), not
 executed from scratch — that's exactly what the dry run below is for.
 
-### 3. Uncommitted code — ⚠ **the critical blocker**
+### 3. Code — ✅ now committed
 
-None of the following exist in git history — a real fresh clone gets none of
-it:
+Everything the reference command needs to *run* (as opposed to *retrain* a
+checkpoint) is committed:
 
-| Path | git status |
+| Path | Commit |
 |---|---|
-| `sims/scripts/pilot/*.py` (all 4 pilot scripts, including the one in the reference command) | untracked |
-| `sims/scripts/train/*`, `sims/scripts/play/*`, `sims/scripts/debug/*` | untracked |
-| `sims/scripts/utils/schedule_dispatch.py` and everything else in `utils/` | untracked |
-| `sims/scripts/README.md` | untracked |
-| `sims/isaaclab_tasks/forest_trail/` (32 files, 46 MB — the entire forest-trail task: scene, curved-trail generator, tree/human placement, and the **local fallback USD assets** trees/human rely on) | untracked |
-| `sims/training/*` (train_dronet.py, finetune_dronet.py, collect_sim_data.py, dataset_*.py, README.md) | **now committed** (see §4) |
-| `sims/README.md`, `sims/STEERING_POLICY_USAGE.md`, and the other loose `sims/*.md` docs | untracked |
-| The two shutdown-hang / asset-race fixes applied this session to all 4 pilot scripts (`_disable_app_control_on_stop_handle`, `wait_for_textures = False`) | **uncommitted working-tree edits** — exist only in this checkout, not even staged |
+| `sims/scripts/pilot/*.py` (all 4 pilot scripts, incl. this session's shutdown-hang + asset-race fixes) | `3ab117d` |
+| `sims/scripts/utils/schedule_dispatch.py` | `3ab117d` |
+| `sims/isaaclab_tasks/forest_trail/` (code + hand-authored fallback assets; the large Poly Haven binary is deliberately excluded — see §7) | `04bf9b9` |
+| `sims/training/*` (base + fine-tune DroNet tooling) | `42bd9d1` |
 
-Only `qnn_models/dronet.py` (the `DronetTorch` model class) and the
-`track_steering_vision` half of `sims/isaaclab_tasks` are actually committed.
-Committed HEAD still has the *old* flat layout (`sims/scripts/train_steering_tracking.py`
-etc., currently showing as `D` deleted in the working tree) — meaning **the
-reference command's script path doesn't exist in git at all today.**
-
-This is the dominant finding: everything downstream (env setup, model
-training, schedule generation) is moot for a genuinely fresh clone until this
-gets committed.
+Still uncommitted, but **not required to run the demo** (only to retrain a
+checkpoint from scratch): `sims/scripts/{train,play,debug}/`,
+`sims/scripts/README.md`, the loose `sims/*.md` docs (`README.md`,
+`STEERING_POLICY_USAGE.md`, etc. — `sims/README.md` is also stale, see the
+bottom summary).
 
 ### 4. DroNet weights
 
 `--dronet_weights logs/dronet/2026-05-10_20-22-08_finetune/best.pt`
 
-`logs/` is untracked (1.2 GB on disk; not even mentioned in `.gitignore`, just
-never added) but the *generation* flow is split across two paths:
+`logs/` is untracked (1.2 GB on disk; not even mentioned in `.gitignore`,
+just never added) — this checkpoint has to be regenerated, not cloned. Both
+stages are documented in `sims/training/README.md`: §3 (base, IDSIA) and §3b
+(fine-tune on sim-collected data, the path that actually produced this
+specific checkpoint).
 
-- **Base training — ✅ documented** (`sims/training/README.md` §3): download
-  IDSIA archive manually → `extract_idsia.py` → `train_dronet.py` → `best.pt`.
-- **Fine-tuning — ✅ now documented** (`sims/training/README.md` §3b, added
-  and committed in this pass, along with the underlying scripts themselves —
-  see §3 above). The checkpoint the reference command actually uses is a
-  *fine-tuned* run (`..._finetune`), not a base run: on disk there are 4 base
-  runs (2026-04-27) and 4 fine-tune runs (2026-05-10); the tooling was added
-  6 days after the original documentation pass and had never been folded
-  into the README until now.
-  1. `sims/training/collect_sim_data.py --headless --num_samples 5000` — needs
-     Isaac Sim running, teleports the drone along the trail, saves labeled
-     frames.
-  2. `sims/training/finetune_dronet.py --checkpoint <base best.pt> --data_root datasets/sim_forest/extracted/000 --sim_data --epochs 20 --lr 1e-4`
-
-### 5. RL inner-loop checkpoint — ✅ documented
+### 5. RL inner-loop checkpoint — ✅ documented, script uncommitted
 
 `--checkpoint logs/rsl_rl/crazyflie_steering_tracking/2026-04-13_12-23-08/model_6998.pt`
 
@@ -154,97 +133,108 @@ never added) but the *generation* flow is split across two paths:
 bash sims/scripts/train/train_full.sh   # 4096 envs, 2000 iters, headless, ~20 min
 ```
 
-Also untracked (part of `logs/`), but the training path is documented
-consistently in three places (`sims/scripts/README.md`, `sims/STEERING_POLICY_USAGE.md`,
-`sims/training/README.md` §4). One caveat unrelated to this specific
-checkpoint but worth knowing: `train_harsh.sh` still silently trains the
-*non*-harsh config — `train_steering_tracking.py` hardcodes
-`TrackSteeringEnvCfg()` and passes it as `cfg=` to `gym.make()`, which
-overrides the `--task ...Harsh-v0` name. `TRAINING_CONFIG_BUG.md` /
-`ENVIRONMENT_MISMATCH_FIX.md` document this as "RESOLVED" — but the
-resolution was "use the regular config for playback," not a code fix. The
-bug is still live in the current script.
+`train_full.sh`/`train_steering_tracking.py` are still uncommitted (§3) —
+only matters if the dry run needs to retrain rather than reuse an existing
+checkpoint. Documented consistently in `sims/scripts/README.md`,
+`sims/STEERING_POLICY_USAGE.md`, `sims/training/README.md` §4. Unrelated
+caveat worth knowing: `train_harsh.sh` still silently trains the *non*-harsh
+config (`train_steering_tracking.py` hardcodes `TrackSteeringEnvCfg()` and
+passes it as `cfg=` to `gym.make()`, overriding the `--task ...Harsh-v0`
+name) — `TRAINING_CONFIG_BUG.md`/`ENVIRONMENT_MISMATCH_FIX.md` call this
+"RESOLVED" but only documented a workaround, not a code fix.
 
-### 6. Schedule JSON — ⚠ tool documented, this file is not
+### 6. Schedule JSON — left out of scope, but a tracked substitute exists
 
 `--schedule_json schedules/scheduled_networks_mlp10_dronet20_yolov8_firesim_static_decomposed_profiled.json`
 
-The general pipeline is well documented in `docs/end_to_end_xpurt_firesim.md`
-(tracked, 267 lines):
+Per an earlier decision this is orthogonal to the sim-runner flow and was
+left alone: `data/toplevel/networks_mlp10_dronet20_yolov8_firesim_static.json`
+(topology input) and the schedule JSON itself are both still untracked, and
+regenerating them depends on `gen/profile/...` hardware timing data whose
+provenance isn't traced here.
 
-```
-data/toplevel/networks_<name>.json  →  scripts/run_xpurt_schedule.py  →  schedules/scheduled_networks_<name>_<solver>_profiled.json
-```
+For the dry run this doesn't have to block anything:
+`schedules/scheduled_networks_periodic_dronet50ms_yolov8_firesim_greedy_profiled.json`
+**is tracked** and contains real `dronet0`–`dronet3` + `yolov8_nano` dispatch
+keys (no `mlp` key — the pilot script handles that gracefully, falling back
+to running the MLP ungated). It exercises the same DroNet+YOLO scheduling
+code paths as the reference file; swap it in via `--schedule_json` for a
+dry run that doesn't depend on the untracked topology/schedule pair.
 
-But for this specific demo:
-
-- `data/toplevel/networks_mlp10_dronet20_yolov8_firesim_static.json` (the
-  topology input) is **untracked**, and is not one of the examples named in
-  `docs/end_to_end_xpurt_firesim.md` (which only lists the `_q31profile`
-  sibling variant).
-- The output schedule JSON itself is **untracked** (of 54 schedule files on
-  disk, only 10 are committed).
-- Reproducing it also depends on profiled hardware timing data
-  (`gen/profile/...`) whose provenance for the `firesim` hardware profile
-  used here isn't traced in this doc — treat it as a separate, deeper
-  rabbit hole if the dry run needs to regenerate this file from scratch
-  rather than just committing the existing one.
-
-### 7. Runtime auto-downloads — ✅ work with zero setup
+### 7. Runtime downloads / third-party assets
 
 - **`yolov8n.pt`**: `ultralytics.YOLO("yolov8n.pt")` downloads it
   automatically on first use. Needs outbound internet; no repo-side action
   needed.
-- **Human character USD**: `sims/isaaclab_tasks/forest_trail/forest_scene.py`
-  fetches from `https://omniverse-content-production.s3-us-west-2.amazonaws.com/...`
-  directly over HTTPS — **no Nucleus server required** (confirmed in code
-  comments and by a live run). Falls back to a bundled local USD
-  (`forest_trail/assets/human.usda`) if the S3 asset is unreachable — but
-  that fallback asset only exists because `forest_trail/` is untracked-but-
-  present in *this* checkout (see §3); a fresh clone has neither the S3 path
-  guaranteed nor the local fallback.
-- Trees use bundled local assets (`forest_trail/assets/pine_tree.usda` /
-  `pine_sapling_small/`) — same caveat, only present because `forest_trail/`
-  hasn't been committed yet.
+- **Human character USD**: `forest_scene.py` fetches from
+  `https://omniverse-content-production.s3-us-west-2.amazonaws.com/...`
+  directly over HTTPS — no Nucleus server required. Falls back to a
+  committed local procedural USD (`forest_trail/assets/human.usda`, hand-
+  authored primitives, no license concern) if the S3 asset is unreachable.
+- **Pine tree asset (`pine_sapling_small`)** — this is a real third-party
+  asset, and was specifically audited:
+  - **License**: [Poly Haven](https://polyhaven.com), **CC0** (verified
+    against `polyhaven.com/license`) — free for any use including
+    commercial, redistribution explicitly allowed, no attribution required.
+  - **How obtained**: `forest_trail/assets/download_trees.py` hits Poly
+    Haven's public files API (`api.polyhaven.com/files/pine_sapling_small`)
+    and downloads the 1k-resolution USDC geometry + 9 PBR texture maps from
+    `dl.polyhaven.org`.
+  - **Is the fetch replicable?** Yes, now — but it was **broken**: Poly
+    Haven's API/CDN returns 403 for urllib's default `Python-urllib/x.y`
+    User-Agent (curl and browser UAs pass fine). Fixed in this pass
+    (`sims/isaaclab_tasks/forest_trail/assets/download_trees.py`) and
+    verified with a real from-scratch redownload of all 10 files, diffed
+    byte-for-byte (`md5sum`-identical) against the working copy.
+  - **What's committed vs. fetched**: the USDC + textures (~46 MB) are
+    **not** committed — excluded via a scoped `.gitignore` inside
+    `forest_trail/assets/` and regenerated by running `download_trees.py`.
+    The hand-authored override layer that fixes a broken MDL material
+    remap in the raw USDC (`pine_sapling_small_patched.usda`, ~3 KB, not
+    part of the download) **is** committed as source.
+  - If `download_trees.py` is never run, `forest_scene.py` falls back to
+    the committed procedural `pine_tree.usda` proxy (simple cylinder +
+    cone geometry) — the scene still runs, just with plainer trees.
 
 ### 8. Run
 
-Once 1–7 are satisfied, the reference command should run as-is.
+Once 1–7 are satisfied, the reference command should run — or, for a dry
+run that doesn't depend on the two orthogonal untracked pieces (§6),
+substitute the tracked schedule file and reuse/regenerate checkpoints per
+§4–§5.
 
 ---
 
 ## Summary: not committed
 
-- Entire `sims/scripts/{pilot,play,debug,utils}/` reorg + README (note: `train/` is
-  still uncommitted too — only `sims/training/` was committed in this pass)
-- Entire `sims/isaaclab_tasks/forest_trail/` package (code + 46 MB local assets)
-- All loose `sims/*.md` docs (`README.md`, `STEERING_POLICY_USAGE.md`, etc.)
-- The specific topology + schedule JSON pair used by the reference command
-  (left as-is for now — orthogonal to the sim-runner flow)
-- This session's two shutdown/asset-race fixes to the 4 pilot scripts (still only in the working tree — the pilot scripts themselves aren't committed yet either)
+- `sims/scripts/{train,play,debug}/`, `sims/scripts/README.md` — not required to *run* the demo, only to *retrain* a checkpoint
+- Loose `sims/*.md` docs (`README.md`, `STEERING_POLICY_USAGE.md`, etc.) — `sims/README.md` is also stale (see below)
+- The specific topology + schedule JSON pair used by the reference command — left out of scope by choice; a tracked substitute exists (§6)
+- The Poly Haven tree binary payload (~46 MB) — left out by choice, regenerable via the now-fixed `download_trees.py`
 - `logs/`, `datasets/` (expected/appropriate to exclude — just noting they're not even named in `.gitignore`)
 
-Committed in this pass: `sims/training/` (base + fine-tune DroNet tooling,
-now including the fine-tune docs), `docs/xpurt_env_setup.md`, and
-`docs/xpurt_pip_freeze_2026-07-08.txt`.
+Committed across this session: `sims/training/` (`42bd9d1`),
+`docs/xpurt_env_setup.md` + frozen manifest (`43401f2`),
+`sims/isaaclab_tasks/forest_trail/` (`04bf9b9`),
+`sims/scripts/pilot/*` + `schedule_dispatch.py` (`3ab117d`).
 
 ## Summary: not documented
 
-- How to regenerate this specific schedule JSON (topology file untracked, hardware profile provenance untraced) — left out of scope for now
+- How to regenerate the specific `mlp10_dronet20_yolov8_firesim_static` schedule JSON (topology file untracked, hardware profile provenance untraced) — left out of scope for now
 - `sims/README.md` is stale — describes DroNet integration and the forest trail as future "Next Steps" when both already exist and are the primary demo per `sims/scripts/README.md`
 
-Resolved in this pass:
-- The DroNet fine-tuning flow (`collect_sim_data.py` → `finetune_dronet.py`), documented in `sims/training/README.md` §3b.
-- The `xpurt` env build flow, including the IsaacLab install step, documented in `docs/xpurt_env_setup.md`. Reverse-engineered from the live env, not yet executed on a clean machine — see the dry run below.
+Resolved across this session: the DroNet fine-tuning flow, the `xpurt` env
+build flow (including the IsaacLab install step), and the Poly Haven asset
+license/provenance/fetch-script status.
 
-## Suggested next step (not run yet)
+## Suggested next step
 
-Dry-run in a fresh worktree/temp clone once the above is committed, in this
-order: (1) submodule init, (2) recreate `xpurt` env from a captured
-`pip freeze`/`conda list --explicit`, (3) commit and pull in the
-`sims/scripts/`, `sims/isaaclab_tasks/forest_trail/`, `sims/training/` trees
-plus this session's two fixes, (4) either commit the existing DroNet/RL
-checkpoints and schedule JSON directly (simplest for a verification dry run)
-or re-run the training/scheduling flows from scratch, (5) run the reference
-command headless with a small `--num_periods` and confirm a non-empty video
-chunk, matching the smoke test already done in this session.
+The code-completeness half of the dry run is now unblocked. Order:
+(1) submodule init in a scratch clone, (2) build the `xpurt` env per
+`docs/xpurt_env_setup.md` (untested from scratch — this is the main open
+risk), (3) either copy over the existing DroNet/RL checkpoints or retrain
+per §4–§5, (4) run `download_trees.py` or accept the procedural tree
+fallback, (5) run the reference command with the tracked substitute
+schedule (§6) and a small `--num_periods`, confirm a non-empty video chunk
+— matching the smoke test already done earlier in this session, now from a
+clean clone instead of the working tree.
