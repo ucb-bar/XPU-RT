@@ -1,0 +1,107 @@
+#usda 1.0
+(
+    defaultPrim = "PineTree"
+    upAxis = "Z"
+    metersPerUnit = 1.0
+)
+
+# Simple pine-tree proxy: bark cylinder + 3 layered foliage cones.
+# Base of tree is at local z=0; total height ≈ 4.5 m.
+# Scale the spawned prim to add per-instance variety.
+
+def Xform "PineTree" (
+    kind = "component"
+)
+{
+    # ── Trunk ──────────────────────────────────────────────────────────────
+    # Cylinder center at z=0.75 → base z=0, top z=1.5
+    def Xform "Trunk"
+    {
+        double3 xformOp:translate = (0.0, 0.0, 0.75)
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+
+        def Cylinder "TrunkGeo"
+        {
+            double height = 1.5
+            double radius = 0.08
+            rel material:binding = </PineTree/Materials/Bark>
+        }
+    }
+
+    # ── Foliage layer 1 (bottom / widest) ──────────────────────────────────
+    # Cone center z=2.3 → base z=1.2, tip z=3.4
+    def Xform "Layer1"
+    {
+        double3 xformOp:translate = (0.0, 0.0, 2.3)
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+
+        def Cone "Layer1Geo"
+        {
+            double height = 2.2
+            double radius = 1.35
+            rel material:binding = </PineTree/Materials/Foliage>
+        }
+    }
+
+    # ── Foliage layer 2 (middle) ────────────────────────────────────────────
+    # Cone center z=3.1 → base z=2.2, tip z=4.0
+    def Xform "Layer2"
+    {
+        double3 xformOp:translate = (0.0, 0.0, 3.1)
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+
+        def Cone "Layer2Geo"
+        {
+            double height = 1.8
+            double radius = 0.95
+            rel material:binding = </PineTree/Materials/Foliage>
+        }
+    }
+
+    # ── Foliage layer 3 (top / narrowest) ─────────────────────────────────
+    # Cone center z=3.8 → base z=3.1, tip z=4.5
+    def Xform "Layer3"
+    {
+        double3 xformOp:translate = (0.0, 0.0, 3.8)
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+
+        def Cone "Layer3Geo"
+        {
+            double height = 1.4
+            double radius = 0.6
+            rel material:binding = </PineTree/Materials/Foliage>
+        }
+    }
+
+    # ── Materials ──────────────────────────────────────────────────────────
+    def Scope "Materials"
+    {
+        def Material "Bark"
+        {
+            token outputs:surface.connect = </PineTree/Materials/Bark/Shader.outputs:surface>
+
+            def Shader "Shader"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.35, 0.22, 0.12)
+                float inputs:roughness = 0.9
+                float inputs:metallic = 0.0
+                token outputs:surface
+            }
+        }
+
+        def Material "Foliage"
+        {
+            token outputs:surface.connect = </PineTree/Materials/Foliage/Shader.outputs:surface>
+
+            def Shader "Shader"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.12, 0.38, 0.15)
+                float inputs:roughness = 0.85
+                float inputs:metallic = 0.0
+                token outputs:surface
+            }
+        }
+    }
+}
