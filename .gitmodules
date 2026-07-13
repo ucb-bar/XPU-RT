@@ -10,3 +10,6 @@
 [submodule "hw/chipyard"]
 	path = hw/chipyard
 	url = git@github.com:ucb-bar/chipyard.git
+[submodule "ModelBlaster"]
+	path = ModelBlaster
+	url = https://github.com/ucb-bar/ModelBlaster.git

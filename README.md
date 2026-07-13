@@ -6,16 +6,41 @@
 
 This project is under active development. If you would love to contribute or if you find any issues, please do so by opening a [pull request](https://github.com/ucb-bar/XPURT/pulls) or [filing an issue](https://github.com/ucb-bar/XPURT/issues) on GitHub.
 
+## Framework model: bring your own compiler
+
+The scheduler and runtime core (`xpu-rt/`, `runtime/`) are **plug-and-play** —
+compiler- and codegen-agnostic. Anything that can (a) emit a per-op profile in
+the IREE dispatch-shape CSV schema and (b) build a single binary that dispatches
+per-op kernels according to the schedule's core assignment can sit on the
+"compiler" side of the flow. Two integrations exist today:
+
+| flow | compiler / codegen | target | profiling | docs |
+|---|---|---|---|---|
+| **A — ModelBlaster** | PyTorch → quantized Zephyr/RISC-V; curated + LLM-agentic kernel-gen | chipyard (Saturn/Gemmini, RISC-V) | spike / FireSim | [Flow A section below](#flow-a-modelblaster-as-the-compiler-backend), [`ModelBlaster/README.md`](ModelBlaster/README.md) ("Workflow: integrating with XPURT"), [`docs/end_to_end_xpurt_firesim.md`](docs/end_to_end_xpurt_firesim.md) |
+| **B — merlin** *(this README)* | merlin → IREE → VMFB | SpacemiT (BananaPi) | on-device, via `profile_remote.sh` | sections below |
+
+Both flows feed the same `xpu-rt/scheduler.py` and read/write the same
+`gen/profile/.../results.csv` + `schedules/*.json` shapes — the compiler and
+target hardware are the only things that change. Flow B (merlin as the
+compiler backend) is documented in the sections immediately below; Flow A
+(ModelBlaster) has its own walkthrough further down, in
+["Flow A: ModelBlaster as the compiler backend"](#flow-a-modelblaster-as-the-compiler-backend).
+Flow A brings its own compiler (ModelBlaster's codegen pipeline, including an
+LLM-driven kernel generator) and its own Zephyr/chipyard build+run path
+instead of merlin/IREE.
+
 ### Documentation
 
 * [`docs/end_to_end_xpurt_firesim.md`](docs/end_to_end_xpurt_firesim.md)
   — full walkthrough from a multi-network workload spec to a FireSim
   run with trace plots (scheduler → codegen → build → run → analyze),
-  on the Saturn-Gemmini-Q31 path.
+  on the Saturn-Gemmini-Q31 path (Flow A).
 * [`zephyr-chipyard-sw/agents/examples/microros_demo/ROS_FLOW.md`](zephyr-chipyard-sw/agents/examples/microros_demo/ROS_FLOW.md)
   — micro-ROS fixed-pinning baseline flow (the reference against which
   the scheduler is benchmarked).
-* The sections below cover the Merlin/SpacemiT path (BananaPi).
+* The sections below cover the Merlin/SpacemiT path (BananaPi) — Flow B.
+
+## Flow B: merlin as the compiler backend
 
 ### Repository Initialization
 
@@ -129,6 +154,118 @@ Run greedy scheduler variant:
 python scripts/run_greedy_schedule.py --use-grouped
 ```
 
+## Flow A: ModelBlaster as the compiler backend
+
+ModelBlaster brings PyTorch → quantized Zephyr/RISC-V codegen (curated
+kernels + an LLM-agentic kernel generator) instead of merlin/IREE, and
+profiles on spike/FireSim instead of a physical BananaPi. It plugs into the
+same `xpu-rt/scheduler.py` as Flow B — only the compiler and target change.
+
+### Repository layout
+
+ModelBlaster ships as a git submodule of this repo, the same way `merlin`
+does for Flow B:
+
+```bash
+git submodule update --init ModelBlaster   # or --recursive from the top to get everything
+cd ModelBlaster && git submodule update --init --recursive   # pulls in KernelBlaster
+```
+
+```text
+XPU-RT/                (this repo)
+├── merlin/            submodule — Flow B compiler
+└── ModelBlaster/       submodule — Flow A compiler
+```
+
+ModelBlaster's own scripts (`scripts/run_xpurt_scheduler*.py`,
+`benchmarks/runners/firesim.py`, `examples/xpurt_demo/run.sh`, ...) default to
+finding XPU-RT as a **sibling** checkout (`XPURT_ROOT` defaults to
+`../XPU-RT`) — that assumption predates the submodule and no longer holds
+once ModelBlaster is nested *inside* XPU-RT. Set `XPURT_ROOT` to the parent
+directory explicitly when working from the submodule:
+
+```bash
+export XPURT_ROOT="$(cd .. && pwd)"   # run from inside XPU-RT/ModelBlaster
+```
+
+(No `pip install` of the `xpurt` package is required either way — the
+bridge scripts import `xpu-rt/*.py` straight off the path `XPURT_ROOT`
+resolves to.)
+
+### 1) Profile each (model, backend) pair
+
+From the ModelBlaster submodule, profile every model/backend combination this
+workload needs on spike or FireSim — this is what fills in the per-op cycle
+data the scheduler bridge reads in step 2:
+
+```bash
+cd ModelBlaster
+QUANT=int8 TARGET=rvv        RUNNER=firesim bash examples/dronet/run.sh
+QUANT=int8 TARGET=gemmini_q31 RUNNER=firesim bash examples/dronet/run.sh
+# ...one run per (model, backend) pair in the workload
+```
+
+### 2) Run the XPU-RT scheduler bridge
+
+ModelBlaster ships two scheduler bridge scripts that import `xpu-rt/scheduler.py`
+straight off this checkout (via `XPURT_ROOT`) and solve with MOSEK through cvxpy
+— the same MILP as Flow B's `scripts/run_xpurt_schedule.py`, just invoked from
+the ModelBlaster side:
+
+```bash
+cd ModelBlaster
+export XPURT_ROOT="$(cd .. && pwd)"
+
+# single hetero workload
+PYTHONPATH=. uv run python -m scripts.run_xpurt_scheduler \
+    --workload dronet_hetero_int8 \
+    --target-backends gemmini,rvv_opu \
+    --runner firesim \
+    --output schedule_fixtures/dronet_xpurt_mosek.json
+
+# multi-network workload (YAML spec of networks + instance counts)
+PYTHONPATH=. uv run python -m scripts.run_xpurt_scheduler_multi \
+    --config configs/multi_3way_qrb.yaml \
+    --output schedule_fixtures/3way_mosek_qrb.json
+```
+
+Both require a MOSEK license + cvxpy in the interpreter that runs them — see
+`XPURT_PYTHON` below.
+
+### 3) Build and run the scheduled binary
+
+```bash
+SCHEDULE_JSON=$PWD/schedule_fixtures/dronet_xpurt_mosek.json \
+MODELS=dronet,mlp_control \
+BACKENDS=scalar,rvv \
+QUANT=int8 \
+RUNNER=firesim \
+XPURT_TRACE=1 \
+bash examples/xpurt_demo/run.sh
+```
+
+`xpurt_demo/run.sh` links one object per (model × backend) and dispatches
+each schedule entry to the right one. With `XPURT_TRACE=1`, the uartlog
+carries per-entry begin/end timestamps that ModelBlaster's
+`scripts/plot_xpurt_trace.py` renders as a Gantt chart against the predicted
+timeline.
+
+### Env vars ModelBlaster uses to find this checkout
+
+| var | default | used by |
+|---|---|---|
+| `XPURT_ROOT` | `../XPU-RT` (a **sibling-checkout default** — override to `..` when running from the `ModelBlaster/` submodule) | `scripts/run_xpurt_scheduler.py`, `scripts/run_xpurt_scheduler_multi.py`, `scripts/find_min_periodic_makespan*.py`, `benchmarks/runners/firesim.py`, `examples/xpurt_demo/run.sh` |
+| `XPURT_PYTHON` | the `xpu-rt-schedule` conda env (derived from `CONDA_EXE`), else `python3` | `scripts/find_min_periodic_makespan_mosek.py` (needs cvxpy + MOSEK) |
+
+Unlike `merlin`, this submodule reference *is* pinned to a commit (standard
+submodule semantics) — `git submodule update --remote ModelBlaster` bumps it
+deliberately, same as any other submodule in this repo.
+
+For the full ModelBlaster-side workflow (profiling knobs, workload JSON
+schema, models in scope), see
+[`ModelBlaster/README.md`](ModelBlaster/README.md), section
+"Workflow: integrating with XPURT."
+
 ## Repository Map
 
 ```text
@@ -146,11 +283,13 @@ XPU-RT/
 │   ├── scripts/*.sh           #   compile_all_models, profile_remote, etc.
 │   └── tools/                 #   Custom tool sources (links merlin's xpu-rt archive)
 ├── data/                      # Collected benchmark/profile/scheduling outputs
-├── merlin/                    # Git submodule (compiler/runtime/tooling upstream)
+├── merlin/                    # Git submodule (compiler/runtime/tooling upstream) — Flow B
 │   ├── tools/merlin.py        #   Unified CLI: build, compile, setup, benchmark, ...
 │   ├── samples/common/xpu-rt/ #   XPU-RT runtime library (baseline + scheduler runners)
 │   ├── samples/SpacemiTX60/   #   SpacemiT-specific sample binaries
 │   └── models/                #   Model definitions (MLIR/ONNX sources)
+├── ModelBlaster/               # Git submodule (PyTorch->Zephyr/RISC-V pipeline) — Flow A
+│   └── third_party/KernelBlaster/  # nested submodule — originating research project
 ├── env.yml                    # Conda environment
 └── setup.py                   # Editable pip install config
 ```
@@ -173,6 +312,25 @@ XPU-RT/
 2. `runtime/scripts/profile_remote.sh` runs topology benchmarks remotely and writes CSV results to `gen/profile/...`.
 3. `scripts/run_xpurt_schedule.py` reads profiled CSVs from `gen/profile/...` and combines them with dispatch graph JSON inputs to produce schedules.
 4. Final scheduling outputs and logs are stored under `data/...` and script output directories.
+
+### Data/Artifact Flow Between This Repo and `ModelBlaster` (Flow A)
+
+ModelBlaster is a submodule of this repo (`ModelBlaster/`) — but its own
+scripts still reach back into XPU-RT via the `XPURT_ROOT`/`MERLIN_DIR` env
+vars and a `[tool.uv.sources]` entry rather than a relative import, so
+`XPURT_ROOT` needs to be set to `..` (not left at its sibling-checkout
+default) when running from inside the submodule. See
+["Flow A: ModelBlaster as the compiler backend"](#flow-a-modelblaster-as-the-compiler-backend)
+above.
+
+1. ModelBlaster profiles each (model, backend) pair on spike/FireSim and emits
+   an IREE-shape `results.csv` (same schema `xpu-rt/profile_loader.py` expects
+   from the merlin path).
+2. `xpu-rt/scheduler.py` (imported live from this checkout via `XPURT_ROOT`)
+   reads those CSVs and computes a core-assignment schedule, same as Flow B.
+3. ModelBlaster's `examples/xpurt_demo/run.sh` builds a single Zephyr ELF from
+   that schedule and runs it via `harness_xpurt/` — the chipyard/Zephyr
+   equivalent of merlin's VMFB dispatch runners.
 
 ## Notes
 
