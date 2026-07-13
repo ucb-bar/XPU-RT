@@ -347,8 +347,14 @@ into finer ones. That has to happen upstream, in whatever compiler produced
 the dispatch graph (e.g. ModelBlaster's Model Partitioner / LLM-agentic
 codegen). So `xpu-rt/granularity_advisor.py` is **advisory only**: it
 compares each non-periodic job's worst-case dispatch duration against the
-tightest period among periodic jobs in the same schedule, and flags a
-mismatch — a signal a human, or an upstream optimizer, can act on.
+tightest **free slot** among periodic jobs in the same schedule — a periodic
+job's period adjusted for how much of it its own dependency-chain critical
+path actually occupies, not the raw period (a periodic job running close to
+its own deadline can leave far less free room than its period alone
+suggests) — and flags a mismatch, gating any "coarser" recommendation on the
+job's dispatches actually forming a linear chain (the same shape
+`xpu-rt/fusion.py`'s own fusion pass requires). A signal a human, or an
+upstream optimizer, can act on.
 
 Two ways to get the signal:
 - **Inline**, every time `scripts/run_xpurt_schedule.py` runs: it's printed
