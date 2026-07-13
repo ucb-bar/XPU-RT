@@ -23,6 +23,8 @@ from granularity_advisor import (
     analyze_granularity,
     from_schedule_json,
     group_by_periodicity,
+    _critical_path_ms,
+    _is_linear_chain,
 )
 
 
@@ -54,6 +56,48 @@ def _non_periodic_records(base: str, durations: list[float]):
         )
         for i, d in enumerate(durations)
     ]
+
+
+def _periodic_chain_records(base: str, period: float, n_instances: int, chain_durations: list[float]):
+    """n_instances periodic instances of `base`, each a *serial chain* of
+    len(chain_durations) dispatches (dispatch j depends on dispatch j-1),
+    spaced `period` apart. Exercises critical-path-based utilization (F_p),
+    as opposed to `_periodic_records`' single-dispatch instances where
+    critical path trivially equals that one dispatch's duration."""
+    records = []
+    for i in range(n_instances):
+        instance_start = i * period
+        prev_key = None
+        for j, d in enumerate(chain_durations):
+            key = f"{base}{i}_dispatch_{j}"
+            records.append(DispatchRecord(
+                instance_id=f"{base}{i}",
+                base_id=base,
+                is_periodic=True,
+                start_time=instance_start,  # only the instance's earliest matters for period inference
+                duration=d,
+                dispatch_key=key,
+                dependencies=[prev_key] if prev_key else [],
+            ))
+            prev_key = key
+    return records
+
+
+def _branching_non_periodic_records(base: str, root_duration: float, branch_durations: list[float]):
+    """One non-periodic job whose dispatches branch: a root dispatch with
+    multiple direct dependents (out-degree > 1) -- not a linear chain."""
+    records = [DispatchRecord(
+        instance_id=base, base_id=base, is_periodic=False,
+        start_time=0.0, duration=root_duration, dispatch_key=f"{base}_dispatch_0",
+        dependencies=[],
+    )]
+    for i, d in enumerate(branch_durations, start=1):
+        records.append(DispatchRecord(
+            instance_id=base, base_id=base, is_periodic=False,
+            start_time=float(i * 10), duration=d, dispatch_key=f"{base}_dispatch_{i}",
+            dependencies=[f"{base}_dispatch_0"],
+        ))
+    return records
 
 
 def test_period_inferred_from_instance_spacing():
@@ -112,6 +156,51 @@ def test_no_periodic_job_means_no_advice():
     non_periodic = _non_periodic_records("mobilenet", durations=[9.0, 406.0])
     advice = analyze_granularity(non_periodic)
     assert advice == []
+
+
+def test_critical_path_is_serial_sum_for_a_chain():
+    chain = _periodic_chain_records("dronet", period=100.0, n_instances=1, chain_durations=[20.0, 20.0, 20.0])
+    assert _critical_path_ms(chain) == 60.0
+
+
+def test_critical_path_is_not_overcounted_for_a_branch():
+    branch = _branching_non_periodic_records("widget", root_duration=10.0, branch_durations=[5.0, 30.0])
+    # root (10) -> longest branch (30) = 40, NOT root + sum(branches) = 45.
+    assert _critical_path_ms(branch) == 40.0
+
+
+def test_is_linear_chain_true_for_a_chain():
+    chain = _periodic_chain_records("dronet", period=100.0, n_instances=1, chain_durations=[20.0, 20.0, 20.0])
+    assert _is_linear_chain(chain) is True
+
+
+def test_is_linear_chain_false_for_a_branch():
+    branch = _branching_non_periodic_records("widget", root_duration=10.0, branch_durations=[5.0, 5.0])
+    assert _is_linear_chain(branch) is False
+
+
+def test_free_slot_accounts_for_periodic_jobs_own_utilization():
+    # dronet's own 3-dispatch chain (20+20+20=60ms) eats 60% of its 100ms
+    # period, leaving only a 40ms free slot -- so mobilenet's 50ms dispatch
+    # should be flagged "finer" even though 50 < the *raw* 100ms period
+    # (which the old period-only heuristic would have called "unchanged").
+    periodic = _periodic_chain_records("dronet", period=100.0, n_instances=4, chain_durations=[20.0, 20.0, 20.0])
+    non_periodic = _non_periodic_records("mobilenet", durations=[50.0])
+    advice = analyze_granularity(periodic + non_periodic)
+    assert len(advice) == 1
+    a = advice[0]
+    assert a.period_ms == 100.0
+    assert abs(a.free_slot_ms - 40.0) < 1e-9, a.free_slot_ms
+    assert a.recommended == "finer"
+
+
+def test_coarser_capped_to_unchanged_when_job_branches():
+    periodic = _periodic_records("dronet", period=1000.0, n_instances=4, dispatch_duration=2.0)
+    non_periodic = _branching_non_periodic_records("widget", root_duration=1.0, branch_durations=[0.5, 0.5])
+    advice = analyze_granularity(periodic + non_periodic)
+    assert len(advice) == 1
+    assert advice[0].recommended == "unchanged"
+    assert "branch" in advice[0].reason
 
 
 def test_from_schedule_json_recovers_instance_ids_from_dispatch_keys():
