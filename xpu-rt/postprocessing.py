@@ -19,6 +19,8 @@ except ImportError:
     # FusedOperation might not be available
     FusedOperation = None
 
+from granularity_advisor import analyze_granularity, from_workload, group_by_periodicity
+
 def output_scheduled_json(
     combined_workload: Workload,
     t: np.ndarray,
@@ -215,6 +217,22 @@ def output_scheduled_json(
 
         combined_dispatches[dispatch_name] = dispatch_entry
 
+    # Feedback-driven compilation: derive periodic-network periods and
+    # non-periodic granularity advice from the same live Operations used
+    # above (precise -- real min_start_t/max_end_t, not inferred from
+    # naming). Additive metadata only; never fails JSON output itself if
+    # something here is unexpectedly malformed -- this signal is advisory,
+    # not load-bearing. See granularity_advisor.py.
+    periodic_networks = {}
+    granularity_advice = []
+    try:
+        records = from_workload(combined_workload, t, alpha)
+        periodic_periods, _ = group_by_periodicity(records)
+        periodic_networks = {base: round(period, 3) for base, period in periodic_periods.items()}
+        granularity_advice = [advice.as_dict() for advice in analyze_granularity(records)]
+    except Exception as e:
+        print(f"warning: granularity advisor failed, omitting from output ({e})")
+
     # Create output JSON structure
     output_data = {
         "dot_file": "combined_schedule_periodic.json",
@@ -236,6 +254,13 @@ def output_scheduled_json(
             # abstract CPU_P / CPU_E roles. Optional — older schedules
             # without this field still load fine.
             **({"profile_hw": profile_hw} if profile_hw else {}),
+            # periodic_networks: {base_id -> inferred period_ms}, ground
+            # truth for granularity_advisor.from_schedule_json() to prefer
+            # over its naming-based fallback when analyzing this file later.
+            # granularity_advice: feedback-driven-compilation signal -- see
+            # granularity_advisor.py and README "Feedback-driven compilation".
+            **({"periodic_networks": periodic_networks} if periodic_networks else {}),
+            **({"granularity_advice": granularity_advice} if granularity_advice else {}),
         }
     }
 
