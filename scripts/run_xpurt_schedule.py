@@ -38,6 +38,7 @@ from greedy_scheduler import (
 )
 from profile_loader import load_profiled_processing_times
 from postprocessing import trim_periodic_after_nonperiodic_makespan, output_scheduled_json
+from granularity_advisor import analyze_granularity, from_workload
 import plot
 
 # Hardware constants — SpacemiT x60
@@ -584,7 +585,21 @@ def schedule_iree_networks(
         profile_hw=plot_profile_hw,
         profiled_times_by_network=profiled_by_network,
     )
-    
+
+    # Feedback-driven compilation: surface any dispatch-granularity mismatch
+    # between periodic and non-periodic jobs in this schedule. Advisory
+    # only -- xpu-rt can't split a coarse dispatch itself; this just flags
+    # it so a human (or an upstream partitioner) can act on it. Same signal
+    # is already embedded in the JSON's metadata["granularity_advice"]; this
+    # just makes it visible without opening the file.
+    try:
+        advice = analyze_granularity(from_workload(combined_workload, t, alpha))
+        for a in advice:
+            if a.recommended != "unchanged":
+                print(f"WARN: granularity advisor -- {a.reason}")
+    except Exception as e:
+        print(f"warning: granularity advisor failed ({e})")
+
     return combined_workload, t, alpha
 
 if __name__ == "__main__":
