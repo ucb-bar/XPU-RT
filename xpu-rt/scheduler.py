@@ -21,6 +21,15 @@ try:
 except ImportError:
     from fusion import fuse_operations, expand_schedule, print_fusion_report
 
+# Feedback-driven compilation: post-schedule dispatch-granularity advisor.
+# Re-exported here so `scheduler.analyze_granularity(...)` works without
+# changing schedule()'s own (t, alpha, fused_workload, fusion_map) return
+# contract, which ModelBlaster's XPU-RT scheduler bridge scripts depend on.
+try:
+    from .granularity_advisor import analyze_granularity, from_workload
+except ImportError:
+    from granularity_advisor import analyze_granularity, from_workload
+
 
 def _constraints_section_logger(enabled: bool, constraints: list):
     """
@@ -116,6 +125,37 @@ def _compute_dependency_descendants_bitset(operations: list) -> Optional[list[in
     return descendants
 
 
+def _compute_big_m(workload_or_window, machine_combinations: list, machines: list,
+                   transfer_times, *, min_value: float = 5000.0, slack: float = 2.0) -> float:
+    """
+    Compute a Big-M for non-overlap / precedence constraints.
+
+    Tight upper bound: every op runs serially using its slowest combination,
+    plus the worst-case transfer time per op-pair. Multiplied by `slack` and
+    floored at `min_value` so simple workloads behave as before.
+
+    Returns a scalar suitable for use as the H constant in disjunctive
+    scheduling constraints.
+    """
+    ops = list(workload_or_window.operations)
+    if not ops:
+        return float(min_value)
+    sum_max_dur = 0.0
+    for op in ops:
+        max_dur = 0.0
+        for k in range(len(machine_combinations)):
+            d = op.get_duration_for_combination(k, machine_combinations, machines)
+            if d > max_dur:
+                max_dur = float(d)
+        sum_max_dur += max_dur
+    try:
+        max_transfer = float(np.max(transfer_times)) if transfer_times is not None else 0.0
+    except (TypeError, ValueError):
+        max_transfer = 0.0
+    bound = (sum_max_dur + max_transfer * len(ops)) * slack
+    return max(float(min_value), bound)
+
+
 def schedule_window(window: Window, debug_constraints: bool = False) -> Tuple[np.ndarray, np.ndarray]:
     num_operations = len(window.operations)
     machine_combinations = window.get_machine_combinations()
@@ -128,7 +168,7 @@ def schedule_window(window: Window, debug_constraints: bool = False) -> Tuple[np
     C_max = cp.Variable()
 
     # Hyperparameters
-    H = 5000
+    H = _compute_big_m(window, machine_combinations, window.machines, transfer_times)
 
     # Constraints
     constraints = []
@@ -322,7 +362,7 @@ def schedule(
     C_max = cp.Variable()
 
     # Hyperparameters
-    H = 5000
+    H = _compute_big_m(workload, machine_combinations, workload.machines, transfer_times)
 
     # Constraints
     constraints = []
@@ -650,7 +690,7 @@ def schedule_additional_objectives(
     g = cp.Variable(num_operations)
 
     # Hyperparameters
-    H = 5000
+    H = _compute_big_m(workload, machine_combinations, workload.machines, transfer_times)
 
     # Constraints
     constraints = []

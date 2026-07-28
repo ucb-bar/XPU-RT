@@ -332,6 +332,46 @@ above.
    that schedule and runs it via `harness_xpurt/` — the chipyard/Zephyr
    equivalent of merlin's VMFB dispatch runners.
 
+## Feedback-driven compilation: post-schedule granularity advisor
+
+Motivating case: you partition a model at the compiler's default dispatch
+granularity, profile it (Flow A or B), and the schedule xpu-rt computes still
+misses its deadline. Often that's because a **non-periodic** (best-effort)
+job got scheduled as one coarse, unfused dispatch that occupies a core far
+longer than a **periodic** job's period — if the two ever share a core, that
+one coarse dispatch blows through several periodic deadlines before
+yielding. xpu-rt can't fix this itself: its only granularity lever
+(`fusion_threshold` in `scheduler.schedule()`, via `xpu-rt/fusion.py`) merges
+small dispatches into bigger ones — nothing here splits a coarse dispatch
+into finer ones. That has to happen upstream, in whatever compiler produced
+the dispatch graph (e.g. ModelBlaster's Model Partitioner / LLM-agentic
+codegen). So `xpu-rt/granularity_advisor.py` is **advisory only**: it
+compares each non-periodic job's worst-case dispatch duration against the
+tightest **free slot** among periodic jobs in the same schedule — a periodic
+job's period adjusted for how much of it its own dependency-chain critical
+path actually occupies, not the raw period (a periodic job running close to
+its own deadline can leave far less free room than its period alone
+suggests) — and flags a mismatch, gating any "coarser" recommendation on the
+job's dispatches actually forming a linear chain (the same shape
+`xpu-rt/fusion.py`'s own fusion pass requires). A signal a human, or an
+upstream optimizer, can act on.
+
+Two ways to get the signal:
+- **Inline**, every time `scripts/run_xpurt_schedule.py` runs: it's printed
+  as a `WARN:` line, and also embedded in the output JSON's
+  `metadata["granularity_advice"]` (plus `metadata["periodic_networks"]`,
+  the inferred per-network periods) — no extra step required.
+- **Retroactively**, against any already-saved schedule JSON (including
+  ones from before this feature existed):
+  ```bash
+  python scripts/analyze_granularity.py schedules/scheduled_networks_deps_4cores_profiled.json
+  ```
+  Older files fall back to inferring periodicity from dispatch-key naming
+  (`<instance>_dispatch_<n>` — e.g. `dronet0`, `dronet1`, ... share base
+  `dronet`) rather than reading it from metadata that didn't exist yet when
+  they were written; see the module docstring in `granularity_advisor.py`
+  for the precision trade-off that implies.
+
 ## Notes
 
 1. The Python scheduler modules are sourced from `xpu-rt/*.py` and installed via `setup.py`.
