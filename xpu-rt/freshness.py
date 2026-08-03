@@ -532,6 +532,183 @@ def aggregate_metrics(records: Sequence[FreshnessRecord]) -> Dict[str, object]:
     }
 
 
+# --- workload-spec plumbing ------------------------------------------------
+#
+# Freshness edges are read from a top-level `freshness_edges` key, deliberately
+# SEPARATE from the existing `edges` key.
+#
+# `edges` already means precedence: workload_factory turns each one into
+# `Operation.predecessors`, i.e. a MILP constraint that the consumer may not
+# start until the producer has finished. A freshness edge must not do that. A
+# real control loop does not block waiting for perception — it reads the most
+# recent estimate available and acts on it. That is precisely why its output can
+# be stale. Make the same pair a precedence edge and the consumer can never
+# consume a stale input; it can only miss its deadline, and the phenomenon under
+# study disappears.
+#
+# So freshness is evaluated post-hoc against the schedule, never enforced
+# during scheduling, and the two relations stay visibly distinct in serialized
+# specs.
+
+FRESHNESS_EDGES_KEY = "freshness_edges"
+PRECEDENCE_EDGES_KEY = "edges"
+
+CRITICALITY_VALUES = ("hard", "soft")
+
+
+def freshness_edges_from_config(
+    networks_data: Dict[str, object],
+    *,
+    freshness_window_override: Optional[float] = None,
+) -> List[FreshnessEdge]:
+    """Build FreshnessEdge objects from a top-level workload JSON.
+
+    Expected shape:
+
+        "freshness_edges": [
+          {
+            "producer_task": "dronet",
+            "consumer_task": "mlp_control",
+            "freshness_window": 70.5,
+            "sample_time_semantics": "producer_release",
+            "consumption_policy": "latest_completed",
+            "criticality": "hard"
+          }
+        ]
+
+    `freshness_window_override` replaces every edge's window, which is how the
+    phi sweep drives one config across many windows without rewriting it.
+
+    Raises if a freshness edge duplicates a precedence edge on the same pair:
+    that combination silently makes staleness impossible (see the note above),
+    so it is far more likely to be a mistake than an intent.
+    """
+    raw = networks_data.get(FRESHNESS_EDGES_KEY, []) or []
+    if not isinstance(raw, list):
+        raise ValueError(f"{FRESHNESS_EDGES_KEY} must be a list, got {type(raw).__name__}")
+
+    precedence_pairs = {
+        (e.get("from"), e.get("to"))
+        for e in (networks_data.get(PRECEDENCE_EDGES_KEY, []) or [])
+        if isinstance(e, dict)
+    }
+
+    edges: List[FreshnessEdge] = []
+    for i, spec in enumerate(raw):
+        if not isinstance(spec, dict):
+            raise ValueError(f"{FRESHNESS_EDGES_KEY}[{i}] must be an object")
+        missing = [k for k in ("producer_task", "consumer_task") if not spec.get(k)]
+        if missing:
+            raise ValueError(
+                f"{FRESHNESS_EDGES_KEY}[{i}] missing required field(s): {missing}"
+            )
+        producer = str(spec["producer_task"])
+        consumer = str(spec["consumer_task"])
+
+        if (producer, consumer) in precedence_pairs:
+            raise ValueError(
+                f"{producer}->{consumer} is declared both as a precedence edge "
+                f"(under {PRECEDENCE_EDGES_KEY!r}) and as a freshness edge. A "
+                f"precedence edge forces the consumer to wait for the producer, "
+                f"which makes a stale input impossible and defeats the "
+                f"measurement. Declare it as one or the other."
+            )
+
+        window = (
+            freshness_window_override
+            if freshness_window_override is not None
+            else spec.get("freshness_window")
+        )
+        if window is None:
+            raise ValueError(
+                f"{FRESHNESS_EDGES_KEY}[{i}] ({producer}->{consumer}) has no "
+                f"freshness_window and no override was supplied. There is no "
+                f"defensible default: the window must come from the experiment "
+                f"config so every result records which one produced it."
+            )
+
+        criticality = str(spec.get("criticality", "hard"))
+        if criticality not in CRITICALITY_VALUES:
+            raise ValueError(
+                f"{FRESHNESS_EDGES_KEY}[{i}]: criticality {criticality!r} not in "
+                f"{CRITICALITY_VALUES}"
+            )
+
+        edges.append(
+            FreshnessEdge(
+                producer_task=producer,
+                consumer_task=consumer,
+                freshness_window=float(window),
+                sample_time_semantics=str(
+                    spec.get("sample_time_semantics", SAMPLE_AT_RELEASE)
+                ),
+                consumption_policy=str(
+                    spec.get("consumption_policy", LATEST_COMPLETED)
+                ),
+                criticality=criticality,
+            )
+        )
+    return edges
+
+
+def criticality_from_config(networks_data: Dict[str, object]) -> Dict[str, str]:
+    """Map network identifier -> criticality, from a per-network `criticality`.
+
+    Networks that do not declare one default to "soft". Defaulting to soft
+    rather than hard is deliberate: a task silently promoted to hard-critical
+    would inflate the reported hard-validity denominator, so the safe default
+    is the one that cannot flatter the result.
+    """
+    out: Dict[str, str] = {}
+    networks = networks_data.get("networks", {}) or {}
+    if isinstance(networks, dict):
+        items = networks.items()
+    else:
+        items = [(n.get("identifier", str(i)), n) for i, n in enumerate(networks)]
+    for name, info in items:
+        if not isinstance(info, dict):
+            continue
+        c = str(info.get("criticality", "soft"))
+        if c not in CRITICALITY_VALUES:
+            raise ValueError(
+                f"network {name!r}: criticality {c!r} not in {CRITICALITY_VALUES}"
+            )
+        out[str(info.get("identifier", name))] = c
+    return out
+
+
+def split_instance_name(name: str, known_tasks: Sequence[str]) -> Tuple[str, int]:
+    """Split a per-instance job name into (task, instance).
+
+    workload_factory names periodic instances `<identifier><i>` ("dronet0"),
+    while aperiodic networks keep their bare identifier ("yolov8_nano_64" ->
+    instance 0).
+
+    Matching is longest-prefix against `known_tasks`, not a trailing-digit
+    regex. A digit-suffix rule mis-splits any model whose own name ends in
+    digits: "yolov8_nano_64" would become ("yolov8_nano_", 64). Longest-prefix
+    also resolves the genuinely ambiguous case in favour of the more specific
+    task, so with both "yolov8_nano" and "yolov8_nano_64" registered,
+    "yolov8_nano_640" reads as instance 0 of "yolov8_nano_64" rather than
+    instance 640 of "yolov8_nano".
+    """
+    candidates = [t for t in known_tasks if name.startswith(t)]
+    if not candidates:
+        raise ValueError(
+            f"job name {name!r} matches none of the known tasks {list(known_tasks)}"
+        )
+    for task in sorted(candidates, key=len, reverse=True):
+        suffix = name[len(task):]
+        if suffix == "":
+            return task, 0
+        if suffix.isdigit():
+            return task, int(suffix)
+    raise ValueError(
+        f"job name {name!r} starts with a known task but the remainder is not an "
+        f"instance index (tried {sorted(candidates, key=len, reverse=True)})"
+    )
+
+
 # --- analytic cross-checks -------------------------------------------------
 #
 # These exist so a sweep can be checked against closed-form arithmetic before
