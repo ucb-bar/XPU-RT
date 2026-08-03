@@ -60,6 +60,7 @@ from freshness import (  # noqa: E402
     criticality_from_config,
 )
 from benchmarks.freshness_eval.trace import (  # noqa: E402
+    deadline_compliance,
     invocations_from_fixture,
     load_fixture,
     soft_utility,
@@ -410,6 +411,10 @@ def main() -> int:
                 schedule_digests.setdefault((policy, burst), {})[seed] = str(hash(digest))
 
                 su = soft_utility(invs, soft_tasks, epoch_ms)
+                # Producer deadline behaviour, which the consumer-side freshness
+                # records cannot show. At high contention the producer is what
+                # is late, and that is the mechanism behind the staleness.
+                prod_dl = deadline_compliance(invs, edge.producer_task)
 
                 # Every invocation interval, so the diagnostic timeline plot has
                 # the interfering soft work too (per_invocation.csv only carries
@@ -456,6 +461,7 @@ def main() -> int:
                             a["deadline_success_rate"] - a["output_valid_rate"]
                         ),
                         **su,
+                        **prod_dl,
                     })
                     a.pop("soft_completed_by_task", None)
                     a.pop("soft_released_by_task", None)
@@ -577,8 +583,12 @@ def main() -> int:
     print("=" * 96)
     print(f"A0 = {A0:.3f} ms   (uncontended input-age ceiling)")
     print()
+    prod_key = f"{edge.producer_task}_deadline_success_rate"
     print(f"{'policy':<21}{'B':>3}{'phi':>8}{'mkspn':>8}{'dl_ok':>8}"
-          f"{'fresh_ok':>10}{'out_ok':>8}{'diverg':>8}{'maxage':>8}{'soft':>6}")
+          f"{'fresh_ok':>10}{'out_ok':>8}{'diverg':>8}{'maxage':>8}"
+          f"{'prod_dl':>9}{'soft':>6}")
+    print(f"{'':<21}{'':>3}{'':>8}{'':>8}{'(consumer)':>8}"
+          f"{'':>10}{'':>8}{'':>8}{'':>8}{'(producer)':>9}{'':>6}")
     for r in sorted(agg_rows, key=lambda r: (r["policy"], r["contention_level"],
                                              r["freshness_window"], r["seed"])):
         if r["seed"] != seeds[0] and r["policy"] != ORACLE:
@@ -587,7 +597,9 @@ def main() -> int:
               f"{r['freshness_window']:>8.1f}{r['makespan_ms']:>8.1f}"
               f"{r['deadline_success_rate']:>8.3f}{r['freshness_success_rate']:>10.3f}"
               f"{r['output_valid_rate']:>8.3f}{r['divergence']:>8.3f}"
-              f"{(r['max_input_age'] or 0):>8.1f}{r['soft_instances_completed']:>6}")
+              f"{(r['max_input_age'] or 0):>8.1f}"
+              f"{(r.get(prod_key) if r.get(prod_key) is not None else float('nan')):>9.3f}"
+              f"{r['soft_instances_completed']:>6}")
 
     # Operating points where local deadline success hides invalid output.
     flagged = [
