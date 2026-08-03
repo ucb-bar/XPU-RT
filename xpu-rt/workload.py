@@ -5,8 +5,16 @@ class Operation:
     Lowest level of a schedulable instance. An operation has a processing time and potentially multiple predecessors.
     Each operation has a must havea   processing time for each machine in the workload.
     """
-    def __init__(self, processing_times: list[float], predecessors=None, operation_id=None, operation_name=None, job_id=None, min_start_t=None, max_end_t=None):
+    def __init__(self, processing_times: list[float], predecessors=None, operation_id=None, operation_name=None, job_id=None, min_start_t=None, max_end_t=None, deadline_us=None, skip_allowed=False, processing_times_by_pred=None, infeasible_combinations=None):
         self.processing_times = processing_times
+        # Per-(predecessor combination, current combination) cost tensor.
+        # Shape: dict[(k_pred_idx, k_curr_idx) -> duration_us]. When set, the
+        # MOSEK MILP linearises alpha[i_pred, k_pred] * alpha[i, k_curr] into
+        # gamma[i, k_pred, k_curr] and uses cost[k_pred, k_curr] for the
+        # effective duration of op i, capturing cross-cluster cache-state
+        # penalties (e.g. CPU_P→CPU_E coming hot vs cold). When unset the
+        # solver falls back to the 2D processing_times[k_curr] cost.
+        self.processing_times_by_pred = processing_times_by_pred or {}
         # Support both single predecessor (backward compatibility) and list of predecessors
         if predecessors is None:
             self.predecessors = []
@@ -25,6 +33,23 @@ class Operation:
         # Time constraints - minimum start time and maximum end time
         self.min_start_t = min_start_t
         self.max_end_t = max_end_t
+        # Robotics-deadline support (added by PR5 of the rosy-sundae plan):
+        # `deadline_us` is a hard "must finish by" time in the same units as
+        # processing_times. `skip_allowed` opts this op into the binary
+        # skip-indicator path: if the deadline can't be met, the solver may
+        # set s[i]=1, dropping the op from the schedule. If skip_allowed is
+        # False, the deadline becomes a hard constraint and infeasible
+        # instances surface as MOSEK status=infeasible.
+        self.deadline_us = deadline_us
+        self.skip_allowed = bool(skip_allowed)
+        # Hard-exclusion set of machine combination indices the solver
+        # MUST NOT pick for this op. Used by the heterogeneous QNN
+        # workflow to forbid (op, backend) cells where the on-board
+        # build/run failed — there's no measured cost for those, and we
+        # don't want the MILP guessing via large coefficients. The
+        # scheduler injects `alpha[i, k] = 0` for each k in this set
+        # (see scheduler.py "(2b) infeasibility hard exclusion").
+        self.infeasible_combinations = set(infeasible_combinations or ())
     
     def get_predecessors(self):
         """Returns list of all predecessors"""
