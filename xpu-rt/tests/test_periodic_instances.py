@@ -192,5 +192,61 @@ class PreferredHwValidation(unittest.TestCase):
             )
 
 
+class EdfUsesTheWindowClose(unittest.TestCase):
+    """`edf` read only op.deadline_us, which run_xpurt_schedule.py never sets, so
+    it silently fell back to upward rank -- it ran, and reported itself as "edf",
+    while ordering by something else entirely. Periodic workloads express the
+    deadline as the window close (max_end_t), which the MILP itself enforces."""
+
+    @staticmethod
+    def _op(oid, name, jid, max_end_t, deadline_us=None):
+        from workload import Operation
+        return Operation(
+            [1.0, 1.0], operation_id=oid, operation_name=name, job_id=jid,
+            min_start_t=0, max_end_t=max_end_t, deadline_us=deadline_us,
+        )
+
+    def _wl(self, ops):
+        from workload import Workload
+        return Workload(ops, MACHINES, np.zeros((2, 2)), machine_combinations=COMBOS)
+
+    def test_earlier_window_close_gets_higher_priority(self):
+        from scheduler_heft import _deadline_priority
+        late = self._op(0, "late_dispatch_0", 0, max_end_t=100.0)
+        soon = self._op(1, "soon_dispatch_0", 1, max_end_t=10.0)
+        prio = _deadline_priority(self._wl([late, soon]))
+        self.assertGreater(prio[1], prio[0])
+
+    def test_explicit_deadline_us_still_wins(self):
+        from scheduler_heft import _deadline_priority
+        a = self._op(0, "a_dispatch_0", 0, max_end_t=10.0, deadline_us=999.0)
+        b = self._op(1, "b_dispatch_0", 1, max_end_t=100.0, deadline_us=5.0)
+        prio = _deadline_priority(self._wl([a, b]))
+        self.assertGreater(prio[1], prio[0], "deadline_us must take precedence")
+
+    def test_no_deadline_and_no_window_falls_back_without_crashing(self):
+        from scheduler_heft import _deadline_priority
+        a = self._op(0, "a_dispatch_0", 0, max_end_t=None)
+        b = self._op(1, "b_dispatch_0", 1, max_end_t=None)
+        prio = _deadline_priority(self._wl([a, b]))
+        self.assertEqual(len(prio), 2)
+        self.assertTrue(all(isinstance(p, float) for p in prio))
+
+    def test_ordering_differs_from_upward_rank(self):
+        """If it matched upward rank the fix would be inert. Give the op with the
+        LATER window the higher upward rank, so the two rules disagree."""
+        from scheduler_heft import _deadline_priority, _upward_rank
+        # a is a predecessor of b, so a has the higher upward rank; but a's
+        # window closes later, so EDF must rank b first.
+        a = self._op(0, "a_dispatch_0", 0, max_end_t=100.0)
+        b = self._op(1, "b_dispatch_0", 1, max_end_t=10.0)
+        b.add_predecessor(a)
+        wl = self._wl([a, b])
+        rank = _upward_rank(wl)
+        prio = _deadline_priority(wl)
+        self.assertGreater(rank[0], rank[1], "a should outrank b by upward rank")
+        self.assertGreater(prio[1], prio[0], "b should outrank a by deadline")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
