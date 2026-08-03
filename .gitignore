@@ -13,3 +13,6 @@ docs/*_status.md
 
 # MOSEK license — machine-local, never commit
 *.lic
+
+# generated packaging metadata
+*.egg-info/
