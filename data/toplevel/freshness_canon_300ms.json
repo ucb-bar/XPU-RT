@@ -1,0 +1,142 @@
+{
+  "_comment": [
+    "Canonical workload for the freshness-validity evaluation.",
+    "",
+    "Epoch 300 ms = 6 DroNet periods = 30 MLP control periods. The epoch is 300 ms",
+    "rather than 100 ms because the measured cost of a YOLO instance makes a 100 ms",
+    "epoch with a 0-4 instance burst infeasible by ~17x: full-resolution yolov8_nano",
+    "is 418 ms on gemmini (4.2 epochs for ONE instance), and even the 64x64 variant",
+    "is 67.2 ms. At 300 ms the gemmini load spans genuinely feasible to genuinely",
+    "oversubscribed, which is what makes the contention axis well-posed:",
+    "",
+    "  B=0  124.2/300 =  41%      B=3  325.8/300 = 109%  oversubscribed",
+    "  B=1  191.4/300 =  64%      B=4  393.0/300 = 131%  heavily oversubscribed",
+    "  B=2  258.6/300 =  86%",
+    "",
+    "so B>=3 forces the scheduler to shed soft work. Control and perception rates",
+    "are exactly as specified (10 ms / 50 ms); only the epoch was stretched.",
+    "",
+    "Backends are gemmini (cpu_p) and rvv_opu (cpu_e), matching the prebuilt",
+    "alveo_u250_firesim_shuttle_gemmini_opu bitstream",
+    "(FireSimGemminiAndOPUShuttleConfig: tile 0 Shuttle+Gemmini RoCC, tile 1",
+    "Shuttle+Saturn OPU vLen=128). All timings are FireSim-measured cycles from",
+    "ModelBlaster's profile_db, converted at an assumed 1 GHz -- NOT the 25-30 MHz",
+    "the bitstream closes timing at. See the _provenance.json beside each",
+    "results.csv, and scripts/export_profile_db_to_results_csv.py.",
+    "",
+    "This file is the B=2 primary operating point. The sweep materialises B and the",
+    "freshness window from it; see benchmarks/freshness_eval/run.py.",
+    "",
+    "Regenerate the profile CSVs and dispatch graphs with:",
+    "  python scripts/export_profile_db_to_results_csv.py"
+  ],
+
+  "epoch": {
+    "length_ms": 300.0,
+    "_comment": "Read by the freshness sweep, not by the scheduler."
+  },
+
+  "hardware": {
+    "machines": { "cpu_p": 1, "cpu_e": 1 },
+    "profile_hw": { "cpu_p": "gemmini", "cpu_e": "rvv_opu" },
+    "profile": {
+      "target": "firesim_gemmini_opu",
+      "topo_tag": "topo_0",
+      "topo_tag_override": true,
+      "gen_root": "gen"
+    },
+    "p_core_speedup": 1.0,
+    "_comment": [
+      "p_core_speedup is 1.0 because both clusters have real measured profiles;",
+      "nothing is derived from the other by a ratio."
+    ]
+  },
+
+  "scheduler": {
+    "random_seed": 42,
+    "solver_verbosity": 0,
+    "time_limit": 60,
+    "use_profiled": true,
+    "prune_periodic": false,
+    "restrict_makespan_to_nonperiodic": false
+  },
+
+  "networks": {
+    "mlp_control": {
+      "id": 0,
+      "identifier": "mlp_control",
+      "dispatch_deps_path": "gen/vmfb/mlp_control/firesim_gemmini_opu/gemmini/mlp_control.int8/mlp_control.int8_dispatch_graph.json",
+      "period": 10,
+      "window_duration": 10,
+      "num_instances": 30,
+      "criticality": "hard",
+      "_comment": [
+        "Hard-critical consumer. 0.546 ms of work in a 10 ms window, and the same",
+        "cost on both backends (kernels/gemmini has no linear kernel, so an",
+        "all-linear model falls back to the same scalar reference either side).",
+        "It therefore has no placement preference, which is why 'isolate control",
+        "on a separate core' is not one of the protection mechanisms."
+      ]
+    },
+    "dronet": {
+      "id": 1,
+      "identifier": "dronet",
+      "dispatch_deps_path": "gen/vmfb/dronet/firesim_gemmini_opu/gemmini/dronet.int8/dronet.int8_dispatch_graph.json",
+      "period": 50,
+      "window_duration": 50,
+      "num_instances": 6,
+      "criticality": "hard",
+      "_comment": [
+        "Producer in the hard-validity chain. 17.973 ms on gemmini vs 241.462 ms",
+        "on rvv_opu -- a 13.4x preference, so protecting it means reserving",
+        "gemmini for it, and that is exactly what contends with YOLO."
+      ]
+    },
+    "yolov8_nano_64": {
+      "id": 2,
+      "identifier": "yolov8_nano_64",
+      "dispatch_deps_path": "gen/vmfb/yolov8_nano_64/firesim_gemmini_opu/gemmini/yolov8_nano_64.int8/yolov8_nano_64.int8_dispatch_graph.json",
+      "period": 150,
+      "window_duration": 300,
+      "num_instances": 2,
+      "criticality": "soft",
+      "_comment": [
+        "Soft interfering work. period = epoch/B spreads B releases across the",
+        "epoch; window_duration = epoch keeps the window loose so YOLO is",
+        "interference to be shed rather than a hard constraint that makes the",
+        "instance infeasible. 67.202 ms on gemmini vs 1069.004 ms on rvv_opu",
+        "(15.9x), so it wants the same backend DroNet needs. Soft utility is",
+        "counted as completed instances."
+      ]
+    }
+  },
+
+  "edges": [],
+  "_edges_comment": [
+    "MUST stay empty for the DroNet->MLP relationship. An entry here becomes a",
+    "MILP precedence constraint (workload_factory.py:733-760), which would force",
+    "the controller to wait for perception. A controller that blocks can never",
+    "consume a stale input -- it can only miss its deadline -- so a precedence",
+    "edge here would delete the phenomenon being measured. The freshness",
+    "relationship lives under freshness_edges and is evaluated post-hoc."
+  ],
+
+  "freshness_edges": [
+    {
+      "producer_task": "dronet",
+      "consumer_task": "mlp_control",
+      "freshness_window": 70.5,
+      "sample_time_semantics": "producer_release",
+      "consumption_policy": "latest_completed",
+      "criticality": "hard",
+      "_comment": [
+        "freshness_window here is the primary operating point only; the sweep",
+        "overrides it as phi = A0 + delta, where A0 is the MEASURED uncontended",
+        "input-age ceiling (60.546 ms for this grid) rather than the DroNet",
+        "period. Anchoring on the period instead would put phi below A0, and",
+        "the resulting staleness would come from the 50 ms sampling rate rather",
+        "than from contention. 70.5 = A0 + 10."
+      ]
+    }
+  ]
+}
