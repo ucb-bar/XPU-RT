@@ -29,8 +29,11 @@ from freshness import (  # noqa: E402
     analytic_age_ceiling_realized,
     analytic_age_supremum,
     aggregate_metrics,
+    criticality_from_config,
     evaluate_freshness,
+    freshness_edges_from_config,
     select_producer,
+    split_instance_name,
 )
 
 PHI = 50.0
@@ -411,6 +414,123 @@ class Validation(unittest.TestCase):
             trace, dependency_edges=[_edge(freshness_window=1000.0)], epoch_length=300.0
         )
         self.assertEqual([r.epoch for r in ev.records], [0, 1])
+
+
+class ConfigPlumbing(unittest.TestCase):
+    CANON = {
+        "networks": {
+            "mlp_control": {"identifier": "mlp_control", "criticality": "hard"},
+            "dronet": {"identifier": "dronet", "criticality": "hard"},
+            "yolov8_nano_64": {"identifier": "yolov8_nano_64", "criticality": "soft"},
+        },
+        "edges": [],
+        "freshness_edges": [
+            {
+                "producer_task": "dronet",
+                "consumer_task": "mlp_control",
+                "freshness_window": 70.5,
+                "sample_time_semantics": "producer_release",
+                "consumption_policy": "latest_completed",
+                "criticality": "hard",
+            }
+        ],
+    }
+
+    def test_loads_the_dronet_to_control_edge(self):
+        edges = freshness_edges_from_config(self.CANON)
+        self.assertEqual(len(edges), 1)
+        e = edges[0]
+        self.assertEqual(e.producer_task, "dronet")
+        self.assertEqual(e.consumer_task, "mlp_control")
+        self.assertEqual(e.freshness_window, 70.5)
+        self.assertEqual(e.criticality, "hard")
+
+    def test_window_override_drives_the_phi_sweep(self):
+        edges = freshness_edges_from_config(self.CANON, freshness_window_override=95.0)
+        self.assertEqual(edges[0].freshness_window, 95.0)
+
+    def test_missing_window_with_no_override_is_an_error(self):
+        cfg = {"freshness_edges": [{"producer_task": "a", "consumer_task": "b"}]}
+        with self.assertRaises(ValueError) as cm:
+            freshness_edges_from_config(cfg)
+        self.assertIn("freshness_window", str(cm.exception))
+
+    def test_precedence_and_freshness_on_the_same_pair_is_rejected(self):
+        """A precedence edge makes the consumer wait, which makes staleness
+        impossible. Declaring both on one pair silently destroys the
+        measurement, so it must fail loudly."""
+        cfg = {
+            "edges": [{"from": "dronet", "to": "mlp_control"}],
+            "freshness_edges": [
+                {
+                    "producer_task": "dronet",
+                    "consumer_task": "mlp_control",
+                    "freshness_window": 50.0,
+                }
+            ],
+        }
+        with self.assertRaises(ValueError) as cm:
+            freshness_edges_from_config(cfg)
+        msg = str(cm.exception)
+        self.assertIn("precedence", msg)
+        self.assertIn("impossible", msg)
+
+    def test_absent_freshness_edges_yields_none(self):
+        self.assertEqual(freshness_edges_from_config({"networks": {}}), [])
+
+    def test_criticality_map(self):
+        crit = criticality_from_config(self.CANON)
+        self.assertEqual(crit["dronet"], "hard")
+        self.assertEqual(crit["mlp_control"], "hard")
+        self.assertEqual(crit["yolov8_nano_64"], "soft")
+
+    def test_criticality_defaults_to_soft(self):
+        """Defaulting to soft cannot inflate the hard-validity denominator."""
+        crit = criticality_from_config(
+            {"networks": {"x": {"identifier": "x"}}}
+        )
+        self.assertEqual(crit["x"], "soft")
+
+    def test_bad_criticality_rejected(self):
+        with self.assertRaises(ValueError):
+            criticality_from_config(
+                {"networks": {"x": {"identifier": "x", "criticality": "critical"}}}
+            )
+
+
+class InstanceNameSplitting(unittest.TestCase):
+    TASKS = ("dronet", "mlp_control", "yolov8_nano_64")
+
+    def test_periodic_instance_suffix(self):
+        self.assertEqual(split_instance_name("dronet0", self.TASKS), ("dronet", 0))
+        self.assertEqual(split_instance_name("dronet5", self.TASKS), ("dronet", 5))
+        self.assertEqual(
+            split_instance_name("mlp_control29", self.TASKS), ("mlp_control", 29)
+        )
+
+    def test_bare_name_is_instance_zero(self):
+        self.assertEqual(
+            split_instance_name("yolov8_nano_64", self.TASKS), ("yolov8_nano_64", 0)
+        )
+
+    def test_model_name_ending_in_digits_is_not_mis_split(self):
+        """A trailing-digit regex would read this as ('yolov8_nano_', 64)."""
+        task, inst = split_instance_name("yolov8_nano_64", self.TASKS)
+        self.assertEqual(task, "yolov8_nano_64")
+        self.assertEqual(inst, 0)
+
+    def test_longest_prefix_wins_on_ambiguity(self):
+        tasks = ("yolov8_nano", "yolov8_nano_64")
+        self.assertEqual(
+            split_instance_name("yolov8_nano_640", tasks), ("yolov8_nano_64", 0)
+        )
+        self.assertEqual(
+            split_instance_name("yolov8_nano3", tasks), ("yolov8_nano", 3)
+        )
+
+    def test_unknown_name_raises(self):
+        with self.assertRaises(ValueError):
+            split_instance_name("fastdepth0", self.TASKS)
 
 
 class AnalyticCrossCheck(unittest.TestCase):
