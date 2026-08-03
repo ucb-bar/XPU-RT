@@ -247,11 +247,53 @@ def create_workload_from_dependencies(
         operation_id = dispatch_info.get('id', None)
         operation_name = dispatch_name
         
+        # Plumb robotics-deadline fields if the dispatch entry carries
+        # them. Used by the merlin_adapter --deadline-ms / --skip-allowed
+        # flags from PR5 of the rosy-sundae plan.
+        deadline_us = dispatch_info.get('deadline_us', None)
+        skip_allowed = bool(dispatch_info.get('skip_allowed', False))
+        # Optional per-(predecessor target, current target) cost map. Format
+        # in the schedule.json: {"CPU_P->CPU_E": 700.0, "CPU_E->CPU_E": 250.0,
+        # ...}. Translated here to combination indices keyed against
+        # machines list.
+        cost_by_pred_str = dispatch_info.get('cost_by_pred', {}) or {}
+        ptbp = {}
+        if cost_by_pred_str:
+            m_idx = {m: i for i, m in enumerate(machines)}
+            for key, v in cost_by_pred_str.items():
+                if "->" not in key:
+                    continue
+                pred_name, cur_name = key.split("->", 1)
+                cur_i = m_idx.get(cur_name)
+                if cur_i is None:
+                    continue
+                pred_i = m_idx.get(pred_name)
+                if pred_i is None:
+                    continue  # _cold_ (root op) skipped here, fallback to 2D
+                ptbp[(pred_i, cur_i)] = float(v)
+        # Infeasible machine-combination indices for this op. Workload
+        # JSON form: {"infeasible_machines": ["HTA", "GPU"]} — the names
+        # are mapped through the machine list to combination indices,
+        # treating each machine as its own singleton combination by
+        # default (matches the heterogeneous-QNN workflow). Used by the
+        # MILP's "(2b) infeasibility hard exclusion" branch.
+        infe_names = dispatch_info.get("infeasible_machines", []) or []
+        infe_idx: set[int] = set()
+        m_idx = {m: i for i, m in enumerate(machines)}
+        for name in infe_names:
+            i = m_idx.get(name)
+            if i is not None:
+                infe_idx.add(i)
+
         operations_map[dispatch_name] = Operation(
-            proc_times, 
+            proc_times,
             operation_id=operation_id,
             operation_name=operation_name,
-            job_id=job_id  # All operations in a single workload belong to the same job
+            job_id=job_id,  # All operations in a single workload belong to the same job
+            deadline_us=deadline_us,
+            skip_allowed=skip_allowed,
+            processing_times_by_pred=ptbp,
+            infeasible_combinations=infe_idx,
         )
     
     # Set up predecessor relationships

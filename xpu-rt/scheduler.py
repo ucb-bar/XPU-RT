@@ -125,38 +125,34 @@ def _compute_dependency_descendants_bitset(operations: list) -> Optional[list[in
     return descendants
 
 
-def _compute_big_m(workload_or_window, machine_combinations: list, machines: list,
-                   transfer_times, *, min_value: float = 5000.0, slack: float = 2.0) -> float:
+def _auto_big_m(operations, machine_combinations, machines, transfer_times,
+                num_combinations) -> float:
+    """Compute a big-M that strictly upper-bounds any feasible makespan.
+
+    The MILP non-overlap constraints use big-M relaxation: when the alpha
+    indicators are off the constraint should be slack. If H is too small
+    relative to op durations + transfers, the relaxation becomes binding
+    and the problem reports infeasible even though valid schedules exist.
+
+    H = 2 * (sum(max op duration across combinations) + N * max transfer)
     """
-    Compute a Big-M for non-overlap / precedence constraints.
-
-    Tight upper bound: every op runs serially using its slowest combination,
-    plus the worst-case transfer time per op-pair. Multiplied by `slack` and
-    floored at `min_value` so simple workloads behave as before.
-
-    Returns a scalar suitable for use as the H constant in disjunctive
-    scheduling constraints.
-    """
-    ops = list(workload_or_window.operations)
-    if not ops:
-        return float(min_value)
-    sum_max_dur = 0.0
-    for op in ops:
-        max_dur = 0.0
-        for k in range(len(machine_combinations)):
-            d = op.get_duration_for_combination(k, machine_combinations, machines)
-            if d > max_dur:
-                max_dur = float(d)
-        sum_max_dur += max_dur
-    try:
-        max_transfer = float(np.max(transfer_times)) if transfer_times is not None else 0.0
-    except (TypeError, ValueError):
-        max_transfer = 0.0
-    bound = (sum_max_dur + max_transfer * len(ops)) * slack
-    return max(float(min_value), bound)
+    max_durs = []
+    for op in operations:
+        durs = [op.get_duration_for_combination(k, machine_combinations,
+                                                machines)
+                for k in range(num_combinations)]
+        max_durs.append(max(durs) if durs else 0.0)
+    max_transfer = 0.0
+    for row in transfer_times:
+        for v in row:
+            if v > max_transfer:
+                max_transfer = v
+    H = float(2 * (sum(max_durs) + len(operations) * max_transfer + 1.0))
+    return max(H, 5000.0)
 
 
-def schedule_window(window: Window, debug_constraints: bool = False) -> Tuple[np.ndarray, np.ndarray]:
+def schedule_window(window: Window, debug_constraints: bool = False,
+                    target_diversity_weight: float = 0.0) -> Tuple[np.ndarray, np.ndarray]:
     num_operations = len(window.operations)
     machine_combinations = window.get_machine_combinations()
     num_combinations = len(machine_combinations)
@@ -167,8 +163,12 @@ def schedule_window(window: Window, debug_constraints: bool = False) -> Tuple[np
     t = cp.Variable(num_operations)
     C_max = cp.Variable()
 
-    # Hyperparameters
-    H = _compute_big_m(window, machine_combinations, window.machines, transfer_times)
+    # Hyperparameters: auto-size big-M so the non-overlap relaxation is
+    # non-binding when alpha-pair is off. Hard-coded 5000 was undersized
+    # for >5ms-makespan workloads in microseconds (would yield infeasible
+    # on dronet's 7ms and the 130ms multi-model run).
+    H = _auto_big_m(window.operations, machine_combinations, window.machines,
+                    transfer_times, num_combinations)
 
     # Constraints
     constraints = []
@@ -244,14 +244,56 @@ def schedule_window(window: Window, debug_constraints: bool = False) -> Tuple[np
                         )
     end()
 
-    # (6)
+    # (6) Makespan lower bound. When operations[i].processing_times_by_pred
+    # is set we use the predecessor-aware tensor: linearise the bilinear
+    # alpha[pred,k_pred] * alpha[i,k_curr] into gamma and contribute
+    # cost[k_pred,k_curr] * gamma. Falls back to the 2D dur_vec path when
+    # the per-pred map is empty so the existing workloads are unaffected.
     end = log("(6) makespan lower bound (C_max)")
+    pred_aware_gammas = {}  # i -> cp.Variable (num_combinations, num_combinations) binary
     for i in range(num_operations):
-        # Build duration vector for all combinations
-        dur_vec = [window.operations[i].get_duration_for_combination(k, machine_combinations, window.machines) for k in range(num_combinations)]
-        constraints.append(
-            C_max >= t[i] + cp.sum(cp.multiply(dur_vec, alpha[i, :]))
-        )
+        op = window.operations[i]
+        pmap = getattr(op, "processing_times_by_pred", None) or {}
+        preds = op.get_predecessors()
+        # Pick the dominant predecessor (longest critical path proxy: first in
+        # list; future work could pick by index of largest cost). With a single
+        # predecessor this is exact; with multiple, tightening would require
+        # max-style aggregation which is non-DCP — punt to dominant.
+        dom_pred = preds[0] if preds and pmap else None
+        if dom_pred is not None:
+            try:
+                i_pred = window.operations.index(dom_pred)
+            except ValueError:
+                i_pred = None
+        else:
+            i_pred = None
+        if i_pred is not None:
+            gamma = cp.Variable((num_combinations, num_combinations), boolean=True)
+            pred_aware_gammas[i] = (i_pred, gamma)
+            # Linearisation of gamma[k_pred, k_curr] = alpha[i_pred,k_pred] * alpha[i,k_curr]
+            constraints.append(cp.sum(gamma) == 1)
+            for k_pred in range(num_combinations):
+                constraints.append(cp.sum(gamma[k_pred, :]) <= alpha[i_pred, k_pred])
+            for k_curr in range(num_combinations):
+                constraints.append(cp.sum(gamma[:, k_curr]) <= alpha[i, k_curr])
+            # Effective duration is sum cost[k_pred,k_curr] * gamma[k_pred,k_curr];
+            # default to the 2D dur for missing entries (e.g. cold-start).
+            base_dur_vec = [op.get_duration_for_combination(k, machine_combinations, window.machines) for k in range(num_combinations)]
+            cost_matrix = np.zeros((num_combinations, num_combinations))
+            for k_pred in range(num_combinations):
+                for k_curr in range(num_combinations):
+                    if (k_pred, k_curr) in pmap:
+                        cost_matrix[k_pred, k_curr] = pmap[(k_pred, k_curr)]
+                    else:
+                        cost_matrix[k_pred, k_curr] = base_dur_vec[k_curr]
+            constraints.append(
+                C_max >= t[i] + cp.sum(cp.multiply(cost_matrix, gamma))
+            )
+        else:
+            dur_vec = [op.get_duration_for_combination(k, machine_combinations, window.machines) for k in range(num_combinations)]
+            constraints.append(
+                C_max >= t[i] + cp.sum(cp.multiply(dur_vec, alpha[i, :]))
+            )
     end()
 
     # (7) and (8) are covered by boolean argument of alpha and beta variables
@@ -283,6 +325,27 @@ def schedule_window(window: Window, debug_constraints: bool = False) -> Tuple[np
     # objective_func = 150*C_max + cp.sum(empty_space)
     objective_func = C_max
 
+    # Optional: --target-diversity-weight encourages using more distinct
+    # primary machines. For each machine M we introduce a binary `used[M]`
+    # forced to 1 if any operation is assigned to a combination whose primary
+    # machine is M. We then SUBTRACT λ × Σ used[M] from the objective so the
+    # solver prefers schedules that touch more machines, all else equal.
+    if target_diversity_weight and target_diversity_weight > 0.0:
+        primary_machines = list(window.machines)
+        used = cp.Variable(len(primary_machines), boolean=True)
+        for m_idx, m_name in enumerate(primary_machines):
+            matching_combos = [
+                k for k, c in enumerate(machine_combinations)
+                if c[0] == m_name
+            ]
+            if not matching_combos:
+                constraints.append(used[m_idx] == 0)
+                continue
+            for i in range(num_operations):
+                for k in matching_combos:
+                    constraints.append(used[m_idx] >= alpha[i, k])
+        objective_func = objective_func - target_diversity_weight * cp.sum(used)
+
     # Optimization problem
     objective = cp.Minimize(objective_func)
     problem = cp.Problem(objective, constraints)
@@ -302,6 +365,9 @@ def schedule(
     prune_cross_period_constraints: bool = True,
     debug_constraints: bool = False,
     prune_overlap_constraints_for_dependency_chain: bool = True,
+    target_diversity_weight: float = 0.0,
+    cvxpy_solver: str = "MOSEK",
+    emit_report_to: Optional[str] = None,
 ) -> Tuple[np.ndarray, np.ndarray, Optional[Workload], Optional[dict]]:
     """
     Schedule a workload, optionally with operation fusion.
@@ -342,7 +408,6 @@ def schedule(
         workload, fusion_map = fuse_operations(workload, fusion_threshold)
         print(f"Fusion applied: {len(original_workload.operations)} operations -> {len(workload.operations)} fused operations")
         # Print detailed fusion report for debugging (to file)
-        import os
         os.makedirs("fusion_reports", exist_ok=True)
         report_file = f"fusion_reports/fusion_report_{len(original_workload.operations)}to{len(workload.operations)}.txt"
         print_fusion_report(original_workload, workload, fusion_map, output_file=report_file)
@@ -361,8 +426,10 @@ def schedule(
     t = cp.Variable(num_operations)
     C_max = cp.Variable()
 
-    # Hyperparameters
-    H = _compute_big_m(workload, machine_combinations, workload.machines, transfer_times)
+    # Hyperparameters: auto-size big-M (see top of schedule_window for
+    # rationale).
+    H = _auto_big_m(workload.get_operations(), machine_combinations,
+                    workload.machines, transfer_times, num_combinations)
 
     # Constraints
     constraints = []
@@ -377,6 +444,118 @@ def schedule(
             cp.sum(alpha[i, :]) == 1
         )
     end()
+
+    # (2b) Hard infeasibility exclusion. When an op carries
+    # `infeasible_combinations`, force alpha[i, k] = 0 for those k. This
+    # is the no-extrapolation guard for the heterogeneous QNN workflow:
+    # if we measured that (dispatch i, backend k) cannot build/run on
+    # the board, the MILP is forbidden from assigning it there — no
+    # large coefficient as a soft penalty, no silent fallback. If every
+    # combination of some op is infeasible the model is infeasible and
+    # the solver returns no solution, which is the right loud failure
+    # ("profile that op on at least one backend before scheduling").
+    n_infeasible = 0
+    end = log("(2b) infeasibility hard exclusion")
+    ops = workload.get_operations()
+    for i in range(num_operations):
+        infe = getattr(ops[i], "infeasible_combinations", set()) or set()
+        for k in infe:
+            if 0 <= k < num_combinations:
+                constraints.append(alpha[i, k] == 0)
+                n_infeasible += 1
+    end()
+    if constraints_debug_enabled and n_infeasible:
+        print(f"  (2b) added {n_infeasible} hard exclusions across "
+              f"{sum(1 for o in ops if getattr(o, 'infeasible_combinations', None))}"
+              f" ops")
+
+    # (2c) Phase F2b — singleton-feasible pre-fix (MOSEK convergence aid).
+    # When an op has exactly one feasible combination (either because
+    # `infeasible_combinations` rules out all others or because all
+    # other combos report >= 1e8 in processing_times, indicating "no
+    # feasible measurement"), force alpha[i, single_k] = 1 directly.
+    # Combined with the row-sum-equals-1 constraint, this lets MOSEK
+    # presolve eliminate the binary variable entirely. Phase F1's
+    # diagnosis pointed at canonicalization wall — singleton pre-fix
+    # reduces that wall in proportion to how many ops are pinned.
+    INFEASIBLE_COST = 1e8  # processing_times sentinel for "no profile data"
+    n_singletons = 0
+    end = log("(2c) F2b singleton-feasible pre-fix")
+    for i in range(num_operations):
+        infe = set(getattr(ops[i], "infeasible_combinations", set()) or set())
+        proc_times = list(getattr(ops[i], "processing_times", []) or [])
+        feasible_ks = [k for k in range(num_combinations)
+                       if k not in infe and
+                       (k >= len(proc_times) or proc_times[k] < INFEASIBLE_COST)]
+        if len(feasible_ks) == 1:
+            constraints.append(alpha[i, feasible_ks[0]] == 1)
+            n_singletons += 1
+    end()
+    if constraints_debug_enabled and n_singletons:
+        print(f"  (2c) F2b: pre-fixed {n_singletons} singleton-feasible ops "
+              f"({100.0*n_singletons/num_operations:.1f}% of {num_operations} total)")
+
+    # (2d) Phase F2c — symmetry-breaking constraints for periodic instances.
+    # When the workload contains multiple periodic INSTANCES of the same
+    # base network (e.g. mlp_control0, mlp_control1, mlp_control2,
+    # mlp_control3), their dispatch sets are structurally identical. MOSEK
+    # without symmetry-breaking explores N! permutations of which instance
+    # goes where. We add ordering constraints that force instance k's
+    # first op to start no later than instance (k+1)'s first op. Since
+    # the periodic min_start_t already enforces this in the data, the
+    # explicit constraint just helps MOSEK's branch-and-bound prune
+    # symmetric subtrees up front.
+    n_symmetry = 0
+    end = log("(2d) F2c symmetry-breaking for periodic instances")
+    # Group ops by (job_name_base, dispatch_id) to find instances.
+    # job_name = e.g. "mlp_control0", "mlp_control1"; the base is the
+    # leading non-digit prefix.
+    import re as _re_sym
+    instances_by_base: dict[str, dict[int, list[int]]] = {}
+    for i in range(num_operations):
+        op = ops[i]
+        job_name = getattr(op, "operation_name", "") or ""
+        # dispatch_name format: "<job_name>_dispatch_<id>"; the parent
+        # network's instance index is parseable from job_name.
+        m = _re_sym.match(r"^(.+?)(\d+)_dispatch_", job_name)
+        if not m:
+            continue
+        base = m.group(1).rstrip("_")
+        try:
+            inst_k = int(m.group(2))
+        except ValueError:
+            continue
+        # Parse dispatch index for matching identical ops across instances.
+        m2 = _re_sym.search(r"_dispatch_(\d+)", job_name)
+        if not m2:
+            continue
+        try:
+            disp_id = int(m2.group(1))
+        except ValueError:
+            continue
+        instances_by_base.setdefault(base, {}).setdefault(disp_id, []).append(
+            (inst_k, i)
+        )
+    # For each (base, disp_id), if we have ≥ 2 instances, add a chain
+    # t[inst_0] ≤ t[inst_1] ≤ ... — they're already imposed by
+    # min_start_t for periodic data but the explicit chain breaks
+    # symmetric exploration in the optimizer.
+    for base, by_disp in instances_by_base.items():
+        for disp_id, instance_list in by_disp.items():
+            if len(instance_list) < 2:
+                continue
+            instance_list.sort()  # by inst_k ascending
+            for a, b in zip(instance_list, instance_list[1:]):
+                _, ia = a
+                _, ib = b
+                # Allow ties — same-instant scheduling of symmetric ops
+                # is harmless and may even be the periodic solution.
+                constraints.append(t[ia] <= t[ib])
+                n_symmetry += 1
+    end()
+    if constraints_debug_enabled and n_symmetry:
+        print(f"  (2d) F2c: added {n_symmetry} symmetry-breaking constraints "
+              f"across {len(instances_by_base)} periodic networks")
 
     def _periods_overlap(op_a, op_b) -> bool:
         """Return True if the time windows of two operations can overlap."""
@@ -464,6 +643,39 @@ def schedule(
             # constraints.append(
             #     t[i] <= op.max_end_t
             # )
+    end()
+
+    # (7)+(8) Robotics-deadline support: per-op `deadline_us` constraint
+    # with optional binary skip indicator `s[i]` for ops that opted into
+    # `skip_allowed`. Mirrors the relaxation pattern used for the
+    # non-overlap big-M (lines ~496) so the constraint becomes slack only
+    # when s[i]=1.
+    skip_vars: dict[int, "cp.Variable"] = {}
+    end = log("(7)+(8) robotics deadlines + skip indicator")
+    for i in range(num_operations):
+        op = workload.operations[i]
+        deadline = getattr(op, "deadline_us", None)
+        if deadline is None:
+            continue
+        skip_allowed = getattr(op, "skip_allowed", False)
+        dur_vec = [
+            op.get_duration_for_combination(k, machine_combinations, workload.machines)
+            for k in range(num_combinations)
+        ]
+        if skip_allowed:
+            s_i = cp.Variable(boolean=True)
+            skip_vars[i] = s_i
+            # When s_i=0, full deadline applies. When s_i=1, the deadline
+            # is relaxed by H, effectively disabling the bound.
+            constraints.append(
+                t[i] + cp.sum(cp.multiply(dur_vec, alpha[i, :]))
+                <= deadline + H * s_i
+            )
+        else:
+            constraints.append(
+                t[i] + cp.sum(cp.multiply(dur_vec, alpha[i, :]))
+                <= deadline
+            )
     end()
 
     # (4) and (5) Non-overlap constraints: if two operations are assigned to overlapping combinations, enforce ordering
@@ -567,8 +779,38 @@ def schedule(
             f"(n={len(constraints)})"
         )
 
-    # Optimization problem
-    objective = cp.Minimize(C_max)
+    # Optimization problem. C_max is the primary objective; skip indicators
+    # contribute a heavy penalty so the solver only sets s_i=1 when the
+    # deadline forces it. The penalty must dominate any conceivable C_max
+    # win from skipping, so we weight by H (the auto-sized big-M, which is
+    # already an upper bound on C_max).
+    objective_func = C_max
+    if skip_vars:
+        skip_penalty = float(H)
+        objective_func = objective_func + skip_penalty * cp.sum(
+            [s for s in skip_vars.values()]
+        )
+
+    # Optional target-diversity penalty: subtract λ × (number of distinct
+    # primary machines used) so the solver prefers placements that touch
+    # more devices, all else equal.
+    if target_diversity_weight and target_diversity_weight > 0.0:
+        primary_machines = list(workload.machines)
+        used = cp.Variable(len(primary_machines), boolean=True)
+        for m_idx, m_name in enumerate(primary_machines):
+            matching_combos = [
+                k for k, c in enumerate(machine_combinations)
+                if c[0] == m_name
+            ]
+            if not matching_combos:
+                constraints.append(used[m_idx] == 0)
+                continue
+            for i in range(num_operations):
+                for k in matching_combos:
+                    constraints.append(used[m_idx] >= alpha[i, k])
+        objective_func = objective_func - target_diversity_weight * cp.sum(used)
+
+    objective = cp.Minimize(objective_func)
     problem = cp.Problem(objective, constraints)
     
     # Print problem statistics
@@ -587,28 +829,66 @@ def schedule(
         print(f"Number of constraints: {len(constraints)}")
         print(f"{'='*60}\n")
         print("Starting optimization...")
-        start_time = time.time()
+    # Always time the solve regardless of verbosity — SchedulerReport needs it.
+    start_time = time.time()
     
-    # Configure MOSEK solver parameters
-    # CVXPY's verbose parameter controls MOSEK output
-    # For additional MOSEK-specific parameters, we can pass them through mosek_params
-    # Note: CVXPY's verbose=True already enables MOSEK logging
-    mosek_verbose = verbose or (solver_verbosity > 0)
-    mosek_params = {}
-    
-    # Set time limit if specified (in seconds)
-    if time_limit is not None and time_limit > 0:
-        mosek_params['MSK_DPAR_OPTIMIZER_MAX_TIME'] = time_limit
-        if verbose:
-            print(f"Time limit set to {time_limit:.1f} seconds ({time_limit/60:.1f} minutes)")
-    
-    if mosek_params:
-        problem.solve(solver=cp.MOSEK, verbose=mosek_verbose, mosek_params=mosek_params)
-    else:
-        problem.solve(solver=cp.MOSEK, verbose=mosek_verbose)
-    
+    # Configure solver backend. Default is MOSEK (original behaviour); any CVXPY
+    # MILP-capable backend can be selected via cvxpy_solver.
+    solver_verbose = verbose or (solver_verbosity > 0)
+    solver_attr = getattr(cp, cvxpy_solver, None)
+    if solver_attr is None:
+        raise ValueError(
+            f"Unknown CVXPY solver '{cvxpy_solver}'. "
+            f"Available: {cp.installed_solvers()}"
+        )
+    solver_kwargs: dict = {}
+
+    if cvxpy_solver == "MOSEK":
+        mosek_params: dict = {}
+        if time_limit is not None and time_limit > 0:
+            mosek_params['MSK_DPAR_OPTIMIZER_MAX_TIME'] = time_limit
+            if verbose:
+                print(f"Time limit set to {time_limit:.1f} seconds ({time_limit/60:.1f} minutes)")
+        # F2d/F2e: env-injected MOSEK params for convergence-aid sweeps.
+        # XPURT_MOSEK_MIO_GAP=0.05 sets MSK_DPAR_MIO_TOL_REL_GAP=0.05.
+        # XPURT_MOSEK_PARAMS=key=val;key=val sets arbitrary MOSEK keys.
+        _mio_gap = os.environ.get("XPURT_MOSEK_MIO_GAP", "")
+        if _mio_gap:
+            try:
+                mosek_params['MSK_DPAR_MIO_TOL_REL_GAP'] = float(_mio_gap)
+            except ValueError:
+                pass
+        _extra = os.environ.get("XPURT_MOSEK_PARAMS", "")
+        if _extra:
+            for kv in _extra.split(";"):
+                if "=" not in kv:
+                    continue
+                k, v = kv.split("=", 1)
+                k = k.strip(); v = v.strip()
+                # Try float first, then string.
+                try:
+                    mosek_params[k] = float(v)
+                except ValueError:
+                    mosek_params[k] = v
+        if mosek_params:
+            solver_kwargs["mosek_params"] = mosek_params
+    elif cvxpy_solver == "GUROBI":
+        if time_limit is not None and time_limit > 0:
+            solver_kwargs["TimeLimit"] = time_limit
+    elif cvxpy_solver == "HIGHS":
+        if time_limit is not None and time_limit > 0:
+            solver_kwargs["time_limit"] = time_limit
+    elif cvxpy_solver == "SCIP":
+        if time_limit is not None and time_limit > 0:
+            solver_kwargs["scip_params"] = {"limits/time": time_limit}
+    elif cvxpy_solver == "CBC":
+        if time_limit is not None and time_limit > 0:
+            solver_kwargs["maximumSeconds"] = time_limit
+
+    problem.solve(solver=solver_attr, verbose=solver_verbose, **solver_kwargs)
+    elapsed_time = time.time() - start_time
+
     if verbose:
-        elapsed_time = time.time() - start_time
         print(f"\nOptimization completed in {elapsed_time:.2f} seconds")
         print(f"{'='*60}")
 
@@ -617,6 +897,50 @@ def schedule(
 
     t_result = t.value
     alpha_result = alpha.value
+    # Stash skip-indicator results onto the original workload so callers
+    # know which ops were dropped. Use indices into `original_workload`
+    # (= workload pre-fusion) so the schema remains stable for callers
+    # that don't enable fusion.
+    skipped_indices: list[int] = []
+    if skip_vars:
+        for i, sv in skip_vars.items():
+            if sv.value is not None and sv.value > 0.5:
+                skipped_indices.append(i)
+        original_workload.skipped_op_indices = skipped_indices
+    else:
+        original_workload.skipped_op_indices = []
+
+    # Stash solver state for downstream feedback derivation (xpu-rt/feedback.py).
+    # Sidecar on the workload keeps the schedule() return signature stable.
+    original_workload.solver_state = {
+        "problem_status": str(problem.status),
+        "makespan": float(C_max.value) if C_max.value is not None else None,
+        "objective_value": float(problem.value) if problem.value is not None else None,
+        "num_operations": num_operations,
+        "num_combinations": num_combinations,
+        "fusion_applied": fusion_threshold is not None and fusion_threshold > 0,
+        "solve_wall_s": float(elapsed_time),
+        "solver_name": cvxpy_solver,
+    }
+
+    # Build SchedulerReport and stash + optionally write to disk. Non-breaking:
+    # the schedule() return tuple stays 4-element; callers access the report
+    # via workload.solver_state["report"] or read the JSON file.
+    if t_result is not None and alpha_result is not None:
+        try:
+            from profiling import SchedulerReport
+            report = SchedulerReport.from_solver_state(
+                original_workload, t_result, alpha_result,
+                solver_name=cvxpy_solver,
+                solve_wall_s=float(elapsed_time),
+                solver_status=str(problem.status),
+                fusion_map=fusion_map,
+            )
+            original_workload.solver_state["report"] = report
+            if emit_report_to:
+                report.write_json(emit_report_to)
+        except Exception as exc:
+            print(f"warning: SchedulerReport build failed: {exc}")
     
     # Check if optimization was successful
     if t_result is None or alpha_result is None:
@@ -689,8 +1013,9 @@ def schedule_additional_objectives(
     G_max = cp.Variable() # TODO have a G_max for each machine
     g = cp.Variable(num_operations)
 
-    # Hyperparameters
-    H = _compute_big_m(workload, machine_combinations, workload.machines, transfer_times)
+    # Hyperparameters: auto-size big-M (see top of schedule_window).
+    H = _auto_big_m(workload.get_operations(), machine_combinations,
+                    workload.machines, transfer_times, num_combinations)
 
     # Constraints
     constraints = []
@@ -840,24 +1165,28 @@ def schedule_additional_objectives(
     print("Optimal value: ", problem.value)
     return t.value, alpha.value
 
-def schedule_with_greedy_packing(workload: Workload, n_splits: int) -> Tuple[np.ndarray, np.ndarray]:
+def schedule_with_greedy_packing(workload: Workload, n_splits: int,
+                                 target_diversity_weight: float = 0.0) -> Tuple[np.ndarray, np.ndarray]:
     windows = greedy_packing(workload, n_splits)
 
     solutions = []
     for i, window in enumerate(windows):
-        t, alpha = schedule_window(window)
+        t, alpha = schedule_window(
+            window, target_diversity_weight=target_diversity_weight)
         solutions.append((t, alpha))
 
     t, alpha = combine_solved_windows(workload, windows, solutions)
 
     return t, alpha
 
-def schedule_with_convex_packing(workload: Workload, n_splits: int) -> Tuple[int, int]:
+def schedule_with_convex_packing(workload: Workload, n_splits: int,
+                                 target_diversity_weight: float = 0.0) -> Tuple[int, int]:
     windows = convex_packing(workload, n_splits)
 
     solutions = []
     for i, window in enumerate(windows):
-        t, alpha = schedule_window(window)
+        t, alpha = schedule_window(
+            window, target_diversity_weight=target_diversity_weight)
         solutions.append((t, alpha))
 
     t, alpha = combine_solved_windows(workload, windows, solutions)

@@ -30,6 +30,8 @@ def output_scheduled_json(
     profiled_times_e: dict | None = None,
     profile_hw: dict | None = None,
     profiled_times_by_network: dict[str, dict[str, dict[int, dict]]] | None = None,
+    pdb_hash: str | None = None,
+    pdb_files: list[str] | None = None,
 ):
     """
     Output a combined JSON file with all dispatches, their hardware targets, and start times.
@@ -225,6 +227,16 @@ def output_scheduled_json(
         if time_dependency:
             dispatch_entry["time_dependency"] = time_dependency
 
+        # Propagate honest deadline-miss flag set by heuristic schedulers
+        # (Phase A2). When present, downstream readers (Gantt overlay,
+        # band-compliance audit) can mark the overrun directly without
+        # re-deriving from workload metadata.
+        if getattr(op, "deadline_miss", False):
+            dispatch_entry["deadline_miss"] = True
+            overrun = getattr(op, "deadline_overrun_us", None)
+            if overrun is not None:
+                dispatch_entry["deadline_overrun_us"] = float(overrun)
+
         combined_dispatches[dispatch_name] = dispatch_entry
 
     # Feedback-driven compilation: derive periodic-network periods and
@@ -271,8 +283,37 @@ def output_scheduled_json(
             # granularity_advisor.py and README "Feedback-driven compilation".
             **({"periodic_networks": periodic_networks} if periodic_networks else {}),
             **({"granularity_advice": granularity_advice} if granularity_advice else {}),
+            # pdb_hash / pdb_files persist the content fingerprint of
+            # the profile CSVs that the solver consumed. The runtime
+            # loader (pipeline/ingest_xpurt_schedule.py) recomputes the
+            # hash over the SAME paths and refuses (or warns, depending
+            # on MB_INGEST_STRICT_PDB_CHECK) when it differs — defends
+            # against the "predicted 70 ms / measured 638 ms" trap that
+            # killed v8 (the fixture was solved against a pre-bit-exact
+            # PDB; the runtime ran bit-exact kernels against it).
+            **({"pdb_hash": pdb_hash} if pdb_hash else {}),
+            **({"pdb_files": pdb_files} if pdb_files else {}),
         }
     }
+
+    # Apply same-network adjacent auto-merge (schedule-time fusion of
+    # back-to-back dispatches on the same core that have no external
+    # readers). Disabled by env XPURT_NO_AUTOMERGE=1.
+    if os.environ.get("XPURT_NO_AUTOMERGE", "0") not in ("1", "true", "True"):
+        try:
+            from automerge import automerge_adjacent, automerge_savings
+            before = output_data
+            output_data = automerge_adjacent(output_data, max_gap_us=50.0,
+                                             saved_handshake_us=5.0)
+            savings = automerge_savings(before, output_data)
+            if savings["pairs_merged"] > 0:
+                print(f"automerge: collapsed {savings['pairs_merged']} "
+                      f"adjacent same-network pair(s) → "
+                      f"{savings['dispatches_after']} dispatches, "
+                      f"makespan {savings['makespan_before']:.1f}µs "
+                      f"→ {savings['makespan_after']:.1f}µs")
+        except Exception as exc:
+            print(f"warning: automerge pass skipped ({exc})")
 
     # Save to file
     os.makedirs(os.path.dirname(output_path) if os.path.dirname(output_path) else '.', exist_ok=True)

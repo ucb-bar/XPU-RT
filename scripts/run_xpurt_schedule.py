@@ -21,22 +21,28 @@ _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _REPO_ROOT)
 sys.path.insert(0, os.path.join(_REPO_ROOT, "xpu-rt"))
 
+import time
+
 from workload import Workload, Operation
 from workload_factory import (
     create_workload_from_network_hierarchy,
     build_machine_combinations,
     machine_type_prefix,
 )
-# `scheduler` pulls in cvxpy/mosek; defer that import so `--solver greedy`
-# can run in environments where the MILP solver isn't installable (e.g. an
-# xpurt env where numpy is pinned <2 for compatibility with another
-# downstream consumer, but cvxpy expects numpy>=2).
+from schedulers import get_scheduler, available_schedulers
+from metrics import compute_metrics
+# The greedy family lives in greedy_scheduler (no cvxpy dependency); the MILP
+# path is reached lazily through the registry via get_scheduler("mosek").
 from greedy_scheduler import (
     greedy_schedule,
     greedy_periodic_schedule,
     decomposed_schedule,
 )
-from profile_loader import load_profiled_processing_times
+from profile_loader import (
+    load_profiled_processing_times,
+    compute_pdb_hash,
+    _LAST_LOAD_CSV_PATHS,
+)
 from postprocessing import trim_periodic_after_nonperiodic_makespan, output_scheduled_json
 from granularity_advisor import analyze_granularity, from_workload
 import plot
@@ -134,6 +140,7 @@ def schedule_iree_networks(
     use_profiled: bool | None = None,
     prune_periodic: bool | None = None,
     restrict_makespan_to_nonperiodic: bool | None = None,
+    scheduler: str = "mosek",
     max_periodic_iters: int = 4,
 ) -> tuple[Workload, np.ndarray, np.ndarray]:
     """
@@ -298,8 +305,8 @@ def schedule_iree_networks(
         )
 
     if solver == "milp":
-        # Single global solve. Build workload once, run the MILP
-        # scheduler, post-process trim.
+        # Single global solve. Build workload once, run the selected registry
+        # scheduler (default "mosek" == the CVXPY/MOSEK MILP), post-process trim.
         print(f"\nCreating workload from network hierarchy...")
         combined_workload = _build_workload()
 
@@ -320,16 +327,22 @@ def schedule_iree_networks(
         print(f"  Independent jobs (can run in parallel): {independent_jobs}")
 
         print("\n" + "=" * 60)
-        print("Scheduling combined workload (MILP)...")
+        print(f"Scheduling combined workload (scheduler={scheduler})...")
         print("=" * 60)
-        from scheduler import schedule as milp_schedule
-        result = milp_schedule(
+        # Route the single-pass solve through the schedulers registry so
+        # `--scheduler` can profile any registered algorithm
+        # (heft/peft/edf/cpsat/milp_*/...). get_scheduler("mosek") is the
+        # CVXPY/MOSEK MILP, so the default behaviour is unchanged.
+        scheduler_fn = get_scheduler(scheduler)
+        solver_t0 = time.perf_counter()
+        result = scheduler_fn(
             combined_workload,
             solver_verbosity=effective_solver_verbosity,
             time_limit=effective_time_limit,
             restrict_makespan_to_nonperiodic=effective_restrict_makespan_to_nonperiodic,
             prune_cross_period_constraints=effective_prune_periodic,
         )
+        solver_wall_time_s = time.perf_counter() - solver_t0
         t, alpha, _, _ = result
 
         if effective_prune_periodic:
@@ -352,6 +365,7 @@ def schedule_iree_networks(
         #     periodic counts to ceil(makespan/period) for any short
         #     network; iterate until counts are stable or
         #     `max_periodic_iters` is hit.
+        solver_t0 = time.perf_counter()
         if effective_restrict_makespan_to_nonperiodic:
             for net_id, net_info in networks.items():
                 if net_info.get("period") is not None:
@@ -453,12 +467,16 @@ def schedule_iree_networks(
                 break
             print("  Bumping num_instances:", ", ".join(f"{n}: {a}->{b}" for n, a, b in bumped))
         print(f"\nFinal greedy makespan: {iter_makespan:.2f} ms (after {it + 1} iteration{'s' if it else ''})")
+        solver_wall_time_s = time.perf_counter() - solver_t0
 
         if effective_prune_periodic:
             combined_workload, t, alpha = trim_periodic_after_nonperiodic_makespan(
                 combined_workload, t, alpha
             )
 
+    # Name of the algorithm actually run (for metrics / report labeling): the
+    # registry scheduler on the MILP path, else the greedy-family solver.
+    algo_name = scheduler if solver == "milp" else solver
     # Calculate makespan (non-periodic operations only, matching the solver objective)
     machine_combinations = combined_workload.get_machine_combinations()
     completion_times = []
@@ -555,8 +573,11 @@ def schedule_iree_networks(
         solver_tag = "_decomposed"
         title_solver = "Decomposed-EDF "
     else:
-        solver_tag = ""           # MILP keeps no infix for back-compat
-        title_solver = ""
+        # MILP/registry path: default "mosek" keeps no infix for back-compat;
+        # other registry schedulers are tagged so a sweep (heft/peft/edf/...)
+        # doesn't clobber the canonical mosek outputs.
+        solver_tag = "" if scheduler == "mosek" else f"_{scheduler}"
+        title_solver = "" if scheduler == "mosek" else f"{scheduler} "
     profiled_tag = "_profiled" if effective_use_profiled else ""
     plot_path = f"plots/{input_json_name}{solver_tag}{profiled_tag}.png"
     json_output_path = f"schedules/scheduled_{input_json_name}{solver_tag}{profiled_tag}.json"
@@ -586,6 +607,14 @@ def schedule_iree_networks(
 
     os.makedirs("schedules", exist_ok=True)
     print(f"\nOutputting scheduled JSON...")
+    # Snapshot the CSVs the loader read this run and hash them.
+    # Embed both in the fixture metadata so the runtime loader can
+    # detect when the PDB-on-disk has drifted from the PDB the solve
+    # was performed against — the trap that produced v8's 9x
+    # predicted/measured gap.
+    _pdb_hash, _pdb_files = compute_pdb_hash(list(_LAST_LOAD_CSV_PATHS))
+    print(f"  pdb_hash = sha256:{_pdb_hash[:16]}... over "
+          f"{len(_pdb_files)} CSV(s)")
     output_scheduled_json(
         combined_workload=combined_workload,
         t=t,
@@ -595,6 +624,8 @@ def schedule_iree_networks(
         profiled_times_e=combined_profiled_e,
         profile_hw=plot_profile_hw,
         profiled_times_by_network=profiled_by_network,
+        pdb_hash=_pdb_hash,
+        pdb_files=_pdb_files,
     )
 
     # Feedback-driven compilation: surface any dispatch-granularity mismatch
@@ -610,6 +641,46 @@ def schedule_iree_networks(
                 print(f"WARN: granularity advisor -- {a.reason}")
     except Exception as e:
         print(f"warning: granularity advisor failed ({e})")
+    # Emit per-run metrics next to the schedule JSON (additive — does not affect
+    # the regression diff on the schedule JSON itself).
+    try:
+        import json as _json
+        metrics_dict = compute_metrics(
+            combined_workload,
+            t,
+            alpha,
+            scheduler_name=algo_name,
+            solver_wall_time_s=solver_wall_time_s,
+        )
+        metrics_path = json_output_path.replace(".json", "_metrics.json")
+        with open(metrics_path, "w") as f:
+            _json.dump(metrics_dict, f, indent=2)
+        print(f"Metrics written to: {metrics_path}")
+        print(f"  makespan_us={metrics_dict['makespan_us']:.2f}  "
+              f"deadline_miss={metrics_dict['deadline_miss_count']}  "
+              f"cross_dev={metrics_dict['cross_device_transitions']}  "
+              f"solver_s={solver_wall_time_s:.3f}")
+    except Exception as exc:
+        print(f"[warn] metrics emission failed: {exc}")
+
+    # Emit a structured SchedulerReport (schema v2, with the per-dispatch list)
+    # next to the schedule JSON, so the scheduler advisor and terminal Gantt can
+    # consume real runs. Additive and best-effort.
+    try:
+        from profiling import SchedulerReport
+        report = SchedulerReport.from_solver_state(
+            combined_workload,
+            t,
+            alpha,
+            solver_name=algo_name,
+            solve_wall_s=solver_wall_time_s,
+            solver_status="feasible",
+        )
+        report_path = json_output_path.replace(".json", "_report.json")
+        report.write_json(report_path)
+        print(f"Scheduler report written to: {report_path}")
+    except Exception as exc:
+        print(f"[warn] scheduler report emission failed: {exc}")
 
     return combined_workload, t, alpha
 
@@ -716,6 +787,13 @@ if __name__ == "__main__":
         default=None,
         help="Override P-core speedup factor. If omitted, uses JSON config (hardware/scheduler p_core_speedup) or 1.5.",
     )
+    parser.add_argument(
+        "--scheduler",
+        type=str,
+        default="mosek",
+        choices=available_schedulers(),
+        help="Scheduler to use. Default 'mosek' preserves the existing CVXPY/MOSEK pipeline; additional baselines are added in later milestones.",
+    )
     args = parser.parse_args()
 
     seed = None if args.random_seed is not None and args.random_seed < 0 else args.random_seed
@@ -730,5 +808,6 @@ if __name__ == "__main__":
         use_profiled=args.profiled,
         prune_periodic=args.prune_periodic,
         restrict_makespan_to_nonperiodic=args.restrict_makespan_to_nonperiodic,
+        scheduler=args.scheduler,
         max_periodic_iters=args.max_periodic_iters,
     )

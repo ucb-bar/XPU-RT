@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import csv
 import glob
+import hashlib
 import json
 import os
 
@@ -19,6 +20,51 @@ from workload_factory import (
     topo_tag_for_combination,
     machine_type_prefix,
 )
+
+
+# Module-level record of which CSVs the most recent
+# `load_profiled_processing_times` call actually read. Populated inside
+# `_load_all_topo_profiles` and consumed by the fixture emitter (via
+# `compute_pdb_hash`) to embed a content hash in the fixture metadata.
+# This is what prevents the stale-fixture trap: a solver run picks up
+# the hash of the CSVs it saw; a later runtime load recomputes the
+# hash for the SAME CSV paths and refuses (or warns) if they differ.
+_LAST_LOAD_CSV_PATHS: list[str] = []
+
+
+def compute_pdb_hash(csv_paths: list[str]) -> tuple[str, list[str]]:
+    """Stable SHA256 over the content of the given profile CSVs.
+
+    Returns (hex_digest, paths_actually_hashed). Paths are sorted
+    before hashing so the digest is independent of discovery order.
+    Missing files are skipped silently; the returned path list
+    reflects what was successfully read.
+    """
+    h = hashlib.sha256()
+    used: list[str] = []
+    for p in sorted(set(csv_paths)):
+        if not p:
+            continue
+        try:
+            with open(p, "rb") as f:
+                data = f.read()
+        except OSError:
+            continue
+        # Include the path so two CSVs with identical content at
+        # different paths still hash differently.
+        h.update(p.encode("utf-8"))
+        h.update(b"\0")
+        h.update(len(data).to_bytes(8, "little"))
+        h.update(data)
+        used.append(p)
+    return h.hexdigest(), used
+
+
+def hash_for_paths(csv_paths: list[str]) -> str:
+    """Convenience: just the digest, for callers that already know
+    which CSVs to hash and only want a yes/no comparison."""
+    digest, _ = compute_pdb_hash(csv_paths)
+    return digest
 
 
 def load_profiled_times(csv_path: str) -> dict[int, dict]:
@@ -189,6 +235,7 @@ def _load_all_topo_profiles(
                 prof = load_profiled_times(csv_path)
                 if prof:
                     profiles[(hw, topo)] = prof
+                    _LAST_LOAD_CSV_PATHS.append(csv_path)
                     if model_candidate != net_id:
                         print(f"  (info) profile fallback: {net_id}/{hw}/{topo} -> model={model_candidate}")
                 break
@@ -239,6 +286,11 @@ def load_profiled_processing_times(
         the base network identifier from `networks` (e.g. "dronet",
         "yolov8_nano"), not a periodic instance like "dronet0".
     """
+    # Reset the per-call csv-path record so callers can compute a
+    # content hash over exactly the CSVs that contributed to this
+    # solve (see compute_pdb_hash). Anti stale-fixture-trap guard.
+    _LAST_LOAD_CSV_PATHS.clear()
+
     processing_times: dict[str, list[float]] = {}
     combined_profiled_p: dict[int, dict] = {}
     combined_profiled_e: dict[int, dict] = {}
@@ -317,6 +369,68 @@ def load_profiled_processing_times(
                 t_ms = None
                 if prof and isinstance(dispatch_id, int) and dispatch_id in prof:
                     t_ms = prof[dispatch_id]["time_ms"]
+
+                # ── Tile-dispatch fallback ────────────────────────────────
+                # When apply_split_hint rewrites the IR to split an op into
+                # N tiles, the new dispatches are named `<orig>.tile_<i>` and
+                # have fresh dispatch_ids that the profile DB doesn't know
+                # about. Without this fallback they default to 0 cycles,
+                # which makes the scheduler think the work has vanished
+                # (bookkeeping fiction).
+                #
+                # For ASYMMETRIC splits (tile_oc_fraction in split_from),
+                # the tile cost = parent cost * fraction. This lets the
+                # scheduler model proportional splits where one tile takes
+                # most of the work (going to the fast accelerator) and the
+                # other takes a small fraction (going to the slow one) so
+                # both finish at the same wall-clock — the genuine
+                # parallelism win.
+                #
+                # The fallback: look at split_from metadata on the dispatch
+                # to find the parent op_id and n_splits, then use parent
+                # cycles / n_splits as the tile's per-combo time. This is
+                # the "linear scaling along split axis" assumption — exact
+                # for matrix-mul-like work and a good first approximation
+                # for conv2d. The decision-loop's measure_candidate.sh path
+                # can later override this with the actual measured per-tile
+                # cycles (round 5 of artifacts/decision_loop/ confirmed
+                # measured tile_0 ≈ tile_1 ≈ orig/2 for linear_s8 N-splits).
+                if t_ms is None and prof and ".tile_" in dispatch_name:
+                    split_from = dispatch_info.get("split_from") or {}
+                    parent_id = split_from.get("op_id") or split_from.get("orig")
+                    n_splits = split_from.get("n_splits", 1)
+                    # Asymmetric split: each tile carries its own fraction
+                    # (sum across all tiles == 1.0). Symmetric splits don't
+                    # set this and fall back to 1/n_splits.
+                    tile_fraction = split_from.get("tile_oc_fraction") or \
+                                    split_from.get("tile_fraction") or \
+                                    (1.0 / float(n_splits) if n_splits >= 1 else 1.0)
+                    if isinstance(parent_id, int) and parent_id in prof and n_splits >= 1:
+                        t_ms = float(prof[parent_id]["time_ms"]) * float(tile_fraction)
+                    elif isinstance(parent_id, str):
+                        # parent_id encoded as the original dispatch name
+                        # ("dispatch_177"). The split rewrite REMOVED the
+                        # parent from the graph, so we can't look it up
+                        # via dispatches[parent_id]. Parse the integer
+                        # suffix directly — the dispatch_graph.json convention
+                        # is `dispatch_<int>` for all unsplit ops.
+                        cand_id: int | None = None
+                        if parent_id.startswith("dispatch_"):
+                            tail = parent_id[len("dispatch_"):]
+                            if tail.isdigit():
+                                cand_id = int(tail)
+                        if cand_id is None:
+                            # Last-chance fallback: scan the graph for any
+                            # dispatch whose name matches (handles
+                            # non-standard naming schemes).
+                            for cand_name, cand_info in dispatches.items():
+                                if cand_name == parent_id:
+                                    maybe_id = cand_info.get("id")
+                                    if isinstance(maybe_id, int):
+                                        cand_id = maybe_id
+                                    break
+                        if isinstance(cand_id, int) and cand_id in prof:
+                            t_ms = float(prof[cand_id]["time_ms"]) * float(tile_fraction)
 
                 if t_ms is not None:
                     base_t = float(t_ms)
