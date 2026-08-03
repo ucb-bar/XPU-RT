@@ -454,7 +454,26 @@ def create_workload_from_network_hierarchy(
                 worst_dur = max(proc_times)
                 total_worst_nonperiodic += float(worst_dur)
 
-        # If there are no non-periodic operations, default to 1 instance per periodic network
+        def _apply_num_instances_overrides(counts: Dict[str, int]) -> Dict[str, int]:
+            """Let an explicit per-network `num_instances` win over the heuristic.
+
+            Applied on EVERY return path. It used to be applied only after the
+            horizon calculation, so a workload whose networks are all periodic
+            took the early return below and silently got 1 instance each,
+            ignoring the override entirely — an explicit number in the config
+            being discarded with no warning.
+            """
+            for net_id, net_info in networks.items():
+                if net_id not in counts:
+                    continue
+                forced = net_info.get("num_instances", None)
+                if isinstance(forced, int) and forced > 0:
+                    counts[net_id] = forced
+            return counts
+
+        # If there are no non-periodic operations there is no horizon to derive
+        # a count from, so default to 1 instance per periodic network — unless
+        # the config states a count explicitly.
         if total_worst_nonperiodic <= 0.0:
             periodic_counts: Dict[str, int] = {}
             for net_id, net_info in networks.items():
@@ -462,7 +481,7 @@ def create_workload_from_network_hierarchy(
                 window_duration = net_info.get("window_duration", None)
                 if period is not None and window_duration is not None:
                     periodic_counts[net_id] = 1
-            return periodic_counts
+            return _apply_num_instances_overrides(periodic_counts)
 
         profile_horizon = profile_based_horizon_ms(networks_data, repo_base_path)
         # The min-per-op based horizon (profile_horizon) is a LOWER bound
@@ -495,16 +514,13 @@ def create_workload_from_network_hierarchy(
             if T <= 0:
                 continue
             num_instances = int(np.ceil(horizon / T))
-            # Per-network override: lets the toplevel JSON cap periodic
-            # instance count directly. Useful when the horizon heuristic
-            # over-estimates (e.g. profile data is being pinned per-network
-            # so the cross-product worst-case bloats).
-            forced = net_info.get("num_instances", None)
-            if isinstance(forced, int) and forced > 0:
-                num_instances = forced
             periodic_counts[net_id] = max(1, num_instances)
 
-        return periodic_counts
+        # Per-network override: lets the toplevel JSON set the periodic instance
+        # count directly, e.g. when the horizon heuristic over-estimates because
+        # profile data is pinned per-network and the cross-product worst case
+        # bloats. Applied here rather than inline so both return paths agree.
+        return _apply_num_instances_overrides(periodic_counts)
 
     # Estimate number of instances for each periodic network
     periodic_num_instances = _estimate_num_periodic_instances()
