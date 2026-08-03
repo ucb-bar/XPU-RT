@@ -304,14 +304,34 @@ def _topo_priority(workload: Workload) -> List[float]:
 def _deadline_priority(workload: Workload) -> List[float]:
     """EDF priority: earlier deadline → higher priority (negative deadline as score).
 
-    Operations without a deadline fall back to upward rank so the algorithm is
-    well-defined on workloads with partial deadline annotations.
+    Deadline source, in order:
+
+    1. ``op.deadline_us`` — the explicit robotics-deadline annotation.
+    2. ``op.max_end_t`` — the window close. For a periodic workload this IS the
+       operation's deadline: the MILP enforces ``t[i] + dur <= max_end_t``
+       (scheduler.py "time windows"), and workload_factory sets it to
+       ``release + window_duration`` per instance.
+    3. upward rank, so the rule stays well defined on a workload with neither.
+
+    Falling straight from (1) to (3) made this silently NOT EDF on every
+    workload that expresses deadlines as windows rather than as `deadline_us` —
+    which is every workload the main entry point produces, since
+    run_xpurt_schedule.py never sets `deadline_us`. The scheduler still ran and
+    still reported itself as "edf"; it was ordering by upward rank. Preferring
+    max_end_t makes the baseline mean what its name says.
+
+    Note both (1) and (2) are compared only against each other here, never mixed
+    into one score, so the ms/us ambiguity between the two fields cannot corrupt
+    the ordering: whichever is used, it is used consistently for every op that
+    has it.
     """
     fallback = _upward_rank(workload)
     out: List[float] = []
     for i, op in enumerate(workload.operations):
         if op.deadline_us is not None:
             out.append(1e12 - float(op.deadline_us))
+        elif getattr(op, "max_end_t", None) is not None:
+            out.append(1e12 - float(op.max_end_t))
         else:
             out.append(fallback[i])
     return out
