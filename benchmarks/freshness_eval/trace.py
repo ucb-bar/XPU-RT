@@ -130,6 +130,33 @@ def load_fixture(path: str) -> Dict:
         return json.load(f)
 
 
+def deadline_compliance(
+    invocations: List[Invocation], task: str
+) -> Dict[str, object]:
+    """Deadline statistics for one task, whichever role it plays.
+
+    The freshness evaluator only emits records for CONSUMER invocations, so the
+    producer's own deadline behaviour is otherwise invisible — and at high
+    contention the producer is exactly what is late. Reporting only the
+    consumer's deadline success would let "the controller is fine but its input
+    is old" be confused with "everything is on time but the data is old", which
+    are different failures with different fixes.
+    """
+    sel = [i for i in invocations if i.task == task and i.deadline is not None]
+    if not sel:
+        return {
+            f"{task}_deadline_success_rate": None,
+            f"{task}_max_lateness_ms": None,
+            f"{task}_n_invocations": 0,
+        }
+    late = [i.end_time - i.deadline for i in sel]
+    return {
+        f"{task}_deadline_success_rate": sum(1 for d in late if d <= 0) / len(sel),
+        f"{task}_max_lateness_ms": max(late),
+        f"{task}_n_invocations": len(sel),
+    }
+
+
 def soft_utility(
     invocations: List[Invocation],
     soft_tasks: List[str],
