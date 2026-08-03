@@ -19,3 +19,5 @@ docs/*_status.md
 
 # freshness sweep scratch: materialised per-cell workload configs
 data/toplevel/_fx_*.json
+# per-cell solver logs are large and regenerable
+results/freshness_eval/work/

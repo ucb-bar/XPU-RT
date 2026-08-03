@@ -1,0 +1,214 @@
+{
+  "schema": "xpurt.freshness_eval/1",
+  "config": "data/toplevel/freshness_canon_300ms.json",
+  "epoch_ms": 300.0,
+  "bursts": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "deltas": [
+    5.0,
+    10.0,
+    20.0,
+    30.0,
+    50.0
+  ],
+  "phis": [
+    {
+      "delta": 5.0,
+      "phi_ms": 65.546074
+    },
+    {
+      "delta": 10.0,
+      "phi_ms": 70.546074
+    },
+    {
+      "delta": 20.0,
+      "phi_ms": 80.546074
+    },
+    {
+      "delta": 30.0,
+      "phi_ms": 90.546074
+    },
+    {
+      "delta": 50.0,
+      "phi_ms": 110.546074
+    }
+  ],
+  "A0": {
+    "A0_realized": 60.546074,
+    "A0_supremum": 68.519152,
+    "distinct_ages": [
+      20.546074,
+      30.546074,
+      40.546074,
+      50.546074,
+      60.546074
+    ],
+    "no_producer_count": 2,
+    "total_consumer_invocations": 31,
+    "producer_task": "dronet",
+    "consumer_task": "mlp_control",
+    "producer_period_ms": 50.0,
+    "producer_latency_ms": 17.973077999999997,
+    "consumer_period_ms": 10.0,
+    "consumer_latency_ms": 0.546074,
+    "fast_cluster_hw": "gemmini"
+  },
+  "policies": {
+    "static_nominal": {
+      "solver": "greedy",
+      "scheduler": "mosek",
+      "preferred_hw": null,
+      "intent": "Contention-blind earliest-completion list schedule. Maximises soft throughput under low load; no protection for the perception chain."
+    },
+    "edf": {
+      "solver": "milp",
+      "scheduler": "edf",
+      "preferred_hw": null,
+      "intent": "Deadline-ordered list schedule; the conventional real-time baseline."
+    },
+    "heft": {
+      "solver": "milp",
+      "scheduler": "heft",
+      "preferred_hw": null,
+      "intent": "Heterogeneous-DAG baseline (upward rank, earliest finish)."
+    },
+    "static_conservative": {
+      "solver": "greedy",
+      "scheduler": "mosek",
+      "preferred_hw": {
+        "dronet": "gemmini"
+      },
+      "intent": "Protects the DroNet->control chain by reserving the fast accelerator for DroNet (soft cost penalty on other placements)."
+    }
+  },
+  "oracle_note": "The oracle row is a post-hoc upper bound: the best output_valid_rate available at each (B, phi) among the deployable policies. It is not a deployable policy.",
+  "seeds": [
+    0
+  ],
+  "post_passes": {
+    "compaction_enabled": false,
+    "automerge_enabled": false,
+    "note": "Both rewrite the emitted fixture and are forced off, so this is a comparison of policies rather than of policy+post-pass."
+  },
+  "timing_provenance": {
+    "timing_source": "firesim_measured",
+    "target": "firesim_gemmini_opu",
+    "backends": {
+      "cpu_p": "gemmini",
+      "cpu_e": "rvv_opu"
+    },
+    "measured_or_derived": "measured_cycles_derived_ms",
+    "clock_mhz_assumed": 1000.0,
+    "scaling_factor": "mean_time_ms = cycles / 1e6",
+    "clock_caveat": "The assumed 1 GHz is NOT the Alveo U250 bitstream frequency (25-30 MHz). Raw cycles are preserved in the exported results.csv `cycles` column. Absolute millisecond claims must restate this assumption.",
+    "source": "ModelBlaster/benchmarks/profile_db (see gen/profile/**/_provenance.json)"
+  },
+  "producer_instance_provenance": "inferred_from_schedule_timestamps -- no dataflow exists between the producer and consumer networks in either XPU-RT or ModelBlaster, so the consumed instance is inferred, never recorded",
+  "time_unit": "ms",
+  "schedule_digests_by_policy_burst": {
+    "static_nominal|B0": {
+      "0": "8217479044186487158"
+    },
+    "static_nominal|B1": {
+      "0": "3590858219033831570"
+    },
+    "static_nominal|B2": {
+      "0": "-7803262828093703275"
+    },
+    "static_nominal|B3": {
+      "0": "8476748053530373200"
+    },
+    "static_nominal|B4": {
+      "0": "-544462948632066323"
+    },
+    "edf|B0": {
+      "0": "7229680910313095339"
+    },
+    "edf|B1": {
+      "0": "5457630214370884795"
+    },
+    "edf|B2": {
+      "0": "8805851618919272708"
+    },
+    "edf|B3": {
+      "0": "5258982533682521884"
+    },
+    "edf|B4": {
+      "0": "-5229950212080215048"
+    },
+    "heft|B0": {
+      "0": "-7327441779023118266"
+    },
+    "heft|B1": {
+      "0": "6700543957252065990"
+    },
+    "heft|B2": {
+      "0": "1965233607326281142"
+    },
+    "heft|B3": {
+      "0": "5838753997644508816"
+    },
+    "heft|B4": {
+      "0": "-6324841513881705586"
+    },
+    "static_conservative|B0": {
+      "0": "-4524065744861890055"
+    },
+    "static_conservative|B1": {
+      "0": "7400986760256522250"
+    },
+    "static_conservative|B2": {
+      "0": "4287537538746082870"
+    },
+    "static_conservative|B3": {
+      "0": "-4887860681229409129"
+    },
+    "static_conservative|B4": {
+      "0": "-5689078192976343665"
+    }
+  },
+  "determinism": {
+    "static_nominal|B0": "identical across seeds",
+    "static_nominal|B1": "identical across seeds",
+    "static_nominal|B2": "identical across seeds",
+    "static_nominal|B3": "identical across seeds",
+    "static_nominal|B4": "identical across seeds",
+    "edf|B0": "identical across seeds",
+    "edf|B1": "identical across seeds",
+    "edf|B2": "identical across seeds",
+    "edf|B3": "identical across seeds",
+    "edf|B4": "identical across seeds",
+    "heft|B0": "identical across seeds",
+    "heft|B1": "identical across seeds",
+    "heft|B2": "identical across seeds",
+    "heft|B3": "identical across seeds",
+    "heft|B4": "identical across seeds",
+    "static_conservative|B0": "identical across seeds",
+    "static_conservative|B1": "identical across seeds",
+    "static_conservative|B2": "identical across seeds",
+    "static_conservative|B3": "identical across seeds",
+    "static_conservative|B4": "identical across seeds"
+  },
+  "failures": [],
+  "n_per_invocation_rows": 3500,
+  "n_aggregate_rows": 125,
+  "git": {
+    "xpu-rt": {
+      "sha": "ff026672df819445bbeae9fe62ef9e287a3236d7",
+      "dirty": true
+    },
+    "ModelBlaster": {
+      "sha": "16b7b52d25cd139f4af726dacb5b4139545388b1",
+      "dirty": true
+    },
+    "zephyr-chipyard-sw": {
+      "sha": "03ee2e2604d81f14efaa0e499a32c17dcf92a26e",
+      "dirty": true
+    }
+  }
+}
