@@ -21,6 +21,22 @@ except ImportError:
 
 from granularity_advisor import analyze_granularity, from_workload, group_by_periodicity
 
+
+def automerge_enabled() -> bool:
+    """Whether output_scheduled_json applies the adjacent auto-merge post-pass.
+
+    Opt-in (XPURT_AUTOMERGE=1). This pass rewrites the emitted fixture, so
+    leaving it on by default silently turns every cross-policy comparison into
+    a comparison of policy+automerge. Callers should record this flag in their
+    manifest alongside schedulers.compaction_enabled().
+
+    XPURT_NO_AUTOMERGE=1 is honoured as an explicit force-off.
+    """
+    if os.environ.get("XPURT_NO_AUTOMERGE", "0") in ("1", "true", "True"):
+        return False
+    return os.environ.get("XPURT_AUTOMERGE", "0") in ("1", "true", "True")
+
+
 def output_scheduled_json(
     combined_workload: Workload,
     t: np.ndarray,
@@ -297,9 +313,15 @@ def output_scheduled_json(
     }
 
     # Apply same-network adjacent auto-merge (schedule-time fusion of
-    # back-to-back dispatches on the same core that have no external
-    # readers). Disabled by env XPURT_NO_AUTOMERGE=1.
-    if os.environ.get("XPURT_NO_AUTOMERGE", "0") not in ("1", "true", "True"):
+    # back-to-back dispatches on the same core that have no external readers).
+    #
+    # OPT-IN via XPURT_AUTOMERGE=1. It used to be opt-out, but this pass
+    # rewrites the emitted fixture -- collapsing dispatches and shifting start
+    # times -- so leaving it on by default makes every cross-policy comparison
+    # a comparison of policy+automerge, and makes per-instance intervals
+    # derived from the fixture reflect the post-pass rather than the schedule.
+    # XPURT_NO_AUTOMERGE=1 is still honoured as an explicit force-off.
+    if automerge_enabled():
         try:
             from automerge import automerge_adjacent, automerge_savings
             before = output_data

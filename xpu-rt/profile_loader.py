@@ -460,6 +460,20 @@ def load_profiled_processing_times(
                 combo_times.append(base_t)
 
             if preferred_hw is not None:
+                if preferred_hw not in combo_hw:
+                    # Otherwise EVERY combination is "non-preferred" and gets
+                    # the penalty, silently inflating this network's cost by
+                    # ~PIN_PENALTY_CAP_MS per dispatch. That produces a
+                    # nonsense horizon and a nonsense schedule with no warning.
+                    # The usual cause is naming the CLUSTER ("cpu_p") instead
+                    # of the profile hw the cluster maps to ("gemmini").
+                    raise ValueError(
+                        f"network {net_id!r}: preferred_hw={preferred_hw!r} "
+                        f"matches no machine combination. Available profile hw: "
+                        f"{sorted(set(combo_hw))}. Note this must be the profile "
+                        f"hw name (hardware.profile_hw values), not the cluster "
+                        f"name (cpu_p / cpu_e)."
+                    )
                 penalty = min(PIN_PENALTY_CAP_MS,
                               PIN_PENALTY_MULT * (preferred_t or 1.0))
                 for ci, combo in enumerate(machine_combinations):
