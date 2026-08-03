@@ -154,11 +154,52 @@ def main() -> int:
                and _f(r["deadline_success_rate"]) is not None
                and _f(r["deadline_success_rate"]) >= 0.95
                and _f(r["output_valid_rate"]) < _f(r["deadline_success_rate"]) - 0.10]
+    # ---- structural floor vs contention-induced loss ------------------------
+    # B=0 is the same workload with no soft work at all, so whatever validity is
+    # lost there is structural: the first consumer invocations precede any
+    # producer completion no matter how idle the machine is. Reporting raw
+    # divergence alone would credit contention with that floor.
+    w("## Structural floor versus contention-induced loss\n")
+    w("B=0 is the same workload with no soft work, so validity lost there is "
+      "structural — the first consumer invocations precede any producer "
+      "completion however idle the machine is. The contention-induced loss is "
+      "the drop below the B=0 control.\n")
+    w("| policy | phi (ms) | output-valid at B=0 (floor) | " +
+      " | ".join(f"loss at B={b}" for b in bursts if b != 0) + " |")
+    w("|---" * (len([b for b in bursts if b != 0]) + 3) + "|")
+    for pol in policies:
+        for phi in phis:
+            base = [_f(r["output_valid_rate"]) for r in agg
+                    if r["policy"] == pol and int(_f(r["contention_level"])) == 0
+                    and abs(_f(r["freshness_window"]) - phi) < 1e-6
+                    and _f(r["output_valid_rate"]) is not None]
+            if not base:
+                continue
+            floor = sum(base) / len(base)
+            cells = []
+            for b in bursts:
+                if b == 0:
+                    continue
+                vals = [_f(r["output_valid_rate"]) for r in agg
+                        if r["policy"] == pol
+                        and int(_f(r["contention_level"])) == b
+                        and abs(_f(r["freshness_window"]) - phi) < 1e-6
+                        and _f(r["output_valid_rate"]) is not None]
+                cells.append(f"−{floor - sum(vals)/len(vals):.3f}" if vals else "—")
+            w(f"| {pol} | {phi:.1f} | {floor:.3f} | " + " | ".join(cells) + " |")
+    w("")
+
     w(f"## Operating points where deadline success hides invalid output\n")
     w(f"Criterion: `deadline_success_rate >= 0.95` and "
       f"`output_valid_rate < deadline_success_rate - 0.10`.\n")
     w(f"**{len(flagged)} of {len([r for r in agg if r['policy'] != ORACLE])} "
       f"(policy, B, phi, seed) cells qualify.**\n")
+    n_b0 = len([r for r in flagged if int(_f(r["contention_level"])) == 0])
+    if n_b0:
+        w(f"{n_b0} of those {'is' if n_b0 == 1 else 'are'} at **B=0**, i.e. with "
+          f"no contention at all — "
+          f"that part of the divergence is structural, not contention-induced. "
+          f"See the floor table above.\n")
     if flagged:
         by_b = defaultdict(list)
         for r in flagged:
