@@ -16,3 +16,6 @@ docs/*_status.md
 
 # generated packaging metadata
 *.egg-info/
+
+# freshness sweep scratch: materialised per-cell workload configs
+data/toplevel/_fx_*.json
