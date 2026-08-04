@@ -325,6 +325,7 @@ def evaluate_freshness(
     epoch_length: Optional[float] = None,
     time_unit: str = "us",
     provenance: Optional[Dict[str, object]] = None,
+    pipeline_fill_ms: Optional[float] = None,
 ) -> FreshnessEvaluation:
     """Evaluate producer-consumer freshness over a trace.
 
@@ -464,7 +465,7 @@ def evaluate_freshness(
 
     return FreshnessEvaluation(
         records=records,
-        aggregate=aggregate_metrics(records),
+        aggregate=aggregate_metrics(records, pipeline_fill_ms=pipeline_fill_ms),
         context=context,
     )
 
@@ -485,7 +486,11 @@ def _epoch_of(t: float, epoch_length: Optional[float]) -> Optional[int]:
     return int(t // epoch_length)
 
 
-def aggregate_metrics(records: Sequence[FreshnessRecord]) -> Dict[str, object]:
+def aggregate_metrics(
+    records: Sequence[FreshnessRecord],
+    *,
+    pipeline_fill_ms: Optional[float] = None,
+) -> Dict[str, object]:
     """Aggregate rates and age percentiles over per-invocation records.
 
     Age percentiles are computed over records that HAVE an age, i.e. excluding
@@ -493,6 +498,30 @@ def aggregate_metrics(records: Sequence[FreshnessRecord]) -> Dict[str, object]:
     as an infinite age, because a missing producer and a very old producer are
     different failures with different fixes, and imputing a value for the
     former would quietly move the percentiles.
+
+    `pipeline_fill_ms` separates two failures that `output_valid_rate` otherwise
+    merges, and the merge was actively misleading. Measured at phi = A0+20 on the
+    canonical workload, static_nominal at B=1 lost 11 of 30 consumer invocations
+    -- but only 2 were STALE_INPUT. The other 9 were NO_COMPLETED_PRODUCER: the
+    consumer had no input at all, because the producer's first instance lost the
+    t=0 race to the soft burst and did not finish until 87 ms. "Meets its deadline
+    while acting on stale input" and "has nothing to act on" are different claims,
+    and only the first is the phenomenon under study.
+
+    Two of those 9 are unavoidable at ANY contention level, including B=0: the
+    pipeline starts empty, so a consumer released before the producer could
+    possibly have finished even uncontended is structurally unservable. That is a
+    property of the workload, not of the policy.
+
+    So `pipeline_fill_ms` must be the UNCONTENDED first-producer completion time
+    -- a fixed workload constant -- and never each policy's own first completion.
+    Deriving it per policy would excuse a policy that starves the producer for
+    87 ms from exactly the 87 ms of damage being measured, the same way a
+    self-relative deadline window excuses a candidate for accepting a harder
+    target (see trace.deadline_compliance).
+
+    Rates are emitted both over the full trace and over the steady-state subset
+    (`steady_*`); neither replaces the other, and the excluded count is reported.
     """
     total = len(records)
     if total == 0:
@@ -509,6 +538,12 @@ def aggregate_metrics(records: Sequence[FreshnessRecord]) -> Dict[str, object]:
             "stale_input_count": 0,
             "no_producer_count": 0,
             "n_with_age": 0,
+            "pipeline_fill_ms": pipeline_fill_ms,
+            "structurally_unservable_count": 0,
+            "steady_total_consumer_invocations": 0,
+            "steady_output_valid_rate": None,
+            "steady_stale_input_rate": None,
+            "steady_no_producer_rate": None,
         }
 
     ages = [
@@ -528,6 +563,23 @@ def aggregate_metrics(records: Sequence[FreshnessRecord]) -> Dict[str, object]:
     n_deadline_ok = sum(1 for r in records if r.deadline_valid)
     n_fresh_ok = sum(1 for r in records if r.freshness_valid)
     n_output_ok = sum(1 for r in records if r.output_valid)
+
+    # Steady state = the subset a scheduling policy could in principle have
+    # served. A consumer that starts before the producer could have finished even
+    # with the machine to itself is unservable by construction.
+    if pipeline_fill_ms is None:
+        steady = list(records)
+        n_unservable = 0
+    else:
+        steady = [r for r in records
+                  if r.consumer_start_time >= float(pipeline_fill_ms)]
+        n_unservable = total - len(steady)
+    n_steady = len(steady)
+
+    def _rate(pred) -> Optional[float]:
+        if n_steady == 0:
+            return None
+        return sum(1 for r in steady if pred(r)) / n_steady
 
     return {
         "total_consumer_invocations": total,
@@ -558,6 +610,25 @@ def aggregate_metrics(records: Sequence[FreshnessRecord]) -> Dict[str, object]:
             1 for r in records if r.invalid_reason == NO_COMPLETED_PRODUCER
         ),
         "n_with_age": len(ages),
+        # Rates over the full trace, decomposed. output_valid_rate alone cannot
+        # distinguish "acted on stale input" from "had no input", and the two
+        # were 2 vs 9 out of 30 at the operating point this project reports.
+        "stale_input_rate": sum(
+            1 for r in records
+            if r.invalid_reason in (STALE_INPUT, DEADLINE_AND_STALE)
+        ) / total,
+        "no_producer_rate": sum(
+            1 for r in records if r.invalid_reason == NO_COMPLETED_PRODUCER
+        ) / total,
+        # Steady state: the same rates over invocations a policy could have served.
+        "pipeline_fill_ms": pipeline_fill_ms,
+        "structurally_unservable_count": n_unservable,
+        "steady_total_consumer_invocations": n_steady,
+        "steady_output_valid_rate": _rate(lambda r: r.output_valid),
+        "steady_stale_input_rate": _rate(
+            lambda r: r.invalid_reason in (STALE_INPUT, DEADLINE_AND_STALE)),
+        "steady_no_producer_rate": _rate(
+            lambda r: r.invalid_reason == NO_COMPLETED_PRODUCER),
     }
 
 
