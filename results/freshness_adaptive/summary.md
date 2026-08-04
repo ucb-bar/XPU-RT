@@ -1,7 +1,24 @@
 # Decision Gate B: does switching among precomputed schedules retain more utility?
 
-**Answer: no, on this workload. The mechanism has not demonstrated its value, and the
-reason is identifiable and measurable rather than a tuning failure.**
+**Answer, in two parts.**
+
+**With the specified control signal (observed input age), no** — and it is worse than
+useless: the selector is inadmissible on 3 of 4 contention trajectories because it runs
+a schedule that overruns the epoch by 2.7×. The cause is not tuning. The signal is
+measured *downstream of the mitigation*, so a mitigation that works destroys the signal
+that says whether it is still needed (§4).
+
+**With a signal taken upstream of the mitigation, partly yes.** Offered work for the
+coming epoch is monotone in contention and available at the epoch boundary. It restores
+safety completely (20/21 threshold settings admissible on every trajectory) and retains
+**+2 of 20** offered soft instances on the ramp trajectory — one per epoch spent at the
+single burst where the cheap rung both suffices and fits. On trajectories that visit only
+the extremes it retains nothing (§4b).
+
+So the value demonstrated here is mostly in the **candidate** and in the **choice of
+observable**, not in switching per se. The prize for switching on this workload is
+small and bounded, and that bound was computed before the selector was built rather than
+discovered after it succeeded.
 
 All numbers at φ = A0 + 20 = 80.546 ms (A0 = 60.546 ms, the measured uncontended
 input-age ceiling), 300 ms epoch, greedy solver, compaction and automerge forced off,
@@ -120,6 +137,52 @@ Secondarily, the failure mode of the lower rung is a cliff, not a slope: C1 does
 degrade gracefully at B=4, it overruns by 2.7×. Reactive control must absorb one epoch of
 whatever it was late to avoid, and one epoch of that is fatal.
 
+## 4b. An upstream signal fixes the safety failure and part of the utility one
+
+The saturation diagnosis makes a prediction, so it was tested rather than left as an
+explanation. Replacing the signal with the **offered soft work for the epoch about to
+be scheduled** — available at the boundary because admission control happens there —
+gives a monotone observable: offered gemmini utilisation 42.7 / 65.1 / 87.5 / 109.9 /
+132.3 % for B = 0…4.
+
+This is not an oracle. It is the request count, not the outcome: it says nothing about
+the resulting validity, makespan or input age, all of which still depend on the
+schedule chosen. (`oracle_contention_aware` is the oracle — it reads every candidate's
+measured validity at that burst and picks the winner.)
+
+Because the signal is available *at* the boundary rather than one epoch later, it
+removes the lag as well, so this experiment addresses both failures at once and cannot
+attribute the change to either alone. Separating them would need a workload whose low
+rung degrades gracefully; this one's fails by a 2.7× overrun.
+
+Thresholds are **swept, not chosen** — 21 settings including both degenerate ends —
+because picking the value that separates the measured outcomes would be fitting a
+one-parameter model to five points and reporting the fit as a result.
+
+| trajectory | downstream selector | upstream (best safe threshold) | vs best admissible static at that validity |
+|---|---|---|---|
+| ramp | +0, and ties the most conservative static | valid .880, soft **16/20** | **+2** |
+| step | **INADMISSIBLE** | valid .907, soft 8/16 | +0 |
+| oscillate | **INADMISSIBLE** | valid .900, soft 10/20 | +0 |
+| sustained | **INADMISSIBLE** | valid .867, soft 20/40 | +0 |
+
+**Safety is fully restored:** 20 of 21 threshold settings are admissible on every
+trajectory. The single inadmissible one is the degenerate "never escalate", which *is*
+static C1 and reproduces its overrun.
+
+**Utility is gained only where the trajectory spends time at intermediate contention.**
+The +2 on `ramp` is exactly +1 in each of its two B=3 epochs and 0 in all eight others —
+verified per epoch. B=3 is the only burst where the cheap rung both suffices and fits the
+epoch. `step`, `oscillate` and `sustained` visit only B∈{0,4}, so they gain nothing.
+
+This also restates the bound's units: the headroom figure of +1 is **per visit to B=3**,
+not per trajectory. A ramp gains +2; a workload that never reaches B=3 gains 0.
+
+**The honest caveat:** the winning threshold is *only* escalate-at-4. Escalating earlier
+sheds work that did not need shedding (escalate-at-3 → 10/20); escalating later
+reproduces the overrun. The optimum is a single point on this grid, not a plateau — a
+two-point calibration, and far weaker evidence than the deferral plateau's 8 ms width.
+
 ## 5. Causes, in the plan's terms
 
 1. **The protective mechanism is nearly free.** Deferral costs zero soft utility, so a
@@ -147,10 +210,13 @@ real and large (Gate A: nominal loses up to 0.733 of its output validity while m
 **switching**.
 
 **Does not:** show that freshness-aware adaptation is useless in general. The specific
-blocker is a saturated observable. A signal taken *upstream* of the mitigation — offered
-queue depth, admitted-vs-offered soft count, or the producer's own start-time slack — does
-not saturate, and is the obvious next thing to try. That is a design change rather than a
-retune, and it is out of scope here.
+blocker was a saturated observable, and §4b confirms the diagnosis by fixing it: an
+upstream signal makes the selector safe everywhere and profitable where the trajectory
+spends time at intermediate contention. What remains true is that the *size* of the prize
+on this workload is small, because the protective mechanism is nearly free — to make
+adaptation matter you need a workload where protection costs something substantial, so
+there is real utility to reclaim. That is a workload-design question and the right next
+target.
 
 ## 7. Limitations specific to this gate
 
