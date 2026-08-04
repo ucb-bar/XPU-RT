@@ -39,6 +39,7 @@ from __future__ import annotations
 import argparse
 import copy
 import csv
+import hashlib
 import json
 import os
 import shutil
@@ -371,9 +372,37 @@ def solver_tag(solver: str, scheduler: str) -> str:
 
 def run_schedule(cfg: Dict, *, stem: str, solver: str, scheduler: str,
                  time_limit: float, work_dir: str,
-                 cell_timeout_s: float = 600.0) -> Tuple[Optional[str], float, str]:
-    """Invoke run_xpurt_schedule.py on a materialised config."""
+                 cell_timeout_s: float = 600.0,
+                 reuse_fixtures: bool = False) -> Tuple[Optional[str], float, str]:
+    """Invoke run_xpurt_schedule.py on a materialised config.
+
+    With `reuse_fixtures`, skip the solve when a fixture for an IDENTICAL config
+    already exists. Scheduling dominates the cost (measured: 6 s at B=0 rising to
+    584 s at B=4 per cell) while evaluation is milliseconds, so a change to the
+    EVALUATOR should not require re-solving. That is not a micro-optimisation: it
+    is what makes it affordable to fix an evaluator bug and restate every number,
+    rather than being tempted to leave results as they are.
+
+    Reuse is gated on a content hash of the exact config, written as a sidecar
+    when the fixture is produced. Matching on filename or mtime would silently
+    reuse a fixture from a different workload -- and this sweep deliberately
+    reuses stems across runs, so that risk is real rather than theoretical.
+    """
     cfg_path = os.path.join(_REPO, "data", "toplevel", f"{stem}.json")
+    cfg_blob = json.dumps(cfg, indent=2, sort_keys=True)
+    cfg_digest = hashlib.sha256(cfg_blob.encode()).hexdigest()
+
+    fixture_path = os.path.join(
+        _REPO, "schedules",
+        f"scheduled_{stem}{solver_tag(solver, scheduler)}_profiled.json",
+    )
+    sidecar = fixture_path + ".cfgsha256"
+    if reuse_fixtures and os.path.exists(fixture_path) and os.path.exists(sidecar):
+        with open(sidecar) as f:
+            recorded = f.read().strip()
+        if recorded == cfg_digest:
+            return fixture_path, 0.0, "ok (reused fixture)"
+
     with open(cfg_path, "w") as f:
         json.dump(cfg, f, indent=2)
 
@@ -415,15 +444,15 @@ def run_schedule(cfg: Dict, *, stem: str, solver: str, scheduler: str,
     with open(log_path, "w") as f:
         f.write(f"$ {' '.join(cmd)}\n\n--- stdout ---\n{proc.stdout}\n--- stderr ---\n{proc.stderr}")
 
-    fixture = os.path.join(
-        _REPO, "schedules",
-        f"scheduled_{stem}{solver_tag(solver, scheduler)}_profiled.json",
-    )
     if proc.returncode != 0:
         return None, wall, f"solver exit {proc.returncode} (see {log_path})"
-    if not os.path.exists(fixture):
-        return None, wall, f"fixture missing: {fixture} (see {log_path})"
-    return fixture, wall, "ok"
+    if not os.path.exists(fixture_path):
+        return None, wall, f"fixture missing: {fixture_path} (see {log_path})"
+    # Record which config produced this fixture so a later --reuse-fixtures pass
+    # can prove they correspond instead of trusting the filename.
+    with open(sidecar, "w") as f:
+        f.write(cfg_digest + "\n")
+    return fixture_path, wall, "ok"
 
 
 def compute_a0(base: Dict, *, epoch_ms: float, edge) -> Dict[str, object]:
@@ -492,6 +521,11 @@ def main() -> int:
                     help="phi = A0 + delta, in ms")
     ap.add_argument("--policies", default=",".join(DEPLOYABLE))
     ap.add_argument("--time-limit", type=float, default=60.0)
+    ap.add_argument("--reuse-fixtures", action="store_true",
+                    help="skip the solve when a fixture for a byte-identical "
+                         "config already exists (verified by content hash). Use "
+                         "to re-evaluate after an EVALUATOR change without "
+                         "re-solving; never use it to skip a workload change.")
     ap.add_argument("--cell-timeout", type=float, default=600.0,
                     help="wall-clock cap per (policy, B, seed) cell; a cell that "
                          "exceeds it is recorded as a failure rather than "
@@ -577,6 +611,7 @@ def main() -> int:
                     cfg, stem=stem, solver=spec["solver"],
                     scheduler=spec["scheduler"], time_limit=args.time_limit,
                     work_dir=work_dir, cell_timeout_s=args.cell_timeout,
+                    reuse_fixtures=args.reuse_fixtures,
                 )
                 if status != "ok":
                     print(f"  [FAIL] {policy:<20} B={burst} seed={seed}: {status}")
@@ -727,6 +762,7 @@ def main() -> int:
         "policies": {p: ALL_POLICIES[p] for p in policies},
         "mutation_vocabulary": MUTATION_KEYS,
         "producer_reference_window_ms": producer_ref_window,
+        "reuse_fixtures": bool(args.reuse_fixtures),
         "oracle_note": (
             "The oracle row is a post-hoc upper bound: the best output_valid_rate "
             "available at each (B, phi) among the deployable policies. It is not "
