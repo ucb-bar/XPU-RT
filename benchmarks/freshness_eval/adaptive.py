@@ -255,15 +255,26 @@ def run_oracle_contention_aware(table: CellTable, candidates: Sequence[str],
     contention level. Not deployable: it reads the current epoch's B before
     choosing. Tie-break is the LOWEST protection level, so the oracle does not
     get free credit for shedding soft work it did not need to shed.
+
+    Candidates whose schedule OVERRUNS the epoch at that burst are excluded. An
+    oracle is meant to bound what the system could have done, and a schedule that
+    runs past the epoch is not something it could have done; its rate is also
+    measured over a longer trace, so ranking it against a fitting cell compares
+    two different experiments. (The same defect existed in the sweep's own oracle
+    and inflated the reported bound at B=3 from 0.933 to 0.952.)
     """
     res = StrategyResult(strategy="oracle_contention_aware", trajectory_name=name,
                          epoch_ms=epoch_ms)
     order = {c: i for i, c in enumerate(candidates)}
     prev = None
     for e, b in enumerate(trajectory):
-        avail = [c for c in candidates if table.has(c, b)]
+        avail = [c for c in candidates if table.has(c, b)
+                 and float(table.get(c, b)["makespan_ms"]) <= epoch_ms]
         if not avail:
-            raise KeyError(f"no candidate has a measured cell at B={b}")
+            raise KeyError(
+                f"no candidate has an epoch-respecting measured cell at B={b}; "
+                f"an oracle cannot be defined there, and inventing one from an "
+                f"overrunning schedule would report an unattainable bound")
         best = min(
             avail,
             key=lambda c: (-float(table.get(c, b)["output_valid_rate"]), order[c]),
@@ -370,9 +381,17 @@ def evaluate_trajectories(
             results.append(run_static(table, cid, traj, name, epoch_ms))
         results.append(run_adaptive(table, cfg, traj, phi, name, epoch_ms,
                                    lag=lag))
-        results.append(
-            run_oracle_contention_aware(table, candidates, traj, name,
-                                        epoch_ms))
+        # If no candidate has an epoch-respecting cell at some burst the oracle
+        # is undefinable there. Skip it and say so, rather than raising and
+        # losing the static and adaptive rows, which are still valid. Same
+        # principle as check_clean_boundaries: report an honest partial result.
+        try:
+            results.append(
+                run_oracle_contention_aware(table, candidates, traj, name,
+                                            epoch_ms))
+        except KeyError as exc:
+            warnings.append(
+                f"trajectory {name}: NO oracle bound computed -- {exc.args[0]}")
     return results, warnings
 
 

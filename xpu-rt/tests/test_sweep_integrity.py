@@ -301,5 +301,80 @@ class SoftSideWindowMutation(unittest.TestCase):
             solver_tag("greedy_periodic", "mosek"), solver_tag("greedy", "mosek"))
 
 
+class OracleBoundIsAchievable(unittest.TestCase):
+    """The oracle must not be built from schedules that overrun the epoch.
+
+    Measured defect this pins, from results/freshness_probe_v3 at B=3, phi=A0+50:
+
+        probe_defer30   ovr 0.952   makespan 495.4 ms   42 consumer invocations
+        probe_defer10   ovr 0.933   makespan 297.2 ms   30 consumer invocations
+
+    Ranking by rate alone chose the first and reported 0.952 as the achievable
+    upper bound at B=3. It is not achievable: that schedule runs 195 ms past the
+    300 ms epoch, and its higher rate is a consequence of the longer trace
+    (greedy extends the horizon and adds instances, so more producer instances
+    complete before the extra consumers fire). An upper bound no admissible
+    schedule can attain is worse than none, because every policy is then measured
+    against a target that does not exist.
+
+    The selection logic is small and lives inline in `main()`, so this test
+    reimplements it against the real numbers rather than importing it. The
+    invariant it protects -- an oracle row must have fits_in_epoch True -- is also
+    asserted directly against every aggregate.csv on disk below.
+    """
+
+    CELLS = [  # (policy, output_valid_rate, fits_in_epoch)
+        ("probe_defer30", 0.952, False),
+        ("probe_defer20", 0.951, False),
+        ("probe_defer10", 0.933, True),
+        ("probe_defer15", 0.933, True),
+    ]
+
+    @staticmethod
+    def _pick(cells, *, epoch_respecting):
+        pool = [c for c in cells if c[2]] if epoch_respecting else list(cells)
+        return max(pool, key=lambda c: c[1]) if pool else None
+
+    def test_restricting_to_fitting_cells_changes_the_answer(self):
+        naive = self._pick(self.CELLS, epoch_respecting=False)
+        fixed = self._pick(self.CELLS, epoch_respecting=True)
+        self.assertEqual(naive[0], "probe_defer30")
+        self.assertAlmostEqual(naive[1], 0.952)
+        self.assertEqual(fixed[0], "probe_defer10")
+        self.assertAlmostEqual(fixed[1], 0.933)
+        self.assertLess(fixed[1], naive[1],
+                        "the honest bound must be lower -- if it were not, the "
+                        "restriction would be cosmetic")
+
+    def test_no_bound_is_emitted_when_nothing_fits(self):
+        """At B=4 every deferral probe overruns. Emitting the least-bad overrun as
+        an 'upper bound' would invent a target; emitting nothing is correct."""
+        nothing_fits = [("probe_defer15", 0.161, False),
+                        ("probe_defer10", 0.111, False)]
+        self.assertIsNone(self._pick(nothing_fits, epoch_respecting=True))
+
+    def test_every_oracle_row_on_disk_fits_the_epoch(self):
+        """Guards the artifacts, not just the logic. Runs on whatever is present;
+        pre-fix result directories are expected to fail this and are restated
+        rather than kept."""
+        import csv
+        import glob
+        repo = os.path.dirname(_XPURT)
+        pattern = os.path.join(repo, "results", "freshness_adaptive",
+                               "aggregate.csv")
+        files = glob.glob(pattern)
+        if not files:
+            self.skipTest("no post-fix aggregate.csv present yet")
+        for f in files:
+            with open(f) as fh:
+                for r in csv.DictReader(fh):
+                    if r.get("policy") == "oracle":
+                        self.assertEqual(
+                            r.get("fits_in_epoch"), "True",
+                            f"{f}: oracle row at B={r['contention_level']} "
+                            f"phi={r['freshness_window']} is backed by an "
+                            f"overrunning schedule ({r.get('candidate_id')})")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
