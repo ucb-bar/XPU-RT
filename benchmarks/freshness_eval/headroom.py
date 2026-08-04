@@ -219,7 +219,20 @@ def max_gain(
     bursts: Sequence[int],
     targets: Sequence[float] = DEFAULT_TARGETS,
 ) -> int:
-    """The headline number: the most switching can buy at ANY validity target."""
+    """The headline number: the most switching can buy at ANY validity target.
+
+    UNITS MATTER HERE. This is a gain over the burst GRID, where each burst is
+    visited exactly once, so the +1 it returns means "one soft instance per visit
+    to the burst that carries the gain" -- on this workload, B=3, the single burst
+    where the cheap rung both suffices and fits the epoch.
+
+    On a trajectory the gain scales with the number of epochs spent there. The
+    `ramp` trajectory visits B=3 twice and measurably gains +2 (see
+    benchmarks/freshness_eval/upstream.py), which is this same bound applied per
+    visit rather than a violation of it. Quoting "+1 of 10 offered" as a
+    trajectory-level result would understate a ramp and overstate a workload that
+    never reaches B=3 at all.
+    """
     gains = [bound(table, rungs, target=t, bursts=bursts).gain for t in targets]
     real = [g for g in gains if g is not None]
     return max(real) if real else 0
