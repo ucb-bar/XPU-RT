@@ -549,6 +549,36 @@ def plot_optimization_schedule(durations, t, alpha, num_jobs, num_machines, mach
 
     plt.tight_layout()
 
-    # Save the plot with dynamic filename
+    # Save the plot with dynamic filename.
+    #
+    # dpi is adaptive rather than a fixed 500. A 12x6 figure at dpi=500 is
+    # 6000x3000 px BEFORE bbox_inches='tight' expands the canvas to include the
+    # legend anchored outside the axes; on a large schedule (measured: 2629 ops
+    # at contention B=4) FreeType then fails with
+    # "raster overflow; error code 0x62" while rasterising a glyph, and the
+    # whole run dies. That cost a sweep 14 of 45 cells -- the schedules had been
+    # solved but the fixture is written AFTER this call, so a cosmetic plot
+    # failure destroyed the scientific output.
+    #
+    # So: scale dpi down as the schedule grows, and retry at successively lower
+    # dpi if the rasteriser still refuses. A lower-resolution Gantt is a fine
+    # outcome; losing the schedule is not.
     print(f"Saving plot to {save_path}...")
-    plt.savefig(save_path, dpi=500, bbox_inches='tight')
+    n_ops = len(durations) if durations is not None else 0
+    dpi = 500 if n_ops < 800 else max(120, int(500 * (800.0 / n_ops) ** 0.5))
+    last_err = None
+    for attempt_dpi in (dpi, 200, 120, 80):
+        try:
+            plt.savefig(save_path, dpi=attempt_dpi, bbox_inches='tight')
+            if attempt_dpi != dpi:
+                print(f"  note: fell back to dpi={attempt_dpi} after a "
+                      f"rasteriser failure at dpi={dpi}")
+            last_err = None
+            break
+        except (RuntimeError, ValueError) as exc:
+            last_err = exc
+            print(f"  warning: savefig failed at dpi={attempt_dpi}: {exc}")
+    if last_err is not None:
+        # Re-raise so the caller can decide; run_xpurt_schedule.py treats a plot
+        # failure as non-fatal precisely so the fixture still gets written.
+        raise last_err
