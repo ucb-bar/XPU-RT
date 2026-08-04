@@ -387,6 +387,105 @@ class ProvenanceExclusionCannotMaskAWorkloadChange(unittest.TestCase):
             f"unexpected use of the provenance block: {reads}")
 
 
+class SeedIsNotAVarianceSource(unittest.TestCase):
+    """Why the sweep reports one seed instead of the specified five.
+
+    The plan asks for seeds {0,1,2,3,4}. Every run uses seed 0, and the
+    justification has to be precise, because the first version of this test
+    asserted something false -- that seed never reaches the config at all. It
+    does: run.py sets `scheduler.random_seed`. What is true is narrower.
+
+    `random_seed` has exactly three consumers in this tree:
+
+      * workload_factory, as the RNG for SYNTHETIC runtime generation. This sweep
+        runs with profiled durations and strict=True, so no duration is ever
+        drawn from it -- that is the same strictness that makes a missing profile
+        an error instead of a silent rng.uniform(2, 10).
+      * scheduler_heft.random_list and its random priority factory, a scheduler
+        this sweep never selects.
+      * scheduler_cpsat, which hardcodes 42 and so ignores it.
+
+    So for THIS sweep's configuration the seed cannot reach a duration or a
+    priority, and the schedulers used (greedy, EDF, HEFT, MOSEK) are
+    deterministic. Five seeds would produce five identical schedules and five
+    identical columns; reporting a seed band from them would imply a robustness
+    check that did not happen. The robustness axes here are B and phi, and the
+    summary says so.
+
+    These tests pin the narrow claim. The empirical companion -- that the emitted
+    schedule really is identical across seeds -- is checked by the sweep itself,
+    which compares schedule digests per (policy, burst) across all seeds it runs.
+    """
+
+    def test_seed_enters_only_as_the_scheduler_rng_seed(self):
+        """Everything except `scheduler.random_seed` and the provenance block must
+        be seed-invariant. If seed ever reaches a period, an instance count or an
+        admission decision, this fails and the five-seed sweep becomes mandatory."""
+        import copy
+        import json
+
+        from benchmarks.freshness_eval.backfill_sidecars import _workload_of
+        from benchmarks.freshness_eval.run import ALL_POLICIES, materialise
+
+        base = _load(CANON)
+        checked = 0
+        for name in ("static_nominal", "cand_c1_defer12",
+                     "cand_c2_defer12_admit1", "probe_slow_producer"):
+            spec = ALL_POLICIES.get(name)
+            if spec is None:
+                continue
+            for burst in (0, 2, 4):
+                ref = None
+                for seed in (0, 1, 2, 3, 4):
+                    cfg = materialise(base, burst=burst,
+                                      mutations=spec.get("mutations"),
+                                      epoch_ms=300.0, seed=seed)
+                    self.assertEqual(cfg["scheduler"]["random_seed"], seed,
+                                     "the seed must still be recorded")
+                    stripped = copy.deepcopy(cfg)
+                    stripped["scheduler"].pop("random_seed")
+                    got = _workload_of(stripped)
+                    if ref is None:
+                        ref = got
+                    else:
+                        self.assertEqual(
+                            ref, got,
+                            f"{name} B={burst}: seed {seed} changed something "
+                            f"other than scheduler.random_seed, so the five-seed "
+                            f"sweep is NOT vacuous and must run")
+                    checked += 1
+        self.assertGreater(checked, 10, "expected to have checked several cells")
+
+    def test_the_sweep_uses_profiled_durations_not_synthetic_ones(self):
+        """The load-bearing precondition: random_seed drives synthetic runtime
+        generation, so the argument above holds only while durations come from
+        profiles. Asserted from the source rather than assumed."""
+        run_py = os.path.join(os.path.dirname(_XPURT), "benchmarks",
+                              "freshness_eval", "run.py")
+        with open(run_py) as f:
+            src = f.read()
+        self.assertIn("--use-profiled", src,
+                      "the sweep must request profiled durations")
+
+    def test_no_scheduler_used_by_the_sweep_consumes_the_seed(self):
+        """random_list is the one scheduler whose priorities depend on the seed,
+        and nothing in the sweep's policy table selects it."""
+        from benchmarks.freshness_eval.run import ALL_POLICIES
+        used = {(s.get("solver"), s.get("scheduler"))
+                for s in ALL_POLICIES.values()}
+        flat = {x for pair in used for x in pair if x}
+        self.assertNotIn("random_list", flat)
+        self.assertNotIn("random", flat)
+
+    def test_seed_is_recorded_even_though_it_is_inert(self):
+        """Inert is not the same as absent: the value still has to appear in the
+        provenance so a reader can tell which seed produced an artifact."""
+        from benchmarks.freshness_eval.run import materialise
+        cfg = materialise(_load(CANON), burst=1, mutations=None, epoch_ms=300.0,
+                          seed=3)
+        self.assertEqual(cfg["_materialised"]["seed"], 3)
+
+
 class OracleBoundIsAchievable(unittest.TestCase):
     """The oracle must not be built from schedules that overrun the epoch.
 
