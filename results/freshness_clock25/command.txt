@@ -1,0 +1,1 @@
+/home/agustin/.local/bin/python -m benchmarks.freshness_eval.run --config data/toplevel/freshness_canon_25mhz.json --output-dir results/freshness_clock25 --policies static_nominal --bursts 0,1,2 --seeds 0 --deltas 200,400,800,1200,2000 --cell-timeout 2400

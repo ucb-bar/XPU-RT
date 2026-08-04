@@ -1,0 +1,74 @@
+config          data/toplevel/freshness_canon_25mhz.json
+epoch           12000.0 ms
+A0 (uncontended input-age ceiling)  2421.843 ms
+  closed-form supremum              2740.766 ms
+  distinct uncontended ages         [821.84, 1221.84, 1621.84, 2021.84, 2421.84]
+  producer dronet T=2000.0 L=718.923 ms on gemmini
+  consumer mlp_control T=400.0 L=21.843 ms
+phi             ['A0+200=2621.8', 'A0+400=2821.8', 'A0+800=3221.8', 'A0+1200=3621.8', 'A0+2000=4421.8']
+bursts          [0, 1, 2]
+policies        ['static_nominal']
+seeds           [0]
+
+  static_nominal       B=0 seed=0 makespan=11621.8ms  deadline=1.000 soft=0/0 (7.5s)
+  static_nominal       B=1 seed=0 makespan=11621.8ms  deadline=1.000 soft=1/1 (16.3s)
+  static_nominal       B=2 seed=0 makespan=11621.8ms  deadline=1.000 soft=2/2 (25.3s)
+
+================================================================================================
+A0 = 2421.843 ms   (uncontended input-age ceiling)
+
+policy                 B     phi   mkspn   dl_ok  fresh_ok  out_ok  diverg  maxage  prod_dl  soft
+                                        (consumer)                                  (producer)      
+oracle                 0  2621.8 11621.8   1.000     0.933   0.933   0.067  2421.8    1.000     0
+oracle                 0  2821.8 11621.8   1.000     0.933   0.933   0.067  2421.8    1.000     0
+oracle                 0  3221.8 11621.8   1.000     0.933   0.933   0.067  2421.8    1.000     0
+oracle                 0  3621.8 11621.8   1.000     0.933   0.933   0.067  2421.8    1.000     0
+oracle                 0  4421.8 11621.8   1.000     0.933   0.933   0.067  2421.8    1.000     0
+oracle                 1  2621.8 11621.8   1.000     0.600   0.600   0.400  4021.8    0.667     1
+oracle                 1  2821.8 11621.8   1.000     0.633   0.633   0.367  4021.8    0.667     1
+oracle                 1  3221.8 11621.8   1.000     0.633   0.633   0.367  4021.8    0.667     1
+oracle                 1  3621.8 11621.8   1.000     0.667   0.667   0.333  4021.8    0.667     1
+oracle                 1  4421.8 11621.8   1.000     0.700   0.700   0.300  4021.8    0.667     1
+oracle                 2  2621.8 11621.8   1.000     0.267   0.267   0.733  5221.8    0.333     2
+oracle                 2  2821.8 11621.8   1.000     0.333   0.333   0.667  5221.8    0.333     2
+oracle                 2  3221.8 11621.8   1.000     0.400   0.400   0.600  5221.8    0.333     2
+oracle                 2  3621.8 11621.8   1.000     0.433   0.433   0.567  5221.8    0.333     2
+oracle                 2  4421.8 11621.8   1.000     0.600   0.600   0.400  5221.8    0.333     2
+static_nominal         0  2621.8 11621.8   1.000     0.933   0.933   0.067  2421.8    1.000     0
+static_nominal         0  2821.8 11621.8   1.000     0.933   0.933   0.067  2421.8    1.000     0
+static_nominal         0  3221.8 11621.8   1.000     0.933   0.933   0.067  2421.8    1.000     0
+static_nominal         0  3621.8 11621.8   1.000     0.933   0.933   0.067  2421.8    1.000     0
+static_nominal         0  4421.8 11621.8   1.000     0.933   0.933   0.067  2421.8    1.000     0
+static_nominal         1  2621.8 11621.8   1.000     0.600   0.600   0.400  4021.8    0.667     1
+static_nominal         1  2821.8 11621.8   1.000     0.633   0.633   0.367  4021.8    0.667     1
+static_nominal         1  3221.8 11621.8   1.000     0.633   0.633   0.367  4021.8    0.667     1
+static_nominal         1  3621.8 11621.8   1.000     0.667   0.667   0.333  4021.8    0.667     1
+static_nominal         1  4421.8 11621.8   1.000     0.700   0.700   0.300  4021.8    0.667     1
+static_nominal         2  2621.8 11621.8   1.000     0.267   0.267   0.733  5221.8    0.333     2
+static_nominal         2  2821.8 11621.8   1.000     0.333   0.333   0.667  5221.8    0.333     2
+static_nominal         2  3221.8 11621.8   1.000     0.400   0.400   0.600  5221.8    0.333     2
+static_nominal         2  3621.8 11621.8   1.000     0.433   0.433   0.567  5221.8    0.333     2
+static_nominal         2  4421.8 11621.8   1.000     0.600   0.600   0.400  5221.8    0.333     2
+
+Operating points with deadline_success >= 0.95 and output_valid < deadline_success - 0.10:  10
+  static_nominal        B=2 phi=2621.8  deadline=1.000 output_valid=0.267 divergence=0.733
+  static_nominal        B=2 phi=2821.8  deadline=1.000 output_valid=0.333 divergence=0.667
+  static_nominal        B=2 phi=3221.8  deadline=1.000 output_valid=0.400 divergence=0.600
+  static_nominal        B=2 phi=3621.8  deadline=1.000 output_valid=0.433 divergence=0.567
+  static_nominal        B=1 phi=2621.8  deadline=1.000 output_valid=0.600 divergence=0.400
+  static_nominal        B=2 phi=4421.8  deadline=1.000 output_valid=0.600 divergence=0.400
+  static_nominal        B=1 phi=2821.8  deadline=1.000 output_valid=0.633 divergence=0.367
+  static_nominal        B=1 phi=3221.8  deadline=1.000 output_valid=0.633 divergence=0.367
+  static_nominal        B=1 phi=3621.8  deadline=1.000 output_valid=0.667 divergence=0.333
+  static_nominal        B=1 phi=4421.8  deadline=1.000 output_valid=0.700 divergence=0.300
+
+Largest divergence: 0.733 at static_nominal B=2 phi=2621.8 (deadline 1.000, output_valid 0.267)
+
+All 3 (policy, B) cells were identical across 1 seeds.
+
+wrote /scratch2/agustin/XPU-RT/results/freshness_clock25/
+  manifest.json
+  aggregate.csv
+  per_invocation.csv
+  command.txt
+  git_commits.json
