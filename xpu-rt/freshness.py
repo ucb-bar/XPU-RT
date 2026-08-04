@@ -77,7 +77,12 @@ SAMPLE_SEMANTICS = (SAMPLE_AT_RELEASE, SAMPLE_AT_START)
 
 # Consumption policies.
 LATEST_COMPLETED = "latest_completed"
-CONSUMPTION_POLICIES = (LATEST_COMPLETED,)
+NEWEST_VERSION = "newest_version"
+RELEASE_MATCHED = "release_matched"
+# `latest_completed` stays first and stays the default: every result reported
+# before these alternatives existed used it, and reordering would silently
+# restate them.
+CONSUMPTION_POLICIES = (LATEST_COMPLETED, NEWEST_VERSION, RELEASE_MATCHED)
 
 
 # --- inputs ----------------------------------------------------------------
@@ -269,43 +274,80 @@ def select_producer(
     producers: Sequence[Invocation],
     consumer_start_time: float,
     policy: str = LATEST_COMPLETED,
+    *,
+    consumer_release_time: Optional[float] = None,
 ) -> Optional[Invocation]:
-    """Return the producer instance a consumer starting at `consumer_start_time`
-    consumes, or None if none had completed.
+    """Return the producer instance a consumer consumes, or None if none is usable.
 
-    `latest_completed`: the eligible producer with the greatest end_time, where
-    eligible means `end_time <= consumer_start_time`.
+    Every policy shares one physical constraint: a producer is only readable once
+    it has been written, i.e. `end_time <= consumer_start_time`. The boundary is
+    inclusive -- a producer finishing exactly at the consumer's start time IS
+    eligible. Zero-duration gaps are the normal case in solver output rather than
+    a measure-zero edge case, and excluding them would silently reclassify a whole
+    class of tight schedules as no_completed_producer. See BOUNDARY_RTOL.
 
-    Two things this is deliberately NOT:
+    The policies differ in WHICH readable instance counts as "the input", and the
+    difference is not cosmetic: it changes whether a late producer shows up as
+    stale input or as no input at all.
 
-    * not the most recently *released* producer. With heterogeneous backends
-      producers can complete out of release order (a perception instance placed
-      on the slow backend can finish after a later instance placed on the fast
-      one), and the consumer physically cannot read a result that has not been
-      written yet.
-    * not the producer with the greatest instance index.
+    `latest_completed` -- the most recently WRITTEN sample: greatest end_time.
+        Ties break toward the higher instance index, the fresher sample. This is
+        deliberately not "most recently released": with heterogeneous backends
+        producers can complete out of release order, and a consumer cannot read a
+        result that has not been written.
 
-    The boundary is inclusive: a producer finishing exactly at the consumer's
-    start time IS eligible. Zero-duration gaps are common in solver output
-    (equality is the normal case, not a measure-zero edge case), and excluding
-    it would silently reclassify a whole class of tight schedules as
-    no_completed_producer. Ties in end_time break toward the higher instance
-    index, which is the fresher sample.
+    `newest_version` -- the freshest SAMPLE available: greatest instance index
+        among the readable ones, ties breaking toward the earlier end_time. Models
+        a versioned buffer where the consumer takes the newest version present.
+        Differs from latest_completed exactly when producers complete out of
+        release order, which is the heterogeneous case this project is about.
+
+    `release_matched` -- strictly the CURRENT frame, no substitution: the producer
+        whose release is the latest one at or before the consumer's release, and
+        only if it is readable. If that instance has not completed, the result is
+        None even though older completed samples exist. Models a controller that
+        refuses to actuate on anything but the current frame, which is the
+        conservative reading of a freshness requirement.
+        Requires `consumer_release_time`.
     """
-    if policy != LATEST_COMPLETED:
+    if policy not in CONSUMPTION_POLICIES:
         raise ValueError(
             f"unknown consumption_policy {policy!r}; expected one of "
             f"{CONSUMPTION_POLICIES}"
         )
-    best: Optional[Invocation] = None
+
+    readable = [p for p in producers if _lte(p.end_time, consumer_start_time)]
+
+    if policy == LATEST_COMPLETED:
+        best: Optional[Invocation] = None
+        for p in readable:
+            if best is None or (p.end_time, p.instance) > (best.end_time, best.instance):
+                best = p
+        return best
+
+    if policy == NEWEST_VERSION:
+        best = None
+        for p in readable:
+            if best is None or (p.instance, -p.end_time) > (best.instance, -best.end_time):
+                best = p
+        return best
+
+    # release_matched
+    if consumer_release_time is None:
+        raise ValueError(
+            f"consumption_policy {policy!r} needs consumer_release_time: it "
+            f"selects the producer frame matching the consumer's release, which "
+            f"cannot be derived from the start time alone"
+        )
+    frame: Optional[Invocation] = None
     for p in producers:
-        if not _lte(p.end_time, consumer_start_time):  # inclusive boundary
+        if not _lte(p.release_time, consumer_release_time):
             continue
-        if best is None:
-            best = p
-        elif (p.end_time, p.instance) > (best.end_time, best.instance):
-            best = p
-    return best
+        if frame is None or (p.release_time, p.instance) > (frame.release_time, frame.instance):
+            frame = p
+    if frame is None:
+        return None
+    return frame if _lte(frame.end_time, consumer_start_time) else None
 
 
 # --- evaluation ------------------------------------------------------------
@@ -371,7 +413,8 @@ def evaluate_freshness(
         eff_policy = edge.consumption_policy or consumption_policy
 
         for c in consumers:
-            p = select_producer(producers, c.start_time, eff_policy)
+            p = select_producer(producers, c.start_time, eff_policy,
+                                consumer_release_time=c.release_time)
 
             deadline_valid = c.deadline is None or _lte(c.end_time, c.deadline)
 

@@ -64,6 +64,7 @@ sys.path.insert(0, _REPO)
 sys.path.insert(0, os.path.join(_REPO, "xpu-rt"))
 
 from freshness import (  # noqa: E402
+    CONSUMPTION_POLICIES,
     CSV_COLUMNS,
     analytic_age_ceiling_realized,
     evaluate_freshness,
@@ -613,6 +614,23 @@ def solver_tag(solver: str, scheduler: str) -> str:
     return ""
 
 
+def _edges_at(base: Dict, phi: float, consumption_policy: str = ""):
+    """Freshness edges at a window, optionally with the consumption policy replaced.
+
+    The override is applied HERE, to the edge objects handed to the evaluator, and
+    deliberately NOT by rewriting the config. Consumption policy is an evaluator
+    setting: it cannot change a schedule, only how that schedule is scored. Writing
+    it into the config would change the config hash and force every cell to
+    re-solve -- hours of MOSEK time to answer a question the solver has no part in.
+    Same reasoning as `_materialised` being excluded from the fixture-reuse hash.
+    """
+    edges = freshness_edges_from_config(base, freshness_window_override=phi)
+    if not consumption_policy:
+        return edges
+    from dataclasses import replace
+    return [replace(e, consumption_policy=consumption_policy) for e in edges]
+
+
 def run_schedule(cfg: Dict, *, stem: str, solver: str, scheduler: str,
                  time_limit: float, work_dir: str,
                  cell_timeout_s: float = 600.0,
@@ -780,6 +798,14 @@ def main() -> int:
                     help="wall-clock cap per (policy, B, seed) cell; a cell that "
                          "exceeds it is recorded as a failure rather than "
                          "stalling the sweep")
+    ap.add_argument("--consumption-policy", default="",
+                    choices=("", *CONSUMPTION_POLICIES),
+                    help="override the edge's consumption policy at EVALUATION "
+                         "time. Empty keeps whatever the config declares. This "
+                         "does not touch the config, so the fixture hash is "
+                         "unchanged and --reuse-fixtures still applies: the "
+                         "policy decides how a schedule is scored, never what "
+                         "the schedule is. Recorded in the manifest.")
     ap.add_argument("--stem-tag", default="",
                     help="disambiguator inserted into every fixture stem. REQUIRED "
                          "when sweeping a config that is not the canonical one: "
@@ -943,9 +969,8 @@ def main() -> int:
                 for delta, phi in phis:
                     ev = evaluate_freshness(
                         invs,
-                        dependency_edges=freshness_edges_from_config(
-                            base, freshness_window_override=phi
-                        ),
+                        dependency_edges=_edges_at(base, phi,
+                                                   args.consumption_policy),
                         experiment_id=f"{policy}_B{burst}_s{seed}_phi{phi:.1f}",
                         seed=seed, policy=policy, candidate_id=policy,
                         contention_level=float(burst), epoch_length=epoch_ms,
@@ -1079,6 +1104,15 @@ def main() -> int:
         "bursts": bursts,
         "deltas": deltas,
         "phis": [{"delta": d, "phi_ms": p} for d, p in phis],
+        # Which policy SCORED this run. An evaluator setting, not a workload one,
+        # so it does not appear in the fixture hash -- which is exactly why it has
+        # to appear here, or two runs over identical fixtures would be
+        # indistinguishable in the artifacts.
+        "consumption_policy": (
+            args.consumption_policy
+            or freshness_edges_from_config(base)[0].consumption_policy
+        ),
+        "consumption_policy_overridden": bool(args.consumption_policy),
         "A0": a0_info,
         "policies": {p: ALL_POLICIES[p] for p in policies},
         "mutation_vocabulary": MUTATION_KEYS,
