@@ -1,0 +1,2 @@
+$ /scratch2/agustin/miniforge3/envs/merlin-dev/bin/python /scratch2/agustin/XPU-RT/scripts/run_xpurt_schedule.py --networks-json data/toplevel/_fx_probe_delay_producer10_B4_s0.json --solver greedy --use-profiled --no-prune-periods --include-periodic-in-makespan --time-limit 60.0
+timed out after 600.0s
