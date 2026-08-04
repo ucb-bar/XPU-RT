@@ -564,7 +564,22 @@ def plot_optimization_schedule(durations, t, alpha, num_jobs, num_machines, mach
     # dpi if the rasteriser still refuses. A lower-resolution Gantt is a fine
     # outcome; losing the schedule is not.
     print(f"Saving plot to {save_path}...")
-    n_ops = len(durations) if durations is not None else 0
+    # Count operations from the workload when we have it. `durations` is a
+    # per-machine processing-time structure, not one entry per operation, so
+    # len(durations) is NOT the op count -- using it made the adaptive branch
+    # inert (measured: it chose dpi=500 for a 2629-op schedule and relied
+    # entirely on the retry below).
+    n_ops = 0
+    if workload is not None and hasattr(workload, "get_operations"):
+        try:
+            n_ops = len(workload.get_operations())
+        except Exception:
+            n_ops = 0
+    if not n_ops and durations is not None:
+        try:
+            n_ops = len(durations)
+        except TypeError:
+            n_ops = 0
     dpi = 500 if n_ops < 800 else max(120, int(500 * (800.0 / n_ops) ** 0.5))
     last_err = None
     for attempt_dpi in (dpi, 200, 120, 80):

@@ -195,10 +195,40 @@ PROBES.update({
     },
     # M3: rate-limit in time instead of in count -- same soft work, released
     # later. Separates "less soft work" from "soft work out of the way".
+    #
+    # SWEPT, because 25 ms is exactly half the 50 ms producer period and a single
+    # working offset would be indistinguishable from a resonance artifact of that
+    # alignment. The discriminator:
+    #   - smooth improvement across offsets      -> a real mechanism
+    #   - only 25 works, and 50 behaves like 0   -> a phase effect, real but
+    #     fragile, and it must be reported as phase-sensitive rather than as
+    #     "deferring soft work helps"
+    # 50 ms is the control: a full producer period, which modulo the period is
+    # the same alignment as no deferral at all.
+    "probe_defer10": {
+        "solver": "greedy", "scheduler": "mosek",
+        "mutations": {"soft_phase_ms": 10.0},
+        "intent": "Defer the first soft release by 10 ms (1/5 of a DroNet period).",
+    },
     "probe_defer25": {
         "solver": "greedy", "scheduler": "mosek",
         "mutations": {"soft_phase_ms": 25.0},
         "intent": "Defer the first soft release by 25 ms (half a DroNet period).",
+    },
+    "probe_defer40": {
+        "solver": "greedy", "scheduler": "mosek",
+        "mutations": {"soft_phase_ms": 40.0},
+        "intent": "Defer the first soft release by 40 ms (4/5 of a DroNet period).",
+    },
+    "probe_defer50": {
+        "solver": "greedy", "scheduler": "mosek",
+        "mutations": {"soft_phase_ms": 50.0},
+        "intent": (
+            "PHASE CONTROL: defer by a full DroNet period. Modulo the period "
+            "this is the same alignment as no deferral, so if deferral works by "
+            "phase this should look like static_nominal, and if it works by "
+            "'soft work starts later' it should still help."
+        ),
     },
     # M4: directional control, expected to HURT. greedy_periodic deliberately
     # deprioritises periodic work so non-periodic makespan shrinks -- the
