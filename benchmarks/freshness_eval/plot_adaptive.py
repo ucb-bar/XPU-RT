@@ -413,6 +413,110 @@ def plot_signal_saturation(risks, out_dir: str, *, bursts: Sequence[int]) -> Lis
     return _save(fig, out_dir, "plot7_signal_saturation")
 
 
+def plot_signal_comparison(rows, out_dir: str, *, phi: float,
+                           epoch_ms: float) -> List[str]:
+    """Plot 8 -- downstream vs upstream signal, per contention trajectory.
+
+    The headline of the upstream experiment is SAFETY, which no utility number
+    shows: the downstream selector is inadmissible on three of four trajectories.
+    So admissibility is drawn as the primary distinction (hatch + critical
+    colour), with utility second.
+    """
+    from benchmarks.freshness_eval.adaptive import (
+        SELECTOR_RUNGS, TRAJECTORIES, CellTable, default_selector_config,
+        run_adaptive, run_static,
+    )
+    from benchmarks.freshness_eval.upstream import candidate_thresholds, run_upstream
+
+    table = CellTable(rows, phi)
+    names = [n for n in TRAJECTORIES if all(
+        table.has(c, b) for c in SELECTOR_RUNGS for b in set(TRAJECTORIES[n]))]
+    if not names:
+        return []
+
+    STRATS = ("best safe static", "downstream signal", "upstream signal")
+    data: Dict[str, List[Tuple[float, int, int, bool]]] = {s: [] for s in STRATS}
+    for name in names:
+        traj = TRAJECTORIES[name]
+
+        stats = []
+        for cid in SELECTOR_RUNGS:
+            r = run_static(table, cid, traj, name, epoch_ms)
+            ok = all(e.makespan_ms <= epoch_ms for e in r.epochs)
+            s = r.summary()
+            if ok:
+                stats.append((s["soft_completed"], s["hard_output_valid_rate"],
+                              s["soft_offered"]))
+        best = max(stats) if stats else (0, 0.0, 0)
+        data["best safe static"].append((best[1], best[0], best[2], bool(stats)))
+
+        dn = run_adaptive(table, default_selector_config(list(SELECTOR_RUNGS)),
+                          traj, phi, name, epoch_ms, lag=1)
+        ok = all(e.makespan_ms <= epoch_ms for e in dn.epochs)
+        s = dn.summary()
+        data["downstream signal"].append(
+            (s["hard_output_valid_rate"], s["soft_completed"], s["soft_offered"], ok))
+
+        cands = []
+        for th in candidate_thresholds(table.bursts(), len(SELECTOR_RUNGS)):
+            r = run_upstream(table, traj, name, epoch_ms, escalate_at=th)
+            if all(e.makespan_ms <= epoch_ms for e in r.epochs):
+                s2 = r.summary()
+                cands.append((s2["soft_completed"], s2["hard_output_valid_rate"],
+                              s2["soft_offered"]))
+        b2 = max(cands) if cands else (0, 0.0, 0)
+        data["upstream signal"].append((b2[1], b2[0], b2[2], bool(cands)))
+
+    fig, (ax1, ax2) = plt.subplots(
+        2, 1, figsize=(8.0, 6.2), sharex=True,
+        gridspec_kw={"height_ratios": [1.0, 1.0], "hspace": 0.13})
+    fig.patch.set_facecolor(SURFACE)
+
+    x = list(range(len(names)))
+    w = 0.26
+    for i, strat in enumerate(STRATS):
+        off = (i - 1) * w
+        col = SERIES[i]
+        vals = data[strat]
+        for xi, (valid, soft, offered, ok) in zip(x, vals):
+            face = col if ok else SURFACE
+            edge = col if ok else STATUS_CRITICAL
+            for ax, v in ((ax1, valid), (ax2, soft / offered if offered else 0.0)):
+                ax.bar([xi + off], [v], width=w, color=face, edgecolor=edge,
+                       linewidth=1.6, hatch=None if ok else "///", zorder=3)
+    # A legend rather than direct labels: twelve bars of similar height leave no
+    # room to place three labels without them landing on top of each other, which
+    # is what the first draft did. Identity still never rests on colour alone --
+    # the inadmissible entry is keyed by hatch, and the summary carries the table.
+    from matplotlib.patches import Patch
+    handles = [Patch(facecolor=SERIES[i], edgecolor=SERIES[i], label=s)
+               for i, s in enumerate(STRATS)]
+    handles.append(Patch(facecolor=SURFACE, edgecolor=STATUS_CRITICAL, hatch="///",
+                         label="inadmissible (an epoch overruns 300 ms)"))
+    leg = fig.legend(handles=handles, loc="upper left", bbox_to_anchor=(0.10, 0.945),
+                     ncol=2, frameon=False, fontsize=8.6,
+                     handlelength=1.5, columnspacing=1.6, handletextpad=0.6)
+    for t in leg.get_texts():
+        t.set_color(INK_MUTED)
+
+    for ax in (ax1, ax2):
+        _style(ax)
+        ax.set_xticks(x)
+        ax.set_xticklabels(names)
+    ax1.set_ylim(0, 1.14)
+    ax1.set_ylabel("output-valid rate", color=INK, fontsize=10)
+    ax2.set_ylim(0, 1.05)
+    ax2.set_ylabel("fraction of offered\nsoft work completed", color=INK, fontsize=10)
+    ax2.set_xlabel("contention trajectory", color=INK, fontsize=10)
+    fig.suptitle(
+        "Plot 8 — changing the signal, not the selector: an upstream observable\n"
+        "removes every epoch overrun and gains utility where contention is graded",
+        color=INK, fontsize=11.5, x=0.10, ha="left", y=0.995)
+    # Room for the two-line title and the two-row legend above the top panel.
+    fig.subplots_adjust(top=0.80)
+    return _save(fig, out_dir, "plot8_signal_comparison")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--rows", default="results/freshness_cand/*/aggregate.csv")
@@ -437,6 +541,7 @@ def main() -> int:
     written += plot_headroom(table, out, delta=args.delta)
     written += plot_signal_saturation(
         risk_table(rows, delta=args.delta, bursts=bursts), out, bursts=bursts)
+    written += plot_signal_comparison(rows, out, phi=phi, epoch_ms=args.epoch_ms)
 
     pe_path = os.path.join(_abs(args.adaptive), "adaptive_per_epoch.csv")
     if os.path.exists(pe_path):
