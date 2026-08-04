@@ -173,9 +173,54 @@ class ProbeDesignHonesty(unittest.TestCase):
                       "this control produced bit-identical schedules to the "
                       "baseline; it must not read as a passed falsification test")
 
-    def test_a_replacement_control_exists(self):
-        self.assertIn("probe_soft_first", PROBES)
-        self.assertIn("WORSE", PROBES["probe_soft_first"]["intent"])
+    def test_a_working_directional_control_exists(self):
+        """Two controls were tried and BOTH measured inert, because both used
+        window_duration, which greedy ignores. A control must use a lever the
+        solver demonstrably responds to -- here, release time."""
+        controls = {n: s for n, s in PROBES.items() if "WORSE" in s["intent"]}
+        self.assertTrue(controls, "no expected-WORSE probe remains")
+        for name, spec in controls.items():
+            muts = spec.get("mutations") or {}
+            self.assertNotIn(
+                "window_duration", muts,
+                f"{name} is a control built on window_duration, which is measured "
+                f"inert on greedy -- it cannot falsify anything")
+            self.assertTrue(
+                set(muts) & {"phase_ms", "soft_phase_ms", "admit_cap"},
+                f"{name} must use a lever greedy responds to; got {sorted(muts)}")
+
+    def test_both_inert_controls_are_recorded_as_inert(self):
+        for name in ("probe_nonperiodic_priority", "probe_soft_first"):
+            intent = PROBES[name]["intent"]
+            self.assertIn("INERT", intent, name)
+            self.assertNotIn("expected WORSE", intent, name)
+
+    def test_the_producer_delay_control_does_not_move_the_fill_threshold(self):
+        """The control delays the producer, which leaves early consumers with no
+        input. Those must be charged to the policy, so pipeline_fill_ms -- computed
+        from the BASE config -- must not follow the mutation."""
+        from benchmarks.freshness_eval.run import compute_a0
+        from freshness import freshness_edges_from_config
+        base = _load(CANON)
+        edge = freshness_edges_from_config(base)[0]
+        before = compute_a0(base, epoch_ms=300.0, edge=edge)["pipeline_fill_ms"]
+        materialise(base, burst=2, mutations={"phase_ms": {"dronet": 25.0}},
+                    epoch_ms=300.0, seed=0)
+        after = compute_a0(_load(CANON), epoch_ms=300.0,
+                           edge=edge)["pipeline_fill_ms"]
+        self.assertAlmostEqual(before, after)
+
+    def test_phase_ms_reaches_the_named_network(self):
+        cfg = materialise(_load(CANON), burst=2,
+                          mutations={"phase_ms": {"dronet": 25.0}},
+                          epoch_ms=300.0, seed=0)
+        self.assertAlmostEqual(float(cfg["networks"]["dronet"]["start_time"]), 25.0)
+
+    def test_phase_ms_rejects_an_unknown_network(self):
+        with self.assertRaises(ValueError):
+            materialise(_load(CANON), burst=2,
+                        mutations={"phase_ms": {"nope": 1.0}},
+                        epoch_ms=300.0, seed=0)
 
     def test_the_deferral_curve_brackets_the_measured_optimum(self):
         """10 ms was the best of {10,25,40,50}; offsets below it are needed to

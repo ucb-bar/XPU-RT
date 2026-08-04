@@ -82,11 +82,22 @@ MUTATION_KEYS = {
     ),
     "window_duration": (
         "{net: ms} tightens a network's own window, i.e. max_end_t = release + "
-        "ms. greedy honours this via ALAP back-propagation and emergency "
-        "promotion; the MILP enforces it outright. Applied to the PRODUCER this "
-        "converts the consumer's freshness requirement into a producer "
-        "deadline, which is the only mechanism here that acts on the quantity "
-        "freshness actually depends on."
+        "ms. MEASURED INERT ON GREEDY: five probes (prodwin40/30/25/20 on the "
+        "producer, soft_first on the consumer) all produce schedules that are "
+        "bit-identical to the baseline at every contention level. The mutation "
+        "does reach the workload -- test_freshness_mutations asserts max_end_t "
+        "moves -- so greedy simply does not reprioritise on it; the constraint "
+        "is already satisfied and there is no gradient. The MILP enforces it "
+        "outright, so this key is only useful under solver=milp. Retained as a "
+        "documented negative result, not as a working mechanism."
+    ),
+    "phase_ms": (
+        "{net: ms} start_time offset on ANY network. Distinct from "
+        "soft_phase_ms, which is kept because it is baked into 60 already-solved "
+        "fixture hashes and folding the two would force a full re-solve. Use "
+        "this for the producer: greedy honours release times (min_start_t) even "
+        "though it ignores window_duration, so a producer offset is the one "
+        "directional control this workload has that greedy actually responds to."
     ),
     "admit_cap": (
         "int cap on admitted soft instances: admitted = min(B, cap). Trades "
@@ -220,13 +231,55 @@ PROBES.update({
     #      monotone-decreasing-in-offset is the opposite of what "get soft work
     #      out of the way" predicts (more deferral should help more). The offsets
     #      below 10 ms exist to find where the curve turns over.
+    # MEASURED RESULT: a STEP function with a plateau, not a smooth response.
+    # phi = A0+20, seed 0, output_valid_rate ("!" = schedule overruns the epoch,
+    # so that column is not comparable across policies):
+    #
+    #   offset   0     2     5    10    15    20    25    30    40    50
+    #   B=1   .633  .633  .633  .900  .900  .867  .833  .833  .733  .700
+    #   B=2   .400  .400  .400  .867  .867  .800  .733  .733  .533  .511!
+    #   B=3   .220! .220! .220! .833  .833  .683! .732! .667! .431! .365!
+    #
+    # Offsets 0/2/5 are bit-identical in OUTCOME to no deferral (5 does change
+    # the schedule -- digest differs -- but not DroNet-0's completion, so the
+    # rates are unchanged). The effect switches on in (5, 10], plateaus over
+    # [10, 15], then decays. 10 and 15 are also the only offsets whose schedule
+    # still fits the epoch at B=3.
+    #
+    # This is a threshold-with-plateau mechanism and must be reported as one. The
+    # plateau width is the robustness margin a candidate gets, so its edges are
+    # measured (7, 8, 12, 17, 18) rather than assumed from two interior points.
     **{
         f"probe_defer{int(o)}": {
             "solver": "greedy", "scheduler": "mosek",
             "mutations": {"soft_phase_ms": float(o)},
             "intent": f"Defer the first soft release by {int(o)} ms.",
         }
-        for o in (2, 5, 10, 15, 20, 25, 30, 40, 50)
+        for o in (2, 5, 7, 8, 10, 12, 15, 17, 18, 20, 25, 30, 40, 50)
+    },
+    # M5: the directional control that greedy actually responds to.
+    #
+    # Both earlier attempts were INERT because both used window_duration, which
+    # greedy ignores (see MUTATION_KEYS). greedy does honour release times, so
+    # delaying the PRODUCER is a mechanism it will act on, and the prediction is
+    # unambiguous: the consumer's input can only get older, so freshness must get
+    # WORSE. If it does not, the metric is not measuring what it claims and every
+    # other probe here is uninterpretable.
+    #
+    # pipeline_fill_ms is deliberately NOT moved by this mutation (it is computed
+    # from the base config), so the extra consumer invocations left with no
+    # producer at all are charged to the policy rather than excused.
+    **{
+        f"probe_delay_producer{int(o)}": {
+            "solver": "greedy", "scheduler": "mosek",
+            "mutations": {"phase_ms": {"dronet": float(o)}},
+            "intent": (
+                f"FALSIFICATION CONTROL, expected WORSE: delay the producer's "
+                f"first release by {int(o)} ms, so every consumer reads an older "
+                f"input."
+            ),
+        }
+        for o in (10, 25)
     },
     # M4: directional control, expected to HURT.
     #
@@ -256,12 +309,17 @@ PROBES.update({
     # mechanism the other way: tighten the SOFT window so soft work becomes a
     # hard constraint competing with the producer rather than sheddable
     # interference. Expected to be WORSE than static_nominal at B>=1.
+    # Measured INERT as well, for the same reason as probe_prodwin*: it is a
+    # window_duration mutation, and greedy does not reprioritise on max_end_t.
+    # Kept as the second data point establishing that inertness on the CONSUMER
+    # side too, so the negative result is about the key and not about which
+    # network it was applied to.
     "probe_soft_first": {
         "solver": "greedy", "scheduler": "mosek",
         "mutations": {"window_duration": {"yolov8_nano_64": 75.0}},
         "intent": (
-            "FALSIFICATION CONTROL, expected WORSE: give the soft network a tight "
-            "window so it competes as a constraint instead of being sheddable."
+            "MIS-SPECIFIED CONTROL, measured INERT: intended to make soft work "
+            "compete as a constraint, but window_duration has no effect on greedy."
         ),
     },
 })
@@ -352,6 +410,19 @@ def materialise(base: Dict, *, burst: int, mutations: Optional[Dict],
     for net, hw in (mutations.get("preferred_hw") or {}).items():
         if net in nets:
             nets[net]["preferred_hw"] = hw
+
+    # Per-network release offset. Note this does NOT move pipeline_fill_ms, which
+    # is computed from the BASE config: a candidate that delays the producer must
+    # be charged for the consumer invocations it thereby leaves unserved.
+    for net, off in (mutations.get("phase_ms") or {}).items():
+        if net not in nets:
+            if net in base["networks"]:
+                continue
+            raise ValueError(
+                f"phase_ms mutation names {net!r}, which is not a network in this "
+                f"workload ({sorted(base['networks'])})"
+            )
+        nets[net]["start_time"] = float(off)
 
     # Tightening a network's own window moves its max_end_t. For the producer
     # that is the point; it also moves that network's own deadline, which is

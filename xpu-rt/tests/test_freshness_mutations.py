@@ -73,6 +73,7 @@ class MutationVocabulary(unittest.TestCase):
             "window_duration": {"window_duration": {PRODUCER: 25.0}},
             "admit_cap": {"admit_cap": 1},
             "soft_phase_ms": {"soft_phase_ms": 25.0},
+            "phase_ms": {"phase_ms": {PRODUCER: 25.0}},
         }
         self.assertEqual(
             set(probes), set(MUTATION_KEYS),
