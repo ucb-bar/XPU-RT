@@ -236,6 +236,35 @@ class FreshnessEvaluation:
 # --- producer selection ----------------------------------------------------
 
 
+# Relative tolerance for the three inclusive-boundary comparisons below
+# (producer eligibility, consumer deadline, freshness window).
+#
+# WHY THIS IS NOT COSMETIC. All three boundaries are documented as INCLUSIVE, but
+# they were implemented as exact float comparisons, and this evaluation puts
+# invocations exactly ON them by construction: phi is anchored on A0, the
+# measured uncontended age ceiling, and the uncontended ages ARE A0. So at
+# phi = A0 + delta there are consumer instances whose age equals phi to the last
+# bit, and their verdict was decided by accumulated rounding.
+#
+# Measured instance of the failure: the same consumer instance, same schedule,
+# evaluated on two arithmetically equivalent timing bases, came out
+# age = 70.54607400000002 against phi = 70.546074 (stale) in one and
+# age = phi = 2821.84296 (valid) in the other -- a 1.4e-14 disagreement flipping
+# a reported rate by 1/30. Exact comparison made the result depend on the order
+# floating-point operations happened to be performed in.
+#
+# 1e-9 relative is ~7e-8 ms at these magnitudes: far above the ~1e-14 noise and
+# far below the smallest real age difference in this workload (10 ms, the control
+# period). Ties therefore resolve to VALID / ELIGIBLE, which is what "inclusive"
+# was always supposed to mean.
+BOUNDARY_RTOL = 1e-9
+
+
+def _lte(a: float, b: float, rtol: float = BOUNDARY_RTOL) -> bool:
+    """a <= b, treating an exact-boundary tie as satisfying the inequality."""
+    return a <= b + rtol * max(1.0, abs(b))
+
+
 def select_producer(
     producers: Sequence[Invocation],
     consumer_start_time: float,
@@ -270,7 +299,7 @@ def select_producer(
         )
     best: Optional[Invocation] = None
     for p in producers:
-        if p.end_time > consumer_start_time:  # inclusive boundary
+        if not _lte(p.end_time, consumer_start_time):  # inclusive boundary
             continue
         if best is None:
             best = p
@@ -343,7 +372,7 @@ def evaluate_freshness(
         for c in consumers:
             p = select_producer(producers, c.start_time, eff_policy)
 
-            deadline_valid = c.deadline is None or c.end_time <= c.deadline
+            deadline_valid = c.deadline is None or _lte(c.end_time, c.deadline)
 
             if p is None:
                 records.append(
@@ -381,7 +410,7 @@ def evaluate_freshness(
             age_at_start = c.start_time - sample_t
             age_at_output = c.end_time - sample_t
 
-            freshness_valid = age_at_output <= edge.freshness_window
+            freshness_valid = _lte(age_at_output, edge.freshness_window)
             output_valid = deadline_valid and freshness_valid
 
             records.append(
