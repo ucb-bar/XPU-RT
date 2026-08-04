@@ -301,6 +301,92 @@ class SoftSideWindowMutation(unittest.TestCase):
             solver_tag("greedy_periodic", "mosek"), solver_tag("greedy", "mosek"))
 
 
+class ProvenanceExclusionCannotMaskAWorkloadChange(unittest.TestCase):
+    """The sidecar backfill compares configs modulo the `_materialised` block.
+
+    That exclusion exists for a measured reason: the Gate A configs predate the
+    block, so a byte-exact comparison refused all 15 cells over three provenance
+    scalars while networks, scheduler and epoch were identical. But an exclusion
+    is a hole in a safety check, so these tests pin that the hole is exactly the
+    size claimed -- provenance only, and nothing that can change a schedule.
+    """
+
+    def _cfg(self, **over):
+        cfg = {
+            "networks": {"dronet": {"period": 50.0, "num_instances": 6},
+                         "yolov8_nano_64": {"period": 100.0, "num_instances": 2}},
+            "epoch": {"length_ms": 300.0},
+            "_materialised": {"offered_burst": 2, "admitted_soft_instances": 2,
+                              "mutations": None, "seed": 0},
+        }
+        cfg.update(over)
+        return cfg
+
+    def test_a_missing_provenance_block_is_not_a_difference(self):
+        """The exact Gate A situation: the block did not exist yet."""
+        from benchmarks.freshness_eval.backfill_sidecars import _workload_of
+        old = self._cfg()
+        del old["_materialised"]
+        self.assertEqual(_workload_of(old), _workload_of(self._cfg()))
+
+    def test_differing_provenance_values_are_not_a_difference(self):
+        from benchmarks.freshness_eval.backfill_sidecars import _workload_of
+        a = self._cfg()
+        b = self._cfg(_materialised={"offered_burst": 4, "seed": 3,
+                                     "admitted_soft_instances": 1,
+                                     "mutations": {"admit_cap": 1}})
+        self.assertEqual(_workload_of(a), _workload_of(b))
+
+    def test_an_instance_count_change_IS_a_difference(self):
+        """The thing the exclusion must never hide. A different burst reaches the
+        workload as num_instances, so it is still caught."""
+        from benchmarks.freshness_eval.backfill_sidecars import _workload_of
+        a = self._cfg()
+        b = self._cfg(networks={"dronet": {"period": 50.0, "num_instances": 6},
+                                "yolov8_nano_64": {"period": 100.0,
+                                                   "num_instances": 4}})
+        self.assertNotEqual(_workload_of(a), _workload_of(b))
+
+    def test_a_mutated_network_field_IS_a_difference(self):
+        from benchmarks.freshness_eval.backfill_sidecars import _workload_of
+        a = self._cfg()
+        b = self._cfg(networks={"dronet": {"period": 50.0, "num_instances": 6,
+                                           "start_time": 12.0},
+                                "yolov8_nano_64": {"period": 100.0,
+                                                   "num_instances": 2}})
+        self.assertNotEqual(_workload_of(a), _workload_of(b))
+
+    def test_an_epoch_change_IS_a_difference(self):
+        from benchmarks.freshness_eval.backfill_sidecars import _workload_of
+        self.assertNotEqual(_workload_of(self._cfg()),
+                            _workload_of(self._cfg(epoch={"length_ms": 400.0})))
+
+    def test_the_exclusion_list_stays_minimal(self):
+        """Adding a key here silently widens what counts as 'the same workload'."""
+        from benchmarks.freshness_eval.backfill_sidecars import (
+            PROVENANCE_ONLY_KEYS,
+        )
+        self.assertEqual(PROVENANCE_ONLY_KEYS, ("_materialised",))
+
+    def test_the_excluded_block_is_not_read_by_the_solver_path(self):
+        """The justification for the exclusion, asserted rather than assumed: the
+        only consumer of `_materialised` outside materialise() is the sweep's own
+        reporting of soft_instances_admitted."""
+        import re
+        run_py = os.path.join(os.path.dirname(_XPURT), "benchmarks",
+                              "freshness_eval", "run.py")
+        with open(run_py) as f:
+            src = f.read()
+        reads = [m.group(0) for m in
+                 re.finditer(r'cfg\["_materialised"\]\s*(\[[^\]]*\])?', src)]
+        # one write (assignment) plus exactly one read
+        self.assertEqual(len(reads), 2, reads)
+        self.assertTrue(
+            any("admitted_soft_instances" in r for r in reads)
+            or 'cfg["_materialised"][' in src,
+            f"unexpected use of the provenance block: {reads}")
+
+
 class OracleBoundIsAchievable(unittest.TestCase):
     """The oracle must not be built from schedules that overrun the epoch.
 

@@ -41,6 +41,35 @@ from benchmarks.freshness_eval.run import (  # noqa: E402
 )
 
 
+# Keys that describe PROVENANCE rather than the workload, and are excluded from
+# the equivalence check.
+#
+# `_materialised` is written by materialise() and read only by the sweep's own
+# reporting (run.py takes `soft_instances_admitted` from it). It is never passed
+# to the solver, so it cannot change a schedule. Excluding it is what makes the
+# Gate A fixtures reusable: those configs predate the block entirely, and a
+# byte-exact comparison refused all 15 cells over three provenance scalars
+# (offered_burst, admitted_soft_instances, seed) while the networks, scheduler and
+# epoch sections were identical.
+#
+# This is safe rather than convenient, and the reason is worth stating: every
+# input that `_materialised` records is also expressed in the workload proper --
+# `burst` sets the soft network's num_instances, `mutations` write into the
+# network fields, and `seed` does not affect the workload at all. So any
+# semantically meaningful difference still shows up outside the excluded block,
+# and the exclusion cannot mask one.
+#
+# The sidecar still records the hash of the FULL current config, so
+# `--reuse-fixtures` remains an exact match afterwards.
+PROVENANCE_ONLY_KEYS = ("_materialised",)
+
+
+def _workload_of(cfg: dict) -> str:
+    """Canonical form of everything that can affect the schedule."""
+    stripped = {k: v for k, v in cfg.items() if k not in PROVENANCE_ONLY_KEYS}
+    return json.dumps(stripped, indent=2, sort_keys=True)
+
+
 def backfill(base_path: str, policies, bursts, seeds, *, apply: bool):
     with open(base_path) as f:
         base = json.load(f)
@@ -73,7 +102,7 @@ def backfill(base_path: str, policies, bursts, seeds, *, apply: bool):
                 derived = json.dumps(cfg, indent=2, sort_keys=True)
                 with open(cfg_path) as f:
                     on_disk = json.load(f)
-                if json.dumps(on_disk, indent=2, sort_keys=True) != derived:
+                if _workload_of(on_disk) != _workload_of(cfg):
                     skipped.append((cell, "on-disk config differs from re-derived"))
                     continue
                 if os.path.getmtime(fixture) <= os.path.getmtime(cfg_path):
