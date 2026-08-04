@@ -1,0 +1,4 @@
+trajectory ramp: cand_c1_defer12 at B=4: makespan 805.9 ms exceeds the 300 ms epoch by 505.9 ms -- work is in flight at the epoch boundary, which this composition cannot model, so transition_violations for this trajectory is NOT meaningful
+trajectory step: cand_c1_defer12 at B=4: makespan 805.9 ms exceeds the 300 ms epoch by 505.9 ms -- work is in flight at the epoch boundary, which this composition cannot model, so transition_violations for this trajectory is NOT meaningful
+trajectory oscillate: cand_c1_defer12 at B=4: makespan 805.9 ms exceeds the 300 ms epoch by 505.9 ms -- work is in flight at the epoch boundary, which this composition cannot model, so transition_violations for this trajectory is NOT meaningful
+trajectory sustained: cand_c1_defer12 at B=4: makespan 805.9 ms exceeds the 300 ms epoch by 505.9 ms -- work is in flight at the epoch boundary, which this composition cannot model, so transition_violations for this trajectory is NOT meaningful

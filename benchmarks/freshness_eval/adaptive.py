@@ -422,3 +422,202 @@ def write_artifacts(results: Sequence[StrategyResult], out_dir: str,
     if warnings:
         with open(os.path.join(out_dir, "adaptive_warnings.txt"), "w") as f:
             f.write("\n".join(warnings) + "\n")
+
+
+# --- MEASURED OUTCOME, and why adaptation failed here -----------------------
+#
+# Recorded next to the code that produced it, because the conclusion is negative
+# and a negative conclusion is the easy one to lose.
+#
+# At phi = A0+20 over the four fixed trajectories, the deployable selector
+# (1 epoch of observation lag) NEVER beat the best admissible static:
+#
+#   ramp       admissible; valid 0.907, soft 8/20 -- EXACTLY ties static admit1
+#   step       INADMISSIBLE: ran C1 at B=4, makespan 805.9 ms in a 300 ms epoch
+#   oscillate  INADMISSIBLE, same cause
+#   sustained  INADMISSIBLE, same cause
+#
+# Two causes, and the second is the interesting one.
+#
+# 1. The protective mechanism is nearly free. Deferral costs no soft utility, so
+#    a permanently conservative rung is barely worse than the best per-burst
+#    choice. `headroom.py` bounds the whole opportunity at ONE soft instance out
+#    of 10 offered, and at zero if bursts stay <= 3. There was almost nothing to
+#    win before the selector was written.
+#
+# 2. THE OBSERVABLE SATURATES. risk = observed_max_age / phi, and under any
+#    protective rung max_input_age is measured FLAT at 90.55 ms for B = 1, 2, 3
+#    and 4 alike (risk 1.124), against 60.55 ms at B=0 (risk 0.752):
+#
+#              rung                     B=0    B=1    B=2    B=3    B=4
+#              static_nominal          0.75   1.25   1.62  1.62*  6.21*
+#              cand_c1_defer12         0.75   1.12   1.12   1.12  5.10*
+#              cand_c2_defer12_admit2  0.75   1.12   1.12   1.12   1.12
+#              cand_c2_defer12_admit1  0.75   1.12   1.12   1.12   1.12
+#                                                   (* = schedule overruns)
+#
+#    So the signal cannot distinguish 65% offered load from 131%. The only values
+#    that discriminate B=4 are the starred ones, and those are observable only
+#    AFTER the overrunning schedule has already run. The mitigation masks the
+#    disturbance it is mitigating: because protection successfully pins the input
+#    age to one missed producer period, the age stops reporting how much
+#    contention was offered.
+#
+#    The consequence is not a tuning problem. A threshold sweep on `step` shows
+#    entry risks <= 0.752 DO keep it admissible -- but 0.752 is the B=0
+#    observation, so such a selector escalates at zero contention, switches once,
+#    never returns, and reproduces static admit1's numbers exactly (0.920,
+#    4/16). It becomes safe by ceasing to adapt. Every threshold above 0.752
+#    takes one full epoch of the 806 ms overrun. There is no setting that both
+#    adapts and survives a step to B=4.
+#
+# What this does NOT show: that freshness-aware switching is useless in general.
+# It shows that a selector observing only the protected quantity is blind on this
+# workload. A signal measured UPSTREAM of the mitigation -- offered queue depth,
+# admitted-vs-offered soft count, or the producer's own start-time slack -- does
+# not saturate and is the obvious next thing to try. That is a design change, not
+# a retune, and it is out of scope for this pass.
+#
+# --- driver -----------------------------------------------------------------
+#
+# The selector's option set deliberately EXCLUDES the nominal candidate. That is
+# a measurement-driven choice, not a convenience: nominal is weakly dominated by
+# C1 at every burst (equal at B=0, worse at every other) and its schedule
+# overruns the epoch at B>=3, so handing a selector an option that is measured to
+# be worse everywhere would test nothing. Nominal is still reported, as a static
+# reference row, because the research question is stated against it.
+SELECTOR_RUNGS = ("cand_c1_defer12", "cand_c2_defer12_admit2",
+                  "cand_c2_defer12_admit1")
+NOMINAL = "static_nominal"
+
+
+def admissible_strategies(results: Sequence[StrategyResult]) -> Dict[str, bool]:
+    """A strategy is inadmissible on a trajectory if any epoch it ran overruns.
+
+    Composing an overrunning cell into an epoch sequence produces a rate, and
+    that rate is not meaningful: work was still in flight when the next epoch
+    began, which this harness cannot represent. Such a strategy must be excluded
+    from "best safe static" rather than quietly competing with a number it has no
+    right to.
+    """
+    return {f"{r.strategy}@{r.trajectory_name}":
+            all(e.makespan_ms <= r.epoch_ms for e in r.epochs)
+            for r in results}
+
+
+def summarise(results: Sequence[StrategyResult]) -> str:
+    ok = admissible_strategies(results)
+    by_traj: Dict[str, List[StrategyResult]] = {}
+    for r in results:
+        by_traj.setdefault(r.trajectory_name, []).append(r)
+
+    lines: List[str] = []
+    for traj, rs in by_traj.items():
+        lines.append(f"\ntrajectory {traj}: {TRAJECTORIES.get(traj)}")
+        lines.append(f"  {'strategy':<34} {'valid':>7} {'soft':>9} {'switch':>6}  admissible")
+        for r in sorted(rs, key=lambda r: r.strategy):
+            s = r.summary()
+            key = f"{r.strategy}@{r.trajectory_name}"
+            lines.append(
+                f"  {r.strategy:<34} "
+                f"{s['hard_output_valid_rate']:>7.3f} "
+                f"{s['soft_completed']:>4}/{s['soft_offered']:<4} "
+                f"{s['switch_count']:>6}  {'yes' if ok[key] else 'NO (epoch overrun)'}"
+            )
+        # The comparison the research question asks for. It must be matched on
+        # validity: comparing adaptive against the highest-utility static
+        # regardless of validity would penalise adaptive for being more
+        # conservative, which is not the question. The question is whether, AT
+        # THE VALIDITY ADAPTIVE DELIVERED, some static could have delivered more
+        # noncritical work.
+        adapt_r = next((r for r in rs if r.strategy == "adaptive"), None)
+        if adapt_r is None:
+            continue
+        adapt = adapt_r.summary()
+        if not ok[f"adaptive@{traj}"]:
+            lines.append(
+                "  -> adaptive is INADMISSIBLE on this trajectory: it ran a "
+                "candidate whose schedule overruns the epoch. Reacting to the "
+                "previous epoch means the first high-contention epoch is always "
+                "entered on a stale estimate, and here the lower rung's failure "
+                "mode is a 2.7x epoch overrun rather than graceful degradation. "
+                "No utility comparison is meaningful.")
+            continue
+
+        va = adapt["hard_output_valid_rate"]
+        rivals = [r.summary() for r in rs
+                  if r.strategy.startswith("static_")
+                  and ok[f"{r.strategy}@{traj}"]
+                  and r.summary()["hard_output_valid_rate"] >= va - 1e-9]
+        if not rivals:
+            lines.append(f"  -> no admissible static reaches adaptive's validity "
+                         f"{va:.3f}; adaptive wins on validity alone")
+            continue
+        best = max(rivals, key=lambda s: s["soft_completed"])
+        lines.append(
+            f"  -> adaptive: valid {va:.3f}, soft "
+            f"{adapt['soft_completed']}/{adapt['soft_offered']}, "
+            f"{adapt['switch_count']} switches")
+        lines.append(
+            f"     best admissible static at validity >= {va:.3f}: "
+            f"{best['strategy']} (valid {best['hard_output_valid_rate']:.3f}, "
+            f"soft {best['soft_completed']}/{best['soft_offered']})")
+        d = adapt["soft_completed"] - best["soft_completed"]
+        lines.append(f"     adaptive retains {d:+d} soft instances vs that static"
+                     + ("  <-- adaptation bought nothing" if d == 0 else ""))
+    return "\n".join(lines)
+
+
+def main() -> int:
+    import argparse
+
+    ap = argparse.ArgumentParser(
+        description="Phase 11: adaptive candidate selection vs static strategies")
+    ap.add_argument("--rows", default="results/freshness_cand/*/aggregate.csv",
+                    help="glob of aggregate.csv files holding the measured cells")
+    ap.add_argument("--output-dir", default="results/freshness_adaptive")
+    ap.add_argument("--delta", type=float, default=20.0,
+                    help="phi = A0 + delta, in ms")
+    ap.add_argument("--epoch-ms", type=float, default=300.0)
+    ap.add_argument("--lag", type=int, default=1,
+                    help="epochs of observation lag; 1 is the deployable case")
+    args = ap.parse_args()
+
+    from benchmarks.freshness_eval.headroom import load_rows
+
+    pattern = (args.rows if os.path.isabs(args.rows)
+               else os.path.join(_REPO, args.rows))
+    rows = load_rows(pattern)
+    a0 = float(rows[0]["A0"])
+    phi = a0 + args.delta
+
+    candidates = [NOMINAL] + list(SELECTOR_RUNGS)
+    results, warnings = evaluate_trajectories(
+        rows, list(SELECTOR_RUNGS), phi=phi, epoch_ms=args.epoch_ms,
+        lag=args.lag)
+    # Nominal is not in the selector's option set, so evaluate_trajectories did
+    # not produce its static rows. Add them: the research question is stated
+    # against the unprotected schedule and it has to appear in the table.
+    table = CellTable(rows, phi)
+    for name, traj in TRAJECTORIES.items():
+        if all(table.has(NOMINAL, b) for b in set(traj)):
+            results.append(run_static(table, NOMINAL, traj, name, args.epoch_ms))
+
+    out_dir = (args.output_dir if os.path.isabs(args.output_dir)
+               else os.path.join(_REPO, args.output_dir))
+    write_artifacts(results, out_dir, warnings)
+
+    print(f"phi = A0 + {args.delta:g} = {phi:.3f} ms  (A0 = {a0:.3f})")
+    print(f"selector rungs: {list(SELECTOR_RUNGS)}")
+    print(f"nominal reported as a static reference only: {NOMINAL}")
+    print(summarise(results))
+    if warnings:
+        print("\nWARNINGS (composition assumption violated):")
+        for w in warnings:
+            print(f"  - {w}")
+    print(f"\nwrote {out_dir}/")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

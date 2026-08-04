@@ -247,5 +247,112 @@ class EndToEnd(unittest.TestCase):
         self.assertEqual(TRAJECTORIES["sustained"], [4] * 10)
 
 
+class SaturatedObservableDefeatsTheSelector(unittest.TestCase):
+    """The measured cause of adaptation's failure on this workload.
+
+    Under any protective rung, max_input_age is FLAT at 90.55 ms for B = 1, 2, 3
+    and 4 (risk 1.124 at phi = A0+20), against 60.55 ms at B=0. So the selector's
+    only input cannot distinguish 65% offered load from 131%. The values that do
+    discriminate B=4 belong to schedules that overrun the epoch, and are therefore
+    observable only after the overrun has already happened.
+
+    These tests use a synthetic grid with that saturation property rather than the
+    measured CSVs, so they pin the CONSEQUENCE of a saturated observable -- which
+    is a property of reactive selection, not of one results directory.
+    """
+
+    #      B:      0      1      2      3      4
+    AGES = {"P1": [60.0, 90.0, 90.0, 90.0, 410.0],   # protective, overruns at B=4
+            "P2": [60.0, 90.0, 90.0, 90.0, 90.0]}    # protective, always fits
+    MK = {"P1": [290.5, 290.5, 290.5, 290.5, 805.9],
+          "P2": [290.5] * 5}
+    OVR = {"P1": [0.93, 0.90, 0.87, 0.83, 0.16],
+           "P2": [0.93, 0.90, 0.87, 0.87, 0.87]}
+    SOFT = {"P1": [0, 1, 2, 3, 3], "P2": [0, 1, 2, 2, 2]}
+
+    def _rows(self):
+        rows = []
+        for cid in ("P1", "P2"):
+            for b in range(5):
+                rows.append(_cell(cid, b, self.OVR[cid][b], age=self.AGES[cid][b],
+                                  soft=self.SOFT[cid][b], makespan=self.MK[cid][b]))
+        return rows
+
+    def _table(self):
+        return CellTable(self._rows(), PHI)
+
+    def test_the_observable_does_not_discriminate_contention(self):
+        """The premise. If this ever stops holding the findings below are void."""
+        t = self._table()
+        ages = [float(t.get("P2", b)["max_input_age"]) for b in (1, 2, 3, 4)]
+        self.assertEqual(len(set(ages)), 1,
+                         f"expected a saturated signal, got {ages}")
+        self.assertNotEqual(ages[0], float(t.get("P2", 0)["max_input_age"]),
+                            "B=0 must still be distinguishable, or the signal "
+                            "carries no information at all")
+
+    def test_a_step_to_max_contention_costs_one_overrunning_epoch(self):
+        t = self._table()
+        cfg = default_selector_config(["P1", "P2"], entry_risks=(0.0, 0.85),
+                                      exit_risks=(-1.0, 0.70))
+        res = run_adaptive(t, cfg, [0, 0, 4, 4, 4], PHI, "step", EPOCH, lag=1)
+        overruns = [e.epoch for e in res.epochs if e.makespan_ms > EPOCH]
+        self.assertEqual(overruns, [2],
+                         "the first high-contention epoch is entered on the "
+                         "previous epoch's low-risk observation and must overrun")
+        self.assertEqual(res.epochs[2].candidate_id, "P1")
+        self.assertEqual(res.epochs[3].candidate_id, "P2",
+                         "it should escalate immediately afterwards -- the "
+                         "failure is the lag, not a broken selector")
+
+    def test_a_threshold_low_enough_to_be_safe_stops_adapting(self):
+        """The finding that corrects the obvious first guess.
+
+        Thresholds that survive the step DO exist -- but the only observation
+        available before contention arrives is the B=0 one (risk 0.60 here), so
+        such a selector escalates at ZERO contention and never returns. It becomes
+        safe by degenerating into the conservative static policy, which is not
+        adaptation.
+        """
+        t = self._table()
+        safe = default_selector_config(["P1", "P2"], entry_risks=(0.0, 0.55),
+                                       exit_risks=(-1.0, 0.40))
+        res = run_adaptive(t, safe, [0, 0, 4, 4, 0, 0], PHI, "step", EPOCH, lag=1)
+        self.assertTrue(all(e.makespan_ms <= EPOCH for e in res.epochs),
+                        "a threshold below the B=0 risk must be safe")
+        chosen = [e.candidate_id for e in res.epochs]
+        self.assertEqual(chosen[1:], ["P2"] * 5,
+                         f"it should pin to the protective rung forever, got {chosen}")
+        static = run_static(t, "P2", [0, 0, 4, 4, 0, 0], "step", EPOCH)
+        self.assertEqual(res.summary()["soft_completed"],
+                         static.summary()["soft_completed"],
+                         "a selector that never de-escalates must reproduce the "
+                         "static policy's utility exactly")
+
+    def test_a_gradual_ramp_is_survivable_because_it_warns_first(self):
+        """Contrast case: an intermediate burst raises risk before B=4 arrives, so
+        the same selector and thresholds are admissible on a ramp."""
+        t = self._table()
+        cfg = default_selector_config(["P1", "P2"], entry_risks=(0.0, 0.85),
+                                      exit_risks=(-1.0, 0.70))
+        res = run_adaptive(t, cfg, [0, 1, 2, 3, 4], PHI, "ramp", EPOCH, lag=1)
+        self.assertTrue(all(e.makespan_ms <= EPOCH for e in res.epochs),
+                        f"ramp should be safe; got "
+                        f"{[(e.epoch, e.candidate_id, e.makespan_ms) for e in res.epochs]}")
+
+
+class AdaptiveIsNotCreditedForUnmodellableEpochs(unittest.TestCase):
+    def test_a_strategy_that_overruns_is_flagged_inadmissible(self):
+        from benchmarks.freshness_eval.adaptive import admissible_strategies
+        t = CellTable(
+            [_cell("P1", 4, 0.16, age=410.0, soft=3, makespan=805.9),
+             _cell("P1", 0, 0.93, age=60.0, soft=0, makespan=290.5)], PHI)
+        bad = run_static(t, "P1", [0, 4], "x", EPOCH)
+        good = run_static(t, "P1", [0, 0], "y", EPOCH)
+        ok = admissible_strategies([bad, good])
+        self.assertFalse(ok["static_P1@x"])
+        self.assertTrue(ok["static_P1@y"])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
