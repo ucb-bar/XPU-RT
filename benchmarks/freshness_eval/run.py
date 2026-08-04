@@ -68,16 +68,41 @@ from benchmarks.freshness_eval.trace import (  # noqa: E402
 
 # --- policy definitions ----------------------------------------------------
 #
-# Each policy is a (solver, scheduler, config-mutation) triple. `preferred_hw`
-# is a SOFT pin: profile_loader adds a large cost penalty to non-preferred
-# combinations (PIN_PENALTY_MULT), it does not hard-exclude them. Describe it
-# as a preference, not a reservation.
+# Each policy is a (solver, scheduler, mutations) triple. `mutations` is a dict
+# of config edits applied by `materialise`; see MUTATION_KEYS for the vocabulary
+# and for what each one costs. Exactly one mutation per probe policy, so an
+# outcome is attributable to a mechanism rather than to a bundle.
+
+MUTATION_KEYS = {
+    "preferred_hw": (
+        "{net: profile_hw} SOFT pin. profile_loader multiplies non-preferred "
+        "combinations by PIN_PENALTY_MULT; it does not hard-exclude them. A "
+        "preference, never a reservation."
+    ),
+    "window_duration": (
+        "{net: ms} tightens a network's own window, i.e. max_end_t = release + "
+        "ms. greedy honours this via ALAP back-propagation and emergency "
+        "promotion; the MILP enforces it outright. Applied to the PRODUCER this "
+        "converts the consumer's freshness requirement into a producer "
+        "deadline, which is the only mechanism here that acts on the quantity "
+        "freshness actually depends on."
+    ),
+    "admit_cap": (
+        "int cap on admitted soft instances: admitted = min(B, cap). Trades "
+        "soft utility for headroom directly. `contention_level` still records "
+        "the OFFERED B, so admission control is never free in the reporting."
+    ),
+    "soft_phase_ms": (
+        "float start_time offset on the soft network, deferring its first "
+        "release. Rate-limiting in time rather than in count."
+    ),
+}
 
 POLICIES: Dict[str, Dict] = {
     "static_nominal": {
         "solver": "greedy",
         "scheduler": "mosek",  # unused when solver != milp
-        "preferred_hw": None,
+        "mutations": {},
         "intent": (
             "Contention-blind earliest-completion list schedule. Maximises soft "
             "throughput under low load; no protection for the perception chain."
@@ -86,13 +111,13 @@ POLICIES: Dict[str, Dict] = {
     "edf": {
         "solver": "milp",
         "scheduler": "edf",
-        "preferred_hw": None,
+        "mutations": {},
         "intent": "Deadline-ordered list schedule; the conventional real-time baseline.",
     },
     "heft": {
         "solver": "milp",
         "scheduler": "heft",
-        "preferred_hw": None,
+        "mutations": {},
         "intent": "Heterogeneous-DAG baseline (upward rank, earliest finish).",
     },
     "static_conservative": {
@@ -113,14 +138,84 @@ POLICIES: Dict[str, Dict] = {
         # cluster names: profile_loader compares preferred_hw against combo_hw,
         # which holds "gemmini"/"rvv_opu". Naming the cluster instead used to
         # penalise every combination silently; it now raises.
-        "preferred_hw": {"dronet": "gemmini"},
+        "mutations": {"preferred_hw": {"dronet": "gemmini"}},
         "intent": (
             "Protects the DroNet->control chain by reserving the fast "
-            "accelerator for DroNet (soft cost penalty on other placements)."
+            "accelerator for DroNet (soft cost penalty on other placements). "
+            "MEASURED WORSE THAN static_nominal at every contention level -- see "
+            "the mechanism probe below and results/freshness_eval/summary.md."
         ),
     },
 }
 
+# --- mechanism probe -------------------------------------------------------
+#
+# Gate A returned a negative finding: `static_conservative` -- a soft pin of the
+# perception producer to the fast accelerator -- is WORSE than doing nothing at
+# every contention level (0.146 vs 0.220 output-valid at B=3). A protection
+# candidate cannot be ASSUMED to protect, so no selector is built on top of one
+# until some mechanism is measured to beat the nominal baseline.
+#
+# The mechanistic reading of that failure: DroNet is 17.973 ms on gemmini vs
+# 241.462 ms on rvv_opu, so it lands on gemmini regardless -- the pin cannot
+# move a placement that was already optimal. All it does is perturb the costs
+# the greedy picker orders by. It was never a reservation, and reserving a
+# BACKEND was the wrong lever anyway: at B>=1 the contention is for gemmini
+# TIME, which a preference does not allocate.
+#
+# Every probe below holds solver=greedy fixed -- the same solver as
+# static_nominal -- so a difference is attributable to the mechanism and not to
+# the scheduler. One mutation each.
+PROBES: Dict[str, Dict] = {
+    # M1: convert the freshness requirement into a producer deadline. The
+    # hypothesis with an actual mechanism behind it: input age is bounded by
+    # when the producer FINISHES, so bounding producer completion bounds age.
+    # Swept, because the tightness that helps is an empirical question and too
+    # tight should over-constrain and hurt.
+    f"probe_prodwin{int(w)}": {
+        "solver": "greedy", "scheduler": "mosek",
+        "mutations": {"window_duration": {"dronet": float(w)}},
+        "intent": f"Producer window tightened 50 -> {int(w)} ms.",
+    }
+    for w in (40, 30, 25, 20)
+}
+PROBES.update({
+    # M2: admission control. Guaranteed to buy headroom; the question is the
+    # exchange rate against soft utility, which is the whole point of the
+    # adaptive comparison.
+    "probe_admit1": {
+        "solver": "greedy", "scheduler": "mosek",
+        "mutations": {"admit_cap": 1},
+        "intent": "Admit at most 1 soft instance regardless of offered B.",
+    },
+    "probe_admit2": {
+        "solver": "greedy", "scheduler": "mosek",
+        "mutations": {"admit_cap": 2},
+        "intent": "Admit at most 2 soft instances regardless of offered B.",
+    },
+    # M3: rate-limit in time instead of in count -- same soft work, released
+    # later. Separates "less soft work" from "soft work out of the way".
+    "probe_defer25": {
+        "solver": "greedy", "scheduler": "mosek",
+        "mutations": {"soft_phase_ms": 25.0},
+        "intent": "Defer the first soft release by 25 ms (half a DroNet period).",
+    },
+    # M4: directional control, expected to HURT. greedy_periodic deliberately
+    # deprioritises periodic work so non-periodic makespan shrinks -- the
+    # producer is periodic, so freshness should get worse. If it does not, the
+    # metric is not measuring what it claims to and the other probes mean
+    # nothing.
+    "probe_nonperiodic_priority": {
+        "solver": "greedy_periodic", "scheduler": "mosek",
+        "mutations": {},
+        "intent": (
+            "FALSIFICATION CONTROL, expected to be WORSE: non-periodic priority "
+            "deprioritises the periodic producer."
+        ),
+    },
+})
+
+ALL_POLICIES: Dict[str, Dict] = {**POLICIES, **PROBES}
 DEPLOYABLE = list(POLICIES)
 ORACLE = "oracle"
 
@@ -153,9 +248,22 @@ def _git_info() -> Dict[str, object]:
     return out
 
 
-def materialise(base: Dict, *, burst: int, preferred_hw: Optional[Dict[str, str]],
+def materialise(base: Dict, *, burst: int, mutations: Optional[Dict],
                 epoch_ms: float, seed: int) -> Dict:
-    """Build a concrete workload config for one (burst, policy) cell."""
+    """Build a concrete workload config for one (burst, policy) cell.
+
+    `burst` is the OFFERED soft load. A candidate may admit fewer via the
+    `admit_cap` mutation; the offered value is what gets recorded as
+    `contention_level`, so shedding work never looks free.
+    """
+    mutations = dict(mutations or {})
+    unknown = set(mutations) - set(MUTATION_KEYS)
+    if unknown:
+        raise ValueError(
+            f"unknown mutation key(s) {sorted(unknown)}; "
+            f"vocabulary is {sorted(MUTATION_KEYS)}"
+        )
+
     cfg = copy.deepcopy(base)
     cfg.setdefault("scheduler", {})["random_seed"] = seed
 
@@ -168,24 +276,57 @@ def materialise(base: Dict, *, burst: int, preferred_hw: Optional[Dict[str, str]
         )
     soft_name = soft[0]
 
-    if burst <= 0:
+    admitted = burst
+    cap = mutations.get("admit_cap")
+    if cap is not None:
+        admitted = min(burst, int(cap))
+
+    if admitted <= 0:
         # No soft work at all: remove the network rather than give it zero
         # instances, so the workload contains no vestigial entry.
         nets.pop(soft_name)
     else:
         info = nets[soft_name]
-        info["num_instances"] = burst
-        # Spread B releases evenly across the epoch. window_duration stays at
-        # the epoch so the window is loose: soft work is interference to be
-        # shed, not a hard constraint that would make the instance infeasible.
-        info["period"] = epoch_ms / burst
+        info["num_instances"] = admitted
+        # Spread the ADMITTED releases evenly across the epoch. window_duration
+        # stays at the epoch so the window is loose: soft work is interference
+        # to be shed, not a hard constraint that would make the instance
+        # infeasible.
+        info["period"] = epoch_ms / admitted
         info["window_duration"] = epoch_ms
+        phase = mutations.get("soft_phase_ms")
+        if phase:
+            info["start_time"] = float(phase)
 
-    if preferred_hw:
-        for net, hw in preferred_hw.items():
-            if net in nets:
-                nets[net]["preferred_hw"] = hw
+    for net, hw in (mutations.get("preferred_hw") or {}).items():
+        if net in nets:
+            nets[net]["preferred_hw"] = hw
 
+    # Tightening a network's own window moves its max_end_t. For the producer
+    # that is the point; it also moves that network's own deadline, which is
+    # why deadline_compliance is additionally reported against a fixed
+    # reference window (see trace.deadline_compliance).
+    for net, win in (mutations.get("window_duration") or {}).items():
+        if net not in nets:
+            raise ValueError(
+                f"window_duration mutation names {net!r}, which is not in this "
+                f"workload ({sorted(nets)})"
+            )
+        w = float(win)
+        period = float(nets[net].get("period", w))
+        if w > period:
+            raise ValueError(
+                f"{net}: window_duration {w} exceeds its period {period}; "
+                f"overlapping instances are outside what this evaluation models"
+            )
+        nets[net]["window_duration"] = w
+
+    cfg["_materialised"] = {
+        "offered_burst": burst,
+        "admitted_soft_instances": admitted,
+        "mutations": mutations,
+        "seed": seed,
+    }
     return cfg
 
 
@@ -328,9 +469,14 @@ def main() -> int:
     bursts = [int(b) for b in args.bursts.split(",") if b != ""]
     deltas = [float(d) for d in args.deltas.split(",") if d != ""]
     policies = [p for p in args.policies.split(",") if p]
+    if policies == ["PROBES"]:
+        policies = ["static_nominal"] + list(PROBES)  # baseline always included
     for p in policies:
-        if p not in POLICIES:
-            raise SystemExit(f"unknown policy {p!r}; have {sorted(POLICIES)}")
+        if p not in ALL_POLICIES:
+            raise SystemExit(
+                f"unknown policy {p!r}; have {sorted(ALL_POLICIES)} "
+                f"(or the literal 'PROBES' for baseline + every probe)"
+            )
 
     out_dir = args.output_dir if os.path.isabs(args.output_dir) else os.path.join(_REPO, args.output_dir)
     work_dir = os.path.join(out_dir, "work")
@@ -350,6 +496,13 @@ def main() -> int:
 
     crit = criticality_from_config(base)
     soft_tasks = [t for t, c in crit.items() if c == "soft"]
+
+    # The producer's window as declared in the canonical config. Candidates may
+    # tighten their own copy; this fixed value is the bar they are all compared
+    # against.
+    producer_ref_window = float(
+        base["networks"][edge.producer_task]["window_duration"]
+    )
 
     print(f"config          {os.path.relpath(cfg_path, _REPO)}")
     print(f"epoch           {epoch_ms} ms")
@@ -374,12 +527,12 @@ def main() -> int:
     failures: List[Dict] = []
 
     for policy in policies:
-        spec = POLICIES[policy]
+        spec = ALL_POLICIES[policy]
         for burst in bursts:
             for seed in seeds:
                 stem = f"_fx_{policy}_B{burst}_s{seed}"
                 cfg = materialise(
-                    base, burst=burst, preferred_hw=spec["preferred_hw"],
+                    base, burst=burst, mutations=spec.get("mutations"),
                     epoch_ms=epoch_ms, seed=seed,
                 )
                 fixture_path, wall, status = run_schedule(
@@ -411,10 +564,22 @@ def main() -> int:
                 schedule_digests.setdefault((policy, burst), {})[seed] = str(hash(digest))
 
                 su = soft_utility(invs, soft_tasks, epoch_ms)
+                su["soft_instances_offered"] = burst
+                su["soft_instances_admitted"] = cfg["_materialised"][
+                    "admitted_soft_instances"
+                ]
                 # Producer deadline behaviour, which the consumer-side freshness
                 # records cannot show. At high contention the producer is what
                 # is late, and that is the mechanism behind the staleness.
-                prod_dl = deadline_compliance(invs, edge.producer_task)
+                #
+                # `reference_window` is the BASELINE producer window, so a
+                # candidate that tightens its own window is still scored against
+                # the same fixed bar as every other candidate. Without it,
+                # window-tightening would look like a deadline regression purely
+                # because it moved its own goalposts.
+                prod_dl = deadline_compliance(
+                    invs, edge.producer_task, reference_window=producer_ref_window
+                )
 
                 # Every invocation interval, so the diagnostic timeline plot has
                 # the interfering soft work too (per_invocation.csv only carries
@@ -521,7 +686,9 @@ def main() -> int:
         "deltas": deltas,
         "phis": [{"delta": d, "phi_ms": p} for d, p in phis],
         "A0": a0_info,
-        "policies": {p: POLICIES[p] for p in policies},
+        "policies": {p: ALL_POLICIES[p] for p in policies},
+        "mutation_vocabulary": MUTATION_KEYS,
+        "producer_reference_window_ms": producer_ref_window,
         "oracle_note": (
             "The oracle row is a post-hoc upper bound: the best output_valid_rate "
             "available at each (B, phi) among the deployable policies. It is not "
