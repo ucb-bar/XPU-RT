@@ -165,6 +165,84 @@ class SoftPhaseOffset(unittest.TestCase):
         self.assertNotIn("start_time", _mat({})["networks"][SOFT])
 
 
+GRAPH_PROBE = os.path.join(
+    _REPO, "gen/vmfb/dronet/firesim_gemmini_opu/gemmini/dronet.int8/"
+           "dronet.int8_dispatch_graph.json")
+
+
+@unittest.skipUnless(os.path.exists(GRAPH_PROBE),
+                     "bridged dispatch graphs absent; run "
+                     "scripts/export_profile_db_to_results_csv.py")
+class MutationsReachTheSolver(unittest.TestCase):
+    """A mutation that changes the config but that the SOLVER ignores would be
+    inert in the way that matters, and `test_every_documented_mutation_is_
+    observable` above cannot catch it -- it only inspects the config.
+
+    These two knobs are the ones that must survive the config -> Workload
+    boundary, because both also feed the evaluator's release/deadline arithmetic
+    independently. If workload_factory and trace.py ever disagree about what
+    `start_time` or `window_duration` mean, input ages are silently wrong (or,
+    if the schedule starts before the release the evaluator computed,
+    invocations_from_fixture raises and the cell fails loudly).
+    """
+
+    @staticmethod
+    def _build(cfg):
+        import numpy as np
+        from workload_factory import create_workload_from_network_hierarchy
+        machines = ["CPU_P#0", "CPU_E#0"]
+        return create_workload_from_network_hierarchy(
+            {"networks": {PRODUCER: cfg["networks"][PRODUCER]}, "edges": []},
+            _REPO, machines, np.zeros((2, 2)), p_core_speedup=1.0,
+            random_seed=0, machine_combinations=[["CPU_P#0"], ["CPU_E#0"]],
+        )
+
+    def _windows(self, cfg):
+        """instance index -> (min_start_t, max_end_t) for the producer."""
+        out = {}
+        for op in self._build(cfg).get_operations():
+            base = op.operation_name.split("_dispatch_")[0]
+            i = int(base[len(PRODUCER):])
+            lo, hi = out.get(i, (float("inf"), float("-inf")))
+            out[i] = (min(lo, float(op.min_start_t)), max(hi, float(op.max_end_t)))
+        return out
+
+    def test_window_tightening_reaches_max_end_t(self):
+        base = _base()
+        base["networks"][PRODUCER]["num_instances"] = 3
+        loose = self._windows(materialise(base, burst=0, mutations={},
+                                          epoch_ms=EPOCH, seed=0))
+        tight = self._windows(materialise(
+            base, burst=0, mutations={"window_duration": {PRODUCER: 25.0}},
+            epoch_ms=EPOCH, seed=0))
+        period = float(base["networks"][PRODUCER]["period"])
+        for i in sorted(loose):
+            self.assertAlmostEqual(loose[i][1], i * period + period, places=6)
+            self.assertAlmostEqual(tight[i][1], i * period + 25.0, places=6,
+                                   msg="window_duration did not reach the solver")
+            self.assertAlmostEqual(tight[i][0], loose[i][0], places=6,
+                                   msg="tightening must not move the release")
+
+    def test_phase_offset_reaches_min_start_t_and_matches_the_evaluator(self):
+        """workload_factory uses start_time + i*period for min_start_t; trace.py
+        uses the same expression for `release`. Assert they agree, since a
+        divergence makes every input age wrong."""
+        base = _base()
+        # Apply the phase to the PRODUCER so this test can use the one network
+        # whose dispatch graph is guaranteed present.
+        base["networks"][PRODUCER]["num_instances"] = 3
+        base["networks"][PRODUCER]["start_time"] = 25.0
+        got = self._windows(base)
+        period = float(base["networks"][PRODUCER]["period"])
+
+        from benchmarks.freshness_eval.trace import periodic_spec
+        spec = periodic_spec(base)[PRODUCER]
+        for i in sorted(got):
+            expected_release = float(spec["start_time"]) + i * period
+            self.assertAlmostEqual(got[i][0], expected_release, places=6)
+            self.assertAlmostEqual(got[i][0], 25.0 + i * period, places=6)
+
+
 class FixedReferenceWindow(unittest.TestCase):
     """The producer runs 18 ms of work released every 50 ms. Under a tightened
     25 ms window an instance finishing at t=30 misses its OWN deadline but is
