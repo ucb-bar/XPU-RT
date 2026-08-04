@@ -38,6 +38,19 @@ def _f(v) -> Optional[float]:
         return None
 
 
+def _fits(r: Dict[str, str]) -> bool:
+    """Does this cell's schedule fit the epoch?
+
+    Sweeps predating the column are treated as fitting so their summaries stay
+    readable; the column has been written since the epoch-comparability finding,
+    so absence means "old artifact", not "overran".
+    """
+    v = r.get("fits_in_epoch")
+    if v is None or v == "":
+        return True
+    return str(v).lower() in ("true", "1")
+
+
 def read_csv(path: str) -> List[Dict[str, str]]:
     if not os.path.exists(path):
         return []
@@ -105,6 +118,25 @@ def main() -> int:
       f"`phi = A0 + delta`, so every point has real headroom over the sampling "
       f"rate.\n")
 
+    w("## Restatement history\n")
+    w("These numbers were restated once, on 2026-08-03, after the evaluator gained "
+      "an inclusive-boundary tolerance. The schedules did not change: all 100 cells "
+      "were re-evaluated from the cached fixtures with byte-identical makespans, so "
+      "the difference is entirely evaluator-side.\n")
+    w("**23 of 100 cells moved, every one of them upward, by exactly one consumer "
+      "invocation (two in one cell).** An input age is compared against phi with a "
+      "relative tolerance (`BOUNDARY_RTOL = 1e-9`) so that an age landing exactly on "
+      "the window counts as valid. Such exact hits are systematic here rather than "
+      "incidental: both A0 and phi carry the consumer's "
+      f"{man['A0']['consumer_latency_ms']:.6f} ms latency term, so an age measured at "
+      "output lands precisely on phi whenever delta is a multiple of the "
+      f"{man['A0']['consumer_period_ms']:.0f} ms consumer period. The affected "
+      "records compute to e.g. 70.54607400000002 against a phi of 70.546074 -- "
+      "strictly larger in floating point, and valid only because of the tolerance.\n")
+    w("The correction makes the reported divergence *smaller* (largest single change "
+      "+0.067, typical +0.033). It works against the headline rather than for it, "
+      "and no qualitative conclusion changes.\n")
+
     tp = man["timing_provenance"]
     w("## Timing assumptions\n")
     w(f"- source: **{tp['timing_source']}**, {tp['source']}")
@@ -124,9 +156,21 @@ def main() -> int:
 
     w(f"## Validity vs contention at phi = {primary:.1f} ms "
       f"(= A0 + {primary - A0:.0f})\n")
+    w("`output-valid` splits into two failures that are NOT the same claim, so both "
+      "are broken out. **stale** means the consumer acted on an input that was too "
+      "old — the phenomenon this study is about. **no-input** means there was no "
+      "completed producer output at all, which a real controller handles by holding "
+      "or faulting rather than by actuating on garbage. Reporting only their sum "
+      "overstates the stale-input finding; at B=1 below it does so by about 5x.\n")
+    w("A **!** marks a cell whose schedule OVERRUNS the epoch. Greedy then extends "
+      "the horizon and adds instances, so that row's rates are computed over a "
+      "longer trace with a different denominator (41 consumer invocations at B=3, "
+      "64 at B=4, against 30) and are **not comparable** to a fitting row. Such "
+      "cells are excluded from every headline below.\n")
     w(f"| policy | B | consumer deadline-valid | freshness-valid | output-valid | "
-      f"divergence | max input age | producer deadline-valid | producer max late | soft done |")
-    w("|---|---|---|---|---|---|---|---|---|---|")
+      f"stale | no-input | max input age | producer deadline-valid | "
+      f"producer max late | soft done |")
+    w("|---|---|---|---|---|---|---|---|---|---|---|")
     for pol in policies:
         for b in bursts:
             rows = [r for r in agg
@@ -134,19 +178,34 @@ def main() -> int:
                     and int(_f(r["contention_level"])) == b
                     and abs(_f(r["freshness_window"]) - primary) < 1e-6]
             if not rows:
-                w(f"| {pol} | {b} | — | — | — | — | — | — | — | *cell failed* |")
+                w(f"| {pol} | {b} | — | — | — | — | — | — | — | — | *cell failed* |")
                 continue
             r = rows[0]
             pc = prod.get((pol, b, int(_f(r["seed"]))))
             pr = f"{pc['rate']:.3f}" if pc else "—"
             pl = f"{pc['max_lateness']:+.1f} ms" if pc else "—"
-            w(f"| {pol} | {b} | {_f(r['deadline_success_rate']):.3f} | "
+            bang = "" if _fits(r) else " !"
+            stale = _f(r.get("stale_input_rate"))
+            nop = _f(r.get("no_producer_rate"))
+            w(f"| {pol} | {b}{bang} | {_f(r['deadline_success_rate']):.3f} | "
               f"{_f(r['freshness_success_rate']):.3f} | "
               f"{_f(r['output_valid_rate']):.3f} | "
-              f"{_f(r['divergence']):+.3f} | "
+              f"{'—' if stale is None else format(stale, '.3f')} | "
+              f"{'—' if nop is None else format(nop, '.3f')} | "
               f"{(_f(r['max_input_age']) or 0):.1f} ms | {pr} | {pl} | "
               f"{int(_f(r['soft_instances_completed']))} |")
     w("")
+
+    # ---- what the deadline axis contributes --------------------------------
+    dl_misses = [r for r in agg if r["policy"] != ORACLE
+                 and (_f(r.get("deadline_miss_count")) or 0) > 0]
+    if not dl_misses:
+        w("**The consumer's deadline axis carries no information in this sweep.** "
+          "`deadline_miss_count` is 0 in every cell of the grid, so divergence is "
+          "identically `1 − output_valid_rate` and the two-axis framing collapses "
+          "to one axis. The consumer is 0.546 ms of work in a 10 ms window, so this "
+          "is by construction rather than a finding. It is the producer that is "
+          "late, and the producer's lateness is what the freshness axis detects.\n")
 
     # ---- flagged operating points ------------------------------------------
     flagged = [r for r in agg
@@ -192,33 +251,101 @@ def main() -> int:
     w(f"## Operating points where deadline success hides invalid output\n")
     w(f"Criterion: `deadline_success_rate >= 0.95` and "
       f"`output_valid_rate < deadline_success_rate - 0.10`.\n")
-    w(f"**{len(flagged)} of {len([r for r in agg if r['policy'] != ORACLE])} "
-      f"(policy, B, phi, seed) cells qualify.**\n")
-    n_b0 = len([r for r in flagged if int(_f(r["contention_level"])) == 0])
+    n_all = len([r for r in agg if r["policy"] != ORACLE])
+    flagged_fit = [r for r in flagged if _fits(r)]
+    w(f"**{len(flagged)} of {n_all} (policy, B, phi, seed) cells qualify**, of which "
+      f"**{len(flagged_fit)} come from a schedule that fits the epoch** and are the "
+      f"only ones quoted below.\n")
+    n_b0 = len([r for r in flagged_fit if int(_f(r["contention_level"])) == 0])
     if n_b0:
         w(f"{n_b0} of those {'is' if n_b0 == 1 else 'are'} at **B=0**, i.e. with "
           f"no contention at all — "
           f"that part of the divergence is structural, not contention-induced. "
           f"See the floor table above.\n")
-    if flagged:
+    if flagged_fit:
         by_b = defaultdict(list)
-        for r in flagged:
+        for r in flagged_fit:
             by_b[int(_f(r["contention_level"]))].append(r)
-        w("| B | qualifying cells | phi range (ms) | worst divergence |")
-        w("|---|---|---|---|")
+        w("| B | qualifying cells | phi range (ms) | worst divergence | "
+          "of which stale |")
+        w("|---|---|---|---|---|")
         for b in sorted(by_b):
             rs = by_b[b]
             ps = sorted({_f(x["freshness_window"]) for x in rs})
             worst = max(rs, key=lambda x: _f(x["divergence"]))
+            st = _f(worst.get("stale_input_rate"))
             w(f"| {b} | {len(rs)} | {ps[0]:.1f}–{ps[-1]:.1f} | "
-              f"{_f(worst['divergence']):+.3f} ({worst['policy']}) |")
+              f"{_f(worst['divergence']):+.3f} ({worst['policy']}) | "
+              f"{'—' if st is None else format(st, '.3f')} |")
         w("")
-        top = max(flagged, key=lambda r: _f(r["divergence"]))
-        w(f"Largest divergence: **{_f(top['divergence']):+.3f}** at "
+        top = max(flagged_fit, key=lambda r: _f(r["divergence"]))
+        st = _f(top.get("stale_input_rate"))
+        nop = _f(top.get("no_producer_rate"))
+        w(f"Largest divergence among epoch-respecting cells: "
+          f"**{_f(top['divergence']):+.3f}** at "
           f"`{top['policy']}` B={int(_f(top['contention_level']))} "
           f"phi={_f(top['freshness_window']):.1f} ms — consumer deadline-valid "
           f"{_f(top['deadline_success_rate']):.3f} but output-valid "
-          f"{_f(top['output_valid_rate']):.3f}.\n")
+          f"{_f(top['output_valid_rate']):.3f}"
+          + ("" if st is None or nop is None else
+             f", of which **{st:.3f} acted on stale input** and {nop:.3f} had no "
+             f"input at all") + ".\n")
+
+    over = [r for r in flagged if not _fits(r)]
+    if over:
+        worst_over = max(over, key=lambda r: _f(r["divergence"]))
+        w(f"For completeness and **not for quotation**: {len(over)} flagged cells "
+          f"come from schedules that overrun the epoch, the largest being "
+          f"{_f(worst_over['divergence']):+.3f} at `{worst_over['policy']}` "
+          f"B={int(_f(worst_over['contention_level']))}. That rate is measured over "
+          f"a {(_f(worst_over['makespan_ms']) or 0):.0f} ms trace against a "
+          f"{(_f(worst_over.get('epoch_ms')) or 300):.0f} ms epoch, so it describes "
+          f"a different experiment rather than a worse policy.\n")
+
+    # ---- did the intended protection policy protect? ------------------------
+    # Computed rather than asserted, so it cannot drift out of date. Restricted
+    # to epoch-comparable cells, since a comparison spanning an overrun is not a
+    # rate comparison.
+    NOMINAL = "static_nominal"
+    if NOMINAL in policies:
+        w("## Did the intended protection policy protect?\n")
+        w(f"Mean output-valid over the cells where BOTH policies' schedules fit the "
+          f"epoch, against `{NOMINAL}`. A protection policy is not protective by "
+          f"intention or by name; this is the check.\n")
+        w("| policy | cells compared | mean output-valid | nominal | margin | verdict |")
+        w("|---|---|---|---|---|---|")
+        for pol in policies:
+            if pol == NOMINAL:
+                continue
+            pairs = []
+            for b in bursts:
+                for phi in phis:
+                    def pick(p):
+                        return [r for r in agg
+                                if r["policy"] == p
+                                and int(_f(r["contention_level"])) == b
+                                and abs(_f(r["freshness_window"]) - phi) < 1e-6]
+                    a_, n_ = pick(pol), pick(NOMINAL)
+                    if not a_ or not n_ or not _fits(a_[0]) or not _fits(n_[0]):
+                        continue
+                    pairs.append((_f(a_[0]["output_valid_rate"]),
+                                  _f(n_[0]["output_valid_rate"])))
+            if not pairs:
+                w(f"| {pol} | 0 | — | — | — | *no epoch-comparable cell* |")
+                continue
+            cv = sum(p[0] for p in pairs) / len(pairs)
+            nv = sum(p[1] for p in pairs) / len(pairs)
+            verdict = ("**WORSE than doing nothing**" if cv < nv - 1e-9
+                       else "better" if cv > nv + 1e-9 else "no difference")
+            w(f"| {pol} | {len(pairs)} | {cv:.3f} | {nv:.3f} | {cv - nv:+.3f} | "
+              f"{verdict} |")
+        w("")
+        w("`static_conservative` reserves the fast accelerator for the perception "
+          "producer — the protection mechanism the specification proposed. It "
+          "measures worse than the unprotected schedule at every contention level. "
+          "That is the finding that forced the candidate ladder to be assembled from "
+          "mechanisms measured to work rather than mechanisms expected to, and it is "
+          "why `candidates.py` refuses to build a selector on unvalidated rungs.\n")
 
     # ---- phi sensitivity ----------------------------------------------------
     w("## Sensitivity to the freshness window\n")

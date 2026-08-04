@@ -56,36 +56,49 @@
     "producer_latency_ms": 17.973077999999997,
     "consumer_period_ms": 10.0,
     "consumer_latency_ms": 0.546074,
-    "fast_cluster_hw": "gemmini"
+    "fast_cluster_hw": "gemmini",
+    "pipeline_fill_ms": 17.973077999999997
   },
   "policies": {
     "static_nominal": {
       "solver": "greedy",
       "scheduler": "mosek",
-      "preferred_hw": null,
+      "mutations": {},
       "intent": "Contention-blind earliest-completion list schedule. Maximises soft throughput under low load; no protection for the perception chain."
     },
     "edf": {
       "solver": "milp",
       "scheduler": "edf",
-      "preferred_hw": null,
+      "mutations": {},
       "intent": "Deadline-ordered list schedule; the conventional real-time baseline."
     },
     "heft": {
       "solver": "milp",
       "scheduler": "heft",
-      "preferred_hw": null,
+      "mutations": {},
       "intent": "Heterogeneous-DAG baseline (upward rank, earliest finish)."
     },
     "static_conservative": {
       "solver": "greedy",
       "scheduler": "mosek",
-      "preferred_hw": {
-        "dronet": "gemmini"
+      "mutations": {
+        "preferred_hw": {
+          "dronet": "gemmini"
+        }
       },
-      "intent": "Protects the DroNet->control chain by reserving the fast accelerator for DroNet (soft cost penalty on other placements)."
+      "intent": "Protects the DroNet->control chain by reserving the fast accelerator for DroNet (soft cost penalty on other placements). MEASURED WORSE THAN static_nominal at every contention level -- see the mechanism probe below and results/freshness_eval/summary.md."
     }
   },
+  "mutation_vocabulary": {
+    "preferred_hw": "{net: profile_hw} SOFT pin. profile_loader multiplies non-preferred combinations by PIN_PENALTY_MULT; it does not hard-exclude them. A preference, never a reservation.",
+    "window_duration": "{net: ms} tightens a network's own window, i.e. max_end_t = release + ms. MEASURED INERT ON GREEDY: five probes (prodwin40/30/25/20 on the producer, soft_first on the consumer) all produce schedules that are bit-identical to the baseline at every contention level. The mutation does reach the workload -- test_freshness_mutations asserts max_end_t moves -- so greedy simply does not reprioritise on it; the constraint is already satisfied and there is no gradient. The MILP enforces it outright, so this key is only useful under solver=milp. Retained as a documented negative result, not as a working mechanism.",
+    "phase_ms": "{net: ms} start_time offset on ANY network. Distinct from soft_phase_ms, which is kept because it is baked into 60 already-solved fixture hashes and folding the two would force a full re-solve. MEASURED: applied to the PRODUCER this IMPROVES freshness, which was not the prediction -- see probe_delay_producer*. sample_time_semantics is producer_release, so delaying the release delays the SAMPLE, and every input age drops by exactly the offset (max_input_age 100.55 -> 75.55 ms at a 25 ms offset, B=1). It is therefore unusable as a directional control and is a real limitation of the metric: measured age is reducible by re-phasing the sampling clock, with no change in perception quality.",
+    "period_scale": "{net: factor} multiplies a network's period and divides its instance count, i.e. changes its RATE. Unlike phase_ms this cannot be gamed by re-phasing: halving the producer's sampling rate raises the structural age floor by ~T/2 no matter where the samples land, so it is the directional control this experiment needs.",
+    "admit_cap": "int cap on admitted soft instances: admitted = min(B, cap). Trades soft utility for headroom directly. `contention_level` still records the OFFERED B, so admission control is never free in the reporting.",
+    "soft_phase_ms": "float start_time offset on the soft network, deferring its first release. Rate-limiting in time rather than in count."
+  },
+  "producer_reference_window_ms": 50.0,
+  "reuse_fixtures": true,
   "oracle_note": "The oracle row is a post-hoc upper bound: the best output_valid_rate available at each (B, phi) among the deployable policies. It is not a deployable policy.",
   "seeds": [
     0
@@ -112,64 +125,64 @@
   "time_unit": "ms",
   "schedule_digests_by_policy_burst": {
     "static_nominal|B0": {
-      "0": "8217479044186487158"
+      "0": "2029921466856094939"
     },
     "static_nominal|B1": {
-      "0": "3590858219033831570"
+      "0": "-3915479767345637580"
     },
     "static_nominal|B2": {
-      "0": "-7803262828093703275"
+      "0": "-4985441499051173824"
     },
     "static_nominal|B3": {
-      "0": "8476748053530373200"
+      "0": "6877986382061602366"
     },
     "static_nominal|B4": {
-      "0": "-544462948632066323"
+      "0": "-2780840639461093679"
     },
     "edf|B0": {
-      "0": "7229680910313095339"
+      "0": "7250115366582474210"
     },
     "edf|B1": {
-      "0": "5457630214370884795"
+      "0": "-3283349614187625182"
     },
     "edf|B2": {
-      "0": "8805851618919272708"
+      "0": "1001344664539931108"
     },
     "edf|B3": {
-      "0": "5258982533682521884"
+      "0": "3731925824331621156"
     },
     "edf|B4": {
-      "0": "-5229950212080215048"
+      "0": "1941800150058121445"
     },
     "heft|B0": {
-      "0": "-7327441779023118266"
+      "0": "-8644187198696075103"
     },
     "heft|B1": {
-      "0": "6700543957252065990"
+      "0": "428917003462801025"
     },
     "heft|B2": {
-      "0": "1965233607326281142"
+      "0": "5433883548600003643"
     },
     "heft|B3": {
-      "0": "5838753997644508816"
+      "0": "-4660759466826770817"
     },
     "heft|B4": {
-      "0": "-6324841513881705586"
+      "0": "-3907882802213786758"
     },
     "static_conservative|B0": {
-      "0": "-4524065744861890055"
+      "0": "2074866606008947510"
     },
     "static_conservative|B1": {
-      "0": "7400986760256522250"
+      "0": "-6020306915712288742"
     },
     "static_conservative|B2": {
-      "0": "4287537538746082870"
+      "0": "7199454693644080149"
     },
     "static_conservative|B3": {
-      "0": "-4887860681229409129"
+      "0": "-5733038840189623456"
     },
     "static_conservative|B4": {
-      "0": "-5689078192976343665"
+      "0": "-1765725991050411532"
     }
   },
   "determinism": {
@@ -196,10 +209,10 @@
   },
   "failures": [],
   "n_per_invocation_rows": 3500,
-  "n_aggregate_rows": 125,
+  "n_aggregate_rows": 115,
   "git": {
     "xpu-rt": {
-      "sha": "ff026672df819445bbeae9fe62ef9e287a3236d7",
+      "sha": "74df1eadc736a4f84ed6b7a55ff1a852ba93e219",
       "dirty": true
     },
     "ModelBlaster": {
