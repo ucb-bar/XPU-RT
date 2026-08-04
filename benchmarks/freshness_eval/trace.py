@@ -131,7 +131,9 @@ def load_fixture(path: str) -> Dict:
 
 
 def deadline_compliance(
-    invocations: List[Invocation], task: str
+    invocations: List[Invocation],
+    task: str,
+    reference_window: Optional[float] = None,
 ) -> Dict[str, object]:
     """Deadline statistics for one task, whichever role it plays.
 
@@ -141,20 +143,42 @@ def deadline_compliance(
     consumer's deadline success would let "the controller is fine but its input
     is old" be confused with "everything is on time but the data is old", which
     are different failures with different fixes.
+
+    `reference_window` guards a comparison hazard. One protection mechanism is
+    to TIGHTEN the producer's own window, which moves `Invocation.deadline` —
+    so the candidate's `_deadline_success_rate` is measured against a different
+    bar than the baseline's and the two are not comparable. Passing the
+    baseline window adds a `_vs_ref` series measured against a FIXED bar, which
+    is the one to compare across candidates. The self-relative series is still
+    reported, because "did it honour the deadline it was given" is the question
+    the solver was actually asked.
     """
     sel = [i for i in invocations if i.task == task and i.deadline is not None]
     if not sel:
-        return {
+        out: Dict[str, object] = {
             f"{task}_deadline_success_rate": None,
             f"{task}_max_lateness_ms": None,
             f"{task}_n_invocations": 0,
         }
+        if reference_window is not None:
+            out[f"{task}_deadline_success_rate_vs_ref"] = None
+            out[f"{task}_max_lateness_ms_vs_ref"] = None
+            out[f"{task}_reference_window_ms"] = reference_window
+        return out
     late = [i.end_time - i.deadline for i in sel]
-    return {
+    out = {
         f"{task}_deadline_success_rate": sum(1 for d in late if d <= 0) / len(sel),
         f"{task}_max_lateness_ms": max(late),
         f"{task}_n_invocations": len(sel),
     }
+    if reference_window is not None:
+        ref_late = [i.end_time - (i.release_time + reference_window) for i in sel]
+        out[f"{task}_deadline_success_rate_vs_ref"] = (
+            sum(1 for d in ref_late if d <= 0) / len(sel)
+        )
+        out[f"{task}_max_lateness_ms_vs_ref"] = max(ref_late)
+        out[f"{task}_reference_window_ms"] = reference_window
+    return out
 
 
 def soft_utility(
