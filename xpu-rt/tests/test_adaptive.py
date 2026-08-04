@@ -210,12 +210,41 @@ class BoundaryHonesty(unittest.TestCase):
         self.assertEqual(s["transition_violations"], 2)
 
     def test_evaluate_trajectories_surfaces_boundary_warnings(self):
-        rows = [_cell("C0", b, 0.9, makespan=310.0) for b in range(5)]
-        _, warnings = evaluate_trajectories(
-            rows, ["C0"], phi=PHI, epoch_ms=EPOCH,
+        # C0 overruns everywhere; C1 fits, so the oracle is still definable and
+        # the warning under test is about the boundary, not a missing oracle.
+        rows = ([_cell("C0", b, 0.9, makespan=310.0) for b in range(5)]
+                + [_cell("C1", b, 0.8, makespan=290.5) for b in range(5)])
+        results, warnings = evaluate_trajectories(
+            rows, ["C0", "C1"], phi=PHI, epoch_ms=EPOCH,
             trajectories={"t": [0, 1]})
         self.assertTrue(warnings)
         self.assertTrue(any("NOT meaningful" in w for w in warnings))
+        self.assertIn("oracle_contention_aware", {r.strategy for r in results})
+
+    def test_an_undefinable_oracle_is_skipped_with_a_warning_not_raised(self):
+        """When nothing fits at some burst there is no attainable bound. The
+        static and adaptive rows are still valid, so losing them to an exception
+        would discard good data to report a missing reference."""
+        rows = [_cell("C0", b, 0.9, makespan=310.0) for b in range(5)]
+        results, warnings = evaluate_trajectories(
+            rows, ["C0"], phi=PHI, epoch_ms=EPOCH,
+            trajectories={"t": [0, 1]})
+        strategies = {r.strategy for r in results}
+        self.assertNotIn("oracle_contention_aware", strategies)
+        self.assertIn("static_C0", strategies)
+        self.assertIn("adaptive", strategies)
+        self.assertTrue(any("NO oracle bound" in w for w in warnings), warnings)
+
+    def test_the_oracle_will_not_pick_an_overrunning_cell(self):
+        """The defect this guards against, reproduced from the real numbers: at
+        B=3 the best rate belonged to a 495 ms schedule (0.952) and the best
+        epoch-respecting one to a 297 ms schedule (0.933)."""
+        rows = [_cell("FAST", 3, 0.952, makespan=495.4, n_inv=42),
+                _cell("FITS", 3, 0.933, makespan=297.2, n_inv=30)]
+        t = CellTable(rows, PHI)
+        res = run_oracle_contention_aware(t, ["FAST", "FITS"], [3], "x", EPOCH)
+        self.assertEqual(res.epochs[0].candidate_id, "FITS")
+        self.assertAlmostEqual(res.epochs[0].output_valid_rate, 0.933)
 
 
 class EndToEnd(unittest.TestCase):

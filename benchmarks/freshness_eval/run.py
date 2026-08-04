@@ -30,8 +30,18 @@ per-instance intervals reflect the post-pass rather than the schedule. The
 effective setting is recorded in the manifest.
 
 The oracle is a post-hoc upper bound -- the best output_valid_rate available at
-each (B, phi) among the deployable policies. It is not a deployable policy and
-must not be reported as one.
+each (B, phi) among the policies IN THIS RUN whose schedule fits the epoch. It is
+not a deployable policy and must not be reported as one. Two further caveats:
+
+  * It is scoped to the run's policy set, not global. An oracle row from a
+    3-policy run is not comparable to one from a 19-policy run, and a candidate
+    measured in a different run can legitimately exceed it.
+  * It is restricted to EPOCH-RESPECTING cells. It was not always: the selection
+    originally ranked every cell by rate, and at B=3 / phi=A0+50 that made the
+    "upper bound" 0.952 -- taken from a 495 ms schedule scored over 42 consumer
+    invocations, when the best schedule that actually fits the 300 ms epoch
+    reaches 0.933 over 30. An upper bound that no admissible schedule can attain
+    is worse than no upper bound.
 """
 
 from __future__ import annotations
@@ -978,8 +988,20 @@ def main() -> int:
                       f"({wall:.1f}s)")
 
     # --- oracle: post-hoc upper bound, NOT a deployable policy ---
+    #
+    # Restricted to cells whose schedule FITS THE EPOCH. Ranking every cell by
+    # rate silently promoted overrunning schedules: at B=3 / phi=A0+50 the best
+    # rate was 0.952 from a 495 ms schedule scored over 42 consumer invocations,
+    # against 0.933 from the best schedule that fits the 300 ms epoch over 30. A
+    # bound no admissible schedule can reach is not an upper bound on anything
+    # the system could do -- it is an artifact of a longer trace.
+    #
+    # When no cell at a (B, phi) fits, NO oracle row is emitted. A missing bound
+    # is honest; a bound built from inadmissible schedules is not.
     best: Dict[Tuple[int, float], Dict] = {}
     for r in agg_rows:
+        if not r["fits_in_epoch"]:
+            continue
         key = (r["contention_level"], r["freshness_window"])
         cur = best.get(key)
         if cur is None or r["output_valid_rate"] > cur["output_valid_rate"]:
@@ -989,6 +1011,16 @@ def main() -> int:
         o["policy"] = ORACLE
         o["candidate_id"] = f"oracle<-{r['policy']}"
         agg_rows.append(o)
+
+    no_oracle = sorted(
+        {(r["contention_level"], r["freshness_window"]) for r in agg_rows}
+        - set(best)
+    )
+    if no_oracle:
+        print(f"\nNO oracle bound at {len(no_oracle)} (B, phi) point(s): every "
+              f"policy's schedule overruns the epoch there, so no admissible "
+              f"upper bound exists. Bursts affected: "
+              f"{sorted({int(b) for b, _ in no_oracle})}")
 
     # --- epoch comparability, stamped before anything is written -------------
     # A cell whose makespan exceeds the epoch is NOT comparable to one that fits.

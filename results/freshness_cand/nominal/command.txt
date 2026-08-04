@@ -1,0 +1,1 @@
+/scratch2/agustin/miniforge3/envs/merlin-dev/bin/python -m benchmarks.freshness_eval.run --config data/toplevel/freshness_canon_300ms.json --output-dir results/freshness_cand/nominal --seeds 0 --bursts 0,1,2,3,4 --policies static_nominal --reuse-fixtures
