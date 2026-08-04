@@ -41,6 +41,7 @@ Figures in `figures/freshness_adaptive/`:
 | `plot5_switching_headroom` | the ceiling: +1 instance, only for targets ≤ 0.833; zero over B≤3 |
 | `plot6_selector_timeline` | the selector on `step`: one epoch of a 2.7× overrun, then correct |
 | `plot7_signal_saturation` | **the cause** — risk flat at 1.124 across B=1…4 |
+| `plot8_signal_comparison` | downstream vs upstream signal per trajectory: every overrun removed |
 
 Plot 7 exists because plot 6 cannot show the cause: `step` visits only B=0 and B=4,
 so the flatness across B=1…4 is not in that trajectory's data.
