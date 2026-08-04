@@ -197,51 +197,71 @@ PROBES.update({
     # M3: rate-limit in time instead of in count -- same soft work, released
     # later. Separates "less soft work" from "soft work out of the way".
     #
-    # SWEPT, because 25 ms is exactly half the 50 ms producer period and a single
-    # working offset would be indistinguishable from a resonance artifact of that
-    # alignment. The discriminator:
-    #   - smooth improvement across offsets      -> a real mechanism
-    #   - only 25 works, and 50 behaves like 0   -> a phase effect, real but
-    #     fragile, and it must be reported as phase-sensitive rather than as
-    #     "deferring soft work helps"
-    # 50 ms is the control: a full producer period, which modulo the period is
-    # the same alignment as no deferral at all.
-    "probe_defer10": {
-        "solver": "greedy", "scheduler": "mosek",
-        "mutations": {"soft_phase_ms": 10.0},
-        "intent": "Defer the first soft release by 10 ms (1/5 of a DroNet period).",
+    # MEASURED RESULT (phi = A0+20, clean region B<=2, seed 0): monotone in the
+    # offset, every offset at least as good as no deferral, smallest offset best.
+    #
+    #     offset ms      0     10     25     40     50
+    #     B=1        0.633  0.900  0.833  0.733  0.700
+    #     B=2        0.400  0.867  0.733  0.533   (overruns epoch)
+    #
+    # Two assumptions in the original probe design were WRONG and are corrected
+    # here rather than quietly dropped:
+    #
+    #  (a) "50 ms is the phase control -- a full producer period is the same
+    #      alignment as no deferral." False. The offset is applied to the SOFT
+    #      network, whose period is epoch/admitted (300 ms at B=1, 150 at B=2,
+    #      100 at B=3), not to DroNet. A null control for a phase effect would
+    #      need offset == the soft period, which is a different value at every B,
+    #      so no single offset is a phase control. probe_defer50 is therefore a
+    #      point on the curve, not a control.
+    #  (b) The discriminator "only 25 works and 50 behaves like 0 -> resonance"
+    #      never fired: the response is monotone, which rules out resonance at a
+    #      single alignment. It does NOT yet establish the mechanism, because
+    #      monotone-decreasing-in-offset is the opposite of what "get soft work
+    #      out of the way" predicts (more deferral should help more). The offsets
+    #      below 10 ms exist to find where the curve turns over.
+    **{
+        f"probe_defer{int(o)}": {
+            "solver": "greedy", "scheduler": "mosek",
+            "mutations": {"soft_phase_ms": float(o)},
+            "intent": f"Defer the first soft release by {int(o)} ms.",
+        }
+        for o in (2, 5, 10, 15, 20, 25, 30, 40, 50)
     },
-    "probe_defer25": {
-        "solver": "greedy", "scheduler": "mosek",
-        "mutations": {"soft_phase_ms": 25.0},
-        "intent": "Defer the first soft release by 25 ms (half a DroNet period).",
-    },
-    "probe_defer40": {
-        "solver": "greedy", "scheduler": "mosek",
-        "mutations": {"soft_phase_ms": 40.0},
-        "intent": "Defer the first soft release by 40 ms (4/5 of a DroNet period).",
-    },
-    "probe_defer50": {
-        "solver": "greedy", "scheduler": "mosek",
-        "mutations": {"soft_phase_ms": 50.0},
-        "intent": (
-            "PHASE CONTROL: defer by a full DroNet period. Modulo the period "
-            "this is the same alignment as no deferral, so if deferral works by "
-            "phase this should look like static_nominal, and if it works by "
-            "'soft work starts later' it should still help."
-        ),
-    },
-    # M4: directional control, expected to HURT. greedy_periodic deliberately
-    # deprioritises periodic work so non-periodic makespan shrinks -- the
-    # producer is periodic, so freshness should get worse. If it does not, the
-    # metric is not measuring what it claims to and the other probes mean
-    # nothing.
+    # M4: directional control, expected to HURT.
+    #
+    # MEASURED RESULT: INERT -- bit-identical schedules to static_nominal at
+    # every B (same invocation set, same makespan to 4 decimal places). So this
+    # control did NOT function as a control, and must not be reported as a
+    # passed falsification test.
+    #
+    # Cause: every network in this workload is periodic, so "deprioritise
+    # periodic work" has nothing to deprioritise it RELATIVE TO -- greedy_periodic
+    # and greedy order the same set the same way. The control was mis-specified,
+    # not the metric. It is kept in the vocabulary as a documented null result;
+    # probe_soft_first below is the replacement that can actually be worse.
     "probe_nonperiodic_priority": {
         "solver": "greedy_periodic", "scheduler": "mosek",
         "mutations": {},
         "intent": (
-            "FALSIFICATION CONTROL, expected to be WORSE: non-periodic priority "
-            "deprioritises the periodic producer."
+            "MIS-SPECIFIED CONTROL, measured INERT: intended to deprioritise the "
+            "periodic producer, but all networks here are periodic so it reduces "
+            "to plain greedy. Retained as a recorded null result."
+        ),
+    },
+    # M4': the replacement directional control. If deferring soft work helps,
+    # then ADVANCING it -- releasing the whole soft burst at t=0 with the
+    # producer, which is what static_nominal already does -- should be the worst
+    # case, and a NEGATIVE offset is not expressible. So instead invert the
+    # mechanism the other way: tighten the SOFT window so soft work becomes a
+    # hard constraint competing with the producer rather than sheddable
+    # interference. Expected to be WORSE than static_nominal at B>=1.
+    "probe_soft_first": {
+        "solver": "greedy", "scheduler": "mosek",
+        "mutations": {"window_duration": {"yolov8_nano_64": 75.0}},
+        "intent": (
+            "FALSIFICATION CONTROL, expected WORSE: give the soft network a tight "
+            "window so it competes as a constraint instead of being sheddable."
         ),
     },
 })
@@ -339,9 +359,15 @@ def materialise(base: Dict, *, burst: int, mutations: Optional[Dict],
     # reference window (see trace.deadline_compliance).
     for net, win in (mutations.get("window_duration") or {}).items():
         if net not in nets:
+            # Distinguish a typo from a network legitimately dropped by admission
+            # control (the soft network is removed entirely at burst 0). Raising
+            # on the latter would make any soft-side window mutation crash at
+            # B=0; silently ignoring the former would hide a dead mutation.
+            if net in base["networks"]:
+                continue
             raise ValueError(
-                f"window_duration mutation names {net!r}, which is not in this "
-                f"workload ({sorted(nets)})"
+                f"window_duration mutation names {net!r}, which is not a network "
+                f"in this workload ({sorted(base['networks'])})"
             )
         w = float(win)
         period = float(nets[net].get("period", w))
@@ -530,6 +556,17 @@ def main() -> int:
                     help="wall-clock cap per (policy, B, seed) cell; a cell that "
                          "exceeds it is recorded as a failure rather than "
                          "stalling the sweep")
+    ap.add_argument("--stem-tag", default="",
+                    help="disambiguator inserted into every fixture stem. REQUIRED "
+                         "when sweeping a config that is not the canonical one: "
+                         "stems are (policy, B, seed) only, so two different "
+                         "workloads swept with the same policy names overwrite each "
+                         "other's fixtures. That has already happened once -- the "
+                         "25 MHz clock-invariance control clobbered three "
+                         "static_nominal fixtures. The content-hash sidecar makes "
+                         "the collision safe (it forces a re-solve rather than "
+                         "silently reusing the wrong schedule); this flag makes it "
+                         "not happen.")
     args = ap.parse_args()
 
     cfg_path = args.config if os.path.isabs(args.config) else os.path.join(_REPO, args.config)
@@ -602,7 +639,8 @@ def main() -> int:
         spec = ALL_POLICIES[policy]
         for burst in bursts:
             for seed in seeds:
-                stem = f"_fx_{policy}_B{burst}_s{seed}"
+                stem = f"_fx_{args.stem_tag + '_' if args.stem_tag else ''}" \
+                       f"{policy}_B{burst}_s{seed}"
                 cfg = materialise(
                     base, burst=burst, mutations=spec.get("mutations"),
                     epoch_ms=epoch_ms, seed=seed,
@@ -613,7 +651,12 @@ def main() -> int:
                     work_dir=work_dir, cell_timeout_s=args.cell_timeout,
                     reuse_fixtures=args.reuse_fixtures,
                 )
-                if status != "ok":
+                # run_schedule distinguishes a fresh solve ("ok") from a verified
+                # reuse ("ok (reused fixture)"); both are successes. Comparing for
+                # exact equality here silently turned all 57 reused cells into
+                # "failures" with a passing status string, which is the worst kind
+                # of bug -- it drops data while the manifest looks fine.
+                if not status.startswith("ok"):
                     print(f"  [FAIL] {policy:<20} B={burst} seed={seed}: {status}")
                     failures.append({
                         "policy": policy, "burst": burst, "seed": seed,
@@ -723,6 +766,29 @@ def main() -> int:
         o["policy"] = ORACLE
         o["candidate_id"] = f"oracle<-{r['policy']}"
         agg_rows.append(o)
+
+    # --- epoch comparability, stamped before anything is written -------------
+    # A cell whose makespan exceeds the epoch is NOT comparable to one that fits.
+    # When the schedule overruns, greedy's horizon search extends the horizon and
+    # adds instances, so the rates are computed over a longer trace with a
+    # different denominator: static_nominal at B=3 is scored over 41 consumer
+    # invocations across 483 ms, while probe_defer10 at the same B is scored over
+    # 30 across 297 ms. Ranking those two against each other compares a policy to
+    # a different experiment, not to a different policy.
+    #
+    # Recorded as a column rather than filtered out: which B are comparable is a
+    # property of the workload worth knowing, and an overrunning cell is still
+    # valid evidence that the workload does not fit at that contention level.
+    overrun_by_b: Dict[int, List[str]] = {}
+    for r in agg_rows:
+        if r["policy"] != ORACLE and not r["fits_in_epoch"]:
+            overrun_by_b.setdefault(int(r["contention_level"]), []).append(r["policy"])
+    comparable_b = sorted(
+        b for b in {int(r["contention_level"]) for r in agg_rows}
+        if b not in overrun_by_b
+    )
+    for r in agg_rows:
+        r["epoch_comparable"] = int(r["contention_level"]) in comparable_b
 
     # --- write artifacts ---
     inv_csv = os.path.join(out_dir, "per_invocation.csv")
@@ -842,6 +908,15 @@ def main() -> int:
               f"{(r.get(prod_key) if r.get(prod_key) is not None else float('nan')):>9.3f}"
               f"{r['soft_instances_completed']:>6}")
 
+    print()
+    print("Epoch comparability (makespan <= epoch): cross-policy ranking is only "
+          "well-posed where EVERY policy fits.")
+    print(f"  comparable contention levels: {comparable_b}")
+    for b in sorted(overrun_by_b):
+        pols = sorted(set(overrun_by_b[b]))
+        print(f"  B={b}: NOT comparable -- {len(pols)} policy/policies overrun the "
+              f"epoch: {', '.join(pols[:6])}{' ...' if len(pols) > 6 else ''}")
+
     # Operating points where local deadline success hides invalid output.
     flagged = [
         r for r in agg_rows
@@ -858,15 +933,30 @@ def main() -> int:
               f"deadline={r['deadline_success_rate']:.3f} "
               f"output_valid={r['output_valid_rate']:.3f} "
               f"divergence={r['divergence']:.3f}")
-    if agg_rows:
-        worst = max((r for r in agg_rows if r["policy"] != ORACLE),
-                    key=lambda r: r["divergence"])
-        print()
-        print(f"Largest divergence: {worst['divergence']:.3f} at "
-              f"{worst['policy']} B={int(worst['contention_level'])} "
-              f"phi={worst['freshness_window']:.1f} "
-              f"(deadline {worst['deadline_success_rate']:.3f}, "
-              f"output_valid {worst['output_valid_rate']:.3f})")
+    # The headline divergence is taken from cells that FIT the epoch. Divergence
+    # is a within-cell claim, so an overrunning cell still exhibits it -- but its
+    # rate is over a trace longer than the epoch the experiment specifies, so it
+    # cannot be the number that gets quoted.
+    def _worst(rows):
+        return max(rows, key=lambda r: r["divergence"]) if rows else None
+
+    deployable = [r for r in agg_rows if r["policy"] != ORACLE]
+    worst_fit = _worst([r for r in deployable if r["fits_in_epoch"]])
+    worst_any = _worst(deployable)
+    print()
+    if worst_fit:
+        print(f"Largest divergence (schedule fits the epoch): "
+              f"{worst_fit['divergence']:.3f} at "
+              f"{worst_fit['policy']} B={int(worst_fit['contention_level'])} "
+              f"phi={worst_fit['freshness_window']:.1f} "
+              f"(deadline {worst_fit['deadline_success_rate']:.3f}, "
+              f"output_valid {worst_fit['output_valid_rate']:.3f})")
+    if worst_any and worst_any is not worst_fit:
+        print(f"Largest divergence overall (epoch OVERRUN, rate is over a "
+              f"{worst_any['makespan_ms']:.0f} ms trace, not the "
+              f"{worst_any['epoch_ms']:.0f} ms epoch -- do not quote): "
+              f"{worst_any['divergence']:.3f} at {worst_any['policy']} "
+              f"B={int(worst_any['contention_level'])}")
 
     nondet = [k for k, v in manifest["determinism"].items() if v != "identical across seeds"]
     if nondet:
