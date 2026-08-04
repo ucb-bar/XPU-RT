@@ -1,0 +1,14 @@
+{
+  "xpu-rt": {
+    "sha": "636af76222d1e4e545a9566bd8ed8133e7454a55",
+    "dirty": true
+  },
+  "ModelBlaster": {
+    "sha": "16b7b52d25cd139f4af726dacb5b4139545388b1",
+    "dirty": true
+  },
+  "zephyr-chipyard-sw": {
+    "sha": "03ee2e2604d81f14efaa0e499a32c17dcf92a26e",
+    "dirty": true
+  }
+}
