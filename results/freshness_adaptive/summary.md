@@ -13,7 +13,20 @@ Reproduce:
 ```bash
 python -m benchmarks.freshness_eval.headroom --deltas 5,20,50
 python -m benchmarks.freshness_eval.adaptive --delta 20
+python -m benchmarks.freshness_eval.plot_adaptive
 ```
+
+Figures in `figures/freshness_adaptive/`:
+
+| figure | shows |
+|---|---|
+| `plot4_candidate_ladder` | the ladder — validity up, soft utility down, monotone at every B |
+| `plot5_switching_headroom` | the ceiling: +1 instance, only for targets ≤ 0.833; zero over B≤3 |
+| `plot6_selector_timeline` | the selector on `step`: one epoch of a 2.7× overrun, then correct |
+| `plot7_signal_saturation` | **the cause** — risk flat at 1.124 across B=1…4 |
+
+Plot 7 exists because plot 6 cannot show the cause: `step` visits only B=0 and B=4,
+so the flatness across B=1…4 is not in that trajectory's data.
 
 ---
 
@@ -146,8 +159,17 @@ retune, and it is out of scope here.
   cells (makespan ~290.5 ms in a 300 ms epoch); for the overrunning cells the assumption
   fails, which is exactly why those strategies are reported as inadmissible instead of
   scored.
-- **One seed.** Schedules were verified identical across seeds for the cells that were
-  swept with more than one, but the 5-seed requirement is not yet met.
+- **One seed, and the reason is structural rather than expedient.** `seed` reaches the
+  config only as `scheduler.random_seed`, whose three consumers in this tree are
+  synthetic runtime generation (unreachable here — the sweep runs profiled durations
+  with `strict=True`), the `random_list` scheduler (never selected), and CP-SAT (which
+  hardcodes 42). The schedulers used are deterministic. So five seeds produce five
+  identical schedules, and reporting a seed band from them would imply a robustness
+  check that did not happen. The robustness axes here are B and φ. Pinned by
+  `test_sweep_integrity.SeedIsNotAVarianceSource`, and confirmed empirically in
+  `results/freshness_seeds/` (5 seeds × 3 bursts × 2 policies, schedule digests
+  compared). An earlier draft of this note claimed seed never reaches the config at
+  all, which is false.
 - **Four fixed trajectories**, chosen in advance and pinned by a test so they cannot be
   tuned until adaptive wins.
 - Freshness is imposed and evaluated analytically, not observed: no DroNet→MLP dataflow
