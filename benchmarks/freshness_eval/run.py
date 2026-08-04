@@ -531,6 +531,13 @@ def compute_a0(base: Dict, *, epoch_ms: float, edge) -> Dict[str, object]:
         "producer_period_ms": tp, "producer_latency_ms": lp,
         "consumer_period_ms": tc, "consumer_latency_ms": lc,
         "fast_cluster_hw": hw,
+        # When the producer's FIRST instance could finish with the machine to
+        # itself. Consumers starting before this are unservable no matter what the
+        # scheduler does -- the pipeline starts empty. Anchored on the uncontended
+        # latency and the producer's own release, so it is a workload constant
+        # shared by every policy; a per-policy value would excuse a policy for the
+        # producer starvation it caused.
+        "pipeline_fill_ms": float(base["networks"][p_net].get("start_time", 0.0)) + lp,
     })
     return res
 
@@ -721,6 +728,10 @@ def main() -> int:
                         seed=seed, policy=policy, candidate_id=policy,
                         contention_level=float(burst), epoch_length=epoch_ms,
                         time_unit="ms",
+                        # A workload constant, identical for every policy, so a
+                        # policy cannot earn credit for the producer starvation it
+                        # itself caused.
+                        pipeline_fill_ms=float(a0_info["pipeline_fill_ms"]),
                         provenance={
                             "timing_source": "firesim_measured",
                             "measured_or_derived": "measured_cycles_derived_ms",
