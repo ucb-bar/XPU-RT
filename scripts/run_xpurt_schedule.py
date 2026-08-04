@@ -210,6 +210,12 @@ def schedule_iree_networks(
     profile_topo_tag = cfg["profile_topo_tag"]
     profile_topo_tag_override = cfg["profile_topo_tag_override"]
     profile_topo_tag_per_hw = cfg["profile_topo_tag_per_hw"]
+    # `gen_root` selects which profile tree the timings come from. It was parsed
+    # into cfg and then never read by anything, so a config naming an alternate
+    # tree silently got the default one -- i.e. a run could be labelled with one
+    # timing basis while actually using another. Defaulting to "gen" preserves
+    # every existing config, whose value is either absent or literally "gen".
+    gen_root = cfg.get("gen_root") or "gen"
     effective_p_core_speedup = cfg["p_core_speedup"]
     effective_random_seed = cfg["random_seed"]
     effective_solver_verbosity = cfg["solver_verbosity"]
@@ -290,6 +296,7 @@ def schedule_iree_networks(
             rng=rng,
             p_core_speedup=effective_p_core_speedup,
             topo_tag_override=tt_override,
+            gen_root=gen_root,
         )
 
     def _build_workload():
@@ -589,21 +596,39 @@ def schedule_iree_networks(
     plot_profile_hw = {k.upper(): v for k, v in profile_hw_map.items()}
     plot_profile_hw.setdefault(CPU_P, cpu_p_profile_hw)
     plot_profile_hw.setdefault(CPU_E, cpu_e_profile_hw)
-    plot.plot_optimization_schedule(
-        combined_workload.get_durations(),
-        t,
-        alpha,
-        num_jobs,
-        len(combined_workload.machines),
-        combined_workload.machines,
-        combined_workload.get_transfer_times(),
-        save_path=plot_path,
-        plot_title=f"{title_networks} {title_solver}Schedule ({n_cores} cores) (Periodic)",
-        workload=combined_workload,
-        profile_hw=plot_profile_hw,
-    )
-
-    print(f"\nPlot saved to {plot_path}")
+    # The Gantt render must never be able to destroy the run's data. It used to:
+    # this call precedes output_scheduled_json, and on large schedules
+    # matplotlib/FreeType raised "raster overflow" while rasterising a glyph,
+    # aborting the process after the solve had already succeeded. A sweep lost
+    # 14 of 45 cells that way -- every cell at contention B>=3, i.e. exactly the
+    # oversubscribed points the experiment exists to measure.
+    #
+    # plot.py now scales dpi down and retries, so this should be rare; the guard
+    # stays because a cosmetic artifact is never worth a solved schedule. The
+    # failure is printed loudly rather than swallowed, since a per-cell Gantt is
+    # a required deliverable and a silently missing one would be worse than a
+    # noisy one.
+    plot_ok, plot_error = True, None
+    try:
+        plot.plot_optimization_schedule(
+            combined_workload.get_durations(),
+            t,
+            alpha,
+            num_jobs,
+            len(combined_workload.machines),
+            combined_workload.machines,
+            combined_workload.get_transfer_times(),
+            save_path=plot_path,
+            plot_title=f"{title_networks} {title_solver}Schedule ({n_cores} cores) (Periodic)",
+            workload=combined_workload,
+            profile_hw=plot_profile_hw,
+        )
+        print(f"\nPlot saved to {plot_path}")
+    except Exception as exc:  # noqa: BLE001 - a plot must not abort the solve
+        plot_ok, plot_error = False, f"{type(exc).__name__}: {exc}"
+        print(f"\nWARN: Gantt plot FAILED and was skipped: {plot_error}")
+        print(f"WARN: the schedule itself is unaffected and will still be "
+              f"written to {json_output_path}")
 
     os.makedirs("schedules", exist_ok=True)
     print(f"\nOutputting scheduled JSON...")

@@ -561,23 +561,42 @@ def plot_optimization_schedule(durations, t, alpha, num_jobs, num_machines, mach
 
     plt.tight_layout()
 
-    # Save the plot with dynamic filename. Dense schedules (many short
-    # dispatches crammed into a fixed-size figure) can hit a freetype
-    # "raster overflow" at high dpi regardless of legend size -- retry at
-    # progressively lower dpi rather than losing the plot entirely; a
-    # render failure must never block the schedule JSON write that follows
-    # this call, since the plot is a visualization aid, not the deliverable.
+    # Save the plot with dynamic filename.
+    #
+    # dpi is adaptive rather than a fixed 500. A 12x6 figure at dpi=500 is
+    # 6000x3000 px BEFORE bbox_inches='tight' expands the canvas to include the
+    # legend anchored outside the axes; on a large schedule (measured: 2629 ops
+    # at contention B=4) FreeType then fails with
+    # "raster overflow; error code 0x62" while rasterising a glyph, and the
+    # whole run dies. That cost a sweep 14 of 45 cells -- the schedules had been
+    # solved but the fixture is written AFTER this call, so a cosmetic plot
+    # failure destroyed the scientific output.
+    #
+    # So: scale dpi down as the schedule grows, and retry at successively lower
+    # dpi if the rasteriser still refuses. A lower-resolution Gantt is a fine
+    # outcome; losing the schedule is not.
+    #
+    # The figure is closed in a finally: a sweep renders dozens of these, and a
+    # leaked figure per cell is a real memory cost even when the save succeeded.
     print(f"Saving plot to {save_path}...")
+    n_ops = len(durations) if durations is not None else 0
+    dpi = 500 if n_ops < 800 else max(120, int(500 * (800.0 / n_ops) ** 0.5))
+    last_err = None
     try:
-        for dpi in (500, 300, 200, 150, 100):
+        for attempt_dpi in (dpi, 200, 120, 80):
             try:
-                plt.savefig(save_path, dpi=dpi, bbox_inches='tight')
-                if dpi != 500:
-                    print(f"  (saved at dpi={dpi} after higher dpi failed to render)")
+                plt.savefig(save_path, dpi=attempt_dpi, bbox_inches='tight')
+                if attempt_dpi != dpi:
+                    print(f"  note: fell back to dpi={attempt_dpi} after a "
+                          f"rasteriser failure at dpi={dpi}")
+                last_err = None
                 break
-            except RuntimeError as exc:
-                print(f"  dpi={dpi} failed ({exc}), retrying lower...")
-        else:
-            print(f"WARNING: failed to save plot to {save_path} at all attempted dpi levels")
+            except (RuntimeError, ValueError) as exc:
+                last_err = exc
+                print(f"  warning: savefig failed at dpi={attempt_dpi}: {exc}")
     finally:
         plt.close()
+    if last_err is not None:
+        # Re-raise so the caller can decide; run_xpurt_schedule.py treats a plot
+        # failure as non-fatal precisely so the fixture still gets written.
+        raise last_err
