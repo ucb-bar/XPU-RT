@@ -94,10 +94,21 @@ MUTATION_KEYS = {
     "phase_ms": (
         "{net: ms} start_time offset on ANY network. Distinct from "
         "soft_phase_ms, which is kept because it is baked into 60 already-solved "
-        "fixture hashes and folding the two would force a full re-solve. Use "
-        "this for the producer: greedy honours release times (min_start_t) even "
-        "though it ignores window_duration, so a producer offset is the one "
-        "directional control this workload has that greedy actually responds to."
+        "fixture hashes and folding the two would force a full re-solve. "
+        "MEASURED: applied to the PRODUCER this IMPROVES freshness, which was not "
+        "the prediction -- see probe_delay_producer*. sample_time_semantics is "
+        "producer_release, so delaying the release delays the SAMPLE, and every "
+        "input age drops by exactly the offset (max_input_age 100.55 -> 75.55 ms "
+        "at a 25 ms offset, B=1). It is therefore unusable as a directional "
+        "control and is a real limitation of the metric: measured age is reducible "
+        "by re-phasing the sampling clock, with no change in perception quality."
+    ),
+    "period_scale": (
+        "{net: factor} multiplies a network's period and divides its instance "
+        "count, i.e. changes its RATE. Unlike phase_ms this cannot be gamed by "
+        "re-phasing: halving the producer's sampling rate raises the structural "
+        "age floor by ~T/2 no matter where the samples land, so it is the "
+        "directional control this experiment needs."
     ),
     "admit_cap": (
         "int cap on admitted soft instances: admitted = min(B, cap). Trades "
@@ -257,29 +268,64 @@ PROBES.update({
         }
         for o in (2, 5, 7, 8, 10, 12, 15, 17, 18, 20, 25, 30, 40, 50)
     },
-    # M5: the directional control that greedy actually responds to.
+    # M5: attempt at a directional control by delaying the producer.
     #
-    # Both earlier attempts were INERT because both used window_duration, which
-    # greedy ignores (see MUTATION_KEYS). greedy does honour release times, so
-    # delaying the PRODUCER is a mechanism it will act on, and the prediction is
-    # unambiguous: the consumer's input can only get older, so freshness must get
-    # WORSE. If it does not, the metric is not measuring what it claims and every
-    # other probe here is uninterpretable.
+    # PREDICTION WRONG, and the reason is a real limitation of the metric rather
+    # than a bug. Measured at phi = A0+20:
     #
-    # pipeline_fill_ms is deliberately NOT moved by this mutation (it is computed
-    # from the base config), so the extra consumer invocations left with no
-    # producer at all are charged to the policy rather than excused.
+    #                     B=0    B=1    B=2    B=3
+    #   baseline         .933   .633   .400   .220!
+    #   producer +10ms   .900   .667   .467   .317!
+    #   producer +25ms   .833   .700   .600   .561!
+    #
+    # Worse at B=0 as predicted, BETTER above it. Cause: the edge declares
+    # sample_time_semantics = producer_release, so input age is measured from when
+    # the producer was RELEASED, not when it finished. Delaying the release delays
+    # the sample, and every age drops by exactly the offset -- max_input_age goes
+    # 100.55 -> 75.55 ms at B=1 with a 25 ms offset, and the stale count goes 2 ->
+    # 0. The offset also leaves more early consumers with no producer at all
+    # (no_producer 2 -> 5 at B=0), which is why B=0 gets worse; above B=0 the age
+    # reduction dominates.
+    #
+    # So measured freshness is reducible by re-phasing the sampling clock, with no
+    # improvement in perception quality and no change in scheduling behaviour. That
+    # must be stated as a limitation. It also means these two probes are NOT
+    # controls; they are kept as the evidence for the limitation.
+    #
+    # It does NOT contaminate the soft-deferral result: soft_phase_ms moves the
+    # SOFT network's releases, leaving DroNet's sample times at 0, 50, 100, ...
+    # unchanged, so probe_defer*'s gain comes from the consumer reading a newer
+    # producer instance rather than from a redefined sample time.
+    #
+    # pipeline_fill_ms is computed from the BASE config and so does not follow the
+    # mutation -- the extra unserved consumers are charged, not excused.
     **{
         f"probe_delay_producer{int(o)}": {
             "solver": "greedy", "scheduler": "mosek",
             "mutations": {"phase_ms": {"dronet": float(o)}},
             "intent": (
-                f"FALSIFICATION CONTROL, expected WORSE: delay the producer's "
-                f"first release by {int(o)} ms, so every consumer reads an older "
-                f"input."
+                f"NOT A CONTROL, measured BETTER not worse: delaying the producer "
+                f"release by {int(o)} ms delays the SAMPLE, so every input age "
+                f"drops by {int(o)} ms under producer_release semantics. Evidence "
+                f"for a metric limitation."
             ),
         }
         for o in (10, 25)
+    },
+    # M6: the directional control that survives the sample-time objection.
+    #
+    # Halving the producer's sampling rate raises the structural age floor by ~T/2
+    # regardless of where the samples land, and phi stays anchored on the BASE
+    # config's A0, so this must lose against a fixed window. There is no re-phasing
+    # that recovers it and no scheduling decision that avoids it.
+    "probe_slow_producer": {
+        "solver": "greedy", "scheduler": "mosek",
+        "mutations": {"period_scale": {"dronet": 2.0}},
+        "intent": (
+            "FALSIFICATION CONTROL, expected WORSE: halve the producer's sampling "
+            "rate (period 50 -> 100 ms, 6 -> 3 instances), raising the structural "
+            "age floor against a phi anchored on the unscaled workload."
+        ),
     },
     # M4: directional control, expected to HURT.
     #
@@ -423,6 +469,35 @@ def materialise(base: Dict, *, burst: int, mutations: Optional[Dict],
                 f"workload ({sorted(base['networks'])})"
             )
         nets[net]["start_time"] = float(off)
+
+    # Rate change: period *= factor, instances /= factor, so the network still
+    # spans the epoch. This moves the workload's structural age floor, which is
+    # the point -- phi stays anchored on the BASE config's A0, so a slower
+    # producer must lose against a fixed window for a structural reason.
+    for net, factor in (mutations.get("period_scale") or {}).items():
+        if net not in nets:
+            if net in base["networks"]:
+                continue
+            raise ValueError(
+                f"period_scale mutation names {net!r}, which is not a network in "
+                f"this workload ({sorted(base['networks'])})"
+            )
+        k = float(factor)
+        if k <= 0:
+            raise ValueError(f"period_scale for {net!r} must be positive, got {k}")
+        info = nets[net]
+        info["period"] = float(info["period"]) * k
+        info["window_duration"] = float(info.get("window_duration",
+                                                 info["period"])) * k
+        if "num_instances" in info:
+            n = int(round(float(info["num_instances"]) / k))
+            if n < 1:
+                raise ValueError(
+                    f"period_scale {k} on {net!r} leaves {n} instances; a network "
+                    f"scaled out of existence is a different workload, not a "
+                    f"mutation of this one"
+                )
+            info["num_instances"] = n
 
     # Tightening a network's own window moves its max_end_t. For the producer
     # that is the point; it also moves that network's own deadline, which is

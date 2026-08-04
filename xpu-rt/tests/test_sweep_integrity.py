@@ -185,9 +185,15 @@ class ProbeDesignHonesty(unittest.TestCase):
                 "window_duration", muts,
                 f"{name} is a control built on window_duration, which is measured "
                 f"inert on greedy -- it cannot falsify anything")
+            self.assertNotIn(
+                "phase_ms", muts,
+                f"{name} is a control built on a producer phase offset, which was "
+                f"MEASURED to improve freshness (delaying the release delays the "
+                f"sample under producer_release semantics) -- it cannot falsify")
             self.assertTrue(
-                set(muts) & {"phase_ms", "soft_phase_ms", "admit_cap"},
-                f"{name} must use a lever greedy responds to; got {sorted(muts)}")
+                set(muts) & {"period_scale", "admit_cap"},
+                f"{name} must use a lever that moves the structural age floor and "
+                f"cannot be gamed by re-phasing; got {sorted(muts)}")
 
     def test_both_inert_controls_are_recorded_as_inert(self):
         for name in ("probe_nonperiodic_priority", "probe_soft_first"):
