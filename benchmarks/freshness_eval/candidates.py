@@ -112,11 +112,16 @@ class GateResult:
             "",
         ]
         for cid, d in self.per_candidate.items():
+            # The baseline's "margin" is against itself and is always 0, so
+            # flagging it as unquotable is noise.
+            flag = ("" if d["verdict"] == "baseline"
+                    or d.get("margin_epoch_comparable", True)
+                    else " [margin NOT quotable]")
             lines.append(
                 f"  {cid:<24} region={d['region']} "
                 f"output_valid={d['candidate_output_valid']} "
                 f"nominal={d['nominal_output_valid']} "
-                f"margin={d['margin']} -> {d['verdict']}"
+                f"margin={d['margin']}{flag} -> {d['verdict']}"
             )
         if self.findings:
             lines += ["", "findings:"] + [f"  - {f}" for f in self.findings]
@@ -145,6 +150,26 @@ def _rates_by_burst(rows, policy: str, phi: float, metric: str) -> Dict[int, flo
             continue
         acc.setdefault(b, []).append(float(v))
     return {b: _mean(v) for b, v in sorted(acc.items()) if _mean(v) is not None}
+
+
+def _overrun_bursts(rows, policy: str, phi: float) -> List[int]:
+    """Bursts where this policy's schedule does NOT fit the epoch.
+
+    A rate measured on an overrunning schedule is computed over a longer trace
+    with more consumer invocations, so it does not share a denominator with a
+    rate from a fitting schedule. Margins spanning such a cell are directionally
+    meaningful but not quotable, and the gate says so rather than printing a
+    clean-looking number.
+    """
+    out = []
+    for r in rows:
+        if r.get("policy") != policy:
+            continue
+        if abs(float(r["freshness_window"]) - phi) > 1e-6:
+            continue
+        if r.get("fits_in_epoch") == "False":
+            out.append(int(float(r["contention_level"])))
+    return sorted(set(out))
 
 
 def validate_candidate_set(
@@ -215,11 +240,33 @@ def validate_candidate_set(
                 f"candidate that does not protect. Do NOT build a selector on it."
             )
 
+        # A margin is only quotable if BOTH sides fit the epoch everywhere in the
+        # region. Where they do not, the verdict still stands (the candidate is
+        # better, and the nominal's overrun is itself a failure) but the number
+        # must not be reported as a rate difference.
+        nom_over = [b for b in _overrun_bursts(aggregate_rows, nominal_id, phi)
+                    if b in region]
+        cand_over = [b for b in _overrun_bursts(aggregate_rows, c.candidate_id, phi)
+                     if b in region]
+        comparable = not (nom_over or cand_over)
+        if c.protection_level > 0 and not comparable:
+            res.findings.append(
+                f"{c.candidate_id}: margin {margin:+.3f} is NOT epoch-comparable "
+                f"-- overrunning cells in the region: "
+                f"nominal at B={nom_over or 'none'}, candidate at "
+                f"B={cand_over or 'none'}. Those rates are over longer traces "
+                f"with different invocation counts. Verdict stands (an overrun "
+                f"is itself a failure); do not quote the margin."
+            )
+
         res.per_candidate[c.candidate_id] = {
             "region": region,
             "candidate_output_valid": None if cv is None else round(cv, 4),
             "nominal_output_valid": None if nv is None else round(nv, 4),
             "margin": None if margin is None else round(margin, 4),
+            "margin_epoch_comparable": comparable,
+            "overrun_bursts_nominal": nom_over,
+            "overrun_bursts_candidate": cand_over,
             "verdict": verdict,
             "by_burst": {b: round(cand[b], 4) for b in sorted(cand)},
             "run_label": run_label,
@@ -284,3 +331,108 @@ def build_candidate_set(
         for c in sorted(candidates, key=lambda c: c.protection_level)
     ]
     return out, gate
+
+
+# --- the ladder for this workload -------------------------------------------
+#
+# Assembled only from mechanisms the probe sweep measured to work, with the
+# region boundaries taken from where they were measured to work rather than from
+# where they were hoped to.
+#
+# The shape is forced by three measurements, and the last one is inconvenient:
+#
+#  1. Soft deferral in [10, 18] ms weakly DOMINATES no deferral across all 20
+#     measured (phi, B) cells at B<=3 -- equal at B=0, strictly better in the
+#     other 16 -- while shedding no soft work and, at B=3, fitting the 300 ms
+#     epoch where the baseline's schedule does not. There is therefore NO
+#     operating region in which the unprotected schedule is the right choice.
+#     C0 is kept as the reference the gate scores against, not as a rung a
+#     selector would ever choose.
+#
+#  2. At B=4 that dominance ends: deferral alone overruns the epoch (806 ms
+#     against a 300 ms budget) and so is not a deployable choice there at all,
+#     whatever its rate. Admission capping ON TOP OF deferral is what survives:
+#     at phi=A0+20, admit2 holds 0.867 and admit1 holds 0.900 at every burst.
+#
+#  3. Adaptive switching is therefore worth almost nothing on this workload, and
+#     the bound is exact rather than a guess (see `adaptive.py`, which computes
+#     it):
+#
+#       * over bursts 0..3, a single static rung is optimal at EVERY validity
+#         target -- switching gains exactly zero;
+#       * over bursts 0..4, switching gains exactly ONE soft instance out of the
+#         10 offered (3/3 instead of 2/3 at B=3), and only for validity targets
+#         <= 0.833. Above that it gains zero again.
+#
+#     The cause is that the protective mechanism is nearly free: deferral costs
+#     no utility, so a permanently conservative rung is barely worse than the
+#     best per-burst choice, and there is almost nothing for adaptation to
+#     reclaim. That is a property of this workload, not a bug in the selector,
+#     and it has to be reported as the headline for the adaptive phase rather
+#     than buried under a selector that technically works.
+LADDER_PHI_DELTA = 20.0     # phi = A0 + 20 ms, the primary reported operating point
+
+C0_NOMINAL = Candidate(
+    candidate_id="static_nominal",
+    protection_level=0,
+    intent=(
+        "Reference, not a deployable rung: no protection. Measured to be weakly "
+        "dominated by C1 at every contention level, so a selector has no reason "
+        "to choose it."
+    ),
+    intended_bursts=(0, 1, 2, 3),
+    solver="greedy", scheduler="mosek", mutations={},
+)
+
+C1_DEFER = Candidate(
+    candidate_id="cand_c1_defer12",
+    protection_level=1,
+    intent=(
+        "Perception protection by deferring the first soft release 12 ms, the "
+        "centre of the measured [10, 18] ms plateau. Costs no soft utility."
+    ),
+    intended_bursts=(0, 1, 2, 3),
+    admission_policy="admit all offered soft work",
+    solver="greedy", scheduler="mosek",
+    mutations={"soft_phase_ms": 12.0},
+)
+
+# NOTE on the id/level mismatch below: the `candidate_id`s are the policy keys the
+# sweep was actually run under, and the measured rows in
+# results/freshness_cand/*/aggregate.csv are keyed by them. Renaming them to match
+# their protection level would orphan every measurement, so the ids stay as
+# measured and the level is what orders the ladder.
+C2_DEFER_ADMIT2 = Candidate(
+    candidate_id="cand_c2_defer12_admit2",
+    protection_level=2,
+    intent=(
+        "Degraded safety: deferral plus a 2-instance admission cap. Measured to "
+        "be the lowest rung that is admissible across the WHOLE range 0..4 -- "
+        "deferral alone overruns the epoch at B=4."
+    ),
+    intended_bursts=(3, 4),
+    admission_policy="admit at most 2 soft instances",
+    solver="greedy", scheduler="mosek",
+    mutations={"soft_phase_ms": 12.0, "admit_cap": 2},
+)
+
+C3_DEFER_ADMIT1 = Candidate(
+    candidate_id="cand_c2_defer12_admit1",
+    protection_level=3,
+    intent=(
+        "Maximum protection: deferral plus a 1-instance admission cap. Holds a "
+        "flat 0.900 output-valid rate at every burst 0..4 at phi=A0+20, the only "
+        "rung that does, and pays for it by shedding the most soft work."
+    ),
+    intended_bursts=(2, 3, 4),
+    admission_policy="admit at most 1 soft instance",
+    solver="greedy", scheduler="mosek",
+    mutations={"soft_phase_ms": 12.0, "admit_cap": 1},
+)
+
+# Ordered by protection level. Measured to be strictly monotone in BOTH
+# directions at every burst: validity non-decreasing up the ladder, soft utility
+# non-increasing. `test_candidate_ladder.py` pins that, because a ladder that is
+# not monotone has no well-defined "next safer rung" for a selector to escalate
+# to.
+LADDER = (C0_NOMINAL, C1_DEFER, C2_DEFER_ADMIT2, C3_DEFER_ADMIT1)

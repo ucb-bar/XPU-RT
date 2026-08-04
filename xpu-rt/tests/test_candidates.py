@@ -34,13 +34,14 @@ from benchmarks.freshness_eval.candidates import (  # noqa: E402
 PHI = 80.546
 
 
-def _row(policy, burst, ovr, soft=0, phi=PHI):
+def _row(policy, burst, ovr, soft=0, phi=PHI, fits=True):
     return {
         "policy": policy,
         "contention_level": str(burst),
         "freshness_window": str(phi),
         "output_valid_rate": str(ovr),
         "soft_instances_completed": str(soft),
+        "fits_in_epoch": str(bool(fits)),
         "seed": "0",
     }
 
@@ -208,6 +209,72 @@ class LadderShape(unittest.TestCase):
         gate = validate_candidate_set(
             [_nominal(), _protect()], rows, phi=PHI, nominal_id="C0")
         self.assertAlmostEqual(gate.per_candidate["C1"]["candidate_output_valid"], 0.9)
+
+
+class MarginQuotability(unittest.TestCase):
+    """A margin spanning an epoch-overrunning cell is not a rate difference.
+
+    This is the situation on the real workload: the nominal schedule overruns the
+    300 ms epoch at B>=3, so its rate there is computed over a 483 ms or 815 ms
+    trace with 41 or 64 consumer invocations instead of 30. Subtracting that from
+    a candidate's 30-invocation rate produces a number that looks like a rate gap
+    and is not one. The verdict still stands -- an overrun is itself a failure --
+    but the gate has to refuse to present the figure as quotable, because that
+    figure is exactly what would end up in a paper.
+    """
+
+    def _rows(self, nominal_fits_at_3=True):
+        rows = []
+        for b in (1, 2, 3):
+            rows.append(_row("C0", b, 0.5,
+                             fits=(nominal_fits_at_3 or b != 3)))
+            rows.append(_row("C1", b, 0.9))
+        return rows
+
+    def test_margin_is_quotable_when_every_cell_fits(self):
+        gate = validate_candidate_set(
+            [_nominal(), _protect()], self._rows(), phi=PHI, nominal_id="C0")
+        d = gate.per_candidate["C1"]
+        self.assertTrue(d["margin_epoch_comparable"])
+        self.assertEqual(d["overrun_bursts_nominal"], [])
+        self.assertNotIn("NOT quotable", gate.report())
+
+    def test_an_overrunning_nominal_cell_marks_the_margin_unquotable(self):
+        gate = validate_candidate_set(
+            [_nominal(), _protect()], self._rows(nominal_fits_at_3=False),
+            phi=PHI, nominal_id="C0")
+        d = gate.per_candidate["C1"]
+        self.assertFalse(d["margin_epoch_comparable"])
+        self.assertEqual(d["overrun_bursts_nominal"], [3])
+        self.assertIn("NOT quotable", gate.report())
+        self.assertTrue(any("do not quote the margin" in f for f in gate.findings))
+
+    def test_the_verdict_still_passes(self):
+        """Unquotable is not the same as inadmissible. The candidate is still
+        better; only the presentation of the number is restricted."""
+        gate = validate_candidate_set(
+            [_nominal(), _protect()], self._rows(nominal_fits_at_3=False),
+            phi=PHI, nominal_id="C0")
+        self.assertTrue(gate.admissible)
+        self.assertEqual(gate.per_candidate["C1"]["verdict"], "PASS")
+
+    def test_an_overrun_outside_the_region_does_not_taint_the_margin(self):
+        """Only cells inside the candidate's declared region matter -- the region
+        is what the margin was averaged over."""
+        rows = [_row("C0", b, 0.5, fits=(b != 4)) for b in (1, 2, 3, 4)] + \
+               [_row("C1", b, 0.9) for b in (1, 2, 3, 4)]
+        gate = validate_candidate_set(
+            [_nominal(), _protect(bursts=(1, 2, 3))], rows, phi=PHI,
+            nominal_id="C0")
+        self.assertTrue(gate.per_candidate["C1"]["margin_epoch_comparable"])
+
+    def test_the_baseline_row_is_not_flagged_against_itself(self):
+        gate = validate_candidate_set(
+            [_nominal(), _protect()], self._rows(nominal_fits_at_3=False),
+            phi=PHI, nominal_id="C0")
+        baseline_line = next(l for l in gate.report().splitlines()
+                             if l.strip().startswith("C0"))
+        self.assertNotIn("NOT quotable", baseline_line)
 
 
 if __name__ == "__main__":
