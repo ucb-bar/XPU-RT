@@ -154,6 +154,35 @@ scope for this project (LLVM bulk), and `sims/IsaacLab` stays unpopulated.
 
 ---
 
+## 5b. Local FireSim on the U250s works — confirmed from other users' trees
+
+Recorded because an earlier draft of this file treated it as an open question on
+the grounds that firesim1 has no `/opt/xilinx/xrt` and no `vivado` on PATH. That
+caution was wrong on both counts:
+
+- **XRT is not part of this flow.** The Alveo U250 path is XDMA plus either
+  Vivado JTAG or `xvsecctl` MCAP programming (`/usr/local/sbin/xvsecctl` is
+  installed and `firesim-xvsecctl-flash-fpga` is in the passwordless sudo list).
+- **Vivado is installed**, just not on the default PATH:
+  `/ecad/tools/xilinx/2025.1/Vivado`, with `/ecad/tools/fpga.bashrc` to set the
+  environment up. `/ecad` is a 59 T NFS mount with 57 T free.
+
+The direct evidence that local runs happen, from readable trees:
+
+| tree | evidence |
+|---|---|
+| `/scratch/ferran/chipyard1/sims/firesim/deploy` | `default_platform: XilinxAlveoU250InstanceDeployManager`, `default_simulation_dir: /scratch/ferran/FIRESIM_RUNS_DIR`, `default_hw_config: rocket_u250_lowfreq` |
+| `/scratch/chrisdong/chipyard-fsim/sims/firesim/deploy` | `default_hw_config: alveo_u250_saturn_refv256d128_singlecore_20mhz`; `results-workload/` holds `…-kb_local_slot_2` and `…-kb_local_slot_3` dated 2026-08-03 |
+
+Those `kb_local_slot_N` names are local-FPGA slots, so at least two boards were
+in active local use the same day. That is consistent with slot 0 being the one
+dima set aside — and it also means §4's "looks free" checks must be re-run
+immediately before claiming a board, not trusted from this document.
+
+Note `/scratch` on firesim1 is **97 % full** (3.5 T, ~116 G free). A chipyard
+clone plus conda env plus FireSim build is tight; check headroom first. `/` has
+182 G free.
+
 ## 6. Bitstreams
 
 The bitstream this evaluation's profiles were measured against is
