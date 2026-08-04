@@ -290,10 +290,30 @@ class PolicyRegistry(unittest.TestCase):
     def test_falsification_control_is_present(self):
         """The probe set must contain a mechanism expected to make freshness
         WORSE. Without one, a metric that responds to nothing would be
-        indistinguishable from a metric where every mechanism helps."""
+        indistinguishable from a metric where every mechanism helps.
+
+        The original control (`probe_nonperiodic_priority`, greedy_periodic) was
+        measured INERT -- bit-identical schedules to the baseline, because every
+        network in this workload is periodic so there is nothing to deprioritise
+        periodic work relative to. This test now requires that SOME probe is
+        declared expected-worse, rather than naming the one that turned out not to
+        be a control at all."""
+        controls = [n for n, s in PROBES.items() if "WORSE" in s["intent"]]
+        self.assertTrue(controls,
+                        "no probe is declared expected-WORSE, so the metric's "
+                        "directionality is untested")
+        for name in controls:
+            self.assertEqual(
+                PROBES[name]["solver"],
+                ALL_POLICIES["static_nominal"]["solver"],
+                f"{name} is the directional control, so it must not also change "
+                f"the solver")
+
+    def test_the_inert_control_is_not_reported_as_a_passed_test(self):
         ctrl = ALL_POLICIES["probe_nonperiodic_priority"]
         self.assertEqual(ctrl["solver"], "greedy_periodic")
-        self.assertIn("WORSE", ctrl["intent"])
+        self.assertIn("INERT", ctrl["intent"])
+        self.assertNotIn("WORSE", ctrl["intent"])
 
     def test_all_probes_hold_the_solver_fixed_except_the_control(self):
         """A probe that also changed solver would confound mechanism with
