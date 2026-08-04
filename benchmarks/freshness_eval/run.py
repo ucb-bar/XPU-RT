@@ -370,7 +370,68 @@ PROBES.update({
     },
 })
 
-ALL_POLICIES: Dict[str, Dict] = {**POLICIES, **PROBES}
+# The candidate ladder, assembled ONLY from mechanisms the probes measured to
+# work. Unlike a probe, a candidate may combine mutations -- a probe holds one
+# variable so an outcome is attributable, a candidate is a deployable
+# configuration and has no such obligation.
+#
+# What the probes established, and what it forces this ladder to look like:
+#
+#  - soft deferral in [10, 18] ms weakly DOMINATES no deferral in all 20 measured
+#    (phi, B) cells for B<=3: equal at B=0, strictly better in the other 16, zero
+#    soft work shed, and its schedule still fits the 300 ms epoch at B=3 where the
+#    baseline's does not. So there is no operating region in which the unprotected
+#    nominal schedule is the right choice, and C0 is a REFERENCE, not a rung.
+#
+#  - at B=4 (131% offered gemmini load) deferral alone stops being deployable at
+#    all: its schedule runs 806 ms against a 300 ms epoch. The overrun, not the
+#    rate, is what disqualifies it -- a rate measured over a 2.7x-long trace does
+#    not share a denominator with the others and is not comparable. Admission
+#    capping ON TOP OF deferral is what survives there.
+#
+#    Two numbers must not be confused. The STANDALONE admit probes (no deferral)
+#    scored 0.633 (cap 1) and 0.400 (cap 2) at B=4. The CANDIDATES below combine
+#    admit with deferral and score much better -- 0.900 (cap 1) and 0.867 (cap 2)
+#    at phi=A0+20 -- so the combination is not merely the sum of its parts and the
+#    probe figures must not be quoted as these candidates' expected outcomes.
+#
+#  - that B=3/B=4 boundary is the only place in this workload where selecting
+#    between rungs buys anything, and even there the ceiling is ONE soft instance
+#    out of 10 offered. Restricted to B<=3 a single static rung is optimal at every
+#    validity target. See benchmarks/freshness_eval/headroom.py, which computes
+#    that bound, and read it before interpreting any adaptive-vs-static result.
+#
+# 12 ms is the plateau centre (measured flat over [10, 18]), chosen for margin
+# rather than for being the best single point -- 10 and 18 score identically.
+CANDIDATES: Dict[str, Dict] = {
+    "cand_c1_defer12": {
+        "solver": "greedy", "scheduler": "mosek",
+        "mutations": {"soft_phase_ms": 12.0},
+        "intent": (
+            "C1 perception protection: defer the first soft release to the centre "
+            "of the measured [10, 18] ms plateau. Retains all offered soft work."
+        ),
+    },
+    "cand_c2_defer12_admit2": {
+        "solver": "greedy", "scheduler": "mosek",
+        "mutations": {"soft_phase_ms": 12.0, "admit_cap": 2},
+        "intent": (
+            "C2 degraded safety: deferral plus a 2-instance admission cap, for the "
+            "oversubscribed region where deferral alone collapses."
+        ),
+    },
+    "cand_c2_defer12_admit1": {
+        "solver": "greedy", "scheduler": "mosek",
+        "mutations": {"soft_phase_ms": 12.0, "admit_cap": 1},
+        "intent": (
+            "C3 maximum protection: deferral plus a 1-instance admission cap. The "
+            "only rung measured to hold a flat 0.900 output-valid rate at every "
+            "burst 0..4; sheds 3 of 4 soft instances at B=4 to do it."
+        ),
+    },
+}
+
+ALL_POLICIES: Dict[str, Dict] = {**POLICIES, **PROBES, **CANDIDATES}
 DEPLOYABLE = list(POLICIES)
 ORACLE = "oracle"
 
@@ -733,11 +794,16 @@ def main() -> int:
     policies = [p for p in args.policies.split(",") if p]
     if policies == ["PROBES"]:
         policies = ["static_nominal"] + list(PROBES)  # baseline always included
+    elif policies == ["CANDIDATES"]:
+        # The gate scores every protective rung against the nominal one, so the
+        # baseline is not optional here -- a candidate set evaluated without it
+        # cannot be validated at all.
+        policies = ["static_nominal"] + list(CANDIDATES)
     for p in policies:
         if p not in ALL_POLICIES:
             raise SystemExit(
-                f"unknown policy {p!r}; have {sorted(ALL_POLICIES)} "
-                f"(or the literal 'PROBES' for baseline + every probe)"
+                f"unknown policy {p!r}; have {sorted(ALL_POLICIES)} (or the "
+                f"literal 'PROBES' / 'CANDIDATES' for baseline + that group)"
             )
 
     out_dir = args.output_dir if os.path.isabs(args.output_dir) else os.path.join(_REPO, args.output_dir)
