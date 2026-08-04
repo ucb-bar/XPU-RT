@@ -407,6 +407,12 @@ def compute_a0(base: Dict, *, epoch_ms: float, edge) -> Dict[str, object]:
     hw = base["hardware"]["profile_hw"]["cpu_p"]
     target = base["hardware"]["profile"]["target"]
     topo = base["hardware"]["profile"].get("topo_tag", "topo_0")
+    # MUST match the tree the solver reads, or A0 -- and therefore the whole phi
+    # grid -- is computed on a different timing basis than the schedules it is
+    # used to judge. This silently happened once: gen_root was ignored
+    # everywhere, so a 25 MHz control produced 25 MHz periods against 1 GHz
+    # latencies and A0 came out as 2000.546 instead of 2421.84.
+    gen_root = base["hardware"]["profile"].get("gen_root") or "gen"
 
     def latency(net: str) -> float:
         info = base["networks"][net]
@@ -415,11 +421,13 @@ def compute_a0(base: Dict, *, epoch_ms: float, edge) -> Dict[str, object]:
             info["dispatch_deps_path"]
         ).replace("_dispatch_graph.json", "")
         csv_path = find_profile_csv(
-            _REPO, model=ident, target=target, hw=hw, basename=basename, topo_tag=topo
+            _REPO, model=ident, target=target, hw=hw, basename=basename,
+            topo_tag=topo, gen_root=gen_root,
         )
         if not csv_path:
             raise FileNotFoundError(
-                f"no profile CSV for {ident} on {hw}/{target}/{topo}; run "
+                f"no profile CSV for {ident} on {hw}/{target}/{topo} under "
+                f"{gen_root}/profile; run "
                 f"scripts/export_profile_db_to_results_csv.py"
             )
         return sum(v["time_ms"] for v in load_profiled_times(csv_path).values())

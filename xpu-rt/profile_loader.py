@@ -121,16 +121,25 @@ def find_profile_csv(
     hw: str,
     basename: str,
     topo_tag: str = "topo_0_1_2_3",
+    gen_root: str = "gen",
 ) -> str | None:
     """
     Find a profiling results.csv produced by runtime/scripts/profile_remote.sh.
 
     Expected layout:
-      gen/profile/<hw>/<target>/<model>/<basename>/<input_tag>/<topo_tag>/results.csv
+      <gen_root>/profile/<hw>/<target>/<model>/<basename>/<input_tag>/<topo_tag>/results.csv
 
     We pick the most recently modified match.
+
+    `gen_root` used to be hardcoded to "gen" while the schedule JSON's
+    `hardware.profile.gen_root` was parsed and then never passed anywhere. Any
+    config naming an alternate profile tree silently read the default one
+    instead, so a run could be labelled as using one timing basis while actually
+    using another. That went unnoticed because the canonical config's value is
+    literally "gen" -- identical to the hardcoded path. It surfaced when a
+    clock-rescaling control pointed at gen25/ and came back with 1 GHz numbers.
     """
-    profile_root = os.path.join(repo_base_path, "gen", "profile")
+    profile_root = os.path.join(repo_base_path, gen_root, "profile")
 
     # New layout (with input_tag subdir).
     pat1 = os.path.join(profile_root, hw, target, model, basename, "*", topo_tag, "results.csv")
@@ -196,6 +205,7 @@ def _load_all_topo_profiles(
     combo_hw: list[str],
     machine_combinations: list[list[str]],
     topo_tag_override=None,
+    gen_root: str = "gen",
 ) -> dict[tuple[str, str], dict[int, dict]]:
     """
     Load profiles for all (hw, topo) combinations for a network.
@@ -230,6 +240,7 @@ def _load_all_topo_profiles(
             csv_path = find_profile_csv(
                 repo_base_path, model=model_candidate,
                 target=profile_target, hw=hw, basename=basename, topo_tag=topo,
+                gen_root=gen_root,
             )
             if csv_path:
                 prof = load_profiled_times(csv_path)
@@ -254,6 +265,7 @@ def load_profiled_processing_times(
     p_core_speedup: float,
     topo_tag_override=None,
     strict: bool = True,
+    gen_root: str = "gen",
 ) -> tuple[dict[str, list[float]], dict[int, dict], dict[int, dict], dict[str, dict[str, dict[int, dict]]]]:
     """
     Load profiled processing times for all networks and dispatches.
@@ -313,7 +325,7 @@ def load_profiled_processing_times(
         all_profiles = _load_all_topo_profiles(
             net_id, net_info, dispatch_deps_path,
             repo_base_path, profile_target, combo_hw, machine_combinations,
-            topo_tag_override=topo_tag_override,
+            topo_tag_override=topo_tag_override, gen_root=gen_root,
         )
         # Verify every (hw, topo) requested by the schedule has a profile.
         hw_types = set(combo_hw)
