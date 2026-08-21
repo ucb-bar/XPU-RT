@@ -1,0 +1,712 @@
+{
+  "dot_file": "combined_schedule_periodic.json",
+  "dispatches": {
+    "vision_v3_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 0.0,
+      "duration": 68.49210000000001,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_00"
+    },
+    "vision_v3_dispatch_1": {
+      "id": 1,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_0"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 68.4921,
+      "duration": 36.0713,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_00"
+    },
+    "vision_v3_dispatch_2": {
+      "id": 2,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_1"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 104.5634,
+      "duration": 12.398950000000001,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_01",
+      "time_dependency": "vision_v3_dispatch_1"
+    },
+    "vision_v3_dispatch_3": {
+      "id": 3,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_2"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 116.96235,
+      "duration": 9.16893,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_01",
+      "time_dependency": "vision_v3_dispatch_2"
+    },
+    "vision_v3_dispatch_4": {
+      "id": 4,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_3"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 126.13128,
+      "duration": 22.15456,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_02",
+      "time_dependency": "vision_v3_dispatch_3"
+    },
+    "vision_v3_dispatch_5": {
+      "id": 5,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_4"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 148.28584000000004,
+      "duration": 36.09918,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_02",
+      "time_dependency": "vision_v3_dispatch_4"
+    },
+    "vision_v3_dispatch_6": {
+      "id": 6,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_5"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 184.38502000000003,
+      "duration": 12.72744,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_03",
+      "time_dependency": "vision_v3_dispatch_5"
+    },
+    "vision_v3_dispatch_7": {
+      "id": 7,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_6"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 197.11246,
+      "duration": 9.16552,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_03",
+      "time_dependency": "vision_v3_dispatch_5"
+    },
+    "vision_v3_dispatch_8": {
+      "id": 8,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_7"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 206.27798,
+      "duration": 22.39772,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_04",
+      "time_dependency": "vision_v3_dispatch_7"
+    },
+    "vision_v3_dispatch_9": {
+      "id": 9,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_8"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 228.6757,
+      "duration": 36.04357,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_04",
+      "time_dependency": "vision_v3_dispatch_8"
+    },
+    "vision_v3_dispatch_10": {
+      "id": 10,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_9"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 264.71927,
+      "duration": 12.63922,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_05",
+      "time_dependency": "vision_v3_dispatch_9"
+    },
+    "vision_v3_dispatch_11": {
+      "id": 11,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_10"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 277.35849,
+      "duration": 9.144219999999999,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_05",
+      "time_dependency": "vision_v3_dispatch_10"
+    },
+    "vision_v3_dispatch_12": {
+      "id": 12,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_11"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 286.50271000000004,
+      "duration": 21.52244,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_06",
+      "time_dependency": "vision_v3_dispatch_11"
+    },
+    "vision_v3_dispatch_13": {
+      "id": 13,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_12"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 308.02515,
+      "duration": 36.44542,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_06",
+      "time_dependency": "vision_v3_dispatch_11"
+    },
+    "vision_v3_dispatch_14": {
+      "id": 14,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_13"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 344.47057,
+      "duration": 12.3826,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_07",
+      "time_dependency": "vision_v3_dispatch_13"
+    },
+    "vision_v3_dispatch_15": {
+      "id": 15,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_14"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 356.85317000000003,
+      "duration": 9.16465,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_07",
+      "time_dependency": "vision_v3_dispatch_14"
+    },
+    "vision_v3_dispatch_16": {
+      "id": 16,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_15"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 366.01782000000003,
+      "duration": 21.73524,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_08",
+      "time_dependency": "vision_v3_dispatch_15"
+    },
+    "vision_v3_dispatch_17": {
+      "id": 17,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_16"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 387.75306,
+      "duration": 36.04495,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_08",
+      "time_dependency": "vision_v3_dispatch_16"
+    },
+    "vision_v3_dispatch_18": {
+      "id": 18,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_17"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 423.79801000000003,
+      "duration": 12.561309999999999,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_09",
+      "time_dependency": "vision_v3_dispatch_17"
+    },
+    "vision_v3_dispatch_19": {
+      "id": 19,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_18"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 436.35932,
+      "duration": 9.18687,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_09",
+      "time_dependency": "vision_v3_dispatch_18"
+    },
+    "vision_v3_dispatch_20": {
+      "id": 20,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_19"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 445.54619,
+      "duration": 22.015040000000003,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_10",
+      "time_dependency": "vision_v3_dispatch_19"
+    },
+    "vision_v3_dispatch_21": {
+      "id": 21,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_20"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 467.56123,
+      "duration": 36.16732,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_10",
+      "time_dependency": "vision_v3_dispatch_20"
+    },
+    "vision_v3_dispatch_22": {
+      "id": 22,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_21"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 503.72855000000004,
+      "duration": 12.41583,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_11",
+      "time_dependency": "vision_v3_dispatch_21"
+    },
+    "vision_v3_dispatch_23": {
+      "id": 23,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_22"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 516.1443800000001,
+      "duration": 9.16189,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_11",
+      "time_dependency": "vision_v3_dispatch_22"
+    },
+    "vision_v3_dispatch_24": {
+      "id": 24,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_23"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 525.30627,
+      "duration": 22.278689999999997,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_12",
+      "time_dependency": "vision_v3_dispatch_23"
+    },
+    "vision_v3_dispatch_25": {
+      "id": 25,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_24"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 547.5849600000001,
+      "duration": 36.08575,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_12",
+      "time_dependency": "vision_v3_dispatch_24"
+    },
+    "vision_v3_dispatch_26": {
+      "id": 26,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_25"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 583.6707100000001,
+      "duration": 12.45725,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_13",
+      "time_dependency": "vision_v3_dispatch_25"
+    },
+    "vision_v3_dispatch_27": {
+      "id": 27,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_26"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 596.12796,
+      "duration": 9.16078,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_13",
+      "time_dependency": "vision_v3_dispatch_25"
+    },
+    "vision_v3_dispatch_28": {
+      "id": 28,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_27"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 605.2887400000001,
+      "duration": 22.17225,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_14",
+      "time_dependency": "vision_v3_dispatch_27"
+    },
+    "vision_v3_dispatch_29": {
+      "id": 29,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_28"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 627.46099,
+      "duration": 36.83811,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_14",
+      "time_dependency": "vision_v3_dispatch_28"
+    },
+    "vision_v3_dispatch_30": {
+      "id": 30,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_29"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 664.2991000000001,
+      "duration": 12.44251,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_15",
+      "time_dependency": "vision_v3_dispatch_29"
+    },
+    "vision_v3_dispatch_31": {
+      "id": 31,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_30"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 676.74161,
+      "duration": 9.16556,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_15",
+      "time_dependency": "vision_v3_dispatch_30"
+    },
+    "vision_v3_dispatch_32": {
+      "id": 32,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_31"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 685.9071700000001,
+      "duration": 22.00707,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_16",
+      "time_dependency": "vision_v3_dispatch_31"
+    },
+    "vision_v3_dispatch_33": {
+      "id": 33,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_32"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 707.9142400000001,
+      "duration": 36.22583,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_16",
+      "time_dependency": "vision_v3_dispatch_32"
+    },
+    "vision_v3_dispatch_34": {
+      "id": 34,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_33"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 744.14007,
+      "duration": 12.49432,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_17",
+      "time_dependency": "vision_v3_dispatch_33"
+    },
+    "vision_v3_dispatch_35": {
+      "id": 35,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_34"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 756.63439,
+      "duration": 9.16941,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_17",
+      "time_dependency": "vision_v3_dispatch_34"
+    },
+    "vision_v3_dispatch_36": {
+      "id": 36,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_35"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 765.8038,
+      "duration": 21.75403,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_18",
+      "time_dependency": "vision_v3_dispatch_35"
+    },
+    "vision_v3_dispatch_37": {
+      "id": 37,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_36"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 787.5578300000001,
+      "duration": 36.32844,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_18",
+      "time_dependency": "vision_v3_dispatch_36"
+    },
+    "vision_v3_dispatch_38": {
+      "id": 38,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_37"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 823.8862700000001,
+      "duration": 12.58338,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_19",
+      "time_dependency": "vision_v3_dispatch_37"
+    },
+    "vision_v3_dispatch_39": {
+      "id": 39,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_38"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 836.46965,
+      "duration": 9.17272,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_19",
+      "time_dependency": "vision_v3_dispatch_37"
+    },
+    "vision_v3_dispatch_40": {
+      "id": 40,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_39"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 845.64237,
+      "duration": 22.08322,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_20",
+      "time_dependency": "vision_v3_dispatch_39"
+    },
+    "vision_v3_dispatch_41": {
+      "id": 41,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_40"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 867.72559,
+      "duration": 36.51008,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_20",
+      "time_dependency": "vision_v3_dispatch_40"
+    },
+    "vision_v3_dispatch_42": {
+      "id": 42,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_41"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 904.23567,
+      "duration": 12.5169,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_21",
+      "time_dependency": "vision_v3_dispatch_41"
+    },
+    "vision_v3_dispatch_43": {
+      "id": 43,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_42"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 916.7525700000001,
+      "duration": 9.164549999999998,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_21",
+      "time_dependency": "vision_v3_dispatch_42"
+    },
+    "vision_v3_dispatch_44": {
+      "id": 44,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_43"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 925.9171200000001,
+      "duration": 22.271919999999998,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_22",
+      "time_dependency": "vision_v3_dispatch_43"
+    },
+    "vision_v3_dispatch_45": {
+      "id": 45,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_44"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 948.1890400000001,
+      "duration": 35.88802,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_22",
+      "time_dependency": "vision_v3_dispatch_44"
+    },
+    "vision_v3_dispatch_46": {
+      "id": 46,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_45"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 984.0770600000001,
+      "duration": 12.55803,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_23",
+      "time_dependency": "vision_v3_dispatch_45"
+    },
+    "vision_v3_dispatch_47": {
+      "id": 47,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_46"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 996.6350900000001,
+      "duration": 9.16309,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "cpu_seg_23",
+      "time_dependency": "vision_v3_dispatch_46"
+    },
+    "vision_v3_dispatch_48": {
+      "id": 48,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vision_v3_dispatch_47"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 1005.7981800000001,
+      "duration": 77.80431,
+      "job_name": "smolvlm_vision_v3",
+      "module_name": "dsp_seg_24",
+      "time_dependency": "vision_v3_dispatch_0"
+    }
+  },
+  "metadata": {
+    "makespan": 1083.6024900000002,
+    "num_operations": 49,
+    "machines": [
+      "CPU_P#0",
+      "CPU_E#0",
+      "CPU_X#0"
+    ],
+    "machine_combinations": [
+      [
+        "CPU_P#0"
+      ],
+      [
+        "CPU_E#0"
+      ],
+      [
+        "CPU_X#0"
+      ]
+    ],
+    "profile_hw": {
+      "CPU_P": "HTA",
+      "CPU_E": "DSP",
+      "CPU_X": "CPU"
+    }
+  }
+}
