@@ -75,7 +75,10 @@ export PYTHONPATH="$PWD${PYTHONPATH:+:${PYTHONPATH}}"   # see Bug 1
 `ultralytics` must be installed in this env for yolov8_nano's extraction step
 (`pip install ultralytics` — was missing initially, installing it did not
 break numpy/torch in this env, unlike the unrelated isaacsim env elsewhere in
-this repo which pins `numpy<2`).
+this repo which pins `numpy<2`). Also needs the system package `libgl1`
+(`sudo apt-get install -y libgl1`) — `ultralytics` pulls in `opencv-python`,
+which dynamically links `libGL.so.1` at import time; not present on a
+headless install (see Bug 16).
 
 ## 1. Profile each model on spike
 
@@ -736,6 +739,27 @@ full 3-network rebuild against this same fix are the next steps (§10).
     `MODELBLASTER_DRONET_CKPT` still overrides the checkpoint if needed.
     Verified: `get_model()` loads and runs a forward pass correctly from a
     fresh checkout with no `FileNotFoundError`.
+16. **Fixed in code (partially) + doc fix** — a third sandboxed Docker
+    validation run (after Bugs 13/14/15 all landed on `dev` and were
+    confirmed non-recurring — `mlp_control`/`dronet` both profiled
+    successfully) hit a *different class* of gap on `yolov8_nano`, the one
+    model never previously reached: `pip install ultralytics` succeeds, but
+    `ultralytics`'s own `opencv-python` dependency fails to import at
+    runtime — `ImportError: libGL.so.1: cannot open shared object file` — a
+    standard headless-Linux gap (`libgl1` isn't installed on a bare
+    `ubuntu:24.04`; presumably already present on a real desktop/dev
+    workstation, which is why this went unnoticed until a truly minimal
+    container tested it). Two things needed fixing: (a) **doc** — `libgl1`
+    noted as a required system package (§0 above); and (b) **code** —
+    `zephyr-chipyard-sw/modelblaster/models/yolov8_nano.py`'s
+    `_load_ultralytics_weights()` caught `ImportError` broadly and reported
+    a fixed `"ultralytics not installed"` message regardless of the actual
+    cause, which is misleading here (ultralytics *is* installed; one of
+    *its* dependencies failed to import) and sent the previous debugging
+    pass looking in the wrong place. Fixed to include the real underlying
+    exception's message in the raised `RuntimeError` rather than a generic
+    string. Not independently re-verified end-to-end after the `libgl1` fix
+    — flagged here rather than silently assumed fixed.
 
 ## Resolved: cross-network numeric corruption in the combined binary
 
@@ -960,6 +984,7 @@ in both runs regardless — expected, not a bug.
 | `zephyr-chipyard-sw/modelblaster/models/checkpoints/dronet/best.pt` | nested submodule | **tracked** (Bug 15 fix) — trained DroNet checkpoint, previously only on one user's disk |
 | `zephyr-chipyard-sw/modelblaster/models/dronet_arch.py` | nested submodule | **tracked, new** (Bug 15 fix) — vendored copy of `qnn_models/dronet.py`'s `DronetTorch` class |
 | `zephyr-chipyard-sw/modelblaster/models/dronet.py` | nested submodule | **tracked, modified** (Bug 15 fix — imports the vendored arch, `_DEFAULT_CKPT` now `__file__`-relative) |
+| `zephyr-chipyard-sw/modelblaster/models/yolov8_nano.py` | nested submodule | **tracked, modified** (Bug 16 fix — error message no longer masks the real `ImportError` cause) |
 
 The code fixes (`postprocessing.py`, `plot.py`, `run_xpurt_schedule.py`,
 `xpurt_demo/run.sh`, `generate_skeleton.py`, `harness_xpurt/CMakeLists.txt`)
