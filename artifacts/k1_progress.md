@@ -602,3 +602,47 @@ separate interconnect pressure from cache effects.
 If it holds, the scheduling consequence is concrete and contrarian: **prefer
 packing concurrent work onto one cluster** rather than spreading it, which is
 the opposite of the default intuition.
+
+---
+
+## Phases 14–15 (VitFly, SmolVLA): scoped, not started
+
+Both are explicitly post-first-milestone in the plan. Scoping them precisely so
+the next person starts from facts rather than a guess.
+
+### VitFly `LSTMNet` — 6 of 9 ops already exist
+
+| op | ModelBlaster kernel | source line |
+|---|---|---|
+| conv2d | `conv2d_s8` | `conv1`, `conv2` |
+| batchnorm2d | `batchnorm2d_s8` | `bn1`, `bn2` |
+| relu | `relu_s8` | `F.relu` |
+| maxpool2d | `maxpool2d_s8` | `maxpool` |
+| linear | `linear_s8` | `fc1/fc2/fc3` |
+| cat | `cat3_c1_s8` | `torch.cat` |
+| avgpool2d | **MISSING** | `avgpool` |
+| leaky_relu | **MISSING** (`leaky_relu` exists in fp32, no `_s8`) | `F.leaky_relu` |
+| **LSTM** | **MISSING** | `LSTM(input=665, hidden=395, layers=2)` |
+
+Two distinct pieces of work, and they are not the same size:
+
+1. **`avgpool2d_s8` and `leaky_relu_s8`** — ordinary elementwise/pooling kernels.
+   Each needs a `KernelSpec` plus a branch in `extract_graph.py`'s int8 module
+   dispatch, which currently handles only BatchNorm2d, Conv2d, Dropout, ELU,
+   MaxPool2d, Sigmoid, SiLU and Upsample. Small and well-understood.
+
+2. **LSTM** — the actual project. `nn.LSTM` is a fused multi-gate module; the
+   int8 extractor has no path for it, so it must either be decomposed into
+   matmul + sigmoid + tanh + elementwise (all of which exist) or added as a
+   fused `lstm_s8` op. Beyond codegen, it needs **hidden state carried across
+   periodic invocations**, which the current harness has no concept of: every
+   dispatch is stateless and `run_model` starts from a fixed input. That is a
+   change to the harness and to the scheduler's notion of an instance, not just
+   a new kernel — a recurrent model's instance *k* is not an interchangeable
+   replica of instance *k-1*, which is exactly why the plan calls it out.
+
+### SmolVLA — as the plan predicted
+`models/smolvla.py` exists and is reachable only through
+`extract_graph_export.py` (torch.export), **not** the FX int8 path. There is no
+`examples/smolvla/`. So it loads and exports; int8 lowering is a separate
+milestone, and nothing here blocks on it.
