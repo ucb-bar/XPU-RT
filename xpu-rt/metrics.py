@@ -22,6 +22,12 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from workload import Workload
 
 
+# Floating-point slack: a finish time reconstructed as t[i] + duration can
+# land a few ulps past an exactly-met deadline. Without this, exact hits are
+# reported as misses.
+_DEADLINE_EPS = 1e-9
+
+
 def compute_metrics(
     workload: Workload,
     t: np.ndarray,
@@ -59,9 +65,17 @@ def compute_metrics(
         if not is_periodic:
             nonperiodic_finish.append(finish)
 
-        if op.deadline_us is not None:
-            late = finish - float(op.deadline_us)
-            if late > 0:
+        # A periodic instance's deadline lives in max_end_t (release + window),
+        # set by workload_factory when `period`/`window_duration` are expanded.
+        # deadline_us is only populated by the per-dispatch path in
+        # create_workload_from_dependencies, so counting misses against it alone
+        # made every periodic miss invisible: a schedule where all 10 dronet
+        # instances overran their 33.3 ms window by ~80 ms reported
+        # deadline_miss_count = 0. Take whichever bound is tighter.
+        bounds = [b for b in (op.deadline_us, op.max_end_t) if b is not None]
+        if bounds:
+            late = finish - float(min(bounds))
+            if late > _DEADLINE_EPS:
                 deadline_miss += 1
                 total_lateness += late
                 if late > max_lateness:
