@@ -29,26 +29,28 @@ fi
 
 
 
+# K1 bring-up set. smolVLA is deliberately last per the plan -- it must not
+# block the three-model baseline.
 MODELS=(
-  "models/smolVLA/smolVLA.mlir"
+  "models/mlp/mlp.q.int8.mlir"
+  "models/dronet/dronet.q.int8.mlir"
+  # "models/smolVLA/smolVLA.mlir"
   # "models/smolVLA/smolVLA.q.int8.mlir"
-  # "models/smolVLA/smolVLA.q.fp8.mlir"
-  # "models/mlp/mlp.q.int8.mlir"
-  # "models/mlp/mlp.q.fp8.mlir"
-  # "models/dronet/dronet.q.int8.mlir"
 )
 TARGETS=(
   "spacemit_x60"
 )
 
+# Both clusters run scalar and RVV; IME is added once its variant exists in
+# merlin/models/spacemit_x60.yaml (cluster 0 only -- it SIGILLs on cluster 1).
 HWS=(
-  #"RVV"
+  "RVV"
   "scalar"
 )
 
 DRY_RUN="${DRY_RUN:-0}"
 CONTINUE_ON_ERROR="${CONTINUE_ON_ERROR:-0}"
-MERLIN_TOOL_BUILD_DIR="${MERLIN_TOOL_BUILD_DIR:-host-vanilla-debug}"
+MERLIN_TOOL_BUILD_DIR="${MERLIN_TOOL_BUILD_DIR:-host-vanilla-release}"
 
 # Prefer a real iree-compile path. Drop bogus MERLIN_IREE_COMPILE (e.g. host-merlin-release from old env).
 if [[ -n "${MERLIN_IREE_COMPILE:-}" ]] && [[ ! -f "${MERLIN_IREE_COMPILE}" ]]; then
@@ -57,7 +59,7 @@ if [[ -n "${MERLIN_IREE_COMPILE:-}" ]] && [[ ! -f "${MERLIN_IREE_COMPILE}" ]]; t
     *) unset MERLIN_IREE_COMPILE ;;
   esac
 fi
-IREE_COMPILE_BIN="${IREE_COMPILE_BIN:-${MERLIN_DIR}/build/host-vanilla-debug/install/bin/iree-compile}"
+IREE_COMPILE_BIN="${IREE_COMPILE_BIN:-${MERLIN_DIR}/build/${MERLIN_TOOL_BUILD_DIR}/install/bin/iree-compile}"
 if [[ -f "${IREE_COMPILE_BIN}" ]]; then
   export MERLIN_IREE_COMPILE="${IREE_COMPILE_BIN}"
 fi
@@ -73,11 +75,15 @@ if [[ "${PARSE_DOT}" == "1" && ! -f "${DOT_PARSER}" ]]; then
   exit 1
 fi
 
+# --dump-graph is required: the .dot it emits is what dot_dispatch_parser.py
+# turns into the *_dispatch_graph.json the scheduler consumes.
+# --build-benchmarks produces the *_benchmarks.zip that profile_remote.sh
+# stages to the board for per-dispatch timing.
 extra_args=(
   # "--quantized"
   #"--dump-artifacts"
-  #"--build-benchmarks"
-  #"--dump-graph"
+  "--build-benchmarks"
+  "--dump-graph"
   "--build-dir" "${MERLIN_TOOL_BUILD_DIR}"
 )
 if [[ "${DRY_RUN}" == "1" ]]; then
