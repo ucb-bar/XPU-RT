@@ -41,8 +41,11 @@ basename-rename fixup), bridges profile data via symlinks, generates the
 schedule, builds+runs the combined `xpurt_demo` binary, and (with `--trace`)
 renders the real-execution timeline. Expect `OVERALL: PASS (3 models)` and a
 predicted/actual makespan within ~0.05% (see §10.3's caveat about
-`mlp_control`'s own residual deviation). Flags to skip already-fresh stages
-(`--skip-profile`, `--skip-dispatch`, `--skip-schedule`, `--skip-build`) are
+`mlp_control`'s own residual deviation). It also installs
+`scripts/install_xpurt_deps.sh`'s dependencies into the active env before
+doing any of that (see §0) — pass `--skip-deps` once that's already been
+done for this env. Flags to skip already-fresh stages (`--skip-deps`,
+`--skip-profile`, `--skip-dispatch`, `--skip-schedule`, `--skip-build`) are
 documented in the script's `--help`.
 
 The sections below are the manual, step-by-step walkthrough the script
@@ -72,13 +75,22 @@ export PATH="${CONDA_PREFIX}/bin:${PATH}"   # see Bug 13 -- re-promote conda's p
 export PYTHONPATH="$PWD${PYTHONPATH:+:${PYTHONPATH}}"   # see Bug 1
 ```
 
-`ultralytics` must be installed in this env for yolov8_nano's extraction step
-(`pip install ultralytics` — was missing initially, installing it did not
-break numpy/torch in this env, unlike the unrelated isaacsim env elsewhere in
-this repo which pins `numpy<2`). Also needs the system package `libgl1`
-(`sudo apt-get install -y libgl1`) — `ultralytics` pulls in `opencv-python`,
-which dynamically links `libGL.so.1` at import time; not present on a
-headless install (see Bug 16).
+The `zephyr` env above is produced entirely by zephyr-chipyard-sw's own
+standalone install (`install_conda.sh`/`install_submodules.sh`/
+`install_toolchain_sdk.sh`) — nothing xpurt-specific. Everything this
+specific reproduction flow needs *on top of* that (modelblaster's own deps
+— torch, `ultralytics`, pillow, ...; xpu-rt's own scheduler deps; the
+pinned `spike` wheel; the `libgl1` system package for `ultralytics`'
+`opencv-python`, see Bug 16) is declared and installed from ONE place in
+*this* repo, into the same env:
+
+```bash
+cd "${FRESHSCHEDULER_ROOT}"
+bash scripts/install_xpurt_deps.sh
+```
+
+`scripts/repro_mlp_dronet_yolo_spike.sh` (below) runs this automatically —
+`--skip-deps` skips it once you've already run it for this env.
 
 ## 1. Profile each model on spike
 
@@ -760,6 +772,57 @@ full 3-network rebuild against this same fix are the next steps (§10).
     exception's message in the raised `RuntimeError` rather than a generic
     string. Not independently re-verified end-to-end after the `libgl1` fix
     — flagged here rather than silently assumed fixed.
+17. **Fixed in code** — `scripts/repro_mlp_dronet_yolo_spike.sh`. A fourth
+    sandboxed run (after Bugs 13-16 all landed and were confirmed
+    non-recurring — all 3 models profiled successfully inside the actual
+    pipeline run) found that the script had the **exact same PATH-ordering
+    defect as the original Bug 13**, never actually fixed in the script
+    itself — only the doc's copy-pasteable §0 block was fixed. This didn't
+    break step 1 (model profiling) because `modelblaster/examples/
+    _run_lib.sh` invokes the interpreter as bare `python` (no apt-installed
+    `/usr/bin/python` exists on a bare `ubuntu:24.04` to shadow it), but the
+    script's own schedule-generation step calls `python3
+    scripts/run_xpurt_schedule.py` directly — and `/usr/bin/python3` *does*
+    exist there (the apt `python3` package), so it silently resolved to the
+    system interpreter instead of the conda env's, failing with
+    `ModuleNotFoundError: No module named 'numpy'`. Same fix as Bug 13:
+    re-prepend `${CONDA_PREFIX}/bin` after the `/usr/bin:${PATH}` line.
+    This is also the occasion for the broader dependency-management
+    cleanup below (§ dependency management) — the script now also calls
+    `scripts/install_xpurt_deps.sh` before running anything, rather than
+    assuming the active env already has everything it needs.
+
+## Dependency management: zephyr-chipyard-sw vs. xpu-rt
+
+Cleaned up after the bugs above kept surfacing the same underlying
+confusion — which env needs what, and where is it declared:
+
+- **`zephyr-chipyard-sw` stays fully standalone.** Its own
+  `install_conda.sh`/`install_submodules.sh`/`install_toolchain_sdk.sh`
+  are untouched and still produce a complete, usable `zephyr` env for
+  Zephyr/RISC-V development on their own — no xpurt-specific package
+  (torch, ultralytics, cvxpy, spike) is installed by them. A consumer that
+  only wants the Zephyr/RISC-V dev environment (e.g. the separate RoSE
+  project, which embeds this same zephyr-chipyard-sw as its own submodule
+  on an unrelated branch) never needs to know xpurt exists.
+- **Everything xpurt-specific is declared in *this* repo, in one place:**
+  `pyproject.toml` (xpu-rt's own scheduler deps — numpy/scipy/matplotlib/
+  pandas, plus an optional `milp` extra for cvxpy) and
+  `scripts/install_xpurt_deps.sh` (installs xpu-rt's own deps, then
+  modelblaster's own deps via its own `pyproject.toml`, then the pinned
+  `spike` wheel, then the `libgl1` system package). One conda env — the
+  same `zephyr` env produced by zephyr-chipyard-sw's standalone install —
+  covers both `west build` and the scheduling/reproduction flow; nothing
+  here creates a second env.
+- **Removed as part of this cleanup** (superseded, not referenced by
+  anything, confirmed via `git grep`): the top-level `setup.py` (replaced
+  by `pyproject.toml`), the top-level `env.yml` (an orphaned, fully-pinned
+  MOSEK+cvxpy conda env that no install script ever actually used — the
+  README's own documented setup command uses a *different* file,
+  `merlin/env_linux.yml`, entirely unrelated to this flow), and
+  `zephyr-chipyard-sw/modelblaster/requirements.txt` (a stale, incomplete
+  subset of modelblaster's own `pyproject.toml`, missing `pyyaml`/
+  `pillow`/`ultralytics`).
 
 ## Resolved: cross-network numeric corruption in the combined binary
 
@@ -985,6 +1048,12 @@ in both runs regardless — expected, not a bug.
 | `zephyr-chipyard-sw/modelblaster/models/dronet_arch.py` | nested submodule | **tracked, new** (Bug 15 fix) — vendored copy of `qnn_models/dronet.py`'s `DronetTorch` class |
 | `zephyr-chipyard-sw/modelblaster/models/dronet.py` | nested submodule | **tracked, modified** (Bug 15 fix — imports the vendored arch, `_DEFAULT_CKPT` now `__file__`-relative) |
 | `zephyr-chipyard-sw/modelblaster/models/yolov8_nano.py` | nested submodule | **tracked, modified** (Bug 16 fix — error message no longer masks the real `ImportError` cause) |
+| `scripts/repro_mlp_dronet_yolo_spike.sh` | top-level | **tracked, modified** (Bug 17 fix — same PATH-ordering defect as Bug 13, never fixed in the script itself; also now calls `install_xpurt_deps.sh`) |
+| `pyproject.toml` | top-level | **tracked, new** — xpu-rt's own deps, replaces `setup.py` (dependency-management cleanup) |
+| `scripts/install_xpurt_deps.sh` | top-level | **tracked, new** — the one place all xpurt-specific deps (on top of a standalone zephyr-chipyard-sw install) are installed from (dependency-management cleanup) |
+| `setup.py` | top-level | **removed** — superseded by `pyproject.toml` |
+| `env.yml` | top-level | **removed** — orphaned, never wired into any install script (dependency-management cleanup) |
+| `zephyr-chipyard-sw/modelblaster/requirements.txt` | nested submodule | **removed** — stale, incomplete subset of modelblaster's own `pyproject.toml` |
 
 The code fixes (`postprocessing.py`, `plot.py`, `run_xpurt_schedule.py`,
 `xpurt_demo/run.sh`, `generate_skeleton.py`, `harness_xpurt/CMakeLists.txt`)

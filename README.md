@@ -151,8 +151,9 @@ XPU-RT/
 │   ├── samples/common/xpu-rt/ #   XPU-RT runtime library (baseline + scheduler runners)
 │   ├── samples/SpacemiTX60/   #   SpacemiT-specific sample binaries
 │   └── models/                #   Model definitions (MLIR/ONNX sources)
-├── env.yml                    # Conda environment
-└── setup.py                   # Editable pip install config
+└── pyproject.toml              # xpu-rt's own deps (`pip install -e .`); see
+                                 #   scripts/install_xpurt_deps.sh for the
+                                 #   full reproducible-flow dependency set
 ```
 
 
