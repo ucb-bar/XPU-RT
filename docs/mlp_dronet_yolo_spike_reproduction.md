@@ -190,6 +190,21 @@ pip install torch==2.9.0+cpu torchvision==0.24.0+cpu \
 pip install -e modelblaster/
 ```
 
+**Also needed (system package, Bug 16):** `ultralytics` pulls in
+`opencv-python`, which dynamically links `libGL.so.1` at import time — not
+present on a bare/headless install (confirmed missing on a plain
+`ubuntu:24.04` container; may already be present on a real desktop/dev
+workstation, which is presumably why this went unnoticed originally):
+```bash
+sudo apt-get install -y libgl1
+```
+Without it, `yolov8_nano`'s extraction step fails with `ImportError:
+libGL.so.1: cannot open shared object file`, but
+`modelblaster/models/yolov8_nano.py`'s error handling used to report a
+misleading "ultralytics not installed" regardless of the actual cause —
+fixed to include the real underlying error message (see Bug 16 below);
+the missing-library fix itself is this `apt-get install`, not a code change.
+
 Expect one benign pip resolver warning here:
 `gym-pybullet-drones 2.0.0 requires numpy<2.0,>=1.24, but you have numpy
 2.5.x` — `gym-pybullet-drones` is installed by `install_submodules.sh` for
@@ -913,6 +928,31 @@ full 3-network rebuild against this same fix are the next steps (§10).
     `MODELBLASTER_DRONET_CKPT` still overrides the checkpoint if needed.
     Verified: `get_model()` loads and runs a forward pass correctly from a
     fresh checkout with no `FileNotFoundError`.
+16. **Fixed in code (partially) + doc fix** — a third sandboxed Docker
+    validation run (after Bugs 13/14/15 all landed on `dev` and were
+    confirmed non-recurring — `mlp_control`/`dronet` both profiled
+    successfully) hit a *different class* of gap on `yolov8_nano`, the one
+    model never previously reached: `pip install ultralytics` succeeds, but
+    `ultralytics`'s own `opencv-python` dependency fails to import at
+    runtime — `ImportError: libGL.so.1: cannot open shared object file` — a
+    standard headless-Linux gap (`libgl1` isn't installed on a bare
+    `ubuntu:24.04`; presumably already present on a real desktop/dev
+    workstation, which is why this went unnoticed until a truly minimal
+    container tested it). Two things needed fixing:
+    (a) **doc** — `libgl1` added as a required system package right after
+    the `pip install -e modelblaster/` step above; and
+    (b) **code** — `zephyr-chipyard-sw/modelblaster/models/yolov8_nano.py`'s
+    `_load_ultralytics_weights()` caught `ImportError` broadly and reported
+    a fixed `"ultralytics not installed"` message regardless of the actual
+    cause, which is misleading here (ultralytics *is* installed; one of
+    *its* dependencies failed to import) and sent the previous debugging
+    pass looking in the wrong place. Fixed to include the real underlying
+    exception's message in the raised `RuntimeError` rather than a generic
+    string (the chained `from e` traceback already had the real cause, but
+    burying it under a wrong top-line message is still a real usability
+    bug). Not independently re-verified end-to-end after the `libgl1` fix
+    (the sandboxed run that found this didn't get a follow-up pass in time)
+    — flagged here rather than silently assumed fixed.
 
 ## Resolved: cross-network numeric corruption in the combined binary
 
@@ -1140,6 +1180,7 @@ in both runs regardless — expected, not a bug.
 | `zephyr-chipyard-sw/modelblaster/models/checkpoints/dronet/best.pt` | nested submodule | **tracked** (Bug 15 fix) — trained DroNet checkpoint, previously only on one user's disk |
 | `zephyr-chipyard-sw/modelblaster/models/dronet_arch.py` | nested submodule | **tracked, new** (Bug 15 fix) — vendored copy of `qnn_models/dronet.py`'s `DronetTorch` class |
 | `zephyr-chipyard-sw/modelblaster/models/dronet.py` | nested submodule | **tracked, modified** (Bug 15 fix — imports the vendored arch, `_DEFAULT_CKPT` now `__file__`-relative) |
+| `zephyr-chipyard-sw/modelblaster/models/yolov8_nano.py` | nested submodule | **tracked, modified** (Bug 16 fix — error message no longer masks the real `ImportError` cause) |
 
 The code fixes (`postprocessing.py`, `plot.py`, `run_xpurt_schedule.py`,
 `xpurt_demo/run.sh`, `generate_skeleton.py`, `harness_xpurt/CMakeLists.txt`)
