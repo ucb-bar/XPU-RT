@@ -114,6 +114,23 @@ def build_machine_combinations_with_impls(
         the **single-core** profile (``topo_0``); using a 4-hart number here
         would credit each core with the throughput of the whole cluster.
 
+    ``"shard"``: ``"per_core"`` **plus** aligned power-of-two core blocks, so the
+        scheduler may either run a dispatch on one core or spread that single
+        dispatch across several. This is what baseline B4 needs: a dispatch
+        whose own latency exceeds its period cannot be rescheduled into
+        compliance by any placement policy, only by being given more cores.
+
+        Blocks are buddy-aligned (``{0,1}``, ``{2,3}``, ``{0,1,2,3}``) rather
+        than every possible subset. That keeps the combination count linear
+        instead of exponential, and every block is still a plain machine *set*,
+        so ``combinations_overlap`` serialises a block against the singletons
+        inside it for free — a 4-core shard on cluster 0 excludes anything else
+        on cores 0-3, which is exactly the physical truth.
+
+        Measured on the board: DroNet's 22.8 ms convolution takes 6.1 ms on four
+        harts and 3.1 ms on eight, so these blocks are not a modelling
+        convenience — IREE really does distribute the workgroups.
+
     The two answer different questions and need different profiles, so the
     choice belongs in the workload spec rather than being implied.
 
@@ -139,9 +156,10 @@ def build_machine_combinations_with_impls(
     for kind, count in machine_core_counts.items():
         machines.extend(f"{kind}#{i}" for i in range(count))
 
-    if granularity not in ("prefix", "per_core"):
+    if granularity not in ("prefix", "per_core", "shard"):
         raise ValueError(
-            f"granularity must be 'prefix' or 'per_core', got {granularity!r}"
+            "granularity must be 'prefix', 'per_core' or 'shard', got "
+            f"{granularity!r}"
         )
 
     combinations: List[List[str]] = []
@@ -158,11 +176,43 @@ def build_machine_combinations_with_impls(
                 for n in range(1, count + 1):
                     combinations.append(cores[:n])
                     combo_impls.append(impl)
-            else:
+            elif granularity == "per_core":
                 for core in cores:
                     combinations.append([core])
                     combo_impls.append(impl)
+            else:
+                for block in aligned_core_blocks(cores):
+                    combinations.append(block)
+                    combo_impls.append(impl)
     return machines, combinations, combo_impls
+
+
+def aligned_core_blocks(cores: Sequence[str]) -> List[List[str]]:
+    """Singletons plus buddy-aligned power-of-two blocks of ``cores``.
+
+    For four cores this is ``[0] [1] [2] [3] [0,1] [2,3] [0,1,2,3]``.
+
+    Alignment is what keeps the set algebra honest *and* small. Every pair of
+    blocks is either disjoint or nested, so two blocks that do not intersect can
+    genuinely run at the same time, and two that do are serialised by
+    ``combinations_overlap``. Allowing unaligned windows such as ``[1,2]`` would
+    add partial overlaps that buy no real placement freedom -- the cores are
+    interchangeable -- while multiplying the combination count.
+
+    A trailing group smaller than the block size is emitted as-is rather than
+    dropped, so a cluster whose core count is not a power of two still offers
+    every core to the scheduler.
+    """
+    out: List[List[str]] = [[c] for c in cores]
+    n = len(cores)
+    size = 2
+    while size <= n:
+        for start in range(0, n, size):
+            block = list(cores[start:start + size])
+            if len(block) > 1:
+                out.append(block)
+        size *= 2
+    return out
 
 
 def legal_combination_indices(

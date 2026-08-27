@@ -1,0 +1,41 @@
+{
+  "scheduler": "greedy",
+  "num_operations": 430,
+  "makespan_us": 407.8245000000001,
+  "nonperiodic_makespan_us": 0.0,
+  "mean_op_duration_us": 0.9931934883720929,
+  "p95_op_duration_us": 4.855275000000001,
+  "p99_op_duration_us": 6.1095,
+  "deadline_miss_count": 121,
+  "deadline_miss_ratio": 0.2813953488372093,
+  "total_lateness_us": 1157.8963500000016,
+  "max_lateness_us": 18.65904999999998,
+  "per_machine_utilization": {
+    "CPU_P#0": 0.4481669198392934,
+    "CPU_P#1": 0.42213378548861086,
+    "CPU_P#2": 0.4160931969511393,
+    "CPU_P#3": 0.4160931969511393,
+    "CPU_E#0": 0.46727759121877166,
+    "CPU_E#1": 0.45252602528783814,
+    "CPU_E#2": 0.5718697626062189,
+    "CPU_E#3": 0.5718697626062189
+  },
+  "per_machine_idle_us": {
+    "CPU_P#0": 225.05105000000015,
+    "CPU_P#1": 235.6680000000001,
+    "CPU_P#2": 238.13150000000016,
+    "CPU_P#3": 238.13150000000016,
+    "CPU_E#0": 217.2572500000001,
+    "CPU_E#1": 223.27330000000012,
+    "CPU_E#2": 174.60200000000015,
+    "CPU_E#3": 174.60200000000015
+  },
+  "cross_device_transitions": 197,
+  "critical_path_us": 38.02225,
+  "solver_wall_time_s": 113.34112989899586,
+  "peak_dram_bytes": null,
+  "peak_scratchpad_bytes": null,
+  "buffer_reuse_count": null,
+  "jitter_us": null,
+  "packing_capacity": null
+}

@@ -37,6 +37,7 @@ sys.path.insert(0, _XPURT)
 
 from capabilities import (  # noqa: E402
     K1_CAPABILITIES,
+    aligned_core_blocks,
     IllegalPlacement,
     build_machine_combinations_with_impls,
     check_implementation_legality,
@@ -280,6 +281,111 @@ class PerCoreGranularityTests(unittest.TestCase):
         self.assertFalse(self.wl.combinations_overlap(a, b))
         self.assertGreater(len(prefix_combos), 0)
         self.assertGreaterEqual(p0, 0)
+
+
+class ShardGranularityTests(unittest.TestCase):
+    """B4: a dispatch may be given several cores instead of one.
+
+    DroNet's measured single-core latency is 113 ms against a 33.3 ms period, so
+    it misses every deadline under *every* placement policy, including static
+    pinning. That is a property of the workload, not of the scheduler, and the
+    only fix that exists at the scheduling layer is to spend more cores on one
+    dispatch. These tests pin the resource model that makes that expressible
+    without letting it become a licence to double-book.
+    """
+
+    def test_blocks_are_singletons_plus_aligned_powers_of_two(self):
+        cores = ["CPU_P#0", "CPU_P#1", "CPU_P#2", "CPU_P#3"]
+        self.assertEqual(
+            aligned_core_blocks(cores),
+            [["CPU_P#0"], ["CPU_P#1"], ["CPU_P#2"], ["CPU_P#3"],
+             ["CPU_P#0", "CPU_P#1"], ["CPU_P#2", "CPU_P#3"],
+             ["CPU_P#0", "CPU_P#1", "CPU_P#2", "CPU_P#3"]])
+
+    def test_every_pair_of_blocks_is_disjoint_or_nested(self):
+        """The property the whole design rests on.
+
+        If two blocks partially overlapped, the scheduler could pick both,
+        `combinations_overlap` would serialise them, and we would have paid for
+        a placement option that buys nothing. Alignment rules that out.
+        """
+        blocks = [set(b) for b in aligned_core_blocks(
+            [f"CPU_P#{i}" for i in range(8)])]
+        for a in blocks:
+            for b in blocks:
+                inter = a & b
+                self.assertTrue(not inter or inter == a or inter == b,
+                                f"partial overlap between {sorted(a)} and "
+                                f"{sorted(b)}")
+
+    def test_a_shard_block_excludes_the_cores_it_spans(self):
+        """The bug this must never allow: a 4-core shard running while
+        something else is also placed on one of those four cores."""
+        machines, combos, _ = build_machine_combinations_with_impls(
+            {"CPU_P": 4}, {"CPU_P": ["rvv"]}, granularity="shard")
+        w = _workload(machines, combos)
+        quad = combos.index(["CPU_P#0", "CPU_P#1", "CPU_P#2", "CPU_P#3"])
+        for i, combo in enumerate(combos):
+            if i == quad:
+                continue
+            self.assertTrue(
+                w.combinations_overlap(quad, i),
+                f"a 4-core shard must exclude {combo}, but they were "
+                "allowed to run concurrently")
+
+    def test_disjoint_pairs_still_run_concurrently(self):
+        """Sharding must not collapse into 'one dispatch per cluster'. The two
+        halves of a cluster are genuinely independent and must stay so."""
+        machines, combos, _ = build_machine_combinations_with_impls(
+            {"CPU_P": 4}, {"CPU_P": ["rvv"]}, granularity="shard")
+        w = _workload(machines, combos)
+        lo = combos.index(["CPU_P#0", "CPU_P#1"])
+        hi = combos.index(["CPU_P#2", "CPU_P#3"])
+        self.assertFalse(w.combinations_overlap(lo, hi))
+
+    def test_shard_supersets_per_core(self):
+        """Adding shards may not remove a placement that used to be legal."""
+        _, per_core, _ = build_machine_combinations_with_impls(
+            K1_CORES, K1_IMPLS, granularity="per_core")
+        _, shard, _ = build_machine_combinations_with_impls(
+            K1_CORES, K1_IMPLS, granularity="shard")
+        for combo in per_core:
+            self.assertIn(combo, shard)
+
+    def test_shard_blocks_carry_the_multi_core_topo_tag(self):
+        """A 4-core shard must be timed with the 4-hart profile. Timing it with
+        the single-core number would credit the shard with a speedup it did not
+        get; timing a single core with the 4-hart number would do the reverse.
+        """
+        from workload_factory import topo_tag_for_combination
+        _, combos, _ = build_machine_combinations_with_impls(
+            {"CPU_P": 4}, {"CPU_P": ["rvv"]}, granularity="shard")
+        quad = combos.index(["CPU_P#0", "CPU_P#1", "CPU_P#2", "CPU_P#3"])
+        pair = combos.index(["CPU_P#2", "CPU_P#3"])
+        one = combos.index(["CPU_P#1"])
+        self.assertEqual(topo_tag_for_combination(combos[quad]), "topo_0_1_2_3")
+        self.assertEqual(topo_tag_for_combination(combos[pair]), "topo_0_1")
+        self.assertEqual(topo_tag_for_combination(combos[one]), "topo_0")
+
+    def test_illegal_implementations_are_still_rejected_when_sharding(self):
+        with self.assertRaises(IllegalPlacement):
+            build_machine_combinations_with_impls(
+                {"CPU_E": 4}, {"CPU_E": ["ime"]}, granularity="shard")
+
+    def test_unknown_granularity_names_shard(self):
+        with self.assertRaises(ValueError) as cm:
+            build_machine_combinations_with_impls(
+                K1_CORES, K1_IMPLS, granularity="nonsense")
+        self.assertIn("shard", str(cm.exception))
+
+    def test_non_power_of_two_cluster_keeps_every_core(self):
+        """The Merlin runner's own default is an asymmetric 4+2, so a cluster
+        whose core count is not a power of two is not hypothetical."""
+        blocks = aligned_core_blocks(["c0", "c1", "c2"])
+        self.assertIn(["c2"], blocks)
+        self.assertIn(["c0", "c1"], blocks)
+        covered = {c for b in blocks for c in b}
+        self.assertEqual(covered, {"c0", "c1", "c2"})
 
 
 class BackwardCompatibilityTests(unittest.TestCase):

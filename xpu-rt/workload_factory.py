@@ -48,6 +48,15 @@ def build_machine_combinations(
                    (topo_0); an N-hart number here would credit each core with
                    the whole kind's throughput.
 
+      "shard"      "singletons" plus aligned power-of-two core blocks, so the
+                   scheduler may EITHER run a dispatch on one core OR spread
+                   that one dispatch across several. Needed when a dispatch's
+                   own latency exceeds its period: no placement policy can fix
+                   that, only giving it more cores can. Each block is timed
+                   with its own N-hart profile, which the topo tag already
+                   selects. See capabilities.aligned_core_blocks for why the
+                   blocks are aligned rather than every subset.
+
     Historical note: `machine_combination_mode` was parsed from config and never
     read, with a default of "singletons" -- so the documented default disagreed
     with the only implemented behaviour. Making it live is safe because prefix
@@ -69,9 +78,10 @@ def build_machine_combinations(
 
     Each combination only contains cores from the same processor type.
     """
-    if mode not in ("prefix", "singletons"):
+    if mode not in ("prefix", "singletons", "shard"):
         raise ValueError(
-            f"machine_combination_mode must be 'prefix' or 'singletons', got {mode!r}"
+            "machine_combination_mode must be 'prefix', 'singletons' or "
+            f"'shard', got {mode!r}"
         )
     machines = expand_machine_core_counts_to_list(machine_core_counts)
     combinations = []
@@ -80,6 +90,13 @@ def build_machine_combinations(
         if mode == "prefix":
             for n in range(1, count + 1):
                 combinations.append(cores[:n])
+        elif mode == "shard":
+            # Imported here rather than at module scope: capabilities imports
+            # nothing from this module, and keeping the dependency one-way
+            # means workload_factory stays usable on targets that have no
+            # capability table.
+            from capabilities import aligned_core_blocks
+            combinations.extend(aligned_core_blocks(cores))
         else:
             for core in cores:
                 combinations.append([core])

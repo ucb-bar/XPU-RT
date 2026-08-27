@@ -1,0 +1,52 @@
+{
+  "_comment": "B4: sharding. DroNet's own single-core latency is 113.7 ms against a 33.3 ms period, so it misses every deadline under EVERY placement policy, static pinning included -- no scheduler can fix a task whose service time exceeds its period. The only lever left is to spend more cores on one dispatch. Measured on the board, DroNet's total falls 113.7 -> 62.0 -> 32.4 ms on 1/2/4 cores, so a 4-core shard is the first configuration in which it can meet its deadline at all.",
+  "_capabilities_comment": "IME is measured, not assumed: smt.vmadot executes on cores 0-3 and SIGILLs on 4-7 (artifacts/k1_bringup/*/ime_capability_probe.txt). It is therefore a property of cluster-0 cores, never a separate machine -- see xpu-rt/capabilities.py.",
+  "hardware": {
+    "machines": {
+      "cpu_p": 4,
+      "cpu_e": 4
+    },
+    "profile_hw": {
+      "cpu_p": "RVV",
+      "cpu_e": "RVV_c1"
+    },
+    "profile": {
+      "target": "spacemit_x60",
+      "topo_tag_override": false,
+      "gen_root": "gen"
+    },
+    "p_core_speedup": 1.0
+  },
+  "scheduler": {
+    "random_seed": 42,
+    "solver_verbosity": 1,
+    "time_limit": 120,
+    "use_profiled": true,
+    "prune_periodic": true,
+    "restrict_makespan_to_nonperiodic": false,
+    "machine_combination_mode": "shard"
+  },
+  "networks": {
+    "mlp": {
+      "id": 0,
+      "identifier": "mlp",
+      "dispatch_deps_path": "gen/vmfb/mlp/spacemit_x60/RVV/mlp.q.int8/mlp.q.int8_dispatch_graph.json",
+      "period": 10,
+      "window_duration": 10,
+      "num_instances": 32
+    },
+    "dronet": {
+      "id": 1,
+      "identifier": "dronet",
+      "dispatch_deps_path": "gen/vmfb/dronet/spacemit_x60/RVV/dronet.q.int8/dronet.q.int8_dispatch_graph.json",
+      "period": 33.3,
+      "window_duration": 33.3,
+      "num_instances": 10
+    }
+  },
+  "edges": [],
+  "_concurrency_comment": "machine_combination_mode=singletons: each of the 8 cores is independently schedulable, so 8 dispatches can genuinely run at once. This is why the profiles above are single-core (topo_0).",
+  "_shard_comment": "machine_combination_mode=shard emits singletons PLUS aligned power-of-two core blocks, so the scheduler CHOOSES between running a dispatch on one core and spreading it across several. A block and the cores inside it intersect, so combinations_overlap serialises them and a 4-core shard excludes anything else on those cores -- the physical truth, enforced by the same set intersection that already prevents double-booking.",
+  "_topo_comment": "topo_tag_override is FALSE here, unlike the singleton configs. With it true every combination is costed with topo_0, so a 4-core shard would be charged the SINGLE-core time while blocking four cores, and the solver would correctly never choose one -- reporting 'sharding does not help' for a purely clerical reason. Each block must be costed with its own N-hart profile, which the combination's topo tag already selects.",
+  "_instances_comment": "Instance counts are pinned, not derived. The heuristic sizes the horizon from the profiles, so a faster configuration produces FEWER releases -- B4 came out at 7 mlp / 3 dronet against B1's 32 / 10, which would have compared two different workloads and flattered the faster one. 32 and 10 are one hyperperiod of {10, 33.3} ms and match every other rung."
+}

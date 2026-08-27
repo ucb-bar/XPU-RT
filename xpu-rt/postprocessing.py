@@ -243,6 +243,28 @@ def output_scheduled_json(
         if time_dependency:
             dispatch_entry["time_dependency"] = time_dependency
 
+        # Release semantics, stated rather than guessed.
+        #
+        # The runner infers these when the JSON omits them, and its heuristic is
+        # a literal name match: only jobs whose name starts with "mlp" are
+        # phase-locked, everything else is released the moment its predecessor
+        # finishes (dispatch_types.h InferSchedulingPolicies). So DroNet -- and
+        # any future model -- was chained instance-to-instance and started
+        # *early*, which makes its measured lateness a comparison against a
+        # release the runtime never enforced. Emitting the field explicitly sets
+        # policies_from_json and retires the heuristic for every model at once.
+        #
+        # min_start_t is the periodic release k*T that workload_factory computed;
+        # a root dispatch is one with no predecessors inside its instance.
+        release_t = getattr(op, "min_start_t", None)
+        if release_t is not None and not dependencies:
+            dispatch_entry["release_policy"] = "phase_locked"
+            dispatch_entry["release_us"] = float(release_t) * 1000.0
+            dispatch_entry["time_dep_mode"] = "soft"
+        else:
+            dispatch_entry["release_policy"] = "immediate"
+            dispatch_entry["time_dep_mode"] = "hard"
+
         # Propagate honest deadline-miss flag set by heuristic schedulers
         # (Phase A2). When present, downstream readers (Gantt overlay,
         # band-compliance audit) can mark the overrun directly without
