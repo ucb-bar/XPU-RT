@@ -427,3 +427,33 @@ Until then the K1 can be scheduled as 2 resources faithfully, or as 8 resources
 only in simulation. Everything needed on the XPU-RT side is already in place —
 `capabilities.py` emits per-core combinations and `machine_combination_mode`
 selects them.
+
+---
+
+## Codex kernel generation — correct, and rejected on merit (2026-08-27)
+
+`LLM_PROVIDER=codex`, model `gpt-5.6-sol`, prompt sha256[:16] `a10e56e72849432c`,
+19 818 in / 9 803 out tokens, logged with `provider: codex`. Full detail and the
+source in `artifacts/k1_run/codex/`.
+
+The kernel is good work: `vwmacc_vv_i32m4` over the contiguous reduction plus
+`vredsum`, exactly the right shape for an M=1 GEMV. It compiles clean and runs
+**bit-exact** on the board (`max_abs_err=0`).
+
+| `linear_s8` total | scalar ref | curated RVV | Codex RVV |
+|---|---|---|---|
+| rdtime ticks | 8095 | **1280** | 1807 |
+
+**Against the scalar reference it is 4.48x faster.** Against
+`kernels/rvv/rvv_linear_s8_direct.c`, which already exists in the tree, it is
+**41% slower**. Accept requires correctness *and* an improvement in the selected
+metric; only the first holds, so it is archived rather than promoted, and the
+curated kernel stays in place.
+
+Worth recording that the first framing of this result compared Codex against the
+*scalar* baseline and read as a 3.4x win. The comparison that decides the
+question is against the best kernel already available, and it inverts the
+conclusion.
+
+It loses only on the two large-K calls and wins slightly at K=16, which points
+at reduction blocking as the specific thing a second round should address.
