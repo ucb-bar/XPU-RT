@@ -1022,6 +1022,24 @@ confusion — which env needs what, and where is it declared:
   that just isn't spelled as a direct file reference anywhere, so a plain
   string grep for `env.yml` missed it. Restored; see the main README's
   "Repository Initialization"/Flow A sections for how it's actually used.
+18. **Fixed in docs (not code)** — the top-level `README.md`, unrelated to
+    this doc's own recent hardcoded-path fixes but the same underlying
+    problem: "Repository Initialization" told every reader to run `git
+    submodule update --init --recursive` right after cloning — this repo
+    has 207 submodules recursively (`hw/chipyard` alone vendors 100+ of
+    its own), and only a small, flow-specific slice of them is ever
+    actually needed. A user reported this getting effectively stuck
+    pulling in `hw/chipyard`. Fixed: removed `--recursive` from the
+    top-level clone instructions, added explicit per-flow targeted
+    `git submodule update --init <name>` commands instead (mirroring what
+    this doc's own §0 already does), and fixed a stale internal comment in
+    the Flow A section that still suggested `--recursive` from the repo
+    root as an alternative. Also fixed while in there: a broken doc link
+    (`zephyr-chipyard-sw/agents/examples/microros_demo/ROS_FLOW.md` — the
+    `agents/` → `modelblaster/` rename happened long before this session
+    but the README link was never updated) and added a "Documentation"
+    bullet pointing at *this* doc, which the README didn't reference at
+    all before.
 
 ## Resolved: cross-network numeric corruption in the combined binary
 
