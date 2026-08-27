@@ -499,3 +499,34 @@ plausibility.
 
 **Best configuration on the board remains the unfused curated RVV build: 2122
 ticks = 88.4 us at 24 MHz, 4.22x faster than the round-0 reference.**
+
+---
+
+## Three-model set complete on the physical K1 via ModelBlaster (2026-08-27)
+
+All bit-exact (`max_abs_err=0`), pinned to core 0, scalar reference kernels,
+profiles filed under `gen/profile_mb/scalar/spacemit_x60/<model>/`:
+
+| model | rdtime ticks | wall @24 MHz | verify |
+|---|---|---|---|
+| mlp_control | 9 028 | 0.38 ms | PASS |
+| dronet | 3 777 286 | 157.4 ms | PASS |
+| yolov8_nano | 96 503 982 | 4021 ms | PASS (75 600 outputs) |
+
+YOLOv8n was the model missing from the merlin/IREE path — merlin has no YOLO
+under `models/`, while ModelBlaster carries it as a PyTorch definition. So the
+three-model set the brief asks for exists on the board through the ModelBlaster
+path, and MLP + DroNet additionally through merlin/IREE.
+
+These are scalar-kernel numbers and should be read as a correctness and
+plumbing result, not a performance one — the curated RVV kernels are a 4.2x
+improvement on mlp_control alone.
+
+### A bug this surfaced
+`report_run` derived the model name by walking three directories up from
+`io.npz`, which mislabels any layout other than
+`examples/<model>/<quant>/generated/`. The K1 flow roots its build at
+`build/k1/<model>/<quant>/`, so every profile was filed under a model called
+**`k1`** — wrong tree, no error, and unfindable by the model it describes. Fixed
+by letting the runner state the name (`--model-name`), with the walk kept as the
+default for existing callers.
