@@ -32,7 +32,7 @@ def run_on_board(host, remote_root, schedule_remote, trace_remote, *,
            f"{schedule_remote} local-task 1 1 0 "
            f"--vmfb_dir={remote_root} --cpu_p_cpu_ids={cpu_p} "
            f"--cpu_e_cpu_ids={cpu_e} --visible_cores=8 "
-           f"--variant_p={variant_p} --variant_e={variant_e} "
+           f"--variant_p={variant_p} --variant_e={variant_e} --pin_per_core=1 "
            f"--trace_csv={remote_root}/{trace_remote}")
     p = subprocess.run(["ssh", host, cmd], capture_output=True, text=True,
                        timeout=timeout)
@@ -115,18 +115,18 @@ def main() -> int:
         # B0 pins each model to a cluster with no per-dispatch scheduling: the
         # same graph, but every dispatch of a model on one core.
         "B0": ("schedules/scheduled_k1_B0_static.json", "schedule_b0.json",
-               "0", "4", "RVV", "RVV"),
+               "0,1,2,3", "4,5,6,7", "RVV", "RVV"),
         "B1": ("schedules/scheduled_networks_k1_mlp_dronet_greedy_profiled.json",
-               "schedule.json", "0", "4", "RVV", "RVV"),
+               "schedule.json", "0,1,2,3", "4,5,6,7", "RVV", "RVV"),
         "B2": ("schedules/scheduled_k1_advice_applied.json",
-               "schedule_advice.json", "0", "4", "RVV", "RVV"),
+               "schedule_advice.json", "0,1,2,3", "4,5,6,7", "RVV", "RVV"),
         # Not a rung of the compiler ladder: a scheduler-policy control. B1 uses
         # the makespan-minimising greedy solver, which is free to queue a 10 ms
         # periodic model behind a 22 ms convolution. This runs the same graph
         # and the same profiles through the periodic-aware solver instead, to
         # separate "the compiler needs to change" from "the policy was wrong".
         "P1": ("schedules/scheduled_networks_k1_mlp_dronet_greedy_periodic_profiled.json",
-               "schedule_periodic.json", "0", "4", "RVV", "RVV"),
+               "schedule_periodic.json", "0,1,2,3", "4,5,6,7", "RVV", "RVV"),
         # C2 is the only self-consistent configuration available with this
         # runner: one scheduler machine per worker pool, one physical core per
         # pool, timed with single-core profiles. The 8-machine rungs above

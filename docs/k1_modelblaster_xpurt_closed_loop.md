@@ -194,9 +194,21 @@ scp k1:/root/mb_k1/trace.csv artifacts/k1_run/
 against single-core profiles, dispatches run 3.75× faster than planned
 (18.29 ms planned, 4.88 ms actual) and every calibration number is meaningless.
 
-**Caveat:** `CPU_P#2` is parsed and recorded but **not enforced** — the runner
-dispatches to a per-cluster worker pool and IREE's local-task picks the core
-within it. Treat intra-cluster placement as unpinned.
+**Use `--pin_per_core=1` for any multi-core schedule.** Without it the runner
+creates one device per cluster and runs two worker threads total, so an 8-way
+schedule is serialised onto two threads and `CPU_P#2` is parsed and discarded.
+With it, one pinned device and one worker per physical core:
+
+| runner configuration | makespan | queueing | MLP deadline misses |
+|---|---|---|---|
+| 1 worker/target, cluster device | 1017.2 ms | 87.6% | 32/32 |
+| 1 worker/target, per-core device | 1022.1 ms | 87.7% | 31/32 |
+| **8 workers, per-core device** | **448.5 ms** | **6.1%** | **2/32** |
+
+N-way is only offered together with per-core devices, deliberately: a module
+wraps an IREE session, and two threads in one session is a data race. Keying the
+module cache by core plus one worker per core means each session has exactly one
+thread.
 
 ---
 

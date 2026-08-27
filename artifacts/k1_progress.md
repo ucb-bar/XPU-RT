@@ -674,3 +674,42 @@ contribute 0 to the sum either way under symmetric quantization.
 **Still outstanding for full VitFly: the LSTM**, and it remains a different kind
 of work — no path in the int8 extractor, and hidden state must survive across
 periodic invocations, which the harness has no concept of.
+
+---
+
+## CORRECTION: the baseline ladder was measuring the runtime, not the scheduler
+
+An earlier section of this log recorded that "XPU-RT buys 11% makespan and loses
+31 of 32 MLP deadlines", and that `greedy_periodic` did not rescue it. **That
+conclusion was wrong**, and it was wrong for the same reason the calibration
+section flagged: the runtime could not execute the schedule it was given.
+
+The runner had two worker threads, one per hardware target, so an 8-way schedule
+was serialised onto two threads no matter how many cores or devices existed. The
+deadline misses measured that serialisation. Per-core *devices* (`--pin_per_core`)
+fixed where a dispatch ran but not how many ran at once; one worker **per core**
+was the missing half.
+
+Same schedules, same profiles, same board, with the runner fixed:
+
+| rung | makespan | queue% | dronet | mlp |
+|---|---|---|---|---|
+| B0 static placement | 1149.8 ms | 70.5% | 10/10 miss | **0/32 miss** |
+| **B1 XPU-RT greedy** | **441.8 ms** | 5.4% | 10/10 miss | **1/32 miss** |
+| B2 + impl selection | 448.1 ms | 6.2% | 10/10 miss | 2/32 miss |
+| P1 greedy_periodic | 449.5 ms | 6.0% | 10/10 miss | 2/32 miss |
+
+**XPU-RT scheduling is 2.6x better on makespan than static placement and costs
+one MLP deadline out of 32.** Predicted makespan 412.8 ms against 441.8 ms
+measured — **7.0% error**.
+
+DroNet misses 10/10 in *every* configuration including static placement, and that
+is a property of the workload rather than of any scheduler: one instance is
+113 ms of measured work and the window is 33.3 ms. No placement policy fixes
+that; it needs the dispatch sharded across cores, which is the B4 rung.
+
+The methodological point is the same one the calibration section made, and it
+has now bitten twice: **before concluding anything about a scheduler, check that
+the runtime can execute the schedule.** Both times the model and the profiles
+were fine and the execution environment was not, and both times the wrong
+conclusion was the flattering-to-nobody kind that looks like a real finding.
