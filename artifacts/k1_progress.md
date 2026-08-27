@@ -605,7 +605,7 @@ the opposite of the default intuition.
 
 ---
 
-## Phases 14–15 (VitFly, SmolVLA): scoped, not started
+## Phases 14–15 (VitFly, SmolVLA): two of three VitFly ops landed
 
 Both are explicitly post-first-milestone in the plan. Scoping them precisely so
 the next person starts from facts rather than a guess.
@@ -646,3 +646,31 @@ Two distinct pieces of work, and they are not the same size:
 `extract_graph_export.py` (torch.export), **not** the FX int8 path. There is no
 `examples/smolvla/`. So it loads and exports; int8 lowering is a separate
 milestone, and nothing here blocks on it.
+
+
+### VitFly update: `avgpool2d_s8` and `leaky_relu_s8` landed and verified
+
+Both ops now exist end to end. Each needed four pieces, because a kernel is not
+usable until all of them are present: a `KernelSpec` with argtypes, a branch in
+the int8 extractor's module dispatch, a case in the int8 golden simulator, and
+call emission in `generate_skeleton`.
+
+Verified on hardware rather than added untested: `models/vitfly_frontend.py` is
+LSTMNet's convolutional front end with layer parameters taken verbatim from
+upstream. It extracts, builds and runs on the K1 **bit-exact**
+(`max_abs_err=0`), 42 549 ticks (1.77 ms), with both new ops in the profile:
+
+| op | kernel | ticks |
+|---|---|---|
+| avgpool | `avgpool2d_s8` | 1051 |
+| lrelu | `leaky_relu_s8` | 88 |
+
+Two details that are silent when wrong, both now pinned in the semantics:
+`avgpool2d_s8` does **not** requantize (the mean of values on a scale is on that
+scale, so the output scale is overwritten to the input's, as `maxpool2d_s8`
+does); and `count_include_pad` selects **only the divisor**, because padded taps
+contribute 0 to the sum either way under symmetric quantization.
+
+**Still outstanding for full VitFly: the LSTM**, and it remains a different kind
+of work — no path in the int8 extractor, and hidden state must survive across
+periodic invocations, which the harness has no concept of.
