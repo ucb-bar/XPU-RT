@@ -10,6 +10,10 @@
 #   bash scripts/repro_mlp_dronet_yolo_spike.sh [flags]
 #
 # Flags:
+#   --skip-deps         skip installing xpu-rt/modelblaster's own deps
+#                        (scripts/install_xpurt_deps.sh) into the active
+#                        conda env. Use once you've already run that once
+#                        for this env and just want to re-run the pipeline.
 #   --skip-profile      skip step 1 (re-profiling all 3 models on spike).
 #                        Use once gen/profile/{scalar,RVV}/spike/<model>
 #                        already holds fresh data (e.g. re-running just the
@@ -64,6 +68,7 @@ if [[ ! -d "${MB_ROOT}" ]]; then
     exit 1
 fi
 
+SKIP_DEPS=""
 SKIP_PROFILE=""
 SKIP_DISPATCH=""
 SKIP_SCHEDULE=""
@@ -74,6 +79,7 @@ SOLVER="greedy_periodic"
 
 while (( $# )); do
     case "$1" in
+        --skip-deps)      SKIP_DEPS=1 ;;
         --skip-profile)   SKIP_PROFILE=1 ;;
         --skip-dispatch)  SKIP_DISPATCH=1 ;;
         --skip-schedule)  SKIP_SCHEDULE=1 ;;
@@ -82,7 +88,7 @@ while (( $# )); do
         --networks-json)  shift; NETWORKS_JSON="$1" ;;
         --solver)         shift; SOLVER="$1" ;;
         -h|--help)
-            sed -n '2,33p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+            sed -n '2,38p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
             exit 0
             ;;
         *) echo "unknown flag: $1" >&2; exit 1 ;;
@@ -105,7 +111,15 @@ conda activate zephyr
 # shellcheck disable=SC1091
 source "${ZCS_ROOT}/scripts/set_envvars_sdk.sh"
 export PATH="/usr/bin:${PATH}"
+export PATH="${CONDA_PREFIX}/bin:${PATH}"   # re-promote conda's python/pip (see doc Bug 13)
 export PYTHONPATH="${ZCS_ROOT}${PYTHONPATH:+:${PYTHONPATH}}"
+
+if [[ -z "${SKIP_DEPS}" ]]; then
+    log "installing xpu-rt/modelblaster deps into this env"
+    bash "${TOP_ROOT}/scripts/install_xpurt_deps.sh"
+else
+    log "skipping dependency install (--skip-deps)"
+fi
 
 # Model, quant pairs this reproduction covers. Order matters: it's the
 # order used for MODELS=/QUANTS= in step 5 below (must match).
