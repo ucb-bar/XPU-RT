@@ -814,15 +814,41 @@ confusion — which env needs what, and where is it declared:
   same `zephyr` env produced by zephyr-chipyard-sw's standalone install —
   covers both `west build` and the scheduling/reproduction flow; nothing
   here creates a second env.
-- **Removed as part of this cleanup** (superseded, not referenced by
-  anything, confirmed via `git grep`): the top-level `setup.py` (replaced
-  by `pyproject.toml`), the top-level `env.yml` (an orphaned, fully-pinned
-  MOSEK+cvxpy conda env that no install script ever actually used — the
-  README's own documented setup command uses a *different* file,
-  `merlin/env_linux.yml`, entirely unrelated to this flow), and
-  `zephyr-chipyard-sw/modelblaster/requirements.txt` (a stale, incomplete
-  subset of modelblaster's own `pyproject.toml`, missing `pyyaml`/
-  `pillow`/`ultralytics`).
+- **Removed as part of this cleanup:** the top-level `setup.py` (replaced
+  by `pyproject.toml`) and `zephyr-chipyard-sw/modelblaster/requirements.txt`
+  (a stale, incomplete subset of modelblaster's own `pyproject.toml`,
+  missing `pyyaml`/`pillow`/`ultralytics`) — both confirmed unreferenced
+  via `git grep`.
+- **`env.yml` — initially deleted here by mistake, then restored.** A
+  `git grep` for the literal string `env.yml` found no hits outside
+  file-tree diagrams, which looked like enough evidence to call it
+  orphaned. It isn't: the top-level `ModelBlaster/` submodule's own MOSEK
+  bridge scripts (`scripts/find_min_periodic_makespan_mosek.py`,
+  `scripts/mosek_qrb_y64_warmstart.py` — a *different* checkout of
+  ModelBlaster than the one this doc uses) look up a conda env by the
+  literal name `xpu-rt-schedule`, which is exactly what `env.yml`'s
+  `name:` field defines — a real, live dependency that just isn't spelled
+  as a direct file reference anywhere, so a plain string grep for
+  `env.yml` missed it. Restored; see the main README for how it's
+  actually used.
+18. **Fixed in docs (not code)** — the top-level `README.md`, unrelated to
+    this doc's own recent hardcoded-path fixes but the same underlying
+    problem: "Repository Initialization" told every reader to run `git
+    submodule update --init --recursive` right after cloning — this repo
+    has 207 submodules recursively (`hw/chipyard` alone vendors 100+ of
+    its own), and only a small, flow-specific slice of them is ever
+    actually needed. A user reported this getting effectively stuck
+    pulling in `hw/chipyard`. Fixed: removed `--recursive` from the
+    top-level clone instructions, added explicit per-flow targeted
+    `git submodule update --init <name>` commands instead (mirroring what
+    this doc's own §0 already does), and fixed a stale internal comment in
+    the Flow A section that still suggested `--recursive` from the repo
+    root as an alternative. Also fixed while in there: a broken doc link
+    (`zephyr-chipyard-sw/agents/examples/microros_demo/ROS_FLOW.md` — the
+    `agents/` → `modelblaster/` rename happened long before this session
+    but the README link was never updated) and added a "Documentation"
+    bullet pointing at *this* doc, which the README didn't reference at
+    all before.
 
 ## Resolved: cross-network numeric corruption in the combined binary
 
@@ -1052,7 +1078,7 @@ in both runs regardless — expected, not a bug.
 | `pyproject.toml` | top-level | **tracked, new** — xpu-rt's own deps, replaces `setup.py` (dependency-management cleanup) |
 | `scripts/install_xpurt_deps.sh` | top-level | **tracked, new** — the one place all xpurt-specific deps (on top of a standalone zephyr-chipyard-sw install) are installed from (dependency-management cleanup) |
 | `setup.py` | top-level | **removed** — superseded by `pyproject.toml` |
-| `env.yml` | top-level | **removed** — orphaned, never wired into any install script (dependency-management cleanup) |
+| `env.yml` | top-level | **kept** — initially deleted by mistake (thought orphaned), then restored: it's the `xpu-rt-schedule` conda env Flow A's MOSEK bridge scripts actually look up by name |
 | `zephyr-chipyard-sw/modelblaster/requirements.txt` | nested submodule | **removed** — stale, incomplete subset of modelblaster's own `pyproject.toml` |
 
 The code fixes (`postprocessing.py`, `plot.py`, `run_xpurt_schedule.py`,

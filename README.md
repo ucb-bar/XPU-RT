@@ -12,7 +12,12 @@ This project is under active development. If you would love to contribute or if 
   — full walkthrough from a multi-network workload spec to a FireSim
   run with trace plots (scheduler → codegen → build → run → analyze),
   on the Saturn-Gemmini-Q31 path.
-* [`zephyr-chipyard-sw/agents/examples/microros_demo/ROS_FLOW.md`](zephyr-chipyard-sw/agents/examples/microros_demo/ROS_FLOW.md)
+* [`docs/mlp_dronet_yolo_spike_reproduction.md`](docs/mlp_dronet_yolo_spike_reproduction.md)
+  — a simpler, no-FireSim reproduction via the `zephyr-chipyard-sw/modelblaster/`
+  submodule, profiled entirely on spike (no MOSEK license needed). Has its
+  own end-to-end script, `scripts/repro_mlp_dronet_yolo_spike.sh`, and
+  installs everything it needs via `scripts/install_xpurt_deps.sh`.
+* [`zephyr-chipyard-sw/modelblaster/examples/microros_demo/ROS_FLOW.md`](zephyr-chipyard-sw/modelblaster/examples/microros_demo/ROS_FLOW.md)
   — micro-ROS fixed-pinning baseline flow (the reference against which
   the scheduler is benchmarked).
 * The sections below cover the Merlin/SpacemiT path (BananaPi).
@@ -22,13 +27,27 @@ This project is under active development. If you would love to contribute or if 
 ```bash
 git clone https://github.com/ucb-bar/XPU-RT.git
 cd XPU-RT
-git submodule update --init --recursive
 ```
+
+**Don't run `git submodule update --init --recursive` here** — two of this
+repo's top-level submodules, `hw/chipyard` and `sims/IsaacLab`, are very
+large (chipyard alone vendors 100+ of its own nested submodules) and
+neither is needed for the flow below; a recursive init will sit there for
+a very long time pulling in gigabytes you don't need, and may get
+effectively stuck on chipyard's own submodule tree. Initialize only
+`merlin` (below), or — for the ModelBlaster/spike-only reproduction flow
+instead — see
+[`docs/mlp_dronet_yolo_spike_reproduction.md`](docs/mlp_dronet_yolo_spike_reproduction.md),
+which only needs `zephyr-chipyard-sw` (+ its own nested `modelblaster`).
 
 ### Set up `merlin`
 
 Merlin provides the compiler toolchain, IREE runtime, and cross-compilation
-support used by XPU-RT. It ships as a git submodule under `merlin/`.
+support used by XPU-RT. It ships as a git submodule under `merlin/`:
+
+```bash
+git submodule update --init merlin
+```
 
 #### Prerequisites
 
@@ -151,9 +170,14 @@ XPU-RT/
 │   ├── samples/common/xpu-rt/ #   XPU-RT runtime library (baseline + scheduler runners)
 │   ├── samples/SpacemiTX60/   #   SpacemiT-specific sample binaries
 │   └── models/                #   Model definitions (MLIR/ONNX sources)
+├── env.yml                     # cvxpy+MOSEK conda env ("xpu-rt-schedule"),
+                                 #   looked up by name from ModelBlaster's own
+                                 #   MOSEK bridge scripts -- not auto-created
+                                 #   by any script here, `conda env create -f
+                                 #   env.yml` is a one-time manual step
 └── pyproject.toml              # xpu-rt's own deps (`pip install -e .`); see
                                  #   scripts/install_xpurt_deps.sh for the
-                                 #   full reproducible-flow dependency set
+                                 #   spike-only reproducible-flow's dependency set
 ```
 
 
