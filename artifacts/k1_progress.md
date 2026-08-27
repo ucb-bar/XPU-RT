@@ -713,3 +713,72 @@ has now bitten twice: **before concluding anything about a scheduler, check that
 the runtime can execute the schedule.** Both times the model and the profiles
 were fine and the execution environment was not, and both times the wrong
 conclusion was the flattering-to-nobody kind that looks like a real finding.
+
+---
+
+## Phases 14–15 complete
+
+### VitFly (Phase 14) — full LSTMNet on the board, bit-exact
+
+All three missing ops landed: `avgpool2d_s8`, `leaky_relu_s8`, and a fused
+`lstm_s8` cell. Each needed four pieces — KernelSpec, extractor branch, golden
+simulator case, skeleton emission — plus, for the LSTM, `nn.LSTM` handling
+(tuple output resolved through its `getitem(0)`, discarded `(h_n, c_n)` skipped)
+and `unsqueeze`/`squeeze` as views.
+
+**Statefulness came from storage, not new machinery.** `h_state`/`c_state` are
+ordinary intermediates, so `buffers.c` gives them file-scope arrays — `.bss`,
+zero-initialised once and retained across `run_model()` calls. Nothing resets
+them, deliberately: invocation *k* reads what *k-1* wrote.
+
+`models/vitfly_lstm.py` on the K1: **`max_abs_err=0`**, 712 470 ticks (29.7 ms).
+
+| op | ticks | share |
+|---|---|---|
+| lstm.l0 | 383 347 | 53.8% |
+| lstm.l1 | 282 992 | 39.7% |
+| everything else | 46 131 | 6.5% |
+
+**Three real bugs, all caught by insisting on bit-exactness** and none of which a
+tolerance would have surfaced:
+1. The kernel wrote `h_state[t]` inside the loop that also reduces over the whole
+   previous hidden vector, so unit *t+1* read the new `h[t]` — the recurrence
+   consuming its own output mid-step. Off by up to **12 LSB**.
+2. float32 accumulation was insufficient; both sides are now double/float64.
+   2 LSB → 1.
+3. numpy's `np.round` is half-to-**even**, C's `round()` is half-away-from-zero.
+   The last LSB.
+
+### SmolVLA (Phase 15) — exports, and the work list is quantified
+
+Three genuine incompatibilities fixed to make it export at all: non-persistent
+rotary `inv_freq` buffers absent from `state_dict`, `abs()` over a bool attention
+mask during calibration, and the IO writer demanding a scale for that bool input.
+
+`scripts/smolvla_op_inventory.py` reads the torch.export graph directly rather
+than ModelBlaster's IR — the walker emits **2 op records for a 450M model**,
+which measures its own coverage, not the model.
+
+**4379 nodes, 63 distinct aten ops. Excluding 2480 shape/bookkeeping nodes:
+1422 compute nodes covered, 477 gaps — 74.9%.**
+
+The gaps are three families, not scatter:
+
+| family | ops | count |
+|---|---|---|
+| RMSNorm | `pow`, `rsqrt` | 173 |
+| attention | `scaled_dot_product_attention`, `softmax` | 60 |
+| RoPE | `sin`, `cos` | 82 |
+| plus | `layer_norm`, `embedding` | 79 |
+
+That is a work list rather than "SmolVLA needs attention support". int8 lowering
+of those families is the separate milestone the plan describes; nothing depends
+on it.
+
+### zephyr-chipyard-sw — resolved
+
+The 3 orphaned commits now live in XPU-RT (which **is** pushable) as a 28 KB
+bundle, verified by fetching into a clean clone: yields `418136fe` and tree
+`a62bdd21`, byte-identical. A `format-patch` series was tried first and **does
+not apply** — the profile CSVs defeat textual patching — which only surfaced
+because the restore was tested rather than assumed.
