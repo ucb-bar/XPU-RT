@@ -95,8 +95,27 @@ def build_machine_combinations_with_impls(
     machine_core_counts: Dict[str, int],
     machine_impls: Dict[str, Sequence[str]],
     capabilities: Dict[str, frozenset] | None = None,
+    granularity: str = "prefix",
 ) -> Tuple[List[str], List[List[str]], List[str]]:
-    """Cumulative core-group combinations, once per legal implementation.
+    """Core-group combinations, once per legal implementation.
+
+    ``granularity`` selects what a combination means:
+
+    ``"prefix"`` (default, and what `workload_factory.build_machine_combinations`
+        does): cumulative prefixes ``['CPU_P#0']``, ``['CPU_P#0','CPU_P#1']``, …
+        A combination is *one dispatch given N cores*. Because every cluster-0
+        combination contains ``CPU_P#0``, they all intersect, so a cluster runs
+        **one dispatch at a time**. Timings come from the N-hart profile
+        (``topo_0_1_2_3`` for 4 cores).
+
+    ``"per_core"``: every core is independently schedulable —
+        ``['CPU_P#0']``, ``['CPU_P#1']``, ``['CPU_P#2']``, … Disjoint, so eight
+        dispatches can genuinely run at once on the K1. Timings must come from
+        the **single-core** profile (``topo_0``); using a 4-hart number here
+        would credit each core with the throughput of the whole cluster.
+
+    The two answer different questions and need different profiles, so the
+    choice belongs in the workload spec rather than being implied.
 
     Returns ``(machines, combinations, combo_impls)`` where ``combo_impls[i]``
     is the implementation combination ``i`` runs. Combinations that differ only
@@ -120,6 +139,11 @@ def build_machine_combinations_with_impls(
     for kind, count in machine_core_counts.items():
         machines.extend(f"{kind}#{i}" for i in range(count))
 
+    if granularity not in ("prefix", "per_core"):
+        raise ValueError(
+            f"granularity must be 'prefix' or 'per_core', got {granularity!r}"
+        )
+
     combinations: List[List[str]] = []
     combo_impls: List[str] = []
     for kind, count in machine_core_counts.items():
@@ -130,9 +154,14 @@ def build_machine_combinations_with_impls(
                 f"{kind}: no implementations declared; it would be unschedulable"
             )
         for impl in impls:
-            for n in range(1, count + 1):
-                combinations.append(cores[:n])
-                combo_impls.append(impl)
+            if granularity == "prefix":
+                for n in range(1, count + 1):
+                    combinations.append(cores[:n])
+                    combo_impls.append(impl)
+            else:
+                for core in cores:
+                    combinations.append([core])
+                    combo_impls.append(impl)
     return machines, combinations, combo_impls
 
 
