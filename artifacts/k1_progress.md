@@ -560,3 +560,45 @@ Closing the gap means N worker threads in `scheduler_runner.cc`, which is a
 refactor of the dispatch loop rather than a config change. Everything upstream
 of it is ready: `capabilities.py` emits per-core combinations,
 `machine_combination_mode` selects them, and the runner now executes placement.
+
+---
+
+## Contention, measured under control — and it inverts the obvious assumption
+
+`runtime/scripts/k1_contention.py` pins the dispatch under test to core 0 and runs
+a co-runner on a chosen other core, comparing against the same dispatch with
+nothing else running. The co-runner is a **different** benchmark module on
+purpose: an identical one shares its weights, and a same-L2 co-placement then
+looks *helpful* rather than contended (measured: 1.034x with the same module vs
+1.088x with a different one on the same dispatch).
+
+| dispatch | solo | co-runner same cluster | co-runner other cluster |
+|---|---|---|---|
+| dronet.0 | 0.581 ms | 1.088x | **1.298x** |
+| dronet.10 | 0.416 ms | 1.103x | **1.312x** |
+| dronet.11 | 0.222 ms | 0.995x | 0.937x |
+| dronet.12 | 9.581 ms | 1.053x | **1.233x** |
+| dronet.13 | 18.321 ms | 1.034x | **1.137x** |
+| dronet.14 | 1.317 ms | 1.014x | 1.031x |
+| **median** | | **1.043x** | **1.185x** |
+
+**Co-running on the *other* cluster costs ~18%; on the *same* cluster ~4%.**
+That is the opposite of what the resource model would suggest — cores 0-3 and
+4-7 have separate 512K L2s, so spreading across clusters looks like the way to
+avoid interference, and on this SoC it is roughly four times worse.
+
+The magnitude also matches the unexplained gap in the first predicted-vs-actual
+join: solo profiles ran 17-25% optimistic on the large convolutions during a run
+with both clusters busy, and cross-cluster co-running measures 13-31% here.
+So that gap was contention, and specifically *cross-cluster* contention.
+
+**Confidence: moderate, mechanism unexplained.** Six dispatches, four
+repetitions, one co-runner. Two of the six show no effect. A plausible story is
+shared memory-controller or interconnect pressure dominating L2 isolation, but
+this experiment does not establish it. Before this changes placement policy it
+wants: more co-runner kinds, more repetitions, and a memory-bandwidth control to
+separate interconnect pressure from cache effects.
+
+If it holds, the scheduling consequence is concrete and contrarian: **prefer
+packing concurrent work onto one cluster** rather than spreading it, which is
+the opposite of the default intuition.
