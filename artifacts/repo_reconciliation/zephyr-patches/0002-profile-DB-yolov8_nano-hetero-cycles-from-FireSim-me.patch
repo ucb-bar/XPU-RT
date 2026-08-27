@@ -1,0 +1,716 @@
+From 03ee2e2604d81f14efaa0e499a32c17dcf92a26e Mon Sep 17 00:00:00 2001
+From: "Agustin N. Coppari Hollmann" <copparihollmann@gmail.com>
+Date: Thu, 4 Jun 2026 14:00:05 -0700
+Subject: [PATCH 2/3] profile DB: yolov8_nano hetero cycles from FireSim
+ measurement
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Re-ingested per-op cycles from a hetero FireSim run of yolov8 using
+the bit-exact gemmini_im2col_full_C conv kernel (copied from dronet
+cache). 64 gemmini_q31 rows + 140 V256D128_rvv rows updated. The
+yolov8 run shows max_abs_err=22 in the output tail — the conv kernel
+runs structurally fine but accumulates small drift on yolov8-specific
+conv shapes that the dronet validation didn't exercise. Cycles are
+still the right measurement to base scheduling on.
+
+Backups preserved at *.prebitexact_backup. Source uartlog:
+ModelBlaster artifacts/audit/firesim_yolov8_gemmini.uartlog
+---
+ .../topo_0/results.csv                        | 410 +++++++++---------
+ .../topo_0/results.csv                        | 128 +++---
+ 2 files changed, 269 insertions(+), 269 deletions(-)
+
+diff --git a/gen/profile/sweep_v8/V256D128_rvv/firesim_rocket_saturn/yolov8_nano/yolov8_nano.int8/yolov8_nano_firesim_rocket_saturn_V256D128_rvv_yolov8_nano.int8/topo_0/results.csv b/gen/profile/sweep_v8/V256D128_rvv/firesim_rocket_saturn/yolov8_nano/yolov8_nano.int8/yolov8_nano_firesim_rocket_saturn_V256D128_rvv_yolov8_nano.int8/topo_0/results.csv
+index cc37e18940e..308af2f3c2c 100644
+--- a/gen/profile/sweep_v8/V256D128_rvv/firesim_rocket_saturn/yolov8_nano/yolov8_nano.int8/yolov8_nano_firesim_rocket_saturn_V256D128_rvv_yolov8_nano.int8/topo_0/results.csv
++++ b/gen/profile/sweep_v8/V256D128_rvv/firesim_rocket_saturn/yolov8_nano/yolov8_nano.int8/yolov8_nano_firesim_rocket_saturn_V256D128_rvv_yolov8_nano.int8/topo_0/results.csv
+@@ -1,205 +1,205 @@
+-dispatch_id,module_name,vmfb_path,mlir_path,mean_time,mean_unit,mean_time_ns,returncode,log_path,source,op,shape,cycles
+-0,yolov8_nano$dispatch_0_V256D128_rvv_curated_conv2d_s8_N1xIC3xIH160xIW160xOC16xOH80xOW80xKH3xKW3xSH2xSW2xPH1xPW1,,,8.566232,ms,8566232.000000,0,,firesim,conv2d_s8,N=1;IC=3;IH=160;IW=160;OC=16;OH=80;OW=80;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,8566232
+-1,yolov8_nano$dispatch_1_V256D128_rvv_curated_batchnorm2d_s8_N1xC16xH80xW80,,,0.201982,ms,201982.000000,0,,firesim,batchnorm2d_s8,N=1;C=16;H=80;W=80,201982
+-2,yolov8_nano$dispatch_2_V256D128_rvv_curated_silu_s8_n102400,,,1.364861,ms,1364861.000000,0,,firesim,silu_s8,n=102400,1364861
+-3,yolov8_nano$dispatch_3_V256D128_rvv_curated_conv2d_s8_N1xIC16xIH80xIW80xOC32xOH40xOW40xKH3xKW3xSH2xSW2xPH1xPW1,,,8.061676,ms,8061676.000000,0,,firesim,conv2d_s8,N=1;IC=16;IH=80;IW=80;OC=32;OH=40;OW=40;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,8061676
+-4,yolov8_nano$dispatch_4_V256D128_rvv_curated_batchnorm2d_s8_N1xC32xH40xW40,,,0.100451,ms,100451.000000,0,,firesim,batchnorm2d_s8,N=1;C=32;H=40;W=40,100451
+-5,yolov8_nano$dispatch_5_V256D128_rvv_curated_silu_s8_n51200,,,0.711225,ms,711225.000000,0,,firesim,silu_s8,n=51200,711225
+-6,yolov8_nano$dispatch_6_V256D128_rvv_curated_conv2d_s8_N1xIC32xIH40xIW40xOC32xOH40xOW40xKH1xKW1xSH1xSW1xPH0xPW0,,,4.118598,ms,4118598.000000,0,,firesim,conv2d_s8,N=1;IC=32;IH=40;IW=40;OC=32;OH=40;OW=40;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,4118598
+-7,yolov8_nano$dispatch_7_V256D128_rvv_curated_batchnorm2d_s8_N1xC32xH40xW40,,,0.100394,ms,100394.000000,0,,firesim,batchnorm2d_s8,N=1;C=32;H=40;W=40,100394
+-8,yolov8_nano$dispatch_8_V256D128_rvv_curated_silu_s8_n51200,,,0.707264,ms,707264.000000,0,,firesim,silu_s8,n=51200,707264
+-10,yolov8_nano$dispatch_10_V256D128_rvv_curated_conv2d_s8_N1xIC16xIH40xIW40xOC16xOH40xOW40xKH3xKW3xSH1xSW1xPH1xPW1,,,7.170190,ms,7170190.000000,0,,firesim,conv2d_s8,N=1;IC=16;IH=40;IW=40;OC=16;OH=40;OW=40;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,7170190
+-11,yolov8_nano$dispatch_11_V256D128_rvv_curated_batchnorm2d_s8_N1xC16xH40xW40,,,0.050275,ms,50275.000000,0,,firesim,batchnorm2d_s8,N=1;C=16;H=40;W=40,50275
+-12,yolov8_nano$dispatch_12_V256D128_rvv_curated_silu_s8_n25600,,,0.382094,ms,382094.000000,0,,firesim,silu_s8,n=25600,382094
+-13,yolov8_nano$dispatch_13_V256D128_rvv_curated_conv2d_s8_N1xIC16xIH40xIW40xOC16xOH40xOW40xKH3xKW3xSH1xSW1xPH1xPW1,,,7.165632,ms,7165632.000000,0,,firesim,conv2d_s8,N=1;IC=16;IH=40;IW=40;OC=16;OH=40;OW=40;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,7165632
+-14,yolov8_nano$dispatch_14_V256D128_rvv_curated_batchnorm2d_s8_N1xC16xH40xW40,,,0.050221,ms,50221.000000,0,,firesim,batchnorm2d_s8,N=1;C=16;H=40;W=40,50221
+-15,yolov8_nano$dispatch_15_V256D128_rvv_curated_silu_s8_n25600,,,0.382256,ms,382256.000000,0,,firesim,silu_s8,n=25600,382256
+-16,yolov8_nano$dispatch_16_V256D128_rvv_curated_add_s8_n25600,,,2.076229,ms,2076229.000000,0,,firesim,add_s8,n=25600,2076229
+-17,yolov8_nano$dispatch_17_V256D128_rvv_curated_cat3_c1_s8_N1xH40xW40xC_inputs161616xC_total48,,,0.124299,ms,124299.000000,0,,firesim,cat3_c1_s8,N=1;H=40;W=40;C_inputs=16|16|16;C_total=48,124299
+-18,yolov8_nano$dispatch_18_V256D128_rvv_curated_conv2d_s8_N1xIC48xIH40xIW40xOC32xOH40xOW40xKH1xKW1xSH1xSW1xPH0xPW0,,,5.326307,ms,5326307.000000,0,,firesim,conv2d_s8,N=1;IC=48;IH=40;IW=40;OC=32;OH=40;OW=40;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,5326307
+-19,yolov8_nano$dispatch_19_V256D128_rvv_curated_batchnorm2d_s8_N1xC32xH40xW40,,,0.100336,ms,100336.000000,0,,firesim,batchnorm2d_s8,N=1;C=32;H=40;W=40,100336
+-20,yolov8_nano$dispatch_20_V256D128_rvv_curated_silu_s8_n51200,,,0.708770,ms,708770.000000,0,,firesim,silu_s8,n=51200,708770
+-21,yolov8_nano$dispatch_21_V256D128_rvv_curated_conv2d_s8_N1xIC32xIH40xIW40xOC64xOH20xOW20xKH3xKW3xSH2xSW2xPH1xPW1,,,7.091221,ms,7091221.000000,0,,firesim,conv2d_s8,N=1;IC=32;IH=40;IW=40;OC=64;OH=20;OW=20;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,7091221
+-22,yolov8_nano$dispatch_22_V256D128_rvv_curated_batchnorm2d_s8_N1xC64xH20xW20,,,0.052077,ms,52077.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=20;W=20,52077
+-23,yolov8_nano$dispatch_23_V256D128_rvv_curated_silu_s8_n25600,,,0.382275,ms,382275.000000,0,,firesim,silu_s8,n=25600,382275
+-24,yolov8_nano$dispatch_24_V256D128_rvv_curated_conv2d_s8_N1xIC64xIH20xIW20xOC64xOH20xOW20xKH1xKW1xSH1xSW1xPH0xPW0,,,3.242366,ms,3242366.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=20;IW=20;OC=64;OH=20;OW=20;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,3242366
+-25,yolov8_nano$dispatch_25_V256D128_rvv_curated_batchnorm2d_s8_N1xC64xH20xW20,,,0.051979,ms,51979.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=20;W=20,51979
+-26,yolov8_nano$dispatch_26_V256D128_rvv_curated_silu_s8_n25600,,,0.382297,ms,382297.000000,0,,firesim,silu_s8,n=25600,382297
+-28,yolov8_nano$dispatch_28_V256D128_rvv_curated_conv2d_s8_N1xIC32xIH20xIW20xOC32xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1,,,3.521280,ms,3521280.000000,0,,firesim,conv2d_s8,N=1;IC=32;IH=20;IW=20;OC=32;OH=20;OW=20;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,3521280
+-29,yolov8_nano$dispatch_29_V256D128_rvv_curated_batchnorm2d_s8_N1xC32xH20xW20,,,0.026254,ms,26254.000000,0,,firesim,batchnorm2d_s8,N=1;C=32;H=20;W=20,26254
+-30,yolov8_nano$dispatch_30_V256D128_rvv_curated_silu_s8_n12800,,,0.221175,ms,221175.000000,0,,firesim,silu_s8,n=12800,221175
+-31,yolov8_nano$dispatch_31_V256D128_rvv_curated_conv2d_s8_N1xIC32xIH20xIW20xOC32xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1,,,3.523877,ms,3523877.000000,0,,firesim,conv2d_s8,N=1;IC=32;IH=20;IW=20;OC=32;OH=20;OW=20;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,3523877
+-32,yolov8_nano$dispatch_32_V256D128_rvv_curated_batchnorm2d_s8_N1xC32xH20xW20,,,0.026209,ms,26209.000000,0,,firesim,batchnorm2d_s8,N=1;C=32;H=20;W=20,26209
+-33,yolov8_nano$dispatch_33_V256D128_rvv_curated_silu_s8_n12800,,,0.221328,ms,221328.000000,0,,firesim,silu_s8,n=12800,221328
+-34,yolov8_nano$dispatch_34_V256D128_rvv_curated_add_s8_n12800,,,1.038726,ms,1038726.000000,0,,firesim,add_s8,n=12800,1038726
+-35,yolov8_nano$dispatch_35_V256D128_rvv_curated_conv2d_s8_N1xIC32xIH20xIW20xOC32xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1,,,3.523116,ms,3523116.000000,0,,firesim,conv2d_s8,N=1;IC=32;IH=20;IW=20;OC=32;OH=20;OW=20;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,3523116
+-36,yolov8_nano$dispatch_36_V256D128_rvv_curated_batchnorm2d_s8_N1xC32xH20xW20,,,0.026244,ms,26244.000000,0,,firesim,batchnorm2d_s8,N=1;C=32;H=20;W=20,26244
+-37,yolov8_nano$dispatch_37_V256D128_rvv_curated_silu_s8_n12800,,,0.221397,ms,221397.000000,0,,firesim,silu_s8,n=12800,221397
+-38,yolov8_nano$dispatch_38_V256D128_rvv_curated_conv2d_s8_N1xIC32xIH20xIW20xOC32xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1,,,3.522512,ms,3522512.000000,0,,firesim,conv2d_s8,N=1;IC=32;IH=20;IW=20;OC=32;OH=20;OW=20;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,3522512
+-39,yolov8_nano$dispatch_39_V256D128_rvv_curated_batchnorm2d_s8_N1xC32xH20xW20,,,0.026121,ms,26121.000000,0,,firesim,batchnorm2d_s8,N=1;C=32;H=20;W=20,26121
+-40,yolov8_nano$dispatch_40_V256D128_rvv_curated_silu_s8_n12800,,,0.221191,ms,221191.000000,0,,firesim,silu_s8,n=12800,221191
+-41,yolov8_nano$dispatch_41_V256D128_rvv_curated_add_s8_n12800,,,1.038317,ms,1038317.000000,0,,firesim,add_s8,n=12800,1038317
+-42,yolov8_nano$dispatch_42_V256D128_rvv_curated_cat4_c1_s8_N1xH20xW20xC_inputs32323232xC_total128,,,0.090718,ms,90718.000000,0,,firesim,cat4_c1_s8,N=1;H=20;W=20;C_inputs=32|32|32|32;C_total=128,90718
+-43,yolov8_nano$dispatch_43_V256D128_rvv_curated_conv2d_s8_N1xIC128xIH20xIW20xOC64xOH20xOW20xKH1xKW1xSH1xSW1xPH0xPW0,,,5.620195,ms,5620195.000000,0,,firesim,conv2d_s8,N=1;IC=128;IH=20;IW=20;OC=64;OH=20;OW=20;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,5620195
+-44,yolov8_nano$dispatch_44_V256D128_rvv_curated_batchnorm2d_s8_N1xC64xH20xW20,,,0.051930,ms,51930.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=20;W=20,51930
+-45,yolov8_nano$dispatch_45_V256D128_rvv_curated_silu_s8_n25600,,,0.382301,ms,382301.000000,0,,firesim,silu_s8,n=25600,382301
+-46,yolov8_nano$dispatch_46_V256D128_rvv_curated_conv2d_s8_N1xIC64xIH20xIW20xOC128xOH10xOW10xKH3xKW3xSH2xSW2xPH1xPW1,,,6.584426,ms,6584426.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=20;IW=20;OC=128;OH=10;OW=10;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,6584426
+-47,yolov8_nano$dispatch_47_V256D128_rvv_curated_batchnorm2d_s8_N1xC128xH10xW10,,,0.026526,ms,26526.000000,0,,firesim,batchnorm2d_s8,N=1;C=128;H=10;W=10,26526
+-48,yolov8_nano$dispatch_48_V256D128_rvv_curated_silu_s8_n12800,,,0.221392,ms,221392.000000,0,,firesim,silu_s8,n=12800,221392
+-49,yolov8_nano$dispatch_49_V256D128_rvv_curated_conv2d_s8_N1xIC128xIH10xIW10xOC128xOH10xOW10xKH1xKW1xSH1xSW1xPH0xPW0,,,2.805889,ms,2805889.000000,0,,firesim,conv2d_s8,N=1;IC=128;IH=10;IW=10;OC=128;OH=10;OW=10;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,2805889
+-50,yolov8_nano$dispatch_50_V256D128_rvv_curated_batchnorm2d_s8_N1xC128xH10xW10,,,0.026458,ms,26458.000000,0,,firesim,batchnorm2d_s8,N=1;C=128;H=10;W=10,26458
+-51,yolov8_nano$dispatch_51_V256D128_rvv_curated_silu_s8_n12800,,,0.221283,ms,221283.000000,0,,firesim,silu_s8,n=12800,221283
+-53,yolov8_nano$dispatch_53_V256D128_rvv_curated_conv2d_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,3.251071,ms,3251071.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=10;IW=10;OC=64;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,3251071
+-54,yolov8_nano$dispatch_54_V256D128_rvv_curated_batchnorm2d_s8_N1xC64xH10xW10,,,0.013315,ms,13315.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=10;W=10,13315
+-55,yolov8_nano$dispatch_55_V256D128_rvv_curated_silu_s8_n6400,,,0.140531,ms,140531.000000,0,,firesim,silu_s8,n=6400,140531
+-56,yolov8_nano$dispatch_56_V256D128_rvv_curated_conv2d_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,3.249948,ms,3249948.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=10;IW=10;OC=64;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,3249948
+-57,yolov8_nano$dispatch_57_V256D128_rvv_curated_batchnorm2d_s8_N1xC64xH10xW10,,,0.013306,ms,13306.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=10;W=10,13306
+-58,yolov8_nano$dispatch_58_V256D128_rvv_curated_silu_s8_n6400,,,0.140331,ms,140331.000000,0,,firesim,silu_s8,n=6400,140331
+-59,yolov8_nano$dispatch_59_V256D128_rvv_curated_add_s8_n6400,,,0.520342,ms,520342.000000,0,,firesim,add_s8,n=6400,520342
+-60,yolov8_nano$dispatch_60_V256D128_rvv_curated_conv2d_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,3.248569,ms,3248569.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=10;IW=10;OC=64;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,3248569
+-61,yolov8_nano$dispatch_61_V256D128_rvv_curated_batchnorm2d_s8_N1xC64xH10xW10,,,0.013378,ms,13378.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=10;W=10,13378
+-62,yolov8_nano$dispatch_62_V256D128_rvv_curated_silu_s8_n6400,,,0.140508,ms,140508.000000,0,,firesim,silu_s8,n=6400,140508
+-63,yolov8_nano$dispatch_63_V256D128_rvv_curated_conv2d_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,3.248712,ms,3248712.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=10;IW=10;OC=64;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,3248712
+-64,yolov8_nano$dispatch_64_V256D128_rvv_curated_batchnorm2d_s8_N1xC64xH10xW10,,,0.013254,ms,13254.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=10;W=10,13254
+-65,yolov8_nano$dispatch_65_V256D128_rvv_curated_silu_s8_n6400,,,0.143230,ms,143230.000000,0,,firesim,silu_s8,n=6400,143230
+-66,yolov8_nano$dispatch_66_V256D128_rvv_curated_add_s8_n6400,,,0.521409,ms,521409.000000,0,,firesim,add_s8,n=6400,521409
+-67,yolov8_nano$dispatch_67_V256D128_rvv_curated_cat4_c1_s8_N1xH10xW10xC_inputs64646464xC_total256,,,0.045525,ms,45525.000000,0,,firesim,cat4_c1_s8,N=1;H=10;W=10;C_inputs=64|64|64|64;C_total=256,45525
+-68,yolov8_nano$dispatch_68_V256D128_rvv_curated_conv2d_s8_N1xIC256xIH10xIW10xOC128xOH10xOW10xKH1xKW1xSH1xSW1xPH0xPW0,,,5.274137,ms,5274137.000000,0,,firesim,conv2d_s8,N=1;IC=256;IH=10;IW=10;OC=128;OH=10;OW=10;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,5274137
+-69,yolov8_nano$dispatch_69_V256D128_rvv_curated_batchnorm2d_s8_N1xC128xH10xW10,,,0.026279,ms,26279.000000,0,,firesim,batchnorm2d_s8,N=1;C=128;H=10;W=10,26279
+-70,yolov8_nano$dispatch_70_V256D128_rvv_curated_silu_s8_n12800,,,0.221173,ms,221173.000000,0,,firesim,silu_s8,n=12800,221173
+-71,yolov8_nano$dispatch_71_V256D128_rvv_curated_conv2d_s8_N1xIC128xIH10xIW10xOC256xOH5xOW5xKH3xKW3xSH2xSW2xPH1xPW1,,,6.221590,ms,6221590.000000,0,,firesim,conv2d_s8,N=1;IC=128;IH=10;IW=10;OC=256;OH=5;OW=5;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,6221590
+-72,yolov8_nano$dispatch_72_V256D128_rvv_curated_batchnorm2d_s8_N1xC256xH5xW5,,,0.017625,ms,17625.000000,0,,firesim,batchnorm2d_s8,N=1;C=256;H=5;W=5,17625
+-73,yolov8_nano$dispatch_73_V256D128_rvv_curated_silu_s8_n6400,,,0.140487,ms,140487.000000,0,,firesim,silu_s8,n=6400,140487
+-74,yolov8_nano$dispatch_74_V256D128_rvv_curated_conv2d_s8_N1xIC256xIH5xIW5xOC256xOH5xOW5xKH1xKW1xSH1xSW1xPH0xPW0,,,2.578579,ms,2578579.000000,0,,firesim,conv2d_s8,N=1;IC=256;IH=5;IW=5;OC=256;OH=5;OW=5;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,2578579
+-75,yolov8_nano$dispatch_75_V256D128_rvv_curated_batchnorm2d_s8_N1xC256xH5xW5,,,0.017422,ms,17422.000000,0,,firesim,batchnorm2d_s8,N=1;C=256;H=5;W=5,17422
+-76,yolov8_nano$dispatch_76_V256D128_rvv_curated_silu_s8_n6400,,,0.139778,ms,139778.000000,0,,firesim,silu_s8,n=6400,139778
+-78,yolov8_nano$dispatch_78_V256D128_rvv_curated_conv2d_s8_N1xIC128xIH5xIW5xOC128xOH5xOW5xKH3xKW3xSH1xSW1xPH1xPW1,,,3.040593,ms,3040593.000000,0,,firesim,conv2d_s8,N=1;IC=128;IH=5;IW=5;OC=128;OH=5;OW=5;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,3040593
+-79,yolov8_nano$dispatch_79_V256D128_rvv_curated_batchnorm2d_s8_N1xC128xH5xW5,,,0.008845,ms,8845.000000,0,,firesim,batchnorm2d_s8,N=1;C=128;H=5;W=5,8845
+-80,yolov8_nano$dispatch_80_V256D128_rvv_curated_silu_s8_n3200,,,0.097215,ms,97215.000000,0,,firesim,silu_s8,n=3200,97215
+-81,yolov8_nano$dispatch_81_V256D128_rvv_curated_conv2d_s8_N1xIC128xIH5xIW5xOC128xOH5xOW5xKH3xKW3xSH1xSW1xPH1xPW1,,,3.043387,ms,3043387.000000,0,,firesim,conv2d_s8,N=1;IC=128;IH=5;IW=5;OC=128;OH=5;OW=5;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,3043387
+-82,yolov8_nano$dispatch_82_V256D128_rvv_curated_batchnorm2d_s8_N1xC128xH5xW5,,,0.008872,ms,8872.000000,0,,firesim,batchnorm2d_s8,N=1;C=128;H=5;W=5,8872
+-83,yolov8_nano$dispatch_83_V256D128_rvv_curated_silu_s8_n3200,,,0.084435,ms,84435.000000,0,,firesim,silu_s8,n=3200,84435
+-84,yolov8_nano$dispatch_84_V256D128_rvv_curated_add_s8_n3200,,,0.259403,ms,259403.000000,0,,firesim,add_s8,n=3200,259403
+-85,yolov8_nano$dispatch_85_V256D128_rvv_curated_cat3_c1_s8_N1xH5xW5xC_inputs128128128xC_total384,,,0.020203,ms,20203.000000,0,,firesim,cat3_c1_s8,N=1;H=5;W=5;C_inputs=128|128|128;C_total=384,20203
+-86,yolov8_nano$dispatch_86_V256D128_rvv_curated_conv2d_s8_N1xIC384xIH5xIW5xOC256xOH5xOW5xKH1xKW1xSH1xSW1xPH0xPW0,,,3.760279,ms,3760279.000000,0,,firesim,conv2d_s8,N=1;IC=384;IH=5;IW=5;OC=256;OH=5;OW=5;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,3760279
+-87,yolov8_nano$dispatch_87_V256D128_rvv_curated_batchnorm2d_s8_N1xC256xH5xW5,,,0.017510,ms,17510.000000,0,,firesim,batchnorm2d_s8,N=1;C=256;H=5;W=5,17510
+-88,yolov8_nano$dispatch_88_V256D128_rvv_curated_silu_s8_n6400,,,0.137758,ms,137758.000000,0,,firesim,silu_s8,n=6400,137758
+-89,yolov8_nano$dispatch_89_V256D128_rvv_curated_conv2d_s8_N1xIC256xIH5xIW5xOC128xOH5xOW5xKH1xKW1xSH1xSW1xPH0xPW0,,,1.290302,ms,1290302.000000,0,,firesim,conv2d_s8,N=1;IC=256;IH=5;IW=5;OC=128;OH=5;OW=5;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,1290302
+-90,yolov8_nano$dispatch_90_V256D128_rvv_curated_batchnorm2d_s8_N1xC128xH5xW5,,,0.008731,ms,8731.000000,0,,firesim,batchnorm2d_s8,N=1;C=128;H=5;W=5,8731
+-91,yolov8_nano$dispatch_91_V256D128_rvv_curated_silu_s8_n3200,,,0.090652,ms,90652.000000,0,,firesim,silu_s8,n=3200,90652
+-92,yolov8_nano$dispatch_92_V256D128_rvv_curated_maxpool2d_s8_N1xC128xIH5xIW5xOH5xOW5xKH5xKW5xSH1xSW1xPH2xPW2xDH1xDW1,,,1.252184,ms,1252184.000000,0,,firesim,maxpool2d_s8,N=1;C=128;IH=5;IW=5;OH=5;OW=5;KH=5;KW=5;SH=1;SW=1;PH=2;PW=2;DH=1;DW=1,1252184
+-93,yolov8_nano$dispatch_93_V256D128_rvv_curated_maxpool2d_s8_N1xC128xIH5xIW5xOH5xOW5xKH5xKW5xSH1xSW1xPH2xPW2xDH1xDW1,,,1.225438,ms,1225438.000000,0,,firesim,maxpool2d_s8,N=1;C=128;IH=5;IW=5;OH=5;OW=5;KH=5;KW=5;SH=1;SW=1;PH=2;PW=2;DH=1;DW=1,1225438
+-94,yolov8_nano$dispatch_94_V256D128_rvv_curated_maxpool2d_s8_N1xC128xIH5xIW5xOH5xOW5xKH5xKW5xSH1xSW1xPH2xPW2xDH1xDW1,,,1.212963,ms,1212963.000000,0,,firesim,maxpool2d_s8,N=1;C=128;IH=5;IW=5;OH=5;OW=5;KH=5;KW=5;SH=1;SW=1;PH=2;PW=2;DH=1;DW=1,1212963
+-95,yolov8_nano$dispatch_95_V256D128_rvv_curated_cat4_c1_s8_N1xH5xW5xC_inputs128128128128xC_total512,,,0.022828,ms,22828.000000,0,,firesim,cat4_c1_s8,N=1;H=5;W=5;C_inputs=128|128|128|128;C_total=512,22828
+-96,yolov8_nano$dispatch_96_V256D128_rvv_curated_conv2d_s8_N1xIC512xIH5xIW5xOC256xOH5xOW5xKH1xKW1xSH1xSW1xPH0xPW0,,,4.946780,ms,4946780.000000,0,,firesim,conv2d_s8,N=1;IC=512;IH=5;IW=5;OC=256;OH=5;OW=5;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,4946780
+-97,yolov8_nano$dispatch_97_V256D128_rvv_curated_batchnorm2d_s8_N1xC256xH5xW5,,,0.017366,ms,17366.000000,0,,firesim,batchnorm2d_s8,N=1;C=256;H=5;W=5,17366
+-98,yolov8_nano$dispatch_98_V256D128_rvv_curated_silu_s8_n6400,,,0.120141,ms,120141.000000,0,,firesim,silu_s8,n=6400,120141
+-99,yolov8_nano$dispatch_99_V256D128_rvv_curated_upsample_nearest_s8_N1xC256xIH5xIW5xscale2,,,0.160740,ms,160740.000000,0,,firesim,upsample_nearest_s8,N=1;C=256;IH=5;IW=5;scale=2,160740
+-100,yolov8_nano$dispatch_100_V256D128_rvv_curated_cat2_c1_s8_N1xH10xW10xC_inputs256128xC_total384,,,0.060860,ms,60860.000000,0,,firesim,cat2_c1_s8,N=1;H=10;W=10;C_inputs=256|128;C_total=384,60860
+-101,yolov8_nano$dispatch_101_V256D128_rvv_curated_conv2d_s8_N1xIC384xIH10xIW10xOC128xOH10xOW10xKH1xKW1xSH1xSW1xPH0xPW0,,,8.143591,ms,8143591.000000,0,,firesim,conv2d_s8,N=1;IC=384;IH=10;IW=10;OC=128;OH=10;OW=10;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,8143591
+-102,yolov8_nano$dispatch_102_V256D128_rvv_curated_batchnorm2d_s8_N1xC128xH10xW10,,,0.026330,ms,26330.000000,0,,firesim,batchnorm2d_s8,N=1;C=128;H=10;W=10,26330
+-103,yolov8_nano$dispatch_103_V256D128_rvv_curated_silu_s8_n12800,,,0.220928,ms,220928.000000,0,,firesim,silu_s8,n=12800,220928
+-105,yolov8_nano$dispatch_105_V256D128_rvv_curated_conv2d_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,3.248651,ms,3248651.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=10;IW=10;OC=64;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,3248651
+-106,yolov8_nano$dispatch_106_V256D128_rvv_curated_batchnorm2d_s8_N1xC64xH10xW10,,,0.013301,ms,13301.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=10;W=10,13301
+-107,yolov8_nano$dispatch_107_V256D128_rvv_curated_silu_s8_n6400,,,0.139205,ms,139205.000000,0,,firesim,silu_s8,n=6400,139205
+-108,yolov8_nano$dispatch_108_V256D128_rvv_curated_conv2d_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,3.249285,ms,3249285.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=10;IW=10;OC=64;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,3249285
+-109,yolov8_nano$dispatch_109_V256D128_rvv_curated_batchnorm2d_s8_N1xC64xH10xW10,,,0.013301,ms,13301.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=10;W=10,13301
+-110,yolov8_nano$dispatch_110_V256D128_rvv_curated_silu_s8_n6400,,,0.134984,ms,134984.000000,0,,firesim,silu_s8,n=6400,134984
+-111,yolov8_nano$dispatch_111_V256D128_rvv_curated_cat3_c1_s8_N1xH10xW10xC_inputs646464xC_total192,,,0.032481,ms,32481.000000,0,,firesim,cat3_c1_s8,N=1;H=10;W=10;C_inputs=64|64|64;C_total=192,32481
+-112,yolov8_nano$dispatch_112_V256D128_rvv_curated_conv2d_s8_N1xIC192xIH10xIW10xOC128xOH10xOW10xKH1xKW1xSH1xSW1xPH0xPW0,,,4.014447,ms,4014447.000000,0,,firesim,conv2d_s8,N=1;IC=192;IH=10;IW=10;OC=128;OH=10;OW=10;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,4014447
+-113,yolov8_nano$dispatch_113_V256D128_rvv_curated_batchnorm2d_s8_N1xC128xH10xW10,,,0.026427,ms,26427.000000,0,,firesim,batchnorm2d_s8,N=1;C=128;H=10;W=10,26427
+-114,yolov8_nano$dispatch_114_V256D128_rvv_curated_silu_s8_n12800,,,0.219715,ms,219715.000000,0,,firesim,silu_s8,n=12800,219715
+-115,yolov8_nano$dispatch_115_V256D128_rvv_curated_upsample_nearest_s8_N1xC128xIH10xIW10xscale2,,,0.276060,ms,276060.000000,0,,firesim,upsample_nearest_s8,N=1;C=128;IH=10;IW=10;scale=2,276060
+-116,yolov8_nano$dispatch_116_V256D128_rvv_curated_cat2_c1_s8_N1xH20xW20xC_inputs12864xC_total192,,,0.118003,ms,118003.000000,0,,firesim,cat2_c1_s8,N=1;H=20;W=20;C_inputs=128|64;C_total=192,118003
+-117,yolov8_nano$dispatch_117_V256D128_rvv_curated_conv2d_s8_N1xIC192xIH20xIW20xOC64xOH20xOW20xKH1xKW1xSH1xSW1xPH0xPW0,,,8.003427,ms,8003427.000000,0,,firesim,conv2d_s8,N=1;IC=192;IH=20;IW=20;OC=64;OH=20;OW=20;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,8003427
+-118,yolov8_nano$dispatch_118_V256D128_rvv_curated_batchnorm2d_s8_N1xC64xH20xW20,,,0.052014,ms,52014.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=20;W=20,52014
+-119,yolov8_nano$dispatch_119_V256D128_rvv_curated_silu_s8_n25600,,,0.382284,ms,382284.000000,0,,firesim,silu_s8,n=25600,382284
+-121,yolov8_nano$dispatch_121_V256D128_rvv_curated_conv2d_s8_N1xIC32xIH20xIW20xOC32xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1,,,3.521870,ms,3521870.000000,0,,firesim,conv2d_s8,N=1;IC=32;IH=20;IW=20;OC=32;OH=20;OW=20;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,3521870
+-122,yolov8_nano$dispatch_122_V256D128_rvv_curated_batchnorm2d_s8_N1xC32xH20xW20,,,0.026278,ms,26278.000000,0,,firesim,batchnorm2d_s8,N=1;C=32;H=20;W=20,26278
+-123,yolov8_nano$dispatch_123_V256D128_rvv_curated_silu_s8_n12800,,,0.221160,ms,221160.000000,0,,firesim,silu_s8,n=12800,221160
+-124,yolov8_nano$dispatch_124_V256D128_rvv_curated_conv2d_s8_N1xIC32xIH20xIW20xOC32xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1,,,3.520801,ms,3520801.000000,0,,firesim,conv2d_s8,N=1;IC=32;IH=20;IW=20;OC=32;OH=20;OW=20;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,3520801
+-125,yolov8_nano$dispatch_125_V256D128_rvv_curated_batchnorm2d_s8_N1xC32xH20xW20,,,0.026196,ms,26196.000000,0,,firesim,batchnorm2d_s8,N=1;C=32;H=20;W=20,26196
+-126,yolov8_nano$dispatch_126_V256D128_rvv_curated_silu_s8_n12800,,,0.221078,ms,221078.000000,0,,firesim,silu_s8,n=12800,221078
+-127,yolov8_nano$dispatch_127_V256D128_rvv_curated_cat3_c1_s8_N1xH20xW20xC_inputs323232xC_total96,,,0.063281,ms,63281.000000,0,,firesim,cat3_c1_s8,N=1;H=20;W=20;C_inputs=32|32|32;C_total=96,63281
+-128,yolov8_nano$dispatch_128_V256D128_rvv_curated_conv2d_s8_N1xIC96xIH20xIW20xOC64xOH20xOW20xKH1xKW1xSH1xSW1xPH0xPW0,,,4.427794,ms,4427794.000000,0,,firesim,conv2d_s8,N=1;IC=96;IH=20;IW=20;OC=64;OH=20;OW=20;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,4427794
+-129,yolov8_nano$dispatch_129_V256D128_rvv_curated_batchnorm2d_s8_N1xC64xH20xW20,,,0.051986,ms,51986.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=20;W=20,51986
+-130,yolov8_nano$dispatch_130_V256D128_rvv_curated_silu_s8_n25600,,,0.382141,ms,382141.000000,0,,firesim,silu_s8,n=25600,382141
+-131,yolov8_nano$dispatch_131_V256D128_rvv_curated_conv2d_s8_N1xIC64xIH20xIW20xOC64xOH10xOW10xKH3xKW3xSH2xSW2xPH1xPW1,,,3.296712,ms,3296712.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=20;IW=20;OC=64;OH=10;OW=10;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,3296712
+-132,yolov8_nano$dispatch_132_V256D128_rvv_curated_batchnorm2d_s8_N1xC64xH10xW10,,,0.013240,ms,13240.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=10;W=10,13240
+-133,yolov8_nano$dispatch_133_V256D128_rvv_curated_silu_s8_n6400,,,0.140463,ms,140463.000000,0,,firesim,silu_s8,n=6400,140463
+-134,yolov8_nano$dispatch_134_V256D128_rvv_curated_cat2_c1_s8_N1xH10xW10xC_inputs64128xC_total192,,,0.031450,ms,31450.000000,0,,firesim,cat2_c1_s8,N=1;H=10;W=10;C_inputs=64|128;C_total=192,31450
+-135,yolov8_nano$dispatch_135_V256D128_rvv_curated_conv2d_s8_N1xIC192xIH10xIW10xOC128xOH10xOW10xKH1xKW1xSH1xSW1xPH0xPW0,,,4.018048,ms,4018048.000000,0,,firesim,conv2d_s8,N=1;IC=192;IH=10;IW=10;OC=128;OH=10;OW=10;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,4018048
+-136,yolov8_nano$dispatch_136_V256D128_rvv_curated_batchnorm2d_s8_N1xC128xH10xW10,,,0.026380,ms,26380.000000,0,,firesim,batchnorm2d_s8,N=1;C=128;H=10;W=10,26380
+-137,yolov8_nano$dispatch_137_V256D128_rvv_curated_silu_s8_n12800,,,0.220542,ms,220542.000000,0,,firesim,silu_s8,n=12800,220542
+-139,yolov8_nano$dispatch_139_V256D128_rvv_curated_conv2d_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,3.247667,ms,3247667.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=10;IW=10;OC=64;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,3247667
+-140,yolov8_nano$dispatch_140_V256D128_rvv_curated_batchnorm2d_s8_N1xC64xH10xW10,,,0.013410,ms,13410.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=10;W=10,13410
+-141,yolov8_nano$dispatch_141_V256D128_rvv_curated_silu_s8_n6400,,,0.137119,ms,137119.000000,0,,firesim,silu_s8,n=6400,137119
+-142,yolov8_nano$dispatch_142_V256D128_rvv_curated_conv2d_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,3.249769,ms,3249769.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=10;IW=10;OC=64;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,3249769
+-143,yolov8_nano$dispatch_143_V256D128_rvv_curated_batchnorm2d_s8_N1xC64xH10xW10,,,0.013269,ms,13269.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=10;W=10,13269
+-144,yolov8_nano$dispatch_144_V256D128_rvv_curated_silu_s8_n6400,,,0.130015,ms,130015.000000,0,,firesim,silu_s8,n=6400,130015
+-145,yolov8_nano$dispatch_145_V256D128_rvv_curated_cat3_c1_s8_N1xH10xW10xC_inputs646464xC_total192,,,0.032448,ms,32448.000000,0,,firesim,cat3_c1_s8,N=1;H=10;W=10;C_inputs=64|64|64;C_total=192,32448
+-146,yolov8_nano$dispatch_146_V256D128_rvv_curated_conv2d_s8_N1xIC192xIH10xIW10xOC128xOH10xOW10xKH1xKW1xSH1xSW1xPH0xPW0,,,4.015993,ms,4015993.000000,0,,firesim,conv2d_s8,N=1;IC=192;IH=10;IW=10;OC=128;OH=10;OW=10;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,4015993
+-147,yolov8_nano$dispatch_147_V256D128_rvv_curated_batchnorm2d_s8_N1xC128xH10xW10,,,0.026513,ms,26513.000000,0,,firesim,batchnorm2d_s8,N=1;C=128;H=10;W=10,26513
+-148,yolov8_nano$dispatch_148_V256D128_rvv_curated_silu_s8_n12800,,,0.217426,ms,217426.000000,0,,firesim,silu_s8,n=12800,217426
+-149,yolov8_nano$dispatch_149_V256D128_rvv_curated_conv2d_s8_N1xIC128xIH10xIW10xOC128xOH5xOW5xKH3xKW3xSH2xSW2xPH1xPW1,,,3.108460,ms,3108460.000000,0,,firesim,conv2d_s8,N=1;IC=128;IH=10;IW=10;OC=128;OH=5;OW=5;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,3108460
+-150,yolov8_nano$dispatch_150_V256D128_rvv_curated_batchnorm2d_s8_N1xC128xH5xW5,,,0.008746,ms,8746.000000,0,,firesim,batchnorm2d_s8,N=1;C=128;H=5;W=5,8746
+-151,yolov8_nano$dispatch_151_V256D128_rvv_curated_silu_s8_n3200,,,0.082169,ms,82169.000000,0,,firesim,silu_s8,n=3200,82169
+-152,yolov8_nano$dispatch_152_V256D128_rvv_curated_cat2_c1_s8_N1xH5xW5xC_inputs128256xC_total384,,,0.020758,ms,20758.000000,0,,firesim,cat2_c1_s8,N=1;H=5;W=5;C_inputs=128|256;C_total=384,20758
+-153,yolov8_nano$dispatch_153_V256D128_rvv_curated_conv2d_s8_N1xIC384xIH5xIW5xOC256xOH5xOW5xKH1xKW1xSH1xSW1xPH0xPW0,,,3.765696,ms,3765696.000000,0,,firesim,conv2d_s8,N=1;IC=384;IH=5;IW=5;OC=256;OH=5;OW=5;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,3765696
+-154,yolov8_nano$dispatch_154_V256D128_rvv_curated_batchnorm2d_s8_N1xC256xH5xW5,,,0.017493,ms,17493.000000,0,,firesim,batchnorm2d_s8,N=1;C=256;H=5;W=5,17493
+-155,yolov8_nano$dispatch_155_V256D128_rvv_curated_silu_s8_n6400,,,0.118501,ms,118501.000000,0,,firesim,silu_s8,n=6400,118501
+-157,yolov8_nano$dispatch_157_V256D128_rvv_curated_conv2d_s8_N1xIC128xIH5xIW5xOC128xOH5xOW5xKH3xKW3xSH1xSW1xPH1xPW1,,,3.040718,ms,3040718.000000,0,,firesim,conv2d_s8,N=1;IC=128;IH=5;IW=5;OC=128;OH=5;OW=5;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,3040718
+-158,yolov8_nano$dispatch_158_V256D128_rvv_curated_batchnorm2d_s8_N1xC128xH5xW5,,,0.008768,ms,8768.000000,0,,firesim,batchnorm2d_s8,N=1;C=128;H=5;W=5,8768
+-159,yolov8_nano$dispatch_159_V256D128_rvv_curated_silu_s8_n3200,,,0.080799,ms,80799.000000,0,,firesim,silu_s8,n=3200,80799
+-160,yolov8_nano$dispatch_160_V256D128_rvv_curated_conv2d_s8_N1xIC128xIH5xIW5xOC128xOH5xOW5xKH3xKW3xSH1xSW1xPH1xPW1,,,3.039529,ms,3039529.000000,0,,firesim,conv2d_s8,N=1;IC=128;IH=5;IW=5;OC=128;OH=5;OW=5;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,3039529
+-161,yolov8_nano$dispatch_161_V256D128_rvv_curated_batchnorm2d_s8_N1xC128xH5xW5,,,0.008792,ms,8792.000000,0,,firesim,batchnorm2d_s8,N=1;C=128;H=5;W=5,8792
+-162,yolov8_nano$dispatch_162_V256D128_rvv_curated_silu_s8_n3200,,,0.081024,ms,81024.000000,0,,firesim,silu_s8,n=3200,81024
+-163,yolov8_nano$dispatch_163_V256D128_rvv_curated_cat3_c1_s8_N1xH5xW5xC_inputs128128128xC_total384,,,0.020283,ms,20283.000000,0,,firesim,cat3_c1_s8,N=1;H=5;W=5;C_inputs=128|128|128;C_total=384,20283
+-164,yolov8_nano$dispatch_164_V256D128_rvv_curated_conv2d_s8_N1xIC384xIH5xIW5xOC256xOH5xOW5xKH1xKW1xSH1xSW1xPH0xPW0,,,3.759431,ms,3759431.000000,0,,firesim,conv2d_s8,N=1;IC=384;IH=5;IW=5;OC=256;OH=5;OW=5;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,3759431
+-165,yolov8_nano$dispatch_165_V256D128_rvv_curated_batchnorm2d_s8_N1xC256xH5xW5,,,0.017236,ms,17236.000000,0,,firesim,batchnorm2d_s8,N=1;C=256;H=5;W=5,17236
+-166,yolov8_nano$dispatch_166_V256D128_rvv_curated_silu_s8_n6400,,,0.121341,ms,121341.000000,0,,firesim,silu_s8,n=6400,121341
+-167,yolov8_nano$dispatch_167_V256D128_rvv_curated_conv2d_s8_N1xIC64xIH20xIW20xOC64xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1,,,13.202926,ms,13202926.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=20;IW=20;OC=64;OH=20;OW=20;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,13202926
+-168,yolov8_nano$dispatch_168_V256D128_rvv_curated_batchnorm2d_s8_N1xC64xH20xW20,,,0.052206,ms,52206.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=20;W=20,52206
+-169,yolov8_nano$dispatch_169_V256D128_rvv_curated_silu_s8_n25600,,,0.382172,ms,382172.000000,0,,firesim,silu_s8,n=25600,382172
+-170,yolov8_nano$dispatch_170_V256D128_rvv_curated_conv2d_s8_N1xIC64xIH20xIW20xOC64xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1,,,13.184258,ms,13184258.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=20;IW=20;OC=64;OH=20;OW=20;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,13184258
+-171,yolov8_nano$dispatch_171_V256D128_rvv_curated_batchnorm2d_s8_N1xC64xH20xW20,,,0.054381,ms,54381.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=20;W=20,54381
+-172,yolov8_nano$dispatch_172_V256D128_rvv_curated_silu_s8_n25600,,,0.381517,ms,381517.000000,0,,firesim,silu_s8,n=25600,381517
+-173,yolov8_nano$dispatch_173_V256D128_rvv_curated_conv2d_s8_N1xIC64xIH20xIW20xOC64xOH20xOW20xKH1xKW1xSH1xSW1xPH0xPW0,,,3.269573,ms,3269573.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=20;IW=20;OC=64;OH=20;OW=20;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,3269573
+-174,yolov8_nano$dispatch_174_V256D128_rvv_curated_conv2d_s8_N1xIC64xIH20xIW20xOC80xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1,,,19.595532,ms,19595532.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=20;IW=20;OC=80;OH=20;OW=20;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,19595532
+-175,yolov8_nano$dispatch_175_V256D128_rvv_curated_batchnorm2d_s8_N1xC80xH20xW20,,,0.065157,ms,65157.000000,0,,firesim,batchnorm2d_s8,N=1;C=80;H=20;W=20,65157
+-176,yolov8_nano$dispatch_176_V256D128_rvv_curated_silu_s8_n32000,,,0.462816,ms,462816.000000,0,,firesim,silu_s8,n=32000,462816
+-177,yolov8_nano$dispatch_177_V256D128_rvv_curated_conv2d_s8_N1xIC80xIH20xIW20xOC80xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1,,,24.208887,ms,24208887.000000,0,,firesim,conv2d_s8,N=1;IC=80;IH=20;IW=20;OC=80;OH=20;OW=20;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,24208887
+-178,yolov8_nano$dispatch_178_V256D128_rvv_curated_batchnorm2d_s8_N1xC80xH20xW20,,,0.065056,ms,65056.000000,0,,firesim,batchnorm2d_s8,N=1;C=80;H=20;W=20,65056
+-179,yolov8_nano$dispatch_179_V256D128_rvv_curated_silu_s8_n32000,,,0.462442,ms,462442.000000,0,,firesim,silu_s8,n=32000,462442
+-180,yolov8_nano$dispatch_180_V256D128_rvv_curated_conv2d_s8_N1xIC80xIH20xIW20xOC80xOH20xOW20xKH1xKW1xSH1xSW1xPH0xPW0,,,5.573288,ms,5573288.000000,0,,firesim,conv2d_s8,N=1;IC=80;IH=20;IW=20;OC=80;OH=20;OW=20;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,5573288
+-181,yolov8_nano$dispatch_181_V256D128_rvv_curated_cat2_c1_s8_N1xH20xW20xC_inputs6480xC_total144,,,0.088946,ms,88946.000000,0,,firesim,cat2_c1_s8,N=1;H=20;W=20;C_inputs=64|80;C_total=144,88946
+-182,yolov8_nano$dispatch_182_V256D128_rvv_curated_conv2d_s8_N1xIC128xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,6.277041,ms,6277041.000000,0,,firesim,conv2d_s8,N=1;IC=128;IH=10;IW=10;OC=64;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,6277041
+-183,yolov8_nano$dispatch_183_V256D128_rvv_curated_batchnorm2d_s8_N1xC64xH10xW10,,,0.013397,ms,13397.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=10;W=10,13397
+-184,yolov8_nano$dispatch_184_V256D128_rvv_curated_silu_s8_n6400,,,0.123032,ms,123032.000000,0,,firesim,silu_s8,n=6400,123032
+-185,yolov8_nano$dispatch_185_V256D128_rvv_curated_conv2d_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,3.243420,ms,3243420.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=10;IW=10;OC=64;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,3243420
+-186,yolov8_nano$dispatch_186_V256D128_rvv_curated_batchnorm2d_s8_N1xC64xH10xW10,,,0.013258,ms,13258.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=10;W=10,13258
+-187,yolov8_nano$dispatch_187_V256D128_rvv_curated_silu_s8_n6400,,,0.118616,ms,118616.000000,0,,firesim,silu_s8,n=6400,118616
+-188,yolov8_nano$dispatch_188_V256D128_rvv_curated_conv2d_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH1xKW1xSH1xSW1xPH0xPW0,,,0.816622,ms,816622.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=10;IW=10;OC=64;OH=10;OW=10;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,816622
+-189,yolov8_nano$dispatch_189_V256D128_rvv_curated_conv2d_s8_N1xIC128xIH10xIW10xOC80xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,9.354232,ms,9354232.000000,0,,firesim,conv2d_s8,N=1;IC=128;IH=10;IW=10;OC=80;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,9354232
+-190,yolov8_nano$dispatch_190_V256D128_rvv_curated_batchnorm2d_s8_N1xC80xH10xW10,,,0.016582,ms,16582.000000,0,,firesim,batchnorm2d_s8,N=1;C=80;H=10;W=10,16582
+-191,yolov8_nano$dispatch_191_V256D128_rvv_curated_silu_s8_n8000,,,0.145182,ms,145182.000000,0,,firesim,silu_s8,n=8000,145182
+-192,yolov8_nano$dispatch_192_V256D128_rvv_curated_conv2d_s8_N1xIC80xIH10xIW10xOC80xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,5.953658,ms,5953658.000000,0,,firesim,conv2d_s8,N=1;IC=80;IH=10;IW=10;OC=80;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,5953658
+-193,yolov8_nano$dispatch_193_V256D128_rvv_curated_batchnorm2d_s8_N1xC80xH10xW10,,,0.016572,ms,16572.000000,0,,firesim,batchnorm2d_s8,N=1;C=80;H=10;W=10,16572
+-194,yolov8_nano$dispatch_194_V256D128_rvv_curated_silu_s8_n8000,,,0.138974,ms,138974.000000,0,,firesim,silu_s8,n=8000,138974
+-195,yolov8_nano$dispatch_195_V256D128_rvv_curated_conv2d_s8_N1xIC80xIH10xIW10xOC80xOH10xOW10xKH1xKW1xSH1xSW1xPH0xPW0,,,1.395438,ms,1395438.000000,0,,firesim,conv2d_s8,N=1;IC=80;IH=10;IW=10;OC=80;OH=10;OW=10;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,1395438
+-196,yolov8_nano$dispatch_196_V256D128_rvv_curated_cat2_c1_s8_N1xH10xW10xC_inputs6480xC_total144,,,0.022381,ms,22381.000000,0,,firesim,cat2_c1_s8,N=1;H=10;W=10;C_inputs=64|80;C_total=144,22381
+-197,yolov8_nano$dispatch_197_V256D128_rvv_curated_conv2d_s8_N1xIC256xIH5xIW5xOC64xOH5xOW5xKH3xKW3xSH1xSW1xPH1xPW1,,,2.983617,ms,2983617.000000,0,,firesim,conv2d_s8,N=1;IC=256;IH=5;IW=5;OC=64;OH=5;OW=5;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,2983617
+-198,yolov8_nano$dispatch_198_V256D128_rvv_curated_batchnorm2d_s8_N1xC64xH5xW5,,,0.004483,ms,4483.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=5;W=5,4483
+-199,yolov8_nano$dispatch_199_V256D128_rvv_curated_silu_s8_n1600,,,0.060747,ms,60747.000000,0,,firesim,silu_s8,n=1600,60747
+-200,yolov8_nano$dispatch_200_V256D128_rvv_curated_conv2d_s8_N1xIC64xIH5xIW5xOC64xOH5xOW5xKH3xKW3xSH1xSW1xPH1xPW1,,,0.786210,ms,786210.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=5;IW=5;OC=64;OH=5;OW=5;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,786210
+-201,yolov8_nano$dispatch_201_V256D128_rvv_curated_batchnorm2d_s8_N1xC64xH5xW5,,,0.004409,ms,4409.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=5;W=5,4409
+-202,yolov8_nano$dispatch_202_V256D128_rvv_curated_silu_s8_n1600,,,0.060551,ms,60551.000000,0,,firesim,silu_s8,n=1600,60551
+-203,yolov8_nano$dispatch_203_V256D128_rvv_curated_conv2d_s8_N1xIC64xIH5xIW5xOC64xOH5xOW5xKH1xKW1xSH1xSW1xPH0xPW0,,,0.203759,ms,203759.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=5;IW=5;OC=64;OH=5;OW=5;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,203759
+-204,yolov8_nano$dispatch_204_V256D128_rvv_curated_conv2d_s8_N1xIC256xIH5xIW5xOC80xOH5xOW5xKH3xKW3xSH1xSW1xPH1xPW1,,,4.461487,ms,4461487.000000,0,,firesim,conv2d_s8,N=1;IC=256;IH=5;IW=5;OC=80;OH=5;OW=5;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,4461487
+-205,yolov8_nano$dispatch_205_V256D128_rvv_curated_batchnorm2d_s8_N1xC80xH5xW5,,,0.005574,ms,5574.000000,0,,firesim,batchnorm2d_s8,N=1;C=80;H=5;W=5,5574
+-206,yolov8_nano$dispatch_206_V256D128_rvv_curated_silu_s8_n2000,,,0.065736,ms,65736.000000,0,,firesim,silu_s8,n=2000,65736
+-207,yolov8_nano$dispatch_207_V256D128_rvv_curated_conv2d_s8_N1xIC80xIH5xIW5xOC80xOH5xOW5xKH3xKW3xSH1xSW1xPH1xPW1,,,1.442150,ms,1442150.000000,0,,firesim,conv2d_s8,N=1;IC=80;IH=5;IW=5;OC=80;OH=5;OW=5;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,1442150
+-208,yolov8_nano$dispatch_208_V256D128_rvv_curated_batchnorm2d_s8_N1xC80xH5xW5,,,0.005509,ms,5509.000000,0,,firesim,batchnorm2d_s8,N=1;C=80;H=5;W=5,5509
+-209,yolov8_nano$dispatch_209_V256D128_rvv_curated_silu_s8_n2000,,,0.065745,ms,65745.000000,0,,firesim,silu_s8,n=2000,65745
+-210,yolov8_nano$dispatch_210_V256D128_rvv_curated_conv2d_s8_N1xIC80xIH5xIW5xOC80xOH5xOW5xKH1xKW1xSH1xSW1xPH0xPW0,,,0.347839,ms,347839.000000,0,,firesim,conv2d_s8,N=1;IC=80;IH=5;IW=5;OC=80;OH=5;OW=5;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,347839
+-211,yolov8_nano$dispatch_211_V256D128_rvv_curated_cat2_c1_s8_N1xH5xW5xC_inputs6480xC_total144,,,0.007160,ms,7160.000000,0,,firesim,cat2_c1_s8,N=1;H=5;W=5;C_inputs=64|80;C_total=144,7160
++dispatch_id,module_name,vmfb_path,mlir_path,mean_time,mean_unit,mean_time_ns,returncode,log_path,source,op,shape,cycles
++0,yolov8_nano$dispatch_0_V256D128_rvv_curated_conv2d_s8_N1xIC3xIH160xIW160xOC16xOH80xOW80xKH3xKW3xSH2xSW2xPH1xPW1,,,8.566232,ms,8566232.000000,0,,firesim,conv2d_s8,N=1;IC=3;IH=160;IW=160;OC=16;OH=80;OW=80;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,8566232
++1,yolov8_nano$dispatch_1_V256D128_rvv_curated_batchnorm2d_s8_N1xC16xH80xW80,,,8.600418,ms,8600418.000000,0,,firesim,batchnorm2d_s8,N=1;C=16;H=80;W=80,8600418
++2,yolov8_nano$dispatch_2_V256D128_rvv_curated_silu_s8_n102400,,,29.099546,ms,29099546.000000,0,,firesim,silu_s8,n=102400,29099546
++3,yolov8_nano$dispatch_3_V256D128_rvv_curated_conv2d_s8_N1xIC16xIH80xIW80xOC32xOH40xOW40xKH3xKW3xSH2xSW2xPH1xPW1,,,8.061676,ms,8061676.000000,0,,firesim,conv2d_s8,N=1;IC=16;IH=80;IW=80;OC=32;OH=40;OW=40;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,8061676
++4,yolov8_nano$dispatch_4_V256D128_rvv_curated_batchnorm2d_s8_N1xC32xH40xW40,,,4.258494,ms,4258494.000000,0,,firesim,batchnorm2d_s8,N=1;C=32;H=40;W=40,4258494
++5,yolov8_nano$dispatch_5_V256D128_rvv_curated_silu_s8_n51200,,,14.040167,ms,14040167.000000,0,,firesim,silu_s8,n=51200,14040167
++6,yolov8_nano$dispatch_6_V256D128_rvv_curated_conv2d_s8_N1xIC32xIH40xIW40xOC32xOH40xOW40xKH1xKW1xSH1xSW1xPH0xPW0,,,4.118598,ms,4118598.000000,0,,firesim,conv2d_s8,N=1;IC=32;IH=40;IW=40;OC=32;OH=40;OW=40;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,4118598
++7,yolov8_nano$dispatch_7_V256D128_rvv_curated_batchnorm2d_s8_N1xC32xH40xW40,,,4.298689,ms,4298689.000000,0,,firesim,batchnorm2d_s8,N=1;C=32;H=40;W=40,4298689
++8,yolov8_nano$dispatch_8_V256D128_rvv_curated_silu_s8_n51200,,,13.933645,ms,13933645.000000,0,,firesim,silu_s8,n=51200,13933645
++10,yolov8_nano$dispatch_10_V256D128_rvv_curated_conv2d_s8_N1xIC16xIH40xIW40xOC16xOH40xOW40xKH3xKW3xSH1xSW1xPH1xPW1,,,7.170190,ms,7170190.000000,0,,firesim,conv2d_s8,N=1;IC=16;IH=40;IW=40;OC=16;OH=40;OW=40;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,7170190
++11,yolov8_nano$dispatch_11_V256D128_rvv_curated_batchnorm2d_s8_N1xC16xH40xW40,,,2.138906,ms,2138906.000000,0,,firesim,batchnorm2d_s8,N=1;C=16;H=40;W=40,2138906
++12,yolov8_nano$dispatch_12_V256D128_rvv_curated_silu_s8_n25600,,,7.143569,ms,7143569.000000,0,,firesim,silu_s8,n=25600,7143569
++13,yolov8_nano$dispatch_13_V256D128_rvv_curated_conv2d_s8_N1xIC16xIH40xIW40xOC16xOH40xOW40xKH3xKW3xSH1xSW1xPH1xPW1,,,7.165632,ms,7165632.000000,0,,firesim,conv2d_s8,N=1;IC=16;IH=40;IW=40;OC=16;OH=40;OW=40;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,7165632
++14,yolov8_nano$dispatch_14_V256D128_rvv_curated_batchnorm2d_s8_N1xC16xH40xW40,,,2.131316,ms,2131316.000000,0,,firesim,batchnorm2d_s8,N=1;C=16;H=40;W=40,2131316
++15,yolov8_nano$dispatch_15_V256D128_rvv_curated_silu_s8_n25600,,,7.153217,ms,7153217.000000,0,,firesim,silu_s8,n=25600,7153217
++16,yolov8_nano$dispatch_16_V256D128_rvv_curated_add_s8_n25600,,,2.014631,ms,2014631.000000,0,,firesim,add_s8,n=25600,2014631
++17,yolov8_nano$dispatch_17_V256D128_rvv_curated_cat3_c1_s8_N1xH40xW40xC_inputs161616xC_total48,,,4.647808,ms,4647808.000000,0,,firesim,cat3_c1_s8,N=1;H=40;W=40;C_inputs=16|16|16;C_total=48,4647808
++18,yolov8_nano$dispatch_18_V256D128_rvv_curated_conv2d_s8_N1xIC48xIH40xIW40xOC32xOH40xOW40xKH1xKW1xSH1xSW1xPH0xPW0,,,5.326307,ms,5326307.000000,0,,firesim,conv2d_s8,N=1;IC=48;IH=40;IW=40;OC=32;OH=40;OW=40;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,5326307
++19,yolov8_nano$dispatch_19_V256D128_rvv_curated_batchnorm2d_s8_N1xC32xH40xW40,,,4.300280,ms,4300280.000000,0,,firesim,batchnorm2d_s8,N=1;C=32;H=40;W=40,4300280
++20,yolov8_nano$dispatch_20_V256D128_rvv_curated_silu_s8_n51200,,,14.160856,ms,14160856.000000,0,,firesim,silu_s8,n=51200,14160856
++21,yolov8_nano$dispatch_21_V256D128_rvv_curated_conv2d_s8_N1xIC32xIH40xIW40xOC64xOH20xOW20xKH3xKW3xSH2xSW2xPH1xPW1,,,7.091221,ms,7091221.000000,0,,firesim,conv2d_s8,N=1;IC=32;IH=40;IW=40;OC=64;OH=20;OW=20;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,7091221
++22,yolov8_nano$dispatch_22_V256D128_rvv_curated_batchnorm2d_s8_N1xC64xH20xW20,,,2.161987,ms,2161987.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=20;W=20,2161987
++23,yolov8_nano$dispatch_23_V256D128_rvv_curated_silu_s8_n25600,,,7.078290,ms,7078290.000000,0,,firesim,silu_s8,n=25600,7078290
++24,yolov8_nano$dispatch_24_V256D128_rvv_curated_conv2d_s8_N1xIC64xIH20xIW20xOC64xOH20xOW20xKH1xKW1xSH1xSW1xPH0xPW0,,,3.242366,ms,3242366.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=20;IW=20;OC=64;OH=20;OW=20;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,3242366
++25,yolov8_nano$dispatch_25_V256D128_rvv_curated_batchnorm2d_s8_N1xC64xH20xW20,,,2.160642,ms,2160642.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=20;W=20,2160642
++26,yolov8_nano$dispatch_26_V256D128_rvv_curated_silu_s8_n25600,,,6.991348,ms,6991348.000000,0,,firesim,silu_s8,n=25600,6991348
++28,yolov8_nano$dispatch_28_V256D128_rvv_curated_conv2d_s8_N1xIC32xIH20xIW20xOC32xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1,,,3.521280,ms,3521280.000000,0,,firesim,conv2d_s8,N=1;IC=32;IH=20;IW=20;OC=32;OH=20;OW=20;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,3521280
++29,yolov8_nano$dispatch_29_V256D128_rvv_curated_batchnorm2d_s8_N1xC32xH20xW20,,,1.080514,ms,1080514.000000,0,,firesim,batchnorm2d_s8,N=1;C=32;H=20;W=20,1080514
++30,yolov8_nano$dispatch_30_V256D128_rvv_curated_silu_s8_n12800,,,3.348514,ms,3348514.000000,0,,firesim,silu_s8,n=12800,3348514
++31,yolov8_nano$dispatch_31_V256D128_rvv_curated_conv2d_s8_N1xIC32xIH20xIW20xOC32xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1,,,3.523877,ms,3523877.000000,0,,firesim,conv2d_s8,N=1;IC=32;IH=20;IW=20;OC=32;OH=20;OW=20;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,3523877
++32,yolov8_nano$dispatch_32_V256D128_rvv_curated_batchnorm2d_s8_N1xC32xH20xW20,,,1.083749,ms,1083749.000000,0,,firesim,batchnorm2d_s8,N=1;C=32;H=20;W=20,1083749
++33,yolov8_nano$dispatch_33_V256D128_rvv_curated_silu_s8_n12800,,,3.435919,ms,3435919.000000,0,,firesim,silu_s8,n=12800,3435919
++34,yolov8_nano$dispatch_34_V256D128_rvv_curated_add_s8_n12800,,,1.054620,ms,1054620.000000,0,,firesim,add_s8,n=12800,1054620
++35,yolov8_nano$dispatch_35_V256D128_rvv_curated_conv2d_s8_N1xIC32xIH20xIW20xOC32xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1,,,3.523116,ms,3523116.000000,0,,firesim,conv2d_s8,N=1;IC=32;IH=20;IW=20;OC=32;OH=20;OW=20;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,3523116
++36,yolov8_nano$dispatch_36_V256D128_rvv_curated_batchnorm2d_s8_N1xC32xH20xW20,,,1.078272,ms,1078272.000000,0,,firesim,batchnorm2d_s8,N=1;C=32;H=20;W=20,1078272
++37,yolov8_nano$dispatch_37_V256D128_rvv_curated_silu_s8_n12800,,,3.374376,ms,3374376.000000,0,,firesim,silu_s8,n=12800,3374376
++38,yolov8_nano$dispatch_38_V256D128_rvv_curated_conv2d_s8_N1xIC32xIH20xIW20xOC32xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1,,,3.522512,ms,3522512.000000,0,,firesim,conv2d_s8,N=1;IC=32;IH=20;IW=20;OC=32;OH=20;OW=20;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,3522512
++39,yolov8_nano$dispatch_39_V256D128_rvv_curated_batchnorm2d_s8_N1xC32xH20xW20,,,1.082350,ms,1082350.000000,0,,firesim,batchnorm2d_s8,N=1;C=32;H=20;W=20,1082350
++40,yolov8_nano$dispatch_40_V256D128_rvv_curated_silu_s8_n12800,,,3.535439,ms,3535439.000000,0,,firesim,silu_s8,n=12800,3535439
++41,yolov8_nano$dispatch_41_V256D128_rvv_curated_add_s8_n12800,,,1.057985,ms,1057985.000000,0,,firesim,add_s8,n=12800,1057985
++42,yolov8_nano$dispatch_42_V256D128_rvv_curated_cat4_c1_s8_N1xH20xW20xC_inputs32323232xC_total128,,,3.788114,ms,3788114.000000,0,,firesim,cat4_c1_s8,N=1;H=20;W=20;C_inputs=32|32|32|32;C_total=128,3788114
++43,yolov8_nano$dispatch_43_V256D128_rvv_curated_conv2d_s8_N1xIC128xIH20xIW20xOC64xOH20xOW20xKH1xKW1xSH1xSW1xPH0xPW0,,,5.620195,ms,5620195.000000,0,,firesim,conv2d_s8,N=1;IC=128;IH=20;IW=20;OC=64;OH=20;OW=20;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,5620195
++44,yolov8_nano$dispatch_44_V256D128_rvv_curated_batchnorm2d_s8_N1xC64xH20xW20,,,2.160539,ms,2160539.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=20;W=20,2160539
++45,yolov8_nano$dispatch_45_V256D128_rvv_curated_silu_s8_n25600,,,6.844924,ms,6844924.000000,0,,firesim,silu_s8,n=25600,6844924
++46,yolov8_nano$dispatch_46_V256D128_rvv_curated_conv2d_s8_N1xIC64xIH20xIW20xOC128xOH10xOW10xKH3xKW3xSH2xSW2xPH1xPW1,,,6.584426,ms,6584426.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=20;IW=20;OC=128;OH=10;OW=10;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,6584426
++47,yolov8_nano$dispatch_47_V256D128_rvv_curated_batchnorm2d_s8_N1xC128xH10xW10,,,1.093776,ms,1093776.000000,0,,firesim,batchnorm2d_s8,N=1;C=128;H=10;W=10,1093776
++48,yolov8_nano$dispatch_48_V256D128_rvv_curated_silu_s8_n12800,,,3.460235,ms,3460235.000000,0,,firesim,silu_s8,n=12800,3460235
++49,yolov8_nano$dispatch_49_V256D128_rvv_curated_conv2d_s8_N1xIC128xIH10xIW10xOC128xOH10xOW10xKH1xKW1xSH1xSW1xPH0xPW0,,,2.805889,ms,2805889.000000,0,,firesim,conv2d_s8,N=1;IC=128;IH=10;IW=10;OC=128;OH=10;OW=10;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,2805889
++50,yolov8_nano$dispatch_50_V256D128_rvv_curated_batchnorm2d_s8_N1xC128xH10xW10,,,1.092055,ms,1092055.000000,0,,firesim,batchnorm2d_s8,N=1;C=128;H=10;W=10,1092055
++51,yolov8_nano$dispatch_51_V256D128_rvv_curated_silu_s8_n12800,,,3.438758,ms,3438758.000000,0,,firesim,silu_s8,n=12800,3438758
++53,yolov8_nano$dispatch_53_V256D128_rvv_curated_conv2d_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,3.251071,ms,3251071.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=10;IW=10;OC=64;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,3251071
++54,yolov8_nano$dispatch_54_V256D128_rvv_curated_batchnorm2d_s8_N1xC64xH10xW10,,,0.548420,ms,548420.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=10;W=10,548420
++55,yolov8_nano$dispatch_55_V256D128_rvv_curated_silu_s8_n6400,,,1.701940,ms,1701940.000000,0,,firesim,silu_s8,n=6400,1701940
++56,yolov8_nano$dispatch_56_V256D128_rvv_curated_conv2d_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,3.249948,ms,3249948.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=10;IW=10;OC=64;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,3249948
++57,yolov8_nano$dispatch_57_V256D128_rvv_curated_batchnorm2d_s8_N1xC64xH10xW10,,,0.544306,ms,544306.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=10;W=10,544306
++58,yolov8_nano$dispatch_58_V256D128_rvv_curated_silu_s8_n6400,,,1.662312,ms,1662312.000000,0,,firesim,silu_s8,n=6400,1662312
++59,yolov8_nano$dispatch_59_V256D128_rvv_curated_add_s8_n6400,,,0.529663,ms,529663.000000,0,,firesim,add_s8,n=6400,529663
++60,yolov8_nano$dispatch_60_V256D128_rvv_curated_conv2d_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,3.248569,ms,3248569.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=10;IW=10;OC=64;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,3248569
++61,yolov8_nano$dispatch_61_V256D128_rvv_curated_batchnorm2d_s8_N1xC64xH10xW10,,,0.544427,ms,544427.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=10;W=10,544427
++62,yolov8_nano$dispatch_62_V256D128_rvv_curated_silu_s8_n6400,,,1.724947,ms,1724947.000000,0,,firesim,silu_s8,n=6400,1724947
++63,yolov8_nano$dispatch_63_V256D128_rvv_curated_conv2d_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,3.248712,ms,3248712.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=10;IW=10;OC=64;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,3248712
++64,yolov8_nano$dispatch_64_V256D128_rvv_curated_batchnorm2d_s8_N1xC64xH10xW10,,,0.545404,ms,545404.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=10;W=10,545404
++65,yolov8_nano$dispatch_65_V256D128_rvv_curated_silu_s8_n6400,,,1.727560,ms,1727560.000000,0,,firesim,silu_s8,n=6400,1727560
++66,yolov8_nano$dispatch_66_V256D128_rvv_curated_add_s8_n6400,,,0.525061,ms,525061.000000,0,,firesim,add_s8,n=6400,525061
++67,yolov8_nano$dispatch_67_V256D128_rvv_curated_cat4_c1_s8_N1xH10xW10xC_inputs64646464xC_total256,,,1.870169,ms,1870169.000000,0,,firesim,cat4_c1_s8,N=1;H=10;W=10;C_inputs=64|64|64|64;C_total=256,1870169
++68,yolov8_nano$dispatch_68_V256D128_rvv_curated_conv2d_s8_N1xIC256xIH10xIW10xOC128xOH10xOW10xKH1xKW1xSH1xSW1xPH0xPW0,,,5.274137,ms,5274137.000000,0,,firesim,conv2d_s8,N=1;IC=256;IH=10;IW=10;OC=128;OH=10;OW=10;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,5274137
++69,yolov8_nano$dispatch_69_V256D128_rvv_curated_batchnorm2d_s8_N1xC128xH10xW10,,,1.083707,ms,1083707.000000,0,,firesim,batchnorm2d_s8,N=1;C=128;H=10;W=10,1083707
++70,yolov8_nano$dispatch_70_V256D128_rvv_curated_silu_s8_n12800,,,3.409115,ms,3409115.000000,0,,firesim,silu_s8,n=12800,3409115
++71,yolov8_nano$dispatch_71_V256D128_rvv_curated_conv2d_s8_N1xIC128xIH10xIW10xOC256xOH5xOW5xKH3xKW3xSH2xSW2xPH1xPW1,,,6.221590,ms,6221590.000000,0,,firesim,conv2d_s8,N=1;IC=128;IH=10;IW=10;OC=256;OH=5;OW=5;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,6221590
++72,yolov8_nano$dispatch_72_V256D128_rvv_curated_batchnorm2d_s8_N1xC256xH5xW5,,,0.558788,ms,558788.000000,0,,firesim,batchnorm2d_s8,N=1;C=256;H=5;W=5,558788
++73,yolov8_nano$dispatch_73_V256D128_rvv_curated_silu_s8_n6400,,,1.737811,ms,1737811.000000,0,,firesim,silu_s8,n=6400,1737811
++74,yolov8_nano$dispatch_74_V256D128_rvv_curated_conv2d_s8_N1xIC256xIH5xIW5xOC256xOH5xOW5xKH1xKW1xSH1xSW1xPH0xPW0,,,2.578579,ms,2578579.000000,0,,firesim,conv2d_s8,N=1;IC=256;IH=5;IW=5;OC=256;OH=5;OW=5;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,2578579
++75,yolov8_nano$dispatch_75_V256D128_rvv_curated_batchnorm2d_s8_N1xC256xH5xW5,,,0.562455,ms,562455.000000,0,,firesim,batchnorm2d_s8,N=1;C=256;H=5;W=5,562455
++76,yolov8_nano$dispatch_76_V256D128_rvv_curated_silu_s8_n6400,,,1.775104,ms,1775104.000000,0,,firesim,silu_s8,n=6400,1775104
++78,yolov8_nano$dispatch_78_V256D128_rvv_curated_conv2d_s8_N1xIC128xIH5xIW5xOC128xOH5xOW5xKH3xKW3xSH1xSW1xPH1xPW1,,,3.040593,ms,3040593.000000,0,,firesim,conv2d_s8,N=1;IC=128;IH=5;IW=5;OC=128;OH=5;OW=5;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,3040593
++79,yolov8_nano$dispatch_79_V256D128_rvv_curated_batchnorm2d_s8_N1xC128xH5xW5,,,0.279472,ms,279472.000000,0,,firesim,batchnorm2d_s8,N=1;C=128;H=5;W=5,279472
++80,yolov8_nano$dispatch_80_V256D128_rvv_curated_silu_s8_n3200,,,0.831206,ms,831206.000000,0,,firesim,silu_s8,n=3200,831206
++81,yolov8_nano$dispatch_81_V256D128_rvv_curated_conv2d_s8_N1xIC128xIH5xIW5xOC128xOH5xOW5xKH3xKW3xSH1xSW1xPH1xPW1,,,3.043387,ms,3043387.000000,0,,firesim,conv2d_s8,N=1;IC=128;IH=5;IW=5;OC=128;OH=5;OW=5;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,3043387
++82,yolov8_nano$dispatch_82_V256D128_rvv_curated_batchnorm2d_s8_N1xC128xH5xW5,,,0.281949,ms,281949.000000,0,,firesim,batchnorm2d_s8,N=1;C=128;H=5;W=5,281949
++83,yolov8_nano$dispatch_83_V256D128_rvv_curated_silu_s8_n3200,,,0.835846,ms,835846.000000,0,,firesim,silu_s8,n=3200,835846
++84,yolov8_nano$dispatch_84_V256D128_rvv_curated_add_s8_n3200,,,0.263010,ms,263010.000000,0,,firesim,add_s8,n=3200,263010
++85,yolov8_nano$dispatch_85_V256D128_rvv_curated_cat3_c1_s8_N1xH5xW5xC_inputs128128128xC_total384,,,0.709752,ms,709752.000000,0,,firesim,cat3_c1_s8,N=1;H=5;W=5;C_inputs=128|128|128;C_total=384,709752
++86,yolov8_nano$dispatch_86_V256D128_rvv_curated_conv2d_s8_N1xIC384xIH5xIW5xOC256xOH5xOW5xKH1xKW1xSH1xSW1xPH0xPW0,,,3.760279,ms,3760279.000000,0,,firesim,conv2d_s8,N=1;IC=384;IH=5;IW=5;OC=256;OH=5;OW=5;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,3760279
++87,yolov8_nano$dispatch_87_V256D128_rvv_curated_batchnorm2d_s8_N1xC256xH5xW5,,,0.556975,ms,556975.000000,0,,firesim,batchnorm2d_s8,N=1;C=256;H=5;W=5,556975
++88,yolov8_nano$dispatch_88_V256D128_rvv_curated_silu_s8_n6400,,,1.723185,ms,1723185.000000,0,,firesim,silu_s8,n=6400,1723185
++89,yolov8_nano$dispatch_89_V256D128_rvv_curated_conv2d_s8_N1xIC256xIH5xIW5xOC128xOH5xOW5xKH1xKW1xSH1xSW1xPH0xPW0,,,1.290302,ms,1290302.000000,0,,firesim,conv2d_s8,N=1;IC=256;IH=5;IW=5;OC=128;OH=5;OW=5;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,1290302
++90,yolov8_nano$dispatch_90_V256D128_rvv_curated_batchnorm2d_s8_N1xC128xH5xW5,,,0.276752,ms,276752.000000,0,,firesim,batchnorm2d_s8,N=1;C=128;H=5;W=5,276752
++91,yolov8_nano$dispatch_91_V256D128_rvv_curated_silu_s8_n3200,,,0.912274,ms,912274.000000,0,,firesim,silu_s8,n=3200,912274
++92,yolov8_nano$dispatch_92_V256D128_rvv_curated_maxpool2d_s8_N1xC128xIH5xIW5xOH5xOW5xKH5xKW5xSH1xSW1xPH2xPW2xDH1xDW1,,,1.252184,ms,1252184.000000,0,,firesim,maxpool2d_s8,N=1;C=128;IH=5;IW=5;OH=5;OW=5;KH=5;KW=5;SH=1;SW=1;PH=2;PW=2;DH=1;DW=1,1252184
++93,yolov8_nano$dispatch_93_V256D128_rvv_curated_maxpool2d_s8_N1xC128xIH5xIW5xOH5xOW5xKH5xKW5xSH1xSW1xPH2xPW2xDH1xDW1,,,1.225438,ms,1225438.000000,0,,firesim,maxpool2d_s8,N=1;C=128;IH=5;IW=5;OH=5;OW=5;KH=5;KW=5;SH=1;SW=1;PH=2;PW=2;DH=1;DW=1,1225438
++94,yolov8_nano$dispatch_94_V256D128_rvv_curated_maxpool2d_s8_N1xC128xIH5xIW5xOH5xOW5xKH5xKW5xSH1xSW1xPH2xPW2xDH1xDW1,,,1.212963,ms,1212963.000000,0,,firesim,maxpool2d_s8,N=1;C=128;IH=5;IW=5;OH=5;OW=5;KH=5;KW=5;SH=1;SW=1;PH=2;PW=2;DH=1;DW=1,1212963
++95,yolov8_nano$dispatch_95_V256D128_rvv_curated_cat4_c1_s8_N1xH5xW5xC_inputs128128128128xC_total512,,,0.925018,ms,925018.000000,0,,firesim,cat4_c1_s8,N=1;H=5;W=5;C_inputs=128|128|128|128;C_total=512,925018
++96,yolov8_nano$dispatch_96_V256D128_rvv_curated_conv2d_s8_N1xIC512xIH5xIW5xOC256xOH5xOW5xKH1xKW1xSH1xSW1xPH0xPW0,,,4.946780,ms,4946780.000000,0,,firesim,conv2d_s8,N=1;IC=512;IH=5;IW=5;OC=256;OH=5;OW=5;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,4946780
++97,yolov8_nano$dispatch_97_V256D128_rvv_curated_batchnorm2d_s8_N1xC256xH5xW5,,,0.558209,ms,558209.000000,0,,firesim,batchnorm2d_s8,N=1;C=256;H=5;W=5,558209
++98,yolov8_nano$dispatch_98_V256D128_rvv_curated_silu_s8_n6400,,,1.725742,ms,1725742.000000,0,,firesim,silu_s8,n=6400,1725742
++99,yolov8_nano$dispatch_99_V256D128_rvv_curated_upsample_nearest_s8_N1xC256xIH5xIW5xscale2,,,0.761913,ms,761913.000000,0,,firesim,upsample_nearest_s8,N=1;C=256;IH=5;IW=5;scale=2,761913
++100,yolov8_nano$dispatch_100_V256D128_rvv_curated_cat2_c1_s8_N1xH10xW10xC_inputs256128xC_total384,,,2.779097,ms,2779097.000000,0,,firesim,cat2_c1_s8,N=1;H=10;W=10;C_inputs=256|128;C_total=384,2779097
++101,yolov8_nano$dispatch_101_V256D128_rvv_curated_conv2d_s8_N1xIC384xIH10xIW10xOC128xOH10xOW10xKH1xKW1xSH1xSW1xPH0xPW0,,,8.143591,ms,8143591.000000,0,,firesim,conv2d_s8,N=1;IC=384;IH=10;IW=10;OC=128;OH=10;OW=10;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,8143591
++102,yolov8_nano$dispatch_102_V256D128_rvv_curated_batchnorm2d_s8_N1xC128xH10xW10,,,1.087666,ms,1087666.000000,0,,firesim,batchnorm2d_s8,N=1;C=128;H=10;W=10,1087666
++103,yolov8_nano$dispatch_103_V256D128_rvv_curated_silu_s8_n12800,,,3.420374,ms,3420374.000000,0,,firesim,silu_s8,n=12800,3420374
++105,yolov8_nano$dispatch_105_V256D128_rvv_curated_conv2d_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,3.248651,ms,3248651.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=10;IW=10;OC=64;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,3248651
++106,yolov8_nano$dispatch_106_V256D128_rvv_curated_batchnorm2d_s8_N1xC64xH10xW10,,,0.543034,ms,543034.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=10;W=10,543034
++107,yolov8_nano$dispatch_107_V256D128_rvv_curated_silu_s8_n6400,,,1.708905,ms,1708905.000000,0,,firesim,silu_s8,n=6400,1708905
++108,yolov8_nano$dispatch_108_V256D128_rvv_curated_conv2d_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,3.249285,ms,3249285.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=10;IW=10;OC=64;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,3249285
++109,yolov8_nano$dispatch_109_V256D128_rvv_curated_batchnorm2d_s8_N1xC64xH10xW10,,,0.547799,ms,547799.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=10;W=10,547799
++110,yolov8_nano$dispatch_110_V256D128_rvv_curated_silu_s8_n6400,,,1.696218,ms,1696218.000000,0,,firesim,silu_s8,n=6400,1696218
++111,yolov8_nano$dispatch_111_V256D128_rvv_curated_cat3_c1_s8_N1xH10xW10xC_inputs646464xC_total192,,,1.412348,ms,1412348.000000,0,,firesim,cat3_c1_s8,N=1;H=10;W=10;C_inputs=64|64|64;C_total=192,1412348
++112,yolov8_nano$dispatch_112_V256D128_rvv_curated_conv2d_s8_N1xIC192xIH10xIW10xOC128xOH10xOW10xKH1xKW1xSH1xSW1xPH0xPW0,,,4.014447,ms,4014447.000000,0,,firesim,conv2d_s8,N=1;IC=192;IH=10;IW=10;OC=128;OH=10;OW=10;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,4014447
++113,yolov8_nano$dispatch_113_V256D128_rvv_curated_batchnorm2d_s8_N1xC128xH10xW10,,,1.085765,ms,1085765.000000,0,,firesim,batchnorm2d_s8,N=1;C=128;H=10;W=10,1085765
++114,yolov8_nano$dispatch_114_V256D128_rvv_curated_silu_s8_n12800,,,3.315570,ms,3315570.000000,0,,firesim,silu_s8,n=12800,3315570
++115,yolov8_nano$dispatch_115_V256D128_rvv_curated_upsample_nearest_s8_N1xC128xIH10xIW10xscale2,,,1.184923,ms,1184923.000000,0,,firesim,upsample_nearest_s8,N=1;C=128;IH=10;IW=10;scale=2,1184923
++116,yolov8_nano$dispatch_116_V256D128_rvv_curated_cat2_c1_s8_N1xH20xW20xC_inputs12864xC_total192,,,5.579372,ms,5579372.000000,0,,firesim,cat2_c1_s8,N=1;H=20;W=20;C_inputs=128|64;C_total=192,5579372
++117,yolov8_nano$dispatch_117_V256D128_rvv_curated_conv2d_s8_N1xIC192xIH20xIW20xOC64xOH20xOW20xKH1xKW1xSH1xSW1xPH0xPW0,,,8.003427,ms,8003427.000000,0,,firesim,conv2d_s8,N=1;IC=192;IH=20;IW=20;OC=64;OH=20;OW=20;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,8003427
++118,yolov8_nano$dispatch_118_V256D128_rvv_curated_batchnorm2d_s8_N1xC64xH20xW20,,,2.144725,ms,2144725.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=20;W=20,2144725
++119,yolov8_nano$dispatch_119_V256D128_rvv_curated_silu_s8_n25600,,,6.871045,ms,6871045.000000,0,,firesim,silu_s8,n=25600,6871045
++121,yolov8_nano$dispatch_121_V256D128_rvv_curated_conv2d_s8_N1xIC32xIH20xIW20xOC32xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1,,,3.521870,ms,3521870.000000,0,,firesim,conv2d_s8,N=1;IC=32;IH=20;IW=20;OC=32;OH=20;OW=20;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,3521870
++122,yolov8_nano$dispatch_122_V256D128_rvv_curated_batchnorm2d_s8_N1xC32xH20xW20,,,1.079050,ms,1079050.000000,0,,firesim,batchnorm2d_s8,N=1;C=32;H=20;W=20,1079050
++123,yolov8_nano$dispatch_123_V256D128_rvv_curated_silu_s8_n12800,,,3.401885,ms,3401885.000000,0,,firesim,silu_s8,n=12800,3401885
++124,yolov8_nano$dispatch_124_V256D128_rvv_curated_conv2d_s8_N1xIC32xIH20xIW20xOC32xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1,,,3.520801,ms,3520801.000000,0,,firesim,conv2d_s8,N=1;IC=32;IH=20;IW=20;OC=32;OH=20;OW=20;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,3520801
++125,yolov8_nano$dispatch_125_V256D128_rvv_curated_batchnorm2d_s8_N1xC32xH20xW20,,,1.074075,ms,1074075.000000,0,,firesim,batchnorm2d_s8,N=1;C=32;H=20;W=20,1074075
++126,yolov8_nano$dispatch_126_V256D128_rvv_curated_silu_s8_n12800,,,3.411322,ms,3411322.000000,0,,firesim,silu_s8,n=12800,3411322
++127,yolov8_nano$dispatch_127_V256D128_rvv_curated_cat3_c1_s8_N1xH20xW20xC_inputs323232xC_total96,,,2.789913,ms,2789913.000000,0,,firesim,cat3_c1_s8,N=1;H=20;W=20;C_inputs=32|32|32;C_total=96,2789913
++128,yolov8_nano$dispatch_128_V256D128_rvv_curated_conv2d_s8_N1xIC96xIH20xIW20xOC64xOH20xOW20xKH1xKW1xSH1xSW1xPH0xPW0,,,4.427794,ms,4427794.000000,0,,firesim,conv2d_s8,N=1;IC=96;IH=20;IW=20;OC=64;OH=20;OW=20;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,4427794
++129,yolov8_nano$dispatch_129_V256D128_rvv_curated_batchnorm2d_s8_N1xC64xH20xW20,,,2.155771,ms,2155771.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=20;W=20,2155771
++130,yolov8_nano$dispatch_130_V256D128_rvv_curated_silu_s8_n25600,,,6.799943,ms,6799943.000000,0,,firesim,silu_s8,n=25600,6799943
++131,yolov8_nano$dispatch_131_V256D128_rvv_curated_conv2d_s8_N1xIC64xIH20xIW20xOC64xOH10xOW10xKH3xKW3xSH2xSW2xPH1xPW1,,,3.296712,ms,3296712.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=20;IW=20;OC=64;OH=10;OW=10;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,3296712
++132,yolov8_nano$dispatch_132_V256D128_rvv_curated_batchnorm2d_s8_N1xC64xH10xW10,,,0.548145,ms,548145.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=10;W=10,548145
++133,yolov8_nano$dispatch_133_V256D128_rvv_curated_silu_s8_n6400,,,1.709252,ms,1709252.000000,0,,firesim,silu_s8,n=6400,1709252
++134,yolov8_nano$dispatch_134_V256D128_rvv_curated_cat2_c1_s8_N1xH10xW10xC_inputs64128xC_total192,,,1.425714,ms,1425714.000000,0,,firesim,cat2_c1_s8,N=1;H=10;W=10;C_inputs=64|128;C_total=192,1425714
++135,yolov8_nano$dispatch_135_V256D128_rvv_curated_conv2d_s8_N1xIC192xIH10xIW10xOC128xOH10xOW10xKH1xKW1xSH1xSW1xPH0xPW0,,,4.018048,ms,4018048.000000,0,,firesim,conv2d_s8,N=1;IC=192;IH=10;IW=10;OC=128;OH=10;OW=10;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,4018048
++136,yolov8_nano$dispatch_136_V256D128_rvv_curated_batchnorm2d_s8_N1xC128xH10xW10,,,1.090874,ms,1090874.000000,0,,firesim,batchnorm2d_s8,N=1;C=128;H=10;W=10,1090874
++137,yolov8_nano$dispatch_137_V256D128_rvv_curated_silu_s8_n12800,,,3.345179,ms,3345179.000000,0,,firesim,silu_s8,n=12800,3345179
++139,yolov8_nano$dispatch_139_V256D128_rvv_curated_conv2d_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,3.247667,ms,3247667.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=10;IW=10;OC=64;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,3247667
++140,yolov8_nano$dispatch_140_V256D128_rvv_curated_batchnorm2d_s8_N1xC64xH10xW10,,,0.545390,ms,545390.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=10;W=10,545390
++141,yolov8_nano$dispatch_141_V256D128_rvv_curated_silu_s8_n6400,,,1.686813,ms,1686813.000000,0,,firesim,silu_s8,n=6400,1686813
++142,yolov8_nano$dispatch_142_V256D128_rvv_curated_conv2d_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,3.249769,ms,3249769.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=10;IW=10;OC=64;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,3249769
++143,yolov8_nano$dispatch_143_V256D128_rvv_curated_batchnorm2d_s8_N1xC64xH10xW10,,,0.549702,ms,549702.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=10;W=10,549702
++144,yolov8_nano$dispatch_144_V256D128_rvv_curated_silu_s8_n6400,,,1.728098,ms,1728098.000000,0,,firesim,silu_s8,n=6400,1728098
++145,yolov8_nano$dispatch_145_V256D128_rvv_curated_cat3_c1_s8_N1xH10xW10xC_inputs646464xC_total192,,,1.400553,ms,1400553.000000,0,,firesim,cat3_c1_s8,N=1;H=10;W=10;C_inputs=64|64|64;C_total=192,1400553
++146,yolov8_nano$dispatch_146_V256D128_rvv_curated_conv2d_s8_N1xIC192xIH10xIW10xOC128xOH10xOW10xKH1xKW1xSH1xSW1xPH0xPW0,,,4.015993,ms,4015993.000000,0,,firesim,conv2d_s8,N=1;IC=192;IH=10;IW=10;OC=128;OH=10;OW=10;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,4015993
++147,yolov8_nano$dispatch_147_V256D128_rvv_curated_batchnorm2d_s8_N1xC128xH10xW10,,,1.103390,ms,1103390.000000,0,,firesim,batchnorm2d_s8,N=1;C=128;H=10;W=10,1103390
++148,yolov8_nano$dispatch_148_V256D128_rvv_curated_silu_s8_n12800,,,3.357079,ms,3357079.000000,0,,firesim,silu_s8,n=12800,3357079
++149,yolov8_nano$dispatch_149_V256D128_rvv_curated_conv2d_s8_N1xIC128xIH10xIW10xOC128xOH5xOW5xKH3xKW3xSH2xSW2xPH1xPW1,,,3.108460,ms,3108460.000000,0,,firesim,conv2d_s8,N=1;IC=128;IH=10;IW=10;OC=128;OH=5;OW=5;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,3108460
++150,yolov8_nano$dispatch_150_V256D128_rvv_curated_batchnorm2d_s8_N1xC128xH5xW5,,,0.283209,ms,283209.000000,0,,firesim,batchnorm2d_s8,N=1;C=128;H=5;W=5,283209
++151,yolov8_nano$dispatch_151_V256D128_rvv_curated_silu_s8_n3200,,,0.847524,ms,847524.000000,0,,firesim,silu_s8,n=3200,847524
++152,yolov8_nano$dispatch_152_V256D128_rvv_curated_cat2_c1_s8_N1xH5xW5xC_inputs128256xC_total384,,,0.711807,ms,711807.000000,0,,firesim,cat2_c1_s8,N=1;H=5;W=5;C_inputs=128|256;C_total=384,711807
++153,yolov8_nano$dispatch_153_V256D128_rvv_curated_conv2d_s8_N1xIC384xIH5xIW5xOC256xOH5xOW5xKH1xKW1xSH1xSW1xPH0xPW0,,,3.765696,ms,3765696.000000,0,,firesim,conv2d_s8,N=1;IC=384;IH=5;IW=5;OC=256;OH=5;OW=5;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,3765696
++154,yolov8_nano$dispatch_154_V256D128_rvv_curated_batchnorm2d_s8_N1xC256xH5xW5,,,0.560294,ms,560294.000000,0,,firesim,batchnorm2d_s8,N=1;C=256;H=5;W=5,560294
++155,yolov8_nano$dispatch_155_V256D128_rvv_curated_silu_s8_n6400,,,1.717225,ms,1717225.000000,0,,firesim,silu_s8,n=6400,1717225
++157,yolov8_nano$dispatch_157_V256D128_rvv_curated_conv2d_s8_N1xIC128xIH5xIW5xOC128xOH5xOW5xKH3xKW3xSH1xSW1xPH1xPW1,,,3.040718,ms,3040718.000000,0,,firesim,conv2d_s8,N=1;IC=128;IH=5;IW=5;OC=128;OH=5;OW=5;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,3040718
++158,yolov8_nano$dispatch_158_V256D128_rvv_curated_batchnorm2d_s8_N1xC128xH5xW5,,,0.281934,ms,281934.000000,0,,firesim,batchnorm2d_s8,N=1;C=128;H=5;W=5,281934
++159,yolov8_nano$dispatch_159_V256D128_rvv_curated_silu_s8_n3200,,,0.080799,ms,80799.000000,0,,firesim,silu_s8,n=3200,80799
++160,yolov8_nano$dispatch_160_V256D128_rvv_curated_conv2d_s8_N1xIC128xIH5xIW5xOC128xOH5xOW5xKH3xKW3xSH1xSW1xPH1xPW1,,,3.039529,ms,3039529.000000,0,,firesim,conv2d_s8,N=1;IC=128;IH=5;IW=5;OC=128;OH=5;OW=5;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,3039529
++161,yolov8_nano$dispatch_161_V256D128_rvv_curated_batchnorm2d_s8_N1xC128xH5xW5,,,0.281187,ms,281187.000000,0,,firesim,batchnorm2d_s8,N=1;C=128;H=5;W=5,281187
++162,yolov8_nano$dispatch_162_V256D128_rvv_curated_silu_s8_n3200,,,0.877437,ms,877437.000000,0,,firesim,silu_s8,n=3200,877437
++163,yolov8_nano$dispatch_163_V256D128_rvv_curated_cat3_c1_s8_N1xH5xW5xC_inputs128128128xC_total384,,,0.714475,ms,714475.000000,0,,firesim,cat3_c1_s8,N=1;H=5;W=5;C_inputs=128|128|128;C_total=384,714475
++164,yolov8_nano$dispatch_164_V256D128_rvv_curated_conv2d_s8_N1xIC384xIH5xIW5xOC256xOH5xOW5xKH1xKW1xSH1xSW1xPH0xPW0,,,3.759431,ms,3759431.000000,0,,firesim,conv2d_s8,N=1;IC=384;IH=5;IW=5;OC=256;OH=5;OW=5;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,3759431
++165,yolov8_nano$dispatch_165_V256D128_rvv_curated_batchnorm2d_s8_N1xC256xH5xW5,,,0.559751,ms,559751.000000,0,,firesim,batchnorm2d_s8,N=1;C=256;H=5;W=5,559751
++166,yolov8_nano$dispatch_166_V256D128_rvv_curated_silu_s8_n6400,,,1.700857,ms,1700857.000000,0,,firesim,silu_s8,n=6400,1700857
++167,yolov8_nano$dispatch_167_V256D128_rvv_curated_conv2d_s8_N1xIC64xIH20xIW20xOC64xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1,,,13.202926,ms,13202926.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=20;IW=20;OC=64;OH=20;OW=20;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,13202926
++168,yolov8_nano$dispatch_168_V256D128_rvv_curated_batchnorm2d_s8_N1xC64xH20xW20,,,2.175452,ms,2175452.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=20;W=20,2175452
++169,yolov8_nano$dispatch_169_V256D128_rvv_curated_silu_s8_n25600,,,6.848175,ms,6848175.000000,0,,firesim,silu_s8,n=25600,6848175
++170,yolov8_nano$dispatch_170_V256D128_rvv_curated_conv2d_s8_N1xIC64xIH20xIW20xOC64xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1,,,13.184258,ms,13184258.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=20;IW=20;OC=64;OH=20;OW=20;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,13184258
++171,yolov8_nano$dispatch_171_V256D128_rvv_curated_batchnorm2d_s8_N1xC64xH20xW20,,,2.166622,ms,2166622.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=20;W=20,2166622
++172,yolov8_nano$dispatch_172_V256D128_rvv_curated_silu_s8_n25600,,,7.069574,ms,7069574.000000,0,,firesim,silu_s8,n=25600,7069574
++173,yolov8_nano$dispatch_173_V256D128_rvv_curated_conv2d_s8_N1xIC64xIH20xIW20xOC64xOH20xOW20xKH1xKW1xSH1xSW1xPH0xPW0,,,3.269573,ms,3269573.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=20;IW=20;OC=64;OH=20;OW=20;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,3269573
++174,yolov8_nano$dispatch_174_V256D128_rvv_curated_conv2d_s8_N1xIC64xIH20xIW20xOC80xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1,,,19.595532,ms,19595532.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=20;IW=20;OC=80;OH=20;OW=20;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,19595532
++175,yolov8_nano$dispatch_175_V256D128_rvv_curated_batchnorm2d_s8_N1xC80xH20xW20,,,2.697671,ms,2697671.000000,0,,firesim,batchnorm2d_s8,N=1;C=80;H=20;W=20,2697671
++176,yolov8_nano$dispatch_176_V256D128_rvv_curated_silu_s8_n32000,,,8.499581,ms,8499581.000000,0,,firesim,silu_s8,n=32000,8499581
++177,yolov8_nano$dispatch_177_V256D128_rvv_curated_conv2d_s8_N1xIC80xIH20xIW20xOC80xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1,,,24.208887,ms,24208887.000000,0,,firesim,conv2d_s8,N=1;IC=80;IH=20;IW=20;OC=80;OH=20;OW=20;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,24208887
++178,yolov8_nano$dispatch_178_V256D128_rvv_curated_batchnorm2d_s8_N1xC80xH20xW20,,,2.711874,ms,2711874.000000,0,,firesim,batchnorm2d_s8,N=1;C=80;H=20;W=20,2711874
++179,yolov8_nano$dispatch_179_V256D128_rvv_curated_silu_s8_n32000,,,8.876428,ms,8876428.000000,0,,firesim,silu_s8,n=32000,8876428
++180,yolov8_nano$dispatch_180_V256D128_rvv_curated_conv2d_s8_N1xIC80xIH20xIW20xOC80xOH20xOW20xKH1xKW1xSH1xSW1xPH0xPW0,,,5.573288,ms,5573288.000000,0,,firesim,conv2d_s8,N=1;IC=80;IH=20;IW=20;OC=80;OH=20;OW=20;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,5573288
++181,yolov8_nano$dispatch_181_V256D128_rvv_curated_cat2_c1_s8_N1xH20xW20xC_inputs6480xC_total144,,,4.218651,ms,4218651.000000,0,,firesim,cat2_c1_s8,N=1;H=20;W=20;C_inputs=64|80;C_total=144,4218651
++182,yolov8_nano$dispatch_182_V256D128_rvv_curated_conv2d_s8_N1xIC128xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,6.277041,ms,6277041.000000,0,,firesim,conv2d_s8,N=1;IC=128;IH=10;IW=10;OC=64;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,6277041
++183,yolov8_nano$dispatch_183_V256D128_rvv_curated_batchnorm2d_s8_N1xC64xH10xW10,,,0.549638,ms,549638.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=10;W=10,549638
++184,yolov8_nano$dispatch_184_V256D128_rvv_curated_silu_s8_n6400,,,1.737154,ms,1737154.000000,0,,firesim,silu_s8,n=6400,1737154
++185,yolov8_nano$dispatch_185_V256D128_rvv_curated_conv2d_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,3.243420,ms,3243420.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=10;IW=10;OC=64;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,3243420
++186,yolov8_nano$dispatch_186_V256D128_rvv_curated_batchnorm2d_s8_N1xC64xH10xW10,,,0.550513,ms,550513.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=10;W=10,550513
++187,yolov8_nano$dispatch_187_V256D128_rvv_curated_silu_s8_n6400,,,1.794060,ms,1794060.000000,0,,firesim,silu_s8,n=6400,1794060
++188,yolov8_nano$dispatch_188_V256D128_rvv_curated_conv2d_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH1xKW1xSH1xSW1xPH0xPW0,,,13.129830,ms,13129830.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=10;IW=10;OC=64;OH=10;OW=10;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,13129830
++189,yolov8_nano$dispatch_189_V256D128_rvv_curated_conv2d_s8_N1xIC128xIH10xIW10xOC80xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,9.354232,ms,9354232.000000,0,,firesim,conv2d_s8,N=1;IC=128;IH=10;IW=10;OC=80;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,9354232
++190,yolov8_nano$dispatch_190_V256D128_rvv_curated_batchnorm2d_s8_N1xC80xH10xW10,,,0.689126,ms,689126.000000,0,,firesim,batchnorm2d_s8,N=1;C=80;H=10;W=10,689126
++191,yolov8_nano$dispatch_191_V256D128_rvv_curated_silu_s8_n8000,,,2.071611,ms,2071611.000000,0,,firesim,silu_s8,n=8000,2071611
++192,yolov8_nano$dispatch_192_V256D128_rvv_curated_conv2d_s8_N1xIC80xIH10xIW10xOC80xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,5.953658,ms,5953658.000000,0,,firesim,conv2d_s8,N=1;IC=80;IH=10;IW=10;OC=80;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,5953658
++193,yolov8_nano$dispatch_193_V256D128_rvv_curated_batchnorm2d_s8_N1xC80xH10xW10,,,0.683592,ms,683592.000000,0,,firesim,batchnorm2d_s8,N=1;C=80;H=10;W=10,683592
++194,yolov8_nano$dispatch_194_V256D128_rvv_curated_silu_s8_n8000,,,2.163870,ms,2163870.000000,0,,firesim,silu_s8,n=8000,2163870
++195,yolov8_nano$dispatch_195_V256D128_rvv_curated_conv2d_s8_N1xIC80xIH10xIW10xOC80xOH10xOW10xKH1xKW1xSH1xSW1xPH0xPW0,,,20.410251,ms,20410251.000000,0,,firesim,conv2d_s8,N=1;IC=80;IH=10;IW=10;OC=80;OH=10;OW=10;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,20410251
++196,yolov8_nano$dispatch_196_V256D128_rvv_curated_cat2_c1_s8_N1xH10xW10xC_inputs6480xC_total144,,,1.060866,ms,1060866.000000,0,,firesim,cat2_c1_s8,N=1;H=10;W=10;C_inputs=64|80;C_total=144,1060866
++197,yolov8_nano$dispatch_197_V256D128_rvv_curated_conv2d_s8_N1xIC256xIH5xIW5xOC64xOH5xOW5xKH3xKW3xSH1xSW1xPH1xPW1,,,2.983617,ms,2983617.000000,0,,firesim,conv2d_s8,N=1;IC=256;IH=5;IW=5;OC=64;OH=5;OW=5;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,2983617
++198,yolov8_nano$dispatch_198_V256D128_rvv_curated_batchnorm2d_s8_N1xC64xH5xW5,,,0.140560,ms,140560.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=5;W=5,140560
++199,yolov8_nano$dispatch_199_V256D128_rvv_curated_silu_s8_n1600,,,0.442693,ms,442693.000000,0,,firesim,silu_s8,n=1600,442693
++200,yolov8_nano$dispatch_200_V256D128_rvv_curated_conv2d_s8_N1xIC64xIH5xIW5xOC64xOH5xOW5xKH3xKW3xSH1xSW1xPH1xPW1,,,0.786210,ms,786210.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=5;IW=5;OC=64;OH=5;OW=5;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,786210
++201,yolov8_nano$dispatch_201_V256D128_rvv_curated_batchnorm2d_s8_N1xC64xH5xW5,,,0.140629,ms,140629.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=5;W=5,140629
++202,yolov8_nano$dispatch_202_V256D128_rvv_curated_silu_s8_n1600,,,0.448078,ms,448078.000000,0,,firesim,silu_s8,n=1600,448078
++203,yolov8_nano$dispatch_203_V256D128_rvv_curated_conv2d_s8_N1xIC64xIH5xIW5xOC64xOH5xOW5xKH1xKW1xSH1xSW1xPH0xPW0,,,3.290537,ms,3290537.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=5;IW=5;OC=64;OH=5;OW=5;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,3290537
++204,yolov8_nano$dispatch_204_V256D128_rvv_curated_conv2d_s8_N1xIC256xIH5xIW5xOC80xOH5xOW5xKH3xKW3xSH1xSW1xPH1xPW1,,,4.461487,ms,4461487.000000,0,,firesim,conv2d_s8,N=1;IC=256;IH=5;IW=5;OC=80;OH=5;OW=5;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,4461487
++205,yolov8_nano$dispatch_205_V256D128_rvv_curated_batchnorm2d_s8_N1xC80xH5xW5,,,0.176198,ms,176198.000000,0,,firesim,batchnorm2d_s8,N=1;C=80;H=5;W=5,176198
++206,yolov8_nano$dispatch_206_V256D128_rvv_curated_silu_s8_n2000,,,0.531319,ms,531319.000000,0,,firesim,silu_s8,n=2000,531319
++207,yolov8_nano$dispatch_207_V256D128_rvv_curated_conv2d_s8_N1xIC80xIH5xIW5xOC80xOH5xOW5xKH3xKW3xSH1xSW1xPH1xPW1,,,1.442150,ms,1442150.000000,0,,firesim,conv2d_s8,N=1;IC=80;IH=5;IW=5;OC=80;OH=5;OW=5;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,1442150
++208,yolov8_nano$dispatch_208_V256D128_rvv_curated_batchnorm2d_s8_N1xC80xH5xW5,,,0.176722,ms,176722.000000,0,,firesim,batchnorm2d_s8,N=1;C=80;H=5;W=5,176722
++209,yolov8_nano$dispatch_209_V256D128_rvv_curated_silu_s8_n2000,,,0.547233,ms,547233.000000,0,,firesim,silu_s8,n=2000,547233
++210,yolov8_nano$dispatch_210_V256D128_rvv_curated_conv2d_s8_N1xIC80xIH5xIW5xOC80xOH5xOW5xKH1xKW1xSH1xSW1xPH0xPW0,,,5.109027,ms,5109027.000000,0,,firesim,conv2d_s8,N=1;IC=80;IH=5;IW=5;OC=80;OH=5;OW=5;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,5109027
++211,yolov8_nano$dispatch_211_V256D128_rvv_curated_cat2_c1_s8_N1xH5xW5xC_inputs6480xC_total144,,,0.007160,ms,7160.000000,0,,firesim,cat2_c1_s8,N=1;H=5;W=5;C_inputs=64|80;C_total=144,7160
+diff --git a/gen/profile/sweep_v8/gemmini_q31/firesim_rocket_saturn/yolov8_nano/yolov8_nano.int8/yolov8_nano_firesim_rocket_saturn_gemmini_q31_yolov8_nano.int8/topo_0/results.csv b/gen/profile/sweep_v8/gemmini_q31/firesim_rocket_saturn/yolov8_nano/yolov8_nano.int8/yolov8_nano_firesim_rocket_saturn_gemmini_q31_yolov8_nano.int8/topo_0/results.csv
+index 46012c1e9c2..aab8700e89a 100644
+--- a/gen/profile/sweep_v8/gemmini_q31/firesim_rocket_saturn/yolov8_nano/yolov8_nano.int8/yolov8_nano_firesim_rocket_saturn_gemmini_q31_yolov8_nano.int8/topo_0/results.csv
++++ b/gen/profile/sweep_v8/gemmini_q31/firesim_rocket_saturn/yolov8_nano/yolov8_nano.int8/yolov8_nano_firesim_rocket_saturn_gemmini_q31_yolov8_nano.int8/topo_0/results.csv
+@@ -1,205 +1,205 @@
+ dispatch_id,module_name,vmfb_path,mlir_path,mean_time,mean_unit,mean_time_ns,returncode,log_path,source,op,shape,cycles
+-0,yolov8_nano$dispatch_0_gemmini_q31_conv2d_s8_N1xIC3xIH160xIW160xOC16xOH80xOW80xKH3xKW3xSH2xSW2xPH1xPW1,,,2.109587,ms,2109587.000000,0,,firesim,conv2d_s8,N=1;IC=3;IH=160;IW=160;OC=16;OH=80;OW=80;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,2109587
++0,yolov8_nano$dispatch_0_gemmini_q31_conv2d_s8_N1xIC3xIH160xIW160xOC16xOH80xOW80xKH3xKW3xSH2xSW2xPH1xPW1,,,9.472412,ms,9472412.000000,0,,firesim,conv2d_s8,N=1;IC=3;IH=160;IW=160;OC=16;OH=80;OW=80;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,9472412
+ 1,yolov8_nano$dispatch_1_gemmini_q31_batchnorm2d_s8_N1xC16xH80xW80,,,7.713411,ms,7713411.000000,0,,firesim,batchnorm2d_s8,N=1;C=16;H=80;W=80,7713411
+ 2,yolov8_nano$dispatch_2_gemmini_q31_silu_s8_n102400,,,25.979633,ms,25979633.000000,0,,firesim,silu_s8,n=102400,25979633
+-3,yolov8_nano$dispatch_3_gemmini_q31_conv2d_s8_N1xIC16xIH80xIW80xOC32xOH40xOW40xKH3xKW3xSH2xSW2xPH1xPW1,,,1.479597,ms,1479597.000000,0,,firesim,conv2d_s8,N=1;IC=16;IH=80;IW=80;OC=32;OH=40;OW=40;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,1479597
++3,yolov8_nano$dispatch_3_gemmini_q31_conv2d_s8_N1xIC16xIH80xIW80xOC32xOH40xOW40xKH3xKW3xSH2xSW2xPH1xPW1,,,4.257180,ms,4257180.000000,0,,firesim,conv2d_s8,N=1;IC=16;IH=80;IW=80;OC=32;OH=40;OW=40;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,4257180
+ 4,yolov8_nano$dispatch_4_gemmini_q31_batchnorm2d_s8_N1xC32xH40xW40,,,3.936170,ms,3936170.000000,0,,firesim,batchnorm2d_s8,N=1;C=32;H=40;W=40,3936170
+ 5,yolov8_nano$dispatch_5_gemmini_q31_silu_s8_n51200,,,12.139145,ms,12139145.000000,0,,firesim,silu_s8,n=51200,12139145
+-6,yolov8_nano$dispatch_6_gemmini_q31_conv2d_s8_N1xIC32xIH40xIW40xOC32xOH40xOW40xKH1xKW1xSH1xSW1xPH0xPW0,,,1.035404,ms,1035404.000000,0,,firesim,conv2d_s8,N=1;IC=32;IH=40;IW=40;OC=32;OH=40;OW=40;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,1035404
++6,yolov8_nano$dispatch_6_gemmini_q31_conv2d_s8_N1xIC32xIH40xIW40xOC32xOH40xOW40xKH1xKW1xSH1xSW1xPH0xPW0,,,3.101627,ms,3101627.000000,0,,firesim,conv2d_s8,N=1;IC=32;IH=40;IW=40;OC=32;OH=40;OW=40;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,3101627
+ 7,yolov8_nano$dispatch_7_gemmini_q31_batchnorm2d_s8_N1xC32xH40xW40,,,3.881566,ms,3881566.000000,0,,firesim,batchnorm2d_s8,N=1;C=32;H=40;W=40,3881566
+ 8,yolov8_nano$dispatch_8_gemmini_q31_silu_s8_n51200,,,12.044351,ms,12044351.000000,0,,firesim,silu_s8,n=51200,12044351
+-10,yolov8_nano$dispatch_10_gemmini_q31_conv2d_s8_N1xIC16xIH40xIW40xOC16xOH40xOW40xKH3xKW3xSH1xSW1xPH1xPW1,,,0.435860,ms,435860.000000,0,,firesim,conv2d_s8,N=1;IC=16;IH=40;IW=40;OC=16;OH=40;OW=40;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,435860
++10,yolov8_nano$dispatch_10_gemmini_q31_conv2d_s8_N1xIC16xIH40xIW40xOC16xOH40xOW40xKH3xKW3xSH1xSW1xPH1xPW1,,,2.480560,ms,2480560.000000,0,,firesim,conv2d_s8,N=1;IC=16;IH=40;IW=40;OC=16;OH=40;OW=40;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,2480560
+ 11,yolov8_nano$dispatch_11_gemmini_q31_batchnorm2d_s8_N1xC16xH40xW40,,,1.904334,ms,1904334.000000,0,,firesim,batchnorm2d_s8,N=1;C=16;H=40;W=40,1904334
+ 12,yolov8_nano$dispatch_12_gemmini_q31_silu_s8_n25600,,,6.028404,ms,6028404.000000,0,,firesim,silu_s8,n=25600,6028404
+-13,yolov8_nano$dispatch_13_gemmini_q31_conv2d_s8_N1xIC16xIH40xIW40xOC16xOH40xOW40xKH3xKW3xSH1xSW1xPH1xPW1,,,0.432304,ms,432304.000000,0,,firesim,conv2d_s8,N=1;IC=16;IH=40;IW=40;OC=16;OH=40;OW=40;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,432304
++13,yolov8_nano$dispatch_13_gemmini_q31_conv2d_s8_N1xIC16xIH40xIW40xOC16xOH40xOW40xKH3xKW3xSH1xSW1xPH1xPW1,,,2.471393,ms,2471393.000000,0,,firesim,conv2d_s8,N=1;IC=16;IH=40;IW=40;OC=16;OH=40;OW=40;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,2471393
+ 14,yolov8_nano$dispatch_14_gemmini_q31_batchnorm2d_s8_N1xC16xH40xW40,,,1.922310,ms,1922310.000000,0,,firesim,batchnorm2d_s8,N=1;C=16;H=40;W=40,1922310
+ 15,yolov8_nano$dispatch_15_gemmini_q31_silu_s8_n25600,,,6.033157,ms,6033157.000000,0,,firesim,silu_s8,n=25600,6033157
+ 16,yolov8_nano$dispatch_16_gemmini_q31_add_s8_n25600,,,2.104120,ms,2104120.000000,0,,firesim,add_s8,n=25600,2104120
+ 17,yolov8_nano$dispatch_17_gemmini_q31_cat3_c1_s8_N1xH40xW40xC_inputs16|16|16xC_total48,,,5.701708,ms,5701708.000000,0,,firesim,cat3_c1_s8,N=1;H=40;W=40;C_inputs=16|16|16;C_total=48,5701708
+-18,yolov8_nano$dispatch_18_gemmini_q31_conv2d_s8_N1xIC48xIH40xIW40xOC32xOH40xOW40xKH1xKW1xSH1xSW1xPH0xPW0,,,1.247761,ms,1247761.000000,0,,firesim,conv2d_s8,N=1;IC=48;IH=40;IW=40;OC=32;OH=40;OW=40;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,1247761
++18,yolov8_nano$dispatch_18_gemmini_q31_conv2d_s8_N1xIC48xIH40xIW40xOC32xOH40xOW40xKH1xKW1xSH1xSW1xPH0xPW0,,,3.284431,ms,3284431.000000,0,,firesim,conv2d_s8,N=1;IC=48;IH=40;IW=40;OC=32;OH=40;OW=40;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,3284431
+ 19,yolov8_nano$dispatch_19_gemmini_q31_batchnorm2d_s8_N1xC32xH40xW40,,,3.747738,ms,3747738.000000,0,,firesim,batchnorm2d_s8,N=1;C=32;H=40;W=40,3747738
+ 20,yolov8_nano$dispatch_20_gemmini_q31_silu_s8_n51200,,,12.038301,ms,12038301.000000,0,,firesim,silu_s8,n=51200,12038301
+-21,yolov8_nano$dispatch_21_gemmini_q31_conv2d_s8_N1xIC32xIH40xIW40xOC64xOH20xOW20xKH3xKW3xSH2xSW2xPH1xPW1,,,0.637420,ms,637420.000000,0,,firesim,conv2d_s8,N=1;IC=32;IH=40;IW=40;OC=64;OH=20;OW=20;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,637420
++21,yolov8_nano$dispatch_21_gemmini_q31_conv2d_s8_N1xIC32xIH40xIW40xOC64xOH20xOW20xKH3xKW3xSH2xSW2xPH1xPW1,,,1.968041,ms,1968041.000000,0,,firesim,conv2d_s8,N=1;IC=32;IH=40;IW=40;OC=64;OH=20;OW=20;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,1968041
+ 22,yolov8_nano$dispatch_22_gemmini_q31_batchnorm2d_s8_N1xC64xH20xW20,,,1.927629,ms,1927629.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=20;W=20,1927629
+ 23,yolov8_nano$dispatch_23_gemmini_q31_silu_s8_n25600,,,6.025099,ms,6025099.000000,0,,firesim,silu_s8,n=25600,6025099
+-24,yolov8_nano$dispatch_24_gemmini_q31_conv2d_s8_N1xIC64xIH20xIW20xOC64xOH20xOW20xKH1xKW1xSH1xSW1xPH0xPW0,,,0.435197,ms,435197.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=20;IW=20;OC=64;OH=20;OW=20;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,435197
++24,yolov8_nano$dispatch_24_gemmini_q31_conv2d_s8_N1xIC64xIH20xIW20xOC64xOH20xOW20xKH1xKW1xSH1xSW1xPH0xPW0,,,1.539126,ms,1539126.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=20;IW=20;OC=64;OH=20;OW=20;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,1539126
+ 25,yolov8_nano$dispatch_25_gemmini_q31_batchnorm2d_s8_N1xC64xH20xW20,,,2.048525,ms,2048525.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=20;W=20,2048525
+ 26,yolov8_nano$dispatch_26_gemmini_q31_silu_s8_n25600,,,6.030631,ms,6030631.000000,0,,firesim,silu_s8,n=25600,6030631
+-28,yolov8_nano$dispatch_28_gemmini_q31_conv2d_s8_N1xIC32xIH20xIW20xOC32xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1,,,0.217810,ms,217810.000000,0,,firesim,conv2d_s8,N=1;IC=32;IH=20;IW=20;OC=32;OH=20;OW=20;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,217810
++28,yolov8_nano$dispatch_28_gemmini_q31_conv2d_s8_N1xIC32xIH20xIW20xOC32xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1,,,0.899757,ms,899757.000000,0,,firesim,conv2d_s8,N=1;IC=32;IH=20;IW=20;OC=32;OH=20;OW=20;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,899757
+ 29,yolov8_nano$dispatch_29_gemmini_q31_batchnorm2d_s8_N1xC32xH20xW20,,,1.023754,ms,1023754.000000,0,,firesim,batchnorm2d_s8,N=1;C=32;H=20;W=20,1023754
+ 30,yolov8_nano$dispatch_30_gemmini_q31_silu_s8_n12800,,,3.013988,ms,3013988.000000,0,,firesim,silu_s8,n=12800,3013988
+-31,yolov8_nano$dispatch_31_gemmini_q31_conv2d_s8_N1xIC32xIH20xIW20xOC32xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1,,,0.217677,ms,217677.000000,0,,firesim,conv2d_s8,N=1;IC=32;IH=20;IW=20;OC=32;OH=20;OW=20;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,217677
++31,yolov8_nano$dispatch_31_gemmini_q31_conv2d_s8_N1xIC32xIH20xIW20xOC32xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1,,,0.898941,ms,898941.000000,0,,firesim,conv2d_s8,N=1;IC=32;IH=20;IW=20;OC=32;OH=20;OW=20;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,898941
+ 32,yolov8_nano$dispatch_32_gemmini_q31_batchnorm2d_s8_N1xC32xH20xW20,,,1.021371,ms,1021371.000000,0,,firesim,batchnorm2d_s8,N=1;C=32;H=20;W=20,1021371
+ 33,yolov8_nano$dispatch_33_gemmini_q31_silu_s8_n12800,,,3.020815,ms,3020815.000000,0,,firesim,silu_s8,n=12800,3020815
+ 34,yolov8_nano$dispatch_34_gemmini_q31_add_s8_n12800,,,1.055411,ms,1055411.000000,0,,firesim,add_s8,n=12800,1055411
+-35,yolov8_nano$dispatch_35_gemmini_q31_conv2d_s8_N1xIC32xIH20xIW20xOC32xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1,,,0.218177,ms,218177.000000,0,,firesim,conv2d_s8,N=1;IC=32;IH=20;IW=20;OC=32;OH=20;OW=20;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,218177
++35,yolov8_nano$dispatch_35_gemmini_q31_conv2d_s8_N1xIC32xIH20xIW20xOC32xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1,,,0.899294,ms,899294.000000,0,,firesim,conv2d_s8,N=1;IC=32;IH=20;IW=20;OC=32;OH=20;OW=20;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,899294
+ 36,yolov8_nano$dispatch_36_gemmini_q31_batchnorm2d_s8_N1xC32xH20xW20,,,0.981121,ms,981121.000000,0,,firesim,batchnorm2d_s8,N=1;C=32;H=20;W=20,981121
+ 37,yolov8_nano$dispatch_37_gemmini_q31_silu_s8_n12800,,,3.012243,ms,3012243.000000,0,,firesim,silu_s8,n=12800,3012243
+-38,yolov8_nano$dispatch_38_gemmini_q31_conv2d_s8_N1xIC32xIH20xIW20xOC32xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1,,,0.217930,ms,217930.000000,0,,firesim,conv2d_s8,N=1;IC=32;IH=20;IW=20;OC=32;OH=20;OW=20;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,217930
++38,yolov8_nano$dispatch_38_gemmini_q31_conv2d_s8_N1xIC32xIH20xIW20xOC32xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1,,,0.900677,ms,900677.000000,0,,firesim,conv2d_s8,N=1;IC=32;IH=20;IW=20;OC=32;OH=20;OW=20;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,900677
+ 39,yolov8_nano$dispatch_39_gemmini_q31_batchnorm2d_s8_N1xC32xH20xW20,,,0.984546,ms,984546.000000,0,,firesim,batchnorm2d_s8,N=1;C=32;H=20;W=20,984546
+ 40,yolov8_nano$dispatch_40_gemmini_q31_silu_s8_n12800,,,3.019736,ms,3019736.000000,0,,firesim,silu_s8,n=12800,3019736
+ 41,yolov8_nano$dispatch_41_gemmini_q31_add_s8_n12800,,,1.051187,ms,1051187.000000,0,,firesim,add_s8,n=12800,1051187
+ 42,yolov8_nano$dispatch_42_gemmini_q31_cat4_c1_s8_N1xH20xW20xC_inputs32|32|32|32xC_total128,,,3.850017,ms,3850017.000000,0,,firesim,cat4_c1_s8,N=1;H=20;W=20;C_inputs=32|32|32|32;C_total=128,3850017
+-43,yolov8_nano$dispatch_43_gemmini_q31_conv2d_s8_N1xIC128xIH20xIW20xOC64xOH20xOW20xKH1xKW1xSH1xSW1xPH0xPW0,,,0.669759,ms,669759.000000,0,,firesim,conv2d_s8,N=1;IC=128;IH=20;IW=20;OC=64;OH=20;OW=20;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,669759
++43,yolov8_nano$dispatch_43_gemmini_q31_conv2d_s8_N1xIC128xIH20xIW20xOC64xOH20xOW20xKH1xKW1xSH1xSW1xPH0xPW0,,,1.722156,ms,1722156.000000,0,,firesim,conv2d_s8,N=1;IC=128;IH=20;IW=20;OC=64;OH=20;OW=20;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,1722156
+ 44,yolov8_nano$dispatch_44_gemmini_q31_batchnorm2d_s8_N1xC64xH20xW20,,,2.028724,ms,2028724.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=20;W=20,2028724
+ 45,yolov8_nano$dispatch_45_gemmini_q31_silu_s8_n25600,,,6.035882,ms,6035882.000000,0,,firesim,silu_s8,n=25600,6035882
+-46,yolov8_nano$dispatch_46_gemmini_q31_conv2d_s8_N1xIC64xIH20xIW20xOC128xOH10xOW10xKH3xKW3xSH2xSW2xPH1xPW1,,,0.346096,ms,346096.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=20;IW=20;OC=128;OH=10;OW=10;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,346096
++46,yolov8_nano$dispatch_46_gemmini_q31_conv2d_s8_N1xIC64xIH20xIW20xOC128xOH10xOW10xKH3xKW3xSH2xSW2xPH1xPW1,,,0.752789,ms,752789.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=20;IW=20;OC=128;OH=10;OW=10;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,752789
+ 47,yolov8_nano$dispatch_47_gemmini_q31_batchnorm2d_s8_N1xC128xH10xW10,,,0.986586,ms,986586.000000,0,,firesim,batchnorm2d_s8,N=1;C=128;H=10;W=10,986586
+ 48,yolov8_nano$dispatch_48_gemmini_q31_silu_s8_n12800,,,3.015430,ms,3015430.000000,0,,firesim,silu_s8,n=12800,3015430
+-49,yolov8_nano$dispatch_49_gemmini_q31_conv2d_s8_N1xIC128xIH10xIW10xOC128xOH10xOW10xKH1xKW1xSH1xSW1xPH0xPW0,,,0.235687,ms,235687.000000,0,,firesim,conv2d_s8,N=1;IC=128;IH=10;IW=10;OC=128;OH=10;OW=10;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,235687
++49,yolov8_nano$dispatch_49_gemmini_q31_conv2d_s8_N1xIC128xIH10xIW10xOC128xOH10xOW10xKH1xKW1xSH1xSW1xPH0xPW0,,,0.539579,ms,539579.000000,0,,firesim,conv2d_s8,N=1;IC=128;IH=10;IW=10;OC=128;OH=10;OW=10;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,539579
+ 50,yolov8_nano$dispatch_50_gemmini_q31_batchnorm2d_s8_N1xC128xH10xW10,,,1.033616,ms,1033616.000000,0,,firesim,batchnorm2d_s8,N=1;C=128;H=10;W=10,1033616
+ 51,yolov8_nano$dispatch_51_gemmini_q31_silu_s8_n12800,,,3.022962,ms,3022962.000000,0,,firesim,silu_s8,n=12800,3022962
+-53,yolov8_nano$dispatch_53_gemmini_q31_conv2d_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,0.127851,ms,127851.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=10;IW=10;OC=64;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,127851
++53,yolov8_nano$dispatch_53_gemmini_q31_conv2d_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,0.390753,ms,390753.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=10;IW=10;OC=64;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,390753
+ 54,yolov8_nano$dispatch_54_gemmini_q31_batchnorm2d_s8_N1xC64xH10xW10,,,0.471877,ms,471877.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=10;W=10,471877
+ 55,yolov8_nano$dispatch_55_gemmini_q31_silu_s8_n6400,,,1.506957,ms,1506957.000000,0,,firesim,silu_s8,n=6400,1506957
+-56,yolov8_nano$dispatch_56_gemmini_q31_conv2d_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,0.126447,ms,126447.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=10;IW=10;OC=64;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,126447
++56,yolov8_nano$dispatch_56_gemmini_q31_conv2d_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,0.390554,ms,390554.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=10;IW=10;OC=64;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,390554
+ 57,yolov8_nano$dispatch_57_gemmini_q31_batchnorm2d_s8_N1xC64xH10xW10,,,0.518491,ms,518491.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=10;W=10,518491
+ 58,yolov8_nano$dispatch_58_gemmini_q31_silu_s8_n6400,,,1.492293,ms,1492293.000000,0,,firesim,silu_s8,n=6400,1492293
+ 59,yolov8_nano$dispatch_59_gemmini_q31_add_s8_n6400,,,0.527519,ms,527519.000000,0,,firesim,add_s8,n=6400,527519
+-60,yolov8_nano$dispatch_60_gemmini_q31_conv2d_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,0.127101,ms,127101.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=10;IW=10;OC=64;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,127101
++60,yolov8_nano$dispatch_60_gemmini_q31_conv2d_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,0.389367,ms,389367.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=10;IW=10;OC=64;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,389367
+ 61,yolov8_nano$dispatch_61_gemmini_q31_batchnorm2d_s8_N1xC64xH10xW10,,,0.488223,ms,488223.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=10;W=10,488223
+ 62,yolov8_nano$dispatch_62_gemmini_q31_silu_s8_n6400,,,1.503960,ms,1503960.000000,0,,firesim,silu_s8,n=6400,1503960
+-63,yolov8_nano$dispatch_63_gemmini_q31_conv2d_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,0.126579,ms,126579.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=10;IW=10;OC=64;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,126579
++63,yolov8_nano$dispatch_63_gemmini_q31_conv2d_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,0.390712,ms,390712.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=10;IW=10;OC=64;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,390712
+ 64,yolov8_nano$dispatch_64_gemmini_q31_batchnorm2d_s8_N1xC64xH10xW10,,,0.488185,ms,488185.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=10;W=10,488185
+ 65,yolov8_nano$dispatch_65_gemmini_q31_silu_s8_n6400,,,1.491069,ms,1491069.000000,0,,firesim,silu_s8,n=6400,1491069
+ 66,yolov8_nano$dispatch_66_gemmini_q31_add_s8_n6400,,,0.528745,ms,528745.000000,0,,firesim,add_s8,n=6400,528745
+ 67,yolov8_nano$dispatch_67_gemmini_q31_cat4_c1_s8_N1xH10xW10xC_inputs64|64|64|64xC_total256,,,1.928665,ms,1928665.000000,0,,firesim,cat4_c1_s8,N=1;H=10;W=10;C_inputs=64|64|64|64;C_total=256,1928665
+-68,yolov8_nano$dispatch_68_gemmini_q31_conv2d_s8_N1xIC256xIH10xIW10xOC128xOH10xOW10xKH1xKW1xSH1xSW1xPH0xPW0,,,0.421890,ms,421890.000000,0,,firesim,conv2d_s8,N=1;IC=256;IH=10;IW=10;OC=128;OH=10;OW=10;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,421890
++68,yolov8_nano$dispatch_68_gemmini_q31_conv2d_s8_N1xIC256xIH10xIW10xOC128xOH10xOW10xKH1xKW1xSH1xSW1xPH0xPW0,,,0.977274,ms,977274.000000,0,,firesim,conv2d_s8,N=1;IC=256;IH=10;IW=10;OC=128;OH=10;OW=10;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,977274
+ 69,yolov8_nano$dispatch_69_gemmini_q31_batchnorm2d_s8_N1xC128xH10xW10,,,1.020558,ms,1020558.000000,0,,firesim,batchnorm2d_s8,N=1;C=128;H=10;W=10,1020558
+ 70,yolov8_nano$dispatch_70_gemmini_q31_silu_s8_n12800,,,3.009335,ms,3009335.000000,0,,firesim,silu_s8,n=12800,3009335
+-71,yolov8_nano$dispatch_71_gemmini_q31_conv2d_s8_N1xIC128xIH10xIW10xOC256xOH5xOW5xKH3xKW3xSH2xSW2xPH1xPW1,,,0.283634,ms,283634.000000,0,,firesim,conv2d_s8,N=1;IC=128;IH=10;IW=10;OC=256;OH=5;OW=5;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,283634
++71,yolov8_nano$dispatch_71_gemmini_q31_conv2d_s8_N1xIC128xIH10xIW10xOC256xOH5xOW5xKH3xKW3xSH2xSW2xPH1xPW1,,,0.418547,ms,418547.000000,0,,firesim,conv2d_s8,N=1;IC=128;IH=10;IW=10;OC=256;OH=5;OW=5;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,418547
+ 72,yolov8_nano$dispatch_72_gemmini_q31_batchnorm2d_s8_N1xC256xH5xW5,,,0.504955,ms,504955.000000,0,,firesim,batchnorm2d_s8,N=1;C=256;H=5;W=5,504955
+ 73,yolov8_nano$dispatch_73_gemmini_q31_silu_s8_n6400,,,1.489198,ms,1489198.000000,0,,firesim,silu_s8,n=6400,1489198
+-74,yolov8_nano$dispatch_74_gemmini_q31_conv2d_s8_N1xIC256xIH5xIW5xOC256xOH5xOW5xKH1xKW1xSH1xSW1xPH0xPW0,,,0.141342,ms,141342.000000,0,,firesim,conv2d_s8,N=1;IC=256;IH=5;IW=5;OC=256;OH=5;OW=5;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,141342
++74,yolov8_nano$dispatch_74_gemmini_q31_conv2d_s8_N1xIC256xIH5xIW5xOC256xOH5xOW5xKH1xKW1xSH1xSW1xPH0xPW0,,,0.274828,ms,274828.000000,0,,firesim,conv2d_s8,N=1;IC=256;IH=5;IW=5;OC=256;OH=5;OW=5;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,274828
+ 75,yolov8_nano$dispatch_75_gemmini_q31_batchnorm2d_s8_N1xC256xH5xW5,,,0.514193,ms,514193.000000,0,,firesim,batchnorm2d_s8,N=1;C=256;H=5;W=5,514193
+ 76,yolov8_nano$dispatch_76_gemmini_q31_silu_s8_n6400,,,1.441186,ms,1441186.000000,0,,firesim,silu_s8,n=6400,1441186
+-78,yolov8_nano$dispatch_78_gemmini_q31_conv2d_s8_N1xIC128xIH5xIW5xOC128xOH5xOW5xKH3xKW3xSH1xSW1xPH1xPW1,,,0.128986,ms,128986.000000,0,,firesim,conv2d_s8,N=1;IC=128;IH=5;IW=5;OC=128;OH=5;OW=5;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,128986
++78,yolov8_nano$dispatch_78_gemmini_q31_conv2d_s8_N1xIC128xIH5xIW5xOC128xOH5xOW5xKH3xKW3xSH1xSW1xPH1xPW1,,,0.203966,ms,203966.000000,0,,firesim,conv2d_s8,N=1;IC=128;IH=5;IW=5;OC=128;OH=5;OW=5;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,203966
+ 79,yolov8_nano$dispatch_79_gemmini_q31_batchnorm2d_s8_N1xC128xH5xW5,,,0.253139,ms,253139.000000,0,,firesim,batchnorm2d_s8,N=1;C=128;H=5;W=5,253139
+ 80,yolov8_nano$dispatch_80_gemmini_q31_silu_s8_n3200,,,0.618903,ms,618903.000000,0,,firesim,silu_s8,n=3200,618903
+-81,yolov8_nano$dispatch_81_gemmini_q31_conv2d_s8_N1xIC128xIH5xIW5xOC128xOH5xOW5xKH3xKW3xSH1xSW1xPH1xPW1,,,0.127661,ms,127661.000000,0,,firesim,conv2d_s8,N=1;IC=128;IH=5;IW=5;OC=128;OH=5;OW=5;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,127661
++81,yolov8_nano$dispatch_81_gemmini_q31_conv2d_s8_N1xIC128xIH5xIW5xOC128xOH5xOW5xKH3xKW3xSH1xSW1xPH1xPW1,,,0.204144,ms,204144.000000,0,,firesim,conv2d_s8,N=1;IC=128;IH=5;IW=5;OC=128;OH=5;OW=5;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,204144
+ 82,yolov8_nano$dispatch_82_gemmini_q31_batchnorm2d_s8_N1xC128xH5xW5,,,0.255391,ms,255391.000000,0,,firesim,batchnorm2d_s8,N=1;C=128;H=5;W=5,255391
+ 83,yolov8_nano$dispatch_83_gemmini_q31_silu_s8_n3200,,,0.477863,ms,477863.000000,0,,firesim,silu_s8,n=3200,477863
+ 84,yolov8_nano$dispatch_84_gemmini_q31_add_s8_n3200,,,0.262882,ms,262882.000000,0,,firesim,add_s8,n=3200,262882
+ 85,yolov8_nano$dispatch_85_gemmini_q31_cat3_c1_s8_N1xH5xW5xC_inputs128|128|128xC_total384,,,0.724828,ms,724828.000000,0,,firesim,cat3_c1_s8,N=1;H=5;W=5;C_inputs=128|128|128;C_total=384,724828
+-86,yolov8_nano$dispatch_86_gemmini_q31_conv2d_s8_N1xIC384xIH5xIW5xOC256xOH5xOW5xKH1xKW1xSH1xSW1xPH0xPW0,,,0.179043,ms,179043.000000,0,,firesim,conv2d_s8,N=1;IC=384;IH=5;IW=5;OC=256;OH=5;OW=5;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,179043
++86,yolov8_nano$dispatch_86_gemmini_q31_conv2d_s8_N1xIC384xIH5xIW5xOC256xOH5xOW5xKH1xKW1xSH1xSW1xPH0xPW0,,,0.306457,ms,306457.000000,0,,firesim,conv2d_s8,N=1;IC=384;IH=5;IW=5;OC=256;OH=5;OW=5;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,306457
+ 87,yolov8_nano$dispatch_87_gemmini_q31_batchnorm2d_s8_N1xC256xH5xW5,,,0.508841,ms,508841.000000,0,,firesim,batchnorm2d_s8,N=1;C=256;H=5;W=5,508841
+ 88,yolov8_nano$dispatch_88_gemmini_q31_silu_s8_n6400,,,1.267585,ms,1267585.000000,0,,firesim,silu_s8,n=6400,1267585
+-89,yolov8_nano$dispatch_89_gemmini_q31_conv2d_s8_N1xIC256xIH5xIW5xOC128xOH5xOW5xKH1xKW1xSH1xSW1xPH0xPW0,,,0.093319,ms,93319.000000,0,,firesim,conv2d_s8,N=1;IC=256;IH=5;IW=5;OC=128;OH=5;OW=5;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,93319
++89,yolov8_nano$dispatch_89_gemmini_q31_conv2d_s8_N1xIC256xIH5xIW5xOC128xOH5xOW5xKH1xKW1xSH1xSW1xPH0xPW0,,,0.162486,ms,162486.000000,0,,firesim,conv2d_s8,N=1;IC=256;IH=5;IW=5;OC=128;OH=5;OW=5;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,162486
+ 90,yolov8_nano$dispatch_90_gemmini_q31_batchnorm2d_s8_N1xC128xH5xW5,,,0.250261,ms,250261.000000,0,,firesim,batchnorm2d_s8,N=1;C=128;H=5;W=5,250261
+ 91,yolov8_nano$dispatch_91_gemmini_q31_silu_s8_n3200,,,0.509075,ms,509075.000000,0,,firesim,silu_s8,n=3200,509075
+-92,yolov8_nano$dispatch_92_gemmini_q31_maxpool2d_s8_N1xC128xIH5xIW5xOH5xOW5xKH5xKW5xSH1xSW1xPH2xPW2xDH1xDW1,,,1.250023,ms,1250023.000000,0,,firesim,maxpool2d_s8,N=1;C=128;IH=5;IW=5;OH=5;OW=5;KH=5;KW=5;SH=1;SW=1;PH=2;PW=2;DH=1;DW=1,1250023
+-93,yolov8_nano$dispatch_93_gemmini_q31_maxpool2d_s8_N1xC128xIH5xIW5xOH5xOW5xKH5xKW5xSH1xSW1xPH2xPW2xDH1xDW1,,,1.195128,ms,1195128.000000,0,,firesim,maxpool2d_s8,N=1;C=128;IH=5;IW=5;OH=5;OW=5;KH=5;KW=5;SH=1;SW=1;PH=2;PW=2;DH=1;DW=1,1195128
+-94,yolov8_nano$dispatch_94_gemmini_q31_maxpool2d_s8_N1xC128xIH5xIW5xOH5xOW5xKH5xKW5xSH1xSW1xPH2xPW2xDH1xDW1,,,1.159111,ms,1159111.000000,0,,firesim,maxpool2d_s8,N=1;C=128;IH=5;IW=5;OH=5;OW=5;KH=5;KW=5;SH=1;SW=1;PH=2;PW=2;DH=1;DW=1,1159111
++92,yolov8_nano$dispatch_92_gemmini_q31_maxpool2d_s8_N1xC128xIH5xIW5xOH5xOW5xKH5xKW5xSH1xSW1xPH2xPW2xDH1xDW1,,,0.987204,ms,987204.000000,0,,firesim,maxpool2d_s8,N=1;C=128;IH=5;IW=5;OH=5;OW=5;KH=5;KW=5;SH=1;SW=1;PH=2;PW=2;DH=1;DW=1,987204
++93,yolov8_nano$dispatch_93_gemmini_q31_maxpool2d_s8_N1xC128xIH5xIW5xOH5xOW5xKH5xKW5xSH1xSW1xPH2xPW2xDH1xDW1,,,0.984357,ms,984357.000000,0,,firesim,maxpool2d_s8,N=1;C=128;IH=5;IW=5;OH=5;OW=5;KH=5;KW=5;SH=1;SW=1;PH=2;PW=2;DH=1;DW=1,984357
++94,yolov8_nano$dispatch_94_gemmini_q31_maxpool2d_s8_N1xC128xIH5xIW5xOH5xOW5xKH5xKW5xSH1xSW1xPH2xPW2xDH1xDW1,,,0.994752,ms,994752.000000,0,,firesim,maxpool2d_s8,N=1;C=128;IH=5;IW=5;OH=5;OW=5;KH=5;KW=5;SH=1;SW=1;PH=2;PW=2;DH=1;DW=1,994752
+ 95,yolov8_nano$dispatch_95_gemmini_q31_cat4_c1_s8_N1xH5xW5xC_inputs128|128|128|128xC_total512,,,0.882510,ms,882510.000000,0,,firesim,cat4_c1_s8,N=1;H=5;W=5;C_inputs=128|128|128|128;C_total=512,882510
+-96,yolov8_nano$dispatch_96_gemmini_q31_conv2d_s8_N1xIC512xIH5xIW5xOC256xOH5xOW5xKH1xKW1xSH1xSW1xPH0xPW0,,,0.216341,ms,216341.000000,0,,firesim,conv2d_s8,N=1;IC=512;IH=5;IW=5;OC=256;OH=5;OW=5;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,216341
++96,yolov8_nano$dispatch_96_gemmini_q31_conv2d_s8_N1xIC512xIH5xIW5xOC256xOH5xOW5xKH1xKW1xSH1xSW1xPH0xPW0,,,0.344716,ms,344716.000000,0,,firesim,conv2d_s8,N=1;IC=512;IH=5;IW=5;OC=256;OH=5;OW=5;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,344716
+ 97,yolov8_nano$dispatch_97_gemmini_q31_batchnorm2d_s8_N1xC256xH5xW5,,,0.534934,ms,534934.000000,0,,firesim,batchnorm2d_s8,N=1;C=256;H=5;W=5,534934
+ 98,yolov8_nano$dispatch_98_gemmini_q31_silu_s8_n6400,,,0.997111,ms,997111.000000,0,,firesim,silu_s8,n=6400,997111
+ 99,yolov8_nano$dispatch_99_gemmini_q31_upsample_nearest_s8_N1xC256xIH5xIW5xscale2,,,0.770318,ms,770318.000000,0,,firesim,upsample_nearest_s8,N=1;C=256;IH=5;IW=5;scale=2,770318
+ 100,yolov8_nano$dispatch_100_gemmini_q31_cat2_c1_s8_N1xH10xW10xC_inputs256|128xC_total384,,,2.661762,ms,2661762.000000,0,,firesim,cat2_c1_s8,N=1;H=10;W=10;C_inputs=256|128;C_total=384,2661762
+-101,yolov8_nano$dispatch_101_gemmini_q31_conv2d_s8_N1xIC384xIH10xIW10xOC128xOH10xOW10xKH1xKW1xSH1xSW1xPH0xPW0,,,0.698628,ms,698628.000000,0,,firesim,conv2d_s8,N=1;IC=384;IH=10;IW=10;OC=128;OH=10;OW=10;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,698628
++101,yolov8_nano$dispatch_101_gemmini_q31_conv2d_s8_N1xIC384xIH10xIW10xOC128xOH10xOW10xKH1xKW1xSH1xSW1xPH0xPW0,,,1.439362,ms,1439362.000000,0,,firesim,conv2d_s8,N=1;IC=384;IH=10;IW=10;OC=128;OH=10;OW=10;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,1439362
+ 102,yolov8_nano$dispatch_102_gemmini_q31_batchnorm2d_s8_N1xC128xH10xW10,,,1.023162,ms,1023162.000000,0,,firesim,batchnorm2d_s8,N=1;C=128;H=10;W=10,1023162
+ 103,yolov8_nano$dispatch_103_gemmini_q31_silu_s8_n12800,,,2.952936,ms,2952936.000000,0,,firesim,silu_s8,n=12800,2952936
+-105,yolov8_nano$dispatch_105_gemmini_q31_conv2d_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,0.127269,ms,127269.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=10;IW=10;OC=64;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,127269
++105,yolov8_nano$dispatch_105_gemmini_q31_conv2d_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,0.388043,ms,388043.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=10;IW=10;OC=64;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,388043
+ 106,yolov8_nano$dispatch_106_gemmini_q31_batchnorm2d_s8_N1xC64xH10xW10,,,0.494919,ms,494919.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=10;W=10,494919
+ 107,yolov8_nano$dispatch_107_gemmini_q31_silu_s8_n6400,,,1.388512,ms,1388512.000000,0,,firesim,silu_s8,n=6400,1388512
+-108,yolov8_nano$dispatch_108_gemmini_q31_conv2d_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,0.125544,ms,125544.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=10;IW=10;OC=64;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,125544
++108,yolov8_nano$dispatch_108_gemmini_q31_conv2d_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,0.390112,ms,390112.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=10;IW=10;OC=64;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,390112
+ 109,yolov8_nano$dispatch_109_gemmini_q31_batchnorm2d_s8_N1xC64xH10xW10,,,0.517261,ms,517261.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=10;W=10,517261
+ 110,yolov8_nano$dispatch_110_gemmini_q31_silu_s8_n6400,,,1.125486,ms,1125486.000000,0,,firesim,silu_s8,n=6400,1125486
+ 111,yolov8_nano$dispatch_111_gemmini_q31_cat3_c1_s8_N1xH10xW10xC_inputs64|64|64xC_total192,,,1.444698,ms,1444698.000000,0,,firesim,cat3_c1_s8,N=1;H=10;W=10;C_inputs=64|64|64;C_total=192,1444698
+-112,yolov8_nano$dispatch_112_gemmini_q31_conv2d_s8_N1xIC192xIH10xIW10xOC128xOH10xOW10xKH1xKW1xSH1xSW1xPH0xPW0,,,0.325004,ms,325004.000000,0,,firesim,conv2d_s8,N=1;IC=192;IH=10;IW=10;OC=128;OH=10;OW=10;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,325004
++112,yolov8_nano$dispatch_112_gemmini_q31_conv2d_s8_N1xIC192xIH10xIW10xOC128xOH10xOW10xKH1xKW1xSH1xSW1xPH0xPW0,,,0.710337,ms,710337.000000,0,,firesim,conv2d_s8,N=1;IC=192;IH=10;IW=10;OC=128;OH=10;OW=10;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,710337
+ 113,yolov8_nano$dispatch_113_gemmini_q31_batchnorm2d_s8_N1xC128xH10xW10,,,0.996823,ms,996823.000000,0,,firesim,batchnorm2d_s8,N=1;C=128;H=10;W=10,996823
+ 114,yolov8_nano$dispatch_114_gemmini_q31_silu_s8_n12800,,,2.724132,ms,2724132.000000,0,,firesim,silu_s8,n=12800,2724132
+ 115,yolov8_nano$dispatch_115_gemmini_q31_upsample_nearest_s8_N1xC128xIH10xIW10xscale2,,,1.184869,ms,1184869.000000,0,,firesim,upsample_nearest_s8,N=1;C=128;IH=10;IW=10;scale=2,1184869
+ 116,yolov8_nano$dispatch_116_gemmini_q31_cat2_c1_s8_N1xH20xW20xC_inputs128|64xC_total192,,,5.349385,ms,5349385.000000,0,,firesim,cat2_c1_s8,N=1;H=20;W=20;C_inputs=128|64;C_total=192,5349385
+-117,yolov8_nano$dispatch_117_gemmini_q31_conv2d_s8_N1xIC192xIH20xIW20xOC64xOH20xOW20xKH1xKW1xSH1xSW1xPH0xPW0,,,0.920273,ms,920273.000000,0,,firesim,conv2d_s8,N=1;IC=192;IH=20;IW=20;OC=64;OH=20;OW=20;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,920273
++117,yolov8_nano$dispatch_117_gemmini_q31_conv2d_s8_N1xIC192xIH20xIW20xOC64xOH20xOW20xKH1xKW1xSH1xSW1xPH0xPW0,,,1.987070,ms,1987070.000000,0,,firesim,conv2d_s8,N=1;IC=192;IH=20;IW=20;OC=64;OH=20;OW=20;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,1987070
+ 118,yolov8_nano$dispatch_118_gemmini_q31_batchnorm2d_s8_N1xC64xH20xW20,,,1.906969,ms,1906969.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=20;W=20,1906969
+ 119,yolov8_nano$dispatch_119_gemmini_q31_silu_s8_n25600,,,6.017914,ms,6017914.000000,0,,firesim,silu_s8,n=25600,6017914
+-121,yolov8_nano$dispatch_121_gemmini_q31_conv2d_s8_N1xIC32xIH20xIW20xOC32xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1,,,0.218735,ms,218735.000000,0,,firesim,conv2d_s8,N=1;IC=32;IH=20;IW=20;OC=32;OH=20;OW=20;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,218735
++121,yolov8_nano$dispatch_121_gemmini_q31_conv2d_s8_N1xIC32xIH20xIW20xOC32xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1,,,0.899857,ms,899857.000000,0,,firesim,conv2d_s8,N=1;IC=32;IH=20;IW=20;OC=32;OH=20;OW=20;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,899857
+ 122,yolov8_nano$dispatch_122_gemmini_q31_batchnorm2d_s8_N1xC32xH20xW20,,,0.974195,ms,974195.000000,0,,firesim,batchnorm2d_s8,N=1;C=32;H=20;W=20,974195
+ 123,yolov8_nano$dispatch_123_gemmini_q31_silu_s8_n12800,,,3.015557,ms,3015557.000000,0,,firesim,silu_s8,n=12800,3015557
+-124,yolov8_nano$dispatch_124_gemmini_q31_conv2d_s8_N1xIC32xIH20xIW20xOC32xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1,,,0.217464,ms,217464.000000,0,,firesim,conv2d_s8,N=1;IC=32;IH=20;IW=20;OC=32;OH=20;OW=20;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,217464
++124,yolov8_nano$dispatch_124_gemmini_q31_conv2d_s8_N1xIC32xIH20xIW20xOC32xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1,,,0.898811,ms,898811.000000,0,,firesim,conv2d_s8,N=1;IC=32;IH=20;IW=20;OC=32;OH=20;OW=20;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,898811
+ 125,yolov8_nano$dispatch_125_gemmini_q31_batchnorm2d_s8_N1xC32xH20xW20,,,0.986806,ms,986806.000000,0,,firesim,batchnorm2d_s8,N=1;C=32;H=20;W=20,986806
+ 126,yolov8_nano$dispatch_126_gemmini_q31_silu_s8_n12800,,,3.012561,ms,3012561.000000,0,,firesim,silu_s8,n=12800,3012561
+ 127,yolov8_nano$dispatch_127_gemmini_q31_cat3_c1_s8_N1xH20xW20xC_inputs32|32|32xC_total96,,,2.840365,ms,2840365.000000,0,,firesim,cat3_c1_s8,N=1;H=20;W=20;C_inputs=32|32|32;C_total=96,2840365
+-128,yolov8_nano$dispatch_128_gemmini_q31_conv2d_s8_N1xIC96xIH20xIW20xOC64xOH20xOW20xKH1xKW1xSH1xSW1xPH0xPW0,,,0.550149,ms,550149.000000,0,,firesim,conv2d_s8,N=1;IC=96;IH=20;IW=20;OC=64;OH=20;OW=20;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,550149
++128,yolov8_nano$dispatch_128_gemmini_q31_conv2d_s8_N1xIC96xIH20xIW20xOC64xOH20xOW20xKH1xKW1xSH1xSW1xPH0xPW0,,,1.625190,ms,1625190.000000,0,,firesim,conv2d_s8,N=1;IC=96;IH=20;IW=20;OC=64;OH=20;OW=20;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,1625190
+ 129,yolov8_nano$dispatch_129_gemmini_q31_batchnorm2d_s8_N1xC64xH20xW20,,,1.981642,ms,1981642.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=20;W=20,1981642
+ 130,yolov8_nano$dispatch_130_gemmini_q31_silu_s8_n25600,,,6.012097,ms,6012097.000000,0,,firesim,silu_s8,n=25600,6012097
+-131,yolov8_nano$dispatch_131_gemmini_q31_conv2d_s8_N1xIC64xIH20xIW20xOC64xOH10xOW10xKH3xKW3xSH2xSW2xPH1xPW1,,,0.265141,ms,265141.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=20;IW=20;OC=64;OH=10;OW=10;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,265141
++131,yolov8_nano$dispatch_131_gemmini_q31_conv2d_s8_N1xIC64xIH20xIW20xOC64xOH10xOW10xKH3xKW3xSH2xSW2xPH1xPW1,,,0.509308,ms,509308.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=20;IW=20;OC=64;OH=10;OW=10;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,509308
+ 132,yolov8_nano$dispatch_132_gemmini_q31_batchnorm2d_s8_N1xC64xH10xW10,,,0.507101,ms,507101.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=10;W=10,507101
+ 133,yolov8_nano$dispatch_133_gemmini_q31_silu_s8_n6400,,,1.503462,ms,1503462.000000,0,,firesim,silu_s8,n=6400,1503462
+ 134,yolov8_nano$dispatch_134_gemmini_q31_cat2_c1_s8_N1xH10xW10xC_inputs64|128xC_total192,,,1.408784,ms,1408784.000000,0,,firesim,cat2_c1_s8,N=1;H=10;W=10;C_inputs=64|128;C_total=192,1408784
+-135,yolov8_nano$dispatch_135_gemmini_q31_conv2d_s8_N1xIC192xIH10xIW10xOC128xOH10xOW10xKH1xKW1xSH1xSW1xPH0xPW0,,,0.323384,ms,323384.000000,0,,firesim,conv2d_s8,N=1;IC=192;IH=10;IW=10;OC=128;OH=10;OW=10;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,323384
++135,yolov8_nano$dispatch_135_gemmini_q31_conv2d_s8_N1xIC192xIH10xIW10xOC128xOH10xOW10xKH1xKW1xSH1xSW1xPH0xPW0,,,0.711734,ms,711734.000000,0,,firesim,conv2d_s8,N=1;IC=192;IH=10;IW=10;OC=128;OH=10;OW=10;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,711734
+ 136,yolov8_nano$dispatch_136_gemmini_q31_batchnorm2d_s8_N1xC128xH10xW10,,,0.975513,ms,975513.000000,0,,firesim,batchnorm2d_s8,N=1;C=128;H=10;W=10,975513
+ 137,yolov8_nano$dispatch_137_gemmini_q31_silu_s8_n12800,,,2.876617,ms,2876617.000000,0,,firesim,silu_s8,n=12800,2876617
+-139,yolov8_nano$dispatch_139_gemmini_q31_conv2d_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,0.127039,ms,127039.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=10;IW=10;OC=64;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,127039
++139,yolov8_nano$dispatch_139_gemmini_q31_conv2d_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,0.390670,ms,390670.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=10;IW=10;OC=64;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,390670
+ 140,yolov8_nano$dispatch_140_gemmini_q31_batchnorm2d_s8_N1xC64xH10xW10,,,0.486503,ms,486503.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=10;W=10,486503
+ 141,yolov8_nano$dispatch_141_gemmini_q31_silu_s8_n6400,,,1.191992,ms,1191992.000000,0,,firesim,silu_s8,n=6400,1191992
+-142,yolov8_nano$dispatch_142_gemmini_q31_conv2d_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,0.126672,ms,126672.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=10;IW=10;OC=64;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,126672
++142,yolov8_nano$dispatch_142_gemmini_q31_conv2d_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,0.388366,ms,388366.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=10;IW=10;OC=64;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,388366
+ 143,yolov8_nano$dispatch_143_gemmini_q31_batchnorm2d_s8_N1xC64xH10xW10,,,0.507050,ms,507050.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=10;W=10,507050
+ 144,yolov8_nano$dispatch_144_gemmini_q31_silu_s8_n6400,,,1.007323,ms,1007323.000000,0,,firesim,silu_s8,n=6400,1007323
+ 145,yolov8_nano$dispatch_145_gemmini_q31_cat3_c1_s8_N1xH10xW10xC_inputs64|64|64xC_total192,,,1.437241,ms,1437241.000000,0,,firesim,cat3_c1_s8,N=1;H=10;W=10;C_inputs=64|64|64;C_total=192,1437241
+-146,yolov8_nano$dispatch_146_gemmini_q31_conv2d_s8_N1xIC192xIH10xIW10xOC128xOH10xOW10xKH1xKW1xSH1xSW1xPH0xPW0,,,0.326772,ms,326772.000000,0,,firesim,conv2d_s8,N=1;IC=192;IH=10;IW=10;OC=128;OH=10;OW=10;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,326772
++146,yolov8_nano$dispatch_146_gemmini_q31_conv2d_s8_N1xIC192xIH10xIW10xOC128xOH10xOW10xKH1xKW1xSH1xSW1xPH0xPW0,,,0.714616,ms,714616.000000,0,,firesim,conv2d_s8,N=1;IC=192;IH=10;IW=10;OC=128;OH=10;OW=10;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,714616
+ 147,yolov8_nano$dispatch_147_gemmini_q31_batchnorm2d_s8_N1xC128xH10xW10,,,0.955278,ms,955278.000000,0,,firesim,batchnorm2d_s8,N=1;C=128;H=10;W=10,955278
+ 148,yolov8_nano$dispatch_148_gemmini_q31_silu_s8_n12800,,,2.358080,ms,2358080.000000,0,,firesim,silu_s8,n=12800,2358080
+-149,yolov8_nano$dispatch_149_gemmini_q31_conv2d_s8_N1xIC128xIH10xIW10xOC128xOH5xOW5xKH3xKW3xSH2xSW2xPH1xPW1,,,0.187398,ms,187398.000000,0,,firesim,conv2d_s8,N=1;IC=128;IH=10;IW=10;OC=128;OH=5;OW=5;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,187398
++149,yolov8_nano$dispatch_149_gemmini_q31_conv2d_s8_N1xIC128xIH10xIW10xOC128xOH5xOW5xKH3xKW3xSH2xSW2xPH1xPW1,,,0.273597,ms,273597.000000,0,,firesim,conv2d_s8,N=1;IC=128;IH=10;IW=10;OC=128;OH=5;OW=5;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,273597
+ 150,yolov8_nano$dispatch_150_gemmini_q31_batchnorm2d_s8_N1xC128xH5xW5,,,0.268993,ms,268993.000000,0,,firesim,batchnorm2d_s8,N=1;C=128;H=5;W=5,268993
+ 151,yolov8_nano$dispatch_151_gemmini_q31_silu_s8_n3200,,,0.468456,ms,468456.000000,0,,firesim,silu_s8,n=3200,468456
+ 152,yolov8_nano$dispatch_152_gemmini_q31_cat2_c1_s8_N1xH5xW5xC_inputs128|256xC_total384,,,0.710502,ms,710502.000000,0,,firesim,cat2_c1_s8,N=1;H=5;W=5;C_inputs=128|256;C_total=384,710502
+-153,yolov8_nano$dispatch_153_gemmini_q31_conv2d_s8_N1xIC384xIH5xIW5xOC256xOH5xOW5xKH1xKW1xSH1xSW1xPH0xPW0,,,0.178658,ms,178658.000000,0,,firesim,conv2d_s8,N=1;IC=384;IH=5;IW=5;OC=256;OH=5;OW=5;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,178658
++153,yolov8_nano$dispatch_153_gemmini_q31_conv2d_s8_N1xIC384xIH5xIW5xOC256xOH5xOW5xKH1xKW1xSH1xSW1xPH0xPW0,,,0.308567,ms,308567.000000,0,,firesim,conv2d_s8,N=1;IC=384;IH=5;IW=5;OC=256;OH=5;OW=5;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,308567
+ 154,yolov8_nano$dispatch_154_gemmini_q31_batchnorm2d_s8_N1xC256xH5xW5,,,0.504406,ms,504406.000000,0,,firesim,batchnorm2d_s8,N=1;C=256;H=5;W=5,504406
+ 155,yolov8_nano$dispatch_155_gemmini_q31_silu_s8_n6400,,,0.939684,ms,939684.000000,0,,firesim,silu_s8,n=6400,939684
+-157,yolov8_nano$dispatch_157_gemmini_q31_conv2d_s8_N1xIC128xIH5xIW5xOC128xOH5xOW5xKH3xKW3xSH1xSW1xPH1xPW1,,,0.129221,ms,129221.000000,0,,firesim,conv2d_s8,N=1;IC=128;IH=5;IW=5;OC=128;OH=5;OW=5;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,129221
++157,yolov8_nano$dispatch_157_gemmini_q31_conv2d_s8_N1xIC128xIH5xIW5xOC128xOH5xOW5xKH3xKW3xSH1xSW1xPH1xPW1,,,0.206867,ms,206867.000000,0,,firesim,conv2d_s8,N=1;IC=128;IH=5;IW=5;OC=128;OH=5;OW=5;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,206867
+ 158,yolov8_nano$dispatch_158_gemmini_q31_batchnorm2d_s8_N1xC128xH5xW5,,,0.269491,ms,269491.000000,0,,firesim,batchnorm2d_s8,N=1;C=128;H=5;W=5,269491
+-159,yolov8_nano$dispatch_159_gemmini_q31_silu_s8_n3200,,,0.488757,ms,488757.000000,0,,firesim,silu_s8,n=3200,488757
+-160,yolov8_nano$dispatch_160_gemmini_q31_conv2d_s8_N1xIC128xIH5xIW5xOC128xOH5xOW5xKH3xKW3xSH1xSW1xPH1xPW1,,,0.128014,ms,128014.000000,0,,firesim,conv2d_s8,N=1;IC=128;IH=5;IW=5;OC=128;OH=5;OW=5;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,128014
++159,yolov8_nano$dispatch_159_gemmini_q31_silu_s8_n3200,,,0.877383,ms,877383.000000,0,,firesim,silu_s8,n=3200,877383
++160,yolov8_nano$dispatch_160_gemmini_q31_conv2d_s8_N1xIC128xIH5xIW5xOC128xOH5xOW5xKH3xKW3xSH1xSW1xPH1xPW1,,,0.203851,ms,203851.000000,0,,firesim,conv2d_s8,N=1;IC=128;IH=5;IW=5;OC=128;OH=5;OW=5;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,203851
+ 161,yolov8_nano$dispatch_161_gemmini_q31_batchnorm2d_s8_N1xC128xH5xW5,,,0.267855,ms,267855.000000,0,,firesim,batchnorm2d_s8,N=1;C=128;H=5;W=5,267855
+ 162,yolov8_nano$dispatch_162_gemmini_q31_silu_s8_n3200,,,0.483356,ms,483356.000000,0,,firesim,silu_s8,n=3200,483356
+ 163,yolov8_nano$dispatch_163_gemmini_q31_cat3_c1_s8_N1xH5xW5xC_inputs128|128|128xC_total384,,,0.720493,ms,720493.000000,0,,firesim,cat3_c1_s8,N=1;H=5;W=5;C_inputs=128|128|128;C_total=384,720493
+-164,yolov8_nano$dispatch_164_gemmini_q31_conv2d_s8_N1xIC384xIH5xIW5xOC256xOH5xOW5xKH1xKW1xSH1xSW1xPH0xPW0,,,0.179952,ms,179952.000000,0,,firesim,conv2d_s8,N=1;IC=384;IH=5;IW=5;OC=256;OH=5;OW=5;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,179952
++164,yolov8_nano$dispatch_164_gemmini_q31_conv2d_s8_N1xIC384xIH5xIW5xOC256xOH5xOW5xKH1xKW1xSH1xSW1xPH0xPW0,,,0.308071,ms,308071.000000,0,,firesim,conv2d_s8,N=1;IC=384;IH=5;IW=5;OC=256;OH=5;OW=5;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,308071
+ 165,yolov8_nano$dispatch_165_gemmini_q31_batchnorm2d_s8_N1xC256xH5xW5,,,0.538564,ms,538564.000000,0,,firesim,batchnorm2d_s8,N=1;C=256;H=5;W=5,538564
+ 166,yolov8_nano$dispatch_166_gemmini_q31_silu_s8_n6400,,,0.981562,ms,981562.000000,0,,firesim,silu_s8,n=6400,981562
+-167,yolov8_nano$dispatch_167_gemmini_q31_conv2d_s8_N1xIC64xIH20xIW20xOC64xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1,,,0.516295,ms,516295.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=20;IW=20;OC=64;OH=20;OW=20;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,516295
++167,yolov8_nano$dispatch_167_gemmini_q31_conv2d_s8_N1xIC64xIH20xIW20xOC64xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1,,,1.962251,ms,1962251.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=20;IW=20;OC=64;OH=20;OW=20;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,1962251
+ 168,yolov8_nano$dispatch_168_gemmini_q31_batchnorm2d_s8_N1xC64xH20xW20,,,2.052874,ms,2052874.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=20;W=20,2052874
+ 169,yolov8_nano$dispatch_169_gemmini_q31_silu_s8_n25600,,,6.017254,ms,6017254.000000,0,,firesim,silu_s8,n=25600,6017254
+-170,yolov8_nano$dispatch_170_gemmini_q31_conv2d_s8_N1xIC64xIH20xIW20xOC64xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1,,,0.490999,ms,490999.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=20;IW=20;OC=64;OH=20;OW=20;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,490999
++170,yolov8_nano$dispatch_170_gemmini_q31_conv2d_s8_N1xIC64xIH20xIW20xOC64xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1,,,1.964498,ms,1964498.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=20;IW=20;OC=64;OH=20;OW=20;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,1964498
+ 171,yolov8_nano$dispatch_171_gemmini_q31_batchnorm2d_s8_N1xC64xH20xW20,,,1.993924,ms,1993924.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=20;W=20,1993924
+ 172,yolov8_nano$dispatch_172_gemmini_q31_silu_s8_n25600,,,5.828883,ms,5828883.000000,0,,firesim,silu_s8,n=25600,5828883
+-173,yolov8_nano$dispatch_173_gemmini_q31_conv2d_s8_N1xIC64xIH20xIW20xOC64xOH20xOW20xKH1xKW1xSH1xSW1xPH0xPW0,,,0.432480,ms,432480.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=20;IW=20;OC=64;OH=20;OW=20;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,432480
+-174,yolov8_nano$dispatch_174_gemmini_q31_conv2d_s8_N1xIC64xIH20xIW20xOC80xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1,,,0.582277,ms,582277.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=20;IW=20;OC=80;OH=20;OW=20;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,582277
++173,yolov8_nano$dispatch_173_gemmini_q31_conv2d_s8_N1xIC64xIH20xIW20xOC64xOH20xOW20xKH1xKW1xSH1xSW1xPH0xPW0,,,1.546391,ms,1546391.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=20;IW=20;OC=64;OH=20;OW=20;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,1546391
++174,yolov8_nano$dispatch_174_gemmini_q31_conv2d_s8_N1xIC64xIH20xIW20xOC80xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1,,,2.308442,ms,2308442.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=20;IW=20;OC=80;OH=20;OW=20;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,2308442
+ 175,yolov8_nano$dispatch_175_gemmini_q31_batchnorm2d_s8_N1xC80xH20xW20,,,2.448067,ms,2448067.000000,0,,firesim,batchnorm2d_s8,N=1;C=80;H=20;W=20,2448067
+ 176,yolov8_nano$dispatch_176_gemmini_q31_silu_s8_n32000,,,7.529549,ms,7529549.000000,0,,firesim,silu_s8,n=32000,7529549
+-177,yolov8_nano$dispatch_177_gemmini_q31_conv2d_s8_N1xIC80xIH20xIW20xOC80xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1,,,0.654633,ms,654633.000000,0,,firesim,conv2d_s8,N=1;IC=80;IH=20;IW=20;OC=80;OH=20;OW=20;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,654633
++177,yolov8_nano$dispatch_177_gemmini_q31_conv2d_s8_N1xIC80xIH20xIW20xOC80xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1,,,2.343670,ms,2343670.000000,0,,firesim,conv2d_s8,N=1;IC=80;IH=20;IW=20;OC=80;OH=20;OW=20;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,2343670
+ 178,yolov8_nano$dispatch_178_gemmini_q31_batchnorm2d_s8_N1xC80xH20xW20,,,2.462022,ms,2462022.000000,0,,firesim,batchnorm2d_s8,N=1;C=80;H=20;W=20,2462022
+ 179,yolov8_nano$dispatch_179_gemmini_q31_silu_s8_n32000,,,7.362595,ms,7362595.000000,0,,firesim,silu_s8,n=32000,7362595
+-180,yolov8_nano$dispatch_180_gemmini_q31_conv2d_s8_N1xIC80xIH20xIW20xOC80xOH20xOW20xKH1xKW1xSH1xSW1xPH0xPW0,,,0.558858,ms,558858.000000,0,,firesim,conv2d_s8,N=1;IC=80;IH=20;IW=20;OC=80;OH=20;OW=20;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,558858
++180,yolov8_nano$dispatch_180_gemmini_q31_conv2d_s8_N1xIC80xIH20xIW20xOC80xOH20xOW20xKH1xKW1xSH1xSW1xPH0xPW0,,,1.886161,ms,1886161.000000,0,,firesim,conv2d_s8,N=1;IC=80;IH=20;IW=20;OC=80;OH=20;OW=20;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,1886161
+ 181,yolov8_nano$dispatch_181_gemmini_q31_cat2_c1_s8_N1xH20xW20xC_inputs64|80xC_total144,,,4.209144,ms,4209144.000000,0,,firesim,cat2_c1_s8,N=1;H=20;W=20;C_inputs=64|80;C_total=144,4209144
+-182,yolov8_nano$dispatch_182_gemmini_q31_conv2d_s8_N1xIC128xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,0.205556,ms,205556.000000,0,,firesim,conv2d_s8,N=1;IC=128;IH=10;IW=10;OC=64;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,205556
++182,yolov8_nano$dispatch_182_gemmini_q31_conv2d_s8_N1xIC128xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,0.500534,ms,500534.000000,0,,firesim,conv2d_s8,N=1;IC=128;IH=10;IW=10;OC=64;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,500534
+ 183,yolov8_nano$dispatch_183_gemmini_q31_batchnorm2d_s8_N1xC64xH10xW10,,,0.520366,ms,520366.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=10;W=10,520366
+ 184,yolov8_nano$dispatch_184_gemmini_q31_silu_s8_n6400,,,0.945843,ms,945843.000000,0,,firesim,silu_s8,n=6400,945843
+-185,yolov8_nano$dispatch_185_gemmini_q31_conv2d_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,0.127209,ms,127209.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=10;IW=10;OC=64;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,127209
++185,yolov8_nano$dispatch_185_gemmini_q31_conv2d_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,0.390336,ms,390336.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=10;IW=10;OC=64;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,390336
+ 186,yolov8_nano$dispatch_186_gemmini_q31_batchnorm2d_s8_N1xC64xH10xW10,,,0.491420,ms,491420.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=10;W=10,491420
+ 187,yolov8_nano$dispatch_187_gemmini_q31_silu_s8_n6400,,,0.951341,ms,951341.000000,0,,firesim,silu_s8,n=6400,951341
+ 188,yolov8_nano$dispatch_188_gemmini_q31_conv2d_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH1xKW1xSH1xSW1xPH0xPW0,,,23.260587,ms,23260587.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=10;IW=10;OC=64;OH=10;OW=10;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,23260587
+-189,yolov8_nano$dispatch_189_gemmini_q31_conv2d_s8_N1xIC128xIH10xIW10xOC80xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,0.229618,ms,229618.000000,0,,firesim,conv2d_s8,N=1;IC=128;IH=10;IW=10;OC=80;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,229618
++189,yolov8_nano$dispatch_189_gemmini_q31_conv2d_s8_N1xIC128xIH10xIW10xOC80xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,0.581057,ms,581057.000000,0,,firesim,conv2d_s8,N=1;IC=128;IH=10;IW=10;OC=80;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,581057
+ 190,yolov8_nano$dispatch_190_gemmini_q31_batchnorm2d_s8_N1xC80xH10xW10,,,0.615929,ms,615929.000000,0,,firesim,batchnorm2d_s8,N=1;C=80;H=10;W=10,615929
+ 191,yolov8_nano$dispatch_191_gemmini_q31_silu_s8_n8000,,,1.188262,ms,1188262.000000,0,,firesim,silu_s8,n=8000,1188262
+-192,yolov8_nano$dispatch_192_gemmini_q31_conv2d_s8_N1xIC80xIH10xIW10xOC80xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,0.168045,ms,168045.000000,0,,firesim,conv2d_s8,N=1;IC=80;IH=10;IW=10;OC=80;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,168045
++192,yolov8_nano$dispatch_192_gemmini_q31_conv2d_s8_N1xIC80xIH10xIW10xOC80xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1,,,0.462122,ms,462122.000000,0,,firesim,conv2d_s8,N=1;IC=80;IH=10;IW=10;OC=80;OH=10;OW=10;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,462122
+ 193,yolov8_nano$dispatch_193_gemmini_q31_batchnorm2d_s8_N1xC80xH10xW10,,,0.614211,ms,614211.000000,0,,firesim,batchnorm2d_s8,N=1;C=80;H=10;W=10,614211
+ 194,yolov8_nano$dispatch_194_gemmini_q31_silu_s8_n8000,,,1.187530,ms,1187530.000000,0,,firesim,silu_s8,n=8000,1187530
+ 195,yolov8_nano$dispatch_195_gemmini_q31_conv2d_s8_N1xIC80xIH10xIW10xOC80xOH10xOW10xKH1xKW1xSH1xSW1xPH0xPW0,,,36.180203,ms,36180203.000000,0,,firesim,conv2d_s8,N=1;IC=80;IH=10;IW=10;OC=80;OH=10;OW=10;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,36180203
+ 196,yolov8_nano$dispatch_196_gemmini_q31_cat2_c1_s8_N1xH10xW10xC_inputs64|80xC_total144,,,0.656274,ms,656274.000000,0,,firesim,cat2_c1_s8,N=1;H=10;W=10;C_inputs=64|80;C_total=144,656274
+-197,yolov8_nano$dispatch_197_gemmini_q31_conv2d_s8_N1xIC256xIH5xIW5xOC64xOH5xOW5xKH3xKW3xSH1xSW1xPH1xPW1,,,0.122686,ms,122686.000000,0,,firesim,conv2d_s8,N=1;IC=256;IH=5;IW=5;OC=64;OH=5;OW=5;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,122686
++197,yolov8_nano$dispatch_197_gemmini_q31_conv2d_s8_N1xIC256xIH5xIW5xOC64xOH5xOW5xKH3xKW3xSH1xSW1xPH1xPW1,,,0.190959,ms,190959.000000,0,,firesim,conv2d_s8,N=1;IC=256;IH=5;IW=5;OC=64;OH=5;OW=5;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,190959
+ 198,yolov8_nano$dispatch_198_gemmini_q31_batchnorm2d_s8_N1xC64xH5xW5,,,0.133821,ms,133821.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=5;W=5,133821
+ 199,yolov8_nano$dispatch_199_gemmini_q31_silu_s8_n1600,,,0.241206,ms,241206.000000,0,,firesim,silu_s8,n=1600,241206
+-200,yolov8_nano$dispatch_200_gemmini_q31_conv2d_s8_N1xIC64xIH5xIW5xOC64xOH5xOW5xKH3xKW3xSH1xSW1xPH1xPW1,,,0.044118,ms,44118.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=5;IW=5;OC=64;OH=5;OW=5;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,44118
++200,yolov8_nano$dispatch_200_gemmini_q31_conv2d_s8_N1xIC64xIH5xIW5xOC64xOH5xOW5xKH3xKW3xSH1xSW1xPH1xPW1,,,0.102119,ms,102119.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=5;IW=5;OC=64;OH=5;OW=5;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,102119
+ 201,yolov8_nano$dispatch_201_gemmini_q31_batchnorm2d_s8_N1xC64xH5xW5,,,0.125490,ms,125490.000000,0,,firesim,batchnorm2d_s8,N=1;C=64;H=5;W=5,125490
+ 202,yolov8_nano$dispatch_202_gemmini_q31_silu_s8_n1600,,,0.225751,ms,225751.000000,0,,firesim,silu_s8,n=1600,225751
+ 203,yolov8_nano$dispatch_203_gemmini_q31_conv2d_s8_N1xIC64xIH5xIW5xOC64xOH5xOW5xKH1xKW1xSH1xSW1xPH0xPW0,,,5.823955,ms,5823955.000000,0,,firesim,conv2d_s8,N=1;IC=64;IH=5;IW=5;OC=64;OH=5;OW=5;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,5823955
+-204,yolov8_nano$dispatch_204_gemmini_q31_conv2d_s8_N1xIC256xIH5xIW5xOC80xOH5xOW5xKH3xKW3xSH1xSW1xPH1xPW1,,,0.141798,ms,141798.000000,0,,firesim,conv2d_s8,N=1;IC=256;IH=5;IW=5;OC=80;OH=5;OW=5;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,141798
++204,yolov8_nano$dispatch_204_gemmini_q31_conv2d_s8_N1xIC256xIH5xIW5xOC80xOH5xOW5xKH3xKW3xSH1xSW1xPH1xPW1,,,0.229266,ms,229266.000000,0,,firesim,conv2d_s8,N=1;IC=256;IH=5;IW=5;OC=80;OH=5;OW=5;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,229266
+ 205,yolov8_nano$dispatch_205_gemmini_q31_batchnorm2d_s8_N1xC80xH5xW5,,,0.166817,ms,166817.000000,0,,firesim,batchnorm2d_s8,N=1;C=80;H=5;W=5,166817
+ 206,yolov8_nano$dispatch_206_gemmini_q31_silu_s8_n2000,,,0.299857,ms,299857.000000,0,,firesim,silu_s8,n=2000,299857
+-207,yolov8_nano$dispatch_207_gemmini_q31_conv2d_s8_N1xIC80xIH5xIW5xOC80xOH5xOW5xKH3xKW3xSH1xSW1xPH1xPW1,,,0.061008,ms,61008.000000,0,,firesim,conv2d_s8,N=1;IC=80;IH=5;IW=5;OC=80;OH=5;OW=5;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,61008
++207,yolov8_nano$dispatch_207_gemmini_q31_conv2d_s8_N1xIC80xIH5xIW5xOC80xOH5xOW5xKH3xKW3xSH1xSW1xPH1xPW1,,,0.124505,ms,124505.000000,0,,firesim,conv2d_s8,N=1;IC=80;IH=5;IW=5;OC=80;OH=5;OW=5;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,124505
+ 208,yolov8_nano$dispatch_208_gemmini_q31_batchnorm2d_s8_N1xC80xH5xW5,,,0.156867,ms,156867.000000,0,,firesim,batchnorm2d_s8,N=1;C=80;H=5;W=5,156867
+ 209,yolov8_nano$dispatch_209_gemmini_q31_silu_s8_n2000,,,0.282502,ms,282502.000000,0,,firesim,silu_s8,n=2000,282502
+ 210,yolov8_nano$dispatch_210_gemmini_q31_conv2d_s8_N1xIC80xIH5xIW5xOC80xOH5xOW5xKH1xKW1xSH1xSW1xPH0xPW0,,,9.061627,ms,9061627.000000,0,,firesim,conv2d_s8,N=1;IC=80;IH=5;IW=5;OC=80;OH=5;OW=5;KH=1;KW=1;SH=1;SW=1;PH=0;PW=0,9061627
+-211,yolov8_nano$dispatch_211_gemmini_q31_cat2_c1_s8_N1xH5xW5xC_inputs64|80xC_total144,,,0.166010,ms,166010.000000,0,,firesim,cat2_c1_s8,N=1;H=5;W=5;C_inputs=64|80;C_total=144,166010
++211,yolov8_nano$dispatch_211_gemmini_q31_cat2_c1_s8_N1xH5xW5xC_inputs64|80xC_total144,,,0.266452,ms,266452.000000,0,,firesim,cat2_c1_s8,N=1;H=5;W=5;C_inputs=64|80;C_total=144,266452
+-- 
+2.43.0
+
