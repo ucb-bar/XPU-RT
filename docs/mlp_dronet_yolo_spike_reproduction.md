@@ -25,6 +25,33 @@ Repo layout reminder: `zephyr-chipyard-sw/` is a submodule of this repo, and
 submodule and need their own commit chain (modelblaster → zephyr-chipyard-sw
 pointer bump → this repo's pointer bump) if kept.
 
+## Quick start: end-to-end script
+
+`scripts/repro_mlp_dronet_yolo_spike.sh` runs the entire flow below (sections
+0/1/2/3/5/6, and optionally 7) as a single command:
+
+```bash
+bash scripts/repro_mlp_dronet_yolo_spike.sh --trace
+```
+
+It resolves the `zephyr-chipyard-sw`/`modelblaster` submodule checkouts from
+`.gitmodules` (not a hardcoded path), activates the conda/Zephyr-SDK env,
+profiles all 3 models on spike, generates dispatch graphs (with the
+basename-rename fixup), bridges profile data via symlinks, generates the
+schedule, builds+runs the combined `xpurt_demo` binary, and (with `--trace`)
+renders the real-execution timeline. Expect `OVERALL: PASS (3 models)` and a
+predicted/actual makespan within ~0.05% (see §10.3's caveat about
+`mlp_control`'s own residual deviation). Flags to skip already-fresh stages
+(`--skip-profile`, `--skip-dispatch`, `--skip-schedule`, `--skip-build`) are
+documented in the script's `--help`.
+
+The sections below (including the from-scratch environment setup in
+"Prerequisites") are the manual, step-by-step walkthrough the script
+automates — read them for the "why" behind each stage and the bugs each
+workaround is standing in for. Useful on its own for debugging a stage in
+isolation, or if the script's assumptions (model list, quants, backends)
+don't fit a variant you're trying.
+
 ## Prerequisites: building the `zephyr` conda env + Zephyr SDK from scratch
 
 Everything below §0 assumes the `zephyr` conda env, the Zephyr SDK, and the
@@ -1027,6 +1054,7 @@ in both runs regardless — expected, not a bug.
 | `plots/networks_mlp_dronet_yolo_spike_greedy_periodic_profiled.png` | top-level | untracked, **final** regeneration (§10.2) |
 | `plots/xpurt_trace_mlp_dronet_yolo_spike_final.png` | top-level | untracked, **final** real execution timeline, all 3 models PASS (§10.3) |
 | `schedules/xpurt_trace_mlp_dronet_yolo_spike_final.csv` | top-level | untracked, parsed trace data backing the plot above (§10.3) |
+| `scripts/repro_mlp_dronet_yolo_spike.sh` | top-level | **tracked**, end-to-end automation of sections 0/1/2/3/5/6/7 (see "Quick start" above) |
 
 The code fixes (`postprocessing.py`, `plot.py`, `run_xpurt_schedule.py`,
 `xpurt_demo/run.sh`, `generate_skeleton.py`, `harness_xpurt/CMakeLists.txt`)
