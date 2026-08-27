@@ -4,15 +4,19 @@
   "conv2d": 3,
   "mul": 389,
   "add": 190,
+  "layer_norm": 75,
   "linear": 448,
   "gelu": 36,
   "cat": 32,
+  "pow": 107,
   "silu": 33,
   "sub": 49,
   "mean": 66,
+  "rsqrt": 66,
   "div": 40,
   "matmul": 48,
   "mul_": 24,
+  "softmax": 24,
   "add_": 64
  },
  "gaps": {
@@ -27,17 +31,13 @@
   "new_ones": 3,
   "ge": 3,
   "__and__": 7,
-  "layer_norm": 75,
   "scaled_dot_product_attention": 36,
   "linspace": 1,
-  "pow": 107,
   "sin": 41,
   "cos": 41,
   "cumsum": 2,
   "le": 1,
-  "rsqrt": 66,
   "where": 24,
-  "softmax": 24,
   "min": 8
  },
  "free": {
@@ -69,5 +69,5 @@
   "alias": 16,
   "empty": 1
  },
- "coverage_pct": 74.9
+ "coverage_pct": 89.2
 }

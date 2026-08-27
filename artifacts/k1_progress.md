@@ -771,9 +771,25 @@ The gaps are three families, not scatter:
 | RoPE | `sin`, `cos` | 82 |
 | plus | `layer_norm`, `embedding` | 79 |
 
-That is a work list rather than "SmolVLA needs attention support". int8 lowering
-of those families is the separate milestone the plan describes; nothing depends
-on it.
+That is a work list rather than "SmolVLA needs attention support".
+
+**Two of those families then landed**, each with the full four pieces and
+verified on hardware via `models/norm_block.py` (`max_abs_err=0`):
+
+| added | covers |
+|---|---|
+| `layernorm_s8` | `layer_norm` 75 |
+| `rmsnorm_s8` | `pow` 107 + `rsqrt` 66 — SmolVLA writes RMSNorm out rather than calling a module |
+| GELU extractor branch | `gelu_s8` had a kernel and **no way to emit it** |
+
+**SmolVLA compute coverage 74.9% → 89.2%.** The 205 remaining are RoPE
+(`sin` 41, `cos` 41), attention (`scaled_dot_product_attention` 36) and a long
+tail of small ops.
+
+The GELU case is worth keeping in mind when reading any coverage number here:
+kernel presence is not coverage. `gelu_s8` existed and counted as covered while
+nothing in the extractor could produce it, so the inventory now says explicitly
+that its figure is an upper bound.
 
 ### zephyr-chipyard-sw — resolved
 
