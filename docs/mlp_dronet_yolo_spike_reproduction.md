@@ -1040,6 +1040,43 @@ confusion — which env needs what, and where is it declared:
     but the README link was never updated) and added a "Documentation"
     bullet pointing at *this* doc, which the README didn't reference at
     all before.
+19. **Fixed in code** — `zephyr-chipyard-sw/modelblaster/harness_xpurt/
+    CMakeLists.txt` (tracked, nested `modelblaster` submodule). Surfaced by
+    merging the separate `rose-2-dev` line of modelblaster work (curated
+    RVV kernels — int8/fp16 LSTM, per-channel conv/linear quant — plus a
+    `fused_full` mixed-precision model and a dynamic-import fallback for
+    `extract_graph.py`'s model dispatch, so a new `models/<name>.py` no
+    longer requires editing that file's `if/elif` ladder) into this
+    branch. Four real merge conflicts (`pipeline/generate_skeleton.py`,
+    `pipeline/extract_graph.py`, `pipeline/reference_kernels.py`,
+    `harness/src/main.c`) — all resolved by combining both sides' features
+    (this branch's `backend=` param for Bug 12, `MB_BIGIO_HIGH` large-io
+    section placement, and ~17 unrelated KernelBench-coverage commits;
+    rose-2-dev's multi-input/multi-dtype support, `_s_blob()` helper, and
+    TACIT tracing untouched) — none were semantically incompatible, just
+    textually overlapping. Standalone `dronet` re-verified bit-exact
+    against the pre-merge baseline (28,413,832 rdcycle, matching §9.3
+    exactly) after resolving.
+
+    The merge did surface one genuine integration bug, caught by actually
+    rebuilding the full 3-network `xpurt_demo` binary (not just the
+    standalone single-model test above): rose-2-dev's new arity-agnostic
+    `model_{mid}_run_test()` wrapper added `#include "model.h"` to the
+    generated `test_io.h` template, needed for the `model_{mid}_output_t`
+    type. That's fine for a single-model build (unambiguous `model.h`),
+    but `harness_xpurt`'s multi-model build stages every model's headers
+    into one shared directory, renamed to `<name>_model.h`/
+    `<name>_test_io.h` via `configure_file(... COPYONLY)` — which copies
+    file *content* verbatim without rewriting internal `#include` lines,
+    so the staged `<name>_test_io.h`'s unqualified `#include "model.h"`
+    resolved to nothing (`fatal error: model.h: No such file or
+    directory` — no unqualified `model.h` exists in that shared dir by
+    design, to avoid exactly this kind of cross-model collision). Fixed by
+    rewriting that one `#include` line during staging (`file(READ...)` +
+    `string(REPLACE...)` + `file(WRITE...)` in place of the plain
+    `configure_file`) to point at the correct `<name>_model.h`. Verified:
+    full `repro_mlp_dronet_yolo_spike.sh` rebuild after the fix reaches
+    `OVERALL: PASS (3 models)` again.
 
 ## Resolved: cross-network numeric corruption in the combined binary
 
