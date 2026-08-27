@@ -886,6 +886,33 @@ full 3-network rebuild against this same fix are the next steps (§10).
     instead of a hardcoded absolute string — self-contained regardless of
     where or how deep this repo is checked out.
     `MODELBLASTER_MLP_CONTROL_CKPT` still overrides it if needed.
+15. **Fixed in code** — `zephyr-chipyard-sw/modelblaster/models/dronet.py`
+    (tracked, nested `modelblaster` submodule). Found by a second sandboxed
+    Docker validation run made *after* Bugs 13/14 landed on `dev` — both of
+    those were confirmed fixed (pip installs succeeded, `mlp_control`'s
+    checkpoint resolved correctly), but `dronet`'s own profiling step then
+    hit the exact same class of bug, one level worse: `_DRONET_SRC` used
+    `importlib.util.spec_from_file_location` to dynamically load the
+    `DronetTorch` architecture class from an absolute path,
+    `/scratch2/dima/misc_sw/FreshScheduler/qnn_models/dronet.py` — a file in
+    the *top-level* repo, entirely outside `modelblaster`, never committed
+    to it. Since this loads a `.py` file by literal path rather than
+    importing a module, no `PYTHONPATH`/`FRESHSCHEDULER_ROOT` fix could
+    reach it. `_DEFAULT_CKPT` had the identical untracked-absolute-path
+    problem as Bug 14 (`logs/dronet/2026-04-27_17-10-41/best.pt`, 1.27MB,
+    confirmed untracked via `git ls-files`/`git check-ignore`), just not
+    reached yet since the architecture load fails first. Fix: vendored the
+    architecture class into `modelblaster` itself as `models/dronet_arch.py`
+    (a copy of `qnn_models/dronet.py`, which is itself already a documented
+    copy of `merlin/models/dronet/dronet.py` — vendoring small,
+    self-contained model-definition files like this is an established
+    pattern in this codebase, not a new one), replaced the dynamic
+    `importlib`-based load with a normal `from . import dronet_arch`, and
+    committed the checkpoint to `models/checkpoints/dronet/best.pt` with
+    `_DEFAULT_CKPT` now `__file__`-relative (identical fix shape to Bug 14).
+    `MODELBLASTER_DRONET_CKPT` still overrides the checkpoint if needed.
+    Verified: `get_model()` loads and runs a forward pass correctly from a
+    fresh checkout with no `FileNotFoundError`.
 
 ## Resolved: cross-network numeric corruption in the combined binary
 
@@ -1110,6 +1137,9 @@ in both runs regardless — expected, not a bug.
 | `scripts/repro_mlp_dronet_yolo_spike.sh` | top-level | **tracked**, end-to-end automation of sections 0/1/2/3/5/6/7 (see "Quick start" above) |
 | `zephyr-chipyard-sw/modelblaster/models/checkpoints/mlp_control/model_6998.pt` | nested submodule | **tracked** (Bug 14 fix) — trained MLP policy checkpoint, previously only on one user's disk |
 | `zephyr-chipyard-sw/modelblaster/models/mlp_control.py` | nested submodule | **tracked, modified** (Bug 14 fix — `_DEFAULT_CKPT` now `__file__`-relative) |
+| `zephyr-chipyard-sw/modelblaster/models/checkpoints/dronet/best.pt` | nested submodule | **tracked** (Bug 15 fix) — trained DroNet checkpoint, previously only on one user's disk |
+| `zephyr-chipyard-sw/modelblaster/models/dronet_arch.py` | nested submodule | **tracked, new** (Bug 15 fix) — vendored copy of `qnn_models/dronet.py`'s `DronetTorch` class |
+| `zephyr-chipyard-sw/modelblaster/models/dronet.py` | nested submodule | **tracked, modified** (Bug 15 fix — imports the vendored arch, `_DEFAULT_CKPT` now `__file__`-relative) |
 
 The code fixes (`postprocessing.py`, `plot.py`, `run_xpurt_schedule.py`,
 `xpurt_demo/run.sh`, `generate_skeleton.py`, `harness_xpurt/CMakeLists.txt`)
