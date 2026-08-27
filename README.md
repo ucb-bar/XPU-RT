@@ -35,7 +35,15 @@ instead of merlin/IREE.
   — full walkthrough from a multi-network workload spec to a FireSim
   run with trace plots (scheduler → codegen → build → run → analyze),
   on the Saturn-Gemmini-Q31 path (Flow A).
-* [`zephyr-chipyard-sw/agents/examples/microros_demo/ROS_FLOW.md`](zephyr-chipyard-sw/agents/examples/microros_demo/ROS_FLOW.md)
+* [`docs/mlp_dronet_yolo_spike_reproduction.md`](docs/mlp_dronet_yolo_spike_reproduction.md)
+  — a simpler, no-FireSim variant of Flow A: same ModelBlaster codegen,
+  but via the *nested* `zephyr-chipyard-sw/modelblaster/` checkout (not
+  the top-level `ModelBlaster/` submodule above), profiled entirely on
+  spike with the `greedy`/`greedy_periodic` solver (no MOSEK license
+  needed). Has its own end-to-end script,
+  `scripts/repro_mlp_dronet_yolo_spike.sh`, and installs everything it
+  needs via `scripts/install_xpurt_deps.sh` — see that doc's §0.
+* [`zephyr-chipyard-sw/modelblaster/examples/microros_demo/ROS_FLOW.md`](zephyr-chipyard-sw/modelblaster/examples/microros_demo/ROS_FLOW.md)
   — micro-ROS fixed-pinning baseline flow (the reference against which
   the scheduler is benchmarked).
 * The sections below cover the Merlin/SpacemiT path (BananaPi) — Flow B.
@@ -47,13 +55,25 @@ instead of merlin/IREE.
 ```bash
 git clone https://github.com/ucb-bar/XPU-RT.git
 cd XPU-RT
-git submodule update --init --recursive
 ```
+
+**Don't run `git submodule update --init --recursive` here** — two of this
+repo's top-level submodules, `hw/chipyard` and `sims/IsaacLab`, are very
+large (chipyard alone vendors 100+ of its own nested submodules) and
+neither is needed for either flow below; a recursive init will sit there
+for a very long time pulling in gigabytes you don't need, and may get
+effectively stuck on chipyard's own submodule tree. Initialize only what
+the flow you're following actually needs — Flow B's is the next section;
+Flow A's is in its own section further down.
 
 ### Set up `merlin`
 
 Merlin provides the compiler toolchain, IREE runtime, and cross-compilation
-support used by XPU-RT. It ships as a git submodule under `merlin/`.
+support used by XPU-RT. It ships as a git submodule under `merlin/`:
+
+```bash
+git submodule update --init merlin
+```
 
 #### Prerequisites
 
@@ -167,9 +187,13 @@ ModelBlaster ships as a git submodule of this repo, the same way `merlin`
 does for Flow B:
 
 ```bash
-git submodule update --init ModelBlaster   # or --recursive from the top to get everything
+git submodule update --init ModelBlaster
 cd ModelBlaster && git submodule update --init --recursive   # pulls in KernelBlaster
 ```
+
+(`--recursive` here is scoped to `ModelBlaster/`'s own submodules only —
+don't run it from the repo root; see the note in "Repository Initialization"
+above.)
 
 ```text
 XPU-RT/                (this repo)
@@ -290,9 +314,15 @@ XPU-RT/
 │   └── models/                #   Model definitions (MLIR/ONNX sources)
 ├── ModelBlaster/               # Git submodule (PyTorch->Zephyr/RISC-V pipeline) — Flow A
 │   └── third_party/KernelBlaster/  # nested submodule — originating research project
+├── zephyr-chipyard-sw/         # Git submodule — Flow A, spike-only variant
+│   └── modelblaster/           #   nested submodule (same upstream as ModelBlaster/ above,
+                                 #   different checkout/branch) — see
+                                 #   docs/mlp_dronet_yolo_spike_reproduction.md
+├── env.yml                     # cvxpy+MOSEK conda env ("xpu-rt-schedule") for
+                                 #   ModelBlaster's own MOSEK bridge scripts (Flow A)
 └── pyproject.toml              # xpu-rt's own deps (`pip install -e .`); see
                                  #   scripts/install_xpurt_deps.sh for the
-                                 #   full reproducible-flow dependency set
+                                 #   spike-only reproducible-flow's dependency set
 ```
 
 
