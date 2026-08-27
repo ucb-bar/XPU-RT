@@ -202,6 +202,86 @@ class NoDoubleBookingTests(unittest.TestCase):
         )
 
 
+class PerCoreGranularityTests(unittest.TestCase):
+    """`per_core` is the model that actually gives the K1 eight-way concurrency."""
+
+    def setUp(self):
+        self.machines, self.combos, self.impls = \
+            build_machine_combinations_with_impls(
+                K1_CORES, K1_IMPLS, granularity="per_core")
+        self.wl = _workload(self.machines, self.combos)
+
+    def test_every_combination_is_a_single_core(self):
+        for combo in self.combos:
+            self.assertEqual(len(combo), 1, f"{combo} should be one core")
+
+    def test_eight_dispatches_can_run_concurrently(self):
+        """The whole point: one dispatch per physical core, none excluding another."""
+        one_per_core = {}
+        for i, combo in enumerate(self.combos):
+            if self.impls[i] == "rvv":
+                one_per_core.setdefault(combo[0], i)
+        self.assertEqual(len(one_per_core), 8, "all 8 cores schedulable")
+        idx = sorted(one_per_core.values())
+        for a in idx:
+            for b in idx:
+                if a < b:
+                    self.assertFalse(
+                        self.wl.combinations_overlap(a, b),
+                        f"{self.combos[a]} and {self.combos[b]} are different "
+                        f"physical cores and must run concurrently",
+                    )
+
+    def test_ime_still_excludes_rvv_on_the_same_core(self):
+        """Per-core must not weaken the invariant that motivated all of this."""
+        for core in ("CPU_P#0", "CPU_P#1", "CPU_P#2", "CPU_P#3"):
+            rvv = next(i for i, (c, m) in enumerate(zip(self.combos, self.impls))
+                       if c == [core] and m == "rvv")
+            ime = next(i for i, (c, m) in enumerate(zip(self.combos, self.impls))
+                       if c == [core] and m == "ime")
+            self.assertTrue(
+                self.wl.combinations_overlap(rvv, ime),
+                f"IME and RVV on {core} are the same physical core",
+            )
+
+    def test_ime_is_offered_on_cluster_0_only(self):
+        for combo, impl in zip(self.combos, self.impls):
+            if impl == "ime":
+                self.assertTrue(combo[0].startswith("CPU_P#"))
+
+    def test_single_core_combinations_imply_the_topo_0_profile(self):
+        """Guard the profile pairing: per_core must be timed single-hart.
+
+        workload_factory.topo_tag_for_combination derives the tag from
+        combination length, so every per_core combination maps to topo_0. Using
+        a 4-hart profile tree with this granularity would silently credit each
+        core with the throughput of the whole cluster.
+        """
+        from workload_factory import topo_tag_for_combination
+        for combo in self.combos:
+            self.assertEqual(topo_tag_for_combination(combo), "topo_0")
+
+    def test_an_unknown_granularity_is_rejected(self):
+        with self.assertRaises(ValueError):
+            build_machine_combinations_with_impls(
+                K1_CORES, K1_IMPLS, granularity="whatever")
+
+    def test_prefix_and_per_core_disagree_about_concurrency(self):
+        """The two models are genuinely different, not cosmetic variants."""
+        _, prefix_combos, prefix_impls = build_machine_combinations_with_impls(
+            K1_CORES, K1_IMPLS, granularity="prefix")
+        wl_prefix = _workload(self.machines, prefix_combos)
+        p0 = prefix_combos.index(["CPU_P#0"])
+        # under prefix there is no ['CPU_P#1'] at all to run beside it
+        self.assertNotIn(["CPU_P#1"], prefix_combos)
+        # under per_core there is, and the two are independent
+        a = next(i for i, c in enumerate(self.combos) if c == ["CPU_P#0"])
+        b = next(i for i, c in enumerate(self.combos) if c == ["CPU_P#1"])
+        self.assertFalse(self.wl.combinations_overlap(a, b))
+        self.assertGreater(len(prefix_combos), 0)
+        self.assertGreaterEqual(p0, 0)
+
+
 class BackwardCompatibilityTests(unittest.TestCase):
     def test_single_implementation_matches_the_existing_builder(self):
         """One impl per kind must reproduce the current combinations exactly."""
