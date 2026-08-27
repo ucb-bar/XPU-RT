@@ -161,7 +161,8 @@ def profile_one(host: str, remote_root: str, bench_tool: str, zip_path: Path,
             }
             records.append(rec)
             print(f"  dispatch_{did:<3} median={med*1000:9.2f} us  "
-                  f"p99={rec['p99_ms']*1000:9.2f} us  cv={rec['cv_pct']:.2f}%")
+                  f"p99={rec['p99_ms']*1000:9.2f} us  cv={rec['cv_pct']:.2f}%",
+                  flush=True)
 
         if dry_run or not records:
             return Path()
@@ -171,7 +172,7 @@ def profile_one(host: str, remote_root: str, bench_tool: str, zip_path: Path,
         out_dir.mkdir(parents=True, exist_ok=True)
         _write_csv(out_dir / "results.csv", records)
         _write_jsonl(out_dir / "profile.jsonl", records)
-        print(f"  -> {out_dir}/results.csv  ({len(records)} dispatches)")
+        print(f"  -> {out_dir}/results.csv  ({len(records)} dispatches)", flush=True)
         return out_dir
     finally:
         shutil.rmtree(stage, ignore_errors=True)
@@ -240,7 +241,7 @@ def main() -> int:
                 basename = z.parent.name
                 label = f"{hw}{a.hw_label_suffix}"
                 print(f"[{model}/{label}] {basename}  cpus={a.cpu_ids} "
-                      f"reps={a.reps}")
+                      f"reps={a.reps}", flush=True)
                 try:
                     profile_one(a.host, a.remote_root, a.bench_tool, z,
                                 a.cpu_ids, a.reps, model, basename, label,
