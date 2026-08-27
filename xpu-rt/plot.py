@@ -269,6 +269,18 @@ def plot_optimization_schedule(durations, t, alpha, num_jobs, num_machines, mach
         base_colors = _build_family_colors(
             job_id_to_color_index, job_names_list, family_n)
 
+    # Legend dedup: group periodic instances of the same model kind under
+    # one legend entry (e.g. 58 mlp_control instances -> one
+    # "mlp_control (58x)" row) instead of one row per instance. Colors
+    # already group by kind (_build_family_colors above); without this, a
+    # per-instance legend is both unreadable and can overflow matplotlib's
+    # renderer at high dpi with many periodic instances.
+    kind_instance_counts = defaultdict(int)
+    if workload is not None and job_names_list:
+        for job_id in job_id_to_color_index:
+            name = job_names_list[job_id] if job_id < len(job_names_list) else None
+            kind_instance_counts[_kind_from_job_name(name)] += 1
+
     # CRITICAL FIX: Ensure base_colors has enough colors for all unique job_ids
     # If we have more unique job_ids than num_jobs, we need to extend base_colors
     if num_unique_job_ids > len(base_colors):
@@ -364,12 +376,12 @@ def plot_optimization_schedule(durations, t, alpha, num_jobs, num_machines, mach
             else:
                 job_label = f"Job {name_index}"
             
-            # Add to legend only once per unique job_id
-            # Use job_id as the key to ensure we don't add duplicates
-            if op_job_id is not None:
-                legend_key = f"job_id_{op_job_id}"
-            else:
-                legend_key = f"job_label_{job_label}"
+            # Add to legend only once per model kind (see kind_instance_counts
+            # above), not once per periodic instance.
+            legend_kind = _kind_from_job_name(job_label)
+            legend_key = f"kind_{legend_kind}"
+            _kind_count = kind_instance_counts.get(legend_kind, 1)
+            legend_label = f"{legend_kind} ({_kind_count}x)" if _kind_count > 1 else job_label
             
             # Debug: check op_color_index right before legend check
             if len(jobs_in_legend) < 5 and current_operation_index >= 62 and current_operation_index <= 64:
@@ -387,8 +399,8 @@ def plot_optimization_schedule(durations, t, alpha, num_jobs, num_machines, mach
                             print(f"Job '{job_label}' (job_id={op_job_id}, color_index={op_color_index}) -> color RGB={op_base_color}")
                     else:
                         print(f"Job '{job_label}' (job_id={op_job_id}, color_index={op_color_index}, job_index={job_index}) -> color RGB={op_base_color}")
-                legend_handles.append(mpatches.Patch(facecolor=op_base_color, edgecolor='black', label=job_label))
-                legend_labels.append(job_label)
+                legend_handles.append(mpatches.Patch(facecolor=op_base_color, edgecolor='black', label=legend_label))
+                legend_labels.append(legend_label)
                 jobs_in_legend.add(legend_key)
             
             start_time = start_times[current_operation_index]
@@ -549,6 +561,23 @@ def plot_optimization_schedule(durations, t, alpha, num_jobs, num_machines, mach
 
     plt.tight_layout()
 
-    # Save the plot with dynamic filename
+    # Save the plot with dynamic filename. Dense schedules (many short
+    # dispatches crammed into a fixed-size figure) can hit a freetype
+    # "raster overflow" at high dpi regardless of legend size -- retry at
+    # progressively lower dpi rather than losing the plot entirely; a
+    # render failure must never block the schedule JSON write that follows
+    # this call, since the plot is a visualization aid, not the deliverable.
     print(f"Saving plot to {save_path}...")
-    plt.savefig(save_path, dpi=500, bbox_inches='tight')
+    try:
+        for dpi in (500, 300, 200, 150, 100):
+            try:
+                plt.savefig(save_path, dpi=dpi, bbox_inches='tight')
+                if dpi != 500:
+                    print(f"  (saved at dpi={dpi} after higher dpi failed to render)")
+                break
+            except RuntimeError as exc:
+                print(f"  dpi={dpi} failed ({exc}), retrying lower...")
+        else:
+            print(f"WARNING: failed to save plot to {save_path} at all attempted dpi levels")
+    finally:
+        plt.close()
