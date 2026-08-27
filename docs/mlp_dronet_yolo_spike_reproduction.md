@@ -68,6 +68,7 @@ source tools/miniforge3/etc/profile.d/conda.sh
 conda activate zephyr
 source scripts/set_envvars_sdk.sh
 export PATH="/usr/bin:${PATH}"
+export PATH="${CONDA_PREFIX}/bin:${PATH}"   # see Bug 13 -- re-promote conda's python/pip
 export PYTHONPATH="$PWD${PYTHONPATH:+:${PYTHONPATH}}"   # see Bug 1
 ```
 
@@ -676,6 +677,38 @@ full 3-network rebuild against this same fix are the next steps (§10).
     just the "primary" backend's. Verified: see §9.3 (dronet-only rebuild:
     `max_abs_err=51`→`0`, timing within 0.1% of standalone) and §10 (full
     3-network rebuild).
+13. **Fixed in code** — this doc's own §0, `export PATH="/usr/bin:${PATH}"`.
+    Found via a genuinely sandboxed (Docker, `ubuntu:24.04`, no host mounts
+    except `.ssh`) from-scratch validation run. That line exists to fix a
+    `cmake`-shadowing issue (an old Vitis-bundled `cmake` earlier in PATH);
+    it works, but it also demotes the conda `zephyr` env's own `python3`/
+    `pip` behind `/usr/bin`'s system ones. On any host enforcing PEP 668
+    (stock Ubuntu 24.04, but apparently not the original host this doc was
+    written on — hence this going unnoticed), every subsequent `pip install`
+    in this doc then fails with `error: externally-managed-environment`,
+    blocking `pip install spike`/`torch`/`-r requirements-base.txt`/
+    `-e modelblaster/`. Fix: immediately re-prepend `${CONDA_PREFIX}/bin`
+    after the `/usr/bin` line, so the real `cmake` from `/usr/bin` is still
+    found (ahead of whatever shadowed it before), but the conda env's own
+    `python3`/`pip` win over `/usr/bin`'s.
+14. **Fixed in code** — `zephyr-chipyard-sw/modelblaster/models/mlp_control.py`
+    (tracked, nested `modelblaster` submodule). Also found by the same
+    sandboxed validation run: `_DEFAULT_CKPT` hardcoded an absolute path,
+    `/scratch2/dima/misc_sw/FreshScheduler/logs/rsl_rl/crazyflie_steering_tracking/2026-04-13_12-23-08/model_6998.pt`
+    — a 1.1MB trained-policy checkpoint that existed only on one user's
+    disk and was **not git-tracked anywhere** (confirmed via `git ls-files`
+    and `git check-ignore` — genuinely untracked local state, not merely
+    misconfigured `.gitignore`). Unlike every other hardcoded-path bug this
+    session, no `FRESHSCHEDULER_ROOT`-style env var fixes this for a fresh
+    clone: the file itself doesn't exist anywhere reproducible, so the very
+    first `mlp_control` profiling command fails with `FileNotFoundError`
+    before any of this doc's own workarounds are even reached. Fix:
+    committed the checkpoint into modelblaster itself
+    (`models/checkpoints/mlp_control/model_6998.pt`, small enough to be a
+    normal git blob) and changed `_DEFAULT_CKPT` to derive from `__file__`
+    instead of a hardcoded absolute string — self-contained regardless of
+    where or how deep this repo is checked out.
+    `MODELBLASTER_MLP_CONTROL_CKPT` still overrides it if needed.
 
 ## Resolved: cross-network numeric corruption in the combined binary
 
@@ -895,6 +928,8 @@ in both runs regardless — expected, not a bug.
 | `plots/xpurt_trace_mlp_dronet_yolo_spike_final.png` | top-level | untracked, **final** real execution timeline, all 3 models PASS (§10.3) |
 | `schedules/xpurt_trace_mlp_dronet_yolo_spike_final.csv` | top-level | untracked, parsed trace data backing the plot above (§10.3) |
 | `scripts/repro_mlp_dronet_yolo_spike.sh` | top-level | **tracked**, end-to-end automation of sections 0/1/2/3/5/6/7 (see "Quick start" above) |
+| `zephyr-chipyard-sw/modelblaster/models/checkpoints/mlp_control/model_6998.pt` | nested submodule | **tracked** (Bug 14 fix) — trained MLP policy checkpoint, previously only on one user's disk |
+| `zephyr-chipyard-sw/modelblaster/models/mlp_control.py` | nested submodule | **tracked, modified** (Bug 14 fix — `_DEFAULT_CKPT` now `__file__`-relative) |
 
 The code fixes (`postprocessing.py`, `plot.py`, `run_xpurt_schedule.py`,
 `xpurt_demo/run.sh`, `generate_skeleton.py`, `harness_xpurt/CMakeLists.txt`)
