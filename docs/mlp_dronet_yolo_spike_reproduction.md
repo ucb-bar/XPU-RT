@@ -53,8 +53,17 @@ don't fit a variant you're trying.
 
 ## 0. Environment setup (run before every command below)
 
+Every absolute path in this doc is written relative to `FRESHSCHEDULER_ROOT` —
+**set this to wherever you actually cloned this repo** (it is NOT
+`/scratch2/dima/misc_sw/FreshScheduler` unless that happens to be your own
+checkout; hardcoding one user's path here is exactly what broke this flow
+for a second user on this same shared machine — every command below reads
+`${FRESHSCHEDULER_ROOT}`, none of it should be copy-pasted with someone
+else's literal path):
+
 ```bash
-cd /scratch2/dima/misc_sw/FreshScheduler/zephyr-chipyard-sw
+export FRESHSCHEDULER_ROOT=/path/to/your/FreshScheduler   # <-- set this first
+cd "${FRESHSCHEDULER_ROOT}/zephyr-chipyard-sw"
 source tools/miniforge3/etc/profile.d/conda.sh
 conda activate zephyr
 source scripts/set_envvars_sdk.sh
@@ -176,7 +185,7 @@ the real data lives under the nested `zephyr-chipyard-sw/modelblaster/gen/`,
 bridge it with symlinks (already in place, confirmed present):
 
 ```bash
-cd /scratch2/dima/misc_sw/FreshScheduler
+cd "${FRESHSCHEDULER_ROOT}"
 mkdir -p gen/profile/RVV/spike gen/profile/scalar/spike
 for model in mlp_control dronet yolov8_nano; do
   ln -s "../../../../zephyr-chipyard-sw/modelblaster/gen/profile/RVV/spike/$model"    "gen/profile/RVV/spike/$model"
@@ -258,7 +267,7 @@ against the file's *previous* content, not this latest regeneration.
 ## 5. Generate the schedule
 
 ```bash
-cd /scratch2/dima/misc_sw/FreshScheduler
+cd "${FRESHSCHEDULER_ROOT}"
 python3 scripts/run_xpurt_schedule.py \
   --networks-json data/toplevel/networks_mlp_dronet_yolo_spike.json \
   --solver greedy_periodic --profiled
@@ -320,9 +329,9 @@ bug).
 ## 6. Build + run the combined binary (`xpurt_demo`)
 
 ```bash
-cd /scratch2/dima/misc_sw/FreshScheduler/zephyr-chipyard-sw
+cd "${FRESHSCHEDULER_ROOT}/zephyr-chipyard-sw"
 # (env setup from §0)
-SCHEDULE_JSON=/scratch2/dima/misc_sw/FreshScheduler/schedules/scheduled_networks_mlp_dronet_yolo_spike_greedy_periodic_profiled.json \
+SCHEDULE_JSON="${FRESHSCHEDULER_ROOT}/schedules/scheduled_networks_mlp_dronet_yolo_spike_greedy_periodic_profiled.json" \
 MODELS=mlp_control,dronet,yolov8_nano \
 QUANTS=fp32,int8,int8 \
 BACKENDS=scalar,rvv \
@@ -387,14 +396,14 @@ schedule vs. actual execution) and flags any entry that ran later than
 predicted:
 
 ```bash
-cd /scratch2/dima/misc_sw/FreshScheduler/zephyr-chipyard-sw/modelblaster
+cd "${FRESHSCHEDULER_ROOT}/zephyr-chipyard-sw/modelblaster"
 source ../tools/miniforge3/etc/profile.d/conda.sh && conda activate zephyr
 export PYTHONPATH="$PWD/..${PYTHONPATH:+:${PYTHONPATH}}"
 python3 -m modelblaster.scripts.plot_xpurt_trace \
-  /tmp/claude-1172/.../scratchpad/xpurt_demo_mlp58_v3.log \
+  <path-to-the-run-log-you-captured-in-§6> \
   --clock-mhz 10 \
-  --out /scratch2/dima/misc_sw/FreshScheduler/plots/xpurt_trace_mlp_dronet_yolo_spike_clk10.png \
-  --csv /scratch2/dima/misc_sw/FreshScheduler/schedules/xpurt_trace_mlp_dronet_yolo_spike_clk10.csv
+  --out "${FRESHSCHEDULER_ROOT}/plots/xpurt_trace_mlp_dronet_yolo_spike_clk10.png" \
+  --csv "${FRESHSCHEDULER_ROOT}/schedules/xpurt_trace_mlp_dronet_yolo_spike_clk10.csv"
 ```
 
 **IMPORTANT — use `--clock-mhz 10`, not `1000`.** `actual_start/end_cycles`
