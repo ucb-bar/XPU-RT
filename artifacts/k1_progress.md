@@ -530,3 +530,33 @@ improvement on mlp_control alone.
 **`k1`** — wrong tree, no error, and unfindable by the model it describes. Fixed
 by letting the runner state the name (`--model-name`), with the walk kept as the
 default for existing callers.
+
+---
+
+## Per-core execution: placement now honoured, concurrency still 2
+
+`--pin_per_core` (merlin `46fe201`) creates one pinned local-task device per
+physical core and routes each dispatch to the device matching the `CPU_P#N`
+index the schedule assigned. Previously that index was parsed and discarded.
+
+| | before | after |
+|---|---|---|
+| service-time error, all dispatches | +14.1% | **+11.3%** median |
+| queueing share | 87.6% | **87.7%** |
+
+**Placement is now faithful; concurrency is not.** The runner still uses two
+long-lived worker threads, one per hardware target, so at most two dispatches
+are in flight regardless of how many devices exist. That, not the device
+pinning, is what the 87.7% queueing measures.
+
+So the K1 can currently be scheduled faithfully in two configurations:
+- **2 resources** (one machine per worker pool) — self-consistent end to end,
+  and predicted-vs-actual lands within **0.18%**.
+- **8 resources with per-core placement** — placement is executed correctly,
+  but the runtime serialises to 2-way, so the schedule's concurrency assumption
+  is not met.
+
+Closing the gap means N worker threads in `scheduler_runner.cc`, which is a
+refactor of the dispatch loop rather than a config change. Everything upstream
+of it is ready: `capabilities.py` emits per-core combinations,
+`machine_combination_mode` selects them, and the runner now executes placement.
