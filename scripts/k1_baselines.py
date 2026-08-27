@@ -25,6 +25,10 @@ import subprocess
 import sys
 from collections import defaultdict
 
+sys.path.insert(0, os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "xpu-rt"))
+import trace_metrics  # noqa: E402
+
 
 def run_on_board(host, remote_root, schedule_remote, trace_remote, *,
                  cpu_p, cpu_e, variant_p, variant_e, timeout=1800):
@@ -44,39 +48,41 @@ def fetch(host, remote_root, name, local):
                    check=True, timeout=600)
 
 
+def _periods_from_schedules(paths):
+    """Union of metadata.periodic_networks across the rungs being run."""
+    out = {}
+    for p in paths:
+        if not os.path.exists(p):
+            continue
+        try:
+            md = json.load(open(p)).get("metadata", {})
+        except (OSError, ValueError):
+            continue
+        for k, v in (md.get("periodic_networks") or {}).items():
+            out[k] = float(v)
+    return out
+
+
 def summarise(trace_path, periods):
-    rows = list(csv.DictReader(open(trace_path)))
+    """Measured metrics, delegated to xpu-rt/trace_metrics.py.
+
+    This used to be a local copy of the instance-collapsing logic. There were
+    three such copies -- here, in xpu-rt/metrics.py, and in
+    scripts/plot_k1_evolution.py -- and they disagreed: metrics.py counted
+    deadline misses per *dispatch* (B1: 160) while this one counted per
+    *instance* (B1: 10), and neither reported a rate, so "10 misses" read like a
+    near miss when it was in fact 10 of 10. One implementation now, with both
+    definitions named distinctly.
+    """
+    rows = trace_metrics.read_trace(trace_path)
     if not rows:
         return None
-    service = sum(float(r["run_us"]) for r in rows)
-    queue = sum(float(r["queue_delay_us"]) for r in rows)
-    makespan = max(float(r["end_us"]) for r in rows)
-    inst = defaultdict(lambda: [1e18, -1e18])
-    for r in rows:
-        j = r["job_name"]
-        inst[j][0] = min(inst[j][0], float(r["start_us"]) / 1000.0)
-        inst[j][1] = max(inst[j][1], float(r["end_us"]) / 1000.0)
-    misses, lateness = 0, []
-    for job, (st, en) in inst.items():
-        b = job.rstrip("0123456789") or job
-        i = int(job[len(b):] or 0)
-        T = periods.get(b)
-        if T is None:
-            continue
-        late = en - (i * T + T)
-        if late > 0:
-            misses += 1
-            lateness.append(late)
-    return {
-        "n_dispatches": len(rows),
-        "service_us": round(service, 1),
-        "queue_us": round(queue, 1),
-        "queue_share_pct": round(100 * queue / (service + queue), 1) if service + queue else 0,
-        "makespan_us": round(makespan, 1),
-        "periodic_instances": len(inst),
-        "deadline_misses": misses,
-        "worst_lateness_ms": round(max(lateness), 2) if lateness else 0.0,
-    }
+    s = trace_metrics.summarise_trace(rows, periods)
+    # Flat keys the existing table printer and baselines.json consumers expect.
+    s["deadline_misses"] = s["instance_deadline_misses"]
+    worst = [m["worst_lateness_ms"] for m in s["per_model"].values()]
+    s["worst_lateness_ms"] = max(worst) if worst else 0.0
+    return s
 
 
 def predicted(schedule_path, periods):
@@ -135,7 +141,15 @@ def main() -> int:
         "C2": ("schedules/scheduled_networks_k1_2core_greedy_profiled.json",
                "schedule_2core.json", "0", "4", "RVV", "RVV"),
     }
-    periods = {"mlp": 10.0, "dronet": 33.3}
+    # Periods come from the schedule the rung actually ran, so adding a third
+    # model does not silently skip it (a hardcoded two-model dict would drop
+    # every yolo instance without a word).
+    periods = _periods_from_schedules(
+        [RUNGS[r][0] for r in a.rungs.split(",") if r in RUNGS])
+    if not periods:
+        periods = {"mlp": 10.0, "dronet": 33.3}
+        print("WARN: no metadata.periodic_networks found; falling back to "
+              f"{periods}", file=sys.stderr)
     results = {}
     for rung in [r for r in a.rungs.split(",") if r]:
         if rung not in RUNGS:
@@ -175,6 +189,15 @@ def main() -> int:
         print(f"{rung:<5}{p['service_us']:>14.0f}{m['service_us']:>14.0f}"
               f"{m['makespan_us']:>15.0f}{m['queue_share_pct']:>8.1f}"
               f"{m['deadline_misses']:>8d}")
+
+    # The per-model block is the one that answers the actual question. A raw
+    # miss count hides whether a model failed once or failed every time, and it
+    # says nothing about achieved frequency -- which is what a periodic
+    # workload is specified in.
+    print()
+    for rung, r in results.items():
+        if r["measured"]:
+            print(trace_metrics.format_summary(rung, r["measured"]))
     print(f"\nwrote {out}")
     return 0
 

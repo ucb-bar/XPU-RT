@@ -21,6 +21,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import re
 import statistics
 import sys
 from collections import defaultdict
@@ -41,6 +42,50 @@ def base_and_instance(job: str):
     return job[:i], int(job[i:] or 0)
 
 
+_OP_TAIL = re.compile(r"\$async_dispatch_\d+_([a-zA-Z_][a-zA-Z0-9_]*?)(?:_\d+(?:x\d+)*)?(?:_[a-z0-9]+(?:x[a-z0-9]+)*)?$")
+
+
+def _op_of(module_name: str) -> str:
+    """'conv' from '...$async_dispatch_1_conv_32x56x56x3x3x3_i8xi8xi32'."""
+    m = _OP_TAIL.search(module_name or "")
+    return m.group(1) if m else ""
+
+
+def _impl_from_vmfb(path: str) -> str:
+    """'RVV' from '.../gen/vmfb/dronet/spacemit_x60/RVV/dronet.q.int8/...'.
+
+    Positional rather than pattern-matched on names, so a new implementation
+    label (RVV_split, IME_ukernel, ...) needs no change here.
+    """
+    parts = (path or "").split("/")
+    try:
+        i = parts.index("vmfb")
+    except ValueError:
+        return ""
+    # vmfb / <model> / <target> / <impl>
+    return parts[i + 3] if len(parts) > i + 3 else ""
+
+
+def _err_table(title: str, groups: dict) -> None:
+    """median/mean relative error and count, per group, worst median first."""
+    if not groups:
+        return
+    print(f"\n=== {title} ===")
+    print(f"{'group':<16}{'n':>5}{'median rel':>12}{'mean rel':>11}"
+          f"{'median |abs|':>14}")
+    rows = []
+    for g, js in groups.items():
+        rel = [j["rel_err"] for j in js if j["pred_dur_ms"] > 0]
+        if not rel:
+            continue
+        absr = [abs(j["abs_err_ms"]) for j in js]
+        rows.append((statistics.median(rel), g, len(js),
+                     statistics.fmean(rel), statistics.median(absr)))
+    for med, g, n, mean, mabs in sorted(rows, reverse=True):
+        print(f"{g:<16}{n:>5}{med*100:>11.1f}%{mean*100:>10.1f}%"
+              f"{mabs*1000:>13.1f}us")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--schedule", required=True)
@@ -54,18 +99,28 @@ def main() -> int:
     periods = (sched.get("metadata") or {}).get("periodic_networks") or {}
     trace = load_trace(a.trace)
 
-    joined, missing = [], []
+    joined, missing, multi_iter_keys = [], [], []
     for key, v in disp.items():
         rs = trace.get(key)
         if not rs:
             missing.append(key)
             continue
+        if len(rs) > 1:
+            multi_iter_keys.append(key)
         r = rs[0]
         pred_ms = float(v["duration"])
         run_ms = float(r["run_us"]) / 1000.0
         joined.append({
             "key": key, "job": v.get("job_name", ""), "id": v.get("id"),
             "target": r.get("target", ""),
+            # `target` is only CPU_P/CPU_E, so it cannot answer "which
+            # implementation was this?". The trace's vmfb_path can: its layout
+            # is gen/vmfb/<model>/<target>/<impl>/..., so the implementation is
+            # already in every trace ever taken, just never read.
+            "impl": _impl_from_vmfb(r.get("vmfb_path", ""))
+                    or (v.get("implementation") or ""),
+            "op": _op_of(r.get("module_name", "")),
+            "cores": r.get("cores", ""),
             "pred_dur_ms": pred_ms, "actual_run_ms": run_ms,
             "abs_err_ms": run_ms - pred_ms,
             "rel_err": (run_ms - pred_ms) / pred_ms if pred_ms > 0 else float("nan"),
@@ -95,6 +150,23 @@ def main() -> int:
         rb = [j["rel_err"] for j in big]
         print(f"\n  restricted to dispatches >=1ms (n={len(big)}):")
         print(f"    median relative error : {statistics.median(rb)*100:+.1f}%")
+
+    # The aggregate above hides a large spread. Grouping is what turns "+14%
+    # median error" into an actionable statement about which op types the cost
+    # model is wrong about.
+    from collections import defaultdict
+    by_op, by_impl = defaultdict(list), defaultdict(list)
+    for j in joined:
+        by_op[j["op"] or "(unparsed)"].append(j)
+        by_impl[j["impl"] or "(unknown)"].append(j)
+    _err_table("service-time prediction error by op type", by_op)
+    _err_table("service-time prediction error by implementation", by_impl)
+
+    if multi_iter_keys:
+        print(f"\nNOTE: {len(multi_iter_keys)} dispatch key(s) had more than "
+              f"one trace row (multiple graph iterations); only iteration 0 is "
+              f"joined. Re-run with graph_iters=1 for a clean comparison, or "
+              f"extend this script to join per (key, graph_iter).")
 
     print("\n=== where the time actually goes ===")
     tot_run = sum(j["actual_run_ms"] for j in joined)

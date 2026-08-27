@@ -845,3 +845,132 @@ rather than a real finding. Models are now seeded.
 
 **All seven models run bit-exact on the board**: mlp_control, dronet,
 vitfly_frontend, lstm_tiny, vitfly_lstm, norm_block, attn_block.
+
+---
+
+## Phase 1 — measurement integrity
+
+### Attempted
+
+Make the instruments trustworthy before adding any rung, on the principle that
+a conclusion drawn on a known-broken instrument is worth less than no
+conclusion. Six changes.
+
+### Commands
+
+```bash
+# merlin runner rebuild + deploy
+cmake --build merlin/build/spacemit-merlin-perf --target merlin-dispatch-scheduler -j16
+scp .../merlin-dispatch-scheduler k1:/root/mb_k1/bin/
+ssh k1 'cd /root/mb_k1 && ulimit -n 8192 && ./bin/merlin-dispatch-scheduler \
+  schedule_b4.json local-task 1 1 0 --vmfb_dir=/root/mb_k1 \
+  --cpu_p_cpu_ids=0,1,2,3 --cpu_e_cpu_ids=4,5,6,7 --visible_cores=8 \
+  --variant_p=RVV --variant_e=RVV --pin_per_core=1 --trace_csv=.../trace_B4.csv'
+python3 scripts/join_k1_trace.py --schedule schedules/scheduled_networks_k1_B4_shard_greedy_profiled.json \
+  --trace artifacts/k1_run/baselines/trace_B4.csv
+python3 scripts/plot_k1_trace_gantt.py --composite "B0=...:..." "B1=...:..." "B4=...:..." \
+  --out paper/figures/k1_measured_gantt_ladder.png
+```
+
+### Passed
+
+* **Trace now carries placement.** `cores`, `observed_cpu_start`,
+  `observed_cpu_end` appended in `dispatch_output.h`, fed the runner's own
+  `held_mask`. Verified on hardware: 430 rows, `cores` populated
+  (`0`, `0+1`, `2+3`, `0+1+2+3`), 218 sharded rows.
+* **Per-core utilization is computable for the first time.** B4: CPU_P#0-3 at
+  50.4-54.4%, CPU_E#0-3 at 47.7-59.7%; clusters CPU_P 51.6%, CPU_E 54.2%.
+* **Affinity verified, not assumed.** `migrated=0` across four runs. The pin
+  was previously best-effort with the return value discarded.
+* **One metrics implementation.** `xpu-rt/trace_metrics.py` replaces three
+  divergent copies. Reports what a periodic workload is actually specified in:
+  miss *rate*, response p50/p90/p99 measured from `k*T`, achieved frequency,
+  per-core and per-cluster utilization, and idle *intervals*.
+* **The two miss definitions are now named apart.** `metrics.py` counts per
+  dispatch (`op_deadline_miss_count`, B1: 160 of 360); `trace_metrics.py`
+  counts per instance (`instance_deadline_misses`, B1: 10 of 10). Both were
+  previously called `deadline_miss_count`.
+* **Units.** Nine `*_us` fields in `_metrics.json` carried millisecond values —
+  a 412 ms schedule reported as `makespan_us: 412.83`. Keys retained for
+  compatibility, `*_ms` aliases added, `units_note` states it.
+* **Prediction error is now decomposed.** Implementation comes from the trace's
+  existing `vmfb_path` (third path segment) — it was in every trace ever taken
+  and never read. Op type comes from the module-name tail.
+* **Profiler.** `op`/`shape` parsed from the module name and written to the two
+  CSV columns that were literal `""` for the whole campaign; explicit
+  `--benchmark_min_warmup_time`; `cycles_est` renamed
+  `cycles_est_from_assumed_clock` because it is median wall time x an assumed
+  1.6 GHz, not a counter — `rdcycle` SIGILLs here.
+* **Reusable measured Gantt.** `scripts/plot_k1_trace_gantt.py`, physical-core
+  lanes from the trace, shard as one spanning bar, `--composite` for the
+  ladder. Neither existing renderer could do this: `xpu-rt/plot_gantt.py`
+  expects ModelBlaster's schema (zero shared column names), and merlin's own
+  `plot_dispatch_trace.py` packs synthetic lanes.
+
+### Measurements
+
+Prediction error, B4, decomposed — the aggregate hides a 14x spread:
+
+| op type | n | median rel err |
+|---|---|---|
+| matmul | 138 | +32.5% |
+| reduction | 36 | +23.5% |
+| elementwise | 160 | +20.4% |
+| **conv** | 96 | **+2.3%** |
+
+Aggregate median +19.5%, but **+1.7% restricted to dispatches >= 1 ms**. So the
+cost model is accurate on the work that matters and wrong on small dispatches,
+where a fixed per-dispatch overhead it does not model dominates.
+
+Worst mispredictions are all sharded DroNet convs: `dronet0_dispatch_1`
+predicted 6.096 ms from the 4-hart solo profile, measured **10.212 ms (+67.5%)**.
+The profile is not wrong — the shard is contending with concurrent work. This is
+the first direct evidence that a solo multi-core profile is not a valid cost for
+a shard running alongside other dispatches, and it is what Phase 6 has to
+quantify.
+
+### Failed / corrected
+
+**A retraction.** The B4 figure of "1 MLP deadline miss" was n=1 and is not
+reproducible. Seven runs of the identical schedule give **7-9 misses of 38
+(~24%)**; the single run showing 1 was a lucky outlier. Cause: MLP completes at
+~7 ms against a 10 ms deadline, so its miss count is a knife-edge and is not a
+stable discriminator between rungs. Makespan, by contrast, is stable to 1.0%
+across runs.
+
+I initially suspected my own instrumentation, since it added ~4% to MLP dispatch
+time. Removing the allocation from the trace path left the miss count unchanged
+at 9, so the instrumentation was not the cause. The allocation-free path stays
+anyway.
+
+**Also corrected:** DroNet's achieved frequency is the more honest framing of
+the ladder than its miss count, which is 100% everywhere:
+
+| rung | DroNet achieved | required | worst lateness |
+|---|---|---|---|
+| B0 static | 8.70 Hz | 30 Hz | 816.78 ms |
+| B1 XPU-RT | 22.64 Hz | 30 Hz | 108.75 ms |
+| B4 + shard | **29.02 Hz** | 30 Hz | **27.15 ms** |
+
+B4 reaches 96.7% of the required rate.
+
+### Blocker
+
+None.
+
+### Next
+
+Phase 2: wire `capabilities.check_implementation_legality` into the production
+path (it has zero callers today), reject `--variant_e=IME` in the runner, wire
+the objdump gate, correct the IME record, and enable the vendored RVV int8
+mmt4d ukernels that `enable-ukernels=none` currently makes dead code.
+
+**Open question this phase raised:** all eight cores sit at ~50-60% utilization
+while DroNet misses 100% of its deadlines. The board is half idle, so the
+binding constraint is the dependency chain, not capacity — which means B3
+(granularity) has a clearer route to improvement than more cores do.
+
+### Repo SHAs
+
+XPU-RT `feat/k1-modelblaster-closed-loop`, merlin `c2f7c35`, ModelBlaster
+`34dc890`.

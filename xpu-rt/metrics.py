@@ -106,22 +106,61 @@ def compute_metrics(
         m: max(0.0, makespan - per_machine_busy[m]) for m in machines
     }
 
+    # UNITS. Every field below named `*_us` is in the unit of the schedule's
+    # own timebase, which for every K1 and FireSim workload in this repo is
+    # MILLISECONDS -- `duration` and `start_time` in a scheduled JSON are ms.
+    # So `makespan_us: 412.83` describes a 412.83 ms schedule. The suffix is
+    # wrong and has been since the file was written.
+    #
+    # Renaming the keys would break `_metrics.json` consumers (sweep
+    # aggregators, the Gantt overlay, the band-compliance audit) for no
+    # correctness gain, so the keys stay and each value is ALSO published under
+    # an honestly-named `*_ms` key. New code should read the `_ms` keys; the
+    # `_us` ones are retained aliases.
     metrics: Dict[str, Any] = {
         "scheduler": scheduler_name,
         "num_operations": n,
+        "units_note": (
+            "fields suffixed _us are in the schedule's timebase, which is "
+            "milliseconds; the _ms aliases carry the same values under a "
+            "correct name"
+        ),
         "makespan_us": float(makespan),
+        "makespan_ms": float(makespan),
         "nonperiodic_makespan_us": float(nonperiodic_makespan),
+        "nonperiodic_makespan_ms": float(nonperiodic_makespan),
         "mean_op_duration_us": float(np.mean(durations)) if durations else 0.0,
+        "mean_op_duration_ms": float(np.mean(durations)) if durations else 0.0,
         "p95_op_duration_us": float(np.percentile(durations, 95)) if durations else 0.0,
+        "p95_op_duration_ms": float(np.percentile(durations, 95)) if durations else 0.0,
         "p99_op_duration_us": float(np.percentile(durations, 99)) if durations else 0.0,
+        "p99_op_duration_ms": float(np.percentile(durations, 99)) if durations else 0.0,
+        # DEADLINE MISSES ARE COUNTED PER OPERATION HERE.
+        #
+        # That is a different question from the one a periodic real-time
+        # workload asks. An "operation" is one dispatch, so a DroNet instance
+        # whose last dispatch overruns contributes as many misses as it has
+        # late dispatches -- which is how this file reported 160 misses for the
+        # same run that scripts/k1_baselines.py reported 10 (10 instances, all
+        # late). Both are defensible; publishing them under one name is not.
+        # The per-instance view lives in xpu-rt/trace_metrics.py, keyed
+        # `instance_deadline_misses`, and is the one to quote for a frequency
+        # claim.
+        "op_deadline_miss_count": int(deadline_miss),
+        "op_deadline_miss_ratio": (deadline_miss / n) if n else 0.0,
+        # Retained aliases; prefer the op_-prefixed names above.
         "deadline_miss_count": int(deadline_miss),
         "deadline_miss_ratio": (deadline_miss / n) if n else 0.0,
         "total_lateness_us": float(total_lateness),
+        "total_lateness_ms": float(total_lateness),
         "max_lateness_us": float(max_lateness),
+        "max_lateness_ms": float(max_lateness),
         "per_machine_utilization": utilization,
         "per_machine_idle_us": idle_time,
+        "per_machine_idle_ms": idle_time,
         "cross_device_transitions": int(cross_device_transitions),
         "critical_path_us": float(critical_path_us),
+        "critical_path_ms": float(critical_path_us),
         "solver_wall_time_s": solver_wall_time_s,
         # Memory fields are populated when a memory plan is supplied (milestone 7+).
         "peak_dram_bytes": None,

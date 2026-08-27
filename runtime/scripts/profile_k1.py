@@ -52,6 +52,38 @@ _ROW = re.compile(
 )
 # module_<model>$async_dispatch_<N>_embedded_elf_riscv_64_benchmark.vmfb
 _DISPATCH = re.compile(r"\$async_dispatch_(\d+)_")
+
+# The tail of a benchmark name encodes the op and its shape, e.g.
+#   mlp$async_dispatch_1_embedded_elf_riscv_64_mlp$async_dispatch_1_matmul_1x32x10_i8xi8xi32
+#                                                                  ^op    ^shape  ^dtypes
+# Nothing in either repo parsed this, which is why the `op` and `shape` columns
+# of every K1 results.csv were written as empty strings -- and why prediction
+# error could only ever be reported in aggregate, hiding a 6.5x spread between
+# op types (matmul +22% vs conv +3.4%).
+_OP_TAIL = re.compile(
+    r"\$async_dispatch_\d+_(?P<op>[a-zA-Z_][a-zA-Z0-9_]*?)"
+    r"_(?P<shape>\d+(?:x\d+)*)"
+    r"(?:_(?P<dtypes>[a-z0-9]+(?:x[a-z0-9]+)*))?$"
+)
+# Some dispatches carry no shape at all (e.g. a bare `..._elementwise`). The op
+# name is still the useful half for grouping, so fall back to it rather than
+# discarding the row's identity entirely.
+_OP_ONLY = re.compile(r"\$async_dispatch_\d+_(?P<op>[a-zA-Z_][a-zA-Z0-9_]*)$")
+
+
+def parse_op_shape(bench_name: str) -> tuple[str, str, str]:
+    """('conv', '32x56x56x3x3x3', 'i8xi8xi32') from a benchmark name.
+
+    Returns empty strings rather than raising: an unparseable name means the
+    column stays blank, exactly as before, instead of losing the measurement.
+    """
+    m = _OP_TAIL.search(bench_name)
+    if m:
+        return m.group("op"), m.group("shape"), m.group("dtypes") or ""
+    m = _OP_ONLY.search(bench_name)
+    if m:
+        return m.group("op"), "", ""
+    return "", "", ""
 _TO_MS = {"ns": 1e-6, "us": 1e-3, "ms": 1.0, "s": 1000.0}
 
 
@@ -101,7 +133,8 @@ def pct(xs: list[float], p: float) -> float:
 def profile_one(host: str, remote_root: str, bench_tool: str, zip_path: Path,
                 cpu_ids: str, reps: int, model: str, basename: str,
                 hw_label: str, target: str, clock_mhz: float,
-                profile_root: Path, dry_run: bool = False) -> Path:
+                profile_root: Path, dry_run: bool = False,
+                warmup_s: float = 0.2) -> Path:
     stage = Path(tempfile.mkdtemp(prefix="k1prof_"))
     try:
         with zipfile.ZipFile(zip_path) as z:
@@ -124,9 +157,14 @@ def profile_one(host: str, remote_root: str, bench_tool: str, zip_path: Path,
             did = int(m.group(1))
             # single-quote for the local shell, escape $ for the remote one
             esc = name.replace("$", r"\$")
+            # Warm up explicitly. Without this the first repetition pays for
+            # page faults and i-cache misses and is silently averaged in with
+            # the rest; the profile then claims a median over samples that were
+            # not all measuring the same thing.
             cmd = (f"cd {rdir} && {bench_tool} --module=\"{esc}\" "
                    f"--device=local-task --task_topology_cpu_ids={cpu_ids} "
-                   f"--benchmark_repetitions={reps}")
+                   f"--benchmark_repetitions={reps} "
+                   f"--benchmark_min_warmup_time={warmup_s}")
             if dry_run:
                 print("  would run:", cmd)
                 continue
@@ -142,13 +180,16 @@ def profile_one(host: str, remote_root: str, bench_tool: str, zip_path: Path,
                 continue
             bench_name, xs = next(iter(samples.items()))
             med = statistics.median(xs)
+            op, shape, dtypes = parse_op_shape(bench_name)
             rec = {
                 "model": model, "basename": basename, "dispatch_id": did,
                 "module_name": bench_name, "hw_label": hw_label,
+                "op": op, "shape": shape, "dtypes": dtypes,
                 "target": target, "cpu_ids": cpu_ids,
                 "cluster": 0 if int(cpu_ids.split(",")[0]) < 4 else 1,
                 "n_cores": len(cpu_ids.split(",")),
                 "reps": len(xs), "clock_mhz": clock_mhz,
+                "warmup_s": warmup_s,
                 "samples_ms": xs,
                 "median_ms": med,
                 "mean_ms": statistics.fmean(xs),
@@ -157,7 +198,15 @@ def profile_one(host: str, remote_root: str, bench_tool: str, zip_path: Path,
                 "stdev_ms": statistics.pstdev(xs) if len(xs) > 1 else 0.0,
                 "cv_pct": (statistics.pstdev(xs) / med * 100.0)
                           if len(xs) > 1 and med else 0.0,
-                "cycles_est": int(round(med * 1e-3 * clock_mhz * 1e6)),
+                # DERIVED, not measured: median wall time x an ASSUMED core
+                # clock. rdcycle SIGILLs from userspace on this board, so there
+                # is no hardware cycle count here at all. The governor is
+                # pinned to `performance` at 1.6 GHz today; if that ever
+                # changes this number becomes silently wrong, which is why it
+                # is named _est and why the CSV's `cycles` column carries it
+                # only for schema compatibility.
+                "cycles_est_from_assumed_clock": int(
+                    round(med * 1e-3 * clock_mhz * 1e6)),
             }
             records.append(rec)
             print(f"  dispatch_{did:<3} median={med*1000:9.2f} us  "
@@ -192,10 +241,21 @@ def _write_csv(path: Path, records: list[dict]) -> None:
             # `mean_time` carries the MEDIAN on purpose: it is the robust
             # statistic the scheduler should use as nominal service time. The
             # column name is fixed by the existing schema.
+            # `op` and `shape` were written as empty strings here for the
+            # whole K1 campaign, which is why no per-op-type analysis was
+            # possible; both are parsed out of the module name now.
+            #
+            # `returncode` stays 0 because a failed benchmark produces no row
+            # at all (the ssh call raises and the dispatch is skipped), so 0 is
+            # accurate for every row that exists. Correctness is a separate
+            # question this tool does not answer -- it times kernels, it does
+            # not compare outputs -- and the sidecar JSONL records that
+            # explicitly rather than implying it here.
             w.writerow([r["dispatch_id"], r["module_name"], "", "",
                         f"{r['median_ms']:.6f}", "ms",
                         f"{r['median_ms']*1e6:.3f}", 0, "",
-                        "k1_measured", "", "", r["cycles_est"]])
+                        "k1_measured", r.get("op", ""), r.get("shape", ""),
+                        r["cycles_est_from_assumed_clock"]])
 
 
 def _write_jsonl(path: Path, records: list[dict]) -> None:
@@ -221,6 +281,8 @@ def main() -> int:
     ap.add_argument("--hw-label-suffix", default="",
                     help="appended to the hw label, e.g. '_c1' for cluster 1")
     ap.add_argument("--reps", type=int, default=10)
+    ap.add_argument("--warmup-s", type=float, default=0.2,
+                    help="google-benchmark minimum warmup time, seconds")
     ap.add_argument("--clock-mhz", type=float, default=1600.0)
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
@@ -245,7 +307,8 @@ def main() -> int:
                 try:
                     profile_one(a.host, a.remote_root, a.bench_tool, z,
                                 a.cpu_ids, a.reps, model, basename, label,
-                                a.target, a.clock_mhz, profile_root, a.dry_run)
+                                a.target, a.clock_mhz, profile_root, a.dry_run,
+                                warmup_s=a.warmup_s)
                 except Exception as e:  # noqa: BLE001
                     print(f"  FAILED {model}/{label}: {e}", file=sys.stderr)
                     rc = 1
