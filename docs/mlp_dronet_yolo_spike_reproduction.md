@@ -25,6 +25,164 @@ Repo layout reminder: `zephyr-chipyard-sw/` is a submodule of this repo, and
 submodule and need their own commit chain (modelblaster → zephyr-chipyard-sw
 pointer bump → this repo's pointer bump) if kept.
 
+## Prerequisites: building the `zephyr` conda env + Zephyr SDK from scratch
+
+Everything below §0 assumes the `zephyr` conda env, the Zephyr SDK, and the
+`west` workspace already exist. Two earlier passes through this doc
+(including a from-scratch *repo* clone) explicitly skipped this by
+symlinking in an already-installed toolchain — this section closes that
+gap, verified via a genuine from-scratch install (conda + SDK + full
+pipeline run) on 2026-08-27. Good news: unlike the unrelated `xpurt`/Isaac
+Sim env elsewhere in this repo (see `docs/xpurt_env_setup.md`), **this
+environment already has a real, committed setup script** —
+`zephyr-chipyard-sw/README.md`'s "Standalone Installation" section plus
+`scripts/install_conda.sh` / `install_submodules.sh` / `install_toolchain_sdk.sh`.
+This section is just that flow, run for real, with the gaps it hit and the
+extra (undocumented) packages this specific pipeline needs on top of it.
+
+```bash
+# 1. Clone + submodules (zephyr_ws/zephyr, modelblaster are submodules —
+#    hw/chipyard is NOT a registered git submodule and is not needed for
+#    this spike-only flow; don't bother initializing it here).
+git clone --recursive git@github.com:ucb-bar/XPU-RT.git
+cd XPU-RT
+git submodule update --init zephyr-chipyard-sw
+cd zephyr-chipyard-sw
+git submodule update --init modelblaster
+
+# 2. Miniforge3, conda env, west workspace (idempotent, safe to re-run).
+#    install_conda.sh bootstraps ./tools/miniforge3 (~9GB after step 3).
+#    install_submodules.sh creates the `zephyr` conda env (python 3.12),
+#    installs west's own deps (west, pyelftools, rich, meson, ninja,
+#    matplotlib, jsonschema), inits tools/{pyuartsi,gym-pybullet-drones,
+#    picolibc,riscv-gnu-toolchain}, inits zephyr_ws/zephyr, runs
+#    `west init -l . && west config manifest.file west-riscv.yml && west update`,
+#    and inits samples/drone_control.
+source scripts/install_conda.sh
+bash scripts/install_submodules.sh
+
+# 3. Zephyr SDK (official zephyrproject-rtos/sdk-ng v1.0.0-beta1 release —
+#    NOT a custom chipyard fork, despite the beta-looking version string;
+#    downloads ~260MB, installs GNU riscv64-zephyr-elf + LLVM + host tools).
+bash scripts/install_toolchain_sdk.sh
+source scripts/set_envvars_sdk.sh
+```
+
+**Gap #1 hit during the from-scratch run — SDK CMake package registration
+failed with a missing system library, and the script's `set -e` silently
+skipped the subsequent cmake-patches-copy step as a result:**
+```
+cmake: error while loading shared libraries: libidn.so.11: cannot open shared object file: No such file or directory
+ERROR: CMake package registration failed
+```
+This is a **host library gap**, not a repo bug — this machine has
+`libidn.so.12` (a compatible SONAME bump) but not the older `.so.11` some
+prebuilt binaries still link against. Other users on this same shared
+machine had already independently hit and worked around the identical
+issue (found `.compat_lib/libidn.so.11 -> libidn.so.12` symlinks under
+other home directories). Fix, no sudo required:
+```bash
+mkdir -p tools-manual/compat_lib
+ln -sf /lib/x86_64-linux-gnu/libidn.so.12 tools-manual/compat_lib/libidn.so.11
+cd tools-manual/zephyr-sdk-1.0.0-beta1
+LD_LIBRARY_PATH="$PWD/../compat_lib:${LD_LIBRARY_PATH:-}" ./setup.sh -c
+cd -
+# install_toolchain_sdk.sh's own cmake-patches-copy step never ran because
+# of the error above -- do it manually (harmless if already done):
+cp tools/patches/generic.cmake tools/patches/target.cmake \
+   tools-manual/zephyr-sdk-1.0.0-beta1/cmake/zephyr/
+```
+Whether this specific library is missing depends entirely on the host; if
+`install_toolchain_sdk.sh` succeeds cleanly for you, skip this. Confirmed
+this registration step doesn't actually gate anything else — `west build`
+uses `set_envvars_sdk.sh`'s explicit `ZEPHYR_SDK_INSTALL_DIR` env var to
+find the SDK regardless, so even without this fix the SDK's toolchain
+binaries (`gnu/riscv64-zephyr-elf/bin`, `llvm/bin`) are fully usable; this
+only affects `find_package(Zephyr-sdk)`-based auto-discovery, which this
+project's own build flow doesn't rely on.
+
+**Gap #2 — this machine's PATH shadows `cmake` with an ancient (3.3.2,
+non-functional against this libc) Xilinx Vitis-bundled one**, causing
+`west build` to fail with `cannot get cmake version: ... returned non-zero
+exit status 127` even after the SDK itself is fully installed. This is
+exactly why `export PATH="/usr/bin:${PATH}"` is already in §0 below — it
+wasn't obvious *why* until hitting this for real. Host-specific; may not
+apply to your machine, but if `west build` fails this way, check `which
+cmake` and make sure a real, working one wins.
+
+**Sanity check before moving to the actual pipeline** (matches
+`zephyr-chipyard-sw/README.md`'s own suggested check):
+```bash
+pip install spike==0.0.5.dev20   # see below — this IS on PyPI
+west build -p -b spike_riscv64 samples/hello_world/ -d /tmp/hello_build
+spike /tmp/hello_build/zephyr/zephyr.elf
+# expect: "Hello World! spike_riscv64/rocketchip_virt_riscv64"
+```
+
+**Beyond `install_submodules.sh`, this specific mlp/dronet/yolo pipeline
+needs several packages the base Zephyr install doesn't pull in.** None of
+these are custom/private — all confirmed fetchable from public PyPI /
+pytorch.org during the from-scratch run:
+
+```bash
+# west's own full base requirements (install_submodules.sh only installs
+# a subset by hand; this covers the rest -- canopen, patool, pylink-square,
+# semver, reuse, anytree, intelhex, etc.)
+pip install -r zephyr_ws/zephyr/scripts/requirements-base.txt
+
+# spike itself. Despite the custom-looking version string
+# ("0.0.5.dev20+pyspike.g40ac8a8.spike.g591cff16" -- two embedded git
+# hashes from setuptools_scm), this exact version IS a normal, public
+# PyPI package (github.com/liuyu81/pyspike, Apache-2.0) with a prebuilt
+# manylinux wheel -- no local compilation needed. (Gemmini/Saturn RoCC
+# support is NOT compiled into this wheel -- it comes from
+# `libgemmini.so`, a runtime `--extlib`-style plugin generated by
+# modelblaster's own tooling and already committed under
+# `modelblaster/cores/gemmini/include/per_config/`, unrelated to the spike
+# package itself.)
+pip install spike==0.0.5.dev20
+
+# torch, pinned to match what modelblaster/the rest of this env expects
+# (CPU-only wheel; a GPU build is not needed for this flow and is much
+# larger)
+pip install torch==2.9.0+cpu torchvision==0.24.0+cpu \
+  --index-url https://download.pytorch.org/whl/cpu
+
+# modelblaster's own deps (torch already pinned above; this pulls in
+# numpy, pillow, ultralytics>=8.4.55 -- needed for yolov8_nano's
+# extraction step, see Bug/note in §0 below -- and registers the
+# `modelblaster` package itself in editable mode)
+pip install -e modelblaster/
+```
+
+Expect one benign pip resolver warning here:
+`gym-pybullet-drones 2.0.0 requires numpy<2.0,>=1.24, but you have numpy
+2.5.x` — `gym-pybullet-drones` is installed by `install_submodules.sh` for
+an unrelated drone-control sample and is never imported by this pipeline;
+the numpy≥2 state this warning complains about is the same state the
+original long-lived environment this doc was developed against already
+has. Not something to fix.
+
+### Dry-run result (2026-08-27)
+
+Ran this exact sequence end to end on a fresh clone in `/scratch2` (not
+`/tmp` — needs ~15-20GB, `/tmp` was constrained on this host): conda +
+Zephyr SDK + west workspace built from nothing, both `libidn`/PATH gaps
+above hit and fixed, then the *full* documented pipeline (§1 profiling ×6,
+§2 dispatch graphs, §3 symlinks, §5 schedule, §6 combined build) run
+against the resulting environment. **Result: identical to every other
+verification in this doc** — schedule regenerated to the same 71/1/1
+instance counts and 733 dispatches; `OVERALL: PASS (3 models)`
+(`mlp_control` `max_abs_err=8.01e-08`, `dronet`/`yolov8_nano` bit-exact);
+timing **704.675ms actual vs. 704.997ms predicted (1.00x)**, matching
+every previous run to within noise. No code or config changes were needed
+beyond the two host-specific workarounds above — the repo itself required
+nothing new. The scratch clone, conda env, and SDK install created purely
+for this dry run were removed afterward; nothing from this run persists on
+disk beyond this doc section (the two workaround commands above are
+reproducible from a clean host, not one-time hacks tied to specific
+files that no longer exist).
+
 ## 0. Environment setup (run before every command below)
 
 ```bash
@@ -241,6 +399,16 @@ python3 scripts/run_xpurt_schedule.py \
 Outputs (both untracked, regenerated in place each run):
 - `schedules/scheduled_networks_mlp_dronet_yolo_spike_greedy_periodic_profiled.json`
 - `plots/networks_mlp_dronet_yolo_spike_greedy_periodic_profiled.png`
+
+Since this doc was last verified, `dev` picked up a new, unrelated
+"granularity advisor" feature (`xpu-rt/granularity_advisor.py`, imported by
+`run_xpurt_schedule.py`). It now prints an informational warning here —
+e.g. `WARN: granularity advisor -- the desired granularity for
+yolov8_nano's dispatches should be finer: its largest dispatch (46.11 ms)
+exceeds mlp_control's available free slot (9.61 ms)...` — this is a
+non-fatal suggestion about dispatch granularity, not an error; the
+schedule JSON is still written and the pipeline is unaffected. Not
+investigated further here — out of scope for this doc.
 
 First confirmed-good result (both periods at 1000ms): 249 schedule entries,
 one instance each of `mlp_control0`, `dronet0`, `yolov8_nano`, makespan
