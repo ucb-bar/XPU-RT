@@ -41,11 +41,15 @@ TARGETS=(
   "spacemit_x60"
 )
 
-# Both clusters run scalar and RVV; IME is added once its variant exists in
-# merlin/models/spacemit_x60.yaml (cluster 0 only -- it SIGILLs on cluster 1).
+# Both clusters run scalar and RVV. IME is cluster 0 only -- it SIGILLs on
+# cluster 1 (measured, artifacts/k1_bringup/*/ime_capability_probe.txt) -- and
+# its variant now exists in merlin/models/spacemit_x60.yaml, so it is built
+# here. The label is not taken on trust: IME_GATE below disassembles the result
+# and fails the build if no smt.vmadot reached the machine code.
 HWS=(
   "RVV"
   "scalar"
+  "IME"
 )
 
 DRY_RUN="${DRY_RUN:-0}"
@@ -79,13 +83,25 @@ fi
 # turns into the *_dispatch_graph.json the scheduler consumes.
 # --build-benchmarks produces the *_benchmarks.zip that profile_remote.sh
 # stages to the board for per-dispatch timing.
+# --dump-artifacts is required by the IME gate: without it no .o/.so is emitted
+# and there is nothing to disassemble, which is why the gate had never actually
+# run against a real build.
 extra_args=(
   # "--quantized"
-  #"--dump-artifacts"
+  "--dump-artifacts"
   "--build-benchmarks"
   "--dump-graph"
   "--build-dir" "${MERLIN_TOOL_BUILD_DIR}"
 )
+
+# IME acceptance gate. 1 = disassemble every IME build and record the vmadot
+# count; 0 = skip. Per-model expectations, because a legitimate zero exists:
+# MLP's matmuls are all 1xNxK (M=1, i.e. GEMV) and a matrix engine has nothing
+# to bite on, so "0 vmadot for mlp" is a property of the model rather than a
+# build failure. Anything not listed defaults to requiring at least one.
+IME_GATE="${IME_GATE:-1}"
+IME_GATE_DIR="${IME_GATE_DIR:-${REPO_ROOT}/artifacts/k1_run/ime_gate}"
+ime_expect_zero_models=("mlp")
 if [[ "${DRY_RUN}" == "1" ]]; then
   extra_args+=("--dry-run")
 fi
@@ -130,6 +146,43 @@ for target in "${TARGETS[@]}"; do
           exit "${rc}"
         fi
       else
+        # IME gate: an "IME" build that silently lowered to plain RVV must be
+        # rejected, not profiled as IME performance.
+        if [[ "${hw}" == IME* && "${IME_GATE}" == "1" && "${DRY_RUN}" != "1" ]]; then
+          mkdir -p "${IME_GATE_DIR}"
+          gate_log="${IME_GATE_DIR}/${model_name}_${target}_${hw}.txt"
+          expect_zero=0
+          for m in "${ime_expect_zero_models[@]}"; do
+            [[ "${model_name}" == "${m}" ]] && expect_zero=1
+          done
+
+          set +e
+          bash "${REPO_ROOT}/runtime/scripts/verify_ime_build.sh" "${out_dir}" \
+            >"${gate_log}" 2>&1
+          grc=$?
+          set -e
+          n_vmadot="$(grep -oE 'vmadot[ =:]+[0-9]+' "${gate_log}" | grep -oE '[0-9]+' \
+                      | paste -sd+ - | bc 2>/dev/null || echo 0)"
+          n_vmadot="${n_vmadot:-0}"
+          {
+            echo ""
+            echo "gate: model=${model_name} hw=${hw} expect_zero=${expect_zero} vmadot_total=${n_vmadot}"
+          } >>"${gate_log}"
+
+          if [[ "${expect_zero}" == "1" ]]; then
+            echo "IME gate: ${model_name} vmadot=${n_vmadot} (zero expected: all matmuls are GEMV) -> ${gate_log}"
+          elif [[ $grc -ne 0 || "${n_vmadot}" == "0" ]]; then
+            echo "IME GATE FAILED: ${model_name}/${hw} produced no smt.vmadot -- this build fell back to RVV; refusing to label it IME. See ${gate_log}" >&2
+            failures=$((failures + 1))
+            if [[ "${CONTINUE_ON_ERROR}" != "1" ]]; then
+              popd >/dev/null
+              exit 1
+            fi
+          else
+            echo "IME gate: ${model_name} vmadot=${n_vmadot} PASS -> ${gate_log}"
+          fi
+        fi
+
         # Post-process DOT -> JSON (dependency extraction).
         if [[ "${PARSE_DOT}" == "1" ]]; then
           dot_path="${out_dir}/${basename}_dispatch_graph.dot"

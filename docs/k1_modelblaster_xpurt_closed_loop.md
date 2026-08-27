@@ -150,7 +150,7 @@ cluster in the tag would make the profile unfindable.
 | MLP, 5 dispatches | 335.7 µs — every dispatch 63-78 µs **regardless of work**; ~94% is launch overhead |
 | DroNet, 19 dispatches | **113.7 ms** on one core; top-5 dispatches are 75% of it |
 | cluster 1 vs cluster 0 | **0.996** median ratio on compute-bound dispatches — the clusters are equivalent for RVV |
-| IME vs RVV (DroNet) | **1.079** — IME is 7.9% *slower* overall; it wins on exactly 2 of 19 dispatches |
+| IME vs RVV (DroNet) | **1.079** — IME is 7.9% *slower* overall. See `artifacts/k1_run/ime_gate/FINDINGS.md`: exactly **one** `smt.vmadot` exists in the whole model, in `matmul_1x1x2048`, and it is worth 0.027 ms of 122.7. The 7.9% is the `+xsmtvdot` data-tiling path, not the matrix engine — proved by `IME_ukernel`, which measures the same 122.73 ms with **zero** vmadot. No convolution can reach IME here: every xsmtvdot hook in this IREE is matmul-only. |
 
 ---
 

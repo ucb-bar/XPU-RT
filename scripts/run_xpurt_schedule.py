@@ -257,6 +257,19 @@ def schedule_iree_networks(
     # own combination, which is what a multi-core target needs to express real
     # concurrency; "prefix" keeps the cumulative-group reading. The two are
     # identical when every kind has one core, so no pre-K1 config changes.
+    # Capability legality, before anything is scheduled.
+    #
+    # IME is an instruction available on cluster-0 cores only -- measured with a
+    # per-core SIGILL probe, artifacts/k1_bringup/*/ime_capability_probe.txt.
+    # An IME dispatch on cluster 1 does not run slowly, it traps. That has to be
+    # rejected here rather than discovered on the board, and until now it was
+    # not: capabilities.py was unit-tested and called by nothing.
+    try:
+        from capabilities import check_profile_hw_map
+        check_profile_hw_map(cfg["profile_hw_map"])
+    except ImportError:
+        pass  # capabilities.py is K1-specific; other targets need not have it
+
     machines, machine_combinations = build_machine_combinations(
         machine_core_counts, mode=machine_combination_mode)
     n_cores = len(machines)

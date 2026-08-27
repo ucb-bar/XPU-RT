@@ -251,3 +251,65 @@ def core_ids_for_combination(
             )
         out.append(cluster[idx])
     return out
+
+# Profile-hw labels in a networks JSON are build-variant names -- "RVV",
+# "RVV_c1", "RVV_fused", "RVV_split", "IME", "IME_ukernel", "scalar_c1" -- while
+# the capability table above is in terms of the ISA feature actually required:
+# scalar, rvv, ime. Mapping is by prefix so a new variant of an existing ISA
+# needs no change here; only a genuinely new ISA does.
+_ISA_PREFIXES = (
+    ("ime", "ime"),
+    ("rvv", "rvv"),
+    ("scalar", "scalar"),
+)
+
+
+def implementation_of_profile_hw(hw_label: str) -> str:
+    """'RVV_c1' -> 'rvv', 'IME_ukernel' -> 'ime'. '' for an unknown label.
+
+    Returning '' rather than guessing matters: an unrecognised label must not
+    silently normalise to something legal everywhere, or the legality check it
+    feeds becomes a no-op for exactly the case it was written to catch.
+    """
+    low = (hw_label or "").strip().lower()
+    for prefix, impl in _ISA_PREFIXES:
+        if low.startswith(prefix):
+            return impl
+    return ""
+
+
+def check_profile_hw_map(profile_hw_map: Dict[str, str],
+                         capabilities: Dict[str, frozenset] | None = None,
+                         strict_unknown: bool = False) -> None:
+    """Reject an illegal (machine kind, build variant) pairing at config time.
+
+    This is the production entry point. The legality machinery below it was
+    written, unit-tested, and then called by nothing -- so a config naming
+    `profile_hw: {cpu_e: IME}` would schedule happily and SIGILL on the board's
+    first cluster-1 dispatch, which is precisely the failure the capability
+    table exists to prevent.
+
+    Unknown labels are reported but not fatal by default, because the machine
+    kinds in this repo extend well past the K1 (gemmini, rvv_opu, qrb5165 DSP
+    and HTA, ...) and those have no entry in K1_CAPABILITIES. Pass
+    ``strict_unknown=True`` on a K1 config to make them fatal.
+    """
+    caps = K1_CAPABILITIES if capabilities is None else capabilities
+    machine_impls: Dict[str, List[str]] = {}
+    unknown: List[str] = []
+    for kind_lower, hw in (profile_hw_map or {}).items():
+        kind = kind_lower.upper()
+        if kind not in caps:
+            continue  # a machine kind this table says nothing about
+        impl = implementation_of_profile_hw(hw)
+        if not impl:
+            unknown.append(f"{kind_lower}: {hw!r} is not a scalar/rvv/ime variant")
+            continue
+        machine_impls[kind] = [impl]
+    if unknown and strict_unknown:
+        raise IllegalPlacement("unrecognised profile_hw label(s):\n  "
+                               + "\n  ".join(unknown))
+    for u in unknown:
+        print(f"WARN capability check: {u}")
+    if machine_impls:
+        check_implementation_legality(machine_impls, caps)

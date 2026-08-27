@@ -974,3 +974,124 @@ binding constraint is the dependency chain, not capacity — which means B3
 
 XPU-RT `feat/k1-modelblaster-closed-loop`, merlin `c2f7c35`, ModelBlaster
 `34dc890`.
+
+---
+
+## Phase 2 — capability enforcement, and what IME actually does
+
+### Attempted
+
+Wire the legality machinery that had no callers, gate the IME label, and settle
+what the matrix engine is really contributing. The user supplied the official
+SpaceMiT IME specification mid-phase
+(github.com/spacemit-com/riscv-ime-extension-spec), which changed the answer.
+
+### Commands
+
+```bash
+# enforcement
+python3 scripts/run_xpurt_schedule.py ...        # now calls check_profile_hw_map
+ssh k1 './bin/merlin-dispatch-scheduler ... --variant_e=IME'   # now refused
+bash runtime/scripts/verify_ime_build.sh gen/vmfb/dronet/spacemit_x60/IME/dronet.q.int8
+
+# the ukernel A/B
+cd merlin && uv run tools/merlin.py compile models/dronet/dronet.q.int8.mlir \
+  --target spacemit_x60 --hw RVV_ukernel --dump-artifacts --build-benchmarks --dump-graph
+python3 runtime/scripts/profile_k1.py --models dronet,mlp --hw RVV_ukernel,IME_ukernel --cpu-ids 0
+```
+
+### Passed
+
+* **`capabilities.py` has a production caller.** `check_profile_hw_map` added
+  and called from `run_xpurt_schedule.py` before combinations are built.
+  `profile_hw: {cpu_e: IME}` now fails at config time with the measured reason.
+  Label normalisation is by ISA prefix, so `RVV_c1`/`IME_ukernel`/`RVV_split`
+  need no new code; non-K1 kinds (gemmini, HTA, DSP) pass through.
+* **The runner refuses `--variant_e=IME`.** Verified on the board. That is the
+  only layer that sees a hand-typed invocation, which bypasses the scheduler
+  entirely.
+* **The IME gate is wired.** `--dump-artifacts` uncommented (without it there is
+  no object to disassemble, which is why the gate had never run), `IME` added to
+  `HWS`, per-model expectations so MLP's legitimate zero is not a false failure,
+  results stored under `artifacts/k1_run/ime_gate/`. Verified: dronet PASS,
+  mlp FAIL-as-expected.
+
+### Measurements — and four corrections
+
+Full detail in `artifacts/k1_run/ime_gate/FINDINGS.md`.
+
+**The 4x4x8 tile assumption was right, and is forced by hardware.** The spec's
+MAC-unit table is indexed by `vl*SEW`; at VLEN=256/SEW=8/vl=32 the only tile is
+4x4x8 with Copies=1. K is *not* a tiling parameter — it is pinned at 8.
+
+**Correction: the discriminator is M, not K.** Earlier this session I wrote that
+K distinguishes the vmadot-eligible matmul from MLP's, reasoning from K=2048 vs
+K=10/32. Wrong. Every xsmtvdot path in this IREE requires M0=4 and N0=4; for
+M=1, `chooseMatmulTile` prefers `{1,4,8}` and `limitVectorTileSizes` clamps M
+4->1, both landing on a pure-RVV fallback. K never enters the decision.
+
+**Correction: the vmadot is real, not dead code** — a reasonable hypothesis,
+since the native tile is ALWAYS_INLINE and table-referenced. Ruled out by
+disassembly: it sits inside a loop with a live back edge, stride 32 B/iteration
+(one 4x8 tile), preceded by exactly the spec's `vsetvli zero, t0, e8, m1` tile
+selection. This build links no ukernel bitcode at all, so there is no dead
+ukernel to confuse it with.
+
+**New finding: 15 of every 16 lanes are discarded.** Four instructions later:
+`vmv.v.i v0, 1` then `vse32.v v8, (a0), v0.t` — a masked store keeping **one**
+of sixteen int32 results. IREE padded a 1x1x2048 GEMV up to the 4x4 tile the
+instruction demands. Still 23% faster than RVV for that dispatch
+(0.0926 vs 0.1200 ms) — but it is 0.075% of DroNet's runtime, so 0.027 ms.
+
+**Correction: the "IME wins" in compile_advice.json are not IME wins.**
+Dispatch 14 (`reduction`, -25.8%) and dispatch 7 (`elementwise`, -5.3%) contain
+no vmadot. Dispatch 14 measures 0.742x — *better* than the one dispatch that does
+use IME (0.772x). Both are data-tiling side effects.
+
+**Correction: no convolution can ever reach IME here.** Every xsmtvdot hook is
+matmul-only; no conv->img2col/mmt4d path is wired to it. DroNet is 111 of its
+122.7 ms in convolutions, so 90% of the model is unreachable by construction —
+even though conv via `vmadot1`/`vmadot2` is the spec's sole worked example.
+
+### Failed — the ukernel hypothesis, refuted by measurement
+
+The plan predicted enabling the vendored ukernels was "the most likely route to
+more than one vmadot". Measured:
+
+| variant | dronet | vs RVV | vmadot |
+|---|---|---|---|
+| RVV | 113.71 ms | 1.000 | 0 |
+| IME | 122.73 ms | 1.079 | 1 |
+| RVV_ukernel | 113.64 ms | **0.999** | 0 |
+| IME_ukernel | 122.73 ms | **1.079** | **0** |
+
+`RVV_ukernel` is identical to `RVV`, and contains zero `iree_uk` and zero
+`mmt4d` symbols. The riscv_64 ukernel bitcode *is* built, so this is not a
+missing artifact: no mmt4d op is ever formed for these shapes, so the flag has
+nothing to attach to.
+
+And `IME_ukernel` measures **the same 122.73 ms as IME while containing no
+vmadot** — which settles the attribution question outright. The 7.9% IME penalty
+is the data-tiling path, not the matrix engine.
+
+Both variants are kept in the yaml as recorded negative results rather than
+deleted, so the experiment is not repeated.
+
+### Blocker
+
+None for the phase. But the honest headline is that **IME is untested on this
+workload**, because the workload cannot reach it: 90% of DroNet is convolution
+and no conv lowering exists. "IME is 7.9% slower" is a statement about
+`+xsmtvdot`'s data tiling, not about `smt.vmadot`.
+
+### Next
+
+Phase 3: YOLOv8n through merlin/IREE, 64x64 first. Note for that phase — YOLOv8n
+is 57 fused conv+BN+SiLU plus 6 bare conv, so on the evidence above it will get
+**zero** vmadot too, and IME need not be compiled for it until a conv path
+exists.
+
+### Repo SHAs
+
+XPU-RT `feat/k1-modelblaster-closed-loop`, merlin (pending commit), ModelBlaster
+`34dc890`.
