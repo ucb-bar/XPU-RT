@@ -290,8 +290,9 @@ XPU-RT/
 │   └── models/                #   Model definitions (MLIR/ONNX sources)
 ├── ModelBlaster/               # Git submodule (PyTorch->Zephyr/RISC-V pipeline) — Flow A
 │   └── third_party/KernelBlaster/  # nested submodule — originating research project
-├── env.yml                    # Conda environment
-└── setup.py                   # Editable pip install config
+└── pyproject.toml              # xpu-rt's own deps (`pip install -e .`); see
+                                 #   scripts/install_xpurt_deps.sh for the
+                                 #   full reproducible-flow dependency set
 ```
 
 
@@ -374,6 +375,6 @@ Two ways to get the signal:
 
 ## Notes
 
-1. The Python scheduler modules are sourced from `xpu-rt/*.py` and installed via `setup.py`.
+1. The Python scheduler modules are sourced from `xpu-rt/*.py`; deps declared in `pyproject.toml` (`pip install -e .`).
 2. Runtime C tooling in `runtime/` is separate from Python scheduling code and is focused on Merlin/IREE integration.
 3. If submodule contents are missing, runtime build/profile scripts will fail early.
