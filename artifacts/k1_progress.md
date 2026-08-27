@@ -457,3 +457,45 @@ conclusion.
 
 It loses only on the two large-K calls and wins slightly at K=16, which points
 at reduction blocking as the specific thing a second round should address.
+
+---
+
+## Round 1 through ModelBlaster: advice → fusion → Codex → measured → rejected
+
+The full loop, end to end, on `mlp_control`:
+
+1. Measured profile on the board says elementwise `elu_s8` is **39.7%** of runtime
+   — a share that only appeared *after* the curated RVV linear kernel landed.
+2. `compile_advice_mlp_control.json` recommends `fuse_with_successor`, with that
+   evidence attached.
+3. `scripts/advice_to_fusion_hint.py` translates it into
+   `modelblaster.fusion_hints/v1`.
+4. `apply_fusion_hint` rewrites the IR: **7 ops → 4**.
+5. The fused op `linear_s8_elu_s8` has no RVV kernel, so **Codex** generates one
+   (`gpt-5.6-sol`, prompt `bd46d6231ff1e79c`, 20 108 in / 7 897 out).
+6. Built, deployed, run on the K1: **PASS**, correct.
+
+| configuration | ticks | vs best | vs round 0 |
+|---|---|---|---|
+| reference scalar (round 0) | 8965 | 4.22x | 1.00x |
+| **curated RVV linear, unfused** | **2122** | **1.00x** | **4.22x** |
+| fused, reference kernel | 2986 | 1.41x | 3.00x |
+| fused, Codex RVV kernel | 2892 | 1.36x | 3.10x |
+
+### Verdict: REJECT the fusion round
+
+Correct on hardware and still **36% slower** than the unfused incumbent. Two
+reasons, both visible in the artifacts: the elu tail needs a per-element `expf`
+that does not vectorise, so fusing buys one avoided tensor write and pays for a
+scalar tail; and the Codex fused kernel never emits `vwmacc` (its intrinsic set
+is `vle8`/`vmv`/`vsetvl` only), so it vectorises the reduction less effectively
+than the curated linear kernel it replaced.
+
+The advice was **well-founded** — 39.7% in elementwise ops is exactly the kind of
+thing that should be investigated — and the outcome is still a rejection. That is
+the loop working: the recommendation is a hypothesis, the board is the referee,
+and both rounds so far have been rejected on measurement rather than accepted on
+plausibility.
+
+**Best configuration on the board remains the unfused curated RVV build: 2122
+ticks = 88.4 us at 24 MHz, 4.22x faster than the round-0 reference.**

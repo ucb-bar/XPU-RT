@@ -287,6 +287,45 @@ kernels — deterministic artifacts already in the tree, not another model.
 The call log records `provider: codex`; note it deliberately does **not** reuse
 `bedrock_client._append_call_log`, which hardcodes `"provider": "bedrock"`.
 
+#### Compare against the best kernel you already have, not the reference
+
+The first Codex kernel (`artifacts/k1_run/codex/`) was bit-exact on the board and
+**4.48× faster than the scalar reference** — a number it would be easy to report
+as a win. Against `kernels/rvv/rvv_linear_s8_direct.c`, which was already in the
+tree, it is **41% slower**:
+
+| `linear_s8` total, rdtime ticks | scalar ref | curated RVV | Codex RVV |
+|---|---|---|---|
+| | 8095 | **1280** | 1807 |
+
+Accept requires correctness **and** an improvement in the selected metric. It is
+archived, not promoted. Always run the incumbent on the same board in the same
+conditions before claiming a generated kernel is an improvement.
+
+---
+
+## 9. Feeding advice back into ModelBlaster
+
+```bash
+python3 scripts/advice_to_fusion_hint.py \
+    --advice artifacts/k1_run/compile_advice_mlp_control.json \
+    --ir <gen>/graph.json --model mlp_control \
+    --out <gen>/fusion_hint.json --pair-only
+python3 -m modelblaster.pipeline.apply_fusion_hint \
+    --hint <gen>/fusion_hint.json --model mlp_control \
+    --ir <gen>/graph.json --out <gen>/graph.fused.json
+```
+
+The scheduler never edits C: it emits advice, the adapter translates the
+actionable subset into ModelBlaster's own `modelblaster.fusion_hints/v1`, and
+`apply_fusion_hint` does a pure JSON-in/JSON-out graph rewrite. mlp_control goes
+from 7 ops to 4 (three fused `linear_s8+elu_s8` pairs plus the tail linear).
+
+Note the evidence only appeared **after** the previous round: once the curated
+RVV linear kernel landed, the elu ops went from noise to **39.7%** of runtime.
+Fusion advice that would have been wrong at round 0 is right at round 1, which
+is the argument for closing the loop rather than optimising once.
+
 ---
 
 ## Artifacts
