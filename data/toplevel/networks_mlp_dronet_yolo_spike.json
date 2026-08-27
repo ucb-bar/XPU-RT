@@ -1,0 +1,48 @@
+{
+  "_comment": "Three-component heterogeneous schedule (mlp_control periodic drone-control policy fp32 + dronet periodic int8 obstacle classifier + yolov8_nano non-periodic int8 object detector) profiled entirely on spike (scalar/rvv reference+curated kernels) rather than FireSim RTL -- a fast, no-hardware round trip through modelblaster + the XPU-RT scheduler. Mirrors networks_periodic_mlp10ms_dronet20ms_yolov8_firesim.json's network topology but with periods loosened to 100ms/150ms (from the original 10ms/20ms): yolov8_nano without gemmini acceleration is enormously slow on spike (600M-10.4B cycles, ~657ms non-periodic makespan at 1 instance each), so the original tight periods need ~66/33 periodic instances to converge -- correct, but a multi-minute greedy_periodic solve. Loosened periods keep this a fast pipeline-mechanics smoke test; use the original periods (see networks_periodic_mlp10ms_dronet20ms_yolov8_firesim.json) for a faithful reproduction once patient with the solver, or profile yolov8/dronet on gemmini to bring the makespan down instead. Profile data: gen/profile/{scalar,RVV}/spike/<model>/.../topo_0/results.csv (PROFILE_CPU=spike, PROFILE_CORES=0).",
+
+  "hardware": {
+    "machines": { "cpu_p": 1, "cpu_e": 1 },
+    "profile_hw": { "cpu_p": "RVV", "cpu_e": "scalar" },
+    "profile": {
+      "target": "spike",
+      "topo_tag": "topo_0",
+      "topo_tag_override": true,
+      "gen_root": "zephyr-chipyard-sw/modelblaster/gen"
+    },
+    "p_core_speedup": 1.0
+  },
+
+  "scheduler": {
+    "random_seed": 42,
+    "solver_verbosity": 2,
+    "time_limit": 60,
+    "use_profiled": true,
+    "prune_periodic": false,
+    "restrict_makespan_to_nonperiodic": true
+  },
+
+  "networks": {
+    "mlp_control": {
+      "id": 0,
+      "identifier": "mlp_control",
+      "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/mlp_control/generic_riscv64/RVV/mlp_control.fp32/mlp_control.fp32_dispatch_graph.json",
+      "period": 10,
+      "window_duration": 10
+    },
+    "dronet": {
+      "id": 1,
+      "identifier": "dronet",
+      "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/dronet/generic_riscv64/RVV/dronet.fp32/dronet.fp32_dispatch_graph.json",
+      "period": 1000,
+      "window_duration": 1000
+    },
+    "yolov8_nano": {
+      "id": 2,
+      "identifier": "yolov8_nano",
+      "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/yolov8_nano/generic_riscv64/RVV/yolov8_nano.fp32/yolov8_nano.fp32_dispatch_graph.json"
+    }
+  },
+
+  "edges": []
+}

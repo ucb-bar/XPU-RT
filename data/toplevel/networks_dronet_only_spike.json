@@ -1,0 +1,34 @@
+{
+  "_comment": "Minimal single-network repro: dronet ONLY, non-periodic (single pass), through the XPU-RT scheduler + xpurt_demo combined-binary runtime on spike. Same purpose as networks_mlp_only_spike.json but for dronet -- isolates whether dronet's ~16x actual-vs-predicted instruction-count gap (seen in the 3-network schedule) persists with no other network present to alias buffers with.",
+
+  "hardware": {
+    "machines": { "cpu_p": 1, "cpu_e": 1 },
+    "profile_hw": { "cpu_p": "RVV", "cpu_e": "scalar" },
+    "profile": {
+      "target": "spike",
+      "topo_tag": "topo_0",
+      "topo_tag_override": true,
+      "gen_root": "zephyr-chipyard-sw/modelblaster/gen"
+    },
+    "p_core_speedup": 1.0
+  },
+
+  "scheduler": {
+    "random_seed": 42,
+    "solver_verbosity": 2,
+    "time_limit": 60,
+    "use_profiled": true,
+    "prune_periodic": false,
+    "restrict_makespan_to_nonperiodic": true
+  },
+
+  "networks": {
+    "dronet": {
+      "id": 0,
+      "identifier": "dronet",
+      "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/dronet/generic_riscv64/RVV/dronet.fp32/dronet.fp32_dispatch_graph.json"
+    }
+  },
+
+  "edges": []
+}
