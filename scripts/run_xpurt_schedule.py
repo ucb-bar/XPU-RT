@@ -519,10 +519,21 @@ def schedule_iree_networks(
     # Count number of jobs (operations with no predecessors)
     num_jobs = sum(1 for op in combined_workload.operations if not op.predecessors)
     
-    # Create title showing the networks
-    network_names = [combined_workload.job_names[i] if i < len(combined_workload.job_names) else f"Job {i}" 
+    # Create title showing the networks. Dedup by base model kind (e.g.
+    # "mlp_control0".."mlp_control57" -> one "Mlp_control" entry) -- without
+    # this, a schedule with many periodic instances produces a title
+    # hundreds of characters long, which forces bbox_inches='tight' to
+    # blow up the whole figure's canvas to fit it (observed: a 642-dispatch
+    # schedule with 58 mlp_control instances rendered a 26113x1768px image
+    # that was almost entirely title whitespace).
+    network_names = [combined_workload.job_names[i] if i < len(combined_workload.job_names) else f"Job {i}"
                      for i in sorted(set(op.job_id for op in combined_workload.operations))]
-    title_networks = " + ".join([name.capitalize() for name in network_names])
+    seen_kinds = []
+    for name in network_names:
+        kind = plot._kind_from_job_name(name)
+        if kind not in seen_kinds:
+            seen_kinds.append(kind)
+    title_networks = " + ".join([kind.capitalize() for kind in seen_kinds])
     
     # Output naming: solver tag + optional `_profiled` suffix.  MILP
     # historically wrote to `plots/iree_combined_schedule_period.png`

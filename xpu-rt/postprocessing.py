@@ -186,11 +186,21 @@ def output_scheduled_json(
         time_dependency = None
         if hardware_target in hardware_dispatch_map:
             hw_dispatches = hardware_dispatch_map[hardware_target]
-            # Find the dispatch that finished most recently before this one starts
+            # Find the dispatch that finished most recently before this one starts.
+            # Strict `<` is required, not `<=`: two independent dispatches sharing
+            # a core (e.g. parallel branches after a fork) can legitimately tie on
+            # completion_time/start_time. Since the list is only sorted by
+            # completion_time, ties break on incidental dispatch_info_list
+            # insertion order, not true precedence -- with `<=` this let a later
+            # dispatch's own successor be picked as its "predecessor" (observed:
+            # dispatch_28 and dispatch_29 each pointed at the other), producing a
+            # 2-cycle that ingest_xpurt_schedule.py's topological sort correctly
+            # rejects. Ties are dropped entirely rather than guessed at; real data
+            # dependencies (above) already order anything that must be ordered.
             for completion_time, prev_dispatch_name, prev_start_time in hw_dispatches:
-                if completion_time <= start_time and prev_dispatch_name != dispatch_name:
+                if completion_time < start_time and prev_dispatch_name != dispatch_name:
                     time_dependency = prev_dispatch_name
-                elif completion_time > start_time:
+                elif completion_time >= start_time:
                     break  # No need to check further (sorted by completion time)
 
         # Create dispatch entry
