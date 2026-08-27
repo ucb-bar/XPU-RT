@@ -1,0 +1,34 @@
+{
+  "_comment": "Minimal single-network repro: mlp_control ONLY, non-periodic (single pass), through the XPU-RT scheduler + xpurt_demo combined-binary runtime on spike. Built to isolate whether the ~13-16x actual-vs-predicted instruction-count gap seen on dronet/yolov8_nano in the 3-network schedule (networks_mlp_dronet_yolo_spike.json) is inherent to the xpurt dispatch mechanism itself (fence+semaphore overhead per dispatch, worker-thread indirection) or specific to multi-network interleaving/contention. Compare this build's per-dispatch predicted vs actual (mtime-based, converted via the verified ~100:1 rdcycle:mtime ratio) against a plain standalone `examples/mlp_control/run.sh` run.",
+
+  "hardware": {
+    "machines": { "cpu_p": 1, "cpu_e": 1 },
+    "profile_hw": { "cpu_p": "RVV", "cpu_e": "scalar" },
+    "profile": {
+      "target": "spike",
+      "topo_tag": "topo_0",
+      "topo_tag_override": true,
+      "gen_root": "zephyr-chipyard-sw/modelblaster/gen"
+    },
+    "p_core_speedup": 1.0
+  },
+
+  "scheduler": {
+    "random_seed": 42,
+    "solver_verbosity": 2,
+    "time_limit": 60,
+    "use_profiled": true,
+    "prune_periodic": false,
+    "restrict_makespan_to_nonperiodic": true
+  },
+
+  "networks": {
+    "mlp_control": {
+      "id": 0,
+      "identifier": "mlp_control",
+      "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/mlp_control/generic_riscv64/RVV/mlp_control.fp32/mlp_control.fp32_dispatch_graph.json"
+    }
+  },
+
+  "edges": []
+}

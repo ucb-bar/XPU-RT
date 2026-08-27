@@ -35,7 +35,14 @@ instead of merlin/IREE.
   — full walkthrough from a multi-network workload spec to a FireSim
   run with trace plots (scheduler → codegen → build → run → analyze),
   on the Saturn-Gemmini-Q31 path (Flow A).
-* [`zephyr-chipyard-sw/agents/examples/microros_demo/ROS_FLOW.md`](zephyr-chipyard-sw/agents/examples/microros_demo/ROS_FLOW.md)
+* [`docs/mlp_dronet_yolo_spike_reproduction.md`](docs/mlp_dronet_yolo_spike_reproduction.md)
+  — a simpler, no-FireSim variant of Flow A: same ModelBlaster codegen and
+  checkout (`zephyr-chipyard-sw/modelblaster/`), profiled entirely on
+  spike with the `greedy`/`greedy_periodic` solver (no MOSEK license
+  needed). Has its own end-to-end script,
+  `scripts/repro_mlp_dronet_yolo_spike.sh`, and installs everything it
+  needs via `scripts/install_xpurt_deps.sh` — see that doc's §0.
+* [`zephyr-chipyard-sw/modelblaster/examples/microros_demo/ROS_FLOW.md`](zephyr-chipyard-sw/modelblaster/examples/microros_demo/ROS_FLOW.md)
   — micro-ROS fixed-pinning baseline flow (the reference against which
   the scheduler is benchmarked).
 * The sections below cover the Merlin/SpacemiT path (BananaPi) — Flow B.
@@ -47,13 +54,25 @@ instead of merlin/IREE.
 ```bash
 git clone https://github.com/ucb-bar/XPU-RT.git
 cd XPU-RT
-git submodule update --init --recursive
 ```
+
+**Don't run `git submodule update --init --recursive` here** — two of this
+repo's top-level submodules, `hw/chipyard` and `sims/IsaacLab`, are very
+large (chipyard alone vendors 100+ of its own nested submodules) and
+neither is needed for either flow below; a recursive init will sit there
+for a very long time pulling in gigabytes you don't need, and may get
+effectively stuck on chipyard's own submodule tree. Initialize only what
+the flow you're following actually needs — Flow B's is the next section;
+Flow A's is in its own section further down.
 
 ### Set up `merlin`
 
 Merlin provides the compiler toolchain, IREE runtime, and cross-compilation
-support used by XPU-RT. It ships as a git submodule under `merlin/`.
+support used by XPU-RT. It ships as a git submodule under `merlin/`:
+
+```bash
+git submodule update --init merlin
+```
 
 #### Prerequisites
 
@@ -164,26 +183,27 @@ same `xpu-rt/scheduler.py` as Flow B — only the compiler and target change.
 ### Repository layout
 
 ModelBlaster ships as a git submodule **nested inside `zephyr-chipyard-sw`**
-(its canonical location — the same one the standalone xpu-rt flow uses), not at
-the top level:
+(its canonical location — the same one the spike-only reproduction flow
+uses), not at the top level:
 
 ```bash
 git submodule update --init --recursive zephyr-chipyard-sw   # pulls in modelblaster (+ KernelBlaster)
 ```
 
 ```text
-XPU-RT/                (this repo)
-├── merlin/                        submodule — Flow B compiler
-└── zephyr-chipyard-sw/            submodule — Zephyr BSP + samples
-    └── modelblaster/              submodule — Flow A compiler
+XPU-RT/                          (this repo)
+├── merlin/                      submodule — Flow B compiler
+└── zephyr-chipyard-sw/          submodule — Zephyr BSP + samples
+    └── modelblaster/            submodule — Flow A compiler
 ```
 
 ModelBlaster's own scripts (`scripts/run_xpurt_scheduler*.py`,
 `benchmarks/runners/firesim.py`, `examples/xpurt_demo/run.sh`, ...) default to
 finding XPU-RT as a **sibling** checkout (`XPURT_ROOT` defaults to
 `../XPU-RT`) — that assumption predates the submodule and no longer holds
-once ModelBlaster is nested *inside* XPU-RT. Set `XPURT_ROOT` to the XPU-RT root
-explicitly when working from the submodule:
+once ModelBlaster is nested *inside* XPU-RT (two levels deep, inside
+`zephyr-chipyard-sw`). Set `XPURT_ROOT` to the XPU-RT root explicitly when
+working from the submodule:
 
 ```bash
 export XPURT_ROOT="$(cd ../.. && pwd)"   # run from inside zephyr-chipyard-sw/modelblaster
@@ -290,11 +310,14 @@ XPU-RT/
 │   ├── samples/common/xpu-rt/ #   XPU-RT runtime library (baseline + scheduler runners)
 │   ├── samples/SpacemiTX60/   #   SpacemiT-specific sample binaries
 │   └── models/                #   Model definitions (MLIR/ONNX sources)
-├── zephyr-chipyard-sw/          # Git submodule — Zephyr BSP + samples
-│   └── modelblaster/            #   nested submodule (PyTorch->Zephyr/RISC-V pipeline) — Flow A
+├── zephyr-chipyard-sw/         # Git submodule — Zephyr BSP + samples
+│   └── modelblaster/           #   nested submodule (PyTorch->Zephyr/RISC-V pipeline) — Flow A
 │       └── third_party/KernelBlaster/  # nested submodule — originating research project
-├── env.yml                    # Conda environment
-└── setup.py                   # Editable pip install config
+├── env.yml                     # cvxpy+MOSEK conda env ("xpu-rt-schedule") for
+                                 #   ModelBlaster's own MOSEK bridge scripts (Flow A)
+└── pyproject.toml              # xpu-rt's own deps (`pip install -e .`); see
+                                 #   scripts/install_xpurt_deps.sh for the
+                                 #   spike-only reproducible-flow's dependency set
 ```
 
 
@@ -377,6 +400,6 @@ Two ways to get the signal:
 
 ## Notes
 
-1. The Python scheduler modules are sourced from `xpu-rt/*.py` and installed via `setup.py`.
+1. The Python scheduler modules are sourced from `xpu-rt/*.py`; deps declared in `pyproject.toml` (`pip install -e .`).
 2. Runtime C tooling in `runtime/` is separate from Python scheduling code and is focused on Merlin/IREE integration.
 3. If submodule contents are missing, runtime build/profile scripts will fail early.
