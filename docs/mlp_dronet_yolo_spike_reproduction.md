@@ -68,14 +68,22 @@ This section is just that flow, run for real, with the gaps it hit and the
 extra (undocumented) packages this specific pipeline needs on top of it.
 
 ```bash
-# 1. Clone + submodules (zephyr_ws/zephyr, modelblaster are submodules —
-#    hw/chipyard is NOT a registered git submodule and is not needed for
-#    this spike-only flow; don't bother initializing it here).
-git clone --recursive git@github.com:ucb-bar/XPU-RT.git
+# 1. Clone WITHOUT --recursive. This repo's top-level .gitmodules
+#    registers 4 submodules (merlin, zephyr-chipyard-sw, sims/IsaacLab,
+#    hw/chipyard) and zephyr-chipyard-sw itself registers 11 more
+#    (zephyr_ws/zephyr, modelblaster, XNNPACK, executorch, tinympc,
+#    riscv-gnu-toolchain, ...) -- `--recursive` would clone ALL of them,
+#    including hw/chipyard (the full Chipyard RTL/toolchain checkout,
+#    SSH-only, very large) and sims/IsaacLab (a large robotics sim
+#    framework), neither of which this spike-only flow touches. Init only
+#    the two submodules this flow actually needs, explicitly:
+git clone git@github.com:ucb-bar/XPU-RT.git
 cd XPU-RT
 git submodule update --init zephyr-chipyard-sw
 cd zephyr-chipyard-sw
 git submodule update --init modelblaster
+# (zephyr_ws/zephyr -- also a registered submodule here -- is initialized
+# by install_submodules.sh below, not by hand.)
 
 # 2. Miniforge3, conda env, west workspace (idempotent, safe to re-run).
 #    install_conda.sh bootstraps ./tools/miniforge3 (~9GB after step 3).
@@ -996,8 +1004,11 @@ log` in each repo for the actual commits):
 **From-scratch verification.** Cloned the pushed branch fresh (`git clone
 --branch feature/fp-precision-stripping ... FreshScheduler_fresh`, then
 `git submodule update --init` for `zephyr-chipyard-sw`, `modelblaster`, and
-`zephyr_ws/zephyr` specifically — `hw/chipyard` is not needed for this flow
-and isn't a plain git submodule anyway). The only pieces NOT pulled by the
+`zephyr_ws/zephyr` specifically — **not** `--recursive`, and `hw/chipyard`
+was deliberately skipped: it IS a registered submodule (of this repo's
+top-level `.gitmodules`, not `zephyr-chipyard-sw`'s — corrected an earlier,
+wrong claim in this doc that it wasn't a submodule at all), just not one
+this spike-only flow needs. The only pieces NOT pulled by the
 clone are the untracked, multi-GB toolchain (`tools/miniforge3` — the conda
 env, and `tools-manual/zephyr-sdk-1.0.0-beta1` — the Zephyr SDK), for which
 there's no committed setup recipe (same situation as this repo's unrelated
