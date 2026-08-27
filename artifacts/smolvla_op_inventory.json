@@ -2,13 +2,19 @@
  "total_nodes": 4379,
  "covered": {
   "conv2d": 3,
+  "sum": 6,
+  "reciprocal": 7,
   "mul": 389,
+  "clamp": 6,
   "add": 190,
   "layer_norm": 75,
   "linear": 448,
+  "scaled_dot_product_attention": 36,
   "gelu": 36,
   "cat": 32,
   "pow": 107,
+  "sin": 41,
+  "cos": 41,
   "silu": 33,
   "sub": 49,
   "mean": 66,
@@ -16,13 +22,12 @@
   "div": 40,
   "matmul": 48,
   "mul_": 24,
+  "where": 24,
   "softmax": 24,
-  "add_": 64
+  "add_": 64,
+  "min": 8
  },
  "gaps": {
-  "sum": 6,
-  "reciprocal": 7,
-  "clamp": 6,
   "bucketize": 6,
   "<built-in function ge>": 3,
   "<built-in function le>": 3,
@@ -31,14 +36,9 @@
   "new_ones": 3,
   "ge": 3,
   "__and__": 7,
-  "scaled_dot_product_attention": 36,
   "linspace": 1,
-  "sin": 41,
-  "cos": 41,
   "cumsum": 2,
-  "le": 1,
-  "where": 24,
-  "min": 8
+  "le": 1
  },
  "free": {
   "_assert_tensor_metadata": 473,
@@ -69,5 +69,5 @@
   "alias": 16,
   "empty": 1
  },
- "coverage_pct": 89.2
+ "coverage_pct": 98.1
 }

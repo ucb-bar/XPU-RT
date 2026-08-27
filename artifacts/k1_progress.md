@@ -798,3 +798,50 @@ bundle, verified by fetching into a clean clone: yields `418136fe` and tree
 `a62bdd21`, byte-identical. A `format-patch` series was tried first and **does
 not apply** — the profile CSVs defeat textual patching — which only surfaced
 because the restore was tested rather than assumed.
+
+---
+
+## SmolVLA int8 complete: 98.1% coverage, and the soundness question answered
+
+The last two families landed. `sdpa` is **decomposed**, not fused — `matmul_s8`
+already carries `transpose_b` and `scale_div`, which is exactly QK^T/√d, and
+`softmax_s8` exists; three existing kernels beat one new one duplicating them.
+`sin_s8`/`cos_s8` cover RoPE. Extractor branches also added for `softmax` and
+elementwise `mul` (another kernel nothing could emit).
+
+**SmolVLA compute coverage 74.9% → 89.2% → 98.1%.** The 36 remaining nodes are
+comparisons, `bucketize`, `cumsum`, `embedding`, `linspace`.
+
+### The scores scale was wrong, and it mattered
+`sq*sk*√D` is the obvious choice and it **clips**: on `attn_block` it covered
+0.022 against an actual score range of 0.095, and cosine at that step was
+**0.914**. In int8 units each operand has σ≈127/3, so the dot over D terms has
+σ≈√D·(127/3)² and the 1/√D cancels — score magnitude is ~independent of D, near
+1800·sq·sk at 3σ. `32·sq·sk` gives ~2× headroom; the step recovers to ~0.999.
+
+### Is int8 attention/RoPE numerically sound? Yes — measured
+
+| model | int8 vs fp32, cosine |
+|---|---|
+| attn_block (attention + RoPE) | **0.999899** |
+| norm_block (layernorm/gelu/rmsnorm) | **0.999921** |
+| lstm_tiny (stateful LSTM) | **0.999987** |
+| mlp_control (trained reference) | **0.999975** |
+
+`int8_quality.py` keeps this separate from kernel correctness on purpose. The
+harness asks whether the device computes what the int8 reference says — exact or
+a bug. This asks whether the int8 *model* still agrees with the fp32 model it
+came from — never exact. Conflating them means shipping a broken kernel because
+"int8 is lossy anyway", or rejecting a correct one because PTQ moved the answer.
+
+### A bug in my own measurement, worth recording
+That tool first reported **cosine 0.03** and looked like proof int8 attention was
+destroyed. It was the tool. The synthetic models had no seed, so `get_model()`
+built *different random weights* than extraction had used — the comparison was
+between two different networks. `mlp_control` scored well only because it loads a
+trained checkpoint, which masked the bug. A control (plain random-weight MLPs
+quantize to 0.9997 even at 6 layers) is what showed the number had to be wrong
+rather than a real finding. Models are now seeded.
+
+**All seven models run bit-exact on the board**: mlp_control, dronet,
+vitfly_frontend, lstm_tiny, vitfly_lstm, norm_block, attn_block.

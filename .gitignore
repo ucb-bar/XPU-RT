@@ -21,3 +21,9 @@ docs/*_status.md
 data/toplevel/_fx_*.json
 # per-cell solver logs are large and regenerable
 results/freshness_eval/work/
+
+# Full-history safety bundles: hundreds of MB, local restore aids, and larger
+# than GitHub accepts. The 28 KB artifacts/repo_reconciliation/zephyr-patches/
+# bundle is deliberately NOT ignored -- it carries commits that exist on no
+# remote and is small enough to live in git.
+artifacts/repo_reconciliation/*.bundle

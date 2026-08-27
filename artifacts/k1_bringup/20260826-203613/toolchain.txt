@@ -1,0 +1,29 @@
+===== compilers/build tools on board =====
+  gcc     : MISSING
+  g++     : MISSING
+  cc      : MISSING
+  clang   : MISSING
+  cmake   : MISSING
+  make    : MISSING
+  ninja   : MISSING
+  west    : MISSING
+  python3 : /usr/bin/python3
+  pip3    : MISSING
+  perf    : MISSING
+===== apt candidates =====
+gcc:
+  Installed: (none)
+  Candidate: 4:14.2.0-1ubuntu1
+g++:
+  Installed: (none)
+  Candidate: 4:14.2.0-1ubuntu1
+build-essential:
+  Installed: (none)
+  Candidate: 12.12ubuntu1
+cmake:
+  Installed: (none)
+  Candidate: 3.31.6-1ubuntu1
+===== glibc =====
+ldd (Ubuntu GLIBC 2.41-6ubuntu1bb2) 2.41
+===== perf_event_paranoid (gates userspace rdcycle/perf) =====
+2

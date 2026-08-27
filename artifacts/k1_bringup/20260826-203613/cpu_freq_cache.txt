@@ -1,0 +1,50 @@
+===== cpufreq per cpu =====
+cpu gov=performance cur=1600000 min=614400 max=1600000 related=0 1 2 3 4 5 6 7
+cpu gov=performance cur=1600000 min=614400 max=1600000 related=0 1 2 3 4 5 6 7
+cpu gov=performance cur=1600000 min=614400 max=1600000 related=0 1 2 3 4 5 6 7
+cpu gov=performance cur=1600000 min=614400 max=1600000 related=0 1 2 3 4 5 6 7
+cpu gov=performance cur=1600000 min=614400 max=1600000 related=0 1 2 3 4 5 6 7
+cpu gov=performance cur=1600000 min=614400 max=1600000 related=0 1 2 3 4 5 6 7
+cpu gov=performance cur=1600000 min=614400 max=1600000 related=0 1 2 3 4 5 6 7
+cpu gov=performance cur=1600000 min=614400 max=1600000 related=0 1 2 3 4 5 6 7
+===== available governors =====
+conservative ondemand userspace powersave performance schedutil 
+===== available freqs =====
+614400 819000 1000000 1228800 1600000 
+===== cache topology =====
+cpu0/cache/index0 lvl=1 type=Instruction size=32K shared=0
+cpu0/cache/index1 lvl=1 type=Data size=32K shared=0
+cpu0/cache/index2 lvl=2 type=Unified size=512K shared=0-3
+cpu1/cache/index0 lvl=1 type=Instruction size=32K shared=1
+cpu1/cache/index1 lvl=1 type=Data size=32K shared=1
+cpu1/cache/index2 lvl=2 type=Unified size=512K shared=0-3
+cpu2/cache/index0 lvl=1 type=Instruction size=32K shared=2
+cpu2/cache/index1 lvl=1 type=Data size=32K shared=2
+cpu2/cache/index2 lvl=2 type=Unified size=512K shared=0-3
+cpu3/cache/index0 lvl=1 type=Instruction size=32K shared=3
+cpu3/cache/index1 lvl=1 type=Data size=32K shared=3
+cpu3/cache/index2 lvl=2 type=Unified size=512K shared=0-3
+cpu4/cache/index0 lvl=1 type=Instruction size=32K shared=4
+cpu4/cache/index1 lvl=1 type=Data size=32K shared=4
+cpu4/cache/index2 lvl=2 type=Unified size=512K shared=4-7
+cpu5/cache/index0 lvl=1 type=Instruction size=32K shared=5
+cpu5/cache/index1 lvl=1 type=Data size=32K shared=5
+cpu5/cache/index2 lvl=2 type=Unified size=512K shared=4-7
+cpu6/cache/index0 lvl=1 type=Instruction size=32K shared=6
+cpu6/cache/index1 lvl=1 type=Data size=32K shared=6
+cpu6/cache/index2 lvl=2 type=Unified size=512K shared=4-7
+cpu7/cache/index0 lvl=1 type=Instruction size=32K shared=7
+cpu7/cache/index1 lvl=1 type=Data size=32K shared=7
+cpu7/cache/index2 lvl=2 type=Unified size=512K shared=4-7
+cpu0 gov=performance cur_kHz=1600000 min=614400 max=1600000 related=0 1 2 3 4 5 6 7
+cpu1 gov=performance cur_kHz=1600000 min=614400 max=1600000 related=0 1 2 3 4 5 6 7
+cpu2 gov=performance cur_kHz=1600000 min=614400 max=1600000 related=0 1 2 3 4 5 6 7
+cpu3 gov=performance cur_kHz=1600000 min=614400 max=1600000 related=0 1 2 3 4 5 6 7
+cpu4 gov=performance cur_kHz=1600000 min=614400 max=1600000 related=0 1 2 3 4 5 6 7
+cpu5 gov=performance cur_kHz=1600000 min=614400 max=1600000 related=0 1 2 3 4 5 6 7
+cpu6 gov=performance cur_kHz=1600000 min=614400 max=1600000 related=0 1 2 3 4 5 6 7
+cpu7 gov=performance cur_kHz=1600000 min=614400 max=1600000 related=0 1 2 3 4 5 6 7
+--- driver ---
+cpufreq-dt
+--- policies ---
+policy0

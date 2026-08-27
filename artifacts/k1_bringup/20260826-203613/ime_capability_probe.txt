@@ -1,0 +1,36 @@
+# IME / RVV per-core capability probe
+# host: garden -> k1 (10.44.98.236), 2026-08-26T20:41:03-07:00
+# binary: static, riscv64-unknown-linux-gnu-gcc 14.3.0, -march=rv64gcv_zvl256b
+# encoding probed: .insn r 0x2b, 0x3, 0x71  (smt.vmadot; opcode=custom-1, funct3=3, funct7=0x71)
+# source of encoding: merlin/benchmarks/SpacemiTX60/compile_matmul_xsmt_i8_ukernel_all.sh:37
+
+--- run 1 ---
+cpu  cluster  rvv        ime(smt.vmadot)
+  0  0        ok         EXECUTED (supported)
+  1  0        ok         EXECUTED (supported)
+  2  0        ok         EXECUTED (supported)
+  3  0        ok         EXECUTED (supported)
+  4  1        ok         TRAP (unsupported)
+  5  1        ok         TRAP (unsupported)
+  6  1        ok         TRAP (unsupported)
+  7  1        ok         TRAP (unsupported)
+--- run 2 ---
+cpu  cluster  rvv        ime(smt.vmadot)
+  0  0        ok         EXECUTED (supported)
+  1  0        ok         EXECUTED (supported)
+  2  0        ok         EXECUTED (supported)
+  3  0        ok         EXECUTED (supported)
+  4  1        ok         TRAP (unsupported)
+  5  1        ok         TRAP (unsupported)
+  6  1        ok         TRAP (unsupported)
+  7  1        ok         TRAP (unsupported)
+--- run 3 ---
+cpu  cluster  rvv        ime(smt.vmadot)
+  0  0        ok         EXECUTED (supported)
+  1  0        ok         EXECUTED (supported)
+  2  0        ok         EXECUTED (supported)
+  3  0        ok         EXECUTED (supported)
+  4  1        ok         TRAP (unsupported)
+  5  1        ok         TRAP (unsupported)
+  6  1        ok         TRAP (unsupported)
+  7  1        ok         TRAP (unsupported)
