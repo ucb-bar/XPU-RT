@@ -778,6 +778,57 @@ exercised the same way in either the standalone harness (§9.1's isolated
 Flagged here as a known, scoped, low-impact open item rather than
 papered over.
 
+## 11. Commits, pushes, and from-scratch verification
+
+All code fixes above are committed and pushed (working-tree-only,
+uncommitted state described in earlier sections is now stale — check `git
+log` in each repo for the actual commits):
+
+- `modelblaster` (`git@github.com:ucb-bar/ModelBlaster.git`,
+  branch `feat/harness-shared-input`): `6369fd6` (Bugs 9/11/12) and
+  `650558a` (a new bug found only by this from-scratch verification, see
+  below).
+- `zephyr-chipyard-sw` (`git@github.com:ucb-bar/zephyr-chipyard-sw.git`,
+  branch `et-sizing-knobs`): two pointer-bump commits following the two
+  modelblaster commits above.
+- Top-level (pushed to the `ucb-bar` remote, `git@github.com:ucb-bar/XPU-RT.git`,
+  branch `feature/fp-precision-stripping` — **note:** this repo has three
+  configured remotes pointing at three different repo names (`origin`→
+  `Scheduler.git`, `new`→`XPURT.git`, `ucb-bar`→`XPU-RT.git`); confirm
+  which is the intended target before pushing again): Bugs 7/10/10b, the
+  workload specs, this doc, and the `zephyr-chipyard-sw` pointer bumps.
+
+**From-scratch verification.** Cloned the pushed branch fresh (`git clone
+--branch feature/fp-precision-stripping ... FreshScheduler_fresh`, then
+`git submodule update --init` for `zephyr-chipyard-sw`, `modelblaster`, and
+`zephyr_ws/zephyr` specifically — `hw/chipyard` is not needed for this flow
+and isn't a plain git submodule anyway). The only pieces NOT pulled by the
+clone are the untracked, multi-GB toolchain (`tools/miniforge3` — the conda
+env, and `tools-manual/zephyr-sdk-1.0.0-beta1` — the Zephyr SDK), for which
+there's no committed setup recipe (same situation as this repo's unrelated
+`docs/xpurt_env_setup.md` case) — re-provisioning those from scratch is a
+separate, much larger undertaking than validating the fixes, so they were
+symlinked in from the existing installation instead, plus a one-time copy
+of the small `zephyr_ws/.west/config` file (also untracked).
+
+This surfaced one real, previously-invisible bug: `west build` failed at
+CMake configure with `File not found: .../harness/backends/spike_single_core.conf`
+for every model — that file (and its FireSim sibling,
+`firesim_chipyard_singlecore.conf`) existed in the original working tree
+but had never actually been committed to modelblaster, despite being a
+required `EXTRA_CONF_FILE` for the default `RUNNER=spike` path. This is
+unrelated to this session's other fixes (long-standing gap on the
+`feat/harness-shared-input` branch) but would have silently blocked
+*anyone* cloning fresh. Fixed by committing both files (`650558a`).
+
+With that fixed, the fresh clone reproduced the full pipeline exactly:
+same 71/1/1 instance counts, same 733 dispatches, same 704.997ms predicted
+makespan, `OVERALL: PASS (3 models)`, and the same timing-accuracy result
+(**704.675ms actual, 1.00x predicted** — identical to the original run to
+0.03ms). `yolov8_nano`'s golden values differed numerically from the first
+run (test-input generation isn't seeded), but `actual == golden` bit-exact
+in both runs regardless — expected, not a bug.
+
 ## Artifact inventory
 
 | Path | Repo | Status |
