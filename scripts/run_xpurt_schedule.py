@@ -252,7 +252,13 @@ def schedule_iree_networks(
     print(f"  enforce_same_processor_combinations: {enforce_same_processor_combinations}")
 
     # Build machines list and machine combinations (cumulative core groups per type)
-    machines, machine_combinations = build_machine_combinations(machine_core_counts)
+    # machine_combination_mode is now honoured (it used to be parsed and only
+    # printed). "singletons" -- its long-standing default -- gives every core its
+    # own combination, which is what a multi-core target needs to express real
+    # concurrency; "prefix" keeps the cumulative-group reading. The two are
+    # identical when every kind has one core, so no pre-K1 config changes.
+    machines, machine_combinations = build_machine_combinations(
+        machine_core_counts, mode=machine_combination_mode)
     n_cores = len(machines)
     transfer_times = np.zeros((n_cores, n_cores))
 

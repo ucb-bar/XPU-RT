@@ -357,3 +357,46 @@ class PhysicalCoreIdTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class MachineCombinationModeTests(unittest.TestCase):
+    """`machine_combination_mode` was inert; making it live must change nothing old.
+
+    It was parsed into config and only ever printed, with a default of
+    "singletons" -- so the documented default disagreed with the sole
+    implemented behaviour (cumulative prefixes). The fix is safe precisely
+    because the two modes coincide when a kind has one core, which every
+    pre-K1 config uses.
+    """
+
+    def test_modes_coincide_for_single_core_kinds(self):
+        a = build_machine_combinations({"CPU_P": 1, "CPU_E": 1}, mode="prefix")
+        b = build_machine_combinations({"CPU_P": 1, "CPU_E": 1}, mode="singletons")
+        self.assertEqual(a, b)
+
+    def test_prefix_is_cumulative(self):
+        _, combos = build_machine_combinations({"CPU_P": 3}, mode="prefix")
+        self.assertEqual(combos, [["CPU_P#0"],
+                                  ["CPU_P#0", "CPU_P#1"],
+                                  ["CPU_P#0", "CPU_P#1", "CPU_P#2"]])
+
+    def test_singletons_are_independent(self):
+        _, combos = build_machine_combinations({"CPU_P": 3}, mode="singletons")
+        self.assertEqual(combos, [["CPU_P#0"], ["CPU_P#1"], ["CPU_P#2"]])
+
+    def test_default_stays_prefix_at_the_function_level(self):
+        """The function default must not shift under existing callers."""
+        self.assertEqual(build_machine_combinations({"CPU_P": 2}),
+                         build_machine_combinations({"CPU_P": 2}, mode="prefix"))
+
+    def test_bad_mode_is_rejected(self):
+        with self.assertRaises(ValueError):
+            build_machine_combinations({"CPU_P": 2}, mode="nonsense")
+
+    def test_singletons_give_the_k1_eight_independent_cores(self):
+        machines, combos = build_machine_combinations(K1_CORES, mode="singletons")
+        wl = _workload(machines, combos)
+        self.assertEqual(len(combos), 8)
+        for i in range(len(combos)):
+            for j in range(i + 1, len(combos)):
+                self.assertFalse(wl.combinations_overlap(i, j))

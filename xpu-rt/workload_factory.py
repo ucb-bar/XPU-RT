@@ -25,9 +25,36 @@ def expand_machine_core_counts_to_list(machine_core_counts: dict[str, int]) -> l
     return machines
 
 
-def build_machine_combinations(machine_core_counts: dict[str, int]) -> tuple[list[str], list[list[str]]]:
+def build_machine_combinations(
+    machine_core_counts: dict[str, int],
+    mode: str = "prefix",
+) -> tuple[list[str], list[list[str]]]:
     """
-    Build the full machines list and cumulative core-group combinations.
+    Build the full machines list and per-kind core-group combinations.
+
+    `mode` decides what a combination *means*, and the two answers differ in
+    how much concurrency the model admits:
+
+      "prefix"     cumulative prefixes -- ['CPU_P#0'], ['CPU_P#0','CPU_P#1'], ...
+                   A combination is ONE dispatch handed N cores. Because every
+                   combination of a kind contains that kind's core #0, they all
+                   intersect, so `combinations_overlap` serialises them and a
+                   kind runs one dispatch at a time however many cores it has.
+                   Timings must come from the N-hart profile (topo_0_1_2_3).
+
+      "singletons" every core independently schedulable -- ['CPU_P#0'],
+                   ['CPU_P#1'], ... Disjoint, so N dispatches genuinely run at
+                   once. Timings must come from the single-core profile
+                   (topo_0); an N-hart number here would credit each core with
+                   the whole kind's throughput.
+
+    Historical note: `machine_combination_mode` was parsed from config and never
+    read, with a default of "singletons" -- so the documented default disagreed
+    with the only implemented behaviour. Making it live is safe because prefix
+    and singletons are identical when a kind has one core, which every config
+    predating the K1 work does.
+
+    Cumulative core-group combinations.
 
     For {'CPU_P': 4, 'CPU_E': 4} returns:
       machines = ['CPU_P#0', ..., 'CPU_P#3', 'CPU_E#0', ..., 'CPU_E#3']
@@ -42,12 +69,20 @@ def build_machine_combinations(machine_core_counts: dict[str, int]) -> tuple[lis
 
     Each combination only contains cores from the same processor type.
     """
+    if mode not in ("prefix", "singletons"):
+        raise ValueError(
+            f"machine_combination_mode must be 'prefix' or 'singletons', got {mode!r}"
+        )
     machines = expand_machine_core_counts_to_list(machine_core_counts)
     combinations = []
     for machine_type, count in machine_core_counts.items():
         cores = [f"{machine_type}#{i}" for i in range(count)]
-        for n in range(1, count + 1):
-            combinations.append(cores[:n])
+        if mode == "prefix":
+            for n in range(1, count + 1):
+                combinations.append(cores[:n])
+        else:
+            for core in cores:
+                combinations.append([core])
     return machines, combinations
 
 
