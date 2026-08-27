@@ -369,3 +369,61 @@ That is exactly what "94% launch overhead" predicts: **no codegen flag can touch
 per dispatch launch.** The only lever is emitting fewer dispatches, which is a graph-level
 transformation — ModelBlaster's `apply_fusion_hint`, not an IREE flag. This is the concrete
 reason the ModelBlaster path (M5) matters rather than being an alternative front end.
+
+---
+
+## M8 — Baselines, and a calibration result that reframes everything (2026-08-27)
+
+`scripts/k1_baselines.py` runs the ladder on the board and reports predicted and
+measured side by side, never merged.
+
+### The ladder as first run (8 scheduler machines, 2 physical cores)
+
+| rung | pred service | meas service | meas makespan | queue% | misses |
+|---|---|---|---|---|---|
+| B0 static placement | 1 143 476 | 1 146 316 | 1 141 405 | 70.3 | 10 |
+| B1 XPU-RT greedy | 1 143 476 | 1 228 329 | **1 013 698** | 87.6 | **41** |
+| B2 + impl selection | 1 139 372 | 1 229 807 | 1 018 049 | 87.7 | 42 |
+| P1 greedy_periodic | 1 143 476 | 1 229 536 | 1 014 015 | 87.6 | 41 |
+
+Broken down by model, this looked damning for the scheduler:
+
+```
+B0: dronet 10/10 miss   mlp  0/32 miss
+B1: dronet 10/10 miss   mlp 31/32 miss
+P1: dronet 10/10 miss   mlp 31/32 miss
+```
+
+XPU-RT buys **11% makespan and loses 31 of 32 MLP deadlines**, and the
+periodic-aware solver does not rescue it.
+
+### Except that was measuring a configuration error, not a scheduler
+
+The config declared `machines: {cpu_p: 4, cpu_e: 4}`, but
+`merlin-dispatch-scheduler` executes on exactly **two** worker pools, pinned to
+whatever `--cpu_p_cpu_ids` / `--cpu_e_cpu_ids` name. Running it with `0` and `4`
+collapses **4 scheduler machines onto 1 physical core**. The 87.6% queueing was
+that over-subscription, not the hardware.
+
+Re-run with a self-consistent model — one machine per pool, one core per pool,
+single-core profiles (`data/toplevel/networks_k1_2core.json`):
+
+| | predicted | measured | error |
+|---|---|---|---|
+| service | 3 553 628 us | 3 547 101 us | **0.18%** |
+| makespan | 2 838 340 us | 2 859 786 us | **0.75%** |
+| queueing share | — | **1.8%** | (was 87.6%) |
+| service error, dispatches >=1 ms | — | **-1.6%** median | (was +4.8%) |
+
+**When the resource model matches what the runtime can honour, prediction is
+accurate to well under 1%.** The earlier +14% service error and 87.6% queueing
+were artifacts of the mismatch. This is why the plan insisted on fixing
+prediction before drawing scheduler conclusions — every conclusion from the
+8-machine rungs above is about a configuration that cannot exist on this runner.
+
+**Open, and the single most valuable next fix:** teach the runner to honour
+per-dispatch core placement (`CPU_P#2`), which it currently parses and discards.
+Until then the K1 can be scheduled as 2 resources faithfully, or as 8 resources
+only in simulation. Everything needed on the XPU-RT side is already in place —
+`capabilities.py` emits per-core combinations and `machine_combination_mode`
+selects them.

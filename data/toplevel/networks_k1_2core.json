@@ -1,0 +1,48 @@
+{
+  "_comment": "Self-consistent 2-core K1 config. The merlin dispatch_scheduler executes a schedule on exactly two worker pools (CPU_P and CPU_E), each pinned to the cpu ids given on the command line. Declaring 8 machines while running with --cpu_p_cpu_ids=0 --cpu_e_cpu_ids=4 over-subscribes 4 scheduler machines onto 1 physical core, which is what produced 87.6% queueing and 31/32 MLP deadline misses in the 8-machine run. One machine per pool, timed with single-core (topo_0) profiles, is the configuration the runtime can actually honour.",
+  "_capabilities_comment": "IME is measured, not assumed: smt.vmadot executes on cores 0-3 and SIGILLs on 4-7 (artifacts/k1_bringup/*/ime_capability_probe.txt). It is therefore a property of cluster-0 cores, never a separate machine -- see xpu-rt/capabilities.py.",
+  "hardware": {
+    "machines": {
+      "cpu_p": 1,
+      "cpu_e": 1
+    },
+    "profile_hw": {
+      "cpu_p": "RVV",
+      "cpu_e": "RVV_c1"
+    },
+    "profile": {
+      "target": "spacemit_x60",
+      "topo_tag": "topo_0",
+      "topo_tag_override": true,
+      "gen_root": "gen"
+    },
+    "p_core_speedup": 1.0
+  },
+  "scheduler": {
+    "random_seed": 42,
+    "solver_verbosity": 1,
+    "time_limit": 120,
+    "use_profiled": true,
+    "prune_periodic": true,
+    "restrict_makespan_to_nonperiodic": false,
+    "machine_combination_mode": "singletons"
+  },
+  "networks": {
+    "mlp": {
+      "id": 0,
+      "identifier": "mlp",
+      "dispatch_deps_path": "gen/vmfb/mlp/spacemit_x60/RVV/mlp.q.int8/mlp.q.int8_dispatch_graph.json",
+      "period": 10,
+      "window_duration": 10
+    },
+    "dronet": {
+      "id": 1,
+      "identifier": "dronet",
+      "dispatch_deps_path": "gen/vmfb/dronet/spacemit_x60/RVV/dronet.q.int8/dronet.q.int8_dispatch_graph.json",
+      "period": 33.3,
+      "window_duration": 33.3
+    }
+  },
+  "edges": [],
+  "_concurrency_comment": "machine_combination_mode=singletons: each of the 8 cores is independently schedulable, so 8 dispatches can genuinely run at once. This is why the profiles above are single-core (topo_0)."
+}

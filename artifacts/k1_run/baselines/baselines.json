@@ -1,0 +1,20 @@
+{
+ "C2": {
+  "schedule": "schedules/scheduled_networks_k1_2core_greedy_profiled.json",
+  "predicted": {
+   "service_us": 3553628.5,
+   "makespan_us": 2838344.7,
+   "deadline_misses": 31
+  },
+  "measured": {
+   "n_dispatches": 1130,
+   "service_us": 3547101.0,
+   "queue_us": 66385.0,
+   "queue_share_pct": 1.8,
+   "makespan_us": 2859786.0,
+   "periodic_instances": 133,
+   "deadline_misses": 32,
+   "worst_lateness_ms": 1827.49
+  }
+ }
+}
