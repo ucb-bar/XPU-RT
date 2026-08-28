@@ -1430,3 +1430,84 @@ real feasibility frontier, which means scheduling YOLOv8n.
 ### Repo SHAs
 
 XPU-RT `feat/k1-modelblaster-closed-loop` `0f8b1ee`, ModelBlaster `f083877`.
+
+---
+
+## The schedule's core assignment was not being executed
+
+### Attempted
+
+Build a workload heavy enough to find the real feasibility frontier, now that the two-model
+one runs at 23% utilisation. Three models: mlp_control (100 Hz), dronet (30 Hz),
+yolov8_nano swept at 3/4/5/6 Hz around its measured 226.9 ms single-core service time.
+
+### Measurements
+
+All four periods solve with **0 predicted misses**, including 6 Hz where YOLO alone is
+1.36x of one core -- the solver spreads it. Measured on the board at 4 Hz, however:
+
+    predicted   0 misses,  makespan  908.49 ms
+    measured  119 of 123 misses, makespan 1017.78 ms
+              yolov8_nano 3/4   dronet 26/28   mlp_control 90/91
+
+That is the largest prediction failure recorded in this project, so it was worth finding the
+mechanism rather than reporting the gap.
+
+**It is not the cost model.** Per-dispatch duration actual/predicted is 0.93 median, and
+per-dispatch service times are unchanged by co-running YOLO -- 1.00x on the big convolutions,
+measured by splitting DroNet's dispatches on whether YOLO overlapped them. The 1.20x aggregate
+is an op-mix artifact between the two groups.
+
+**It is not contention or handoff cost.** Cross-hart handoffs are sub-microsecond (median
+0.5 us, no worse than same-hart). Only 2 of 588 DroNet dispatches directly follow a YOLO
+dispatch on the same hart, and YOLO occupancy of the target hart explains 2.6% of DroNet's
+wait.
+
+**DroNet's busy time is unchanged and its wait time is not.** Median instance latency
+decomposes as:
+
+    B1 (2 models)   busy 8.48 ms   wait 0.155 ms   ( 1.8%)
+    3-model 4 Hz    busy 8.84 ms   wait 8.871 ms   (50.1%)
+
+**The cause: the walker runs one thread per core KIND, not per core.**
+`generate_xpurt_main.py` spawns one scheduler worker per distinct `core_kind` and claims
+entries with `strcmp(e_->core_kind, ...)`. The dispatch entry already carries
+`int hart` -- `ingest_xpurt_schedule._resolve_target()` fills it -- and the walker ignores it.
+
+Verified directly: across **both** traces, the number of dispatch pairs assigned to different
+harts of the same kind that overlap in time is **zero**. Execution is fully serial per kind.
+
+### A correction to the previous entry in this log
+
+The B0/B1 entry reported "peak per-hart utilization 23.6%", which implied eight independent
+cores with headroom. Those harts never ran concurrently, so the honest figure is the SUM over
+each kind's harts -- one thread's occupancy:
+
+    B1 (2 models)   rvv worker 29.2% busy   -> genuinely idle, conclusion stands
+    3-model 4 Hz    rvv worker 97.9% busy   -> saturated, and this is the miss
+
+B1's result is unaffected: it met every deadline and matched its prediction to 0.1% because
+29% of one thread was enough. The serialization only bites once the workload needs real
+parallelism, which is exactly why two models never exposed it and three did.
+
+### What this means for the earlier ladder results
+
+B0 and B1 remain valid as measured. But "B1 spreads DroNet across rvv#0-#3" describes an
+ASSIGNMENT, not concurrent execution -- the composite Gantt draws four lanes that were in
+truth time-sliced onto one thread. The figure is accurate about placement and misleading
+about parallelism, and B4 (sharding) cannot mean anything until this is fixed.
+
+### Blocker
+
+None; the fix is in progress -- one worker per (kind, hart), claiming on both fields.
+
+### Next
+
+Re-run B1 as a regression (it must stay at 0 misses and keep matching its prediction) and the
+3-model workload against the 119/123 baseline. Then redo the feasibility sweep, because
+every "0 predicted misses" above was computed against a machine model the runtime did not
+implement.
+
+### Repo SHAs
+
+XPU-RT `feat/k1-modelblaster-closed-loop`, ModelBlaster `f083877`.
