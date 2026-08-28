@@ -1356,3 +1356,77 @@ fixes it needed 97% of four cores.
 ### Repo SHAs
 
 XPU-RT `feat/k1-modelblaster-closed-loop` `e03fcf2`, ModelBlaster `f083877`.
+
+---
+
+## The ladder on hardware: prediction within 0.1% of measurement
+
+### Attempted
+
+Re-solve B0/B1 against the corrected costs and execute them on the board, which
+is the step that has never completed -- B1 SIGILLed on the previous attempt.
+
+### Commands
+
+    scripts/run_xpurt_schedule.py --networks-json data/toplevel/networks_k1_mb_B{0,1}.json \
+        --solver greedy --use-profiled
+    ModelBlaster/scripts/run_xpurt_k1.sh --schedule <sched> \
+        --models mlp_control,dronet --backends rvv_x60,rvv_x60
+    scripts/plot_k1_trace_gantt.py --trace ... --schedule ... [--composite ...]
+
+### Measurements
+
+Solved (predicted): makespan 310.09 ms, 0 deadline misses, both rungs. Before
+the kernel fixes the same solve gave 658 misses on B0 and 156 on B1, and took
+476 s to solve rather than 5.9 s.
+
+Measured on the board, 434 dispatches and 42 instances per rung:
+
+| rung | makespan | misses | dronet | mlp_control | peak hart util |
+|---|---|---|---|---|---|
+| B0 | 309.84 ms | 0/42 | 32.3 Hz (need 30.0) | 103.3 Hz (need 100) | 23.6% |
+| B1 | 309.80 ms | 0/42 | 32.3 Hz | 103.3 Hz | 23.3% |
+
+Predicted 310.09 ms against measured 309.84 / 309.80 ms -- within 0.1%. That is
+the first time in this project that a predicted schedule and its measured
+execution can be compared at all, because until the `implementation` column
+landed the profile the solver consumed did not describe the binary that ran.
+
+Per-instance DroNet latency: B0 median 8.54 ms / max 9.55; B1 median 8.63 / max
+10.91. B1's higher max is the cost of spreading across four cores rather than
+two -- consistent with the measured 1.185x cross-cluster contention penalty
+already recorded in this log, and it costs nothing here because both rungs have
+23 ms of slack against a 33.3 ms period.
+
+### What this changes about the earlier conclusions
+
+The plan anticipated an infeasible workload: "DroNet needs 32.4 ms of four-core
+work against a 33.3 ms period (97% utilisation)" and expected the deliverable to
+be a feasibility frontier showing what CANNOT be met. That framing does not
+survive the kernel fix. DroNet is 9.79 ms on ONE core, the workload does not
+saturate the board, and peak per-hart utilization is 23.6%.
+
+The honest reading is that the earlier frontier measured a missing kernel, not
+the machine. A real frontier now needs a heavier workload -- YOLOv8n at 226.9 ms
+is the obvious candidate and is the model that would actually constrain this
+board.
+
+### Passed
+
+Both rungs exit 0 with 434 real trace rows. Gantts plus composite emitted per
+the standing requirement. The composite shows what the table cannot: B0 places
+DroNet on rvv#0 + rvv_c1#4, spanning both L2 domains; B1 keeps it inside
+cluster 0 on rvv#0-#3.
+
+### Blocker
+
+None.
+
+### Next
+
+B3 (granularity) and B4 (sharding) rungs; a workload heavy enough to find the
+real feasibility frontier, which means scheduling YOLOv8n.
+
+### Repo SHAs
+
+XPU-RT `feat/k1-modelblaster-closed-loop` `0f8b1ee`, ModelBlaster `f083877`.
