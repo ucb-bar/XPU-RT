@@ -17,30 +17,24 @@ _HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(os.path.dirname(_HERE), "xpu-rt"))
 
 from compile_advice import (  # noqa: E402
-    blocking_advice, implementation_advice, load_profiles, overhead_advice,
-    write_advice,
+    blocking_advice, implementation_advice, load_profiles,
+    load_profiles_by_cores, overhead_advice, shard_advice, write_advice,
 )
-
-
-def is_linear_chain(graph_path: str) -> bool:
-    """In/out degree <= 1 everywhere -- the precondition fusion.py requires."""
-    if not os.path.exists(graph_path):
-        return False
-    g = json.load(open(graph_path))
-    disp = g.get("dispatches", {})
-    outdeg = {k: 0 for k in disp}
-    for k, v in disp.items():
-        deps = v.get("dependencies", []) or []
-        if len(deps) > 1:
-            return False
-        for d in deps:
-            if d in outdeg:
-                outdeg[d] += 1
-    return all(v <= 1 for v in outdeg.values())
+# The canonical granularity analysis. This file used to carry its own
+# `is_linear_chain` over a dispatch-graph FILE and its own notion of a free
+# slot; both already existed here, and the local copies were the worse of the
+# two -- see the free-slot note below.
+from granularity_advisor import (  # noqa: E402
+    _free_slot_ms, _is_linear_chain, from_schedule_json, group_by_periodicity,
+)
 
 
 def main() -> int:
     ap = argparse.ArgumentParser()
+    ap.add_argument("--trace", default=None,
+                    help="measured trace CSV. Without it, "
+                         "deadline_misses_attributed is 0 -- an unmeasured "
+                         "miss count is not evidence.")
     ap.add_argument("--gen-root", default="gen")
     ap.add_argument("--target", default="spacemit_x60")
     ap.add_argument("--schedule", required=True)
@@ -54,8 +48,91 @@ def main() -> int:
     periods = (sched.get("metadata") or {}).get("periodic_networks") or {}
     impls = [i for i in a.impls.split(",") if i]
 
-    # The tightest periodic slot any long dispatch has to fit between releases.
-    free_slot_ms = min(periods.values()) if periods else 0.0
+    # The tightest periodic FREE SLOT, not the tightest period.
+    #
+    # This previously read `min(periods.values())` while calling itself a slot.
+    # A period is the whole interval between releases; the slot is what is left
+    # of it after the model's own work -- period * (1 - utilization), computed
+    # over a duration-weighted critical path. Using the raw period overstates
+    # the room available by exactly the amount the model already occupies, so
+    # every "this dispatch does not fit" judgement was measured against a
+    # budget nobody has.
+    #
+    # granularity_advisor already computes the real thing; the local version was
+    # a second, worse source of truth.
+    # NOTE on group_by_periodicity's return: the second element is the
+    # NON-periodic groups, not all of them. For a fully periodic workload it is
+    # empty, so indexing it by a periodic base silently yields nothing and every
+    # free slot comes out 0 -- which disables split and shard advice entirely
+    # without saying so. Group the periodic records here instead.
+    records = from_schedule_json(sched)
+    periods_by_base, _non_periodic = group_by_periodicity(records)
+    by_base: dict = {}
+    for r in records:
+        by_base.setdefault(r.base_id, []).append(r)
+    slots = {base: _free_slot_ms(base, by_base[base], T)
+             for base, T in periods_by_base.items() if base in by_base}
+
+    def budget_for(model: str) -> float:
+        """The budget a dispatch of `model` has to fit into, in ms.
+
+        Two corrections over the previous `min(periods.values())`:
+
+        * per model, not a global minimum. Taking the minimum across models
+          meant one saturated model zeroed the budget for every other one, so a
+          workload containing DroNet produced no advice about the MLP at all.
+        * a ZERO free slot means the model already consumes its whole period --
+          which is exactly when its long dispatches most need attention, not
+          least. Gating on `slot > 0` silently excluded the saturated model, so
+          the one case the advisor exists for produced nothing. When the slot
+          is zero the period itself is the budget: an instance that cannot fit
+          its own period is the finding.
+        """
+        slot = slots.get(model, 0.0)
+        if slot > 0:
+            return slot
+        return periods_by_base.get(model, 0.0)
+
+    def dispatch_budget(model: str, profile: dict) -> float:
+        """Per-dispatch budget for a SATURATED model, in ms.
+
+        For a model that fits its period, `budget_for` is the right test: a
+        dispatch longer than the free slot is the thing blocking the slot.
+
+        For a model that does not fit, that test finds nothing -- and finds
+        nothing precisely when the model is in the worst trouble. DroNet needs
+        113.7 ms against a 33.3 ms window, yet its largest single dispatch is
+        22.9 ms, under the period. Comparing each dispatch to the whole period
+        therefore reports "no dispatch is too long" about a model that misses
+        every deadline.
+
+        The honest per-dispatch target is its PROPORTIONAL SHARE of the window:
+        if the instance is to fit at all, a dispatch responsible for x% of the
+        work has x% of the window to do it in. For DroNet's heaviest
+        convolution that is 33.3 * 22.87/113.7 = 6.7 ms -- which it exceeds on
+        one core and meets on four, which is exactly the finding.
+        """
+        period = periods_by_base.get(model, 0.0)
+        total = sum(float(r.get("median_ms") or 0.0) for r in profile.values())
+        if period <= 0 or total <= period:
+            return budget_for(model)
+        return period / total  # scale factor; caller multiplies by cost
+
+    free_slot_ms = min((v for v in slots.values() if v > 0), default=0.0)
+    if slots:
+        print("  free slots (ms): " + ", ".join(
+            f"{b}={v:.3f}" + (" [saturated -> budget=period]" if v <= 0 else "")
+            for b, v in sorted(slots.items())))
+
+    measured_misses = {}
+    if a.trace:
+        import trace_metrics
+        summary = trace_metrics.summarise_trace(
+            trace_metrics.read_trace(a.trace), periods)
+        measured_misses = {m: d["instance_deadline_misses"]
+                           for m, d in (summary.get("per_model") or {}).items()}
+        print("  measured misses: " + ", ".join(
+            f"{m}={n}" for m, n in sorted(measured_misses.items())))
 
     advice, notes = [], {}
     for spec in a.models.split(","):
@@ -65,10 +142,10 @@ def main() -> int:
             print(f"WARN no profiles for {model}", file=sys.stderr)
             continue
         base = profs.get(a.baseline_impl, {})
-        graph = os.path.join(a.gen_root, "vmfb", model, a.target,
-                             a.baseline_impl, basename,
-                             f"{basename}_dispatch_graph.json")
-        chain = is_linear_chain(graph)
+        # From the schedule's own records rather than a separate dispatch-graph
+        # file, so the chain test and the cost data cannot disagree about which
+        # graph they describe.
+        chain = _is_linear_chain(by_base.get(model, []))
         notes[model] = {
             "implementations_profiled": sorted(profs),
             "n_dispatches": len(base),
@@ -81,8 +158,34 @@ def main() -> int:
         total = sum(r["median_ms"] for r in base.values())
         period = periods.get(model)
         if period and total > period:
-            advice += blocking_advice(model, base, free_slot_ms,
-                                      misses=len(base))
+            # `misses` is deadline misses ATTRIBUTED to this model. It used to
+            # be passed as len(base) -- the number of DISPATCHES -- so every
+            # split recommendation carried a dispatch count in a field named
+            # deadline_misses_attributed, identically, for every item. Anyone
+            # reading that field downstream was reading a mislabelled constant.
+            #
+            # The real figure comes from a measured trace, so when none is
+            # supplied the honest value is 0 rather than a number that happens
+            # to be available.
+            advice += blocking_advice(model, base, budget_for(model),
+                                      misses=measured_misses.get(model, 0))
+        # Sharding is judged on measured scaling with core count, which no
+        # single-topo profile can show.
+        by_cores = load_profiles_by_cores(a.gen_root, a.target, model,
+                                          basename, a.baseline_impl)
+        if len(by_cores) > 1:
+            period = periods.get(model, 0.0)
+            if period and total > period:
+                # Saturated: each dispatch gets its proportional share of the
+                # window. shard_advice compares cost to a single budget, so
+                # pass the share of the LARGEST dispatch -- the one that has to
+                # shrink first for the instance to fit at all.
+                biggest = max((float(r.get("median_ms") or 0.0)
+                               for r in base.values()), default=0.0)
+                target = period * (biggest / total) if total else 0.0
+            else:
+                target = budget_for(model)
+            advice += shard_advice(model, by_cores, target)
 
     # Highest-priority first; the consumer is expected to apply a bounded number.
     advice.sort(key=lambda x: (x.priority, -x.evidence.service_time_us))

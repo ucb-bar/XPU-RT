@@ -32,7 +32,7 @@ from __future__ import annotations
 import json
 import os
 from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Sequence
 
 SCHEMA_VERSION = 1
 
@@ -251,4 +251,150 @@ def load_profiles(gen_root: str, target: str, model: str, basename: str,
         rec = _load_jsonl(p)
         if rec:
             out[impl] = rec
+    return out
+
+def load_profiles_by_cores(gen_root: str, target: str, model: str,
+                           basename: str, impl: str,
+                           topo_tags: Sequence[str] = (
+                               "topo_0", "topo_0_1", "topo_0_1_2_3",
+                               "topo_0_1_2_3_4_5_6_7")
+                           ) -> Dict[int, Dict[int, dict]]:
+    """Per-dispatch cost as a function of CORE COUNT: {n_cores: {did: rec}}.
+
+    Nothing in XPU-RT could express this before. `load_profiles` takes a single
+    `topo_tag` (defaulting to the 1-core `topo_0`), and `profile_loader` drops
+    everything but the time and module name, so the `n_cores` field that the
+    profiler already writes into every record had no readers at all.
+
+    That gap is why no advisor could ever justify a `shard` recommendation:
+    sharding is a claim about how a dispatch's cost changes when you give it
+    more cores, and the measurement existed on disk while being unreachable
+    through the API.
+
+    Keyed on the `n_cores` recorded in the profile rather than on the topo tag,
+    so the tag naming convention stays an implementation detail of where the
+    file lives.
+    """
+    out: Dict[int, Dict[int, dict]] = {}
+    for tag in topo_tags:
+        p = os.path.join(gen_root, "profile", impl, target, model, basename,
+                         tag, "profile.jsonl")
+        rec = _load_jsonl(p)
+        if not rec:
+            continue
+        n = None
+        for r in rec.values():
+            if r.get("n_cores"):
+                n = int(r["n_cores"])
+                break
+        if n is None:
+            # Fall back to the tag, which encodes count as topo_0_1_..._n-1.
+            n = len(tag.split("_")) - 1
+        out[n] = rec
+    return out
+
+
+def shard_advice(model: str, profiles_by_cores: Dict[int, Dict[int, dict]],
+                 free_slot_ms: float, min_speedup: float = 1.5,
+                 min_efficiency: float = 0.5) -> List[Advice]:
+    """Recommend spreading ONE dispatch across several cores.
+
+    Distinct from `split`, and the distinction is not cosmetic: split cuts a
+    dispatch into smaller sequential pieces so each fits a scheduling slot;
+    shard runs one dispatch's work on several cores at once. They need
+    different evidence and they fix different problems, so conflating them
+    produces recommendations that cannot be acted on.
+
+    Gated on measurement, not on hope. A dispatch is worth sharding when:
+
+      1. it does not fit the slot on one core (otherwise leave it alone);
+      2. its measured cost actually falls with core count -- `speedup(n) =
+         cost(1)/cost(n)` reaches `min_speedup`;
+      3. that speedup is not bought at absurd cost -- parallel efficiency
+         `speedup(n)/n` stays above `min_efficiency`.
+
+    Condition 2 is what makes this honest. On the measured K1 data it emits
+    shard for DroNet's heavy convolutions (dispatch 1: 22.87 -> 6.10 ms on four
+    cores, 3.75x) and correctly refuses for every MLP dispatch, whose cost gets
+    *worse* with more cores (0.066 -> 0.094 ms) because they are dominated by
+    per-dispatch overhead rather than work. An advisor that recommended
+    sharding from op size alone would get the MLP exactly backwards.
+
+    `sync_overhead_us = n*cost(n) - cost(1)` is reported as evidence: it is the
+    extra total work the split costs, which is what a summed-cycles objective
+    would (wrongly) reject the change for.
+    """
+    out: List[Advice] = []
+    if 1 not in profiles_by_cores or free_slot_ms <= 0:
+        return out
+    base = profiles_by_cores[1]
+    core_counts = sorted(n for n in profiles_by_cores if n > 1)
+
+    for did, rec in sorted(base.items()):
+        c1 = float(rec.get("median_ms") or 0.0)
+        if c1 <= 0 or c1 <= free_slot_ms:
+            continue  # fits already: nothing to fix
+
+        best = None
+        for n in core_counts:
+            r = profiles_by_cores[n].get(did)
+            if not r:
+                continue
+            cn = float(r.get("median_ms") or 0.0)
+            if cn <= 0:
+                continue
+            speedup = c1 / cn
+            eff = speedup / n
+            if speedup < min_speedup or eff < min_efficiency:
+                continue
+            if best is None or cn < best[1]:
+                best = (n, cn, speedup, eff)
+
+        if best is None:
+            # Measured and refused: record it, so the next round does not
+            # re-propose a shard the data has already rejected.
+            fastest = min(
+                ((n, float(profiles_by_cores[n][did].get("median_ms") or 0.0))
+                 for n in core_counts if did in profiles_by_cores[n]),
+                key=lambda t: t[1], default=None)
+            detail = (f"best measured {fastest[1]:.4f} ms on {fastest[0]} cores "
+                      f"vs {c1:.4f} on 1" if fastest else "no multi-core profile")
+            out.append(Advice(
+                model=model, dispatch_id=did, recommendation="unchanged",
+                priority=3, confidence="high",
+                evidence=Evidence(
+                    service_time_us=c1 * 1000.0,
+                    periodic_free_slot_us=free_slot_ms * 1000.0,
+                    extra={"reason": "does not shard profitably",
+                           "detail": detail}),
+                rationale=(f"dispatch {did} overruns the slot but does not "
+                           f"speed up enough with more cores to be worth "
+                           f"sharding ({detail})")))
+            continue
+
+        n, cn, speedup, eff = best
+        out.append(Advice(
+            model=model, dispatch_id=did, recommendation="shard",
+            priority=1 if cn <= free_slot_ms else 2,
+            confidence="high" if eff >= 0.7 else "medium",
+            evidence=Evidence(
+                service_time_us=c1 * 1000.0,
+                periodic_free_slot_us=free_slot_ms * 1000.0,
+                on_critical_path=True,
+                extra={
+                    "cost_1core_ms": round(c1, 4),
+                    f"cost_{n}core_ms": round(cn, 4),
+                    "n_cores": n,
+                    "measured_speedup": round(speedup, 3),
+                    "parallel_efficiency": round(eff, 3),
+                    "sync_overhead_us": round((n * cn - c1) * 1000.0, 1),
+                    "fits_slot_after": cn <= free_slot_ms,
+                }),
+            constraints={"n_cores": n,
+                         "legal_resources": ["k1_cluster0", "k1_cluster1"]},
+            rationale=(f"dispatch {did} takes {c1:.3f} ms on one core against a "
+                       f"{free_slot_ms:.3f} ms slot, and measures {cn:.3f} ms on "
+                       f"{n} cores ({speedup:.2f}x, {eff:.0%} efficient)"
+                       + (" -- which fits" if cn <= free_slot_ms
+                          else " -- still over, but closer"))))
     return out

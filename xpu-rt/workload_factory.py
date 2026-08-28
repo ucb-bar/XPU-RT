@@ -661,8 +661,42 @@ def create_workload_from_network_hierarchy(
             # Regular network - add as-is
             expanded_networks[network_identifier] = network_info
     
+    # Stateful (recurrent) networks: chain instance i-1 -> instance i.
+    #
+    # A periodic network's instances are otherwise independent copies, free to
+    # run concurrently or out of order. That is correct for a stateless model
+    # and WRONG for a recurrent one: VitFly's LSTM keeps h_state/c_state in
+    # .bss and nothing resets them, so instance k consumes what instance k-1
+    # wrote. Scheduling them as interchangeable replicas would place two
+    # invocations of the same recurrence in parallel and silently corrupt the
+    # hidden state -- the kernel honours the recurrence, so the constraint has
+    # to be expressed here or nowhere.
+    #
+    # Declared per network with "stateful": true rather than inferred, because
+    # statefulness is a property of the model that the dispatch graph does not
+    # reveal: the state buffers are ordinary intermediates and look exactly
+    # like scratch.
+    #
+    # This is expected to HURT throughput -- a 29.7 ms instance cannot overlap
+    # itself, so any window shorter than that serialises. That is the honest
+    # cost of the recurrence, not a scheduling failure.
+    stateful_chain_edges = []
+    for network_identifier, instances in periodic_network_to_instances.items():
+        base_info = networks.get(network_identifier, {})
+        if not base_info.get('stateful'):
+            continue
+        for i in range(1, len(instances)):
+            stateful_chain_edges.append({
+                'from': instances[i - 1],
+                'to': instances[i],
+                '_stateful_chain': True,
+            })
+    if stateful_chain_edges:
+        print(f"  stateful: chained {len(stateful_chain_edges)} instance edge(s) "
+              f"for {[n for n in periodic_network_to_instances if networks.get(n, {}).get('stateful')]}")
+
     # Expand edges: if an edge references a periodic network, expand it to all instances
-    expanded_edges = []
+    expanded_edges = list(stateful_chain_edges)
     for edge in network_edges:
         from_network = edge.get('from')
         to_network = edge.get('to')
