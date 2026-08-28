@@ -46,21 +46,24 @@ mpl.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 
-MM = 1 / 25.4
-DOUBLE_COL = 183 * MM
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-mpl.rcParams.update({
-    "font.family": "DejaVu Sans", "font.size": 6,
-    "axes.labelsize": 6, "axes.titlesize": 7,
-    "xtick.labelsize": 5, "ytick.labelsize": 4.4,
-    "legend.fontsize": 5, "axes.linewidth": 0.6,
-    "xtick.major.width": 0.5, "ytick.major.width": 0.5,
-    "pdf.fonttype": 42, "ps.fonttype": 42, "savefig.dpi": 300,
-})
+import figstyle  # noqa: E402
+
+# The print rcParams and the palette live in `figstyle` because they were
+# copy-pasted into five renderers and drifted: DroNet was blue in one figure
+# and orange in another, and yolov8_nano was blue in that one. Colour is an
+# identity claim, so it is made once.
+figstyle.use()
+MM = figstyle.MM
+SINGLE_COL = figstyle.SINGLE_COL
+DOUBLE_COL = figstyle.DOUBLE_COL
 
 # Model colours are assigned by first appearance so any model set works.
-_PALETTE = ["#0072B2", "#E69F00", "#009E73", "#CC79A7", "#56B4E9", "#D55E00"]
-C_DEADLINE = "#D55E00"
+#: Fallback order for models `figstyle.MODEL_COLOR` does not name.
+_PALETTE = [figstyle.BLUE, figstyle.ORANGE, figstyle.GREEN,
+            figstyle.PURPLE, figstyle.SKY, figstyle.VERMILLION]
+C_DEADLINE = figstyle.C_DEADLINE
 
 
 def model_of(job_name: str) -> str:

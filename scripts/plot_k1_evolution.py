@@ -24,29 +24,24 @@ mpl.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 
-MM = 1 / 25.4
-SINGLE_COL = 89 * MM
-DOUBLE_COL = 183 * MM
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-mpl.rcParams.update({
-    "font.family": "DejaVu Sans",
-    "font.size": 6,
-    "axes.labelsize": 6, "axes.titlesize": 7,
-    "xtick.labelsize": 5, "ytick.labelsize": 5,
-    "legend.fontsize": 5,
-    "axes.linewidth": 0.6,
-    "xtick.major.width": 0.5, "ytick.major.width": 0.5,
-    "xtick.major.size": 2.5, "ytick.major.size": 2.5,
-    "lines.linewidth": 1.0, "lines.markersize": 3.5,
-    "pdf.fonttype": 42, "ps.fonttype": 42,
-    "savefig.dpi": 300,
-})
+import figstyle  # noqa: E402
+
+# The print rcParams and the palette live in `figstyle` because they were
+# copy-pasted into five renderers and drifted: DroNet was blue in one figure
+# and orange in another, and yolov8_nano was blue in that one. Colour is an
+# identity claim, so it is made once.
+figstyle.use()
+MM = figstyle.MM
+SINGLE_COL = figstyle.SINGLE_COL
+DOUBLE_COL = figstyle.DOUBLE_COL
 
 # Okabe-Ito. DroNet is the model under study, so it takes the strong colour;
 # MLP is the well-behaved co-runner and is muted.
-C_DRONET = "#0072B2"
-C_MLP = "#E69F00"
-C_DEADLINE = "#D55E00"
+C_DRONET = figstyle.model_color("dronet")
+C_MLP = figstyle.model_color("mlp_control")
+C_DEADLINE = figstyle.C_DEADLINE
 C_MUTED = "#999999"
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -158,7 +153,8 @@ def pct(xs, p):
 # figure changed: same lanes, same window, same styling.
 
 #: Okabe-Ito, minus the two already spoken for below.
-PALETTE = ["#009E73", "#CC79A7", "#56B4E9", "#F0E442", "#D55E00", "#000000"]
+PALETTE = [figstyle.GREEN, figstyle.PURPLE, figstyle.SKY,
+           figstyle.YELLOW, figstyle.VERMILLION, figstyle.BLACK]
 
 
 def model_colours(models):
@@ -482,7 +478,7 @@ def _stamp(fig, provenance):
         fig.text(0.005, 0.002,
                  "Measured on the IREE path, which this project has since "
                  "dropped. NOT the current ModelBlaster toolchain; the two are "
-                 "not comparable.", fontsize=4.5, color="#D55E00", va="bottom")
+                 "not comparable.", fontsize=4.5, color=figstyle.C_DEADLINE, va="bottom")
     elif provenance == MODELBLASTER:
         fig.text(0.005, 0.002, "Measured on the ModelBlaster path.",
                  fontsize=4.5, color="#666666", va="bottom")

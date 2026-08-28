@@ -6,24 +6,32 @@ many dispatches are actually in flight, and whether a core is genuinely
 time-sharing between models rather than draining one queue at a time.
 """
 import csv, collections
+import os
+
+import sys
+
 import matplotlib as mpl
 mpl.use("Agg")
 import matplotlib.pyplot as plt
 
-MM = 1/25.4
-DOUBLE = 183*MM
-mpl.rcParams.update({
-    "font.family": "DejaVu Sans", "font.size": 6,
-    "axes.labelsize": 6, "axes.titlesize": 7,
-    "xtick.labelsize": 5, "ytick.labelsize": 5, "legend.fontsize": 5,
-    "axes.linewidth": 0.6, "xtick.major.width": 0.5, "ytick.major.width": 0.5,
-    "xtick.major.size": 2.5, "ytick.major.size": 2.5,
-    "lines.linewidth": 1.0, "pdf.fonttype": 42, "ps.fonttype": 42,
-    "savefig.dpi": 300,
-})
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+import figstyle  # noqa: E402
+
+# The print rcParams and the palette live in `figstyle` because they were
+# copy-pasted into five renderers and drifted: DroNet was blue in one figure
+# and orange in another, and yolov8_nano was blue in that one. Colour is an
+# identity claim, so it is made once.
+figstyle.use()
+MM = figstyle.MM
+SINGLE_COL = figstyle.SINGLE_COL
+DOUBLE_COL = figstyle.DOUBLE_COL
+DOUBLE = DOUBLE_COL   # this file's older spelling
+SINGLE = SINGLE_COL
 HZ = 24e6
 # Okabe-Ito, assigned by descending period so colours match the other figures.
-COL = {"yolov8_nano": "#0072B2", "dronet": "#E69F00", "mlp_control": "#009E73"}
+COL = {m: figstyle.model_color(m)
+       for m in ("yolov8_nano", "dronet", "mlp_control")}
 
 rows = [r for r in csv.DictReader(
     open("results/k1_ladder_mb/trace_3model_4hz.csv"))
@@ -50,10 +58,10 @@ tot = sum(at.values())
 ks = sorted(k for k in at if at[k])
 ax = axes[0]
 ax.bar(ks, [100*at[k]/tot for k in ks],
-       color=["#BBBBBB" if k == 0 else "#0072B2" for k in ks], width=0.72)
+       color=["#BBBBBB" if k == 0 else figstyle.BLUE for k in ks], width=0.72)
 mean = sum(k*v for k, v in at.items())/tot
-ax.axvline(mean, color="#D55E00", ls="--", lw=0.8)
-ax.text(mean+0.18, 40, f"mean {mean:.2f}", fontsize=5, color="#D55E00")
+ax.axvline(mean, color=figstyle.C_DEADLINE, ls="--", lw=0.8)
+ax.text(mean+0.18, 40, f"mean {mean:.2f}", fontsize=5, color=figstyle.C_DEADLINE)
 ax.set_xlabel("Dispatches in flight")
 ax.set_ylabel("Share of wall time (%)")
 ax.set_xticks(ks)

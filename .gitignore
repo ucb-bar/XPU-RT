@@ -125,3 +125,7 @@ data/toplevel/_probe_*.json
 /gen/vmfb/dronet/spacemit_x60/
 /gen/vmfb/mlp/
 /gen/vmfb/yolov8_nano/
+
+# Figures are build products: a committed script plus measured data in the
+# repo reproduces every one of them. `scripts/figstyle.py` fixes the style.
+out/figures/

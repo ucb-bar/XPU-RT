@@ -1,21 +1,28 @@
 """The measured YOLOv8n frequency frontier, built at final print size."""
 import csv
+import os
+
+import sys
+
 import matplotlib as mpl
 mpl.use("Agg")
 import matplotlib.pyplot as plt
 
-MM = 1/25.4
-SINGLE, DOUBLE = 89*MM, 183*MM
-mpl.rcParams.update({
-    "font.family": "DejaVu Sans", "font.size": 6,
-    "axes.labelsize": 6, "axes.titlesize": 7,
-    "xtick.labelsize": 5, "ytick.labelsize": 5, "legend.fontsize": 5,
-    "axes.linewidth": 0.6, "xtick.major.width": 0.5, "ytick.major.width": 0.5,
-    "xtick.major.size": 2.5, "ytick.major.size": 2.5,
-    "lines.linewidth": 1.0, "lines.markersize": 3.5,
-    "pdf.fonttype": 42, "ps.fonttype": 42, "savefig.dpi": 300,
-})
-OK, BAD, MUTE = "#0072B2", "#D55E00", "#666666"
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+import figstyle  # noqa: E402
+
+# The print rcParams and the palette live in `figstyle` because they were
+# copy-pasted into five renderers and drifted: DroNet was blue in one figure
+# and orange in another, and yolov8_nano was blue in that one. Colour is an
+# identity claim, so it is made once.
+figstyle.use()
+MM = figstyle.MM
+SINGLE_COL = figstyle.SINGLE_COL
+DOUBLE_COL = figstyle.DOUBLE_COL
+DOUBLE = DOUBLE_COL   # this file's older spelling
+SINGLE = SINGLE_COL
+OK, BAD, MUTE = figstyle.BLUE, figstyle.C_DEADLINE, "#666666"
 
 rows = list(csv.DictReader(open("results/frontier/yolo_frequency_frontier.csv")))
 hz    = [float(r["yolo_hz"]) for r in rows]
@@ -60,11 +67,11 @@ ax.set_xlabel("yolov8n frequency (Hz)")
 ax.set_ylabel("Cores needed by measured service time")
 ax.spines[["top", "right"]].set_visible(False)
 ax2 = ax.twinx()
-ax2.plot(hz, solv, "s--", color="#009E73", ms=2.5, lw=0.7)
-ax2.set_ylabel("edf solver time (s)", color="#009E73")
-ax2.tick_params(axis="y", colors="#009E73")
+ax2.plot(hz, solv, "s--", color=figstyle.GREEN, ms=2.5, lw=0.7)
+ax2.set_ylabel("edf solver time (s)", color=figstyle.GREEN)
+ax2.tick_params(axis="y", colors=figstyle.GREEN)
 ax2.spines[["top"]].set_visible(False)
-ax2.spines["right"].set_color("#009E73")
+ax2.spines["right"].set_color(figstyle.GREEN)
 
 for a, lab in zip(axes, "ab"):
     a.text(-0.19, 1.06, lab, transform=a.transAxes, fontsize=8,
