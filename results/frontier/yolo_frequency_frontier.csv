@@ -1,0 +1,12 @@
+yolo_hz,cores_needed_by_service_time,makespan_ms,predicted_deadline_misses,solver_s,solver,feasible
+3.0,0.68,819.32,0,0.273,edf,yes
+4.0,0.91,902.65,0,0.369,edf,yes
+5.0,1.13,952.65,0,0.417,edf,yes
+6.0,1.36,985.99,0,0.538,edf,yes
+6.5,1.47,921.88,0,0.519,edf,yes
+7.0,1.59,1009.79,98,0.666,edf,no
+7.5,1.7,952.65,201,0.617,edf,no
+8.0,1.81,1027.65,285,0.826,edf,no
+9.0,2.04,1041.54,420,0.879,edf,no
+10.0,2.27,1052.65,534,1.228,edf,no
+12.0,2.72,1069.32,795,1.387,edf,no
