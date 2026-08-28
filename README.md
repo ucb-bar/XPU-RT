@@ -39,8 +39,8 @@ instead of merlin/IREE.
   — a simpler, no-FireSim variant of Flow A: same ModelBlaster codegen and
   checkout (`zephyr-chipyard-sw/modelblaster/`), profiled entirely on
   spike with the `greedy`/`greedy_periodic` solver (no MOSEK license
-  needed). Has its own end-to-end script,
-  `scripts/repro_mlp_dronet_yolo_spike.sh`, and installs everything it
+  needed). Driven by the same one-command script as Flow A,
+  `scripts/repro_workload.sh <spec.json>`, which installs everything it
   needs via `scripts/install_xpurt_deps.sh` — see that doc's §0.
 * [`zephyr-chipyard-sw/modelblaster/examples/microros_demo/ROS_FLOW.md`](zephyr-chipyard-sw/modelblaster/examples/microros_demo/ROS_FLOW.md)
   — micro-ROS fixed-pinning baseline flow (the reference against which

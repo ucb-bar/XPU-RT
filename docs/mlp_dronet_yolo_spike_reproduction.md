@@ -27,12 +27,17 @@ pointer bump → this repo's pointer bump) if kept.
 
 ## Quick start: end-to-end script
 
-`scripts/repro_mlp_dronet_yolo_spike.sh` runs the entire flow below (sections
-0/1/2/3/5/6, and optionally 7) as a single command:
+`scripts/repro_workload.sh` runs the entire flow below (sections
+0/1/2/3/5/6, and optionally 7) as a single command, against whatever
+workload spec you hand it:
 
 ```bash
-bash scripts/repro_mlp_dronet_yolo_spike.sh --trace
+bash scripts/repro_workload.sh data/toplevel/networks_mlp_dronet_yolo_spike.json --trace
 ```
+
+(`scripts/repro_mlp_dronet_yolo_spike.sh` still exists as a shim that
+forwards to it with that spec as the default, so older commands keep
+working.)
 
 It resolves the `zephyr-chipyard-sw`/`modelblaster` submodule checkouts from
 `.gitmodules` (not a hardcoded path), activates the conda/Zephyr-SDK env,
@@ -48,26 +53,47 @@ done for this env. Flags to skip already-fresh stages (`--skip-deps`,
 `--skip-profile`, `--skip-dispatch`, `--skip-schedule`, `--skip-build`) are
 documented in the script's `--help`.
 
-The script is **driven by the workload spec**, not by a hardcoded model
-list: `--networks-json PATH` (default
-`data/toplevel/networks_mlp_dronet_yolo_spike.json`) supplies which models
-get profiled and built (each `networks` entry's `identifier`, deduped, in
-spec order), each model's quant tree (the entry's `quant` field, §4 — default
-`fp32`), the HW backends to emit dispatch graphs for and link into the binary
-(`hardware.profile_hw`, lowercased for `TARGET=`/`BACKENDS=`), the IREE
-target triple (parsed out of `dispatch_deps_path`), and the profile target
-(`hardware.profile.target`, which must be `spike` here — a FireSim spec is
-rejected rather than silently profiled the wrong way). So the single-network
-repros of §9 are just:
+The script is **driven entirely by the workload spec** — there is no
+hardcoded model list, backend list or target anywhere in it. The JSON says
+what to run and the script does that:
+
+| spec field | drives |
+| --- | --- |
+| `hardware.profile.target` | `spike` → this doc's no-RTL flow; anything else (`firesim_rocket_saturn`, …) → `RUNNER=firesim`, i.e. `docs/end_to_end_xpurt_firesim.md` |
+| `hardware.profile.topo_tag` | `PROFILE_CORES` for the capture (`topo_0` → `0`, `topo_0_1` → `0,1`) |
+| `hardware.profile_hw` | which HW backends get profiled, get dispatch graphs, and are linked into the binary. Each value is both the on-disk profile dir and (mapped: `RVV`/`<cfg>_rvv` → `rvv`, plus `scalar`, `gemmini`, `gemmini_q31`) a modelblaster `TARGET=`. `cpu_p`/`cpu_e` also pick `CPU_P_KIND`/`CPU_E_KIND` |
+| `networks[*].identifier` | which models get profiled and built (deduped, in spec order) |
+| `networks[*].quant` | each model's modelblaster quant tree (§4). Absent → inferred from the `<model>.<quant>/` basename in `dispatch_deps_path`, else `fp32` |
+| `networks[*].dispatch_deps_path` | that network's IREE target and the dispatch-graph basename step 2 renames its output to — per network, so a spec may mix a spike-emitted graph with a FireSim one |
+| `scheduler.*` | `run_xpurt_schedule.py`, as always |
+| `flow.*` | optional, read by this script only (the scheduler ignores it): `flow.solver`, `flow.trace`, `flow.profile.{out_root,clock_mhz}`, `flow.build.{registry,backends,firesim_conf,firesim_timeout,force_regen}` |
+
+So the single-network repros of §9 are just a different JSON:
 
 ```bash
-bash scripts/repro_mlp_dronet_yolo_spike.sh \
-  --networks-json data/toplevel/networks_dronet_only_spike.json
+bash scripts/repro_workload.sh data/toplevel/networks_dronet_only_spike.json
 ```
 
-`--quants` overrides the spec's per-model quants (one comma-separated entry
-per model, in spec order) when you want the same topology at a different
-precision without editing the spec.
+and a FireSim workload is the same command again:
+
+```bash
+bash scripts/repro_workload.sh data/toplevel/networks_periodic_dronet_yolov8_firesim.json
+```
+
+`--dry-run` prints the fully resolved plan (models, quants, backends, core
+kinds, registry, schedule path) and exits without running anything — worth
+doing first on a spec you haven't run before. `--quants` overrides the
+spec's per-model quants (one comma-separated entry per model, in spec
+order) when you want the same topology at a different precision without
+editing the spec, and `--solver`/`--trace`/`--no-trace` override
+`flow.solver`/`flow.trace`.
+
+The one thing the spec can't express is the **bitstream**, which is what
+the core registry encodes. `flow.build.registry` names it; without one the
+script takes `xpurt_demo`'s default on spike (nothing to get wrong there),
+otherwise the single `modelblaster/cores/*.json` whose core kinds are
+exactly the spec's `cpu_p`/`cpu_e` pair — and refuses to guess when
+several match, listing them.
 
 The sections below (including the from-scratch environment setup in
 "Prerequisites") are the manual, step-by-step walkthrough the script
@@ -286,7 +312,7 @@ cd "${FRESHSCHEDULER_ROOT}"
 bash scripts/install_xpurt_deps.sh
 ```
 
-`scripts/repro_mlp_dronet_yolo_spike.sh` (below) runs this automatically —
+`scripts/repro_workload.sh` (below) runs this automatically —
 `--skip-deps` skips it once you've already run it for this env.
 
 ## 1. Profile each model on spike
@@ -458,7 +484,7 @@ this session). Current content:
 }
 ```
 
-`quant` is read by `scripts/repro_mlp_dronet_yolo_spike.sh` (not by the
+`quant` is read by `scripts/repro_workload.sh` (not by the
 scheduler, which ignores unknown keys) to pick each model's
 `modelblaster/examples/<model>/<quant>/` tree for profiling, dispatch-graph
 emission, and the combined build. It has to be declared explicitly because
@@ -994,7 +1020,8 @@ full 3-network rebuild against this same fix are the next steps (§10).
     bug). Not independently re-verified end-to-end after the `libgl1` fix
     (the sandboxed run that found this didn't get a follow-up pass in time)
     — flagged here rather than silently assumed fixed.
-17. **Fixed in code** — `scripts/repro_mlp_dronet_yolo_spike.sh`. A fourth
+17. **Fixed in code** — `scripts/repro_workload.sh` (then named
+    `repro_mlp_dronet_yolo_spike.sh`). A fourth
     sandboxed run (after Bugs 13-16 all landed and were confirmed
     non-recurring — all 3 models profiled successfully inside the actual
     pipeline run) found that the script had the **exact same PATH-ordering
@@ -1107,7 +1134,7 @@ confusion — which env needs what, and where is it declared:
     rewriting that one `#include` line during staging (`file(READ...)` +
     `string(REPLACE...)` + `file(WRITE...)` in place of the plain
     `configure_file`) to point at the correct `<name>_model.h`. Verified:
-    full `repro_mlp_dronet_yolo_spike.sh` rebuild after the fix reaches
+    full `repro_workload.sh` rebuild after the fix reaches
     `OVERALL: PASS (3 models)` again.
 
 ## Resolved: cross-network numeric corruption in the combined binary
@@ -1330,14 +1357,14 @@ in both runs regardless — expected, not a bug.
 | `plots/networks_mlp_dronet_yolo_spike_greedy_periodic_profiled.png` | top-level | untracked, **final** regeneration (§10.2) |
 | `plots/xpurt_trace_mlp_dronet_yolo_spike_final.png` | top-level | untracked, **final** real execution timeline, all 3 models PASS (§10.3) |
 | `schedules/xpurt_trace_mlp_dronet_yolo_spike_final.csv` | top-level | untracked, parsed trace data backing the plot above (§10.3) |
-| `scripts/repro_mlp_dronet_yolo_spike.sh` | top-level | **tracked**, end-to-end automation of sections 0/1/2/3/5/6/7 (see "Quick start" above) |
+| `scripts/repro_workload.sh` (then named `repro_mlp_dronet_yolo_spike.sh`) | top-level | **tracked**, end-to-end automation of sections 0/1/2/3/5/6/7 (see "Quick start" above) |
 | `zephyr-chipyard-sw/modelblaster/models/checkpoints/mlp_control/model_6998.pt` | nested submodule | **tracked** (Bug 14 fix) — trained MLP policy checkpoint, previously only on one user's disk |
 | `zephyr-chipyard-sw/modelblaster/models/mlp_control.py` | nested submodule | **tracked, modified** (Bug 14 fix — `_DEFAULT_CKPT` now `__file__`-relative) |
 | `zephyr-chipyard-sw/modelblaster/models/checkpoints/dronet/best.pt` | nested submodule | **tracked** (Bug 15 fix) — trained DroNet checkpoint, previously only on one user's disk |
 | `zephyr-chipyard-sw/modelblaster/models/dronet_arch.py` | nested submodule | **tracked, new** (Bug 15 fix) — vendored copy of `qnn_models/dronet.py`'s `DronetTorch` class |
 | `zephyr-chipyard-sw/modelblaster/models/dronet.py` | nested submodule | **tracked, modified** (Bug 15 fix — imports the vendored arch, `_DEFAULT_CKPT` now `__file__`-relative) |
 | `zephyr-chipyard-sw/modelblaster/models/yolov8_nano.py` | nested submodule | **tracked, modified** (Bug 16 fix — error message no longer masks the real `ImportError` cause) |
-| `scripts/repro_mlp_dronet_yolo_spike.sh` | top-level | **tracked, modified** (Bug 17 fix — same PATH-ordering defect as Bug 13, never fixed in the script itself; also now calls `install_xpurt_deps.sh`) |
+| `scripts/repro_workload.sh` (then named `repro_mlp_dronet_yolo_spike.sh`) | top-level | **tracked, modified** (Bug 17 fix — same PATH-ordering defect as Bug 13, never fixed in the script itself; also now calls `install_xpurt_deps.sh`) |
 | `pyproject.toml` | top-level | **tracked, new** — xpu-rt's own deps, replaces `setup.py` (dependency-management cleanup) |
 | `scripts/install_xpurt_deps.sh` | top-level | **tracked, new** — the one place all xpurt-specific deps (on top of a standalone zephyr-chipyard-sw install) are installed from (dependency-management cleanup) |
 | `setup.py` | top-level | **removed** — superseded by `pyproject.toml` |
